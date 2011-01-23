@@ -185,12 +185,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
     return;
   }
 
-  if(ki->prop != NULL)
-    prop_ref_dec(ki->prop);
-
-  ki->prop = p;
-  if(p != NULL)
-    prop_ref_inc(p);
+  prop_ref_dec(ki->prop);
+  ki->prop = prop_ref_inc(p);
 }
 
 

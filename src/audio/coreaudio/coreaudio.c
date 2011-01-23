@@ -31,7 +31,7 @@
 #include <CoreAudio/CoreAudio.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 
 
 #define CATRACE(level, fmt...) TRACE(level, "CoreAudio", fmt)
@@ -181,16 +181,17 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   audio_buf_t *ab;
   float vol = cam->cam_master_volume;
   
-  ab = af_deq(cam->cam_af, 0 /* no wait */);
-  if(ab == NULL) {
+  ab = af_deq2(cam->cam_af, 0 /* no wait */, am);
+  if(ab == NULL || ab == AF_EXIT) {
     /* outOutputData is zeroed out by default */
     return 0;
   }
   
-  if(ab->ab_format != cam->cam_cur_format || ab->ab_rate != cam->cam_cur_rate) {
-    coreaudio_change_format(cam, ab->ab_format, ab->ab_rate);
+  if(ab->ab_format != cam->cam_cur_format ||
+     ab->ab_samplerate != cam->cam_cur_rate) {
+    coreaudio_change_format(cam, ab->ab_format, ab->ab_samplerate);
     cam->cam_cur_format = ab->ab_format;
-    cam->cam_cur_rate = ab->ab_rate;
+    cam->cam_cur_rate = ab->ab_samplerate;
   }
     
   if(ab->ab_pts != AV_NOPTS_VALUE) {
@@ -235,7 +236,7 @@ coreaudio_change_format(coreaudio_audio_mode_t *cam, int format, int rate)
   AudioStreamBasicDescription asbd;
     
   asbd.mFormatID = kAudioFormatLinearPCM;
-  asbd.mSampleRate = audio_rate_from_rateflag(rate);
+  asbd.mSampleRate = rate;
   asbd.mFormatFlags = 
     kAudioFormatFlagIsFloat | 
     kAudioFormatFlagIsPacked |

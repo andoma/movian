@@ -209,8 +209,7 @@ glw_view_loader_set(glw_t *w, va_list ap)
       if(a->prop_parent_override)
 	prop_ref_dec(a->prop_parent_override);
 
-      a->prop_parent_override = va_arg(ap, prop_t *);
-      prop_ref_inc(a->prop_parent_override);
+      a->prop_parent_override = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
     default:

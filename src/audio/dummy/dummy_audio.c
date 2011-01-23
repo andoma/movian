@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 
 static int
 dummy_audio_start(audio_mode_t *am, audio_fifo_t *af)
@@ -32,13 +32,11 @@ dummy_audio_start(audio_mode_t *am, audio_fifo_t *af)
   audio_buf_t *ab;
   while(1) {
 
-    ab = af_deq(af, 1);
-
-    if(am != audio_mode_current) {
+    ab = af_deq2(af, 1, am);
+    
+    if(ab == AF_EXIT)
       /* We're not the selected audio output anymore, return. */
-      ab_free(ab);
       break;
-    }
 
     usleep(1000000 * ab->ab_frames / 48000);
     ab_free(ab);

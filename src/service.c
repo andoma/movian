@@ -58,7 +58,7 @@ service_init(void)
   struct prop_nf *pnf;
 
   hts_mutex_init(&service_mutex);
-  hts_cond_init(&service_cond);
+  hts_cond_init(&service_cond, &service_mutex);
 
   hts_thread_create_detached("service probe", service_probe_loop, NULL);
 

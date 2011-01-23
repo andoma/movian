@@ -33,6 +33,8 @@
 #include "showtime.h"
 #include "settings.h"
 
+#define NUM_CLIPPLANES 6
+
 struct event;
 
 TAILQ_HEAD(glw_queue, glw);
@@ -604,6 +606,14 @@ typedef struct glw_root {
 
   setting_t *gr_setting_screensaver;
 
+
+  /**
+   * Rendering
+   */
+  float gr_clip[NUM_CLIPPLANES][4];
+  int gr_active_clippers;
+  void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const float *vec);
+
 } glw_root_t;
 
 
@@ -636,7 +646,7 @@ typedef struct glw_rctx {
 #endif
 
 #ifdef CONFIG_GLW_BACKEND_OPENGL
-#include "glw_opengl_ops.h"
+#include "glw_common_ops.h"
 #endif
 
 
@@ -1035,31 +1045,6 @@ void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
 void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
 
 void glw_align_2(glw_rctx_t *rc, glw_alignment_t a);
-
-/**
- * Render interface abstraction
- */
-
-void glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
-		       uint16_t *indices);
-
-void glw_renderer_init_quad(glw_renderer_t *gr);
-
-void glw_renderer_triangle(glw_renderer_t *gr, int element, 
-			   uint16_t a, uint16_t b, uint16_t c);
-
-int glw_renderer_initialized(glw_renderer_t *gr);
-
-void glw_renderer_free(glw_renderer_t *gr);
-
-void glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
-			  float x, float y, float z);
-
-void glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
-			 float s, float t);
-
-void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
-			  float r, float g, float b, float a);
 
 void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
 

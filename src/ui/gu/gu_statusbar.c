@@ -74,8 +74,7 @@ notifications_update(void *opaque, prop_event_t event, ...)
 	    buf[i] = ' ';
 
 	sbe = calloc(1, sizeof(statusbar_entry_t));
-	sbe->p = p;
-	prop_ref_inc(p);
+	sbe->p = prop_ref_inc(p);
 	sbe->id = gtk_statusbar_push(GTK_STATUSBAR(sb->bar), sb->ctxid, buf);
 	LIST_INSERT_HEAD(&sb->entries, sbe, link);
       }

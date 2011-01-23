@@ -57,10 +57,8 @@ search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
   e = prop_create(p, "entries");
   prop_set_int(e, 0);
 
-  prop_ref_inc(n);
-  prop_ref_inc(e);
-  *nodesp = n;
-  *entriesp = e;
+  *nodesp = prop_ref_inc(n);
+  *entriesp = prop_ref_inc(e);
 
   if(prop_set_parent(p, parent)) {
     prop_destroy(p);

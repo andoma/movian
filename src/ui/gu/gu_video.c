@@ -137,7 +137,7 @@ gu_video_create(gu_nav_page_t *gnp)
 
   gv = calloc(1, sizeof(gu_video_t));
 
-  prop_ref_inc(gv->gv_closeprop = prop_create(gnp->gnp_prop, "close"));
+  gv->gv_closeprop = prop_ref_inc(prop_create(gnp->gnp_prop, "close"));
 
   gv->gv_status_sub = 
     prop_subscribe(0,

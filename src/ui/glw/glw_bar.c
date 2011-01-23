@@ -17,6 +17,7 @@
  */
 
 #include "glw.h"
+#include "glw_renderer.h"
 
 typedef struct glw_bar {
   glw_t w;

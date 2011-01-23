@@ -20,7 +20,7 @@
 #define AUDIO_DECODER_H
 
 #include "media.h"
-#include "audio.h"
+#include "audio_defs.h"
 
 TAILQ_HEAD(audio_decoder_queue, audio_decoder);
 

@@ -430,12 +430,8 @@ prop_callback(void *opaque, prop_event_t event, ...)
     return;
   }
 
-  if(sl->p != NULL)
-    prop_ref_dec(sl->p);
-
-  sl->p = p;
-  if(p != NULL)
-    prop_ref_inc(p);
+  prop_ref_dec(sl->p);
+  sl->p = prop_ref_inc(p);
   
   if(grabbed)
     return;

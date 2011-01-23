@@ -162,8 +162,7 @@ glw_view_token_copy(token_t *src)
     break;
 
   case TOKEN_PROPERTY_REF:
-    dst->t_prop = src->t_prop;
-    prop_ref_inc(dst->t_prop);
+    dst->t_prop = prop_ref_inc(src->t_prop);
     break;
 
   case TOKEN_PROPERTY_OWNER:

@@ -305,9 +305,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
 
   TAILQ_INIT(&w->glw_childs);
 
-  w->glw_originating_prop = originator;
-  if(w->glw_originating_prop != NULL)
-    prop_ref_inc(w->glw_originating_prop);
+  w->glw_originating_prop = prop_ref_inc(w->glw_originating_prop);
 
   w->glw_parent = parent;
   if(parent != NULL) {
@@ -1005,8 +1003,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
       if(gr->gr_last_focused_interactive != NULL)
 	prop_ref_dec(gr->gr_last_focused_interactive);
 
-      gr->gr_last_focused_interactive = p;
-      prop_ref_inc(p);
+      gr->gr_last_focused_interactive = prop_ref_inc(p);
     }
   }
 }
@@ -1957,4 +1954,38 @@ glw_unhide(glw_t *w)
     return;
   w->glw_flags &= ~GLW_HIDDEN;
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
+}
+
+
+
+/**
+ *
+ */
+void
+glw_store_matrix(glw_t *w, glw_rctx_t *rc)
+{
+  if(rc->rc_inhibit_matrix_store)
+    return;
+
+  if(w->glw_matrix == NULL)
+    w->glw_matrix = malloc(sizeof(Mtx));
+  
+  memcpy(w->glw_matrix, rc->rc_mtx, sizeof(Mtx));
+}
+
+
+
+/**
+ *
+ */
+void
+glw_rctx_init(glw_rctx_t *rc, int width, int height)
+{
+  memset(rc, 0, sizeof(glw_rctx_t));
+  rc->rc_width  = width;
+  rc->rc_height = height;
+  rc->rc_alpha = 1.0f;
+
+  glw_LoadIdentity(rc);
+  glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
 }

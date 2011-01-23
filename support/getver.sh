@@ -7,6 +7,10 @@ if ! test $revision; then
     test $revision || revision=`cd "$1" && grep revision .svn/entries 2>/dev/null | cut -d '"' -f2`
     test $revision || revision=`cd "$1" && sed -n -e '/^dir$/{n;p;q}' .svn/entries 2>/dev/null`
     test $revision && revision=SVN-r$revision
+fi    
+if ! test $revision; then
+    test $revision || revision=`cd "$1" && git describe --dirty --abbrev=5 2>/dev/null | sed  -e 's/-/./g'`
+    test $revision && revision=GIT-$revision
 fi
 
 echo $revision

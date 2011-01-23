@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef AUDIO_H
-#define AUDIO_H
+#pragma once
 
 #include "audio_fifo.h"
 
@@ -59,7 +58,7 @@ typedef struct audio_mode {
 #define AM_SR_44100 0x4
 #define AM_SR_32000 0x8
 #define AM_SR_24000 0x10
-
+#define AM_SR_ANY   0x20
   unsigned int am_sample_rate;
 
   char *am_title;
@@ -80,15 +79,13 @@ typedef struct audio_mode {
 
 } audio_mode_t;
 
-extern audio_mode_t *audio_mode_current;
-
 int audio_rateflag_from_rate(int rate);
-int audio_rate_from_rateflag(int flag);
 const char *audio_format_to_string(int format);
 
 void audio_mode_register(audio_mode_t *am);
 
 void audio_init(void);
+void audio_fini(void);
 
 extern prop_t *prop_mastervol, *prop_mastermute;
 
@@ -103,5 +100,3 @@ extern int audio_pa_init(void);
 extern void audio_alsa_init(int);
 extern void audio_coreaudio_init(void);
 extern void audio_dummy_init(void);
-
-#endif /* AUDIO__H */

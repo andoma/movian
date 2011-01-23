@@ -95,6 +95,9 @@ enable vdpau
 enable spidermonkey
 enable libxxf86vm
 enable httpserver
+enable timegm
+enable inotify
+enable realpath
 #enable libxrandr  -- code does not really work yet
 
 for opt do

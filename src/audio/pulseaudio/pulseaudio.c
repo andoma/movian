@@ -19,7 +19,7 @@
 #include <pulse/pulseaudio.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 #include "notifications.h"
 
 static pa_threaded_mainloop *mainloop;
@@ -106,14 +106,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   memset(&pam->ss, 0, sizeof(pa_sample_spec));
 
   pam->ss.format = PA_SAMPLE_S16NE; 
-  switch(ab->ab_rate) {
-  default:
-  case AM_SR_96000: pam->ss.rate = 96000; break;
-  case AM_SR_48000: pam->ss.rate = 48000; break;
-  case AM_SR_44100: pam->ss.rate = 44100; break;
-  case AM_SR_32000: pam->ss.rate = 32000; break;
-  case AM_SR_24000: pam->ss.rate = 24000; break;
-  }
+  pam->ss.rate = ab->ab_samplerate;
 
   switch(ab->ab_format) {
   case AM_FORMAT_PCM_STEREO:
@@ -189,7 +182,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   n = pa_stream_connect_playback(s, NULL, &pba, flags, &cv, NULL);
 
   pam->stream = s;
-  pam->cur_rate   = ab->ab_rate;
+  pam->cur_rate   = ab->ab_samplerate;
   pam->cur_format = ab->ab_format;
 }
 
@@ -430,7 +423,6 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   }
 
  /* Need at least one packet of audio */
-  ab = af_deq(af, 1);
 
   /* Subscribe to updates of master volume */
   pam->sub_mvol = 
@@ -448,12 +440,15 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 		   PROP_TAG_EXTERNAL_LOCK, mainloop, prop_pa_lockmgr,
 		   NULL);
  
-  while(am == audio_mode_current) {
+  while(1) {
 
-    if(ab == NULL) {
-      pa_threaded_mainloop_unlock(mainloop);
-      ab = af_deq(af, 1);
-      pa_threaded_mainloop_lock(mainloop);
+    pa_threaded_mainloop_unlock(mainloop);
+    ab = af_deq2(af, 1, am);
+    pa_threaded_mainloop_lock(mainloop);
+
+    if(ab == AF_EXIT) {
+      ab = NULL;
+      break;
     }
 
     if(pa_context_get_state(pam->context) == PA_CONTEXT_TERMINATED ||
@@ -463,7 +458,7 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
     if(pam->stream != NULL &&
        (pam->cur_format != ab->ab_format ||
-	pam->cur_rate   != ab->ab_rate)) {
+	pam->cur_rate   != ab->ab_samplerate)) {
       stream_destroy(pam);
     }
 
@@ -603,8 +598,7 @@ audio_pa_init(void)
   am = &pam->am;
   am->am_formats = 
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
-  am->am_sample_rates = AM_SR_96000 | AM_SR_48000 | AM_SR_44100 | 
-    AM_SR_32000 | AM_SR_24000;
+  am->am_sample_rates = AM_SR_ANY;
   am->am_title = strdup("Pulseaudio");
   am->am_id = strdup("pulseaudio");
   am->am_preferred_size = 1024;

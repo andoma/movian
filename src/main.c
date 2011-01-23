@@ -30,7 +30,7 @@
 #include "prop/prop.h"
 #include "arch/arch.h"
 
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 #include "backend/backend.h"
 #include "navigator.h"
 #include "settings.h"
@@ -428,6 +428,7 @@ showtime_shutdown(int retcode)
 static void
 finalize(void)
 {
+  audio_fini();
   backend_fini();
   shutdown_hook_run(0);
   arch_exit(showtime_retcode);

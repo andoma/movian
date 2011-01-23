@@ -28,8 +28,7 @@
 #include <alsa/asoundlib.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
-#include "audio/audio_ui.h"
+#include "audio/audio_defs.h"
 #include "audio/audio_iec958.h"
 
 /* seams to only be defined in modern versions of endian.h */
@@ -94,15 +93,6 @@ alsa_open(alsa_audio_mode_t *aam, int format, int rate)
 
   snd_pcm_hw_params_set_access(h, hwp, SND_PCM_ACCESS_RW_INTERLEAVED);
   snd_pcm_hw_params_set_format(h, hwp, aam->aam_format);
-
-  switch(rate) {
-  default:
-  case AM_SR_96000: rate = 96000; break;
-  case AM_SR_48000: rate = 48000; break;
-  case AM_SR_44100: rate = 44100; break;
-  case AM_SR_32000: rate = 32000; break;
-  case AM_SR_24000: rate = 24000; break;
-  }
 
   snd_pcm_hw_params_set_rate(h, hwp, rate, 0);
   
@@ -359,16 +349,11 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
   while(1) {
 
-    ab = af_deq(af, h == NULL); /* wait if PCM device is not open */
+    ab = af_deq2(af, h == NULL, am); /* wait if PCM device is not open */
 
-    if(am != audio_mode_current) {
-      /* We're not the selected audio output anymore, return.
-	 We will lose the current audio block, but who cares ? */
-      ab_free(ab);
-
+    if(ab == AF_EXIT) {
       if(h != NULL)
 	snd_pcm_close(h);
-
       break;
     }
 
@@ -388,10 +373,11 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       continue;
     }
 
-    if(h == NULL || ab->ab_format != cur_format || ab->ab_rate != cur_rate) {
+    if(h == NULL ||
+       ab->ab_format != cur_format ||
+       ab->ab_samplerate != cur_rate) {
 
-      if(!(ab->ab_format & am->am_formats) || 
-	 !(ab->ab_rate & am->am_sample_rates)) {
+      if(!(ab->ab_format & am->am_formats)) {
 	/* Rate / format is not supported by this mode */
 	ab_free(ab);
 	if(h == NULL)
@@ -404,7 +390,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	snd_pcm_close(h);
 
       cur_format = ab->ab_format;
-      cur_rate   = ab->ab_rate;
+      cur_rate   = ab->ab_samplerate;
 
       pts = AV_NOPTS_VALUE;
 

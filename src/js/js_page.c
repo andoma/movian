@@ -468,9 +468,8 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
     JS_DefineFunctions(cx, robj, item_functions);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
     ji->ji_model = model;
-    ji->ji_root = item;
+    ji->ji_root =  prop_ref_inc(item);
     LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
-    prop_ref_inc(ji->ji_root);
     JS_SetPrivate(cx, robj, ji);
   }
   return JS_TRUE;
@@ -484,12 +483,12 @@ init_model_props(js_model_t *jm, prop_t *model)
 {
   struct prop_nf *pnf;
 
-  prop_ref_inc(jm->jm_nodes   = prop_create(model, "items"));
-  prop_ref_inc(jm->jm_type    = prop_create(model, "type"));
-  prop_ref_inc(jm->jm_error   = prop_create(model, "error"));
-  prop_ref_inc(jm->jm_contents= prop_create(model, "contents"));
-  prop_ref_inc(jm->jm_entries = prop_create(model, "entries"));
-  prop_ref_inc(jm->jm_metadata= prop_create(model, "metadata"));
+  jm->jm_nodes   = prop_ref_inc(prop_create(model, "items"));
+  jm->jm_type    = prop_ref_inc(prop_create(model, "type"));
+  jm->jm_error   = prop_ref_inc(prop_create(model, "error"));
+  jm->jm_contents= prop_ref_inc(prop_create(model, "contents"));
+  jm->jm_entries = prop_ref_inc(prop_create(model, "entries"));
+  jm->jm_metadata= prop_ref_inc(prop_create(model, "metadata"));
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       jm->jm_nodes,
@@ -953,10 +952,10 @@ js_backend_open(prop_t *page, const char *url)
 
   init_model_props(jm, model);
 
-  prop_ref_inc(jm->jm_url     = prop_create(page, "url"));
-  prop_ref_inc(jm->jm_eventsink = prop_create(page, "eventSink"));
-  prop_ref_inc(jm->jm_loading = prop_create(model, "loading"));
-  prop_ref_inc(jm->jm_root = page);
+  jm->jm_url       = prop_ref_inc(prop_create(page, "url"));
+  jm->jm_eventsink = prop_ref_inc(prop_create(page, "eventSink"));
+  jm->jm_loading   = prop_ref_inc(prop_create(model, "loading"));
+  jm->jm_root      = prop_ref_inc(page);
   
   model_launch(jm);
   return 0;
