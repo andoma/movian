@@ -137,8 +137,8 @@ fs_read(fa_handle_t *fh0, void *buf, size_t size)
 /**
  * Seek in file
  */
-static off_t
-fs_seek(fa_handle_t *fh0, off_t pos, int whence)
+static int64_t
+fs_seek(fa_handle_t *fh0, int64_t pos, int whence)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
   return lseek(fh->fd, pos, whence);
@@ -147,7 +147,7 @@ fs_seek(fa_handle_t *fh0, off_t pos, int whence)
 /**
  * Return size of file
  */
-static off_t
+static int64_t
 fs_fsize(fa_handle_t *fh0)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;

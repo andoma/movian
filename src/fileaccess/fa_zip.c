@@ -612,8 +612,8 @@ zip_file_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  *
  */
-static off_t
-zip_file_seek(fa_handle_t *handle, off_t pos, int whence)
+static int64_t
+zip_file_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
   zip_file_t *zf = zfh->zfh_file;
@@ -796,8 +796,8 @@ zip_read(fa_handle_t *handle, void *buf, size_t size)
 /**
  * Seek in file
  */
-static off_t
-zip_seek(fa_handle_t *handle, off_t pos, int whence)
+static int64_t
+zip_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
   return zfh->zfh_reader_proto->fap_seek(zfh->zfh_reader_handle, pos, whence);
@@ -807,7 +807,7 @@ zip_seek(fa_handle_t *handle, off_t pos, int whence)
 /**
  * Return size of file
  */
-static off_t
+static int64_t
 zip_fsize(fa_handle_t *handle)
 {
   zip_fh_t *zfh = (zip_fh_t *)handle;
