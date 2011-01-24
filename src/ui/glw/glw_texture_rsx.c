@@ -35,10 +35,7 @@ void
 glw_tex_backend_free_render_resources(glw_root_t *gr, 
 				      glw_loadable_texture_t *glt)
 {
-  if(glt->glt_texture.size != 0) {
-    rsx_free(gr, glt->glt_texture.pos, glt->glt_texture.size);
-    glt->glt_texture.size = 0;
-  }
+  glw_tex_destroy(gr, &glt->glt_texture);
 }
 
 
@@ -64,14 +61,9 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 static void
 init_tex(realityTexture *tex, uint32_t offset,
 	 uint32_t width, uint32_t height, uint32_t stride,
-	 uint32_t fmt, int repeat)
+	 uint32_t fmt, int repeat, int swizzle)
 {
-  tex->swizzle =
-    NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
-    NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
-    NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
-    NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W ;
-  
+  tex->swizzle = swizzle;
   tex->offset = offset;
 
   tex->format = fmt |
@@ -108,22 +100,114 @@ init_tex(realityTexture *tex, uint32_t offset,
 /**
  *
  */
+static void *
+realloc_tex(glw_root_t *gr, glw_backend_texture_t *tex, int size)
+{
+  if(tex->size != size) {
+
+    if(size == 0)
+      rsx_free(gr, tex->tex.offset, tex->size);
+
+    tex->size = size;
+
+    if(tex->size != 0)
+      tex->tex.offset = rsx_alloc(gr, tex->size, 16);
+  }
+  return tex->size ? rsx_to_ppu(gr, tex->tex.offset) : NULL;
+}
+
+
+/**
+ *
+ */
 static void
 init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
 	  const uint8_t *src, int linesize,
 	  int width, int height, int repeat)
 {
-  tex->size = linesize * height;
-  tex->pos = rsx_alloc(gr, tex->size, 16);
-  void *mem = rsx_to_ppu(gr, tex->pos);
+  void *mem = realloc_tex(gr, tex, linesize * height);
 
   TRACE(TRACE_DEBUG, "GLW", "Init ARGB %d x %d, buffer=%d bytes @ 0x%x (%p)",
-	width, height, tex->size, tex->pos, mem);
+	width, height, tex->size, tex->tex.offset, mem);
 
   memcpy(mem, src, tex->size);
-  init_tex(&tex->tex, tex->pos, width, height, linesize, 
-	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat);
-  
+  init_tex(&tex->tex, tex->tex.offset, width, height, linesize, 
+	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
+	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	   NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
+	   );
+}
+
+
+/**
+ *
+ */
+static void
+init_rgb(glw_root_t *gr, glw_backend_texture_t *tex,
+	 const uint8_t *src, int linesize,
+	 int width, int height, int repeat)
+{
+  int y, x;
+  uint32_t *dst = realloc_tex(gr, tex, width * height * 4);
+
+  TRACE(TRACE_DEBUG, "GLW", "Init RGB %d x %d, buffer=%d bytes @ 0x%x (%p)",
+	width, height, tex->size, tex->tex.offset, dst);
+
+  for(y = 0; y < height; y++) {
+    const uint8_t *s = src;
+    for(x = 0; x < width; x++) {
+      uint8_t r = *s++;
+      uint8_t g = *s++;
+      uint8_t b = *s++;
+      *dst++ = 0xff000000 | (r << 16) | (g << 8) | b;
+    }
+    src += linesize;
+  }
+
+  init_tex(&tex->tex, tex->tex.offset, width, height, width * 4, 
+	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
+	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	   NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
+	   );
+}
+
+
+/**
+ *
+ */
+static void
+init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
+	  const uint8_t *src, int linesize,
+	  int width, int height, int repeat)
+{
+  int y, x;
+  uint16_t *dst = realloc_tex(gr, tex, width * height * 2);
+
+  TRACE(TRACE_DEBUG, "GLW", 
+	"Init I8A8 %d x %d (stride=%d), buffer=%d bytes @ 0x%x (%p)",
+	width, height, linesize, tex->size, tex->tex.offset, dst);
+
+  for(y = 0; y < height; y++) {
+    const uint8_t *s = src;
+    for(x = 0; x < width; x++) {
+      uint8_t a = *s++;
+      uint8_t b = *s++;
+      *dst++ = (b << 8) | a;
+    }
+    src += linesize;
+  }
+
+  init_tex(&tex->tex, tex->tex.offset, width, height, width * 2, 
+	   NV40_3D_TEX_FORMAT_FORMAT_A8L8, repeat,
+	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	   NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
+	   );
 }
 
 /**
@@ -147,9 +231,24 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
       break;
     glt->glt_xs = src_w;
     glt->glt_ys = src_h;
+    glt->glt_s = 1;
+    glt->glt_t = 1;
     init_argb(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
 	      src_w, src_h, repeat);
     return 0;
+
+  case PIX_FMT_Y400A:
+    if(need_rescale)
+      break;
+    glt->glt_xs = src_w;
+    glt->glt_ys = src_h;
+    glt->glt_s = 1;
+    glt->glt_t = 1;
+    init_i8a8(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
+	      src_w, src_h, repeat);
+    return 0;
+
+
   default:
     TRACE(TRACE_DEBUG, "GLW", "Can't deal with pixfmt %d", pix_fmt);
     return -1;
@@ -162,10 +261,25 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  *
  */
 void
-glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
+glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height, int flags)
 {
   TRACE(TRACE_DEBUG, "GLW", "Texture upload %d x %d", width, height);
+
+  switch(fmt) {
+  case GLW_TEXTURE_FORMAT_I8A8:
+    init_i8a8(gr, tex, src, width * 2, width, height, flags & GLW_TEX_REPEAT);
+    break;
+
+  case GLW_TEXTURE_FORMAT_RGB:
+    init_rgb(gr, tex, src, width * 3, width, height, flags & GLW_TEX_REPEAT);
+    break;
+
+  default:
+    TRACE(TRACE_DEBUG, "GLW", "Unable to upload texture fmt %d, %d x %d",
+	  fmt, width, height);
+    return;
+  }
 }
 
 
@@ -176,7 +290,7 @@ void
 glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
   if(tex->size != 0) {
-    rsx_free(gr, tex->pos, tex->size);
+    rsx_free(gr, tex->tex.offset, tex->size);
     tex->size = 0;
   }
 }

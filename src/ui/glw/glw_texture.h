@@ -107,7 +107,7 @@ void glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt);
 #define GLW_TEXTURE_FORMAT_RGBA  4
 #define GLW_TEXTURE_FORMAT_RGB   3
 
-void glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
+void glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 		    const void *src, int format, int width, int height,
 		    int flags);
 

@@ -62,7 +62,6 @@ void glw_renderer_draw(struct glw_renderer *gr, struct glw_root *root,
  */
 typedef struct glw_backend_texture {
   realityTexture tex;
-  uint32_t pos;
   uint32_t size;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0

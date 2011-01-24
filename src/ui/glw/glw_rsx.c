@@ -198,43 +198,17 @@ load_fp(glw_root_t *gr, const char *url)
   return rfp;
 }
 
-static unsigned int v_offset;
-
-
 /**
  *
  */
 int
 glw_rsx_init_context(glw_root_t *gr)
 {
+  gr->gr_normalized_texture_coords = 1;
+
   gr->gr_be.be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
   gr->gr_be.be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
   gr->gr_be.be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
-
-
-
-
-  v_offset = rsx_alloc(gr, 10 * 4 * sizeof(float), 64);
-  float *v = rsx_to_ppu(gr, v_offset);
-
-  v[ 0] = -1.0; v[ 1] = -1.0; v[ 2] =  0.0; v[ 3] = -1.0;
-  v[ 4] =  0.0; v[ 5] =  1.0;
-  v[ 6] =  1.0; v[ 7] =  1.0; v[ 8] =  1.0; v[ 9] =  1.0;
-
-  v[10] =  1.0; v[11] = -1.0; v[12] =  0.0; v[13] = -1.0;
-  v[14] =  1.0; v[15] =  1.0;
-  v[16] =  1.0; v[17] =  1.0; v[18] =  1.0; v[19] =  1.0;
-
-  v[20] =  1.0; v[21] =  1.0; v[22] =  0.0; v[23] = -1.0;
-  v[24] =  1.0; v[25] =  0.0;
-  v[26] =  1.0; v[27] =  1.0; v[28] =  1.0; v[29] =  1.0;
-
-  v[30] = -1.0; v[31] =  1.0; v[32] =  0.0; v[33] = -1.0;
-  v[34] =  0.0; v[35] =  0.0;
-  v[36] =  1.0; v[37] =  1.0; v[38] =  1.0; v[39] =  1.0;
-
-  TRACE(TRACE_INFO, "GLW", "Vertex buffer location: RSX: 0x%08x  PPU: %p",
-	v_offset, v);
   return 0;
 }
 
@@ -297,12 +271,24 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 {
   gcmContextData *ctx = root->gr_be.be_ctx;
   rsx_vp_t *rvp = root->gr_be.be_vp_1;
-  rsx_fp_t *rfp = root->gr_be.be_fp_tex;
+  rsx_fp_t *rfp;
   float rgba[4];
+
+
+  if(be_tex == NULL) {
+    rfp = root->gr_be.be_fp_flat;
+
+  } else {
+
+    if(be_tex->tex.offset == 0 || be_tex->size == 0)
+      return;
+
+    realitySetTexture(ctx, 0, &be_tex->tex);
+    rfp = root->gr_be.be_fp_tex;
+  }
 
   set_vp(root, rvp);
   set_fp(root, rfp);
-
 
   realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
 					 rvp->rvp_u_modelview,
@@ -320,20 +306,63 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
   rgba[3] = alpha;
 
   realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
-  realitySetTexture(ctx, 0, &be_tex->tex);
-  
-  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_position, v_offset, 40, 3, 
-				   REALITY_BUFFER_DATATYPE_FLOAT,
-				   REALITY_RSX_MEMORY);
-  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_color, v_offset+(6*4), 40, 4,
-				   REALITY_BUFFER_DATATYPE_FLOAT,
-				   REALITY_RSX_MEMORY);
-  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_texcoord, v_offset+(4*4), 40, 2,
+
+  // TODO: Get rid of immediate mode
+  realityVertexBegin(ctx, REALITY_TRIANGLES);
+
+  int i;
+  for(i = 0; i < gr->gr_triangles * 3; i++) {
+    int p = gr->gr_indices[i];
+    realityAttr2f(ctx, 
+		  rvp->rvp_a_texcoord,
+		  gr->gr_array[p * 9 + 3],
+		  gr->gr_array[p * 9 + 4]);
+		  
+    realityAttr4f(ctx, 
+		  rvp->rvp_a_color,
+		  gr->gr_array[p * 9 + 5],
+		  gr->gr_array[p * 9 + 6],
+		  gr->gr_array[p * 9 + 7],
+		  gr->gr_array[p * 9 + 8]);
+
+    realityVertex4f(ctx, 
+		    gr->gr_array[p * 9 + 0],
+		    gr->gr_array[p * 9 + 1],
+		    gr->gr_array[p * 9 + 2],
+		    1.0);
+  }
+  realityVertexEnd(ctx);
+
+
+#if 0
+
+  memcpy(rsx_to_ppu(root, array_offset), gr->gr_array,
+	 gr->gr_vertices * sizeof(float) * 9);
+
+
+  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_position, 
+				   array_offset, 36, 3, 
 				   REALITY_BUFFER_DATATYPE_FLOAT,
 				   REALITY_RSX_MEMORY);
 
+  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_color, 
+				   array_offset+(5*4), 36, 4,
+				   REALITY_BUFFER_DATATYPE_FLOAT,
+				   REALITY_RSX_MEMORY);
 
-  realityDrawVertexBuffer(ctx, REALITY_QUADS, 0, 4);
+  realityBindVertexBufferAttribute(ctx, rvp->rvp_a_texcoord,
+				   array_offset+(3*4), 36, 2,
+				   REALITY_BUFFER_DATATYPE_FLOAT,
+				   REALITY_RSX_MEMORY);
+
+  memcpy(rsx_to_ppu(root, index_offset), gr->gr_indices,
+	 gr->gr_triangles * sizeof(uint16_t) * 3);
+
+  realityDrawVertexBufferIndex(ctx, REALITY_TRIANGLES, index_offset,
+			       3 * gr->gr_triangles, 
+			       REALITY_INDEX_DATATYPE_U16,
+			       REALITY_RSX_MEMORY);
+#endif
 }
 
 
