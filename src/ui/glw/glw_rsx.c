@@ -52,9 +52,6 @@ typedef struct rsx_fp {
 } rsx_fp_t;
 
 
-static float *vertices;
-
-
 /**
  *
  */
@@ -140,7 +137,7 @@ load_vp(const char *url)
  *
  */
 static rsx_fp_t *
-load_fp(const char *url)
+load_fp(glw_root_t *gr, const char *url)
 {
   char errmsg[100];
   realityFragmentProgram *fp;
@@ -185,15 +182,13 @@ load_fp(const char *url)
 	  name, attributes[i].index);
   }
 
-  uint32_t *buf = rsxMemAlign(256, fp->num_insn * 16);
+  int offset = rsx_alloc(gr, fp->num_insn * 16, 256);
+  uint32_t *buf = rsx_to_ppu(gr, offset);
   TRACE(TRACE_INFO, "glw", "  PPU location: 0x%08x  %d bytes",
 	buf, fp->num_insn * 16);
   const uint32_t *src = (uint32_t *)((char*)fp + fp->ucode_off);
-  uint32_t offset;
 
   memcpy(buf, src, fp->num_insn * 16);
-  if(realityAddressToOffset(buf, &offset))
-    return NULL;
   TRACE(TRACE_INFO, "glw", "  RSX location: 0x%08x", offset);
 
   rsx_fp_t *rfp = calloc(1, sizeof(rsx_fp_t));
@@ -213,14 +208,14 @@ int
 glw_rsx_init_context(glw_root_t *gr)
 {
   gr->gr_be.be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
-  gr->gr_be.be_fp_tex = load_fp("bundle://src/ui/glw/rsx/f_tex.fp");
-  gr->gr_be.be_fp_flat = load_fp("bundle://src/ui/glw/rsx/f_flat.fp");
+  gr->gr_be.be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
+  gr->gr_be.be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
 
 
 
 
-  vertices = rsxMemAlign(64, 10 * 4 * sizeof(float));
-  float *v = vertices;
+  v_offset = rsx_alloc(gr, 10 * 4 * sizeof(float), 64);
+  float *v = rsx_to_ppu(gr, v_offset);
 
   v[ 0] = -1.0; v[ 1] = -1.0; v[ 2] =  0.0; v[ 3] = -1.0;
   v[ 4] =  0.0; v[ 5] =  1.0;
@@ -238,9 +233,8 @@ glw_rsx_init_context(glw_root_t *gr)
   v[34] =  0.0; v[35] =  0.0;
   v[36] =  1.0; v[37] =  1.0; v[38] =  1.0; v[39] =  1.0;
 
-  realityAddressToOffset(vertices, &v_offset);
   TRACE(TRACE_INFO, "GLW", "Vertex buffer location: RSX: 0x%08x  PPU: %p",
-	v_offset, vertices);
+	v_offset, v);
   return 0;
 }
 

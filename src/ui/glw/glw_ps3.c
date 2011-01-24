@@ -31,6 +31,7 @@
 
 #include "showtime.h"
 #include "settings.h"
+#include "misc/extents.h"
 
 
 #include <rsx/commands.h>
@@ -55,13 +56,11 @@ typedef struct glw_ps3 {
   
   VideoResolution res;
 
-  u8 *buffer[2];
-  u32 offset[2];
-  int pitch;
+  u32 framebuffer[2];
+  int framebuffer_pitch;
 
-  u8 *depth_buffer;
-  u32 depth_offset;
-  int depth_pitch;
+  u32 depthbuffer;
+  int depthbuffer_pitch;
 
 } glw_ps3_t;
 
@@ -90,6 +89,47 @@ flip(glw_ps3_t *gp, s32 buffer)
   gcmSetWaitFlip(gp->gr.gr_be.be_ctx);
 }
 
+
+/**
+ *
+ */
+int
+rsx_alloc(glw_root_t *gr, int size, int alignment)
+{
+  int pos;
+
+  hts_mutex_lock(&gr->gr_be.be_mempool_lock);
+  pos = extent_alloc_aligned(gr->gr_be.be_mempool,
+			     (size + 15) >> 4, alignment >> 4);
+  TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
+	size, alignment, pos << 4);
+  hts_mutex_unlock(&gr->gr_be.be_mempool_lock);
+  return pos << 4;
+}
+
+
+/**
+ *
+ */
+void
+rsx_free(glw_root_t *gr, int pos, int size)
+{
+  int r;
+
+  hts_mutex_lock(&gr->gr_be.be_mempool_lock);
+  r = extent_free(gr->gr_be.be_mempool, pos >> 4, (size + 15) >> 4);
+
+  TRACE(TRACE_DEBUG, "RSXMEM", "Free %d + %d = %d", pos, size, r);
+
+  if(r != 0) {
+    TRACE(TRACE_ERROR, "GLX", "RSX memory corrupted, error %d", r);
+  }
+
+  hts_mutex_unlock(&gr->gr_be.be_mempool_lock);
+}
+
+
+
 /**
  *
  */
@@ -100,12 +140,22 @@ init_screen(glw_ps3_t *gp)
   // Allocate a 1Mb buffer, alligned to a 1Mb boundary to be our shared IO memory with the RSX.
   void *host_addr = memalign(1024*1024, 1024*1024);
   assert(host_addr != NULL);
-  TRACE(TRACE_INFO, "RSX", "Buffer at %p", host_addr);
 
   // Initilise Reality, which sets up the command buffer and shared IO memory
   gp->gr.gr_be.be_ctx = realityInit(0x10000, 1024*1024, host_addr); 
   assert(gp->gr.gr_be.be_ctx != NULL);
   
+  gcmConfiguration config;
+  gcmGetConfiguration(&config);
+
+  TRACE(TRACE_INFO, "RSX", "memory @ 0x%x size = %d\n",
+	config.localAddress, config.localSize);
+
+  hts_mutex_init(&gp->gr.gr_be.be_mempool_lock);
+  gp->gr.gr_be.be_mempool = extent_create(0, config.localSize >> 4);
+  gp->gr.gr_be.be_rsx_address = (void *)(uint64_t)config.localAddress;
+
+
   VideoState state;
   assert(videoGetState(0, 0, &state) == 0); // Get the state of the display
   assert(state.state == 0); // Make sure display is enabled
@@ -116,47 +166,39 @@ init_screen(glw_ps3_t *gp)
   TRACE(TRACE_INFO, "RSX", "Video resolution %d x %d",
 	gp->res.width, gp->res.height);
 
-  gp->pitch = 4 * gp->res.width; // each pixel is 4 bytes
-  gp->depth_pitch = 4 * gp->res.width; // And each value in the depth buffer is a 16 bit float
+  gp->framebuffer_pitch = 4 * gp->res.width; // each pixel is 4 bytes
+  gp->depthbuffer_pitch = 4 * gp->res.width; // And each value in the depth buffer is a 16 bit float
   
   // Configure the buffer format to xRGB
   VideoConfiguration vconfig;
   memset(&vconfig, 0, sizeof(VideoConfiguration));
   vconfig.resolution = state.displayMode.resolution;
   vconfig.format = VIDEO_BUFFER_FORMAT_XRGB;
-  vconfig.pitch = gp->pitch;
+  vconfig.pitch = gp->framebuffer_pitch;
 
   assert(videoConfigure(0, &vconfig, NULL, 0) == 0);
   assert(videoGetState(0, 0, &state) == 0); 
   
-  const s32 buffer_size = gp->pitch * gp->res.height; 
-  const s32 depth_buffer_size = gp->depth_pitch * gp->res.height;
+  const s32 buffer_size = gp->framebuffer_pitch * gp->res.height; 
+  const s32 depth_buffer_size = gp->depthbuffer_pitch * gp->res.height;
   TRACE(TRACE_INFO, "RSX", "Buffer will be %d bytes", buffer_size);
   
   gcmSetFlipMode(GCM_FLIP_VSYNC); // Wait for VSYNC to flip
   
   // Allocate two buffers for the RSX to draw to the screen (double buffering)
-  gp->buffer[0] = rsxMemAlign(16, buffer_size);
-  gp->buffer[1] = rsxMemAlign(16, buffer_size);
-  assert(gp->buffer[0] != NULL && gp->buffer[1] != NULL);
-  
-  int i;
-  for(i = 0; i < buffer_size; i++)
-    gp->buffer[0][i] = i;
+  gp->framebuffer[0] = rsx_alloc(&gp->gr, buffer_size, 16);
+  gp->framebuffer[1] = rsx_alloc(&gp->gr, buffer_size, 16);
 
-  TRACE(TRACE_INFO, "RSX", "Buffers at %p %p\n",
-	gp->buffer[0],
-	gp->buffer[1]);
+  TRACE(TRACE_INFO, "RSX", "Buffers at 0x%x 0x%x\n",
+	gp->framebuffer[0], gp->framebuffer[1]);
 
-  gp->depth_buffer = rsxMemAlign(16, depth_buffer_size * 4);
+  gp->depthbuffer = rsx_alloc(&gp->gr, depth_buffer_size * 4, 16);
   
-  assert(realityAddressToOffset(gp->buffer[0], &gp->offset[0]) == 0);
-  assert(realityAddressToOffset(gp->buffer[1], &gp->offset[1]) == 0);
   // Setup the display buffers
-  assert(gcmSetDisplayBuffer(0, gp->offset[0], gp->pitch, gp->res.width, gp->res.height) == 0);
-  assert(gcmSetDisplayBuffer(1, gp->offset[1], gp->pitch, gp->res.width, gp->res.height) == 0);
-
-  assert(realityAddressToOffset(gp->depth_buffer, &gp->depth_offset) == 0);
+  gcmSetDisplayBuffer(0, gp->framebuffer[0],
+		      gp->framebuffer_pitch, gp->res.width, gp->res.height);
+  gcmSetDisplayBuffer(1, gp->framebuffer[1],
+		      gp->framebuffer_pitch, gp->res.width, gp->res.height);
 
   gcmResetFlipStatus();
   flip(gp, 1);
@@ -210,11 +252,12 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 {
   realitySetRenderSurface(gp->gr.gr_be.be_ctx,
 			  REALITY_SURFACE_COLOR0, REALITY_RSX_MEMORY, 
-			  gp->offset[currentBuffer], gp->pitch);
+			  gp->framebuffer[currentBuffer],
+			  gp->framebuffer_pitch);
   
   realitySetRenderSurface(gp->gr.gr_be.be_ctx,
 			  REALITY_SURFACE_ZETA, REALITY_RSX_MEMORY, 
-			  gp->depth_offset, gp->depth_pitch);
+			  gp->depthbuffer, gp->depthbuffer_pitch);
 
   realitySelectRenderTarget(gp->gr.gr_be.be_ctx, REALITY_TARGET_0, 
 			    REALITY_TARGET_FORMAT_COLOR_X8R8G8B8 | 

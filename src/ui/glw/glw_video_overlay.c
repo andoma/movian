@@ -30,11 +30,11 @@
  * 
  */
 void
-glw_video_overlay_deinit(glw_video_overlay_t *gvo)
+glw_video_overlay_deinit(glw_root_t *gr, glw_video_overlay_t *gvo)
 {
   int i;
   for(i = 0; i < gvo->gvo_entries; i++) {
-    glw_tex_destroy(&gvo->gvo_textures[i]);
+    glw_tex_destroy(gr, &gvo->gvo_textures[i]);
     glw_renderer_free(&gvo->gvo_renderers[i]);
   }
   free(gvo->gvo_textures);
@@ -69,11 +69,11 @@ child_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  * 
  */
 static int
-gvo_setup_bitmap(glw_video_overlay_t *gvo, int entries)
+gvo_setup_bitmap(glw_root_t *gr, glw_video_overlay_t *gvo, int entries)
 {
   if(gvo->gvo_entries == entries)
     return 0;
-  glw_video_overlay_deinit(gvo);
+  glw_video_overlay_deinit(gr, gvo);
 
   gvo->gvo_entries = entries;
   gvo->gvo_textures  = calloc(entries, sizeof(glw_backend_texture_t));
@@ -331,10 +331,10 @@ glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
  */
 static void
 glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			     const glw_root_t *gr, subtitle_t *s)
+			     glw_root_t *gr, subtitle_t *s)
 {
   int i;
-  if(gvo_setup_bitmap(gvo, s->s_num_rects))
+  if(gvo_setup_bitmap(gr, gvo, s->s_num_rects))
     for(i = 0; i < s->s_num_rects; i++)
       glw_renderer_init_quad(&gvo->gvo_renderers[i]);
   
@@ -421,7 +421,7 @@ glw_video_overlay_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
     }
 
   } else {
-    glw_video_overlay_deinit(gvo);
+    glw_video_overlay_deinit(gr, gvo);
   }
   hts_mutex_unlock(&vd->vd_sub_mutex);
 }

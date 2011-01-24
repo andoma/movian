@@ -194,8 +194,8 @@ glw_video_dtor(glw_t *w)
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
 
-  glw_video_overlay_deinit(&gv->gv_spu);
-  glw_video_overlay_deinit(&gv->gv_sub);
+  glw_video_overlay_deinit(w->glw_root, &gv->gv_spu);
+  glw_video_overlay_deinit(w->glw_root, &gv->gv_sub);
   
   LIST_REMOVE(gv, gv_global_link);
   video_decoder_destroy(vd);

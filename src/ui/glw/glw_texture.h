@@ -96,7 +96,8 @@ int glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 			 int src_w, int src_h,
 			 int req_w, int req_h);
 
-void glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt);
+void glw_tex_backend_free_render_resources(glw_root_t *gr,
+					   glw_loadable_texture_t *glt);
 
 void glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt);
 
@@ -110,6 +111,6 @@ void glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
 		    const void *src, int format, int width, int height,
 		    int flags);
 
-void glw_tex_destroy(glw_backend_texture_t *tex);
+void glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex);
 
 #endif /* GLW_TEXTURE_H */

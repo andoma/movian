@@ -56,7 +56,7 @@ glw_tex_autoflush(glw_root_t *gr)
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
     assert(glt->glt_filename != NULL || glt->glt_pixmap != NULL);
     LIST_REMOVE(glt, glt_flush_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
 
@@ -171,7 +171,7 @@ glw_tex_flush_all(glw_root_t *gr)
     if(glt->glt_state != GLT_STATE_VALID)
       continue;
     LIST_REMOVE(glt, glt_flush_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
@@ -335,7 +335,7 @@ glw_tex_purge(glw_root_t *gr)
 
   while((glt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
     TAILQ_REMOVE(&gr->gr_tex_rel_queue, glt, glt_work_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     free(glt);
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);

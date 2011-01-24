@@ -41,6 +41,9 @@ typedef struct glw_backend_root {
   struct rsx_fp *be_fp_tex;
   struct rsx_fp *be_fp_flat;
 
+  struct extent_pool *be_mempool;
+  char *be_rsx_address;
+  hts_mutex_t be_mempool_lock;
 
 
 
@@ -59,7 +62,8 @@ void glw_renderer_draw(struct glw_renderer *gr, struct glw_root *root,
  */
 typedef struct glw_backend_texture {
   realityTexture tex;
-  void *mem;
+  uint32_t pos;
+  uint32_t size;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0
 #define GLW_TEXTURE_TYPE_NO_ALPHA 1
@@ -69,7 +73,7 @@ typedef struct glw_backend_texture {
 
 #define glw_can_tnpo2(gr) 1
 
-#define glw_is_tex_inited(n) ((n)->mem != 0)
+#define glw_is_tex_inited(n) ((n)->size != 0)
 
 int glw_rsx_init_context(struct glw_root *gr);
 
@@ -109,3 +113,12 @@ void glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt);
 void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 #define glw_rtt_texture(grtt) ((grtt)->grtt_texture)
+
+/**
+ *
+ */
+int rsx_alloc(struct glw_root *gr, int size, int alignment);
+
+void rsx_free(struct glw_root *gr, int pos, int size);
+
+#define rsx_to_ppu(gr, pos) ((void *)((gr)->gr_be.be_rsx_address + (pos)))

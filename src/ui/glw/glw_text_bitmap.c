@@ -938,7 +938,7 @@ glw_text_bitmap_dtor(glw_t *w)
 
   LIST_REMOVE(gtb, gtb_global_link);
 
-  glw_tex_destroy(&gtb->gtb_texture);
+  glw_tex_destroy(w->glw_root, &gtb->gtb_texture);
 
   glw_renderer_free(&gtb->gtb_text_renderer);
   glw_renderer_free(&gtb->gtb_cursor_renderer);
@@ -982,7 +982,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 static void
 gtb_flush(glw_text_bitmap_t *gtb)
 {
-  glw_tex_destroy(&gtb->gtb_texture);
+  glw_tex_destroy(gtb->w.glw_root, &gtb->gtb_texture);
   if(gtb->gtb_status != GTB_ON_QUEUE)
     gtb->gtb_status = GTB_NEED_RERENDER;
 }

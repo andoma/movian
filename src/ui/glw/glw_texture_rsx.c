@@ -32,11 +32,12 @@
  * Free texture (always invoked in main rendering thread)
  */
 void
-glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt)
+glw_tex_backend_free_render_resources(glw_root_t *gr, 
+				      glw_loadable_texture_t *glt)
 {
-  if(glt->glt_texture.mem != NULL) {
-    TRACE(TRACE_ERROR, "GLW", "glw_tex_backend_free_render_resources()");
-    glt->glt_texture.mem = NULL;
+  if(glt->glt_texture.size != 0) {
+    rsx_free(gr, glt->glt_texture.pos, glt->glt_texture.size);
+    glt->glt_texture.size = 0;
   }
 }
 
@@ -108,20 +109,19 @@ init_tex(realityTexture *tex, uint32_t offset,
  *
  */
 static void
-init_argb(glw_backend_texture_t *tex, const uint8_t *src, int linesize,
+init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
+	  const uint8_t *src, int linesize,
 	  int width, int height, int repeat)
 {
-  int buffersize = linesize * height;
-  uint32_t offset = 0;
+  tex->size = linesize * height;
+  tex->pos = rsx_alloc(gr, tex->size, 16);
+  void *mem = rsx_to_ppu(gr, tex->pos);
 
-  tex->mem = rsxMemAlign(16, buffersize);
-  realityAddressToOffset(tex->mem, &offset);
+  TRACE(TRACE_DEBUG, "GLW", "Init ARGB %d x %d, buffer=%d bytes @ 0x%x (%p)",
+	width, height, tex->size, tex->pos, mem);
 
-  TRACE(TRACE_DEBUG, "GLW", "Init ARGB %d x %d, buffer=%d bytes @ %p [%x]",
-	width, height, buffersize, tex->mem, offset);
-
-  memcpy(tex->mem, src, buffersize);
-  init_tex(&tex->tex, offset, width, height, linesize, 
+  memcpy(mem, src, tex->size);
+  init_tex(&tex->tex, tex->pos, width, height, linesize, 
 	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat);
   
 }
@@ -147,7 +147,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
       break;
     glt->glt_xs = src_w;
     glt->glt_ys = src_h;
-    init_argb(&glt->glt_texture, pict->data[0], pict->linesize[0],
+    init_argb(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
 	      src_w, src_h, repeat);
     return 0;
   default:
@@ -173,10 +173,10 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 void
-glw_tex_destroy(glw_backend_texture_t *tex)
+glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
-  if(tex->mem != 0) {
-    TRACE(TRACE_ERROR, "GLW", "glw_tex_destroy()");
-    tex->mem = NULL;
+  if(tex->size != 0) {
+    rsx_free(gr, tex->pos, tex->size);
+    tex->size = 0;
   }
 }

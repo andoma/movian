@@ -1,6 +1,6 @@
 /*
- *  Video decoder
- *  Copyright (C) 2007 - 2010 Andreas Öman
+ *  Extent allocator
+ *  Copyright (C) 2011 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,18 +16,17 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GLW_VIDEO_OVERLAY_H
-#define GLW_VIDEO_OVERLAY_H
+#pragma once
 
-void glw_video_overlay_deinit(glw_root_t *gr, glw_video_overlay_t *gvo);
+typedef struct extent_pool extent_pool_t;
 
-void glw_video_overlay_render(glw_video_overlay_t *gvo, glw_root_t *gr,
-			      glw_rctx_t *rc);
+extent_pool_t *extent_create(int start, int size);
 
-int glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
-				    glw_pointer_event_t *gpe, media_pipe_t *mp);
+void extent_stats(extent_pool_t *ep, int *totalp, int *availp, int *fragmentsp);
 
-void glw_video_overlay_layout(glw_video_t *gv, int64_t pts,
-			      video_decoder_t *vd);
+int extent_alloc_aligned(extent_pool_t *ep, int size, int alignment);
 
-#endif // GLW_VIDEO_OVERLAY_H
+int extent_alloc(extent_pool_t *ep, int size);
+
+int extent_free(extent_pool_t *ep, int pos, int size);
+
