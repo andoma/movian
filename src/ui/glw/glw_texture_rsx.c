@@ -105,7 +105,7 @@ realloc_tex(glw_root_t *gr, glw_backend_texture_t *tex, int size)
 {
   if(tex->size != size) {
 
-    if(size == 0)
+    if(tex->size != 0)
       rsx_free(gr, tex->tex.offset, tex->size);
 
     tex->size = size;
