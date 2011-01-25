@@ -1,3 +1,5 @@
+#import "skin://buttons/nav.view"
+
 // Main container 
 widget(container_y, {
 
@@ -6,90 +8,33 @@ widget(container_y, {
     .expansion = scurve(!$ui.fullwindow, 0.25);
     .alpha     = scurve(!$ui.fullwindow, 0.25);
 
-    widget(container_y, {
+    widget(container_x, {
+
+      .padding = [2,2,2,2];
       
-      widget(container_x, {
-	widget(container_y, {
-	  .filterConstraintX = true;
-	  .weight = 0.3;
-	  widget(container_x, {
+      skinNavLeft(EVENT = event(Back),
+		  ENABLED = 0.01 * $global.nav.canGoBack,
+		  HIDDEN = !$ui.topBarTools);
 
-	    ICON("theme://icons/48x48/NavLeft.png",
-		 event(Back),
-		 TOOLBARCOL(),
-		 0.01 * $global.nav.canGoBack,
-		 1.5,
-		 !$ui.topBarTools, true);
-	    
-	    ICON("theme://icons/48x48/NavRight.png",
-		 event(Forward),
-		 TOOLBARCOL(),
-		 0.01 * $global.nav.canGoForward,
-		 1.5,
-		 !$ui.topBarTools, true);
-	    
-	    ICON("theme://icons/48x48/Home.png",
-		 event(Home),
-		 TOOLBARCOL(),
-		 0.01 * $global.nav.canGoHome,
-		 1.5,
-		 !$ui.topBarTools);
+      skinNavRight(EVENT = event(Forward),
+		   ENABLED = 0.01 * $global.nav.canGoForward,
+		   HIDDEN = !$ui.topBarTools);
 
-	    ICON("theme://icons/48x48/Blank.png",
-		 event(EnableScreenSaver),
-		 TOOLBARCOL(),
-		 0.01,
-		 1.5,
-		 !$ui.topBarTools);
-	  });
-	  space(1);
-	});
-	widget(deck, {
-	  .filterConstraintX = true;
-	  .noInitialTransform = true;
-	  .time = 0.2;
-	  
+      skinNavHome(EVENT = event(Home),
+		  ENABLED = 0.01 * $global.nav.canGoHome,
+		  HIDDEN = !$ui.topBarTools);
 
-	  widget(label, {
-	    .caption = $global.nav.currentpage.model.metadata.title;
-	    .align = center;
-	    .sizeBias = 4;
-	    .sizeScale = 1.5;
-	  });
-	  
-	  widget(container_y, {
-	    widget(dummy, { .height = 2; });
-	    
-	    widget(image, {
-	      .source = $global.nav.currentpage.model.metadata.logo;
-	      .hqScaling = true;
-	      .height = $ui.fontsize * 4;
-	    });
-	  });
-	  .page = select($global.nav.currentpage.model.metadata.logo, 1, 0);
-	});
+      widget(deck, {
+	.filterConstraintX = true;
+	.time = 0.2;
+	.effect = flipHorizontal;
+	.noInitialTransform = true;
 	
-
-	// helpers
-	widget(container_y, {
-	  .weight = 0.3;
-	  .filterConstraintX = true;
-	  widget(deck, {
-	    .time = 0.1;
-	    .effect = blend;
-	    .noInitialTransform = true;
-	    
-	    cloner($global.nav.pages, loader, {
-	      .time = 0.2;
-	      .noInitialTransform = true;
-	      .source = "theme://pages/" +
-		$page.model.type + "_top.view";
-	    });
-	  });
-	  space(1);
+	cloner($global.nav.pages, loader, {
+	  .time = 0.2;
+	  .source = "theme://pages/" + $page.model.type + "_top.view";
 	});
       });
-      HORIZONTAL_SEPARATOR();
     });
   });
 

@@ -635,6 +635,8 @@ typedef struct glw_rctx {
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
 
 
+  struct glw_grid *rc_grid; // Used by grid layout mechanisms (see glw_grid.c)
+
   // Current ModelView Matrix
   Mtx rc_mtx;
 
