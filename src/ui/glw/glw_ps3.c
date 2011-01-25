@@ -324,6 +324,41 @@ drawFrame(glw_ps3_t *gp, int buffer)
   glw_unlock(&gp->gr);
 }
 
+
+
+/**
+ *
+ */
+typedef struct krepeat {
+  int held_frames;
+} krepeat_t;
+
+
+static krepeat_t k_left, k_right, k_up, k_down;
+static krepeat_t k_enter, k_back, k_menu;
+
+static void
+btn(glw_ps3_t *gp, krepeat_t *kr, int pressed, action_type_t ac)
+{
+  event_t *e;
+
+  if(ac == ACTION_NONE)
+    return;
+
+  if(pressed) {
+
+    if(kr->held_frames == 0 ||
+       (kr->held_frames > 30 && (kr->held_frames % 3 == 0))) {
+      e = event_create_action(ac);
+      glw_dispatch_event(&gp->gr.gr_uii, e);
+    }
+    kr->held_frames++;
+  } else {
+    kr->held_frames = 0;
+  }
+}
+
+
 /**
  *
  */
@@ -344,10 +379,18 @@ glw_ps3_mainloop(glw_ps3_t *gp)
     for(i=0; i<MAX_PADS; i++){
       if(padinfo.status[i]){
 	ioPadGetData(i, &paddata);
-	
-	if(paddata.BTN_CROSS || paddata.BTN_START) {
+
+	if(paddata.BTN_SQUARE || paddata.BTN_START)
 	  gp->stop = 1;
-	}
+
+	btn(gp, &k_left,  paddata.BTN_LEFT,     ACTION_LEFT);
+	btn(gp, &k_up,    paddata.BTN_UP,       ACTION_UP);
+	btn(gp, &k_right, paddata.BTN_RIGHT,    ACTION_RIGHT);
+	btn(gp, &k_down,  paddata.BTN_DOWN,     ACTION_DOWN);
+
+	btn(gp, &k_enter, paddata.BTN_CROSS,    ACTION_ACTIVATE);
+	btn(gp, &k_back,  paddata.BTN_CIRCLE,   ACTION_NAV_BACK);
+	btn(gp, &k_menu,  paddata.BTN_TRIANGLE, ACTION_MENU);
       }
     }
 
