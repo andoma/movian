@@ -27,7 +27,7 @@ typedef struct audio_buf {
   TAILQ_ENTRY(audio_buf) link;
   unsigned int ab_flush;
   unsigned int ab_format;
-  unsigned int ab_rate;
+  unsigned int ab_samplerate;
   unsigned int ab_channels;
   int64_t ab_pts;
   int ab_epoch;
@@ -68,7 +68,10 @@ audio_buf_t *af_peek(audio_fifo_t *af);
 
 audio_buf_t *af_wait(audio_fifo_t *af);
 
-audio_buf_t *af_deq(audio_fifo_t *af, int wait);
+struct audio_mode;
+audio_buf_t *af_deq2(audio_fifo_t *af, int wait, struct audio_mode *am);
+
+#define AF_EXIT ((void *)-1)
 
 void ab_free(audio_buf_t *ab);
 

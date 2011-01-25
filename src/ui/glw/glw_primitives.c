@@ -17,6 +17,7 @@
  */
 
 #include "glw.h"
+#include "glw_renderer.h"
 #include "glw_texture.h"
 
 typedef struct glw_quad {

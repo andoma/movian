@@ -311,9 +311,8 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
 
   oaq = malloc(sizeof(opensub_async_query_t));
 
-  oaq->node = node;
+  oaq->node = prop_ref_inc(node);
   oaq->query = query;
-  prop_ref_inc(node);
 
   hts_thread_create_detached("opensub query", async_query_thread, oaq);
 }

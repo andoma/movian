@@ -12,8 +12,10 @@ ipc_init(void)
   lirc_start();
 #endif
 
-#ifdef CONFIG_SERDEV
-  serdev_start();
+#if ENABLE_SERDEV
+  extern int enable_serdev;
+  if(enable_serdev)
+    serdev_start();
 #endif
 
 #ifdef CONFIG_STDIN

@@ -30,6 +30,7 @@
 
 #include "glw.h"
 #include "glw_texture.h"
+#include "glw_renderer.h"
 #include "glw_text_bitmap.h"
 #include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"
@@ -274,17 +275,6 @@ draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst,
   dst += x1 * gtbd->gtbd_bpp + y1 * gtbd->gtbd_linesize;
 
   switch(gtbd->gtbd_bpp) {
-
-  case 1:
-    // Luma channel only
-    for(y = 0; y < h; y++) {
-      for(x = 0; x < w; x++)
-	dst[x] += src[x];
-      src += bmp->pitch;
-      dst += gtbd->gtbd_linesize;
-    }
-    break;
-
   case 2:
     // Luma + Alpha channel
     for(y = 0; y < h; y++) {
@@ -570,7 +560,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   start_y = 0;
 
   /* Allocate drawing area */
-  gtbd->gtbd_bpp = 1;
+  gtbd->gtbd_bpp = 2;
   gtbd->gtbd_linesize = gtbd->gtbd_texture_width * gtbd->gtbd_bpp;
 
   data = calloc(1, gtbd->gtbd_linesize * gtbd->gtbd_texture_height);
@@ -680,12 +670,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_data = data;
 
   switch(gtbd->gtbd_bpp) {
-  case 1:
-    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8;
-    break;
   case 2:
     gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
     break;
+  default:
+    abort();
   }
 
   free(pos);
@@ -1366,13 +1355,9 @@ prop_callback(void *opaque, prop_event_t event, ...)
     return;
   }
 
-  if(gtb->gtb_p != NULL)
-    prop_ref_dec(gtb->gtb_p);
+  prop_ref_dec(gtb->gtb_p);
+  gtb->gtb_p = prop_ref_inc(p);
 
-  gtb->gtb_p = p;
-  if(p != NULL)
-    prop_ref_inc(p);
-  
   free(gtb->gtb_caption);
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb_caption_has_changed(gtb);
@@ -1785,7 +1770,7 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
 
-  hts_cond_init(&gr->gr_gtb_render_cond);
+  hts_cond_init(&gr->gr_gtb_render_cond, &gr->gr_mutex);
 
   glw_font_change_size(gr, 20);
 

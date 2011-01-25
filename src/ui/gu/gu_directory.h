@@ -29,6 +29,7 @@
 #define GU_DIR_SCROLLBOX      0x80
 #define GU_DIR_VISIBLE_HEADERS 0x100
 #define GU_DIR_COL_POPULARITY 0x200
+#define GU_DIR_COL_USER 0x400
 
 GtkWidget *gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags);
 

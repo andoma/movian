@@ -122,8 +122,7 @@ make_prop(fa_dir_entry_t *fde)
 
   rstr_release(fname);
   assert(fde->fde_prop == NULL);
-  fde->fde_prop = p;
-  prop_ref_inc(p);
+  fde->fde_prop = prop_ref_inc(p);
 }
 
 /**
@@ -545,8 +544,8 @@ doscan(scanner_t *s)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
-    prop_ref_inc(fde->fde_prop);
-    pv = prop_vec_append(pv, fde->fde_prop);
+    // TODO: reference leak?  prop_vec_append also adds 
+    pv = prop_vec_append(pv, prop_ref_inc(fde->fde_prop));
   }
 
   prop_set_parent_vector(pv, s->s_nodes);
@@ -656,14 +655,9 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
 
   prop_set_int(prop_create(model, "loading"), 1);
 
-  s->s_root = model;
-  prop_ref_inc(s->s_root);
-
-  s->s_nodes = source;
-  prop_ref_inc(s->s_nodes);
-
-  s->s_contents = prop_create(model, "contents");
-  prop_ref_inc(s->s_contents);
+  s->s_root = prop_ref_inc(model);
+  s->s_nodes = prop_ref_inc(source);
+  s->s_contents = prop_ref_inc(prop_create(model, "contents"));
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 

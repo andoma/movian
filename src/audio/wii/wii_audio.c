@@ -24,7 +24,7 @@
 #include <errno.h>
 
 #include "showtime.h"
-#include "audio/audio.h"
+#include "audio/audio_defs.h"
 
 #include <ogc/irq.h>
 #include <ogcsys.h>

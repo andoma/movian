@@ -127,8 +127,7 @@ cloner_add(gu_cloner_t *gc, prop_t *p, prop_t *before)
   int pos;
 
   gcn = calloc(1, gc->gc_nodesize);
-  gcn->gcn_prop = p;
-  prop_ref_inc(p);
+  gcn->gcn_prop = prop_ref_inc(p);
 
   b = before ? cloner_node_find(gc, before) : NULL;
   

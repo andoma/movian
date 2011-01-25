@@ -95,13 +95,13 @@ media_buf_free(media_buf_t *mb)
  *
  */
 static void
-mq_init(media_queue_t *mq, prop_t *p)
+mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex)
 {
   TAILQ_INIT(&mq->mq_q);
   mq->mq_len = 0;
   mq->mq_bytes = 0;
   mq->mq_stream = -1;
-  hts_cond_init(&mq->mq_avail);
+  hts_cond_init(&mq->mq_avail, mutex);
   mq->mq_prop_qlen_curx = prop_create(p, "dqlen");
   mq->mq_prop_qlen_bytes = prop_create(p, "bytes");
   mq->mq_prop_qlen_max = prop_create(p, "dqmax");
@@ -147,7 +147,7 @@ mp_create(const char *name, const char *type, int flags)
 
   hts_mutex_init(&mp->mp_mutex);
   hts_mutex_init(&mp->mp_clock_mutex);
-  hts_cond_init(&mp->mp_backpressure);
+  hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
   
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
 
@@ -157,11 +157,11 @@ mp_create(const char *name, const char *type, int flags)
   }
 
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
-  mq_init(&mp->mp_audio, mp->mp_prop_audio);
+  mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
-  mq_init(&mp->mp_video, mp->mp_prop_video);
+  mq_init(&mp->mp_video, mp->mp_prop_video, &mp->mp_mutex);
 
   p = prop_create(mp->mp_prop_root, "subtitle");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");

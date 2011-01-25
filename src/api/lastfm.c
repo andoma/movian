@@ -401,8 +401,7 @@ lastfm_artistpics_init(prop_t *prop, rstr_t *artist)
   lp = calloc(1, sizeof(lastfm_prop_t));
   lp->lp_artist = rstr_dup(artist);
 
-  lp->lp_prop = prop;
-  prop_ref_inc(prop);
+  lp->lp_prop = prop_ref_inc(prop);
 
   lp->lp_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
@@ -425,8 +424,7 @@ lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
   lp->lp_artist = rstr_dup(artist);
   lp->lp_album  = rstr_dup(album);
 
-  lp->lp_prop = prop;
-  prop_ref_inc(prop);
+  lp->lp_prop = prop_ref_inc(prop);
 
   lp->lp_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,

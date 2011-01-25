@@ -149,7 +149,7 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, !!initial);
 
-  prop_ref_inc(s->s_prop = r);
+  s->s_prop = prop_ref_inc(r);
 
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, !!initial);
@@ -222,7 +222,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 
   prop_set_int(v, initial);
 
-  prop_ref_inc(s->s_prop = r);
+  s->s_prop = prop_ref_inc(r);
   s->s_val = v;
   s->s_min = min;
   s->s_max = max;
@@ -413,7 +413,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
   if(initial != NULL)
     prop_set_string(v, initial);
 
-  prop_ref_inc(s->s_prop = r);
+  s->s_prop = prop_ref_inc(r);
   
   if(flags & SETTINGS_PASSWORD)
     prop_set_int(prop_create(r, "password"), 1);
@@ -463,7 +463,7 @@ settings_create_action(prop_t *parent, const char *id, const char *title,
   setting_t *s = calloc(1, sizeof(setting_t));
   prop_sub_t *sub;
 
-  prop_ref_inc(s->s_prop = r);
+  s->s_prop = prop_ref_inc(r);
 
   sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK, cb, opaque,

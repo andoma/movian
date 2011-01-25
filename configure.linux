@@ -34,6 +34,7 @@ show_help(){
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
   echo "                            none     Disable GLW"
+  echo "  --pkg-config-path=PATH   Extra paths for pkg-config"
   exit 1
 }
 
@@ -94,6 +95,9 @@ enable vdpau
 enable spidermonkey
 enable libxxf86vm
 enable httpserver
+enable timegm
+enable inotify
+enable realpath
 #enable libxrandr  -- code does not really work yet
 
 for opt do
@@ -114,6 +118,8 @@ for opt do
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"
+  ;;
+  --pkg-config-path=*) export PKG_CONFIG_PATH="$optval"
   ;;
   *)
   common_opt $opt $optval

@@ -76,6 +76,8 @@ enable spotlight
 enable spidermonkey
 enable stdin
 enable httpserver
+enable timegm
+enable realpath
 
 for opt do
   optval="${opt#*=}"

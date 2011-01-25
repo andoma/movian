@@ -220,7 +220,7 @@ int
 ui_shutdown(void)
 {
   uii_t *uii = primary_uii;
-  if(uii->uii_ui->ui_stop == NULL)
+  if(uii == NULL || uii->uii_ui->ui_stop == NULL)
     return -1;
   uii->uii_ui->ui_stop(uii);
   return 0;

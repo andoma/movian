@@ -231,6 +231,7 @@ SRCS-${CONFIG_LIBSIDPLAY2} += \
 # GLW user interface
 #
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
+			src/ui/glw/glw_renderer.c \
 			src/ui/glw/glw_event.c \
 			src/ui/glw/glw_view.c \
 		     	src/ui/glw/glw_view_lexer.c \
@@ -287,6 +288,8 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_glx.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_vdpau.c
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_math_common.c
+
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gx.c

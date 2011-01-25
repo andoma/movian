@@ -238,11 +238,9 @@ event_create_openurl(const char *url, const char *view, prop_t *origin)
 {
   event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
 
-  e->url      = url  ? strdup(url)  : NULL;
-  e->view     = view ? strdup(view) : NULL;
-  e->origin   = origin;
-  if(e->origin != NULL)
-    prop_ref_inc(e->origin);
+  e->url      = url    ? strdup(url)          : NULL;
+  e->view     = view   ? strdup(view)         : NULL;
+  e->origin   = prop_ref_inc(origin);
 
   e->h.e_dtor = event_openurl_dtor;
   return &e->h;

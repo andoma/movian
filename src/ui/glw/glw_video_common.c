@@ -17,13 +17,17 @@
  */
 
 #include <assert.h>
+#include <libavutil/pixdesc.h>
+
 #include "showtime.h"
 #include "media.h"
+#include "video/video_playback.h"
+
+#include "glw.h"
 #include "glw_video_common.h"
 #include "glw_video_overlay.h"
+#include "glw_renderer.h"
 #include "glw_texture.h"
-#include "video/video_playback.h"
-#include <libavutil/pixdesc.h>
 
 static glw_video_engine_t glw_video_blank;
 
@@ -300,8 +304,8 @@ glw_video_ctor(glw_t *w)
   TAILQ_INIT(&gv->gv_decoded_queue);
 
   hts_mutex_init(&gv->gv_surface_mutex);
-  hts_cond_init(&gv->gv_avail_queue_cond);
-  hts_cond_init(&gv->gv_reconf_cond);
+  hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
+  hts_cond_init(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
 
   gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
 #if CONFIG_GLW_BACKEND_OPENGL

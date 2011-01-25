@@ -388,8 +388,7 @@ locatedb_search(prop_t *model, const char *query)
   } while (*++s);
 
   fas->fas_run = 1;
-  fas->fas_nodes = prop_create(model, "nodes");
-  prop_ref_inc(fas->fas_nodes);
+  fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
 
   hts_thread_create_detached("fa search", fa_searcher, fas);
 }

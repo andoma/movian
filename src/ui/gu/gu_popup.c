@@ -120,8 +120,7 @@ popup_create_auth(gtk_ui_t *gu, prop_t *p)
 
   popup_t *pop = calloc(1, sizeof(popup_t));
 
-  pop->p = p;
-  prop_ref_inc(p);
+  pop->p = prop_ref_inc(p);
   LIST_INSERT_HEAD(&gu->popups, pop, link);
 
   /* The window */
