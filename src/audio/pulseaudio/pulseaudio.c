@@ -387,7 +387,7 @@ static int
 pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 {
   pa_audio_mode_t *pam = (pa_audio_mode_t *)am;
-  audio_buf_t *ab;
+  audio_buf_t *ab = NULL;
   size_t l, length;
   int64_t pts;
   media_pipe_t *mp;
@@ -442,13 +442,15 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
  
   while(1) {
 
-    pa_threaded_mainloop_unlock(mainloop);
-    ab = af_deq2(af, 1, am);
-    pa_threaded_mainloop_lock(mainloop);
+    if(ab == NULL) {
+      pa_threaded_mainloop_unlock(mainloop);
+      ab = af_deq2(af, 1, am);
+      pa_threaded_mainloop_lock(mainloop);
 
-    if(ab == AF_EXIT) {
-      ab = NULL;
-      break;
+      if(ab == AF_EXIT) {
+	ab = NULL;
+	break;
+      }
     }
 
     if(pa_context_get_state(pam->context) == PA_CONTEXT_TERMINATED ||
