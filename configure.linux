@@ -115,6 +115,11 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --enable-all)
+	  enable libgme
+	  enable libsmbclient
+	  enable libsidplay2
+  ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"
