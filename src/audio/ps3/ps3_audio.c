@@ -121,7 +121,6 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
   while(1) {
     ab = af_deq2(af, !running, am);
-    TRACE(TRACE_INFO, "AUDIO", "AB=%p\n", ab);
     if(ab == AF_EXIT) {
       ab = NULL;
       break;
