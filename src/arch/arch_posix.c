@@ -296,6 +296,7 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
   pthread_attr_t attr;
   pthread_attr_init(&attr);
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
+  pthread_attr_setstacksize(&attr, 128 * 1024);
   pthread_create(&id, &attr, thread_trampoline,
 		 make_trampoline(title, func, aux));
   pthread_attr_destroy(&attr);
@@ -307,8 +308,12 @@ void
 hts_thread_create_joinable(const char *title, hts_thread_t *p, 
 			   void *(*func)(void *), void *aux)
 {
-  pthread_create(p, NULL, thread_trampoline,
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setstacksize(&attr, 128 * 1024);
+  pthread_create(p, &attr, thread_trampoline,
 		make_trampoline(title, func, aux));
+  pthread_attr_destroy(&attr);
 
   TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);
 }
