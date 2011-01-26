@@ -1941,7 +1941,8 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     plt = calloc(1, sizeof(playlist_track_t));
     plt->plt_pl = pl;
     t = (sp_track *)tracks[i];
-    
+    before = ptrvec_get_entry(&pl->pl_tracks, pos);
+
     plt->plt_prop_root = prop_create(NULL, NULL);
     plt->plt_track = t;
 
