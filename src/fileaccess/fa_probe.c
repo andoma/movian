@@ -554,6 +554,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     if(i > 4 && tmp1[i - 4] == '.')
       tmp1[i - 4] = 0;
 
+    http_deescape(tmp1);
     md->md_title = rstr_alloc(tmp1);
   } else {
     md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
