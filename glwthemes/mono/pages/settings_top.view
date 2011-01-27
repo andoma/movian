@@ -1,0 +1,13 @@
+#import "skin://buttons/nav.view"
+
+skinNavLocation($page.model.metadata.title,
+		translate($page.model.subtype,
+			  "theme://icons/48x48/Settings.png",
+			  "sound", "theme://icons/48x48/Sound.png",
+			  "audio", "theme://icons/48x48/Music.png",
+			  "video", "theme://icons/48x48/Movie.png",
+			  "bookmark", "theme://icons/48x48/Bookmark.png",
+			  "display", "theme://icons/48x48/Display.png",
+			  "search", "theme://icons/48x48/Search.png",
+			  "keymap", "theme://icons/48x48/Keyboard.png"
+			 ));

@@ -231,9 +231,7 @@ void prop_print_trace(prop_t *p);
 
 void prop_ref_dec(prop_t *p);
 
-void prop_ref_dec_nullchk(prop_t *p);
-
-void prop_ref_inc(prop_t *p);
+prop_t *prop_ref_inc(prop_t *p) __attribute__ ((warn_unused_result));
 
 #endif
 

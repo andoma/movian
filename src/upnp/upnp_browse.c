@@ -629,37 +629,22 @@ be_upnp_browse(prop_t *page, const char *url0)
 
   prop_t *model = prop_create(page, "model");
 
-  ub->ub_type = prop_create(model, "type");
-  prop_ref_inc(ub->ub_type);
+  ub->ub_type = prop_ref_inc(prop_create(model, "type"));
   prop_set_string(ub->ub_type, "directory");
   
-  ub->ub_contents = prop_create(model, "contents");
-  prop_ref_inc(ub->ub_contents);
-
-  ub->ub_error = prop_create(model, "error");
-  prop_ref_inc(ub->ub_error);
-
-  ub->ub_nodes = prop_create(model, "nodes");
-  prop_ref_inc(ub->ub_nodes);
-
-  ub->ub_items = prop_create(model, "items");
-  prop_ref_inc(ub->ub_items);
-
-  ub->ub_loading = prop_create(model, "loading");
-  prop_ref_inc(ub->ub_loading);
+  ub->ub_contents = prop_ref_inc(prop_create(model, "contents"));
+  ub->ub_error = prop_ref_inc(prop_create(model, "error"));
+  ub->ub_nodes = prop_ref_inc(prop_create(model, "nodes"));
+  ub->ub_items = prop_ref_inc(prop_create(model, "items"));
+  ub->ub_loading = prop_ref_inc(prop_create(model, "loading"));
   prop_set_int(ub->ub_loading, 1);
 
-  ub->ub_filter = prop_create(model, "filter");
-  prop_ref_inc(ub->ub_filter);
-
-  ub->ub_canFilter = prop_create(model, "canFilter");
-  prop_ref_inc(ub->ub_canFilter);
+  ub->ub_filter = prop_ref_inc(prop_create(model, "filter"));
+  ub->ub_canFilter = prop_ref_inc(prop_create(model, "canFilter"));
 
   prop_t *metadata = prop_create(model, "metadata");
 
-  ub->ub_title = prop_create(metadata, "title");
-  prop_ref_inc(ub->ub_title);
-
+  ub->ub_title = prop_ref_inc(prop_create(metadata, "title"));
   hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub);
   return 0;
 }

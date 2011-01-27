@@ -91,7 +91,7 @@
   }
 
   function titlePopulator(page, item) {
-    page.appendItem("svtplay:video:" + item.svtplay::titleId,
+    page.appendItem("svtplay:video:" + item.svtplay::titleId + ":" + item.title,
 		    "directory", {
 		      title: item.title,
 		      icon: item.media::thumbnail.@url
@@ -124,8 +124,10 @@
 
 
 
-  plugin.addURI("svtplay:title:([0-9,]*)", function(page, id) {
+  plugin.addURI("svtplay:title:([0-9,]*):(.*)", function(page, id, title) {
     page.contents = "items";
+    page.metadata.logo = plugin.config.path + "svtplay.png";
+    page.metadata.title = title;
     pageController(page, function(offset) {
       return showtime.httpGet("http://xml.svtplay.se/v1/title/list/" + id, {
 	start: offset
@@ -135,7 +137,9 @@
 
 
 
-  plugin.addURI("svtplay:video:([0-9,]*)", function(page, id) {
+  plugin.addURI("svtplay:video:([0-9,]*):(.*)", function(page, id, title) {
+    page.metadata.logo = plugin.config.path + "svtplay.png";
+    page.metadata.title = title;
     pageController(page, function(offset) {
       return showtime.httpGet("http://xml.svtplay.se/v1/video/list/" + id, {
 	start: offset,
@@ -145,8 +149,9 @@
   });
 
   plugin.addURI("svtplay:senaste", function(page) {
+    page.metadata.logo = plugin.config.path + "svtplay.png";
+    page.metadata.title = "Senaste program från SVT Play";
     pageController(page, function(offset) {
-      page.metadata.title = "Senaste program från SVT Play";
       return showtime.httpGet("http://xml.svtplay.se/v1/video/list/96241,96242,96243,96245,96246,96247,96248", {
 	start: offset,
 	expression: "full",
@@ -159,6 +164,11 @@
 
 
   plugin.addURI("svtplay:start", function(page) {
+
+    page.type = "directory";
+    page.contents = "items";
+    page.metadata.logo = plugin.config.path + "svtplay.png";
+    page.metadata.title = "SVT Play";
 
     var svtplay = new Namespace("http://xml.svtplay.se/ns/playopml");
 
@@ -174,7 +184,8 @@
 
       if(o.@text == "Kategorier") {
 	for each (var k in o.outline) {
-	  page.appendItem("svtplay:title:" + k.@svtplay::contentNodeIds,
+	  page.appendItem("svtplay:title:" + k.@svtplay::contentNodeIds + 
+			  ":" + k.@text,
 			  "directory", {
 			    title: k.@text,
 			    icon: k.@svtplay::thumbnail
@@ -182,13 +193,7 @@
 	}
       }
     }
-    page.type = "directory";
-    page.contents = "items";
     page.loading = false;
-
-    page.metadata.logo = plugin.config.path + "svtplay.png";
-    page.metadata.title = "SVT Play";
-
   });
   
 

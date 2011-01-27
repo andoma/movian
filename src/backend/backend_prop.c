@@ -83,8 +83,7 @@ backend_prop_make(prop_t *model, char *url, size_t urllen)
   snprintf(url, urllen, "prop:%d", pp_tally);
   pp->pp_url = strdup(url);
 
-  prop_ref_inc(model);
-  pp->pp_model = model;
+  pp->pp_model = prop_ref_inc(model);
 
   pp->pp_model_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,

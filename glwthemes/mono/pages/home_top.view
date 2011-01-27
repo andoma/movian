@@ -1,0 +1,2 @@
+#import "skin://buttons/nav.view"
+skinNavLocation("Home");

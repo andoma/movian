@@ -45,14 +45,12 @@ prop_vec_t *prop_vec_append(prop_vec_t *pv, prop_t *p)
 {
   assert(pv->pv_refcount == 1);
 
-  prop_ref_inc(p);
-
   if(pv->pv_length == pv->pv_capacity) {
     pv->pv_capacity++;
     pv = realloc(pv, sizeof(prop_vec_t) + sizeof(prop_t *) * pv->pv_capacity);
   }
   assert(pv->pv_length < pv->pv_capacity);
-  pv->pv_vec[pv->pv_length] = p;
+  pv->pv_vec[pv->pv_length] = prop_ref_inc(p);
   pv->pv_length++;
   return pv;
 }

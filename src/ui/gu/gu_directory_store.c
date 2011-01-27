@@ -34,6 +34,7 @@ static const GType coltypes[] = {
   [GDS_COL_TRACKINDEX] = G_TYPE_INT,
   [GDS_COL_POPULARITY] = G_TYPE_FLOAT,
   [GDS_COL_STARRED]    = G_TYPE_INT,
+  [GDS_COL_USER]       = G_TYPE_STRING,
 };
 
 /**
@@ -50,6 +51,7 @@ static const char **subpaths[] = {
   [GDS_COL_TRACKINDEX] = PNVEC("self", "metadata", "trackindex"),
   [GDS_COL_POPULARITY] = PNVEC("self", "metadata", "popularity"),
   [GDS_COL_STARRED]    = PNVEC("self", "metadata", "starred"),
+  [GDS_COL_USER]       = PNVEC("self", "metadata", "user", "name"),
 };
 
 
@@ -566,8 +568,7 @@ gds_row_add(GuDirStore *gds, prop_t *p, prop_t *p_before)
   int i, pos;
 
   gr->gr_gds = gds;
-  gr->gr_root = p;
-  prop_ref_inc(p);
+  gr->gr_root = prop_ref_inc(p);
   
   if(p_before == NULL) {
     // Add at tail, common operation
@@ -872,10 +873,9 @@ void
 gu_dir_store_toggle_star(GuDirStore *gds, GtkTreeIter *iter)
 {
   gds_row_t *gr = iter->user_data;
-  prop_t *metadata = prop_create(gr->gr_root, "metadata");
-  prop_t *starred  = prop_create(metadata,    "starred");
-
-  prop_toggle_int(starred);
+  event_t *e = event_create_action_str("starToggle");
+  prop_send_ext_event(gr->gr_root, e);
+  event_release(e);
 }
 
 

@@ -592,7 +592,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
   /**
    * Update property metadata
    */
-  fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, faurl);
+  fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, url);
 
   /**
    * Subtitles from filesystem

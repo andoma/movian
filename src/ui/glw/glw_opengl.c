@@ -328,6 +328,9 @@ glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 
   glVertexPointer(3, GL_FLOAT, sizeof(float) * 9, gr->gr_array);
 
+  if(flags & GLW_IMAGE_ADDITIVE)
+    glw_blendmode(GLW_BLEND_ADDITIVE);
+
   if(gr->gr_color_attributes) {
 
     glEnableClientState(GL_COLOR_ARRAY);
@@ -409,6 +412,9 @@ glw_renderer_ff(glw_renderer_t *gr, glw_root_t *root,
 
   if(gr->gr_color_attributes)
     glDisableClientState(GL_COLOR_ARRAY);
+
+  if(flags & GLW_IMAGE_ADDITIVE)
+    glw_blendmode(GLW_BLEND_NORMAL);
 
   gr->gr_dirty = 0;
 }
