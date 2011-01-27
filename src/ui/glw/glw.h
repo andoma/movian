@@ -790,6 +790,8 @@ typedef struct glw {
 
   Mtx *glw_matrix;
 
+  struct clone *glw_clone;
+
 } glw_t;
 
 

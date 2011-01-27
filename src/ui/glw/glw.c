@@ -459,8 +459,10 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 void
 glw_unref(glw_t *w)
 {
-  if(w->glw_refcnt == 1)
+  if(w->glw_refcnt == 1) {
+    assert(w->glw_clone == NULL);
     free(w);
+  }
   else
     w->glw_refcnt--;
 }
