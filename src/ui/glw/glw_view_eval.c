@@ -1065,7 +1065,7 @@ cloner_pagination_check(sub_cloner_t *sc)
 static int
 clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  clone_t *c = opaque;
+  clone_t *c = opaque, *d;
   sub_cloner_t *sc = c->c_sc;
 
   switch(signal) {
@@ -1096,7 +1096,14 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_DESTROY:
-    abort();
+    d = prop_tag_clear(w->glw_originating_prop, sc);
+    assert(d == c);
+    sc->sc_entries--;
+    if(TAILQ_NEXT(w, glw_parent_link) != NULL)
+      sc->sc_positions_valid = 0;
+    c->c_w = NULL;
+    clone_free(c);
+    break;
 
   default:
     break;
@@ -1264,9 +1271,10 @@ static void
 clone_free(clone_t *c)
 {
   glw_t *w = c->c_w;
-
-  glw_signal_handler_unregister(w, clone_sig_handler, c);
-  glw_retire_child(w);
+  if(w != NULL) {
+    glw_signal_handler_unregister(w, clone_sig_handler, c);
+    glw_retire_child(w);
+  }
 
   LIST_REMOVE(c, c_link);
   prop_ref_dec(c->c_prop);
@@ -2047,6 +2055,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   int f;
   const glw_class_t *cl;
   glw_t *parent = ec->w;
+  glw_t *w;
 
   if(argc < 3)
     return glw_view_seterr(ec->ei, self, "Cloner not enough arguments");
@@ -2088,6 +2097,12 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 
     glw_hide(self->t_extra);
   }
+
+  /* Destroy any previous cloned entries */
+  while((w = TAILQ_PREV((glw_t *)self->t_extra,
+			glw_queue, glw_parent_link)) != NULL &&
+	w->glw_originating_prop != NULL)
+    glw_retire_child(w);
 
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
