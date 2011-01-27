@@ -2533,6 +2533,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
     metadata = prop_create(pl->pl_prop_root, "metadata");
     prop_set_string(prop_create(metadata, "title"), name);
+    prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
 
     backend_prop_make(pl->pl_prop_root, url, sizeof(url));
     prop_set_string(prop_create(pl->pl_prop_root, "url"), url);
