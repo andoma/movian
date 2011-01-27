@@ -115,6 +115,10 @@ done
 echo >>${OUTPUT}  "{(void *)0, 0, 0, 0}};"
 [[ -z $DEPFILE ]] || echo >>${DEPFILE} ""
 
+for file in $FILES; do
+    [[ -z $DEPFILE ]] || echo >>${DEPFILE} "${SOURCE}/$file: "
+done
+
 cat >>${OUTPUT} <<EOF
 
 static struct filebundle fb = {
