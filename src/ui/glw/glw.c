@@ -305,7 +305,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
 
   TAILQ_INIT(&w->glw_childs);
 
-  w->glw_originating_prop = prop_ref_inc(w->glw_originating_prop);
+  w->glw_originating_prop = prop_ref_inc(originator);
 
   w->glw_parent = parent;
   if(parent != NULL) {
