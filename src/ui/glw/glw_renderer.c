@@ -20,31 +20,33 @@
 #include "glw_renderer.h"
 #include "glw_math.h"
 
+static const glw_rgb_t white = {.r = 1,.g = 1,.b = 1};
+
 /**
  * 
  */
 void
-glw_renderer_init(glw_renderer_t *gr, int vertices, int triangles,
+glw_renderer_init(glw_renderer_t *gr, int num_vertices, int num_triangles,
 		  uint16_t *indices)
 {
   int i;
 
-  gr->gr_array = malloc(sizeof(float) * (3 + 2 + 4) * vertices);
-  gr->gr_vertices = vertices;
+  gr->gr_vertices = malloc(sizeof(float) * VERTEX_SIZE * num_vertices);
+  gr->gr_num_vertices = num_vertices;
 
   if((gr->gr_static_indices = (indices != NULL))) {
     gr->gr_indices = indices;
   } else {
-    gr->gr_indices = malloc(sizeof(uint16_t) * triangles * 3);
+    gr->gr_indices = malloc(sizeof(uint16_t) * num_triangles * 3);
   }
 
-  gr->gr_triangles = triangles;
+  gr->gr_num_triangles = num_triangles;
 
-  for(i = 0; i < vertices; i++) {
-    gr->gr_array[i * 9 + 5] = 1;
-    gr->gr_array[i * 9 + 6] = 1;
-    gr->gr_array[i * 9 + 7] = 1;
-    gr->gr_array[i * 9 + 8] = 1;
+  for(i = 0; i < num_vertices; i++) {
+    gr->gr_vertices[i * VERTEX_SIZE + 5] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 6] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 7] = 1;
+    gr->gr_vertices[i * VERTEX_SIZE + 8] = 1;
   }
   gr->gr_dirty = 1;
   gr->gr_blended_attributes = 0;
@@ -88,8 +90,8 @@ void
 glw_renderer_free(glw_renderer_t *gr)
 {
   int i;
-  free(gr->gr_array);
-  gr->gr_array = NULL;
+  free(gr->gr_vertices);
+  gr->gr_vertices = NULL;
 
   if(!gr->gr_static_indices) {
     free(gr->gr_indices);
@@ -97,7 +99,7 @@ glw_renderer_free(glw_renderer_t *gr)
   }
   for(i = 0; i < GLW_RENDERER_CACHES; i++) {
     if(gr->gr_cache[i] != NULL) {
-      free(gr->gr_cache[i]->grc_array);
+      free(gr->gr_cache[i]->grc_vertices);
       free(gr->gr_cache[i]);
       gr->gr_cache[i] = NULL;
     }
@@ -111,7 +113,7 @@ glw_renderer_free(glw_renderer_t *gr)
 int
 glw_renderer_initialized(glw_renderer_t *gr)
 {
-  return !!gr->gr_array;
+  return !!gr->gr_vertices;
 }
 
 /**
@@ -121,9 +123,9 @@ void
 glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
 		     float x, float y, float z)
 {
-  gr->gr_array[vertex * 9 + 0] = x;
-  gr->gr_array[vertex * 9 + 1] = y;
-  gr->gr_array[vertex * 9 + 2] = z;
+  gr->gr_vertices[vertex * 9 + 0] = x;
+  gr->gr_vertices[vertex * 9 + 1] = y;
+  gr->gr_vertices[vertex * 9 + 2] = z;
   gr->gr_dirty = 1;
 }
 
@@ -134,8 +136,8 @@ void
 glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 		    float s, float t)
 {
-  gr->gr_array[vertex * 9 + 3] = s;
-  gr->gr_array[vertex * 9 + 4] = t;
+  gr->gr_vertices[vertex * 9 + 3] = s;
+  gr->gr_vertices[vertex * 9 + 4] = t;
   gr->gr_dirty = 1;
 }
 
@@ -146,10 +148,10 @@ void
 glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 		     float r, float g, float b, float a)
 {
-  gr->gr_array[vertex * 9 + 5] = r;
-  gr->gr_array[vertex * 9 + 6] = g;
-  gr->gr_array[vertex * 9 + 7] = b;
-  gr->gr_array[vertex * 9 + 8] = a;
+  gr->gr_vertices[vertex * 9 + 5] = r;
+  gr->gr_vertices[vertex * 9 + 6] = g;
+  gr->gr_vertices[vertex * 9 + 7] = b;
+  gr->gr_vertices[vertex * 9 + 8] = a;
   if(a <= 0.99)
     gr->gr_blended_attributes = 1;
   gr->gr_dirty = 1;
@@ -157,23 +159,24 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 
 }
 
+
 /**
  *
  */
 static void
-clip_draw(glw_renderer_cache_t *grc,
-	  const float *V1, const float *V2, const float *V3,
-	  const float *C1, const float *C2, const float *C3,
-	  const float *T1, const float *T2, const float *T3)
+clip_emit_triangle(glw_root_t *gr,
+		   const float *V1, const float *V2, const float *V3,
+		   const float *C1, const float *C2, const float *C3,
+		   const float *T1, const float *T2, const float *T3)
 {
-  if(grc->grc_size == grc->grc_capacity) {
-    grc->grc_capacity++;
-    grc->grc_array = realloc(grc->grc_array, 
-			     sizeof(float) * 27 * grc->grc_capacity);
+  if(gr->gr_vtmp_size + 3 < gr->gr_vtmp_capacity) {
+    gr->gr_vtmp_capacity += 3;
+    gr->gr_vtmp_buffer = realloc(gr->gr_vtmp_buffer, sizeof(float) *
+				 VERTEX_SIZE * gr->gr_vtmp_capacity);
   }
 
-  float *f = grc->grc_array + grc->grc_size * 27;
-  grc->grc_size++;
+  float *f = gr->gr_vtmp_buffer + gr->gr_vtmp_size * VERTEX_SIZE;
+  gr->gr_vtmp_size += 3;
 
   *f++ = V1[0];
   *f++ = V1[1];
@@ -234,7 +237,8 @@ clip_draw(glw_renderer_cache_t *grc,
  * Clip a triangle in eye space
  */
 static void
-clipper(glw_renderer_cache_t *grc,
+clipper(glw_root_t *gr, 
+	glw_renderer_cache_t *grc,
 	const float *V1, const float *V2, const float *V3,
 	const float *C1, const float *C2, const float *C3,
 	const float *T1, const float *T2, const float *T3,
@@ -242,7 +246,7 @@ clipper(glw_renderer_cache_t *grc,
 {
   while(1) {
     if(plane == NUM_CLIPPLANES) {
-      clip_draw(grc, V1, V2, V3, C1, C2, C3, T1, T2, T3);
+      clip_emit_triangle(gr, V1, V2, V3, C1, C2, C3, T1, T2, T3);
       return;
     }
     if(grc->grc_active_clippers & (1 << plane))
@@ -250,8 +254,7 @@ clipper(glw_renderer_cache_t *grc,
     plane++;
   }
 
-  const float *P = grc->grc_clip[plane];
-  plane++;
+  const float *P = grc->grc_clip[plane++];
 
   float D1 = P[0] * V1[0] + P[1] * V1[1] + P[2] * V1[2] + P[3];
   float D2 = P[0] * V2[0] + P[1] * V2[1] + P[2] * V2[2] + P[3];
@@ -276,7 +279,7 @@ clipper(glw_renderer_cache_t *grc,
   if(D1 >= 0) {
     if(D2 >= 0) {
       if(D3 >= 0) {
-	clipper(grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, plane);
+	clipper(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, plane);
       } else {
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
@@ -290,8 +293,8 @@ clipper(glw_renderer_cache_t *grc,
 	LERP2v(T13, s13, T1, T3);
 	LERP2v(T23, s23, T2, T3);
 	
-	clipper(grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
-	clipper(grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
+	clipper(gr, grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
+	clipper(gr, grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
       }
 
     } else {
@@ -306,8 +309,8 @@ clipper(glw_renderer_cache_t *grc,
 	LERP4v(C23, s23, C2, C3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
-	clipper(grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
+	clipper(gr, grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
+	clipper(gr, grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
 
       } else {
 	s13 = D1 / (D1 - D3);
@@ -315,7 +318,7 @@ clipper(glw_renderer_cache_t *grc,
 	LERP4v(C13, s13, C1, C3);
 	LERP2v(T13, s13, T1, T3);
 
-	clipper(grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
+	clipper(gr, grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
       }
 
     }
@@ -332,8 +335,8 @@ clipper(glw_renderer_cache_t *grc,
 	LERP4v(C13, s13, C1, C3);
 	LERP2v(T13, s13, T1, T3);
 
-	clipper(grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
-	clipper(grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
+	clipper(gr, grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
+	clipper(gr, grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
 
       } else {
 	s23 = D2 / (D2 - D3);
@@ -341,7 +344,7 @@ clipper(glw_renderer_cache_t *grc,
 	LERP4v(C23, s23, C2, C3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
+	clipper(gr, grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
 
       }
     } else {
@@ -358,7 +361,7 @@ clipper(glw_renderer_cache_t *grc,
 	LERP2v(T13, s13, T1, T3);
 	LERP2v(T23, s23, T2, T3);
 
-	clipper(grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
+	clipper(gr, grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
       }
     }
   }
@@ -368,23 +371,15 @@ clipper(glw_renderer_cache_t *grc,
 /**
  *
  */
-void
+static void
 glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
-			    glw_rctx_t *rc, int cache)
+			    glw_rctx_t *rc, glw_renderer_cache_t *grc)
 {
   int i;
   uint16_t *ip = gr->gr_indices;
-  const float *a = gr->gr_array;
+  const float *a = gr->gr_vertices;
 
-  if(gr->gr_cache[cache] == NULL) {
-    gr->gr_cache[cache] = calloc(1, sizeof(glw_renderer_cache_t));
-    gr->gr_cache[cache]->grc_capacity = gr->gr_triangles;
-    gr->gr_cache[cache]->grc_array = malloc(sizeof(float) * 27 *
-					 gr->gr_cache[cache]->grc_capacity);
-  }
-
-  glw_renderer_cache_t *grc = gr->gr_cache[cache];
-  grc->grc_size = 0;
+  root->gr_vtmp_size = 0;
 
   memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
 
@@ -394,7 +389,7 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
     if((1 << i) & root->gr_active_clippers)
       memcpy(grc->grc_clip[i], root->gr_clip[i], sizeof(float) * 4);
 
-  for(i = 0; i < gr->gr_triangles; i++) {
+  for(i = 0; i < gr->gr_num_triangles; i++) {
     int v1 = *ip++;
     int v2 = *ip++;
     int v3 = *ip++;
@@ -407,22 +402,33 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
     glw_mtx_mul_vec(V2, rc->rc_mtx, a[v2*9+0], a[v2*9+1], a[v2*9+2]);
     glw_mtx_mul_vec(V3, rc->rc_mtx, a[v3*9+0], a[v3*9+1], a[v3*9+2]);
 
-    clipper(grc, V1, V2, V3,
-	    &gr->gr_array[v1 * 9 + 5],
-	    &gr->gr_array[v2 * 9 + 5],
-	    &gr->gr_array[v3 * 9 + 5],
-	    &gr->gr_array[v1 * 9 + 3],
-	    &gr->gr_array[v2 * 9 + 3],
-	    &gr->gr_array[v3 * 9 + 3],
+    clipper(root, grc, V1, V2, V3,
+	    &gr->gr_vertices[v1 * 9 + 5],
+	    &gr->gr_vertices[v2 * 9 + 5],
+	    &gr->gr_vertices[v3 * 9 + 5],
+	    &gr->gr_vertices[v1 * 9 + 3],
+	    &gr->gr_vertices[v2 * 9 + 3],
+	    &gr->gr_vertices[v3 * 9 + 3],
 	    0);
   }
+
+  int size = root->gr_vtmp_size * sizeof(float) * VERTEX_SIZE;
+
+  if(root->gr_vtmp_size != grc->grc_num_triangles) {
+    grc->grc_num_triangles = root->gr_vtmp_size;
+    free(grc->grc_vertices);
+    grc->grc_vertices = size ? malloc(size) : NULL;
+  }
+
+  if(size)
+    memcpy(grc->grc_vertices, root->gr_vtmp_buffer, size);
 }
 
 
 /**
  *
  */
-int
+static int
 glw_renderer_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 {
   int i;
@@ -441,17 +447,56 @@ glw_renderer_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 /**
  *
  */
-int
-glw_renderer_get_cache_id(glw_root_t *root, glw_renderer_t *gr)
+static glw_renderer_cache_t *
+glw_renderer_get_cache(glw_root_t *root, glw_renderer_t *gr)
 {
+  int idx;
   if((root->gr_frames & 0xff ) != gr->gr_framecmp) {
     gr->gr_cacheptr = 0;
     gr->gr_framecmp = root->gr_frames & 0xff;
   } else {
     gr->gr_cacheptr = (gr->gr_cacheptr + 1) & (GLW_RENDERER_CACHES - 1);
   }
-  
-  return gr->gr_cacheptr;
+  idx = gr->gr_cacheptr;
+
+  if(gr->gr_cache[idx] == NULL)
+    gr->gr_cache[idx] = calloc(1, sizeof(glw_renderer_cache_t));
+  return gr->gr_cache[idx];
+}
+
+
+/**
+ * This is the entry point of the rendering pipeline
+ */
+void
+glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
+		  glw_rctx_t *rc, struct glw_backend_texture *tex,
+		  const struct glw_rgb *rgb, float alpha)
+{
+  rgb = rgb ?: &white;
+
+  int flags = 
+    gr->gr_color_attributes ? GLW_RENDER_COLOR_ATTRIBUTES : 0;
+
+  if(root->gr_need_sw_clip) {
+    glw_renderer_cache_t *grc = glw_renderer_get_cache(root, gr);
+
+    if(gr->gr_dirty || 
+       memcmp(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx)) ||
+       glw_renderer_clippers_cmp(grc, root)) {
+      glw_renderer_clip_tesselate(gr, root, rc, grc);
+    }
+
+    root->gr_render(root, NULL, tex, rgb, alpha,
+		    grc->grc_vertices, grc->grc_num_triangles * 3,
+		    NULL, 0, flags);
+  } else {
+    root->gr_render(root, rc->rc_mtx, tex, rgb, alpha,
+		    gr->gr_vertices, gr->gr_num_vertices,
+		    gr->gr_indices,  gr->gr_num_triangles,
+		    flags);
+  }
+  gr->gr_dirty = 0;
 }
 
 
@@ -496,6 +541,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
 			   clip_planes[how][1],
 			   clip_planes[how][2],
 			   clip_planes[how][3]);
+    gr->gr_need_sw_clip = 1;
   }
 
   gr->gr_active_clippers |= (1 << i);
@@ -512,9 +558,12 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
   if(which == -1)
     return;
 
+  gr->gr_active_clippers &= ~(1 << which);
+
   if(gr->gr_set_hw_clipper != NULL)
     gr->gr_set_hw_clipper(rc, which, NULL);
+  else
+    gr->gr_need_sw_clip = gr->gr_active_clippers;
+  
 
-  gr->gr_active_clippers &= ~(1 << which);
 }
-

@@ -93,7 +93,7 @@ glw_video_overlay_render(glw_video_overlay_t *gvo, glw_root_t *gr,
 
   for(i = 0; i < gvo->gvo_entries; i++) {
     glw_renderer_draw(&gvo->gvo_renderers[i], gr, rc,
-		      &gvo->gvo_textures[i], NULL, rc->rc_alpha, 0);
+		      &gvo->gvo_textures[i], NULL, rc->rc_alpha);
   }
 }
 
