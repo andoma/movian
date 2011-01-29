@@ -533,7 +533,7 @@ glw_opengl_init_context(glw_root_t *gr)
   const char *renderer = (const char *)glGetString(GL_RENDERER);
   TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
 
-  int use_shaders = 0;
+  int use_shaders = 1;
 
   if(strstr(renderer, "Mesa"))
       use_shaders = 0;
