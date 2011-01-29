@@ -26,42 +26,14 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <dirent.h>
 
+#include "showtime.h"
 #include "htsmsg.h"
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
 
-static char *settingspath;
-
-/**
- *
- */
-void
-htsmsg_store_init(const char *programname, const char *path)
-{
-  const char *homedir = getenv("HOME");
-  char buf[PATH_MAX];
-  struct stat st;
-
-  if(path != NULL) {
-    settingspath = strdup(path);
-    return;
-  }
-
-  if(homedir == NULL)
-    return;
-
-  snprintf(buf, sizeof(buf), "%s/.hts", homedir);
-  if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0) {
-
-    snprintf(buf, sizeof(buf), "%s/.hts/%s", homedir, programname);
-
-    if(stat(buf, &st) == 0 || mkdir(buf, 0700) == 0)
-      settingspath = strdup(buf);
-  }
-}
+extern char *showtime_settings_path;
 
 /**
  *
@@ -80,7 +52,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   char *n;
   int ok;
 
-  if(settingspath == NULL)
+  if(showtime_settings_path == NULL)
     return;
 
   va_start(ap, pathfmt);
@@ -102,10 +74,10 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
       /* It's a directory here */
 
       path[x] = 0;
-      snprintf(fullpath, sizeof(fullpath), "%s/%s", settingspath, path);
+      snprintf(fullpath, sizeof(fullpath), "%s/%s", showtime_settings_path, path);
 
       if(stat(fullpath, &st) && mkdir(fullpath, 0700)) {
-	syslog(LOG_ALERT, "settings: Unable to create dir \"%s\": %s",
+	TRACE(TRACE_ERROR, "settings", "Unable to create dir \"%s\": %s",
 	       fullpath, strerror(errno));
 	return;
       }
@@ -113,10 +85,10 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
     }
   }
 
-  snprintf(fullpath, sizeof(fullpath), "%s/%s.tmp", settingspath, path);
+  snprintf(fullpath, sizeof(fullpath), "%s/%s.tmp", showtime_settings_path, path);
 
   if((fd = open(fullpath, O_CREAT | O_TRUNC | O_RDWR, 0700)) < 0) {
-    syslog(LOG_ALERT, "settings: Unable to create \"%s\" - %s",
+    TRACE(TRACE_ERROR, "settings", "Unable to create \"%s\" - %s",
 	    fullpath, strerror(errno));
     return;
   }
@@ -129,7 +101,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   TAILQ_FOREACH(hd, &hq.hq_q, hd_link)
     if(write(fd, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
        hd->hd_data_len) {
-      syslog(LOG_ALERT, "settings: Failed to write file \"%s\" - %s",
+      TRACE(TRACE_ERROR, "settings", "Failed to write file \"%s\" - %s",
 	      fullpath, strerror(errno));
       ok = 0;
       break;
@@ -137,7 +109,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 
   close(fd);
 
-  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", settingspath, path);
+  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path, path);
 
   if(ok)
     rename(fullpath, fullpath2);
@@ -188,10 +160,10 @@ htsmsg_store_buildpath(char *dst, size_t dstsize, const char *fmt, va_list ap)
 {
   char *n = dst;
 
-  if(settingspath == NULL)
+  if(showtime_settings_path == NULL)
      return -1;
 
-  snprintf(dst, dstsize, "%s/", settingspath);
+  snprintf(dst, dstsize, "%s/", showtime_settings_path);
 
   vsnprintf(dst + strlen(dst), dstsize - strlen(dst), fmt, ap);
 
@@ -261,7 +233,7 @@ htsmsg_store_remove(const char *pathfmt, ...)
   va_list ap;
 
   va_start(ap, pathfmt);
-  if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
-    return;
-  unlink(fullpath);
+  if(!htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap))
+    unlink(fullpath);
+  va_end(ap);
 }

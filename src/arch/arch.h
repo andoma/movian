@@ -25,7 +25,7 @@ void arch_sd_init(void); // Arch specific service discovery
 
 void arch_exit(int code) __attribute__((noreturn));
 
-void arch_set_cachepath(void);
+void arch_set_default_paths(void);
 
 void trap_init(void);
 
