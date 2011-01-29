@@ -607,7 +607,6 @@ static const token_attrib_t attribtab[] = {
 
   {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
-  {"dualSided",       mod_flag, GLW_IMAGE_DUAL_SIDED, mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT, mod_img_flags},
   {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP, mod_img_flags},
   {"bevelRight",      mod_flag, GLW_IMAGE_BEVEL_RIGHT, mod_img_flags},

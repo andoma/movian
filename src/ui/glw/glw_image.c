@@ -209,13 +209,18 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, alpha_self * 0.75f, gi->gi_bitmap_flags);
+			  &black, alpha_self * 0.75f);
 	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
-      glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			&gi->gi_color, alpha_self, gi->gi_bitmap_flags);
+      if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
+	glw_blendmode(GLW_BLEND_ADDITIVE);
 
+      glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
+			&gi->gi_color, alpha_self);
+
+      if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
+	glw_blendmode(GLW_BLEND_NORMAL);
     }
 
     render_child_simple(w, &rc0);
@@ -225,9 +230,17 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
-    if(alpha_self > 0.01f)
+    if(alpha_self > 0.01f) {
+
+      if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
+	glw_blendmode(GLW_BLEND_ADDITIVE);
+
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			&gi->gi_color, alpha_self, gi->gi_bitmap_flags);
+			&gi->gi_color, alpha_self);
+
+      if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
+	glw_blendmode(GLW_BLEND_NORMAL);
+    }
 
     render_child_autocentered(gi, rc);
   }

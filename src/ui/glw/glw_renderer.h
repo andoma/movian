@@ -18,30 +18,32 @@
 
 #pragma once
 
+#define VERTEX_SIZE 9 // Number of floats per vertex
+
+
+
 /**
  * Renderer cache
  */
 typedef struct glw_renderer_cache {
-  union {
-    Mtx grc_mtx; // ModelView matrix
-    float grc_rgba[4];
-  };
+  Mtx grc_mtx; // ModelView matrix
   int grc_active_clippers;
   float grc_clip[NUM_CLIPPLANES][4];
 
-  float *grc_array;
-  int grc_size;     // In triangles
-  int grc_capacity; // In triangles
+  float *grc_vertices;
+  uint16_t grc_num_triangles;
 } glw_renderer_cache_t;
 
 /**
  * Renderer
  */
-
-
 typedef struct glw_renderer {
-  uint16_t gr_vertices;
-  uint16_t gr_triangles;
+  uint16_t gr_num_vertices;
+  uint16_t gr_num_triangles;
+
+  float *gr_vertices;
+  uint16_t *gr_indices;
+
   char gr_static_indices;
   char gr_dirty;
   char gr_blended_attributes;
@@ -49,8 +51,6 @@ typedef struct glw_renderer {
   unsigned char gr_framecmp;
   unsigned char gr_cacheptr;
 
-  float *gr_array;
-  uint16_t *gr_indices;
 
 #define GLW_RENDERER_CACHES 4
 
@@ -84,13 +84,6 @@ void glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 			  float r, float g, float b, float a);
 
-
-/**
- * Private
- */
-int glw_renderer_get_cache_id(glw_root_t *root, glw_renderer_t *gr);
-
-int glw_renderer_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root);
-
-void glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
-				 glw_rctx_t *rc, int cache);
+void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
+		       glw_rctx_t *rc, struct glw_backend_texture *be_tex,
+		       const struct glw_rgb *rgb, float alpha);

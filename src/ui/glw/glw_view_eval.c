@@ -1168,6 +1168,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   c->c_clone_root = prop_create(NULL, NULL);
 
   c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p);
+  c->c_w->glw_clone = c;
 
   glw_set(c->c_w,
 	  GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
@@ -1272,6 +1273,7 @@ clone_free(clone_t *c)
 {
   glw_t *w = c->c_w;
   if(w != NULL) {
+    w->glw_clone = NULL;
     glw_signal_handler_unregister(w, clone_sig_handler, c);
     glw_retire_child(w);
   }
@@ -2101,8 +2103,8 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   /* Destroy any previous cloned entries */
   while((w = TAILQ_PREV((glw_t *)self->t_extra,
 			glw_queue, glw_parent_link)) != NULL &&
-	w->glw_originating_prop != NULL)
-    glw_retire_child(w);
+	w->glw_clone != NULL)
+    clone_free(w->glw_clone);
 
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;

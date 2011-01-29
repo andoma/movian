@@ -145,7 +145,6 @@ typedef enum {
  */
 #define GLW_IMAGE_HQ_SCALING    0x1
 #define GLW_IMAGE_FIXED_SIZE    0x2
-#define GLW_IMAGE_DUAL_SIDED    0x4
 #define GLW_IMAGE_BEVEL_LEFT    0x8
 #define GLW_IMAGE_BEVEL_TOP     0x10
 #define GLW_IMAGE_BEVEL_RIGHT   0x20
@@ -614,7 +613,27 @@ typedef struct glw_root {
    */
   float gr_clip[NUM_CLIPPLANES][4];
   int gr_active_clippers;
+
+  char gr_need_sw_clip;          /* Set if software clipping is needed
+				    at the moment */
+
   void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const float *vec);
+  void (*gr_render)(struct glw_root *gr,
+		    Mtx m,
+		    struct glw_backend_texture *tex,
+		    const struct glw_rgb *rgb,
+		    float alpha,
+		    const float *vertices,
+		    int num_vertices,
+		    const uint16_t *indices,
+		    int num_triangles,
+		    int flags);
+#define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes
+					   are != [1,1,1,1] */
+
+  float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
+  int gr_vtmp_size;     // gr_clip_buffer size in vertices
+  int gr_vtmp_capacity; // gr_clip_buffer capacity in vertices
 
 } glw_root_t;
 
@@ -795,6 +814,8 @@ typedef struct glw {
   struct token *glw_dynamic_expressions;
 
   Mtx *glw_matrix;
+
+  struct clone *glw_clone;
 
 } glw_t;
 

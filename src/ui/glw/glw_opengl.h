@@ -108,18 +108,7 @@ typedef struct glw_backend_root {
 
   int gbr_culling;
 
-  void (*gbr_renderer_draw)(struct glw_renderer *gr, struct glw_root *root,
-			    struct glw_rctx *rc,
-			    struct glw_backend_texture *be_tex,
-			    const struct glw_rgb *rgb, float alpha,
-			    int flags);
-
-
 } glw_backend_root_t;
-
-#define glw_renderer_draw(gr, root, rc, be_tex, rgb, alpha, flags)\
-  (root)->gr_be.gbr_renderer_draw(gr, root, rc, be_tex, rgb, alpha, flags)
-
 
 typedef float Mtx[16];
 
