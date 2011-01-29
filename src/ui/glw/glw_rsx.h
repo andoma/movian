@@ -49,14 +49,6 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
-void glw_renderer_draw(struct glw_renderer *gr, struct glw_root *root,
-		       struct glw_rctx *rc,
-		       struct glw_backend_texture *be_tex,
-		       const struct glw_rgb *rgb, float alpha,
-		       int flags);
-
-
-
 /**
  *
  */

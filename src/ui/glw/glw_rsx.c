@@ -24,6 +24,11 @@
 #include "glw_renderer.h"
 #include "fileaccess/fileaccess.h"
 
+static float identitymtx[16] = {
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1};
 
 /**
  *
@@ -198,21 +203,6 @@ load_fp(glw_root_t *gr, const char *url)
   return rfp;
 }
 
-/**
- *
- */
-int
-glw_rsx_init_context(glw_root_t *gr)
-{
-  gr->gr_normalized_texture_coords = 1;
-
-  gr->gr_be.be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
-  gr->gr_be.be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
-  gr->gr_be.be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
-  return 0;
-}
-
-
 
 /**
  *
@@ -261,6 +251,77 @@ set_fp(glw_root_t *root, rsx_fp_t *rfp)
 }
 
 
+/**
+ *
+ */
+static void
+rsx_render(struct glw_root *gr,
+	   Mtx m,
+	   struct glw_backend_texture *tex,
+	   const struct glw_rgb *rgb,
+	   float alpha,
+	   const float *vertices,
+	   int num_vertices,
+	   const uint16_t *indices,
+	   int num_triangles,
+	   int flags)
+{
+  gcmContextData *ctx = gr->gr_be.be_ctx;
+  rsx_vp_t *rvp = gr->gr_be.be_vp_1;
+  rsx_fp_t *rfp;
+  float rgba[4];
+
+  if(tex == NULL) {
+
+    rfp = gr->gr_be.be_fp_flat;
+
+  } else {
+
+    if(tex->tex.offset == 0 || tex->size == 0)
+      return;
+
+    realitySetTexture(ctx, 0, &tex->tex);
+    rfp = gr->gr_be.be_fp_tex;
+  }
+
+  set_vp(gr, rvp);
+  set_fp(gr, rfp);
+
+  realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
+					 rvp->rvp_u_modelview,
+					 4, m ?: identitymtx);
+  
+  rgba[0] = rgb->r;
+  rgba[1] = rgb->g;
+  rgba[2] = rgb->b;
+  rgba[3] = alpha;
+
+  realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
+
+  // TODO: Get rid of immediate mode
+  realityVertexBegin(ctx, REALITY_TRIANGLES);
+
+  int i;
+
+  if(indices != NULL) {
+    for(i = 0; i < num_triangles * 3; i++) {
+      const float *v = &vertices[indices[i] * VERTEX_SIZE];
+      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
+      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+    }
+  } else {
+    for(i = 0; i < num_vertices * 3; i++) {
+      const float *v = &vertices[i * VERTEX_SIZE];
+      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
+      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+    }
+  }
+  realityVertexEnd(ctx);
+}
+
+#if 0
 /**
  *
  */
@@ -363,6 +424,23 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 			       REALITY_INDEX_DATATYPE_U16,
 			       REALITY_RSX_MEMORY);
 #endif
+}
+#endif
+
+
+/**
+ *
+ */
+int
+glw_rsx_init_context(glw_root_t *gr)
+{
+  gr->gr_normalized_texture_coords = 1;
+  gr->gr_render = rsx_render;
+
+  gr->gr_be.be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
+  gr->gr_be.be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
+  gr->gr_be.be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
+  return 0;
 }
 
 
