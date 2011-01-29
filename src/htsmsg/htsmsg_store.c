@@ -185,9 +185,9 @@ htsmsg_store_load(const char *pathfmt, ...)
   char child[PATH_MAX];
   va_list ap;
   struct stat st;
-  struct dirent **namelist, *d;
+  struct dirent *d;
   htsmsg_t *r, *c;
-  int n, i;
+  DIR *dir;
 
   va_start(ap, pathfmt);
   if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
@@ -198,13 +198,12 @@ htsmsg_store_load(const char *pathfmt, ...)
 
   if(S_ISDIR(st.st_mode)) {
 
-    if((n = scandir(fullpath, &namelist, NULL, NULL)) < 0)
+    if((dir = opendir(fullpath)) == NULL)
       return NULL;
-     
+
     r = htsmsg_create_map();
 
-    for(i = 0; i < n; i++) {
-      d = namelist[i];
+    while((d = readdir(dir)) != NULL) {
       if(d->d_name[0] == '.')
 	continue;
       
@@ -214,7 +213,7 @@ htsmsg_store_load(const char *pathfmt, ...)
 	htsmsg_add_msg(r, d->d_name, c);
 
     }
-    free(namelist);
+    closedir(dir);
 
   } else {
     r = htsmsg_store_load_one(fullpath);
