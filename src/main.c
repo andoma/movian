@@ -73,6 +73,7 @@ static int ffmpeglog;
 static int showtime_retcode;
 char *remote_logtarget; // Used on Wii
 char *showtime_cache_path;
+char *showtime_settings_path;
 
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
@@ -150,7 +151,7 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  arch_set_cachepath();
+  arch_set_default_paths();
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */
@@ -272,15 +273,23 @@ main(int argc, char **argv)
   arch_init();
 
   /* Try to create cache path */
-  if((r = makedirs(showtime_cache_path)) != 0)
-    TRACE(TRACE_INFO, "Cache", "Unable to create cache path %s -- %s",
+  if(showtime_cache_path != NULL &&
+     (r = makedirs(showtime_cache_path)) != 0) {
+    TRACE(TRACE_ERROR, "cache", "Unable to create cache path %s -- %s",
 	  showtime_cache_path, strerror(r));
+    showtime_cache_path = NULL;
+  }
 
   /* Initializte blob cache */
   blobcache_init();
 
-  /* Initialize (and optionally load) settings */
-  htsmsg_store_init("showtime", settingspath);
+  /* Try to create settings path */
+  if(showtime_settings_path != NULL &&
+     (r = makedirs(showtime_settings_path)) != 0) {
+    TRACE(TRACE_ERROR, "settings", "Unable to create settings path %s -- %s",
+	  showtime_settings_path, strerror(r));
+    showtime_settings_path = NULL;
+  }
 
   /* Initialize keyring */
   keyring_init();

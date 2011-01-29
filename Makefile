@@ -87,7 +87,7 @@ SRCS +=	src/htsmsg/htsbuf.c \
 	src/htsmsg/htsmsg_json.c \
 	src/htsmsg/htsmsg_xml.c \
 	src/htsmsg/htsmsg_binary.c \
-	src/htsmsg/htsmsg_store_${OSENV}.c \
+	src/htsmsg/htsmsg_store.c \
 
 #
 # Virtual FS system

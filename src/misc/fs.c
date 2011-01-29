@@ -36,6 +36,9 @@ makedirs(const char *path)
   char *p;
   int l, r;
 
+  if(path == NULL)
+      return EINVAL;
+
   if(stat(path, &st) == 0 && S_ISDIR(st.st_mode)) 
     return 0; /* Dir already there */
 

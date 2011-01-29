@@ -323,13 +323,20 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
  *
  */
 void
-arch_set_cachepath(void)
+arch_set_default_paths(void)
 {
   const char *homedir = getenv("HOME");
   char buf[PATH_MAX];
 
+  if(homedir == NULL)
+    return;
+
   snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
   showtime_cache_path = strdup(buf);
+
+
+  snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
+  showtime_settings_path = strdup(buf);
 }
 
 
