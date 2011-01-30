@@ -219,7 +219,7 @@ void prop_ref_dec_nullchk_traced(prop_t *p, const char *file, int line);
 
 #define prop_ref_dec_nullchk(p) prop_ref_dec_nullchk_traced(p, __FILE__, __LINE__)
 
-void prop_ref_inc_traced(prop_t *p, const char *file, int line);
+prop_t *prop_ref_inc_traced(prop_t *p, const char *file, int line);
 
 #define prop_ref_inc(p) prop_ref_inc_traced(p, __FILE__, __LINE__)
 

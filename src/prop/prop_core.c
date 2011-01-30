@@ -222,6 +222,7 @@ prop_ref_inc_traced(prop_t *p, const char *file, int line)
     SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
     hts_mutex_unlock(&prop_ref_mutex);
   }
+  return p;
 }
 
 
