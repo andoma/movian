@@ -42,7 +42,6 @@ arch_init(void)
 void
 arch_exit(int retcode)
 {
-  Lv2Syscall0(3);
   exit(retcode);
 }
 
@@ -51,33 +50,24 @@ void
 hts_thread_create_detached(const char *name, void *(*fn)(void *), void *aux)
 {
   hts_thread_t tid;
-  my_trace(
-	"Creating thread '%s' @ %p %p (detached)\n", name, fn, aux);
   s32 r = sys_ppu_thread_create(&tid, (void *)fn, (intptr_t)aux, 1500, 65536, 0,
 				(char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
     exit(0);
   }
-
-  my_trace("'%s' > %ld\n", name, tid);
-
 }
 
 void
 hts_thread_create_joinable(const char *name, hts_thread_t *p,
 			   void *(*fn)(void *), void *aux)
 {
-  my_trace(
-	"Creating thread '%s' @ %p %p\n", name, fn, aux);
   s32 r = sys_ppu_thread_create(p, (void *)fn, (intptr_t)aux, 1500, 65536,
 			THREAD_JOINABLE, (char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
     exit(0);
   }
-
-  my_trace("'%s' > %ld\n", name, *p);
 }
 
 
@@ -179,8 +169,6 @@ trace_arch(int level, const char *prefix, const char *str)
 
   my_trace("%s%s %s%s\n", sgr, prefix, str, sgroff);
 }
-
-
 
 /**
  *
