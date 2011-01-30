@@ -2103,8 +2103,10 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   /* Destroy any previous cloned entries */
   while((w = TAILQ_PREV((glw_t *)self->t_extra,
 			glw_queue, glw_parent_link)) != NULL &&
-	w->glw_clone != NULL)
+	w->glw_clone != NULL) {
+    prop_tag_clear(w->glw_clone->c_prop, w->glw_clone->c_sc);
     clone_free(w->glw_clone);
+  }
 
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
