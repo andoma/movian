@@ -186,11 +186,10 @@ trace_arch(int level, const char *prefix, const char *str)
  *
  */
 void
-arch_set_cachepath(void)
+arch_set_default_paths(void)
 {
   netInitialize();
   my_trace("Showtime starting...\n");
-  showtime_cache_path = strdup("/");
 }
 
 #ifndef PS3_DEBUG_MUTEX
