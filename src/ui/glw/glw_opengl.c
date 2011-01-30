@@ -300,10 +300,10 @@ shader_render(struct glw_root *root,
 			  vertices + 3);
   
   if(indices != NULL)
-    glDrawElements(GL_TRIANGLES, 3 * num_triangles,
+    glDrawElements(GL_TRIANGLES, num_triangles * 3,
 		   GL_UNSIGNED_SHORT, indices);
   else
-    glDrawArrays(GL_TRIANGLES, 0, 3 * num_triangles);
+    glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 }
 
 

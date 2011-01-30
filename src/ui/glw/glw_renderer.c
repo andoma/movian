@@ -169,7 +169,7 @@ clip_emit_triangle(glw_root_t *gr,
 		   const float *C1, const float *C2, const float *C3,
 		   const float *T1, const float *T2, const float *T3)
 {
-  if(gr->gr_vtmp_size + 3 < gr->gr_vtmp_capacity) {
+  if(gr->gr_vtmp_size + 3 > gr->gr_vtmp_capacity) {
     gr->gr_vtmp_capacity += 3;
     gr->gr_vtmp_buffer = realloc(gr->gr_vtmp_buffer, sizeof(float) *
 				 VERTEX_SIZE * gr->gr_vtmp_capacity);
@@ -414,8 +414,8 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
 
   int size = root->gr_vtmp_size * sizeof(float) * VERTEX_SIZE;
 
-  if(root->gr_vtmp_size != grc->grc_num_triangles) {
-    grc->grc_num_triangles = root->gr_vtmp_size;
+  if(root->gr_vtmp_size != grc->grc_num_vertices) {
+    grc->grc_num_vertices = root->gr_vtmp_size;
     free(grc->grc_vertices);
     grc->grc_vertices = size ? malloc(size) : NULL;
   }
@@ -488,7 +488,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     }
 
     root->gr_render(root, NULL, tex, rgb, alpha,
-		    grc->grc_vertices, grc->grc_num_triangles * 3,
+		    grc->grc_vertices, grc->grc_num_vertices,
 		    NULL, 0, flags);
   } else {
     root->gr_render(root, rc->rc_mtx, tex, rgb, alpha,
