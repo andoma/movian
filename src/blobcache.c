@@ -157,7 +157,7 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad)
 
   digest_to_path(d, path, sizeof(path));
 
-  if((fd = open(path, O_RDONLY)) == -1)
+  if((fd = open(path, O_RDONLY, 0)) == -1)
     return NULL;
 
   r = blobcache_load(path, fd, sizep, pad);
@@ -373,7 +373,7 @@ blobcache_prune(void)
       next = LIST_NEXT(c, link);
 
       digest_to_path(c->d, path, sizeof(path));
-      int fd = open(path, O_RDONLY);
+      int fd = open(path, O_RDONLY, 0);
       if(fd != -1) {
 	uint8_t buf[4];
 	

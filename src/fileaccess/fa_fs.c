@@ -99,7 +99,7 @@ fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
   fs_handle_t *fh;
 
-  int fd = open(url, O_RDONLY);
+  int fd = open(url, O_RDONLY, 0);
   if(fd == -1) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
     return NULL;

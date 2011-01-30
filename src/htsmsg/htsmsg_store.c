@@ -87,7 +87,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 
   snprintf(fullpath, sizeof(fullpath), "%s/%s.tmp", showtime_settings_path, path);
 
-  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_RDWR, 0700)) < 0) {
+  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_WRONLY, 0700)) < 0) {
     TRACE(TRACE_ERROR, "settings", "Unable to create \"%s\" - %s",
 	    fullpath, strerror(errno));
     return;
@@ -134,7 +134,7 @@ htsmsg_store_load_one(const char *filename)
   if(stat(filename, &st) < 0)
     return NULL;
 
-  if((fd = open(filename, O_RDONLY)) < 0)
+  if((fd = open(filename, O_RDONLY, 0)) < 0)
     return NULL;
 
   mem = malloc(st.st_size + 1);
