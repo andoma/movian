@@ -31,7 +31,7 @@ typedef struct glw_renderer_cache {
   float grc_clip[NUM_CLIPPLANES][4];
 
   float *grc_vertices;
-  uint16_t grc_num_triangles;
+  uint16_t grc_num_vertices;
 } glw_renderer_cache_t;
 
 /**
