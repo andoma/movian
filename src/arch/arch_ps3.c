@@ -30,12 +30,45 @@
 #include "atomic.h"
 #include "arch.h"
 #include "showtime.h"
-
+#include "service.h"
+#include "misc/callout.h"
 static void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+static uint64_t ticks_per_us;
+
+static callout_t memlogger;
+
+
+static uint64_t
+mftb(void)
+{
+  uint64_t ret;
+  asm volatile ("1: mftb %[tmp];       "
+		"   cmpwi 7, %[tmp], 0;"
+		"   beq-  7, 1b;       "
+		: [tmp] "=r" (ret):: "cr7");
+  return ret;
+}
+
+static void
+memlogger_fn(callout_t *co, void *aux)
+{
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
+  struct {
+    uint32_t total;
+    uint32_t avail;
+  } meminfo;
+
+  Lv2Syscall1(352, (uint64_t) &meminfo);
+
+  TRACE(TRACE_INFO, "MEM", "r = %d %d", meminfo.total, meminfo.avail);
+}
+
 
 void
 arch_init(void)
 {
+  callout_arm(&memlogger, memlogger_fn, NULL, 1);
 }
 
 
@@ -89,9 +122,7 @@ hts_thread_current(void)
 int64_t
 showtime_get_ts(void)
 {
-  struct timeval tv;
-  gettimeofday(&tv, NULL);
-  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+  return mftb() / ticks_per_us;
 }
 
 
@@ -101,6 +132,10 @@ showtime_get_ts(void)
 void
 arch_sd_init(void)
 {
+  service_create("Root file system", "file:///",
+		 "other", NULL, 0, 1);
+  service_create("media", "webdav://172.31.255.1/media",
+		 "other", NULL, 0, 1);
 }
 
 
@@ -179,6 +214,11 @@ arch_set_default_paths(int argc, char **argv)
   char buf[PATH_MAX], *x;
 
   netInitialize();
+
+  ticks_per_us = Lv2Syscall0(147) / 1000000;
+  my_trace("Ticks per µs = %ld\n", ticks_per_us);
+
+
   if(argc == 0) {
     my_trace("Showtime starting from ???\n");
     return;
