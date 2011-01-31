@@ -151,7 +151,7 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  arch_set_default_paths();
+  arch_set_default_paths(argc, argv);
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */

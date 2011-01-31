@@ -174,10 +174,23 @@ trace_arch(int level, const char *prefix, const char *str)
  *
  */
 void
-arch_set_default_paths(void)
+arch_set_default_paths(int argc, char **argv)
 {
+  char buf[PATH_MAX], *x;
+
   netInitialize();
-  my_trace("Showtime starting...\n");
+  if(argc == 0) {
+    my_trace("Showtime starting from ???\n");
+    return;
+  }
+  my_trace("Showtime starting from %s\n", argv[0]);
+  snprintf(buf, sizeof(buf), "%s", argv[0]);
+  x = strstr(buf, "/EBOOT.BIN");
+  if(x == NULL)
+    return;
+  x++;
+  strcpy(x, "settings");
+  showtime_settings_path = strdup(buf);
 }
 
 #ifndef PS3_DEBUG_MUTEX
