@@ -127,9 +127,6 @@ init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
 {
   void *mem = realloc_tex(gr, tex, linesize * height);
 
-  TRACE(TRACE_DEBUG, "GLW", "Init ARGB %d x %d, buffer=%d bytes @ 0x%x (%p)",
-	width, height, tex->size, tex->tex.offset, mem);
-
   memcpy(mem, src, tex->size);
   init_tex(&tex->tex, tex->tex.offset, width, height, linesize, 
 	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
@@ -151,9 +148,6 @@ init_rgb(glw_root_t *gr, glw_backend_texture_t *tex,
 {
   int y, x;
   uint32_t *dst = realloc_tex(gr, tex, width * height * 4);
-
-  TRACE(TRACE_DEBUG, "GLW", "Init RGB %d x %d, buffer=%d bytes @ 0x%x (%p)",
-	width, height, tex->size, tex->tex.offset, dst);
 
   for(y = 0; y < height; y++) {
     const uint8_t *s = src;
@@ -187,10 +181,6 @@ init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
   int y, x;
   uint16_t *dst = realloc_tex(gr, tex, width * height * 2);
 
-  TRACE(TRACE_DEBUG, "GLW", 
-	"Init I8A8 %d x %d (stride=%d), buffer=%d bytes @ 0x%x (%p)",
-	width, height, linesize, tex->size, tex->tex.offset, dst);
-
   for(y = 0; y < height; y++) {
     const uint8_t *s = src;
     for(x = 0; x < width; x++) {
@@ -219,9 +209,6 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     int src_w, int src_h,
 		     int req_w, int req_h)
 {
-  TRACE(TRACE_DEBUG, "GLW", "Texture load %d x %d => %d x %d",
-	src_w, src_h, req_w, req_h);
-
   int need_rescale = req_w != src_w || req_h != src_h;
   int repeat = glt->glt_flags & GLW_TEX_REPEAT;
   switch(pix_fmt) {
@@ -248,12 +235,23 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 	      src_w, src_h, repeat);
     return 0;
 
+  case PIX_FMT_RGB24:
+    if(need_rescale)
+      break;
+    glt->glt_xs = src_w;
+    glt->glt_ys = src_h;
+    glt->glt_s = 1;
+    glt->glt_t = 1;
+    init_rgb(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
+	     src_w, src_h, repeat);
+    return 0;
+
 
   default:
-    TRACE(TRACE_DEBUG, "GLW", "Can't deal with pixfmt %d", pix_fmt);
+    TRACE(TRACE_ERROR, "GLW", "Can't deal with pixfmt %d", pix_fmt);
     return -1;
   }
-  TRACE(TRACE_DEBUG, "GLW", "Can't scale");
+  TRACE(TRACE_ERROR, "GLW", "Can't scale");
   return -1;
 }
 
@@ -264,8 +262,6 @@ void
 glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height, int flags)
 {
-  TRACE(TRACE_DEBUG, "GLW", "Texture upload %d x %d", width, height);
-
   switch(fmt) {
   case GLW_TEXTURE_FORMAT_I8A8:
     init_i8a8(gr, tex, src, width * 2, width, height, flags & GLW_TEX_REPEAT);
@@ -276,7 +272,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     break;
 
   default:
-    TRACE(TRACE_DEBUG, "GLW", "Unable to upload texture fmt %d, %d x %d",
+    TRACE(TRACE_ERROR, "GLW", "Unable to upload texture fmt %d, %d x %d",
 	  fmt, width, height);
     return;
   }

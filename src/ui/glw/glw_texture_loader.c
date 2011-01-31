@@ -213,7 +213,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   pixmap_t *pm = backend_imageloader(url, want_thumb, gr->gr_vpaths, errbuf, 
 				     sizeof(errbuf));
   if(pm == NULL) {
-    TRACE(TRACE_DEBUG, "GLW", "Unable to load %s -- %s", url, errbuf);
+    TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", url, errbuf);
     return -1;
   }
 
@@ -314,7 +314,8 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 
 			   ctx->pix_fmt, ctx->width, ctx->height, w, h);
-
+  if(r)
+    TRACE(TRACE_INFO, "GLW", "Unable to load %s", url);
   av_free(frame);
 
   avcodec_close(ctx);
