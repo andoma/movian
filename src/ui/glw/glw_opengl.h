@@ -165,7 +165,7 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 #define GLW_BLEND_ADDITIVE GL_SRC_COLOR, GL_ONE
 #define GLW_BLEND_NORMAL   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
 
-#define glw_blendmode(m) glBlendFunc(m)
+#define glw_blendmode(gr, m) glBlendFunc(m)
 
 /**
  *

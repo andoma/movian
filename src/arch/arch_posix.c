@@ -323,7 +323,7 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
  *
  */
 void
-arch_set_default_paths(void)
+arch_set_default_paths(int argc, char **argv)
 {
   const char *homedir = getenv("HOME");
   char buf[PATH_MAX];

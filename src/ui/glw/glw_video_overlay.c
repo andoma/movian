@@ -174,7 +174,7 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
  */
 static void
 spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
-	    const glw_root_t *gr)
+	    glw_root_t *gr)
 {
   int width  = d->d_x2 - d->d_x1;
   int height = d->d_y2 - d->d_y1;
@@ -251,7 +251,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
     }
   }
 
-  if(gvo_setup_bitmap(gvo, 1))
+  if(gvo_setup_bitmap(gr, gvo, 1))
     glw_renderer_init_quad(&gvo->gvo_renderers[0]);
 
   float w = gr->gr_normalized_texture_coords ? 1.0 : width;
@@ -282,7 +282,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
  */
 static void
 glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			     const glw_root_t *gr, int64_t pts)
+			     glw_root_t *gr, int64_t pts)
 {
   dvdspu_t *d;
   int x;
@@ -307,7 +307,7 @@ glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
   destroy:
     dvdspu_destroy(vd, d);
     vd->vd_spu_in_menu = 0;
-    glw_video_overlay_deinit(gvo);
+    glw_video_overlay_deinit(gr, gvo);
     goto again;
 
   case 0:

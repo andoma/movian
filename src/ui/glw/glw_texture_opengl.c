@@ -30,7 +30,8 @@
  * Free texture (always invoked in main rendering thread)
  */
 void
-glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt)
+glw_tex_backend_free_render_resources(glw_root_t *gr, 
+				      glw_loadable_texture_t *glt)
 {
   if(glt->glt_texture.tex != 0) {
     glDeleteTextures(1, &glt->glt_texture.tex);
@@ -395,7 +396,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
  *
  */
 void
-glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
+glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height, int flags)
 {
   int format;
@@ -450,7 +451,7 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 void
-glw_tex_destroy(glw_backend_texture_t *tex)
+glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
   if(tex->tex != 0) {
     glDeleteTextures(1, &tex->tex);
