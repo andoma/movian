@@ -312,7 +312,7 @@ rsx_render(struct glw_root *gr,
       realityVertex4f(ctx, v[0], v[1], v[2], 1);
     }
   } else {
-    for(i = 0; i < num_vertices * 3; i++) {
+    for(i = 0; i < num_vertices; i++) {
       const float *v = &vertices[i * VERTEX_SIZE];
       realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
