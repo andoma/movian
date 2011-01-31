@@ -98,6 +98,9 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_t *user = prop_create(p, "username");
     prop_t *pass = prop_create(p, "password");
  
+    TRACE(TRACE_INFO, "keyring", "Requesting credentials for %s : %s : %s",
+	  id, source, reason);
+
     event_t *e = popup_display(p);
 
     htsmsg_delete_field(keyring, id);
