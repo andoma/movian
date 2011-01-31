@@ -41,7 +41,7 @@
   widget(container_z, {
     .filterConstraintX = true;
     widget(backdrop, {
-      .source = "skin:///gfx/bar4.png";
+      .source = "skin://gfx/bar4.png";
       .border = [6,4,6,4];
       .color = [0.6, 0.6, 0.6];
       BODY
