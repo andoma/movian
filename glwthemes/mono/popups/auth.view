@@ -20,13 +20,10 @@ widget(container_x, {
       widget(container_y, {
 
 	widget(container_x, {
-	  widget(bloom, {
-	    .value = 1.2 + sin(monotime() * 4);
-	    widget(icon, {
-	      .color = [1.0, 0.8, 0.2];
-	      .source = "theme://icons/48x48/Lock.png";
-	      .sizeScale = 2;
-	    });
+	  widget(icon, {
+	    .color = [1.0, 0.8, 0.2];
+	    .source = "theme://icons/48x48/Lock.png";
+	    .sizeScale = 2;
 	  });
 
 	  VERTICAL_SEPARATOR();
