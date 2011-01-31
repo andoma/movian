@@ -3186,7 +3186,7 @@ prop_courier_create_waitable(void)
   prop_courier_t *pc = prop_courier_create();
   
   pc->pc_has_cond = 1;
-  hts_cond_init(&pc->pc_cond, pc->pc_entry_mutex);
+  hts_cond_init(&pc->pc_cond, &prop_mutex);
 
   return pc;
 }
