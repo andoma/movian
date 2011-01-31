@@ -18,7 +18,8 @@
 
 #include <string.h>
 
-#include "rsx/reality.h"
+#include <rsx/reality.h>
+#include <rsx/nv40.h>
 
 #include "glw.h"
 #include "glw_renderer.h"
@@ -481,3 +482,25 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 {
 }
 
+
+/**
+ *
+ */
+void
+glw_blendmode(struct glw_root *gr, int mode)
+{
+  switch(mode) {
+  case GLW_BLEND_ADDITIVE:
+    realityBlendFunc(gr->gr_be.be_ctx,
+		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_COLOR,
+		     NV30_3D_BLEND_FUNC_DST_RGB_ONE);
+    break;
+  case GLW_BLEND_NORMAL:
+    realityBlendFunc(gr->gr_be.be_ctx,
+		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
+		     NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
+		     NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
+		     NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
+    break;
+  }
+}

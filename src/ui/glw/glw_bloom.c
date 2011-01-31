@@ -116,7 +116,7 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
 
   a *= b->b_glow;
 
-  glw_blendmode(GLW_BLEND_ADDITIVE);
+  glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
   glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
 		    &glw_rtt_texture(&b->b_rtt[0]), NULL, a * 0.50);
 
@@ -128,7 +128,7 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
   glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
 		    &glw_rtt_texture(&b->b_rtt[2]), NULL, a * 0.33);
  
-  glw_blendmode(GLW_BLEND_NORMAL);
+  glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
 }
 
 

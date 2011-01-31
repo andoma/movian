@@ -214,13 +214,13 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       }
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_ADDITIVE);
+	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
 			&gi->gi_color, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_NORMAL);
+	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
     }
 
     render_child_simple(w, &rc0);
@@ -233,13 +233,13 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01f) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_ADDITIVE);
+	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
 			&gi->gi_color, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_NORMAL);
+	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
     }
 
     render_child_autocentered(gi, rc);
