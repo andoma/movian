@@ -42,6 +42,7 @@
 #include <sysutil/events.h>
 
 #include <io/pad.h>
+#include <io/kb.h>
 
 #include <sysmodule/sysmodule.h>
 
@@ -61,6 +62,10 @@ typedef struct glw_ps3 {
 
   u32 depthbuffer;
   int depthbuffer_pitch;
+
+  char kb_present[MAX_KEYBOARDS];
+
+  KbConfig kb_config[MAX_KEYBOARDS];
 
 } glw_ps3_t;
 
@@ -218,6 +223,7 @@ glw_ps3_init(glw_ps3_t *gp)
   glw_rsx_init_context(&gp->gr);
 
   ioPadInit(7);
+  ioKbInit(MAX_KB_PORT_NUM);
   return 0;
 }
 
@@ -351,6 +357,7 @@ btn(glw_ps3_t *gp, krepeat_t *kr, int pressed, action_type_t ac)
        (kr->held_frames > 30 && (kr->held_frames % 3 == 0))) {
       e = event_create_action(ac);
       glw_dispatch_event(&gp->gr.gr_uii, e);
+      event_release(e);
     }
     kr->held_frames++;
   } else {
@@ -363,36 +370,206 @@ btn(glw_ps3_t *gp, krepeat_t *kr, int pressed, action_type_t ac)
  *
  */
 static void
-glw_ps3_mainloop(glw_ps3_t *gp)
+handle_pads(glw_ps3_t *gp)
 {
-  int i;
   PadInfo padinfo;
   PadData paddata;
+  int i;
+
+  // Check the pads.
+  ioPadGetInfo(&padinfo);
+  for(i=0; i<MAX_PADS; i++){
+    if(!padinfo.status[i])
+      continue;
+    ioPadGetData(i, &paddata);
+
+    if(paddata.BTN_SQUARE || paddata.BTN_START)
+      gp->stop = 1;
+
+    btn(gp, &k_left,  paddata.BTN_LEFT,     ACTION_LEFT);
+    btn(gp, &k_up,    paddata.BTN_UP,       ACTION_UP);
+    btn(gp, &k_right, paddata.BTN_RIGHT,    ACTION_RIGHT);
+    btn(gp, &k_down,  paddata.BTN_DOWN,     ACTION_DOWN);
+    btn(gp, &k_enter, paddata.BTN_CROSS,    ACTION_ACTIVATE);
+    btn(gp, &k_back,  paddata.BTN_CIRCLE,   ACTION_NAV_BACK);
+    btn(gp, &k_menu,  paddata.BTN_TRIANGLE, ACTION_MENU);
+  }
+}
+
+
+#define KB_SHIFTMASK 0x1
+#define KB_ALTMASK   0x2
+#define KB_CTRLMASK  0x4
+
+/**
+ *
+ */
+static const struct {
+  int code;
+  int modifier;
+  const char *sym;
+  int action1;
+  int action2;
+  int action3;
+} kb2action[] = {
+
+  { KB_RAWDAT|KB_RAWKEY_LEFT_ARROW,         0,      NULL, ACTION_LEFT },
+  { KB_RAWDAT|KB_RAWKEY_RIGHT_ARROW,        0,      NULL, ACTION_RIGHT },
+  { KB_RAWDAT|KB_RAWKEY_UP_ARROW,           0,      NULL, ACTION_UP },
+  { KB_RAWDAT|KB_RAWKEY_DOWN_ARROW,         0,      NULL, ACTION_DOWN },
+
+  { 9,     0,             NULL, ACTION_FOCUS_NEXT },
+  { 9,     KB_SHIFTMASK,  NULL, ACTION_FOCUS_PREV },
+  { 8,     0,             NULL, ACTION_BS, ACTION_NAV_BACK },
+  { 10,    0,             NULL, ACTION_ACTIVATE, ACTION_ENTER },
+  { 27,    0,             NULL, ACTION_CANCEL },
+
+  { KB_RAWDAT|KB_RAWKEY_F1, -1,   "F1" },
+  { KB_RAWDAT|KB_RAWKEY_F2, -1,   "F2" },
+  { KB_RAWDAT|KB_RAWKEY_F3, -1,   "F3" },
+  { KB_RAWDAT|KB_RAWKEY_F4, -1,   "F4" },
+  { KB_RAWDAT|KB_RAWKEY_F5, -1,   "F5" },
+  { KB_RAWDAT|KB_RAWKEY_F6, -1,   "F6" },
+  { KB_RAWDAT|KB_RAWKEY_F7, -1,   "F7" },
+  { KB_RAWDAT|KB_RAWKEY_F8, -1,   "F8" },
+  { KB_RAWDAT|KB_RAWKEY_F9, -1,   "F9" },
+  { KB_RAWDAT|KB_RAWKEY_F10, -1,   "F10" },
+  { KB_RAWDAT|KB_RAWKEY_F11, -1,   "F11" },
+  { KB_RAWDAT|KB_RAWKEY_F12, -1,   "F12" },
+
+  { KB_RAWDAT|KB_RAWKEY_PAGE_UP,   -1,   "Prior" },
+  { KB_RAWDAT|KB_RAWKEY_PAGE_DOWN, -1,   "Next" },
+  { KB_RAWDAT|KB_RAWKEY_HOME,      -1,   "Home" },
+  { KB_RAWDAT|KB_RAWKEY_END,       -1,   "End" },
+
+  { KB_RAWDAT|KB_RAWKEY_LEFT_ARROW,  -1,   "Left" },
+  { KB_RAWDAT|KB_RAWKEY_RIGHT_ARROW, -1,   "Right" },
+  { KB_RAWDAT|KB_RAWKEY_UP_ARROW,    -1,   "Up" },
+  { KB_RAWDAT|KB_RAWKEY_DOWN_ARROW,  -1,   "Down" },
+};
+
+
+/**
+ *
+ */
+static void
+handle_kb(glw_ps3_t *gp)
+{
+  KbInfo kbinfo;
+  KbData kbdata;
+  int i, j;
+  int uc;
+  event_t *e;
+  action_type_t av[3];
+  int mods;
+
+  if(ioKbGetInfo(&kbinfo))
+    return;
+
+  for(i=0; i<MAX_KEYBOARDS; i++) {
+    if(kbinfo.status[i] == 0) {
+      if(gp->kb_present[i])
+	TRACE(TRACE_INFO, "PS3", "Keyboard %d disconnected", i);
+
+    } else {
+      if(!gp->kb_present[i]) {
+
+	ioKbGetConfiguration(i, &gp->kb_config[i]);
+
+	TRACE(TRACE_INFO, "PS3",
+	      "Keyboard %d connected, mapping=%d, rmode=%d, codetype=%d",
+	      i, gp->kb_config[i].mapping, gp->kb_config[i].rmode,
+	      gp->kb_config[i].codetype);
+
+	ioKbSetCodeType(i, KB_CODETYPE_RAW);
+      }
+
+      if(!ioKbRead(i, &kbdata)) {
+	for(j = 0; j < kbdata.nb_keycode; j++) {
+
+	  if(0) TRACE(TRACE_DEBUG, "PS3", "Keystrike %x %x %x %x",
+		      gp->kb_config[i].mapping,
+		      kbdata.mkey.mkeys,
+		      kbdata.led.leds,
+		      kbdata.keycode[j]);
+
+	  uc = ioKbCnvRawCode(gp->kb_config[i].mapping, kbdata.mkey,
+			      kbdata.led, kbdata.keycode[j]);
+
+	  mods = 0;
+	  if(kbdata.mkey.l_shift || kbdata.mkey.r_shift)
+	    mods |= KB_SHIFTMASK;
+	  if(kbdata.mkey.l_alt || kbdata.mkey.r_alt)
+	    mods |= KB_ALTMASK;
+	  if(kbdata.mkey.l_ctrl || kbdata.mkey.r_ctrl)
+	    mods |= KB_CTRLMASK;
+
+	  for(i = 0; i < sizeof(kb2action) / sizeof(*kb2action); i++) {
+	    if(kb2action[i].code == uc &&
+	       (kb2action[i].modifier == -1 || kb2action[i].modifier == mods)) {
+
+	      av[0] = kb2action[i].action1;
+	      av[1] = kb2action[i].action2;
+	      av[2] = kb2action[i].action3;
+
+	      if(kb2action[i].action3 != ACTION_NONE)
+		e = event_create_action_multi(av, 3);
+	      else if(kb2action[i].action2 != ACTION_NONE)
+		e = event_create_action_multi(av, 2);
+	      else if(kb2action[i].action1 != ACTION_NONE)
+		e = event_create_action_multi(av, 1);
+	      else if(kb2action[i].sym != NULL) {
+		char buf[128];
+
+		snprintf(buf, sizeof(buf),
+			 "%s%s%s%s",
+			 mods & KB_SHIFTMASK   ? "Shift+" : "",
+			 mods & KB_ALTMASK     ? "Alt+"   : "",
+			 mods & KB_CTRLMASK    ? "Ctrl+"  : "",
+			 kb2action[i].sym);
+		e = event_create_str(EVENT_KEYDESC, buf);
+	      } else {
+		e = NULL;
+	      }
+
+	      if(e != NULL) {
+		glw_dispatch_event(&gp->gr.gr_uii, e);
+		event_release(e);
+		break;
+	      }
+	    }
+	  }
+
+	  if(i == sizeof(kb2action) / sizeof(*kb2action) && uc < 0x8000 && uc) {
+	    e = event_create_int(EVENT_UNICODE, uc);
+	    glw_dispatch_event(&gp->gr.gr_uii, e);
+	    event_release(e);
+	  }
+	}
+      }
+    }
+    gp->kb_present[i] = kbinfo.status[i];
+  }
+
+}
+
+
+/**
+ *
+ */
+static void
+glw_ps3_mainloop(glw_ps3_t *gp)
+{
   int currentBuffer = 0;
 
   TRACE(TRACE_INFO, "GLW", "Entering mainloop");
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
   while(!gp->stop) {
-    // Check the pads.
-    ioPadGetInfo(&padinfo);
-    for(i=0; i<MAX_PADS; i++){
-      if(padinfo.status[i]){
-	ioPadGetData(i, &paddata);
 
-	if(paddata.BTN_SQUARE || paddata.BTN_START)
-	  gp->stop = 1;
+    handle_pads(gp);
+    handle_kb(gp);
 
-	btn(gp, &k_left,  paddata.BTN_LEFT,     ACTION_LEFT);
-	btn(gp, &k_up,    paddata.BTN_UP,       ACTION_UP);
-	btn(gp, &k_right, paddata.BTN_RIGHT,    ACTION_RIGHT);
-	btn(gp, &k_down,  paddata.BTN_DOWN,     ACTION_DOWN);
-
-	btn(gp, &k_enter, paddata.BTN_CROSS,    ACTION_ACTIVATE);
-	btn(gp, &k_back,  paddata.BTN_CIRCLE,   ACTION_NAV_BACK);
-	btn(gp, &k_menu,  paddata.BTN_TRIANGLE, ACTION_MENU);
-      }
-    }
 
     waitFlip();
     drawFrame(gp, currentBuffer);
