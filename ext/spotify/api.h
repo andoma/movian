@@ -655,26 +655,16 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *sessi
  * Return the published container for a given @a canonical_username,
  * or the currently logged in user if @a canonical_username is NULL.
  *
- * The container can be released when you're done with it, using
- * sp_session_publishedcontainer_fo_user_release(), or it will be
- * released when calling sp_session_logout().
- *
- * Subsequent requests for a published container will return the same
- * object, unless it has been released previously.
+ * When done with the list you should call sp_playlistconatiner_release() to 
+ * decrese the reference you own by having created it.
  *
  * @param[in]   session    Your session object.
  * @param[in]   username   The canonical username, or NULL.
  *
  * @return Playlist container object, NULL if not logged in or not found.
  */
-SP_LIBEXPORT(sp_playlistcontainer *) sp_session_publishedcontainer_for_user(sp_session *session, const char *canonical_username);
+SP_LIBEXPORT(sp_playlistcontainer *) sp_session_publishedcontainer_for_user_create(sp_session *session, const char *canonical_username);
 
-/**
- * Releases the playlistcontainer for @a canonical_username.
- *
- * @param[in]  canonical_username       Canonical username
- */
-SP_LIBEXPORT(void) sp_session_publishedcontainer_for_user_release(sp_session *session, const char *canonical_username);
 
 /**
  * Set preferred bitrate for music streaming
@@ -2721,6 +2711,21 @@ SP_LIBEXPORT(sp_error) sp_playlistcontainer_add_folder(sp_playlistcontainer *pc,
  * @return          The user object or NULL if unknown or none.     
  */
 SP_LIBEXPORT(sp_user *) sp_playlistcontainer_owner(sp_playlistcontainer *pc);
+
+
+/**
+ * Increase reference count on playlistconatiner object
+ *
+ * @param[in]  pc   Playlist container.
+ */
+SP_LIBEXPORT(void) sp_playlistcontainer_add_ref(sp_playlistcontainer *pc);
+
+/**
+ * Release reference count on playlistconatiner object
+ *
+ * @param[in]  pc   Playlist container.
+ */
+SP_LIBEXPORT(void) sp_playlistcontainer_release(sp_playlistcontainer *pc);
 
 /** @} */
 

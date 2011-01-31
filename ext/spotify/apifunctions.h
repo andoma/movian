@@ -19,8 +19,7 @@ static sp_playlistcontainer *(*f_sp_session_playlistcontainer)(sp_session *sessi
 static sp_playlist *(*f_sp_session_inbox_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session, const char *username);
-static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user)(sp_session *session, const char *canonical_username);
-static void(*f_sp_session_publishedcontainer_for_user_release)(sp_session *session, const char *canonical_username);
+static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user_create)(sp_session *session, const char *canonical_username);
 static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
 static int(*f_sp_session_num_friends)(sp_session *session);
 static sp_user *(*f_sp_session_friend)(sp_session *session, int index);
@@ -169,6 +168,8 @@ static sp_error(*f_sp_playlistcontainer_remove_playlist)(sp_playlistcontainer *p
 static sp_error(*f_sp_playlistcontainer_move_playlist)(sp_playlistcontainer *pc, int index, int new_position, bool dry_run);
 static sp_error(*f_sp_playlistcontainer_add_folder)(sp_playlistcontainer *pc, int index, const char *name);
 static sp_user *(*f_sp_playlistcontainer_owner)(sp_playlistcontainer *pc);
+static void(*f_sp_playlistcontainer_add_ref)(sp_playlistcontainer *pc);
+static void(*f_sp_playlistcontainer_release)(sp_playlistcontainer *pc);
 static const char *(*f_sp_user_canonical_name)(sp_user *user);
 static const char *(*f_sp_user_display_name)(sp_user *user);
 static bool(*f_sp_user_is_loaded)(sp_user *user);
@@ -212,8 +213,7 @@ if((f_sp_session_playlistcontainer=dlsym(handle,"sp_session_playlistcontainer"))
 if((f_sp_session_inbox_create=dlsym(handle,"sp_session_inbox_create"))==NULL) return "sp_session_inbox_create";
 if((f_sp_session_starred_create=dlsym(handle,"sp_session_starred_create"))==NULL) return "sp_session_starred_create";
 if((f_sp_session_starred_for_user_create=dlsym(handle,"sp_session_starred_for_user_create"))==NULL) return "sp_session_starred_for_user_create";
-if((f_sp_session_publishedcontainer_for_user=dlsym(handle,"sp_session_publishedcontainer_for_user"))==NULL) return "sp_session_publishedcontainer_for_user";
-if((f_sp_session_publishedcontainer_for_user_release=dlsym(handle,"sp_session_publishedcontainer_for_user_release"))==NULL) return "sp_session_publishedcontainer_for_user_release";
+if((f_sp_session_publishedcontainer_for_user_create=dlsym(handle,"sp_session_publishedcontainer_for_user_create"))==NULL) return "sp_session_publishedcontainer_for_user_create";
 if((f_sp_session_preferred_bitrate=dlsym(handle,"sp_session_preferred_bitrate"))==NULL) return "sp_session_preferred_bitrate";
 if((f_sp_session_num_friends=dlsym(handle,"sp_session_num_friends"))==NULL) return "sp_session_num_friends";
 if((f_sp_session_friend=dlsym(handle,"sp_session_friend"))==NULL) return "sp_session_friend";
@@ -362,6 +362,8 @@ if((f_sp_playlistcontainer_remove_playlist=dlsym(handle,"sp_playlistcontainer_re
 if((f_sp_playlistcontainer_move_playlist=dlsym(handle,"sp_playlistcontainer_move_playlist"))==NULL) return "sp_playlistcontainer_move_playlist";
 if((f_sp_playlistcontainer_add_folder=dlsym(handle,"sp_playlistcontainer_add_folder"))==NULL) return "sp_playlistcontainer_add_folder";
 if((f_sp_playlistcontainer_owner=dlsym(handle,"sp_playlistcontainer_owner"))==NULL) return "sp_playlistcontainer_owner";
+if((f_sp_playlistcontainer_add_ref=dlsym(handle,"sp_playlistcontainer_add_ref"))==NULL) return "sp_playlistcontainer_add_ref";
+if((f_sp_playlistcontainer_release=dlsym(handle,"sp_playlistcontainer_release"))==NULL) return "sp_playlistcontainer_release";
 if((f_sp_user_canonical_name=dlsym(handle,"sp_user_canonical_name"))==NULL) return "sp_user_canonical_name";
 if((f_sp_user_display_name=dlsym(handle,"sp_user_display_name"))==NULL) return "sp_user_display_name";
 if((f_sp_user_is_loaded=dlsym(handle,"sp_user_is_loaded"))==NULL) return "sp_user_is_loaded";
@@ -406,8 +408,7 @@ return NULL;}
 #define f_sp_session_inbox_create sp_session_inbox_create
 #define f_sp_session_starred_create sp_session_starred_create
 #define f_sp_session_starred_for_user_create sp_session_starred_for_user_create
-#define f_sp_session_publishedcontainer_for_user sp_session_publishedcontainer_for_user
-#define f_sp_session_publishedcontainer_for_user_release sp_session_publishedcontainer_for_user_release
+#define f_sp_session_publishedcontainer_for_user_create sp_session_publishedcontainer_for_user_create
 #define f_sp_session_preferred_bitrate sp_session_preferred_bitrate
 #define f_sp_session_num_friends sp_session_num_friends
 #define f_sp_session_friend sp_session_friend
@@ -556,6 +557,8 @@ return NULL;}
 #define f_sp_playlistcontainer_move_playlist sp_playlistcontainer_move_playlist
 #define f_sp_playlistcontainer_add_folder sp_playlistcontainer_add_folder
 #define f_sp_playlistcontainer_owner sp_playlistcontainer_owner
+#define f_sp_playlistcontainer_add_ref sp_playlistcontainer_add_ref
+#define f_sp_playlistcontainer_release sp_playlistcontainer_release
 #define f_sp_user_canonical_name sp_user_canonical_name
 #define f_sp_user_display_name sp_user_display_name
 #define f_sp_user_is_loaded sp_user_is_loaded
