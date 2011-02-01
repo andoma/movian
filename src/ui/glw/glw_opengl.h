@@ -66,6 +66,7 @@ typedef struct glw_program {
   GLint  gp_uniform_color;
   GLint  gp_uniform_colormtx;
   GLint  gp_uniform_blend;
+  GLint  gp_uniform_color_offset;
 
   GLint  gp_uniform_t[6];
 

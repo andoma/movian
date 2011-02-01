@@ -487,11 +487,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
       glw_renderer_clip_tesselate(gr, root, rc, grc);
     }
 
-    root->gr_render(root, NULL, tex, rgb, alpha,
+    root->gr_render(root, NULL, tex, rgb, NULL, alpha,
 		    grc->grc_vertices, grc->grc_num_vertices,
 		    NULL, 0, flags);
   } else {
-    root->gr_render(root, rc->rc_mtx, tex, rgb, alpha,
+    root->gr_render(root, rc->rc_mtx, tex, rgb, NULL, alpha,
 		    gr->gr_vertices, gr->gr_num_vertices,
 		    gr->gr_indices,  gr->gr_num_triangles,
 		    flags);
