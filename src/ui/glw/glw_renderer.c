@@ -471,9 +471,11 @@ glw_renderer_get_cache(glw_root_t *root, glw_renderer_t *gr)
 void
 glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		  glw_rctx_t *rc, struct glw_backend_texture *tex,
-		  const struct glw_rgb *rgb, float alpha)
+		  const struct glw_rgb *rgb_mul,
+		  const struct glw_rgb *rgb_off,
+		  float alpha)
 {
-  rgb = rgb ?: &white;
+  rgb_mul = rgb_mul ?: &white;
 
   int flags = 
     gr->gr_color_attributes ? GLW_RENDER_COLOR_ATTRIBUTES : 0;
@@ -487,11 +489,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
       glw_renderer_clip_tesselate(gr, root, rc, grc);
     }
 
-    root->gr_render(root, NULL, tex, rgb, NULL, alpha,
+    root->gr_render(root, NULL, tex, rgb_mul, rgb_off, alpha,
 		    grc->grc_vertices, grc->grc_num_vertices,
 		    NULL, 0, flags);
   } else {
-    root->gr_render(root, rc->rc_mtx, tex, rgb, NULL, alpha,
+    root->gr_render(root, rc->rc_mtx, tex, rgb_mul, rgb_off, alpha,
 		    gr->gr_vertices, gr->gr_num_vertices,
 		    gr->gr_indices,  gr->gr_num_triangles,
 		    flags);
