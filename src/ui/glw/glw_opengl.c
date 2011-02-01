@@ -283,11 +283,8 @@ shader_render(struct glw_root *root,
   else
     glUniform4f(gp->gp_uniform_color_offset, 0,0,0,0);
 
-  glw_program_set_uniform_color(gbr, 
-				GLW_CLAMP(rgb_mul->r, 0, 1),
-				GLW_CLAMP(rgb_mul->g, 0, 1),
-				GLW_CLAMP(rgb_mul->b, 0, 1),
-				GLW_CLAMP(alpha,  0, 1));
+  glw_program_set_uniform_color(gbr, rgb_mul->r, rgb_mul->g, rgb_mul->b,
+				alpha);
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, m ?: identitymtx);
 
