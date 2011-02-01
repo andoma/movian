@@ -1026,18 +1026,23 @@ http_server_init(void)
   int fd;
   struct sockaddr_in si = {0};
   socklen_t sl = sizeof(struct sockaddr_in);
-  int one = 1;
+  int one = 1, i;
   http_server_t *hs;
 
   if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
     return;
 
   si.sin_family = AF_INET;
-  si.sin_port = htons(40000);
 
   setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
 
-  if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
+  for(i = 0; i < 100; i++) {
+    si.sin_port = htons(42000 + i);
+    if(!bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)))
+      break;
+  }
+
+  if(i == 100) {
     si.sin_port = 0;
     if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
       TRACE(TRACE_ERROR, "HTTPSRV", "Unable to bind");
