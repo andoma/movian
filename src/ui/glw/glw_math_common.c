@@ -215,7 +215,7 @@ glw_LoadIdentity(glw_rctx_t *rc)
 {
   memset(&rc->rc_mtx, 0, sizeof(Mtx));
   
-  rc->rc_mtx[0]  = 1;
+  rc->rc_mtx[0][0]  = 1;
   rc->rc_mtx[5]  = 1;
   rc->rc_mtx[10] = 1;
   rc->rc_mtx[15] = 1;

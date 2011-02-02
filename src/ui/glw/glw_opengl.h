@@ -111,7 +111,12 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
+#if 1
+#include <xmmintrin.h>
+typedef __m128 Mtx[4];
+#else
 typedef float Mtx[16];
+#endif
 
 
 /**
