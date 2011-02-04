@@ -200,6 +200,76 @@ init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
 	   );
 }
 
+
+/**
+ *
+ */
+static int
+convert_with_swscale(glw_root_t *gr, 
+		     glw_loadable_texture_t *glt, AVPicture *pict, 
+		     int src_pix_fmt, 
+		     int src_w, int src_h, int dst_w, int dst_h,
+		     int repeat)
+{
+  int dst_pix_fmt;
+  struct SwsContext *sws;
+  AVPicture dst;
+  const uint8_t *ptr[4];
+  int strides[4];
+  int bpp;
+
+  switch(src_pix_fmt) {
+  case PIX_FMT_Y400A:
+  case PIX_FMT_BGRA:
+  case PIX_FMT_RGBA:
+    dst_pix_fmt = PIX_FMT_ARGB;
+    bpp = 4;
+    break;
+  default:
+    dst_pix_fmt = PIX_FMT_RGB24;
+    bpp = 3;
+    break;
+  }
+
+
+  ptr[0] = pict->data[0];
+  ptr[1] = pict->data[1];
+  ptr[2] = pict->data[2];
+  ptr[3] = pict->data[3];
+
+  strides[0] = pict->linesize[0];
+  strides[1] = pict->linesize[1];
+  strides[2] = pict->linesize[2];
+  strides[3] = pict->linesize[3];
+
+  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
+		       dst_w, dst_h, dst_pix_fmt,
+		       SWS_LANCZOS, NULL, NULL, NULL);
+  if(sws == NULL)
+    return 1;
+
+  memset(&dst, 0, sizeof(dst));
+  dst.data[0] = malloc(dst_w * dst_h * bpp);
+  dst.linesize[0] = bpp * dst_w;
+  sws_scale(sws, ptr, strides, 0, src_h, dst.data, dst.linesize);
+
+  glt->glt_xs = dst_w;
+  glt->glt_ys = dst_h;
+  glt->glt_s = 1;
+  glt->glt_t = 1;
+
+  if(bpp == 4)
+    init_argb(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
+	      dst_w, dst_h, repeat);
+  else
+    init_rgb(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
+	     dst_w, dst_h, repeat);
+
+  free(dst.data[0]);
+  sws_freeContext(sws);
+  return 0;
+}
+
 /**
  *
  */
@@ -248,11 +318,11 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
 
   default:
-    TRACE(TRACE_ERROR, "GLW", "Can't deal with pixfmt %d", pix_fmt);
-    return -1;
+    break;
   }
-  TRACE(TRACE_ERROR, "GLW", "Can't scale");
-  return -1;
+
+  return convert_with_swscale(gr, glt, pict, pix_fmt,
+			      src_w, src_h, req_w, req_h, repeat);
 }
 
 /**
