@@ -19,7 +19,7 @@ varying vec2 f_tex;
 void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position, 1);
-  f_col_mul = a_color * clamp(u_color, 0, 1);
+  f_col_mul = a_color * clamp(u_color, 0.0, 1.0);
   f_tex = a_texcoord;
 
 }
