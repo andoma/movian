@@ -55,6 +55,8 @@ typedef struct rsx_fp {
 
   int rfp_rsx_location;  // location in RSX memory
 
+  int rfp_u_color_offset;
+
 } rsx_fp_t;
 
 
@@ -201,6 +203,11 @@ load_fp(glw_root_t *gr, const char *url)
   rfp->rfp_binary = fp;
   rfp->rfp_rsx_location = offset;
 
+  rfp->rfp_u_color_offset = realityFragmentProgramGetConst(fp,
+							   "u_color_offset");
+  TRACE(TRACE_DEBUG, "glw", "   Color offset: %d", 
+	rfp->rfp_u_color_offset);
+
   return rfp;
 }
 
@@ -259,7 +266,8 @@ static void
 rsx_render(struct glw_root *gr,
 	   Mtx m,
 	   struct glw_backend_texture *tex,
-	   const struct glw_rgb *rgb,
+	   const struct glw_rgb *rgb_mul,
+	   const struct glw_rgb *rgb_off,
 	   float alpha,
 	   const float *vertices,
 	   int num_vertices,
@@ -292,12 +300,29 @@ rsx_render(struct glw_root *gr,
 					 rvp->rvp_u_modelview,
 					 4, m ?: identitymtx);
   
-  rgba[0] = rgb->r;
-  rgba[1] = rgb->g;
-  rgba[2] = rgb->b;
+  rgba[0] = rgb_mul->r;
+  rgba[1] = rgb_mul->g;
+  rgba[2] = rgb_mul->b;
   rgba[3] = alpha;
 
   realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
+
+  if(rfp->rfp_u_color_offset) {
+
+    if(rgb_off != NULL) {
+      rgba[0] = rgb_off->r;
+      rgba[1] = rgb_off->g;
+      rgba[2] = rgb_off->b;
+    } else {
+      rgba[0] = 0;
+      rgba[1] = 0;
+      rgba[2] = 0;
+    }
+    rgba[3] = 0;
+
+    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
+				       rfp->rfp_u_color_offset, rgba, 0);
+  }
 
   // TODO: Get rid of immediate mode
   realityVertexBegin(ctx, REALITY_TRIANGLES);
