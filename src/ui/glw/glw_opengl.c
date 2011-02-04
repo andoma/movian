@@ -173,7 +173,8 @@ static void
 ff_render(struct glw_root *gr,
 	  Mtx m,
 	  struct glw_backend_texture *tex,
-	  const struct glw_rgb *rgb,
+	  const struct glw_rgb *rgb_mul,
+	  const struct glw_rgb *rgb_off,
 	  float alpha,
 	  const float *vertices,
 	  int num_vertices,
@@ -197,11 +198,11 @@ ff_render(struct glw_root *gr,
     }
     for(i = 0; i < num_vertices; i++) {
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 0] =
-	vertices[i * VERTEX_SIZE + 5] * rgb->r;
+	vertices[i * VERTEX_SIZE + 5] * rgb_mul->r;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 1] =
-	vertices[i * VERTEX_SIZE + 6] * rgb->g;
+	vertices[i * VERTEX_SIZE + 6] * rgb_mul->g;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 2] =
-	vertices[i * VERTEX_SIZE + 7] * rgb->b;
+	vertices[i * VERTEX_SIZE + 7] * rgb_mul->b;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 3] =
 	vertices[i * VERTEX_SIZE + 8] * alpha;
     }
@@ -210,7 +211,13 @@ ff_render(struct glw_root *gr,
     glColorPointer(4, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
 		   gr->gr_vtmp_buffer);
   } else {
-    glColor4f(rgb->r, rgb->g, rgb->b, alpha);
+    glColor4f(rgb_mul->r, rgb_mul->g, rgb_mul->b, alpha);
+  }
+
+
+  if(rgb_off != NULL) {
+    glEnable(GL_COLOR_SUM);
+    glSecondaryColor3f(rgb_off->r, rgb_off->g, rgb_off->b);
   }
 
   if(tex == NULL) {
@@ -228,6 +235,9 @@ ff_render(struct glw_root *gr,
   else
     glDrawArrays(GL_TRIANGLES, 0, num_vertices);
 
+  if(rgb_off != NULL)
+    glDisable(GL_COLOR_SUM);
+
   if(flags & GLW_RENDER_COLOR_ATTRIBUTES)
     glDisableClientState(GL_COLOR_ARRAY);
 
@@ -243,7 +253,8 @@ static void
 shader_render(struct glw_root *root, 
 	      Mtx m,
 	      struct glw_backend_texture *tex,
-	      const struct glw_rgb *rgb,
+	      const struct glw_rgb *rgb_mul,
+	      const struct glw_rgb *rgb_off,
 	      float alpha,
 	      const float *vertices,
 	      int num_vertices,
@@ -257,19 +268,7 @@ shader_render(struct glw_root *root,
   if(tex == NULL) {
     gp = gbr->gbr_renderer_flat;
   } else {
-
-    switch(tex->type) {
-    case GLW_TEXTURE_TYPE_NORMAL:
-      gp = gbr->gbr_renderer_tex;
-      break;
-
-    case GLW_TEXTURE_TYPE_NO_ALPHA:
-      gp = gbr->gbr_renderer_tex;
-      break;
-
-    default:
-      return;
-    }
+    gp = gbr->gbr_renderer_tex;
     glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
   }
 
@@ -278,11 +277,14 @@ shader_render(struct glw_root *root,
 
   glw_load_program(gbr, gp);
 
-  glw_program_set_uniform_color(gbr, 
-				GLW_CLAMP(rgb->r, 0, 1),
-				GLW_CLAMP(rgb->g, 0, 1),
-				GLW_CLAMP(rgb->b, 0, 1),
-				GLW_CLAMP(alpha,  0, 1));
+  if(rgb_off != NULL)
+    glUniform4f(gp->gp_uniform_color_offset,
+		rgb_off->r, rgb_off->g, rgb_off->b, 0);
+  else
+    glUniform4f(gp->gp_uniform_color_offset, 0,0,0,0);
+
+  glw_program_set_uniform_color(gbr, rgb_mul->r, rgb_mul->g, rgb_mul->b,
+				alpha);
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, m ?: identitymtx);
 
@@ -386,17 +388,19 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
   gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
+  gp->gp_uniform_color_offset= glGetUniformLocation(p, "u_color_offset");
   
 #ifdef DEBUG_SHADERS
   printf("Loaded %s\n", title);
-  printf("  a_position  = %d\n", gp->gp_attribute_position);
-  printf("  a_texcoord  = %d\n", gp->gp_attribute_texcoord);
-  printf("  a_color     = %d\n", gp->gp_attribute_color);
+  printf("  a_position     = %d\n", gp->gp_attribute_position);
+  printf("  a_texcoord     = %d\n", gp->gp_attribute_texcoord);
+  printf("  a_color        = %d\n", gp->gp_attribute_color);
 
   printf("  u_modelview = %d\n", gp->gp_uniform_modelview);
   printf("  u_color     = %d\n", gp->gp_uniform_color);
   printf("  u_colormtx  = %d\n", gp->gp_uniform_colormtx);
   printf("  u_blend     = %d\n", gp->gp_uniform_blend);
+  printf("  u_color_offset = %d\n", gp->gp_uniform_color_offset);
 #endif
 
   for(i = 0; i < 6; i++) {

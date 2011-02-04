@@ -105,6 +105,7 @@ typedef enum {
   GLW_ATTRIB_SPACING,
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
+  GLW_ATTRIB_SATURATION,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -621,7 +622,8 @@ typedef struct glw_root {
   void (*gr_render)(struct glw_root *gr,
 		    Mtx m,
 		    struct glw_backend_texture *tex,
-		    const struct glw_rgb *rgb,
+		    const struct glw_rgb *rgb_mul,
+		    const struct glw_rgb *rgb_off,
 		    float alpha,
 		    const float *vertices,
 		    int num_vertices,
@@ -985,6 +987,7 @@ do {						\
   case GLW_ATTRIB_SIZE_BIAS:                    \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
+  case GLW_ATTRIB_SATURATION:                   \
     (void)va_arg(ap, double);			\
     break;					\
   }						\

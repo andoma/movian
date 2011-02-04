@@ -86,4 +86,6 @@ void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       glw_rctx_t *rc, struct glw_backend_texture *be_tex,
-		       const struct glw_rgb *rgb, float alpha);
+		       const struct glw_rgb *rgb_mul,
+		       const struct glw_rgb *rgb_off,
+		       float alpha);

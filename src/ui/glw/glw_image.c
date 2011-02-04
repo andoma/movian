@@ -64,9 +64,13 @@ typedef struct glw_image {
   int16_t gi_last_height;
 
   glw_rgb_t gi_color;
+  glw_rgb_t gi_col_mul;
+  glw_rgb_t gi_col_off;
 
   float gi_size_scale;
   float gi_size_bias;
+
+  float gi_saturation;
 
 } glw_image_t;
 
@@ -209,7 +213,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, alpha_self * 0.75f);
+			  &black, NULL, alpha_self * 0.75f);
 	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
@@ -217,7 +221,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			&gi->gi_color, alpha_self);
+			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -236,7 +240,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			&gi->gi_color, alpha_self);
+			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -716,6 +720,22 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
   return 0;
 }
 
+/**
+ *
+ */
+static void
+compute_colors(glw_image_t *gi)
+{
+  float iS = 1 - gi->gi_saturation;
+  gi->gi_col_mul.r = gi->gi_color.r * iS;
+  gi->gi_col_mul.g = gi->gi_color.g * iS;
+  gi->gi_col_mul.b = gi->gi_color.b * iS;
+
+  gi->gi_col_off.r = gi->gi_saturation;
+  gi->gi_col_off.g = gi->gi_saturation;
+  gi->gi_col_off.b = gi->gi_saturation;
+}
+
 
 
 /**
@@ -732,10 +752,11 @@ glw_image_ctor(glw_t *w)
   gi->gi_color.b = 1.0;
   gi->gi_size_scale = 1.0;
 
+  compute_colors(gi);
+
   if(w->glw_class == &glw_repeatedimage)
     gi->gi_mode = GI_MODE_REPEATED_TEXTURE;
 }
-
 
 /**
  *
@@ -747,6 +768,7 @@ glw_image_set_rgb(glw_t *w, const float *rgb)
   gi->gi_color.r = rgb[0];
   gi->gi_color.g = rgb[1];
   gi->gi_color.b = rgb[2];
+  compute_colors(gi);
 }
 
 
@@ -821,6 +843,11 @@ glw_image_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_ALPHA_SELF:
       gi->gi_alpha_self = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_SATURATION:
+      gi->gi_saturation = va_arg(ap, double);
+      compute_colors(gi);
       break;
       
     case GLW_ATTRIB_SOURCE:

@@ -11,13 +11,15 @@ const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 			     0.000000,0.000000,2.033898,0.000000);
 
 // The ordering of these are important to match the varying variables
-// in the fragment shaders. GLHF
-varying vec4 f_col;
+// in the fragment shaders.
+varying vec4 f_col_mul;
+varying vec4 f_col_off;
 varying vec2 f_tex;
 
 void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position, 1);
+  f_col_mul = a_color * clamp(u_color, 0, 1);
   f_tex = a_texcoord;
-  f_col = a_color * u_color;
+
 }
