@@ -60,7 +60,8 @@ service_init(void)
   hts_mutex_init(&service_mutex);
   hts_cond_init(&service_cond, &service_mutex);
 
-  hts_thread_create_detached("service probe", service_probe_loop, NULL);
+  hts_thread_create_detached("service probe", service_probe_loop, NULL,
+			     THREAD_PRIO_LOW);
 
   all_services = prop_create(NULL, NULL);
 

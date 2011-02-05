@@ -185,7 +185,7 @@ audio_init(void)
 
   audio_run = 1;
   hts_thread_create_joinable("audio output", &audio_thread_id, 
-			     audio_output_thread, NULL);
+			     audio_output_thread, NULL, THREAD_PRIO_HIGH);
 }
 
 /**

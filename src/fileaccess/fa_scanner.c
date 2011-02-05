@@ -661,7 +661,7 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 
-  hts_thread_create_detached("fa scanner", scanner, s);
+  hts_thread_create_detached("fa scanner", scanner, s, THREAD_PRIO_LOW);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, scanner_stop, s,

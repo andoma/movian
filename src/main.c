@@ -426,7 +426,8 @@ showtime_shutdown(int retcode)
 
   if(ui_shutdown() == -1) {
     // Primary UI has no shutdown method, launch a new thread to stop
-    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL);
+    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL,
+			       THREAD_PRIO_NORMAL);
   }
 }
 

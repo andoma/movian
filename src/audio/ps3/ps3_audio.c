@@ -36,7 +36,6 @@ static sys_event_queue_t snd_queue;
 static u64	snd_queue_key;
 
 
-
 /**
  * Convert dB to amplitude scale factor (-6dB ~= half volume)
  */

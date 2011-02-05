@@ -193,11 +193,16 @@ extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, cons
  */
 typedef sys_ppu_thread_t hts_thread_t;
 
+#define THREAD_PRIO_LOW    3000
+#define THREAD_PRIO_NORMAL 1000
+#define THREAD_PRIO_HIGH   3
 
-extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
+extern void hts_thread_create_detached(const char *, void *(*)(void *), void *,
+				       int prio);
 
 extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
-				       void *(*)(void *), void *);
+				       void *(*)(void *), void *,
+				       int prio);
 
 #define hts_thread_join(t)   sys_ppu_thread_join(*(t), NULL)
 

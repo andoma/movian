@@ -92,10 +92,11 @@ arch_exit(int retcode)
 
 
 void
-hts_thread_create_detached(const char *name, void *(*fn)(void *), void *aux)
+hts_thread_create_detached(const char *name, void *(*fn)(void *), void *aux,
+			   int prio)
 {
   hts_thread_t tid;
-  s32 r = sys_ppu_thread_create(&tid, (void *)fn, (intptr_t)aux, 1500, 65536, 0,
+  s32 r = sys_ppu_thread_create(&tid, (void *)fn, (intptr_t)aux, prio, 65536, 0,
 				(char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
@@ -105,9 +106,9 @@ hts_thread_create_detached(const char *name, void *(*fn)(void *), void *aux)
 
 void
 hts_thread_create_joinable(const char *name, hts_thread_t *p,
-			   void *(*fn)(void *), void *aux)
+			   void *(*fn)(void *), void *aux, int prio)
 {
-  s32 r = sys_ppu_thread_create(p, (void *)fn, (intptr_t)aux, 1500, 65536,
+  s32 r = sys_ppu_thread_create(p, (void *)fn, (intptr_t)aux, prio, 65536,
 			THREAD_JOINABLE, (char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);

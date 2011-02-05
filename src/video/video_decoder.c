@@ -423,7 +423,8 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
   video_subtitles_init(vd);
 
   hts_thread_create_joinable("video decoder", 
-			     &vd->vd_decoder_thread, vd_thread, vd);
+			     &vd->vd_decoder_thread, vd_thread, vd,
+			     THREAD_PRIO_NORMAL);
   
   return vd;
 }

@@ -204,7 +204,8 @@ ui_start(int argc, const char *argv[], const char *argv00)
   }
 
   TAILQ_FOREACH(ub, &ubs, link)
-    hts_thread_create_detached(ub->ui->ui_title, ui_trampoline, ub);
+    hts_thread_create_detached(ub->ui->ui_title, ui_trampoline, ub,
+			       THREAD_PRIO_NORMAL);
 
   r = prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
   free(prim->argv[0]);

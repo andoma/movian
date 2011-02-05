@@ -87,7 +87,8 @@ video_playback_create(media_pipe_t *mp)
   video_playback_t *vp = calloc(1, sizeof(video_playback_t));
   vp->vp_mp = mp;
   hts_thread_create_joinable("video player", 
-			     &vp->vp_thread, video_player_idle, vp);
+			     &vp->vp_thread, video_player_idle, vp,
+			     THREAD_PRIO_NORMAL);
   return vp;
 }
 

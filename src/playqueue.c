@@ -849,7 +849,8 @@ playqueue_init(void)
   playqueue_root = prop_create(prop_get_global(), "playqueue");
   playqueue_nodes = prop_create(playqueue_root, "nodes");
 
-  hts_thread_create_detached("audioplayer", player_thread, NULL);
+  hts_thread_create_detached("audioplayer", player_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("playqueue", "eventsink"),
