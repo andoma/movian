@@ -4075,7 +4075,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 rstr_get(b->t_rstring),
-				 PROP_GROUPER_TAKE_DST_OWNERSHIP);
+				 PROP_NF_TAKE_DST_OWNERSHIP);
   return 0;
 }
 
