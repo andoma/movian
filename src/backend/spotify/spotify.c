@@ -153,7 +153,6 @@ typedef struct playlist {
   sp_playlist *pl_playlist;
   sp_playlist_type pl_type;
   uint64_t pl_folder_id;
-  char *pl_url;
   ptrvec_t pl_tracks;
 
   prop_t *pl_prop_root;
@@ -2148,7 +2147,6 @@ playlist_update_meta(playlist_t *pl)
     if(l != NULL) {
       char url[URL_MAX];
       spotify_make_link(l, url, sizeof(url));
-      pl->pl_url = strdup(url);
       prop_set_string(pl->pl_prop_url, url);
     }
   }
@@ -2270,7 +2268,6 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(pl->pl_destroy_sub);
 
   free(pl->pl_tracks.vec);
-  free(pl->pl_url);
   free(pl);
 }
 
