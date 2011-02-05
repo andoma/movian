@@ -299,7 +299,7 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
     return;
 
   if(en) {
-
+    assert(nfn->out == NULL);
     nfn->out = prop_create0(NULL, NULL, NULL, 0);
     prop_link0(nfn->in, nfn->out, NULL, 0);
 
@@ -722,6 +722,8 @@ prop_nf_release0(struct prop_nf *pnf)
 
   nf_destroy_preds(pnf);
 
+  assert(TAILQ_FIRST(&pnf->in) == NULL);
+  assert(TAILQ_FIRST(&pnf->out)== NULL);
   free(pnf);
 }
 
