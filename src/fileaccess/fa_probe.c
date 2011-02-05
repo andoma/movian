@@ -196,45 +196,35 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 /**
  *
  */
-static char *
+static rstr_t *
 ffmpeg_metadata_get(AVMetadata *m, const char *key)
 {
   AVMetadataTag *tag;
   int len;
-  char *ret;
+  rstr_t *ret;
   const char *str;
-  
+  char *d;
+
   if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
     return NULL;
 
   str = tag->value;
   len = strlen(str);
-  ret = malloc(len + 1);
-  memcpy(ret, str, len);
-  ret[len] = 0;
+  ret = rstr_allocl(str, len);
+  d = rstr_data(ret);
 
   while(len > 0) {
     len--;
-    if(ret[len] <= ' ' || ret[len] == '-')
-      ret[len] = 0;
+    if(d[len] <= ' ' || d[len] == '-')
+      d[len] = 0;
     else
       break;
   }
-  if(*ret == 0 || !strncasecmp(ret, "http://", 7)) {
-    free(ret);
+  if(*d == 0 || !strncasecmp(d, "http://", 7)) {
+    rstr_release(ret);
     return NULL;
   }
   return ret;
-}
-
-
-/**
- *
- */
-static rstr_t *
-ffmpeg_metadata_get_str(AVMetadata *m, const char *key)
-{
-  return rstr_alloc(ffmpeg_metadata_get(m, key));
 }
 
 #if 0
@@ -557,13 +547,13 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     http_deescape(tmp1);
     md->md_title = rstr_alloc(tmp1);
   } else {
-    md->md_title = ffmpeg_metadata_get_str(fctx->metadata, "title");
+    md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
   }
 
-  md->md_artist = ffmpeg_metadata_get_str(fctx->metadata, "artist") ?:
-    ffmpeg_metadata_get_str(fctx->metadata, "author");
+  md->md_artist = ffmpeg_metadata_get(fctx->metadata, "artist") ?:
+    ffmpeg_metadata_get(fctx->metadata, "author");
 
-  md->md_album = ffmpeg_metadata_get_str(fctx->metadata, "album");
+  md->md_album = ffmpeg_metadata_get(fctx->metadata, "album");
 
   md->md_format = rstr_alloc(fctx->iformat->long_name);
 
@@ -647,8 +637,10 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
      (pd.buf[3] & 0xf8) == 0 &&
      (pd.buf[5] & 0x0f) == 0) {
     f = av_find_input_format("mp3");
-    if(f != NULL)
+    if(f != NULL) {
+      free(pd.buf);
       goto found;
+    }
   }
 
 #if ENABLE_LIBGME
