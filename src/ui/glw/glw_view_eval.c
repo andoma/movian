@@ -1714,6 +1714,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
 		       PROP_TAG_ROOT, prop,
 		       NULL);
+    // prop came from self->t_prop which we are going to overwrite
+    // (since we are changing type of this token) so release our reference
+    prop_ref_dec(prop);
 
   } else {
 
