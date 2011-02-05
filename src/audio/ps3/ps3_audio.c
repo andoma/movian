@@ -117,7 +117,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 			 PROP_TAG_ROOT, prop_mastervol,
 			 NULL);
 
-  TRACE(TRACE_INFO, "AUDIO", "PS3 audio system initialized");
+  TRACE(TRACE_DEBUG, "AUDIO", "PS3 audio system initialized");
 
   while(1) {
     ab = af_deq2(af, !running, am);
@@ -136,35 +136,35 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
   
       ret = audioPortOpen(&params, &port_num);
 
-      TRACE(TRACE_INFO, "AUDIO", "PS3 audio port %d opened", port_num);
+      TRACE(TRACE_DEBUG, "AUDIO", "PS3 audio port %d opened", port_num);
 
       ret = audioGetPortConfig(port_num, &config);
-      TRACE(TRACE_INFO, "AUDIO", "audioGetPortConfig: %d\n",ret);
-      TRACE(TRACE_INFO, "AUDIO", "  readIndex: 0x%8X\n",config.readIndex);
-      TRACE(TRACE_INFO, "AUDIO", "  status: %d\n",config.status);
-      TRACE(TRACE_INFO, "AUDIO", "  channelCount: %ld\n",config.channelCount);
-      TRACE(TRACE_INFO, "AUDIO", "  numBlocks: %ld\n",config.numBlocks);
-      TRACE(TRACE_INFO, "AUDIO", "  portSize: %d\n",config.portSize);
-      TRACE(TRACE_INFO, "AUDIO", "  audioDataStart: 0x%8X\n",config.audioDataStart);
+      TRACE(TRACE_DEBUG, "AUDIO", "audioGetPortConfig: %d\n",ret);
+      TRACE(TRACE_DEBUG, "AUDIO", "  readIndex: 0x%8X\n",config.readIndex);
+      TRACE(TRACE_DEBUG, "AUDIO", "  status: %d\n",config.status);
+      TRACE(TRACE_DEBUG, "AUDIO", "  channelCount: %ld\n",config.channelCount);
+      TRACE(TRACE_DEBUG, "AUDIO", "  numBlocks: %ld\n",config.numBlocks);
+      TRACE(TRACE_DEBUG, "AUDIO", "  portSize: %d\n",config.portSize);
+      TRACE(TRACE_DEBUG, "AUDIO", "  audioDataStart: 0x%8X\n",config.audioDataStart);
 
       // create an event queue that will tell when a block is read
       ret = audioCreateNotifyEventQueue(&snd_queue, &snd_queue_key);
-      TRACE(TRACE_INFO, "AUDIO", "audioCreateNotifyEventQueue: %d\n",ret);
-      TRACE(TRACE_INFO, "AUDIO", "  snd_queue: 0x%08X.%08X\n",SHW64(snd_queue));
-      TRACE(TRACE_INFO, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n", SHW64(snd_queue_key));
+      TRACE(TRACE_DEBUG, "AUDIO", "audioCreateNotifyEventQueue: %d\n",ret);
+      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue: 0x%08X.%08X\n",SHW64(snd_queue));
+      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n", SHW64(snd_queue_key));
   
       // Set it to the sprx
       ret = audioSetNotifyEventQueue(snd_queue_key);
-      TRACE(TRACE_INFO, "AUDIO", "audioSetNotifyEventQueue: %d\n",ret);
-      TRACE(TRACE_INFO, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n",SHW64(snd_queue_key));
+      TRACE(TRACE_DEBUG, "AUDIO", "audioSetNotifyEventQueue: %d\n",ret);
+      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n",SHW64(snd_queue_key));
   
       // clears the event queue
       ret = sys_event_queue_drain(snd_queue);
-      TRACE(TRACE_INFO, "AUDIO", "sys_event_queue_drain: %d\n",ret);
+      TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_drain: %d\n",ret);
 
 
       ret=audioPortStart(port_num);
-      TRACE(TRACE_INFO, "AUDIO", "audioPortStart: %d\n",ret);
+      TRACE(TRACE_DEBUG, "AUDIO", "audioPortStart: %d\n",ret);
 
       running = 1;
     }
@@ -177,19 +177,19 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
     if(ab != NULL)
       ab_free(ab);
   }
-  TRACE(TRACE_INFO, "AUDIO", "leaving the loop");
+  TRACE(TRACE_DEBUG, "AUDIO", "leaving the loop");
 
   if(running) {
 
     //shutdown in reverse order
     ret=audioPortStop(port_num);
-    TRACE(TRACE_INFO, "AUDIO", "audioPortStop: %d\n",ret);
+    TRACE(TRACE_DEBUG, "AUDIO", "audioPortStop: %d\n",ret);
     ret=audioRemoveNotifyEventQueue(snd_queue_key);
-    TRACE(TRACE_INFO, "AUDIO", "audioRemoveNotifyEventQueue: %d\n",ret);
+    TRACE(TRACE_DEBUG, "AUDIO", "audioRemoveNotifyEventQueue: %d\n",ret);
     ret=audioPortClose(port_num);
-    TRACE(TRACE_INFO, "AUDIO", "audioPortClose: %d\n",ret);
+    TRACE(TRACE_DEBUG, "AUDIO", "audioPortClose: %d\n",ret);
     ret=sys_event_queue_destroy(snd_queue, 0);
-    TRACE(TRACE_INFO, "AUDIO", "sys_event_queue_destroy: %d\n",ret);
+    TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_destroy: %d\n",ret);
   }
 
   audioQuit();
