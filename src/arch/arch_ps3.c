@@ -155,7 +155,7 @@ arch_sd_init(void)
 
 static int trace_fd = -1;
 
-#define TRACEIP		"172.31.255.88"
+#define TRACEIP		"172.31.255.19"
 #define TRACEPORT	4000
 
 
