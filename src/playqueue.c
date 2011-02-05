@@ -467,7 +467,7 @@ add_from_source(prop_t *p, playqueue_entry_t *before)
 
   p = prop_ref_inc(p); // TODO: do we need this?
 
-  pqe->pqe_node = prop_create(NULL, NULL);
+  pqe->pqe_node = prop_create_root(NULL);
   prop_link(p, pqe->pqe_node);
 
   pqe->pqe_urlsub = 
@@ -675,7 +675,7 @@ playqueue_enqueue(prop_t *track)
   pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url = strdup(url);
 
-  pqe->pqe_node = prop_create(NULL, NULL);
+  pqe->pqe_node = prop_create_root(NULL);
   pqe->pqe_enq = 1;
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
@@ -737,7 +737,7 @@ playqueue_play(const char *url, prop_t *metadata, int paused)
   pqe = calloc(1, sizeof(playqueue_entry_t));
   pqe->pqe_url = strdup(url);
 
-  pqe->pqe_node = prop_create(NULL, NULL);
+  pqe->pqe_node = prop_create_root(NULL);
   pqe->pqe_refcount = 1;
   pqe->pqe_linked = 1;
   pqe->pqe_playable = 1;

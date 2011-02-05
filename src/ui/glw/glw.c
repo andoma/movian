@@ -196,7 +196,7 @@ glw_init(glw_root_t *gr, const char *theme, const char *skin,
   gr->gr_vpaths[4] = NULL;
 
   gr->gr_uii.uii_ui = ui;
-  gr->gr_uii.uii_prop = prop_create(NULL, "ui");
+  gr->gr_uii.uii_prop = prop_create_root("ui");
 
   if(glw_text_bitmap_init(gr))
     return -1;

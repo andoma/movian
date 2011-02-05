@@ -102,7 +102,7 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
       if((url = htsmsg_get_str(size, "cdata")) == NULL)
 	continue;
 
-      p = prop_create(NULL, NULL);
+      p = prop_create_root(NULL);
 
       prop_set_string(prop_create(p, "url"), url);
 
@@ -164,7 +164,7 @@ load_from_blobcache(const char *artist, prop_t *parent)
     return 0;
 
   while((s = strsep(&s0, "\n")) != NULL) {
-      p = prop_create(NULL, NULL);
+      p = prop_create_root(NULL);
 
       prop_set_string(prop_create(p, "url"), s);
 

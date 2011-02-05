@@ -80,7 +80,7 @@ notify_add(notify_type_t type, const char *icon, int delay,
   va_end(ap);
   va_end(apx);
 
-  p = prop_create(NULL, NULL);
+  p = prop_create_root(NULL);
 
   prop_set_string(prop_create(p, "text"), msg);
   prop_set_string(prop_create(p, "type"), typestr);
@@ -177,7 +177,7 @@ message_popup(const char *message, int flags)
   prop_t *p;
   int rval;
 
-  p = prop_create(NULL, NULL);
+  p = prop_create_root(NULL);
 
   prop_set_string(prop_create(p, "type"), "message");
   prop_set_string_ex(prop_create(p, "message"), NULL, message,

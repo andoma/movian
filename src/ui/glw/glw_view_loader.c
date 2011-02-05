@@ -164,7 +164,7 @@ glw_view_loader_ctor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
   a->time = 1.0;
-  a->args = prop_create(NULL, "args");
+  a->args = prop_create_root("args");
 }
 
 

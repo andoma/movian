@@ -568,7 +568,7 @@ dvd_update_streams(dvd_player_t *dp)
     } else {
       
       if((p = dp->dp_audio_props[i]) == NULL) {
-	p = dp->dp_audio_props[i] = prop_create(NULL, NULL);
+	p = dp->dp_audio_props[i] = prop_create_root(NULL);
 	if(prop_set_parent_ex(p, dp->dp_audio_tracks, before, NULL))
 	  abort();
       }
@@ -622,7 +622,7 @@ dvd_update_streams(dvd_player_t *dp)
     } else {
       
       if((p = dp->dp_spu_props[i]) == NULL) {
-	p = dp->dp_spu_props[i] = prop_create(NULL, NULL);
+	p = dp->dp_spu_props[i] = prop_create_root(NULL);
 	if(prop_set_parent_ex(p, dp->dp_subtitle_tracks, before, NULL))
 	  abort();
       }

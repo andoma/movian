@@ -43,6 +43,7 @@ typedef struct scanner {
   prop_t *s_nodes;
   prop_t *s_contents;
   prop_t *s_root;
+  prop_t *s_loading;
 
   int s_stop;
 
@@ -92,7 +93,7 @@ make_filename(const char *filename)
 static void
 make_prop(fa_dir_entry_t *fde)
 {
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *metadata;
   rstr_t *fname;
 
@@ -560,7 +561,7 @@ doscan(scanner_t *s)
     }
   }
 
-  prop_set_int(prop_create(s->s_root, "loading"), 0);
+  prop_set_int(s->s_loading, 0);
 
   deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
 
@@ -595,7 +596,7 @@ scanner(void *aux)
     fa_dir_free(s->s_fd);
   }
 
-  prop_set_int(prop_create(s->s_root, "loading"), 0);
+  prop_set_int(s->s_loading, 0);
 
   free(s->s_url);
   free(s->s_playme);
@@ -603,6 +604,7 @@ scanner(void *aux)
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
   prop_ref_dec(s->s_contents);
+  prop_ref_dec(s->s_loading);
 
   scanner_unref(s);
   return NULL;
@@ -658,6 +660,7 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   s->s_root = prop_ref_inc(model);
   s->s_nodes = prop_ref_inc(source);
   s->s_contents = prop_ref_inc(prop_create(model, "contents"));
+  s->s_loading = prop_ref_inc(prop_create(model, "loading"));
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 

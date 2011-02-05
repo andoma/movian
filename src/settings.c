@@ -508,7 +508,7 @@ settings_init(void)
 {
   settings_root = prop_create(prop_get_global(), "settings");
 
-  settings_nodes = prop_create(NULL, "sources");
+  settings_nodes = prop_create_root("sources");
 
   prop_nf_create(prop_create(settings_root, "nodes"),
 		 settings_nodes, NULL, "node.model.metadata.title",

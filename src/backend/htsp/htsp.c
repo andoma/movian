@@ -482,7 +482,7 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
   if(create) {
 
     ch = calloc(1, sizeof(htsp_channel_t));
-    p = ch->ch_root = prop_create(NULL, txt);
+    p = ch->ch_root = prop_create_root(txt);
     ch->ch_id = id;
 
     snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
@@ -635,7 +635,7 @@ htsp_tagAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
     LIST_INSERT_SORTED(&hc->hc_tags, ht, ht_link, tag_compar);
     n = LIST_NEXT(ht, ht_link);
 
-    ht->ht_root = prop_create(NULL, id);
+    ht->ht_root = prop_create_root(id);
 
     snprintf(txt, sizeof(txt), "htsp://%s:%d/tag/%s",
 	     hc->hc_hostname, hc->hc_port, id);
@@ -1051,7 +1051,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   hc = calloc(1, sizeof(htsp_connection_t));
 
-  hc->hc_tags_model = prop_create(NULL, NULL);
+  hc->hc_tags_model = prop_create_root(NULL);
   hc->hc_tags_nodes  = prop_create(hc->hc_tags_model, "nodes");
   prop_set_string(prop_create(hc->hc_tags_model, "type"), "directory");
   meta = prop_create(hc->hc_tags_model, "metadata");

@@ -39,7 +39,7 @@ int
 search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
 		    const char *title, const char *icon)
 {
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *m = prop_create(p, "metadata");
   prop_t *n, *e;
   

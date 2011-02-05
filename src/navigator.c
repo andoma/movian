@@ -330,7 +330,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
   np->np_direct_close = 0;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
-  np->np_prop_root = prop_create(NULL, "page");
+  np->np_prop_root = prop_create_root("page");
   if(view != NULL) {
     np->np_view = strdup(view);
     prop_set_string(prop_create(np->np_prop_root, "requestedView"), view);

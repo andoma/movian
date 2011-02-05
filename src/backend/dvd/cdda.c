@@ -203,7 +203,7 @@ get_cd_meta(const char *device)
   
     cm->cm_ntracks = tracks;
 
-    cm->cm_root   = prop_create(NULL, NULL);
+    cm->cm_root   = prop_create_root(NULL);
     cm->cm_model = prop_create(cm->cm_root, "model");
     cm->cm_nodes  = prop_create(cm->cm_model, "nodes");
     cm->cm_meta   = prop_create(cm->cm_model, "metadata");
@@ -219,7 +219,7 @@ get_cd_meta(const char *device)
       char trackurl[URL_MAX];
       char title[64];
 
-      ct->ct_root = prop_create(NULL, NULL);
+      ct->ct_root = prop_create_root(NULL);
 
       prop_set_rstring(prop_create(ct->ct_root, "type"), audio);
 
@@ -336,7 +336,7 @@ openpage(prop_t *page, const char *url)
     if(ct == NULL)
       return nav_open_errorf(page, "Invalid track");
 
-    prop_t *meta = prop_create(NULL, "metadata");
+    prop_t *meta = prop_create_root("metadata");
     prop_link(ct->ct_metadata, meta);
 
     playqueue_play(url, meta, 0);

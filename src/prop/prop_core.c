@@ -1236,23 +1236,9 @@ prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
  *
  */
 prop_t *
-prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
+prop_make(const char *name, int noalloc, prop_t *parent)
 {
   prop_t *hp;
-
-  if(parent != NULL) {
-
-    prop_make_dir(parent, skipme, "prop_create()");
-
-    if(name != NULL) {
-      TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
-	if(hp->hp_name != NULL && !strcmp(hp->hp_name, name)) {
-	  return hp;
-	}
-      }
-    }
-  }
-
   hp = malloc(sizeof(prop_t));
 #ifdef PROP_DEBUG
   SIMPLEQ_INIT(&hp->hp_ref_trace);
@@ -1273,14 +1259,36 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
   LIST_INIT(&hp->hp_canonical_subscriptions);
 
   hp->hp_parent = parent;
+  return hp;
+}
 
-  if(parent != NULL) {
-    if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
-      prop_flood_flag(hp, PROP_MULTI_NOTIFY, 0);
 
-    prop_insert(hp, parent, NULL, skipme);
+/**
+ *
+ */
+prop_t *
+prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
+{
+  prop_t *hp;
+
+  assert(parent->hp_type != PROP_ZOMBIE);
+
+  prop_make_dir(parent, skipme, "prop_create()");
+
+  if(name != NULL) {
+    TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
+      if(hp->hp_name != NULL && !strcmp(hp->hp_name, name)) {
+	return hp;
+      }
+    }
   }
 
+  hp = prop_make(name, noalloc, parent);
+
+  if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
+    prop_flood_flag(hp, PROP_MULTI_NOTIFY, 0);
+
+  prop_insert(hp, parent, NULL, skipme);
   return hp;
 }
 
@@ -1290,24 +1298,44 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
  *
  */
 prop_t *
-prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme, int flags)
+prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme,
+	       int noalloc)
 {
   prop_t *p;
-
-  if(parent == NULL)
-    return prop_create0(NULL, name, skipme, flags);
-
   hts_mutex_lock(&prop_mutex);
-  
-  if(parent->hp_type != PROP_ZOMBIE)
-    p = prop_create0(parent, name, skipme, flags);
-  else
-    p = NULL;
-
+  p = prop_create0(parent, name, skipme, noalloc);
   hts_mutex_unlock(&prop_mutex);
-
   return p;
 }
+
+
+/**
+ *
+ */
+prop_t *
+prop_create_check_ex(prop_t *parent, const char *name, int noalloc)
+{
+  prop_t *p;
+  hts_mutex_lock(&prop_mutex);
+  if(parent->hp_type != PROP_ZOMBIE) {
+    p = prop_ref_inc(prop_create0(parent, name, NULL, noalloc));
+  } else {
+    p = NULL;
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return p;
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_create_root_ex(const char *name, int noalloc)
+{
+  return prop_make(name, noalloc, NULL);
+}
+
 
 
 /**
@@ -2137,7 +2165,7 @@ prop_init(void)
 {
   hts_mutex_init(&prop_mutex);
   hts_mutex_init(&prop_tag_mutex);
-  prop_global = prop_create0(NULL, "global", NULL, 0);
+  prop_global = prop_make("global", 1, NULL);
 
   global_courier = prop_courier_create_thread(NULL, "global");
 }
@@ -3494,7 +3522,7 @@ prop_test(void)
   prop_courier_t *couriers[TEST_COURIERS];
   hts_mutex_t mtx[TEST_COURIERS];
 
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
 
   for(i = 0; i < TEST_COURIERS; i++) {
     hts_mutex_init(&mtx[i]);

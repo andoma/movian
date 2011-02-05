@@ -984,13 +984,25 @@ spotify_metadata_update_track(metadata_t *m)
   
   nartists = f_sp_track_num_artists(track);
   if(nartists > 1) {
-    prop_t *xa = m->m_additional_artists;
     for(i = 1; i < nartists; i++) {
       artist = f_sp_track_artist(track, i);
       spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-      
-      prop_set_link(prop_create(prop_create(xa, url), "artist"),
-		    f_sp_artist_name(artist), url);
+
+      /* m->m_additional_artists can turn into a zombie at any time so
+	 we can't just rely on prop_create() as it will abort() on
+	 zombie parents, instead we use a more elaborate version
+	 (prop_create_check) but it will also leave us with a
+	 reference that we must release */
+
+      prop_t *p = prop_create_check(m->m_additional_artists, url);
+      if(p != NULL) {
+	prop_t *p2 = prop_create_check(p, "artist");
+	if(p2 != NULL) {
+	  prop_set_link(p2, f_sp_artist_name(artist), url);
+	  prop_ref_dec(p2);
+	}
+	prop_ref_dec(p);
+      }
     }
   }
 
@@ -1316,7 +1328,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
 
-      p = prop_create(NULL, NULL);
+      p = prop_create_root(NULL);
 
       spotify_make_link(f_sp_link_create_from_track(track, 0), 
 			url, sizeof(url));
@@ -1418,7 +1430,7 @@ static void
 spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
 {
   prop_t *metadata;
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   char link[200];
 
   spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
@@ -1880,7 +1892,7 @@ find_user(sp_user *u)
     su = malloc(sizeof(spotify_user_t));
     f_sp_user_add_ref(u);
     su->su_user = u;
-    su->su_prop = prop_create(NULL, NULL);
+    su->su_prop = prop_create_root(NULL);
     su->su_prop_name = prop_create(su->su_prop, "name");
     su->su_prop_picture = prop_create(su->su_prop, "picture");
 
@@ -1943,7 +1955,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     t = (sp_track *)tracks[i];
     before = ptrvec_get_entry(&pl->pl_tracks, pos);
 
-    plt->plt_prop_root = prop_create(NULL, NULL);
+    plt->plt_prop_root = prop_create_root(NULL);
     plt->plt_track = t;
 
     prop_set_string(prop_create(plt->plt_prop_root, "type"), "audio");
@@ -2474,7 +2486,7 @@ place_playlists_in_tree(void)
 static playlist_t *
 pl_create2(sp_playlist *plist)
 {
-  prop_t *model = prop_create(NULL, NULL);
+  prop_t *model = prop_create_root(NULL);
   prop_t *metadata = prop_create(model, "metadata");
   
   playlist_t *pl = pl_create(plist, 0, NULL,
@@ -2528,7 +2540,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
     pl->pl_folder_id = f_sp_playlistcontainer_playlist_folder_id(pc, position);
 
-    pl->pl_prop_root = prop_create(NULL, NULL);
+    pl->pl_prop_root = prop_create_root(NULL);
     prop_set_string(prop_create(pl->pl_prop_root, "type"), "directory");
 
     metadata = prop_create(pl->pl_prop_root, "metadata");
@@ -2751,7 +2763,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_search_track(result, i);
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
 
@@ -2804,7 +2816,7 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
 	continue; 
     }
 
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
@@ -2851,7 +2863,7 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
   for(i = 0; i < nartists; i++) {
     artist = f_sp_search_artist(result, i);
     
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
@@ -3205,7 +3217,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 static void
 add_dir(prop_t *parent, const char *url, const char *title)
 {
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
 
   prop_set_string(prop_create(p, "type"), "directory");
