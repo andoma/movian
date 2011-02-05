@@ -32,8 +32,6 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 
-static int do_album_view = 0;
-
 typedef struct scanner {
   int s_refcount;
 
@@ -42,8 +40,8 @@ typedef struct scanner {
 
   prop_t *s_nodes;
   prop_t *s_contents;
-  prop_t *s_root;
   prop_t *s_loading;
+  prop_t *s_root;
 
   int s_stop;
 
@@ -66,8 +64,13 @@ set_type(prop_t *proproot, unsigned int type)
 {
   const char *typestr;
 
-  if ((typestr = content2type(type)))
-    prop_set_string(prop_create(proproot, "type"), typestr);
+  if((typestr = content2type(type))) {
+    prop_t *p = prop_create_check(proproot, "type");
+    if(p != NULL) {
+      prop_set_string(p, typestr);
+      prop_ref_dec(p);
+    }
+  }
 }
 
 
@@ -201,160 +204,43 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
  *
  */
 static void
-deep_analyzer(fa_dir_t *fd, prop_t *contents, prop_t *root, int *stop)
+deep_analyzer(scanner_t *s)
 {
-  int type;
-  prop_t *metadata, *p;
-
-  int album_score = 0;
-  int different_artists = 0;
-  int images = 0;
-  int unknown = 0;
-  char album_name[128] = {0};
-  char artist_name[128] = {0};
-  char album_art[1024] = {0};
-  int64_t album_art_score = 0;  // Bigger is better
+  prop_t *metadata;
   char buf[URL_MAX];
-  int trackidx;
   fa_dir_entry_t *fde;
 
   /* Empty */
-  if(fd->fd_count == 0) {
-    prop_set_string(contents, "empty");
+  if(s->s_fd->fd_count == 0) {
+    prop_set_string(s->s_contents, "empty");
     return;
   }
 
   /* Scan all entries */
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
+
+    if(s->s_stop)
+      break;
 
     if(fde->fde_probestatus == FDE_PROBE_DEEP)
       continue;
 
     fde->fde_probestatus = FDE_PROBE_DEEP;
 
-    metadata = fde->fde_prop ? prop_create(fde->fde_prop, "metadata") : NULL;
-
-    if(metadata != NULL) {
-
-      if(stop && *stop)
-	return;
-
-      type = fde->fde_type;
+    metadata = prop_create(fde->fde_prop, "metadata");
     
-      if(fde->fde_type == CONTENT_DIR) {
-	type = fa_probe_dir(metadata, fde->fde_url);
-      } else {
-	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf),
-			fde->fde_statdone ? &fde->fde_stat : NULL);
+    if(fde->fde_type == CONTENT_DIR) {
+      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
+    } else {
+      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
+			       buf, sizeof(buf),
+			       fde->fde_statdone ? &fde->fde_stat : NULL);
 
-	if(type == CONTENT_UNKNOWN)
-	  TRACE(TRACE_DEBUG, "BROWSE",
-		"File \"%s\" not recognized: %s", fde->fde_url, buf);
-      }
-      set_type(fde->fde_prop, type);
-      fde->fde_type = type;
+      if(fde->fde_type == CONTENT_UNKNOWN)
+	TRACE(TRACE_DEBUG, "BROWSE",
+	      "File \"%s\" not recognized: %s", fde->fde_url, buf);
     }
-
-    switch(fde->fde_type) {
-
-    case CONTENT_IMAGE:
-      images++;
-
-      if(!strncasecmp(fde->fde_filename, "albumart", 8) ||
-	 !strncasecmp(fde->fde_filename, "folder.", 7)) {
-
-	if(fde->fde_statdone || 
-	   (metadata != NULL && !fa_dir_entry_stat(fde))) {
-	  album_art_score = fde->fde_stat.fs_size;
-	  snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
-	}
-      }
-      break;
-
-    case CONTENT_UNKNOWN:
-      unknown++;
-      if(fde->fde_prop != NULL)
-	prop_destroy(fde->fde_prop);
-      break;
-      
-    case CONTENT_AUDIO:
-      if(metadata == NULL)
-	break;
-
-      if((p = prop_get_by_names(metadata, "album", NULL)) == NULL ||
-	 prop_get_string(p, buf, sizeof(buf))) {
-	album_score--;
-	break;
-      }
-
-      if(album_name[0] == 0) {
-	snprintf(album_name, sizeof(album_name), "%s", buf);
-	album_score++;
-      } else if(!strcasecmp(album_name, buf)) {
-	album_score++;
-      } else {
-	album_score--;
-	break;
-      }
-      
-      if((p = prop_get_by_names(metadata, "artist", NULL)) == NULL ||
-	 prop_get_string(p, buf, sizeof(buf)))
-	break;
-
-      if(strstr(artist_name, buf))
-	break;
-
-      different_artists++;
-      snprintf(artist_name + strlen(artist_name),
-	       sizeof(artist_name) - strlen(artist_name),
-	       "%s%s", artist_name[0] ? ", " : "", buf);
-      break;
-
-    default:
-      album_score = INT32_MIN;
-      break;
-
-    }
-  }
-
-  if(do_album_view && album_score > 0 && 
-     (different_artists < 2 || different_artists < album_score / 2)) {
-      
-    /* It is an album */
-    prop_set_string(contents, "albumTracks");
-
-    if(root != NULL) {
-      prop_set_string(prop_create(root, "album_name"), album_name);
-
-      if(artist_name[0])
-	prop_set_string(prop_create(root, "artist_name"), artist_name);
-  
-      if(album_art[0])
-	prop_set_string(prop_create(root, "album_art"), album_art);
-    }
-
-    trackidx = 1;
-
-    /* Remove everything that is not audio */
-    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-      if(fde->fde_type != CONTENT_AUDIO) {
-	if(fde->fde_prop != NULL)
-	  prop_destroy(fde->fde_prop);
-
-      } else {
-	metadata = prop_create(fde->fde_prop, "metadata");
-	prop_set_int(prop_create(metadata, "trackindex"), trackidx);
-	trackidx++;
-
-	if(album_art[0])
-	  prop_set_string(prop_create(metadata, "album_art"), 
-			  album_art);
-      }
-    }
-  } else if(fd->fd_count == unknown) {
-    prop_set_string(contents, "empty");
-  } else if(images * 4 > fd->fd_count * 3) {
-    prop_set_string(contents, "images");
+    set_type(fde->fde_prop, fde->fde_type);
   }
 }
 
@@ -449,7 +335,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
     break;
   }
-  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
+  deep_analyzer(s);
 }
 
 
@@ -545,8 +431,7 @@ doscan(scanner_t *s)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
-    // TODO: reference leak?  prop_vec_append also adds 
-    pv = prop_vec_append(pv, prop_ref_inc(fde->fde_prop));
+    pv = prop_vec_append(pv, fde->fde_prop);
   }
 
   prop_set_parent_vector(pv, s->s_nodes);
@@ -563,7 +448,7 @@ doscan(scanner_t *s)
 
   prop_set_int(s->s_loading, 0);
 
-  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
+  deep_analyzer(s);
 
   if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
     return;

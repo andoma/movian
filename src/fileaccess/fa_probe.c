@@ -172,19 +172,35 @@ codecname(AVCodec *codec)
 static void
 metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 {
-  prop_t *p = prop_create(parent, NULL);
+  prop_t *p, *r = prop_create_check(parent, NULL);
+  if(r == NULL)
+    return;
 
-  prop_set_int(prop_create(p, "id"), ms->ms_streamindex);
 
-  if(ms->ms_codec != NULL)
-    prop_set_string(prop_create(p, "format"), codecname(ms->ms_codec));
+  if((p = prop_create_check(r, "id")) != NULL) {
+    prop_set_int(p, ms->ms_streamindex);
+    prop_ref_dec(p);
+  }
 
-  prop_set_rstring(prop_create(p, "longformat"), ms->ms_info);
+  if(ms->ms_codec != NULL && (p = prop_create_check(r, "format")) != NULL) {
+    prop_set_string(p, codecname(ms->ms_codec));
+    prop_ref_dec(p);
+  }
 
-  if(ms->ms_language)
-    prop_set_rstring(prop_create(p, "title"), ms->ms_language);
-  else
-    prop_set_stringf(prop_create(p, "title"), "Stream %d", ms->ms_streamindex);
+  if((p = prop_create_check(r, "longformat")) != NULL) {
+    prop_set_rstring(p, ms->ms_info);
+    prop_ref_dec(p);
+  }
+
+  if((p = prop_create_check(r, "title")) != NULL) {
+    if(ms->ms_language)
+      prop_set_rstring(p, ms->ms_language);
+    else
+      prop_set_stringf(p, "Stream %d", ms->ms_streamindex);
+    prop_ref_dec(p);
+  }
+
+  prop_ref_dec(r);
 }
 
 
@@ -721,54 +737,73 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
   if(md->md_redirect != NULL && newurl != NULL)
     av_strlcpy(newurl, md->md_redirect, newurlsize);
 
-  if(md->md_title)
-    prop_set_rstring(prop_create(proproot, "title"),  md->md_title);
+  if(md->md_title && (p = prop_create_check(proproot, "title")) != NULL) {
+    prop_set_rstring(p, md->md_title);
+    prop_ref_dec(p);
+  }
 
   if(md->md_artist) {
-    prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
-    p = prop_create(proproot, "artist_images");
-    if(p != NULL)
+    if((p = prop_create_check(proproot, "artist")) != NULL) {
+      prop_set_rstring(p, md->md_artist);
+      prop_ref_dec(p);
+    }
+
+    if((p = prop_create_check(proproot, "artist_images")) != NULL) {
       lastfm_artistpics_init(p, md->md_artist);
+      prop_ref_dec(p);
+    }
   }
 
-  if(md->md_album)
-    prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
-
-  if(md->md_artist != NULL && md->md_album != NULL) {
-    p = prop_create(proproot, "album_art");
-    if(p != NULL)
+  if(md->md_album) {
+    if((p = prop_create_check(proproot, "album")) != NULL) {
+      prop_set_rstring(p,  md->md_album);
+      prop_ref_dec(p);
+    }
+    
+    if(md->md_artist != NULL &&
+       (p = prop_create_check(proproot, "album_art")) != NULL) {
       lastfm_albumart_init(p, md->md_artist, md->md_album);
+      prop_ref_dec(p);
+    }
   }
-
 
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
 
-    prop_t *parent;
+    prop_t *p;
 
     switch(ms->ms_type) {
     case CODEC_TYPE_AUDIO:
-      parent = prop_create(proproot, "audiostreams");
+      p = prop_create_check(proproot, "audiostreams");
       break;
     case CODEC_TYPE_VIDEO:
-      parent = prop_create(proproot, "videostreams");
+      p = prop_create_check(proproot, "videostreams");
       break;
     case CODEC_TYPE_SUBTITLE:
-      parent = prop_create(proproot, "subtitlestreams");
+      p = prop_create_check(proproot, "subtitlestreams");
       break;
     default:
       continue;
     }
-    metadata_stream_make_prop(ms, parent);
+    if(p != NULL) {
+      metadata_stream_make_prop(ms, p);
+      prop_ref_dec(p);
+    }
   }
 
-  if(md->md_format)
-    prop_set_rstring(prop_create(proproot, "format"),  md->md_format);
+  if(md->md_format && (p = prop_create_check(proproot, "format")) != NULL) {
+    prop_set_rstring(p,  md->md_format);
+    prop_ref_dec(p);
+  }
 
-  if(md->md_duration)
-    prop_set_float(prop_create(proproot, "duration"),  md->md_duration);
+  if(md->md_duration && (p = prop_create_check(proproot, "duration")) != NULL) {
+    prop_set_float(p, md->md_duration);
+    prop_ref_dec(p);
+  }
 
-  if(md->md_tracks)
-    prop_set_int(prop_create(proproot, "tracks"),  md->md_tracks);
+  if(md->md_tracks && (p = prop_create_check(proproot, "tracks")) != NULL) {
+    prop_set_int(p,  md->md_tracks);
+    prop_ref_dec(p);
+  }
 
   return md->md_type;
 }
