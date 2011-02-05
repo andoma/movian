@@ -47,7 +47,7 @@ static void
 trace_prop(int l, const char *pfx, const char *msg, const char *sev)
 {
   trace_entry_t *te = malloc(sizeof(trace_entry_t));
-  te->p = prop_create(NULL, NULL);
+  te->p = prop_create_root(NULL);
 
   prop_set_string(prop_create(te->p, "prefix"), pfx);
   prop_set_string(prop_create(te->p, "message"), msg);

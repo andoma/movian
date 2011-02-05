@@ -441,7 +441,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
 
-  prop_t *item = prop_create(NULL, NULL);
+  prop_t *item = prop_create_root(NULL);
   prop_set_string(prop_create(item, "url"), url);
 
   *rval = JSVAL_VOID;
@@ -519,7 +519,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s/o", &type, &metaobj))
     return JS_FALSE;
 
-  item = prop_create(NULL, NULL);
+  item = prop_create_root(NULL);
 
   backend_prop_make(item, url, sizeof(url));
  

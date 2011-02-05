@@ -88,7 +88,7 @@ keyring_lookup(const char *id, char **username, char **password,
   if(query) {
     char buf[128];
 
-    prop_t *p = prop_create(NULL, NULL);
+    prop_t *p = prop_create_root(NULL);
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);

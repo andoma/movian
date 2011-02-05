@@ -102,7 +102,7 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
     fde->fde_probestatus = FDE_PROBE_DEEP;
 
-    fde->fde_metadata = prop_create(NULL, "metadata");
+    fde->fde_metadata = prop_create_root("metadata");
     prop_set_string(prop_create(fde->fde_metadata, "title"), title);
 
     if(err == NULL) {

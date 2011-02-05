@@ -225,7 +225,7 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
   ke->ke_action = a;
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
-  ke->ke_prop =  prop_create(NULL, NULL);
+  ke->ke_prop =  prop_create_root(NULL);
   src = prop_create(ke->ke_prop, "model");
 
   prop_set_string(prop_create(src, "type"), "keymapentry");

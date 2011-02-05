@@ -147,7 +147,7 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
   int r;
   prop_t *meta;
 
-  meta = prop_create(NULL, "metadata");
+  meta = prop_create_root("metadata");
 
   r = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs);
 

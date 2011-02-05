@@ -195,7 +195,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   ec.prop = prop;
   ec.prop_parent = prop_parent;
   ec.prop_args    = args;
-  v->viewprop = ec.prop_viewx = prop_create(NULL, NULL);
+  v->viewprop = ec.prop_viewx = prop_create_root(NULL);
   ec.sublist = &ec.w->glw_prop_subscriptions;
 
   if(glw_view_eval_block(t, &ec)) {

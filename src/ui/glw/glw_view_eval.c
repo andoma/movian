@@ -797,7 +797,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     n.gr = ec->gr;
     n.sublist = ec->sublist;
 
-    n.tgtprop = prop_create(NULL, NULL);
+    n.tgtprop = prop_create_root(NULL);
 
     if(glw_view_eval_block(b, &n))
       return -1;
@@ -1165,7 +1165,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   sc->sc_entries++;
 
-  c->c_clone_root = prop_create(NULL, NULL);
+  c->c_clone_root = prop_create_root(NULL);
 
   c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p);
   c->c_w->glw_clone = c;
@@ -1714,6 +1714,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_COURIER, w->glw_root->gr_courier,
 		       PROP_TAG_ROOT, prop,
 		       NULL);
+    // prop came from self->t_prop which we are going to overwrite
+    // (since we are changing type of this token) so release our reference
+    prop_ref_dec(prop);
 
   } else {
 
@@ -3647,7 +3650,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     if(be->p)
       prop_destroy(be->p);
 
-    be->p = prop_create(NULL, NULL);
+    be->p = prop_create_root(NULL);
 
     if(backend_open(be->p, rstr_get(url))) {
       prop_destroy(be->p);
@@ -4022,7 +4025,7 @@ glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
     prop_grouper_destroy(self->t_extra);
 
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-  r->t_prop = prop_ref_inc(prop_create(NULL, NULL));
+  r->t_prop = prop_ref_inc(prop_create_root(NULL));
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
 
@@ -4066,13 +4069,13 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
     prop_nf_release(self->t_extra);
 
   r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
-  r->t_prop = prop_ref_inc(prop_create(NULL, NULL));
+  r->t_prop = prop_ref_inc(prop_create_root(NULL));
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   eval_push(ec, r);
 
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 rstr_get(b->t_rstring),
-				 PROP_GROUPER_TAKE_DST_OWNERSHIP);
+				 PROP_NF_TAKE_DST_OWNERSHIP);
   return 0;
 }
 

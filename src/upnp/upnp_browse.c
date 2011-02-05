@@ -150,7 +150,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 
   url = htsmsg_get_str_multi(item, "res", "cdata", NULL);
 
-  prop_t *c = prop_create(NULL, NULL);
+  prop_t *c = prop_create_root(NULL);
   prop_set_string(prop_create(c, "url"), url);
 		  
 
@@ -195,7 +195,7 @@ add_container(htsmsg_t *item, prop_t *root, const char *baseurl,
 
   snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
-  prop_t *c = prop_create(NULL, NULL);
+  prop_t *c = prop_create_root(NULL);
   prop_set_string(prop_create(c, "url"), url);
 
   prop_t *m = prop_create(c, "metadata");
