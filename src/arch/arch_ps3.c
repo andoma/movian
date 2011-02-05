@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <malloc.h>
 
 #include <netinet/in.h>
 #include <net/net.h>
@@ -61,13 +62,24 @@ memlogger_fn(callout_t *co, void *aux)
 
   Lv2Syscall1(352, (uint64_t) &meminfo);
 
-  TRACE(TRACE_INFO, "MEM", "r = %d %d", meminfo.total, meminfo.avail);
+  TRACE(TRACE_INFO, "MEM-LV2", "Total = %d kB, Alloced = %d kB",
+	meminfo.total / 1024, (meminfo.total - meminfo.avail) / 1024);
+
+  struct mallinfo info;
+  info = mallinfo();
+
+  TRACE(TRACE_INFO, "LIBC", "Arena = %d kB, Alloced = %d kB, Non Inuse = %d kB",
+	info.arena / 1024, info.uordblks / 1024, info.fordblks / 1024);
+
 }
 
 
 void
 arch_init(void)
 {
+  extern int trace_level;
+
+  trace_level = TRACE_DEBUG;
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 }
 
