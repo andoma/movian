@@ -400,12 +400,18 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       continue;
       
     case RS_P_CENTER_ON:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 1;
       center = 1;
       continue;
 
     case RS_P_CENTER_OFF:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 0;
       center = 0;
       continue;
 
@@ -478,6 +484,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
+	  lix->center = 0;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
