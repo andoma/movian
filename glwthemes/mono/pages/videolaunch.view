@@ -36,11 +36,6 @@ widget(container_y, {
       .filterConstraintX = true;
 
       widget(label, {
-	.caption = $page.model.metadata.title + " (" + $page.model.metadata.year + ")";
-	.sizeScale = 2;
-      });
-
-      widget(label, {
 	.caption = $page.model.metadata.genre;
       });
 
