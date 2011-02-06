@@ -574,17 +574,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_width  = target_width;
   gtbd->gtbd_height = target_height;
 
-#if 0
   if(debug) {
-    for(i = 0; i < target_height / 2; i+=3)
-      memset(data + i * linesize, 0xcc, linesize);
-    for(;i < target_height; i++) {
-      int x;
-      for(x = 0; x < target_width; x+= 3)
-	data[i * linesize + x] = 0xcc;
-    }
+    for(i = 0; i < target_height; i+=3)
+      memset(data + i * gtbd->gtbd_linesize, 0xff, gtbd->gtbd_linesize);
   }
-#endif
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
