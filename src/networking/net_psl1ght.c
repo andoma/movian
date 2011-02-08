@@ -25,10 +25,10 @@
 #include <string.h>
 #include <stdarg.h>
 #include <fcntl.h>
-#include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/net.h>
+#include <errno.h>
 
 #include "showtime.h"
 #include "net.h"
@@ -105,9 +105,9 @@ static int
 tcp_write(tcpcon_t *tc, const void *data, size_t len)
 {
 #ifdef MSG_NOSIGNAL
-  return send(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
+  return netSend(tc->fd, data, len, MSG_NOSIGNAL) != len ? ECONNRESET : 0;
 #else
-  return send(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
+  return netSend(tc->fd, data, len, 0           ) != len ? ECONNRESET : 0;
 #endif
 }
 
@@ -122,7 +122,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   size_t off = 0;
   while(1) {
 
-    x = recv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
+    x = netRecv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
     if(x <= 0)
       return -1;
     
@@ -147,10 +147,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
   int fd, optval;
 
-  fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
-  if(fd == -1) {
+  fd = netSocket(family, SOCK_STREAM, IPPROTO_TCP);
+  if(fd < 0) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
-	     strerror(errno));
+	     strerror(net_errno));
     return -1;  
   }
 
@@ -158,25 +158,14 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
    * Switch to nonblocking
    */
   optval = 1;
-  int r = setsockopt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  int r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
   if(r < 0) {
     snprintf(errbuf, errbufsize, "Unable to go nonblocking: %s",
-	     strerror(errno));
-    close(fd);
+	     strerror(net_errno));
+    netClose(fd);
     return -1;
   }
 
-
-  /* Darwin send() does not have MSG_NOSIGNAL, but has SO_NOSIGPIPE sockopt */
-#ifdef SO_NOSIGPIPE
-  int val = 1;
-  if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, sizeof(val)) == -1) {
-    snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
-	     strerror(errno));
-    close(fd);
-    return -1; 
-  } 
-#endif
   return fd;
 }
 
@@ -187,7 +176,7 @@ tcpcon_t *
 tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 	    int timeout, int ssl)
 {
-  struct hostent *hp;
+  struct net_hostent *hp;
   char *tmphstbuf;
   int fd, r, err, herr, optval;
   const char *errtxt;
@@ -203,12 +192,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     in.sin_family = AF_INET;
     in.sin_port = htons(port);
     in.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+    r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
   } else {
 
     herr = 0;
     tmphstbuf = NULL; /* free NULL is a nop */
-    hp = gethostbyname(hostname);
+    hp = netGetHostByName(hostname);
     if(hp == NULL)
       herr = h_errno;
 
@@ -254,8 +243,9 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       memset(&in, 0, sizeof(in));
       in.sin_family = AF_INET;
       in.sin_port = htons(port);
-      memcpy(&in.sin_addr, hp->h_addr_list[0], sizeof(struct in_addr));
-      r = connect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
+      lv2_void* netaddrlist = (lv2_void*)(u64)hp->h_addr_list;
+      memcpy(&in.sin_addr, (char*)(u64)netaddrlist[0], sizeof(struct in_addr));
+      r = netConnect(fd, (struct sockaddr *)&in, sizeof(struct sockaddr_in));
       break;
 
     default:
@@ -267,43 +257,41 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     free(tmphstbuf);
   }
 
-  if(r == -1) {
-    if(errno == NET_EINPROGRESS) {
-
-#define FD(socket) (socket & ~SOCKET_FD_MASK)
+  if(r < 0) {
+    if(net_errno == NET_EINPROGRESS) {
 
       net_fd_set wfds;
       struct timeval tv;
 
-      if(FD(fd) >= sizeof(net_fd_set) * 8) {
+      if(fd >= sizeof(net_fd_set) * 8) {
 	snprintf(errbuf, errbufsize, "Too big FD (%d > %ld)",
-		 FD(fd), sizeof(net_fd_set) * 8);
-	close(fd);
+		 fd, sizeof(net_fd_set) * 8);
+	netClose(fd);
 	return NULL;
       }
       memset(&wfds, 0, sizeof(wfds));
-      FD_SET(FD(fd), &wfds);
+      FD_SET(fd, &wfds);
 
       tv.tv_sec = timeout / 1000;
       tv.tv_usec = (timeout % 1000) * 1000;
-
-      r = select(FD(fd) + 1, NULL, (void *)&wfds, NULL, (void *)&tv);
+      r = netSelect(fd + 1, NULL, (void *)&wfds, NULL, (void *)&tv);
       if(r == 0) {
 	/* Timeout */
 	snprintf(errbuf, errbufsize, "Connection attempt timed out");
-	close(fd);
+	netClose(fd);
 	return NULL;
       }
       
       if(r == -1) {
-	snprintf(errbuf, errbufsize, "select() error: %s", strerror(errno));
-	close(fd);
+	snprintf(errbuf, errbufsize, "select() error: %s", 
+		 strerror(net_errno));
+	netClose(fd);
 	return NULL;
       }
 
-      getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
+      netGetSockOpt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
     } else {
-      err = errno;
+      err = net_errno;
     }
   } else {
     err = 0;
@@ -311,16 +299,16 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   if(err != 0) {
     snprintf(errbuf, errbufsize, "%s", strerror(err));
-    close(fd);
+    netClose(fd);
     return NULL;
   }
   
   optval = 0;
-  r = setsockopt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
   if(r < 0) {
     snprintf(errbuf, errbufsize, "Unable to go blocking: %s",
-	     strerror(errno));
-    close(fd);
+	     strerror(net_errno));
+    netClose(fd);
     return NULL;
   }
 
@@ -385,7 +373,7 @@ tcp_close(tcpcon_t *tc)
     SSL_free(tc->ssl);
   }
 #endif
-  close(tc->fd);
+  netClose(tc->fd);
   free(tc);
 }
 
