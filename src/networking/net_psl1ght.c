@@ -28,6 +28,7 @@
 #include <errno.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/net.h>
 
 #include "showtime.h"
 #include "net.h"
@@ -144,13 +145,27 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
-  int fd;
-  fd = socket(family, SOCK_STREAM, 0);
+  int fd, optval;
+
+  fd = socket(family, SOCK_STREAM, IPPROTO_TCP);
   if(fd == -1) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
 	     strerror(errno));
     return -1;  
   }
+
+  /**
+   * Switch to nonblocking
+   */
+  optval = 1;
+  int r = setsockopt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  if(r < 0) {
+    snprintf(errbuf, errbufsize, "Unable to go nonblocking: %s",
+	     strerror(errno));
+    close(fd);
+    return -1;
+  }
+
 
   /* Darwin send() does not have MSG_NOSIGNAL, but has SO_NOSIGPIPE sockopt */
 #ifdef SO_NOSIGPIPE
@@ -174,7 +189,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 {
   struct hostent *hp;
   char *tmphstbuf;
-  int fd, r, err, herr;
+  int fd, r, err, herr, optval;
   const char *errtxt;
   struct sockaddr_in in;
   socklen_t errlen = sizeof(int);
@@ -251,16 +266,28 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
     free(tmphstbuf);
   }
+
   if(r == -1) {
-    if(errno == EINPROGRESS) {
-#if 0
-      struct pollfd pfd;
+    if(errno == NET_EINPROGRESS) {
 
-      pfd.fd = fd;
-      pfd.events = POLLOUT;
-      pfd.revents = 0;
+#define FD(socket) (socket & ~SOCKET_FD_MASK)
 
-      r = poll(&pfd, 1, timeout);
+      net_fd_set wfds;
+      struct timeval tv;
+
+      if(FD(fd) >= sizeof(net_fd_set) * 8) {
+	snprintf(errbuf, errbufsize, "Too big FD (%d > %ld)",
+		 FD(fd), sizeof(net_fd_set) * 8);
+	close(fd);
+	return NULL;
+      }
+      memset(&wfds, 0, sizeof(wfds));
+      FD_SET(FD(fd), &wfds);
+
+      tv.tv_sec = timeout / 1000;
+      tv.tv_usec = (timeout % 1000) * 1000;
+
+      r = select(FD(fd) + 1, NULL, (void *)&wfds, NULL, (void *)&tv);
       if(r == 0) {
 	/* Timeout */
 	snprintf(errbuf, errbufsize, "Connection attempt timed out");
@@ -269,11 +296,10 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       }
       
       if(r == -1) {
-	snprintf(errbuf, errbufsize, "poll() error: %s", strerror(errno));
+	snprintf(errbuf, errbufsize, "select() error: %s", strerror(errno));
 	close(fd);
 	return NULL;
       }
-#endif
 
       getsockopt(fd, SOL_SOCKET, SO_ERROR, (void *)&err, &errlen);
     } else {
@@ -289,6 +315,15 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
     return NULL;
   }
   
+  optval = 0;
+  r = setsockopt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  if(r < 0) {
+    snprintf(errbuf, errbufsize, "Unable to go blocking: %s",
+	     strerror(errno));
+    close(fd);
+    return NULL;
+  }
+
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
 
