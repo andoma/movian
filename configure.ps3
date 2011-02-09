@@ -41,6 +41,9 @@ done
 setup_env "$@"
 
 
+enable spidermonkey
+enable trex
+enable emu_thread_specifics
 enable glw_frontend_ps3
 enable glw_backend_rsx
 enable glw

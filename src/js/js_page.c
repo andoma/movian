@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/types.h>
 #include <assert.h>
 #include <string.h>
 #include "js.h"
@@ -917,7 +918,8 @@ model_launch(js_model_t *jm)
 {
   jm->jm_pc = prop_courier_create_waitable();
 
-  hts_thread_create_detached("jsmodel", js_open_trampoline, jm);
+  hts_thread_create_detached("jsmodel", js_open_trampoline, jm,
+			     THREAD_PRIO_NORMAL);
   prop_set_int(jm->jm_loading, 1);
 }
 

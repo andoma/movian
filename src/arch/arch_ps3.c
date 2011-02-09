@@ -79,6 +79,10 @@ arch_init(void)
 {
   extern int trace_level;
 
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_key_init();
+#endif
+
   trace_level = TRACE_DEBUG;
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 }
@@ -91,29 +95,62 @@ arch_exit(int retcode)
 }
 
 
+
+typedef struct {
+  void *aux;
+  void *(*fn)(void *);
+
+} thread_aux_t;
+
+
+
+static void *
+thread_trampoline(void *aux)
+{
+  thread_aux_t *ta = aux;
+  void *r = ta->fn(ta->aux);
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_exit_specific();
+#endif
+  free(ta);
+  return r;
+}
+
+
+static void
+start_thread(const char *name, hts_thread_t *p,
+	     void *(*fn)(void *), void *aux,
+	     int prio, int flags)
+{
+  thread_aux_t *ta = malloc(sizeof(thread_aux_t));
+  ta->fn = fn;
+  ta->aux = aux;
+  s32 r = sys_ppu_thread_create(p, (void *)thread_trampoline, (intptr_t)ta,
+				prio, 65536, flags, (char *)name);
+  if(r) {
+    my_trace("Failed to create thread %s: error: 0x%x", name, r);
+    exit(0);
+  }
+
+}
+
+
+
+
 void
 hts_thread_create_detached(const char *name, void *(*fn)(void *), void *aux,
 			   int prio)
 {
   hts_thread_t tid;
-  s32 r = sys_ppu_thread_create(&tid, (void *)fn, (intptr_t)aux, prio, 65536, 0,
-				(char *)name);
-  if(r) {
-    my_trace("Failed to create thread %s: error: 0x%x", name, r);
-    exit(0);
-  }
+  start_thread(name, &tid, fn, aux, prio, 0);
 }
+
 
 void
 hts_thread_create_joinable(const char *name, hts_thread_t *p,
 			   void *(*fn)(void *), void *aux, int prio)
 {
-  s32 r = sys_ppu_thread_create(p, (void *)fn, (intptr_t)aux, prio, 65536,
-			THREAD_JOINABLE, (char *)name);
-  if(r) {
-    my_trace("Failed to create thread %s: error: 0x%x", name, r);
-    exit(0);
-  }
+  start_thread(name, p, fn, aux, prio, THREAD_JOINABLE);
 }
 
 
