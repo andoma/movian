@@ -62,6 +62,7 @@ typedef struct glw_text_bitmap_data {
   int16_t gtbd_linesize;
   uint8_t gtbd_bpp;
   uint8_t gtbd_ellipsized;
+  uint8_t gtbd_wrapped;
 
   int *gtbd_cursor_pos;
   int16_t gtbd_lines;
@@ -346,6 +347,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   pos_t *pos;
 
   gtbd->gtbd_ellipsized = 0;
+  gtbd->gtbd_wrapped = 0;
 
   max_width *= 64;
 
@@ -400,12 +402,18 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       continue;
       
     case RS_P_CENTER_ON:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 1;
       center = 1;
       continue;
 
     case RS_P_CENTER_OFF:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 0;
       center = 0;
       continue;
 
@@ -478,8 +486,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
+	  lix->center = 0;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
+
+	  gtbd->gtbd_wrapped = 1;
 
 	  k--;
 	  w2 -= pos[li->start + k].adv_x + 
@@ -567,17 +578,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_width  = target_width;
   gtbd->gtbd_height = target_height;
 
-#if 0
   if(debug) {
-    for(i = 0; i < target_height / 2; i+=3)
-      memset(data + i * linesize, 0xcc, linesize);
-    for(;i < target_height; i++) {
-      int x;
-      for(x = 0; x < target_width; x+= 3)
-	data[i * linesize + x] = 0xcc;
-    }
+    for(i = 0; i < target_height; i+=3)
+      memset(data + i * gtbd->gtbd_linesize, 0xff, gtbd->gtbd_linesize);
   }
-#endif
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
@@ -719,18 +723,24 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   if(gtb->gtb_saved_width  != rc->rc_width || 
      gtb->gtb_saved_height != rc->rc_height) {
 
-    if(gtb->gtb_status == GTB_VALID && gtb->gtb_flags & GTB_ELLIPSIZE) {
-      
-      if(gtbd->gtbd_ellipsized) {
+    if(gtb->gtb_status == GTB_VALID) {
+
+      if(gtbd->gtbd_wrapped)
 	gtb->gtb_status = GTB_NEED_RERENDER;
-      } else {
-	if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
-	   gtbd->gtbd_width)
-	  gtb->gtb_status = GTB_NEED_RERENDER;
+
+      if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
-	if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
-	   gtbd->gtbd_height)
+	if(gtbd->gtbd_ellipsized) {
 	  gtb->gtb_status = GTB_NEED_RERENDER;
+	} else {
+	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
+	     gtbd->gtbd_width)
+	    gtb->gtb_status = GTB_NEED_RERENDER;
+
+	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
+	     gtbd->gtbd_height)
+	    gtb->gtb_status = GTB_NEED_RERENDER;
+	}
       }
     }
 

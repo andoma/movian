@@ -108,6 +108,10 @@ static int decorate_trace;
 void
 arch_init(void)
 {
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_key_init();
+#endif
+
   setlocale(LC_ALL, "");
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
@@ -278,6 +282,10 @@ thread_trampoline(void *aux)
   free(t->title);
 
   r = t->func(t->aux);
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_exit_specific();
+#endif
+
   free(t);
   return r;
 }

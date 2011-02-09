@@ -66,6 +66,8 @@ ifeq ($(PLATFORM), osx)
 SRCS += src/arch/darwin.c
 endif
 
+SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
+
 #
 # Misc support
 #
@@ -78,6 +80,8 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/string.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
+
+SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
 #
 # HTSMSG

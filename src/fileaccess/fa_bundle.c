@@ -18,7 +18,6 @@
 
 #include "config.h"
 #include <sys/stat.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
@@ -159,6 +158,132 @@ b_fsize(fa_handle_t *handle)
 }
 
 
+/**
+ *
+ */
+static int
+b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+{
+  fa_dir_entry_t *fde;
+  struct filebundle *fb;
+  char buf[PATH_MAX];
+  char buf2[PATH_MAX];
+  const struct filebundle_entry *fbe;
+  const char *u, *u2;
+  char *s;
+  int ok = 0;
+
+  if(*url == 0) {
+    if(fd != NULL) {
+      for(fb = filebundles; fb != NULL; fb = fb->next) {
+	snprintf(buf2, sizeof(buf2), "%s", fb->prefix);
+	if((s = strchr(buf2, '/')) != NULL)
+	  *s = 0;
+      
+	TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+	  if(!strcmp(fde->fde_filename, buf2))
+	    break;
+	if(fde != NULL)
+	  continue;
+
+	snprintf(buf, sizeof(buf), "bundle://%s", buf2);
+	fa_dir_add(fd, buf, buf2, CONTENT_DIR);
+      }
+    }
+    return 0;
+  }
+
+  for(fb = filebundles; fb != NULL; fb = fb->next) {
+
+    if(!strncmp(url, fb->prefix, strlen(url))) {
+
+      if(fb->prefix[strlen(url)] == '/') {
+	if(fd != NULL) {
+	  int len = strlen(url)+1;
+	  snprintf(buf2, sizeof(buf2), "%s", fb->prefix + len);
+	  if((s = strchr(buf2, '/')) != NULL)
+	    *s = 0;
+
+	  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+	    if(!strcmp(fde->fde_filename, buf2))
+	      break;
+	  if(fde != NULL)
+	    continue;
+
+	  snprintf(buf, sizeof(buf), "bundle://%.*s%s", len, fb->prefix, buf2);
+	  fa_dir_add(fd, buf, buf2, CONTENT_DIR);
+	}
+	ok = 1;
+	continue;
+      } else {
+
+	ok = 1;
+
+	if(fd == NULL)
+	  continue;
+
+	for(fbe = fb->entries; fbe->filename != NULL; fbe++) {
+	  snprintf(buf2, sizeof(buf2), "%s", fbe->filename);
+	  if((s = strchr(buf2, '/')) != NULL) {
+	    *s = 0;
+
+	    fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
+	    if(fde != NULL && !strcmp(fde->fde_filename, buf2))
+	      continue;
+	    snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix, buf2);
+	  } else {
+	    snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix,
+		     fbe->filename);
+	  }
+	  fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
+	}
+      }
+
+    } else if(!strncmp(url, fb->prefix, strlen(fb->prefix))) {
+
+      u = url + strlen(fb->prefix);
+      if(*u != '/')
+	continue;
+      u++;
+
+      for(fbe = fb->entries; fbe->filename != NULL; fbe++) {
+	if(strncmp(u, fbe->filename, strlen(u)))
+	  continue;
+	u2 = fbe->filename + strlen(u);
+	if(*u2 != '/')
+	  continue;
+	ok = 1;
+	u2++;
+	
+	if(fd == NULL)
+	  continue;
+
+	snprintf(buf2, sizeof(buf2), "%s", u2);
+	if((s = strchr(buf2, '/')) != NULL) {
+	  *s = 0;
+
+	  fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
+	  if(fde != NULL && !strcmp(fde->fde_filename, buf2))
+	    continue;
+	  
+	  snprintf(buf, sizeof(buf), "bundle://%s/%.*s/%s", fb->prefix,
+		   (int)strlen(u), fbe->filename, buf2);
+	} else {
+	  snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix,
+		   fbe->filename);
+	}
+	printf("Adding URL %s\n", buf);
+	fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
+      }
+    }
+  }
+
+  if(!ok)
+    snprintf(errbuf, errlen, "No such directory");
+  return !ok;
+}
+
+
 
 /**
  * Standard unix stat
@@ -167,26 +292,27 @@ static int
 b_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
        char *errbuf, size_t errlen, int non_interactive)
 {
-  fa_handle_t *handle;
-  fa_bundle_fh_t *fh;
-
-  if((handle = b_open(fap, url, errbuf, errlen)) == NULL)
-    return FAP_STAT_ERR;
- 
-  fh = (fa_bundle_fh_t *)handle;
+  const struct filebundle_entry *fbe;
 
   memset(fs, 0, sizeof(struct fa_stat));
-  fs->fs_type = CONTENT_FILE;
-  fs->fs_size = fh->size;
-  
-  free(fh);
+
+  if((fbe = resolve_file(url)) != NULL) {
+    fs->fs_type = CONTENT_FILE;
+    fs->fs_size = fbe->size;
+    return FAP_STAT_OK;
+  }
+
+  if(b_scandir(NULL, url, errbuf, errlen))
+    return FAP_STAT_ERR;
+
+  fs->fs_type = CONTENT_DIR;
   return FAP_STAT_OK;
 }
 
 
 static fa_protocol_t fa_protocol_bundle = {
   .fap_name  = "bundle",
-  .fap_scan  = NULL,
+  .fap_scan  = b_scandir,
   .fap_open  = b_open,
   .fap_close = b_close,
   .fap_read  = b_read,

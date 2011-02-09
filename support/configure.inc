@@ -75,6 +75,8 @@ CONFIG_LIST="
  timegm
  inotify
  realpath
+ trex
+ emu_thread_specifics
 "
 
 die() {
