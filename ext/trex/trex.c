@@ -11,7 +11,7 @@
 #define scprintf wprintf
 #define _SC(x) L(x)
 #else
-#define scisprint isprint
+#define scisprint(x) isprint((int)(x))
 #define scstrlen strlen
 #define scprintf printf
 #define _SC(x) (x)
@@ -224,7 +224,7 @@ static int trex_parsenumber(TRex *exp)
 	int ret = *exp->_p-'0';
 	int positions = 10;
 	exp->_p++;
-	while(isdigit(*exp->_p)) {
+	while(isdigit((int)*exp->_p)) {
 		ret = ret*10+(*exp->_p++-'0');
 		if(positions==1000000000) trex_error(exp,_SC("overflow in numeric constant"));
 		positions *= 10;
@@ -277,7 +277,7 @@ static int trex_element(TRex *exp)
 			case TREX_SYMBOL_GREEDY_ZERO_OR_ONE: p0 = 0; p1 = 1; exp->_p++; isgreedy = TRex_True; break;
 			case '{':
 				exp->_p++;
-				if(!isdigit(*exp->_p)) trex_error(exp,_SC("number expected"));
+				if(!isdigit((int)*exp->_p)) trex_error(exp,_SC("number expected"));
 				p0 = (unsigned short)trex_parsenumber(exp);
 				/*******************************/
 				switch(*exp->_p) {
@@ -287,7 +287,7 @@ static int trex_element(TRex *exp)
 			case ',':
 				exp->_p++;
 				p1 = 0xFFFF;
-				if(isdigit(*exp->_p)){
+				if(isdigit((int)*exp->_p)){
 					p1 = (unsigned short)trex_parsenumber(exp);
 				}
 				trex_expect(exp,'}');
@@ -344,22 +344,22 @@ static int trex_list(TRex *exp)
 static TRexBool trex_matchcclass(int cclass,TRexChar c)
 {
 	switch(cclass) {
-	case 'a': return isalpha(c)?TRex_True:TRex_False;
-	case 'A': return !isalpha(c)?TRex_True:TRex_False;
-	case 'w': return (isalnum(c) || c == '_')?TRex_True:TRex_False;
-	case 'W': return (!isalnum(c) && c != '_')?TRex_True:TRex_False;
-	case 's': return isspace(c)?TRex_True:TRex_False;
-	case 'S': return !isspace(c)?TRex_True:TRex_False;
-	case 'd': return isdigit(c)?TRex_True:TRex_False;
-	case 'D': return !isdigit(c)?TRex_True:TRex_False;
-	case 'x': return isxdigit(c)?TRex_True:TRex_False;
-	case 'X': return !isxdigit(c)?TRex_True:TRex_False;
-	case 'c': return iscntrl(c)?TRex_True:TRex_False;
-	case 'C': return !iscntrl(c)?TRex_True:TRex_False;
-	case 'p': return ispunct(c)?TRex_True:TRex_False;
-	case 'P': return !ispunct(c)?TRex_True:TRex_False;
-	case 'l': return islower(c)?TRex_True:TRex_False;
-	case 'u': return isupper(c)?TRex_True:TRex_False;
+	case 'a': return isalpha((int)c)?TRex_True:TRex_False;
+	case 'A': return !isalpha((int)c)?TRex_True:TRex_False;
+	case 'w': return (isalnum((int)c) || c == '_')?TRex_True:TRex_False;
+	case 'W': return (!isalnum((int)c) && c != '_')?TRex_True:TRex_False;
+	case 's': return isspace((int)c)?TRex_True:TRex_False;
+	case 'S': return !isspace((int)c)?TRex_True:TRex_False;
+	case 'd': return isdigit((int)c)?TRex_True:TRex_False;
+	case 'D': return !isdigit((int)c)?TRex_True:TRex_False;
+	case 'x': return isxdigit((int)c)?TRex_True:TRex_False;
+	case 'X': return !isxdigit((int)c)?TRex_True:TRex_False;
+	case 'c': return iscntrl((int)c)?TRex_True:TRex_False;
+	case 'C': return !iscntrl((int)c)?TRex_True:TRex_False;
+	case 'p': return ispunct((int)c)?TRex_True:TRex_False;
+	case 'P': return !ispunct((int)c)?TRex_True:TRex_False;
+	case 'l': return islower((int)c)?TRex_True:TRex_False;
+	case 'u': return isupper((int)c)?TRex_True:TRex_False;
 	}
 	return TRex_False; /*cannot happen*/
 }
@@ -488,10 +488,10 @@ static const TRexChar *trex_matchnode(TRex* exp,TRexNode *node,const TRexChar *s
 			return cur;
 	}				 
 	case OP_WB:
-		if((str == exp->_bol && !isspace(*str))
-		 || (str == exp->_eol && !isspace(*(str-1)))
-		 || (!isspace(*str) && isspace(*(str+1)))
-		 || (isspace(*str) && !isspace(*(str+1))) ) {
+		if((str == exp->_bol && !isspace((int)*str))
+		 || (str == exp->_eol && !isspace((int)*(str-1)))
+		 || (!isspace((int)*str) && isspace((int)*(str+1)))
+		 || (isspace((int)*str) && !isspace((int)*(str+1))) ) {
 			return (node->left == 'b')?str:NULL;
 		}
 		return (node->left == 'b')?NULL:str;
