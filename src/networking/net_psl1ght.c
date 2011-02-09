@@ -260,21 +260,12 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   if(r < 0) {
     if(net_errno == NET_EINPROGRESS) {
 
-      net_fd_set wfds;
-      struct timeval tv;
+      struct pollfd pfd;
+      pfd.fd = fd;
+      pfd.events = POLLOUT;
+      pfd.revents = 0;
 
-      if(fd >= sizeof(net_fd_set) * 8) {
-	snprintf(errbuf, errbufsize, "Too big FD (%d > %ld)",
-		 fd, sizeof(net_fd_set) * 8);
-	netClose(fd);
-	return NULL;
-      }
-      memset(&wfds, 0, sizeof(wfds));
-      FD_SET(fd, &wfds);
-
-      tv.tv_sec = timeout / 1000;
-      tv.tv_usec = (timeout % 1000) * 1000;
-      r = netSelect(fd + 1, NULL, (void *)&wfds, NULL, (void *)&tv);
+      r = netPoll(&pfd, 1, timeout);
       if(r == 0) {
 	/* Timeout */
 	snprintf(errbuf, errbufsize, "Connection attempt timed out");
@@ -283,7 +274,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       }
       
       if(r == -1) {
-	snprintf(errbuf, errbufsize, "select() error: %s", 
+	snprintf(errbuf, errbufsize, "poll() error: %s", 
 		 strerror(net_errno));
 	netClose(fd);
 	return NULL;
