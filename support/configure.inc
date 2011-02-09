@@ -73,6 +73,7 @@ CONFIG_LIST="
  inotify
  realpath
  trex
+ emu_thread_specifics
 "
 
 die() {

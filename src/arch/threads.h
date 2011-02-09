@@ -61,13 +61,15 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *,
 #define hts_thread_join(t)                  pthread_join(*(t), NULL)
 #define hts_thread_current()                pthread_self()
 
+#if !ENABLE_EMU_THREAD_SPECIFICS
+
 #define hts_thread_key_create(k, f) pthread_key_create((pthread_key_t *)k, f)
 #define hts_thread_key_delete(k)    pthread_key_delete(k)
 
 #define hts_thread_set_specific(k, p) pthread_setspecific(k, p)
 #define hts_thread_get_specific(k)    pthread_getspecific(k)
 
-
+#endif
 
 
 #elif CONFIG_LIBOGC
@@ -127,5 +129,17 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #endif
 
+
+
+#if ENABLE_EMU_THREAD_SPECIFICS
+
+extern void hts_thread_key_init(void);
+extern int hts_thread_key_create(unsigned int *k, void (*destrutor)(void *));
+extern int hts_thread_key_delete(unsigned int k);
+extern int hts_thread_set_specific(unsigned int k, void *p);
+extern void *hts_thread_get_specific(unsigned int k);
+extern void hts_thread_exit_specific(void);
+
+#endif
 
 #endif /* HTSTHREADS_H__ */
