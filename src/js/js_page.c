@@ -18,7 +18,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <regex.h>
 #include "js.h"
 
 
@@ -27,6 +26,7 @@
 #include "backend/search.h"
 #include "navigator.h"
 #include "misc/string.h"
+#include "misc/regex.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"
 
@@ -44,7 +44,7 @@ typedef struct js_route {
   LIST_ENTRY(js_route) jsr_global_link;
   LIST_ENTRY(js_route) jsr_plugin_link;
   char *jsr_pattern;
-  regex_t jsr_regex;
+  hts_regex_t jsr_regex;
   jsval jsr_openfunc;
   int jsr_prio;
 } js_route_t;
@@ -928,14 +928,14 @@ int
 js_backend_open(prop_t *page, const char *url)
 {
   js_route_t *jsr;
-  regmatch_t matches[8];
+  hts_regmatch_t matches[8];
   int i;
   js_model_t *jm;
   prop_t *model;
 
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
     if(jsr->jsr_jsp->jsp_enable_uri_routing &&
-       !regexec(&jsr->jsr_regex, url, 8, matches, 0))
+       !hts_regexec(&jsr->jsr_regex, url, 8, matches, 0))
       break;
 
   if(jsr == NULL)
@@ -1031,7 +1031,7 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
   
   jsr = calloc(1, sizeof(js_route_t));
   jsr->jsr_jsp = jsp;
-  if(regcomp(&jsr->jsr_regex, str, REG_EXTENDED | REG_ICASE)) {
+  if(hts_regcomp(&jsr->jsr_regex, str)) {
     free(jsr);
     JS_ReportError(cx, "Invalid regular expression");
     return JS_FALSE;
@@ -1097,7 +1097,7 @@ js_route_delete(JSContext *cx, js_route_t *jsr)
   LIST_REMOVE(jsr, jsr_global_link);
   LIST_REMOVE(jsr, jsr_plugin_link);
 
-  regfree(&jsr->jsr_regex);
+  hts_regfree(&jsr->jsr_regex);
 
   free(jsr->jsr_pattern);
   free(jsr);

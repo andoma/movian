@@ -72,6 +72,7 @@ CONFIG_LIST="
  timegm
  inotify
  realpath
+ trex
 "
 
 die() {
