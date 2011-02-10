@@ -2255,14 +2255,18 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
  if(event != PROP_DESTROYED)
    return;
 
-  f_sp_playlist_release(pl->pl_playlist);
-
   if(pl->pl_node_sub) {
+    f_sp_playlist_remove_callbacks(pl->pl_playlist,
+				   &pl_callbacks_withtracks, pl);
     int i;
     prop_unsubscribe(pl->pl_node_sub);
     for(i = 0; i < pl->pl_tracks.size; i++)
       free(pl->pl_tracks.vec[i]);
+  } else {
+    f_sp_playlist_remove_callbacks(pl->pl_playlist, &pl_callbacks, pl);
   }
+
+  f_sp_playlist_release(pl->pl_playlist);
 
   prop_unsubscribe(pl->pl_destroy_sub);
 
