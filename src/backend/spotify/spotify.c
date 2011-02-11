@@ -792,12 +792,7 @@ spotify_play_track_try(void)
   spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
   play_position = 0;
 
-  if((err = f_sp_session_player_play(spotify_session, 1))) {
-    snprintf(su->su_errbuf, su->su_errlen, "Unable to play track:\n%s",
-	     f_sp_error_message(err));
-    spotify_uri_return(su, 1);
-    return;
-  }
+  f_sp_session_player_play(spotify_session, 1);
 
   su_playing = su;
   spotify_uri_return(su, 0);
@@ -3155,7 +3150,7 @@ spotify_thread(void *aux)
 	mp_flush(spotify_mp, 0);
 	
 	seek_pos = sm->sm_int;
-	error = f_sp_session_player_seek(s, sm->sm_int);
+	f_sp_session_player_seek(s, sm->sm_int);
 	break;
 
       case SPOTIFY_PAUSE:
