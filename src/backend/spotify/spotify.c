@@ -2722,8 +2722,8 @@ static playlistcontainer_t *
 playlistcontainer_create(void)
 {
   playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
-  plc->plc_root_nodes = prop_create(NULL, NULL);
-  plc->plc_pending = prop_create(NULL, NULL);
+  plc->plc_root_nodes = prop_create_root(NULL);
+  plc->plc_pending = prop_create_root(NULL);
   prop_set_int(plc->plc_pending, 1);
   return plc;
 }
