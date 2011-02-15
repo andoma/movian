@@ -246,7 +246,8 @@ get_cd_meta(const char *device)
     LIST_INSERT_HEAD(&cd_metas, cm, cm_link);
 
 #if ENABLE_CDDB
-    hts_thread_create_detached("CDDB query", cddb_thread, cm);
+    hts_thread_create_detached("CDDB query", cddb_thread, cm,
+			       THREAD_PRIO_NORMAL);
 #endif
   }
   hts_mutex_unlock(&cd_meta_mutex);

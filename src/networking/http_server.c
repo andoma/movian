@@ -1065,5 +1065,6 @@ http_server_init(void)
     
   hs = calloc(1, sizeof(http_server_t));
   hs->hs_fd = fd;  
-  hts_thread_create_detached("httpsrv", http_server, hs);
+  hts_thread_create_detached("httpsrv", http_server, hs,
+			     THREAD_PRIO_NORMAL);
 }

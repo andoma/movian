@@ -64,7 +64,8 @@ typedef struct glw_program {
   // Uniforms
   GLint  gp_uniform_modelview;
   GLint  gp_uniform_color;
-  GLint  gp_uniform_colormtx;
+  GLint  gp_uniform_colormtx1;
+  GLint  gp_uniform_colormtx2;
   GLint  gp_uniform_blend;
   GLint  gp_uniform_color_offset;
 

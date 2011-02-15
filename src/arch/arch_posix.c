@@ -298,7 +298,8 @@ thread_trampoline(void *aux)
  *
  */
 void
-hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
+hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
+			   int prio)
 {
   pthread_t id;
   pthread_attr_t attr;
@@ -314,7 +315,7 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
 
 void
 hts_thread_create_joinable(const char *title, hts_thread_t *p, 
-			   void *(*func)(void *), void *aux)
+			   void *(*func)(void *), void *aux, int prio)
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);

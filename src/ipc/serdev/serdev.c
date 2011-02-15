@@ -177,7 +177,8 @@ opendev(const char *dev)
   sd->sd_fd = fd;
   sd->sd_path = strdup(dev);
 
-  hts_thread_create_detached(sd->sd_path, serthread, sd);
+  hts_thread_create_detached(sd->sd_path, serthread, sd,
+			     THREAD_PRIO_NORMAL);
 }
 
 

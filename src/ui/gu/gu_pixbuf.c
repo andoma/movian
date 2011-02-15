@@ -409,5 +409,6 @@ gu_pixbuf_init(void)
   TAILQ_INIT(&pixbufcache);
 
   hts_thread_create_detached("GDK pixbuf loader", 
-			     pixbuf_loader_thread, NULL);
+			     pixbuf_loader_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 }

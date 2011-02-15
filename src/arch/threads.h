@@ -49,12 +49,19 @@ extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
 /**
  * Threads
  */
+// These are not really used on POSIX
+#define THREAD_PRIO_LOW    0
+#define THREAD_PRIO_NORMAL 0
+#define THREAD_PRIO_HIGH   0
+
+
 typedef pthread_t hts_thread_t;
 
-extern void hts_thread_create_detached(const char *, void *(*)(void *), void *);
+extern void hts_thread_create_detached(const char *, void *(*)(void *), void *,
+				       int);
 
 extern void hts_thread_create_joinable(const char *, hts_thread_t *, 
-				       void *(*)(void *), void *);
+				       void *(*)(void *), void *, int);
 
 #define hts_thread_detach(t)                pthread_detach(*(t));
 

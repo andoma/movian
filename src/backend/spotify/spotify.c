@@ -3236,7 +3236,8 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 
   if(!is_thread_running) {
     is_thread_running = 1;
-    hts_thread_create_detached("spotify", spotify_thread, NULL);
+    hts_thread_create_detached("spotify", spotify_thread, NULL,
+			       THREAD_PRIO_NORMAL);
     shutdown_hook_add(spotify_shutdown_early, NULL, 1);
     shutdown_hook_add(spotify_shutdown_late, NULL, 0);
   }
