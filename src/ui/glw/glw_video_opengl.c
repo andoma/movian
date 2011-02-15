@@ -170,18 +170,18 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs,
   glTexImage2D(textype, 0, 1, gvc->gvc_width[0], gvc->gvc_height[0],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[2]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[1]);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cr));
   gv_set_tex_meta(textype);
-  glTexImage2D(textype, 0, 1, gvc->gvc_width[2], gvc->gvc_height[2],
+  glTexImage2D(textype, 0, 1, gvc->gvc_width[1], gvc->gvc_height[1],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
-  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[1]);
+  glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[2]);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_Cb));
   gv_set_tex_meta(textype);
-  glTexImage2D(textype, 0, 1, gvc->gvc_width[1], gvc->gvc_height[1],
+  glTexImage2D(textype, 0, 1, gvc->gvc_width[2], gvc->gvc_height[2],
 	       0, GL_LUMINANCE, GL_UNSIGNED_BYTE, NULL);
 
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

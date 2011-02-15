@@ -2304,6 +2304,8 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
   pl->pl_playlist = plist;
   pl->pl_withtracks = withtracks;
 
+  prop_set_int(loading, 0);
+
   prop_set_string(type, withtracks ? "directory" : "playlist");
 
   pl->pl_prop_title = prop_ref_inc(title);
