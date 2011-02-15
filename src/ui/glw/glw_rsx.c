@@ -102,6 +102,7 @@ load_vp(const char *url)
 
   rvp->rvp_u_modelview = realityVertexProgramGetConstant(vp, "u_modelview");
   rvp->rvp_u_color     = vp_get_vector_const(vp, "u_color");
+  rvp->rvp_u_color_offset = vp_get_vector_const(vp, "u_color_offset");
   TRACE(TRACE_INFO, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
 
   rvp->rvp_a_position = realityVertexProgramGetAttribute(vp, "a_position");
@@ -175,9 +176,6 @@ load_fp(glw_root_t *gr, const char *url)
   rsx_fp_t *rfp = calloc(1, sizeof(rsx_fp_t));
   rfp->rfp_binary = fp;
   rfp->rfp_rsx_location = offset;
-
-  rfp->rfp_u_color_offset =
-    realityFragmentProgramGetConst(fp, "u_color_offset");
 
   rfp->rfp_u_color =
     realityFragmentProgramGetConst(fp, "u_color");
@@ -296,8 +294,7 @@ rsx_render(struct glw_root *gr,
 
   realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
-  if(0 && rfp->rfp_u_color_offset != -1) {
-    // This is slow and must be replaced
+  if(rvp->rvp_u_color_offset != -1) {
 
     if(rgb_off != NULL) {
       rgba[0] = rgb_off->r;
@@ -309,14 +306,10 @@ rsx_render(struct glw_root *gr,
       rgba[2] = 0;
     }
     rgba[3] = 0;
-    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color_offset, rgba,
-				       rfp->rfp_rsx_location);
-    gr->gr_be.be_fp_current = NULL;
+    realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
   }
 
   rsx_set_fp(gr, rfp, 0);
-
 
   // TODO: Get rid of immediate mode
   realityVertexBegin(ctx, REALITY_TRIANGLES);

@@ -39,6 +39,7 @@ typedef struct rsx_vp {
 
   int rvp_u_modelview;
   int rvp_u_color;
+  int rvp_u_color_offset;
 
   int rvp_a_position;
   int rvp_a_color;
@@ -54,8 +55,6 @@ typedef struct rsx_fp {
   realityFragmentProgram *rfp_binary;
 
   int rfp_rsx_location;  // location in RSX memory
-
-  int rfp_u_color_offset;
 
   int rfp_u_color;
   int rfp_u_color_matrix;
