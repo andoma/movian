@@ -285,18 +285,24 @@ else
 fi
 
 #
-# SSL
+# OpenSSL
 #
-if enabled ssl; then
+if enabled openssl; then
     if $PKGCONFIG openssl; then
 	PKGS+="openssl "
 	echo "Using OpenSSL:         `$PKGCONFIG --modversion openssl`"
-	enable librtmp
     else
-	echo "OpenSSL not found"
-	die
+	echo "OpenSSL not found, using polarssl instead"
+	disable openssl
     fi
 fi
+
+
+if disabled openssl then;
+    enable polarssl
+fi
+
+enable librtmp
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
 echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`

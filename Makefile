@@ -483,6 +483,43 @@ ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 
 CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE -DJS_GC_ZEAL
 
+#
+# polarssl
+#
+SRCS-$(CONFIG_POLARSSL) += \
+	ext/polarssl-0.14.0/library/aes.c \
+	ext/polarssl-0.14.0/library/arc4.c \
+	ext/polarssl-0.14.0/library/base64.c \
+	ext/polarssl-0.14.0/library/bignum.c \
+	ext/polarssl-0.14.0/library/camellia.c \
+	ext/polarssl-0.14.0/library/certs.c \
+	ext/polarssl-0.14.0/library/debug.c \
+	ext/polarssl-0.14.0/library/des.c \
+	ext/polarssl-0.14.0/library/dhm.c \
+	ext/polarssl-0.14.0/library/havege.c \
+	ext/polarssl-0.14.0/library/md2.c \
+	ext/polarssl-0.14.0/library/md4.c \
+	ext/polarssl-0.14.0/library/md5.c \
+	ext/polarssl-0.14.0/library/net.c \
+	ext/polarssl-0.14.0/library/padlock.c \
+	ext/polarssl-0.14.0/library/rsa.c \
+	ext/polarssl-0.14.0/library/sha1.c \
+	ext/polarssl-0.14.0/library/sha2.c \
+	ext/polarssl-0.14.0/library/sha4.c \
+	ext/polarssl-0.14.0/library/ssl_cli.c \
+	ext/polarssl-0.14.0/library/ssl_srv.c \
+	ext/polarssl-0.14.0/library/ssl_tls.c \
+	ext/polarssl-0.14.0/library/timing.c \
+	ext/polarssl-0.14.0/library/version.c \
+	ext/polarssl-0.14.0/library/x509parse.c \
+	ext/polarssl-0.14.0/library/xtea.c \
+
+${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall
+
+ifeq ($(CONFIG_POLARSSL), yes)
+CFLAGS_com += -Iext/polarssl-0.14.0/include
+endif
+
 
 # Various transformations
 SRCS  += $(SRCS-yes)
@@ -523,7 +560,7 @@ endif
 
 all:	makever ${PROG}
 
-.PHONY:	clean distclean ffmpeg makever
+.PHONY:	clean distclean makever
 
 ${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
@@ -531,18 +568,14 @@ ${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.c ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.c ${BUILDDIR}/config.mak
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.m ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.m ${BUILDDIR}/config.mak
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.cpp ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.cpp ${BUILDDIR}/config.mak
 	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
-
-ffmpeg ${FFBUILDDEP}:
-	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
-	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 
 clean:
 	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles

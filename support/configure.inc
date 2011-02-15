@@ -57,7 +57,8 @@ CONFIG_LIST="
  libsmbclient
  libxv
  serdev
- ssl
+ openssl
+ polarssl
  librtmp
  libx11
  libxext
@@ -228,6 +229,12 @@ spotify_setup() {
 # Do final common stuff
 #
 finalize() {
+
+    if enabled polarssl; then
+	echo "Using built-in polarssl"
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_POLARSSL"
+    fi
+
 
     if [ "x${SPOTIFY_KEYFILE}" != "x" ]; then
 	spotify_setup "${SPOTIFY_KEYFILE}"

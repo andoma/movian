@@ -47,7 +47,7 @@
 
 
 
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
 
 static SSL_CTX *showtime_ssl_ctx;
 static pthread_mutex_t *ssl_locks;
@@ -102,6 +102,43 @@ ssl_write(tcpcon_t *tc, const void *data, size_t len)
 
 #endif
 
+
+#if ENABLE_POLARSSL
+/**
+ *
+ */
+static int
+polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
+{
+  int ret, tot = 0;
+  if(!all) {
+    ret = ssl_read(tc->ssl, buf, len);
+    if(ret >= 0) 
+      return ret;
+    return -1;
+  }
+
+  while(tot != len) {
+    ret = ssl_read(tc->ssl, buf + tot, len - tot);
+    if(ret < 0) 
+      return -1;
+    tot += ret;
+  }
+  return tot;
+}
+
+
+/**
+ *
+ */
+static int
+polarssl_write(tcpcon_t *tc, const void *data, size_t len)
+{
+  return ssl_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
+}
+
+
+#endif
 
 /**
  *
@@ -333,7 +370,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
 
   if(ssl) {
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
     if(showtime_ssl_ctx != NULL) {
       char errmsg[120];
 
@@ -360,7 +397,37 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
       tc->read = ssl_read;
       tc->write = ssl_write;
-    } else 
+    } else
+#elif ENABLE_POLARSSL
+    if(1) {
+      tc->ssl = malloc(sizeof(ssl_context));
+      if(ssl_init(tc->ssl)) {
+	snprintf(errbuf, errlen, "SSL failed to initialize");
+	close(fd);
+	free(tc->ssl);
+	free(tc);
+	return NULL;
+      }
+
+      tc->ssn = malloc(sizeof(ssl_session));
+      tc->hs = malloc(sizeof(havege_state));
+
+      havege_init(tc->hs);
+      memset(tc->ssn, 0, sizeof(ssl_session));
+
+
+      ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT );
+      ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE );
+
+      ssl_set_rng(tc->ssl, havege_rand, tc->hs );
+      ssl_set_bio(tc->ssl, net_recv, &tc->fd, net_send, &tc->fd);
+      ssl_set_ciphers(tc->ssl, ssl_default_ciphers );
+      ssl_set_session(tc->ssl, 1, 600, tc->ssn );
+      
+      tc->read = polarssl_read;
+      tc->write = polarssl_write;
+      
+    } else
 #endif
     {
 
@@ -383,10 +450,20 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 void
 tcp_close(tcpcon_t *tc)
 {
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
   if(tc->ssl != NULL) {
     SSL_shutdown(tc->ssl);
     SSL_free(tc->ssl);
+  }
+#endif
+#if ENABLE_POLARSSL
+  if(tc->ssl != NULL) {
+    ssl_close_notify(tc->ssl);
+    ssl_free(tc->ssl);
+
+    free(tc->ssl);
+    free(tc->ssn);
+    free(tc->hs);
   }
 #endif
   close(tc->fd);
@@ -439,7 +516,7 @@ net_get_interfaces(void)
 void
 net_initialize(void)
 {
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
 
   SSL_library_init();
   SSL_load_error_strings();

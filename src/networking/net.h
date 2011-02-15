@@ -21,10 +21,17 @@
 
 #include "config.h"
 
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #endif
+
+#if ENABLE_POLARSSL
+#include "polarssl/net.h"
+#include "polarssl/ssl.h"
+#include "polarssl/havege.h"
+#endif
+
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -36,8 +43,14 @@ typedef struct tcpcon {
   int (*write)(struct tcpcon *, const void *, size_t);
   int (*read)(struct tcpcon *, void *, size_t, int);
 
-#if ENABLE_SSL
+#if ENABLE_OPENSSL
   SSL *ssl;
+#endif
+
+#if ENABLE_POLARSSL
+    ssl_context *ssl;
+    ssl_session *ssn;
+    havege_state *hs;
 #endif
 
 } tcpcon_t;
