@@ -484,13 +484,11 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
   glw_backend_root_t *be = &gv->w.glw_root->gr_be;
   gcmContextData *ctx = be->be_ctx;
   rsx_fp_t *rfp = be->be_fp_yuv2rgb_1f;
-    
-  if(rfp->rfp_texunit[0] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[0], &s->gvs_tex[0]);
-  if(rfp->rfp_texunit[1] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[1], &s->gvs_tex[1]);
-  if(rfp->rfp_texunit[2] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[2], &s->gvs_tex[2]);
+  int i;
+
+  for(i = 0; i < 3; i++)
+    if(rfp->rfp_texunit[i] != -1)
+      realitySetTexture(ctx, rfp->rfp_texunit[i], &s->gvs_tex[i]);
 
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
 
@@ -514,24 +512,13 @@ render_video_2f(const glw_video_t *gv,
   rsx_fp_t *rfp = be->be_fp_yuv2rgb_2f;
   int i;
 
-  realitySetTextureUnits(ctx, 0x3f);
+  for(i = 0; i < 3; i++)
+    if(rfp->rfp_texunit[i] != -1)
+      realitySetTexture(ctx, rfp->rfp_texunit[i], &sa->gvs_tex[i]);
 
-  for(i = 0; i < 6; i++)
-    realitySetTextureControl(ctx, i, 1, 0, 0, 0);  
-
-
-  if(rfp->rfp_texunit[0] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[0], &sa->gvs_tex[0]);
-  if(rfp->rfp_texunit[1] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[1], &sa->gvs_tex[1]);
-  if(rfp->rfp_texunit[2] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[2], &sa->gvs_tex[2]);
-  if(rfp->rfp_texunit[3] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[3], &sb->gvs_tex[0]);
-  if(rfp->rfp_texunit[4] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[4], &sb->gvs_tex[1]);
-  if(rfp->rfp_texunit[5] != -1)
-    realitySetTexture(ctx, rfp->rfp_texunit[5], &sb->gvs_tex[2]);
+  for(i = 0; i < 3; i++)
+    if(rfp->rfp_texunit[i+3] != -1)
+      realitySetTexture(ctx, rfp->rfp_texunit[i+3], &sb->gvs_tex[i]);
 
   const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   
