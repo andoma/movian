@@ -1,8 +1,7 @@
-uniform vec4 u_color_offset;
-
 varying vec4 f_col_mul;
+varying vec4 f_col_off;
 
 void main()
 {
-  gl_FragColor = f_col_mul + u_color_offset;
+  gl_FragColor = f_col_mul + f_col_off;
 }
