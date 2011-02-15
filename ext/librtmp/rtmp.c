@@ -797,7 +797,7 @@ finish:
 }
 
 int
-RTMP_Connect0(RTMP *r, struct sockaddr * service)
+RTMP_Connect0(RTMP *r, struct sockaddr * service, int sasize)
 {
   int on = 1;
   r->m_sb.sb_timedout = FALSE;
@@ -807,7 +807,7 @@ RTMP_Connect0(RTMP *r, struct sockaddr * service)
   r->m_sb.sb_socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
   if (r->m_sb.sb_socket != -1)
     {
-      if (connect(r->m_sb.sb_socket, service, sizeof(struct sockaddr)) < 0)
+      if (connect(r->m_sb.sb_socket, service, sasize) < 0)
 	{
 	  int err = GetSockError();
 	  RTMP_Log(RTMP_LOGERROR, "%s, failed to connect socket. %d (%s)",
@@ -921,7 +921,7 @@ RTMP_Connect(RTMP *r, RTMPPacket *cp)
 	return FALSE;
     }
 
-  if (!RTMP_Connect0(r, (struct sockaddr *)&service))
+  if (!RTMP_Connect0(r, (struct sockaddr *)&service, sizeof(service)))
     return FALSE;
 
   r->m_bSendCounter = TRUE;
