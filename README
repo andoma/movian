@@ -155,3 +155,31 @@ $ make homebrew
 
 The output will reside in "build.wii/bundle/". Both an app directory
 and a zip file is generated.
+
+
+How to build for PS3 with PSL1GHT
+=================================
+
+You need the opensource PS3 toolchain. Follow the instructions at:
+
+https://github.com/ps3dev/ps3toolchain
+
+If you install it from scratch when you read this the stuff it downloads
+should be up to date. If you already have the toolchain and psl1ght
+you need to make sure that psl1ght is at least from Tue Feb 15 2011
+
+Once setup you need to build dependencies
+
+$ support/ps3setup
+
+Then configure
+
+$ ./configure.ps3
+
+.. and build
+
+$ make -j8
+
+.. to generate pkgs, etc and install in ${PS3INSTALL}
+
+$ make install
