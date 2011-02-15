@@ -104,6 +104,12 @@ typedef struct glw_video_surface {
   int gvs_size[3];
 #endif
 
+#if CONFIG_GLW_BACKEND_RSX
+  realityTexture gvs_tex[3];
+  int gvs_size[3];
+  int gvs_offset[3];   // Position in RSX memory
+#endif
+
 #if ENABLE_VDPAU
   VdpVideoSurface gvs_vdpau_surface;
 #endif

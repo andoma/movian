@@ -31,34 +31,6 @@ static float identitymtx[16] = {
   0,0,1,0,
   0,0,0,1};
 
-/**
- *
- */
-typedef struct rsx_vp {
-  realityVertexProgram *rvp_binary;
-
-  int rvp_u_modelview;
-  int rvp_u_color;
-
-  int rvp_a_position;
-  int rvp_a_color;
-  int rvp_a_texcoord;
-
-} rsx_vp_t;
-
-
-/**
- *
- */
-typedef struct rsx_fp {
-  realityFragmentProgram *rfp_binary;
-
-  int rfp_rsx_location;  // location in RSX memory
-
-  int rfp_u_color_offset;
-
-} rsx_fp_t;
-
 
 /**
  *
@@ -169,13 +141,14 @@ load_fp(glw_root_t *gr, const char *url)
     else
       name = "<anon>";
 
-    TRACE(TRACE_INFO, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f]",
+    TRACE(TRACE_INFO, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f] type=%d",
 	  name,
 	  constants[i].index,
 	  constants[i].values[0].f,
 	  constants[i].values[1].f,
 	  constants[i].values[2].f,
-	  constants[i].values[3].f);
+	  constants[i].values[3].f,
+	  constants[i].type);
   }
 
   realityProgramAttrib *attributes;
@@ -203,10 +176,29 @@ load_fp(glw_root_t *gr, const char *url)
   rfp->rfp_binary = fp;
   rfp->rfp_rsx_location = offset;
 
-  rfp->rfp_u_color_offset = realityFragmentProgramGetConst(fp,
-							   "u_color_offset");
-  TRACE(TRACE_DEBUG, "glw", "   Color offset: %d", 
-	rfp->rfp_u_color_offset);
+  rfp->rfp_u_color_offset =
+    realityFragmentProgramGetConst(fp, "u_color_offset");
+
+  rfp->rfp_u_color =
+    realityFragmentProgramGetConst(fp, "u_color");
+
+  rfp->rfp_u_color_matrix1 =
+    realityFragmentProgramGetConst(fp, "u_colormtx1");
+  rfp->rfp_u_color_matrix2 =
+    realityFragmentProgramGetConst(fp, "u_colormtx2");
+
+  rfp->rfp_u_blend =
+    realityFragmentProgramGetConst(fp, "u_blend");
+
+  for(i = 0; i < 6; i++) {
+    char name[8];
+    snprintf(name, sizeof(name), "u_t%d", i);
+    rfp->rfp_texunit[i] = 
+      realityFragmentProgramGetAttrib(fp, name);
+    if(rfp->rfp_texunit[i] != -1)
+      TRACE(TRACE_INFO, "glw", "    Texture %d via unit %d",
+	    i, rfp->rfp_texunit[i]);
+  }
 
   return rfp;
 }
@@ -235,8 +227,8 @@ glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
 /**
  *
  */
-static void
-set_vp(glw_root_t *root, rsx_vp_t *rvp)
+void
+rsx_set_vp(glw_root_t *root, rsx_vp_t *rvp)
 {
   if(root->gr_be.be_vp_current == rvp)
     return;
@@ -248,10 +240,10 @@ set_vp(glw_root_t *root, rsx_vp_t *rvp)
 /**
  *
  */
-static void
-set_fp(glw_root_t *root, rsx_fp_t *rfp)
+void
+rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
 {
-  if(root->gr_be.be_fp_current == rfp)
+  if(root->gr_be.be_fp_current == rfp && !force)
     return;
   root->gr_be.be_fp_current = rfp;
   realityLoadFragmentProgram(root->gr_be.be_ctx, rfp->rfp_binary,
@@ -293,8 +285,7 @@ rsx_render(struct glw_root *gr,
     rfp = gr->gr_be.be_fp_tex;
   }
 
-  set_vp(gr, rvp);
-  set_fp(gr, rfp);
+  rsx_set_vp(gr, rvp);
 
   realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
 					 rvp->rvp_u_modelview,
@@ -307,7 +298,8 @@ rsx_render(struct glw_root *gr,
 
   realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
-  if(rfp->rfp_u_color_offset) {
+  if(0 && rfp->rfp_u_color_offset != -1) {
+    // This is slow and must be replaced
 
     if(rgb_off != NULL) {
       rgba[0] = rgb_off->r;
@@ -319,10 +311,14 @@ rsx_render(struct glw_root *gr,
       rgba[2] = 0;
     }
     rgba[3] = 0;
-
     realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color_offset, rgba, 0);
+				       rfp->rfp_u_color_offset, rgba,
+				       rfp->rfp_rsx_location);
+    gr->gr_be.be_fp_current = NULL;
   }
+
+  rsx_set_fp(gr, rfp, 0);
+
 
   // TODO: Get rid of immediate mode
   realityVertexBegin(ctx, REALITY_TRIANGLES);
@@ -460,12 +456,21 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 int
 glw_rsx_init_context(glw_root_t *gr)
 {
+  glw_backend_root_t *be = &gr->gr_be;
+
   gr->gr_normalized_texture_coords = 1;
   gr->gr_render = rsx_render;
+  
+  be->be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
+  be->be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
+  be->be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
+  
+  be->be_vp_yuv2rgb = load_vp("bundle://src/ui/glw/rsx/yuv2rgb_v.vp");
+  be->be_fp_yuv2rgb_1f =
+    load_fp(gr, "bundle://src/ui/glw/rsx/yuv2rgb_1f_norm.fp");
+  be->be_fp_yuv2rgb_2f =
+    load_fp(gr, "bundle://src/ui/glw/rsx/yuv2rgb_2f_norm.fp");
 
-  gr->gr_be.be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
-  gr->gr_be.be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
-  gr->gr_be.be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
   return 0;
 }
 

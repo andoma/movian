@@ -21,6 +21,8 @@
 #include <rsx/gcm.h>
 #include <rsx/commands.h>
 
+typedef float Mtx[16];
+
 struct glw_rgb;
 struct glw_rctx;
 struct glw_root;
@@ -28,8 +30,47 @@ struct glw_backend_root;
 struct glw_renderer;
 struct glw_backend_texture;
 
-typedef float Mtx[16];
 
+/**
+ *
+ */
+typedef struct rsx_vp {
+  realityVertexProgram *rvp_binary;
+
+  int rvp_u_modelview;
+  int rvp_u_color;
+
+  int rvp_a_position;
+  int rvp_a_color;
+  int rvp_a_texcoord;
+
+} rsx_vp_t;
+
+
+/**
+ *
+ */
+typedef struct rsx_fp {
+  realityFragmentProgram *rfp_binary;
+
+  int rfp_rsx_location;  // location in RSX memory
+
+  int rfp_u_color_offset;
+
+  int rfp_u_color;
+  int rfp_u_color_matrix1;
+  int rfp_u_color_matrix2;
+
+  int rfp_u_blend;
+
+  int rfp_texunit[6];
+
+} rsx_fp_t;
+
+
+/**
+ *
+ */
 typedef struct glw_backend_root {
   gcmContextData *be_ctx;
 
@@ -40,6 +81,11 @@ typedef struct glw_backend_root {
   struct rsx_vp *be_vp_1;
   struct rsx_fp *be_fp_tex;
   struct rsx_fp *be_fp_flat;
+
+  struct rsx_vp *be_vp_yuv2rgb;
+  struct rsx_fp *be_fp_yuv2rgb_1f;
+  struct rsx_fp *be_fp_yuv2rgb_2f;
+
 
   struct extent_pool *be_mempool;
   char *be_rsx_address;
@@ -116,3 +162,9 @@ int rsx_alloc(struct glw_root *gr, int size, int alignment);
 void rsx_free(struct glw_root *gr, int pos, int size);
 
 #define rsx_to_ppu(gr, pos) ((void *)((gr)->gr_be.be_rsx_address + (pos)))
+
+
+
+void rsx_set_vp(struct glw_root *root, rsx_vp_t *rvp);
+
+void rsx_set_fp(struct glw_root *root, rsx_fp_t *rfp, int force);
