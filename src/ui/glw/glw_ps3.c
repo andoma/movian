@@ -106,7 +106,7 @@ rsx_alloc(glw_root_t *gr, int size, int alignment)
   hts_mutex_lock(&gr->gr_be.be_mempool_lock);
   pos = extent_alloc_aligned(gr->gr_be.be_mempool,
 			     (size + 15) >> 4, alignment >> 4);
-  TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
+  if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
 	size, alignment, pos << 4);
   hts_mutex_unlock(&gr->gr_be.be_mempool_lock);
   return pos << 4;
@@ -124,7 +124,7 @@ rsx_free(glw_root_t *gr, int pos, int size)
   hts_mutex_lock(&gr->gr_be.be_mempool_lock);
   r = extent_free(gr->gr_be.be_mempool, pos >> 4, (size + 15) >> 4);
 
-  TRACE(TRACE_DEBUG, "RSXMEM", "Free %d + %d = %d", pos, size, r);
+  if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Free %d + %d = %d", pos, size, r);
 
   if(r != 0) {
     TRACE(TRACE_ERROR, "GLX", "RSX memory corrupted, error %d", r);
