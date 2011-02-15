@@ -714,11 +714,43 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 }
 
 
+static void
+rtmp_log(int level, const char *format, va_list vl)
+{
+  return;
+
+  int mylevel = 0;
+  switch(level) {
+  case RTMP_LOGCRIT:
+  case RTMP_LOGERROR:
+    mylevel = TRACE_ERROR;
+    break;
+  case RTMP_LOGWARNING:
+  case RTMP_LOGINFO:
+    mylevel = TRACE_INFO;
+    break;
+  case RTMP_LOGDEBUG:
+  case RTMP_LOGDEBUG2:
+  case RTMP_LOGALL:
+    mylevel = TRACE_DEBUG;
+    break;
+  }
+  tracev(0, mylevel, "RTMP", format, vl);
+}
+
+static int
+rtmp_init(void)
+{
+  RTMP_LogSetCallback(rtmp_log);
+  return 0;
+}
+
 
 /**
  *
  */
 static backend_t be_rtmp = {
+  .be_init = rtmp_init,
   .be_canhandle = rtmp_canhandle,
   .be_open = backend_open_video,
   .be_play_video = rtmp_playvideo,
