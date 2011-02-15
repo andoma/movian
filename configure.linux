@@ -89,7 +89,7 @@ enable cddb
 enable libxss
 enable libxv
 enable serdev
-enable ssl
+enable openssl
 enable locatedb
 enable vdpau
 enable spidermonkey
@@ -540,11 +540,18 @@ if enabled avahi; then
     fi
 fi
 
+#
+# polaressl
+#
+if enabled polarssl; then
+    enable librtmp
+    disable openssl
+fi
 
 #
-# SSL
+# OpenSSL
 #
-if enabled ssl; then
+if enabled openssl; then
     if pkg-config libssl; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libssl`
 	echo "Using libssl:          `pkg-config --modversion libssl`"
@@ -554,6 +561,7 @@ if enabled ssl; then
     else
 	echo "libssl or openssl not found"
 	echo "To compile without it, configure with: --disable-ssl"
+	echo "To build with built-in version of polarssl, configure with --enable-polarssl"
 	die
     fi
 

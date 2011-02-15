@@ -1,4 +1,5 @@
 uniform vec4 u_color;
+uniform vec4 u_color_offset;
 uniform mat4 u_modelview;
 
 attribute vec3 a_position;
@@ -20,6 +21,6 @@ void main()
 {
   gl_Position = projection * u_modelview * vec4(a_position, 1);
   f_col_mul = a_color * clamp(u_color, 0.0, 1.0);
+  f_col_off = u_color_offset;
   f_tex = a_texcoord;
-
 }
