@@ -63,6 +63,9 @@ static int wsa_init_done = 0;
 #include <sys/endian.h>
 #elif defined(__APPLE__)
 #include <machine/endian.h>
+#elif defined(__PPU__)
+#include <machine/endian.h>
+#define __socklen_t_defined
 #else
 #include <endian.h>
 #endif
@@ -276,22 +279,11 @@ int net_set_nonblock( int fd )
 }
 
 /*
- * Portable usleep helper
- */
-void net_usleep( unsigned long usec )
-{
-    struct timeval tv;
-    tv.tv_sec  = 0;
-    tv.tv_usec = usec;
-    select( 0, NULL, NULL, NULL, &tv );
-}
-
-/*
  * Read at most 'len' characters
  */
 int net_recv( void *ctx, unsigned char *buf, int len )
 { 
-    int ret = read( *((int *) ctx), buf, len );
+    int ret = recv( *((int *) ctx), buf, len, 0 );
 
     if( len > 0 && ret == 0 )
         return( POLARSSL_ERR_NET_CONN_RESET );
@@ -323,7 +315,7 @@ int net_recv( void *ctx, unsigned char *buf, int len )
  */
 int net_send( void *ctx, unsigned char *buf, int len )
 {
-    int ret = write( *((int *) ctx), buf, len );
+    int ret = send( *((int *) ctx), buf, len, 0 );
 
     if( ret < 0 )
     {

@@ -40,47 +40,29 @@
 #endif
 
 
-
-
-#if ENABLE_SSL
-
-static SSL_CTX *showtime_ssl_ctx;
-static pthread_mutex_t *ssl_locks;
-
-static unsigned long
-ssl_tid_fn(void)
-{
-  return (unsigned long)pthread_self();
-}
-
-static void
-ssl_lock_fn(int mode, int n, const char *file, int line)
-{
-  if(mode & CRYPTO_LOCK)
-    pthread_mutex_lock(&ssl_locks[n]);
-  else
-    pthread_mutex_unlock(&ssl_locks[n]);
-}
-
-
-
+#if ENABLE_POLARSSL
 /**
  *
  */
 static int
-ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
+polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
 {
-  int c, tot = 0;
-  if(!all)
-    return SSL_read(tc->ssl, buf, len);
+  int ret, tot = 0;
+  TRACE(TRACE_INFO, "SSL", "Read %d bytes %d", len, all);
+  if(!all) {
+    ret = ssl_read(tc->ssl, buf, len);
+    TRACE(TRACE_INFO, "SSL", "Read -> 0x%x", ret);
+    if(ret >= 0) 
+      return ret;
+    return -1;
+  }
 
   while(tot != len) {
-    c = SSL_read(tc->ssl, buf + tot, len - tot);
-
-    if(c < 1)
+    ret = ssl_read(tc->ssl, buf + tot, len - tot);
+    TRACE(TRACE_INFO, "SSL", "Read -> 0x%x", ret);
+    if(ret < 0) 
       return -1;
-
-    tot += c;
+    tot += ret;
   }
   return tot;
 }
@@ -90,13 +72,14 @@ ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
  *
  */
 static int
-ssl_write(tcpcon_t *tc, const void *data, size_t len)
+polarssl_write(tcpcon_t *tc, const void *data, size_t len)
 {
-  return SSL_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
+  TRACE(TRACE_INFO, "SSL", "Write %d bytes", len);
+  return ssl_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
 }
 
-#endif
 
+#endif
 
 /**
  *
@@ -308,34 +291,36 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
 
   if(ssl) {
-#if ENABLE_SSL
-    if(showtime_ssl_ctx != NULL) {
-      char errmsg[120];
-
-      if((tc->ssl = SSL_new(showtime_ssl_ctx)) == NULL) {
-	ERR_error_string(ERR_get_error(), errmsg);
-	snprintf(errbuf, errlen, "SSL: %s", errmsg);
-	tcp_close(tc);
-	return NULL;
-      }
-      if(SSL_set_fd(tc->ssl, tc->fd) == 0) {
-	ERR_error_string(ERR_get_error(), errmsg);
-	snprintf(errbuf, errlen, "SSL fd: %s", errmsg);
-	tcp_close(tc);
+#if ENABLE_POLARSSL
+    if(1) {
+      tc->ssl = malloc(sizeof(ssl_context));
+      if(ssl_init(tc->ssl)) {
+	snprintf(errbuf, errlen, "SSL failed to initialize");
+	close(fd);
+	free(tc->ssl);
+	free(tc);
 	return NULL;
       }
 
-      if(SSL_connect(tc->ssl) <= 0) {
-	ERR_error_string(ERR_get_error(), errmsg);
-	snprintf(errbuf, errlen, "SSL connect: %s", errmsg);
-	tcp_close(tc);
-	return NULL;
-      }
+      tc->ssn = malloc(sizeof(ssl_session));
+      tc->hs = malloc(sizeof(havege_state));
 
-      SSL_set_mode(tc->ssl, SSL_MODE_AUTO_RETRY);
-      tc->read = ssl_read;
-      tc->write = ssl_write;
-    } else 
+      havege_init(tc->hs);
+      memset(tc->ssn, 0, sizeof(ssl_session));
+
+
+      ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT );
+      ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE );
+
+      ssl_set_rng(tc->ssl, havege_rand, tc->hs );
+      ssl_set_bio(tc->ssl, net_recv, &tc->fd, net_send, &tc->fd);
+      ssl_set_ciphers(tc->ssl, ssl_default_ciphers );
+      ssl_set_session(tc->ssl, 1, 600, tc->ssn );
+      
+      tc->read = polarssl_read;
+      tc->write = polarssl_write;
+      
+    } else
 #endif
     {
 
@@ -358,10 +343,14 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 void
 tcp_close(tcpcon_t *tc)
 {
-#if ENABLE_SSL
+#if ENABLE_POLARSSL
   if(tc->ssl != NULL) {
-    SSL_shutdown(tc->ssl);
-    SSL_free(tc->ssl);
+    ssl_close_notify(tc->ssl);
+    ssl_free(tc->ssl);
+
+    free(tc->ssl);
+    free(tc->ssn);
+    free(tc->hs);
   }
 #endif
   netClose(tc->fd);
@@ -385,18 +374,4 @@ net_get_interfaces(void)
 void
 net_initialize(void)
 {
-#if ENABLE_SSL
-
-  SSL_library_init();
-  SSL_load_error_strings();
-  showtime_ssl_ctx = SSL_CTX_new(SSLv23_client_method());
-  
-  int i, n = CRYPTO_num_locks();
-  ssl_locks = malloc(sizeof(pthread_mutex_t) * n);
-  for(i = 0; i < n; i++)
-    pthread_mutex_init(&ssl_locks[i], NULL);
-  
-  CRYPTO_set_locking_callback(ssl_lock_fn);
-  CRYPTO_set_id_callback(ssl_tid_fn);
-#endif
 }

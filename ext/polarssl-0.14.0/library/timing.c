@@ -165,6 +165,7 @@ unsigned long hardclock( void )
 #endif /* i586+   */
 
 int alarmed = 0;
+#ifndef __PPU__
 
 #if defined(_WIN32)
 
@@ -255,4 +256,5 @@ void m_sleep( int milliseconds )
 
 #endif
 
+#endif
 #endif
