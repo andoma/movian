@@ -182,10 +182,8 @@ load_fp(glw_root_t *gr, const char *url)
   rfp->rfp_u_color =
     realityFragmentProgramGetConst(fp, "u_color");
 
-  rfp->rfp_u_color_matrix1 =
-    realityFragmentProgramGetConst(fp, "u_colormtx1");
-  rfp->rfp_u_color_matrix2 =
-    realityFragmentProgramGetConst(fp, "u_colormtx2");
+  rfp->rfp_u_color_matrix =
+    realityFragmentProgramGetConst(fp, "u_colormtx");
 
   rfp->rfp_u_blend =
     realityFragmentProgramGetConst(fp, "u_blend");

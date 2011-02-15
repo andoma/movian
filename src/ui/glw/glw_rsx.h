@@ -58,8 +58,7 @@ typedef struct rsx_fp {
   int rfp_u_color_offset;
 
   int rfp_u_color;
-  int rfp_u_color_matrix1;
-  int rfp_u_color_matrix2;
+  int rfp_u_color_matrix;
 
   int rfp_u_blend;
 

@@ -487,8 +487,7 @@ render_video_quad(int interlace, int rectmode, int width, int height,
   if(gp->gp_uniform_blend != -1)
     glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
 
-  glUniformMatrix4fv(gp->gp_uniform_colormtx1, 1, GL_FALSE, gv->gv_cmatrix_cur);
-  glUniformMatrix4fv(gp->gp_uniform_colormtx2, 1, GL_FALSE, gv->gv_cmatrix_cur);
+  glUniformMatrix4fv(gp->gp_uniform_colormtx, 1, GL_FALSE, gv->gv_cmatrix_cur);
      
   glVertexAttribPointer(gp->gp_attribute_texcoord, 3, GL_FLOAT, 0, 0, tc);
   glVertexAttribPointer(gp->gp_attribute_position, 2, GL_FLOAT, 0, 0, vertices);

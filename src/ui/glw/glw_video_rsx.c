@@ -442,15 +442,9 @@ render_video_quad(int interlace, int width, int height,
   }
 
 
-  if(rfp->rfp_u_color_matrix1 != -1) 
+  if(rfp->rfp_u_color_matrix != -1) 
     realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color_matrix1, 
-				       gv->gv_cmatrix_cur,
-				       rfp->rfp_rsx_location);
-
-  if(rfp->rfp_u_color_matrix2 != -1) 
-    realitySetFragmentProgramParameter(ctx, rfp->rfp_binary,
-				       rfp->rfp_u_color_matrix2, 
+				       rfp->rfp_u_color_matrix,
 				       gv->gv_cmatrix_cur,
 				       rfp->rfp_rsx_location);
 

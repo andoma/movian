@@ -386,8 +386,7 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
 
   gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
-  gp->gp_uniform_colormtx1  = glGetUniformLocation(p, "u_colormtx1");
-  gp->gp_uniform_colormtx2  = glGetUniformLocation(p, "u_colormtx2");
+  gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
   gp->gp_uniform_color_offset= glGetUniformLocation(p, "u_color_offset");
   
