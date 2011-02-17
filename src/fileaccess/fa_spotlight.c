@@ -181,7 +181,7 @@ spotlight_searcher(void *aux)
     item = (MDItemRef)MDQueryGetResultAtIndex(query, query_index);
     query_index++;
     
-    metadata = prop_create(NULL, "metadata");
+    metadata = prop_create_root("metadata");
     
     pathRef = (CFStringRef)MDItemCopyAttribute(item, kMDItemPath);
     
