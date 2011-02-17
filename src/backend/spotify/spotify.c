@@ -3069,7 +3069,13 @@ find_cachedir(char *path, size_t pathlen)
     return 0;
   }
 #endif
-  return 1;
+
+  snprintf(path, pathlen, "%s/libspotify", showtime_cache_path);
+  if(mkdir(path, 0770)) {
+    if(errno != EEXIST)
+      return 1;
+  }
+  return 0;
 }
 
 /**
