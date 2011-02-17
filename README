@@ -183,3 +183,10 @@ $ make -j8
 .. to generate pkgs, etc and install in ${PS3INSTALL}
 
 $ make install
+
+There is a small utility in support/traceprint that will receive UDP
+packets on port 4000 and print it to stdout (only tested on Linux)
+You can use this program to get debug output when running the app
+on ps3. configure with --logtarget=IP.OF.YOUR.HOST to make it send
+log messages to that machine. Showtime will default to port 4000 when
+sending log messages.

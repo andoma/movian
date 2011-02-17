@@ -191,12 +191,8 @@ arch_sd_init(void)
 
 
 static int trace_fd = -1;
-
-#define TRACEIP		"172.31.255.19"
-#define TRACEPORT	4000
-
-
-static int tracetally;
+static struct sockaddr_in log_server;
+extern const char *showtime_logtarget;
 
 void
 my_trace(const char *fmt, ...)
@@ -204,27 +200,39 @@ my_trace(const char *fmt, ...)
   char msg[1000];
   va_list ap;
 
-  int v = atomic_add(&tracetally, 1);
-
-  snprintf(msg, 11, "%08x: ", v);
-
-  va_start(ap, fmt);
-  vsnprintf(msg + 10, sizeof(msg) - 10, fmt, ap);
-  va_end(ap);
+  if(trace_fd == -2)
+    return;
 
   if(trace_fd == -1) {
+    int port = 4000;
+    char *p;
+
+    log_server.sin_len = sizeof(log_server);
+    log_server.sin_family = AF_INET;
+    
+    snprintf(msg, sizeof(msg), "%s", showtime_logtarget);
+    p = strchr(msg, ':');
+    if(p != NULL) {
+      *p++ = 0;
+      port = atoi(p);
+    }
+    log_server.sin_port = htons(port);
+    if(inet_pton(AF_INET, msg, &log_server.sin_addr) != 1) {
+      trace_fd = -2;
+      return;
+    }
+
     trace_fd = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    if(trace_fd == -1)
+      return;
   }
 
-  struct sockaddr_in server;
-  memset(&server, 0, sizeof(server));
-  server.sin_len = sizeof(server);
-  server.sin_family = AF_INET;
-  inet_pton(AF_INET, TRACEIP, &server.sin_addr);
-  server.sin_port = htons(TRACEPORT);
+  va_start(ap, fmt);
+  vsnprintf(msg, sizeof(msg), fmt, ap);
+  va_end(ap);
 
   sendto(trace_fd, msg, strlen(msg), 0,
-	 (struct sockaddr*)&server, sizeof(server));
+	 (struct sockaddr*)&log_server, sizeof(log_server));
 }
 
 

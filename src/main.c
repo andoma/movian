@@ -71,7 +71,7 @@ int enable_serdev;
 #endif
 static int ffmpeglog;
 static int showtime_retcode;
-char *remote_logtarget; // Used on Wii
+const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
 char *showtime_cache_path;
 char *showtime_settings_path;
 
@@ -174,7 +174,7 @@ main(int argc, char **argv)
 	     "   --with-poweroff   - Enable system power-off.\n"
 	     "   -s <path>         - Non-default Showtime settings path.\n"
 	     "   --ui <ui>         - Use specified user interface.\n"
-	     "   -L <ip>           - Send log messages to remote <ip>.\n"
+	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
 	     "   --syslog          - Send log messages to syslog.\n"
 #if ENABLE_STDIN
 	     "   --stdin           - Listen on stdin for events.\n"
@@ -235,7 +235,7 @@ main(int argc, char **argv)
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "-L") && argc > 1) {
-      remote_logtarget = argv[1];
+      showtime_logtarget = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {

@@ -25,6 +25,7 @@ enable embedded_resources
 
 show_help(){
   common_help
+  echo "  --logtarget=HOST:PORT      Log to HOST:PORT via UDP [disabled]"
   exit 1
 }
 
@@ -32,6 +33,8 @@ for opt do
   optval="${opt#*=}"
   case "$opt" in
   --help) show_help
+  ;;
+  --logtarget=*) DEFAULT_LOGTARGET="$optval"
   ;;
   *)
   common_opt $opt $optval
