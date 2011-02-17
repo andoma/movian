@@ -281,6 +281,8 @@ arch_set_default_paths(int argc, char **argv)
   x++;
   strcpy(x, "settings");
   showtime_settings_path = strdup(buf);
+  strcpy(x, "cache");
+  showtime_cache_path = strdup(buf);
 }
 
 #ifndef PS3_DEBUG_MUTEX
