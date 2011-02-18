@@ -445,7 +445,8 @@ settings_create_info(prop_t *parent, const char *image,
   prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
 				      "Info", "info"), "model");
   prop_set_string(prop_create(r, "description"), description);
-  prop_set_string(prop_create(r, "image"), image);
+  if(image != NULL)
+    prop_set_string(prop_create(r, "image"), image);
 }
 
 
