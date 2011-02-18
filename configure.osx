@@ -298,7 +298,7 @@ if enabled openssl; then
 fi
 
 
-if disabled openssl then;
+if disabled openssl; then
     enable polarssl
 fi
 

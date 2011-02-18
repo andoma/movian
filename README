@@ -33,26 +33,27 @@ installing it on your system:
 
 Create an ffmpeg directory somewhere, perhaps in your home dir:
 
+$ cd
 $ mkdir ffmpeg
-$ svn co svn://svn.ffmpeg.org/ffmpeg/trunk src
-$ cd src
+$ cd ffmpeg
+$ git clone git://git.ffmpeg.org/ffmpeg.git src
 
-Configure FFmpeg to install itself one directory up. Note that this
+Configure FFmpeg to build and install itself in current dir. Note that this
 will build static libraries so you don't need to mess around with
 LD_LIBRARY_PATH when running the binary. IF you enable shared libraries,
 remember to set that up as well.
 
-$ ./configure --prefix=$(cd .. && pwd)
+So while still in the same dir, do
 
-Build and install it in the ffmpeg directory you created in step #1
-
-$ make && make install
+$ src/configure --prefix=${PWD}
+$ make -j4
+$ make install
 
 Now go back and reconfigure Showtime with PKG_CONFIG_PATH set to the
 directories where the .pc files resides from the FFmpeg install:
 
 $ cd showtime 
-$ PKG_CONFIG_PATH=/the/path/to/ffmpeg/lib/pkgconfig ./configure
+$ ./configure --pkg-config-path=${HOME}/ffmpeg/lib/pkgconfig
 $ make
 
 

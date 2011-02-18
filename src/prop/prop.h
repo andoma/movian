@@ -313,8 +313,7 @@ void prop_notify_dispatch(struct prop_notify_queue *q);
 
 void prop_courier_stop(prop_courier_t *pc);
 
-prop_t *prop_get_by_names(prop_t *parent, ...) 
-     __attribute__((__sentinel__(0)));
+prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
 
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 

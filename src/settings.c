@@ -354,7 +354,7 @@ settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
   if(str != NULL) {
     prop_t *r = s->s_prop;
     prop_t *opts = prop_create_ex(r, "options", s->s_sub, 0);
-    prop_t *o = prop_get_by_names(opts, str, NULL);
+    prop_t *o = prop_find(opts, str, NULL);
 
     if(o != NULL)
       prop_select_ex(o, NULL, s->s_sub);

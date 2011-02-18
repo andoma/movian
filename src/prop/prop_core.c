@@ -3066,7 +3066,7 @@ prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
  *
  */
 prop_t *
-prop_get_by_names(prop_t *p, ...)
+prop_find(prop_t *p, ...)
 {
   prop_t *c = NULL;
   const char *n;
