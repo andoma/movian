@@ -1753,6 +1753,7 @@ spotify_open_page(spotify_page_t *sp)
       break;
 
     default:
+      spotify_open_page_fail(sp, "Unable to handle URI");
       break;
     }
     f_sp_link_release(l);
