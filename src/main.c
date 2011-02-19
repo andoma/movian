@@ -47,6 +47,7 @@
 #include "keymapper.h"
 #include "plugins.h"
 #include "blobcache.h"
+#include "i18n.h"
 #include "misc/string.h"
 
 #if ENABLE_HTTPSERVER
@@ -325,6 +326,9 @@ main(int argc, char **argv)
 
   /* Initialize plugin manager and load plugins */
   plugins_init();
+
+  /* Internationalization */
+  i18n_init();
 
 
   nav_open(NAV_HOME, NULL);

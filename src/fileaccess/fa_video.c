@@ -33,6 +33,7 @@
 #include "media.h"
 #include "fa_probe.h"
 #include "fileaccess.h"
+#include "i18n.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
 #include "video/subtitles.h"
@@ -504,7 +505,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
   AVFormatContext *fctx;
   AVCodecContext *ctx;
   media_format_t *fw;
-  int i;
+  int i, s;
   char faurl[URL_MAX];
   media_codec_t **cwvec;
   event_t *e;
@@ -515,6 +516,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
   uint64_t hash;
   uint64_t fsize;
   int valid_hash = 0;
+  int best_audio_score = -1;
+  int best_subtitle_score = 0;
 
   if(fa_stat(url, &fs, errbuf, errlen))
     return NULL;
@@ -617,6 +620,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 
   fw = media_format_create(fctx);
 
+  prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
+
+  // Scan all streams and select defaults
+
   for(i = 0; i < fctx->nb_streams; i++) {
     ctx = fctx->streams[i]->codec;
 
@@ -636,20 +643,34 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
       if(flags & BACKEND_VIDEO_NO_AUDIO)
 	continue;
 
-      if(mp->mp_audio.mq_stream == -1)
+      s = i18n_audio_score(fctx->streams[i]->language);
+
+      if(s > best_audio_score) {
 	mp->mp_audio.mq_stream = i;
+	best_audio_score = s;
+      }
 
       if(ctx->codec_id == CODEC_ID_DTS)
 	ctx->channels = 0;
     }
 
+    if(ctx->codec_type == CODEC_TYPE_SUBTITLE) {
+      s = i18n_subtitle_score(fctx->streams[i]->language);
+
+      if(s > best_subtitle_score) {
+	best_subtitle_score = s;
+	mp->mp_video.mq_stream2 = i;
+	prop_set_int(mp->mp_prop_subtitle_track_current, i);
+      }
+    }
     cwvec[i] = media_codec_create(ctx->codec_id,
 				  ctx->codec_type, 0, fw, ctx, &mcp, mp);
   }
 
   prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
 
-  prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
+
+  // Start it
 
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 

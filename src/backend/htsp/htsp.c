@@ -35,6 +35,7 @@
 #include "keyring.h"
 #include "media.h"
 #include "misc/string.h"
+#include "i18n.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 
@@ -1686,7 +1687,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   uint32_t idx, s;
   enum CodecID   codec_id;
   enum CodecType codec_type;
-  const char *nicename, *title;
+  const char *nicename, *lang, *title;
   media_codec_t *cw;
 
   int vstream = -1; /* Initial video stream */
@@ -1758,26 +1759,28 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       subid = 0;
       memset(&mcp, 0, sizeof(mcp));
 
+      lang = htsmsg_get_str(sub, "language");
+
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
 	codec_type = CODEC_TYPE_AUDIO;
 	nicename = "AC3";
-	s = 3;
+	s = i18n_audio_score(lang) + 3;
       } else if(!strcmp(type, "EAC3")) {
 	codec_id = CODEC_ID_EAC3;
 	codec_type = CODEC_TYPE_AUDIO;
 	nicename = "EAC3";
-	s = 4;
+	s = i18n_audio_score(lang) + 4;
       } else if(!strcmp(type, "AAC")) {
 	codec_id = CODEC_ID_AAC;
 	codec_type = CODEC_TYPE_AUDIO;
 	nicename = "AAC";
-	s = 2;
+	s = i18n_audio_score(lang) + 2;
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
 	codec_type = CODEC_TYPE_AUDIO;
 	nicename = "MPEG";
-	s = 1;
+	s = i18n_audio_score(lang) + 1;
       } else if(!strcmp(type, "MPEG2VIDEO")) {
 	codec_id = CODEC_ID_MPEG2VIDEO;
 	codec_type = CODEC_TYPE_VIDEO;
@@ -1815,13 +1818,14 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	mcp.extradata = &buf4;
 	mcp.extradata_size = 4;
-	s = 2;
+
+	s = i18n_subtitle_score(lang);
 
       } else if(!strcmp(type, "TEXTSUB")) {
 	codec_id = -1;
 	codec_type = CODEC_TYPE_SUBTITLE;
 	nicename = "Subtitles";
-	s = 1;
+	s = i18n_subtitle_score(lang);
       } else {
 	continue;
       }
@@ -1846,10 +1850,11 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       hss->hss_index = idx;
       hss->hss_cw = cw;
 
-      title = htsmsg_get_str(sub, "language");
-      if(title == NULL) {
+      if(lang == NULL) {
 	snprintf(titlebuf, sizeof(titlebuf), "Stream %d", idx);
 	title = titlebuf;
+      } else {
+	title = lang;
       }
 
       switch(codec_type) {
