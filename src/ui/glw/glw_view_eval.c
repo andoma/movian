@@ -3380,9 +3380,27 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
 
   if(a->type != TOKEN_PROPERTY_VALUE_NAME)
     return glw_view_seterr(ec->ei, a, "delta() first arg is not a property");
-  
-  if(b->type != TOKEN_FLOAT && b->type != TOKEN_INT)
-    return glw_view_seterr(ec->ei, b, "delta() second arg is not scalar");
+
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+
+  switch(b->type) {
+  case TOKEN_FLOAT:
+    f = b->t_float;
+    break;
+  case TOKEN_INT:
+    f = b->t_int;
+    break;
+  case TOKEN_STRING:
+    f = strlen(rstr_get(b->t_rstring)) > 0;
+    break;
+  case TOKEN_LINK:
+    f = strlen(rstr_get(b->t_link_rtitle)) > 0;
+    break;
+  default:
+    f = 0;
+    break;
+  }
 
   if(ec->w == NULL)
     return glw_view_seterr(ec->ei, b, "delta() in non widget scope");
@@ -3403,8 +3421,6 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   if(p == NULL)
     return glw_view_seterr(ec->ei, a, "Unable to resolve property");
   
-  f = b->type == TOKEN_FLOAT ? b->t_float : b->t_int;
-
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
 
   if(p == de->p && de->f + f == 0) {
