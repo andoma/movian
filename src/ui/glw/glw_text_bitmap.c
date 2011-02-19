@@ -1383,7 +1383,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
+  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_int_step = 1;
   gtb->gtb_int_min = INT_MIN;
@@ -1472,10 +1472,6 @@ set_caption(glw_t *w, const char *caption, int type)
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb->gtb_type = type;
   assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
-  if(caption == NULL)
-    w->glw_flags |= GLW_HIDDEN;
-  else
-    w->glw_flags &= ~GLW_HIDDEN;
   
   if(update)
     gtb_update(gtb);
@@ -1503,7 +1499,6 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
 		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		   NULL);
-  w->glw_flags &= ~GLW_HIDDEN;
 }
 
 /**
@@ -1521,7 +1516,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
       gtb->gtb_int = va_arg(ap, double);
-      w->glw_flags &= ~GLW_HIDDEN;
       update = 1;
       break;
 
