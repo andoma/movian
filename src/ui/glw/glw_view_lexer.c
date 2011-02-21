@@ -377,8 +377,8 @@ glw_view_load1(glw_root_t *gr, const char *filename,
 			 errbuf, sizeof(errbuf))) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
 	     filename, errbuf);
-    snprintf(ei->file,  sizeof(ei->file),  "%s", filename);
-    ei->line = 0;
+    snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
+    ei->line = prev->line;
     return NULL;
   }
 
