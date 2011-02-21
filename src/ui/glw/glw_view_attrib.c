@@ -57,8 +57,8 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   default:
     return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar",
-			    a->name);
+			   "Attribute '%s' expects a string or scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, const char *str) = a->fn;
@@ -109,8 +109,8 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   default:
     return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar",
-			    a->name);
+			   "Attribute '%s' expects a string or scalar, got %s",
+			   a->name, token2name(t));
   }
 
   if(ec->w->glw_class->gc_set_caption != NULL)
@@ -146,8 +146,8 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v = 0.0f;
     break;
   default:
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, float v) = a->fn;
@@ -203,8 +203,8 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v = 0;
     break;
   default:
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, int v) = a->fn;
@@ -260,8 +260,8 @@ set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 3)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3, got %s",
+			   a->name, token2name(t));
 
   void (*fn)(struct glw *w, const float *v3) = a->fn;
   fn(ec->w, t->t_float_vector);
@@ -330,8 +330,8 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 4)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
+			   a->name, token2name(t));
 
   void (*fn)(struct glw *w, const float *v4) = a->fn;
   fn(ec->w, t->t_float_vector);
