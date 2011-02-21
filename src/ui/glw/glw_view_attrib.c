@@ -165,7 +165,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_weight(glw_t *w, float v)
 {
-  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_WF);
+  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_W);
 }
 
 static void
