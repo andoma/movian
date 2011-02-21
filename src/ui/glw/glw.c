@@ -1757,6 +1757,13 @@ glw_set_constraints(glw_t *w, int x, int y, float weight,
     }
   }
 
+
+  if((w->glw_flags ^ flags) & GLW_CONSTRAINT_F) {
+    ch = 1;
+    w->glw_flags &= ~GLW_CONSTRAINT_F;
+    w->glw_flags |= (flags & GLW_CONSTRAINT_F);
+  }
+
   if(!ch)
     return;
 
@@ -1795,6 +1802,11 @@ glw_clear_constraints(glw_t *w)
       w->glw_req_weight = 0;
       ch = 1;
     }
+  }
+
+  if(w->glw_flags & GLW_CONSTRAINT_F) {
+    w->glw_flags &= ~GLW_CONSTRAINT_F;
+    ch = 1;
   }
   
   if(!ch)

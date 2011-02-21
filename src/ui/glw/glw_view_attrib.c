@@ -222,15 +222,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_width(glw_t *w, int v)
 {
-  glw_set_constraints(w, 
-		      v,
-		      w->glw_req_size_y, 
-		      0,
-		      GLW_CONSTRAINT_X | 
-		      (w->glw_flags & (GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y) ?
-		       w->glw_flags & GLW_CONSTRAINT_Y : 0),
-		      GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y);
-  
+  glw_set_constraints(w, v, 0, 0, GLW_CONSTRAINT_X, GLW_CONSTRAINT_CONF_X);
 }
 
 
@@ -240,15 +232,7 @@ set_width(glw_t *w, int v)
 static void
 set_height(glw_t *w, int v)
 {
-  glw_set_constraints(w, 
-		      w->glw_req_size_x, 
-		      v,
-		      0,
-		      GLW_CONSTRAINT_Y | 
-		      (w->glw_flags & (GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y) ?
-		       w->glw_flags & GLW_CONSTRAINT_X : 0),
-		      GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y);
-
+  glw_set_constraints(w, 0, v, 0, GLW_CONSTRAINT_Y, GLW_CONSTRAINT_CONF_Y);
 }
 
 
