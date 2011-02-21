@@ -198,7 +198,8 @@ typedef struct glw_view_eval_context {
   struct glw *w;
   struct prop *prop, *prop_parent, *prop_viewx, *prop_args, *prop_clone;
   struct glw_root *gr;
-  
+  struct glw_rctx *rc;
+
   int dynamic_eval;
 #define GLW_VIEW_DYNAMIC_EVAL_PROP                 0x1
 #define GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME          0x2

@@ -228,7 +228,7 @@ glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l)
 
 
 
-static void eval_dynamic(glw_t *w, token_t *rpn);
+static void eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc);
 
 static int glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec);
 
@@ -795,6 +795,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     n.prop_args = ec->prop_args;
     n.ei = ec->ei;
     n.gr = ec->gr;
+    n.rc = ec->rc;
     n.sublist = ec->sublist;
 
     n.tgtprop = prop_create_root(NULL);
@@ -882,7 +883,7 @@ eval_dynamic_every_frame_sig(glw_t *w, void *opaque,
 			     glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_LAYOUT)
-    eval_dynamic(w, opaque);
+    eval_dynamic(w, opaque, extra);
   return 0;
 }
 
@@ -895,7 +896,7 @@ eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque,
 {
   if(signal == GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE ||
      signal == GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC)
-    eval_dynamic(w, opaque);
+    eval_dynamic(w, opaque, NULL);
   return 0;
 }
 
@@ -908,7 +909,7 @@ eval_dynamic_fhp_change_sig(glw_t *w, void *opaque,
 			    glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_FHP_PATH_CHANGED)
-    eval_dynamic(w, opaque);
+    eval_dynamic(w, opaque, NULL);
   return 0;
 }
 
@@ -924,7 +925,7 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READY || signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED)
-    eval_dynamic(w, opaque);
+    eval_dynamic(w, opaque, NULL);
   return 0;
 }
 
@@ -932,13 +933,15 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
  *
  */
 static void
-eval_dynamic(glw_t *w, token_t *rpn)
+eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc)
 {
   glw_view_eval_context_t ec;
 
   memset(&ec, 0, sizeof(ec));
   ec.w = w;
   ec.gr = w->glw_root;
+  ec.rc = rc;
+
   ec.sublist = &w->glw_prop_subscriptions;
 
   glw_view_eval_rpn0(rpn, &ec);
@@ -1458,7 +1461,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn);
+    eval_dynamic(gps->gps_widget, rpn, NULL);
 }
 
 
@@ -1551,7 +1554,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn);
+    eval_dynamic(gps->gps_widget, rpn, NULL);
 }
 
 
@@ -1623,7 +1626,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn);
+    eval_dynamic(gps->gps_widget, rpn, NULL);
 }
 
 
@@ -1927,6 +1930,7 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   ec.w = pec->w;
   ec.rpn = t;
   ec.gr = pec->gr;
+  ec.rc = pec->rc;
   ec.passive_subscriptions = pec->passive_subscriptions;
   ec.sublist = pec->sublist;
   ec.event = pec->event;
@@ -2034,6 +2038,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.prop_args = ec->prop_args;
   n.ei = ec->ei;
   n.gr = ec->gr;
+  n.rc = ec->rc;
   n.w = glw_create(ec->gr, c, ec->w, NULL, NULL);
 
   glw_set(n.w,
@@ -2212,6 +2217,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.prop_clone = b->prop_clone;
   n.prop_args = b->prop_args;
   n.gr = w->glw_root;
+  n.rc = NULL;
   n.w = w;
   n.passive_subscriptions = 1;
   n.sublist = &l;
@@ -4102,6 +4108,32 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+/**
+ *
+ */
+static int
+glwf_getWidth(glw_view_eval_context_t *ec, struct token *self,
+	      token_t **argv, unsigned int argc)
+{
+  token_t *r;
+  glw_t *w = ec->w;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+
+  if(w->glw_flags & GLW_CONSTRAINT_X) {
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = w->glw_req_size_x;
+  } else if(ec->rc == NULL) {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  } else {
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = ec->rc->rc_width;
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
 
 
 /**
@@ -4156,6 +4188,7 @@ static const token_func_t funcvec[] = {
   {"deliverEvent", -1, glwf_deliverEvent},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
+  {"getWidth", 0, glwf_getWidth},
 };
 
 
