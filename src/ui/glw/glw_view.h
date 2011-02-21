@@ -37,6 +37,7 @@ typedef enum {
   TOKEN_END,                   // 
   TOKEN_HASH,                  // #
   TOKEN_ASSIGNMENT,            // =
+  TOKEN_COND_ASSIGNMENT,       // ?=
   TOKEN_END_OF_EXPR,           // ; (end of expression)
   TOKEN_SEPARATOR,             // ,
   TOKEN_BLOCK_OPEN,            // {

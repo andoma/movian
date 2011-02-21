@@ -242,6 +242,12 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       continue;
     }
 
+    if(src[0] == '?' && src[1] == '=') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_COND_ASSIGNMENT);
+      src+=2;
+      continue;
+    }
+
     if(src[0] == '|' && src[1] == '|') {
       prev = lexer_add_token_simple(prev, f, line, TOKEN_BOOLEAN_OR);
       src+=2;

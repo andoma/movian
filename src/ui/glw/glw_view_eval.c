@@ -769,7 +769,7 @@ set_prop_from_token(prop_t *p, token_t *t)
  *
  */
 static int
-eval_assign(glw_view_eval_context_t *ec, struct token *self)
+eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   int r = 0;
@@ -809,8 +809,10 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self)
     return -1;
   }
 
-
-
+  if(conditional && b->type == TOKEN_VOID) {
+    eval_push(ec, b);
+    return 0;
+  }
 
   switch(a->type) {
   case TOKEN_IDENTIFIER:
@@ -1887,7 +1889,12 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
       break;
 
     case TOKEN_ASSIGNMENT:
-      if(eval_assign(ec, t))
+      if(eval_assign(ec, t, 0))
+	return -1;
+      break;
+
+    case TOKEN_COND_ASSIGNMENT:
+      if(eval_assign(ec, t, 1))
 	return -1;
       break;
 
