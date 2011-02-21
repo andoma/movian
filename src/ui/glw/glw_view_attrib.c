@@ -227,9 +227,9 @@ set_width(glw_t *w, int v)
 		      w->glw_req_size_y, 
 		      0,
 		      GLW_CONSTRAINT_X | 
-		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
+		      (w->glw_flags & (GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y) ?
 		       w->glw_flags & GLW_CONSTRAINT_Y : 0),
-		      GLW_CONSTRAINT_CONF_XY);
+		      GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y);
   
 }
 
@@ -245,9 +245,9 @@ set_height(glw_t *w, int v)
 		      v,
 		      0,
 		      GLW_CONSTRAINT_Y | 
-		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
+		      (w->glw_flags & (GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y) ?
 		       w->glw_flags & GLW_CONSTRAINT_X : 0),
-		      GLW_CONSTRAINT_CONF_XY);
+		      GLW_CONSTRAINT_CONF_X | GLW_CONSTRAINT_CONF_Y);
 
 }
 
