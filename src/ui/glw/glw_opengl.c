@@ -302,7 +302,7 @@ shader_render(struct glw_root *root,
     break;
   }
 
-  if(gbr->be_blur > 0.05) {
+  if(gbr->be_blur > 0.05 && tex != NULL) {
     glUniform2f(gp->gp_uniform_blur_amount, 
 		1.5 * gbr->be_blur / tex->width,
 		1.5 * gbr->be_blur / tex->height);
