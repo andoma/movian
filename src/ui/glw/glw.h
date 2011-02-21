@@ -769,8 +769,6 @@ typedef struct glw {
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
 
-#define GLW_CONSTRAINT_FLAGS_XY  (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)
-  
 #define GLW_CLIPPED              0x1000000 
 
 #define GLW_HOMOGENOUS           0x2000000
