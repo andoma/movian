@@ -120,7 +120,7 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
   int i;
   glw_rctx_t rc0;
 
-  glw_blendmode(GLW_BLEND_ADDITIVE);
+  glw_blendmode(gr, GLW_BLEND_ADDITIVE);
 
   glw_Scalef(rc, 2.0, 2.0, 1.0);
 
@@ -135,7 +135,7 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
     glw_renderer_draw(&fx->fx_source_render, gr, &rc0,
 		      &glt->glt_texture, NULL, NULL, 0.15);
   }
-  glw_blendmode(GLW_BLEND_NORMAL);
+  glw_blendmode(gr, GLW_BLEND_NORMAL);
 }
 
 

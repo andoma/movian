@@ -21,6 +21,7 @@
 
 #define glw_parent_alpha glw_parent_val[0].f
 #define glw_parent_z     glw_parent_val[1].f
+#define glw_parent_blur  glw_parent_val[2].f
 
 static void
 glw_layer_select_child(glw_t *w)
@@ -46,7 +47,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_rctx_t *rc = extra;
   glw_t *c = extra, *p;
-  float z, a0 = 1, a;
+  float z, a0 = 1, a, b0 = 1, b;
 
   switch(signal) {
   default:
@@ -59,6 +60,7 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
       z = 1.0;
       a = 0;
+      b = 0;
 
       if(c->glw_flags & GLW_RETIRED) {
 
@@ -71,11 +73,15 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	z = 0.0;
 	a = a0;
 	a0 *= 0.25;
+
+	b = b0;
+	b0 = 0;
       }
 
       c->glw_parent_z     = GLW_LP(8, c->glw_parent_z,     z);
       c->glw_parent_alpha = GLW_LP(8, c->glw_parent_alpha, a);
-
+      c->glw_parent_blur  = GLW_LP(8, c->glw_parent_blur,  b);
+      
       if(c->glw_parent_alpha > 0.01)
 	glw_layout0(c, rc);
     }
@@ -124,6 +130,7 @@ glw_layer_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_rctx_t rc0;
   glw_t *c;
+  float b;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     rc0 = *rc;
@@ -131,7 +138,10 @@ glw_layer_render(glw_t *w, glw_rctx_t *rc)
     if(rc0.rc_alpha < 0.01)
       continue;
     glw_Translatef(&rc0, 0, 0, c->glw_parent_z);
+
+    b = glw_blur(w->glw_root, 1 - c->glw_parent_blur);
     glw_render0(c, &rc0);
+    glw_blur(w->glw_root, b);
   }
 }
 
