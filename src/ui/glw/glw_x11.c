@@ -501,18 +501,22 @@ probe_wm(glw_x11_t *gx11)
 
   if(XGetWindowProperty(gx11->display, gx11->root, NET_SUPPORTING_WM_CHECK,
 			0, 16384, False, AnyPropertyType, &type, &format, &r,
-			&bytes_after, &prop_return) != Success) {
+			&bytes_after, &prop_return) != Success ||
+     r == 0 || prop_return == NULL) {
     TRACE(TRACE_INFO, "GLW",
 	  "No window manager found (NET_SUPPORTING_WM_CHECK not set)");
     return;
   }
 
+
   wm_window_id = *(int *)prop_return;
   XFree(prop_return);
+  prop_return = NULL;
 
   if(XGetWindowProperty(gx11->display, wm_window_id, NET_WM_NAME,
 			0, 16384, False, AnyPropertyType, &type, &format, &r,
-			&bytes_after, &prop_return) != Success) {
+			&bytes_after, &prop_return) != Success || 
+     r == 0 || prop_return == NULL) {
     TRACE(TRACE_INFO, "GLW",
 	  "No window manager found (NET_WM_NAME not set on wm window)");
     return;
@@ -520,10 +524,12 @@ probe_wm(glw_x11_t *gx11)
 
   wm_name = mystrdupa((char *)prop_return);
   XFree(prop_return);
+  prop_return = NULL;
 
   if(XGetWindowProperty(gx11->display, gx11->root, NET_SUPPORTED,
 			0, 16384, False, AnyPropertyType, &type, &format,
-			&nitems, &bytes_after, &prop_return) != Success) {
+			&nitems, &bytes_after, &prop_return) != Success ||
+     r == 0 || prop_return == NULL) {
     TRACE(TRACE_INFO, "GLW",
 	  "No window manager found (NET_SUPPORTING_WM_CHECK not set)");
     return;
