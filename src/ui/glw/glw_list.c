@@ -37,6 +37,7 @@ typedef struct glw_list {
 
   int16_t saved_height;
   int16_t saved_width;
+  int16_t spacing;
 
 } glw_list_t;
 
@@ -145,6 +146,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     }
 
     ypos += rc0.rc_height;
+    ypos += l->spacing;
   }
 
   if(l->total_size != ypos) {
@@ -313,6 +315,10 @@ glw_list_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_CHILD_ASPECT:
       l->child_aspect = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_SPACING:
+      l->spacing = va_arg(ap, int);
       break;
 
     default:
