@@ -49,6 +49,7 @@ typedef struct glw_image {
 #define GI_MODE_BORDER_SCALING   1
 #define GI_MODE_REPEATED_TEXTURE 2
 #define GI_MODE_ALPHA_EDGES      3
+#define GI_MODE_BORDER_ONLY_SCALING  4
 
   uint8_t gi_update;
 
@@ -491,7 +492,7 @@ glw_image_update_constraints(glw_image_t *gi)
  * |\ | /| /|
  * | \|/ |/ |
  * c--d--e--f
-b */
+ */
 
 static uint16_t borderobject[] = {
   4, 1, 0,
@@ -504,6 +505,27 @@ static uint16_t borderobject[] = {
   8, 9, 5,
   9, 6, 5,
   9, 10, 6,
+  10, 7, 6,
+  10, 11, 7,
+  12, 13, 8,
+  8, 13, 9,
+  13, 10, 9,
+  13, 14, 10,
+  14, 11, 10,
+  14, 15, 11,
+};
+
+static uint16_t borderonlyobject[] = {
+  4, 1, 0,
+  4, 5, 1,
+  5, 2, 1,
+  5, 6, 2,
+  6, 7, 2,
+  2, 7, 3,
+  8, 5, 4,
+  8, 9, 5,
+  //  9, 6, 5,
+  //  9, 10, 6,
   10, 7, 6,
   10, 11, 7,
   12, 13, 8,
@@ -618,6 +640,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_renderer_init(&gi->gi_gr, 16, 18, borderobject);
 	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
+      case GI_MODE_BORDER_ONLY_SCALING:
+	glw_renderer_init(&gi->gi_gr, 16, 16, borderonlyobject);
+	glw_image_layout_tesselated(gr, rc, gi, glt);
+	break;
       default:
 	abort();
       }
@@ -634,6 +660,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       case GI_MODE_NORMAL:
 	break;
       case GI_MODE_BORDER_SCALING:
+      case GI_MODE_BORDER_ONLY_SCALING:
 	glw_image_layout_tesselated(gr, rc, gi, glt);
 	break;
       case GI_MODE_REPEATED_TEXTURE:
@@ -780,7 +807,8 @@ set_border(glw_t *w, const float *v)
 {
   glw_image_t *gi = (void *)w;
 
-  gi->gi_mode = GI_MODE_BORDER_SCALING;
+  if(gi->gi_mode != GI_MODE_BORDER_ONLY_SCALING)
+    gi->gi_mode = GI_MODE_BORDER_SCALING;
   gi->gi_border_left   = v[0];
   gi->gi_border_top    = v[1];
   gi->gi_border_right  = v[2];
@@ -816,6 +844,11 @@ mod_image_flags(glw_t *w, int set, int clr)
   glw_image_t *gi = (void *)w;
   gi->gi_bitmap_flags = (gi->gi_bitmap_flags | set) & ~clr;
   gi->gi_update = 1;
+
+  if(set & GLW_IMAGE_BORDER_ONLY)
+    gi->gi_mode = GI_MODE_BORDER_ONLY_SCALING;
+  if(clr & GLW_IMAGE_BORDER_ONLY)
+    gi->gi_mode = GI_MODE_BORDER_SCALING;
 }
 
 
