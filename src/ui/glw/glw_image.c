@@ -557,32 +557,44 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_pending != NULL)
       glw_tex_deref(w->glw_root, gi->gi_pending);
     
+    if(gi->gi_pending_filename[0] == 0) {
+      gi->gi_pending = NULL;
+
+      if(gi->gi_current != NULL) {
+	glw_tex_deref(w->glw_root, gi->gi_current);
+	gi->gi_current = NULL;
+      }
+
+      gi->gi_update = 1;
+
+    } else {
+
     
-    if(w->glw_class == &glw_repeatedimage)
-      flags |= GLW_TEX_REPEAT;
+      if(w->glw_class == &glw_repeatedimage)
+	flags |= GLW_TEX_REPEAT;
 
 
-    if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
+      if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
 
-      if(rc->rc_width < rc->rc_height) {
-	xs = rc->rc_width;
+	if(rc->rc_width < rc->rc_height) {
+	  xs = rc->rc_width;
+	} else {
+	  ys = rc->rc_height;
+	}
+      }
+
+      if(xs && ys) {
+
+	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
+					flags, xs, ys);
+
+	free(gi->gi_pending_filename);
+	gi->gi_pending_filename = NULL;
       } else {
-	ys = rc->rc_height;
+	gi->gi_pending = NULL;
       }
     }
-
-    if(gi->gi_pending_filename != NULL && xs && ys) {
-
-      gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
-				      flags, xs, ys);
-
-      free(gi->gi_pending_filename);
-      gi->gi_pending_filename = NULL;
-    } else {
-      gi->gi_pending = NULL;
-    }
   }
-
 
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
@@ -903,7 +915,7 @@ glw_image_set(glw_t *w, va_list ap)
       if(gi->gi_pending_filename != NULL)
 	free(gi->gi_pending_filename);
 
-      gi->gi_pending_filename = filename ? strdup(filename) : NULL;
+      gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
       break;
 
     case GLW_ATTRIB_PIXMAP:
