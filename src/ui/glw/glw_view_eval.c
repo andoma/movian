@@ -758,6 +758,10 @@ set_prop_from_token(prop_t *p, token_t *t)
     prop_set_float(p, t->t_float);
     break;
 
+  case TOKEN_PROPERTY_REF:
+    prop_link(t->t_prop, p);
+    break;
+
   default:
     return -1;
   }
