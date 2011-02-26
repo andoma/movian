@@ -32,7 +32,7 @@ typedef struct glw_view_loader {
   float time;
 
   glw_transition_type_t efx_conf;
-
+  char *filename;
 
 } glw_view_loader_t;
 
@@ -172,6 +172,17 @@ glw_view_loader_ctor(glw_t *w)
  *
  */
 static void 
+glw_view_loader_dtor(glw_t *w)
+{
+  glw_view_loader_t *a = (void *)w;
+  free(a->filename);
+}
+
+
+/**
+ *
+ */
+static void 
 glw_view_loader_set(glw_t *w, va_list ap)
 {
   glw_view_loader_t *a = (void *)w;
@@ -218,7 +229,10 @@ glw_view_loader_set(glw_t *w, va_list ap)
     }
   } while(attrib);
 
-  if(filename != NULL) {
+  if(filename != NULL && strcmp(filename, a->filename?:"")) {
+    free(a->filename);
+    a->filename = strdup(filename);
+
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       glw_suspend_subscriptions(c);
     if(*filename) {
@@ -241,6 +255,7 @@ static glw_class_t glw_view_loader = {
   .gc_flags = GLW_EXPEDITE_SUBSCRIPTIONS,
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_ctor = glw_view_loader_ctor,
+  .gc_dtor = glw_view_loader_dtor,
   .gc_set = glw_view_loader_set,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,
