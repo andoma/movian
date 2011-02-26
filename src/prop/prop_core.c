@@ -1882,7 +1882,7 @@ prop_sub_t *
 prop_subscribe(int flags, ...)
 {
   prop_t *p, *value, *canonical, *c;
-  prop_sub_t *s;
+  prop_sub_t *s, *t;
   int direct = !!(flags & (PROP_SUB_DIRECT_UPDATE | PROP_SUB_INTERNAL));
   int notify_now = !(flags & PROP_SUB_NO_INITIAL_UPDATE);
   int tag;
@@ -1896,7 +1896,7 @@ prop_subscribe(int flags, ...)
   void *cb = NULL;
   prop_trampoline_t *trampoline = NULL;
   int dolock = !(flags & PROP_SUB_DONTLOCK);
-
+  int activate_on_canonical = 0;
   va_list ap;
   va_start(ap, flags);
 
@@ -2056,8 +2056,19 @@ prop_subscribe(int flags, ...)
 		   hps_canonical_prop_link);
   s->hps_canonical_prop = canonical;
 
-  if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR)
+  if(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR &&
+     (canonical->hp_flags & PROP_MONITORED) == 0) {
     canonical->hp_flags |= PROP_MONITORED;
+
+    LIST_FOREACH(t, &canonical->hp_value_subscriptions, hps_value_prop_link) {
+      if(!(t->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR))
+	break;
+    }
+    if(t != NULL) {
+      // monitor was enabled but there are already subscribers
+      activate_on_canonical = 1;
+    }
+  }
 
   if(s->hps_flags & PROP_SUB_MULTI)
     prop_set_multi(canonical);
@@ -2087,6 +2098,9 @@ prop_subscribe(int flags, ...)
   if(!(s->hps_flags & PROP_SUB_SUBSCRIPTION_MONITOR) && 
      value->hp_flags & PROP_MONITORED)
     prop_send_subscription_monitor_active(value);
+
+  if(activate_on_canonical)
+    prop_send_subscription_monitor_active(canonical);
 
   if(dolock)
     hts_mutex_unlock(&prop_mutex);
