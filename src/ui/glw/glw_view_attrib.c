@@ -313,12 +313,49 @@ static int
 set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
 {
-  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 4)
+  const float *vec4;
+  float v[4];
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 4:
+      vec4 = t->t_float_vector;
+      break;
+
+    case 2:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[0];
+      v[3] = t->t_float_vector[1];
+      vec4 = v;
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = v[3] = t->t_float;
+    vec4 = v;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = v[3] = t->t_int;
+    vec4 = v;
+    break;
+  default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
 			   a->name, token2name(t));
+  }
 
   void (*fn)(struct glw *w, const float *v4) = a->fn;
-  fn(ec->w, t->t_float_vector);
+  fn(ec->w, vec4);
   return 0;
 }
 
@@ -327,10 +364,10 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static void
-set_padding(glw_t *w, const float *xyz)
+set_padding(glw_t *w, const float *vec4)
 {
   if(w->glw_class->gc_set_padding != NULL)
-    w->glw_class->gc_set_padding(w, xyz);
+    w->glw_class->gc_set_padding(w, vec4);
 }
 
 
@@ -338,10 +375,10 @@ set_padding(glw_t *w, const float *xyz)
  *
  */
 static void
-set_border(glw_t *w, const float *xyz)
+set_border(glw_t *w, const float *vec4)
 {
   if(w->glw_class->gc_set_border != NULL)
-    w->glw_class->gc_set_border(w, xyz);
+    w->glw_class->gc_set_border(w, vec4);
 }
 
 
