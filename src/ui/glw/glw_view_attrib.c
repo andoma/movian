@@ -243,12 +243,42 @@ static int
 set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
 {
-  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 3)
+  const float *vec3;
+  float v[3];
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 3:
+      vec3 = t->t_float_vector;
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = t->t_float;
+    vec3 = v;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = t->t_int;
+    vec3 = v;
+    break;
+  default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3, got %s",
 			   a->name, token2name(t));
+  }
+
 
   void (*fn)(struct glw *w, const float *v3) = a->fn;
-  fn(ec->w, t->t_float_vector);
+  fn(ec->w, vec3);
   return 0;
 }
 
