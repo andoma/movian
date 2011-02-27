@@ -679,6 +679,8 @@ static const token_attrib_t attribtab[] = {
   {"aspectConstraint",mod_flag, GLW_IMAGE_SET_ASPECT, mod_img_flags},
   {"additive",        mod_flag, GLW_IMAGE_ADDITIVE, mod_img_flags},
   {"borderOnly",      mod_flag, GLW_IMAGE_BORDER_ONLY, mod_img_flags},
+  {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT, mod_img_flags},
+  {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
 
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},

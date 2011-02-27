@@ -151,6 +151,8 @@ typedef enum {
 #define GLW_IMAGE_SET_ASPECT    0x80
 #define GLW_IMAGE_ADDITIVE      0x100
 #define GLW_IMAGE_BORDER_ONLY   0x200
+#define GLW_IMAGE_BORDER_LEFT   0x400
+#define GLW_IMAGE_BORDER_RIGHT  0x800
 
 /**
  * Video flags

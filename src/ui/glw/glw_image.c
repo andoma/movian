@@ -272,20 +272,22 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   int x, y, i = 0;
 
   if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0f;
     tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
     tex[2][0] = glt->glt_s - (float)gi->gi_border_right / glt->glt_xs;
-    tex[3][0] = glt->glt_s;
+    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
+    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_s : tex[2][0];
 
     tex[0][1] = 0.0f;
     tex[1][1] = 0.0f + (float)gi->gi_border_top    / glt->glt_ys;
     tex[2][1] = glt->glt_t - (float)gi->gi_border_bottom / glt->glt_ys;
     tex[3][1] = glt->glt_t;
+
   } else {
-    tex[0][0] = 0.0f;
+
     tex[1][0] = gi->gi_border_left;
     tex[2][0] = glt->glt_xs - gi->gi_border_right;
-    tex[3][0] = glt->glt_xs;
+    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT  ? 0.0f : tex[1][0];
+    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_xs : tex[2][0];
 
     tex[0][1] = 0.0f;
     tex[1][1] = gi->gi_border_top;
@@ -785,6 +787,8 @@ static void
 glw_image_ctor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
+
+  gi->gi_bitmap_flags = GLW_IMAGE_BORDER_LEFT | GLW_IMAGE_BORDER_RIGHT;
 
   gi->gi_alpha_self = 1;
   gi->gi_color.r = 1.0;
