@@ -386,6 +386,17 @@ set_border(glw_t *w, const float *vec4)
  *
  */
 static void
+set_margin(glw_t *w, const float *vec4)
+{
+  if(w->glw_class->gc_set_margin != NULL)
+    w->glw_class->gc_set_margin(w, vec4);
+}
+
+
+/**
+ *
+ */
+static void
 set_rotation(glw_t *w, const float *xyz)
 {
   if(w->glw_class->gc_set_rotation != NULL)
@@ -687,8 +698,9 @@ static const token_attrib_t attribtab[] = {
   {"color1",          set_float3, 0, set_color1},
   {"color2",          set_float3, 0, set_color2},
 
-  {"border",          set_float4, 0, set_border},
   {"padding",         set_float4, 0, set_padding},
+  {"border",          set_float4, 0, set_border},
+  {"margin",          set_float4, 0, set_margin},
   {"rotation",        set_float4, 0, set_rotation},
 
   {"align",           set_align,  0},

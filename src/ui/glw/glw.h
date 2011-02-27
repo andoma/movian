@@ -453,6 +453,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_margin)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
   void (*gc_set_rotation)(struct glw *w, const float *v);
 
   /**

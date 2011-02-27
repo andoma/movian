@@ -40,6 +40,17 @@ typedef struct glw_image {
   int16_t gi_padding_right;
   int16_t gi_padding_top;
   int16_t gi_padding_bottom;
+
+  int16_t gi_margin_left;
+  int16_t gi_margin_right;
+  int16_t gi_margin_top;
+  int16_t gi_margin_bottom;
+
+  // gi_box_ is (gi_border_ + gi_padding_ + gi_margin_)
+  int16_t gi_box_left;
+  int16_t gi_box_right;
+  int16_t gi_box_top;
+  int16_t gi_box_bottom;
  
   int gi_bitmap_flags;
 
@@ -139,11 +150,8 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 
   rc0 = *rc;
   
-  glw_reposition(&rc0,
-		                 gi->gi_border_left   + gi->gi_padding_left,
-		 rc->rc_height - gi->gi_border_top    - gi->gi_padding_top,
-		 rc->rc_width  - gi->gi_border_right  - gi->gi_padding_right,
-		                 gi->gi_border_bottom + gi->gi_padding_bottom);
+  glw_reposition(&rc0, gi->gi_box_left, rc->rc_height - gi->gi_box_top,
+		 rc->rc_width  - gi->gi_box_right, gi->gi_box_bottom);
 
   rc0.rc_alpha *= gi->w.glw_alpha;
   glw_render0(c, &rc0);
@@ -286,15 +294,15 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
 
-  vex[0][0] = -1.0f;
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_border_left  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_right / rc->rc_width, 0.0f);
-  vex[3][0] = 1.0f;
+  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left)  / rc->rc_width, 0.0f);
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_left + gi->gi_margin_left)  / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_right + gi->gi_margin_right) / rc->rc_width, 0.0f);
+  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right) / rc->rc_width, 0.0f);
     
-  vex[0][1] = 1.0f;
-  vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_top  / rc->rc_height, 0.0f);
-  vex[2][1] = GLW_MIN(-1.0f + 2.0f *gi->gi_border_bottom / rc->rc_height, 0.0f);
-  vex[3][1] = -1.0f;
+  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top)  / rc->rc_height, 0.0f);
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_top + gi->gi_margin_top)  / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_bottom + gi->gi_margin_bottom) / rc->rc_height, 0.0f);
+  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_bottom) / rc->rc_height, 0.0f);
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -449,11 +457,9 @@ glw_image_update_constraints(glw_image_t *gi)
     if(c != NULL) {
       glw_set_constraints(&gi->w, 
 			  c->glw_req_size_x +
-			  gi->gi_border_left + gi->gi_border_right +
-			  gi->gi_padding_left + gi->gi_padding_right,
+			  gi->gi_box_left + gi->gi_box_right,
 			  c->glw_req_size_y + 
-			  gi->gi_border_top + gi->gi_border_bottom + 
-			  gi->gi_padding_top + gi->gi_padding_bottom,
+			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
 			  c->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
 
@@ -713,13 +719,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
     
-    rc0.rc_width -=
-      gi->gi_border_left +  gi->gi_border_right + 
-      gi->gi_padding_left + gi->gi_padding_right;
-
-    rc0.rc_height -=
-      gi->gi_border_top +  gi->gi_border_bottom + 
-      gi->gi_padding_top + gi->gi_padding_bottom;
+    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right;
+    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom;
 
     if(rc0.rc_height >= 0 && rc0.rc_width >= 0)
       glw_layout0(c, &rc0);
@@ -815,6 +816,22 @@ glw_image_set_rgb(glw_t *w, const float *rgb)
  *
  */
 static void
+update_box(glw_image_t *gi)
+{
+  gi->gi_box_left =
+    gi->gi_margin_left + gi->gi_border_left + gi->gi_padding_left;
+  gi->gi_box_top =
+    gi->gi_margin_top + gi->gi_border_top + gi->gi_padding_top;
+  gi->gi_box_right =
+    gi->gi_margin_right + gi->gi_border_right + gi->gi_padding_right;
+  gi->gi_box_bottom =
+    gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
+}
+
+/**
+ *
+ */
+static void
 set_border(glw_t *w, const float *v)
 {
   glw_image_t *gi = (void *)w;
@@ -825,6 +842,7 @@ set_border(glw_t *w, const float *v)
   gi->gi_border_top    = v[1];
   gi->gi_border_right  = v[2];
   gi->gi_border_bottom = v[3];
+  update_box(gi);
   gi->gi_update = 1;
   glw_image_update_constraints(gi);
 }
@@ -842,6 +860,25 @@ set_padding(glw_t *w, const float *v)
   gi->gi_padding_top    = v[1];
   gi->gi_padding_right  = v[2];
   gi->gi_padding_bottom = v[3];
+  update_box(gi);
+  gi->gi_update = 1;
+  glw_image_update_constraints(gi);
+}
+
+
+/**
+ *
+ */
+static void
+set_margin(glw_t *w, const float *v)
+{
+  glw_image_t *gi = (void *)w;
+
+  gi->gi_margin_left   = v[0];
+  gi->gi_margin_top    = v[1];
+  gi->gi_margin_right  = v[2];
+  gi->gi_margin_bottom = v[3];
+  update_box(gi);
   gi->gi_update = 1;
   glw_image_update_constraints(gi);
 }
@@ -1026,6 +1063,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_set_border = set_border,
+  .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
 };
 
