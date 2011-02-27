@@ -1484,20 +1484,6 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   glw_root_set_hover(gr, hover);
 }
 
-/**
- *
- */
-void
-glw_select(glw_t *p, glw_t *c)
-{
-  if(c->glw_originating_prop) {
-    prop_select(c->glw_originating_prop);
-  } else {
-    p->glw_selected = c;
-  }
-}
-
-
 
 /**
  *

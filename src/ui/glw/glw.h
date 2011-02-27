@@ -1064,8 +1064,6 @@ void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
 void glw_rctx_init(glw_rctx_t *rc, int width, int height);
 
-void glw_select(glw_t *p, glw_t *c);
-
 int glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
