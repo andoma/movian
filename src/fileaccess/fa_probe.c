@@ -39,6 +39,7 @@
 #include "api/lastfm.h"
 #include "media.h"
 #include "misc/string.h"
+#include "misc/isolang.h"
 
 
 #define METADATA_HASH_SIZE 101
@@ -189,6 +190,11 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 
   if((p = prop_create_check(r, "longformat")) != NULL) {
     prop_set_rstring(p, ms->ms_info);
+    prop_ref_dec(p);
+  }
+
+  if(ms->ms_language && (p = prop_create_check(r, "language")) != NULL) {
+    prop_set_rstring(p, ms->ms_language);
     prop_ref_dec(p);
   }
 
@@ -598,13 +604,22 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     }
 
     if(codec == NULL) {
-      snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
+
+      switch(avctx->codec_id) {
+      case CODEC_ID_TEXT:
+	snprintf(tmp1, sizeof(tmp1), "Text");
+	break;
+      default:
+	snprintf(tmp1, sizeof(tmp1),
+		 "Unsupported codec (0x%x)", avctx->codec_id);
+	break;
+      }
     } else {
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
     metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, 
-			stream->language[0] ? stream->language : NULL);
+			isolang_iso2lang(stream->language));
   }
   
   md->md_type = CONTENT_FILE;
