@@ -2017,6 +2017,12 @@ prop_subscribe(int flags, ...)
     if(dolock)
       hts_mutex_lock(&prop_mutex);
 
+
+    if(value->hp_type == PROP_ZOMBIE) {
+      hts_mutex_unlock(&prop_mutex);
+      return NULL;
+    }
+
   } else {
 
     if((p = prop_resolve_tree(name[0], &proproots)) == NULL) 
