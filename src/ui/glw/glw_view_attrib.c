@@ -637,8 +637,9 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   if(t->type != TOKEN_PROPERTY_REF)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a property ref",
-			   a->name);
+    return glw_view_seterr(ec->ei, t,
+			   "Attribute '%s' expects a property ref, got %s",
+			   a->name, token2name(t));
 
   glw_set(ec->w, a->attrib, t->t_prop, NULL);
   return 0;
