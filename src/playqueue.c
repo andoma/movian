@@ -683,7 +683,7 @@ playqueue_enqueue(prop_t *track)
 
   prop_link_ex(prop_create(track, "metadata"),
 	       prop_create(pqe->pqe_node, "metadata"),
-	       NULL, 1);
+	       NULL, PROP_LINK_XREFED);
 
   prop_set_string(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
@@ -1079,7 +1079,7 @@ player_thread(void *aux)
     p = prop_get_by_name(PNVEC("self", "metadata"), 1,
 			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
 			 NULL);
-    prop_link_ex(p, mp->mp_prop_metadata, NULL, 1);
+    prop_link_ex(p, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
     prop_ref_dec(p);
 
 

@@ -262,9 +262,13 @@ void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
 void prop_unparent_childs(prop_t *p);
 
-void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
+#define PROP_LINK_NORMAL 0
+#define PROP_LINK_XREFED 1
+#define PROP_LINK_XREFED_IF_ORPHANED 2
 
-#define prop_link(src, dst) prop_link_ex(src, dst, NULL, 0)
+void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int how);
+
+#define prop_link(src, dst) prop_link_ex(src, dst, NULL, PROP_LINK_NORMAL)
 
 void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
 

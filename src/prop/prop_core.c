@@ -2923,7 +2923,8 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
   if(dst->hp_originator != NULL)
     prop_unlink0(dst, skipme, "prop_link()/unlink", &pnq);
 
-  if(hard) {
+  if(hard == PROP_LINK_XREFED ||
+     (hard == PROP_LINK_XREFED_IF_ORPHANED && src->hp_parent == NULL)) {
     dst->hp_flags |= PROP_XREFED_ORIGINATOR;
     assert(src->hp_xref < 255);
     src->hp_xref++;

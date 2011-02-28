@@ -213,7 +213,8 @@ glw_view_loader_set(glw_t *w, va_list ap)
       break;
 
     case GLW_ATTRIB_ARGS:
-      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL, 1);
+      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL,
+		   PROP_LINK_XREFED_IF_ORPHANED);
       break;
 
     case GLW_ATTRIB_PROP_PARENT:
