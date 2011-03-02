@@ -659,6 +659,7 @@ playqueue_enqueue(prop_t *track)
   playqueue_entry_t *pqe, *before;
   prop_t *p;
   char url[URL_MAX];
+  int doplay = 0;
 
   p = prop_get_by_name(PNVEC("self", "url"), 1,
 		       PROP_TAG_NAMED_ROOT, track, "self",
@@ -688,7 +689,9 @@ playqueue_enqueue(prop_t *track)
   prop_set_string(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
 
-  before = TAILQ_NEXT(pqe_current, pqe_linear_link);
+  doplay = pqe_current == NULL;
+
+  before = pqe_current ? TAILQ_NEXT(pqe_current, pqe_linear_link) : NULL;
 
   /* Skip past any previously enqueued entries */
   while(before != NULL && before->pqe_enq)
@@ -711,6 +714,9 @@ playqueue_enqueue(prop_t *track)
   pqe_insert_shuffled(pqe);
 
   update_pq_meta();
+
+  if(doplay)
+    pqe_play(pqe, EVENT_PLAYQUEUE_JUMP);
 
   hts_mutex_unlock(&playqueue_mutex);
 }
