@@ -545,7 +545,14 @@ mod_flags1(glw_t *w, int set, int clr)
 static void
 mod_flags2(glw_t *w, int set, int clr)
 {
-  w->glw_flags2 = (w->glw_flags2 | set) & ~clr;
+  set &= ~w->glw_flags2;
+  w->glw_flags2 |= set;
+
+  clr &= w->glw_flags2;
+  w->glw_flags2 &= ~clr;
+
+  if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
+    w->glw_class->gc_mod_flags2(w, set, clr);
 }
 
 
@@ -670,6 +677,7 @@ static const token_attrib_t attribtab[] = {
   {"enabled",                 mod_flag, GLW2_ENABLED, mod_flags2},
   {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
   {"clickSetValue",           mod_flag, GLW2_CLICK_SET_VALUE, mod_flags2},
+  {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
 
   {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},

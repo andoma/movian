@@ -1472,6 +1472,13 @@ set_caption(glw_t *w, const char *caption, int type)
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb->gtb_type = type;
   assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE) {
+    if(caption == NULL)
+      glw_hide(w);
+    else
+      glw_unhide(w);
+  }
   
   if(update)
     gtb_update(gtb);
@@ -1499,6 +1506,9 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
 		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		   NULL);
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE)
+    glw_unhide(w);
 }
 
 /**
@@ -1516,6 +1526,8 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
       gtb->gtb_int = va_arg(ap, double);
+      if(w->glw_flags2 & GLW2_AUTOHIDE)
+	glw_unhide(w);
       update = 1;
       break;
 
@@ -1808,6 +1820,23 @@ glw_text_bitmap_get_text(glw_t *w)
   return gtb->gtb_caption;
 }
 
+
+/**
+ *
+ */
+static void 
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+
+  if(set & GLW2_AUTOHIDE && gtb->gtb_caption == NULL)
+    glw_hide(w);
+
+  if(clr & GLW2_AUTOHIDE)
+    glw_unhide(w);
+}
+
+
 /**
  *
  */
@@ -1826,6 +1855,7 @@ static glw_class_t glw_label = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_label);
