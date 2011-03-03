@@ -399,6 +399,30 @@ spotify_msg_enq(spotify_msg_t *sm)
  *
  */
 static void
+spotify_msg_enq_one(spotify_msg_t *sm)
+{
+  spotify_msg_t *sm2;
+  hts_mutex_lock(&spotify_mutex);
+
+  TAILQ_FOREACH(sm2, &spotify_msgs, sm_link) {
+    if(sm2->sm_op == sm->sm_op) {
+      sm2->sm_int = sm->sm_int;
+      break;
+    }
+  }
+  if(sm2 == NULL)
+    spotify_msg_enq_locked(sm);
+  else
+    free(sm);
+
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
+/**
+ *
+ */
+static void
 spotify_page_destroy(spotify_page_t *sp)
 {
   prop_ref_dec(sp->sp_model);
@@ -3421,8 +3445,7 @@ delta_seek(media_pipe_t *mp, int64_t d)
   int64_t n = mp->mp_current_time + d;
   if(n < 0)
     n = 0;
-
-  spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, n / 1000));
+  spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, n / 1000));
 }
 
 
@@ -3513,7 +3536,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
+      spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
 
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
