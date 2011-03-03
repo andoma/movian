@@ -200,6 +200,8 @@ glw_view_loader_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_SOURCE:
       filename = va_arg(ap, char *);
+      if(filename == NULL)
+	filename = "";
       break;
 
     case GLW_ATTRIB_TIME:
