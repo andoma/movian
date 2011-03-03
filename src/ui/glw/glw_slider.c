@@ -264,9 +264,10 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   
   switch(gpe->type) {
   case GLW_POINTER_LEFT_PRESS:
-    if(w->glw_flags2 & GLW2_CLICK_SET_VALUE) {
+    if(w->glw_flags2 & GLW2_ALWAYS_GRAB_KNOB) {
       s->value = GLW_RESCALE(v0 + s->grab_delta,
 			     -1.0 + knob_size, 1.0 - knob_size);
+      gr->gr_pointer_grab = w;
     } else if(hitpos == 0) {
       s->grab_delta = knob_pos - v0;
       gr->gr_pointer_grab = w;

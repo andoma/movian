@@ -676,7 +676,7 @@ static const token_attrib_t attribtab[] = {
 
   {"enabled",                 mod_flag, GLW2_ENABLED, mod_flags2},
   {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
-  {"clickSetValue",           mod_flag, GLW2_CLICK_SET_VALUE, mod_flags2},
+  {"alwaysGrabKnob",          mod_flag, GLW2_ALWAYS_GRAB_KNOB, mod_flags2},
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
 
   {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
