@@ -1433,36 +1433,44 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
 
-  gr->gr_mouse_x = gpe->x;
-  gr->gr_mouse_y = gpe->y;
-  gr->gr_mouse_valid = 1;
+  if(gpe->x != gr->gr_mouse_x || gpe->y != gr->gr_mouse_y) {
+    gr->gr_mouse_x = gpe->x;
+    gr->gr_mouse_y = gpe->y;
+    gr->gr_mouse_valid = 1;
 
-  if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
-     gpe->type == GLW_POINTER_MOTION_REFRESH) {
+    if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
+       gpe->type == GLW_POINTER_MOTION_REFRESH) {
     
-    prop_set_int(gr->gr_pointer_visible, 1);
+      prop_set_int(gr->gr_pointer_visible, 1);
 
-    if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
-      glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
-      gpe0.type = GLW_POINTER_FOCUS_MOTION;
-      gpe0.x = x;
-      gpe0.y = y;
+      if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
+	glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+	gpe0.type = GLW_POINTER_FOCUS_MOTION;
+	gpe0.x = x;
+	gpe0.y = y;
       
-      glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
-    }
+	glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+      }
 
-    if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
-      if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
-	 x < -1 || y < -1 || x > 1 || y > 1) {
-	// Moved outside button, release 
+      if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
+	if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
+	   x < -1 || y < -1 || x > 1 || y > 1) {
+	  // Moved outside button, release 
 
-	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
-	gr->gr_pointer_press = NULL;
+	  glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
+	  gr->gr_pointer_press = NULL;
+	}
       }
     }
   }
-
   if(gpe->type == GLW_POINTER_LEFT_RELEASE && gr->gr_pointer_grab != NULL) {
+    w = gr->gr_pointer_grab;
+    glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+    gpe0.type = GLW_POINTER_LEFT_RELEASE;
+    gpe0.x = x;
+    gpe0.y = y;
+
+    glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
     gr->gr_pointer_grab = NULL;
     return;
   }

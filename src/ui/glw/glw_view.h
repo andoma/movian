@@ -115,11 +115,13 @@ typedef struct token {
     void *extra;
     double f;
     int args;
+    int i;
   } arg;
 
 #define t_elements    arg.elements
 #define t_extra       arg.extra
 #define t_extra_float arg.f
+#define t_extra_int   arg.i
 
   int t_num_args;
   struct glw_prop_sub *propsubr;
@@ -130,7 +132,11 @@ typedef struct token {
 
     char *string_vec[0];
 
-    float value;
+    struct {
+      float value;
+      int how;  // same as PROP_SET_ ...
+    } f;
+
     float value_vec[0];
 
     const struct token_func   *func;
@@ -159,7 +165,8 @@ typedef struct token {
 #define t_rstring         u.rstr.rstr
 #define t_rstrtype        u.rstr.type
 #define t_string_vector   u.string_vec
-#define t_float           u.value
+#define t_float           u.f.value
+#define t_float_how       u.f.how
 #define t_float_vector    u.value_vec
 #define t_int             u.ival
 #define t_int_vector      u.int_vec

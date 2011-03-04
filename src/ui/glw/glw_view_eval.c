@@ -1507,6 +1507,8 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
     t->propsubr = gps;
     t->t_float = va_arg(ap, double);
+    (void)va_arg(ap, prop_t *);
+    t->t_float_how = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
 
@@ -4138,6 +4140,112 @@ glwf_getWidth(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+/**
+ * 
+ */
+static int 
+glwf_preferTentative(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0], *r;
+  int how;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  switch(a->type) {
+  case TOKEN_FLOAT:
+    how = a->t_float_how;
+    break;
+  default:
+    how = 0;
+    break;
+  }
+
+  switch(how) {
+  case PROP_SET_NORMAL:
+    r = self->t_extra ?: a;
+    break;
+
+  case PROP_SET_TENTATIVE:
+    if(self->t_extra != NULL)
+      glw_view_token_free(self->t_extra);
+    self->t_extra = r = glw_view_token_copy(a);
+    break;
+
+  case PROP_SET_COMMIT:
+    if(self->t_extra != NULL)
+      glw_view_token_free(self->t_extra);
+    self->t_extra = NULL;
+    r = a;
+    break;
+  default:
+    abort();
+  }
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glwf_freetoken_dtor(struct token *self)
+{
+  if(self->t_extra != NULL)
+    glw_view_token_free(self->t_extra);
+}
+
+
+
+/**
+ * 
+ */
+static int 
+glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0], *r;
+  int how;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  switch(a->type) {
+  case TOKEN_FLOAT:
+    how = a->t_float_how;
+    break;
+  default:
+    how = 0;
+    break;
+  }
+
+  switch(how) {
+  case PROP_SET_NORMAL:
+  case PROP_SET_COMMIT:
+    if(self->t_extra != NULL)
+      glw_view_token_free(self->t_extra);
+    self->t_extra = r = glw_view_token_copy(a);
+    break;
+
+  case PROP_SET_TENTATIVE:
+    r = self->t_extra ?: a;
+    break;
+  default:
+    abort();
+  }
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+
+
 
 
 /**
@@ -4193,6 +4301,8 @@ static const token_func_t funcvec[] = {
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"getWidth", 0, glwf_getWidth},
+  {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},
+  {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
 };
 
 
