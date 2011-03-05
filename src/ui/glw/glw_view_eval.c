@@ -4141,6 +4141,32 @@ glwf_getWidth(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ *
+ */
+static int
+glwf_getHeight(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *r;
+  glw_t *w = ec->w;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+
+  if(w->glw_flags & GLW_CONSTRAINT_X) {
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = w->glw_req_size_y;
+  } else if(ec->rc == NULL) {
+    r = eval_alloc(self, ec, TOKEN_VOID);
+  } else {
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = ec->rc->rc_height;
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * 
  */
 static int 
@@ -4301,6 +4327,7 @@ static const token_func_t funcvec[] = {
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"getWidth", 0, glwf_getWidth},
+  {"getHeight", 0, glwf_getHeight},
   {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},
   {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
 };
