@@ -55,6 +55,9 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_LAYOUT:
 
+    if(w->glw_alpha < 0.01)
+      return 0;
+
     for(c = TAILQ_LAST(&w->glw_childs, glw_queue); c != NULL; c = p) {
       p = TAILQ_PREV(c, glw_queue, glw_parent_link);
 
@@ -134,7 +137,7 @@ glw_layer_render(glw_t *w, glw_rctx_t *rc)
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     rc0 = *rc;
-    rc0.rc_alpha *= c->glw_parent_alpha;
+    rc0.rc_alpha *= c->glw_parent_alpha * w->glw_alpha;
     if(rc0.rc_alpha < 0.01)
       continue;
     glw_Translatef(&rc0, 0, 0, c->glw_parent_z);
