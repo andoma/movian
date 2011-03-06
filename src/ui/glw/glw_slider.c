@@ -283,6 +283,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
     } else if(hitpos == 0) {
       s->grab_delta = knob_pos - v0;
       gr->gr_pointer_grab = w;
+      v = s->value;
     } else {
       update_value_delta(s, hitpos * knob_size);
       return 0;
