@@ -158,8 +158,6 @@ be_dvd_play(struct backend *be, const char *url, media_pipe_t *mp,
     sleep(1);
   }
 
-  prop_set_string(mp->mp_prop_type, "dvd");
-
   e = dvd_play("/dev/di", mp, errstr, errlen, 0);
 
   if(e != NULL && event_is_action(e, ACTION_EJECT))

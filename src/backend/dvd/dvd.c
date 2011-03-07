@@ -652,6 +652,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   event_t *e = NULL;
   const char *title;
 
+  prop_set_string(mp->mp_prop_type, "dvd");
+
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
   prop_set_stringf(prop_create(mp->mp_prop_metadata, "format"), "DVD");
