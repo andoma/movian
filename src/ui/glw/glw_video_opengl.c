@@ -310,10 +310,11 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
     gv->gv_sa = sa;
     gv->gv_sb = NULL;
 
-    pts = sa->gvs_pts;
-
     sa->gvs_duration -= output_duration;
-    sa->gvs_pts      += output_duration;
+
+    pts = sa->gvs_pts;
+    if(sa->gvs_pts != AV_NOPTS_VALUE)
+      sa->gvs_pts += output_duration;
 
   } else if(sb != NULL) {
 
@@ -331,14 +332,16 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
       pts = sa->gvs_pts;
       x = output_duration - sa->gvs_duration;
       sb->gvs_duration -= x;
-      sb->gvs_pts      += x;
+      if(sb->gvs_pts != AV_NOPTS_VALUE)
+	sb->gvs_pts += x;
     }
     sa->gvs_duration = 0;
 
   } else {
     gv->gv_sa = sa;
     gv->gv_sb = NULL;
-    sa->gvs_pts      += output_duration;
+    if(sa->gvs_pts != AV_NOPTS_VALUE)
+      sa->gvs_pts += output_duration;
 
     pts = sa->gvs_pts;
   }
@@ -357,7 +360,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
   int output_duration;
-  int64_t pts = 0;
+  int64_t pts = AV_NOPTS_VALUE;
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
@@ -619,6 +622,7 @@ glw_video_input_yuvp(glw_video_t *gv,
   int hshift, vshift;
   glw_video_surface_t *s;
   const int parity = 0;
+  int64_t pts = fi->pts;
 
   avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
 
@@ -653,7 +657,7 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
 
-    glw_video_put_surface(gv, s, fi->pts, fi->epoch, fi->duration, 0);
+    glw_video_put_surface(gv, s, pts, fi->epoch, fi->duration, 0);
 
   } else {
 
@@ -675,7 +679,7 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, fi->pts, fi->epoch, duration, !tff);
+    glw_video_put_surface(gv, s, pts, fi->epoch, duration, !tff);
 
     if((s = glw_video_get_surface(gv)) == NULL)
       return;
@@ -694,6 +698,9 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, fi->pts + duration, fi->epoch, duration, tff);
+    if(pts != AV_NOPTS_VALUE)
+      pts += duration;
+
+    glw_video_put_surface(gv, s, pts, fi->epoch, duration, tff);
   }
 }

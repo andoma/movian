@@ -773,7 +773,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       mp_send_cmd(mp, &mp->mp_video, MB_DVD_RESET_SPU);
       dvd_video_push(dp);
       dvd_release_codecs(dp);
-      mp_send_cmd(mp, &mp->mp_video, MB_FLUSH);
       dvd_set_audio_stream(dp, "auto");
       dvd_set_spu_stream(dp, "auto");
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
