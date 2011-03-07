@@ -120,13 +120,19 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   height = rc0.rc_height;
   width = rc0.rc_width;
 
-  if(a->child_tiles_x && a->child_tiles_y) {
+  if(a->child_tiles_x || a->child_tiles_y) {
 
     xspacing = a->xspacing;
     yspacing = a->yspacing;
 
     a->xentries = a->child_tiles_x;
     a->yentries = a->child_tiles_y;
+
+    if(a->yentries == 0) {
+      a->yentries = a->xentries * height / width;
+    } else if(a->xentries == 0) {
+      a->xentries = a->yentries * width / height;
+    }
 
     a->child_width_px  = (rc0.rc_width - (a->xentries - 1) * xspacing) /
       a->xentries;
