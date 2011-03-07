@@ -131,7 +131,7 @@ mq_destroy(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name, const char *type, int flags)
+mp_create(const char *name, int flags, const char *type)
 {
   media_pipe_t *mp;
   prop_t *p;
@@ -151,10 +151,8 @@ mp_create(const char *name, const char *type, int flags)
   
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
 
-  if(type != NULL) {
-    mp->mp_flags |= MP_PRIMABLE;
-    prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
-  }
+  mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
+  prop_set_string(mp->mp_prop_type, type);
 
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
   mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);

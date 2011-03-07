@@ -1566,6 +1566,8 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
   hs->hs_sid = atomic_add(&hc->hc_sid_generator, 1);
   hs->hs_mp = mp;
 
+  prop_set_string(mp->mp_prop_type, "tv");
+
   hts_mutex_lock(&hc->hc_subscription_mutex);
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
