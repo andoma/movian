@@ -130,6 +130,9 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
 		 rc->rc_width  - gd->gd_border_right,
 		 gd->gd_border_bottom);
 
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, &rc0);
+
   glw_render0(c, &rc0);
 }
 
