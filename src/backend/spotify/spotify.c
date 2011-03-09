@@ -286,12 +286,9 @@ typedef struct spotify_msg {
  * Image load request
  */
 typedef struct spotify_image {
-  uint8_t *si_id;
-
+  const char *si_url;
   int si_errcode;
-  
   pixmap_t *si_pixmap;
-
 } spotify_image_t;
 
 static hts_cond_t spotify_cond_image;
@@ -876,18 +873,16 @@ spotify_play_track(spotify_uri_t *su)
  *
  */
 static void
-set_image_uri(prop_t *p, const uint8_t *id)
+set_image_uri(prop_t *p, sp_link *link)
 {
-  if(id == NULL)
+  char url[100];
+
+  if(link == NULL)
     return;
 
-  prop_set_stringf(p, "spotify:image:"
-		   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-		   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
-		   id[ 0],id[ 1],id[ 2],id[ 3],id[ 4], 
-		   id[ 5],id[ 6],id[ 7],id[ 8],id[ 9], 
-		   id[10],id[11],id[12],id[13],id[14], 
-		   id[15],id[16],id[17],id[18],id[19]);
+  if(f_sp_link_as_string(link, url, sizeof(url)))
+    prop_set_string(p, url);
+  f_sp_link_release(link);
 }
 
 
@@ -986,7 +981,7 @@ spotify_metadata_update_track(metadata_t *m)
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
     prop_set_link(m->m_album, f_sp_album_name(album), url);
-    set_image_uri(m->m_album_art, f_sp_album_cover(album));
+    set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover(album));
     prop_set_int(m->m_album_year, f_sp_album_year(album));
   }
 
@@ -1082,7 +1077,7 @@ spotify_metadata_update_artistname(prop_t *p, sp_artist *artist)
 static void
 spotify_metadata_update_albumimage(prop_t *p, sp_album *album)
 {
-  set_image_uri(p, f_sp_album_cover(album));
+  set_image_uri(p, f_sp_link_create_from_album_cover(album));
 }
 
 
@@ -1457,7 +1452,8 @@ spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
   prop_set_link(prop_create(metadata, "artist"),
 		f_sp_artist_name(artist), link);
   
-  set_image_uri(prop_create(metadata, "album_art"), f_sp_album_cover(album));
+  set_image_uri(prop_create(metadata, "album_art"),
+		f_sp_link_create_from_album_cover(album));
   
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -1702,7 +1698,7 @@ try_resolve_track_item(spotify_page_t *sp)
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
     prop_set_link(sp->sp_album_name, f_sp_album_name(album), url);
-    set_image_uri(sp->sp_album_art, f_sp_album_cover(album));
+    set_image_uri(sp->sp_album_art, f_sp_link_create_from_album_cover(album));
     prop_set_int(sp->sp_album_year, f_sp_album_year(album));
   }
 
@@ -2855,8 +2851,15 @@ spotify_got_image(sp_image *image, void *userdata)
 static void
 spotify_get_image(spotify_image_t *si)
 {
-  f_sp_image_add_load_callback(f_sp_image_create(spotify_session, si->si_id),
+  sp_link *l = f_sp_link_create_from_string(si->si_url);
+  if(l == NULL || f_sp_link_type(l) != SP_LINKTYPE_IMAGE) {
+    si->si_errcode = 1;
+    return;
+  }
+
+  f_sp_image_add_load_callback(f_sp_image_create_from_link(spotify_session, l),
 			       spotify_got_image, si);
+  f_sp_link_release(l);
 }
 
 
@@ -2935,7 +2938,8 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
     prop_set_link(prop_create(metadata, "artist"),
 		  f_sp_artist_name(artist), link);
 
-    set_image_uri(prop_create(metadata, "album_art"), f_sp_album_cover(album));
+    set_image_uri(prop_create(metadata, "album_art"),
+		  f_sp_link_create_from_album_cover(album));
 
     if(prop_set_parent(p, ssr->ssr_nodes))
       prop_destroy(p);
@@ -3623,78 +3627,18 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 /**
  *
  */
-static unsigned int
-hex2v(int s)
-{
-  switch(s) {
-  case '0' ... '9':
-    return s - '0';
-  case 'a' ... 'f':
-    return s - 'a' + 10;
-  case 'A' ... 'F':
-    return s - 'A' + 10;
-  default:
-    return 0;
-  }
-}
-
-
-
-/**
- *
- */
-static int
-parse_image_url(uint8_t *out, const char *url)
-{
-  int i;
-  uint8_t v;
-
-  if(strncmp(url, "spotify:image:", strlen("spotify:image:")))
-    return -1;
-
-  url += strlen("spotify:image:");
-
-  for(i = 0; i < 20; i++) {
-
-    if(*url == 0)
-      return -1;
-
-    v = hex2v(*url++);
-    if(*url == 0)
-      return -1;
-
-    v = (v << 4) | hex2v(*url++);
-    *out++ = v;
-  }
-  return 0;
-}
-
-
-
-/**
- *
- */
 static pixmap_t *
 be_spotify_imageloader(const char *url, int want_thumb, const char **vpaths,
 		       char *errbuf, size_t errlen)
 {
-  spotify_image_t si;
-  uint8_t id[20];
+  spotify_image_t si = {0};
 
   if(spotify_start(errbuf, errlen, 0))
     return NULL;
-  
-  memset(&si, 0, sizeof(si));
-
-  if(parse_image_url(id, url)) {
-    snprintf(errbuf, errlen, "Invalid URL for Spotify imageloader");
-    return NULL;
-  }
-
 
   hts_mutex_lock(&spotify_mutex);
 
-  si.si_id = id;
+  si.si_url = url;
   si.si_errcode = -1;
 
   spotify_msg_enq_locked(spotify_msg_build(SPOTIFY_GET_IMAGE, &si));

@@ -18,7 +18,7 @@ static sp_error(*f_sp_session_player_prefetch)(sp_session *session, sp_track *tr
 static sp_playlistcontainer *(*f_sp_session_playlistcontainer)(sp_session *session);
 static sp_playlist *(*f_sp_session_inbox_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_create)(sp_session *session);
-static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session, const char *username);
+static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session, const char *canonical_username);
 static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user_create)(sp_session *session, const char *canonical_username);
 static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
 static int(*f_sp_session_num_friends)(sp_session *session);
@@ -26,10 +26,13 @@ static sp_user *(*f_sp_session_friend)(sp_session *session, int index);
 static sp_link *(*f_sp_link_create_from_string)(const char *link);
 static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
+static sp_link *(*f_sp_link_create_from_album_cover)(sp_album *album);
 static sp_link *(*f_sp_link_create_from_artist)(sp_artist *artist);
+static sp_link *(*f_sp_link_create_from_artist_portrait)(sp_artist *artist, int index);
 static sp_link *(*f_sp_link_create_from_search)(sp_search *search);
 static sp_link *(*f_sp_link_create_from_playlist)(sp_playlist *playlist);
 static sp_link *(*f_sp_link_create_from_user)(sp_user *user);
+static sp_link *(*f_sp_link_create_from_image)(sp_image *image);
 static int(*f_sp_link_as_string)(sp_link *link, char *buffer, int buffer_size);
 static sp_linktype(*f_sp_link_type)(sp_link *link);
 static sp_track *(*f_sp_link_as_track)(sp_link *link);
@@ -98,6 +101,7 @@ static const char *(*f_sp_artistbrowse_biography)(sp_artistbrowse *arb);
 static void(*f_sp_artistbrowse_add_ref)(sp_artistbrowse *arb);
 static void(*f_sp_artistbrowse_release)(sp_artistbrowse *arb);
 static sp_image *(*f_sp_image_create)(sp_session *session, const byte image_id[20]);
+static sp_image *(*f_sp_image_create_from_link)(sp_session *session, sp_link *l);
 static void(*f_sp_image_add_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
 static void(*f_sp_image_remove_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
 static bool(*f_sp_image_is_loaded)(sp_image *image);
@@ -220,10 +224,13 @@ if((f_sp_session_friend=dlsym(handle,"sp_session_friend"))==NULL) return "sp_ses
 if((f_sp_link_create_from_string=dlsym(handle,"sp_link_create_from_string"))==NULL) return "sp_link_create_from_string";
 if((f_sp_link_create_from_track=dlsym(handle,"sp_link_create_from_track"))==NULL) return "sp_link_create_from_track";
 if((f_sp_link_create_from_album=dlsym(handle,"sp_link_create_from_album"))==NULL) return "sp_link_create_from_album";
+if((f_sp_link_create_from_album_cover=dlsym(handle,"sp_link_create_from_album_cover"))==NULL) return "sp_link_create_from_album_cover";
 if((f_sp_link_create_from_artist=dlsym(handle,"sp_link_create_from_artist"))==NULL) return "sp_link_create_from_artist";
+if((f_sp_link_create_from_artist_portrait=dlsym(handle,"sp_link_create_from_artist_portrait"))==NULL) return "sp_link_create_from_artist_portrait";
 if((f_sp_link_create_from_search=dlsym(handle,"sp_link_create_from_search"))==NULL) return "sp_link_create_from_search";
 if((f_sp_link_create_from_playlist=dlsym(handle,"sp_link_create_from_playlist"))==NULL) return "sp_link_create_from_playlist";
 if((f_sp_link_create_from_user=dlsym(handle,"sp_link_create_from_user"))==NULL) return "sp_link_create_from_user";
+if((f_sp_link_create_from_image=dlsym(handle,"sp_link_create_from_image"))==NULL) return "sp_link_create_from_image";
 if((f_sp_link_as_string=dlsym(handle,"sp_link_as_string"))==NULL) return "sp_link_as_string";
 if((f_sp_link_type=dlsym(handle,"sp_link_type"))==NULL) return "sp_link_type";
 if((f_sp_link_as_track=dlsym(handle,"sp_link_as_track"))==NULL) return "sp_link_as_track";
@@ -292,6 +299,7 @@ if((f_sp_artistbrowse_biography=dlsym(handle,"sp_artistbrowse_biography"))==NULL
 if((f_sp_artistbrowse_add_ref=dlsym(handle,"sp_artistbrowse_add_ref"))==NULL) return "sp_artistbrowse_add_ref";
 if((f_sp_artistbrowse_release=dlsym(handle,"sp_artistbrowse_release"))==NULL) return "sp_artistbrowse_release";
 if((f_sp_image_create=dlsym(handle,"sp_image_create"))==NULL) return "sp_image_create";
+if((f_sp_image_create_from_link=dlsym(handle,"sp_image_create_from_link"))==NULL) return "sp_image_create_from_link";
 if((f_sp_image_add_load_callback=dlsym(handle,"sp_image_add_load_callback"))==NULL) return "sp_image_add_load_callback";
 if((f_sp_image_remove_load_callback=dlsym(handle,"sp_image_remove_load_callback"))==NULL) return "sp_image_remove_load_callback";
 if((f_sp_image_is_loaded=dlsym(handle,"sp_image_is_loaded"))==NULL) return "sp_image_is_loaded";
@@ -415,10 +423,13 @@ return NULL;}
 #define f_sp_link_create_from_string sp_link_create_from_string
 #define f_sp_link_create_from_track sp_link_create_from_track
 #define f_sp_link_create_from_album sp_link_create_from_album
+#define f_sp_link_create_from_album_cover sp_link_create_from_album_cover
 #define f_sp_link_create_from_artist sp_link_create_from_artist
+#define f_sp_link_create_from_artist_portrait sp_link_create_from_artist_portrait
 #define f_sp_link_create_from_search sp_link_create_from_search
 #define f_sp_link_create_from_playlist sp_link_create_from_playlist
 #define f_sp_link_create_from_user sp_link_create_from_user
+#define f_sp_link_create_from_image sp_link_create_from_image
 #define f_sp_link_as_string sp_link_as_string
 #define f_sp_link_type sp_link_type
 #define f_sp_link_as_track sp_link_as_track
@@ -487,6 +498,7 @@ return NULL;}
 #define f_sp_artistbrowse_add_ref sp_artistbrowse_add_ref
 #define f_sp_artistbrowse_release sp_artistbrowse_release
 #define f_sp_image_create sp_image_create
+#define f_sp_image_create_from_link sp_image_create_from_link
 #define f_sp_image_add_load_callback sp_image_add_load_callback
 #define f_sp_image_remove_load_callback sp_image_remove_load_callback
 #define f_sp_image_is_loaded sp_image_is_loaded

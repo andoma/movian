@@ -147,7 +147,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_create(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 7
+#define SPOTIFY_API_VERSION 8
 
 /**
  * Describes the current state of the connection
@@ -420,7 +420,10 @@ typedef struct sp_session_config {
 						*/
 	const void *application_key;           ///< Your application key
 	size_t application_key_size;           ///< The size of the application key in bytes
-	const char *user_agent;                ///< "User-Agent" for your application - max 255 characters long
+	const char *user_agent;                /**< "User-Agent" for your application - max 255 characters long
+						     The User-Agent should be a relevant, customer facing identification of your application
+					       */
+
 	const sp_session_callbacks *callbacks; ///< Delivery callbacks for session events, or NULL if you are not interested in any callbacks (not recommended!)
 	void *userdata;                        ///< User supplied data for your application
 
@@ -649,7 +652,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_create(sp_session *session);
  * @note You need to release the playlist when you are done with it.
  * @see sp_playlist_release()
  */
-SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *session, const char *username);
+SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *session, const char *canonical_username);
 
 /**
  * Return the published container for a given @a canonical_username,
@@ -659,7 +662,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *sessi
  * decrese the reference you own by having created it.
  *
  * @param[in]   session    Your session object.
- * @param[in]   username   The canonical username, or NULL.
+ * @param[in]   canonical_username   The canonical username, or NULL.
  *
  * @return Playlist container object, NULL if not logged in or not found.
  */
@@ -720,6 +723,7 @@ typedef enum {
 	SP_LINKTYPE_PROFILE  = 6, ///< Link type is profile
 	SP_LINKTYPE_STARRED  = 7, ///< Link type is starred
 	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file	
+	SP_LINKTYPE_IMAGE = 9, ///< Link type is an image
 } sp_linktype;
 
 /**
@@ -762,6 +766,18 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_track(sp_track *track, int offset);
 SP_LIBEXPORT(sp_link *) sp_link_create_from_album(sp_album *album);
 
 /**
+ * Create an image link object from an album
+ *
+ * @param[in]   album      An album object
+ *
+ * @return                 A link representing the album cover. Type is set to SP_LINKTYPE_IMAGE
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_album_cover(sp_album *album);
+
+/**
  * Creates a link object from an artist
  *
  * @param[in]   artist     An artist object
@@ -772,6 +788,20 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_album(sp_album *album);
  * @see sp_link_release()
  */
 SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
+
+/**
+ * Creates a link object from an artist portrait
+ *
+ * @param[in]   artist     An artist object
+ * @param[in]   index      The index of the portrait. Should be in the interval [0, sp_artistbrowse_num_portraits() - 1]
+ *
+ * @return                 A link object representing an image
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ * @see sp_artistbrowse_num_portraits()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artist *artist, int index);
 
 /**
  * Generate a link object representing the current search
@@ -813,6 +843,18 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_playlist(sp_playlist *playlist);
  * @see sp_link_release()
  */
 SP_LIBEXPORT(sp_link *) sp_link_create_from_user(sp_user *user);
+
+/**
+ * Create a link object representing the given image
+ *
+ * @param[in]  image          Image object
+ *
+ * @return                    A link representing the image.
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_image(sp_image *image);
 
 /**
  * Create a string representation of the given Spotify link
@@ -1093,7 +1135,7 @@ SP_LIBEXPORT(int) sp_track_index(sp_track *track);
  * @param[in]   artist     Name of the artist
  * @param[in]   title      Song title
  * @param[in]   album      Name of the album, or an empty string if not available
- * @param[in]   title      Length in MS, or -1 if not available.
+ * @param[in]   length      Length in MS, or -1 if not available.
  *
  * @return                 A track.
  */
@@ -1634,6 +1676,19 @@ typedef void SP_CALLCONV image_loaded_cb(sp_image *image, void *userdata);
  * @see sp_artistbrowse_portrait
  */
 SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const byte image_id[20]);
+
+/**
+ * Create an image object from a link
+ *
+ * @param[in]  session    Session
+ * @param[in]  link       Spotify link object. This must be of SP_LINKTYPE_IMAGE type 
+ *
+ * @return                Pointer to an image object. To free the object, use
+ *                        sp_image_release()
+ *
+ * @see sp_image_create
+ */
+SP_LIBEXPORT(sp_image *) sp_image_create_from_link(sp_session *session, sp_link *l);
 
 /**
  * Add a callback that will be invoked when the image is loaded
@@ -2549,6 +2604,11 @@ typedef struct sp_playlistcontainer_callbacks {
  * @param[in]  pc        Playlist container
  * @param[in]  callbacks Callbacks, see sp_playlistcontainer_callbacks
  * @param[in]  userdata  Opaque value passed to callbacks.
+ *
+ * @note Every sp_playlistcontainer_add_callbacks() needs to be paried with a corresponding
+ *       sp_playlistcontainer_remove_callbacks() that is invoked before releasing the
+ *       last reference you own for the container. In other words, you must make sure
+ *       to have removed all the callbacks before the container gets destroyed.
  *
  * @sa sp_session_playlistcontainer()
  * @sa sp_playlistcontainer_remove_callbacks
