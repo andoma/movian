@@ -75,15 +75,15 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       } else if(!(c->glw_flags & GLW_HIDDEN)) {
 	z = 0.0;
 	a = a0;
-	a0 *= 0.25;
+	a0 *= 0.5;
 
 	b = b0;
 	b0 = 0;
       }
 
-      c->glw_parent_z     = GLW_LP(8, c->glw_parent_z,     z);
-      c->glw_parent_alpha = GLW_LP(8, c->glw_parent_alpha, a);
-      c->glw_parent_blur  = GLW_LP(8, c->glw_parent_blur,  b);
+      c->glw_parent_z     = GLW_LP(5, c->glw_parent_z,     z);
+      c->glw_parent_alpha = GLW_LP(5, c->glw_parent_alpha, a);
+      c->glw_parent_blur  = GLW_LP(5, c->glw_parent_blur,  b);
       
       if(c->glw_parent_alpha > 0.01)
 	glw_layout0(c, rc);
@@ -140,7 +140,7 @@ glw_layer_render(glw_t *w, glw_rctx_t *rc)
     rc0.rc_alpha *= c->glw_parent_alpha * w->glw_alpha;
     if(rc0.rc_alpha < 0.01)
       continue;
-    glw_Translatef(&rc0, 0, 0, c->glw_parent_z);
+    glw_Translatef(&rc0, 0, 0, 0.1*c->glw_parent_z);
 
     b = glw_blur(w->glw_root, 1 - c->glw_parent_blur);
     glw_render0(c, &rc0);
