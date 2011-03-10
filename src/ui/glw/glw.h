@@ -1079,6 +1079,9 @@ void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
 void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
 
+void glw_repositionf(glw_rctx_t *rc, float left, float top,
+		     float right, float bottom);
+
 void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
 
 void glw_align_2(glw_rctx_t *rc, glw_alignment_t a);

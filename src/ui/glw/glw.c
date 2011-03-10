@@ -1550,6 +1550,26 @@ glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
 /**
  *
  */
+void
+glw_repositionf(glw_rctx_t *rc, float left, float top,
+		float right, float bottom)
+{
+  float sx =         (right - left) / (float)rc->rc_width;
+  float tx = -1.0f + (right + left) / (float)rc->rc_width;
+  float sy =         (top - bottom) / (float)rc->rc_height;
+  float ty = -1.0f + (top + bottom) / (float)rc->rc_height;
+  
+  glw_Translatef(rc, tx, ty, 0);
+  glw_Scalef(rc, sx, sy, GLW_MIN(sx, sy));
+
+  rc->rc_width  = right - left;
+  rc->rc_height = top - bottom;
+}
+
+
+/**
+ *
+ */
 int
 glw_kill_screensaver(glw_root_t *gr)
 {
