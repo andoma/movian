@@ -3767,20 +3767,20 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   if(unit->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, unit, "Unit argument is not a string");
   
-  setting_t *s = 
-    settings_create_int(gr->gr_settings, rstr_get(id->t_rstring),
+  if(self->t_extra == NULL) {
+    self->t_extra = 
+      settings_create_int(gr->gr_settings, rstr_get(id->t_rstring),
 			rstr_get(title->t_rstring), 
-			token2int(def), gr->gr_settings_store, 
-			token2int(min), token2int(max), token2int(step),
-			NULL, NULL,
-			SETTINGS_INITIAL_UPDATE, rstr_get(unit->t_rstring),
-			gr->gr_courier,
-			glw_settings_save, gr);
-
-  prop_link(settings_get_value(s), prop->t_prop);
-
-  self->t_extra = s; // Save setting for destruction
-
+			  token2int(def), gr->gr_settings_store, 
+			  token2int(min), token2int(max), token2int(step),
+			  NULL, NULL,
+			  SETTINGS_INITIAL_UPDATE, rstr_get(unit->t_rstring),
+			  gr->gr_courier,
+			  glw_settings_save, gr);
+    
+    prop_link(settings_get_value(self->t_extra), prop->t_prop);
+  }
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   return 0;
 }
 
@@ -3809,18 +3809,21 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   
   if(id->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, id, "Second argument is not a string");
-  
-  setting_t *s =
-    settings_create_bool(gr->gr_settings, rstr_get(id->t_rstring),
-			 rstr_get(title->t_rstring), 
-			 token2int(def), gr->gr_settings_store, 
-			 NULL, NULL,
-			 SETTINGS_INITIAL_UPDATE,
-			 gr->gr_courier,
-			 glw_settings_save, gr);
 
-  prop_link(settings_get_value(s), prop->t_prop);
-  self->type = TOKEN_NOP; // Can never be reevaluated
+  if(self->t_extra == NULL) {
+    self->t_extra = 
+      settings_create_bool(gr->gr_settings, rstr_get(id->t_rstring),
+			   rstr_get(title->t_rstring), 
+			   token2int(def), gr->gr_settings_store, 
+			   NULL, NULL,
+			   SETTINGS_INITIAL_UPDATE,
+			   gr->gr_courier,
+			   glw_settings_save, gr);
+    
+    prop_link(settings_get_value(self->t_extra), prop->t_prop);
+  }
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   return 0;
 }
 

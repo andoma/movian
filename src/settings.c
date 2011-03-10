@@ -45,7 +45,8 @@ struct setting {
   void *s_opaque;
   void *s_callback;
   prop_sub_t *s_sub;
-  prop_t *s_prop;
+  prop_t *s_root;
+  prop_t *s_model;
   prop_t *s_val;
   int s_min;
   int s_max;
@@ -109,6 +110,21 @@ settings_add_dir(prop_t *parent, const char *title, const char *subtype,
 /**
  *
  */
+static setting_t *
+setting_create_leaf(prop_t *parent, const char *title, const char *type,
+		    const char *valuename)
+{
+  setting_t *s = calloc(1, sizeof(setting_t));
+  s->s_root = setting_add(prop_create(parent, "model"), title, type);
+  s->s_model = prop_create(s->s_root, "model");
+  s->s_val = prop_ref_inc(prop_create(s->s_model, valuename));
+  return s;
+}
+
+
+/**
+ *
+ */
 static void
 settings_int_callback(void *opaque, int v)
 {
@@ -134,10 +150,7 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 		     int flags, prop_courier_t *pc,
 		     settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      title, "bool"), "model");
-  prop_t *v = prop_create(r, "value");
-  setting_t *s = calloc(1, sizeof(setting_t));
+  setting_t *s = setting_create_leaf(parent, title, "bool", "value");
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -147,16 +160,14 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
   if(store != NULL)
     initial = htsmsg_get_u32_or_default(store, id, initial);
 
-  prop_set_int(v, !!initial);
-
-  s->s_prop = prop_ref_inc(r);
+  prop_set_int(s->s_val, !!initial);
 
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, !!initial);
   
   sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
-		       PROP_TAG_ROOT, v,
+		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
@@ -173,7 +184,7 @@ settings_create_bool(prop_t *parent, const char *id, const char *title,
 void
 settings_set_bool(setting_t *s, int v)
 {
-  prop_set_int(prop_create(s->s_prop, "value"), v);
+  prop_set_int(s->s_val, v);
 }
 
 
@@ -183,7 +194,7 @@ settings_set_bool(setting_t *s, int v)
 void
 settings_toggle_bool(setting_t *s)
 {
-  prop_toggle_int(prop_create(s->s_prop, "value"));
+  prop_toggle_int(s->s_val);
 }
 
 
@@ -199,10 +210,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 		    prop_courier_t *pc,
 		    settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      title, "integer"), "model");
-  prop_t *v = prop_create(r, "value");
-  setting_t *s = calloc(1, sizeof(setting_t));
+  setting_t *s = setting_create_leaf(parent, title, "integer", "value");
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -213,17 +221,15 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
   if(store != NULL)
     initial = htsmsg_get_s32_or_default(store, id, initial);
 
-  prop_set_int_clipping_range(v, min, max);
+  prop_set_int_clipping_range(s->s_val, min, max);
 
-  prop_set_int(prop_create(r, "min"), min);
-  prop_set_int(prop_create(r, "max"), max);
-  prop_set_int(prop_create(r, "step"), step);
-  prop_set_string(prop_create(r, "unit"), unit);
+  prop_set_int(prop_create(s->s_model, "min"), min);
+  prop_set_int(prop_create(s->s_model, "max"), max);
+  prop_set_int(prop_create(s->s_model, "step"), step);
+  prop_set_string(prop_create(s->s_model, "unit"), unit);
 
-  prop_set_int(v, initial);
+  prop_set_int(s->s_val, initial);
 
-  s->s_prop = prop_ref_inc(r);
-  s->s_val = v;
   s->s_min = min;
   s->s_max = max;
 
@@ -232,7 +238,7 @@ settings_create_int(prop_t *parent, const char *id, const char *title,
 
   sub = prop_subscribe(0,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
-		       PROP_TAG_ROOT, v,
+		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
 		       NULL);
   s->s_sub = sub;
@@ -301,23 +307,16 @@ setting_t *
 settings_create_multiopt(prop_t *parent, const char *id, const char *title,
 			 prop_callback_string_t *cb, void *opaque)
 {
-  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      title, "multiopt"), "model");
-  prop_t *o = prop_create(r, "options");
-  setting_t *s = calloc(1, sizeof(setting_t));
-  prop_sub_t *sub;
+  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options");
 
   s->s_id = strdup(id);
   s->s_callback = cb;
   s->s_opaque = opaque;
-  s->s_prop = r;
   
-  sub = prop_subscribe(0,
-		       PROP_TAG_CALLBACK, callback_opt, s, 
-		       PROP_TAG_ROOT, o, 
-		       NULL);
-
-  s->s_sub = sub;
+  s->s_sub = prop_subscribe(0,
+			    PROP_TAG_CALLBACK, callback_opt, s, 
+			    PROP_TAG_ROOT, s->s_val, 
+			    NULL);
   return s;
 }
 
@@ -327,18 +326,14 @@ settings_create_multiopt(prop_t *parent, const char *id, const char *title,
  *
  */
 void
-settings_multiopt_add_opt(setting_t *parent, const char *id, const char *title,
+settings_multiopt_add_opt(setting_t *s, const char *id, const char *title,
 			  int selected)
 {
-  prop_t *r = parent->s_prop;
-  prop_t *opts = prop_create_ex(r, "options", parent->s_sub, 0);
-  prop_t *o = prop_create(opts, id);
-
+  prop_t *o = prop_create(s->s_val, id);
   prop_set_string(prop_create(o, "title"), title);
 
-
   if(selected)
-    prop_select_ex(o, NULL, parent->s_sub);
+    prop_select_ex(o, NULL, s->s_sub);
 }
 
 
@@ -352,9 +347,7 @@ settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
   const char *str = htsmsg_get_str(store, s->s_id);
 
   if(str != NULL) {
-    prop_t *r = s->s_prop;
-    prop_t *opts = prop_create_ex(r, "options", s->s_sub, 0);
-    prop_t *o = prop_find(opts, str, NULL);
+    prop_t *o = prop_find(s->s_val, str, NULL);
 
     if(o != NULL)
       prop_select_ex(o, NULL, s->s_sub);
@@ -397,11 +390,7 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
 		       int flags, prop_courier_t *pc,
 		       settings_saver_t *saver, void *saver_opaque)
 {
-  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      title, "string"), "model");
-  prop_t *v = prop_create(r, "value");
-  setting_t *s = calloc(1, sizeof(setting_t));
-  prop_sub_t *sub;
+  setting_t *s = setting_create_leaf(parent, title, "string", "value");
 
   s->s_id = strdup(id);
   s->s_callback = cb;
@@ -411,22 +400,20 @@ settings_create_string(prop_t *parent, const char *id, const char *title,
     initial = htsmsg_get_str(store, id) ?: initial;
 
   if(initial != NULL)
-    prop_set_string(v, initial);
+    prop_set_string(s->s_val, initial);
 
-  s->s_prop = prop_ref_inc(r);
-  
   if(flags & SETTINGS_PASSWORD)
-    prop_set_int(prop_create(r, "password"), 1);
+    prop_set_int(prop_create(s->s_model, "password"), 1);
 
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_string_callback(s, initial);
 
-  sub = prop_subscribe(0,
-		       PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
-		       PROP_TAG_ROOT, v,
-		       PROP_TAG_COURIER, pc,
-		       NULL);
-  s->s_sub = sub;
+  s->s_sub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
+		   PROP_TAG_ROOT, s->s_val,
+		   PROP_TAG_COURIER, pc,
+		   NULL);
   
   s->s_store = store;
   s->s_saver = saver;
@@ -458,20 +445,12 @@ settings_create_action(prop_t *parent, const char *id, const char *title,
 		       prop_callback_t *cb, void *opaque,
 		       prop_courier_t *pc)
 {
-  prop_t *r = prop_create(setting_add(prop_create(parent, "model"),
-				      title, "action"), "model");
-  prop_t *v = prop_create(r, "action");
-  setting_t *s = calloc(1, sizeof(setting_t));
-  prop_sub_t *sub;
-
-  s->s_prop = prop_ref_inc(r);
-
-  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		       PROP_TAG_CALLBACK, cb, opaque,
-		       PROP_TAG_ROOT, v,
-		       PROP_TAG_COURIER, pc,
-		       NULL);
-  s->s_sub = sub;
+  setting_t *s = setting_create_leaf(parent, title, "action", "action");
+  s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+			    PROP_TAG_CALLBACK, cb, opaque,
+			    PROP_TAG_ROOT, s->s_val,
+			    PROP_TAG_COURIER, pc,
+			    NULL);
   return s;
 }
 
@@ -486,8 +465,8 @@ setting_destroy(setting_t *s)
 {
   free(s->s_id);
   prop_unsubscribe(s->s_sub);
-  prop_destroy(s->s_prop);
-  prop_ref_dec(s->s_prop);
+  prop_destroy(s->s_root);
+  prop_ref_dec(s->s_val);
   free(s);
 }
 
@@ -498,7 +477,17 @@ setting_destroy(setting_t *s)
 prop_t *
 settings_get_value(setting_t *s)
 {
-  return prop_create(s->s_prop, "value");
+  return s->s_val;
+}
+
+
+/**
+ *
+ */
+prop_t *
+settings_get_node(setting_t *s)
+{
+  return s->s_root;
 }
 
 /**
