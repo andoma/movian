@@ -40,6 +40,7 @@
 #include "media.h"
 #include "misc/string.h"
 #include "misc/isolang.h"
+#include "misc/jpeg.h"
 
 
 #define METADATA_HASH_SIZE 101
@@ -333,12 +334,39 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 
 
 /**
+ *
+ */
+static int
+jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
+{
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
+    return -1;
+  return fa_read(handle, buf, size);
+}
+
+
+static void
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
+{
+    jpeginfo_t ji;
+
+   if(jpeg_info(&ji, jpeginfo_reader, fh, 
+		JPEG_INFO_DIMENSIONS |
+		JPEG_INFO_ORIENTATION,
+		pb, 256, NULL, 0))
+     return;
+   
+   md->md_time = ji.ji_time;
+}
+
+
+/**
  * Probe file by checking its header
  *
  * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
+fa_probe_header(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
 {
   uint16_t flags;
 
@@ -385,14 +413,11 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
   }
 #endif
 
-  if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
+  if((pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') ||
+     (pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f')) {
     /* JPEG image */
     md->md_type = CONTENT_IMAGE;
-    return 1;
-  }
-
-  if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
-    md->md_type = CONTENT_IMAGE;
+    fa_probe_exif(md, url, pb, fh); // Try to get more info
     return 1;
   }
 
@@ -682,7 +707,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
   }
 #endif
 
-  if(fa_probe_header(md, url0, pd.buf)) {
+  if(fa_probe_header(md, url0, pd.buf, fh)) {
     fa_close(fh);
     free(pd.buf);
     return 0;
@@ -817,6 +842,11 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
 
   if(md->md_tracks && (p = prop_create_check(proproot, "tracks")) != NULL) {
     prop_set_int(p,  md->md_tracks);
+    prop_ref_dec(p);
+  }
+
+  if(md->md_time && (p = prop_create_check(proproot, "timestamp")) != NULL) {
+    prop_set_int(p,  md->md_time);
     prop_ref_dec(p);
   }
 
