@@ -1063,7 +1063,8 @@ cloner_pagination_check(sub_cloner_t *sc)
     return;
 
   sc->sc_have_more = 0;
-  prop_want_more_childs(sc->sc_sub.gps_sub);
+  if(sc->sc_sub.gps_sub != NULL)
+    prop_want_more_childs(sc->sc_sub.gps_sub);
 }
 
 
