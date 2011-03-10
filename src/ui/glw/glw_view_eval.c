@@ -3271,7 +3271,7 @@ glwf_isHovered(glw_view_eval_context_t *ec, struct token *self,
 }
 
 /**
- * Return 1 if the current widget is in focus
+ * Return 1 if the current widget is depressed
  */
 static int 
 glwf_isPressed(glw_view_eval_context_t *ec, struct token *self,
