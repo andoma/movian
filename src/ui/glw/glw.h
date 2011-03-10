@@ -571,7 +571,6 @@ typedef struct glw_root {
   FT_Face gr_gtb_face;
   int gr_fontsize;
   int gr_fontsize_px;
-  prop_t *gr_fontsize_prop;
 
   /**
    * Image/Texture loader
