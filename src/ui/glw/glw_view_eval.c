@@ -4273,7 +4273,24 @@ glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
-
+/**
+ * Cast to int
+ */
+static int 
+glwf_int(glw_view_eval_context_t *ec, struct token *self,
+	     token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = token2int(a);
+  eval_push(ec, r);
+  return 0;
+}
 
 
 
@@ -4333,6 +4350,7 @@ static const token_func_t funcvec[] = {
   {"getHeight", 0, glwf_getHeight},
   {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},
   {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
+  {"int", 1, glwf_int},
 };
 
 
