@@ -142,9 +142,10 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_settings = settings_add_dir(NULL, title, "display", NULL);
 
-  gr->gr_setting_fontsize =
-    settings_create_int(gr->gr_settings, "fontsize",
-			"Font size", 20, gr->gr_settings_store, 14, 40, 1,
+  gr->gr_setting_size =
+    settings_create_int(gr->gr_settings, "scaling",
+			"Userinterface scaling", 15,
+			gr->gr_settings_store, 14, 40, 1,
 			glw_font_change_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
@@ -158,8 +159,8 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 			glw_settings_save, gr);
 
 
-  prop_link(settings_get_value(gr->gr_setting_fontsize),
-	    prop_create(gr->gr_uii.uii_prop, "fontsize"));
+  prop_link(settings_get_value(gr->gr_setting_size),
+	    prop_create(gr->gr_uii.uii_prop, "size"));
 
   gr->gr_pointer_visible = 
     prop_create(gr->gr_uii.uii_prop, "pointerVisible");
@@ -1645,13 +1646,13 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
-    settings_add_int(gr->gr_setting_fontsize, 1);
+    settings_add_int(gr->gr_setting_size, 1);
     glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
-    settings_add_int(gr->gr_setting_fontsize, -1);
+    settings_add_int(gr->gr_setting_size, -1);
     glw_unlock(gr);
     return;
 

@@ -614,7 +614,7 @@ typedef struct glw_root {
 
   htsmsg_t *gr_settings_store;  // Loaded settings
 
-  setting_t *gr_setting_fontsize;
+  setting_t *gr_setting_size;
 
   setting_t *gr_setting_screensaver;
 
