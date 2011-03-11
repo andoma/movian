@@ -145,7 +145,8 @@ typedef struct playlistcontainer {
   LIST_ENTRY(playlistcontainer) plc_rethink_link;
   int plc_rethink;
 
-  prop_t *plc_root_nodes;
+  prop_t *plc_root_tree;
+  prop_t *plc_root_flat;
   prop_t *plc_pending;
   ptrvec_t plc_playlists;
 
@@ -160,7 +161,8 @@ typedef struct playlist {
   uint64_t pl_folder_id;
   ptrvec_t pl_tracks;
 
-  prop_t *pl_prop_root;
+  prop_t *pl_prop_root_flat;
+  prop_t *pl_prop_root_tree;
   prop_t *pl_prop_canDelete;
   prop_t *pl_prop_url;
   prop_t *pl_prop_tracks;
@@ -1539,7 +1541,7 @@ spotify_open_artist(sp_link *l, spotify_page_t *sp)
  *
  */
 static void
-spotify_open_rootlist(spotify_page_t *sp)
+spotify_open_rootlist(spotify_page_t *sp, int flat)
 {
   struct prop_nf *pnf;
 
@@ -1547,7 +1549,8 @@ spotify_open_rootlist(spotify_page_t *sp)
   prop_set_string(sp->sp_title, "Spotify playlists");
   prop_link(users_root->plc_pending, sp->sp_loading);
 
-  pnf = prop_nf_create(sp->sp_nodes, users_root->plc_root_nodes,
+  pnf = prop_nf_create(sp->sp_nodes, flat ? users_root->plc_root_flat :
+		       users_root->plc_root_tree,
 		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
@@ -1704,7 +1707,9 @@ spotify_open_page(spotify_page_t *sp)
   sp_playlist *plist;
 
   if(!strcmp(sp->sp_url, "spotify:playlists")) {
-    spotify_open_rootlist(sp);
+    spotify_open_rootlist(sp, 0);
+  } else if(!strcmp(sp->sp_url, "spotify:playlistsflat")) {
+    spotify_open_rootlist(sp, 1);
   } else if(!strcmp(sp->sp_url, "spotify:starred")) {
     
     plist = f_sp_session_starred_create(spotify_session);
@@ -2428,7 +2433,7 @@ static int
 place_playlists_in_node(playlistcontainer_t *plc, int i, playlist_t *parent)
 {
   playlist_t *before = NULL;
-  prop_t *container = parent ? parent->pl_prop_childs : plc->plc_root_nodes;
+  prop_t *container = parent ? parent->pl_prop_childs : plc->plc_root_tree;
 
   while(i >= 0) {
     playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, i);
@@ -2443,9 +2448,9 @@ place_playlists_in_node(playlistcontainer_t *plc, int i, playlist_t *parent)
       continue;
     }
 
-    if(pl->pl_prop_root != NULL) {
-      if(prop_set_parent_ex(pl->pl_prop_root, container,
-			    before ? before->pl_prop_root : NULL, NULL))
+    if(pl->pl_prop_root_tree != NULL) {
+      if(prop_set_parent_ex(pl->pl_prop_root_tree, container,
+			    before ? before->pl_prop_root_tree : NULL, NULL))
 	abort();
       before = pl;
     }
@@ -2453,6 +2458,29 @@ place_playlists_in_node(playlistcontainer_t *plc, int i, playlist_t *parent)
   }
   return i;
 }
+
+
+/**
+ *
+ */
+static void
+place_playlists_in_list(playlistcontainer_t *plc)
+{
+  playlist_t *before = NULL;
+  int i;
+
+  for(i = plc->plc_playlists.size-1; i >= 0; i--) {
+    playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, i);
+
+    if(pl->pl_prop_root_flat != NULL) {
+      if(prop_set_parent_ex(pl->pl_prop_root_flat, plc->plc_root_flat,
+			    before ? before->pl_prop_root_flat : NULL, NULL))
+	abort();
+      before = pl;
+    }
+  }
+}
+
 
 #if 0
 /**
@@ -2478,6 +2506,7 @@ place_playlists_in_tree(playlistcontainer_t *plc)
   if(rootlist_bind_folders(plc, 0, NULL))
     return;
   place_playlists_in_node(plc, plc->plc_playlists.size-1, NULL);
+  place_playlists_in_list(plc);
 }
 
 
@@ -2504,7 +2533,11 @@ pl_create2(sp_playlist *plist)
 			     prop_create(model, "filter"),
 			     prop_create(model, "canFilter"),
 			     prop_create(metadata, "user"));
-  pl->pl_prop_root = model;
+  pl->pl_prop_root_flat = model;
+  pl->pl_prop_root_tree = prop_create_root(NULL);
+
+  prop_link(pl->pl_prop_root_flat, pl->pl_prop_root_tree);
+
   return pl;
 }    
 
@@ -2552,16 +2585,16 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
     pl->pl_folder_id = f_sp_playlistcontainer_playlist_folder_id(pc, position);
 
-    pl->pl_prop_root = prop_create_root(NULL);
-    prop_set_string(prop_create(pl->pl_prop_root, "type"), "directory");
+    pl->pl_prop_root_tree = prop_create_root(NULL);
+    prop_set_string(prop_create(pl->pl_prop_root_tree, "type"), "directory");
 
-    metadata = prop_create(pl->pl_prop_root, "metadata");
+    metadata = prop_create(pl->pl_prop_root_tree, "metadata");
     prop_set_string(prop_create(metadata, "title"), name);
     prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
 
-    backend_prop_make(pl->pl_prop_root, url, sizeof(url));
-    prop_set_string(prop_create(pl->pl_prop_root, "url"), url);
-    pl->pl_prop_childs = prop_create(pl->pl_prop_root, "nodes");
+    backend_prop_make(pl->pl_prop_root_tree, url, sizeof(url));
+    prop_set_string(prop_create(pl->pl_prop_root_tree, "url"), url);
+    pl->pl_prop_childs = prop_create(pl->pl_prop_root_tree, "nodes");
     break;
 
   case SP_PLAYLIST_TYPE_END_FOLDER:
@@ -2606,13 +2639,14 @@ playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 
   switch(pl->pl_type) {
   case SP_PLAYLIST_TYPE_PLAYLIST:
-    prop_destroy(pl->pl_prop_root);
+    prop_destroy(pl->pl_prop_root_flat);
+    prop_destroy(pl->pl_prop_root_tree);
     break;
 
   case SP_PLAYLIST_TYPE_START_FOLDER:
     prop_unparent_childs(pl->pl_prop_childs);
-
-    prop_destroy(pl->pl_prop_root);
+    prop_destroy(pl->pl_prop_root_tree);
+    /* FALLTHRU */
   default:
     free(pl);
     break;
@@ -2725,7 +2759,8 @@ static playlistcontainer_t *
 playlistcontainer_create(void)
 {
   playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
-  plc->plc_root_nodes = prop_create_root(NULL);
+  plc->plc_root_tree = prop_create_root(NULL);
+  plc->plc_root_flat = prop_create_root(NULL);
   plc->plc_pending = prop_create_root(NULL);
   prop_set_int(plc->plc_pending, 1);
   return plc;
