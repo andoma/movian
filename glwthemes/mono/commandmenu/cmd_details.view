@@ -1,0 +1,79 @@
+#import "skin://commandmenu.skin"
+#import "theme://include/separators.view";
+
+widget(container_y, {
+
+  .spacing = 20;
+  .align = bottom;
+
+
+  widget(container_x, {
+    .hidden = $global.media.current.type != "video";
+    .height = $ui.size * 10;
+    .spacing = 20;
+    .align = center;
+
+    commandGroup(widget(container_y, {
+      .width = $ui.size * 10;
+      widget(label, {
+	.caption = "Audio tracks";
+	.align = center;
+	.color = [0.5, 0.5, 0.5];
+      });
+      HORIZONTAL_SEPARATOR();
+      
+      widget(list_y, {
+	cloner($global.media.current.metadata.audiostreams, container_z, {
+	  commandSelectableItem($self.title,
+				$self.format,
+				$self.id == $global.media.current.audio.current,
+				selectTrack($self.id));
+	});
+      });
+    }));
+    
+    commandGroup(widget(container_y, {
+      .width = $ui.size * 10;
+      widget(label, {
+	.caption = "Subtitles";
+	.align = center;
+	.color = [0.5, 0.5, 0.5];
+      });
+      HORIZONTAL_SEPARATOR();
+      
+      widget(list_y, {
+	cloner($global.media.current.metadata.subtitlestreams, container_z, {
+	  commandSelectableItem($self.title,
+				$self.format,
+				$self.id == $global.media.current.subtitle.current,
+				selectTrack($self.id));
+	});
+      });
+    }));
+  });
+
+  widget(container_x, {
+    .align = center;
+    .hidden = $global.media.current.type != "video";
+    commandGroup(widget(container_y, {
+
+      .width = 20 + $ui.size * 20;
+      
+      widget(label, {
+	.caption = "Lipsync (Audio delay)";
+      });
+      commandSlider($global.media.current.avdelta,  -1000, 1000, 10, 
+		    int2str($global.media.current.avdelta) + "ms");
+    }));
+  });
+
+	       
+  commandGroup(widget(container_x, {
+    widget(container_y, {
+      commandMenuLeft(targetedEvent("cmd_deck", Decrease), "Main", 0.1);
+    });
+    space(1);
+    
+  }));
+  
+});

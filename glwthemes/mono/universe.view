@@ -1,6 +1,7 @@
 #import "theme://include/defs.view"
 #import "theme://include/separators.view"
 #import "theme://include/buttons.view"
+#import "theme://include/slider.view"
 
 settingInt("Vertical underscan", "underscan_v", 
 	   $ui.defaults.underscan_v, "px", 0, 100, 1, $ui.underscan_v);
@@ -40,8 +41,6 @@ onEvent(back, {
 
 $ui.fullwindow = 0;
 
-$view.showplaydeck = !$ui.fullwindow && $global.media.current.type == "tracks";
-
 widget(container_z, {
 
   widget(gradient, {
@@ -60,77 +59,94 @@ widget(container_z, {
     space(1);
   });
 
+  widget(loader, {
+    .time = 0.3;
+    .effect = blend;
+    .source = select($ui.screensaverActive, "theme://screensaver.view", "");
+  });
+
+
   widget(displacement, {
 
-    .alpha = iir(1 - $ui.screensaverActive, 8);
-
-    .border = [$ui.underscan_h * 1,
-	       $ui.underscan_v * 1,
-	       $ui.underscan_h * 1,
-	       $ui.underscan_v * 1];
+    .padding = [$ui.underscan_h * 1,
+		$ui.underscan_v * 1,
+		$ui.underscan_h * 1,
+		$ui.underscan_v * 1];
     .scaling = [1,1,1] - ($ui.tilt / 20) * [0.2, 0.2, 0.0];
     .translation = [0, $ui.tilt / 200, 0];
     .rotation = [$ui.tilt, -1, 0, 0];
 
 
-    widget(layer, {
+    widget(container_z, {
+      widget(layer, {
+	.alpha = iir(1 - $ui.screensaverActive, 8);
 
-      #include "theme://maindeck.view"
+	#include "theme://maindeck.view"
 
-      // Command menu
+	// Command menu
 
-      #include "theme://commandmenu.view"
+	#include "theme://commandmenu/cmd_root.view"
 
-      // Popup cloner
+	// Popup cloner
 
-      cloner($global.popups, loader, {
-	.source = "theme://popups/" + $self.type + ".view";
-      });
+	cloner($global.popups, loader, {
+	  .source = "theme://popups/" + $self.type + ".view";
+	});
 
-      // Log window
+	// Log window
 
-      widget(backdrop, {
-	.hidden = !$ui.logwindow;
+	widget(backdrop, {
+	  .hidden = !$ui.logwindow;
 
-	PLATE_GFX();
-	.color = [0.1, 0.1, 0.1];
-	.alphaSelf = 0.8;
-	
-	widget(container_y, {
+	  PLATE_GFX();
+	  .color = [0.1, 0.1, 0.1];
+	  .alphaSelf = 0.8;
+	  
+	  widget(container_y, {
 
-	  widget(label, {
-	    .caption = "Log";
-	    .sizeScale = 1.5;
-	    .align = center;
-	  });
-	  HORIZONTAL_SEPARATOR();
-
-	  widget(container_x, {
-	    widget(list_y, {
-	      .id = "list";
-	      cloner($global.logbuffer, label, {
-		.sizeScale = 0.75;
-		.caption = $self.prefix + $self.message;
-		.ellipsize = true;
-		.color = translate($self.severity, [1,1,1],
-				   "DEBUG", [0.5, 1, 0.5],
-				   "INFO",  [1, 1, 0.5],
-				   "ERROR", [1, 0.5, 0.5]);
-
-		
-	      });
+	    widget(label, {
+	      .caption = "Log";
+	      .sizeScale = 1.5;
+	      .align = center;
 	    });
-	    LIST_Y_SLIDER("list", true);
+	    HORIZONTAL_SEPARATOR();
+
+	    widget(container_x, {
+	      widget(list_y, {
+		.id = "list";
+		cloner($global.logbuffer, label, {
+		  .sizeScale = 0.75;
+		  .caption = $self.prefix + $self.message;
+		  .ellipsize = true;
+		  .color = translate($self.severity, [1,1,1],
+				     "DEBUG", [0.5, 1, 0.5],
+				     "INFO",  [1, 1, 0.5],
+				     "ERROR", [1, 0.5, 0.5]);
+
+		  
+		});
+	      });
+	      LIST_Y_SLIDER("list", true);
+	    });
+	  });
+	});
+      });
+      // Now playing info
+      widget(container_y, {
+	.align = bottom;
+	widget(expander_y, {
+	  $ui.playdeckheight = getHeight();
+	  
+	  .expansion = scurve($ui.showplaydeck, 0.3);
+	  
+	  widget(loader, {
+	    .time = 0.3;
+	    .effect = blend;
+	    .source = "theme://playdecks/" + $global.media.current.type + ".view" ?? "theme://playdecks/none.view";
 	  });
 	});
       });
     });
-  });
-
-  widget(loader, {
-    .time = 0.3;
-    .effect = blend;
-    .source = select($ui.screensaverActive, "theme://screensaver.view", "");
   });
 
   // Overlay that always should be visible even if screen saver is active

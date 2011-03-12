@@ -4,65 +4,71 @@
 
 $view.showFilter = $page.model.filter && 1;
 
-widget(container_x, {
+widget(container_y, {
+  widget(container_x, {
 
-  widget(dummy, { .width = 2; });
+    widget(dummy, { .width = 2; });
 
-  widget(keyintercept, {
-    bind($page.model.filter);
-    .enabled = $page.model.canFilter;
-    
-    widget(container_y, {
-      .filterConstraintX = true;
+    widget(keyintercept, {
+      bind($page.model.filter);
+      .enabled = $page.model.canFilter;
       
-      widget(expander_y, {
+      widget(container_y, {
 	.filterConstraintX = true;
-
-	.expansion = scurve($view.showFilter, 0.25);
-	.alpha     = scurve($view.showFilter, 0.25);
 	
-	widget(container_x, {
-	  widget(backdrop, {
-	    .filterConstraintX = true;
-	    .color = [0.3, 0.3, 0.3];
-	    PLATE_GFX();
-	    widget(container_x, {
-	      
-	      widget(label, {
-		.caption = "Filter: ";
-	      });
-	      
-	      widget(label, {
-		.caption = $page.model.filter;
-	      });
-      	    });
+	widget(expander_y, {
+	  .filterConstraintX = true;
+
+	  .expansion = scurve($view.showFilter, 0.25);
+	  .alpha     = scurve($view.showFilter, 0.25);
+	  
+	  widget(container_x, {
+	    widget(backdrop, {
+	      .filterConstraintX = true;
+	      .color = [0.3, 0.3, 0.3];
+	      PLATE_GFX();
+	      widget(container_x, {
+		
+		widget(label, {
+		  .caption = "Filter: ";
+		});
+		
+		widget(label, {
+		  .caption = $page.model.filter;
+		});
+      	      });
+	    });
+	    ICON2("skin://icons/Delete.png",
+		  "Clear",
+		  {
+		    $page.model.filter = void;
+		  },
+		  PLATE_COLOR_DELETE(),
+		  1, 0.1);
 	  });
-	  ICON2("theme://icons/48x48/Delete.png",
-		"Clear",
-		{
-		  $page.model.filter = void;
-		},
-		PLATE_COLOR_DELETE(),
-		1, 0.1);
 	});
-      });
 
-      widget(array, {
-	.id = "array";
-	
-	.childWidth = 200;
-	.childHeight = 140 + $ui.fontsize;
-	
-	cloner($page.model.nodes, loader, {
-	  .time = 0.3;
-	  .noInitialTransform = true;
-	  .source = "theme://directoryviews/array/" + $self.type + ".view";
+	widget(array, {
+	  .id = "array";
+	  
+	  .childWidth = 200;
+	  .childHeight = 140 + $ui.size;
+	  
+	  cloner($page.model.nodes, loader, {
+	    .time = 0.3;
+	    .noInitialTransform = true;
+	    .source = "theme://directoryviews/array/" + $self.type + ".view";
+	  });
 	});
       });
     });
+
+    widget(dummy, { .width = 2; });
+    LIST_Y_SLIDER("array");
+    widget(dummy, { .width = 2; });
+  });
+  widget(dummy, {
+    .height = $ui.playdeckheight;
   });
 
-  widget(dummy, { .width = 2; });
-  LIST_Y_SLIDER("array");
-  widget(dummy, { .width = 2; });
 });

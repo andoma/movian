@@ -1,4 +1,4 @@
-#import "skin://buttons/nav.view"
+#import "skin://nav.skin"
 
 // Main container 
 widget(container_y, {
@@ -12,17 +12,20 @@ widget(container_y, {
 
       .padding = [2,2,2,2];
       
-      skinNavLeft(EVENT = event(Back),
-		  ENABLED = 0.01 * $global.nav.canGoBack,
-		  HIDDEN = !$ui.topBarTools);
+      skinNavButton(TYPE="back",
+		    EVENT = event(Back),
+		    ENABLED = 0.01 * $global.nav.canGoBack,
+		    HIDDEN = !$ui.topBarTools);
 
-      skinNavRight(EVENT = event(Forward),
-		   ENABLED = 0.01 * $global.nav.canGoForward,
-		   HIDDEN = !$ui.topBarTools);
+      skinNavButton(TYPE="forward",
+		    EVENT = event(Forward),
+		    ENABLED = 0.01 * $global.nav.canGoForward,
+		    HIDDEN = !$ui.topBarTools);
 
-      skinNavHome(EVENT = event(Home),
-		  ENABLED = 0.01 * $global.nav.canGoHome,
-		  HIDDEN = !$ui.topBarTools);
+      skinNavButton(TYPE="home",
+		    EVENT = event(Home),
+		    ENABLED = 0.01 * $global.nav.canGoHome,
+		    HIDDEN = !$ui.topBarTools);
 
       widget(deck, {
 	.filterConstraintX = true;
@@ -59,17 +62,6 @@ widget(container_y, {
       .time = 0.3;
       .effect = blend;
       .source = select($ui.showSysteminfo, "theme://sysinfo.view", "");
-    });
-  });
-
-  // Now playing info
-  widget(expander_y, {
-    .expansion = scurve($view.showplaydeck, 0.3);
-    
-    widget(loader, {
-      .time = 0.3;
-      .effect = blend;
-      .source = "theme://playdecks/" + $global.media.current.type + ".view" ?? "";
     });
   });
 });

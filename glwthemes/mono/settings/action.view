@@ -3,7 +3,7 @@
 
 
 LIST_ITEM_SIMPLE($self.model.metadata.title,
-		"theme://icons/48x48/Check.png", // bad icon
+		"skin://icons/Check.png", // bad icon
 		 deliverEvent($self.model.action),
 		 PLATE_COLOR_OTHER());
 

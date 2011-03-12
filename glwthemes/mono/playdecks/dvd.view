@@ -1,0 +1,52 @@
+#import "skin://playdeck.skin"
+
+$ui.showplaydeck =  $ui.menu ||
+  $global.media.current.error ||
+  changed($self.media.metadata.title, 2, true);
+
+// -------------------------------------------------------------------
+
+widget(container_x, {
+  .padding = [5, 0, 5, 5];
+      
+  .align = center;
+  skinPlaydeckGroup(.filterConstraintX = true; widget(container_x, {
+    .spacing = 10;
+    widget(container_y, {
+      .filterConstraintX = true;
+      widget(label, {
+	.sizeScale = 1.5;
+	.caption = $global.media.current.metadata.title;
+      });
+    });
+
+    widget(container_y, {
+      .align = bottom;
+
+      widget(label, {
+	.align = right;
+	.caption =
+	  "Title: " + 
+	  int2str($global.media.current.currenttitle) + 
+	  " / " + int2str($global.media.current.metadata.titles);
+      });
+
+      widget(label, {
+	.align = right;
+	.caption =
+	  "Chapter: " + 
+	  int2str($global.media.current.currentchapter) + 
+	  " / " + int2str($global.media.current.metadata.chapters);
+      });
+
+/* Don't have time yet...
+      widget(label, {
+	.align = right;
+	.caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
+	  select($global.media.current.metadata.duration,
+		 " / " + value2duration($global.media.current.metadata.duration), "");
+      });
+*/
+    });
+  }));
+});

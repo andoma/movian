@@ -24,7 +24,7 @@ widget(container_x, {
 	    .value = 1.2 + sin(monotime() * 4);
 	    widget(icon, {
 	      .color = [1.0, 0.8, 0.2];
-	      .source = "theme://icons/48x48/Lock.png";
+	      .source = "skin://icons/Lock.png";
 	      .sizeScale = 2;
 	    });
 	  });
@@ -91,11 +91,11 @@ widget(container_x, {
 
 	  BAR_BUTTON("OK", 
 		     deliverEvent($self.eventSink, "Ok"),
-		     false, "theme://icons/48x48/Check.png");
+		     false, "skin://icons/Check.png");
 
 	  BAR_BUTTON("Cancel", 
 		     deliverEvent($self.eventSink, "Cancel"),
-		     false, "theme://icons/48x48/Delete.png");
+		     false, "skin://icons/Delete.png");
 	});
       });
     });

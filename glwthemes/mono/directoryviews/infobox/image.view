@@ -1,0 +1,4 @@
+widget(image, {
+  .source = $args.url;
+  .hqScaling = true;
+});

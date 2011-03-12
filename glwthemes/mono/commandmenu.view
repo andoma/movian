@@ -51,7 +51,7 @@
     widget(container_x, {
 	      
       widget(icon, {
-	.source = "theme://icons/48x48/Check.png";
+	.source = "skin://icons/Check.png";
 	.shadow = true;
 	.alpha = iir($self.id == CURRENT, 8);
       });
@@ -153,7 +153,7 @@ widget(container_x, {
 	    widget(container_x, {
 	      .align = center;
 
-	      ICON2("theme://icons/48x48/NavLeft.png",
+	      ICON2("skin://icons/NavLeft.png",
 		    "Back",
 		    {
 		      $ui.menu = false;
@@ -163,7 +163,7 @@ widget(container_x, {
 		    $global.nav.canGoBack);
 	      
 
-	      ICON2("theme://icons/48x48/NavRight.png",
+	      ICON2("skin://icons/NavRight.png",
 		    "Forward",
 		    {
 		      $ui.menu = false;
@@ -172,7 +172,7 @@ widget(container_x, {
 		    PLATE_COLOR_CMDMENU(),
 		    $global.nav.canGoForward);
 
-	      ICON2("theme://icons/48x48/Home.png",
+	      ICON2("skin://icons/Home.png",
 		    "Home",
 		    {
 		      $ui.menu = false;
@@ -181,13 +181,13 @@ widget(container_x, {
 		    PLATE_COLOR_CMDMENU(),
 		    $global.nav.canGoHome);
 
-	      ICON2("theme://icons/48x48/Blank.png",
+	      ICON2("skin://icons/Blank.png",
 		    "Blank",
 		    event(EnableScreenSaver),
 		    PLATE_COLOR_CMDMENU(),
 		    true);
 
-	      ICON2("theme://icons/48x48/Settings.png",
+	      ICON2("skin://icons/Settings.png",
 		    "Settings",
 		   {
 		     $ui.menu = false;
@@ -197,7 +197,7 @@ widget(container_x, {
 		   1);
 
 
-	      ICON2("theme://icons/48x48/Queue.png",
+	      ICON2("skin://icons/Queue.png",
 		    "Playqueue",
 		   {
 		     $ui.menu = false;
@@ -206,7 +206,7 @@ widget(container_x, {
 		   PLATE_COLOR_CMDMENU(),
 		   1);
 
-	      ICON2("theme://icons/48x48/Exit.png",
+	      ICON2("skin://icons/Exit.png",
 		    "Exit",
 		    event(Quit),
 		   PLATE_COLOR_CMDMENU(),
@@ -224,13 +224,13 @@ widget(container_x, {
 	    widget(container_x, {
 	      .align = center;
 
-	      ICON2("theme://icons/48x48/SkipBack.png",
+	      ICON2("skin://icons/SkipBack.png",
 		    "Prev track",
 		    event(PreviousTrack),
 		    PLATE_COLOR_CMDMENU(),
 		    $global.media.current.canSkipBackward);
 
-	      ICON2("theme://icons/48x48/SeekBack.png",
+	      ICON2("skin://icons/SeekBack.png",
 		    "Rewind",
 		    event(SeekReverse),
 		    PLATE_COLOR_CMDMENU(),
@@ -242,13 +242,13 @@ widget(container_x, {
 		.noInitialTransform = true;
 		.time = 0.2;
 
-		ICON2("theme://icons/48x48/Pause.png",
+		ICON2("skin://icons/Pause.png",
 		      "Pause",
 		      event(Pause),
 		      PLATE_COLOR_CMDMENU(),
 		      $global.media.current.canPause);
 
-		ICON2("theme://icons/48x48/Play.png",
+		ICON2("skin://icons/Play.png",
 		      "Play",
 		      event(Play),
 		      PLATE_COLOR_CMDMENU(),
@@ -260,25 +260,25 @@ widget(container_x, {
 				  "pause", 1);
 	      });
 
-	      ICON2("theme://icons/48x48/SeekFwd.png",
+	      ICON2("skin://icons/SeekFwd.png",
 		    "Fast Forward",
 		    event(SeekForward),
 		    PLATE_COLOR_CMDMENU(),
 		    $global.media.current.canSeek);
 
-	      ICON2("theme://icons/48x48/SkipNext.png",
+	      ICON2("skin://icons/SkipNext.png",
 		    "Next Track",
 		    event(NextTrack),
 		    PLATE_COLOR_CMDMENU(),
 		    $global.media.current.canSkipForward);
 
-	      ICON2("theme://icons/48x48/Stop.png",
+	      ICON2("skin://icons/Stop.png",
 		    "Stop",
 		    event(Stop),
 		    PLATE_COLOR_CMDMENU(),
 		    $global.media.current.canStop);
 
-	      ICON2("theme://icons/48x48/Eject.png",
+	      ICON2("skin://icons/Eject.png",
 		    "Eject",
 		    event(Eject),
 		    PLATE_COLOR_CMDMENU(),
