@@ -16,6 +16,8 @@ settingBool("Top bar navigation buttons", "navtools", true, $ui.topBarTools);
 settingBool("Adjust background tint based on daytime", "daytimegradient", 
 	    true, $ui.dayTimeGradient);
 
+settingBool("Fancy UI animations", "fancyAnimations", true, $ui.fancyAnimations);
+
 onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
