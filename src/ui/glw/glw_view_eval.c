@@ -998,10 +998,11 @@ clone_eval(clone_t *c)
   sub_cloner_t *sc = c->c_sc;
   glw_view_eval_context_t n;
   token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
-
+  const glw_class_t *gc = c->c_w->glw_class;
   c->c_evaluated = 1;
 
-  glw_set(c->c_w, GLW_ATTRIB_FREEZE, 1, NULL);
+  if(gc->gc_freeze != NULL)
+    gc->gc_freeze(c->c_w);
 
   memset(&n, 0, sizeof(n));
   n.prop = c->c_prop;
@@ -1018,7 +1019,8 @@ clone_eval(clone_t *c)
   glw_view_eval_block(body, &n);
   glw_view_free_chain(body);
 
-  glw_set(c->c_w, GLW_ATTRIB_FREEZE, 0, NULL);
+  if(gc->gc_thaw != NULL)
+    gc->gc_thaw(c->c_w);
 }
 
 
@@ -2048,8 +2050,10 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   n.rc = ec->rc;
   n.w = glw_create(ec->gr, c, ec->w, NULL, NULL);
 
+  if(c->gc_freeze != NULL)
+    c->gc_freeze(n.w);
+
   glw_set(n.w,
-	  GLW_ATTRIB_FREEZE, 1,
 	  GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
 	  NULL);
 
@@ -2057,7 +2061,8 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
 
   r = glw_view_eval_block(b, &n);
 
-  glw_set(n.w, GLW_ATTRIB_FREEZE, 0, NULL);
+  if(c->gc_thaw != NULL)
+    c->gc_thaw(n.w);
 
   return r ? -1 : 0;
 }

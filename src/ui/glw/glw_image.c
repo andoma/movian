@@ -64,8 +64,6 @@ typedef struct glw_image {
 
   uint8_t gi_update;
 
-  uint8_t gi_frozen;
-
   uint8_t gi_alpha_edge;
 
   uint8_t gi_was_valid;
@@ -637,7 +635,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       gi->gi_was_valid = 1;
     }
 
-    if(gi->gi_update && !gi->gi_frozen) {
+    if(gi->gi_update) {
       gi->gi_update = 0;
 
       glw_renderer_free(&gi->gi_gr);
@@ -947,10 +945,6 @@ glw_image_set(glw_t *w, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_FREEZE:
-      gi->gi_frozen = va_arg(ap, int);
-      break;
-
     case GLW_ATTRIB_ANGLE:
       gi->gi_angle = va_arg(ap, double);
       break;

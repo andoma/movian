@@ -1511,6 +1511,34 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
     glw_unhide(w);
 }
 
+
+/**
+ *
+ */
+static void
+freeze(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 1;
+}
+
+
+/**
+ *
+ */
+static void
+thaw(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 0;
+
+  if(gtb->gtb_pending_update) {
+    gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
+}
+
+
 /**
  *
  */
@@ -1529,16 +1557,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
       if(w->glw_flags2 & GLW2_AUTOHIDE)
 	glw_unhide(w);
       update = 1;
-      break;
-
-    case GLW_ATTRIB_FREEZE:
-      if(va_arg(ap, int)) {
-	gtb->gtb_frozen = 1;
-      } else {
-	if(gtb->gtb_pending_update)
-	  update = 1;
-	gtb->gtb_frozen = 0;
-      }
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1856,6 +1874,8 @@ static glw_class_t glw_label = {
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
   .gc_mod_flags2 = mod_flags2,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1879,6 +1899,8 @@ static glw_class_t glw_text = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_text);

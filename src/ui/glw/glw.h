@@ -93,7 +93,6 @@ typedef enum {
   GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
-  GLW_ATTRIB_FREEZE,
   GLW_ATTRIB_PAGE,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
@@ -505,6 +504,16 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_source_prop)(struct glw *w, prop_t *p);
+
+  /**
+   *
+   */
+  void (*gc_freeze)(struct glw *w);
+
+  /**
+   *
+   */
+  void (*gc_thaw)(struct glw *w);
 
   /**
    * Registration link
@@ -974,7 +983,6 @@ do {						\
   case GLW_ATTRIB_PIXMAP: 			\
     (void)va_arg(ap, void *);			\
     break;					\
-  case GLW_ATTRIB_FREEZE:			\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
