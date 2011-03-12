@@ -624,7 +624,7 @@ js_init(void)
 
   JS_SetCStringsAreUTF8();
 
-  runtime = JS_NewRuntime(0x100000); 
+  runtime = JS_NewRuntime(0x1000000);
 
   cx = js_newctx();
 
