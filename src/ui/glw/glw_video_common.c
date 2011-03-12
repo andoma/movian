@@ -338,21 +338,34 @@ mod_video_flags(glw_t *w, int set, int clr)
  *
  */
 static void
+set_source(glw_t *w, const char *url)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+
+  if(url[0] != 0) {
+    if(gv->gv_freezed) {
+      gv->gv_pending_set_source_cnt = 5;
+      mystrset(&gv->gv_pending_url, url);
+    } else {
+      glw_video_set_source(gv, url);
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
 glw_video_set(glw_t *w, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_attribute_t attrib;
-  const char *filename = NULL;
   prop_t *p, *p2;
   event_t *e;
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-      break;
 
     case GLW_ATTRIB_FREEZE:
       gv->gv_freezed = va_arg(ap, int);
@@ -388,15 +401,6 @@ glw_video_set(glw_t *w, va_list ap)
       break;
     }
   } while(attrib);
-
-  if(filename != NULL && filename[0] != 0) {
-    if(gv->gv_freezed) {
-      gv->gv_pending_set_source_cnt = 5;
-      mystrset(&gv->gv_pending_url, filename);
-    } else {
-      glw_video_set_source(gv, filename);
-    }
-  }
 }
 
 
@@ -457,6 +461,7 @@ static glw_class_t glw_video = {
   .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback,
   .gc_mod_video_flags = mod_video_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_video);

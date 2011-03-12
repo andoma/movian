@@ -72,7 +72,6 @@ LIST_HEAD(glw_video_list, glw_video);
 typedef enum {
   GLW_ATTRIB_END = 0,
   GLW_ATTRIB_VALUE,
-  GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
   GLW_ATTRIB_ALPHA_SELF,
@@ -496,6 +495,16 @@ typedef struct glw_class {
 			      prop_t *view,
 			      prop_t *args,
 			      prop_t *clone);
+
+  /**
+   *
+   */
+  void (*gc_set_source_str)(struct glw *w, const char *str);
+
+  /**
+   *
+   */
+  void (*gc_set_source_prop)(struct glw *w, prop_t *p);
 
   /**
    * Registration link
@@ -959,7 +968,6 @@ do {						\
     abort();                                    \
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
-  case GLW_ATTRIB_SOURCE:			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\

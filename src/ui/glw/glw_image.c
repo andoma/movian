@@ -908,12 +908,40 @@ mod_image_flags(glw_t *w, int set, int clr)
 /**
  *
  */
+static void
+set_source(glw_t *w, const char *filename)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  
+  const char *curname;
+
+  if(gi->gi_pending_filename != NULL)
+    curname = gi->gi_pending_filename;
+  else if(gi->gi_pending != NULL) 
+    curname = gi->gi_pending->glt_filename;
+  else if(gi->gi_current != NULL) 
+    curname = gi->gi_current->glt_filename;
+  else 
+    curname = NULL;
+  
+  if(curname != NULL && filename != NULL && !strcmp(filename, curname))
+    return;
+  
+  if(gi->gi_pending_filename != NULL)
+    free(gi->gi_pending_filename);
+  
+  gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
+}
+
+
+/**
+ *
+ */
 static void 
 glw_image_set(glw_t *w, va_list ap)
 {
-  glw_image_t *gi = (void *)w;
+  glw_image_t *gi = (glw_image_t *)w;
   glw_attribute_t attrib;
-  const char *filename = NULL;
   glw_root_t *gr = w->glw_root;
 
   do {
@@ -936,29 +964,6 @@ glw_image_set(glw_t *w, va_list ap)
       compute_colors(gi);
       break;
       
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-
-      char *curname;
-
-      if(gi->gi_pending_filename != NULL)
-	curname = gi->gi_pending_filename;
-      else if(gi->gi_pending != NULL) 
-	curname = gi->gi_pending->glt_filename;
-      else if(gi->gi_current != NULL) 
-	curname = gi->gi_current->glt_filename;
-      else 
-	curname = NULL;
-
-      if(curname != NULL && filename != NULL && !strcmp(filename, curname))
-	break;
-
-      if(gi->gi_pending_filename != NULL)
-	free(gi->gi_pending_filename);
-
-      gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
-      break;
-
     case GLW_ATTRIB_PIXMAP:
       if(gi->gi_pending != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_pending);
@@ -1027,6 +1032,7 @@ static glw_class_t glw_image = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1047,6 +1053,7 @@ static glw_class_t glw_icon = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1069,6 +1076,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_border = set_border,
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1090,6 +1098,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

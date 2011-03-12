@@ -595,14 +595,18 @@ static int
 set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
+  glw_t *w = ec->w;
+
   switch(t->type) {
   case TOKEN_VOID:
-    glw_set(ec->w, GLW_ATTRIB_SOURCE, NULL, NULL);
+    if(w->glw_class->gc_set_source_str != NULL)
+      w->glw_class->gc_set_source_str(w, NULL);
     break;
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    glw_set(ec->w, GLW_ATTRIB_SOURCE, rstr_get(t->t_rstring), NULL);
+    if(w->glw_class->gc_set_source_str != NULL)
+      w->glw_class->gc_set_source_str(w, rstr_get(t->t_rstring));
     break;
 
   case TOKEN_PIXMAP:
