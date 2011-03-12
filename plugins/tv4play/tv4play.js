@@ -203,7 +203,7 @@
 
 	  showtime.trace("playing video at " + videoURL);
 	  page.loading = false;
-	  page.url = videoURL;
+	  page.source = videoURL;
 	  page.type = "video";
 	  
       });

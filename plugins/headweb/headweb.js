@@ -261,7 +261,7 @@
     var params = showtime.queryStringSplit(doc.auth.playerparams);
 
     page.loading = false;
-    page.url = params["cfg.stream.auth.url"] + "/" +
+    page.source = params["cfg.stream.auth.url"] + "/" +
       params["cfg.stream.auth.streamid"];
     page.type = "video";
   });
