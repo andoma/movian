@@ -137,7 +137,7 @@
     widget(container_z, {
       .width ?= WIDTH;
       widget(backdrop, {
-	.source = "skin:///gfx/hsliderbackground.png";
+	.source = "skin://gfx/hsliderbackground.png";
 	.border = 5;
 	.padding = -5;
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -151,7 +151,7 @@
 	  .alwaysGrabKnob = true;
 	  widget(backdrop, {
 	    .width = $ui.size;
-	    .source = "skin:///gfx/hsliderknob.png";
+	    .source = "skin://gfx/hsliderknob.png";
 	    .border = 6;
 	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	  });
@@ -172,7 +172,7 @@
 #define commandSlider(VALUE, MIN, MAX, STEP, CAPTION, ENABLED=true, HIDDEN=false) {
   widget(container_z, {
     widget(backdrop, {
-      .source = "skin:///gfx/hsliderbackground.png";
+      .source = "skin://gfx/hsliderbackground.png";
       .border = 5;
       .padding = -2;
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -229,7 +229,7 @@
 
 #define commandGroup(BODY) {
   widget(backdrop, {
-    .source = "skin:///gfx/blackdrop.png";
+    .source = "skin://gfx/blackdrop.png";
     .border = 12;
     .alphaSelf = 0.5;
     BODY;
