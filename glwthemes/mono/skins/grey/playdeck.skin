@@ -1,7 +1,7 @@
 
 #define skinPlaydeckGroup(BODY) {
   widget(backdrop, {
-    .source = "skin:///gfx/blackdrop.png";
+    .source = "skin://gfx/blackdrop.png";
     .border = [12,12,12,12];
     .alphaSelf = 0.5;
     BODY;

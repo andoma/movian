@@ -49,7 +49,7 @@
 
 #define skinInfoboxGroup(BODY) {
   widget(backdrop, {
-    .source = "skin:///gfx/border.png";
+    .source = "skin://gfx/border.png";
     .border = [12,12,12,12];
     .borderOnly = true;
     .alphaSelf = 0.5;
