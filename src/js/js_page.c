@@ -93,7 +93,7 @@ typedef struct js_model {
   prop_t *jm_error;
   prop_t *jm_contents;
   prop_t *jm_entries;
-  prop_t *jm_url;
+  prop_t *jm_source;
   prop_t *jm_metadata;
 
   prop_t *jm_eventsink;
@@ -209,7 +209,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_error)     prop_ref_dec(jm->jm_error);
   if(jm->jm_contents)  prop_ref_dec(jm->jm_contents);
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
-  if(jm->jm_url)       prop_ref_dec(jm->jm_url);
+  if(jm->jm_source)    prop_ref_dec(jm->jm_source);
   if(jm->jm_metadata)  prop_ref_dec(jm->jm_metadata);
   if(jm->jm_eventsink) prop_ref_dec(jm->jm_eventsink);
 
@@ -238,7 +238,7 @@ static JSBool
 js_setEntries(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_entries, *vp);
+  js_prop_set_from_jsval(cx, jm->jm_entries, *vp, 0);
   return JS_TRUE;
 }
 
@@ -250,7 +250,7 @@ static JSBool
 js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_type, *vp);
+  js_prop_set_from_jsval(cx, jm->jm_type, *vp, 0);
   return JS_TRUE;
 }
 
@@ -262,7 +262,7 @@ static JSBool
 js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_contents, *vp);
+  js_prop_set_from_jsval(cx, jm->jm_contents, *vp, 0);
   return JS_TRUE;
 }
 
@@ -271,10 +271,11 @@ js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  *
  */
 static JSBool 
-js_setURL(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
+js_setSource(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_url, *vp);
+  js_prop_set_from_jsval(cx, jm->jm_source, *vp, 1);
+  prop_print_tree(jm->jm_source, 1);
   return JS_TRUE;
 }
 
@@ -451,7 +452,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
     prop_set_string(prop_create(item, "type"), type);
 
     if(metaobj)
-      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
+      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"), 0);
 
   } else {
 
@@ -527,7 +528,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   metadata = prop_create(item, "metadata");
 
   if(metaobj)
-    js_prop_from_object(cx, metaobj, metadata);
+    js_prop_from_object(cx, metaobj, metadata, 0);
 
   prop_set_string(prop_create(item, "url"), url);
 
@@ -820,9 +821,9 @@ make_model_object(JSContext *cx, js_model_t *jm)
     JS_DefineProperty(cx, obj, "loading", BOOLEAN_TO_JSVAL(1),
 		      NULL, js_setLoading, JSPROP_PERMANENT);
 
-  if(jm->jm_url != NULL)
-    JS_DefineProperty(cx, obj, "url", JSVAL_VOID,
-		      NULL, js_setURL, JSPROP_PERMANENT);
+  if(jm->jm_source != NULL)
+    JS_DefineProperty(cx, obj, "source", JSVAL_VOID,
+		      NULL, js_setSource, JSPROP_PERMANENT);
 
   if(jm->jm_metadata != NULL) {
     JSObject *metaobj = js_object_from_prop(cx, jm->jm_metadata);
@@ -954,7 +955,7 @@ js_backend_open(prop_t *page, const char *url)
 
   init_model_props(jm, model);
 
-  jm->jm_url       = prop_ref_inc(prop_create(page, "url"));
+  jm->jm_source    = prop_ref_inc(prop_create(page, "source"));
   jm->jm_eventsink = prop_ref_inc(prop_create(page, "eventSink"));
   jm->jm_loading   = prop_ref_inc(prop_create(model, "loading"));
   jm->jm_root      = prop_ref_inc(page);

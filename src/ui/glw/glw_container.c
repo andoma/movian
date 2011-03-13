@@ -32,6 +32,7 @@ typedef struct glw_container {
   int16_t co_padding_bottom;
   int16_t co_spacing;
   int16_t co_biggest;
+  char co_using_aspect;
 
 } glw_container_t;
 
@@ -54,6 +55,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   int numfix = 0;
 
   co->co_biggest = 0;
+  co->co_using_aspect = 0;
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
@@ -77,6 +79,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     } else if(f & GLW_CONSTRAINT_W) {
       if(c->glw_req_weight > 0)
 	weight += c->glw_req_weight;
+      else
+	co->co_using_aspect = 1;
+
     } else {
       weight += 1.0f;
     }
@@ -108,7 +113,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0 = *rc;
-  const int width = co->width;
+  int width = co->width;
   float IW; 
   int weightavail;  // Pixels available for weighted childs
   float pos;        // Current position
@@ -119,6 +124,17 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     return 0;
 
   rc0.rc_height = rc->rc_height - co->co_padding_top - co->co_padding_bottom;
+
+  if(co->co_using_aspect) {
+    // If any of our childs wants a fixed aspect we need to compute
+    // the total width those will consume
+    TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+      int f = glw_filter_constraints(c->glw_flags);
+      float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
+      if(w < 0)
+	width += rc0.rc_height * -w;
+    }
+  }
 
   if(width > rc->rc_width) {
     // Requested pixel size > available width, must scale

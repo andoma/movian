@@ -1383,7 +1383,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
+  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_int_step = 1;
   gtb->gtb_int_min = INT_MIN;
@@ -1472,10 +1472,13 @@ set_caption(glw_t *w, const char *caption, int type)
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb->gtb_type = type;
   assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
-  if(caption == NULL)
-    w->glw_flags |= GLW_HIDDEN;
-  else
-    w->glw_flags &= ~GLW_HIDDEN;
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE) {
+    if(caption == NULL)
+      glw_hide(w);
+    else
+      glw_unhide(w);
+  }
   
   if(update)
     gtb_update(gtb);
@@ -1503,8 +1506,38 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
 		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		   NULL);
-  w->glw_flags &= ~GLW_HIDDEN;
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE)
+    glw_unhide(w);
 }
+
+
+/**
+ *
+ */
+static void
+freeze(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 1;
+}
+
+
+/**
+ *
+ */
+static void
+thaw(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 0;
+
+  if(gtb->gtb_pending_update) {
+    gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
+}
+
 
 /**
  *
@@ -1521,18 +1554,9 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
       gtb->gtb_int = va_arg(ap, double);
-      w->glw_flags &= ~GLW_HIDDEN;
+      if(w->glw_flags2 & GLW2_AUTOHIDE)
+	glw_unhide(w);
       update = 1;
-      break;
-
-    case GLW_ATTRIB_FREEZE:
-      if(va_arg(ap, int)) {
-	gtb->gtb_frozen = 1;
-      } else {
-	if(gtb->gtb_pending_update)
-	  update = 1;
-	gtb->gtb_frozen = 0;
-      }
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1815,6 +1839,23 @@ glw_text_bitmap_get_text(glw_t *w)
   return gtb->gtb_caption;
 }
 
+
+/**
+ *
+ */
+static void 
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+
+  if(set & GLW2_AUTOHIDE && gtb->gtb_caption == NULL)
+    glw_hide(w);
+
+  if(clr & GLW2_AUTOHIDE)
+    glw_unhide(w);
+}
+
+
 /**
  *
  */
@@ -1833,6 +1874,9 @@ static glw_class_t glw_label = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_mod_flags2 = mod_flags2,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1856,6 +1900,8 @@ static glw_class_t glw_text = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_text);

@@ -41,6 +41,8 @@ typedef struct {
 
   glw_t *bound_widget;
 
+  int tentative_only;
+
 } glw_slider_t;
 
 
@@ -49,21 +51,43 @@ typedef struct {
  */
 static glw_class_t glw_slider_x, glw_slider_y;
 
+
 /**
  *
  */
 static void
-update_value(glw_slider_t *s, float v)
+update_value_delta(glw_slider_t *s, float d)
 {
-  glw_scroll_t gs;
+  if(s->p != NULL)
+    prop_add_float(s->p, d * (s->max - s->min));
+  else {
+    s->value += d;
 
-  s->value = GLW_MAX(0, GLW_MIN(1.0, v));
-  if(s->p != NULL) {
-    prop_set_float_ex(s->p, s->sub, s->value * (s->max - s->min) + s->min);
+    if(s->bound_widget != NULL) {
+      glw_scroll_t gs;
+      gs.value = s->value;
+      glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
+    }
   }
-  if(s->bound_widget != NULL) {
-    gs.value = s->value;
-    glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
+}
+
+/**
+ *
+ */
+static void
+update_value(glw_slider_t *s, float v, int how)
+{
+  v = GLW_MAX(0, GLW_MIN(1.0, v));
+
+  if(s->p != NULL)
+    prop_set_float_ex(s->p, NULL, v * (s->max - s->min) + s->min, how);
+  else {
+    s->value = v;
+    if(s->bound_widget != NULL) {
+      glw_scroll_t gs;
+      gs.value = s->value;
+      glw_signal0(s->bound_widget, GLW_SIGNAL_SCROLL, &gs);
+    }
   }
 }
 
@@ -188,23 +212,17 @@ static int
 glw_slider_event_y(glw_t *w, event_t *e)
 {
   glw_slider_t *s = (glw_slider_t *)w;
-  float v = s->value;
+  float d;
 
   if(event_is_action(e, ACTION_UP)) {
-
-    v = s->value - s->step;
-
+    d = -s->step;
   } else if(event_is_action(e, ACTION_DOWN)) {
-
-    v = s->value + s->step;
-
+    d = s->step;
   } else {
-
     return 0;
-
   }
 
-  update_value(s, v);
+  update_value_delta(s, d);
   return 1;
 }
 
@@ -216,26 +234,18 @@ static int
 glw_slider_event_x(glw_t *w, event_t *e)
 {
   glw_slider_t *s = (glw_slider_t *)w;
-  float v = s->value;
+  float d;
 
   if(event_is_action(e, ACTION_LEFT)) {
-
-    v = s->value - s->step_i;
-
+    d = -s->step_i;
   } else if(event_is_action(e, ACTION_RIGHT)) {
-
-    v = s->value + s->step_i;
-
+    d = s->step_i;
   } else {
-
     return 0;
-
   }
-
-  update_value(s, v);
+  update_value_delta(s, d);
   return 1;
 }
-
 
 
 /**
@@ -248,9 +258,11 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   glw_slider_t *s = (glw_slider_t *)w;
   int hitpos = 0;
   float v0 = w->glw_class == &glw_slider_x ? gpe->x : -gpe->y;
+  float v;
   float knob_pos;
   float knob_size = (float)s->knob_size_px / s->slider_size_px;
-  
+  int how = PROP_SET_NORMAL;
+
   if(w->glw_class == &glw_slider_x) {
     knob_pos = -1 + 2.0 * (float)s->knob_pos_px  / s->slider_size_px;
   } else {
@@ -264,27 +276,38 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   
   switch(gpe->type) {
   case GLW_POINTER_LEFT_PRESS:
-    if(hitpos == 0) {
+    if(w->glw_flags2 & GLW2_ALWAYS_GRAB_KNOB) {
+      v = GLW_RESCALE(v0 + s->grab_delta,
+		      -1.0 + knob_size, 1.0 - knob_size);
+      gr->gr_pointer_grab = w;
+    } else if(hitpos == 0) {
       s->grab_delta = knob_pos - v0;
       gr->gr_pointer_grab = w;
+      v = s->value;
     } else {
-      s->value += hitpos * knob_size;
+      update_value_delta(s, hitpos * knob_size);
+      return 0;
     }
+    how = PROP_SET_TENTATIVE;
     break;
 
   case GLW_POINTER_FOCUS_MOTION:
     if(knob_size == 1.0)
       break;
-    
-    s->value = GLW_RESCALE(v0 + s->grab_delta, 
-			   -1.0 + knob_size, 1.0 - knob_size);
+    v = GLW_RESCALE(v0 + s->grab_delta, 
+		    -1.0 + knob_size, 1.0 - knob_size);
+    how = PROP_SET_TENTATIVE;
+    break;
+
+  case GLW_POINTER_LEFT_RELEASE:
+    v = s->value;
+    how = PROP_SET_COMMIT;
     break;
 
   default:
     return 0;
   }
-
-  update_value(s, s->value);
+  update_value(s, v, how);
   return 0;
 }
 
@@ -398,7 +421,9 @@ prop_callback(void *opaque, prop_event_t event, ...)
   glw_root_t *gr;
   float v;
   prop_t *p;
+  int how = 0;
   int grabbed;
+
   if(sl == NULL)
     return;
 
@@ -419,6 +444,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   case PROP_SET_FLOAT:
     v = va_arg(ap, double);
     p = va_arg(ap, prop_t *);
+    how = va_arg(ap, int);
     break;
 
   case PROP_SET_INT:
@@ -429,12 +455,21 @@ prop_callback(void *opaque, prop_event_t event, ...)
   default:
     return;
   }
-
   prop_ref_dec(sl->p);
   sl->p = prop_ref_inc(p);
   
-  if(grabbed)
-    return;
+  switch(how) {
+  case PROP_SET_NORMAL:
+    if(sl->tentative_only)
+      return;
+    break;
+  case PROP_SET_TENTATIVE:
+    sl->tentative_only = 1;
+    break;
+  case PROP_SET_COMMIT:
+    sl->tentative_only = 0;
+    break;
+  }
 
   if(sl->max - sl->min == 0)
     return;

@@ -142,9 +142,10 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_settings = settings_add_dir(NULL, title, "display", NULL);
 
-  gr->gr_setting_fontsize =
-    settings_create_int(gr->gr_settings, "fontsize",
-			"Font size", 20, gr->gr_settings_store, 14, 40, 1,
+  gr->gr_setting_size =
+    settings_create_int(gr->gr_settings, "scaling",
+			"Userinterface scaling", 15,
+			gr->gr_settings_store, 14, 40, 1,
 			glw_font_change_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
@@ -158,8 +159,8 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 			glw_settings_save, gr);
 
 
-  prop_link(settings_get_value(gr->gr_setting_fontsize),
-	    prop_create(gr->gr_uii.uii_prop, "fontsize"));
+  prop_link(settings_get_value(gr->gr_setting_size),
+	    prop_create(gr->gr_uii.uii_prop, "size"));
 
   gr->gr_pointer_visible = 
     prop_create(gr->gr_uii.uii_prop, "pointerVisible");
@@ -1433,36 +1434,44 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   /* If a widget has grabbed to pointer (such as when holding the button
      on a slider), dispatch events there */
 
-  gr->gr_mouse_x = gpe->x;
-  gr->gr_mouse_y = gpe->y;
-  gr->gr_mouse_valid = 1;
+  if(gpe->x != gr->gr_mouse_x || gpe->y != gr->gr_mouse_y) {
+    gr->gr_mouse_x = gpe->x;
+    gr->gr_mouse_y = gpe->y;
+    gr->gr_mouse_valid = 1;
 
-  if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
-     gpe->type == GLW_POINTER_MOTION_REFRESH) {
+    if(gpe->type == GLW_POINTER_MOTION_UPDATE ||
+       gpe->type == GLW_POINTER_MOTION_REFRESH) {
     
-    prop_set_int(gr->gr_pointer_visible, 1);
+      prop_set_int(gr->gr_pointer_visible, 1);
 
-    if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
-      glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
-      gpe0.type = GLW_POINTER_FOCUS_MOTION;
-      gpe0.x = x;
-      gpe0.y = y;
+      if((w = gr->gr_pointer_grab) != NULL && w->glw_matrix != NULL) {
+	glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+	gpe0.type = GLW_POINTER_FOCUS_MOTION;
+	gpe0.x = x;
+	gpe0.y = y;
       
-      glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
-    }
+	glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
+      }
 
-    if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
-      if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
-	 x < -1 || y < -1 || x > 1 || y > 1) {
-	// Moved outside button, release 
+      if((w = gr->gr_pointer_press) != NULL && w->glw_matrix != NULL) {
+	if(!glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir) ||
+	   x < -1 || y < -1 || x > 1 || y > 1) {
+	  // Moved outside button, release 
 
-	glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
-	gr->gr_pointer_press = NULL;
+	  glw_path_modify(w, 0, GLW_IN_PRESSED_PATH, NULL);
+	  gr->gr_pointer_press = NULL;
+	}
       }
     }
   }
-
   if(gpe->type == GLW_POINTER_LEFT_RELEASE && gr->gr_pointer_grab != NULL) {
+    w = gr->gr_pointer_grab;
+    glw_widget_unproject(*w->glw_matrix, &x, &y, p, dir);
+    gpe0.type = GLW_POINTER_LEFT_RELEASE;
+    gpe0.x = x;
+    gpe0.y = y;
+
+    glw_signal0(w, GLW_SIGNAL_POINTER_EVENT, &gpe0);
     gr->gr_pointer_grab = NULL;
     return;
   }
@@ -1483,20 +1492,6 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 
   glw_root_set_hover(gr, hover);
 }
-
-/**
- *
- */
-void
-glw_select(glw_t *p, glw_t *c)
-{
-  if(c->glw_originating_prop) {
-    prop_select(c->glw_originating_prop);
-  } else {
-    p->glw_selected = c;
-  }
-}
-
 
 
 /**
@@ -1539,6 +1534,26 @@ glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
  */
 void
 glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
+{
+  float sx =         (right - left) / (float)rc->rc_width;
+  float tx = -1.0f + (right + left) / (float)rc->rc_width;
+  float sy =         (top - bottom) / (float)rc->rc_height;
+  float ty = -1.0f + (top + bottom) / (float)rc->rc_height;
+  
+  glw_Translatef(rc, tx, ty, 0);
+  glw_Scalef(rc, sx, sy, GLW_MIN(sx, sy));
+
+  rc->rc_width  = right - left;
+  rc->rc_height = top - bottom;
+}
+
+
+/**
+ *
+ */
+void
+glw_repositionf(glw_rctx_t *rc, float left, float top,
+		float right, float bottom)
 {
   float sx =         (right - left) / (float)rc->rc_width;
   float tx = -1.0f + (right + left) / (float)rc->rc_width;
@@ -1631,13 +1646,13 @@ glw_dispatch_event(uii_t *uii, event_t *e)
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
-    settings_add_int(gr->gr_setting_fontsize, 1);
+    settings_add_int(gr->gr_setting_size, 1);
     glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
-    settings_add_int(gr->gr_setting_fontsize, -1);
+    settings_add_int(gr->gr_setting_size, -1);
     glw_unlock(gr);
     return;
 
@@ -1697,46 +1712,71 @@ glw_set_constraints(glw_t *w, int x, int y, float weight,
 {
   int ch = 0;
 
-  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_XY) {
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_X) {
 
-    int f = flags & GLW_CONSTRAINT_FLAGS_XY;
+    int f = flags & GLW_CONSTRAINT_X;
 
-    if(!(w->glw_flags & GLW_CONSTRAINT_CONF_XY) ||
-       conf == GLW_CONSTRAINT_CONF_XY) {
+    if(!(w->glw_flags & GLW_CONSTRAINT_CONF_X) ||
+       conf == GLW_CONSTRAINT_CONF_X) {
 
       if(!(w->glw_req_size_x == x &&
-	   w->glw_req_size_y == y && 
-	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_XY) == f)) {
+	   (w->glw_flags & GLW_CONSTRAINT_X) == f)) {
 
 	ch = 1;
 
 	w->glw_req_size_x = x;
-	w->glw_req_size_y = y;
 	
-	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_XY;
+	w->glw_flags &= ~GLW_CONSTRAINT_X;
 	w->glw_flags |= f | conf;
       }
     }
   }
 
-  if((w->glw_flags | flags) & GLW_CONSTRAINT_FLAGS_WF) {
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_Y) {
 
-    int f = flags & GLW_CONSTRAINT_FLAGS_WF;
+    int f = flags & GLW_CONSTRAINT_Y;
 
-   if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WF) ||
-       conf == GLW_CONSTRAINT_CONF_WF) {
+    if(!(w->glw_flags & GLW_CONSTRAINT_CONF_Y) ||
+       conf == GLW_CONSTRAINT_CONF_Y) {
+
+      if(!(w->glw_req_size_y == y && 
+	   (w->glw_flags & GLW_CONSTRAINT_Y) == f)) {
+
+	ch = 1;
+
+	w->glw_req_size_y = y;
+	
+	w->glw_flags &= ~GLW_CONSTRAINT_Y;
+	w->glw_flags |= f | conf;
+      }
+    }
+  }
+
+  if((w->glw_flags | flags) & GLW_CONSTRAINT_W) {
+
+    int f = flags & GLW_CONSTRAINT_W;
+
+   if(!(w->glw_flags & GLW_CONSTRAINT_W) ||
+       conf == GLW_CONSTRAINT_CONF_W) {
 
       if(!(w->glw_req_weight == weight && 
-	   (w->glw_flags & GLW_CONSTRAINT_FLAGS_WF) == f)) {
+	   (w->glw_flags & GLW_CONSTRAINT_W) == f)) {
 
 	ch = 1;
 
 	w->glw_req_weight = weight;
 	
-	w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WF;
+	w->glw_flags &= ~GLW_CONSTRAINT_W;
 	w->glw_flags |= f | conf;
       }
     }
+  }
+
+
+  if((w->glw_flags ^ flags) & GLW_CONSTRAINT_F) {
+    ch = 1;
+    w->glw_flags &= ~GLW_CONSTRAINT_F;
+    w->glw_flags |= (flags & GLW_CONSTRAINT_F);
   }
 
   if(!ch)
@@ -1755,21 +1795,33 @@ glw_clear_constraints(glw_t *w)
 {
   int ch = 0;
 
-  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_XY)) {
-    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_XY) {
-      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_XY;
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_X)) {
+    if(w->glw_flags & GLW_CONSTRAINT_X) {
+      w->glw_flags &= ~GLW_CONSTRAINT_X;
       w->glw_req_size_x = 0;
+      ch = 1;
+    }
+  }
+
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_Y)) {
+    if(w->glw_flags & GLW_CONSTRAINT_Y) {
+      w->glw_flags &= ~GLW_CONSTRAINT_Y;
       w->glw_req_size_y = 0;
       ch = 1;
     }
   }
 
-  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_WF)) {
-    if(w->glw_flags & GLW_CONSTRAINT_FLAGS_WF) {
-      w->glw_flags &= ~GLW_CONSTRAINT_FLAGS_WF;
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_W)) {
+    if(w->glw_flags & GLW_CONSTRAINT_W) {
+      w->glw_flags &= ~GLW_CONSTRAINT_W;
       w->glw_req_weight = 0;
       ch = 1;
     }
+  }
+
+  if(w->glw_flags & GLW_CONSTRAINT_F) {
+    w->glw_flags &= ~GLW_CONSTRAINT_F;
+    ch = 1;
   }
   
   if(!ch)

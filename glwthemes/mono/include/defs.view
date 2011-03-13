@@ -48,4 +48,4 @@
   .padding = [-4, -4, -4, -4];
 }
 
-#define KNOB_SIZE() { $ui.fontsize * 3 }
+#define KNOB_SIZE() { $ui.size * 3 }

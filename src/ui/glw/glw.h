@@ -74,7 +74,6 @@ LIST_HEAD(glw_video_list, glw_video);
 typedef enum {
   GLW_ATTRIB_END = 0,
   GLW_ATTRIB_VALUE,
-  GLW_ATTRIB_SOURCE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
   GLW_ATTRIB_ALPHA_SELF,
@@ -96,7 +95,6 @@ typedef enum {
   GLW_ATTRIB_CHILD_WIDTH,
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
-  GLW_ATTRIB_FREEZE,
   GLW_ATTRIB_PAGE,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
@@ -152,6 +150,9 @@ typedef enum {
 #define GLW_IMAGE_BEVEL_BOTTOM  0x40
 #define GLW_IMAGE_SET_ASPECT    0x80
 #define GLW_IMAGE_ADDITIVE      0x100
+#define GLW_IMAGE_BORDER_ONLY   0x200
+#define GLW_IMAGE_BORDER_LEFT   0x400
+#define GLW_IMAGE_BORDER_RIGHT  0x800
 
 /**
  * Video flags
@@ -454,6 +455,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_margin)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
   void (*gc_set_rotation)(struct glw *w, const float *v);
 
   /**
@@ -474,6 +480,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_mod_flags2)(struct glw *w, int set, int clr);
+
+  /**
+   *
+   */
   void (*gc_set_caption)(struct glw *w, const char *str, int type);
 
   /**
@@ -485,6 +496,26 @@ typedef struct glw_class {
 			      prop_t *view,
 			      prop_t *args,
 			      prop_t *clone);
+
+  /**
+   *
+   */
+  void (*gc_set_source_str)(struct glw *w, const char *str);
+
+  /**
+   *
+   */
+  void (*gc_set_source_prop)(struct glw *w, prop_t *p);
+
+  /**
+   *
+   */
+  void (*gc_freeze)(struct glw *w);
+
+  /**
+   *
+   */
+  void (*gc_thaw)(struct glw *w);
 
   /**
    * Registration link
@@ -560,7 +591,6 @@ typedef struct glw_root {
   FT_Face gr_gtb_face;
   int gr_fontsize;
   int gr_fontsize_px;
-  prop_t *gr_fontsize_prop;
 
   /**
    * Image/Texture loader
@@ -604,7 +634,7 @@ typedef struct glw_root {
 
   htsmsg_t *gr_settings_store;  // Loaded settings
 
-  setting_t *gr_setting_fontsize;
+  setting_t *gr_setting_size;
 
   setting_t *gr_setting_screensaver;
 
@@ -758,8 +788,6 @@ typedef struct glw {
 #define GLW_RETIRED              0x800
 #define GLW_NO_INITIAL_TRANS     0x1000
 #define GLW_CAN_SCROLL           0x2000
-#define GLW_CONSTRAINT_CONF_XY   0x4000
-#define GLW_CONSTRAINT_CONF_WF   0x8000
 
 #define GLW_CONSTRAINT_X         0x10000
 #define GLW_CONSTRAINT_Y         0x20000
@@ -776,9 +804,6 @@ typedef struct glw {
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
 
-#define GLW_CONSTRAINT_FLAGS_XY  (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)
-#define GLW_CONSTRAINT_FLAGS_WF  (GLW_CONSTRAINT_W | GLW_CONSTRAINT_F)
-  
 #define GLW_CLIPPED              0x1000000 
 
 #define GLW_HOMOGENOUS           0x2000000
@@ -787,11 +812,17 @@ typedef struct glw {
 
 #define GLW_SHADOW               0x8000000
 
+#define GLW_CONSTRAINT_CONF_W    0x10000000
+#define GLW_CONSTRAINT_CONF_X    0x20000000
+#define GLW_CONSTRAINT_CONF_Y    0x40000000
+
 
   int glw_flags2;
 #define GLW2_ENABLED        0x1
 #define GLW2_FLOATING_FOCUS 0x2
 #define GLW2_ALWAYS_LAYOUT  0x4
+#define GLW2_ALWAYS_GRAB_KNOB 0x8
+#define GLW2_AUTOHIDE        0x10
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
@@ -952,14 +983,12 @@ do {						\
     abort();                                    \
   case GLW_ATTRIB_PROPROOTS:         		\
     (void)va_arg(ap, void *);			\
-  case GLW_ATTRIB_SOURCE:			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
   case GLW_ATTRIB_PIXMAP: 			\
     (void)va_arg(ap, void *);			\
     break;					\
-  case GLW_ATTRIB_FREEZE:			\
   case GLW_ATTRIB_MODE:                         \
   case GLW_ATTRIB_TRANSITION_EFFECT:            \
   case GLW_ATTRIB_CHILD_TILES_X:                \
@@ -1062,8 +1091,6 @@ void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
 void glw_rctx_init(glw_rctx_t *rc, int width, int height);
 
-void glw_select(glw_t *p, glw_t *c);
-
 int glw_check_system_features(glw_root_t *gr);
 
 void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
@@ -1073,6 +1100,9 @@ void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
 void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
 void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
+
+void glw_repositionf(glw_rctx_t *rc, float left, float top,
+		     float right, float bottom);
 
 void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
 

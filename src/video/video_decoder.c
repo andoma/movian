@@ -220,16 +220,23 @@ video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
   }
   vd->vd_prevpts_cnt++;
 
-  if(duration == 0 || pts == AV_NOPTS_VALUE)
-    return;
 
-  vd->vd_nextpts = pts + duration;
-      
-  ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-  ets->pts = pts;
-  ets->dts = dts;
-  mp_enqueue_event(mp, &ets->h);
-  event_release(&ets->h);
+  if(duration == 0) {
+    TRACE(TRACE_DEBUG, "Video", "Dropping frame with duration = 0");
+    return;
+  }
+
+  if(pts != AV_NOPTS_VALUE) {
+    vd->vd_nextpts = pts + duration;
+
+    ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+    ets->pts = pts;
+    ets->dts = dts;
+    mp_enqueue_event(mp, &ets->h);
+    event_release(&ets->h);
+  } else {
+    vd->vd_nextpts = AV_NOPTS_VALUE;
+  }
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;

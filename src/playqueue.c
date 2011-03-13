@@ -659,6 +659,7 @@ playqueue_enqueue(prop_t *track)
   playqueue_entry_t *pqe, *before;
   prop_t *p;
   char url[URL_MAX];
+  int doplay = 0;
 
   p = prop_get_by_name(PNVEC("self", "url"), 1,
 		       PROP_TAG_NAMED_ROOT, track, "self",
@@ -683,12 +684,14 @@ playqueue_enqueue(prop_t *track)
 
   prop_link_ex(prop_create(track, "metadata"),
 	       prop_create(pqe->pqe_node, "metadata"),
-	       NULL, 1);
+	       NULL, PROP_LINK_XREFED);
 
   prop_set_string(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
 
-  before = TAILQ_NEXT(pqe_current, pqe_linear_link);
+  doplay = pqe_current == NULL;
+
+  before = pqe_current ? TAILQ_NEXT(pqe_current, pqe_linear_link) : NULL;
 
   /* Skip past any previously enqueued entries */
   while(before != NULL && before->pqe_enq)
@@ -711,6 +714,9 @@ playqueue_enqueue(prop_t *track)
   pqe_insert_shuffled(pqe);
 
   update_pq_meta();
+
+  if(doplay)
+    pqe_play(pqe, EVENT_PLAYQUEUE_JUMP);
 
   hts_mutex_unlock(&playqueue_mutex);
 }
@@ -825,7 +831,7 @@ playqueue_init(void)
 
   hts_mutex_init(&playqueue_mutex);
 
-  playqueue_mp = mp_create("playqueue", "tracks", 0);
+  playqueue_mp = mp_create("playqueue", MP_PRIMABLE, "tracks");
 
   TAILQ_INIT(&playqueue_entries);
   TAILQ_INIT(&playqueue_source_entries);
@@ -1080,7 +1086,7 @@ player_thread(void *aux)
     p = prop_get_by_name(PNVEC("self", "metadata"), 1,
 			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
 			 NULL);
-    prop_link_ex(p, mp->mp_prop_metadata, NULL, 1);
+    prop_link_ex(p, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
     prop_ref_dec(p);
 
 

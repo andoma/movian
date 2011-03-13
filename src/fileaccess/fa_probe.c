@@ -39,6 +39,8 @@
 #include "api/lastfm.h"
 #include "media.h"
 #include "misc/string.h"
+#include "misc/isolang.h"
+#include "misc/jpeg.h"
 
 
 #define METADATA_HASH_SIZE 101
@@ -192,6 +194,11 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
     prop_ref_dec(p);
   }
 
+  if(ms->ms_language && (p = prop_create_check(r, "language")) != NULL) {
+    prop_set_rstring(p, ms->ms_language);
+    prop_ref_dec(p);
+  }
+
   if((p = prop_create_check(r, "title")) != NULL) {
     if(ms->ms_language)
       prop_set_rstring(p, ms->ms_language);
@@ -327,12 +334,39 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 
 
 /**
+ *
+ */
+static int
+jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
+{
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
+    return -1;
+  return fa_read(handle, buf, size);
+}
+
+
+static void
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
+{
+    jpeginfo_t ji;
+
+   if(jpeg_info(&ji, jpeginfo_reader, fh, 
+		JPEG_INFO_DIMENSIONS |
+		JPEG_INFO_ORIENTATION,
+		pb, 256, NULL, 0))
+     return;
+   
+   md->md_time = ji.ji_time;
+}
+
+
+/**
  * Probe file by checking its header
  *
  * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
+fa_probe_header(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
 {
   uint16_t flags;
 
@@ -379,14 +413,11 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb)
   }
 #endif
 
-  if(pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') {
+  if((pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') ||
+     (pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f')) {
     /* JPEG image */
     md->md_type = CONTENT_IMAGE;
-    return 1;
-  }
-
-  if(pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f') {
-    md->md_type = CONTENT_IMAGE;
+    fa_probe_exif(md, url, pb, fh); // Try to get more info
     return 1;
   }
 
@@ -598,13 +629,22 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     }
 
     if(codec == NULL) {
-      snprintf(tmp1, sizeof(tmp1), "Unsupported codec");
+
+      switch(avctx->codec_id) {
+      case CODEC_ID_TEXT:
+	snprintf(tmp1, sizeof(tmp1), "Text");
+	break;
+      default:
+	snprintf(tmp1, sizeof(tmp1),
+		 "Unsupported codec (0x%x)", avctx->codec_id);
+	break;
+      }
     } else {
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
     metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, 
-			stream->language[0] ? stream->language : NULL);
+			isolang_iso2lang(stream->language));
   }
   
   md->md_type = CONTENT_FILE;
@@ -667,7 +707,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
   }
 #endif
 
-  if(fa_probe_header(md, url0, pd.buf)) {
+  if(fa_probe_header(md, url0, pd.buf, fh)) {
     fa_close(fh);
     free(pd.buf);
     return 0;
@@ -802,6 +842,11 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
 
   if(md->md_tracks && (p = prop_create_check(proproot, "tracks")) != NULL) {
     prop_set_int(p,  md->md_tracks);
+    prop_ref_dec(p);
+  }
+
+  if(md->md_time && (p = prop_create_check(proproot, "timestamp")) != NULL) {
+    prop_set_int(p,  md->md_time);
     prop_ref_dec(p);
   }
 

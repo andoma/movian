@@ -31,7 +31,7 @@
 			[1.0, 1.0, 1.0],
 			COLOR);
 	.shadow = true; 
-	.source = "theme://icons/48x48/Selected.png"; 
+	.source = "skin://icons/Selected.png"; 
 	.sizeScale = 2; 
       });
     });
@@ -44,7 +44,7 @@ widget(container_x, {
   widget(icon, {
     .align = top;
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_OTHER());
-    .source = "theme://icons/48x48/Bookmark.png";
+    .source = "skin://icons/Bookmark.png";
     .shadow = true;
   });
   
@@ -62,7 +62,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(label, {
-	  .width = $ui.fontsize * 8;
+	  .width = $ui.size * 8;
 	  .caption = "Title:";
 	  .align = right;
 	});
@@ -91,7 +91,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(label, {
-	  .width = $ui.fontsize * 8;
+	  .width = $ui.size * 8;
 	  .caption = "URL:";
 	  .align = right;
 	});
@@ -131,11 +131,11 @@ widget(container_x, {
 
 	  .source = translate($self.model.status,
 			      void,
-			      "ok",   "theme://icons/48x48/Check.png",
-			      "auth", "theme://icons/48x48/Lock.png",
-			      "nohandler", "theme://icons/48x48/Alert.png",
-			      "fail", "theme://icons/48x48/Alert.png",
-			      "scanning", "theme://icons/48x48/Scan.png");
+			      "ok",   "skin://icons/Check.png",
+			      "auth", "skin://icons/Lock.png",
+			      "nohandler", "skin://icons/Alert.png",
+			      "fail", "skin://icons/Alert.png",
+			      "scanning", "skin://icons/Scan.png");
 	  .shadow = true;
 	});
       });
@@ -148,7 +148,7 @@ widget(container_x, {
 	widget(container_x, {
 	
 	  widget(dummy, {
-	    .width = $ui.fontsize * 8 + 10;
+	    .width = $ui.size * 8 + 10;
 	  });
 
 	  widget(label, {
@@ -160,7 +160,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(container_y, {
-	  .width = $ui.fontsize * 8;
+	  .width = $ui.size * 8;
 	  widget(label, {
 	    .caption = "Type:";
 	    .align = right;
@@ -188,15 +188,15 @@ widget(container_x, {
       
 	  widget(container_x, {
 
-	    TYPE_ENTRY("music", "Music", "theme://icons/48x48/Music.png",
+	    TYPE_ENTRY("music", "Music", "skin://icons/Music.png",
 		       PLATE_COLOR_AUDIO());
-	    TYPE_ENTRY("video", "Video", "theme://icons/48x48/Movie.png",
+	    TYPE_ENTRY("video", "Video", "skin://icons/Movie.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("tv", "Tv", "theme://icons/48x48/Display.png",
+	    TYPE_ENTRY("tv", "Tv", "skin://icons/Display.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("image", "Image", "theme://icons/48x48/Image.png",
+	    TYPE_ENTRY("image", "Image", "skin://icons/Image.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("other", "Other", "theme://icons/48x48/Folder.png",
+	    TYPE_ENTRY("other", "Other", "skin://icons/Folder.png",
 		       PLATE_COLOR_VIDEO());
 	  });
 	});
@@ -204,7 +204,7 @@ widget(container_x, {
 
       widget(container_x, {
 	widget(dummy, {
-	  .width = $ui.fontsize * 8 + 10;
+	  .width = $ui.size * 8 + 10;
 	});
 
 	widget(backdrop, {
@@ -218,7 +218,7 @@ widget(container_x, {
 	  .alphaSelf = 0.66;
 
 	  widget(container_x, {
-	    ICON2("theme://icons/48x48/Delete.png",
+	    ICON2("skin://icons/Delete.png",
 		  "Delete",
 		  {
 		    delete($self);

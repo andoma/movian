@@ -8,8 +8,8 @@
     .color = select($page.model.metadata.rating > LIMIT,
 		    [1,1,0], [0.5, 0.5, 0]);
     .source = select($page.model.metadata.rating > LIMIT,
-		     "theme://icons/48x48/Star.png",
-		     "theme://icons/48x48/NoStar.png");
+		     "skin://icons/Star.png",
+		     "skin://icons/NoStar.png");
   });
 }  
 

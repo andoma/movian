@@ -225,7 +225,7 @@ update_sink_input_info(pa_context *c, const pa_sink_input_info *i,
   pam->muted = !!i->mute;
 
   prop_set_float_ex(prop_mastervol, pam->sub_mvol, 
-		    pa_sw_volume_to_dB(pam->mastervol));
+		    pa_sw_volume_to_dB(pam->mastervol), 0);
   prop_set_int_ex(prop_mastermute, pam->sub_mute, pam->muted);
 }
 

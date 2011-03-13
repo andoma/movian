@@ -242,6 +242,12 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       continue;
     }
 
+    if(src[0] == '?' && src[1] == '=') {
+      prev = lexer_add_token_simple(prev, f, line, TOKEN_COND_ASSIGNMENT);
+      src+=2;
+      continue;
+    }
+
     if(src[0] == '|' && src[1] == '|') {
       prev = lexer_add_token_simple(prev, f, line, TOKEN_BOOLEAN_OR);
       src+=2;
@@ -371,8 +377,8 @@ glw_view_load1(glw_root_t *gr, const char *filename,
 			 errbuf, sizeof(errbuf))) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
 	     filename, errbuf);
-    snprintf(ei->file,  sizeof(ei->file),  "%s", filename);
-    ei->line = 0;
+    snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
+    ei->line = prev->line;
     return NULL;
   }
 

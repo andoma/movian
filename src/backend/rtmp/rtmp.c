@@ -672,6 +672,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url = mystrdupa(url0);
 
+  prop_set_string(mp->mp_prop_type, "video");
+
   RTMP_LogSetLevel(RTMP_LOGINFO);
 
   r.r = RTMP_Alloc();

@@ -234,6 +234,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
   mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
+  //  mb->mb_time = (dvdnav_get_current_time(dp->dp_dvdnav) * 1000000) / 90000;
   mb->mb_epoch = dp->dp_epoch;
   
   mb->mb_data = malloc(datalen + FF_INPUT_BUFFER_PADDING_SIZE);
@@ -634,6 +635,27 @@ dvd_update_streams(dvd_player_t *dp)
   }
 }
 
+
+/**
+ *
+ */
+static void
+update_chapter(dvd_player_t *dp, media_pipe_t *mp)
+{
+  int title, titles, part, parts;
+
+  dvdnav_get_number_of_titles(dp->dp_dvdnav, &titles);
+  dvdnav_current_title_info(dp->dp_dvdnav, &title, &part);
+  dvdnav_get_number_of_parts(dp->dp_dvdnav, title, &parts);
+
+  prop_set_int(prop_create(mp->mp_prop_root, "currenttitle"), title);
+  prop_set_int(prop_create(mp->mp_prop_metadata, "titles"), titles);
+
+  prop_set_int(prop_create(mp->mp_prop_root, "currentchapter"), part);
+  prop_set_int(prop_create(mp->mp_prop_metadata, "chapters"), parts);
+}
+
+
 /**
  *
  */
@@ -651,6 +673,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   pci_t *pci;
   event_t *e = NULL;
   const char *title;
+
+  prop_set_string(mp->mp_prop_type, "dvd");
 
   TRACE(TRACE_DEBUG, "DVD", "Starting playback of %s", url);
 
@@ -749,7 +773,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       mp_send_cmd(mp, &mp->mp_video, MB_DVD_RESET_SPU);
       dvd_video_push(dp);
       dvd_release_codecs(dp);
-      mp_send_cmd(mp, &mp->mp_video, MB_FLUSH);
       dvd_set_audio_stream(dp, "auto");
       dvd_set_spu_stream(dp, "auto");
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
@@ -764,6 +787,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm)
 	dp->dp_epoch++; // Discontinuity
       dp->dp_end_ptm = pci->pci_gi.vobu_e_ptm;
+
+      update_chapter(dp, mp);
 
       mp_send_cmd_data(mp, &mp->mp_video, MB_DVD_PCI, pci);
       break;

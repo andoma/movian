@@ -676,6 +676,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 
   mp_become_primary(mp);
 
+  prop_set_string(mp->mp_prop_type, "video");
+
   e = video_player_loop(fctx, cwvec, mp, NULL, errbuf, errlen);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);

@@ -141,28 +141,31 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT:
-    if(w->glw_selected != NULL) {
-      if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
-	return 1;
-    }
-
-    if((c = w->glw_selected) == NULL)
-      return 0;
-    
     /* Respond to some events ourselfs */
     e = extra;
+    c = w->glw_selected;
 
-    if(event_is_action(e, ACTION_INCR)) {
+    if(c != NULL && event_is_action(e, ACTION_INCR)) {
       n = glw_get_next_n(c, 1);
-    } else if(event_is_action(e, ACTION_DECR)) {
+    } else if(c != NULL && event_is_action(e, ACTION_DECR)) {
       n = glw_get_prev_n(c, 1);
     } else {
-      break;
+      if(w->glw_selected != NULL) {
+	if(glw_signal0(w->glw_selected, GLW_SIGNAL_EVENT, extra))
+	  return 1;
+      }
+      n = NULL;
     }
 
-    if(n != c && n != NULL)
-      glw_select(w, n);
+    if(n != c && n != NULL) {
 
+      if(n->glw_originating_prop) {
+	// This will bounce back via .gc_select_child
+	prop_select(n->glw_originating_prop);
+      } else {
+	deck_select_child(&gd->w, n, NULL);
+      }
+    }
     return 1;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:

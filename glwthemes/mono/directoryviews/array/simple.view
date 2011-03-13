@@ -59,6 +59,7 @@
     .source = IMAGE ?? ICON;
     .alpha = iir(isReady(), 5);
     .saturation = 1 - iir(isReady(), 10);
+
     .hqScaling = select(IMAGE, true, false);
     .shadow    = select(IMAGE, false, true);
     .color = select(isFocused(),  [1.0, 1.0, 1.0],

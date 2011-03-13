@@ -81,6 +81,9 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
     break;
   }
 
+  glt->glt_texture.width  = glt->glt_xs;
+  glt->glt_texture.height = glt->glt_ys;
+
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
@@ -442,6 +445,9 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   default:
     return;
   }
+
+  tex->width = width;
+  tex->height = height;
 
   glTexImage2D(m, 0, format, width, height, 0, ext_format, ext_type, src);
 }

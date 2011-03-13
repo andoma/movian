@@ -21,6 +21,7 @@
  * http://park2.wakwak.com/~tsuruzoh/Computer/Digicams/exif-e.html
  */
 
+#include <time.h>
 #include <string.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -37,7 +38,8 @@
 /**
  *
  */
-typedef int (jiparser_t)(jpeginfo_t *ji, const uint8_t *buf, size_t len);
+typedef int (jiparser_t)(jpeginfo_t *ji, const uint8_t *buf, size_t len,
+			 int flags);
 
 /**
  *
@@ -57,7 +59,7 @@ typedef struct jpegpriv {
  *
  */
 static int
-parse_sof(jpeginfo_t *ji, const uint8_t *buf, size_t len)
+parse_sof(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
 {
   if(len < 5)
     return -1;
@@ -69,11 +71,37 @@ parse_sof(jpeginfo_t *ji, const uint8_t *buf, size_t len)
 
 static const char exifheader[6] = {0x45, 0x78, 0x69, 0x66, 0x00, 0x00};
 
+
+/**
+ *
+ */
+static time_t
+jpeg_time(const char *d)
+{
+  struct tm tm = {0};
+  char dummy;
+
+  if(sscanf(d, "%d%c%d%c%d %d:%d:%d",
+	    &tm.tm_year, &dummy, &tm.tm_mon, &dummy, &tm.tm_mday,
+	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 8)
+    return 0;
+
+  tm.tm_year -= 1900;
+  tm.tm_isdst = -1;
+  
+#if ENABLE_TIMEGM
+  return timegm(&tm);
+#else
+  return mktime(&tm);
+#endif
+}
+
+
 /**
  *
  */
 static int
-parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
+parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
 {
   int bigendian;
   int ifdbase;
@@ -137,11 +165,15 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
       //      uint32_t c       = EXIF32(ifdbase + 2 + i * 12 + 4);
 
       int po = ifdbase + 2 + i * 12 + 8;
-      int value;
-
+      int value = 0;
+      const char *str = NULL;
       switch(type) {
       case 1:
 	value = (uint8_t)  EXIF8(po);
+	break;
+      case 2:
+	value = (uint32_t) EXIF32(po);
+	str = (const char *)buf + value;
 	break;
       case 3:
 	value = (uint16_t) EXIF16(po);
@@ -155,8 +187,6 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
       case 8:
 	value = (int16_t)  EXIF8(po);
 	break;
-      default:
-	value = 0;
       }
       
       //      printf("  IFD%d  %04x (%d) * %d  ==  %d\n",  ifd, tag, type, c, value);
@@ -171,6 +201,12 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
       case IFDTAG(0, 0x112):  // Orientation
 	ji->ji_orientation = value;
 	break;
+      case IFDTAG(0, 0x132):  // Datetime
+	ji->ji_time = jpeg_time(str);
+	break;
+
+      default:
+	break;
       }
     }
 
@@ -178,7 +214,8 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len)
     ifdbase = EXIF32(ifdbase + 2 + entries * 12);
   }
 
-  if(thumbnail_jpeg_offset != -1 && thumbnail_jpeg_size != -1 &&
+  if(flags & JPEG_INFO_THUMBNAIL && 
+     thumbnail_jpeg_offset != -1 && thumbnail_jpeg_size != -1 &&
      thumbnail_jpeg_offset + thumbnail_jpeg_size <= len) {
 
     //    printf("  Thumbnail @ %d, %d bytes\n", thumbnail_jpeg_offset, thumbnail_jpeg_size);
@@ -276,7 +313,8 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
       break;
 
     case 0xffe1: // APP1
-      if(flags & (JPEG_INFO_THUMBNAIL | JPEG_INFO_ORIENTATION))
+      if(flags & (JPEG_INFO_THUMBNAIL | JPEG_INFO_ORIENTATION |
+		  JPEG_INFO_METADATA))
 	jip = parse_app1;
       break;
     }
@@ -292,7 +330,7 @@ jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
 	break;
       }
 
-      if(jip(ji, loadbuf, ll - 4)) {
+      if(jip(ji, loadbuf, ll - 4, flags)) {
 	snprintf(errbuf, errlen, "Error while  processing section 0x%04x",
 		 marker);
 	break;

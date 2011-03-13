@@ -190,6 +190,7 @@ glw_view_create(glw_root_t *gr, const char *src,
 
   v = (glw_view_t *)r;
   ec.gr = gr;
+  ec.rc = NULL;
   ec.w = r;
   ec.ei = &ei;
   ec.prop = prop;

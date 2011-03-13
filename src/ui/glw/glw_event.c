@@ -408,7 +408,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   if(g->target != NULL) {
 
     if((t = glw_event_find_target(w, g->target)) == NULL) {
-      TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found\n", g->target);
+      TRACE(TRACE_ERROR, "GLW", "Targeted widget %s not found", g->target);
     } else {
       glw_signal0(t, GLW_SIGNAL_EVENT, e);
     }

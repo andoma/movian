@@ -27,4 +27,7 @@ widget(container_y, {
       });
     });
   });
+  widget(dummy, {
+    .height = $ui.playdeckheight;
+  });
 });

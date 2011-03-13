@@ -65,9 +65,17 @@ typedef struct nfnode {
   struct prop_nf *nf;
   int pos;
   char inserted;
+  char sortkey_type;
+#define SORTKEY_NONE  0
+#define SORTKEY_RSTR  1
+#define SORTKEY_INT   2
+#define SORTKEY_FLOAT 3
 
-  rstr_t *sortkey;
-
+  union {
+    rstr_t *sortkey_rstr;
+    int sortkey_int;
+    float sortkey_float;
+  };
 } nfnode_t;
 
 
@@ -118,7 +126,9 @@ typedef struct prop_nf {
   struct prop_nf_pred_list preds;
 
   char pending_have_more;
-  
+
+  int sortorder;
+
 } prop_nf_t;
 
 /**
@@ -224,11 +234,30 @@ nf_filtercheck(prop_t *p, const char *q)
 static int
 nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
 {
-  const char *A = a->sortkey ? rstr_get(a->sortkey) : "";
-  const char *B = b->sortkey ? rstr_get(b->sortkey) : "";
+  int r = 0;
 
-  int r = dictcmp(A, B);
-  return r ? r : a->pos - b->pos;
+  if(a->sortkey_type != b->sortkey_type)
+    return a->sortkey_type - b->sortkey_type;
+
+  switch(a->sortkey_type) {
+  case SORTKEY_RSTR:
+    r = dictcmp(rstr_get(a->sortkey_rstr), rstr_get(b->sortkey_rstr));
+    break;
+
+  case SORTKEY_INT:
+    r = a->sortkey_int - b->sortkey_int;
+    break;
+
+  case SORTKEY_FLOAT:
+    if(a->sortkey_float < b->sortkey_float)
+      r = -1;
+    else if(a->sortkey_float > b->sortkey_float)
+      r = 1;
+    else
+      r = 0;
+    break;
+  }
+  return a->nf->sortorder * (r ? r : a->pos - b->pos);
 }
 
 
@@ -246,7 +275,7 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
 
   nfn->inserted = 1;
 
-  if(nfn->sortkey == NULL) {
+  if(nfn->sortkey_type == SORTKEY_NONE) {
 
     b = TAILQ_NEXT(nfn, in_link);
 
@@ -285,7 +314,7 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
   int en = 1;
 
   // If sorting is enabled but this node don't have a key, hide it
-  if(nf->defsortpath != NULL && nfn->sortkey == NULL)
+  if(nf->defsortpath != NULL && nfn->sortkey_type == SORTKEY_NONE)
     en = 0;
 
   // Check filtering
@@ -454,30 +483,31 @@ static void
 nf_set_sortkey(void *opaque, prop_event_t event, ...)
 {
   nfnode_t *nfn = opaque;
-  char buf[32];
   va_list ap;
 
   va_start(ap, event);
-  rstr_release(nfn->sortkey);
+  if(nfn->sortkey_type == SORTKEY_RSTR)
+    rstr_release(nfn->sortkey_rstr);
 
   switch(event) {
   case PROP_SET_RSTRING:
   case PROP_SET_RLINK:
-    nfn->sortkey = rstr_dup(va_arg(ap, rstr_t *));
+    nfn->sortkey_rstr = rstr_dup(va_arg(ap, rstr_t *));
+    nfn->sortkey_type = SORTKEY_RSTR;
     break;
 
   case PROP_SET_INT:
-    snprintf(buf, sizeof(buf), "%d", va_arg(ap, int));
-    nfn->sortkey = rstr_alloc(buf);
+    nfn->sortkey_int = va_arg(ap, int);
+    nfn->sortkey_type = SORTKEY_INT;
     break;
 
   case PROP_SET_FLOAT:
-    snprintf(buf, sizeof(buf), "%f", va_arg(ap, double));
-    nfn->sortkey = rstr_alloc(buf);
+    nfn->sortkey_float = va_arg(ap, double);
+    nfn->sortkey_type = SORTKEY_FLOAT;
     break;
 
   default:
-    nfn->sortkey = NULL;
+    nfn->sortkey_type = SORTKEY_NONE;
     break;
   }
   nf_insert_node(nfn->nf, nfn);
@@ -500,10 +530,9 @@ nf_update_order(prop_nf_t *nf, nfnode_t *nfn)
 
   if(p == NULL) {
 
-    if(nfn->sortkey != NULL) {
-      rstr_release(nfn->sortkey);
-      nfn->sortkey = NULL;
-    }
+    if(nfn->sortkey_type == SORTKEY_RSTR)
+      rstr_release(nfn->sortkey_rstr);
+    nfn->sortkey_type = SORTKEY_NONE;
 
     nf_insert_node(nf, nfn);      
 
@@ -614,7 +643,8 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
   while((nfnp = LIST_FIRST(&nfn->preds)) != NULL)
     nfnp_destroy(nfnp);
   
-  rstr_release(nfn->sortkey);
+  if(nfn->sortkey_type == SORTKEY_RSTR)
+    rstr_release(nfn->sortkey_rstr);
   free(nfn);
 }
 
@@ -896,6 +926,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
   nf->src = src;
 
   nf->defsortpath = defsortpath ? strvec_split(defsortpath, '.') : NULL;
+  nf->sortorder = flags & PROP_NF_SORT_DESC ? -1 : 1;
 
   hts_mutex_lock(&prop_mutex);
 

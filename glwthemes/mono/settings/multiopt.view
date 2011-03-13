@@ -13,7 +13,7 @@ widget(container_x, {
     .width = 4;
   });
 
-  ICON("theme://icons/48x48/Left.png",
+  ICON("skin://icons/Left.png",
        targetedEvent("choiceDeck", Decrease),
        PLATE_COLOR_OTHER());
 
@@ -33,7 +33,7 @@ widget(container_x, {
     });
   });
   
-  ICON("theme://icons/48x48/Right.png",
+  ICON("skin://icons/Right.png",
        targetedEvent("choiceDeck", Increase),
        PLATE_COLOR_OTHER());
 });

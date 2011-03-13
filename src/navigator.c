@@ -277,21 +277,17 @@ nav_insert_page(navigator_t *nav, nav_page_t *np, prop_t *origin)
 static void
 nav_page_close_set(void *opaque, int value)
 {
-  nav_page_t *np = opaque, *next;
+  nav_page_t *np = opaque, *np2;
   navigator_t *nav = np->np_nav;
-
   if(!value)
     return;
 
-  next = TAILQ_NEXT(np, np_history_link);
+  if(nav->nav_page_current == np) {
+    np2 = TAILQ_PREV(np, nav_page_queue, np_history_link);
+    nav_select(nav, np2, NULL);
+  }
 
   nav_close(np, 1);
-
-  if(next == NULL)
-    next = TAILQ_LAST(&nav->nav_pages, nav_page_queue);
-
-  if(next != NULL)
-    nav_open0(nav, next->np_url, next->np_view, NULL);
 }
 
 

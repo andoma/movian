@@ -274,35 +274,16 @@ glw_fx_texrot_ctor(glw_t *w)
 /**
  *
  */
-static void 
-glw_fx_texrot_set(glw_t *w, va_list ap)
+static void
+set_source(struct glw *w, const char *str)
 {
-  glw_fx_texrot_t *fx = (void *)w;
-  glw_attribute_t attrib;
-  const char *filename = NULL;
-
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-      break;
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-
-
-  if(filename == NULL)
-    return;
+  glw_fx_texrot_t *fx = (glw_fx_texrot_t *)w;
 
   if(fx->fx_tex != NULL)
     glw_tex_deref(w->glw_root, fx->fx_tex);
 
-  fx->fx_tex = glw_tex_create(w->glw_root, filename, 0, -1, -1);
+  fx->fx_tex = glw_tex_create(w->glw_root, str, 0, -1, -1);
 }
-
 
 /**
  *
@@ -310,11 +291,11 @@ glw_fx_texrot_set(glw_t *w, va_list ap)
 static glw_class_t glw_fx_texrot = {
   .gc_name = "fx_texrot",
   .gc_instance_size = sizeof(glw_fx_texrot_t),
-  .gc_set = glw_fx_texrot_set,
   .gc_ctor = glw_fx_texrot_ctor,
   .gc_render = glw_fx_texrot_render,
   .gc_dtor = glw_fx_texrot_dtor,
   .gc_signal_handler = glw_fx_texrot_callback,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_fx_texrot);

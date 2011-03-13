@@ -1,0 +1,22 @@
+
+widget(container_y, {
+  .hidden = !$ui.menu;
+  .padding = 5;
+
+  widget(deck, {
+    .filterConstraintY = true;
+    .noInitialTransform = true;
+    .id = "cmd_deck";
+    .effect = flipVertical;
+    .time = 0.3;
+
+    #include "theme://commandmenu/cmd_sysinfo.view"
+    #include "theme://commandmenu/cmd_main.view"
+    #include "theme://commandmenu/cmd_details.view"
+
+    .page = 1; // Bad: Must be after the actual pages
+  });
+  widget(dummy, {
+    .height = $ui.playdeckheight;
+  });
+});

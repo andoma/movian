@@ -131,7 +131,7 @@ mq_destroy(media_queue_t *mq)
  *
  */
 media_pipe_t *
-mp_create(const char *name, const char *type, int flags)
+mp_create(const char *name, int flags, const char *type)
 {
   media_pipe_t *mp;
   prop_t *p;
@@ -151,10 +151,8 @@ mp_create(const char *name, const char *type, int flags)
   
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
 
-  if(type != NULL) {
-    mp->mp_flags |= MP_PRIMABLE;
-    prop_set_string(prop_create(mp->mp_prop_root, "type"), type);
-  }
+  mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
+  prop_set_string(mp->mp_prop_type, type);
 
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
   mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
@@ -170,6 +168,9 @@ mp_create(const char *name, const char *type, int flags)
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
+
+  prop_set_float_clipping_range(mp->mp_prop_currenttime, 0, 10e6);
+
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   prop_set_float(mp->mp_prop_avdelta, 0);
 
@@ -1074,7 +1075,7 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
   event_t *e;
   media_pipe_t *mp = opaque;
   int64_t t;
-
+  int how = 0;
   va_list ap;
   va_start(ap, event);
 
@@ -1084,10 +1085,15 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
     break;
   case PROP_SET_FLOAT:
     t = va_arg(ap, double) * 1000000.0;
+    (void)va_arg(ap, prop_t *);
+    how = va_arg(ap, int);
     break;
   default:
     return;
   }
+
+  if(how == PROP_SET_TENTATIVE)
+    return;
 
   /* If there already is a seek event enqueued, update it */
   TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
@@ -1138,7 +1144,7 @@ mp_set_current_time(media_pipe_t *mp, int64_t pts)
   mp->mp_current_time = pts;
   if(pts != AV_NOPTS_VALUE)
     prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
-		      pts / 1000000.0);
+		      pts / 1000000.0, 0);
   else
     prop_set_void_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime);
 }
@@ -1230,7 +1236,14 @@ void
 metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec, 
 		     AVCodecContext *avctx)
 {
-  int off = snprintf(dst, dstlen, "%s", codec->long_name ?: codec->name);
+  char *n;
+  int off = snprintf(dst, dstlen, "%s", codec->name);
+
+  n = dst;
+  while(*n) {
+    *n = toupper((int)*n);
+    n++;
+  }
 
   if(codec->id  == CODEC_ID_H264) {
     const char *p;

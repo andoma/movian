@@ -166,13 +166,19 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
  *
  */
 static void
-glw_video_set_source(glw_video_t *gv, const char *url)
+glw_video_play(glw_video_t *gv)
 {
   event_t *e;
   
-  mystrset(&gv->gv_current_url, url);
+  if(gv->gv_freezed)
+    return;
 
-  e = event_create_playurl(url, 
+  if(!strcmp(gv->gv_current_url ?: "", gv->gv_pending_url ?: ""))
+    return;
+
+  mystrset(&gv->gv_current_url, gv->gv_pending_url ?: "");
+
+  e = event_create_playurl(gv->gv_current_url, 
 			   !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
 			   gv->gv_priority,
 			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO));
@@ -240,7 +246,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
-  glw_rctx_t *rc;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
@@ -249,18 +254,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     if(gv->gv_sub.gvo_child != NULL)
       glw_layout0(gv->gv_sub.gvo_child, extra);
-
-    if(gv->gv_pending_url != NULL) {
-      if(gv->gv_pending_set_source_cnt == 0) {
-	rc = extra;
-
-	glw_video_set_source(gv, gv->gv_pending_url);
-	mystrset(&gv->gv_pending_url, NULL);
-
-      } else {
-	gv->gv_pending_set_source_cnt--;
-      }
-    }
     return 0;
 
   case GLW_SIGNAL_EVENT:
@@ -307,7 +300,7 @@ glw_video_ctor(glw_t *w)
   hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
   hts_cond_init(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
 
-  gv->gv_mp = mp_create("Video decoder", "video", MP_VIDEO);
+  gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
 #if CONFIG_GLW_BACKEND_OPENGL
   if(gr->gr_be.gbr_enable_vdpau)
     gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
@@ -338,32 +331,55 @@ mod_video_flags(glw_t *w, int set, int clr)
  *
  */
 static void
+set_source(glw_t *w, const char *url)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+
+  if(url == NULL)
+    return;
+  
+  mystrset(&gv->gv_pending_url, url);
+  glw_video_play(gv);
+}
+
+
+/**
+ *
+ */
+static void
+freeze(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  gv->gv_freezed = 1;
+}
+
+
+/**
+ *
+ */
+static void
+thaw(glw_t *w)
+{
+  glw_video_t *gv = (glw_video_t *)w;
+  gv->gv_freezed = 0;
+  glw_video_play(gv);
+}
+
+
+/**
+ *
+ */
+static void
 glw_video_set(glw_t *w, va_list ap)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_attribute_t attrib;
-  const char *filename = NULL;
   prop_t *p, *p2;
   event_t *e;
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-      break;
-
-    case GLW_ATTRIB_FREEZE:
-      gv->gv_freezed = va_arg(ap, int);
-
-      if(gv->gv_pending_url) {
-	glw_video_set_source(gv, gv->gv_pending_url);
-	mystrset(&gv->gv_pending_url, NULL);
-	gv->gv_pending_set_source_cnt = 0;
-      }
-
-      break;
 
     case GLW_ATTRIB_PROPROOTS:
       p = va_arg(ap, void *);
@@ -388,15 +404,6 @@ glw_video_set(glw_t *w, va_list ap)
       break;
     }
   } while(attrib);
-
-  if(filename != NULL && filename[0] != 0) {
-    if(gv->gv_freezed) {
-      gv->gv_pending_set_source_cnt = 5;
-      mystrset(&gv->gv_pending_url, filename);
-    } else {
-      glw_video_set_source(gv, filename);
-    }
-  }
 }
 
 
@@ -457,6 +464,9 @@ static glw_class_t glw_video = {
   .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback,
   .gc_mod_video_flags = mod_video_flags,
+  .gc_set_source_str = set_source,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_video);

@@ -24,15 +24,10 @@
 typedef struct {
   glw_t w;
 
-  int16_t gd_border_left;
-  int16_t gd_border_right;
-  int16_t gd_border_top;
-  int16_t gd_border_bottom;
-
-  float gd_border_xs;
-  float gd_border_ys;
-  float gd_border_xt;
-  float gd_border_yt;
+  float gd_padding_left;
+  float gd_padding_right;
+  float gd_padding_top;
+  float gd_padding_bottom;
 
   float gd_scale_x;
   float gd_scale_y;
@@ -71,8 +66,8 @@ glw_displacement_callback(glw_t *w, void *opaque,
       break;
 
     rc = extra;
-    int width  = rc->rc_width - gd->gd_border_left - gd->gd_border_right;
-    int height = rc->rc_height - gd->gd_border_top - gd->gd_border_bottom;
+    int width  = rc->rc_width - gd->gd_padding_left - gd->gd_padding_right;
+    int height = rc->rc_height - gd->gd_padding_top - gd->gd_padding_bottom;
 
     rc0 = *rc;
     rc0.rc_width  = width;
@@ -124,11 +119,14 @@ glw_displacement_render(glw_t *w, glw_rctx_t *rc)
 		gd->gd_rotate_y,
 		gd->gd_rotate_z);
 
-  glw_reposition(&rc0,
-		 gd->gd_border_left,
-		 rc->rc_height - gd->gd_border_top,
-		 rc->rc_width  - gd->gd_border_right,
-		 gd->gd_border_bottom);
+  glw_repositionf(&rc0,
+		  gd->gd_padding_left,
+		  rc->rc_height - gd->gd_padding_top,
+		  rc->rc_width  - gd->gd_padding_right,
+		  gd->gd_padding_bottom);
+
+  if(glw_is_focusable(w))
+    glw_store_matrix(w, &rc0);
 
   glw_render0(c, &rc0);
 }
@@ -179,14 +177,14 @@ set_scaling(glw_t *w, const float *xyz)
  *
  */
 static void
-set_border(glw_t *w, const float *v)
+set_padding(glw_t *w, const float *v)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
   
-  gd->gd_border_left   = v[0];
-  gd->gd_border_top    = v[1];
-  gd->gd_border_right  = v[2];
-  gd->gd_border_bottom = v[3];
+  gd->gd_padding_left   = v[0];
+  gd->gd_padding_top    = v[1];
+  gd->gd_padding_right  = v[2];
+  gd->gd_padding_bottom = v[3];
 }
 
 
@@ -216,7 +214,7 @@ static glw_class_t glw_displacement = {
   .gc_signal_handler = glw_displacement_callback,
   .gc_set_translation = set_translation,
   .gc_set_scaling = set_scaling,
-  .gc_set_border = set_border,
+  .gc_set_padding = set_padding,
   .gc_set_rotation = set_rotation,
 };
 
