@@ -293,6 +293,14 @@ arch_set_default_paths(int argc, char **argv)
   showtime_cache_path = strdup(buf);
 }
 
+
+int64_t
+arch_cache_avail_bytes(void)
+{
+  return 100 * 1024 * 1024;
+}
+
+
 #ifndef PS3_DEBUG_MUTEX
 
 void

@@ -120,6 +120,8 @@ int glw_rsx_init_context(struct glw_root *gr);
 #define GLW_BLEND_NORMAL   2
 void glw_blendmode(struct glw_root *gr, int mode);
 
+float glw_blur(struct glw_root *gr, float blur);
+
 
 /**
  *

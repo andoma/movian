@@ -26,12 +26,11 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include <sys/statvfs.h>
-
 #include <libavutil/sha1.h>
 
 #include "showtime.h"
 #include "blobcache.h"
+#include "arch/arch.h"
 #include "misc/fs.h"
 #include "misc/string.h"
 #include "misc/callout.h"
@@ -290,15 +289,11 @@ cfcmp(const void *p1, const void *p2)
  *
  */
 static uint64_t 
-blobcache_compute_size(const char *path, uint64_t csize)
+blobcache_compute_size(uint64_t csize)
 {
-  struct statvfs buf;
   uint64_t avail, maxsize;
 
-  if(statvfs(path, &buf))
-    return 0;
-
-  avail = buf.f_bfree * buf.f_bsize + csize;
+  avail = arch_cache_avail_bytes() + csize;
   maxsize = avail / 10;
 
   if(maxsize < 10 * 1000 * 1000)
@@ -360,7 +355,7 @@ blobcache_prune(void)
   }
   closedir(d1);
   
-  msize = blobcache_compute_size(path, tsize);
+  msize = blobcache_compute_size(tsize);
   
   if(files > 0) {
     struct cachefile **v, *c, *next;

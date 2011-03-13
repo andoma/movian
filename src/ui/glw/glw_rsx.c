@@ -420,3 +420,9 @@ glw_blendmode(struct glw_root *gr, int mode)
     break;
   }
 }
+
+float
+glw_blur(struct glw_root *gr, float blur)
+{
+  return 0;
+}

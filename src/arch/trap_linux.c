@@ -16,9 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "arch.h"
-
-
 #if defined(__i386__) || defined(__x86_64__)
 
 // Only do this on x86 for now
@@ -39,6 +36,7 @@
 #include <fcntl.h>
 
 #include "showtime.h"
+#include "arch.h"
 
 #define TRAPMSG(fmt...) trace(TRACE_NO_PROP, TRACE_ERROR, "CRASH", fmt)
 

@@ -89,6 +89,7 @@ get_system_concurrency(void)
 #include "arch.h"
 #include <limits.h>
 #include <syslog.h>
+#include <sys/statvfs.h>
 
 #ifdef XBMC_PLUGIN
 #include "xbmc-plugin.h"
@@ -348,6 +349,16 @@ arch_set_default_paths(int argc, char **argv)
   showtime_settings_path = strdup(buf);
 }
 
+int64_t
+arch_cache_avail_bytes(void)
+{
+  struct statvfs buf;
+
+  if(showtime_cache_path == NULL || statvfs(showtime_cache_path, &buf))
+    return 0;
+
+  return buf.f_bfree * buf.f_bsize;
+}
 
 /**
  *
