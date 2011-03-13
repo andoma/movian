@@ -89,7 +89,7 @@ typedef struct glw_backend_root {
   char *be_rsx_address;
   hts_mutex_t be_mempool_lock;
 
-
+  int be_blendmode;
 
 } glw_backend_root_t;
 

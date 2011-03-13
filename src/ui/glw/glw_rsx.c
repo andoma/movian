@@ -287,10 +287,21 @@ rsx_render(struct glw_root *gr,
 					 rvp->rvp_u_modelview,
 					 4, m ?: identitymtx);
   
-  rgba[0] = rgb_mul->r;
-  rgba[1] = rgb_mul->g;
-  rgba[2] = rgb_mul->b;
-  rgba[3] = alpha;
+  switch(gr->gr_be.be_blendmode) {
+  case GLW_BLEND_NORMAL:
+    rgba[0] = rgb_mul->r;
+    rgba[1] = rgb_mul->g;
+    rgba[2] = rgb_mul->b;
+    rgba[3] = alpha;
+    break;
+
+  case GLW_BLEND_ADDITIVE:
+    rgba[0] = rgb_mul->r * alpha;
+    rgba[1] = rgb_mul->g * alpha;
+    rgba[2] = rgb_mul->b * alpha;
+    rgba[3] = 1;
+    break;
+  }
 
   realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
@@ -405,6 +416,10 @@ glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
 void
 glw_blendmode(struct glw_root *gr, int mode)
 {
+  if(mode == gr->gr_be.be_blendmode)
+    return;
+  gr->gr_be.be_blendmode = mode;
+
   switch(mode) {
   case GLW_BLEND_ADDITIVE:
     realityBlendFunc(gr->gr_be.be_ctx,
