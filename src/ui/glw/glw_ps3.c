@@ -278,34 +278,36 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 static void 
 drawFrame(glw_ps3_t *gp, int buffer) 
 {
-  realityViewportTranslate(gp->gr.gr_be.be_ctx,
+  gcmContextData *ctx = gp->gr.gr_be.be_ctx;
+
+  realityViewportTranslate(ctx,
 			   gp->res.width/2, gp->res.height/2, 0.0, 0.0);
-  realityViewportScale(gp->gr.gr_be.be_ctx,
+  realityViewportScale(ctx,
 		       gp->res.width/2, -gp->res.height/2, 1.0, 0.0); 
 
-  realityZControl(gp->gr.gr_be.be_ctx, 0, 1, 1); // disable viewport culling
+  realityZControl(ctx, 0, 1, 1); // disable viewport culling
 
   // Enable alpha blending.
-  realityBlendFunc(gp->gr.gr_be.be_ctx,
+  realityBlendFunc(ctx,
 		   NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
 		   NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
 		   NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
 		   NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
-  realityBlendEquation(gp->gr.gr_be.be_ctx, NV40_3D_BLEND_EQUATION_RGB_FUNC_ADD |
+  realityBlendEquation(ctx, NV40_3D_BLEND_EQUATION_RGB_FUNC_ADD |
 		       NV40_3D_BLEND_EQUATION_ALPHA_FUNC_ADD);
-  realityBlendEnable(gp->gr.gr_be.be_ctx, 1);
+  realityBlendEnable(ctx, 1);
 
-  realityViewport(gp->gr.gr_be.be_ctx, gp->res.width, gp->res.height);
+  realityViewport(ctx, gp->res.width, gp->res.height);
   
   setupRenderTarget(gp, buffer);
 
   // set the clear color
-  realitySetClearColor(gp->gr.gr_be.be_ctx, 0x00000000);
+  realitySetClearColor(ctx, 0x00000000);
 
-  realitySetClearDepthValue(gp->gr.gr_be.be_ctx, 0xffff);
+  realitySetClearDepthValue(ctx, 0xffff);
 
   // Clear the buffers
-  realityClearBuffers(gp->gr.gr_be.be_ctx,
+  realityClearBuffers(ctx,
 		      REALITY_CLEAR_BUFFERS_COLOR_R |
 		      REALITY_CLEAR_BUFFERS_COLOR_G |
 		      REALITY_CLEAR_BUFFERS_COLOR_B |
