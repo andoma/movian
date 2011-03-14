@@ -361,7 +361,9 @@ ssdp_send_notify(const char *nts)
   sin.sin_family = AF_INET;
   sin.sin_port = 0;
 
-  ni = net_get_interfaces();
+  if((ni = net_get_interfaces()) == NULL)
+    return;
+
   while(ni[i].ifname[0]) {
 
     if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) {
