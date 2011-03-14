@@ -252,14 +252,14 @@ ssdp_input(int fd, int mc)
 {
   char buf[2000];
   char ctrl[500];
-  int r, self = 0, i = 0, cmd;
+  int r, cmd, self;
   struct sockaddr_in si;
   struct http_header_list args;
-  netif_t *ni;
   struct msghdr msg;
   struct cmsghdr *cmsg;
   struct iovec iov;
   uint32_t myaddr;
+  const char *usn;
 
   iov.iov_base = buf;
   iov.iov_len = sizeof(buf);
@@ -278,16 +278,6 @@ ssdp_input(int fd, int mc)
     return;
 
   buf[r] = 0;
-  if((ni = net_get_interfaces()) == NULL)
-    return;
-  while(ni[i].ifname[0]) {
-    if(si.sin_port == ssdp_selfaddr.sin_port && 
-       ntohl(si.sin_addr.s_addr) == ni[i].ipv4) {
-      self = 1;
-      break;
-    }
-    i++;
-  }
 
   myaddr = 0;
 
@@ -307,20 +297,26 @@ ssdp_input(int fd, int mc)
 #endif
   }
 
-  if(!self && myaddr) {
-    LIST_INIT(&args);
-    cmd = ssdp_parse(buf, &args);
+  if(!myaddr)
+    return;
 
+  LIST_INIT(&args);
+
+  cmd = ssdp_parse(buf, &args);
+  usn = http_header_get(&args, "usn");
+
+  self = usn != NULL && !strncmp(usn, "uuid:", 5) &&
+    !strncmp(usn + 5, ssdp_uuid, strlen(ssdp_uuid));
+
+  if(!self) {
     if(cmd == SSDP_NOTIFY && mc)
       ssdp_recv_notify(&args);
     if(cmd == SSDP_RESPONSE && !mc)
       ssdp_response(&args);
     if(cmd == SSDP_SEARCH && mc)
       ssdp_send_all(ssdp_fdu, myaddr, &si, NULL);
-
-    http_headers_free(&args);
   }
-  free(ni);
+  http_headers_free(&args);
 }
 
 
