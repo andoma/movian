@@ -39,9 +39,6 @@
 #define SSDP_SEARCH   2
 #define SSDP_RESPONSE 3
 
-#if !defined(IP_PKTINFO) && !defined(IP_RECVDSTADDR)
-#error Both IP_PKTINFO and IP_RECVDSTADDR not defined
-#endif
 
 static struct sockaddr_in ssdp_selfaddr;
 static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
@@ -250,15 +247,18 @@ static void
 ssdp_input(int fd, int mc)
 {
   char buf[2000];
-  char ctrl[500];
   int r, cmd, self;
-  struct sockaddr_in si;
   struct http_header_list args;
+  uint32_t myaddr;
+  const char *usn;
+  struct sockaddr_in si;
+
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+
   struct msghdr msg;
   struct cmsghdr *cmsg;
   struct iovec iov;
-  uint32_t myaddr;
-  const char *usn;
+  char ctrl[500];
 
   iov.iov_base = buf;
   iov.iov_len = sizeof(buf);
@@ -295,6 +295,23 @@ ssdp_input(int fd, int mc)
     }
 #endif
   }
+
+
+#else
+ 
+  socklen_t slen = sizeof(struct sockaddr_in);
+  netif_t *ni;
+
+  r = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&si, &slen);
+  if(r < 1)
+    return;
+  buf[r] = 0;
+
+  ni = net_get_interfaces();
+  myaddr = ni ? ni[0].ipv4 : 0;
+  free(ni);
+
+#endif
 
   if(!myaddr)
     return;
