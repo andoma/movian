@@ -142,6 +142,27 @@ init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 static void
+init_rgba(glw_root_t *gr, glw_backend_texture_t *tex,
+	  const uint8_t *src, int linesize,
+	  int width, int height, int repeat)
+{
+  void *mem = realloc_tex(gr, tex, linesize * height);
+
+  memcpy(mem, src, tex->size);
+  init_tex(&tex->tex, tex->tex.offset, width, height, linesize, 
+	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
+	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	   NV30_3D_TEX_SWIZZLE_S1_X_Y | NV30_3D_TEX_SWIZZLE_S1_Y_Z |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_W | NV30_3D_TEX_SWIZZLE_S1_W_X
+	   );
+}
+
+
+/**
+ *
+ */
+static void
 init_rgb(glw_root_t *gr, glw_backend_texture_t *tex,
 	 const uint8_t *src, int linesize,
 	 int width, int height, int repeat)
@@ -222,7 +243,9 @@ convert_with_swscale(glw_root_t *gr,
   case PIX_FMT_Y400A:
   case PIX_FMT_BGRA:
   case PIX_FMT_RGBA:
-    dst_pix_fmt = PIX_FMT_ARGB;
+  case PIX_FMT_ABGR:
+  case PIX_FMT_ARGB:
+    dst_pix_fmt = PIX_FMT_RGBA;
     bpp = 4;
     break;
   default:
@@ -244,13 +267,13 @@ convert_with_swscale(glw_root_t *gr,
 
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       dst_w, dst_h, dst_pix_fmt,
-		       SWS_LANCZOS, NULL, NULL, NULL);
+		       SWS_PRINT_INFO | SWS_BILINEAR, NULL, NULL, NULL);
   if(sws == NULL)
     return 1;
 
   memset(&dst, 0, sizeof(dst));
-  dst.data[0] = malloc(dst_w * dst_h * bpp);
-  dst.linesize[0] = bpp * dst_w;
+  dst.linesize[0] = bpp * dst_w; // ((bpp * dst_w) + 15) & ~15;
+  dst.data[0] = malloc(dst.linesize[0] * dst_h);
   sws_scale(sws, ptr, strides, 0, src_h, dst.data, dst.linesize);
 
   glt->glt_xs = dst_w;
@@ -258,10 +281,10 @@ convert_with_swscale(glw_root_t *gr,
   glt->glt_s = 1;
   glt->glt_t = 1;
 
-  if(bpp == 4)
-    init_argb(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
+  if(bpp == 4) {
+    init_rgba(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
 	      dst_w, dst_h, repeat);
-  else
+  } else
     init_rgb(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
 	     dst_w, dst_h, repeat);
 
@@ -281,10 +304,11 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 {
   int need_rescale = req_w != src_w || req_h != src_h;
   int repeat = glt->glt_flags & GLW_TEX_REPEAT;
+
   switch(pix_fmt) {
 
   case PIX_FMT_ARGB:
-    if(need_rescale)
+    if(need_rescale && 0)
       break;
     glt->glt_xs = src_w;
     glt->glt_ys = src_h;
@@ -295,7 +319,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     return 0;
 
   case PIX_FMT_Y400A:
-    if(need_rescale)
+    if(need_rescale && 0)
       break;
     glt->glt_xs = src_w;
     glt->glt_ys = src_h;
