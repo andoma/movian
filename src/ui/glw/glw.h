@@ -1150,4 +1150,19 @@ void glw_hide(glw_t *w);
 
 void glw_unhide(glw_t *w);
 
+
+/**
+ *
+ */
+#define GLW_BLEND_NORMAL   0
+#define GLW_BLEND_ADDITIVE 1
+
+void glw_blendmode(struct glw_root *gr, int mode);
+
+float glw_blur(struct glw_root *gr, float blur);
+
+#define GLW_CW  0
+#define GLW_CCW 1
+void glw_frontface(struct glw_root *gr, int how);
+
 #endif /* GLW_H */

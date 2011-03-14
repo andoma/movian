@@ -658,10 +658,16 @@ glw_opengl_init_context(glw_root_t *gr)
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(projection);
     glMatrixMode(GL_MODELVIEW);
-
   }
- 
-
   return 0;
 }
 
+
+/**
+ *
+ */
+void
+glw_frontface(struct glw_root *gr, int how)
+{
+  glFrontFace(how == GLW_CW ? GL_CW : GL_CCW);
+}

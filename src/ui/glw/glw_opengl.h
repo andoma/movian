@@ -166,21 +166,6 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 #define glw_rtt_texture(grtt) ((grtt)->grtt_texture)
 
-#define GLW_BLEND_NORMAL   0
-#define GLW_BLEND_ADDITIVE 1
-
-void glw_blendmode(struct glw_root *gr, int mode);
-
-float glw_blur(struct glw_root *gr, float blur);
-
-/**
- *
- */
-#define GLW_CW  GL_CW
-#define GLW_CCW GL_CCW
-
-#define glw_frontface(x) glFrontFace(x) 
-
 
 /**
  *
