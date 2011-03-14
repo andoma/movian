@@ -379,6 +379,13 @@ ssdp_send_notify(const char *nts)
 }
 
 
+#ifndef IP_ADD_MEMBERSHIP
+#define IP_ADD_MEMBERSHIP		12
+struct ip_mreq {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+};
+#endif
 
 /**
  *
@@ -392,6 +399,7 @@ ssdp_thread(void *aux)
   int64_t next_send = 0;
   struct pollfd fds[2];
   socklen_t sl = sizeof(struct sockaddr_in);
+  struct ip_mreq imr;
 
   fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -409,6 +417,14 @@ ssdp_thread(void *aux)
     return NULL;
   }
 
+  memset(&imr, 0, sizeof(imr));
+  imr.imr_multiaddr.s_addr = 0xeffffffa; // 239.255.255.250
+  if(setsockopt(fdm, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, 
+		sizeof(struct ip_mreq)) == -1) {
+    TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
+	  strerror(errno));
+    return NULL;
+  }
 
   fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
