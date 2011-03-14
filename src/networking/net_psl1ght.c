@@ -28,6 +28,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <net/net.h>
+#include <net/netctl.h>
 #include <errno.h>
 
 #include "showtime.h"
@@ -358,13 +359,23 @@ tcp_close(tcpcon_t *tc)
 }
 
 
+
 /**
  *
  */
 netif_t *
 net_get_interfaces(void)
 {
-  return NULL;
+  union net_ctl_info info;
+
+  if(netCtlGetInfo(NET_CTL_INFO_IP_ADDRESS, &info))
+    return NULL;
+
+  netif_t *ni = calloc(2, sizeof(netif_t));
+
+  snprintf(ni[0].ifname, sizeof(ni[0].ifname), "eth");
+  ni[0].ipv4 = inet_addr(info.ip_address);
+  return ni;
 }
 
 

@@ -24,6 +24,7 @@
 
 #include <netinet/in.h>
 #include <net/net.h>
+#include <net/netctl.h>
 
 #include <psl1ght/lv2.h>
 
@@ -272,7 +273,9 @@ arch_set_default_paths(int argc, char **argv)
   char buf[PATH_MAX], *x;
 
   netInitialize();
+  netCtlInit();
 
+  
   ticks_per_us = Lv2Syscall0(147) / 1000000;
   my_trace("Ticks per µs = %ld\n", ticks_per_us);
 
