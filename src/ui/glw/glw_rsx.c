@@ -441,3 +441,12 @@ glw_blur(struct glw_root *gr, float blur)
 {
   return 0;
 }
+
+
+void glw_frontface(struct glw_root *gr, int how)
+{
+  realityFrontFace(gr->gr_be.be_ctx,
+		   how == GLW_CW ? REALITY_FRONT_FACE_CW :
+		   REALITY_FRONT_FACE_CCW);
+}
+
