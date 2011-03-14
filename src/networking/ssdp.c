@@ -418,7 +418,7 @@ ssdp_thread(void *aux)
   }
 
   memset(&imr, 0, sizeof(imr));
-  imr.imr_multiaddr.s_addr = 0xeffffffa; // 239.255.255.250
+  imr.imr_multiaddr.s_addr = htonl(0xeffffffa); // 239.255.255.250
   if(setsockopt(fdm, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, 
 		sizeof(struct ip_mreq)) == -1) {
     TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
