@@ -26,7 +26,10 @@
 #include <errno.h>
 
 #include <netinet/in.h>
-#include <netinet/tcp.h>
+
+#if ENABLE_POSIX_NETWORKING
+#include <netinet/tcp.h>  // for TCP_ defines
+#endif
 
 #include "http.h"
 #include "http_server.h"
@@ -953,8 +956,10 @@ http_accept(http_server_t *hs)
   setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &val, sizeof(val));
 #endif
 
+#ifdef TCP_NODELAY
   val = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+#endif
 
   slen = sizeof(struct sockaddr_in);
   if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
