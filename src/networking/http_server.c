@@ -350,8 +350,7 @@ http_error(http_connection_t *hc, int error, const char *fmt, ...)
 
   htsbuf_queue_init(&hq, 0);
 
-  if(extra != NULL) {
-
+  if(fmt != NULL) {
     va_start(ap, fmt);
     vsnprintf(extra, sizeof(extra), fmt, ap);
     va_end(ap);
