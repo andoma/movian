@@ -1054,15 +1054,15 @@ http_server_init(void)
       close(fd);
       return;
     }
+    if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
+      TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
+      close(fd);
+      return;
+    }
+    http_server_port = ntohs(si.sin_port);
+  } else {
+    http_server_port = 42000 + i;
   }
-  
-  if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
-    close(fd);
-    return;
-  }
-
-  http_server_port = ntohs(si.sin_port);
 
   TRACE(TRACE_INFO, "HTTPSRV", "Listening on port %d", http_server_port);
 
