@@ -876,7 +876,7 @@ http_io(http_connection_t *hc, int revents)
  *
  */
 static void
-http_close(http_connection_t *hc)
+http_close(http_server_t *hs, http_connection_t *hc)
 {
   htsbuf_queue_flush(&hc->hc_input);
   htsbuf_queue_flush(&hc->hc_output);
@@ -884,6 +884,7 @@ http_close(http_connection_t *hc)
   http_headers_free(&hc->hc_request_headers);
   http_headers_free(&hc->hc_response_headers);
   LIST_REMOVE(hc, hc_link);
+  hs->hs_numcon--;
   close(hc->hc_fd);
   free(hc->hc_url);
   free(hc->hc_url_orig);
@@ -933,6 +934,7 @@ http_accept(http_server_t *hs)
   hc->hc_fd = fd;
   hc->hc_events = POLLIN | POLLHUP | POLLERR;
   LIST_INSERT_HEAD(&hs->hs_connections, hc, hc_link);
+  hs->hs_numcon++;
   htsbuf_queue_init(&hc->hc_input, 0);
   htsbuf_queue_init(&hc->hc_output, 0);
 
@@ -1011,7 +1013,7 @@ http_server(void *aux)
       nxt = LIST_NEXT(hc, hc_link);
 
       if(http_io(hc, hs->hs_fds[n].revents)) {
-	http_close(hc);
+	http_close(hs, hc);
       }
       n++;
     }
