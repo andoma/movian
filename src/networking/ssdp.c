@@ -443,7 +443,7 @@ ssdp_thread(void *aux)
   }
 
   if(getsockname(fdu, (struct sockaddr *)&ssdp_selfaddr, &sl) == -1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
+    TRACE(TRACE_ERROR, "SSDP", "Unable to figure local port");
     return NULL;
   }
 
