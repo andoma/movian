@@ -28,7 +28,7 @@ static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
 static sp_link *(*f_sp_link_create_from_album_cover)(sp_album *album);
 static sp_link *(*f_sp_link_create_from_artist)(sp_artist *artist);
-static sp_link *(*f_sp_link_create_from_artist_portrait)(sp_artist *artist, int index);
+static sp_link *(*f_sp_link_create_from_artist_portrait)(sp_artistbrowse *arb, int index);
 static sp_link *(*f_sp_link_create_from_search)(sp_search *search);
 static sp_link *(*f_sp_link_create_from_playlist)(sp_playlist *playlist);
 static sp_link *(*f_sp_link_create_from_user)(sp_user *user);
@@ -162,6 +162,7 @@ static void(*f_sp_playlist_release)(sp_playlist *playlist);
 static void(*f_sp_playlistcontainer_add_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 static void(*f_sp_playlistcontainer_remove_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 static int(*f_sp_playlistcontainer_num_playlists)(sp_playlistcontainer *pc);
+static bool(*f_sp_playlistcontainer_is_loaded)(sp_playlistcontainer *pc);
 static sp_playlist *(*f_sp_playlistcontainer_playlist)(sp_playlistcontainer *pc, int index);
 static sp_playlist_type(*f_sp_playlistcontainer_playlist_type)(sp_playlistcontainer *pc, int index);
 static sp_error(*f_sp_playlistcontainer_playlist_folder_name)(sp_playlistcontainer *pc, int index, char *buffer, int buffer_size);
@@ -360,6 +361,7 @@ if((f_sp_playlist_release=dlsym(handle,"sp_playlist_release"))==NULL) return "sp
 if((f_sp_playlistcontainer_add_callbacks=dlsym(handle,"sp_playlistcontainer_add_callbacks"))==NULL) return "sp_playlistcontainer_add_callbacks";
 if((f_sp_playlistcontainer_remove_callbacks=dlsym(handle,"sp_playlistcontainer_remove_callbacks"))==NULL) return "sp_playlistcontainer_remove_callbacks";
 if((f_sp_playlistcontainer_num_playlists=dlsym(handle,"sp_playlistcontainer_num_playlists"))==NULL) return "sp_playlistcontainer_num_playlists";
+if((f_sp_playlistcontainer_is_loaded=dlsym(handle,"sp_playlistcontainer_is_loaded"))==NULL) return "sp_playlistcontainer_is_loaded";
 if((f_sp_playlistcontainer_playlist=dlsym(handle,"sp_playlistcontainer_playlist"))==NULL) return "sp_playlistcontainer_playlist";
 if((f_sp_playlistcontainer_playlist_type=dlsym(handle,"sp_playlistcontainer_playlist_type"))==NULL) return "sp_playlistcontainer_playlist_type";
 if((f_sp_playlistcontainer_playlist_folder_name=dlsym(handle,"sp_playlistcontainer_playlist_folder_name"))==NULL) return "sp_playlistcontainer_playlist_folder_name";
@@ -559,6 +561,7 @@ return NULL;}
 #define f_sp_playlistcontainer_add_callbacks sp_playlistcontainer_add_callbacks
 #define f_sp_playlistcontainer_remove_callbacks sp_playlistcontainer_remove_callbacks
 #define f_sp_playlistcontainer_num_playlists sp_playlistcontainer_num_playlists
+#define f_sp_playlistcontainer_is_loaded sp_playlistcontainer_is_loaded
 #define f_sp_playlistcontainer_playlist sp_playlistcontainer_playlist
 #define f_sp_playlistcontainer_playlist_type sp_playlistcontainer_playlist_type
 #define f_sp_playlistcontainer_playlist_folder_name sp_playlistcontainer_playlist_folder_name

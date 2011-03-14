@@ -792,7 +792,7 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
 /**
  * Creates a link object from an artist portrait
  *
- * @param[in]   artist     An artist object
+ * @param[in]   arb        Artist browse object
  * @param[in]   index      The index of the portrait. Should be in the interval [0, sp_artistbrowse_num_portraits() - 1]
  *
  * @return                 A link object representing an image
@@ -801,7 +801,7 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
  * @see sp_link_release()
  * @see sp_artistbrowse_num_portraits()
  */
-SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artist *artist, int index);
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artistbrowse *arb, int index);
 
 /**
  * Generate a link object representing the current search
@@ -1681,7 +1681,7 @@ SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const byte image_i
  * Create an image object from a link
  *
  * @param[in]  session    Session
- * @param[in]  link       Spotify link object. This must be of SP_LINKTYPE_IMAGE type 
+ * @param[in]  l          Spotify link object. This must be of SP_LINKTYPE_IMAGE type
  *
  * @return                Pointer to an image object. To free the object, use
  *                        sp_image_release()
@@ -2638,6 +2638,17 @@ SP_LIBEXPORT(void) sp_playlistcontainer_remove_callbacks(sp_playlistcontainer *p
  * @sa sp_session_playlistcontainer()
  */
 SP_LIBEXPORT(int) sp_playlistcontainer_num_playlists(sp_playlistcontainer *pc);
+
+/**
+ * Return true if the playlistcontainer is fully loaded
+ *
+ * @param[in]  pc        Playlist container
+ *
+ * @return               True if container is loaded
+ *
+ * @note The container_loaded callback will be invoked when this flips to true
+ */
+SP_LIBEXPORT(bool) sp_playlistcontainer_is_loaded(sp_playlistcontainer *pc);
 
 /**
  * Return a pointer to the playlist at a specific index

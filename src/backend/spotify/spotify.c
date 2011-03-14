@@ -55,6 +55,8 @@
 #include "ext/spotify/apifunctions.h"
 #include "spotify_app_key.h"
 
+struct spotify_page;
+
 /**
  *
  */
@@ -151,9 +153,15 @@ typedef struct playlistcontainer {
   prop_t *plc_pending;
   ptrvec_t plc_playlists;
 
+  char *plc_name;
+  sp_playlistcontainer *plc_pc;
+  prop_sub_t *plc_destroy_sub;
+
 } playlistcontainer_t;
 
 static playlistcontainer_t *users_root;
+static void plc_for_user(sp_session *sess, struct spotify_page *sp,
+			 const char *username);
 
 typedef struct playlist {
   
@@ -1673,6 +1681,7 @@ try_get_album(spotify_page_t *sp)
 }
 
 
+
 /**
  *
  */  
@@ -1716,6 +1725,7 @@ spotify_open_page(spotify_page_t *sp)
   sp_link *l;
   sp_linktype type;
   sp_playlist *plist;
+  sp_user *user;
 
   if(!strcmp(sp->sp_url, "spotify:playlists")) {
     spotify_open_rootlist(sp, 0);
@@ -1766,6 +1776,11 @@ spotify_open_page(spotify_page_t *sp)
       f_sp_track_add_ref(sp->sp_track);
       LIST_INSERT_HEAD(&pending_album_queries, sp, sp_query_link);
       try_get_album(sp);
+      break;
+
+    case SP_LINKTYPE_PROFILE:
+      user = f_sp_link_as_user(l);
+      plc_for_user(spotify_session, sp, f_sp_user_canonical_name(user));
       break;
 
     default:
@@ -2521,8 +2536,10 @@ place_playlists_in_tree(playlistcontainer_t *plc)
 {
   if(rootlist_bind_folders(plc, 0, NULL))
     return;
-  place_playlists_in_node(plc, plc->plc_playlists.size-1, NULL);
-  place_playlists_in_list(plc);
+  if(plc->plc_root_tree != NULL)
+    place_playlists_in_node(plc, plc->plc_playlists.size-1, NULL);
+  if(plc->plc_root_flat != NULL)
+    place_playlists_in_list(plc);
 }
 
 
@@ -2705,7 +2722,8 @@ static void
 container_loaded(sp_playlistcontainer *pc, void *userdata)
 {
   playlistcontainer_t *plc = userdata;
-  TRACE(TRACE_DEBUG, "spotify", "Container loaded");
+  TRACE(TRACE_INFO, "spotify", "Container for user \"%s\" loaded",
+	plc->plc_name);
   prop_set_int(plc->plc_pending, 0);
 }
 
@@ -2766,6 +2784,15 @@ playlistcontainer_bind(sp_session *sess, playlistcontainer_t *plc,
     playlist_added(pc, f_sp_playlistcontainer_playlist(pc, i), i, plc);
 
   f_sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, plc);
+
+  plc->plc_pc = pc;
+
+  if(!f_sp_playlistcontainer_is_loaded(pc))
+    return;
+
+  TRACE(TRACE_INFO, "spotify", "Container for user \"%s\" already loaded",
+	plc->plc_name);
+  prop_set_int(plc->plc_pending, 0);
 }
 
 
@@ -2789,15 +2816,17 @@ playlistcontainer_unbind(sp_session *sess, playlistcontainer_t *plc,
  *
  */
 static playlistcontainer_t *
-playlistcontainer_create(void)
+playlistcontainer_create(const char *name)
 {
   playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
   plc->plc_root_tree = prop_create_root(NULL);
   plc->plc_root_flat = prop_create_root(NULL);
   plc->plc_pending = prop_create_root(NULL);
   prop_set_int(plc->plc_pending, 1);
+  plc->plc_name = strdup(name);
   return plc;
 }
+
 
 
 /**
@@ -2822,6 +2851,73 @@ unload_initial_playlists(sp_session *sess)
 {
   playlistcontainer_unbind(sess, users_root,
 			   f_sp_session_playlistcontainer(sess));
+}
+
+/**
+ *
+ */
+static void
+playlistcontainer_destroy_sub(void *opaque, prop_event_t event, ...)
+{
+  playlistcontainer_t *plc = opaque;
+
+  if(event != PROP_DESTROYED)
+    return;
+  
+  f_sp_playlistcontainer_remove_callbacks(plc->plc_pc, &pc_callbacks, plc);
+
+  //  while(f_sp_playlistcontainer_num_playlists(plc->plc_pc) > 0)
+  //    playlist_removed(
+  
+
+  if(plc->plc_rethink)
+    LIST_REMOVE(plc, plc_rethink_link);
+
+  prop_unsubscribe(plc->plc_destroy_sub);
+
+  f_sp_playlistcontainer_release(plc->plc_pc);
+  prop_ref_dec(plc->plc_root_flat);
+  prop_ref_dec(plc->plc_pending);
+  free(plc->plc_name);
+  free(plc);
+}
+
+
+/**
+ * When 'tracking_prop' is destroyed we will destroy ourselfs
+ */
+static void
+plc_for_user(sp_session *sess, spotify_page_t *sp, const char *username)
+{
+  struct prop_nf *pnf;
+
+  sp_playlistcontainer *pc;
+  playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
+
+  plc->plc_root_tree = NULL;
+  plc->plc_root_flat = prop_ref_inc(sp->sp_items);
+  plc->plc_pending = prop_ref_inc(sp->sp_loading);
+  prop_set_int(plc->plc_pending, 1);
+
+  plc->plc_name = strdup(username);
+
+  pc = f_sp_session_publishedcontainer_for_user_create(sess, username);
+  playlistcontainer_bind(sess, plc, pc);
+
+  plc->plc_destroy_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, playlistcontainer_destroy_sub, plc,
+		   PROP_TAG_ROOT, sp->sp_items,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
+
+  prop_set_string(sp->sp_type, "directory");
+  prop_set_string(sp->sp_title, "Playlists");
+
+  pnf = prop_nf_create(sp->sp_nodes, sp->sp_items,
+		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
+  prop_set_int(sp->sp_canFilter, 1);
+  prop_nf_release(pnf);
 }
 
 
@@ -3796,7 +3892,9 @@ be_spotify_init(void)
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 
-  users_root = playlistcontainer_create();
+  spotify = prop_create(prop_get_global(), "spotify");
+
+  users_root = playlistcontainer_create("Self");
 
   TAILQ_INIT(&spotify_msgs);
 
