@@ -61,8 +61,7 @@ update_value_delta(glw_slider_t *s, float d)
   if(s->p != NULL)
     prop_add_float(s->p, d * (s->max - s->min));
   else {
-    s->value += d;
-
+    s->value = GLW_MAX(s->min, GLW_MIN(s->max, s->value + d));
     if(s->bound_widget != NULL) {
       glw_scroll_t gs;
       gs.value = s->value;
