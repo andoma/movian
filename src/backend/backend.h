@@ -38,6 +38,7 @@ typedef enum {
 
 #define BACKEND_VIDEO_PRIMARY  0x1
 #define BACKEND_VIDEO_NO_AUDIO 0x2
+#define BACKEND_VIDEO_NO_AUTOSTOP 0x4
 
 /**
  *

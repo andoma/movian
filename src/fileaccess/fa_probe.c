@@ -421,6 +421,12 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
     return 1;
   }
 
+  if(!memcmp(pb, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
+    /* Ugly playlist thing (see fa_video.c) */
+    md->md_type = CONTENT_VIDEO;
+    return 1;
+  }
+
   if(!memcmp(pb, pngsig, 8)) {
     /* PNG */
     md->md_type = CONTENT_IMAGE;
