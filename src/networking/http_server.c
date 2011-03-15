@@ -227,6 +227,7 @@ http_rc2str(int code)
   case HTTP_STATUS_FOUND:           return "Found";
   case HTTP_STATUS_METHOD_NOT_ALLOWED: return "Method not allowed";
   case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition failed";
+  case HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE: return "Unsupported media type";
   default:
     return "Unknown returncode";
     break;

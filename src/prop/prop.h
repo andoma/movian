@@ -223,6 +223,8 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 rstr_t *prop_get_string(prop_t *p);
 
+char **prop_get_name_of_childs(prop_t *p);
+
 #ifdef PROP_DEBUG
 
 void prop_ref_dec_traced(prop_t *p, const char *file, int line);

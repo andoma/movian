@@ -1741,7 +1741,7 @@ prop_move(prop_t *p, prop_t *before)
  *
  */
 static prop_t *
-prop_subfind(prop_t *p, const char **name, int follow_symlinks)
+prop_subfind(prop_t *p, const char **name, int follow_symlinks, int allow_indexing)
 {
   prop_t *c;
 
@@ -1763,9 +1763,22 @@ prop_subfind(prop_t *p, const char **name, int follow_symlinks)
       prop_notify_value(p, NULL, "prop_subfind()", 0);
     }
 
-    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
-      if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
-	break;
+    if(allow_indexing && name[0][0] == '*') {
+      unsigned int i = atoi(name[0]+1);
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+	if(i == 0)
+	  break;
+	i--;
+      }
+      if(c == NULL)
+	return NULL;
+
+    } else {
+
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+	if(c->hp_name != NULL && !strcmp(c->hp_name, name[0]))
+	  break;
+      }
     }
     p = c ?: prop_create0(p, name[0], NULL, 0);    
     name++;
@@ -1867,7 +1880,7 @@ prop_get_by_name(const char **name, int follow_symlinks, ...)
 
   name++;
   hts_mutex_lock(&prop_mutex);
-  p = prop_subfind(p, name, follow_symlinks);
+  p = prop_subfind(p, name, follow_symlinks, 1);
 
   p = prop_ref_inc(p);
 
@@ -2045,10 +2058,10 @@ prop_subscribe(int flags, ...)
       hts_mutex_lock(&prop_mutex);
 
     /* Canonical name is the resolved props without following symlinks */
-    canonical = prop_subfind(p, name, 0);
+    canonical = prop_subfind(p, name, 0, 0);
   
     /* ... and value will follow links */
-    value     = prop_subfind(p, name, 1);
+    value     = prop_subfind(p, name, 1, 0);
 
     if(canonical == NULL || value == NULL) {
       hts_mutex_unlock(&prop_mutex);
@@ -3371,6 +3384,42 @@ prop_get_string(prop_t *p)
   hts_mutex_unlock(&prop_mutex);
   return r;
 }
+
+
+/**
+ *
+ */
+char **
+prop_get_name_of_childs(prop_t *p)
+{
+  prop_t *c;
+  char **rval = NULL;
+  int i = 0;
+
+  if(p->hp_type != PROP_DIR)
+    return NULL;
+
+  hts_mutex_lock(&prop_mutex);
+
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    if(c->hp_type == PROP_VOID || c->hp_type == PROP_ZOMBIE)
+      continue;
+
+    if(c->hp_name != NULL) {
+      strvec_addp(&rval, c->hp_name);
+    } else {
+      char buf[16];
+      snprintf(buf, sizeof(buf), "*%d", i);
+      strvec_addp(&rval, buf);
+    }
+    i++;
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+
+  return rval;
+}
+
 
 
 /**
