@@ -221,8 +221,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
 
-int prop_get_string(prop_t *p, char *buf, size_t bufsize)
-     __attribute__ ((warn_unused_result));
+rstr_t *prop_get_string(prop_t *p);
 
 #ifdef PROP_DEBUG
 

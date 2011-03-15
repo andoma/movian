@@ -3341,18 +3341,32 @@ prop_courier_poll(prop_courier_t *pc)
 /**
  *
  */
-int
-prop_get_string(prop_t *p, char *buf, size_t bufsize)
+rstr_t *
+prop_get_string(prop_t *p)
 {
-  int r;
+  rstr_t *r;
+  char buf[64];
 
   hts_mutex_lock(&prop_mutex);
 
-  if(p->hp_type == PROP_STRING) {
-    snprintf(buf, bufsize, "%s", rstr_get(p->hp_rstring));
-    r = 0;
-  } else {
-    r = -1;
+  switch(p->hp_type) {
+  case PROP_STRING:
+    r = rstr_dup(p->hp_rstring);
+    break;
+  case PROP_LINK:
+    r = rstr_dup(p->hp_link_rtitle);
+    break;
+  case PROP_FLOAT:
+    snprintf(buf, sizeof(buf), "%f", p->hp_float);
+    r = rstr_alloc(buf);
+    break;
+  case PROP_INT:
+    snprintf(buf, sizeof(buf), "%d", p->hp_int);
+    r = rstr_alloc(buf);
+    break;
+ default:
+   r = NULL;
+   break;
   }
   hts_mutex_unlock(&prop_mutex);
   return r;

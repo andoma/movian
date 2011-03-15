@@ -658,23 +658,23 @@ playqueue_enqueue(prop_t *track)
 {
   playqueue_entry_t *pqe, *before;
   prop_t *p;
-  char url[URL_MAX];
+  rstr_t *url;
   int doplay = 0;
 
   p = prop_get_by_name(PNVEC("self", "url"), 1,
 		       PROP_TAG_NAMED_ROOT, track, "self",
 		       NULL);
   
-  if(prop_get_string(p, url, sizeof(url))) {
-    prop_ref_dec(p);
-    return;
-  }
+  url = prop_get_string(p);
   prop_ref_dec(p);
+
+  if(url == NULL)
+    return;
 
   hts_mutex_lock(&playqueue_mutex);
 
   pqe = calloc(1, sizeof(playqueue_entry_t));
-  pqe->pqe_url = strdup(url);
+  pqe->pqe_url = strdup(rstr_get(url));
 
   pqe->pqe_node = prop_create_root(NULL);
   pqe->pqe_enq = 1;
@@ -686,7 +686,7 @@ playqueue_enqueue(prop_t *track)
 	       prop_create(pqe->pqe_node, "metadata"),
 	       NULL, PROP_LINK_XREFED);
 
-  prop_set_string(prop_create(pqe->pqe_node, "url"), url);
+  prop_set_rstring(prop_create(pqe->pqe_node, "url"), url);
   prop_set_string(prop_create(pqe->pqe_node, "type"), "audio");
 
   doplay = pqe_current == NULL;
@@ -719,6 +719,7 @@ playqueue_enqueue(prop_t *track)
     pqe_play(pqe, EVENT_PLAYQUEUE_JUMP);
 
   hts_mutex_unlock(&playqueue_mutex);
+  rstr_release(url);
 }
 
 
