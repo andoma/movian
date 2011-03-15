@@ -103,6 +103,7 @@ load_vp(const char *url)
   rvp->rvp_u_modelview = realityVertexProgramGetConstant(vp, "u_modelview");
   rvp->rvp_u_color     = vp_get_vector_const(vp, "u_color");
   rvp->rvp_u_color_offset = vp_get_vector_const(vp, "u_color_offset");
+  rvp->rvp_u_blur_amount = vp_get_vector_const(vp, "u_blur_amount");
   TRACE(TRACE_INFO, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
 
   rvp->rvp_a_position = realityVertexProgramGetAttribute(vp, "a_position");
@@ -278,7 +279,11 @@ rsx_render(struct glw_root *gr,
       return;
 
     realitySetTexture(ctx, 0, &tex->tex);
-    rfp = gr->gr_be.be_fp_tex;
+    if(gr->gr_be.be_blur > 0.05) {
+      rfp = gr->gr_be.be_fp_tex_blur;
+    } else {
+      rfp = gr->gr_be.be_fp_tex;
+    }
   }
 
   rsx_set_vp(gr, rvp);
@@ -318,6 +323,16 @@ rsx_render(struct glw_root *gr,
     }
     rgba[3] = 0;
     realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
+  }
+
+  if(gr->gr_be.be_blur > 0.05 && tex != NULL) {
+    float v[4];
+    v[0] = 1.5 * gr->gr_be.be_blur / tex->tex.width;
+    v[1] = 1.5 * gr->gr_be.be_blur / tex->tex.height;
+    v[2] = 0;
+    v[3] = 0;
+
+    realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur_amount, v);
   }
 
   rsx_set_fp(gr, rfp, 0);
@@ -361,6 +376,7 @@ glw_rsx_init_context(glw_root_t *gr)
   be->be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
   be->be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
   be->be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
+  be->be_fp_tex_blur = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex_blur.fp");
   
   be->be_vp_yuv2rgb = load_vp("bundle://src/ui/glw/rsx/yuv2rgb_v.vp");
   be->be_fp_yuv2rgb_1f =
@@ -439,7 +455,9 @@ glw_blendmode(struct glw_root *gr, int mode)
 float
 glw_blur(struct glw_root *gr, float blur)
 {
-  return 0;
+  float old = gr->gr_be.be_blur;
+  gr->gr_be.be_blur = blur;
+  return old;
 }
 
 

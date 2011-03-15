@@ -40,6 +40,7 @@ typedef struct rsx_vp {
   int rvp_u_modelview;
   int rvp_u_color;
   int rvp_u_color_offset;
+  int rvp_u_blur_amount;
 
   int rvp_a_position;
   int rvp_a_color;
@@ -79,6 +80,7 @@ typedef struct glw_backend_root {
   struct rsx_vp *be_vp_1;
   struct rsx_fp *be_fp_tex;
   struct rsx_fp *be_fp_flat;
+  struct rsx_fp *be_fp_tex_blur;
 
   struct rsx_vp *be_vp_yuv2rgb;
   struct rsx_fp *be_fp_yuv2rgb_1f;
@@ -90,7 +92,8 @@ typedef struct glw_backend_root {
   hts_mutex_t be_mempool_lock;
 
   int be_blendmode;
-
+  float be_blur;
+  
 } glw_backend_root_t;
 
 /**

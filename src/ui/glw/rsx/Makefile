@@ -1,6 +1,7 @@
 
 all: 	f_tex.fp \
 	f_flat.fp \
+	f_tex_blur.fp \
 	v1.vp \
 	yuv2rgb_1f_norm.fp \
 	yuv2rgb_2f_norm.fp \
