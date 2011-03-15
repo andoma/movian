@@ -340,78 +340,45 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 
 
 /**
- * Very simple and naive diff
+ * Very simple and O^2 diff
+ *
+ * We should also check mtime and trig change if needed
  */
 static void
 rescan(scanner_t *s)
 {
-#if 0
-  fa_dir_t *fd2;
-  fa_dir_entry_t *a, *b, *x, *y;
-  int change = 0;
+  fa_dir_t *fd;
+  fa_dir_entry_t *a, *b, *n;
+  int changed = 0;
 
-  if((fd2 = fa_scandir(s->s_url, NULL, 0)) == NULL)
+  if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL)
     return; 
 
-  fa_dir_sort(fd2);
+  for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
+    n = TAILQ_NEXT(a, fde_link);
+    TAILQ_FOREACH(b, &fd->fd_entries, fde_link)
+      if(!strcmp(a->fde_url, b->fde_url))
+	break;
 
-  a = TAILQ_FIRST(&s->s_fd->fd_entries);
-  x = TAILQ_FIRST(&fd2->fd_entries);
-  
-  while(a != NULL && x != NULL) {
-    
-    if(!strcmp(a->fde_url, x->fde_url)) {
-      a = TAILQ_NEXT(a, fde_link);
-      x = TAILQ_NEXT(x, fde_link);
-      continue;
-    }
-    
-    b =     TAILQ_NEXT(a, fde_link);
-    y =     TAILQ_NEXT(x, fde_link);
-
-    if(y != NULL && !strcmp(a->fde_url, y->fde_url)) {
-      TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
-      TAILQ_INSERT_BEFORE(a, x, fde_link);
-      s->s_fd->fd_count++;
-      scanner_entry_setup(s, x);
-      change = 1;
-      a = TAILQ_NEXT(a, fde_link);
-      x = TAILQ_NEXT(y, fde_link);
-      continue;
-    }
-
-    if(b != NULL && !strcmp(b->fde_url, x->fde_url)) {
+    if(b != NULL) {
+      // Exists in old and new set, all fine
+      fa_dir_entry_free(fd, b);
+    } else {
+      changed = 1;
+      // Exists in old but not in new
       scanner_entry_destroy(s, a);
-      change = 1;
-      a = b;
-      continue;
     }
-
-    a = b;
-    x = y;
   }
 
-  for(; x != NULL; x = y) {
-    y = TAILQ_NEXT(x, fde_link);
-    TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
-    TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, x, fde_link);
-    s->s_fd->fd_count++;
-    scanner_entry_setup(s, x);
-    change = 1;
+  while((b = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
+    TAILQ_REMOVE(&fd->fd_entries, b, fde_link);
+    TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, b, fde_link);
+    scanner_entry_setup(s, b);
+    changed = 1;
   }
 
-  for(; a != NULL; a = b) {
-    b = TAILQ_NEXT(a, fde_link);
-    scanner_entry_destroy(s, a);
-    change = 1;
-  }
-
-  fa_dir_free(fd2);
-  fa_dir_sort(s->s_fd);
-
-  if(change)
-    deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
-#endif
+  if(changed)
+    deep_analyzer(s);
 }
 
 
