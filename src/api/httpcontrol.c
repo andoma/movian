@@ -25,6 +25,7 @@
 #include "misc/pixmap.h"
 #include "misc/string.h"
 #include "backend/backend.h"
+#include "ui/ui.h"
 
 #define STRINGIFY(A)  #A
 
@@ -121,7 +122,12 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_t out;
   rstr_t *r;
   int rval, i;
-  prop_t *p = prop_from_path(remain);
+  prop_t *p;
+
+  if(remain == NULL)
+    return 404;
+
+  p = prop_from_path(remain);
 
   if(p == NULL)
     return 404;
@@ -160,6 +166,23 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   return rval;
 }
 
+
+static int
+hc_action(http_connection_t *hc, const char *remain, void *opaque,
+	  http_cmd_t method)
+{
+  htsbuf_queue_t out;
+
+  if(remain == NULL)
+    return 404;
+
+  ui_primary_event(event_create_action_str(remain));
+  htsbuf_queue_init(&out, 0);
+  htsbuf_append(&out, "OK\n", 3);
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
+
 /**
  *
  */
@@ -169,4 +192,5 @@ httpcontrol_init(void)
   http_path_add("/control/open", NULL, hc_open);
   http_path_add("/image", NULL, hc_image);
   http_path_add("/prop", NULL, hc_prop);
+  http_path_add("/action", NULL, hc_action);
 }
