@@ -171,15 +171,28 @@ static int
 hc_action(http_connection_t *hc, const char *remain, void *opaque,
 	  http_cmd_t method)
 {
-  htsbuf_queue_t out;
-
   if(remain == NULL)
     return 404;
 
   ui_primary_event(event_create_action_str(remain));
-  htsbuf_queue_init(&out, 0);
-  htsbuf_append(&out, "OK\n", 3);
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  return HTTP_STATUS_OK;
+}
+
+
+static int
+hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
+	http_cmd_t method)
+{
+  const char *str = http_arg_get_req(hc, "str");
+  int c;
+
+  if(str == NULL)
+    return HTTP_STATUS_BAD_REQUEST;
+
+  while((c = utf8_get(&str)) != 0)
+    ui_primary_event(event_create_int(EVENT_UNICODE, c));
+
+  return HTTP_STATUS_OK;
 }
 
 
@@ -192,5 +205,6 @@ httpcontrol_init(void)
   http_path_add("/control/open", NULL, hc_open);
   http_path_add("/image", NULL, hc_image);
   http_path_add("/prop", NULL, hc_prop);
-  http_path_add("/action", NULL, hc_action);
+  http_path_add("/input/action", NULL, hc_action);
+  http_path_add("/input/utf8", NULL, hc_utf8);
 }
