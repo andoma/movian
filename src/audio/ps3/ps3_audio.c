@@ -73,12 +73,13 @@ fillBuffersilence(float *buf)
 
 
 static u32
-playOneBlock(u64 *readIndex, float *audioDataStart, audio_buf_t *ab)
+playOneBlock(u64 *readIndex, float *audioDataStart,
+	     audio_mode_t *am, audio_buf_t *ab)
 {
   u32 ret = 0;
   //get position of the hardware
   u64 current_block = *readIndex;
-  
+  int64_t pts;
   u32 audio_block_index = (current_block + 1) % AUDIO_BLOCK_8;
   
   sys_event_t event;
@@ -90,6 +91,21 @@ playOneBlock(u64 *readIndex, float *audioDataStart, audio_buf_t *ab)
     fillBuffersilence(buf);
   } else {
     fillBuffer(buf, ab);
+
+    if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
+      pts += am->am_audio_delay * 1000;
+
+      pts -= 1000000LL * (AUDIO_BLOCK_SAMPLES * AUDIO_BLOCK_8) / 48000;
+
+      media_pipe_t *mp = ab->ab_mp;
+
+      hts_mutex_lock(&mp->mp_clock_mutex);
+      mp->mp_audio_clock = pts;
+      mp->mp_audio_clock_realtime = showtime_get_ts();
+      mp->mp_audio_clock_epoch = ab->ab_epoch;
+
+      hts_mutex_unlock(&mp->mp_clock_mutex);
+    }
   }
   return 0;
 }
@@ -170,7 +186,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
     
     playOneBlock((u64*)(u64)config.readIndex,
 		 (float*)(u64)config.audioDataStart,
-		 ab);
+		 am, ab);
 
 
     if(ab != NULL)
