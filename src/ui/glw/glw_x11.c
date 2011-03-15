@@ -548,6 +548,9 @@ probe_wm(glw_x11_t *gx11)
 	wm_name,
 	gx11->wm_flags & GX11_WM_CAN_FULLSCREEN ? ", can fullscreen" : "");
 
+  prop_set_string(prop_create(gx11->gr.gr_uii.uii_prop, "windowmanager"),
+		  wm_name);
+
   XFree(prop_return);
 }
 
@@ -1193,7 +1196,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
  *
  */
 static int
-glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
+glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[PATH_MAX];
@@ -1201,6 +1204,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   const char *displayname_title  = NULL;
   const char *skin = NULL;
   int force_fs = 0;
+
+  gx11->gr.gr_uii.uii_prop = root;
+
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
 

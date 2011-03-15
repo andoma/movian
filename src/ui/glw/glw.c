@@ -125,6 +125,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 		  const char *instance_title)
 {
   char title[256];
+  prop_t *r = gr->gr_uii.uii_prop;
 
   gr->gr_settings_instance = strdup(instance);
 
@@ -160,16 +161,13 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
 
   prop_link(settings_get_value(gr->gr_setting_size),
-	    prop_create(gr->gr_uii.uii_prop, "size"));
+	    prop_create(r, "size"));
 
-  gr->gr_pointer_visible = 
-    prop_create(gr->gr_uii.uii_prop, "pointerVisible");
-
-  gr->gr_is_fullscreen = 
-    prop_create(gr->gr_uii.uii_prop, "fullscreen");
-
-  gr->gr_screensaver_active =
-    prop_create(gr->gr_uii.uii_prop, "screensaverActive");
+  gr->gr_pointer_visible    = prop_create(r, "pointerVisible");
+  gr->gr_is_fullscreen      = prop_create(r, "fullscreen");
+  gr->gr_screensaver_active = prop_create(r, "screensaverActive");
+  gr->gr_prop_width         = prop_create(r, "width");
+  gr->gr_prop_height        = prop_create(r, "height");
 
   prop_set_int(gr->gr_screensaver_active, 0);
 }
@@ -197,7 +195,6 @@ glw_init(glw_root_t *gr, const char *theme, const char *skin,
   gr->gr_vpaths[4] = NULL;
 
   gr->gr_uii.uii_ui = ui;
-  gr->gr_uii.uii_prop = prop_create_root("ui");
 
   if(glw_text_bitmap_init(gr))
     return -1;
@@ -426,6 +423,8 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   gr->gr_screensaver_counter++;
 
   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
+  prop_set_int(gr->gr_prop_width, gr->gr_width);
+  prop_set_int(gr->gr_prop_height, gr->gr_height);
 
   prop_courier_poll(gr->gr_courier);
 

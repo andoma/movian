@@ -646,6 +646,9 @@ glw_opengl_init_context(glw_root_t *gr)
 
     gr->gr_render = shader_render;
 
+    prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+		    "OpenGL VP/FP shaders");
+
   } else {
 
     gr->gr_set_hw_clipper = hw_clip_conf;
@@ -658,6 +661,10 @@ glw_opengl_init_context(glw_root_t *gr)
     glMatrixMode(GL_PROJECTION);
     glLoadMatrixf(projection);
     glMatrixMode(GL_MODELVIEW);
+
+    prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+		    "OpenGL fixed function");
+
   }
   return 0;
 }
