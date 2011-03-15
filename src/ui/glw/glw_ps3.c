@@ -348,6 +348,7 @@ typedef struct krepeat {
 
 static krepeat_t k_left, k_right, k_up, k_down;
 static krepeat_t k_enter, k_back, k_menu;
+static krepeat_t k_pp, k_home, k_l3, k_r3;
 
 static void
 btn(glw_ps3_t *gp, krepeat_t *kr, int pressed, action_type_t ac)
@@ -389,9 +390,6 @@ handle_pads(glw_ps3_t *gp)
       continue;
     ioPadGetData(i, &paddata);
 
-    if(paddata.BTN_SQUARE || paddata.BTN_START)
-      gp->stop = 1;
-
     btn(gp, &k_left,  paddata.BTN_LEFT,     ACTION_LEFT);
     btn(gp, &k_up,    paddata.BTN_UP,       ACTION_UP);
     btn(gp, &k_right, paddata.BTN_RIGHT,    ACTION_RIGHT);
@@ -399,6 +397,10 @@ handle_pads(glw_ps3_t *gp)
     btn(gp, &k_enter, paddata.BTN_CROSS,    ACTION_ACTIVATE);
     btn(gp, &k_back,  paddata.BTN_CIRCLE,   ACTION_NAV_BACK);
     btn(gp, &k_menu,  paddata.BTN_TRIANGLE, ACTION_MENU);
+    btn(gp, &k_pp,    paddata.BTN_START,    ACTION_PLAYPAUSE);
+    btn(gp, &k_home,  paddata.BTN_SELECT,   ACTION_HOME);
+    btn(gp, &k_r3,    paddata.BTN_R3,       ACTION_LOGWINDOW);
+    btn(gp, &k_l3,    paddata.BTN_L3,       ACTION_SHOW_MEDIA_STATS);
   }
 }
 
