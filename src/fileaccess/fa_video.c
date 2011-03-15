@@ -176,8 +176,9 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
-video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp,
-		  subtitles_t *sub, char *errbuf, size_t errlen)
+video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
+		  media_pipe_t *mp, subtitles_t *sub, int flags,
+		  char *errbuf, size_t errlen)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -213,7 +214,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 	  /* Wait for queues to drain */
 	  e = mp_wait_for_empty_queues(mp, 0);
 
-	  mp_set_playstatus_stop(mp);
+	  if(!(flags & BACKEND_VIDEO_NO_AUTOSTOP))
+	    mp_set_playstatus_stop(mp);
 
 	  if(e == NULL)
 	    e = event_create_type(EVENT_EOF);
@@ -465,9 +467,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec, media_pipe_t *mp
 	sub = subtitles_load(est->id);
       }
 
-      
-
-
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
@@ -678,7 +677,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 
   prop_set_string(mp->mp_prop_type, "video");
 
-  e = video_player_loop(fctx, cwvec, mp, NULL, errbuf, errlen);
+  e = video_player_loop(fctx, cwvec, mp, NULL, flags, errbuf, errlen);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
@@ -743,7 +742,7 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
       if(strcmp(f->hmf_name, "url") ||
 	 (c = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
-      int flags2 = flags;
+      int flags2 = flags | BACKEND_VIDEO_NO_AUTOSTOP;
 
       s = htsmsg_get_str_multi(c, "attrib", "noaudio", NULL);
 
