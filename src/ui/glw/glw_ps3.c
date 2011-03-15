@@ -319,9 +319,9 @@ drawFrame(glw_ps3_t *gp, int buffer)
   gp->gr.gr_be.be_vp_current = NULL;
   gp->gr.gr_be.be_fp_current = NULL;
 
-  realityCullEnable(ctx, REALITY_CULL_FACE_BACK);
-  realityFrontFace(ctx, REALITY_FRONT_FACE_CW);
-  realityCullFace(ctx, REALITY_FRONT_FACE_CCW);
+  realityCullEnable(ctx, 1);
+  realityFrontFace(ctx, REALITY_FRONT_FACE_CCW);
+  realityCullFace(ctx, REALITY_CULL_FACE_BACK);
 
   glw_lock(&gp->gr);
   glw_prepare_frame(&gp->gr, 0);
