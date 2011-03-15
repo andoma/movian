@@ -562,6 +562,9 @@ typedef struct glw_root {
   int gr_width;
   int gr_height;
 
+  prop_t *gr_prop_width;
+  prop_t *gr_prop_height;
+
   float gr_mouse_x;
   float gr_mouse_y;
   int gr_mouse_valid;

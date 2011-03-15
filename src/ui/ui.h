@@ -22,6 +22,7 @@
 LIST_HEAD(ui_list,  ui);
 LIST_HEAD(uii_list, uii);
 
+struct prop;
 
 /**
  * User interface instance
@@ -52,7 +53,8 @@ typedef struct ui {
 
   int ui_num_instances;
 
-  int (*ui_start)(struct ui *ui, int argc, char **argv, int primary);
+  int (*ui_start)(struct ui *ui, struct prop *root, 
+		  int argc, char **argv, int primary);
 
   void (*ui_dispatch_event)(uii_t *uii, struct event *e);
 

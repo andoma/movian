@@ -23,7 +23,7 @@
 #include "showtime.h"
 #include "event.h"
 #include "ui.h"
-
+#include "prop/prop.h"
 
 static hts_mutex_t ui_mutex;
 static struct ui_list uis;
@@ -113,7 +113,9 @@ static void *
 ui_trampoline(void *aux)
 {
   struct uiboot *ub = aux;
-  ub->ui->ui_start(ub->ui, ub->argc, ub->argv, 0);
+  prop_t *p = prop_create_root("ui");
+
+  ub->ui->ui_start(ub->ui, p, ub->argc, ub->argv, 0);
   free(ub->argv[0]);
   free(ub);
   return NULL;
@@ -129,6 +131,7 @@ ui_start(int argc, const char *argv[], const char *argv00)
   int i, r;
   char *argv0 = mystrdupa(argv00);
   struct uiboot *ub, *prim = NULL;
+  prop_t *p;
 
   TAILQ_HEAD(, uiboot) ubs;
 
@@ -143,8 +146,8 @@ ui_start(int argc, const char *argv[], const char *argv00)
       TRACE(TRACE_ERROR, "UI", "No default user interface specified, exiting");
       return 2;
     }
-
-    return ui->ui_start(ui, 1, &argv0, 1);
+    p = prop_create_root("ui");
+    return ui->ui_start(ui, p, 1, &argv0, 1);
   }
 
   TAILQ_INIT(&ubs);
@@ -206,7 +209,8 @@ ui_start(int argc, const char *argv[], const char *argv00)
   TAILQ_FOREACH(ub, &ubs, link)
     hts_thread_create_detached(ub->ui->ui_title, ui_trampoline, ub);
 
-  r = prim->ui->ui_start(prim->ui, prim->argc, prim->argv, 1);
+  p = prop_create_root("ui");
+  r = prim->ui->ui_start(prim->ui, p, prim->argc, prim->argv, 1);
   free(prim->argv[0]);
   free(prim);
   return r;

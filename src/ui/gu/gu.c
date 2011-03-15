@@ -358,7 +358,7 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
  *
  */
 static int
-gu_start(ui_t *ui, int argc, char **argv, int primary)
+gu_start(ui_t *ui, prop_t *root, int argc, char **argv, int primary)
 {
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 

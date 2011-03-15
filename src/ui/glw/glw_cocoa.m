@@ -845,11 +845,12 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
 }
 
 static int
-glw_cocoa_start(ui_t *ui, int argc, char *argv[], int primary)
+glw_cocoa_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 {
   gcocoa.start_ui = ui;
   gcocoa.start_primary = primary;
-  
+  gcocoa.gr.gr_uii.uii_prop = root;
+
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
   timer = CFRunLoopTimerCreate(NULL, CFAbsoluteTimeGetCurrent(), 30, 0, 0,

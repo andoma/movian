@@ -1,6 +1,7 @@
 #import "skin://nav.skin"
 widget(container_x, {
   skinNavLocation("Home");
+  skinNavButton("about", navOpen("page:about"), true);
   skinNavButton("settings", navOpen("settings:"), true);
   skinNavButton("power", event(Standby), true, !$global.runcontrol.canStandby);
   skinNavButton("exit", event(Quit), true,

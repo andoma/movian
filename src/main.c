@@ -129,6 +129,21 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 }
 
 
+/**
+ * Set some info in the global property tree that might be interesting
+ */
+static void
+init_global_info(void)
+{
+  prop_t *s = prop_create(prop_get_global(), "showtime");
+  extern const char *htsversion;
+  extern const char *htsversion_full;
+
+  prop_set_string(prop_create(s, "version"), htsversion);
+  prop_set_string(prop_create(s, "fullversion"), htsversion_full);
+  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2011 Andreas Öman");
+
+}
 
 
 /**
@@ -260,6 +275,7 @@ main(int argc, char **argv)
 
   /* Initialize property tree */
   prop_init();
+  init_global_info();
 
   /* Initiailize logging */
   trace_init();

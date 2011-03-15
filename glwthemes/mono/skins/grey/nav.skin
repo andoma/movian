@@ -9,6 +9,7 @@
 			  "forward",  "NavRight",
 			  "home",     "Home",
 			  "settings", "Settings",
+			  "about",    "Info",
 			  "power",    "Power",
 			  "exit",     "Exit") + ".png",
 		EVENT, ENABLED, HIDDEN, NAVSCALE());
