@@ -17,11 +17,13 @@
  */
 
 #include <stdio.h>
+#include <assert.h>
 
 #include "networking/http_server.h"
 #include "httpcontrol.h"
 #include "event.h"
 #include "misc/pixmap.h"
+#include "misc/string.h"
 #include "backend/backend.h"
 
 #define STRINGIFY(A)  #A
@@ -100,6 +102,64 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+
+static prop_t *
+prop_from_path(const char *path)
+{
+  char **n = strvec_split(path, '/');
+  prop_t *p = prop_get_by_name((const char **)n, 1, NULL);
+  strvec_free(n);
+  return p;
+}
+
+
+
+static int
+hc_prop(http_connection_t *hc, const char *remain, void *opaque,
+	http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  rstr_t *r;
+  int rval, i;
+  prop_t *p = prop_from_path(remain);
+
+  if(p == NULL)
+    return 404;
+  
+  htsbuf_queue_init(&out, 0);
+
+  switch(method) {
+  case HTTP_CMD_GET:
+    r = prop_get_string(p);
+
+    if(r == NULL) {
+
+      char **childs = prop_get_name_of_childs(p);
+      if(childs == NULL) {
+	rval = HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
+	break;
+      }
+      for(i = 0; childs[i] != NULL; i++) {
+	htsbuf_qprintf(&out, "\t%s\n", childs[i]);
+      }
+    } else {
+      htsbuf_append(&out, rstr_get(r), strlen(rstr_get(r)));
+      htsbuf_append(&out, "\n", 1);
+      rstr_release(r);
+    }
+    rval = http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+    break;
+
+  default:
+    rval = HTTP_STATUS_METHOD_NOT_ALLOWED;
+    break;
+  }
+
+  prop_ref_dec(p);
+
+  return rval;
+}
+
 /**
  *
  */
@@ -108,4 +168,5 @@ httpcontrol_init(void)
 {
   http_path_add("/control/open", NULL, hc_open);
   http_path_add("/image", NULL, hc_image);
+  http_path_add("/prop", NULL, hc_prop);
 }

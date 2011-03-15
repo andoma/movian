@@ -226,9 +226,8 @@ popups_update(void *opaque, prop_event_t event, ...)
 {
   gtk_ui_t *gu = opaque;
   prop_t *p, *txt;
-  char buf[1024];
+  rstr_t *str;
   popup_t *pop;
-
   va_list ap;
   va_start(ap, event);
 
@@ -241,11 +240,12 @@ popups_update(void *opaque, prop_event_t event, ...)
 			   NULL);
     if(txt == NULL)
       break;
+    
+    if((str = prop_get_string(txt)) != NULL) {
 
-    if(!prop_get_string(txt, buf, sizeof(buf))) {
-
-      if(!strcmp(buf, "auth"))
+      if(!strcmp(rstr_get(str), "auth"))
 	popup_create_auth(gu, p);
+      rstr_release(str);
     }
     prop_ref_dec(txt);
     break;
