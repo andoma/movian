@@ -83,14 +83,22 @@ widget(container_y, {
       });
 
       widget(label, {
-	.hidden = !$global.cpuinfo.available;
-	.caption = "Detected CPUs: " + int2str(count($global.cpuinfo.cpus));
+	.hidden = !$global.system.cpuinfo.available;
+	.caption = "Detected CPUs: " + int2str(count($global.system.cpuinfo.cpus));
 	.color = 0.7;
-	.sizeScale = 1;
+      });
+
+      widget(label, {
+	.hidden = !$global.system.mem.systotal;
+	.caption = "Total system RAM: " + int2str($global.system.mem.systotal) + " kB";
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.hidden = !$global.system.mem.sysfree;
+	.caption = "Avail system RAM: " + int2str($global.system.mem.sysfree) + " kB";
+	.color = 0.7;
       });
     });
-
-
   });
-
 });
