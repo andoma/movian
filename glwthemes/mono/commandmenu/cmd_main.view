@@ -53,10 +53,10 @@ widget(container_y, {
   commandGroup(widget(container_x, {
     .align = center;
 
-    widget(container_y, {
-      commandMenuLeft(targetedEvent("cmd_deck", Decrease), "System menu", 0.1);
+    widget(dummy, {
+      .width = $ui.size * 2;
     });
-    
+   
     space(1);
     
     widget(container_y, {
