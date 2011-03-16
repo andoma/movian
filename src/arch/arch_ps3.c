@@ -52,6 +52,9 @@ mftb(void)
   return ret;
 }
 
+static prop_t *sysprop;
+static prop_t *memprop;
+
 static void
 memlogger_fn(callout_t *co, void *aux)
 {
@@ -63,15 +66,8 @@ memlogger_fn(callout_t *co, void *aux)
 
   Lv2Syscall1(352, (uint64_t) &meminfo);
 
-  TRACE(TRACE_INFO, "MEM-LV2", "Total = %d kB, Alloced = %d kB",
-	meminfo.total / 1024, (meminfo.total - meminfo.avail) / 1024);
-
-  struct mallinfo info;
-  info = mallinfo();
-
-  TRACE(TRACE_INFO, "LIBC", "Arena = %d kB, Alloced = %d kB, Non Inuse = %d kB",
-	info.arena / 1024, info.uordblks / 1024, info.fordblks / 1024);
-
+  prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
+  prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
 }
 
 
@@ -85,6 +81,8 @@ arch_init(void)
 #endif
 
   trace_level = TRACE_DEBUG;
+  sysprop = prop_create(prop_get_global(), "system");
+  memprop = prop_create(sysprop, "mem");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
 }
 
