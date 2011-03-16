@@ -1,4 +1,5 @@
 TITLE := Showtime
+VERSION := $(shell support/getver.sh)
 SELF := $(PSL1GHT)/host/bin/fself.py
 SFO := $(PSL1GHT)/host/bin/sfo.py
 PKG := $(PSL1GHT)/host/bin/pkg.py
@@ -34,3 +35,14 @@ self: $(BUILDDIR)/showtime.self
 install: $(BUILDDIR)/showtime.pkg
 	cp $< $(PS3INSTALL)/showtime.pkg
 	sync
+
+$(BUILDDIR)/dist/showtime-$(VERSION).self: $(BUILDDIR)/showtime.self
+	cp $< $@
+
+$(BUILDDIR)/dist/showtime-$(VERSION).pkg: $(BUILDDIR)/showtime.pkg
+	cp $< $@
+
+$(BUILDDIR)/dist:
+	mkdir -p $@
+
+dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg
