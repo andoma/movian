@@ -200,7 +200,7 @@ set_source(glw_t *w, const char *filename)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_suspend_subscriptions(c);
 
-  if(filename) {
+  if(filename && *filename) {
     glw_view_create(w->glw_root, filename, w,a->prop, 
 		    a->prop_parent_override ?: a->prop_parent, a->args, 1);
   } else {
