@@ -638,6 +638,17 @@ typedef struct glw_root {
   htsmsg_t *gr_settings_store;  // Loaded settings
 
   setting_t *gr_setting_size;
+  setting_t *gr_setting_underscan_v;
+  setting_t *gr_setting_underscan_h;
+
+  prop_t *gr_prop_size;
+  prop_t *gr_prop_underscan_v;
+  prop_t *gr_prop_underscan_h;
+
+  // Base offsets, should be set by frontend
+  int gr_base_size;
+  int gr_base_underscan_v;
+  int gr_base_underscan_h;
 
   setting_t *gr_setting_screensaver;
 
