@@ -3,11 +3,6 @@
 #import "theme://include/buttons.view"
 #import "theme://include/slider.view"
 
-settingInt("Vertical underscan", "underscan_v", 
-	   $ui.defaults.underscan_v, "px", 0, 100, 1, $ui.underscan_v);
-settingInt("Horizontal underscan", "underscan_h", 
-	   $ui.defaults.underscan_h, "px", 0, 100, 1, $ui.underscan_h);
-
 settingInt("Starwars scroller tilt", "tilt",
 	   $ui.defaults.tilt, "deg", 0, 20, 1, $ui.tilt);
 

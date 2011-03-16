@@ -121,11 +121,60 @@ glw_set_screensaver_delay(void *opaque, int v)
  *
  */
 static void
+glw_change_size(void *opaque, int v)
+{
+  glw_root_t *gr = opaque;
+
+  v += gr->gr_base_size;
+  v = GLW_CLAMP(v, 14, 40);
+  prop_set_int(gr->gr_prop_size, v);
+  TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
+  glw_font_change_size(gr, v);
+}
+
+
+/**
+ *
+ */
+static void
+glw_change_underscan_h(void *opaque, int v)
+{
+  glw_root_t *gr = opaque;
+
+  v += gr->gr_base_underscan_h;
+  v = GLW_CLAMP(v, 0, 100);
+  prop_set_int(gr->gr_prop_underscan_h, v);
+}
+
+
+/**
+ *
+ */
+static void
+glw_change_underscan_v(void *opaque, int v)
+{
+  glw_root_t *gr = opaque;
+
+  v += gr->gr_base_underscan_v;
+  v = GLW_CLAMP(v, 0, 100);
+  prop_set_int(gr->gr_prop_underscan_v, v);
+}
+
+
+
+
+/**
+ *
+ */
+static void
 glw_init_settings(glw_root_t *gr, const char *instance,
 		  const char *instance_title)
 {
   char title[256];
   prop_t *r = gr->gr_uii.uii_prop;
+
+  if(gr->gr_base_size == 0)
+    gr->gr_base_size = 20;
 
   gr->gr_settings_instance = strdup(instance);
 
@@ -141,15 +190,36 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     snprintf(title, sizeof(title), "Display and user interface");
   }
 
+  gr->gr_prop_size = prop_create(r, "size");
+  gr->gr_prop_underscan_h = prop_create(r, "underscan_h");
+  gr->gr_prop_underscan_v = prop_create(r, "underscan_v");
+
   gr->gr_settings = settings_add_dir(NULL, title, "display", NULL);
 
   gr->gr_setting_size =
-    settings_create_int(gr->gr_settings, "scaling",
-			"Userinterface scaling", 15,
-			gr->gr_settings_store, 14, 40, 1,
-			glw_font_change_size, gr,
+    settings_create_int(gr->gr_settings, "size",
+			"Userinterface size", 0,
+			gr->gr_settings_store, -10, 30, 1,
+			glw_change_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
+
+  gr->gr_setting_underscan_h =
+    settings_create_int(gr->gr_settings, "underscan_h",
+			"Horizontal underscan", 0,
+			gr->gr_settings_store, -100, +100, 1,
+			glw_change_underscan_h, gr,
+			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
+			glw_settings_save, gr);
+
+  gr->gr_setting_underscan_v =
+    settings_create_int(gr->gr_settings, "underscan_v",
+			"Vertical underscan", 0,
+			gr->gr_settings_store, -100, +100, 1,
+			glw_change_underscan_v, gr,
+			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
+			glw_settings_save, gr);
+
 
   gr->gr_setting_screensaver =
     settings_create_int(gr->gr_settings, "screensaver",
@@ -159,9 +229,6 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 			SETTINGS_INITIAL_UPDATE, " min", gr->gr_courier,
 			glw_settings_save, gr);
 
-
-  prop_link(settings_get_value(gr->gr_setting_size),
-	    prop_create(r, "size"));
 
   gr->gr_pointer_visible    = prop_create(r, "pointerVisible");
   gr->gr_is_fullscreen      = prop_create(r, "fullscreen");
