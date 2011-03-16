@@ -698,7 +698,8 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
 		       NULL);
 
   if(p == NULL)
-    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
+    return glw_view_seterr(ec->ei, a, "Unable to resolve property %s",
+			   pname[i-1]);
   
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
   
@@ -3410,14 +3411,12 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
 	   token_t **argv, unsigned int argc)
 {
   glwf_delta_extra_t *de = self->t_extra;
-  token_t *a = argv[0], *b = argv[1], *t;
-  const char *propname[16];
-  int i;
+  token_t *a = argv[0], *b = argv[1];
   float f;
   prop_t *p;
 
-  if(a->type != TOKEN_PROPERTY_VALUE_NAME)
-    return glw_view_seterr(ec->ei, a, "delta() first arg is not a property");
+  if((a = resolve_property_name2(ec, a)) == NULL)
+    return -1;
 
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
@@ -3440,25 +3439,8 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
     break;
   }
 
-  if(ec->w == NULL)
-    return glw_view_seterr(ec->ei, b, "delta() in non widget scope");
-  
-  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-    propname[i++]  = rstr_get(t->t_rstring);
-  propname[i] = NULL;
-
-  p = prop_get_by_name(propname, 0, 
-		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
-		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
-		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
-		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
-		       PROP_TAG_ROOT, ec->w->glw_root->gr_uii.uii_prop,
-		       NULL);
-
-  if(p == NULL)
-    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
-  
+  p = prop_ref_inc(a->t_prop);
+ 
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
 
   if(p == de->p && de->f + f == 0) {
