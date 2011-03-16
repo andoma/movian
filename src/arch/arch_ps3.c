@@ -181,9 +181,9 @@ showtime_get_ts(void)
 void
 arch_sd_init(void)
 {
-  service_create("Root file system", "file:///",
-		 "other", NULL, 0, 1);
-  service_create("media", "webdav://172.31.255.1/media",
+  // This should be much more clever
+
+  service_create("PS3 HDD", "file:///",
 		 "other", NULL, 0, 1);
 }
 
