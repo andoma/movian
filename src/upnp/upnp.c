@@ -94,6 +94,7 @@ dev_destroy(upnp_device_t *ud)
   free(ud->ud_manufacturer);
   free(ud->ud_modelDescription);
   free(ud->ud_url);
+  free(ud->ud_icon);
   free(ud);
 }
 
@@ -436,7 +437,8 @@ add_content_directory(upnp_service_t *us)
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   upnp_settings_saver, us);
 
-  us->us_service = service_create(NULL, us->us_local_url, NULL, NULL, 1, 0);
+  us->us_service = service_create(NULL, us->us_local_url, NULL,
+				  us->us_icon_url, 1, 0);
 
   prop_link(settings_get_value(us->us_setting_title), 
 	    prop_create(us->us_service->s_root, "title"));
@@ -489,6 +491,11 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   free(us->us_control_url);
   us->us_control_url = url_resolve_relative(proto, hostname, port, path, c_url);
 
+  free(us->us_icon_url);
+  us->us_icon_url =
+    ud->ud_icon ? url_resolve_relative(proto, hostname, port, path,
+				       ud->ud_icon) : NULL;
+
   switch(us->us_type) {
   case UPNP_SERVICE_CONTENT_DIRECTORY_1:
   case UPNP_SERVICE_CONTENT_DIRECTORY_2:
@@ -498,6 +505,61 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
     break;
   }
 }
+
+
+/**
+ *
+ */
+static char *
+device_get_icon(htsmsg_t *dev)
+{
+  htsmsg_field_t *f;
+  char *best = NULL;
+  int bestscore = 0;
+
+  htsmsg_t *iconlist = htsmsg_get_map_multi(dev,
+					    "tags", "iconList",
+					    "tags", NULL);
+
+  if(iconlist == NULL)
+    return NULL;
+
+  HTSMSG_FOREACH(f, iconlist) {
+    htsmsg_t *icon;
+    int width, height;
+    const char *mimetype, *url;
+    int score;
+
+    if(strcmp(f->hmf_name, "icon") ||
+       (icon = htsmsg_get_map_by_field(f)) == NULL ||
+       (icon = htsmsg_get_map(icon, "tags")) == NULL)
+	continue;
+
+    mimetype = htsmsg_get_str_multi(icon, "mimetype", "cdata", NULL);
+    url = htsmsg_get_str_multi(icon, "url", "cdata", NULL);
+
+    if(mimetype == NULL || url == NULL)
+      continue;
+
+    if(!strcmp(mimetype, "image/png"))
+      score = 2;
+    else if(!strcmp(mimetype, "image/jpeg"))
+      score = 1;
+    else
+      continue;
+
+    width  = atoi(htsmsg_get_str_multi(icon, "width",  "cdata", NULL) ?: "0");
+    height = atoi(htsmsg_get_str_multi(icon, "height", "cdata", NULL) ?: "0");
+    score += width * height;
+
+    if(score > bestscore) {
+      mystrset(&best, url);
+      bestscore = score;
+    }
+  }
+  return best;
+}
+
 
 
 /**
@@ -538,7 +600,7 @@ introspect_device(upnp_device_t *ud)
     return;
   }
 
-  ud->ud_uuid = strdup(uuid);
+  mystrset(&ud->ud_uuid, uuid);
 
 
   mystrset(&ud->ud_friendlyName, 
@@ -550,6 +612,7 @@ introspect_device(upnp_device_t *ud)
   mystrset(&ud->ud_modelDescription, 
 	   htsmsg_get_str_multi(dev, "tags", "modelDescription", "cdata", NULL));
 
+  mystrset(&ud->ud_icon, device_get_icon(dev));
 
   svclist = htsmsg_get_map_multi(dev,
 				 "tags", "serviceList",

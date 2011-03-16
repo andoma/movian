@@ -170,7 +170,7 @@
 @end
 
 static int
-appleremote_start(ui_t *ui, int argc, char *argv[], int primary)
+appleremote_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 {
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];
   

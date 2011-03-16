@@ -137,14 +137,14 @@ widget(container_z, {
       widget(container_y, {
 	.align = bottom;
 	widget(expander_y, {
+
 	  $ui.playdeckheight = getHeight();
-	  
-	  .expansion = scurve($ui.showplaydeck, 0.3);
-	  
+	  .expansion = scurve($ui.showplaydeck && $global.media.current.type, 0.3);
 	  widget(loader, {
 	    .time = 0.3;
 	    .effect = blend;
-	    .source = "theme://playdecks/" + $global.media.current.type + ".view" ?? "theme://playdecks/none.view";
+	    .noInitialTransform = true;
+	    .source = "theme://playdecks/" + $global.media.current.type + ".view";
 	  });
 	});
       });

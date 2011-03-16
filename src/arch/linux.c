@@ -32,7 +32,7 @@
 #include "prop/prop.h"
 
 
-
+static prop_t *p_sys;
 static int isvalid;
 static int64_t last_idle[17];
 static int64_t last_tot[17];
@@ -98,8 +98,38 @@ cpu_monitor_do(void)
     last_tot[id] = tot;
   }
   isvalid = 1;
-  prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
+  prop_set_int(prop_create(prop_create(p_sys, "cpuinfo"),
 			   "available"), 1);
+  fclose(f);
+  return ret;
+}
+
+
+static int
+meminfo_do(void)
+{
+  int ret = 0;
+  char data[1000];
+  uint64_t v1;
+  char s1[64];
+  FILE *f;
+  prop_t *mem = prop_create(p_sys, "mem");
+
+  f = fopen("/proc/meminfo", "r");
+  if(f == NULL)
+    return 0;
+
+  while(fgets(data, sizeof(data), f) != NULL) {
+    if(sscanf(data, "%60s %"PRId64, s1, &v1) != 2)
+      continue;
+
+    if(!strcmp(s1, "MemTotal:"))
+      prop_set_int(prop_create(mem, "systotal"), v1);
+    else if(!strcmp(s1, "MemFree:"))
+      prop_set_int(prop_create(mem, "sysfree"), v1);
+
+  }
+
   fclose(f);
   return ret;
 }
@@ -110,13 +140,13 @@ timercb(callout_t *c, void *aux)
 {
   callout_arm(&timer, timercb, NULL, 1);
   cpu_monitor_do();
+  meminfo_do();
 }
 
 void
 linux_init_cpu_monitor(void)
 {
-  p_cpuroot = prop_create(prop_create(prop_get_global(), "cpuinfo"), "cpus");
-
-  cpu_monitor_do();
-  callout_arm(&timer, timercb, NULL, 1);
+  p_sys = prop_create(prop_get_global(), "system");
+  p_cpuroot = prop_create(prop_create(p_sys, "cpuinfo"), "cpus");
+  timercb(NULL, NULL);
 }

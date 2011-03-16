@@ -102,7 +102,7 @@ widget(container_x, {
 
 
     widget(backdrop, {
-      .hidden = !$global.cpuinfo.available;
+      .hidden = !$global.system.cpuinfo.available;
 
       PLATE_GFX();
       .color = PLATE_COLOR_VIDEO();
@@ -117,7 +117,7 @@ widget(container_x, {
 	
 	HORIZONTAL_SEPARATOR();
       
-	cloner($global.cpuinfo.cpus, container_y, {
+	cloner($global.system.cpuinfo.cpus, container_y, {
 	  widget(label, {
 	    .sizeScale = 0.5;
 	    .caption = $self.name + ": " + int2str($self.load * 100) + "%";

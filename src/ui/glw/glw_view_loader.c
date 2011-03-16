@@ -188,15 +188,19 @@ set_source(glw_t *w, const char *filename)
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
 
-  if(filename == NULL || !strcmp(filename, a->filename?:""))
+  if(w->glw_flags & GLW_DEBUG)
+    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", filename ?: "(void)");
+
+  if(!strcmp(filename ?: "", a->filename ?: ""))
     return;
 
   free(a->filename);
-  a->filename = strdup(filename);
+  a->filename = filename ? strdup(filename) : NULL;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_suspend_subscriptions(c);
-  if(*filename) {
+
+  if(filename && *filename) {
     glw_view_create(w->glw_root, filename, w,a->prop, 
 		    a->prop_parent_override ?: a->prop_parent, a->args, 1);
   } else {
