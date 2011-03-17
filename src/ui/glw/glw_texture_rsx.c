@@ -330,7 +330,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
     return 0;
 
   case PIX_FMT_RGB24:
-    if(need_rescale)
+    if(need_rescale && 0)
       break;
     glt->glt_xs = src_w;
     glt->glt_ys = src_h;
