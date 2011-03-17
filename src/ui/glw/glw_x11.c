@@ -931,7 +931,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
-  glw_pointer_event_t gpe;
+  glw_pointer_event_t gpe = {0};
   event_t *e;
   struct timespec tp;
   int64_t start;
