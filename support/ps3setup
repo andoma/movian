@@ -13,7 +13,7 @@ mkdir -p ${FFMPEG}
 
 if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
     cd ${FFMPEG}
-    svn co svn://svn.ffmpeg.org/ffmpeg/trunk src
+    git clone git://github.com/andoma/libav.git src
     echo Configuring FFmpeg...
 
     src/configure \
@@ -42,8 +42,7 @@ if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
 	--target-os=none \
 	--disable-decoder=twinvq \
 	--disable-decoder=snow \
-	--disable-decoder=cavs \
-	--disable-altivec
+	--disable-decoder=cavs
 
     make ${PARALLEL}
     make install

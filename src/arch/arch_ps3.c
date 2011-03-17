@@ -454,14 +454,6 @@ int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, const char 
 
 #endif
 
-clock_t _times_r(void);
-
-clock_t
-_times_r(void)
-{
-  return 4; // Used for random number generation, we stick to a proven algo.
-}
-
 /**
  *
  */
