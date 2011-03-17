@@ -112,6 +112,7 @@ thread_trampoline(void *aux)
   hts_thread_exit_specific();
 #endif
   free(ta);
+  sys_ppu_thread_exit(0);
   return r;
 }
 
