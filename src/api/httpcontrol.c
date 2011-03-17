@@ -185,13 +185,25 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
 {
   const char *str = http_arg_get_req(hc, "str");
   int c;
+  event_t *e;
 
   if(str == NULL)
     return HTTP_STATUS_BAD_REQUEST;
 
-  while((c = utf8_get(&str)) != 0)
-    ui_primary_event(event_create_int(EVENT_UNICODE, c));
+  while((c = utf8_get(&str)) != 0) {
+    switch(c) {
+    case 8:
+      e = event_create_action_multi(
+				    (const action_type_t[]){
+				      ACTION_BS, ACTION_NAV_BACK}, 2);
+      break;
 
+    default:
+      e = event_create_int(EVENT_UNICODE, c);
+      break;
+    }
+    ui_primary_event(e);
+  }
   return HTTP_STATUS_OK;
 }
 
