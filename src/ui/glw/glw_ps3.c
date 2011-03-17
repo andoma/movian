@@ -604,6 +604,8 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 
   gp->gr.gr_uii.uii_prop = root;
 
+  prop_set_int(prop_create(root, "fullscreen"), 1);
+
   snprintf(confname, sizeof(confname), "glw/ps3");
 
   /* Parse options */
