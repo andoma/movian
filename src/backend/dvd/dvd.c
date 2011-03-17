@@ -642,7 +642,7 @@ dvd_update_streams(dvd_player_t *dp)
 static void
 update_chapter(dvd_player_t *dp, media_pipe_t *mp)
 {
-  int title, titles, part, parts;
+  int title = 0, titles = 0, part = 0, parts = 0;
 
   dvdnav_get_number_of_titles(dp->dp_dvdnav, &titles);
   dvdnav_current_title_info(dp->dp_dvdnav, &title, &part);
