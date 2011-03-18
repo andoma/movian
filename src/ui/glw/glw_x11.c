@@ -185,7 +185,7 @@ build_blank_cursor(glw_x11_t *gx11)
 static void
 hide_cursor(glw_x11_t *gx11)
 {
-  glw_pointer_event_t gpe;
+  glw_pointer_event_t gpe = {0};
 
   if(gx11->cursor_hidden)
     return;
