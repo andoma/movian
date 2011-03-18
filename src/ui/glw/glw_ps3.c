@@ -276,7 +276,7 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 }
 
 static void 
-drawFrame(glw_ps3_t *gp, int buffer) 
+drawFrame(glw_ps3_t *gp, int buffer, int with_universe) 
 {
   gcmContextData *ctx = gp->gr.gr_be.be_ctx;
 
@@ -322,6 +322,9 @@ drawFrame(glw_ps3_t *gp, int buffer)
   realityCullEnable(ctx, 1);
   realityFrontFace(ctx, REALITY_FRONT_FACE_CCW);
   realityCullFace(ctx, REALITY_CULL_FACE_BACK);
+
+  if(!with_universe)
+    return;
 
   glw_lock(&gp->gr);
   glw_prepare_frame(&gp->gr, 0);
@@ -581,11 +584,16 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 
 
     waitFlip();
-    drawFrame(gp, currentBuffer);
+    drawFrame(gp, currentBuffer, 1);
     flip(gp, currentBuffer);
     currentBuffer = !currentBuffer;
     sysCheckCallback();
   }
+  waitFlip();
+  drawFrame(gp, currentBuffer, 0);
+  flip(gp, currentBuffer);
+  currentBuffer = !currentBuffer;
+
   sysUnregisterCallback(EVENT_SLOT0);
 }
 
