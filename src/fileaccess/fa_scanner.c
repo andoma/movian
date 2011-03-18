@@ -159,8 +159,29 @@ static struct strtab postfixtab[] = {
   { "sid",             CONTENT_ALBUM },
 
   { "pdf",             CONTENT_UNKNOWN },
+  { "nfo",             CONTENT_UNKNOWN },
+  { "gz",              CONTENT_UNKNOWN },
+  { "txt",             CONTENT_UNKNOWN },
 };
 
+
+/**
+ *
+ */
+static int
+type_from_filename(const char *filename)
+{
+  int type;
+  const char *str;
+
+  if((str = strrchr(filename, '.')) == NULL)
+    return CONTENT_FILE;
+  str++;
+  
+  if((type = str2val(str, postfixtab)) == -1)
+    return CONTENT_FILE;
+  return type;
+}
 
 /**
  *
@@ -170,7 +191,6 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
 {
   fa_dir_entry_t *fde;
   int type;
-  const char *str;
   int images = 0;
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
@@ -181,14 +201,9 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
     if(fde->fde_type == CONTENT_DIR)
       continue;
     
-    if((str = strrchr(fde->fde_filename, '.')) == NULL)
-      continue;
-    str++;
-    
-    if((type = str2val(str, postfixtab)) == -1)
-      continue;
+    if(fde->fde_type == CONTENT_FILE)
+      fde->fde_type = type_from_filename(fde->fde_filename);
 
-    fde->fde_type = type;
     fde->fde_probestatus = FDE_PROBE_FILENAME;
 
     if(type == CONTENT_IMAGE)
@@ -280,22 +295,31 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
   prop_t *metadata;
   int r;
 
+  if(fde->fde_type == CONTENT_FILE)
+    fde->fde_type = type_from_filename(fde->fde_filename);
+
   make_prop(fde);
 
-  metadata = prop_create(fde->fde_prop, "metadata");
+  if(fde->fde_type != CONTENT_UNKNOWN) {
+    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    if(fde->fde_type == CONTENT_DIR) {
+      r = fa_probe_dir(metadata, fde->fde_url);
+    } else {
+      r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
+		   fde->fde_statdone ? &fde->fde_stat : NULL);
+    }
+    prop_ref_dec(metadata);
 
-  if(fde->fde_type == CONTENT_DIR) {
-    r = fa_probe_dir(metadata, fde->fde_url);
-  } else {
-    r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
-		 fde->fde_statdone ? &fde->fde_stat : NULL);
+    set_type(fde->fde_prop, r);
+    fde->fde_type = r;
   }
 
-  set_type(fde->fde_prop, r);
-  fde->fde_type = r;
-
-  if(prop_set_parent(fde->fde_prop, s->s_nodes))
-    prop_destroy(fde->fde_prop);
+  if(fde->fde_type != CONTENT_UNKNOWN)
+    if(!prop_set_parent(fde->fde_prop, s->s_nodes))
+      return; // OK
+  
+  prop_destroy(fde->fde_prop);
+  fde->fde_prop = NULL;
 }
 
 /**
@@ -399,7 +423,8 @@ doscan(scanner_t *s)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
-    pv = prop_vec_append(pv, fde->fde_prop);
+    if(fde->fde_type != CONTENT_UNKNOWN)
+      pv = prop_vec_append(pv, fde->fde_prop);
   }
 
   prop_set_parent_vector(pv, s->s_nodes);
