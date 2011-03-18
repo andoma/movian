@@ -227,7 +227,7 @@ deep_analyzer(scanner_t *s)
 
     fde->fde_probestatus = FDE_PROBE_DEEP;
 
-    metadata = prop_create(fde->fde_prop, "metadata");
+    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
     
     if(fde->fde_type == CONTENT_DIR) {
       fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
@@ -240,6 +240,7 @@ deep_analyzer(scanner_t *s)
 	TRACE(TRACE_DEBUG, "BROWSE",
 	      "File \"%s\" not recognized: %s", fde->fde_url, buf);
     }
+    prop_ref_dec(metadata);
     set_type(fde->fde_prop, fde->fde_type);
   }
 }
