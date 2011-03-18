@@ -75,6 +75,9 @@ void
 arch_init(void)
 {
   extern int trace_level;
+  extern int concurrency;
+
+  concurrency = 2;
 
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_key_init();
