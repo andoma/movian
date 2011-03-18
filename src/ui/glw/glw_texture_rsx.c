@@ -272,7 +272,7 @@ convert_with_swscale(glw_root_t *gr,
     return 1;
 
   memset(&dst, 0, sizeof(dst));
-  dst.linesize[0] = bpp * dst_w; // ((bpp * dst_w) + 15) & ~15;
+  dst.linesize[0] = ((bpp * dst_w) + 15) & ~15;
   dst.data[0] = malloc(dst.linesize[0] * dst_h);
   sws_scale(sws, ptr, strides, 0, src_h, dst.data, dst.linesize);
 
