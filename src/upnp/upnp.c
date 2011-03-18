@@ -36,6 +36,7 @@
 #include "backend/backend.h"
 
 hts_mutex_t upnp_lock;
+hts_cond_t upnp_device_cond;
 
 static char *upnp_uuid;
 struct upnp_device_list upnp_devices;
@@ -262,8 +263,6 @@ upnp_init(void)
   }
 
   htsmsg_destroy(conf);
-
-  hts_mutex_init(&upnp_lock);
 
   upnp_avtransport_init();
 
@@ -651,6 +650,7 @@ upnp_add_device(const char *url, const char *type, int maxage)
     ud = calloc(1, sizeof(upnp_device_t));
     ud->ud_url = strdup(url);
     LIST_INSERT_HEAD(&upnp_devices, ud, ud_link);
+    hts_cond_broadcast(&upnp_device_cond);
   }
 
   if(!strcmp(type, "urn:schemas-upnp-org:service:ContentDirectory:1") ||
@@ -696,7 +696,20 @@ be_upnp_canhandle(const char *url)
 /**
  *
  */
+static int
+be_upnp_init(void)
+{
+  hts_mutex_init(&upnp_lock);
+  hts_cond_init(&upnp_device_cond, &upnp_lock);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static backend_t be_upnp = {
+  .be_init = be_upnp_init,
   .be_canhandle = be_upnp_canhandle,
   .be_open = be_upnp_browse,
 };

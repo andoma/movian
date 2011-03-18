@@ -163,6 +163,7 @@ int upnp_subscribe(struct http_connection *hc, const char *remain, void *opaque,
 		   http_cmd_t method);
 
 extern hts_mutex_t upnp_lock;
+extern hts_cond_t upnp_device_cond;
 extern struct upnp_device_list upnp_devices;
 
 int be_upnp_browse(struct prop *page, const char *url0);
