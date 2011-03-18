@@ -114,6 +114,7 @@ mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex)
   mq->mq_prop_upload_peak = prop_create(p, "uploadtime_peak");
 
   mq->mq_prop_codec       = prop_create(p, "codec");
+  mq->mq_prop_too_slow    = prop_create(p, "too_slow");
 }
 
 

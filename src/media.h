@@ -163,6 +163,8 @@ typedef struct media_queue {
 
   prop_t *mq_prop_codec;
 
+  prop_t *mq_prop_too_slow;
+
 } media_queue_t;
 
 /**

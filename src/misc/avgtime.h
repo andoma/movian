@@ -19,7 +19,7 @@ static inline void avgtime_start(avgtime_t *a)
   a->start = showtime_get_ts();
 }
 
-static inline void avgtime_stop(avgtime_t *a, prop_t *avg, prop_t *peak)
+static inline int avgtime_stop(avgtime_t *a, prop_t *avg, prop_t *peak)
 {
   int64_t now = showtime_get_ts();
   int d = now - a->start;
@@ -43,6 +43,8 @@ static inline void avgtime_stop(avgtime_t *a, prop_t *avg, prop_t *peak)
 
   if(peak != NULL)
     prop_set_int(peak, a->peak / 1000);
+
+  return a->avg;
 }
 
 #endif /* AVGTIME_H__ */
