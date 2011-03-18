@@ -11,9 +11,16 @@ export FFMPEG=${PS3SUPPORT}/ffmpeg
 
 mkdir -p ${FFMPEG}
 
-if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
+if [ ! -e ${FFMPEG}/include/libavcodec/avcodec.h ] || [[ $# == 1 && $1 == -u ]] ; then
     cd ${FFMPEG}
-    git clone git://github.com/andoma/libav.git src
+    if ! test -e src/.git ; then
+        git clone git://github.com/andoma/libav.git src
+    else
+        cd ${FFMPEG}/src
+        git pull
+        cd ${FFMPEG}
+    fi
+
     echo Configuring FFmpeg...
 
     src/configure \
@@ -25,7 +32,6 @@ if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
         --disable-protocols \
         --disable-network \
         --disable-stripping \
-        --disable-static \
         --disable-shared \
         --enable-static \
         --prefix=${PS3SUPPORT}/ffmpeg \
@@ -39,6 +45,7 @@ if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
 	--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- \
 	--enable-cross-compile \
 	--arch=powerpc64 \
+    --cpu=cell \
 	--target-os=none \
 	--disable-decoder=twinvq \
 	--disable-decoder=snow \
@@ -47,4 +54,6 @@ if ! test -e ${FFMPEG}/include/libavcodec/avcodec.h ; then
     make ${PARALLEL}
     make install
 
+else
+    echo "Nothing to do, use -u to update"
 fi
