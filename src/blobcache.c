@@ -42,7 +42,9 @@
 
 
 #ifndef BC_USE_FILE_LOCKS
-static hts_mutex_t blobcache_lock;
+#define BC_NUM_FILE_LOCKS 16
+#define BC_FILE_LOCKS_MASK (BC_NUM_FILE_LOCKS - 1)
+static hts_mutex_t blobcache_lock[BC_NUM_FILE_LOCKS];
 #endif
 
 
@@ -94,7 +96,7 @@ digest_to_path(uint8_t *d, char *path, size_t pathlen)
  *
  */
 static void *
-blobcache_load(const char *path, int fd, size_t *sizep, int pad)
+blobcache_load(const char *path, int fd, size_t *sizep, int pad, int lockhash)
 {
   struct stat st;
   uint8_t buf[4];
@@ -103,17 +105,17 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
   size_t l;
 
 #ifndef BC_USE_FILE_LOCKS
-  hts_mutex_lock(&blobcache_lock);
+  hts_mutex_lock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
 #else
   if(flock(fd, LOCK_SH))
     return NULL;
 #endif
 
   if(fstat(fd, &st))
-    return NULL;
+    goto bad;
 
   if(read(fd, buf, 4) != 4)
-    return NULL;
+    goto bad;
 
   exp = buf[0] << 24 | buf[1] << 16 | buf[2] << 8 | buf[3];
 
@@ -124,7 +126,7 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
     if(blobcache_size_current < 0)
       blobcache_size_current = 0; // Just to be sure
     hts_mutex_unlock(&blobcache_mutex);
-    return NULL;
+    goto bad;
   }
 
   l = st.st_size - 4;
@@ -132,12 +134,20 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad)
   r = malloc(l + pad);
 
   if(read(fd, r, l) != l)
-    return NULL;
+    goto bad;
 
   memset(r + l, 0, pad);
 
   *sizep = l;
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_unlock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
+#endif
   return r;
+ bad:
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_unlock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
+#endif
+  return NULL;
 }
 
 
@@ -155,11 +165,10 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad)
   digest_key(key, stash, d);
 
   digest_to_path(d, path, sizeof(path));
-
   if((fd = open(path, O_RDONLY, 0)) == -1)
     return NULL;
 
-  r = blobcache_load(path, fd, sizep, pad);
+  r = blobcache_load(path, fd, sizep, pad, d[0]);
   close(fd);
   return r;
 }
@@ -169,12 +178,13 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad)
  *
  */
 static int
-blobcache_save(int fd, const void *data, size_t size, time_t expire)
+blobcache_save(int fd, const void *data, size_t size, time_t expire,
+	       int lockhash)
 {
   uint8_t buf[4];
 
 #ifndef BC_USE_FILE_LOCKS
-  hts_mutex_lock(&blobcache_lock);
+  hts_mutex_lock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
 #else
   if(flock(fd, LOCK_EX))
     return -1;
@@ -186,13 +196,13 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
   buf[3] = expire;
 
   if(write(fd, buf, 4) != 4)
-    return -1;
+    goto bad;
 
   if(write(fd, data, size) != size)
-    return -1;
+    goto bad;
 
   if(ftruncate(fd, size + 4))
-    return -1;
+    goto bad;
 
   hts_mutex_lock(&blobcache_mutex);
   blobcache_size_current += size + 4;
@@ -205,7 +215,15 @@ blobcache_save(int fd, const void *data, size_t size, time_t expire)
 
   hts_mutex_unlock(&blobcache_mutex);
 
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_unlock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
+#endif
   return 0;
+ bad:
+#ifndef BC_USE_FILE_LOCKS
+  hts_mutex_unlock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
+#endif
+  return -1;
 }
 
 
@@ -235,7 +253,7 @@ blobcache_put(const char *key, const char *stash,
   if(maxage > 86400 * 30) 
     maxage = 86400 * 30;
 
-  if(blobcache_save(fd, data, size, time(NULL) + maxage))
+  if(blobcache_save(fd, data, size, time(NULL) + maxage, d[0]))
     unlink(path);
 
   close(fd);
@@ -430,7 +448,9 @@ void
 blobcache_init(void)
 {
 #ifndef BC_USE_FILE_LOCKS
-  hts_mutex_init(&blobcache_lock);
+  int i;
+  for(i = 0; i < BC_NUM_FILE_LOCKS; i++)
+    hts_mutex_init(&blobcache_lock[i]);
 #endif
   hts_mutex_init(&blobcache_mutex);
   callout_arm(&blobcache_callout, blobcache_do_prune, NULL, 1);
