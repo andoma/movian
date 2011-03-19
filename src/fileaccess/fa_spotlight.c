@@ -260,7 +260,8 @@ spotlight_search(prop_t *model, const char *query)
   fas->fas_run = 1;
   fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
   
-  hts_thread_create_detached("spotlight search", spotlight_searcher, fas);
+  hts_thread_create_detached("spotlight search", spotlight_searcher, fas,
+			     THREAD_PRIO_NORMAL);
 }
 
 static int
