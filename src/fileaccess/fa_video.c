@@ -673,7 +673,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
 
-  mp_become_primary(mp);
+  if(!(flags & BACKEND_VIDEO_NO_AUDIO))
+    mp_become_primary(mp);
 
   prop_set_string(mp->mp_prop_type, "video");
 
