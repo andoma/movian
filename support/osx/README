@@ -12,10 +12,8 @@ Now copy the buildenv* scripts to the new directory.
 
 There are several script for building different envionments
 buildenv.10.4-i386.sh, 10.4 SDK, gcc 4.0, i386
-buildenv.10.5-i386.sh, 10.5 SDK, gcc 4.0, i386
 buildenv.10.6-i386.sh, 10.6 SDK, gcc 4.2, i386
-buildenv.10.6-x86_64.sh, 10.6 SDK, gcc 4.2, x86_64
-
+... and others ...
 buildenv.common.sh is a common help script used by all build scripts.
 
 After you have copied the files you may want to change the INSTALLDIR
