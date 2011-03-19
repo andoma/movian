@@ -190,7 +190,6 @@ static void
 quick_analyzer(fa_dir_t *fd, prop_t *contents)
 {
   fa_dir_entry_t *fde;
-  int type;
   int images = 0;
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
@@ -206,7 +205,7 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
 
     fde->fde_probestatus = FDE_PROBE_FILENAME;
 
-    if(type == CONTENT_IMAGE)
+    if(fde->fde_type == CONTENT_IMAGE)
       images++;
   }
 
