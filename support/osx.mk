@@ -15,15 +15,15 @@ Showtime.app: \
 ${APPDIR}/Contents/MacOS:
 	mkdir -p $@
 
-$(APPDIR)/Contents/Info.plist: osx/Info.plist
+$(APPDIR)/Contents/Info.plist: support/osx/Info.plist
 	mkdir -p `dirname $@`
 	cp $< $@
 
-$(APPDIR)/Contents/Resources/hts.icns: osx/hts.icns
+$(APPDIR)/Contents/Resources/hts.icns: support/osx/hts.icns
 	mkdir -p `dirname $@`
 	cp $< $@
         
-$(APPDIR)/Contents/Resources/MainMenu.nib: osx/MainMenu.xib
+$(APPDIR)/Contents/Resources/MainMenu.nib: support/osx/MainMenu.xib
 	mkdir -p `dirname $@`
 	ibtool --compile $@ $<
 
@@ -41,5 +41,5 @@ endif
 .PHONY: Showtime.dmg
 Showtime.dmg:
 	support/osxchecknonsyslink.sh ${PROG}
-	support/mkdmg ${APPDIR} Showtime osx/hts.icns Showtime.dmg
+	support/mkdmg ${APPDIR} Showtime support/osx/hts.icns Showtime.dmg
 

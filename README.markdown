@@ -69,7 +69,7 @@ or the custome build scripts way. If you dont plan to build for different
 architectures or SDKs as you are current running, or dont plan to compile with
 fancy extensions, i would recommend the MacPorts way.
 
-If you choose the custome script way, please continue to read osx/README
+If you choose the custome script way, please continue to read support/osx/README
 
 MacPorts way:
 
@@ -103,7 +103,7 @@ include paths to your local build tree.
 
 	$ make Showtime.dmg
 
-For more information read osx/README
+For more information read support/osx/README
 
 TODO: universal binary, cant be done i one step as ffmpeg does not
 build when using multiple arch arguments to gcc
