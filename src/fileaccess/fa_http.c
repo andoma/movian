@@ -1060,11 +1060,12 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
 {
   char *p, *n;
   char *url = malloc(URL_MAX);
+  int skip = 1;
   
   p = buf;
   /* n + 1 to skip '\0' */
   for(;(n = strchr(p, '\n')); p = n + 1) {
-    char *s, *href, *hrefd, *name;
+    char *s, *href, *name;
     int isdir;
     
     /* terminate line */
@@ -1073,9 +1074,6 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     if(!(href = strstr(p, "<a href=\"")))
       continue;
     href += 9;
-    /* when does this happen? xbmc does it */
-    if(href[0] == '/')
-      href++;
     
     if(!(s = strstr(href, "\">")))
       continue;
@@ -1086,29 +1084,28 @@ http_index_parse(http_file_t *hf, fa_dir_t *fd, char *buf)
     if(!(s = strstr(name, "</a>")))
       continue;
     *s = '\0';
+
+    /* skip first entry "Name" */
+    if(skip > 0)  {
+      skip--;
+      continue;
+    }
+
+    /* skip absolute paths "Parent directroy" */
+    if(href[0] == '/')
+      continue;
     
     isdir = http_strip_last(name, '/');
-    http_strip_last(href, '/');
     
-    hrefd = strdup(href);
-    http_deescape(hrefd);
-    
-    html_entities_decode(hrefd);
+    html_entities_decode(href);
     html_entities_decode(name);
     
-    /* skip parent dir links etc */
-    if(strcmp(name, hrefd) == 0) {
-      snprintf(url, URL_MAX, "http://%s:%d%s%s%s",
-               hf->hf_connection->hc_hostname, 
-	       hf->hf_connection->hc_port, hf->hf_path,
-               hrefd,
-               isdir ? "/" : "");
+    snprintf(url, URL_MAX, "http://%s:%d%s%s",
+	     hf->hf_connection->hc_hostname, 
+	     hf->hf_connection->hc_port, hf->hf_path,
+	     href);
       
-      http_deescape(url);
-      fa_dir_add(fd, url, name, isdir ? CONTENT_DIR : CONTENT_FILE);
-    }
-    
-    free(hrefd);
+    fa_dir_add(fd, url, name, isdir ? CONTENT_DIR : CONTENT_FILE);
   }
   
   free(url);
