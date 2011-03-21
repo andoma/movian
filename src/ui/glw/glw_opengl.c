@@ -183,6 +183,23 @@ ff_render(struct glw_root *gr,
 	  int flags)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  float r,g,b;
+
+  switch(gbr->be_blendmode) {
+  case GLW_BLEND_NORMAL:
+    r = rgb_mul->r;
+    g = rgb_mul->g;
+    b = rgb_mul->b;
+    break;
+  case GLW_BLEND_ADDITIVE:
+    r = rgb_mul->r * alpha;
+    g = rgb_mul->g * alpha;
+    b = rgb_mul->b * alpha;
+    break;
+  default:
+    return;
+  }
+
 
   glLoadMatrixf(m ?: identitymtx);
 
@@ -198,11 +215,11 @@ ff_render(struct glw_root *gr,
     }
     for(i = 0; i < num_vertices; i++) {
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 0] =
-	vertices[i * VERTEX_SIZE + 5] * rgb_mul->r;
+	vertices[i * VERTEX_SIZE + 5] * r;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 1] =
-	vertices[i * VERTEX_SIZE + 6] * rgb_mul->g;
+	vertices[i * VERTEX_SIZE + 6] * g;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 2] =
-	vertices[i * VERTEX_SIZE + 7] * rgb_mul->b;
+	vertices[i * VERTEX_SIZE + 7] * b;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 3] =
 	vertices[i * VERTEX_SIZE + 8] * alpha;
     }
@@ -211,9 +228,8 @@ ff_render(struct glw_root *gr,
     glColorPointer(4, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
 		   gr->gr_vtmp_buffer);
   } else {
-    glColor4f(rgb_mul->r, rgb_mul->g, rgb_mul->b, alpha);
+    glColor4f(r, g, b, alpha);
   }
-
 
   if(rgb_off != NULL) {
     glEnable(GL_COLOR_SUM);
