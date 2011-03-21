@@ -6,7 +6,6 @@ extract packages for these projects into it:
 
 FFmpeg, http://www.ffmpeg.org/ (at least 0.6)
 freetype, http://www.freetype.org
-OpenSSL, http://www.openssl.org
 
 Now copy the buildenv* scripts to the new directory.
 
@@ -24,7 +23,7 @@ $ sh buildenv.10.4.sh
 
 Now you can compile showtime using:
 
-./configure --cc="gcc-4.0 -arch i386" --macosx-sdk=/Developer/SDKs/MacOSX10.4u.sdk --pkg-config-dir=$HOME/showtime-env-10.4-i386/lib/pkgconfig --enable-ssl
+./configure --cc="gcc-4.0 -arch i386" --macosx-sdk=/Developer/SDKs/MacOSX10.4u.sdk --pkg-config-dir=$HOME/showtime-env-10.4-i386/lib/pkgconfig 
 
 Make sure to use same gcc version and SDK when building showtime.
 

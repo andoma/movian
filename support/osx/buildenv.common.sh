@@ -12,13 +12,6 @@ if [ "$CC_ARCH" = "x86_64" ] ; then
   OPENSSL_TARGET="darwin64-x86_64-cc"
 fi
 
-(cd openssl* && \
-  ./Configure $OPENSSL_TARGET "--prefix=$INSTALLDIR" zlib no-asm no-krb5 shared "-mmacosx-version-min=$OSX_TARGET" "-isysroot $OSX_SYSROOT" && \
-  make clean && \
-  make && \
-  make install \
-  )
-
 (cd freetype* && \
   ./configure "--prefix=$INSTALLDIR" \
     --enable-static && \
