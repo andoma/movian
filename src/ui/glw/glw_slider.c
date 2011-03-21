@@ -257,7 +257,7 @@ pointer_event(glw_t *w, glw_pointer_event_t *gpe)
   glw_slider_t *s = (glw_slider_t *)w;
   int hitpos = 0;
   float v0 = w->glw_class == &glw_slider_x ? gpe->x : -gpe->y;
-  float v;
+  float v = 0;
   float knob_pos;
   float knob_size = (float)s->knob_size_px / s->slider_size_px;
   int how = PROP_SET_NORMAL;
