@@ -74,6 +74,7 @@ static int is_logged_in;
 static int is_thread_running;
 static int login_rejected_by_user;
 static int pending_login;
+static int pending_relogin;
 
 static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
@@ -194,6 +195,7 @@ typedef struct playlist_track {
 } playlist_track_t;
 
 static void load_initial_playlists(sp_session *sess);
+static void unload_initial_playlists(sp_session *sess);
 
 
 static int spotify_pending_events;
@@ -678,6 +680,10 @@ spotify_logged_out(sp_session *sess)
   is_logged_in = 0;
   fail_pending_messages("Logged out");
 
+  if(pending_relogin) {
+    pending_relogin = 0;
+    spotify_try_login(sess, 1, "Relogin", 0);
+  }
 }
 
 
@@ -2798,6 +2804,22 @@ playlistcontainer_bind(sp_session *sess, playlistcontainer_t *plc,
 /**
  *
  */
+static void
+playlistcontainer_unbind(sp_session *sess, playlistcontainer_t *plc,
+			 sp_playlistcontainer *pc)
+{
+  f_sp_playlistcontainer_remove_callbacks(pc, &pc_callbacks, plc);
+  int i, n = f_sp_playlistcontainer_num_playlists(pc);
+
+  for(i = 0; i < n; i++)
+    playlist_removed(pc, f_sp_playlistcontainer_playlist(pc, i), 0, plc);
+
+}
+
+
+/**
+ *
+ */
 static playlistcontainer_t *
 playlistcontainer_create(void)
 {
@@ -2821,6 +2843,17 @@ load_initial_playlists(sp_session *sess)
 
   f_sp_playlist_add_callbacks(f_sp_session_starred_create(sess),
 			      &star_callbacks, NULL);
+}
+
+
+/**
+ *
+ */
+static void
+unload_initial_playlists(sp_session *sess)
+{
+  playlistcontainer_unbind(sess, users_root,
+			   f_sp_session_playlistcontainer(sess));
 }
 
 
@@ -3157,6 +3190,22 @@ find_cachedir(char *path, size_t pathlen)
   return 0;
 }
 
+
+/**
+ *
+ */
+static void
+do_rethink_playlistcontainers(void)
+{
+  playlistcontainer_t *plc;
+  while((plc = LIST_FIRST(&rethink_playlistcontainers)) != NULL) {
+    plc->plc_rethink = 0;
+    LIST_REMOVE(plc, plc_rethink_link);
+    place_playlists_in_tree(plc);
+  }
+}
+
+
 /**
  *
  */
@@ -3204,14 +3253,9 @@ spotify_thread(void *aux)
   /* Wakeup any sleepers that are waiting for us to start */
 
   while(1) {
-    playlistcontainer_t *plc;
     sm = NULL;
 
-    while((plc = LIST_FIRST(&rethink_playlistcontainers)) != NULL) {
-      plc->plc_rethink = 0;
-      LIST_REMOVE(plc, plc_rethink_link);
-      place_playlists_in_tree(plc);
-    }
+    do_rethink_playlistcontainers();
 
     hts_mutex_lock(&spotify_mutex);
 
@@ -3257,7 +3301,9 @@ spotify_thread(void *aux)
       switch(sm->sm_op) {
       case SPOTIFY_LOGOUT:
 	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
-	f_sp_session_logout(s);
+	if(!pending_relogin)
+	  f_sp_session_logout(s);
+	pending_relogin = 0;
 	break;
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
@@ -3766,6 +3812,60 @@ spotify_set_bitrate(void *opaque, int value)
   hts_mutex_unlock(&spotify_mutex);
 }
 
+static void
+spotify_relogin0(void)
+{
+  TRACE(TRACE_DEBUG, "spotify", "Switching account");
+  unload_initial_playlists(spotify_session);
+  f_sp_session_logout(spotify_session);
+  pending_relogin = 1;
+}
+
+
+static void
+spotify_relogin(void *opaque, prop_event_t event, ...)
+{
+  spotify_relogin0();
+}
+
+
+/**
+ *
+ */
+static void
+spotify_dispatch_action(const char *ev)
+{
+  if(!strcmp(ev, "relogin")) {
+    spotify_relogin0();
+  }
+}
+
+
+/**
+ *
+ */
+static void
+spotify_control(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  event_t *e;
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  va_start(ap, event);
+
+  e = va_arg(ap, event_t *);
+
+  if(event_is_type(e, EVENT_ACTION_VECTOR)) {
+    event_action_vector_t *eav = (event_action_vector_t *)e;
+    int i;
+    for(i = 0; i < eav->num; i++)
+      spotify_dispatch_action(action_code2str(eav->actions[i]));
+    
+  } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+    spotify_dispatch_action(e->e_payload);
+  }
+}
 
 /**
  *
@@ -3774,7 +3874,7 @@ static int
 be_spotify_init(void)
 {
   prop_t *spotify;
-  prop_t *s;
+  prop_t *s, *ctrl;
   setting_t *ena;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
@@ -3785,8 +3885,6 @@ be_spotify_init(void)
   s = settings_add_dir(settings_apps, "Spotify", NULL, SPOTIFY_ICON_URL);
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
-
-  spotify = prop_create(prop_get_global(), "spotify");
 
   users_root = playlistcontainer_create();
 
@@ -3833,6 +3931,9 @@ be_spotify_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
+  settings_create_action(s, "relogin", "Relogin (switch user)",
+			 spotify_relogin, NULL, spotify_courier);
+
   prop_link(settings_get_value(ena),
 	    prop_create(spotify_service->s_root, "enabled"));
 
@@ -3840,6 +3941,16 @@ be_spotify_init(void)
     TRACE(TRACE_DEBUG, "spotify", "Autologin");
     spotify_start(NULL, 0, 1);
   }
+
+  spotify = prop_create(prop_get_global(), "spotify");
+  ctrl = prop_create(spotify, "control");
+
+  prop_subscribe(0,
+		 PROP_TAG_CALLBACK, spotify_control, NULL,
+		 PROP_TAG_ROOT, ctrl,
+		 PROP_TAG_COURIER, spotify_courier,
+		 NULL);
+
   return 0;
 }
 
