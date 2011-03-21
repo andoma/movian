@@ -270,7 +270,12 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
   glw_renderer_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
 
-  glw_tex_upload(gr, &gvo->gvo_textures[0], t0, GLW_TEXTURE_FORMAT_RGBA,
+  glw_tex_upload(gr, &gvo->gvo_textures[0], t0,
+#ifdef WORDS_BIGENDIAN
+		 GLW_TEXTURE_FORMAT_ABGR,
+#else
+		 GLW_TEXTURE_FORMAT_RGBA,
+#endif
 		 width, height, 0);
   free(t0);
 }

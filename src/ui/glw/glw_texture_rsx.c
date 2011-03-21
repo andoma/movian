@@ -142,6 +142,27 @@ init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 static void
+init_abgr(glw_root_t *gr, glw_backend_texture_t *tex,
+	  const uint8_t *src, int linesize,
+	  int width, int height, int repeat)
+{
+  void *mem = realloc_tex(gr, tex, linesize * height);
+
+  memcpy(mem, src, tex->size);
+  init_tex(&tex->tex, tex->tex.offset, width, height, linesize,
+	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
+	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	   NV30_3D_TEX_SWIZZLE_S1_X_Z | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_X | NV30_3D_TEX_SWIZZLE_S1_W_W
+	   );
+}
+
+
+/**
+ *
+ */
+static void
 init_rgba(glw_root_t *gr, glw_backend_texture_t *tex,
 	  const uint8_t *src, int linesize,
 	  int width, int height, int repeat)
@@ -363,6 +384,14 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 
   case GLW_TEXTURE_FORMAT_RGB:
     init_rgb(gr, tex, src, width * 3, width, height, flags & GLW_TEX_REPEAT);
+    break;
+
+  case GLW_TEXTURE_FORMAT_RGBA:
+    init_rgba(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
+    break;
+
+  case GLW_TEXTURE_FORMAT_ABGR:
+    init_abgr(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
     break;
 
   default:

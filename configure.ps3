@@ -53,13 +53,14 @@ enable glw
 enable polarssl
 enable librtmp
 enable httpserver
+enable dvd
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${TOOLCHAIN}gcc
 STRIP=${TOOLCHAIN}strip
-CFLAGS_cfg += -mminimal-toc
+CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
 CFLAGS_cfg += -I${FFMPEG}/include
-CFLAGS_cfg += -DPATH_MAX=512
+CFLAGS_cfg += -DPATH_MAX=512 -DPS3
 CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2
