@@ -123,6 +123,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   rstr_t *r;
   int rval, i;
   prop_t *p;
+  const char *action = http_arg_get_req(hc, "action");
 
   if(remain == NULL)
     return 404;
@@ -136,6 +137,15 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
 
   switch(method) {
   case HTTP_CMD_GET:
+
+    if(action != NULL) {
+      event_t *e = event_create_action_str(action);
+      prop_send_ext_event(p, e);
+      event_release(e);
+      rval = HTTP_STATUS_OK;
+      break;
+    }
+
     r = prop_get_string(p);
 
     if(r == NULL) {
