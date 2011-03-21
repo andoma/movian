@@ -364,7 +364,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   /* Compute position for each glyph */
 
-  height = 64 * face->height * pixelheight / 2048;
   height = 64 * pixelheight;
 
   pen_x = 0;
@@ -554,7 +553,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   target_height =  lines * pxheight;
   gtbd->gtbd_lines = lines;
 
-  bbox.yMin = 64 * face->descender * pixelheight / 2048;
+  bbox.yMin = 64 * face->descender * pixelheight / gr->gr_gtb_face->units_per_EM;
   height = 64 * (target_height / lines);
 
   origin_y = ((64 * (lines - 1) * pxheight) - bbox.yMin) / 64;
@@ -1824,7 +1823,7 @@ glw_font_change_size(void *opaque, int fontsize)
     return;
 
   gr->gr_fontsize = fontsize;
-  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / 2048;
+  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / gr->gr_gtb_face->units_per_EM;
   glw_text_flush(gr);
 }
 
