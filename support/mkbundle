@@ -87,7 +87,7 @@ for file in $FILES; do
 	
 	echo >>${OUTPUT} "// ${SOURCE}/$file"
 	echo >>${OUTPUT} "static const unsigned char embedded_$name[]={"
-	$READER <${SOURCE}/$file | od -v -An -b | sed s/^\ */0/ | sed s/\ *$$/,/| sed s/\ /,\ 0/g|sed s/$/,/ >>${OUTPUT}
+	$READER <${SOURCE}/$file | od -v -An -b | awk '/[^\s]+/ { print $0 }' | sed s/^\ */0/ | sed s/\ *$/,/| sed s/\ /,\ 0/g >>${OUTPUT}
 	echo >>${OUTPUT} "};"
     fi
 done
