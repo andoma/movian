@@ -212,6 +212,7 @@ int
 backend_open_video(prop_t *page, const char *url)
 {
   prop_set_int(prop_create(page, "directClose"), 1);
+  prop_set_string(prop_create(page, "source"), url);
   prop_set_string(prop_create(prop_create(page, "model"), "type"), "video");
   return 0;
 }

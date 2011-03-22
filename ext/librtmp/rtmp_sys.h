@@ -49,7 +49,9 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#ifndef __PPU__
 #include <netinet/tcp.h>
+#endif
 #define GetSockError()	errno
 #define SetSockError(e)	errno = e
 #undef closesocket

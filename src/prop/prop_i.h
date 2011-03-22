@@ -304,6 +304,8 @@ struct prop_sub {
 prop_t *prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, 
 		     int flags);
 
+prop_t *prop_make(const char *name, int noalloc, prop_t *parent);
+
 void prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme);
 
 void prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);

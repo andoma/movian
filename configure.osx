@@ -78,6 +78,8 @@ enable stdin
 enable httpserver
 enable timegm
 enable realpath
+enable polarssl
+enable librtmp
 
 for opt do
   optval="${opt#*=}"
@@ -282,20 +284,6 @@ if $PKGCONFIG freetype2; then
 else
     echo "FreeType 2 not found"
     die
-fi
-
-#
-# SSL
-#
-if enabled ssl; then
-    if $PKGCONFIG openssl; then
-	PKGS+="openssl "
-	echo "Using OpenSSL:         `$PKGCONFIG --modversion openssl`"
-	enable librtmp
-    else
-	echo "OpenSSL not found"
-	die
-    fi
 fi
 
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`

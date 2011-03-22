@@ -265,7 +265,7 @@ async_query_do(prop_t *node, htsmsg_t *query)
     if(id == NULL || title == NULL || lang == NULL)
       continue;
 
-    prop_t *p = prop_create(NULL, NULL);
+    prop_t *p = prop_create_root(NULL);
 
     prop_set_string(prop_create(p, "id"), id);
     prop_set_stringf(prop_create(p, "title"), "%s (%s)", title, lang);
@@ -314,7 +314,8 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
   oaq->node = prop_ref_inc(node);
   oaq->query = query;
 
-  hts_thread_create_detached("opensub query", async_query_thread, oaq);
+  hts_thread_create_detached("opensub query", async_query_thread, oaq,
+			     THREAD_PRIO_LOW);
 }
 
 

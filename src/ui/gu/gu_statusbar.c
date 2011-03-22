@@ -54,7 +54,8 @@ notifications_update(void *opaque, prop_event_t event, ...)
   statusbar_t *sb = opaque;
   prop_t *p, *txt;
   statusbar_entry_t *sbe;
-  char buf[1024];
+  char *buf;
+  rstr_t *msg;
   int i, l;
   va_list ap;
   va_start(ap, event);
@@ -67,7 +68,10 @@ notifications_update(void *opaque, prop_event_t event, ...)
 			   PROP_TAG_NAMED_ROOT, p, "self",
 			   NULL);
     if(txt != NULL) {
-      if(!prop_get_string(txt, buf, sizeof(buf))) {
+      msg = prop_get_string(txt);
+
+      if(msg != NULL) {
+	buf = mystrdupa(rstr_get(msg));
 	l = strlen(buf);
 	for(i = 0; i < l; i++)
 	  if(buf[i] < ' ')
@@ -77,6 +81,7 @@ notifications_update(void *opaque, prop_event_t event, ...)
 	sbe->p = prop_ref_inc(p);
 	sbe->id = gtk_statusbar_push(GTK_STATUSBAR(sb->bar), sb->ctxid, buf);
 	LIST_INSERT_HEAD(&sb->entries, sbe, link);
+	rstr_release(msg);
       }
       prop_ref_dec(txt);
     }

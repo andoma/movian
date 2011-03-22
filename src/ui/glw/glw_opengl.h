@@ -67,6 +67,7 @@ typedef struct glw_program {
   GLint  gp_uniform_colormtx;
   GLint  gp_uniform_blend;
   GLint  gp_uniform_color_offset;
+  GLint  gp_uniform_blur_amount;
 
   GLint  gp_uniform_t[6];
 
@@ -105,9 +106,14 @@ typedef struct glw_backend_root {
   int gbr_enable_vdpau;
 
   struct glw_program *gbr_renderer_tex;
+  struct glw_program *gbr_renderer_tex_blur;
   struct glw_program *gbr_renderer_flat;
 
   int gbr_culling;
+
+  int be_blendmode;
+
+  float be_blur;
 
 } glw_backend_root_t;
 
@@ -124,6 +130,8 @@ typedef float Mtx[16];
  */
 typedef struct glw_backend_texture {
   GLuint tex;
+  uint16_t width;
+  uint16_t height;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0
 #define GLW_TEXTURE_TYPE_NO_ALPHA 1
@@ -162,24 +170,6 @@ void glw_rtt_restore(struct glw_root *gr, glw_rtt_t *grtt);
 void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 
 #define glw_rtt_texture(grtt) ((grtt)->grtt_texture)
-
-
-/**
- *
- */
-
-#define GLW_BLEND_ADDITIVE GL_SRC_COLOR, GL_ONE
-#define GLW_BLEND_NORMAL   GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA
-
-#define glw_blendmode(m) glBlendFunc(m)
-
-/**
- *
- */
-#define GLW_CW  GL_CW
-#define GLW_CCW GL_CCW
-
-#define glw_frontface(x) glFrontFace(x) 
 
 
 /**

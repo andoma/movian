@@ -12,7 +12,7 @@ widget(container_y, {
       .id = "list";
 
       LIST_ITEM_SIMPLE("Add new entry", 
-		       "theme://icons/48x48/Add.png",
+		       "skin://icons/Add.png",
 		       {
 			 createChild($page.model.nodes); 
 		       },

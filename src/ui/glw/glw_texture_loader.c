@@ -56,7 +56,7 @@ glw_tex_autoflush(glw_root_t *gr)
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
     assert(glt->glt_filename != NULL || glt->glt_pixmap != NULL);
     LIST_REMOVE(glt, glt_flush_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
 
@@ -148,14 +148,17 @@ glw_tex_init(glw_root_t *gr)
   la = lacreate(gr, LQ_ALL_OTHER);
 
   for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++)
-    hts_thread_create_detached("GLW texture loader", loader_thread, la);
+    hts_thread_create_detached("GLW texture loader", loader_thread, la,
+			       THREAD_PRIO_NORMAL);
 
   la = lacreate(gr, LQ_THEME);
-  hts_thread_create_detached("texture theme loader", loader_thread, la);
+  hts_thread_create_detached("texture theme loader", loader_thread, la,
+			     THREAD_PRIO_NORMAL);
 
   la = lacreate(gr, LQ_THUMBS);
   for(i = 0; i < 2; i++)
-    hts_thread_create_detached("texture thumbs", loader_thread, la);
+    hts_thread_create_detached("texture thumbs", loader_thread, la,
+			       THREAD_PRIO_NORMAL);
 }
 
 /**
@@ -171,7 +174,7 @@ glw_tex_flush_all(glw_root_t *gr)
     if(glt->glt_state != GLT_STATE_VALID)
       continue;
     LIST_REMOVE(glt, glt_flush_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
@@ -213,7 +216,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   pixmap_t *pm = backend_imageloader(url, want_thumb, gr->gr_vpaths, errbuf, 
 				     sizeof(errbuf));
   if(pm == NULL) {
-    TRACE(TRACE_DEBUG, "GLW", "Unable to load %s -- %s", url, errbuf);
+    TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", url, errbuf);
     return -1;
   }
 
@@ -314,7 +317,8 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 
 			   ctx->pix_fmt, ctx->width, ctx->height, w, h);
-
+  if(r)
+    TRACE(TRACE_INFO, "GLW", "Unable to load %s", url);
   av_free(frame);
 
   avcodec_close(ctx);
@@ -335,7 +339,7 @@ glw_tex_purge(glw_root_t *gr)
 
   while((glt = TAILQ_FIRST(&gr->gr_tex_rel_queue)) != NULL) {
     TAILQ_REMOVE(&gr->gr_tex_rel_queue, glt, glt_work_link);
-    glw_tex_backend_free_render_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
     free(glt);
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);

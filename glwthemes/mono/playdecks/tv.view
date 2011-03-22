@@ -1,0 +1,102 @@
+#import "skin://playdeck.skin"
+
+$ui.showplaydeck =  $ui.menu ||
+  $global.media.current.error ||
+  changed($global.media.current.metadata.title, 5);
+
+// -------------------------------------------------------------------
+
+widget(container_x, {
+  .padding = [5, 0, 5, 5];
+      
+  .align = center;
+  skinPlaydeckGroup(.filterConstraintX = true; widget(container_x, {
+    .spacing = 10;
+    .height = $ui.size * 4.5;
+
+    widget(image, {
+      .hidden = select($global.media.current.metadata.icon, false, true);
+      .height = $ui.size * 4.5;
+      .aspectConstraint = true;
+      .source = $global.media.current.metadata.icon;
+      .hqScaling = true;
+      .align = top;
+    });
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+      widget(label, {
+	.sizeScale = 1.5;
+	.caption = $global.media.current.metadata.title;
+	.hidden = select($global.media.current.metadata.icon, true, false);
+      });
+
+
+      widget(container_x, {
+	.filterConstraintX = true;
+	.spacing = 10;
+
+/*
+	widget(container_y, {
+	  widget(label, {
+	    .hidden = select($global.media.current.metadata.current.title, false, true);
+	    .caption = "Now:";
+	  });
+	  widget(label, {
+	  .hidden = select($global.media.current.metadata.next.title, false, true);
+
+	    .caption = "Next:";
+	  });
+	});
+*/
+
+	widget(container_y, {
+	  .filterConstraintX = true;
+	  widget(label, {
+	    .autohide = true;
+	    .caption = $global.media.current.metadata.current.title;
+	  });
+
+	  widget(label, {
+	    .autohide = true;
+	    .caption = $global.media.current.metadata.next.title;
+	  });
+	});
+
+
+
+
+	widget(container_y, {
+	  widget(label, {
+	    .hidden = select($global.media.current.metadata.current.title, false, true);
+	    .caption =
+	      strftime($global.media.current.metadata.current.start, "%H:%M") + " - " + 
+	      strftime($global.media.current.metadata.current.stop, "%H:%M");
+	    .align = right;
+	  });
+
+	  widget(label, {
+	    .hidden = select($global.media.current.metadata.next.title, false, true);
+	    .caption =
+	      strftime($global.media.current.metadata.next.start, "%H:%M") + " - " + 
+	      strftime($global.media.current.metadata.next.stop, "%H:%M");
+	    .align = right;
+	  });
+	});
+
+      });
+
+      widget(container_x, {
+	.hidden = select($global.media.current.error, false, true);
+	widget(icon, {
+	  .source = "skin://icons/Alert.png";
+	  .hqScaling = true;
+	});
+	widget(label, {
+	  .caption = $global.media.current.error;
+	});
+      });
+    });
+  }));
+});

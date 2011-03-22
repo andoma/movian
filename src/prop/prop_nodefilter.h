@@ -36,6 +36,7 @@ typedef enum {
 
 #define PROP_NF_TAKE_DST_OWNERSHIP 0x1
 #define PROP_NF_AUTODESTROY        0x2
+#define PROP_NF_SORT_DESC          0x4
 
 void prop_nf_pred_str_add(struct prop_nf *nf,
 			  const char *path, prop_nf_cmp_t cf,

@@ -52,6 +52,7 @@ typedef struct upnp_service {
   char *us_event_url;
   char *us_control_url;
   char *us_local_url;
+  char *us_icon_url;
 
   char *us_settings_path;
   htsmsg_t *us_settings_store;
@@ -78,6 +79,7 @@ typedef struct upnp_device {
   char *ud_friendlyName;
   char *ud_manufacturer;
   char *ud_modelDescription;
+  char *ud_icon;
 
   struct upnp_service_list ud_services;
 
@@ -161,6 +163,7 @@ int upnp_subscribe(struct http_connection *hc, const char *remain, void *opaque,
 		   http_cmd_t method);
 
 extern hts_mutex_t upnp_lock;
+extern hts_cond_t upnp_device_cond;
 extern struct upnp_device_list upnp_devices;
 
 int be_upnp_browse(struct prop *page, const char *url0);

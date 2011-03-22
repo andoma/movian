@@ -103,7 +103,7 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
   rc0 = *rc;
   glw_scale_to_aspect(&rc0, 1.0);
 
-  glw_blendmode(GLW_BLEND_ADDITIVE);
+  glw_blendmode(gr, GLW_BLEND_ADDITIVE);
 
 #define NUMPINS 15
 
@@ -117,7 +117,7 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
 
     glw_renderer_draw(&gt->renderer, gr, &rc1, NULL, NULL, NULL, alpha);
   }
-  glw_blendmode(GLW_BLEND_NORMAL);
+  glw_blendmode(gr, GLW_BLEND_NORMAL);
 }
 
 

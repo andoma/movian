@@ -282,7 +282,7 @@ extern "C"
 
   int RTMP_Connect(RTMP *r, RTMPPacket *cp);
   struct sockaddr;
-  int RTMP_Connect0(RTMP *r, struct sockaddr *svc);
+  int RTMP_Connect0(RTMP *r, struct sockaddr *svc, int sasize);
   int RTMP_Connect1(RTMP *r, RTMPPacket *cp);
   int RTMP_Serve(RTMP *r);
 

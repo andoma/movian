@@ -17,7 +17,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef ARCH_H__
+#pragma once
+
+#include <stdint.h>
 
 void arch_init(void);
 
@@ -25,8 +27,8 @@ void arch_sd_init(void); // Arch specific service discovery
 
 void arch_exit(int code) __attribute__((noreturn));
 
-void arch_set_default_paths(void);
+void arch_set_default_paths(int argc, char **argv);
+
+int64_t arch_cache_avail_bytes(void);
 
 void trap_init(void);
-
-#endif /* ARCH_H__ */

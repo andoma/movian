@@ -68,16 +68,13 @@ static int spotify_high_bitrate;
 
 static int play_position;
 static int seek_pos;
-static int rethink_playlists;
 
 
 static int is_logged_in;
-static int is_rootlist_loaded;
 static int is_thread_running;
 static int login_rejected_by_user;
 static int pending_login;
-
-static prop_t *prop_syncing_playlists;
+static int pending_relogin;
 
 static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
@@ -143,20 +140,30 @@ static LIST_HEAD(, spotify_user) spotify_users;
 /**
  * Playlist support
  */
-prop_t *prop_rootlist_nodes;
+static LIST_HEAD(, playlistcontainer) rethink_playlistcontainers;
+typedef struct playlistcontainer {
 
-static ptrvec_t playlists;
+  LIST_ENTRY(playlistcontainer) plc_rethink_link;
+  int plc_rethink;
 
+  prop_t *plc_root_tree;
+  prop_t *plc_root_flat;
+  prop_t *plc_pending;
+  ptrvec_t plc_playlists;
+
+} playlistcontainer_t;
+
+static playlistcontainer_t *users_root;
 
 typedef struct playlist {
   
   sp_playlist *pl_playlist;
   sp_playlist_type pl_type;
   uint64_t pl_folder_id;
-  char *pl_url;
   ptrvec_t pl_tracks;
 
-  prop_t *pl_prop_root;
+  prop_t *pl_prop_root_flat;
+  prop_t *pl_prop_root_tree;
   prop_t *pl_prop_canDelete;
   prop_t *pl_prop_url;
   prop_t *pl_prop_tracks;
@@ -168,7 +175,10 @@ typedef struct playlist {
   prop_sub_t *pl_node_sub;
   prop_sub_t *pl_destroy_sub;
 
-  int pl_withtracks;
+  int pl_flags;
+#define PL_WITH_TRACKS 0x1
+#define PL_MESSAGES    0x2
+#define PL_SORT_ON_TIME 0x4
 
   struct playlist *pl_start; // End folder point to its start
 
@@ -185,6 +195,7 @@ typedef struct playlist_track {
 } playlist_track_t;
 
 static void load_initial_playlists(sp_session *sess);
+static void unload_initial_playlists(sp_session *sess);
 
 
 static int spotify_pending_events;
@@ -315,7 +326,7 @@ typedef struct spotify_search {
 static void parse_search_reply(sp_search *result, prop_t *nodes, 
 			       prop_t *contents);
 
-static playlist_t *pl_create(sp_playlist *plist, int withtracks,
+static playlist_t *pl_create(sp_playlist *plist,
 			     const char *name,
 			     prop_t *model,
 			     prop_t *loading,
@@ -329,7 +340,8 @@ static playlist_t *pl_create(sp_playlist *plist, int withtracks,
 			     prop_t *items,
 			     prop_t *filter,
 			     prop_t *canFilter,
-			     prop_t *user);
+			     prop_t *user,
+			     int flags);
 
 static void spotify_shutdown_early(void *opaque, int retcode);
 static void spotify_shutdown_late(void *opaque, int retcode);
@@ -381,6 +393,30 @@ spotify_msg_enq(spotify_msg_t *sm)
 {
   hts_mutex_lock(&spotify_mutex);
   spotify_msg_enq_locked(sm);
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_msg_enq_one(spotify_msg_t *sm)
+{
+  spotify_msg_t *sm2;
+  hts_mutex_lock(&spotify_mutex);
+
+  TAILQ_FOREACH(sm2, &spotify_msgs, sm_link) {
+    if(sm2->sm_op == sm->sm_op) {
+      sm2->sm_int = sm->sm_int;
+      break;
+    }
+  }
+  if(sm2 == NULL)
+    spotify_msg_enq_locked(sm);
+  else
+    free(sm);
+
   hts_mutex_unlock(&spotify_mutex);
 }
 
@@ -642,9 +678,12 @@ spotify_logged_out(sp_session *sess)
 
   pending_login = 0;
   is_logged_in = 0;
-  is_rootlist_loaded = 0;
   fail_pending_messages("Logged out");
 
+  if(pending_relogin) {
+    pending_relogin = 0;
+    spotify_try_login(sess, 1, "Relogin", 0);
+  }
 }
 
 
@@ -793,12 +832,7 @@ spotify_play_track_try(void)
   spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
   play_position = 0;
 
-  if((err = f_sp_session_player_play(spotify_session, 1))) {
-    snprintf(su->su_errbuf, su->su_errlen, "Unable to play track:\n%s",
-	     f_sp_error_message(err));
-    spotify_uri_return(su, 1);
-    return;
-  }
+  f_sp_session_player_play(spotify_session, 1);
 
   su_playing = su;
   spotify_uri_return(su, 0);
@@ -984,13 +1018,25 @@ spotify_metadata_update_track(metadata_t *m)
   
   nartists = f_sp_track_num_artists(track);
   if(nartists > 1) {
-    prop_t *xa = m->m_additional_artists;
     for(i = 1; i < nartists; i++) {
       artist = f_sp_track_artist(track, i);
       spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-      
-      prop_set_link(prop_create(prop_create(xa, url), "artist"),
-		    f_sp_artist_name(artist), url);
+
+      /* m->m_additional_artists can turn into a zombie at any time so
+	 we can't just rely on prop_create() as it will abort() on
+	 zombie parents, instead we use a more elaborate version
+	 (prop_create_check) but it will also leave us with a
+	 reference that we must release */
+
+      prop_t *p = prop_create_check(m->m_additional_artists, url);
+      if(p != NULL) {
+	prop_t *p2 = prop_create_check(p, "artist");
+	if(p2 != NULL) {
+	  prop_set_link(p2, f_sp_artist_name(artist), url);
+	  prop_ref_dec(p2);
+	}
+	prop_ref_dec(p);
+      }
     }
   }
 
@@ -1316,7 +1362,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
 
-      p = prop_create(NULL, NULL);
+      p = prop_create_root(NULL);
 
       spotify_make_link(f_sp_link_create_from_track(track, 0), 
 			url, sizeof(url));
@@ -1418,7 +1464,7 @@ static void
 spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
 {
   prop_t *metadata;
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   char link[200];
 
   spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
@@ -1529,16 +1575,17 @@ spotify_open_artist(sp_link *l, spotify_page_t *sp)
  *
  */
 static void
-spotify_open_rootlist(spotify_page_t *sp)
+spotify_open_rootlist(spotify_page_t *sp, int flat)
 {
   struct prop_nf *pnf;
 
   prop_set_string(sp->sp_type, "directory");
   prop_set_string(sp->sp_title, "Spotify playlists");
-  prop_link(prop_syncing_playlists, sp->sp_loading);
+  prop_link(users_root->plc_pending, sp->sp_loading);
 
-  pnf = prop_nf_create(sp->sp_nodes, prop_rootlist_nodes, sp->sp_filter, NULL,
-		       PROP_NF_AUTODESTROY);
+  pnf = prop_nf_create(sp->sp_nodes, flat ? users_root->plc_root_flat :
+		       users_root->plc_root_tree,
+		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 }
@@ -1600,9 +1647,10 @@ spotify_open_album(sp_album *alb, spotify_page_t *sp, const char *playme)
  *
  */
 static void
-spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
+spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name,
+		      int flags)
 {
-  pl_create(plist, 1, name,
+  pl_create(plist, name,
 	    sp->sp_model,
 	    sp->sp_loading,
 	    sp->sp_type,
@@ -1615,7 +1663,8 @@ spotify_open_playlist(spotify_page_t *sp, sp_playlist *plist, const char *name)
 	    sp->sp_items,
 	    sp->sp_filter,
 	    sp->sp_canFilter,
-	    sp->sp_user);
+	    sp->sp_user,
+	    flags | PL_WITH_TRACKS);
 }
 
 
@@ -1694,18 +1743,20 @@ spotify_open_page(spotify_page_t *sp)
   sp_playlist *plist;
 
   if(!strcmp(sp->sp_url, "spotify:playlists")) {
-    spotify_open_rootlist(sp);
+    spotify_open_rootlist(sp, 0);
+  } else if(!strcmp(sp->sp_url, "spotify:playlistsflat")) {
+    spotify_open_rootlist(sp, 1);
   } else if(!strcmp(sp->sp_url, "spotify:starred")) {
     
     plist = f_sp_session_starred_create(spotify_session);
     if(plist != NULL) 
-      spotify_open_playlist(sp, plist, "Starred tracks");
+      spotify_open_playlist(sp, plist, "Starred tracks", PL_SORT_ON_TIME);
 
   } else if(!strcmp(sp->sp_url, "spotify:inbox")) {
     
     plist = f_sp_session_inbox_create(spotify_session);
     if(plist != NULL) 
-      spotify_open_playlist(sp, plist, "Inbox");
+      spotify_open_playlist(sp, plist, "Inbox", PL_MESSAGES | PL_SORT_ON_TIME);
 
   } else if(!strncmp(sp->sp_url, "spotify:search:",
 		     strlen("spotify:search:"))) {
@@ -1731,7 +1782,7 @@ spotify_open_page(spotify_page_t *sp)
     case SP_LINKTYPE_PLAYLIST:
       plist = f_sp_playlist_create(spotify_session, l);
       if(plist != NULL) 
-	spotify_open_playlist(sp, plist, NULL);
+	spotify_open_playlist(sp, plist, NULL, 0);
       spotify_page_destroy(sp);
       break;
 
@@ -1743,6 +1794,7 @@ spotify_open_page(spotify_page_t *sp)
       break;
 
     default:
+      spotify_open_page_fail(sp, "Unable to handle URI");
       break;
     }
     f_sp_link_release(l);
@@ -1880,7 +1932,7 @@ find_user(sp_user *u)
     su = malloc(sizeof(spotify_user_t));
     f_sp_user_add_ref(u);
     su->su_user = u;
-    su->su_prop = prop_create(NULL, NULL);
+    su->su_prop = prop_create_root(NULL);
     su->su_prop_name = prop_create(su->su_prop, "name");
     su->su_prop_picture = prop_create(su->su_prop, "picture");
 
@@ -1932,7 +1984,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
   playlist_t *pl = userdata;
   sp_track *t;
   playlist_track_t *plt, *before;
-  int i, pos;
+  int i, pos, when;
   char url[URL_MAX];
   sp_user *u;
 
@@ -1943,7 +1995,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     t = (sp_track *)tracks[i];
     before = ptrvec_get_entry(&pl->pl_tracks, pos);
 
-    plt->plt_prop_root = prop_create(NULL, NULL);
+    plt->plt_prop_root = prop_create_root(NULL);
     plt->plt_track = t;
 
     prop_set_string(prop_create(plt->plt_prop_root, "type"), "audio");
@@ -1957,6 +2009,16 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     if(u != NULL) {
       spotify_user_t *su = find_user(u);
       prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+    }
+
+    when = f_sp_playlist_track_create_time(plist, pos);
+    if(when > 1)
+      prop_set_int(prop_create(plt->plt_prop_metadata, "timestamp"), when);
+
+    if(pl->pl_flags & PL_MESSAGES) {
+      const char *msg = f_sp_playlist_track_message(plist, pos);
+      if(msg != NULL)
+	prop_set_string(prop_create(plt->plt_prop_metadata, "message"), msg);
     }
 
     if(prop_set_parent_ex(plt->plt_prop_root, pl->pl_prop_tracks,
@@ -2136,7 +2198,6 @@ playlist_update_meta(playlist_t *pl)
     if(l != NULL) {
       char url[URL_MAX];
       spotify_make_link(l, url, sizeof(url));
-      pl->pl_url = strdup(url);
       prop_set_string(pl->pl_prop_url, url);
     }
   }
@@ -2246,19 +2307,22 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
  if(event != PROP_DESTROYED)
    return;
 
-  f_sp_playlist_release(pl->pl_playlist);
-
   if(pl->pl_node_sub) {
+    f_sp_playlist_remove_callbacks(pl->pl_playlist,
+				   &pl_callbacks_withtracks, pl);
     int i;
     prop_unsubscribe(pl->pl_node_sub);
     for(i = 0; i < pl->pl_tracks.size; i++)
       free(pl->pl_tracks.vec[i]);
+  } else {
+    f_sp_playlist_remove_callbacks(pl->pl_playlist, &pl_callbacks, pl);
   }
+
+  f_sp_playlist_release(pl->pl_playlist);
 
   prop_unsubscribe(pl->pl_destroy_sub);
 
   free(pl->pl_tracks.vec);
-  free(pl->pl_url);
   free(pl);
 }
 
@@ -2267,7 +2331,7 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
  *
  */
 static playlist_t *
-pl_create(sp_playlist *plist, int withtracks, const char *name,
+pl_create(sp_playlist *plist, const char *name,
 	  prop_t *model,
 	  prop_t *loading,
 	  prop_t *type,
@@ -2280,21 +2344,22 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 	  prop_t *items,
 	  prop_t *filter,
 	  prop_t *canFilter,
-	  prop_t *user)
+	  prop_t *user,
+	  int flags)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   int i, n;
 
   pl->pl_type = SP_PLAYLIST_TYPE_PLAYLIST;
+  pl->pl_flags = flags;
 
   f_sp_playlist_add_ref(plist);
 
   pl->pl_playlist = plist;
-  pl->pl_withtracks = withtracks;
 
-  prop_link(prop_syncing_playlists, loading);
+  prop_set_int(loading, 0);
 
-  prop_set_string(type, withtracks ? "directory" : "playlist");
+  prop_set_string(type, flags & PL_WITH_TRACKS ? "directory" : "playlist");
 
   pl->pl_prop_title = prop_ref_inc(title);
   pl->pl_prop_canDelete = prop_ref_inc(canDelete);
@@ -2312,14 +2377,15 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
 
   prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
 
-  if(withtracks) {
+  if(pl->pl_flags & PL_WITH_TRACKS) {
 
     pl->pl_prop_tracks = prop_ref_inc(items);
 
     struct prop_nf *pnf;
 
-    pnf = prop_nf_create(nodes, pl->pl_prop_tracks, filter, NULL,
-			 PROP_NF_AUTODESTROY);
+    pnf = prop_nf_create(nodes, pl->pl_prop_tracks, filter,
+			 pl->pl_flags & PL_SORT_ON_TIME ? "node.metadata.timestamp" : NULL,
+			 PROP_NF_AUTODESTROY | PROP_NF_SORT_DESC);
 
     prop_nf_pred_int_add(pnf, "node.metadata.available",
 			 PROP_NF_CMP_EQ, 0, NULL, 
@@ -2361,15 +2427,15 @@ pl_create(sp_playlist *plist, int withtracks, const char *name,
  *
  */
 static int
-rootlist_bind_folders(int start, playlist_t *parent)
+rootlist_bind_folders(playlistcontainer_t *plc, int start, playlist_t *parent)
 {
   int i;
-  for(i = start; i < playlists.size; i++) {
-    playlist_t *pl = ptrvec_get_entry(&playlists, i);
+  for(i = start; i < plc->plc_playlists.size; i++) {
+    playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, i);
     switch(pl->pl_type) {
 
     case SP_PLAYLIST_TYPE_START_FOLDER:
-      i = rootlist_bind_folders(i + 1, pl);
+      i = rootlist_bind_folders(plc, i + 1, pl);
       if(i == -1)
 	return -1;
       break;
@@ -2412,13 +2478,13 @@ rootlist_bind_folders(int start, playlist_t *parent)
  *
  */
 static int
-place_playlists_in_node(int i, playlist_t *parent)
+place_playlists_in_node(playlistcontainer_t *plc, int i, playlist_t *parent)
 {
   playlist_t *before = NULL;
-  prop_t *container = parent ? parent->pl_prop_childs : prop_rootlist_nodes;
+  prop_t *container = parent ? parent->pl_prop_childs : plc->plc_root_tree;
 
   while(i >= 0) {
-    playlist_t *pl = ptrvec_get_entry(&playlists, i);
+    playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, i);
     assert(pl != NULL);
     if(pl == parent) {
       assert(pl->pl_type == SP_PLAYLIST_TYPE_START_FOLDER);
@@ -2426,13 +2492,13 @@ place_playlists_in_node(int i, playlist_t *parent)
     }
 
     if(pl->pl_type == SP_PLAYLIST_TYPE_END_FOLDER) {
-      i = place_playlists_in_node(i - 1, pl->pl_start);
+      i = place_playlists_in_node(plc, i - 1, pl->pl_start);
       continue;
     }
 
-    if(pl->pl_prop_root != NULL) {
-      if(prop_set_parent_ex(pl->pl_prop_root, container,
-			    before ? before->pl_prop_root : NULL, NULL))
+    if(pl->pl_prop_root_tree != NULL) {
+      if(prop_set_parent_ex(pl->pl_prop_root_tree, container,
+			    before ? before->pl_prop_root_tree : NULL, NULL))
 	abort();
       before = pl;
     }
@@ -2440,6 +2506,29 @@ place_playlists_in_node(int i, playlist_t *parent)
   }
   return i;
 }
+
+
+/**
+ *
+ */
+static void
+place_playlists_in_list(playlistcontainer_t *plc)
+{
+  playlist_t *before = NULL;
+  int i;
+
+  for(i = plc->plc_playlists.size-1; i >= 0; i--) {
+    playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, i);
+
+    if(pl->pl_prop_root_flat != NULL) {
+      if(prop_set_parent_ex(pl->pl_prop_root_flat, plc->plc_root_flat,
+			    before ? before->pl_prop_root_flat : NULL, NULL))
+	abort();
+      before = pl;
+    }
+  }
+}
+
 
 #if 0
 /**
@@ -2460,11 +2549,12 @@ print_my_view(void)
  *
  */
 static void
-place_playlists_in_tree(void)
+place_playlists_in_tree(playlistcontainer_t *plc)
 {
-  if(rootlist_bind_folders(0, NULL))
+  if(rootlist_bind_folders(plc, 0, NULL))
     return;
-  place_playlists_in_node(playlists.size-1, NULL);
+  place_playlists_in_node(plc, plc->plc_playlists.size-1, NULL);
+  place_playlists_in_list(plc);
 }
 
 
@@ -2474,10 +2564,10 @@ place_playlists_in_tree(void)
 static playlist_t *
 pl_create2(sp_playlist *plist)
 {
-  prop_t *model = prop_create(NULL, NULL);
+  prop_t *model = prop_create_root(NULL);
   prop_t *metadata = prop_create(model, "metadata");
   
-  playlist_t *pl = pl_create(plist, 0, NULL,
+  playlist_t *pl = pl_create(plist, NULL,
 			     model,
 			     prop_create(model, "loading"),
 			     prop_create(model, "type"),
@@ -2490,15 +2580,30 @@ pl_create2(sp_playlist *plist)
 			     prop_create(model, "items"),
 			     prop_create(model, "filter"),
 			     prop_create(model, "canFilter"),
-			     prop_create(metadata, "user"));
-  pl->pl_prop_root = model;
+			     prop_create(metadata, "user"),
+			     0);
+
+  pl->pl_prop_root_flat = model;
+  pl->pl_prop_root_tree = prop_create_root(NULL);
+
+  prop_link(pl->pl_prop_root_flat, pl->pl_prop_root_tree);
   return pl;
 }    
 
 
 
 
-
+/**
+ *
+ */
+static void
+playlistcontainer_rethink(playlistcontainer_t *plc)
+{
+  if(plc->plc_rethink)
+    return;
+  plc->plc_rethink = 1;
+  LIST_INSERT_HEAD(&rethink_playlistcontainers, plc, plc_rethink_link);
+}
 
 
 /**
@@ -2508,10 +2613,11 @@ static void
 playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 	       int position, void *userdata)
 {
+  playlistcontainer_t *plc = userdata;
   sp_playlist_type type = f_sp_playlistcontainer_playlist_type(pc, position);
   playlist_t *pl;
   prop_t *metadata;
-  char url[200];
+  char url[200], buf[200];
   const char *name;
 
   switch(type) {
@@ -2523,21 +2629,21 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   case SP_PLAYLIST_TYPE_START_FOLDER:
     pl = calloc(1, sizeof(playlist_t));
-    name = f_sp_playlistcontainer_playlist_folder_name(pc, position);
-    name = mystrdupa(name); // bug in libspotify
+    f_sp_playlistcontainer_playlist_folder_name(pc, position, buf, sizeof(buf));
+    name = buf;
 
     pl->pl_folder_id = f_sp_playlistcontainer_playlist_folder_id(pc, position);
 
-    pl->pl_prop_root = prop_create(NULL, NULL);
-    prop_set_string(prop_create(pl->pl_prop_root, "type"), "directory");
+    pl->pl_prop_root_tree = prop_create_root(NULL);
+    prop_set_string(prop_create(pl->pl_prop_root_tree, "type"), "directory");
 
-    metadata = prop_create(pl->pl_prop_root, "metadata");
+    metadata = prop_create(pl->pl_prop_root_tree, "metadata");
     prop_set_string(prop_create(metadata, "title"), name);
     prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
 
-    backend_prop_make(pl->pl_prop_root, url, sizeof(url));
-    prop_set_string(prop_create(pl->pl_prop_root, "url"), url);
-    pl->pl_prop_childs = prop_create(pl->pl_prop_root, "nodes");
+    backend_prop_make(pl->pl_prop_root_tree, url, sizeof(url));
+    prop_set_string(prop_create(pl->pl_prop_root_tree, "url"), url);
+    pl->pl_prop_childs = prop_create(pl->pl_prop_root_tree, "nodes");
     break;
 
   case SP_PLAYLIST_TYPE_END_FOLDER:
@@ -2560,11 +2666,10 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
   pl->pl_type = type;
 
-  ptrvec_insert_entry(&playlists, position, pl);
+  ptrvec_insert_entry(&plc->plc_playlists, position, pl);
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d added (%s)", position, name);
-
-  rethink_playlists = 1;
+  playlistcontainer_rethink(plc);
 }
 
 
@@ -2575,25 +2680,27 @@ static void
 playlist_removed(sp_playlistcontainer *pc, sp_playlist *plist,
 		 int position, void *userdata)
 {
-  playlist_t *pl = ptrvec_remove_entry(&playlists, position);
+  playlistcontainer_t *plc = userdata;
+  playlist_t *pl = ptrvec_remove_entry(&plc->plc_playlists, position);
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d removed (%s) (type:%d)", 
 	position, f_sp_playlist_name(plist), pl->pl_type);
 
   switch(pl->pl_type) {
   case SP_PLAYLIST_TYPE_PLAYLIST:
-    prop_destroy(pl->pl_prop_root);
+    prop_destroy(pl->pl_prop_root_flat);
+    prop_destroy(pl->pl_prop_root_tree);
     break;
 
   case SP_PLAYLIST_TYPE_START_FOLDER:
     prop_unparent_childs(pl->pl_prop_childs);
-
-    prop_destroy(pl->pl_prop_root);
+    prop_destroy(pl->pl_prop_root_tree);
+    /* FALLTHRU */
   default:
     free(pl);
     break;
   }
-  rethink_playlists = 1;
+  playlistcontainer_rethink(plc);
 }
 
 
@@ -2604,21 +2711,22 @@ static void
 playlist_moved(sp_playlistcontainer *pc, sp_playlist *plist,
 	       int old_position, int new_position, void *userdata)
 {
+  playlistcontainer_t *plc = userdata;
   playlist_t *pl;
 
   TRACE(TRACE_DEBUG, "spotify", "Playlist %d (%s) moved from %d to %d", 
 	old_position, f_sp_playlist_name(plist), old_position, new_position);
 
-  pl = ptrvec_remove_entry(&playlists, old_position);
+  pl = ptrvec_remove_entry(&plc->plc_playlists, old_position);
 
   if(new_position > old_position)
     new_position--;
   
-  ptrvec_insert_entry(&playlists, new_position, pl);
+  ptrvec_insert_entry(&plc->plc_playlists, new_position, pl);
 
   if(pl->pl_type == SP_PLAYLIST_TYPE_START_FOLDER)
     return; // Wait for the END_FOLDER to move
-  rethink_playlists = 1;
+  playlistcontainer_rethink(plc);
 }
 
 
@@ -2626,11 +2734,11 @@ playlist_moved(sp_playlistcontainer *pc, sp_playlist *plist,
  *
  */
 static void
-rootlist_loaded(sp_playlistcontainer *pc, void *userdata)
+container_loaded(sp_playlistcontainer *pc, void *userdata)
 {
-  TRACE(TRACE_DEBUG, "spotify", "Rootlist loaded");
-  prop_set_int(prop_syncing_playlists, 0);
-  is_rootlist_loaded = 1;
+  playlistcontainer_t *plc = userdata;
+  TRACE(TRACE_DEBUG, "spotify", "Container loaded");
+  prop_set_int(plc->plc_pending, 0);
 }
 
 /**
@@ -2640,7 +2748,7 @@ static sp_playlistcontainer_callbacks pc_callbacks = {
   .playlist_added   = playlist_added,
   .playlist_removed = playlist_removed,
   .playlist_moved   = playlist_moved,
-  .container_loaded = rootlist_loaded,
+  .container_loaded = container_loaded,
 };
 
 
@@ -2676,28 +2784,76 @@ static sp_playlist_callbacks star_callbacks = {
   .tracks_removed   = star_removed,
 };
 
+
+/**
+ *
+ */
+static void
+playlistcontainer_bind(sp_session *sess, playlistcontainer_t *plc,
+		       sp_playlistcontainer *pc)
+{
+  int i, n = f_sp_playlistcontainer_num_playlists(pc);
+
+  for(i = 0; i < n; i++)
+    playlist_added(pc, f_sp_playlistcontainer_playlist(pc, i), i, plc);
+
+  f_sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, plc);
+}
+
+
+/**
+ *
+ */
+static void
+playlistcontainer_unbind(sp_session *sess, playlistcontainer_t *plc,
+			 sp_playlistcontainer *pc)
+{
+  f_sp_playlistcontainer_remove_callbacks(pc, &pc_callbacks, plc);
+  int i, n = f_sp_playlistcontainer_num_playlists(pc);
+
+  for(i = 0; i < n; i++)
+    playlist_removed(pc, f_sp_playlistcontainer_playlist(pc, i), 0, plc);
+
+}
+
+
+/**
+ *
+ */
+static playlistcontainer_t *
+playlistcontainer_create(void)
+{
+  playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
+  plc->plc_root_tree = prop_create_root(NULL);
+  plc->plc_root_flat = prop_create_root(NULL);
+  plc->plc_pending = prop_create_root(NULL);
+  prop_set_int(plc->plc_pending, 1);
+  return plc;
+}
+
+
 /**
  *
  */
 static void
 load_initial_playlists(sp_session *sess)
 {
-  int i, n;
-  sp_playlistcontainer *pc = f_sp_session_playlistcontainer(sess);
-  sp_playlist *plist;
+  playlistcontainer_bind(sess, users_root,
+			 f_sp_session_playlistcontainer(sess));
 
-  n = f_sp_playlistcontainer_num_playlists(pc);
+  f_sp_playlist_add_callbacks(f_sp_session_starred_create(sess),
+			      &star_callbacks, NULL);
+}
 
-  for(i = 0; i < n; i++) {
-    playlist_added(pc, f_sp_playlistcontainer_playlist(pc, i), i, NULL);
-  }
 
-  f_sp_playlistcontainer_add_callbacks(pc, &pc_callbacks, NULL);
-
-  // starred
-
-  plist = f_sp_session_starred_create(sess);
-  f_sp_playlist_add_callbacks(plist, &star_callbacks, NULL);
+/**
+ *
+ */
+static void
+unload_initial_playlists(sp_session *sess)
+{
+  playlistcontainer_unbind(sess, users_root,
+			   f_sp_session_playlistcontainer(sess));
 }
 
 
@@ -2751,7 +2907,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_search_track(result, i);
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
 
@@ -2804,7 +2960,7 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
 	continue; 
     }
 
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
@@ -2851,7 +3007,7 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
   for(i = 0; i < nartists; i++) {
     artist = f_sp_search_artist(result, i);
     
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
     prop_set_string(prop_create(p, "url"), link);
@@ -3025,8 +3181,30 @@ find_cachedir(char *path, size_t pathlen)
     return 0;
   }
 #endif
-  return 1;
+
+  snprintf(path, pathlen, "%s/libspotify", showtime_cache_path);
+  if(mkdir(path, 0770)) {
+    if(errno != EEXIST)
+      return 1;
+  }
+  return 0;
 }
+
+
+/**
+ *
+ */
+static void
+do_rethink_playlistcontainers(void)
+{
+  playlistcontainer_t *plc;
+  while((plc = LIST_FIRST(&rethink_playlistcontainers)) != NULL) {
+    plc->plc_rethink = 0;
+    LIST_REMOVE(plc, plc_rethink_link);
+    place_playlists_in_tree(plc);
+  }
+}
+
 
 /**
  *
@@ -3041,6 +3219,8 @@ spotify_thread(void *aux)
   int next_timeout = 0;
   char cache[PATH_MAX];
   int high_bitrate = 0;
+
+  memset(&sesconf, 0, sizeof(sesconf));
 
   sesconf.api_version = SPOTIFY_API_VERSION;
 
@@ -3073,13 +3253,9 @@ spotify_thread(void *aux)
   /* Wakeup any sleepers that are waiting for us to start */
 
   while(1) {
-
     sm = NULL;
 
-    if(rethink_playlists) {
-      rethink_playlists = 0;
-      place_playlists_in_tree();
-    }
+    do_rethink_playlistcontainers();
 
     hts_mutex_lock(&spotify_mutex);
 
@@ -3125,7 +3301,9 @@ spotify_thread(void *aux)
       switch(sm->sm_op) {
       case SPOTIFY_LOGOUT:
 	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
-	f_sp_session_logout(s);
+	if(!pending_relogin)
+	  f_sp_session_logout(s);
+	pending_relogin = 0;
 	break;
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
@@ -3146,7 +3324,7 @@ spotify_thread(void *aux)
 	mp_flush(spotify_mp, 0);
 	
 	seek_pos = sm->sm_int;
-	error = f_sp_session_player_seek(s, sm->sm_int);
+	f_sp_session_player_seek(s, sm->sm_int);
 	break;
 
       case SPOTIFY_PAUSE:
@@ -3189,7 +3367,8 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 
   if(!is_thread_running) {
     is_thread_running = 1;
-    hts_thread_create_detached("spotify", spotify_thread, NULL);
+    hts_thread_create_detached("spotify", spotify_thread, NULL,
+			       THREAD_PRIO_NORMAL);
     shutdown_hook_add(spotify_shutdown_early, NULL, 1);
     shutdown_hook_add(spotify_shutdown_late, NULL, 0);
   }
@@ -3205,7 +3384,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 static void
 add_dir(prop_t *parent, const char *url, const char *title)
 {
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
 
   prop_set_string(prop_create(p, "type"), "directory");
@@ -3313,8 +3492,7 @@ delta_seek(media_pipe_t *mp, int64_t d)
   int64_t n = mp->mp_current_time + d;
   if(n < 0)
     n = 0;
-
-  spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, n / 1000));
+  spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, n / 1000));
 }
 
 
@@ -3405,7 +3583,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
+      spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
 
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
@@ -3634,6 +3812,60 @@ spotify_set_bitrate(void *opaque, int value)
   hts_mutex_unlock(&spotify_mutex);
 }
 
+static void
+spotify_relogin0(void)
+{
+  TRACE(TRACE_DEBUG, "spotify", "Switching account");
+  unload_initial_playlists(spotify_session);
+  f_sp_session_logout(spotify_session);
+  pending_relogin = 1;
+}
+
+
+static void
+spotify_relogin(void *opaque, prop_event_t event, ...)
+{
+  spotify_relogin0();
+}
+
+
+/**
+ *
+ */
+static void
+spotify_dispatch_action(const char *ev)
+{
+  if(!strcmp(ev, "relogin")) {
+    spotify_relogin0();
+  }
+}
+
+
+/**
+ *
+ */
+static void
+spotify_control(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  event_t *e;
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  va_start(ap, event);
+
+  e = va_arg(ap, event_t *);
+
+  if(event_is_type(e, EVENT_ACTION_VECTOR)) {
+    event_action_vector_t *eav = (event_action_vector_t *)e;
+    int i;
+    for(i = 0; i < eav->num; i++)
+      spotify_dispatch_action(action_code2str(eav->actions[i]));
+    
+  } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+    spotify_dispatch_action(e->e_payload);
+  }
+}
 
 /**
  *
@@ -3642,7 +3874,7 @@ static int
 be_spotify_init(void)
 {
   prop_t *spotify;
-  prop_t *s;
+  prop_t *s, *ctrl;
   setting_t *ena;
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
@@ -3654,12 +3886,7 @@ be_spotify_init(void)
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 
-  spotify = prop_create(prop_get_global(), "spotify");
-
-  prop_syncing_playlists = prop_create(spotify, "syncing_playlists");
-  prop_set_int(prop_syncing_playlists, 1);
-
-  prop_rootlist_nodes = prop_create(prop_create(spotify, "playlists"), "nodes");
+  users_root = playlistcontainer_create();
 
   TAILQ_INIT(&spotify_msgs);
 
@@ -3704,6 +3931,9 @@ be_spotify_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
+  settings_create_action(s, "relogin", "Relogin (switch user)",
+			 spotify_relogin, NULL, spotify_courier);
+
   prop_link(settings_get_value(ena),
 	    prop_create(spotify_service->s_root, "enabled"));
 
@@ -3711,6 +3941,16 @@ be_spotify_init(void)
     TRACE(TRACE_DEBUG, "spotify", "Autologin");
     spotify_start(NULL, 0, 1);
   }
+
+  spotify = prop_create(prop_get_global(), "spotify");
+  ctrl = prop_create(spotify, "control");
+
+  prop_subscribe(0,
+		 PROP_TAG_CALLBACK, spotify_control, NULL,
+		 PROP_TAG_ROOT, ctrl,
+		 PROP_TAG_COURIER, spotify_courier,
+		 NULL);
+
   return 0;
 }
 

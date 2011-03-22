@@ -97,8 +97,8 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
   frame_meta_t *fm;
-
-
+  int t;
+  
   if(vd->vd_do_flush) {
     do {
       avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
@@ -124,16 +124,15 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   if(mb->mb_skip == 2)
     vd->vd_skip = 1;
 
-  if(mp->mp_stats)
-    avgtime_start(&vd->vd_decode_time);
+  avgtime_start(&vd->vd_decode_time);
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
 
-  if(mp->mp_stats) {
-    avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
-		 mq->mq_prop_decode_peak);
+  t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
+	       mq->mq_prop_decode_peak);
+
+  if(mp->mp_stats)
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
-  }
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
@@ -143,8 +142,8 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   fm = frame->opaque;
   assert(fm != NULL);
 
-  video_deliver_frame(vd, mp, mb, ctx, frame, fm->time, fm->pts, fm->dts,
-		   fm->duration, fm->epoch);
+  video_deliver_frame(vd, mp, mq, mb, ctx, frame, fm->time, fm->pts, fm->dts,
+		      fm->duration, fm->epoch, t);
 }
 
 
@@ -152,10 +151,11 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
  *
  */
 void
-video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
+video_deliver_frame(video_decoder_t *vd,
+		    media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 		    AVCodecContext *ctx, AVFrame *frame,
 		    int64_t tim, int64_t pts, int64_t dts, int duration,
-		    int epoch)
+		    int epoch, int decode_time)
 {
   float f, dar = 1;
   event_ts_t *ets;
@@ -220,16 +220,26 @@ video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
   }
   vd->vd_prevpts_cnt++;
 
-  if(duration == 0 || pts == AV_NOPTS_VALUE)
-    return;
 
-  vd->vd_nextpts = pts + duration;
-      
-  ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-  ets->pts = pts;
-  ets->dts = dts;
-  mp_enqueue_event(mp, &ets->h);
-  event_release(&ets->h);
+  if(duration == 0) {
+    TRACE(TRACE_DEBUG, "Video", "Dropping frame with duration = 0");
+    return;
+  }
+
+  prop_set_int(mq->mq_prop_too_slow, decode_time > duration);
+
+
+  if(pts != AV_NOPTS_VALUE) {
+    vd->vd_nextpts = pts + duration;
+
+    ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+    ets->pts = pts;
+    ets->dts = dts;
+    mp_enqueue_event(mp, &ets->h);
+    event_release(&ets->h);
+  } else {
+    vd->vd_nextpts = AV_NOPTS_VALUE;
+  }
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
@@ -423,7 +433,8 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
   video_subtitles_init(vd);
 
   hts_thread_create_joinable("video decoder", 
-			     &vd->vd_decoder_thread, vd_thread, vd);
+			     &vd->vd_decoder_thread, vd_thread, vd,
+			     THREAD_PRIO_NORMAL);
   
   return vd;
 }

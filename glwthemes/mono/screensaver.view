@@ -7,29 +7,16 @@ widget(container_z, {
   });
 
   widget(container_y, {
+    .hidden = select($global.media.current.type, true, false);
 
     space(1);
 
     widget(label, {
-      .caption = $global.media.current.metadata.title ?? "No media loaded";
+      .caption = "No media loaded";
       .align = center;
-      .sizeScale = 1;
-    });
-    
-    widget(label, {
-      .ellipsize = true;
-      .align = center;
-      .sizeScale = 0.75;
-      .caption =
-	select($global.media.current.metadata.artist && $global.media.current.metadata.album, 
-	       $global.media.current.metadata.artist + " • " +  $global.media.current.metadata.album,
-	       select($global.media.current.metadata.artist, $global.media.current.metadata.artist,
-		      select($global.media.current.metadata.album, $global.media.current.metadata.album,
-			     "")));
+      .sizeScale = 2;
     });
 
-    widget(dummy, {
-      .height = 4;
-    });
+    space(1);
   });
 });

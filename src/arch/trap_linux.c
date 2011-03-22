@@ -16,9 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "arch.h"
-
-
 #if defined(__i386__) || defined(__x86_64__)
 
 // Only do this on x86 for now
@@ -32,12 +29,14 @@
 #include <execinfo.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 #include "showtime.h"
+#include "arch.h"
 
 #define TRAPMSG(fmt...) trace(TRACE_NO_PROP, TRACE_ERROR, "CRASH", fmt)
 
@@ -46,6 +45,7 @@
 static char line1[200];
 static char tmpbuf[1024];
 static char libs[2048];
+static char self[PATH_MAX];
 
 static void
 sappend(char *buf, size_t l, const char *fmt, ...)
@@ -58,12 +58,78 @@ sappend(char *buf, size_t l, const char *fmt, ...)
 }
 
 
+/**
+ *
+ */
+static int
+add2lineresolve(const char *binary, void *addr, char *buf0, size_t buflen)
+{
+  char *buf = buf0;
+  int fd[2], r, f;
+  const char *argv[5];
+  pid_t p;
+  char addrstr[30], *cp;
+
+  argv[0] = "addr2line";
+  argv[1] = "-e";
+  argv[2] = binary;
+  argv[3] = addrstr;
+  argv[4] = NULL;
+
+  snprintf(addrstr, sizeof(addrstr), "%p", (void *)((intptr_t)addr-1));
+
+  if(pipe(fd) == -1)
+    return -1;
+
+  if((p = fork()) == -1)
+    return -1;
+
+  if(p == 0) {
+    close(0);
+    close(2);
+    close(fd[0]);
+    dup2(fd[1], 1);
+    close(fd[1]);
+    if((f = open("/dev/null", O_RDWR)) == -1)
+      exit(1);
+
+    dup2(f, 0);
+    dup2(f, 2);
+    close(f);
+
+    execve("/usr/bin/addr2line", (char *const *) argv, environ);
+    exit(2);
+  }
+
+  close(fd[1]);
+  *buf = 0;
+  while(buflen > 1) {
+    r = read(fd[0], buf, buflen);
+    if(r < 1)
+      break;
+
+    buf += r;
+    buflen -= r;
+    *buf = 0;
+    cp = strchr(buf0, '\n');
+    if(cp != NULL) {
+      *cp = 0;
+      break;
+    }
+  }
+  close(fd[0]);
+  return 0;
+}
+
+
+
 
 static void 
 traphandler(int sig, siginfo_t *si, void *UC)
 {
   ucontext_t *uc = UC;
   static void *frames[MAXFRAMES];
+  char buf[256];
   int nframes = backtrace(frames, MAXFRAMES);
   Dl_info dli;
   int i;
@@ -116,13 +182,15 @@ traphandler(int sig, siginfo_t *si, void *UC)
 	continue;
       }
 
-      if(dli.dli_fname != NULL && dli.dli_fbase != NULL) {
-      	TRAPMSG("%s %p",
- 		     dli.dli_fname,
-		     frames[i]);
+      if(self[0] && !add2lineresolve(self, frames[i], buf, sizeof(buf))) {
+	TRAPMSG("%s %p", buf, frames[i]);
 	continue;
       }
 
+      if(dli.dli_fname != NULL && dli.dli_fbase != NULL) {
+	TRAPMSG("%s %p", dli.dli_fname, frames[i]);
+	continue;
+      }
 
       TRAPMSG("%p", frames[i]);
     }
@@ -146,15 +214,20 @@ trap_init(void)
   uint8_t digest[20];
   struct sigaction sa, old;
   char path[256];
-
+  int r;
   memset(digest, 0, sizeof(digest));
 
-  
+  r = readlink("/proc/self/exe", self, sizeof(self) - 1);
+  if(r == -1)
+    self[0] = 0;
+  else
+    self[r] = 0;
+
   snprintf(line1, sizeof(line1),
 	   "PRG: Showtime (%s) "
 	   "[%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
 	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x] "
-	   "CWD: %s ", htsversion_full,
+	   "EXE: %s, CWD: %s ", htsversion_full,
 	   digest[0],
 	   digest[1],
 	   digest[2],
@@ -175,7 +248,7 @@ trap_init(void)
 	   digest[17],
 	   digest[18],
 	   digest[19],
-	   getcwd(path, sizeof(path)));
+	   self, getcwd(path, sizeof(path)));
 
   dl_iterate_phdr(callback, NULL);
   

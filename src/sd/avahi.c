@@ -214,5 +214,6 @@ avahi_thread(void *aux)
 void
 avahi_init(void)
 {
-  hts_thread_create_detached("AVAHI", avahi_thread, NULL);
+  hts_thread_create_detached("AVAHI", avahi_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 }

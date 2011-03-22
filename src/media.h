@@ -163,6 +163,8 @@ typedef struct media_queue {
 
   prop_t *mq_prop_codec;
 
+  prop_t *mq_prop_too_slow;
+
 } media_queue_t;
 
 /**
@@ -199,6 +201,7 @@ typedef struct media_pipe {
   /* Props */
 
   prop_t *mp_prop_root;
+  prop_t *mp_prop_type;
   prop_t *mp_prop_metadata;
   prop_t *mp_prop_model;
   prop_t *mp_prop_playstatus;
@@ -286,7 +289,7 @@ media_buf_alloc(void)
   return mb;
 }
 
-media_pipe_t *mp_create(const char *name, const char *type, int flags);
+media_pipe_t *mp_create(const char *name, int flags, const char *type);
 
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);

@@ -52,6 +52,7 @@ SRCS += src/main.c \
 	src/keymapper.c \
 	src/plugins.c \
 	src/blobcache.c \
+	src/i18n.c \
 	src/prop/prop_core.c \
 	src/prop/prop_nodefilter.c \
 	src/prop/prop_tags.c \
@@ -67,6 +68,8 @@ ifeq ($(PLATFORM), osx)
 SRCS += src/arch/darwin.c
 endif
 
+SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
+
 #
 # Misc support
 #
@@ -78,6 +81,10 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/gz.c \
 	src/misc/string.c \
 	src/misc/fs.c \
+	src/misc/extents.c \
+	src/misc/isolang.c \
+
+SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
 #
 # HTSMSG
@@ -154,6 +161,7 @@ SRCS += src/networking/net_common.c \
 
 SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
 SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
+SRCS-$(CONFIG_PSL1GHT) += src/networking/net_psl1ght.c
 
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
@@ -176,14 +184,6 @@ SRCS += src/video/video_playback.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
-#SRCS += ext/video/yadif.c
-
-# Temporary fix for http://gcc.gnu.org/bugzilla/show_bug.cgi?id=11203
-# -OO will result in compiler error
-ifeq ($(PLATFORM), osx)
-${BUILDDIR}/ext/video/yadif.o : CFLAGS = ${OPTFLAGS}
-endif
-
 SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 
 #
@@ -198,6 +198,7 @@ SRCS-$(CONFIG_LIBASOUND)  += src/audio/alsa/alsa_audio.c
 SRCS-$(CONFIG_LIBPULSE)   += src/audio/pulseaudio/pulseaudio.c
 SRCS-$(CONFIG_LIBOGC)     += src/audio/wii/wii_audio.c
 SRCS-$(CONFIG_COREAUDIO)  += src/audio/coreaudio/coreaudio.c
+SRCS-$(CONFIG_PSL1GHT)    += src/audio/ps3/ps3_audio.c
 SRCS                      += src/audio/dummy/dummy_audio.c
 
 #
@@ -289,6 +290,12 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_vdpau.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_math_common.c
+
+SRCS-$(CONFIG_GLW_FRONTEND_PS3)   += src/ui/glw/glw_ps3.c
+SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_rsx.c
+SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_texture_rsx.c
+SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_math_common.c
+SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_video_rsx.c
 
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c
 SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_texture_gx.c
@@ -479,6 +486,43 @@ ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 
 CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE -DJS_GC_ZEAL
 
+#
+# polarssl
+#
+SRCS-$(CONFIG_POLARSSL) += \
+	ext/polarssl-0.14.0/library/aes.c \
+	ext/polarssl-0.14.0/library/arc4.c \
+	ext/polarssl-0.14.0/library/base64.c \
+	ext/polarssl-0.14.0/library/bignum.c \
+	ext/polarssl-0.14.0/library/camellia.c \
+	ext/polarssl-0.14.0/library/certs.c \
+	ext/polarssl-0.14.0/library/debug.c \
+	ext/polarssl-0.14.0/library/des.c \
+	ext/polarssl-0.14.0/library/dhm.c \
+	ext/polarssl-0.14.0/library/havege.c \
+	ext/polarssl-0.14.0/library/md2.c \
+	ext/polarssl-0.14.0/library/md4.c \
+	ext/polarssl-0.14.0/library/md5.c \
+	ext/polarssl-0.14.0/library/net.c \
+	ext/polarssl-0.14.0/library/padlock.c \
+	ext/polarssl-0.14.0/library/rsa.c \
+	ext/polarssl-0.14.0/library/sha1.c \
+	ext/polarssl-0.14.0/library/sha2.c \
+	ext/polarssl-0.14.0/library/sha4.c \
+	ext/polarssl-0.14.0/library/ssl_cli.c \
+	ext/polarssl-0.14.0/library/ssl_srv.c \
+	ext/polarssl-0.14.0/library/ssl_tls.c \
+	ext/polarssl-0.14.0/library/timing.c \
+	ext/polarssl-0.14.0/library/version.c \
+	ext/polarssl-0.14.0/library/x509parse.c \
+	ext/polarssl-0.14.0/library/xtea.c \
+
+${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall
+
+ifeq ($(CONFIG_POLARSSL), yes)
+CFLAGS_com += -Iext/polarssl-0.14.0/include
+endif
+
 
 # Various transformations
 SRCS  += $(SRCS-yes)
@@ -519,7 +563,7 @@ endif
 
 all:	makever ${PROG}
 
-.PHONY:	clean distclean ffmpeg makever
+.PHONY:	clean distclean makever
 
 ${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
@@ -527,18 +571,14 @@ ${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
 $(OBJDIRS):
 	@mkdir -p $@
 
-${BUILDDIR}/%.o: %.c ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.c ${BUILDDIR}/config.mak
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.m ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.m ${BUILDDIR}/config.mak
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.cpp ${FFBUILDDEP}
+${BUILDDIR}/%.o: %.cpp ${BUILDDIR}/config.mak
 	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
-
-ffmpeg ${FFBUILDDEP}:
-	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} all
-	cd ${BUILDDIR}/ffmpeg/build && ${MAKE} install
 
 clean:
 	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles

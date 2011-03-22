@@ -47,6 +47,7 @@
 #include "keymapper.h"
 #include "plugins.h"
 #include "blobcache.h"
+#include "i18n.h"
 #include "misc/string.h"
 
 #if ENABLE_HTTPSERVER
@@ -71,7 +72,7 @@ int enable_serdev;
 #endif
 static int ffmpeglog;
 static int showtime_retcode;
-char *remote_logtarget; // Used on Wii
+const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
 char *showtime_cache_path;
 char *showtime_settings_path;
 
@@ -128,6 +129,21 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 }
 
 
+/**
+ * Set some info in the global property tree that might be interesting
+ */
+static void
+init_global_info(void)
+{
+  prop_t *s = prop_create(prop_get_global(), "showtime");
+  extern const char *htsversion;
+  extern const char *htsversion_full;
+
+  prop_set_string(prop_create(s, "version"), htsversion);
+  prop_set_string(prop_create(s, "fullversion"), htsversion_full);
+  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2011 Andreas Öman");
+
+}
 
 
 /**
@@ -151,7 +167,7 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
-  arch_set_default_paths();
+  arch_set_default_paths(argc, argv);
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */
@@ -174,7 +190,7 @@ main(int argc, char **argv)
 	     "   --with-poweroff   - Enable system power-off.\n"
 	     "   -s <path>         - Non-default Showtime settings path.\n"
 	     "   --ui <ui>         - Use specified user interface.\n"
-	     "   -L <ip>           - Send log messages to remote <ip>.\n"
+	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
 	     "   --syslog          - Send log messages to syslog.\n"
 #if ENABLE_STDIN
 	     "   --stdin           - Listen on stdin for events.\n"
@@ -235,7 +251,7 @@ main(int argc, char **argv)
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "-L") && argc > 1) {
-      remote_logtarget = argv[1];
+      showtime_logtarget = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
@@ -259,6 +275,7 @@ main(int argc, char **argv)
 
   /* Initialize property tree */
   prop_init();
+  init_global_info();
 
   /* Initiailize logging */
   trace_init();
@@ -325,6 +342,9 @@ main(int argc, char **argv)
 
   /* Initialize plugin manager and load plugins */
   plugins_init();
+
+  /* Internationalization */
+  i18n_init();
 
 
   nav_open(NAV_HOME, NULL);
@@ -426,7 +446,8 @@ showtime_shutdown(int retcode)
 
   if(ui_shutdown() == -1) {
     // Primary UI has no shutdown method, launch a new thread to stop
-    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL);
+    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL,
+			       THREAD_PRIO_NORMAL);
   }
 }
 

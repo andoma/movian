@@ -140,11 +140,22 @@ prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 void prop_unsubscribe(prop_sub_t *s);
 
 prop_t *prop_create_ex(prop_t *parent, const char *name,
-		       prop_sub_t *skipme, int flags)
-     __attribute__ ((malloc));
+		       prop_sub_t *skipme, int noalloc)
+     __attribute__ ((malloc)) __attribute__((nonnull (1)));
 
 #define prop_create(parent, name) \
   prop_create_ex(parent, name, NULL, __builtin_constant_p(name))
+
+prop_t *prop_create_root_ex(const char *name, int noalloc)
+  __attribute__ ((malloc));
+
+#define prop_create_root(name) \
+  prop_create_root_ex(name, __builtin_constant_p(name))
+
+prop_t *prop_create_check_ex(prop_t *parent, const char *name, int noalloc);
+
+#define prop_create_check(parent, name) \
+  prop_create_check_ex(parent, name, __builtin_constant_p(name))
 
 void prop_destroy(prop_t *p);
 
@@ -163,7 +174,11 @@ void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr);
 
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
-void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v);
+#define PROP_SET_NORMAL    0
+#define PROP_SET_TENTATIVE 1
+#define PROP_SET_COMMIT    2
+
+void prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v, int how);
 
 void prop_set_float_clipping_range(prop_t *p, float min, float max);
 
@@ -188,7 +203,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
 
-#define prop_set_float(p, v) prop_set_float_ex(p, NULL, v)
+#define prop_set_float(p, v) prop_set_float_ex(p, NULL, v, 0)
 
 #define prop_add_float(p, v) prop_add_float_ex(p, NULL, v)
 
@@ -206,8 +221,9 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
 
-int prop_get_string(prop_t *p, char *buf, size_t bufsize)
-     __attribute__ ((warn_unused_result));
+rstr_t *prop_get_string(prop_t *p);
+
+char **prop_get_name_of_childs(prop_t *p);
 
 #ifdef PROP_DEBUG
 
@@ -251,9 +267,13 @@ void prop_unparent_ex(prop_t *p, prop_sub_t *skipme);
 
 void prop_unparent_childs(prop_t *p);
 
-void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard);
+#define PROP_LINK_NORMAL 0
+#define PROP_LINK_XREFED 1
+#define PROP_LINK_XREFED_IF_ORPHANED 2
 
-#define prop_link(src, dst) prop_link_ex(src, dst, NULL, 0)
+void prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int how);
+
+#define prop_link(src, dst) prop_link_ex(src, dst, NULL, PROP_LINK_NORMAL)
 
 void prop_unlink_ex(prop_t *p, prop_sub_t *skipme);
 
@@ -302,8 +322,7 @@ void prop_notify_dispatch(struct prop_notify_queue *q);
 
 void prop_courier_stop(prop_courier_t *pc);
 
-prop_t *prop_get_by_names(prop_t *parent, ...) 
-     __attribute__((__sentinel__(0)));
+prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
 
 htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 

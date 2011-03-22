@@ -1,4 +1,4 @@
-#import "skin://buttons/nav.view"
+#import "skin://nav.skin"
 
 $view.canSlideShow = $page.model.contents == "images";
 $view.canCoverFlow = ($page.model.contents == "images" ||

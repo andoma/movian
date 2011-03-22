@@ -160,10 +160,11 @@ void video_decoder_stop(video_decoder_t *gv);
 
 void video_decoder_destroy(video_decoder_t *gv);
 
-void video_deliver_frame(video_decoder_t *vd, media_pipe_t *mp, media_buf_t *mb,
+void video_deliver_frame(video_decoder_t *vd,
+			 media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 			 AVCodecContext *ctx, AVFrame *frame,
 			 int64_t tim, int64_t pts, int64_t dts,
-			 int duration, int epoch);
+			 int duration, int epoch, int decode_time);
 
 
 /**

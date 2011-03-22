@@ -34,6 +34,7 @@
 #include "htsmsg_store.h"
 
 extern char *showtime_settings_path;
+static int rename_cant_overwrite;
 
 /**
  *
@@ -77,7 +78,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
       snprintf(fullpath, sizeof(fullpath), "%s/%s", showtime_settings_path, path);
 
       if(stat(fullpath, &st) && mkdir(fullpath, 0700)) {
-	TRACE(TRACE_ERROR, "settings", "Unable to create dir \"%s\": %s",
+	TRACE(TRACE_ERROR, "Settings", "Unable to create dir \"%s\": %s",
 	       fullpath, strerror(errno));
 	return;
       }
@@ -85,10 +86,14 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
     }
   }
 
-  snprintf(fullpath, sizeof(fullpath), "%s/%s.tmp", showtime_settings_path, path);
+ retry:
 
-  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_RDWR, 0700)) < 0) {
-    TRACE(TRACE_ERROR, "settings", "Unable to create \"%s\" - %s",
+  snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
+	   showtime_settings_path, path, 
+	   rename_cant_overwrite ? "" : ".tmp");
+
+  if((fd = open(fullpath, O_CREAT | O_TRUNC | O_WRONLY, 0700)) < 0) {
+    TRACE(TRACE_ERROR, "Settings", "Unable to create \"%s\" - %s",
 	    fullpath, strerror(errno));
     return;
   }
@@ -97,26 +102,44 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
 
   htsbuf_queue_init(&hq, 0);
   htsmsg_json_serialize(record, &hq, 1);
- 
-  TAILQ_FOREACH(hd, &hq.hq_q, hd_link)
+
+  int bytes = 0;
+
+  TAILQ_FOREACH(hd, &hq.hq_q, hd_link) {
     if(write(fd, hd->hd_data + hd->hd_data_off, hd->hd_data_len) !=
        hd->hd_data_len) {
-      TRACE(TRACE_ERROR, "settings", "Failed to write file \"%s\" - %s",
+      TRACE(TRACE_ERROR, "Settings", "Failed to write file \"%s\" - %s",
 	      fullpath, strerror(errno));
       ok = 0;
       break;
     }
-
+    bytes += hd->hd_data_len;
+  }
+  htsbuf_queue_flush(&hq);
   close(fd);
+
+  if(!ok) {
+    unlink(fullpath);
+    return;
+  }
 
   snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path, path);
 
-  if(ok)
-    rename(fullpath, fullpath2);
-  else
-    unlink(fullpath);
-	   
-  htsbuf_queue_flush(&hq);
+  if(!rename_cant_overwrite && rename(fullpath, fullpath2)) {
+
+    if(errno == EEXIST) {
+      TRACE(TRACE_ERROR, "Settings", 
+	    "Seems like rename() can not overwrite, retrying");
+      rename_cant_overwrite = 1;
+      goto retry;
+    }
+
+    TRACE(TRACE_ERROR, "Settings", "Failed to rename \"%s\" -> \"%s\" - %s",
+	  fullpath, fullpath2, strerror(errno));
+  } else {
+    TRACE(TRACE_DEBUG, "Settings", "Wrote %d bytes to \"%s\"",
+	  bytes, fullpath2);
+  }
 }
 
 /**
@@ -131,21 +154,30 @@ htsmsg_store_load_one(const char *filename)
   htsmsg_t *r;
   int n;
 
-  if(stat(filename, &st) < 0)
+  if(stat(filename, &st) < 0) {
+    TRACE(TRACE_DEBUG, "Settings", 
+	  "Trying to load %s -- %s", filename, strerror(errno));
     return NULL;
-
-  if((fd = open(filename, O_RDONLY)) < 0)
+  }
+  if((fd = open(filename, O_RDONLY, 0)) < 0) {
+    TRACE(TRACE_ERROR, "Settings", 
+	  "Unable to open %s -- %s", filename, strerror(errno));
     return NULL;
+  }
 
   mem = malloc(st.st_size + 1);
   mem[st.st_size] = 0;
 
   n = read(fd, mem, st.st_size);
+
   close(fd);
   if(n == st.st_size)
     r = htsmsg_json_deserialize(mem);
   else
     r = NULL;
+
+  TRACE(TRACE_DEBUG, "Settings", 
+	"Read %s -- %d bytes. File %s", filename, n, r ? "OK" : "corrupted");
 
   free(mem);
 

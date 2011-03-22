@@ -174,6 +174,7 @@ HTTP_get(struct HTTP_ctx *http, const char *url, HTTP_read_callback *cb)
 #endif
   RTMPSockBuf_Send(&sb, sb.sb_buf, i);
 
+#ifndef __PPU__
   /* set timeout */
 #define HTTP_TIMEOUT	5
   {
@@ -185,7 +186,7 @@ HTTP_get(struct HTTP_ctx *http, const char *url, HTTP_read_callback *cb)
 	    __FUNCTION__, HTTP_TIMEOUT);
       }
   }
-
+#endif
   sb.sb_size = 0;
   sb.sb_timedout = FALSE;
   if (RTMPSockBuf_Fill(&sb) < 1)

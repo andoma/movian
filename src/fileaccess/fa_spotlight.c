@@ -181,7 +181,7 @@ spotlight_searcher(void *aux)
     item = (MDItemRef)MDQueryGetResultAtIndex(query, query_index);
     query_index++;
     
-    metadata = prop_create(NULL, "metadata");
+    metadata = prop_create_root("metadata");
     
     pathRef = (CFStringRef)MDItemCopyAttribute(item, kMDItemPath);
     
@@ -217,7 +217,7 @@ spotlight_searcher(void *aux)
     if((type = content2type(ctype)) == NULL)
       continue; /* Unlikely.. */
 
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     if(prop_set_parent(metadata, p))
       prop_destroy(metadata);
@@ -258,10 +258,10 @@ spotlight_search(prop_t *model, const char *query)
   
   fas->fas_query = s = strdup(query);
   fas->fas_run = 1;
-  fas->fas_nodes = prop_create(model, "nodes");
-  prop_ref_inc(fas->fas_nodes);
+  fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
   
-  hts_thread_create_detached("spotlight search", spotlight_searcher, fas);
+  hts_thread_create_detached("spotlight search", spotlight_searcher, fas,
+			     THREAD_PRIO_NORMAL);
 }
 
 static int

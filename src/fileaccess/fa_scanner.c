@@ -32,8 +32,6 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 
-static int do_album_view = 0;
-
 typedef struct scanner {
   int s_refcount;
 
@@ -42,6 +40,7 @@ typedef struct scanner {
 
   prop_t *s_nodes;
   prop_t *s_contents;
+  prop_t *s_loading;
   prop_t *s_root;
 
   int s_stop;
@@ -65,8 +64,13 @@ set_type(prop_t *proproot, unsigned int type)
 {
   const char *typestr;
 
-  if ((typestr = content2type(type)))
-    prop_set_string(prop_create(proproot, "type"), typestr);
+  if((typestr = content2type(type))) {
+    prop_t *p = prop_create_check(proproot, "type");
+    if(p != NULL) {
+      prop_set_string(p, typestr);
+      prop_ref_dec(p);
+    }
+  }
 }
 
 
@@ -92,7 +96,7 @@ make_filename(const char *filename)
 static void
 make_prop(fa_dir_entry_t *fde)
 {
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *metadata;
   rstr_t *fname;
 
@@ -155,8 +159,29 @@ static struct strtab postfixtab[] = {
   { "sid",             CONTENT_ALBUM },
 
   { "pdf",             CONTENT_UNKNOWN },
+  { "nfo",             CONTENT_UNKNOWN },
+  { "gz",              CONTENT_UNKNOWN },
+  { "txt",             CONTENT_UNKNOWN },
 };
 
+
+/**
+ *
+ */
+static int
+type_from_filename(const char *filename)
+{
+  int type;
+  const char *str;
+
+  if((str = strrchr(filename, '.')) == NULL)
+    return CONTENT_FILE;
+  str++;
+  
+  if((type = str2val(str, postfixtab)) == -1)
+    return CONTENT_FILE;
+  return type;
+}
 
 /**
  *
@@ -165,8 +190,6 @@ static void
 quick_analyzer(fa_dir_t *fd, prop_t *contents)
 {
   fa_dir_entry_t *fde;
-  int type;
-  const char *str;
   int images = 0;
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
@@ -177,17 +200,12 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
     if(fde->fde_type == CONTENT_DIR)
       continue;
     
-    if((str = strrchr(fde->fde_filename, '.')) == NULL)
-      continue;
-    str++;
-    
-    if((type = str2val(str, postfixtab)) == -1)
-      continue;
+    if(fde->fde_type == CONTENT_FILE)
+      fde->fde_type = type_from_filename(fde->fde_filename);
 
-    fde->fde_type = type;
     fde->fde_probestatus = FDE_PROBE_FILENAME;
 
-    if(type == CONTENT_IMAGE)
+    if(fde->fde_type == CONTENT_IMAGE)
       images++;
   }
 
@@ -200,160 +218,44 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
  *
  */
 static void
-deep_analyzer(fa_dir_t *fd, prop_t *contents, prop_t *root, int *stop)
+deep_analyzer(scanner_t *s)
 {
-  int type;
-  prop_t *metadata, *p;
-
-  int album_score = 0;
-  int different_artists = 0;
-  int images = 0;
-  int unknown = 0;
-  char album_name[128] = {0};
-  char artist_name[128] = {0};
-  char album_art[1024] = {0};
-  int64_t album_art_score = 0;  // Bigger is better
+  prop_t *metadata;
   char buf[URL_MAX];
-  int trackidx;
   fa_dir_entry_t *fde;
 
   /* Empty */
-  if(fd->fd_count == 0) {
-    prop_set_string(contents, "empty");
+  if(s->s_fd->fd_count == 0) {
+    prop_set_string(s->s_contents, "empty");
     return;
   }
 
   /* Scan all entries */
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
+
+    if(s->s_stop)
+      break;
 
     if(fde->fde_probestatus == FDE_PROBE_DEEP)
       continue;
 
     fde->fde_probestatus = FDE_PROBE_DEEP;
 
-    metadata = fde->fde_prop ? prop_create(fde->fde_prop, "metadata") : NULL;
-
-    if(metadata != NULL) {
-
-      if(stop && *stop)
-	return;
-
-      type = fde->fde_type;
+    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
     
-      if(fde->fde_type == CONTENT_DIR) {
-	type = fa_probe_dir(metadata, fde->fde_url);
-      } else {
-	type = fa_probe(metadata, fde->fde_url, NULL, 0, buf, sizeof(buf),
-			fde->fde_statdone ? &fde->fde_stat : NULL);
+    if(fde->fde_type == CONTENT_DIR) {
+      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
+    } else {
+      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
+			       buf, sizeof(buf),
+			       fde->fde_statdone ? &fde->fde_stat : NULL);
 
-	if(type == CONTENT_UNKNOWN)
-	  TRACE(TRACE_DEBUG, "BROWSE",
-		"File \"%s\" not recognized: %s", fde->fde_url, buf);
-      }
-      set_type(fde->fde_prop, type);
-      fde->fde_type = type;
+      if(fde->fde_type == CONTENT_UNKNOWN)
+	TRACE(TRACE_DEBUG, "BROWSE",
+	      "File \"%s\" not recognized: %s", fde->fde_url, buf);
     }
-
-    switch(fde->fde_type) {
-
-    case CONTENT_IMAGE:
-      images++;
-
-      if(!strncasecmp(fde->fde_filename, "albumart", 8) ||
-	 !strncasecmp(fde->fde_filename, "folder.", 7)) {
-
-	if(fde->fde_statdone || 
-	   (metadata != NULL && !fa_dir_entry_stat(fde))) {
-	  album_art_score = fde->fde_stat.fs_size;
-	  snprintf(album_art, sizeof(album_art), "%s", fde->fde_url);
-	}
-      }
-      break;
-
-    case CONTENT_UNKNOWN:
-      unknown++;
-      if(fde->fde_prop != NULL)
-	prop_destroy(fde->fde_prop);
-      break;
-      
-    case CONTENT_AUDIO:
-      if(metadata == NULL)
-	break;
-
-      if((p = prop_get_by_names(metadata, "album", NULL)) == NULL ||
-	 prop_get_string(p, buf, sizeof(buf))) {
-	album_score--;
-	break;
-      }
-
-      if(album_name[0] == 0) {
-	snprintf(album_name, sizeof(album_name), "%s", buf);
-	album_score++;
-      } else if(!strcasecmp(album_name, buf)) {
-	album_score++;
-      } else {
-	album_score--;
-	break;
-      }
-      
-      if((p = prop_get_by_names(metadata, "artist", NULL)) == NULL ||
-	 prop_get_string(p, buf, sizeof(buf)))
-	break;
-
-      if(strstr(artist_name, buf))
-	break;
-
-      different_artists++;
-      snprintf(artist_name + strlen(artist_name),
-	       sizeof(artist_name) - strlen(artist_name),
-	       "%s%s", artist_name[0] ? ", " : "", buf);
-      break;
-
-    default:
-      album_score = INT32_MIN;
-      break;
-
-    }
-  }
-
-  if(do_album_view && album_score > 0 && 
-     (different_artists < 2 || different_artists < album_score / 2)) {
-      
-    /* It is an album */
-    prop_set_string(contents, "albumTracks");
-
-    if(root != NULL) {
-      prop_set_string(prop_create(root, "album_name"), album_name);
-
-      if(artist_name[0])
-	prop_set_string(prop_create(root, "artist_name"), artist_name);
-  
-      if(album_art[0])
-	prop_set_string(prop_create(root, "album_art"), album_art);
-    }
-
-    trackidx = 1;
-
-    /* Remove everything that is not audio */
-    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-      if(fde->fde_type != CONTENT_AUDIO) {
-	if(fde->fde_prop != NULL)
-	  prop_destroy(fde->fde_prop);
-
-      } else {
-	metadata = prop_create(fde->fde_prop, "metadata");
-	prop_set_int(prop_create(metadata, "trackindex"), trackidx);
-	trackidx++;
-
-	if(album_art[0])
-	  prop_set_string(prop_create(metadata, "album_art"), 
-			  album_art);
-      }
-    }
-  } else if(fd->fd_count == unknown) {
-    prop_set_string(contents, "empty");
-  } else if(images * 4 > fd->fd_count * 3) {
-    prop_set_string(contents, "images");
+    prop_ref_dec(metadata);
+    set_type(fde->fde_prop, fde->fde_type);
   }
 }
 
@@ -392,22 +294,31 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
   prop_t *metadata;
   int r;
 
+  if(fde->fde_type == CONTENT_FILE)
+    fde->fde_type = type_from_filename(fde->fde_filename);
+
   make_prop(fde);
 
-  metadata = prop_create(fde->fde_prop, "metadata");
+  if(fde->fde_type != CONTENT_UNKNOWN) {
+    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    if(fde->fde_type == CONTENT_DIR) {
+      r = fa_probe_dir(metadata, fde->fde_url);
+    } else {
+      r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
+		   fde->fde_statdone ? &fde->fde_stat : NULL);
+    }
+    prop_ref_dec(metadata);
 
-  if(fde->fde_type == CONTENT_DIR) {
-    r = fa_probe_dir(metadata, fde->fde_url);
-  } else {
-    r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
-		 fde->fde_statdone ? &fde->fde_stat : NULL);
+    set_type(fde->fde_prop, r);
+    fde->fde_type = r;
   }
 
-  set_type(fde->fde_prop, r);
-  fde->fde_type = r;
-
-  if(prop_set_parent(fde->fde_prop, s->s_nodes))
-    prop_destroy(fde->fde_prop);
+  if(fde->fde_type != CONTENT_UNKNOWN)
+    if(!prop_set_parent(fde->fde_prop, s->s_nodes))
+      return; // OK
+  
+  prop_destroy(fde->fde_prop);
+  fde->fde_prop = NULL;
 }
 
 /**
@@ -448,83 +359,50 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
     break;
   }
-  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
+  deep_analyzer(s);
 }
 
 
 /**
- * Very simple and naive diff
+ * Very simple and O^2 diff
+ *
+ * We should also check mtime and trig change if needed
  */
 static void
 rescan(scanner_t *s)
 {
-#if 0
-  fa_dir_t *fd2;
-  fa_dir_entry_t *a, *b, *x, *y;
-  int change = 0;
+  fa_dir_t *fd;
+  fa_dir_entry_t *a, *b, *n;
+  int changed = 0;
 
-  if((fd2 = fa_scandir(s->s_url, NULL, 0)) == NULL)
+  if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL)
     return; 
 
-  fa_dir_sort(fd2);
+  for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
+    n = TAILQ_NEXT(a, fde_link);
+    TAILQ_FOREACH(b, &fd->fd_entries, fde_link)
+      if(!strcmp(a->fde_url, b->fde_url))
+	break;
 
-  a = TAILQ_FIRST(&s->s_fd->fd_entries);
-  x = TAILQ_FIRST(&fd2->fd_entries);
-  
-  while(a != NULL && x != NULL) {
-    
-    if(!strcmp(a->fde_url, x->fde_url)) {
-      a = TAILQ_NEXT(a, fde_link);
-      x = TAILQ_NEXT(x, fde_link);
-      continue;
-    }
-    
-    b =     TAILQ_NEXT(a, fde_link);
-    y =     TAILQ_NEXT(x, fde_link);
-
-    if(y != NULL && !strcmp(a->fde_url, y->fde_url)) {
-      TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
-      TAILQ_INSERT_BEFORE(a, x, fde_link);
-      s->s_fd->fd_count++;
-      scanner_entry_setup(s, x);
-      change = 1;
-      a = TAILQ_NEXT(a, fde_link);
-      x = TAILQ_NEXT(y, fde_link);
-      continue;
-    }
-
-    if(b != NULL && !strcmp(b->fde_url, x->fde_url)) {
+    if(b != NULL) {
+      // Exists in old and new set, all fine
+      fa_dir_entry_free(fd, b);
+    } else {
+      changed = 1;
+      // Exists in old but not in new
       scanner_entry_destroy(s, a);
-      change = 1;
-      a = b;
-      continue;
     }
-
-    a = b;
-    x = y;
   }
 
-  for(; x != NULL; x = y) {
-    y = TAILQ_NEXT(x, fde_link);
-    TAILQ_REMOVE(&fd2->fd_entries, x, fde_link);
-    TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, x, fde_link);
-    s->s_fd->fd_count++;
-    scanner_entry_setup(s, x);
-    change = 1;
+  while((b = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
+    TAILQ_REMOVE(&fd->fd_entries, b, fde_link);
+    TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, b, fde_link);
+    scanner_entry_setup(s, b);
+    changed = 1;
   }
 
-  for(; a != NULL; a = b) {
-    b = TAILQ_NEXT(a, fde_link);
-    scanner_entry_destroy(s, a);
-    change = 1;
-  }
-
-  fa_dir_free(fd2);
-  fa_dir_sort(s->s_fd);
-
-  if(change)
-    deep_analyzer(s->s_fd, s->s_viewprop, s->s_root, &s->s_stop);
-#endif
+  if(changed)
+    deep_analyzer(s);
 }
 
 
@@ -544,8 +422,8 @@ doscan(scanner_t *s)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
-    // TODO: reference leak?  prop_vec_append also adds 
-    pv = prop_vec_append(pv, prop_ref_inc(fde->fde_prop));
+    if(fde->fde_type != CONTENT_UNKNOWN)
+      pv = prop_vec_append(pv, fde->fde_prop);
   }
 
   prop_set_parent_vector(pv, s->s_nodes);
@@ -560,9 +438,9 @@ doscan(scanner_t *s)
     }
   }
 
-  prop_set_int(prop_create(s->s_root, "loading"), 0);
+  prop_set_int(s->s_loading, 0);
 
-  deep_analyzer(s->s_fd, s->s_contents, s->s_root, &s->s_stop);
+  deep_analyzer(s);
 
   if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
     return;
@@ -595,7 +473,7 @@ scanner(void *aux)
     fa_dir_free(s->s_fd);
   }
 
-  prop_set_int(prop_create(s->s_root, "loading"), 0);
+  prop_set_int(s->s_loading, 0);
 
   free(s->s_url);
   free(s->s_playme);
@@ -603,6 +481,7 @@ scanner(void *aux)
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
   prop_ref_dec(s->s_contents);
+  prop_ref_dec(s->s_loading);
 
   scanner_unref(s);
   return NULL;
@@ -658,10 +537,11 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   s->s_root = prop_ref_inc(model);
   s->s_nodes = prop_ref_inc(source);
   s->s_contents = prop_ref_inc(prop_create(model, "contents"));
+  s->s_loading = prop_ref_inc(prop_create(model, "loading"));
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 
-  hts_thread_create_detached("fa scanner", scanner, s);
+  hts_thread_create_detached("fa scanner", scanner, s, THREAD_PRIO_LOW);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		 PROP_TAG_CALLBACK, scanner_stop, s,

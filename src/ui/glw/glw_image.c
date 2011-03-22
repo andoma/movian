@@ -40,6 +40,17 @@ typedef struct glw_image {
   int16_t gi_padding_right;
   int16_t gi_padding_top;
   int16_t gi_padding_bottom;
+
+  int16_t gi_margin_left;
+  int16_t gi_margin_right;
+  int16_t gi_margin_top;
+  int16_t gi_margin_bottom;
+
+  // gi_box_ is (gi_border_ + gi_padding_ + gi_margin_)
+  int16_t gi_box_left;
+  int16_t gi_box_right;
+  int16_t gi_box_top;
+  int16_t gi_box_bottom;
  
   int gi_bitmap_flags;
 
@@ -49,10 +60,9 @@ typedef struct glw_image {
 #define GI_MODE_BORDER_SCALING   1
 #define GI_MODE_REPEATED_TEXTURE 2
 #define GI_MODE_ALPHA_EDGES      3
+#define GI_MODE_BORDER_ONLY_SCALING  4
 
   uint8_t gi_update;
-
-  uint8_t gi_frozen;
 
   uint8_t gi_alpha_edge;
 
@@ -138,11 +148,8 @@ render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
 
   rc0 = *rc;
   
-  glw_reposition(&rc0,
-		                 gi->gi_border_left   + gi->gi_padding_left,
-		 rc->rc_height - gi->gi_border_top    - gi->gi_padding_top,
-		 rc->rc_width  - gi->gi_border_right  - gi->gi_padding_right,
-		                 gi->gi_border_bottom + gi->gi_padding_bottom);
+  glw_reposition(&rc0, gi->gi_box_left, rc->rc_height - gi->gi_box_top,
+		 rc->rc_width  - gi->gi_box_right, gi->gi_box_bottom);
 
   rc0.rc_alpha *= gi->w.glw_alpha;
   glw_render0(c, &rc0);
@@ -218,13 +225,13 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       }
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_ADDITIVE);
+	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
 			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_NORMAL);
+	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
     }
 
     render_child_simple(w, &rc0);
@@ -237,13 +244,13 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01f) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_ADDITIVE);
+	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
 			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
-	glw_blendmode(GLW_BLEND_NORMAL);
+	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
     }
 
     render_child_autocentered(gi, rc);
@@ -263,20 +270,22 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   int x, y, i = 0;
 
   if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0f;
     tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
     tex[2][0] = glt->glt_s - (float)gi->gi_border_right / glt->glt_xs;
-    tex[3][0] = glt->glt_s;
+    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
+    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_s : tex[2][0];
 
     tex[0][1] = 0.0f;
     tex[1][1] = 0.0f + (float)gi->gi_border_top    / glt->glt_ys;
     tex[2][1] = glt->glt_t - (float)gi->gi_border_bottom / glt->glt_ys;
     tex[3][1] = glt->glt_t;
+
   } else {
-    tex[0][0] = 0.0f;
+
     tex[1][0] = gi->gi_border_left;
     tex[2][0] = glt->glt_xs - gi->gi_border_right;
-    tex[3][0] = glt->glt_xs;
+    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT  ? 0.0f : tex[1][0];
+    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_xs : tex[2][0];
 
     tex[0][1] = 0.0f;
     tex[1][1] = gi->gi_border_top;
@@ -285,15 +294,15 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
 
-  vex[0][0] = -1.0f;
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_border_left  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_right / rc->rc_width, 0.0f);
-  vex[3][0] = 1.0f;
+  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left)  / rc->rc_width, 0.0f);
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_left + gi->gi_margin_left)  / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_right + gi->gi_margin_right) / rc->rc_width, 0.0f);
+  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right) / rc->rc_width, 0.0f);
     
-  vex[0][1] = 1.0f;
-  vex[1][1] = GLW_MAX( 1.0f - 2.0f * gi->gi_border_top  / rc->rc_height, 0.0f);
-  vex[2][1] = GLW_MIN(-1.0f + 2.0f *gi->gi_border_bottom / rc->rc_height, 0.0f);
-  vex[3][1] = -1.0f;
+  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top)  / rc->rc_height, 0.0f);
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_top + gi->gi_margin_top)  / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_bottom + gi->gi_margin_bottom) / rc->rc_height, 0.0f);
+  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_bottom) / rc->rc_height, 0.0f);
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -448,11 +457,9 @@ glw_image_update_constraints(glw_image_t *gi)
     if(c != NULL) {
       glw_set_constraints(&gi->w, 
 			  c->glw_req_size_x +
-			  gi->gi_border_left + gi->gi_border_right +
-			  gi->gi_padding_left + gi->gi_padding_right,
+			  gi->gi_box_left + gi->gi_box_right,
 			  c->glw_req_size_y + 
-			  gi->gi_border_top + gi->gi_border_bottom + 
-			  gi->gi_padding_top + gi->gi_padding_bottom,
+			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
 			  c->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
 
@@ -491,7 +498,7 @@ glw_image_update_constraints(glw_image_t *gi)
  * |\ | /| /|
  * | \|/ |/ |
  * c--d--e--f
-b */
+ */
 
 static uint16_t borderobject[] = {
   4, 1, 0,
@@ -504,6 +511,27 @@ static uint16_t borderobject[] = {
   8, 9, 5,
   9, 6, 5,
   9, 10, 6,
+  10, 7, 6,
+  10, 11, 7,
+  12, 13, 8,
+  8, 13, 9,
+  13, 10, 9,
+  13, 14, 10,
+  14, 11, 10,
+  14, 15, 11,
+};
+
+static uint16_t borderonlyobject[] = {
+  4, 1, 0,
+  4, 5, 1,
+  5, 2, 1,
+  5, 6, 2,
+  6, 7, 2,
+  2, 7, 3,
+  8, 5, 4,
+  8, 9, 5,
+  //  9, 6, 5,
+  //  9, 10, 6,
   10, 7, 6,
   10, 11, 7,
   12, 13, 8,
@@ -535,32 +563,44 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_pending != NULL)
       glw_tex_deref(w->glw_root, gi->gi_pending);
     
+    if(gi->gi_pending_filename[0] == 0) {
+      gi->gi_pending = NULL;
+
+      if(gi->gi_current != NULL) {
+	glw_tex_deref(w->glw_root, gi->gi_current);
+	gi->gi_current = NULL;
+      }
+
+      gi->gi_update = 1;
+
+    } else {
+
     
-    if(w->glw_class == &glw_repeatedimage)
-      flags |= GLW_TEX_REPEAT;
+      if(w->glw_class == &glw_repeatedimage)
+	flags |= GLW_TEX_REPEAT;
 
 
-    if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
+      if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
 
-      if(rc->rc_width < rc->rc_height) {
-	xs = rc->rc_width;
+	if(rc->rc_width < rc->rc_height) {
+	  xs = rc->rc_width;
+	} else {
+	  ys = rc->rc_height;
+	}
+      }
+
+      if(xs && ys) {
+
+	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
+					flags, xs, ys);
+
+	free(gi->gi_pending_filename);
+	gi->gi_pending_filename = NULL;
       } else {
-	ys = rc->rc_height;
+	gi->gi_pending = NULL;
       }
     }
-
-    if(gi->gi_pending_filename != NULL && xs && ys) {
-
-      gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
-				      flags, xs, ys);
-
-      free(gi->gi_pending_filename);
-      gi->gi_pending_filename = NULL;
-    } else {
-      gi->gi_pending = NULL;
-    }
   }
-
 
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
@@ -595,7 +635,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       gi->gi_was_valid = 1;
     }
 
-    if(gi->gi_update && !gi->gi_frozen) {
+    if(gi->gi_update) {
       gi->gi_update = 0;
 
       glw_renderer_free(&gi->gi_gr);
@@ -618,6 +658,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_renderer_init(&gi->gi_gr, 16, 18, borderobject);
 	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
+      case GI_MODE_BORDER_ONLY_SCALING:
+	glw_renderer_init(&gi->gi_gr, 16, 16, borderonlyobject);
+	glw_image_layout_tesselated(gr, rc, gi, glt);
+	break;
       default:
 	abort();
       }
@@ -634,6 +678,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       case GI_MODE_NORMAL:
 	break;
       case GI_MODE_BORDER_SCALING:
+      case GI_MODE_BORDER_ONLY_SCALING:
 	glw_image_layout_tesselated(gr, rc, gi, glt);
 	break;
       case GI_MODE_REPEATED_TEXTURE:
@@ -674,13 +719,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
     
-    rc0.rc_width -=
-      gi->gi_border_left +  gi->gi_border_right + 
-      gi->gi_padding_left + gi->gi_padding_right;
-
-    rc0.rc_height -=
-      gi->gi_border_top +  gi->gi_border_bottom + 
-      gi->gi_padding_top + gi->gi_padding_bottom;
+    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right;
+    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom;
 
     if(rc0.rc_height >= 0 && rc0.rc_width >= 0)
       glw_layout0(c, &rc0);
@@ -746,6 +786,8 @@ glw_image_ctor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
+  gi->gi_bitmap_flags = GLW_IMAGE_BORDER_LEFT | GLW_IMAGE_BORDER_RIGHT;
+
   gi->gi_alpha_self = 1;
   gi->gi_color.r = 1.0;
   gi->gi_color.g = 1.0;
@@ -776,15 +818,33 @@ glw_image_set_rgb(glw_t *w, const float *rgb)
  *
  */
 static void
+update_box(glw_image_t *gi)
+{
+  gi->gi_box_left =
+    gi->gi_margin_left + gi->gi_border_left + gi->gi_padding_left;
+  gi->gi_box_top =
+    gi->gi_margin_top + gi->gi_border_top + gi->gi_padding_top;
+  gi->gi_box_right =
+    gi->gi_margin_right + gi->gi_border_right + gi->gi_padding_right;
+  gi->gi_box_bottom =
+    gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
+}
+
+/**
+ *
+ */
+static void
 set_border(glw_t *w, const float *v)
 {
   glw_image_t *gi = (void *)w;
 
-  gi->gi_mode = GI_MODE_BORDER_SCALING;
+  if(gi->gi_mode != GI_MODE_BORDER_ONLY_SCALING)
+    gi->gi_mode = GI_MODE_BORDER_SCALING;
   gi->gi_border_left   = v[0];
   gi->gi_border_top    = v[1];
   gi->gi_border_right  = v[2];
   gi->gi_border_bottom = v[3];
+  update_box(gi);
   gi->gi_update = 1;
   glw_image_update_constraints(gi);
 }
@@ -802,6 +862,25 @@ set_padding(glw_t *w, const float *v)
   gi->gi_padding_top    = v[1];
   gi->gi_padding_right  = v[2];
   gi->gi_padding_bottom = v[3];
+  update_box(gi);
+  gi->gi_update = 1;
+  glw_image_update_constraints(gi);
+}
+
+
+/**
+ *
+ */
+static void
+set_margin(glw_t *w, const float *v)
+{
+  glw_image_t *gi = (void *)w;
+
+  gi->gi_margin_left   = v[0];
+  gi->gi_margin_top    = v[1];
+  gi->gi_margin_right  = v[2];
+  gi->gi_margin_bottom = v[3];
+  update_box(gi);
   gi->gi_update = 1;
   glw_image_update_constraints(gi);
 }
@@ -816,6 +895,40 @@ mod_image_flags(glw_t *w, int set, int clr)
   glw_image_t *gi = (void *)w;
   gi->gi_bitmap_flags = (gi->gi_bitmap_flags | set) & ~clr;
   gi->gi_update = 1;
+
+  if(set & GLW_IMAGE_BORDER_ONLY)
+    gi->gi_mode = GI_MODE_BORDER_ONLY_SCALING;
+  if(clr & GLW_IMAGE_BORDER_ONLY)
+    gi->gi_mode = GI_MODE_BORDER_SCALING;
+}
+
+
+/**
+ *
+ */
+static void
+set_source(glw_t *w, const char *filename)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  
+  const char *curname;
+
+  if(gi->gi_pending_filename != NULL)
+    curname = gi->gi_pending_filename;
+  else if(gi->gi_pending != NULL) 
+    curname = gi->gi_pending->glt_filename;
+  else if(gi->gi_current != NULL) 
+    curname = gi->gi_current->glt_filename;
+  else 
+    curname = NULL;
+  
+  if(curname != NULL && filename != NULL && !strcmp(filename, curname))
+    return;
+  
+  if(gi->gi_pending_filename != NULL)
+    free(gi->gi_pending_filename);
+  
+  gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
 }
 
 
@@ -825,18 +938,13 @@ mod_image_flags(glw_t *w, int set, int clr)
 static void 
 glw_image_set(glw_t *w, va_list ap)
 {
-  glw_image_t *gi = (void *)w;
+  glw_image_t *gi = (glw_image_t *)w;
   glw_attribute_t attrib;
-  const char *filename = NULL;
   glw_root_t *gr = w->glw_root;
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_FREEZE:
-      gi->gi_frozen = va_arg(ap, int);
-      break;
-
     case GLW_ATTRIB_ANGLE:
       gi->gi_angle = va_arg(ap, double);
       break;
@@ -850,29 +958,6 @@ glw_image_set(glw_t *w, va_list ap)
       compute_colors(gi);
       break;
       
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
-
-      char *curname;
-
-      if(gi->gi_pending_filename != NULL)
-	curname = gi->gi_pending_filename;
-      else if(gi->gi_pending != NULL) 
-	curname = gi->gi_pending->glt_filename;
-      else if(gi->gi_current != NULL) 
-	curname = gi->gi_current->glt_filename;
-      else 
-	curname = NULL;
-
-      if(curname != NULL && filename != NULL && !strcmp(filename, curname))
-	break;
-
-      if(gi->gi_pending_filename != NULL)
-	free(gi->gi_pending_filename);
-
-      gi->gi_pending_filename = filename ? strdup(filename) : NULL;
-      break;
-
     case GLW_ATTRIB_PIXMAP:
       if(gi->gi_pending != NULL)
 	glw_tex_deref(w->glw_root, gi->gi_pending);
@@ -941,6 +1026,7 @@ static glw_class_t glw_image = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -961,6 +1047,7 @@ static glw_class_t glw_icon = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -981,7 +1068,9 @@ static glw_class_t glw_backdrop = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_set_border = set_border,
+  .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1003,6 +1092,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

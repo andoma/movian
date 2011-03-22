@@ -77,6 +77,7 @@ glw_view_token_free(token_t *t)
   case TOKEN_END:
   case TOKEN_HASH:
   case TOKEN_ASSIGNMENT:
+  case TOKEN_COND_ASSIGNMENT:
   case TOKEN_END_OF_EXPR:
   case TOKEN_SEPARATOR:
   case TOKEN_BLOCK_OPEN:
@@ -197,6 +198,7 @@ glw_view_token_copy(token_t *src)
   case TOKEN_END:
   case TOKEN_HASH:
   case TOKEN_ASSIGNMENT:
+  case TOKEN_COND_ASSIGNMENT:
   case TOKEN_END_OF_EXPR:
   case TOKEN_SEPARATOR:
   case TOKEN_BLOCK_OPEN:

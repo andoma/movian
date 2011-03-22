@@ -57,8 +57,8 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   default:
     return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar",
-			    a->name);
+			   "Attribute '%s' expects a string or scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, const char *str) = a->fn;
@@ -109,8 +109,8 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   default:
     return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar",
-			    a->name);
+			   "Attribute '%s' expects a string or scalar, got %s",
+			   a->name, token2name(t));
   }
 
   if(ec->w->glw_class->gc_set_caption != NULL)
@@ -146,8 +146,8 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v = 0.0f;
     break;
   default:
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, float v) = a->fn;
@@ -165,7 +165,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_weight(glw_t *w, float v)
 {
-  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_WF);
+  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_W);
 }
 
 static void
@@ -203,8 +203,8 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v = 0;
     break;
   default:
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar",
-			    a->name);
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a scalar, got %s",
+			   a->name, token2name(t));
   }
 
   void (*fn)(struct glw *w, int v) = a->fn;
@@ -222,15 +222,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_width(glw_t *w, int v)
 {
-  glw_set_constraints(w, 
-		      v,
-		      w->glw_req_size_y, 
-		      0,
-		      GLW_CONSTRAINT_X | 
-		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
-		       w->glw_flags & GLW_CONSTRAINT_Y : 0),
-		      GLW_CONSTRAINT_CONF_XY);
-  
+  glw_set_constraints(w, v, 0, 0, GLW_CONSTRAINT_X, GLW_CONSTRAINT_CONF_X);
 }
 
 
@@ -240,15 +232,7 @@ set_width(glw_t *w, int v)
 static void
 set_height(glw_t *w, int v)
 {
-  glw_set_constraints(w, 
-		      w->glw_req_size_x, 
-		      v,
-		      0,
-		      GLW_CONSTRAINT_Y | 
-		      (w->glw_flags & GLW_CONSTRAINT_CONF_XY ?
-		       w->glw_flags & GLW_CONSTRAINT_X : 0),
-		      GLW_CONSTRAINT_CONF_XY);
-
+  glw_set_constraints(w, 0, v, 0, GLW_CONSTRAINT_Y, GLW_CONSTRAINT_CONF_Y);
 }
 
 
@@ -259,12 +243,42 @@ static int
 set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
 {
-  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 3)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3",
-			    a->name);
+  const float *vec3;
+  float v[3];
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 3:
+      vec3 = t->t_float_vector;
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = t->t_float;
+    vec3 = v;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = t->t_int;
+    vec3 = v;
+    break;
+  default:
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec3, got %s",
+			   a->name, token2name(t));
+  }
+
 
   void (*fn)(struct glw *w, const float *v3) = a->fn;
-  fn(ec->w, t->t_float_vector);
+  fn(ec->w, vec3);
   return 0;
 }
 
@@ -329,12 +343,49 @@ static int
 set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
 {
-  if(t->type != TOKEN_VECTOR_FLOAT || t->t_elements != 4)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4",
-			    a->name);
+  const float *vec4;
+  float v[4];
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 4:
+      vec4 = t->t_float_vector;
+      break;
+
+    case 2:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[0];
+      v[3] = t->t_float_vector[1];
+      vec4 = v;
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = v[3] = t->t_float;
+    vec4 = v;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = v[3] = t->t_int;
+    vec4 = v;
+    break;
+  default:
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
+			   a->name, token2name(t));
+  }
 
   void (*fn)(struct glw *w, const float *v4) = a->fn;
-  fn(ec->w, t->t_float_vector);
+  fn(ec->w, vec4);
   return 0;
 }
 
@@ -343,10 +394,10 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static void
-set_padding(glw_t *w, const float *xyz)
+set_padding(glw_t *w, const float *vec4)
 {
   if(w->glw_class->gc_set_padding != NULL)
-    w->glw_class->gc_set_padding(w, xyz);
+    w->glw_class->gc_set_padding(w, vec4);
 }
 
 
@@ -354,10 +405,21 @@ set_padding(glw_t *w, const float *xyz)
  *
  */
 static void
-set_border(glw_t *w, const float *xyz)
+set_border(glw_t *w, const float *vec4)
 {
   if(w->glw_class->gc_set_border != NULL)
-    w->glw_class->gc_set_border(w, xyz);
+    w->glw_class->gc_set_border(w, vec4);
+}
+
+
+/**
+ *
+ */
+static void
+set_margin(glw_t *w, const float *vec4)
+{
+  if(w->glw_class->gc_set_margin != NULL)
+    w->glw_class->gc_set_margin(w, vec4);
 }
 
 
@@ -483,7 +545,14 @@ mod_flags1(glw_t *w, int set, int clr)
 static void
 mod_flags2(glw_t *w, int set, int clr)
 {
-  w->glw_flags2 = (w->glw_flags2 | set) & ~clr;
+  set &= ~w->glw_flags2;
+  w->glw_flags2 |= set;
+
+  clr &= w->glw_flags2;
+  w->glw_flags2 &= ~clr;
+
+  if((set | clr) && w->glw_class->gc_mod_flags2 != NULL)
+    w->glw_class->gc_mod_flags2(w, set, clr);
 }
 
 
@@ -526,14 +595,18 @@ static int
 set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
+  glw_t *w = ec->w;
+
   switch(t->type) {
   case TOKEN_VOID:
-    glw_set(ec->w, GLW_ATTRIB_SOURCE, NULL, NULL);
+    if(w->glw_class->gc_set_source_str != NULL)
+      w->glw_class->gc_set_source_str(w, NULL);
     break;
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    glw_set(ec->w, GLW_ATTRIB_SOURCE, rstr_get(t->t_rstring), NULL);
+    if(w->glw_class->gc_set_source_str != NULL)
+      w->glw_class->gc_set_source_str(w, rstr_get(t->t_rstring));
     break;
 
   case TOKEN_PIXMAP:
@@ -556,9 +629,11 @@ static int
 set_args(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
-  if(t->type != TOKEN_PROPERTY_OWNER)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects block",
-			   a->name);
+  if(t->type != TOKEN_PROPERTY_OWNER &&
+     t->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, t,
+			   "Attribute '%s' expects a property, got %s",
+			   a->name, token2name(t));
 
   glw_set(ec->w, GLW_ATTRIB_ARGS, t->t_prop, NULL);
   return 0;
@@ -573,8 +648,9 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   if(t->type != TOKEN_PROPERTY_REF)
-    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a property ref",
-			   a->name);
+    return glw_view_seterr(ec->ei, t,
+			   "Attribute '%s' expects a property ref, got %s",
+			   a->name, token2name(t));
 
   glw_set(ec->w, a->attrib, t->t_prop, NULL);
   return 0;
@@ -604,6 +680,8 @@ static const token_attrib_t attribtab[] = {
 
   {"enabled",                 mod_flag, GLW2_ENABLED, mod_flags2},
   {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
+  {"alwaysGrabKnob",          mod_flag, GLW2_ALWAYS_GRAB_KNOB, mod_flags2},
+  {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
 
   {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
@@ -613,6 +691,9 @@ static const token_attrib_t attribtab[] = {
   {"bevelBottom",     mod_flag, GLW_IMAGE_BEVEL_BOTTOM, mod_img_flags},
   {"aspectConstraint",mod_flag, GLW_IMAGE_SET_ASPECT, mod_img_flags},
   {"additive",        mod_flag, GLW_IMAGE_ADDITIVE, mod_img_flags},
+  {"borderOnly",      mod_flag, GLW_IMAGE_BORDER_ONLY, mod_img_flags},
+  {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT, mod_img_flags},
+  {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
 
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
@@ -662,8 +743,9 @@ static const token_attrib_t attribtab[] = {
   {"color1",          set_float3, 0, set_color1},
   {"color2",          set_float3, 0, set_color2},
 
-  {"border",          set_float4, 0, set_border},
   {"padding",         set_float4, 0, set_padding},
+  {"border",          set_float4, 0, set_border},
+  {"margin",          set_float4, 0, set_margin},
   {"rotation",        set_float4, 0, set_rotation},
 
   {"align",           set_align,  0},

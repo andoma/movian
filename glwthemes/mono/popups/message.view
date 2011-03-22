@@ -35,12 +35,12 @@ widget(container_x, {
 	  BAR_BUTTON("OK", 
 		     deliverEvent($self.eventSink, "Ok"),
 		     select($self.ok, 0, 1),
-		     "theme://icons/48x48/Check.png");
+		     "skin://icons/Check.png");
 
 	  BAR_BUTTON("Cancel", 
 		     deliverEvent($self.eventSink, "Cancel"),
 		     select($self.cancel, 0, 1),
-		     "theme://icons/48x48/Delete.png");
+		     "skin://icons/Delete.png");
 	});
       });
     });

@@ -82,13 +82,12 @@ keyring_lookup(const char *id, char **username, char **password,
 	       const char *reason)
 {
   htsmsg_t *m;
+  rstr_t *r;
 
   hts_mutex_lock(&keyring_mutex);
 
   if(query) {
-    char buf[128];
-
-    prop_t *p = prop_create(NULL, NULL);
+    prop_t *p = prop_create_root(NULL);
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);
@@ -98,6 +97,9 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_t *user = prop_create(p, "username");
     prop_t *pass = prop_create(p, "password");
  
+    TRACE(TRACE_INFO, "keyring", "Requesting credentials for %s : %s : %s",
+	  id, source, reason);
+
     event_t *e = popup_display(p);
 
     htsmsg_delete_field(keyring, id);
@@ -107,14 +109,13 @@ keyring_lookup(const char *id, char **username, char **password,
 
       m = htsmsg_create_map();
 
-      if(prop_get_string(user, buf, sizeof(buf)))
-	buf[0] = 0;
-      htsmsg_add_str(m, "username", buf);
+      r = prop_get_string(user);
+      htsmsg_add_str(m, "username", r ? rstr_get(r) : "");
+      rstr_release(r);
 
-      if(prop_get_string(pass, buf, sizeof(buf)))
-	buf[0] = 0;
-
-      htsmsg_add_str(m, "password", buf);
+      r = prop_get_string(pass);
+      htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
+      rstr_release(r);
 
       htsmsg_add_msg(keyring, id, m);
 

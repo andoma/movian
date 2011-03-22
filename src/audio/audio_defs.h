@@ -100,3 +100,4 @@ extern int audio_pa_init(void);
 extern void audio_alsa_init(int);
 extern void audio_coreaudio_init(void);
 extern void audio_dummy_init(void);
+extern void audio_ps3_init(void);

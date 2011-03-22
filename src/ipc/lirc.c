@@ -171,7 +171,8 @@ lirc_open(void)
     return;
 
   lirc_fd = fd;
-  hts_thread_create_detached("lirc", lirc_thread, NULL);
+  hts_thread_create_detached("lirc", lirc_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 }
 
 

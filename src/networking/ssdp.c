@@ -26,7 +26,6 @@
 
 
 #include <netinet/in.h>
-#include <netinet/tcp.h>
 
 #include "showtime.h"
 #include "ssdp.h"
@@ -40,9 +39,6 @@
 #define SSDP_SEARCH   2
 #define SSDP_RESPONSE 3
 
-#if !defined(IP_PKTINFO) && !defined(IP_RECVDSTADDR)
-#error Both IP_PKTINFO and IP_RECVDSTADDR not defined
-#endif
 
 static struct sockaddr_in ssdp_selfaddr;
 static int ssdp_fdm, ssdp_fdu, ssdp_run = 1;
@@ -251,15 +247,18 @@ static void
 ssdp_input(int fd, int mc)
 {
   char buf[2000];
-  char ctrl[500];
-  int r, self = 0, i = 0, cmd;
-  struct sockaddr_in si;
+  int r, cmd, self;
   struct http_header_list args;
-  netif_t *ni;
+  uint32_t myaddr;
+  const char *usn;
+  struct sockaddr_in si;
+
+#if defined(IP_PKTINFO) || defined(IP_RECVDSTADDR)
+
   struct msghdr msg;
   struct cmsghdr *cmsg;
   struct iovec iov;
-  uint32_t myaddr;
+  char ctrl[500];
 
   iov.iov_base = buf;
   iov.iov_len = sizeof(buf);
@@ -278,16 +277,6 @@ ssdp_input(int fd, int mc)
     return;
 
   buf[r] = 0;
-  if((ni = net_get_interfaces()) == NULL)
-    return;
-  while(ni[i].ifname[0]) {
-    if(si.sin_port == ssdp_selfaddr.sin_port && 
-       ntohl(si.sin_addr.s_addr) == ni[i].ipv4) {
-      self = 1;
-      break;
-    }
-    i++;
-  }
 
   myaddr = 0;
 
@@ -307,20 +296,43 @@ ssdp_input(int fd, int mc)
 #endif
   }
 
-  if(!self && myaddr) {
-    LIST_INIT(&args);
-    cmd = ssdp_parse(buf, &args);
 
+#else
+ 
+  socklen_t slen = sizeof(struct sockaddr_in);
+  netif_t *ni;
+
+  r = recvfrom(fd, buf, sizeof(buf), 0, (struct sockaddr *)&si, &slen);
+  if(r < 1)
+    return;
+  buf[r] = 0;
+
+  ni = net_get_interfaces();
+  myaddr = ni ? ni[0].ipv4 : 0;
+  free(ni);
+
+#endif
+
+  if(!myaddr)
+    return;
+
+  LIST_INIT(&args);
+
+  cmd = ssdp_parse(buf, &args);
+  usn = http_header_get(&args, "usn");
+
+  self = usn != NULL && !strncmp(usn, "uuid:", 5) &&
+    !strncmp(usn + 5, ssdp_uuid, strlen(ssdp_uuid));
+
+  if(!self) {
     if(cmd == SSDP_NOTIFY && mc)
       ssdp_recv_notify(&args);
     if(cmd == SSDP_RESPONSE && !mc)
       ssdp_response(&args);
     if(cmd == SSDP_SEARCH && mc)
       ssdp_send_all(ssdp_fdu, myaddr, &si, NULL);
-
-    http_headers_free(&args);
   }
-  free(ni);
+  http_headers_free(&args);
 }
 
 
@@ -349,7 +361,9 @@ ssdp_send_notify(const char *nts)
   sin.sin_family = AF_INET;
   sin.sin_port = 0;
 
-  ni = net_get_interfaces();
+  if((ni = net_get_interfaces()) == NULL)
+    return;
+
   while(ni[i].ifname[0]) {
 
     if((fd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP)) != -1) {
@@ -365,6 +379,13 @@ ssdp_send_notify(const char *nts)
 }
 
 
+#ifndef IP_ADD_MEMBERSHIP
+#define IP_ADD_MEMBERSHIP		12
+struct ip_mreq {
+	struct in_addr imr_multiaddr;
+	struct in_addr imr_interface;
+};
+#endif
 
 /**
  *
@@ -378,6 +399,7 @@ ssdp_thread(void *aux)
   int64_t next_send = 0;
   struct pollfd fds[2];
   socklen_t sl = sizeof(struct sockaddr_in);
+  struct ip_mreq imr;
 
   fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -395,6 +417,14 @@ ssdp_thread(void *aux)
     return NULL;
   }
 
+  memset(&imr, 0, sizeof(imr));
+  imr.imr_multiaddr.s_addr = htonl(0xeffffffa); // 239.255.255.250
+  if(setsockopt(fdm, IPPROTO_IP, IP_ADD_MEMBERSHIP, &imr, 
+		sizeof(struct ip_mreq)) == -1) {
+    TRACE(TRACE_ERROR, "SSDP", "Unable to join 239.255.255.250: %s",
+	  strerror(errno));
+    return NULL;
+  }
 
   fdu = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
@@ -413,7 +443,7 @@ ssdp_thread(void *aux)
   }
 
   if(getsockname(fdu, (struct sockaddr *)&ssdp_selfaddr, &sl) == -1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
+    TRACE(TRACE_ERROR, "SSDP", "Unable to figure local port");
     return NULL;
   }
 
@@ -465,5 +495,6 @@ ssdp_init(const char *uuid)
 {
   shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
-  hts_thread_create_detached("ssdp", ssdp_thread, NULL);
+  hts_thread_create_detached("ssdp", ssdp_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 }

@@ -406,9 +406,9 @@ vdpau_decode(struct media_codec *mc, void *decoder,
 
   vd->vd_skip = 0;
   vvs = frame->opaque;
-  video_deliver_frame(vd, vd->vd_mp, mb, ctx, frame,
+  video_deliver_frame(vd, vd->vd_mp, mq, mb, ctx, frame,
 		      vvs->vvs_time, vvs->vvs_pts, vvs->vvs_dts,
-		      vvs->vvs_duration, vvs->vvs_epoch);
+		      vvs->vvs_duration, vvs->vvs_epoch, 0);
 }
 
 

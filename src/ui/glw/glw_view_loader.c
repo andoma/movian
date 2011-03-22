@@ -32,7 +32,7 @@ typedef struct glw_view_loader {
   float time;
 
   glw_transition_type_t efx_conf;
-
+  char *filename;
 
 } glw_view_loader_t;
 
@@ -164,7 +164,50 @@ glw_view_loader_ctor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
   a->time = 1.0;
-  a->args = prop_create(NULL, "args");
+  a->args = prop_create_root("args");
+}
+
+
+/**
+ *
+ */
+static void 
+glw_view_loader_dtor(glw_t *w)
+{
+  glw_view_loader_t *a = (void *)w;
+  free(a->filename);
+}
+
+
+/**
+ *
+ */
+static void
+set_source(glw_t *w, const char *filename)
+{
+  glw_view_loader_t *a = (glw_view_loader_t *)w;
+  glw_t *c;
+
+  if(w->glw_flags & GLW_DEBUG)
+    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", filename ?: "(void)");
+
+  if(!strcmp(filename ?: "", a->filename ?: ""))
+    return;
+
+  free(a->filename);
+  a->filename = filename ? strdup(filename) : NULL;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_suspend_subscriptions(c);
+
+  if(filename && *filename) {
+    glw_view_create(w->glw_root, filename, w,a->prop, 
+		    a->prop_parent_override ?: a->prop_parent, a->args, 1);
+  } else {
+    /* Fade out all */
+    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+      c->glw_parent_vl_tgt = 1;
+  }
 }
 
 
@@ -177,18 +220,12 @@ glw_view_loader_set(glw_t *w, va_list ap)
   glw_view_loader_t *a = (void *)w;
 
   glw_attribute_t attrib;
-  const char *filename = NULL;
-  glw_t *c;
 
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
     case GLW_ATTRIB_TRANSITION_EFFECT:
       a->efx_conf = va_arg(ap, int);
-      break;
-
-    case GLW_ATTRIB_SOURCE:
-      filename = va_arg(ap, char *);
       break;
 
     case GLW_ATTRIB_TIME:
@@ -202,7 +239,8 @@ glw_view_loader_set(glw_t *w, va_list ap)
       break;
 
     case GLW_ATTRIB_ARGS:
-      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL, 1);
+      prop_link_ex(va_arg(ap, prop_t *), a->args, NULL,
+		   PROP_LINK_XREFED_IF_ORPHANED);
       break;
 
     case GLW_ATTRIB_PROP_PARENT:
@@ -217,19 +255,6 @@ glw_view_loader_set(glw_t *w, va_list ap)
       break;
     }
   } while(attrib);
-
-  if(filename != NULL) {
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-      glw_suspend_subscriptions(c);
-    if(*filename) {
-      glw_view_create(w->glw_root, filename, w,a->prop, 
-		      a->prop_parent_override ?: a->prop_parent, a->args, 1);
-    } else {
-      /* Fade out all */
-      TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-	c->glw_parent_vl_tgt = 1;
-    }
-  }
 }
 
 
@@ -241,10 +266,12 @@ static glw_class_t glw_view_loader = {
   .gc_flags = GLW_EXPEDITE_SUBSCRIPTIONS,
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_ctor = glw_view_loader_ctor,
+  .gc_dtor = glw_view_loader_dtor,
   .gc_set = glw_view_loader_set,
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,
   .gc_signal_handler = glw_view_loader_callback,
+  .gc_set_source_str = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_view_loader);

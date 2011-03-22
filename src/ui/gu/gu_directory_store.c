@@ -643,6 +643,7 @@ gds_row_delete0(GuDirStore *gds, gds_row_t *gr, int notify)
     gtk_tree_model_row_deleted(GTK_TREE_MODEL(gds), path);
     gtk_tree_path_free(path);
   }
+  prop_ref_dec(gr->gr_root);
   free(gr);
 }
 

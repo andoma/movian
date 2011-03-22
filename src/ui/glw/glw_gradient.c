@@ -51,7 +51,7 @@ glw_gradient_dtor(glw_t *w)
   int i;
 
   for(i = 0; i < gg->gg_tex_uploaded; i++)
-    glw_tex_destroy(&gg->gg_tex[i]);
+    glw_tex_destroy(w->glw_root, &gg->gg_tex[i]);
 
   glw_renderer_free(&gg->gg_gr[i]);
 }

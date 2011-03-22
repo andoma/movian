@@ -150,7 +150,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 
   url = htsmsg_get_str_multi(item, "res", "cdata", NULL);
 
-  prop_t *c = prop_create(NULL, NULL);
+  prop_t *c = prop_create_root(NULL);
   prop_set_string(prop_create(c, "url"), url);
 		  
 
@@ -195,7 +195,7 @@ add_container(htsmsg_t *item, prop_t *root, const char *baseurl,
 
   snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
-  prop_t *c = prop_create(NULL, NULL);
+  prop_t *c = prop_create_root(NULL);
   prop_set_string(prop_create(c, "url"), url);
 
   prop_t *m = prop_create(c, "metadata");
@@ -311,10 +311,12 @@ typedef struct upnp_browse {
 
   char *ub_id;
 
+  char *ub_url;
   char *ub_base_url;
   char *ub_control_url;
   char *ub_event_url;
 
+  prop_t *ub_page;
   prop_t *ub_nodes;
   prop_t *ub_items;
   prop_t *ub_loading;
@@ -476,10 +478,12 @@ static void
 ub_destroy(upnp_browse_t *ub)
 {
   free(ub->ub_id);
+  free(ub->ub_url);
   free(ub->ub_base_url);
   free(ub->ub_control_url);
   free(ub->ub_event_url);
 
+  prop_ref_dec(ub->ub_page);
   prop_ref_dec(ub->ub_nodes);
   prop_ref_dec(ub->ub_items);
   prop_ref_dec(ub->ub_loading);
@@ -517,6 +521,81 @@ node_eventsub(void *opaque, prop_event_t event, ...)
   }
 }
 
+
+static int
+upnp_browse_resolve(upnp_browse_t *ub)
+{
+  upnp_device_t *ud = NULL;
+  upnp_service_t *us;
+
+  char *url = ub->ub_url;
+
+  url += strlen("upnp:");
+  
+  hts_mutex_lock(&upnp_lock);
+  
+  while(ud == NULL) {
+    LIST_FOREACH(ud, &upnp_devices, ud_link) {
+      if(ud->ud_uuid != NULL && 
+	 !strncmp(ud->ud_uuid, url, strlen(ud->ud_uuid)))
+	break;
+    }
+
+    if(ud != NULL)
+      break;
+
+    // Do SSDP M-SEARCH ?
+    if(hts_cond_wait_timeout(&upnp_device_cond, &upnp_lock, 5000))
+      break;
+  }
+
+  if(ud == NULL) {
+    hts_mutex_unlock(&upnp_lock);
+    nav_open_errorf(ub->ub_page, "Device not found");
+    return 1;
+  }
+  
+  url += strlen(ud->ud_uuid);
+  if(*url != ':') {
+    hts_mutex_unlock(&upnp_lock);
+    nav_open_errorf(ub->ub_page, "Malformed URI after device");
+    return 1;
+  }
+
+  url++;
+
+  LIST_FOREACH(us, &ud->ud_services, us_link) {
+    if(us->us_id != NULL && 
+       !strncmp(us->us_id, url, strlen(us->us_id)))
+      break;
+  }
+
+  if(us == NULL) {
+    hts_mutex_unlock(&upnp_lock);
+    nav_open_errorf(ub->ub_page, "Service not found");
+    return 1;
+  }
+  
+  url += strlen(us->us_id);
+  if(*url != ':') {
+    hts_mutex_unlock(&upnp_lock);
+    nav_open_errorf(ub->ub_page, "Malformed URI after service");
+    return 1;
+  }
+
+  *url = 0;
+  url++;
+
+  ub->ub_base_url = strdup(ub->ub_url);
+  ub->ub_control_url = us->us_control_url ? strdup(us->us_control_url) : NULL;
+  ub->ub_event_url   = us->us_event_url   ? strdup(us->us_event_url)   : NULL;
+  ub->ub_id = strdup(url);
+
+  hts_mutex_unlock(&upnp_lock);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -524,8 +603,13 @@ static void *
 upnp_browse_thread(void *aux)
 {
   upnp_browse_t *ub = aux;
-  prop_courier_t *pc = prop_courier_create_waitable();
+  prop_courier_t *pc;
   struct prop_nf *pnf;
+
+  if(upnp_browse_resolve(ub)) {
+    ub_destroy(ub);
+    return NULL;
+  }
 
   // Extract title and content types
   browse_self(ub);
@@ -535,6 +619,7 @@ upnp_browse_thread(void *aux)
   prop_set_int(ub->ub_canFilter, 1);
   prop_nf_release(pnf);
 
+  pc = prop_courier_create_waitable();
   ub->ub_run = 1;
   ub->ub_itemsub = prop_subscribe(PROP_SUB_TRACK_DESTROY,
 				  PROP_TAG_CALLBACK, node_eventsub, ub,
@@ -566,66 +651,12 @@ upnp_browse_thread(void *aux)
  *
  */
 int
-be_upnp_browse(prop_t *page, const char *url0)
+be_upnp_browse(prop_t *page, const char *url)
 {
-  upnp_device_t *ud;
-  upnp_service_t *us;
-
-  char *url = mystrdupa(url0);
-  char *baseurl = url;
-
-  url += strlen("upnp:");
-  
-  hts_mutex_lock(&upnp_lock);
-  
-  LIST_FOREACH(ud, &upnp_devices, ud_link) {
-    if(ud->ud_uuid != NULL && 
-       !strncmp(ud->ud_uuid, url, strlen(ud->ud_uuid)))
-      break;
-  }
-
-  if(ud == NULL) {
-    hts_mutex_unlock(&upnp_lock);
-    return nav_open_errorf(page, "Device not found");
-  }
-  
-  url += strlen(ud->ud_uuid);
-  if(*url != ':') {
-    hts_mutex_unlock(&upnp_lock);
-    return nav_open_errorf(page, "Malformed URI after device");
-  }
-
-  url++;
-
-  LIST_FOREACH(us, &ud->ud_services, us_link) {
-    if(us->us_id != NULL && 
-       !strncmp(us->us_id, url, strlen(us->us_id)))
-      break;
-  }
-
-  if(us == NULL) {
-    hts_mutex_unlock(&upnp_lock);
-    return nav_open_errorf(page, "Service not found");
-  }
-  
-  url += strlen(us->us_id);
-  if(*url != ':') {
-    hts_mutex_unlock(&upnp_lock);
-    return nav_open_errorf(page, "Malformed URI after service");
-  }
-
-  *url = 0;
-  url++;
-
-  // Copy URLs cause we want to unlock
 
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
-  ub->ub_base_url = strdup(baseurl);
-  ub->ub_control_url = us->us_control_url ? strdup(us->us_control_url) : NULL;
-  ub->ub_event_url   = us->us_event_url   ? strdup(us->us_event_url)   : NULL;
-  ub->ub_id = strdup(url);
-
-  hts_mutex_unlock(&upnp_lock);
+  ub->ub_url = strdup(url);
+  ub->ub_page = prop_ref_inc(page);
 
   prop_t *model = prop_create(page, "model");
 
@@ -645,6 +676,7 @@ be_upnp_browse(prop_t *page, const char *url0)
   prop_t *metadata = prop_create(model, "metadata");
 
   ub->ub_title = prop_ref_inc(prop_create(metadata, "title"));
-  hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub);
+  hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
+			     THREAD_PRIO_LOW);
   return 0;
 }

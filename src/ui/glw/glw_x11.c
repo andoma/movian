@@ -185,7 +185,7 @@ build_blank_cursor(glw_x11_t *gx11)
 static void
 hide_cursor(glw_x11_t *gx11)
 {
-  glw_pointer_event_t gpe;
+  glw_pointer_event_t gpe = {0};
 
   if(gx11->cursor_hidden)
     return;
@@ -475,23 +475,6 @@ GLXExtensionSupported(Display *dpy, const char *extension)
   return 0;
 }
 
-/**
- *
- */
-static int 
-get_x11_prop(glw_x11_t *gx11, Atom type, Atom **items)
-{
-  int format;
-  unsigned long bytes_after, r;
-
-    if(XGetWindowProperty(gx11->display, gx11->root, type, 0, 16384, False,
-			  AnyPropertyType, &type, &format, &r,
-			  &bytes_after, (unsigned char **)items) != Success) {
-      printf("FAIL\n");
-      return -1;
-    }
-    return r;
-}
 
 /**
  * Try to figure out if we have a window manager and query some of its
@@ -500,18 +483,59 @@ get_x11_prop(glw_x11_t *gx11, Atom type, Atom **items)
 static void
 probe_wm(glw_x11_t *gx11)
 {
-  int nitems, i;
-  Atom *items;
+  int i, format;
+  Atom *items, type;
+  unsigned long bytes_after, r, nitems;
+  unsigned char *prop_return;
+  int wm_window_id;
+  char *wm_name;
 
-  Atom NET_SUPPORTED = XInternAtom(gx11->display, "_NET_SUPPORTED", 0);
-  Atom STATE_FS = XInternAtom(gx11->display, "_NET_WM_STATE_FULLSCREEN", 0);
+  Atom NET_SUPPORTED =
+    XInternAtom(gx11->display, "_NET_SUPPORTED", 0);
+  Atom STATE_FS =
+    XInternAtom(gx11->display, "_NET_WM_STATE_FULLSCREEN", 0);
+  Atom NET_SUPPORTING_WM_CHECK =
+    XInternAtom(gx11->display, "_NET_SUPPORTING_WM_CHECK", 0);
+  Atom NET_WM_NAME =
+    XInternAtom(gx11->display, "_NET_WM_NAME", 0);
 
-  if(NET_SUPPORTED == None ||
-     (nitems = get_x11_prop(gx11, NET_SUPPORTED, &items)) < 0 ||
-     nitems == 0) {
-    TRACE(TRACE_INFO, "GLW", "No window manager detected");
+  if(XGetWindowProperty(gx11->display, gx11->root, NET_SUPPORTING_WM_CHECK,
+			0, 16384, False, AnyPropertyType, &type, &format, &r,
+			&bytes_after, &prop_return) != Success ||
+     r == 0 || prop_return == NULL) {
+    TRACE(TRACE_INFO, "GLW",
+	  "No window manager found (NET_SUPPORTING_WM_CHECK not set)");
     return;
   }
+
+
+  wm_window_id = *(int *)prop_return;
+  XFree(prop_return);
+  prop_return = NULL;
+
+  if(XGetWindowProperty(gx11->display, wm_window_id, NET_WM_NAME,
+			0, 16384, False, AnyPropertyType, &type, &format, &r,
+			&bytes_after, &prop_return) != Success || 
+     r == 0 || prop_return == NULL) {
+    TRACE(TRACE_INFO, "GLW",
+	  "No window manager found (NET_WM_NAME not set on wm window)");
+    return;
+  }
+
+  wm_name = mystrdupa((char *)prop_return);
+  XFree(prop_return);
+  prop_return = NULL;
+
+  if(XGetWindowProperty(gx11->display, gx11->root, NET_SUPPORTED,
+			0, 16384, False, AnyPropertyType, &type, &format,
+			&nitems, &bytes_after, &prop_return) != Success ||
+     r == 0 || prop_return == NULL) {
+    TRACE(TRACE_INFO, "GLW",
+	  "No window manager found (NET_SUPPORTING_WM_CHECK not set)");
+    return;
+  }
+
+  items = (Atom *)prop_return;
 
   gx11->wm_flags |= GX11_WM_DETECTED;
 
@@ -520,10 +544,14 @@ probe_wm(glw_x11_t *gx11)
       gx11->wm_flags |= GX11_WM_CAN_FULLSCREEN;
   }
 
-  TRACE(TRACE_DEBUG, "GLW", "Window manager detected%s",
+  TRACE(TRACE_DEBUG, "GLW", "Window manager (%s) detected%s",
+	wm_name,
 	gx11->wm_flags & GX11_WM_CAN_FULLSCREEN ? ", can fullscreen" : "");
 
-  XFree(items);
+  prop_set_string(prop_create(gx11->gr.gr_uii.uii_prop, "windowmanager"),
+		  wm_name);
+
+  XFree(prop_return);
 }
 
 /**
@@ -903,7 +931,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 {
   XEvent event;
   int w, h;
-  glw_pointer_event_t gpe;
+  glw_pointer_event_t gpe = {0};
   event_t *e;
   struct timespec tp;
   int64_t start;
@@ -1168,7 +1196,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
  *
  */
 static int
-glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
+glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[PATH_MAX];
@@ -1176,6 +1204,9 @@ glw_x11_start(ui_t *ui, int argc, char *argv[], int primary)
   const char *displayname_title  = NULL;
   const char *skin = NULL;
   int force_fs = 0;
+
+  gx11->gr.gr_uii.uii_prop = root;
+
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
 

@@ -30,11 +30,11 @@
  * 
  */
 void
-glw_video_overlay_deinit(glw_video_overlay_t *gvo)
+glw_video_overlay_deinit(glw_root_t *gr, glw_video_overlay_t *gvo)
 {
   int i;
   for(i = 0; i < gvo->gvo_entries; i++) {
-    glw_tex_destroy(&gvo->gvo_textures[i]);
+    glw_tex_destroy(gr, &gvo->gvo_textures[i]);
     glw_renderer_free(&gvo->gvo_renderers[i]);
   }
   free(gvo->gvo_textures);
@@ -69,11 +69,11 @@ child_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  * 
  */
 static int
-gvo_setup_bitmap(glw_video_overlay_t *gvo, int entries)
+gvo_setup_bitmap(glw_root_t *gr, glw_video_overlay_t *gvo, int entries)
 {
   if(gvo->gvo_entries == entries)
     return 0;
-  glw_video_overlay_deinit(gvo);
+  glw_video_overlay_deinit(gr, gvo);
 
   gvo->gvo_entries = entries;
   gvo->gvo_textures  = calloc(entries, sizeof(glw_backend_texture_t));
@@ -174,7 +174,7 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
  */
 static void
 spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
-	    const glw_root_t *gr)
+	    glw_root_t *gr)
 {
   int width  = d->d_x2 - d->d_x1;
   int height = d->d_y2 - d->d_y1;
@@ -251,7 +251,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
     }
   }
 
-  if(gvo_setup_bitmap(gvo, 1))
+  if(gvo_setup_bitmap(gr, gvo, 1))
     glw_renderer_init_quad(&gvo->gvo_renderers[0]);
 
   float w = gr->gr_normalized_texture_coords ? 1.0 : width;
@@ -270,7 +270,12 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
   glw_renderer_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
 
-  glw_tex_upload(gr, &gvo->gvo_textures[0], t0, GLW_TEXTURE_FORMAT_RGBA,
+  glw_tex_upload(gr, &gvo->gvo_textures[0], t0,
+#ifdef WORDS_BIGENDIAN
+		 GLW_TEXTURE_FORMAT_ABGR,
+#else
+		 GLW_TEXTURE_FORMAT_RGBA,
+#endif
 		 width, height, 0);
   free(t0);
 }
@@ -282,7 +287,7 @@ spu_repaint(glw_video_overlay_t *gvo, video_decoder_t *vd, dvdspu_t *d,
  */
 static void
 glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			     const glw_root_t *gr, int64_t pts)
+			     glw_root_t *gr, int64_t pts)
 {
   dvdspu_t *d;
   int x;
@@ -307,7 +312,7 @@ glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
   destroy:
     dvdspu_destroy(vd, d);
     vd->vd_spu_in_menu = 0;
-    glw_video_overlay_deinit(gvo);
+    glw_video_overlay_deinit(gr, gvo);
     goto again;
 
   case 0:
@@ -331,10 +336,10 @@ glw_video_overlay_spu_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
  */
 static void
 glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo, 
-			     const glw_root_t *gr, subtitle_t *s)
+			     glw_root_t *gr, subtitle_t *s)
 {
   int i;
-  if(gvo_setup_bitmap(gvo, s->s_num_rects))
+  if(gvo_setup_bitmap(gr, gvo, s->s_num_rects))
     for(i = 0; i < s->s_num_rects; i++)
       glw_renderer_init_quad(&gvo->gvo_renderers[i]);
   
@@ -421,7 +426,7 @@ glw_video_overlay_sub_layout(video_decoder_t *vd, glw_video_overlay_t *gvo,
     }
 
   } else {
-    glw_video_overlay_deinit(gvo);
+    glw_video_overlay_deinit(gr, gvo);
   }
   hts_mutex_unlock(&vd->vd_sub_mutex);
 }

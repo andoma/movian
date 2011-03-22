@@ -187,6 +187,7 @@ be_dvd_play(const char *url, media_pipe_t *mp, int flags, int no_audio,
   }
 
   url += 4;
+
   e = dvd_play(url, mp, errstr, errlen, 0);
 
   if(e != NULL && event_is_action(e, ACTION_EJECT)) {

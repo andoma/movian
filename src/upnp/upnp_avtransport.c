@@ -142,7 +142,7 @@ play_with_context(const char *uri, htsmsg_t *meta)
   if(us != NULL) {
     TRACE(TRACE_DEBUG, "UPNP", "Using controlpoint %s", us->us_control_url);
 
-    prop_t *model = prop_create(NULL, NULL);
+    prop_t *model = prop_create_root(NULL);
     prop_t *nodes = prop_create(model, "nodes");
     prop_t *t = NULL;
 
@@ -178,7 +178,7 @@ avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args)
     return NULL;
 
   if(metaxml == NULL) {
-    playqueue_play(uri, prop_create(NULL, NULL), 1);
+    playqueue_play(uri, prop_create_root(NULL), 1);
     return NULL;
   }
 
@@ -192,7 +192,7 @@ avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args)
   if(play_with_context(uri, meta)) {
     // Failed to play from context
     // TODO: Fix metadata here
-    playqueue_play(uri, prop_create(NULL, NULL), 1);
+    playqueue_play(uri, prop_create_root(NULL), 1);
   }
   htsmsg_destroy(meta);
   return NULL;

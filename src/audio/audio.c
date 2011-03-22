@@ -163,6 +163,10 @@ audio_init(void)
   audio_wii_init();
 #endif
 
+#ifdef CONFIG_PSL1GHT
+  audio_ps3_init();
+#endif
+
   int have_pulse_audio  __attribute__((unused)) = 0;
 
 #ifdef CONFIG_LIBPULSE
@@ -181,9 +185,8 @@ audio_init(void)
 
   audio_run = 1;
   hts_thread_create_joinable("audio output", &audio_thread_id, 
-			     audio_output_thread, NULL);
+			     audio_output_thread, NULL, THREAD_PRIO_HIGH);
 }
-
 
 /**
  *

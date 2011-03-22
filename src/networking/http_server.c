@@ -26,7 +26,10 @@
 #include <errno.h>
 
 #include <netinet/in.h>
-#include <netinet/tcp.h>
+
+#if ENABLE_POSIX_NETWORKING
+#include <netinet/tcp.h>  // for TCP_ defines
+#endif
 
 #include "http.h"
 #include "http_server.h"
@@ -227,6 +230,7 @@ http_rc2str(int code)
   case HTTP_STATUS_FOUND:           return "Found";
   case HTTP_STATUS_METHOD_NOT_ALLOWED: return "Method not allowed";
   case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition failed";
+  case HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE: return "Unsupported media type";
   default:
     return "Unknown returncode";
     break;
@@ -347,8 +351,7 @@ http_error(http_connection_t *hc, int error, const char *fmt, ...)
 
   htsbuf_queue_init(&hq, 0);
 
-  if(extra != NULL) {
-
+  if(fmt != NULL) {
     va_start(ap, fmt);
     vsnprintf(extra, sizeof(extra), fmt, ap);
     va_end(ap);
@@ -408,7 +411,13 @@ http_exec(http_connection_t *hc, http_path_t *hp, char *remain,
 {
   int err = hp->hp_callback(hc, remain, hp->hp_opaque, method);
 
-  if(err > 0)
+  if(err == HTTP_STATUS_OK) {
+    htsbuf_queue_t out;
+    htsbuf_queue_init(&out, 0);
+    htsbuf_append(&out, "OK\n", 3);
+    http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+    return;
+  } else if(err > 0)
     http_error(hc, err, NULL);
   else if(err == 0)
     return;
@@ -873,7 +882,7 @@ http_io(http_connection_t *hc, int revents)
  *
  */
 static void
-http_close(http_connection_t *hc)
+http_close(http_server_t *hs, http_connection_t *hc)
 {
   htsbuf_queue_flush(&hc->hc_input);
   htsbuf_queue_flush(&hc->hc_output);
@@ -881,6 +890,7 @@ http_close(http_connection_t *hc)
   http_headers_free(&hc->hc_request_headers);
   http_headers_free(&hc->hc_response_headers);
   LIST_REMOVE(hc, hc_link);
+  hs->hs_numcon--;
   close(hc->hc_fd);
   free(hc->hc_url);
   free(hc->hc_url_orig);
@@ -930,6 +940,7 @@ http_accept(http_server_t *hs)
   hc->hc_fd = fd;
   hc->hc_events = POLLIN | POLLHUP | POLLERR;
   LIST_INSERT_HEAD(&hs->hs_connections, hc, hc_link);
+  hs->hs_numcon++;
   htsbuf_queue_init(&hc->hc_input, 0);
   htsbuf_queue_init(&hc->hc_output, 0);
 
@@ -953,8 +964,10 @@ http_accept(http_server_t *hs)
   setsockopt(fd, IPPROTO_TCP, TCP_KEEPCNT, &val, sizeof(val));
 #endif
 
+#ifdef TCP_NODELAY
   val = 1;
   setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val));
+#endif
 
   slen = sizeof(struct sockaddr_in);
   if(!getsockname(fd, (struct sockaddr *)&self, &slen)) {
@@ -1006,7 +1019,7 @@ http_server(void *aux)
       nxt = LIST_NEXT(hc, hc_link);
 
       if(http_io(hc, hs->hs_fds[n].revents)) {
-	http_close(hc);
+	http_close(hs, hc);
       }
       n++;
     }
@@ -1049,15 +1062,15 @@ http_server_init(void)
       close(fd);
       return;
     }
+    if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
+      TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
+      close(fd);
+      return;
+    }
+    http_server_port = ntohs(si.sin_port);
+  } else {
+    http_server_port = 42000 + i;
   }
-  
-  if(getsockname(fd, (struct sockaddr *)&si, &sl) == -1) {
-    TRACE(TRACE_ERROR, "HTTPSRV", "Unable to figure local port");
-    close(fd);
-    return;
-  }
-
-  http_server_port = ntohs(si.sin_port);
 
   TRACE(TRACE_INFO, "HTTPSRV", "Listening on port %d", http_server_port);
 
@@ -1065,5 +1078,6 @@ http_server_init(void)
     
   hs = calloc(1, sizeof(http_server_t));
   hs->hs_fd = fd;  
-  hts_thread_create_detached("httpsrv", http_server, hs);
+  hts_thread_create_detached("httpsrv", http_server, hs,
+			     THREAD_PRIO_NORMAL);
 }

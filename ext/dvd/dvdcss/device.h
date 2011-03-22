@@ -31,13 +31,13 @@
 #else
 #   include <sys/types.h>
 
-#ifndef WII
+#if !defined(WII) && !defined(PS3)
 #   include <sys/uio.h>                                      /* struct iovec */
 #endif
 
 #endif
 
-#if ( defined( WIN32 ) && !defined( SYS_CYGWIN ) ) || defined ( WII )
+#if ( defined( WIN32 ) && !defined( SYS_CYGWIN ) ) || defined ( WII ) || defined (PS3)
 struct iovec
 {
     void *iov_base;     /* Pointer to data. */

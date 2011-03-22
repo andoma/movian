@@ -30,7 +30,8 @@
  * Free texture (always invoked in main rendering thread)
  */
 void
-glw_tex_backend_free_render_resources(glw_loadable_texture_t *glt)
+glw_tex_backend_free_render_resources(glw_root_t *gr, 
+				      glw_loadable_texture_t *glt)
 {
   if(glt->glt_texture.tex != 0) {
     glDeleteTextures(1, &glt->glt_texture.tex);
@@ -79,6 +80,9 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
     glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
     break;
   }
+
+  glt->glt_texture.width  = glt->glt_xs;
+  glt->glt_texture.height = glt->glt_ys;
 
   glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
@@ -148,7 +152,8 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 {
   int r, x, y, i;
   int need_format_conv = 0;
-  int need_rescale;
+  int want_rescale = 0; // Want rescaling cause it looks better
+  int must_rescale = 0; // Must rescale cause we cant display it otherwise
   uint32_t *palette, *u32p;
   uint8_t *map;
   int bpp = 0;
@@ -249,22 +254,27 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 
     if(1 << av_log2(req_h0) != req_h0)
       req_h = make_powerof2(req_h0);
+
+    must_rescale = req_w != src_w || req_h != src_h;
+  } else {
+    want_rescale = req_w != src_w || req_h != src_h;
   }
 
-  need_rescale = req_w != src_w || req_h != src_h;
 
-  if(need_rescale || need_format_conv) {
+  if(must_rescale || want_rescale || need_format_conv) {
     if(!texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h,
 				     req_w, req_h, glt))
       return 0;
     
-    if(need_format_conv)
-      return 0;
+    if(need_format_conv) {
+      return texture_load_rescale_swscale(pict, pix_fmt, src_w, src_h,
+					  src_w, src_h, glt);
+    }
 
-    // Scale up to next power of two
-
-    glt->glt_tex_width  = 1 << (av_log2(req_w0) + 1);
-    glt->glt_tex_height = 1 << (av_log2(req_h0) + 1);
+    if(must_rescale) {
+      glt->glt_tex_width  = 1 << (av_log2(src_w - 1) + 1);
+      glt->glt_tex_height = 1 << (av_log2(src_h - 1) + 1);
+    }
   }
   
   glt->glt_xs = src_w;
@@ -395,7 +405,7 @@ texture_load_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
  *
  */
 void
-glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex, 
+glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
 	       const void *src, int fmt, int width, int height, int flags)
 {
   int format;
@@ -442,6 +452,9 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
     return;
   }
 
+  tex->width = width;
+  tex->height = height;
+
   glTexImage2D(m, 0, format, width, height, 0, ext_format, ext_type, src);
 }
 
@@ -450,7 +463,7 @@ glw_tex_upload(const glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 void
-glw_tex_destroy(glw_backend_texture_t *tex)
+glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
   if(tex->tex != 0) {
     glDeleteTextures(1, &tex->tex);

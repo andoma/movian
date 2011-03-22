@@ -19,7 +19,7 @@
 #ifndef GLW_VIDEO_OVERLAY_H
 #define GLW_VIDEO_OVERLAY_H
 
-void glw_video_overlay_deinit(glw_video_overlay_t *gvo);
+void glw_video_overlay_deinit(glw_root_t *gr, glw_video_overlay_t *gvo);
 
 void glw_video_overlay_render(glw_video_overlay_t *gvo, glw_root_t *gr,
 			      glw_rctx_t *rc);

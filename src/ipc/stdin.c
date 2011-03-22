@@ -177,5 +177,6 @@ stdin_start(void)
   termio.c_lflag &= ~(ECHO | ICANON);
   if(tcsetattr(0, TCSANOW, &termio) == -1)
     return;
-  hts_thread_create_detached("stdin", stdin_thread, NULL);
+  hts_thread_create_detached("stdin", stdin_thread, NULL,
+			     THREAD_PRIO_NORMAL);
 }

@@ -127,6 +127,7 @@ typedef struct coreaudio_audio_mode {
   int cam_master_mute;
   prop_sub_t *cam_sub_master_volume;
   prop_sub_t *cam_sub_master_mute;
+  int cam_run;
 } coreaudio_audio_mode_t;
 
 
@@ -182,7 +183,12 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   float vol = cam->cam_master_volume;
   
   ab = af_deq2(cam->cam_af, 0 /* no wait */, am);
-  if(ab == NULL || ab == AF_EXIT) {
+  if(ab == AF_EXIT) {
+    cam->cam_run = 0;
+    return 0;
+  }
+
+  if(ab == NULL) {
     /* outOutputData is zeroed out by default */
     return 0;
   }
@@ -375,7 +381,8 @@ coreaudio_start(audio_mode_t *am, audio_fifo_t *af)
   if(coreaudio_open(cam)) {
     /* TODO: needed when NSApplicationMain? */
     
-    while(am == audio_mode_current)
+    cam->cam_run = 1;
+    while(cam->cam_run)
       CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
     
     CATRACE(TRACE_DEBUG, "Stopping");

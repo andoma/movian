@@ -160,7 +160,7 @@ read_mastervol(GtkScaleButton *button, gdouble value, gpointer user_data)
 				    easier */
   
   value = (value - 1) * 75;
-  prop_set_float_ex(prop_mastervol, pd->sub_volume, value);
+  prop_set_float_ex(prop_mastervol, pd->sub_volume, value, 0);
 }
 
 
@@ -214,7 +214,7 @@ slider_updated(GtkRange *range, GtkScrollType scroll,
   p = prop_get_by_name(PNVEC("global", "media", "current", "currenttime"),
 		       1, NULL);
   if(p != NULL) {
-    prop_set_float_ex(p, pd->sub_pos, value);
+    prop_set_float_ex(p, pd->sub_pos, value, 0);
     prop_ref_dec(p);
   }
   return FALSE;

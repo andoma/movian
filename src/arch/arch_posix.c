@@ -89,6 +89,7 @@ get_system_concurrency(void)
 #include "arch.h"
 #include <limits.h>
 #include <syslog.h>
+#include <sys/statvfs.h>
 
 #ifdef XBMC_PLUGIN
 #include "xbmc-plugin.h"
@@ -108,6 +109,10 @@ static int decorate_trace;
 void
 arch_init(void)
 {
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_key_init();
+#endif
+
   setlocale(LC_ALL, "");
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
@@ -278,6 +283,10 @@ thread_trampoline(void *aux)
   free(t->title);
 
   r = t->func(t->aux);
+#if ENABLE_EMU_THREAD_SPECIFICS
+  hts_thread_exit_specific();
+#endif
+
   free(t);
   return r;
 }
@@ -290,7 +299,8 @@ thread_trampoline(void *aux)
  *
  */
 void
-hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
+hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
+			   int prio)
 {
   pthread_t id;
   pthread_attr_t attr;
@@ -306,7 +316,7 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux)
 
 void
 hts_thread_create_joinable(const char *title, hts_thread_t *p, 
-			   void *(*func)(void *), void *aux)
+			   void *(*func)(void *), void *aux, int prio)
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
@@ -323,7 +333,7 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
  *
  */
 void
-arch_set_default_paths(void)
+arch_set_default_paths(int argc, char **argv)
 {
   const char *homedir = getenv("HOME");
   char buf[PATH_MAX];
@@ -339,6 +349,16 @@ arch_set_default_paths(void)
   showtime_settings_path = strdup(buf);
 }
 
+int64_t
+arch_cache_avail_bytes(void)
+{
+  struct statvfs buf;
+
+  if(showtime_cache_path == NULL || statvfs(showtime_cache_path, &buf))
+    return 0;
+
+  return buf.f_bfree * buf.f_bsize;
+}
 
 /**
  *

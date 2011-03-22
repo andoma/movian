@@ -183,6 +183,23 @@ ff_render(struct glw_root *gr,
 	  int flags)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  float r,g,b;
+
+  switch(gbr->be_blendmode) {
+  case GLW_BLEND_NORMAL:
+    r = rgb_mul->r;
+    g = rgb_mul->g;
+    b = rgb_mul->b;
+    break;
+  case GLW_BLEND_ADDITIVE:
+    r = rgb_mul->r * alpha;
+    g = rgb_mul->g * alpha;
+    b = rgb_mul->b * alpha;
+    break;
+  default:
+    return;
+  }
+
 
   glLoadMatrixf(m ?: identitymtx);
 
@@ -198,11 +215,11 @@ ff_render(struct glw_root *gr,
     }
     for(i = 0; i < num_vertices; i++) {
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 0] =
-	vertices[i * VERTEX_SIZE + 5] * rgb_mul->r;
+	vertices[i * VERTEX_SIZE + 5] * r;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 1] =
-	vertices[i * VERTEX_SIZE + 6] * rgb_mul->g;
+	vertices[i * VERTEX_SIZE + 6] * g;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 2] =
-	vertices[i * VERTEX_SIZE + 7] * rgb_mul->b;
+	vertices[i * VERTEX_SIZE + 7] * b;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 3] =
 	vertices[i * VERTEX_SIZE + 8] * alpha;
     }
@@ -211,9 +228,8 @@ ff_render(struct glw_root *gr,
     glColorPointer(4, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
 		   gr->gr_vtmp_buffer);
   } else {
-    glColor4f(rgb_mul->r, rgb_mul->g, rgb_mul->b, alpha);
+    glColor4f(r, g, b, alpha);
   }
-
 
   if(rgb_off != NULL) {
     glEnable(GL_COLOR_SUM);
@@ -268,7 +284,12 @@ shader_render(struct glw_root *root,
   if(tex == NULL) {
     gp = gbr->gbr_renderer_flat;
   } else {
-    gp = gbr->gbr_renderer_tex;
+    
+    if(gbr->be_blur > 0.05) {
+      gp = gbr->gbr_renderer_tex_blur;
+    } else {
+      gp = gbr->gbr_renderer_tex;
+    }
     glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
   }
 
@@ -283,8 +304,25 @@ shader_render(struct glw_root *root,
   else
     glUniform4f(gp->gp_uniform_color_offset, 0,0,0,0);
 
-  glw_program_set_uniform_color(gbr, rgb_mul->r, rgb_mul->g, rgb_mul->b,
-				alpha);
+  switch(gbr->be_blendmode) {
+  case GLW_BLEND_NORMAL:
+    glw_program_set_uniform_color(gbr, rgb_mul->r, rgb_mul->g, rgb_mul->b,
+				  alpha);
+    break;
+  case GLW_BLEND_ADDITIVE:
+    glw_program_set_uniform_color(gbr, 
+				  rgb_mul->r * alpha,
+				  rgb_mul->g * alpha,
+				  rgb_mul->b * alpha,
+				  1);
+    break;
+  }
+
+  if(gbr->be_blur > 0.05 && tex != NULL) {
+    glUniform2f(gp->gp_uniform_blur_amount, 
+		1.5 * gbr->be_blur / tex->width,
+		1.5 * gbr->be_blur / tex->height);
+  }
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, m ?: identitymtx);
 
@@ -306,6 +344,40 @@ shader_render(struct glw_root *root,
 		   GL_UNSIGNED_SHORT, indices);
   else
     glDrawArrays(GL_TRIANGLES, 0, num_vertices);
+}
+
+
+/**
+ *
+ */
+void
+glw_blendmode(struct glw_root *gr, int mode)
+{
+  if(mode == gr->gr_be.be_blendmode)
+    return;
+  gr->gr_be.be_blendmode = mode;
+
+  switch(mode) {
+  case GLW_BLEND_NORMAL:
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    break;
+
+  case GLW_BLEND_ADDITIVE:
+    glBlendFunc(GL_SRC_COLOR, GL_ONE);
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+float
+glw_blur(struct glw_root *gr, float blur)
+{
+  float old = gr->gr_be.be_blur;
+  gr->gr_be.be_blur = blur;
+  return old;
 }
 
 
@@ -389,6 +461,7 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
   gp->gp_uniform_color_offset= glGetUniformLocation(p, "u_color_offset");
+  gp->gp_uniform_blur_amount = glGetUniformLocation(p, "u_blur_amount");
   
 #ifdef DEBUG_SHADERS
   printf("Loaded %s\n", title);
@@ -554,6 +627,11 @@ glw_opengl_init_context(glw_root_t *gr)
     gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
     glDeleteShader(fs);
 
+    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex_blur.glsl",
+			    GL_FRAGMENT_SHADER);
+    gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "Texture", vs, fs);
+    glDeleteShader(fs);
+
     fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
@@ -584,6 +662,9 @@ glw_opengl_init_context(glw_root_t *gr)
 
     gr->gr_render = shader_render;
 
+    prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+		    "OpenGL VP/FP shaders");
+
   } else {
 
     gr->gr_set_hw_clipper = hw_clip_conf;
@@ -597,9 +678,10 @@ glw_opengl_init_context(glw_root_t *gr)
     glLoadMatrixf(projection);
     glMatrixMode(GL_MODELVIEW);
 
-  }
- 
+    prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+		    "OpenGL fixed function");
 
+  }
   return 0;
 }
 
@@ -636,3 +718,12 @@ scaleit2(mtx m, __m128 vec)
   m[2] = _mm_mul_ps(m[2], Z);
 }
 #endif
+
+/**
+ *
+ */
+void
+glw_frontface(struct glw_root *gr, int how)
+{
+  glFrontFace(how == GLW_CW ? GL_CW : GL_CCW);
+}

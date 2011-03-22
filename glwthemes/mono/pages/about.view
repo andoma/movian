@@ -1,0 +1,104 @@
+widget(container_y, {
+
+  space(1);
+  .spacing = 10;
+
+  widget(label, {
+    .align = center;
+    .caption = "Showtime Mediacenter";
+    .sizeScale = 3;
+  });
+
+  widget(label, {
+    .align = center;
+    .caption = $global.showtime.copyright;
+    .sizeScale = 1.5;
+  });
+
+  widget(label, {
+    .align = center;
+    .caption = "Version: " + $global.showtime.version;
+    .color = 0.5;
+    .sizeScale = 1.5;
+  });
+
+
+  space(2);
+
+  widget(container_x, {
+    .padding = 20;
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+
+      widget(label, {
+	.caption = "Display info";
+	.color = 0.7;
+	.sizeScale = 1.5;
+      });
+
+      widget(label, {
+	.caption = "Width: " + int2str($ui.width) + " px";
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.caption = "Height: " + int2str($ui.height) + " px";
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.caption = "Framerate: " + float2str($ui.framerate, 2) + " Hz";
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.autohide = true;
+	.caption = "GPU: " + $ui.gpu.name;
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.autohide = true;
+	.caption = "Renderer: " + $ui.rendermode;
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.autohide = true;
+	.caption = "Windowmanager: " + $ui.windowmanager;
+	.color = 0.7;
+      });
+    });
+
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+      widget(label, {
+	.caption = "System info";
+	.color = 0.7;
+	.sizeScale = 1.5;
+      });
+
+      widget(label, {
+	.hidden = !$global.system.cpuinfo.available;
+	.caption = "Detected CPUs: " + int2str(count($global.system.cpuinfo.cpus));
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.hidden = !$global.system.mem.systotal;
+	.caption = "Total system RAM: " + int2str($global.system.mem.systotal) + " kB";
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.hidden = !$global.system.mem.sysfree;
+	.caption = "Avail system RAM: " + int2str($global.system.mem.sysfree) + " kB";
+	.color = 0.7;
+      });
+    });
+  });
+});

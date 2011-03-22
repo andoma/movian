@@ -150,7 +150,7 @@ static void
 bookmark_add(const char *title, const char *url, const char *type)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
-  prop_t *p = prop_create(NULL, NULL);
+  prop_t *p = prop_create_root(NULL);
   prop_t *src = prop_create(p, "model");
  
   prop_set_string(prop_create(src, "type"), "bookmark");

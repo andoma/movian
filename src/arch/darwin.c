@@ -30,6 +30,7 @@
 #include "misc/callout.h"
 #include "prop/prop.h"
 
+static prop_t *p_sys;
 static unsigned int *last_total;
 static unsigned int *last_idle;
 static unsigned int cpu_count;
@@ -107,6 +108,8 @@ darwin_init_cpu_monitor(void)
   processor_info_t pinfo;
   mach_msg_type_number_t msg_count;
 
+  p_sys = prop_create(prop_get_global(), "system");
+
   r = host_processor_info(mach_host_self (),
                           PROCESSOR_CPU_LOAD_INFO,
                           &cpu_count,
@@ -123,9 +126,8 @@ darwin_init_cpu_monitor(void)
   last_total = calloc(cpu_count, sizeof(unsigned int));
   last_idle = calloc(cpu_count, sizeof(unsigned int));
   
-  prop_set_int(prop_create(prop_create(prop_get_global(), "cpuinfo"),
-			   "available"), 1);
-  p_cpuroot = prop_create(prop_create(prop_get_global(), "cpuinfo"), "cpus");
+  prop_set_int(prop_create(prop_create(p_sys, "cpuinfo"), "available"), 1);
+  p_cpuroot =  prop_create(prop_create(p_sys, "cpuinfo"), "cpus");
   
   vm_deallocate(mach_task_self(),
                 (vm_address_t)pinfo,

@@ -1,57 +1,12 @@
-#include "theme://include/buttons.view"
-#import "theme://include/separators.view"
+#import "skin://buttons/buttons.skin";
 
-$page.glw.title = "Home";
-
-#define COL() {[0.45, 0.45, 0.5]}
-
-#define SERVICE_TYPE_LISTER(TITLE, NODES, ICON, COLOR) {
-  widget(container_y, {
-    .align = center;
-    $clone.focus = isFocused();
-    .width = $ui.fontsize * 10;
-    widget(image, {
-      .color = select($clone.focus, [1.0, 1.0, 1.0], COLOR);
-      .shadow = true;
-      .source = ICON;
-      .height = $ui.fontsize * 4;
-      .align = center;
-    });
-
-   
-    widget(list_y, {
-      .height = 128;
-      cloner(propSorter(NODES, "node.title"), backdrop, {
-
-	PLATE_GFX();
-
-	onEvent(activate, navOpen($self.url));
-
-	.focusable = true;
-	.focusOnClick = true;
-	.color = COLOR;
-	.alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
-	
-	widget(container_x, {
-
-	  widget(label, {
-	    .align = center;
-	    .ellipsize = true;
-	    .caption = $self.title;
-	    .color = select(isFocused(), [1.0, 1.0, 1.0], COLOR);
-	  });
-	});
-      });
-    });
-  });
-}
-
+// $view.sizer = -10 + $ui.size;
 
 widget(container_y, {
+  .padding = [0, $ui.size * 2];
 
-  space(0.25);
+  .spacing = $ui.size * 3;
 
-  
   widget(container_x, {
     space(1);
     widget(backdrop, {
@@ -62,78 +17,97 @@ widget(container_y, {
       .source = "theme://graphics/shadedplate.png";
       .border =  [4, 4, 4, 4];
       .padding = [0, -2, -2, -2];
-
+      
       widget(container_x, {
-       .filterConstraintX = true;
+	.filterConstraintX = true;
         widget(icon, {
-          .source = "theme://icons/48x48/Search.png";
+          .source = "skin://icons/Search.png";
+	  .sizeScale = 1.5;
           .alpha = $view.searchAlpha;
         });
 
         widget(backdrop, {
-         .weight = 2;
-         .filterConstraintX = true;
-         .color = [0.0, 0.0, 0.0];
-         .source = "theme://graphics/shadedplate.png";
-         .border =  [4, 4, 4, 4];
-         .padding = [0, -2, 0, -2];
+          .weight = 2;
+          .filterConstraintX = true;
+          .color = [0.0, 0.0, 0.0];
+          .source = "theme://graphics/shadedplate.png";
+          .border =  [4, 4, 4, 4];
+          .padding = [0, -2, 0, -2];
+	  
+          widget(text, {
+            bind($view.searchQuery);
+	    .sizeScale = 1.5;
+            .focusable = 0.7;
+            $view.searchAlpha = 0.3 + iir(isFocused() * 0.7, 8) + isHovered() * 0.1;
+	    
+	    onEvent(enter, navOpen("search:" + $view.searchQuery));
+          });
+	});
+      });
+    });
+    space(1);
+  });
 
-         widget(text, {
-           bind($view.searchQuery);
-           .focusable = 0.7;
-           $view.searchAlpha = 0.3 + iir(isFocused() * 0.7, 8) + isHovered() * 0.1;
+  widget(array, {
+    $view.sizer = int(getWidth() / 100);
 
-	   onEvent(enter, navOpen("search:" + $view.searchQuery));
-         });
-       });
+    .padding = [$view.sizer * 3, 0];
+
+
+    .Xspacing = $view.sizer * 3;
+    .Yspacing = $view.sizer * 3;
+
+    .childTilesX = 6;
+    .childTilesY = 3;
+
+    cloner(propSorter($global.sources, "node.title"), displacement, {
+      .focusable = true;
+      .padding = $view.sizer * -1.5 * iir(isHovered() || isFocused(), 3) + $view.sizer * iir(isPressed(), 3);
+
+      onEvent(activate, select($ui.fancyAnimations,
+			       navOpen($self.url, void, $self),
+			       navOpen($self.url)));
+      widget(container_y, {
+	.spacing = 5;
+	widget(detachable, {
+	  widget(container_z, {
+	    widget(backdrop, {
+	      .source = "theme://graphics/boxbg.png";
+	      .border = 12;
+	      .padding = -4;
+	      .color = 0.3 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;;
+	      widget(container_y, {
+		
+		widget(image, {
+		  .color = 0.5 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;;	      
+
+		  .hqScaling = true;
+		  .source = $self.icon ?? 
+		    "theme://icons/mediasources/" + 
+		    translate($self.type, "other.png",
+			      "music",     "music.png",
+			      "video",     "movies.png",
+			      "tv",        "tv.png",
+			      "photos",    "pictures.png");
+		});
+	      });
+	    });
+	    widget(backdrop, {
+	      .source = "theme://graphics/boxgloss.png";
+	      .border = 12;
+	      .alpha = iir(0.2 + isHovered() * 0.2 + isFocused() * 0.2 + isPressed() * 0.2 , 5);
+	      .additive = true;
+	      
+	    });
+	  });
+	});
+	widget(label, {
+	  .color = 0.3 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+	  .caption = $self.title;
+	  .align = center;
+	  .ellipsize = true;
+	});
+      });
     });
   });
-  widget(container_x, {
-   .weight = 1.0;
-    });
-  });
-
-    space(0.10);
-
-  widget(container_x, {
-    .align = center;
-    cloner(propSorter(propGrouper($global.sources, "node.type"), "node.name"),
-		      container_z, {
-      SERVICE_TYPE_LISTER($self.name, $self.nodes,
-			  "theme://icons/mediasources/" + 
-			  translate($self.name,  "other.png",
-				    "music",     "music.png",
-				    "video",     "movies.png",
-				    "tv",        "tv.png",
-				    "photos",    "pictures.png"),
-
-			  translate($self.name,  PLATE_COLOR_OTHER(),
-				    "music",     PLATE_COLOR_AUDIO(),
-				    "video",     PLATE_COLOR_VIDEO(),
-				    "tv",        PLATE_COLOR_TV(),
-				    "photos",    PLATE_COLOR_IMAGE()));
-    });
-  });
-
-    HORIZONTAL_SEPARATOR();
-
-  widget(dummy, { .height = 8; });
-
-  widget(container_x, {
-    .padding = [3, 3, 3, 3];
-    .align = right;
-
-    BUTTON_SMALL("Settings", "theme://icons/48x48/Settings.png", 
-		 navOpen("settings:"), COL(), false, 0.3);
-
-    BUTTON_SMALL("Stand by", "theme://icons/48x48/Power.png", 
-		 event(Standby), COL(), 
-		 !$global.runcontrol.canStandby, 0.3);
-
-    BUTTON_SMALL("Exit", "theme://icons/48x48/Exit.png", 
-		 event(Quit), COL(), 
-		 $global.runcontrol.canStandby || !$ui.fullscreen, 0.3);
-  });
-
-  widget(dummy, { .height = 8; });
 });

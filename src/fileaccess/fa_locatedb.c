@@ -267,7 +267,7 @@ fa_locate_searcher (fa_search_t *fas)
     if (fa_stat(url, &fs, NULL, 0))
       continue;
 
-    metadata = prop_create(NULL, "metadata");
+    metadata = prop_create_root("metadata");
 
     if(fs.fs_type == CONTENT_DIR) {
       ctype = CONTENT_DIR;
@@ -305,7 +305,7 @@ fa_locate_searcher (fa_search_t *fas)
       continue; /* Unlikely.. */
 
 
-    p = prop_create(NULL, NULL);
+    p = prop_create_root(NULL);
 
     if (prop_set_parent(metadata, p))
       prop_destroy(metadata);
@@ -390,7 +390,8 @@ locatedb_search(prop_t *model, const char *query)
   fas->fas_run = 1;
   fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
 
-  hts_thread_create_detached("fa search", fa_searcher, fas);
+  hts_thread_create_detached("fa search", fa_searcher, fas,
+			     THREAD_PRIO_NORMAL);
 }
 
 

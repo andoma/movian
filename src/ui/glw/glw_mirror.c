@@ -61,7 +61,7 @@ glw_mirror_render(glw_t *w, glw_rctx_t *rc)
   glw_Scalef(&rc0, 1.0, -1.0, 1.0);
   glw_Translatef(&rc0, 0, 1, 0);
 
-  glw_frontface(GLW_CW);
+  glw_frontface(w->glw_root, GLW_CW);
 
   rc0.rc_alpha *= w->glw_alpha;
   rc0.rc_inhibit_matrix_store = 1;
@@ -70,7 +70,7 @@ glw_mirror_render(glw_t *w, glw_rctx_t *rc)
   glw_render0(c, &rc0);
   glw_clip_disable(w->glw_root, &rc0, b);
 
-  glw_frontface(GLW_CCW);
+  glw_frontface(w->glw_root, GLW_CCW);
 }
 
 

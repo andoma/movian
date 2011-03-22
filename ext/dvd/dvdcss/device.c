@@ -28,7 +28,7 @@
  *****************************************************************************/
 #include "config.h"
 
-#ifndef WII
+#if !defined(WII) && !defined(PS3)
 #define CSS_LIBC
 #endif
 
@@ -456,7 +456,7 @@ int _dvdcss_close ( dvdcss_t dvdcss )
 /*****************************************************************************
  * Open commands.
  *****************************************************************************/
-#ifndef WII
+#if !defined(WII) && !defined(PS3)
 static int libc_open ( dvdcss_t dvdcss, char const *psz_device )
 {
 #if !defined( WIN32 )

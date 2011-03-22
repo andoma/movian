@@ -62,6 +62,7 @@ typedef struct glw_text_bitmap_data {
   int16_t gtbd_linesize;
   uint8_t gtbd_bpp;
   uint8_t gtbd_ellipsized;
+  uint8_t gtbd_wrapped;
 
   int *gtbd_cursor_pos;
   int16_t gtbd_lines;
@@ -346,6 +347,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   pos_t *pos;
 
   gtbd->gtbd_ellipsized = 0;
+  gtbd->gtbd_wrapped = 0;
 
   max_width *= 64;
 
@@ -362,7 +364,6 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 
   /* Compute position for each glyph */
 
-  height = 64 * face->height * pixelheight / 2048;
   height = 64 * pixelheight;
 
   pen_x = 0;
@@ -400,12 +401,18 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
       continue;
       
     case RS_P_CENTER_ON:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 1;
       center = 1;
       continue;
 
     case RS_P_CENTER_OFF:
-      li->center = 1;
+      if(i != 0)
+	li = NULL;
+      else
+	li->center = 0;
       center = 0;
       continue;
 
@@ -478,8 +485,11 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
+	  lix->center = 0;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
+
+	  gtbd->gtbd_wrapped = 1;
 
 	  k--;
 	  w2 -= pos[li->start + k].adv_x + 
@@ -543,7 +553,7 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   target_height =  lines * pxheight;
   gtbd->gtbd_lines = lines;
 
-  bbox.yMin = 64 * face->descender * pixelheight / 2048;
+  bbox.yMin = 64 * face->descender * pixelheight / gr->gr_gtb_face->units_per_EM;
   height = 64 * (target_height / lines);
 
   origin_y = ((64 * (lines - 1) * pxheight) - bbox.yMin) / 64;
@@ -567,17 +577,10 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   gtbd->gtbd_width  = target_width;
   gtbd->gtbd_height = target_height;
 
-#if 0
   if(debug) {
-    for(i = 0; i < target_height / 2; i+=3)
-      memset(data + i * linesize, 0xcc, linesize);
-    for(;i < target_height; i++) {
-      int x;
-      for(x = 0; x < target_width; x+= 3)
-	data[i * linesize + x] = 0xcc;
-    }
+    for(i = 0; i < target_height; i+=3)
+      memset(data + i * gtbd->gtbd_linesize, 0xff, gtbd->gtbd_linesize);
   }
-#endif
 
   if(docur) {
     gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
@@ -719,18 +722,24 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   if(gtb->gtb_saved_width  != rc->rc_width || 
      gtb->gtb_saved_height != rc->rc_height) {
 
-    if(gtb->gtb_status == GTB_VALID && gtb->gtb_flags & GTB_ELLIPSIZE) {
-      
-      if(gtbd->gtbd_ellipsized) {
+    if(gtb->gtb_status == GTB_VALID) {
+
+      if(gtbd->gtbd_wrapped)
 	gtb->gtb_status = GTB_NEED_RERENDER;
-      } else {
-	if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
-	   gtbd->gtbd_width)
-	  gtb->gtb_status = GTB_NEED_RERENDER;
+
+      if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
-	if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
-	   gtbd->gtbd_height)
+	if(gtbd->gtbd_ellipsized) {
 	  gtb->gtb_status = GTB_NEED_RERENDER;
+	} else {
+	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
+	     gtbd->gtbd_width)
+	    gtb->gtb_status = GTB_NEED_RERENDER;
+
+	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
+	     gtbd->gtbd_height)
+	    gtb->gtb_status = GTB_NEED_RERENDER;
+	}
       }
     }
 
@@ -938,7 +947,7 @@ glw_text_bitmap_dtor(glw_t *w)
 
   LIST_REMOVE(gtb, gtb_global_link);
 
-  glw_tex_destroy(&gtb->gtb_texture);
+  glw_tex_destroy(w->glw_root, &gtb->gtb_texture);
 
   glw_renderer_free(&gtb->gtb_text_renderer);
   glw_renderer_free(&gtb->gtb_cursor_renderer);
@@ -982,7 +991,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 static void
 gtb_flush(glw_text_bitmap_t *gtb)
 {
-  glw_tex_destroy(&gtb->gtb_texture);
+  glw_tex_destroy(gtb->w.glw_root, &gtb->gtb_texture);
   if(gtb->gtb_status != GTB_ON_QUEUE)
     gtb->gtb_status = GTB_NEED_RERENDER;
 }
@@ -1373,7 +1382,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW | GLW_HIDDEN;
+  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_int_step = 1;
   gtb->gtb_int_min = INT_MIN;
@@ -1462,10 +1471,13 @@ set_caption(glw_t *w, const char *caption, int type)
   gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
   gtb->gtb_type = type;
   assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
-  if(caption == NULL)
-    w->glw_flags |= GLW_HIDDEN;
-  else
-    w->glw_flags &= ~GLW_HIDDEN;
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE) {
+    if(caption == NULL)
+      glw_hide(w);
+    else
+      glw_unhide(w);
+  }
   
   if(update)
     gtb_update(gtb);
@@ -1493,8 +1505,38 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
 		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
 		   NULL);
-  w->glw_flags &= ~GLW_HIDDEN;
+
+  if(w->glw_flags2 & GLW2_AUTOHIDE)
+    glw_unhide(w);
 }
+
+
+/**
+ *
+ */
+static void
+freeze(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 1;
+}
+
+
+/**
+ *
+ */
+static void
+thaw(glw_t *w)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb->gtb_frozen = 0;
+
+  if(gtb->gtb_pending_update) {
+    gtb_caption_has_changed(gtb);
+    gtb->gtb_pending_update = 0;
+  }
+}
+
 
 /**
  *
@@ -1511,18 +1553,9 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_VALUE:
       gtb->gtb_int = va_arg(ap, double);
-      w->glw_flags &= ~GLW_HIDDEN;
+      if(w->glw_flags2 & GLW2_AUTOHIDE)
+	glw_unhide(w);
       update = 1;
-      break;
-
-    case GLW_ATTRIB_FREEZE:
-      if(va_arg(ap, int)) {
-	gtb->gtb_frozen = 1;
-      } else {
-	if(gtb->gtb_pending_update)
-	  update = 1;
-	gtb->gtb_frozen = 0;
-      }
       break;
 
     case GLW_ATTRIB_INT_STEP:
@@ -1774,7 +1807,8 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   glw_font_change_size(gr, 20);
 
-  hts_thread_create_detached("GLW font renderer", font_render_thread, gr);
+  hts_thread_create_detached("GLW font renderer", font_render_thread, gr,
+			     THREAD_PRIO_NORMAL);
   return 0;
 }
 
@@ -1789,7 +1823,7 @@ glw_font_change_size(void *opaque, int fontsize)
     return;
 
   gr->gr_fontsize = fontsize;
-  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / 2048;
+  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / gr->gr_gtb_face->units_per_EM;
   glw_text_flush(gr);
 }
 
@@ -1803,6 +1837,23 @@ glw_text_bitmap_get_text(glw_t *w)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   return gtb->gtb_caption;
 }
+
+
+/**
+ *
+ */
+static void 
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+
+  if(set & GLW2_AUTOHIDE && gtb->gtb_caption == NULL)
+    glw_hide(w);
+
+  if(clr & GLW2_AUTOHIDE)
+    glw_unhide(w);
+}
+
 
 /**
  *
@@ -1822,6 +1873,9 @@ static glw_class_t glw_label = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_mod_flags2 = mod_flags2,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1845,6 +1899,8 @@ static glw_class_t glw_text = {
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
   .gc_bind_to_property = bind_to_property,
+  .gc_freeze = freeze,
+  .gc_thaw = thaw,
 };
 
 GLW_REGISTER_CLASS(glw_text);

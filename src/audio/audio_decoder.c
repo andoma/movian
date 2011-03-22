@@ -76,7 +76,8 @@ audio_decoder_create(media_pipe_t *mp)
 
   TAILQ_INIT(&ad->ad_hold_queue);
 
-  hts_thread_create_joinable("audio decoder", &ad->ad_tid, ad_thread, ad);
+  hts_thread_create_joinable("audio decoder", &ad->ad_tid, ad_thread, ad,
+			     THREAD_PRIO_NORMAL);
   return ad;
 }
 

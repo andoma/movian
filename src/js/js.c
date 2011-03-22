@@ -186,7 +186,7 @@ js_httpEscape(JSContext *cx, JSObject *obj,
  *
  */
 void
-js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
+js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value, int recurse)
 {
   JSBool b;
   if(JSVAL_IS_INT(value)) {
@@ -215,6 +215,8 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
 
   } else if(JSVAL_IS_VOID(value) || JSVAL_IS_NULL(value)) {
     prop_set_void(p);
+  } else if(recurse && JSVAL_IS_OBJECT(value)) {
+    js_prop_from_object(cx, JSVAL_TO_OBJECT(value), p, recurse);
   } else {
     prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
   }
@@ -225,32 +227,41 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
  *
  */
 int
-js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
+js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p, int recurse)
 {
   JSIdArray *ida;
-  int i;
+  int i, r = 0;
+  const char *n;
 
   if((ida = JS_Enumerate(cx, obj)) == NULL)
     return -1;
   
   for(i = 0; i < ida->length; i++) {
     jsval name, value;
-    prop_t *val;
+
     if(!JS_IdToValue(cx, ida->vector[i], &name))
       continue;
-    
-    if(!JSVAL_IS_STRING(name))
+
+    if(JSVAL_IS_STRING(name)) {
+      n = JS_GetStringBytes(JSVAL_TO_STRING(name));
+      if(!JS_GetProperty(cx, obj, n, &value))
+	continue;
+    } else if(JSVAL_IS_INT(name)) {
+      if(!JS_GetElement(cx, obj, JSVAL_TO_INT(name), &value) ||
+	 JSVAL_IS_VOID(value))
+	continue;
+      n = NULL;
+    } else {
       continue;
-    
-    if(!JS_GetProperty(cx, obj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
-		       &value))
+    }
+
+    if(JSVAL_TO_OBJECT(value) == obj)
       continue;
-    
-    val = prop_create(p, JS_GetStringBytes(JSVAL_TO_STRING(name)));
-    js_prop_set_from_jsval(cx, val, value);
+
+    js_prop_set_from_jsval(cx, prop_create(p, n), value, recurse);
   }
   JS_DestroyIdArray(cx, ida);
-  return 0;
+  return r;
 }
 
 
@@ -624,7 +635,7 @@ js_init(void)
 
   JS_SetCStringsAreUTF8();
 
-  runtime = JS_NewRuntime(0x100000); 
+  runtime = JS_NewRuntime(0x1000000);
 
   cx = js_newctx();
 

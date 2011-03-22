@@ -60,9 +60,10 @@ service_init(void)
   hts_mutex_init(&service_mutex);
   hts_cond_init(&service_cond, &service_mutex);
 
-  hts_thread_create_detached("service probe", service_probe_loop, NULL);
+  hts_thread_create_detached("service probe", service_probe_loop, NULL,
+			     THREAD_PRIO_LOW);
 
-  all_services = prop_create(NULL, NULL);
+  all_services = prop_create_root(NULL);
 
   pnf = prop_nf_create(prop_create(prop_get_global(), "sources"), all_services,
 		       NULL, NULL, 0);
@@ -137,7 +138,7 @@ service_create(const char *title,
   prop_t *p;
   s->s_ref = 1;
 
-  p = s->s_root = prop_create(NULL, NULL);
+  p = s->s_root = prop_create_root(NULL);
   seturl(s, url);
 
   prop_set_string(prop_create(p, "title"), title);
