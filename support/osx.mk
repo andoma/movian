@@ -40,6 +40,6 @@ endif
 
 .PHONY: Showtime.dmg
 Showtime.dmg:
-	support/osxchecknonsyslink.sh ${PROG}
+	support/osx_checkbundlelink.sh ${PROG}
 	support/mkdmg ${APPDIR} Showtime support/osx/hts.icns Showtime.dmg
 

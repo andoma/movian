@@ -1,5 +1,10 @@
 #!/bin/sh
 
+if [ "$1" = "" ] ; then
+  echo "Usage: $0 binary-path"
+  exit
+fi
+
 BINDIR=`dirname $1`
 
 otool -L $1 | tail +2 | cut -f 1 -d " "  | while read LIB ; do
