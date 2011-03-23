@@ -1883,8 +1883,11 @@ static void
 spotify_log_message(sp_session *session, const char *msg)
 {
   int l = strlen(msg);
+  if(l > 512)
+    l = 512;
   char *s = alloca(l + 1);
-  memcpy(s, msg, l + 1);
+  memcpy(s, msg, l);
+  s[l] = 0;
 
   if(l > 0 && s[l - 1] == '\n')
     s[l - 1] = 0;
