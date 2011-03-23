@@ -17,57 +17,6 @@
  */
 
 #include "glw.h"
-#include "glw_math.h"
-
-static void
-vec_addmul(float *dst, const float *a, const float *b, float s)
-{
-  dst[0] = a[0] + b[0] * s;
-  dst[1] = a[1] + b[1] * s;
-  dst[2] = a[2] + b[2] * s;
-}
-
-static void
-vec_sub(float *dst, const float *a, const float *b)
-{
-  dst[0] = a[0] - b[0];
-  dst[1] = a[1] - b[1];
-  dst[2] = a[2] - b[2];
-}
-
-
-static void
-vec_cross(float *dst, const float *a, const float *b)
-{
-  dst[0] = (a[1] * b[2]) - (a[2] * b[1]);
-  dst[1] = (a[2] * b[0]) - (a[0] * b[2]);
-  dst[2] = (a[0] * b[1]) - (a[1] * b[0]);
-}
-
-static float
-vec_dot(const float *a, const float *b)
-{
-  return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
-}
-
-
-void
-glw_mtx_mul_vec(float *dst, const float *mt, float x, float y, float z)
-{
-  dst[0] = mt[0] * x + mt[4] * y + mt[ 8] * z + mt[12];
-  dst[1] = mt[1] * x + mt[5] * y + mt[ 9] * z + mt[13];
-  dst[2] = mt[2] * x + mt[6] * y + mt[10] * z + mt[14];
-}
-
-void
-glw_mtx_trans_mul_vec4(float *dst, const float *mt,
-		       float x, float y, float z, float w)
-{
-  dst[0] = mt[ 0] * x + mt[ 1] * y + mt[ 2] * z + mt[ 3] * w;
-  dst[1] = mt[ 4] * x + mt[ 5] * y + mt[ 6] * z + mt[ 7] * w;
-  dst[2] = mt[ 8] * x + mt[ 9] * y + mt[10] * z + mt[11] * w;
-  dst[3] = mt[12] * x + mt[13] * y + mt[14] * z + mt[15] * w;
-}
 
 
 int
@@ -108,46 +57,6 @@ glw_mtx_invert(float *dst, const float *src)
   dst[15] = 1;
   return 1;
 }
-
-typedef float Vector[3];
-/**
- * m   Model matrix
- * x   Return x in model space
- * y   Return y in model space
- * p   Mouse pointer at camera z plane
- * dir Mouse pointer direction vector
- */
-int
-glw_widget_unproject(Mtx m, float *xp, float *yp, 
-		     const float *p, const float *dir)
-{
-  Vector u, v, n, w0, T0, T1, T2, out, I;
-  float b, inv[16];
-
-  glw_mtx_mul_vec(T0, m, -1, -1, 0);
-  glw_mtx_mul_vec(T1, m,  1, -1, 0);
-  glw_mtx_mul_vec(T2, m,  1,  1, 0);
-
-  vec_sub(u, T1, T0);
-  vec_sub(v, T2, T0);
-  vec_cross(n, u, v);
-  
-  vec_sub(w0, p, T0);
-  b = vec_dot(n, dir);
-  if(fabs(b) < 0.000001)
-    return 0;
-
-  vec_addmul(I, p, dir, -vec_dot(n, w0) / b);
-
-  if(!glw_mtx_invert(inv, m))
-    return 0;
-  glw_mtx_mul_vec(out, inv, I[0], I[1], I[2]);
-
-  *xp = out[0];
-  *yp = out[1];
-  return 1;
-}
-
 
 
 /**
@@ -215,9 +124,8 @@ glw_LoadIdentity(glw_rctx_t *rc)
 {
   memset(&rc->rc_mtx, 0, sizeof(Mtx));
   
-  rc->rc_mtx[0][0]  = 1;
+  rc->rc_mtx[0]  = 1;
   rc->rc_mtx[5]  = 1;
   rc->rc_mtx[10] = 1;
   rc->rc_mtx[15] = 1;
 }
-
