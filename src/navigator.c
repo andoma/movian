@@ -91,14 +91,14 @@ static void nav_open0(navigator_t *nav, const char *url, const char *view,
  *
  */
 static navigator_t *
-nav_create(prop_t *parent)
+nav_create(prop_t *prop)
 {
   navigator_t *nav = calloc(1, sizeof(navigator_t));
+  nav->nav_prop_root = prop;
 
   TAILQ_INIT(&nav->nav_pages);
   TAILQ_INIT(&nav->nav_history);
 
-  nav->nav_prop_root        = prop_create(parent, "nav");
   nav->nav_prop_pages       = prop_create(nav->nav_prop_root, "pages");
   nav->nav_prop_curpage     = prop_create(nav->nav_prop_root, "currentpage");
   nav->nav_prop_can_go_back = prop_create(nav->nav_prop_root, "canGoBack");
@@ -133,7 +133,7 @@ nav_create(prop_t *parent)
 prop_t *
 nav_spawn(void)
 {
-  return nav_create(NULL)->nav_prop_root;
+  return nav_create(prop_create_root("nav"))->nav_prop_root;
 }
 
 
@@ -143,7 +143,7 @@ nav_spawn(void)
 void
 nav_init(void)
 {
-  nav_create(prop_get_global());
+  nav_create(prop_create(prop_get_global(), "nav"));
 }
 
 
