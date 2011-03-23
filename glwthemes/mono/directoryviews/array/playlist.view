@@ -1,7 +1,0 @@
-#import "theme://include/defs.view"
-#import "theme://directoryviews/array/simple.view"
-
-SIMPLE_ITEM_ICON($self.metadata.title,
-		 "theme://icons/256x256/List.png",
-		 navOpen($self.url),
-		 PLATE_COLOR_DIR());

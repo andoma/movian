@@ -3385,7 +3385,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
  *
  */
 static void
-add_dir(prop_t *parent, const char *url, const char *title)
+add_dir(prop_t *parent, const char *url, const char *title, const char *subtype)
 {
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
@@ -3394,6 +3394,7 @@ add_dir(prop_t *parent, const char *url, const char *title)
   prop_set_string(prop_create(p, "url"), url);
 
   prop_set_string(prop_create(metadata, "title"), title);
+  prop_set_string(prop_create(metadata, "subtype"), subtype);
   if(prop_set_parent(p, parent))
     abort();
 
@@ -3411,13 +3412,14 @@ startpage(prop_t *page)
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
   prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
+  prop_set_string(prop_create(metadata, "title"), "Spotify");
 
   prop_t *nodes = prop_create(model, "nodes");
 
-  add_dir(nodes, "spotify:playlists", "Playlists");
-  add_dir(nodes, "spotify:search:tag:new", "New releases");
-  add_dir(nodes, "spotify:starred", "Starred tracks");
-  add_dir(nodes, "spotify:inbox", "Inbox");
+  add_dir(nodes, "spotify:playlists", "Playlists", "playlists");
+  add_dir(nodes, "spotify:search:tag:new", "New releases", NULL);
+  add_dir(nodes, "spotify:starred", "Starred", "starred");
+  add_dir(nodes, "spotify:inbox", "Inbox", "inbox");
 }
 
 
