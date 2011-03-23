@@ -50,7 +50,7 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 
   if(url != NULL) {
     event_dispatch(event_create_openurl(url, NULL, NULL));
-    return http_redirect(hc, "/control/open");
+    return http_redirect(hc, "/showtime/control/open");
   }
 
   htsbuf_queue_init(&out, 0);
@@ -224,9 +224,9 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
 void
 httpcontrol_init(void)
 {
-  http_path_add("/control/open", NULL, hc_open);
-  http_path_add("/image", NULL, hc_image);
-  http_path_add("/prop", NULL, hc_prop);
-  http_path_add("/input/action", NULL, hc_action);
-  http_path_add("/input/utf8", NULL, hc_utf8);
+  http_path_add("/showtime/image", NULL, hc_image);
+  http_path_add("/showtime/open", NULL, hc_open);
+  http_path_add("/showtime/prop", NULL, hc_prop);
+  http_path_add("/showtime/input/action", NULL, hc_action);
+  http_path_add("/showtime/input/utf8", NULL, hc_utf8);
 }
