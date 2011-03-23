@@ -1,7 +1,7 @@
 Showtime mediaplayer
 ====================
 
-(c) 2006 - 2010 Andreas Öman, et al.
+(c) 2006 - 2011 Andreas Öman, et al.
 
 Settings are stored in `~/.hts/showtime`
 
