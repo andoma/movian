@@ -59,6 +59,8 @@ typedef struct glw_array {
   int16_t border_top;
   int16_t border_bottom;
 
+  int num_visible_childs;
+
 } glw_array_t;
 
 #define glw_parent_pos_x glw_parent_val[0].i32
@@ -116,9 +118,9 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int topedge = 1;
-  int ypos;
   int xspacing = 0, yspacing = 0;
-  int height, width;
+  int height, width, rows;
+  int xpos = 0, ypos = 0;
 
   glw_reposition(&rc0,
 		 (a->margin_left + a->border_left),
@@ -161,7 +163,15 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
       a->child_height_px = a->child_height_fixed;
     }
       
+    if(a->num_visible_childs < a->child_tiles_x)
+      xpos = (a->child_tiles_x - a->num_visible_childs) * 
+	(xspacing + a->child_width_px) / 2;
 
+    rows = (a->num_visible_childs - 1) / a->child_tiles_x + 1;
+
+    if(rows < a->child_tiles_y)
+      ypos = (a->child_tiles_y - rows) * 
+	(yspacing + a->child_height_px) / 2;
 
   } else {
 
@@ -197,14 +207,13 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   rc0.rc_width  = a->child_width_px;
   rc0.rc_height = a->child_height_px;
-  ypos = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
     c->glw_parent_pos_y = ypos;
-    c->glw_parent_pos_x = column * (xspacing + a->child_width_px);
+    c->glw_parent_pos_x = column * (xspacing + a->child_width_px) + xpos;
 
     if(ypos - a->filtered_pos > -height &&
        ypos - a->filtered_pos <  height * 2)
@@ -382,11 +391,16 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    a->num_visible_childs++;
     break;
+
 
   case GLW_SIGNAL_CHILD_DESTROYED:
     if(a->scroll_to_me == extra)
       a->scroll_to_me = NULL;
+  case GLW_SIGNAL_CHILD_HIDDEN:
+    a->num_visible_childs--;
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
