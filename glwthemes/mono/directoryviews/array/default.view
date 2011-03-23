@@ -8,7 +8,6 @@ widget(image, {
               "video",     "Movie.png",
               "tv",        "Tv.png",
               "photos",    "Picture.png");
-);
 
   .alpha = iir(isReady(), 10);
   .saturation = 1 - iir(isReady(), 10);
