@@ -7,14 +7,3 @@ widget(image, {
   .saturation = 1 - iir(isReady(), 10);
 
 });
-
-
-
-
-#import "theme://include/defs.view"
-#import "theme://directoryviews/array/simple.view"
-
-SIMPLE_ITEM_IMAGE($self.metadata.title,
-		  $self.metadata.album_art,
-		  navOpen($self.url),
-		  PLATE_COLOR_IMAGE());
