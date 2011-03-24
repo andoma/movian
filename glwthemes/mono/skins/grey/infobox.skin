@@ -1,3 +1,4 @@
+#import "skin://buttons/buttons.skin"
 #define skinInfoboxFocusable(FOCUSABLE, EVENT, BODY) {
   widget(backdrop, {
     .source = "skin://gfx/focused.png";
@@ -14,21 +15,11 @@
 }
 
 #define skinInfoboxFocusableCommand(ENABLED, EVENT, ICON, CAPTION) {
-  skinInfoboxFocusable(
-    0.8, EVENT,
-    .hidden = select(ENABLED, false, true);
-    widget(container_x, {
-      widget(icon, {
-	.source = ICON;
-	.hqScaling = true;
-	.color = select(isFocused(), 1.0, 0.6);
-      });
-      widget(label, {
-	.caption = CAPTION;
-	.color = select(isFocused(), 1.0, 0.6);
-      });
-    });
-  );
+  _glossybuttonTextRight(ICON=ICON,
+			 CAPTION=CAPTION,
+			 EVENT=EVENT,
+			 ENABLED=true,
+			 HIDDEN=!ENABLED);
 }
 
 

@@ -51,21 +51,18 @@ widget(container_y, {
 
 	
 	widget(array, {
-	  .id = "array";
-
 	  $view.sizer = int(getWidth() / 100);
 
+	  .id = "array";
 	  .border = $view.sizer * 3;
-	  
-	  
 	  .Xspacing = $view.sizer * 3;
 	  .Yspacing = $view.sizer * 3;
-	  
 	  .childTilesX = 6;
 	  .childTilesY = 3;
 	  
 	  cloner($page.model.nodes, displacement, {
 	    .focusable = true;
+	    .focusOnClick = true;
 	    .padding = $view.sizer * -1.5 * iir(isHovered() || isFocused(), 3) + $view.sizer * iir(isPressed(), 3);
 
 	    onEvent(activate, select($ui.fancyAnimations,
@@ -95,7 +92,6 @@ widget(container_y, {
 		    .border = 12;
 		    .alpha = iir(0.2 + isHovered() * 0.2 + isFocused() * 0.2 + isPressed() * 0.2 , 5);
 		    .additive = true;
-		
 		  });
 		});
 	      });
