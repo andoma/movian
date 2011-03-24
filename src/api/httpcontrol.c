@@ -50,7 +50,7 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 
   if(url != NULL) {
     event_dispatch(event_create_openurl(url, NULL, NULL));
-    return http_redirect(hc, "/showtime/control/open");
+    return http_redirect(hc, "/showtime/open");
   }
 
   htsbuf_queue_init(&out, 0);
