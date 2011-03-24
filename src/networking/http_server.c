@@ -237,6 +237,15 @@ http_rc2str(int code)
   }
 }
 
+static const char *httpdays[7] = {
+  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
+};
+
+static const char *httpmonths[12] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
+  "Dec"
+};
+
 
 /**
  * Transmit a HTTP reply
@@ -251,14 +260,6 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   time_t t;
   http_header_t *hh;
 
-  static const char *cachedays[7] = {
-    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-  };
-  
-  static const char *cachemonths[12] = {
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
-    "Dec"
-  };
 
   htsbuf_queue_init(&hdrs, 0);
 
@@ -277,8 +278,8 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
     tm = gmtime_r(&t, &tm0);
     htsbuf_qprintf(&hdrs, 
 		   "Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   cachedays[tm->tm_wday],	tm->tm_year + 1900,
-		   cachemonths[tm->tm_mon], tm->tm_mday,
+		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
+		   httpmonths[tm->tm_mon], tm->tm_mday,
 		   tm->tm_hour, tm->tm_min, tm->tm_sec);
 
     t += maxage;
@@ -286,8 +287,8 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
     tm = gmtime_r(&t, &tm0);
     htsbuf_qprintf(&hdrs, 
 		   "Expires: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   cachedays[tm->tm_wday],	tm->tm_year + 1900,
-		   cachemonths[tm->tm_mon], tm->tm_mday,
+		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
+		   httpmonths[tm->tm_mon], tm->tm_mday,
 		   tm->tm_hour, tm->tm_min, tm->tm_sec);
       
     htsbuf_qprintf(&hdrs, "Cache-Control: max-age=%d\r\n", maxage);
@@ -313,6 +314,45 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   htsbuf_qprintf(&hdrs, "\r\n");
   
   htsbuf_appendq(&hc->hc_output, &hdrs);
+}
+
+
+/**
+ * Transmit a HTTP reply
+ */
+int
+http_send_raw(http_connection_t *hc, int rc, const char *rctxt,
+	      struct http_header_list *headers, htsbuf_queue_t *output)
+{
+  htsbuf_queue_t hdrs;
+  http_header_t *hh;
+#if 0
+  struct tm tm0, *tm;
+  time_t t;
+#endif
+  htsbuf_queue_init(&hdrs, 0);
+
+  htsbuf_qprintf(&hdrs, "%s %d %s\r\n", 
+		 val2str(hc->hc_version, HTTP_versiontab),
+		 rc, rctxt);
+
+  if(headers != NULL) {
+    LIST_FOREACH(hh, headers, hh_link)
+      htsbuf_qprintf(&hdrs, "%s: %s\r\n", hh->hh_key, hh->hh_value);
+    http_headers_free(headers);
+  }
+
+  htsbuf_qprintf(&hdrs, "\r\n");
+  
+  htsbuf_appendq(&hc->hc_output, &hdrs);
+
+  if(output != NULL) {
+    if(hc->hc_no_output)
+      htsbuf_queue_flush(output);
+    else
+      htsbuf_appendq(&hc->hc_output, output);
+  }
+  return 0;
 }
 
 
@@ -595,6 +635,7 @@ static int
 http_read_post(http_connection_t *hc)
 {
   http_path_t *hp;
+  const char *content_type;
   char *v, *argv[2], *args, *remain;
   int n;
   size_t size = hc->hc_input.hq_size;
@@ -615,19 +656,21 @@ http_read_post(http_connection_t *hc)
   hc->hc_state = HCS_COMMAND;
 
   /* Parse content-type */
-  v = mystrdupa(http_header_get(&hc->hc_request_headers, "Content-Type"));
-  if(v == NULL) {
-    http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type missing");
-    return 0;
-  }
-  n = http_tokenize(v, argv, 2, ';');
-  if(n == 0) {
-    http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type malformed");
-    return 0;
-  }
+  content_type = http_header_get(&hc->hc_request_headers, "Content-Type");
 
-  if(!strcmp(argv[0], "application/x-www-form-urlencoded"))
-    http_parse_get_args(hc, hc->hc_post_data);
+  if(content_type != NULL) {
+
+    v = mystrdupa(content_type);
+
+    n = http_tokenize(v, argv, 2, ';');
+    if(n == 0) {
+      http_error(hc, HTTP_STATUS_BAD_REQUEST, "Content-Type malformed");
+      return 0;
+    }
+
+    if(!strcmp(argv[0], "application/x-www-form-urlencoded"))
+      http_parse_get_args(hc, hc->hc_post_data);
+  }
 
   hp = http_resolve(hc, &remain, &args);
   if(hp == NULL) {
