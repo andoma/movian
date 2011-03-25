@@ -400,8 +400,8 @@ HandShake(RTMP * r, int FP9HandShake)
       /* set version to at least 9.0.115.0 */
       if (encrypted)
 	{
-	  clientsig[4] = 128;
-	  clientsig[6] = 3;
+	  clientsig[4] = 9;
+	  clientsig[6] = 0x7c;
 	}
       else
         {
