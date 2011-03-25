@@ -48,18 +48,62 @@ widget(container_y, {
 	  });
 	});
 
+
+	
 	widget(array, {
+	  $view.sizer = int(getWidth() / 100);
+
 	  .id = "array";
+	  .border = $view.sizer * 3;
+	  .Xspacing = $view.sizer * 3;
+	  .Yspacing = $view.sizer * 3;
+	  .childTilesX = 6;
+	  .childTilesY = 3;
 	  
-	  .childWidth = 200;
-	  .childHeight = 140 + $ui.size;
-	  
-	  cloner($page.model.nodes, loader, {
-	    .time = 0.3;
-	    .noInitialTransform = true;
-	    .source = "theme://directoryviews/array/" + $self.type + ".view";
+	  cloner($page.model.nodes, displacement, {
+	    .focusable = true;
+	    .focusOnClick = true;
+	    .padding = $view.sizer * -1.5 * iir(isHovered() || isFocused(), 3) + $view.sizer * iir(isPressed(), 3);
+
+	    onEvent(activate, select($ui.fancyAnimations,
+				     navOpen($self.url, void, $self),
+				     navOpen($self.url)));
+	    widget(container_y, {
+	      .spacing = 5;
+	      widget(detachable, {
+		widget(container_z, {
+		  widget(backdrop, {
+		    .source = "theme://graphics/boxbg.png";
+		    .border = 12;
+		    .padding = -4;
+		    .color = 0.3 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+		    
+		    widget(loader, {
+		      .time = 0.3;
+		      .noInitialTransform = true;
+		      .source = "theme://directoryviews/array/" +
+			translate($self.type, "default",
+				  "album", "album",
+				  "directory", "directory") + ".view";
+		    });
+		  });
+		  widget(backdrop, {
+		    .source = "theme://graphics/boxgloss.png";
+		    .border = 12;
+		    .alpha = iir(0.2 + isHovered() * 0.2 + isFocused() * 0.2 + isPressed() * 0.2 , 5);
+		    .additive = true;
+		  });
+		});
+	      });
+	      widget(label, {
+		.color = 0.3 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+		.caption = $self.metadata.title;
+		.align = center;
+		.ellipsize = true;
+	      });
+	    });
 	  });
-	});
+	});	  
       });
     });
 

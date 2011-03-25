@@ -63,7 +63,7 @@ err_reporter(JSContext *cx, const char *msg, JSErrorReport *r)
  *
  */
 JSContext *
-js_newctx(void)
+js_newctx(JSErrorReporter er)
 {
   JSContext *cx = JS_NewContext(runtime, 8192);
 
@@ -71,7 +71,7 @@ js_newctx(void)
 		JSOPTION_STRICT |
 		JSOPTION_WERROR | 
 		JSOPTION_VAROBJFIX);
-  JS_SetErrorReporter(cx, err_reporter);
+  JS_SetErrorReporter(cx, er ?: err_reporter);
 #ifdef JS_GC_ZEAL
   //  JS_SetGCZeal(cx, 1);
 #endif
@@ -555,7 +555,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
     return -1;
 
-  cx = js_newctx();
+  cx = js_newctx(err_reporter);
   JS_BeginRequest(cx);
 
   /* Remove any plugin with same URL */
@@ -637,7 +637,7 @@ js_init(void)
 
   runtime = JS_NewRuntime(0x1000000);
 
-  cx = js_newctx();
+  cx = js_newctx(err_reporter);
 
   JS_BeginRequest(cx);
 
@@ -667,7 +667,7 @@ js_fini(void)
   js_plugin_t *jsp, *n;
   JSContext *cx;
 
-  cx = js_newctx();
+  cx = js_newctx(err_reporter);
   JS_BeginRequest(cx);
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {

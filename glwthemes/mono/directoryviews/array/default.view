@@ -3,10 +3,11 @@ widget(image, {
   .hqScaling = true;
   .source = $self.metadata.icon ?? 
     "theme://icons/256x256/" + 
-    translate($self.metadata.subtype, "Folder.png",
-              "playlists",     "List.png",
-              "starred",       "Star.png",
-              "inbox",         "Inbox.png");
+    translate($self.type, "Folder.png",
+              "music",     "Music.png",
+              "video",     "Movie.png",
+              "tv",        "Tv.png",
+              "photos",    "Picture.png");
 
   .alpha = iir(isReady(), 10);
   .saturation = 1 - iir(isReady(), 10);

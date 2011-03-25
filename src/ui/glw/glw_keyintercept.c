@@ -19,7 +19,6 @@
 #include "misc/string.h"
 #include "event.h"
 #include "glw.h"
-#include <libavutil/common.h>
 
 #define KI_BUF_LEN 64
 
@@ -43,14 +42,11 @@ updatestr(glw_keyintercept_t *ki)
 {
   char str[KI_BUF_LEN * 5 + 1];
   char *q;
-  int i, c;
+  int i;
 
   q = str;
-  for(i = 0; i < ki->buflen; i++) {
-    uint8_t tmp;
-    c = ki->buf[i];
-    PUT_UTF8(c, tmp, if (q - str < KI_BUF_LEN * 5 ) *q++ = tmp;)
-  }
+  for(i = 0; i < ki->buflen - 6; i++)
+    q += utf8_put(q, ki->buf[i]);
   *q = 0;
 
   if(ki->prop != NULL)

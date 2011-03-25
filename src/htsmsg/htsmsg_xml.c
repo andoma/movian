@@ -50,8 +50,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <libavutil/common.h>
-
 #include "htsmsg_xml.h"
 #include "htsbuf.h"
 #include "misc/string.h"
@@ -108,7 +106,6 @@ add_unicode(struct cdata_content_queue *ccq, int c)
 {
   cdata_content_t *cc;
   char *q;
-  uint8_t tmp;
 
   cc = malloc(sizeof(cdata_content_t) + 6);
   cc->cc_encoding = XML_ENCODING_UTF8;
@@ -117,7 +114,7 @@ add_unicode(struct cdata_content_queue *ccq, int c)
   TAILQ_INSERT_TAIL(ccq, cc, cc_link);
   cc->cc_start = cc->cc_buf;
 
-  PUT_UTF8(c, tmp, *q++ = tmp;)
+  q += utf8_put(q, c);
   cc->cc_end = q;
 }
 
@@ -663,7 +660,6 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *parent, char *src)
   char *body;
   char *x;
   htsmsg_t *tags = htsmsg_create_map();
-  uint8_t tmp;
   
   TAILQ_INIT(&ccq);
   src = htsmsg_xml_parse_cd0(xp, &ccq, tags, NULL, src, 0);
@@ -717,9 +713,8 @@ htsmsg_xml_parse_cd(xmlparser_t *xp, htsmsg_t *parent, char *src)
 	break;
 
       case XML_ENCODING_8859_1:
-	for(x = cc->cc_start; x < cc->cc_end; x++) {
-	  PUT_UTF8(*x, tmp, body[c++] = tmp;)
-	    }
+	for(x = cc->cc_start; x < cc->cc_end; x++)
+	  c += utf8_put(body + c, *x);
 	break;
       }
       

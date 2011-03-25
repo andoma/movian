@@ -70,6 +70,49 @@
   });
 }
 
+
+
+#define _glossybuttonTextRight(ICON, CAPTION, EVENT, ENABLED=true, HIDDEN=false, SCALE=1.0) {
+  widget(displacement, {
+    .hidden = HIDDEN;
+    .padding = iir(isPressed() * 2, 3, true);
+
+    widget(container_z, {
+      widget(backdrop, {
+	.focusable = ENABLED;
+	.source = "skin://gfx/bar3.png";
+	.border = [2,4,2,4];
+	.padding = [5,0,5,0];
+	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+	
+	onEvent(activate, EVENT);
+	
+	widget(container_x, {
+
+	  widget(icon, {
+	    .alpha = select(ENABLED, 1,  0.2);
+	    .source = ICON;
+	    .sizeScale = SCALE;
+	    .shadow = true;
+	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+	  });
+	  widget(label, {
+	    .caption = CAPTION;
+	    .source = ICON;
+	    .sizeScale = SCALE;
+	  });
+	});
+      });
+      _gloss();
+    });
+  });
+}
+
+
+
+
+
+
 #define _glossybuttonText(ICON, CAPTION, EVENT,
 			  ENABLED=true, HIDDEN=false, SCALE=1.0) {
   widget(container_y, {

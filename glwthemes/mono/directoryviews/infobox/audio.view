@@ -2,6 +2,7 @@
 #import "theme://include/separators.view"
 #import "skin://infobox.skin"
 
+
 widget(container_y, {
   .spacing = 5;
   widget(container_x, {
@@ -87,8 +88,12 @@ widget(container_y, {
   });
 
   space(1);
-  skinInfoboxEnqueue(true, enqueuetrack($args));
-  skinInfoboxDelete(true, {
-    delete($args);
+  widget(container_x, {
+    .spacing = 10;
+    .homogenous = true;
+    skinInfoboxEnqueue(true, enqueuetrack($args));
+    skinInfoboxDelete($self.model.canDelete, {
+      delete($args);
+    });
   });
 });

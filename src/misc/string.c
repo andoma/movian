@@ -22,9 +22,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include <libavutil/avstring.h>
-#include <libavutil/common.h>
-
 #include "misc/string.h"
 #include "showtime.h"
 
@@ -131,7 +128,6 @@ html_entities_decode(char *s)
   char *e;
   int code;
   char name[10];
-  uint8_t tmp;
 
   for(; *s; s++) {
     if(*s != '&')
@@ -147,7 +143,7 @@ html_entities_decode(char *s)
     if(code == -1)
       continue;
 
-    PUT_UTF8(code, tmp, *s++ = tmp;);
+    s += utf8_put(s, code);
     
     memmove(s, e + 1, strlen(e + 1) + 1);
     s--;
@@ -450,7 +446,7 @@ url_split(char *proto, int proto_size,
 
   /* parse protocol */
   if ((p = strchr(url, ':'))) {
-    av_strlcpy(proto, url, MIN(proto_size, p + 1 - url));
+    snprintf(proto, MIN(proto_size, p + 1 - url), "%s", url);
     p++; /* skip ':' */
     if (*p == '/') p++;
     if (*p == '/') p++;
@@ -480,24 +476,20 @@ url_split(char *proto, int proto_size,
   if (ls != p) {
     /* authorization (user[:pass]@hostname) */
     if ((at = strchr(p, '@')) && at < ls) {
-      av_strlcpy(authorization, p,
-		 MIN(authorization_size, at + 1 - p));
+      snprintf(authorization, MIN(authorization_size, at + 1 - p), "%s", p);
       p = at + 1; /* skip '@' */
     }
 
     if (*p == '[' && (brk = strchr(p, ']')) && brk < ls) {
       /* [host]:port */
-      av_strlcpy(hostname, p + 1,
-		 MIN(hostname_size, brk - p));
+      snprintf(hostname, MIN(hostname_size, brk - p), "%s", p + 1);
       if (brk[1] == ':' && port_ptr)
 	*port_ptr = atoi(brk + 2);
     } else if ((col = strchr(p, ':')) && col < ls) {
-      av_strlcpy(hostname, p,
-		 MIN(col + 1 - p, hostname_size));
+      snprintf(hostname, MIN(col + 1 - p, hostname_size), "%s", p);
       if (port_ptr) *port_ptr = atoi(col + 1);
     } else
-      av_strlcpy(hostname, p,
-		 MIN(ls + 1 - p, hostname_size));
+      snprintf(hostname, MIN(ls + 1 - p, hostname_size), "%s", p);
   }
 }
 

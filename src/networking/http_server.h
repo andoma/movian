@@ -38,6 +38,9 @@ int http_send_reply(http_connection_t *hc, int rc, const char *content,
 		    const char *encoding, const char *location, int maxage,
 		    htsbuf_queue_t *output);
 
+int http_send_raw(http_connection_t *hc, int rc, const char *rctxt,
+		  struct http_header_list *headers, htsbuf_queue_t *output);
+
 int http_error(http_connection_t *hc, int error, const char *extra, ...);
 
 int http_redirect(http_connection_t *hc, const char *location);

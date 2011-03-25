@@ -879,7 +879,15 @@ RTMP_Connect1(RTMP *r, RTMPPacket *cp)
       r->m_clientID.av_val = NULL;
       r->m_clientID.av_len = 0;
       HTTP_Post(r, RTMPT_OPEN, "", 1);
-      HTTP_read(r, 1);
+      if (HTTP_read(r, 1) != 0)
+	{
+         r->m_msgCounter = 0;
+         RTMP_Log(RTMP_LOGDEBUG, "%s, Could not connect for handshake", __FUNCTION__);
+         RTMP_Close(r);
+         return 0;
+       }
+
+
       r->m_msgCounter = 0;
     }
   RTMP_Log(RTMP_LOGDEBUG, "%s, ... connected, handshaking", __FUNCTION__);
@@ -4085,7 +4093,7 @@ Read_1_Packet(RTMP *r, char *buf, unsigned int buflen)
 	  /* grab first timestamp and see if it needs fixing */
 	  nTimeStamp = AMF_DecodeInt24(packetBody + 4);
 	  nTimeStamp |= (packetBody[7] << 24);
-	  delta = packet.m_nTimeStamp - nTimeStamp;
+	  delta = packet.m_nTimeStamp - nTimeStamp + r->m_read.nResumeTS;
 
 	  while (pos + 11 < nPacketLen)
 	    {

@@ -49,10 +49,17 @@ typedef struct glw_array {
   int16_t xspacing;
   int16_t yspacing;
 
-  int16_t padding_left;
-  int16_t padding_right;
-  int16_t padding_top;
-  int16_t padding_bottom;
+  int16_t margin_left;
+  int16_t margin_right;
+  int16_t margin_top;
+  int16_t margin_bottom;
+
+  int16_t border_left;
+  int16_t border_right;
+  int16_t border_top;
+  int16_t border_bottom;
+
+  int num_visible_childs;
 
 } glw_array_t;
 
@@ -111,12 +118,16 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int topedge = 1;
-  int ypos;
   int xspacing = 0, yspacing = 0;
-  int height, width;
+  int height, width, rows;
+  int xpos = 0, ypos = 0;
 
-  glw_reposition(&rc0, a->padding_left, rc->rc_height - a->padding_top,
-		 rc->rc_width - a->padding_right, a->padding_bottom);
+  glw_reposition(&rc0,
+		 (a->margin_left + a->border_left),
+		 rc->rc_height - (a->margin_top + a->border_top),
+		 rc->rc_width - (a->margin_right + a->border_right),
+		 a->margin_bottom + a->border_bottom);
+
   height = rc0.rc_height;
   width = rc0.rc_width;
 
@@ -152,7 +163,15 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
       a->child_height_px = a->child_height_fixed;
     }
       
+    if(a->num_visible_childs < a->child_tiles_x)
+      xpos = (a->child_tiles_x - a->num_visible_childs) * 
+	(xspacing + a->child_width_px) / 2;
 
+    rows = (a->num_visible_childs - 1) / a->child_tiles_x + 1;
+
+    if(rows < a->child_tiles_y)
+      ypos = (a->child_tiles_y - rows) * 
+	(yspacing + a->child_height_px) / 2;
 
   } else {
 
@@ -188,14 +207,13 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   rc0.rc_width  = a->child_width_px;
   rc0.rc_height = a->child_height_px;
-  ypos = 0;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
     c->glw_parent_pos_y = ypos;
-    c->glw_parent_pos_x = column * (xspacing + a->child_width_px);
+    c->glw_parent_pos_x = column * (xspacing + a->child_width_px) + xpos;
 
     if(ypos - a->filtered_pos > -height &&
        ypos - a->filtered_pos <  height * 2)
@@ -275,7 +293,7 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
-  glw_rctx_t rc0, rc1, rc2;
+  glw_rctx_t rc0, rc1, rc2, rc3;
   int t, b, height, width;
   float y;
 
@@ -283,15 +301,22 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
     return;
 
   rc0 = *rc;
-  glw_reposition(&rc0, a->padding_left, rc->rc_height - a->padding_top,
-		 rc->rc_width  - a->padding_right, a->padding_bottom);
-  height = rc0.rc_height;
-  width = rc0.rc_width;
+  glw_reposition(&rc0, a->margin_left, rc->rc_height - a->margin_top,
+		 rc->rc_width  - a->margin_right, a->margin_bottom);
 
   glw_store_matrix(w, &rc0);
   rc1 = rc0;
+
+  glw_reposition(&rc1,
+		 a->border_left, rc->rc_height - a->border_top,
+		 rc->rc_width  - a->border_right, a->border_bottom);
+
+  height = rc1.rc_height;
+  width = rc1.rc_width;
+
+  rc2 = rc1;
   
-  glw_Translatef(&rc1, 0, 2.0f * a->filtered_pos / height, 0);
+  glw_Translatef(&rc2, 0, 2.0f * a->filtered_pos / height, 0);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -316,14 +341,14 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
     else
       b = -1;
 
-    rc2 = rc1;
-    glw_reposition(&rc2,
+    rc3 = rc2;
+    glw_reposition(&rc3,
 		   c->glw_parent_pos_x,
 		   height - c->glw_parent_pos_y,
 		   c->glw_parent_pos_x + a->child_width_px,
 		   height - c->glw_parent_pos_y - a->child_height_px);
 
-    glw_render0(c, &rc2);
+    glw_render0(c, &rc3);
 
     if(t != -1)
       glw_clip_disable(w->glw_root, &rc0, t);
@@ -366,11 +391,16 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    a->num_visible_childs++;
     break;
+
 
   case GLW_SIGNAL_CHILD_DESTROYED:
     if(a->scroll_to_me == extra)
       a->scroll_to_me = NULL;
+  case GLW_SIGNAL_CHILD_HIDDEN:
+    a->num_visible_childs--;
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
@@ -457,13 +487,27 @@ glw_array_get_num_children_x(glw_t *w)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_margin(glw_t *w, const float *v)
 {
   glw_array_t *a = (glw_array_t *)w;
-  a->padding_left   = v[0];
-  a->padding_top    = v[1];
-  a->padding_right  = v[2];
-  a->padding_bottom = v[3];
+  a->margin_left   = v[0];
+  a->margin_top    = v[1];
+  a->margin_right  = v[2];
+  a->margin_bottom = v[3];
+}
+
+
+/**
+ *
+ */
+static void
+set_border(glw_t *w, const float *v)
+{
+  glw_array_t *a = (glw_array_t *)w;
+  a->border_left   = v[0];
+  a->border_top    = v[1];
+  a->border_right  = v[2];
+  a->border_bottom = v[3];
 }
 
 
@@ -481,7 +525,8 @@ static glw_class_t glw_array = {
   .gc_set = glw_array_set,
   .gc_signal_handler = glw_array_callback,
   .gc_get_num_children_x = glw_array_get_num_children_x,
-  .gc_set_padding = set_padding,
+  .gc_set_margin = set_margin,
+  .gc_set_border = set_border,
 };
 
 GLW_REGISTER_CLASS(glw_array);

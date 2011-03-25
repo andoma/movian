@@ -1714,7 +1714,7 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   char *q;
-  int i, c;
+  int i;
 
   if(w->glw_class != &glw_label &&
      w->glw_class != &glw_text &&
@@ -1723,11 +1723,8 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
   }
 
   q = buf;
-  for(i = 0; i < gtb->gtb_uc_len; i++) {
-    uint8_t tmp;
-    c = gtb->gtb_uc_buffer[i];
-    PUT_UTF8(c, tmp, if (q - buf < buflen - 1) *q++ = tmp;)
-  }
+  for(i = 0; i < gtb->gtb_uc_len; i++)
+    q += utf8_put(q, gtb->gtb_uc_buffer[i]);
   *q = 0;
   return 0;
 }
