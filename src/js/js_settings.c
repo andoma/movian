@@ -84,7 +84,7 @@ settings_get_cx(js_setting_t *jss)
 {
   JSContext *cx;
   if(jss->jss_cx == NULL) {
-    cx = js_newctx();
+    cx = js_newctx(NULL);
     JS_BeginRequest(cx);
   } else {
     cx = jss->jss_cx;

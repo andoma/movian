@@ -883,12 +883,35 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
 /**
  *
  */
+static void
+js_open_error(JSContext *cx, const char *msg, JSErrorReport *r)
+{
+  js_model_t *jm = JS_GetContextPrivate(cx);
+
+  int level;
+
+  if(r->flags & JSREPORT_WARNING)
+    level = TRACE_INFO;
+  else {
+    level = TRACE_ERROR;
+    nav_open_errorf(jm->jm_root, "%s", msg);
+  }
+
+  TRACE(level, "JS", "%s:%u %s",  r->filename, r->lineno, msg);
+}
+
+
+/**
+ *
+ */
 static void *
 js_open_trampoline(void *arg)
 {
   js_model_t *jm = arg;
   
-  JSContext *cx = js_newctx();
+  JSContext *cx = js_newctx(js_open_error);
+  JS_SetContextPrivate(cx, jm);
+
   JS_BeginRequest(cx);
 
   js_open_invoke(cx, jm);

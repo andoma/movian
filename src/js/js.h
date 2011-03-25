@@ -27,7 +27,7 @@ typedef struct js_plugin {
 
 } js_plugin_t;
 
-JSContext *js_newctx(void);
+JSContext *js_newctx(JSErrorReporter er);
 
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 		  jsval *argv, jsval *rval);
