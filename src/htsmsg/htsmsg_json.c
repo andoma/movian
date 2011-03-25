@@ -27,8 +27,6 @@
 #include "htsbuf.h"
 #include "misc/string.h"
 
-#include <libavutil/common.h>
-
 /**
  *
  */
@@ -194,7 +192,6 @@ htsmsg_json_parse_string(const char *s, const char **endp)
 	    else if(*a == 'u') {
 	      // Unicode character
 	      int i, v = 0;
-	      uint8_t tmp;
 
 	      a++;
 	      for(i = 0; i < 4; i++) {
@@ -215,7 +212,7 @@ htsmsg_json_parse_string(const char *s, const char **endp)
 		}
 	      }
 	      a+=3;
-	      PUT_UTF8(v, tmp, *b++ = tmp;)
+	      b += utf8_put(b, v);
 	    } else {
 	      *b++ = *a;
 	    }
