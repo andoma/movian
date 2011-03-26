@@ -202,6 +202,8 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
     prop_set_int(p, JSVAL_TO_INT(value));
   } else if(JSVAL_IS_BOOLEAN(value)) {
     prop_set_int(p, JSVAL_TO_BOOLEAN(value));
+  } else if(JSVAL_IS_NULL(value) || JSVAL_IS_VOID(value)) {
+    prop_set_void(p);
   } else if(JSVAL_IS_DOUBLE(value)) {
     double d;
     if(JS_ValueToNumber(cx, value, &d))
