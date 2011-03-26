@@ -25,6 +25,16 @@
 
 static int json_encode_from_object(JSContext *cx, JSObject *obj,
 				   htsbuf_queue_t *out);
+/**
+ *
+ */
+static void
+js_json_emit_str(JSContext *cx, jsval value, htsbuf_queue_t *out)
+{
+  JSString *str = JS_ValueToString(cx, value);
+  htsbuf_append_and_escape_jsonstr(out, JS_GetStringBytes(str));
+}
+
 
 /**
  *
@@ -50,10 +60,15 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
   } else if(JSVAL_IS_NULL(value)) {
     htsbuf_append(out, "null", 4);
   } else if(JSVAL_IS_STRING(value)) {
-    JSString *str = JS_ValueToString(cx, value);
-    htsbuf_append_and_escape_jsonstr(out, JS_GetStringBytes(str));
+    js_json_emit_str(cx, value, out);
   } else if(JSVAL_IS_OBJECT(value)) {
-    json_encode_from_object(cx, JSVAL_TO_OBJECT(value), out);
+    JSObject *obj = JSVAL_TO_OBJECT(value);
+    JSClass *c = JS_GetClass(cx, obj);
+
+    if(!strcmp(c->name, "XML"))   // Treat some classes special
+      js_json_emit_str(cx, value, out);
+    else 
+      json_encode_from_object(cx, JSVAL_TO_OBJECT(value), out);
   }
 }
 

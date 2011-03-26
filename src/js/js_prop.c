@@ -66,7 +66,7 @@ pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
   prop_t *c = prop_from_id(cx, obj, id);
 
   if(c != NULL)
-    js_prop_set_from_jsval(cx, c, *vp, 0);
+    js_prop_set_from_jsval(cx, c, *vp);
 
   return JS_TRUE;
 }
