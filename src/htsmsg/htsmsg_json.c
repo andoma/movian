@@ -27,36 +27,6 @@
 #include "htsbuf.h"
 #include "misc/string.h"
 
-/**
- *
- */
-static void
-htsmsg_json_encode_string(const char *str, htsbuf_queue_t *hq)
-{
-  const char *s = str;
-
-  htsbuf_append(hq, "\"", 1);
-
-  while(*s != 0) {
-    if(*s == '"' || *s == '\\' || *s == '\n') {
-      htsbuf_append(hq, str, s - str);
-
-      if(*s == '"')
-	htsbuf_append(hq, "\\\"", 2);
-      else if(*s == '\n') 
-	htsbuf_append(hq, "\\n", 2);
-      else
-	htsbuf_append(hq, "\\\\", 2);
-      s++;
-      str = s;
-    } else {
-      s++;
-    }
-  }
-  htsbuf_append(hq, str, s - str);
-  htsbuf_append(hq, "\"", 1);
-}
-
 
 /*
  * Note to future:
@@ -80,7 +50,7 @@ htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
       htsbuf_append(hq, indentor, indent < 16 ? indent : 16);
 
     if(!isarray) {
-      htsmsg_json_encode_string(f->hmf_name ?: "noname", hq);
+      htsbuf_append_and_escape_jsonstr(hq, f->hmf_name ?: "noname");
       htsbuf_append(hq, ": ", 2);
     }
 
@@ -94,11 +64,11 @@ htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
       break;
 
     case HMF_STR:
-      htsmsg_json_encode_string(f->hmf_str, hq);
+      htsbuf_append_and_escape_jsonstr(hq, f->hmf_str);
       break;
 
     case HMF_BIN:
-      htsmsg_json_encode_string("binary", hq);
+      htsbuf_append_and_escape_jsonstr(hq, "binary");
       break;
 
     case HMF_S64:

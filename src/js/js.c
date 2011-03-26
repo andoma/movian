@@ -386,6 +386,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
     JS_FS("sleep",            js_sleep, 1, 0, 0),
+    JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS_END
 };
 
