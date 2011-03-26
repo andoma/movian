@@ -275,7 +275,6 @@ js_setSource(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
   js_prop_set_from_jsval(cx, jm->jm_source, *vp);
-  prop_print_tree(jm->jm_source, 1);
   return JS_TRUE;
 }
 
