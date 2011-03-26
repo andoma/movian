@@ -1026,7 +1026,7 @@ static glw_class_t glw_image = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1047,7 +1047,7 @@ static glw_class_t glw_icon = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1070,7 +1070,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_border = set_border,
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1092,7 +1092,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_rgb = glw_image_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

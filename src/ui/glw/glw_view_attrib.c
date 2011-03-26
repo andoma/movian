@@ -599,14 +599,14 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 
   switch(t->type) {
   case TOKEN_VOID:
-    if(w->glw_class->gc_set_source_str != NULL)
-      w->glw_class->gc_set_source_str(w, NULL);
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, NULL);
     break;
 
   case TOKEN_STRING:
   case TOKEN_LINK:
-    if(w->glw_class->gc_set_source_str != NULL)
-      w->glw_class->gc_set_source_str(w, rstr_get(t->t_rstring));
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, rstr_get(t->t_rstring));
     break;
 
   case TOKEN_PIXMAP:

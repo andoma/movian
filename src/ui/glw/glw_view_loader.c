@@ -271,7 +271,7 @@ static glw_class_t glw_view_loader = {
   .gc_render = glw_view_loader_render,
   .gc_retire_child = glw_view_loader_retire_child,
   .gc_signal_handler = glw_view_loader_callback,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_view_loader);
