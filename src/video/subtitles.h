@@ -51,4 +51,6 @@ subtitles_t *subtitles_load(const char *url);
 
 struct media_buf *subtitles_ssa_decode_line(uint8_t *src, size_t len);
 
+struct media_buf *subtitles_make_pkt(subtitle_entry_t *se);
+
 #endif /* SUBTITLES_H_ */

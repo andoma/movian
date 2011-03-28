@@ -322,19 +322,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(subpts != AV_NOPTS_VALUE && sub != NULL) {
 	subtitle_entry_t *se = subtitles_pick(sub, subpts);
-	if(se != NULL) {
-
-	  media_buf_t *mb2 = media_buf_alloc();
-	  
-	  mb2->mb_pts = se->se_start;
-	  mb2->mb_duration = se->se_stop - se->se_start;
-	  mb2->mb_data_type = MB_SUBTITLE;
-
-	  mb2->mb_data = strdup(se->se_text);
-	  mb2->mb_size = 0;
-
-	  mb_enqueue_always(mp, mq, mb2);
-	}
+	if(se != NULL)
+	  mb_enqueue_always(mp, mq, subtitles_make_pkt(se));
       }
       continue;
     }

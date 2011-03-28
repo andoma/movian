@@ -459,3 +459,19 @@ subtitles_ssa_decode_line(uint8_t *src, size_t len)
 }
 
 
+/**
+ *
+ */
+media_buf_t *
+subtitles_make_pkt(subtitle_entry_t *se)
+{
+  media_buf_t *mb = media_buf_alloc();
+	  
+  mb->mb_pts = se->se_start;
+  mb->mb_duration = se->se_stop - se->se_start;
+  mb->mb_data_type = MB_SUBTITLE;
+  
+  mb->mb_data = strdup(se->se_text);
+  mb->mb_size = 0;
+  return mb;
+}
