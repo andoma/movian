@@ -1743,8 +1743,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
   htsmsg_t *sourceinfo;
-
-  prop_t *audio_tracks, *subtitle_tracks, *p;
   media_codec_params_t mcp;
   char buf4[4];
 
@@ -1755,19 +1753,11 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
   TRACE(TRACE_DEBUG, "HTSP", "Got start notitification");
 
-  audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
-  prop_destroy_childs(audio_tracks);
+  prop_destroy_childs(mp->mp_prop_audio_tracks);
+  prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
-  subtitle_tracks = prop_create(mp->mp_prop_metadata, "subtitlestreams");
-  prop_destroy_childs(subtitle_tracks);
-
-  p = prop_create(audio_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Off");
-  prop_set_string(prop_create(p, "id"), "audio:off");
-
-  p = prop_create(subtitle_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Off");
-  prop_set_string(prop_create(p, "id"), "sub:off");
+  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off");
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off");
 
   if((sourceinfo = htsmsg_get_map(m, "sourceinfo")) != NULL) {
 
@@ -1919,7 +1909,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	  sscore = s;
 	  sstream = idx;
 	}
-	metaparent = prop_create(subtitle_tracks, NULL);
+	metaparent = prop_create(mp->mp_prop_subtitle_tracks, NULL);
 	prop_set_stringf(prop_create(metaparent, "id"), "sub:%d", idx);
 	break;
 
@@ -1931,7 +1921,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	  ascore = s;
 	  astream = idx;
 	}
-	metaparent = prop_create(audio_tracks, NULL);
+	metaparent = prop_create(mp->mp_prop_audio_tracks, NULL);
 	prop_set_stringf(prop_create(metaparent, "id"), "audio:%d", idx);
 	break;
       }

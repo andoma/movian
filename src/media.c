@@ -28,6 +28,8 @@
 #include "event.h"
 #include "playqueue.h"
 #include "fileaccess/fileaccess.h"
+#include "backend/backend.h"
+#include "misc/isolang.h"
 
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
@@ -151,6 +153,7 @@ mp_create(const char *name, int flags, const char *type)
   hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
   
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
+  mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
 
   mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
   prop_set_string(mp->mp_prop_type, type);
@@ -158,14 +161,17 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
   mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
+  mp->mp_prop_audio_tracks =
+    prop_create(mp->mp_prop_metadata, "audiostreams");
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
   mq_init(&mp->mp_video, mp->mp_prop_video, &mp->mp_mutex);
 
   p = prop_create(mp->mp_prop_root, "subtitle");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
+  mp->mp_prop_subtitle_tracks =
+    prop_create(mp->mp_prop_metadata, "subtitlestreams");
 
-  mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
   mp->mp_prop_currenttime = prop_create(mp->mp_prop_root, "currenttime");
@@ -1295,4 +1301,46 @@ mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
   char buf[128];
   metadata_from_ffmpeg(buf, sizeof(buf), codec, avctx);
   prop_set_string(mq->mq_prop_codec, buf);
+}
+
+
+/**
+ *
+ */
+void
+mp_add_track(prop_t *prop, const char *title, const char *id)
+{
+  prop_t *p = prop_create(prop, NULL);
+  
+  prop_set_string(prop_create(p, "id"), id);
+  prop_set_string(prop_create(p, "title"), title);
+}
+
+
+/**
+ *
+ */
+void
+mp_add_track_off(prop_t *prop, const char *id)
+{
+  mp_add_track(prop, "Off", id);
+}
+
+
+/**
+ *
+ */
+void
+mp_add_tracks_from_subtitle_list(prop_t *tracks,
+				 struct play_video_subtitle_list *list)
+{
+  play_video_subtitle_t *pvs;
+  char track[20];
+  int i = 0;
+  LIST_FOREACH(pvs, list, pvs_link) {
+    snprintf(track, sizeof(track), "Track #%d", ++i);
+    mp_add_track(tracks,
+		 pvs->pvs_language ? isolang_iso2lang(pvs->pvs_language) :
+		 track, pvs->pvs_url);
+  }
 }

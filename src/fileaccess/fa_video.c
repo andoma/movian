@@ -68,12 +68,8 @@ scan_subtitles(prop_t *prop, const char *url)
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     
     e = strrchr(fde->fde_url, '.');
-    if(e != NULL && !strcasecmp(e, ".srt")) {
-
-      prop_t *p = prop_create(prop, NULL);
-      prop_set_string(prop_create(p, "id"), fde->fde_url);
-      prop_set_string(prop_create(p, "title"), fde->fde_filename);
-    }
+    if(e != NULL && !strcasecmp(e, ".srt"))
+      mp_add_track(prop, fde->fde_filename, fde->fde_url);
   }
   fa_dir_free(fd);
 }
@@ -574,12 +570,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 
-  prop_t *subs = prop_create(mp->mp_prop_metadata, "subtitlestreams");
-
-  add_off_stream(subs, "sub:off");
-
-  add_off_stream(prop_create(mp->mp_prop_metadata, "audiostreams"),
-		 "audio:off");
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
   /**
    * Update property metadata
@@ -589,12 +581,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Subtitles from filesystem
    */
-  scan_subtitles(subs, url);
+  scan_subtitles(mp->mp_prop_subtitle_tracks, url);
 
   /**
    * Query opensubtitles.org
    */
-  opensub_add_subtitles(subs,
+  opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
 			opensub_build_query(NULL, hash, fsize, NULL, NULL));
 
   /**
