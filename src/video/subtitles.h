@@ -39,8 +39,6 @@ typedef struct subtitles {
   subtitle_entry_t *s_cur;
 } subtitles_t;
 
-subtitles_t *subtitles_create(const char *buf, size_t len);
-
 void subtitles_destroy(subtitles_t *sub);
 
 subtitles_t *subtitles_test(const char *fname);
