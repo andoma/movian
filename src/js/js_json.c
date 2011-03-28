@@ -67,8 +67,10 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
 
     if(!strcmp(c->name, "XML"))   // Treat some classes special
       js_json_emit_str(cx, value, out);
-    else 
-      json_encode_from_object(cx, JSVAL_TO_OBJECT(value), out);
+    else {
+      if(json_encode_from_object(cx, obj, out))
+	htsbuf_append(out, "null", 4);
+    }
   }
 }
 
@@ -83,7 +85,7 @@ json_encode_from_object(JSContext *cx, JSObject *obj, htsbuf_queue_t *out)
 {
   int objtype = 0;
   JSIdArray *ida;
-  int i, r = 0;
+  int i;
   const char *n;
 
   if((ida = JS_Enumerate(cx, obj)) == NULL)
@@ -139,9 +141,11 @@ json_encode_from_object(JSContext *cx, JSObject *obj, htsbuf_queue_t *out)
   case OBJTYPE_MAP:
     htsbuf_append(out, "}", 1);
     break;
+  default:
+    return -1;
   }
 
-  return r;
+  return 0;
 }
 
 
