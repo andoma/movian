@@ -83,6 +83,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
 	src/misc/isolang.c \
+	src/misc/dbl.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
