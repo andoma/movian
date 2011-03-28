@@ -481,24 +481,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   return e;
 }
 
-/**
- *
- */
-static void
-add_off_stream(prop_t *prop, const char *id)
-{
-  prop_t *p = prop_create(prop, NULL);
-  
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "title"), "Off");
-}
-
 
 /**
  *
  */
 event_t *
-be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
+be_file_playvideo(const char *url, media_pipe_t *mp,
+		  int flags, int priority,
+		  struct play_video_subtitle_list *subtitles,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;
@@ -753,7 +743,7 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen);
+      e = backend_play_video(url, mp, flags2, priority, NULL, errbuf, errlen);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;

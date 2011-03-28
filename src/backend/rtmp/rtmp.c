@@ -664,9 +664,47 @@ rtmp_free(rtmp_t *r)
 /**
  *
  */
+static const char *
+rtmp_init_subtitles(media_pipe_t *mp,
+		    struct play_video_subtitle_list *list)
+{
+
+  play_video_subtitle_t *pvs;
+  char track[20];
+  int i = 0, s;
+  const char *lang, *ret = NULL;
+  int best_subtitle_score = 0;
+
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "off");
+
+  LIST_FOREACH(pvs, list, pvs_link) {
+    i++;
+    if(pvs->pvs_language) {
+      s = i18n_subtitle_score(pvs->pvs_language);
+      if(s > best_subtitle_score) {
+	ret = pvs->pvs_url;
+	best_subtitle_score = s;
+      }
+
+      lang = isolang_iso2lang(pvs->pvs_language);
+    } else {
+      snprintf(track, sizeof(track), "Track #%d", i);
+      lang = track;
+    }
+    mp_add_track(mp->mp_prop_subtitle_tracks, lang, pvs->pvs_url);
+  }
+  return ret;
+}
+
+
+/**
+ *
+ */
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
-	       int flags, int priority, char *errbuf, size_t errlen)
+	       int flags, int priority,
+	       struct play_video_subtitle_list *subtitles,
+	       char *errbuf, size_t errlen)
 {
   rtmp_t r = {0};
   event_t *e;

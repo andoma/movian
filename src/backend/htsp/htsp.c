@@ -1559,7 +1559,9 @@ htsp_free_streams(htsp_subscription_t *hs)
  *
  */
 static event_t *
-be_htsp_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
+be_htsp_playvideo(const char *url, media_pipe_t *mp,
+		  int flags, int priority,
+		  struct play_video_subtitle_list *subtitles,
 		  char *errbuf, size_t errlen)
 {
   htsp_connection_t *hc;

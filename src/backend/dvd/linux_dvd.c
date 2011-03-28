@@ -177,7 +177,9 @@ be_dvd_canhandle(const char *url)
  *
  */
 static event_t *
-be_dvd_play(const char *url, media_pipe_t *mp, int flags, int no_audio,
+be_dvd_play(const char *url, media_pipe_t *mp,
+	    int flags, int priority,
+	    struct play_video_subtitle_list *subtitles,
 	    char *errstr, size_t errlen)
 {
   event_t *e;
