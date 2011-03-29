@@ -20,7 +20,6 @@
 
 #include "glw.h"
 #include "glw_renderer.h"
-#include "glw_math.h"
 #include "fileaccess/fileaccess.h"
 
 
@@ -66,23 +65,30 @@ const static float projection[16] = {
  *
  */
 static void
-hw_clip_conf(struct glw_rctx *rc, int which, const float v[4])
+hw_set_clip_conf(struct glw_rctx *rc, int which, const Vec4 v)
 {
-  if(v != NULL) {
-    double plane[4];
-    int j;
+  double plane[4];
     
-    for(j = 0; j < 4; j++)
-      plane[j] = v[j];
+  plane[0] = glw_vec4_extract(v, 0);
+  plane[1] = glw_vec4_extract(v, 1);
+  plane[2] = glw_vec4_extract(v, 2);
+  plane[3] = glw_vec4_extract(v, 3);
 
-    glLoadMatrixf(rc->rc_mtx);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
 
-    glClipPlane(GL_CLIP_PLANE0 + which, plane);
-    glEnable(GL_CLIP_PLANE0 + which);
-  } else {
-    glDisable(GL_CLIP_PLANE0 + which);
-  }
+  glClipPlane(GL_CLIP_PLANE0 + which, plane);
+  glEnable(GL_CLIP_PLANE0 + which);
 }
+
+/**
+ *
+ */
+static void
+hw_clr_clip_conf(struct glw_rctx *rc, int which)
+{
+  glDisable(GL_CLIP_PLANE0 + which);
+}
+
 
 /**
  *
@@ -201,7 +207,7 @@ ff_render(struct glw_root *gr,
   }
 
 
-  glLoadMatrixf(m ?: identitymtx);
+  glLoadMatrixf(glw_mtx_get(m) ?: identitymtx);
 
   glVertexPointer(3, GL_FLOAT, sizeof(float) * VERTEX_SIZE, vertices);
 
@@ -324,7 +330,8 @@ shader_render(struct glw_root *root,
 		1.5 * gbr->be_blur / tex->height);
   }
 
-  glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, m ?: identitymtx);
+  glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
+		     glw_mtx_get(m) ?: identitymtx);
 
   glVertexAttribPointer(gp->gp_attribute_position,
 			3, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
@@ -535,7 +542,7 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
 void
 glw_program_set_modelview(glw_backend_root_t *gbr, glw_rctx_t *rc)
 {
-  const float *m = rc ? rc->rc_mtx : identitymtx;
+  const float *m = rc ? glw_mtx_get(rc->rc_mtx) : identitymtx;
   glUniformMatrix4fv(gbr->gbr_current->gp_uniform_modelview, 1, 0, m);
 }
 
@@ -667,7 +674,8 @@ glw_opengl_init_context(glw_root_t *gr)
 
   } else {
 
-    gr->gr_set_hw_clipper = hw_clip_conf;
+    gr->gr_set_hw_clipper = hw_set_clip_conf;
+    gr->gr_clr_hw_clipper = hw_clr_clip_conf;
     
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -685,6 +693,39 @@ glw_opengl_init_context(glw_root_t *gr)
   return 0;
 }
 
+
+#if 0
+#include <xmmintrin.h>
+
+typedef __m128 mtx[4];
+
+void scaleit(mtx m, float x, float y, float z);
+
+void
+scaleit(mtx m, float x, float y, float z)
+{
+  __m128 X = (__m128){ x,x,x,0};
+  __m128 Y = (__m128){ y,y,y,0};
+  __m128 Z = (__m128){ z,z,z,0};
+  m[0] = _mm_mul_ps(m[0], X);
+  m[1] = _mm_mul_ps(m[1], Y);
+  m[2] = _mm_mul_ps(m[2], Z);
+}
+
+
+void scaleit2(mtx m, __m128 vec);
+
+void
+scaleit2(mtx m, __m128 vec)
+{
+  __m128 X =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(0,0,0,3));
+  __m128 Y =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(1,1,1,3));
+  __m128 Z =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(2,2,2,3));
+  m[0] = _mm_mul_ps(m[0], X);
+  m[1] = _mm_mul_ps(m[1], Y);
+  m[2] = _mm_mul_ps(m[2], Z);
+}
+#endif
 
 /**
  *

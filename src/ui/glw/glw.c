@@ -1397,7 +1397,7 @@ glw_event(glw_root_t *gr, event_t *e)
  */
 int
 glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
-		   glw_t **hp, float *p, float *dir)
+		   glw_t **hp, Vec3 p, Vec3 dir)
 {
   glw_t *c;
   event_t *e;
@@ -1479,10 +1479,16 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   glw_pointer_event_t gpe0;
   float x, y;
   glw_t *hover = NULL;
-  float p[3];
-  float dir[3];
+
+  Vec3 p, dir;
+
+  glw_vec3_copy(p, glw_vec3_make(gpe->x, gpe->y, -2.41));
+  glw_vec3_sub(dir, p, glw_vec3_make(gpe->x * 42.38,
+				     gpe->y * 42.38,
+				     -100));
 
 
+#if 0
   p[0] = gpe->x;
   p[1] = gpe->y;
   p[2] = -2.41;
@@ -1490,7 +1496,10 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   dir[0] = p[0] - gpe->x * 42.38; // 42.38 comes from unprojecting
   dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
   dir[2] = p[2] - -100;
- 
+ #endif
+
+
+
   if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
     runcontrol_activity();
     gr->gr_screensaver_counter = 0;
@@ -2108,4 +2117,48 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height)
 
   glw_LoadIdentity(rc);
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));
+}
+
+
+/**
+ * m   Model matrix
+ * x   Return x in model space
+ * y   Return y in model space
+ * p   Mouse pointer at camera z plane
+ * dir Mouse pointer direction vector
+ */
+int
+glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
+{
+  Vec3 u, v, n, w0, T0, T1, T2, out, I;
+  Mtx inv;
+  float b;
+
+  PMtx tm;
+  glw_pmtx_mul_prepare(tm, m);
+
+  glw_pmtx_mul_vec3(T0, tm, glw_vec3_make(-1, -1, 0));
+  glw_pmtx_mul_vec3(T1, tm, glw_vec3_make( 1, -1, 0));
+  glw_pmtx_mul_vec3(T2, tm, glw_vec3_make( 1,  1, 0));
+
+  glw_vec3_sub(u, T1, T0);
+  glw_vec3_sub(v, T2, T0);
+  glw_vec3_cross(n, u, v);
+  
+  glw_vec3_sub(w0, p, T0);
+  b = glw_vec3_dot(n, dir);
+  if(fabs(b) < 0.000001)
+    return 0;
+
+  glw_vec3_addmul(I, p, dir, -glw_vec3_dot(n, w0) / b);
+
+  if(!glw_mtx_invert(inv, m))
+    return 0;
+
+  glw_pmtx_mul_prepare(tm, inv);
+  glw_pmtx_mul_vec3(out, tm, I);
+
+  *xp = glw_vec3_extract(out, 0);
+  *yp = glw_vec3_extract(out, 1);
+  return 1;
 }

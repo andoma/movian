@@ -21,8 +21,6 @@
 #include <rsx/gcm.h>
 #include <rsx/commands.h>
 
-typedef float Mtx[16];
-
 struct glw_rgb;
 struct glw_rctx;
 struct glw_root;

@@ -273,7 +273,7 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  */
 static int
 glw_coverflow_gpe_iterator(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe,
-			   glw_t **hp, float *ptr, float *dir)
+			   glw_t **hp, Vec3 ptr, Vec3 dir)
 {
   glw_t *c, *p, *n;
   glw_coverflow_t *gc = (glw_coverflow_t *)w;

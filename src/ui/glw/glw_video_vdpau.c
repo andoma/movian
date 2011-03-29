@@ -189,7 +189,7 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projmtx);
   glMatrixMode(GL_MODELVIEW);
-  glLoadMatrixf(rc->rc_mtx);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
 
   glw_load_program(gbr, NULL);
 

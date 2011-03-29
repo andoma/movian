@@ -279,6 +279,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_keyintercept.c \
 			src/ui/glw/glw_clip.c \
 			src/ui/glw/glw_primitives.c \
+			src/ui/glw/glw_math.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/glw/glw_rec.c \
@@ -290,12 +291,10 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_glx.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
 SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_vdpau.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_math_common.c
 
 SRCS-$(CONFIG_GLW_FRONTEND_PS3)   += src/ui/glw/glw_ps3.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_rsx.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_texture_rsx.c
-SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_math_common.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_video_rsx.c
 
 SRCS-$(CONFIG_GLW_FRONTEND_WII)	  += src/ui/glw/glw_wii.c

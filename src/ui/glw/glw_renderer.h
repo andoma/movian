@@ -28,7 +28,7 @@
 typedef struct glw_renderer_cache {
   Mtx grc_mtx; // ModelView matrix
   int grc_active_clippers;
-  float grc_clip[NUM_CLIPPLANES][4];
+  Vec4 grc_clip[NUM_CLIPPLANES];
 
   float *grc_vertices;
   uint16_t grc_num_vertices;

@@ -18,7 +18,6 @@
 
 #include "glw.h"
 #include "glw_renderer.h"
-#include "glw_math.h"
 
 static const glw_rgb_t white = {.r = 1,.g = 1,.b = 1};
 
@@ -165,9 +164,9 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
  */
 static void
 clip_emit_triangle(glw_root_t *gr,
-		   const float *V1, const float *V2, const float *V3,
-		   const float *C1, const float *C2, const float *C3,
-		   const float *T1, const float *T2, const float *T3)
+		   const Vec3 V1, const Vec3 V2, const Vec3 V3,
+		   const Vec4 C1, const Vec4 C2, const Vec4 C3,
+		   const Vec2 T1, const Vec2 T2, const Vec2 T3)
 {
   if(gr->gr_vtmp_size + 3 > gr->gr_vtmp_capacity) {
     gr->gr_vtmp_capacity += 3;
@@ -178,70 +177,28 @@ clip_emit_triangle(glw_root_t *gr,
   float *f = gr->gr_vtmp_buffer + gr->gr_vtmp_size * VERTEX_SIZE;
   gr->gr_vtmp_size += 3;
 
-  *f++ = V1[0];
-  *f++ = V1[1];
-  *f++ = V1[2];
+  glw_vec3_store(f,   V1);
+  glw_vec2_store(f+3, T1);
+  glw_vec4_store(f+5, C1);
 
-  *f++ = T1[0];
-  *f++ = T1[1];
+  glw_vec3_store(f+9,   V2);
+  glw_vec2_store(f+9+3, T2);
+  glw_vec4_store(f+9+5, C2);
 
-  *f++ = C1[0];
-  *f++ = C1[1];
-  *f++ = C1[2];
-  *f++ = C1[3];
-
-  
-  *f++ = V2[0];
-  *f++ = V2[1];
-  *f++ = V2[2];
-
-  *f++ = T2[0];
-  *f++ = T2[1];
-
-  *f++ = C2[0];
-  *f++ = C2[1];
-  *f++ = C2[2];
-  *f++ = C2[3];
-
-  *f++ = V3[0];
-  *f++ = V3[1];
-  *f++ = V3[2];
-
-  *f++ = T3[0];
-  *f++ = T3[1];
-
-  *f++ = C3[0];
-  *f++ = C3[1];
-  *f++ = C3[2];
-  *f++ = C3[3];
+  glw_vec3_store(f+9+9,   V3);
+  glw_vec2_store(f+9+9+3, T3);
+  glw_vec4_store(f+9+9+5, C3);
 }
-
-#define LERP2v(dst, s, a, b) do { \
-	dst[0] = a[0] + s * (b[0] - a[0]); \
-	dst[1] = a[1] + s * (b[1] - a[1]); } while(0)
-
-#define LERP3v(dst, s, a, b) do { \
-	dst[0] = a[0] + s * (b[0] - a[0]); \
-	dst[1] = a[1] + s * (b[1] - a[1]); \
-	dst[2] = a[2] + s * (b[2] - a[2]); } while(0)
-
-#define LERP4v(dst, s, a, b) do { \
-	dst[0] = a[0] + s * (b[0] - a[0]); \
-	dst[1] = a[1] + s * (b[1] - a[1]); \
-	dst[2] = a[2] + s * (b[2] - a[2]); \
-	dst[3] = a[3] + s * (b[3] - a[3]); } while(0)
-  
 
 
 /**
  * Clip a triangle in eye space
  */
 static void
-clipper(glw_root_t *gr, 
-	glw_renderer_cache_t *grc,
-	const float *V1, const float *V2, const float *V3,
-	const float *C1, const float *C2, const float *C3,
-	const float *T1, const float *T2, const float *T3,
+clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
+	const Vec3 V1, const Vec3 V2, const Vec3 V3,
+	const Vec4 C1, const Vec4 C2, const Vec4 C3,
+	const Vec2 T1, const Vec2 T2, const Vec2 T3,
 	int plane)
 {
   while(1) {
@@ -254,27 +211,19 @@ clipper(glw_root_t *gr,
     plane++;
   }
 
-  const float *P = grc->grc_clip[plane++];
+  const float D1 = glw_vec34_dot(V1, grc->grc_clip[plane]);
+  const float D2 = glw_vec34_dot(V2, grc->grc_clip[plane]);
+  const float D3 = glw_vec34_dot(V3, grc->grc_clip[plane]);
 
-  float D1 = P[0] * V1[0] + P[1] * V1[1] + P[2] * V1[2] + P[3];
-  float D2 = P[0] * V2[0] + P[1] * V2[1] + P[2] * V2[2] + P[3];
-  float D3 = P[0] * V3[0] + P[1] * V3[1] + P[2] * V3[2] + P[3];
+  plane++;
 
   float s12;
   float s13;
   float s23;
 
-  float V12[3];
-  float V13[3];
-  float V23[3];
-
-  float C12[4];
-  float C13[4];
-  float C23[4];
-
-  float T12[2];
-  float T13[2];
-  float T23[2];
+  Vec3 V12, V13, V23;
+  Vec4 C12, C13, C23;
+  Vec2 T12, T13, T23;
 
   if(D1 >= 0) {
     if(D2 >= 0) {
@@ -284,14 +233,14 @@ clipper(glw_root_t *gr,
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
 	
-	LERP3v(V13, s13, V1, V3);
-	LERP3v(V23, s23, V2, V3);
+	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec3_lerp(V23, s23, V2, V3);
 
-	LERP4v(C13, s13, C1, C3);
-	LERP4v(C23, s23, C2, C3);
+	glw_vec4_lerp(C13, s13, C1, C3);
+	glw_vec4_lerp(C23, s23, C2, C3);
 
-	LERP2v(T13, s13, T1, T3);
-	LERP2v(T23, s23, T2, T3);
+	glw_vec2_lerp(T13, s13, T1, T3);
+	glw_vec2_lerp(T23, s23, T2, T3);
 	
 	clipper(gr, grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
 	clipper(gr, grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
@@ -299,24 +248,24 @@ clipper(glw_root_t *gr,
 
     } else {
       s12 = D1 / (D1 - D2);
-      LERP3v(V12, s12, V1, V2);
-      LERP4v(C12, s12, C1, C2);
-      LERP2v(T12, s12, T1, T2);
+      glw_vec3_lerp(V12, s12, V1, V2);
+      glw_vec4_lerp(C12, s12, C1, C2);
+      glw_vec2_lerp(T12, s12, T1, T2);
 
       if(D3 >= 0) {
 	s23 = D2 / (D2 - D3);
-	LERP3v(V23, s23, V2, V3);
-	LERP4v(C23, s23, C2, C3);
-	LERP2v(T23, s23, T2, T3);
+	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(C23, s23, C2, C3);
+	glw_vec2_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
 	clipper(gr, grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
 
       } else {
 	s13 = D1 / (D1 - D3);
-	LERP3v(V13, s13, V1, V3);
-	LERP4v(C13, s13, C1, C3);
-	LERP2v(T13, s13, T1, T3);
+	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(C13, s13, C1, C3);
+	glw_vec2_lerp(T13, s13, T1, T3);
 
 	clipper(gr, grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
       }
@@ -325,24 +274,24 @@ clipper(glw_root_t *gr,
   } else {
     if(D2 >= 0) {
       s12 = D1 / (D1 - D2);
-      LERP3v(V12, s12, V1, V2);
-      LERP4v(C12, s12, C1, C2);
-      LERP2v(T12, s12, T1, T2);
+      glw_vec3_lerp(V12, s12, V1, V2);
+      glw_vec4_lerp(C12, s12, C1, C2);
+      glw_vec2_lerp(T12, s12, T1, T2);
       
       if(D3 >= 0) {
 	s13 = D1 / (D1 - D3);
-	LERP3v(V13, s13, V1, V3);
-	LERP4v(C13, s13, C1, C3);
-	LERP2v(T13, s13, T1, T3);
+	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(C13, s13, C1, C3);
+	glw_vec2_lerp(T13, s13, T1, T3);
 
 	clipper(gr, grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
 	clipper(gr, grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
 
       } else {
 	s23 = D2 / (D2 - D3);
-	LERP3v(V23, s23, V2, V3);
-	LERP4v(C23, s23, C2, C3);
-	LERP2v(T23, s23, T2, T3);
+	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(C23, s23, C2, C3);
+	glw_vec2_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
 
@@ -352,14 +301,14 @@ clipper(glw_root_t *gr,
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
 	
-	LERP3v(V13, s13, V1, V3);
-	LERP3v(V23, s23, V2, V3);
+	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec3_lerp(V23, s23, V2, V3);
 
-	LERP4v(C13, s13, C1, C3);
-	LERP4v(C23, s23, C2, C3);
+	glw_vec4_lerp(C13, s13, C1, C3);
+	glw_vec4_lerp(C23, s23, C2, C3);
 
-	LERP2v(T13, s13, T1, T3);
-	LERP2v(T23, s23, T2, T3);
+	glw_vec2_lerp(T13, s13, T1, T3);
+	glw_vec2_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
       }
@@ -378,7 +327,8 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
   int i;
   uint16_t *ip = gr->gr_indices;
   const float *a = gr->gr_vertices;
-
+  PMtx pmtx;
+  
   root->gr_vtmp_size = 0;
 
   memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
@@ -387,28 +337,29 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_active_clippers)
-      memcpy(grc->grc_clip[i], root->gr_clip[i], sizeof(float) * 4);
+      memcpy(&grc->grc_clip[i], &root->gr_clip[i], sizeof(Vec4));
+
+  glw_pmtx_mul_prepare(pmtx, rc->rc_mtx);
 
   for(i = 0; i < gr->gr_num_triangles; i++) {
     int v1 = *ip++;
     int v2 = *ip++;
     int v3 = *ip++;
 
-    float V1[3];
-    float V2[3];
-    float V3[3];
-    
-    glw_mtx_mul_vec(V1, rc->rc_mtx, a[v1*9+0], a[v1*9+1], a[v1*9+2]);
-    glw_mtx_mul_vec(V2, rc->rc_mtx, a[v2*9+0], a[v2*9+1], a[v2*9+2]);
-    glw_mtx_mul_vec(V3, rc->rc_mtx, a[v3*9+0], a[v3*9+1], a[v3*9+2]);
+    Vec3 V1, V2, V3;
 
-    clipper(root, grc, V1, V2, V3,
-	    &gr->gr_vertices[v1 * 9 + 5],
-	    &gr->gr_vertices[v2 * 9 + 5],
-	    &gr->gr_vertices[v3 * 9 + 5],
-	    &gr->gr_vertices[v1 * 9 + 3],
-	    &gr->gr_vertices[v2 * 9 + 3],
-	    &gr->gr_vertices[v3 * 9 + 3],
+    glw_pmtx_mul_vec3(V1, pmtx, glw_vec3_get(a + v1*9));
+    glw_pmtx_mul_vec3(V2, pmtx, glw_vec3_get(a + v2*9));
+    glw_pmtx_mul_vec3(V3, pmtx, glw_vec3_get(a + v3*9));
+
+    clipper(root, grc,
+	    V1, V2, V3,
+	    glw_vec4_get(a + v1 * 9 + 5),
+	    glw_vec4_get(a + v2 * 9 + 5),
+	    glw_vec4_get(a + v3 * 9 + 5),
+	    glw_vec2_get(a + v1 * 9 + 3),
+	    glw_vec2_get(a + v2 * 9 + 3),
+	    glw_vec2_get(a + v3 * 9 + 3),
 	    0);
   }
 
@@ -438,7 +389,7 @@ glw_renderer_clippers_cmp(glw_renderer_cache_t *grc, glw_root_t *root)
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_active_clippers)
-      if(memcmp(grc->grc_clip[i], root->gr_clip[i], sizeof(float) * 4))
+      if(memcmp(&grc->grc_clip[i], &root->gr_clip[i], sizeof(Vec4)))
 	return 1;
   return 0;
 }
@@ -507,7 +458,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 /**
  *
  */
-static const float clip_planes[4][4] = {
+static const Vec4 clip_planes[4] = {
   [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
   [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
   [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
@@ -533,16 +484,12 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
     gr->gr_set_hw_clipper(rc, i, clip_planes[how]);
 
   } else {
-    float inv[16];
+    Mtx inv;
 
     if(!glw_mtx_invert(inv, rc->rc_mtx))
       return -1;
 
-    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, 
-			   clip_planes[how][0],
-			   clip_planes[how][1],
-			   clip_planes[how][2],
-			   clip_planes[how][3]);
+    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, clip_planes[how]);
     gr->gr_need_sw_clip = 1;
   }
 
@@ -562,10 +509,8 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
 
   gr->gr_active_clippers &= ~(1 << which);
 
-  if(gr->gr_set_hw_clipper != NULL)
-    gr->gr_set_hw_clipper(rc, which, NULL);
+  if(gr->gr_clr_hw_clipper != NULL)
+    gr->gr_clr_hw_clipper(rc, which);
   else
     gr->gr_need_sw_clip = gr->gr_active_clippers;
-  
-
 }

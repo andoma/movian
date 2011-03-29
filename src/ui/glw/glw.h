@@ -45,6 +45,8 @@ LIST_HEAD(glw_loadable_texture_list, glw_loadable_texture);
 TAILQ_HEAD(glw_loadable_texture_queue, glw_loadable_texture);
 LIST_HEAD(glw_video_list, glw_video);
 
+// ------------------- Backends -----------------
+
 #if CONFIG_GLW_BACKEND_OPENGL
 #include "glw_opengl.h"
 #elif CONFIG_GLW_BACKEND_GX
@@ -55,10 +57,37 @@ LIST_HEAD(glw_video_list, glw_video);
 #error No backend for glw
 #endif
 
+// ------------------- Math mode -----------------
+
+#ifdef __x86_64
+#define ENABLE_GLW_MATH_SSE 1
+#else
+#define ENABLE_GLW_MATH_SSE 0
+#endif
+
+#if ENABLE_GLW_MATH_SSE
+#include <xmmintrin.h>
+typedef __m128 Mtx[4];
+typedef __m128 Vec4;
+typedef __m128 Vec3;
+typedef __m128 Vec2;
+#else
+typedef float Mtx[16];
+typedef float Vec4[4];
+typedef float Vec3[3];
+typedef float Vec2[2];
+#endif
+
+
+// ------------------ Freetype ----------------------------
+
+
 #include <ft2build.h>  
 #include FT_FREETYPE_H
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
+
+// ------------------ Helpers ----------------------------
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
@@ -377,7 +406,7 @@ typedef struct glw_class {
    */ 
   int (*gc_gpe_iterator)(struct glw_root *gr, struct glw *r, 
 			 glw_pointer_event_t *gpe, struct glw **hp,
-			 float *p, float *dir);
+			 Vec3 p, Vec3 dir);
 
   /**
    * Get a text representing the widget
@@ -651,13 +680,14 @@ typedef struct glw_root {
   /**
    * Rendering
    */
-  float gr_clip[NUM_CLIPPLANES][4];
+  Vec4 gr_clip[NUM_CLIPPLANES];
   int gr_active_clippers;
 
   char gr_need_sw_clip;          /* Set if software clipping is needed
 				    at the moment */
 
-  void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const float *vec);
+  void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const Vec4 vec);
+  void (*gr_clr_hw_clipper)(struct glw_rctx *rc, int which);
   void (*gr_render)(struct glw_root *gr,
 		    Mtx m,
 		    struct glw_backend_texture *tex,
@@ -705,16 +735,11 @@ typedef struct glw_rctx {
 } glw_rctx_t;
 
 
-#ifdef CONFIG_GLW_BACKEND_GX
-#include "glw_gx_ops.h"
-#endif
 
-#ifdef CONFIG_GLW_BACKEND_OPENGL
-#include "glw_common_ops.h"
-#endif
-
-#ifdef CONFIG_GLW_BACKEND_RSX
-#include "glw_common_ops.h"
+#if ENABLE_GLW_MATH_SSE
+#include "glw_math_sse.h"
+#else
+#include "glw_math_c.h"
 #endif
 
 
@@ -1035,8 +1060,8 @@ const char *glw_get_a_name(glw_t *w);
 
 void glw_print_tree(glw_t *w);
 
-int glw_widget_unproject(Mtx m, float *x, float *y, 
-			 const float *p, const float *dir);
+int glw_widget_unproject(Mtx m, float *xp, float *yp,
+			 const Vec3 p, const Vec3 dir);
 
 glw_t *glw_create(glw_root_t *gr, const glw_class_t *class,
 		  glw_t *parent, glw_t *before, prop_t *originator);
@@ -1074,7 +1099,7 @@ int glw_event_to_widget(glw_t *w, struct event *e, int local);
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
 int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 
-		       glw_t **hp, float *p, float *dir);
+		       glw_t **hp, Vec3 p, Vec3 dir);
 
 
 int glw_navigate(glw_t *w, struct event *e, int local);

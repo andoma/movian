@@ -117,8 +117,6 @@ typedef struct glw_backend_root {
 
 } glw_backend_root_t;
 
-typedef float Mtx[16];
-
 
 /**
  *
