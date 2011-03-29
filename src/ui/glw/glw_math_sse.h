@@ -46,7 +46,7 @@ glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
   int i;
 
   for(i = 0; i < 4; i++)
-    out[i] = _mm_mul_ps(_mm_add_ps(a[i], vv), _mm_sub_ps(b[i], a[i]));
+    out[i] = _mm_add_ps(a[i], _mm_mul_ps(vv, _mm_sub_ps(b[i], a[i])));
 }
 
 
