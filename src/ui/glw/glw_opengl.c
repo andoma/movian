@@ -735,13 +735,3 @@ glw_frontface(struct glw_root *gr, int how)
 {
   glFrontFace(how == GLW_CW ? GL_CW : GL_CCW);
 }
-
-Vec4 testit(const Mtx m, const Vec4 a);
-
-Vec4
-testit(const Mtx m, const Vec4 a)
-{
-  Vec4 r;
-  glw_mtx_trans_mul_vec4(r, m, a);
-  return r;
-}

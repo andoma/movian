@@ -164,3 +164,8 @@ glw_mtx_trans_mul_vec4(Vec4 dst, const Mtx mt, const Vec4 v)
 }
 
 extern int glw_mtx_invert(Mtx dst, const Mtx src);
+
+#define glw_vec2_extract(v, i) v[i]
+#define glw_vec3_extract(v, i) v[i]
+#define glw_vec4_extract(v, i) v[i]
+#define glw_mtx_get(m) (m)
