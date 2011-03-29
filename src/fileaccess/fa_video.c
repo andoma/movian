@@ -97,20 +97,25 @@ subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
 		AVPacket *pkt, int si, media_codec_t *mc)
 {
   media_buf_t *mb;
-
+  int offset = 0;
   int duration = pkt->convergence_duration ?: pkt->duration;
 
   switch(ctx->codec_id) {
   case CODEC_ID_TEXT:
+  case CODEC_ID_MOV_TEXT:
+    offset = ctx->codec_id == CODEC_ID_MOV_TEXT ? 2 : 0;
+
+    if(pkt->size < offset)
+      return NULL;
+
     mb = media_buf_alloc();
     mb->mb_data_type = MB_SUBTITLE;
-    
     mb->mb_pts = rescale(fctx, pkt->pts,      si);
-
     mb->mb_duration = rescale(fctx, duration, si);
-    char *s = malloc(pkt->size + 1);
-    mb->mb_data = memcpy(s, pkt->data, pkt->size);
-    s[pkt->size] = 0;
+
+    char *s = malloc(pkt->size + 1 - offset);
+    mb->mb_data = memcpy(s, pkt->data + offset, pkt->size - offset);
+    s[pkt->size - offset] = 0;
     break;
 
   case CODEC_ID_SSA:

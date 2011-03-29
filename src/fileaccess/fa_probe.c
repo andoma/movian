@@ -638,6 +638,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 
       switch(avctx->codec_id) {
       case CODEC_ID_TEXT:
+      case CODEC_ID_MOV_TEXT:
 	snprintf(tmp1, sizeof(tmp1), "Text");
 	break;
       case CODEC_ID_SSA:
