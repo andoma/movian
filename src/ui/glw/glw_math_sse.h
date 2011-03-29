@@ -70,10 +70,20 @@ glw_vec4_store(float *p, const Vec4 v)
 
 
 
-// BAD
-#define glw_mtx_mul_vec3(dst, mt, a) dst=a
+#define glw_mtx_mul_vec3(dst, MT, A) do {			 \
+    __m128 a_ = A;						 \
+  const float *mt = (const float *)&MT[0];			 \
+  const float *a = (const float *)&a_;				 \
+  dst = (__m128){						 \
+    mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12],	 \
+    mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13],	 \
+    mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14], 0 };	 \
+  } while(0)
 
-#define glw_vec3_make(x,y,z) _mm_set_ps(x, y, z, 1)
+
+
+
+#define glw_vec3_make(x,y,z) _mm_set_ps(1, z, y, x)
 
 #define glw_vec3_copy(dst, src) (dst) = (src)
 
@@ -83,18 +93,36 @@ glw_vec4_store(float *p, const Vec4 v)
 #define glw_vec3_sub(dst, a, b) do { \
     dst = _mm_sub_ps((a), (b)); } while(0)
 
-// BAD
-#define glw_vec3_cross(dst, a, b) dst = a
+#define glw_vec3_cross(dst, A, B) do {		\
+    const float *a = (const float *)&A;		\
+    const float *b = (const float *)&B;		\
+    dst = (__m128){				\
+      (a[1] * b[2]) - (a[2] * b[1]),		\
+      (a[2] * b[0]) - (a[0] * b[2]),		\
+      (a[0] * b[1]) - (a[1] * b[0]), 0};	\
+  } while(0)
 
-// BAD
-extern float glw_vec3_dot(const Vec3 a, const Vec3 b);
 
-// BAD
-extern float glw_vec34_dot(const Vec3 a, const Vec4 b);
+static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
+{
+  __v4sf n = _mm_mul_ps(a,b);
+  return 
+    __builtin_ia32_vec_ext_v4sf(n, 0) + 
+    __builtin_ia32_vec_ext_v4sf(n, 1) + 
+    __builtin_ia32_vec_ext_v4sf(n, 2);
+}
 
-// BAD
+static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
+{
+  __v4sf n = _mm_mul_ps(a,b);
+  return 
+    __builtin_ia32_vec_ext_v4sf(n, 0) + 
+    __builtin_ia32_vec_ext_v4sf(n, 1) + 
+    __builtin_ia32_vec_ext_v4sf(n, 2) + 
+    __builtin_ia32_vec_ext_v4sf(b, 3);
+}
+
 extern int glw_mtx_invert(Mtx dst, const Mtx src);
-
 
 static inline float glw_vec3_extract(const Vec3 a, int pos)
 {
