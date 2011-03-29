@@ -24,6 +24,10 @@
 #include "backend/backend.h"
 #include "media.h"
 #include "showtime.h"
+#include "video/subtitles.h"
+#include "i18n.h"
+#include "misc/isolang.h"
+#include "video/subtitles.h"
 
 typedef struct {
 
@@ -50,6 +54,10 @@ typedef struct {
   int64_t seekbase;
   int epoch;
   int64_t seekpos;
+
+  subtitles_t *sub;
+  int64_t subpts;
+  int64_t lastsubpts;
 
 } rtmp_t;
 
@@ -172,6 +180,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   }
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
+  r->lastsubpts = AV_NOPTS_VALUE;
 
   return pos;
 }
@@ -255,6 +264,14 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
+  } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
+    event_select_track_t *est = (event_select_track_t *)e;
+    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
+
+    if(r->sub != NULL)
+      subtitles_destroy(r->sub);
+    
+    r->sub = subtitles_load(est->id);
   }
   event_release(e);
   return NULL;
@@ -310,6 +327,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
   uint8_t type = 0;
   enum CodecID id;
   int d = 0;
+  event_t *e;
 
   if(r->r->m_read.flags & RTMP_READ_SEEKING)
     return NULL; 
@@ -395,8 +413,22 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 
   r->lastdts = dts;
 
-  return sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
-		 data, size, skip, MB_VIDEO, r->vframeduration);
+  e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
+	      data, size, skip, MB_VIDEO, r->vframeduration);
+  if(e != NULL)
+    return e;
+
+  if(pts > r->lastsubpts)
+    r->lastsubpts = r->subpts = pts;
+  else
+    r->subpts = AV_NOPTS_VALUE;
+  
+  if(r->subpts != AV_NOPTS_VALUE && r->sub != NULL) {
+    subtitle_entry_t *se = subtitles_pick(r->sub, r->subpts);
+    if(se != NULL)
+      mb_enqueue_always(mp, &r->mp->mp_video, subtitles_make_pkt(se));
+  }
+  return NULL;
 }
 
 
@@ -518,6 +550,8 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   r->epoch = 1;
   r->seekbase = AV_NOPTS_VALUE;
   r->seekpos = AV_NOPTS_VALUE;
+  r->subpts = AV_NOPTS_VALUE;
+  r->lastsubpts = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
@@ -664,9 +698,47 @@ rtmp_free(rtmp_t *r)
 /**
  *
  */
+static const char *
+rtmp_init_subtitles(media_pipe_t *mp,
+		    struct play_video_subtitle_list *list)
+{
+
+  play_video_subtitle_t *pvs;
+  char track[20];
+  int i = 0, s;
+  const char *lang, *ret = NULL;
+  int best_subtitle_score = 0;
+
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "off");
+
+  LIST_FOREACH(pvs, list, pvs_link) {
+    i++;
+    if(pvs->pvs_language) {
+      s = i18n_subtitle_score(pvs->pvs_language);
+      if(s > best_subtitle_score) {
+	ret = pvs->pvs_url;
+	best_subtitle_score = s;
+      }
+
+      lang = isolang_iso2lang(pvs->pvs_language);
+    } else {
+      snprintf(track, sizeof(track), "Track #%d", i);
+      lang = track;
+    }
+    mp_add_track(mp->mp_prop_subtitle_tracks, lang, pvs->pvs_url);
+  }
+  return ret;
+}
+
+
+/**
+ *
+ */
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
-	       int flags, int priority, char *errbuf, size_t errlen)
+	       int flags, int priority,
+	       struct play_video_subtitle_list *subtitles,
+	       char *errbuf, size_t errlen)
 {
   rtmp_t r = {0};
   event_t *e;
@@ -697,6 +769,10 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     return NULL;
   }
 
+  const char *suburl = rtmp_init_subtitles(mp, subtitles);
+
+  r.sub = suburl ? subtitles_load(suburl) : NULL;
+  prop_set_string(mp->mp_prop_subtitle_track_current, suburl ?: "off");
 
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
@@ -704,12 +780,15 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
   mp_become_primary(mp);
 
-  e = rtmp_loop(&r, mp, (char *)url, errbuf, errlen);
+  e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
   mp_flush(mp, 0);
   mp_shutdown(mp);
 
   TRACE(TRACE_DEBUG, "RTMP", "End of stream");
+
+  if(r.sub)
+    subtitles_destroy(r.sub);
 
   rtmp_free(&r);
   return e;

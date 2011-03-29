@@ -39,8 +39,6 @@ typedef struct subtitles {
   subtitle_entry_t *s_cur;
 } subtitles_t;
 
-subtitles_t *subtitles_create(const char *buf, size_t len);
-
 void subtitles_destroy(subtitles_t *sub);
 
 subtitles_t *subtitles_test(const char *fname);
@@ -50,5 +48,7 @@ subtitle_entry_t *subtitles_pick(subtitles_t *sub, int64_t pts);
 subtitles_t *subtitles_load(const char *url);
 
 struct media_buf *subtitles_ssa_decode_line(uint8_t *src, size_t len);
+
+struct media_buf *subtitles_make_pkt(subtitle_entry_t *se);
 
 #endif /* SUBTITLES_H_ */

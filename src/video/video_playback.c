@@ -26,6 +26,111 @@
 #include "media.h"
 #include "backend/backend.h"
 #include "notifications.h"
+#include "htsmsg/htsmsg_json.h"
+
+
+typedef struct vsource {
+  const char *vs_url;
+  int vs_bitrate;
+} vsource_t;
+
+/**
+ *
+ */
+static event_t *
+play_videoparams(const char *json, struct media_pipe *mp,
+		 int flags, int priority,
+		 char *errbuf, size_t errlen)
+{
+  htsmsg_t *m = htsmsg_json_deserialize(json);
+  htsmsg_t *subs, *sources;
+  struct play_video_subtitle_list subtitles;
+  const char *str;
+  htsmsg_field_t *f;
+  int nsources = 0, i;
+  vsource_t *vsvec, *vs;
+
+  if(m == NULL) {
+    snprintf(errbuf, errlen, "Invalid JSON");
+    return NULL;
+  }
+
+
+  // Sources
+
+  if((sources = htsmsg_get_list(m, "sources")) == NULL) {
+    snprintf(errbuf, errlen, "No sources list in JSON parameters");
+    return NULL;
+  }
+  
+  HTSMSG_FOREACH(f, sources)
+    nsources++;
+  
+  if(nsources == 0) {
+    snprintf(errbuf, errlen, "No sources in JSON list");
+    return NULL;
+  }
+
+  vsvec = alloca(nsources * sizeof(vsource_t));
+
+  i = 0;
+  HTSMSG_FOREACH(f, sources) {
+    htsmsg_t *src = &f->hmf_msg;
+    vsvec[i].vs_url = htsmsg_get_str(src, "url");
+    if(vsvec[i].vs_url == NULL)
+      continue;
+
+    if(backend_canhandle(vsvec[i].vs_url) == NULL)
+      continue;
+
+    vsvec[i].vs_bitrate = htsmsg_get_u32_or_default(src, "bitrate", -1);
+    i++;
+  }
+
+  nsources = i;
+
+  if(nsources == 0) {
+    snprintf(errbuf, errlen, "No players found for sources");
+    return NULL;
+  }
+  
+  // Other metadata
+
+  if((str = htsmsg_get_str(m, "title")) != NULL)
+    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), str);
+
+  // Subtitles
+
+  LIST_INIT(&subtitles);
+  if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
+    play_video_subtitle_t *prev = NULL, *s;
+    HTSMSG_FOREACH(f, subs) {
+      htsmsg_t *sub = &f->hmf_msg;
+
+      if((str = htsmsg_get_str(sub, "url")) == NULL)
+	continue;
+
+      s = calloc(1, sizeof(play_video_subtitle_t));
+      s->pvs_url = strdup(str);
+
+      if((str = htsmsg_get_str(sub, "language")) != NULL)
+	s->pvs_language = strdup(str);
+
+      if(prev == NULL)
+	LIST_INSERT_HEAD(&subtitles, s, pvs_link);
+      else
+	LIST_INSERT_AFTER(prev, s, pvs_link);
+      prev = s;
+    }
+  }
+
+
+  vs = vsvec;
+  
+  return backend_play_video(vs->vs_url, mp, flags, priority,
+			    &subtitles, errbuf, sizeof(errbuf));
+}
+
 
 /**
  *
@@ -55,8 +160,14 @@ video_player_idle(void *aux)
       if(ep->no_audio)
 	flags |= BACKEND_VIDEO_NO_AUDIO;
 
-      next = backend_play_video(ep->url, mp, flags, ep->priority,
+      if(!strncmp(ep->url, "videoparams:", strlen("videoparams:"))) {
+	next = play_videoparams(ep->url + strlen("videoparams:"),
+				mp, flags, ep->priority,
 				errbuf, sizeof(errbuf));
+      } else {
+	next = backend_play_video(ep->url, mp, flags, ep->priority,
+				  NULL, errbuf, sizeof(errbuf));
+      }
 
       if(next == NULL) {
 	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 

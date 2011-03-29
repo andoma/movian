@@ -24,9 +24,10 @@
 #include "subtitles.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
-
+#include "htsmsg/htsmsg_xml.h"
 #include "libavcodec/avcodec.h"
 #include "media.h"
+#include "misc/dbl.h"
 
 
 /**
@@ -42,6 +43,28 @@ se_cmp(const subtitle_entry_t *a, const subtitle_entry_t *b)
   return 0;
 }
 
+
+/**
+ *
+ */
+static void
+se_insert(subtitles_t *s, char *txt, int64_t start, int64_t stop)
+{
+  subtitle_entry_t *se = malloc(sizeof(subtitle_entry_t));
+  se->se_start = start;
+  se->se_stop = stop;
+  se->se_text = txt;
+  if(RB_INSERT_SORTED(&s->s_entries, se, se_link, se_cmp)) {
+    // Collision
+    free(se);
+    free(txt);
+  }
+}
+
+
+/**
+ *
+ */
 typedef struct {
   const char *buf;
   size_t len;       // Remaining bytes in buf
@@ -221,23 +244,110 @@ load_srt(const char *buf, size_t len)
     }
 
     if(txt != NULL) {
-      subtitle_entry_t *se = malloc(sizeof(subtitle_entry_t));
-      se->se_start = start;
-      se->se_stop = stop;
-      se->se_text = txt;
       txt[tlen - 1] = 0;
-
-      if(RB_INSERT_SORTED(&s->s_entries, se, se_link, se_cmp)) {
-	// Collision
-	free(se);
-	free(txt);
-      }
+      se_insert(s, txt, start, stop);
     }
     if(lr.ll < 0)
       break;
   }
   return s;
 }
+
+
+/**
+ *
+ */
+static int
+is_ttml(const char *buf, size_t len)
+{
+  if(len < 30)
+    return 0;
+  if(memcmp(buf, "<?xml", 5))
+    return 0;
+  if(strstr(buf, "http://www.w3.org/2006/10/ttaf1") == NULL)
+    return 0;
+  return 1;
+}
+
+
+/**
+ *
+ */
+static int64_t
+ttml_time_expression(const char *str)
+{
+  const char *endp = NULL;
+  double t = my_str2double(str, &endp);
+
+  if(!strcmp(endp, "h"))
+    return t * 3600 * 1000000;
+  if(!strcmp(endp, "m"))
+    return t * 60 * 1000000;
+  if(!strcmp(endp, "ms"))
+    return t * 1000;
+  if(!strcmp(endp, "s"))
+    return t * 1000000;
+  return -1;
+}
+
+
+/**
+ * TTML docs here: http://www.w3.org/TR/ttaf1-dfxp/
+ */
+static subtitles_t *
+load_ttml(char **buf, size_t len)
+{
+  char errbuf[256];
+  htsmsg_t *xml = htsmsg_xml_deserialize(*buf, errbuf, sizeof(errbuf));
+  htsmsg_t *subs;
+  htsmsg_field_t *f;
+
+  if(xml == NULL) {
+    TRACE(TRACE_INFO, "Subtitles", "Unable to load TTML: %s", errbuf);
+    return NULL;
+  }
+
+  *buf = NULL;
+
+  subs = htsmsg_get_map_multi(xml, "tags",
+			      "tt", "tags",
+			      "body", "tags",
+			      "div", "tags",
+			      NULL);
+
+  if(subs == NULL) {
+    htsmsg_destroy(xml);
+    return NULL;
+  }
+
+  subtitles_t *s = calloc(1, sizeof(subtitles_t));
+  RB_INIT(&s->s_entries);
+
+  HTSMSG_FOREACH(f, subs) {
+    if(f->hmf_type == HMF_MAP) {
+      htsmsg_t *n = &f->hmf_msg;
+      const char *str, *txt;
+      int64_t start, end;
+
+      if((txt = htsmsg_get_str(n, "cdata")) == NULL)
+	continue;
+
+      if((str = htsmsg_get_str_multi(n, "attrib", "begin", NULL)) == NULL)
+	continue;
+      if((start = ttml_time_expression(str)) == -1)
+	continue;
+
+      if((str = htsmsg_get_str_multi(n, "attrib", "end", NULL)) == NULL)
+	continue;
+      if((end = ttml_time_expression(str)) == -1)
+	continue;
+
+      se_insert(s, strdup(txt), start, end);
+    }
+  }
+  return s;
+}
+
 
 #if 0
 /**
@@ -257,15 +367,19 @@ dump_subtitles(subtitles_t *s)
 /**
  *
  */
-subtitles_t *
-subtitles_create(const char *buf, size_t len)
+static subtitles_t *
+subtitles_create(char **buf, size_t len)
 {
   subtitles_t *s;
-  if(is_srt(buf, len)) 
-    s = load_srt(buf, len);
-  else
+  if(is_srt(*buf, len)) {
+    s = load_srt(*buf, len);
+  } else if(is_ttml(*buf, len)) {
+    s = load_ttml(buf, len);
+  } else {
     s = NULL;
+  }
 
+  //  if(s)dump_subtitles(s);
   return s;
 }
 
@@ -366,7 +480,7 @@ subtitles_load(const char *url)
     datalen = fs.fs_size;
   }
 
-  sub = subtitles_create(data, datalen);
+  sub = subtitles_create(&data, datalen);
 
   free(data);
 
@@ -459,3 +573,19 @@ subtitles_ssa_decode_line(uint8_t *src, size_t len)
 }
 
 
+/**
+ *
+ */
+media_buf_t *
+subtitles_make_pkt(subtitle_entry_t *se)
+{
+  media_buf_t *mb = media_buf_alloc();
+	  
+  mb->mb_pts = se->se_start;
+  mb->mb_duration = se->se_stop - se->se_start;
+  mb->mb_data_type = MB_SUBTITLE;
+  
+  mb->mb_data = strdup(se->se_text);
+  mb->mb_size = 0;
+  return mb;
+}

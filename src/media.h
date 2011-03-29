@@ -226,7 +226,11 @@ typedef struct media_pipe {
   prop_t *mp_prop_audio;
 
   prop_t *mp_prop_audio_track_current;
+  prop_t *mp_prop_audio_tracks;
+
   prop_t *mp_prop_subtitle_track_current;
+  prop_t *mp_prop_subtitle_tracks;
+
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
@@ -362,5 +366,13 @@ void metadata_from_ffmpeg(char *dst, size_t dstlen,
 void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
+
+void mp_add_track(prop_t *tracks, const char *title, const char *id);
+
+void mp_add_track_off(prop_t *tracks, const char *id);
+
+struct play_video_subtitle_list;
+void mp_add_tracks_from_subtitle_list(prop_t *tracks,
+				      struct play_video_subtitle_list *list);
 
 #endif /* MEDIA_H */

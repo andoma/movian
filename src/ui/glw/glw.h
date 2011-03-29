@@ -526,12 +526,7 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_source_str)(struct glw *w, const char *str);
-
-  /**
-   *
-   */
-  void (*gc_set_source_prop)(struct glw *w, prop_t *p);
+  void (*gc_set_source)(struct glw *w, const char *str);
 
   /**
    *

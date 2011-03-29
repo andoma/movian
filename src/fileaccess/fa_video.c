@@ -68,12 +68,8 @@ scan_subtitles(prop_t *prop, const char *url)
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     
     e = strrchr(fde->fde_url, '.');
-    if(e != NULL && !strcasecmp(e, ".srt")) {
-
-      prop_t *p = prop_create(prop, NULL);
-      prop_set_string(prop_create(p, "id"), fde->fde_url);
-      prop_set_string(prop_create(p, "title"), fde->fde_filename);
-    }
+    if(e != NULL && !strcasecmp(e, ".srt"))
+      mp_add_track(prop, fde->fde_filename, fde->fde_url);
   }
   fa_dir_free(fd);
 }
@@ -326,19 +322,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(subpts != AV_NOPTS_VALUE && sub != NULL) {
 	subtitle_entry_t *se = subtitles_pick(sub, subpts);
-	if(se != NULL) {
-
-	  media_buf_t *mb2 = media_buf_alloc();
-	  
-	  mb2->mb_pts = se->se_start;
-	  mb2->mb_duration = se->se_stop - se->se_start;
-	  mb2->mb_data_type = MB_SUBTITLE;
-
-	  mb2->mb_data = strdup(se->se_text);
-	  mb2->mb_size = 0;
-
-	  mb_enqueue_always(mp, mq, mb2);
-	}
+	if(se != NULL)
+	  mb_enqueue_always(mp, mq, subtitles_make_pkt(se));
       }
       continue;
     }
@@ -481,24 +466,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   return e;
 }
 
-/**
- *
- */
-static void
-add_off_stream(prop_t *prop, const char *id)
-{
-  prop_t *p = prop_create(prop, NULL);
-  
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "title"), "Off");
-}
-
 
 /**
  *
  */
 event_t *
-be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
+be_file_playvideo(const char *url, media_pipe_t *mp,
+		  int flags, int priority,
+		  struct play_video_subtitle_list *subtitles,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;
@@ -584,12 +559,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
 
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 
-  prop_t *subs = prop_create(mp->mp_prop_metadata, "subtitlestreams");
-
-  add_off_stream(subs, "sub:off");
-
-  add_off_stream(prop_create(mp->mp_prop_metadata, "audiostreams"),
-		 "audio:off");
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
   /**
    * Update property metadata
@@ -599,12 +570,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp, int flags, int priority,
   /**
    * Subtitles from filesystem
    */
-  scan_subtitles(subs, url);
+  scan_subtitles(mp->mp_prop_subtitle_tracks, url);
 
   /**
    * Query opensubtitles.org
    */
-  opensub_add_subtitles(subs,
+  opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
 			opensub_build_query(NULL, hash, fsize, NULL, NULL));
 
   /**
@@ -753,7 +724,7 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen);
+      e = backend_play_video(url, mp, flags2, priority, NULL, errbuf, errlen);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;

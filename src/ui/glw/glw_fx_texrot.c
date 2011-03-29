@@ -295,7 +295,7 @@ static glw_class_t glw_fx_texrot = {
   .gc_render = glw_fx_texrot_render,
   .gc_dtor = glw_fx_texrot_dtor,
   .gc_signal_handler = glw_fx_texrot_callback,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
 };
 
 GLW_REGISTER_CLASS(glw_fx_texrot);

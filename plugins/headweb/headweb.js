@@ -47,6 +47,25 @@
    */
   var APIKEY = "2d6461dd322b4b84b5bac8c654ee6195";
 
+
+  /**
+   *
+   */
+  function code2lang(code) {
+    var langmap = {
+      sv: 'swe',
+      fi: 'fin',
+      no: 'nor',
+      da: 'dan'
+    }
+    if(code in langmap)
+      return langmap[code];
+    showtime.trace('Need language mapping for: ' + code);
+    return null;
+  }
+
+
+
   /*
    * Login user
    * The headweb session is handled via standard HTTP cookies.
@@ -258,11 +277,31 @@
   plugin.addURI(PREFIX + "stream:([0-9]*)", function(page, id) {
 
     var doc = request("/stream/" + id);
+
+    // Construct dict with subtitle URLs
+
+    var subtitles = []
+
+    for each (var sub in doc.content.stream.subtitle) {
+      subtitles.push({
+	url: sub.url,
+	language: code2lang(sub.language.@code)
+      });
+    }
+
     var params = showtime.queryStringSplit(doc.auth.playerparams);
+    var rtmpurl = params["cfg.stream.auth.url"] + "/" +
+      params["cfg.stream.auth.streamid"];
 
     page.loading = false;
-    page.source = params["cfg.stream.auth.url"] + "/" +
-      params["cfg.stream.auth.streamid"];
+
+    page.source = "videoparams:" + showtime.JSONEncode({
+      title: doc.content.name,
+      subtitles: subtitles,
+      sources: [{
+	url: rtmpurl
+      }]
+    });
     page.type = "video";
   });
 

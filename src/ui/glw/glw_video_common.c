@@ -464,7 +464,7 @@ static glw_class_t glw_video = {
   .gc_newframe = glw_video_newframe,
   .gc_signal_handler = glw_video_widget_callback,
   .gc_mod_video_flags = mod_video_flags,
-  .gc_set_source_str = set_source,
+  .gc_set_source = set_source,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
 };

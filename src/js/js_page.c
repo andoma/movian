@@ -238,7 +238,7 @@ static JSBool
 js_setEntries(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_entries, *vp, 0);
+  js_prop_set_from_jsval(cx, jm->jm_entries, *vp);
   return JS_TRUE;
 }
 
@@ -250,7 +250,7 @@ static JSBool
 js_setType(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_type, *vp, 0);
+  js_prop_set_from_jsval(cx, jm->jm_type, *vp);
   return JS_TRUE;
 }
 
@@ -262,7 +262,7 @@ static JSBool
 js_setContents(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_contents, *vp, 0);
+  js_prop_set_from_jsval(cx, jm->jm_contents, *vp);
   return JS_TRUE;
 }
 
@@ -274,8 +274,7 @@ static JSBool
 js_setSource(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_prop_set_from_jsval(cx, jm->jm_source, *vp, 1);
-  prop_print_tree(jm->jm_source, 1);
+  js_prop_set_from_jsval(cx, jm->jm_source, *vp);
   return JS_TRUE;
 }
 
@@ -452,7 +451,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
     prop_set_string(prop_create(item, "type"), type);
 
     if(metaobj)
-      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"), 0);
+      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
 
   } else {
 
@@ -528,7 +527,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   metadata = prop_create(item, "metadata");
 
   if(metaobj)
-    js_prop_from_object(cx, metaobj, metadata, 0);
+    js_prop_from_object(cx, metaobj, metadata);
 
   prop_set_string(prop_create(item, "url"), url);
 

@@ -185,14 +185,25 @@ js_httpEscape(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static void
+js_prop_from_str(JSContext *cx, prop_t *p, jsval value)
+{
+  prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
+}
+
+/**
+ *
+ */
 void
-js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value, int recurse)
+js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
 {
   JSBool b;
   if(JSVAL_IS_INT(value)) {
     prop_set_int(p, JSVAL_TO_INT(value));
   } else if(JSVAL_IS_BOOLEAN(value)) {
     prop_set_int(p, JSVAL_TO_BOOLEAN(value));
+  } else if(JSVAL_IS_NULL(value) || JSVAL_IS_VOID(value)) {
+    prop_set_void(p);
   } else if(JSVAL_IS_DOUBLE(value)) {
     double d;
     if(JS_ValueToNumber(cx, value, &d))
@@ -212,13 +223,18 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value, int recurse)
     prop_set_string_ex(p, NULL, JS_GetStringBytes(JS_ValueToString(cx, v2)),
 		       PROP_STR_RICH);
     JS_LeaveLocalRootScope(cx);
+  } else if(JSVAL_IS_STRING(value)) {
+    js_prop_from_str(cx, p, value);
+  } else if(JSVAL_IS_OBJECT(value)) {
+    JSObject *obj = JSVAL_TO_OBJECT(value);
+    JSClass *c = JS_GetClass(cx, obj);
 
-  } else if(JSVAL_IS_VOID(value) || JSVAL_IS_NULL(value)) {
-    prop_set_void(p);
-  } else if(recurse && JSVAL_IS_OBJECT(value)) {
-    js_prop_from_object(cx, JSVAL_TO_OBJECT(value), p, recurse);
+    if(!strcmp(c->name, "XML"))   // Treat some classes special
+      js_prop_from_str(cx, p, value);
+    else
+      js_prop_from_object(cx, obj, p);
   } else {
-    prop_set_string(p, JS_GetStringBytes(JS_ValueToString(cx, value)));
+    prop_set_void(p);
   }
 }
 
@@ -227,7 +243,7 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value, int recurse)
  *
  */
 int
-js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p, int recurse)
+js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
 {
   JSIdArray *ida;
   int i, r = 0;
@@ -258,7 +274,7 @@ js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p, int recurse)
     if(JSVAL_TO_OBJECT(value) == obj)
       continue;
 
-    js_prop_set_from_jsval(cx, prop_create(p, n), value, recurse);
+    js_prop_set_from_jsval(cx, prop_create(p, n), value);
   }
   JS_DestroyIdArray(cx, ida);
   return r;
@@ -386,6 +402,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
     JS_FS("sleep",            js_sleep, 1, 0, 0),
+    JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS_END
 };
 

@@ -70,13 +70,13 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
   }
 
   outlen = inlen * 2;
-  out = malloc(outlen);
+  out = malloc(outlen+1);
 
   while(1) {
     
     if(outlen - z.total_out == 0) {
       outlen *= 2;
-      out = realloc(out, outlen);
+      out = realloc(out, outlen+1);
     }
 
     z.next_out  = out    + z.total_out;
@@ -94,6 +94,7 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
     }
   }
 
+  out[z.total_out] = 0;
   *outlenptr = z.total_out;
   inflateEnd(&z);
   return out;

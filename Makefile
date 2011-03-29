@@ -83,6 +83,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
 	src/misc/isolang.c \
+	src/misc/dbl.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
@@ -480,6 +481,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_service.c             \
                         src/js/js_settings.c            \
                         src/js/js_prop.c                \
+                        src/js/js_json.c                \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr -DDEBUG=1

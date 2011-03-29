@@ -151,9 +151,6 @@ typedef struct dvd_player {
   prop_t *dp_audio_props[8];
   prop_t *dp_spu_props[32];
 
-  prop_t *dp_subtitle_tracks;
-  prop_t *dp_audio_tracks;
-
   int dp_vwidth;
   int dp_vheight;
 
@@ -483,26 +480,10 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
 static void
 dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
-  prop_t *p;
-
-  p = prop_create(dp->dp_audio_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Off");
-  prop_set_string(prop_create(p, "id"), "audio:off");
-
-  p = prop_create(dp->dp_audio_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Auto");
-  prop_set_string(prop_create(p, "id"), "audio:auto");
-
-
-
-  p = prop_create(dp->dp_subtitle_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Off");
-  prop_set_string(prop_create(p, "id"), "spu:off");
-
-  p = prop_create(dp->dp_subtitle_tracks, NULL);
-  prop_set_string(prop_create(p, "title"), "Auto");
-  prop_set_string(prop_create(p, "id"), "spu:auto");
-
+  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off");
+  mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto");
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "spu:off");
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "spu:auto");
 }
 
 
@@ -553,6 +534,7 @@ dvd_update_streams(dvd_player_t *dp)
   int i;
   uint16_t lang;
   prop_t *before = NULL, *p;
+  media_pipe_t *mp = dp->dp_mp;
 
   for(i = 7; i >= 0; i--) {
 
@@ -570,7 +552,7 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_audio_props[i]) == NULL) {
 	p = dp->dp_audio_props[i] = prop_create_root(NULL);
-	if(prop_set_parent_ex(p, dp->dp_audio_tracks, before, NULL))
+	if(prop_set_parent_ex(p, mp->mp_prop_audio_tracks, before, NULL))
 	  abort();
       }
 
@@ -624,7 +606,7 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_spu_props[i]) == NULL) {
 	p = dp->dp_spu_props[i] = prop_create_root(NULL);
-	if(prop_set_parent_ex(p, dp->dp_subtitle_tracks, before, NULL))
+	if(prop_set_parent_ex(p, mp->mp_prop_subtitle_tracks, before, NULL))
 	  abort();
       }
 
@@ -682,8 +664,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
-  dp->dp_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
-  dp->dp_subtitle_tracks = prop_create(mp->mp_prop_metadata, "subtitlestreams");
 
   dp->dp_epoch = 1;
 
