@@ -46,8 +46,13 @@ glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
     out[i] = GLW_LERP(v, a[i], b[i]);
 }
 
+
+typedef float *PMtx;
+
+#define glw_pmtx_mul_prepare(dst, src) dst = &src[0]
+
 static inline void
-glw_mtx_mul_vec3(Vec3 dst, const Mtx mt, const Vec3 a)
+glw_pmtx_mul_vec3(Vec3 dst, const float *mt, const Vec3 a)
 {
   dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12];
   dst[1] = mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13];

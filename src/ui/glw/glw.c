@@ -2134,9 +2134,12 @@ glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
   Mtx inv;
   float b;
 
-  glw_mtx_mul_vec3(T0, m, glw_vec3_make(-1, -1, 0));
-  glw_mtx_mul_vec3(T1, m, glw_vec3_make( 1, -1, 0));
-  glw_mtx_mul_vec3(T2, m, glw_vec3_make( 1,  1, 0));
+  PMtx tm;
+  glw_pmtx_mul_prepare(tm, m);
+
+  glw_pmtx_mul_vec3(T0, tm, glw_vec3_make(-1, -1, 0));
+  glw_pmtx_mul_vec3(T1, tm, glw_vec3_make( 1, -1, 0));
+  glw_pmtx_mul_vec3(T2, tm, glw_vec3_make( 1,  1, 0));
 
   glw_vec3_sub(u, T1, T0);
   glw_vec3_sub(v, T2, T0);
@@ -2151,7 +2154,9 @@ glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
 
   if(!glw_mtx_invert(inv, m))
     return 0;
-  glw_mtx_mul_vec3(out, inv, I);
+
+  glw_pmtx_mul_prepare(tm, inv);
+  glw_pmtx_mul_vec3(out, tm, I);
 
   *xp = glw_vec3_extract(out, 0);
   *yp = glw_vec3_extract(out, 1);

@@ -69,21 +69,45 @@ glw_vec4_store(float *p, const Vec4 v)
 }
 
 
+typedef Mtx PMtx;
 
-#define glw_mtx_mul_vec3(dst, MT, A) do {			 \
-    __m128 a_ = A;						 \
-  const float *mt = (const float *)&MT[0];			 \
-  const float *a = (const float *)&a_;				 \
-  dst = (__m128){						 \
-    mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12],	 \
-    mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13],	 \
-    mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14], 0 };	 \
+#define glw_pmtx_mul_prepare(dst, src) do {				\
+    __v4sf __r0 = (src)[0], __r1 = (src)[1], __r2 = (src)[2], __r3 = (src)[3]; \
+    __v4sf __t0 = __builtin_ia32_unpcklps (__r0, __r1);			\
+    __v4sf __t1 = __builtin_ia32_unpcklps (__r2, __r3);			\
+    __v4sf __t2 = __builtin_ia32_unpckhps (__r0, __r1);			\
+    __v4sf __t3 = __builtin_ia32_unpckhps (__r2, __r3);			\
+    (dst)[0] = __builtin_ia32_movlhps (__t0, __t1);			\
+    (dst)[1] = __builtin_ia32_movhlps (__t1, __t0);			\
+    (dst)[2] = __builtin_ia32_movlhps (__t2, __t3);			\
+    (dst)[3] = __builtin_ia32_movhlps (__t3, __t2);			\
+  } while (0)
+
+
+#define glw_pmtx_mul_vec4(dst, pmt, v) do {	\
+    __v4sf a0 = _mm_mul_ps(pmt[0], v);		\
+    __v4sf a1 = _mm_mul_ps(pmt[1], v);		\
+    __v4sf a2 = _mm_mul_ps(pmt[2], v);		\
+    __v4sf a3 = _mm_mul_ps(pmt[3], v);		\
+    _MM_TRANSPOSE4_PS(a0, a1, a2, a3);			    \
+    dst = _mm_add_ps(_mm_add_ps(a0, a1), _mm_add_ps(a2, a3));	\
+  } while(0)
+
+#define glw_pmtx_mul_vec3(dst, pmt, V) do {			\
+    __v4sf v = _mm_set_ps(1,					\
+			  __builtin_ia32_vec_ext_v4sf(V, 2),	\
+			  __builtin_ia32_vec_ext_v4sf(V, 1),	\
+			  __builtin_ia32_vec_ext_v4sf(V, 0));	\
+    __v4sf a0 = _mm_mul_ps(pmt[0], v);				\
+    __v4sf a1 = _mm_mul_ps(pmt[1], v);				\
+    __v4sf a2 = _mm_mul_ps(pmt[2], v);				\
+    __v4sf a3 = _mm_mul_ps(pmt[3], v);				\
+    _MM_TRANSPOSE4_PS(a0, a1, a2, a3);				\
+    dst = _mm_add_ps(_mm_add_ps(a0, a1), _mm_add_ps(a2, a3));	\
   } while(0)
 
 
-
-
-#define glw_vec3_make(x,y,z) _mm_set_ps(1, z, y, x)
+#define glw_vec3_make(x,y,z) _mm_set_ps(0, z, y, x)
 
 #define glw_vec3_copy(dst, src) (dst) = (src)
 

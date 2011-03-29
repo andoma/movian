@@ -327,7 +327,8 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
   int i;
   uint16_t *ip = gr->gr_indices;
   const float *a = gr->gr_vertices;
-
+  PMtx pmtx;
+  
   root->gr_vtmp_size = 0;
 
   memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
@@ -338,6 +339,8 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
     if((1 << i) & root->gr_active_clippers)
       memcpy(&grc->grc_clip[i], &root->gr_clip[i], sizeof(Vec4));
 
+  glw_pmtx_mul_prepare(pmtx, rc->rc_mtx);
+
   for(i = 0; i < gr->gr_num_triangles; i++) {
     int v1 = *ip++;
     int v2 = *ip++;
@@ -345,9 +348,9 @@ glw_renderer_clip_tesselate(glw_renderer_t *gr, glw_root_t *root,
 
     Vec3 V1, V2, V3;
 
-    glw_mtx_mul_vec3(V1, rc->rc_mtx, glw_vec3_get(a + v1*9));
-    glw_mtx_mul_vec3(V2, rc->rc_mtx, glw_vec3_get(a + v2*9));
-    glw_mtx_mul_vec3(V3, rc->rc_mtx, glw_vec3_get(a + v3*9));
+    glw_pmtx_mul_vec3(V1, pmtx, glw_vec3_get(a + v1*9));
+    glw_pmtx_mul_vec3(V2, pmtx, glw_vec3_get(a + v2*9));
+    glw_pmtx_mul_vec3(V3, pmtx, glw_vec3_get(a + v3*9));
 
     clipper(root, grc,
 	    V1, V2, V3,
