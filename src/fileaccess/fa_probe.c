@@ -640,6 +640,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
       case CODEC_ID_TEXT:
 	snprintf(tmp1, sizeof(tmp1), "Text");
 	break;
+      case CODEC_ID_SSA:
+	snprintf(tmp1, sizeof(tmp1), "SSA");
+	break;
       default:
 	snprintf(tmp1, sizeof(tmp1),
 		 "Unsupported codec (0x%x)", avctx->codec_id);
