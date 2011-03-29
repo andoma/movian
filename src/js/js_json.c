@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _ISOC99_SOURCE
-#include <math.h>
 #include <string.h>
 #include "htsmsg/htsbuf.h"
 
@@ -54,9 +52,11 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
   } else if(JSVAL_IS_DOUBLE(value)) {
     double dbl;
     if(!JS_ValueToNumber(cx, value, &dbl))
-      dbl = NAN;
-    snprintf(buf, sizeof(buf), "%f", dbl);
-    htsbuf_append(out, buf, strlen(buf));
+      htsbuf_append(out, "null", 4);
+    else {
+      snprintf(buf, sizeof(buf), "%f", dbl);
+      htsbuf_append(out, buf, strlen(buf));
+    }
   } else if(JSVAL_IS_NULL(value)) {
     htsbuf_append(out, "null", 4);
   } else if(JSVAL_IS_STRING(value)) {
