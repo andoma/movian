@@ -253,6 +253,17 @@ else
 fi
 
 #
+# libavcodec
+#
+if pkg-config --atleast-version 52.72.2 libavcodec; then
+    PKGS+="libavcodec "
+    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
+else
+    echo "libavcodec 52.72.2 or newer not found."
+    die
+fi
+
+#
 # libavutil
 #
 if pkg-config --atleast-version 50.15.0 libavutil; then
