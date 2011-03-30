@@ -47,13 +47,14 @@ show_help(){
 pkg_config_static() {
   libdir=`$PKGCONFIG --variable=libdir $1`
   args=""
-  for arg in `$PKGCONFIG --libs $*` ; do
+  for arg in `$PKGCONFIG --static --libs $*` ; do
     if [ \
         "$arg" = "-lm" -o \
         "$arg" = "-lz" -o \
         "$arg" = "-lbz2" -o \
         "$arg" = "-lpthread" ] \
         ; then
+      args+="$arg "
       continue
     fi
     if [ "${arg:0:2}" != "-l" ] ; then
