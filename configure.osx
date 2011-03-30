@@ -47,12 +47,14 @@ show_help(){
 pkg_config_static() {
   libdir=`$PKGCONFIG --variable=libdir $1`
   args=""
-  for arg in `$PKGCONFIG --libs $*` ; do
+  for arg in `$PKGCONFIG --static --libs $*` ; do
     if [ \
         "$arg" = "-lm" -o \
         "$arg" = "-lz" -o \
+        "$arg" = "-lbz2" -o \
         "$arg" = "-lpthread" ] \
         ; then
+      args+="$arg "
       continue
     fi
     if [ "${arg:0:2}" != "-l" ] ; then
@@ -243,8 +245,7 @@ PKGS=""
 # libavformat
 #
 if pkg-config --atleast-version 52.64.0 libavformat; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavformat`
+    PKGS+="libavformat "
     echo "Using libavformat:     `pkg-config --modversion libavformat`"
 else
     echo "libavformat 52.64.0 or newer not found."
@@ -252,11 +253,21 @@ else
 fi
 
 #
+# libavcodec
+#
+if pkg-config --atleast-version 52.72.2 libavcodec; then
+    PKGS+="libavcodec "
+    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
+else
+    echo "libavcodec 52.72.2 or newer not found."
+    die
+fi
+
+#
 # libavutil
 #
 if pkg-config --atleast-version 50.15.0 libavutil; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
+    PKGS+="libavutil "
     echo "Using libavutil:       `pkg-config --modversion libavutil`"
 else
     echo "libavutil 50.15.0 or newer not found."
@@ -267,8 +278,7 @@ fi
 # libswscale
 #
 if pkg-config  --atleast-version 0.11.0 libswscale; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libswscale`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libswscale`
+    PKGS+="libswscale "
     echo "Using libswscale:      `pkg-config --modversion libswscale`"
 else
     echo "libswscale 0.11.0 or newer not found."
