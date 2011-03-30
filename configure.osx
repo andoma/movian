@@ -51,6 +51,7 @@ pkg_config_static() {
     if [ \
         "$arg" = "-lm" -o \
         "$arg" = "-lz" -o \
+        "$arg" = "-lbz2" -o \
         "$arg" = "-lpthread" ] \
         ; then
       continue
