@@ -26,6 +26,7 @@
 #include "htsmsg_json.h"
 #include "htsbuf.h"
 #include "misc/string.h"
+#include "misc/json.h"
 
 
 /*
@@ -102,283 +103,78 @@ htsmsg_json_serialize(htsmsg_t *msg, htsbuf_queue_t *hq, int pretty)
 }
 
 
-
-static const char *htsmsg_json_parse_value(const char *s, 
-					   htsmsg_t *parent, char *name);
-
 /**
  *
  */
-static char *
-htsmsg_json_parse_string(const char *s, const char **endp)
+
+static void *
+create_map(void *opaque)
 {
-  const char *start;
-  char *r, *a, *b;
-  int l, esc = 0;
-
-  while(*s > 0 && *s < 33)
-    s++;
-
-  if(*s != '"')
-    return NULL;
-
-  s++;
-  start = s;
-
-  while(1) {
-    if(*s == 0)
-      return NULL;
-
-    if(*s == '\\') {
-      esc = 1;
-    } else if(*s == '"' && s[-1] != '\\') {
-
-      *endp = s + 1;
-
-      /* End */
-      l = s - start;
-      r = malloc(l + 1);
-      memcpy(r, start, l);
-      r[l] = 0;
-
-      if(esc) {
-	/* Do deescaping inplace */
-
-	a = b = r;
-
-	while(*a) {
-	  if(*a == '\\') {
-	    a++;
-	    if(*a == 'b')
-	      *b++ = '\b';
-	    else if(*a == 'f')
-	      *b++ = '\f';
-	    else if(*a == 'n')
-	      *b++ = '\n';
-	    else if(*a == 'r')
-	      *b++ = '\r';
-	    else if(*a == 't')
-	      *b++ = '\t';
-	    else if(*a == 'u') {
-	      // Unicode character
-	      int i, v = 0;
-
-	      a++;
-	      for(i = 0; i < 4; i++) {
-		v = v << 4;
-		switch(a[i]) {
-		case '0' ... '9':
-		  v |= a[i] - '0';
-		  break;
-		case 'a' ... 'f':
-		  v |= a[i] - 'a' + 10;
-		  break;
-		case 'A' ... 'F':
-		  v |= a[i] - 'F' + 10;
-		  break;
-		default:
-		  free(r);
-		  return NULL;
-		}
-	      }
-	      a+=3;
-	      b += utf8_put(b, v);
-	    } else {
-	      *b++ = *a;
-	    }
-	    a++;
-	  } else {
-	    *b++ = *a++;
-	  }
-	}
-	*b = 0;
-      }
-      return r;
-    }
-    s++;
-  }
+  return htsmsg_create_map();
 }
 
-
-/**
- *
- */
-static htsmsg_t *
-htsmsg_json_parse_object(const char *s, const char **endp)
+static void *
+create_list(void *opaque)
 {
-  char *name;
-  const char *s2;
-  htsmsg_t *r;
-
-  while(*s > 0 && *s < 33)
-    s++;
-
-  if(*s != '{')
-    return NULL;
-
-  s++;
-
-  r = htsmsg_create_map();
-  
-  while(1) {
-
-    if((name = htsmsg_json_parse_string(s, &s2)) == NULL) {
-      htsmsg_destroy(r);
-      return NULL;
-    }
-
-    s = s2;
-    
-    while(*s > 0 && *s < 33)
-      s++;
-
-    if(*s != ':') {
-      htsmsg_destroy(r);
-      free(name);
-      return NULL;
-    }
-    s++;
-
-    s2 = htsmsg_json_parse_value(s, r, name);
-    free(name);
-
-    if(s2 == NULL) {
-      htsmsg_destroy(r);
-      return NULL;
-    }
-
-    s = s2;
-
-    while(*s > 0 && *s < 33)
-      s++;
-
-    if(*s == '}')
-      break;
-
-    if(*s != ',') {
-      htsmsg_destroy(r);
-      return NULL;
-    }
-    s++;
-  }
-
-  s++;
-  *endp = s;
-  return r;
+  return htsmsg_create_list();
 }
 
-
-/**
- *
- */
-static htsmsg_t *
-htsmsg_json_parse_array(const char *s, const char **endp)
+static void
+destroy_obj(void *opaque, void *obj)
 {
-  const char *s2;
-  htsmsg_t *r;
+  return htsmsg_destroy(obj);
+}
 
-  while(*s > 0 && *s < 33)
-    s++;
+static void
+add_obj(void *opaque, void *parent, const char *name, void *child)
+{
+  htsmsg_add_msg(parent, name, child);
+}
 
-  if(*s != '[')
-    return NULL;
+static void 
+add_string(void *opaque, void *parent, const char *name,  char *str)
+{
+  htsmsg_add_str(parent, name, str);
+  free(str);
+}
 
-  s++;
+static void 
+add_long(void *opaque, void *parent, const char *name, long v)
+{
+  htsmsg_add_s64(parent, name, v);
+}
 
-  r = htsmsg_create_list();
-  
-  while(*s > 0 && *s < 33)
-    s++;
+static void 
+add_double(void *opaque, void *parent, const char *name, double v)
+{
+  htsmsg_add_s64(parent, name, v);
+}
 
-  if(*s != ']') {
+static void 
+add_bool(void *opaque, void *parent, const char *name, int v)
+{
+  htsmsg_add_u32(parent, name, v);
+}
 
-    while(1) {
-
-      s2 = htsmsg_json_parse_value(s, r, NULL);
-
-      if(s2 == NULL) {
-	htsmsg_destroy(r);
-	return NULL;
-      }
-
-      s = s2;
-
-      while(*s > 0 && *s < 33)
-	s++;
-
-      if(*s == ']')
-	break;
-
-      if(*s != ',') {
-	htsmsg_destroy(r);
-	return NULL;
-      }
-      s++;
-    }
-  }
-  s++;
-  *endp = s;
-  return r;
+static void 
+add_null(void *opaque, void *parent, const char *name)
+{
 }
 
 /**
  *
  */
-static char *
-htsmsg_json_parse_number(const char *s, double *dp)
-{
-  char *ep;
-  double d = strtod_ex(s, '.', &ep);
-
-  if(ep == s)
-    return NULL;
-
-  *dp = d;
-  return ep;
-}
-
-/**
- *
- */
-static const char *
-htsmsg_json_parse_value(const char *s, htsmsg_t *parent, char *name)
-{
-  const char *s2;
-  char *str;
-  double d = 0;
-  htsmsg_t *c;
-
-  if((c = htsmsg_json_parse_object(s, &s2)) != NULL) {
-    htsmsg_add_msg(parent, name, c);
-    return s2;
-  } else if((c = htsmsg_json_parse_array(s, &s2)) != NULL) {
-    htsmsg_add_msg(parent, name, c);
-    return s2;
-  } else if((str = htsmsg_json_parse_string(s, &s2)) != NULL) {
-    htsmsg_add_str(parent, name, str);
-    free(str);
-    return s2;
-  } else if((s2 = htsmsg_json_parse_number(s, &d)) != NULL) {
-    htsmsg_add_s64(parent, name, d);
-    return s2;
-  }
-
-  if(!strncmp(s, "true", 4)) {
-    htsmsg_add_u32(parent, name, 1);
-    return s + 4;
-  }
-
-  if(!strncmp(s, "false", 5)) {
-    htsmsg_add_u32(parent, name, 0);
-    return s + 5;
-  }
-
-  if(!strncmp(s, "null", 4)) {
-    /* Don't add anything */
-    return s + 4;
-  }
-  return NULL;
-}
+static const json_deserializer_t json_to_htsmsg = {
+  .jd_create_map      = create_map,
+  .jd_create_list     = create_list,
+  .jd_destroy_obj     = destroy_obj,
+  .jd_add_obj         = add_obj,
+  .jd_add_string      = add_string,
+  .jd_add_long        = add_long,
+  .jd_add_double      = add_double,
+  .jd_add_bool        = add_bool,
+  .jd_add_null        = add_null,
+};
 
 
 /**
@@ -387,15 +183,5 @@ htsmsg_json_parse_value(const char *s, htsmsg_t *parent, char *name)
 htsmsg_t *
 htsmsg_json_deserialize(const char *src)
 {
-  const char *end;
-  htsmsg_t *c;
-
-  if((c = htsmsg_json_parse_object(src, &end)) != NULL)
-    return c;
-
-  if((c = htsmsg_json_parse_array(src, &end)) != NULL) {
-      c->hm_islist = 1;
-      return c;
-  }
-  return NULL;
+  return json_deserialize(src, &json_to_htsmsg, NULL);
 }
