@@ -962,27 +962,6 @@ track_action_handler(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-track_attach_action_handler(prop_t *p, sp_track *t)
-{
-  track_action_ctrl_t *tac = calloc(1, sizeof(track_action_ctrl_t));
-
-  tac->prop_star =
-    prop_ref_inc(prop_create(prop_create(p, "metadata"), "starred"));
-
-  tac->t = t;
-  f_sp_track_add_ref(t);
-  prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		 PROP_TAG_CALLBACK, track_action_handler, tac,
-		 PROP_TAG_COURIER, spotify_courier,
-		 PROP_TAG_ROOT, p,
-		 NULL);
-}
-
-
-/**
- *
- */
-static void
 spotify_metadata_update_track(metadata_t *m)
 {
   sp_track *track = m->m_source;
@@ -1214,7 +1193,7 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
 
 static void
-metadata_create0(prop_t *p, metadata_type_t type, void *source)
+metadata_create(prop_t *p, metadata_type_t type, void *source)
 {
   metadata_t *m = calloc(1, sizeof(metadata_t));
 
@@ -1281,11 +1260,37 @@ metadata_create0(prop_t *p, metadata_type_t type, void *source)
 /**
  *
  */
-static void
-metadata_create(prop_t *p, metadata_type_t type, void *source)
+static prop_t *
+track_create(sp_track *track, prop_t **metadatap)
 {
-  metadata_create0(p, type, source);
+  char url[URL_MAX];
+  prop_t *p = prop_create_root(NULL);
+  prop_t *metadata;
+  track_action_ctrl_t *tac = calloc(1, sizeof(track_action_ctrl_t));
+
+  spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
+
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(p, "type"), "audio");
+
+  metadata = prop_create(p, "metadata");
+  if(metadatap != NULL)
+    *metadatap = metadata;
+
+  metadata_create(metadata, METADATA_TRACK, track);
+
+  tac->prop_star = prop_ref_inc(prop_create(metadata, "starred"));
+
+  tac->t = track;
+  f_sp_track_add_ref(track);
+  prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, track_action_handler, tac,
+		 PROP_TAG_COURIER, spotify_courier,
+		 PROP_TAG_ROOT, p,
+		 NULL);
+  return p;
 }
+
 
 
 /**
@@ -1361,16 +1366,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
-
-      p = prop_create_root(NULL);
-
-      spotify_make_link(f_sp_link_create_from_track(track, 0), 
-			url, sizeof(url));
-
-      prop_set_string(prop_create(p, "url"), url);
-      prop_set_string(prop_create(p, "type"), "audio");
-      metadata_create(prop_create(p, "metadata"), METADATA_TRACK, track);
-      track_attach_action_handler(p, track);
+      p = track_create(track, NULL);
 
       if(prop_set_parent(p, bh->sp->sp_items))
 	prop_destroy(p);
@@ -1419,35 +1415,6 @@ album_cmp(const void *A, const void *B)
 
   return strcasecmp(f_sp_album_name(a->album), f_sp_album_name(b->album));
 }
-
-#if 0
-/**
- *
- */
-static void
-artist_add_album_tracks(sp_artistbrowse *result, int first, int num,
-			prop_t *root)
-{
-  int i;
-  sp_track *t;
-  prop_t *n;
-  char url[URL_MAX];
-
-  for(i = first; i < first + num; i++) {
-
-    t = f_sp_artistbrowse_track(result, i);
-
-    n = prop_create(NULL, NULL);
-    spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
-    prop_set_string(prop_create(n, "url"), url);
-    prop_set_string(prop_create(n, "type"), "audio");
-    metadata_create(prop_create(n, "metadata"), METADATA_TRACK, t);
-    
-    if(prop_set_parent(n, root))
-      prop_destroy(n);
-  }
-}
-#endif
 
 /**
  *
@@ -1988,7 +1955,6 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
   sp_track *t;
   playlist_track_t *plt, *before;
   int i, pos, when;
-  char url[URL_MAX];
   sp_user *u;
 
   for(i = 0; i < num_tracks; i++) {
@@ -1998,15 +1964,9 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     t = (sp_track *)tracks[i];
     before = ptrvec_get_entry(&pl->pl_tracks, pos);
 
-    plt->plt_prop_root = prop_create_root(NULL);
     plt->plt_track = t;
 
-    prop_set_string(prop_create(plt->plt_prop_root, "type"), "audio");
-
-    spotify_make_link(f_sp_link_create_from_track(t, 0), url, sizeof(url));
-    prop_set_string(prop_create(plt->plt_prop_root, "url"), url);
-
-    plt->plt_prop_metadata = prop_create(plt->plt_prop_root, "metadata");
+    plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata);
 
     u = f_sp_playlist_track_creator(plist, pos);
     if(u != NULL) {
@@ -2029,9 +1989,6 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
 			  pl->pl_node_sub)) {
       abort();
     }
-
-    metadata_create0(plt->plt_prop_metadata, METADATA_TRACK, t);
-    track_attach_action_handler(plt->plt_prop_root, t);
 
     ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
   }
@@ -2900,9 +2857,8 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 {
   int ntracks = f_sp_search_num_tracks(result);
   int i;
-  prop_t *p, *metadata;
+  prop_t *p;
   sp_track *track;
-  char url[URL_MAX];
   int total = f_sp_search_total_tracks(result);
 
   prop_set_int(ssr->ssr_entries, total);
@@ -2910,16 +2866,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
   for(i = 0; i < ntracks; i++) {
     track = f_sp_search_track(result, i);
-    p = prop_create_root(NULL);
-
-    spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
-
-    prop_set_string(prop_create(p, "url"), url);
-    prop_set_string(prop_create(p, "type"), "audio");
-    metadata = prop_create(p, "metadata");
-    metadata_create(metadata, METADATA_TRACK, track);
-    track_attach_action_handler(p, track);
-
+    p = track_create(track, NULL);
     if(prop_set_parent(p, ssr->ssr_nodes)) {
       prop_destroy(p);
       break;
