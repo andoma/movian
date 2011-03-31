@@ -17,9 +17,11 @@
  */
 
 #include <string.h>
-#include "htsmsg/htsbuf.h"
 
+#include "htsmsg/htsbuf.h"
+#include "misc/dbl.h"
 #include "js.h"
+
 
 static int json_encode_from_object(JSContext *cx, JSObject *obj,
 				   htsbuf_queue_t *out);
@@ -40,7 +42,7 @@ js_json_emit_str(JSContext *cx, jsval value, htsbuf_queue_t *out)
 static void
 js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
 {
-  char buf[64];
+  char buf[100];
   if(JSVAL_IS_BOOLEAN(value)) {
     if(JSVAL_TO_BOOLEAN(value))
       htsbuf_append(out, "true", 4);
@@ -51,12 +53,11 @@ js_json_emit_jsval(JSContext *cx, jsval value, htsbuf_queue_t *out)
     htsbuf_append(out, buf, strlen(buf));
   } else if(JSVAL_IS_DOUBLE(value)) {
     double dbl;
-    if(!JS_ValueToNumber(cx, value, &dbl))
-      htsbuf_append(out, "null", 4);
-    else {
-      snprintf(buf, sizeof(buf), "%f", dbl);
+    if(JS_ValueToNumber(cx, value, &dbl) &&
+       !my_double2str(buf, sizeof(buf), dbl))
       htsbuf_append(out, buf, strlen(buf));
-    }
+    else
+      htsbuf_append(out, "null", 4);
   } else if(JSVAL_IS_NULL(value)) {
     htsbuf_append(out, "null", 4);
   } else if(JSVAL_IS_STRING(value)) {
