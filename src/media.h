@@ -64,8 +64,8 @@ typedef struct media_codec {
   AVCodecParserContext *parser_ctx;
 
   void *opaque;
-  void (*data)(struct media_codec *mc, void *decoder,
-	       struct media_queue *mq, struct media_buf *mb, int reqsize);
+  void (*decode)(struct media_codec *mc, struct video_decoder *vd,
+		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
@@ -271,6 +271,8 @@ media_codec_t *media_codec_ref(media_codec_t *cw);
 typedef struct media_codec_params {
   unsigned int width;
   unsigned int height;
+  unsigned int profile;
+  unsigned int level;
   int cheat_for_speed;
   const void *extradata;
   size_t extradata_size;

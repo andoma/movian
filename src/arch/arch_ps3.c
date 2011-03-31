@@ -27,6 +27,7 @@
 #include <net/netctl.h>
 
 #include <psl1ght/lv2.h>
+#include <psl1ght/lv2/spu.h>
 
 #include "threads.h"
 #include "atomic.h"
@@ -34,6 +35,11 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/callout.h"
+
+#if ENABLE_PS3_VDEC
+#include "video/ps3_vdec.h"
+#endif
+
 static void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 static uint64_t ticks_per_us;
@@ -87,6 +93,13 @@ arch_init(void)
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
+#if ENABLE_PS3_VDEC
+  TRACE(TRACE_DEBUG, "SPU", "Initializing SPUs");
+  lv2SpuInitialize(6, 0);
+  video_ps3_vdec_init();
+#endif
+
 }
 
 

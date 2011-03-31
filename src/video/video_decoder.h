@@ -149,8 +149,14 @@ typedef struct video_decoder {
   int vd_frame_size[VD_FRAME_SIZE_LEN];
   int vd_frame_size_ptr;
 
-} video_decoder_t;
+  /**
+   * Acceleration helpers
+   */
+  void *vd_accelerator_opaque;
+  void (*vd_accelerator_blackout)(void *opaque);
+  void (*vd_accelerator_stop)(void *opaque);
 
+} video_decoder_t;
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp, 
 				      vd_frame_deliver_t *frame_delivery,
@@ -165,6 +171,11 @@ void video_deliver_frame(video_decoder_t *vd,
 			 AVCodecContext *ctx, AVFrame *frame,
 			 int64_t tim, int64_t pts, int64_t dts,
 			 int duration, int epoch, int decode_time);
+
+void video_decoder_set_accelerator(video_decoder_t *vd,
+				   void (*stopfn)(void *opaque),
+				   void (*blackoutfn)(void *opaque),
+				   void *opaque);
 
 
 /**

@@ -31,9 +31,18 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 
+
+// -- Video accelerators ---------
+
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
 #endif
+
+#if ENABLE_PS3_VDEC
+#include "video/ps3_vdec.h"
+#endif
+
+// -------------------------------
 
 static hts_mutex_t media_mutex;
 
@@ -742,7 +751,7 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 
-  if(cw->codec_ctx->codec != NULL)
+  if(cw->codec_ctx != NULL && cw->codec_ctx->codec != NULL)
     avcodec_close(cw->codec_ctx);
 
   if(cw->close != NULL)
@@ -818,6 +827,11 @@ media_codec_create(enum CodecID id, enum CodecType type, int parser,
 #if ENABLE_VDPAU
   if(mcp && !vdpau_codec_create(mc, id, ctx, mcp, mp)) {
     
+  } else
+#endif
+#if ENABLE_PS3_VDEC
+  if(mcp && !video_ps3_vdec_codec_create(mc, id, ctx, mcp, mp)) {
+
   } else
 #endif
   if(media_codec_create_lavc(mc, id, ctx, mcp)) {

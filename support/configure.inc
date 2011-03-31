@@ -79,6 +79,7 @@ CONFIG_LIST="
  realpath
  trex
  emu_thread_specifics
+ ps3_vdec
 "
 
 die() {

@@ -121,9 +121,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
    */
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
 
-  if(mb->mb_skip == 2)
-    vd->vd_skip = 1;
-
   avgtime_start(&vd->vd_decode_time);
 
   avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
@@ -355,8 +352,11 @@ vd_thread(void *aux)
 	  mc->reinit(mc);
       }
 
-      if(mc->data)
-	mc->data(mc, vd, mq, mb, reqsize);
+      if(mb->mb_skip == 2)
+	vd->vd_skip = 1;
+
+      if(mc->decode)
+	mc->decode(mc, vd, mq, mb, reqsize);
       else
 	vd_decode_video(vd, mq, mb);
 
@@ -390,7 +390,10 @@ vd_thread(void *aux)
       break;
 
     case MB_BLACKOUT:
-      vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
+      if(vd->vd_accelerator_blackout)
+	vd->vd_accelerator_blackout(vd->vd_accelerator_opaque);
+      else
+	vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
       break;
 
     default:
@@ -402,6 +405,9 @@ vd_thread(void *aux)
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
+
+  // Stop any video accelerator helper threads 
+  video_decoder_set_accelerator(vd, NULL, NULL, NULL);
 
   /* Free ffmpeg frame */
   av_free(vd->vd_frame);
@@ -469,4 +475,22 @@ video_decoder_destroy(video_decoder_t *vd)
 
   video_subtitles_deinit(vd);
   free(vd);
+}
+
+
+/**
+ *
+ */
+void
+video_decoder_set_accelerator(video_decoder_t *vd,
+			      void (*stopfn)(void *opaque),
+			      void (*blackoutfn)(void *opaque),
+			      void *opaque)
+{
+  if(vd->vd_accelerator_opaque != NULL)
+    vd->vd_accelerator_stop(vd->vd_accelerator_opaque);
+  
+  vd->vd_accelerator_stop = stopfn;
+  vd->vd_accelerator_blackout = blackoutfn;
+  vd->vd_accelerator_opaque = opaque;
 }

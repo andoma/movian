@@ -54,6 +54,7 @@ enable polarssl
 enable librtmp
 enable httpserver
 enable dvd
+enable ps3_vdec
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${TOOLCHAIN}gcc
@@ -71,6 +72,7 @@ EOF
 # 
 #
 cat >> ${CONFIG_MAK} <<EOF
+LDFLAGS_cfg  += -lvdec
 LDFLAGS_cfg  += -L${FFMPEG}/lib -lswscale -lavformat -lavcodec -lavutil
 LDFLAGS_cfg  += -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib
 LDFLAGS_cfg  += -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lnetctl -lsysmodule

@@ -365,10 +365,9 @@ vdpau_draw_horiz_band(struct AVCodecContext *ctx,
  *
  */
 static void
-vdpau_decode(struct media_codec *mc, void *decoder,
+vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 	     struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
-  video_decoder_t *vd = decoder;
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   vdpau_codec_t *vc = mc->opaque;
@@ -613,7 +612,7 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
 
   mc->codec_ctx->opaque = mc;
   mc->opaque = vc;
-  mc->data   = vdpau_decode;
+  mc->decode = vdpau_decode;
   mc->close  = vdpau_codec_close;
   mc->reinit = vdpau_codec_reinit;
   return 0;

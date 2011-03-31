@@ -183,7 +183,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
-  AVCodecContext *ctx;
   AVPacket pkt;
   int r, si;
   event_t *e;
@@ -230,9 +229,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       si = pkt.stream_index;
 
-      ctx = cwvec[si] ? cwvec[si]->codec_ctx : NULL;
-
-      if(ctx != NULL && si == mp->mp_video.mq_stream) {
+      if(si == mp->mp_video.mq_stream) {
 	/* Current video stream */
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_VIDEO;
@@ -245,13 +242,17 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
 
-      } else if(ctx != NULL && si == mp->mp_audio.mq_stream) {
+      } else if(si == mp->mp_audio.mq_stream) {
 	/* Current audio stream */
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
 
       } else if(si == mp->mp_video.mq_stream2) {
+
+
+	AVCodecContext *ctx;
+	ctx = cwvec[si] ? cwvec[si]->codec_ctx : NULL;
 
 	ctx = fctx->streams[si]->codec;
 
@@ -431,7 +432,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       } else if(id[0] >= '0' && id[0] <= '9') {
 	unsigned int idx = atoi(est->id);
 	if(idx < fctx->nb_streams) {
-	  ctx = fctx->streams[idx]->codec;
+	  AVCodecContext *ctx = fctx->streams[idx]->codec;
 	  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
 	    mp->mp_audio.mq_stream = idx;
 	    prop_set_int(mp->mp_prop_audio_track_current, idx);
@@ -608,6 +609,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       
       mcp.width = ctx->width;
       mcp.height = ctx->height;
+      mcp.profile = ctx->profile;
+      mcp.level = ctx->level;
 
       if(mp->mp_video.mq_stream == -1)
 	mp->mp_video.mq_stream = i;

@@ -188,6 +188,9 @@ SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
 SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 
+SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
+
+
 #
 # Audio subsys
 #
