@@ -20,8 +20,6 @@ url_split(char *proto, int proto_size,
 	  char *path, int path_size,
 	  const char *url, int escape_path);
 
-double strtod_ex(const char *s, char decimal_point_char, char **ep);
-
 int dictcmp(const char *a, const char *b);
 
 int utf8_get(const char **s);
