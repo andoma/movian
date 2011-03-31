@@ -24,7 +24,8 @@
 #include "dbl.h"
 
 static const char *json_parse_value(const char *s, void *parent, 
-				    const char *name, json_deserializer_t *jd,
+				    const char *name,
+				    const json_deserializer_t *jd,
 				    void *opaque);
 
 /**
@@ -125,7 +126,7 @@ json_parse_string(const char *s, const char **endp)
  *
  */
 static void *
-json_parse_map(const char *s, const char **endp, json_deserializer_t *jd,
+json_parse_map(const char *s, const char **endp, const json_deserializer_t *jd,
 	       void *opaque)
 {
   char *name;
@@ -194,7 +195,7 @@ json_parse_map(const char *s, const char **endp, json_deserializer_t *jd,
  *
  */
 static void *
-json_parse_list(const char *s, const char **endp, json_deserializer_t *jd,
+json_parse_list(const char *s, const char **endp, const json_deserializer_t *jd,
 		void *opaque)
 {
   const char *s2;
@@ -293,7 +294,7 @@ json_parse_integer(const char *s, long *lp)
  */
 static const char *
 json_parse_value(const char *s, void *parent, const char *name,
-		 json_deserializer_t *jd, void *opaque)
+		 const json_deserializer_t *jd, void *opaque)
 {
   const char *s2;
   char *str;
@@ -340,7 +341,7 @@ json_parse_value(const char *s, void *parent, const char *name,
  *
  */
 void *
-json_deserialize(const char *src, json_deserializer_t *jd, void *opaque)
+json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque)
 {
   const char *end;
   void *c;
