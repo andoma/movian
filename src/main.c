@@ -71,7 +71,7 @@ int listen_on_stdin;
 int enable_serdev;
 #endif
 static int ffmpeglog;
-static int showtime_retcode;
+static int showtime_retcode = 1;
 const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
 char *showtime_cache_path;
 char *showtime_settings_path;
@@ -438,6 +438,11 @@ void
 showtime_shutdown(int retcode)
 {
   TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
+
+  if(showtime_retcode != 1) {
+    // Force exit
+    arch_exit(retcode);
+  }
 
   showtime_retcode = retcode;
 
