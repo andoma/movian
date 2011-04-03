@@ -40,32 +40,24 @@ show_help(){
   exit 1
 }
 
-# figure out what archives to link with by modifying output
-# from pkg-config
-# this is done because gcc (on at least osx) cant be
-# forced to link some libraries static with -static using -l
+# figure out what archives to link with by modifying output from pkg-config
+# this is done because gcc (on at least osx) cant be forced to mix
+# dynamic and static libraries using -static and -l
 pkg_config_static() {
+  # assume all packages use the same libdir
   libdir=`$PKGCONFIG --variable=libdir $1`
   args=""
   for arg in `$PKGCONFIG --static --libs $*` ; do
-    if [ \
-        "$arg" = "-lm" -o \
-        "$arg" = "-lz" -o \
-        "$arg" = "-lbz2" -o \
-        "$arg" = "-lpthread" ] \
-        ; then
-      args+="$arg "
-      continue
-    fi
-    if [ "${arg:0:2}" != "-l" ] ; then
+    if [ "${arg:0:2}" != "-l" -o -e "/usr/lib/lib${arg:2}.dylib" ] ; then
+      # pass along non -l or existing dynamic standard libraries
       args+="$arg "
     else
+      # pass full path to static archive
       args+="${arg/-l/$libdir/lib}.a "
     fi
   done
   echo $args
 }
-
 
 enable libfreetype
 enable glw
