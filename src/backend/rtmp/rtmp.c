@@ -769,10 +769,11 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     return NULL;
   }
 
-  const char *suburl = rtmp_init_subtitles(mp, subtitles);
-
-  r.sub = suburl ? subtitles_load(suburl) : NULL;
-  prop_set_string(mp->mp_prop_subtitle_track_current, suburl ?: "off");
+  if(subtitles != NULL) {
+    const char *suburl = rtmp_init_subtitles(mp, subtitles);
+    r.sub = suburl ? subtitles_load(suburl) : NULL;
+    prop_set_string(mp->mp_prop_subtitle_track_current, suburl ?: "off");
+  }
 
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
