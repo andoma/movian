@@ -8,6 +8,7 @@ export LDFLAGS="-arch $CC_ARCH -mmacosx-version-min=$OSX_TARGET -isysroot $OSX_S
 
 (cd freetype* && \
   ./configure "--prefix=$INSTALLDIR" \
+    --disable-shared \
     --enable-static && \
   make clean && \
   make && \
@@ -16,10 +17,26 @@ export LDFLAGS="-arch $CC_ARCH -mmacosx-version-min=$OSX_TARGET -isysroot $OSX_S
 
 (cd ffmpeg* && \
   ./configure "--prefix=$INSTALLDIR" \
+    --disable-encoders \
+    --disable-bsfs \
+    --disable-filters \
+    --disable-muxers \
+    --disable-devices \
+    --disable-protocols \
+    --disable-network \
+    --disable-stripping \
+    --disable-ffserver \
+    --disable-ffmpeg \
+    --disable-ffplay \
+    --disable-ffprobe \
+    --disable-bzlib \
+    --disable-decoder=twinvq \
+    --disable-decoder=snow \
+    --disable-decoder=cavs \
+    --disable-shared \
     --enable-static && \
   make clean && \
   make && \
   make install \
   )
-
 
