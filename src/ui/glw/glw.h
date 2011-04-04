@@ -59,7 +59,8 @@ LIST_HEAD(glw_video_list, glw_video);
 
 // ------------------- Math mode -----------------
 
-#ifdef __x86_64
+// all supported apple devices should support SSE
+#if defined(__x86_64) || defined(__APPLE__)
 #define ENABLE_GLW_MATH_SSE 1
 #else
 #define ENABLE_GLW_MATH_SSE 0
