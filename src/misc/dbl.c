@@ -171,7 +171,7 @@ my_double2str(char *buf, size_t bufsize, double realvalue)
   if(bufsize < 8)
     return -1;
 
-  if( precision<0 ) precision = 6;         /* Set default precision */
+  if( precision<0 ) precision = 20;         /* Set default precision */
   if( precision>bufsize/2-10 ) precision = bufsize/2-10;
   if( realvalue<0.0 ){
     realvalue = -realvalue;
