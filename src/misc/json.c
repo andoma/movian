@@ -319,6 +319,9 @@ json_parse_value(const char *s, void *parent, const char *name,
     return s2;
   }
 
+  while(*s > 0 && *s < 33)
+    s++;
+
   if(!strncmp(s, "true", 4)) {
     jd->jd_add_bool(opaque, parent, name, 1);
     return s + 4;
