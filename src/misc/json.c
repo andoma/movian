@@ -275,7 +275,7 @@ json_parse_integer(const char *s, long *lp)
 
   if(*s2 == 0)
     return NULL;
-  if(s2[1] == '.' || s2[1] == 'e' || s2[1] == 'E')
+  if(s2[0] == '.' || s2[0] == 'e' || s2[0] == 'E')
     return NULL; // Is floating point
 
   long v = strtol(s, &ep, 10);
