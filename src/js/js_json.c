@@ -20,6 +20,7 @@
 
 #include "htsmsg/htsbuf.h"
 #include "misc/dbl.h"
+#include "misc/json.h"
 #include "js.h"
 
 
@@ -172,5 +173,137 @@ js_json_encode(JSContext *cx, JSObject *obj,
   htsbuf_read(&out, r, len);
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, r, len));
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+
+static void *
+create_map(void *opaque)
+{
+  return JS_NewObject(opaque, NULL, NULL, NULL);
+}
+
+static void *
+create_list(void *opaque)
+{
+  return JS_NewArrayObject(opaque, 0, NULL);
+}
+
+static void
+destroy_obj(void *opaque, void *obj)
+{
+  // GC will take care of this
+}
+
+
+/**
+ *
+ */
+static void
+add_item(JSContext *cx, JSObject *obj, const char *name, jsval item)
+{
+  if(name)
+    JS_SetProperty(cx, obj, name, &item);
+  else {
+    jsuint length;
+    if(JS_GetArrayLength(cx, obj, &length))
+      JS_SetElement(cx, obj, length, &item);
+  }
+}
+
+
+static void
+add_obj(void *opaque, void *parent, const char *name, void *child)
+{
+  add_item(opaque, parent, name, OBJECT_TO_JSVAL(child));
+}
+
+
+static void 
+add_string(void *opaque, void *parent, const char *name, char *str)
+{
+  JSString *s = JS_NewString(opaque, str, strlen(str));
+  if(s == NULL)
+    free(str);
+  else
+    add_item(opaque, parent, name, STRING_TO_JSVAL(s));
+}
+
+static void 
+add_double(void *opaque, void *parent, const char *name, double v)
+{
+  jsdouble *d = JS_NewDouble(opaque, v);
+  if(d != NULL)
+    add_item(opaque, parent, name, DOUBLE_TO_JSVAL(d));
+}
+
+static void 
+add_long(void *opaque, void *parent, const char *name, long v)
+{
+  if(v <= INT32_MAX && v >= INT32_MIN && INT_FITS_IN_JSVAL(v))
+    add_item(opaque, parent, name, INT_TO_JSVAL(v));
+  else
+    add_double(opaque, parent, name, v);
+}
+
+
+static void 
+add_bool(void *opaque, void *parent, const char *name, int v)
+{
+  add_item(opaque, parent, name, BOOLEAN_TO_JSVAL(!!v));
+}
+
+static void 
+add_null(void *opaque, void *parent, const char *name)
+{
+  add_item(opaque, parent, name, JSVAL_NULL);
+}
+
+
+/**
+ *
+ */
+static const json_deserializer_t json_to_jsapi = {
+  .jd_create_map      = create_map,
+  .jd_create_list     = create_list,
+  .jd_destroy_obj     = destroy_obj,
+  .jd_add_obj         = add_obj,
+  .jd_add_string      = add_string,
+  .jd_add_long        = add_long,
+  .jd_add_double      = add_double,
+  .jd_add_bool        = add_bool,
+  .jd_add_null        = add_null,
+};
+
+
+
+JSBool 
+js_json_decode(JSContext *cx, JSObject *obj,
+	       uintN argc, jsval *argv, jsval *rval)
+{
+  char *str;
+  JSObject *o;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  if(!JS_EnterLocalRootScope(cx))
+    return JS_FALSE;
+
+  o = json_deserialize(str, &json_to_jsapi, cx);
+
+  *rval = OBJECT_TO_JSVAL(o);
+
+  JS_LeaveLocalRootScope(cx);
+
+  if(o == NULL) {
+    JS_ReportError(cx, "Invalid JSON");
+    return JS_FALSE;
+  }
   return JS_TRUE;
 }

@@ -73,4 +73,7 @@ JSBool js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
 JSBool js_json_encode(JSContext *cx, JSObject *obj,
 		      uintN argc, jsval *argv, jsval *rval);
 
+JSBool  js_json_decode(JSContext *cx, JSObject *obj,
+		       uintN argc, jsval *argv, jsval *rval);
+
 #endif // JS_H__ 

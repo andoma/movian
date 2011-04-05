@@ -403,6 +403,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("message",          js_message, 3, 0, 0),
     JS_FS("sleep",            js_sleep, 1, 0, 0),
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
+    JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
     JS_FS_END
 };
 
