@@ -650,7 +650,6 @@ upnp_add_device(const char *url, const char *type, int maxage)
     ud = calloc(1, sizeof(upnp_device_t));
     ud->ud_url = strdup(url);
     LIST_INSERT_HEAD(&upnp_devices, ud, ud_link);
-    hts_cond_broadcast(&upnp_device_cond);
   }
 
   if(!strcmp(type, "urn:schemas-upnp-org:service:ContentDirectory:1") ||
@@ -661,7 +660,8 @@ upnp_add_device(const char *url, const char *type, int maxage)
       introspect_device(ud);
     }
   }
-
+  hts_cond_broadcast(&upnp_device_cond);
+    
   hts_mutex_unlock(&upnp_lock);
 }
 
