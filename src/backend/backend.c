@@ -220,6 +220,26 @@ backend_open_video(prop_t *page, const char *url)
 }
 
 
+static int
+be_vp_canhandle(const char *url)
+{
+  return !strncmp(url, "videoparams:", strlen("videoparams:"));
+}
+
+
+
+
+/**
+ *
+ */
+static backend_t be_videoparams = {
+  .be_canhandle = be_vp_canhandle,
+  .be_open = backend_open_video,
+};
+
+BE_REGISTER(videoparams);
+
+
 /**
  *
  */
