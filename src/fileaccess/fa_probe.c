@@ -788,7 +788,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
     av_strlcpy(newurl, md->md_redirect, newurlsize);
 
   if(md->md_title && (p = prop_create_check(proproot, "title")) != NULL) {
-    prop_set_rstring(p, md->md_title);
+    prop_set_rstring_ex(p, NULL, md->md_title, 1);
     prop_ref_dec(p);
   }
 

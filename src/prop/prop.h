@@ -170,7 +170,8 @@ void prop_move(prop_t *p, prop_t *before);
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 			prop_str_type_t type);
 
-void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr);
+void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
+			 int noupdate);
 
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
@@ -219,7 +220,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
 
-#define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr)
+#define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr, 0)
 
 rstr_t *prop_get_string(prop_t *p);
 
