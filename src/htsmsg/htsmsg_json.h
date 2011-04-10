@@ -27,6 +27,8 @@
  */
 htsmsg_t *htsmsg_json_deserialize(const char *src);
 
-int htsmsg_json_serialize(htsmsg_t *msg, htsbuf_queue_t *hq, int pretty);
+void htsmsg_json_serialize(htsmsg_t *msg, htsbuf_queue_t *hq, int pretty);
+
+char *htsmsg_json_serialize_to_str(htsmsg_t *msg, int pretty);
 
 #endif /* HTSMSG_JSON_H_ */

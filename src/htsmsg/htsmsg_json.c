@@ -93,13 +93,28 @@ htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
 /**
  *
  */
-int
+void
 htsmsg_json_serialize(htsmsg_t *msg, htsbuf_queue_t *hq, int pretty)
 {
   htsmsg_json_write(msg, hq, msg->hm_islist, 2, pretty);
   if(pretty) 
     htsbuf_append(hq, "\n", 1);
-  return 0;
+}
+
+
+/**
+ *
+ */
+char *
+htsmsg_json_serialize_to_str(htsmsg_t *msg, int pretty)
+{
+  htsbuf_queue_t hq;
+  char *str;
+  htsbuf_queue_init(&hq, 0);
+  htsmsg_json_serialize(msg, &hq, pretty);
+  str = htsbuf_to_string(&hq);
+  htsbuf_queue_flush(&hq);
+  return str;
 }
 
 
