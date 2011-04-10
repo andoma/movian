@@ -414,6 +414,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
       const char *id = est->id;
+      TRACE(TRACE_DEBUG, "Playback", "Track %s selected", id);
 
       if(!strcmp(id, "sub:off")) {
 	prop_set_string(mp->mp_prop_subtitle_track_current, id);
