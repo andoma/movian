@@ -19,6 +19,7 @@
 
 #include "networking/http_server.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "htsmsg/htsmsg_json.h"
 #include "event.h"
 #include "playqueue.h"
 #include "misc/string.h"
@@ -102,13 +103,39 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
  *
  */
 static void
-make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item)
+make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item, const char *url)
 {
-  prop_set_string(prop_create(c, "type"), "video");
+  htsmsg_t *vp, *sources, *src;
+  char *str, *vpstr;
+  const char *title;
+  size_t len;
 
-  item_set_str(m, item, "title",
-	       "http://purl.org/dc/elements/1.1/title");
+  title = htsmsg_get_str_multi(item, "http://purl.org/dc/elements/1.1/title",
+			       "cdata", NULL);
 
+  vp = htsmsg_create_map();
+  if(title)
+    htsmsg_add_str(vp, "title", title);
+
+  src = htsmsg_create_map();
+  htsmsg_add_str(src, "url", url);
+
+  sources = htsmsg_create_list();
+  htsmsg_add_msg(sources, NULL, src);
+  
+  htsmsg_add_msg(vp, "sources", sources);
+  
+  str = htsmsg_json_serialize_to_str(vp, 0);
+  len = strlen(str);
+  vpstr = malloc(len + strlen("videoparams:") + 1);
+  strcpy(vpstr, "videoparams:");
+  strcpy(vpstr + strlen("videoparams:"), str);
+  free(str);
+  printf("%s\n", vpstr);
+  prop_set_string(prop_create(c, "url"), vpstr);
+  free(vpstr);
+
+  prop_set_string(prop_create(m, "title"), title);
 }
 
 
@@ -151,22 +178,23 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
   url = htsmsg_get_str_multi(item, "res", "cdata", NULL);
 
   prop_t *c = prop_create_root(NULL);
-  prop_set_string(prop_create(c, "url"), url);
 		  
 
   prop_t *m = prop_create(c, "metadata");
   item_set_duration(m, item);
 
   if(!strncmp(cls, "object.item.audioItem",
-	      strlen("object.item.audioItem")))
+	      strlen("object.item.audioItem"))) {
+    prop_set_string(prop_create(c, "url"), url);
     make_audioItem(c, m, item);
-  else if(!strncmp(cls, "object.item.videoItem",
-		   strlen("object.item.videoItem")))
-    make_videoItem(c, m, item);
-  else if(!strncmp(cls, "object.item.imageItem",
-		   strlen("object.item.imageItem")))
+  } else if(!strncmp(cls, "object.item.videoItem",
+		     strlen("object.item.videoItem"))) {
+    make_videoItem(c, m, item, url);
+  } else if(!strncmp(cls, "object.item.imageItem",
+		     strlen("object.item.imageItem"))) {
+    prop_set_string(prop_create(c, "url"), url);
     make_imageItem(c, m, item);
-  else {
+  } else {
     TRACE(TRACE_DEBUG, "UPNP", "Cant handle upnp:class %s (%s)", cls, url);
     prop_destroy(c);
     return;
