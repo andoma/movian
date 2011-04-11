@@ -165,8 +165,9 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       } else {
 	deck_select_child(&gd->w, n, NULL);
       }
+      return 1;
     }
-    return 1;
+    break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_selected == extra)
