@@ -358,6 +358,8 @@ picture_out(vdec_decoder_t *vdd)
 
   }
 
+  vd->vd_estimated_duration = vp->fi.duration; // For bitrate calculations
+
   prop_set_string(vdd->metainfo, metainfo);
 
   vp->fi.pix_fmt = PIX_FMT_YUV420P;
