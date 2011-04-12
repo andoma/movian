@@ -121,11 +121,6 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
-#define FA_SCAN_ARCHIVES 0x1
-
-fa_dir_t *fa_scandir_recursive(const char *url, char *errbuf, size_t errsize,
-			       int flags);
-
 void *fa_open(const char *url, char *errbuf, size_t errsize);
 void *fa_open_vpaths(const char *url, const char **vpaths);
 void fa_close(void *fh);

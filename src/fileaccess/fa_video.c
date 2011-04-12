@@ -40,6 +40,7 @@
 #include "api/opensubtitles.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
+#include "misc/isolang.h"
 
 static event_t *playlist_play(fa_handle_t *fh,media_pipe_t *mp, int primary,
 			      int flags, char *errbuf, size_t errlen);
@@ -51,25 +52,45 @@ static void
 scan_subtitles(prop_t *prop, const char *url)
 {
   char parent[URL_MAX];
+  char *base, *s, *postfix;
+  size_t baselen;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   char errbuf[256];
-  const char *e;
+  const char *lang;
+
+  base = mystrdupa(url);
+  s = strrchr(base, '.');
+  if(s == NULL)
+    return;
+  *s = 0;
+  baselen = strlen(base);
 
   fa_parent(parent, sizeof(parent), url);
-
-  if((fd = fa_scandir_recursive(parent, errbuf, sizeof(errbuf),
-				FA_SCAN_ARCHIVES)) == NULL) {
+  
+  if((fd = fa_scandir(parent, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
 	  parent, errbuf);
     return;
   }
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    
-    e = strrchr(fde->fde_url, '.');
-    if(e != NULL && !strcasecmp(e, ".srt"))
-      mp_add_track(prop, fde->fde_filename, fde->fde_url);
+    if(strncasecmp(fde->fde_url, base, baselen) || fde->fde_url[baselen] != '.')
+      continue;
+    postfix = mystrdupa(fde->fde_url + baselen + 1);
+    s = strchr(postfix, '.');
+
+    if(s != NULL) {
+      *s++ = 0;
+      lang = isolang_iso2lang(postfix);
+    } else {
+      s = postfix;
+      lang = "Subtitles";
+    }
+
+    if(strcasecmp(s, "srt"))
+      continue;
+    mp_add_track(prop, lang, fde->fde_url);
   }
   fa_dir_free(fd);
 }
