@@ -364,7 +364,12 @@ glw_video_sub_layout_bitmaps(video_decoder_t *vd, glw_video_overlay_t *gvo,
     glw_renderer_vtx_st (r, 3, 0, 0);
 
     glw_tex_upload(gr, &gvo->gvo_textures[i], sr->bitmap,
-		   GLW_TEXTURE_FORMAT_RGBA, sr->w, sr->h, 0);
+#ifdef WORDS_BIGENDIAN
+		   GLW_TEXTURE_FORMAT_ABGR,
+#else
+		   GLW_TEXTURE_FORMAT_RGBA,
+#endif
+		   sr->w, sr->h, 0);
   }
 }
 
