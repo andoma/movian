@@ -3,7 +3,7 @@
 
 widget(container_y, {
 
-  .spacing = 20;
+  .spacing = 10;
   .align = center;
 
   // -- clock and date -------------------------------------------------
@@ -42,22 +42,29 @@ widget(container_y, {
 	.caption = strftime($global.clock.unixtime, "%d");
       });
     }));
-    
   });
 
-  space(1);
+  widget(container_x, {
+    .filterConstraintY = true;
+    commandGroup(widget(container_y, {
+      .width = $ui.size * 10;
+
+      widget(label, {
+	.caption = "Audio tracks";
+	.align = center;
+	.color = [0.5, 0.5, 0.5];
+      });
+      HORIZONTAL_SEPARATOR();
+      
+
+    }));
+  });
 
 
   // -- playdeck ------------------------------------------------------
 
   commandGroup(widget(container_x, {
     .align = center;
-
-    widget(dummy, {
-      .width = $ui.size * 2;
-    });
-   
-    space(1);
     
     widget(container_y, {
       .spacing = 5;
@@ -106,12 +113,5 @@ widget(container_y, {
 	!$global.media.current.canSeek
       );
     });
-
-    space(1);
-
-    widget(container_y, {
-      commandMenuRight(targetedEvent("cmd_deck", Increase), "Video", 0.1);
-    });
-
   }));
 });
