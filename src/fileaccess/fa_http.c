@@ -1655,12 +1655,14 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
       continue;
 
     /* Some DAV servers seams to send an empty href tag for root path "/" */
-    if((href = htsmsg_get_str(c2, "cdata")) == NULL)
-      href = "/";
-    else {
-      snprintf(ehref, URL_MAX, "%s", href);
-      http_deescape(ehref);
-    }
+    href = htsmsg_get_str(c2, "cdata") ?: "/";
+
+    // Get rid of http://hostname (lighttpd includes those)
+    if((q = strstr(href, "://")) != NULL)
+      href = strchr(q + strlen("://"), '/') ?: "/";
+
+    snprintf(ehref, URL_MAX, "%s", href);
+    http_deescape(ehref);
 
     if((c = htsmsg_get_map_multi(c, "DAV:propstat", "tags",
 				 "DAV:prop", "tags", NULL)) == NULL)
