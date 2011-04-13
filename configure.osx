@@ -74,6 +74,7 @@ enable timegm
 enable realpath
 enable polarssl
 enable librtmp
+enable font_liberation
 
 for opt do
   optval="${opt#*=}"

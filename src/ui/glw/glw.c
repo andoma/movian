@@ -263,9 +263,7 @@ glw_init(glw_root_t *gr, const char *theme, const char *skin,
 
   gr->gr_uii.uii_ui = ui;
 
-  if(glw_text_bitmap_init(gr))
-    return -1;
-
+  glw_text_bitmap_init(gr);
   glw_init_settings(gr, instance, instance_title);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);

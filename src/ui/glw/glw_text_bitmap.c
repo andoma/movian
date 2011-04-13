@@ -35,39 +35,8 @@
 #include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
+#include "text/text.h"
 #include "event.h"
-
-
-
-#define RS_P_START      0x7f000001
-#define RS_P_NEWLINE    0x7f000002
-#define RS_P_CENTER_ON  0x7f000003
-#define RS_P_CENTER_OFF 0x7f000004
-
-/**
- *
- */
-typedef struct glw_text_bitmap_data {
-
-  int gtbd_pixel_format;
-  
-  uint8_t *gtbd_data;
-
-  int16_t gtbd_width;
-  int16_t gtbd_height;
-
-  int16_t gtbd_texture_width;
-  int16_t gtbd_texture_height;
-
-  int16_t gtbd_linesize;
-  uint8_t gtbd_bpp;
-  uint8_t gtbd_ellipsized;
-  uint8_t gtbd_wrapped;
-
-  int *gtbd_cursor_pos;
-  int16_t gtbd_lines;
-
-} glw_text_bitmap_data_t;
 
 
 /**
@@ -91,7 +60,7 @@ typedef struct glw_text_bitmap {
   TAILQ_ENTRY(glw_text_bitmap) gtb_workq_link;
   LIST_ENTRY(glw_text_bitmap) gtb_global_link;
 
-  glw_text_bitmap_data_t gtb_data;
+  pixmap_t *gtb_pixmap;
 
   enum {
     GTB_NEED_RERENDER,
@@ -137,551 +106,9 @@ typedef struct glw_text_bitmap {
 
 } glw_text_bitmap_t;
 
-static glw_class_t glw_text, glw_label, glw_integer;
-
-
-
-#define HORIZONTAL_ELLIPSIS_UNICODE 0x2026
-
 static void gtb_notify(glw_text_bitmap_t *gtb);
 
-
-static FT_Library glw_text_library;
-
-TAILQ_HEAD(glyph_queue, glyph);
-LIST_HEAD(glyph_list, glyph);
-
-static struct glyph_queue allglyphs;
-
-#define GLYPH_HASH_SIZE 512
-#define GLYPH_HASH_MASK (GLYPH_HASH_SIZE-1)
-
-static struct glyph_list glyph_hash[GLYPH_HASH_SIZE];
-
-typedef struct glyph {
-  FT_Face face;
-  int uc;
-  FT_UInt gi;
-  int size;
-
-  LIST_ENTRY(glyph) hash_link;
-  TAILQ_ENTRY(glyph) lru_link;
-  FT_Glyph glyph;
-  int adv_x;
-
-  FT_BBox bbox;
-
-} glyph_t;
-
-static int num_glyphs;
-
-
-/**
- *
- */
-static void
-flush_glyph(void)
-{
-  glyph_t *g = TAILQ_FIRST(&allglyphs);
-  assert(g != NULL);
-
-  TAILQ_REMOVE(&allglyphs, g, lru_link);
-  LIST_REMOVE(g, hash_link);
-  FT_Done_Glyph(g->glyph);
-  free(g);
-  num_glyphs--;
-}
-
-
-
-/**
- *
- */
-static glyph_t *
-get_glyph(FT_Face face, int uc, int size)
-{
-  int err, hash = (uc ^ size) & GLYPH_HASH_MASK;
-  glyph_t *g;
-
-  LIST_FOREACH(g, &glyph_hash[hash], hash_link)
-    if(g->uc == uc && g->size == size && g->face == face)
-      break;
-
-  if(g == NULL) {
-
-    FT_UInt gi = FT_Get_Char_Index(face, uc);
-
-    if((err = FT_Load_Glyph(face, gi, FT_LOAD_DEFAULT)) != 0)
-      return NULL;
-    
-    g = calloc(1, sizeof(glyph_t));
-
-    if((err = FT_Get_Glyph(face->glyph, &g->glyph)) != 0) {
-      free(g);
-      return NULL;
-    }
-
-    FT_Glyph_Get_CBox(g->glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
-
-    g->gi = gi;
-    g->face = face;
-    g->uc = uc;
-    g->size = size;
-    g->adv_x = face->glyph->advance.x;
-    LIST_INSERT_HEAD(&glyph_hash[hash], g, hash_link);
-    num_glyphs++;
-  } else {
-    TAILQ_REMOVE(&allglyphs, g, lru_link);
-  }
-  TAILQ_INSERT_TAIL(&allglyphs, g, lru_link);
-
-
-  if(num_glyphs > 2048)
-    flush_glyph();
-
-  return g;
-}
-
-
-/**
- *
- */
-static void
-draw_glyph(glw_text_bitmap_data_t *gtbd, FT_Bitmap *bmp, uint8_t *dst, 
-	   int left, int top, int index)
-{
-  const uint8_t *src = bmp->buffer;
-  int x, y;
-  int w, h;
-  
-  int x1, y1, x2, y2;
-
-  x1 = GLW_MAX(0, left);
-  x2 = GLW_MIN(left + bmp->width, gtbd->gtbd_width);
-  y1 = GLW_MAX(0, top);
-  y2 = GLW_MIN(top + bmp->rows, gtbd->gtbd_height);
-
-  if(gtbd->gtbd_cursor_pos != NULL) {
-    gtbd->gtbd_cursor_pos[index * 2 + 0] = x1;
-    gtbd->gtbd_cursor_pos[index * 2 + 1] = x2;
-  }
-
-  w = GLW_MIN(x2 - x1, bmp->width);
-  h = GLW_MIN(y2 - y1, bmp->rows);
-
-  if(w < 0 || h < 0)
-    return;
-
-  dst += x1 * gtbd->gtbd_bpp + y1 * gtbd->gtbd_linesize;
-
-  switch(gtbd->gtbd_bpp) {
-  case 2:
-    // Luma + Alpha channel
-    for(y = 0; y < h; y++) {
-      for(x = 0; x < w; x++) {
-	dst[x*2 + 0] += src[x] ? 0xff : 0;
-	dst[x*2 + 1] += src[x];
-      }
-      src += bmp->pitch;
-      dst += gtbd->gtbd_linesize;
-    }
-    break;
-
-  default:
-    abort();
-  }
-}
-
-
-/**
- *
- */
-TAILQ_HEAD(line_queue, line);
-
-typedef struct line {
-  TAILQ_ENTRY(line) link;
-  int start;
-  int count;
-  int width;
-  int xspace;
-  char center;
-
-} line_t;
-
-
-typedef struct pos {
-  int kerning;
-  int adv_x;
-} pos_t;
-
-
-/**
- *
- */
-static int
-gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
-	     uint32_t *uc, int len, int flags, int docur, float scale,
-	     int max_width, int debug, int maxlines,
-	     int doellipsize)
-{
-  FT_Bool use_kerning = FT_HAS_KERNING( face );
-  FT_UInt prev = 0;
-  FT_BBox bbox;
-  FT_Vector pen, delta;
-  int err;
-  int pen_x, pen_y;
-
-  int c, i, j, d, e, height;
-  glyph_t *g;
-  int siz_x, start_x, start_y;
-  int target_width, target_height;
-  uint8_t *data;
-  int origin_y;
-  int pixelheight = gr->gr_fontsize * scale;
-  int pxheight = gr->gr_fontsize_px * scale;
-  int ellipsize_width;
-  int lines = 0;
-  line_t *li, *lix;
-  struct line_queue lq;
-  pos_t *pos;
-
-  gtbd->gtbd_ellipsized = 0;
-  gtbd->gtbd_wrapped = 0;
-
-  max_width *= 64;
-
-  if(pixelheight < 3)
-    return -1;
-
-  TAILQ_INIT(&lq);
-
-  FT_Set_Pixel_Sizes(face, 0, pixelheight);
-
-  /* Compute xsize of three dots, for ellipsize */
-  g = get_glyph(face, HORIZONTAL_ELLIPSIS_UNICODE, pixelheight);
-  ellipsize_width = g->adv_x;
-
-  /* Compute position for each glyph */
-
-  height = 64 * pixelheight;
-
-  pen_x = 0;
-  pen_y = 0;
-  prev = 0;
-  li = NULL;
-
-  pos = malloc(sizeof(pos_t) * len);
-
-  int out = 0;
-  int center = 0;
-
-  for(i = 0; i < len; i++) {
-
-    if(li == NULL) {
-      li = alloca(sizeof(line_t));
-      li->start = -1;
-      li->count = 0;
-      li->xspace = 0;
-      li->center = center;
-      TAILQ_INSERT_TAIL(&lq, li, link);
-      prev = 0;
-      pen_x = 0;
-    }
-
-    switch(uc[i]) {
-    case RS_P_START:
-      if(i != 0)
-	li = NULL;
-      continue;
-
-    case '\n':
-    case RS_P_NEWLINE:
-      li = NULL;
-      continue;
-      
-    case RS_P_CENTER_ON:
-      if(i != 0)
-	li = NULL;
-      else
-	li->center = 1;
-      center = 1;
-      continue;
-
-    case RS_P_CENTER_OFF:
-      if(i != 0)
-	li = NULL;
-      else
-	li->center = 0;
-      center = 0;
-      continue;
-
-    default:
-      break;
-    }
-
-    if(uc[i] > 0x7f000000)
-      continue;
-
-    uc[out] = uc[i];
-
-
-    if(li->start == -1)
-      li->start = out;
-
-    if((g = get_glyph(face, uc[i], pixelheight)) == NULL)
-      continue;
-
-    if(use_kerning && g->gi && prev) {
-      FT_Get_Kerning(face, prev, g->gi, FT_KERNING_DEFAULT, &delta); 
-      pos[out].kerning = delta.x;
-    } else {
-      pos[out].kerning = 0;
-    }
-    pos[out].adv_x = g->adv_x;
-    prev = g->gi;
-    li->count++;
-    out++;
-  }
-  
-  bbox.xMin = 0;
-
-  lines = 0;
-  siz_x = 0;
-
-  TAILQ_FOREACH(li, &lq, link) {
-
-    int w = 0;
-
-    for(j = 0; j < li->count; j++) {
-
-      if(j == 0 
-	 && (g = get_glyph(face, uc[li->start + j], pixelheight)) != NULL) {
-	w += g->bbox.xMin;
-	bbox.xMin = GLW_MIN(g->bbox.xMin, bbox.xMin);
-      }
-
-      if(j == li->count - 1
-	 && (g = get_glyph(face, uc[li->start + j], pixelheight)) != NULL)
-	w += g->bbox.xMax;
-
-
-      int d = pos[li->start + j].adv_x + 
-	(j > 0 ? pos[li->start + j].kerning : 0);
-
-      
-      if(lines < maxlines - 1 && w + d >= max_width && j < li->count - 1) {
-	int k = j;
-	int w2 = w;
-
-	while(k > 0 && uc[li->start + k - 1] != ' ') {
-	  k--;
-	  w2 -= pos[li->start + k].adv_x + 
-	    (k > 0 ? pos[li->start + k].kerning : 0);
-	}
-
-	if(k > 0) {
-	  lix = alloca(sizeof(line_t));
-	  lix->start = li->start + k;
-	  lix->count = li->count - k;
-	  lix->xspace = 0;
-	  lix->center = 0;
-
-	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
-
-	  gtbd->gtbd_wrapped = 1;
-
-	  k--;
-	  w2 -= pos[li->start + k].adv_x + 
-	    (k > 0 ? pos[li->start + k].kerning : 0);
-
-	  li->count = k;
-	  w = w2;
-	  break;
-	}
-      }
-
-      if(lines == maxlines - 1 && doellipsize && 
-	 w >= max_width - ellipsize_width) {
-
-	while(j > 0 && uc[li->start + j - 1] == ' ') {
-	  j--;
-	  w -= pos[li->start + j].adv_x + 
-	    (j > 0 ? pos[li->start + j].kerning : 0);
-	}
-	
-	uc[li->start + j] = HORIZONTAL_ELLIPSIS_UNICODE;
-	pos[li->start + j].kerning = 0;
-	gtbd->gtbd_ellipsized = 1;
-
-	w += ellipsize_width;
-	li->count = j + 1;
-	break;
-      }
-      if(j < li->count - 1)
-	w += d;
-    }
-    
-    li->width = w;
-    siz_x = GLW_MAX(w, siz_x);
-    lines++;
-  }
-
-  if(siz_x < 5) {
-    free(pos);
-    return -1;
-  }
-
-  target_width  = siz_x / 64 + 3;
-
-  if(maxlines > 1) {
-    TAILQ_FOREACH(li, &lq, link) {
-      if(li->center)
-	continue;
-
-      int spaces = 0;
-      int spill = siz_x - li->width;
-      for(i = li->start; i < li->start + li->count; i++) {
-	if(uc[i] == ' ')
-	  spaces++;
-      }
-      if((float)spill / li->width < 0.2)
-	li->xspace = spaces ? spill / spaces : 0;
-    }
-  }
-
-  target_height =  lines * pxheight;
-  gtbd->gtbd_lines = lines;
-
-  bbox.yMin = 64 * face->descender * pixelheight / gr->gr_gtb_face->units_per_EM;
-  height = 64 * (target_height / lines);
-
-  origin_y = ((64 * (lines - 1) * pxheight) - bbox.yMin) / 64;
-
-  if(glw_can_tnpo2(gr)) {
-    gtbd->gtbd_texture_width  = target_width;
-    gtbd->gtbd_texture_height = target_height;
-  } else {
-    gtbd->gtbd_texture_width  = 1 << (av_log2(target_width)  + 1);
-    gtbd->gtbd_texture_height = 1 << (av_log2(target_height) + 1);
-  }
-
-  start_x = -bbox.xMin;
-  start_y = 0;
-
-  /* Allocate drawing area */
-  gtbd->gtbd_bpp = 2;
-  gtbd->gtbd_linesize = gtbd->gtbd_texture_width * gtbd->gtbd_bpp;
-
-  data = calloc(1, gtbd->gtbd_linesize * gtbd->gtbd_texture_height);
-  gtbd->gtbd_width  = target_width;
-  gtbd->gtbd_height = target_height;
-
-  if(debug) {
-    for(i = 0; i < target_height; i+=3)
-      memset(data + i * gtbd->gtbd_linesize, 0xff, gtbd->gtbd_linesize);
-  }
-
-  if(docur) {
-    gtbd->gtbd_cursor_pos = malloc(2 * (1 + len) * sizeof(int));
-  } else {
-    gtbd->gtbd_cursor_pos = NULL;
-  }
-
-  pen_y = 0;
-
-  TAILQ_FOREACH(li, &lq, link) {
-    pen_x = 0;
-    
-    if(li->center) {
-      pen_x += (siz_x - li->width) / 2;
-    }
-
-
-    for(i = li->start; i < li->start + li->count; i++) {
-      g = get_glyph(face, uc[i], pixelheight);
-      if(g == NULL)
-	continue;
-
-      pen_x += pos[i].kerning;
-      
-      pen.x = start_x + pen_x;
-      pen.y = start_y + pen_y;
-
-      FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->glyph;
-      pen.x &= ~63;
-      pen.y &= ~63;
-      err = FT_Glyph_To_Bitmap((FT_Glyph*)&bmp, FT_RENDER_MODE_NORMAL, &pen, 0);
-      if(err == 0) {
-	draw_glyph(gtbd, &bmp->bitmap, data, bmp->left + 1,
-		   target_height - 1 - origin_y - bmp->top, i);
-	FT_Done_Glyph((FT_Glyph)bmp);
-      }
-
-      if(gtbd->gtbd_cursor_pos != NULL && uc[i] == ' ')
-	gtbd->gtbd_cursor_pos[2 * i + 0] = pen_x / 64;
-
-      pen_x += pos[i].adv_x;
-      if(uc[i] == ' ')
-	pen_x += li->xspace;
-
-      if(gtbd->gtbd_cursor_pos != NULL && uc[i] == ' ')
-	gtbd->gtbd_cursor_pos[2 * i + 1] = pen_x / 64;
-
-    }
-    pen_y -= height;
-  }
-
-  if(docur) {
-    gtbd->gtbd_cursor_pos[2 * len] = gtbd->gtbd_cursor_pos[2 * len - 1];
-    i = pxheight / 4;
-    gtbd->gtbd_cursor_pos[2 * len + 1] = gtbd->gtbd_cursor_pos[2 * len] + i;
-
-    for(i = 0; i < len; i++) {
-      if(gtbd->gtbd_cursor_pos[2 * i] == 0) {
-	c = i;
-	if(c == 0)
-	  start_x = 0;
-	else
-	  start_x = gtbd->gtbd_cursor_pos[2 * c - 1];
-	
-	e = 1;
-	while(1) {
-	  i++;
-	  if(i == len || gtbd->gtbd_cursor_pos[2 * i])
-	    break;
-	  e+= 2;
-	}
-
-	if(i == len || e == 0)
-	  break;
-
-	d = gtbd->gtbd_cursor_pos[2 * i] - start_x;
-	d = d / e;
-	e = start_x;
-	for(;c < i; c++) {
-	  gtbd->gtbd_cursor_pos[c*2 + 0] = e;
-	  e += d;
-	  gtbd->gtbd_cursor_pos[c*2 + 1] = e;
-	  e += d;
-	}
-
-      }
-    }
-  }
-
-  gtbd->gtbd_data = data;
-
-  switch(gtbd->gtbd_bpp) {
-  case 2:
-    gtbd->gtbd_pixel_format = GLW_TEXTURE_FORMAT_I8A8;
-    break;
-  default:
-    abort();
-  }
-
-  free(pos);
-  return 0;
-}
+static glw_class_t glw_text, glw_label, glw_integer;
 
 
 /**
@@ -692,7 +119,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
-  glw_text_bitmap_data_t *gtbd = &gtb->gtb_data;
+  pixmap_t *pm = gtb->gtb_pixmap;
 
   // Initialize renderers
 
@@ -706,37 +133,38 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   // Upload texture
 
-  if(gtbd->gtbd_data != NULL && gtb->gtb_status == GTB_VALID) {
-    glw_tex_upload(gr, &gtb->gtb_texture, gtbd->gtbd_data, 
-		   gtbd->gtbd_pixel_format,
-		   gtbd->gtbd_texture_width, gtbd->gtbd_texture_height ,0);
+  if(pm != NULL && pm->pm_pixels != NULL && gtb->gtb_status == GTB_VALID) {
+    glw_tex_upload(gr, &gtb->gtb_texture, pm->pm_pixels,
+		   GLW_TEXTURE_FORMAT_I8A8, pm->pm_width, pm->pm_height, 0);
 
-    free(gtbd->gtbd_data);
-    gtbd->gtbd_data = NULL;
+    free(pm->pm_pixels);
+    pm->pm_pixels = NULL;
     gtb->gtb_need_layout = 1;
   }
 
   // Check if we need to repaint
 
-  if(gtb->gtb_saved_width  != rc->rc_width || 
-     gtb->gtb_saved_height != rc->rc_height) {
-
+  if(pm != NULL && 
+     (gtb->gtb_saved_width  != rc->rc_width || 
+      gtb->gtb_saved_height != rc->rc_height)) {
+    
     if(gtb->gtb_status == GTB_VALID) {
 
-      if(gtbd->gtbd_wrapped)
+      if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
 	gtb->gtb_status = GTB_NEED_RERENDER;
 
       if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
-	if(gtbd->gtbd_ellipsized) {
+	if(pm->pm_flags & PIXMAP_TEXT_ELLIPSIZED) {
 	  gtb->gtb_status = GTB_NEED_RERENDER;
 	} else {
+
 	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
-	     gtbd->gtbd_width)
+	     pm->pm_width)
 	    gtb->gtb_status = GTB_NEED_RERENDER;
 
 	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
-	     gtbd->gtbd_height)
+	     pm->pm_height)
 	    gtb->gtb_status = GTB_NEED_RERENDER;
 	}
       }
@@ -747,17 +175,15 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_need_layout = 1;
   }
 
-
-  if(gtb->gtb_status == GTB_VALID &&
-     (gtb->gtb_need_layout || gtb->gtb_update_cursor)) {
+  if(pm != NULL && gtb->gtb_need_layout) {
 
     int left   =                 gtb->gtb_padding_left;
     int top    = rc->rc_height - gtb->gtb_padding_top;
     int right  = rc->rc_width  - gtb->gtb_padding_right;
     int bottom =                 gtb->gtb_padding_bottom;
     
-    int text_width  = gtbd->gtbd_width;
-    int text_height = gtbd->gtbd_height;
+    int text_width  = pm->pm_width;
+    int text_height = pm->pm_height;
     
     float x1, y1, x2, y2;
 
@@ -777,13 +203,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       case GLW_ALIGN_LEFT:
       case GLW_ALIGN_TOP_LEFT:
       case GLW_ALIGN_BOTTOM_LEFT:
-	right = left + gtbd->gtbd_width;
+	right = left + pm->pm_width;
 	break;
 
       case GLW_ALIGN_RIGHT:
       case GLW_ALIGN_TOP_RIGHT:
       case GLW_ALIGN_BOTTOM_RIGHT:
-	left = right - gtbd->gtbd_width;
+	left = right - pm->pm_width;
 	break;
       }
     }
@@ -804,13 +230,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       case GLW_ALIGN_TOP_LEFT:
       case GLW_ALIGN_TOP_RIGHT:
       case GLW_ALIGN_TOP:
-	bottom = top - gtbd->gtbd_height;
+	bottom = top - pm->pm_height;
 	break;
 
       case GLW_ALIGN_BOTTOM:
       case GLW_ALIGN_BOTTOM_LEFT:
       case GLW_ALIGN_BOTTOM_RIGHT:
-	top = bottom + gtbd->gtbd_height;
+	top = bottom + pm->pm_height;
 	break;
       }
     }
@@ -823,8 +249,8 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     float s, t;
 
     if(gr->gr_normalized_texture_coords) {
-      s = text_width  / (float)gtbd->gtbd_texture_width;
-      t = text_height / (float)gtbd->gtbd_texture_height;
+      s = text_width  / (float)pm->pm_width;
+      t = text_height / (float)pm->pm_height;
     } else {
       s = text_width;
       t = text_height;
@@ -841,32 +267,42 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
     glw_renderer_vtx_pos(&gtb->gtb_text_renderer, 3, x1, y2, 0.0);
     glw_renderer_vtx_st (&gtb->gtb_text_renderer, 3, 0, 0);
+  }
+  
+  if(w->glw_class == &glw_text && gtb->gtb_update_cursor && 
+     gtb->gtb_status == GTB_VALID) {
 
-    if(w->glw_class == &glw_text) {
-      gtb->gtb_update_cursor = 0;
+    int i = gtb->gtb_edit_ptr;
+    int left, right;
+    float x1, y1, x2, y2;
 
-      if(gtbd->gtbd_cursor_pos != NULL) {
+    if(pm != NULL && pm->pm_charpos != NULL) {
 	
-	int i = gtb->gtb_edit_ptr;
-	left  = gtbd->gtbd_cursor_pos[i*2  ];
-	right = gtbd->gtbd_cursor_pos[i*2+1];
-
+      if(i < pm->pm_charposlen) {
+	left  = pm->pm_charpos[i*2  ];
+	right = pm->pm_charpos[i*2+1];
       } else {
-
-	left = 0;
-	right = 10;
+	left  = pm->pm_charpos[2*pm->pm_charposlen - 1];
+	right = left + 10;
       }
 
-      x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
-      x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
-      y1 = -0.9f;
-      y2 =  0.9f;
+    } else {
 
-      glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, y1, 0.0);
-      glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, y1, 0.0);
-      glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2, y2, 0.0);
-      glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1, y2, 0.0);
+      left = 0;
+      right = 10;
     }
+
+    x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
+    x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
+    y1 = -0.9f;
+    y2 =  0.9f;
+
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 0, x1, y1, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 1, x2, y1, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 2, x2, y2, 0.0);
+    glw_renderer_vtx_pos(&gtb->gtb_cursor_renderer, 3, x1, y2, 0.0);
+
+    gtb->gtb_update_cursor = 0;
   }
 
   gtb->gtb_paint_cursor = w->glw_class == &glw_text && glw_is_focused(w);
@@ -889,7 +325,8 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 static void
 glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 {
-  glw_text_bitmap_t *gtb = (void *)w;
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  pixmap_t *pm = gtb->gtb_pixmap;
   float alpha;
 
   if(glw_is_focusable(w))
@@ -903,7 +340,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   if(w->glw_flags & GLW_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
-  if(glw_is_tex_inited(&gtb->gtb_texture) && gtb->gtb_data.gtbd_width > 0) {
+  if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
 
     if(w->glw_flags & GLW_SHADOW && !rc->rc_inhibit_shadows) {
       float xd =  2.0f / rc->rc_width;
@@ -942,7 +379,8 @@ glw_text_bitmap_dtor(glw_t *w)
   free(gtb->gtb_caption);
   free(gtb->gtb_uc_buffer);
 
-  free(gtb->gtb_data.gtbd_data);
+  if(gtb->gtb_pixmap != NULL)
+    pixmap_release(gtb->gtb_pixmap);
 
   LIST_REMOVE(gtb, gtb_global_link);
 
@@ -962,12 +400,12 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
-  int lines = gtb->gtb_data.gtbd_lines ?: 1;
+  int lines = gtb->gtb_pixmap && gtb->gtb_pixmap->pm_lines ? gtb->gtb_pixmap->pm_lines : 1;
   int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + 
-    (gr->gr_fontsize_px * gtb->gtb_size_scale)
-    * lines;
+    (gr->gr_fontsize * gtb->gtb_size_scale) * lines;
+
   int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
-    gtb->gtb_data.gtbd_width;
+    (gtb->gtb_pixmap ? gtb->gtb_pixmap->pm_width : 0);
 
   int flags = GLW_CONSTRAINT_Y;
 
@@ -1067,7 +505,7 @@ gtb_unbind(glw_text_bitmap_t *gtb)
 
 
 
-/*
+/**
  *
  */
 static int
@@ -1158,13 +596,19 @@ tag_to_code(char *s)
   *s = 0;
 
   if(!endtag && !strcmp(tag, "p")) 
-    return RS_P_START;
+    return TR_CODE_START;
 
   if(!endtag && !strcmp(tag, "br")) 
-    return RS_P_NEWLINE;
+    return TR_CODE_NEWLINE;
 
   if(!strcmp(tag, "center")) 
-    return endtag ? RS_P_CENTER_OFF : RS_P_CENTER_ON;
+    return endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
+
+  if(!strcmp(tag, "i")) 
+    return endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
+
+  if(!strcmp(tag, "b")) 
+    return endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
 
   return 0;
 }
@@ -1600,7 +1044,7 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
 
 
 
-/*
+/**
  *
  */
 static void *
@@ -1608,10 +1052,10 @@ font_render_thread(void *aux)
 {
   glw_root_t *gr = aux;
   glw_text_bitmap_t *gtb;
-  uint32_t *uc, len, docur, i;
-  glw_text_bitmap_data_t d;
+  uint32_t *uc, len, i;
+  pixmap_t *pm;
   float scale;
-  int max_width, debug, doellipsize, maxlines;
+  int max_width, max_lines, flags;
 
   glw_lock(gr);
 
@@ -1640,12 +1084,20 @@ font_render_thread(void *aux)
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_RENDERING;
     
-    docur = gtb->gtb_edit_ptr >= 0;
     scale = gtb->gtb_size_scale;
     max_width = gtb->gtb_saved_width;
-    debug = gtb->w.glw_flags & GLW_DEBUG;
-    doellipsize = gtb->gtb_flags & GTB_ELLIPSIZE;
-    maxlines = gtb->gtb_maxlines;
+    max_lines = gtb->gtb_maxlines;
+
+    flags = 0;
+    if(gtb->w.glw_flags & GLW_DEBUG)
+      flags |= TR_RENDER_DEBUG;
+
+    if(gtb->gtb_flags & GTB_ELLIPSIZE)
+      flags |= TR_RENDER_ELLIPSIZE;
+    
+    if(gtb->gtb_edit_ptr >= 0)
+      flags |= TR_RENDER_CHARACTER_POS;
+
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -1654,10 +1106,11 @@ font_render_thread(void *aux)
     glw_ref(&gtb->w);
     glw_unlock(gr);
 
-    if(uc == NULL || uc[0] == 0 || 
-       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale,
-		    max_width, debug, maxlines, doellipsize)) {
-      memset(&d, 0, sizeof(d));
+    if(uc != NULL && uc[0] != 0) {
+      pm = text_render(uc, len, flags, gr->gr_fontsize * scale,
+		       max_width, max_lines, NULL);
+    } else {
+      pm = NULL;
     }
 
     free(uc);
@@ -1666,16 +1119,17 @@ font_render_thread(void *aux)
     if(gtb->w.glw_flags & GLW_DESTROYING) {
       /* widget got destroyed while we were away, throw away the results */
       glw_unref(&gtb->w);
-      free(d.gtbd_data);
-      free(d.gtbd_cursor_pos);
+      if(pm != NULL)
+	pixmap_release(pm);
       continue;
     }
 
     glw_unref(&gtb->w);
-    free(gtb->gtb_data.gtbd_data);
-    free(gtb->gtb_data.gtbd_cursor_pos);
 
-    memcpy(&gtb->gtb_data, &d, sizeof(glw_text_bitmap_data_t));
+    if(gtb->gtb_pixmap != NULL)
+      pixmap_release(gtb->gtb_pixmap);
+
+    gtb->gtb_pixmap = pm;
 
     if(gtb->gtb_status == GTB_RENDERING)
       gtb->gtb_status = GTB_VALID;
@@ -1755,41 +1209,14 @@ gtb_notify(glw_text_bitmap_t *gtb)
   }
 }
 
+
 /**
  *
  */
-int
+void
 glw_text_bitmap_init(glw_root_t *gr)
 {
-  int error;
-  const void *r;
-  struct fa_stat fs;
-  const char *font_variable = "theme://font.ttf";
-  char errbuf[256];
-
-  error = FT_Init_FreeType(&glw_text_library);
-  if(error) {
-    TRACE(TRACE_ERROR, "glw", "Freetype init error\n");
-    return -1;
-  }
-
-  if((r = fa_quickload(font_variable, &fs, gr->gr_vpaths, 
-		       errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- %s\n",
-	  font_variable, errbuf);
-    return -1;
-  }
-
   TAILQ_INIT(&gr->gr_gtb_render_queue);
-  TAILQ_INIT(&allglyphs);
-
-  if(FT_New_Memory_Face(glw_text_library, r, fs.fs_size, 0, &gr->gr_gtb_face)) {
-    TRACE(TRACE_ERROR, "glw", 
-	  "Unable to create font face: %s\n", font_variable);
-    return -1;
-  }
-
-  FT_Select_Charmap(gr->gr_gtb_face, FT_ENCODING_UNICODE);
 
   hts_cond_init(&gr->gr_gtb_render_cond, &gr->gr_mutex);
 
@@ -1797,8 +1224,10 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   hts_thread_create_detached("GLW font renderer", font_render_thread, gr,
 			     THREAD_PRIO_NORMAL);
-  return 0;
 }
+
+
+
 
 /**
  * Change font scaling
@@ -1811,7 +1240,6 @@ glw_font_change_size(void *opaque, int fontsize)
     return;
 
   gr->gr_fontsize = fontsize;
-  gr->gr_fontsize_px = gr->gr_gtb_face->height * fontsize / gr->gr_gtb_face->units_per_EM;
   glw_text_flush(gr);
 }
 

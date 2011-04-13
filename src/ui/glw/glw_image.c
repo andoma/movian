@@ -471,7 +471,7 @@ glw_image_update_constraints(glw_image_t *gi)
 
   } else if(gi->w.glw_class == &glw_icon) {
 
-    float siz = gi->gi_size_scale * gr->gr_fontsize_px;
+    float siz = gi->gi_size_scale * gr->gr_fontsize;
 
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
@@ -984,7 +984,7 @@ glw_image_set(glw_t *w, va_list ap)
   } while(attrib);
 
   if(w->glw_class == &glw_icon) {
-    float siz = gi->gi_size_scale * gr->gr_fontsize_px;
+    float siz = gi->gi_size_scale * gr->gr_fontsize;
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
   }

@@ -79,15 +79,6 @@ typedef float Vec3[3];
 typedef float Vec2[2];
 #endif
 
-
-// ------------------ Freetype ----------------------------
-
-
-#include <ft2build.h>  
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-#include FT_OUTLINE_H
-
 // ------------------ Helpers ----------------------------
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
@@ -615,9 +606,8 @@ typedef struct glw_root {
   LIST_HEAD(,  glw_text_bitmap) gr_gtbs;
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   hts_cond_t gr_gtb_render_cond;
-  FT_Face gr_gtb_face;
+
   int gr_fontsize;
-  int gr_fontsize_px;
 
   /**
    * Image/Texture loader

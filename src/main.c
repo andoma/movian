@@ -49,6 +49,7 @@
 #include "blobcache.h"
 #include "i18n.h"
 #include "misc/string.h"
+#include "text/text.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -318,6 +319,11 @@ main(int argc, char **argv)
   av_lockmgr_register(fflockmgr);
   av_log_set_callback(fflog);
   av_register_all();
+
+  /* Freetype keymapper */
+#if ENABLE_LIBFREETYPE
+  freetype_init();
+#endif
 
   /* Global keymapper */
   keymapper_init();

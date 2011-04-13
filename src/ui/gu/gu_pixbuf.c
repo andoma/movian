@@ -112,11 +112,14 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
 
   if(pm->pm_codec == CODEC_ID_NONE) {
 
+      pixmap_release(pm);
+      return NULL;
+
+
     width  = pm->pm_width;
     height = pm->pm_height;
     pixfmt = pm->pm_pixfmt;
     
-    src = &pm->pm_pict;
 
   } else {
     

@@ -195,7 +195,10 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   if(glt->glt_pixmap != NULL) {
     pixmap_t *pm = glt->glt_pixmap;
-    r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
+    AVPicture pict;
+    pict.data[0] = pm->pm_pixels;
+    pict.linesize[0] = pm->pm_linesize;
+    r = glw_tex_backend_load(gr, glt, &pict,
 			     pm->pm_pixfmt,
 			     pm->pm_width, pm->pm_height,
 			     pm->pm_width, pm->pm_height);
@@ -225,7 +228,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(pm->pm_codec == CODEC_ID_NONE) {
     glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
 
-    r = glw_tex_backend_load(gr, glt, &pm->pm_pict,
+    AVPicture pict;
+    pict.data[0] = pm->pm_pixels;
+    pict.linesize[0] = pm->pm_linesize;
+
+    r = glw_tex_backend_load(gr, glt, &pict,
 			     pm->pm_pixfmt,
 			     pm->pm_width, pm->pm_height,
 			     pm->pm_width, pm->pm_height);

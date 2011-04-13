@@ -55,7 +55,8 @@ pixmap_release(pixmap_t *pm)
     return;
   
   if(pm->pm_codec == CODEC_ID_NONE) {
-    avpicture_free(&pm->pm_pict);
+    free(pm->pm_pixels);
+    free(pm->pm_charpos);
   } else {
     free(pm->pm_data);
   }
@@ -69,28 +70,5 @@ pixmap_t *
 pixmap_dup(pixmap_t *pm)
 {
   atomic_add(&pm->pm_refcount, 1);
-  return pm;
-}
-
-
-/**
- *
- */
-pixmap_t *
-pixmap_create_rgb24(int width, int height, const void *pixels, int pitch)
-{
-  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
-
-  pm->pm_refcount = 1;
-  pm->pm_codec = CODEC_ID_NONE;
-
-  pm->pm_width = width;
-  pm->pm_height = height;
-  pm->pm_pixfmt = PIX_FMT_RGB24;
-
-  pm->pm_pict.data[0] = malloc(height * pitch);
-  pm->pm_pict.linesize[0] = pitch;
-
-  memcpy(pm->pm_pict.data[0], pixels, height * pitch);
   return pm;
 }

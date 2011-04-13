@@ -19,7 +19,7 @@
 #ifndef GLW_TEXT_BITMAP_H
 #define GLW_TEXT_BITMAP_H
 
-int glw_text_bitmap_init(glw_root_t *gr);
+void glw_text_bitmap_init(glw_root_t *gr);
 
 void glw_text_flush(glw_root_t *gr);
 
