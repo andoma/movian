@@ -118,7 +118,6 @@ typedef enum {
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE_SCALE,
-  GLW_ATTRIB_SIZE_BIAS,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
@@ -1048,7 +1047,6 @@ do {						\
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_SIZE_SCALE:                   \
-  case GLW_ATTRIB_SIZE_BIAS:                    \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \

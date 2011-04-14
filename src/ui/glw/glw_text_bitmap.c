@@ -126,7 +126,6 @@ typedef struct glw_text_bitmap {
   int gtb_int_max;
 
   float gtb_size_scale;
-  float gtb_size_bias;
 
   glw_rgb_t gtb_color;
 
@@ -322,7 +321,7 @@ typedef struct pos {
 static int
 gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face, 
 	     uint32_t *uc, int len, int flags, int docur, float scale,
-	     float bias, int max_width, int debug, int maxlines,
+	     int max_width, int debug, int maxlines,
 	     int doellipsize)
 {
   FT_Bool use_kerning = FT_HAS_KERNING( face );
@@ -338,8 +337,8 @@ gtb_make_tex(glw_root_t *gr, glw_text_bitmap_data_t *gtbd, FT_Face face,
   int target_width, target_height;
   uint8_t *data;
   int origin_y;
-  int pixelheight = gr->gr_fontsize * scale + bias;
-  int pxheight = gr->gr_fontsize_px * scale + bias;
+  int pixelheight = gr->gr_fontsize * scale;
+  int pxheight = gr->gr_fontsize_px * scale;
   int ellipsize_width;
   int lines = 0;
   line_t *li, *lix;
@@ -965,7 +964,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
   int lines = gtb->gtb_data.gtbd_lines ?: 1;
   int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + 
-    (gtb->gtb_size_bias + gr->gr_fontsize_px * gtb->gtb_size_scale)
+    (gr->gr_fontsize_px * gtb->gtb_size_scale)
     * lines;
   int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
     gtb->gtb_data.gtbd_width;
@@ -1576,13 +1575,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
 	gtb_set_constraints(gtb->w.glw_root, gtb);
       break;
 
-    case GLW_ATTRIB_SIZE_BIAS:
-      gtb->gtb_size_bias = va_arg(ap, double);
-      if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
-	gtb_set_constraints(gtb->w.glw_root, gtb);
-      break;
-
-
    case GLW_ATTRIB_MAXLINES:
      gtb->gtb_maxlines = va_arg(ap, int);
      update = 1;
@@ -1618,7 +1610,7 @@ font_render_thread(void *aux)
   glw_text_bitmap_t *gtb;
   uint32_t *uc, len, docur, i;
   glw_text_bitmap_data_t d;
-  float scale, bias;
+  float scale;
   int max_width, debug, doellipsize, maxlines;
 
   glw_lock(gr);
@@ -1650,7 +1642,6 @@ font_render_thread(void *aux)
     
     docur = gtb->gtb_edit_ptr >= 0;
     scale = gtb->gtb_size_scale;
-    bias  = gtb->gtb_size_bias;
     max_width = gtb->gtb_saved_width;
     debug = gtb->w.glw_flags & GLW_DEBUG;
     doellipsize = gtb->gtb_flags & GTB_ELLIPSIZE;
@@ -1664,7 +1655,7 @@ font_render_thread(void *aux)
     glw_unlock(gr);
 
     if(uc == NULL || uc[0] == 0 || 
-       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale, bias,
+       gtb_make_tex(gr, &d, gr->gr_gtb_face, uc, len, 0, docur, scale,
 		    max_width, debug, maxlines, doellipsize)) {
       memset(&d, 0, sizeof(d));
     }
