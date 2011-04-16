@@ -109,6 +109,7 @@ b_read(fa_handle_t *fh0, void *buf, size_t size)
   if(fh->pos + size > fh->size)
     size = fh->size - fh->pos;
   memcpy(buf, fh->ptr + fh->pos, size);
+  fh->pos += size;
   return size;
 }
 
