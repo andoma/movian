@@ -657,6 +657,6 @@ fi
 # Finalize
 
 echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
-echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt
+echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt -ldl
 
 finalize
