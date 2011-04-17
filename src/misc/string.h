@@ -24,6 +24,8 @@ int dictcmp(const char *a, const char *b);
 
 int utf8_get(const char **s);
 
+int utf8_verify(const char *str);
+
 int utf8_put(char *out, int c);
 
 const char *mystrstr(const char *haystack, const char *needle);

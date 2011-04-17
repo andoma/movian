@@ -495,14 +495,25 @@ url_split(char *proto, int proto_size,
 
 
 /**
+ * Strict error checking UTF-8 decoder
+ *
+ * Checks for these errors:
+ *
+ * - Bytes 192, 193 and 245 - 255 must never appear.
+ *
+ * - Unexpected continuation byte.
+ *
+ * - Start byte not followed by enough continuation bytes.
+ *
+ * - A sequence that decodes to a value that should use a shorter
+ *   sequence (an "overlong form").
  *
  */
 int
 utf8_get(const char **s)
 {
   uint8_t c;
-  int r;
-  int l;
+  int r, l, m;
 
   c = **s;
   *s = *s + 1;
@@ -511,29 +522,34 @@ utf8_get(const char **s)
   case 0 ... 127:
     return c;
 
-  case 192 ... 223:
+  case 194 ... 223:
     r = c & 0x1f;
     l = 1;
+    m = 0x80;
     break;
 
   case 224 ... 239:
     r = c & 0xf;
     l = 2;
+    m = 0x800;
     break;
 
   case 240 ... 247:
     r = c & 0x7;
     l = 3;
+    m = 0x10000;
     break;
 
   case 248 ... 251:
     r = c & 0x3;
     l = 4;
+    m = 0x200000;
     break;
 
   case 252 ... 253:
     r = c & 0x1;
     l = 5;
+    m = 0x4000000;
     break;
   default:
     return 0xfffd;
@@ -541,13 +557,33 @@ utf8_get(const char **s)
 
   while(l-- > 0) {
     c = **s;
-    if(c == 0)
+    if((c & 0xc0) != 0x80)
       return 0xfffd;
     *s = *s + 1;
     r = r << 6 | (c & 0x3f);
   }
+  if(r < m)
+    return 0xfffd; // overlong sequence
+
   return r;
 }
+
+
+/**
+ * Return 1 iff the string is UTF-8 conformant
+ */
+int
+utf8_verify(const char *str)
+{
+  int c;
+
+  while((c = utf8_get(&str)) != 0) {
+    if(c == 0xfffd)
+      return 0;
+  }
+  return 1;
+}
+
 
 /**
  *
