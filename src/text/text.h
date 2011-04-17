@@ -42,5 +42,7 @@ text_render(const uint32_t *uc, int len, int flags, int size,
 
 #if ENABLE_LIBFREETYPE
 int freetype_init(void);
+
+void freetype_load_font(const char *url);
 #endif
 

@@ -32,3 +32,5 @@ void arch_set_default_paths(int argc, char **argv);
 int64_t arch_cache_avail_bytes(void);
 
 void trap_init(void);
+
+void arch_preload_fonts(void);

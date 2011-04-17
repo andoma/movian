@@ -23,6 +23,7 @@
 #include "misc/queue.h"
 #include "misc/pixmap.h"
 #include "text.h"
+#include "arch/arch.h"
 
 #include "fileaccess/fileaccess.h"
 
@@ -46,7 +47,7 @@ static hts_mutex_t text_mutex;
 #define GLYPH_HASH_MASK (GLYPH_HASH_SIZE-1)
 TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
-LIST_HEAD(face_list, face);
+TAILQ_HEAD(face_queue, face);
 
 #define STYLE_BOLD   0x1
 #define STYLE_ITALIC 0x2
@@ -55,7 +56,7 @@ LIST_HEAD(face_list, face);
 //------------------------- Faces -----------------------
 
 typedef struct face {
-  LIST_ENTRY(face) link;
+  TAILQ_ENTRY(face) link;
 
   FT_Face face;
   char *url;
@@ -67,7 +68,7 @@ typedef struct face {
 
 } face_t;
 
-static struct face_list faces;
+static struct face_queue faces;
 
 
 //------------------------- Glyph cache -----------------------
@@ -101,7 +102,7 @@ static void
 face_destroy(face_t *f)
 {
   TRACE(TRACE_DEBUG, "Freetype", "Unloading %s", f->url);
-  LIST_REMOVE(f, link);
+  TAILQ_REMOVE(&faces, f, link);
   free(f->url);
   free(f->family);
   FT_Done_Face(f->face);
@@ -116,8 +117,8 @@ static void
 faces_purge(void)
 {
   face_t *f, *n;
-  for(f = LIST_FIRST(&faces); f != NULL; f = n) {
-    n = LIST_NEXT(f, link);
+  for(f = TAILQ_FIRST(&faces); f != NULL; f = n) {
+    n = TAILQ_NEXT(f, link);
     if(f->refcount == 0)
       face_destroy(f);
   }
@@ -200,7 +201,7 @@ face_create(const char *path)
 
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
-  LIST_INSERT_HEAD(&faces, face, link);
+  TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
 }
 
@@ -236,7 +237,7 @@ face_clone(face_t *src, const char *family)
 
   dst->family = strdup(family);
   dst->style = src->style;
-  LIST_INSERT_HEAD(&faces, dst, link);
+  TAILQ_INSERT_TAIL(&faces, dst, link);
   return dst;
 }
 
@@ -252,7 +253,7 @@ face_find(int uc, uint8_t style, const char *family)
   uint8_t actualstyle;
 
   // Try already loaded faces
-  LIST_FOREACH(f, &faces, link) {
+  TAILQ_FOREACH(f, &faces, link) {
     if((family == NULL || !strcmp(family, f->family ?: "" )) &&
        f->style == style && FT_Get_Char_Index(f->face, uc))
       return f;
@@ -261,7 +262,7 @@ face_find(int uc, uint8_t style, const char *family)
   if(face_resovle(uc, style, family, url, sizeof(url), &actualstyle))
     return NULL;
 
-  LIST_FOREACH(f, &faces, link) {
+  TAILQ_FOREACH(f, &faces, link) {
     if(!strcmp(f->url, url)) {
       if(family == NULL || !strcmp(family, f->family ?: ""))
 	return f;
@@ -818,8 +819,26 @@ freetype_init(void)
     TRACE(TRACE_ERROR, "Freetype", "Freetype init error\n");
     return -1;
   }
-
+  TAILQ_INIT(&faces);
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
+  arch_preload_fonts();
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+freetype_load_font(const char *url)
+{
+  face_t *f;
+  hts_mutex_lock(&text_mutex);
+
+  f = face_create(url);
+  if(f != NULL)
+    f->refcount++;  // Make sure it never is unloaded
+
+  hts_mutex_unlock(&text_mutex);
 }
