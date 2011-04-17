@@ -28,6 +28,7 @@
 #include "libavcodec/avcodec.h"
 #include "media.h"
 #include "misc/dbl.h"
+#include "misc/string.h"
 
 
 /**
@@ -207,18 +208,27 @@ is_srt(const char *buf, size_t len)
  *
  */
 static subtitles_t *
-load_srt(const char *buf, size_t len)
+load_srt(const char *path, const char *buf, size_t len)
 {
   int n;
   size_t tlen;
   int64_t start, stop;
   linereader_t lr;
   subtitles_t *s = calloc(1, sizeof(subtitles_t));
-  char *txt;
-
-  RB_INIT(&s->s_entries);
-  linereader_init(&lr, buf, len);
+  char *txt, *tmp = NULL;
   
+  RB_INIT(&s->s_entries);
+
+  if(utf8_verify(buf)) {
+    linereader_init(&lr, buf, len);
+  } else {
+    TRACE(TRACE_INFO, "Subtitles",
+	  "%s is not valid UTF-8. Decoding it as Latin-1",
+	  path);
+    tmp = utf8_from_ISO_8859_1(buf, len);
+    linereader_init(&lr, tmp, strlen(tmp));
+  }
+
   while(1) {
     if(linereader_next(&lr) < 0)
       break;
@@ -250,6 +260,7 @@ load_srt(const char *buf, size_t len)
     if(lr.ll < 0)
       break;
   }
+  free(tmp);
   return s;
 }
 
@@ -368,11 +379,11 @@ dump_subtitles(subtitles_t *s)
  *
  */
 static subtitles_t *
-subtitles_create(char **buf, size_t len)
+subtitles_create(const char *path, char **buf, size_t len)
 {
   subtitles_t *s;
   if(is_srt(*buf, len)) {
-    s = load_srt(*buf, len);
+    s = load_srt(path, *buf, len);
   } else if(is_ttml(*buf, len)) {
     s = load_ttml(buf, len);
   } else {
@@ -480,7 +491,7 @@ subtitles_load(const char *url)
     datalen = fs.fs_size;
   }
 
-  sub = subtitles_create(&data, datalen);
+  sub = subtitles_create(url, &data, datalen);
 
   free(data);
 
