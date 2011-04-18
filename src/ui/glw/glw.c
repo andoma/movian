@@ -732,7 +732,10 @@ glw_get_prev_n(glw_t *c, int count)
   for(i = 0; i < count; i++) {
     if((t = TAILQ_PREV(t, glw_queue, glw_parent_link)) == NULL)
       break;
-    c = t;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
   }
   return c;
 }
@@ -752,7 +755,10 @@ glw_get_next_n(glw_t *c, int count)
   for(i = 0; i < count; i++) {
     if((t = TAILQ_NEXT(t, glw_parent_link)) == NULL)
       break;
-    c = t;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
   }
   return c;
 }
