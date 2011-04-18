@@ -773,11 +773,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     }
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    if(mcp->level != 0)
+    if(mcp->level != 0 && mcp->level <= 42)
       dec_type.profile_level = mcp->level;
     else
       dec_type.profile_level = 42;
-
     spu_threads = 4;
     break;
 
@@ -800,6 +799,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
+  TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
+	id == CODEC_ID_H264 ? "h264" : "MPEG2", dec_type.profile_level,
+	dec_attr.mem_size);
+
   vdd->config.mem_addr = (intptr_t)vdd->mem;
   vdd->config.mem_size = dec_attr.mem_size;
   vdd->config.num_spus = spu_threads;
@@ -819,8 +822,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
-  vdd->level_major = dec_type.profile_level / 10;
-  vdd->level_minor = dec_type.profile_level % 10;
+  vdd->level_major = mcp->level / 10;
+  vdd->level_minor = mcp->level % 10;
 
   if(id == CODEC_ID_H264 && ctx->extradata_size)
     h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);
