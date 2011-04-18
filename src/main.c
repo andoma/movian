@@ -290,6 +290,8 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  htsmsg_store_init();
+
   /* Try to create cache path */
   if(showtime_cache_path != NULL &&
      (r = makedirs(showtime_cache_path)) != 0) {
@@ -454,6 +456,8 @@ showtime_shutdown(int retcode)
 
   // run early shutdown hooks (those must be fast)
   shutdown_hook_run(1);
+
+  htsmsg_store_flush();
 
   if(ui_shutdown() == -1) {
     // Primary UI has no shutdown method, launch a new thread to stop
