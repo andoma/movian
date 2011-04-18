@@ -38,6 +38,13 @@
 #include FT_OUTLINE_H
 #include FT_SYNTHESIS_H
 
+#define ver(maj, min, pat) ((maj) * 100000 + (min) * 100 + (pat))
+
+#define ftver ver(FREETYPE_MAJOR, FREETYPE_MINOR, FREETYPE_PATCH)
+
+#if ftver >= ver(2,4,0)
+#define HAVE_FACE_REFERENCE
+#endif
 
 static FT_Library text_library;
 static hts_mutex_t text_mutex;
@@ -222,7 +229,7 @@ face_resovle(int uc, uint8_t style, const char *family,
   return -1;
 }
 
-
+#ifdef HAVE_FACE_REFERENCE
 /**
  *
  */
@@ -240,6 +247,7 @@ face_clone(face_t *src, const char *family)
   TAILQ_INSERT_TAIL(&faces, dst, link);
   return dst;
 }
+#endif
 
 
 /**
@@ -266,7 +274,9 @@ face_find(int uc, uint8_t style, const char *family)
     if(!strcmp(f->url, url)) {
       if(family == NULL || !strcmp(family, f->family ?: ""))
 	return f;
+#ifdef HAVE_FACE_REFERENCE
       return face_clone(f, family);
+#endif
     }
   }
 
