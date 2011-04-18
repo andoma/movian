@@ -761,36 +761,6 @@ glw_get_next_n(glw_t *c, int count)
 /**
  *
  */
-glw_t *
-glw_get_prev_n_all(glw_t *c, int count)
-{
-  int i;
-  for(i = 0; i < count; i++) {
-    if((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) == NULL)
-      break;
-  }
-  return c;
-}
-
-
-/**
- *
- */
-glw_t *
-glw_get_next_n_all(glw_t *c, int count)
-{
-  int i;
-  for(i = 0; i < count; i++) {
-    if((c = TAILQ_NEXT(c, glw_parent_link)) == NULL)
-      break;
-  }
-  return c;
-}
-
-
-/**
- *
- */
 
 static LIST_HEAD(, glw_gf_ctrl) ggcs;
 

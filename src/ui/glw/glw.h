@@ -1077,10 +1077,6 @@ glw_t *glw_get_prev_n(glw_t *c, int count);
 
 glw_t *glw_get_next_n(glw_t *c, int count);
 
-glw_t *glw_get_prev_n_all(glw_t *c, int count);
-
-glw_t *glw_get_next_n_all(glw_t *c, int count);
-
 int glw_event(glw_root_t *gr, struct event *e);
 
 int glw_event_to_widget(glw_t *w, struct event *e, int local);
