@@ -65,8 +65,8 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     return -1;
   }
 
-  album = rstr_alloc(utf8_from_ISO_8859_1((char *)buf + 0x16, 32));
-  artist = rstr_alloc(utf8_from_ISO_8859_1((char *)buf + 0x36, 32));
+  album = rstr_alloc(utf8_from_ISO_8859_X((char *)buf + 0x16, 32, NULL));
+  artist = rstr_alloc(utf8_from_ISO_8859_X((char *)buf + 0x36, 32, NULL));
 
   tracks = buf[0xf];
   for(i = 0; i < tracks; i++) {

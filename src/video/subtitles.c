@@ -29,6 +29,7 @@
 #include "media.h"
 #include "misc/dbl.h"
 #include "misc/string.h"
+#include "i18n.h"
 
 
 /**
@@ -223,9 +224,9 @@ load_srt(const char *path, const char *buf, size_t len)
     linereader_init(&lr, buf, len);
   } else {
     TRACE(TRACE_INFO, "Subtitles",
-	  "%s is not valid UTF-8. Decoding it as Latin-1",
-	  path);
-    tmp = utf8_from_ISO_8859_1(buf, len);
+	  "%s is not valid UTF-8. Decoding it as %s",
+	  path, i18n_get_charset_name(i18n_get_srt_charset()));
+    tmp = utf8_from_ISO_8859_X(buf, len, i18n_get_srt_charset());
     linereader_init(&lr, tmp, strlen(tmp));
   }
 

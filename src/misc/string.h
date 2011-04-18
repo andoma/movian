@@ -42,9 +42,29 @@ int hex2bin(uint8_t *buf, size_t buflen, const char *str);
 
 void unicode_init(void);
 
-char *utf8_from_ISO_8859_1(const char *str, int len);
-
 char *url_resolve_relative(const char *proto, const char *hostname, int port,
 			   const char *path, const char *ref);
+
+
+// ISO-8859-X  ->  UTF-8
+
+#define ISO_8859_1 NULL
+extern const uint16_t ISO_8859_2[];
+extern const uint16_t ISO_8859_3[];
+extern const uint16_t ISO_8859_4[];
+extern const uint16_t ISO_8859_5[];
+extern const uint16_t ISO_8859_6[];
+extern const uint16_t ISO_8859_7[];
+extern const uint16_t ISO_8859_8[];
+extern const uint16_t ISO_8859_9[];
+extern const uint16_t ISO_8859_10[];
+extern const uint16_t ISO_8859_11[];
+extern const uint16_t ISO_8859_13[];
+extern const uint16_t ISO_8859_14[];
+extern const uint16_t ISO_8859_15[];
+extern const uint16_t ISO_8859_16[];
+
+char *utf8_from_ISO_8859_X(const char *str, int len, const uint16_t *table);
+
 
 #endif

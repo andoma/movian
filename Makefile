@@ -80,6 +80,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/string.c \
+	src/misc/iso_8859.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
 	src/misc/isolang.c \
