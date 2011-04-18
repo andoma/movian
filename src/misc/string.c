@@ -495,8 +495,8 @@ url_split(char *proto, int proto_size,
 
 
 /**
- * Strict error checking UTF-8 decoder
- *
+ * Strict error checking UTF-8 decoder.
+ * Based on the wikipedia article http://en.wikipedia.org/wiki/UTF-8
  * Checks for these errors:
  *
  * - Bytes 192, 193 and 245 - 255 must never appear.

@@ -371,10 +371,8 @@ picture_out(vdec_decoder_t *vdd)
 
   vdec_get_picture(vdd->handle, &picfmt, vp->buf);
 
-  if(vp->order == 0) {
+  if(vp->order == 0)
     vdd->next_picture = 0;
-    reset_active_pictures(vdd);
-  }
 
   LIST_INSERT_HEAD(&vdd->active_pictures, vp, link);
 
@@ -405,6 +403,13 @@ picture_out(vdec_decoder_t *vdd)
 
     release_picture(vdd, vp);
   }
+
+  int cnt = 0;
+  LIST_FOREACH(vp, &vdd->active_pictures, link)
+    cnt++;
+
+  if(cnt > 4)
+    reset_active_pictures(vdd);
 }
 
 
@@ -505,7 +510,6 @@ vdec_blackout(void *opaque)
   vdd->pending_blackout = 1;
   hts_cond_signal(&vdd->picdone);
   hts_mutex_unlock(&vdd->mtx);
-  vdd->vd = NULL;
 }
 
 
