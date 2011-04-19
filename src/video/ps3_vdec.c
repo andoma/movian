@@ -365,6 +365,10 @@ picture_out(vdec_decoder_t *vdd)
 
   }
 
+  vd->vd_width = vp->fi.width;
+  vd->vd_height = vp->fi.height;
+  vd->vd_dar = vp->fi.dar;
+
   vd->vd_estimated_duration = vp->fi.duration; // For bitrate calculations
 
   prop_set_string(vdd->metainfo, metainfo);

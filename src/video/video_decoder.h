@@ -67,6 +67,10 @@ typedef void (vd_frame_deliver_t)(uint8_t * const data[], const int pitch[],
  */
 typedef struct video_decoder {
 
+  int vd_width;
+  int vd_height;
+  AVRational vd_dar;
+
   void *vd_opaque;
 
   vd_frame_deliver_t *vd_frame_deliver;
