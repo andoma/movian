@@ -478,7 +478,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   int err;
   int pen_x, pen_y;
 
-  int i, j, height;
+  int i, j, row_height;
   glyph_t *g;
   int siz_x, start_x, start_y;
   int target_width, target_height;
@@ -713,9 +713,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   }
 
   target_height = lines * size;
-  height = 64 * target_height / lines;
+  row_height = 64 * target_height / lines;
 
-  origin_y = ((64 * (lines - 1) * size) - bbox.yMin) / 64;
+  origin_y = (64 * (lines - 1) * size) - bbox.yMin;
 
   start_x = -bbox.xMin;
   start_y = 0;
@@ -760,8 +760,8 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
       pen_x += items[i].kerning;
       
-      pen.x = start_x + pen_x;
-      pen.y = start_y + pen_y;
+      pen.x = start_x + pen_x + 31;
+      pen.y = start_y + pen_y + origin_y + 31;
 
       pen.x &= ~63;
       pen.y &= ~63;
@@ -771,7 +771,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(err == 0) {
 	draw_glyph(pm, &bmp->bitmap, 
 		   bmp->left,
-		   target_height - origin_y - bmp->top,
+		   target_height - bmp->top,
 		   i);
 	FT_Done_Glyph((FT_Glyph)bmp);
       }
@@ -786,7 +786,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 1] = pen_x / 64;
     }
-    pen_y -= height;
+    pen_y -= row_height;
   }
   free(items);
   return pm;
