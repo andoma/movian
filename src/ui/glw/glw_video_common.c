@@ -417,7 +417,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
 
-  glw_scale_to_aspect(&rc0, gv->gv_dar);
+  glw_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;
@@ -562,7 +562,8 @@ glw_video_input(uint8_t * const data[], const int pitch[],
 {
   glw_video_t *gv = opaque;
 
-  gv->gv_dar = fi ? fi->dar : 0;
+  if(fi)
+    gv->gv_dar = fi->dar;
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 

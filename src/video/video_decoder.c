@@ -154,8 +154,8 @@ video_deliver_frame(video_decoder_t *vd,
 		    int64_t tim, int64_t pts, int64_t dts, int duration,
 		    int epoch, int decode_time)
 {
-  float f, dar = 1;
   event_ts_t *ets;
+  frame_info_t fi;
 
   if(tim != AV_NOPTS_VALUE)
     mp_set_current_time(mp, tim);
@@ -164,18 +164,22 @@ video_deliver_frame(video_decoder_t *vd,
   switch(mb->mb_aspect_override) {
   case 0:
 
-    if(frame->pan_scan != NULL && frame->pan_scan->width != 0)
-      f = (float)frame->pan_scan->width / (float)frame->pan_scan->height;
-    else
-      f = (float)ctx->width / (float)ctx->height;
-    
-    dar = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
+    if(frame->pan_scan != NULL && frame->pan_scan->width != 0) {
+      fi.dar.num = frame->pan_scan->width;
+      fi.dar.den = frame->pan_scan->height;
+    } else {
+      fi.dar.num = ctx->width;
+      fi.dar.den = ctx->height;
+    }
+
+    if(ctx->sample_aspect_ratio.num)
+      fi.dar = av_mul_q(fi.dar, ctx->sample_aspect_ratio);
     break;
   case 1:
-    dar = (4.0f / 3.0f);
+    fi.dar = (AVRational){4,3};
     break;
   case 2:
-    dar = (16.0f / 9.0f);
+    fi.dar = (AVRational){16,9};
     break;
   }
 
@@ -241,14 +245,12 @@ video_deliver_frame(video_decoder_t *vd,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  frame_info_t fi;
   fi.width = ctx->width;
   fi.height = ctx->height;
   fi.pix_fmt = ctx->pix_fmt;
   fi.pts = pts;
   fi.epoch = epoch;
   fi.duration = duration;
-  fi.dar = dar;
 
   fi.interlaced = !!vd->vd_interlaced;
   fi.tff = !!frame->top_field_first;

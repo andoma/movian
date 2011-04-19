@@ -265,7 +265,6 @@ picture_out(vdec_decoder_t *vdd)
   uint32_t addr;
   vdec_picture_format picfmt;
   video_decoder_t *vd = vdd->vd;
-  const uint8_t *sar;
   vdec_pic_t *vp;
   char metainfo[64];
   union vdec_userdata ud;
@@ -307,16 +306,17 @@ picture_out(vdec_decoder_t *vdd)
 
     switch(mpeg2->aspect_ratio) {
     case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.dar = (float)mpeg2->width / mpeg2->height;
+      vp->fi.dar.num = mpeg2->width;
+      vp->fi.dar.den = mpeg2->height;
       break;
     case VDEC_MPEG2_ARI_DAR_4_3:
-      vp->fi.dar = 4.0f/3;
+      vp->fi.dar = (AVRational){4,3};
       break;
     case VDEC_MPEG2_ARI_DAR_16_9:
-      vp->fi.dar = 16.0f/9;
+      vp->fi.dar = (AVRational){16,9};
       break;
     case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.dar = 2.21f/1;
+      vp->fi.dar = (AVRational){221,100};
       break;
     }
 
@@ -328,6 +328,7 @@ picture_out(vdec_decoder_t *vdd)
 
   } else {
     vdec_h264_info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
+    AVRational sar;
 
     lumasize = h264->width * h264->height;
     vp = alloc_picture(vdd, lumasize);
@@ -341,14 +342,20 @@ picture_out(vdec_decoder_t *vdd)
     if(h264->color_description_present_flag)
       vp->fi.color_space = h264->matrix_coefficients;
 
+    vp->fi.dar.num = h264->width;
+    vp->fi.dar.den = h264->height;
+
     if(h264->aspect_ratio_idc == 0xff) {
-      vp->fi.dar = (float)(h264->width * h264->sar_width) / 
-	(float)(h264->height * h264->sar_height);
+      sar.num = h264->sar_width;
+      sar.den = h264->sar_height;
     } else {
-      sar = h264_sar[h264->aspect_ratio_idc <= 16 ? h264->aspect_ratio_idc : 0];
-      vp->fi.dar = (float)(h264->width * sar[0]) /
-	(float)(h264->height * sar[1]);
+      const uint8_t *p;
+      p = h264_sar[h264->aspect_ratio_idc <= 16 ? h264->aspect_ratio_idc : 0];
+      sar.num = p[0];
+      sar.den = p[1];
     }
+    vp->fi.dar = av_mul_q(vp->fi.dar, sar);
+
     vp->order = h264->pic_order_count[0];
 
     snprintf(metainfo, sizeof(metainfo),

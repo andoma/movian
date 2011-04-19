@@ -43,7 +43,7 @@ typedef struct frame_info {
   int epoch;
   int duration;
 
-  float dar;
+  AVRational dar;
 
   char interlaced;     // Frame delivered is interlaced 
   char tff;            // For interlaced frame, top-field-first

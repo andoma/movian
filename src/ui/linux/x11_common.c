@@ -433,9 +433,10 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
  *
  */
 static void
-compute_output_dimensions(video_output_t *vo, float dar, int *w, int *h)
+compute_output_dimensions(video_output_t *vo, AVRational dar,
+			  int *w, int *h)
 {
-  float a = vo->vo_w / (vo->vo_h * dar);
+  float a = (vo->vo_w * dar.den) / (vo->vo_h * dar.num);
 
   if(a > 1) {
     *w = vo->vo_w / a;
