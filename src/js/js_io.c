@@ -77,7 +77,7 @@ http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
       }
 
       if(conv)
-	r = tmpbuf = utf8_from_ISO_8859_X(jhr->data, jhr->datalen, NULL);
+	r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, NULL);
     }
 
     isxml =

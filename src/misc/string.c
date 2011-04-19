@@ -654,7 +654,7 @@ utf8_put(char *out, int c)
  *
  */
 char *
-utf8_from_ISO_8859_X(const char *str, int len, const uint16_t *table)
+utf8_from_bytes(const char *str, int len, const uint16_t *cp)
 {
   char *r, *d;
   len = !len ? strlen(str) : len;
@@ -663,13 +663,13 @@ utf8_from_ISO_8859_X(const char *str, int len, const uint16_t *table)
   for(i = 0; i < len; i++) {
     if(str[i] == 0)
       break;
-    olen += utf8_put(NULL, table ? table[(uint8_t)str[i]] : str[i]);
+    olen += utf8_put(NULL, cp ? cp[(uint8_t)str[i]] : str[i]);
   }
   d = r = malloc(olen + 1);
   for(i = 0; i < len; i++) {
     if(str[i] == 0)
       break;
-    d += utf8_put(d, table ? table[(uint8_t)str[i]] : str[i]);
+    d += utf8_put(d, cp ? cp[(uint8_t)str[i]] : str[i]);
   }
   *d = 0;
   return r;
