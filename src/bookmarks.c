@@ -61,7 +61,6 @@ static void
 bookmark_destroyed(void *opaque, prop_event_t event, ...)
 {
   bookmark_t *bm = opaque;
-  prop_t *p;
   prop_sub_t *s;
   va_list ap;
   va_start(ap, event);
@@ -69,7 +68,6 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED)
     return;
 
-  p = va_arg(ap, prop_t *);
   s = va_arg(ap, prop_sub_t *);
 
   prop_unsubscribe(bm->bm_title_sub);

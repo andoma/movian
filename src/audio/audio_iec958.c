@@ -57,7 +57,7 @@ iec958_build_ac3frame(const uint8_t *src, size_t framesize, uint8_t *dst)
 static int 
 dts_decode_header(const uint8_t *src, int *rate, int *nblks)
 {
-  int ftype, surp, fsize, amode;
+  int ftype, fsize;
   uint32_t sync;
 
   sync = (src[0] << 24) | (src[1] << 16) | (src[2] << 8) | src[3];
@@ -66,10 +66,8 @@ dts_decode_header(const uint8_t *src, int *rate, int *nblks)
     return -1;
 
   ftype = src[4] >> 7;
-  surp = ((src[4] >> 2) + 1) & 0x1f;
   *nblks = ((src[4] & 0x01) << 6  | (src[5] >> 2)) + 1;
   fsize  = ((src[5] & 0x03) << 12 | (src[6] << 4) | (src[7] >> 4)) + 1;
-  amode  = ( src[7] & 0x0f) << 2  | (src[8] >> 6);
   *rate  = ( src[8] & 0x03) << 3  | ((src[9] >> 5) & 0x07);
     
   if(ftype != 1 || fsize > 8192 || fsize < 96)

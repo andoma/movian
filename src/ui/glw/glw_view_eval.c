@@ -1626,14 +1626,11 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   t->t_int = sc->sc_entries;
   rpn = gps->gps_rpn;
 
-  if(t != NULL) {
-      
-    if(gps->gps_token != NULL) {
-      glw_view_token_free(gps->gps_token);
-      gps->gps_token = NULL;
-    }
-    gps->gps_token = t;
+  if(gps->gps_token != NULL) {
+    glw_view_token_free(gps->gps_token);
+    gps->gps_token = NULL;
   }
+  gps->gps_token = t;
 
   if(rpn != NULL) 
     eval_dynamic(gps->gps_widget, rpn, NULL);

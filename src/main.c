@@ -154,7 +154,6 @@ int
 main(int argc, char **argv)
 {
   struct timeval tv;
-  const char *settingspath = NULL;
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
   const char *forceview = NULL;
@@ -243,7 +242,6 @@ main(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "-s") && argc > 1) {
-      settingspath = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "--ui") && argc > 1) {

@@ -1034,7 +1034,7 @@ static void *
 http_server(void *aux)
 {
   http_server_t *hs = aux;
-  int n, r;
+  int n;
   http_connection_t *hc, *nxt;
 
   while(1) {
@@ -1055,7 +1055,7 @@ http_server(void *aux)
     hs->hs_fds[n].fd = hs->hs_fd;
     hs->hs_fds[n].events = POLLIN;
     n++;
-    r = poll(hs->hs_fds, n, -1);
+    poll(hs->hs_fds, n, -1);
 
     n = 0;
     for(hc = LIST_FIRST(&hs->hs_connections); hc != NULL; hc = nxt) {

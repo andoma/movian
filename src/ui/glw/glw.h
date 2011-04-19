@@ -68,7 +68,7 @@ LIST_HEAD(glw_video_list, glw_video);
 
 #if ENABLE_GLW_MATH_SSE
 #include <xmmintrin.h>
-typedef __m128 Mtx[4];
+typedef __m128 Mtx[16];
 typedef __m128 Vec4;
 typedef __m128 Vec3;
 typedef __m128 Vec2;

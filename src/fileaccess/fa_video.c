@@ -517,7 +517,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   uint64_t hash;
   uint64_t fsize;
-  int valid_hash = 0;
   int best_audio_score = -1;
   int best_subtitle_score = 0;
 
@@ -564,7 +563,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
 
-  valid_hash = !opensub_compute_hash(fh, &hash);
+  opensub_compute_hash(fh, &hash);
   fsize = fa_fsize(fh);
   fa_close(fh);
   

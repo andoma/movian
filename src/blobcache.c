@@ -100,7 +100,7 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad, int lockhash)
 {
   struct stat st;
   uint8_t buf[4];
-  void *r;
+  void *r = NULL;
   time_t exp;
   size_t l;
 
@@ -147,6 +147,7 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad, int lockhash)
 #ifndef BC_USE_FILE_LOCKS
   hts_mutex_unlock(&blobcache_lock[lockhash & BC_FILE_LOCKS_MASK]);
 #endif
+  free(r);
   return NULL;
 }
 

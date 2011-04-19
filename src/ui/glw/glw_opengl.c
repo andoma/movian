@@ -567,7 +567,6 @@ glw_opengl_init_context(glw_root_t *gr)
   GLint tu = 0;
   glw_backend_root_t *gbr = &gr->gr_be;
   const	GLubyte	*s;
-  int rectmode;
   /* Check OpenGL extensions we would like to have */
 
   s = glGetString(GL_EXTENSIONS);
@@ -583,20 +582,17 @@ glw_opengl_init_context(glw_root_t *gr)
     gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
     gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
     gr->gr_normalized_texture_coords = 1;
-    rectmode = 0;
 
 #ifdef GL_TEXTURE_RECTANGLE_ARB
   } else if(check_gl_ext(s, "GL_ARB_texture_rectangle")) {
     gbr->gbr_texmode = GLW_OPENGL_TEXTURE_RECTANGLE;
     gbr->gbr_primary_texture_mode = GL_TEXTURE_RECTANGLE_ARB;
-    rectmode = 1;
 #endif
 
   } else {
     gbr->gbr_texmode = GLW_OPENGL_TEXTURE_SIMPLE;
     gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
     gr->gr_normalized_texture_coords = 1;
-    rectmode = 0; // WRONG
     
   }
 

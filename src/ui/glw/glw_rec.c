@@ -81,6 +81,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Invalid output format parameters",
 	  filename);
+    free(gr);
     return NULL;
   }
 
@@ -92,6 +93,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Unable to open video codec",
 	  filename);
+    free(gr);
     return NULL;
   }
 
@@ -101,6 +103,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
     TRACE(TRACE_ERROR, "GLWREC",
 	  "Unable to record to %s -- Unable to open file for writing",
 	  filename);
+    free(gr);
     return NULL;
   }
 

@@ -268,7 +268,6 @@ static inline unsigned char get_bit(unsigned long val, unsigned char b)
 
 static inline int GenerateDigi(int sIn)
 {
-    static int last_sample = 0;
     static int sample = 0;
 
     if (!sample_active) return(sIn);
@@ -283,8 +282,6 @@ static inline int GenerateDigi(int sIn)
         {
             fracPos%=mixing_frequency;
 
-            last_sample = sample;           
-                        
             // N�hstes Samples holen
             if (sample_order == 0) {
                 sample_nibble++;                        // Nähstes Sample-Nibble

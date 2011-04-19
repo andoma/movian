@@ -41,7 +41,6 @@ upnp_event_send_all(upnp_local_service_t *uls)
   htsbuf_queue_t out;
   htsmsg_field_t *f;
   upnp_subscription_t *us;
-  int r;
 
   if(uls->uls_generate_props == NULL)
     return;
@@ -78,7 +77,7 @@ upnp_event_send_all(upnp_local_service_t *uls)
     http_header_add(&hdrs, "SEQ", str);
     us->us_seq++;
 
-    r = http_request(us->us_callback, NULL, NULL, NULL, NULL, 0, &out,
+    http_request(us->us_callback, NULL, NULL, NULL, NULL, 0, &out,
 		     "text/xml;charset=\"utf-8\"", 0, NULL, &hdrs, "NOTIFY");
     http_headers_free(&hdrs);
     htsbuf_queue_flush(&out);

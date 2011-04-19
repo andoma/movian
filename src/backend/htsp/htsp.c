@@ -1738,7 +1738,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   int vscore = 0;
   int sscore = 0;
 
-  int subid;
   prop_t *metaparent = NULL;
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
@@ -1785,7 +1784,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_u32(sub, "index", &idx))
 	continue;
 
-      subid = 0;
       memset(&mcp, 0, sizeof(mcp));
 
       lang = htsmsg_get_str(sub, "language");

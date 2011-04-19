@@ -2334,10 +2334,12 @@ prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
   if(p == NULL)
     return;
 
+  /* link is never NULL
   if(title == NULL && link == NULL) {
     prop_set_void_ex(p, skipme);
     return;
   }
+  */
 
   hts_mutex_lock(&prop_mutex);
 

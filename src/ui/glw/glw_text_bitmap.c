@@ -781,14 +781,12 @@ static void
 prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_text_bitmap_t *gtb = opaque;
-  glw_root_t *gr;
   const char *caption;
   prop_t *p;
 
   if(gtb == NULL)
     return;
 
-  gr = gtb->w.glw_root;
   va_list ap;
   va_start(ap, event);
 

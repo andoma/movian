@@ -255,7 +255,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_list_t *l = (void *)w;
   glw_pointer_event_t *gpe;
-  glw_t *c;
 
   switch(signal) {
   default:
@@ -267,7 +266,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
-    c = extra;
     break;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
