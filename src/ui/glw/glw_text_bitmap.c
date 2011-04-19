@@ -108,7 +108,7 @@ typedef struct glw_text_bitmap {
 
 static void gtb_notify(glw_text_bitmap_t *gtb);
 
-static glw_class_t glw_text, glw_label, glw_integer;
+static glw_class_t glw_text, glw_label;
 
 
 /**
@@ -714,31 +714,17 @@ parse_str(glw_text_bitmap_t *gtb, const char *str)
 static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
-  char buf[30];
   int l;
   const char *str;
 
   /* Convert UTF8 string to unicode int[] */
 
-  if(gtb->w.glw_class == &glw_integer) {
+  l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
     
-    if(gtb->gtb_caption != NULL) {
-      snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
-    } else {
-      snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
-    }
-    str = buf;
-    l = strlen(str);
-
-  } else {
-
-    l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
-    
-    if(gtb->w.glw_class == &glw_text) /* Editable */
-      l = GLW_MAX(l, 100);
-    
-    str = gtb->gtb_caption;
-  }
+  if(gtb->w.glw_class == &glw_text) /* Editable */
+    l = GLW_MAX(l, 100);
+  
+  str = gtb->gtb_caption;
   
   gtb->gtb_uc_size = l;
   gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
@@ -1161,9 +1147,7 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
   char *q;
   int i;
 
-  if(w->glw_class != &glw_label &&
-     w->glw_class != &glw_text &&
-     w->glw_class != &glw_integer) {
+  if(w->glw_class != &glw_label && w->glw_class != &glw_text) {
     return -1;
   }
 
@@ -1171,24 +1155,6 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
   for(i = 0; i < gtb->gtb_uc_len; i++)
     q += utf8_put(q, gtb->gtb_uc_buffer[i]);
   *q = 0;
-  return 0;
-}
-
-
-
-
-/**
- *
- */
-int
-glw_get_int(glw_t *w, int *result)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-
-  if(w->glw_class != &glw_integer) 
-    return -1;
-
-  *result = gtb->gtb_int;
   return 0;
 }
 
