@@ -32,9 +32,9 @@
 #include "glw_texture.h"
 #include "glw_renderer.h"
 #include "glw_text_bitmap.h"
-#include "glw_unicode.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
+#include "misc/unicode_composition.h"
 #include "text/text.h"
 #include "event.h"
 
@@ -669,7 +669,7 @@ parse_rich_str(glw_text_bitmap_t *gtb, const char *str)
 
 
 
-    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
+    if(p != -1 && (d = unicode_compose(p, c)) != -1) {
       gtb->gtb_uc_buffer[x-1] = d;
       p = -1;
     } else {
@@ -696,7 +696,7 @@ parse_str(glw_text_bitmap_t *gtb, const char *str)
     if(c == '\n') 
       lines++;
 
-    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
+    if(p != -1 && (d = unicode_compose(p, c)) != -1) {
       gtb->gtb_uc_buffer[x-1] = d;
       p = -1;
     } else {
