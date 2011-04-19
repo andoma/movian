@@ -32,9 +32,7 @@
 #include "glw_texture.h"
 #include "glw_renderer.h"
 #include "glw_text_bitmap.h"
-#include "fileaccess/fileaccess.h"
 #include "misc/string.h"
-#include "misc/unicode_composition.h"
 #include "text/text.h"
 #include "event.h"
 
@@ -567,177 +565,18 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static int
-tag_to_code(char *s)
-{
-  const char *tag;
-  int endtag = 0;
-
-  while(*s == ' ')
-    s++;
-  if(*s == 0)
-    return 0;
-
-  tag = s;
-
-  if(*tag == '/') {
-    endtag = 1;
-    tag++;
-  }
-    
-  while(*s != ' ' && *s != '/' && *s != 0)
-    s++;
-  *s = 0;
-
-  if(!endtag && !strcmp(tag, "p")) 
-    return TR_CODE_START;
-
-  if(!endtag && !strcmp(tag, "br")) 
-    return TR_CODE_NEWLINE;
-
-  if(!strcmp(tag, "center")) 
-    return endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
-
-  if(!strcmp(tag, "i")) 
-    return endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
-
-  if(!strcmp(tag, "b")) 
-    return endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
-
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-parse_rich_str(glw_text_bitmap_t *gtb, const char *str)
-{
-  int x = 0, c, lines = 1, p = -1, d;
-  int l = strlen(str);
-
-  char *tmp = malloc(l);
-  int lp;
-
-  while((c = utf8_get(&str)) != 0) {
-    if(c == '\r' || c == '\r')
-      continue;
-
-    if(c == '<') {
-      lp = 0;
-      while((d = utf8_get(&str)) != 0) {
-	if(d == '>')
-	  break;
-	tmp[lp++] = d;
-      }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
-
-      int c = tag_to_code(tmp);
-
-      if(c)
-	gtb->gtb_uc_buffer[x++] = c;
-      continue;
-    }
-
-
-    if(c == '&') {
-      lp = 0;
-      while((d = utf8_get(&str)) != 0) {
-	if(d == ';')
-	  break;
-	tmp[lp++] = d;
-      }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
-
-      int c = html_entity_lookup(tmp);
-
-      if(c != -1)
-	gtb->gtb_uc_buffer[x++] = c;
-      continue;
-    }
-
-
-
-    if(p != -1 && (d = unicode_compose(p, c)) != -1) {
-      gtb->gtb_uc_buffer[x-1] = d;
-      p = -1;
-    } else {
-      gtb->gtb_uc_buffer[x++] = p = c;
-    }
-  }
-  lines = lines;
-  gtb->gtb_uc_len = x;
-  free(tmp);
-}
-
-
-/**
- *
- */
-static void
-parse_str(glw_text_bitmap_t *gtb, const char *str)
-{
-  int x = 0, c, lines = 1, p = -1, d;
-
-  while((c = utf8_get(&str)) != 0) {
-    if(c == '\r')
-      continue;
-    if(c == '\n') 
-      lines++;
-
-    if(p != -1 && (d = unicode_compose(p, c)) != -1) {
-      gtb->gtb_uc_buffer[x-1] = d;
-      p = -1;
-    } else {
-      gtb->gtb_uc_buffer[x++] = p = c;
-    }
-  }
-  lines = lines;
-  gtb->gtb_uc_len = x;
-}
-
-
-/**
- *
- */
 static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
-  int l;
-  const char *str;
+  int len;
+  int flags = 0;
 
-  /* Convert UTF8 string to unicode int[] */
+  if(gtb->gtb_type == PROP_STR_RICH)
+    flags |= TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES;
 
-  l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
-    
-  str = gtb->gtb_caption;
-  
-  gtb->gtb_uc_size = l;
-  gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
-  
-  if(str != NULL) {
-
-    switch(gtb->gtb_type) {
-    case PROP_STR_UTF8:
-      parse_str(gtb, str);
-      break;
-
-    case PROP_STR_RICH:
-      parse_rich_str(gtb, str);
-      break;
-
-    default:
-      abort();
-    }
-  } else {
-    gtb->gtb_uc_len = 0;
-  }
-
+  free(gtb->gtb_uc_buffer);
+  gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags);
+  gtb->gtb_uc_len = gtb->gtb_uc_size = len;
 
   if(gtb->w.glw_class == &glw_text) {
     gtb->gtb_edit_ptr = gtb->gtb_uc_len;

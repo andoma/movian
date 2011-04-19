@@ -193,10 +193,10 @@ SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 
 #
-# Audio subsys
+# Text rendering
 #
 SRCS-$(CONFIG_LIBFREETYPE) += src/text/freetype.c
-
+SRCS += src/text/parser.c
 
 #
 # Audio subsys

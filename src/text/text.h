@@ -46,3 +46,8 @@ int freetype_init(void);
 void freetype_load_font(const char *url);
 #endif
 
+#define TEXT_PARSE_TAGS          0x1
+#define TEXT_PARSE_HTML_ENTETIES 0x2
+
+
+int *text_parse(const char *str, int *lenp, int flags);
