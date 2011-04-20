@@ -233,7 +233,8 @@ glw_video_newframe(glw_t *w, int flags)
 
   pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
 
-  glw_video_overlay_layout(gv, pts, vd);
+  if(pts != AV_NOPTS_VALUE)
+    glw_video_overlay_layout(gv, pts, vd);
 }
 
 
