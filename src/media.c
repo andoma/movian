@@ -797,6 +797,12 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     cw->codec_ctx->extradata_size = mcp->extradata_size;
   }
 
+  if(id == CODEC_ID_H264 && concurrency > 1) {
+    cw->codec_ctx->thread_count = concurrency;
+    if(mcp && mcp->cheat_for_speed)
+      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
+  }
+
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
     if(ctx == NULL)
       free(cw->codec_ctx);
@@ -804,12 +810,6 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     return -1;
   }
 
-  if(id == CODEC_ID_H264 && concurrency > 1) {
-    avcodec_thread_init(cw->codec_ctx, concurrency);
-    
-    if(mcp && mcp->cheat_for_speed)
-      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
-  }
   return 0;
 }
 
@@ -818,7 +818,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
  *
  */
 media_codec_t *
-media_codec_create(enum CodecID id, enum CodecType type, int parser,
+media_codec_create(enum CodecID id, int parser,
 		   media_format_t *fw, AVCodecContext *ctx,
 		   media_codec_params_t *mcp, media_pipe_t *mp)
 {
@@ -1013,7 +1013,7 @@ codec_details(AVCodecContext *ctx, char *buf, size_t size, const char *lead)
 {
   const char *cfg;
 
-  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
 
     if(ctx->sample_rate % 1000 == 0) {
       snprintf(buf, size, "%s%d kHz", lead, ctx->sample_rate / 1000);
@@ -1286,7 +1286,7 @@ metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec,
 		      p, avctx->level / 10, avctx->level % 10);
   }
     
-  if(avctx->codec_type == CODEC_TYPE_AUDIO) {
+  if(avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     char buf[64];
 
     avcodec_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
@@ -1300,7 +1300,7 @@ metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec,
     off += snprintf(dst + off, dstlen - off,
 		    ", %dx%d", avctx->width, avctx->height);
   
-  if(avctx->codec_type == CODEC_TYPE_AUDIO && avctx->bit_rate)
+  if(avctx->codec_type == AVMEDIA_TYPE_AUDIO && avctx->bit_rate)
     off += snprintf(dst + off, dstlen - off,
 		    ", %d kb/s", avctx->bit_rate / 1000);
 

@@ -144,7 +144,7 @@ int fa_notify(const char *url, void *opaque,
 			     int type),
 	      int (*breakcheck)(void *opaque));
 
-const char *fa_ffmpeg_error_to_txt(int err);
+void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
 void fa_scanner(const char *url, prop_t *model, const char *playme);
 

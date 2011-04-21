@@ -25,7 +25,7 @@
 #include <htsmsg/htsmsg_binary.h>
 #include <arch/threads.h>
 #include <arch/atomic.h>
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 #include "showtime.h"
 #include "prop/prop_nodefilter.h"
@@ -218,7 +218,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   char id[100];
   char *username;
   char *password;
-  struct AVSHA1 *shactx = alloca(av_sha1_size);
+  struct AVSHA *shactx = alloca(av_sha_size);
   uint8_t d[20];
 
   if(tc == NULL)
@@ -249,10 +249,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
       htsmsg_add_str(m, "username", username);
 
     if(password != NULL) {
-      av_sha1_init(shactx);
-      av_sha1_update(shactx, (const uint8_t *)password, strlen(password));
-      av_sha1_update(shactx, hc->hc_challenge, 32);
-      av_sha1_final(shactx, d);
+      av_sha_init(shactx, 160);
+      av_sha_update(shactx, (const uint8_t *)password, strlen(password));
+      av_sha_update(shactx, hc->hc_challenge, 32);
+      av_sha_final(shactx, d);
       htsmsg_add_bin(m, "digest", d, 20);
     }
 
@@ -1725,7 +1725,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   const char *type;
   uint32_t idx, s;
   enum CodecID   codec_id;
-  enum CodecType codec_type;
+  enum AVMediaType media_type;
   const char *nicename, *lang, *title;
   media_codec_t *cw;
 
@@ -1792,38 +1792,38 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "AC3";
 	s = i18n_audio_score(lang) + 3;
       } else if(!strcmp(type, "EAC3")) {
 	codec_id = CODEC_ID_EAC3;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "EAC3";
 	s = i18n_audio_score(lang) + 4;
       } else if(!strcmp(type, "AAC")) {
 	codec_id = CODEC_ID_AAC;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "AAC";
 	s = i18n_audio_score(lang) + 2;
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "MPEG";
 	s = i18n_audio_score(lang) + 1;
       } else if(!strcmp(type, "MPEG2VIDEO")) {
 	codec_id = CODEC_ID_MPEG2VIDEO;
-	codec_type = CODEC_TYPE_VIDEO;
+	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "MPEG-2";
 	s = 1;
       } else if(!strcmp(type, "H264")) {
 	codec_id = CODEC_ID_H264;
-	codec_type = CODEC_TYPE_VIDEO;
+	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
 	s = 2;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
-	codec_type = CODEC_TYPE_SUBTITLE;
+	media_type = AVMEDIA_TYPE_SUBTITLE;
 	nicename = "Subtitles";
 
 	uint32_t composition_id, ancillary_id;
@@ -1852,7 +1852,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       } else if(!strcmp(type, "TEXTSUB")) {
 	codec_id = -1;
-	codec_type = CODEC_TYPE_SUBTITLE;
+	media_type = AVMEDIA_TYPE_SUBTITLE;
 	nicename = "Subtitles";
 	s = i18n_subtitle_score(lang);
       } else {
@@ -1866,7 +1866,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        * Try to create the codec
        */
       if(codec_id != -1) {
-	cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
+	cw = media_codec_create(codec_id, 0, NULL, NULL, &mcp, mp);
 	if(cw == NULL) {
 	  TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 		nicename, idx);
@@ -1886,11 +1886,11 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	title = lang;
       }
 
-      switch(codec_type) {
+      switch(media_type) {
       default:
 	break;
 
-      case CODEC_TYPE_VIDEO:
+      case AVMEDIA_TYPE_VIDEO:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_VIDEO;
 
@@ -1901,7 +1901,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	metaparent = NULL;
 	break;
 
-      case CODEC_TYPE_SUBTITLE:
+      case AVMEDIA_TYPE_SUBTITLE:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_SUBTITLE;
 
@@ -1913,7 +1913,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	prop_set_stringf(prop_create(metaparent, "id"), "sub:%d", idx);
 	break;
 
-      case CODEC_TYPE_AUDIO:
+      case AVMEDIA_TYPE_AUDIO:
 	hss->hss_mq = &mp->mp_audio;
 	hss->hss_data_type = MB_AUDIO;
 	

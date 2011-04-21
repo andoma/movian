@@ -31,8 +31,12 @@ video_subtitles_decode_lavc(video_decoder_t *vd, media_buf_t *mb,
   int size = 0, i, x, y;
   subtitle_t *s;
 
-  if(avcodec_decode_subtitle(ctx, &sub, &size, mb->mb_data, mb->mb_size) < 1 ||
-     size < 1) 
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = mb->mb_data;
+  avpkt.size = mb->mb_size;
+
+  if(avcodec_decode_subtitle2(ctx, &sub, &size, &avpkt) < 1 || size < 1) 
     return;
 
   s = malloc(sizeof(subtitle_t) + sizeof(subtitle_rect_t) * sub.num_rects);

@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 #include "networking/http_server.h"
 #include "networking/ssdp.h"
@@ -232,7 +232,7 @@ upnp_init(void)
     upnp_uuid = strdup(s);
   } else {
     
-    struct AVSHA1 *shactx = alloca(av_sha1_size);
+    struct AVSHA *shactx = alloca(av_sha_size);
     uint64_t v;
     uint8_t d[20];
     char uuid[40];
@@ -240,14 +240,14 @@ upnp_init(void)
     if(conf == NULL)
       conf = htsmsg_create_map();
 
-    av_sha1_init(shactx);
+    av_sha_init(shactx, 160);
     v = showtime_get_ts();
-    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
 
     v = arch_get_seed();
-    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
 
-    av_sha1_final(shactx, d);
+    av_sha_final(shactx, d);
 
     snprintf(uuid, sizeof(uuid),
 	     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"

@@ -67,7 +67,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
   gr->v_st = av_new_stream(gr->oc, 0);
 
   gr->v_ctx = gr->v_st->codec;
-  gr->v_ctx->codec_type = CODEC_TYPE_VIDEO;
+  gr->v_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
   gr->v_ctx->codec_id = CODEC_ID_FFVHUFF;
 
   gr->v_ctx->width = width;
@@ -95,7 +95,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
     return NULL;
   }
 
-  avcodec_thread_init(gr->v_ctx, concurrency);
+  gr->v_ctx->thread_count = concurrency;
 
   if(url_fopen(&gr->oc->pb, filename, URL_WRONLY) < 0) {
     TRACE(TRACE_ERROR, "GLWREC",
@@ -171,7 +171,7 @@ glw_rec_deliver_vframe(glw_rec_t *gr, void *data)
 			   AV_TIME_BASE_Q, gr->v_st->time_base);
   
   if(gr->v_ctx->coded_frame->key_frame)
-    pkt.flags |= PKT_FLAG_KEY;
+    pkt.flags |= AV_PKT_FLAG_KEY;
 
   pkt.stream_index = gr->v_st->index;
   pkt.data = gr->vbuf_ptr;

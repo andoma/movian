@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <dirent.h>
 
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 #include "showtime.h"
 #include "blobcache.h"
@@ -62,12 +62,12 @@ static void blobcache_do_prune(struct callout *c, void *opaque);
 static void
 digest_key(const char *key, const char *stash, uint8_t *d)
 {
-  struct AVSHA1 *shactx = alloca(av_sha1_size);
+  struct AVSHA *shactx = alloca(av_sha_size);
 
-  av_sha1_init(shactx);
-  av_sha1_update(shactx, (const uint8_t *)key, strlen(key));
-  av_sha1_update(shactx, (const uint8_t *)stash, strlen(stash));
-  av_sha1_final(shactx, d);
+  av_sha_init(shactx, 160);
+  av_sha_update(shactx, (const uint8_t *)key, strlen(key));
+  av_sha_update(shactx, (const uint8_t *)stash, strlen(stash));
+  av_sha_final(shactx, d);
 }
 
 

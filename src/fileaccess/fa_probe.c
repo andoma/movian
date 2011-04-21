@@ -65,7 +65,7 @@ typedef struct metadata_stream {
   rstr_t *ms_language;
 
   AVCodec *ms_codec;
-  enum CodecType ms_type;
+  enum AVMediaType ms_type;
 
 } metadata_stream_t;
 
@@ -124,7 +124,7 @@ metadata_clean(metadata_t *md)
  *
  */
 static void
-metadata_add_stream(metadata_t *md, AVCodec *codec, enum CodecType type,
+metadata_add_stream(metadata_t *md, AVCodec *codec, enum AVMediaType type,
 		    int streamindex, const char *info, const char *language)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
@@ -588,8 +588,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   av_metadata_conv(fctx, NULL, fctx->iformat->metadata_conv);
 
   /* Format meta info */
-  
-  if(fctx->title[0] == 0) {
+
+  md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
+  if(md->md_title == NULL) {
     fa_url_get_last_component(tmp1, sizeof(tmp1), url);
 
     // Strip .xxx ending in filenames
@@ -599,8 +600,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 
     http_deescape(tmp1);
     md->md_title = rstr_alloc(tmp1);
-  } else {
-    md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
   }
 
   md->md_artist = ffmpeg_metadata_get(fctx->metadata, "artist") ?:
@@ -619,15 +618,17 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     AVStream *stream = fctx->streams[i];
     AVCodecContext *avctx = stream->codec;
     AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
+    AVMetadataTag *tag;
+    const char *lang;
 
     switch(avctx->codec_type) {
-    case CODEC_TYPE_VIDEO:
+    case AVMEDIA_TYPE_VIDEO:
       has_video = !!codec;
       break;
-    case CODEC_TYPE_AUDIO:
+    case AVMEDIA_TYPE_AUDIO:
       has_audio = !!codec;
       break;
-    case CODEC_TYPE_SUBTITLE:
+    case AVMEDIA_TYPE_SUBTITLE:
       break;
 
     default:
@@ -653,8 +654,16 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
-    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, 
-			isolang_iso2lang(stream->language));
+    
+
+    if((tag = av_metadata_get(stream->metadata, "language", NULL,
+			      AV_METADATA_IGNORE_SUFFIX)) != NULL) {
+      lang = isolang_iso2lang(tag->value) ?: tag->value;
+    } else {
+      lang = NULL;
+    }
+
+    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, lang);
   }
   
   md->md_type = CONTENT_FILE;
@@ -822,13 +831,13 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
     prop_t *p;
 
     switch(ms->ms_type) {
-    case CODEC_TYPE_AUDIO:
+    case AVMEDIA_TYPE_AUDIO:
       p = prop_create_check(proproot, "audiostreams");
       break;
-    case CODEC_TYPE_VIDEO:
+    case AVMEDIA_TYPE_VIDEO:
       p = prop_create_check(proproot, "videostreams");
       break;
-    case CODEC_TYPE_SUBTITLE:
+    case AVMEDIA_TYPE_SUBTITLE:
       p = prop_create_check(proproot, "subtitlestreams");
       break;
     default:

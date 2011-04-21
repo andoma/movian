@@ -232,7 +232,7 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
   int r;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
-    return AVERROR_NOENT;
+    return -1;
 
   r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
   free(filename);
@@ -501,13 +501,13 @@ fa_lavf_open(URLContext *h, const char *url, int flags)
   av_strstart(url, "showtime:", &url);  
 
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
-    return AVERROR_NOENT;
+    return AVERROR(ENOENT);
   
   fh = fap->fap_open(fap, filename, NULL, 0);
   free(filename);
   
   if(fh == NULL) 
-    return AVERROR_NOENT;
+    return AVERROR(ENOENT);
   
   h->priv_data = fh;
   return 0;
@@ -564,7 +564,7 @@ fa_lavf_open2(URLContext *h, const char *url, int flags)
   void *fh;
 
   if(sscanf(url, "%p", &fh) != 1)
-    return AVERROR_NOENT;
+    return AVERROR(ENOENT);
   h->priv_data = fh;
   fa_seek(fh, 0, SEEK_SET);
   return 0;
@@ -609,25 +609,14 @@ fa_lavf_reopen(ByteIOContext **s, fa_handle_t *fh)
   return 0;
 }
 
-
 /**
  *
  */
-const char *
-fa_ffmpeg_error_to_txt(int err)
+void
+fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
 {
-  switch(err) {
-  case AVERROR_IO:           return "I/O error";
-  case AVERROR_NUMEXPECTED:  return "Number syntax expected in filename";
-  case AVERROR_INVALIDDATA:  return "Invalid data found";
-  case AVERROR_NOMEM:        return "Out of memory";
-  case AVERROR_NOFMT:        return "Unknown format";
-  case AVERROR_NOTSUPP:      return "Operation not supported";
-  case AVERROR_NOENT:        return "No such file or directory";
-  case AVERROR_EOF:          return "End of file";
-  case AVERROR_PATCHWELCOME: return "Not yet implemented, patch welcome";
-  }
-  return "Unknown errorcode";
+  if(av_strerror(err, errbuf, errlen))
+    snprintf(errbuf, errlen, "libav error %d", err);
 }
 
 

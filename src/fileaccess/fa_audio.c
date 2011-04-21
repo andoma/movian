@@ -284,11 +284,10 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   for(i = 0; i < fctx->nb_streams; i++) {
     ctx = fctx->streams[i]->codec;
 
-    if(ctx->codec_type != CODEC_TYPE_AUDIO)
+    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO)
       continue;
 
-    cw = media_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, NULL,
-			    mp);
+    cw = media_codec_create(ctx->codec_id, 0, fw, ctx, NULL, mp);
     mp->mp_audio.mq_stream = i;
     break;
   }

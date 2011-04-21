@@ -242,7 +242,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	    e = event_create_type(EVENT_EOF);
 
 	} else {
-	  snprintf(errbuf, errlen, "%s", fa_ffmpeg_error_to_txt(r));
+	  fa_ffmpeg_error_to_txt(r, errbuf, errlen);
 	  e = NULL;
 	}
 	break;
@@ -455,10 +455,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	unsigned int idx = atoi(est->id);
 	if(idx < fctx->nb_streams) {
 	  AVCodecContext *ctx = fctx->streams[idx]->codec;
-	  if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+	  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
 	    mp->mp_audio.mq_stream = idx;
 	    prop_set_int(mp->mp_prop_audio_track_current, idx);
-	  } else if(ctx->codec_type == CODEC_TYPE_SUBTITLE) {
+	  } else if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
 
 	    if(sub != NULL) {
 	      subtitles_destroy(sub);
@@ -623,11 +623,15 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   // Scan all streams and select defaults
 
   for(i = 0; i < fctx->nb_streams; i++) {
+    media_codec_params_t mcp = {0};
+    AVMetadataTag *lang;
+
     ctx = fctx->streams[i]->codec;
 
-    media_codec_params_t mcp = {0};
+    lang = av_metadata_get(fctx->streams[i]->metadata, "language", NULL,
+			   AV_METADATA_IGNORE_SUFFIX);
 
-    if(ctx->codec_type == CODEC_TYPE_VIDEO) {
+    if(ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
       
       mcp.width = ctx->width;
       mcp.height = ctx->height;
@@ -638,12 +642,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 	mp->mp_video.mq_stream = i;
     }
 
-    if(ctx->codec_type == CODEC_TYPE_AUDIO) {
+    if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
 
       if(flags & BACKEND_VIDEO_NO_AUDIO)
 	continue;
 
-      s = i18n_audio_score(fctx->streams[i]->language);
+      s = lang ? i18n_audio_score(lang->value) : 0;
 
       if(s > best_audio_score) {
 	mp->mp_audio.mq_stream = i;
@@ -654,8 +658,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 	ctx->channels = 0;
     }
 
-    if(ctx->codec_type == CODEC_TYPE_SUBTITLE) {
-      s = i18n_subtitle_score(fctx->streams[i]->language);
+    if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+      s = lang ? i18n_subtitle_score(lang->value) : 0;
 
       if(s > best_subtitle_score) {
 	best_subtitle_score = s;
@@ -663,12 +667,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 	prop_set_int(mp->mp_prop_subtitle_track_current, i);
       }
     }
-    cwvec[i] = media_codec_create(ctx->codec_id,
-				  ctx->codec_type, 0, fw, ctx, &mcp, mp);
+    cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
   }
 
   prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
-
 
   // Start it
 

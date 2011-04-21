@@ -101,7 +101,9 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   
   if(vd->vd_do_flush) {
     do {
-      avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
+      AVPacket avpkt;
+      av_init_packet(&avpkt);
+      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
     } while(got_pic);
 
     vd->vd_do_flush = 0;
@@ -123,7 +125,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   avgtime_start(&vd->vd_decode_time);
 
-  avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = mb->mb_data;
+  avpkt.size = mb->mb_size;
+
+  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 	       mq->mq_prop_decode_peak);

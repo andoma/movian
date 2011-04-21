@@ -334,7 +334,12 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       ctx->request_channels = 0;
 
     data_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-    r = avcodec_decode_audio2(ctx, ad->ad_outbuf, &data_size, buf, size);
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = buf;
+    avpkt.size = size;
+
+    r = avcodec_decode_audio3(ctx, ad->ad_outbuf, &data_size, &avpkt);
 
     if(r == -1)
       break;
