@@ -56,8 +56,6 @@ TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
 TAILQ_HEAD(face_queue, face);
 
-#define STYLE_BOLD   0x1
-#define STYLE_ITALIC 0x2
 
 
 //------------------------- Faces -----------------------
@@ -220,6 +218,11 @@ static int
 face_resovle(int uc, uint8_t style, const char *family,
 	     char *urlbuf, size_t urllen, uint8_t *actualstylep)
 {
+#if ENABLE_LIBFONTCONFIG
+  if(!fontconfig_resolve(uc, style, family, urlbuf, urllen, actualstylep))
+    return 0;
+#endif
+
 #ifdef SHOWTIME_FONT_LIBERATION_URL
   snprintf(urlbuf, urllen,
 	   SHOWTIME_FONT_LIBERATION_URL"/LiberationSans-Regular.ttf");
@@ -330,10 +333,10 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
     
     gs = f->face->glyph;
 
-    if(style & STYLE_ITALIC && !(f->style & STYLE_ITALIC))
+    if(style & TR_STYLE_ITALIC && !(f->style & TR_STYLE_ITALIC))
       FT_GlyphSlot_Oblique(gs);
 
-    if(style & STYLE_BOLD && !(f->style & STYLE_BOLD) && 
+    if(style & TR_STYLE_BOLD && !(f->style & TR_STYLE_BOLD) && 
        gs->format == FT_GLYPH_FORMAT_OUTLINE) {
       int v = FT_MulFix(gs->face->units_per_EM,
 			gs->face->size->metrics.y_scale) / 64;
@@ -563,19 +566,19 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       continue;
 
     case TR_CODE_ITALIC_ON:
-      style |= STYLE_ITALIC;
+      style |= TR_STYLE_ITALIC;
       break;
 
     case TR_CODE_ITALIC_OFF:
-      style &= ~STYLE_ITALIC;
+      style &= ~TR_STYLE_ITALIC;
       break;
 
     case TR_CODE_BOLD_ON:
-      style |= STYLE_BOLD;
+      style |= TR_STYLE_BOLD;
       break;
 
     case TR_CODE_BOLD_OFF:
-      style &= ~STYLE_BOLD;
+      style &= ~TR_STYLE_BOLD;
       break;
 
     default:

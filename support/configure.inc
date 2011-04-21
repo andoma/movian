@@ -81,6 +81,7 @@ CONFIG_LIST="
  emu_thread_specifics
  ps3_vdec
  font_liberation
+ libfontconfig
 "
 
 die() {
