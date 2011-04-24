@@ -610,32 +610,12 @@ mp_end(media_pipe_t *mp)
     mb_enq_tail(mp, a, mb);
   }
   hts_mutex_unlock(&mp->mp_mutex);
-
 }
 
 
-/*
+/**
  *
  */
-
-void
-mp_wait(media_pipe_t *mp, int audio, int video)
-{
-  while(1) {
-    usleep(100000);
-    if(audio && mp->mp_audio.mq_len > 0)
-      continue;
-
-    if(video && mp->mp_video.mq_len > 0)
-      continue;
-    break;
-  }
-}
-
-/*
- *
- */
-
 void
 mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
 {
