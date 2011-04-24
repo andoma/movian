@@ -88,6 +88,18 @@ media_init(void)
 /**
  *
  */
+media_buf_t *
+media_buf_alloc(void)
+{
+  media_buf_t *mb = calloc(1, sizeof(media_buf_t));
+  mb->mb_time = AV_NOPTS_VALUE;
+  return mb;
+}
+
+
+/**
+ *
+ */
 void
 media_buf_free(media_buf_t *mb)
 {

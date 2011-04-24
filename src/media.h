@@ -285,14 +285,7 @@ media_codec_t *media_codec_create(enum CodecID id, int parser,
 
 void media_buf_free(media_buf_t *mb);
 
-
-static inline media_buf_t *
-media_buf_alloc(void)
-{
-  media_buf_t *mb = calloc(1, sizeof(media_buf_t));
-  mb->mb_time = AV_NOPTS_VALUE;
-  return mb;
-}
+media_buf_t *media_buf_alloc(void);
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 
