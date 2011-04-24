@@ -2027,9 +2027,13 @@ http_request(const char *url, const char **arguments,
   case 200:
     break;
 
-  case 301:
   case 302:
   case 303:
+    postdata = NULL;
+    postcontenttype = NULL;
+    method = "GET";
+    // FALLTHRU
+  case 301:
   case 307:
     if(redirect(hf, &redircount, errbuf, errlen, code)) {
       http_destroy(hf);
