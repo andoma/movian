@@ -279,9 +279,8 @@ typedef struct media_codec_params {
 } media_codec_params_t;
 
 
-media_codec_t *media_codec_create(enum CodecID id, enum CodecType type, 
-				  int parser, media_format_t *fw,
-				  AVCodecContext *ctx,
+media_codec_t *media_codec_create(enum CodecID id, int parser,
+				  media_format_t *fw, AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
 void media_buf_free(media_buf_t *mb);

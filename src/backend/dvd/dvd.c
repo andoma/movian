@@ -393,7 +393,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     if(cw != NULL)
       media_codec_deref(cw);
 
-    *cwp = cw = media_codec_create(codec_id, type, 1, NULL, NULL, &mcp, mp);
+    *cwp = cw = media_codec_create(codec_id, 1, NULL, NULL, &mcp, mp);
     if(cw == NULL)
       return NULL;
   }

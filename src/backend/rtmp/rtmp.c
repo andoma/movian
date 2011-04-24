@@ -392,8 +392,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
     }
     mcp.width = r->width;
     mcp.height = r->height;
-    r->vcodec = media_codec_create(id, CODEC_TYPE_VIDEO, 0, NULL, ctx, 
-				   &mcp, mp);
+    r->vcodec = media_codec_create(id, 0, NULL, ctx,  &mcp, mp);
     return NULL;
   }
 
@@ -491,8 +490,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       abort();
     }
 
-    r->acodec = media_codec_create(id, CODEC_TYPE_AUDIO, parse, NULL, ctx,
-				   NULL, mp);
+    r->acodec = media_codec_create(id, parse, NULL, ctx, NULL, mp);
     return NULL;
   }
 

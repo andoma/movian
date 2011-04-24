@@ -818,7 +818,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
  *
  */
 media_codec_t *
-media_codec_create(enum CodecID id, enum CodecType type, int parser,
+media_codec_create(enum CodecID id, int parser,
 		   media_format_t *fw, AVCodecContext *ctx,
 		   media_codec_params_t *mcp, media_pipe_t *mp)
 {

@@ -1866,7 +1866,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        * Try to create the codec
        */
       if(codec_id != -1) {
-	cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
+	cw = media_codec_create(codec_id, 0, NULL, NULL, &mcp, mp);
 	if(cw == NULL) {
 	  TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 		nicename, idx);
