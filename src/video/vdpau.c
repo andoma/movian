@@ -377,8 +377,10 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
   AVFrame *frame = vd->vd_frame;
   
   if(vd->vd_do_flush) {
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
     do {
-      avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
+      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
     } while(got_pic);
 
     vd->vd_do_flush = 0;
@@ -395,7 +397,12 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 
   vc->vc_mb = mb;
 
-  avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = mb->mb_data;
+  avpkt.size = mb->mb_size;
+
+  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(mp->mp_stats)
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
