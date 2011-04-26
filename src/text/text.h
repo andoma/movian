@@ -17,10 +17,14 @@
  */
 
 #include "config.h"
+#include <stdint.h>
 
 #pragma once
 
 struct pixmap;
+
+#define TR_STYLE_BOLD   0x1
+#define TR_STYLE_ITALIC 0x2
 
 #define TR_CODE_START      0x7f000001
 #define TR_CODE_NEWLINE    0x7f000002
@@ -46,8 +50,14 @@ int freetype_init(void);
 void freetype_load_font(const char *url);
 #endif
 
+#if ENABLE_LIBFONTCONFIG
+int fontconfig_resolve(int uc, uint8_t style, const char *family,
+		       char *urlbuf, size_t urllen, uint8_t *actualstylep);
+#endif
+
 #define TEXT_PARSE_TAGS          0x1
 #define TEXT_PARSE_HTML_ENTETIES 0x2
 
 
 int *text_parse(const char *str, int *lenp, int flags);
+

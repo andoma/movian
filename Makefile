@@ -196,6 +196,7 @@ SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 # Text rendering
 #
 SRCS-$(CONFIG_LIBFREETYPE) += src/text/freetype.c
+SRCS-$(CONFIG_LIBFONTCONFIG) += src/text/fontconfig.c
 SRCS += src/text/parser.c
 
 #

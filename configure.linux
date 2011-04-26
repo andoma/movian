@@ -76,6 +76,7 @@ fatal() {
 
 
 enable libfreetype
+enable libfontconfig
 enable libasound
 enable libpulse
 enable lirc
@@ -270,6 +271,22 @@ if enabled libfreetype; then
     else
 	echo "FreeType 2 not found"
 	echo "To compile without it, configure with: --disable-libfreetype"
+	die
+    fi
+fi
+
+
+#
+# libfontconfig
+#
+if enabled libfontconfig; then
+    if pkg-config fontconfig; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs fontconfig`
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags fontconfig`
+	echo "Using libfontconfig:   `pkg-config --modversion fontconfig`"
+    else
+	echo "libfontconfig not found"
+	echo "To compile without it, configure with: --disable-libfontconfig"
 	die
     fi
 fi

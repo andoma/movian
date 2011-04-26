@@ -285,14 +285,7 @@ media_codec_t *media_codec_create(enum CodecID id, int parser,
 
 void media_buf_free(media_buf_t *mb);
 
-
-static inline media_buf_t *
-media_buf_alloc(void)
-{
-  media_buf_t *mb = calloc(1, sizeof(media_buf_t));
-  mb->mb_time = AV_NOPTS_VALUE;
-  return mb;
-}
+media_buf_t *media_buf_alloc(void);
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 
@@ -321,8 +314,6 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 void mp_flush(media_pipe_t *mp, int blackout);
 
 void mp_end(media_pipe_t *mp);
-
-void mp_wait(media_pipe_t *mp, int audio, int video);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 
