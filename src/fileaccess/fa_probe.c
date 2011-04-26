@@ -339,24 +339,24 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 static int
 jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 {
-  if(fa_seek(handle, offset, SEEK_SET) != offset)
+  AVIOContext *avio = handle;
+  if(avio_seek(avio, offset, SEEK_SET) != offset)
     return -1;
-  return fa_read(handle, buf, size);
+  return avio_read(avio, buf, size);
 }
 
 
 static void
-fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, AVIOContext *avio)
 {
-    jpeginfo_t ji;
+  jpeginfo_t ji;
 
-   if(jpeg_info(&ji, jpeginfo_reader, fh, 
-		JPEG_INFO_DIMENSIONS |
-		JPEG_INFO_ORIENTATION,
-		pb, 256, NULL, 0))
-     return;
-   
-   md->md_time = ji.ji_time;
+  if(jpeg_info(&ji, jpeginfo_reader, avio, 
+	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
+	       pb, 256, NULL, 0))
+    return;
+  
+  md->md_time = ji.ji_time;
 }
 
 
@@ -366,27 +366,31 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
  * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
+fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
 {
   uint16_t flags;
+  uint8_t buf[256];
 
-  if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27)) {
-    fa_probe_spc(md, pb); 
+  if(avio_read(avio, buf, sizeof(buf)) != sizeof(buf))
+    return 0;
+
+  if(!memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
+    fa_probe_spc(md, buf);
     md->md_type = CONTENT_AUDIO;
     return 1;
   }
 
-  if(!memcmp(pb, "PSID", 4) || !memcmp(pb, "RSID", 4)) {
-    fa_probe_psid(md, pb); 
+  if(!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4)) {
+    fa_probe_psid(md, buf); 
     md->md_type = CONTENT_ALBUM;
     metdata_set_redirect(md, "sidfile://%s/", url);
     return 1;
   }
 
-  if(pb[0] == 'R'  && pb[1] == 'a'  && pb[2] == 'r' && pb[3] == '!' &&
-     pb[4] == 0x1a && pb[5] == 0x07 && pb[6] == 0x0 && pb[9] == 0x73) {
+  if(buf[0] == 'R'  && buf[1] == 'a'  && buf[2] == 'r' && buf[3] == '!' &&
+     buf[4] == 0x1a && buf[5] == 0x07 && buf[6] == 0x0 && buf[9] == 0x73) {
 
-    flags = pb[10] | pb[11] << 8;
+    flags = buf[10] | buf[11] << 8;
     if((flags & 0x101) == 1) {
       /* Don't include slave volumes */
       md->md_type = CONTENT_UNKNOWN;
@@ -398,48 +402,48 @@ fa_probe_header(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
     return 1;
   }
 
-  if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04) {
+  if(buf[0] == 0x50 && buf[1] == 0x4b && buf[2] == 0x03 && buf[3] == 0x04) {
     metdata_set_redirect(md, "zip://%s", url);
     md->md_type = CONTENT_ARCHIVE;
     return 1;
   }
 
 #if 0
-  if(!strncasecmp((char *)pb, "[playlist]", 10)) {
+  if(!strncasecmp((char *)buf, "[playlist]", 10)) {
     /* Playlist */
-    fa_probe_playlist(md, url, pb, sizeof(pb));
+    fa_probe_playlist(md, url, buf, sizeof(buf));
     md->md_type = CONTENT_PLAYLIST;
     return 1;
   }
 #endif
 
-  if((pb[6] == 'J' && pb[7] == 'F' && pb[8] == 'I' && pb[9] == 'F') ||
-     (pb[6] == 'E' && pb[7] == 'x' && pb[8] == 'i' && pb[9] == 'f')) {
+  if((buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F') ||
+     (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f')) {
     /* JPEG image */
     md->md_type = CONTENT_IMAGE;
-    fa_probe_exif(md, url, pb, fh); // Try to get more info
+    fa_probe_exif(md, url, buf, avio); // Try to get more info
     return 1;
   }
 
-  if(!memcmp(pb, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
+  if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
     /* Ugly playlist thing (see fa_video.c) */
     md->md_type = CONTENT_VIDEO;
     return 1;
   }
 
-  if(!memcmp(pb, pngsig, 8)) {
+  if(!memcmp(buf, pngsig, 8)) {
     /* PNG */
     md->md_type = CONTENT_IMAGE;
     return 1;
   }
 
-  if(!memcmp(pb, gifsig, sizeof(gifsig))) {
+  if(!memcmp(buf, gifsig, sizeof(gifsig))) {
     /* GIF */
     md->md_type = CONTENT_IMAGE;
     return 1;
   }
 
-  if(pb[0] == '%' && pb[1] == 'P' && pb[2] == 'D' && pb[3] == 'F') {
+  if(buf[0] == '%' && buf[1] == 'P' && buf[2] == 'D' && buf[3] == 'F') {
     md->md_type = CONTENT_UNKNOWN;
     return 1;
   }
@@ -498,34 +502,36 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
  *
  */
 static int
-gme_probe(metadata_t *md, AVProbeData *pd, fa_handle_t *fh, struct fa_stat *fs)
+gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
 {
-  const char *type = gme_identify_header(pd->buf);
-  struct fa_stat fs0;
-  char *buf;
+  uint8_t b4[4], *buf;
   gme_err_t err;
   Music_Emu *emu;
   gme_info_t *info;
   int tracks;
+  size_t size;
+  const char *type;
+
+  if(avio_read(avio, b4, 4) != 4)
+    return 0;
+
+  type = gme_identify_header(b4);
 
   if(*type == 0)
     return 0;
 
-  if(fs == NULL) {
-    if(fa_stat(pd->filename, &fs0, NULL, 0))
-      return 0;
-    fs = &fs0;
-  }
+  size = avio_size(avio);
+  buf = malloc(size);
 
-  buf = malloc(fs->fs_size);
-  memcpy(buf, pd->buf, pd->buf_size);
-  int r = fa_read(fh, buf + pd->buf_size, fs->fs_size - pd->buf_size);
-  if(r != fs->fs_size - pd->buf_size) {
+  avio_seek(avio, 0, SEEK_SET);
+
+  if(avio_read(avio, buf, size) != size) {
     free(buf);
     return 0;
   }
 
-  err = gme_open_data(buf, fs->fs_size, &emu, gme_info_only);
+
+  err = gme_open_data(buf, size, &emu, gme_info_only);
   free(buf);
   if(err != NULL)
     return 0;
@@ -564,7 +570,7 @@ gme_probe(metadata_t *md, AVProbeData *pd, fa_handle_t *fh, struct fa_stat *fs)
     md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
 
     md->md_type = CONTENT_ALBUM;
-    metdata_set_redirect(md, "gmefile://%s/", pd->filename);
+    metdata_set_redirect(md, "gmefile://%s/", url);
   }
 
   gme_free_info(info);
@@ -674,9 +680,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 }
   
 
-#define PROBE1_SIZE 4096
-#define PROBE2_SIZE 65536
-
 /**
  *
  */
@@ -684,101 +687,35 @@ static int
 fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf, 
 		    size_t errsize, struct fa_stat *fs)
 {
-  const char *url0 = url;
-  AVInputFormat *f;
-  AVFormatContext *fctx;
   fa_handle_t *fh;
-  int score = 0;
-  AVProbeData pd;
-  ByteIOContext *s;
+  AVFormatContext *fctx;
+  AVIOContext *avio;
 
   if((fh = fa_open(url, errbuf, errsize)) == NULL)
     return -1;
 
-  pd.filename = url;
-  pd.buf = malloc(PROBE1_SIZE + AVPROBE_PADDING_SIZE);
+  avio = fa_libav_reopen(fh);
 
-  pd.buf_size = fa_read(fh, pd.buf, PROBE1_SIZE);
-  
-  if(pd.buf_size < 256) {
-    snprintf(errbuf, errsize, "Short file");
-    free(pd.buf);
-    return -1;
-  }
-
-  if(pd.buf[0] == 'I' &&
-     pd.buf[1] == 'D' &&
-     pd.buf[2] == '3' && 
-     (pd.buf[3] & 0xf8) == 0 &&
-     (pd.buf[5] & 0x0f) == 0) {
-    f = av_find_input_format("mp3");
-    if(f != NULL) {
-      free(pd.buf);
-      goto found;
-    }
-  }
 
 #if ENABLE_LIBGME
-  if(gme_probe(md, &pd, fh, fs)) {
-    fa_close(fh);
-    free(pd.buf);
+  if(gme_probe(md, url, avio))
     return 0;
-  }
 #endif
 
-  if(fa_probe_header(md, url0, pd.buf, fh)) {
-    fa_close(fh);
-    free(pd.buf);
+  avio_seek(avio, 0, SEEK_SET);
+
+  if(fa_probe_header(md, url, avio)) {
+    fa_libav_close(avio);
     return 0;
   }
 
-  // First try using lavc
-
-  f = av_probe_input_format2(&pd, 1, &score);
-  
-  // If score is low and it is possible, read more
-  if(pd.buf_size == PROBE1_SIZE && score < AVPROBE_SCORE_MAX / 2) {
-    
-    pd.buf = realloc(pd.buf, PROBE2_SIZE + AVPROBE_PADDING_SIZE);
-    pd.buf_size += fa_read(fh, pd.buf + PROBE1_SIZE, PROBE2_SIZE - PROBE1_SIZE);
-    if(pd.buf_size == PROBE2_SIZE) {
-      if(!fa_probe_iso0(md, (char *)pd.buf + 0x8000)) {
-	free(pd.buf);
-	fa_close(fh);
-	return 0;
-      }
-    }
-
-    f = av_probe_input_format2(&pd, 1, &score);
-  }
-
-  free(pd.buf);
-	
-  if(f == NULL) {
-    snprintf(errbuf, errsize, "Unable to probe file (FFmpeg)");
-    fa_close(fh);
-    return -1;
-  }
- found:
-  if(fa_lavf_reopen(&s, fh)) {
-    snprintf(errbuf, errsize, "Unable to reopen file (FFmpeg)");
-    return -1;
-  }
-
-  if(av_open_input_stream(&fctx, s, url0, f, NULL) != 0) {
-    snprintf(errbuf, errsize, "Unable to open stream (FFmpeg)");
-    url_fclose(s);
-    return -1;
-  }
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    snprintf(errbuf, errsize, "Unable to handle file contents");
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errsize)) == NULL) {
+    fa_libav_close(avio);
     return -1;
   }
 
   fa_lavf_load_meta(md, fctx, url);
-  av_close_input_file(fctx);  
+  fa_libav_close_format(fctx);
   return 0;
 }
 

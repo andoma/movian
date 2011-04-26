@@ -863,7 +863,7 @@ media_format_deref(media_format_t *fw)
 {
   if(atomic_add(&fw->refcount, -1) > 1)
     return;
-  av_close_input_file(fw->fctx);
+  fa_libav_close_format(fw->fctx);
   free(fw);
 }
 

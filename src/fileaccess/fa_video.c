@@ -505,10 +505,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;
+  AVIOContext *avio;
   AVCodecContext *ctx;
   media_format_t *fw;
   int i, s;
-  char faurl[URL_MAX];
   media_codec_t **cwvec;
   event_t *e;
   struct fa_stat fs;
@@ -566,24 +566,17 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   valid_hash = !opensub_compute_hash(fh, &hash);
   fsize = fa_fsize(fh);
-  fa_close(fh);
+  fa_seek(fh, 0, SEEK_SET);
+
   
-  /**
-   * Open input file
-   */
-  snprintf(faurl, sizeof(faurl), "showtime:%s", url);
-  if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errlen, "Unable to open input file %s", url);
+  avio = fa_libav_reopen(fh);
+
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
+    fa_libav_close(avio);
     return NULL;
   }
 
   // fctx->flags |= AVFMT_FLAG_GENPTS;
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    snprintf(errbuf, errlen, "Unable to find stream info");
-    return NULL;
-  }
 
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
 

@@ -209,6 +209,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen, int hold)
 {
   AVFormatContext *fctx;
+  AVIOContext *avio;
   AVCodecContext *ctx;
   AVPacket pkt;
   media_format_t *fw;
@@ -218,21 +219,21 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   event_ts_t *ets;
   int64_t ts, pts4seek = 0;
   media_codec_t *cw;
-  char faurl[URL_MAX];
   event_t *e;
   int lost_focus = 0;
+  fa_handle_t *fh;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
+
+  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+    return NULL;
+
 
   // First we need to check for a few other formats
 #if ENABLE_LIBOPENSPC || ENABLE_LIBGME
 
   char pb[128];
-  void *fh;
   size_t psiz;
-
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
-    return NULL;
   
   psiz = fa_read(fh, pb, sizeof(pb));
   if(psiz < sizeof(pb)) {
@@ -255,19 +256,13 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return openspc_play(mp, fh, errbuf, errlen);
 #endif
 
-  fa_close(fh);
+  fa_seek(fh, 0, SEEK_SET);
 #endif
 
-  snprintf(faurl, sizeof(faurl), "showtime:%s", url);
+  avio = fa_libav_reopen(fh);
 
-  if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errlen, "Unable to open input file (FFmpeg)");
-    return NULL;
-  }
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    snprintf(errbuf, errlen, "Unable to find stream info");
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
+    fa_libav_close(avio);
     return NULL;
   }
 
