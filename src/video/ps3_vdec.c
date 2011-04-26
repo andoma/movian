@@ -65,7 +65,6 @@ typedef struct vdec_pic {
 
   uint8_t *buf;
   size_t bufsize;
-
 } vdec_pic_t;
 
 
@@ -268,6 +267,7 @@ picture_out(vdec_decoder_t *vdd)
   vdec_pic_t *vp;
   char metainfo[64];
   union vdec_userdata ud;
+  int cnt = 0;
 
   picfmt.alpha = 0;
   picfmt.format_type = VDEC_PICFMT_YUV420P;
@@ -286,6 +286,14 @@ picture_out(vdec_decoder_t *vdd)
     reset_active_pictures(vdd);
     vdd->next_picture = -1;
     return;
+  }
+
+  LIST_FOREACH(vp, &vdd->active_pictures, link)
+    cnt++;
+
+  if(cnt > 4) {
+    reset_active_pictures(vdd);
+    vdd->next_picture = -1;
   }
 
   if(pi->codec_type == VDEC_CODEC_TYPE_MPEG2) {
@@ -320,6 +328,9 @@ picture_out(vdec_decoder_t *vdd)
       break;
     }
 
+    // No reordering
+    reset_active_pictures(vdd);
+    vdd->next_picture = 0;
     vp->order = 0;
 
     snprintf(metainfo, sizeof(metainfo),
@@ -358,11 +369,15 @@ picture_out(vdec_decoder_t *vdd)
 
     vp->order = h264->pic_order_count[0];
 
+    if(h264->idr_picture_flag) {
+      reset_active_pictures(vdd);
+      vdd->next_picture = vp->order;
+    }
+
     snprintf(metainfo, sizeof(metainfo),
 	     "h264 (Level %d.%d) %dx%d%c (Cell)",
 	     vdd->level_major, vdd->level_minor,
 	     h264->width, h264->height, vp->fi.interlaced ? 'i' : 'p');
-
   }
 
   vd->vd_width = vp->fi.width;
@@ -379,11 +394,8 @@ picture_out(vdec_decoder_t *vdd)
   vp->fi.prescaled = 0;
   vp->fi.color_space = -1;
   vp->fi.color_range = 0;
-
   vdec_get_picture(vdd->handle, &picfmt, vp->buf);
 
-  if(vp->order == 0)
-    vdd->next_picture = 0;
 
   LIST_INSERT_HEAD(&vdd->active_pictures, vp, link);
 
@@ -408,19 +420,11 @@ picture_out(vdec_decoder_t *vdd)
     uint8_t *data[4] = {vp->buf, vp->buf + lumasize,
 			vp->buf + lumasize + lumasize / 4, 0};
 
-
     if(vd)
       vd->vd_frame_deliver(data, linesizes, &vp->fi, vd->vd_opaque);
 
     release_picture(vdd, vp);
   }
-
-  int cnt = 0;
-  LIST_FOREACH(vp, &vdd->active_pictures, link)
-    cnt++;
-
-  if(cnt > 4)
-    reset_active_pictures(vdd);
 }
 
 
@@ -439,11 +443,12 @@ pic_thread(void *aux)
   while(!vdd->picture_thread_stop) {
 
     if(vdd->pending_pictures > 0) {
-      vdd->pending_pictures--;
       
       hts_mutex_unlock(&vdd->mtx);
       picture_out(vdd);
       hts_mutex_lock(&vdd->mtx);
+
+      vdd->pending_pictures--;
       continue;
     }
 
