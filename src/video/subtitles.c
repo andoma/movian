@@ -209,7 +209,7 @@ is_srt(const char *buf, size_t len)
  *
  */
 static subtitles_t *
-load_srt(const char *path, const char *buf, size_t len)
+load_srt(const char *path, const char *buf, size_t len, int force_utf8)
 {
   int n;
   size_t tlen;
@@ -220,7 +220,7 @@ load_srt(const char *path, const char *buf, size_t len)
   
   RB_INIT(&s->s_entries);
 
-  if(utf8_verify(buf)) {
+  if(force_utf8 || utf8_verify(buf)) {
     linereader_init(&lr, buf, len);
   } else {
     TRACE(TRACE_INFO, "Subtitles",
@@ -380,15 +380,26 @@ dump_subtitles(subtitles_t *s)
  *
  */
 static subtitles_t *
-subtitles_create(const char *path, char **buf, size_t len)
+subtitles_create(const char *path, char **bufp, size_t len)
 {
-  subtitles_t *s;
-  if(is_srt(*buf, len)) {
-    s = load_srt(path, *buf, len);
-  } else if(is_ttml(*buf, len)) {
-    s = load_ttml(buf, len);
+  subtitles_t *s = NULL;
+
+  if(is_ttml(*bufp, len)) {
+    s = load_ttml(bufp, len);
   } else {
-    s = NULL;
+
+    int force_utf8 = 0;
+    const char *buf = *bufp;
+
+    if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
+      // UTF-8 BOM
+      force_utf8 = 1;
+      buf += 3;
+      len -= 3;
+    }
+
+    if(is_srt(buf, len))
+      s = load_srt(path, buf, len, force_utf8);
   }
 
   //  if(s)dump_subtitles(s);
