@@ -4,7 +4,7 @@ for showtime. The envionment will not depend on MacPorts, except for pkg-config.
 Create a new directory with the name of your choice. Then donwload and
 extract packages for these projects into it:
 
-FFmpeg, http://www.ffmpeg.org/ (at least 0.6)
+libav, http://libav.org/ (at least 0.7)
 freetype, http://www.freetype.org
 
 Now copy the buildenv* scripts to the new directory.
@@ -19,7 +19,7 @@ After you have copied the files you may want to change the INSTALLDIR
 variable in buildenv.common.sh before running them.
 
 When done run for example:
-$ sh buildenv.10.4.sh
+$ sh buildenv.10.6-i386.sh
 
 Now you can compile showtime using:
 
