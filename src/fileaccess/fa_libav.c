@@ -16,9 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libavformat/avio.h>
-
-#include "fileaccess.h"
+#include "fa_libav.h"
 
 /**
  *
@@ -48,9 +46,10 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
  *
  */
 AVIOContext *
-fa_libav_reopen(fa_handle_t *fh)
+fa_libav_reopen(fa_handle_t *fh, int buf_size)
 {
-  int buf_size = 32768;
+  if(buf_size == 0)
+    buf_size = 32768;
   void *buf = malloc(buf_size);
   return avio_alloc_context(buf, buf_size, 0, fh, fa_libav_read, NULL, 
 			    fa_libav_seek);

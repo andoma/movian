@@ -27,7 +27,7 @@
 #include "audio/audio_decoder.h"
 #include "event.h"
 #include "playqueue.h"
-#include "fileaccess/fileaccess.h"
+#include "fileaccess/fa_libav.h"
 #include "backend/backend.h"
 #include "misc/isolang.h"
 

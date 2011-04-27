@@ -23,9 +23,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include <libavformat/avio.h>
-#include <libavformat/avformat.h>
-
 #include "misc/queue.h"
 #include "networking/http.h"
 
@@ -177,14 +174,5 @@ int http_request(const char *url, const char **arguments,
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
-
-AVIOContext *fa_libav_reopen(fa_handle_t *fh);
-
-void fa_libav_close(AVIOContext *io);
-
-AVFormatContext *fa_libav_open_format(AVIOContext *avio, const char *url,
-				      char *errbuf, size_t errlen);
-
-void fa_libav_close_format(AVFormatContext *fctx);
 
 #endif /* FILEACCESS_H */

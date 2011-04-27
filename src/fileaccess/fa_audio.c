@@ -30,6 +30,7 @@
 #include "event.h"
 #include "media.h"
 #include "fileaccess.h"
+#include "fa_libav.h"
 #include "notifications.h"
 
 #if ENABLE_LIBGME
@@ -259,7 +260,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   fa_seek(fh, 0, SEEK_SET);
 #endif
 
-  avio = fa_libav_reopen(fh);
+  avio = fa_libav_reopen(fh, 32768);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
     fa_libav_close(avio);

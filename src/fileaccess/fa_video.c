@@ -33,6 +33,7 @@
 #include "media.h"
 #include "fa_probe.h"
 #include "fileaccess.h"
+#include "fa_libav.h"
 #include "i18n.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
@@ -569,7 +570,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   fa_seek(fh, 0, SEEK_SET);
 
   
-  avio = fa_libav_reopen(fh);
+  avio = fa_libav_reopen(fh, 65536);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
     fa_libav_close(avio);

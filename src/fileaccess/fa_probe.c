@@ -35,6 +35,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
+#include "fa_libav.h"
 #include "navigator.h"
 #include "api/lastfm.h"
 #include "media.h"
@@ -694,7 +695,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
   if((fh = fa_open(url, errbuf, errsize)) == NULL)
     return -1;
 
-  avio = fa_libav_reopen(fh);
+  avio = fa_libav_reopen(fh, 32768);
 
 
 #if ENABLE_LIBGME
