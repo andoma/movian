@@ -73,9 +73,12 @@ If you choose the custome script way, please continue to read support/osx/README
 
 MacPorts way:
 
-Install freetype using MacPorts:
+Install freetype and libav using MacPorts:
 
-	$ sudo /opt/local/bin/port install freetype ffmpeg
+	$ sudo /opt/local/bin/port install freetype ffmpeg-devel
+
+	(there is no libav port when i write this but i hope it works with the
+	 ffmpeg-devel port)
 
 Now run configure
 
