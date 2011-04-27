@@ -131,7 +131,6 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item, const char *url)
   strcpy(vpstr, "videoparams:");
   strcpy(vpstr + strlen("videoparams:"), str);
   free(str);
-  printf("%s\n", vpstr);
   prop_set_string(prop_create(c, "url"), vpstr);
   free(vpstr);
 
