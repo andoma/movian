@@ -679,9 +679,14 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
 
     cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
+
+    if(ctx->codec_type == AVMEDIA_TYPE_AUDIO && cwvec[i] != NULL &&
+       mp->mp_audio.mq_stream == -1) {
+      mp->mp_audio.mq_stream = i;
+      prop_set_stringf(mp->mp_prop_audio_track_current, "libav:%d", i);
+    }
   }
 
-  prop_set_int(mp->mp_prop_audio_track_current, mp->mp_audio.mq_stream);
 
   // Start it
 
