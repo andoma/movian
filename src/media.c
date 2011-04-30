@@ -30,6 +30,7 @@
 #include "fileaccess/fa_libav.h"
 #include "backend/backend.h"
 #include "misc/isolang.h"
+#include "i18n.h"
 
 
 // -- Video accelerators ---------
@@ -61,6 +62,10 @@ static void update_stats(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
+static void track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm,
+			   prop_t *root, int type);
+
+static void track_mgr_destroy(media_track_mgr_t *mtm);
 
 /**
  *
@@ -179,19 +184,39 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
   prop_set_string(mp->mp_prop_type, type);
 
-  mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
-  mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
-  mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
-  mp->mp_prop_audio_tracks =
-    prop_create(mp->mp_prop_metadata, "audiostreams");
+  // Video
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
   mq_init(&mp->mp_video, mp->mp_prop_video, &mp->mp_mutex);
 
+  // Audio
+
+  mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
+  mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
+  mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
+  mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
+  prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
+
+  track_mgr_init(mp, &mp->mp_audio_track_mgr, mp->mp_prop_audio_tracks,
+		 MEDIA_TRACK_MANAGER_AUDIO);
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
+
+
+  // Subtitles
+
   p = prop_create(mp->mp_prop_root, "subtitle");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
-  mp->mp_prop_subtitle_tracks =
-    prop_create(mp->mp_prop_metadata, "subtitlestreams");
+  mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata, 
+					    "subtitlestreams");
+
+  prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
+
+  track_mgr_init(mp, &mp->mp_subtitle_track_mgr, mp->mp_prop_subtitle_tracks,
+		 MEDIA_TRACK_MANAGER_SUBTITLES);
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
+
+
+  // 
 
   mp->mp_prop_playstatus  = prop_create(mp->mp_prop_root, "playstatus");
   mp->mp_prop_pausereason = prop_create(mp->mp_prop_root, "pausereason");
@@ -262,6 +287,7 @@ mp_create(const char *name, int flags, const char *type)
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
+
   return mp;
 }
 
@@ -282,6 +308,10 @@ mp_destroy(media_pipe_t *mp)
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_avdelta);
   prop_unsubscribe(mp->mp_sub_stats);
+
+
+  track_mgr_destroy(&mp->mp_audio_track_mgr);
+  track_mgr_destroy(&mp->mp_subtitle_track_mgr);
 
   prop_courier_destroy(mp->mp_pc);
 
@@ -320,6 +350,18 @@ mp_ref_dec(media_pipe_t *mp)
 static void
 mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 {
+  event_select_track_t *est = (event_select_track_t *)e;
+
+  switch(e->e_type_x) {
+  case EVENT_SELECT_AUDIO_TRACK:
+    mp->mp_audio_track_mgr.mtm_user_set |= est->manual;
+    break;
+  case EVENT_SELECT_SUBTITLE_TRACK:
+    mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
+    break;
+  default:
+    break;
+  }
   atomic_add(&e->e_refcount, 1);
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
@@ -1310,43 +1352,302 @@ mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
 }
 
 
+
 /**
  *
  */
 void
-mp_add_track(prop_t *prop, const char *title, const char *id)
+mp_add_track(prop_t *parent,
+	     const char *title,
+	     const char *url,
+	     const char *format,
+	     const char *longformat,
+	     const char *isolang,
+	     const char *source)
 {
-  prop_t *p = prop_create(prop, NULL);
+  const char *language = NULL;
+
+  prop_t *p = prop_create_root(NULL);
   
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "title"), title);
-}
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(p, "format"), format);
+  prop_set_string(prop_create(p, "longformat"), longformat);
 
+  prop_set_string(prop_create(p, "source"), source);
 
-/**
- *
- */
-void
-mp_add_track_off(prop_t *prop, const char *id)
-{
-  mp_add_track(prop, "Off", id);
-}
-
-
-/**
- *
- */
-void
-mp_add_tracks_from_subtitle_list(prop_t *tracks,
-				 struct play_video_subtitle_list *list)
-{
-  play_video_subtitle_t *pvs;
-  char track[20];
-  int i = 0;
-  LIST_FOREACH(pvs, list, pvs_link) {
-    snprintf(track, sizeof(track), "Track #%d", ++i);
-    mp_add_track(tracks,
-		 pvs->pvs_language ? isolang_iso2lang(pvs->pvs_language) :
-		 track, pvs->pvs_url);
+  if(isolang != NULL) {
+    prop_set_string(prop_create(p, "isolang"), isolang);
+    
+    language = isolang_iso2lang(isolang) ?: isolang;
+    prop_set_string(prop_create(p, "language"), language);
   }
+
+  prop_set_string(prop_create(p, "title"), title);
+
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+void
+mp_add_track_off(prop_t *prop, const char *url)
+{
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL);
+}
+
+
+
+
+typedef struct media_track {
+  TAILQ_ENTRY(media_track) mt_link;
+  prop_sub_t *mt_sub_url;
+  char *mt_url;
+
+  prop_sub_t *mt_sub_isolang;
+  int mt_score;
+
+  media_track_mgr_t *mt_mtm;
+  prop_t *mt_root;
+
+} media_track_t;
+
+
+
+/**
+ *
+ */
+static void
+mtm_rethink(media_track_mgr_t *mtm)
+{
+  media_track_t *mt, *best = NULL;
+  
+  if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
+    // All tracks deleted, clear the user-has-configured flag
+    mtm->mtm_user_set = 0;
+    return;
+  }
+
+  if(mtm->mtm_user_set)
+    return;
+
+  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link) {
+    if(mt->mt_url == NULL || mt->mt_score == -1)
+      continue;
+
+    if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
+      continue;
+
+    if(mt->mt_score > 0 && (best == NULL || mt->mt_score > best->mt_score))
+      best = mt;
+  }
+
+  if(best == mtm->mtm_suggested_track)
+    return;
+
+  mtm->mtm_suggested_track = best;
+
+
+  if(best != NULL) {
+    event_type_t t;
+
+    switch(mtm->mtm_type) {
+    case MEDIA_TRACK_MANAGER_AUDIO:
+      t = EVENT_SELECT_AUDIO_TRACK;
+      break;
+
+    case MEDIA_TRACK_MANAGER_SUBTITLES:
+      t = EVENT_SELECT_SUBTITLE_TRACK;
+      break;
+
+    default:
+      return;
+    }
+
+    event_t *e = event_create_select_track(best->mt_url, t, 0);
+    mp_enqueue_event_locked(mtm->mtm_mp, e);
+    event_release(e);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+mt_set_url(void *opaque, const char *str)
+{
+  media_track_t *mt = opaque;
+  mystrset(&mt->mt_url, str);
+  mtm_rethink(mt->mt_mtm);
+}
+
+
+/**
+ *
+ */
+static void
+mt_set_isolang(void *opaque, const char *str)
+{
+  media_track_t *mt = opaque;
+
+  switch(mt->mt_mtm->mtm_type) {
+  case MEDIA_TRACK_MANAGER_AUDIO:
+    mt->mt_score = str ? i18n_audio_score(str) : 0;
+    break;
+  case MEDIA_TRACK_MANAGER_SUBTITLES:
+    mt->mt_score = str ? i18n_subtitle_score(str) : 0;
+    break;
+  default:
+    mt->mt_score = 0;
+    break;
+  }
+  mtm_rethink(mt->mt_mtm);
+}
+
+
+/**
+ *
+ */
+static void
+mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
+{
+  media_track_t *mt = calloc(1, sizeof(media_track_t));
+
+  prop_tag_set(root, mtm, mt);
+  mt->mt_mtm = mtm;
+  mt->mt_root = root;
+  mt->mt_score = -1;
+
+  if(before) {
+    TAILQ_INSERT_BEFORE(before, mt, mt_link);
+  } else {
+    TAILQ_INSERT_TAIL(&mtm->mtm_tracks, mt, mt_link);
+  }
+
+  mt->mt_sub_url =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "url"),
+		   PROP_TAG_CALLBACK_STRING, mt_set_url, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
+
+  mt->mt_sub_isolang =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "isolang"),
+		   PROP_TAG_CALLBACK_STRING, mt_set_isolang, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
+}
+
+
+/**
+ *
+ */
+static void
+mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
+{
+  if(mtm->mtm_suggested_track == mt)
+    mtm->mtm_suggested_track = NULL;
+
+  TAILQ_REMOVE(&mtm->mtm_tracks, mt, mt_link);
+  prop_unsubscribe(mt->mt_sub_url);
+  prop_unsubscribe(mt->mt_sub_isolang);
+  free(mt->mt_url);
+  free(mt);
+}
+
+
+/**
+ *
+ */
+static void
+mtm_clear(media_track_mgr_t *mtm)
+{
+  media_track_t *mt;
+  while((mt = TAILQ_FIRST(&mtm->mtm_tracks)) != NULL) {
+    prop_tag_clear(mt->mt_root, mtm);
+    mt_destroy(mtm, mt);
+  }
+}
+
+
+/**
+ * Callback for tracking changes to the tracks
+ */
+static void
+mtm_update_tracks(void *opaque, prop_event_t event, ...)
+{
+  media_track_mgr_t *mtm = opaque;
+  prop_t *p1, *p2;
+
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+
+  case PROP_ADD_CHILD:
+    mtm_add_track(mtm, va_arg(ap, prop_t *), NULL);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    mtm_add_track(mtm, p1, prop_tag_get(p2, mtm));
+    break;
+
+  case PROP_DEL_CHILD:
+    mt_destroy(mtm, prop_tag_clear(va_arg(ap, prop_t *), mtm));
+    mtm_rethink(mtm);
+    break;
+
+  case PROP_MOVE_CHILD:
+    // NOP
+    break;
+    
+  case PROP_SET_DIR:
+    break;
+
+  case PROP_SET_VOID:
+    mtm_clear(mtm);
+    break;
+
+  default:
+    abort();
+  }
+}
+
+
+/**
+ *
+ */
+static void
+track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
+	       int type)
+{
+  TAILQ_INIT(&mtm->mtm_tracks);
+  mtm->mtm_mp = mp;
+  mtm->mtm_type = type;
+
+  mtm->mtm_sub =
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK, mtm_update_tracks, mtm,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, root,
+		   NULL);
+}
+
+
+/**
+ *
+ */
+static void
+track_mgr_destroy(media_track_mgr_t *mtm)
+{
+  prop_unsubscribe(mtm->mtm_sub);
+  mtm_clear(mtm);
 }

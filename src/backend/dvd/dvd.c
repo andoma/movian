@@ -477,10 +477,17 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
 static void
 dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
-  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off");
-  mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto");
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "spu:off");
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "spu:auto");
+  prop_destroy_childs(mp->mp_prop_audio_tracks);
+  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off",
+	       NULL, NULL, NULL, "DVD");
+  mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto",
+	       NULL, NULL, NULL, "DVD");
+
+  prop_destroy_childs(mp->mp_prop_subtitle_tracks);
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off",
+	       NULL, NULL, NULL, "DVD");
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "sub:auto",
+	       NULL, NULL, NULL, "DVD");
 }
 
 
@@ -518,7 +525,7 @@ dvd_set_spu_stream(dvd_player_t *dp, const char *id)
     int idx = atoi(id);
     dp->dp_spu_track = idx;
   }
-  prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "spu:%s", id);
+  prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "sub:%s", id);
 }
 
 
@@ -608,7 +615,7 @@ dvd_update_streams(dvd_player_t *dp)
       }
 
       prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
-      prop_set_stringf(prop_create(p, "id"), "spu:%d", i);
+      prop_set_stringf(prop_create(p, "id"), "sub:%d", i);
       before = p;
     }
   }
@@ -840,14 +847,17 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
      event_is_type(e, EVENT_PLAY_URL))
     return e;
 
-  if(event_is_type(e, EVENT_SELECT_TRACK)) {
+  if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
     event_select_track_t *est = (event_select_track_t *)e;
     
     if(!strncmp(est->id, "audio:", strlen("audio:")))
       dvd_set_audio_stream(dp, est->id + strlen("audio:"));
-    else if(!strncmp(est->id, "spu:", strlen("spu:")))
-      dvd_set_spu_stream(dp, est->id + strlen("spu:"));
 
+  } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
+    event_select_track_t *est = (event_select_track_t *)e;
+
+    if(!strncmp(est->id, "sub:", strlen("sub:")))
+      dvd_set_spu_stream(dp, est->id + strlen("sub:"));
 
   } else if(!dvd_in_menu(dp) && 
      (event_is_action(e, ACTION_PLAYPAUSE) ||

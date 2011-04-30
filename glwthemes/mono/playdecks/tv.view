@@ -37,30 +37,16 @@ widget(container_x, {
 	.filterConstraintX = true;
 	.spacing = 10;
 
-/*
-	widget(container_y, {
-	  widget(label, {
-	    .hidden = select($global.media.current.metadata.current.title, false, true);
-	    .caption = "Now:";
-	  });
-	  widget(label, {
-	  .hidden = select($global.media.current.metadata.next.title, false, true);
-
-	    .caption = "Next:";
-	  });
-	});
-*/
-
 	widget(container_y, {
 	  .filterConstraintX = true;
 	  widget(label, {
 	    .autohide = true;
-	    .caption = $global.media.current.metadata.current.title;
+	    .caption = $global.media.current.metadata.events.current.title;
 	  });
 
 	  widget(label, {
 	    .autohide = true;
-	    .caption = $global.media.current.metadata.next.title;
+	    .caption = $global.media.current.metadata.events.next.title;
 	  });
 	});
 
@@ -69,18 +55,18 @@ widget(container_x, {
 
 	widget(container_y, {
 	  widget(label, {
-	    .hidden = select($global.media.current.metadata.current.title, false, true);
+	    .hidden = select($global.media.current.metadata.events.current.title, false, true);
 	    .caption =
-	      strftime($global.media.current.metadata.current.start, "%H:%M") + " - " + 
-	      strftime($global.media.current.metadata.current.stop, "%H:%M");
+	      strftime($global.media.current.metadata.events.current.start, "%H:%M") + " - " + 
+	      strftime($global.media.current.metadata.events.current.stop, "%H:%M");
 	    .align = right;
 	  });
 
 	  widget(label, {
-	    .hidden = select($global.media.current.metadata.next.title, false, true);
+	    .hidden = select($global.media.current.metadata.events.next.title, false, true);
 	    .caption =
-	      strftime($global.media.current.metadata.next.start, "%H:%M") + " - " + 
-	      strftime($global.media.current.metadata.next.stop, "%H:%M");
+	      strftime($global.media.current.metadata.events.next.start, "%H:%M") + " - " + 
+	      strftime($global.media.current.metadata.events.next.stop, "%H:%M");
 	    .align = right;
 	  });
 	});

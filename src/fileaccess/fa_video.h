@@ -20,11 +20,9 @@
 #define FA_VIDEO_H
 
 #include "media.h"
-struct play_video_subtitle_list;
 
 event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
 			   int flags, int priority,
-			   struct play_video_subtitle_list *subtitles,
 			   char *errbuf, size_t errlen);
 
 #endif /* FA_VIDEO_H */

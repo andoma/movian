@@ -43,6 +43,7 @@ typedef struct event_ts {
 TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
+TAILQ_HEAD(media_track_queue, media_track);
 
 /**
  *
@@ -170,6 +171,27 @@ typedef struct media_queue {
 /**
  * Media pipe
  */
+typedef struct media_track_mgr {
+
+  prop_sub_t *mtm_sub;
+  struct media_track_queue mtm_tracks;
+  struct media_track *mtm_suggested_track;
+  struct media_pipe *mtm_mp;
+
+  enum {
+    MEDIA_TRACK_MANAGER_AUDIO,
+    MEDIA_TRACK_MANAGER_SUBTITLES,
+  } mtm_type;
+
+  int mtm_user_set; /* If set by user, and if so, we should not suggest
+		       anything */
+
+} media_track_mgr_t;
+
+
+/**
+ * Media pipe
+ */
 typedef struct media_pipe {
   int mp_refcount;
 
@@ -249,6 +271,9 @@ typedef struct media_pipe {
   int64_t mp_current_time;
 
   struct vdpau_dev *mp_vdpau_dev;
+
+  media_track_mgr_t mp_audio_track_mgr;
+  media_track_mgr_t mp_subtitle_track_mgr;
 
 } media_pipe_t;
 
@@ -359,12 +384,14 @@ void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 
-void mp_add_track(prop_t *tracks, const char *title, const char *id);
+void mp_add_track(prop_t *parent,
+		  const char *title,
+		  const char *url,
+		  const char *format,
+		  const char *longformat,
+		  const char *isolang,
+		  const char *source);
 
-void mp_add_track_off(prop_t *tracks, const char *id);
-
-struct play_video_subtitle_list;
-void mp_add_tracks_from_subtitle_list(prop_t *tracks,
-				      struct play_video_subtitle_list *list);
+void mp_add_track_off(prop_t *tracks, const char *title);
 
 #endif /* MEDIA_H */

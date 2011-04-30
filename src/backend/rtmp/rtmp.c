@@ -27,7 +27,7 @@
 #include "video/subtitles.h"
 #include "i18n.h"
 #include "misc/isolang.h"
-#include "video/subtitles.h"
+#include "video/video_playback.h"
 
 typedef struct {
 
@@ -58,6 +58,7 @@ typedef struct {
   subtitles_t *sub;
   int64_t subpts;
   int64_t lastsubpts;
+  int manual_sub_selected;
 
 } rtmp_t;
 
@@ -264,14 +265,24 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
-  } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
+  } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
     event_select_track_t *est = (event_select_track_t *)e;
-    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 
-    if(r->sub != NULL)
-      subtitles_destroy(r->sub);
-    
-    r->sub = subtitles_load(est->id);
+    if(est->manual >= r->manual_sub_selected) {
+      r->manual_sub_selected = est->manual;
+
+      prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
+
+      if(r->sub != NULL)
+	subtitles_destroy(r->sub);
+      
+      if(!strcmp(est->id, "sub:off")) {
+	r->sub = NULL;
+      } else {
+	r->sub = subtitles_load(est->id);
+      }
+    }
+
   }
   event_release(e);
   return NULL;
@@ -468,7 +479,8 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
   if(r->acodec == NULL) {
     AVCodecContext *ctx;
     int parse = 0;
-    
+    const char *fmt;
+
     switch(id) {
       
     case CODEC_ID_AAC:
@@ -479,16 +491,28 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(ctx->extradata, data, size);
       ctx->extradata_size =  size;
+      fmt = "AAC";
       break;
 
     case CODEC_ID_MP3:
       ctx = avcodec_alloc_context();
       parse = 1;
+      fmt = "MP3";
       break;
 
     default:
       abort();
     }
+
+    mp_add_track(mp->mp_prop_audio_tracks,
+		 "Audio",
+		 "rtmp:1",
+		 fmt,
+		 fmt,
+		 NULL, 
+		 "Embedded");
+
+    prop_set_string(mp->mp_prop_audio_track_current, "rtmp:1");
 
     r->acodec = media_codec_create(id, parse, NULL, ctx, NULL, mp);
     return NULL;
@@ -696,46 +720,9 @@ rtmp_free(rtmp_t *r)
 /**
  *
  */
-static const char *
-rtmp_init_subtitles(media_pipe_t *mp,
-		    struct play_video_subtitle_list *list)
-{
-
-  play_video_subtitle_t *pvs;
-  char track[20];
-  int i = 0, s;
-  const char *lang, *ret = NULL;
-  int best_subtitle_score = 0;
-
-  mp_add_track_off(mp->mp_prop_subtitle_tracks, "off");
-
-  LIST_FOREACH(pvs, list, pvs_link) {
-    i++;
-    if(pvs->pvs_language) {
-      s = i18n_subtitle_score(pvs->pvs_language);
-      if(s > best_subtitle_score) {
-	ret = pvs->pvs_url;
-	best_subtitle_score = s;
-      }
-
-      lang = isolang_iso2lang(pvs->pvs_language);
-    } else {
-      snprintf(track, sizeof(track), "Track #%d", i);
-      lang = track;
-    }
-    mp_add_track(mp->mp_prop_subtitle_tracks, lang, pvs->pvs_url);
-  }
-  return ret;
-}
-
-
-/**
- *
- */
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
-	       struct play_video_subtitle_list *subtitles,
 	       char *errbuf, size_t errlen)
 {
   rtmp_t r = {0};
@@ -765,12 +752,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
     rtmp_free(&r);
     return NULL;
-  }
-
-  if(subtitles != NULL) {
-    const char *suburl = rtmp_init_subtitles(mp, subtitles);
-    r.sub = suburl ? subtitles_load(suburl) : NULL;
-    prop_set_string(mp->mp_prop_subtitle_track_current, suburl ?: "off");
   }
 
   mp->mp_audio.mq_stream = 0;

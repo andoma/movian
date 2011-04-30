@@ -63,7 +63,7 @@ typedef struct metadata_stream {
   int ms_streamindex;
 
   rstr_t *ms_info;
-  rstr_t *ms_language;
+  rstr_t *ms_isolang;
 
   AVCodec *ms_codec;
   enum AVMediaType ms_type;
@@ -115,7 +115,7 @@ metadata_clean(metadata_t *md)
   while((ms = TAILQ_FIRST(&md->md_streams)) != NULL) {
     TAILQ_REMOVE(&md->md_streams, ms, ms_link);
     rstr_release(ms->ms_info);
-    rstr_release(ms->ms_language);
+    rstr_release(ms->ms_isolang);
     free(ms);
   }
 }
@@ -126,11 +126,11 @@ metadata_clean(metadata_t *md)
  */
 static void
 metadata_add_stream(metadata_t *md, AVCodec *codec, enum AVMediaType type,
-		    int streamindex, const char *info, const char *language)
+		    int streamindex, const char *info, const char *isolang)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
   ms->ms_info = rstr_alloc(info);
-  ms->ms_language = rstr_alloc(language);
+  ms->ms_isolang = rstr_alloc(isolang);
 
   ms->ms_codec = codec;
   ms->ms_type = type;
@@ -175,40 +175,17 @@ codecname(AVCodec *codec)
 static void
 metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 {
-  prop_t *p, *r = prop_create_check(parent, NULL);
-  if(r == NULL)
-    return;
+  char url[16];
 
+  snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
 
-  if((p = prop_create_check(r, "id")) != NULL) {
-    prop_set_int(p, ms->ms_streamindex);
-    prop_ref_dec(p);
-  }
-
-  if(ms->ms_codec != NULL && (p = prop_create_check(r, "format")) != NULL) {
-    prop_set_string(p, codecname(ms->ms_codec));
-    prop_ref_dec(p);
-  }
-
-  if((p = prop_create_check(r, "longformat")) != NULL) {
-    prop_set_rstring(p, ms->ms_info);
-    prop_ref_dec(p);
-  }
-
-  if(ms->ms_language && (p = prop_create_check(r, "language")) != NULL) {
-    prop_set_rstring(p, ms->ms_language);
-    prop_ref_dec(p);
-  }
-
-  if((p = prop_create_check(r, "title")) != NULL) {
-    if(ms->ms_language)
-      prop_set_rstring(p, ms->ms_language);
-    else
-      prop_set_stringf(p, "Stream %d", ms->ms_streamindex);
-    prop_ref_dec(p);
-  }
-
-  prop_ref_dec(r);
+  mp_add_track(parent,
+	       NULL,
+	       url,
+	       ms->ms_codec ? codecname(ms->ms_codec) : NULL,
+	       rstr_get(ms->ms_info),
+	       rstr_get(ms->ms_isolang),
+	       "Embedded");
 }
 
 
@@ -626,7 +603,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     AVCodecContext *avctx = stream->codec;
     AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
     AVMetadataTag *tag;
-    const char *lang;
 
     switch(avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
@@ -663,14 +639,11 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 
     
 
-    if((tag = av_metadata_get(stream->metadata, "language", NULL,
-			      AV_METADATA_IGNORE_SUFFIX)) != NULL) {
-      lang = isolang_iso2lang(tag->value) ?: tag->value;
-    } else {
-      lang = NULL;
-    }
+    tag = av_metadata_get(stream->metadata, "language", NULL,
+			  AV_METADATA_IGNORE_SUFFIX);
 
-    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1, lang);
+    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1,
+			tag ? tag->value : NULL);
   }
   
   md->md_type = CONTENT_FILE;

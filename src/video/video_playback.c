@@ -44,7 +44,6 @@ play_videoparams(const char *json, struct media_pipe *mp,
 {
   htsmsg_t *m = htsmsg_json_deserialize(json);
   htsmsg_t *subs, *sources;
-  struct play_video_subtitle_list subtitles;
   const char *str;
   htsmsg_field_t *f;
   int nsources = 0, i;
@@ -101,34 +100,27 @@ play_videoparams(const char *json, struct media_pipe *mp,
 
   // Subtitles
 
-  LIST_INIT(&subtitles);
   if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
-    play_video_subtitle_t *prev = NULL, *s;
     HTSMSG_FOREACH(f, subs) {
       htsmsg_t *sub = &f->hmf_msg;
+      const char *url = htsmsg_get_str(sub, "url");
+      const char *lang = htsmsg_get_str(sub, "language");
+      const char *source = htsmsg_get_str(sub, "source");
 
-      if((str = htsmsg_get_str(sub, "url")) == NULL)
-	continue;
-
-      s = calloc(1, sizeof(play_video_subtitle_t));
-      s->pvs_url = strdup(str);
-
-      if((str = htsmsg_get_str(sub, "language")) != NULL)
-	s->pvs_language = strdup(str);
-
-      if(prev == NULL)
-	LIST_INSERT_HEAD(&subtitles, s, pvs_link);
-      else
-	LIST_INSERT_AFTER(prev, s, pvs_link);
-      prev = s;
+      mp_add_track(mp->mp_prop_subtitle_tracks, NULL, url, 
+		   NULL, NULL, lang, source);
     }
   }
 
+  // Check if we should disable filesystem scanning of related files (subtitles)
+
+  if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
+    flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
   vs = vsvec;
   
-  return backend_play_video(vs->vs_url, mp, flags, priority,
-			    &subtitles, errbuf, sizeof(errbuf));
+  return backend_play_video(vs->vs_url, mp, flags, priority, 
+			    errbuf, sizeof(errbuf));
 }
 
 
@@ -166,7 +158,7 @@ video_player_idle(void *aux)
 				errbuf, sizeof(errbuf));
       } else {
 	next = backend_play_video(ep->url, mp, flags, ep->priority,
-				  NULL, errbuf, sizeof(errbuf));
+				  errbuf, sizeof(errbuf));
       }
 
       if(next == NULL) {

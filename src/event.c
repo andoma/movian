@@ -294,11 +294,11 @@ event_select_track_dtor(event_t *e)
  *
  */
 event_t *
-event_create_select_track(const char *id)
+event_create_select_track(const char *id, event_type_t type, int manual)
 {
-  event_select_track_t *e = event_create(EVENT_SELECT_TRACK,
-					 sizeof(event_select_track_t));
+  event_select_track_t *e = event_create(type, sizeof(event_select_track_t));
   e->id = strdup(id);
+  e->manual = manual;
   e->h.e_dtor = event_select_track_dtor;
   return &e->h;
 }
@@ -456,7 +456,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_REPEAT) ||
 	    event_is_action(e, ACTION_NEXT_CHANNEL) ||
 	    event_is_action(e, ACTION_PREV_CHANNEL) ||
-	    event_is_type(e, EVENT_SELECT_TRACK)
+	    event_is_type(e, EVENT_SELECT_AUDIO_TRACK) || 
+	    event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 	    ) {
 
     event_to_prop(prop_get_by_name(PNVEC("global", "media", "eventsink"),

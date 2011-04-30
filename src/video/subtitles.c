@@ -209,7 +209,7 @@ is_srt(const char *buf, size_t len)
  *
  */
 static subtitles_t *
-load_srt(const char *path, const char *buf, size_t len, int force_utf8)
+load_srt(const char *url, const char *buf, size_t len, int force_utf8)
 {
   int n;
   size_t tlen;
@@ -225,7 +225,7 @@ load_srt(const char *path, const char *buf, size_t len, int force_utf8)
   } else {
     TRACE(TRACE_INFO, "Subtitles",
 	  "%s is not valid UTF-8. Decoding it as %s",
-	  path, i18n_get_charset_name(i18n_get_srt_charset()));
+	  url, i18n_get_charset_name(i18n_get_srt_charset()));
     tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
     linereader_init(&lr, tmp, strlen(tmp));
   }
@@ -262,6 +262,9 @@ load_srt(const char *path, const char *buf, size_t len, int force_utf8)
       break;
   }
   free(tmp);
+  TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s as SRT, %d pages", url,
+	s->s_entries.entries);
+
   return s;
 }
 
@@ -307,7 +310,7 @@ ttml_time_expression(const char *str)
  * TTML docs here: http://www.w3.org/TR/ttaf1-dfxp/
  */
 static subtitles_t *
-load_ttml(char **buf, size_t len)
+load_ttml(const char *url, char **buf, size_t len)
 {
   char errbuf[256];
   htsmsg_t *xml = htsmsg_xml_deserialize(*buf, errbuf, sizeof(errbuf));
@@ -357,6 +360,9 @@ load_ttml(char **buf, size_t len)
       se_insert(s, strdup(txt), start, end);
     }
   }
+  TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s as TTML, %d pages", url,
+	s->s_entries.entries);
+
   return s;
 }
 
@@ -385,7 +391,7 @@ subtitles_create(const char *path, char **bufp, size_t len)
   subtitles_t *s = NULL;
 
   if(is_ttml(*bufp, len)) {
-    s = load_ttml(bufp, len);
+    s = load_ttml(path, bufp, len);
   } else {
 
     int force_utf8 = 0;

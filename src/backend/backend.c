@@ -81,7 +81,6 @@ backend_fini(void)
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   int flags, int priority,
-		   struct play_video_subtitle_list *subtitles,
 		   char *errbuf, size_t errlen)
 {
   backend_t *nb = backend_canhandle(url);
@@ -91,7 +90,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  return nb->be_play_video(url, mp, flags, priority, subtitles, errbuf, errlen);
+  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen);
 }
 
 

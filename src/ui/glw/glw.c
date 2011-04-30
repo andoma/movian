@@ -1680,7 +1680,10 @@ glw_dispatch_event(uii_t *uii, event_t *e)
        event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE) ||
        event_is_action(e, ACTION_POWER_OFF) ||
        event_is_action(e, ACTION_STANDBY) ||
-       event_is_type(e, EVENT_SELECT_TRACK))) {
+       event_is_type(e, EVENT_SELECT_AUDIO_TRACK) ||
+       event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
+
+     )) {
     
     if(glw_kill_screensaver(gr)) {
       glw_unlock(gr);

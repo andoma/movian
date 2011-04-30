@@ -34,7 +34,6 @@
 #include "fa_probe.h"
 #include "fileaccess.h"
 #include "fa_libav.h"
-#include "i18n.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
 #include "video/subtitles.h"
@@ -50,7 +49,7 @@ static event_t *playlist_play(fa_handle_t *fh,media_pipe_t *mp, int primary,
  *
  */
 static void
-scan_subtitles(prop_t *prop, const char *url)
+scan_srt(prop_t *prop, const char *url)
 {
   char parent[URL_MAX];
   char *base, *s, *postfix;
@@ -86,12 +85,12 @@ scan_subtitles(prop_t *prop, const char *url)
       lang = isolang_iso2lang(postfix);
     } else {
       s = postfix;
-      lang = "Subtitles";
+      lang = NULL;
     }
 
     if(strcasecmp(s, "srt"))
       continue;
-    mp_add_track(prop, lang, fde->fde_url);
+    mp_add_track(prop, NULL, fde->fde_url, "SRT", NULL, lang, "SRT File");
   }
   fa_dir_free(fd);
 }
@@ -433,13 +432,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
 
-    } else if(event_is_type(e, EVENT_SELECT_TRACK)) {
+    } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
-      const char *id = est->id;
-      TRACE(TRACE_DEBUG, "Playback", "Track %s selected", id);
 
-      if(!strcmp(id, "sub:off")) {
-	prop_set_string(mp->mp_prop_subtitle_track_current, id);
+      TRACE(TRACE_DEBUG, "Video", "Selecting subtitle track %s",
+	    est->id);
+
+      if(!strcmp(est->id, "sub:off")) {
+	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 	mp->mp_video.mq_stream2 = -1;
 
 	if(sub != NULL) {
@@ -447,38 +447,52 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	  sub = NULL;
 	}
 
-
-      } else if(!strcmp(id, "audio:off")) {
-	prop_set_string(mp->mp_prop_audio_track_current, id);
-	mp->mp_audio.mq_stream = -1;
-
-      } else if(id[0] >= '0' && id[0] <= '9') {
-	unsigned int idx = atoi(est->id);
+      } else if(!strncmp(est->id, "libav:", strlen("libav:"))) {
+	unsigned int idx = atoi(est->id + strlen("libav:"));
 	if(idx < fctx->nb_streams) {
 	  AVCodecContext *ctx = fctx->streams[idx]->codec;
-	  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-	    mp->mp_audio.mq_stream = idx;
-	    prop_set_int(mp->mp_prop_audio_track_current, idx);
-	  } else if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-
+	  if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+    
 	    if(sub != NULL) {
 	      subtitles_destroy(sub);
 	      sub = NULL;
 	    }
 
 	    mp->mp_video.mq_stream2 = idx;
-	    prop_set_int(mp->mp_prop_subtitle_track_current, idx);
+	    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 	  }
 	}
-      } else {
-	mp->mp_video.mq_stream2 = -1;
+      } else  {
 
+	mp->mp_video.mq_stream2 = -1;
 	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 
 	if(sub != NULL)
 	  subtitles_destroy(sub);
 
 	sub = subtitles_load(est->id);
+      }
+
+
+    } else if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
+      event_select_track_t *est = (event_select_track_t *)e;
+
+      TRACE(TRACE_DEBUG, "Video", "Selecting audio track %s",
+	    est->id);
+
+      if(!strcmp(est->id, "audio:off")) {
+	prop_set_string(mp->mp_prop_audio_track_current, est->id);
+	mp->mp_audio.mq_stream = -1;
+
+      } else if(!strncmp(est->id, "libav:", strlen("libav:"))) {
+	unsigned int idx = atoi(est->id + strlen("libav:"));
+	if(idx < fctx->nb_streams) {
+	  AVCodecContext *ctx = fctx->streams[idx]->codec;
+	  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+	    mp->mp_audio.mq_stream = idx;
+	    prop_set_string(mp->mp_prop_audio_track_current, est->id);
+	  }
+	}
       }
 
     } else if(event_is_type(e, EVENT_EXIT) ||
@@ -502,14 +516,13 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
-		  struct play_video_subtitle_list *subtitles,
 		  char *errbuf, size_t errlen)
 {
   AVFormatContext *fctx;
   AVIOContext *avio;
   AVCodecContext *ctx;
   media_format_t *fw;
-  int i, s;
+  int i;
   media_codec_t **cwvec;
   event_t *e;
   struct fa_stat fs;
@@ -519,8 +532,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   uint64_t hash;
   uint64_t fsize;
   int valid_hash = 0;
-  int best_audio_score = -1;
-  int best_subtitle_score = 0;
 
   if(fa_stat(url, &fs, errbuf, errlen))
     return NULL;
@@ -577,22 +588,20 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
-  // fctx->flags |= AVFMT_FLAG_GENPTS;
-
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
-
-  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
-  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
   /**
    * Update property metadata
    */
   fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, url);
 
+
+
   /**
    * Subtitles from filesystem
    */
-  scan_subtitles(mp->mp_prop_subtitle_tracks, url);
+  if(!(flags & BACKEND_VIDEO_NO_FS_SCAN))
+    scan_srt(mp->mp_prop_subtitle_tracks, url);
 
   /**
    * Query opensubtitles.org
@@ -612,18 +621,13 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   fw = media_format_create(fctx);
 
-  prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
 
   // Scan all streams and select defaults
 
   for(i = 0; i < fctx->nb_streams; i++) {
     media_codec_params_t mcp = {0};
-    AVMetadataTag *lang;
 
     ctx = fctx->streams[i]->codec;
-
-    lang = av_metadata_get(fctx->streams[i]->metadata, "language", NULL,
-			   AV_METADATA_IGNORE_SUFFIX);
 
     if(ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
       
@@ -641,26 +645,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       if(flags & BACKEND_VIDEO_NO_AUDIO)
 	continue;
 
-      s = lang ? i18n_audio_score(lang->value) : 0;
-
-      if(s > best_audio_score) {
-	mp->mp_audio.mq_stream = i;
-	best_audio_score = s;
-      }
-
       if(ctx->codec_id == CODEC_ID_DTS)
 	ctx->channels = 0;
     }
 
-    if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-      s = lang ? i18n_subtitle_score(lang->value) : 0;
-
-      if(s > best_subtitle_score) {
-	best_subtitle_score = s;
-	mp->mp_video.mq_stream2 = i;
-	prop_set_int(mp->mp_prop_subtitle_track_current, i);
-      }
-    }
     cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
   }
 
@@ -750,7 +738,7 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, NULL, errbuf, errlen);
+      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;
