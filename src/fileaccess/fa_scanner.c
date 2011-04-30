@@ -466,8 +466,6 @@ scanner(void *aux)
 {
   scanner_t *s = aux;
 
-  s->s_ref = fa_reference(s->s_url);
-  
   if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) != NULL) {
     doscan(s);
     fa_dir_free(s->s_fd);
@@ -540,6 +538,8 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
   s->s_loading = prop_ref_inc(prop_create(model, "loading"));
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
+
+  s->s_ref = fa_reference(s->s_url);
 
   hts_thread_create_detached("fa scanner", scanner, s, THREAD_PRIO_LOW);
 
