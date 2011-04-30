@@ -1963,7 +1963,7 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_queue_init(&q, 0);
 
-  htsbuf_qprintf(&q, "%s %s", method ?: postdata ? "POST": "GET", hf->hf_path);
+  htsbuf_qprintf(&q, "%s %s", method ?: postdata ? "POST": (result ? "GET" : "HEAD"), hf->hf_path);
 
   if(arguments != NULL) {
     char prefix = '?';
