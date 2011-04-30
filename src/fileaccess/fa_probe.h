@@ -28,7 +28,7 @@ struct metadata;
 unsigned int fa_probe(prop_t *proproot, const char *url,
 		      char *newurl, size_t newurlsize,
 		      char *errbuf, size_t errsize,
-		      struct fa_stat *fs);
+		      struct fa_stat *fs, int overwrite_title);
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 

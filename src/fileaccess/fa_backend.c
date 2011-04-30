@@ -149,7 +149,7 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
 
   meta = prop_create_root("metadata");
 
-  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs);
+  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs, 1);
 
   switch(r) {
   case CONTENT_ARCHIVE:

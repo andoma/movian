@@ -248,7 +248,7 @@ deep_analyzer(scanner_t *s)
     } else {
       fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
 			       buf, sizeof(buf),
-			       fde->fde_statdone ? &fde->fde_stat : NULL);
+			       fde->fde_statdone ? &fde->fde_stat : NULL, 1);
 
       if(fde->fde_type == CONTENT_UNKNOWN)
 	TRACE(TRACE_DEBUG, "BROWSE",
@@ -305,7 +305,7 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
       r = fa_probe_dir(metadata, fde->fde_url);
     } else {
       r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
-		   fde->fde_statdone ? &fde->fde_stat : NULL);
+		   fde->fde_statdone ? &fde->fde_stat : NULL, 1);
     }
     prop_ref_dec(metadata);
 

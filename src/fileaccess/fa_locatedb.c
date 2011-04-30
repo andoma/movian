@@ -273,7 +273,7 @@ fa_locate_searcher (fa_search_t *fas)
       ctype = CONTENT_DIR;
       prop_set_string(prop_create(metadata, "title"), basename(buf));
     } else
-      ctype = fa_probe(metadata, url, NULL, 0, NULL, 0, NULL);
+      ctype = fa_probe(metadata, url, NULL, 0, NULL, 0, NULL, 1);
 
     if (ctype == CONTENT_UNKNOWN)
       continue;

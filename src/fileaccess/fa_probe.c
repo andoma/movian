@@ -695,7 +695,8 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
  */
 static int
 fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot, 
-			char *newurl, size_t newurlsize)
+			char *newurl, size_t newurlsize,
+			int overwrite_title)
 {
   metadata_stream_t *ms;
   prop_t *p;
@@ -704,7 +705,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
     av_strlcpy(newurl, md->md_redirect, newurlsize);
 
   if(md->md_title && (p = prop_create_check(proproot, "title")) != NULL) {
-    prop_set_rstring_ex(p, NULL, md->md_title, 1);
+    prop_set_rstring_ex(p, NULL, md->md_title, !overwrite_title);
     prop_ref_dec(p);
   }
 
@@ -787,7 +788,7 @@ fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot,
  */
 unsigned int
 fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
-	 char *errbuf, size_t errsize, struct fa_stat *fs)
+	 char *errbuf, size_t errsize, struct fa_stat *fs, int overwrite_title)
 {
   struct fa_stat fs0;
   unsigned int hash, r;
@@ -831,7 +832,8 @@ fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
     }
   }
 
-  r = fa_probe_set_from_cache(md, proproot, newurl, newurlsize);
+  r = fa_probe_set_from_cache(md, proproot, newurl, newurlsize,
+			      overwrite_title);
 
   hts_mutex_unlock(&metadata_mutex);
   return r;
@@ -848,7 +850,7 @@ fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url)
   TAILQ_INIT(&md.md_streams);
 
   fa_lavf_load_meta(&md, fctx, url);
-  fa_probe_set_from_cache(&md, p, NULL, 0);
+  fa_probe_set_from_cache(&md, p, NULL, 0, 0);
   metadata_clean(&md);
 }
 
