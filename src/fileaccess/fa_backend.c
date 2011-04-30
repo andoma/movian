@@ -67,24 +67,31 @@ file_open_dir(prop_t *page, const char *url)
   prop_t *model;
   int type;
   char parent[URL_MAX];
+  int r;
+  fa_handle_t *ref;
 
+  ref = fa_reference(url);
   type = fa_probe_dir(NULL, url);
+  if(type == CONTENT_DVD) {
+    r =  backend_open_video(page, url);
+  } else {
 
-  if(type == CONTENT_DVD)
-    return backend_open_video(page, url);
+    model = prop_create(page, "model");
+    prop_set_string(prop_create(model, "type"), "directory");
 
-  model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
+    /* Find a meaningful page title (last component of URL) */
+    set_title_from_url(prop_create(model, "metadata"), url);
 
-  /* Find a meaningful page title (last component of URL) */
-  set_title_from_url(prop_create(model, "metadata"), url);
+    // Set parent
+    if(!fa_parent(parent, sizeof(parent), url))
+      prop_set_string(prop_create(page, "parent"), parent);
 
-  // Set parent
-  if(!fa_parent(parent, sizeof(parent), url))
-    prop_set_string(prop_create(page, "parent"), parent);
+    fa_scanner(url, model, NULL);
+    r = 0;
+  }
+  fa_unreference(ref);
 
-  fa_scanner(url, model, NULL);
-  return 0;
+  return r;
 }
 
 
@@ -144,14 +151,14 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
 {
   char redir[URL_MAX];
   char errbuf[200];
-  int r;
+  int c;
   prop_t *meta;
 
   meta = prop_create_root("metadata");
 
-  r = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs, 1);
+  c = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs, 1);
 
-  switch(r) {
+  switch(c) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
