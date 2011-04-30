@@ -32,7 +32,7 @@ unsigned int fa_probe(prop_t *proproot, const char *url,
 
 unsigned int fa_probe_dir(prop_t *proproot, const char *url);
 
-int fa_probe_iso(struct metadata *md, fa_handle_t *fh);
+int fa_probe_iso(struct metadata *md, AVIOContext *avio);
 
 void fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url);
 

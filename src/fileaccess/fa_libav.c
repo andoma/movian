@@ -38,6 +38,7 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
   fa_handle_t *fh = opaque;
   if(whence == AVSEEK_SIZE)
     return fa_fsize(fh);
+
   return fa_seek(fh, offset, whence & ~AVSEEK_FORCE);
 }
 
@@ -46,8 +47,13 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
  *
  */
 AVIOContext *
-fa_libav_reopen(fa_handle_t *fh, int buf_size)
+fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen)
 {
+  fa_handle_t *fh;
+
+  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+    return NULL;
+
   if(buf_size == 0)
     buf_size = 32768;
   void *buf = malloc(buf_size);
@@ -130,4 +136,29 @@ fa_libav_close_format(AVFormatContext *fctx)
   AVIOContext *avio = fctx->pb;
   av_close_input_stream(fctx);
   fa_libav_close(avio);
+}
+
+
+/**
+ *
+ */
+uint8_t *
+fa_libav_load_and_close(AVIOContext *avio, size_t *sizep)
+{
+  size_t r, size = avio_size(avio);
+  uint8_t *mem = malloc(size+1);
+
+  avio_seek(avio, 0, SEEK_SET);
+  r = avio_read(avio, mem, size);
+  fa_libav_close(avio);
+
+  if(r != size) {
+    free(mem);
+    return NULL;
+  }
+
+  if(sizep != NULL)
+    *sizep = size;
+  mem[size] = 0; 
+  return mem;
 }

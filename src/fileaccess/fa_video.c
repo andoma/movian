@@ -42,7 +42,7 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 
-static event_t *playlist_play(fa_handle_t *fh,media_pipe_t *mp, int primary,
+static event_t *playlist_play(AVIOContext *avio, media_pipe_t *mp, int primary,
 			      int flags, char *errbuf, size_t errlen);
 
 /**
@@ -526,8 +526,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   media_codec_t **cwvec;
   event_t *e;
   struct fa_stat fs;
-  fa_handle_t *fh;
-  char buf[64];
+  uint8_t buf[64];
 
   uint64_t hash;
   uint64_t fsize;
@@ -552,20 +551,18 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Check file type
    */
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+  if((avio = fa_libav_open(url, 65536, errbuf, errlen)) == NULL)
     return NULL;
 
-  if(fa_read(fh, buf, sizeof(buf)) == sizeof(buf)) {
+  if(avio_read(avio, buf, sizeof(buf)) == sizeof(buf)) {
     if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
-      e = playlist_play(fh, mp, flags, priority, errbuf, errlen);
-      fa_close(fh);
-      return e;
+      return playlist_play(avio, mp, flags, priority, errbuf, errlen);
     }
   }
 
 
-  if(fa_probe_iso(NULL, fh) == 0) {
-    fa_close(fh);
+  if(fa_probe_iso(NULL, avio) == 0) {
+    fa_libav_close(avio);
   isdvd:
 #if ENABLE_DVD
     return dvd_play(url, mp, errbuf, errlen, 1);
@@ -576,12 +573,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
 
-  valid_hash = !opensub_compute_hash(fh, &hash);
-  fsize = fa_fsize(fh);
-  fa_seek(fh, 0, SEEK_SET);
-
-  
-  avio = fa_libav_reopen(fh, 65536);
+  valid_hash = !opensub_compute_hash(avio, &hash);
+  fsize = avio_size(avio);
+  avio_seek(avio, 0, SEEK_SET);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
     fa_libav_close(avio);
@@ -683,11 +677,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
  *
  */
 static event_t *
-playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
+playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
 	      int priority, char *errbuf, size_t errlen)
 {
-  size_t size;
-  char *mem;
+  void *mem;
   htsmsg_t *xml, *urls, *c;
   event_t *e;
   const char *s, *url;
@@ -695,16 +688,7 @@ playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
   htsmsg_field_t *f;
   int played_something;
 
-  fa_seek(fh, 0, SEEK_SET);
-
-  size = fa_fsize(fh);
-  mem = malloc(size + 1);
-  if(fa_read(fh, mem, size) != size) {
-    free(mem);
-    snprintf(errbuf, errlen, "Unable to read XML playlist");
-    return NULL;
-  }
-  mem[size] = 0;
+  mem = fa_libav_load_and_close(avio, NULL);
 
   if((xml = htsmsg_xml_deserialize(mem, errbuf, errlen)) == NULL)
     return NULL;

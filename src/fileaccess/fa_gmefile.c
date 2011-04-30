@@ -36,6 +36,7 @@
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "fa_audio.h"
+#include "fa_libav.h"
 #include "misc/string.h"
 #include "media.h"
 
@@ -192,32 +193,18 @@ deltaseek(media_pipe_t *mp, media_buf_t **mbp, Music_Emu *emu, int delta)
  *
  */
 static event_t *
-fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
+fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
 			 char *errbuf, size_t errlen, int hold, int track)
 {
   media_queue_t *mq = &mp->mp_audio;
   Music_Emu *emu;
   gme_err_t err;
-  char *buf;
   int lost_focus = 0;
-  size_t size, r;
   int sample_rate = 48000;
   media_buf_t *mb = NULL;
   event_t *e;
 
-  size = fa_fsize(fh);
-
-  buf = malloc(size);
-  r = fa_read(fh, buf, size);
-
-  if(r != size) {
-    snprintf(errbuf, errlen, "Unable to read file");
-    free(buf);
-    return NULL;
-  }
-
   err = gme_open_data(buf, size, &emu, sample_rate);
-  free(buf);
   if(err != NULL) {
     snprintf(errbuf, errlen, "Unable to load file -- %s", err);
     return NULL;
@@ -339,11 +326,21 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
  *
  */
 event_t *
-fa_gme_playfile(media_pipe_t *mp, void *fh,
+fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
 		char *errbuf, size_t errlen, int hold)
 {
-  return fa_gme_playfile_internal(mp, fh, errbuf, errlen, hold, 0);
+  uint8_t *mem;
+  size_t size;
+  event_t *e;
 
+  if((mem = fa_libav_load_and_close(avio, &size)) == NULL) {
+    snprintf(errbuf, errlen, "Unable to read data from file");
+    return NULL;
+  }
+
+  e = fa_gme_playfile_internal(mp, mem, size, errbuf, errlen, hold, 0);
+  free(mem);
+  return e;
 }
 
 /**
@@ -356,7 +353,8 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url, *p;
   int track;
-  void *fh;
+  void *mem;
+  struct fa_stat fs;
 
   url0 += strlen("gmeplayer:");
 
@@ -370,13 +368,13 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   track = atoi(p) - 1;
 
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+  if((mem = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
     return NULL;
 
-  e = fa_gme_playfile_internal(mp, fh, errbuf, errlen, hold, track);
-  fa_close(fh);
+  e = fa_gme_playfile_internal(mp, mem, fs.fs_size,
+			       errbuf, errlen, hold, track);
+  free(mem);
   return e;
-
 }
 
 

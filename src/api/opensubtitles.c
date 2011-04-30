@@ -319,31 +319,26 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
  * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
  */
 int
-opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp)
+opensub_compute_hash(AVIOContext *avio, uint64_t *hashp)
 {
   int i;
-  uint64_t *buf = malloc(65536);
-  uint64_t hash = fa_fsize(fh);
+  uint64_t n, hash, size = avio_size(avio);
+  
+  if(size < 65536)
+    return -1;
 
-  fa_seek(fh, 0, SEEK_SET);
+  hash = size;
 
-  if(fa_read(fh, buf, 65536) == 65536) {
+  n = avio_seek(avio, 0, SEEK_SET);
 
-    for(i = 0; i < 8192; i++)
-      hash += buf[i];
+  for(i = 0; i < 8192; i++)
+    hash += avio_rl64(avio);
 
-    fa_seek(fh, -65536, SEEK_END);
+  n = avio_seek(avio, size-65536, SEEK_SET);
 
-    if(fa_read(fh, buf, 65536) == 65536) {
+  for(i = 0; i < 8192; i++)
+    hash += avio_rl64(avio);
 
-      for(i = 0; i < 8192; i++)
-	hash += buf[i];
-
-      *hashp = hash;
-      free(buf);
-      return 0;
-    }
-  }
-  free(buf);
-  return -1;
+  *hashp = hash;
+  return 0;
 }

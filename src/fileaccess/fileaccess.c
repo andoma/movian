@@ -517,7 +517,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
   if(fap->fap_quickload != NULL) {
     data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
 
-    if(fs->fs_cache_age > 0)
+    if(fs != NULL && fs->fs_cache_age > 0)
       blobcache_put(url, "fa_quickload", data, fs->fs_size, fs->fs_cache_age);
 
     free(filename);

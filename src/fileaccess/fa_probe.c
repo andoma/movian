@@ -435,9 +435,9 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
  * of data starting 0x8000 of start of file
  */
 static int
-fa_probe_iso0(metadata_t *md, char *pb)
+fa_probe_iso0(metadata_t *md, uint8_t *pb)
 {
-  char *p;
+  uint8_t *p;
 
   if(memcmp(pb, isosig, 8))
     return -1;
@@ -449,7 +449,7 @@ fa_probe_iso0(metadata_t *md, char *pb)
   *p = 0;
 
   if(md != NULL) {
-    md->md_title = rstr_alloc(pb + 40);
+    md->md_title = rstr_alloc((const char *)pb + 40);
     md->md_type = CONTENT_DVD;
   }
   return 0;
@@ -462,14 +462,14 @@ fa_probe_iso0(metadata_t *md, char *pb)
  * pb is guaranteed to point at 64k of data
  */
 int
-fa_probe_iso(metadata_t *md, fa_handle_t *fh)
+fa_probe_iso(metadata_t *md, AVIOContext *avio)
 {
-  char pb[128];
+  uint8_t pb[128];
 
-  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
+  if(avio_seek(avio, 0x8000, SEEK_SET) != 0x8000)
     return -1;
 
-  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
+  if(avio_read(avio, pb, sizeof(pb)) != sizeof(pb))
     return -1;
   return fa_probe_iso0(md, pb);
 }
@@ -661,15 +661,11 @@ static int
 fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf, 
 		    size_t errsize, struct fa_stat *fs)
 {
-  fa_handle_t *fh;
   AVFormatContext *fctx;
   AVIOContext *avio;
 
-  if((fh = fa_open(url, errbuf, errsize)) == NULL)
+  if((avio = fa_libav_open(url, 32768, errbuf, errsize)) == NULL)
     return -1;
-
-  avio = fa_libav_reopen(fh, 32768);
-
 
 #if ENABLE_LIBGME
   if(gme_probe(md, url, avio))
