@@ -1610,6 +1610,7 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
     break;
     
   case PROP_SET_DIR:
+  case PROP_WANT_MORE_CHILDS:
     break;
 
   case PROP_SET_VOID:
