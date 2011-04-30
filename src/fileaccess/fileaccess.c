@@ -300,7 +300,7 @@ fa_findfile(const char *path, const char *file,
 /**
  *
  */
-void *
+fa_handle_t *
 fa_reference(const char *url)
 {
   fa_protocol_t *fap;
@@ -320,13 +320,10 @@ fa_reference(const char *url)
  *
  */
 void
-fa_unreference(void *fh_)
+fa_unreference(fa_handle_t *fh)
 {
-  fa_handle_t *fh = fh_;
-  if(fh_ == NULL)
-    return;
-
-  fh->fh_proto->fap_unreference(fh);
+  if(fh != NULL)
+    fh->fh_proto->fap_unreference(fh);
 }
 
 

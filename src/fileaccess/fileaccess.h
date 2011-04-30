@@ -133,8 +133,8 @@ int fa_findfile(const char *path, const char *file,
 
 int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 
-void *fa_reference(const char *url);
-void fa_unreference(void *fh);
+fa_handle_t *fa_reference(const char *url);
+void fa_unreference(fa_handle_t *fh);
 
 int fa_notify(const char *url, void *opaque,
 	      void (*change)(void *opaque,
