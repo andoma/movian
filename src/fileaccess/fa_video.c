@@ -45,55 +45,92 @@
 static event_t *playlist_play(AVIOContext *avio, media_pipe_t *mp, int primary,
 			      int flags, char *errbuf, size_t errlen);
 
+
+/**
+ *
+ */
+typedef struct fs_sub_scanner {
+  prop_t *p;
+  char *url;
+} fs_sub_scanner_t;
+
+
+
 /**
  *
  */
 static void
-scan_srt(prop_t *prop, const char *url)
+fs_sub_scan_dir(prop_t *prop, const char *url)
 {
   char parent[URL_MAX];
-  char *base, *s, *postfix;
-  size_t baselen;
+  char *postfix;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   char errbuf[256];
-  const char *lang;
 
-  base = mystrdupa(url);
-  s = strrchr(base, '.');
-  if(s == NULL)
-    return;
-  *s = 0;
-  baselen = strlen(base);
-
-  fa_parent(parent, sizeof(parent), url);
-  
-  if((fd = fa_scandir(parent, errbuf, sizeof(errbuf))) == NULL) {
+  if((fd = fa_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
 	  parent, errbuf);
     return;
   }
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(strncasecmp(fde->fde_url, base, baselen) || fde->fde_url[baselen] != '.')
-      continue;
-    postfix = mystrdupa(fde->fde_url + baselen + 1);
-    s = strchr(postfix, '.');
 
-    if(s != NULL) {
-      *s++ = 0;
-      lang = isolang_iso2lang(postfix);
-    } else {
-      s = postfix;
-      lang = NULL;
+    if(fde->fde_type == CONTENT_DIR && !strcasecmp(fde->fde_filename, "subs")) {
+      fs_sub_scan_dir(prop, fde->fde_url);
+      continue;
     }
 
-    if(strcasecmp(s, "srt"))
-      continue;
-    mp_add_track(prop, NULL, fde->fde_url, "SRT", NULL, lang, "SRT File");
+    postfix = strrchr(fde->fde_filename, '.');
+    if(postfix != NULL && !strcasecmp(postfix, ".srt")) {
+      const char *lang = NULL;
+      if(postfix - fde->fde_filename > 4 && postfix[-4] == '.') {
+	char b[4];
+	memcpy(b, postfix - 3, 3);
+	b[3] = 0;
+	lang = isolang_iso2lang(b);
+      }
+      mp_add_track(prop, NULL, fde->fde_url, "SRT", NULL, lang, "SRT File");
+    }
   }
   fa_dir_free(fd);
 }
+
+
+/**
+ *
+ */
+static void *
+fs_sub_scan_thread(void *aux)
+{
+  fs_sub_scanner_t *fss = aux;
+  char parent[URL_MAX];
+
+  fa_parent(parent, sizeof(parent), fss->url);
+
+  fs_sub_scan_dir(fss->p, parent);
+
+  prop_ref_dec(fss->p);
+  free(fss->url);
+  free(fss);
+  return NULL;
+}
+
+/**
+ *
+ */
+static void
+fs_sub_scan(prop_t *prop, const char *url)
+{
+  fs_sub_scanner_t *fss = malloc(sizeof(fs_sub_scanner_t));
+  fss->p = prop_ref_inc(prop);
+  fss->url = strdup(url);
+
+  hts_thread_create_detached("fs sub scan", fs_sub_scan_thread, fss,
+			     THREAD_PRIO_LOW);
+}
+
+
 
 
 /**
@@ -589,13 +626,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
    */
   fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, url);
 
-
-
   /**
    * Subtitles from filesystem
    */
   if(!(flags & BACKEND_VIDEO_NO_FS_SCAN))
-    scan_srt(mp->mp_prop_subtitle_tracks, url);
+    fs_sub_scan(mp->mp_prop_subtitle_tracks, url);
 
   /**
    * Query opensubtitles.org
