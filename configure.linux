@@ -237,7 +237,7 @@ fi
 #
 # libavutil
 #
-if pkg-config --atleast-version 50.0.0 libavutil; then
+if pkg-config --atleast-version 51.0.0 libavutil; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
     echo "Using libavutil:       `pkg-config --modversion libavutil`"
