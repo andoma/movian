@@ -218,10 +218,34 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
  *
  */
 static void
-deep_analyzer(scanner_t *s)
+deep_probe(fa_dir_entry_t *fde)
 {
   prop_t *metadata;
-  char buf[URL_MAX];
+
+  fde->fde_probestatus = FDE_PROBE_DEEP;
+
+  metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    
+  if(fde->fde_type == CONTENT_DIR) {
+    fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
+  } else if(fde->fde_type == CONTENT_FILE) {
+    fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
+			     NULL, 0,
+			     fde->fde_statdone ? &fde->fde_stat : NULL, 1);
+  }
+
+  set_type(fde->fde_prop, fde->fde_type);
+  prop_ref_dec(metadata);
+}
+
+
+
+/**
+ *
+ */
+static void
+deep_analyzer(scanner_t *s)
+{
   fa_dir_entry_t *fde;
 
   /* Empty */
@@ -236,26 +260,8 @@ deep_analyzer(scanner_t *s)
     if(s->s_stop)
       break;
 
-    if(fde->fde_probestatus == FDE_PROBE_DEEP)
-      continue;
-
-    fde->fde_probestatus = FDE_PROBE_DEEP;
-
-    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
-    
-    if(fde->fde_type == CONTENT_DIR) {
-      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
-    } else {
-      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
-			       buf, sizeof(buf),
-			       fde->fde_statdone ? &fde->fde_stat : NULL, 1);
-
-      if(fde->fde_type == CONTENT_UNKNOWN)
-	TRACE(TRACE_DEBUG, "BROWSE",
-	      "File \"%s\" not recognized: %s", fde->fde_url, buf);
-    }
-    prop_ref_dec(metadata);
-    set_type(fde->fde_prop, fde->fde_type);
+    if(fde->fde_probestatus != FDE_PROBE_DEEP)
+      deep_probe(fde);
   }
 }
 
@@ -291,31 +297,15 @@ scanner_checkstop(void *opaque)
 static void
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
 {
-  prop_t *metadata;
-  int r;
-
   if(fde->fde_type == CONTENT_FILE)
     fde->fde_type = type_from_filename(fde->fde_filename);
 
   make_prop(fde);
 
-  if(fde->fde_type != CONTENT_UNKNOWN) {
-    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
-    if(fde->fde_type == CONTENT_DIR) {
-      r = fa_probe_dir(metadata, fde->fde_url);
-    } else {
-      r = fa_probe(metadata, fde->fde_url, NULL, 0, NULL, 0,
-		   fde->fde_statdone ? &fde->fde_stat : NULL, 1);
-    }
-    prop_ref_dec(metadata);
+  deep_probe(fde);
 
-    set_type(fde->fde_prop, r);
-    fde->fde_type = r;
-  }
-
-  if(fde->fde_type != CONTENT_UNKNOWN)
-    if(!prop_set_parent(fde->fde_prop, s->s_nodes))
-      return; // OK
+  if(!prop_set_parent(fde->fde_prop, s->s_nodes))
+    return; // OK
   
   prop_destroy(fde->fde_prop);
   fde->fde_prop = NULL;
@@ -422,8 +412,7 @@ doscan(scanner_t *s)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
     make_prop(fde);
-    if(fde->fde_type != CONTENT_UNKNOWN)
-      pv = prop_vec_append(pv, fde->fde_prop);
+    pv = prop_vec_append(pv, fde->fde_prop);
   }
 
   prop_set_parent_vector(pv, s->s_nodes);
@@ -516,14 +505,20 @@ void
 fa_scanner(const char *url, prop_t *model, const char *playme)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
-
   prop_t *source = prop_create(model, "source");
 
+  struct prop_nf *pnf;
 
-  prop_nf_release(prop_nf_create(prop_create(model, "nodes"),
-				 source,
-				 prop_create(model, "filter"),
-				 "node.filename", PROP_NF_AUTODESTROY));
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       source,
+		       prop_create(model, "filter"),
+		       "node.filename", PROP_NF_AUTODESTROY);
+  
+  prop_nf_pred_str_add(pnf, "node.type",
+		       PROP_NF_CMP_EQ, "unknown", NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  prop_nf_release(pnf);
 
   prop_set_int(prop_create(model, "canFilter"), 1);
 
