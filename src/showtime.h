@@ -64,6 +64,7 @@ extern uint64_t arch_get_seed(void);
 static inline const char *content2type (int ctype) __attribute__((unused));
 static inline const char *content2type (int ctype) {
   static const char *types[CONTENT_MAX+1] = {
+    [CONTENT_UNKNOWN]  = "unknown",
     [CONTENT_DIR]      = "directory",
     [CONTENT_FILE]     = "file",
     [CONTENT_AUDIO]    = "audio",
