@@ -27,6 +27,7 @@
 #include "api/soap.h"
 #include "prop/prop_nodefilter.h"
 #include "upnp.h"
+#include "fileaccess/fileaccess.h"
 
 
 
@@ -62,11 +63,20 @@ static void
 item_set_duration(prop_t *meta, htsmsg_t *item)
 {
   const char *str;
+  htsmsg_field_t *f;
+  htsmsg_t *res;
   int h, m, s;
 
-  str = htsmsg_get_str_multi(item, "res", "attrib", "duration", NULL);
-  if(str != NULL && sscanf(str, "%d:%d:%d", &h, &m, &s) == 3)
-    prop_set_float(prop_create(meta, "duration"), h * 3600 + m * 60 + s);
+  HTSMSG_FOREACH(f, item) {
+    if((res = htsmsg_get_map_by_field_if_name(f, "res")) == NULL)
+      continue;
+    
+    str = htsmsg_get_str_multi(res, "attrib", "duration", NULL);
+    if(str != NULL && sscanf(str, "%d:%d:%d", &h, &m, &s) == 3) {
+      prop_set_float(prop_create(meta, "duration"), h * 3600 + m * 60 + s);
+      break;
+    }
+  }
 }
 
 
@@ -103,38 +113,18 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
  *
  */
 static void
-make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item, const char *url)
+make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
+	       const char *baseurl, const char *id)
 {
-  htsmsg_t *vp, *sources, *src;
-  char *str, *vpstr;
-  const char *title;
-  size_t len;
+  char url[URL_MAX];
 
-  title = htsmsg_get_str_multi(item, "http://purl.org/dc/elements/1.1/title",
-			       "cdata", NULL);
+  prop_set_string(prop_create(c, "type"), "video");
 
-  vp = htsmsg_create_map();
-  if(title)
-    htsmsg_add_str(vp, "title", title);
+  item_set_str(m, item, "title", "http://purl.org/dc/elements/1.1/title");
 
-  src = htsmsg_create_map();
-  htsmsg_add_str(src, "url", url);
+  snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
-  sources = htsmsg_create_list();
-  htsmsg_add_msg(sources, NULL, src);
-  
-  htsmsg_add_msg(vp, "sources", sources);
-  
-  str = htsmsg_json_serialize_to_str(vp, 0);
-  len = strlen(str);
-  vpstr = malloc(len + strlen("videoparams:") + 1);
-  strcpy(vpstr, "videoparams:");
-  strcpy(vpstr + strlen("videoparams:"), str);
-  free(str);
-  prop_set_string(prop_create(c, "url"), vpstr);
-  free(vpstr);
-
-  prop_set_string(prop_create(m, "title"), title);
+  prop_set_string(prop_create(c, "url"), url);
 }
 
 
@@ -157,7 +147,7 @@ make_imageItem(prop_t *c, prop_t *m, htsmsg_t *item)
  */
 static void
 add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
-	 prop_sub_t *skip)
+	 prop_sub_t *skip, const char *baseurl)
 {
   const char *cls, *id, *url;
 
@@ -188,7 +178,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
     make_audioItem(c, m, item);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
-    make_videoItem(c, m, item, url);
+    make_videoItem(c, m, item, baseurl, id);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
@@ -261,7 +251,7 @@ nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
     if(!strcmp(f->hmf_name, "item")) {
       htsmsg_t *item = htsmsg_get_map_by_field(f);
       if(item != NULL)
-	add_item(item, root, trackid, trackptr, skip);
+	add_item(item, root, trackid, trackptr, skip, baseurl);
     } else if(baseurl != NULL && !strcmp(f->hmf_name, "container")) {
       htsmsg_t *container = htsmsg_get_map_by_field(f);
       if(container != NULL)
@@ -348,6 +338,7 @@ typedef struct upnp_browse {
   prop_t *ub_items;
   prop_t *ub_loading;
   prop_t *ub_type;
+  prop_t *ub_source;
   prop_t *ub_error;
   prop_t *ub_title;
   prop_t *ub_contents;
@@ -378,68 +369,6 @@ browse_fail(upnp_browse_t *ub, const char *fmt, ...)
   prop_set_string(ub->ub_error, buf);
   prop_set_string(ub->ub_type, "openerror");
   prop_set_int(ub->ub_loading, 0);
-}
-
-
-
-
-/**
- *
- */
-static void 
-browse_self(upnp_browse_t *ub)
-{
-  int r;
-  htsmsg_t *in = htsmsg_create_map(), *out;
-  char errbuf[200];
-  const char *result;
-  htsmsg_t *meta;
-
-  htsmsg_add_str(in, "ObjectID", ub->ub_id);
-  htsmsg_add_str(in, "BrowseFlag", "BrowseMetadata");
-  htsmsg_add_str(in, "Filter", "*");
-  htsmsg_add_u32(in, "StartingIndex", 0);
-  htsmsg_add_u32(in, "RequestedCount", 1);
-  htsmsg_add_str(in, "SortCriteria", "");
-
-  r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
-		errbuf, sizeof(errbuf));
-
-  if(r)
-    return browse_fail(ub, "%s", errbuf);
-
-  if(out == NULL)
-    return browse_fail(ub, "Malformed SOAP response, no returned variabled");
-  
-  if((result = htsmsg_get_str(out, "Result")) == NULL)
-    return browse_fail(ub, "No SOAP result");
-
-  meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
-  if(meta == NULL)
-    return browse_fail(ub, "Malformed XML: %s", errbuf);
-
-  htsmsg_t *container =
-    htsmsg_get_map_multi(meta, 
-			 "tags", "DIDL-Lite",
-			 "tags", "container",
-			 NULL);
-
-  const char *name = 
-    container ? htsmsg_get_str_multi(container, "tags",
-				     "http://purl.org/dc/elements/1.1/title",
-				     "cdata", NULL) : NULL;
-  if(name)
-    prop_set_string(ub->ub_title, name);
-
-  const char *cls = 
-    container ? htsmsg_get_str_multi(container, "tags",
-				     "urn:schemas-upnp-org:metadata-1-0/upnp/class",
-				     "cdata", NULL) : NULL;
-
-  if(cls && !strcmp(cls, "object.container.album.musicAlbum"))
-    prop_set_string(ub->ub_contents, "albumTracks");
-
-  htsmsg_destroy(meta);
 }
 
 
@@ -515,6 +444,7 @@ ub_destroy(upnp_browse_t *ub)
   prop_ref_dec(ub->ub_items);
   prop_ref_dec(ub->ub_loading);
   prop_ref_dec(ub->ub_type);
+  prop_ref_dec(ub->ub_source);
   prop_ref_dec(ub->ub_error);
   prop_ref_dec(ub->ub_title);
   prop_ref_dec(ub->ub_contents);
@@ -626,20 +556,13 @@ upnp_browse_resolve(upnp_browse_t *ub)
 /**
  *
  */
-static void *
-upnp_browse_thread(void *aux)
+static void
+browse_directory(upnp_browse_t *ub)
 {
-  upnp_browse_t *ub = aux;
   prop_courier_t *pc;
   struct prop_nf *pnf;
 
-  if(upnp_browse_resolve(ub)) {
-    ub_destroy(ub);
-    return NULL;
-  }
-
-  // Extract title and content types
-  browse_self(ub);
+  prop_set_string(ub->ub_type, "directory");
 
   pnf = prop_nf_create(ub->ub_nodes, ub->ub_items, ub->ub_filter, NULL,
 		       PROP_NF_AUTODESTROY);
@@ -669,6 +592,228 @@ upnp_browse_thread(void *aux)
 
   prop_unsubscribe(ub->ub_itemsub);
   prop_courier_destroy(pc);
+
+}
+
+
+/**
+ *
+ */
+static void
+minidlna_get_srt(const char *url, htsmsg_t *sublist)
+{
+  struct http_header_list in, out;
+  const char *s;
+
+  LIST_INIT(&in);
+  LIST_INIT(&out);
+  
+  http_header_add(&in, "getCaptionInfo.sec", "1");
+
+  if(!http_request(url, NULL, NULL, NULL, NULL, 0, NULL, 0,
+		   0, &out, &in, NULL)) {
+    if((s = http_header_get(&out, "CaptionInfo.sec")) != NULL) {
+
+      htsmsg_t *sub = htsmsg_create_map();
+      htsmsg_add_str(sub, "url", s);
+      htsmsg_add_str(sub, "source", "MiniDLNA");
+      htsmsg_add_msg(sublist, NULL, sub);
+    }
+  }
+  http_headers_free(&in);
+  http_headers_free(&out);
+}
+
+
+
+
+
+/**
+ *
+ */
+static void
+browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
+{
+  htsmsg_t *tags, *res;
+  htsmsg_field_t *f;
+  const char *proto, *url, *title;
+  char *str, *vpstr;
+  size_t len;
+
+  if((tags = htsmsg_get_map(item, "tags")) == NULL)
+    return browse_fail(ub, "UPNP Video playback: No tags in item");
+
+  HTSMSG_FOREACH(f, tags) {
+    if((res = htsmsg_get_map_by_field_if_name(f, "res")) == NULL)
+      continue;
+
+    proto = htsmsg_get_str_multi(res, "attrib", "protocolInfo", NULL);
+    if(proto == NULL || strstr(proto, "DLNA.ORG_PN=JPEG_TN") == NULL)
+      url = htsmsg_get_str_multi(res, "cdata", NULL);
+  }
+
+
+  if(url == NULL)
+    return browse_fail(ub, "UPNP Video playback: No playable URL");
+
+  title = htsmsg_get_str_multi(tags, "http://purl.org/dc/elements/1.1/title",
+			       "cdata", NULL);
+
+  // Construct videoparam JSON blob
+
+  htsmsg_t *vp = htsmsg_create_map();
+
+  htsmsg_add_u32(vp, "no_fs_scan", 1); /* Don't try to scan parent directory
+					* for subtitles
+					*/
+  if(title != NULL)
+    htsmsg_add_str(vp, "title", title);
+
+  htsmsg_t *src = htsmsg_create_map();
+  htsmsg_add_str(src, "url", url);
+
+  htsmsg_t *sources = htsmsg_create_list();
+  htsmsg_add_msg(sources, NULL, src);
+  
+  htsmsg_add_msg(vp, "sources", sources);
+
+  htsmsg_t *subtitles = htsmsg_create_list();
+  minidlna_get_srt(url, subtitles);
+  htsmsg_add_msg(vp, "subtitles", subtitles);
+  
+  str = htsmsg_json_serialize_to_str(vp, 0);
+  len = strlen(str);
+  vpstr = malloc(len + strlen("videoparams:") + 1);
+  strcpy(vpstr, "videoparams:");
+  strcpy(vpstr + strlen("videoparams:"), str);
+  free(str);
+
+  prop_set_string(ub->ub_source, vpstr);
+  free(vpstr);
+
+  prop_set_string(ub->ub_type, "video");
+  prop_set_int(ub->ub_loading, 0);
+}
+
+
+/**
+ *
+ */
+static void
+browse_item(upnp_browse_t *ub, htsmsg_t *item)
+{
+  const char *cls;
+  cls = htsmsg_get_str_multi(item, "tags",
+			     "urn:schemas-upnp-org:metadata-1-0/upnp/class",
+			     "cdata", NULL);
+
+  if(cls == NULL)
+    return browse_fail(ub, "Missing <class> in item tag");
+
+  if(!strcmp(cls, "object.item.videoItem")) {
+    browse_video_item(ub, item);
+  } else {
+    browse_fail(ub, "Don't know how to browse %s", cls);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+browse_container(upnp_browse_t *ub, htsmsg_t *container)
+{
+  const char *name, *cls;
+  name = htsmsg_get_str_multi(container, "tags",
+			      "http://purl.org/dc/elements/1.1/title",
+			      "cdata", NULL);
+
+  cls = htsmsg_get_str_multi(container, "tags",
+			     "urn:schemas-upnp-org:metadata-1-0/upnp/class",
+			     "cdata", NULL);
+  
+  if(name)
+    prop_set_string(ub->ub_title, name);
+  
+  if(!strcmp(cls, "object.container.album.musicAlbum"))
+    prop_set_string(ub->ub_contents, "albumTracks");
+  
+  browse_directory(ub);
+}
+
+
+/**
+ *
+ */
+static void 
+browse_self(upnp_browse_t *ub)
+{
+  int r;
+  htsmsg_t *in = htsmsg_create_map(), *out;
+  char errbuf[200];
+  const char *result;
+  htsmsg_t *meta, *x;
+
+  htsmsg_add_str(in, "ObjectID", ub->ub_id);
+  htsmsg_add_str(in, "BrowseFlag", "BrowseMetadata");
+  htsmsg_add_str(in, "Filter", "*");
+  htsmsg_add_u32(in, "StartingIndex", 0);
+  htsmsg_add_u32(in, "RequestedCount", 1);
+  htsmsg_add_str(in, "SortCriteria", "");
+
+  r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
+		errbuf, sizeof(errbuf));
+
+  if(r)
+    return browse_fail(ub, "%s", errbuf);
+
+  if(out == NULL)
+    return browse_fail(ub, "Malformed SOAP response, no returned variabled");
+
+  if((result = htsmsg_get_str(out, "Result")) == NULL)
+    return browse_fail(ub, "No SOAP result");
+
+  meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
+  if(meta == NULL)
+    return browse_fail(ub, "Malformed XML: %s", errbuf);
+
+  if((x = htsmsg_get_map_multi(meta, 
+			       "tags", "DIDL-Lite",
+			       "tags", "container",
+			       NULL)) != NULL) {
+    browse_container(ub, x);
+ 
+  } else if((x = htsmsg_get_map_multi(meta, 
+				      "tags", "DIDL-Lite",
+				      "tags", "item",
+				      NULL)) != NULL) {
+    browse_item(ub, x);
+  } else {
+    browse_fail(ub, "Browsing something that is neither item nor container");
+  }
+  htsmsg_destroy(meta);
+}
+
+
+
+/**
+ *
+ */
+static void *
+upnp_browse_thread(void *aux)
+{
+  upnp_browse_t *ub = aux;
+
+  if(upnp_browse_resolve(ub)) {
+    ub_destroy(ub);
+    return NULL;
+  }
+
+  // Check what we are browsing
+  browse_self(ub);
+
+
   ub_destroy(ub);
   return NULL;
 }
@@ -685,10 +830,11 @@ be_upnp_browse(prop_t *page, const char *url)
   ub->ub_url = strdup(url);
   ub->ub_page = prop_ref_inc(page);
 
+  ub->ub_source = prop_ref_inc(prop_create(page, "source"));
+
   prop_t *model = prop_create(page, "model");
 
   ub->ub_type = prop_ref_inc(prop_create(model, "type"));
-  prop_set_string(ub->ub_type, "directory");
   
   ub->ub_contents = prop_ref_inc(prop_create(model, "contents"));
   ub->ub_error = prop_ref_inc(prop_create(model, "error"));
