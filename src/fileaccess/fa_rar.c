@@ -480,13 +480,17 @@ rar_archive_find(const char *url, const char **rp)
   hts_mutex_lock(&rar_global_mutex);
 
   u = mystrdupa(url);
-  while((s = strrchr(u, '/')) != NULL) {
-    *s = 0;
-    LIST_FOREACH(ra, &rar_archives, ra_link)
+
+  while(1) {
+    LIST_FOREACH(ra, &rar_archives, ra_link) {
       if(!strcasecmp(ra->ra_url, u))
 	break;
+    }
     if(ra != NULL)
       break;
+    if((s = strrchr(u, '/')) == NULL)
+      break;
+    *s = 0;
   }
 
   if(ra == NULL) {
