@@ -557,9 +557,10 @@ http_read_content(http_file_t *hf)
 		       &hc->hc_spill) < 0)
 	break;
  
-      if((csize = strtol(chunkheader, NULL, 16)) == 0)
+      if((csize = strtol(chunkheader, NULL, 16)) == 0) {
+	hf->hf_rsize = 0;
 	return buf;
-
+      }
       buf = realloc(buf, s + csize + 1);
       if(tcp_read_data(hc->hc_tc, buf + s, csize, &hc->hc_spill))
 	break;
@@ -1030,8 +1031,7 @@ http_destroy(http_file_t *hf)
 {
   http_detach(hf, 
 	      hf->hf_rsize == 0 &&
-	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT &&
-	      hf->hf_chunked_transfer == 0);
+	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT);
   free(hf->hf_url);
   free(hf->hf_auth);
   free(hf->hf_auth_realm);
