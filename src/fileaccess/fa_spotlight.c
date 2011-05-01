@@ -190,7 +190,7 @@ spotlight_searcher(void *aux)
     path = malloc(len);
     CFStringGetCString(pathRef, path, len, kCFStringEncodingUTF8);
     CFRelease(pathRef);
-    ctype = fa_probe(metadata, path, NULL, 0, NULL, 0, NULL);
+    ctype = fa_probe(metadata, path, NULL, 0, NULL, 0, NULL, 1);
     
     t = 0;
     switch(ctype) {
