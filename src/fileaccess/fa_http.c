@@ -34,12 +34,15 @@
 
 static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 
-#if 0
-#define HTTP_TRACE(x...) TRACE(TRACE_DEBUG, "HTTP", x)
-#else
-#define HTTP_TRACE(x...)
-#endif
+#define HTTP_TRACE(dbg, x...) do { \
+  if(dbg)			   \
+    TRACE(TRACE_DEBUG, "HTTP", x); \
+  } while(0)
 
+#define HF_TRACE(hf, x...) do {			\
+    if((hf)->hf_debug)				\
+      TRACE(TRACE_DEBUG, "HTTP", x);		\
+  } while(0)
 
 /**
  *
@@ -114,7 +117,7 @@ typedef struct http_connection {
  */
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
-		    char *errbuf, int errlen)
+		    char *errbuf, int errlen, int dbg)
 {
   http_connection_t *hc;
   tcpcon_t *tc;
@@ -127,7 +130,8 @@ http_connection_get(const char *hostname, int port, int ssl,
       TAILQ_REMOVE(&http_connections, hc, hc_link);
       http_parked_connections--;
       hts_mutex_unlock(&http_connections_mutex);
-      HTTP_TRACE("Reusing connection to %s:%d", hc->hc_hostname, hc->hc_port);
+      HTTP_TRACE(dbg, "Reusing connection to %s:%d",
+		 hc->hc_hostname, hc->hc_port);
       hc->hc_reused = 1;
       return hc;
     }
@@ -136,10 +140,10 @@ http_connection_get(const char *hostname, int port, int ssl,
   hts_mutex_unlock(&http_connections_mutex);
 
   if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) == NULL) {
-    HTTP_TRACE("Connection to %s:%d failed", hostname, port);
+    HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
-  HTTP_TRACE("Connected to %s:%d", hostname, port);
+  HTTP_TRACE(dbg, "Connected to %s:%d", hostname, port);
 
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
@@ -156,9 +160,9 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_destroy(http_connection_t *hc)
+http_connection_destroy(http_connection_t *hc, int dbg)
 {
-  HTTP_TRACE("Disconnected from %s:%d", hc->hc_hostname, hc->hc_port);
+  HTTP_TRACE(dbg, "Disconnected from %s:%d", hc->hc_hostname, hc->hc_port);
   tcp_close(hc->hc_tc);
   htsbuf_queue_flush(&hc->hc_spill);
   free(hc);
@@ -169,16 +173,16 @@ http_connection_destroy(http_connection_t *hc)
  *
  */
 static void
-http_connection_park(http_connection_t *hc)
+http_connection_park(http_connection_t *hc, int dbg)
 {
-  HTTP_TRACE("Parking connection to %s:%d", hc->hc_hostname, hc->hc_port);
+  HTTP_TRACE(dbg, "Parking connection to %s:%d", hc->hc_hostname, hc->hc_port);
   hts_mutex_lock(&http_connections_mutex);
   TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
 
   if(http_parked_connections == 5) {
     hc = TAILQ_FIRST(&http_connections);
     TAILQ_REMOVE(&http_connections, hc, hc_link);
-    http_connection_destroy(hc);
+    http_connection_destroy(hc, dbg);
   } else {
     http_parked_connections++;
   }
@@ -445,6 +449,8 @@ typedef struct http_file {
 
   time_t hf_mtime;
 
+  int hf_debug;
+
 } http_file_t;
 
 #define hf_fd(hf) ((hf)->hf_hc->hc_fd)
@@ -663,14 +669,14 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
 
-  HTTP_TRACE("%s: Response:", hf->hf_url);
+  HF_TRACE(hf, "%s: Response:", hf->hf_url);
 
   for(li = 0; ;li++) {
     if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line),
 		     &hc->hc_spill) < 0)
       return -1;
 
-    HTTP_TRACE("  %s", hf->hf_line);
+    HF_TRACE(hf, "  %s", hf->hf_line);
 
     if(hf->hf_line[0] == 0)
       break;
@@ -776,9 +782,9 @@ http_detach(http_file_t *hf, int reusable)
     return;
 
   if(reusable) {
-    http_connection_park(hf->hf_connection);
+    http_connection_park(hf->hf_connection, hf->hf_debug);
   } else {
-    http_connection_destroy(hf->hf_connection);
+    http_connection_destroy(hf->hf_connection, hf->hf_debug);
   }
   hf->hf_connection = NULL;
 }
@@ -810,8 +816,8 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   if(code == 301)
     add_premanent_redirect(hf->hf_url, hf->hf_location);
 
-  HTTP_TRACE("%s: Following redirect to %s%s", hf->hf_url, hf->hf_location,
-	     code == 301 ? ", (premanent)" : "");
+  HF_TRACE(hf, "%s: Following redirect to %s%s", hf->hf_url, hf->hf_location,
+	   code == 301 ? ", (premanent)" : "");
 
   free(hf->hf_url);
   hf->hf_url = hf->hf_location;
@@ -870,8 +876,8 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
   }
 
   if(r == 0) {
-    HTTP_TRACE("%s: Authenticating with %s %s",
-	       hf->hf_url, username, password);
+    HF_TRACE(hf, "%s: Authenticating with %s %s",
+	     hf->hf_url, username, password);
 
     /* Got auth credentials */  
     snprintf(buf1, sizeof(buf1), "%s:%s", username, password);
@@ -934,7 +940,8 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
   if(!hf->hf_path[0])
     strcpy(hf->hf_path, "/");
 
-  hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen);
+  hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
+					  hf->hf_debug);
 
   return hf->hf_connection ? 0 : -1;
 }
