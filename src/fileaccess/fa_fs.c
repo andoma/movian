@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include "showtime.h"
 #include "fileaccess.h"
 
