@@ -224,18 +224,20 @@ deep_probe(fa_dir_entry_t *fde)
 
   fde->fde_probestatus = FDE_PROBE_DEEP;
 
-  metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
-    
-  if(fde->fde_type == CONTENT_DIR) {
-    fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
-  } else if(fde->fde_type == CONTENT_FILE) {
-    fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
-			     NULL, 0,
-			     fde->fde_statdone ? &fde->fde_stat : NULL, 1);
-  }
+  if(fde->fde_type != CONTENT_UNKNOWN) {
 
+    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    
+    if(fde->fde_type == CONTENT_DIR) {
+      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
+    } else {
+      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
+			       NULL, 0,
+			       fde->fde_statdone ? &fde->fde_stat : NULL, 1);
+    }
+    prop_ref_dec(metadata);
+  }
   set_type(fde->fde_prop, fde->fde_type);
-  prop_ref_dec(metadata);
 }
 
 
