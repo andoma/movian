@@ -636,7 +636,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 {
   htsmsg_t *tags, *res;
   htsmsg_field_t *f;
-  const char *proto, *url, *title;
+  const char *proto, *url = NULL, *title;
   char *str, *vpstr;
   size_t len;
 
