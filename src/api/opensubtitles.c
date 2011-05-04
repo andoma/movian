@@ -322,19 +322,23 @@ int
 opensub_compute_hash(AVIOContext *avio, uint64_t *hashp)
 {
   int i;
-  uint64_t n, hash, size = avio_size(avio);
+  uint64_t hash;
+
+  int64_t size = avio_size(avio);
   
   if(size < 65536)
     return -1;
 
   hash = size;
 
-  n = avio_seek(avio, 0, SEEK_SET);
+  if(avio_seek(avio, 0, SEEK_SET) == -1)
+    return -1;
 
   for(i = 0; i < 8192; i++)
     hash += avio_rl64(avio);
 
-  n = avio_seek(avio, size-65536, SEEK_SET);
+  if(avio_seek(avio, size-65536, SEEK_SET) == -1)
+    return -1;
 
   for(i = 0; i < 8192; i++)
     hash += avio_rl64(avio);
