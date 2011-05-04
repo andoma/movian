@@ -499,6 +499,9 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
     return 0;
 
   size = avio_size(avio);
+  if(size == -1)
+    return -1;
+
   buf = malloc(size);
 
   avio_seek(avio, 0, SEEK_SET);

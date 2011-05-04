@@ -565,8 +565,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   uint8_t buf[64];
 
   uint64_t hash;
-  uint64_t fsize;
-  int valid_hash = 0;
+  int64_t fsize;
+  int opensub_hash_rval;
 
   if(fa_stat(url, &fs, errbuf, errlen))
     return NULL;
@@ -608,8 +608,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 #endif
   }
 
+  opensub_hash_rval = !opensub_compute_hash(avio, &hash);
+  if(opensub_hash_rval == -1)
+    TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
-  valid_hash = !opensub_compute_hash(avio, &hash);
   fsize = avio_size(avio);
   avio_seek(avio, 0, SEEK_SET);
 
@@ -634,8 +636,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Query opensubtitles.org
    */
-  opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
-			opensub_build_query(NULL, hash, fsize, NULL, NULL));
+  if(!opensub_hash_rval && fsize != -1)
+    opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
+			  opensub_build_query(NULL, hash, fsize, NULL, NULL));
 
   /**
    * Init codec contexts

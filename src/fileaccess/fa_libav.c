@@ -150,7 +150,11 @@ fa_libav_close_format(AVFormatContext *fctx)
 uint8_t *
 fa_libav_load_and_close(AVIOContext *avio, size_t *sizep)
 {
-  size_t r, size = avio_size(avio);
+  size_t r;
+  size_t size = avio_size(avio);
+  if(size == -1)
+    return NULL;
+
   uint8_t *mem = malloc(size+1);
 
   avio_seek(avio, 0, SEEK_SET);
