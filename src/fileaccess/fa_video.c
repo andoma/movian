@@ -620,7 +620,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     return NULL;
   }
 
-  TRACE(TRACE_DEBUG, "Video", "Starting playback of %s", url);
+  if(!strcmp(fctx->iformat->name, "avi"))
+    fctx->flags |= AVFMT_FLAG_GENPTS;
+
+  TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
+	url, fctx->iformat->name);
 
   /**
    * Update property metadata
