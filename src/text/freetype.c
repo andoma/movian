@@ -172,11 +172,20 @@ face_create(const char *path)
   char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
+  size_t s;
 
-  void *fh = fa_open(path, errbuf, sizeof(errbuf));
+  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- %s",
 	  path, errbuf);
+    return NULL;
+  }
+
+  s = fa_fsize(fh);
+  if(s < 0) {
+    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- Not a seekable file",
+	  path);
+    fa_close(fh);
     return NULL;
   }
 

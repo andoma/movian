@@ -47,6 +47,7 @@ static event_t *
 openspc_play(media_pipe_t *mp, AVIOContext *avio, char *errbuf, size_t errlen)
 {
   media_queue_t *mq = &mp->mp_audio;
+#error fa_fsize can return -1 .. deal with it
   size_t r, siz = fa_fsize(fh);
   uint8_t *buf = malloc(siz);
   media_buf_t *mb = NULL;

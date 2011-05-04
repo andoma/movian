@@ -46,39 +46,29 @@
 static int
 gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  void *fh = NULL;
+  fa_stat_t fs;
   char *p, *fpath = mystrdupa(url);
   char name[32];
   char turl[URL_MAX];
-  int tracks, i, size;
+  int tracks, i;
   fa_dir_entry_t *fde;
   const char *title;
   char *buf;
   Music_Emu *emu;
   gme_info_t *info;
   gme_err_t err;
-  size_t r;
+
   if((p = strrchr(fpath, '/')) == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
     return -1;
   }
 
   *p = 0;
-  if((fh = fa_open(fpath, errbuf, errlen)) == NULL)
+
+  if((buf = fa_quickload(fpath, &fs, NULL, errbuf, errlen)) == NULL)
     return -1;
 
-  size = fa_fsize(fh);
-
-  buf = malloc(size);
-  r = fa_read(fh, buf, size);
-  fa_close(fh);
-  if(r != size) {
-    snprintf(errbuf, errlen, "Unable to read file");
-    free(buf);
-    return -1;
-  }
-
-  err = gme_open_data(buf, size, &emu, gme_info_only);
+  err = gme_open_data(buf, fs.fs_size, &emu, gme_info_only);
   free(buf);
   if(err != NULL)
     return 0;

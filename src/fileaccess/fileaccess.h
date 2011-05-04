@@ -42,8 +42,8 @@ TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
 /**
  *
  */
-struct fa_stat {
-  uint64_t fs_size;
+typedef struct fa_stat {
+  int64_t fs_size; // -1 if unknown (a pipe)
 
   int fs_type; /* CONTENT_ .. types from showtime.h */
 

@@ -138,13 +138,20 @@ int
 tcp_read_data(tcpcon_t *tc, char *buf, const size_t bufsize,
 	      htsbuf_queue_t *spill)
 {
-  int tot = htsbuf_read(spill, buf, bufsize);
+  int r = buf ? htsbuf_read(spill, buf, bufsize) : htsbuf_drop(spill, bufsize);
 
-  if(tot == bufsize)
+  if(r == bufsize)
     return 0;
 
-  return tc->read(tc, buf + tot, bufsize - tot, 1) < 0 ? -1 : 0;
+  if(buf != NULL)
+    return tc->read(tc, buf + r, bufsize - r, 1) < 0 ? -1 : 0;
+
+  buf = malloc(bufsize - r);
+  r = tc->read(tc, buf, bufsize - r, 1) < 0 ? -1 : 0;
+  free(buf);
+  return r;
 }
+
 
 /**
  *

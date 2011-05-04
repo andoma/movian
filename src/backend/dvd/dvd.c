@@ -95,6 +95,9 @@ dvd_fa_stat(const char *url, struct stat *st)
   if(fa_stat(url, &fs, NULL, 0))
     return -1;
 
+  if(fs.fs_size == -1)
+    return -1; // Not a seekable file
+
   st->st_size  = fs.fs_size;
   st->st_mode  = fs.fs_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
   st->st_mtime = fs.fs_mtime;

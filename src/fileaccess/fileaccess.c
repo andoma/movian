@@ -528,6 +528,12 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
     return NULL;
 
   size = fa_fsize(fh);
+  if(size == -1) {
+    snprintf(errbuf, errlen, "Unable to load file from non-seekable fs");
+    fa_close(fh);
+    return NULL;
+  }
+
   data = malloc(size + 1);
 
   r = fa_read(fh, data, size);

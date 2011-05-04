@@ -252,6 +252,9 @@ zip_archive_load(zip_archive_t *za)
   if(fa_stat(za->za_url, &fs, NULL, 0))
     return -1;
 
+  if(fs.fs_size < sizeof(zip_hdr_disk_trailer_t))
+    return -1;
+
   asize = fs.fs_size;
   za->za_mtime = fs.fs_mtime;
 

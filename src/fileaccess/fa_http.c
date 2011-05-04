@@ -32,7 +32,16 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
 
+/**
+ * If we are reading data as a constant pushed stream and we get a
+ * seek request forward in the file it might be better to just
+ * continue to read and drop the data if the seek offset is below a
+ * certain limit. SEEK_BY_READ_THRES is this limit.
+ */
+#define SEEK_BY_READ_THRES 32768
+
 static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
+
 
 #define HTTP_TRACE(dbg, x...) do { \
   if(dbg)			   \
@@ -96,10 +105,12 @@ TAILQ_HEAD(http_connection_queue , http_connection);
 static struct http_connection_queue http_connections;
 static int http_parked_connections;
 static hts_mutex_t http_connections_mutex;
+static int http_connection_tally;
 
 typedef struct http_connection {
   char hc_hostname[HOSTNAME_MAX];
   int hc_port;
+  int hc_id;
   tcpcon_t *hc_tc;
 
   htsbuf_queue_t hc_spill;
@@ -121,6 +132,7 @@ http_connection_get(const char *hostname, int port, int ssl,
 {
   http_connection_t *hc;
   tcpcon_t *tc;
+  int id;
 
   hts_mutex_lock(&http_connections_mutex);
 
@@ -130,20 +142,21 @@ http_connection_get(const char *hostname, int port, int ssl,
       TAILQ_REMOVE(&http_connections, hc, hc_link);
       http_parked_connections--;
       hts_mutex_unlock(&http_connections_mutex);
-      HTTP_TRACE(dbg, "Reusing connection to %s:%d",
-		 hc->hc_hostname, hc->hc_port);
+      HTTP_TRACE(dbg, "Reusing connection to %s:%d (id=%d)",
+		 hc->hc_hostname, hc->hc_port, hc->hc_id);
       hc->hc_reused = 1;
       return hc;
     }
   }
 
+  id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
   if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
-  HTTP_TRACE(dbg, "Connected to %s:%d", hostname, port);
+  HTTP_TRACE(dbg, "Connected to %s:%d (id=%d)", hostname, port, id);
 
   hc = malloc(sizeof(http_connection_t));
   snprintf(hc->hc_hostname, sizeof(hc->hc_hostname), "%s", hostname);
@@ -152,6 +165,7 @@ http_connection_get(const char *hostname, int port, int ssl,
   hc->hc_tc = tc;
   htsbuf_queue_init(&hc->hc_spill, 0);
   hc->hc_reused = 0;
+  hc->hc_id = id;
   return hc;
 }
 
@@ -162,7 +176,8 @@ http_connection_get(const char *hostname, int port, int ssl,
 static void
 http_connection_destroy(http_connection_t *hc, int dbg)
 {
-  HTTP_TRACE(dbg, "Disconnected from %s:%d", hc->hc_hostname, hc->hc_port);
+  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d)",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id);
   tcp_close(hc->hc_tc);
   htsbuf_queue_flush(&hc->hc_spill);
   free(hc);
@@ -175,7 +190,8 @@ http_connection_destroy(http_connection_t *hc, int dbg)
 static void
 http_connection_park(http_connection_t *hc, int dbg)
 {
-  HTTP_TRACE(dbg, "Parking connection to %s:%d", hc->hc_hostname, hc->hc_port);
+  HTTP_TRACE(dbg, "Parking connection to %s:%d (id=%d)",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id);
   hts_mutex_lock(&http_connections_mutex);
   TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
 
@@ -431,7 +447,7 @@ typedef struct http_file {
 
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
 
-  int64_t hf_filesize;
+  int64_t hf_filesize; /* -1 if filesize can not be determined */
   int64_t hf_pos;
 
   int64_t hf_consecutive_read;
@@ -997,10 +1013,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(!ignore_size && hf->hf_filesize < 0) {
-      snprintf(errbuf, errlen, "Invalid HTTP 200 response");
-      return -1;
-    }
+    if(!ignore_size && hf->hf_filesize < 0)
+      HF_TRACE(hf,
+	       "%s: No known filesize, seeking may be slower", hf->hf_url);
+
     hf->hf_rsize = 0; /* This was just a HEAD request, we don't actually
 		       * get any data
 		       */
@@ -1282,48 +1298,48 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 
     } else {
 
+      /* Must send a new request */
+
+      if(hf->hf_filesize != -1 && hf->hf_pos >= hf->hf_filesize)
+	return 0; // Reading outside known filesize
+
+      htsbuf_queue_init(&q, 0);
+      hf_set_auth(hf);
+      htsbuf_qprintf(&q, 
+		     "GET %s HTTP/1.1\r\n"
+		     "Accept: */*\r\n"
+		     "User-Agent: Showtime %s\r\n"
+		     "Host: %s\r\n"
+		     "%s%s",
+		     hf->hf_path,
+		     htsversion,
+		     hc->hc_hostname,
+		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
       char range[100];
 
-      if(hf->hf_pos >= hf->hf_filesize)
-	return 0;
+      if(hf->hf_filesize == -1) {
+	range[0] = 0;
 
-      if(hf->hf_consecutive_read > STREAMING_LIMIT) {
+      } else if(hf->hf_consecutive_read > STREAMING_LIMIT) {
 	TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
 	      hf->hf_url);
-
-	snprintf(range, sizeof(range), 
-		 "bytes=%"PRId64"-", hf->hf_pos);
+	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
       } else {
 
 	int64_t end = hf->hf_pos + size;
 	if(end > hf->hf_filesize)
 	  end = hf->hf_filesize;
 
-	snprintf(range, sizeof(range), "bytes=%"PRId64"-%"PRId64, 
-		       hf->hf_pos, end - 1);
+	snprintf(range, sizeof(range), "bytes=%"PRId64"-%"PRId64,
+		 hf->hf_pos, end - 1);
       }
 
-      /* Must send a new request */
-
-      htsbuf_queue_init(&q, 0);
-
-      hf_set_auth(hf);
-
-      htsbuf_qprintf(&q, 
-		     "GET %s HTTP/1.1\r\n"
-		     "Accept: */*\r\n"
-		     "User-Agent: Showtime %s\r\n"
-		     "Range: %s\r\n"
-		     "Host: %s\r\n"
-		     "%s%s\r\n\r\n",
-		     hf->hf_path,
-		     htsversion,
-		     range,
-		     hc->hc_hostname,
-		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
-
+      if(range[0])
+	htsbuf_qprintf(&q, "Range: %s\r\n", range);
+      htsbuf_qprintf(&q, "\r\n");
       tcp_write_queue(hc->hc_tc, &q);
+
       code = http_read_response(hf, NULL);
       switch(code) {
       case 206:
@@ -1331,12 +1347,17 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	break;
 
       case 200:
+	if(hf->hf_rsize == -1)
+	  hf->hf_rsize = INT64_MAX;
+
 	if(hf->hf_pos != 0) {
 	  TRACE(TRACE_DEBUG, "HTTP", 
-		"Server responds with 200 for request starting at %"PRId64,
-		hf->hf_pos);
-	  http_detach(hf, 0);
-	  return -1;
+		"Skipping by reading %"PRId64" bytes", hf->hf_pos);
+
+	  if(tcp_read_data(hc->hc_tc, NULL, hf->hf_pos, &hc->hc_spill)) {
+	    http_detach(hf, 0);
+	    continue;
+	  }
 	}
 	break;
 
@@ -1397,6 +1418,11 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
     break;
 
   case SEEK_END:
+    if(hf->hf_filesize == -1) {
+      HF_TRACE(hf, "%s: Refusing to seek to END on non-seekable file",
+	       hf->hf_url);
+      return -1;
+    }
     np = hf->hf_filesize + pos;
     break;
   default:
@@ -1413,14 +1439,13 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
       // We've data pending on socket
       int64_t d = np - hf->hf_pos;
 
-      // We allow seek by reading if delta offset is <8k
+      // We allow seek by reading if delta offset is small enough
 
-      if(hc != NULL && d > 0 && d < 8192 && d < hf->hf_rsize) {
-	void *j = malloc(d);
-	int n = tcp_read_data(hc->hc_tc, j, d, &hc->hc_spill);
-	free(j);
+      if(hc != NULL && d > 0 && d < SEEK_BY_READ_THRES && d < hf->hf_rsize) {
+	int n = tcp_read_data(hc->hc_tc, NULL, d, &hc->hc_spill);
 	if(!n) {
 	  hf->hf_pos = np;
+	  hf->hf_rsize -= d;
 	  return np;
 	}
       }
@@ -1462,9 +1487,8 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   memset(fs, 0, sizeof(struct fa_stat));
   hf = (http_file_t *)handle;
   
-  /* no content length and text/html, assume "index of" page */
-  if(hf->hf_filesize < 0 &&
-     hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
+  /* if content_type == text/html, assume "index of" page */
+  if(hf->hf_content_type && strstr(hf->hf_content_type, "text/html"))
     fs->fs_type = CONTENT_DIR;
   else
     fs->fs_type = CONTENT_FILE;
