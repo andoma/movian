@@ -608,7 +608,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 #endif
   }
 
-  opensub_hash_rval = !opensub_compute_hash(avio, &hash);
+  opensub_hash_rval = opensub_compute_hash(avio, &hash);
   if(opensub_hash_rval == -1)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
