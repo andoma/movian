@@ -50,6 +50,7 @@ AVIOContext *
 fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen)
 {
   fa_handle_t *fh;
+  AVIOContext *avio;
 
   if((fh = fa_open(url, errbuf, errlen)) == NULL)
     return NULL;
@@ -57,8 +58,12 @@ fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen)
   if(buf_size == 0)
     buf_size = 32768;
   void *buf = malloc(buf_size);
-  return avio_alloc_context(buf, buf_size, 0, fh, fa_libav_read, NULL, 
+
+  avio = avio_alloc_context(buf, buf_size, 0, fh, fa_libav_read, NULL, 
 			    fa_libav_seek);
+  if(fa_fsize(fh) == -1)
+    avio->seekable = 0;
+  return avio;
 }
 
 
