@@ -62,7 +62,6 @@ typedef struct fs_sub_scanner {
 static void
 fs_sub_scan_dir(prop_t *prop, const char *url)
 {
-  char parent[URL_MAX];
   char *postfix;
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
@@ -70,7 +69,7 @@ fs_sub_scan_dir(prop_t *prop, const char *url)
 
   if((fd = fa_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
-	  parent, errbuf);
+	  url, errbuf);
     return;
   }
 
