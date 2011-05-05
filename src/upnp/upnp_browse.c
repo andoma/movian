@@ -710,7 +710,8 @@ browse_item(upnp_browse_t *ub, htsmsg_t *item)
   if(cls == NULL)
     return browse_fail(ub, "Missing <class> in item tag");
 
-  if(!strcmp(cls, "object.item.videoItem")) {
+  if(!strncmp(cls, "object.item.videoItem",
+	      strlen("object.item.videoItem"))) {
     browse_video_item(ub, item);
   } else {
     browse_fail(ub, "Don't know how to browse %s", cls);
