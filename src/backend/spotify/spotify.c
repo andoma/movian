@@ -1269,7 +1269,6 @@ track_create(sp_track *track, prop_t **metadatap)
   track_action_ctrl_t *tac = calloc(1, sizeof(track_action_ctrl_t));
 
   spotify_make_link(f_sp_link_create_from_track(track, 0), url, sizeof(url));
-
   prop_set_string(prop_create(p, "url"), url);
   prop_set_string(prop_create(p, "type"), "audio");
 
@@ -1290,7 +1289,6 @@ track_create(sp_track *track, prop_t **metadatap)
 		 NULL);
   return p;
 }
-
 
 
 /**
@@ -1355,12 +1353,22 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   prop_t *p;
   sp_track *track;
   int i, ntracks;
-  char url[URL_MAX];
-
-
+  
   if(f_sp_albumbrowse_error(result)) {
     bh_error(bh, "Album not found");
   } else {
+    sp_track *playme = NULL;
+
+    if(bh->playme) {
+      sp_link *l;
+      if((l = f_sp_link_create_from_string(bh->playme)) != NULL) {
+	if(f_sp_link_type(l) == SP_LINKTYPE_TRACK) {
+	  playme = f_sp_link_as_track(l);
+	  f_sp_track_add_ref(playme);
+	}
+	f_sp_link_release(l);
+      }
+    }
 
     ntracks = f_sp_albumbrowse_num_tracks(result);
 
@@ -1371,10 +1379,14 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
       if(prop_set_parent(p, bh->sp->sp_items))
 	prop_destroy(p);
 
-      if(bh->playme != NULL && !strcmp(url, bh->playme))
+      if(track == playme)
 	playqueue_load_with_source(p, bh->sp->sp_model, 0);
     }
     spotify_metadata_updated(spotify_session);
+
+    if(playme != NULL)
+      f_sp_track_release(playme);
+
   }
   f_sp_albumbrowse_release(result);
   prop_set_int(bh->sp->sp_loading, 0);
