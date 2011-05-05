@@ -179,7 +179,8 @@ be_dvd_canhandle(const char *url)
 static event_t *
 be_dvd_play(const char *url, media_pipe_t *mp,
 	    int flags, int priority,
-	    char *errstr, size_t errlen)
+	    char *errstr, size_t errlen,
+	    const char *mimetype)
 {
   event_t *e;
   if(strncmp(url, "dvd:", strlen("dvd:"))) {

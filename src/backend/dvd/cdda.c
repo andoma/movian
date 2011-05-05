@@ -376,7 +376,7 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
  */
 static event_t *
 playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
-	  int hold)
+	  int hold, const char *mimetype)
 {
   int track;
   char device[32];

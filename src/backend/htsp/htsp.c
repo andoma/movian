@@ -1583,7 +1583,8 @@ htsp_free_streams(htsp_subscription_t *hs)
 static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen,
+		  const char *mimetype)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];

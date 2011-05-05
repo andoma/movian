@@ -691,7 +691,8 @@ rtmp_free(rtmp_t *r)
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
-	       char *errbuf, size_t errlen)
+	       char *errbuf, size_t errlen,
+	       const char *mimetype)
 {
   rtmp_t r = {0};
   event_t *e;

@@ -682,7 +682,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
     return 0;
   }
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, errsize)) == NULL) {
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errsize, NULL)) == NULL) {
     fa_libav_close(avio);
     return -1;
   }

@@ -1219,7 +1219,7 @@ be_sidplayer_canhandle(const char *url)
  */
 static event_t *
 be_sidplayer_play(const char *url0, media_pipe_t *mp, 
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold, const char *memetype)
 {
   media_queue_t *mq = &mp->mp_audio;
   char *url, *p;

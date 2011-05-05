@@ -1751,7 +1751,6 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) == NULL ||
 	       http_ctime(&fde->fde_stat.fs_mtime, d))
 	      fde->fde_statdone = 1;
-
 	  }
 	}
       }

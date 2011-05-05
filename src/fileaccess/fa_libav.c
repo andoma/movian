@@ -82,6 +82,16 @@ fa_libav_open_error(char *errbuf, size_t errlen, const char *hdr, int errcode)
   return NULL;
 }
 
+/**
+ *
+ */
+static const struct {
+  const char *mimetype;
+  const char *fmt;
+} mimetype2fmt[] = {
+  { "video/x-matroska", "matroska" },
+  { "audio/x-mpeg", "mp3" },
+};
 
 
 /**
@@ -89,29 +99,53 @@ fa_libav_open_error(char *errbuf, size_t errlen, const char *hdr, int errcode)
  */
 AVFormatContext *
 fa_libav_open_format(AVIOContext *avio, const char *url, 
-		     char *errbuf, size_t errlen)
+		     char *errbuf, size_t errlen, const char *mimetype)
 {
   AVInputFormat *fmt = NULL;
   AVFormatContext *fctx;
   int err;
 
   avio_seek(avio, 0, SEEK_SET);
+  printf("%s <%s>\n", url, mimetype);
+  if(mimetype != NULL) {
+    int i;
 
-  if((err = av_probe_input_buffer(avio, &fmt, url, NULL, 0, 0)) != 0)
-    return fa_libav_open_error(errbuf, errlen,
-			       "Unable to probe file", err);
+    for(i = 0; i < sizeof(mimetype2fmt) / sizeof(mimetype2fmt[0]); i++) {
+      if(!strcmp(mimetype, mimetype2fmt[i].mimetype)) {
+	printf("%s -> %s\n", mimetype2fmt[i].mimetype, mimetype2fmt[i].fmt);
+	fmt = av_find_input_format(mimetype2fmt[i].fmt);
+	printf("\t -> %p\n", fmt);
+	if(fmt != NULL)
+	  printf("\t -> %s\n", fmt->name);
 
-  if(fmt == NULL) {
-    snprintf(errbuf, errlen, "Unknown file format");
-    return NULL;
+	break;
+      }
+    }
   }
 
-  if((err = av_open_input_stream(&fctx, avio, url, fmt, NULL)) != 0)
+  if(fmt == NULL) {
+
+    if((err = av_probe_input_buffer(avio, &fmt, url, NULL, 0, 0)) != 0)
+      return fa_libav_open_error(errbuf, errlen,
+				 "Unable to probe file", err);
+
+    if(fmt == NULL) {
+      snprintf(errbuf, errlen, "Unknown file format");
+      return NULL;
+    }
+  }
+
+  if((err = av_open_input_stream(&fctx, avio, url, fmt, NULL)) != 0) {
+    if(mimetype != NULL)
+      return fa_libav_open_format(avio, url, errbuf, errlen, NULL);
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to open file as input format", err);
+  }
 
   if(av_find_stream_info(fctx) < 0) {
     av_close_input_stream(fctx);
+    if(mimetype != NULL)
+      return fa_libav_open_format(avio, url, errbuf, errlen, NULL);
     return fa_libav_open_error(errbuf, errlen,
 			       "Unable to handle file contents", err);
   }

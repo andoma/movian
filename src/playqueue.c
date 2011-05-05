@@ -1110,7 +1110,7 @@ player_thread(void *aux)
     prop_set_int(p, 1);
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
-			   startpaused);
+			   startpaused, NULL);
     startpaused = 0;
 
     prop_set_int(p, 0);

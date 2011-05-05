@@ -3455,7 +3455,8 @@ delta_seek(media_pipe_t *mp, int64_t d)
  */
 static event_t *
 be_spotify_play(const char *url, media_pipe_t *mp, 
-		char *errbuf, size_t errlen, int hold)
+		char *errbuf, size_t errlen, int hold,
+		const char *mimetype)
 {
   spotify_uri_t su;
   event_t *e, *eof = NULL;

@@ -51,7 +51,7 @@ typedef struct fa_stat {
 
   int fs_cache_age;
 
-  uint8_t fs_tag[20];
+  uint8_t fs_mimetype[32];
   
 } fa_stat_t;
 

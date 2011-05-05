@@ -31,6 +31,7 @@
 
 typedef struct vsource {
   const char *vs_url;
+  const char *vs_mimetype;
   int vs_bitrate;
 } vsource_t;
 
@@ -83,6 +84,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
       continue;
 
     vsvec[i].vs_bitrate = htsmsg_get_u32_or_default(src, "bitrate", -1);
+    vsvec[i].vs_mimetype = htsmsg_get_str(src, "mimetype");
     i++;
   }
 
@@ -120,7 +122,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
   vs = vsvec;
   
   return backend_play_video(vs->vs_url, mp, flags, priority, 
-			    errbuf, sizeof(errbuf));
+			    errbuf, sizeof(errbuf), vs->vs_mimetype);
 }
 
 
@@ -158,7 +160,7 @@ video_player_idle(void *aux)
 				errbuf, sizeof(errbuf));
       } else {
 	next = backend_play_video(ep->url, mp, flags, ep->priority,
-				  errbuf, sizeof(errbuf));
+				  errbuf, sizeof(errbuf), NULL);
       }
 
       if(next == NULL) {

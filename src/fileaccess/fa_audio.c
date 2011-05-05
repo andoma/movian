@@ -209,7 +209,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
  */
 event_t *
 be_file_playaudio(const char *url, media_pipe_t *mp,
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold, const char *mimetype)
 {
   AVFormatContext *fctx;
   AVIOContext *avio;
@@ -256,7 +256,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
 #endif
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
+  if((fctx = fa_libav_open_format(avio, url, 
+				  errbuf, errlen, mimetype)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }

@@ -339,7 +339,8 @@ fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
  */
 static event_t *
 be_gmeplayer_play(const char *url0, media_pipe_t *mp, 
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold,
+		  const char *mimetype)
 {
   event_t *e;
   char *url, *p;

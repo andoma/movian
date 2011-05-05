@@ -526,7 +526,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen,
+		  const char *mimetype)
 {
   AVFormatContext *fctx;
   AVIOContext *avio;
@@ -535,28 +536,27 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   int i;
   media_codec_t **cwvec;
   event_t *e;
-  struct fa_stat fs;
   uint8_t buf[64];
 
   uint64_t hash;
   int64_t fsize;
   int opensub_hash_rval;
 
-  if(fa_stat(url, &fs, errbuf, errlen))
-    return NULL;
+  if(mimetype == NULL) {
+    struct fa_stat fs;
+
+    if(fa_stat(url, &fs, errbuf, errlen))
+      return NULL;
   
-  /**
-   * Is it a DVD ?
-   */
-
-  if(fs.fs_type == CONTENT_DIR) {
-    
-    if(fa_probe_dir(NULL, url) == CONTENT_DVD)
-      goto isdvd;
-
-    return NULL;
+    /**
+     * Is it a DVD ?
+     */
+    if(fs.fs_type == CONTENT_DIR) {
+      if(fa_probe_dir(NULL, url) == CONTENT_DVD)
+	goto isdvd;
+      return NULL;
+    }
   }
-
 
   /**
    * Check file type
@@ -570,16 +570,17 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-
-  if(fa_probe_iso(NULL, avio) == 0) {
-    fa_libav_close(avio);
-  isdvd:
+  if(mimetype == NULL) {
+    if(fa_probe_iso(NULL, avio) == 0) {
+      fa_libav_close(avio);
+    isdvd:
 #if ENABLE_DVD
-    return dvd_play(url, mp, errbuf, errlen, 1);
+      return dvd_play(url, mp, errbuf, errlen, 1);
 #else
-    snprintf(errbuf, errlen, "DVD playback is not supported");
-    return NULL;
+      snprintf(errbuf, errlen, "DVD playback is not supported");
+      return NULL;
 #endif
+    }
   }
 
   opensub_hash_rval = opensub_compute_hash(avio, &hash);
@@ -589,7 +590,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   fsize = avio_size(avio);
   avio_seek(avio, 0, SEEK_SET);
 
-  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen)) == NULL) {
+  if((fctx = fa_libav_open_format(avio, url, errbuf, errlen,
+				  mimetype)) == NULL) {
     fa_libav_close(avio);
     return NULL;
   }
@@ -754,7 +756,7 @@ playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen);
+      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;

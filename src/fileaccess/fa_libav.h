@@ -11,7 +11,8 @@ AVIOContext *fa_libav_open(const char *url, int buf_size,
 void fa_libav_close(AVIOContext *io);
 
 AVFormatContext *fa_libav_open_format(AVIOContext *avio, const char *url,
-				      char *errbuf, size_t errlen);
+				      char *errbuf, size_t errlen,
+				      const char *mimetype);
 
 void fa_libav_close_format(AVFormatContext *fctx);
 
