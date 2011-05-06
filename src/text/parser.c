@@ -73,7 +73,7 @@ tag_to_code(char *s)
  *
  */
 static int
-parse_str(int *output, const char *str, int flags)
+parse_str(uint32_t *output, const char *str, int flags)
 {
   int olen = 0, c, p = -1, d;
   int l = strlen(str);
@@ -149,10 +149,10 @@ parse_str(int *output, const char *str, int flags)
 /**
  *
  */
-int *
+uint32_t *
 text_parse(const char *str, int *lenp, int flags)
 {
-  int *buf;
+  uint32_t *buf;
 
   *lenp = parse_str(NULL, str, flags);
   if(*lenp == 0)

@@ -84,7 +84,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_uc_size;
   int16_t gtb_maxlines;
 
-  int *gtb_uc_buffer; /* unicode buffer */
+  uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
 
   int gtb_int;

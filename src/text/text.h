@@ -59,5 +59,5 @@ int fontconfig_resolve(int uc, uint8_t style, const char *family,
 #define TEXT_PARSE_HTML_ENTETIES 0x2
 
 
-int *text_parse(const char *str, int *lenp, int flags);
+uint32_t *text_parse(const char *str, int *lenp, int flags);
 
