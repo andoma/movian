@@ -228,7 +228,6 @@ video_deliver_frame(video_decoder_t *vd,
   }
   vd->vd_prevpts_cnt++;
 
-
   if(duration == 0) {
     TRACE(TRACE_DEBUG, "Video", "Dropping frame with duration = 0");
     return;
@@ -252,8 +251,8 @@ video_deliver_frame(video_decoder_t *vd,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  vd->vd_width = fi.width;
-  vd->vd_height = fi.height;
+  vd->vd_width = ctx->width;
+  vd->vd_height = ctx->height;
   vd->vd_dar = fi.dar;
 
   fi.width = ctx->width;
