@@ -179,7 +179,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pba.prebuf    = 8  * 1024;
   pba.tlength   = 12 * 1024;
 
-  n = pa_stream_connect_playback(s, NULL, &pba, flags, &cv, NULL);
+  n = pa_stream_connect_playback(s, NULL, NULL, flags, &cv, NULL);
 
   pam->stream = s;
   pam->cur_rate   = ab->ab_samplerate;
