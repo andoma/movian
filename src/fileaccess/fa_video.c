@@ -664,32 +664,44 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
     ctx = fctx->streams[i]->codec;
 
-    if(ctx->codec_type == AVMEDIA_TYPE_VIDEO) {
-      
+    switch(ctx->codec_type) {
+    case AVMEDIA_TYPE_VIDEO:
       mcp.width = ctx->width;
       mcp.height = ctx->height;
       mcp.profile = ctx->profile;
       mcp.level = ctx->level;
+      break;
 
-      if(mp->mp_video.mq_stream == -1)
-	mp->mp_video.mq_stream = i;
-    }
-
-    if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-
+    case AVMEDIA_TYPE_AUDIO:
       if(flags & BACKEND_VIDEO_NO_AUDIO)
 	continue;
-
       if(ctx->codec_id == CODEC_ID_DTS)
 	ctx->channels = 0;
+      break;
+
+    default:
+      break;
     }
+
 
     cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
 
-    if(ctx->codec_type == AVMEDIA_TYPE_AUDIO && cwvec[i] != NULL &&
-       mp->mp_audio.mq_stream == -1) {
-      mp->mp_audio.mq_stream = i;
-      prop_set_stringf(mp->mp_prop_audio_track_current, "libav:%d", i);
+    if(cwvec[i] != NULL) {
+      switch(ctx->codec_type) {
+      case AVMEDIA_TYPE_VIDEO:
+	if(mp->mp_video.mq_stream == -1)
+	  mp->mp_video.mq_stream = i;
+	break;
+
+      case AVMEDIA_TYPE_AUDIO:
+	if(mp->mp_audio.mq_stream == -1) {
+	  mp->mp_audio.mq_stream = i;
+	  prop_set_stringf(mp->mp_prop_audio_track_current, "libav:%d", i);
+	}
+	break;
+      default:
+	break;
+      }
     }
   }
 
