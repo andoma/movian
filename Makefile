@@ -184,8 +184,10 @@ SRCS-$(CONFIG_HTTPSERVER) += \
 #
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
-	src/video/video_subtitles.c \
-	src/video/subtitles.c \
+	src/video/video_overlay.c \
+	src/video/sub_ass.c \
+	src/video/ext_subtitles.c \
+	src/video/video_settings.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 

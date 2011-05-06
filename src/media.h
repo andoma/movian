@@ -83,6 +83,7 @@ typedef struct media_buf {
     MB_AUDIO,
 
     MB_FLUSH,
+    MB_FLUSH_SUBTITLES,
     MB_END,
 
     MB_CTRL_PAUSE,
@@ -125,6 +126,7 @@ typedef struct media_buf {
   int mb_epoch;
 
   media_codec_t *mb_cw;
+  enum CodecID mb_codecid;
 
   int mb_stream; /* For feedback */
 

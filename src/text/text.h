@@ -38,6 +38,8 @@ struct pixmap;
 #define TR_RENDER_DEBUG         0x1
 #define TR_RENDER_ELLIPSIZE     0x2
 #define TR_RENDER_CHARACTER_POS 0x4
+#define TR_RENDER_JUSTIFIED     0x8
+#define TR_RENDER_CENTERED      0x10
 
 struct pixmap *
 text_render(const uint32_t *uc, int len, int flags, int size,

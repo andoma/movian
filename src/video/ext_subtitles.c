@@ -21,7 +21,7 @@
 #include <unistd.h>
 
 #include "showtime.h"
-#include "subtitles.h"
+#include "ext_subtitles.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
 #include "htsmsg/htsmsg_xml.h"
@@ -30,17 +30,17 @@
 #include "misc/dbl.h"
 #include "misc/string.h"
 #include "i18n.h"
-
+#include "video_overlay.h"
 
 /**
  *
  */
 static int
-se_cmp(const subtitle_entry_t *a, const subtitle_entry_t *b)
+ese_cmp(const ext_subtitle_entry_t *a, const ext_subtitle_entry_t *b)
 {
-  if(a->se_start > b->se_start)
+  if(a->ese_start > b->ese_start)
     return 1;
-  if(a->se_start < b->se_start)
+  if(a->ese_start < b->ese_start)
     return -1;
   return 0;
 }
@@ -50,15 +50,15 @@ se_cmp(const subtitle_entry_t *a, const subtitle_entry_t *b)
  *
  */
 static void
-se_insert(subtitles_t *s, char *txt, int64_t start, int64_t stop)
+ese_insert(ext_subtitles_t *es, char *txt, int64_t start, int64_t stop)
 {
-  subtitle_entry_t *se = malloc(sizeof(subtitle_entry_t));
-  se->se_start = start;
-  se->se_stop = stop;
-  se->se_text = txt;
-  if(RB_INSERT_SORTED(&s->s_entries, se, se_link, se_cmp)) {
+  ext_subtitle_entry_t *ese = malloc(sizeof(ext_subtitle_entry_t));
+  ese->ese_start = start;
+  ese->ese_stop = stop;
+  ese->ese_text = txt;
+  if(RB_INSERT_SORTED(&es->es_entries, ese, ese_link, ese_cmp)) {
     // Collision
-    free(se);
+    free(ese);
     free(txt);
   }
 }
@@ -201,24 +201,37 @@ is_srt(const char *buf, size_t len)
     return 0;
 
   return 1;
-
 }
 
 
 /**
  *
  */
-static subtitles_t *
+static void
+ext_srt_decode(struct video_decoder *vd, struct ext_subtitles *es,
+	       ext_subtitle_entry_t *ese)
+{
+  video_overlay_render_cleartext(vd, ese->ese_text,
+				 ese->ese_start, ese->ese_stop,
+				 1);
+}
+
+
+
+/**
+ *
+ */
+static ext_subtitles_t *
 load_srt(const char *url, const char *buf, size_t len, int force_utf8)
 {
   int n;
   size_t tlen;
   int64_t start, stop;
   linereader_t lr;
-  subtitles_t *s = calloc(1, sizeof(subtitles_t));
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
   char *txt, *tmp = NULL;
   
-  RB_INIT(&s->s_entries);
+  RB_INIT(&es->es_entries);
 
   if(force_utf8 || utf8_verify(buf)) {
     linereader_init(&lr, buf, len);
@@ -256,16 +269,16 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
 
     if(txt != NULL) {
       txt[tlen - 1] = 0;
-      se_insert(s, txt, start, stop);
+      ese_insert(es, txt, start, stop);
     }
     if(lr.ll < 0)
       break;
   }
   free(tmp);
   TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s as SRT, %d pages", url,
-	s->s_entries.entries);
-
-  return s;
+	es->es_entries.entries);
+  es->es_decode = ext_srt_decode;
+  return es;
 }
 
 
@@ -307,9 +320,22 @@ ttml_time_expression(const char *str)
 
 
 /**
+ *
+ */
+static void
+ext_ttlm_decode(struct video_decoder *vd, struct ext_subtitles *es,
+		ext_subtitle_entry_t *ese)
+{
+  video_overlay_render_cleartext(vd, ese->ese_text,
+				 ese->ese_start, ese->ese_stop,
+				 0);
+}
+
+
+/**
  * TTML docs here: http://www.w3.org/TR/ttaf1-dfxp/
  */
-static subtitles_t *
+static ext_subtitles_t *
 load_ttml(const char *url, char **buf, size_t len)
 {
   char errbuf[256];
@@ -335,8 +361,8 @@ load_ttml(const char *url, char **buf, size_t len)
     return NULL;
   }
 
-  subtitles_t *s = calloc(1, sizeof(subtitles_t));
-  RB_INIT(&s->s_entries);
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
+  RB_INIT(&es->es_entries);
 
   HTSMSG_FOREACH(f, subs) {
     if(f->hmf_type == HMF_MAP) {
@@ -357,13 +383,14 @@ load_ttml(const char *url, char **buf, size_t len)
       if((end = ttml_time_expression(str)) == -1)
 	continue;
 
-      se_insert(s, strdup(txt), start, end);
+      ese_insert(es, strdup(txt), start, end);
     }
   }
   TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s as TTML, %d pages", url,
-	s->s_entries.entries);
+	es->es_entries.entries);
 
-  return s;
+  es->es_decode = ext_ttlm_decode;
+  return es;
 }
 
 
@@ -376,7 +403,7 @@ dump_subtitles(subtitles_t *s)
 {
   subtitle_entry_t *se;
 
-  RB_FOREACH(se, &s->s_entries, se_link) {
+  RB_FOREACH(se, &es->es_entries, se_link) {
     printf("PAGE: %lld -> %lld\n--\n%s\n--\n", se->se_start, se->se_stop, se->se_text);
   }
 }
@@ -385,10 +412,10 @@ dump_subtitles(subtitles_t *s)
 /**
  *
  */
-static subtitles_t *
+static ext_subtitles_t *
 subtitles_create(const char *path, char **bufp, size_t len)
 {
-  subtitles_t *s = NULL;
+  ext_subtitles_t *s = NULL;
 
   if(is_ttml(*bufp, len)) {
     s = load_ttml(path, bufp, len);
@@ -417,14 +444,14 @@ subtitles_create(const char *path, char **bufp, size_t len)
  *
  */
 static void
-subtitle_entry_destroy(subtitle_entry_t *se)
+subtitle_entry_destroy(ext_subtitle_entry_t *ese)
 {
-  if(se->se_link.left != NULL)
-    subtitle_entry_destroy(se->se_link.left);
-  if(se->se_link.right != NULL)
-    subtitle_entry_destroy(se->se_link.right);
-  free(se->se_text);
-  free(se);
+  if(ese->ese_link.left != NULL)
+    subtitle_entry_destroy(ese->ese_link.left);
+  if(ese->ese_link.right != NULL)
+    subtitle_entry_destroy(ese->ese_link.right);
+  free(ese->ese_text);
+  free(ese);
 }
 
 
@@ -433,50 +460,50 @@ subtitle_entry_destroy(subtitle_entry_t *se)
  *
  */
 void
-subtitles_destroy(subtitles_t *s)
+subtitles_destroy(ext_subtitles_t *es)
 {
-  if(s->s_entries.root != NULL)
-    subtitle_entry_destroy(s->s_entries.root);
+  if(es->es_entries.root != NULL)
+    subtitle_entry_destroy(es->es_entries.root);
 
-  free(s);
+  free(es);
 }
 
 
 /**
  *
  */
-subtitle_entry_t *
-subtitles_pick(subtitles_t *s, int64_t pts)
+ext_subtitle_entry_t *
+subtitles_pick(ext_subtitles_t *es, int64_t pts)
 {
-  subtitle_entry_t skel, *se = s->s_cur;
+  ext_subtitle_entry_t skel, *ese = es->es_cur;
 
-  if(se != NULL && se->se_start <= pts && se->se_stop > pts)
+  if(ese != NULL && ese->ese_start <= pts && ese->ese_stop > pts)
     return NULL; // Already sent
   
-  if(se != NULL) {
-    se = RB_NEXT(se, se_link);
-    if(se != NULL && se->se_start <= pts && se->se_stop > pts)
-      return s->s_cur = se;
+  if(ese != NULL) {
+    ese = RB_NEXT(ese, ese_link);
+    if(ese != NULL && ese->ese_start <= pts && ese->ese_stop > pts)
+      return es->es_cur = ese;
   }
   
-  skel.se_start = pts;
-  se = RB_FIND_LE(&s->s_entries, &skel, se_link, se_cmp);
-  if(se == NULL || se->se_stop <= pts) {
-    s->s_cur = NULL;
+  skel.ese_start = pts;
+  ese = RB_FIND_LE(&es->es_entries, &skel, ese_link, ese_cmp);
+  if(ese == NULL || ese->ese_stop <= pts) {
+    es->es_cur = NULL;
     return NULL;
   }
 
-  return s->s_cur = se;
+  return es->es_cur = ese;
 }
 
 
 /**
  *
  */
-subtitles_t *
+ext_subtitles_t *
 subtitles_load(const char *url)
 {
-  subtitles_t *sub;
+  ext_subtitles_t *sub;
   char errbuf[256];
   struct fa_stat fs;
   int datalen;
@@ -517,104 +544,4 @@ subtitles_load(const char *url)
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- Unknown format", 
 	  url);
   return sub;
-}
-
-
-/**
- *
- */
-static int64_t
-get_ssa_ts(const char *buf)
-{
-  if(strlen(buf) != 10)
-    return AV_NOPTS_VALUE;
-
-  return 1000LL * (
-    (buf[ 0] - '0') *  3600000LL +
-    (buf[ 2] - '0') *   600000LL +
-    (buf[ 3] - '0') *    60000LL + 
-    (buf[ 5] - '0') *    10000LL + 
-    (buf[ 6] - '0') *     1000LL +
-    (buf[ 8] - '0') *      100LL +
-    (buf[ 9] - '0') *       10LL);
-
-}
-
-
-/**
- *
- */
-media_buf_t *
-subtitles_ssa_decode_line(uint8_t *src, size_t len)
-{
-  char *t[10], *s, *d;
-  char *buf = alloca(len + 1);
-  int i;
-  int64_t start, end, duration;
-  media_buf_t *mb;
-
-  memcpy(buf, src, len);
-  buf[len] = 0;
-
-  if(strncmp(buf, "Dialogue:", strlen("Dialogue:")))
-    return NULL;
-  buf += strlen("Dialogue:");
-
-  s = strchr(buf, '\n');
-  if(s != NULL)
-    *s = 0;
-  
-  t[0] = buf;
-  for(i = 1; i < 10; i++) {
-    s = strchr(t[i-1], ',');
-    if(s == NULL)
-      return NULL;
-    *s++ = 0;
-    t[i] = s;
-  }
-
-  start = get_ssa_ts(t[1]);
-    end = get_ssa_ts(t[2]);
-  
-  if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE)
-    return NULL;
-
-  duration = end - start;
-
-  d = s = t[9];
-  while(*s) {
-    if(s[0] == '\\' && (s[1] == 'N' || s[1] == 'n')) {
-      *d++ = '\n';
-      s += 2;
-    } else {
-      *d++ = *s++;
-    }
-  }
-
-  mb = media_buf_alloc();
-  mb->mb_data_type = MB_SUBTITLE;
-    
-  mb->mb_pts = start;
-  mb->mb_duration = duration;
-  mb->mb_data = strdup(t[9]);
-  mb->mb_size = 0;
-  return mb;
-}
-
-
-/**
- *
- */
-media_buf_t *
-subtitles_make_pkt(subtitle_entry_t *se)
-{
-  media_buf_t *mb = media_buf_alloc();
-	  
-  mb->mb_pts = se->se_start;
-  mb->mb_duration = se->se_stop - se->se_start;
-  mb->mb_data_type = MB_SUBTITLE;
-  
-  mb->mb_data = strdup(se->se_text);
-  mb->mb_size = 0;
-  return mb;
 }

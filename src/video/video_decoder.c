@@ -31,7 +31,9 @@
 #include "video_decoder.h"
 #include "event.h"
 #include "media.h"
-#include "subtitles.h"
+#include "ext_subtitles.h"
+#include "video_overlay.h"
+
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -358,6 +360,7 @@ vd_thread(void *aux)
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
+      video_overlay_flush(vd, 1);
       break;
 
     case MB_VIDEO:
@@ -399,7 +402,7 @@ vd_thread(void *aux)
 
     case MB_SUBTITLE:
       if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)
-	video_subtitles_decode(vd, mb);
+	video_overlay_decode(vd, mb);
       break;
 
     case MB_END:
@@ -412,6 +415,10 @@ vd_thread(void *aux)
 	vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
       break;
 
+    case MB_FLUSH_SUBTITLES:
+      video_overlay_flush(vd, 1);
+      break;
+
     case MB_EXT_SUBTITLE:
       if(vd->vd_ext_subtitles != NULL)
          subtitles_destroy(vd->vd_ext_subtitles);
@@ -419,6 +426,7 @@ vd_thread(void *aux)
       // Steal subtitle from the media_buf
       vd->vd_ext_subtitles = mb->mb_data;
       mb->mb_data = NULL; 
+      video_overlay_flush(vd, 1);
       break;
 
     default:
@@ -464,7 +472,8 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
   dvdspu_decoder_init(vd);
 #endif
 
-  video_subtitles_init(vd);
+  TAILQ_INIT(&vd->vd_overlay_queue);
+  hts_mutex_init(&vd->vd_overlay_mutex);
 
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
@@ -500,8 +509,9 @@ video_decoder_destroy(video_decoder_t *vd)
 #ifdef CONFIG_DVD
   dvdspu_decoder_deinit(vd);
 #endif
+  video_overlay_flush(vd, 0);
 
-  video_subtitles_deinit(vd);
+  hts_mutex_destroy(&vd->vd_overlay_mutex);
   free(vd);
 }
 
@@ -531,11 +541,8 @@ void
 video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
 {
   if(vd->vd_ext_subtitles != NULL) {
-    subtitle_entry_t *se = subtitles_pick(vd->vd_ext_subtitles, pts);
-    if(se != NULL) {
-      media_buf_t *mb = subtitles_make_pkt(se);
-      video_subtitles_decode(vd, mb);
-      media_buf_free(mb);
-    }
+    ext_subtitle_entry_t *ese = subtitles_pick(vd->vd_ext_subtitles, pts);
+    if(ese != NULL)
+      vd->vd_ext_subtitles->es_decode(vd, vd->vd_ext_subtitles, ese);
   }
 }

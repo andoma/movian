@@ -31,7 +31,8 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "i18n.h"
-#include "video/subtitles.h"
+#include "video/ext_subtitles.h"
+#include "video/video_settings.h"
 
 // -- Video accelerators ---------
 
@@ -1472,12 +1473,16 @@ static void
 mtm_rethink(media_track_mgr_t *mtm)
 {
   media_track_t *mt, *best = NULL;
-  
+  int thres = 1;
+
   if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
     // All tracks deleted, clear the user-has-configured flag
     mtm->mtm_user_set = 0;
     return;
   }
+
+  if(mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO || subtitle_always_select)
+    thres = 0;
 
   if(mtm->mtm_user_set)
     return;
@@ -1489,7 +1494,7 @@ mtm_rethink(media_track_mgr_t *mtm)
     if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
       continue;
 
-    if(mt->mt_score > 0 && (best == NULL || mt->mt_score > best->mt_score))
+    if(mt->mt_score >= thres && (best == NULL || mt->mt_score > best->mt_score))
       best = mt;
   }
 

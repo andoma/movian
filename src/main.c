@@ -50,6 +50,7 @@
 #include "i18n.h"
 #include "misc/string.h"
 #include "text/text.h"
+#include "video/video_settings.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -353,6 +354,9 @@ main(int argc, char **argv)
 
   /* Internationalization */
   i18n_init();
+
+  /* Video settings */
+  video_settings_init();
 
 
   nav_open(NAV_HOME, NULL);

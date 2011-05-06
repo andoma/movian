@@ -19,15 +19,13 @@
 #ifndef GLW_VIDEO_OVERLAY_H
 #define GLW_VIDEO_OVERLAY_H
 
-void glw_video_overlay_deinit(glw_root_t *gr, glw_video_overlay_t *gvo);
+void glw_video_overlay_deinit(glw_video_t *gv);
 
-void glw_video_overlay_render(glw_video_overlay_t *gvo, glw_root_t *gr,
-			      glw_rctx_t *rc);
+void glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc);
 
 int glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
 				    glw_pointer_event_t *gpe, media_pipe_t *mp);
 
-void glw_video_overlay_layout(glw_video_t *gv, int64_t pts,
-			      video_decoder_t *vd);
+void glw_video_overlay_layout(glw_video_t *gv, int64_t pts);
 
 #endif // GLW_VIDEO_OVERLAY_H

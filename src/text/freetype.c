@@ -503,6 +503,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   int pmflags = 0;
   uint8_t style;
+  int global_center = !!(flags & TR_RENDER_CENTERED);
 
   if(size < 3)
     return NULL;
@@ -532,7 +533,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   items = malloc(sizeof(item_t) * len);
 
   int out = 0;
-  int center = 0;
+  int center = global_center;
 
   for(i = 0; i < len; i++) {
 
@@ -567,11 +568,11 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       continue;
 
     case TR_CODE_CENTER_OFF:
+      center = global_center;
       if(i != 0)
 	li = NULL;
       else
-	li->center = 0;
-      center = 0;
+	li->center = center;
       continue;
 
     case TR_CODE_ITALIC_ON:
@@ -659,7 +660,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
-	  lix->center = 0;
+	  lix->center = global_center;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
@@ -708,7 +709,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   target_width  = siz_x / 64 + 3;
 
-  if(max_lines > 1) {
+  if(flags & TR_RENDER_JUSTIFIED && max_lines > 1) {
     TAILQ_FOREACH(li, &lq, link) {
       if(li->center)
 	continue;

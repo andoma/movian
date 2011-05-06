@@ -30,6 +30,7 @@
 #include "video/vdpau.h"
 #endif
 
+LIST_HEAD(glw_video_overlay_list, glw_video_overlay);
 TAILQ_HEAD(glw_video_surface_queue, glw_video_surface);
 
 /**
@@ -58,12 +59,20 @@ typedef struct {
  */
 typedef struct glw_video_overlay {
   
-  glw_backend_texture_t *gvo_textures;
-  glw_renderer_t *gvo_renderers;
+  LIST_ENTRY(glw_video_overlay) gvo_link;
 
-  int gvo_entries;
+  int gvo_is_dvd;
 
-  glw_t *gvo_child; // Used to render text
+  glw_backend_texture_t gvo_texture;
+  glw_renderer_t gvo_renderer;
+
+  int64_t gvo_start;
+  int64_t gvo_stop;
+
+  int gvo_fadein;
+  int gvo_fadeout;
+
+  float gvo_alpha;
 
 } glw_video_overlay_t;
 
@@ -147,8 +156,7 @@ typedef struct glw_video {
 
   LIST_ENTRY(glw_video) gv_global_link;
 
-  glw_video_overlay_t gv_spu; // DVD SPU 
-  glw_video_overlay_t gv_sub; // Subtitles
+  struct glw_video_overlay_list gv_overlays;
 
   float gv_cmatrix_cur[16];
   float gv_cmatrix_tgt[16];

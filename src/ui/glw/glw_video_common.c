@@ -200,8 +200,7 @@ glw_video_dtor(glw_t *w)
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
 
-  glw_video_overlay_deinit(w->glw_root, &gv->gv_spu);
-  glw_video_overlay_deinit(w->glw_root, &gv->gv_sub);
+  glw_video_overlay_deinit(gv);
   
   LIST_REMOVE(gv, gv_global_link);
   video_decoder_destroy(vd);
@@ -234,7 +233,7 @@ glw_video_newframe(glw_t *w, int flags)
   pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
 
   if(pts != AV_NOPTS_VALUE)
-    glw_video_overlay_layout(gv, pts, vd);
+    glw_video_overlay_layout(gv, pts);
 }
 
 
@@ -252,9 +251,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
   case GLW_SIGNAL_LAYOUT:
     // Reset screensaver counter if we are displaying video
     w->glw_root->gr_screensaver_counter = 0;
-
-    if(gv->gv_sub.gvo_child != NULL)
-      glw_layout0(gv->gv_sub.gvo_child, extra);
     return 0;
 
   case GLW_SIGNAL_EVENT:
@@ -438,17 +434,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
 		 (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
 		0.0f);
 
-#ifdef CONFIG_DVD
-  video_decoder_t *vd = gv->gv_vd;
-  if(gv->gv_cfg_cur.gvc_width[0] > 0 &&
-     (glw_is_focused(w) || !vd->vd_pci.hli.hl_gi.hli_ss))
-    glw_video_overlay_render(&gv->gv_spu, w->glw_root, &rc0);
-#endif
-  
-  glw_video_overlay_render(&gv->gv_sub, w->glw_root, &rc0);
-
-  if(gv->gv_sub.gvo_child != NULL)
-    glw_render0(gv->gv_sub.gvo_child, rc);
+  glw_video_overlay_render(gv, &rc0);
 }
 
 

@@ -36,7 +36,6 @@
 #include "fa_libav.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
-#include "video/subtitles.h"
 #include "api/opensubtitles.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
@@ -146,56 +145,7 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 
 
 
-/**
- *
- */
-static media_buf_t *
-subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
-		AVPacket *pkt, int si, media_codec_t *mc)
-{
-  media_buf_t *mb;
-  int offset = 0;
-  int duration = pkt->convergence_duration ?: pkt->duration;
 
-  switch(ctx->codec_id) {
-  case CODEC_ID_TEXT:
-  case CODEC_ID_MOV_TEXT:
-    offset = ctx->codec_id == CODEC_ID_MOV_TEXT ? 2 : 0;
-
-    if(pkt->size < offset)
-      return NULL;
-
-    mb = media_buf_alloc();
-    mb->mb_data_type = MB_SUBTITLE;
-    mb->mb_pts = rescale(fctx, pkt->pts,      si);
-    mb->mb_duration = rescale(fctx, duration, si);
-
-    char *s = malloc(pkt->size + 1 - offset);
-    mb->mb_data = memcpy(s, pkt->data + offset, pkt->size - offset);
-    s[pkt->size - offset] = 0;
-    break;
-
-  case CODEC_ID_SSA:
-    mb = subtitles_ssa_decode_line(pkt->data, pkt->size);
-    break;
-
-  default:
-    mb = media_buf_alloc();
-    mb->mb_data_type = MB_SUBTITLE;
-
-    mb->mb_pts = rescale(fctx, pkt->pts,      si);
-    mb->mb_duration = rescale(fctx, duration, si);
- 
-    mb->mb_data = malloc(pkt->size +   FF_INPUT_BUFFER_PADDING_SIZE);
-    memset(mb->mb_data + pkt->size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(mb->mb_data, pkt->data, pkt->size);
-    mb->mb_size = pkt->size;
-    mb->mb_cw = media_codec_ref(mc);
-    break;
-  }
-  mb->mb_stream = si;
-  return mb;
-}
 
 #define MB_SPECIAL_EOF ((void *)-1)
 
@@ -297,18 +247,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_SUBTITLE) {
 
-	AVCodecContext *ctx;
-	ctx = cwvec[si] ? cwvec[si]->codec_ctx : NULL;
+	int duration = pkt.convergence_duration ?: pkt.duration;
 
-	ctx = fctx->streams[si]->codec;
-
-	mb = ctx != NULL ? subtitle_decode(fctx, ctx, &pkt, si, cwvec[si]) : mb;
+	mb = media_buf_alloc();
+	mb->mb_codecid = fctx->streams[si]->codec->codec_id;
+	mb->mb_data_type = MB_SUBTITLE;
 	mq = &mp->mp_video;
 
-	av_free_packet(&pkt);
-	if(mb != NULL)
-	  goto deliver;
-	continue;
+	mb->mb_duration = rescale(fctx, duration, si);
 
       } else {
 	/* Check event queue ? */
@@ -317,10 +263,11 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       }
 
       mb->mb_epoch    = epoch;
-      mb->mb_pts      = rescale(fctx, pkt.pts,      si);
-      mb->mb_dts      = rescale(fctx, pkt.dts,      si);
+      mb->mb_pts      = rescale(fctx, pkt.pts, si);
+      mb->mb_dts      = rescale(fctx, pkt.dts, si);
 
-      if(mq->mq_seektarget != AV_NOPTS_VALUE) {
+      if(mq->mq_seektarget != AV_NOPTS_VALUE &&
+	 mb->mb_data_type != MB_SUBTITLE) {
 	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
 	if(ts < mq->mq_seektarget) {
 	  mb->mb_skip = 1;
@@ -330,7 +277,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	}
       }
 
-      mb->mb_cw = media_codec_ref(cwvec[si]);
+      mb->mb_cw = cwvec[si] ? media_codec_ref(cwvec[si]) : NULL;
 
       mb->mb_stream = pkt.stream_index;
 
@@ -363,8 +310,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
      * catched an event instead of enqueueing the buffer. In this case
      * 'mb' will be left untouched.
      */
-  deliver:
-
     if(mb == MB_SPECIAL_EOF) {
       /* Wait for queues to drain */
       e = mp_wait_for_empty_queues(mp);
@@ -460,6 +405,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       TRACE(TRACE_DEBUG, "Video", "Selecting subtitle track %s",
 	    est->id);
+
+      mp_send_cmd_head(mp, &mp->mp_video, MB_FLUSH_SUBTITLES);
 
       if(!strcmp(est->id, "sub:off")) {
 	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
