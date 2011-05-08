@@ -2056,6 +2056,10 @@ http_request(const char *url, const char **arguments,
 
   switch(code) {
   case 200:
+    if(result == NULL) {
+      http_destroy(hf);
+      return 0;
+    }
     break;
 
   case 302:
