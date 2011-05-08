@@ -626,6 +626,33 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
 
 
 
+/**
+ *
+ */
+static void
+blind_srt_check(const char *url, htsmsg_t *sublist)
+{
+  char *srt = mystrdupa(url);
+  char *dot = strrchr(srt, '.');
+
+  if(dot == NULL)
+    return;
+
+  if(strlen(dot) == 4)
+    strcpy(dot, ".srt");
+
+  if(!http_request(srt, NULL, NULL, NULL, NULL, 0, NULL, 0,
+		   HTTP_REQUEST_DEBUG, NULL, NULL, NULL)) {
+
+    htsmsg_t *sub = htsmsg_create_map();
+    htsmsg_add_str(sub, "url", srt);
+    htsmsg_add_str(sub, "source", "HTTP probe");
+    htsmsg_add_msg(sublist, NULL, sub);
+  }
+}
+
+
+
 
 
 /**
@@ -678,7 +705,10 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   htsmsg_add_msg(vp, "sources", sources);
 
   htsmsg_t *subtitles = htsmsg_create_list();
+
   minidlna_get_srt(url, subtitles);
+  blind_srt_check(url, subtitles);
+
   htsmsg_add_msg(vp, "subtitles", subtitles);
   
   str = htsmsg_json_serialize_to_str(vp, 0);
