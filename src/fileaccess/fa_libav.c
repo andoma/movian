@@ -106,18 +106,12 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
   int err;
 
   avio_seek(avio, 0, SEEK_SET);
-  printf("%s <%s>\n", url, mimetype);
   if(mimetype != NULL) {
     int i;
 
     for(i = 0; i < sizeof(mimetype2fmt) / sizeof(mimetype2fmt[0]); i++) {
       if(!strcmp(mimetype, mimetype2fmt[i].mimetype)) {
-	printf("%s -> %s\n", mimetype2fmt[i].mimetype, mimetype2fmt[i].fmt);
 	fmt = av_find_input_format(mimetype2fmt[i].fmt);
-	printf("\t -> %p\n", fmt);
-	if(fmt != NULL)
-	  printf("\t -> %s\n", fmt->name);
-
 	break;
       }
     }
