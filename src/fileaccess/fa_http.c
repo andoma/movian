@@ -1977,7 +1977,7 @@ http_request(const char *url, const char **arguments,
 
   if(headers_out != NULL)
     LIST_INIT(headers_out);
-
+  hf->hf_debug = !!(flags & HTTP_REQUEST_DEBUG);
   hf->hf_url = strdup(url);
 
  retry:
