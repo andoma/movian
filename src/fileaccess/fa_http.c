@@ -2056,7 +2056,8 @@ http_request(const char *url, const char **arguments,
 
   switch(code) {
   case 200:
-    if(result == NULL) {
+    if(method == NULL && postdata == NULL && result == NULL) {
+      hf->hf_rsize = 0;
       http_destroy(hf);
       return 0;
     }
