@@ -189,6 +189,8 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 }
 
 
+#define MB_SPECIAL_EOF ((void *)-1)
+
 /**
  *
  */
@@ -197,10 +199,9 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
 {
   mp_flush(mp, 0);
   
-  if(*mbp != NULL) {
+  if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free(*mbp);
-    *mbp = NULL;
-  }
+  *mbp = NULL;
 }
 
 /**
@@ -262,7 +263,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+	       MP_BUFFER_SHALLOW);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
@@ -296,10 +298,22 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
      * Need to fetch a new packet ?
      */
     if(mb == NULL) {
+      
+      r = av_read_frame(fctx, &pkt);
+      if(r == AVERROR(EAGAIN))
+	continue;
+      
+      if(r == AVERROR_EOF) {
+	mb = MB_SPECIAL_EOF;
+	continue;
+      }
+      
+      if(r != 0) {
+	char msg[100];
+	fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
+	TRACE(TRACE_ERROR, "Audio", "Playback error: %s", msg);
 
-      if((r = av_read_frame(fctx, &pkt)) < 0) {
-
-	while((e = mp_wait_for_empty_queues(mp, 0)) != NULL) {
+	while((e = mp_wait_for_empty_queues(mp)) != NULL) {
 	  if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
 	     event_is_action(e, ACTION_PREV_TRACK) ||
 	     event_is_action(e, ACTION_NEXT_TRACK) ||
@@ -365,7 +379,16 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
      * 'mb' will be left untouched.
      */
 
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+    if(mb == MB_SPECIAL_EOF) {
+      // We have reached EOF, drain queues
+      e = mp_wait_for_empty_queues(mp);
+      
+      if(e == NULL) {
+	e = event_create_type(EVENT_EOF);
+	break;
+      }
+
+    } else if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
       continue;
     }      
@@ -450,7 +473,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     event_release(e);
   }
 
-  if(mb != NULL)
+  if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free(mb);
 
   media_codec_deref(cw);

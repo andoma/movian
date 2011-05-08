@@ -696,7 +696,11 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   mp_become_primary(mp);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT,
+	       MP_BUFFER_SHALLOW); /* Might wanna use deep buffering
+				      but it requires some modification
+				      to buffer draining code */
+
   mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
 
   prop_set_int(mp->mp_prop_canSkipForward,  1);
@@ -796,7 +800,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       break;
 
     case DVDNAV_WAIT:
-      if((e = mp_wait_for_empty_queues(mp, 0)) == NULL)
+      if((e = mp_wait_for_empty_queues(mp)) == NULL)
 	dvdnav_wait_skip(dp->dp_dvdnav);
       else
 	e = dvd_process_event(dp, e);

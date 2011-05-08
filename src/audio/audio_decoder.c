@@ -151,8 +151,8 @@ ad_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_len--;
-    mq->mq_bytes -= mb->mb_size;
+    mq->mq_packets_current--;
+    mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
@@ -180,8 +180,13 @@ ad_thread(void *aux)
       break;
 
     case MB_AUDIO:
-      if(mb->mb_skip == 0)
-	ad_decode_buf(ad, mp, mq, mb);
+      if(mb->mb_skip != 0)
+	break;
+
+      if(mb->mb_stream != mq->mq_stream)
+	break;
+
+      ad_decode_buf(ad, mp, mq, mb);
       break;
 
     case MB_END:

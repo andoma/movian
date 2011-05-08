@@ -31,6 +31,7 @@
 #include "video_decoder.h"
 #include "event.h"
 #include "media.h"
+#include "subtitles.h"
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -270,6 +271,8 @@ video_deliver_frame(video_decoder_t *vd,
   fi.color_range = ctx->color_range;
 
   vd->vd_frame_deliver(frame->data, frame->linesize, &fi, vd->vd_opaque);
+
+  video_decoder_scan_ext_sub(vd, fi.pts);
 }
 
 
@@ -329,8 +332,8 @@ vd_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_len--;
-    mq->mq_bytes -= mb->mb_size;
+    mq->mq_packets_current--;
+    mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
 
     hts_cond_signal(&mp->mp_backpressure);
@@ -395,7 +398,8 @@ vd_thread(void *aux)
 #endif
 
     case MB_SUBTITLE:
-      video_subtitles_decode(vd, mb);
+      if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)
+	video_subtitles_decode(vd, mb);
       break;
 
     case MB_END:
@@ -406,6 +410,15 @@ vd_thread(void *aux)
 	vd->vd_accelerator_blackout(vd->vd_accelerator_opaque);
       else
 	vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
+      break;
+
+    case MB_EXT_SUBTITLE:
+      if(vd->vd_ext_subtitles != NULL)
+         subtitles_destroy(vd->vd_ext_subtitles);
+
+      // Steal subtitle from the media_buf
+      vd->vd_ext_subtitles = mb->mb_data;
+      mb->mb_data = NULL; 
       break;
 
     default:
@@ -420,6 +433,9 @@ vd_thread(void *aux)
 
   // Stop any video accelerator helper threads 
   video_decoder_set_accelerator(vd, NULL, NULL, NULL);
+
+  if(vd->vd_ext_subtitles != NULL)
+    subtitles_destroy(vd->vd_ext_subtitles);
 
   /* Free ffmpeg frame */
   av_free(vd->vd_frame);
@@ -505,4 +521,21 @@ video_decoder_set_accelerator(video_decoder_t *vd,
   vd->vd_accelerator_stop = stopfn;
   vd->vd_accelerator_blackout = blackoutfn;
   vd->vd_accelerator_opaque = opaque;
+}
+
+
+/**
+ *
+ */
+void
+video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
+{
+  if(vd->vd_ext_subtitles != NULL) {
+    subtitle_entry_t *se = subtitles_pick(vd->vd_ext_subtitles, pts);
+    if(se != NULL) {
+      media_buf_t *mb = subtitles_make_pkt(se);
+      video_subtitles_decode(vd, mb);
+      media_buf_free(mb);
+    }
+  }
 }

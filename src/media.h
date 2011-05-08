@@ -37,8 +37,6 @@ typedef struct event_ts {
   int64_t pts;
 } event_ts_t;
 
-#define MQ_LOWWATER 20
-#define MQ_HIWATER  200
 
 TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
@@ -105,6 +103,8 @@ typedef struct media_buf {
 
     MB_REINITIALIZE,
 
+    MB_EXT_SUBTITLE,
+
   } mb_data_type;
 
   void *mb_data;
@@ -131,7 +131,9 @@ typedef struct media_buf {
   /* Raw 16bit audio */
   int mb_channels;
   int mb_rate;
-  
+
+  void (*mb_dtor)(struct media_buf *mb);
+
 } media_buf_t;
 
 /*
@@ -140,8 +142,10 @@ typedef struct media_buf {
 
 typedef struct media_queue {
   struct media_buf_queue mq_q;
-  unsigned int mq_len;
-  unsigned int mq_bytes;
+
+  unsigned int mq_packets_current;    /* Packets currently in queue */
+  unsigned int mq_packets_threshold;  /* If we are below this threshold
+					 the queue is always granted enqueues */
 
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   int mq_stream2;            /* Complementary stream */
@@ -149,10 +153,8 @@ typedef struct media_queue {
 
   int64_t mq_seektarget;
 
-  prop_t *mq_prop_qlen_curx;
+  prop_t *mq_prop_qlen_cur;
   prop_t *mq_prop_qlen_max;
-
-  prop_t *mq_prop_qlen_bytes;
 
   prop_t *mq_prop_bitrate;   // In kbps
 
@@ -203,6 +205,10 @@ typedef struct media_pipe {
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
 
+  unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
+  unsigned int mp_buffer_limit;   // Max buffer size
+  unsigned int mp_max_realtime_delay; // Max delay in a queue (real time)
+
   hts_mutex_t mp_mutex;
 
   hts_cond_t mp_backpressure;
@@ -252,6 +258,9 @@ typedef struct media_pipe {
 
   prop_t *mp_prop_subtitle_track_current;
   prop_t *mp_prop_subtitle_tracks;
+
+  prop_t *mp_prop_buffer_current;
+  prop_t *mp_prop_buffer_limit;
 
 
   prop_courier_t *mp_pc;
@@ -327,7 +336,7 @@ void mp_enqueue_event(media_pipe_t *mp, struct event *e);
 struct event *mp_dequeue_event(media_pipe_t *mp);
 struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
 
-struct event *mp_wait_for_empty_queues(media_pipe_t *mp, int limit);
+struct event *mp_wait_for_empty_queues(media_pipe_t *mp);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
@@ -375,7 +384,13 @@ void mp_set_url(media_pipe_t *mp, const char *url);
 #define MP_PLAY_CAPS_PAUSE 0x2
 #define MP_PLAY_CAPS_EJECT 0x4
 
-void mp_set_play_caps(media_pipe_t *mp, int caps);
+#define MP_BUFFER_NONE    0
+#define MP_BUFFER_SHALLOW 2
+#define MP_BUFFER_DEEP    3
+
+void mp_configure(media_pipe_t *mp, int caps, int buffer_mode);
+
+void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 
 void metadata_from_ffmpeg(char *dst, size_t dstlen, 
 			  AVCodec *codec, AVCodecContext *avctx);

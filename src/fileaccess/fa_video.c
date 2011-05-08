@@ -193,19 +193,19 @@ subtitle_decode(AVFormatContext *fctx, AVCodecContext *ctx,
     mb->mb_cw = media_codec_ref(mc);
     break;
   }
+  mb->mb_stream = si;
   return mb;
 }
 
+#define MB_SPECIAL_EOF ((void *)-1)
 
 /**
  *
  */
 static int64_t
 video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
-	   int64_t pos, int backward, const char *txt, int64_t *lastsubpts)
+	   int64_t pos, int backward, const char *txt)
 {
-  *lastsubpts = AV_NOPTS_VALUE;
-
   pos = FFMAX(fctx->start_time, FFMIN(fctx->start_time + fctx->duration, pos));
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
@@ -218,10 +218,9 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 
   mp_flush(mp, 0);
   
-  if(*mbp != NULL) {
+  if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free(*mbp);
-    *mbp = NULL;
-  }
+  *mbp = NULL;
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
 		 (pos - fctx->start_time) / 1000000.0);
@@ -235,7 +234,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
  */
 static event_t *
 video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
-		  media_pipe_t *mp, subtitles_t *sub, int flags,
+		  media_pipe_t *mp, int flags,
 		  char *errbuf, size_t errlen)
 {
   media_buf_t *mb = NULL;
@@ -245,9 +244,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_t *e;
   event_ts_t *ets;
   int64_t ts;
-  int64_t seekbase, subpts, lastsubpts;
-
-  seekbase = subpts = lastsubpts = AV_NOPTS_VALUE;
+  int64_t seekbase = AV_NOPTS_VALUE;
 
   int hold = 0, lost_focus = 0, epoch = 1;
 
@@ -261,26 +258,19 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
      */
     if(mb == NULL) {
 
-      if((r = av_read_frame(fctx, &pkt)) < 0) {
+      r = av_read_frame(fctx, &pkt);
 
-	if(r == AVERROR(EAGAIN))
-	  continue;
+      if(r == AVERROR(EAGAIN))
+	continue;
 
-	if(r == AVERROR_EOF) {
+      if(r == AVERROR_EOF) {
+	mb = MB_SPECIAL_EOF;
+	continue;
+      }
 
-	  /* Wait for queues to drain */
-	  e = mp_wait_for_empty_queues(mp, 0);
-
-	  if(!(flags & BACKEND_VIDEO_NO_AUTOSTOP))
-	    mp_set_playstatus_stop(mp);
-
-	  if(e == NULL)
-	    e = event_create_type(EVENT_EOF);
-
-	} else {
-	  fa_ffmpeg_error_to_txt(r, errbuf, errlen);
-	  e = NULL;
-	}
+      if(r != 0) {
+	fa_ffmpeg_error_to_txt(r, errbuf, errlen);
+	e = NULL;
 	break;
       }
 
@@ -299,14 +289,13 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
 
-      } else if(si == mp->mp_audio.mq_stream) {
-	/* Current audio stream */
+      } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+
 	mb = media_buf_alloc();
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
 
-      } else if(si == mp->mp_video.mq_stream2) {
-
+      } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_SUBTITLE) {
 
 	AVCodecContext *ctx;
 	ctx = cwvec[si] ? cwvec[si]->codec_ctx : NULL;
@@ -330,11 +319,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       mb->mb_epoch    = epoch;
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
-
-      if(mb->mb_data_type == MB_VIDEO && mb->mb_pts > lastsubpts)
-	lastsubpts = subpts = mb->mb_pts;
-      else
-	subpts = AV_NOPTS_VALUE;
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE) {
 	ts = mb->mb_pts != AV_NOPTS_VALUE ? mb->mb_pts : mb->mb_dts;
@@ -380,14 +364,21 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
      * 'mb' will be left untouched.
      */
   deliver:
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
-      mb = NULL; /* Enqueue succeeded */
 
-      if(subpts != AV_NOPTS_VALUE && sub != NULL) {
-	subtitle_entry_t *se = subtitles_pick(sub, subpts);
-	if(se != NULL)
-	  mb_enqueue_always(mp, mq, subtitles_make_pkt(se));
+    if(mb == MB_SPECIAL_EOF) {
+      /* Wait for queues to drain */
+      e = mp_wait_for_empty_queues(mp);
+
+
+      if(e == NULL) {
+	if(!(flags & BACKEND_VIDEO_NO_AUTOSTOP))
+	  mp_set_playstatus_stop(mp);
+	
+	e = event_create_type(EVENT_EOF);
+	break;
       }
+    } else if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+      mb = NULL; /* Enqueue succeeded */
       continue;
     }
 
@@ -443,27 +434,23 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
 
-      seekbase = video_seek(fctx, mp, &mb, ts, 1, "direct", &lastsubpts);
+      seekbase = video_seek(fctx, mp, &mb, ts, 1, "direct");
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s",
-			    &lastsubpts);
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s");
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s",
-			    &lastsubpts);
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s");
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s",
-			    &lastsubpts);
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s");
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s",
-			    &lastsubpts);
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s");
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
@@ -478,22 +465,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 	mp->mp_video.mq_stream2 = -1;
 
-	if(sub != NULL) {
-	  subtitles_destroy(sub);
-	  sub = NULL;
-	}
+	mp_load_ext_sub(mp, NULL);
 
       } else if(!strncmp(est->id, "libav:", strlen("libav:"))) {
 	unsigned int idx = atoi(est->id + strlen("libav:"));
 	if(idx < fctx->nb_streams) {
 	  AVCodecContext *ctx = fctx->streams[idx]->codec;
 	  if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-    
-	    if(sub != NULL) {
-	      subtitles_destroy(sub);
-	      sub = NULL;
-	    }
-
+	    mp_load_ext_sub(mp, NULL);
 	    mp->mp_video.mq_stream2 = idx;
 	    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 	  }
@@ -503,10 +482,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	mp->mp_video.mq_stream2 = -1;
 	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
 
-	if(sub != NULL)
-	  subtitles_destroy(sub);
-
-	sub = subtitles_load(est->id);
+	mp_load_ext_sub(mp, est->id);
       }
 
 
@@ -538,10 +514,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     event_release(e);
   }
 
-  if(mb != NULL)
+  if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free(mb);
-  if(sub != NULL)
-    subtitles_destroy(sub);
   return e;
 }
 
@@ -707,15 +681,15 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
 
   // Start it
-
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+	       MP_BUFFER_DEEP);
 
   if(!(flags & BACKEND_VIDEO_NO_AUDIO))
     mp_become_primary(mp);
 
   prop_set_string(mp->mp_prop_type, "video");
 
-  e = video_player_loop(fctx, cwvec, mp, NULL, flags, errbuf, errlen);
+  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 

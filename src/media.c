@@ -31,7 +31,7 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "i18n.h"
-
+#include "video/subtitles.h"
 
 // -- Video accelerators ---------
 
@@ -93,11 +93,24 @@ media_init(void)
 /**
  *
  */
+static void
+media_buf_dtor_freedata(media_buf_t *mb)
+{
+  if(mb->mb_data != NULL)
+    free(mb->mb_data);
+}
+
+
+
+/**
+ *
+ */
 media_buf_t *
 media_buf_alloc(void)
 {
   media_buf_t *mb = calloc(1, sizeof(media_buf_t));
   mb->mb_time = AV_NOPTS_VALUE;
+  mb->mb_dtor = media_buf_dtor_freedata;
   return mb;
 }
 
@@ -108,8 +121,7 @@ media_buf_alloc(void)
 void
 media_buf_free(media_buf_t *mb)
 {
-  if(mb->mb_data != NULL)
-    free(mb->mb_data);
+  mb->mb_dtor(mb);
 
   if(mb->mb_cw != NULL)
     media_codec_deref(mb->mb_cw);
@@ -126,13 +138,15 @@ static void
 mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex)
 {
   TAILQ_INIT(&mq->mq_q);
-  mq->mq_len = 0;
-  mq->mq_bytes = 0;
+
+  mq->mq_packets_current = 0;
+  mq->mq_packets_threshold = 5;
+
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail, mutex);
-  mq->mq_prop_qlen_curx = prop_create(p, "dqlen");
-  mq->mq_prop_qlen_bytes = prop_create(p, "bytes");
+  mq->mq_prop_qlen_cur = prop_create(p, "dqlen");
   mq->mq_prop_qlen_max = prop_create(p, "dqmax");
+
   mq->mq_prop_bitrate = prop_create(p, "bitrate");
 
   mq->mq_prop_decode_avg  = prop_create(p, "decodetime_avg");
@@ -171,6 +185,8 @@ mp_create(const char *name, int flags, const char *type)
   TAILQ_INIT(&mp->mp_eq);
 
   mp->mp_refcount = 1;
+
+  mp->mp_buffer_limit = 10 * 1000 * 1000; 
 
   mp->mp_name = name;
 
@@ -214,6 +230,15 @@ mp_create(const char *name, int flags, const char *type)
   track_mgr_init(mp, &mp->mp_subtitle_track_mgr, mp->mp_prop_subtitle_tracks,
 		 MEDIA_TRACK_MANAGER_SUBTITLES);
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
+
+  // Buffer
+
+  p = prop_create(mp->mp_prop_root, "buffer");
+  mp->mp_prop_buffer_current = prop_create(p, "current");
+  prop_set_int(mp->mp_prop_buffer_current, 0);
+
+  mp->mp_prop_buffer_limit = prop_create(p, "limit");
+  prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
 
 
   // 
@@ -423,14 +448,14 @@ mp_dequeue_event_deadline(media_pipe_t *mp, int timeout)
  *
  */
 event_t *
-mp_wait_for_empty_queues(media_pipe_t *mp, int limit)
+mp_wait_for_empty_queues(media_pipe_t *mp)
 {
   event_t *e;
   hts_mutex_lock(&mp->mp_mutex);
 
  again:
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	(mp->mp_audio.mq_len > limit || mp->mp_video.mq_len > limit))
+	(mp->mp_audio.mq_packets_current || mp->mp_video.mq_packets_current))
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
 
   if(e != NULL) {
@@ -455,8 +480,9 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 {
   if(!mp->mp_stats)
     return;
-  prop_set_int(mq->mq_prop_qlen_curx, mq->mq_len);
-  prop_set_int(mq->mq_prop_qlen_bytes, mq->mq_bytes);
+
+  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
+  prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
 }
 
 /**
@@ -466,8 +492,8 @@ static void
 mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
-  mq->mq_len++;
-  mq->mq_bytes += mb->mb_size;
+  mq->mq_packets_current++;
+  mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 }
@@ -479,11 +505,33 @@ static void
 mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
-  mq->mq_len++;
-  mq->mq_bytes += mb->mb_size;
+  mq->mq_packets_current++;
+  mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 }
+
+
+/**
+ *
+ */
+static int64_t
+mq_realtime_delay(media_queue_t *mq)
+{
+  media_buf_t *f, *l;
+
+  f = TAILQ_FIRST(&mq->mq_q);
+  l = TAILQ_LAST(&mq->mq_q, media_buf_queue);
+
+  if(f != NULL) {
+    if(f->mb_epoch == l->mb_epoch) {
+      int64_t d = l->mb_pts - f->mb_pts;
+      return d;
+    }
+  }
+  return 0;
+}
+
 
 /**
  *
@@ -491,32 +539,30 @@ mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 event_t *
 mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
-  media_queue_t *v = &mp->mp_video;
-  media_queue_t *a = &mp->mp_audio;
   event_t *e = NULL;
 
   hts_mutex_lock(&mp->mp_mutex);
-
-  if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-    while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	  ((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
-	   a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER)) {
-      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-    }
-  } else {
-    while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL && mq->mq_len > MQ_LOWWATER)
-      hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-  }
-
+#if 0
+  printf("ENQ %s %d/%d %d/%d\n", mq == &mp->mp_video ? "video" : "audio",
+	 mq->mq_packets_current, mq->mq_packets_threshold,
+	 mp->mp_buffer_current,  mp->mp_buffer_limit);
+#endif
+	 
+  while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
+	mq->mq_packets_current > mq->mq_packets_threshold &&
+	(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit ||
+	 (mp->mp_max_realtime_delay != 0 && 
+	  mq_realtime_delay(mq) > mp->mp_max_realtime_delay)))
+    hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
+  
   if(e != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-    hts_mutex_unlock(&mp->mp_mutex);
-    return e;
+  } else {
+    mb_enq_tail(mp, mq, mb);
   }
 
-  mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
-  return NULL;
+  return e;
 }
 
 
@@ -528,27 +574,13 @@ int
 mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 		    int auxtype)
 {
-  media_queue_t *v = &mp->mp_video;
-  media_queue_t *a = &mp->mp_audio;
-
   hts_mutex_lock(&mp->mp_mutex);
   
-  if(a->mq_stream >= 0 && v->mq_stream >= 0) {
-
-    if((a->mq_len > MQ_LOWWATER && v->mq_len > MQ_LOWWATER) ||
-       a->mq_len > MQ_HIWATER || v->mq_len > MQ_HIWATER) {
+  if(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit &&
+     mq->mq_packets_current < mq->mq_packets_threshold) {
       hts_mutex_unlock(&mp->mp_mutex);
-      return -1;
-    }
-
-  } else {
-
-    if(mq->mq_len > MQ_LOWWATER) {
-      hts_mutex_unlock(&mp->mp_mutex);
-      return -1;
-    }
+    return -1;
   }
-  
 
   if(auxtype != -1) {
     media_buf_t *after;
@@ -566,8 +598,8 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   }
 
-  mq->mq_len++;
-  mq->mq_bytes += mb->mb_size;
+  mq->mq_packets_current++;
+  mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 
@@ -598,10 +630,10 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq)
 
   while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mp->mp_buffer_current -= mb->mb_size;
     media_buf_free(mb);
   }
-  mq->mq_len = 0;
-  mq->mq_bytes = 0;
+  mq->mq_packets_current = 0;
   mq_update_stats(mp, mq);
 }
 
@@ -1273,11 +1305,28 @@ mp_set_url(media_pipe_t *mp, const char *url)
  *
  */
 void
-mp_set_play_caps(media_pipe_t *mp, int caps)
+mp_configure(media_pipe_t *mp, int caps, int buffer_size)
 {
+  mp->mp_max_realtime_delay = 0;
+
   prop_set_int(mp->mp_prop_canSeek,  caps & MP_PLAY_CAPS_SEEK  ? 1 : 0);
   prop_set_int(mp->mp_prop_canPause, caps & MP_PLAY_CAPS_PAUSE ? 1 : 0);
   prop_set_int(mp->mp_prop_canEject, caps & MP_PLAY_CAPS_EJECT ? 1 : 0);
+
+  switch(buffer_size) {
+  case MP_BUFFER_NONE:
+    mp->mp_buffer_limit = 0;
+    break;
+
+  case MP_BUFFER_SHALLOW:
+    mp->mp_buffer_limit = 1000 * 1000;
+    break;
+
+  case MP_BUFFER_DEEP:
+    mp->mp_buffer_limit = 10 * 1000 * 1000;
+    break;
+  }
+  prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
 }
 
 
@@ -1651,4 +1700,32 @@ track_mgr_destroy(media_track_mgr_t *mtm)
 {
   prop_unsubscribe(mtm->mtm_sub);
   mtm_clear(mtm);
+}
+
+
+/**
+ *
+ */
+static void
+ext_sub_dtor(media_buf_t *mb)
+{
+  if(mb->mb_data != NULL)
+    subtitles_destroy(mb->mb_data);
+}
+
+
+/**
+ *
+ */
+void
+mp_load_ext_sub(media_pipe_t *mp, const char *url)
+{
+  media_buf_t *mb = media_buf_alloc();
+  mb->mb_data_type = MB_EXT_SUBTITLE;
+  
+  if(url != NULL)
+    mb->mb_data = subtitles_load(url);
+  
+  mb->mb_dtor = ext_sub_dtor;
+  mb_enq_head(mp, &mp->mp_video, mb);
 }

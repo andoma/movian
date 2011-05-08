@@ -24,7 +24,6 @@
 #include "backend/backend.h"
 #include "media.h"
 #include "showtime.h"
-#include "video/subtitles.h"
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "video/video_playback.h"
@@ -54,11 +53,6 @@ typedef struct {
   int64_t seekbase;
   int epoch;
   int64_t seekpos;
-
-  subtitles_t *sub;
-  int64_t subpts;
-  int64_t lastsubpts;
-  int manual_sub_selected;
 
 } rtmp_t;
 
@@ -181,8 +175,6 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   }
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
-  r->lastsubpts = AV_NOPTS_VALUE;
-
   return pos;
 }
 
@@ -267,20 +259,11 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     mp_set_playstatus_stop(mp);
   } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
     event_select_track_t *est = (event_select_track_t *)e;
-
-    if(est->manual >= r->manual_sub_selected) {
-      r->manual_sub_selected = est->manual;
-
-      prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
-
-      if(r->sub != NULL)
-	subtitles_destroy(r->sub);
-      
-      if(!strcmp(est->id, "sub:off")) {
-	r->sub = NULL;
+    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
+    if(!strcmp(est->id, "sub:off")) {
+      mp_load_ext_sub(mp, NULL);
       } else {
-	r->sub = subtitles_load(est->id);
-      }
+      mp_load_ext_sub(mp, est->id);
     }
 
   }
@@ -425,20 +408,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 
   e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
 	      data, size, skip, MB_VIDEO, r->vframeduration);
-  if(e != NULL)
-    return e;
-
-  if(pts > r->lastsubpts)
-    r->lastsubpts = r->subpts = pts;
-  else
-    r->subpts = AV_NOPTS_VALUE;
-  
-  if(r->subpts != AV_NOPTS_VALUE && r->sub != NULL) {
-    subtitle_entry_t *se = subtitles_pick(r->sub, r->subpts);
-    if(se != NULL)
-      mb_enqueue_always(mp, &r->mp->mp_video, subtitles_make_pkt(se));
-  }
-  return NULL;
+  return e;
 }
 
 
@@ -572,8 +542,6 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   r->epoch = 1;
   r->seekbase = AV_NOPTS_VALUE;
   r->seekpos = AV_NOPTS_VALUE;
-  r->subpts = AV_NOPTS_VALUE;
-  r->lastsubpts = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
@@ -588,7 +556,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
       if(ret == 2) {
 	/* Wait for queues to drain */
-	e = mp_wait_for_empty_queues(mp, 0);
+	e = mp_wait_for_empty_queues(mp);
 	mp_set_playstatus_stop(mp);
 
 	if(e == NULL)
@@ -757,7 +725,10 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+	       MP_BUFFER_DEEP);
+  mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
+
   mp_become_primary(mp);
 
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
@@ -766,9 +737,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   mp_shutdown(mp);
 
   TRACE(TRACE_DEBUG, "RTMP", "End of stream");
-
-  if(r.sub)
-    subtitles_destroy(r.sub);
 
   rtmp_free(&r);
   return e;

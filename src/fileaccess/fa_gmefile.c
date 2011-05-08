@@ -204,7 +204,8 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_SEEK);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_SEEK,
+	       MP_BUFFER_SHALLOW);
   mp_become_primary(mp);
   
 

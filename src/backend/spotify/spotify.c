@@ -773,7 +773,7 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
     return 0;
   }
 
-  if(mq->mq_len > 100)
+  if(mq->mq_packets_current > 100)
     return 0;
 
   mb = media_buf_alloc();
@@ -3498,7 +3498,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
   hts_mutex_unlock(&spotify_mutex);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+	       MP_BUFFER_NONE);
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
@@ -3507,7 +3508,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
 
     if(eof != NULL) {
       /* End of file, wait a while for queues to drain more */
-      e = mp_wait_for_empty_queues(mp, 0);
+      e = mp_wait_for_empty_queues(mp);
       if(e == NULL) {
 	e = eof;
 	eof = NULL;

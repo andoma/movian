@@ -420,8 +420,10 @@ picture_out(vdec_decoder_t *vdd)
     uint8_t *data[4] = {vp->buf, vp->buf + lumasize,
 			vp->buf + lumasize + lumasize / 4, 0};
 
-    if(vd)
+    if(vd) {
       vd->vd_frame_deliver(data, linesizes, &vp->fi, vd->vd_opaque);
+      video_decoder_scan_ext_sub(vd, vp->fi.pts);
+    }
 
     release_picture(vdd, vp);
   }

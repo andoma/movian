@@ -143,6 +143,7 @@ typedef struct video_decoder {
    */
   struct subtitle_queue vd_sub_queue;
   hts_mutex_t vd_sub_mutex;
+  struct subtitles *vd_ext_subtitles;
 
   /**
    *
@@ -180,6 +181,8 @@ void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),
 				   void (*blackoutfn)(void *opaque),
 				   void *opaque);
+
+void video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts);
 
 
 /**
