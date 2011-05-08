@@ -652,9 +652,6 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
 }
 
 
-
-
-
 /**
  *
  */
@@ -663,7 +660,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 {
   htsmsg_t *tags, *res;
   htsmsg_field_t *f;
-  const char *proto, *url = NULL, *title;
+  const char *url = NULL, *mimetype = NULL, *title;
   char *str, *vpstr;
   size_t len;
 
@@ -674,9 +671,26 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
     if((res = htsmsg_get_map_by_field_if_name(f, "res")) == NULL)
       continue;
 
-    proto = htsmsg_get_str_multi(res, "attrib", "protocolInfo", NULL);
-    if(proto == NULL || strstr(proto, "DLNA.ORG_PN=JPEG_TN") == NULL)
+    const char *pi = htsmsg_get_str_multi(res, "attrib", "protocolInfo", NULL);
+
+    if(pi == NULL)
+      continue;
+
+    char *tmp = NULL, *str = mystrdupa(pi);
+
+    const char *proto = strtok_r(str, ":", &tmp);
+    if(proto == NULL || strcmp(proto, "http-get"))
+      continue;
+
+    strtok_r(NULL, ":", &tmp);
+    const char *contentformat = strtok_r(NULL, ":", &tmp);
+    const char *ai = strtok_r(NULL, ":", &tmp);
+    
+    if(ai == NULL || strstr(ai, "DLNA.ORG_PN=JPEG_TN") == NULL) {
       url = htsmsg_get_str_multi(res, "cdata", NULL);
+      mimetype = contentformat;
+      break;
+    }
   }
 
 
@@ -698,6 +712,8 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 
   htsmsg_t *src = htsmsg_create_map();
   htsmsg_add_str(src, "url", url);
+  if(mimetype != NULL)
+    htsmsg_add_str(src, "mimetype", mimetype);
 
   htsmsg_t *sources = htsmsg_create_list();
   htsmsg_add_msg(sources, NULL, src);
