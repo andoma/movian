@@ -361,7 +361,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 
   nav_insert_page(nav, np, origin);
   if(backend_open(np->np_prop_root, url))
-    nav_open_errorf(np->np_prop_root, url, "No handler for URL");
+    nav_open_errorf(np->np_prop_root, "No handler for URL");
 
 }
 
