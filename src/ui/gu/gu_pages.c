@@ -21,6 +21,7 @@
 #include "gu.h"
 #include "showtime.h"
 
+static void gu_openerror_create(gu_nav_page_t *gnp);
 
 
 /**
@@ -45,6 +46,8 @@ gu_nav_page_set_type(void *opaque, const char *type)
     gu_home_create(gnp);
   } else if(!strcmp(type, "video")) {
     gu_video_create(gnp);
+  } else if(!strcmp(type, "openerror")) {
+    gu_openerror_create(gnp);
   } else {
     TRACE(TRACE_ERROR, "GU", "Can not display page type: %s", type);
   }
@@ -231,4 +234,55 @@ gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable)
 {
   gnp->gnp_fullwindow = enable;
   gu_fullwindow_update(gnp->gnp_gt->gt_gw);
+}
+
+
+/**
+ *
+ */
+static void
+gu_openerror_create(gu_nav_page_t *gnp)
+{
+  prop_courier_t *pc = gnp->gnp_gt->gt_gw->gw_gu->gu_pc;
+  prop_sub_t *s;
+  GtkWidget *l;
+
+  gnp->gnp_pageroot = gtk_vbox_new(FALSE, 3);
+  gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
+  
+  l = gtk_label_new(NULL);
+  gtk_label_set_markup(GTK_LABEL(l),
+		       "<span size=\"x-large\">Unable to open page</span>");
+  gtk_box_pack_start(GTK_BOX(gnp->gnp_pageroot), l, FALSE, FALSE, 0);
+  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+
+
+
+  l = gtk_label_new(NULL);
+  gtk_box_pack_start(GTK_BOX(gnp->gnp_pageroot), l, FALSE, FALSE, 0);
+  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+
+ s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		    PROP_TAG_NAME("self", "url"),
+		    PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
+		    PROP_TAG_COURIER, pc,
+		    PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
+		    NULL);
+  gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
+
+
+
+  l = gtk_label_new(NULL);
+  gtk_box_pack_start(GTK_BOX(gnp->gnp_pageroot), l, FALSE, FALSE, 0);
+  gtk_label_set_ellipsize(GTK_LABEL(l), PANGO_ELLIPSIZE_END);
+
+ s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		    PROP_TAG_NAME("self", "model", "error"),
+		    PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
+		    PROP_TAG_COURIER, pc,
+		    PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
+		    NULL);
+  gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
+
+  gtk_widget_show_all(gnp->gnp_pageroot);
 }
