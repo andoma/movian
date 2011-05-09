@@ -436,7 +436,7 @@ static void
 compute_output_dimensions(video_output_t *vo, AVRational dar,
 			  int *w, int *h)
 {
-  float a = (vo->vo_w * dar.den) / (vo->vo_h * dar.num);
+  float a = (float)(vo->vo_w * dar.den) / (float)(vo->vo_h * dar.num);
 
   if(a > 1) {
     *w = vo->vo_w / a;
