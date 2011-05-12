@@ -693,40 +693,6 @@ glw_opengl_init_context(glw_root_t *gr)
   return 0;
 }
 
-
-#if 0
-#include <xmmintrin.h>
-
-typedef __m128 mtx[4];
-
-void scaleit(mtx m, float x, float y, float z);
-
-void
-scaleit(mtx m, float x, float y, float z)
-{
-  __m128 X = (__m128){ x,x,x,0};
-  __m128 Y = (__m128){ y,y,y,0};
-  __m128 Z = (__m128){ z,z,z,0};
-  m[0] = _mm_mul_ps(m[0], X);
-  m[1] = _mm_mul_ps(m[1], Y);
-  m[2] = _mm_mul_ps(m[2], Z);
-}
-
-
-void scaleit2(mtx m, __m128 vec);
-
-void
-scaleit2(mtx m, __m128 vec)
-{
-  __m128 X =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(0,0,0,3));
-  __m128 Y =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(1,1,1,3));
-  __m128 Z =  _mm_shuffle_ps(vec, vec, _MM_SHUFFLE(2,2,2,3));
-  m[0] = _mm_mul_ps(m[0], X);
-  m[1] = _mm_mul_ps(m[1], Y);
-  m[2] = _mm_mul_ps(m[2], Z);
-}
-#endif
-
 /**
  *
  */
