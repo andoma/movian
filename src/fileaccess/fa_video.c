@@ -583,9 +583,13 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   // Scan all streams and select defaults
 
   for(i = 0; i < fctx->nb_streams; i++) {
+    char str[256];
     media_codec_params_t mcp = {0};
 
     ctx = fctx->streams[i]->codec;
+
+    avcodec_string(str, sizeof(str), ctx, 0);
+    TRACE(TRACE_DEBUG, "Video", " Stream #%d: %s", i, str);
 
     switch(ctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
