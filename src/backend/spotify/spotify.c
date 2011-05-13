@@ -1949,6 +1949,22 @@ spotify_userinfo_updated(sp_session *session)
 
 
 /**
+ *
+ */
+static void
+spotify_streaming_error(sp_session *session, sp_error error)
+{
+  media_pipe_t *mp = spotify_mp;
+
+  TRACE(TRACE_ERROR, "Spotify", "Unable to play track -- %s", 
+	f_sp_error_message(error));
+
+  if(mp != NULL)
+    mp_enqueue_event(mp, event_create_type(EVENT_EOF));
+}
+
+
+/**
  * Session callbacks
  */
 static const sp_session_callbacks spotify_session_callbacks = {
@@ -1961,6 +1977,7 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .play_token_lost     = spotify_play_token_lost,
   .end_of_track        = spotify_end_of_track,
   .log_message         = spotify_log_message,
+  .streaming_error     = spotify_streaming_error,
   .userinfo_updated    = spotify_userinfo_updated,
 };
 
