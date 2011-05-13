@@ -21,8 +21,14 @@ static sp_playlist *(*f_sp_session_starred_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session, const char *canonical_username);
 static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user_create)(sp_session *session, const char *canonical_username);
 static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
+static void(*f_sp_session_preferred_offline_bitrate)(sp_session *session, sp_bitrate bitrate, bool allow_resync);
 static int(*f_sp_session_num_friends)(sp_session *session);
 static sp_user *(*f_sp_session_friend)(sp_session *session, int index);
+static void(*f_sp_session_set_connection_type)(sp_session *session, sp_connection_type type);
+static void(*f_sp_session_set_connection_rules)(sp_session *session, sp_connection_rules rules);
+static int(*f_sp_offline_tracks_to_sync)(sp_session *session);
+static int(*f_sp_offline_num_playlists)(sp_session *session);
+static void(*f_sp_offline_sync_get_status)(sp_session *session, sp_offline_sync_status *status);
 static sp_link *(*f_sp_link_create_from_string)(const char *link);
 static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
@@ -157,6 +163,9 @@ static void(*f_sp_playlist_update_subscribers)(sp_session *session, sp_playlist 
 static bool(*f_sp_playlist_is_in_ram)(sp_session *session, sp_playlist *playlist);
 static void(*f_sp_playlist_set_in_ram)(sp_session *session, sp_playlist *playlist, bool in_ram);
 static sp_playlist *(*f_sp_playlist_create)(sp_session *session, sp_link *link);
+static void(*f_sp_playlist_set_offline_mode)(sp_session *session, sp_playlist *playlist, bool offline);
+static sp_playlist_offline_status(*f_sp_playlist_get_offline_status)(sp_session *session, sp_playlist *playlist);
+static int(*f_sp_playlist_get_offline_download_completed)(sp_session *session, sp_playlist *playlist);
 static void(*f_sp_playlist_add_ref)(sp_playlist *playlist);
 static void(*f_sp_playlist_release)(sp_playlist *playlist);
 static void(*f_sp_playlistcontainer_add_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
@@ -220,8 +229,14 @@ if((f_sp_session_starred_create=dlsym(handle,"sp_session_starred_create"))==NULL
 if((f_sp_session_starred_for_user_create=dlsym(handle,"sp_session_starred_for_user_create"))==NULL) return "sp_session_starred_for_user_create";
 if((f_sp_session_publishedcontainer_for_user_create=dlsym(handle,"sp_session_publishedcontainer_for_user_create"))==NULL) return "sp_session_publishedcontainer_for_user_create";
 if((f_sp_session_preferred_bitrate=dlsym(handle,"sp_session_preferred_bitrate"))==NULL) return "sp_session_preferred_bitrate";
+if((f_sp_session_preferred_offline_bitrate=dlsym(handle,"sp_session_preferred_offline_bitrate"))==NULL) return "sp_session_preferred_offline_bitrate";
 if((f_sp_session_num_friends=dlsym(handle,"sp_session_num_friends"))==NULL) return "sp_session_num_friends";
 if((f_sp_session_friend=dlsym(handle,"sp_session_friend"))==NULL) return "sp_session_friend";
+if((f_sp_session_set_connection_type=dlsym(handle,"sp_session_set_connection_type"))==NULL) return "sp_session_set_connection_type";
+if((f_sp_session_set_connection_rules=dlsym(handle,"sp_session_set_connection_rules"))==NULL) return "sp_session_set_connection_rules";
+if((f_sp_offline_tracks_to_sync=dlsym(handle,"sp_offline_tracks_to_sync"))==NULL) return "sp_offline_tracks_to_sync";
+if((f_sp_offline_num_playlists=dlsym(handle,"sp_offline_num_playlists"))==NULL) return "sp_offline_num_playlists";
+if((f_sp_offline_sync_get_status=dlsym(handle,"sp_offline_sync_get_status"))==NULL) return "sp_offline_sync_get_status";
 if((f_sp_link_create_from_string=dlsym(handle,"sp_link_create_from_string"))==NULL) return "sp_link_create_from_string";
 if((f_sp_link_create_from_track=dlsym(handle,"sp_link_create_from_track"))==NULL) return "sp_link_create_from_track";
 if((f_sp_link_create_from_album=dlsym(handle,"sp_link_create_from_album"))==NULL) return "sp_link_create_from_album";
@@ -356,6 +371,9 @@ if((f_sp_playlist_update_subscribers=dlsym(handle,"sp_playlist_update_subscriber
 if((f_sp_playlist_is_in_ram=dlsym(handle,"sp_playlist_is_in_ram"))==NULL) return "sp_playlist_is_in_ram";
 if((f_sp_playlist_set_in_ram=dlsym(handle,"sp_playlist_set_in_ram"))==NULL) return "sp_playlist_set_in_ram";
 if((f_sp_playlist_create=dlsym(handle,"sp_playlist_create"))==NULL) return "sp_playlist_create";
+if((f_sp_playlist_set_offline_mode=dlsym(handle,"sp_playlist_set_offline_mode"))==NULL) return "sp_playlist_set_offline_mode";
+if((f_sp_playlist_get_offline_status=dlsym(handle,"sp_playlist_get_offline_status"))==NULL) return "sp_playlist_get_offline_status";
+if((f_sp_playlist_get_offline_download_completed=dlsym(handle,"sp_playlist_get_offline_download_completed"))==NULL) return "sp_playlist_get_offline_download_completed";
 if((f_sp_playlist_add_ref=dlsym(handle,"sp_playlist_add_ref"))==NULL) return "sp_playlist_add_ref";
 if((f_sp_playlist_release=dlsym(handle,"sp_playlist_release"))==NULL) return "sp_playlist_release";
 if((f_sp_playlistcontainer_add_callbacks=dlsym(handle,"sp_playlistcontainer_add_callbacks"))==NULL) return "sp_playlistcontainer_add_callbacks";
@@ -420,8 +438,14 @@ return NULL;}
 #define f_sp_session_starred_for_user_create sp_session_starred_for_user_create
 #define f_sp_session_publishedcontainer_for_user_create sp_session_publishedcontainer_for_user_create
 #define f_sp_session_preferred_bitrate sp_session_preferred_bitrate
+#define f_sp_session_preferred_offline_bitrate sp_session_preferred_offline_bitrate
 #define f_sp_session_num_friends sp_session_num_friends
 #define f_sp_session_friend sp_session_friend
+#define f_sp_session_set_connection_type sp_session_set_connection_type
+#define f_sp_session_set_connection_rules sp_session_set_connection_rules
+#define f_sp_offline_tracks_to_sync sp_offline_tracks_to_sync
+#define f_sp_offline_num_playlists sp_offline_num_playlists
+#define f_sp_offline_sync_get_status sp_offline_sync_get_status
 #define f_sp_link_create_from_string sp_link_create_from_string
 #define f_sp_link_create_from_track sp_link_create_from_track
 #define f_sp_link_create_from_album sp_link_create_from_album
@@ -556,6 +580,9 @@ return NULL;}
 #define f_sp_playlist_is_in_ram sp_playlist_is_in_ram
 #define f_sp_playlist_set_in_ram sp_playlist_set_in_ram
 #define f_sp_playlist_create sp_playlist_create
+#define f_sp_playlist_set_offline_mode sp_playlist_set_offline_mode
+#define f_sp_playlist_get_offline_status sp_playlist_get_offline_status
+#define f_sp_playlist_get_offline_download_completed sp_playlist_get_offline_download_completed
 #define f_sp_playlist_add_ref sp_playlist_add_ref
 #define f_sp_playlist_release sp_playlist_release
 #define f_sp_playlistcontainer_add_callbacks sp_playlistcontainer_add_callbacks
