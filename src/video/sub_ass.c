@@ -382,6 +382,7 @@ static void
 ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
 {
   char *str, *cmd;
+  int v1, v2;
   if(len > 1000)
     return;
 
@@ -393,8 +394,13 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
     str = ++cmd;
     if(str[0] == 'i')
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_ITALIC_ON : TR_CODE_ITALIC_OFF);
-    if(str[0] == 'b')
+    else if(str[0] == 'b')
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_BOLD_ON : TR_CODE_BOLD_OFF);
+    else if(sscanf(str, "fad(%d,%d)", &v1, &v2) == 2) {
+      ad->ad_fadein = v1 * 1000;
+      ad->ad_fadeout = v2 * 1000;
+    } else
+      TRACE(TRACE_DEBUG, "ASS", "Can't handle override: %s", str);
   }
 }
 
