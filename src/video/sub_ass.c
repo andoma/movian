@@ -506,6 +506,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   pixmap_composite(out, pm, 0, 0, red, green, blue, alpha);
 
   video_overlay_t *vo = video_overlay_from_pixmap(out);
+  pixmap_release(out);
 
   vo->vo_start = start;
   vo->vo_stop = end;
