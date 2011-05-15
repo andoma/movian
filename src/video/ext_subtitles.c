@@ -244,8 +244,11 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   }
 
   while(1) {
-    if(linereader_next(&lr) < 0)
+    if((n = linereader_next(&lr)) < 0)
       break;
+    if(n == 0)
+      continue;
+
     if(get_int(&lr, &n) < 0)
       break;
     if(linereader_next(&lr) < 0)
@@ -256,7 +259,8 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
     tlen = 0;
     txt = NULL;
     // Text lines
-    while(lr.ll != -1) {
+
+    while(1) {
       if(linereader_next(&lr) < 1)
 	break;
 
