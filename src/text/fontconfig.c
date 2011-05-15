@@ -34,6 +34,7 @@ fontconfig_init(void)
   FcConfig *conf = FcInitLoadConfig();
   FcConfigBuildFonts(conf);
   fc_config = conf;
+  fc_initialized = 1;
 }
 
 
