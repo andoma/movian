@@ -224,6 +224,9 @@ typedef struct media_pipe {
   int mp_avdelta;
   int mp_stats;
 
+  int mp_video_width;
+  int mp_video_height;
+
   struct audio_decoder *mp_audio_decoder;
 
   struct event_q mp_eq;

@@ -254,9 +254,8 @@ video_deliver_frame(video_decoder_t *vd,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  vd->vd_width = ctx->width;
-  vd->vd_height = ctx->height;
-  vd->vd_dar = fi.dar;
+  mp->mp_video_width = ctx->width;
+  mp->mp_video_height = ctx->height;
 
   fi.width = ctx->width;
   fi.height = ctx->height;

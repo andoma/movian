@@ -197,8 +197,11 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   int len;
   struct pixmap *pm;
   video_overlay_t *vo;
+  const media_pipe_t *mp = vd->vd_mp;
+  int vwidth  = mp->mp_video_width;
+  int vheight = mp->mp_video_height;
 
-  if(vd->vd_width < 10 || vd->vd_height < 10)
+  if(vwidth < 10 || vheight < 10)
     return;
 
   uc = text_parse(txt, &len, 
@@ -206,9 +209,9 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   if(uc == NULL)
     return;
 
-  int margin_x = vd->vd_width / 10;
-  int maxwidth = vd->vd_width - (margin_x * 2);
-  int fontsize = vd->vd_height / 20;
+  int margin_x = vwidth / 10;
+  int maxwidth = vwidth - (margin_x * 2);
+  int fontsize = vheight / 20;
   int flags = 0;
 
   if(subtitle_alignment == SUBTITLE_ALIGNMENT_CENTER)
@@ -227,7 +230,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 
   switch(subtitle_alignment) {
   default:
-    vo->vo_x = vd->vd_width / 2 - pm->pm_width / 2;
+    vo->vo_x = vwidth / 2 - pm->pm_width / 2;
     break;
 
   case SUBTITLE_ALIGNMENT_LEFT:
@@ -235,11 +238,11 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     break;
  
   case SUBTITLE_ALIGNMENT_RIGHT:
-    vo->vo_x = vd->vd_width - pm->pm_width - margin_x;
+    vo->vo_x = vwidth - pm->pm_width - margin_x;
     break;
   }
 
-  vo->vo_y = vd->vd_height - pm->pm_height - (fontsize / 2);
+  vo->vo_y = vheight - pm->pm_height - (fontsize / 2);
   video_overlay_enqueue(vd, vo);
   pixmap_release(pm);
 }

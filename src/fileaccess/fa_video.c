@@ -612,8 +612,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(cwvec[i] != NULL) {
       switch(ctx->codec_type) {
       case AVMEDIA_TYPE_VIDEO:
-	if(mp->mp_video.mq_stream == -1)
+	if(mp->mp_video.mq_stream == -1) {
 	  mp->mp_video.mq_stream = i;
+	  mp->mp_video_width = ctx->width;
+	  mp->mp_video_height = ctx->height;
+	}
 	break;
 
       case AVMEDIA_TYPE_AUDIO:

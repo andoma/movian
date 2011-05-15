@@ -410,6 +410,8 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   const char *str;
   int c;
   const ass_style_t *as;
+  int vwidth  = vd->vd_mp->mp_video_width;
+  int vheight = vd->vd_mp->mp_video_height;
 
   ad->ad_buf[strcspn(ad->ad_buf, "\n\r")] = 0;
 
@@ -459,7 +461,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     ad_txt_append(ad, c);
   }
 
-  int maxwidth = vd->vd_width - as->as_margin_left - as->as_margin_right;
+  int maxwidth = vwidth - as->as_margin_left - as->as_margin_right;
   if(maxwidth < 10)
     return;
 
@@ -512,11 +514,11 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 
   switch(as->as_alignment) {
   case 1 ... 3:
-    vo->vo_y = vd->vd_height - pm->pm_height - as->as_margin_vertical;
+    vo->vo_y = vheight - pm->pm_height - as->as_margin_vertical;
     break;
     
   case 4 ... 6:
-    vo->vo_y = vd->vd_height / 2 - pm->pm_height / 2;
+    vo->vo_y = vheight / 2 - pm->pm_height / 2;
     break;
 
   case 7 ... 9:
@@ -531,11 +533,11 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     break;
     
   case 1:
-    vo->vo_x = vd->vd_width / 2 - pm->pm_width / 2;
+    vo->vo_x = vwidth / 2 - pm->pm_width / 2;
     break;
     
   case 2:
-    vo->vo_x = vd->vd_width - as->as_margin_right - pm->pm_width;
+    vo->vo_x = vwidth - as->as_margin_right - pm->pm_width;
     break;
   }
 
@@ -553,7 +555,7 @@ sub_ass_render(video_decoder_t *vd, const char *src,
 {
   ass_dialoge_t ad;
 
-  if(vd->vd_width == 0 ||  vd->vd_height == 0)
+  if(vd->vd_mp->mp_video_width < 10 ||  vd->vd_mp->mp_video_height < 10)
     return;
 
   if(strncmp(src, "Dialogue:", strlen("Dialogue:")))
