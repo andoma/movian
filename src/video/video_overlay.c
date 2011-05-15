@@ -169,7 +169,7 @@ video_overlay_postprocess(pixmap_t *src)
 				src->pm_height + shadow,
 				PIX_FMT_BGR32);
   
-  pixmap_composite(dst, blur, shadow, shadow, 0, 0, 0, 128);
+  pixmap_composite(dst, blur, shadow, shadow, 0, 0, 0, 208);
   pixmap_release(blur);
 
   pixmap_composite(dst, src, 0, 0, 255, 255, 255, 255);
