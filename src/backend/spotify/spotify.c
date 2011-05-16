@@ -1758,17 +1758,18 @@ spotify_open_page(spotify_page_t *sp)
     switch(type) {
     case SP_LINKTYPE_ALBUM:
       spotify_open_album(f_sp_link_as_album(l), sp, NULL);
+      sp = NULL;
       break;
 
     case SP_LINKTYPE_ARTIST:
       spotify_open_artist(l, sp);
+      sp = NULL;
       break;
 
     case SP_LINKTYPE_PLAYLIST:
       plist = f_sp_playlist_create(spotify_session, l);
       if(plist != NULL) 
 	spotify_open_playlist(sp, plist, NULL, 0);
-      spotify_page_destroy(sp);
       break;
 
     case SP_LINKTYPE_TRACK:
@@ -1776,6 +1777,7 @@ spotify_open_page(spotify_page_t *sp)
       f_sp_track_add_ref(sp->sp_track);
       LIST_INSERT_HEAD(&pending_album_queries, sp, sp_query_link);
       try_get_album(sp);
+      sp = NULL;
       break;
 
     case SP_LINKTYPE_PROFILE:
@@ -1785,10 +1787,13 @@ spotify_open_page(spotify_page_t *sp)
 
     default:
       spotify_open_page_fail(sp, "Unable to handle URI");
+      sp = NULL;
       break;
     }
     f_sp_link_release(l);
   }
+  if(sp != NULL)
+    spotify_page_destroy(sp);
 }
 
 
