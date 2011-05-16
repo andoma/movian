@@ -509,11 +509,11 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
 /**
  *
  */
-static char *
+static const char *
 device_get_icon(htsmsg_t *dev)
 {
   htsmsg_field_t *f;
-  char *best = NULL;
+  const char *best = NULL;
   int bestscore = 0;
 
   htsmsg_t *iconlist = htsmsg_get_map_multi(dev,
@@ -552,7 +552,7 @@ device_get_icon(htsmsg_t *dev)
     score += width * height;
 
     if(score > bestscore) {
-      mystrset(&best, url);
+      best = url;
       bestscore = score;
     }
   }
