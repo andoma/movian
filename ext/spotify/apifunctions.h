@@ -29,6 +29,7 @@ static void(*f_sp_session_set_connection_rules)(sp_session *session, sp_connecti
 static int(*f_sp_offline_tracks_to_sync)(sp_session *session);
 static int(*f_sp_offline_num_playlists)(sp_session *session);
 static void(*f_sp_offline_sync_get_status)(sp_session *session, sp_offline_sync_status *status);
+static int(*f_sp_session_user_country)(sp_session *session);
 static sp_link *(*f_sp_link_create_from_string)(const char *link);
 static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
@@ -237,6 +238,7 @@ if((f_sp_session_set_connection_rules=dlsym(handle,"sp_session_set_connection_ru
 if((f_sp_offline_tracks_to_sync=dlsym(handle,"sp_offline_tracks_to_sync"))==NULL) return "sp_offline_tracks_to_sync";
 if((f_sp_offline_num_playlists=dlsym(handle,"sp_offline_num_playlists"))==NULL) return "sp_offline_num_playlists";
 if((f_sp_offline_sync_get_status=dlsym(handle,"sp_offline_sync_get_status"))==NULL) return "sp_offline_sync_get_status";
+if((f_sp_session_user_country=dlsym(handle,"sp_session_user_country"))==NULL) return "sp_session_user_country";
 if((f_sp_link_create_from_string=dlsym(handle,"sp_link_create_from_string"))==NULL) return "sp_link_create_from_string";
 if((f_sp_link_create_from_track=dlsym(handle,"sp_link_create_from_track"))==NULL) return "sp_link_create_from_track";
 if((f_sp_link_create_from_album=dlsym(handle,"sp_link_create_from_album"))==NULL) return "sp_link_create_from_album";
@@ -446,6 +448,7 @@ return NULL;}
 #define f_sp_offline_tracks_to_sync sp_offline_tracks_to_sync
 #define f_sp_offline_num_playlists sp_offline_num_playlists
 #define f_sp_offline_sync_get_status sp_offline_sync_get_status
+#define f_sp_session_user_country sp_session_user_country
 #define f_sp_link_create_from_string sp_link_create_from_string
 #define f_sp_link_create_from_track sp_link_create_from_track
 #define f_sp_link_create_from_album sp_link_create_from_album

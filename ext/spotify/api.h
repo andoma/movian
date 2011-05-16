@@ -286,11 +286,6 @@ typedef struct sp_offline_sync_status {
 	int error_tracks;
 
 	/**
-	 * Current download spead in bytes per second
-	 */
-	int current_download_speed;
-
-	/**
 	 * Set if sync operation is in progress
 	 */
 	bool syncing;
@@ -466,6 +461,7 @@ typedef struct sp_session_callbacks {
 	 * @param[in]  session    Session
 	 */
 	void (SP_CALLCONV *start_playback)(sp_session *session);
+
 
 	/**
 	 * Called when audio playback should stop
@@ -862,6 +858,16 @@ SP_LIBEXPORT(int) sp_offline_num_playlists(sp_session *session);
  *
  */
 SP_LIBEXPORT(void) sp_offline_sync_get_status(sp_session *session, sp_offline_sync_status *status);
+
+/**
+ * Get currently logged in users country
+ * updated the offline_status_updated() callback will be invoked.
+ *
+ * @param[in]  session        Session object
+ *
+ * @return  Country encoded in an integer 'SE' = 'S' << 8 | 'E'
+ */
+SP_LIBEXPORT(int) sp_session_user_country(sp_session *session);
 
 
 
