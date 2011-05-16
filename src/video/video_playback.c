@@ -122,7 +122,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
   vs = vsvec;
   
   return backend_play_video(vs->vs_url, mp, flags, priority, 
-			    errbuf, sizeof(errbuf), vs->vs_mimetype);
+			    errbuf, errlen, vs->vs_mimetype);
 }
 
 
