@@ -643,8 +643,7 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
   if(dot == NULL)
     return;
 
-  if(strlen(dot) == 4)
-    strcpy(dot, ".srt");
+  strcpy(dot, ".srt");
 
   if(!http_request(srt, NULL, NULL, NULL, NULL, 0, NULL, 0,
 		   HTTP_REQUEST_DEBUG, NULL, NULL, NULL)) {
