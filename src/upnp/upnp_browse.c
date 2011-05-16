@@ -301,6 +301,7 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
   if((result = htsmsg_get_str(out, "Result")) == NULL) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "Browse %s via %s -- No returned result", uri, id);
+    htsmsg_destroy(out);
     return -1;
   }
 
@@ -308,11 +309,13 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
   if(meta == NULL) {
     TRACE(TRACE_ERROR, "UPNP", 
 	  "Browse %s via %s -- XML error %s", uri, id, errbuf);
+    htsmsg_destroy(out);
     return -1;
   }
 
   nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL);
   htsmsg_destroy(meta);
+  htsmsg_destroy(out);
   return 0;
 }
 
@@ -393,6 +396,7 @@ browse_items(upnp_browse_t *ub)
 
   r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
+  htsmsg_destroy(in);
 
   if(r)
     return browse_fail(ub, "%s", errbuf);
@@ -424,6 +428,7 @@ browse_items(upnp_browse_t *ub)
 		  ub->ub_base_url, ub->ub_itemsub);
   htsmsg_destroy(meta);
   prop_have_more_childs(ub->ub_items);
+  htsmsg_destroy(out);
 }
 
 
@@ -811,6 +816,7 @@ browse_self(upnp_browse_t *ub)
 
   r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
+  htsmsg_destroy(in);
 
   if(r)
     return browse_fail(ub, "%s", errbuf);
@@ -818,12 +824,15 @@ browse_self(upnp_browse_t *ub)
   if(out == NULL)
     return browse_fail(ub, "Malformed SOAP response, no returned variabled");
 
-  if((result = htsmsg_get_str(out, "Result")) == NULL)
+  if((result = htsmsg_get_str(out, "Result")) == NULL) {
+    htsmsg_destroy(out);
     return browse_fail(ub, "No SOAP result");
-
+  }
   meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
-  if(meta == NULL)
+  if(meta == NULL) {
+    htsmsg_destroy(out);
     return browse_fail(ub, "Malformed XML: %s", errbuf);
+  }
 
   if((x = htsmsg_get_map_multi(meta, 
 			       "tags", "DIDL-Lite",
@@ -840,6 +849,7 @@ browse_self(upnp_browse_t *ub)
     browse_fail(ub, "Browsing something that is neither item nor container");
   }
   htsmsg_destroy(meta);
+  htsmsg_destroy(out);
 }
 
 
