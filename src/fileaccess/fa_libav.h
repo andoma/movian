@@ -6,7 +6,7 @@
 #include "fileaccess.h"
 
 AVIOContext *fa_libav_open(const char *url, int buf_size,
-			   char *errbuf, size_t errlen);
+			   char *errbuf, size_t errlen, int flags);
 
 void fa_libav_close(AVIOContext *io);
 

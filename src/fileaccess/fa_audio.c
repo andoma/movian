@@ -227,7 +227,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errlen)) == NULL)
+  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0)) == NULL)
     return NULL;
 
 

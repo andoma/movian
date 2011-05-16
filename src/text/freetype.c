@@ -174,7 +174,7 @@ face_create(const char *path)
   FT_Error err;
   size_t s;
 
-  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
+  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf), 0);
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- %s",
 	  path, errbuf);

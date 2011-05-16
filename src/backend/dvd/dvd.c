@@ -84,7 +84,7 @@ static const char *dvd_langcode_to_string(uint16_t langcode);
 static void *
 dvd_fa_open(const char *url)
 {
-  return fa_open(url, NULL, 0);
+  return fa_open(url, NULL, 0, 0);
 }
 
 static int

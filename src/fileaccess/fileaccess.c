@@ -145,7 +145,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
  *
  */
 void *
-fa_open(const char *url, char *errbuf, size_t errsize)
+fa_open(const char *url, char *errbuf, size_t errsize, int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -154,7 +154,7 @@ fa_open(const char *url, char *errbuf, size_t errsize)
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, errbuf, errsize);
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags);
   free(filename);
 
   return fh;
@@ -174,7 +174,7 @@ fa_open_vpaths(const char *url, const char **vpaths)
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, NULL, 0);
+  fh = fap->fap_open(fap, filename, NULL, 0, 0);
   free(filename);
 
   return fh;
@@ -521,7 +521,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
     return data;
   }
 
-  fh = fap->fap_open(fap, filename, errbuf, errlen);
+  fh = fap->fap_open(fap, filename, errbuf, errlen, 0);
   free(filename);
 
   if(fh == NULL)

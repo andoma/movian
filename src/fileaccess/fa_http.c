@@ -1233,11 +1233,12 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int ignore_size, int *non_interactive)
+             int ignore_size, int *non_interactive, int debug)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   
   hf->hf_url = strdup(url);
+  hf->hf_debug = !!debug;
 
   if(!http_open0(hf, 1, errbuf, errlen, ignore_size, non_interactive)) {
     hf->h.fh_proto = fap;
@@ -1249,9 +1250,10 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 }
 
 static fa_handle_t *
-http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+	  int flags)
 {
-  return http_open_ex(fap, url, errbuf, errlen, 0, 0);
+  return http_open_ex(fap, url, errbuf, errlen, 0, 0, flags & FA_DEBUG);
 }
 
 
@@ -1481,7 +1483,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   int statcode = -1;
 
   if((handle = http_open_ex(fap, url, errbuf, errlen, 1, 
-			    non_interactive ? &statcode : NULL)) == NULL)
+			    non_interactive ? &statcode : NULL, 0)) == NULL)
     return statcode;
  
   memset(fs, 0, sizeof(struct fa_stat));

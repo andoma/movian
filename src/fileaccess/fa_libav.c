@@ -47,12 +47,13 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
  *
  */
 AVIOContext *
-fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen)
+fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
+	      int flags)
 {
   fa_handle_t *fh;
   AVIOContext *avio;
 
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+  if((fh = fa_open(url, errbuf, errlen, flags)) == NULL)
     return NULL;
 
   if(buf_size == 0)
