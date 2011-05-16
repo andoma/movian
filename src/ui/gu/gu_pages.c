@@ -49,7 +49,18 @@ gu_nav_page_set_type(void *opaque, const char *type)
   } else if(!strcmp(type, "openerror")) {
     gu_openerror_create(gnp);
   } else {
-    TRACE(TRACE_ERROR, "GU", "Can not display page type: %s", type);
+    GtkWidget *l;
+    char str[256];
+
+    snprintf(str, sizeof(str), "Can not display page type: %s", type);
+
+    gnp->gnp_pageroot = gtk_vbox_new(FALSE, 3);
+    gtk_container_add(GTK_CONTAINER(gnp->gnp_pagebin), gnp->gnp_pageroot);
+  
+    l = gtk_label_new(str);
+    gtk_box_pack_start(GTK_BOX(gnp->gnp_pageroot), l, FALSE, FALSE, 0);
+
+    gtk_widget_show_all(gnp->gnp_pageroot);
   }
 }
 
