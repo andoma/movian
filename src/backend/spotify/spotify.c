@@ -125,7 +125,7 @@ static LIST_HEAD(, metadata) metadatas;
 
 
 /**
- *
+ * Users
  */
 typedef struct spotify_user {
   LIST_ENTRY(spotify_user) su_link;
@@ -134,9 +134,19 @@ typedef struct spotify_user {
 
   prop_t *su_prop_name;
   prop_t *su_prop_picture;
+
+  int su_mark;
+  prop_t *su_prop_friend;
+  prop_t *su_prop_title;
+  prop_t *su_prop_url;
+
 } spotify_user_t;
 
 static LIST_HEAD(, spotify_user) spotify_users;
+
+static void spotify_userinfo_updated(sp_session *session);
+
+static prop_t *friend_nodes;
 
 
 /**
@@ -159,7 +169,7 @@ typedef struct playlistcontainer {
 
 } playlistcontainer_t;
 
-static playlistcontainer_t *users_root;
+static playlistcontainer_t *current_user_rootlist;
 static void plc_for_user(sp_session *sess, struct spotify_page *sp,
 			 const char *username);
 
@@ -609,6 +619,8 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
     return spotify_try_login(s, 1, NULL, 0);
   }
 
+  TRACE(TRACE_INFO, "Spotify", "Logging in as user %s", username);
+
   f_sp_session_login(s, username, password);
   pending_login = 1;
 
@@ -653,7 +665,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
 
     user = f_sp_session_user(sess);
     load_initial_playlists(sess);
-    f_sp_session_num_friends(sess); // Trig enable of social features
+    spotify_userinfo_updated(sess);
 
   } else {
 
@@ -1564,10 +1576,30 @@ spotify_open_rootlist(spotify_page_t *sp, int flat)
 
   prop_set_string(sp->sp_type, "directory");
   prop_set_string(sp->sp_title, "Spotify playlists");
-  prop_link(users_root->plc_pending, sp->sp_loading);
+  prop_link(current_user_rootlist->plc_pending, sp->sp_loading);
 
-  pnf = prop_nf_create(sp->sp_nodes, flat ? users_root->plc_root_flat :
-		       users_root->plc_root_tree,
+  pnf = prop_nf_create(sp->sp_nodes,
+		       flat ? current_user_rootlist->plc_root_flat :
+		       current_user_rootlist->plc_root_tree,
+		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
+  prop_set_int(sp->sp_canFilter, 1);
+  prop_nf_release(pnf);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_open_friends(spotify_page_t *sp)
+{
+  struct prop_nf *pnf;
+
+  prop_set_string(sp->sp_type, "directory");
+  prop_set_string(sp->sp_title, "Spotify friends");
+  prop_set_int(sp->sp_loading, 0);
+
+  pnf = prop_nf_create(sp->sp_nodes, friend_nodes,
 		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
@@ -1731,6 +1763,8 @@ spotify_open_page(spotify_page_t *sp)
     spotify_open_rootlist(sp, 0);
   } else if(!strcmp(sp->sp_url, "spotify:playlistsflat")) {
     spotify_open_rootlist(sp, 1);
+  } else if(!strcmp(sp->sp_url, "spotify:friends")) {
+    spotify_open_friends(sp);
   } else if(!strcmp(sp->sp_url, "spotify:starred")) {
     
     plist = f_sp_session_starred_create(spotify_session);
@@ -1904,6 +1938,13 @@ update_userdata(spotify_user_t *su)
 
   sp_link *l = f_sp_link_create_from_user(su->su_user);
   f_sp_link_as_string(l, url, sizeof(url));
+
+  if(su->su_prop_title != NULL)
+    prop_set_string(su->su_prop_title, name);
+
+  if(su->su_prop_url != NULL)
+    prop_set_string(su->su_prop_url, url);
+
   prop_set_link(su->su_prop_name, name, url);
   f_sp_link_release(l);
 
@@ -1927,9 +1968,10 @@ find_user(sp_user *u)
   }
 
   if(su == NULL) {
-    su = malloc(sizeof(spotify_user_t));
+    su = calloc(1, sizeof(spotify_user_t));
     f_sp_user_add_ref(u);
     su->su_user = u;
+
     su->su_prop = prop_create_root(NULL);
     su->su_prop_name = prop_create(su->su_prop, "name");
     su->su_prop_picture = prop_create(su->su_prop, "picture");
@@ -1948,8 +1990,60 @@ static void
 spotify_userinfo_updated(sp_session *session)
 {
   spotify_user_t *su;
-  LIST_FOREACH(su, &spotify_users, su_link)
+  prop_t *before = NULL;
+  int num_friends = f_sp_session_num_friends(session);
+  int i;
+
+  LIST_FOREACH(su, &spotify_users, su_link) {
+    su->su_mark = 1;
     update_userdata(su);
+  }
+
+  for(i = num_friends - 1; i >= 0; i--) {
+    spotify_user_t *su = find_user(f_sp_session_friend(session, i));
+    su->su_mark = 0;
+
+    if(su->su_prop_friend == NULL) {
+      su->su_prop_friend = prop_create_root(NULL);
+      su->su_prop_url = prop_create(su->su_prop_friend, "url");
+      prop_set_string(prop_create(su->su_prop_friend, "type"), "person");
+      prop_t *metadata = prop_create(su->su_prop_friend, "metadata");
+      
+      su->su_prop_title = prop_create(metadata, "title");
+      prop_link(su->su_prop_picture, prop_create(metadata, "picture"));
+      update_userdata(su);
+    }
+
+    if(prop_set_parent_ex(su->su_prop_friend, friend_nodes, before, NULL))
+      abort();
+    before = su->su_prop_friend;
+  }
+
+  LIST_FOREACH(su, &spotify_users, su_link) {
+    if(su->su_mark) {
+      if(su->su_prop_friend) {
+	prop_destroy(su->su_prop_friend);
+	su->su_prop_friend = NULL;
+      }
+      su->su_mark = 0;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+clear_friends(void)
+{
+  spotify_user_t *su;
+  LIST_FOREACH(su, &spotify_users, su_link) {
+    if(su->su_prop_friend) {
+      prop_destroy(su->su_prop_friend);
+      su->su_prop_friend = NULL;
+    }
+  }
 }
 
 
@@ -2857,7 +2951,7 @@ playlistcontainer_create(const char *name)
 static void
 load_initial_playlists(sp_session *sess)
 {
-  playlistcontainer_bind(sess, users_root,
+  playlistcontainer_bind(sess, current_user_rootlist,
 			 f_sp_session_playlistcontainer(sess));
 
   f_sp_playlist_add_callbacks(f_sp_session_starred_create(sess),
@@ -2871,7 +2965,7 @@ load_initial_playlists(sp_session *sess)
 static void
 unload_initial_playlists(sp_session *sess)
 {
-  playlistcontainer_unbind(sess, users_root,
+  playlistcontainer_unbind(sess, current_user_rootlist,
 			   f_sp_session_playlistcontainer(sess));
 }
 
@@ -3501,6 +3595,7 @@ startpage(prop_t *page)
   add_dir(nodes, "spotify:search:tag:new", "New releases", NULL);
   add_dir(nodes, "spotify:starred", "Starred", "starred");
   add_dir(nodes, "spotify:inbox", "Inbox", "inbox");
+  add_dir(nodes, "spotify:friends", "Friends", "friends");
 }
 
 
@@ -3845,6 +3940,7 @@ spotify_relogin0(void)
 {
   TRACE(TRACE_DEBUG, "spotify", "Switching account");
   unload_initial_playlists(spotify_session);
+  clear_friends();
   f_sp_session_logout(spotify_session);
   pending_relogin = 1;
 }
@@ -3916,7 +4012,9 @@ be_spotify_init(void)
 
   spotify = prop_create(prop_get_global(), "spotify");
 
-  users_root = playlistcontainer_create("Self");
+  friend_nodes = prop_create(spotify, "friends");
+
+  current_user_rootlist = playlistcontainer_create("Self");
 
   TAILQ_INIT(&spotify_msgs);
 
