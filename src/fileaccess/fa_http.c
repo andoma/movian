@@ -1043,7 +1043,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   
   htsbuf_qprintf(&q, 
 		 "HEAD %s HTTP/1.1\r\n"
-		 "Accept: */*\r\n"
+		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
 		 "%s%s"
@@ -1210,7 +1210,7 @@ again:
 
   htsbuf_qprintf(&q, 
 		 "GET %s HTTP/1.1\r\n"
-		 "Accept: */*\r\n"
+		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
 		 "%s%s"
@@ -1366,7 +1366,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       hf_set_auth(hf);
       htsbuf_qprintf(&q, 
 		     "GET %s HTTP/1.1\r\n"
-		     "Accept: */*\r\n"
+		     "Accept-Encoding: identity\r\n"
 		     "User-Agent: Showtime %s\r\n"
 		     "Host: %s\r\n"
 		     "%s%s",
@@ -1919,7 +1919,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     htsbuf_qprintf(&q, 
 		   "PROPFIND %s HTTP/1.1\r\n"
 		   "Depth: %d\r\n"
-		   "Accept: */*\r\n"
+		   "Accept-Encoding: identity\r\n"
 		   "User-Agent: Showtime %s\r\n"
 		   "Host: %s\r\n"
 		   "%s%s"
@@ -2105,7 +2105,7 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_qprintf(&q,
 		 " HTTP/1.1\r\n"
-		 "Accept: */*\r\n"
+		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n",
 		 htsversion,
