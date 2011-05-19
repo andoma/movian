@@ -322,8 +322,11 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
 
     f = face_find(uc, style, family);
 
-    if(f == NULL)
-      return NULL;
+    if(f == NULL) {
+      f = face_find(uc, 0, family);
+      if(f == NULL)
+	return NULL;
+    }
 
     gi = FT_Get_Char_Index(f->face, uc);
 
