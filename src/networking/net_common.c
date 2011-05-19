@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/param.h>
 #include <stdlib.h>
 #include "net.h"
 
@@ -135,19 +136,28 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize,
  *
  */
 int
-tcp_read_data(tcpcon_t *tc, char *buf, const size_t bufsize,
+tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize,
 	      htsbuf_queue_t *spill)
 {
   int r = buf ? htsbuf_read(spill, buf, bufsize) : htsbuf_drop(spill, bufsize);
-
   if(r == bufsize)
     return 0;
 
   if(buf != NULL)
     return tc->read(tc, buf + r, bufsize - r, 1) < 0 ? -1 : 0;
 
-  buf = malloc(bufsize - r);
-  r = tc->read(tc, buf, bufsize - r, 1) < 0 ? -1 : 0;
+  size_t remain = bufsize - r;
+
+  buf = malloc(5000);
+
+  while(remain > 0) {
+    size_t n = MIN(remain, 5000);
+    r = tc->read(tc, buf, n, 1) < 0 ? -1 : 0;
+    if(r != 0)
+      break;
+    remain -= n;
+  }
+
   free(buf);
   return r;
 }
