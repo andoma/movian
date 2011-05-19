@@ -221,6 +221,10 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 
   pm = text_render(uc, len, flags, fontsize, maxwidth, 10, NULL);
 
+  free(uc);
+  if(pm == NULL)
+    return;
+
   pm = video_overlay_postprocess(pm);
   vo = video_overlay_from_pixmap(pm);
 

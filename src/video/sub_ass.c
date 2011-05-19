@@ -480,6 +480,9 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   pixmap_t *pm = text_render(ad->ad_text, ad->ad_textlen,
 			     0, as->as_fontsize, maxwidth, 10, NULL);
 
+  if(pm == NULL)
+    return;
+
   pixmap_t *mask = pixmap_extract_channel(pm, 3);
 
   pixmap_t *out = pixmap_create(pm->pm_width  + as->as_shadow,
