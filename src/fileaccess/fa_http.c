@@ -23,6 +23,7 @@
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
 #include <libavutil/common.h>
+#include <assert.h>
 
 #include "keyring.h"
 #include "fileaccess.h"
@@ -444,6 +445,7 @@ typedef struct http_file {
   char hf_path[URL_MAX];
 
   int hf_chunked_transfer;
+  int hf_chunk_size;
 
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
 
@@ -466,6 +468,8 @@ typedef struct http_file {
   time_t hf_mtime;
 
   int hf_debug;
+
+  int hf_no_ranges; // Server does not accept range queries
 
 } http_file_t;
 
@@ -579,19 +583,24 @@ http_read_content(http_file_t *hf)
 		       &hc->hc_spill) < 0)
 	break;
  
-      if((csize = strtol(chunkheader, NULL, 16)) == 0) {
-	hf->hf_rsize = 0;
-	return buf;
-      }
-      buf = realloc(buf, s + csize + 1);
-      if(tcp_read_data(hc->hc_tc, buf + s, csize, &hc->hc_spill))
-	break;
+      csize = strtol(chunkheader, NULL, 16);
 
-      s += csize;
-      buf[s] = 0;
+      if(csize > 0) {
+	buf = realloc(buf, s + csize + 1);
+	if(tcp_read_data(hc->hc_tc, buf + s, csize, &hc->hc_spill))
+	  break;
+
+	s += csize;
+	buf[s] = 0;
+      }
 
       if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
 	break;
+
+      if(csize == 0) {
+	hf->hf_rsize = 0;
+	return buf;
+      }
     }
     free(buf);
     hf->hf_chunked_transfer = 0;
@@ -631,6 +640,46 @@ http_drain_content(http_file_t *hf)
 
   return 0;
 }
+
+
+/**
+ *
+ */
+static int
+hf_drain_bytes(http_file_t *hf, int64_t bytes)
+{
+  char chunkheader[100];
+  http_connection_t *hc = hf->hf_connection;
+
+  if(!hf->hf_chunked_transfer)
+    return tcp_read_data(hc->hc_tc, NULL, bytes, &hc->hc_spill);
+  
+  while(bytes > 0) {
+    if(hf->hf_chunk_size == 0) {
+      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
+		       &hc->hc_spill) < 0) {
+	return -1;
+      }
+      hf->hf_chunk_size = strtol(chunkheader, NULL, 16);
+    }
+
+    size_t read_size = MIN(bytes, hf->hf_chunk_size);
+    if(read_size > 0)
+      if(tcp_read_data(hc->hc_tc, NULL, read_size, &hc->hc_spill))
+	return -1;
+
+    bytes -= read_size;
+    hf->hf_chunk_size -= read_size;
+
+    if(hf->hf_chunk_size == 0) {
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+	return -1;
+    }
+  }
+  return 0;
+}
+
+
 
 /*
  * Split a string in components delimited by 'delimiter'
@@ -719,9 +768,10 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
 
     if(!strcasecmp(argv[0], "Transfer-Encoding")) {
 
-      if(!strcasecmp(argv[1], "chunked"))
+      if(!strcasecmp(argv[1], "chunked")) {
 	hf->hf_chunked_transfer = 1;
-
+	hf->hf_chunk_size = 0;
+      }
       continue;
     }
 
@@ -1272,12 +1322,15 @@ http_close(fa_handle_t *handle)
  * Read from file
  */
 static int
-http_read(fa_handle_t *handle, void *buf, size_t size)
+http_read(fa_handle_t *handle, void *buf, const size_t size)
 {
   http_file_t *hf = (http_file_t *)handle;
   htsbuf_queue_t q;
   int i, code;
   http_connection_t *hc;
+  char chunkheader[100];
+  size_t totsize = 0; // Total data read
+  size_t read_size;   // Amount of bytes to read in one round
 
   if(size == 0)
     return 0;
@@ -1294,11 +1347,15 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
     if(hf->hf_rsize > 0) {
       /* We have pending data input on the socket */
 
-      if(hf->hf_rsize < size)
+      if(hf->hf_rsize < size - totsize)
 	/* We can not read more data than is available */
-	size = hf->hf_rsize;
+	read_size = hf->hf_rsize;
+      else
+	read_size = size - totsize;
 
     } else {
+
+      read_size = size - totsize;
 
       /* Must send a new request */
 
@@ -1329,7 +1386,7 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
       } else {
 
-	int64_t end = hf->hf_pos + size;
+	int64_t end = hf->hf_pos + read_size;
 	if(end > hf->hf_filesize)
 	  end = hf->hf_filesize;
 
@@ -1349,14 +1406,17 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	break;
 
       case 200:
+	if(range[0] && hf->hf_no_ranges)
+	  hf->hf_no_ranges = 1;
+
 	if(hf->hf_rsize == -1)
 	  hf->hf_rsize = INT64_MAX;
 
 	if(hf->hf_pos != 0) {
 	  TRACE(TRACE_DEBUG, "HTTP", 
 		"Skipping by reading %"PRId64" bytes", hf->hf_pos);
-
-	  if(tcp_read_data(hc->hc_tc, NULL, hf->hf_pos, &hc->hc_spill)) {
+	  if(hf_drain_bytes(hf, hf->hf_pos)) {
+	    printf("Drain failed\n");
 	    http_detach(hf, 0);
 	    continue;
 	  }
@@ -1371,30 +1431,63 @@ http_read(fa_handle_t *handle, void *buf, size_t size)
 	continue;
       }
 
-      if(hf->hf_chunked_transfer) {
-	return -1; /* Not supported atm */
+      if(hf->hf_rsize < read_size)
+	read_size = hf->hf_rsize;
+
+    }
+
+
+    if(hf->hf_chunked_transfer) {
+      if(hf->hf_chunk_size == 0) {
+	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
+			 &hc->hc_spill) < 0)
+	  goto bad;
+	hf->hf_chunk_size = strtol(chunkheader, NULL, 16);
       }
-      if(hf->hf_rsize < size)
-	size = hf->hf_rsize;
 
-      if(size == 0)
-	return size;
+      read_size = MIN(size - totsize, hf->hf_chunk_size);
     }
 
-    if(!tcp_read_data(hc->hc_tc, buf, size, &hc->hc_spill)) {
-      hf->hf_pos   += size;
-      hf->hf_rsize -= size;
-
-      hf->hf_consecutive_read += size;
-
-      if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+    if(read_size > 0) {
+      assert(totsize + read_size <= size);
+      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, &hc->hc_spill)) {
+	// Fail but we can retry a couple of times
 	http_detach(hf, 0);
+	continue;
+      }
 
-      return size;
-    } else {
-      http_detach(hf, 0);
+      hf->hf_pos   += read_size;
+      hf->hf_rsize -= read_size;
+      totsize      += read_size;
+
+      hf->hf_consecutive_read += read_size;
     }
+
+    if(hf->hf_chunked_transfer) {
+
+      hf->hf_chunk_size -= read_size;
+
+      if(hf->hf_chunk_size == 0) {
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+	  goto bad;
+      }
+    }
+
+    if(read_size == 0)
+      return totsize;
+      
+    if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
+      http_detach(hf, 0);
+      return totsize;
+    }
+
+    if(totsize != size) {
+      i--;
+      continue;
+    }
+    return totsize;
   }
+ bad:
   http_detach(hf, 0);
   return -1;
 }
@@ -1434,18 +1527,18 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
   if(np < 0)
     return -1;
 
-  if(hf->hf_pos != np) {
+  if(hf->hf_pos != np && hc != NULL) {
     hf->hf_consecutive_read = 0;
 
     if(hf->hf_rsize != 0) {
       // We've data pending on socket
       int64_t d = np - hf->hf_pos;
-
       // We allow seek by reading if delta offset is small enough
 
-      if(hc != NULL && d > 0 && d < SEEK_BY_READ_THRES && d < hf->hf_rsize) {
-	int n = tcp_read_data(hc->hc_tc, NULL, d, &hc->hc_spill);
-	if(!n) {
+      if(d > 0 && (d < SEEK_BY_READ_THRES || hf->hf_no_ranges) &&
+	 d < hf->hf_rsize) {
+
+	if(!hf_drain_bytes(hf, d)) {
 	  hf->hf_pos = np;
 	  hf->hf_rsize -= d;
 	  return np;
@@ -2139,17 +2232,21 @@ http_request(const char *url, const char **arguments,
 			 &hc->hc_spill) < 0)
 	  break;
  
-	if((csize = strtol(chunkheader, NULL, 16)) == 0)
-	  goto done;
 
-	buf = realloc(buf, size + csize + 1);
-	if(tcp_read_data(hc->hc_tc, buf + size, csize, &hc->hc_spill))
-	  break;
+	csize = strtol(chunkheader, NULL, 16);
 
-	size += csize;
-	
+	if(csize > 0) {
+	  buf = realloc(buf, size + csize + 1);
+	  if(tcp_read_data(hc->hc_tc, buf + size, csize, &hc->hc_spill))
+	    break;
+
+	  size += csize;
+	}
 	if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
 	  break;
+
+	if(csize == 0)
+	  goto done;
       }
       free(buf);
       snprintf(errbuf, errlen, "Chunked transfer error");
