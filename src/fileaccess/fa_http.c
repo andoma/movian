@@ -444,7 +444,6 @@ typedef struct http_file {
   char hf_authurl[128];
   char hf_path[URL_MAX];
 
-  int hf_chunked_transfer;
   int hf_chunk_size;
 
   int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
@@ -454,12 +453,9 @@ typedef struct http_file {
 
   int64_t hf_consecutive_read;
 
-  int hf_isdir;
-
-  int hf_auth_failed;
-  
   char *hf_content_type;
 
+  /* The negotiated connection mode (ie, what the server replied with) */
   enum {
     CONNECTION_MODE_PERSISTENT,
     CONNECTION_MODE_CLOSE,
@@ -467,9 +463,21 @@ typedef struct http_file {
 
   time_t hf_mtime;
 
-  int hf_debug;
+  char hf_chunked_transfer;
+  char hf_isdir;
 
-  int hf_no_ranges; // Server does not accept range queries
+  char hf_auth_failed;
+  
+
+  char hf_debug;
+
+  char hf_no_ranges; // Server does not accept range queries
+
+  char hf_want_close;
+
+  char hf_accept_ranges;
+
+  char hf_version;
 
 } http_file_t;
 
@@ -891,7 +899,7 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   // Location changed, must detach from connection
   // We might still be able to reuse it if hostname+port is same
   // But that's for some other code to figure out
-  http_detach(hf, 1);
+  http_detach(hf, hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT);
   return 0;
 }
 
@@ -1016,7 +1024,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
  */
 static int
 http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
-	   int ignore_size, int *non_interactive)
+	   int *non_interactive)
 {
   int code;
   htsbuf_queue_t q;
@@ -1040,15 +1048,18 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   hf_set_auth(hf);
   
   htsbuf_qprintf(&q, 
-		 "HEAD %s HTTP/1.1\r\n"
+		 "HEAD %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
+		 "Connection: %s\r\n"
 		 "%s%s"
 		 "\r\n",
 		 hf->hf_path,
+		 hf->hf_version,
 		 htsversion,
 		 hf->hf_connection->hc_hostname,
+		 hf->hf_want_close ? "close" : "keep-alive",
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -1061,13 +1072,27 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
-    if(!ignore_size && hf->hf_filesize < 0)
-      HF_TRACE(hf,
-	       "%s: No known filesize, seeking may be slower", hf->hf_url);
+    if(hf->hf_filesize < 0) {
+      
+      if(!hf->hf_want_close && hf->hf_chunked_transfer) {
+	// Some servers seems incapable of sending content-length when
+	// in persistent connection mode (because they switch to using
+	// chunked transfer instead).
+	// Retry with HTTP/1.0 and closing connections
 
-    hf->hf_rsize = 0; /* This was just a HEAD request, we don't actually
-		       * get any data
-		       */
+	hf->hf_version = 0;
+	hf->hf_want_close = 1;
+	HF_TRACE(hf, "%s: No content-length, retrying with connection: close",
+		 hf->hf_url);
+	goto again;
+      }
+
+      HF_TRACE(hf, "%s: No known filesize, seeking may be slower", hf->hf_url);
+    }
+
+    // This was just a HEAD request, we don't actually get any data
+    hf->hf_rsize = 0;
+
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
       http_detach(hf, 0);
 
@@ -1079,12 +1104,22 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   case 307:
     if(redirect(hf, &redircount, errbuf, errlen, code))
       return -1;
+
+    if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
+      http_detach(hf, 0);
+
     goto reconnect;
 
 
   case 401:
     if(authenticate(hf, errbuf, errlen, non_interactive))
       return -1;
+
+    if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
+      http_detach(hf, 0);
+      goto reconnect;
+    }
+
     goto again;
 
   default:
@@ -1207,13 +1242,14 @@ again:
   hf_set_auth(hf);
 
   htsbuf_qprintf(&q, 
-		 "GET %s HTTP/1.1\r\n"
+		 "GET %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
 		 "%s%s"
 		 "\r\n",
 		 hf->hf_path,
+		 hf->hf_version,
 		 htsversion,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
@@ -1268,7 +1304,7 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
-  
+  hf->hf_version = 1;
   hf->hf_url = strdup(url);
   
   retval = http_index_fetch(hf, fd, errbuf, errlen);
@@ -1281,14 +1317,14 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int ignore_size, int *non_interactive, int debug)
+             int *non_interactive, int debug)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
-  
+  hf->hf_version = 1;
   hf->hf_url = strdup(url);
   hf->hf_debug = !!debug;
 
-  if(!http_open0(hf, 1, errbuf, errlen, ignore_size, non_interactive)) {
+  if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
     hf->h.fh_proto = fap;
     return &hf->h;
   }
@@ -1301,7 +1337,7 @@ static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 	  int flags)
 {
-  return http_open_ex(fap, url, errbuf, errlen, 0, 0, flags & FA_DEBUG);
+  return http_open_ex(fap, url, errbuf, errlen, NULL, flags & FA_DEBUG);
 }
 
 
@@ -1363,14 +1399,17 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       htsbuf_queue_init(&q, 0);
       hf_set_auth(hf);
       htsbuf_qprintf(&q, 
-		     "GET %s HTTP/1.1\r\n"
+		     "GET %s HTTP/1.%d\r\n"
 		     "Accept-Encoding: identity\r\n"
 		     "User-Agent: Showtime %s\r\n"
 		     "Host: %s\r\n"
+		     "Connection: %s\r\n"
 		     "%s%s",
 		     hf->hf_path,
+		     hf->hf_version,
 		     htsversion,
 		     hc->hc_hostname,
+		     hf->hf_want_close ? "close" : "keep-alive",
 		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
 
       char range[100];
@@ -1413,8 +1452,8 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 	if(hf->hf_pos != 0) {
 	  TRACE(TRACE_DEBUG, "HTTP", 
 		"Skipping by reading %"PRId64" bytes", hf->hf_pos);
+
 	  if(hf_drain_bytes(hf, hf->hf_pos)) {
-	    printf("Drain failed\n");
 	    http_detach(hf, 0);
 	    continue;
 	  }
@@ -1459,6 +1498,8 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       totsize      += read_size;
 
       hf->hf_consecutive_read += read_size;
+    } else {
+      hf->hf_rsize = 0;
     }
 
     if(hf->hf_chunked_transfer) {
@@ -1544,8 +1585,8 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
       }
     }
     http_detach(hf, 0);
-    hf->hf_pos = np;
   }
+  hf->hf_pos = np;
 
   return np;
 }
@@ -1573,7 +1614,7 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   http_file_t *hf;
   int statcode = -1;
 
-  if((handle = http_open_ex(fap, url, errbuf, errlen, 1, 
+  if((handle = http_open_ex(fap, url, errbuf, errlen,
 			    non_interactive ? &statcode : NULL, 0)) == NULL)
     return statcode;
  
@@ -1915,17 +1956,20 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 
     hf_set_auth(hf);
     htsbuf_qprintf(&q, 
-		   "PROPFIND %s HTTP/1.1\r\n"
+		   "PROPFIND %s HTTP/1.%d\r\n"
 		   "Depth: %d\r\n"
 		   "Accept-Encoding: identity\r\n"
 		   "User-Agent: Showtime %s\r\n"
 		   "Host: %s\r\n"
+		   "Connection: %s\r\n"
 		   "%s%s"
 		   "\r\n",
 		   hf->hf_path,
+		   hf->hf_version,
 		   fd != NULL ? 1 : 0,
 		   htsversion,
 		   hf->hf_connection->hc_hostname,
+		   hf->hf_want_close ? "close" : "keep-alive",
 		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
     
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -1993,9 +2037,9 @@ dav_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   int statcode = -1;
-
+  hf->hf_version = 1;
   hf->hf_url = strdup(url);
-  
+
   if(dav_propfind(hf, NULL, errbuf, errlen, 
 		  non_interactive ? &statcode : NULL)) {
     http_destroy(hf);
@@ -2021,7 +2065,7 @@ dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
   int retval;
   http_file_t *hf = calloc(1, sizeof(http_file_t));
-
+  hf->hf_version = 1;
   hf->hf_url = strdup(url);
   
   retval = dav_propfind(hf, fd, errbuf, errlen, NULL);
@@ -2069,6 +2113,7 @@ http_request(const char *url, const char **arguments,
 
   if(headers_out != NULL)
     LIST_INIT(headers_out);
+  hf->hf_version = 1;
   hf->hf_debug = !!(flags & HTTP_REQUEST_DEBUG);
   hf->hf_url = strdup(url);
 
@@ -2102,11 +2147,14 @@ http_request(const char *url, const char **arguments,
   }
 
   htsbuf_qprintf(&q,
-		 " HTTP/1.1\r\n"
+		 " HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
+		 "Connection: %s\r\n"
 		 "Host: %s\r\n",
+		 hf->hf_version,
 		 htsversion,
+		 hf->hf_want_close ? "close" : "keep-alive",
 		 hc->hc_hostname);
 
   if(postdata != NULL) 
