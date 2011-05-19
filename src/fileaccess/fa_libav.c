@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "showtime.h"
 #include "fa_libav.h"
 
 /**
@@ -91,6 +91,10 @@ static const struct {
   const char *fmt;
 } mimetype2fmt[] = {
   { "video/x-matroska", "matroska" },
+  { "video/mp4", "mp4" },
+  { "video/x-msvideo", "avi" },
+  { "video/vnd.dlna.mpeg-tts,", "mpegts" },
+  { "video/avi", "avi" },
   { "audio/x-mpeg", "mp3" },
 };
 
@@ -116,6 +120,9 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
 	break;
       }
     }
+    if(fmt == NULL)
+      TRACE(TRACE_DEBUG, "probe", "Don't know mimetype %s, probing instead",
+	    mimetype);
   }
 
   if(fmt == NULL) {
