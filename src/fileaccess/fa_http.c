@@ -473,8 +473,6 @@ typedef struct http_file {
 
 } http_file_t;
 
-#define hf_fd(hf) ((hf)->hf_hc->hc_fd)
-
 
 static void http_detach(http_file_t *hf, int reusable);
 
