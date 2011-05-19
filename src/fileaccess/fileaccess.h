@@ -102,11 +102,17 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 extern struct fa_protocol_list fileaccess_all_protocols;
 
 
+#define FA_DEBUG 0x1
+// #define FA_DUMP  0x2
+
 /**
  *
  */
 typedef struct fa_handle {
   const struct fa_protocol *fh_proto;
+#ifdef FA_DUMP
+  int fh_dump_fd;
+#endif
 } fa_handle_t;
 
 
@@ -121,7 +127,6 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
-#define FA_DEBUG 0x1
 
 void *fa_open(const char *url, char *errbuf, size_t errsize, int flags);
 void *fa_open_vpaths(const char *url, const char **vpaths);

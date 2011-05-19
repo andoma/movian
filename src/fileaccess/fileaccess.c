@@ -19,6 +19,10 @@
 #include "config.h"
 
 #include <assert.h>
+#ifdef FA_DUMP
+#include <sys/types.h>
+#include <fcntl.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -156,7 +160,12 @@ fa_open(const char *url, char *errbuf, size_t errsize, int flags)
   
   fh = fap->fap_open(fap, filename, errbuf, errsize, flags);
   free(filename);
-
+#ifdef FA_DUMP
+  if(flags & FA_DUMP) 
+    fh->fh_dump_fd = open("dumpfile.bin", O_CREAT | O_TRUNC | O_WRONLY, 0666);
+  else
+    fh->fh_dump_fd = -1;
+#endif
   return fh;
 }
 
@@ -175,6 +184,9 @@ fa_open_vpaths(const char *url, const char **vpaths)
     return NULL;
   
   fh = fap->fap_open(fap, filename, NULL, 0, 0);
+#ifdef FA_DUMP
+  fh->fh_dump_fd = -1;
+#endif
   free(filename);
 
   return fh;
@@ -187,7 +199,12 @@ void
 fa_close(void *fh_)
 {
   fa_handle_t *fh = fh_;
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1)
+    close(fh->fh_dump_fd);
+#endif
   fh->fh_proto->fap_close(fh);
+
 }
 
 /**
@@ -197,7 +214,16 @@ int
 fa_read(void *fh_, void *buf, size_t size)
 {
   fa_handle_t *fh = fh_;
-  return fh->fh_proto->fap_read(fh, buf, size);
+  int r = fh->fh_proto->fap_read(fh, buf, size);
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1) {
+    printf("---------------- Dumpfile write %zd bytes at %ld\n",
+	   size, lseek(fh->fh_dump_fd, 0, SEEK_CUR));
+    if(write(fh->fh_dump_fd, buf, size) != size)
+      printf("Warning: Dump data write error\n");
+  }
+#endif
+  return r;
 }
 
 /**
@@ -207,6 +233,12 @@ int64_t
 fa_seek(void *fh_, int64_t pos, int whence)
 {
   fa_handle_t *fh = fh_;
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1) {
+    printf("--------------------- Dumpfile seek to %ld (%d)\n", pos, whence);
+    lseek(fh->fh_dump_fd, pos, whence);
+  }
+#endif
   return fh->fh_proto->fap_seek(fh, pos, whence);
 }
 
@@ -522,6 +554,9 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
   }
 
   fh = fap->fap_open(fap, filename, errbuf, errlen, 0);
+#ifdef FA_DUMP
+  fh->fh_dump_fd = -1;
+#endif
   free(filename);
 
   if(fh == NULL)
