@@ -646,7 +646,7 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
   strcpy(dot, ".srt");
 
   if(!http_request(srt, NULL, NULL, NULL, NULL, 0, NULL, 0,
-		   HTTP_REQUEST_DEBUG, NULL, NULL, NULL)) {
+		   0, NULL, NULL, NULL)) {
 
     htsmsg_t *sub = htsmsg_create_map();
     htsmsg_add_str(sub, "url", srt);
