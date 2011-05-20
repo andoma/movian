@@ -1583,8 +1583,9 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
 	  return np;
 	}
       }
+      // Still got stale data on the socket, disconnect
+      http_detach(hf, 0);
     }
-    http_detach(hf, 0);
   }
   hf->hf_pos = np;
 
