@@ -915,7 +915,6 @@ font_render_thread(void *aux)
     if(gtb->gtb_edit_ptr >= 0)
       flags |= TR_RENDER_CHARACTER_POS;
 
-    flags |= TR_RENDER_JUSTIFIED;
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -926,7 +925,7 @@ font_render_thread(void *aux)
 
     if(uc != NULL && uc[0] != 0) {
       pm = text_render(uc, len, flags, gr->gr_fontsize * scale,
-		       max_width, max_lines, NULL);
+		       TR_ALIGN_JUSTIFIED, max_width, max_lines, NULL);
     } else {
       pm = NULL;
     }

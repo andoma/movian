@@ -59,6 +59,7 @@ video_settings_init(void)
   settings_multiopt_add_opt(x, "0", "Center", 1);
   settings_multiopt_add_opt(x, "1", "Left", 0);
   settings_multiopt_add_opt(x, "2", "Right", 0);
+  settings_multiopt_add_opt(x, "3", "Auto", 0);
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"subtitles");

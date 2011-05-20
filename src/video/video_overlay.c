@@ -200,6 +200,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   const media_pipe_t *mp = vd->vd_mp;
   int vwidth  = mp->mp_video_width;
   int vheight = mp->mp_video_height;
+  int alignment;
 
   if(vwidth < 10 || vheight < 10)
     return;
@@ -214,12 +215,16 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   int fontsize = vheight / 20;
   int flags = 0;
 
-  if(subtitle_alignment == SUBTITLE_ALIGNMENT_CENTER)
-    flags |= TR_RENDER_CENTERED;
+  switch(subtitle_alignment) {
+  case SUBTITLE_ALIGNMENT_LEFT:   alignment = TR_ALIGN_LEFT;   break;
+  case SUBTITLE_ALIGNMENT_RIGHT:  alignment = TR_ALIGN_RIGHT;  break;
+  case SUBTITLE_ALIGNMENT_CENTER: alignment = TR_ALIGN_CENTER; break;
+  default:                        alignment = TR_ALIGN_AUTO;   break;
+  }
 
   fontsize = fontsize * subtitle_scaling / 100;
 
-  pm = text_render(uc, len, flags, fontsize, maxwidth, 10, NULL);
+  pm = text_render(uc, len, flags, fontsize, alignment, maxwidth, 10, NULL);
 
   free(uc);
   if(pm == NULL)

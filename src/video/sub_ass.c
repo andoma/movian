@@ -473,12 +473,12 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 
   uint8_t red, green, blue, alpha;
 
-  int fontsize = as->as_fontsize;
-
-  fontsize = fontsize * subtitle_scaling / 100;
+  int fontsize = as->as_fontsize * subtitle_scaling / 100;
+  int alignment = (const int[]){TR_ALIGN_LEFT, TR_ALIGN_CENTER,
+				TR_ALIGN_RIGHT}[(as->as_alignment - 1) % 3];
 
   pixmap_t *pm = text_render(ad->ad_text, ad->ad_textlen,
-			     0, as->as_fontsize, maxwidth, 10, NULL);
+			     0, fontsize, alignment, maxwidth, 10, NULL);
 
   if(pm == NULL)
     return;

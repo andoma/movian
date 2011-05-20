@@ -466,7 +466,7 @@ typedef struct line {
   int count;
   int width;
   int xspace;
-  char center;
+  char alignment;
 
 } line_t;
 
@@ -484,7 +484,8 @@ typedef struct item {
  */
 static struct pixmap *
 text_render0(const uint32_t *uc, const int len, int flags, int size,
-	     int max_width, int max_lines, const char *family)
+	     int global_alignment, int max_width, int max_lines,
+	     const char *family)
 {
   pixmap_t *pm;
   FT_UInt prev = 0;
@@ -506,7 +507,6 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   int pmflags = 0;
   uint8_t style;
-  int global_center = !!(flags & TR_RENDER_CENTERED);
 
   if(size < 3)
     return NULL;
@@ -536,7 +536,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   items = malloc(sizeof(item_t) * len);
 
   int out = 0;
-  int center = global_center;
+  int alignment = global_alignment;
 
   for(i = 0; i < len; i++) {
 
@@ -545,7 +545,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
-      li->center = center;
+      li->alignment = alignment;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
       pen_x = 0;
@@ -566,16 +566,16 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(i != 0)
 	li = NULL;
       else
-	li->center = 1;
-      center = 1;
+	li->alignment = TR_ALIGN_CENTER;
+      alignment = TR_ALIGN_CENTER;
       continue;
 
     case TR_CODE_CENTER_OFF:
-      center = global_center;
+      alignment = global_alignment;
       if(i != 0)
 	li = NULL;
       else
-	li->center = center;
+	li->alignment = global_alignment;
       continue;
 
     case TR_CODE_ITALIC_ON:
@@ -663,7 +663,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
-	  lix->center = global_center;
+	  lix->alignment = global_alignment;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
@@ -712,9 +712,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   target_width  = siz_x / 64 + 3;
 
-  if(flags & TR_RENDER_JUSTIFIED && max_lines > 1) {
+  if(max_lines > 1) {
     TAILQ_FOREACH(li, &lq, link) {
-      if(li->center)
+      if(li->alignment != TR_ALIGN_JUSTIFIED)
 	continue;
 
       int spaces = 0;
@@ -766,8 +766,17 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   TAILQ_FOREACH(li, &lq, link) {
     pen_x = 0;
     
-    if(li->center)
+    switch(li->alignment) {
+    case TR_ALIGN_LEFT:
+    case TR_ALIGN_JUSTIFIED:
+      break;
+    case TR_ALIGN_CENTER:
       pen_x += (siz_x - li->width) / 2;
+      break;
+    case TR_ALIGN_RIGHT:
+      pen_x += li->width - siz_x;
+      break;
+    }
 
     for(i = li->start; i < li->start + li->count; i++) {
       g = items[i].g;
@@ -814,13 +823,14 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
  */
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int size,
-	    int max_width, int max_lines, const char *family)
+	    int alignment, int max_width, int max_lines, const char *family)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
-  pm = text_render0(uc, len, flags, size, max_width, max_lines, family);
+  pm = text_render0(uc, len, flags, size, alignment, 
+		    max_width, max_lines, family);
   while(num_glyphs > 512)
     glyph_flush();
 

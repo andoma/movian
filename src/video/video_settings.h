@@ -9,3 +9,4 @@ extern int subtitle_alignment;
 #define SUBTITLE_ALIGNMENT_CENTER 0
 #define SUBTITLE_ALIGNMENT_LEFT   1
 #define SUBTITLE_ALIGNMENT_RIGHT  2
+#define SUBTITLE_ALIGNMENT_AUTO   3
