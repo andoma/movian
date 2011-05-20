@@ -1775,6 +1775,12 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
 
+  mp->mp_audio.mq_stream  = -1;
+  mp->mp_video.mq_stream2 = -1;
+  
+  prop_set_string(mp->mp_prop_audio_track_current, "spu:off");
+  prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
+
   if((sourceinfo = htsmsg_get_map(m, "sourceinfo")) != NULL) {
 
     char format[256];
@@ -1934,14 +1940,8 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       LIST_INSERT_HEAD(&hs->hs_streams, hss, hss_link);
     }
   }
-  mp->mp_audio.mq_stream  = astream;
   mp->mp_video.mq_stream  = vstream;
-  mp->mp_video.mq_stream2 = -1;
 
-  if(astream != -1)
-    prop_set_stringf(mp->mp_prop_audio_track_current, "audio:%d", astream);
-  else
-    prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }
