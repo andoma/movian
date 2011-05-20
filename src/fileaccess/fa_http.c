@@ -1520,7 +1520,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       return totsize;
     }
 
-    if(totsize != size) {
+    if(totsize != size && hf->hf_chunked_transfer) {
       i--;
       continue;
     }
