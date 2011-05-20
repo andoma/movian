@@ -385,12 +385,12 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   case GLW_TEXTURE_FORMAT_RGB:
     init_rgb(gr, tex, src, width * 3, width, height, flags & GLW_TEX_REPEAT);
     break;
-
+#if 0
   case GLW_TEXTURE_FORMAT_RGBA:
     init_rgba(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
     break;
-
-  case GLW_TEXTURE_FORMAT_ABGR:
+#endif
+  case GLW_TEXTURE_FORMAT_BGR32:
     init_abgr(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
     break;
 

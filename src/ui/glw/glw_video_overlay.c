@@ -325,12 +325,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   glw_renderer_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
 
-  glw_tex_upload(gr, &gvo->gvo_texture, t0,
-#ifdef WORDS_BIGENDIAN
-		 GLW_TEXTURE_FORMAT_ABGR,
-#else
-		 GLW_TEXTURE_FORMAT_RGBA,
-#endif
+  glw_tex_upload(gr, &gvo->gvo_texture, t0, GLW_TEXTURE_FORMAT_BGR32,
 		 width, height, 0);
   free(t0);
 }
@@ -394,6 +389,11 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
 {
   glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start);
   glw_root_t *gr = gv->w.glw_root;
+  int fmt;
+
+  pixmap_t *pm = vo->vo_pixmap;
+  int W = pm->pm_width;
+  int H = pm->pm_height;
 
   gvo->gvo_stop = vo->vo_stop;
   gvo->gvo_fadein = vo->vo_fadein;
@@ -401,30 +401,37 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
 
   glw_renderer_init_quad(&gvo->gvo_renderer);
 
-  float w = gr->gr_normalized_texture_coords ? 1.0 : vo->vo_w;
-  float h = gr->gr_normalized_texture_coords ? 1.0 : vo->vo_h;
+  float w = gr->gr_normalized_texture_coords ? 1.0 : W;
+  float h = gr->gr_normalized_texture_coords ? 1.0 : H;
     
   glw_renderer_t *r = &gvo->gvo_renderer;
     
-  glw_renderer_vtx_pos(r, 0, vo->vo_x,         vo->vo_y + vo->vo_h, 0.0f);
+  glw_renderer_vtx_pos(r, 0, vo->vo_x,         vo->vo_y+H, 0.0f);
   glw_renderer_vtx_st (r, 0, 0, h);
   
-  glw_renderer_vtx_pos(r, 1, vo->vo_x + vo->vo_w, vo->vo_y + vo->vo_h, 0.0f);
+  glw_renderer_vtx_pos(r, 1, vo->vo_x + W, vo->vo_y + H, 0.0f);
   glw_renderer_vtx_st (r, 1, w, h);
   
-  glw_renderer_vtx_pos(r, 2, vo->vo_x + vo->vo_w, vo->vo_y,         0.0f);
+  glw_renderer_vtx_pos(r, 2, vo->vo_x + W, vo->vo_y,         0.0f);
   glw_renderer_vtx_st (r, 2, w, 0);
   
   glw_renderer_vtx_pos(r, 3, vo->vo_x,         vo->vo_y,         0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
   
-  glw_tex_upload(gr, &gvo->gvo_texture, vo->vo_bitmap,
-#ifdef WORDS_BIGENDIAN
-		 GLW_TEXTURE_FORMAT_ABGR,
-#else
-		 GLW_TEXTURE_FORMAT_RGBA,
-#endif
-		 vo->vo_w, vo->vo_h, 0);
+  switch(pm->pm_pixfmt) {
+  case PIX_FMT_Y400A:
+    fmt = GLW_TEXTURE_FORMAT_I8A8;
+    break;
+
+  case PIX_FMT_BGR32:
+    fmt = GLW_TEXTURE_FORMAT_BGR32;
+    break;
+
+  default:
+    return;
+  }
+
+  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels, fmt, W, H, 0);
 }
 
 
@@ -450,7 +457,8 @@ glw_video_overlay_sub_layout(glw_video_t *gv, int64_t pts)
       if(vo->vo_start > pts)
 	break;
       gvo_flush_infinite(gv);
-      gvo_create_from_vo(gv, vo);
+      if(vo->vo_pixmap != NULL)
+	gvo_create_from_vo(gv, vo);
       video_overlay_destroy(vd, vo);
       continue;
     }

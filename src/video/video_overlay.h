@@ -22,10 +22,9 @@ typedef struct video_overlay {
 
   int vo_x;
   int vo_y;
-  int vo_w;
-  int vo_h;
 
-  uint8_t *vo_bitmap;
+  struct pixmap *vo_pixmap;
+
   int vo_fadein;
   int vo_fadeout;
 
@@ -39,7 +38,7 @@ void video_overlay_flush(video_decoder_t *vd, int send);
 
 void video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo);
 
-video_overlay_t *video_overlay_from_pixmap(const struct pixmap *pm);
+video_overlay_t *video_overlay_from_pixmap(struct pixmap *pm);
 
 void video_overlay_decode_ext_subtitle(video_decoder_t *vd, 
 				       struct ext_subtitles *es,

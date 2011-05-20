@@ -66,14 +66,12 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 		  
       vo->vo_x = r->x;
       vo->vo_y = r->y;
-      vo->vo_w = r->w;
-      vo->vo_h = r->h;
+
+      vo->vo_pixmap = pixmap_create(r->w, r->h, PIX_FMT_BGR32);
 
       const uint8_t *src = r->pict.data[0];
       const uint32_t *clut = (uint32_t *)r->pict.data[1];
-
-      vo->vo_bitmap = malloc(sizeof(uint32_t) * r->w * r->h);
-      uint32_t *dst = (uint32_t *)vo->vo_bitmap;
+      uint32_t *dst = (uint32_t *)vo->vo_pixmap->pm_pixels;
       
       for(y = 0; y < r->h; y++) {
 	for(x = 0; x < r->w; x++) {
@@ -100,53 +98,10 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
  * This is crap. video_overlay contain pixmap instead
  */
 video_overlay_t *
-video_overlay_from_pixmap(const pixmap_t *pm)
+video_overlay_from_pixmap(pixmap_t *pm)
 {
   video_overlay_t *vo = calloc(1, sizeof(video_overlay_t));
-  vo->vo_w = pm->pm_width;
-  vo->vo_h = pm->pm_height;
-
-  const uint8_t *src = pm->pm_pixels;
-  vo->vo_bitmap = malloc(sizeof(uint32_t) * vo->vo_w * vo->vo_h);
-  uint32_t *dst = (uint32_t *)vo->vo_bitmap;
-  
-  int x, y;
-
-  switch(pm->pm_pixfmt) {
-  case PIX_FMT_BGR32:
-    
-    for(y = 0; y < vo->vo_h; y++) {
-      memcpy(dst, src, vo->vo_w * sizeof(uint32_t));
-      dst += vo->vo_w;
-      src += pm->pm_linesize;
-    }
-    break;
-
-  case PIX_FMT_Y400A:
-    for(y = 0; y < vo->vo_h; y++) {
-      for(x = 0; x < vo->vo_w; x++) {
-	uint8_t i = src[x * 2 + 0];
-	uint8_t a = src[x * 2 + 1];
-	*dst++ = i * 0x00010101 + (a << 24);
-      }
-      src += pm->pm_linesize;
-    }
-    break;
-
-  case PIX_FMT_GRAY8:
-    for(y = 0; y < vo->vo_h; y++) {
-      for(x = 0; x < vo->vo_w; x++) {
-	uint8_t i = src[x];
-	*dst++ = i * 0x01010101;
-      }
-      src += pm->pm_linesize;
-    }
-    break;
-
-
-  default:
-    break;
-  }
+  vo->vo_pixmap = pixmap_dup(pm);
   return vo;
 }
 
@@ -205,55 +160,63 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   if(vwidth < 10 || vheight < 10)
     return;
 
-  uc = text_parse(txt, &len, 
-		  tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0);
-  if(uc == NULL)
-    return;
+  if(strlen(txt) == 0) {
+    vo = calloc(1, sizeof(video_overlay_t));
+  } else {
 
-  int margin_x = vwidth / 10;
-  int maxwidth = vwidth - (margin_x * 2);
-  int fontsize = vheight / 20;
-  int flags = 0;
 
-  switch(subtitle_alignment) {
-  case SUBTITLE_ALIGNMENT_LEFT:   alignment = TR_ALIGN_LEFT;   break;
-  case SUBTITLE_ALIGNMENT_RIGHT:  alignment = TR_ALIGN_RIGHT;  break;
-  case SUBTITLE_ALIGNMENT_CENTER: alignment = TR_ALIGN_CENTER; break;
-  default:                        alignment = TR_ALIGN_AUTO;   break;
+    uc = text_parse(txt, &len, 
+		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0);
+    if(uc == NULL)
+      return;
+
+    int margin_x = vwidth / 10;
+    int maxwidth = vwidth - (margin_x * 2);
+    int fontsize = vheight / 20;
+    int flags = 0;
+
+    switch(subtitle_alignment) {
+    case SUBTITLE_ALIGNMENT_LEFT:   alignment = TR_ALIGN_LEFT;   break;
+    case SUBTITLE_ALIGNMENT_RIGHT:  alignment = TR_ALIGN_RIGHT;  break;
+    case SUBTITLE_ALIGNMENT_CENTER: alignment = TR_ALIGN_CENTER; break;
+    default:                        alignment = TR_ALIGN_AUTO;   break;
+    }
+
+    fontsize = fontsize * subtitle_scaling / 100;
+
+    pm = text_render(uc, len, flags, fontsize, alignment, maxwidth, 10, NULL);
+
+    free(uc);
+    if(pm == NULL)
+      return;
+
+    pm = video_overlay_postprocess(pm);
+    vo = video_overlay_from_pixmap(pm);
+
+
+
+    switch(subtitle_alignment) {
+    default:
+      vo->vo_x = vwidth / 2 - pm->pm_width / 2;
+      break;
+
+    case SUBTITLE_ALIGNMENT_LEFT:
+      vo->vo_x = margin_x;
+      break;
+ 
+    case SUBTITLE_ALIGNMENT_RIGHT:
+      vo->vo_x = vwidth - pm->pm_width - margin_x;
+      break;
+    }
+
+    vo->vo_y = vheight - pm->pm_height - (fontsize / 2);
+    pixmap_release(pm);
   }
-
-  fontsize = fontsize * subtitle_scaling / 100;
-
-  pm = text_render(uc, len, flags, fontsize, alignment, maxwidth, 10, NULL);
-
-  free(uc);
-  if(pm == NULL)
-    return;
-
-  pm = video_overlay_postprocess(pm);
-  vo = video_overlay_from_pixmap(pm);
-
+  
   vo->vo_start = start;
   vo->vo_stop = stop;
 
-
-  switch(subtitle_alignment) {
-  default:
-    vo->vo_x = vwidth / 2 - pm->pm_width / 2;
-    break;
-
-  case SUBTITLE_ALIGNMENT_LEFT:
-    vo->vo_x = margin_x;
-    break;
- 
-  case SUBTITLE_ALIGNMENT_RIGHT:
-    vo->vo_x = vwidth - pm->pm_width - margin_x;
-    break;
-  }
-
-  vo->vo_y = vheight - pm->pm_height - (fontsize / 2);
   video_overlay_enqueue(vd, vo);
-  pixmap_release(pm);
 }
 
 
@@ -297,7 +260,8 @@ void
 video_overlay_destroy(video_decoder_t *vd, video_overlay_t *vo)
 {
   TAILQ_REMOVE(&vd->vd_overlay_queue, vo, vo_link);
-  free(vo->vo_bitmap);
+  if(vo->vo_pixmap != NULL)
+    pixmap_release(vo->vo_pixmap);
   free(vo);
 }
 
