@@ -473,7 +473,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 
   uint8_t red, green, blue, alpha;
 
-  int fontsize = as->as_fontsize * subtitle_scaling / 100;
+  int fontsize = as->as_fontsize * subtitle_setting_scaling / 100;
   int alignment = (const int[]){TR_ALIGN_LEFT, TR_ALIGN_CENTER,
 				TR_ALIGN_RIGHT}[(as->as_alignment - 1) % 3];
 

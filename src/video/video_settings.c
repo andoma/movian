@@ -3,28 +3,37 @@
 #include "settings.h"
 #include "video_settings.h"
 
-int subtitle_always_select;
-int subtitle_scaling;
-int subtitle_alignment;
+int subtitle_setting_always_select;
+int subtitle_setting_scaling;
+int subtitle_setting_alignment;
+
+int video_setting_vdpau;
 
 static void
 set_subtitle_always_select(void *opaque, int v)
 {
-  subtitle_always_select = v;
+  subtitle_setting_always_select = v;
 }
 
 static void
 set_subtitle_scale(void *opaque, int v)
 {
-  subtitle_scaling = v;
+  subtitle_setting_scaling = v;
 }
 
 static void
 set_subtitle_alignment(void *opaque, const char *str)
 {
-  subtitle_alignment = atoi(str);
+  subtitle_setting_alignment = atoi(str);
 }
 
+#if ENABLE_VDPAU 
+static void
+set_vdpau(void *opaque, int on)
+{
+  video_setting_vdpau = on;
+}
+#endif
 
 void
 video_settings_init(void)
@@ -33,7 +42,17 @@ video_settings_init(void)
   prop_t *s;
   setting_t *x;
 
- 
+  s = settings_add_dir(NULL, "Video playback", NULL, NULL);
+
+  if((store = htsmsg_store_load("videoplayback")) == NULL)
+    store = htsmsg_create_map();
+#if ENABLE_VDPAU 
+  settings_create_bool(s, "vdpau", "Enable VDPAU", 1,
+		       store, set_vdpau, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
+#endif
 
 
   s = settings_add_dir(NULL, "Subtitles", NULL, NULL);

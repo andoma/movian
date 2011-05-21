@@ -175,14 +175,14 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     int fontsize = vheight / 20;
     int flags = 0;
 
-    switch(subtitle_alignment) {
+    switch(subtitle_setting_alignment) {
     case SUBTITLE_ALIGNMENT_LEFT:   alignment = TR_ALIGN_LEFT;   break;
     case SUBTITLE_ALIGNMENT_RIGHT:  alignment = TR_ALIGN_RIGHT;  break;
     case SUBTITLE_ALIGNMENT_CENTER: alignment = TR_ALIGN_CENTER; break;
     default:                        alignment = TR_ALIGN_AUTO;   break;
     }
 
-    fontsize = fontsize * subtitle_scaling / 100;
+    fontsize = fontsize * subtitle_setting_scaling / 100;
 
     pm = text_render(uc, len, flags, fontsize, alignment, maxwidth, 10, NULL);
 
@@ -195,7 +195,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 
 
 
-    switch(subtitle_alignment) {
+    switch(subtitle_setting_alignment) {
     default:
       vo->vo_x = vwidth / 2 - pm->pm_width / 2;
       break;

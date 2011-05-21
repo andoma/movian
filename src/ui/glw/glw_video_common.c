@@ -22,6 +22,7 @@
 #include "showtime.h"
 #include "media.h"
 #include "video/video_playback.h"
+#include "video/video_settings.h"
 
 #include "glw.h"
 #include "glw_video_common.h"
@@ -299,7 +300,7 @@ glw_video_ctor(glw_t *w)
 
   gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
 #if CONFIG_GLW_BACKEND_OPENGL
-  if(gr->gr_be.gbr_enable_vdpau)
+  if(video_setting_vdpau)
     gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
 #endif
 
