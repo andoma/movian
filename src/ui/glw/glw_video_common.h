@@ -72,6 +72,16 @@ typedef struct glw_video_overlay {
   int gvo_fadein;
   int gvo_fadeout;
 
+  int gvo_alignment;
+
+  int gvo_padding_left;
+  int gvo_padding_top;
+  int gvo_padding_right;
+  int gvo_padding_bottom;
+
+  int gvo_width;
+  int gvo_height;
+
   float gvo_alpha;
 
 } glw_video_overlay_t;

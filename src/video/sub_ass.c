@@ -417,7 +417,6 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   int c;
   const ass_style_t *as;
   int vwidth  = vd->vd_mp->mp_video_width;
-  int vheight = vd->vd_mp->mp_video_height;
 
   ad->ad_buf[strcspn(ad->ad_buf, "\n\r")] = 0;
 
@@ -473,7 +472,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 
   uint8_t red, green, blue, alpha;
 
-  int fontsize = as->as_fontsize * subtitle_setting_scaling / 100;
+  int fontsize = as->as_fontsize * subtitle_settings.scaling / 100;
   int alignment = (const int[]){TR_ALIGN_LEFT, TR_ALIGN_CENTER,
 				TR_ALIGN_RIGHT}[(as->as_alignment - 1) % 3];
 
@@ -521,36 +520,12 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   vo->vo_stop = end;
   vo->vo_fadein = ad->ad_fadein;
   vo->vo_fadeout = ad->ad_fadeout;
+  vo->vo_alignment = as->as_alignment;
 
-  switch(as->as_alignment) {
-  case 1 ... 3:
-    vo->vo_y = vheight - pm->pm_height - as->as_margin_vertical;
-    break;
-    
-  case 4 ... 6:
-    vo->vo_y = vheight / 2 - pm->pm_height / 2;
-    break;
-
-  case 7 ... 9:
-    vo->vo_y = as->as_margin_vertical;
-    break;
-  }
-
-  
-  switch((as->as_alignment - 1) % 3) {
-  case 0:
-    vo->vo_x = as->as_margin_left;
-    break;
-    
-  case 1:
-    vo->vo_x = vwidth / 2 - pm->pm_width / 2;
-    break;
-    
-  case 2:
-    vo->vo_x = vwidth - as->as_margin_right - pm->pm_width;
-    break;
-  }
-
+  vo->vo_padding_left  =  as->as_margin_left;
+  vo->vo_padding_top    = as->as_margin_vertical;
+  vo->vo_padding_right  = as->as_margin_right;
+  vo->vo_padding_bottom = as->as_margin_vertical;
   pixmap_release(pm);
   video_overlay_enqueue(vd, vo);
 }

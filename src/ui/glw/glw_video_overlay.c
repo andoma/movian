@@ -123,11 +123,12 @@ gvo_update(glw_video_t *gv, int64_t pts)
  * 
  */
 void
-glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc)
+glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc, glw_rctx_t *vrc)
 {
   glw_video_overlay_t *gvo;
   glw_root_t *gr = gv->w.glw_root;
   int show_dvd_overlays = 0;
+  glw_rctx_t rc0;
 
 #if ENABLE_DVD
   video_decoder_t *vd = gv->gv_vd;
@@ -140,7 +141,97 @@ glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc)
     if(gvo->gvo_is_dvd && !show_dvd_overlays)
       continue;
 
-    glw_renderer_draw(&gvo->gvo_renderer, gr, rc,
+    rc0 = *rc;
+    
+    if(gvo->gvo_alignment != 0) {
+      
+
+      int left   =                 gvo->gvo_padding_left;
+      int top    = rc->rc_height - gvo->gvo_padding_top;
+      int right  = rc->rc_width  - gvo->gvo_padding_right;
+      int bottom =                 gvo->gvo_padding_bottom;
+    
+      int width  = gvo->gvo_width;
+      int height = gvo->gvo_height;
+    
+      float x1, y1, x2, y2;
+
+      // Horizontal 
+      if(width > right - left) {
+	// Oversized, must cut
+	width = right - left;
+      } else { 
+	switch(gvo->gvo_alignment) {
+	case 2:
+	case 5:
+	case 8:
+	  left = (left + right - width) / 2;
+	  right = left + width;
+	  break;
+
+	case 1:
+	case 4:
+	case 7:
+	  right = left + gvo->gvo_width;
+	  break;
+
+	case 3:
+	case 6:
+	case 9:
+	  left = right - gvo->gvo_width;
+	  break;
+	}
+      }
+      
+      // Vertical 
+      if(height > top - bottom) {
+	// Oversized, must cut
+	height = top - bottom;
+      } else { 
+	switch(gvo->gvo_alignment) {
+	case 4 ... 6:
+	  bottom = (bottom + top - height) / 2;
+	  top = bottom + height;
+	  break;
+
+	case 7 ... 9:
+	  bottom = top - gvo->gvo_height;
+	  break;
+
+	case 1 ... 3:
+	  top = bottom + gvo->gvo_height;
+	  break;
+	}
+      }
+      
+      x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
+      y1 = -1.0f + 2.0f * bottom / (float)rc->rc_height;
+      x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
+      y2 = -1.0f + 2.0f * top    / (float)rc->rc_height;
+
+      glw_renderer_vtx_pos(&gvo->gvo_renderer, 0, x1, y1, 0.0);
+      glw_renderer_vtx_pos(&gvo->gvo_renderer, 1, x2, y1, 0.0);
+      glw_renderer_vtx_pos(&gvo->gvo_renderer, 2, x2, y2, 0.0);
+      glw_renderer_vtx_pos(&gvo->gvo_renderer, 3, x1, y2, 0.0);
+
+      rc0 = *rc;
+      
+    } else {
+      float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
+
+      rc0 = *vrc;
+      glw_Scalef(&rc0, 
+		 2.0f / gv->gv_cfg_cur.gvc_width[0], 
+		 -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
+		 0.0f);
+      
+      glw_Translatef(&rc0, 
+		     -gv->gv_cfg_cur.gvc_width[0]  / 2,
+		     (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
+		     0.0f);
+    }
+
+    glw_renderer_draw(&gvo->gvo_renderer, gr, &rc0,
 		      &gvo->gvo_texture, NULL, NULL, 
 		      gvo->gvo_alpha * rc->rc_alpha);
   }
@@ -406,18 +497,27 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
     
   glw_renderer_t *r = &gvo->gvo_renderer;
     
-  glw_renderer_vtx_pos(r, 0, vo->vo_x,         vo->vo_y+H, 0.0f);
   glw_renderer_vtx_st (r, 0, 0, h);
-  
-  glw_renderer_vtx_pos(r, 1, vo->vo_x + W, vo->vo_y + H, 0.0f);
   glw_renderer_vtx_st (r, 1, w, h);
-  
-  glw_renderer_vtx_pos(r, 2, vo->vo_x + W, vo->vo_y,         0.0f);
   glw_renderer_vtx_st (r, 2, w, 0);
-  
-  glw_renderer_vtx_pos(r, 3, vo->vo_x,         vo->vo_y,         0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
-  
+
+  gvo->gvo_alignment = vo->vo_alignment;
+
+  if(vo->vo_alignment == 0) {
+    glw_renderer_vtx_pos(r, 0, vo->vo_x,     vo->vo_y + H, 0.0f);
+    glw_renderer_vtx_pos(r, 1, vo->vo_x + W, vo->vo_y + H, 0.0f);
+    glw_renderer_vtx_pos(r, 2, vo->vo_x + W, vo->vo_y,     0.0f);
+    glw_renderer_vtx_pos(r, 3, vo->vo_x,     vo->vo_y,     0.0f);
+  } else {
+    gvo->gvo_padding_left   = vo->vo_padding_left;
+    gvo->gvo_padding_top    = vo->vo_padding_top;
+    gvo->gvo_padding_right  = vo->vo_padding_right;
+    gvo->gvo_padding_bottom = vo->vo_padding_bottom;
+    gvo->gvo_width  = pm->pm_width;
+    gvo->gvo_height = pm->pm_height;
+  }
+
   switch(pm->pm_pixfmt) {
   case PIX_FMT_Y400A:
     fmt = GLW_TEXTURE_FORMAT_I8A8;

@@ -3,37 +3,41 @@
 #include "settings.h"
 #include "video_settings.h"
 
-int subtitle_setting_always_select;
-int subtitle_setting_scaling;
-int subtitle_setting_alignment;
-
-int video_setting_vdpau;
+struct subtitle_settings subtitle_settings;
+struct video_settings video_settings;
 
 static void
 set_subtitle_always_select(void *opaque, int v)
 {
-  subtitle_setting_always_select = v;
+  subtitle_settings.always_select = v;
 }
 
 static void
 set_subtitle_scale(void *opaque, int v)
 {
-  subtitle_setting_scaling = v;
+  subtitle_settings.scaling = v;
 }
 
 static void
 set_subtitle_alignment(void *opaque, const char *str)
 {
-  subtitle_setting_alignment = atoi(str);
+  subtitle_settings.alignment = atoi(str);
 }
 
 #if ENABLE_VDPAU 
 static void
 set_vdpau(void *opaque, int on)
 {
-  video_setting_vdpau = on;
+  video_settings.vdpau = on;
 }
 #endif
+
+
+static void
+set_stretch_horizontal(void *opaque, int on)
+{
+  video_settings.stretch_horizontal = on;
+}
 
 void
 video_settings_init(void)
@@ -53,6 +57,13 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
 #endif
+
+  settings_create_bool(s, "stretch_horizontal",
+		       "Stretch video to widescreen", 0,
+		       store, set_stretch_horizontal, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
 
 
   s = settings_add_dir(NULL, "Subtitles", NULL, NULL);

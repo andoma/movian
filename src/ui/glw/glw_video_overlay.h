@@ -21,7 +21,8 @@
 
 void glw_video_overlay_deinit(glw_video_t *gv);
 
-void glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc);
+void glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc, 
+			      glw_rctx_t *vrc);
 
 int glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
 				    glw_pointer_event_t *gpe, media_pipe_t *mp);

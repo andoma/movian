@@ -184,14 +184,14 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     int fontsize = vheight / 20;
     int flags = 0;
 
-    switch(subtitle_setting_alignment) {
+    switch(subtitle_settings.alignment) {
     case SUBTITLE_ALIGNMENT_LEFT:   alignment = TR_ALIGN_LEFT;   break;
     case SUBTITLE_ALIGNMENT_RIGHT:  alignment = TR_ALIGN_RIGHT;  break;
     case SUBTITLE_ALIGNMENT_CENTER: alignment = TR_ALIGN_CENTER; break;
     default:                        alignment = TR_ALIGN_AUTO;   break;
     }
 
-    fontsize = fontsize * subtitle_setting_scaling / 100;
+    fontsize = fontsize * subtitle_settings.scaling / 100;
 
     pm = text_render(uc, len, flags, fontsize, alignment, maxwidth, 10, NULL);
 
@@ -203,22 +203,22 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     vo = video_overlay_from_pixmap(pm);
 
 
-
-    switch(subtitle_setting_alignment) {
+    switch(subtitle_settings.alignment) {
     default:
-      vo->vo_x = vwidth / 2 - pm->pm_width / 2;
+      vo->vo_alignment = 2;
       break;
 
     case SUBTITLE_ALIGNMENT_LEFT:
-      vo->vo_x = margin_x;
+      vo->vo_alignment = 1;
       break;
  
     case SUBTITLE_ALIGNMENT_RIGHT:
-      vo->vo_x = vwidth - pm->pm_width - margin_x;
+      vo->vo_alignment = 3;
       break;
     }
-
-    vo->vo_y = vheight - pm->pm_height - (fontsize / 2);
+    
+    vo->vo_padding_left = vo->vo_padding_top =  vo->vo_padding_right = 
+      vo->vo_padding_bottom = fontsize / 2;
     pixmap_release(pm);
   }
   

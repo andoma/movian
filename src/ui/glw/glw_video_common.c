@@ -300,7 +300,7 @@ glw_video_ctor(glw_t *w)
 
   gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
 #if CONFIG_GLW_BACKEND_OPENGL
-  if(video_setting_vdpau)
+  if(video_settings.vdpau)
     gv->gv_mp->mp_vdpau_dev = gr->gr_be.gbr_vdpau_dev;
 #endif
 
@@ -408,14 +408,53 @@ glw_video_set(glw_t *w, va_list ap)
 /**
  *
  */
+static void
+glw_video_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
+{
+  if(t_aspect * rc->rc_height < rc->rc_width) {
+
+    if(video_settings.stretch_horizontal)
+      return;
+
+    // Shrink X
+    int border = rc->rc_width - t_aspect * rc->rc_height;
+    int left  = (border + 1) / 2;
+    int right = rc->rc_width - (border / 2);
+
+    float s = (right - left) / (float)rc->rc_width;
+    float t = -1.0f + (right + left) / (float)rc->rc_width;
+
+    glw_Translatef(rc, t, 0, 0);
+    glw_Scalef(rc, s, 1.0f, 1.0f);
+
+    rc->rc_width = right - left;
+
+  } else {
+    // Shrink Y
+    int border = rc->rc_height - rc->rc_width / t_aspect;
+    int bottom  = (border + 1) / 2;
+    int top     = rc->rc_height - (border / 2);
+
+    float s = (top - bottom) / (float)rc->rc_height;
+    float t = -1.0f + (top + bottom) / (float)rc->rc_height;
+
+    glw_Translatef(rc, 0, t, 0);
+    glw_Scalef(rc, 1.0f, s, 1.0f);
+    rc->rc_height = top - bottom;
+  }
+}
+
+
+/**
+ *
+ */
 void 
 glw_video_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
-  float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
 
-  glw_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
+  glw_video_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;
@@ -424,18 +463,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
     glw_store_matrix(w, &rc0);
 
   gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc0);
-
-  glw_Scalef(&rc0, 
-	     2.0f / gv->gv_cfg_cur.gvc_width[0], 
-	     -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
-	     0.0f);
-  
-  glw_Translatef(&rc0, 
-		-gv->gv_cfg_cur.gvc_width[0]  / 2,
-		 (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
-		0.0f);
-
-  glw_video_overlay_render(gv, &rc0);
+  glw_video_overlay_render(gv, rc, &rc0);
 }
 
 

@@ -1482,7 +1482,7 @@ mtm_rethink(media_track_mgr_t *mtm)
   }
 
   if(mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ||
-     subtitle_setting_always_select)
+     subtitle_settings.always_select)
     thres = 0;
 
   if(mtm->mtm_user_set)

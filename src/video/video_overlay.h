@@ -29,6 +29,13 @@ typedef struct video_overlay {
   int vo_fadein;
   int vo_fadeout;
 
+  int vo_alignment;  // ASS numpad style
+
+  int vo_padding_left;
+  int vo_padding_top;
+  int vo_padding_right;
+  int vo_padding_bottom;
+
 } video_overlay_t;
 
 void video_overlay_destroy(video_decoder_t *vd, video_overlay_t *vo);
