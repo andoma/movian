@@ -791,8 +791,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       pen.x &= ~63;
       pen.y &= ~63;
 
-      FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->glyph;
-      err = FT_Glyph_To_Bitmap((FT_Glyph*)&bmp, FT_RENDER_MODE_NORMAL, &pen, 0);
+      FT_Glyph glyph = g->glyph;
+      err = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0);
+      FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
       if(err == 0) {
 	draw_glyph(pm, &bmp->bitmap, 
 		   bmp->left,
