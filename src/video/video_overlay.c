@@ -53,6 +53,15 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
   if(avcodec_decode_subtitle2(ctx, &sub, &size, &avpkt) < 1 || size < 1) 
     return;
 
+  if(sub.num_rects == 0) {
+    // Flush screen
+    vo = calloc(1, sizeof(video_overlay_t));
+    vo->vo_type = VO_TIMED_FLUSH;
+    vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
+    video_overlay_enqueue(vd, vo);
+    return;
+  }
+
   for(i = 0; i < sub.num_rects; i++) {
     AVSubtitleRect *r = sub.rects[i];
 

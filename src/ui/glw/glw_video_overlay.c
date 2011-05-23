@@ -448,6 +448,10 @@ glw_video_overlay_sub_layout(glw_video_t *gv, int64_t pts)
 
   while((vo = TAILQ_FIRST(&vd->vd_overlay_queue)) != NULL) {
     switch(vo->vo_type) {
+    case VO_TIMED_FLUSH:
+      if(vo->vo_start > pts)
+	break;
+      // FALLTHRU
     case VO_FLUSH:
       gvo_flush_all(gv);
       video_overlay_destroy(vd, vo);

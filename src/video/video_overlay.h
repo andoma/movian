@@ -15,6 +15,7 @@ typedef struct video_overlay {
   enum { 
     VO_BITMAP,
     VO_FLUSH,
+    VO_TIMED_FLUSH,
   } vo_type;
 
   int64_t vo_start;
