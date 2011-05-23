@@ -799,7 +799,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 		   bmp->left,
 		   target_height - bmp->top,
 		   i);
-	FT_Done_Glyph((FT_Glyph)bmp);
+	FT_Done_Glyph(glyph);
       }
 
       if(pm->pm_charpos != NULL && items[i].code == ' ')
