@@ -64,6 +64,7 @@ extern const uint16_t ISO_8859_14[];
 extern const uint16_t ISO_8859_15[];
 extern const uint16_t ISO_8859_16[];
 extern const uint16_t CP1250[];
+extern const uint16_t CP1251[];
 
 char *utf8_from_bytes(const char *str, int len, const uint16_t *table);
 
