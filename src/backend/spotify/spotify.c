@@ -2024,6 +2024,8 @@ spotify_userinfo_updated(sp_session *session)
       if(su->su_prop_friend) {
 	prop_destroy(su->su_prop_friend);
 	su->su_prop_friend = NULL;
+	su->su_prop_title = NULL;
+	su->su_prop_url = NULL;
       }
       su->su_mark = 0;
     }
