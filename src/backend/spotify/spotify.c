@@ -2623,8 +2623,11 @@ place_playlists_in_list(playlistcontainer_t *plc)
 
     if(pl->pl_prop_root_flat != NULL) {
       if(prop_set_parent_ex(pl->pl_prop_root_flat, plc->plc_root_flat,
-			    before ? before->pl_prop_root_flat : NULL, NULL))
-	abort();
+			    before ? before->pl_prop_root_flat : NULL, NULL)) {
+	/* Did not manage to insert, this is not fatal as the container
+	   about to be destroyed */
+	break;
+      }
       before = pl;
     }
   }
@@ -2983,10 +2986,6 @@ playlistcontainer_destroy_sub(void *opaque, prop_event_t event, ...)
     return;
   
   f_sp_playlistcontainer_remove_callbacks(plc->plc_pc, &pc_callbacks, plc);
-
-  //  while(f_sp_playlistcontainer_num_playlists(plc->plc_pc) > 0)
-  //    playlist_removed(
-  
 
   if(plc->plc_rethink)
     LIST_REMOVE(plc, plc_rethink_link);
