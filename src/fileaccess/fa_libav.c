@@ -91,6 +91,7 @@ static const struct {
   const char *fmt;
 } mimetype2fmt[] = {
   { "video/x-matroska", "matroska" },
+  { "video/quicktime", "mov" },
   { "video/mp4", "mp4" },
   { "video/x-msvideo", "avi" },
   { "video/vnd.dlna.mpeg-tts,", "mpegts" },
