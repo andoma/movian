@@ -332,7 +332,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     } else if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
-    if(audio_mode_stereo_only(am))
+    if(audio_mode_stereo_only(am) &&
+       cw->codec->id != CODEC_ID_TRUEHD &&
+       cw->codec->id != CODEC_ID_MLP)
       ctx->request_channels = 2; /* We can only output stereo.
 				    Ask codecs to do downmixing for us. */
     else
