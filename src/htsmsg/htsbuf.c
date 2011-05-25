@@ -331,11 +331,8 @@ htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s)
     if((C >= '0' && C <= '9') ||
        (C >= 'a' && C <= 'z') ||
        (C >= 'A' && C <= 'Z') ||
-       C == '/' ||
-       C == '(' ||
-       C == ')' ||
-       C == ',' ||
        C == '_' ||
+       C == '~' ||
        C == '.' ||
        C == '-') {
       esc = NULL;

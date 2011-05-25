@@ -31,7 +31,7 @@
  * De-escape HTTP URL
  */
 void
-http_deescape(char *s)
+url_deescape(char *s)
 {
   char v, *d = s;
 
@@ -82,43 +82,61 @@ http_deescape(char *s)
 
 static const char hexchars[16] = "0123456789abcdef";
 
+static const char url_escape_tbl1[256] = {
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x00
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x10
+  2,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,1,0,   // 0x20
+  1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,   // 0x30
+  0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x40
+  1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,1,   // 0x50
+  0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x60
+  1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,1,0,   // 0x70
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x80
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x90
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xa0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xb0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xc0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xd0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xe0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xf0
+};
+
 /**
  *
  */
-void
-path_escape(char *dest, int size, const char *src)
+int
+url_escape(char *dst, const int size, const char *src)
 {
   unsigned char s;
+  int r = 0;
+  const char *table = url_escape_tbl1;
 
-  while(size > 1) {
-
-    s = *src++;
-    if(s == 0)
+  while((s = *src++) != 0) {
+    switch(table[s]) {
+    case 0:
+      if(r < size - 3) {
+	dst[r]   = '%';
+	dst[r+1] = hexchars[(s >> 4) & 0xf];
+	dst[r+2] = hexchars[s & 0xf];
+      }
+      r+= 3;
       break;
 
-    if((s >= '0' && s <= '9') ||
-       (s >= 'a' && s <= 'z') ||
-       (s >= 'A' && s <= 'Z') ||
-       s == '/' ||
-       s == '(' ||
-       s == ')' ||
-       s == ',' ||
-       s == '_' ||
-       s == '.' ||
-       s == '-') {
-      *dest++ = s;
-      size--;
-    } else {
-      if(size > 4) {
-	*dest++ = '%';
-	*dest++ = hexchars[(s >> 4) & 0xf];
-	*dest++ = hexchars[s & 0xf];
-	size -= 3;
-      }
+    case 2:
+      s = '+';
+      // FALLTHRU
+    case 1:
+      if(r < size - 1)
+	dst[r] = s;
+      r++;
+      break;
     }
   }
-  *dest = 0;
+  if(r < size)
+    dst[r] = 0;
+  return r;
 }
+
 
 /* inplace decode html entities, this relies on that no entity has a
  * code point in utf8 that is more bytes then the entity string */
@@ -434,7 +452,7 @@ url_split(char *proto, int proto_size,
 	  char *hostname, int hostname_size,
 	  int *port_ptr,
 	  char *path, int path_size,
-	  const char *url, int escape_path)
+	  const char *url)
 {
   const char *p, *ls, *at, *col, *brk;
 
@@ -452,10 +470,7 @@ url_split(char *proto, int proto_size,
     if (*p == '/') p++;
   } else {
     /* no protocol means plain filename */
-    if(escape_path)
-      path_escape(path, path_size, url);
-    else
-      snprintf(path, path_size, "%s", url);
+    snprintf(path, path_size, "%s", url);
     return;
   }
 
@@ -463,13 +478,9 @@ url_split(char *proto, int proto_size,
   ls = strchr(p, '/');
   if(!ls)
     ls = strchr(p, '?');
-  if(ls) {
-    if(escape_path) {
-      path_escape(path, path_size, ls);      
-    } else {
-      snprintf(path, path_size, "%s", ls);
-    }
-  } else
+  if(ls)
+    snprintf(path, path_size, "%s", ls);
+  else
     ls = &p[strlen(p)]; // XXX
 
   /* the rest is hostname, use that to parse auth/port */

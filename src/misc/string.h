@@ -4,9 +4,9 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-void http_deescape(char *s);
+void url_deescape(char *s);
 
-void path_escape(char *dest, int size, const char *src);
+int url_escape(char *dest, const int size, const char *src);
 
 void html_entities_decode(char *s);
 
@@ -18,7 +18,7 @@ url_split(char *proto, int proto_size,
 	  char *hostname, int hostname_size,
 	  int *port_ptr,
 	  char *path, int path_size,
-	  const char *url, int escape_path);
+	  const char *url);
 
 int dictcmp(const char *a, const char *b);
 

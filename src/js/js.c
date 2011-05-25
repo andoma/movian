@@ -146,8 +146,8 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
     k = strdup(k);
     v = strdup(v);
 
-    http_deescape(k);
-    http_deescape(v);
+    url_deescape(k);
+    url_deescape(v);
 
     jsval val = STRING_TO_JSVAL(JS_NewString(cx, v, strlen(v)));
     JS_SetProperty(cx, robj, k, &val);
@@ -176,7 +176,7 @@ js_httpEscape(JSContext *cx, JSObject *obj,
   
   r = malloc((l * 3) + 1);
   
-  path_escape(r, l * 3, str);
+  url_escape(r, l * 3, str);
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, r, strlen(r)));
   return JS_TRUE;

@@ -973,7 +973,7 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
  *
  */
 static int
-http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
+http_connect(http_file_t *hf, char *errbuf, int errlen)
 {
   char hostname[HOSTNAME_MAX];
   char proto[16];
@@ -992,7 +992,6 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
 
   LIST_FOREACH(hr, &http_redirects, hr_link)
     if(!strcmp(url, hr->hr_from)) {
-      escape_path = 0;
       url = hr->hr_to;
       break;
     }
@@ -1000,7 +999,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen, int escape_path)
   url_split(proto, sizeof(proto), hf->hf_authurl, sizeof(hf->hf_authurl), 
 	    hostname, sizeof(hostname), &port,
 	    hf->hf_path, sizeof(hf->hf_path), 
-	    url, escape_path);
+	    url);
 
   hts_mutex_unlock(&http_redirects_mutex);
 
@@ -1034,7 +1033,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   hf->hf_filesize = -1;
 
-  if(http_connect(hf, errbuf, errlen, 0))
+  if(http_connect(hf, errbuf, errlen))
     return -1;
 
   if(!probe && hf->hf_filesize != -1)
@@ -1232,7 +1231,7 @@ http_index_fetch(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen)
   int redircount = 0;
 
 reconnect:
-  if(http_connect(hf, errbuf, errlen, 0))
+  if(http_connect(hf, errbuf, errlen))
     return -1;
 
   htsbuf_queue_init(&q, 0);
@@ -1373,7 +1372,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
     if((hc = hf->hf_connection) == NULL) {
-      if(http_connect(hf, NULL, 0, 0))
+      if(http_connect(hf, NULL, 0))
 	return -1;
       hc = hf->hf_connection;
     }
@@ -1719,7 +1718,7 @@ http_get_last_component(struct fa_protocol *fap, const char *url,
   memcpy(dst, url + b, dstlen);
   dst[dstlen - 1] = 0;
 
-  http_deescape(dst);
+  url_deescape(dst);
 }
 
 
@@ -1800,7 +1799,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
   // We need to compare paths and to do so, we must deescape the
   // possible URL encoding. Do the searched-for path once
   snprintf(rpath, URL_MAX, "%s", hf->hf_path);
-  http_deescape(rpath);
+  url_deescape(rpath);
 
   if((m = htsmsg_get_map_multi(xml, "tags", 
 			       "DAV:multistatus", "tags", NULL)) == NULL) {
@@ -1828,7 +1827,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
       href = strchr(q + strlen("://"), '/') ?: "/";
 
     snprintf(ehref, URL_MAX, "%s", href);
-    http_deescape(ehref);
+    url_deescape(ehref);
 
     if((c = htsmsg_get_map_multi(c, "DAV:propstat", "tags",
 				 "DAV:prop", "tags", NULL)) == NULL)
@@ -1869,7 +1868,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	  } else {
 	    snprintf(fname, URL_MAX, "%s", q);
 	  }
-	  http_deescape(fname);
+	  url_deescape(fname);
 	  
 	  fde = fa_dir_add(fd, path, fname, 
 			   isdir ? CONTENT_DIR : CONTENT_FILE);
@@ -1893,7 +1892,7 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
       /* single entry stat(2) */
 
       snprintf(fname, URL_MAX, "%s", href);
-      http_deescape(fname);
+      url_deescape(fname);
 
       if(!strcmp(rpath, fname)) {
 	/* This is the path we asked for */
@@ -1950,7 +1949,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
   for(i = 0; i < 5; i++) {
 
     if(hf->hf_connection == NULL) 
-      if(http_connect(hf, errbuf, errlen, 0))
+      if(http_connect(hf, errbuf, errlen))
 	return -1;
 
     htsbuf_queue_init(&q, 0);
@@ -2109,7 +2108,7 @@ http_request(const char *url, const char **arguments,
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
   int code, r;
-  int redircount = 0, escape_path = !!(flags & HTTP_REQUEST_ESCAPE_PATH);
+  int redircount = 0;
   http_header_t *hh;
 
   if(headers_out != NULL)
@@ -2120,7 +2119,7 @@ http_request(const char *url, const char **arguments,
 
  retry:
 
-  http_connect(hf, errbuf, errlen, escape_path);
+  http_connect(hf, errbuf, errlen);
 
   if(hf->hf_connection == NULL) {
     http_destroy(hf);

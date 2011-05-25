@@ -343,7 +343,7 @@ upnp_service_guess(const char *url)
 
   url_split(proto1, sizeof(proto1), NULL, 0,
 	    hostname1, sizeof(hostname1), &port1,
-	    NULL, 0, url, 0);
+	    NULL, 0, url);
 
   if(port1 == -1 && !strcasecmp(proto1, "http"))
     port1 = 80;
@@ -354,7 +354,7 @@ upnp_service_guess(const char *url)
 
       url_split(proto2, sizeof(proto2), NULL, 0,
 		hostname2, sizeof(hostname2), &port2,
-		NULL, 0, us->us_control_url, 0);
+		NULL, 0, us->us_control_url);
 
       if(port2 == -1 && !strcasecmp(proto2, "http"))
 	port2 = 80;
@@ -482,7 +482,7 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   us->us_type = type;
 
   url_split(proto, sizeof(proto), NULL, 0, hostname, sizeof(hostname), &port,
-	    path, sizeof(path), ud->ud_url, 0);
+	    path, sizeof(path), ud->ud_url);
 
   free(us->us_event_url);
   us->us_event_url = url_resolve_relative(proto, hostname, port, path, e_url);

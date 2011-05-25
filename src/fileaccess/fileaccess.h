@@ -168,7 +168,6 @@ int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
 
-#define HTTP_REQUEST_ESCAPE_PATH 0x1
 #define HTTP_REQUEST_DEBUG 0x2
 
 int http_request(const char *url, const char **arguments, 

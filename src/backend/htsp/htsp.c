@@ -1069,7 +1069,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   tcpcon_t *tc;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
-	    path, pathlen, url, 0);
+	    path, pathlen, url);
 
   if(port < 0)
     port = 9982;
