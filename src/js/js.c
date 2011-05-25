@@ -309,15 +309,16 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
 {
   const char *id, *reason, *source;
   char *username, *password;
-  JSBool query;
+  JSBool query, forcetmp = 0;
   int r;
   jsval val;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "sssb",
-			  &id, &source, &reason, &query))
+  if(!JS_ConvertArguments(cx, argc, argv, "sssb/b",
+			  &id, &source, &reason, &query, &forcetmp))
     return JS_FALSE;
 
-  r = keyring_lookup(id, &username, &password, NULL, query, source, reason);
+  r = keyring_lookup(id, &username, &password, NULL, query, source, reason,
+		     forcetmp);
 
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);

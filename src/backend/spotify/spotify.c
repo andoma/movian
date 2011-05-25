@@ -600,7 +600,7 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
   TRACE(TRACE_DEBUG, "spotify", "Attempting to login");
 
   r = keyring_lookup("spotify", &username, &password, NULL,
-		     retry && !silent, "Spotify", reason);
+		     retry && !silent, "Spotify", reason, 0);
   if(r == -1) {
     assert(silent == 0);
     login_rejected_by_user = 1;

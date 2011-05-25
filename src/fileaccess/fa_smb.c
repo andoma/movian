@@ -296,7 +296,7 @@ smb_auth(const char *server, const char *share,
 
     int r = keyring_lookup(buf, &username, &password, &domain, 
 			   query,
-			   "SMB Client", "Access denied");
+			   "SMB Client", "Access denied", 0);
     if(r == 0)
       break;
 

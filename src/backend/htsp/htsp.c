@@ -237,7 +237,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
 
   r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		     "TV client", "Access denied");
+		     "TV client", "Access denied", 0);
 
   if(r == -1) {
     /* User rejected */
