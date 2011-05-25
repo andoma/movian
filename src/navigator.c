@@ -84,9 +84,6 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
-static void nav_open0(navigator_t *nav, const char *url, const char *view,
-		      prop_t *origin);
-
 /**
  *
  */
@@ -322,7 +319,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
   np->np_nav = nav;
-  np->np_url = url ? strdup(url) : NULL;
+  np->np_url = strdup(url);
   np->np_direct_close = 0;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
@@ -340,8 +337,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
 
-  if(url != NULL)
-    prop_set_string(prop_create(np->np_prop_root, "url"), url);
+  prop_set_string(prop_create(np->np_prop_root, "url"), url);
 
   np->np_url_sub = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -439,7 +435,10 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
 
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
-    nav_open0(nav, ou->url, ou->view, ou->origin);
+    if(ou->url != NULL)
+      nav_open0(nav, ou->url, ou->view, ou->origin);
+    else
+      TRACE(TRACE_INFO, "Navigator", "Tried to open NULL URL");
   }
 }
 
