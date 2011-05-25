@@ -637,6 +637,7 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
 static void
 blind_srt_check(const char *url, htsmsg_t *sublist)
 {
+  struct http_header_list out;
   char *srt = mystrdupa(url);
   char *dot = strrchr(srt, '.');
 
@@ -645,13 +646,18 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
 
   strcpy(dot, ".srt");
 
+  LIST_INIT(&out);
   if(!http_request(srt, NULL, NULL, NULL, NULL, 0, NULL, 0,
-		   0, NULL, NULL, NULL)) {
-
-    htsmsg_t *sub = htsmsg_create_map();
-    htsmsg_add_str(sub, "url", srt);
-    htsmsg_add_str(sub, "source", "HTTP probe");
-    htsmsg_add_msg(sublist, NULL, sub);
+		   0, &out, NULL, NULL)) {
+    const char *s;
+    if((s = http_header_get(&out, "Content-Type")) != NULL) {
+      if(!strcasecmp(s, "application/x-srt")) {
+	htsmsg_t *sub = htsmsg_create_map();
+	htsmsg_add_str(sub, "url", srt);
+	htsmsg_add_str(sub, "source", "HTTP probe");
+	htsmsg_add_msg(sublist, NULL, sub);
+      }
+    }
   }
 }
 
