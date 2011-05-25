@@ -6,7 +6,11 @@ widget(image, {
     translate($self.metadata.subtype, "Folder.png",
               "playlists",     "List.png",
               "starred",       "Star.png",
-              "inbox",         "Inbox.png");
+              "inbox",         "Inbox.png",
+              "favourites",    "Favorite.png",
+              "tags",          "Tags.png",
+              "genres",        "Tags.png"
+	     );
 
   .alpha = iir(isReady(), 10);
   .saturation = 1 - iir(isReady(), 10);
