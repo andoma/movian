@@ -342,6 +342,7 @@ typedef struct upnp_browse {
   prop_t *ub_loading;
   prop_t *ub_type;
   prop_t *ub_source;
+  prop_t *ub_direct_close;
   prop_t *ub_error;
   prop_t *ub_title;
   prop_t *ub_contents;
@@ -450,6 +451,7 @@ ub_destroy(upnp_browse_t *ub)
   prop_ref_dec(ub->ub_loading);
   prop_ref_dec(ub->ub_type);
   prop_ref_dec(ub->ub_source);
+  prop_ref_dec(ub->ub_direct_close);
   prop_ref_dec(ub->ub_error);
   prop_ref_dec(ub->ub_title);
   prop_ref_dec(ub->ub_contents);
@@ -747,6 +749,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   prop_set_string(ub->ub_source, vpstr);
   free(vpstr);
 
+  prop_set_int(ub->ub_direct_close, 1);
   prop_set_string(ub->ub_type, "video");
   prop_set_int(ub->ub_loading, 0);
 }
@@ -893,6 +896,7 @@ be_upnp_browse(prop_t *page, const char *url)
   ub->ub_page = prop_ref_inc(page);
 
   ub->ub_source = prop_ref_inc(prop_create(page, "source"));
+  ub->ub_direct_close = prop_ref_inc(prop_create(page, "directClose"));
 
   prop_t *model = prop_create(page, "model");
 
