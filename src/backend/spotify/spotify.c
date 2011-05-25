@@ -710,8 +710,9 @@ spotify_logged_out(sp_session *sess)
 static void
 spotify_connection_error(sp_session *sess, sp_error error)
 {
-  notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Connection error\n%s",
-	     f_sp_error_message(error));
+  if(error != SP_ERROR_OK)
+    notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Connection error: %s",
+	       f_sp_error_message(error));
 }
 
 
