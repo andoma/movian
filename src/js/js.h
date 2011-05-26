@@ -8,6 +8,7 @@
 
 LIST_HEAD(js_route_list, js_route);
 LIST_HEAD(js_searcher_list, js_searcher);
+LIST_HEAD(js_http_auth_list, js_http_auth);
 LIST_HEAD(js_plugin_list, js_plugin);
 
 /**
@@ -24,6 +25,7 @@ typedef struct js_plugin {
 
   struct js_route_list jsp_routes;
   struct js_searcher_list jsp_searchers;
+  struct js_http_auth_list jsp_http_auths;
 
 } js_plugin_t;
 
@@ -42,6 +44,9 @@ JSBool js_addURI(JSContext *cx, JSObject *obj, uintN argc,
 		 jsval *argv, jsval *rval);
 
 JSBool js_addSearcher(JSContext *cx, JSObject *obj, uintN argc, 
+		      jsval *argv, jsval *rval);
+
+JSBool js_addHTTPAuth(JSContext *cx, JSObject *obj, uintN argc, 
 		      jsval *argv, jsval *rval);
 
 JSBool js_createService(JSContext *cx, JSObject *obj, uintN argc, 
@@ -64,6 +69,8 @@ int js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p);
 void js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value);
 
 void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
+
+void js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 

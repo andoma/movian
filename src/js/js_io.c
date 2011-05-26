@@ -25,6 +25,8 @@
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
 #include "misc/string.h"
+#include "misc/regex.h"
+
 
 typedef struct js_http_response {
   char *data;
@@ -309,4 +311,103 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
   return JS_TRUE;
+}
+
+
+static struct js_http_auth_list js_http_auths;
+
+
+/**
+ *
+ */
+typedef struct js_http_auth {
+  js_plugin_t *jha_jsp;
+  LIST_ENTRY(js_http_auth) jha_global_link;
+  LIST_ENTRY(js_http_auth) jha_plugin_link;
+  char *jha_pattern;
+  hts_regex_t jha_regex;
+  jsval jha_func;
+} js_http_auth_t;
+
+
+
+/**
+ *
+ */
+static void
+js_http_auth_delete(JSContext *cx, js_http_auth_t *jha)
+{
+  JS_RemoveRoot(cx, &jha->jha_func);
+
+  LIST_REMOVE(jha, jha_global_link);
+  LIST_REMOVE(jha, jha_plugin_link);
+
+  hts_regfree(&jha->jha_regex);
+
+  free(jha->jha_pattern);
+  free(jha);
+}
+
+
+
+/**
+ *
+ */
+JSBool 
+js_addHTTPAuth(JSContext *cx, JSObject *obj, uintN argc, 
+	       jsval *argv, jsval *rval)
+{
+  const char *str;
+  js_http_auth_t *jha;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  str = JS_GetStringBytes(JS_ValueToString(cx, argv[0]));
+
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  if(str[0] != '^') {
+    int l = strlen(str);
+    char *s = alloca(l + 2);
+    s[0] = '^';
+    memcpy(s+1, str, l+1);
+    str = s;
+  }
+
+ 
+  jha = calloc(1, sizeof(js_http_auth_t));
+  jha->jha_jsp = jsp;
+  if(hts_regcomp(&jha->jha_regex, str)) {
+    free(jha);
+    JS_ReportError(cx, "Invalid regular expression");
+    return JS_FALSE;
+  }
+  
+  jha->jha_pattern = strdup(str);
+  
+  LIST_INSERT_HEAD(&js_http_auths, jha, jha_global_link);
+  LIST_INSERT_HEAD(&jsp->jsp_http_auths, jha, jha_plugin_link);
+
+  TRACE(TRACE_DEBUG, "JS", "Add auth handler for %s", str);
+
+  jha->jha_func = argv[1];
+  JS_AddNamedRoot(cx, &jha->jha_func, "authuri");
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+void
+js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
+{
+  js_http_auth_t *jha;
+
+  while((jha = LIST_FIRST(&jsp->jsp_http_auths)) != NULL)
+    js_http_auth_delete(cx, jha);
 }

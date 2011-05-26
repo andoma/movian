@@ -450,6 +450,7 @@ plugin_finalize(JSContext *cx, JSObject *obj)
 
   assert(LIST_FIRST(&jsp->jsp_routes) == NULL);
   assert(LIST_FIRST(&jsp->jsp_searchers) == NULL);
+  assert(LIST_FIRST(&jsp->jsp_http_auths) == NULL);
 
   TRACE(TRACE_DEBUG, "JS", "Plugin %s unloaded", jsp->jsp_url);
   
@@ -468,7 +469,7 @@ static void
 js_plugin_unload(JSContext *cx, js_plugin_t *jsp)
 {
   js_page_flush_from_plugin(cx, jsp);
-
+  js_io_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -551,6 +552,7 @@ static JSClass plugin_conf_class = {
 static JSFunctionSpec plugin_functions[] = {
     JS_FS("addURI",           js_addURI,      2, 0, 0),
     JS_FS("addSearcher",      js_addSearcher, 3, 0, 0),
+    JS_FS("addHTTPAuth",      js_addHTTPAuth, 2, 0, 0),
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
     JS_FS_END
