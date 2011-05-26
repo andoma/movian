@@ -546,19 +546,22 @@ http_auth_cache_set(http_file_t *hf)
  *
  */
 static void
-hf_set_auth(http_file_t *hf)
+http_auth_send(http_file_t *hf, htsbuf_queue_t *q)
 {
   http_auth_cache_t *hac;
   const char *hostname = hf->hf_connection->hc_hostname;
   int port = hf->hf_connection->hc_port;
 
-  if(hf->hf_auth)
+  if(hf->hf_auth != NULL) {
+    htsbuf_qprintf(q, "%s\r\n", hf->hf_auth);
     return;
+  }
 
   hts_mutex_lock(&http_auth_caches_mutex);
   LIST_FOREACH(hac, &http_auth_caches, hac_link) {
     if(!strcmp(hostname, hac->hac_hostname) && port == hac->hac_port) {
       hf->hf_auth = strdup(hac->hac_credentials);
+      htsbuf_qprintf(q, "%s\r\n", hac->hac_credentials);
       break;
     }
   }
@@ -1041,22 +1044,21 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
  again:
 
   
-  hf_set_auth(hf);
   
   htsbuf_qprintf(&q, 
 		 "HEAD %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
-		 "Connection: %s\r\n"
-		 "%s%s"
-		 "\r\n",
+		 "Connection: %s\r\n",
 		 hf->hf_path,
 		 hf->hf_version,
 		 htsversion,
 		 hf->hf_connection->hc_hostname,
-		 hf->hf_want_close ? "close" : "keep-alive",
-		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+		 hf->hf_want_close ? "close" : "keep-alive");
+
+  http_auth_send(hf, &q);
+  htsbuf_qprintf(&q, "\r\n");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -1235,20 +1237,19 @@ reconnect:
   
 again:
 
-  hf_set_auth(hf);
 
   htsbuf_qprintf(&q, 
 		 "GET %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
-		 "Host: %s\r\n"
-		 "%s%s"
-		 "\r\n",
+		 "Host: %s\r\n",
 		 hf->hf_path,
 		 hf->hf_version,
 		 htsversion,
-		 hf->hf_connection->hc_hostname,
-		 hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+		 hf->hf_connection->hc_hostname);
+
+  http_auth_send(hf, &q);
+  htsbuf_qprintf(&q, "\r\n");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
   code = http_read_response(hf, NULL);
@@ -1393,20 +1394,20 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 	return 0; // Reading outside known filesize
 
       htsbuf_queue_init(&q, 0);
-      hf_set_auth(hf);
+
       htsbuf_qprintf(&q, 
 		     "GET %s HTTP/1.%d\r\n"
 		     "Accept-Encoding: identity\r\n"
 		     "User-Agent: Showtime %s\r\n"
 		     "Host: %s\r\n"
-		     "Connection: %s\r\n"
-		     "%s%s",
+		     "Connection: %s\r\n",
 		     hf->hf_path,
 		     hf->hf_version,
 		     htsversion,
 		     hc->hc_hostname,
-		     hf->hf_want_close ? "close" : "keep-alive",
-		     hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+		     hf->hf_want_close ? "close" : "keep-alive");
+
+      http_auth_send(hf, &q);
 
       char range[100];
 
@@ -1951,24 +1952,23 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 
     htsbuf_queue_init(&q, 0);
 
-    hf_set_auth(hf);
     htsbuf_qprintf(&q, 
 		   "PROPFIND %s HTTP/1.%d\r\n"
 		   "Depth: %d\r\n"
 		   "Accept-Encoding: identity\r\n"
 		   "User-Agent: Showtime %s\r\n"
 		   "Host: %s\r\n"
-		   "Connection: %s\r\n"
-		   "%s%s"
-		   "\r\n",
+		   "Connection: %s\r\n",
 		   hf->hf_path,
 		   hf->hf_version,
 		   fd != NULL ? 1 : 0,
 		   htsversion,
 		   hf->hf_connection->hc_hostname,
-		   hf->hf_want_close ? "close" : "keep-alive",
-		   hf->hf_auth ?: "", hf->hf_auth ? "\r\n" : "");
+		   hf->hf_want_close ? "close" : "keep-alive");
     
+    http_auth_send(hf, &q);
+    htsbuf_qprintf(&q, "\r\n");
+
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
     code = http_read_response(hf, NULL);
 
@@ -2160,9 +2160,7 @@ http_request(const char *url, const char **arguments,
   if(postcontenttype != NULL) 
     htsbuf_qprintf(&q, "Content-Type: %s\r\n", postcontenttype);
 
-  hf_set_auth(hf);
-  if(hf->hf_auth != NULL)
-    htsbuf_qprintf(&q, "%s\r\n", hf->hf_auth);
+  http_auth_send(hf, &q);
 
   if(headers_in) {
     LIST_FOREACH(hh, headers_in, hh_link)
