@@ -23,6 +23,7 @@
 #include <libavutil/base64.h>
 #include <libavutil/avstring.h>
 #include <libavutil/common.h>
+#include <libavutil/sha.h>
 #include <assert.h>
 
 #include "keyring.h"
@@ -32,6 +33,12 @@
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
+
+#if ENABLE_SPIDERMONKEY
+#include "js/js.h"
+#endif
+
+static uint8_t nonce[20];
 
 /**
  * If we are reading data as a constant pushed stream and we get a
@@ -411,6 +418,13 @@ http_cookie_send(const char *req_host, const char *req_path, htsbuf_queue_t *q)
 static void
 http_init(void)
 {
+  uint64_t v = arch_get_seed();
+
+  struct AVSHA *shactx = alloca(av_sha_size);
+  av_sha_init(shactx, 160);
+  av_sha_update(shactx, (void *)&v, sizeof(v));
+  av_sha_final(shactx, nonce);
+
   TAILQ_INIT(&http_connections);
   hts_mutex_init(&http_connections_mutex);
 
@@ -541,16 +555,192 @@ http_auth_cache_set(http_file_t *hf)
   hts_mutex_unlock(&http_auth_caches_mutex);
 }
 
+/**
+ *
+ */
+static int
+kvcomp(const void *A, const void *B)
+{
+  const char **a = (const char **)A;
+  const char **b = (const char **)B;
+
+  int r;
+  if((r = strcmp(a[0], b[0])) != 0)
+    return r;
+  return strcmp(a[1], b[1]);
+}
+
+
+struct http_auth_req {
+  const char *har_method;
+  const char **har_parameters;
+  const http_file_t *har_hf;
+
+  htsbuf_queue_t *har_q;
+
+} http_auth_req_t;
+
+
+/**
+ *
+ */
+int
+http_client_oauth(struct http_auth_req *har,
+		  const char *consumer_key,
+		  const char *consumer_secret,
+		  const char *token,
+		  const char *token_secret)
+{
+  char key[512];
+  char str[2048];
+  const http_file_t *hf = har->har_hf;
+  const http_connection_t *hc = hf->hf_connection;
+  int len = 0, i = 0;
+  const char **params;
+
+  if(har->har_parameters != NULL)
+    while(har->har_parameters[len])
+      len++;
+
+  if(len&1)
+    return -1;
+
+  len /= 2;
+  len += 6;
+
+  params = alloca(sizeof(char *) * len * 2);
+
+  url_escape(str, sizeof(str), consumer_key);
+  const char *oauth_consumer_key = mystrdupa(str);
+
+  url_escape(str, sizeof(str), consumer_secret);
+  const char *oauth_consumer_secret = mystrdupa(str);
+
+  url_escape(str, sizeof(str), token);
+  const char *oauth_token = mystrdupa(str);
+
+  url_escape(str, sizeof(str), token_secret);
+  const char *oauth_token_secret = mystrdupa(str);
+
+  snprintf(str, sizeof(str), "%lu", time(NULL));
+  const char *oauth_timestamp = mystrdupa(str);
+
+  struct AVSHA *shactx = alloca(av_sha_size);
+  av_sha_init(shactx, 160);
+  av_sha_update(shactx, nonce, sizeof(nonce));
+  av_sha_final(shactx, nonce);
+
+  snprintf(str, sizeof(str),
+	   "%02x%02x%02x%02x%02x%02x%02x%02x"
+	   "%02x%02x%02x%02x%02x%02x%02x%02x"
+	   "%02x%02x%02x%02x",
+	   nonce[0], nonce[1], nonce[2], nonce[3], nonce[4],
+	   nonce[5], nonce[6], nonce[7], nonce[8], nonce[9],
+	   nonce[10], nonce[11], nonce[12], nonce[13], nonce[14],
+	   nonce[15], nonce[16], nonce[17], nonce[18], nonce[19]);
+  
+  const char *oauth_nonce = mystrdupa(str);
+
+  params[0] = "oauth_consumer_key";
+  params[1] = oauth_consumer_key;  
+
+  params[2] = "oauth_timestamp";
+  params[3] = oauth_timestamp;
+
+  params[4] = "oauth_nonce";
+  params[5] = oauth_nonce;
+
+  params[6] = "oauth_version";
+  params[7] = "1.0";
+
+  params[8] = "oauth_signature_method";
+  params[9] = "HMAC-SHA1";
+
+  params[10] = "oauth_token";
+  params[11] = oauth_token;
+  int j = 12;
+  if(har->har_parameters != NULL) {
+    i = 0;
+    while(har->har_parameters[i])
+      params[j++] = har->har_parameters[i++];
+  }
+
+  qsort(params, len, sizeof(char *) * 2, kvcomp);
+
+  snprintf(str, sizeof(str), "%s&", har->har_method);
+
+  if(!hc->hc_ssl && hc->hc_port == 80)
+    snprintf(str + strlen(str), sizeof(str) - strlen(str),
+	     "http%%3A%%2F%%2F%s", hc->hc_hostname);
+  else if(hc->hc_ssl && hc->hc_port == 443)
+    snprintf(str + strlen(str), sizeof(str) - strlen(str),
+	     "https%%3A%%2F%%2F%s", hc->hc_hostname);
+  else
+    snprintf(str + strlen(str), sizeof(str) - strlen(str),
+	     "%s%%3A%%2F%%2F%s%%3A%d", hc->hc_ssl ? "https" : "http",
+	     hc->hc_hostname, hc->hc_port);
+
+  url_escape(str + strlen(str), sizeof(str) - strlen(str), hf->hf_path);
+
+  const char *div = "&";
+  for(i = 0; i < len; i++) {
+    snprintf(str + strlen(str), sizeof(str) - strlen(str),
+	     "%s%s%%3D%s", div, params[i*2],params[1+i*2]);
+    div = "%26";
+  }
+
+  snprintf(key, sizeof(key), "%s&%s",
+	   oauth_consumer_secret, oauth_token_secret);
+
+  unsigned char md[20];
+  HMAC(EVP_sha1(), key, strlen(key), (const unsigned char *)str, strlen(str),
+       md, NULL);
+
+  av_base64_encode(str, sizeof(str), md, 20);
+
+  htsbuf_qprintf(har->har_q,
+		 "Authorization: OAuth realm=\"\", "
+		 "oauth_consumer_key=\"%s\", "
+		 "oauth_timestamp=\"%s\", "
+		 "oauth_nonce=\"%s\", "
+		 "oauth_version=\"1.0\", "
+		 "oauth_token=\"%s\", "
+		 "oauth_signature_method=\"HMAC-SHA1\", "
+		 "oauth_signature=\"",
+		 oauth_consumer_key,
+		 oauth_timestamp,
+		 oauth_nonce,
+		 oauth_token);
+
+  htsbuf_append_and_escape_url(har->har_q, str);
+
+  htsbuf_qprintf(har->har_q, "\"\r\n");
+  return 0;
+}
+
 
 /**
  *
  */
 static void
-http_auth_send(http_file_t *hf, htsbuf_queue_t *q)
+http_auth_send(http_file_t *hf, htsbuf_queue_t *q, const char *method,
+	       const char **parameters)
 {
   http_auth_cache_t *hac;
   const char *hostname = hf->hf_connection->hc_hostname;
   int port = hf->hf_connection->hc_port;
+
+#if ENABLE_SPIDERMONKEY
+  struct http_auth_req har;
+
+  har.har_method = method;
+  har.har_parameters = parameters;
+  har.har_q = q;
+  har.har_hf = hf;
+
+  if(!js_http_auth_try(hf->hf_url, &har))
+    return;
+#endif
 
   if(hf->hf_auth != NULL) {
     htsbuf_qprintf(q, "%s\r\n", hf->hf_auth);
@@ -639,6 +829,7 @@ http_drain_content(http_file_t *hf)
 
   if((buf = http_read_content(hf)) == NULL)
     return -1;
+
   free(buf);
 
   if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
@@ -1057,7 +1248,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_want_close ? "close" : "keep-alive");
 
-  http_auth_send(hf, &q);
+  http_auth_send(hf, &q, "HEAD", NULL);
   htsbuf_qprintf(&q, "\r\n");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -1248,7 +1439,7 @@ again:
 		 htsversion,
 		 hf->hf_connection->hc_hostname);
 
-  http_auth_send(hf, &q);
+  http_auth_send(hf, &q, "GET", NULL);
   htsbuf_qprintf(&q, "\r\n");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -1407,7 +1598,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 		     hc->hc_hostname,
 		     hf->hf_want_close ? "close" : "keep-alive");
 
-      http_auth_send(hf, &q);
+      http_auth_send(hf, &q, "GET", NULL);
 
       char range[100];
 
@@ -1966,7 +2157,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   hf->hf_connection->hc_hostname,
 		   hf->hf_want_close ? "close" : "keep-alive");
     
-    http_auth_send(hf, &q);
+    http_auth_send(hf, &q, "PROPFIND", NULL);
     htsbuf_qprintf(&q, "\r\n");
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -2128,17 +2319,20 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_queue_init(&q, 0);
 
-  htsbuf_qprintf(&q, "%s %s", method ?: postdata ? "POST": (result ? "GET" : "HEAD"), hf->hf_path);
+  const char *m = method ?: postdata ? "POST": (result ? "GET" : "HEAD");
+
+  htsbuf_qprintf(&q, "%s %s", m, hf->hf_path);
 
   if(arguments != NULL) {
+    const char **args = arguments;
     char prefix = '?';
 
-    while(arguments[0] != NULL) {
+    while(args[0] != NULL) {
       htsbuf_append(&q, &prefix, 1);
-      htsbuf_append_and_escape_url(&q, arguments[0]);
+      htsbuf_append_and_escape_url(&q, args[0]);
       htsbuf_append(&q, "=", 1);
-      htsbuf_append_and_escape_url(&q, arguments[1]);
-      arguments += 2;
+      htsbuf_append_and_escape_url(&q, args[1]);
+      args += 2;
       prefix = '&';
     }
   }
@@ -2160,7 +2354,8 @@ http_request(const char *url, const char **arguments,
   if(postcontenttype != NULL) 
     htsbuf_qprintf(&q, "Content-Type: %s\r\n", postcontenttype);
 
-  http_auth_send(hf, &q);
+  if(!(flags & HTTP_DISABLE_AUTH))
+    http_auth_send(hf, &q, m, arguments);
 
   if(headers_in) {
     LIST_FOREACH(hh, headers_in, hh_link)
@@ -2171,7 +2366,7 @@ http_request(const char *url, const char **arguments,
 
   htsbuf_qprintf(&q, "\r\n");
 
-  if(flags & HTTP_REQUEST_DEBUG)
+  if(hf->hf_debug)
     htsbuf_dump_raw_stderr(&q);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -2223,6 +2418,9 @@ http_request(const char *url, const char **arguments,
 
   default:
     snprintf(errbuf, errlen, "HTTP error: %d", code);
+
+    http_drain_content(hf);
+
     http_destroy(hf);
     http_headers_free(headers_out);
     return -1;
