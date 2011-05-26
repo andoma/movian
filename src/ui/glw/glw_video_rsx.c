@@ -1,3 +1,4 @@
+#if 0
 /*
  *  Video output on GL surfaces
  *  Copyright (C) 2007-2010 Andreas Öman
@@ -31,7 +32,7 @@
 #include "glw_video_common.h"
 
 #include "rsx/nv40.h"
-#include "rsx/reality.h"
+#include "rsx/rsx.h"
 
 #define GVF_TEX_L   0
 #define GVF_TEX_Cr  1
@@ -77,7 +78,7 @@ yuvp_reset(glw_video_t *gv)
 
 
 static void
-init_tex(realityTexture *tex, uint32_t offset,
+init_tex(gcmTexture *tex, uint32_t offset,
 	 uint32_t width, uint32_t height, uint32_t stride,
 	 uint32_t fmt, int repeat, int swizzle)
 {
@@ -650,3 +651,4 @@ glw_video_input_yuvp(glw_video_t *gv,
     glw_video_put_surface(gv, s, fi->pts + duration, fi->epoch, duration, tff);
   }
 }
+#endif

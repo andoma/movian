@@ -24,7 +24,8 @@
 #include <errno.h>
 
 #include <audio/audio.h>
-#include <psl1ght/lv2/timer.h>
+//#include <psl1ght/lv2/timer.h>
+#include <sys/event_queue.h>
 
 #include "showtime.h"
 #include "audio/audio_defs.h"
@@ -83,7 +84,7 @@ playOneBlock(u64 *readIndex, float *audioDataStart,
   u32 audio_block_index = (current_block + 1) % AUDIO_BLOCK_8;
   
   sys_event_t event;
-  ret = sys_event_queue_receive( snd_queue, &event, 20 * 1000);
+  ret = sysEventQueueReceive(snd_queue, &event, 20 * 1000);
   
   //get position of the block to write
   float *buf = audioDataStart + 2 /*channelcount*/ * AUDIO_BLOCK_SAMPLES * audio_block_index;
@@ -119,7 +120,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
   u32 port_num;
 
-  AudioPortConfig config;
+  audioPortConfig config;
 
   int ret;
   int running = 0;
@@ -142,11 +143,11 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
 
     if(!running) {
-      AudioPortParam params;
+      audioPortParam params;
 
       params.numChannels = AUDIO_PORT_2CH;
       params.numBlocks = AUDIO_BLOCK_8;
-      params.attr = 0;
+      params.attrib = 0;
       params.level = 1;
   
       ret = audioPortOpen(&params, &port_num);
@@ -174,7 +175,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
       TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n",SHW64(snd_queue_key));
   
       // clears the event queue
-      ret = sys_event_queue_drain(snd_queue);
+      ret = sysEventQueueDrain(snd_queue);
       TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_drain: %d\n",ret);
 
 
@@ -203,7 +204,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
     TRACE(TRACE_DEBUG, "AUDIO", "audioRemoveNotifyEventQueue: %d\n",ret);
     ret=audioPortClose(port_num);
     TRACE(TRACE_DEBUG, "AUDIO", "audioPortClose: %d\n",ret);
-    ret=sys_event_queue_destroy(snd_queue, 0);
+    ret=sysEventQueueDestroy(snd_queue, 0);
     TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_destroy: %d\n",ret);
   }
 

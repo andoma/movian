@@ -132,20 +132,20 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #elif CONFIG_PSL1GHT
 
-#include <sys/thread.h>
 
 /**
  * Mutexes
  */
+#include <sys/mutex.h>
 // #define PS3_DEBUG_MUTEX
 typedef sys_mutex_t hts_mutex_t;
 
 #ifndef PS3_DEBUG_MUTEX
 
 extern void hts_mutex_init(hts_mutex_t *m);
-#define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0)
-#define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
-#define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))
+#define hts_mutex_lock(m)     sysMutexLock(*(m), 0)
+#define hts_mutex_unlock(m)   sysMutexUnlock(*(m))
+#define hts_mutex_destroy(m)  sysMutexDestroy(*(m))
 
 #else
 
@@ -164,6 +164,7 @@ extern void hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line);
 /**
  * Condition variables
  */
+#include <sys/cond.h>
 // #define PS3_DEBUG_COND
 typedef sys_cond_t hts_cond_t;
 
@@ -171,10 +172,10 @@ typedef sys_cond_t hts_cond_t;
 #ifndef PS3_DEBUG_COND
 
 extern void hts_cond_init(hts_cond_t *c, hts_mutex_t *m);
-#define hts_cond_destroy(c) sys_cond_destroy(*(c))
-#define hts_cond_signal(c) sys_cond_signal(*(c))
-#define hts_cond_broadcast(c) sys_cond_signal_all(*(c))
-#define hts_cond_wait(c,m ) sys_cond_wait(*(c), 0)
+#define hts_cond_destroy(c) sysCondDestroy(*(c))
+#define hts_cond_signal(c) sysCondSignal(*(c))
+#define hts_cond_broadcast(c) sysCondBroadcast(*(c))
+#define hts_cond_wait(c,m) sysCondWait(*(c), 0)
 extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay);
 
 
@@ -200,6 +201,8 @@ extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, cons
 /**
  * Threads
  */
+#include <sys/thread.h>
+
 typedef sys_ppu_thread_t hts_thread_t;
 
 #define THREAD_PRIO_LOW    3000
@@ -213,9 +216,9 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 				       void *(*)(void *), void *,
 				       int prio);
 
-#define hts_thread_join(t)   sys_ppu_thread_join(*(t), NULL)
+#define hts_thread_join(t)   sysThreadJoin(*(t), NULL)
 
-#define hts_thread_detach(t) sys_ppu_thread_detach(*(t))
+#define hts_thread_detach(t) sysThreadDetach(*(t))
 
 extern hts_thread_t hts_thread_current(void);
 

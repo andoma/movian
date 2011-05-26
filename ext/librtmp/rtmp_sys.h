@@ -45,7 +45,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/times.h>
-#include <netdb.h>
+#include <net/netdb.h>
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <netinet/in.h>

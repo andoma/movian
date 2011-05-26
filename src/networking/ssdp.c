@@ -21,7 +21,11 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifdef PS3
+#include <net/poll.h>
+#else
 #include <poll.h>
+#endif
 #include <errno.h>
 
 

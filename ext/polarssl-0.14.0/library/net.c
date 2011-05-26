@@ -56,7 +56,7 @@ static int wsa_init_done = 0;
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
-#include <netdb.h>
+#include <net/netdb.h>
 #include <errno.h>
 
 #if defined(__FreeBSD__)

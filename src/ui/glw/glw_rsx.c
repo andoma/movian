@@ -1,3 +1,4 @@
+#if 0
 /*
  *  libglw, OpenGL interface
  *  Copyright (C) 2008 Andreas Öman
@@ -18,7 +19,7 @@
 
 #include <string.h>
 
-#include <rsx/reality.h>
+#include <rsx/rsx.h>
 #include <rsx/nv40.h>
 
 #include "glw.h"
@@ -36,12 +37,12 @@ static float identitymtx[16] = {
  *
  */
 static int
-vp_get_vector_const(realityVertexProgram *vp, const char *name)
+vp_get_vector_const(rsxVertexProgram *vp, const char *name)
 {
-  int v = realityVertexProgramGetConstant(vp, name);
+  int v = rsxVertexProgramGetConst(vp, name);
   if(v == -1)
     return -1;
-  realityProgramConst *c = realityVertexProgramGetConstants(vp);
+  rsxProgramConst *c = rsxVertexProgramGetConsts(vp);
   return c[v].index;
 }
 
@@ -52,7 +53,7 @@ static rsx_vp_t *
 load_vp(const char *url)
 {
   char errmsg[100];
-  realityVertexProgram *vp;
+  rsxVertexProgram *vp;
   int i;
   const char *name;
 
@@ -63,13 +64,9 @@ load_vp(const char *url)
   }
 
   TRACE(TRACE_INFO, "glw", "Loaded Vertex program %s", url);
-  TRACE(TRACE_INFO, "glw", "    input mask: %x", 
-	realityVertexProgramGetInputMask(vp));
-  TRACE(TRACE_INFO, "glw", "   output mask: %x", 
-	realityVertexProgramGetOutputMask(vp));
 
-  realityProgramConst *constants;
-  constants = realityVertexProgramGetConstants(vp);
+  rsxProgramConst *constants;
+  constants = rsxVertexProgramGetConsts(vp);
   for(i = 0; i < vp->num_const; i++) {
     if(constants[i].name_off)
       name = ((char*)vp)+constants[i].name_off;
@@ -85,8 +82,8 @@ load_vp(const char *url)
 	  constants[i].values[3].f);
   }
 
-  realityProgramAttrib *attributes;
-  attributes = realityVertexProgramGetAttributes(vp);
+  rsxProgramAttrib *attributes;
+  attributes = rsxVertexProgramGetAttribs(vp);
   for(i = 0; i < vp->num_attrib; i++) {
     if(attributes[i].name_off)
       name = ((char*)vp)+attributes[i].name_off;
@@ -100,15 +97,15 @@ load_vp(const char *url)
   rsx_vp_t *rvp = calloc(1, sizeof(rsx_vp_t));
   rvp->rvp_binary = vp;
 
-  rvp->rvp_u_modelview = realityVertexProgramGetConstant(vp, "u_modelview");
+  rvp->rvp_u_modelview = rsxVertexProgramGetConst(vp, "u_modelview");
   rvp->rvp_u_color     = vp_get_vector_const(vp, "u_color");
   rvp->rvp_u_color_offset = vp_get_vector_const(vp, "u_color_offset");
   rvp->rvp_u_blur_amount = vp_get_vector_const(vp, "u_blur_amount");
   TRACE(TRACE_INFO, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
 
-  rvp->rvp_a_position = realityVertexProgramGetAttribute(vp, "a_position");
-  rvp->rvp_a_color    = realityVertexProgramGetAttribute(vp, "a_color");
-  rvp->rvp_a_texcoord = realityVertexProgramGetAttribute(vp, "a_texcoord");
+  rvp->rvp_a_position = rsxVertexProgramGetAttrib(vp, "a_position");
+  rvp->rvp_a_color    = rsxVertexProgramGetAttrib(vp, "a_color");
+  rvp->rvp_a_texcoord = rsxVertexProgramGetAttrib(vp, "a_texcoord");
   TRACE(TRACE_INFO, "glw", "%d %d %d",
 	rvp->rvp_a_position, rvp->rvp_a_color, rvp->rvp_a_texcoord);
 
@@ -122,7 +119,7 @@ static rsx_fp_t *
 load_fp(glw_root_t *gr, const char *url)
 {
   char errmsg[100];
-  realityFragmentProgram *fp;
+  rsxFragmentProgram *fp;
   int i;
   const char *name;
 
@@ -135,8 +132,8 @@ load_fp(glw_root_t *gr, const char *url)
   TRACE(TRACE_INFO, "glw", "Loaded fragment program %s", url);
   TRACE(TRACE_INFO, "glw", "  num regs: %d", fp->num_regs);
 
-  realityProgramConst *constants;
-  constants = realityFragmentProgramGetConsts(fp);
+  rsxProgramConst *constants;
+  constants = rsxFragmentProgramGetConsts(fp);
   for(i = 0; i < fp->num_const; i++) {
     if(constants[i].name_off)
       name = ((char*)fp)+constants[i].name_off;
@@ -153,8 +150,8 @@ load_fp(glw_root_t *gr, const char *url)
 	  constants[i].type);
   }
 
-  realityProgramAttrib *attributes;
-  attributes = realityFragmentProgramGetAttribs(fp);
+  rsxProgramAttrib *attributes;
+  attributes = rsxFragmentProgramGetAttribs(fp);
   for(i = 0; i < fp->num_attrib; i++) {
     if(attributes[i].name_off)
       name = ((char*)fp)+attributes[i].name_off;
@@ -179,19 +176,19 @@ load_fp(glw_root_t *gr, const char *url)
   rfp->rfp_rsx_location = offset;
 
   rfp->rfp_u_color =
-    realityFragmentProgramGetConst(fp, "u_color");
+    rsxFragmentProgramGetConst(fp, "u_color");
 
   rfp->rfp_u_color_matrix =
-    realityFragmentProgramGetConst(fp, "u_colormtx");
+    rsxFragmentProgramGetConst(fp, "u_colormtx");
 
   rfp->rfp_u_blend =
-    realityFragmentProgramGetConst(fp, "u_blend");
+    rsxFragmentProgramGetConst(fp, "u_blend");
 
   for(i = 0; i < 6; i++) {
     char name[8];
     snprintf(name, sizeof(name), "u_t%d", i);
     rfp->rfp_texunit[i] = 
-      realityFragmentProgramGetAttrib(fp, name);
+      rsxFragmentProgramGetAttrib(fp, name);
     if(rfp->rfp_texunit[i] != -1)
       TRACE(TRACE_INFO, "glw", "    Texture %d via unit %d",
 	    i, rfp->rfp_texunit[i]);
@@ -230,7 +227,7 @@ rsx_set_vp(glw_root_t *root, rsx_vp_t *rvp)
   if(root->gr_be.be_vp_current == rvp)
     return;
   root->gr_be.be_vp_current = rvp;
-  realityLoadVertexProgram(root->gr_be.be_ctx, rvp->rvp_binary);
+  rsxLoadVertexProgram(root->gr_be.be_ctx, rvp->rvp_binary);
 }
 
 
@@ -243,7 +240,7 @@ rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
   if(root->gr_be.be_fp_current == rfp && !force)
     return;
   root->gr_be.be_fp_current = rfp;
-  realityLoadFragmentProgram(root->gr_be.be_ctx, rfp->rfp_binary,
+  rsxLoadFragmentProgram(root->gr_be.be_ctx, rfp->rfp_binary,
 			     rfp->rfp_rsx_location, 0);
 }
 
@@ -278,7 +275,7 @@ rsx_render(struct glw_root *gr,
     if(tex->tex.offset == 0 || tex->size == 0)
       return;
 
-    realitySetTexture(ctx, 0, &tex->tex);
+    rsxSetTexture(ctx, 0, &tex->tex);
     if(gr->gr_be.be_blur > 0.05) {
       rfp = gr->gr_be.be_fp_tex_blur;
     } else {
@@ -288,7 +285,7 @@ rsx_render(struct glw_root *gr,
 
   rsx_set_vp(gr, rvp);
 
-  realitySetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
+  rsxSetVertexProgramConstant4fBlock(ctx, rvp->rvp_binary,
 					 rvp->rvp_u_modelview,
 					 4, m ?: identitymtx);
   
@@ -308,7 +305,7 @@ rsx_render(struct glw_root *gr,
     break;
   }
 
-  realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
+  rsxSetVertexProgramConstant4f(ctx, rvp->rvp_u_color, rgba);
 
   if(rvp->rvp_u_color_offset != -1) {
 
@@ -322,7 +319,7 @@ rsx_render(struct glw_root *gr,
       rgba[2] = 0;
     }
     rgba[3] = 0;
-    realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
+    rsxSetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
   }
 
   if(gr->gr_be.be_blur > 0.05 && tex != NULL) {
@@ -332,32 +329,32 @@ rsx_render(struct glw_root *gr,
     v[2] = 0;
     v[3] = 0;
 
-    realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur_amount, v);
+    rsxSetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur_amount, v);
   }
 
   rsx_set_fp(gr, rfp, 0);
 
   // TODO: Get rid of immediate mode
-  realityVertexBegin(ctx, REALITY_TRIANGLES);
+  rsxVertexBegin(ctx, RSX_TRIANGLES);
 
   int i;
 
   if(indices != NULL) {
     for(i = 0; i < num_triangles * 3; i++) {
       const float *v = &vertices[indices[i] * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
-      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+      rsxAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
+      rsxAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      rsxVertex4f(ctx, v[0], v[1], v[2], 1);
     }
   } else {
     for(i = 0; i < num_vertices; i++) {
       const float *v = &vertices[i * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
-      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+      rsxAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
+      rsxAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      rsxVertex4f(ctx, v[0], v[1], v[2], 1);
     }
   }
-  realityVertexEnd(ctx);
+  rsxVertexEnd(ctx);
 }
 
 
@@ -438,12 +435,12 @@ glw_blendmode(struct glw_root *gr, int mode)
 
   switch(mode) {
   case GLW_BLEND_ADDITIVE:
-    realityBlendFunc(gr->gr_be.be_ctx,
+    rsxBlendFunc(gr->gr_be.be_ctx,
 		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_COLOR,
 		     NV30_3D_BLEND_FUNC_DST_RGB_ONE);
     break;
   case GLW_BLEND_NORMAL:
-    realityBlendFunc(gr->gr_be.be_ctx,
+    rsxBlendFunc(gr->gr_be.be_ctx,
 		     NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
 		     NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
 		     NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
@@ -463,8 +460,9 @@ glw_blur(struct glw_root *gr, float blur)
 
 void glw_frontface(struct glw_root *gr, int how)
 {
-  realityFrontFace(gr->gr_be.be_ctx,
-		   how == GLW_CW ? REALITY_FRONT_FACE_CW :
-		   REALITY_FRONT_FACE_CCW);
+  rsxFrontFace(gr->gr_be.be_ctx,
+		   how == GLW_CW ? RSX_FRONT_FACE_CW :
+		   RSX_FRONT_FACE_CCW);
 }
 
+#endif

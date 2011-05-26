@@ -36,13 +36,13 @@
 
 #include <rsx/commands.h>
 #include <rsx/nv40.h>
-#include <rsx/reality.h>
+#include <rsx/rsx.h>
 
 #include <sysutil/video.h>
-#include <sysutil/events.h>
+#include <sysutil/sysutil.h>
 
 #include <io/pad.h>
-#include <io/kb.h>
+//#include <io/kb.h>
 
 #include <sysmodule/sysmodule.h>
 
@@ -55,17 +55,13 @@ typedef struct glw_ps3 {
 
   int stop;
   
-  VideoResolution res;
+  videoResolution res;
 
   u32 framebuffer[2];
   int framebuffer_pitch;
 
   u32 depthbuffer;
   int depthbuffer_pitch;
-
-  char kb_present[MAX_KEYBOARDS];
-
-  KbConfig kb_config[MAX_KEYBOARDS];
 
 } glw_ps3_t;
 
@@ -90,7 +86,7 @@ static void
 flip(glw_ps3_t *gp, s32 buffer) 
 {
   assert(gcmSetFlip(gp->gr.gr_be.be_ctx, buffer) == 0);
-  realityFlushBuffer(gp->gr.gr_be.be_ctx);
+  rsxFlushBuffer(gp->gr.gr_be.be_ctx);
   gcmSetWaitFlip(gp->gr.gr_be.be_ctx);
 }
 
@@ -147,7 +143,7 @@ init_screen(glw_ps3_t *gp)
   assert(host_addr != NULL);
 
   // Initilise Reality, which sets up the command buffer and shared IO memory
-  gp->gr.gr_be.be_ctx = realityInit(0x10000, 1024*1024, host_addr); 
+  gp->gr.gr_be.be_ctx = rsxInit(0x10000, 1024*1024, host_addr); 
   assert(gp->gr.gr_be.be_ctx != NULL);
   
   gcmConfiguration config;
@@ -161,7 +157,7 @@ init_screen(glw_ps3_t *gp)
   gp->gr.gr_be.be_rsx_address = (void *)(uint64_t)config.localAddress;
 
 
-  VideoState state;
+  videoState state;
   assert(videoGetState(0, 0, &state) == 0); // Get the state of the display
   assert(state.state == 0); // Make sure display is enabled
   
@@ -175,8 +171,8 @@ init_screen(glw_ps3_t *gp)
   gp->depthbuffer_pitch = 4 * gp->res.width; // And each value in the depth buffer is a 16 bit float
   
   // Configure the buffer format to xRGB
-  VideoConfiguration vconfig;
-  memset(&vconfig, 0, sizeof(VideoConfiguration));
+  videoConfiguration vconfig;
+  memset(&vconfig, 0, sizeof(videoConfiguration));
   vconfig.resolution = state.displayMode.resolution;
   vconfig.format = VIDEO_BUFFER_FORMAT_XRGB;
   vconfig.pitch = gp->framebuffer_pitch;
@@ -223,7 +219,6 @@ glw_ps3_init(glw_ps3_t *gp)
   glw_rsx_init_context(&gp->gr);
 
   ioPadInit(7);
-  ioKbInit(MAX_KB_PORT_NUM);
   return 0;
 }
 
@@ -233,18 +228,18 @@ eventHandle(u64 status, u64 param, void *userdata)
 {
   glw_ps3_t *gp = userdata;
   switch(status) {
-  case EVENT_REQUEST_EXITAPP:
+  case SYSUTIL_EXIT_GAME:
     gp->stop = 1;
     break;
-  case EVENT_MENU_OPEN:
+  case SYSUTIL_MENU_OPEN:
     TRACE(TRACE_INFO, "XMB", "Opened");
     break;
-  case EVENT_MENU_CLOSE:
+  case SYSUTIL_MENU_CLOSE:
     TRACE(TRACE_INFO, "XMB", "Closed");
     break;
-  case EVENT_DRAWING_BEGIN:
+  case SYSUTIL_DRAW_BEGIN:
     break;
-  case EVENT_DRAWING_END:
+  case SYSUTIL_DRAW_END:
     break;
   default:
     TRACE(TRACE_DEBUG, "LV2", "Unhandled event 0x%lx", status);
@@ -256,10 +251,11 @@ eventHandle(u64 status, u64 param, void *userdata)
 static void
 setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer) 
 {
-  realitySetRenderSurface(gp->gr.gr_be.be_ctx,
-			  REALITY_SURFACE_COLOR0, REALITY_RSX_MEMORY, 
-			  gp->framebuffer[currentBuffer],
-			  gp->framebuffer_pitch);
+#if 0
+  rsxSetRenderSurface(gp->gr.gr_be.be_ctx,
+		      REALITY_SURFACE_COLOR0, REALITY_RSX_MEMORY, 
+		      gp->framebuffer[currentBuffer],
+		      gp->framebuffer_pitch);
   
   realitySetRenderSurface(gp->gr.gr_be.be_ctx,
 			  REALITY_SURFACE_ZETA, REALITY_RSX_MEMORY, 
@@ -270,9 +266,10 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 			    REALITY_TARGET_FORMAT_ZETA_Z16 | 
 			    REALITY_TARGET_FORMAT_TYPE_LINEAR,
 			    gp->res.width, gp->res.height, 0, 0);
+#endif
 
-  realityDepthTestEnable(gp->gr.gr_be.be_ctx, 0);
-  realityDepthWriteEnable(gp->gr.gr_be.be_ctx, 0);
+  rsxSetDepthTestEnable(gp->gr.gr_be.be_ctx, 0);
+  rsxSetDepthWriteEnable(gp->gr.gr_be.be_ctx, 0);
 }
 
 static void 
@@ -280,48 +277,49 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
 {
   gcmContextData *ctx = gp->gr.gr_be.be_ctx;
 
-  realityViewportTranslate(ctx,
-			   gp->res.width/2, gp->res.height/2, 0.0, 0.0);
-  realityViewportScale(ctx,
-		       gp->res.width/2, -gp->res.height/2, 1.0, 0.0); 
+  rsxViewportTranslate(ctx,
+		       gp->res.width/2, gp->res.height/2, 0.0, 0.0);
 
-  realityZControl(ctx, 0, 1, 1); // disable viewport culling
+  rsxViewportScale(ctx,
+		   gp->res.width/2, -gp->res.height/2, 1.0, 0.0); 
+
+  rsxZControl(ctx, 0, 1, 1); // disable viewport culling
 
   // Enable alpha blending.
-  realityBlendFunc(ctx,
+  rsxBlendFunc(ctx,
 		   NV30_3D_BLEND_FUNC_SRC_RGB_SRC_ALPHA |
 		   NV30_3D_BLEND_FUNC_SRC_ALPHA_SRC_ALPHA,
 		   NV30_3D_BLEND_FUNC_DST_RGB_ONE_MINUS_SRC_ALPHA |
 		   NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
-  realityBlendEquation(ctx, NV40_3D_BLEND_EQUATION_RGB_FUNC_ADD |
+  rsxBlendEquation(ctx, NV40_3D_BLEND_EQUATION_RGB_FUNC_ADD |
 		       NV40_3D_BLEND_EQUATION_ALPHA_FUNC_ADD);
-  realityBlendEnable(ctx, 1);
+  rsxBlendEnable(ctx, 1);
 
-  realityViewport(ctx, gp->res.width, gp->res.height);
+  rsxViewport(ctx, gp->res.width, gp->res.height);
   
   setupRenderTarget(gp, buffer);
 
   // set the clear color
-  realitySetClearColor(ctx, 0x00000000);
+  rsxSetClearColor(ctx, 0x00000000);
 
-  realitySetClearDepthValue(ctx, 0xffff);
+  rsxSetClearDepthValue(ctx, 0xffff);
 
   // Clear the buffers
-  realityClearBuffers(ctx,
-		      REALITY_CLEAR_BUFFERS_COLOR_R |
-		      REALITY_CLEAR_BUFFERS_COLOR_G |
-		      REALITY_CLEAR_BUFFERS_COLOR_B |
+  rsxClearBuffers(ctx,
+		      RSX_CLEAR_BUFFERS_COLOR_R |
+		      RSX_CLEAR_BUFFERS_COLOR_G |
+		      RSX_CLEAR_BUFFERS_COLOR_B |
 		      NV30_3D_CLEAR_BUFFERS_COLOR_A | 
-		      REALITY_CLEAR_BUFFERS_DEPTH);
+		      RSX_CLEAR_BUFFERS_DEPTH);
 
 
   // XMB may overwrite currently loaded shaders, so clear them out
   gp->gr.gr_be.be_vp_current = NULL;
   gp->gr.gr_be.be_fp_current = NULL;
 
-  realityCullEnable(ctx, 1);
-  realityFrontFace(ctx, REALITY_FRONT_FACE_CCW);
-  realityCullFace(ctx, REALITY_CULL_FACE_BACK);
+  rsxCullEnable(ctx, 1);
+  rsxFrontFace(ctx, RSX_FRONT_FACE_CCW);
+  rsxCullFace(ctx, RSX_CULL_FACE_BACK);
 
   if(!with_universe)
     return;
@@ -706,4 +704,3 @@ ui_t glw_ui = {
   .ui_dispatch_event = glw_ps3_dispatch_event,
   .ui_stop = glw_ps3_stop,
 };
-

@@ -20,6 +20,7 @@
 
 #include <arch/threads.h>
 #include <sysmodule/sysmodule.h>
+#include <ppu-asm.h>
 
 #include "showtime.h"
 #include "ps3_vdec.h"
@@ -74,7 +75,7 @@ typedef struct vdec_pic {
  */
 typedef struct vdec_decoder {
   uint32_t handle;
-  struct vdec_config config;
+  vdecConfig config;
   void *mem;
   
   video_decoder_t *vd;
@@ -118,11 +119,11 @@ typedef struct vdec_decoder {
 void
 video_ps3_vdec_init(void)
 {
-  vdec_mpeg2_loaded = !SysLoadModule(SYSMODULE_VDEC_MPEG2);
+  vdec_mpeg2_loaded = !sysModuleLoad(SYSMODULE_VDEC_MPEG2);
   if(!vdec_mpeg2_loaded)
     TRACE(TRACE_ERROR, "VDEC", "Unable to load MPEG2 decoder");
 
-  vdec_h264_loaded = !SysLoadModule(SYSMODULE_VDEC_H264);
+  vdec_h264_loaded = !sysModuleLoad(SYSMODULE_VDEC_H264);
   if(!vdec_h264_loaded)
     TRACE(TRACE_ERROR, "VDEC", "Unable to load H264 decoder");
 }
@@ -135,7 +136,7 @@ static void
 end_sequence_and_wait(vdec_decoder_t *vdd)
 {
   vdd->sequence_done = 0;
-  vdec_end_sequence(vdd->handle);
+  vdecEndSequence(vdd->handle);
   hts_mutex_lock(&vdd->mtx);
   while(vdd->sequence_done == 0)
     hts_cond_wait(&vdd->seqdone, &vdd->mtx);
@@ -263,7 +264,7 @@ picture_out(vdec_decoder_t *vdd)
 {
   int r, lumasize;
   uint32_t addr;
-  vdec_picture_format picfmt;
+  vdecPictureFormat picfmt;
   video_decoder_t *vd = vdd->vd;
   const uint8_t *sar;
   vdec_pic_t *vp;
@@ -274,23 +275,23 @@ picture_out(vdec_decoder_t *vdd)
   picfmt.format_type = VDEC_PICFMT_YUV420P;
   picfmt.color_matrix = VDEC_COLOR_MATRIX_BT709;
 
-  r = vdec_get_pic_item(vdd->handle, &addr);
+  r = vdecGetPicItem(vdd->handle, &addr);
   if(r != 0)
     return;
 
-  vdec_picture *pi = (void *)(intptr_t)addr;
+  vdecPicture *pi = (void *)(intptr_t)addr;
 
   ud.u64 = pi->userdata[0];
 
   if(pi->status != 0 || pi->attr != 0 || ud.s.skip) {
-    vdec_get_picture(vdd->handle, &picfmt, NULL);
+    vdecGetPicture(vdd->handle, &picfmt, NULL);
     reset_active_pictures(vdd);
     vdd->next_picture = -1;
     return;
   }
 
   if(pi->codec_type == VDEC_CODEC_TYPE_MPEG2) {
-    vdec_mpeg2_info *mpeg2 = (void *)(intptr_t)pi->codec_specific_addr;
+    vdecMPEG2Info *mpeg2 = (void *)(intptr_t)pi->codec_specific_addr;
 
     lumasize = mpeg2->width * mpeg2->height;
     vp = alloc_picture(vdd, lumasize);
@@ -327,7 +328,7 @@ picture_out(vdec_decoder_t *vdd)
 	     mpeg2->width, mpeg2->height, vp->fi.interlaced ? 'i' : 'p');
 
   } else {
-    vdec_h264_info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
+    vdecH264Info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
 
     lumasize = h264->width * h264->height;
     vp = alloc_picture(vdd, lumasize);
@@ -369,7 +370,7 @@ picture_out(vdec_decoder_t *vdd)
   vp->fi.color_space = -1;
   vp->fi.color_range = 0;
 
-  vdec_get_picture(vdd->handle, &picfmt, vp->buf);
+  vdecGetPicture(vdd->handle, &picfmt, vp->buf);
 
   if(vp->order == 0) {
     vdd->next_picture = 0;
@@ -557,7 +558,7 @@ h264_to_annexb(uint8_t *b, size_t fsize)
  * Return 0 if ownership of 'data' has been transfered from caller
  */
 static int
-submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
+submit_au(vdec_decoder_t *vdd, vdecAU *au, void *data, size_t len,
 	  int drop_non_ref)
 {
   vdec_au_buffer_t *vab;
@@ -566,9 +567,9 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
   au->packet_size = len;
 
   while(1) {
-    int r = vdec_decode_au(vdd->handle, 
-			   drop_non_ref ? VDEC_DECODER_MODE_SKIP_NON_REF : 
-			   VDEC_DECODER_MODE_NORMAL, au);
+    int r = vdecDecodeAu(vdd->handle, 
+			 drop_non_ref ? VDEC_DECODER_MODE_SKIP_NON_REF : 
+			 VDEC_DECODER_MODE_NORMAL, au);
     
     if(r == 0)
       break;
@@ -606,7 +607,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 	       struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
   vdec_decoder_t *vdd = mc->opaque;
-  struct vdec_au au = {0};
+  vdecAU au = {0};
 
   vdd->vd = vd;
 
@@ -614,7 +615,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
     vdd->metainfo = prop_ref_inc(mq->mq_prop_codec);
 
   if(vd->vd_accelerator_opaque == NULL) {
-    vdec_start_sequence(vdd->handle);
+    vdecStartSequence(vdd->handle);
     video_decoder_set_accelerator(vd, vdec_stop, vdec_blackout, vdd);
     vdd->mc = mc;
     media_codec_ref(mc);
@@ -657,7 +658,7 @@ decoder_close(struct media_codec *mc)
   vdec_decoder_t *vdd = mc->opaque;
   vdec_au_buffer_t *vab;
 
-  vdec_close(vdd->handle);
+  vdecClose(vdd->handle);
   free(vdd->mem);
 
   while((vab = TAILQ_FIRST(&vdd->vab_queue)) != NULL)
@@ -743,8 +744,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
-  struct vdec_type dec_type = {0};
-  struct vdec_attr dec_attr = {0};
+  vdecType dec_type = {0};
+  vdecAttr dec_attr = {0};
   int spu_threads;
   int r;
 
@@ -781,7 +782,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
-  r = vdec_query_attr(&dec_type, &dec_attr);
+  r = vdecQueryAttr(&dec_type, &dec_attr);
   if(r) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to open decoder: 0x%x", r);
     return 1;
@@ -803,11 +804,11 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   vdd->config.spu_thread_prio = VDEC_SPU_PRIO;
   vdd->config.ppu_thread_stack_size = 8192;
 
-  vdec_closure c;
-  c.fn = (intptr_t)OPD32(decoder_callback);
+  vdecClosure c;
+  c.fn = __get_addr32(__get_opd32(decoder_callback));
   c.arg = (intptr_t)vdd;
 
-  r = vdec_open(&dec_type, &vdd->config, &c, &vdd->handle);
+  r = vdecOpen(&dec_type, &vdd->config, &c, &vdd->handle);
   if(r) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to open codec: 0x%x", r);
     free(vdd->mem);

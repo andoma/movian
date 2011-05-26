@@ -17,9 +17,7 @@
  */
 
 #include "config.h"
-#include <sys/ioctl.h>
-#include <netdb.h>
-#include <poll.h>
+//#include <sys/ioctl.h>
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -34,6 +32,9 @@
 #include <arpa/inet.h>
 #include <ifaddrs.h>
 #include <pthread.h>
+
+#include <net/netdb.h>
+#include <net/poll.h>
 
 #include "showtime.h"
 #include "net.h"

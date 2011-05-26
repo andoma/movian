@@ -1,3 +1,4 @@
+#if 0
 /*
  *  GL Widgets, Texture loader
  *  Copyright (C) 2007 Andreas Öman
@@ -26,7 +27,7 @@
 #include "glw_texture.h"
 
 #include "rsx/nv40.h"
-#include "rsx/reality.h"
+#include "rsx/rsx.h"
 
 /**
  * Free texture (always invoked in main rendering thread)
@@ -59,11 +60,11 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 
 
 static void
-init_tex(realityTexture *tex, uint32_t offset,
+init_tex(gcmTexture *tex, uint32_t offset,
 	 uint32_t width, uint32_t height, uint32_t stride,
-	 uint32_t fmt, int repeat, int swizzle)
+	 uint32_t fmt, int repeat, int remap)
 {
-  tex->swizzle = swizzle;
+  tex->remap = remap;
   tex->offset = offset;
 
   tex->format = fmt |
@@ -413,3 +414,4 @@ glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
     tex->size = 0;
   }
 }
+#endif

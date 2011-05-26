@@ -105,7 +105,7 @@ typedef struct glw_video_surface {
 #endif
 
 #if CONFIG_GLW_BACKEND_RSX
-  realityTexture gvs_tex[3];
+  gcmTexture gvs_tex[3];
   int gvs_size[3];
   int gvs_offset[3];   // Position in RSX memory
 #endif

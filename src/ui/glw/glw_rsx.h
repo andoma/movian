@@ -18,8 +18,8 @@
 
 #pragma once
 
-#include <rsx/gcm.h>
-#include <rsx/commands.h>
+#include <rsx/rsx_program.h>
+#include <rsx/gcm_sys.h>
 
 struct glw_rgb;
 struct glw_rctx;
@@ -32,8 +32,8 @@ struct glw_backend_texture;
 /**
  *
  */
-typedef struct rsx_vp {
-  realityVertexProgram *rvp_binary;
+typedef struct {
+  rsxVertexProgram *rvp_binary;
 
   int rvp_u_modelview;
   int rvp_u_color;
@@ -50,8 +50,8 @@ typedef struct rsx_vp {
 /**
  *
  */
-typedef struct rsx_fp {
-  realityFragmentProgram *rfp_binary;
+typedef struct {
+  rsxFragmentProgram *rfp_binary;
 
   int rfp_rsx_location;  // location in RSX memory
 
@@ -71,18 +71,18 @@ typedef struct rsx_fp {
 typedef struct glw_backend_root {
   gcmContextData *be_ctx;
 
-  struct rsx_vp *be_vp_current;
-  struct rsx_fp *be_fp_current;
+  rsx_vp_t *be_vp_current;
+  rsx_fp_t *be_fp_current;
 
   
-  struct rsx_vp *be_vp_1;
-  struct rsx_fp *be_fp_tex;
-  struct rsx_fp *be_fp_flat;
-  struct rsx_fp *be_fp_tex_blur;
+  rsx_vp_t *be_vp_1;
+  rsx_fp_t *be_fp_tex;
+  rsx_fp_t *be_fp_flat;
+  rsx_fp_t *be_fp_tex_blur;
 
-  struct rsx_vp *be_vp_yuv2rgb;
-  struct rsx_fp *be_fp_yuv2rgb_1f;
-  struct rsx_fp *be_fp_yuv2rgb_2f;
+  rsx_vp_t *be_vp_yuv2rgb;
+  rsx_fp_t *be_fp_yuv2rgb_1f;
+  rsx_fp_t *be_fp_yuv2rgb_2f;
 
 
   struct extent_pool *be_mempool;
@@ -98,7 +98,7 @@ typedef struct glw_backend_root {
  *
  */
 typedef struct glw_backend_texture {
-  realityTexture tex;
+  gcmTexture tex;
   uint32_t size;
   char type;
 #define GLW_TEXTURE_TYPE_NORMAL   0

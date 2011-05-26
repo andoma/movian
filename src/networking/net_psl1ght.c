@@ -17,7 +17,6 @@
  */
 
 #include "config.h"
-#include <netdb.h>
 #include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -29,6 +28,7 @@
 #include <arpa/inet.h>
 #include <net/net.h>
 #include <net/netctl.h>
+#include <net/netdb.h>
 #include <errno.h>
 
 #include "showtime.h"

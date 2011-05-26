@@ -26,8 +26,9 @@
 #include <net/net.h>
 #include <net/netctl.h>
 
-#include <psl1ght/lv2.h>
-#include <psl1ght/lv2/spu.h>
+#include <ppu-lv2.h>
+#include <sys/spu.h>
+#include <sys/thread.h>
 
 #include "threads.h"
 #include "atomic.h"
@@ -71,7 +72,7 @@ memlogger_fn(callout_t *co, void *aux)
     uint32_t avail;
   } meminfo;
 
-  Lv2Syscall1(352, (uint64_t) &meminfo);
+  lv2syscall1(352, (uint64_t) &meminfo);
 
   prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
   prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
@@ -97,7 +98,7 @@ arch_init(void)
 
 #if ENABLE_PS3_VDEC
   TRACE(TRACE_DEBUG, "SPU", "Initializing SPUs");
-  lv2SpuInitialize(6, 0);
+  sysSpuInitialize(6, 0);
   video_ps3_vdec_init();
 #endif
 
@@ -120,17 +121,16 @@ typedef struct {
 
 
 
-static void *
+static void
 thread_trampoline(void *aux)
 {
   thread_aux_t *ta = aux;
-  void *r = ta->fn(ta->aux);
+  ta->fn(ta->aux);
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
   free(ta);
-  sys_ppu_thread_exit(0);
-  return r;
+  sysThreadExit(0);
 }
 
 
@@ -142,8 +142,8 @@ start_thread(const char *name, hts_thread_t *p,
   thread_aux_t *ta = malloc(sizeof(thread_aux_t));
   ta->fn = fn;
   ta->aux = aux;
-  s32 r = sys_ppu_thread_create(p, (void *)thread_trampoline, (intptr_t)ta,
-				prio, 65536, flags, (char *)name);
+  s32 r = sysThreadCreate(p, thread_trampoline, ta,
+			  prio, 65536, flags, (char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
     exit(0);
@@ -178,7 +178,7 @@ hts_thread_t
 hts_thread_current(void)
 {
   hts_thread_t t;
-  sys_ppu_thread_get_id(&t);
+  sysThreadGetId(&t);
   return t;
 }
 
@@ -292,7 +292,7 @@ arch_set_default_paths(int argc, char **argv)
   netCtlInit();
 
   
-  ticks_per_us = Lv2Syscall0(147) / 1000000;
+  ticks_per_us = lv2syscall0(147) / 1000000;
   my_trace("Ticks per µs = %ld\n", ticks_per_us);
 
 
@@ -325,17 +325,17 @@ arch_cache_avail_bytes(void)
 void
 hts_mutex_init(hts_mutex_t *m)
 {
-  sys_mutex_attribute_t attr;
+  sys_mutex_attr_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
-  attr.attr_recursive = MUTEX_NOT_RECURSIVE;
-  attr.attr_pshared  = 0x00200;
-  attr.attr_adaptive = 0x02000;
+  attr.attr_protocol = SYS_MUTEX_PROTOCOL_FIFO;
+  attr.attr_recursive = SYS_MUTEX_ATTR_NOT_RECURSIVE;
+  attr.attr_pshared  = 0x00200;// XXX ?? 
+  attr.attr_adaptive = SYS_MUTEX_ATTR_NOT_ADAPTIVE;
 
   strcpy(attr.name, "mutex");
 
-  if((r = sys_mutex_create(m, &attr)) != 0) {
+  if((r = sysMutexCreate(m, &attr)) != 0) {
     my_trace("Failed to create mutex: error: 0x%x", r);
     exit(0);
   }
@@ -397,12 +397,12 @@ hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line)
 void
 hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 {
-  sys_cond_attribute_t attr;
+  sys_cond_attr_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
   attr.attr_pshared = 0x00200;
   strcpy(attr.name, "cond");
-  if((r = sys_cond_create(c, *m, &attr) != 0)) {
+  if((r = sysCondCreate(c, *m, &attr) != 0)) {
     my_trace("Failed to create cond: error: 0x%x", r);
     exit(0);
   }
@@ -413,7 +413,7 @@ hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 int
 hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay)
 {
-  return !!sys_cond_wait(*c, delay * 1000LL);
+  return !!sysCondWait(*c, delay * 1000LL);
 }
 
 
