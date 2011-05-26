@@ -80,7 +80,7 @@ url_deescape(char *s)
   *d = 0;
 }
 
-static const char hexchars[16] = "0123456789abcdef";
+static const char hexchars[16] = "0123456789ABCDEF";
 
 static const char url_escape_tbl1[256] = {
   0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x00
