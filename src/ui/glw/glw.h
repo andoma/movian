@@ -1071,15 +1071,9 @@ void glw_unref(glw_t *w);
 
 int glw_get_text(glw_t *w, char *buf, size_t buflen);
 
-int glw_get_int(glw_t *w, int *result);
-
 glw_t *glw_get_prev_n(glw_t *c, int count);
 
 glw_t *glw_get_next_n(glw_t *c, int count);
-
-glw_t *glw_get_prev_n_all(glw_t *c, int count);
-
-glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, struct event *e);
 

@@ -237,33 +237,33 @@ PKGS=""
 #
 # libavformat
 #
-if pkg-config --atleast-version 52.64.0 libavformat; then
+if pkg-config --atleast-version 53.0.0 libavformat; then
     PKGS+="libavformat "
     echo "Using libavformat:     `pkg-config --modversion libavformat`"
 else
-    echo "libavformat 52.64.0 or newer not found."
+    echo "libavformat 53.0.0 or newer not found."
     die
 fi
 
 #
 # libavcodec
 #
-if pkg-config --atleast-version 52.72.2 libavcodec; then
+if pkg-config --atleast-version 53.0.0 libavcodec; then
     PKGS+="libavcodec "
     echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
 else
-    echo "libavcodec 52.72.2 or newer not found."
+    echo "libavcodec 53.0.0 or newer not found."
     die
 fi
 
 #
 # libavutil
 #
-if pkg-config --atleast-version 50.15.0 libavutil; then
+if pkg-config --atleast-version 51.0.0 libavutil; then
     PKGS+="libavutil "
     echo "Using libavutil:       `pkg-config --modversion libavutil`"
 else
-    echo "libavutil 50.15.0 or newer not found."
+    echo "libavutil 51.0.0 or newer not found."
     die
 fi
 

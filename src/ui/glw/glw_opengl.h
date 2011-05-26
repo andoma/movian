@@ -103,7 +103,6 @@ typedef struct glw_backend_root {
   PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
   PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
 #endif
-  int gbr_enable_vdpau;
 
   struct glw_program *gbr_renderer_tex;
   struct glw_program *gbr_renderer_tex_blur;

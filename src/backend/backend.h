@@ -37,23 +37,10 @@ typedef enum {
 } backend_probe_result_t;
 
 
-LIST_HEAD(play_video_subtitle_list, play_video_subtitle);
-
-/**
- *
- */
-typedef struct play_video_subtitle {
-  LIST_ENTRY(play_video_subtitle) pvs_link;
-  char *pvs_url;
-  char *pvs_language;
-} play_video_subtitle_t;
-
-
-
 #define BACKEND_VIDEO_PRIMARY     0x1
 #define BACKEND_VIDEO_NO_AUDIO    0x2
 #define BACKEND_VIDEO_NO_AUTOSTOP 0x4
-
+#define BACKEND_VIDEO_NO_FS_SCAN  0x8 // Don't scan FS for subtitles
 /**
  *
  */
@@ -75,11 +62,12 @@ typedef struct backend {
   struct event *(*be_play_video)(const char *url,
 				 struct media_pipe *mp,
 				 int flags, int priority,
-				 struct play_video_subtitle_list *subtitles,
-				 char *errbuf, size_t errlen);
+				 char *errbuf, size_t errlen,
+				 const char *mimetype);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
-				 char *errbuf, size_t errlen, int paused);
+				 char *errbuf, size_t errlen, int paused,
+				 const char *mimetype);
 
   struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
 				   const char **vpaths,
@@ -109,13 +97,14 @@ int backend_open(struct prop *page, const char *url)
 
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
 				 int flags, int priority,
-				 struct play_video_subtitle_list *subtitles,
-				 char *errbuf, size_t errlen)
+				 char *errbuf, size_t errlen,
+				 const char *mimetype)
   __attribute__ ((warn_unused_result));
 
 
 struct event *backend_play_audio(const char *url, struct media_pipe *mp,
-				 char *errbuf, size_t errlen, int paused)
+				 char *errbuf, size_t errlen, int paused,
+				 const char *mimetype)
   __attribute__ ((warn_unused_result));
 
 

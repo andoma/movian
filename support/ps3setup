@@ -31,7 +31,6 @@ if [ ! -e ${FFMPEG}/include/libavcodec/avcodec.h ] || [[ $# == 1 && $1 == -u ]] 
         --disable-devices \
         --disable-protocols \
         --disable-network \
-        --disable-stripping \
         --disable-shared \
         --enable-static \
         --prefix=${PS3SUPPORT}/ffmpeg \

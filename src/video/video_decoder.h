@@ -28,12 +28,13 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
 #include <dvdnav/dvdnav.h>
 #endif
 
-TAILQ_HEAD(subtitle_queue, subtitle);
+TAILQ_HEAD(video_overlay_queue, video_overlay);
 
 
 struct AVCodecContext;
 struct AVFrame;
 struct video_decoder;
+struct pixmap;
 
 typedef struct frame_info {
   int width;
@@ -43,7 +44,7 @@ typedef struct frame_info {
   int epoch;
   int duration;
 
-  float dar;
+  AVRational dar;
 
   char interlaced;     // Frame delivered is interlaced 
   char tff;            // For interlaced frame, top-field-first
@@ -135,13 +136,15 @@ typedef struct video_decoder {
   int vd_spu_in_menu;
 
   /**
-   * Subtitling
+   * Video overlay and subtitles
    */
-  struct subtitle_queue vd_sub_queue;
-  hts_mutex_t vd_sub_mutex;
+  struct video_overlay_queue vd_overlay_queue;
+  hts_mutex_t vd_overlay_mutex;
+
+  struct ext_subtitles *vd_ext_subtitles;
 
   /**
-   *
+   * Bitrate computation
    */
 #define VD_FRAME_SIZE_LEN 16
 #define VD_FRAME_SIZE_MASK (VD_FRAME_SIZE_LEN - 1)
@@ -176,6 +179,8 @@ void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),
 				   void (*blackoutfn)(void *opaque),
 				   void *opaque);
+
+void video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts);
 
 
 /**
@@ -219,40 +224,6 @@ void dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb,
 int dvdspu_decode(dvdspu_t *d, int64_t pts);
 
 #endif
-
-
-typedef struct subtitle_rect {
-  int x,y,w,h;
-  char *bitmap;
-} subtitle_rect_t;
-
-/**
- * Subtitling
- */
-typedef struct subtitle {
-
-  TAILQ_ENTRY(subtitle) s_link;
-
-  int s_active;
-
-  int64_t s_start;
-  int64_t s_stop;
-
-  char *s_text;
-
-  int s_num_rects;
-  subtitle_rect_t s_rects[0];
-
-} subtitle_t;
-
-void video_subtitle_destroy(video_decoder_t *vd, subtitle_t *s);
-
-void video_subtitles_init(video_decoder_t *vd);
-
-void video_subtitles_deinit(video_decoder_t *vd);
-
-void video_subtitles_decode(video_decoder_t *vd, media_buf_t *mb);
-
 
 #endif /* VIDEO_DECODER_H */
 

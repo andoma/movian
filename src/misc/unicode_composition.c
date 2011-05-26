@@ -20,7 +20,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
-#include "glw_unicode.h"
+#include "unicode_composition.h"
 
 struct kv {
   uint16_t c1, c2, d;
@@ -1014,7 +1014,7 @@ cmp(const void *m1, const void *m2)
 }
 
 int
-glw_unicode_compose(int a, int b)
+unicode_compose(int a, int b)
 {
   struct kv key, *r;
   key.c1 = a;

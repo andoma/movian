@@ -45,7 +45,7 @@ updatestr(glw_keyintercept_t *ki)
   int i;
 
   q = str;
-  for(i = 0; i < ki->buflen - 6; i++)
+  for(i = 0; i < ki->buflen; i++)
     q += utf8_put(q, ki->buf[i]);
   *q = 0;
 

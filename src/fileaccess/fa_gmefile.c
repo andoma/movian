@@ -36,6 +36,7 @@
 #include "fileaccess.h"
 #include "fa_proto.h"
 #include "fa_audio.h"
+#include "fa_libav.h"
 #include "misc/string.h"
 #include "media.h"
 
@@ -45,39 +46,29 @@
 static int
 gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  void *fh = NULL;
+  fa_stat_t fs;
   char *p, *fpath = mystrdupa(url);
   char name[32];
   char turl[URL_MAX];
-  int tracks, i, size;
+  int tracks, i;
   fa_dir_entry_t *fde;
   const char *title;
   char *buf;
   Music_Emu *emu;
   gme_info_t *info;
   gme_err_t err;
-  size_t r;
+
   if((p = strrchr(fpath, '/')) == NULL) {
     snprintf(errbuf, errlen, "Invalid filename");
     return -1;
   }
 
   *p = 0;
-  if((fh = fa_open(fpath, errbuf, errlen)) == NULL)
+
+  if((buf = fa_quickload(fpath, &fs, NULL, errbuf, errlen)) == NULL)
     return -1;
 
-  size = fa_fsize(fh);
-
-  buf = malloc(size);
-  r = fa_read(fh, buf, size);
-  fa_close(fh);
-  if(r != size) {
-    snprintf(errbuf, errlen, "Unable to read file");
-    free(buf);
-    return -1;
-  }
-
-  err = gme_open_data(buf, size, &emu, gme_info_only);
+  err = gme_open_data(buf, fs.fs_size, &emu, gme_info_only);
   free(buf);
   if(err != NULL)
     return 0;
@@ -192,32 +183,18 @@ deltaseek(media_pipe_t *mp, media_buf_t **mbp, Music_Emu *emu, int delta)
  *
  */
 static event_t *
-fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
+fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
 			 char *errbuf, size_t errlen, int hold, int track)
 {
   media_queue_t *mq = &mp->mp_audio;
   Music_Emu *emu;
   gme_err_t err;
-  char *buf;
   int lost_focus = 0;
-  size_t size, r;
   int sample_rate = 48000;
   media_buf_t *mb = NULL;
   event_t *e;
 
-  size = fa_fsize(fh);
-
-  buf = malloc(size);
-  r = fa_read(fh, buf, size);
-
-  if(r != size) {
-    snprintf(errbuf, errlen, "Unable to read file");
-    free(buf);
-    return NULL;
-  }
-
   err = gme_open_data(buf, size, &emu, sample_rate);
-  free(buf);
   if(err != NULL) {
     snprintf(errbuf, errlen, "Unable to load file -- %s", err);
     return NULL;
@@ -227,7 +204,8 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_SEEK);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_SEEK,
+	       MP_BUFFER_SHALLOW);
   mp_become_primary(mp);
   
 
@@ -339,11 +317,21 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *fh,
  *
  */
 event_t *
-fa_gme_playfile(media_pipe_t *mp, void *fh,
+fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
 		char *errbuf, size_t errlen, int hold)
 {
-  return fa_gme_playfile_internal(mp, fh, errbuf, errlen, hold, 0);
+  uint8_t *mem;
+  size_t size;
+  event_t *e;
 
+  if((mem = fa_libav_load_and_close(avio, &size)) == NULL) {
+    snprintf(errbuf, errlen, "Unable to read data from file");
+    return NULL;
+  }
+
+  e = fa_gme_playfile_internal(mp, mem, size, errbuf, errlen, hold, 0);
+  free(mem);
+  return e;
 }
 
 /**
@@ -351,12 +339,14 @@ fa_gme_playfile(media_pipe_t *mp, void *fh,
  */
 static event_t *
 be_gmeplayer_play(const char *url0, media_pipe_t *mp, 
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold,
+		  const char *mimetype)
 {
   event_t *e;
   char *url, *p;
   int track;
-  void *fh;
+  void *mem;
+  struct fa_stat fs;
 
   url0 += strlen("gmeplayer:");
 
@@ -370,13 +360,13 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   track = atoi(p) - 1;
 
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+  if((mem = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
     return NULL;
 
-  e = fa_gme_playfile_internal(mp, fh, errbuf, errlen, hold, track);
-  fa_close(fh);
+  e = fa_gme_playfile_internal(mp, mem, fs.fs_size,
+			       errbuf, errlen, hold, track);
+  free(mem);
   return e;
-
 }
 
 

@@ -24,7 +24,7 @@
   var PREFIX = "headweb:"
 
   plugin.service =
-    showtime.createService("Headweb", PREFIX + "genres", "video", false,
+    showtime.createService("Headweb", PREFIX + "start", "video", false,
 			   plugin.config.path + "headweb_square.png");
   
   plugin.settings = plugin.createSettings("Headweb", "video");
@@ -82,14 +82,20 @@
       return false;
 
     var reason = "Login required";
+    var do_query = false;
 
     while(1) {
 
       var credentials = showtime.getAuthCredentials("headweb:",
-	"Headweb streaming service", reason, query);
+	"Headweb streaming service", reason, do_query);
     
-      if(!credentials)
+      if(!credentials) {
+	if(query && !do_query) {
+	  do_query = true;
+	  continue;
+	}
 	return "No credentials";
+      }
 
       if(credentials.rejected)
 	return "Rejected by user";
@@ -107,6 +113,7 @@
 	reason = doc.error;
 	continue;
       }
+      showtime.trace('Logged in to Headweb as user: ' + credentials.username);
       plugin.loggedIn = true;
       return false;
     }
@@ -269,7 +276,7 @@
   plugin.addURI(PREFIX + "genre:([0-9]*):(.*)", function(page, id, name) {
     page.metadata.title = name;
     page.metadata.logo = plugin.config.path + "headweb_square.png";
-    requestContents(page, "/genre/" + id);
+    requestContents(page, "/genre/" + id + "/filter(-adult,stream)");
   });
 
 
@@ -357,6 +364,37 @@
     }
   });
 
+  // Start page
+  plugin.addURI(PREFIX + "start", function(page) {
+
+    page.appendItem("headweb:watchlist", "directory", {
+      title: "My watchlist",
+      subtype: "favourites"
+    });
+
+    page.appendItem("headweb:genres", "directory", {
+      title: "Genres",
+      subtype: "genres"
+    });
+
+    page.type = "directory";
+    page.contents = "items";
+    page.loading = false;
+    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    page.metadata.title = "Headweb";
+  });
+
+  // Watchlist
+  plugin.addURI(PREFIX + "watchlist", function(page) {
+    var v = login(true);
+    if(v) {
+      page.error(v);
+      return;
+    }
+    page.metadata.title = "My watchlist";
+    page.metadata.logo = plugin.config.path + "headweb_square.png";
+    requestContents(page, "/user/watchlist");
+  });
 
 
 

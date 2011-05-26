@@ -42,8 +42,8 @@ TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
 /**
  *
  */
-struct fa_stat {
-  uint64_t fs_size;
+typedef struct fa_stat {
+  int64_t fs_size; // -1 if unknown (a pipe)
 
   int fs_type; /* CONTENT_ .. types from showtime.h */
 
@@ -51,7 +51,7 @@ struct fa_stat {
 
   int fs_cache_age;
 
-  uint8_t fs_tag[20];
+  uint8_t fs_mimetype[32];
   
 } fa_stat_t;
 
@@ -102,11 +102,17 @@ LIST_HEAD(fa_protocol_list, fa_protocol);
 extern struct fa_protocol_list fileaccess_all_protocols;
 
 
+#define FA_DEBUG 0x1
+// #define FA_DUMP  0x2
+
 /**
  *
  */
 typedef struct fa_handle {
   const struct fa_protocol *fh_proto;
+#ifdef FA_DUMP
+  int fh_dump_fd;
+#endif
 } fa_handle_t;
 
 
@@ -121,7 +127,8 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
-void *fa_open(const char *url, char *errbuf, size_t errsize);
+
+void *fa_open(const char *url, char *errbuf, size_t errsize, int flags);
 void *fa_open_vpaths(const char *url, const char **vpaths);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
@@ -133,8 +140,8 @@ int fa_findfile(const char *path, const char *file,
 
 int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 
-void *fa_reference(const char *url);
-void fa_unreference(void *fh);
+fa_handle_t *fa_reference(const char *url);
+void fa_unreference(fa_handle_t *fh);
 
 int fa_notify(const char *url, void *opaque,
 	      void (*change)(void *opaque,
@@ -144,7 +151,7 @@ int fa_notify(const char *url, void *opaque,
 			     int type),
 	      int (*breakcheck)(void *opaque));
 
-const char *fa_ffmpeg_error_to_txt(int err);
+void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
 void fa_scanner(const char *url, prop_t *model, const char *playme);
 
@@ -161,7 +168,6 @@ int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
 
-#define HTTP_REQUEST_ESCAPE_PATH 0x1
 #define HTTP_REQUEST_DEBUG 0x2
 
 int http_request(const char *url, const char **arguments, 
@@ -170,10 +176,6 @@ int http_request(const char *url, const char **arguments,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
 		 struct http_header_list *headers_in, const char *method);
-
-#include <libavformat/avio.h>
-
-int fa_lavf_reopen(ByteIOContext **p, fa_handle_t *fa);
 
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 

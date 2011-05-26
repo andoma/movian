@@ -147,7 +147,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_create(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 7
+#define SPOTIFY_API_VERSION 8
 
 /**
  * Describes the current state of the connection
@@ -182,6 +182,7 @@ typedef struct sp_audioformat {
 typedef enum sp_bitrate {
   SP_BITRATE_160k = 0,
   SP_BITRATE_320k = 1,
+  SP_BITRATE_96k = 2,
 } sp_bitrate;
 
 /**
@@ -193,6 +194,16 @@ typedef enum sp_playlist_type {
 	SP_PLAYLIST_TYPE_END_FOLDER   = 2, ///< and ending point.
 	SP_PLAYLIST_TYPE_PLACEHOLDER  = 3, ///< Unknown entry.
 } sp_playlist_type;
+
+/*
+ * Playlist offline status
+ */
+typedef enum sp_playlist_offline_status {
+	SP_PLAYLIST_OFFLINE_STATUS_NO          = 0, ///< Playlist is not offline enabled
+	SP_PLAYLIST_OFFLINE_STATUS_YES         = 1, ///< Playlist is synchronized to local storage
+	SP_PLAYLIST_OFFLINE_STATUS_DOWNLOADING = 2, ///< This playlist is currently downloading. Only one playlist can be in this state any given time
+	SP_PLAYLIST_OFFLINE_STATUS_WAITING     = 3, ///< Playlist is queued for download
+} sp_playlist_offline_status;
 
 /**
  * Buffer stats used by get_audio_buffer_stats callback
@@ -209,6 +220,79 @@ typedef struct sp_subscribers {
 	unsigned int count;
 	char *subscribers[1];  ///< Actual size is 'count'. Array of pointers to canonical usernames
 } sp_subscribers;
+
+
+/**
+ * Current connection type set using sp_session_set_connection_type()
+ */
+typedef enum sp_connection_type {
+	SP_CONNECTION_TYPE_UNKNOWN        = 0, ///< Connection type unknown (Default)
+	SP_CONNECTION_TYPE_NONE           = 1, ///< No connection
+	SP_CONNECTION_TYPE_MOBILE         = 2, ///< Mobile data (EDGE, 3G, etc)
+	SP_CONNECTION_TYPE_MOBILE_ROAMING = 3, ///< Roamed mobile data (EDGE, 3G, etc)
+	SP_CONNECTION_TYPE_WIFI           = 4, ///< Wireless connection
+	SP_CONNECTION_TYPE_WIRED          = 5, ///< Ethernet cable, etc
+} sp_connection_type;
+
+
+/**
+ * Connection rules, bitwise OR of flags
+ *
+ * The default is SP_CONNECTION_RULE_NETWORK | SP_CONNECTION_RULE_ALLOW_SYNC
+ */
+typedef enum sp_connection_rules {
+	SP_CONNECTION_RULE_NETWORK                = 0x1, ///< Allow network traffic. When not set libspotify will force itself into offline mode
+	SP_CONNECTION_RULE_NETWORK_IF_ROAMING     = 0x2, ///< Allow network traffic even if roaming
+	SP_CONNECTION_RULE_ALLOW_SYNC_OVER_MOBILE = 0x4, ///< Set to allow syncing of offline content over mobile connections
+	SP_CONNECTION_RULE_ALLOW_SYNC_OVER_WIFI   = 0x8, ///< Set to allow syncing of offline content over WiFi
+} sp_connection_rules;
+
+
+/**
+ * Offline sync status
+ */
+typedef struct sp_offline_sync_status {
+	/**
+	 * Queued tracks/bytes is things left to sync in current sync
+	 * operation
+	 */
+	int queued_tracks;
+	sp_uint64 queued_bytes;
+	
+	/**
+	 * Done tracks/bytes is things marked for sync that existed on
+	 * device before current sync operation
+	 */
+	int done_tracks;
+	sp_uint64 done_bytes;
+	
+	/**
+	 * Copied tracks/bytes is things that has been copied in
+	 * current sync operation
+	 */
+	int copied_tracks;
+	sp_uint64 copied_bytes;
+
+	/**
+	 * Tracks that are marked as synced but will not be copied
+	 * (for various reasons)
+	 */
+	int willnotcopy_tracks;
+
+	/**
+	 * A track is counted as error when something goes wrong while
+	 * syncing the track
+	 */
+	int error_tracks;
+
+	/**
+	 * Set if sync operation is in progress
+	 */
+	bool syncing;
+
+} sp_offline_sync_status;
+
+
 
 
 /**
@@ -404,6 +488,13 @@ typedef struct sp_session_callbacks {
 	 */
 	void (SP_CALLCONV *get_audio_buffer_stats)(sp_session *session, sp_audio_buffer_stats *stats);
 
+	/**
+	 * Called when offline synchronization status is updated
+	 *
+	 * @param[in]  session    Session
+	 */
+	void (SP_CALLCONV *offline_status_updated)(sp_session *session);
+
 } sp_session_callbacks;
 
 /**
@@ -420,7 +511,10 @@ typedef struct sp_session_config {
 						*/
 	const void *application_key;           ///< Your application key
 	size_t application_key_size;           ///< The size of the application key in bytes
-	const char *user_agent;                ///< "User-Agent" for your application - max 255 characters long
+	const char *user_agent;                /**< "User-Agent" for your application - max 255 characters long
+						     The User-Agent should be a relevant, customer facing identification of your application
+					       */
+
 	const sp_session_callbacks *callbacks; ///< Delivery callbacks for session events, or NULL if you are not interested in any callbacks (not recommended!)
 	void *userdata;                        ///< User supplied data for your application
 
@@ -649,7 +743,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_create(sp_session *session);
  * @note You need to release the playlist when you are done with it.
  * @see sp_playlist_release()
  */
-SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *session, const char *username);
+SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *session, const char *canonical_username);
 
 /**
  * Return the published container for a given @a canonical_username,
@@ -659,7 +753,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *sessi
  * decrese the reference you own by having created it.
  *
  * @param[in]   session    Your session object.
- * @param[in]   username   The canonical username, or NULL.
+ * @param[in]   canonical_username   The canonical username, or NULL.
  *
  * @return Playlist container object, NULL if not logged in or not found.
  */
@@ -674,6 +768,18 @@ SP_LIBEXPORT(sp_playlistcontainer *) sp_session_publishedcontainer_for_user_crea
  *
  */
 SP_LIBEXPORT(void) sp_session_preferred_bitrate(sp_session *session, sp_bitrate bitrate);
+
+
+/**
+ * Set preferred bitrate for offline sync
+ *
+ * @param[in]  session        Session object
+ * @param[in]  bitrate        Preferred bitrate, see ::sp_bitrate for possible values
+ * @param[in]  allow_resync   Set to true if libspotify should resynchronize already synchronized tracks. Usually you should set this to false.
+ *
+ */
+SP_LIBEXPORT(void) sp_session_preferred_offline_bitrate(sp_session *session, sp_bitrate bitrate, bool allow_resync);
+
 
 /**
  * Return number of friends in the currently logged in users friends list.
@@ -695,6 +801,75 @@ SP_LIBEXPORT(int) sp_session_num_friends(sp_session *session);
  * @return     A user. The object is owned by the session so the caller should not release it.
  */
 SP_LIBEXPORT(sp_user *) sp_session_friend(sp_session *session, int index);
+
+
+/**
+ * Set to true if the connection is currently routed over a roamed connectivity
+ *
+ * @param[in]  session        Session object
+ * @param[in]  type           Connection type
+ *
+ * @note       Used in conjunction with sp_session_set_connection_rules() to control
+ *             how libspotify should behave in respect to network activity and offline
+ *             synchronization.
+ */
+SP_LIBEXPORT(void) sp_session_set_connection_type(sp_session *session, sp_connection_type type);
+
+
+/**
+ * Set rules for how libspotify connects to Spotify servers and synchronizes offline content
+ *
+ * @param[in]  session        Session object
+ * @param[in]  rules          Connection rules
+ *
+ * @note       Used in conjunction with sp_session_set_connection_type() to control
+ *             how libspotify should behave in respect to network activity and offline
+ *             synchronization.
+ */
+SP_LIBEXPORT(void) sp_session_set_connection_rules(sp_session *session, sp_connection_rules rules);
+
+
+
+/**
+ * Get total number of tracks that needs download before everything
+ * from all playlists that is marked for offline is fully synchronized
+ *
+ * @param[in]  session        Session object
+ *
+ * @return Number of tracks
+ */
+SP_LIBEXPORT(int) sp_offline_tracks_to_sync(sp_session *session);
+
+/**
+ * Return number of playlisys that is marked for offline synchronization
+ *
+ * @param[in]  session        Session object
+ *
+ * @return Number of playlists
+ */
+SP_LIBEXPORT(int) sp_offline_num_playlists(sp_session *session);
+
+/**
+ * Return offline synchronization status. When the internal status is
+ * updated the offline_status_updated() callback will be invoked.
+ *
+ * @param[in]  session        Session object
+ * @param[out] status         Status object that will be filled with info
+ *
+ */
+SP_LIBEXPORT(void) sp_offline_sync_get_status(sp_session *session, sp_offline_sync_status *status);
+
+/**
+ * Get currently logged in users country
+ * updated the offline_status_updated() callback will be invoked.
+ *
+ * @param[in]  session        Session object
+ *
+ * @return  Country encoded in an integer 'SE' = 'S' << 8 | 'E'
+ */
+SP_LIBEXPORT(int) sp_session_user_country(sp_session *session);
+
+
 
 /** @} */
 
@@ -720,6 +895,7 @@ typedef enum {
 	SP_LINKTYPE_PROFILE  = 6, ///< Link type is profile
 	SP_LINKTYPE_STARRED  = 7, ///< Link type is starred
 	SP_LINKTYPE_LOCALTRACK  = 8, ///< Link type is a local file	
+	SP_LINKTYPE_IMAGE = 9, ///< Link type is an image
 } sp_linktype;
 
 /**
@@ -762,6 +938,18 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_track(sp_track *track, int offset);
 SP_LIBEXPORT(sp_link *) sp_link_create_from_album(sp_album *album);
 
 /**
+ * Create an image link object from an album
+ *
+ * @param[in]   album      An album object
+ *
+ * @return                 A link representing the album cover. Type is set to SP_LINKTYPE_IMAGE
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_album_cover(sp_album *album);
+
+/**
  * Creates a link object from an artist
  *
  * @param[in]   artist     An artist object
@@ -772,6 +960,20 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_album(sp_album *album);
  * @see sp_link_release()
  */
 SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
+
+/**
+ * Creates a link object from an artist portrait
+ *
+ * @param[in]   arb        Artist browse object
+ * @param[in]   index      The index of the portrait. Should be in the interval [0, sp_artistbrowse_num_portraits() - 1]
+ *
+ * @return                 A link object representing an image
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ * @see sp_artistbrowse_num_portraits()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artistbrowse *arb, int index);
 
 /**
  * Generate a link object representing the current search
@@ -813,6 +1015,18 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_playlist(sp_playlist *playlist);
  * @see sp_link_release()
  */
 SP_LIBEXPORT(sp_link *) sp_link_create_from_user(sp_user *user);
+
+/**
+ * Create a link object representing the given image
+ *
+ * @param[in]  image          Image object
+ *
+ * @return                    A link representing the image.
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_image(sp_image *image);
 
 /**
  * Create a string representation of the given Spotify link
@@ -1093,7 +1307,7 @@ SP_LIBEXPORT(int) sp_track_index(sp_track *track);
  * @param[in]   artist     Name of the artist
  * @param[in]   title      Song title
  * @param[in]   album      Name of the album, or an empty string if not available
- * @param[in]   title      Length in MS, or -1 if not available.
+ * @param[in]   length      Length in MS, or -1 if not available.
  *
  * @return                 A track.
  */
@@ -1634,6 +1848,19 @@ typedef void SP_CALLCONV image_loaded_cb(sp_image *image, void *userdata);
  * @see sp_artistbrowse_portrait
  */
 SP_LIBEXPORT(sp_image *) sp_image_create(sp_session *session, const byte image_id[20]);
+
+/**
+ * Create an image object from a link
+ *
+ * @param[in]  session    Session
+ * @param[in]  l          Spotify link object. This must be of SP_LINKTYPE_IMAGE type
+ *
+ * @return                Pointer to an image object. To free the object, use
+ *                        sp_image_release()
+ *
+ * @see sp_image_create
+ */
+SP_LIBEXPORT(sp_image *) sp_image_create_from_link(sp_session *session, sp_link *l);
 
 /**
  * Add a callback that will be invoked when the image is loaded
@@ -2478,6 +2705,41 @@ SP_LIBEXPORT(void) sp_playlist_set_in_ram(sp_session *session, sp_playlist *play
 SP_LIBEXPORT(sp_playlist *) sp_playlist_create(sp_session *session, sp_link *link);
 
 /**
+ * Mark a playlist to be synchronized for offline playback
+ *
+ * @param[in]  session        Session object
+ * @param[in]  playlist       Playlist object
+ * @param[in]  offline        True iff playlist should be offline, false otherwise
+ */
+SP_LIBEXPORT(void) sp_playlist_set_offline_mode(sp_session *session, sp_playlist *playlist, bool offline);
+
+/**
+ * Get offline status for a playlist
+ *
+ * @param[in]  session        Session object
+ * @param[in]  playlist       Playlist object
+ *
+ * @return sp_playlist_offline_status
+ *
+ * @see When in SP_PLAYLIST_OFFLINE_STATUS_DOWNLOADING mode the
+ *      sp_playlist_get_offline_download_completed() method can be used to query
+ *      progress of the download
+ */
+SP_LIBEXPORT(sp_playlist_offline_status) sp_playlist_get_offline_status(sp_session *session, sp_playlist *playlist);
+
+/**
+ * Get download progress for an offline playlist
+ *
+ * @param[in]  session        Session object
+ * @param[in]  playlist       Playlist object
+ *
+ * @return Value from 0 - 100 that indicates amount of playlist that is downloaded
+ *
+ * @see sp_playlist_offline_status()
+ */
+SP_LIBEXPORT(int) sp_playlist_get_offline_download_completed(sp_session *session, sp_playlist *playlist);
+
+/**
  * Increase the reference count of a playlist
  *
  * @param[in]   playlist       The playlist object
@@ -2550,6 +2812,11 @@ typedef struct sp_playlistcontainer_callbacks {
  * @param[in]  callbacks Callbacks, see sp_playlistcontainer_callbacks
  * @param[in]  userdata  Opaque value passed to callbacks.
  *
+ * @note Every sp_playlistcontainer_add_callbacks() needs to be paried with a corresponding
+ *       sp_playlistcontainer_remove_callbacks() that is invoked before releasing the
+ *       last reference you own for the container. In other words, you must make sure
+ *       to have removed all the callbacks before the container gets destroyed.
+ *
  * @sa sp_session_playlistcontainer()
  * @sa sp_playlistcontainer_remove_callbacks
  */
@@ -2578,6 +2845,17 @@ SP_LIBEXPORT(void) sp_playlistcontainer_remove_callbacks(sp_playlistcontainer *p
  * @sa sp_session_playlistcontainer()
  */
 SP_LIBEXPORT(int) sp_playlistcontainer_num_playlists(sp_playlistcontainer *pc);
+
+/**
+ * Return true if the playlistcontainer is fully loaded
+ *
+ * @param[in]  pc        Playlist container
+ *
+ * @return               True if container is loaded
+ *
+ * @note The container_loaded callback will be invoked when this flips to true
+ */
+SP_LIBEXPORT(bool) sp_playlistcontainer_is_loaded(sp_playlistcontainer *pc);
 
 /**
  * Return a pointer to the playlist at a specific index

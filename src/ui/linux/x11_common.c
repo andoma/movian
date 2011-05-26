@@ -142,7 +142,7 @@ typedef struct video_output {
   media_pipe_t *vo_mp;
   video_playback_t *vo_vp;
 
-  prop_sub_t *vo_sub_url;
+  prop_sub_t *vo_sub_source;
 
   Display *vo_dpy;
   int vo_win;
@@ -177,7 +177,7 @@ typedef struct video_output {
  *
  */
 static void
-vo_set_url(void *opaque, const char *url)
+vo_set_source(void *opaque, const char *url)
 {
   video_output_t *vo = opaque;
   event_t *e;
@@ -313,10 +313,10 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 
   prop_link(vo->vo_mp->mp_prop_root, prop_create(self, "media"));
 
-  vo->vo_sub_url = 
+  vo->vo_sub_source = 
     prop_subscribe(0,
-		   PROP_TAG_NAME("self", "url"),
-		   PROP_TAG_CALLBACK_STRING, vo_set_url, vo,
+		   PROP_TAG_NAME("self", "source"),
+		   PROP_TAG_CALLBACK_STRING, vo_set_source, vo,
 		   PROP_TAG_COURIER, pc, 
 		   PROP_TAG_NAMED_ROOT, self, "self",
 		   NULL);
@@ -335,7 +335,7 @@ x11_vo_destroy(struct video_output *vo)
   if(vo->vo_xss != NULL)
     x11_screensaver_resume(vo->vo_xss);
 
-  prop_unsubscribe(vo->vo_sub_url);
+  prop_unsubscribe(vo->vo_sub_source);
 
   video_playback_destroy(vo->vo_vp);
   video_decoder_stop(vo->vo_vd);
@@ -433,9 +433,10 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
  *
  */
 static void
-compute_output_dimensions(video_output_t *vo, float dar, int *w, int *h)
+compute_output_dimensions(video_output_t *vo, AVRational dar,
+			  int *w, int *h)
 {
-  float a = vo->vo_w / (vo->vo_h * dar);
+  float a = (float)(vo->vo_w * dar.den) / (float)(vo->vo_h * dar.num);
 
   if(a > 1) {
     *w = vo->vo_w / a;

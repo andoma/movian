@@ -93,4 +93,20 @@ pixmap_t *pixmap_dup(pixmap_t *pm);
 
 void pixmap_release(pixmap_t *pm);
 
+#define PIXMAP_BLUR        0
+#define PIXMAP_EDGE_DETECT 1
+#define PIXMAP_EMBOSS      2
+
+pixmap_t *pixmap_convolution_filter(const pixmap_t *src, int kernel);
+
+pixmap_t *pixmap_multiply_alpha(const pixmap_t *src);
+
+pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
+
+void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
+		      int xdisp, int ydisp,
+		      int r, int g, int b, int a);
+
+pixmap_t *pixmap_create(int width, int height, enum PixelFormat pixfmt);
+
 #endif

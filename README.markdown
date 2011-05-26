@@ -12,45 +12,45 @@ For more information and latest versions, please visit:
 
 First you need to configure:
 
-	$ ./configure
+	./configure
 
 If any dependencies are missing the configure script will complain.
 You then have the option to disable that particular module/subsystem.
 
-	$ make
+	make
 
 Build the binary, after build the binary resides in `build.linux/`.
 Thus, to start it, just type:
 
-	$ build.linux/showtime
+	build.linux/showtime
 
-If you need/want to build with a recent version of FFmpeg without
+If you need/want to build with a recent version of libav without
 installing it on your system:
 
-Create an ffmpeg directory somewhere, perhaps in your home dir:
+Create an libav directory somewhere, perhaps in your home dir:
 
-	$ cd
-	$ mkdir ffmpeg
-	$ cd ffmpeg
-	$ git clone git://git.ffmpeg.org/ffmpeg.git src
+	cd
+	mkdir libav
+	cd libav
+	git clone git://git.libav.org/libav.git src
 
-Configure FFmpeg to build and install itself in current dir. Note that this
+Configure libav to build and install itself in current dir. Note that this
 will build static libraries so you don't need to mess around with
 `LD_LIBRARY_PATH` when running the binary. IF you enable shared libraries,
 remember to set that up as well.
 
 So while still in the same dir, do
 
-	$ src/configure --prefix=${PWD}
-	$ make -j4
-	$ make install
+	src/configure --prefix=${PWD}
+	make -j4
+	make install
 
 Now go back and reconfigure Showtime with `PKG_CONFIG_PATH` set to the
-directories where the .pc files resides from the FFmpeg install:
+directories where the .pc files resides from the libav install:
 
-	$ cd showtime 
-	$ ./configure --pkg-config-path=${HOME}/ffmpeg/lib/pkgconfig
-	$ make
+	cd showtime 
+	./configure --pkg-config-path=${HOME}/libav/lib/pkgconfig
+	make
 
 
 ## How to build for Mac OS X
@@ -73,9 +73,12 @@ If you choose the custome script way, please continue to read support/osx/README
 
 MacPorts way:
 
-Install freetype using MacPorts:
+Install freetype and libav using MacPorts:
 
-	$ sudo /opt/local/bin/port install freetype ffmpeg
+	$ sudo /opt/local/bin/port install freetype ffmpeg-devel
+
+	(there is no libav port when i write this but i hope it works with the
+	 ffmpeg-devel port)
 
 Now run configure
 
@@ -105,7 +108,7 @@ include paths to your local build tree.
 
 For more information read support/osx/README
 
-TODO: universal binary, cant be done i one step as ffmpeg does not
+TODO: universal binary, cant be done i one step as libav does not
 build when using multiple arch arguments to gcc
 
 

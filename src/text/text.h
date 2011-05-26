@@ -17,10 +17,14 @@
  */
 
 #include "config.h"
+#include <stdint.h>
 
 #pragma once
 
 struct pixmap;
+
+#define TR_STYLE_BOLD   0x1
+#define TR_STYLE_ITALIC 0x2
 
 #define TR_CODE_START      0x7f000001
 #define TR_CODE_NEWLINE    0x7f000002
@@ -35,8 +39,14 @@ struct pixmap;
 #define TR_RENDER_ELLIPSIZE     0x2
 #define TR_RENDER_CHARACTER_POS 0x4
 
+#define TR_ALIGN_AUTO      0
+#define TR_ALIGN_LEFT      1
+#define TR_ALIGN_CENTER    2
+#define TR_ALIGN_RIGHT     3
+#define TR_ALIGN_JUSTIFIED 4
+
 struct pixmap *
-text_render(const uint32_t *uc, int len, int flags, int size,
+text_render(const uint32_t *uc, int len, int flags, int size, int alignment,
 	    int max_width, int max_lines, const char *font_family);
 
 
@@ -45,4 +55,15 @@ int freetype_init(void);
 
 void freetype_load_font(const char *url);
 #endif
+
+#if ENABLE_LIBFONTCONFIG
+int fontconfig_resolve(int uc, uint8_t style, const char *family,
+		       char *urlbuf, size_t urllen, uint8_t *actualstylep);
+#endif
+
+#define TEXT_PARSE_TAGS          0x1
+#define TEXT_PARSE_HTML_ENTETIES 0x2
+
+
+uint32_t *text_parse(const char *str, int *lenp, int flags);
 

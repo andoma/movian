@@ -27,6 +27,7 @@
 #include "settings.h"
 #include "xmlrpc.h"
 #include "fileaccess/fileaccess.h"
+#include "media.h"
 
 #define OPENSUB_URL "http://api.opensubtitles.org/xml-rpc"
 
@@ -126,7 +127,7 @@ opensub_build_query(const char *lang, int64_t hash, int64_t movsize,
 
   if(movsize) {
     char str[20];
-    snprintf(str, sizeof(str), "%" PRId64, hash);
+    snprintf(str, sizeof(str), "%" PRIx64, hash);
     htsmsg_add_str(m, "moviehash", str);
     htsmsg_add_s64(m, "moviebytesize", movsize);
   }
@@ -258,23 +259,16 @@ async_query_do(prop_t *node, htsmsg_t *query)
     if((entry = htsmsg_get_map_by_field(f)) == NULL)
       continue;
 
-    const char *id    = htsmsg_get_str(entry, "SubDownloadLink");
-    const char *title = htsmsg_get_str(entry, "SubFileName");
-    const char *lang  = htsmsg_get_str(entry, "LanguageName");
+    const char *url = htsmsg_get_str(entry, "SubDownloadLink");
 
-    if(id == NULL || title == NULL || lang == NULL)
+    if(url == NULL)
       continue;
 
-    prop_t *p = prop_create_root(NULL);
-
-    prop_set_string(prop_create(p, "id"), id);
-    prop_set_stringf(prop_create(p, "title"), "%s (%s)", title, lang);
-
-    TRACE(TRACE_DEBUG, "opensubtitles", "Adding sub %s (%s) @ %s",
-	  title, lang, id);
-
-    if(prop_set_parent(p, node))
-      prop_destroy(p);
+    mp_add_track(node, NULL, url,
+		 htsmsg_get_str(entry, "SubFormat"),
+		 NULL,
+		 htsmsg_get_str(entry, "SubLanguageID"),
+		 "opensubtitles.org");
   }
 
   htsmsg_destroy(out);
@@ -325,31 +319,30 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
  * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
  */
 int
-opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp)
+opensub_compute_hash(AVIOContext *avio, uint64_t *hashp)
 {
   int i;
-  uint64_t *buf = malloc(65536);
-  uint64_t hash = fa_fsize(fh);
+  uint64_t hash;
 
-  fa_seek(fh, 0, SEEK_SET);
+  int64_t size = avio_size(avio);
+  
+  if(size < 65536)
+    return -1;
 
-  if(fa_read(fh, buf, 65536) == 65536) {
+  hash = size;
 
-    for(i = 0; i < 8192; i++)
-      hash += buf[i];
+  if(avio_seek(avio, 0, SEEK_SET) == -1)
+    return -1;
 
-    fa_seek(fh, -65536, SEEK_END);
+  for(i = 0; i < 8192; i++)
+    hash += avio_rl64(avio);
 
-    if(fa_read(fh, buf, 65536) == 65536) {
+  if(avio_seek(avio, size-65536, SEEK_SET) == -1)
+    return -1;
 
-      for(i = 0; i < 8192; i++)
-	hash += buf[i];
+  for(i = 0; i < 8192; i++)
+    hash += avio_rl64(avio);
 
-      *hashp = hash;
-      free(buf);
-      return 0;
-    }
-  }
-  free(buf);
-  return -1;
+  *hashp = hash;
+  return 0;
 }

@@ -40,6 +40,7 @@ typedef enum {
   ACTION_ACTIVATE,
   ACTION_ENTER,
   ACTION_OK,
+  ACTION_OKSAVE,
   ACTION_CANCEL,
   ACTION_BS,
 
@@ -136,7 +137,8 @@ typedef enum {
 
   EVENT_CURRENT_PTS,
 
-  EVENT_SELECT_TRACK,
+  EVENT_SELECT_AUDIO_TRACK,
+  EVENT_SELECT_SUBTITLE_TRACK,
 
   EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
 
@@ -210,6 +212,8 @@ typedef struct event_playurl {
  */
 typedef struct event_select_track {
   event_t h;
+  int manual;   /* Set iff it was initiated by user, 
+		   otherwise it was suggested by showtime itself */
   char *id;
 } event_select_track_t;
 
@@ -264,7 +268,8 @@ event_t *event_create_playtrack(struct prop *track,
 				struct prop *psource,
 				int mode);
 
-event_t *event_create_select_track(const char *id);
+event_t *event_create_select_track(const char *id, event_type_t type, 
+				   int manual);
 
 const char *action_code2str(action_type_t code);
 

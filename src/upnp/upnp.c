@@ -18,7 +18,7 @@
 
 #include <stdio.h>
 
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 #include "networking/http_server.h"
 #include "networking/ssdp.h"
@@ -232,7 +232,7 @@ upnp_init(void)
     upnp_uuid = strdup(s);
   } else {
     
-    struct AVSHA1 *shactx = alloca(av_sha1_size);
+    struct AVSHA *shactx = alloca(av_sha_size);
     uint64_t v;
     uint8_t d[20];
     char uuid[40];
@@ -240,14 +240,14 @@ upnp_init(void)
     if(conf == NULL)
       conf = htsmsg_create_map();
 
-    av_sha1_init(shactx);
+    av_sha_init(shactx, 160);
     v = showtime_get_ts();
-    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
 
     v = arch_get_seed();
-    av_sha1_update(shactx, (void *)&v, sizeof(uint64_t));
+    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
 
-    av_sha1_final(shactx, d);
+    av_sha_final(shactx, d);
 
     snprintf(uuid, sizeof(uuid),
 	     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
@@ -343,7 +343,7 @@ upnp_service_guess(const char *url)
 
   url_split(proto1, sizeof(proto1), NULL, 0,
 	    hostname1, sizeof(hostname1), &port1,
-	    NULL, 0, url, 0);
+	    NULL, 0, url);
 
   if(port1 == -1 && !strcasecmp(proto1, "http"))
     port1 = 80;
@@ -354,7 +354,7 @@ upnp_service_guess(const char *url)
 
       url_split(proto2, sizeof(proto2), NULL, 0,
 		hostname2, sizeof(hostname2), &port2,
-		NULL, 0, us->us_control_url, 0);
+		NULL, 0, us->us_control_url);
 
       if(port2 == -1 && !strcasecmp(proto2, "http"))
 	port2 = 80;
@@ -482,7 +482,7 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   us->us_type = type;
 
   url_split(proto, sizeof(proto), NULL, 0, hostname, sizeof(hostname), &port,
-	    path, sizeof(path), ud->ud_url, 0);
+	    path, sizeof(path), ud->ud_url);
 
   free(us->us_event_url);
   us->us_event_url = url_resolve_relative(proto, hostname, port, path, e_url);
@@ -509,11 +509,11 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
 /**
  *
  */
-static char *
+static const char *
 device_get_icon(htsmsg_t *dev)
 {
   htsmsg_field_t *f;
-  char *best = NULL;
+  const char *best = NULL;
   int bestscore = 0;
 
   htsmsg_t *iconlist = htsmsg_get_map_multi(dev,
@@ -552,7 +552,7 @@ device_get_icon(htsmsg_t *dev)
     score += width * height;
 
     if(score > bestscore) {
-      mystrset(&best, url);
+      best = url;
       bestscore = score;
     }
   }

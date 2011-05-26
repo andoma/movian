@@ -305,7 +305,7 @@ rar_archive_load(rar_archive_t *ra)
 
   volume_index++;
 
-  if((fh = fa_open(filename, NULL, 0)) == NULL)
+  if((fh = fa_open(filename, NULL, 0, 0)) == NULL)
     return -1;
 
   /* Read & Verify RAR file signature */
@@ -480,13 +480,17 @@ rar_archive_find(const char *url, const char **rp)
   hts_mutex_lock(&rar_global_mutex);
 
   u = mystrdupa(url);
-  while((s = strrchr(u, '/')) != NULL) {
-    *s = 0;
-    LIST_FOREACH(ra, &rar_archives, ra_link)
+
+  while(1) {
+    LIST_FOREACH(ra, &rar_archives, ra_link) {
       if(!strcasecmp(ra->ra_url, u))
 	break;
+    }
     if(ra != NULL)
       break;
+    if((s = strrchr(u, '/')) == NULL)
+      break;
+    *s = 0;
   }
 
   if(ra == NULL) {
@@ -644,7 +648,8 @@ typedef struct rar_fd {
  *
  */
 static fa_handle_t *
-rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+	 int flags)
 {
   rar_file_t *rf;
   rar_fd_t *rfd;
@@ -722,7 +727,7 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
-      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0);
+      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0, 0);
       if(rfd->rfd_fh == NULL)
 	return -1;
     }

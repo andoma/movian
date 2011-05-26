@@ -1038,7 +1038,7 @@ player_thread(void *aux)
       hts_mutex_unlock(&playqueue_mutex);
 
       /* Drain queues */
-      e = mp_wait_for_empty_queues(mp, 0);
+      e = mp_wait_for_empty_queues(mp);
       if(e != NULL) {
 	/* Got event while waiting for drain */
 	mp_flush(mp, 0);
@@ -1110,7 +1110,7 @@ player_thread(void *aux)
     prop_set_int(p, 1);
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
-			   startpaused);
+			   startpaused, NULL);
     startpaused = 0;
 
     prop_set_int(p, 0);

@@ -84,7 +84,7 @@ static const char *dvd_langcode_to_string(uint16_t langcode);
 static void *
 dvd_fa_open(const char *url)
 {
-  return fa_open(url, NULL, 0);
+  return fa_open(url, NULL, 0, 0);
 }
 
 static int
@@ -94,6 +94,9 @@ dvd_fa_stat(const char *url, struct stat *st)
 
   if(fa_stat(url, &fs, NULL, 0))
     return -1;
+
+  if(fs.fs_size == -1)
+    return -1; // Not a seekable file
 
   st->st_size  = fs.fs_size;
   st->st_mode  = fs.fs_type == CONTENT_DIR ? S_IFDIR : S_IFREG;
@@ -264,7 +267,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   int64_t dts = AV_NOPTS_VALUE, pts = AV_NOPTS_VALUE;
   int rlen, outlen, data_type = 0, rate = 0;
   uint8_t *outbuf;
-  int type, track;
+  int track;
   media_codec_t *cw, **cwp;
   AVCodecContext *ctx;
   enum CodecID codec_id;
@@ -321,7 +324,6 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
 
   if(sc >= 0x1e0 && sc <= 0x1ef) {
     codec_id  = CODEC_ID_MPEG2VIDEO;
-    type      = CODEC_TYPE_VIDEO;
     data_type = MB_VIDEO;
     rate = dp->dp_aspect_override;
     cwp = &dp->dp_video;
@@ -341,7 +343,6 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     if((sc & 7) != track)
       return NULL;
 
-    type = CODEC_TYPE_AUDIO;
     data_type = MB_AUDIO;
 
     switch(sc) {
@@ -377,7 +378,6 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
       return NULL;
 
     codec_id  = CODEC_ID_DVD_SUBTITLE;
-    type      = CODEC_TYPE_SUBTITLE;
     data_type = MB_DVD_SPU;
 
     cwp = &dp->dp_spu;
@@ -393,7 +393,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     if(cw != NULL)
       media_codec_deref(cw);
 
-    *cwp = cw = media_codec_create(codec_id, type, 1, NULL, NULL, &mcp, mp);
+    *cwp = cw = media_codec_create(codec_id, 1, NULL, NULL, &mcp, mp);
     if(cw == NULL)
       return NULL;
   }
@@ -480,10 +480,17 @@ dvd_block(dvd_player_t *dp, uint8_t *buf, int len)
 static void
 dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
-  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off");
-  mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto");
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "spu:off");
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "spu:auto");
+  prop_destroy_childs(mp->mp_prop_audio_tracks);
+  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off",
+	       NULL, NULL, NULL, "DVD");
+  mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto",
+	       NULL, NULL, NULL, "DVD");
+
+  prop_destroy_childs(mp->mp_prop_subtitle_tracks);
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off",
+	       NULL, NULL, NULL, "DVD");
+  mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "sub:auto",
+	       NULL, NULL, NULL, "DVD");
 }
 
 
@@ -521,7 +528,7 @@ dvd_set_spu_stream(dvd_player_t *dp, const char *id)
     int idx = atoi(id);
     dp->dp_spu_track = idx;
   }
-  prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "spu:%s", id);
+  prop_set_stringf(dp->dp_mp->mp_prop_subtitle_track_current,  "sub:%s", id);
 }
 
 
@@ -611,7 +618,7 @@ dvd_update_streams(dvd_player_t *dp)
       }
 
       prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
-      prop_set_stringf(prop_create(p, "id"), "spu:%d", i);
+      prop_set_stringf(prop_create(p, "id"), "sub:%d", i);
       before = p;
     }
   }
@@ -689,7 +696,11 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
   mp_become_primary(mp);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT,
+	       MP_BUFFER_SHALLOW); /* Might wanna use deep buffering
+				      but it requires some modification
+				      to buffer draining code */
+
   mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
 
   prop_set_int(mp->mp_prop_canSkipForward,  1);
@@ -789,7 +800,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       break;
 
     case DVDNAV_WAIT:
-      if((e = mp_wait_for_empty_queues(mp, 0)) == NULL)
+      if((e = mp_wait_for_empty_queues(mp)) == NULL)
 	dvdnav_wait_skip(dp->dp_dvdnav);
       else
 	e = dvd_process_event(dp, e);
@@ -843,14 +854,17 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
      event_is_type(e, EVENT_PLAY_URL))
     return e;
 
-  if(event_is_type(e, EVENT_SELECT_TRACK)) {
+  if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
     event_select_track_t *est = (event_select_track_t *)e;
     
     if(!strncmp(est->id, "audio:", strlen("audio:")))
       dvd_set_audio_stream(dp, est->id + strlen("audio:"));
-    else if(!strncmp(est->id, "spu:", strlen("spu:")))
-      dvd_set_spu_stream(dp, est->id + strlen("spu:"));
 
+  } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
+    event_select_track_t *est = (event_select_track_t *)e;
+
+    if(!strncmp(est->id, "sub:", strlen("sub:")))
+      dvd_set_spu_stream(dp, est->id + strlen("sub:"));
 
   } else if(!dvd_in_menu(dp) && 
      (event_is_action(e, ACTION_PLAYPAUSE) ||

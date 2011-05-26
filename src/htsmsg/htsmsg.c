@@ -661,4 +661,13 @@ htsmsg_get_map_in_list(htsmsg_t *m, int num)
   return NULL;
 }
 
+htsmsg_t *
+htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name)
+{
+  if(f->hmf_type != HMF_MAP)
+    return NULL;
+  if(strcmp(f->hmf_name, name))
+    return NULL;
+  return &f->hmf_msg;
+}
 

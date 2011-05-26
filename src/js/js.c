@@ -20,6 +20,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "js.h"
 
@@ -145,8 +146,8 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
     k = strdup(k);
     v = strdup(v);
 
-    http_deescape(k);
-    http_deescape(v);
+    url_deescape(k);
+    url_deescape(v);
 
     jsval val = STRING_TO_JSVAL(JS_NewString(cx, v, strlen(v)));
     JS_SetProperty(cx, robj, k, &val);
@@ -175,7 +176,7 @@ js_httpEscape(JSContext *cx, JSObject *obj,
   
   r = malloc((l * 3) + 1);
   
-  path_escape(r, l * 3, str);
+  url_escape(r, l * 3, str);
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, r, strlen(r)));
   return JS_TRUE;
@@ -308,15 +309,16 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
 {
   const char *id, *reason, *source;
   char *username, *password;
-  JSBool query;
+  JSBool query, forcetmp = 0;
   int r;
   jsval val;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "sssb",
-			  &id, &source, &reason, &query))
+  if(!JS_ConvertArguments(cx, argc, argv, "sssb/b",
+			  &id, &source, &reason, &query, &forcetmp))
     return JS_FALSE;
 
-  r = keyring_lookup(id, &username, &password, NULL, query, source, reason);
+  r = keyring_lookup(id, &username, &password, NULL, query, source, reason,
+		     forcetmp);
 
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);

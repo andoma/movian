@@ -38,6 +38,13 @@
 #include FT_OUTLINE_H
 #include FT_SYNTHESIS_H
 
+#define ver(maj, min, pat) ((maj) * 100000 + (min) * 100 + (pat))
+
+#define ftver ver(FREETYPE_MAJOR, FREETYPE_MINOR, FREETYPE_PATCH)
+
+#if ftver >= ver(2,4,0)
+#define HAVE_FACE_REFERENCE
+#endif
 
 static FT_Library text_library;
 static hts_mutex_t text_mutex;
@@ -49,8 +56,6 @@ TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
 TAILQ_HEAD(face_queue, face);
 
-#define STYLE_BOLD   0x1
-#define STYLE_ITALIC 0x2
 
 
 //------------------------- Faces -----------------------
@@ -167,11 +172,20 @@ face_create(const char *path)
   char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
+  size_t s;
 
-  void *fh = fa_open(path, errbuf, sizeof(errbuf));
+  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf), 0);
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- %s",
 	  path, errbuf);
+    return NULL;
+  }
+
+  s = fa_fsize(fh);
+  if(s < 0) {
+    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- Not a seekable file",
+	  path);
+    fa_close(fh);
     return NULL;
   }
 
@@ -213,6 +227,11 @@ static int
 face_resovle(int uc, uint8_t style, const char *family,
 	     char *urlbuf, size_t urllen, uint8_t *actualstylep)
 {
+#if ENABLE_LIBFONTCONFIG
+  if(!fontconfig_resolve(uc, style, family, urlbuf, urllen, actualstylep))
+    return 0;
+#endif
+
 #ifdef SHOWTIME_FONT_LIBERATION_URL
   snprintf(urlbuf, urllen,
 	   SHOWTIME_FONT_LIBERATION_URL"/LiberationSans-Regular.ttf");
@@ -222,7 +241,7 @@ face_resovle(int uc, uint8_t style, const char *family,
   return -1;
 }
 
-
+#ifdef HAVE_FACE_REFERENCE
 /**
  *
  */
@@ -240,6 +259,7 @@ face_clone(face_t *src, const char *family)
   TAILQ_INSERT_TAIL(&faces, dst, link);
   return dst;
 }
+#endif
 
 
 /**
@@ -266,7 +286,9 @@ face_find(int uc, uint8_t style, const char *family)
     if(!strcmp(f->url, url)) {
       if(family == NULL || !strcmp(family, f->family ?: ""))
 	return f;
+#ifdef HAVE_FACE_REFERENCE
       return face_clone(f, family);
+#endif
     }
   }
 
@@ -300,8 +322,11 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
 
     f = face_find(uc, style, family);
 
-    if(f == NULL)
-      return NULL;
+    if(f == NULL) {
+      f = face_find(uc, 0, family);
+      if(f == NULL)
+	return NULL;
+    }
 
     gi = FT_Get_Char_Index(f->face, uc);
 
@@ -320,10 +345,10 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
     
     gs = f->face->glyph;
 
-    if(style & STYLE_ITALIC && !(f->style & STYLE_ITALIC))
+    if(style & TR_STYLE_ITALIC && !(f->style & TR_STYLE_ITALIC))
       FT_GlyphSlot_Oblique(gs);
 
-    if(style & STYLE_BOLD && !(f->style & STYLE_BOLD) && 
+    if(style & TR_STYLE_BOLD && !(f->style & TR_STYLE_BOLD) && 
        gs->format == FT_GLYPH_FORMAT_OUTLINE) {
       int v = FT_MulFix(gs->face->units_per_EM,
 			gs->face->size->metrics.y_scale) / 64;
@@ -441,7 +466,7 @@ typedef struct line {
   int count;
   int width;
   int xspace;
-  char center;
+  char alignment;
 
 } line_t;
 
@@ -459,7 +484,8 @@ typedef struct item {
  */
 static struct pixmap *
 text_render0(const uint32_t *uc, const int len, int flags, int size,
-	     int max_width, int max_lines, const char *family)
+	     int global_alignment, int max_width, int max_lines,
+	     const char *family)
 {
   pixmap_t *pm;
   FT_UInt prev = 0;
@@ -468,7 +494,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   int err;
   int pen_x, pen_y;
 
-  int i, j, height;
+  int i, j, row_height;
   glyph_t *g;
   int siz_x, start_x, start_y;
   int target_width, target_height;
@@ -510,7 +536,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   items = malloc(sizeof(item_t) * len);
 
   int out = 0;
-  int center = 0;
+  int alignment = global_alignment;
 
   for(i = 0; i < len; i++) {
 
@@ -519,7 +545,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
-      li->center = center;
+      li->alignment = alignment;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
       pen_x = 0;
@@ -540,32 +566,32 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(i != 0)
 	li = NULL;
       else
-	li->center = 1;
-      center = 1;
+	li->alignment = TR_ALIGN_CENTER;
+      alignment = TR_ALIGN_CENTER;
       continue;
 
     case TR_CODE_CENTER_OFF:
+      alignment = global_alignment;
       if(i != 0)
 	li = NULL;
       else
-	li->center = 0;
-      center = 0;
+	li->alignment = global_alignment;
       continue;
 
     case TR_CODE_ITALIC_ON:
-      style |= STYLE_ITALIC;
+      style |= TR_STYLE_ITALIC;
       break;
 
     case TR_CODE_ITALIC_OFF:
-      style &= ~STYLE_ITALIC;
+      style &= ~TR_STYLE_ITALIC;
       break;
 
     case TR_CODE_BOLD_ON:
-      style |= STYLE_BOLD;
+      style |= TR_STYLE_BOLD;
       break;
 
     case TR_CODE_BOLD_OFF:
-      style &= ~STYLE_BOLD;
+      style &= ~TR_STYLE_BOLD;
       break;
 
     default:
@@ -637,7 +663,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
-	  lix->center = 0;
+	  lix->alignment = global_alignment;
 
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
@@ -688,7 +714,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   if(max_lines > 1) {
     TAILQ_FOREACH(li, &lq, link) {
-      if(li->center)
+      if(li->alignment != TR_ALIGN_JUSTIFIED)
 	continue;
 
       int spaces = 0;
@@ -703,9 +729,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   }
 
   target_height = lines * size;
-  height = 64 * target_height / lines;
+  row_height = 64 * target_height / lines;
 
-  origin_y = ((64 * (lines - 1) * size) - bbox.yMin) / 64;
+  origin_y = (64 * (lines - 1) * size) - bbox.yMin;
 
   start_x = -bbox.xMin;
   start_y = 0;
@@ -740,8 +766,17 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   TAILQ_FOREACH(li, &lq, link) {
     pen_x = 0;
     
-    if(li->center)
+    switch(li->alignment) {
+    case TR_ALIGN_LEFT:
+    case TR_ALIGN_JUSTIFIED:
+      break;
+    case TR_ALIGN_CENTER:
       pen_x += (siz_x - li->width) / 2;
+      break;
+    case TR_ALIGN_RIGHT:
+      pen_x += li->width - siz_x;
+      break;
+    }
 
     for(i = li->start; i < li->start + li->count; i++) {
       g = items[i].g;
@@ -750,20 +785,21 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
       pen_x += items[i].kerning;
       
-      pen.x = start_x + pen_x;
-      pen.y = start_y + pen_y;
+      pen.x = start_x + pen_x + 31;
+      pen.y = start_y + pen_y + origin_y + 31;
 
       pen.x &= ~63;
       pen.y &= ~63;
 
-      FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->glyph;
-      err = FT_Glyph_To_Bitmap((FT_Glyph*)&bmp, FT_RENDER_MODE_NORMAL, &pen, 0);
+      FT_Glyph glyph = g->glyph;
+      err = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0);
+      FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
       if(err == 0) {
 	draw_glyph(pm, &bmp->bitmap, 
 		   bmp->left,
-		   target_height - origin_y - bmp->top,
+		   target_height - bmp->top,
 		   i);
-	FT_Done_Glyph((FT_Glyph)bmp);
+	FT_Done_Glyph(glyph);
       }
 
       if(pm->pm_charpos != NULL && items[i].code == ' ')
@@ -776,7 +812,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 1] = pen_x / 64;
     }
-    pen_y -= height;
+    pen_y -= row_height;
   }
   free(items);
   return pm;
@@ -788,13 +824,14 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
  */
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int size,
-	    int max_width, int max_lines, const char *family)
+	    int alignment, int max_width, int max_lines, const char *family)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
-  pm = text_render0(uc, len, flags, size, max_width, max_lines, family);
+  pm = text_render0(uc, len, flags, size, alignment, 
+		    max_width, max_lines, family);
   while(num_glyphs > 512)
     glyph_flush();
 

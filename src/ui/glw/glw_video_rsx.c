@@ -310,7 +310,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
   int output_duration;
-  int64_t pts = 0;
+  int64_t pts = AV_NOPTS_VALUE;
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
@@ -332,8 +332,6 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
       gv->gv_sa = NULL;
     }
 
-    pts = AV_NOPTS_VALUE;
-      
   } else {
       
     /* There are frames available that we are going to display,
@@ -344,7 +342,8 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 
     /* */
     sb = TAILQ_NEXT(sa, gvs_link);
-    pts = gv_compute_blend(gv, sa, sb, output_duration);
+    if(!vd->vd_hold)
+      pts = gv_compute_blend(gv, sa, sb, output_duration);
     epoch = sa->gvs_epoch;
 
     if(!vd->vd_hold || sb != NULL) {

@@ -167,6 +167,7 @@ glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
  */
 typedef struct glw_event_selectTrack {
   glw_event_map_t map;
+  event_type_t type;
   char *id;
 } glw_event_selectTrack_t;
 
@@ -194,7 +195,7 @@ glw_event_map_selectTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   if(st->id == NULL)
     return; // Must have an ID to fire
 
-  event_t *e = event_create_select_track(st->id);
+  event_t *e = event_create_select_track(st->id, st->type, 1);
   
   e->e_mapped = 1;
   event_bubble(w, e);
@@ -205,11 +206,12 @@ glw_event_map_selectTrack_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_selectTrack_create(const char *id)
+glw_event_map_selectTrack_create(const char *id, event_type_t type)
 {
   glw_event_selectTrack_t *st = malloc(sizeof(glw_event_selectTrack_t));
   
   st->id = id ? strdup(id) : NULL;
+  st->type = type;
 
   st->map.gem_dtor = glw_event_map_selectTrack_dtor;
   st->map.gem_fire = glw_event_map_selectTrack_fire;

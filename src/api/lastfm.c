@@ -257,7 +257,7 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
 			 "page", str,
 			 NULL, NULL},
 		     &result, &resultsize, errbuf, sizeof(errbuf),
-		     NULL, NULL, HTTP_REQUEST_ESCAPE_PATH, NULL, NULL, NULL);
+		     NULL, NULL, 0, NULL, NULL, NULL);
 
     if(n) {
       TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
@@ -367,7 +367,7 @@ lastfm_albumart_query(lastfm_prop_t *lp)
 		       "api_key", LASTFM_APIKEY,
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
-		   NULL, NULL, HTTP_REQUEST_ESCAPE_PATH, NULL, NULL, NULL);
+		   NULL, NULL, 0, NULL, NULL, NULL);
 
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);

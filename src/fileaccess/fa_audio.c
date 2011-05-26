@@ -30,6 +30,7 @@
 #include "event.h"
 #include "media.h"
 #include "fileaccess.h"
+#include "fa_libav.h"
 #include "notifications.h"
 
 #if ENABLE_LIBGME
@@ -43,9 +44,10 @@
  *
  */
 static event_t *
-openspc_play(media_pipe_t *mp, void *fh, char *errbuf, size_t errlen)
+openspc_play(media_pipe_t *mp, AVIOContext *avio, char *errbuf, size_t errlen)
 {
   media_queue_t *mq = &mp->mp_audio;
+#error fa_fsize can return -1 .. deal with it
   size_t r, siz = fa_fsize(fh);
   uint8_t *buf = malloc(siz);
   media_buf_t *mb = NULL;
@@ -187,6 +189,8 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 }
 
 
+#define MB_SPECIAL_EOF ((void *)-1)
+
 /**
  *
  */
@@ -195,10 +199,9 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
 {
   mp_flush(mp, 0);
   
-  if(*mbp != NULL) {
+  if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
     media_buf_free(*mbp);
-    *mbp = NULL;
-  }
+  *mbp = NULL;
 }
 
 /**
@@ -206,9 +209,10 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
  */
 event_t *
 be_file_playaudio(const char *url, media_pipe_t *mp,
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold, const char *mimetype)
 {
   AVFormatContext *fctx;
+  AVIOContext *avio;
   AVCodecContext *ctx;
   AVPacket pkt;
   media_format_t *fw;
@@ -218,62 +222,50 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   event_ts_t *ets;
   int64_t ts, pts4seek = 0;
   media_codec_t *cw;
-  char faurl[URL_MAX];
   event_t *e;
   int lost_focus = 0;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
+  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0)) == NULL)
+    return NULL;
+
+
   // First we need to check for a few other formats
 #if ENABLE_LIBOPENSPC || ENABLE_LIBGME
 
-  char pb[128];
-  void *fh;
+  uint8_t pb[128];
   size_t psiz;
-
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
-    return NULL;
   
-  psiz = fa_read(fh, pb, sizeof(pb));
+  psiz = avio_read(avio, pb, sizeof(pb));
   if(psiz < sizeof(pb)) {
-    fa_close(fh);
+    fa_libav_close(avio);
     snprintf(errbuf, errlen, "Fill too small");
     return NULL;
   }
 
 #if ENABLE_LIBGME
-  if(*gme_identify_header(pb)) {
-    fa_seek(fh, 0, SEEK_SET);
-    e = fa_gme_playfile(mp, fh, errbuf, errlen, hold);
-    fa_close(fh);
-    return e;
-  }
+  if(*gme_identify_header(pb))
+    return fa_gme_playfile(mp, avio, errbuf, errlen, hold);
 #endif
 
 #if ENABLE_LIBOPENSPC
   if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27))
-    return openspc_play(mp, fh, errbuf, errlen);
+    return openspc_play(mp, avio, errbuf, errlen);
 #endif
 
-  fa_close(fh);
 #endif
 
-  snprintf(faurl, sizeof(faurl), "showtime:%s", url);
-
-  if(av_open_input_file(&fctx, faurl, NULL, 0, NULL) != 0) {
-    snprintf(errbuf, errlen, "Unable to open input file (FFmpeg)");
-    return NULL;
-  }
-
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_file(fctx);
-    snprintf(errbuf, errlen, "Unable to find stream info");
+  if((fctx = fa_libav_open_format(avio, url, 
+				  errbuf, errlen, mimetype)) == NULL) {
+    fa_libav_close(avio);
     return NULL;
   }
 
   TRACE(TRACE_DEBUG, "Audio", "Starting playback of %s", url);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+	       MP_BUFFER_SHALLOW);
 
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
@@ -284,11 +276,10 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   for(i = 0; i < fctx->nb_streams; i++) {
     ctx = fctx->streams[i]->codec;
 
-    if(ctx->codec_type != CODEC_TYPE_AUDIO)
+    if(ctx->codec_type != AVMEDIA_TYPE_AUDIO)
       continue;
 
-    cw = media_codec_create(ctx->codec_id, ctx->codec_type, 0, fw, ctx, NULL,
-			    mp);
+    cw = media_codec_create(ctx->codec_id, 0, fw, ctx, NULL, mp);
     mp->mp_audio.mq_stream = i;
     break;
   }
@@ -308,10 +299,22 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
      * Need to fetch a new packet ?
      */
     if(mb == NULL) {
+      
+      r = av_read_frame(fctx, &pkt);
+      if(r == AVERROR(EAGAIN))
+	continue;
+      
+      if(r == AVERROR_EOF) {
+	mb = MB_SPECIAL_EOF;
+	continue;
+      }
+      
+      if(r != 0) {
+	char msg[100];
+	fa_ffmpeg_error_to_txt(r, msg, sizeof(msg));
+	TRACE(TRACE_ERROR, "Audio", "Playback error: %s", msg);
 
-      if((r = av_read_frame(fctx, &pkt)) < 0) {
-
-	while((e = mp_wait_for_empty_queues(mp, 0)) != NULL) {
+	while((e = mp_wait_for_empty_queues(mp)) != NULL) {
 	  if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
 	     event_is_action(e, ACTION_PREV_TRACK) ||
 	     event_is_action(e, ACTION_NEXT_TRACK) ||
@@ -377,7 +380,16 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
      * 'mb' will be left untouched.
      */
 
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+    if(mb == MB_SPECIAL_EOF) {
+      // We have reached EOF, drain queues
+      e = mp_wait_for_empty_queues(mp);
+      
+      if(e == NULL) {
+	e = event_create_type(EVENT_EOF);
+	break;
+      }
+
+    } else if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
       continue;
     }      
@@ -462,7 +474,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     event_release(e);
   }
 
-  if(mb != NULL)
+  if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free(mb);
 
   media_codec_deref(cw);

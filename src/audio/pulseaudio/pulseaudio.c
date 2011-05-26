@@ -170,7 +170,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   memset(&cv, 0, sizeof(cv));
   pa_cvolume_set(&cv, pam->ss.channels, pam->mastervol);
-
+#if 1
   pa_buffer_attr pba = {0};
 
   pba.fragsize = (uint32_t)-1;
@@ -178,7 +178,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pba.minreq    = 3  * 1024;
   pba.prebuf    = 8  * 1024;
   pba.tlength   = 12 * 1024;
-
+#endif
   n = pa_stream_connect_playback(s, NULL, &pba, flags, &cv, NULL);
 
   pam->stream = s;

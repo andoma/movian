@@ -25,7 +25,7 @@
 #include <htsmsg/htsmsg_binary.h>
 #include <arch/threads.h>
 #include <arch/atomic.h>
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 #include "showtime.h"
 #include "prop/prop_nodefilter.h"
@@ -35,7 +35,6 @@
 #include "keyring.h"
 #include "media.h"
 #include "misc/string.h"
-#include "i18n.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 
@@ -74,7 +73,12 @@ typedef struct htsp_channel {
   char *ch_title;
   int ch_channel_num;
   prop_t *ch_root;
-  prop_t *ch_metadata;
+
+  prop_t *ch_prop_icon;
+  prop_t *ch_prop_title;
+  prop_t *ch_prop_channelNumber;
+  prop_t *ch_prop_events;
+
 } htsp_channel_t;
 
 
@@ -218,7 +222,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   char id[100];
   char *username;
   char *password;
-  struct AVSHA1 *shactx = alloca(av_sha1_size);
+  struct AVSHA *shactx = alloca(av_sha_size);
   uint8_t d[20];
 
   if(tc == NULL)
@@ -233,7 +237,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
 
   r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		     "TV client", "Access denied");
+		     "TV client", "Access denied", 0);
 
   if(r == -1) {
     /* User rejected */
@@ -249,10 +253,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
       htsmsg_add_str(m, "username", username);
 
     if(password != NULL) {
-      av_sha1_init(shactx);
-      av_sha1_update(shactx, (const uint8_t *)password, strlen(password));
-      av_sha1_update(shactx, hc->hc_challenge, 32);
-      av_sha1_final(shactx, d);
+      av_sha_init(shactx, 160);
+      av_sha_update(shactx, (const uint8_t *)password, strlen(password));
+      av_sha_update(shactx, hc->hc_challenge, 32);
+      av_sha_final(shactx, d);
       htsmsg_add_bin(m, "digest", d, 20);
     }
 
@@ -389,7 +393,7 @@ update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
 {
   int i;
   htsmsg_t *m;
-  prop_t *events        = prop_create(metadata, "events");
+  prop_t *events        = prop_create(metadata, "list");
   prop_t *current_event = prop_create(metadata, "current");
   prop_t *next_event    = prop_create(metadata, "next");
   char buf[10];
@@ -518,7 +522,13 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
 
     ch = calloc(1, sizeof(htsp_channel_t));
     p = ch->ch_root = prop_create_root(txt);
-    ch->ch_metadata = prop_create(p, "metadata");
+
+    prop_t *m = prop_create(p, "metadata");
+    ch->ch_prop_icon = prop_create(m, "icon");
+    ch->ch_prop_title = prop_create(m, "title");
+    ch->ch_prop_channelNumber = prop_create(m, "channelNumber");
+    ch->ch_prop_events = prop_create(m, "events");
+
     ch->ch_id = id;
 
     snprintf(txt, sizeof(txt), "htsp://%s:%d/channel/%d",
@@ -571,18 +581,18 @@ htsp_channelAddUpdate(htsp_connection_t *hc, htsmsg_t *m, int create)
   hts_mutex_unlock(&hc->hc_meta_mutex);
 
   if(icon != NULL)
-    prop_set_string(prop_create(ch->ch_metadata, "icon"), icon);
+    prop_set_string(ch->ch_prop_icon, icon);
   if(title != NULL)
-    prop_set_string(prop_create(ch->ch_metadata, "title"), title);
+    prop_set_string(ch->ch_prop_title, title);
   if(chnum != -1)
-    prop_set_int(prop_create(ch->ch_metadata, "channelNumber"), chnum);
+    prop_set_int(ch->ch_prop_channelNumber, chnum);
 
 
   if(htsmsg_get_u32(m, "eventId", &id))
     id = 0;
   if(htsmsg_get_u32(m, "nextEventId", &next))
     next = 0;
-  update_events(hc, ch->ch_metadata, id, next);
+  update_events(hc, ch->ch_prop_events, id, next);
 }
 
 
@@ -1059,7 +1069,7 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
   tcpcon_t *tc;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
-	    path, pathlen, url, 0);
+	    path, pathlen, url);
 
   if(port < 0)
     port = 9982;
@@ -1283,8 +1293,16 @@ set_channel(htsp_connection_t *hc, htsp_subscription_t *hs, int chid,
   hts_mutex_lock(&hc->hc_meta_mutex);
 
   if((ch = htsp_channel_get(hc, chid)) != NULL) {
+    prop_t *m = hs->hs_mp->mp_prop_metadata;
+
     TRACE(TRACE_DEBUG, "HTSP", "Subscribing to channel %s", ch->ch_title);
-    prop_link(ch->ch_metadata, hs->hs_mp->mp_prop_metadata);
+
+
+    prop_link(ch->ch_prop_title, prop_create(m, "title"));
+    prop_link(ch->ch_prop_icon, prop_create(m, "icon"));
+    prop_link(ch->ch_prop_channelNumber, prop_create(m, "channelNumber"));
+    prop_link(ch->ch_prop_events, prop_create(m, "events"));
+
     mystrset(name, ch->ch_title);
   } else {
     mystrset(name, NULL);
@@ -1470,12 +1488,16 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   while(1) {
     e = mp_dequeue_event(mp);
     
-    if(event_is_type(e, EVENT_SELECT_TRACK)) {
+    if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
 
       if(!strncmp(est->id, "sub:", strlen("sub:")))
 	htsp_set_subtitles(mp, est->id + strlen("sub:"));
-      else if(!strncmp(est->id, "audio:", strlen("audio:")))
+
+    } else if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
+      event_select_track_t *est = (event_select_track_t *)e;
+
+      if(!strncmp(est->id, "audio:", strlen("audio:")))
 	htsp_set_audio(mp, est->id + strlen("audio:"));
 
     } else if(event_is_type(e, EVENT_PLAYBACK_PRIORITY)) {
@@ -1561,8 +1583,8 @@ htsp_free_streams(htsp_subscription_t *hs)
 static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
-		  struct play_video_subtitle_list *subtitles,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen,
+		  const char *mimetype)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
@@ -1611,7 +1633,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
   e = htsp_subscriber(hc, hs, chid, errbuf, errlen, tag, primary, priority);
-  mp_flush(mp, 0);
+
   mp_flush(mp, 0);
   mp_shutdown(mp);
 
@@ -1725,26 +1747,20 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   const char *type;
   uint32_t idx, s;
   enum CodecID   codec_id;
-  enum CodecType codec_type;
+  enum AVMediaType media_type;
   const char *nicename, *lang, *title;
   media_codec_t *cw;
 
   int vstream = -1; /* Initial video stream */
   int astream = -1; /* Initial audio stream */
-  int sstream = -1; /* Initial subtitle stream */
-
-  /* Discriminators for chosing best stream */
-  int ascore = 0;
-  int vscore = 0;
-  int sscore = 0;
 
   int subid;
-  prop_t *metaparent = NULL;
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
   htsmsg_t *sourceinfo;
   media_codec_params_t mcp;
   char buf4[4];
+  char url[16];
 
   if((hs = htsp_find_subscription_by_msg(hc, m)) == NULL)
     return;
@@ -1756,8 +1772,14 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   prop_destroy_childs(mp->mp_prop_audio_tracks);
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
-  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off");
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off");
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
+
+  mp->mp_audio.mq_stream  = -1;
+  mp->mp_video.mq_stream2 = -1;
+  
+  prop_set_string(mp->mp_prop_audio_track_current, "spu:off");
+  prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
 
   if((sourceinfo = htsmsg_get_map(m, "sourceinfo")) != NULL) {
 
@@ -1792,38 +1814,34 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "AC3";
-	s = i18n_audio_score(lang) + 3;
       } else if(!strcmp(type, "EAC3")) {
 	codec_id = CODEC_ID_EAC3;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "EAC3";
-	s = i18n_audio_score(lang) + 4;
       } else if(!strcmp(type, "AAC")) {
 	codec_id = CODEC_ID_AAC;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "AAC";
-	s = i18n_audio_score(lang) + 2;
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
-	codec_type = CODEC_TYPE_AUDIO;
+	media_type = AVMEDIA_TYPE_AUDIO;
 	nicename = "MPEG";
-	s = i18n_audio_score(lang) + 1;
       } else if(!strcmp(type, "MPEG2VIDEO")) {
 	codec_id = CODEC_ID_MPEG2VIDEO;
-	codec_type = CODEC_TYPE_VIDEO;
+	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "MPEG-2";
 	s = 1;
       } else if(!strcmp(type, "H264")) {
 	codec_id = CODEC_ID_H264;
-	codec_type = CODEC_TYPE_VIDEO;
+	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
 	s = 2;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
-	codec_type = CODEC_TYPE_SUBTITLE;
+	media_type = AVMEDIA_TYPE_SUBTITLE;
 	nicename = "Subtitles";
 
 	uint32_t composition_id, ancillary_id;
@@ -1848,13 +1866,10 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	mcp.extradata = &buf4;
 	mcp.extradata_size = 4;
 
-	s = i18n_subtitle_score(lang);
-
       } else if(!strcmp(type, "TEXTSUB")) {
 	codec_id = -1;
-	codec_type = CODEC_TYPE_SUBTITLE;
+	media_type = AVMEDIA_TYPE_SUBTITLE;
 	nicename = "Subtitles";
-	s = i18n_subtitle_score(lang);
       } else {
 	continue;
       }
@@ -1866,7 +1881,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
        * Try to create the codec
        */
       if(codec_id != -1) {
-	cw = media_codec_create(codec_id, codec_type, 0, NULL, NULL, &mcp, mp);
+	cw = media_codec_create(codec_id, 0, NULL, NULL, &mcp, mp);
 	if(cw == NULL) {
 	  TRACE(TRACE_ERROR, "HTSP", "Unable to create codec for %s (#%d)",
 		nicename, idx);
@@ -1886,74 +1901,47 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	title = lang;
       }
 
-      switch(codec_type) {
+      switch(media_type) {
       default:
 	break;
 
-      case CODEC_TYPE_VIDEO:
+      case AVMEDIA_TYPE_VIDEO:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_VIDEO;
 
-	if(s > vscore) {
-	  vscore = s;
+	if(vstream == -1)
 	  vstream = idx;
-	}
-	metaparent = NULL;
+
 	break;
 
-      case CODEC_TYPE_SUBTITLE:
+      case AVMEDIA_TYPE_SUBTITLE:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_SUBTITLE;
 
-	if(s > sscore) {
-	  sscore = s;
-	  sstream = idx;
-	}
-	metaparent = prop_create(mp->mp_prop_subtitle_tracks, NULL);
-	prop_set_stringf(prop_create(metaparent, "id"), "sub:%d", idx);
+	snprintf(url, sizeof(url), "sub:%d", idx);
+	mp_add_track(mp->mp_prop_subtitle_tracks,
+		     NULL, url, nicename, NULL, lang, "HTSP");
 	break;
 
-      case CODEC_TYPE_AUDIO:
+      case AVMEDIA_TYPE_AUDIO:
 	hss->hss_mq = &mp->mp_audio;
 	hss->hss_data_type = MB_AUDIO;
 	
-	if(s > ascore) {
-	  ascore = s;
+	if(astream == -1)
 	  astream = idx;
-	}
-	metaparent = prop_create(mp->mp_prop_audio_tracks, NULL);
-	prop_set_stringf(prop_create(metaparent, "id"), "audio:%d", idx);
+
+	snprintf(url, sizeof(url), "audio:%d", idx);
+	mp_add_track(mp->mp_prop_audio_tracks,
+		     NULL, url, nicename, NULL, lang, "HTSP");
 	break;
       }
 
-      TRACE(TRACE_DEBUG, "HTSP", "Stream #%d: %s", idx, title);
-
+      TRACE(TRACE_DEBUG, "HTSP", "Stream #%d: %s %s", idx, nicename, title);
       LIST_INSERT_HEAD(&hs->hs_streams, hss, hss_link);
-
-
-      if(metaparent != NULL) {
-	prop_set_string(prop_create(metaparent, "title"), title);
-	prop_set_string(prop_create(metaparent, "format"), nicename);
-      }
     }
   }
-  mp->mp_audio.mq_stream  = astream;
   mp->mp_video.mq_stream  = vstream;
-  mp->mp_video.mq_stream2 = sstream;
 
-  if(astream != -1)
-    prop_set_stringf(mp->mp_prop_audio_track_current, "audio:%d", astream);
-  else
-    prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
-
-  if(sstream != -1)
-    prop_set_stringf(mp->mp_prop_subtitle_track_current, "sub:%d", sstream);
-  else
-    prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
-
-  TRACE(TRACE_DEBUG, "HTSP", "Selecting Video-stream:%d, Audio-stream: %d, "
-	"Subtitle-stream: %d",
-	vstream, astream, sstream);
 
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 }

@@ -8,7 +8,7 @@ widget(container_y, {
 
 
   widget(container_x, {
-    .hidden = $global.media.current.type != "video";
+    .hidden = $global.media.current.type != "video" && $global.media.current.type != "tv";
     .height = $ui.size * 10;
     .spacing = 20;
     .align = center;
@@ -24,10 +24,10 @@ widget(container_y, {
       
       widget(list_y, {
 	cloner($global.media.current.metadata.audiostreams, container_z, {
-	  commandSelectableItem($self.title,
+	  commandSelectableItem($self.title ?? $self.language ?? $self.source,
 				$self.format,
-				$self.id == $global.media.current.audio.current,
-				selectTrack($self.id));
+				$self.url == $global.media.current.audio.current,
+				selectAudioTrack($self.url));
 	});
       });
     }));
@@ -43,10 +43,10 @@ widget(container_y, {
       
       widget(list_y, {
 	cloner($global.media.current.metadata.subtitlestreams, container_z, {
-	  commandSelectableItem($self.title,
+	  commandSelectableItem($self.title ?? $self.language ?? $self.source,
 				$self.format,
-				$self.id == $global.media.current.subtitle.current,
-				selectTrack($self.id));
+				$self.url == $global.media.current.subtitle.current,
+				selectSubtitleTrack($self.url));
 	});
       });
     }));

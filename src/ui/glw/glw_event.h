@@ -67,7 +67,8 @@ glw_event_map_t *glw_event_map_navOpen_create(const char *url,
 /**
  *
  */
-glw_event_map_t *glw_event_map_selectTrack_create(const char *id);
+glw_event_map_t *glw_event_map_selectTrack_create(const char *id,
+						  event_type_t type);
 
 
 /**

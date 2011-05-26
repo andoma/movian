@@ -15,40 +15,34 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef SUBTITLES_H_
-#define SUBTITLES_H_
+#pragma once
 
 #include "arch/atomic.h"
 #include "misc/redblack.h"
 
-struct media_buf;
+struct video_decoder;
 
-RB_HEAD(subtitle_entry_tree, subtitle_entry);
+RB_HEAD(ext_subtitle_entry_tree, ext_subtitle_entry);
 
-typedef struct subtitle_entry {
-  char *se_text;
-  int64_t se_start;
-  int64_t se_stop;
-  RB_ENTRY(subtitle_entry) se_link;
-} subtitle_entry_t;
+typedef struct ext_subtitle_entry {
+  char *ese_text;
+  int64_t ese_start;
+  int64_t ese_stop;
+  RB_ENTRY(ext_subtitle_entry) ese_link;
+} ext_subtitle_entry_t;
 
 
-typedef struct subtitles {
-  struct subtitle_entry_tree s_entries;
-  subtitle_entry_t *s_cur;
-} subtitles_t;
+typedef struct ext_subtitles {
+  struct ext_subtitle_entry_tree es_entries;
+  ext_subtitle_entry_t *es_cur;
+  void (*es_decode)(struct video_decoder *vd, struct ext_subtitles *es,
+		    ext_subtitle_entry_t *ese);
+} ext_subtitles_t;
 
-void subtitles_destroy(subtitles_t *sub);
+void subtitles_destroy(ext_subtitles_t *sub);
 
-subtitles_t *subtitles_test(const char *fname);
+ext_subtitles_t *subtitles_test(const char *fname);
 
-subtitle_entry_t *subtitles_pick(subtitles_t *sub, int64_t pts);
+ext_subtitle_entry_t *subtitles_pick(ext_subtitles_t *sub, int64_t pts);
 
-subtitles_t *subtitles_load(const char *url);
-
-struct media_buf *subtitles_ssa_decode_line(uint8_t *src, size_t len);
-
-struct media_buf *subtitles_make_pkt(subtitle_entry_t *se);
-
-#endif /* SUBTITLES_H_ */
+ext_subtitles_t *subtitles_load(const char *url);

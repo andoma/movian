@@ -32,8 +32,6 @@
 #include "glw_texture.h"
 #include "glw_renderer.h"
 #include "glw_text_bitmap.h"
-#include "glw_unicode.h"
-#include "fileaccess/fileaccess.h"
 #include "misc/string.h"
 #include "text/text.h"
 #include "event.h"
@@ -86,7 +84,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_uc_size;
   int16_t gtb_maxlines;
 
-  int *gtb_uc_buffer; /* unicode buffer */
+  uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
 
   int gtb_int;
@@ -108,7 +106,7 @@ typedef struct glw_text_bitmap {
 
 static void gtb_notify(glw_text_bitmap_t *gtb);
 
-static glw_class_t glw_text, glw_label, glw_integer;
+static glw_class_t glw_text, glw_label;
 
 
 /**
@@ -367,7 +365,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 }
 
 
-/*
+/**
  *
  */
 static void
@@ -440,22 +438,17 @@ gtb_flush(glw_text_bitmap_t *gtb)
 static int
 del_char(glw_text_bitmap_t *gtb)
 {
-  int dlen = gtb->gtb_uc_len + 1; /* string length including trailing NUL */
   int i;
-  int *buf = gtb->gtb_uc_buffer;
 
   if(gtb->gtb_edit_ptr == 0)
     return 0;
-
-  dlen--;
 
   gtb->gtb_uc_len--;
   gtb->gtb_edit_ptr--;
   gtb->gtb_update_cursor = 1;
 
-  for(i = gtb->gtb_edit_ptr; i != dlen; i++)
-    buf[i] = buf[i + 1];
-
+  for(i = gtb->gtb_edit_ptr; i != gtb->gtb_uc_len; i++)
+    gtb->gtb_uc_buffer[i] = gtb->gtb_uc_buffer[i + 1];
 
   return 1;
 }
@@ -468,19 +461,18 @@ del_char(glw_text_bitmap_t *gtb)
 static int
 insert_char(glw_text_bitmap_t *gtb, int ch)
 {
-  int dlen = gtb->gtb_uc_len + 1; /* string length including trailing NUL */
   int i;
-  int *buf = gtb->gtb_uc_buffer;
 
-  if(dlen == gtb->gtb_uc_size)
-    return 0; /* Max length */
-  
-  dlen++;
+  if(gtb->gtb_uc_len == gtb->gtb_uc_size) {
+    gtb->gtb_uc_size += 10;
+    gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, 
+				 sizeof(int) * gtb->gtb_uc_size);
+  }
 
-  for(i = dlen; i != gtb->gtb_edit_ptr; i--)
-    buf[i] = buf[i - 1];
+  for(i = gtb->gtb_uc_len; i != gtb->gtb_edit_ptr; i--)
+    gtb->gtb_uc_buffer[i] = gtb->gtb_uc_buffer[i - 1];
   
-  buf[i] = ch;
+  gtb->gtb_uc_buffer[i] = ch;
   gtb->gtb_uc_len++;
   gtb->gtb_edit_ptr++;
   gtb->gtb_update_cursor = 1;
@@ -573,193 +565,18 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 /**
  *
  */
-static int
-tag_to_code(char *s)
-{
-  const char *tag;
-  int endtag = 0;
-
-  while(*s == ' ')
-    s++;
-  if(*s == 0)
-    return 0;
-
-  tag = s;
-
-  if(*tag == '/') {
-    endtag = 1;
-    tag++;
-  }
-    
-  while(*s != ' ' && *s != '/' && *s != 0)
-    s++;
-  *s = 0;
-
-  if(!endtag && !strcmp(tag, "p")) 
-    return TR_CODE_START;
-
-  if(!endtag && !strcmp(tag, "br")) 
-    return TR_CODE_NEWLINE;
-
-  if(!strcmp(tag, "center")) 
-    return endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
-
-  if(!strcmp(tag, "i")) 
-    return endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
-
-  if(!strcmp(tag, "b")) 
-    return endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
-
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-parse_rich_str(glw_text_bitmap_t *gtb, const char *str)
-{
-  int x = 0, c, lines = 1, p = -1, d;
-  int l = strlen(str);
-
-  char *tmp = malloc(l);
-  int lp;
-
-  while((c = utf8_get(&str)) != 0) {
-    if(c == '\r' || c == '\r')
-      continue;
-
-    if(c == '<') {
-      lp = 0;
-      while((d = utf8_get(&str)) != 0) {
-	if(d == '>')
-	  break;
-	tmp[lp++] = d;
-      }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
-
-      int c = tag_to_code(tmp);
-
-      if(c)
-	gtb->gtb_uc_buffer[x++] = c;
-      continue;
-    }
-
-
-    if(c == '&') {
-      lp = 0;
-      while((d = utf8_get(&str)) != 0) {
-	if(d == ';')
-	  break;
-	tmp[lp++] = d;
-      }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
-
-      int c = html_entity_lookup(tmp);
-
-      if(c != -1)
-	gtb->gtb_uc_buffer[x++] = c;
-      continue;
-    }
-
-
-
-    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
-      gtb->gtb_uc_buffer[x-1] = d;
-      p = -1;
-    } else {
-      gtb->gtb_uc_buffer[x++] = p = c;
-    }
-  }
-  lines = lines;
-  gtb->gtb_uc_len = x;
-  free(tmp);
-}
-
-
-/**
- *
- */
-static void
-parse_str(glw_text_bitmap_t *gtb, const char *str)
-{
-  int x = 0, c, lines = 1, p = -1, d;
-
-  while((c = utf8_get(&str)) != 0) {
-    if(c == '\r')
-      continue;
-    if(c == '\n') 
-      lines++;
-
-    if(p != -1 && (d = glw_unicode_compose(p, c)) != -1) {
-      gtb->gtb_uc_buffer[x-1] = d;
-      p = -1;
-    } else {
-      gtb->gtb_uc_buffer[x++] = p = c;
-    }
-  }
-  lines = lines;
-  gtb->gtb_uc_len = x;
-}
-
-
-/**
- *
- */
 static void
 gtb_caption_has_changed(glw_text_bitmap_t *gtb)
 {
-  char buf[30];
-  int l;
-  const char *str;
+  int len;
+  int flags = 0;
 
-  /* Convert UTF8 string to unicode int[] */
+  if(gtb->gtb_type == PROP_STR_RICH)
+    flags |= TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES;
 
-  if(gtb->w.glw_class == &glw_integer) {
-    
-    if(gtb->gtb_caption != NULL) {
-      snprintf(buf, sizeof(buf), gtb->gtb_caption, gtb->gtb_int);
-    } else {
-      snprintf(buf, sizeof(buf), "%d", gtb->gtb_int);
-    }
-    str = buf;
-    l = strlen(str);
-
-  } else {
-
-    l = gtb->gtb_caption ? strlen(gtb->gtb_caption) : 0;
-    
-    if(gtb->w.glw_class == &glw_text) /* Editable */
-      l = GLW_MAX(l, 100);
-    
-    str = gtb->gtb_caption;
-  }
-  
-  gtb->gtb_uc_size = l;
-  gtb->gtb_uc_buffer = realloc(gtb->gtb_uc_buffer, l * sizeof(int));
-  
-  if(str != NULL) {
-
-    switch(gtb->gtb_type) {
-    case PROP_STR_UTF8:
-      parse_str(gtb, str);
-      break;
-
-    case PROP_STR_RICH:
-      parse_rich_str(gtb, str);
-      break;
-
-    default:
-      abort();
-    }
-  } else {
-    gtb->gtb_uc_len = 0;
-  }
+  free(gtb->gtb_uc_buffer);
+  gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags);
+  gtb->gtb_uc_len = gtb->gtb_uc_size = len;
 
   if(gtb->w.glw_class == &glw_text) {
     gtb->gtb_edit_ptr = gtb->gtb_uc_len;
@@ -1108,7 +925,7 @@ font_render_thread(void *aux)
 
     if(uc != NULL && uc[0] != 0) {
       pm = text_render(uc, len, flags, gr->gr_fontsize * scale,
-		       max_width, max_lines, NULL);
+		       TR_ALIGN_JUSTIFIED, max_width, max_lines, NULL);
     } else {
       pm = NULL;
     }
@@ -1161,9 +978,7 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
   char *q;
   int i;
 
-  if(w->glw_class != &glw_label &&
-     w->glw_class != &glw_text &&
-     w->glw_class != &glw_integer) {
+  if(w->glw_class != &glw_label && w->glw_class != &glw_text) {
     return -1;
   }
 
@@ -1171,24 +986,6 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
   for(i = 0; i < gtb->gtb_uc_len; i++)
     q += utf8_put(q, gtb->gtb_uc_buffer[i]);
   *q = 0;
-  return 0;
-}
-
-
-
-
-/**
- *
- */
-int
-glw_get_int(glw_t *w, int *result)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-
-  if(w->glw_class != &glw_integer) 
-    return -1;
-
-  *result = gtb->gtb_int;
   return 0;
 }
 

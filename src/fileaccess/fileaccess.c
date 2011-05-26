@@ -19,6 +19,10 @@
 #include "config.h"
 
 #include <assert.h>
+#ifdef FA_DUMP
+#include <sys/types.h>
+#include <fcntl.h>
+#endif
 #include <sys/stat.h>
 #include <sys/time.h>
 #include <stdio.h>
@@ -43,7 +47,6 @@
 #include "blobcache.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
-static URLProtocol fa_lavf_proto;
 
 
 /**
@@ -146,7 +149,7 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
  *
  */
 void *
-fa_open(const char *url, char *errbuf, size_t errsize)
+fa_open(const char *url, char *errbuf, size_t errsize, int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -155,9 +158,14 @@ fa_open(const char *url, char *errbuf, size_t errsize)
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, errbuf, errsize);
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags);
   free(filename);
-
+#ifdef FA_DUMP
+  if(flags & FA_DUMP) 
+    fh->fh_dump_fd = open("dumpfile.bin", O_CREAT | O_TRUNC | O_WRONLY, 0666);
+  else
+    fh->fh_dump_fd = -1;
+#endif
   return fh;
 }
 
@@ -175,7 +183,10 @@ fa_open_vpaths(const char *url, const char **vpaths)
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, NULL, 0);
+  fh = fap->fap_open(fap, filename, NULL, 0, 0);
+#ifdef FA_DUMP
+  fh->fh_dump_fd = -1;
+#endif
   free(filename);
 
   return fh;
@@ -188,7 +199,12 @@ void
 fa_close(void *fh_)
 {
   fa_handle_t *fh = fh_;
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1)
+    close(fh->fh_dump_fd);
+#endif
   fh->fh_proto->fap_close(fh);
+
 }
 
 /**
@@ -198,7 +214,16 @@ int
 fa_read(void *fh_, void *buf, size_t size)
 {
   fa_handle_t *fh = fh_;
-  return fh->fh_proto->fap_read(fh, buf, size);
+  int r = fh->fh_proto->fap_read(fh, buf, size);
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1) {
+    printf("---------------- Dumpfile write %zd bytes at %ld\n",
+	   size, lseek(fh->fh_dump_fd, 0, SEEK_CUR));
+    if(write(fh->fh_dump_fd, buf, size) != size)
+      printf("Warning: Dump data write error\n");
+  }
+#endif
+  return r;
 }
 
 /**
@@ -208,6 +233,12 @@ int64_t
 fa_seek(void *fh_, int64_t pos, int whence)
 {
   fa_handle_t *fh = fh_;
+#ifdef FA_DUMP
+  if(fh->fh_dump_fd != -1) {
+    printf("--------------------- Dumpfile seek to %ld (%d)\n", pos, whence);
+    lseek(fh->fh_dump_fd, pos, whence);
+  }
+#endif
   return fh->fh_proto->fap_seek(fh, pos, whence);
 }
 
@@ -232,7 +263,7 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
   int r;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
-    return AVERROR_NOENT;
+    return -1;
 
   r = fap->fap_stat(fap, filename, buf, errbuf, errsize, 0);
   free(filename);
@@ -301,7 +332,7 @@ fa_findfile(const char *path, const char *file,
 /**
  *
  */
-void *
+fa_handle_t *
 fa_reference(const char *url)
 {
   fa_protocol_t *fap;
@@ -321,13 +352,10 @@ fa_reference(const char *url)
  *
  */
 void
-fa_unreference(void *fh_)
+fa_unreference(fa_handle_t *fh)
 {
-  fa_handle_t *fh = fh_;
-  if(fh_ == NULL)
-    return;
-
-  fh->fh_proto->fap_unreference(fh);
+  if(fh != NULL)
+    fh->fh_proto->fap_unreference(fh);
 }
 
 
@@ -477,96 +505,6 @@ fileaccess_init(void)
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)
       fap->fap_init();
-
-#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(52, 69, 0)
-  av_register_protocol2(&fa_lavf_proto, sizeof(fa_lavf_proto));
-#else
-  av_register_protocol(&fa_lavf_proto);
-#endif
-  return 0;
-}
-
-
-
-/**
- * lavf -> fileaccess open wrapper
- */
-static int
-fa_lavf_open(URLContext *h, const char *url, int flags)
-{
-  fa_protocol_t *fap;
-  void *fh;
-  char *filename;
-
-  av_strstart(url, "showtime:", &url);  
-
-  if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
-    return AVERROR_NOENT;
-  
-  fh = fap->fap_open(fap, filename, NULL, 0);
-  free(filename);
-  
-  if(fh == NULL) 
-    return AVERROR_NOENT;
-  
-  h->priv_data = fh;
-  return 0;
-}
-
-/**
- * lavf -> fileaccess read wrapper
- */
-static int
-fa_lavf_read(URLContext *h, unsigned char *buf, int size)
-{
-  return fa_read(h->priv_data, buf, size);
-}
-
-/**
- * lavf -> fileaccess seek wrapper
- */
-static int64_t
-fa_lavf_seek(URLContext *h, int64_t pos, int whence)
-{
-  if(whence == AVSEEK_SIZE)
-    return fa_fsize(h->priv_data);
-
-  return fa_seek(h->priv_data, pos, whence & ~AVSEEK_FORCE);
-}
-
-/**
- * lavf -> fileaccess close wrapper
- */
-static int
-fa_lavf_close(URLContext *h)
-{
-  fa_close(h->priv_data);
-  return 0;
-}
-
-
-static URLProtocol fa_lavf_proto = {
-    "showtime",
-    fa_lavf_open,
-    fa_lavf_read,
-    NULL,            /* Write */
-    fa_lavf_seek,
-    fa_lavf_close,
-};
-
-
-/**
- * lavf -> fileaccess open wrapper
- */
-static int
-fa_lavf_open2(URLContext *h, const char *url, int flags)
-{
-  void *fh;
-
-  if(sscanf(url, "%p", &fh) != 1)
-    return AVERROR_NOENT;
-  h->priv_data = fh;
-  fa_seek(fh, 0, SEEK_SET);
   return 0;
 }
 
@@ -574,60 +512,11 @@ fa_lavf_open2(URLContext *h, const char *url, int flags)
 /**
  *
  */
-static URLProtocol fa_lavf_proto2 = {
-    "showtime_ptr",
-    fa_lavf_open2,
-    fa_lavf_read,
-    NULL,            /* Write */
-    fa_lavf_seek,
-    fa_lavf_close,
-};
-
-
-/**
- * Transform a fa_filehandle_t into FFmpeg ByteIOContext
- *
- * We do this by passing the pointer as an URL (in ascii) to the open
- * function (above). This is insanity
- */
-int
-fa_lavf_reopen(ByteIOContext **s, fa_handle_t *fh)
+void
+fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
 {
-  char url[64];
-  URLContext *uc;
-  snprintf(url, sizeof(url), "%p", fh);
-  if(url_open_protocol(&uc, &fa_lavf_proto2, url, 0)) {
-    fa_close(fh);
-    return -1;
-  }
-
-  /* Okay, see if lavf can find out anything about the file */
-  if(url_fdopen(s, uc) < 0) {
-    url_close(uc);
-    return -1;
-  }
-  return 0;
-}
-
-
-/**
- *
- */
-const char *
-fa_ffmpeg_error_to_txt(int err)
-{
-  switch(err) {
-  case AVERROR_IO:           return "I/O error";
-  case AVERROR_NUMEXPECTED:  return "Number syntax expected in filename";
-  case AVERROR_INVALIDDATA:  return "Invalid data found";
-  case AVERROR_NOMEM:        return "Out of memory";
-  case AVERROR_NOFMT:        return "Unknown format";
-  case AVERROR_NOTSUPP:      return "Operation not supported";
-  case AVERROR_NOENT:        return "No such file or directory";
-  case AVERROR_EOF:          return "End of file";
-  case AVERROR_PATCHWELCOME: return "Not yet implemented, patch welcome";
-  }
-  return "Unknown errorcode";
+  if(av_strerror(err, errbuf, errlen))
+    snprintf(errbuf, errlen, "libav error %d", err);
 }
 
 
@@ -657,20 +546,29 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
   if(fap->fap_quickload != NULL) {
     data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
 
-    if(fs->fs_cache_age > 0)
+    if(fs != NULL && fs->fs_cache_age > 0)
       blobcache_put(url, "fa_quickload", data, fs->fs_size, fs->fs_cache_age);
 
     free(filename);
     return data;
   }
 
-  fh = fap->fap_open(fap, filename, errbuf, errlen);
+  fh = fap->fap_open(fap, filename, errbuf, errlen, 0);
+#ifdef FA_DUMP
+  fh->fh_dump_fd = -1;
+#endif
   free(filename);
 
   if(fh == NULL)
     return NULL;
 
   size = fa_fsize(fh);
+  if(size == -1) {
+    snprintf(errbuf, errlen, "Unable to load file from non-seekable fs");
+    fa_close(fh);
+    return NULL;
+  }
+
   data = malloc(size + 1);
 
   r = fa_read(fh, data, size);

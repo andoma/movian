@@ -199,6 +199,13 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     return NULL;
   }
 
+  size_t s = fa_fsize(fh);
+  if(s < 0) {
+    snprintf(errbuf, errlen, "%s: Can't read from non-seekable file", url);
+    fa_close(fh);
+    return NULL;
+  }
+
   pixmap_t *pm = pixmap_alloc_coded(NULL, fa_fsize(fh), codec);
 
   if(pm == NULL) {

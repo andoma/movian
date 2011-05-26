@@ -18,9 +18,11 @@
 
 #include "config.h"
 #include <sys/stat.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+#include <limits.h>
 #include "showtime.h"
 #include "fileaccess.h"
 #include "filebundle.h"
@@ -67,7 +69,8 @@ resolve_file(const char *url)
  * Open file
  */
 static fa_handle_t *
-b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+       int flags)
 {
   const struct filebundle_entry *fbe;
   fa_bundle_fh_t *fh;

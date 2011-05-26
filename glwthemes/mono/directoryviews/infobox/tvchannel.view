@@ -12,7 +12,7 @@ widget(container_y, {
   });
 
   widget(list_y, {
-    cloner($args.metadata.events, container_x, {
+    cloner($args.metadata.events.list, container_x, {
 
       widget(label, {
 	.filterConstraintX = true;

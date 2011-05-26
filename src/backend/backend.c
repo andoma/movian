@@ -81,8 +81,8 @@ backend_fini(void)
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   int flags, int priority,
-		   struct play_video_subtitle_list *subtitles,
-		   char *errbuf, size_t errlen)
+		   char *errbuf, size_t errlen,
+		   const char *mimetype)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -91,7 +91,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  return nb->be_play_video(url, mp, flags, priority, subtitles, errbuf, errlen);
+  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype);
 }
 
 
@@ -100,7 +100,8 @@ backend_play_video(const char *url, struct media_pipe *mp,
  */
 event_t *
 backend_play_audio(const char *url, struct media_pipe *mp,
-		   char *errbuf, size_t errlen, int paused)
+		   char *errbuf, size_t errlen, int paused,
+		   const char *mimetype)
 {
   backend_t *nb = backend_canhandle(url);
   
@@ -108,7 +109,7 @@ backend_play_audio(const char *url, struct media_pipe *mp,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_play_audio(url, mp, errbuf, errlen, paused);
+  return nb->be_play_audio(url, mp, errbuf, errlen, paused, mimetype);
 }
 
 

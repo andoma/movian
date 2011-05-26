@@ -137,7 +137,12 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
     
     frame = avcodec_alloc_frame();
 
-    r = avcodec_decode_video(ctx, frame, &got_pic, pm->pm_data, pm->pm_size);
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = pm->pm_data;
+    avpkt.size = pm->pm_size;
+
+    r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
     if(r < 0) {
       av_free(frame);
       av_free(ctx);

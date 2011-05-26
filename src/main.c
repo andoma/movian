@@ -50,6 +50,7 @@
 #include "i18n.h"
 #include "misc/string.h"
 #include "text/text.h"
+#include "video/video_settings.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -290,6 +291,8 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  htsmsg_store_init();
+
   /* Try to create cache path */
   if(showtime_cache_path != NULL &&
      (r = makedirs(showtime_cache_path)) != 0) {
@@ -351,6 +354,9 @@ main(int argc, char **argv)
 
   /* Internationalization */
   i18n_init();
+
+  /* Video settings */
+  video_settings_init();
 
 
   nav_open(NAV_HOME, NULL);
@@ -454,6 +460,8 @@ showtime_shutdown(int retcode)
 
   // run early shutdown hooks (those must be fast)
   shutdown_hook_run(1);
+
+  htsmsg_store_flush();
 
   if(ui_shutdown() == -1) {
     // Primary UI has no shutdown method, launch a new thread to stop
