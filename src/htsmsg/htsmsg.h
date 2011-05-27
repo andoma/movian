@@ -287,6 +287,12 @@ htsmsg_field_t *htsmsg_field_add(htsmsg_t *msg, const char *name,
 				 int type, int flags);
 
 /**
+ * Get a field, return NULL if it does not exist
+ */
+htsmsg_field_t *htsmsg_field_find(htsmsg_t *msg, const char *name);
+
+
+/**
  * Clone a message.
  */
 htsmsg_t *htsmsg_copy(htsmsg_t *src);

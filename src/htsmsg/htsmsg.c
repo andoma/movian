@@ -102,7 +102,7 @@ htsmsg_field_add(htsmsg_t *msg, const char *name, int type, int flags)
 /*
  *
  */
-static htsmsg_field_t *
+htsmsg_field_t *
 htsmsg_field_find(htsmsg_t *msg, const char *name)
 {
   htsmsg_field_t *f;
