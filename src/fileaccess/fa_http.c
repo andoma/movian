@@ -48,6 +48,15 @@ static uint8_t nonce[20];
  */
 #define SEEK_BY_READ_THRES 32768
 
+
+/**
+ * If we read more than this in a sequence, we switch to a continous
+ * HTTP stream (instead of ranges)
+ */
+#define STREAMING_LIMIT 1000000
+
+
+
 static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
 
 
@@ -99,15 +108,57 @@ http_ctime(time_t *tp, const char *d)
 }
 
 
+/**
+ * Server quirks
+ */
+LIST_HEAD(http_server_quirk_list, http_server_quirk);
+
+static struct http_server_quirk_list http_server_quirks;
+static hts_mutex_t http_server_quirk_mutex;
+
+#define HTTP_SERVER_QUIRK_NO_HEAD 0x1 // Can't do proper HEAD requests
+
+typedef struct http_server_quirk {
+  LIST_ENTRY(http_server_quirk) hsq_link;
+  char *hsq_hostname;
+  int hsq_quirks;
+} http_server_quirk_t;
+
+/**
+ *
+ */
+static int
+http_server_quirk_set_get(const char *hostname, int quirk)
+{
+  http_server_quirk_t *hsq;
+  int r;
+
+  hts_mutex_lock(&http_server_quirk_mutex);
+
+  LIST_FOREACH(hsq, &http_server_quirks, hsq_link) {
+    if(!strcmp(hsq->hsq_hostname, hostname))
+      break;
+  }
+  
+  if(quirk) {
+    if(hsq == NULL) {
+      hsq = malloc(sizeof(http_server_quirk_t));
+      hsq->hsq_hostname = strdup(hostname);
+    } else {
+      LIST_REMOVE(hsq, hsq_link);
+    }
+    hsq->hsq_quirks = quirk;
+    LIST_INSERT_HEAD(&http_server_quirks, hsq, hsq_link);
+  }
+  r = hsq ? hsq->hsq_quirks : 0;
+  hts_mutex_unlock(&http_server_quirk_mutex);
+  return r;
+}
 
 
 /**
- * If we read more than this in a sequence, we switch to a continous
- * HTTP stream (instead of ranges)
+ * Connection parking
  */
-#define STREAMING_LIMIT 1000000
-
-
 TAILQ_HEAD(http_connection_queue , http_connection);
 
 static struct http_connection_queue http_connections;
@@ -1014,6 +1065,17 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       hf->hf_content_type = strdup(argv[1]);
     }
 
+    if(code == 206 && !strcasecmp(argv[0], "Content-Range") &&
+       hf->hf_filesize == -1) {
+
+      if(!strncasecmp(argv[1], "bytes", 5)) {
+	const char *slash = strchr(argv[1], '/');
+	if(slash != NULL) {
+	  slash++;
+	  hf->hf_filesize = strtoll(slash, NULL, 0);
+	}
+      }
+    }
 
     if(!strcasecmp(argv[0], "connection")) {
 
@@ -1220,6 +1282,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   int code;
   htsbuf_queue_t q;
   int redircount = 0;
+  int nohead; // Set if server can't handle HEAD method
+
 
   reconnect:
 
@@ -1233,24 +1297,32 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   htsbuf_queue_init(&q, 0);
 
+  nohead = !!(http_server_quirk_set_get(hf->hf_connection->hc_hostname, 0) &
+	      HTTP_SERVER_QUIRK_NO_HEAD);
+
  again:
 
-  
-  
+  if(nohead) {
+    htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_auth_send(hf, &q, "GET", NULL);
+    htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
+  } else {
+    htsbuf_qprintf(&q, "HEAD %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_auth_send(hf, &q, "HEAD", NULL);
+  }
   htsbuf_qprintf(&q, 
-		 "HEAD %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
 		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
 		 "Connection: %s\r\n",
-		 hf->hf_path,
-		 hf->hf_version,
 		 htsversion,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_want_close ? "close" : "keep-alive");
 
-  http_auth_send(hf, &q, "HEAD", NULL);
   htsbuf_qprintf(&q, "\r\n");
+
+  if(hf->hf_debug)
+    htsbuf_dump_raw_stderr(&q);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -1262,6 +1334,14 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
+
+    if(nohead) {
+      // Server did not honour our GET request with 1 byte range
+      // This is bad, bail out
+      snprintf(errbuf, errlen, "Unexpected 200 response on open GET");
+      return -1;
+    }
+
     if(hf->hf_filesize < 0) {
       
       if(!hf->hf_want_close && hf->hf_chunked_transfer) {
@@ -1288,6 +1368,16 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
     return 0;
     
+  case 206:
+    if(http_drain_content(hf)) {
+      snprintf(errbuf, errlen, "Connection lost");
+      return -1;
+    }
+    if(hf->hf_filesize == -1)
+      HF_TRACE(hf, "%s: No known filesize, seeking may be slower", hf->hf_url);
+
+    return 0;
+
   case 301:
   case 302:
   case 303:
@@ -1312,6 +1402,20 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
     goto again;
 
+  case 405:
+    if(!nohead) {
+      http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
+				HTTP_SERVER_QUIRK_NO_HEAD);
+      // Retry using GET
+      if(http_drain_content(hf)) {
+	snprintf(errbuf, errlen, "Connection lost");
+	return -1;
+      }
+      
+      nohead = 1;
+      goto again;
+    }
+    // FALLTHRU
   default:
     snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
     return -1;
