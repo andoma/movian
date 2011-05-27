@@ -610,16 +610,16 @@ http_client_oauth(struct http_auth_req *har,
 
   params = alloca(sizeof(char *) * len * 2);
 
-  url_escape(str, sizeof(str), consumer_key);
+  url_escape(str, sizeof(str), consumer_key, URL_ESCAPE_PARAM);
   const char *oauth_consumer_key = mystrdupa(str);
 
-  url_escape(str, sizeof(str), consumer_secret);
+  url_escape(str, sizeof(str), consumer_secret, URL_ESCAPE_PARAM);
   const char *oauth_consumer_secret = mystrdupa(str);
 
-  url_escape(str, sizeof(str), token);
+  url_escape(str, sizeof(str), token, URL_ESCAPE_PARAM);
   const char *oauth_token = mystrdupa(str);
 
-  url_escape(str, sizeof(str), token_secret);
+  url_escape(str, sizeof(str), token_secret, URL_ESCAPE_PARAM);
   const char *oauth_token_secret = mystrdupa(str);
 
   snprintf(str, sizeof(str), "%lu", time(NULL));
@@ -680,7 +680,8 @@ http_client_oauth(struct http_auth_req *har,
 	     "%s%%3A%%2F%%2F%s%%3A%d", hc->hc_ssl ? "https" : "http",
 	     hc->hc_hostname, hc->hc_port);
 
-  url_escape(str + strlen(str), sizeof(str) - strlen(str), hf->hf_path);
+  url_escape(str + strlen(str), sizeof(str) - strlen(str), hf->hf_path,
+	     URL_ESCAPE_PARAM);
 
   const char *div = "&";
   for(i = 0; i < len; i++) {

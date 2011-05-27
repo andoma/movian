@@ -6,7 +6,10 @@
 
 void url_deescape(char *s);
 
-int url_escape(char *dest, const int size, const char *src);
+#define URL_ESCAPE_PATH   1
+#define URL_ESCAPE_PARAM  2
+
+int url_escape(char *dest, const int size, const char *src, int how);
 
 void html_entities_decode(char *s);
 

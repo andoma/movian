@@ -402,7 +402,7 @@
   plugin.addSearcher(
     "Headweb movies", plugin.config.path + "headweb_icon.png",
     function(page, query) {
-      requestContents(page, "/search/" + showtime.httpEscape(query));
+      requestContents(page, "/search/" + showtime.paramEscape(query));
     });
 
 })(this);

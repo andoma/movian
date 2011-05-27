@@ -82,10 +82,31 @@ url_deescape(char *s)
 
 static const char hexchars[16] = "0123456789ABCDEF";
 
-static const char url_escape_tbl1[256] = {
+static const char url_escape_param[256] = {
   0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x00
   0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x10
   2,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,1,0,   // 0x20
+  1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,   // 0x30
+  0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x40
+  1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,1,   // 0x50
+  0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x60
+  1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,1,0,   // 0x70
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x80
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x90
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xa0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xb0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xc0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xd0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xe0
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0xf0
+};
+
+
+
+static const char url_escape_path[256] = {
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x00
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,0,0,0,   // 0x10
+  0,0,0,0, 0,0,0,0, 0,0,0,0, 0,1,1,1,   // 0x20
   1,1,1,1, 1,1,1,1, 1,1,0,0, 0,0,0,0,   // 0x30
   0,1,1,1, 1,1,1,1, 1,1,1,1, 1,1,1,1,   // 0x40
   1,1,1,1, 1,1,1,1, 1,1,1,0, 0,0,0,1,   // 0x50
@@ -105,11 +126,16 @@ static const char url_escape_tbl1[256] = {
  *
  */
 int
-url_escape(char *dst, const int size, const char *src)
+url_escape(char *dst, const int size, const char *src, int how)
 {
   unsigned char s;
   int r = 0;
-  const char *table = url_escape_tbl1;
+  const char *table;
+
+  if(how == URL_ESCAPE_PATH)
+    table = url_escape_path;
+  else
+    table = url_escape_param;
 
   while((s = *src++) != 0) {
     switch(table[s]) {
@@ -134,7 +160,7 @@ url_escape(char *dst, const int size, const char *src)
   }
   if(r < size)
     dst[r] = 0;
-  return r;
+  return r+1;
 }
 
 

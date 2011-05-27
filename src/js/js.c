@@ -158,28 +158,44 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
   return JS_TRUE;
 }
 
-
-/**
- *
- */
 static JSBool 
-js_httpEscape(JSContext *cx, JSObject *obj,
-	      uintN argc, jsval *argv, jsval *rval)
+js_escape(JSContext *cx, JSObject *obj,
+	  uintN argc, jsval *argv, jsval *rval, int how)
 {
+
   const char *str;
   char *r;
 
   if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
     return JS_FALSE;
 
-  size_t l = strlen(str);
-  
-  r = malloc((l * 3) + 1);
-  
-  url_escape(r, l * 3, str);
+  size_t len = url_escape(NULL, 0, str, how);
+  r = malloc(len);
+  url_escape(r, len, str, how);
 
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, r, strlen(r)));
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, r, len-1));
   return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSBool 
+js_pathEscape(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  return js_escape(cx, obj, argc, argv, rval, URL_ESCAPE_PATH);
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_paramEscape(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  return js_escape(cx, obj, argc, argv, rval, URL_ESCAPE_PARAM);
 }
 
 
@@ -398,7 +414,8 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
-    JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
+    JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
+    JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
