@@ -29,18 +29,28 @@
 typedef struct js_setting {
 
   setting_t *jss_s;
-  prop_t *jss_p;
 
   JSContext *jss_cx;
   JSObject *jss_obj;
 
-  htsmsg_t *jss_store;
-  char *jss_spath;
-  char *jss_id;
-
-  struct js_setting *jss_parent;
-
 } js_setting_t;
+
+
+/**
+ *
+ */
+typedef struct js_setting_group {
+
+  setting_t *jsg_s;
+
+  prop_t *jsg_root;
+
+  htsmsg_t *jsg_store;
+  char *jsg_spath;
+  int jsg_frozen;
+} js_setting_group_t;
+
+
 
 
 /**
@@ -52,13 +62,6 @@ setting_finalize(JSContext *cx, JSObject *obj)
   js_setting_t *jss = JS_GetPrivate(cx, obj);
   if(jss->jss_s != NULL)
     setting_destroy(jss->jss_s);
-  if(jss->jss_p != NULL)
-    prop_destroy(jss->jss_p);
-  if(jss->jss_store != NULL)
-    htsmsg_destroy(jss->jss_store);
-  
-  free(jss->jss_spath);
-  free(jss->jss_id);
   free(jss);
 }
 
@@ -79,10 +82,10 @@ static JSClass setting_class = {
  *
  */
 static void
-js_settings_save(void *opaque, htsmsg_t *msg)
+js_setting_group_save(void *opaque, htsmsg_t *msg)
 {
-  js_setting_t *jss = opaque;
-  htsmsg_store_save(msg, jss->jss_spath);
+  js_setting_group_t *jsg = opaque;
+  htsmsg_store_save(msg, jsg->jsg_spath);
 }
 
 
@@ -172,7 +175,7 @@ static JSBool
 js_createBool(JSContext *cx, JSObject *obj, uintN argc, 
 	      jsval *argv, jsval *rval)
 {
-  js_setting_t *parent = JS_GetPrivate(cx, obj);
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
   const char *id;
   const char *title;
   JSBool def;
@@ -193,11 +196,11 @@ js_createBool(JSContext *cx, JSObject *obj, uintN argc,
   v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, jss->jss_obj, "callback", &v);
   jss->jss_cx = cx;
-  jss->jss_s = settings_create_bool(parent->jss_p, id, title,
-				    def, parent->jss_store,
+  jss->jss_s = settings_create_bool(jsg->jsg_root, id, title,
+				    def, jsg->jsg_store,
 				    js_store_update_bool, jss,
 				    SETTINGS_INITIAL_UPDATE, NULL,
-				    js_settings_save, parent);
+				    js_setting_group_save, jsg);
   jss->jss_cx = NULL;
 
   return JS_TRUE;
@@ -211,7 +214,7 @@ static JSBool
 js_createString(JSContext *cx, JSObject *obj, uintN argc, 
 		jsval *argv, jsval *rval)
 {
-  js_setting_t *parent = JS_GetPrivate(cx, obj);
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
   const char *id;
   const char *title;
   const char *def;
@@ -232,11 +235,11 @@ js_createString(JSContext *cx, JSObject *obj, uintN argc,
   v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, jss->jss_obj, "callback", &v);
   jss->jss_cx = cx;
-  jss->jss_s = settings_create_string(parent->jss_p, id, title,
-				      def, parent->jss_store,
+  jss->jss_s = settings_create_string(jsg->jsg_root, id, title,
+				      def, jsg->jsg_store,
 				      js_store_update_string, jss,
 				      SETTINGS_INITIAL_UPDATE, NULL,
-				      js_settings_save, parent);
+				      js_setting_group_save, jsg);
   jss->jss_cx = NULL;
 
   return JS_TRUE;
@@ -250,16 +253,15 @@ static JSBool
 js_createInfo(JSContext *cx, JSObject *obj, uintN argc, 
 	      jsval *argv, jsval *rval)
 {
-  js_setting_t *parent = JS_GetPrivate(cx, obj);
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
   const char *id, *icon, *text;
 
   if(!JS_ConvertArguments(cx, argc, argv, "sss", &id, &icon, &text))
     return JS_FALSE;
 
-  settings_create_info(parent->jss_p, icon, text);
+  settings_create_info(jsg->jsg_root, icon, text);
   return JS_TRUE;
 }
-
 
 /**
  *
@@ -288,64 +290,6 @@ jsval_from_htsmsgfield(JSContext *cx, htsmsg_field_t *f)
   return JSVAL_NULL;
 }
 
-
-/**
- *
- */
-static JSBool 
-js_privset(JSContext *cx, JSObject *obj, uintN argc, 
-	   jsval *argv, jsval *rval)
-{
-  jsval v;
-  if(!JS_ConvertArguments(cx, argc, argv, "v", &v))
-    return JS_FALSE;
-
-  js_setting_t *jss = JS_GetPrivate(cx, obj);
-  htsmsg_t *store = jss->jss_parent->jss_store;
-  htsmsg_delete_field(store, jss->jss_id);
-
-  if(JSVAL_IS_INT(v)) {
-    htsmsg_add_s32(store, jss->jss_id, JSVAL_TO_INT(v));
-  } else if(JSVAL_IS_DOUBLE(v)) {
-    double d;
-    if(JS_ValueToNumber(cx, v, &d))
-      htsmsg_add_dbl(store, jss->jss_id, d);
-  } else {
-    htsmsg_add_str(store, jss->jss_id, 
-		    JS_GetStringBytes(JS_ValueToString(cx, v)));
-  }
-  htsmsg_store_save(store, jss->jss_parent->jss_spath);
-  
-  return JS_TRUE;
-}
-
-/**
- *
- */
-static JSBool 
-js_createPrivate(JSContext *cx, JSObject *obj, uintN argc, 
-		 jsval *argv, jsval *rval)
-{
-  js_setting_t *parent = JS_GetPrivate(cx, obj);
-  const char *id;
-  jsval def;
-
-  if(!JS_ConvertArguments(cx, argc, argv, "sv", &id, &def))
-    return JS_FALSE;
-
-  js_setting_t *jss = jss_create(cx, obj, id, rval);
-  jss->jss_id = strdup(id);
-  htsmsg_field_t *f = htsmsg_field_find(parent->jss_store, id);
-  
-  if(f != NULL)
-    def = jsval_from_htsmsgfield(cx, f);
-  
-  JS_SetProperty(cx, jss->jss_obj, "value", &def);
-  JS_DefineFunction(cx, jss->jss_obj, "set", js_privset, 1, 0);
-  return JS_TRUE;
-}
-
-
 /**
  *
  */
@@ -353,8 +297,132 @@ static JSFunctionSpec setting_functions[] = {
     JS_FS("createBool", js_createBool, 4, 0, 0),
     JS_FS("createString", js_createString, 4, 0, 0),
     JS_FS("createInfo", js_createInfo, 3, 0, 0),
-    JS_FS("createPrivate", js_createPrivate, 2, 0, 0),
     JS_FS_END
+};
+
+
+
+
+/**
+ *
+ */
+static void
+setting_group_finalize(JSContext *cx, JSObject *obj)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  if(jsg->jsg_root != NULL)
+    prop_destroy(jsg->jsg_root);
+  if(jsg->jsg_store != NULL)
+    htsmsg_destroy(jsg->jsg_store);
+  
+  free(jsg->jsg_spath);
+  free(jsg);
+}
+
+
+/**
+ *
+ */
+static JSBool
+jsg_set_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *name;
+
+  if(jsg->jsg_frozen)
+    return JS_TRUE;
+
+  name = JSVAL_IS_STRING(id) ? JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
+  if(name != NULL) {
+    jsval v = *vp;
+    
+    if(JSVAL_IS_INT(v)) {
+      htsmsg_delete_field(jsg->jsg_store, name);
+      htsmsg_add_s32(jsg->jsg_store, name, JSVAL_TO_INT(v));
+    } else if(JSVAL_IS_DOUBLE(v)) {
+      double d;
+      if(JS_ValueToNumber(cx, v, &d)) {
+	htsmsg_delete_field(jsg->jsg_store, name);
+	htsmsg_add_dbl(jsg->jsg_store, name, d);
+      }
+    } else if(JSVAL_IS_STRING(v)) {
+      htsmsg_delete_field(jsg->jsg_store, name);
+      htsmsg_add_str(jsg->jsg_store, name, 
+		     JS_GetStringBytes(JS_ValueToString(cx, v)));
+    } else {
+      return JS_TRUE;
+    }
+    htsmsg_store_save(jsg->jsg_store, jsg->jsg_spath);
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool
+jsg_del_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *name;
+  name = JSVAL_IS_STRING(id) ? JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
+  if(name != NULL) {
+    htsmsg_delete_field(jsg->jsg_store, name);
+    htsmsg_store_save(jsg->jsg_store, jsg->jsg_spath);
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool
+jsg_get_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *name;
+  name = JSVAL_IS_STRING(id) ? JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
+  if(name != NULL) {
+    htsmsg_field_t *f;
+
+    if((f = htsmsg_field_find(jsg->jsg_store, name)) != NULL)
+      *vp = jsval_from_htsmsgfield(cx, f);
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool
+jsg_resolve_prop(JSContext *cx, JSObject *obj, jsval id)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *name;
+  name = JSVAL_IS_STRING(id) ? JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
+  if(name != NULL) {
+    htsmsg_field_t *f;
+
+    if((f = htsmsg_field_find(jsg->jsg_store, name)) != NULL) {
+      jsval vp = jsval_from_htsmsgfield(cx, f);
+      JS_SetProperty(cx, obj, name, &vp);
+    }
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSClass setting_group_class = {
+  "settinggroup", JSCLASS_HAS_PRIVATE,
+  jsg_set_prop, jsg_del_prop, jsg_get_prop, jsg_set_prop,
+  JS_EnumerateStub,jsg_resolve_prop,JS_ConvertStub, setting_group_finalize,
+  JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
 
@@ -375,19 +443,20 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
   snprintf(spath, sizeof(spath), "plugins/%s", jsp->jsp_id);
 
-  js_setting_t *jss = calloc(1, sizeof(js_setting_t));
+  js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
   JSObject *robj;
+  jsg->jsg_frozen = 1;
+  jsg->jsg_spath = strdup(spath);
+  jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
 
-  jss->jss_spath = strdup(spath);
-  jss->jss_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
+  jsg->jsg_root = settings_add_dir(settings_apps, title, type, icon);
 
-  jss->jss_p = settings_add_dir(settings_apps, title, type, icon);
-
-  robj = JS_NewObjectWithGivenProto(cx, &setting_class, NULL, obj);
+  robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);
-  JS_SetPrivate(cx, robj, jss);
+  JS_SetPrivate(cx, robj, jsg);
 
   JS_DefineFunctions(cx, robj, setting_functions);
+  jsg->jsg_frozen = 0;
   return JS_TRUE;
 }
 
