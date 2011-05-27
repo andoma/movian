@@ -407,6 +407,21 @@ js_sleep(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_time(JSContext *cx, JSObject *obj,
+	uintN argc, jsval *argv, jsval *rval)
+{
+  time_t t;
+  time(&t);
+  jsdouble *d = JS_NewDouble(cx, t);
+  *rval = DOUBLE_TO_JSVAL(d);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -423,6 +438,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("sleep",            js_sleep, 1, 0, 0),
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
+    JS_FS("time",             js_time, 0, 0, 0),
     JS_FS_END
 };
 
