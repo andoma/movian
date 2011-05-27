@@ -27,20 +27,18 @@
 #include "htsbuf.h"
 #include "misc/string.h"
 #include "misc/json.h"
+#include "misc/dbl.h"
 
 
-/*
- * Note to future:
- * If your about to add support for numbers with decimal point,
- * remember to always serialize them with '.' as decimal point character
- * no matter what current locale says. This is according to the JSON spec.
+/**
+ *
  */
 static void
 htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
 		  int indent, int pretty)
 {
   htsmsg_field_t *f;
-  char buf[30];
+  char buf[100];
   static const char *indentor = "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
 
   htsbuf_append(hq, isarray ? "[" : "{", 1);
@@ -74,6 +72,11 @@ htsmsg_json_write(htsmsg_t *msg, htsbuf_queue_t *hq, int isarray,
 
     case HMF_S64:
       snprintf(buf, sizeof(buf), "%" PRId64, f->hmf_s64);
+      htsbuf_append(hq, buf, strlen(buf));
+      break;
+
+    case HMF_DBL:
+      my_double2str(buf, sizeof(buf), f->hmf_dbl);
       htsbuf_append(hq, buf, strlen(buf));
       break;
 
@@ -162,7 +165,7 @@ add_long(void *opaque, void *parent, const char *name, long v)
 static void 
 add_double(void *opaque, void *parent, const char *name, double v)
 {
-  htsmsg_add_s64(parent, name, v);
+  htsmsg_add_dbl(parent, name, v);
 }
 
 static void 
