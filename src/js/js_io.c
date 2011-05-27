@@ -455,12 +455,30 @@ js_oauth(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool
+js_rawAuth(JSContext *cx, JSObject *obj,
+	   uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  *rval = BOOLEAN_TO_JSVAL(!http_client_rawauth(JS_GetPrivate(cx, obj), str));
+  return JS_TRUE;
+}
+
+
 
 /**
  *
  */
 static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
+    JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
     JS_FS_END
 };
 

@@ -185,6 +185,8 @@ int http_client_oauth(struct http_auth_req *har,
 		      const char *token,
 		      const char *token_secret);
 
+int http_client_rawauth(struct http_auth_req *har, const char *str);
+
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);

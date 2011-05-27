@@ -774,6 +774,17 @@ http_client_oauth(struct http_auth_req *har,
 /**
  *
  */
+int
+http_client_rawauth(struct http_auth_req *har, const char *str)
+{
+  htsbuf_qprintf(har->har_q, "Authorization: %s\r\n", str);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static void
 http_auth_send(http_file_t *hf, htsbuf_queue_t *q, const char *method,
 	       const char **parameters)
