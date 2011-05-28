@@ -70,6 +70,7 @@ typedef struct glw_ps3 {
 } glw_ps3_t;
 
 
+extern s32 ioPadGetDataExtra(u32 port, u32* type, PadData* data);
 
 static void
 waitFlip()
@@ -339,42 +340,279 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
   glw_unlock(&gp->gr);
 }
 
+typedef enum {
+  BTN_LEFT = 1,
+  BTN_UP,
+  BTN_RIGHT,
+  BTN_DOWN,
+  BTN_CROSS,
+  BTN_CIRCLE,
+  BTN_TRIANGLE,
+  BTN_SQUARE,
+  BTN_L1,
+  BTN_L2,
+  BTN_L3,
+  BTN_R1,
+  BTN_R2,
+  BTN_R3,
+  BTN_START,
+  BTN_SELECT,
+  BTN_KEY_1,
+  BTN_KEY_2,
+  BTN_KEY_3,
+  BTN_KEY_4,
+  BTN_KEY_5,
+  BTN_KEY_6,
+  BTN_KEY_7,
+  BTN_KEY_8,
+  BTN_KEY_9,
+  BTN_KEY_0,
+  BTN_ENTER,
+  BTN_RETURN,
+  BTN_CLEAR,
+  BTN_EJECT,
+  BTN_TOPMENU,
+  BTN_TIME,
+  BTN_PREV,
+  BTN_NEXT,
+  BTN_PLAY,
+  BTN_SCAN_REV,
+  BTN_SCAN_FWD,
+  BTN_STOP,
+  BTN_PAUSE,
+  BTN_POPUP_MENU,
+  BTN_SLOW_REV,
+  BTN_SLOW_FWD,
+  BTN_SUBTITLE,
+  BTN_AUDIO,
+  BTN_ANGLE,
+  BTN_DISPLAY,
+  BTN_BLUE,
+  BTN_RED,
+  BTN_GREEN,
+  BTN_YELLOW,
+  BTN_max
+} buttoncode_t;
+
+#define AVEC(x...) (const action_type_t []){x, ACTION_NONE}
+const static action_type_t *btn_to_action[BTN_max] = {
+  [BTN_LEFT]       = AVEC(ACTION_LEFT),
+  [BTN_UP]         = AVEC(ACTION_UP),
+  [BTN_RIGHT]      = AVEC(ACTION_RIGHT),
+  [BTN_DOWN]       = AVEC(ACTION_DOWN),
+  [BTN_CROSS]      = AVEC(ACTION_ACTIVATE, ACTION_ENTER),
+  [BTN_CIRCLE]     = AVEC(ACTION_NAV_BACK),
+  [BTN_TRIANGLE]   = AVEC(ACTION_MENU),
+  [BTN_L1]         = AVEC(ACTION_PREV_TRACK, ACTION_NAV_BACK),
+  [BTN_L3]         = AVEC(ACTION_SHOW_MEDIA_STATS),
+  [BTN_R1]         = AVEC(ACTION_NEXT_TRACK, ACTION_NAV_FWD),
+  [BTN_R3]         = AVEC(ACTION_LOGWINDOW),
+  [BTN_START]      = AVEC(ACTION_PLAYPAUSE),
+  [BTN_SELECT]     = AVEC(ACTION_HOME),
+  [BTN_ENTER]      = AVEC(ACTION_ACTIVATE, ACTION_ENTER),
+  [BTN_RETURN]     = AVEC(ACTION_NAV_BACK),
+  [BTN_EJECT]      = AVEC(ACTION_EJECT),
+  [BTN_TOPMENU]    = AVEC(ACTION_HOME),
+  [BTN_PREV]       = AVEC(ACTION_PREV_TRACK),
+  [BTN_NEXT]       = AVEC(ACTION_NEXT_TRACK),
+  [BTN_PLAY]       = AVEC(ACTION_PLAY),
+  [BTN_SCAN_REV]   = AVEC(ACTION_SEEK_BACKWARD),
+  [BTN_SCAN_FWD]   = AVEC(ACTION_SEEK_FORWARD),
+  [BTN_STOP]       = AVEC(ACTION_STOP),
+  [BTN_PAUSE]      = AVEC(ACTION_PAUSE),
+  [BTN_POPUP_MENU] = AVEC(ACTION_MENU),
+
+  //  [BTN_L2] = ACTION_L2,
+  //  [BTN_R2] = ACTION_R2,
+  //  [BTN_CLEAR] = ACTION_CLEAR,
+  //  [BTN_TIME] = ACTION_TIME,
+  //  [BTN_SLOW_REV] = ACTION_SLOW_REV,
+  //  [BTN_SLOW_FWD] = ACTION_SLOW_FWD,
+  //  [BTN_SUBTITLE] = ACTION_SUBTITLE,
+  //  [BTN_AUDIO] = ACTION_AUDIO,
+  //  [BTN_ANGLE] = ACTION_ANGLE,
+  //  [BTN_DISPLAY] = ACTION_DISPLAY,
+  //  [BTN_BLUE] = ACTION_BLUE,
+  //  [BTN_RED] = ACTION_RED,
+  //  [BTN_GREEN] = ACTION_GREEN,
+  //  [BTN_YELLOW] = ACTION_YELLOW,
+};
 
 
-/**
- *
- */
-typedef struct krepeat {
-  int held_frames;
-} krepeat_t;
 
 
-static krepeat_t k_left, k_right, k_up, k_down;
-static krepeat_t k_enter, k_back, k_menu, k_sqr;
-static krepeat_t k_pp, k_home, k_l3, k_r3, k_l1, k_r1;
+static int16_t button_counter[MAX_PADS][BTN_max];
+
+
+#define KEY_REPEAT_DELAY 30 // in frames
+#define KEY_REPEAT_RATE  3  // in frames
 
 static void
-btn(glw_ps3_t *gp, krepeat_t *kr, int pressed, action_type_t ac)
+handle_btn(glw_ps3_t *gp, int pad, int code, int pressed)
 {
-  event_t *e;
-
-  if(ac == ACTION_NONE)
+  int16_t *store = &button_counter[pad][code];
+  if(code == 0)
     return;
 
   if(pressed) {
 
-    if(kr->held_frames == 0 ||
-       (kr->held_frames > 30 && (kr->held_frames % 3 == 0))) {
-      e = event_create_action(ac);
-      glw_dispatch_event(&gp->gr.gr_uii, e);
-      event_release(e);
+    if(*store == 0 ||
+       (*store > KEY_REPEAT_DELAY && (*store % KEY_REPEAT_RATE == 0))) {
+      int uc = 0;
+      event_t *e = NULL;
+
+      if(code >= BTN_KEY_1 && code <= BTN_KEY_9) {
+	uc = code - BTN_KEY_1 + '1';
+      } else if(code == BTN_KEY_0) {
+	uc = '0';
+      }
+      
+      if(uc != 0)
+	e = event_create_int(EVENT_UNICODE, uc);
+
+      if(e == NULL) {
+	const action_type_t *avec = btn_to_action[code];
+	if(avec) {
+	  int i = 0;
+	  while(avec[i] != 0)
+	    i++;
+	  e = event_create_action_multi(avec, i);
+	}
+      }
+
+      if(e != NULL) {
+	glw_dispatch_event(&gp->gr.gr_uii, e);
+	event_release(e);
+      }
     }
-    kr->held_frames++;
+    (*store)++;
   } else {
-    kr->held_frames = 0;
+    *store = 0;
   }
 }
 
+
+typedef enum _io_pad_bd_code
+{
+       BTN_BD_KEY_1           = 0x00,
+       BTN_BD_KEY_2           = 0x01,
+       BTN_BD_KEY_3           = 0x02,
+       BTN_BD_KEY_4           = 0x03,
+       BTN_BD_KEY_5           = 0x04,
+       BTN_BD_KEY_6           = 0x05,
+       BTN_BD_KEY_7           = 0x06,
+       BTN_BD_KEY_8           = 0x07,
+       BTN_BD_KEY_9           = 0x08,
+       BTN_BD_KEY_0           = 0x09,
+       BTN_BD_ENTER           = 0x0b,
+       BTN_BD_RETURN          = 0x0e,
+       BTN_BD_CLEAR           = 0x0f,
+       BTN_BD_EJECT           = 0x16,
+       BTN_BD_TOPMENU         = 0x1a,
+       BTN_BD_TIME            = 0x28,
+       BTN_BD_PREV            = 0x30,
+       BTN_BD_NEXT            = 0x31,
+       BTN_BD_PLAY            = 0x32,
+       BTN_BD_SCAN_REV        = 0x33,
+       BTN_BD_SCAN_FWD        = 0x34,
+       BTN_BD_STOP            = 0x38,
+       BTN_BD_PAUSE           = 0x39,
+       BTN_BD_POPUP_MENU      = 0x40,
+       BTN_BD_SELECT          = 0x50,
+       BTN_BD_L3              = 0x51,
+       BTN_BD_R3              = 0x52,
+       BTN_BD_START           = 0x53,
+       BTN_BD_UP              = 0x54,
+       BTN_BD_RIGHT           = 0x55,
+       BTN_BD_DOWN            = 0x56,
+       BTN_BD_LEFT            = 0x57,
+       BTN_BD_L2              = 0x58,
+       BTN_BD_R2              = 0x59,
+       BTN_BD_L1              = 0x5a,
+       BTN_BD_R1              = 0x5b,
+       BTN_BD_TRIANGLE        = 0x5c,
+       BTN_BD_CIRCLE          = 0x5d,
+       BTN_BD_CROSS           = 0x5e,
+       BTN_BD_SQUARE          = 0x5f,
+       BTN_BD_SLOW_REV        = 0x60,
+       BTN_BD_SLOW_FWD        = 0x61,
+       BTN_BD_SUBTITLE        = 0x63,
+       BTN_BD_AUDIO           = 0x64,
+       BTN_BD_ANGLE           = 0x65,
+       BTN_BD_DISPLAY         = 0x70,
+       BTN_BD_BLUE            = 0x80,
+       BTN_BD_RED             = 0x81,
+       BTN_BD_GREEN           = 0x82,
+       BTN_BD_YELLOW          = 0x83,
+       BTN_BD_RELEASE         = 0xff,
+
+       /* TV controller */
+       BTN_BD_NUMBER_11       = 0x101e,
+       BTN_BD_NUMBER_12       = 0x101f,
+       BTN_BD_NUMBER_PERIOD   = 0x102a,
+       BTN_BD_PROGRAM_UP      = 0x1030,
+       BTN_BD_PROGRAM_DOWN    = 0x1031,
+       BTN_BD_PREV_CHANNEL    = 0x1032,
+       BTN_BD_PROGRAM_GUIDE   = 0x1053
+} ioPadBdCode;
+
+
+static const uint8_t bd_to_local_map[256] = {
+  [BTN_BD_KEY_1] = BTN_KEY_1,
+  [BTN_BD_KEY_2] = BTN_KEY_2,
+  [BTN_BD_KEY_3] = BTN_KEY_3,
+  [BTN_BD_KEY_4] = BTN_KEY_4,
+  [BTN_BD_KEY_5] = BTN_KEY_5,
+  [BTN_BD_KEY_6] = BTN_KEY_6,
+  [BTN_BD_KEY_7] = BTN_KEY_7,
+  [BTN_BD_KEY_8] = BTN_KEY_8,
+  [BTN_BD_KEY_9] = BTN_KEY_9,
+  [BTN_BD_KEY_0] = BTN_KEY_0,
+  [BTN_BD_ENTER] = BTN_ENTER,
+  [BTN_BD_RETURN] = BTN_RETURN,
+  [BTN_BD_CLEAR] = BTN_CLEAR,
+  [BTN_BD_EJECT] = BTN_EJECT,
+  [BTN_BD_TOPMENU] = BTN_TOPMENU,
+  [BTN_BD_TIME] = BTN_TIME,
+  [BTN_BD_PREV] = BTN_PREV,
+  [BTN_BD_NEXT] = BTN_NEXT,
+  [BTN_BD_PLAY] = BTN_PLAY,
+  [BTN_BD_SCAN_REV] = BTN_SCAN_REV,
+  [BTN_BD_SCAN_FWD] = BTN_SCAN_FWD,
+  [BTN_BD_STOP] = BTN_STOP,
+  [BTN_BD_PAUSE] = BTN_PAUSE,
+  [BTN_BD_POPUP_MENU] = BTN_POPUP_MENU,
+  [BTN_BD_SELECT] = BTN_SELECT,
+  [BTN_BD_L3] = BTN_L3,
+  [BTN_BD_R3] = BTN_R3,
+  [BTN_BD_START] = BTN_START,
+  [BTN_BD_UP] = BTN_UP,
+  [BTN_BD_RIGHT] = BTN_RIGHT,
+  [BTN_BD_DOWN] = BTN_DOWN,
+  [BTN_BD_LEFT] = BTN_LEFT,
+  [BTN_BD_L2] = BTN_L2,
+  [BTN_BD_R2] = BTN_R2,
+  [BTN_BD_L1] = BTN_L1,
+  [BTN_BD_R1] = BTN_R1,
+  [BTN_BD_TRIANGLE] = BTN_TRIANGLE,
+  [BTN_BD_CIRCLE] = BTN_CIRCLE,
+  [BTN_BD_CROSS] = BTN_CROSS,
+  [BTN_BD_SQUARE] = BTN_SQUARE,
+  [BTN_BD_SLOW_REV] = BTN_SLOW_REV,
+  [BTN_BD_SLOW_FWD] = BTN_SLOW_FWD,
+  [BTN_BD_SUBTITLE] = BTN_SUBTITLE,
+  [BTN_BD_AUDIO] = BTN_AUDIO,
+  [BTN_BD_ANGLE] = BTN_ANGLE,
+  [BTN_BD_DISPLAY] = BTN_DISPLAY,
+  [BTN_BD_BLUE] = BTN_BLUE,
+  [BTN_BD_RED] = BTN_RED,
+  [BTN_BD_GREEN] = BTN_GREEN,
+  [BTN_BD_YELLOW] = BTN_YELLOW,
+};
+
+
+static uint16_t remote_last_btn[MAX_PADS] =
+  {0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 /**
  *
@@ -384,29 +622,58 @@ handle_pads(glw_ps3_t *gp)
 {
   PadInfo padinfo;
   PadData paddata;
+  PadPeriphInfo ppinfo = {0};
   int i;
+
+  ioPadPeriphGetInfo(&ppinfo);
+
 
   // Check the pads.
   ioPadGetInfo(&padinfo);
   for(i=0; i<MAX_PADS; i++){
     if(!padinfo.status[i])
       continue;
+
+    if(ppinfo.device_type[i] == 4) {
+      uint32_t type = 4;
+      memset(&paddata, 0, sizeof(paddata));
+
+      int r = ioPadGetDataExtra(i, &type, &paddata);
+
+      if(r == 0) {
+	int btn = paddata.button[25];
+	if(btn != remote_last_btn[i]) {
+	  if(remote_last_btn[i] < 0xff)
+	    handle_btn(gp, i, bd_to_local_map[remote_last_btn[i]], 0);
+	  remote_last_btn[i] = btn;
+	}
+
+	if(btn != 0xff)
+	  handle_btn(gp, i, bd_to_local_map[btn], 1);
+      }
+      continue;
+    }
+
+
+    memset(&paddata, 0, sizeof(paddata));
     ioPadGetData(i, &paddata);
 
-    btn(gp, &k_left,  paddata.BTN_LEFT,     ACTION_LEFT);
-    btn(gp, &k_up,    paddata.BTN_UP,       ACTION_UP);
-    btn(gp, &k_right, paddata.BTN_RIGHT,    ACTION_RIGHT);
-    btn(gp, &k_down,  paddata.BTN_DOWN,     ACTION_DOWN);
-    btn(gp, &k_enter, paddata.BTN_CROSS,    ACTION_ACTIVATE);
-    btn(gp, &k_back,  paddata.BTN_CIRCLE,   ACTION_NAV_BACK);
-    btn(gp, &k_menu,  paddata.BTN_TRIANGLE, ACTION_MENU);
-    btn(gp, &k_sqr,   paddata.BTN_SQUARE,   ACTION_ENABLE_SCREENSAVER);
-    btn(gp, &k_pp,    paddata.BTN_START,    ACTION_PLAYPAUSE);
-    btn(gp, &k_home,  paddata.BTN_SELECT,   ACTION_HOME);
-    btn(gp, &k_r1,    paddata.BTN_R1,       ACTION_NEXT_TRACK);
-    btn(gp, &k_l1,    paddata.BTN_L1,       ACTION_PREV_TRACK);
-    btn(gp, &k_r3,    paddata.BTN_R3,       ACTION_LOGWINDOW);
-    btn(gp, &k_l3,    paddata.BTN_L3,       ACTION_SHOW_MEDIA_STATS);
+    handle_btn(gp, i, BTN_LEFT,     paddata.BTN_LEFT);
+    handle_btn(gp, i, BTN_UP,       paddata.BTN_UP);
+    handle_btn(gp, i, BTN_RIGHT,    paddata.BTN_RIGHT);
+    handle_btn(gp, i, BTN_DOWN,     paddata.BTN_DOWN);
+    handle_btn(gp, i, BTN_CROSS,    paddata.BTN_CROSS);
+    handle_btn(gp, i, BTN_CIRCLE,   paddata.BTN_CIRCLE);
+    handle_btn(gp, i, BTN_TRIANGLE, paddata.BTN_TRIANGLE);
+    handle_btn(gp, i, BTN_SQUARE,   paddata.BTN_SQUARE);
+    handle_btn(gp, i, BTN_START,    paddata.BTN_START);
+    handle_btn(gp, i, BTN_SELECT,   paddata.BTN_SELECT);
+    handle_btn(gp, i, BTN_R1,       paddata.BTN_R1);
+    handle_btn(gp, i, BTN_L1,       paddata.BTN_L1);
+    handle_btn(gp, i, BTN_R2,       paddata.BTN_R2);
+    handle_btn(gp, i, BTN_L2,       paddata.BTN_L2);
+    handle_btn(gp, i, BTN_R3,       paddata.BTN_R3);
+    handle_btn(gp, i, BTN_L3,       paddata.BTN_L3);
   }
 }
 
@@ -575,8 +842,11 @@ static void
 glw_ps3_mainloop(glw_ps3_t *gp)
 {
   int currentBuffer = 0;
-
   TRACE(TRACE_INFO, "GLW", "Entering mainloop");
+#if 0
+  int r = ioPadSetPortSetting(6, 0xffffffff);
+  TRACE(TRACE_ERROR, "PS3PAD", "portsetting=0x%x", r);
+#endif
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
   while(!gp->stop) {
