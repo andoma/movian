@@ -745,8 +745,18 @@ http_client_oauth(struct http_auth_req *har,
 	   oauth_consumer_secret, oauth_token_secret);
 
   unsigned char md[20];
+#if ENABLE_OPENSSL
   HMAC(EVP_sha1(), key, strlen(key), (const unsigned char *)str, strlen(str),
        md, NULL);
+#elif ENABLE_POLARSSL
+
+  sha1_context ctx;
+  sha1_hmac_starts(&ctx, (const unsigned char *)key, strlen(key));
+  sha1_hmac_update(&ctx, (const unsigned char *)str, strlen(str));
+  sha1_hmac_finish(&ctx, md);
+#else
+#error Need HMAC plz
+#endif
 
   av_base64_encode(str, sizeof(str), md, 20);
 
