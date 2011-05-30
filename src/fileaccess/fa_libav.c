@@ -47,14 +47,9 @@ fa_libav_seek(void *opaque, int64_t offset, int whence)
  *
  */
 AVIOContext *
-fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
-	      int flags)
+fa_libav_reopen(fa_handle_t *fh, int buf_size)
 {
-  fa_handle_t *fh;
   AVIOContext *avio;
-
-  if((fh = fa_open(url, errbuf, errlen, flags)) == NULL)
-    return NULL;
 
   if(buf_size == 0)
     buf_size = 32768;
@@ -65,6 +60,35 @@ fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
   if(fa_fsize(fh) == -1)
     avio->seekable = 0;
   return avio;
+}
+
+
+/**
+ *
+ */
+AVIOContext *
+fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
+	      int flags)
+{
+  fa_handle_t *fh;
+
+  if((fh = fa_open(url, errbuf, errlen, flags)) == NULL)
+    return NULL;
+  return fa_libav_reopen(fh, buf_size);
+}
+
+
+/**
+ *
+ */
+AVIOContext *
+fa_libav_open_vpaths(const char *url, int buf_size, const char **vpaths)
+{
+  fa_handle_t *fh;
+
+  if((fh = fa_open_vpaths(url, vpaths)) == NULL)
+    return NULL;
+  return fa_libav_reopen(fh, buf_size);
 }
 
 

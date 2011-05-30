@@ -8,6 +8,11 @@
 AVIOContext *fa_libav_open(const char *url, int buf_size,
 			   char *errbuf, size_t errlen, int flags);
 
+AVIOContext *fa_libav_open_vpaths(const char *url, int buf_size,
+				  const char **vpaths);
+
+AVIOContext *fa_libav_reopen(fa_handle_t *fh, int buf_size);
+
 void fa_libav_close(AVIOContext *io);
 
 AVFormatContext *fa_libav_open_format(AVIOContext *avio, const char *url,
