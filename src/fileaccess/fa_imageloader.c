@@ -26,6 +26,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_imageloader.h"
+#include "fa_libav.h"
 #include "misc/pixmap.h"
 #include "misc/jpeg.h"
 
@@ -124,9 +125,9 @@ fa_imageloader2(const char *url, const char **vpaths,
 static int
 jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 {
-  if(fa_seek(handle, offset, SEEK_SET) != offset)
+  if(avio_seek(handle, offset, SEEK_SET) != offset)
     return -1;
-  return fa_read(handle, buf, size);
+  return avio_read(handle, buf, size);
 }
 
 
@@ -137,23 +138,23 @@ pixmap_t *
 fa_imageloader(const char *url, int want_thumb, const char **vpaths,
 	       char *errbuf, size_t errlen)
 {
-  fa_handle_t *fh;
   uint8_t p[16];
   int r;
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
+  AVIOContext *avio;
 
   if(!want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
-  if((fh = fa_open_vpaths(url, vpaths)) == NULL) {
+  if((avio = fa_libav_open_vpaths(url, 32768, vpaths)) == NULL) {
     snprintf(errbuf, errlen, "%s: Unable to open file", url);
     return NULL;
   }
 
-  if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
+  if(avio_read(avio, p, sizeof(p)) != sizeof(p)) {
     snprintf(errbuf, errlen, "%s: file too short", url);
-    fa_close(fh);
+    fa_libav_close(avio);
     return NULL;
   }
 
@@ -164,18 +165,18 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
       
     jpeginfo_t ji;
     
-    if(jpeg_info(&ji, jpeginfo_reader, fh, 
+    if(jpeg_info(&ji, jpeginfo_reader, avio,
 		 JPEG_INFO_DIMENSIONS |
 		 JPEG_INFO_ORIENTATION |
 		 (want_thumb ? JPEG_INFO_THUMBNAIL : 0),
 		 p, sizeof(p), errbuf, errlen)) {
-      fa_close(fh);
+      fa_libav_close(avio);
       return NULL;
     }
 
     if(want_thumb && ji.ji_thumbnail) {
       pixmap_t *pm = pixmap_dup(ji.ji_thumbnail);
-      fa_close(fh);
+      fa_libav_close(avio);
       jpeg_info_clear(&ji);
       return pm;
     }
@@ -195,31 +196,31 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     codec = CODEC_ID_GIF;
   } else {
     snprintf(errbuf, errlen, "%s: unknown format", url);
-    fa_close(fh);
+    fa_libav_close(avio);
     return NULL;
   }
 
-  size_t s = fa_fsize(fh);
+  size_t s = avio_size(avio);
   if(s < 0) {
     snprintf(errbuf, errlen, "%s: Can't read from non-seekable file", url);
-    fa_close(fh);
+    fa_libav_close(avio);
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(NULL, fa_fsize(fh), codec);
+  pixmap_t *pm = pixmap_alloc_coded(NULL, s, codec);
 
   if(pm == NULL) {
     snprintf(errbuf, errlen, "%s: no memory", url);
-    fa_close(fh);
+    fa_libav_close(avio);
     return NULL;
   }
 
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_orientation = orientation;
-  fa_seek(fh, SEEK_SET, 0);
-  r = fa_read(fh, pm->pm_data, pm->pm_size);
-  fa_close(fh);
+  avio_seek(avio, SEEK_SET, 0);
+  r = avio_read(avio, pm->pm_data, pm->pm_size);
+  fa_libav_close(avio);
 
   if(r != pm->pm_size) {
     pixmap_release(pm);
