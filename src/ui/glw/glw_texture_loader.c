@@ -196,8 +196,12 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_pixmap != NULL) {
     pixmap_t *pm = glt->glt_pixmap;
     AVPicture pict;
-    pict.data[0] = pm->pm_pixels;
-    pict.linesize[0] = pm->pm_linesize;
+    int i;
+    for(i = 0; i < 4; i++) {
+      pict.data[i] = pm->pm_pixels[i];
+      pict.linesize[i] = pm->pm_linesize[i];
+    }
+
     r = glw_tex_backend_load(gr, glt, &pict,
 			     pm->pm_pixfmt,
 			     pm->pm_width, pm->pm_height,
@@ -228,14 +232,31 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(pm->pm_codec == CODEC_ID_NONE) {
     glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
 
+    int i;
     AVPicture pict;
-    pict.data[0] = pm->pm_pixels;
-    pict.linesize[0] = pm->pm_linesize;
+    for(i = 0; i < 4; i++) {
+      pict.data[i] = pm->pm_pixels[i];
+      pict.linesize[i] = pm->pm_linesize[i];
+    }
 
-    r = glw_tex_backend_load(gr, glt, &pict,
-			     pm->pm_pixfmt,
-			     pm->pm_width, pm->pm_height,
-			     pm->pm_width, pm->pm_height);
+    if(glt->glt_req_xs != -1 && glt->glt_req_ys != -1) {
+      w = glt->glt_req_xs;
+      h = glt->glt_req_ys;
+      
+    } else if(glt->glt_req_xs != -1) {
+      w = glt->glt_req_xs;
+      h = glt->glt_req_xs * pm->pm_height / pm->pm_width;
+      
+    } else if(glt->glt_req_ys != -1) {
+      w = glt->glt_req_ys * pm->pm_width / pm->pm_height;
+      h = glt->glt_req_ys;
+    } else {
+      w = pm->pm_width;
+      h = pm->pm_height;
+    }
+
+    r = glw_tex_backend_load(gr, glt, &pict, pm->pm_pixfmt,
+			     pm->pm_width, pm->pm_height, w, h);
     pixmap_release(pm);
     return r;
   }
