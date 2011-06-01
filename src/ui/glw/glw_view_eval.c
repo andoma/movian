@@ -3006,6 +3006,213 @@ glwf_int2str(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+fmt_add_string(char *out, int len, const char *str)
+{
+  char c;
+  while((c = *str++)) {
+    if(out)
+      out[len] = c;
+    len++;
+  }
+  return len;
+}
+
+
+/**
+ *
+ */
+static void
+build_fmt(char *fmt, int zeropad, int fl1, int fl2, char type)
+{
+  int fmtptr = 1;
+
+  fmt[0] = '%';
+  if(zeropad)
+    fmt[fmtptr++] = '0';
+  if(fl1 != -1)
+    fmt[fmtptr++] = fl1 + '0';
+  if(fl2 != -1) {
+    fmt[fmtptr++] = '.';
+    fmt[fmtptr++] = fl2 + '0';
+  }
+  fmt[fmtptr++] = type;
+  fmt[fmtptr] = 0;
+}
+
+
+/**
+ *
+ */
+static int
+fmt_add_int(char *out, int len, int v, int zeropad, int fl1, int fl2)
+{
+  char fmt[32];
+  char buf[64];
+
+  build_fmt(fmt, zeropad, fl1, fl2, 'd');
+
+  snprintf(buf, sizeof(buf), fmt, v);
+
+  size_t l = strlen(buf);
+
+  if(out)
+    memcpy(out, buf, l);
+
+  return len + l;
+}
+
+
+/**
+ *
+ */
+static int
+fmt_add_float(char *out, int len, float v, int zeropad, int fl1, int fl2)
+{
+  char fmt[32];
+  char buf[64];
+
+  build_fmt(fmt, zeropad, fl1, fl2, 'f');
+
+  snprintf(buf, sizeof(buf), fmt, v);
+
+  size_t l = strlen(buf);
+
+  if(out)
+    memcpy(out + len, buf, l);
+
+  return len + l;
+}
+
+
+/**
+ * String formating internal
+ */
+static size_t
+dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
+{
+  size_t len = 0;
+  char c;
+  int argptr = 0;
+
+  while((c = *fmt) != 0) {
+    if(c != '%') {
+      if(out) 
+	out[len] = c;
+      len++;
+      fmt++;
+    } else {
+      int zeropad = 0;
+      int off = 1;
+      int fieldlen1 = -1;
+      int fieldlen2 = -1;
+
+      if(fmt[off] == '0') {
+	zeropad = 1;
+	off++;
+      }
+      while(fmt[off] >= '0' && fmt[off] <= '9') {
+	if(fieldlen1 == -1)
+	  fieldlen1 = 0;
+	fieldlen1 = fieldlen1 * 10 + fmt[off++] - '0';
+      }
+
+      if(fmt[off] == '.')  {
+	off++;
+	while(fmt[off] >= '0' && fmt[off] <= '9') {
+	  if(fieldlen2 == -1)
+	    fieldlen2 = 0;
+	  fieldlen2 = fieldlen2 * 10 + fmt[off++] - '0';
+	}
+      }
+
+      int type = fmt[off];
+      if(type == 0)
+	break;
+      off++;
+      fmt += off;
+
+      if(argptr == argc)
+	continue;
+
+      token_t *arg = argv[argptr];
+      argptr++;
+
+      switch(arg->type) {
+      case TOKEN_INT:
+	len = fmt_add_int(out, len, arg->t_int, zeropad, fieldlen1, fieldlen2);
+	break;
+
+      case TOKEN_FLOAT:
+	len = fmt_add_float(out, len, arg->t_float, zeropad, fieldlen1, fieldlen2);
+	break;
+
+      case TOKEN_STRING:
+	len = fmt_add_string(out, len, rstr_get(arg->t_rstring));
+	break;
+
+      case TOKEN_LINK:
+	len = fmt_add_string(out, len, rstr_get(arg->t_link_rtitle));
+	break;
+
+      default:
+	break;
+      }
+    }
+  }
+  return len;
+
+}
+
+/**
+ * String formating
+ */
+static int 
+glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
+	 token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+  int i;
+  token_t **res_args;
+  unsigned int num_res_args;
+
+  if(argc < 1) 
+    return glw_view_seterr(ec->ei, self,
+			    "fmt() requires at least one arguments");
+  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  
+  if(a->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, a,
+			   "fmt() first argument is not a string");
+
+  num_res_args = argc - 1;
+  if(num_res_args > 0) {
+    res_args = alloca(sizeof(token_t *) * num_res_args);
+    for(i = 0; i < num_res_args; i++)
+      if((res_args[i] = token_resolve(ec, argv[i+1])) == NULL)
+	return -1;
+
+  } else {
+    res_args = NULL;
+  }
+
+  const char *str = rstr_get(a->t_rstring);
+  size_t len = dofmt(NULL, str, res_args, num_res_args);
+  r = eval_alloc(self, ec, TOKEN_STRING);
+  r->t_rstring  = rstr_allocl(NULL, len);
+  dofmt(rstr_data(r->t_rstring), str, res_args, num_res_args);
+  eval_push(ec, r);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -4493,6 +4700,7 @@ static const token_func_t funcvec[] = {
   {"int", 1,glwf_int},
   {"clamp", 3, glwf_clamp},
   {"join", -1, glwf_join},
+  {"fmt", -1, glwf_fmt},
 };
 
 
