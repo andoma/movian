@@ -44,6 +44,7 @@
 
 #include "fa_proto.h"
 #include "fa_probe.h"
+#include "fa_imageloader.h"
 #include "blobcache.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
@@ -501,6 +502,7 @@ fileaccess_init(void)
 {
   fa_protocol_t *fap;
   fa_probe_init();
+  fa_imageloader_init();
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)

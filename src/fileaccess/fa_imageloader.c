@@ -23,6 +23,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include <libavutil/imgutils.h>
+
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_imageloader.h"
@@ -34,12 +36,28 @@ static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
+static hts_mutex_t image_from_video_mutex;
 
+static pixmap_t *fa_image_from_video(const char *url);
 
+/**
+ *
+ */
 typedef struct meminfo {
   const uint8_t *data;
   size_t size;
 } meminfo_t;
+
+
+/**
+ *
+ */
+void
+fa_imageloader_init(void)
+{
+  hts_mutex_init(&image_from_video_mutex);
+}
+
 
 /**
  *
@@ -143,6 +161,16 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
   AVIOContext *avio;
+  pixmap_t *pm;
+
+  if(strchr(url, '#')) {
+    hts_mutex_lock(&image_from_video_mutex);
+    pm = fa_image_from_video(url);
+    if(pm == NULL)
+      snprintf(errbuf, errlen, "%s: Unable to extract image", url);
+    hts_mutex_unlock(&image_from_video_mutex);
+    return pm;
+  }
 
   if(!want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
@@ -207,7 +235,7 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(NULL, s, codec);
+  pm = pixmap_alloc_coded(NULL, s, codec);
 
   if(pm == NULL) {
     snprintf(errbuf, errlen, "%s: no memory", url);
@@ -227,5 +255,173 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     snprintf(errbuf, errlen, "%s: read error", url);
     return NULL;
   }
+  return pm;
+}
+
+static char *ifv_url;
+static AVFormatContext *ifv_fctx;
+static AVCodecContext *ifv_ctx;
+int ifv_stream;
+
+static void
+ifv_close(void)
+{
+  free(ifv_url);
+  ifv_url = NULL;
+
+  if(ifv_ctx != NULL) {
+    avcodec_close(ifv_ctx);
+    ifv_ctx = NULL;
+  }
+
+  if(ifv_fctx != NULL) {
+    fa_libav_close_format(ifv_fctx);
+    ifv_fctx = NULL;
+  }
+}
+
+
+
+/**
+ *
+ */
+static pixmap_t *
+fa_image_from_video(const char *url0)
+{
+  char *url = mystrdupa(url0);
+  char *tim = strchr(url, '#');
+  pixmap_t *pm = NULL;
+
+  *tim++ = 0;
+
+  if(ifv_url == NULL || strcmp(url, ifv_url)) {
+    // Need to open
+    int i;
+    AVFormatContext *fctx;
+    AVIOContext *avio;
+    
+    if((avio = fa_libav_open(url, 65536, NULL, 0, 0)) == NULL)
+      return NULL;
+
+    if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {
+      fa_libav_close(avio);
+      return NULL;
+    }
+
+    if(!strcmp(fctx->iformat->name, "avi"))
+      fctx->flags |= AVFMT_FLAG_GENPTS;
+
+    AVCodecContext *ctx = NULL;
+    for(i = 0; i < fctx->nb_streams; i++) {
+      if(fctx->streams[i]->codec != NULL && 
+	 fctx->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
+	ctx = fctx->streams[i]->codec;
+	break;
+      }
+    }
+    if(ctx == NULL) {
+      fa_libav_close_format(fctx);
+      return NULL;
+    }
+
+    AVCodec *codec = avcodec_find_decoder(ctx->codec_id);
+    if(codec == NULL) {
+      fa_libav_close_format(fctx);
+      return NULL;
+    }
+
+    if(avcodec_open(ctx, codec) < 0) {
+      fa_libav_close_format(fctx);
+      return NULL;
+    }
+
+    ifv_close();
+
+    ifv_stream = i;
+    ifv_url = strdup(url);
+    ifv_fctx = fctx;
+    ifv_ctx = ctx;
+  }
+
+  int secs = atoi(tim);
+
+  AVStream *st = ifv_fctx->streams[ifv_stream];
+  int64_t ts = av_rescale(secs, st->time_base.den, st->time_base.num);
+
+  printf("Loading for time %d  ts = %ld\n", secs, ts);
+
+  if(av_seek_frame(ifv_fctx, ifv_stream, ts, 
+		   AVSEEK_FLAG_BACKWARD) < 0) {
+    ifv_close();
+    return NULL;
+  }
+  
+
+  AVPacket pkt;
+
+  AVFrame *frame = avcodec_alloc_frame();
+  int got_pic;
+
+  av_init_packet(&pkt);
+  pkt.data = NULL;
+  pkt.size = 0;
+  do {
+    avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
+  } while(got_pic);
+  
+  
+  int cnt = 500;
+  int dbg = 0;
+
+  while(1) {
+    int r = av_read_frame(ifv_fctx, &pkt);
+    
+    if(r == AVERROR(EAGAIN))
+      continue;
+    
+    if(r == AVERROR_EOF)
+      break;
+
+    if(r != 0) {
+      ifv_close();
+      break;
+    }
+
+    if(pkt.stream_index != ifv_stream) {
+      av_free_packet(&pkt);
+      continue;
+    }
+    cnt--;
+    if(!dbg) {
+      printf(" \t Demuxed frame at %ld\n", pkt.pts);
+      dbg = 1;
+    }
+
+    int want_pic = pkt.pts >= ts || cnt <= 0;
+
+    ifv_ctx->skip_frame = want_pic ? AVDISCARD_DEFAULT : AVDISCARD_NONREF;
+    
+    avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
+    if(got_pic == 0 || !want_pic)
+      continue;
+    printf(" \t Decoded frame at %ld (cnt=%d)\n", pkt.pts, cnt);
+    pm = calloc(1, sizeof(pixmap_t));
+    pm->pm_refcount = 1;
+    pm->pm_width = ifv_ctx->width;
+    pm->pm_height = ifv_ctx->height;
+    pm->pm_pixfmt = ifv_ctx->pix_fmt;
+    pm->pm_codec = CODEC_ID_NONE;
+
+    av_image_alloc(pm->pm_pixels, pm->pm_linesize,
+		   pm->pm_width, pm->pm_height,
+		   pm->pm_pixfmt, 16);
+    
+    av_image_copy(pm->pm_pixels, pm->pm_linesize,
+		  (const uint8_t **)frame->data, frame->linesize,
+		  pm->pm_pixfmt, pm->pm_width, pm->pm_height);
+    break;
+  }
+
+  av_free(frame);
   return pm;
 }

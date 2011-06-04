@@ -22,6 +22,8 @@
 #include "misc/pixmap.h"
 struct backend;
 
+void fa_imageloader_init(void);
+
 pixmap_t *fa_imageloader(const char *url,int want_thumb, const char **vpaths,
 			 char *errbuf, size_t errlen);
 
