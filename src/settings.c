@@ -345,12 +345,10 @@ settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
 			   settings_saver_t *saver, void *saver_opaque)
 {
   const char *str = htsmsg_get_str(store, s->s_id);
-
   if(str != NULL) {
     prop_t *o = prop_find(s->s_val, str, NULL);
-
     if(o != NULL)
-      prop_select_ex(o, NULL, s->s_sub);
+      prop_select(o);
   }
 
   s->s_store = store;

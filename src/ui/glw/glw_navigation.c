@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <limits.h>
+
 #include "glw.h"
 #include "event.h"
 #include "glw_event.h"

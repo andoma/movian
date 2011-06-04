@@ -22,12 +22,14 @@
 #include <htsmsg/htsmsg.h>
 #include <stdarg.h>
 
-void htsmsg_store_init(const char *programname, const char *path);
+void htsmsg_store_init(void);
 
 void htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...);
 
 htsmsg_t *htsmsg_store_load(const char *pathfmt, ...);
 
 void htsmsg_store_remove(const char *pathfmt, ...);
+
+void htsmsg_store_flush(void);
 
 #endif /* HTSMSG_STORE_H__ */ 

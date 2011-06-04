@@ -2507,7 +2507,7 @@ glwf_enqueueTrack(glw_view_eval_context_t *ec, struct token *self,
  */
 static int 
 glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
-		 token_t **argv, unsigned int argc)
+		 token_t **argv, unsigned int argc, event_type_t type)
 {
   token_t *a = argv[0];       /* ID */
   token_t *r;
@@ -2526,9 +2526,30 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
   } else {
     str = NULL;
   }
-  r->t_gem = glw_event_map_selectTrack_create(str);
+  r->t_gem = glw_event_map_selectTrack_create(str, type);
   eval_push(ec, r);
   return 0;
+}
+
+
+/**
+ *
+ */
+static int 
+glwf_selectAudioTrack(glw_view_eval_context_t *ec, struct token *self,
+		 token_t **argv, unsigned int argc)
+{
+  return glwf_selectTrack(ec, self, argv, argc, EVENT_SELECT_AUDIO_TRACK);
+}
+
+/**
+ *
+ */
+static int 
+glwf_selectSubtitleTrack(glw_view_eval_context_t *ec, struct token *self,
+		 token_t **argv, unsigned int argc)
+{
+  return glwf_selectTrack(ec, self, argv, argc, EVENT_SELECT_SUBTITLE_TRACK);
 }
 
 
@@ -4306,7 +4327,8 @@ static const token_func_t funcvec[] = {
   {"navOpen", -1, glwf_navOpen},
   {"playTrackFromSource", 2, glwf_playTrackFromSource},
   {"enqueuetrack", 1, glwf_enqueueTrack},
-  {"selectTrack", 1, glwf_selectTrack},
+  {"selectAudioTrack", 1, glwf_selectAudioTrack},
+  {"selectSubtitleTrack", 1, glwf_selectSubtitleTrack},
   {"targetedEvent", 2, glwf_targetedEvent},
   {"fireEvent", 1, glwf_fireEvent},
   {"event", 1, glwf_event},

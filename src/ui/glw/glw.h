@@ -79,15 +79,6 @@ typedef float Vec3[3];
 typedef float Vec2[2];
 #endif
 
-
-// ------------------ Freetype ----------------------------
-
-
-#include <ft2build.h>  
-#include FT_FREETYPE_H
-#include FT_GLYPH_H
-#include FT_OUTLINE_H
-
 // ------------------ Helpers ----------------------------
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
@@ -118,7 +109,6 @@ typedef enum {
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
   GLW_ATTRIB_SIZE_SCALE,
-  GLW_ATTRIB_SIZE_BIAS,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
@@ -616,9 +606,8 @@ typedef struct glw_root {
   LIST_HEAD(,  glw_text_bitmap) gr_gtbs;
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   hts_cond_t gr_gtb_render_cond;
-  FT_Face gr_gtb_face;
+
   int gr_fontsize;
-  int gr_fontsize_px;
 
   /**
    * Image/Texture loader
@@ -1048,7 +1037,6 @@ do {						\
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
   case GLW_ATTRIB_SIZE_SCALE:                   \
-  case GLW_ATTRIB_SIZE_BIAS:                    \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
@@ -1083,15 +1071,9 @@ void glw_unref(glw_t *w);
 
 int glw_get_text(glw_t *w, char *buf, size_t buflen);
 
-int glw_get_int(glw_t *w, int *result);
-
 glw_t *glw_get_prev_n(glw_t *c, int count);
 
 glw_t *glw_get_next_n(glw_t *c, int count);
-
-glw_t *glw_get_prev_n_all(glw_t *c, int count);
-
-glw_t *glw_get_next_n_all(glw_t *c, int count);
 
 int glw_event(glw_root_t *gr, struct event *e);
 

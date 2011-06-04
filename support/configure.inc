@@ -80,6 +80,8 @@ CONFIG_LIST="
  trex
  emu_thread_specifics
  ps3_vdec
+ font_liberation
+ libfontconfig
 "
 
 die() {
@@ -278,6 +280,20 @@ finalize() {
 	PLUGINS_URL="file://`cd plugins && pwd`"
     fi
     echo >>${CONFIG_H} "#define SHOWTIME_PLUGINS_URL \""${PLUGINS_URL}"\""
+
+
+    # Fonts
+    # Optionally embed the stuff if in release mode
+    if enabled font_liberation; then
+	if enabled embedded_resources; then
+	    LIBERATION_RESOURCE_URL="bundle://resources/fonts/liberation"
+	    echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
+	else
+	    LIBERATION_RESOURCE_URL="file://`cd resources/fonts/liberation && pwd`"
+	fi
+	echo >>${CONFIG_H} "#define SHOWTIME_FONT_LIBERATION_URL \""${LIBERATION_RESOURCE_URL}"\""
+    fi
+
 
     # Release tag
     if enabled release; then

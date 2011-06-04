@@ -28,7 +28,7 @@
 #include "prop/prop.h"
 #include "notifications.h"
 
-static htsmsg_t *keyring;
+static htsmsg_t *persistent_keyring, *temporary_keyring;
 static hts_mutex_t keyring_mutex;
 
 
@@ -39,9 +39,9 @@ void
 keyring_init(void)
 {
   hts_mutex_init(&keyring_mutex);
-  keyring = htsmsg_store_load("keyring");
-  if(keyring == NULL)
-    keyring = htsmsg_create_map();
+  if((persistent_keyring = htsmsg_store_load("keyring")) == NULL)
+    persistent_keyring = htsmsg_create_map();
+  temporary_keyring = htsmsg_create_map();
 }
 
 
@@ -51,7 +51,7 @@ keyring_init(void)
 static void
 keyring_store(void)
 {
-  htsmsg_store_save(keyring, "keyring");
+  htsmsg_store_save(persistent_keyring, "keyring");
 }
 
 
@@ -79,21 +79,24 @@ setstr(char **p, htsmsg_t *m, const char *fname)
 int
 keyring_lookup(const char *id, char **username, char **password,
 	       char **domain, int query, const char *source,
-	       const char *reason)
+	       const char *reason, int force_temporary)
 {
   htsmsg_t *m;
   rstr_t *r;
 
+
   hts_mutex_lock(&keyring_mutex);
 
   if(query) {
+    htsmsg_t *parent;
     prop_t *p = prop_create_root(NULL);
 
     prop_set_string(prop_create(p, "type"), "auth");
     prop_set_string(prop_create(p, "id"), id);
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
-    
+    prop_set_int(prop_create(p, "nosave"), !!force_temporary);
+
     prop_t *user = prop_create(p, "username");
     prop_t *pass = prop_create(p, "password");
  
@@ -102,9 +105,14 @@ keyring_lookup(const char *id, char **username, char **password,
 
     event_t *e = popup_display(p);
 
-    htsmsg_delete_field(keyring, id);
+    if(event_is_action(e, ACTION_OKSAVE))
+      parent = persistent_keyring;
+    else
+      parent = temporary_keyring;
 
-    if(event_is_action(e, ACTION_OK)) {
+    htsmsg_delete_field(parent, id);
+
+    if(event_is_action(e, ACTION_OK) || event_is_action(e, ACTION_OKSAVE)) {
       /* OK */
 
       m = htsmsg_create_map();
@@ -117,9 +125,10 @@ keyring_lookup(const char *id, char **username, char **password,
       htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
       rstr_release(r);
 
-      htsmsg_add_msg(keyring, id, m);
+      htsmsg_add_msg(parent, id, m);
 
-      keyring_store();
+      if(parent == persistent_keyring)
+	keyring_store();
 
     } else {
       /* CANCEL, store without adding anything */
@@ -137,7 +146,8 @@ keyring_lookup(const char *id, char **username, char **password,
     event_release(e);
   }
 
-  if((m = htsmsg_get_map(keyring, id)) == NULL) {
+  if((m = htsmsg_get_map(temporary_keyring, id)) == NULL &&
+     (m = htsmsg_get_map(persistent_keyring, id)) == NULL) {
     hts_mutex_unlock(&keyring_mutex);
     return 1;
   }

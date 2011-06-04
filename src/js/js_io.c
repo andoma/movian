@@ -25,6 +25,8 @@
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
 #include "misc/string.h"
+#include "misc/regex.h"
+
 
 typedef struct js_http_response {
   char *data;
@@ -77,7 +79,7 @@ http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
       }
 
       if(conv)
-	r = tmpbuf = utf8_from_ISO_8859_1(jhr->data, jhr->datalen);
+	r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, NULL);
     }
 
     isxml =
@@ -136,9 +138,10 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
   size_t resultsize;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
+  JSBool disable_auto_auth = 0;
 
-
-  if(!JS_ConvertArguments(cx, argc, argv, "s/oo", &url, &argobj, &postobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/oob", &url, &argobj, &postobj,
+			  &disable_auto_auth))
     return JS_FALSE;
 
   if(argobj != NULL) {
@@ -206,13 +209,18 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
   }
 
 
+  int flags = 0;
+
+  if(disable_auto_auth)
+    flags |= HTTP_DISABLE_AUTH;
+
   struct http_header_list response_headers;
 
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       &result, &resultsize, errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
-		       0,
+		       flags,
 		       &response_headers, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
@@ -309,4 +317,216 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
   return JS_TRUE;
+}
+
+
+static struct js_http_auth_list js_http_auths;
+
+
+/**
+ *
+ */
+typedef struct js_http_auth {
+  js_plugin_t *jha_jsp;
+  LIST_ENTRY(js_http_auth) jha_global_link;
+  LIST_ENTRY(js_http_auth) jha_plugin_link;
+  char *jha_pattern;
+  hts_regex_t jha_regex;
+  jsval jha_func;
+} js_http_auth_t;
+
+
+
+/**
+ *
+ */
+static void
+js_http_auth_delete(JSContext *cx, js_http_auth_t *jha)
+{
+  JS_RemoveRoot(cx, &jha->jha_func);
+
+  LIST_REMOVE(jha, jha_global_link);
+  LIST_REMOVE(jha, jha_plugin_link);
+
+  hts_regfree(&jha->jha_regex);
+
+  free(jha->jha_pattern);
+  free(jha);
+}
+
+
+
+/**
+ *
+ */
+JSBool 
+js_addHTTPAuth(JSContext *cx, JSObject *obj, uintN argc, 
+	       jsval *argv, jsval *rval)
+{
+  const char *str;
+  js_http_auth_t *jha;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  str = JS_GetStringBytes(JS_ValueToString(cx, argv[0]));
+
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  if(str[0] != '^') {
+    int l = strlen(str);
+    char *s = alloca(l + 2);
+    s[0] = '^';
+    memcpy(s+1, str, l+1);
+    str = s;
+  }
+
+ 
+  jha = calloc(1, sizeof(js_http_auth_t));
+  jha->jha_jsp = jsp;
+  if(hts_regcomp(&jha->jha_regex, str)) {
+    free(jha);
+    JS_ReportError(cx, "Invalid regular expression");
+    return JS_FALSE;
+  }
+  
+  jha->jha_pattern = strdup(str);
+  
+  LIST_INSERT_HEAD(&js_http_auths, jha, jha_global_link);
+  LIST_INSERT_HEAD(&jsp->jsp_http_auths, jha, jha_plugin_link);
+
+  TRACE(TRACE_DEBUG, "JS", "Add auth handler for %s", str);
+
+  jha->jha_func = argv[1];
+  JS_AddNamedRoot(cx, &jha->jha_func, "authuri");
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+void
+js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
+{
+  js_http_auth_t *jha;
+
+  while((jha = LIST_FIRST(&jsp->jsp_http_auths)) != NULL)
+    js_http_auth_delete(cx, jha);
+}
+
+
+
+/**
+ *
+ */
+static JSClass http_auth_class = {
+  "httpauth", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, JS_FinalizeStub,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+
+/**
+ *
+ */
+static JSBool
+js_oauth(JSContext *cx, JSObject *obj,
+	 uintN argc, jsval *argv, jsval *rval)
+{
+  const char *consumer_key;
+  const char *consumer_secret;
+  const char *token;
+  const char *token_secret;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ssss",
+			  &consumer_key, &consumer_secret,
+			  &token, &token_secret))
+    return JS_FALSE;
+
+  *rval = BOOLEAN_TO_JSVAL(!http_client_oauth(JS_GetPrivate(cx, obj),
+					      consumer_key, consumer_secret,
+					      token, token_secret));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool
+js_rawAuth(JSContext *cx, JSObject *obj,
+	   uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  *rval = BOOLEAN_TO_JSVAL(!http_client_rawauth(JS_GetPrivate(cx, obj), str));
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSFunctionSpec http_auth_functions[] = {
+    JS_FS("oauthToken",      js_oauth,       4, 0, 0),
+    JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+int
+js_http_auth_try(const char *url, struct http_auth_req *har)
+{
+  js_http_auth_t *jha;
+  hts_regmatch_t matches[8];
+  jsval *argv, result;
+  void *mark;
+  char argfmt[10];
+  int argc, ret;
+  JSObject *pobj;
+
+  LIST_FOREACH(jha, &js_http_auths, jha_global_link)
+    if(!hts_regexec(&jha->jha_regex, url, 8, matches, 0))
+      break;
+
+  if(jha == NULL)
+    return 1;
+
+  JSContext *cx = js_newctx(NULL);
+  JS_BeginRequest(cx);
+
+  pobj = JS_NewObject(cx, &http_auth_class, NULL, NULL);
+  JS_AddNamedRoot(cx, &pobj, "plugin");
+
+  JS_SetPrivate(cx, pobj, har);
+
+  JS_DefineFunctions(cx, pobj, http_auth_functions);
+
+  argfmt[0] = 'o';
+  argc = 1;
+  argv = JS_PushArguments(cx, &mark, "o", pobj);
+  
+  ret = JS_CallFunctionValue(cx, NULL, jha->jha_func, argc, argv, &result);
+  JS_PopArguments(cx, mark);
+
+  JS_RemoveRoot(cx, &pobj);
+
+  if(ret && JSVAL_IS_BOOLEAN(result) && JSVAL_TO_BOOLEAN(result))
+    ret = 0;
+  else
+    ret = 1;
+  JS_DestroyContext(cx);
+  return ret;
 }

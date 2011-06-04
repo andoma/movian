@@ -213,7 +213,7 @@ htsbuf_drop(htsbuf_queue_t *hq, size_t len)
     len -= c;
     hd->hd_data_off += c;
     hq->hq_size -= c;
-
+    r += c;
     if(hd->hd_data_off == hd->hd_data_len)
       htsbuf_data_free(hq, hd);
   }
@@ -331,16 +331,13 @@ htsbuf_append_and_escape_url(htsbuf_queue_t *hq, const char *s)
     if((C >= '0' && C <= '9') ||
        (C >= 'a' && C <= 'z') ||
        (C >= 'A' && C <= 'Z') ||
-       C == '/' ||
-       C == '(' ||
-       C == ')' ||
-       C == ',' ||
        C == '_' ||
+       C == '~' ||
        C == '.' ||
        C == '-') {
       esc = NULL;
     } else {
-      static const char hexchars[16] = "0123456789abcdef";
+      static const char hexchars[16] = "0123456789ABCDEF";
       char buf[4];
       buf[0] = '%';
       buf[1] = hexchars[(C >> 4) & 0xf];

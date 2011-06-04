@@ -15,11 +15,44 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-
+#include <sys/param.h>
 #include <arch/atomic.h>
-
 #include "pixmap.h"
+#include "showtime.h"
+
+
+/**
+ * Maybe use libavutil instead
+ */
+static int 
+bytes_per_pixel(int fmt)
+{
+  switch(fmt) {
+  case PIX_FMT_BGR32:
+    return 4;
+
+  case PIX_FMT_Y400A:
+    return 2;
+    
+  case PIX_FMT_GRAY8:
+    return 1;
+
+  default:
+    return 0;
+  }
+}
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_dup(pixmap_t *pm)
+{
+  atomic_add(&pm->pm_refcount, 1);
+  return pm;
+}
+
 
 /**
  *
@@ -48,6 +81,29 @@ pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
 /**
  *
  */
+pixmap_t *
+pixmap_create(int width, int height, enum PixelFormat pixfmt)
+{
+  int bpp = bytes_per_pixel(pixfmt);
+  if(bpp == 0)
+    return NULL;
+
+  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
+  pm->pm_refcount = 1;
+  pm->pm_width = width;
+  pm->pm_height = height;
+  pm->pm_pixfmt = pixfmt;
+  pm->pm_codec = CODEC_ID_NONE;
+  pm->pm_linesize[0] = pm->pm_width * bpp;
+  pm->pm_pixels[0] = calloc(1, pm->pm_linesize[0] * pm->pm_height);
+  return pm;
+}
+
+
+
+/**
+ *
+ */
 void
 pixmap_release(pixmap_t *pm)
 {
@@ -55,7 +111,8 @@ pixmap_release(pixmap_t *pm)
     return;
   
   if(pm->pm_codec == CODEC_ID_NONE) {
-    avpicture_free(&pm->pm_pict);
+    free(pm->pm_pixels[0]);
+    free(pm->pm_charpos);
   } else {
     free(pm->pm_data);
   }
@@ -65,11 +122,203 @@ pixmap_release(pixmap_t *pm)
 /**
  *
  */
-pixmap_t *
-pixmap_dup(pixmap_t *pm)
+static pixmap_t *
+pixmap_clone(const pixmap_t *src, int clear)
 {
-  atomic_add(&pm->pm_refcount, 1);
-  return pm;
+  pixmap_t *dst = calloc(1, sizeof(pixmap_t));
+  memcpy(dst, src, sizeof(pixmap_t));
+  dst->pm_refcount = 1;
+  dst->pm_codec = CODEC_ID_NONE;
+
+  if(clear)
+    dst->pm_pixels[0] = calloc(1, dst->pm_linesize[0] * dst->pm_height);
+  else
+    dst->pm_pixels[0] = malloc(dst->pm_linesize[0] * dst->pm_height);
+
+  return dst;
+}
+
+
+/**
+ *
+ */
+static int
+convolute_pixel_slow(const uint8_t *src, 
+		     int x, int y, int xstep, int ystep,
+		     int width, int height, const int *kernel)
+{
+  int v = 0;
+
+  if(y > 0) {
+    if(x > 0)
+      v += src[-xstep - ystep] * kernel[0];
+    v += src[       - ystep] * kernel[1];
+    if(x < width - 1)
+      v += src[ xstep - ystep] * kernel[2];
+  }
+
+  if(x > 0)
+    v += src[-xstep] * kernel[3];
+  v += src[0] * kernel[4];
+  if(x < width - 1)
+    v += src[ xstep] * kernel[5];
+
+  if(y < height - 1) {
+    if(x > 0)
+      v += src[-xstep + ystep] * kernel[6];
+    v += src[         ystep] * kernel[7];
+    if(x < width - 1)
+      v += src[ xstep + ystep] * kernel[8];
+  }
+  v = MAX(MIN(v, 255), 0);
+  return v;
+}
+
+#define BLUR_KERNEL        {1,1,1, 1,1,1, 1,1,1}
+#define EMBOSS_KERNEL      {-2, -1, 0, -1, 1, 1, 0, 1, 2}
+#define EDGE_DETECT_KERNEL {0,1,0,1,-4,1,0,1,0}
+
+static const int kernels[][9] = {
+  [PIXMAP_BLUR] = BLUR_KERNEL,
+  [PIXMAP_EMBOSS] = EMBOSS_KERNEL,
+  [PIXMAP_EDGE_DETECT] = EDGE_DETECT_KERNEL,
+};
+
+
+/**
+ *
+ */
+static inline int
+convolute_pixel_fast(const uint8_t *src, int xstep, int ystep,
+		     const int *kernel)
+{
+  int v = 0;
+
+  v += src[-xstep - ystep] * kernel[0];
+  v += src[       - ystep] * kernel[1];
+  v += src[ xstep - ystep] * kernel[2];
+  v += src[-xstep]         * kernel[3];
+  v += src[0]              * kernel[4];
+  v += src[ xstep]         * kernel[5];
+  v += src[-xstep + ystep] * kernel[6];
+  v += src[         ystep] * kernel[7];
+  v += src[ xstep + ystep] * kernel[8];
+  v = MAX(MIN(v, 255), 0);
+  return v;
+}
+
+
+static int
+convolute_pixel_BLUR(const uint8_t *src, int xstep, int ystep)
+{
+  return convolute_pixel_fast(src, xstep, ystep, (const int[])BLUR_KERNEL);
+}
+
+static int
+convolute_pixel_EMBOSS(const uint8_t *src, int xstep, int ystep)
+{
+  return convolute_pixel_fast(src, xstep, ystep, (const int[])EMBOSS_KERNEL);
+}
+
+static int
+convolute_pixel_EDGE_DETECT(const uint8_t *src, int xstep, int ystep)
+{
+  return convolute_pixel_fast(src, xstep, ystep,
+			      (const int[])EDGE_DETECT_KERNEL);
+}
+
+
+typedef int (kfn_t)(const uint8_t *src, int xstep, int ystep);
+
+static kfn_t *kernelfuncs[] = {
+  [PIXMAP_BLUR] = convolute_pixel_BLUR,
+  [PIXMAP_EMBOSS] = convolute_pixel_EMBOSS,
+  [PIXMAP_EDGE_DETECT] = convolute_pixel_EDGE_DETECT,
+};
+
+
+/**
+ *
+ */
+static void
+convolute_pixels(uint8_t *dst, const uint8_t *src, 
+		 int w, int h, int channels, int linesize, const int *k,
+		 kfn_t *kfn)
+{
+  int x, y, c;
+  uint8_t *d;
+  const uint8_t *s;
+
+  for(y = 0; y < 1; y++) {
+    d = dst;
+    s = src;
+
+    for(x = 0; x < w; x++)
+      for(c = 0; c < channels; c++)
+	*d++ = convolute_pixel_slow(s++, x, y, channels, linesize, w, h, k);
+      
+    dst += linesize;
+    src += linesize;
+  }
+  
+  
+  for(; y < h - 1; y++) {
+    d = dst;
+    s = src;
+
+    for(c = 0; c < channels; c++)
+      *d++ = convolute_pixel_slow(s++, 0, y, channels, linesize, w, h, k);
+
+    switch(channels) {
+    case 1:
+      for(x = 1; x < w - 1; x++)
+	*d++ = kfn(s++, 1, linesize);
+      break;
+
+    case 2:
+      for(x = 1; x < w - 1; x++) {
+	*d++ = kfn(s++, 2, linesize);
+	*d++ = kfn(s++, 2, linesize);
+      }
+      break;
+
+    case 3:
+      for(x = 1; x < w - 1; x++) {
+	*d++ = kfn(s++, 3, linesize);
+	*d++ = kfn(s++, 3, linesize);
+	*d++ = kfn(s++, 3, linesize);
+      }
+      break;
+
+    case 4:
+      for(x = 1; x < w - 1; x++) {
+	*d++ = kfn(s++, 4, linesize);
+	*d++ = kfn(s++, 4, linesize);
+	*d++ = kfn(s++, 4, linesize);
+	*d++ = kfn(s++, 4, linesize);
+      }
+      break;
+
+    }
+
+    for(c = 0; c < channels; c++)
+      *d++ = convolute_pixel_slow(s++, x, y, channels, linesize, w, h, k);
+
+    dst += linesize;
+    src += linesize;
+  }
+
+  for(; y < h; y++) {
+    d = dst;
+    s = src;
+
+    for(x = 0; x < w; x++)
+      for(c = 0; c < channels; c++)
+	*d++ = convolute_pixel_slow(s++, x, y, channels, linesize, w, h, k);
+
+    dst += linesize;
+    src += linesize;
+  }
 }
 
 
@@ -77,20 +326,330 @@ pixmap_dup(pixmap_t *pm)
  *
  */
 pixmap_t *
-pixmap_create_rgb24(int width, int height, const void *pixels, int pitch)
+pixmap_convolution_filter(const pixmap_t *src, int kernel)
 {
-  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
+  const int *k = kernels[kernel];
+  kfn_t *kfn = kernelfuncs[kernel];
 
-  pm->pm_refcount = 1;
-  pm->pm_codec = CODEC_ID_NONE;
+  if(src->pm_codec != CODEC_ID_NONE)
+    return NULL;
 
-  pm->pm_width = width;
-  pm->pm_height = height;
-  pm->pm_pixfmt = PIX_FMT_RGB24;
 
-  pm->pm_pict.data[0] = malloc(height * pitch);
-  pm->pm_pict.linesize[0] = pitch;
 
-  memcpy(pm->pm_pict.data[0], pixels, height * pitch);
-  return pm;
+
+  pixmap_t *dst = pixmap_clone(src, 0);
+
+
+  switch(src->pm_pixfmt) {
+  case PIX_FMT_GRAY8:
+    convolute_pixels(dst->pm_pixels[0], src->pm_pixels[0],
+		     dst->pm_width, dst->pm_height, 1, dst->pm_linesize[0],
+		     k, kfn);
+    break;
+
+  case PIX_FMT_Y400A:
+    convolute_pixels(dst->pm_pixels[0], src->pm_pixels[0],
+		     dst->pm_width, dst->pm_height, 2, dst->pm_linesize[0],
+		     k, kfn);
+    break;
+
+  default:
+    pixmap_release(dst);
+    return NULL;
+  }
+  return dst;
+}
+
+
+
+/**
+ *
+ */
+static void
+multiply_alpha_PIX_FMT_Y400A(uint8_t *dst, const uint8_t *src, 
+			     int w, int h, int linesize)
+{
+  int x, y;
+  const uint8_t *s;
+  uint8_t *d;
+
+  for(y = 0; y < h; y++) {
+    s = src;
+    d = dst;
+    for(x = 0; x < w; x++) {
+      *d++ = s[0] * s[1];
+      *d++ = s[1];
+      s+= 2;
+    }
+    dst += linesize;
+    src += linesize;
+  }
+}
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_multiply_alpha(const pixmap_t *src)
+{
+  if(src->pm_codec != CODEC_ID_NONE)
+    return NULL;
+
+  pixmap_t *dst = pixmap_clone(src, 0);
+
+  switch(src->pm_pixfmt) {
+  case PIX_FMT_Y400A:
+    multiply_alpha_PIX_FMT_Y400A(dst->pm_pixels[0], src->pm_pixels[0],
+				 dst->pm_width, dst->pm_height,
+				 dst->pm_linesize[0]);
+    break;
+
+  default:
+    pixmap_release(dst);
+    return NULL;
+  }
+  return dst;
+}
+
+
+/**
+ *
+ */
+static void
+extract_channel(uint8_t *dst, const uint8_t *src, 
+		int w, int h, int xstep, int src_linesize, int dst_linesize)
+{
+  int x, y;
+  const uint8_t *s;
+  uint8_t *d;
+
+  for(y = 0; y < h; y++) {
+    s = src;
+    d = dst;
+    for(x = 0; x < w; x++) {
+      *d++ = *s;
+      s += xstep;
+    }
+    dst += dst_linesize;
+    src += src_linesize;
+  }
+}
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_extract_channel(const pixmap_t *src, unsigned int channel)
+{
+  if(src->pm_codec != CODEC_ID_NONE)
+    return NULL;
+
+  pixmap_t *dst = calloc(1, sizeof(pixmap_t));
+  dst->pm_refcount = 1;
+  dst->pm_linesize[0] = dst->pm_width = src->pm_width;
+  dst->pm_height = src->pm_height;
+  dst->pm_codec = CODEC_ID_NONE;
+  dst->pm_pixfmt = PIX_FMT_GRAY8;
+
+  dst->pm_pixels[0] = malloc(dst->pm_linesize[0] * dst->pm_height);
+
+  switch(src->pm_pixfmt) {
+  case PIX_FMT_Y400A:
+    channel = MIN(channel, 1);
+    extract_channel(dst->pm_pixels[0], src->pm_pixels[0] + channel,
+		    dst->pm_width, dst->pm_height,
+		    2, src->pm_linesize[0], dst->pm_linesize[0]);
+    break;
+
+  default:
+    pixmap_release(dst);
+    return NULL;
+  }
+
+  return dst;
+}
+
+#define FIXMUL(a, b) (((a) * (b) + 255) >> 8)
+
+
+static void
+composite_Y400A_on_Y400A(uint8_t *dst, const uint8_t *src,
+			 int red, int green, int blue, int alpha,
+			 int width)
+{
+  int i, a;
+  int x;
+  for(x = 0; x < width; x++) {
+    i = *src++;
+    a = *src++;
+
+    i = FIXMUL(red,   i);
+    a = FIXMUL(alpha, a);
+
+    dst[0] = FIXMUL(255 - a, dst[0]) + i;
+    dst[1] = FIXMUL(255 - a, dst[1]) + a;
+    dst += 2;
+  }
+}
+
+
+
+static void
+composite_Y400A_on_BGR32(uint8_t *dst, const uint8_t *src,
+			 int red, int green, int blue, int alpha,
+			 int width)
+{
+  int r, g, b, a, i;
+  int r0, g0, b0, a0;
+  int x;
+  uint32_t *dst32 = (uint32_t *)dst;
+  uint32_t v;
+
+  for(x = 0; x < width; x++) {
+    i = *src++;
+    a = *src++;
+
+    a = FIXMUL(alpha, a);
+    r = FIXMUL(red,   a);
+    g = FIXMUL(green, a);
+    b = FIXMUL(blue,  a);
+
+    v = *dst32;
+    a0 = (v >> 24) & 0xff;
+    b0 = (v >> 16) & 0xff;
+    g0 = (v >>  8) & 0xff;
+    r0 = v & 0xff;
+
+    a0 = FIXMUL(255 - a, a0) + a;
+    r0 = FIXMUL(255 - a, r0) + r;
+    g0 = FIXMUL(255 - a, g0) + g;
+    b0 = FIXMUL(255 - a, b0) + b;
+
+    *dst32++ = a0 << 24 | b0 << 16 | g0 << 8 | r0;
+  }
+}
+
+
+static void
+composite_GRAY8_on_Y400A(uint8_t *dst, const uint8_t *src,
+			 int red, int green, int blue, int alpha,
+			 int width)
+{
+  int i, a;
+  int x;
+  for(x = 0; x < width; x++) {
+    a = *src++;
+
+    i = FIXMUL(red,   a);
+    a = FIXMUL(alpha, a);
+
+    dst[0] = FIXMUL(255 - a, dst[0]) + i;
+    dst[1] = FIXMUL(255 - a, dst[1]) + a;
+    dst += 2;
+  }
+}
+
+
+
+static void
+composite_GRAY8_on_BGR32(uint8_t *dst, const uint8_t *src,
+			 int red, int green, int blue, int alpha,
+			 int width)
+{
+  int r, g, b, a;
+  int r0, g0, b0, a0;
+  int x;
+  uint32_t *dst32 = (uint32_t *)dst;
+  uint32_t v;
+
+  for(x = 0; x < width; x++) {
+    a = *src++;
+
+    a = FIXMUL(alpha, a);
+    r = FIXMUL(red,   a);
+    g = FIXMUL(green, a);
+    b = FIXMUL(blue,  a);
+
+    v = *dst32;
+    a0 = (v >> 24) & 0xff;
+    b0 = (v >> 16) & 0xff;
+    g0 = (v >>  8) & 0xff;
+    r0 = v & 0xff;
+
+    a0 = FIXMUL(255 - a, a0) + a;
+    r0 = FIXMUL(255 - a, r0) + r;
+    g0 = FIXMUL(255 - a, g0) + g;
+    b0 = FIXMUL(255 - a, b0) + b;
+
+    *dst32++ = a0 << 24 | b0 << 16 | g0 << 8 | r0;
+  }
+}
+
+
+
+
+
+/**
+ *
+ */
+void
+pixmap_composite(pixmap_t *dst, const pixmap_t *src,
+		 int xdisp, int ydisp,
+		 int r, int g, int b, int a)
+{
+  int y, wy;
+  uint8_t *d0;
+  const uint8_t *s0;
+  void (*fn)(uint8_t *dst, const uint8_t *src,
+	     int red, int green, int blue, int alpha,
+	     int width);
+
+  int readstep = 0;
+  int writestep = 0;
+
+  if(src->pm_codec != CODEC_ID_NONE)
+    return;
+
+  if(src->pm_pixfmt == PIX_FMT_Y400A && dst->pm_pixfmt == PIX_FMT_Y400A)
+    fn = composite_Y400A_on_Y400A;
+  else if(src->pm_pixfmt == PIX_FMT_Y400A && dst->pm_pixfmt == PIX_FMT_BGR32)
+    fn = composite_Y400A_on_BGR32;
+  else if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_Y400A)
+    fn = composite_GRAY8_on_Y400A;
+  else if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_BGR32)
+    fn = composite_GRAY8_on_BGR32;
+  else
+    return;
+  
+  readstep  = bytes_per_pixel(src->pm_pixfmt);
+  writestep = bytes_per_pixel(dst->pm_pixfmt);
+
+  s0 = src->pm_pixels[0];
+  d0 = dst->pm_pixels[0];
+
+  int xx = src->pm_width;
+
+  if(xdisp < 0) {
+    // Painting left of dst image
+    s0 += readstep * -xdisp;
+    xx += xdisp;
+    xdisp = 0;
+	
+  } else if(xdisp > 0) {
+    d0 += writestep * xdisp;
+  }
+      
+  if(xx + xdisp > dst->pm_width) {
+    xx = dst->pm_width - xdisp;
+  }
+      
+
+  for(y = 0; y < src->pm_height; y++) {
+    wy = y + ydisp;
+    if(wy >= 0 && wy < dst->pm_height)
+      fn(d0 + wy * dst->pm_linesize[0],
+	 s0 + y * src->pm_linesize[0], r, g, b, a, xx);
+  }
 }

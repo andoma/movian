@@ -32,44 +32,55 @@
 #include "htsmsg.h"
 #include "htsmsg_json.h"
 #include "htsmsg_store.h"
+#include "misc/callout.h"
 
 extern char *showtime_settings_path;
+
+LIST_HEAD(pending_store_list, pending_store);
+
+
+typedef struct pending_store {
+  LIST_ENTRY(pending_store) ps_link;
+  htsmsg_t *ps_msg;
+  char *ps_path;
+} pending_store_t;
+
+
 static int rename_cant_overwrite;
+static struct pending_store_list pending_stores;
+static callout_t pending_store_callout;
+static hts_mutex_t pending_store_mutex;
 
 /**
  *
  */
-void
-htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
+static void
+pending_store_destroy(pending_store_t *ps)
 {
-  char path[PATH_MAX];
+  LIST_REMOVE(ps, ps_link);
+  htsmsg_destroy(ps->ps_msg);
+  free(ps->ps_path);
+  free(ps);
+}
+
+
+/**
+ *
+ */
+static void
+pending_store_write(pending_store_t *ps)
+{
+  char *path;
   char fullpath[PATH_MAX];
   char fullpath2[PATH_MAX];
   int x, l, fd;
-  va_list ap;
   struct stat st;
   htsbuf_queue_t hq;
   htsbuf_data_t *hd;
-  char *n;
   int ok;
 
-  if(showtime_settings_path == NULL)
-    return;
-
-  va_start(ap, pathfmt);
-  vsnprintf(path, sizeof(path), pathfmt, ap);
-  va_end(ap);
-
-  n = path;
-
-  while(*n) {
-    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
-      *n = '_';
-    n++;
-  }
-
-  l = strlen(path);
-
+  path = mystrdupa(ps->ps_path);
+  l = strlen(ps->ps_path);
   for(x = 0; x < l; x++) {
     if(path[x] == '/') {
       /* It's a directory here */
@@ -101,7 +112,7 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   ok = 1;
 
   htsbuf_queue_init(&hq, 0);
-  htsmsg_json_serialize(record, &hq, 1);
+  htsmsg_json_serialize(ps->ps_msg, &hq, 1);
 
   int bytes = 0;
 
@@ -142,6 +153,94 @@ htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
   }
 }
 
+
+/**
+ *
+ */
+void
+htsmsg_store_flush(void)
+{
+  pending_store_t *ps;
+  hts_mutex_lock(&pending_store_mutex);
+  while((ps = LIST_FIRST(&pending_stores)) != NULL) {
+    pending_store_write(ps);
+    pending_store_destroy(ps);
+  }
+  hts_mutex_unlock(&pending_store_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+pending_store_fire(struct callout *c, void *opaque)
+{
+  htsmsg_store_flush();
+}
+
+
+/**
+ *
+ */
+void
+htsmsg_store_init(void)
+{
+  hts_mutex_init(&pending_store_mutex);
+}
+
+
+/**
+ *
+ */
+void
+htsmsg_store_save(htsmsg_t *record, const char *pathfmt, ...)
+{
+  char path[PATH_MAX];
+  va_list ap;
+  char *n;
+  pending_store_t *ps;
+
+  if(showtime_settings_path == NULL)
+    return;
+
+  va_start(ap, pathfmt);
+  vsnprintf(path, sizeof(path), pathfmt, ap);
+  va_end(ap);
+
+  n = path;
+
+  while(*n) {
+    if(*n == ':' || *n == '?' || *n == '*' || *n > 127 || *n < 32)
+      *n = '_';
+    n++;
+  }
+
+  hts_mutex_lock(&pending_store_mutex);
+
+
+
+  LIST_FOREACH(ps, &pending_stores, ps_link)
+    if(!strcmp(ps->ps_path, path))
+      break;
+  
+  if(!callout_isarmed(&pending_store_callout))
+    callout_arm(&pending_store_callout, pending_store_fire, NULL, 10);
+
+  if(ps == NULL) {
+    ps = malloc(sizeof(pending_store_t));
+    ps->ps_path = strdup(path);
+    LIST_INSERT_HEAD(&pending_stores, ps, ps_link);
+  } else {
+    htsmsg_destroy(ps->ps_msg);
+  }
+
+  ps->ps_msg = htsmsg_copy(record);
+
+  hts_mutex_unlock(&pending_store_mutex);
+}
+
+
 /**
  *
  */
@@ -153,6 +252,11 @@ htsmsg_store_load_one(const char *filename)
   char *mem;
   htsmsg_t *r;
   int n;
+  pending_store_t *ps;
+
+  LIST_FOREACH(ps, &pending_stores, ps_link)
+    if(!strcmp(ps->ps_path, filename))
+      return htsmsg_copy(ps->ps_msg);
 
   if(stat(filename, &st) < 0) {
     TRACE(TRACE_DEBUG, "Settings", 
@@ -225,13 +329,14 @@ htsmsg_store_load(const char *pathfmt, ...)
   if(htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap) < 0)
     return NULL;
 
-  if(stat(fullpath, &st) != 0)
-    return NULL;
+  hts_mutex_lock(&pending_store_mutex);
 
-  if(S_ISDIR(st.st_mode)) {
+  if(stat(fullpath, &st) == 0 && S_ISDIR(st.st_mode)) {
 
-    if((dir = opendir(fullpath)) == NULL)
+    if((dir = opendir(fullpath)) == NULL) {
+      hts_mutex_unlock(&pending_store_mutex);
       return NULL;
+    }
 
     r = htsmsg_create_map();
 
@@ -251,6 +356,8 @@ htsmsg_store_load(const char *pathfmt, ...)
     r = htsmsg_store_load_one(fullpath);
   }
 
+  hts_mutex_unlock(&pending_store_mutex);
+
   return r;
 }
 
@@ -264,7 +371,21 @@ htsmsg_store_remove(const char *pathfmt, ...)
   va_list ap;
 
   va_start(ap, pathfmt);
-  if(!htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap))
+  if(!htsmsg_store_buildpath(fullpath, sizeof(fullpath), pathfmt, ap)) {
+
+    pending_store_t *ps;
+
+    hts_mutex_lock(&pending_store_mutex);
+
+    LIST_FOREACH(ps, &pending_stores, ps_link)
+      if(!strcmp(ps->ps_path, fullpath))
+	break;
+    
+    if(ps != NULL)
+      pending_store_destroy(ps);
+
     unlink(fullpath);
+    hts_mutex_unlock(&pending_store_mutex);
+  }
   va_end(ap);
 }

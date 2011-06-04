@@ -130,19 +130,6 @@ gx11_set_fullscreen(void *opaque, int value)
 
 
 /**
- * Switch displaymode, we just set a variable and let mainloop switch
- * later on
- */
-static void
-gx11_set_vdpau(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->gr.gr_be.gbr_enable_vdpau = value;
-}
-
-
-
-/**
  * Use can remap mousewheel to up/down key actions
  */
 static void
@@ -1292,14 +1279,6 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 			   gx11_set_fullscreen, gx11, 
 			   SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 			   glw_settings_save, gr);
-  }
-
-  if(gx11->gr.gr_be.gbr_vdpau_dev) {
-    settings_create_bool(gr->gr_settings, "vdpau",
-			 "Enable VDPAU", 1, gr->gr_settings_store,
-			 gx11_set_vdpau, gx11, 
-			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-			 glw_settings_save, gr);
   }
 
   gx11->want_fullscreen |= force_fs;

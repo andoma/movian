@@ -80,11 +80,13 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/string.c \
+	src/misc/codepages.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
 	src/misc/isolang.c \
 	src/misc/dbl.c \
 	src/misc/json.c \
+	src/misc/unicode_composition.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
@@ -103,6 +105,7 @@ SRCS +=	src/htsmsg/htsbuf.c \
 #
 SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_probe.c \
+	src/fileaccess/fa_libav.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_backend.c \
 	src/fileaccess/fa_scanner.c \
@@ -181,8 +184,10 @@ SRCS-$(CONFIG_HTTPSERVER) += \
 #
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
-	src/video/video_subtitles.c \
-	src/video/subtitles.c \
+	src/video/video_overlay.c \
+	src/video/sub_ass.c \
+	src/video/ext_subtitles.c \
+	src/video/video_settings.c \
 
 SRCS-$(CONFIG_DVD) += src/video/video_dvdspu.c
 
@@ -190,6 +195,12 @@ SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 
+#
+# Text rendering
+#
+SRCS-$(CONFIG_LIBFREETYPE) += src/text/freetype.c
+SRCS-$(CONFIG_LIBFONTCONFIG) += src/text/fontconfig.c
+SRCS += src/text/parser.c
 
 #
 # Audio subsys
@@ -268,7 +279,6 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_texture_loader.c \
 			src/ui/glw/glw_image.c \
 			src/ui/glw/glw_text_bitmap.c \
-			src/ui/glw/glw_unicode.c \
 			src/ui/glw/glw_fx_texrot.c \
 			src/ui/glw/glw_bloom.c \
 			src/ui/glw/glw_cube.c \

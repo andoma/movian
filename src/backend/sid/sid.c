@@ -32,7 +32,8 @@ be_sid2player_canhandle(const char *url)
  */
 static event_t *
 be_sid2player_play(const char *url0, media_pipe_t *mp, 
-		   char *errbuf, size_t errlen, int hold)
+		   char *errbuf, size_t errlen, int hold,
+		   const char *mimetype)
 {
   media_queue_t *mq = &mp->mp_audio;
   char *url, *p;
@@ -69,7 +70,7 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_NONE);
   mp_become_primary(mp);
 
 

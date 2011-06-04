@@ -26,6 +26,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <limits.h>
 #include "showtime.h"
 #include "fileaccess.h"
 
@@ -95,7 +96,8 @@ fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  * Open file
  */
 static fa_handle_t *
-fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+	int flags)
 {
   fs_handle_t *fh;
 

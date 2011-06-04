@@ -371,3 +371,12 @@ arch_get_seed(void)
   v = (v << 32) ^ time(NULL);
   return v;
 }
+
+
+/**
+ *
+ */
+void
+arch_preload_fonts(void)
+{
+}

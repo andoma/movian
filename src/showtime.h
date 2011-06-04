@@ -64,6 +64,7 @@ extern uint64_t arch_get_seed(void);
 static inline const char *content2type (int ctype) __attribute__((unused));
 static inline const char *content2type (int ctype) {
   static const char *types[CONTENT_MAX+1] = {
+    [CONTENT_UNKNOWN]  = "unknown",
     [CONTENT_DIR]      = "directory",
     [CONTENT_FILE]     = "file",
     [CONTENT_AUDIO]    = "audio",
@@ -108,6 +109,12 @@ void trace_arch(int level, const char *prefix, const char *buf);
  char *my_b = alloca(my_l + 1); \
  memcpy(my_b, n, my_l + 1); })
 
+#define mystrndupa(n, len) ({ \
+ char *my_b = alloca(len + 1); \
+ my_b[len] = 0; \
+ memcpy(my_b, n, len); \
+})
+
 
 static inline unsigned int mystrhash(const char *s)
 {
@@ -122,6 +129,16 @@ static inline void mystrset(char **p, const char *s)
   free(*p);
   *p = s ? strdup(s) : NULL;
 }
+
+
+static inline const char *mystrbegins(const char *s1, const char *s2)
+{
+  while(*s2)
+    if(*s1++ != *s2++)
+      return NULL;
+  return s1;
+}
+
 
 void runcontrol_activity(void);
 

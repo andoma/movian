@@ -20,6 +20,7 @@
 #include <string.h>
 #include <assert.h>
 #include <unistd.h>
+#include <limits.h>
 
 #include "js.h"
 
@@ -145,8 +146,8 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
     k = strdup(k);
     v = strdup(v);
 
-    http_deescape(k);
-    http_deescape(v);
+    url_deescape(k);
+    url_deescape(v);
 
     jsval val = STRING_TO_JSVAL(JS_NewString(cx, v, strlen(v)));
     JS_SetProperty(cx, robj, k, &val);
@@ -157,28 +158,44 @@ js_queryStringSplit(JSContext *cx, JSObject *obj,
   return JS_TRUE;
 }
 
-
-/**
- *
- */
 static JSBool 
-js_httpEscape(JSContext *cx, JSObject *obj,
-	      uintN argc, jsval *argv, jsval *rval)
+js_escape(JSContext *cx, JSObject *obj,
+	  uintN argc, jsval *argv, jsval *rval, int how)
 {
+
   const char *str;
   char *r;
 
   if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
     return JS_FALSE;
 
-  size_t l = strlen(str);
-  
-  r = malloc((l * 3) + 1);
-  
-  path_escape(r, l * 3, str);
+  size_t len = url_escape(NULL, 0, str, how);
+  r = malloc(len);
+  url_escape(r, len, str, how);
 
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, r, strlen(r)));
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, r, len-1));
   return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSBool 
+js_pathEscape(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  return js_escape(cx, obj, argc, argv, rval, URL_ESCAPE_PATH);
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_paramEscape(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  return js_escape(cx, obj, argc, argv, rval, URL_ESCAPE_PARAM);
 }
 
 
@@ -308,15 +325,16 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
 {
   const char *id, *reason, *source;
   char *username, *password;
-  JSBool query;
+  JSBool query, forcetmp = 0;
   int r;
   jsval val;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "sssb",
-			  &id, &source, &reason, &query))
+  if(!JS_ConvertArguments(cx, argc, argv, "sssb/b",
+			  &id, &source, &reason, &query, &forcetmp))
     return JS_FALSE;
 
-  r = keyring_lookup(id, &username, &password, NULL, query, source, reason);
+  r = keyring_lookup(id, &username, &password, NULL, query, source, reason,
+		     forcetmp);
 
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);
@@ -389,6 +407,21 @@ js_sleep(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_time(JSContext *cx, JSObject *obj,
+	uintN argc, jsval *argv, jsval *rval)
+{
+  time_t t;
+  time(&t);
+  jsdouble *d = JS_NewDouble(cx, t);
+  *rval = DOUBLE_TO_JSVAL(d);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -396,7 +429,8 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
     JS_FS("readFile",         js_readFile, 1, 0, 0),
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
-    JS_FS("httpEscape",       js_httpEscape, 1, 0, 0),
+    JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
+    JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
@@ -404,6 +438,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("sleep",            js_sleep, 1, 0, 0),
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
+    JS_FS("time",             js_time, 0, 0, 0),
     JS_FS_END
 };
 
@@ -448,6 +483,7 @@ plugin_finalize(JSContext *cx, JSObject *obj)
 
   assert(LIST_FIRST(&jsp->jsp_routes) == NULL);
   assert(LIST_FIRST(&jsp->jsp_searchers) == NULL);
+  assert(LIST_FIRST(&jsp->jsp_http_auths) == NULL);
 
   TRACE(TRACE_DEBUG, "JS", "Plugin %s unloaded", jsp->jsp_url);
   
@@ -466,7 +502,7 @@ static void
 js_plugin_unload(JSContext *cx, js_plugin_t *jsp)
 {
   js_page_flush_from_plugin(cx, jsp);
-
+  js_io_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -549,6 +585,7 @@ static JSClass plugin_conf_class = {
 static JSFunctionSpec plugin_functions[] = {
     JS_FS("addURI",           js_addURI,      2, 0, 0),
     JS_FS("addSearcher",      js_addSearcher, 3, 0, 0),
+    JS_FS("addHTTPAuth",      js_addHTTPAuth, 2, 0, 0),
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
     JS_FS_END

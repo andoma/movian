@@ -16,5 +16,5 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-int glw_unicode_compose(int a, int b);
+int unicode_compose(int a, int b);
 

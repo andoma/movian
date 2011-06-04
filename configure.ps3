@@ -44,6 +44,7 @@ done
 setup_env "$@"
 
 
+enable libfreetype
 enable spidermonkey
 enable trex
 enable emu_thread_specifics

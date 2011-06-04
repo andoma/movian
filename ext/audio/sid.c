@@ -1219,7 +1219,7 @@ be_sidplayer_canhandle(const char *url)
  */
 static event_t *
 be_sidplayer_play(const char *url0, media_pipe_t *mp, 
-		  char *errbuf, size_t errlen, int hold)
+		  char *errbuf, size_t errlen, int hold, const char *memetype)
 {
   media_queue_t *mq = &mp->mp_audio;
   char *url, *p;
@@ -1247,7 +1247,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   subSong = atoi(p) - 1;
 
-  if((fh = fa_open(url, errbuf, errlen)) == NULL)
+  if((fh = fa_open(url, errbuf, errlen, 0)) == NULL)
     return NULL;
 
   fsize = fa_read(fh, sidfile, sizeof(sidfile));
@@ -1265,7 +1265,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_NONE);
   mp_become_primary(mp);
 
 

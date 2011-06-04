@@ -713,7 +713,6 @@ static const token_attrib_t attribtab[] = {
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"sizeScale",       set_float,  GLW_ATTRIB_SIZE_SCALE},
-  {"sizeBias",        set_float,  GLW_ATTRIB_SIZE_BIAS},
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 

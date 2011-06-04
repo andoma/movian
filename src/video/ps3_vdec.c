@@ -65,7 +65,6 @@ typedef struct vdec_pic {
 
   uint8_t *buf;
   size_t bufsize;
-
 } vdec_pic_t;
 
 
@@ -265,10 +264,10 @@ picture_out(vdec_decoder_t *vdd)
   uint32_t addr;
   vdec_picture_format picfmt;
   video_decoder_t *vd = vdd->vd;
-  const uint8_t *sar;
   vdec_pic_t *vp;
   char metainfo[64];
   union vdec_userdata ud;
+  int cnt = 0;
 
   picfmt.alpha = 0;
   picfmt.format_type = VDEC_PICFMT_YUV420P;
@@ -289,6 +288,14 @@ picture_out(vdec_decoder_t *vdd)
     return;
   }
 
+  LIST_FOREACH(vp, &vdd->active_pictures, link)
+    cnt++;
+
+  if(cnt > 4) {
+    reset_active_pictures(vdd);
+    vdd->next_picture = -1;
+  }
+
   if(pi->codec_type == VDEC_CODEC_TYPE_MPEG2) {
     vdec_mpeg2_info *mpeg2 = (void *)(intptr_t)pi->codec_specific_addr;
 
@@ -307,19 +314,23 @@ picture_out(vdec_decoder_t *vdd)
 
     switch(mpeg2->aspect_ratio) {
     case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.dar = (float)mpeg2->width / mpeg2->height;
+      vp->fi.dar.num = mpeg2->width;
+      vp->fi.dar.den = mpeg2->height;
       break;
     case VDEC_MPEG2_ARI_DAR_4_3:
-      vp->fi.dar = 4.0f/3;
+      vp->fi.dar = (AVRational){4,3};
       break;
     case VDEC_MPEG2_ARI_DAR_16_9:
-      vp->fi.dar = 16.0f/9;
+      vp->fi.dar = (AVRational){16,9};
       break;
     case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.dar = 2.21f/1;
+      vp->fi.dar = (AVRational){221,100};
       break;
     }
 
+    // No reordering
+    reset_active_pictures(vdd);
+    vdd->next_picture = 0;
     vp->order = 0;
 
     snprintf(metainfo, sizeof(metainfo),
@@ -328,6 +339,7 @@ picture_out(vdec_decoder_t *vdd)
 
   } else {
     vdec_h264_info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
+    AVRational sar;
 
     lumasize = h264->width * h264->height;
     vp = alloc_picture(vdd, lumasize);
@@ -341,22 +353,35 @@ picture_out(vdec_decoder_t *vdd)
     if(h264->color_description_present_flag)
       vp->fi.color_space = h264->matrix_coefficients;
 
+    vp->fi.dar.num = h264->width;
+    vp->fi.dar.den = h264->height;
+
     if(h264->aspect_ratio_idc == 0xff) {
-      vp->fi.dar = (float)(h264->width * h264->sar_width) / 
-	(float)(h264->height * h264->sar_height);
+      sar.num = h264->sar_width;
+      sar.den = h264->sar_height;
     } else {
-      sar = h264_sar[h264->aspect_ratio_idc <= 16 ? h264->aspect_ratio_idc : 0];
-      vp->fi.dar = (float)(h264->width * sar[0]) /
-	(float)(h264->height * sar[1]);
+      const uint8_t *p;
+      p = h264_sar[h264->aspect_ratio_idc <= 16 ? h264->aspect_ratio_idc : 0];
+      sar.num = p[0];
+      sar.den = p[1];
     }
+    vp->fi.dar = av_mul_q(vp->fi.dar, sar);
+
     vp->order = h264->pic_order_count[0];
+
+    if(h264->idr_picture_flag) {
+      reset_active_pictures(vdd);
+      vdd->next_picture = vp->order;
+    }
 
     snprintf(metainfo, sizeof(metainfo),
 	     "h264 (Level %d.%d) %dx%d%c (Cell)",
 	     vdd->level_major, vdd->level_minor,
 	     h264->width, h264->height, vp->fi.interlaced ? 'i' : 'p');
-
   }
+
+  vd->vd_mp->mp_video_width = vp->fi.width;
+  vd->vd_mp->mp_video_height = vp->fi.height;
 
   vd->vd_estimated_duration = vp->fi.duration; // For bitrate calculations
 
@@ -368,13 +393,8 @@ picture_out(vdec_decoder_t *vdd)
   vp->fi.prescaled = 0;
   vp->fi.color_space = -1;
   vp->fi.color_range = 0;
-
   vdec_get_picture(vdd->handle, &picfmt, vp->buf);
 
-  if(vp->order == 0) {
-    vdd->next_picture = 0;
-    reset_active_pictures(vdd);
-  }
 
   LIST_INSERT_HEAD(&vdd->active_pictures, vp, link);
 
@@ -399,9 +419,10 @@ picture_out(vdec_decoder_t *vdd)
     uint8_t *data[4] = {vp->buf, vp->buf + lumasize,
 			vp->buf + lumasize + lumasize / 4, 0};
 
-
-    if(vd)
+    if(vd) {
       vd->vd_frame_deliver(data, linesizes, &vp->fi, vd->vd_opaque);
+      video_decoder_scan_ext_sub(vd, vp->fi.pts);
+    }
 
     release_picture(vdd, vp);
   }
@@ -423,11 +444,12 @@ pic_thread(void *aux)
   while(!vdd->picture_thread_stop) {
 
     if(vdd->pending_pictures > 0) {
-      vdd->pending_pictures--;
       
       hts_mutex_unlock(&vdd->mtx);
       picture_out(vdd);
       hts_mutex_lock(&vdd->mtx);
+
+      vdd->pending_pictures--;
       continue;
     }
 
@@ -505,7 +527,6 @@ vdec_blackout(void *opaque)
   vdd->pending_blackout = 1;
   hts_cond_signal(&vdd->picdone);
   hts_mutex_unlock(&vdd->mtx);
-  vdd->vd = NULL;
 }
 
 
@@ -769,11 +790,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     }
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    if(mcp->level != 0)
+    if(mcp->level != 0 && mcp->level <= 42)
       dec_type.profile_level = mcp->level;
     else
       dec_type.profile_level = 42;
-
     spu_threads = 4;
     break;
 
@@ -796,6 +816,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
+  TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
+	id == CODEC_ID_H264 ? "h264" : "MPEG2", dec_type.profile_level,
+	dec_attr.mem_size);
+
   vdd->config.mem_addr = (intptr_t)vdd->mem;
   vdd->config.mem_size = dec_attr.mem_size;
   vdd->config.num_spus = spu_threads;
@@ -815,8 +839,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
-  vdd->level_major = dec_type.profile_level / 10;
-  vdd->level_minor = dec_type.profile_level % 10;
+  vdd->level_major = mcp->level / 10;
+  vdd->level_minor = mcp->level % 10;
 
   if(id == CODEC_ID_H264 && ctx->extradata_size)
     h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);

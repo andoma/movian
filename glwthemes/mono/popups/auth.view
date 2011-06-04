@@ -90,6 +90,10 @@ widget(container_x, {
 		     deliverEvent($self.eventSink, "Ok"),
 		     false, "skin://icons/Check.png");
 
+	  BAR_BUTTON("OK and save", 
+		     deliverEvent($self.eventSink, "OkSave"),
+		     $self.nosave, "skin://icons/Check.png");
+
 	  BAR_BUTTON("Cancel", 
 		     deliverEvent($self.eventSink, "Cancel"),
 		     false, "skin://icons/Delete.png");

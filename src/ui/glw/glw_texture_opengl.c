@@ -427,7 +427,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   }
   
   switch(fmt) {
-  case GLW_TEXTURE_FORMAT_RGBA:
+  case GLW_TEXTURE_FORMAT_BGR32:
     format     = GL_RGBA;
     ext_format = GL_RGBA;
     ext_type   = GL_UNSIGNED_BYTE;

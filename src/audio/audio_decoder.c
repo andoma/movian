@@ -151,8 +151,8 @@ ad_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_len--;
-    mq->mq_bytes -= mb->mb_size;
+    mq->mq_packets_current--;
+    mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
     hts_cond_signal(&mp->mp_backpressure);
     hts_mutex_unlock(&mp->mp_mutex);
@@ -180,8 +180,13 @@ ad_thread(void *aux)
       break;
 
     case MB_AUDIO:
-      if(mb->mb_skip == 0)
-	ad_decode_buf(ad, mp, mq, mb);
+      if(mb->mb_skip != 0)
+	break;
+
+      if(mb->mb_stream != mq->mq_stream)
+	break;
+
+      ad_decode_buf(ad, mp, mq, mb);
       break;
 
     case MB_END:
@@ -327,14 +332,21 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     } else if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
-    if(audio_mode_stereo_only(am))
+    if(audio_mode_stereo_only(am) &&
+       cw->codec->id != CODEC_ID_TRUEHD &&
+       cw->codec->id != CODEC_ID_MLP)
       ctx->request_channels = 2; /* We can only output stereo.
 				    Ask codecs to do downmixing for us. */
     else
       ctx->request_channels = 0;
 
     data_size = AVCODEC_MAX_AUDIO_FRAME_SIZE;
-    r = avcodec_decode_audio2(ctx, ad->ad_outbuf, &data_size, buf, size);
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = buf;
+    avpkt.size = size;
+
+    r = avcodec_decode_audio3(ctx, ad->ad_outbuf, &data_size, &avpkt);
 
     if(r == -1)
       break;

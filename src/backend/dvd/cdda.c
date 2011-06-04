@@ -29,7 +29,7 @@
 #include <cddb/cddb.h>
 #endif
 
-#include <libavutil/sha1.h>
+#include <libavutil/sha.h>
 
 
 hts_mutex_t cd_meta_mutex;
@@ -77,7 +77,7 @@ typedef struct cd_meta {
 
 
 /**
- * Create a SHA1 hash based on a CD
+ * Create a SHA hash based on a CD
  */
 static void
 makeid(uint8_t *out, CdIo_t *cdio)
@@ -90,10 +90,10 @@ makeid(uint8_t *out, CdIo_t *cdio)
   for(i = 0; i < ntracks + 1; i++)
     lba[i] = cdio_get_track_lba(cdio, i + 1);
 
-  struct AVSHA1 *shactx = alloca(av_sha1_size);
-  av_sha1_init(shactx);
-  av_sha1_update(shactx, (const uint8_t *)lba, sizeof(int) * ntracks + 1);
-  av_sha1_final(shactx, out);
+  struct AVSHA *shactx = alloca(av_sha_size);
+  av_sha_init(shactx, 160);
+  av_sha_update(shactx, (const uint8_t *)lba, sizeof(int) * ntracks + 1);
+  av_sha_final(shactx, out);
 }
 
 /**
@@ -376,7 +376,7 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
  */
 static event_t *
 playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
-	  int hold)
+	  int hold, const char *mimetype)
 {
   int track;
   char device[32];
@@ -406,8 +406,8 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
  
   TRACE(TRACE_DEBUG, "AudioCD", "Starting playback of track %d", track);
 
-  mp_set_play_caps(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE | 
-		   MP_PLAY_CAPS_EJECT);
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE | 
+	       MP_PLAY_CAPS_EJECT, MP_BUFFER_NONE);
   mp_become_primary(mp);
   mq = &mp->mp_audio;
 

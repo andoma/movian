@@ -35,6 +35,7 @@
 #include "showtime.h"
 #include "service.h"
 #include "misc/callout.h"
+#include "text/text.h"
 
 #if ENABLE_PS3_VDEC
 #include "video/ps3_vdec.h"
@@ -477,4 +478,19 @@ uint64_t
 arch_get_seed(void)
 {
   return mftb();
+}
+
+
+
+/**
+ *
+ */
+void
+arch_preload_fonts(void)
+{
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-VR-R-LATIN2.TTF");
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-NR-R-JPN.TTF");
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-YG-R-KOR.TTF");
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-DH-R-CGB.TTF");
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-CP-R-KANA.TTF");
 }

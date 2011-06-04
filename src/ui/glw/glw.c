@@ -263,9 +263,7 @@ glw_init(glw_root_t *gr, const char *theme, const char *skin,
 
   gr->gr_uii.uii_ui = ui;
 
-  if(glw_text_bitmap_init(gr))
-    return -1;
-
+  glw_text_bitmap_init(gr);
   glw_init_settings(gr, instance, instance_title);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);
@@ -734,7 +732,10 @@ glw_get_prev_n(glw_t *c, int count)
   for(i = 0; i < count; i++) {
     if((t = TAILQ_PREV(t, glw_queue, glw_parent_link)) == NULL)
       break;
-    c = t;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
   }
   return c;
 }
@@ -754,37 +755,10 @@ glw_get_next_n(glw_t *c, int count)
   for(i = 0; i < count; i++) {
     if((t = TAILQ_NEXT(t, glw_parent_link)) == NULL)
       break;
-    c = t;
-  }
-  return c;
-}
-
-
-/**
- *
- */
-glw_t *
-glw_get_prev_n_all(glw_t *c, int count)
-{
-  int i;
-  for(i = 0; i < count; i++) {
-    if((c = TAILQ_PREV(c, glw_queue, glw_parent_link)) == NULL)
-      break;
-  }
-  return c;
-}
-
-
-/**
- *
- */
-glw_t *
-glw_get_next_n_all(glw_t *c, int count)
-{
-  int i;
-  for(i = 0; i < count; i++) {
-    if((c = TAILQ_NEXT(c, glw_parent_link)) == NULL)
-      break;
+    if(t->glw_flags & GLW_HIDDEN)
+      i--;
+    else
+      c = t;
   }
   return c;
 }
@@ -1706,7 +1680,10 @@ glw_dispatch_event(uii_t *uii, event_t *e)
        event_is_action(e, ACTION_VOLUME_MUTE_TOGGLE) ||
        event_is_action(e, ACTION_POWER_OFF) ||
        event_is_action(e, ACTION_STANDBY) ||
-       event_is_type(e, EVENT_SELECT_TRACK))) {
+       event_is_type(e, EVENT_SELECT_AUDIO_TRACK) ||
+       event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
+
+     )) {
     
     if(glw_kill_screensaver(gr)) {
       glw_unlock(gr);

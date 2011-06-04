@@ -76,6 +76,7 @@ fatal() {
 
 
 enable libfreetype
+enable libfontconfig
 enable libasound
 enable libpulse
 enable lirc
@@ -98,6 +99,7 @@ enable httpserver
 enable timegm
 enable inotify
 enable realpath
+enable font_liberation
 #enable libxrandr  -- code does not really work yet
 
 for opt do
@@ -210,24 +212,24 @@ echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 #
 # libavcodec
 #
-if pkg-config --atleast-version 52.72.0 libavcodec; then
+if pkg-config --atleast-version 53.0.0 libavcodec; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavcodec`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavcodec`
     echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
 else
-    echo "libavcodec 52.72.0 or newer not found."
+    echo "libavcodec 53.0.0 or newer not found."
     die
 fi
 
 #
 # libavformat
 #
-if pkg-config --atleast-version 52.64.0 libavformat; then
+if pkg-config --atleast-version 53.0.0 libavformat; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavformat`
     echo "Using libavformat:     `pkg-config --modversion libavformat`"
 else
-    echo "libavformat 52.64.0 or newer not found."
+    echo "libavformat 53.0.0 or newer not found."
     die
 fi
 
@@ -235,12 +237,12 @@ fi
 #
 # libavutil
 #
-if pkg-config --atleast-version 50.15.0 libavutil; then
+if pkg-config --atleast-version 51.0.0 libavutil; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
     echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
     echo "Using libavutil:       `pkg-config --modversion libavutil`"
 else
-    echo "libavutil 50.15.0 or newer not found."
+    echo "libavutil 51.0.0 or newer not found."
     die
 fi
 
@@ -269,6 +271,22 @@ if enabled libfreetype; then
     else
 	echo "FreeType 2 not found"
 	echo "To compile without it, configure with: --disable-libfreetype"
+	die
+    fi
+fi
+
+
+#
+# libfontconfig
+#
+if enabled libfontconfig; then
+    if pkg-config fontconfig; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs fontconfig`
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags fontconfig`
+	echo "Using libfontconfig:   `pkg-config --modversion fontconfig`"
+    else
+	echo "libfontconfig not found"
+	echo "To compile without it, configure with: --disable-libfontconfig"
 	die
     fi
 fi
@@ -552,12 +570,12 @@ fi
 # OpenSSL
 #
 if enabled openssl; then
-    if pkg-config libssl; then
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libssl`
-	echo "Using libssl:          `pkg-config --modversion libssl`"
-    elif pkg-config openssl; then
+    if pkg-config openssl; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs openssl`
 	echo "Using openssl:         `pkg-config --modversion openssl`"
+    elif pkg-config libssl; then
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libssl`
+	echo "Using libssl:          `pkg-config --modversion libssl`"
     else
 	echo "libssl or openssl not found"
 	echo "To compile without it, configure with: --disable-ssl"
@@ -657,6 +675,6 @@ fi
 # Finalize
 
 echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
-echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt
+echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt -ldl
 
 finalize

@@ -287,6 +287,12 @@ htsmsg_field_t *htsmsg_field_add(htsmsg_t *msg, const char *name,
 				 int type, int flags);
 
 /**
+ * Get a field, return NULL if it does not exist
+ */
+htsmsg_field_t *htsmsg_field_find(htsmsg_t *msg, const char *name);
+
+
+/**
  * Clone a message.
  */
 htsmsg_t *htsmsg_copy(htsmsg_t *src);
@@ -298,5 +304,7 @@ htsmsg_t *htsmsg_copy(htsmsg_t *src);
  * Misc
  */
 htsmsg_t *htsmsg_get_map_in_list(htsmsg_t *m, int num);
+
+htsmsg_t *htsmsg_get_map_by_field_if_name(htsmsg_field_t *f, const char *name);
 
 #endif /* HTSMSG_H_ */

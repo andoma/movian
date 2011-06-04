@@ -78,7 +78,6 @@ typedef struct glw_image {
   glw_rgb_t gi_col_off;
 
   float gi_size_scale;
-  float gi_size_bias;
 
   float gi_saturation;
 
@@ -472,7 +471,7 @@ glw_image_update_constraints(glw_image_t *gi)
 
   } else if(gi->w.glw_class == &glw_icon) {
 
-    float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
+    float siz = gi->gi_size_scale * gr->gr_fontsize;
 
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
@@ -973,10 +972,6 @@ glw_image_set(glw_t *w, va_list ap)
       gi->gi_size_scale = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_SIZE_BIAS:
-      gi->gi_size_bias = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;
@@ -989,7 +984,7 @@ glw_image_set(glw_t *w, va_list ap)
   } while(attrib);
 
   if(w->glw_class == &glw_icon) {
-    float siz = gi->gi_size_scale * gr->gr_fontsize_px + gi->gi_size_bias;
+    float siz = gi->gi_size_scale * gr->gr_fontsize;
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
   }

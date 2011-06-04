@@ -31,6 +31,9 @@
 #include "video_decoder.h"
 #include "event.h"
 #include "media.h"
+#include "ext_subtitles.h"
+#include "video_overlay.h"
+
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -100,8 +103,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   int t;
   
   if(vd->vd_do_flush) {
+    AVPacket avpkt;
+    av_init_packet(&avpkt);
+    avpkt.data = NULL;
+    avpkt.size = 0;
     do {
-      avcodec_decode_video(ctx, frame, &got_pic, NULL, 0);
+      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
     } while(got_pic);
 
     vd->vd_do_flush = 0;
@@ -123,7 +130,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   avgtime_start(&vd->vd_decode_time);
 
-  avcodec_decode_video(ctx, frame, &got_pic, mb->mb_data, mb->mb_size);
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = mb->mb_data;
+  avpkt.size = mb->mb_size;
+
+  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
 	       mq->mq_prop_decode_peak);
@@ -154,8 +166,8 @@ video_deliver_frame(video_decoder_t *vd,
 		    int64_t tim, int64_t pts, int64_t dts, int duration,
 		    int epoch, int decode_time)
 {
-  float f, dar = 1;
   event_ts_t *ets;
+  frame_info_t fi;
 
   if(tim != AV_NOPTS_VALUE)
     mp_set_current_time(mp, tim);
@@ -164,18 +176,22 @@ video_deliver_frame(video_decoder_t *vd,
   switch(mb->mb_aspect_override) {
   case 0:
 
-    if(frame->pan_scan != NULL && frame->pan_scan->width != 0)
-      f = (float)frame->pan_scan->width / (float)frame->pan_scan->height;
-    else
-      f = (float)ctx->width / (float)ctx->height;
-    
-    dar = (av_q2d(ctx->sample_aspect_ratio) ?: 1) * f;
+    if(frame->pan_scan != NULL && frame->pan_scan->width != 0) {
+      fi.dar.num = frame->pan_scan->width;
+      fi.dar.den = frame->pan_scan->height;
+    } else {
+      fi.dar.num = ctx->width;
+      fi.dar.den = ctx->height;
+    }
+
+    if(ctx->sample_aspect_ratio.num)
+      fi.dar = av_mul_q(fi.dar, ctx->sample_aspect_ratio);
     break;
   case 1:
-    dar = (4.0f / 3.0f);
+    fi.dar = (AVRational){4,3};
     break;
   case 2:
-    dar = (16.0f / 9.0f);
+    fi.dar = (AVRational){16,9};
     break;
   }
 
@@ -217,7 +233,6 @@ video_deliver_frame(video_decoder_t *vd,
   }
   vd->vd_prevpts_cnt++;
 
-
   if(duration == 0) {
     TRACE(TRACE_DEBUG, "Video", "Dropping frame with duration = 0");
     return;
@@ -241,14 +256,15 @@ video_deliver_frame(video_decoder_t *vd,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  frame_info_t fi;
+  mp->mp_video_width = ctx->width;
+  mp->mp_video_height = ctx->height;
+
   fi.width = ctx->width;
   fi.height = ctx->height;
   fi.pix_fmt = ctx->pix_fmt;
   fi.pts = pts;
   fi.epoch = epoch;
   fi.duration = duration;
-  fi.dar = dar;
 
   fi.interlaced = !!vd->vd_interlaced;
   fi.tff = !!frame->top_field_first;
@@ -258,6 +274,8 @@ video_deliver_frame(video_decoder_t *vd,
   fi.color_range = ctx->color_range;
 
   vd->vd_frame_deliver(frame->data, frame->linesize, &fi, vd->vd_opaque);
+
+  video_decoder_scan_ext_sub(vd, fi.pts);
 }
 
 
@@ -317,8 +335,8 @@ vd_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_len--;
-    mq->mq_bytes -= mb->mb_size;
+    mq->mq_packets_current--;
+    mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
 
     hts_cond_signal(&mp->mp_backpressure);
@@ -343,6 +361,7 @@ vd_thread(void *aux)
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
+      video_overlay_flush(vd, 1);
       break;
 
     case MB_VIDEO:
@@ -383,7 +402,8 @@ vd_thread(void *aux)
 #endif
 
     case MB_SUBTITLE:
-      video_subtitles_decode(vd, mb);
+      if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)
+	video_overlay_decode(vd, mb);
       break;
 
     case MB_END:
@@ -394,6 +414,20 @@ vd_thread(void *aux)
 	vd->vd_accelerator_blackout(vd->vd_accelerator_opaque);
       else
 	vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
+      break;
+
+    case MB_FLUSH_SUBTITLES:
+      video_overlay_flush(vd, 1);
+      break;
+
+    case MB_EXT_SUBTITLE:
+      if(vd->vd_ext_subtitles != NULL)
+         subtitles_destroy(vd->vd_ext_subtitles);
+
+      // Steal subtitle from the media_buf
+      vd->vd_ext_subtitles = mb->mb_data;
+      mb->mb_data = NULL; 
+      video_overlay_flush(vd, 1);
       break;
 
     default:
@@ -408,6 +442,9 @@ vd_thread(void *aux)
 
   // Stop any video accelerator helper threads 
   video_decoder_set_accelerator(vd, NULL, NULL, NULL);
+
+  if(vd->vd_ext_subtitles != NULL)
+    subtitles_destroy(vd->vd_ext_subtitles);
 
   /* Free ffmpeg frame */
   av_free(vd->vd_frame);
@@ -436,7 +473,8 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
   dvdspu_decoder_init(vd);
 #endif
 
-  video_subtitles_init(vd);
+  TAILQ_INIT(&vd->vd_overlay_queue);
+  hts_mutex_init(&vd->vd_overlay_mutex);
 
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
@@ -472,8 +510,9 @@ video_decoder_destroy(video_decoder_t *vd)
 #ifdef CONFIG_DVD
   dvdspu_decoder_deinit(vd);
 #endif
+  video_overlay_flush(vd, 0);
 
-  video_subtitles_deinit(vd);
+  hts_mutex_destroy(&vd->vd_overlay_mutex);
   free(vd);
 }
 
@@ -493,4 +532,18 @@ video_decoder_set_accelerator(video_decoder_t *vd,
   vd->vd_accelerator_stop = stopfn;
   vd->vd_accelerator_blackout = blackoutfn;
   vd->vd_accelerator_opaque = opaque;
+}
+
+
+/**
+ *
+ */
+void
+video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
+{
+  if(vd->vd_ext_subtitles != NULL) {
+    ext_subtitle_entry_t *ese = subtitles_pick(vd->vd_ext_subtitles, pts);
+    if(ese != NULL)
+      vd->vd_ext_subtitles->es_decode(vd, vd->vd_ext_subtitles, ese);
+  }
 }

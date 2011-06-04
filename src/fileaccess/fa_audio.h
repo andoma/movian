@@ -21,12 +21,14 @@
 
 #include "media.h"
 struct backend;
+struct fa_handle;
 
 event_t *be_file_playaudio(const char *url, media_pipe_t *mp,
-			   char *errbuf, size_t errlen, int hold);
+			   char *errbuf, size_t errlen, int hold,
+			   const char *mimetype);
 
 #if ENABLE_LIBGME
-event_t *fa_gme_playfile(media_pipe_t *mp, void *fh,
+event_t *fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
 			 char *errbuf, size_t errlen, int hold);
 #endif
 
