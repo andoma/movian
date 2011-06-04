@@ -136,8 +136,9 @@ parse_str(uint32_t *output, const char *str, int flags)
 	output[olen-1] = d;
       p = -1;
     } else {
+      p = c;
       if(output != NULL)
-	output[olen] = p = c;
+	output[olen] = c;
       olen++;
     }
   }
