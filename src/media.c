@@ -201,6 +201,8 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
   prop_set_string(mp->mp_prop_type, type);
 
+  mp->mp_prop_primary = prop_create(mp->mp_prop_root, "primary");
+
   // Video
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
@@ -956,6 +958,7 @@ mp_set_primary(media_pipe_t *mp)
 
   prop_select(mp->mp_prop_root);
   prop_link(mp->mp_prop_root, media_prop_current);
+  prop_set_int(mp->mp_prop_primary, 1);
 }
 
 
@@ -985,7 +988,8 @@ mp_become_primary(struct media_pipe *mp)
   assert(mp->mp_flags & MP_PRIMABLE);
 
   if(media_primary != NULL) {
-    
+    prop_set_int(media_primary->mp_prop_primary, 0);
+
     LIST_INSERT_HEAD(&media_pipe_stack, media_primary, mp_stack_link);
     media_primary->mp_flags |= MP_ON_STACK;
 
@@ -1018,7 +1022,8 @@ mp_shutdown(struct media_pipe *mp)
 
   if(media_primary == mp) {
     /* We were primary */
-
+    
+    prop_set_int(mp->mp_prop_primary, 0);
     prop_unlink(media_prop_current);
 
     media_primary = NULL;
