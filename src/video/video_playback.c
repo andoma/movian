@@ -163,11 +163,9 @@ video_player_idle(void *aux)
 				  errbuf, sizeof(errbuf), NULL);
       }
 
-      if(next == NULL) {
-	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
-		   ep->url, errbuf);
+      if(next == NULL)
 	prop_set_string(errprop, errbuf);
-      }
+
       event_release(e);
       e = next;
       continue;

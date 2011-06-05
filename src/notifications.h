@@ -25,7 +25,7 @@ typedef enum {
   NOTIFY_ERROR,
 } notify_type_t;
 
-void *notify_add(notify_type_t type, const char *icon, int delay,
+void *notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
 		 const char *fmt, ...);
 
 void notify_destroy(void *);
