@@ -541,6 +541,8 @@ video_decoder_set_accelerator(video_decoder_t *vd,
 void
 video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
 {
+  pts -= vd->vd_mp->mp_svdelta;
+
   if(vd->vd_ext_subtitles != NULL) {
     ext_subtitle_entry_t *ese = subtitles_pick(vd->vd_ext_subtitles, pts);
     if(ese != NULL)

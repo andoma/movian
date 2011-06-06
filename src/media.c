@@ -59,6 +59,8 @@ static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void update_avdelta(void *opaque, int value);
 
+static void update_svdelta(void *opaque, int value);
+
 static void update_stats(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
@@ -255,6 +257,9 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   prop_set_float(mp->mp_prop_avdelta, 0);
 
+  mp->mp_prop_svdelta     = prop_create(mp->mp_prop_root, "svdelta");
+  prop_set_float(mp->mp_prop_svdelta, 10);
+
   mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
   prop_set_int(mp->mp_prop_stats, mp->mp_stats);
   mp->mp_prop_shuffle     = prop_create(mp->mp_prop_root, "shuffle");
@@ -303,10 +308,17 @@ mp_create(const char *name, int flags, const char *type)
 		   NULL);
 
   mp->mp_sub_avdelta = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK_INT, update_avdelta, mp,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_avdelta,
+		   NULL);
+
+  mp->mp_sub_svdelta = 
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_INT, update_svdelta, mp,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_svdelta,
 		   NULL);
 
   mp->mp_sub_stats =
@@ -335,6 +347,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_avdelta);
+  prop_unsubscribe(mp->mp_sub_svdelta);
   prop_unsubscribe(mp->mp_sub_stats);
 
 
@@ -1214,6 +1227,18 @@ update_avdelta(void *opaque, int v)
   media_pipe_t *mp = opaque;
   mp->mp_avdelta = v * 1000;
   TRACE(TRACE_DEBUG, "AVSYNC", "Set to %d ms", v);
+}
+
+
+/**
+ *
+ */
+static void
+update_svdelta(void *opaque, int v)
+{
+  media_pipe_t *mp = opaque;
+  mp->mp_svdelta = v * 1000000;
+  TRACE(TRACE_DEBUG, "SVSYNC", "Set to %ds", v);
 }
 
 
