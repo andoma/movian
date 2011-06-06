@@ -531,7 +531,7 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
     return;
   }
 
-  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels, fmt, W, H, 0);
+  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels[0], fmt, W, H, 0);
 }
 
 
