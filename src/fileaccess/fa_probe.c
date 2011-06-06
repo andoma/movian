@@ -185,7 +185,8 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 	       ms->ms_codec ? codecname(ms->ms_codec) : NULL,
 	       rstr_get(ms->ms_info),
 	       rstr_get(ms->ms_isolang),
-	       "Embedded");
+	       "Embedded",
+	       0);
 }
 
 

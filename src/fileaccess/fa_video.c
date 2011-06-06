@@ -54,12 +54,30 @@ typedef struct fs_sub_scanner {
 } fs_sub_scanner_t;
 
 
+/**
+ *
+ */
+static int
+fs_sub_match(const char *video, const char *sub)
+{
+  char *fname = mystrdupa(sub);
+  fname = strrchr(fname, '/');
+  if(fname == NULL)
+    return 0;
+
+  fname++;
+  char *dot = strrchr(fname, '.');
+  if(dot)
+    *dot = 0;
+  return !strcmp(fname, video);
+}
+
 
 /**
  *
  */
 static void
-fs_sub_scan_dir(prop_t *prop, const char *url)
+fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
 {
   char *postfix;
   fa_dir_t *fd;
@@ -75,7 +93,7 @@ fs_sub_scan_dir(prop_t *prop, const char *url)
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(fde->fde_type == CONTENT_DIR && !strcasecmp(fde->fde_filename, "subs")) {
-      fs_sub_scan_dir(prop, fde->fde_url);
+      fs_sub_scan_dir(prop, fde->fde_url, video);
       continue;
     }
 
@@ -88,7 +106,11 @@ fs_sub_scan_dir(prop_t *prop, const char *url)
 	b[3] = 0;
 	lang = isolang_iso2lang(b);
       }
-      mp_add_track(prop, NULL, fde->fde_url, "SRT", NULL, lang, "SRT File");
+
+      int score = video && fs_sub_match(video, fde->fde_url);
+
+      mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,
+		   "External file", score);
     }
   }
   fa_dir_free(fd);
@@ -103,10 +125,19 @@ fs_sub_scan_thread(void *aux)
 {
   fs_sub_scanner_t *fss = aux;
   char parent[URL_MAX];
+  char *fname = mystrdupa(fss->url);
+
+  fname = strrchr(fname, '/');
+  if(fname != NULL) {
+    fname++;
+    char *dot = strrchr(fname, '.');
+    if(dot)
+      *dot = 0;
+  }
 
   fa_parent(parent, sizeof(parent), fss->url);
 
-  fs_sub_scan_dir(fss->p, parent);
+  fs_sub_scan_dir(fss->p, parent, fname);
 
   prop_ref_dec(fss->p);
   free(fss->url);
