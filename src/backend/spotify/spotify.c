@@ -1388,16 +1388,21 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
     ntracks = f_sp_albumbrowse_num_tracks(result);
 
+    prop_vec_t *pv = prop_vec_create(ntracks);
+
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
       p = track_create(track, NULL);
 
-      if(prop_set_parent(p, bh->sp->sp_items))
-	prop_destroy(p);
+      pv = prop_vec_append(pv, p);
 
       if(track == playme)
 	playqueue_load_with_source(p, bh->sp->sp_model, 0);
     }
+
+    prop_set_parent_vector(pv, bh->sp->sp_items, NULL, NULL);
+    prop_vec_release(pv);
+
     spotify_metadata_updated(spotify_session);
 
     if(playme != NULL)
@@ -2085,6 +2090,38 @@ static const sp_session_callbacks spotify_session_callbacks = {
 
 
 
+/**
+ *
+ */
+static prop_t *
+pl_add_track(playlist_t *pl, sp_track *t, int pos)
+{
+  playlist_track_t *plt = calloc(1, sizeof(playlist_track_t));
+  plt->plt_pl = pl;
+  plt->plt_track = t;
+  plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata);
+
+  sp_user *u = f_sp_playlist_track_creator(pl->pl_playlist, pos);
+
+  if(u != NULL) {
+    spotify_user_t *su = find_user(u);
+    prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+  }
+
+  int when = f_sp_playlist_track_create_time(pl->pl_playlist, pos);
+  if(when > 1)
+    prop_set_int(prop_create(plt->plt_prop_metadata, "timestamp"), when);
+  
+  if(pl->pl_flags & PL_MESSAGES) {
+    const char *msg = f_sp_playlist_track_message(pl->pl_playlist, pos);
+    if(msg != NULL)
+      prop_set_string(prop_create(plt->plt_prop_metadata, "message"), msg);
+  }
+  
+  ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
+  return plt->plt_prop_root;
+}
+
 
 /**
  *
@@ -2094,46 +2131,23 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
 	     int num_tracks, int position, void *userdata)
 {
   playlist_t *pl = userdata;
-  sp_track *t;
-  playlist_track_t *plt, *before;
-  int i, pos, when;
-  sp_user *u;
+  playlist_track_t *before;
+  int i;
+  prop_vec_t *pv = prop_vec_create(num_tracks);
 
-  for(i = 0; i < num_tracks; i++) {
-    pos = position + i;
-    plt = calloc(1, sizeof(playlist_track_t));
-    plt->plt_pl = pl;
-    t = (sp_track *)tracks[i];
-    before = ptrvec_get_entry(&pl->pl_tracks, pos);
+  before = ptrvec_get_entry(&pl->pl_tracks, position);
 
-    plt->plt_track = t;
+  printf("%d tracks\n", num_tracks);
 
-    plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata);
+  for(i = 0; i < num_tracks; i++)
+    pv = prop_vec_append(pv, pl_add_track(pl, tracks[i], position + i));
+  
+  prop_set_parent_vector(pv, pl->pl_prop_tracks, 
+			 before ? before->plt_prop_root : NULL,
+			 pl->pl_node_sub);
 
-    u = f_sp_playlist_track_creator(plist, pos);
-    if(u != NULL) {
-      spotify_user_t *su = find_user(u);
-      prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
-    }
-
-    when = f_sp_playlist_track_create_time(plist, pos);
-    if(when > 1)
-      prop_set_int(prop_create(plt->plt_prop_metadata, "timestamp"), when);
-
-    if(pl->pl_flags & PL_MESSAGES) {
-      const char *msg = f_sp_playlist_track_message(plist, pos);
-      if(msg != NULL)
-	prop_set_string(prop_create(plt->plt_prop_metadata, "message"), msg);
-    }
-
-    if(prop_set_parent_ex(plt->plt_prop_root, pl->pl_prop_tracks,
-			  before ? before->plt_prop_root : NULL,
-			  pl->pl_node_sub)) {
-      abort();
-    }
-
-    ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
-  }
+  prop_vec_release(pv);
+  
   prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
 }
 
@@ -2497,6 +2511,18 @@ pl_create(sp_playlist *plist, const char *name,
 
     prop_set_int(canFilter, 1);
 
+    n = f_sp_playlist_num_tracks(plist);
+    prop_vec_t *pv = prop_vec_create(n);
+
+    for(i = 0; i < n; i++)
+      pv = prop_vec_append(pv,
+			   pl_add_track(pl, f_sp_playlist_track(plist, i), i));
+
+    prop_set_parent_vector(pv, pl->pl_prop_tracks, NULL, NULL);
+    prop_vec_release(pv);
+  
+    prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
+
     pl->pl_node_sub = 
       prop_subscribe(0,
 		     PROP_TAG_CALLBACK, playlist_node_callback, pl,
@@ -2504,11 +2530,7 @@ pl_create(sp_playlist *plist, const char *name,
 		     PROP_TAG_COURIER, spotify_courier,
 		     NULL);
 
-    n = f_sp_playlist_num_tracks(plist);
-    for(i = 0; i < n; i++) {
-      sp_track *t = f_sp_playlist_track(plist, i);
-      tracks_added(plist, &t, 1, i, pl);
-    }
+
     f_sp_playlist_add_callbacks(plist, &pl_callbacks_withtracks, pl);
   } else {
     f_sp_playlist_add_callbacks(plist, &pl_callbacks, pl);
