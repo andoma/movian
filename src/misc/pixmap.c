@@ -31,6 +31,9 @@ bytes_per_pixel(int fmt)
   case PIX_FMT_BGR32:
     return 4;
 
+  case PIX_FMT_RGB24:
+    return 3;
+
   case PIX_FMT_Y400A:
     return 2;
     
