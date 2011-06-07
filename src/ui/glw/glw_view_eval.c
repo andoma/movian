@@ -1419,6 +1419,13 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     cloner_add_child(sc, p, p2, gps->gps_widget, NULL, flags);
     break;
 
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    pv = va_arg(ap, prop_vec_t *);
+    p2 = va_arg(ap, prop_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      cloner_add_child(sc, prop_vec_get(pv, i), p2, gps->gps_widget, NULL, 0);
+    break;
+
   case PROP_MOVE_CHILD:
     p = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
@@ -1541,6 +1548,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
   case PROP_ADD_CHILD_VECTOR:
   case PROP_ADD_CHILD_BEFORE:
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
   case PROP_MOVE_CHILD:
   case PROP_DEL_CHILD:
   case PROP_SELECT_CHILD:
@@ -1601,6 +1609,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
     pv = va_arg(ap, prop_vec_t *);
     sc->sc_entries += prop_vec_len(pv);
     break;

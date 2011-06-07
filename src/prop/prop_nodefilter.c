@@ -588,10 +588,13 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
  *
  */
 static void
-nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv)
+nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
 {
   int i;
   nfnode_t *nfn;
+
+  if(b != NULL)
+    nf->pos_valid = 0;
 
   for(i = 0; i < prop_vec_len(pv); i++) {
     prop_t *p = prop_vec_get(pv, i);
@@ -603,7 +606,12 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv)
       nfnode_t *l = TAILQ_LAST(&nf->in, nfnode_queue);
       nfn->pos = l ? l->pos + 1 : 0;
     }
-    TAILQ_INSERT_TAIL(&nf->in, nfn, in_link);
+
+    if(b != NULL) {
+      TAILQ_INSERT_BEFORE(b, nfn, in_link);
+    } else {
+      TAILQ_INSERT_TAIL(&nf->in, nfn, in_link);
+    }
 
     nfn->nf = nf;
     nfn->in = p;
@@ -767,6 +775,7 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
   prop_nf_t *nf = opaque;
   nfnode_t *p, *q;
   prop_t *P;
+  prop_vec_t *pv;
 
   va_list ap;
   va_start(ap, event);
@@ -776,13 +785,18 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     nf_add_node(nf, va_arg(ap, prop_t *), NULL);
     break;
 
-  case PROP_ADD_CHILD_VECTOR:
-    nf_add_nodes(nf, va_arg(ap, prop_vec_t *));
-    break;
-
   case PROP_ADD_CHILD_BEFORE:
     P = va_arg(ap, prop_t *);
     nf_add_node(nf, P, nf_find_node(nf, va_arg(ap, prop_t *)));
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+    nf_add_nodes(nf, va_arg(ap, prop_vec_t *), NULL);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    pv = va_arg(ap, prop_vec_t *);
+    nf_add_nodes(nf, pv, nf_find_node(nf, va_arg(ap, prop_t *)));
     break;
 
   case PROP_DEL_CHILD:
@@ -846,7 +860,7 @@ nf_translate_del_multi(prop_nf_t *nf, prop_vec_t *in)
     out = prop_vec_append(out, p);
   }
 
-  prop_notify_childv(out, nf->src, PROP_REQ_DELETE_VECTOR, nf->srcsub);
+  prop_notify_childv(out, nf->src, PROP_REQ_DELETE_VECTOR, nf->srcsub, NULL);
   prop_vec_release(out);
 }
 

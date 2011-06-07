@@ -343,8 +343,7 @@ prop_notify_free(prop_notify_t *n)
   switch(n->hpn_event) {
   case PROP_SET_DIR:
   case PROP_SET_VOID:
-    if(n->hpn_prop2 != NULL)
-      prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_SET_RSTRING:
@@ -374,16 +373,14 @@ prop_notify_free(prop_notify_t *n)
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
-    if(n->hpn_prop != NULL)
-      prop_ref_dec(n->hpn_prop);
+    prop_ref_dec(n->hpn_prop);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
   case PROP_MOVE_CHILD:
   case PROP_SELECT_CHILD:
     prop_ref_dec(n->hpn_prop);
-    if(n->hpn_prop2 != NULL)
-      prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_DESTROYED:
@@ -399,6 +396,9 @@ prop_notify_free(prop_notify_t *n)
   case PROP_HAVE_MORE_CHILDS:
     break;
 
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    prop_ref_dec(n->hpn_prop2);
+    // FALLTHRU
   case PROP_REQ_DELETE_VECTOR:
   case PROP_ADD_CHILD_VECTOR:
     prop_vec_release(n->hpn_propv);
@@ -634,6 +634,16 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 	cb(s->hps_opaque, n->hpn_event, n->hpn_propv);
 
       prop_vec_release(n->hpn_propv);
+      break;
+
+    case PROP_ADD_CHILD_VECTOR_BEFORE:
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_propv, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_propv, n->hpn_prop2);
+
+      prop_vec_release(n->hpn_propv);
+      prop_ref_dec(n->hpn_prop2);
       break;
     }
 
@@ -1064,12 +1074,14 @@ prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
  *
  */
 static void
-prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event)
+prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event,
+			 prop_t *p2)
 {
   prop_notify_t *n = get_notify(s);
   n->hpn_propv = prop_vec_addref(pv);
   n->hpn_flags = 0;
   n->hpn_event = event;
+  n->hpn_prop2 = prop_ref_inc(p2);
   courier_enqueue(s, n);
 }
 
@@ -1079,13 +1091,13 @@ prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event)
  */
 void
 prop_notify_childv(prop_vec_t *pv, prop_t *parent, prop_event_t event,
-		   prop_sub_t *skipme)
+		   prop_sub_t *skipme, prop_t *p2)
 {
   prop_sub_t *s;
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_childv(s, pv, event);
+      prop_build_notify_childv(s, pv, event, p2);
 }
 
 
@@ -1394,7 +1406,8 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
  *
  */
 void
-prop_set_parent_vector(prop_vec_t *pv, prop_t *parent)
+prop_set_parent_vector(prop_vec_t *pv, prop_t *parent, prop_t *before,
+		       prop_sub_t *skipme)
 {
   hts_mutex_lock(&prop_mutex);
 
@@ -1412,9 +1425,14 @@ prop_set_parent_vector(prop_vec_t *pv, prop_t *parent)
       if(parent->hp_flags & (PROP_MULTI_SUB | PROP_MULTI_NOTIFY))
 	prop_flood_flag(p, PROP_MULTI_NOTIFY, 0);
     
-      TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+      if(before) {
+	TAILQ_INSERT_BEFORE(before, p, hp_parent_link);
+      } else {
+	TAILQ_INSERT_TAIL(&parent->hp_childs, p, hp_parent_link);
+      }
     }
-    prop_notify_childv(pv, parent, PROP_ADD_CHILD_VECTOR, NULL);
+    prop_notify_childv(pv, parent, before ? PROP_ADD_CHILD_VECTOR_BEFORE : 
+		       PROP_ADD_CHILD_VECTOR, skipme, before);
   }
   hts_mutex_unlock(&prop_mutex);
 }
@@ -3172,7 +3190,7 @@ prop_request_delete(prop_t *c)
     if(p->hp_type == PROP_DIR) {
       prop_vec_t *pv = prop_vec_create(1);
       pv = prop_vec_append(pv, c);
-      prop_notify_childv(pv, p, PROP_REQ_DELETE_VECTOR, NULL);
+      prop_notify_childv(pv, p, PROP_REQ_DELETE_VECTOR, NULL, NULL);
       prop_vec_release(pv);
     }
   }
@@ -3188,7 +3206,7 @@ prop_request_delete_multi(prop_vec_t *pv)
 {
   hts_mutex_lock(&prop_mutex);
   prop_notify_childv(pv, pv->pv_vec[0]->hp_parent,
-		     PROP_REQ_DELETE_VECTOR, NULL);
+		     PROP_REQ_DELETE_VECTOR, NULL, NULL);
   hts_mutex_unlock(&prop_mutex);
 }
 
