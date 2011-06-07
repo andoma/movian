@@ -47,6 +47,7 @@ notify_timeout(callout_t *c, void *aux)
 {
   prop_t *p = aux;
   prop_destroy(p);
+  prop_ref_dec(p);
   free(c);
 }
 
@@ -54,7 +55,7 @@ notify_timeout(callout_t *c, void *aux)
  *
  */
 void *
-notify_add(notify_type_t type, const char *icon, int delay,
+notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
 	   const char *fmt, ...)
 {
   char msg[256];
@@ -88,16 +89,15 @@ notify_add(notify_type_t type, const char *icon, int delay,
   if(icon != NULL)
     prop_set_string(prop_create(p, "icon"), icon);
 
-  if(prop_set_parent(p, notify_prop_entries))
-    abort();
+  p = prop_ref_inc(p);
 
-  prop_select(p);
+  if(prop_set_parent(p, root ?: notify_prop_entries))
+    prop_destroy(p);
   
   if(delay != 0) {
     callout_arm(NULL, notify_timeout, p, delay);
     return NULL;
   }
-
   return p;
 }
 
@@ -108,6 +108,7 @@ void
 notify_destroy(void *p)
 {
   prop_destroy(p);
+  prop_ref_dec(p);
 }
 
 

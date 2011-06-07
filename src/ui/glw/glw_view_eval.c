@@ -60,6 +60,7 @@ typedef struct glw_prop_sub {
   glw_t *gps_widget;
 
   prop_sub_t *gps_sub;
+  prop_t *gps_prop_view;
 
   token_t *gps_rpn;
 
@@ -205,6 +206,7 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
 #ifdef GLW_VIEW_ERRORINFO
     rstr_release(gps->gps_file);
 #endif
+    prop_ref_dec(gps->gps_prop_view);
     free(gps);
   }
 }
@@ -228,7 +230,8 @@ glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l)
 
 
 
-static void eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc);
+static void eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc,
+			 prop_t *view);
 
 static int glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec);
 
@@ -888,7 +891,7 @@ eval_dynamic_every_frame_sig(glw_t *w, void *opaque,
 			     glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_LAYOUT)
-    eval_dynamic(w, opaque, extra);
+    eval_dynamic(w, opaque, extra, NULL);
   return 0;
 }
 
@@ -901,7 +904,7 @@ eval_dynamic_focused_child_change_sig(glw_t *w, void *opaque,
 {
   if(signal == GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE ||
      signal == GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC)
-    eval_dynamic(w, opaque, NULL);
+    eval_dynamic(w, opaque, NULL, NULL);
   return 0;
 }
 
@@ -914,7 +917,7 @@ eval_dynamic_fhp_change_sig(glw_t *w, void *opaque,
 			    glw_signal_t signal, void *extra)
 {
   if(signal == GLW_SIGNAL_FHP_PATH_CHANGED)
-    eval_dynamic(w, opaque, NULL);
+    eval_dynamic(w, opaque, NULL, NULL);
   return 0;
 }
 
@@ -930,7 +933,7 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READY || signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED)
-    eval_dynamic(w, opaque, NULL);
+    eval_dynamic(w, opaque, NULL, NULL);
   return 0;
 }
 
@@ -938,7 +941,7 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
  *
  */
 static void
-eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc)
+eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc, prop_t *view)
 {
   glw_view_eval_context_t ec;
 
@@ -946,6 +949,7 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc)
   ec.w = w;
   ec.gr = w->glw_root;
   ec.rc = rc;
+  ec.prop_viewx = view;
 
   ec.sublist = &w->glw_prop_subscriptions;
 
@@ -1476,7 +1480,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn, NULL);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop_view);
 }
 
 
@@ -1572,7 +1576,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn, NULL);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop_view);
 }
 
 
@@ -1645,7 +1649,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   }
 
   if(rpn != NULL) 
-    eval_dynamic(gps->gps_widget, rpn, NULL);
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop_view);
 }
 
 
@@ -1717,6 +1721,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   }
 
   gps->gps_type = type;
+  gps->gps_prop_view = prop_ref_inc(ec->prop_viewx);
 
 #ifdef GLW_VIEW_ERRORINFO
   gps->gps_file = rstr_dup(self->file);

@@ -1349,19 +1349,19 @@ glw_event(glw_root_t *gr, event_t *e)
 {
   glw_t *w;
 
+  if((w = gr->gr_current_focus) != NULL) {
+    if(glw_event_to_widget(w, e, 0))
+      return 1;
+
+    while((w = w->glw_parent) != NULL) {
+      if(glw_event_map_intercept(w, e))
+	return 1;
+      if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
+	return 1;
+    }
+  }
   if(glw_event_map_intercept(gr->gr_universe, e))
     return 1;
-
-  if((w = gr->gr_current_focus) == NULL)
-    return 0;
-
-  if(glw_event_to_widget(w, e, 0))
-    return 1;
-
-  while((w = w->glw_parent) != NULL) {
-    if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
-      return 1;
-  }
   return 0;
 }
 
@@ -1923,12 +1923,11 @@ glw_register_class(glw_class_t *gc)
   LIST_INSERT_HEAD(&glw_classes, gc, gc_link);
 }
 
-
 /**
  *
  */
-const char *
-glw_get_a_name(glw_t *w)
+static const char *
+glw_get_a_name_r(glw_t *w)
 {
   glw_t *c;
   const char *r;
@@ -1937,10 +1936,23 @@ glw_get_a_name(glw_t *w)
     return w->glw_class->gc_get_text(w);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if((r = glw_get_a_name(c)) != NULL)
+    if((r = glw_get_a_name_r(c)) != NULL)
       return r;
   }
   return NULL;
+}
+
+
+/**
+ *
+ */
+const char *
+glw_get_a_name(glw_t *w)
+{
+  if(w->glw_id != NULL)
+    return w->glw_id;
+
+  return glw_get_a_name_r(w);
 }
 
 

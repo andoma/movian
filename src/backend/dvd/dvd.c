@@ -482,15 +482,15 @@ dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
   prop_destroy_childs(mp->mp_prop_audio_tracks);
   mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off",
-	       NULL, NULL, NULL, "DVD");
+	       NULL, NULL, NULL, "DVD", 0);
   mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto",
-	       NULL, NULL, NULL, "DVD");
+	       NULL, NULL, NULL, "DVD", 0);
 
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
   mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off",
-	       NULL, NULL, NULL, "DVD");
+	       NULL, NULL, NULL, "DVD", 0);
   mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "sub:auto",
-	       NULL, NULL, NULL, "DVD");
+	       NULL, NULL, NULL, "DVD", 0);
 }
 
 
@@ -735,7 +735,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
     block = dp->dp_buf;
     result = dvdnav_get_next_cache_block(dp->dp_dvdnav, &block, &event, &len);
     if(result == DVDNAV_STATUS_ERR) {
-      notify_add(NOTIFY_INFO, NULL, 5, "DVD read error, restarting disc");
+      notify_add(NULL, NOTIFY_INFO, NULL, 5, "DVD read error, restarting disc");
       dvd_release_codecs(dp);
       dvdnav_close(dp->dp_dvdnav);
       free(dp);

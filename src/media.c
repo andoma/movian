@@ -59,6 +59,8 @@ static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void update_avdelta(void *opaque, int value);
 
+static void update_svdelta(void *opaque, int value);
+
 static void update_stats(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
@@ -201,6 +203,8 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_type = prop_create(mp->mp_prop_root, "type");
   prop_set_string(mp->mp_prop_type, type);
 
+  mp->mp_prop_primary = prop_create(mp->mp_prop_root, "primary");
+
   // Video
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
@@ -253,6 +257,9 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_avdelta     = prop_create(mp->mp_prop_root, "avdelta");
   prop_set_float(mp->mp_prop_avdelta, 0);
 
+  mp->mp_prop_svdelta     = prop_create(mp->mp_prop_root, "svdelta");
+  prop_set_float(mp->mp_prop_svdelta, 10);
+
   mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
   prop_set_int(mp->mp_prop_stats, mp->mp_stats);
   mp->mp_prop_shuffle     = prop_create(mp->mp_prop_root, "shuffle");
@@ -301,10 +308,17 @@ mp_create(const char *name, int flags, const char *type)
 		   NULL);
 
   mp->mp_sub_avdelta = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK_INT, update_avdelta, mp,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_avdelta,
+		   NULL);
+
+  mp->mp_sub_svdelta = 
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_INT, update_svdelta, mp,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_svdelta,
 		   NULL);
 
   mp->mp_sub_stats =
@@ -333,6 +347,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_avdelta);
+  prop_unsubscribe(mp->mp_sub_svdelta);
   prop_unsubscribe(mp->mp_sub_stats);
 
 
@@ -956,6 +971,7 @@ mp_set_primary(media_pipe_t *mp)
 
   prop_select(mp->mp_prop_root);
   prop_link(mp->mp_prop_root, media_prop_current);
+  prop_set_int(mp->mp_prop_primary, 1);
 }
 
 
@@ -985,7 +1001,8 @@ mp_become_primary(struct media_pipe *mp)
   assert(mp->mp_flags & MP_PRIMABLE);
 
   if(media_primary != NULL) {
-    
+    prop_set_int(media_primary->mp_prop_primary, 0);
+
     LIST_INSERT_HEAD(&media_pipe_stack, media_primary, mp_stack_link);
     media_primary->mp_flags |= MP_ON_STACK;
 
@@ -1018,7 +1035,8 @@ mp_shutdown(struct media_pipe *mp)
 
   if(media_primary == mp) {
     /* We were primary */
-
+    
+    prop_set_int(mp->mp_prop_primary, 0);
     prop_unlink(media_prop_current);
 
     media_primary = NULL;
@@ -1209,6 +1227,18 @@ update_avdelta(void *opaque, int v)
   media_pipe_t *mp = opaque;
   mp->mp_avdelta = v * 1000;
   TRACE(TRACE_DEBUG, "AVSYNC", "Set to %d ms", v);
+}
+
+
+/**
+ *
+ */
+static void
+update_svdelta(void *opaque, int v)
+{
+  media_pipe_t *mp = opaque;
+  mp->mp_svdelta = v * 1000000;
+  TRACE(TRACE_DEBUG, "SVSYNC", "Set to %ds", v);
 }
 
 
@@ -1413,7 +1443,8 @@ mp_add_track(prop_t *parent,
 	     const char *format,
 	     const char *longformat,
 	     const char *isolang,
-	     const char *source)
+	     const char *source,
+	     int score)
 {
   const char *language = NULL;
 
@@ -1433,6 +1464,7 @@ mp_add_track(prop_t *parent,
   }
 
   prop_set_string(prop_create(p, "title"), title);
+  prop_set_int(prop_create(p, "score"), score);
 
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -1445,7 +1477,7 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL);
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, 0);
 }
 
 
@@ -1457,7 +1489,10 @@ typedef struct media_track {
   char *mt_url;
 
   prop_sub_t *mt_sub_isolang;
-  int mt_score;
+  int mt_isolang_score;
+
+  prop_sub_t *mt_sub_basescore;
+  int mt_base_score;
 
   media_track_mgr_t *mt_mtm;
   prop_t *mt_root;
@@ -1474,6 +1509,7 @@ mtm_rethink(media_track_mgr_t *mtm)
 {
   media_track_t *mt, *best = NULL;
   int thres = 1;
+  int best_score = 0;
 
   if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
     // All tracks deleted, clear the user-has-configured flag
@@ -1489,14 +1525,20 @@ mtm_rethink(media_track_mgr_t *mtm)
     return;
 
   TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link) {
-    if(mt->mt_url == NULL || mt->mt_score == -1)
+    if(mt->mt_url == NULL ||
+       mt->mt_base_score == -1 ||
+       mt->mt_isolang_score == -1)
       continue;
 
     if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
       continue;
 
-    if(mt->mt_score >= thres && (best == NULL || mt->mt_score > best->mt_score))
+    int score = mt->mt_base_score + mt->mt_isolang_score;
+
+    if(score >= thres && (best == NULL || score > best_score)) {
       best = mt;
+      best_score = score;
+    }
   }
 
   if(best == mtm->mtm_suggested_track)
@@ -1550,15 +1592,27 @@ mt_set_isolang(void *opaque, const char *str)
 
   switch(mt->mt_mtm->mtm_type) {
   case MEDIA_TRACK_MANAGER_AUDIO:
-    mt->mt_score = str ? i18n_audio_score(str) : 0;
+    mt->mt_isolang_score = str ? i18n_audio_score(str) : 0;
     break;
   case MEDIA_TRACK_MANAGER_SUBTITLES:
-    mt->mt_score = str ? i18n_subtitle_score(str) : 0;
+    mt->mt_isolang_score = str ? i18n_subtitle_score(str) : 0;
     break;
   default:
-    mt->mt_score = 0;
+    mt->mt_isolang_score = 0;
     break;
   }
+  mtm_rethink(mt->mt_mtm);
+}
+
+
+/**
+ *
+ */
+static void
+mt_set_basescore(void *opaque, int v)
+{
+  media_track_t *mt = opaque;
+  mt->mt_base_score = v;
   mtm_rethink(mt->mt_mtm);
 }
 
@@ -1574,7 +1628,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
   prop_tag_set(root, mtm, mt);
   mt->mt_mtm = mtm;
   mt->mt_root = root;
-  mt->mt_score = -1;
+  mt->mt_isolang_score = -1;
+  mt->mt_base_score = -1;
 
   if(before) {
     TAILQ_INSERT_BEFORE(before, mt, mt_link);
@@ -1597,6 +1652,14 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
+
+  mt->mt_sub_basescore =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "score"),
+		   PROP_TAG_CALLBACK_INT, mt_set_basescore, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
 }
 
 
@@ -1612,6 +1675,7 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   TAILQ_REMOVE(&mtm->mtm_tracks, mt, mt_link);
   prop_unsubscribe(mt->mt_sub_url);
   prop_unsubscribe(mt->mt_sub_isolang);
+  prop_unsubscribe(mt->mt_sub_basescore);
   free(mt->mt_url);
   free(mt);
 }

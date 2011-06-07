@@ -673,8 +673,6 @@ spotify_logged_in(sp_session *sess, sp_error error)
 
     is_logged_in = 0;
 
-    notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Login failed -- %s", msg);
-
     if(is_permanent_error(error)) {
 
       fail_pending_messages(msg);
@@ -691,8 +689,6 @@ spotify_logged_in(sp_session *sess, sp_error error)
 static void
 spotify_logged_out(sp_session *sess)
 {
-  notify_add(NOTIFY_INFO, NULL, 5, "Spotify: Logged out");
-
   pending_login = 0;
   is_logged_in = 0;
   fail_pending_messages("Logged out");
@@ -711,7 +707,7 @@ static void
 spotify_connection_error(sp_session *sess, sp_error error)
 {
   if(error != SP_ERROR_OK)
-    notify_add(NOTIFY_ERROR, NULL, 5, "Spotify: Connection error: %s",
+    notify_add(NULL, NOTIFY_ERROR, NULL, 5, "Spotify: Connection error: %s",
 	       f_sp_error_message(error));
 }
 

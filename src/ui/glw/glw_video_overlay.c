@@ -531,7 +531,7 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
     return;
   }
 
-  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels, fmt, W, H, 0);
+  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels[0], fmt, W, H, 0);
 }
 
 
@@ -585,6 +585,8 @@ glw_video_overlay_layout(glw_video_t *gv, int64_t pts)
 #if ENABLE_DVD
   glw_video_overlay_spu_layout(gv, pts);
 #endif
+  pts -= vd->vd_mp->mp_svdelta;
+
   glw_video_overlay_sub_layout(gv, pts);
 
 
