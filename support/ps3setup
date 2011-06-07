@@ -48,7 +48,8 @@ if [ ! -e ${FFMPEG}/include/libavcodec/avcodec.h ] || [[ $# == 1 && $1 == -u ]] 
 	--target-os=none \
 	--disable-decoder=twinvq \
 	--disable-decoder=snow \
-	--disable-decoder=cavs
+	--disable-decoder=cavs \
+	--enable-encoder=png \
 
     make ${PARALLEL}
     make install

@@ -33,12 +33,14 @@
 #include "misc/pixmap.h"
 #include "misc/jpeg.h"
 #include "backend/backend.h"
+#include "blobcache.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
 static hts_mutex_t image_from_video_mutex;
+static AVCodecContext *pngencoder;
 
 static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im);
 
@@ -58,6 +60,14 @@ void
 fa_imageloader_init(void)
 {
   hts_mutex_init(&image_from_video_mutex);
+
+  AVCodec *c = avcodec_find_encoder(CODEC_ID_PNG);
+  if(c != NULL) {
+    AVCodecContext *ctx = avcodec_alloc_context();
+    if(avcodec_open(ctx, c))
+      return;
+    pngencoder = ctx;
+  }
 }
 
 
@@ -283,18 +293,31 @@ ifv_close(void)
 }
 
 
-
 /**
  *
  */
 static pixmap_t *
 fa_image_from_video(const char *url0, const image_meta_t *im)
 {
-  struct SwsContext *sws;
+  pixmap_t *pm = NULL;
+  char cacheid[512];
+
+  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d",
+	   url0, im->req_width, im->req_height);
+
+  
+  void *data;
+  size_t datasize;
+
+  data = blobcache_get(cacheid, "videothumb", &datasize, 0);
+  if(data != NULL) {
+    pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
+    free(data);
+    return pm;
+  }
 
   char *url = mystrdupa(url0);
   char *tim = strchr(url, '#');
-  pixmap_t *pm = NULL;
 
   *tim++ = 0;
 
@@ -374,7 +397,9 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
   int cnt = 500;
 
   while(1) {
-    int r = av_read_frame(ifv_fctx, &pkt);
+    int r;
+
+    r = av_read_frame(ifv_fctx, &pkt);
     
     if(r == AVERROR(EAGAIN))
       continue;
@@ -419,6 +444,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
 
     pm = pixmap_create(w, h, PIX_FMT_RGB24);
 
+    struct SwsContext *sws;
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
 			 w, h, PIX_FMT_RGB24, SWS_LANCZOS, NULL, NULL, NULL);
     if(sws == NULL) {
@@ -436,6 +462,27 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
 	      0, ifv_ctx->height, ptr, strides);
 
     sws_freeContext(sws);
+
+    if(pngencoder != NULL) {
+      AVFrame *oframe = avcodec_alloc_frame();
+
+      memset(&frame, 0, sizeof(frame));
+      oframe->data[0] = pm->pm_pixels;
+      oframe->linesize[0] = pm->pm_linesize;
+      
+      size_t outputsize = pm->pm_linesize * h;
+      void *output = malloc(outputsize);
+      pngencoder->width = w;
+      pngencoder->height = h;
+      pngencoder->pix_fmt = PIX_FMT_RGB24;
+
+      r = avcodec_encode_video(pngencoder, output, outputsize, oframe);
+    
+      if(r > 0) 
+	blobcache_put(cacheid, "videothumb", output, outputsize, 86400 * 5);
+      free(output);
+      av_free(oframe);
+    }
     break;
   }
 
