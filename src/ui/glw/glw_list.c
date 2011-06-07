@@ -175,6 +175,86 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 /**
  *
  */
+static int
+glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
+{
+  glw_t *c, *w = &l->w;
+  int xpos = 0;
+  glw_rctx_t rc0 = *rc;
+
+  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
+		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  int width = rc0.rc_width;
+
+  float IW = 1.0f / rc0.rc_width;
+
+  if(l->saved_width != rc0.rc_width) {
+    l->saved_width = rc0.rc_width;
+    l->page_size = rc0.rc_width;
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
+
+    if(w->glw_focused != NULL)
+      l->scroll_to_me = w->glw_focused;
+  }
+
+  
+  l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
+				      l->total_size - l->page_size));
+  l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+  
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+
+    int f = glw_filter_constraints(c->glw_flags);
+
+    if(f & GLW_CONSTRAINT_X) {
+      rc0.rc_width = c->glw_req_size_x;
+    } else {
+      rc0.rc_width = rc0.rc_height;
+    }
+
+    c->glw_parent_pos = xpos;
+    c->glw_parent_width = rc0.rc_width;
+    c->glw_norm_weight = rc0.rc_width * IW;
+    
+
+    if(xpos - l->filtered_pos > -width &&
+       xpos - l->filtered_pos <  width * 2)
+      glw_layout0(c, &rc0);
+
+    if(c == l->scroll_to_me) {
+      l->scroll_to_me = NULL;
+     
+      if(xpos - l->filtered_pos < 0) {
+	l->current_pos = xpos;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      } else if(xpos - l->filtered_pos + rc0.rc_width > width) {
+	l->current_pos = xpos + rc0.rc_width - width;
+	l->w.glw_flags |= GLW_UPDATE_METRICS;
+      }
+    }
+
+    xpos += rc0.rc_width;
+    xpos += l->spacing;
+  }
+
+  if(l->total_size != xpos) {
+    l->total_size = xpos;
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
+  }
+
+  if(l->w.glw_flags & GLW_UPDATE_METRICS)
+    glw_list_update_metrics(l);
+
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static void
 glw_list_render_y(glw_t *w, glw_rctx_t *rc)
 {
@@ -236,6 +316,75 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
       glw_clip_disable(w->glw_root, &rc0, b);
   }
 }
+
+
+
+
+
+/**
+ *
+ */
+static void
+glw_list_render_x(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+  glw_list_t *l = (glw_list_t *)w;
+  glw_rctx_t rc0, rc1, rc2;
+  int lclip, rclip, height, width;
+  float x;
+
+  if(rc->rc_alpha < 0.01f)
+    return;
+
+  rc0 = *rc;
+  glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
+		 rc->rc_width  - l->padding_right, l->padding_bottom);
+  height = rc0.rc_height;
+  width = rc0.rc_width;
+
+  glw_store_matrix(w, &rc0);
+  rc1 = rc0;
+
+  glw_Translatef(&rc1, -2.0f * l->filtered_pos / width, 0, 0);
+  
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+
+    x = c->glw_parent_pos - l->filtered_pos;
+    if(x + c->glw_parent_width < 0 || x > width) {
+      c->glw_flags |= GLW_CLIPPED;
+      continue;
+    } else {
+      c->glw_flags &= ~GLW_CLIPPED;
+    }
+
+    if(x < 0)
+      lclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT);
+    else
+      lclip = -1;
+
+    if(x + c->glw_parent_width > width)
+      rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT);
+    else
+      rclip = -1;
+
+    rc2 = rc1;
+    glw_reposition(&rc2,
+		   c->glw_parent_pos,
+		   height,
+		   c->glw_parent_pos + c->glw_parent_width,
+		   0);
+    
+    glw_render0(c, &rc2);
+
+    if(lclip != -1)
+      glw_clip_disable(w->glw_root, &rc0, lclip);
+    if(rclip != -1)
+      glw_clip_disable(w->glw_root, &rc0, rclip);
+  }
+}
+
 
 /**
  *
@@ -317,6 +466,19 @@ glw_list_callback_y(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return glw_list_callback(w, opaque, signal, extra);
 }
 
+
+/**
+ *
+ */
+static int
+glw_list_callback_x(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  if(signal == GLW_SIGNAL_LAYOUT)
+    return glw_list_layout_x((glw_list_t *)w, extra);
+  else
+    return glw_list_callback(w, opaque, signal, extra);
+}
+
 /**
  *
  */
@@ -354,6 +516,19 @@ glw_list_y_ctor(glw_t *w)
   glw_list_t *l = (void *)w;
   
   l->child_aspect = 20;
+  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+}
+
+
+/**
+ *
+ */
+static void
+glw_list_x_ctor(glw_t *w)
+{
+  glw_list_t *l = (void *)w;
+  
+  l->child_aspect = 1;
   w->glw_flags2 |= GLW2_FLOATING_FOCUS;
 }
 
@@ -409,3 +584,24 @@ static glw_class_t glw_list_y = {
 };
 
 GLW_REGISTER_CLASS(glw_list_y);
+
+
+
+static glw_class_t glw_list_x = {
+  .gc_name = "list_x",
+  .gc_instance_size = sizeof(glw_list_t),
+  .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
+  .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
+  .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
+  .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION_WITH_PAGING,
+
+  .gc_render = glw_list_render_x,
+  .gc_set = glw_list_set,
+  .gc_ctor = glw_list_x_ctor,
+  .gc_signal_handler = glw_list_callback_x,
+  .gc_escape_score = 100,
+  .gc_suggest_focus = glw_list_suggest_focus,
+  .gc_set_padding = set_padding,
+};
+
+GLW_REGISTER_CLASS(glw_list_x);
