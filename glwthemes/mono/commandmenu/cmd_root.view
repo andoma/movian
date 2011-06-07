@@ -47,20 +47,14 @@ widget(container_y, {
     }));
   });
 
-  widget(container_x, {
-    .filterConstraintY = true;
-    commandGroup(widget(container_y, {
-      .width = $ui.size * 10;
+  space(1);
 
-      widget(label, {
-	.caption = "Audio tracks";
-	.align = center;
-	.color = [0.5, 0.5, 0.5];
-      });
-      HORIZONTAL_SEPARATOR();
-      
-
-    }));
+  widget(loader, {
+    .time = 0.25;
+    .effect = blend;
+    .source = translate($global.media.current.type, "",
+			"video", "theme://commandmenu/cmd_video.view",
+			"tv",    "theme://commandmenu/cmd_video.view");
   });
 
 

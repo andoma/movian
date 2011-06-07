@@ -13,9 +13,43 @@ widget(container_z, {
   });
 
 
-  /**
-   * 
-   */
+  widget(container_y, {
+
+    // Only display error if there is an error and we are not primary.
+    // If we are primary the playdeck will take care of that.
+    .hidden = select($self.media.error && !$self.media.primary, false, true);
+
+    space(1);
+    
+    widget(label, {
+      .align = center;
+      .sizeScale = 1.5;
+      .caption = $self.url;
+      .ellipsize = true;
+    });
+
+    space(0.1);
+
+    widget(label, {
+      .align = center;
+      .caption = "Unable to start video playback";
+    });
+    
+    
+    space(0.1);
+    
+    widget(label, {
+      .align = center;
+      .caption = $self.media.error;
+    });
+    
+    space(1);
+  });
+});
+
+
+/*
+
   widget(container_y, {
 
     widget(label, {
@@ -25,21 +59,6 @@ widget(container_z, {
       .caption = $self.media.metadata.title;
       .align = center;
       .ellipsize = true;
-    });
- 
-    widget(container_x, {
-      .align = center;
-      widget(backdrop, {
-
-	PLATE_GFX();
-
-	.alpha = iir(changed($self.media.seektime, 2, true), 7);
-	.color = PLATE_COLOR_VIDEO();
-
-	widget(label, {
-	  .caption = "Seeking to " + value2duration($self.media.seektime);
-	});
-      });
     });
 
     widget(container_x, {
@@ -198,3 +217,4 @@ widget(container_z, {
     });
   });
 });
+*/
