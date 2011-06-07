@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <libavutil/imgutils.h>
+#include <libswscale/swscale.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
@@ -39,7 +40,7 @@ static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
 static hts_mutex_t image_from_video_mutex;
 
-static pixmap_t *fa_image_from_video(const char *url);
+static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im);
 
 /**
  *
@@ -166,7 +167,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
 
   if(strchr(url, '#')) {
     hts_mutex_lock(&image_from_video_mutex);
-    pm = fa_image_from_video(url);
+    pm = fa_image_from_video(url, im);
     if(pm == NULL)
       snprintf(errbuf, errlen, "%s: Unable to extract image", url);
     hts_mutex_unlock(&image_from_video_mutex);
@@ -287,8 +288,10 @@ ifv_close(void)
  *
  */
 static pixmap_t *
-fa_image_from_video(const char *url0)
+fa_image_from_video(const char *url0, const image_meta_t *im)
 {
+  struct SwsContext *sws;
+
   char *url = mystrdupa(url0);
   char *tim = strchr(url, '#');
   pixmap_t *pm = NULL;
@@ -349,10 +352,7 @@ fa_image_from_video(const char *url0)
   AVStream *st = ifv_fctx->streams[ifv_stream];
   int64_t ts = av_rescale(secs, st->time_base.den, st->time_base.num);
 
-  printf("Loading for time %d  ts = %ld\n", secs, ts);
-
-  if(av_seek_frame(ifv_fctx, ifv_stream, ts, 
-		   AVSEEK_FLAG_BACKWARD) < 0) {
+  if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
     ifv_close();
     return NULL;
   }
@@ -372,7 +372,6 @@ fa_image_from_video(const char *url0)
   
   
   int cnt = 500;
-  int dbg = 0;
 
   while(1) {
     int r = av_read_frame(ifv_fctx, &pkt);
@@ -393,11 +392,6 @@ fa_image_from_video(const char *url0)
       continue;
     }
     cnt--;
-    if(!dbg) {
-      printf(" \t Demuxed frame at %ld\n", pkt.pts);
-      dbg = 1;
-    }
-
     int want_pic = pkt.pts >= ts || cnt <= 0;
 
     ifv_ctx->skip_frame = want_pic ? AVDISCARD_DEFAULT : AVDISCARD_NONREF;
@@ -405,21 +399,43 @@ fa_image_from_video(const char *url0)
     avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
     if(got_pic == 0 || !want_pic)
       continue;
-    printf(" \t Decoded frame at %ld (cnt=%d)\n", pkt.pts, cnt);
-    pm = calloc(1, sizeof(pixmap_t));
-    pm->pm_refcount = 1;
-    pm->pm_width = ifv_ctx->width;
-    pm->pm_height = ifv_ctx->height;
-    pm->pm_pixfmt = ifv_ctx->pix_fmt;
-    pm->pm_codec = CODEC_ID_NONE;
 
-    av_image_alloc(pm->pm_pixels, pm->pm_linesize,
-		   pm->pm_width, pm->pm_height,
-		   pm->pm_pixfmt, 16);
+    int w,h;
+
+    if(im->req_width != -1 && im->req_height != -1) {
+      w = im->req_width;
+      h = im->req_height;
+    } else if(im->req_width != -1) {
+      w = im->req_width;
+      h = im->req_width * ifv_ctx->height / ifv_ctx->width;
+
+    } else if(im->req_height != -1) {
+      w = im->req_height * ifv_ctx->width / ifv_ctx->height;
+      h = im->req_height;
+    } else {
+      w = im->req_width;
+      h = im->req_height;
+    }
+
+    pm = pixmap_create(w, h, PIX_FMT_RGB24);
+
+    sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
+			 w, h, PIX_FMT_RGB24, SWS_LANCZOS, NULL, NULL, NULL);
+    if(sws == NULL) {
+      ifv_close();
+      return NULL;
+    }
     
-    av_image_copy(pm->pm_pixels, pm->pm_linesize,
-		  (const uint8_t **)frame->data, frame->linesize,
-		  pm->pm_pixfmt, pm->pm_width, pm->pm_height);
+    uint8_t *ptr[4] = {0,0,0,0};
+    int strides[4] = {0,0,0,0};
+
+    ptr[0] = pm->pm_pixels;
+    strides[0] = pm->pm_linesize;
+
+    sws_scale(sws, (const uint8_t **)frame->data, frame->linesize,
+	      0, ifv_ctx->height, ptr, strides);
+
+    sws_freeContext(sws);
     break;
   }
 
