@@ -110,7 +110,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
       const char *source = htsmsg_get_str(sub, "source");
 
       mp_add_track(mp->mp_prop_subtitle_tracks, NULL, url, 
-		   NULL, NULL, lang, source);
+		   NULL, NULL, lang, source, 0);
     }
   }
 
@@ -163,11 +163,9 @@ video_player_idle(void *aux)
 				  errbuf, sizeof(errbuf), NULL);
       }
 
-      if(next == NULL) {
-	notify_add(NOTIFY_ERROR, NULL, 5, "URL: %s\nError: %s", 
-		   ep->url, errbuf);
+      if(next == NULL)
 	prop_set_string(errprop, errbuf);
-      }
+
       event_release(e);
       e = next;
       continue;

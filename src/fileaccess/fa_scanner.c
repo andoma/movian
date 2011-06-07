@@ -417,7 +417,7 @@ doscan(scanner_t *s)
     pv = prop_vec_append(pv, fde->fde_prop);
   }
 
-  prop_set_parent_vector(pv, s->s_nodes);
+  prop_set_parent_vector(pv, s->s_nodes, NULL, NULL);
   prop_vec_release(pv);
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {

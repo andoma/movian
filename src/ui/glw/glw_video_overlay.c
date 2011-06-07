@@ -585,6 +585,8 @@ glw_video_overlay_layout(glw_video_t *gv, int64_t pts)
 #if ENABLE_DVD
   glw_video_overlay_spu_layout(gv, pts);
 #endif
+  pts -= vd->vd_mp->mp_svdelta;
+
   glw_video_overlay_sub_layout(gv, pts);
 
 

@@ -230,7 +230,7 @@ audio_output_thread(void *aux)
       sleep(1);
     } else {
       if(am)
-	notify_add(NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
+	notify_add(NULL, NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
 		   am->am_title);
     }
   }

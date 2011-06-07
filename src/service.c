@@ -80,10 +80,10 @@ service_init(void)
 void 
 service_destroy(service_t *s)
 {
+  hts_mutex_lock(&service_mutex);
   prop_destroy(s->s_root);
   free(s->s_url);
   
-  hts_mutex_lock(&service_mutex);
   LIST_REMOVE(s, s_link);
   s->s_zombie = 1;
   if(--s->s_ref == 0)

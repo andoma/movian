@@ -200,7 +200,7 @@
 }
 
 
-#define commandSelectableItem(TITLE, EXTRA, SELECTED, EVENT) {
+#define commandAudioTrack(TITLE, FORMAT, SELECTED, EVENT) {
   widget(container_x, {
     .focusable = 0.5;
     onEvent(activate, EVENT);
@@ -216,11 +216,49 @@
       .filterConstraintX = true;
       .caption = TITLE;
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
-      .caption = TITLE;
     });
+
     widget(label, {
       .align = right;
-      .caption = EXTRA;
+      .caption = FORMAT;
+      .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+    });
+  });
+}
+
+
+
+#define commandSubtitleTrack(TITLE, FORMAT, SOURCE, SELECTED, EVENT) {
+  widget(container_x, {
+    .focusable = 0.5;
+    onEvent(activate, EVENT);
+    
+    widget(icon, {
+      .source = "skin://icons/Check.png";
+      .shadow = true;
+      .alpha = iir(SELECTED, 8);
+      .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+    });
+    
+    widget(label, {
+      .filterConstraintX = true;
+      .weight = 6;
+      .caption = TITLE;
+      .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+    });
+
+    widget(label, {
+      .filterConstraintX = true;
+      .weight = 2;
+      .caption = SOURCE;
+      .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+    });
+
+    widget(label, {
+      .filterConstraintX = true;
+      .weight = 1;
+      .align = right;
+      .caption = FORMAT;
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
     });
   });

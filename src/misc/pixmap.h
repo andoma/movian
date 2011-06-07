@@ -60,12 +60,11 @@ typedef struct pixmap {
   union {
     struct {
       // if pm_codec == CODEC_ID_NONE
-      uint8_t *pixels[4];
-      int linesize[4];
-
+      uint8_t *pixels;
       int *charpos;
 
       enum PixelFormat pixfmt;
+      int linesize;
       int charposlen;
     } raw;
 
