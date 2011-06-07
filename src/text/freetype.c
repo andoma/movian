@@ -432,11 +432,11 @@ draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx)
   if(w < 0 || h < 0)
     return;
 
-  dst = pm->pm_pixels[0];
+  dst = pm->pm_pixels;
 
   switch(pm->pm_pixfmt) {
   case PIX_FMT_Y400A:
-    dst += x1 * 2 + y1 * pm->pm_linesize[0];
+    dst += x1 * 2 + y1 * pm->pm_linesize;
 
     // Luma + Alpha channel
     for(y = 0; y < h; y++) {
@@ -445,7 +445,7 @@ draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx)
 	dst[x*2 + 1] += src[x];
       }
       src += bmp->pitch;
-      dst += pm->pm_linesize[0];
+      dst += pm->pm_linesize;
     }
     break;
 
@@ -747,13 +747,13 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   pm->pm_height = target_height;
 
   pm->pm_pixfmt = PIX_FMT_Y400A;
-  pm->pm_linesize[0] = target_width * 2;
-  pm->pm_pixels[0] = calloc(1, pm->pm_linesize[0] * pm->pm_height);
+  pm->pm_linesize = target_width * 2;
+  pm->pm_pixels = calloc(1, pm->pm_linesize * pm->pm_height);
 
   if(flags & TR_RENDER_DEBUG) {
-    uint8_t *data = pm->pm_pixels[0];
+    uint8_t *data = pm->pm_pixels;
     for(i = 0; i < target_height; i+=3)
-      memset(data + i * pm->pm_linesize[0], 0xff, pm->pm_linesize[0]);
+      memset(data + i * pm->pm_linesize, 0xff, pm->pm_linesize);
   }
 
   if(flags & TR_RENDER_CHARACTER_POS) {
