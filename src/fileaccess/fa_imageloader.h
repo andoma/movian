@@ -21,10 +21,11 @@
 
 #include "misc/pixmap.h"
 struct backend;
+struct image_meta;
 
 void fa_imageloader_init(void);
 
-pixmap_t *fa_imageloader(const char *url,int want_thumb, const char **vpaths,
-			 char *errbuf, size_t errlen);
+pixmap_t *fa_imageloader(const char *url, const struct image_meta *im,
+			 const char **vpaths, char *errbuf, size_t errlen);
 
 #endif /* FA_IMAGELOADER_H */

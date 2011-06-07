@@ -41,6 +41,18 @@ typedef enum {
 #define BACKEND_VIDEO_NO_AUDIO    0x2
 #define BACKEND_VIDEO_NO_AUTOSTOP 0x4
 #define BACKEND_VIDEO_NO_FS_SCAN  0x8 // Don't scan FS for subtitles
+
+
+/**
+ *
+ */
+typedef struct image_meta {
+  int want_thumb;
+  int req_width;
+  int req_height;
+} image_meta_t;
+
+
 /**
  *
  */
@@ -69,7 +81,7 @@ typedef struct backend {
 				 char *errbuf, size_t errlen, int paused,
 				 const char *mimetype);
 
-  struct pixmap *(*be_imageloader)(const char *url, int want_thumb,
+  struct pixmap *(*be_imageloader)(const char *url, const image_meta_t *im,
 				   const char **vpaths,
 				   char *errbuf, size_t errlen);
 
@@ -108,7 +120,7 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
   __attribute__ ((warn_unused_result));
 
 
-struct pixmap *backend_imageloader(const char *url, int want_thumb,
+struct pixmap *backend_imageloader(const char *url, const image_meta_t *im,
 				   const char **vpaths,
 				   char *errbuf, size_t errlen)
      __attribute__ ((warn_unused_result));

@@ -189,7 +189,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   AVCodecContext *ctx;
   AVCodec *codec;
   AVFrame *frame;
-  int r, got_pic, w, h, want_thumb;
+  int r, got_pic, w, h;
   const char *url;
   char errbuf[128];
 
@@ -209,14 +209,16 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     return -1;
 
   url = glt->glt_filename;
+  image_meta_t im = {0};
+
   if(!strncmp(url, "thumb://", 8)) {
     url = url + 8;
-    want_thumb = 1;
-  } else {
-    want_thumb = 0;
+    im.want_thumb = 1;
   }
+  im.req_width  = glt->glt_req_xs;
+  im.req_height = glt->glt_req_ys;
 
-  pixmap_t *pm = backend_imageloader(url, want_thumb, gr->gr_vpaths, errbuf, 
+  pixmap_t *pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, 
 				     sizeof(errbuf));
   if(pm == NULL) {
     TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", url, errbuf);
@@ -283,7 +285,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   }
 
 
-  if(want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
+  if(im.want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
     w = 160;
     h = 160 * ctx->height / ctx->width;
   } else {

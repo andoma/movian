@@ -3861,8 +3861,8 @@ be_spotify_play(const char *url, media_pipe_t *mp,
  *
  */
 static pixmap_t *
-be_spotify_imageloader(const char *url, int want_thumb, const char **vpaths,
-		       char *errbuf, size_t errlen)
+be_spotify_imageloader(const char *url, const image_meta_t *im,
+		       const char **vpaths, char *errbuf, size_t errlen)
 {
   spotify_image_t si = {0};
 

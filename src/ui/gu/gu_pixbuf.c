@@ -88,7 +88,6 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   AVFrame *frame = NULL;
   AVPicture *src, dst;
   struct SwsContext *sws;
-  int want_thumb;
   GdkPixbuf *gp;
   int r;
   int got_pic;
@@ -97,16 +96,17 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   int width;
   int height;
   const uint8_t *ptr[4];
-
+  image_meta_t im = {0};
 
   if(!strncmp(url, "thumb://", 8)) {
     url = url + 8;
-    want_thumb = 1;
-  } else {
-    want_thumb = 0;
+    im.want_thumb = 1;
   }
 
-  pixmap_t *pm = backend_imageloader(url, want_thumb, NULL, NULL, 0);
+  im.req_width  = req_width;
+  im.req_height = req_height;
+  
+  pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0);
   if(pm == NULL)
     return NULL;
 

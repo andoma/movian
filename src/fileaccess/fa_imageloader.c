@@ -31,6 +31,7 @@
 #include "fa_libav.h"
 #include "misc/pixmap.h"
 #include "misc/jpeg.h"
+#include "backend/backend.h"
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
@@ -153,8 +154,8 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
  *
  */
 pixmap_t *
-fa_imageloader(const char *url, int want_thumb, const char **vpaths,
-	       char *errbuf, size_t errlen)
+fa_imageloader(const char *url, const struct image_meta *im,
+	       const char **vpaths, char *errbuf, size_t errlen)
 {
   uint8_t p[16];
   int r;
@@ -172,7 +173,7 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     return pm;
   }
 
-  if(!want_thumb)
+  if(!im->want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
   if((avio = fa_libav_open_vpaths(url, 32768, vpaths)) == NULL) {
@@ -196,13 +197,13 @@ fa_imageloader(const char *url, int want_thumb, const char **vpaths,
     if(jpeg_info(&ji, jpeginfo_reader, avio,
 		 JPEG_INFO_DIMENSIONS |
 		 JPEG_INFO_ORIENTATION |
-		 (want_thumb ? JPEG_INFO_THUMBNAIL : 0),
+		 (im->want_thumb ? JPEG_INFO_THUMBNAIL : 0),
 		 p, sizeof(p), errbuf, errlen)) {
       fa_libav_close(avio);
       return NULL;
     }
 
-    if(want_thumb && ji.ji_thumbnail) {
+    if(im->want_thumb && ji.ji_thumbnail) {
       pixmap_t *pm = pixmap_dup(ji.ji_thumbnail);
       fa_libav_close(avio);
       jpeg_info_clear(&ji);
