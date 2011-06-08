@@ -176,11 +176,9 @@ fa_imageloader(const char *url, const struct image_meta *im,
   pixmap_t *pm;
 
   if(strchr(url, '#')) {
-    hts_mutex_lock(&image_from_video_mutex);
     pm = fa_image_from_video(url, im);
     if(pm == NULL)
       snprintf(errbuf, errlen, "%s: Unable to extract image", url);
-    hts_mutex_unlock(&image_from_video_mutex);
     return pm;
   }
 
@@ -297,25 +295,10 @@ ifv_close(void)
  *
  */
 static pixmap_t *
-fa_image_from_video(const char *url0, const image_meta_t *im)
+fa_image_from_video2(const char *url0, const image_meta_t *im, 
+		     const char *cacheid)
 {
   pixmap_t *pm = NULL;
-  char cacheid[512];
-
-  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d",
-	   url0, im->req_width, im->req_height);
-
-  
-  void *data;
-  size_t datasize;
-
-  data = blobcache_get(cacheid, "videothumb", &datasize, 0);
-  if(data != NULL) {
-    pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
-    free(data);
-    return pm;
-  }
-
   char *url = mystrdupa(url0);
   char *tim = strchr(url, '#');
 
@@ -370,6 +353,11 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
     ifv_ctx = ctx;
   }
 
+  AVPacket pkt;
+  AVFrame *frame = avcodec_alloc_frame();
+  int got_pic;
+
+
   int secs = atoi(tim);
 
   AVStream *st = ifv_fctx->streams[ifv_stream];
@@ -380,22 +368,11 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
     return NULL;
   }
   
+  avcodec_flush_buffers(ifv_ctx);
 
-  AVPacket pkt;
 
-  AVFrame *frame = avcodec_alloc_frame();
-  int got_pic;
-
-  av_init_packet(&pkt);
-  pkt.data = NULL;
-  pkt.size = 0;
-  do {
-    avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
-  } while(got_pic);
-  
   
   int cnt = 500;
-
   while(1) {
     int r;
 
@@ -487,5 +464,33 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
   }
 
   av_free(frame);
+  return pm;
+}
+
+
+/**
+ *
+ */
+static pixmap_t *
+fa_image_from_video(const char *url0, const image_meta_t *im)
+{
+  pixmap_t *pm = NULL;
+  char cacheid[512];
+  void *data;
+  size_t datasize;
+
+  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d",
+	   url0, im->req_width, im->req_height);
+
+  data = blobcache_get(cacheid, "videothumb", &datasize, 0);
+  if(data != NULL) {
+    pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
+    free(data);
+    return pm;
+  }
+
+  hts_mutex_lock(&image_from_video_mutex);
+  pm = fa_image_from_video2(url0, im, cacheid);
+  hts_mutex_unlock(&image_from_video_mutex);
   return pm;
 }
