@@ -501,6 +501,31 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 /**
  *
  */
+static prop_t *
+build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
+{
+  int i;
+  prop_t *root = prop_create(mp->mp_prop_root, "seekindex");
+  prop_t *parent = prop_create(root, "positions");
+  char buf[URL_MAX];
+
+  prop_set_int(prop_create(root, "available"), 1);
+
+  for(i = 0; i < fctx->duration / 1000000; i+=60) {
+    prop_t *p = prop_create_root(NULL);
+    snprintf(buf, sizeof(buf), "%s#%d", url, i);
+    prop_set_string(prop_create(p, "image"), buf);
+    prop_set_float(prop_create(p, "timestamp"), i);
+    if(prop_set_parent(p, parent))
+      prop_destroy(p);
+  }
+
+  return root;
+}
+
+/**
+ *
+ */
 event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
@@ -676,7 +701,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_set_string(mp->mp_prop_type, "video");
 
+  prop_t *seek_index = build_index(mp, fctx, url);
+
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen);
+
+  prop_destroy(seek_index);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 

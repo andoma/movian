@@ -58,6 +58,29 @@ widget(container_y, {
   });
 
 
+  widget(list_x, {
+    .hidden = !$global.media.current.seekindex.available;
+    .height = 100;
+    .spacing = 5;
+    cloner($global.media.current.seekindex.positions, backdrop, {
+      .alpha = 0.5 + isFocused();
+      .width = 177;
+      .source = "skin://gfx/blackdrop.png";
+      .border = 12;
+      .padding = -4;
+      .focusable = 0.01;
+
+      onEvent(activate, {
+	$global.media.current.currenttime = $self.timestamp;
+      });
+
+      widget(image, {
+	.hqScaling = true;
+	.source = $self.image;
+      });
+    });
+  });
+
   // -- playdeck ------------------------------------------------------
 
   commandGroup(widget(container_x, {
