@@ -29,7 +29,6 @@
 #include "bookmarks.h"
 #include "misc/strtab.h"
 
-static hts_mutex_t bookmark_mutex;
 static prop_t *bookmarks;
 
 typedef struct bookmark {
@@ -138,7 +137,6 @@ bookmark_add_prop(prop_t *parent, const char *name, const char *value,
   return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			PROP_TAG_CALLBACK_STRING, cb, bm,
 			PROP_TAG_ROOT, p, 
-			PROP_TAG_MUTEX, &bookmark_mutex,
 			NULL);
 }
 
@@ -171,7 +169,6 @@ bookmark_add(const char *title, const char *url, const char *type)
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
 		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,
 		 PROP_TAG_ROOT, p,
-		 PROP_TAG_MUTEX, &bookmark_mutex,
 		 NULL);
   if(prop_set_parent(p, prop_create(bookmarks, "nodes")))
     abort();
@@ -228,7 +225,6 @@ bookmarks_init(void)
   htsmsg_field_t *f;
   htsmsg_t *m, *n, *o;
 
-  hts_mutex_init(&bookmark_mutex);
 
   bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks", "bookmark", NULL),
 			  "model");
@@ -238,7 +234,6 @@ bookmarks_init(void)
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
 		 PROP_TAG_ROOT, prop_create(bookmarks, "nodes"),
-		 PROP_TAG_MUTEX, &bookmark_mutex,
 		 NULL);
   
   if((m = htsmsg_store_load("bookmarks")) != NULL) {
