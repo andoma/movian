@@ -1,126 +1,38 @@
 #import "skin://buttons/buttons.skin"
 
-#define CMDBUTTONSCALE() {3.0}
-#define PLAYBUTTONSCALE() {2.0}
-#define MENUNAVBUTTONSCALE() {2.0}
-
-#define commandMenuLeft(EVENT, CAPTION, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/NavLeft.png",
-		    CAPTION=CAPTION,
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=MENUNAVBUTTONSCALE());
-}
-
-#define commandMenuRight(EVENT, CAPTION, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/NavRight.png",
-		    CAPTION=CAPTION,
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=MENUNAVBUTTONSCALE());
-}
-
-#define commandBlank(EVENT, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/Blank.png",
-		    CAPTION="Screensaver",
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=CMDBUTTONSCALE());
-}
-
-#define commandSettings(EVENT, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/Settings.png",
-		    CAPTION="Settings",
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=CMDBUTTONSCALE());
-}
-
-#define commandPlayqueue(EVENT, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/Queue.png",
-		    CAPTION="Playqueue",
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=CMDBUTTONSCALE());
-}
-
-#define commandExit(EVENT, ENABLED=true) {
-  _glossybuttonText(ICON="skin://icons/Exit.png",
-		    CAPTION="Quit Showtime",
-		    EVENT=EVENT,
-		    ENABLED=ENABLED,
-		    SCALE=CMDBUTTONSCALE());
-}
-
-#define commandSkipBackward(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/SkipBack.png",
+#define commandButton(EVENT, TYPE, ENABLED) {
+  _glossybutton(ICON="skin://icons/" + 
+		translate(TYPE, TYPE,
+			  "SeekForward", "SeekFwd",
+			  "Subtitles", "Script"
+			 ) + ".png",
 		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
+		HIDDEN=!ENABLED,
+		ENABLED=0.9,
+		SCALE=2.0);
 }
 
-#define commandSkipForward(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/SkipNext.png",
+#define commandButton2(EVENT, TYPE, ENABLED, VISIBLE) {
+  _glossybutton(ICON="skin://icons/" + 
+		translate(TYPE, TYPE,
+			  "SeekForward", "SeekFwd",
+			  "Subtitles", "Script"
+			 ) + ".png",
 		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
+		HIDDEN=!(VISIBLE),
+		ENABLED=0.9 * (ENABLED),
+		SCALE=2.0);
 }
 
-#define commandSeekReverse(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/SeekBack.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandSeekForward(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/SeekFwd.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandStop(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/Stop.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandEject(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/Eject.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandPlay(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/Play.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandPause(EVENT, ENABLED=true) {
-  _glossybutton(ICON="skin://icons/Pause.png",
-		EVENT=EVENT,
-		ENABLED=ENABLED,
-		SCALE=PLAYBUTTONSCALE());
-}
-
-#define commandRepeatToggle(STATE, ENABLED=true) {
-  _glossybuttontoggle(ICON="skin://icons/Repeat.png",
+#define commandToggle(STATE, TYPE, ENABLED) {
+  _glossybuttontoggle(ICON="skin://icons/" +
+		      translate(TYPE, TYPE) + ".png",
 		      STATE=STATE,
-		      ENABLED=ENABLED,
-		      SCALE=PLAYBUTTONSCALE());
+		      HIDDEN=!ENABLED,
+		      ENABLED=0.9,
+		      SCALE=2.0);
 }
 
-#define commandRepeatShuffle(STATE, ENABLED=true) {
-  _glossybuttontoggle(ICON="skin://icons/Shuffle.png",
-		      STATE=STATE,
-		      ENABLED=ENABLED,
-		      SCALE=PLAYBUTTONSCALE());
-}
 
 #define commandSeekSlider(CURRENTTIME, DURATION, ENABLED=true, WIDTH=void,
 			 HIDDEN=false) {
@@ -187,6 +99,7 @@
 	widget(backdrop, {
 	  .source = "skin://gfx/focused.png";
 	  .border =  5;
+	  .padding = [0, -3];
 	  .additive = true;
 	  .alpha = select(isHovered() || isFocused(), 0.8, 0.4);
 	  widget(label, {
@@ -269,7 +182,7 @@
   widget(backdrop, {
     .source = "skin://gfx/blackdrop.png";
     .border = 12;
-    .alphaSelf = 0.5;
+    .alphaSelf = 0.8;
     BODY;
   });
 }
