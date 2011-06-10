@@ -934,6 +934,16 @@ set_source(glw_t *w, const char *filename)
 /**
  *
  */
+static void
+set_alpha_self(glw_t *w, float f)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  gi->gi_alpha_self = f;
+}
+
+/**
+ *
+ */
 static void 
 glw_image_set(glw_t *w, va_list ap)
 {
@@ -946,10 +956,6 @@ glw_image_set(glw_t *w, va_list ap)
     switch(attrib) {
     case GLW_ATTRIB_ANGLE:
       gi->gi_angle = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_ALPHA_SELF:
-      gi->gi_alpha_self = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_SATURATION:
@@ -1022,6 +1028,7 @@ static glw_class_t glw_image = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_alpha_self = set_alpha_self,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1043,6 +1050,7 @@ static glw_class_t glw_icon = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_alpha_self = set_alpha_self,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1066,6 +1074,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_alpha_self = set_alpha_self,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1088,6 +1097,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_alpha_self = set_alpha_self,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

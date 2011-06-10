@@ -174,6 +174,16 @@ set_alpha(glw_t *w, float v)
   w->glw_alpha = v;
 }
 
+/**
+ *
+ */
+static void
+set_alpha_self(glw_t *w, float v)
+{
+  if(w->glw_class->gc_set_alpha_self != NULL)
+    w->glw_class->gc_set_alpha_self(w, v);
+}
+
 
 
 /**
@@ -702,7 +712,7 @@ static const token_attrib_t attribtab[] = {
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 
   {"alpha",           set_float,  0, set_alpha},
-  {"alphaSelf",       set_float,  GLW_ATTRIB_ALPHA_SELF},
+  {"alphaSelf",       set_float,  0, set_alpha_self},
   {"saturation",      set_float,  GLW_ATTRIB_SATURATION},
   {"weight",          set_float,  0, set_weight},
   {"time",            set_float,  GLW_ATTRIB_TIME},

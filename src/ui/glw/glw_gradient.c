@@ -39,7 +39,7 @@ typedef struct glw_gradient {
   int16_t gg_height2;
   int16_t gg_tiles;
   int gg_image_flags;
-
+  float gg_alpha_self;
 } glw_gradient_t;
 
 
@@ -64,7 +64,7 @@ static void
 glw_gradient_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_gradient_t *gg = (void *)w;
-  float a = rc->rc_alpha * w->glw_alpha;
+  float a = rc->rc_alpha * w->glw_alpha * gg->gg_alpha_self;
 
   if(gg->gg_col1[0] < 0.001 &&
      gg->gg_col1[1] < 0.001 &&
@@ -361,6 +361,7 @@ glw_gradient_ctor(glw_t *w)
   glw_gradient_t *gg = (glw_gradient_t *)w;
   gg->gg_height = -1;
   gg->gg_width = -1;
+  gg->gg_alpha_self = 1;
 }
 
 
@@ -405,6 +406,17 @@ set_color2(glw_t *w, const float *rgb)
 }
 
 
+/**
+ *
+ */
+static void
+set_alpha_self(glw_t *w, float f)
+{
+  glw_gradient_t *gg = (glw_gradient_t *)w;
+  gg->gg_alpha_self = f;
+}
+
+
 
 /**
  *
@@ -420,6 +432,7 @@ static glw_class_t glw_gradient = {
   .gc_set_color1 = set_color1,
   .gc_set_color2 = set_color2,
   .gc_mod_image_flags = mod_image_flags,
+  .gc_set_alpha_self = set_alpha_self,
 };
 
 GLW_REGISTER_CLASS(glw_gradient);

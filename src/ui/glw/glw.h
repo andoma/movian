@@ -97,7 +97,6 @@ typedef enum {
   GLW_ATTRIB_VALUE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
-  GLW_ATTRIB_ALPHA_SELF,
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_TIME,
@@ -521,6 +520,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_source)(struct glw *w, const char *str);
+
+  /**
+   *
+   */
+  void (*gc_set_alpha_self)(struct glw *w, float a);
 
   /**
    *
@@ -1028,7 +1032,6 @@ do {						\
   case GLW_ATTRIB_Y_SPACING:                    \
     (void)va_arg(ap, int);			\
     break;					\
-  case GLW_ATTRIB_ALPHA_SELF:			\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_TIME:                         \
   case GLW_ATTRIB_EXPANSION:                    \
