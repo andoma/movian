@@ -49,8 +49,6 @@ typedef struct nav_page {
 
   prop_sub_t *np_close_sub;
 
-  prop_sub_t *np_url_sub;
-
   prop_sub_t *np_direct_close_sub;
 
 } nav_page_t;
@@ -188,7 +186,6 @@ nav_close(nav_page_t *np, int with_prop)
   navigator_t *nav = np->np_nav;
 
   prop_unsubscribe(np->np_close_sub);
-  prop_unsubscribe(np->np_url_sub);
   prop_unsubscribe(np->np_direct_close_sub);
 
   if(nav->nav_page_current == np)
@@ -292,18 +289,6 @@ nav_page_close_set(void *opaque, int value)
  *
  */
 static void
-nav_page_url_set(void *opaque, const char *str)
-{
-  nav_page_t *np = opaque;
-  free(np->np_url);
-  np->np_url = strdup(str ?: "");
-}
-
-
-/**
- *
- */
-static void
 nav_page_direct_close_set(void *opaque, int v)
 {
   nav_page_t *np = opaque;
@@ -338,13 +323,6 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), url);
-
-  np->np_url_sub = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "url"),
-		   PROP_TAG_CALLBACK_STRING, nav_page_url_set, np,
-		   PROP_TAG_COURIER, nav->nav_pc,
-		   NULL);
 
   np->np_direct_close_sub = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,

@@ -92,6 +92,9 @@ static void
 deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
+  if(w->glw_selected == c)
+    return;
+
   setprev(gd, c);
   w->glw_selected = c;
   if(w->glw_selected != NULL) {

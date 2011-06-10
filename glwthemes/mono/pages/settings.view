@@ -33,4 +33,7 @@ widget(container_y, {
     LIST_Y_SLIDER("list");
     widget(dummy, { .width = 2; });
   });
+  widget(dummy, {
+    .height = $ui.playdeckheight;
+  });
 });

@@ -258,7 +258,7 @@ mp_create(const char *name, int flags, const char *type)
   prop_set_float(mp->mp_prop_avdelta, 0);
 
   mp->mp_prop_svdelta     = prop_create(mp->mp_prop_root, "svdelta");
-  prop_set_float(mp->mp_prop_svdelta, 10);
+  prop_set_float(mp->mp_prop_svdelta, 0);
 
   mp->mp_prop_stats       = prop_create(mp->mp_prop_root, "stats");
   prop_set_int(mp->mp_prop_stats, mp->mp_stats);

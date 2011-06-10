@@ -1,6 +1,17 @@
 #import "skin://commandmenu.skin"
 #import "theme://include/separators.view";
 
+$view.videofeatures =
+  $global.media.current.type == "video" ||
+  $global.media.current.type == "tv";
+
+$view.settingpage = 0;
+
+onEvent(back, {
+  $view.settingpage = 0;
+}, $view.settingpage && $view.videofeatures);
+
+
 widget(container_y, {
 
   .hidden = !$ui.menu;
@@ -12,6 +23,7 @@ widget(container_y, {
   // -- clock and date -------------------------------------------------
 
   widget(container_x, {
+    .height = $ui.size * 5;
     .align = right;
     .spacing = 5;
 
@@ -34,6 +46,7 @@ widget(container_y, {
 
 
     commandGroup(widget(container_y, {
+      .align = center;
       .width = $ui.size * 4;
       widget(label, {
 	.align = center;
@@ -49,92 +62,180 @@ widget(container_y, {
 
   space(1);
 
-  widget(loader, {
-    .time = 0.25;
-    .effect = blend;
-    .source = translate($global.media.current.type, "",
-			"video", "theme://commandmenu/cmd_video.view",
-			"tv",    "theme://commandmenu/cmd_video.view");
-  });
+  widget(deck, {
+    .height = $ui.size * 8;
 
-
-  widget(list_x, {
-    .hidden = !$global.media.current.seekindex.available;
-    .height = 100;
-    .spacing = 5;
-    cloner($global.media.current.seekindex.positions, backdrop, {
-      .alpha = 0.5 + isFocused();
-      .width = 177;
-      .source = "skin://gfx/blackdrop.png";
-      .border = 12;
-      .padding = -4;
-      .focusable = 0.01;
-
-      onEvent(activate, {
-	$global.media.current.currenttime = $self.timestamp;
-      });
-
-      widget(image, {
-	.hqScaling = true;
-	.source = $self.image;
-      });
-    });
-  });
-
-  // -- playdeck ------------------------------------------------------
-
-  commandGroup(widget(container_x, {
-    .align = center;
-    
-    widget(container_y, {
-      .spacing = 5;
-
-      widget(container_x, {
+    // -- playdeck ------------------------------------------------------
+    commandGroup(widget(container_x, {
+      .align = center;
+      
+      widget(container_y, {
 	.spacing = 5;
 	.align = center;
-	.homogenous = true;
-	$view.playcontrollerswidth = getWidth();
-	
-	commandSkipBackward(event(PreviousTrack),
-			    $global.media.current.canSkipBackward);
-	commandSeekReverse(event(SeekReverse),
-			   $global.media.current.canSeek);
-	
-	widget(deck, {
-	  .effect = flipVertical;
-	  .noInitialTransform = true;
-	  .time = 0.2;
+	widget(container_x, {
+	  .spacing = 5;
+	  .align = center;
+	  .homogenous = true;
+	  $view.playcontrollerswidth = getWidth();
 	  
-	  commandPause(event(Pause), $global.media.current.canPause);
-	  commandPlay(event(Play),   $global.media.current.canPause);
+	  commandButton2(event(PreviousTrack), "SkipBack",
+			 $global.media.current.canSkipBackward,
+			 $global.media.current.canSkipBackward ||
+			 $global.media.current.canSkipForward);
+
+	  commandButton(event(SeekReverse), "SeekBack",
+			$global.media.current.canSeek);
 	  
-	  .page = $global.media.current.playstatus == "pause";
+	  widget(deck, {
+	    .hidden = !$global.media.current.canPause;
+	    .effect = flipVertical;
+	    .noInitialTransform = true;
+	    .time = 0.2;
+	    
+	    commandButton(event(Pause), "Pause", true);
+	    commandButton(event(Play), "Play", true);
+	    
+	    .page = $global.media.current.playstatus == "pause";
+	  });
+	  
+	  commandButton(event(SeekForward), "SeekForward",
+			$global.media.current.canSeek);
+	  commandButton2(event(NextTrack), "SkipNext",
+			 $global.media.current.canSkipForward,
+			 $global.media.current.canSkipBackward ||
+			 $global.media.current.canSkipForward);
+			 
+	  
+	  commandButton(event(Stop), "Stop", $global.media.current.canStop);
+	  commandButton(event(Eject), "Eject", $global.media.current.canEject);
+
+	  commandToggle($global.media.current.repeat,
+			"Repeat",
+			$global.media.current.canRepeat);
+	  commandToggle($global.media.current.shuffle,
+			"Shuffle",
+			$global.media.current.canShuffle);
+
+	  commandButton({ $view.settingpage = 1; }, "Sound",
+			$view.videofeatures);
+
+	  commandButton({ $view.settingpage = 2; }, "Subtitles",
+			$view.videofeatures);
+
+
+	  commandButton({
+	     $ui.menu = false;
+	    fireEvent(navOpen("settings:"));
+	  }, "Settings", true);
 	});
 	
-	commandSeekForward(event(SeekForward),
-			   $global.media.current.canSeek);
-	commandSkipForward(event(NextTrack), 
-			   $global.media.current.canSkipForward);
-	
-	commandStop(event(Stop),   $global.media.current.canStop);
-	commandEject(event(Eject), $global.media.current.canEject);
+	commandSeekSlider(
+	  $global.media.current.currenttime,
+	  $global.media.current.metadata.duration,
+	  $global.media.current.canSeek,
+	  $view.playcontrollerswidth,
+	  !$global.media.current.canSeek
+	);
+      });
 
-	commandRepeatToggle($global.media.current.repeat,
-			    $global.media.current.canRepeat);
-	commandRepeatShuffle($global.media.current.shuffle,
-			     $global.media.current.canShuffle);
+    }));
+
+
+    // -- Audio config ------------------------------------------------------
+    commandGroup(widget(list_y, {
+
+      widget(container_x, {
+	widget(label, {
+	  .filterConstraintX = true;
+	  .caption = "Audio delay";
+	});
+	commandSlider($global.media.current.avdelta,  -1000, 1000, 10, 
+		      int2str($global.media.current.avdelta) + "ms");
+      });
+
+      widget(dummy, {
+	.height = 10;
+      });
+
+
+      widget(label, {
+	.caption = "Audio tracks";
+	.align = center;
+      });
+      HORIZONTAL_SEPARATOR();
+      
+      cloner($global.media.current.metadata.audiostreams, container_z, {
+	commandAudioTrack($self.title ?? $self.language ?? $self.source,
+			  $self.format,
+			  $self.url == $global.media.current.audio.current,
+			  selectAudioTrack($self.url));
+      });
+    }));
+
+    // -- Subtitle tracks ------------------------------------------------------
+    commandGroup(widget(list_y, {
+
+      widget(container_x, {
+	widget(label, {
+	  .filterConstraintX = true;
+	  .caption = "Subtitle delay";
+	});
+	commandSlider($global.media.current.svdelta,  -60, 60, 1, 
+		      int2str($global.media.current.svdelta) + "s");
+      });
+
+
+
+      widget(dummy, {
+	.height = 10;
+      });
+
+      widget(label, {
+	.caption = "Subtitle tracks";
+	.align = center;
+      });
+      HORIZONTAL_SEPARATOR();
+      cloner($global.media.current.metadata.subtitlestreams, container_z, {
+	commandSubtitleTrack($self.title ?? $self.language,
+			     $self.format,
+			     $self.source,
+			     $self.url == $global.media.current.subtitle.current,
+			     selectSubtitleTrack($self.url));
       });
       
-      commandSeekSlider(
-	$global.media.current.currenttime,
-	$global.media.current.metadata.duration,
-	$global.media.current.canSeek,
-	$view.playcontrollerswidth,
-	!$global.media.current.canSeek
-      );
-    });
-  }));
+    }));
 
+    // -- Seek by items ------------------------------------------------------
+
+    commandGroup(widget(list_x, {
+      .hidden = !$global.media.current.seekindex.available;
+      .height = 100;
+      .spacing = 5;
+      cloner($global.media.current.seekindex.positions, backdrop, {
+	.alpha = 0.75 + isFocused();
+	.width = 177;
+	.source = "skin://gfx/blackdrop.png";
+	.border = 12;
+	.padding = -4;
+	.focusable = 0.01;
+	
+	onEvent(activate, {
+	  $global.media.current.currenttime = $self.timestamp;
+	});
+	
+	widget(image, {
+	  .hqScaling = true;
+	  .source = $self.image;
+	});
+      });
+    }));
+        
+    //--- Deck control
+    .page = select($view.videofeatures, $view.settingpage, 0);
+    .effect = flipHorizontal;
+    .time = 0.3;
+
+  });
   widget(dummy, {
     .height = $ui.playdeckheight;
   });
