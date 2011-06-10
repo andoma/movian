@@ -461,8 +461,8 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 static const Vec4 clip_planes[4] = {
   [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
   [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
-  [GLW_CLIP_LEFT]   = {-1.0,  0.0, 0.0, 1.0},
-  [GLW_CLIP_RIGHT]  = { 1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_LEFT]   = { 1.0,  0.0, 0.0, 1.0},
+  [GLW_CLIP_RIGHT]  = {-1.0,  0.0, 0.0, 1.0},
 };
 
 
