@@ -186,3 +186,17 @@
     BODY;
   });
 }
+
+
+
+
+#define commandGroupFullWidth(BODY) {
+  widget(backdrop, {
+    .source = "skin://gfx/blackdrop.png";
+    .border = 12;
+    .alphaSelf = 0.8;
+    .leftBorder = false;
+    .rightBorder = false;
+    BODY;
+  });
+}

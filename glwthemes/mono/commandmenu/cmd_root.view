@@ -122,6 +122,9 @@ widget(container_y, {
 	  commandButton({ $view.settingpage = 2; }, "Subtitles",
 			$view.videofeatures);
 
+	  commandButton({ $view.settingpage = 3; }, "SeekByFrame",
+			$global.media.current.seekindex.available);
+
 
 	  commandButton({
 	     $ui.menu = false;
@@ -207,14 +210,13 @@ widget(container_y, {
 
     // -- Seek by items ------------------------------------------------------
 
-    commandGroup(widget(list_x, {
-      .hidden = !$global.media.current.seekindex.available;
-      .height = 100;
+    commandGroupFullWidth(widget(list_x, {
       .spacing = 5;
       cloner($global.media.current.seekindex.positions, backdrop, {
-	.alpha = 0.75 + isFocused();
-	.width = 177;
-	.source = "skin://gfx/blackdrop.png";
+	.alphaSelf = 0.2 + (isFocused() || isHovered());
+	.width = $ui.size * 7 * 16 / 9;
+	.source = "skin://gfx/border.png";
+	.borderOnly = true;
 	.border = 12;
 	.padding = -4;
 	.focusable = 0.01;
@@ -223,9 +225,29 @@ widget(container_y, {
 	  $global.media.current.currenttime = $self.timestamp;
 	});
 	
-	widget(image, {
-	  .hqScaling = true;
-	  .source = $self.image;
+	widget(container_z, {
+	  widget(image, {
+	    .hqScaling = true;
+	    .source = $self.image;
+	  });
+
+	  widget(container_y, {
+	    .align = bottom;
+
+	    widget(container_z, {
+	      widget(gradient, {
+		.color1 = 0;
+		.color2 = 0.1;
+		.alphaSelf = 0.75;
+	      });
+	    
+	    
+	      widget(label, {
+		.align = center;
+		.caption = value2duration($self.timestamp);
+	      });
+	    });
+	  });
 	});
       });
     }));
