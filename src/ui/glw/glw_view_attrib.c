@@ -174,6 +174,12 @@ set_alpha(glw_t *w, float v)
   w->glw_alpha = v;
 }
 
+static void
+set_blur(glw_t *w, float v)
+{
+  w->glw_blur = GLW_CLAMP(1 - v, 0, 1);
+}
+
 /**
  *
  */
@@ -712,6 +718,7 @@ static const token_attrib_t attribtab[] = {
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 
   {"alpha",           set_float,  0, set_alpha},
+  {"blur",            set_float,  0, set_blur},
   {"alphaSelf",       set_float,  0, set_alpha_self},
   {"saturation",      set_float,  GLW_ATTRIB_SATURATION},
   {"weight",          set_float,  0, set_weight},

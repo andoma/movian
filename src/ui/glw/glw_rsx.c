@@ -257,7 +257,7 @@ rsx_render(struct glw_root *gr,
 	   struct glw_backend_texture *tex,
 	   const struct glw_rgb *rgb_mul,
 	   const struct glw_rgb *rgb_off,
-	   float alpha,
+	   float alpha, float blur,
 	   const float *vertices,
 	   int num_vertices,
 	   const uint16_t *indices,
@@ -279,7 +279,7 @@ rsx_render(struct glw_root *gr,
       return;
 
     realitySetTexture(ctx, 0, &tex->tex);
-    if(gr->gr_be.be_blur > 0.05) {
+    if(blur > 0.05) {
       rfp = gr->gr_be.be_fp_tex_blur;
     } else {
       rfp = gr->gr_be.be_fp_tex;
@@ -325,10 +325,10 @@ rsx_render(struct glw_root *gr,
     realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
   }
 
-  if(gr->gr_be.be_blur > 0.05 && tex != NULL) {
+  if(blur > 0.05 && tex != NULL) {
     float v[4];
-    v[0] = 1.5 * gr->gr_be.be_blur / tex->tex.width;
-    v[1] = 1.5 * gr->gr_be.be_blur / tex->tex.height;
+    v[0] = 1.5 * blur / tex->tex.width;
+    v[1] = 1.5 * blur / tex->tex.height;
     v[2] = 0;
     v[3] = 0;
 
@@ -450,14 +450,6 @@ glw_blendmode(struct glw_root *gr, int mode)
 		     NV30_3D_BLEND_FUNC_DST_ALPHA_ZERO);
     break;
   }
-}
-
-float
-glw_blur(struct glw_root *gr, float blur)
-{
-  float old = gr->gr_be.be_blur;
-  gr->gr_be.be_blur = blur;
-  return old;
 }
 
 

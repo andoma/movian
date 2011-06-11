@@ -3,6 +3,10 @@
 // $view.sizer = -10 + $ui.size;
 
 widget(container_y, {
+
+  .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  .blur  = iir(clamp(getLayer(), 0, 1), 7);
+
   .padding = [0, $ui.size * 2];
 
   .spacing = $ui.size * 3;

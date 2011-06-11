@@ -181,7 +181,7 @@ ff_render(struct glw_root *gr,
 	  struct glw_backend_texture *tex,
 	  const struct glw_rgb *rgb_mul,
 	  const struct glw_rgb *rgb_off,
-	  float alpha,
+	  float alpha, float blur,
 	  const float *vertices,
 	  int num_vertices,
 	  const uint16_t *indices,
@@ -277,7 +277,7 @@ shader_render(struct glw_root *root,
 	      struct glw_backend_texture *tex,
 	      const struct glw_rgb *rgb_mul,
 	      const struct glw_rgb *rgb_off,
-	      float alpha,
+	      float alpha, float blur,
 	      const float *vertices,
 	      int num_vertices,
 	      const uint16_t *indices,
@@ -291,7 +291,7 @@ shader_render(struct glw_root *root,
     gp = gbr->gbr_renderer_flat;
   } else {
     
-    if(gbr->be_blur > 0.05) {
+    if(blur > 0.05) {
       gp = gbr->gbr_renderer_tex_blur;
     } else {
       gp = gbr->gbr_renderer_tex;
@@ -324,10 +324,10 @@ shader_render(struct glw_root *root,
     break;
   }
 
-  if(gbr->be_blur > 0.05 && tex != NULL) {
+  if(blur > 0.05 && tex != NULL) {
     glUniform2f(gp->gp_uniform_blur_amount, 
-		1.5 * gbr->be_blur / tex->width,
-		1.5 * gbr->be_blur / tex->height);
+		1.5 * blur / tex->width,
+		1.5 * blur / tex->height);
   }
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
@@ -373,18 +373,6 @@ glw_blendmode(struct glw_root *gr, int mode)
     glBlendFunc(GL_SRC_COLOR, GL_ONE);
     break;
   }
-}
-
-
-/**
- *
- */
-float
-glw_blur(struct glw_root *gr, float blur)
-{
-  float old = gr->gr_be.be_blur;
-  gr->gr_be.be_blur = blur;
-  return old;
 }
 
 

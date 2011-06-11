@@ -179,6 +179,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   glw_image_t *gi = (void *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
+  float blur = 1 - (rc->rc_blur * w->glw_blur);
   glw_rctx_t rc0;
 
   if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
@@ -219,7 +220,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, NULL, alpha_self * 0.75f);
+			  &black, NULL, alpha_self * 0.75f, blur);
 	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
@@ -227,7 +228,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
+			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -246,7 +247,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
 
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc, &glt->glt_texture,
-			&gi->gi_col_mul, &gi->gi_col_off, alpha_self);
+			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);

@@ -424,7 +424,7 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		  glw_rctx_t *rc, struct glw_backend_texture *tex,
 		  const struct glw_rgb *rgb_mul,
 		  const struct glw_rgb *rgb_off,
-		  float alpha)
+		  float alpha, float blur)
 {
   rgb_mul = rgb_mul ?: &white;
 
@@ -440,11 +440,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
       glw_renderer_clip_tesselate(gr, root, rc, grc);
     }
 
-    root->gr_render(root, NULL, tex, rgb_mul, rgb_off, alpha,
+    root->gr_render(root, NULL, tex, rgb_mul, rgb_off, alpha, blur,
 		    grc->grc_vertices, grc->grc_num_vertices,
 		    NULL, 0, flags);
   } else {
-    root->gr_render(root, rc->rc_mtx, tex, rgb_mul, rgb_off, alpha,
+    root->gr_render(root, rc->rc_mtx, tex, rgb_mul, rgb_off, alpha, blur,
 		    gr->gr_vertices, gr->gr_num_vertices,
 		    gr->gr_indices,  gr->gr_num_triangles,
 		    flags);

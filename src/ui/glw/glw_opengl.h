@@ -112,8 +112,6 @@ typedef struct glw_backend_root {
 
   int be_blendmode;
 
-  float be_blur;
-
 } glw_backend_root_t;
 
 

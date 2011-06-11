@@ -90,7 +90,6 @@ typedef struct glw_backend_root {
   hts_mutex_t be_mempool_lock;
 
   int be_blendmode;
-  float be_blur;
   
 } glw_backend_root_t;
 

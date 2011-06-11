@@ -326,6 +326,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   pixmap_t *pm = gtb->gtb_pixmap;
   float alpha;
+  float blur = 1 - (rc->rc_blur * w->glw_blur);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);
@@ -350,17 +351,19 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       const static glw_rgb_t black = {0,0,0};
       
       glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-			&gtb->gtb_texture, &black, NULL, alpha * 0.75f);
+			&gtb->gtb_texture, &black, NULL, alpha * 0.75f,
+			blur);
     }
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
-		      &gtb->gtb_texture, &gtb->gtb_color, NULL, alpha);
+		      &gtb->gtb_texture, &gtb->gtb_color, NULL, alpha,
+		      blur);
   }
 
   if(gtb->gtb_paint_cursor) {
     glw_root_t *gr = w->glw_root;
     float a = cos((gr->gr_frames & 2047) * (360.0f / 2048.0f)) * 0.5f + 0.5f;
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, rc,
-		      NULL, NULL, NULL, alpha * a);
+		      NULL, NULL, NULL, alpha * a, blur);
   }
 }
 

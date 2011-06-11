@@ -126,6 +126,7 @@ static void
 glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
 {
   float alpha = rc->rc_alpha * w->glw_alpha;
+  float blur  = rc->rc_blur  * w->glw_blur;
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
   glw_rctx_t rc0;
@@ -135,6 +136,7 @@ glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
     rc0 = *rc;
     if(c->glw_parent_vl_cur == 0) {
       rc0.rc_alpha = alpha;
+      rc0.rc_blur = blur;
       glw_render0(c, &rc0);
       continue;
     }

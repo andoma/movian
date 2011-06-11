@@ -10,6 +10,9 @@ widget(container_y, {
 
     widget(container_x, {
 
+      .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+      .blur  = iir(clamp(getLayer(), 0, 1), 7);
+
       .padding = [2,2,2,2];
       
       skinNavButton(TYPE="back",

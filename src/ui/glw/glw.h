@@ -687,7 +687,7 @@ typedef struct glw_root {
 		    struct glw_backend_texture *tex,
 		    const struct glw_rgb *rgb_mul,
 		    const struct glw_rgb *rgb_off,
-		    float alpha,
+		    float alpha, float blur,
 		    const float *vertices,
 		    int num_vertices,
 		    const uint16_t *indices,
@@ -711,6 +711,7 @@ void glw_settings_save(void *opaque, htsmsg_t *msg);
  */
 typedef struct glw_rctx {
   float rc_alpha;
+  float rc_blur;
 
   int16_t rc_width;
   int16_t rc_height;
@@ -861,6 +862,7 @@ typedef struct glw {
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
+  float glw_blur;                    /* Blur set by user */
 
   float glw_focus_weight;
 
@@ -1185,8 +1187,6 @@ void glw_unhide(glw_t *w);
 #define GLW_BLEND_ADDITIVE 1
 
 void glw_blendmode(struct glw_root *gr, int mode);
-
-float glw_blur(struct glw_root *gr, float blur);
 
 #define GLW_CW  0
 #define GLW_CCW 1
