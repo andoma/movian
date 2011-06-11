@@ -182,7 +182,7 @@
   widget(backdrop, {
     .source = "skin://gfx/blackdrop.png";
     .border = 12;
-    .alphaSelf = 0.8;
+    .alphaSelf = 0.66;
     BODY;
   });
 }
@@ -194,7 +194,7 @@
   widget(backdrop, {
     .source = "skin://gfx/blackdrop.png";
     .border = 12;
-    .alphaSelf = 0.8;
+    .alphaSelf = 0.66;
     .leftBorder = false;
     .rightBorder = false;
     BODY;

@@ -1,5 +1,6 @@
 #import "theme://include/separators.view"
 #import "theme://include/defs.view"
+#import "skin://playdeck.skin"
 
 // If playstatus is set to stop, close the page
 $self.close = $self.media.playstatus == "stop";
@@ -45,56 +46,23 @@ widget(container_z, {
     
     space(1);
   });
-});
-
-
-/*
-
+  
   widget(container_y, {
-
-    widget(label, {
-      .sizeScale = 2;
-      .alpha = iir(select($self.media.error, 1, 0) ||
-		   changed($self.media.metadata.title, 2, true), 7);
-      .caption = $self.media.metadata.title;
-      .align = center;
-      .ellipsize = true;
-    });
-
+    .padding = 5;
     widget(container_x, {
-
-      .align = center;
-      widget(backdrop, {
-
-	PLATE_GFX();
-
-	.alpha = iir(select($self.media.error, 1, 0), 8);
-	.color = PLATE_COLOR_ERROR();
-
-	widget(label, {
-	  .caption = $self.media.error;
-	});
-      });
-    });
-
-    widget(container_x, {
-      widget(backdrop, {
+      skinPlaydeckGroup(
+	.alphaSelf = $view.statsAlpha * 0.66;
 	
-	PLATE_GFX();
-	
-	.alphaSelf = $view.statsAlpha * 0.75;
-	.color = PLATE_COLOR_VIDEO();
-
 	widget(container_y, {
 	  .alpha = $view.statsAlpha;
-
+	  
 	  widget(label, {
 	    .caption = "Playback status";
 	    .align = center;
 	  });
 
-	    HORIZONTAL_SEPARATOR();
-  
+	  HORIZONTAL_SEPARATOR();
+	  
 	  widget(container_x, {
 
 	    widget(container_y, {
@@ -102,7 +70,7 @@ widget(container_z, {
 		.align = right;
 		.caption = "Source:";
 	      });
-	  
+	      
 	      widget(label, {
 		.align = right;
 		.caption = "Buffer fullness:";
@@ -112,7 +80,7 @@ widget(container_z, {
 		.align = right;
 		.caption = "Video codec:";
 	      });
-	  
+	      
 	      widget(label, {
 		.align = right;
 		.caption = "Video bitrate:";
@@ -132,12 +100,12 @@ widget(container_z, {
 		.align = right;
 		.caption = "Audio queue len:";
 	      });
-	  
+	      
 	      widget(label, {
 		.align = right;
 		.caption = "Video decode time:";
 	      });
-	  
+	      
 	      widget(label, {
 		.align = right;
 		.caption = "A/V diff:";
@@ -164,7 +132,7 @@ widget(container_z, {
 	      widget(label, {
 		.caption = $self.media.metadata.format;
 	      });
-	  
+	      
 	      widget(bar, {
 		.height = $ui.size;
 		.color1 = [1,1,1];
@@ -175,7 +143,7 @@ widget(container_z, {
 	      widget(label, {
 		.caption = $self.media.video.codec;
 	      });
-	  
+	      
 	      widget(label, {
 		.caption = int2str($self.media.video.bitrate) + "kb/s";
 	      });
@@ -191,11 +159,11 @@ widget(container_z, {
 	      widget(label, {
 		.caption = $self.media.audio.dqlen;
 	      });
-	  
+	      
 	      widget(label, {
 		.caption = int2str($self.media.video.decodetime_avg) + " ms";
 	      });
-	  
+	      
 	      widget(label, {
 		.caption = int2str($self.media.avdiff * 1000) + " ms";
 	      });
@@ -213,8 +181,7 @@ widget(container_z, {
 	    });
 	  });
 	});
-      });
+      );
     });
   });
 });
-*/
