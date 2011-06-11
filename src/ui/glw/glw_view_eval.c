@@ -4153,6 +4153,30 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
+/**
+ *
+ */
+static int
+glwf_getLayer(glw_view_eval_context_t *ec, struct token *self,
+	      token_t **argv, unsigned int argc)
+{
+  token_t *r;
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+
+  if(ec->rc == NULL) {
+    r->t_int = 0;
+  } else {
+    r->t_int = ec->rc->rc_layer;
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -4383,6 +4407,7 @@ static const token_func_t funcvec[] = {
   {"deliverEvent", -1, glwf_deliverEvent},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
+  {"getLayer", 0, glwf_getLayer},
   {"getWidth", 0, glwf_getWidth},
   {"getHeight", 0, glwf_getHeight},
   {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},

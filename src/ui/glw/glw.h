@@ -719,6 +719,7 @@ typedef struct glw_rctx {
 
   uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
+  uint8_t rc_layer;
 
 
   struct glw_grid *rc_grid; // Used by grid layout mechanisms (see glw_grid.c)
