@@ -4355,6 +4355,44 @@ glwf_int(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Clamp
+ */
+static int 
+glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *b = argv[1];
+  token_t *c = argv[2];
+  token_t *r;
+  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  if((b = token_resolve(ec, b)) == NULL)
+    return -1;
+  if((c = token_resolve(ec, c)) == NULL)
+    return -1;
+
+  switch(a->type) {
+  case TOKEN_INT:
+    r = eval_alloc(self, ec, TOKEN_INT);
+    r->t_int = GLW_CLAMP(a->t_int, token2int(b), token2int(c));
+    break;
+  case TOKEN_FLOAT:
+    r = eval_alloc(self, ec, TOKEN_FLOAT);
+    r->t_float = GLW_CLAMP(a->t_float, token2float(b), token2float(c));
+    break;
+  default:
+    r = eval_alloc(self, ec, TOKEN_VOID);
+    break;
+  }
+  eval_push(ec, r);
+  return 0;
+}
+
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -4412,7 +4450,8 @@ static const token_func_t funcvec[] = {
   {"getHeight", 0, glwf_getHeight},
   {"preferTentative", 1, glwf_preferTentative, glwf_null_ctor, glwf_freetoken_dtor},
   {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
-  {"int", 1, glwf_int},
+  {"int", 1,glwf_int},
+  {"clamp", 3, glwf_clamp},
 };
 
 
