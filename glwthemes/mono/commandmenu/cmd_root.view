@@ -63,7 +63,6 @@ widget(container_y, {
   space(1);
 
   widget(deck, {
-    .height = $ui.size * 8;
 
     // -- playdeck ------------------------------------------------------
     commandGroup(widget(container_x, {
@@ -151,6 +150,7 @@ widget(container_y, {
 
     // -- Audio config ------------------------------------------------------
     commandGroup(widget(list_y, {
+      .height = $ui.size * 8;
 
       widget(container_x, {
 	widget(label, {
@@ -182,6 +182,7 @@ widget(container_y, {
 
     // -- Subtitle tracks ------------------------------------------------------
     commandGroup(widget(list_y, {
+      .height = $ui.size * 8;
 
       widget(container_x, {
 	widget(label, {
@@ -216,6 +217,7 @@ widget(container_y, {
     // -- Seek by items ------------------------------------------------------
 
     commandGroupFullWidth(widget(list_x, {
+      .height = $ui.size * 8;
       .spacing = 5;
       cloner($global.media.current.seekindex.positions, backdrop, {
 	.alphaSelf = 0.2 + (isFocused() || isHovered());
