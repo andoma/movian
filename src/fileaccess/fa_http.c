@@ -38,6 +38,11 @@
 #include "js/js.h"
 #endif
 
+#if ENABLE_OPENSSL
+#include <openssl/hmac.h>
+#endif
+
+
 static uint8_t nonce[20];
 
 /**
