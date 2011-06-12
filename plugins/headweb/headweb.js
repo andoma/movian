@@ -226,7 +226,7 @@
     if(login(true))
       return false;
 
-    if(!showtime.message('<center>Are you sure want to rent<br>' + title + '<br>For ' +
+    if(!showtime.message('<center>Are you sure want to rent<br><b>' + title + '</b><br>For ' +
 			 price, true, true))
       return false;
 
