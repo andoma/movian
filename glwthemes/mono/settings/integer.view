@@ -1,37 +1,55 @@
 #import "theme://include/defs.view"
+#import "skin://settings.skin"
 
 widget(container_x, {
 
-  widget(label, {
+  .spacing = $ui.size / 2;
+
+  widget(dummy, { .width = $ui.size * 2; });
+  
+  widget(container_y, {
     .filterConstraintX = true;
-    .weight = 1.0;
-    .align = left;
-    .caption = $self.model.metadata.title;
-  });
 
-  widget(dummy, {
-    .width = 4;
-  });
-
-  widget(slider_x, {
-    .focusable = true;
-    .min = $self.model.min;
-    .max = $self.model.max;
-    .step = $self.model.step;
-    bind($self.model.value);
-
-    widget(backdrop, {
-      .width = KNOB_SIZE();
-
-      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
-
-      .color = PLATE_COLOR_OTHER();
-      PLATE_GFX4();
-
-      widget(label, {
-	.align = center;
-	.caption = int2str($self.model.value) + $self.model.unit;
-      });
+    widget(label, {
+      .caption = $self.model.metadata.title;
+      .sizeScale = 1.2;
+      .color = select($view.highlight, 1, 0.4);
     });
+  
+    widget(label, {
+      .caption = $self.model.metadata.shortdesc;
+      .sizeScale = 0.8;
+      .color = select($view.highlight, 1, 0.4);
+      .alpha = select($view.highlight, 1, 0.5);
+    });
+  });
+    
+  widget(container_y, {
+    $view.highlight = isFocused() || isHovered();
+    .filterConstraintX = true;
+    .align = center;
+    settingGroup(
+      .alphaSelf = select($view.highlight, 1, 0.2);
+
+      widget(slider_x, {
+	.focusable = true;
+	.min = $self.model.min;
+	.max = $self.model.max;
+	.step = $self.model.step;
+	bind($self.model.value);
+	
+	widget(backdrop, {
+//	  .width = KNOB_SIZE();
+	  .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+	  .color = PLATE_COLOR_OTHER();
+	  PLATE_GFX();
+	  
+	  widget(label, {
+	    .align = center;
+	    .caption = int2str($self.model.value) + $self.model.unit;
+	  });
+	});
+      });
+    );
   });
 });

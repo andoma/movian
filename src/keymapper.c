@@ -358,14 +358,15 @@ keymapper_create(prop_t *settingsparent, const char *name, const char *title,
 		 const keymap_defmap_t *def)
 {
   keymap_t *km;
-
+  const char *desc = "Configure mapping of keyboard and remote controller keys";
   km = calloc(1, sizeof(keymap_t));
 
   LIST_INIT(&km->km_entries);
 
   km->km_name = strdup(name);
   km->km_settings = prop_create(settings_add_dir(settingsparent, title,
-						 "keymap", NULL), "model");
+						 "keymap", NULL, desc),
+				"model");
 
   keymapper_create_entries(km, def);
   return km;

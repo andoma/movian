@@ -37,9 +37,12 @@ typedef struct settings_multiopt {
 } settings_multiopt_t;
 
 prop_t *settings_add_dir(prop_t *parent, const char *title,
-			 const char *subtype, const char *icon);
+			 const char *subtype, const char *icon,
+			 const char *shortdesc);
 
 prop_t *settings_get_dirlist(prop_t *parent);
+
+prop_t *settings_create_divider(prop_t *parent, const char *caption);
 
 
 

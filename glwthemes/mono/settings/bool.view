@@ -1,25 +1,38 @@
 #import "theme://include/defs.view"
 #import "theme://include/buttons.view"
 
+#import "skin://settings.skin"
+
 widget(container_x, {
 
-  widget(label, {
-    .filterConstraintX = true;
-    .weight = 1.0;
-    .align = left;
-    .caption = $self.model.metadata.title;
-  });
+  .spacing = $ui.size / 2;
+
+  widget(dummy, { .width = $ui.size * 2; });
   
-  widget(dummy, {
-    .width = 4;
-  });
-
-  widget(container_x, {
-    .weight = 1.0;
+  widget(container_y, {
     .filterConstraintX = true;
 
-    ONOFF($self.model.value);
-    space(1);
+    widget(label, {
+      .caption = $self.model.metadata.title;
+      .sizeScale = 1.2;
+      .color = select($view.highlight, 1, 0.4);
+    });
+  
+    widget(label, {
+      .caption = $self.model.metadata.shortdesc;
+      .sizeScale = 0.8;
+      .color = select($view.highlight, 1, 0.4);
+      .alpha = select($view.highlight, 1, 0.5);
+    });
+  });
+    
+  widget(container_x, {
+    $view.highlight = isFocused() || isHovered();
+    .filterConstraintX = true;
+    .align = left;
+    settingGroup(
+      .alphaSelf = select($view.highlight, 1, 0.2);
+      ONOFF($self.model.value);
+    );
   });
 });
-

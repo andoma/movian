@@ -1,27 +1,42 @@
+#import "theme://include/buttons.view"
+#import "skin://settings.skin"
+
+
 widget(container_x, {
 
-  widget(label, {
-    .filterConstraintX = true;
-    .weight = 1.0;
-    .align = left;
-    .caption = $self.model.metadata.title;
-  });
-  
-  widget(backdrop, {
-    .filterConstraintX = true;
-      
-    .alphaSelf = iir(isFocused() * 0.5, 8) + isHovered() * 0.1;
-    .color = [0.45, 0.45, 0.5];
-    .source = "theme://graphics/shadedplate.png";
-    .border =  [4, 4, 4, 4];
-    .padding = [0, -4, 0, -4];
+  .spacing = $ui.size / 2;
 
-    widget(text, {
-      .align = left;
-      .focusable = true;
-      .password = $self.model.password;
-      bind($self.model.value);
+  widget(dummy, { .width = $ui.size * 2; });
+  
+  widget(container_y, {
+    .filterConstraintX = true;
+
+    widget(label, {
+      .caption = $self.model.metadata.title;
+      .sizeScale = 1.2;
+      .color = select($view.highlight, 1, 0.4);
+    });
+  
+    widget(label, {
+      .caption = $self.model.metadata.shortdesc;
+      .sizeScale = 0.8;
+      .color = select($view.highlight, 1, 0.4);
+      .alpha = select($view.highlight, 1, 0.5);
     });
   });
+    
+  widget(container_y, {
+    $view.highlight = isFocused() || isHovered();
+    .filterConstraintX = true;
+    .align = center;
+    settingGroup(
+      .alphaSelf = select($view.highlight, 1, 0.2);
+      widget(text, {
+	.align = left;
+	.focusable = true;
+	.password = $self.model.password;
+	bind($self.model.value);
+      });
+    );
+  });
 });
-

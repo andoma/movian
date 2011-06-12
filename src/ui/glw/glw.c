@@ -194,7 +194,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
   gr->gr_prop_underscan_h = prop_create(r, "underscan_h");
   gr->gr_prop_underscan_v = prop_create(r, "underscan_v");
 
-  gr->gr_settings = settings_add_dir(NULL, title, "display", NULL);
+  gr->gr_settings = settings_add_dir(NULL, title, "display", NULL, NULL);
 
   gr->gr_setting_size =
     settings_create_int(gr->gr_settings, "size",

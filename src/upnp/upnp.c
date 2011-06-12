@@ -94,6 +94,7 @@ dev_destroy(upnp_device_t *ud)
   free(ud->ud_friendlyName);
   free(ud->ud_manufacturer);
   free(ud->ud_modelDescription);
+  free(ud->ud_modelNumber);
   free(ud->ud_url);
   free(ud->ud_icon);
   free(ud);
@@ -399,11 +400,12 @@ upnp_settings_saver(void *opaque, htsmsg_t *msg)
  *
  */
 static void
-add_content_directory(upnp_service_t *us)
+add_content_directory(upnp_service_t *us, const char *hostname, int port)
 {
   upnp_device_t *ud = us->us_device;
 
   char svcid[URL_MAX];
+  char buf[256];
   snprintf(svcid, sizeof(svcid),
 	   "upnp/upnp:%s:%s:0", ud->ud_uuid, us->us_id);
   us->us_local_url = strdup(svcid + 5);
@@ -413,7 +415,11 @@ add_content_directory(upnp_service_t *us)
   us->us_settings_store = htsmsg_store_load(svcid) ?: htsmsg_create_map();
 
   const char *title = ud->ud_friendlyName ?: "UPnP content directory";
-  us->us_settings = settings_add_dir(settings_sd, title, NULL, NULL);
+
+  snprintf(buf, sizeof(buf), "%s (%s) on %s:%d",
+	   title, ud->ud_modelNumber ?: "Unknown version", hostname, port);
+  us->us_settings = settings_add_dir(settings_sd, title, NULL, 
+				     us->us_icon_url, buf);
 
   us->us_setting_enabled = 
     settings_create_bool(us->us_settings, "enabled",
@@ -498,7 +504,7 @@ introspect_service(upnp_device_t *ud, htsmsg_t *svc)
   switch(us->us_type) {
   case UPNP_SERVICE_CONTENT_DIRECTORY_1:
   case UPNP_SERVICE_CONTENT_DIRECTORY_2:
-    add_content_directory(us);
+    add_content_directory(us, hostname, port);
     break;
   default:
     break;
@@ -610,6 +616,9 @@ introspect_device(upnp_device_t *ud)
 
   mystrset(&ud->ud_modelDescription, 
 	   htsmsg_get_str_multi(dev, "tags", "modelDescription", "cdata", NULL));
+
+  mystrset(&ud->ud_modelNumber, 
+	   htsmsg_get_str_multi(dev, "tags", "modelNumber", "cdata", NULL));
 
   mystrset(&ud->ud_icon, device_get_icon(dev));
 

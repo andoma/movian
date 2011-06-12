@@ -3,6 +3,7 @@
 #include "theme://include/listitems.view"
 
 widget(container_y, {
+  .padding = $ui.size / 2;
   .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
   .blur  = iir(clamp(getLayer(), 0, 1), 7);
   
@@ -12,7 +13,7 @@ widget(container_y, {
     
     widget(list_y, {
       .id = "list";
-
+      .spacing = 5;
       LIST_ITEM_SIMPLE("Add new entry", 
 		       "skin://icons/Add.png",
 		       {

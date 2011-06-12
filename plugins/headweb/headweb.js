@@ -27,7 +27,9 @@
     showtime.createService("Headweb", PREFIX + "start", "video", false,
 			   plugin.config.path + "headweb_square.png");
   
-  plugin.settings = plugin.createSettings("Headweb", "video");
+  plugin.settings = plugin.createSettings("Headweb", "video",
+					  plugin.config.path + "headweb_square.png",
+					  "Headweb online video store");
 
   plugin.settings.createInfo("info",
 			     plugin.config.path + "headweb_logo.png",

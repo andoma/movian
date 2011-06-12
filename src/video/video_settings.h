@@ -23,4 +23,5 @@ struct video_settings {
 
 extern struct video_settings video_settings;
 
+extern struct prop *subtitle_settings_dir;
 

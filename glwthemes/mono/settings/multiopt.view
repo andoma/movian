@@ -1,39 +1,54 @@
-#import "theme://include/buttons.view"
+#import "skin://settings.skin"
 
 widget(container_x, {
 
-  widget(label, {
-    .filterConstraintX = true;
-    .weight = 1.0;
-    .align = left;
-    .caption = $self.model.metadata.title;
-  });
+  .spacing = $ui.size / 2;
+
+  widget(dummy, { .width = $ui.size * 2; });
   
-  widget(dummy, {
-    .width = 4;
-  });
+  widget(container_y, {
+    .filterConstraintX = true;
 
-  ICON("skin://icons/Left.png",
-       targetedEvent("choiceDeck", Decrease),
-       PLATE_COLOR_OTHER());
-
-  widget(deck, {
-    .id = "choiceDeck";
-
-    .time = 0.15;
-    .effect = slideHorizontal;
-    .noInitialTransform = true;
-
-    cloner($self.model.options, container_y, {
-      widget(label, {
-	.filterConstraintX = true;
-	.align = center;
-	.caption = $self.title;
-      });
+    widget(label, {
+      .caption = $self.model.metadata.title;
+      .sizeScale = 1.2;
+      .color = select($view.highlight, 1, 0.4);
+    });
+  
+    widget(label, {
+      .caption = $self.model.metadata.shortdesc;
+      .sizeScale = 0.8;
+      .color = select($view.highlight, 1, 0.4);
+      .alpha = select($view.highlight, 1, 0.5);
     });
   });
-  
-  ICON("skin://icons/Right.png",
-       targetedEvent("choiceDeck", Increase),
-       PLATE_COLOR_OTHER());
+    
+  widget(container_y, {
+    $view.highlight = isFocused() || isHovered();
+    .filterConstraintX = true;
+    .align = center;
+    settingGroup(
+      .alphaSelf = select($view.highlight, 1, 0.2);
+      widget(container_x, {
+	.spacing = 4;
+	settingButtonUp(targetedEvent("choiceDeck", Decrease), true, false);
+	settingButtonDown(targetedEvent("choiceDeck", Increase), true, false);
+
+	widget(deck, {
+	  .id = "choiceDeck";
+	  .filterConstraintX = true;
+
+	  .time = 0.15;
+	  .effect = flipHorizontal;
+	  .noInitialTransform = true;
+
+	  cloner($self.model.options, label, {
+	    .align = left;
+	    .caption = $self.title;
+	    .sizeScale = 1.2;
+	  });
+	});
+      });
+    );
+  });
 });

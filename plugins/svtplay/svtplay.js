@@ -26,7 +26,9 @@
     showtime.createService("SVT Play", "svtplay:start", "tv", false,
 			   plugin.config.path + "svtplay_square.png");
   
-  plugin.settings = plugin.createSettings("SVT Play", "video");
+  plugin.settings = plugin.createSettings("SVT Play", "video",
+					  plugin.config.path + "svtplay_square.png",
+					 "Sveriges television online video");
 
   plugin.settings.createInfo("info",
 			     plugin.config.path + "svtplay.png",

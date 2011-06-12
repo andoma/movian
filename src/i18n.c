@@ -79,7 +79,8 @@ set_srt_charset(void *opaque, const char *str)
 void
 i18n_init(void)
 {
-  prop_t *s = settings_add_dir(NULL, "Languages", NULL, NULL);
+  prop_t *s = settings_add_dir(NULL, "Languages", NULL, NULL,
+			       "Preferred languages");
   setting_t *x;
   int i;
 

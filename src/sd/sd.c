@@ -130,7 +130,8 @@ sd_settings_saver(void *opaque, htsmsg_t *msg)
  */
 static void
 sd_add_service(service_instance_t *si, const char *title,
-	       const char *url, const char *contents, int probe)
+	       const char *url, const char *contents,
+	       int probe, const char *description)
 {
   si->si_probe = probe;
   if(si->si_settings == NULL) {
@@ -144,7 +145,8 @@ sd_add_service(service_instance_t *si, const char *title,
     si->si_settings_path = strdup(tmp);
     si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
 
-    si->si_settings = settings_add_dir(settings_sd, title, NULL, NULL);
+    si->si_settings = settings_add_dir(settings_sd, title, NULL, NULL,
+				       description);
     
     si->si_setting_enabled = 
       settings_create_bool(si->si_settings, "enabled", "Enabled", 1,
@@ -176,8 +178,10 @@ sd_add_service_htsp(service_instance_t *si, const char *name,
 		    const char *host, int port)
 {
   char url[URL_MAX];
+  char buf[256];
   snprintf(url, sizeof(url), "htsp://%s:%d", host, port);
-  sd_add_service(si, name, url, "tv", 0);
+  snprintf(buf, sizeof(buf), "Tvheadend TV streaming server on %s", host);
+  sd_add_service(si, name, url, "tv", 0, buf);
 }
 
 
@@ -190,9 +194,12 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 		      const char *contents)
 {
   char url[URL_MAX];
+  char buf[256];
   snprintf(url, sizeof(url), "webdav://%s:%d%s%s", host, port,
 	   path == NULL || path[0] != '/' ? "/" : "", path ? path : "");
-  sd_add_service(si, name, url, contents, 1);
+  snprintf(buf, sizeof(buf), "WEBDAV share on %s:%d%s%s", host, port,
+	   path == NULL || path[0] != '/' ? "/" : "", path ? path : "");
+  sd_add_service(si, name, url, contents, 1, buf);
 }
 
 /**

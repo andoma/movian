@@ -30,6 +30,7 @@
 #include "backend/backend.h"
 #include "backend/backend_prop.h"
 #include "prop/prop_nodefilter.h"
+#include "prop/prop_concat.h"
 
 #define SETTINGS_URL "settings:"
 
@@ -90,7 +91,7 @@ setting_add(prop_t *parent, const char *title, const char *type)
  */
 prop_t *
 settings_add_dir(prop_t *parent, const char *title, const char *subtype,
-		 const char *icon)
+		 const char *icon, const char *shortdesc)
 {
   char url[100];
   prop_t *p = setting_add(parent ? prop_create(parent, "model") : NULL,
@@ -99,6 +100,7 @@ settings_add_dir(prop_t *parent, const char *title, const char *subtype,
   prop_t *metadata = prop_create(model, "metadata");
 
   prop_set_string(prop_create(model, "subtype"), subtype);
+  prop_set_string(prop_create(metadata, "shortdesc"), shortdesc);
   backend_prop_make(model, url, sizeof(url));
   prop_set_string(prop_create(p, "url"), url);
   if(icon != NULL)
@@ -438,6 +440,16 @@ settings_create_info(prop_t *parent, const char *image,
 /**
  *
  */
+prop_t *
+settings_create_divider(prop_t *parent, const char *caption)
+{
+  return setting_add(prop_create(parent, "model"), caption, "divider");
+}
+
+
+/**
+ *
+ */
 setting_t *
 settings_create_action(prop_t *parent, const char *id, const char *title,
 		       prop_callback_t *cb, void *opaque,
@@ -494,20 +506,51 @@ settings_get_node(setting_t *s)
 void
 settings_init(void)
 {
+  prop_t *n, *d, *model;
+  prop_t *s1;
+
   settings_root = prop_create(prop_get_global(), "settings");
-
-  settings_nodes = prop_create_root("sources");
-
-  prop_nf_create(prop_create(settings_root, "nodes"),
-		 settings_nodes, NULL, "node.model.metadata.title",
-		 PROP_NF_AUTODESTROY);
-
   prop_set_string(prop_create(settings_root, "type"), "settings");
   set_title(settings_root, "Global settings");
 
-  settings_apps = settings_add_dir(NULL, "Plugins", "settings", NULL);
-  settings_sd = settings_add_dir(NULL, "Autodiscovered services",
-				 "settings", NULL);
+
+
+
+  settings_nodes = prop_create_root(NULL);
+  s1 = prop_create_root(NULL);
+
+  prop_nf_create(s1,
+		 settings_nodes, NULL, "node.model.metadata.title",
+		 PROP_NF_AUTODESTROY);
+
+
+  settings_apps = prop_create_root(NULL);
+  settings_sd = prop_create_root(NULL);
+
+  prop_concat_t *pc;
+
+  pc = prop_concat_create(prop_create(settings_root, "nodes"), 0);
+
+  prop_concat_add_source(pc, s1, NULL);
+
+  // Applications and plugins
+
+  n = prop_create(prop_create(settings_apps, "model"), "nodes");
+
+  d = prop_create_root(NULL);
+  model = prop_create(d, "model");
+  set_title(model, "Applications and installed plugins");
+  prop_set_string(prop_create(model, "type"), "divider");
+  prop_concat_add_source(pc, n, d);
+
+
+  d = prop_create_root(NULL);
+  model = prop_create(d, "model");
+  set_title(model, "Discovered media sources");
+  prop_set_string(prop_create(model, "type"), "divider");
+
+  n = prop_create(prop_create(settings_sd, "model"), "nodes");
+  prop_concat_add_source(pc, n, d);
 }
 
 

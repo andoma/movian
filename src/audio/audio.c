@@ -146,7 +146,8 @@ audio_init(void)
 {
   audio_mastervol_init();
 
-  audio_settings_root = settings_add_dir(NULL, "Audio output", "sound", NULL);
+  audio_settings_root = settings_add_dir(NULL, "Audio output", "sound", NULL,
+					 "Select audio output device and related configurations");
   
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 
@@ -351,7 +352,8 @@ audio_mode_register(audio_mode_t *am)
 
 
   snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);
-  r = settings_add_dir(audio_settings_root, buf, "sound", NULL);
+  r = settings_add_dir(audio_settings_root, buf, "sound", NULL,
+		       am->am_description);
 
   settings_create_int(r, "delay", "Audio/Video sync delay",
 		      0, m, -1000, 1000, 10, am_set_av_sync, am,

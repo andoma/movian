@@ -72,6 +72,7 @@ set_password(void *opaque, const char *v)
   hts_mutex_unlock(&opensub_mutex);
 }
 
+extern struct prop *subtitle_settings_dir;
 
 /**
  *
@@ -82,7 +83,9 @@ opensub_init(void)
   prop_t *s;
   hts_mutex_init(&opensub_mutex);
 
-  s = settings_add_dir(NULL, "Opensubtitles.org", NULL, NULL);
+  s = subtitle_settings_dir;
+
+  settings_create_divider(s, "opensubtitles.org");
 
   htsmsg_t *store = htsmsg_store_load("opensubtitles");
   if(store == NULL)

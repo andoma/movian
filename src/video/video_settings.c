@@ -3,6 +3,8 @@
 #include "settings.h"
 #include "video_settings.h"
 
+struct prop *subtitle_settings_dir;
+
 struct subtitle_settings subtitle_settings;
 struct video_settings video_settings;
 
@@ -46,7 +48,8 @@ video_settings_init(void)
   prop_t *s;
   setting_t *x;
 
-  s = settings_add_dir(NULL, "Video playback", NULL, NULL);
+  s = settings_add_dir(NULL, "Video playback", "video", NULL,
+		       "Video acceleration and display behaviour");
 
   if((store = htsmsg_store_load("videoplayback")) == NULL)
     store = htsmsg_create_map();
@@ -66,7 +69,9 @@ video_settings_init(void)
 		       (void *)"videoplayback");
 
 
-  s = settings_add_dir(NULL, "Subtitles", NULL, NULL);
+  s = settings_add_dir(NULL, "Subtitles", "subtitle", NULL,
+		       "Generic settings for video subtitles");
+  subtitle_settings_dir = s;
 
   if((store = htsmsg_store_load("subtitles")) == NULL)
     store = htsmsg_create_map();

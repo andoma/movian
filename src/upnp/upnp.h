@@ -79,6 +79,7 @@ typedef struct upnp_device {
   char *ud_friendlyName;
   char *ud_manufacturer;
   char *ud_modelDescription;
+  char *ud_modelNumber;
   char *ud_icon;
 
   struct upnp_service_list ud_services;

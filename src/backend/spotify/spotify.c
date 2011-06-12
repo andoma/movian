@@ -4026,7 +4026,8 @@ be_spotify_init(void)
     return 1;
 #endif
 
-  s = settings_add_dir(settings_apps, "Spotify", NULL, SPOTIFY_ICON_URL);
+  s = settings_add_dir(settings_apps, "Spotify", NULL, SPOTIFY_ICON_URL,
+		       "Spotify music service");
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 

@@ -62,6 +62,7 @@ typedef struct audio_mode {
   unsigned int am_sample_rate;
 
   char *am_title;
+  char *am_description;
   char *am_id;
 
   int (*am_entry)(struct audio_mode *am, audio_fifo_t *af);

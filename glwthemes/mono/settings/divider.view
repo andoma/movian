@@ -1,0 +1,11 @@
+
+#import "theme://include/separators.view"
+
+widget(container_y, {
+  widget(label, {
+    .caption = $self.model.metadata.title;
+    .sizeScale = 1.5;
+  });
+
+  HORIZONTAL_SEPARATOR();
+});

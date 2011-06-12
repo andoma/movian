@@ -1,18 +1,45 @@
 #import "theme://include/defs.view"
 #import "theme://include/listitems.view"
 
+widget(container_x, {
+  .focusable = true;
+  .focusOnClick = true;
+  .spacing = $ui.size / 2;
+  onEvent(activate, navOpen($self.url));
 
-LIST_ITEM_SIMPLE($self.model.metadata.title,
+  widget(icon, {
+    .color = select(isFocused() || isHovered(), 1, 0.3);
+    .source = $self.model.metadata.icon ?? 
+      translate($self.model.subtype,
+		"skin://icons/Settings.png",
+		"sound", "skin://icons/Sound.png",
+		"audio", "skin://icons/Music.png",
+		"video", "skin://icons/Movie.png",
+		"bookmark", "skin://icons/Bookmark.png",
+		"display", "skin://icons/Display.png",
+		"search", "skin://icons/Search.png",
+		"keymap", "skin://icons/Keyboard.png",
+		"subtitle", "skin://icons/Script.png"
+	       );
 
-		 translate($self.model.subtype,
-			   $self.model.metadata.icon ?? "skin://icons/Settings.png",
-			   "sound", "skin://icons/Sound.png",
-			   "audio", "skin://icons/Music.png",
-			   "video", "skin://icons/Movie.png",
-			   "bookmark", "skin://icons/Bookmark.png",
-			   "display", "skin://icons/Display.png",
-			   "search", "skin://icons/Search.png",
-			   "keymap", "skin://icons/Keyboard.png"
-			  ),
-		 navOpen($self.url),
-		 PLATE_COLOR_OTHER());
+    .shadow = true;
+    .sizeScale = 2;
+    .hqScaling = true;
+  });
+
+  widget(container_y, {
+    widget(label, {
+      .caption = $self.model.metadata.title;
+      .sizeScale = 1.2;
+      .color = select(isFocused() || isHovered(), 1, 0.4);
+    });
+
+    widget(label, {
+      .caption = $self.model.metadata.shortdesc;
+      .sizeScale = 0.8;
+      .color = select(isFocused() || isHovered(), 1, 0.4);
+      .alpha = select(isFocused() || isHovered(), 1, 0.5);
+    });
+  });
+});
+

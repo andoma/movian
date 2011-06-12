@@ -1,9 +1,13 @@
-#import "theme://include/defs.view"
-#import "theme://include/listitems.view"
+#import "skin://settings.skin"
 
 
-LIST_ITEM_SIMPLE($self.model.metadata.title,
-		"skin://icons/Check.png", // bad icon
-		 deliverEvent($self.model.action),
-		 PLATE_COLOR_OTHER());
+widget(container_x, {
+  .spacing = $ui.size / 2;
 
+  widget(dummy, { .width = $ui.size * 2; });
+
+  .align = left;
+  settingButtonAction($self.model.metadata.title,
+		      deliverEvent($self.model.action),
+		      true, false);
+});

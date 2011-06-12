@@ -226,7 +226,8 @@ bookmarks_init(void)
   htsmsg_t *m, *n, *o;
 
 
-  bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks", "bookmark", NULL),
+  bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks",
+					   "bookmark", NULL, NULL),
 			  "model");
 
   prop_set_int(prop_create(bookmarks, "mayadd"), 1);
