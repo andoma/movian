@@ -292,7 +292,7 @@ link_vmode(nvctrl_data_t *nvd, const char *name,
 
   TAILQ_INSERT_TAIL(&nvd->vmodes, nv, link);
 
-  r = settings_add_dir(settings, name, name, "display");
+  r = settings_add_dir(settings, name, name, "display", NULL);
 
   store = htsmsg_store_load("displays/%s_vmodes/%s", nvd->settings_instance, 
 			    nv->name) ?: htsmsg_create_map();
@@ -621,7 +621,7 @@ nvidia_init(Display *dpy, int screen, prop_t *uiroot, int *modesp,
   if(ENABLE_LIBXRANDR) {
 
     prop_t *s = settings_add_dir(settings, "videomodes", "Video modes", 
-				 "display");
+				 "display", NULL);
     
     add_modes(nvd, s, pc);
     
