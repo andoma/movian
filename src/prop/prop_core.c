@@ -45,8 +45,6 @@ static prop_courier_t *global_courier;
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
 
-static void prop_unparent0(prop_t *p, prop_sub_t *skipme);
-
 static void prop_flood_flag(prop_t *p, int set, int clr);
 
 #define PROPTRACE(fmt...) trace(TRACE_NO_PROP, TRACE_DEBUG, "prop", fmt)
@@ -1441,7 +1439,7 @@ prop_set_parent_vector(prop_vec_t *pv, prop_t *parent, prop_t *before,
 /**
  *
  */
-static void
+void
 prop_unparent0(prop_t *p, prop_sub_t *skipme)
 {
   prop_t *parent = p->hp_parent;
