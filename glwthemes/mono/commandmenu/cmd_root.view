@@ -105,11 +105,11 @@ widget(container_y, {
 			 $global.media.current.canSkipForward);
 			 
 	  
-	  commandButton({ $view.settingpage = 3; }, "SeekByFrame",
-			$global.media.current.seekindex.available);
-
 	  commandButton(event(Stop), "Stop", $global.media.current.canStop);
 	  commandButton(event(Eject), "Eject", $global.media.current.canEject);
+
+	  commandButton({ $view.settingpage = 3; }, "SeekByFrame",
+			$global.media.current.seekindex.available);
 
 	  commandToggle($global.media.current.repeat,
 			"Repeat",
