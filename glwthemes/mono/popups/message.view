@@ -2,6 +2,8 @@
 #import "theme://include/buttons.view"
 #import "theme://include/separators.view"
 
+#import "skin://popup.skin"
+
 widget(container_x, {
   space(0.2);
 
@@ -11,13 +13,11 @@ widget(container_x, {
 
     .align = center;
     
-    widget(backdrop, {
+    popupGroup(
       .filterConstraintX = true;
-      PLATE_GFX();
-      .alphaSelf = 0.8;
-      .color = PLATE_COLOR_OTHER();
       
       widget(container_y, {
+	.spacing = 4;
 
 	widget(label, {
 	  .maxlines = 10;
@@ -32,18 +32,13 @@ widget(container_x, {
 	  .spacing = 20;
 	  .homogenous = true;
 
-	  BAR_BUTTON("OK", 
-		     deliverEvent($self.eventSink, "Ok"),
-		     select($self.ok, 0, 1),
-		     "skin://icons/Check.png");
-
-	  BAR_BUTTON("Cancel", 
-		     deliverEvent($self.eventSink, "Cancel"),
-		     select($self.cancel, 0, 1),
-		     "skin://icons/Delete.png");
+	  popupButtonOK(deliverEvent($self.eventSink, "Ok"),
+			0.5, !$self.ok);
+	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
+			    1.0, !$self.cancel);
 	});
       });
-    });
+    );
   });
   space(0.2);
 });
