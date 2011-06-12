@@ -2,23 +2,21 @@
 #import "theme://include/buttons.view"
 #import "theme://include/separators.view"
 
+#import "skin://popup.skin"
+
 widget(container_x, {
   space(0.2);
 
   widget(container_y, {
-
     .weight = 1.0;
 
     .align = center;
     
-    widget(backdrop, {
+    popupGroup(
       .filterConstraintX = true;
-      PLATE_GFX();
-      .alphaSelf = 0.8;
-      .color = PLATE_COLOR_AUTH();
       
       widget(container_y, {
-
+	.spacing = 4;
 	widget(container_x, {
 	  widget(icon, {
 	    .color = [1.0, 0.8, 0.2];
@@ -43,13 +41,9 @@ widget(container_x, {
 
 	widget(label, {
 	  .caption = "Username:";
-	  .sizeScale = 0.66;
 	});
       
-	widget(backdrop, {
-	  PLATE_GFX();
-	  .color = PLATE_COLOR_AUTH() * 0.2;
-
+	popupInputField(
  	  widget(text, {
 	    .id = "username";
 	    .focusable = true;
@@ -58,17 +52,13 @@ widget(container_x, {
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
-	});
+	);
 
 	widget(label, {
 	  .caption = "Password:";
-	  .sizeScale = 0.66;
 	});
       
-	widget(backdrop, {
-	  PLATE_GFX();
-	  .color = PLATE_COLOR_AUTH() * 0.2;
-
+	popupInputField(
 	  widget(text, {
 	    .id = "password";
 	    .focusable = true;
@@ -77,29 +67,23 @@ widget(container_x, {
 	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
-	});
+	);
 
-	HORIZONTAL_SEPARATOR();
+	popupCheckbox($self.rememberMe, "Remember me", true,
+		      !$self.canRemember);
 
 	widget(container_x, {
 	  .align = center;
 	  .spacing = 20;
 	  .homogenous = true;
 
-	  BAR_BUTTON("OK", 
-		     deliverEvent($self.eventSink, "Ok"),
-		     false, "skin://icons/Check.png");
-
-	  BAR_BUTTON("OK and save", 
-		     deliverEvent($self.eventSink, "OkSave"),
-		     $self.nosave, "skin://icons/Check.png");
-
-	  BAR_BUTTON("Cancel", 
-		     deliverEvent($self.eventSink, "Cancel"),
-		     false, "skin://icons/Delete.png");
+	  popupButtonOK(deliverEvent($self.eventSink, "Ok"),
+			true, false);
+	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
+			    true, false);
 	});
       });
-    });
+    );
   });
   space(0.2);
 });

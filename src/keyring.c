@@ -72,6 +72,16 @@ setstr(char **p, htsmsg_t *m, const char *fname)
     *p = NULL;
 }
 
+/**
+ *
+ */
+static void
+set_remember(void *opaque, int v)
+{
+  int *rp = (int *)opaque;
+  *rp = v;
+}
+
 
 /**
  *
@@ -95,7 +105,17 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_set_string(prop_create(p, "id"), id);
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
-    prop_set_int(prop_create(p, "nosave"), !!force_temporary);
+
+    int remember = !force_temporary;
+    prop_set_int(prop_create(p, "canRemember"), remember);
+    prop_t *rememberMe = prop_create(p, "rememberMe");
+    prop_set_int(rememberMe, remember);
+
+    prop_sub_t *remember_sub = 
+	prop_subscribe(0,
+		   PROP_TAG_CALLBACK_INT, set_remember, &remember,
+		   PROP_TAG_ROOT, rememberMe,
+		   NULL);
 
     prop_t *user = prop_create(p, "username");
     prop_t *pass = prop_create(p, "password");
@@ -103,16 +123,19 @@ keyring_lookup(const char *id, char **username, char **password,
     TRACE(TRACE_INFO, "keyring", "Requesting credentials for %s : %s : %s",
 	  id, source, reason);
 
+
     event_t *e = popup_display(p);
 
-    if(event_is_action(e, ACTION_OKSAVE))
+    prop_unsubscribe(remember_sub);
+
+    if(remember)
       parent = persistent_keyring;
     else
       parent = temporary_keyring;
 
     htsmsg_delete_field(parent, id);
 
-    if(event_is_action(e, ACTION_OK) || event_is_action(e, ACTION_OKSAVE)) {
+    if(event_is_action(e, ACTION_OK)) {
       /* OK */
 
       m = htsmsg_create_map();

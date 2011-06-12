@@ -90,7 +90,7 @@ auth_ok(GtkButton *unused__, gpointer user_data)
     prop_set_string(p, gtk_entry_get_text(GTK_ENTRY(pop->password)));
     prop_ref_dec(p);
   }
-  popup_send_result(pop, ACTION_OKSAVE);
+  popup_send_result(pop, ACTION_OK);
 }
 
 
