@@ -97,6 +97,7 @@
 	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	  });
 	  widget(label, {
+	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	    .caption = CAPTION;
 	    .source = ICON;
 	    .sizeScale = SCALE;
