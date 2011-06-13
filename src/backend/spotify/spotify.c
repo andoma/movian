@@ -2133,8 +2133,6 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
 
   before = ptrvec_get_entry(&pl->pl_tracks, position);
 
-  printf("%d tracks\n", num_tracks);
-
   for(i = 0; i < num_tracks; i++)
     pv = prop_vec_append(pv, pl_add_track(pl, tracks[i], position + i));
   
@@ -3103,24 +3101,19 @@ static void
 ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 {
   int ntracks = f_sp_search_num_tracks(result);
-  int i;
-  prop_t *p;
-  sp_track *track;
   int total = f_sp_search_total_tracks(result);
+  int i;
+  prop_vec_t *pv = prop_vec_create(ntracks);
 
-  prop_set_int(ssr->ssr_entries, total);
 
+  for(i = 0; i < ntracks; i++)
+    pv = prop_vec_append(pv, track_create(f_sp_search_track(result, i), NULL));
 
-  for(i = 0; i < ntracks; i++) {
-    track = f_sp_search_track(result, i);
-    p = track_create(track, NULL);
-    if(prop_set_parent(p, ssr->ssr_nodes)) {
-      prop_destroy(p);
-      break;
-    }
-  }
+  prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
+  prop_vec_release(pv);
 
   ssr->ssr_offset += ntracks;
+  prop_set_int(ssr->ssr_entries, total);
 
   if(ssr->ssr_offset != total)
     prop_have_more_childs(ssr->ssr_nodes);
@@ -3139,12 +3132,10 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
   sp_album *album, *album_prev = NULL;
   sp_artist *artist;
   char link[URL_MAX];
+  int inc = 0;
+  prop_vec_t *pv = prop_vec_create(nalbums);
 
   prop_have_more_childs(ssr->ssr_nodes);
-
-  /**
-   *
-   */
   for(i = 0; i < nalbums; i++) {
     album = f_sp_search_album(result, i);
     artist = f_sp_album_artist(album);
@@ -3173,12 +3164,14 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
     set_image_uri(prop_create(metadata, "album_art"),
 		  f_sp_link_create_from_album_cover(album));
 
-    if(prop_set_parent(p, ssr->ssr_nodes))
-      prop_destroy(p);
-
+    pv = prop_vec_append(pv, p);
     album_prev = album;
-    prop_add_int(ssr->ssr_entries, 1);
+    inc++;
   }
+
+  prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
+  prop_vec_release(pv);
+  prop_add_int(ssr->ssr_entries, inc);
 
   ssr->ssr_offset += nalbums;
 }
@@ -3192,16 +3185,14 @@ static void
 ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
 {
   int nartists = f_sp_search_num_artists(result);
-  int i;
+  int i, inc = 0;
   prop_t *p, *metadata;
   sp_artist *artist;
   char link[URL_MAX];
+  prop_vec_t *pv = prop_vec_create(nartists);
 
   prop_have_more_childs(ssr->ssr_nodes);
 
-  /**
-   *
-   */
   for(i = 0; i < nartists; i++) {
     artist = f_sp_search_artist(result, i);
     
@@ -3214,11 +3205,14 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
     metadata = prop_create(p, "metadata");
     prop_set_string(prop_create(metadata, "title"), f_sp_artist_name(artist));
 
-    if(prop_set_parent(p, ssr->ssr_nodes))
-      prop_destroy(p);
-
-    prop_add_int(ssr->ssr_entries, 1);
+    pv = prop_vec_append(pv, p);
+    inc++;
   }
+
+  prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
+  prop_vec_release(pv);
+
+  prop_add_int(ssr->ssr_entries, inc);
 
   ssr->ssr_offset += nartists;
 }
