@@ -546,6 +546,10 @@ typedef struct http_file {
 
   char hf_version;
 
+  char hf_streaming; /* Optimize for streaming from start to end
+		      * rather than random seeking 
+		      */
+
 } http_file_t;
 
 
@@ -1328,7 +1332,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
  again:
 
-  if(nohead) {
+  if(hf->hf_streaming) {
+    htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_auth_send(hf, &q, "GET", NULL);
+  } else if(nohead) {
     htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
     http_auth_send(hf, &q, "GET", NULL);
     htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
@@ -1360,6 +1367,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   switch(code) {
   case 200:
+    if(hf->hf_streaming)
+      return 0;
 
     if(nohead) {
       // Server did not honour our GET request with 1 byte range
@@ -1636,12 +1645,13 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int *non_interactive, int debug)
+             int *non_interactive, int flags)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
-  hf->hf_debug = !!debug;
+  hf->hf_debug = !!(flags & FA_DEBUG);
+  hf->hf_streaming = !!(flags & FA_STREAMING);
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
     hf->h.fh_proto = fap;
@@ -1656,7 +1666,7 @@ static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 	  int flags)
 {
-  return http_open_ex(fap, url, errbuf, errlen, NULL, flags & FA_DEBUG);
+  return http_open_ex(fap, url, errbuf, errlen, NULL, flags);
 }
 
 
@@ -1736,9 +1746,10 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       if(hf->hf_filesize == -1) {
 	range[0] = 0;
 
-      } else if(hf->hf_consecutive_read > STREAMING_LIMIT) {
-	TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
-	      hf->hf_url);
+      } else if(hf->hf_streaming || hf->hf_consecutive_read > STREAMING_LIMIT) {
+	if(!hf->hf_streaming)
+	  TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
+		hf->hf_url);
 	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
       } else {
 

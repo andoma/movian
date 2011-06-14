@@ -104,6 +104,7 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 
 #define FA_DEBUG 0x1
 // #define FA_DUMP  0x2
+#define FA_STREAMING 0x4
 
 /**
  *
