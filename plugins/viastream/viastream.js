@@ -7,13 +7,15 @@
 
   plugin.service =
     showtime.createService("Viasat Play", "viastream:start", "tv", false,
-			   plugin.config.path + "viasatimage.jpg");
+			   plugin.config.path + "viaplay_square.png");
 
 
-  plugin.settings = plugin.createSettings("Viasat Play", "video");
+  plugin.settings = plugin.createSettings("Viasat Play", "video",
+					  plugin.config.path + "viaplay_square.png",
+					  "Viaplay online video");
 
   plugin.settings.createInfo("info",
-			     plugin.config.path + "viasatimage.jpg",
+			     plugin.config.path + "viaplay_square.png",
 			     "Viasat Play");
 
   plugin.settings.createBool("enabled", "Enable Viasat Play", false, function(v) {

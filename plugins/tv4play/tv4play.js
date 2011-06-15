@@ -10,7 +10,9 @@
     showtime.createService("TV4 Play",
 			   "tv4play:categorylist:0:" + startURL + ":Tv4play", "tv", false, plugin.config.path + "tv4play.jpg");
 
-  plugin.settings = plugin.createSettings("TV4 Play", "video");
+    plugin.settings = plugin.createSettings("TV4 Play", "video",
+					    plugin.config.path + "tv4play.jpg",
+					    "TV4 online video");
 
   plugin.settings.createInfo("info",
 			     plugin.config.path + "tv4play.jpg",
