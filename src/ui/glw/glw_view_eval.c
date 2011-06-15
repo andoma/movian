@@ -35,6 +35,7 @@
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 #include "glw_text_bitmap.h"
+#include "prop/prop_window.h"
 
 LIST_HEAD(clone_list, glw_clone);
 TAILQ_HEAD(vectorizer_element_queue, vectorizer_element);
@@ -6361,6 +6362,48 @@ glwf_canSelectPrev(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ *
+ */
+static void
+glwf_propWindow_dtor(glw_root_t *gr, struct token *self)
+{
+  if(self->t_extra != NULL)
+    prop_window_destroy(self->t_extra);
+}
+
+
+/**
+ *
+ */
+static int
+glwf_propWindow(glw_view_eval_context_t *ec, struct token *self,
+		token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *c, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+  if((c = token_resolve(ec, argv[2])) == NULL)
+    return -1;
+
+  if(self->t_extra != NULL)
+    prop_window_destroy(self->t_extra);
+
+  r = eval_alloc(self, ec, TOKEN_PROPERTY_REF);
+  r->t_prop = prop_ref_inc(prop_create_root(NULL));
+  ec->dynamic_eval |= GLW_VIEW_EVAL_KEEP;
+  eval_push(ec, r);
+
+  self->t_extra = prop_window_create(r->t_prop, a->t_prop,
+				     token2int(ec, b), token2int(ec, c),
+				     PROP_NF_TAKE_DST_OWNERSHIP);
+  return 0;
+}
+
+
+/**
  * Set default font
  */
 static int
@@ -6597,6 +6640,7 @@ static const token_func_t funcvec[] = {
   {"deliverRef", 2, glwf_deliverRef},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
+  {"propWindow", 3, glwf_propWindow, glwf_null_ctor, glwf_propWindow_dtor},
   {"getLayer", 0, glwf_getLayer},
   {"getWidth", 0, glwf_getWidth},
   {"getHeight", 0, glwf_getHeight},
