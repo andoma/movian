@@ -1195,7 +1195,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   glw_signal_handler_register(c->c_w, clone_sig_handler, c, 1000);
 
-  if(flags & PROP_ADD_SELECTED)
+  if(flags & PROP_ADD_SELECTED && parent->glw_class->gc_select_child != NULL)
     parent->glw_class->gc_select_child(parent, c->c_w, NULL);
 
   clone_update(c);
@@ -1346,7 +1346,8 @@ cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
   }
 
   if((c = prop_tag_get(p, sc)) != NULL) {
-    parent->glw_class->gc_select_child(parent, c->c_w, extra);
+    if(parent->glw_class->gc_select_child != NULL)
+      parent->glw_class->gc_select_child(parent, c->c_w, extra);
     sc->sc_pending_select = NULL;
     return;
   }
