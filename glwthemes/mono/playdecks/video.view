@@ -3,8 +3,10 @@
 $ui.showplaydeck =  $ui.menu ||
   $global.media.current.error ||
   $global.media.current.video.too_slow ||
-  changed($self.media.metadata.title, 2, true) ||
-  changed($self.media.seektime, 2, true);
+  changed($global.media.current.audio.current, 2) ||
+  changed($global.media.current.subtitle.current, 2) ||
+  changed($global.media.current.metadata.title, 5) ||
+  changed($global.media.current.seektime, 2, true);
 
 // -------------------------------------------------------------------
 
@@ -41,6 +43,37 @@ widget(container_x, {
 	});
       });
 
+
+      widget(container_x, {
+	.spacing = 10;
+	.hidden = !changed($global.media.current.audio.current, 5);
+	widget(icon, {
+	  .source = "skin://icons/Sound.png";
+	});
+	widget(deck, {
+	  .effect = flipHorizontal;
+	  .time = 0.1;
+	  cloner($global.media.current.metadata.audiostreams, label, {
+	    .caption = "Audio: " + $self.title + select($self.source, " ("+$self.source+")", "");
+	  });
+	});
+      });
+
+
+      widget(container_x, {
+	.spacing = 10;
+	.hidden = !changed($global.media.current.subtitle.current, 5);
+	widget(icon, {
+	  .source = "skin://icons/Script.png";
+	});
+	widget(deck, {
+	  .effect = flipHorizontal;
+	  .time = 0.1;
+	  cloner($global.media.current.metadata.subtitlestreams, label, {
+	    .caption = "Subtitle: " + $self.title + select($self.source, " ("+$self.source+")", "");
+	  });
+	});
+      });
     });
 
     widget(container_y, {

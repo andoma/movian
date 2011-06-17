@@ -159,6 +159,9 @@ static struct strtab actionnames[] = {
 
   { "EnableScreenSaver",     ACTION_ENABLE_SCREENSAVER },
 
+  { "AudioTrack",            ACTION_CYCLE_AUDIO },
+  { "SubtitleTrack",         ACTION_CYCLE_SUBTITLE },
+
 };
 
 
@@ -456,6 +459,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_REPEAT) ||
 	    event_is_action(e, ACTION_NEXT_CHANNEL) ||
 	    event_is_action(e, ACTION_PREV_CHANNEL) ||
+	    event_is_action(e, ACTION_CYCLE_AUDIO) ||
+	    event_is_action(e, ACTION_CYCLE_SUBTITLE) ||
 	    event_is_type(e, EVENT_SELECT_AUDIO_TRACK) || 
 	    event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 	    ) {

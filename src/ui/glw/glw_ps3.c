@@ -421,6 +421,8 @@ const static action_type_t *btn_to_action[BTN_max] = {
   [BTN_STOP]       = AVEC(ACTION_STOP),
   [BTN_PAUSE]      = AVEC(ACTION_PAUSE),
   [BTN_POPUP_MENU] = AVEC(ACTION_MENU),
+  [BTN_SUBTITLE]   = AVEC(ACTION_CYCLE_SUBTITLE),
+  [BTN_AUDIO]      = AVEC(ACTION_CYCLE_AUDIO),
 
   //  [BTN_L2] = ACTION_L2,
   //  [BTN_R2] = ACTION_R2,
@@ -428,8 +430,6 @@ const static action_type_t *btn_to_action[BTN_max] = {
   //  [BTN_TIME] = ACTION_TIME,
   //  [BTN_SLOW_REV] = ACTION_SLOW_REV,
   //  [BTN_SLOW_FWD] = ACTION_SLOW_FWD,
-  //  [BTN_SUBTITLE] = ACTION_SUBTITLE,
-  //  [BTN_AUDIO] = ACTION_AUDIO,
   //  [BTN_ANGLE] = ACTION_ANGLE,
   //  [BTN_DISPLAY] = ACTION_DISPLAY,
   //  [BTN_BLUE] = ACTION_BLUE,

@@ -480,7 +480,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 		 fmt,
 		 fmt,
 		 NULL, 
-		 "Embedded",
+		 NULL,
 		 0);
 
     prop_set_string(mp->mp_prop_audio_track_current, "rtmp:1");

@@ -104,6 +104,9 @@ typedef enum {
 
   ACTION_ENABLE_SCREENSAVER,
 
+  ACTION_CYCLE_AUDIO,
+  ACTION_CYCLE_SUBTITLE,
+
   ACTION_mappable_end,
 } action_type_t;
 

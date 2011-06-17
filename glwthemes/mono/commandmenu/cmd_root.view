@@ -205,7 +205,7 @@ widget(container_y, {
       });
       HORIZONTAL_SEPARATOR();
       cloner($global.media.current.metadata.subtitlestreams, container_z, {
-	commandSubtitleTrack($self.title ?? $self.language,
+	commandSubtitleTrack($self.title,
 			     $self.format,
 			     $self.source,
 			     $self.url == $global.media.current.subtitle.current,

@@ -177,9 +177,11 @@ typedef struct media_queue {
  */
 typedef struct media_track_mgr {
 
-  prop_sub_t *mtm_sub;
+  prop_sub_t *mtm_node_sub;
+  prop_sub_t *mtm_current_sub;
   struct media_track_queue mtm_tracks;
   struct media_track *mtm_suggested_track;
+  struct media_track *mtm_current;
   struct media_pipe *mtm_mp;
 
   enum {

@@ -66,9 +66,11 @@ static void update_stats(void *opaque, int value);
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
 static void track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm,
-			   prop_t *root, int type);
+			   prop_t *root, int type, prop_t *current);
 
 static void track_mgr_destroy(media_track_mgr_t *mtm);
+
+static void track_mgr_next_track(media_track_mgr_t *mtm);
 
 /**
  *
@@ -219,7 +221,7 @@ mp_create(const char *name, int flags, const char *type)
   prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
 
   track_mgr_init(mp, &mp->mp_audio_track_mgr, mp->mp_prop_audio_tracks,
-		 MEDIA_TRACK_MANAGER_AUDIO);
+		 MEDIA_TRACK_MANAGER_AUDIO, mp->mp_prop_audio_track_current);
   mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
 
@@ -233,7 +235,9 @@ mp_create(const char *name, int flags, const char *type)
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
 
   track_mgr_init(mp, &mp->mp_subtitle_track_mgr, mp->mp_prop_subtitle_tracks,
-		 MEDIA_TRACK_MANAGER_SUBTITLES);
+		 MEDIA_TRACK_MANAGER_SUBTITLES,
+		 mp->mp_prop_subtitle_track_current);
+
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
 
   // Buffer
@@ -1294,6 +1298,10 @@ media_eventsink(void *opaque, prop_event_t event, ...)
       prop_toggle_int(media_primary->mp_prop_shuffle);
     } else if(event_is_action(e, ACTION_REPEAT)) {
       prop_toggle_int(media_primary->mp_prop_repeat);
+    } else if(event_is_action(e, ACTION_CYCLE_AUDIO)) {
+      track_mgr_next_track(&media_primary->mp_audio_track_mgr);
+    } else if(event_is_action(e, ACTION_CYCLE_SUBTITLE)) {
+      track_mgr_next_track(&media_primary->mp_subtitle_track_mgr);
     } else {
       mp_enqueue_event(media_primary, e);
     }
@@ -1461,6 +1469,8 @@ mp_add_track(prop_t *parent,
     
     language = isolang_iso2lang(isolang) ?: isolang;
     prop_set_string(prop_create(p, "language"), language);
+    if(title == NULL)
+      title = language;
   }
 
   prop_set_string(prop_create(p, "title"), title);
@@ -1494,11 +1504,32 @@ typedef struct media_track {
   prop_sub_t *mt_sub_basescore;
   int mt_base_score;
 
+  prop_sub_t *mt_sub_title;
+  char *mt_title;
+
+  prop_sub_t *mt_sub_source;
+  char *mt_source;
+
   media_track_mgr_t *mt_mtm;
   prop_t *mt_root;
 
 } media_track_t;
 
+
+static event_type_t
+mtm_event_type(media_track_mgr_t *mtm)
+{
+  switch(mtm->mtm_type) {
+  case MEDIA_TRACK_MANAGER_AUDIO:
+    return EVENT_SELECT_AUDIO_TRACK;
+
+  case MEDIA_TRACK_MANAGER_SUBTITLES:
+    return EVENT_SELECT_SUBTITLE_TRACK;
+
+  default:
+    return 0;
+  }
+}
 
 
 /**
@@ -1548,22 +1579,9 @@ mtm_rethink(media_track_mgr_t *mtm)
 
 
   if(best != NULL) {
-    event_type_t t;
 
-    switch(mtm->mtm_type) {
-    case MEDIA_TRACK_MANAGER_AUDIO:
-      t = EVENT_SELECT_AUDIO_TRACK;
-      break;
-
-    case MEDIA_TRACK_MANAGER_SUBTITLES:
-      t = EVENT_SELECT_SUBTITLE_TRACK;
-      break;
-
-    default:
-      return;
-    }
-
-    event_t *e = event_create_select_track(best->mt_url, t, 0);
+    event_t *e = event_create_select_track(best->mt_url,
+					   mtm_event_type(mtm), 0);
     mp_enqueue_event_locked(mtm->mtm_mp, e);
     event_release(e);
   }
@@ -1621,6 +1639,28 @@ mt_set_basescore(void *opaque, int v)
  *
  */
 static void
+mt_set_title(void *opaque, const char *str)
+{
+  media_track_t *mt = opaque;
+  mystrset(&mt->mt_title, str);
+}
+
+
+/**
+ *
+ */
+static void
+mt_set_source(void *opaque, const char *str)
+{
+  media_track_t *mt = opaque;
+  mystrset(&mt->mt_source, str);
+}
+
+
+/**
+ *
+ */
+static void
 mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 {
   media_track_t *mt = calloc(1, sizeof(media_track_t));
@@ -1660,6 +1700,22 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
+
+  mt->mt_sub_title =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "title"),
+		   PROP_TAG_CALLBACK_STRING, mt_set_title, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
+
+  mt->mt_sub_source =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "source"),
+		   PROP_TAG_CALLBACK_STRING, mt_set_source, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
 }
 
 
@@ -1672,11 +1728,19 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   if(mtm->mtm_suggested_track == mt)
     mtm->mtm_suggested_track = NULL;
 
+  if(mtm->mtm_current == mt)
+    mtm->mtm_current = NULL;
+
   TAILQ_REMOVE(&mtm->mtm_tracks, mt, mt_link);
+
   prop_unsubscribe(mt->mt_sub_url);
   prop_unsubscribe(mt->mt_sub_isolang);
   prop_unsubscribe(mt->mt_sub_basescore);
+  prop_unsubscribe(mt->mt_sub_title);
+  prop_unsubscribe(mt->mt_sub_source);
   free(mt->mt_url);
+  free(mt->mt_title);
+  free(mt->mt_source);
   free(mt);
 }
 
@@ -1746,18 +1810,44 @@ mtm_update_tracks(void *opaque, prop_event_t event, ...)
  *
  */
 static void
+mtm_set_current(void *opaque, const char *str)
+{
+  media_track_mgr_t *mtm = opaque;
+  media_track_t *mt;
+
+  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
+    if(!strcmp(mt->mt_url, str))
+      break;
+  if(mt == NULL)
+    return;
+  
+  mtm->mtm_current = mt;
+  prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
+}
+
+/**
+ *
+ */
+static void
 track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
-	       int type)
+	       int type, prop_t *current)
 {
   TAILQ_INIT(&mtm->mtm_tracks);
   mtm->mtm_mp = mp;
   mtm->mtm_type = type;
 
-  mtm->mtm_sub =
+  mtm->mtm_node_sub =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_CALLBACK, mtm_update_tracks, mtm,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, root,
+		   NULL);
+
+  mtm->mtm_current_sub =
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_CALLBACK_STRING, mtm_set_current, mtm,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, current,
 		   NULL);
 }
 
@@ -1768,8 +1858,36 @@ track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
 static void
 track_mgr_destroy(media_track_mgr_t *mtm)
 {
-  prop_unsubscribe(mtm->mtm_sub);
+  prop_unsubscribe(mtm->mtm_node_sub);
+  prop_unsubscribe(mtm->mtm_current_sub);
   mtm_clear(mtm);
+}
+
+
+/**
+ *
+ */
+static void
+track_mgr_next_track(media_track_mgr_t *mtm)
+{
+  media_pipe_t *mp = mtm->mtm_mp;
+  media_track_t *mt;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  
+  mt = mtm->mtm_current ? TAILQ_NEXT(mtm->mtm_current, mt_link) : NULL;
+  
+  if(mt == NULL)
+    mt = TAILQ_FIRST(&mtm->mtm_tracks);
+
+  if(mt != mtm->mtm_current) {
+    event_t *e = event_create_select_track(mt->mt_url, mtm_event_type(mtm), 1);
+    mp_enqueue_event_locked(mtm->mtm_mp, e);
+    event_release(e);
+    mtm->mtm_current = mt;
+  }
+
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
