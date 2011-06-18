@@ -475,7 +475,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
     }
 
     mp_add_track(mp->mp_prop_audio_tracks,
-		 "Audio",
+		 NULL,
 		 "rtmp:1",
 		 fmt,
 		 fmt,

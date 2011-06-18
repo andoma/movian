@@ -65,7 +65,7 @@ typedef struct metadata_stream {
   rstr_t *ms_info;
   rstr_t *ms_isolang;
 
-  AVCodec *ms_codec;
+  enum CodecID ms_codecid;
   enum AVMediaType ms_type;
 
 } metadata_stream_t;
@@ -125,14 +125,14 @@ metadata_clean(metadata_t *md)
  *
  */
 static void
-metadata_add_stream(metadata_t *md, AVCodec *codec, enum AVMediaType type,
+metadata_add_stream(metadata_t *md, enum CodecID codecid, enum AVMediaType type,
 		    int streamindex, const char *info, const char *isolang)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
   ms->ms_info = rstr_alloc(info);
   ms->ms_isolang = rstr_alloc(isolang);
 
-  ms->ms_codec = codec;
+  ms->ms_codecid = codecid;
   ms->ms_type = type;
   ms->ms_streamindex = streamindex;
   TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
@@ -152,17 +152,28 @@ metadata_destroy(metadata_t *md)
 }
 
 static const char *
-codecname(AVCodec *codec)
+codecname(enum CodecID id)
 {
-  switch(codec->id) {
+  AVCodec *c;
+
+  switch(id) {
   case CODEC_ID_AC3:
     return "AC3";
   case CODEC_ID_EAC3:
     return "EAC3";
   case CODEC_ID_DTS:
     return "DTS";
+  case CODEC_ID_TEXT:
+  case CODEC_ID_MOV_TEXT:
+    return "Text";
+  case CODEC_ID_SSA:
+    return "SSA";
+
   default:
-    return codec->name;
+    c = avcodec_find_decoder(id);
+    if(c)
+      return c->name;
+    return "Unsupported Codec";
   }
 }
 
@@ -182,7 +193,7 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
   mp_add_track(parent,
 	       NULL,
 	       url,
-	       ms->ms_codec ? codecname(ms->ms_codec) : NULL,
+	       codecname(ms->ms_codecid),
 	       rstr_get(ms->ms_info),
 	       rstr_get(ms->ms_isolang),
 	       NULL, 0);
@@ -622,30 +633,15 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     }
 
     if(codec == NULL) {
-
-      switch(avctx->codec_id) {
-      case CODEC_ID_TEXT:
-      case CODEC_ID_MOV_TEXT:
-	snprintf(tmp1, sizeof(tmp1), "Text");
-	break;
-      case CODEC_ID_SSA:
-	snprintf(tmp1, sizeof(tmp1), "SSA");
-	break;
-      default:
-	snprintf(tmp1, sizeof(tmp1),
-		 "Unsupported codec (0x%x)", avctx->codec_id);
-	break;
-      }
+      snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
     } else {
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
-    
-
     tag = av_metadata_get(stream->metadata, "language", NULL,
 			  AV_METADATA_IGNORE_SUFFIX);
 
-    metadata_add_stream(md, codec, avctx->codec_type, i, tmp1,
+    metadata_add_stream(md, avctx->codec_id, avctx->codec_type, i, tmp1,
 			tag ? tag->value : NULL);
   }
   

@@ -219,10 +219,10 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
   mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
   prop_set_string(mp->mp_prop_audio_track_current, "audio:off");
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
   track_mgr_init(mp, &mp->mp_audio_track_mgr, mp->mp_prop_audio_tracks,
 		 MEDIA_TRACK_MANAGER_AUDIO, mp->mp_prop_audio_track_current);
-  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
 
 
   // Subtitles
@@ -233,12 +233,12 @@ mp_create(const char *name, int flags, const char *type)
 					    "subtitlestreams");
 
   prop_set_string(mp->mp_prop_subtitle_track_current, "sub:off");
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
 
   track_mgr_init(mp, &mp->mp_subtitle_track_mgr, mp->mp_prop_subtitle_tracks,
 		 MEDIA_TRACK_MANAGER_SUBTITLES,
 		 mp->mp_prop_subtitle_track_current);
 
-  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
 
   // Buffer
 
@@ -1071,29 +1071,6 @@ mp_shutdown(struct media_pipe *mp)
 
 
 
-
-
-void
-nice_codec_name(char *buf, int len, AVCodecContext *ctx)
-{
-  const char *fill = NULL;
-
-  switch(ctx->codec_id) {
-  case CODEC_ID_AC3:
-    fill = "ac3";
-    break;
-
-  case CODEC_ID_MPEG2VIDEO:
-    fill = "mpeg2";
-    break;
-  default:
-    fill = ctx->codec->name;
-    break;
-  }
-  snprintf(buf, len, "%s", fill);
-}
-
-
 /**
  *
  */
@@ -1469,8 +1446,6 @@ mp_add_track(prop_t *parent,
     
     language = isolang_iso2lang(isolang) ?: isolang;
     prop_set_string(prop_create(p, "language"), language);
-    if(title == NULL)
-      title = language;
   }
 
   prop_set_string(prop_create(p, "title"), title);
@@ -1504,12 +1479,6 @@ typedef struct media_track {
   prop_sub_t *mt_sub_basescore;
   int mt_base_score;
 
-  prop_sub_t *mt_sub_title;
-  char *mt_title;
-
-  prop_sub_t *mt_sub_source;
-  char *mt_source;
-
   media_track_mgr_t *mt_mtm;
   prop_t *mt_root;
 
@@ -1541,6 +1510,13 @@ mtm_rethink(media_track_mgr_t *mtm)
   media_track_t *mt, *best = NULL;
   int thres = 1;
   int best_score = 0;
+
+  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
+    if(mt->mt_url != NULL && !strcmp(mt->mt_url, mtm->mtm_current_url))
+      break;
+
+  if(mt != NULL)
+    prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
 
   if(TAILQ_FIRST(&mtm->mtm_tracks) == NULL) {
     // All tracks deleted, clear the user-has-configured flag
@@ -1639,28 +1615,6 @@ mt_set_basescore(void *opaque, int v)
  *
  */
 static void
-mt_set_title(void *opaque, const char *str)
-{
-  media_track_t *mt = opaque;
-  mystrset(&mt->mt_title, str);
-}
-
-
-/**
- *
- */
-static void
-mt_set_source(void *opaque, const char *str)
-{
-  media_track_t *mt = opaque;
-  mystrset(&mt->mt_source, str);
-}
-
-
-/**
- *
- */
-static void
 mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 {
   media_track_t *mt = calloc(1, sizeof(media_track_t));
@@ -1668,6 +1622,7 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
   prop_tag_set(root, mtm, mt);
   mt->mt_mtm = mtm;
   mt->mt_root = root;
+
   mt->mt_isolang_score = -1;
   mt->mt_base_score = -1;
 
@@ -1700,22 +1655,6 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
-
-  mt->mt_sub_title =
-    prop_subscribe(0,
-		   PROP_TAG_NAME("node", "title"),
-		   PROP_TAG_CALLBACK_STRING, mt_set_title, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
-		   PROP_TAG_NAMED_ROOT, root, "node",
-		   NULL);
-
-  mt->mt_sub_source =
-    prop_subscribe(0,
-		   PROP_TAG_NAME("node", "source"),
-		   PROP_TAG_CALLBACK_STRING, mt_set_source, mt,
-		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
-		   PROP_TAG_NAMED_ROOT, root, "node",
-		   NULL);
 }
 
 
@@ -1736,11 +1675,7 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   prop_unsubscribe(mt->mt_sub_url);
   prop_unsubscribe(mt->mt_sub_isolang);
   prop_unsubscribe(mt->mt_sub_basescore);
-  prop_unsubscribe(mt->mt_sub_title);
-  prop_unsubscribe(mt->mt_sub_source);
   free(mt->mt_url);
-  free(mt->mt_title);
-  free(mt->mt_source);
   free(mt);
 }
 
@@ -1813,16 +1748,8 @@ static void
 mtm_set_current(void *opaque, const char *str)
 {
   media_track_mgr_t *mtm = opaque;
-  media_track_t *mt;
-
-  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
-    if(!strcmp(mt->mt_url, str))
-      break;
-  if(mt == NULL)
-    return;
-  
-  mtm->mtm_current = mt;
-  prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
+  mystrset(&mtm->mtm_current_url, str);
+  mtm_rethink(mtm);
 }
 
 /**
@@ -1837,14 +1764,14 @@ track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
   mtm->mtm_type = type;
 
   mtm->mtm_node_sub =
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK, mtm_update_tracks, mtm,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, root,
 		   NULL);
 
   mtm->mtm_current_sub =
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(0,
 		   PROP_TAG_CALLBACK_STRING, mtm_set_current, mtm,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, current,
@@ -1861,6 +1788,7 @@ track_mgr_destroy(media_track_mgr_t *mtm)
   prop_unsubscribe(mtm->mtm_node_sub);
   prop_unsubscribe(mtm->mtm_current_sub);
   mtm_clear(mtm);
+  free(mtm->mtm_current_url);
 }
 
 

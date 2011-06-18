@@ -173,8 +173,8 @@ widget(container_y, {
       HORIZONTAL_SEPARATOR();
       
       cloner($global.media.current.metadata.audiostreams, container_z, {
-	commandAudioTrack($self.title ?? $self.language ?? $self.source,
-			  $self.format,
+	commandAudioTrack(join(" - ", $self.title, $self.language),
+			  $self.longformat ?? $self.format,
 			  $self.url == $global.media.current.audio.current,
 			  selectAudioTrack($self.url));
       });
@@ -205,7 +205,7 @@ widget(container_y, {
       });
       HORIZONTAL_SEPARATOR();
       cloner($global.media.current.metadata.subtitlestreams, container_z, {
-	commandSubtitleTrack($self.title,
+	commandSubtitleTrack(join(" - ", $self.title, $self.language),
 			     $self.format,
 			     $self.source,
 			     $self.url == $global.media.current.subtitle.current,

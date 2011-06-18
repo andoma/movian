@@ -192,6 +192,8 @@ typedef struct media_track_mgr {
   int mtm_user_set; /* If set by user, and if so, we should not suggest
 		       anything */
 
+  char *mtm_current_url;
+
 } media_track_mgr_t;
 
 
@@ -367,8 +369,6 @@ void mp_become_primary(struct media_pipe *mp);
 void mp_init_audio(struct media_pipe *mp);
 
 void mp_shutdown(struct media_pipe *mp);
-
-void nice_codec_name(char *buf, int len, AVCodecContext *ctx);
 
 void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
 

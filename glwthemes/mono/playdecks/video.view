@@ -54,11 +54,10 @@ widget(container_x, {
 	  .effect = flipHorizontal;
 	  .time = 0.1;
 	  cloner($global.media.current.metadata.audiostreams, label, {
-	    .caption = "Audio: " + $self.title + select($self.source, " ("+$self.source+")", "");
+	    .caption = join(" - ", $self.title, $self.language, $self.source, $self.longformat ?? $self.format);
 	  });
 	});
       });
-
 
       widget(container_x, {
 	.spacing = 10;
@@ -70,7 +69,7 @@ widget(container_x, {
 	  .effect = flipHorizontal;
 	  .time = 0.1;
 	  cloner($global.media.current.metadata.subtitlestreams, label, {
-	    .caption = "Subtitle: " + $self.title + select($self.source, " ("+$self.source+")", "");
+	    .caption = join(" - ", $self.title, $self.language, $self.source, $self.format);
 	  });
 	});
       });
