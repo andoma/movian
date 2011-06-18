@@ -124,6 +124,45 @@ static JSClass http_response_class = {
 /**
  *
  */
+static void
+js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
+{
+  JSIdArray *ida;
+  int i;
+
+  if((ida = JS_Enumerate(cx, argobj)) == NULL)
+    return;
+  
+  for(i = 0; i < ida->length; i++) {
+    jsval name, value;
+    if(!JS_IdToValue(cx, ida->vector[i], &name))
+      continue;
+
+    if(JSVAL_IS_STRING(name)) {
+      
+      if(!JS_GetProperty(cx, argobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value) || 
+	 JSVAL_IS_VOID(value))
+	continue;
+      strvec_addp(httpargs, JS_GetStringBytes(JSVAL_TO_STRING(name)));
+      strvec_addp(httpargs, JS_GetStringBytes(JS_ValueToString(cx, value)));
+    } else if(JSVAL_IS_INT(name)) {
+      if(!JS_GetElement(cx, argobj, JSVAL_TO_INT(name), &value) ||
+	 !JSVAL_IS_OBJECT(value))
+	continue;
+      
+      js_http_add_args(httpargs, cx, JSVAL_TO_OBJECT(value));
+    }
+
+  }
+  JS_DestroyIdArray(cx, ida);
+}
+
+
+
+/**
+ *
+ */
 static JSBool 
 js_http_request(JSContext *cx, JSObject *obj, uintN argc,
 	     jsval *argv, jsval *rval, int post)
@@ -144,32 +183,8 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
 			  &disable_auto_auth))
     return JS_FALSE;
 
-  if(argobj != NULL) {
-    JSIdArray *ida;
-    int j = 0;
-    if((ida = JS_Enumerate(cx, argobj)) == NULL)
-      return JS_FALSE;
-
-    httpargs = malloc(((ida->length * 2) + 1) * sizeof(char *));
-
-    for(i = 0; i < ida->length; i++) {
-      jsval name, value;
-      if(!JS_IdToValue(cx, ida->vector[i], &name) || 
-	 !JSVAL_IS_STRING(name) ||
-	 !JS_GetProperty(cx, argobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
-			 &value) || 
-	 JSVAL_IS_VOID(value))
-	continue;
-
-      httpargs[j++] = strdup(JS_GetStringBytes(JSVAL_TO_STRING(name)));
-      httpargs[j++] = strdup(JS_GetStringBytes(JS_ValueToString(cx, value)));
-    }
-    httpargs[j++] = NULL;
-    
-    JS_DestroyIdArray(cx, ida);
-  }
-
-
+  if(argobj != NULL)
+    js_http_add_args(&httpargs, cx, argobj);
 
   if(postobj != NULL) {
     htsbuf_queue_t hq;
