@@ -1151,7 +1151,7 @@ http_detach(http_file_t *hf, int reusable)
  */
 static int
 redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
-	 int code)
+	 int code, int expect_content)
 {
   (*redircount)++;
   if(*redircount == 10) {
@@ -1164,9 +1164,11 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
     return -1;
   }
 
-  if(http_drain_content(hf)) {
-    snprintf(errbuf, errlen, "Connection lost");
-    return -1;
+  if(expect_content) {
+    if(http_drain_content(hf)) {
+      snprintf(errbuf, errlen, "Connection lost");
+      return -1;
+    }
   }
 
   if(code == 301)
@@ -1191,7 +1193,8 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
  *
  */
 static int 
-authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
+authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
+	     int expect_content)
 {
   char *username;
   char *password;
@@ -1207,10 +1210,13 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive)
   snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
 	   hf->hf_connection->hc_hostname);
 
-  if(http_drain_content(hf)) {
-    snprintf(errbuf, errlen, "Connection lost");
-    return -1;
+  if(expect_content) {
+    if(http_drain_content(hf)) {
+      snprintf(errbuf, errlen, "Connection lost");
+      return -1;
+    }
   }
+
   if(hf->hf_auth_realm == NULL) {
     snprintf(errbuf, errlen, "Authentication without realm");
     return -1;
@@ -1417,7 +1423,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   case 302:
   case 303:
   case 307:
-    if(redirect(hf, &redircount, errbuf, errlen, code))
+    if(redirect(hf, &redircount, errbuf, errlen, code,
+		hf->hf_streaming || nohead))
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
@@ -1427,7 +1434,8 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   case 401:
-    if(authenticate(hf, errbuf, errlen, non_interactive))
+    if(authenticate(hf, errbuf, errlen, non_interactive,
+		    hf->hf_streaming || nohead))
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
@@ -1609,12 +1617,12 @@ again:
     case 302:
     case 303:
     case 307:
-      if(redirect(hf, &redircount, errbuf, errlen, code))
+      if(redirect(hf, &redircount, errbuf, errlen, code, 1))
         return -1;
       goto reconnect;
       
     case 401:
-      if(authenticate(hf, errbuf, errlen, NULL))
+      if(authenticate(hf, errbuf, errlen, NULL, 1))
         return -1;
       goto again;
       
@@ -2332,12 +2340,12 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     case 302:
     case 303:
     case 307:
-      if(redirect(hf, &redircount, errbuf, errlen, code))
+      if(redirect(hf, &redircount, errbuf, errlen, code, 1))
 	return -1;
       continue;
 
     case 401:
-      if(authenticate(hf, errbuf, errlen, non_interactive))
+      if(authenticate(hf, errbuf, errlen, non_interactive, 1))
 	return -1;
       continue;
 
@@ -2526,9 +2534,11 @@ http_request(const char *url, const char **arguments,
     goto retry;
   }
 
+  int no_content = method == NULL && postdata == NULL && result == NULL;
+
   switch(code) {
   case 200:
-    if(method == NULL && postdata == NULL && result == NULL) {
+    if(no_content) {
       hf->hf_rsize = 0;
       http_destroy(hf);
       return 0;
@@ -2543,7 +2553,7 @@ http_request(const char *url, const char **arguments,
     // FALLTHRU
   case 301:
   case 307:
-    if(redirect(hf, &redircount, errbuf, errlen, code)) {
+    if(redirect(hf, &redircount, errbuf, errlen, code, !no_content)) {
       http_destroy(hf);
       http_headers_free(headers_out);
       return -1;
@@ -2551,7 +2561,7 @@ http_request(const char *url, const char **arguments,
     goto retry;
 
   case 401:
-    if(authenticate(hf, errbuf, errlen, NULL)) {
+    if(authenticate(hf, errbuf, errlen, NULL, !no_content)) {
       http_destroy(hf);
       http_headers_free(headers_out);
       return -1;
