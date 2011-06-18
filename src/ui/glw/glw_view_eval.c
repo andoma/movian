@@ -4419,8 +4419,8 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
     if(t->type != TOKEN_STRING)
       continue;
     if(s != NULL)
-      strconcat(&ret, s);
-    strconcat(&ret, rstr_get(t->t_rstring));
+      strappend(&ret, s);
+    strappend(&ret, rstr_get(t->t_rstring));
     if(s == NULL)
       s = rstr_get(sep->t_rstring);
   }

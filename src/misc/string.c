@@ -908,6 +908,23 @@ strvec_addp(char ***strvp, const char *v)
 /**
  *
  */
+void
+strappend(char **strp, const char *src)
+{
+  if(*strp == NULL)
+    *strp = strdup(src);
+  else {
+    size_t a = strlen(*strp);
+    size_t b = strlen(src);
+    *strp = realloc(*strp, a + b + 1);
+    memcpy(*strp + a, src, b + 1);
+  }
+}
+
+
+/**
+ *
+ */
 static int
 char2nibble(char c)
 {
