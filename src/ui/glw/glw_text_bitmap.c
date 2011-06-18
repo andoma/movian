@@ -87,11 +87,6 @@ typedef struct glw_text_bitmap {
   uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
 
-  int gtb_int;
-  int gtb_int_step;
-  int gtb_int_min;
-  int gtb_int_max;
-
   float gtb_size_scale;
 
   glw_rgb_t gtb_color;
@@ -647,9 +642,6 @@ glw_text_bitmap_ctor(glw_t *w)
 
   w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
   gtb->gtb_edit_ptr = -1;
-  gtb->gtb_int_step = 1;
-  gtb->gtb_int_min = INT_MIN;
-  gtb->gtb_int_max = INT_MAX;
   gtb->gtb_size_scale = 1.0;
   gtb->gtb_color.r = 1.0;
   gtb->gtb_color.g = 1.0;
@@ -814,25 +806,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_VALUE:
-      gtb->gtb_int = va_arg(ap, double);
-      if(w->glw_flags2 & GLW2_AUTOHIDE)
-	glw_unhide(w);
-      update = 1;
-      break;
-
-    case GLW_ATTRIB_INT_STEP:
-      gtb->gtb_int_step = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_INT_MIN:
-      gtb->gtb_int_min = va_arg(ap, double);
-      break;
-
-    case GLW_ATTRIB_INT_MAX:
-      gtb->gtb_int_max = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_SIZE_SCALE:
       gtb->gtb_size_scale = va_arg(ap, double);
       if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
