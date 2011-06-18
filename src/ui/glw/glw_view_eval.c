@@ -22,6 +22,7 @@
 #include <math.h>
 
 #include "misc/strtab.h"
+#include "misc/string.h"
 #include "glw_view.h"
 #include "glw.h"
 #include "glw_event.h"
@@ -4392,6 +4393,46 @@ glwf_clamp(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+static int 
+glwf_join(glw_view_eval_context_t *ec, struct token *self,
+	  token_t **argv, unsigned int argc)
+{
+  token_t *sep, *t;
+  int i;
+  char *ret = NULL;
+  const char *s = NULL;
+  
+  if(argc < 2)
+    return glw_view_seterr(ec->ei, self,
+			   "join() requires at least two arguments");
+  
+  if((sep = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  
+  if(sep->type != TOKEN_STRING)
+    return glw_view_seterr(ec->ei, sep,
+			   "first arg (separator) must be a string");
+
+  for(i = 1; i < argc; i++)  {
+    if((t = token_resolve(ec, argv[i])) == NULL)
+      continue;
+    if(t->type != TOKEN_STRING)
+      continue;
+    if(s != NULL)
+      strconcat(&ret, s);
+    strconcat(&ret, rstr_get(t->t_rstring));
+    if(s == NULL)
+      s = rstr_get(sep->t_rstring);
+  }
+  token_t *r = eval_alloc(self, ec, TOKEN_STRING);
+  r->t_rstring = rstr_alloc(ret);
+  free(ret);
+  eval_push(ec, r);
+  return 0;
+}
+
+    
+
 
 /**
  *
@@ -4453,6 +4494,7 @@ static const token_func_t funcvec[] = {
   {"ignoreTentative", 1, glwf_ignoreTentative, glwf_null_ctor, glwf_freetoken_dtor},
   {"int", 1,glwf_int},
   {"clamp", 3, glwf_clamp},
+  {"join", -1, glwf_join},
 };
 
 
