@@ -942,6 +942,20 @@ set_alpha_self(glw_t *w, float f)
   gi->gi_alpha_self = f;
 }
 
+
+/**
+ * Only for icon class
+ */
+static void
+set_size_scale(glw_t *w, float f)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  gi->gi_size_scale = f;
+
+  float siz = gi->gi_size_scale * w->glw_root->gr_fontsize;
+  glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+}
+
 /**
  *
  */
@@ -950,7 +964,6 @@ glw_image_set(glw_t *w, va_list ap)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_attribute_t attrib;
-  glw_root_t *gr = w->glw_root;
 
   do {
     attrib = va_arg(ap, int);
@@ -975,10 +988,6 @@ glw_image_set(glw_t *w, va_list ap)
 						  va_arg(ap, pixmap_t *));
       break;
 
-    case GLW_ATTRIB_SIZE_SCALE:
-      gi->gi_size_scale = va_arg(ap, double);
-      break;
-
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;
@@ -991,9 +1000,6 @@ glw_image_set(glw_t *w, va_list ap)
   } while(attrib);
 
   if(w->glw_class == &glw_icon) {
-    float siz = gi->gi_size_scale * gr->gr_fontsize;
-    glw_set_constraints(&gi->w, siz, siz, 0,
-			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
   }
 }
 
@@ -1052,6 +1058,7 @@ static glw_class_t glw_icon = {
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
+  .gc_set_size_scale = set_size_scale,
 };
 
 GLW_REGISTER_CLASS(glw_icon);

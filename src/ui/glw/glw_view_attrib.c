@@ -191,6 +191,17 @@ set_alpha_self(glw_t *w, float v)
 }
 
 
+/**
+ *
+ */
+static void
+set_size_scale(glw_t *w, float v)
+{
+  if(w->glw_class->gc_set_size_scale != NULL)
+    w->glw_class->gc_set_size_scale(w, v);
+}
+
+
 
 /**
  *
@@ -729,7 +740,7 @@ static const token_attrib_t attribtab[] = {
   {"max",             set_float,  GLW_ATTRIB_INT_MAX},
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
-  {"sizeScale",       set_float,  GLW_ATTRIB_SIZE_SCALE},
+  {"sizeScale",       set_float,  0, set_size_scale},
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 

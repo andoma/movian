@@ -796,6 +796,19 @@ thaw(glw_t *w)
 /**
  *
  */
+static void
+set_size_scale(glw_t *w, float v)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  gtb->gtb_size_scale = v;
+  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
+    gtb_set_constraints(gtb->w.glw_root, gtb);
+}
+
+/**
+ *
+ */
 static void 
 glw_text_bitmap_set(glw_t *w, va_list ap)
 {
@@ -806,11 +819,6 @@ glw_text_bitmap_set(glw_t *w, va_list ap)
   do {
     attrib = va_arg(ap, int);
     switch(attrib) {
-    case GLW_ATTRIB_SIZE_SCALE:
-      gtb->gtb_size_scale = va_arg(ap, double);
-      if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
-	gtb_set_constraints(gtb->w.glw_root, gtb);
-      break;
 
    case GLW_ATTRIB_MAXLINES:
      gtb->gtb_maxlines = va_arg(ap, int);
@@ -1065,6 +1073,7 @@ static glw_class_t glw_label = {
   .gc_mod_flags2 = mod_flags2,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
+  .gc_set_size_scale = set_size_scale,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1090,6 +1099,7 @@ static glw_class_t glw_text = {
   .gc_bind_to_property = bind_to_property,
   .gc_freeze = freeze,
   .gc_thaw = thaw,
+  .gc_set_size_scale = set_size_scale,
 };
 
 GLW_REGISTER_CLASS(glw_text);

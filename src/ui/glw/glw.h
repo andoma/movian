@@ -107,7 +107,6 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
-  GLW_ATTRIB_SIZE_SCALE,
   GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
@@ -535,6 +534,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_thaw)(struct glw *w);
+
+  /**
+   *
+   */
+  void (*gc_set_size_scale)(struct glw *w, const float v);
 
   /**
    * Registration link
@@ -1039,7 +1043,6 @@ do {						\
   case GLW_ATTRIB_INT_STEP:                     \
   case GLW_ATTRIB_INT_MIN:                      \
   case GLW_ATTRIB_INT_MAX:                      \
-  case GLW_ATTRIB_SIZE_SCALE:                   \
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
