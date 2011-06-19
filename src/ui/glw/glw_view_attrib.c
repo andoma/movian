@@ -462,15 +462,15 @@ set_rotation(glw_t *w, const float *xyz)
 
 
 static struct strtab aligntab[] = {
-  { "center",        GLW_ALIGN_CENTER},
-  { "left",          GLW_ALIGN_LEFT},
-  { "right",         GLW_ALIGN_RIGHT},
-  { "top",           GLW_ALIGN_TOP},
-  { "bottom",        GLW_ALIGN_BOTTOM},
-  { "topLeft",       GLW_ALIGN_TOP_LEFT},
-  { "topRight",      GLW_ALIGN_TOP_RIGHT},
-  { "bottomLeft",    GLW_ALIGN_BOTTOM_LEFT},
-  { "bottomRight",   GLW_ALIGN_BOTTOM_RIGHT},
+  { "center",        LAYOUT_ALIGN_CENTER},
+  { "left",          LAYOUT_ALIGN_LEFT},
+  { "right",         LAYOUT_ALIGN_RIGHT},
+  { "top",           LAYOUT_ALIGN_TOP},
+  { "bottom",        LAYOUT_ALIGN_BOTTOM},
+  { "topLeft",       LAYOUT_ALIGN_TOP_LEFT},
+  { "topRight",      LAYOUT_ALIGN_TOP_RIGHT},
+  { "bottomLeft",    LAYOUT_ALIGN_BOTTOM_LEFT},
+  { "bottomRight",   LAYOUT_ALIGN_BOTTOM_RIGHT},
 
 };
 

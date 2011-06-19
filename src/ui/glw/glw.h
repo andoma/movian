@@ -28,6 +28,7 @@
 #include <math.h>
 
 #include "misc/queue.h"
+#include "misc/layout.h"
 #include "prop/prop.h"
 #include "ui/ui.h"
 #include "showtime.h"
@@ -138,20 +139,6 @@ typedef struct glw_vertex {
 typedef struct glw_rgb {
   float r, g, b;
 } glw_rgb_t;
-
-typedef enum {
-  GLW_ALIGN_CENTER,
-  GLW_ALIGN_LEFT,
-  GLW_ALIGN_RIGHT,
-  GLW_ALIGN_BOTTOM,
-  GLW_ALIGN_TOP,
-  GLW_ALIGN_TOP_LEFT,
-  GLW_ALIGN_TOP_RIGHT,
-  GLW_ALIGN_BOTTOM_LEFT,
-  GLW_ALIGN_BOTTOM_RIGHT,
-  GLW_ALIGN_num
-} glw_alignment_t;
-
 
 /**
  * Image flags
@@ -408,7 +395,7 @@ typedef struct glw_class {
   /**
    * How to initialize glw_alignment when creating an instance
    */
-  glw_alignment_t gc_default_alignment;
+  int gc_default_alignment;
 
   /**
    * Return number of childern currently packed per row
@@ -1123,9 +1110,9 @@ void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
 void glw_repositionf(glw_rctx_t *rc, float left, float top,
 		     float right, float bottom);
 
-void glw_align_1(glw_rctx_t *rc, glw_alignment_t a);
+void glw_align_1(glw_rctx_t *rc, int a);
 
-void glw_align_2(glw_rctx_t *rc, glw_alignment_t a);
+void glw_align_2(glw_rctx_t *rc, int a);
 
 void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
 

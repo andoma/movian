@@ -150,9 +150,9 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
     if(co->weight_sum == 0) {
 
-      if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
+      if(co->w.glw_alignment == LAYOUT_ALIGN_CENTER) {
 	pos = rc->rc_width / 2 - width / 2;
-      } else if(co->w.glw_alignment == GLW_ALIGN_RIGHT) {
+      } else if(co->w.glw_alignment == LAYOUT_ALIGN_RIGHT) {
 	pos = rc->rc_width - width;
       }
     }
@@ -286,9 +286,9 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
     if(co->weight_sum == 0) {
 
-      if(co->w.glw_alignment == GLW_ALIGN_CENTER) {
+      if(co->w.glw_alignment == LAYOUT_ALIGN_CENTER) {
 	pos = rc->rc_height / 2 - height / 2;
-      } else if(co->w.glw_alignment == GLW_ALIGN_BOTTOM) {
+      } else if(co->w.glw_alignment == LAYOUT_ALIGN_BOTTOM) {
 	pos = rc->rc_height - height;
       }
     }
@@ -633,7 +633,7 @@ static glw_class_t glw_container_x = {
   .gc_signal_handler = glw_container_x_callback,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
-  .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_padding = set_padding,
 };
 
@@ -646,7 +646,7 @@ static glw_class_t glw_container_y = {
   .gc_signal_handler = glw_container_y_callback,
   .gc_child_orientation = GLW_ORIENTATION_VERTICAL,
   .gc_nav_search_mode = GLW_NAV_SEARCH_BY_ORIENTATION,
-  .gc_default_alignment = GLW_ALIGN_TOP,
+  .gc_default_alignment = LAYOUT_ALIGN_TOP,
   .gc_set_padding = set_padding,
 };
 

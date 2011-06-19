@@ -330,7 +330,7 @@ static glw_class_t glw_coverflow = {
   .gc_render = glw_coverflow_render,
   .gc_signal_handler = glw_coverflow_callback,
   .gc_gpe_iterator = glw_coverflow_gpe_iterator,
-  .gc_default_alignment = GLW_ALIGN_CENTER,
+  .gc_default_alignment = LAYOUT_ALIGN_CENTER,
   .gc_get_child_pos = glw_coverflow_get_child_pos,
 };
 

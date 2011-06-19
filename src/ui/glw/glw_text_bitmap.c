@@ -186,22 +186,22 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       text_width = right - left;
     } else { 
       switch(w->glw_alignment) {
-      case GLW_ALIGN_CENTER:
-      case GLW_ALIGN_BOTTOM:
-      case GLW_ALIGN_TOP:
+      case LAYOUT_ALIGN_CENTER:
+      case LAYOUT_ALIGN_BOTTOM:
+      case LAYOUT_ALIGN_TOP:
 	left = (left + right - text_width) / 2;
 	right = left + text_width;
 	break;
 
-      case GLW_ALIGN_LEFT:
-      case GLW_ALIGN_TOP_LEFT:
-      case GLW_ALIGN_BOTTOM_LEFT:
+      case LAYOUT_ALIGN_LEFT:
+      case LAYOUT_ALIGN_TOP_LEFT:
+      case LAYOUT_ALIGN_BOTTOM_LEFT:
 	right = left + pm->pm_width;
 	break;
 
-      case GLW_ALIGN_RIGHT:
-      case GLW_ALIGN_TOP_RIGHT:
-      case GLW_ALIGN_BOTTOM_RIGHT:
+      case LAYOUT_ALIGN_RIGHT:
+      case LAYOUT_ALIGN_TOP_RIGHT:
+      case LAYOUT_ALIGN_BOTTOM_RIGHT:
 	left = right - pm->pm_width;
 	break;
       }
@@ -213,22 +213,22 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       text_height = top - bottom;
     } else { 
       switch(w->glw_alignment) {
-      case GLW_ALIGN_CENTER:
-      case GLW_ALIGN_LEFT:
-      case GLW_ALIGN_RIGHT:
+      case LAYOUT_ALIGN_CENTER:
+      case LAYOUT_ALIGN_LEFT:
+      case LAYOUT_ALIGN_RIGHT:
 	bottom = (bottom + top - text_height) / 2;
 	top = bottom + text_height;
 	break;
 
-      case GLW_ALIGN_TOP_LEFT:
-      case GLW_ALIGN_TOP_RIGHT:
-      case GLW_ALIGN_TOP:
+      case LAYOUT_ALIGN_TOP_LEFT:
+      case LAYOUT_ALIGN_TOP_RIGHT:
+      case LAYOUT_ALIGN_TOP:
 	bottom = top - pm->pm_height;
 	break;
 
-      case GLW_ALIGN_BOTTOM:
-      case GLW_ALIGN_BOTTOM_LEFT:
-      case GLW_ALIGN_BOTTOM_RIGHT:
+      case LAYOUT_ALIGN_BOTTOM:
+      case LAYOUT_ALIGN_BOTTOM_LEFT:
+      case LAYOUT_ALIGN_BOTTOM_RIGHT:
 	top = bottom + pm->pm_height;
 	break;
       }
@@ -1064,7 +1064,7 @@ static glw_class_t glw_label = {
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
-  .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
@@ -1091,7 +1091,7 @@ static glw_class_t glw_text = {
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
   .gc_get_text = glw_text_bitmap_get_text,
-  .gc_default_alignment = GLW_ALIGN_LEFT,
+  .gc_default_alignment = LAYOUT_ALIGN_LEFT,
   .gc_set_rgb = glw_text_bitmap_set_rgb,
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,

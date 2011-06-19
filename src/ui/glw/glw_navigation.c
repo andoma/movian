@@ -98,10 +98,10 @@ compute_position(glw_t *w, glw_orientation_t o, float n)
 	  switch(p->glw_alignment) {
 	  default:
 	    break;
-	  case GLW_ALIGN_CENTER:
+	  case LAYOUT_ALIGN_CENTER:
 	    a += d / 2;
 	    break;
-	  case GLW_ALIGN_RIGHT:
+	  case LAYOUT_ALIGN_RIGHT:
 	    a += d;
 	    break;
 	  }
@@ -109,10 +109,10 @@ compute_position(glw_t *w, glw_orientation_t o, float n)
 	  switch(p->glw_alignment) {
 	  default:
 	    break;
-	  case GLW_ALIGN_CENTER:
+	  case LAYOUT_ALIGN_CENTER:
 	    a += d / 2;
 	    break;
-	  case GLW_ALIGN_TOP:
+	  case LAYOUT_ALIGN_TOP:
 	    a += d;
 	    break;
 	  }

@@ -1720,24 +1720,25 @@ glw_dispatch_event(uii_t *uii, event_t *e)
   }
 }
 
-const glw_vertex_t align_vertices[GLW_ALIGN_num] = 
+const glw_vertex_t align_vertices[] = 
   {
-    [GLW_ALIGN_CENTER] = {  0.0,  0.0, 0.0 },
-    [GLW_ALIGN_LEFT]   = { -1.0,  0.0, 0.0 },
-    [GLW_ALIGN_RIGHT]  = {  1.0,  0.0, 0.0 },
-    [GLW_ALIGN_BOTTOM] = {  0.0, -1.0, 0.0 },
-    [GLW_ALIGN_TOP]    = {  0.0,  1.0, 0.0 },
+    [0] = {  0.0,  0.0, 0.0 },
+    [LAYOUT_ALIGN_CENTER] = {  0.0,  0.0, 0.0 },
+    [LAYOUT_ALIGN_LEFT]   = { -1.0,  0.0, 0.0 },
+    [LAYOUT_ALIGN_RIGHT]  = {  1.0,  0.0, 0.0 },
+    [LAYOUT_ALIGN_BOTTOM] = {  0.0, -1.0, 0.0 },
+    [LAYOUT_ALIGN_TOP]    = {  0.0,  1.0, 0.0 },
 
-    [GLW_ALIGN_TOP_LEFT] = { -1.0,  1.0, 0.0 },
-    [GLW_ALIGN_TOP_RIGHT] = { 1.0,  1.0, 0.0 },
-    [GLW_ALIGN_BOTTOM_LEFT] = { -1.0, -1.0, 0.0 },
-    [GLW_ALIGN_BOTTOM_RIGHT] = { 1.0, -1.0, 0.0 },
+    [LAYOUT_ALIGN_TOP_LEFT] = { -1.0,  1.0, 0.0 },
+    [LAYOUT_ALIGN_TOP_RIGHT] = { 1.0,  1.0, 0.0 },
+    [LAYOUT_ALIGN_BOTTOM_LEFT] = { -1.0, -1.0, 0.0 },
+    [LAYOUT_ALIGN_BOTTOM_RIGHT] = { 1.0, -1.0, 0.0 },
   };
 
 void
-glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
+glw_align_1(glw_rctx_t *rc, int a)
 {
-  if(a != GLW_ALIGN_CENTER)
+  if(a && a != LAYOUT_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   align_vertices[a].x, 
 		   align_vertices[a].y, 
@@ -1745,9 +1746,9 @@ glw_align_1(glw_rctx_t *rc, glw_alignment_t a)
 }
 
 void
-glw_align_2(glw_rctx_t *rc, glw_alignment_t a)
+glw_align_2(glw_rctx_t *rc, int a)
 {
-  if(a != GLW_ALIGN_CENTER)
+  if(a && a != LAYOUT_ALIGN_CENTER)
     glw_Translatef(rc, 
 		   -align_vertices[a].x, 
 		   -align_vertices[a].y, 
