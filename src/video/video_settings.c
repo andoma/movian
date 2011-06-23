@@ -26,6 +26,12 @@ set_subtitle_alignment(void *opaque, const char *str)
   subtitle_settings.alignment = atoi(str);
 }
 
+static void
+set_subtitle_align_on_video(void *opaque, int v)
+{
+  subtitle_settings.align_on_video = v;
+}
+
 #if ENABLE_VDPAU 
 static void
 set_vdpau(void *opaque, int on)
@@ -82,19 +88,26 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
   
-  settings_create_int(s, "scale", "Subtitle size scaling",
-		      100, store, 5, 300, 5, set_subtitle_scale, NULL,
+  settings_create_int(s, "scale", "Default subtitle size scaling",
+		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
 		      SETTINGS_INITIAL_UPDATE, "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"subtitles");
 
-  x = settings_create_multiopt(s, "alignment", "Subtitle alignment",
+  settings_create_bool(s, "subonvideoframe",
+		       "Default align subtitles on video frame", 0, 
+		       store, set_subtitle_align_on_video, NULL,
+		       SETTINGS_INITIAL_UPDATE,  NULL,
+		       settings_generic_save_settings, 
+		       (void *)"subtitles");
+
+  x = settings_create_multiopt(s, "align", "Default subtitle alignment",
 			       set_subtitle_alignment, NULL);
 
-  settings_multiopt_add_opt(x, "0", "Center", 1);
+  settings_multiopt_add_opt(x, "2", "Center", 1);
   settings_multiopt_add_opt(x, "1", "Left", 0);
-  settings_multiopt_add_opt(x, "2", "Right", 0);
-  settings_multiopt_add_opt(x, "3", "Auto", 0);
+  settings_multiopt_add_opt(x, "3", "Right", 0);
+  settings_multiopt_add_opt(x, "0", "Auto", 0);
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"subtitles");

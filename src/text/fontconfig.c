@@ -43,7 +43,7 @@ fontconfig_init(void)
  */
 int
 fontconfig_resolve(int uc, uint8_t style, const char *family,
-		   char *urlbuf, size_t urllen, uint8_t *actualstylep)
+		   char *urlbuf, size_t urllen)
 {
   int rval = 1;
   FcPattern *pat = NULL;
@@ -93,7 +93,7 @@ fontconfig_resolve(int uc, uint8_t style, const char *family,
   if(result == FcResultMatch) {
     snprintf(urlbuf, urllen, "file://%s", fname);
     rval = 0;
-
+#if 0
     *actualstylep = 0;
     int ival;
     if(FcPatternGetInteger(fp, FC_SLANT, 0, &ival) == FcResultMatch)
@@ -103,6 +103,7 @@ fontconfig_resolve(int uc, uint8_t style, const char *family,
     if(FcPatternGetInteger(fp, FC_WEIGHT, 0, &ival) == FcResultMatch) 
       if(ival > 150)
 	*actualstylep |= TR_STYLE_BOLD;
+#endif
   }
 
  done:

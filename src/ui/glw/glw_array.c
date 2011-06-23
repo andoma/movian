@@ -487,7 +487,7 @@ glw_array_get_num_children_x(glw_t *w)
  *
  */
 static void
-set_margin(glw_t *w, const float *v)
+set_margin(glw_t *w, const int16_t *v)
 {
   glw_array_t *a = (glw_array_t *)w;
   a->margin_left   = v[0];
@@ -501,7 +501,7 @@ set_margin(glw_t *w, const float *v)
  *
  */
 static void
-set_border(glw_t *w, const float *v)
+set_border(glw_t *w, const int16_t *v)
 {
   glw_array_t *a = (glw_array_t *)w;
   a->border_left   = v[0];

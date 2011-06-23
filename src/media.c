@@ -33,6 +33,7 @@
 #include "i18n.h"
 #include "video/ext_subtitles.h"
 #include "video/video_settings.h"
+#include "settings.h"
 
 // -- Video accelerators ---------
 
@@ -57,11 +58,9 @@ media_pipe_t *media_primary;
 
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
-static void update_avdelta(void *opaque, int value);
+static void update_av_delta(void *opaque, int value);
 
-static void update_svdelta(void *opaque, int value);
-
-static void update_stats(void *opaque, int value);
+static void update_sv_delta(void *opaque, int value);
 
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
@@ -207,14 +206,18 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_prop_primary = prop_create(mp->mp_prop_root, "primary");
 
+  //--------------------------------------------------
   // Video
 
   mp->mp_prop_video = prop_create(mp->mp_prop_root, "video");
+  mp->mp_setting_video_root = prop_create(mp->mp_prop_video, "settings");
   mq_init(&mp->mp_video, mp->mp_prop_video, &mp->mp_mutex);
 
+  //--------------------------------------------------
   // Audio
 
   mp->mp_prop_audio = prop_create(mp->mp_prop_root, "audio");
+  mp->mp_setting_audio_root = prop_create(mp->mp_prop_audio, "settings");
   mq_init(&mp->mp_audio, mp->mp_prop_audio, &mp->mp_mutex);
   mp->mp_prop_audio_track_current = prop_create(mp->mp_prop_audio, "current");
   mp->mp_prop_audio_tracks = prop_create(mp->mp_prop_metadata, "audiostreams");
@@ -224,10 +227,11 @@ mp_create(const char *name, int flags, const char *type)
   track_mgr_init(mp, &mp->mp_audio_track_mgr, mp->mp_prop_audio_tracks,
 		 MEDIA_TRACK_MANAGER_AUDIO, mp->mp_prop_audio_track_current);
 
-
+  //--------------------------------------------------
   // Subtitles
 
   p = prop_create(mp->mp_prop_root, "subtitle");
+  mp->mp_setting_subtitle_root = prop_create(p, "settings");
   mp->mp_prop_subtitle_track_current = prop_create(p, "current");
   mp->mp_prop_subtitle_tracks = prop_create(mp->mp_prop_metadata, 
 					    "subtitlestreams");
@@ -240,6 +244,7 @@ mp_create(const char *name, int flags, const char *type)
 		 mp->mp_prop_subtitle_track_current);
 
 
+  //--------------------------------------------------
   // Buffer
 
   p = prop_create(mp->mp_prop_root, "buffer");
@@ -311,26 +316,41 @@ mp_create(const char *name, int flags, const char *type)
 		   PROP_TAG_ROOT, mp->mp_prop_currenttime,
 		   NULL);
 
-  mp->mp_sub_avdelta = 
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK_INT, update_avdelta, mp,
-		   PROP_TAG_COURIER, mp->mp_pc,
-		   PROP_TAG_ROOT, mp->mp_prop_avdelta,
-		   NULL);
-
-  mp->mp_sub_svdelta = 
-    prop_subscribe(0,
-		   PROP_TAG_CALLBACK_INT, update_svdelta, mp,
-		   PROP_TAG_COURIER, mp->mp_pc,
-		   PROP_TAG_ROOT, mp->mp_prop_svdelta,
-		   NULL);
-
   mp->mp_sub_stats =
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		   PROP_TAG_CALLBACK_INT, update_stats, mp,
+		   PROP_TAG_SET_INT, &mp->mp_stats,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, mp->mp_prop_stats,
 		   NULL);
+
+
+  //--------------------------------------------------
+  // Settings
+
+  mp->mp_setting_av_delta = 
+    settings_create_int(mp->mp_setting_audio_root, "avdelta",
+			"Audio delay", 0, NULL, -5000, 5000,
+			50, update_av_delta, mp, SETTINGS_INITIAL_UPDATE,
+			"ms", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_sv_delta = 
+    settings_create_int(mp->mp_setting_subtitle_root, "svdelta",
+			"Subtitle delay", 0, NULL, -60, 60,
+			1, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
+			"s", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_sub_scale = 
+    settings_create_int(mp->mp_setting_subtitle_root, "subscale",
+			"Subtitle scaling", subtitle_settings.scaling,
+			NULL, 30, 500, 5, NULL, NULL, 0,
+			"%", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_sub_on_video = 
+    settings_create_bool(mp->mp_setting_subtitle_root, "subonvideoframe",
+			 "Align subtitles on video frame", 
+			 subtitle_settings.align_on_video, NULL,
+			 NULL, NULL, 0,
+			 mp->mp_pc, NULL, NULL);
 
   return mp;
 }
@@ -349,11 +369,14 @@ mp_destroy(media_pipe_t *mp)
   assert(mp != media_primary);
   assert(!(mp->mp_flags & MP_ON_STACK));
 
-  prop_unsubscribe(mp->mp_sub_currenttime);
-  prop_unsubscribe(mp->mp_sub_avdelta);
-  prop_unsubscribe(mp->mp_sub_svdelta);
-  prop_unsubscribe(mp->mp_sub_stats);
 
+  setting_destroy(mp->mp_setting_av_delta);
+  setting_destroy(mp->mp_setting_sv_delta);
+  setting_destroy(mp->mp_setting_sub_scale);
+  setting_destroy(mp->mp_setting_sub_on_video);
+
+  prop_unsubscribe(mp->mp_sub_currenttime);
+  prop_unsubscribe(mp->mp_sub_stats);
 
   track_mgr_destroy(&mp->mp_audio_track_mgr);
   track_mgr_destroy(&mp->mp_subtitle_track_mgr);
@@ -1198,12 +1221,11 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
   event_release(&ets->h);
 }
 
-
 /**
  *
  */
 static void
-update_avdelta(void *opaque, int v)
+update_av_delta(void *opaque, int v)
 {
   media_pipe_t *mp = opaque;
   mp->mp_avdelta = v * 1000;
@@ -1215,22 +1237,11 @@ update_avdelta(void *opaque, int v)
  *
  */
 static void
-update_svdelta(void *opaque, int v)
+update_sv_delta(void *opaque, int v)
 {
   media_pipe_t *mp = opaque;
   mp->mp_svdelta = v * 1000000;
   TRACE(TRACE_DEBUG, "SVSYNC", "Set to %ds", v);
-}
-
-
-/**
- *
- */
-static void
-update_stats(void *opaque, int v)
-{
-  media_pipe_t *mp = opaque;
-  mp->mp_stats = v;
 }
 
 

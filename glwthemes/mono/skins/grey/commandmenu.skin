@@ -24,6 +24,14 @@
 		SCALE=2.0);
 }
 
+#define commandButtonText(CAPTION, EVENT, ENABLED, VISIBLE) {
+  _glossybuttonTextOnly(CAPTION=CAPTION,
+			EVENT=EVENT,
+			ENABLED=0.9 * (ENABLED),
+			HIDDEN=!(VISIBLE),
+			SCALE=1.0);
+}
+
 #define commandToggle(STATE, TYPE, ENABLED) {
   _glossybuttontoggle(ICON="skin://icons/" +
 		      translate(TYPE, TYPE) + ".png",
@@ -82,33 +90,29 @@
 
 
 #define commandSlider(VALUE, MIN, MAX, STEP, CAPTION, ENABLED=true, HIDDEN=false) {
-  widget(container_z, {
-    widget(backdrop, {
-      .source = "skin://gfx/hsliderbackground.png";
-      .border = 5;
-      .padding = -2;
-      .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
-      
-      widget(slider_x, {
-	.focusable = ENABLED;
-	.min = MIN;
-	.max = MAX;
-	.step = STEP;
-	bind(VALUE);
-	.alwaysGrabKnob = true;
-	widget(backdrop, {
-	  .source = "skin://gfx/focused.png";
-	  .border =  5;
-	  .padding = [0, -3];
-	  .additive = true;
-	  .alpha = select(isHovered() || isFocused(), 0.8, 0.4);
-	  widget(label, {
-	    .caption = CAPTION;
-	  });
+  widget(backdrop, {
+    .source = "skin://gfx/border-tiny.png";
+    .border = 4;
+    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
+    
+    widget(slider_x, {
+      .focusable = ENABLED;
+      .min = MIN;
+      .max = MAX;
+      .step = STEP;
+      bind(VALUE);
+      .alwaysGrabKnob = true;
+      widget(backdrop, {
+	.source = "skin://gfx/focused.png";
+	.border =  5;
+	.padding = [0, -3];
+	.additive = true;
+	.alpha = select(isHovered() || isFocused(), 0.8, 0.4);
+	widget(label, {
+	  .caption = CAPTION;
 	});
       });
     });
-    _gloss();
   });
 }
 
@@ -198,5 +202,44 @@
     .leftBorder = false;
     .rightBorder = false;
     BODY;
+  });
+}
+
+
+#define commandTabGroup(BODY)
+{
+  widget(container_x, {
+    .height = $ui.size + 6;
+    widget(backdrop, {
+      .width = 30;
+      .source = "skin://gfx/tab-top.png";
+      .border = [2,0,2,0];
+    });
+
+    BODY;
+    widget(backdrop, {
+      .source = "skin://gfx/tab-top.png";
+      .border = [2,0,2,0];
+    });
+    
+  });
+}
+
+
+#define commandTab(PAGEPROP, CAPTION, PAGENUM) {
+  widget(backdrop, {
+    .source = select(PAGEPROP == PAGENUM,
+		     "skin://gfx/tab-selected.png",
+		     "skin://gfx/tab-unselected.png");
+    .border  = [15,0];
+    .padding = [8,0];
+    widget(label, {
+      .caption = CAPTION;
+      .focusable = true;
+      .color = select(isFocused() || isHovered(), 1, 0.4);
+      onEvent(activate, {
+	(PAGEPROP) = PAGENUM;
+      });
+    });
   });
 }

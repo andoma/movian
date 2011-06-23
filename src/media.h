@@ -229,9 +229,6 @@ typedef struct media_pipe {
   int mp_svdelta;           // Subtitle vs video delta (µs)
   int mp_stats;
 
-  int mp_video_width;
-  int mp_video_height;
-
   struct audio_decoder *mp_audio_decoder;
 
   struct event_q mp_eq;
@@ -277,8 +274,6 @@ typedef struct media_pipe {
 
   prop_courier_t *mp_pc;
   prop_sub_t *mp_sub_currenttime;
-  prop_sub_t *mp_sub_avdelta;
-  prop_sub_t *mp_sub_svdelta;
   prop_sub_t *mp_sub_stats;
 
   /* Audio info props */
@@ -296,6 +291,22 @@ typedef struct media_pipe {
 
   media_track_mgr_t mp_audio_track_mgr;
   media_track_mgr_t mp_subtitle_track_mgr;
+
+  /**
+   * Settings
+   */
+
+  prop_t *mp_setting_video_root;
+  prop_t *mp_setting_audio_root;
+  prop_t *mp_setting_subtitle_root;
+
+  struct setting *mp_setting_av_delta;   // Audio vs. Video delta
+  struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
+  struct setting *mp_setting_sub_scale;  // Subtitle scaling
+  struct setting *mp_setting_sub_on_video; // Subtitle always on video
+  
+  
+
 
 } media_pipe_t;
 

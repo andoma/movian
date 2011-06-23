@@ -55,8 +55,18 @@ static hts_mutex_t text_mutex;
 TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
 TAILQ_HEAD(face_queue, face);
+LIST_HEAD(family_list, family);
 
+//----------------- Family name <-> id map --------------
 
+typedef struct family {
+  LIST_ENTRY(family) link;
+  char *name;
+  int id;
+} family_t;
+
+static int family_id_tally;
+static struct family_list families;
 
 //------------------------- Faces -----------------------
 
@@ -66,10 +76,12 @@ typedef struct face {
   FT_Face face;
   char *url;
  
-  char *family;
+  int family_id;
   uint8_t style;
+  uint8_t persistent;
+  uint8_t is_replacement;
 
-  int refcount;
+  struct glyph_list glyphs;
 
 } face_t;
 
@@ -82,7 +94,9 @@ typedef struct glyph {
   int uc;
   int16_t size;
   uint8_t style;
+
   face_t *face;
+  LIST_ENTRY(glyph) face_link;
 
   FT_UInt gi;
 
@@ -103,13 +117,75 @@ static int num_glyphs;
 /**
  *
  */
+static int
+family_get(const char *name)
+{
+  family_t *f;
+  if(name == NULL)
+    return 0;
+
+  LIST_FOREACH(f, &families, link)
+    if(!strcasecmp(name, f->name))
+      break;
+  
+  if(f == NULL) {
+    f = malloc(sizeof(family_t));
+    f->id = ++family_id_tally;
+    f->name = strdup(name);
+  } else {
+    LIST_REMOVE(f, link);
+  }
+  LIST_INSERT_HEAD(&families, f, link);
+  return f->id;
+}
+
+
+/**
+ *
+ */
+static const char *
+family_get_by_id(int id)
+{
+  family_t *f;
+
+  LIST_FOREACH(f, &families, link)
+    if(f->id == id)
+      return f->name;
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+static void
+glyph_destroy(glyph_t *g)
+{
+  LIST_REMOVE(g, face_link);
+  TAILQ_REMOVE(&allglyphs, g, lru_link);
+  LIST_REMOVE(g, hash_link);
+  FT_Done_Glyph(g->glyph);
+  free(g);
+  num_glyphs--;
+}
+
+
+/**
+ *
+ */
 static void
 face_destroy(face_t *f)
 {
-  TRACE(TRACE_DEBUG, "Freetype", "Unloading %s", f->url);
+  glyph_t *g;
+  while((g = LIST_FIRST(&f->glyphs)) != NULL)
+    glyph_destroy(g);
+
+  TRACE(TRACE_DEBUG, "Freetype", "Unloading '%s' [%s] originally from %s",
+	f->face->family_name, f->face->style_name, f->url ?: "memory");
   TAILQ_REMOVE(&faces, f, link);
   free(f->url);
-  free(f->family);
   FT_Done_Face(f->face);
   free(f);
 }
@@ -124,7 +200,24 @@ faces_purge(void)
   face_t *f, *n;
   for(f = TAILQ_FIRST(&faces); f != NULL; f = n) {
     n = TAILQ_NEXT(f, link);
-    if(f->refcount == 0)
+
+    if(LIST_FIRST(&f->glyphs) == NULL && f->persistent == 0)
+      face_destroy(f);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+faces_purge_replacements(void)
+{
+  face_t *f, *n;
+  for(f = TAILQ_FIRST(&faces); f != NULL; f = n) {
+    n = TAILQ_NEXT(f, link);
+
+    if(f->is_replacement)
       face_destroy(f);
   }
 }
@@ -163,11 +256,38 @@ face_finalizer(void *obj)
   free(f->generic.data);
 }
 
+
 /**
  *
  */
 static face_t *
-face_create(const char *path)
+face_create_epilogue(face_t *face, const char *source)
+{
+  const char *family = face->face->family_name;
+  const char *style = face->face->style_name;
+  TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] from %s",
+	family, style, source);
+
+  if(style != NULL) {
+    if(!strcasecmp(style, "bold"))
+      face->style = TR_STYLE_BOLD;
+    if(!strcasecmp(style, "italic"))
+      face->style = TR_STYLE_ITALIC;
+  }
+
+  face->family_id = family_get(family);
+  FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
+  faces_purge_replacements();
+  TAILQ_INSERT_TAIL(&faces, face, link);
+  return face;
+}
+
+
+/**
+ *
+ */
+static face_t *
+face_create_from_uri(const char *path)
 {
   char errbuf[256];
   FT_Open_Args oa = {0};
@@ -176,14 +296,15 @@ face_create(const char *path)
 
   fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf), 0);
   if(fh == NULL) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- %s",
+    TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);
     return NULL;
   }
 
   s = fa_fsize(fh);
   if(s < 0) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load font: %s -- Not a seekable file",
+    TRACE(TRACE_ERROR, "Freetype",
+	  "Unable to load font: %s -- Not a seekable file",
 	  path);
     fa_close(fh);
     return NULL;
@@ -201,41 +322,55 @@ face_create(const char *path)
   oa.flags = FT_OPEN_STREAM;
   
   if((err = FT_Open_Face(text_library, &oa, 0, &face->face)) != 0) {
-    TRACE(TRACE_ERROR, "glw", "Unable to create font face: %s 0x%x", path, err);
+    TRACE(TRACE_ERROR, "Freetype",
+	  "Unable to create font face: %s 0x%x", path, err);
     free(face);
     free(srec);
     return NULL;
   }
 
-  TRACE(TRACE_DEBUG, "Freetype", "Loaded %s", path);
-
   face->face->generic.data = srec;
   face->face->generic.finalizer = face_finalizer;
   face->url = strdup(path);
 
-  FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
-
-  TAILQ_INSERT_TAIL(&faces, face, link);
-  return face;
+  return face_create_epilogue(face, path);
 }
+
+
+
+/**
+ *
+ */
+static face_t *
+face_create_from_memory(const void *ptr, size_t len)
+{
+  face_t *face = calloc(1, sizeof(face_t));
+
+  if(FT_New_Memory_Face(text_library, ptr, len, 0, &face->face)) {
+    free(face);
+    return NULL;
+  }
+  return face_create_epilogue(face, "memory");
+}
+
 
 
 /**
  *
  */
 static int
-face_resovle(int uc, uint8_t style, const char *family,
-	     char *urlbuf, size_t urllen, uint8_t *actualstylep)
+face_resovle(int uc, uint8_t style, int family_id,
+	     char *urlbuf, size_t urllen)
 {
 #if ENABLE_LIBFONTCONFIG
-  if(!fontconfig_resolve(uc, style, family, urlbuf, urllen, actualstylep))
+  if(!fontconfig_resolve(uc, style, family_get_by_id(family_id),
+			 urlbuf, urllen))
     return 0;
 #endif
 
 #ifdef SHOWTIME_FONT_LIBERATION_URL
   snprintf(urlbuf, urllen,
 	   SHOWTIME_FONT_LIBERATION_URL"/LiberationSans-Regular.ttf");
-  *actualstylep = 0;
   return 0;
 #endif
   return -1;
@@ -246,15 +381,17 @@ face_resovle(int uc, uint8_t style, const char *family,
  *
  */
 static face_t *
-face_clone(face_t *src, const char *family)
+face_replacement(face_t *src, int family_id)
 {
   face_t *dst = calloc(1, sizeof(face_t));
 
   dst->face = src->face;
   FT_Reference_Face(src->face);
-  dst->url = strdup(src->url);
+  dst->url = src->url ? strdup(src->url) : NULL;
 
-  dst->family = strdup(family);
+  dst->family_id = family_id;
+  dst->is_replacement = 1;
+
   dst->style = src->style;
   TAILQ_INSERT_TAIL(&faces, dst, link);
   return dst;
@@ -265,65 +402,81 @@ face_clone(face_t *src, const char *family)
 /**
  *
  */
+static int
+face_is_family(face_t *f, int family_id)
+{
+  assert(f->family_id != 0);
+  return family_id == 0 || f->family_id == family_id;
+}
+
+
+/**
+ *
+ */
 static face_t *
-face_find(int uc, uint8_t style, const char *family)
+face_find(int uc, uint8_t style, int family_id)
 {
   face_t *f;
   char url[URL_MAX];
-  uint8_t actualstyle;
 
   // Try already loaded faces
-  TAILQ_FOREACH(f, &faces, link) {
-    if((family == NULL || !strcmp(family, f->family ?: "" )) &&
-       f->style == style && FT_Get_Char_Index(f->face, uc))
+  TAILQ_FOREACH(f, &faces, link)
+    if(face_is_family(f, family_id) &&
+       f->style == style &&
+       FT_Get_Char_Index(f->face, uc))
       return f;
-  }
 
-  if(face_resovle(uc, style, family, url, sizeof(url), &actualstyle))
+  TAILQ_FOREACH(f, &faces, link)
+    if(face_is_family(f, family_id) &&
+       f->style == 0 &&
+       FT_Get_Char_Index(f->face, uc))
+      return f;
+
+  if(face_resovle(uc, style, family_id, url, sizeof(url)))
     return NULL;
 
   TAILQ_FOREACH(f, &faces, link) {
-    if(!strcmp(f->url, url)) {
-      if(family == NULL || !strcmp(family, f->family ?: ""))
+    if(f->url != NULL && !strcmp(f->url, url)) {
+      if(face_is_family(f, family_id))
 	return f;
 #ifdef HAVE_FACE_REFERENCE
-      return face_clone(f, family);
+      return face_replacement(f, family_id);
 #endif
     }
   }
 
-  if((f = face_create(url)) == NULL)
-    return NULL;
-
-  f->style = actualstyle;
-  f->family = family ? strdup(family) : NULL;
+  f = face_create_from_uri(url);
+  if(f != NULL)
+    f->is_replacement = family_id != 0 && f->family_id != family_id;
   return f;
 }
 
 
 /**
- * family == NULL means don't care
+ * family_id == 0 means don't care
  */
 static glyph_t *
-glyph_get(int uc, int size, uint8_t style, const char *family)
+glyph_get(int uc, int size, uint8_t style, int family_id)
 {
   int err, hash = (uc ^ size ^ style) & GLYPH_HASH_MASK;
   glyph_t *g;
   FT_GlyphSlot gs;
 
   LIST_FOREACH(g, &glyph_hash[hash], hash_link)
-    if(g->uc == uc && g->size == size && g->style == style && 
-       (family == NULL || !strcmp(family, g->face->family)))
+    if(g->uc == uc &&
+       g->size == size &&
+       g->style == style && 
+       face_is_family(g->face, family_id))
       break;
 
   if(g == NULL) {
     face_t *f;
     FT_UInt gi = 0;
 
-    f = face_find(uc, style, family);
+    f = face_find(uc, style, family_id);
 
     if(f == NULL) {
-      f = face_find(uc, 0, family);
+      f = face_find(uc, 0, family_id);
       if(f == NULL)
 	return NULL;
     }
@@ -365,7 +518,7 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
     FT_Glyph_Get_CBox(g->glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
 
     g->gi = gi;
-    f->refcount++;
+    LIST_INSERT_HEAD(&f->glyphs, g, face_link);
     g->face = f;
     g->uc = uc;
     g->style = style;
@@ -383,23 +536,15 @@ glyph_get(int uc, int size, uint8_t style, const char *family)
 }
 
 
-
 /**
  *
  */
 static void
-glyph_flush(void)
+glyph_flush_one(void)
 {
   glyph_t *g = TAILQ_FIRST(&allglyphs);
   assert(g != NULL);
-
-  g->face->refcount--;
-
-  TAILQ_REMOVE(&allglyphs, g, lru_link);
-  LIST_REMOVE(g, hash_link);
-  FT_Done_Glyph(g->glyph);
-  free(g);
-  num_glyphs--;
+  glyph_destroy(g);
 }
 
 
@@ -407,7 +552,8 @@ glyph_flush(void)
  *
  */
 static void
-draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx)
+draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx,
+	   int color)
 {
   const uint8_t *src = bmp->buffer;
   uint8_t *dst;
@@ -419,7 +565,7 @@ draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx)
   x1 = MAX(0, left);
   x2 = MIN(left + bmp->width, pm->pm_width);
   y1 = MAX(0, top);
-  y2 = MIN(top + bmp->rows, pm->pm_height);
+  y2 = MIN(y1 + bmp->rows, pm->pm_height);
 
   if(pm->pm_charpos != NULL) {
     pm->pm_charpos[idx * 2 + 0] = x1;
@@ -441,13 +587,29 @@ draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx)
     // Luma + Alpha channel
     for(y = 0; y < h; y++) {
       for(x = 0; x < w; x++) {
-	dst[x*2 + 0] += src[x] ? 0xff : 0;
-	dst[x*2 + 1] += src[x];
+	if(src[x]) {
+	  dst[x*2 + 0] = color;
+	  dst[x*2 + 1] = src[x];
+	}
       }
       src += bmp->pitch;
       dst += pm->pm_linesize;
     }
     break;
+
+  case PIX_FMT_BGR32:
+    dst += x1 * 4 + y1 * pm->pm_linesize;
+    for(y = 0; y < h; y++) {
+      uint32_t *dst32 = (uint32_t *)dst;
+      for(x = 0; x < w; x++) {
+	if(src[x])
+	  *dst32 = color | (src[x] << 24);
+	dst32++;
+      }
+      src += bmp->pitch;
+      dst += pm->pm_linesize;
+   }
+   break;
 
   default:
     return;
@@ -467,7 +629,8 @@ typedef struct line {
   int width;
   int xspace;
   char alignment;
-
+  int height;
+  int descender;
 } line_t;
 
 
@@ -476,6 +639,7 @@ typedef struct item {
   int16_t kerning;
   int16_t adv_x;
   int code;
+  uint32_t color;
 } item_t;
 
 
@@ -483,10 +647,12 @@ typedef struct item {
  *
  */
 static struct pixmap *
-text_render0(const uint32_t *uc, const int len, int flags, int size,
+text_render0(const uint32_t *uc, const int len,
+	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *family)
 {
+  int family_id = family_get(family);
   pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
@@ -494,12 +660,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
   int err;
   int pen_x, pen_y;
 
-  int i, j, row_height;
-  glyph_t *g;
+  int i, j;
+  glyph_t *g = NULL;
   int siz_x, start_x, start_y;
-  int target_width, target_height;
-  int origin_y;
-  int ellipsize_width;
   int lines = 0;
   line_t *li, *lix;
   struct line_queue lq;
@@ -507,8 +670,11 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   int pmflags = 0;
   uint8_t style;
+  int current_size = default_size * scale;
+  int color_output = 0;
+  uint32_t current_color = 0xffffff;
 
-  if(size < 3)
+  if(current_size < 3 || scale < 0.001)
     return NULL;
 
   bbox.xMin = 0;
@@ -517,14 +683,6 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 
   TAILQ_INIT(&lq);
 
-  /* Compute xsize of three dots, for ellipsize */
-  g = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, size, 0, family);
-  if(g)
-    ellipsize_width = g->adv_x;
-  else {
-    flags &= ~TR_RENDER_ELLIPSIZE;
-    ellipsize_width = 0;
-  }
 
   /* Compute position for each glyph */
   pen_x = 0;
@@ -594,23 +752,36 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       style &= ~TR_STYLE_BOLD;
       break;
 
+    case TR_CODE_SIZE_PX ... TR_CODE_SIZE_PX + 0xffff:
+      current_size = (uc[i] & 0xffff) * scale;
+      break;
+
+    case TR_CODE_COLOR ... TR_CODE_COLOR + 0xffffff:
+      current_color = uc[i] & 0xffffff; // BGR host order
+
+      if(((current_color >> 16) & 0xff) != 
+	 ((current_color >>  8) & 0xff) ||
+	 ((current_color >>  8) & 0xff) != 
+	 ((current_color      ) & 0xff))
+	color_output = 1;
+      break;
+
+    case  TR_CODE_FONT_FAMILY ...  TR_CODE_FONT_FAMILY + 0xffffff:
+      family_id = uc[i] & 0xffffff;
+      break;
+
     default:
       break;
     }
 
-    if(uc[i] > 0x7f000000)
+    if(uc[i] >= 0x70000000)
       continue;
 
     if(li->start == -1)
       li->start = out;
 
-    if((g = glyph_get(uc[i], size, style, family)) == NULL)
+    if((g = glyph_get(uc[i], current_size, style, family_id)) == NULL)
       continue;
-
-    if(li == TAILQ_FIRST(&lq)) {
-      FT_Face f = g->face->face;
-      bbox.yMin = MIN(bbox.yMin, 64 * f->descender * size / f->units_per_EM);
-    }
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
       FT_Get_Kerning(g->face->face, prev, g->gi, FT_KERNING_DEFAULT, &delta); 
@@ -621,6 +792,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
     items[out].adv_x = g->adv_x;
     items[out].g = g;
     items[out].code = uc[i];
+    items[out].color = current_color;
 
     prev = g->gi;
     li->count++;
@@ -647,7 +819,6 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       int d = items[li->start + j].adv_x + 
 	(j > 0 ? items[li->start + j].kerning : 0);
 
-      
       if(lines < max_lines - 1 && w + d >= max_width && j < li->count - 1) {
 	int k = j;
 	int w2 = w;
@@ -664,7 +835,6 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
 	  lix->alignment = global_alignment;
-
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
 	  pmflags |= PIXMAP_TEXT_WRAPPED;
@@ -678,23 +848,29 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	}
       }
 
-      if(lines == max_lines - 1 && (flags & TR_RENDER_ELLIPSIZE) &&
-	 w >= max_width - ellipsize_width) {
 
-	while(j > 0 && items[li->start + j - 1].code == ' ') {
-	  j--;
-	  w -= items[li->start + j].adv_x + 
-	    (j > 0 ? items[li->start + j].kerning : 0);
+      if(lines == max_lines - 1 && (flags & TR_RENDER_ELLIPSIZE) && g != NULL) {
+	glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
+				g->face->family_id);
+	if(eg != NULL) {
+	  int ellipsize_width = g->adv_x;
+	  if(w >= max_width - ellipsize_width) {
+
+	    while(j > 0 && items[li->start + j - 1].code == ' ') {
+	      j--;
+	      w -= items[li->start + j].adv_x + 
+		(j > 0 ? items[li->start + j].kerning : 0);
+	    }
+	    
+	    items[li->start + j].g = eg;
+	    items[li->start + j].kerning = 0;
+	    pmflags |= PIXMAP_TEXT_ELLIPSIZED;
+	    
+	    w += ellipsize_width;
+	    li->count = j + 1;
+	    break;
+	  }
 	}
-	
-	items[li->start + j].g = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE,
-					   size, 0, family);
-	items[li->start + j].kerning = 0;
-	pmflags |= PIXMAP_TEXT_ELLIPSIZED;
-
-	w += ellipsize_width;
-	li->count = j + 1;
-	break;
       }
       if(j < li->count - 1)
 	w += d;
@@ -703,6 +879,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
     li->width = w;
     siz_x = MAX(w, siz_x);
     lines++;
+
   }
 
   if(siz_x < 5) {
@@ -710,13 +887,27 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
     return NULL;
   }
 
-  target_width  = siz_x / 64 + 3;
+  int target_width  = siz_x / 64 + 3; /// +3 ???
+  int target_height = 0;
 
-  if(max_lines > 1) {
-    TAILQ_FOREACH(li, &lq, link) {
-      if(li->alignment != TR_ALIGN_JUSTIFIED)
-	continue;
+  int origin_y = 0;
+  TAILQ_FOREACH(li, &lq, link) {
 
+    int height = 0;
+    int descender = 0;
+
+    for(i = li->start; i < li->start + li->count; i++) {
+      glyph_t *g = items[i].g;
+      FT_Face f = g->face->face;
+      height = MAX(g->size, height);
+      descender = MIN(descender, 64 * f->descender * g->size / f->units_per_EM);
+    }
+    li->height = height;
+    li->descender = descender;
+
+    target_height += li->height;
+
+    if(max_lines > 1 && li->alignment == TR_ALIGN_JUSTIFIED) {
       int spaces = 0;
       int spill = siz_x - li->width;
       for(i = li->start; i < li->start + li->count; i++) {
@@ -728,32 +919,22 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
     }
   }
 
-  target_height = lines * size;
-  row_height = 64 * target_height / lines;
-
-  origin_y = (64 * (lines - 1) * size) - bbox.yMin;
-
+  origin_y = target_height * 64;
   start_x = -bbox.xMin;
   start_y = 0;
 
   // --- allocate and init pixmap
 
-  pm = calloc(1, sizeof(pixmap_t));
-  pm->pm_refcount = 1;
+  pm = pixmap_create(target_width, target_height,
+		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A);
+
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;
-  pm->pm_codec = CODEC_ID_NONE;
-  pm->pm_width = target_width;
-  pm->pm_height = target_height;
-
-  pm->pm_pixfmt = PIX_FMT_Y400A;
-  pm->pm_linesize = target_width * 2;
-  pm->pm_pixels = calloc(1, pm->pm_linesize * pm->pm_height);
 
   if(flags & TR_RENDER_DEBUG) {
     uint8_t *data = pm->pm_pixels;
     for(i = 0; i < target_height; i+=3)
-      memset(data + i * pm->pm_linesize, 0xff, pm->pm_linesize);
+      memset(data + i * pm->pm_linesize, 0x80, pm->pm_linesize);
   }
 
   if(flags & TR_RENDER_CHARACTER_POS) {
@@ -778,7 +959,9 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       break;
     }
 
+    pen_y -= li->height * 64;
     for(i = li->start; i < li->start + li->count; i++) {
+
       g = items[i].g;
       if(g == NULL)
 	continue;
@@ -786,7 +969,7 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       pen_x += items[i].kerning;
       
       pen.x = start_x + pen_x + 31;
-      pen.y = start_y + pen_y + origin_y + 31;
+      pen.y = start_y + pen_y + origin_y + 31 - li->descender;
 
       pen.x &= ~63;
       pen.y &= ~63;
@@ -798,7 +981,8 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
 	draw_glyph(pm, &bmp->bitmap, 
 		   bmp->left,
 		   target_height - bmp->top,
-		   i);
+		   i,
+		   items[i].color);
 	FT_Done_Glyph(glyph);
       }
 
@@ -812,7 +996,6 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 1] = pen_x / 64;
     }
-    pen_y -= row_height;
   }
   free(items);
   return pm;
@@ -823,17 +1006,18 @@ text_render0(const uint32_t *uc, const int len, int flags, int size,
  *
  */
 struct pixmap *
-text_render(const uint32_t *uc, const int len, int flags, int size,
-	    int alignment, int max_width, int max_lines, const char *family)
+text_render(const uint32_t *uc, const int len, int flags, int default_size,
+	    float scale, int alignment, int max_width, int max_lines,
+	    const char *family)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
-  pm = text_render0(uc, len, flags, size, alignment, 
+  pm = text_render0(uc, len, flags, default_size, scale, alignment, 
 		    max_width, max_lines, family);
   while(num_glyphs > 512)
-    glyph_flush();
+    glyph_flush_one();
 
   faces_purge();
 
@@ -873,9 +1057,53 @@ freetype_load_font(const char *url)
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create(url);
+  f = face_create_from_uri(url);
   if(f != NULL)
-    f->refcount++;  // Make sure it never is unloaded
+    f->persistent = 1;  // Make sure it never is auto unloaded
 
   hts_mutex_unlock(&text_mutex);
+}
+
+
+/**
+ *
+ */
+void *
+freetype_load_font_from_memory(const void *ptr, size_t len)
+{
+  face_t *f;
+  hts_mutex_lock(&text_mutex);
+
+  f = face_create_from_memory(ptr, len);
+  if(f != NULL)
+    f->persistent = 1;  // Make sure it never is auto unloaded
+
+  hts_mutex_unlock(&text_mutex);
+  return f;
+}
+
+
+/**
+ *
+ */
+void
+freetype_unload_font(void *ref)
+{
+  face_t *f = ref;
+  hts_mutex_lock(&text_mutex);
+  face_destroy(f);
+  hts_mutex_unlock(&text_mutex);
+}
+
+
+/**
+ *
+ */
+int
+freetype_family_id(const char *str)
+{
+  hts_mutex_lock(&text_mutex);
+  int id = family_get(str);
+  hts_mutex_unlock(&text_mutex);
+  return id;
 }

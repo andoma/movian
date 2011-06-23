@@ -40,6 +40,46 @@ static void  glw_video_input(uint8_t * const data[], const int pitch[],
 /**
  *
  */
+static void
+glw_video_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
+{
+  if(t_aspect * rc->rc_height < rc->rc_width) {
+
+    if(video_settings.stretch_horizontal)
+      return;
+
+    // Shrink X
+    int border = rc->rc_width - t_aspect * rc->rc_height;
+    int left  = (border + 1) / 2;
+    int right = rc->rc_width - (border / 2);
+
+    float s = (right - left) / (float)rc->rc_width;
+    float t = -1.0f + (right + left) / (float)rc->rc_width;
+
+    glw_Translatef(rc, t, 0, 0);
+    glw_Scalef(rc, s, 1.0f, 1.0f);
+
+    rc->rc_width = right - left;
+
+  } else {
+    // Shrink Y
+    int border = rc->rc_height - rc->rc_width / t_aspect;
+    int bottom  = (border + 1) / 2;
+    int top     = rc->rc_height - (border / 2);
+
+    float s = (top - bottom) / (float)rc->rc_height;
+    float t = -1.0f + (top + bottom) / (float)rc->rc_height;
+
+    glw_Translatef(rc, 0, t, 0);
+    glw_Scalef(rc, 1.0f, s, 1.0f);
+    rc->rc_height = top - bottom;
+  }
+}
+
+
+/**
+ *
+ */
 static int
 glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
 {
@@ -198,6 +238,9 @@ glw_video_dtor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
 
+  prop_unsubscribe(gv->gv_vo_scaling_sub);
+  prop_unsubscribe(gv->gv_vo_on_video_sub);
+
   free(gv->gv_current_url);
   free(gv->gv_pending_url);
 
@@ -234,7 +277,7 @@ glw_video_newframe(glw_t *w, int flags)
   pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
 
   if(pts != AV_NOPTS_VALUE)
-    glw_video_overlay_layout(gv, pts);
+    glw_video_overlay_set_pts(gv, pts);
 }
 
 
@@ -247,11 +290,17 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 {
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
+  glw_rctx_t *rc, rc0;
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
     // Reset screensaver counter if we are displaying video
     w->glw_root->gr_screensaver_counter = 0;
+
+    rc = extra;
+    rc0 = *rc;
+    glw_video_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
+    glw_video_overlay_layout(gv, rc, &rc0);
     return 0;
 
   case GLW_SIGNAL_EVENT:
@@ -308,6 +357,22 @@ glw_video_ctor(glw_t *w)
 
   gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
   gv->gv_vp = video_playback_create(gv->gv_mp);
+
+  gv->gv_vo_scaling_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_FLOAT, &gv->gv_vo_scaling,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_sub_scale),
+		   NULL);
+
+  gv->gv_vo_on_video_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_on_video,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_sub_on_video),
+		   NULL);
 
   // We like fullwindow mode if possible (should be confiurable perhaps)
   glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
@@ -405,44 +470,6 @@ glw_video_set(glw_t *w, va_list ap)
 }
 
 
-/**
- *
- */
-static void
-glw_video_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
-{
-  if(t_aspect * rc->rc_height < rc->rc_width) {
-
-    if(video_settings.stretch_horizontal)
-      return;
-
-    // Shrink X
-    int border = rc->rc_width - t_aspect * rc->rc_height;
-    int left  = (border + 1) / 2;
-    int right = rc->rc_width - (border / 2);
-
-    float s = (right - left) / (float)rc->rc_width;
-    float t = -1.0f + (right + left) / (float)rc->rc_width;
-
-    glw_Translatef(rc, t, 0, 0);
-    glw_Scalef(rc, s, 1.0f, 1.0f);
-
-    rc->rc_width = right - left;
-
-  } else {
-    // Shrink Y
-    int border = rc->rc_height - rc->rc_width / t_aspect;
-    int bottom  = (border + 1) / 2;
-    int top     = rc->rc_height - (border / 2);
-
-    float s = (top - bottom) / (float)rc->rc_height;
-    float t = -1.0f + (top + bottom) / (float)rc->rc_height;
-
-    glw_Translatef(rc, 0, t, 0);
-    glw_Scalef(rc, 1.0f, s, 1.0f);
-    rc->rc_height = top - bottom;
-  }
-}
 
 
 /**

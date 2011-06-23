@@ -57,39 +57,6 @@ typedef struct {
 /**
  *
  */
-typedef struct glw_video_overlay {
-  
-  LIST_ENTRY(glw_video_overlay) gvo_link;
-
-  int gvo_is_dvd;
-
-  glw_backend_texture_t gvo_texture;
-  glw_renderer_t gvo_renderer;
-
-  int64_t gvo_start;
-  int64_t gvo_stop;
-
-  int gvo_fadein;
-  int gvo_fadeout;
-
-  int gvo_alignment;
-
-  int gvo_padding_left;
-  int gvo_padding_top;
-  int gvo_padding_right;
-  int gvo_padding_bottom;
-
-  int gvo_width;
-  int gvo_height;
-
-  float gvo_alpha;
-
-} glw_video_overlay_t;
-
-
-/**
- *
- */
 typedef struct glw_video_surface {
 
   TAILQ_ENTRY(glw_video_surface) gvs_link;
@@ -214,6 +181,13 @@ typedef struct glw_video {
   int64_t gv_nextpts;
   vdpau_mixer_t gv_vm;
 #endif
+
+  // 
+  prop_sub_t *gv_vo_scaling_sub;
+  float gv_vo_scaling;
+
+  prop_sub_t *gv_vo_on_video_sub;
+  float gv_vo_on_video;
 
 } glw_video_t;
 

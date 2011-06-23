@@ -16,28 +16,44 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <string.h>
 
+#include "showtime.h"
 #include "misc/string.h"
 #include "misc/unicode_composition.h"
 
 #include "text.h"
 
 
+/**
+ *
+ */
+static int 
+add_one_code(int c, uint32_t *output, int olen)
+{
+  if(output != NULL)
+    output[olen] = c;
+  return olen + 1;
+}
+
 
 /**
  *
  */
 static int
-tag_to_code(char *s)
+tag_to_code(char *s, uint32_t *output, int olen)
 {
   const char *tag;
   int endtag = 0;
+  int len;
+  int c;
+  const char *v;
 
   while(*s == ' ')
     s++;
   if(*s == 0)
-    return 0;
+    return olen;
 
   tag = s;
 
@@ -45,27 +61,28 @@ tag_to_code(char *s)
     endtag = 1;
     tag++;
   }
-    
-  while(*s != ' ' && *s != '/' && *s != 0)
-    s++;
-  *s = 0;
+  len = strlen(s);
+  while(len > 0 && s[len-1] == ' ')
+    s[len--] = 0;
 
-  if(!endtag && !strcmp(tag, "p")) 
-    return TR_CODE_START;
+  if(!endtag && !strcmp(tag, "p"))
+    c = TR_CODE_START;
+  else if(!endtag && !strcmp(tag, "br"))
+    c = TR_CODE_NEWLINE;
+  else if(!strcmp(tag, "center"))
+    c = endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
+  else if(!strcmp(tag, "i"))
+    c = endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
+  else if(!strcmp(tag, "b"))
+    c =  endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
+  else if((v = mystrbegins(tag, "size")) != NULL)
+    c = TR_CODE_SIZE_PX | atoi(v);
+  else if((v = mystrbegins(tag, "color")) != NULL)
+    c = TR_CODE_COLOR | atoi(v);
+  else
+    return olen;
 
-  if(!endtag && !strcmp(tag, "br")) 
-    return TR_CODE_NEWLINE;
-
-  if(!strcmp(tag, "center")) 
-    return endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
-
-  if(!strcmp(tag, "i")) 
-    return endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
-
-  if(!strcmp(tag, "b")) 
-    return endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
-
-  return 0;
+  return add_one_code(c, output, olen);
 }
 
 
@@ -97,13 +114,7 @@ parse_str(uint32_t *output, const char *str, int flags)
 	break;
       tmp[lp] = 0;
 
-      c = tag_to_code(tmp);
-
-      if(c) {
-	if(output != NULL)
-	  output[olen] = c;
-	olen++;
-      }
+      olen = tag_to_code(tmp, output, olen);
       continue;
     }
 

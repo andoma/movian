@@ -6,6 +6,8 @@ $view.videofeatures =
   $global.media.current.type == "tv";
 
 $view.settingpage = 0;
+$view.subtitlepage = 0;
+$view.audiopage = 0;
 
 onEvent(back, {
   $view.settingpage = 0;
@@ -149,69 +151,82 @@ widget(container_y, {
 
 
     // -- Audio config ------------------------------------------------------
-    commandGroup(widget(list_y, {
-      .height = $ui.size * 8;
+    commandGroup(widget(container_y, {
+      .height = $ui.size * 10;
+      .spacing = 5;
 
-      widget(container_x, {
-	widget(label, {
-	  .filterConstraintX = true;
-	  .caption = "Audio delay";
+      commandTabGroup(
+	commandTab($view.audiopage, "Languages", 0);
+	commandTab($view.audiopage, "Settings", 1);
+      );
+
+      widget(deck, {
+
+	// Page 0 - Languages
+	widget(list_y, {
+	  cloner($global.media.current.metadata.audiostreams, container_z, {
+	    commandAudioTrack(join(" - ", $self.title, $self.language),
+			      $self.longformat ?? $self.format,
+			      $self.url == $global.media.current.audio.current,
+			      selectAudioTrack($self.url));
+	  });
 	});
-	commandSlider($global.media.current.avdelta,  -1000, 1000, 10, 
-		      int2str($global.media.current.avdelta) + "ms");
-      });
 
-      widget(dummy, {
-	.height = 10;
-      });
+	// Page 1 - Settings
+	widget(list_y, {
+	  .spacing = 5;
 
-
-      widget(label, {
-	.caption = "Audio tracks";
-	.align = center;
-      });
-      HORIZONTAL_SEPARATOR();
-      
-      cloner($global.media.current.metadata.audiostreams, container_z, {
-	commandAudioTrack(join(" - ", $self.title, $self.language),
-			  $self.longformat ?? $self.format,
-			  $self.url == $global.media.current.audio.current,
-			  selectAudioTrack($self.url));
+	  cloner($global.media.current.audio.settings.model.nodes, loader, {
+	    .source = "theme://settings/" + $self.model.type + ".view";
+	    .time = 0.3;
+	    .noInitialTransform = true;
+	  });
+	});
+	
+	.effect = slideHorizontal;
+	.time = 0.2;
+	.page = $view.audiopage;
       });
     }));
 
     // -- Subtitle tracks ------------------------------------------------------
-    commandGroup(widget(list_y, {
-      .height = $ui.size * 8;
+    commandGroup(widget(container_y, {
+      .height = $ui.size * 10;
+      .spacing = 5;
 
-      widget(container_x, {
-	widget(label, {
-	  .filterConstraintX = true;
-	  .caption = "Subtitle delay";
-	});
-	commandSlider($global.media.current.svdelta,  -60, 60, 1, 
-		      int2str($global.media.current.svdelta) + "s");
-      });
-
-
-
-      widget(dummy, {
-	.height = 10;
-      });
-
-      widget(label, {
-	.caption = "Subtitle tracks";
-	.align = center;
-      });
-      HORIZONTAL_SEPARATOR();
-      cloner($global.media.current.metadata.subtitlestreams, container_z, {
-	commandSubtitleTrack(join(" - ", $self.title, $self.language),
-			     $self.format,
-			     $self.source,
-			     $self.url == $global.media.current.subtitle.current,
-			     selectSubtitleTrack($self.url));
-      });
+      commandTabGroup(
+	commandTab($view.subtitlepage, "Languages", 0);
+	commandTab($view.subtitlepage, "Settings", 1);
+      );
       
+      widget(deck, {
+
+	// Page 0 - Languages
+	widget(list_y, {
+	  cloner($global.media.current.metadata.subtitlestreams, container_z, {
+	    commandSubtitleTrack(join(" - ", $self.title, $self.language),
+				 $self.format,
+				 $self.source,
+				 $self.url == $global.media.current.subtitle.current,
+				 selectSubtitleTrack($self.url));
+	  });
+	});
+
+	// Page 1 - Layout settings
+	widget(list_y, {
+	  .spacing = 5;
+
+	  cloner($global.media.current.subtitle.settings.model.nodes, loader, {
+	    .source = "theme://settings/" + $self.model.type + ".view";
+	    .time = 0.3;
+	    .noInitialTransform = true;
+	  });
+	});
+	
+	.effect = slideHorizontal;
+	.time = 0.2;
+	.page = $view.subtitlepage;
+      });
     }));
 
     // -- Seek by items ------------------------------------------------------

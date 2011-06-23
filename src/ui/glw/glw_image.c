@@ -834,7 +834,7 @@ update_box(glw_image_t *gi)
  *
  */
 static void
-set_border(glw_t *w, const float *v)
+set_border(glw_t *w, const int16_t *v)
 {
   glw_image_t *gi = (void *)w;
 
@@ -854,7 +854,7 @@ set_border(glw_t *w, const float *v)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_padding(glw_t *w, const int16_t *v)
 {
   glw_image_t *gi = (void *)w;
 
@@ -872,7 +872,7 @@ set_padding(glw_t *w, const float *v)
  *
  */
 static void
-set_margin(glw_t *w, const float *v)
+set_margin(glw_t *w, const int16_t *v)
 {
   glw_image_t *gi = (void *)w;
 

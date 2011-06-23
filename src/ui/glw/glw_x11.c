@@ -197,7 +197,7 @@ autohide_cursor(glw_x11_t *gx11)
 
   if(gx11->autohide_counter == 0)
     hide_cursor(gx11);
-  else
+  else if(gx11->gr.gr_pointer_grab == NULL)
     gx11->autohide_counter--;
 }
   

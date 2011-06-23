@@ -24,19 +24,65 @@
 #include "video/video_playback.h"
 #include "video/video_overlay.h"
 
+/**
+ *
+ */
+typedef struct glw_video_overlay {
+  
+  LIST_ENTRY(glw_video_overlay) gvo_link;
+
+  enum {
+    GVO_DVDSPU,
+    GVO_BITMAP,
+    GVO_TEXT,
+  } gvo_type;
+
+  // GVO_DVDSPU and GVO_BITMAP
+
+  glw_backend_texture_t gvo_texture;
+  glw_renderer_t gvo_renderer;
+
+  int64_t gvo_start;
+  int64_t gvo_stop;
+
+  int gvo_fadein;
+  int gvo_fadeout;
+
+  int gvo_alignment;
+
+  int gvo_padding_left;
+  int gvo_padding_top;
+  int gvo_padding_right;
+  int gvo_padding_bottom;
+
+  int gvo_width;
+  int gvo_height;
+
+  float gvo_alpha;
+
+  glw_t *gvo_widget;
+
+  int gvo_canvas_width;
+  int gvo_canvas_height;
+
+  int gvo_videoframe_align; /* If set the overlay should be aligned to actual
+			       video frame */
+
+} glw_video_overlay_t;
 
 
 /**
  *
  */
 static glw_video_overlay_t *
-gvo_create(glw_video_t *gv, int64_t pts)
+gvo_create(glw_video_t *gv, int64_t pts, int type)
 {
   glw_video_overlay_t *gvo = calloc(1, sizeof(glw_video_overlay_t));
   LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
   gvo->gvo_start = pts;
   gvo->gvo_stop = AV_NOPTS_VALUE;
   gvo->gvo_alpha = 1;
+  gvo->gvo_type = type;
   return gvo;
 }
 
@@ -50,6 +96,8 @@ gvo_destroy(glw_video_t *gv, glw_video_overlay_t *gvo)
   LIST_REMOVE(gvo, gvo_link);
   glw_tex_destroy(gv->w.glw_root, &gvo->gvo_texture);
   glw_renderer_free(&gvo->gvo_renderer);
+  if(gvo->gvo_widget != NULL)
+    glw_destroy(gvo->gvo_widget);
   free(gvo);
 }
 
@@ -88,7 +136,7 @@ gvo_flush_infinite(glw_video_t *gv)
  *
  */
 static void
-gvo_update(glw_video_t *gv, int64_t pts)
+gvo_set_pts(glw_video_t *gv, int64_t pts)
 {
   glw_video_overlay_t *gvo, *next;
   float a;
@@ -119,11 +167,53 @@ gvo_update(glw_video_t *gv, int64_t pts)
 }
 
 
+
+/**
+ *
+ */
+void
+glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
+{
+  //  media_pipe_t *mp = gv->gv_mp;
+  glw_video_overlay_t *gvo;
+  const glw_class_t *gc;
+  glw_t *w;
+  glw_rctx_t *rc;
+
+  LIST_FOREACH(gvo, &gv->gv_overlays, gvo_link) {
+    if((w = gvo->gvo_widget) == NULL)
+      continue;
+    rc = gv->gv_vo_on_video || gvo->gvo_videoframe_align ? vrc : frc;
+    gc = w->glw_class;
+
+    float scaling = 1;
+
+    if(gvo->gvo_canvas_height != 0) {
+      scaling *= (float)vrc->rc_height / gvo->gvo_canvas_height;
+    }
+
+    if(gv->gv_vo_scaling > 0)
+      scaling = scaling * gv->gv_vo_scaling / 100.0;
+
+    gc->gc_set_size_scale(w, scaling);
+
+    int16_t f[4];
+    f[0] = scaling * gvo->gvo_padding_left;
+    f[1] = scaling * gvo->gvo_padding_top;
+    f[2] = scaling * gvo->gvo_padding_right;
+    f[3] = scaling * gvo->gvo_padding_bottom;
+    gc->gc_set_padding(w, f);
+
+    glw_layout0(w, rc);
+  }
+}
+
+
 /**
  * 
  */
 void
-glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc, glw_rctx_t *vrc)
+glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
 {
   glw_video_overlay_t *gvo;
   glw_root_t *gr = gv->w.glw_root;
@@ -138,102 +228,113 @@ glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *rc, glw_rctx_t *vrc)
 #endif
   
   LIST_FOREACH(gvo, &gv->gv_overlays, gvo_link) {
-    if(gvo->gvo_is_dvd && !show_dvd_overlays)
-      continue;
 
-    rc0 = *rc;
-    
-    if(gvo->gvo_alignment != 0) {
-      
-
-      int left   =                 gvo->gvo_padding_left;
-      int top    = rc->rc_height - gvo->gvo_padding_top;
-      int right  = rc->rc_width  - gvo->gvo_padding_right;
-      int bottom =                 gvo->gvo_padding_bottom;
-    
-      int width  = gvo->gvo_width;
-      int height = gvo->gvo_height;
-    
-      float x1, y1, x2, y2;
-
-      // Horizontal 
-      if(width > right - left) {
-	// Oversized, must cut
-	width = right - left;
-      } else { 
-	switch(gvo->gvo_alignment) {
-	case 2:
-	case 5:
-	case 8:
-	  left = (left + right - width) / 2;
-	  right = left + width;
-	  break;
-
-	case 1:
-	case 4:
-	case 7:
-	  right = left + gvo->gvo_width;
-	  break;
-
-	case 3:
-	case 6:
-	case 9:
-	  left = right - gvo->gvo_width;
-	  break;
-	}
-      }
-      
-      // Vertical 
-      if(height > top - bottom) {
-	// Oversized, must cut
-	height = top - bottom;
-      } else { 
-	switch(gvo->gvo_alignment) {
-	case 4 ... 6:
-	  bottom = (bottom + top - height) / 2;
-	  top = bottom + height;
-	  break;
-
-	case 7 ... 9:
-	  bottom = top - gvo->gvo_height;
-	  break;
-
-	case 1 ... 3:
-	  top = bottom + gvo->gvo_height;
-	  break;
-	}
-      }
-      
-      x1 = -1.0f + 2.0f * left   / (float)rc->rc_width;
-      y1 = -1.0f + 2.0f * bottom / (float)rc->rc_height;
-      x2 = -1.0f + 2.0f * right  / (float)rc->rc_width;
-      y2 = -1.0f + 2.0f * top    / (float)rc->rc_height;
-
-      glw_renderer_vtx_pos(&gvo->gvo_renderer, 0, x1, y1, 0.0);
-      glw_renderer_vtx_pos(&gvo->gvo_renderer, 1, x2, y1, 0.0);
-      glw_renderer_vtx_pos(&gvo->gvo_renderer, 2, x2, y2, 0.0);
-      glw_renderer_vtx_pos(&gvo->gvo_renderer, 3, x1, y2, 0.0);
-
-      rc0 = *rc;
-      
-    } else {
-      float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
-
+    if(gv->gv_vo_on_video || gvo->gvo_videoframe_align)
       rc0 = *vrc;
-      glw_Scalef(&rc0, 
-		 2.0f / gv->gv_cfg_cur.gvc_width[0], 
-		 -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
-		 0.0f);
-      
-      glw_Translatef(&rc0, 
-		     -gv->gv_cfg_cur.gvc_width[0]  / 2,
-		     (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
-		     0.0f);
-    }
+    else
+      rc0 = *frc;
 
-    glw_renderer_draw(&gvo->gvo_renderer, gr, &rc0,
-		      &gvo->gvo_texture, NULL, NULL, 
-		      gvo->gvo_alpha * rc->rc_alpha, 0);
+    switch(gvo->gvo_type) {
+    case GVO_DVDSPU:
+      if(!show_dvd_overlays)
+	continue;
+      // FALLTHRU
+
+    case GVO_BITMAP:
+      if(gvo->gvo_alignment != 0) {
+      
+
+	int left   =                 gvo->gvo_padding_left;
+	int top    = rc0.rc_height - gvo->gvo_padding_top;
+	int right  = rc0.rc_width  - gvo->gvo_padding_right;
+	int bottom =                 gvo->gvo_padding_bottom;
+    
+	int width  = gvo->gvo_width;
+	int height = gvo->gvo_height;
+    
+	float x1, y1, x2, y2;
+
+	// Horizontal 
+	if(width > right - left) {
+	  // Oversized, must cut
+	  width = right - left;
+	} else { 
+	  switch(gvo->gvo_alignment) {
+	  case 2:
+	  case 5:
+	  case 8:
+	    left = (left + right - width) / 2;
+	    right = left + width;
+	    break;
+
+	  case 1:
+	  case 4:
+	  case 7:
+	    right = left + gvo->gvo_width;
+	    break;
+
+	  case 3:
+	  case 6:
+	  case 9:
+	    left = right - gvo->gvo_width;
+	    break;
+	  }
+	}
+      
+	// Vertical 
+	if(height > top - bottom) {
+	  // Oversized, must cut
+	  height = top - bottom;
+	} else { 
+	  switch(gvo->gvo_alignment) {
+	  case 4 ... 6:
+	    bottom = (bottom + top - height) / 2;
+	    top = bottom + height;
+	    break;
+
+	  case 7 ... 9:
+	    bottom = top - gvo->gvo_height;
+	    break;
+
+	  case 1 ... 3:
+	    top = bottom + gvo->gvo_height;
+	    break;
+	  }
+	}
+      
+	x1 = -1.0f + 2.0f * left   / (float)rc0.rc_width;
+	y1 = -1.0f + 2.0f * bottom / (float)rc0.rc_height;
+	x2 = -1.0f + 2.0f * right  / (float)rc0.rc_width;
+	y2 = -1.0f + 2.0f * top    / (float)rc0.rc_height;
+
+	glw_renderer_vtx_pos(&gvo->gvo_renderer, 0, x1, y1, 0.0);
+	glw_renderer_vtx_pos(&gvo->gvo_renderer, 1, x2, y1, 0.0);
+	glw_renderer_vtx_pos(&gvo->gvo_renderer, 2, x2, y2, 0.0);
+	glw_renderer_vtx_pos(&gvo->gvo_renderer, 3, x1, y2, 0.0);
+
+      } else {
+	float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
+	glw_Scalef(&rc0, 
+		   2.0f / gv->gv_cfg_cur.gvc_width[0], 
+		   -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
+		   0.0f);
+      
+	glw_Translatef(&rc0, 
+		       -gv->gv_cfg_cur.gvc_width[0]  / 2,
+		       (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
+		       0.0f);
+      }
+
+      glw_renderer_draw(&gvo->gvo_renderer, gr, &rc0,
+			&gvo->gvo_texture, NULL, NULL, 
+			gvo->gvo_alpha * rc0.rc_alpha, 0);
+      break;
+
+    case GVO_TEXT:
+      rc0.rc_alpha *= gvo->gvo_alpha;
+      glw_render0(gvo->gvo_widget, &rc0);
+      break;
+    }
   }
 }
 
@@ -394,9 +495,9 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   gvo_flush_all(gv);
 
   
-  glw_video_overlay_t *gvo = gvo_create(gv, AV_NOPTS_VALUE);
-  gvo->gvo_is_dvd = 1;
+  glw_video_overlay_t *gvo = gvo_create(gv, AV_NOPTS_VALUE, GVO_DVDSPU);
   glw_root_t *gr = gv->w.glw_root;
+  gvo->gvo_videoframe_align = 1;
 
   glw_renderer_init_quad(&gvo->gvo_renderer);
 
@@ -476,9 +577,9 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
  *
  */
 static void
-gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
+gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
 {
-  glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start);
+  glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start, GVO_BITMAP);
   glw_root_t *gr = gv->w.glw_root;
   int fmt;
 
@@ -505,6 +606,8 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_alignment = vo->vo_alignment;
 
   if(vo->vo_alignment == 0) {
+    gvo->gvo_videoframe_align = 1;
+
     glw_renderer_vtx_pos(r, 0, vo->vo_x,     vo->vo_y + H, 0.0f);
     glw_renderer_vtx_pos(r, 1, vo->vo_x + W, vo->vo_y + H, 0.0f);
     glw_renderer_vtx_pos(r, 2, vo->vo_x + W, vo->vo_y,     0.0f);
@@ -539,7 +642,51 @@ gvo_create_from_vo(glw_video_t *gv, video_overlay_t *vo)
  *
  */
 static void
-glw_video_overlay_sub_layout(glw_video_t *gv, int64_t pts)
+gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
+{
+  const glw_class_t *gc = glw_class_find_by_name("label");
+  
+  if(gc == NULL)
+    return; // huh?
+
+  glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start, GVO_TEXT);
+
+  gvo->gvo_stop           = vo->vo_stop;
+  gvo->gvo_fadein         = vo->vo_fadein;
+  gvo->gvo_fadeout        = vo->vo_fadeout;
+  gvo->gvo_canvas_width   = vo->vo_canvas_width;
+  gvo->gvo_canvas_height  = vo->vo_canvas_height;
+  gvo->gvo_padding_left   = vo->vo_padding_left;
+  gvo->gvo_padding_top    = vo->vo_padding_top;
+  gvo->gvo_padding_right  = vo->vo_padding_right;
+  gvo->gvo_padding_bottom = vo->vo_padding_bottom;
+
+  glw_t *w = glw_create(gv->w.glw_root, gc, NULL, NULL, NULL);
+  
+  gvo->gvo_widget = w;
+
+  gc->gc_freeze(w);
+
+  w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
+
+  gc->gc_set_default_size(w, 48);
+
+  gc->gc_set_padding(w, (const int16_t []){24,24,24,24});
+
+  gc->gc_set_max_lines(w, 10);
+
+  glw_gtb_set_caption_raw(w, vo->vo_text, vo->vo_text_length);
+  vo->vo_text = NULL; // Steal it
+
+  gc->gc_thaw(w);
+}
+
+
+/**
+ *
+ */
+static void
+glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
 {
   video_decoder_t *vd = gv->gv_vd;
   video_overlay_t *vo;
@@ -562,14 +709,23 @@ glw_video_overlay_sub_layout(glw_video_t *gv, int64_t pts)
 	break;
       gvo_flush_infinite(gv);
       if(vo->vo_pixmap != NULL)
-	gvo_create_from_vo(gv, vo);
+	gvo_create_from_vo_bitmap(gv, vo);
       video_overlay_destroy(vd, vo);
       continue;
+
+    case VO_TEXT:
+      if(vo->vo_start > pts)
+	break;
+      gvo_flush_infinite(gv);
+      gvo_create_from_vo_text(gv, vo);
+      video_overlay_destroy(vd, vo);
+      continue;
+
     }
     break;
   }
   hts_mutex_unlock(&vd->vd_overlay_mutex);
-  gvo_update(gv, pts);
+  gvo_set_pts(gv, pts);
 }
 
 
@@ -577,7 +733,7 @@ glw_video_overlay_sub_layout(glw_video_t *gv, int64_t pts)
  *
  */
 void
-glw_video_overlay_layout(glw_video_t *gv, int64_t pts)
+glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
 {
   const video_decoder_t *vd = gv->gv_vd;
   int want_focus = 0;
@@ -587,7 +743,7 @@ glw_video_overlay_layout(glw_video_t *gv, int64_t pts)
 #endif
   pts -= vd->vd_mp->mp_svdelta;
 
-  glw_video_overlay_sub_layout(gv, pts);
+  glw_video_overlay_sub_set_pts(gv, pts);
 
 
 #if ENABLE_DVD

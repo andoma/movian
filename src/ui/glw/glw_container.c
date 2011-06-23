@@ -611,7 +611,7 @@ glw_container_set(glw_t *w, va_list ap)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_padding(glw_t *w, const int16_t *v)
 {
   glw_container_t *co = (glw_container_t *)w;
   co->co_padding_left   = v[0];

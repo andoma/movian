@@ -35,6 +35,12 @@ struct pixmap;
 #define TR_CODE_ITALIC_ON  0x7f000007
 #define TR_CODE_ITALIC_OFF 0x7f000008
 
+#define TR_CODE_SIZE_PX    0x7f010000  // Low 16 bit is the size in pixels
+
+#define TR_CODE_COLOR      0x7e000000  // Low 24 bit is BGR
+
+#define TR_CODE_FONT_FAMILY 0x7d000000  // Low 24 bit is family
+
 #define TR_RENDER_DEBUG         0x1
 #define TR_RENDER_ELLIPSIZE     0x2
 #define TR_RENDER_CHARACTER_POS 0x4
@@ -46,7 +52,8 @@ struct pixmap;
 #define TR_ALIGN_JUSTIFIED 4
 
 struct pixmap *
-text_render(const uint32_t *uc, int len, int flags, int size, int alignment,
+text_render(const uint32_t *uc, int len, int flags, int default_size,
+	    float scale, int alignment,
 	    int max_width, int max_lines, const char *font_family);
 
 
@@ -54,11 +61,18 @@ text_render(const uint32_t *uc, int len, int flags, int size, int alignment,
 int freetype_init(void);
 
 void freetype_load_font(const char *url);
+
+void *freetype_load_font_from_memory(const void *ptr, size_t len);
+
+void freetype_unload_font(void *ref);
+
+int freetype_family_id(const char *str);
+
 #endif
 
 #if ENABLE_LIBFONTCONFIG
 int fontconfig_resolve(int uc, uint8_t style, const char *family,
-		       char *urlbuf, size_t urllen, uint8_t *actualstylep);
+		       char *urlbuf, size_t urllen);
 #endif
 
 #define TEXT_PARSE_TAGS          0x1

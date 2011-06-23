@@ -177,7 +177,7 @@ set_scaling(glw_t *w, const float *xyz)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_padding(glw_t *w, const int16_t *v)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
   

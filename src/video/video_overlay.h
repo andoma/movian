@@ -14,6 +14,7 @@ typedef struct video_overlay {
 
   enum { 
     VO_BITMAP,
+    VO_TEXT,
     VO_FLUSH,
     VO_TIMED_FLUSH,
   } vo_type;
@@ -29,12 +30,18 @@ typedef struct video_overlay {
   int vo_fadein;
   int vo_fadeout;
 
-  int vo_alignment;  // ASS numpad style
+  int vo_alignment;  // LAYOUT_ALIGN_ from layout.h
 
   int vo_padding_left;
   int vo_padding_top;
   int vo_padding_right;
   int vo_padding_bottom;
+
+  uint32_t *vo_text;
+  int vo_text_length;
+
+  int vo_canvas_width;
+  int vo_canvas_height;
 
 } video_overlay_t;
 
@@ -45,8 +52,6 @@ void video_overlay_decode(video_decoder_t *vd, media_buf_t *mb);
 void video_overlay_flush(video_decoder_t *vd, int send);
 
 void video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo);
-
-video_overlay_t *video_overlay_from_pixmap(struct pixmap *pm);
 
 void video_overlay_decode_ext_subtitle(video_decoder_t *vd, 
 				       struct ext_subtitles *es,

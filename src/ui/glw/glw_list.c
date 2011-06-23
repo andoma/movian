@@ -555,7 +555,7 @@ glw_list_suggest_focus(glw_t *w, glw_t *c)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_padding(glw_t *w, const int16_t *v)
 {
   glw_list_t *l = (glw_list_t *)w;
   l->padding_left   = v[0];

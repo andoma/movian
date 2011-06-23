@@ -68,7 +68,9 @@ typedef struct glw_text_bitmap {
   } gtb_status;
 
   uint8_t gtb_frozen;
-  uint8_t gtb_pending_update;
+  uint8_t gtb_pending_updates;
+#define GTB_UPDATE_REALIZE      2
+
   uint8_t gtb_paint_cursor;
   uint8_t gtb_update_cursor;
   uint8_t gtb_need_layout;
@@ -83,6 +85,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_uc_len;
   int16_t gtb_uc_size;
   int16_t gtb_maxlines;
+  int16_t gtb_default_size;
 
   uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
@@ -127,8 +130,12 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   // Upload texture
 
   if(pm != NULL && pm->pm_pixels != NULL && gtb->gtb_status == GTB_VALID) {
+    int fmt;
+
+    fmt = pm->pm_pixfmt == PIX_FMT_Y400A ? GLW_TEXTURE_FORMAT_I8A8 : GLW_TEXTURE_FORMAT_BGR32;
+
     glw_tex_upload(gr, &gtb->gtb_texture, pm->pm_pixels,
-		   GLW_TEXTURE_FORMAT_I8A8, pm->pm_width, pm->pm_height, 0);
+		   fmt, pm->pm_width, pm->pm_height, 0);
 
     free(pm->pm_pixels);
     pm->pm_pixels = NULL;
@@ -137,11 +144,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   // Check if we need to repaint
 
-  if(pm != NULL && 
-     (gtb->gtb_saved_width  != rc->rc_width || 
+  if((gtb->gtb_saved_width  != rc->rc_width || 
       gtb->gtb_saved_height != rc->rc_height)) {
     
-    if(gtb->gtb_status == GTB_VALID) {
+    if(pm != NULL && gtb->gtb_status == GTB_VALID) {
 
       if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
 	gtb->gtb_status = GTB_NEED_RERENDER;
@@ -337,8 +343,8 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
 
     if(w->glw_flags & GLW_SHADOW && !rc->rc_inhibit_shadows) {
-      float xd =  2.0f / rc->rc_width;
-      float yd = -2.0f / rc->rc_height;
+      float xd =  2.5f / rc->rc_width;
+      float yd = -2.5f / rc->rc_height;
       glw_rctx_t rc0 = *rc;
 
       glw_Translatef(&rc0, xd, yd, 0.0);
@@ -346,7 +352,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
       const static glw_rgb_t black = {0,0,0};
       
       glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-			&gtb->gtb_texture, &black, NULL, alpha * 0.75f,
+			&gtb->gtb_texture, &black, NULL, alpha,
 			blur);
     }
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
@@ -396,14 +402,20 @@ glw_text_bitmap_dtor(glw_t *w)
 static void
 gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 {
-  int lines = gtb->gtb_pixmap && gtb->gtb_pixmap->pm_lines ? gtb->gtb_pixmap->pm_lines : 1;
-  int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + 
-    (gr->gr_fontsize * gtb->gtb_size_scale) * lines;
-
-  int xs = gtb->gtb_padding_left + gtb->gtb_padding_right +
-    (gtb->gtb_pixmap ? gtb->gtb_pixmap->pm_width : 0);
-
+  const pixmap_t *pm = gtb->gtb_pixmap;
+  int lines = pm && pm->pm_lines ? pm->pm_lines : 1;
   int flags = GLW_CONSTRAINT_Y;
+  int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom;
+  int xs = gtb->gtb_padding_left + gtb->gtb_padding_right;
+
+  int lh = (gtb->gtb_default_size ?: gr->gr_fontsize) * gtb->gtb_size_scale;
+  int height = lh * lines;
+  
+  height = MAX(pm ? pm->pm_height : 0, height);
+  ys += height;
+
+  if(pm != NULL)
+    xs += pm->pm_width;
 
   if(!(gtb->gtb_flags & GTB_ELLIPSIZE) && gtb->gtb_maxlines == 1 && xs > 0)
     flags |= GLW_CONSTRAINT_X;
@@ -564,11 +576,45 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
  *
  */
 static void
-gtb_caption_has_changed(glw_text_bitmap_t *gtb)
+gtb_realize(glw_text_bitmap_t *gtb)
+{
+  if(gtb->gtb_status != GTB_ON_QUEUE)
+    gtb->gtb_status = GTB_NEED_RERENDER;
+
+  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
+    gtb_set_constraints(gtb->w.glw_root, gtb);
+}
+
+
+
+static void gtb_update_epilogue(glw_text_bitmap_t *gtb, int flags);
+
+/**
+ *
+ */
+static void
+caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
 {
   int len;
   int flags = 0;
 
+  if(gtb->gtb_caption && !strcmp(str ?: "", gtb->gtb_caption) &&
+     type == gtb->gtb_type)
+    return;
+
+  free(gtb->gtb_caption);
+  gtb->gtb_caption = strdup(str ?: "");
+  gtb->gtb_type = type;
+
+  assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
+
+  if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
+    if(str == NULL)
+      glw_hide(&gtb->w);
+    else
+      glw_unhide(&gtb->w);
+  }
+  
   if(gtb->gtb_type == PROP_STR_RICH)
     flags |= TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES;
 
@@ -581,11 +627,42 @@ gtb_caption_has_changed(glw_text_bitmap_t *gtb)
     gtb->gtb_update_cursor = 1;
   }
   
-  if(gtb->gtb_status != GTB_ON_QUEUE)
-    gtb->gtb_status = GTB_NEED_RERENDER;
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+}
 
-  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
-    gtb_set_constraints(gtb->w.glw_root, gtb);
+
+/**
+ *
+ */
+static void
+gtb_update_epilogue(glw_text_bitmap_t *gtb, int flags)
+{
+  if(gtb->gtb_frozen) {
+    gtb->gtb_pending_updates |= flags;
+  } else {
+
+    if(flags & GTB_UPDATE_REALIZE)
+      gtb_realize(gtb);
+
+    gtb->gtb_pending_updates = 0;
+  }
+}
+
+
+
+/**
+ *
+ */
+void
+glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  free(gtb->gtb_uc_buffer);
+
+  gtb->gtb_uc_buffer = uc;
+  gtb->gtb_uc_len = len;
+
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
 
 
@@ -596,14 +673,9 @@ static void
 prop_callback(void *opaque, prop_event_t event, ...)
 {
   glw_text_bitmap_t *gtb = opaque;
-  glw_root_t *gr;
   const char *caption;
   prop_t *p;
-
-  if(gtb == NULL)
-    return;
-
-  gr = gtb->w.glw_root;
+  prop_str_type_t type = 0;
   va_list ap;
   va_start(ap, event);
 
@@ -616,6 +688,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   case PROP_SET_RSTRING:
     caption = rstr_get(va_arg(ap, const rstr_t *));
     p = va_arg(ap, prop_t *);
+    type = va_arg(ap, prop_str_type_t);
     break;
 
   default:
@@ -625,9 +698,7 @@ prop_callback(void *opaque, prop_event_t event, ...)
   prop_ref_dec(gtb->gtb_p);
   gtb->gtb_p = prop_ref_inc(p);
 
-  free(gtb->gtb_caption);
-  gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
-  gtb_caption_has_changed(gtb);
+  caption_set_internal(gtb, caption, type);
 }
 
 
@@ -669,9 +740,16 @@ glw_text_bitmap_set_rgb(glw_t *w, const float *rgb)
  *
  */
 static void
-set_padding(glw_t *w, const float *v)
+set_padding(glw_t *w, const int16_t *v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
+
+  if(gtb->gtb_padding_left   == v[0] &&
+     gtb->gtb_padding_top    == v[1] &&
+     gtb->gtb_padding_right  == v[2] &&
+     gtb->gtb_padding_bottom == v[3])
+    return;
+
   gtb->gtb_padding_left   = v[0];
   gtb->gtb_padding_top    = v[1];
   gtb->gtb_padding_right  = v[2];
@@ -681,32 +759,16 @@ set_padding(glw_t *w, const float *v)
   gtb->gtb_need_layout = 1;
 }
 
-
-/**
- *
- */
-static void
-gtb_update(glw_text_bitmap_t *gtb)
-{
-  if(gtb->gtb_frozen) {
-    gtb->gtb_pending_update = 1;
-  } else {
-    gtb_caption_has_changed(gtb);
-    gtb->gtb_pending_update = 0;
-  }
-}
-
-
 /**
  *
  */
 static void
 mod_text_flags(glw_t *w, int set, int clr)
 {
-  glw_text_bitmap_t *gtb = (void *)w;
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   gtb->gtb_flags = (gtb->gtb_flags | set) & ~clr;
   
-  gtb_update(gtb);
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
 
 
@@ -717,25 +779,8 @@ static void
 set_caption(glw_t *w, const char *caption, int type)
 {
   glw_text_bitmap_t *gtb = (void *)w;
-
   gtb_unbind(gtb);
-
-  const int update = strcmp(caption ?: "", gtb->gtb_caption ?: "");
-
-  free(gtb->gtb_caption);
-  gtb->gtb_caption = caption != NULL ? strdup(caption) : NULL;
-  gtb->gtb_type = type;
-  assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
-
-  if(w->glw_flags2 & GLW2_AUTOHIDE) {
-    if(caption == NULL)
-      glw_hide(w);
-    else
-      glw_unhide(w);
-  }
-  
-  if(update)
-    gtb_update(gtb);
+  caption_set_internal(gtb, caption, type);
 }
 
 
@@ -786,10 +831,10 @@ thaw(glw_t *w)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   gtb->gtb_frozen = 0;
 
-  if(gtb->gtb_pending_update) {
-    gtb_caption_has_changed(gtb);
-    gtb->gtb_pending_update = 0;
-  }
+  if(gtb->gtb_pending_updates & GTB_UPDATE_REALIZE)
+    gtb_realize(gtb);
+
+  gtb->gtb_pending_updates = 0;
 }
 
 
@@ -801,47 +846,42 @@ set_size_scale(glw_t *w, float v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
 
+  if(gtb->gtb_size_scale == v)
+    return;
+
   gtb->gtb_size_scale = v;
-  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) // Only update if yet unset
-    gtb_set_constraints(gtb->w.glw_root, gtb);
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
+
 
 /**
  *
  */
-static void 
-glw_text_bitmap_set(glw_t *w, va_list ap)
+static void
+set_default_size(glw_t *w, int px)
 {
   glw_text_bitmap_t *gtb = (void *)w;
-  glw_attribute_t attrib;
-  int update = 0;
 
-  do {
-    attrib = va_arg(ap, int);
-    switch(attrib) {
-
-   case GLW_ATTRIB_MAXLINES:
-     gtb->gtb_maxlines = va_arg(ap, int);
-     update = 1;
-     break;
-
-    default:
-      GLW_ATTRIB_CHEW(attrib, ap);
-      break;
-    }
-  } while(attrib);
-
-
-  if(!update)
+  if(gtb->gtb_default_size == px)
     return;
 
-  if(gtb->gtb_frozen) {
-    gtb->gtb_pending_update = 1;
-  } else {
-    gtb_caption_has_changed(gtb);
-    gtb->gtb_pending_update = 0;
-  }
+  gtb->gtb_default_size = px;
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
+
+
+/**
+ *
+ */
+static void
+set_maxlines(glw_t *w, int v)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  gtb->gtb_maxlines = v;
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+}
+
 
 
 
@@ -855,8 +895,8 @@ font_render_thread(void *aux)
   glw_text_bitmap_t *gtb;
   uint32_t *uc, len, i;
   pixmap_t *pm;
+  int max_width, max_lines, flags, default_size;
   float scale;
-  int max_width, max_lines, flags;
 
   glw_lock(gr);
 
@@ -884,9 +924,12 @@ font_render_thread(void *aux)
     assert(gtb->gtb_status == GTB_ON_QUEUE);
     TAILQ_REMOVE(&gr->gr_gtb_render_queue, gtb, gtb_workq_link);
     gtb->gtb_status = GTB_RENDERING;
-    
+
+    default_size = gtb->gtb_default_size ?: gr->gr_fontsize;
     scale = gtb->gtb_size_scale;
-    max_width = gtb->gtb_saved_width;
+
+    max_width =
+      gtb->gtb_saved_width - gtb->gtb_padding_left - gtb->gtb_padding_right;
     max_lines = gtb->gtb_maxlines;
 
     flags = 0;
@@ -908,7 +951,7 @@ font_render_thread(void *aux)
     glw_unlock(gr);
 
     if(uc != NULL && uc[0] != 0) {
-      pm = text_render(uc, len, flags, gr->gr_fontsize * scale,
+      pm = text_render(uc, len, flags, default_size, scale,
 		       TR_ALIGN_JUSTIFIED, max_width, max_lines, NULL);
     } else {
       pm = NULL;
@@ -1059,7 +1102,6 @@ static glw_class_t glw_label = {
   .gc_name = "label",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
-  .gc_set = glw_text_bitmap_set,
   .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
@@ -1074,6 +1116,8 @@ static glw_class_t glw_label = {
   .gc_freeze = freeze,
   .gc_thaw = thaw,
   .gc_set_size_scale = set_size_scale,
+  .gc_set_default_size = set_default_size,
+  .gc_set_max_lines = set_maxlines,
 };
 
 GLW_REGISTER_CLASS(glw_label);
@@ -1086,7 +1130,6 @@ static glw_class_t glw_text = {
   .gc_name = "text",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
   .gc_render = glw_text_bitmap_render,
-  .gc_set = glw_text_bitmap_set,
   .gc_ctor = glw_text_bitmap_ctor,
   .gc_dtor = glw_text_bitmap_dtor,
   .gc_signal_handler = glw_text_bitmap_callback,
@@ -1100,6 +1143,8 @@ static glw_class_t glw_text = {
   .gc_freeze = freeze,
   .gc_thaw = thaw,
   .gc_set_size_scale = set_size_scale,
+  .gc_set_default_size = set_default_size,
+  .gc_set_max_lines = set_maxlines,
 };
 
 GLW_REGISTER_CLASS(glw_text);

@@ -72,6 +72,7 @@ typedef struct ass_style {
   LIST_ENTRY(ass_style) as_link;
 
   char *as_name;
+  char *as_fontname;
   uint32_t as_primary_color;
   uint32_t as_secondary_color;
   uint32_t as_outline_color;
@@ -107,7 +108,7 @@ static const ass_style_t ass_style_default = {
   .as_margin_left = 20,
   .as_margin_right = 20,
   .as_margin_vertical = 20,
-  .as_fontsize = 20,
+  .as_fontsize = 48,
 };
 
 typedef struct ass_decoder_ctx {
@@ -121,6 +122,9 @@ typedef struct ass_decoder_ctx {
   LIST_HEAD(, ass_style) adc_styles;
   const char *adc_style_format;
   const char *adc_event_format;
+
+  int adc_canvas_width;
+  int adc_canvas_height;
 
 } ass_decoder_ctx_t;
 
@@ -202,12 +206,12 @@ ass_parse_color(const char *str)
   switch(l) {
   case 8: rgba |= hexnibble(str[l-8]) << 28;
   case 7: rgba |= hexnibble(str[l-7]) << 24;
-  case 6: rgba |= hexnibble(str[l-6]) << 4;
-  case 5: rgba |= hexnibble(str[l-5]) << 0;
+  case 6: rgba |= hexnibble(str[l-6]) << 20;
+  case 5: rgba |= hexnibble(str[l-5]) << 16;
   case 4: rgba |= hexnibble(str[l-4]) << 12;
   case 3: rgba |= hexnibble(str[l-3]) << 8;
-  case 2: rgba |= hexnibble(str[l-2]) << 20;
-  case 1: rgba |= hexnibble(str[l-1]) << 16;
+  case 2: rgba |= hexnibble(str[l-2]) << 4;
+  case 1: rgba |= hexnibble(str[l-1]);
   }
   if((rgba & 0xff000000) == 0)
     rgba |= 0xff000000;
@@ -266,6 +270,8 @@ ass_parse_v4style(ass_decoder_ctx_t *adc, const char *str)
       as->as_shadow = MIN((unsigned int)atoi(val), 4);
     else if(!strcasecmp(key, "fontsize"))
       as->as_fontsize = atoi(val);
+    else if(!strcasecmp(key, "fontname"))
+      mystrset(&as->as_fontname, val);
   }
   LIST_INSERT_HEAD(&adc->adc_styles, as, as_link);
 }
@@ -278,6 +284,11 @@ static void
 ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
 {
   const char *s;
+  if(!strcmp(str, "[Script Info]")) {
+    adc->adc_section = ADC_SECTION_SCRIPT_INFO;
+    return;
+  }
+
   if(!strcmp(str, "[V4+ Styles]")) {
     adc->adc_section = ADC_SECTION_V4_STYLES;
     return;
@@ -297,6 +308,20 @@ ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
   switch(adc->adc_section) {
   default:
     break;
+  case ADC_SECTION_SCRIPT_INFO:
+    s = mystrbegins(str, "PlayResX:");
+    if(s != NULL) {
+      adc->adc_canvas_width = atoi(s);
+      break;
+    }
+
+    s = mystrbegins(str, "PlayResY:");
+    if(s != NULL) {
+      adc->adc_canvas_height = atoi(s);
+      break;
+    }
+    break;
+
   case ADC_SECTION_V4_STYLES:
     s = mystrbegins(str, "Format:");
     if(s != NULL) {
@@ -328,6 +353,7 @@ static void
 ass_decode_header(ass_decoder_ctx_t *adc, char *s)
 {
   int l;
+  //  printf("%s\n", s);
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
     ass_decode_line(adc, s);
@@ -416,7 +442,6 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   const char *str;
   int c;
   const ass_style_t *as;
-  int vwidth  = vd->vd_mp->mp_video_width;
 
   ad->ad_buf[strcspn(ad->ad_buf, "\n\r")] = 0;
 
@@ -442,7 +467,12 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     ad_txt_append(ad, TR_CODE_BOLD_ON);
   if(as->as_italic)
     ad_txt_append(ad, TR_CODE_ITALIC_ON);
+  if(as->as_fontname)
+    ad_txt_append(ad, TR_CODE_FONT_FAMILY |
+		  freetype_family_id(as->as_fontname));
 
+  ad_txt_append(ad, TR_CODE_SIZE_PX | as->as_fontsize);
+  ad_txt_append(ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
 
   str = tokens[9];
   while((c = utf8_get(&str)) != 0) {
@@ -466,55 +496,12 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     ad_txt_append(ad, c);
   }
 
-  int maxwidth = vwidth - as->as_margin_left - as->as_margin_right;
-  if(maxwidth < 10)
-    return;
+  video_overlay_t *vo = calloc(1, sizeof(video_overlay_t));
+  vo->vo_type = VO_TEXT;
 
-  uint8_t red, green, blue, alpha;
-
-  int fontsize = as->as_fontsize * subtitle_settings.scaling / 100;
-  int alignment = (const int[]){TR_ALIGN_LEFT, TR_ALIGN_CENTER,
-				TR_ALIGN_RIGHT}[(as->as_alignment - 1) % 3];
-
-  pixmap_t *pm = text_render(ad->ad_text, ad->ad_textlen,
-			     0, fontsize, alignment, maxwidth, 10, NULL);
-
-  if(pm == NULL)
-    return;
-
-  pixmap_t *mask = pixmap_extract_channel(pm, 3);
-
-  pixmap_t *out = pixmap_create(pm->pm_width  + as->as_shadow,
-				pm->pm_height + as->as_shadow,
-				PIX_FMT_BGR32);
-
-  if(as->as_shadow) {
-    pixmap_t *blur = pixmap_convolution_filter(mask, PIXMAP_BLUR);
-    pixmap_composite(out, blur, as->as_shadow, as->as_shadow, 0, 0, 0, 128);
-    pixmap_release(blur);
-  }
-
-  if(as->as_outline) {
-    pixmap_t *edges = pixmap_convolution_filter(mask, PIXMAP_EDGE_DETECT);
-
-    blue  = as->as_outline_color;
-    green = as->as_outline_color >> 8;
-    red   = as->as_outline_color >> 16;
-    alpha = as->as_outline_color >> 24;
-    pixmap_composite(out, edges, 0, 0, red, green, blue, alpha);
-    pixmap_release(edges);
-  }
-
-  pixmap_release(mask);
-
-  blue  = as->as_primary_color;
-  green = as->as_primary_color >> 8;
-  red   = as->as_primary_color >> 16;
-  alpha = as->as_primary_color >> 24;
-  pixmap_composite(out, pm, 0, 0, red, green, blue, alpha);
-
-  video_overlay_t *vo = video_overlay_from_pixmap(out);
-  pixmap_release(out);
+  vo->vo_text = malloc(ad->ad_textlen * sizeof(uint32_t));
+  vo->vo_text_length = ad->ad_textlen;
+  memcpy(vo->vo_text, ad->ad_text, ad->ad_textlen * sizeof(uint32_t));
 
   vo->vo_start = start;
   vo->vo_stop = end;
@@ -526,7 +513,10 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   vo->vo_padding_top    = as->as_margin_vertical;
   vo->vo_padding_right  = as->as_margin_right;
   vo->vo_padding_bottom = as->as_margin_vertical;
-  pixmap_release(pm);
+
+  vo->vo_canvas_width  = ad->ad_adc.adc_canvas_width;
+  vo->vo_canvas_height = ad->ad_adc.adc_canvas_height;
+
   video_overlay_enqueue(vd, vo);
 }
 
@@ -539,9 +529,6 @@ sub_ass_render(video_decoder_t *vd, const char *src,
 	       const uint8_t *header, int header_len)
 {
   ass_dialoge_t ad;
-
-  if(vd->vd_mp->mp_video_width < 10 ||  vd->vd_mp->mp_video_height < 10)
-    return;
 
   if(strncmp(src, "Dialogue:", strlen("Dialogue:")))
     return;

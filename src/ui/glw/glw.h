@@ -118,7 +118,6 @@ typedef enum {
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_FILL,
-  GLW_ATTRIB_MAXLINES,
   GLW_ATTRIB_SPACING,
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
@@ -446,17 +445,17 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_border)(struct glw *w, const float *v);
+  void (*gc_set_border)(struct glw *w, const int16_t *v);
 
   /**
    *
    */
-  void (*gc_set_padding)(struct glw *w, const float *v);
+  void (*gc_set_padding)(struct glw *w, const int16_t *v);
 
   /**
    *
    */
-  void (*gc_set_margin)(struct glw *w, const float *v);
+  void (*gc_set_margin)(struct glw *w, const int16_t *v);
 
   /**
    *
@@ -522,6 +521,16 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_size_scale)(struct glw *w, const float v);
+
+  /**
+   *
+   */
+  void (*gc_set_default_size)(struct glw *w, int px);
+
+  /**
+   *
+   */
+  void (*gc_set_max_lines)(struct glw *w, int lines);
 
   /**
    * Registration link
@@ -1013,7 +1022,6 @@ do {						\
   case GLW_ATTRIB_PAGE:                         \
   case GLW_ATTRIB_ALPHA_EDGES:                  \
   case GLW_ATTRIB_PRIORITY:                     \
-  case GLW_ATTRIB_MAXLINES:                     \
   case GLW_ATTRIB_SPACING:                      \
   case GLW_ATTRIB_X_SPACING:                    \
   case GLW_ATTRIB_Y_SPACING:                    \
@@ -1174,5 +1182,11 @@ void glw_blendmode(struct glw_root *gr, int mode);
 #define GLW_CW  0
 #define GLW_CCW 1
 void glw_frontface(struct glw_root *gr, int how);
+
+
+
+// text bitmap semi-private stuff
+
+void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 
 #endif /* GLW_H */

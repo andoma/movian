@@ -266,6 +266,17 @@ set_height(glw_t *w, int v)
 /**
  *
  */
+static void
+set_maxlines(glw_t *w, int v)
+{
+  if(w->glw_class->gc_set_max_lines != NULL)
+    w->glw_class->gc_set_max_lines(w, v);
+}
+
+
+/**
+ *
+ */
 static int
 set_float3(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	   struct token *t)
@@ -420,8 +431,63 @@ set_float4(glw_view_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
+static int
+set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  int16_t v[4];
+
+  switch(t->type) {
+  case TOKEN_VECTOR_FLOAT:
+
+    switch(t->t_elements) {
+
+    case 4:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[2];
+      v[3] = t->t_float_vector[3];
+      break;
+
+    case 2:
+      v[0] = t->t_float_vector[0];
+      v[1] = t->t_float_vector[1];
+      v[2] = t->t_float_vector[0];
+      v[3] = t->t_float_vector[1];
+      break;
+
+    default:
+      return glw_view_seterr(ec->ei, t,
+			     "Attribute '%s': invalid vector size %d",
+			     a->name, t->t_elements);
+    }
+    break;
+
+  case TOKEN_FLOAT:
+    v[0] = v[1] = v[2] = v[3] = t->t_float;
+    break;
+
+  case TOKEN_INT:
+    v[0] = v[1] = v[2] = v[3] = t->t_int;
+    break;
+
+  default:
+    return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
+			   a->name, token2name(t));
+  }
+
+  void (*fn)(struct glw *w, const int16_t *v4) = a->fn;
+  fn(ec->w, v);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 static void
-set_padding(glw_t *w, const float *vec4)
+set_padding(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_padding != NULL)
     w->glw_class->gc_set_padding(w, vec4);
@@ -432,7 +498,7 @@ set_padding(glw_t *w, const float *vec4)
  *
  */
 static void
-set_border(glw_t *w, const float *vec4)
+set_border(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_border != NULL)
     w->glw_class->gc_set_border(w, vec4);
@@ -443,7 +509,7 @@ set_border(glw_t *w, const float *vec4)
  *
  */
 static void
-set_margin(glw_t *w, const float *vec4)
+set_margin(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_margin != NULL)
     w->glw_class->gc_set_margin(w, vec4);
@@ -759,7 +825,7 @@ static const token_attrib_t attribtab[] = {
 
   {"alphaEdges",      set_int,    GLW_ATTRIB_ALPHA_EDGES},
   {"priority",        set_int,    GLW_ATTRIB_PRIORITY},
-  {"maxlines",        set_int,    GLW_ATTRIB_MAXLINES},
+  {"maxlines",        set_int,    0, set_maxlines},
   {"spacing",         set_int,    GLW_ATTRIB_SPACING},
   {"Xspacing",        set_int,    GLW_ATTRIB_X_SPACING},
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
@@ -770,9 +836,9 @@ static const token_attrib_t attribtab[] = {
   {"color1",          set_float3, 0, set_color1},
   {"color2",          set_float3, 0, set_color2},
 
-  {"padding",         set_float4, 0, set_padding},
-  {"border",          set_float4, 0, set_border},
-  {"margin",          set_float4, 0, set_margin},
+  {"padding",         set_int16_4, 0, set_padding},
+  {"border",          set_int16_4, 0, set_border},
+  {"margin",          set_int16_4, 0, set_margin},
   {"rotation",        set_float4, 0, set_rotation},
 
   {"align",           set_align,  0},

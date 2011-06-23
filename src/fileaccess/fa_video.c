@@ -40,6 +40,22 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
 #include "misc/isolang.h"
+#include "text/text.h"
+
+LIST_HEAD(attachment_list, attachment);
+
+typedef struct attachment {
+  LIST_ENTRY(attachment) link;
+  void (*dtor)(void *opaque);
+  void *opaque;
+} attachment_t;
+
+static void attachment_load(struct attachment_list *alist,
+			    const uint8_t *ptr, size_t len);
+
+static void attachment_unload_all(struct attachment_list *alist);
+
+
 
 static event_t *playlist_play(AVIOContext *avio, media_pipe_t *mp, int primary,
 			      int flags, char *errbuf, size_t errlen);
@@ -545,6 +561,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   int64_t fsize;
   int opensub_hash_rval;
 
+  struct attachment_list alist;
+  LIST_INIT(&alist);
+
   if(mimetype == NULL) {
     struct fa_stat fs;
 
@@ -662,6 +681,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 	ctx->channels = 0;
       break;
 
+    case AVMEDIA_TYPE_ATTACHMENT:
+      attachment_load(&alist, ctx->extradata, ctx->extradata_size);
+      break;
+
     default:
       break;
     }
@@ -674,8 +697,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       case AVMEDIA_TYPE_VIDEO:
 	if(mp->mp_video.mq_stream == -1) {
 	  mp->mp_video.mq_stream = i;
-	  mp->mp_video_width = ctx->width;
-	  mp->mp_video_height = ctx->height;
 	}
 	break;
 
@@ -716,7 +737,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     if(cwvec[i] != NULL)
       media_codec_deref(cwvec[i]);
 
+  attachment_unload_all(&alist);
+
   media_format_deref(fw);
+  
   return e;
 }
 
@@ -781,4 +805,56 @@ playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
   
   htsmsg_destroy(xml);
   return event_create_type(EVENT_EOF);
+}
+
+
+/**
+ *
+ */
+static void
+attachment_add_dtor(struct attachment_list *alist,
+		    void (*fn)(void *), void *opaque)
+{
+  attachment_t *a = malloc(sizeof(attachment_t));
+
+  a->dtor = fn;
+  a->opaque = opaque;
+  LIST_INSERT_HEAD(alist, a, link);
+}
+
+
+/**
+ *
+ */
+static void
+attachment_load(struct attachment_list *alist, const uint8_t *ptr, size_t len)
+{
+  if(len < 20)
+    return;
+
+#if ENABLE_LIBFREETYPE
+  if(!memcmp(ptr, (const uint8_t []){0,1,0,0,0}, 5) ||
+     !memcmp(ptr, "OTTO", 4)) {
+
+    void *h = freetype_load_font_from_memory(ptr, len);
+    if(h != NULL)
+      attachment_add_dtor(alist, freetype_unload_font, h);
+    return;
+  }
+#endif
+}
+
+/**
+ *
+ */
+static void
+attachment_unload_all(struct attachment_list *alist)
+{
+  attachment_t *a;
+
+  while((a = LIST_FIRST(alist)) != NULL) {
+    LIST_REMOVE(a, link);
+    a->dtor(a->opaque);
+    free(a);
+  }
 }

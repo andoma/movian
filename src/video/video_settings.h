@@ -2,15 +2,11 @@
 
 void video_settings_init(void);
 
-#define SUBTITLE_ALIGNMENT_CENTER 0
-#define SUBTITLE_ALIGNMENT_LEFT   1
-#define SUBTITLE_ALIGNMENT_RIGHT  2
-#define SUBTITLE_ALIGNMENT_AUTO   3
-
 struct subtitle_settings {
   int scaling;
-  int alignment;
+  int alignment;   // LAYOUT_ALIGN_ from layout.h
   int always_select;
+  int align_on_video;
 };
 
 extern struct subtitle_settings subtitle_settings;
