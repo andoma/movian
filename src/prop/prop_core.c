@@ -455,6 +455,50 @@ trampoline_float(prop_sub_t *s, prop_event_t event, ...)
  *
  */
 static void 
+trampoline_int_set(prop_sub_t *s, prop_event_t event, ...)
+{
+  int *ptr = s->hps_opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_INT) {
+    *ptr = va_arg(ap, int);
+  } else if(event == PROP_SET_FLOAT) {
+    *ptr = va_arg(ap, double);
+  } else if(event == PROP_SET_RSTRING) {
+    *ptr = atoi(rstr_get(va_arg(ap, rstr_t *)));
+  } else {
+    *ptr = 0;
+  }
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void 
+trampoline_float_set(prop_sub_t *s, prop_event_t event, ...)
+{
+  float *ptr = (float *)s->hps_opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_SET_INT) {
+    *ptr = va_arg(ap, int);
+  } else if(event == PROP_SET_FLOAT) {
+    *ptr = va_arg(ap, double);
+  } else {
+    *ptr = 0;
+  }
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void 
 trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 {
   prop_callback_string_t *cb = s->hps_callback;
@@ -2004,6 +2048,18 @@ prop_subscribe(int flags, ...)
     case PROP_TAG_CALLBACK_FLOAT:
       cb = va_arg(ap, void *);
       trampoline = trampoline_float;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_SET_INT:
+      cb = NULL;
+      trampoline = trampoline_int_set;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_SET_FLOAT:
+      cb = NULL;
+      trampoline = trampoline_float_set;
       opaque = va_arg(ap, void *);
       break;
 
