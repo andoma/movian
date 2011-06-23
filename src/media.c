@@ -1522,9 +1522,12 @@ mtm_rethink(media_track_mgr_t *mtm)
   int thres = 1;
   int best_score = 0;
 
-  TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
-    if(mt->mt_url != NULL && !strcmp(mt->mt_url, mtm->mtm_current_url))
-      break;
+  if (mtm->mtm_current_url) {
+    TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link)
+      if(mt->mt_url != NULL && !strcmp(mt->mt_url, mtm->mtm_current_url))
+	break;
+  } else
+    mt = NULL;
 
   if(mt != NULL)
     prop_select_ex(mt->mt_root, NULL, mtm->mtm_node_sub);
