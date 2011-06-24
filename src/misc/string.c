@@ -925,20 +925,6 @@ strappend(char **strp, const char *src)
 /**
  *
  */
-static int
-char2nibble(char c)
-{
-  switch(c) {
-  case '0' ... '9': return c - '0';
-  case 'A' ... 'F': return c - 'A' + 10;
-  case 'a' ... 'f': return c - 'a' + 10;
-  default:          return -1;
-  }
-}
-
-/**
- *
- */
 int
 hex2bin(uint8_t *buf, size_t buflen, const char *str)
 {
@@ -947,9 +933,9 @@ hex2bin(uint8_t *buf, size_t buflen, const char *str)
   while(*str) {
     if(buflen == 0)
       return -1;
-    if((hi = char2nibble(*str++)) == -1)
+    if((hi = hexnibble(*str++)) == -1)
       return -1;
-    if((lo = char2nibble(*str++)) == -1)
+    if((lo = hexnibble(*str++)) == -1)
       return -1;
 
     *buf++ = hi << 4 | lo;
@@ -1000,4 +986,20 @@ url_resolve_relative(const char *proto, const char *hostname, int port,
   }
   snprintf(out + l, sizeof(out) - l, "%s", ref); 
   return strdup(out);
+}
+
+
+/**
+ *
+ */
+int
+hexnibble(char c)
+{
+  switch(c) {
+  case '0' ... '9':    return c - '0';
+  case 'a' ... 'f':    return c - 'a' + 10;
+  case 'A' ... 'F':    return c - 'A' + 10;
+  default:
+    return -1;
+  }
 }

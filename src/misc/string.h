@@ -73,5 +73,7 @@ extern const uint16_t CP1251[];
 
 char *utf8_from_bytes(const char *str, int len, const uint16_t *table);
 
+int hexnibble(char c);
+
 
 #endif

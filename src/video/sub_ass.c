@@ -170,17 +170,6 @@ gettoken(char *buf, size_t bufsize, const char **src)
 }
 
 
-static int
-hexnibble(char c)
-{
-  switch(c) {
-  case '0' ... '9':    return c - '0';
-  case 'a' ... 'f':    return c - 'a' + 10;
-  case 'A' ... 'F':    return c - 'A' + 10;
-  default:
-    return -1;
-  }
-}
 
 
 /**
