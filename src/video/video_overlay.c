@@ -119,9 +119,14 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     vo = calloc(1, sizeof(video_overlay_t));
   } else {
 
+    static const uint32_t pfx[] = (const uint32_t[]){
+      TR_CODE_SHADOW | 2,
+      TR_CODE_OUTLINE | 1,
+    };
 
     uc = text_parse(txt, &len, 
-		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0);
+		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
+		    pfx, 2);
     if(uc == NULL)
       return;
 
@@ -129,6 +134,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     vo->vo_type = VO_TEXT;
     vo->vo_text = uc;
     vo->vo_text_length = len;
+    vo->vo_padding_left = -1;  // auto padding
   }
   
   vo->vo_start = start;

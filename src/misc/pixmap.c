@@ -479,123 +479,78 @@ pixmap_extract_channel(const pixmap_t *src, unsigned int channel)
 }
 
 #define FIXMUL(a, b) (((a) * (b) + 255) >> 8)
+#define FIX3MUL(a, b, c) (((a) * (b) * (c) + 65535) >> 16)
 
-
-static void
-composite_Y400A_on_Y400A(uint8_t *dst, const uint8_t *src,
-			 int red, int green, int blue, int alpha,
-			 int width)
-{
-  int i, a;
-  int x;
-  for(x = 0; x < width; x++) {
-    i = *src++;
-    a = *src++;
-
-    i = FIXMUL(red,   i);
-    a = FIXMUL(alpha, a);
-
-    dst[0] = FIXMUL(255 - a, dst[0]) + i;
-    dst[1] = FIXMUL(255 - a, dst[1]) + a;
-    dst += 2;
-  }
-}
-
-
-
-static void
-composite_Y400A_on_BGR32(uint8_t *dst, const uint8_t *src,
-			 int red, int green, int blue, int alpha,
-			 int width)
-{
-  int r, g, b, a, i;
-  int r0, g0, b0, a0;
-  int x;
-  uint32_t *dst32 = (uint32_t *)dst;
-  uint32_t v;
-
-  for(x = 0; x < width; x++) {
-    i = *src++;
-    a = *src++;
-
-    a = FIXMUL(alpha, a);
-    r = FIXMUL(red,   a);
-    g = FIXMUL(green, a);
-    b = FIXMUL(blue,  a);
-
-    v = *dst32;
-    a0 = (v >> 24) & 0xff;
-    b0 = (v >> 16) & 0xff;
-    g0 = (v >>  8) & 0xff;
-    r0 = v & 0xff;
-
-    a0 = FIXMUL(255 - a, a0) + a;
-    r0 = FIXMUL(255 - a, r0) + r;
-    g0 = FIXMUL(255 - a, g0) + g;
-    b0 = FIXMUL(255 - a, b0) + b;
-
-    *dst32++ = a0 << 24 | b0 << 16 | g0 << 8 | r0;
-  }
-}
 
 
 static void
 composite_GRAY8_on_Y400A(uint8_t *dst, const uint8_t *src,
-			 int red, int green, int blue, int alpha,
+			 int i0, int foo_, int bar_, int a0,
 			 int width)
 {
-  int i, a;
+  int i, a, pa, y;
   int x;
   for(x = 0; x < width; x++) {
-    a = *src++;
 
-    i = FIXMUL(red,   a);
-    a = FIXMUL(alpha, a);
+    if(*src) {
+      i = dst[0];
+      a = dst[1];
 
-    dst[0] = FIXMUL(255 - a, dst[0]) + i;
-    dst[1] = FIXMUL(255 - a, dst[1]) + a;
+      pa = a;
+      y = FIXMUL(a0, *src);
+      a = y + FIXMUL(a, 255 - y);
+
+      if(a) {
+	i = ((FIXMUL(i0, y) + FIX3MUL(i, pa, (255 - y))) * 255) / a;
+      } else {
+	i = 0;
+      }
+      dst[0] = i;
+      dst[1] = a;
+    }
+    src++;
     dst += 2;
   }
 }
 
-
-
 static void
-composite_GRAY8_on_BGR32(uint8_t *dst, const uint8_t *src,
-			 int red, int green, int blue, int alpha,
+composite_GRAY8_on_BGR32(uint8_t *dst_, const uint8_t *src,
+			 int r0, int g0, int b0, int a0,
 			 int width)
 {
-  int r, g, b, a;
-  int r0, g0, b0, a0;
   int x;
-  uint32_t *dst32 = (uint32_t *)dst;
-  uint32_t v;
+  uint32_t *dst = (uint32_t *)dst_;
+  int a, r, g, b, pa, y;
+  uint32_t u32;
 
   for(x = 0; x < width; x++) {
-    a = *src++;
+    
+    if(*src) {
+      u32 = *dst;
 
-    a = FIXMUL(alpha, a);
-    r = FIXMUL(red,   a);
-    g = FIXMUL(green, a);
-    b = FIXMUL(blue,  a);
+      r = u32 & 0xff;
+      g = (u32 >> 8) & 0xff;
+      b = (u32 >> 16) & 0xff;
+      a = (u32 >> 24) & 0xff;
 
-    v = *dst32;
-    a0 = (v >> 24) & 0xff;
-    b0 = (v >> 16) & 0xff;
-    g0 = (v >>  8) & 0xff;
-    r0 = v & 0xff;
+      pa = a;
+      y = FIXMUL(a0, *src);
+      a = y + FIXMUL(a, 255 - y);
 
-    a0 = FIXMUL(255 - a, a0) + a;
-    r0 = FIXMUL(255 - a, r0) + r;
-    g0 = FIXMUL(255 - a, g0) + g;
-    b0 = FIXMUL(255 - a, b0) + b;
-
-    *dst32++ = a0 << 24 | b0 << 16 | g0 << 8 | r0;
+      if(a) {
+	r = ((FIXMUL(r0, y) + FIX3MUL(r, pa, (255 - y))) * 255) / a;
+	g = ((FIXMUL(g0, y) + FIX3MUL(g, pa, (255 - y))) * 255) / a;
+	b = ((FIXMUL(b0, y) + FIX3MUL(b, pa, (255 - y))) * 255) / a;
+      } else {
+	r = g = b = 0;
+      }
+      u32 = a << 24 | b << 16 | g << 8 | r;
+      *dst = u32;
+    }
+    src++;
+    dst++;
   }
 }
-
-
-
 
 
 /**
@@ -603,8 +558,7 @@ composite_GRAY8_on_BGR32(uint8_t *dst, const uint8_t *src,
  */
 void
 pixmap_composite(pixmap_t *dst, const pixmap_t *src,
-		 int xdisp, int ydisp,
-		 int r, int g, int b, int a)
+		 int xdisp, int ydisp, int rgba)
 {
   int y, wy;
   uint8_t *d0;
@@ -615,15 +569,15 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 
   int readstep = 0;
   int writestep = 0;
+  uint8_t r = rgba;
+  uint8_t g = rgba >> 8;
+  uint8_t b = rgba >> 16;
+  uint8_t a = rgba >> 24;
 
   if(src->pm_codec != CODEC_ID_NONE)
     return;
 
-  if(src->pm_pixfmt == PIX_FMT_Y400A && dst->pm_pixfmt == PIX_FMT_Y400A)
-    fn = composite_Y400A_on_Y400A;
-  else if(src->pm_pixfmt == PIX_FMT_Y400A && dst->pm_pixfmt == PIX_FMT_BGR32)
-    fn = composite_Y400A_on_BGR32;
-  else if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_Y400A)
+  if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_Y400A)
     fn = composite_GRAY8_on_Y400A;
   else if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_BGR32)
     fn = composite_GRAY8_on_BGR32;
@@ -651,7 +605,7 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
   if(xx + xdisp > dst->pm_width) {
     xx = dst->pm_width - xdisp;
   }
-      
+  
 
   for(y = 0; y < src->pm_height; y++) {
     wy = y + ydisp;

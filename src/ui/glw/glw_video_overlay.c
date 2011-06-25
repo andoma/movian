@@ -67,6 +67,7 @@ typedef struct glw_video_overlay {
 
   int gvo_videoframe_align; /* If set the overlay should be aligned to actual
 			       video frame */
+  int gvo_layer;
 
 } glw_video_overlay_t;
 
@@ -167,6 +168,14 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
 }
 
 
+/**
+ *
+ */
+typedef struct layer {
+  LIST_ENTRY(layer) link;
+  int id;
+  int used_height[10];   // consumed height for each alignment
+} layer_t;
 
 /**
  *
@@ -174,11 +183,14 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
 void
 glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
 {
-  //  media_pipe_t *mp = gv->gv_mp;
   glw_video_overlay_t *gvo;
   const glw_class_t *gc;
   glw_t *w;
   glw_rctx_t *rc;
+  int16_t f[4];
+  layer_t *l;
+  LIST_HEAD(, layer) layers;
+  LIST_INIT(&layers);
 
   LIST_FOREACH(gvo, &gv->gv_overlays, gvo_link) {
     if((w = gvo->gvo_widget) == NULL)
@@ -186,9 +198,23 @@ glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
     rc = gv->gv_vo_on_video || gvo->gvo_videoframe_align ? vrc : frc;
     gc = w->glw_class;
 
+    LIST_FOREACH(l, &layers, link)
+      if(l->id == gvo->gvo_layer)
+	break;
+    if(l == NULL) {
+      l = alloca(sizeof(layer_t));
+      memset(l, 0, sizeof(layer_t));
+      l->id = gvo->gvo_layer;
+      LIST_INSERT_HEAD(&layers, l, link);
+    }
+
     float scaling = 1;
 
-    if(gvo->gvo_canvas_height != 0) {
+    if(gvo->gvo_canvas_height == -1) {
+      if(gv->gv_vheight != 0)
+	scaling *= (float)vrc->rc_height / gv->gv_vheight;
+
+    } else if(gvo->gvo_canvas_height != 0) {
       scaling *= (float)vrc->rc_height / gvo->gvo_canvas_height;
     }
 
@@ -196,15 +222,31 @@ glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
       scaling = scaling * gv->gv_vo_scaling / 100.0;
 
     gc->gc_set_size_scale(w, scaling);
-
-    int16_t f[4];
+    
     f[0] = scaling * gvo->gvo_padding_left;
     f[1] = scaling * gvo->gvo_padding_top;
     f[2] = scaling * gvo->gvo_padding_right;
     f[3] = scaling * gvo->gvo_padding_bottom;
+
+    if(l->used_height[gvo->gvo_alignment]) {
+      switch(gvo->gvo_alignment) {
+      case LAYOUT_ALIGN_TOP:
+      case LAYOUT_ALIGN_TOP_LEFT:
+      case LAYOUT_ALIGN_TOP_RIGHT:
+	f[1] += l->used_height[gvo->gvo_alignment];
+	break;
+
+      case LAYOUT_ALIGN_BOTTOM:
+      case LAYOUT_ALIGN_BOTTOM_LEFT:
+      case LAYOUT_ALIGN_BOTTOM_RIGHT:
+	f[3] += l->used_height[gvo->gvo_alignment];
+	break;
+      }
+    }
     gc->gc_set_padding(w, f);
 
     glw_layout0(w, rc);
+    l->used_height[gvo->gvo_alignment] += w->glw_req_size_y - f[1] - f[3];
   }
 }
 
@@ -656,22 +698,31 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_fadeout        = vo->vo_fadeout;
   gvo->gvo_canvas_width   = vo->vo_canvas_width;
   gvo->gvo_canvas_height  = vo->vo_canvas_height;
-  gvo->gvo_padding_left   = vo->vo_padding_left;
-  gvo->gvo_padding_top    = vo->vo_padding_top;
-  gvo->gvo_padding_right  = vo->vo_padding_right;
-  gvo->gvo_padding_bottom = vo->vo_padding_bottom;
+  gvo->gvo_layer          = vo->vo_layer;
 
   glw_t *w = glw_create(gv->w.glw_root, gc, NULL, NULL, NULL);
-  
+
   gvo->gvo_widget = w;
 
   gc->gc_freeze(w);
 
   w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
+  gvo->gvo_alignment = vo->vo_alignment;
 
-  gc->gc_set_default_size(w, 48);
+  gc->gc_set_default_size(w, gv->w.glw_root->gr_fontsize * 1.5);
 
-  gc->gc_set_padding(w, (const int16_t []){24,24,24,24});
+  if(vo->vo_padding_left == -1) {
+    int default_pad = gv->w.glw_root->gr_fontsize;
+    gvo->gvo_padding_left     = default_pad;
+    gvo->gvo_padding_top      = default_pad;
+    gvo->gvo_padding_right    = default_pad;
+    gvo->gvo_padding_bottom   = default_pad;
+  } else {
+    gvo->gvo_padding_left   = vo->vo_padding_left;
+    gvo->gvo_padding_top    = vo->vo_padding_top;
+    gvo->gvo_padding_right  = vo->vo_padding_right;
+    gvo->gvo_padding_bottom = vo->vo_padding_bottom;
+  }
 
   gc->gc_set_max_lines(w, 10);
 

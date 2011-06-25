@@ -32,7 +32,7 @@ typedef struct video_overlay {
 
   int vo_alignment;  // LAYOUT_ALIGN_ from layout.h
 
-  int vo_padding_left;
+  int vo_padding_left; // if -1, padding is determined by overlay compositing
   int vo_padding_top;
   int vo_padding_right;
   int vo_padding_bottom;
@@ -40,8 +40,10 @@ typedef struct video_overlay {
   uint32_t *vo_text;
   int vo_text_length;
 
-  int vo_canvas_width;
-  int vo_canvas_height;
+  int vo_canvas_width;   // if -1, ==  same as video frame width
+  int vo_canvas_height;  // if -1, ==  same as video frame height
+
+  int vo_layer;
 
 } video_overlay_t;
 

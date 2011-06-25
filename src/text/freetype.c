@@ -37,6 +37,7 @@
 #include FT_GLYPH_H
 #include FT_OUTLINE_H
 #include FT_SYNTHESIS_H
+#include FT_STROKER_H
 
 #define ver(maj, min, pat) ((maj) * 100000 + (min) * 100 + (pat))
 
@@ -210,21 +211,6 @@ faces_purge(void)
 /**
  *
  */
-static void
-faces_purge_replacements(void)
-{
-  face_t *f, *n;
-  for(f = TAILQ_FIRST(&faces); f != NULL; f = n) {
-    n = TAILQ_NEXT(f, link);
-
-    if(f->is_replacement)
-      face_destroy(f);
-  }
-}
-
-/**
- *
- */
 static unsigned long
 face_read(FT_Stream stream, unsigned long offset, unsigned char *buffer,
 	  unsigned long count)
@@ -242,18 +228,6 @@ static void
 face_close(FT_Stream stream)
 {
   fa_close(stream->descriptor.pointer);
-}
-
-
-
-/**
- *
- */
-static void
-face_finalizer(void *obj)
-{
-  FT_Face f = obj;
-  free(f->generic.data);
 }
 
 
@@ -277,8 +251,7 @@ face_create_epilogue(face_t *face, const char *source)
 
   face->family_id = family_get(family);
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
-  faces_purge_replacements();
-  TAILQ_INSERT_TAIL(&faces, face, link);
+  TAILQ_INSERT_HEAD(&faces, face, link);
   return face;
 }
 
@@ -328,9 +301,6 @@ face_create_from_uri(const char *path)
     free(srec);
     return NULL;
   }
-
-  face->face->generic.data = srec;
-  face->face->generic.finalizer = face_finalizer;
   face->url = strdup(path);
 
   return face_create_epilogue(face, path);
@@ -406,7 +376,7 @@ static int
 face_is_family(face_t *f, int family_id)
 {
   assert(f->family_id != 0);
-  return family_id == 0 || f->family_id == family_id;
+  return f->family_id == family_id;
 }
 
 
@@ -447,13 +417,13 @@ face_find(int uc, uint8_t style, int family_id)
 
   f = face_create_from_uri(url);
   if(f != NULL)
-    f->is_replacement = family_id != 0 && f->family_id != family_id;
+    f->is_replacement = f->family_id != family_id;
   return f;
 }
 
 
 /**
- * family_id == 0 means don't care
+ *
  */
 static glyph_t *
 glyph_get(int uc, int size, uint8_t style, int family_id)
@@ -552,70 +522,27 @@ glyph_flush_one(void)
  *
  */
 static void
-draw_glyph(pixmap_t *pm, FT_Bitmap *bmp, int left, int top, int idx,
-	   int color)
+draw_glyph(pixmap_t *pm, int left, int top, FT_Bitmap *bmp, int color)
 {
-  const uint8_t *src = bmp->buffer;
-  uint8_t *dst;
-  int x, y;
-  int w, h;
-  
-  int x1, y1, x2, y2;
-
-  x1 = MAX(0, left);
-  x2 = MIN(left + bmp->width, pm->pm_width);
-  y1 = MAX(0, top);
-  y2 = MIN(y1 + bmp->rows, pm->pm_height);
-
-  if(pm->pm_charpos != NULL) {
-    pm->pm_charpos[idx * 2 + 0] = x1;
-    pm->pm_charpos[idx * 2 + 1] = x2;
-  }
-
-  w = MIN(x2 - x1, bmp->width);
-  h = MIN(y2 - y1, bmp->rows);
-
-  if(w < 0 || h < 0)
-    return;
-
-  dst = pm->pm_pixels;
-
-  switch(pm->pm_pixfmt) {
-  case PIX_FMT_Y400A:
-    dst += x1 * 2 + y1 * pm->pm_linesize;
-
-    // Luma + Alpha channel
-    for(y = 0; y < h; y++) {
-      for(x = 0; x < w; x++) {
-	if(src[x]) {
-	  dst[x*2 + 0] = color;
-	  dst[x*2 + 1] = src[x];
-	}
-      }
-      src += bmp->pitch;
-      dst += pm->pm_linesize;
-    }
-    break;
-
-  case PIX_FMT_BGR32:
-    dst += x1 * 4 + y1 * pm->pm_linesize;
-    for(y = 0; y < h; y++) {
-      uint32_t *dst32 = (uint32_t *)dst;
-      for(x = 0; x < w; x++) {
-	if(src[x])
-	  *dst32 = color | (src[x] << 24);
-	dst32++;
-      }
-      src += bmp->pitch;
-      dst += pm->pm_linesize;
-   }
-   break;
-
-  default:
-    return;
-  }
+  pixmap_t src;
+  src.pm_pixfmt = PIX_FMT_GRAY8;
+  src.pm_codec = CODEC_ID_NONE;
+  src.pm_pixels = bmp->buffer;
+  src.pm_width = bmp->width;
+  src.pm_height = bmp->rows;
+  src.pm_linesize = bmp->width;
+  pixmap_composite(pm, &src, left, top, color);
 }
 
+
+static int
+is_not_gray(uint32_t rgb)
+{
+  uint8_t r = rgb;
+  uint8_t g = rgb >> 8;
+  uint8_t b = rgb >> 16;
+  return (r != g) || (g != b);
+}
 
 /**
  *
@@ -631,15 +558,21 @@ typedef struct line {
   char alignment;
   int height;
   int descender;
+  int shadow;
+  int outline;
 } line_t;
 
 
 typedef struct item {
   glyph_t *g;
-  int16_t kerning;
-  int16_t adv_x;
   int code;
   uint32_t color;
+  uint32_t shadow_color;
+  uint32_t outline_color;
+  int16_t kerning;
+  int16_t adv_x;
+  uint16_t outline;
+  uint16_t shadow;
 } item_t;
 
 
@@ -652,12 +585,12 @@ text_render0(const uint32_t *uc, const int len,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *family)
 {
-  int family_id = family_get(family);
+  int family_id = family_get(family ?: "Arial");
   pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
   FT_Vector pen, delta;
-  int err;
+  FT_Stroker stroker = NULL;
   int pen_x, pen_y;
 
   int i, j;
@@ -670,9 +603,19 @@ text_render0(const uint32_t *uc, const int len,
 
   int pmflags = 0;
   uint8_t style;
-  int current_size = default_size * scale;
   int color_output = 0;
-  uint32_t current_color = 0xffffff;
+
+  int current_size = default_size * scale;
+  uint32_t current_color = 0xff;
+  uint32_t current_alpha = 0xff000000;
+
+  int current_outline = 0;
+  uint32_t current_outline_color = 0x00;
+  uint32_t current_outline_alpha = 0xff000000;
+
+  int current_shadow = 0;
+  uint32_t current_shadow_color = 0x00;
+  uint32_t current_shadow_alpha = 0xff000000;
 
   if(current_size < 3 || scale < 0.001)
     return NULL;
@@ -758,16 +701,41 @@ text_render0(const uint32_t *uc, const int len,
 
     case TR_CODE_COLOR ... TR_CODE_COLOR + 0xffffff:
       current_color = uc[i] & 0xffffff; // BGR host order
+      color_output |= is_not_gray(current_color);
+      break;
 
-      if(((current_color >> 16) & 0xff) != 
-	 ((current_color >>  8) & 0xff) ||
-	 ((current_color >>  8) & 0xff) != 
-	 ((current_color      ) & 0xff))
-	color_output = 1;
+    case TR_CODE_SHADOW_COLOR ... TR_CODE_SHADOW_COLOR + 0xffffff:
+      current_shadow_color = uc[i] & 0xffffff; // BGR host order
+      color_output |= is_not_gray(current_shadow_color);
+      break;
+
+    case TR_CODE_OUTLINE_COLOR ... TR_CODE_OUTLINE_COLOR + 0xffffff:
+      current_outline_color = uc[i] & 0xffffff; // BGR host order
+      color_output |= is_not_gray(current_outline_color);
       break;
 
     case  TR_CODE_FONT_FAMILY ...  TR_CODE_FONT_FAMILY + 0xffffff:
       family_id = uc[i] & 0xffffff;
+      break;
+
+    case TR_CODE_ALPHA ... TR_CODE_ALPHA + 0xff:
+      current_alpha = (uc[i] & 0xff) << 24;
+      break;
+
+    case TR_CODE_SHADOW_ALPHA ... TR_CODE_SHADOW_ALPHA + 0xff:
+      current_shadow_alpha = (uc[i] & 0xff) << 24;
+      break;
+
+    case TR_CODE_OUTLINE_ALPHA ... TR_CODE_OUTLINE_ALPHA + 0xff:
+      current_outline_alpha = (uc[i] & 0xff) << 24;
+      break;
+
+    case TR_CODE_SHADOW ... TR_CODE_SHADOW + 0xffff:
+      current_shadow = (uc[i] & 0xffff) * scale;
+      break;
+
+    case TR_CODE_OUTLINE ... TR_CODE_OUTLINE + 0xffff:
+      current_outline = 64 * (uc[i] & 0xffff) * scale;
       break;
 
     default:
@@ -792,7 +760,13 @@ text_render0(const uint32_t *uc, const int len,
     items[out].adv_x = g->adv_x;
     items[out].g = g;
     items[out].code = uc[i];
-    items[out].color = current_color;
+    items[out].color = current_color | current_alpha;
+
+    items[out].outline = current_outline;
+    items[out].outline_color = current_outline_color | current_outline_alpha;
+
+    items[out].shadow = current_shadow;
+    items[out].shadow_color = current_shadow_color | current_shadow_alpha;
 
     prev = g->gi;
     li->count++;
@@ -895,15 +869,21 @@ text_render0(const uint32_t *uc, const int len,
 
     int height = 0;
     int descender = 0;
+    int shadow = 0;
+    int outline = 0;
 
     for(i = li->start; i < li->start + li->count; i++) {
       glyph_t *g = items[i].g;
       FT_Face f = g->face->face;
       height = MAX(g->size, height);
       descender = MIN(descender, 64 * f->descender * g->size / f->units_per_EM);
+      shadow = MAX(items[i].shadow, shadow);
+      outline = MAX(items[i].outline, outline);
     }
     li->height = height;
     li->descender = descender;
+    li->shadow = shadow;
+    li->outline = outline;
 
     target_height += li->height;
 
@@ -923,18 +903,36 @@ text_render0(const uint32_t *uc, const int len,
   start_x = -bbox.xMin;
   start_y = 0;
 
+  int margin = 0;
+
+  li = TAILQ_FIRST(&lq);
+  if(li != NULL) {
+    margin = li->outline*2;
+    li = TAILQ_LAST(&lq, line_queue);
+    margin = MAX(margin, MAX(li->shadow*64, li->outline*2));
+  }
+
+  margin = (margin + 63) / 64;
+
   // --- allocate and init pixmap
 
-  pm = pixmap_create(target_width, target_height,
+  pm = pixmap_create(target_width + margin*2, target_height + margin*2,
 		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A);
 
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;
-
+  pm->pm_margin = margin;
+  
   if(flags & TR_RENDER_DEBUG) {
     uint8_t *data = pm->pm_pixels;
-    for(i = 0; i < target_height; i+=3)
-      memset(data + i * pm->pm_linesize, 0x80, pm->pm_linesize);
+    for(i = 0; i < pm->pm_height; i+=3)
+      memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
+
+    int y;
+    int l = color_output ? 4 : 2;
+    for(i = 0; i < pm->pm_width; i+=3)
+      for(y = 0; y < pm->pm_height; y++)
+	memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
   }
 
   if(flags & TR_RENDER_CHARACTER_POS) {
@@ -975,16 +973,69 @@ text_render0(const uint32_t *uc, const int len,
       pen.y &= ~63;
 
       FT_Glyph glyph = g->glyph;
-      err = FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0);
-      FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
-      if(err == 0) {
-	draw_glyph(pm, &bmp->bitmap, 
-		   bmp->left,
-		   target_height - bmp->top,
-		   i,
-		   items[i].color);
-	FT_Done_Glyph(glyph);
+      FT_Glyph oglyph = NULL;
+
+      
+      if(items[i].outline > 0) {
+	oglyph = g->glyph;
+	
+	if(stroker == NULL)
+	  FT_Stroker_New(text_library, &stroker);
+	
+	FT_Stroker_Set(stroker,
+		       items[i].outline,
+		       FT_STROKER_LINECAP_ROUND,
+		       FT_STROKER_LINEJOIN_ROUND,
+		       0);
+	FT_Glyph_StrokeBorder(&oglyph, stroker, 0, 0);
       }
+      
+      if(glyph != NULL && 
+	 FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0))
+	glyph = NULL;
+
+
+      if(oglyph != NULL && 
+	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 0))
+	oglyph = NULL;
+
+      if(items[i].shadow && (oglyph != NULL || glyph != NULL)) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(oglyph ?: glyph);
+	draw_glyph(pm,
+		   bmp->left + items[i].shadow + margin,
+		   target_height - bmp->top + items[i].shadow + margin,
+		   &bmp->bitmap, 
+		   items[i].shadow_color);
+      }
+
+      if(oglyph != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)oglyph;
+	draw_glyph(pm,
+		   bmp->left + margin,
+		   target_height - bmp->top + margin,
+		   &bmp->bitmap, 
+		   items[i].outline_color);
+      }
+
+      if(glyph != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
+	draw_glyph(pm,
+		   bmp->left + margin,
+		   target_height - bmp->top + margin,
+		   &bmp->bitmap, 
+		   items[i].color);
+
+	if(pm->pm_charpos != NULL) {
+	  pm->pm_charpos[i * 2 + 0] = bmp->left;
+	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width;
+	}
+      }
+
+      if(glyph != NULL)
+	FT_Done_Glyph(glyph);
+
+      if(oglyph != NULL)
+	FT_Done_Glyph(oglyph);
 
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 0] = pen_x / 64;
@@ -998,6 +1049,10 @@ text_render0(const uint32_t *uc, const int len,
     }
   }
   free(items);
+
+  if(stroker != NULL)
+    FT_Stroker_Done(stroker);
+
   return pm;
 }
 

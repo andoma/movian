@@ -254,7 +254,7 @@ ass_parse_v4style(ass_decoder_ctx_t *adc, const char *str)
     else if(!strcasecmp(key, "backcolour"))
       as->as_back_color = ass_parse_color(val);
     else if(!strcasecmp(key, "outline"))
-      as->as_outline = !!atoi(val);
+      as->as_outline = MIN((unsigned int)atoi(val), 4);
     else if(!strcasecmp(key, "shadow"))
       as->as_shadow = MIN((unsigned int)atoi(val), 4);
     else if(!strcasecmp(key, "fontsize"))
@@ -426,14 +426,13 @@ static void
 ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 {
   char *tokens[10], *s;
-  int i;
+  int i, layer;
   int64_t start, end;
   const char *str;
   int c;
   const ass_style_t *as;
 
   ad->ad_buf[strcspn(ad->ad_buf, "\n\r")] = 0;
-
   tokens[0] = ad->ad_buf;
   for(i = 1; i < 10; i++) {
     s = strchr(tokens[i-1], ',');
@@ -443,6 +442,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     tokens[i] = s;
   }
 
+  layer = atoi(tokens[0]);
   start = ass_get_ts(tokens[1]);
   end   = ass_get_ts(tokens[2]);
 
@@ -462,6 +462,17 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 
   ad_txt_append(ad, TR_CODE_SIZE_PX | as->as_fontsize);
   ad_txt_append(ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
+  ad_txt_append(ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
+  ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | (as->as_outline_color & 0xffffff));
+  ad_txt_append(ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
+  ad_txt_append(ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
+  ad_txt_append(ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
+
+  if(as->as_shadow)
+    ad_txt_append(ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
+
+  if(as->as_outline)
+    ad_txt_append(ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
 
   str = tokens[9];
   while((c = utf8_get(&str)) != 0) {
@@ -503,9 +514,10 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   vo->vo_padding_right  = as->as_margin_right;
   vo->vo_padding_bottom = as->as_margin_vertical;
 
-  vo->vo_canvas_width  = ad->ad_adc.adc_canvas_width;
-  vo->vo_canvas_height = ad->ad_adc.adc_canvas_height;
+  vo->vo_canvas_width  = ad->ad_adc.adc_canvas_width ?: -1;
+  vo->vo_canvas_height = ad->ad_adc.adc_canvas_height ?: -1;
 
+  vo->vo_layer = layer;
   video_overlay_enqueue(vd, vo);
 }
 

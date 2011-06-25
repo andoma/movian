@@ -34,8 +34,10 @@ typedef struct pixmap {
   uint16_t pm_width;
   uint16_t pm_height;
   uint16_t pm_lines;   // Lines of text
+  uint16_t pm_margin;
 
   int pm_flags;
+
 
 #define PIXMAP_THUMBNAIL 0x1       // This is a thumbnail
 #define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
@@ -90,8 +92,7 @@ pixmap_t *pixmap_multiply_alpha(const pixmap_t *src);
 pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
 
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
-		      int xdisp, int ydisp,
-		      int r, int g, int b, int a);
+		      int xdisp, int ydisp, int rgba);
 
 pixmap_t *pixmap_create(int width, int height, enum PixelFormat pixfmt);
 

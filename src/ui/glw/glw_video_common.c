@@ -605,9 +605,10 @@ glw_video_input(uint8_t * const data[], const int pitch[],
 {
   glw_video_t *gv = opaque;
 
-  if(fi)
+  if(fi) {
     gv->gv_dar = fi->dar;
-
+    gv->gv_vheight = fi->height;
+  }
   hts_mutex_lock(&gv->gv_surface_mutex);
 
   if(data == NULL) {

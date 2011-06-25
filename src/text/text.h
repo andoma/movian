@@ -35,11 +35,21 @@ struct pixmap;
 #define TR_CODE_ITALIC_ON  0x7f000007
 #define TR_CODE_ITALIC_OFF 0x7f000008
 
+#define TR_CODE_ALPHA         0x7f000100  // Low 8 bit is alpha
+#define TR_CODE_SHADOW_ALPHA  0x7f000200  // Low 8 bit is alpha
+#define TR_CODE_OUTLINE_ALPHA 0x7f000300  // Low 8 bit is alpha
+
 #define TR_CODE_SIZE_PX    0x7f010000  // Low 16 bit is the size in pixels
+#define TR_CODE_SHADOW     0x7f020000  // Low 16 bit is displacement in pixels
+#define TR_CODE_OUTLINE    0x7f030000  // Low 16 bit is thickness in pixels
+
 
 #define TR_CODE_COLOR      0x7e000000  // Low 24 bit is BGR
 
 #define TR_CODE_FONT_FAMILY 0x7d000000  // Low 24 bit is family
+
+#define TR_CODE_SHADOW_COLOR  0x7c000000  // Low 24 bit is BGR
+#define TR_CODE_OUTLINE_COLOR 0x7b000000  // Low 24 bit is BGR
 
 #define TR_RENDER_DEBUG         0x1
 #define TR_RENDER_ELLIPSIZE     0x2
@@ -79,5 +89,6 @@ int fontconfig_resolve(int uc, uint8_t style, const char *family,
 #define TEXT_PARSE_HTML_ENTETIES 0x2
 
 
-uint32_t *text_parse(const char *str, int *lenp, int flags);
+uint32_t *text_parse(const char *str, int *lenp, int flags,
+		     const uint32_t *prefix, int prefixlen);
 

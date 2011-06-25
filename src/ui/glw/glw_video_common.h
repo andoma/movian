@@ -113,6 +113,7 @@ typedef struct glw_video {
   glw_t w;
 
   AVRational gv_dar;
+  int gv_vheight;
 
   int gv_rwidth;
   int gv_rheight;

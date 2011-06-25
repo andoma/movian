@@ -146,7 +146,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   if((gtb->gtb_saved_width  != rc->rc_width || 
       gtb->gtb_saved_height != rc->rc_height)) {
-    
+
     if(pm != NULL && gtb->gtb_status == GTB_VALID) {
 
       if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
@@ -159,11 +159,11 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 	} else {
 
 	  if(rc->rc_width - gtb->gtb_padding_right - gtb->gtb_padding_left <
-	     pm->pm_width)
+	     pm->pm_width - pm->pm_margin * 2)
 	    gtb->gtb_status = GTB_NEED_RERENDER;
 
 	  if(rc->rc_height - gtb->gtb_padding_top - gtb->gtb_padding_bottom <
-	     pm->pm_height)
+	     pm->pm_height - pm->pm_margin * 2)
 	    gtb->gtb_status = GTB_NEED_RERENDER;
 	}
       }
@@ -176,10 +176,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   if(pm != NULL && gtb->gtb_need_layout) {
 
-    int left   =                 gtb->gtb_padding_left;
-    int top    = rc->rc_height - gtb->gtb_padding_top;
-    int right  = rc->rc_width  - gtb->gtb_padding_right;
-    int bottom =                 gtb->gtb_padding_bottom;
+    int left   =                 gtb->gtb_padding_left   - pm->pm_margin;
+    int top    = rc->rc_height - gtb->gtb_padding_top    + pm->pm_margin;
+    int right  = rc->rc_width  - gtb->gtb_padding_right  + pm->pm_margin;
+    int bottom =                 gtb->gtb_padding_bottom - pm->pm_margin;
     
     int text_width  = pm->pm_width;
     int text_height = pm->pm_height;
@@ -341,7 +341,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
     glw_wirebox(w->glw_root, rc);
 
   if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
-
+#if 0
     if(w->glw_flags & GLW_SHADOW && !rc->rc_inhibit_shadows) {
       float xd =  2.5f / rc->rc_width;
       float yd = -2.5f / rc->rc_height;
@@ -355,6 +355,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
 			&gtb->gtb_texture, &black, NULL, alpha,
 			blur);
     }
+#endif
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
 		      &gtb->gtb_texture, &gtb->gtb_color, NULL, alpha,
 		      blur);
@@ -411,11 +412,11 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
   int lh = (gtb->gtb_default_size ?: gr->gr_fontsize) * gtb->gtb_size_scale;
   int height = lh * lines;
   
-  height = MAX(pm ? pm->pm_height : 0, height);
+  height = MAX(pm ? pm->pm_height - pm->pm_margin*2: 0, height);
   ys += height;
 
   if(pm != NULL)
-    xs += pm->pm_width;
+    xs += pm->pm_width - pm->pm_margin*2;
 
   if(!(gtb->gtb_flags & GTB_ELLIPSIZE) && gtb->gtb_maxlines == 1 && xs > 0)
     flags |= GLW_CONSTRAINT_X;
@@ -619,7 +620,8 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
     flags |= TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES;
 
   free(gtb->gtb_uc_buffer);
-  gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags);
+  gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags,
+				  NULL, 0);
   gtb->gtb_uc_len = gtb->gtb_uc_size = len;
 
   if(gtb->w.glw_class == &glw_text) {
@@ -895,7 +897,7 @@ font_render_thread(void *aux)
   glw_text_bitmap_t *gtb;
   uint32_t *uc, len, i;
   pixmap_t *pm;
-  int max_width, max_lines, flags, default_size;
+  int max_width, max_lines, flags, default_size, tr_align;
   float scale;
 
   glw_lock(gr);
@@ -942,6 +944,28 @@ font_render_thread(void *aux)
     if(gtb->gtb_edit_ptr >= 0)
       flags |= TR_RENDER_CHARACTER_POS;
 
+    tr_align = TR_ALIGN_JUSTIFIED;
+
+    switch(gtb->w.glw_alignment) {
+    case LAYOUT_ALIGN_CENTER:
+    case LAYOUT_ALIGN_BOTTOM:
+    case LAYOUT_ALIGN_TOP:
+      tr_align = TR_ALIGN_CENTER;
+      break;
+
+    case LAYOUT_ALIGN_LEFT:
+    case LAYOUT_ALIGN_TOP_LEFT:
+    case LAYOUT_ALIGN_BOTTOM_LEFT:
+      tr_align = TR_ALIGN_LEFT;
+      break;
+
+    case LAYOUT_ALIGN_RIGHT:
+    case LAYOUT_ALIGN_TOP_RIGHT:
+    case LAYOUT_ALIGN_BOTTOM_RIGHT:
+      tr_align = TR_ALIGN_RIGHT;
+      break;
+    }
+
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -952,7 +976,7 @@ font_render_thread(void *aux)
 
     if(uc != NULL && uc[0] != 0) {
       pm = text_render(uc, len, flags, default_size, scale,
-		       TR_ALIGN_JUSTIFIED, max_width, max_lines, NULL);
+		       tr_align, max_width, max_lines, NULL);
     } else {
       pm = NULL;
     }
