@@ -18,7 +18,6 @@
 #include <sys/param.h>
 #include <arch/atomic.h>
 #include "pixmap.h"
-#include "showtime.h"
 
 
 /**
@@ -513,6 +512,9 @@ composite_GRAY8_on_Y400A(uint8_t *dst, const uint8_t *src,
   }
 }
 
+
+#if 0
+
 static void
 composite_GRAY8_on_BGR32(uint8_t *dst_, const uint8_t *src,
 			 int r0, int g0, int b0, int a0,
@@ -525,32 +527,86 @@ composite_GRAY8_on_BGR32(uint8_t *dst_, const uint8_t *src,
 
   for(x = 0; x < width; x++) {
     
-    if(*src) {
-      u32 = *dst;
+    u32 = *dst;
 
-      r = u32 & 0xff;
-      g = (u32 >> 8) & 0xff;
-      b = (u32 >> 16) & 0xff;
-      a = (u32 >> 24) & 0xff;
+    r = u32 & 0xff;
+    g = (u32 >> 8) & 0xff;
+    b = (u32 >> 16) & 0xff;
+    a = (u32 >> 24) & 0xff;
 
-      pa = a;
-      y = FIXMUL(a0, *src);
-      a = y + FIXMUL(a, 255 - y);
+    pa = a;
+    y = FIXMUL(a0, *src);
+    a = y + FIXMUL(a, 255 - y);
 
-      if(a) {
-	r = ((FIXMUL(r0, y) + FIX3MUL(r, pa, (255 - y))) * 255) / a;
-	g = ((FIXMUL(g0, y) + FIX3MUL(g, pa, (255 - y))) * 255) / a;
-	b = ((FIXMUL(b0, y) + FIX3MUL(b, pa, (255 - y))) * 255) / a;
-      } else {
-	r = g = b = 0;
-      }
-      u32 = a << 24 | b << 16 | g << 8 | r;
-      *dst = u32;
+    if(a) {
+      r = ((FIXMUL(r0, y) + FIX3MUL(r, pa, (255 - y))) * 255) / a;
+      g = ((FIXMUL(g0, y) + FIX3MUL(g, pa, (255 - y))) * 255) / a;
+      b = ((FIXMUL(b0, y) + FIX3MUL(b, pa, (255 - y))) * 255) / a;
+    } else {
+      r = g = b = 0;
     }
+    u32 = a << 24 | b << 16 | g << 8 | r;
+    *dst = u32;
     src++;
     dst++;
   }
 }
+
+
+#else
+
+//#define DIV255(x) ((x) / 255)
+//#define DIV255(x) ((x) >> 8)
+#define DIV255(x) (((((x)+255)>>8)+(x))>>8)
+
+
+static void
+composite_GRAY8_on_BGR32(uint8_t *dst_, const uint8_t *src,
+			 int CR, int CG, int CB, int CA,
+			 int width)
+{
+  int x;
+  uint32_t *dst = (uint32_t *)dst_;
+  uint32_t u32;
+
+  for(x = 0; x < width; x++) {
+
+    int SA = DIV255(*src * CA);
+    int SR = CR;
+    int SG = CG;
+    int SB = CB;
+
+    u32 = *dst;
+    
+    int DR =  u32        & 0xff;
+    int DG = (u32 >> 8)  & 0xff;
+    int DB = (u32 >> 16) & 0xff;
+    int DA = (u32 >> 24) & 0xff;
+
+    int FA = SA + DIV255((255 - SA) * DA);
+
+    if(FA == 0) {
+      SA = 0;
+      u32 = 0;
+    } else {
+      if(FA != 255)
+	SA = SA * 255 / FA;
+
+      DA = 255 - SA;
+      
+      DB = DIV255(SB * SA + DB * DA);
+      DG = DIV255(SG * SA + DG * DA);
+      DR = DIV255(SR * SA + DR * DA);
+      
+      u32 = FA << 24 | DB << 16 | DG << 8 | DR;
+    }
+    *dst = u32;
+
+    src++;
+    dst++;
+  }
+}
+#endif
 
 
 /**
@@ -613,3 +669,33 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
       fn(d0 + wy * dst->pm_linesize, s0 + y * src->pm_linesize, r, g, b, a, xx);
   }
 }
+
+
+// gcc -O3 src/misc/pixmap.c -o /tmp/pixmap -Isrc -DLOCAL_MAIN
+
+#ifdef LOCAL_MAIN
+
+static int64_t
+get_ts(void)
+{
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
+}
+
+int
+main(int argc, char **argv)
+{
+  pixmap_t *dst = pixmap_create(2048, 2048, PIX_FMT_BGR32);
+  pixmap_t *src = pixmap_create(2048, 2048, PIX_FMT_GRAY8);
+
+  memset(src->pm_pixels, 0xff, src->pm_linesize * src->pm_height);
+
+  int64_t a = get_ts();
+  pixmap_composite(dst, src, 0, 0, 0xffffffff);
+  printf("Compositing in %dµs\n",(int)( get_ts() - a));
+  printf("dst pixel(0,0) = 0x%x\n", dst->pm_pixels[0]);
+  return 0;
+}
+
+#endif
