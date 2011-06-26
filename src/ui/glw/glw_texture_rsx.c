@@ -220,28 +220,16 @@ init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
 	  const uint8_t *src, int linesize,
 	  int width, int height, int repeat)
 {
-  int y, x;
-  uint16_t *dst = realloc_tex(gr, tex, width * height * 2);
+  void *mem = realloc_tex(gr, tex, linesize * height);
 
-  for(y = 0; y < height; y++) {
-    const uint8_t *s = src;
-    for(x = 0; x < width; x++) {
-      uint8_t a = *s++;
-      uint8_t b = *s++;
-      *dst++ = (b << 8) | a;
-    }
-    src += linesize;
-  }
-
-  init_tex(&tex->tex, tex->tex.offset, width, height, width * 2, 
+  memcpy(mem, src, tex->size);
+  init_tex(&tex->tex, tex->tex.offset, width, height, linesize, 
 	   NV40_3D_TEX_FORMAT_FORMAT_A8L8, repeat,
 	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
 	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
-	   NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
-	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
-	   );
+	   NV30_3D_TEX_SWIZZLE_S1_X_Y | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	   NV30_3D_TEX_SWIZZLE_S1_Z_Y | NV30_3D_TEX_SWIZZLE_S1_W_X);
 }
-
 
 /**
  *
