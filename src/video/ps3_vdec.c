@@ -380,9 +380,6 @@ picture_out(vdec_decoder_t *vdd)
 	     h264->width, h264->height, vp->fi.interlaced ? 'i' : 'p');
   }
 
-  vd->vd_mp->mp_video_width = vp->fi.width;
-  vd->vd_mp->mp_video_height = vp->fi.height;
-
   vd->vd_estimated_duration = vp->fi.duration; // For bitrate calculations
 
   prop_set_string(vdd->metainfo, metainfo);

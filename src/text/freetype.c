@@ -144,7 +144,7 @@ family_get(const char *name)
 /**
  *
  */
-static const char *
+__attribute__((unused)) static const char *
 family_get_by_id(int id)
 {
   family_t *f;
