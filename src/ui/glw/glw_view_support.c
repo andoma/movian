@@ -188,6 +188,8 @@ glw_view_token_copy(token_t *src)
     break;
 
   case TOKEN_STRING:
+    dst->t_rstrtype = src->t_rstrtype;
+    // FALLTHRU
   case TOKEN_IDENTIFIER:
   case TOKEN_PROPERTY_VALUE_NAME:
   case TOKEN_PROPERTY_CANONICAL_NAME:
