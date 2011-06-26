@@ -442,6 +442,7 @@ const static action_type_t *btn_to_action[BTN_max] = {
 
 
 static int16_t button_counter[MAX_PADS][BTN_max];
+static PadData paddata[MAX_PADS];
 
 
 #define KEY_REPEAT_DELAY 30 // in frames
@@ -620,28 +621,21 @@ static uint16_t remote_last_btn[MAX_PADS] =
 static void
 handle_pads(glw_ps3_t *gp)
 {
-  PadInfo padinfo;
-  PadData paddata;
-  PadPeriphInfo ppinfo = {0};
+  PadInfo2 padinfo2;
   int i;
 
-  ioPadPeriphGetInfo(&ppinfo);
-
-
   // Check the pads.
-  ioPadGetInfo(&padinfo);
+  ioPadGetInfo2(&padinfo2);
   for(i=0; i<MAX_PADS; i++){
-    if(!padinfo.status[i])
+    if(!padinfo2.port_status[i])
       continue;
 
-    if(ppinfo.device_type[i] == 4) {
+    if(padinfo2.device_type[i] == 4) {
       uint32_t type = 4;
-      memset(&paddata, 0, sizeof(paddata));
-
-      int r = ioPadGetDataExtra(i, &type, &paddata);
+      int r = ioPadGetDataExtra(i, &type, &paddata[i]);
 
       if(r == 0) {
-	int btn = paddata.button[25];
+	int btn = paddata[i].button[25];
 	if(btn != remote_last_btn[i]) {
 	  if(remote_last_btn[i] < 0xff)
 	    handle_btn(gp, i, bd_to_local_map[remote_last_btn[i]], 0);
@@ -655,25 +649,24 @@ handle_pads(glw_ps3_t *gp)
     }
 
 
-    memset(&paddata, 0, sizeof(paddata));
-    ioPadGetData(i, &paddata);
-
-    handle_btn(gp, i, BTN_LEFT,     paddata.BTN_LEFT);
-    handle_btn(gp, i, BTN_UP,       paddata.BTN_UP);
-    handle_btn(gp, i, BTN_RIGHT,    paddata.BTN_RIGHT);
-    handle_btn(gp, i, BTN_DOWN,     paddata.BTN_DOWN);
-    handle_btn(gp, i, BTN_CROSS,    paddata.BTN_CROSS);
-    handle_btn(gp, i, BTN_CIRCLE,   paddata.BTN_CIRCLE);
-    handle_btn(gp, i, BTN_TRIANGLE, paddata.BTN_TRIANGLE);
-    handle_btn(gp, i, BTN_SQUARE,   paddata.BTN_SQUARE);
-    handle_btn(gp, i, BTN_START,    paddata.BTN_START);
-    handle_btn(gp, i, BTN_SELECT,   paddata.BTN_SELECT);
-    handle_btn(gp, i, BTN_R1,       paddata.BTN_R1);
-    handle_btn(gp, i, BTN_L1,       paddata.BTN_L1);
-    handle_btn(gp, i, BTN_R2,       paddata.BTN_R2);
-    handle_btn(gp, i, BTN_L2,       paddata.BTN_L2);
-    handle_btn(gp, i, BTN_R3,       paddata.BTN_R3);
-    handle_btn(gp, i, BTN_L3,       paddata.BTN_L3);
+    ioPadGetData(i, &paddata[i]);
+    PadData *pd = &paddata[i];
+    handle_btn(gp, i, BTN_LEFT,     pd->BTN_LEFT);
+    handle_btn(gp, i, BTN_UP,       pd->BTN_UP);
+    handle_btn(gp, i, BTN_RIGHT,    pd->BTN_RIGHT);
+    handle_btn(gp, i, BTN_DOWN,     pd->BTN_DOWN);
+    handle_btn(gp, i, BTN_CROSS,    pd->BTN_CROSS);
+    handle_btn(gp, i, BTN_CIRCLE,   pd->BTN_CIRCLE);
+    handle_btn(gp, i, BTN_TRIANGLE, pd->BTN_TRIANGLE);
+    handle_btn(gp, i, BTN_SQUARE,   pd->BTN_SQUARE);
+    handle_btn(gp, i, BTN_START,    pd->BTN_START);
+    handle_btn(gp, i, BTN_SELECT,   pd->BTN_SELECT);
+    handle_btn(gp, i, BTN_R1,       pd->BTN_R1);
+    handle_btn(gp, i, BTN_L1,       pd->BTN_L1);
+    handle_btn(gp, i, BTN_R2,       pd->BTN_R2);
+    handle_btn(gp, i, BTN_L2,       pd->BTN_L2);
+    handle_btn(gp, i, BTN_R3,       pd->BTN_R3);
+    handle_btn(gp, i, BTN_L3,       pd->BTN_L3);
   }
 }
 
