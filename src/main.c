@@ -169,6 +169,11 @@ main(int argc, char **argv)
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
 
+#if ENABLE_BINREPLACE
+  extern char *binary_to_replace;
+  binary_to_replace = argv[0];
+#endif
+
   arch_set_default_paths(argc, argv);
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)

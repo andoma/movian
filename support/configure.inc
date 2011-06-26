@@ -82,6 +82,7 @@ CONFIG_LIST="
  ps3_vdec
  font_liberation
  libfontconfig
+ binreplace
 "
 
 die() {

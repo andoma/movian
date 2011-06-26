@@ -19,12 +19,15 @@ ${BIN}: ${BUILDDIR}/showtime
 $(BUILDDIR)/showtime.self: ${BIN}
 	$(SELF) $< $@
 
-$(BUILDDIR)/showtime.pkg: ${BIN}
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}
 	@mkdir -p $(BUILDDIR)/pkg
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
-	@cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
 	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
 
+$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
+	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
+
+	@cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 	package_finalize $(BUILDDIR)/showtime.pkg
@@ -46,3 +49,6 @@ $(BUILDDIR)/dist:
 	mkdir -p $@
 
 dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg
+
+upgrade: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
+	 curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace

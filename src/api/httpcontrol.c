@@ -217,6 +217,53 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
   return HTTP_STATUS_OK;
 }
 
+#if ENABLE_BINREPLACE
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+char *binary_to_replace;
+
+/**
+ *
+ */
+static int
+hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
+	      http_cmd_t method)
+{
+  if(binary_to_replace == NULL)
+    return HTTP_STATUS_PRECONDITION_FAILED;
+
+  size_t len;
+  void *data = http_get_post_data(hc, &len, 0);
+
+  if(method != HTTP_CMD_POST || data == NULL)
+    return 405;
+  
+  TRACE(TRACE_INFO, "BINREPLACE", "Replacing %s with %d bytes received",
+	binary_to_replace, (int)len);
+
+  int fd = open(binary_to_replace, O_TRUNC | O_RDWR, 0777);
+  if(fd == -1) {
+    TRACE(TRACE_ERROR, "BINREPLACE", "Unable to open file");
+    return HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
+  }
+
+  if(write(fd, data, len) != len)
+    TRACE(TRACE_ERROR, "BINREPLACE", "Unable to write to file");
+  
+  close(fd);
+  TRACE(TRACE_INFO, "BINREPLACE", "All done, exiting");
+  showtime_shutdown(12);
+  return HTTP_STATUS_OK;
+}
+#endif
+
+
+
+
 
 /**
  *
@@ -229,4 +276,7 @@ httpcontrol_init(void)
   http_path_add("/showtime/prop", NULL, hc_prop);
   http_path_add("/showtime/input/action", NULL, hc_action);
   http_path_add("/showtime/input/utf8", NULL, hc_utf8);
+#if ENABLE_BINREPLACE
+  http_path_add("/showtime/replace", NULL, hc_binreplace);
+#endif
 }
