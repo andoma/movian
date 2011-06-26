@@ -251,7 +251,7 @@ face_create_epilogue(face_t *face, const char *source)
 
   face->family_id = family_get(family);
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
-  TAILQ_INSERT_HEAD(&faces, face, link);
+  TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
 }
 
@@ -402,23 +402,32 @@ face_find(int uc, uint8_t style, int family_id)
        FT_Get_Char_Index(f->face, uc))
       return f;
 
-  if(face_resovle(uc, style, family_id, url, sizeof(url)))
-    return NULL;
-
-  TAILQ_FOREACH(f, &faces, link) {
-    if(f->url != NULL && !strcmp(f->url, url)) {
-      if(face_is_family(f, family_id))
-	return f;
+  if(!face_resovle(uc, style, family_id, url, sizeof(url))) {
+    TAILQ_FOREACH(f, &faces, link) {
+      if(f->url != NULL && !strcmp(f->url, url)) {
+	if(face_is_family(f, family_id))
+	  return f;
 #ifdef HAVE_FACE_REFERENCE
-      return face_replacement(f, family_id);
+	return face_replacement(f, family_id);
 #endif
+      }
     }
+    
+    f = face_create_from_uri(url);
+    if(f != NULL)
+      f->is_replacement = f->family_id != family_id;
+    return f;
   }
 
-  f = face_create_from_uri(url);
-  if(f != NULL)
-    f->is_replacement = f->family_id != family_id;
-  return f;
+  TAILQ_FOREACH(f, &faces, link)
+    if(f->style == style && FT_Get_Char_Index(f->face, uc))
+      return f;
+  
+  TAILQ_FOREACH(f, &faces, link)
+    if(f->style == 0 && FT_Get_Char_Index(f->face, uc))
+      return f;
+
+  return NULL;
 }
 
 
