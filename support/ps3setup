@@ -15,11 +15,14 @@ if [ ! -e ${FFMPEG}/include/libavcodec/avcodec.h ] || [[ $# == 1 && $1 == -u ]] 
     cd ${FFMPEG}
     if ! test -e src/.git ; then
         git clone git://github.com/andoma/libav.git src
+        cd ${FFMPEG}/src
+	git checkout showtime
     else
         cd ${FFMPEG}/src
         git pull
-        cd ${FFMPEG}
+	git checkout showtime
     fi
+    cd ${FFMPEG}
 
     echo Configuring FFmpeg...
 
