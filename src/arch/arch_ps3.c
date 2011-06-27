@@ -17,10 +17,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <dirent.h>
 
 #include <netinet/in.h>
 #include <net/net.h>
@@ -192,6 +196,94 @@ showtime_get_ts(void)
   return mftb() / ticks_per_us;
 }
 
+/**
+ *
+ */
+typedef struct rootfsnode {
+  LIST_ENTRY(rootfsnode) link;
+  char *name;
+  service_t *service;
+  int mark;
+} rootfsnode_t;
+ 
+static LIST_HEAD(, rootfsnode) rootfsnodes;
+
+/**
+ *
+ */
+static void
+scan_root_fs(callout_t *co, void *aux)
+{
+  struct dirent *d;
+  struct stat st;
+  DIR *dir;
+  char fname[32];
+  char dpyname[32];
+  rootfsnode_t *rfn, *next;
+
+  LIST_FOREACH(rfn, &rootfsnodes, link)
+    rfn->mark = 1;
+
+  callout_arm(co, scan_root_fs, NULL, 1);
+
+  if((dir = opendir("/")) == NULL)
+    return;
+
+  while((d = readdir(dir)) != NULL) {
+    if(strncmp(d->d_name, "dev_", strlen("dev_")))
+      continue;
+    if(!strncmp(d->d_name, "dev_flash", strlen("dev_flash")))
+      continue;
+
+    snprintf(fname, sizeof(fname), "/%s", d->d_name);
+    if(stat(fname, &st))
+      continue;
+
+    if((st.st_mode & S_IFMT) != S_IFDIR)
+      continue;
+
+    LIST_FOREACH(rfn, &rootfsnodes, link)
+      if(!strcmp(rfn->name, d->d_name))
+	break;
+
+    if(rfn == NULL) {
+      rfn = malloc(sizeof(rootfsnode_t));
+      rfn->name = strdup(d->d_name);
+
+      snprintf(fname, sizeof(fname), "file:///%s", d->d_name);
+
+      const char *name = d->d_name;
+      const char *type = "other";
+      if(!strcmp(name, "dev_hdd0"))
+	name = "PS3 HDD";
+      else if(!strncmp(name, "dev_usb", strlen("dev_usb"))) {
+	snprintf(dpyname, sizeof(dpyname), "USB Drive %d",
+		 atoi(name + strlen("dev_usb")));
+	type = "usb";
+	name = dpyname;
+      }
+
+      rfn->service = service_create(name, fname, type, NULL, 0, 1);
+      LIST_INSERT_HEAD(&rootfsnodes, rfn, link);
+    }
+    rfn->mark = 0;
+  }
+  closedir(dir);
+  
+  for(rfn = LIST_FIRST(&rootfsnodes); rfn != NULL; rfn = next) {
+    next = LIST_NEXT(rfn, link);
+    if(!rfn->mark)
+      continue;
+
+    LIST_REMOVE(rfn, link);
+    service_destroy(rfn->service);
+    free(rfn->name);
+    free(rfn);
+  }
+
+}
+
+
 
 /**
  *
@@ -199,10 +291,8 @@ showtime_get_ts(void)
 void
 arch_sd_init(void)
 {
-  // This should be much more clever
-
-  service_create("PS3 HDD", "file:///",
-		 "other", NULL, 0, 1);
+  static callout_t co;
+  scan_root_fs(&co, NULL);
 }
 
 

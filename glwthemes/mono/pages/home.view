@@ -90,6 +90,7 @@ widget(container_y, {
 			    "music",     "Music.png",
 			    "video",     "Movie.png",
 			    "tv",        "Tv.png",
+			    "usb",       "Usb.png",
 			    "photos",    "Picture.png");
 	      });
 	    });
