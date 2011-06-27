@@ -162,7 +162,10 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
     }
   }
 
-  if((err = av_open_input_stream(&fctx, avio, url, fmt, NULL)) != 0) {
+  fctx = avformat_alloc_context();
+  fctx->pb = avio;
+
+  if((err = avformat_open_input(&fctx, url, fmt, NULL)) != 0) {
     if(mimetype != NULL)
       return fa_libav_open_format(avio, url, errbuf, errlen, NULL);
     return fa_libav_open_error(errbuf, errlen,
