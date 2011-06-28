@@ -67,7 +67,7 @@ typedef struct glw_ps3 {
 
   KbConfig kb_config[MAX_KEYBOARDS];
 
-  int wide; // Set if 16:9 stretching is needed
+  float scale;
 
 } glw_ps3_t;
 
@@ -171,10 +171,24 @@ init_screen(glw_ps3_t *gp)
   // Get the current resolution
   assert(videoGetResolution(state.displayMode.resolution, &gp->res) == 0);
   
-  TRACE(TRACE_INFO, "RSX", "Video resolution %d x %d  aspect=%d",
-	gp->res.width, gp->res.height, state.displayMode.aspect);
+  int num = gp->res.width;
+  int den = gp->res.height;
+  
+  switch(state.displayMode.aspect) {
+  case VIDEO_ASPECT_4_3:
+    num = 4; den = 3;
+    break;
+  case VIDEO_ASPECT_16_9:
+    num = 16; den = 9;
+    break;
+  }
 
-  gp->wide = state.displayMode.aspect == VIDEO_ASPECT_16_9;
+  gp->scale = (float)(num * gp->res.height) / (float)(den * gp->res.width);
+
+  TRACE(TRACE_INFO, "RSX",
+	"Video resolution %d x %d  aspect=%d, pixel wscale=%f",
+	gp->res.width, gp->res.height, state.displayMode.aspect, gp->scale);
+
 
   gp->framebuffer_pitch = 4 * gp->res.width; // each pixel is 4 bytes
   gp->depthbuffer_pitch = 4 * gp->res.width; // And each value in the depth buffer is a 16 bit float
@@ -338,8 +352,7 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
   gp->gr.gr_height = gp->res.height;
 
   glw_rctx_t rc;
-  glw_rctx_init(&rc, gp->gr.gr_width * (gp->wide ? 1.3333 : 1),
-		gp->gr.gr_height);
+  glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height);
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
