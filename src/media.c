@@ -327,6 +327,12 @@ mp_create(const char *name, int flags, const char *type)
   //--------------------------------------------------
   // Settings
 
+  mp->mp_setting_vzoom = 
+    settings_create_int(mp->mp_setting_video_root, "vzoom",
+			"Video zoom", 100, NULL, 50, 200,
+			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
+			"%", mp->mp_pc, NULL, NULL);
+
   mp->mp_setting_av_delta = 
     settings_create_int(mp->mp_setting_audio_root, "avdelta",
 			"Audio delay", 0, NULL, -5000, 5000,
@@ -374,6 +380,7 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_sv_delta);
   setting_destroy(mp->mp_setting_sub_scale);
   setting_destroy(mp->mp_setting_sub_on_video);
+  setting_destroy(mp->mp_setting_vzoom);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);

@@ -188,7 +188,10 @@ typedef struct glw_video {
   float gv_vo_scaling;
 
   prop_sub_t *gv_vo_on_video_sub;
-  float gv_vo_on_video;
+  int gv_vo_on_video;
+
+  prop_sub_t *gv_vzoom_sub;
+  int gv_vzoom;
 
 } glw_video_t;
 

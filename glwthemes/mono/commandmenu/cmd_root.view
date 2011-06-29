@@ -127,6 +127,9 @@ widget(container_y, {
 	  commandButton({ $view.settingpage = 2; }, "Subtitles",
 			$view.videofeatures);
 
+	  commandButton({ $view.settingpage = 4; }, "Video",
+			$view.videofeatures);
+
 	  commandToggle($global.media.current.stats,
 			"Info",
 			$view.videofeatures);
@@ -152,6 +155,11 @@ widget(container_y, {
 
     // -- Audio config ------------------------------------------------------
     commandGroup(widget(container_y, {
+      widget(label, {
+	.caption = "Audio settings";
+	.sizeScale = 1.5;
+      });
+
       .height = $ui.size * 10;
       .spacing = 5;
 
@@ -191,6 +199,11 @@ widget(container_y, {
 
     // -- Subtitle tracks ------------------------------------------------------
     commandGroup(widget(container_y, {
+      widget(label, {
+	.caption = "Subtitle settings";
+	.sizeScale = 1.5;
+      });
+
       .height = $ui.size * 10;
       .spacing = 5;
 
@@ -273,6 +286,25 @@ widget(container_y, {
 	});
       });
     }));
+
+
+    // -- Video config ------------------------------------------------------
+    commandGroup(widget(list_y, {
+      .height = $ui.size * 8;
+      .spacing = 5;
+
+      widget(label, {
+	.caption = "Video settings";
+	.sizeScale = 1.5;
+      });
+
+      cloner($global.media.current.video.settings.model.nodes, loader, {
+	.source = "theme://settings/" + $self.model.type + ".view";
+	.time = 0.3;
+	.noInitialTransform = true;
+      });
+    }));
+
         
     //--- Deck control
     .page = select($view.videofeatures, $view.settingpage, 0);

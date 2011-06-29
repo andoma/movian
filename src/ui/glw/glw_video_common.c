@@ -41,8 +41,10 @@ static void  glw_video_input(uint8_t * const data[], const int pitch[],
  *
  */
 static void
-glw_video_scale_to_aspect(glw_rctx_t *rc, float t_aspect)
+glw_video_rctx_aspect_adjust(glw_rctx_t *rc, glw_video_t *gv)
 {
+  float t_aspect = av_q2d(gv->gv_dar);
+
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
     if(video_settings.stretch_horizontal)
@@ -299,7 +301,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     rc = extra;
     rc0 = *rc;
-    glw_video_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
+    glw_video_rctx_aspect_adjust(&rc0, gv);
     glw_video_overlay_layout(gv, rc, &rc0);
     return 0;
 
@@ -364,6 +366,14 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_sub_scale),
+		   NULL);
+
+  gv->gv_vzoom_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vzoom,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_vzoom),
 		   NULL);
 
   gv->gv_vo_on_video_sub =
@@ -481,7 +491,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
-  glw_video_scale_to_aspect(&rc0, av_q2d(gv->gv_dar));
+  glw_video_rctx_aspect_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;
@@ -489,7 +499,14 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   if(glw_is_focusable(w))
     glw_store_matrix(w, &rc0);
 
-  gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc0);
+  glw_rctx_t rc1 = rc0;
+
+  if(gv->gv_vzoom != 100) {
+    float zoom = gv->gv_vzoom / 100.0f;
+    glw_Scalef(&rc1, zoom, zoom, 1.0);
+  }
+
+  gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc1);
   glw_video_overlay_render(gv, rc, &rc0);
 }
 

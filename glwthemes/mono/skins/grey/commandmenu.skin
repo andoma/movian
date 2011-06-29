@@ -4,7 +4,8 @@
   _glossybutton(ICON="skin://icons/" + 
 		translate(TYPE, TYPE,
 			  "SeekForward", "SeekFwd",
-			  "Subtitles", "Script"
+			  "Subtitles", "Script",
+			  "Video", "Cam"
 			 ) + ".png",
 		EVENT=EVENT,
 		HIDDEN=!ENABLED,
@@ -186,7 +187,7 @@
   widget(backdrop, {
     .source = "skin://gfx/blackdrop.png";
     .border = 12;
-    .alphaSelf = 0.66;
+    .alphaSelf = 0.8;
     BODY;
   });
 }
