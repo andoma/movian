@@ -260,9 +260,9 @@ rar_archive_load(rar_archive_t *ra)
   int volume_index = -1, size, x;
   unsigned int nsize;
   uint8_t method, unpver;
-  uint16_t main_flags = 0, flags;
+  uint16_t flags;
   uint32_t u32;
-  uint64_t blocksize, packsize, unpsize;
+  uint64_t packsize, unpsize;
   int64_t voff;
   rar_volume_t *rv;
   rar_file_t *rf;
@@ -328,7 +328,6 @@ rar_archive_load(rar_archive_t *ra)
   if(buf[2] != RAR_HEADER_MAIN)
     goto err;
 
-  main_flags = buf[3] | buf[4] << 8;
   size =       buf[5] | buf[6] << 8;
 
   if(size != 13)
@@ -352,7 +351,6 @@ rar_archive_load(rar_archive_t *ra)
     if(size < 7)
       break;
     
-    blocksize = size;
     size -= 7;
 
     /* Read rest of header */

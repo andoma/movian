@@ -1745,7 +1745,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsmsg_field_t *f;
   htsmsg_t *sub, *streams;
   const char *type;
-  uint32_t idx, s;
+  uint32_t idx;
   enum CodecID   codec_id;
   enum AVMediaType media_type;
   const char *nicename, *lang, *title;
@@ -1754,7 +1754,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   int vstream = -1; /* Initial video stream */
   int astream = -1; /* Initial audio stream */
 
-  int subid;
   htsp_subscription_stream_t *hss;
   char titlebuf[64];
   htsmsg_t *sourceinfo;
@@ -1807,7 +1806,6 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_u32(sub, "index", &idx))
 	continue;
 
-      subid = 0;
       memset(&mcp, 0, sizeof(mcp));
 
       lang = htsmsg_get_str(sub, "language");
@@ -1832,13 +1830,11 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 	codec_id = CODEC_ID_MPEG2VIDEO;
 	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "MPEG-2";
-	s = 1;
       } else if(!strcmp(type, "H264")) {
 	codec_id = CODEC_ID_H264;
 	media_type = AVMEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
-	s = 2;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
 	media_type = AVMEDIA_TYPE_SUBTITLE;

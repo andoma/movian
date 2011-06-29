@@ -508,7 +508,6 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   hts_regmatch_t matches[8];
   jsval *argv, result;
   void *mark;
-  char argfmt[10];
   int argc, ret;
   JSObject *pobj;
 
@@ -529,7 +528,6 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
 
   JS_DefineFunctions(cx, pobj, http_auth_functions);
 
-  argfmt[0] = 'o';
   argc = 1;
   argv = JS_PushArguments(cx, &mark, "o", pobj);
   

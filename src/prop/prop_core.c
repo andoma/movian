@@ -2406,7 +2406,7 @@ prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
   if(p == NULL)
     return;
 
-  if(title == NULL && link == NULL) {
+  if(title == NULL && url == NULL) {
     prop_set_void_ex(p, skipme);
     return;
   }

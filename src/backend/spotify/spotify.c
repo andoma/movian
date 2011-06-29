@@ -657,13 +657,11 @@ is_permanent_error(sp_error e)
 static void
 spotify_logged_in(sp_session *sess, sp_error error)
 {
-  sp_user *user;
   pending_login = 0;
   if(error == 0) {
     
     is_logged_in = 1;
 
-    user = f_sp_session_user(sess);
     load_initial_playlists(sess);
     spotify_userinfo_updated(sess);
 
@@ -1154,7 +1152,6 @@ static void
 metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_t *m = opaque;
-  prop_t *p;
   prop_sub_t *s;
   va_list ap;
   va_start(ap, event);
@@ -1162,7 +1159,7 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED) 
     return;
 
-  p = va_arg(ap, prop_t *);
+  (void)va_arg(ap, prop_t *);
   s = va_arg(ap, prop_sub_t *);
 
   prop_unsubscribe(s);

@@ -483,7 +483,6 @@ scanner(void *aux)
 static void
 scanner_stop(void *opaque, prop_event_t event, ...)
 {
-  prop_t *p;
   scanner_t *s = opaque;
 
   va_list ap;
@@ -492,7 +491,7 @@ scanner_stop(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED) 
     return;
 
-  p = va_arg(ap, prop_t *);
+  (void)va_arg(ap, prop_t *);
   prop_unsubscribe(va_arg(ap, prop_sub_t *));
 
   s->s_stop = 1;

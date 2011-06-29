@@ -1057,6 +1057,9 @@ http_server(void *aux)
     n++;
     r = poll(hs->hs_fds, n, -1);
 
+    if(r == -1)
+      continue;
+
     n = 0;
     for(hc = LIST_FIRST(&hs->hs_connections); hc != NULL; hc = nxt) {
       nxt = LIST_NEXT(hc, hc_link);

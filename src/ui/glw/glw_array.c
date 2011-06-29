@@ -294,7 +294,7 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
   glw_rctx_t rc0, rc1, rc2, rc3;
-  int t, b, height, width;
+  int t, b, height;
   float y;
 
   if(rc->rc_alpha < 0.01f)
@@ -312,7 +312,6 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
 		 rc->rc_width  - a->border_right, a->border_bottom);
 
   height = rc1.rc_height;
-  width = rc1.rc_width;
 
   rc2 = rc1;
   
