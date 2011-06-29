@@ -171,6 +171,8 @@ void gu_home_create(gu_nav_page_t *gnp);
 
 void gu_video_create(gu_nav_page_t *gnp);
 
+void gu_settings_create(gu_nav_page_t *gnp);
+
 void gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable);
 
 /**

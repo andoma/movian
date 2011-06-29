@@ -48,6 +48,8 @@ gu_nav_page_set_type(void *opaque, const char *type)
     gu_video_create(gnp);
   } else if(!strcmp(type, "openerror")) {
     gu_openerror_create(gnp);
+  } else if(!strcmp(type, "settings")) {
+    gu_settings_create(gnp);
   } else {
     GtkWidget *l;
     char str[256];
