@@ -220,6 +220,9 @@ ffmpeg_metadata_get(AVMetadata *m, const char *key)
   if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
     return NULL;
 
+  if(!utf8_verify(tag->value))
+    return NULL;
+
   str = tag->value;
   len = strlen(str);
   ret = rstr_allocl(str, len);
