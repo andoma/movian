@@ -27,7 +27,7 @@ BUILDDIR = build.${PLATFORM}
 include ${BUILDDIR}/config.mak
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
-CFLAGS += -Wmissing-prototypes -Iext/dvd
+CFLAGS += -Wmissing-prototypes -Iext/dvd ${OPTFLAGS}
 
 
 #
@@ -95,6 +95,14 @@ SRCS +=	src/misc/ptrvec.c \
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
 #
+# Sqlite3
+#
+SRCS += ext/sqlite/sqlite3.c
+
+${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -Os \
+ -DSQLITE_OMIT_UTF16 \
+
+#
 # HTSMSG
 #
 SRCS +=	src/htsmsg/htsbuf.c \
@@ -145,7 +153,7 @@ SRCS 			+= src/sd/sd.c \
 
 SRCS-$(CONFIG_AVAHI) 	+= src/sd/avahi.c \
 
-${BUILDDIR}/src/sd/avahi.o : CFLAGS = $(CFLAGS_AVAHI) -Wall -Werror
+${BUILDDIR}/src/sd/avahi.o : CFLAGS = $(CFLAGS_AVAHI) -Wall -Werror  ${OPTFLAGS}
 
 BUNDLES += resources/tvheadend
 BUNDLES += resources/fileaccess
@@ -351,8 +359,8 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_video.c \
 			src/ui/linux/x11_common.c \
 
-${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) \
--Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations 
+${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} \
+-Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations
 
 #
 # IPC
@@ -391,7 +399,7 @@ SRCS-$(CONFIG_LIBRTMP) +=	ext/librtmp/amf.c \
 ${BUILDDIR}/ext/librtmp/%.o : CFLAGS = ${OPTFLAGS}
 
 SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
-${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = -Wall -Werror -Iext
+${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = ${OPTFLAGS} -Wall -Werror -Iext
 
 
 #
@@ -412,7 +420,7 @@ endif
 endif
 
 
-${BUILDDIR}/ext/dvd/dvdcss/%.o : CFLAGS = \
+${BUILDDIR}/ext/dvd/dvdcss/%.o : CFLAGS = ${OPTFLAGS} \
  -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DVERSION="0" $(DVDCSS_CFLAGS)
 
 #
@@ -426,7 +434,7 @@ SRCS-$(CONFIG_DVD) += 	ext/dvd/libdvdread/dvd_input.c \
 			ext/dvd/libdvdread/nav_read.c \
 			ext/dvd/libdvdread/bitreader.c
 
-${BUILDDIR}/ext/dvd/libdvdread/%.o : CFLAGS = \
+${BUILDDIR}/ext/dvd/libdvdread/%.o : CFLAGS = ${OPTFLAGS} \
  -DHAVE_DVDCSS_DVDCSS_H -DDVDNAV_COMPILE -Wno-strict-aliasing  -Iext/dvd 
 
 #
@@ -443,7 +451,7 @@ SRCS-$(CONFIG_DVD) += 	ext/dvd/dvdnav/dvdnav.c \
 			ext/dvd/dvdnav/vm/vmcmd.c \
 			ext/dvd/dvdnav/searching.c
 
-${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = \
+${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
  -DVERSION=\"showtime\" -DDVDNAV_COMPILE -Wno-strict-aliasing -Iext/dvd \
  -Iext/dvd/dvdnav
 
@@ -531,7 +539,7 @@ SRCS-$(CONFIG_POLARSSL) += \
 	ext/polarssl-0.14.0/library/x509parse.c \
 	ext/polarssl-0.14.0/library/xtea.c \
 
-${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall
+${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
 
 ifeq ($(CONFIG_POLARSSL), yes)
 CFLAGS_com += -Iext/polarssl-0.14.0/include
