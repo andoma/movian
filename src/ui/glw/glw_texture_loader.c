@@ -473,9 +473,11 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   int q = LQ_ALL_OTHER;
 
   if(glt->glt_filename != NULL) {
-    if(!strncmp(glt->glt_filename, "thumb://", 8))
+    if(!strncmp(glt->glt_filename, "thumb://", 8) ||
+       strstr(glt->glt_filename, "#") != NULL)
       q = LQ_THUMBS;
-    else if(!strncmp(glt->glt_filename, "theme://", 8))
+    else if(!strncmp(glt->glt_filename, "theme://", 8) ||
+	    !strncmp(glt->glt_filename, "skin://", 7))
       q  = LQ_THEME;
   }
 
