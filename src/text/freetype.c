@@ -43,10 +43,6 @@
 
 #define ftver ver(FREETYPE_MAJOR, FREETYPE_MINOR, FREETYPE_PATCH)
 
-#if ftver >= ver(2,4,0)
-#define HAVE_FACE_REFERENCE
-#endif
-
 static FT_Library text_library;
 static hts_mutex_t text_mutex;
 
@@ -77,10 +73,9 @@ typedef struct face {
   FT_Face face;
   char *url;
  
-  int family_id;
+  int *family_id_vec;
   uint8_t style;
   uint8_t persistent;
-  uint8_t is_replacement;
 
   struct glyph_list glyphs;
 
@@ -249,7 +244,9 @@ face_create_epilogue(face_t *face, const char *source)
       face->style = TR_STYLE_ITALIC;
   }
 
-  face->family_id = family_get(family);
+  face->family_id_vec = calloc(2, sizeof(int));
+  face->family_id_vec[0] = family_get(family);
+  
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
@@ -346,28 +343,6 @@ face_resovle(int uc, uint8_t style, int family_id,
   return -1;
 }
 
-#ifdef HAVE_FACE_REFERENCE
-/**
- *
- */
-static face_t *
-face_replacement(face_t *src, int family_id)
-{
-  face_t *dst = calloc(1, sizeof(face_t));
-
-  dst->face = src->face;
-  FT_Reference_Face(src->face);
-  dst->url = src->url ? strdup(src->url) : NULL;
-
-  dst->family_id = family_id;
-  dst->is_replacement = 1;
-
-  dst->style = src->style;
-  TAILQ_INSERT_TAIL(&faces, dst, link);
-  return dst;
-}
-#endif
-
 
 /**
  *
@@ -375,8 +350,35 @@ face_replacement(face_t *src, int family_id)
 static int
 face_is_family(face_t *f, int family_id)
 {
-  assert(f->family_id != 0);
-  return f->family_id == family_id;
+  int i;
+  while(f->family_id_vec[i] != 0)
+    if(f->family_id_vec[i++] == family_id)
+      return 1;
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+face_set_family(face_t *f, int family_id)
+{
+  int len = 0;
+
+  if(f->family_id_vec != NULL)
+    while(f->family_id_vec[len] != 0)
+      len++;
+#if 0
+  printf("Font %s alias to %s\n",
+	 f->family_id_vec ? family_get_by_id(f->family_id_vec[0]) : "<yet unnamed>",
+	 family_get_by_id(family_id));
+#endif
+
+  f->family_id_vec = realloc(f->family_id_vec, sizeof(int) * (len + 2));
+  f->family_id_vec[len] = family_id;
+  f->family_id_vec[len+1] = 0;
 }
 
 
@@ -403,29 +405,36 @@ face_find(int uc, uint8_t style, int family_id)
       return f;
 
   if(!face_resovle(uc, style, family_id, url, sizeof(url))) {
-    TAILQ_FOREACH(f, &faces, link) {
-      if(f->url != NULL && !strcmp(f->url, url)) {
-	if(face_is_family(f, family_id))
-	  return f;
-#ifdef HAVE_FACE_REFERENCE
-	return face_replacement(f, family_id);
-#endif
-      }
-    }
+    TAILQ_FOREACH(f, &faces, link)
+      if(f->url != NULL && !strcmp(f->url, url))
+	break;
+
+
+    if(f != NULL) {
+      // Same family, just return
+      if(face_is_family(f, family_id))
+	return f;
     
+      face_set_family(f, family_id);
+      return f;
+    }
+
     f = face_create_from_uri(url);
-    if(f != NULL)
-      f->is_replacement = f->family_id != family_id;
-    return f;
   }
 
-  TAILQ_FOREACH(f, &faces, link)
-    if(f->style == style && FT_Get_Char_Index(f->face, uc))
-      return f;
-  
-  TAILQ_FOREACH(f, &faces, link)
-    if(f->style == 0 && FT_Get_Char_Index(f->face, uc))
-      return f;
+  if(f == NULL) {
+    TAILQ_FOREACH(f, &faces, link)
+      if(f->style == style && FT_Get_Char_Index(f->face, uc))
+	break;
+  }
+  if(f == NULL) {
+    TAILQ_FOREACH(f, &faces, link)
+      if(f->style == 0 && FT_Get_Char_Index(f->face, uc))
+	break;
+  }
+
+  if(f != NULL)
+    face_set_family(f, family_id);
 
   return NULL;
 }
@@ -834,7 +843,7 @@ text_render0(const uint32_t *uc, const int len,
 
       if(lines == max_lines - 1 && (flags & TR_RENDER_ELLIPSIZE) && g != NULL) {
 	glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
-				g->face->family_id);
+				g->face->family_id_vec[0]);
 	if(eg != NULL) {
 	  int ellipsize_width = g->adv_x;
 	  if(w >= max_width - ellipsize_width) {
