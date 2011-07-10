@@ -21,21 +21,15 @@
 
 #include "prop/prop.h"
 #include "fileaccess.h"
+#include "metadata.h"
 #include <libavformat/avformat.h>
 
-struct metadata;
-
-unsigned int fa_probe(prop_t *proproot, const char *url,
-		      char *newurl, size_t newurlsize,
-		      char *errbuf, size_t errsize,
-		      struct fa_stat *fs, int overwrite_title);
-
-unsigned int fa_probe_dir(prop_t *proproot, const char *url);
+metadata_t *fa_probe_dir(const char *url);
 
 int fa_probe_iso(struct metadata *md, AVIOContext *avio);
 
-void fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url);
+metadata_t *fa_metadata_from_fctx(AVFormatContext *fctx, const char *url);
 
-void fa_probe_init(void);
+metadata_t *fa_probe_metadata(const char *url, char *errbuf, size_t errsize);
 
 #endif /* FA_PROBE_H */

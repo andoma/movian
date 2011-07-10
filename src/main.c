@@ -51,6 +51,8 @@
 #include "misc/string.h"
 #include "text/text.h"
 #include "video/video_settings.h"
+#include "metadata.h"
+#include "ext/sqlite/sqlite3.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -331,6 +333,9 @@ main(int argc, char **argv)
 	  showtime_cache_path, strerror(r));
     showtime_cache_path = NULL;
   }
+
+  /* Initialize sqlite3 */
+  sqlite3_initialize();
 
   /* Initializte blob cache */
   blobcache_init();

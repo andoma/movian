@@ -138,8 +138,7 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-int backend_open_video(prop_t *page, const char *url)
-     __attribute__ ((warn_unused_result));
+int backend_open_video(prop_t *page, const char *url);
 
 int backend_resolve_item(const char *url, prop_t *item)
      __attribute__ ((warn_unused_result));

@@ -55,6 +55,7 @@ SRCS += src/main.c \
 	src/plugins.c \
 	src/blobcache.c \
 	src/i18n.c \
+	src/metadata.c \
 	src/prop/prop_core.c \
 	src/prop/prop_nodefilter.c \
 	src/prop/prop_tags.c \
@@ -101,6 +102,7 @@ SRCS += ext/sqlite/sqlite3.c
 
 ${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -Os \
  -DSQLITE_OMIT_UTF16 \
+ -DSQLITE_OMIT_AUTOINIT \
 
 #
 # HTSMSG

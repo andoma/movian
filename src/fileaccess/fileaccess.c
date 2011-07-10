@@ -518,7 +518,6 @@ int
 fileaccess_init(void)
 {
   fa_protocol_t *fap;
-  fa_probe_init();
   fa_imageloader_init();
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)

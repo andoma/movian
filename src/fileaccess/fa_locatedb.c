@@ -272,8 +272,16 @@ fa_locate_searcher (fa_search_t *fas)
     if(fs.fs_type == CONTENT_DIR) {
       ctype = CONTENT_DIR;
       prop_set_string(prop_create(metadata, "title"), basename(buf));
-    } else
-      ctype = fa_probe(metadata, url, NULL, 0, NULL, 0, NULL, 1);
+    } else {
+      metadata_t *md = fa_probe_metadata(url, NULL, 0);
+      if(md != NULL) {
+	ctype = md->md_contenttype;
+	metadata_destroy(md);
+      } else {
+	ctype = CONTENT_UNKNOWN;
+      }
+    }
+
 
     if (ctype == CONTENT_UNKNOWN)
       continue;

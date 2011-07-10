@@ -220,24 +220,41 @@ quick_analyzer(fa_dir_t *fd, prop_t *contents)
  *
  */
 static void
-deep_probe(fa_dir_entry_t *fde)
+deep_probe(fa_dir_entry_t *fde, void *metadb)
 {
-  prop_t *metadata;
-
   fde->fde_probestatus = FDE_PROBE_DEEP;
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
 
-    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    prop_t *meta = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
     
-    if(fde->fde_type == CONTENT_DIR) {
-      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
-    } else {
-      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
-			       NULL, 0,
-			       fde->fde_statdone ? &fde->fde_stat : NULL, 1);
+    metadata_t *md = NULL;
+
+    if(!fa_dir_entry_stat(fde)) 
+      md = metadb_metadata_get(metadb, fde->fde_url, fde->fde_stat.fs_mtime);
+
+    if(md == NULL) {
+
+      if(fde->fde_type == CONTENT_DIR)
+        md = fa_probe_dir(fde->fde_url);
+      else
+	md = fa_probe_metadata(fde->fde_url, NULL, 0);
     }
-    prop_ref_dec(metadata);
+    
+    if(md != NULL) {
+      fde->fde_type = md->md_contenttype;
+      metadata_to_proptree(md, meta, 1);
+      
+      if(md->md_cached == 0) {
+	
+	if(!fa_dir_entry_stat(fde)) 
+	  metadb_metadata_write(metadb, fde->fde_url,
+				fde->fde_stat.fs_mtime,
+				md, NULL);
+      }
+      metadata_destroy(md);
+    }
+    prop_ref_dec(meta);
   }
   set_type(fde->fde_prop, fde->fde_type);
 }
@@ -258,6 +275,8 @@ deep_analyzer(scanner_t *s)
     return;
   }
 
+  void *metadb = metadb_get();
+
   /* Scan all entries */
   TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
 
@@ -268,8 +287,9 @@ deep_analyzer(scanner_t *s)
       break;
 
     if(fde->fde_probestatus != FDE_PROBE_DEEP)
-      deep_probe(fde);
+      deep_probe(fde, metadb);
   }
+  metadb_close(metadb);
 }
 
 
@@ -309,7 +329,9 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
 
   make_prop(fde);
 
-  deep_probe(fde);
+  void *metadb = metadb_get();
+  deep_probe(fde, metadb);
+  metadb_close(metadb);
 
   if(!prop_set_parent(fde->fde_prop, s->s_nodes))
     return; // OK
@@ -463,10 +485,13 @@ static void *
 scanner(void *aux)
 {
   scanner_t *s = aux;
+  char errbuf[256];
 
-  if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) != NULL) {
+  if((s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf))) != NULL) {
     doscan(s);
     fa_dir_free(s->s_fd);
+  } else {
+    TRACE(TRACE_INFO, "FA", "Unable to scan %s -- %s", s->s_url, errbuf);
   }
 
   prop_set_int(s->s_loading, 0);
