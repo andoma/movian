@@ -1178,8 +1178,15 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
 	   code == 301 ? ", (premanent)" : "");
 
   free(hf->hf_url);
-  hf->hf_url = hf->hf_location;
+  
+  const http_connection_t *hc = hf->hf_connection;
 
+  hf->hf_url = 
+    url_resolve_relative(hc->hc_ssl ? "https" : "http",
+			 hc->hc_hostname, hc->hc_port,
+			 hf->hf_path, hf->hf_location);
+
+  free(hf->hf_location);
   hf->hf_location = NULL;
   
   // Location changed, must detach from connection
