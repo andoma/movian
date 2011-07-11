@@ -76,7 +76,7 @@ static int ffmpeglog;
 static int showtime_retcode = 1;
 const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
 char *showtime_cache_path;
-char *showtime_settings_path;
+char *showtime_persistent_path;
 
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
@@ -291,8 +291,6 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
-  htsmsg_store_init();
-
   /* Try to create cache path */
   if(showtime_cache_path != NULL &&
      (r = makedirs(showtime_cache_path)) != 0) {
@@ -305,12 +303,16 @@ main(int argc, char **argv)
   blobcache_init();
 
   /* Try to create settings path */
-  if(showtime_settings_path != NULL &&
-     (r = makedirs(showtime_settings_path)) != 0) {
-    TRACE(TRACE_ERROR, "settings", "Unable to create settings path %s -- %s",
-	  showtime_settings_path, strerror(r));
-    showtime_settings_path = NULL;
+  if(showtime_persistent_path != NULL &&
+     (r = makedirs(showtime_persistent_path)) != 0) {
+    TRACE(TRACE_ERROR, "settings",
+	  "Unable to create path for persistent storage %s -- %s",
+	  showtime_persistent_path, strerror(r));
+    showtime_persistent_path = NULL;
   }
+
+  /* Initialize htsmsg_store() */
+  htsmsg_store_init();
 
   /* Initialize keyring */
   keyring_init();

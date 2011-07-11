@@ -150,7 +150,7 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 #define SHOWTIME_EXIT_POWEROFF 11
 
 extern char *showtime_cache_path;
-extern char *showtime_settings_path;
+extern char *showtime_persistent_path;
 
 
 /* From version.c */

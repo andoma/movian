@@ -346,7 +346,7 @@ arch_set_default_paths(int argc, char **argv)
 
 
   snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
-  showtime_settings_path = strdup(buf);
+  showtime_persistent_path = strdup(buf);
 }
 
 int64_t

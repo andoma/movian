@@ -397,7 +397,7 @@ arch_set_default_paths(int argc, char **argv)
     return;
   x++;
   strcpy(x, "settings");
-  showtime_settings_path = strdup(buf);
+  showtime_persistent_path = strdup(buf);
   strcpy(x, "cache");
   showtime_cache_path = strdup(buf);
 }
