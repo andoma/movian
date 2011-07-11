@@ -499,7 +499,7 @@ plugin_finalize(JSContext *cx, JSObject *obj)
  *
  */
 static void
-js_plugin_unload(JSContext *cx, js_plugin_t *jsp)
+js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
 {
   js_page_flush_from_plugin(cx, jsp);
   js_io_flush_from_plugin(cx, jsp);
@@ -512,7 +512,7 @@ static JSBool
 js_forceUnload(JSContext *cx, JSObject *obj,
 	      uintN argc, jsval *argv, jsval *rval)
 {
-  js_plugin_unload(cx, JS_GetPrivate(cx, obj));
+  js_plugin_unload0(cx, JS_GetPrivate(cx, obj));
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
@@ -595,6 +595,33 @@ static JSFunctionSpec plugin_functions[] = {
 /**
  *
  */
+void
+js_plugin_unload(const char *id)
+{
+  JSContext *cx;
+  js_plugin_t *jsp;
+
+  LIST_FOREACH(jsp, &js_plugins, jsp_link)
+    if(!strcmp(jsp->jsp_id, id))
+      break;
+
+  if(jsp == NULL)
+    return;
+
+  cx = js_newctx(NULL);
+  JS_BeginRequest(cx);
+
+  js_plugin_unload0(cx, jsp);
+
+  JS_EndRequest(cx);
+  JS_GC(cx);
+  JS_DestroyContext(cx);
+}
+
+
+/**
+ *
+ */
 int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
@@ -618,7 +645,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
     if(!strcmp(jsp->jsp_id, id))
       break;
   if(jsp != NULL)
-    js_plugin_unload(cx, jsp);
+    js_plugin_unload0(cx, jsp);
 
   jsp = calloc(1, sizeof(js_plugin_t));
   jsp->jsp_url = strdup(url);
@@ -727,7 +754,7 @@ js_fini(void)
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
     n = LIST_NEXT(jsp, jsp_link);
-    js_plugin_unload(cx, jsp);
+    js_plugin_unload0(cx, jsp);
   }
 
   JS_RemoveRoot(cx, &showtimeobj);
