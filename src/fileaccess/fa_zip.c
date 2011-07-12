@@ -400,13 +400,17 @@ zip_archive_find(const char *url, const char **rp)
 
   hts_mutex_lock(&zip_global_mutex);
   u = mystrdupa(url);
-  while((s = strrchr(u, '/')) != NULL) {
-    *s = 0;
-    LIST_FOREACH(za, &zip_archives, za_link)
+
+  while(1) {
+    LIST_FOREACH(za, &zip_archives, za_link) {
       if(!strcasecmp(za->za_url, u))
 	break;
+    }
     if(za != NULL)
       break;
+    if((s = strrchr(u, '/')) == NULL)
+      break;
+    *s = 0;
   }
 
   if(za == NULL) {
@@ -415,7 +419,7 @@ zip_archive_find(const char *url, const char **rp)
     while(1) {
       struct fa_stat fs;
 
-      if(!fa_stat(u, &fs, NULL, 0) && fs.fs_type == CONTENT_DIR)
+      if(!fa_stat(u, &fs, NULL, 0) && fs.fs_type == CONTENT_FILE)
 	break;
 
       if((s = strrchr(u, '/')) == NULL) {
