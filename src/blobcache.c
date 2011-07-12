@@ -133,8 +133,10 @@ blobcache_load(const char *path, int fd, size_t *sizep, int pad, int lockhash)
 
   r = malloc(l + pad);
 
-  if(read(fd, r, l) != l)
+  if(read(fd, r, l) != l) {
+    free(r);
     goto bad;
+  }
 
   memset(r + l, 0, pad);
 
