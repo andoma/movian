@@ -455,10 +455,15 @@ nav_open_errorf(prop_t *root, const char *fmt, ...)
   vsnprintf(buf, sizeof(buf), fmt, ap);
   va_end(ap);
   
-  prop_t *src = prop_create(root, "model");
-  prop_set_string(prop_create(src, "type"), "openerror");
-  prop_set_int(prop_create(src, "loading"), 0);
-  prop_set_string(prop_create(src, "error"), buf);
-  prop_set_int(prop_create(root, "directClose"), 1);
+  prop_t *model = prop_create_check(root, "model");
+
+  if(model != NULL) {
+    prop_set_string(prop_create(model, "type"), "openerror");
+    prop_set_int(prop_create(model, "loading"), 0);
+    prop_set_string(prop_create(model, "error"), buf);
+    prop_set_int(prop_create(model, "directClose"), 1);
+  }
+
+  prop_ref_dec(model);
   return 0;
 }
