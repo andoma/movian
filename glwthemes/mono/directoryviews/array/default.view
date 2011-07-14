@@ -5,6 +5,7 @@ widget(image, {
     "theme://icons/256x256/" + 
     translate($self.type, "Folder.png",
               "music",     "Music.png",
+              "plugin",    "Plugin.png",
               "video",     "Movie.png",
               "tv",        "Tv.png",
               "photos",    "Picture.png");
