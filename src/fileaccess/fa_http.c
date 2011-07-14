@@ -2669,12 +2669,13 @@ http_request(const char *url, const char **arguments,
     }
   done:
     buf[size] = 0;
-    if(result == NULL) {
+    if(result == NULL)
       free(buf);
-    } else {
+    else
       *result = buf;
+
+    if(result_sizep != NULL)
       *result_sizep = size;
-    }
   }
 
   http_destroy(hf);
