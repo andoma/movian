@@ -578,6 +578,12 @@ typedef struct line {
   int descender;
   int shadow;
   int outline;
+  uint32_t color;
+  enum {
+    LINE_TYPE_TEXT = 0,
+    LINE_TYPE_HR,
+
+  } type;
 } line_t;
 
 
@@ -661,6 +667,7 @@ text_render0(const uint32_t *uc, const int len,
 
     if(li == NULL) {
       li = alloca(sizeof(line_t));
+      li->type = LINE_TYPE_TEXT;
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
@@ -678,6 +685,19 @@ text_render0(const uint32_t *uc, const int len,
 
     case '\n':
     case TR_CODE_NEWLINE:
+      li = NULL;
+      continue;
+
+    case TR_CODE_HR:
+      li = alloca(sizeof(line_t));
+      li->type = LINE_TYPE_HR;
+      li->start = -1;
+      li->count = 0;
+      li->xspace = 0;
+      li->alignment = 0;
+      li->height = 4;
+      li->color = current_color | current_alpha;
+      TAILQ_INSERT_TAIL(&lq, li, link);
       li = NULL;
       continue;
       
@@ -798,6 +818,9 @@ text_render0(const uint32_t *uc, const int len,
 
     int w = 0;
 
+    if(li->type == LINE_TYPE_HR)
+      continue;
+
     for(j = 0; j < li->count; j++) {
 
       if(j == 0 && (g = items[li->start + j].g) != NULL) {
@@ -882,7 +905,6 @@ text_render0(const uint32_t *uc, const int len,
   int target_width  = siz_x / 64 + 3; /// +3 ???
   int target_height = 0;
 
-  int origin_y = 0;
   TAILQ_FOREACH(li, &lq, link) {
 
     int height = 0;
@@ -890,34 +912,45 @@ text_render0(const uint32_t *uc, const int len,
     int shadow = 0;
     int outline = 0;
 
-    for(i = li->start; i < li->start + li->count; i++) {
-      glyph_t *g = items[i].g;
-      FT_Face f = g->face->face;
-      height = MAX(g->size, height);
-      descender = MIN(descender, 64 * f->descender * g->size / f->units_per_EM);
-      shadow = MAX(items[i].shadow, shadow);
-      outline = MAX(items[i].outline, outline);
-    }
-    li->height = height;
-    li->descender = descender;
-    li->shadow = shadow;
-    li->outline = outline;
+    switch(li->type) {
 
-    target_height += li->height;
+    case LINE_TYPE_TEXT:
 
-    if(max_lines > 1 && li->alignment == TR_ALIGN_JUSTIFIED) {
-      int spaces = 0;
-      int spill = siz_x - li->width;
       for(i = li->start; i < li->start + li->count; i++) {
-	if(items[i].code == ' ')
-	  spaces++;
+	glyph_t *g = items[i].g;
+	FT_Face f = g->face->face;
+	height = MAX(g->size, height);
+	descender = MIN(descender,
+			64 * f->descender * g->size / f->units_per_EM);
+	shadow = MAX(items[i].shadow, shadow);
+	outline = MAX(items[i].outline, outline);
       }
-      if((float)spill / li->width < 0.2)
-	li->xspace = spaces ? spill / spaces : 0;
+
+      li->height = height;
+      li->descender = descender;
+      li->shadow = shadow;
+      li->outline = outline;
+
+      if(max_lines > 1 && li->alignment == TR_ALIGN_JUSTIFIED) {
+	int spaces = 0;
+	int spill = siz_x - li->width;
+	for(i = li->start; i < li->start + li->count; i++) {
+	  if(items[i].code == ' ')
+	    spaces++;
+	}
+	if((float)spill / li->width < 0.2)
+	  li->xspace = spaces ? spill / spaces : 0;
+      }
+      break;
+
+    case LINE_TYPE_HR:
+      break;
     }
+    
+    target_height += li->height;
   }
 
-  origin_y = target_height * 64;
+  int origin_y = target_height * 64;
   start_x = -bbox.xMin;
   start_y = 0;
 
@@ -961,6 +994,69 @@ text_render0(const uint32_t *uc, const int len,
   pen_y = 0;
 
   TAILQ_FOREACH(li, &lq, link) {
+
+    pen_y -= li->height * 64;
+
+    if(li->type == LINE_TYPE_HR) {
+      int ypos = 0;
+      ypos = target_height - (pen_y + li->height * 64);
+			      
+      ypos = ypos >> 6;
+      ypos = MIN(target_height, MAX(0, ypos));
+
+      
+      switch(pm->pm_pixfmt) {
+      case PIX_FMT_BGR32: 
+	{
+	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
+	  int i;
+	  for(i = 0; i < pm->pm_width; i++)
+	    *yptr++ = li->color;
+
+	  yptr = (uint32_t *)(pm->pm_pixels + (ypos + 1) * pm->pm_linesize);
+	  uint32_t color;
+
+	  uint8_t r = li->color;
+	  uint8_t g = li->color >> 8;
+	  uint8_t b = li->color >> 16;
+	  uint8_t a = li->color >> 24;
+
+	  color = (a << 24) | ((b >> 1) << 16) |
+	    ((g >> 1) << 8) | (r >> 1);
+	  
+	  for(i = 0; i < pm->pm_width; i++)
+	    *yptr++ = color;
+	}
+	break;
+	
+      case PIX_FMT_Y400A:
+	{
+	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
+	  int i;
+	  uint8_t r = li->color;
+	  uint8_t a = li->color >> 24;
+	  for(i = 0; i < pm->pm_width; i++) {
+	    *yptr++ = li->color;
+	    *yptr++ = li->color >> 24;
+	  }
+
+	  yptr = pm->pm_pixels + (ypos + 1) * pm->pm_linesize;
+
+	  r = li->color >> 1;
+	  
+	  for(i = 0; i < pm->pm_width; i++) {
+	    *yptr++ = r;
+	    *yptr++ = a;
+	  }
+	}
+	break;
+	
+      default:
+	break;
+      }
+      continue;
+    }
+
     pen_x = 0;
     
     switch(li->alignment) {
@@ -975,7 +1071,6 @@ text_render0(const uint32_t *uc, const int len,
       break;
     }
 
-    pen_y -= li->height * 64;
     for(i = li->start; i < li->start + li->count; i++) {
 
       g = items[i].g;

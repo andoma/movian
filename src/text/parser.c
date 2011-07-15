@@ -198,6 +198,8 @@ tag_to_code(char *s, uint32_t *output, int olen)
     c = TR_CODE_START;
   else if(!endtag && !strcasecmp(tag, "br"))
     c = TR_CODE_NEWLINE;
+  else if(!endtag && !strcasecmp(tag, "hr"))
+    c = TR_CODE_HR;
   else if(!strcasecmp(tag, "center"))
     c = endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
   else if(!strcasecmp(tag, "i"))
