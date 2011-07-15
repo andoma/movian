@@ -38,7 +38,7 @@ static prop_t *
 prop_from_id(JSContext *cx, JSObject *obj, jsval id)
 {
   const char *name = name_by_id(id);
-  return name ? prop_create(JS_GetPrivate(cx, obj), name) : NULL;
+  return name ? prop_create_check(JS_GetPrivate(cx, obj), name) : NULL;
 }
 
 
@@ -65,8 +65,10 @@ pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   prop_t *c = prop_from_id(cx, obj, id);
 
-  if(c != NULL)
+  if(c != NULL) {
     js_prop_set_from_jsval(cx, c, *vp);
+    prop_ref_dec(c);
+  }
 
   return JS_TRUE;
 }
