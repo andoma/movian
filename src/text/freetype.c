@@ -600,6 +600,18 @@ typedef struct item {
 } item_t;
 
 
+static const float legacy_size_mult[16] = {
+  0,
+  0.5,
+  0.75,
+  1.0,
+  1.25,
+  1.5,
+  2.0,
+  3.0
+};
+
+
 /**
  *
  */
@@ -774,6 +786,10 @@ text_render0(const uint32_t *uc, const int len,
 
     case TR_CODE_OUTLINE ... TR_CODE_OUTLINE + 0xffff:
       current_outline = 64 * (uc[i] & 0xffff) * scale;
+      break;
+
+    case TR_CODE_FONT_SIZE ... TR_CODE_FONT_SIZE + 7:
+      current_size = legacy_size_mult[uc[i] & 0xf] * default_size * scale;
       break;
 
     default:

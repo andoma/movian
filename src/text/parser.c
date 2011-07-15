@@ -125,6 +125,9 @@ makecolor(const char *str)
 static int
 font_tag(uint32_t *output, int olen, const char *attrib, const char *value)
 {
+  if(!strcasecmp(attrib, "size"))
+    return add_one_code(TR_CODE_FONT_SIZE |
+			MAX(MIN(atoi(value), 7), 1), output, olen);
   if(!strcasecmp(attrib, "face"))
     return add_one_code(TR_CODE_FONT_FAMILY |
 			freetype_family_id(value), output, olen);
