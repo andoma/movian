@@ -896,6 +896,7 @@ text_render0(const uint32_t *uc, const int len,
 
 	if(k > 0) {
 	  lix = alloca(sizeof(line_t));
+	  lix->type = LINE_TYPE_TEXT;
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
