@@ -24,13 +24,13 @@ widget(container_y, {
   .padding = [20, 10, 20, 10];
 
   widget(container_x, {
-
+    .spacing = 20;
     widget(image, {
       .hqScaling = true;
       .source = $page.model.metadata.icon;
-      .width = 200;
-      .height = 200;
+      .height = $ui.height / 2;
       .align = topLeft;
+      .aspectConstraint = true;
     });
 
 
