@@ -1323,10 +1323,11 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
     return;
   }
 
-  // It must be in the pending list
-  gpsp = prop_tag_clear(p, &sc->sc_pending);
   if(sc->sc_pending_select == p)
     sc->sc_pending_select = NULL;
+
+  if((gpsp = prop_tag_clear(p, &sc->sc_pending)) == NULL)
+    return;
 
   assert(gpsp->gpsp_prop == p);
   prop_ref_dec(p);
