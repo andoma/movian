@@ -621,7 +621,8 @@ text_render0(const uint32_t *uc, const int len,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *family)
 {
-  int family_id = family_get(family ?: "Arial");
+  const int default_family_id = family_get(family ?: "Arial");
+  int family_id = default_family_id;
   pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
@@ -743,6 +744,13 @@ text_render0(const uint32_t *uc, const int len,
 
     case TR_CODE_BOLD_OFF:
       style &= ~TR_STYLE_BOLD;
+      break;
+
+    case TR_CODE_FONT_RESET:
+      current_size = default_size * scale;
+      current_color = 0xffffff;
+      current_alpha = 0xff000000;
+      family_id = default_family_id;
       break;
 
     case TR_CODE_SIZE_PX ... TR_CODE_SIZE_PX + 0xffff:

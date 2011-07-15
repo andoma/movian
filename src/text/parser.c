@@ -209,9 +209,12 @@ tag_to_code(char *s, uint32_t *output, int olen)
     c = endtag ? TR_CODE_ITALIC_OFF : TR_CODE_ITALIC_ON;
   else if(!strcasecmp(tag, "b"))
     c =  endtag ? TR_CODE_BOLD_OFF : TR_CODE_BOLD_ON;
-  else if(!strncasecmp(tag, "font", 4))
-    return attrib_parser(tag+4, output, olen, font_tag);
-  else if(!strncasecmp(tag, "outline", 7)) {
+  else if(!strncasecmp(tag, "font", 4)) {
+    if(endtag)
+      c = TR_CODE_FONT_RESET;
+    else
+      return attrib_parser(tag+4, output, olen, font_tag);
+  } else if(!strncasecmp(tag, "outline", 7)) {
     if(endtag)
       c = TR_CODE_OUTLINE;
     else
