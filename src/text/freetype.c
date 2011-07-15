@@ -624,7 +624,7 @@ text_render0(const uint32_t *uc, const int len,
   int color_output = 0;
 
   int current_size = default_size * scale;
-  uint32_t current_color = 0xff;
+  uint32_t current_color = 0xffffff;
   uint32_t current_alpha = 0xff000000;
 
   int current_outline = 0;
