@@ -229,6 +229,29 @@ face_close(FT_Stream stream)
 /**
  *
  */
+static void
+remove_face_alias(int family_id)
+{
+  int i;
+  face_t *f;
+  TAILQ_FOREACH(f, &faces, link) {
+    for(i = 1; f->family_id_vec[i] != 0; i++) {
+      if(f->family_id_vec[i] == family_id) {
+	while(1) {
+	  f->family_id_vec[i] = f->family_id_vec[i+1];
+	  if(f->family_id_vec[i] == 0)
+	    break;
+	  i++;
+	}
+      }
+    }
+  }
+}
+
+
+/**
+ *
+ */
 static face_t *
 face_create_epilogue(face_t *face, const char *source)
 {
@@ -248,6 +271,9 @@ face_create_epilogue(face_t *face, const char *source)
   face->family_id_vec[0] = family_get(family);
   
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
+
+  remove_face_alias(family_get(family));
+
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
 }
