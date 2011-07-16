@@ -376,7 +376,7 @@ face_resovle(int uc, uint8_t style, int family_id,
 static int
 face_is_family(face_t *f, int family_id)
 {
-  int i;
+  int i = 0;
   while(f->family_id_vec[i] != 0)
     if(f->family_id_vec[i++] == family_id)
       return 1;
