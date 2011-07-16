@@ -822,7 +822,7 @@ text_render0(const uint32_t *uc, const int len,
       current_outline = 64 * (uc[i] & 0xffff) * scale;
       break;
 
-    case TR_CODE_FONT_SIZE ... TR_CODE_FONT_SIZE + 7:
+    case TR_CODE_FONT_SIZE + 1 ... TR_CODE_FONT_SIZE + 7:
       current_size = legacy_size_mult[uc[i] & 0xf] * default_size * scale;
       break;
 
