@@ -369,6 +369,9 @@ metadb_init(void)
   sqlite3 *db;
 
   db = metadb_get();
+
+  one_statement(db, "pragma journal_mode=wal;");
+
   metadb_upgrade(db);
   metadb_close(db);
 }
