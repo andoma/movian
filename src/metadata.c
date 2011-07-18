@@ -704,7 +704,6 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
 			  -1, &stmt, NULL);
   
   if(rc != SQLITE_OK) {
-    printf("insert strweam FAILS\n");
     return -1;
   }
   sqlite3_bind_int64(stmt, 1, item_id);
@@ -719,7 +718,6 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
 
   rc = sqlite3_step(stmt);
   sqlite3_finalize(stmt);
-  printf("insers stream rd = %d\n", rc);
   return rc != SQLITE_DONE;
 }
 
@@ -738,18 +736,15 @@ metadb_set_streams(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			  "DELETE FROM stream WHERE item_id = ?1",
 			  -1, &stmt, NULL);
   
-  if(rc != SQLITE_OK) {
-    printf("DELETE SQL FAILZ\n");
+  if(rc != SQLITE_OK)
     return -1;
-  }
+
   sqlite3_bind_int64(stmt, 1, item_id);
 
   rc = sqlite3_step(stmt);
   sqlite3_finalize(stmt);
   if(rc != SQLITE_DONE)
     return 1;
-
-  printf("INSERTING STREAMS\n");
 
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
     if(metadb_insert_stream(db, item_id, ms))
@@ -804,7 +799,6 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
   if(rc != SQLITE_DONE)
     return 1;
-  printf("Video item inserted\n");
   return metadb_set_streams(db, item_id, md);
 }
 
