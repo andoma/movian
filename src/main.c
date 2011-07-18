@@ -352,6 +352,9 @@ main(int argc, char **argv)
   /* Initialize htsmsg_store() */
   htsmsg_store_init();
 
+  /* Metadata init */
+  metadb_init();
+
   /* Initialize keyring */
   keyring_init();
 

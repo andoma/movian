@@ -1,18 +1,3 @@
-
-PRAGMA foreign_keys = ON;
-
-BEGIN;
-
-DROP TABLE itemtype;
-DROP TABLE item;
-DROP TABLE stream;
-DROP TABLE audioitem;
-DROP TABLE videoitem;
-DROP TABLE artist;
-DROP TABLE album;
-
-DROP INDEX item_url_idx;
-
 CREATE TABLE itemtype (
        id INTEGER PRIMARY KEY,
        name TEXT NOT NULL
@@ -83,30 +68,5 @@ CREATE TABLE stream (
        codec TEXT,
        mediatype TEXT 
        );
+
 CREATE INDEX stream_item_id_idx ON stream(item_id);
-
-
-COMMIT;
-
-
-
-
-INSERT INTO item (url) values ('foo');
-
-BEGIN;
-INSERT OR IGNORE INTO item(url, contenttype, playcount) VALUES('bar3', 5,1);
-UPDATE item SET playcount = playcount + (1 - changes()) WHERE url = 'bar3';
-COMMIT;
-
-
-INSERT INTO item(url, contenttype) VALUES('video', 5);
-INSERT INTO item(url, contenttype) VALUES('audio', 4);
-
-INSERT INTO videoitem values (1, 1337);
-
-INSERT INTO audioitem values (2, 1, 1);
-
-insert into album (title) values ('dark side of the moon');
-insert into artist (title) values ('pink floyd');
-
-

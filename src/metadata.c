@@ -9,6 +9,10 @@
 #include "api/lastfm.h"
 
 #include "metadata.h"
+#include "fileaccess/fileaccess.h"
+
+// If not set to true by metadb_init() no metadb actions will occur
+static int metadb_valid;
 
 /**
  *
@@ -213,10 +217,167 @@ one_statement(sqlite3 *db, const char *sql)
 }
 
 
+/**
+ *
+ */
+static int
+db_get_int_from_query(sqlite3 *db, const char *query, int *v)
+{
+  int rc;
+  int64_t rval = -1;
+  sqlite3_stmt *stmt;
+
+  rc = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
+  if(rc)
+    return -1;
+
+  rc = sqlite3_step(stmt);
+  
+  if(rc == SQLITE_ROW) {
+    *v = sqlite3_column_int(stmt, 0);
+    rval = 0;
+  } else {
+    rval = -1;
+  }
+
+  sqlite3_finalize(stmt);
+  return rval;
+}
 
 
 
+static int
+begin(sqlite3 *db)
+{
+  return one_statement(db, "BEGIN;");
+}
 
+
+static int
+commit(sqlite3 *db)
+{
+  return one_statement(db, "COMMIT;");
+}
+
+
+static int
+rollback(sqlite3 *db)
+{
+  return one_statement(db, "ROLLBACK;");
+}
+
+
+#define METADB_SCHEMA_DIR "bundle://resources/metadb"
+
+/**
+ *
+ */
+static void
+metadb_upgrade(sqlite3 *db)
+{
+  int ver, tgtver = 0;
+  char path[256];
+  char buf[256];
+  if(db_get_int_from_query(db, "pragma user_version", &ver)) {
+    TRACE(TRACE_ERROR, "METADB", "Unable to query db version");
+    return;
+  }
+
+  fa_dir_t *fd;
+  fa_dir_entry_t *fde;
+  
+  fd = fa_scandir(METADB_SCHEMA_DIR, buf, sizeof(buf));
+
+  if(fd == NULL) {
+    TRACE(TRACE_ERROR, "METADB",
+	  "Unable to scan schema dir %s -- %s", METADB_SCHEMA_DIR , buf);
+    return;
+  }
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(fde->fde_type != CONTENT_FILE || strchr(fde->fde_filename, '~'))
+      continue;
+    tgtver = MAX(tgtver, atoi(fde->fde_filename));
+  }
+
+  fa_dir_free(fd);
+
+  while(1) {
+
+    if(ver == tgtver) {
+      TRACE(TRACE_DEBUG, "METADB", "At current version %d", ver);
+      metadb_valid = 1;
+      return;
+    }
+
+    ver++;
+    snprintf(path, sizeof(path), METADB_SCHEMA_DIR"/%03d.sql", ver);
+
+    struct fa_stat fs;
+    char *sql = fa_quickload(path, &fs, NULL, buf, sizeof(buf));
+    if(sql == NULL) {
+      TRACE(TRACE_ERROR, "METADB",
+	    "Unable to upgrade db schema to version %d using %s -- %s",
+	    ver, path, buf);
+      return;
+    }
+
+    begin(db);
+    snprintf(buf, sizeof(buf), "PRAGMA user_version=%d", ver);
+    if(one_statement(db, buf)) {
+      free(sql);
+      break;
+    }
+
+    const char *s = sql;
+
+    while(strchr(s, ';') != NULL) {
+      sqlite3_stmt *stmt;
+  
+      int rc = sqlite3_prepare_v2(db, s, -1, &stmt, &s);
+      if(rc != SQLITE_OK) {
+	TRACE(TRACE_ERROR, "METADB",
+	      "Unable to prepare statement in upgrade %d\n%s", ver, s);
+	goto fail;
+      }
+
+      rc = sqlite3_step(stmt);
+      if(rc != SQLITE_DONE) {
+	TRACE(TRACE_ERROR, "METADB",
+	      "Unable to execute statement error %d\n%s", rc, 
+	      sqlite3_sql(stmt));
+	goto fail;
+      }
+      sqlite3_finalize(stmt);
+    }
+
+    commit(db);
+    TRACE(TRACE_INFO, "METADB", "Upgraded to version %d", ver);
+    free(sql);
+  }
+ fail:
+  rollback(db);
+}
+
+
+/**
+ *
+ */
+void
+metadb_init(void)
+{
+  sqlite3 *db;
+
+  db = metadb_get();
+  metadb_upgrade(db);
+  metadb_close(db);
+}
+
+
+
+/**
+ *
+ */
 void *
 metadb_get(void)
 {
@@ -235,8 +396,6 @@ metadb_get(void)
     sqlite3_close(db);
     return NULL;
   }
-
-  sqlite3_db_config(db, SQLITE_DBCONFIG_ENABLE_FKEY, 1, NULL);
 
   rc = sqlite3_exec(db, "PRAGMA synchronous = normal;", NULL, NULL, &errmsg);
   if(rc) {
@@ -267,6 +426,9 @@ metadb_playcount_incr(void *db, const char *url)
   int rc;
   sqlite3_stmt *stmt;
 
+  if(!metadb_valid)
+    return;
+
   rc = sqlite3_prepare_v2(db, 
 			  "UPDATE item SET playcount=playcount+1 WHERE URL=?1;",
 			  -1, &stmt, NULL);
@@ -282,26 +444,6 @@ metadb_playcount_incr(void *db, const char *url)
 
 
 
-
-static int
-begin(sqlite3 *db)
-{
-  return one_statement(db, "BEGIN;");
-}
-
-
-static int
-commit(sqlite3 *db)
-{
-  return one_statement(db, "COMMIT;");
-}
-
-
-static int
-rollback(sqlite3 *db)
-{
-  return one_statement(db, "ROLLBACK;");
-}
 
 
 /**
@@ -682,6 +824,9 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   int rc;
   sqlite3_stmt *stmt;
 
+  if(!metadb_valid)
+    return;
+
   if(begin(db))
     return;
 
@@ -866,13 +1011,16 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 
 
 /**
- * Perhaps this should be merged into one SELECT
+ *
  */
 metadata_t *
 metadb_metadata_get(void *db, const char *url, time_t mtime)
 {
   int rc;
   sqlite3_stmt *sel;
+
+  if(!metadb_valid)
+    return NULL;
 
   if(begin(db))
     return NULL;
