@@ -13,6 +13,7 @@
 
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
+static char *meta_db_path;
 
 /**
  *
@@ -367,6 +368,13 @@ void
 metadb_init(void)
 {
   sqlite3 *db;
+  extern char *showtime_persistent_path;
+  char buf[256];
+
+  snprintf(buf, sizeof(buf), "%s/metadb", showtime_persistent_path);
+  mkdir(buf, 0770);
+  snprintf(buf, sizeof(buf), "%s/metadb/meta.db", showtime_persistent_path);
+  meta_db_path = strdup(buf);
 
   db = metadb_get();
 
@@ -388,7 +396,7 @@ metadb_get(void)
   char *errmsg;
   sqlite3 *db;
  
-  rc = sqlite3_open_v2("meta.db", &db,
+  rc = sqlite3_open_v2(meta_db_path, &db,
 		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | 
 		       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,
 		       NULL);
