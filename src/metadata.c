@@ -1,3 +1,21 @@
+/*
+ *  Showtime mediacenter
+ *  Copyright (C) 2007-2011 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
 
 #include "prop/prop.h"
@@ -10,6 +28,8 @@
 
 #include "metadata.h"
 #include "fileaccess/fileaccess.h"
+
+#define METADATA_VERSION_STR "1"
 
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
@@ -496,9 +516,9 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 
   rc = sqlite3_prepare_v2(db, 
 			  "INSERT INTO item "
-			  "(url, contenttype, mtime, parent) "
+			  "(url, contenttype, mtime, parent, metadataversion) "
 			  "VALUES "
-			  "(?1, ?2, ?3, ?4)",
+			  "(?1, ?2, ?3, ?4, " METADATA_VERSION_STR ")",
 			  -1, &stmt, NULL);
   
   if(rc != SQLITE_OK)
@@ -848,7 +868,9 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     
     rc = sqlite3_prepare_v2(db, 
 			    "UPDATE item "
-			    "SET contenttype=?1, mtime=?2 "
+			    "SET contenttype=?1, "
+			    "mtime=?2, "
+			    "metadataversion=" METADATA_VERSION_STR " "
 			    "WHERE id=?3",
 			    -1, &stmt, NULL);
   
@@ -1032,7 +1054,9 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
 
   rc = sqlite3_prepare_v2(db, 
 			  "SELECT id,contenttype from item "
-			  "where url=?1 and mtime=?2",
+			  "where url=?1 AND "
+			  "mtime=?2 AND "
+			  "metadataversion=" METADATA_VERSION_STR,
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     rollback(db);

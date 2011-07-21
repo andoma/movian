@@ -21,7 +21,8 @@ CREATE TABLE item (
        mtime INTEGER,
        playcount INTEGER DEFAULT 0,
        lastplay INTEGER,
-       parent INTEGER
+       parent INTEGER,
+       metadataversion INTEGER
        );
 
 CREATE INDEX item_url_idx ON item(url);
