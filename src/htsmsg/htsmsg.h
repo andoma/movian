@@ -97,6 +97,11 @@ htsmsg_t *htsmsg_create_map(void);
 htsmsg_t *htsmsg_create_list(void);
 
 /**
+ * Remove a given field from a msg
+ */
+void htsmsg_field_destroy(htsmsg_t *msg, htsmsg_field_t *f);
+
+/**
  * Destroys a message (map or list)
  */
 void htsmsg_destroy(htsmsg_t *msg);

@@ -27,10 +27,10 @@
 
 static void htsmsg_clear(htsmsg_t *msg);
 
-/*
+/**
  *
  */
-static void
+void
 htsmsg_field_destroy(htsmsg_t *msg, htsmsg_field_t *f)
 {
   TAILQ_REMOVE(&msg->hm_fields, f, hmf_link);
