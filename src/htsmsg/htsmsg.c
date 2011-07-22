@@ -268,6 +268,7 @@ htsmsg_add_msg(htsmsg_t *msg, const char *name, htsmsg_t *sub)
 		       HMF_NAME_ALLOCED);
 
   assert(sub->hm_data == NULL);
+  f->hmf_msg.hm_islist = sub->hm_islist;
   TAILQ_MOVE(&f->hmf_msg.hm_fields, &sub->hm_fields, hmf_link);
   free(sub);
 }
