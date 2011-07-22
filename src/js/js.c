@@ -608,6 +608,8 @@ js_plugin_unload(const char *id)
   if(jsp == NULL)
     return;
 
+  fa_unreference(jsp->jsp_ref);
+    
   cx = js_newctx(NULL);
   JS_BeginRequest(cx);
 
@@ -633,9 +635,14 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   JSScript *s;
   char path[PATH_MAX];
   jsval val;
+  fa_handle_t *ref;
+  
+  ref = fa_reference(url);
 
-  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
+  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL) {
+    fa_unreference(ref);
     return -1;
+  }
 
   cx = js_newctx(err_reporter);
   JS_BeginRequest(cx);
@@ -650,7 +657,8 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   jsp = calloc(1, sizeof(js_plugin_t));
   jsp->jsp_url = strdup(url);
   jsp->jsp_id  = strdup(id);
-
+  jsp->jsp_ref = ref;
+  
   LIST_INSERT_HEAD(&js_plugins, jsp, jsp_link);
 
   gobj = JS_NewObject(cx, &global_class, NULL, NULL);

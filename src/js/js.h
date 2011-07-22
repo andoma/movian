@@ -27,6 +27,8 @@ typedef struct js_plugin {
   struct js_searcher_list jsp_searchers;
   struct js_http_auth_list jsp_http_auths;
 
+  struct fa_handle *jsp_ref;
+
 } js_plugin_t;
 
 JSContext *js_newctx(JSErrorReporter er);
