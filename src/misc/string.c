@@ -990,6 +990,24 @@ url_resolve_relative(const char *proto, const char *hostname, int port,
 
 
 /**
+ * Create URL using ref referred from base
+ */
+char *
+url_resolve_relative_from_base(const char *base, const char *url)
+{
+  char proto[20];
+  char hostname[200];
+  char path[200];
+  int port;
+
+  url_split(proto, sizeof(proto), NULL, 0, hostname, sizeof(hostname),
+	    &port, path, sizeof(path), base);
+
+  return url_resolve_relative(proto, hostname, port, path, url);
+}
+
+
+/**
  *
  */
 int

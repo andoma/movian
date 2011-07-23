@@ -50,6 +50,8 @@ void unicode_init(void);
 char *url_resolve_relative(const char *proto, const char *hostname, int port,
 			   const char *path, const char *ref);
 
+char *url_resolve_relative_from_base(const char *base, const char *url);
+
 
 // ISO-8859-X  ->  UTF-8
 
