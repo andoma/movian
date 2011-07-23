@@ -33,7 +33,7 @@
 #include "js/js.h"
 #endif
 
-#define PLUGIN_REPO_URL "http://localhost:8000/files/plugins.json"
+#define PLUGIN_REPO_URL "http://localhost:8000/files/plugins-v1.json"
 
 extern char *showtime_persistent_path;
 static htsmsg_t *installed_plugins;
@@ -243,6 +243,7 @@ repo_get(char *errbuf, size_t errlen)
 {
   char *result;
   static htsmsg_t *repository;
+  htsmsg_t *json;
 
   hts_mutex_lock(&plugin_mutex);
   
@@ -253,18 +254,33 @@ repo_get(char *errbuf, size_t errlen)
 
   if(http_request(PLUGIN_REPO_URL, NULL, &result, NULL, errbuf, errlen,
 		  NULL, NULL, 0, NULL, NULL, NULL)) {
+  bad:
     hts_mutex_unlock(&plugin_mutex);
     return NULL;
   }
   
-  repository = htsmsg_json_deserialize(result);
+  json = htsmsg_json_deserialize(result);
   free(result);
 
+  if(json == NULL) {
+    snprintf(errbuf, errlen, "Malformed JSON in repository");
+    goto bad;
+  }
+
+  const int ver = htsmsg_get_u32_or_default(json, "version", 0);
+
+  if(ver != 1) {
+    snprintf(errbuf, errlen, "Unsupported repository version %d", ver);
+    goto bad;
+  }
+  
+  repository = htsmsg_get_list(json, "plugins");
+  if(repository == NULL) {
+    snprintf(errbuf, errlen, "Missing plugin list in repository");
+    goto bad;
+  }
+
   hts_mutex_unlock(&plugin_mutex);
-
-  if(repository == NULL)
-    snprintf(errbuf, errlen, "Invalid JSON");
-
   return repository;
 }
 
