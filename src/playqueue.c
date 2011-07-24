@@ -561,7 +561,8 @@ siblings_populate(void *opaque, prop_event_t event, ...)
 {
   prop_t *p;
   playqueue_entry_t *pqe;
-
+  prop_vec_t *pv;
+  int i;
   va_list ap;
   va_start(ap, event);
 
@@ -569,6 +570,12 @@ siblings_populate(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
     add_from_source(p, NULL);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+    pv = va_arg(ap, prop_vec_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      add_from_source(prop_vec_get(pv, i), NULL);
     break;
 
  case PROP_ADD_CHILD_BEFORE:
