@@ -119,14 +119,17 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     vo = calloc(1, sizeof(video_overlay_t));
   } else {
 
-    static const uint32_t pfx[] = (const uint32_t[]){
-      TR_CODE_SHADOW | 2,
-      TR_CODE_OUTLINE | 1,
-    };
+    uint32_t pfx[5];
+
+    pfx[0] = TR_CODE_COLOR | subtitle_settings.color;
+    pfx[1] = TR_CODE_SHADOW | subtitle_settings.shadow_displacement;
+    pfx[2] = TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color;
+    pfx[3] = TR_CODE_OUTLINE | subtitle_settings.outline_size;
+    pfx[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
 
     uc = text_parse(txt, &len, 
 		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
-		    pfx, 2);
+		    pfx, 5);
     if(uc == NULL)
       return;
 

@@ -1,12 +1,56 @@
+/*
+ *  Showtime mediacenter
+ *  Copyright (C) 2007-2011 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include <stdio.h>
+#include "showtime.h"
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
 #include "video_settings.h"
+#include "misc/string.h"
+
 
 struct prop *subtitle_settings_dir;
 
 struct subtitle_settings subtitle_settings;
 struct video_settings video_settings;
+
+static int
+parse_bgr(const char *str)
+{
+  int bgr;
+  if(*str == '#')
+    str++;
+
+  if(strlen(str) == 6) {
+
+    bgr  = hexnibble(str[0]) << 4;
+    bgr |= hexnibble(str[1]);
+    bgr |= hexnibble(str[2]) << 12;
+    bgr |= hexnibble(str[3]) << 8;
+    bgr |= hexnibble(str[4]) << 20;
+    bgr |= hexnibble(str[5]) << 16;
+    return bgr;
+  }
+
+  return 0;
+}
+
+
 
 static void
 set_subtitle_always_select(void *opaque, int v)
@@ -31,6 +75,45 @@ set_subtitle_align_on_video(void *opaque, int v)
 {
   subtitle_settings.align_on_video = v;
 }
+
+static void
+set_subtitle_style_override(void *opaque, int v)
+{
+  subtitle_settings.style_override = v;
+}
+
+static void
+set_subtitle_color(void *opaque, const char *str)
+{
+  subtitle_settings.color = parse_bgr(str);
+}
+
+static void
+set_subtitle_shadow_color(void *opaque, const char *str)
+{
+  subtitle_settings.shadow_color = parse_bgr(str);
+}
+
+static void
+set_subtitle_shadow_size(void *opaque, int v)
+{
+  subtitle_settings.shadow_displacement = v;
+}
+
+static void
+set_subtitle_outline_color(void *opaque, const char *str)
+{
+  subtitle_settings.outline_color = parse_bgr(str);
+}
+
+static void
+set_subtitle_outline_size(void *opaque, int v)
+{
+  subtitle_settings.outline_size = v;
+}
+
+
+
 
 #if ENABLE_VDPAU 
 static void
@@ -111,4 +194,45 @@ video_settings_init(void)
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"subtitles");
+
+  settings_create_divider(s, "Subtitle style");
+
+  settings_create_string(s, "color", "Subtitle color", "FFFFFF", 
+			 store, set_subtitle_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings, 
+			 (void *)"subtitles");
+
+  settings_create_string(s, "shadowcolor", "Subtitle shadow color", "000000", 
+			 store, set_subtitle_shadow_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings, 
+			 (void *)"subtitles");
+
+  settings_create_int(s, "shadowcolorsize", "Shadow offset",
+		      2, store, 0, 10, 1, set_subtitle_shadow_size, NULL,
+		      SETTINGS_INITIAL_UPDATE, "px", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"subtitles");
+
+  settings_create_string(s, "outlinecolor", "Subtitle outline color", "000000", 
+			 store, set_subtitle_outline_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings, 
+			 (void *)"subtitles");
+
+  settings_create_int(s, "shadowoutlinesize", "Outline size",
+		      1, store, 0, 4, 1, set_subtitle_outline_size, NULL,
+		      SETTINGS_INITIAL_UPDATE, "px", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"subtitles");
+
+  settings_create_bool(s, "styleoverride",
+		       "Override embedded styling", 0, 
+		       store, set_subtitle_style_override, NULL,
+		       SETTINGS_INITIAL_UPDATE,  NULL,
+		       settings_generic_save_settings, 
+		       (void *)"subtitles");
+
+
 }

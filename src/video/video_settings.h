@@ -7,6 +7,12 @@ struct subtitle_settings {
   int alignment;   // LAYOUT_ALIGN_ from layout.h
   int always_select;
   int align_on_video;
+  int style_override;
+  int color;
+  int shadow_color;
+  int shadow_displacement;
+  int outline_color;
+  int outline_size;
 };
 
 extern struct subtitle_settings subtitle_settings;

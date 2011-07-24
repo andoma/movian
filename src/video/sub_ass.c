@@ -461,18 +461,31 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
 		  freetype_family_id(as->as_fontname));
 
   ad_txt_append(ad, TR_CODE_SIZE_PX | as->as_fontsize);
-  ad_txt_append(ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
-  ad_txt_append(ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
-  ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | (as->as_outline_color & 0xffffff));
-  ad_txt_append(ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
-  ad_txt_append(ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
-  ad_txt_append(ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
 
-  if(as->as_shadow)
-    ad_txt_append(ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
+  if(as == &ass_style_default || subtitle_settings.style_override) {
 
-  if(as->as_outline)
-    ad_txt_append(ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
+    ad_txt_append(ad, TR_CODE_COLOR | subtitle_settings.color);
+    ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color);
+    ad_txt_append(ad, TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color);
+
+    ad_txt_append(ad, TR_CODE_SHADOW | subtitle_settings.shadow_displacement);
+    ad_txt_append(ad, TR_CODE_OUTLINE | subtitle_settings.outline_size);
+
+  } else {
+
+    ad_txt_append(ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
+    ad_txt_append(ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
+    ad_txt_append(ad, TR_CODE_OUTLINE_COLOR |(as->as_outline_color & 0xffffff));
+    ad_txt_append(ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
+    ad_txt_append(ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
+    ad_txt_append(ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
+
+    if(as->as_shadow)
+      ad_txt_append(ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
+
+    if(as->as_outline)
+      ad_txt_append(ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
+  }
 
   str = tokens[9];
   while((c = utf8_get(&str)) != 0) {
