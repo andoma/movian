@@ -67,7 +67,8 @@ extern uint64_t arch_get_seed(void);
 #define CONTENT_DVD      7
 #define CONTENT_IMAGE    8
 #define CONTENT_ALBUM    9
-#define CONTENT_MAX      9 /* Update me! */
+#define CONTENT_PLUGIN   10
+#define CONTENT_MAX      10 /* Update me! */
 
 /**
  * Returns a "type" property name for the given CONTENT_..
@@ -86,6 +87,7 @@ static inline const char *content2type (int ctype) {
     [CONTENT_DVD]      = "dvd",
     [CONTENT_IMAGE]    = "image",
     [CONTENT_ALBUM]    = "album",
+    [CONTENT_PLUGIN]   = "plugin",
   };
 
   if (ctype < 0 || ctype > CONTENT_MAX)

@@ -353,7 +353,7 @@ plugin_open_repo(prop_t *page)
 
   htsmsg_field_t *f;
   HTSMSG_FOREACH(f, repo) {
-    htsmsg_t *pm =  htsmsg_get_map_by_field(f);
+    htsmsg_t *pm = htsmsg_get_map_by_field(f);
     if(pm == NULL)
       continue;
 
@@ -454,6 +454,9 @@ typedef struct {
   prop_t *pid_installedversion;
   int pid_running;
   prop_courier_t *pid_pc;
+
+  char *pid_package;
+
 } plugin_item_data_t;
 
 
@@ -463,21 +466,11 @@ typedef struct {
 static void
 plugin_install(plugin_item_data_t *pid)
 {
-  const char *dlurl0;
   char errbuf[200];
   char path[200];
 
-  dlurl0 = htsmsg_get_str(pid->pid_msg, "downloadURL");
-
-  if(dlurl0 == NULL) {
-    prop_set_string(pid->pid_statustxt, "Can't generate download URL");
-    return;
-  }
-
-  char *url = url_resolve_relative_from_base(PLUGIN_REPO_URL, dlurl0);
-
   TRACE(TRACE_INFO, "plugins", "Downloading plugin %s from %s",
-	pid->pid_id, url);
+	pid->pid_id, pid->pid_package);
 
   prop_set_int(pid->pid_canInstall, 0);
   prop_set_int(pid->pid_canUpgrade, 0);
@@ -485,7 +478,7 @@ plugin_install(plugin_item_data_t *pid)
 
   fa_stat_t fs;
 
-  char *buf = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
+  char *buf = fa_quickload(pid->pid_package, &fs, NULL, errbuf, sizeof(errbuf));
 
   if(buf == NULL) {
     prop_set_stringf(pid->pid_statustxt, errbuf);
@@ -656,6 +649,7 @@ plugin_item_thread(void *arg)
   prop_ref_dec(pid->pid_installedversion);
   free(pid->pid_id);
   htsmsg_destroy(pid->pid_msg);
+  free(pid->pid_package);
   free(pid);
   return NULL;
 }
@@ -665,26 +659,16 @@ plugin_item_thread(void *arg)
  *
  */
 static void
-plugin_open_repo_item(prop_t *page, const char *id)
+plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
+		    const char *package, const char *icon)
 {
-  char errbuf[200];
-  htsmsg_t  *repo, *pm;
-  
-  if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
-    nav_open_errorf(page, "Unable to request plugin repository: %s", errbuf);
-    return;
-  }
-
-  if((pm = get_item_by_id(repo, id)) == NULL) {
-    nav_open_errorf(page, "Plugin ID %s does not exist", id);
-    return;
-  }
 
   prop_set_int(prop_create(page, "directClose"), 1);
 
   plugin_item_data_t *pid = calloc(1, sizeof(plugin_item_data_t));
 
   pid->pid_id = strdup(id);
+  pid->pid_package = strdup(package);
   pid->pid_msg = htsmsg_copy(pm);
 
   prop_t *model = prop_create(page, "model");
@@ -695,14 +679,8 @@ plugin_open_repo_item(prop_t *page, const char *id)
   prop_set_string(prop_create(metadata, "title"),
 		  htsmsg_get_str(pm, "title"));
 
-  const char *icon = htsmsg_get_str(pm, "icon");
+  prop_set_string(prop_create(metadata, "icon"), icon);
 
-  if(icon != NULL) {
-    char *iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
-    prop_set_string(prop_create(metadata, "icon"), iconurl);
-    free(iconurl);
-  }
-  
   prop_t *nodes = prop_create(model, "nodes");
 
   const char *s;
@@ -774,6 +752,44 @@ plugin_open_repo_item(prop_t *page, const char *id)
 /**
  *
  */
+static void
+plugin_open_repo_item(prop_t *page, const char *id)
+{
+  char errbuf[200];
+  htsmsg_t  *repo, *pm;
+  
+  if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
+    nav_open_errorf(page, "Unable to request plugin repository: %s", errbuf);
+    return;
+  }
+
+  if((pm = get_item_by_id(repo, id)) == NULL) {
+    nav_open_errorf(page, "Plugin ID %s does not exist", id);
+    return;
+  }
+
+  const char *dlurl0 = htsmsg_get_str(pm, "downloadURL");
+  if(dlurl0 == NULL) {
+    nav_open_errorf(page, "Plugin ID %s have no download URL", id);
+    return;
+  }
+  char *package = url_resolve_relative_from_base(PLUGIN_REPO_URL, dlurl0);
+
+  const char *icon = htsmsg_get_str(pm, "icon");
+  char *iconurl = NULL;
+
+  if(icon != NULL)
+    iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
+  
+  plugin_open_in_page(page, id, pm, package, iconurl);
+  free(package);
+  free(iconurl);
+}
+
+
+/**
+ *
+ */
 static int
 plugin_open_url(prop_t *page, const char *url)
 {
@@ -790,6 +806,46 @@ plugin_open_url(prop_t *page, const char *url)
 
   nav_open_errorf(page, "Invalud URI");
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+plugin_open_file(prop_t *page, const char *url)
+{
+  char path[200];
+  char errbuf[200];
+  char *buf;
+  struct fa_stat fs;
+
+  snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
+  buf = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
+  if(buf == NULL) {
+    nav_open_errorf(page, "Unable to load plugin.json: %s", errbuf);
+    return;
+  }
+
+  htsmsg_t *pm = htsmsg_json_deserialize(buf);
+  free(buf);
+
+  if(pm == NULL) {
+    nav_open_errorf(page, "Unable to load plugin.json: Malformed JSON");
+    return;
+  }
+
+  const char *id = htsmsg_get_str(pm, "id");
+  const char *icon = htsmsg_get_str(pm, "icon");
+
+  if(id == NULL) {
+    nav_open_errorf(page, "Field \"id\" not found in plugin.json");
+    return;
+  }
+
+  snprintf(path, sizeof(path), "zip://%s/%s", url, icon);
+  plugin_open_in_page(page, id, pm, url, path);
+  htsmsg_destroy(pm);
 }
 
 

@@ -21,4 +21,6 @@
 
 void plugins_init(const char *loadme);
 
+void plugin_open_file(prop_t *page, const char *url);
+
 #endif // PLUGINS_H__

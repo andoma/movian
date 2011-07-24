@@ -34,6 +34,7 @@
 #include "fa_search.h"
 #include "playqueue.h"
 #include "fileaccess.h"
+#include "plugins.h"
 
 
 /**
@@ -180,6 +181,10 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
 
   case CONTENT_IMAGE:
     return file_open_image(page, meta);
+
+  case CONTENT_PLUGIN:
+    plugin_open_file(page, url);
+    return 0;
 
   default:
     prop_destroy(meta);

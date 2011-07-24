@@ -75,7 +75,8 @@ widget(keyintercept, {
 				"dvd",       "skin://icons/DVD.png",
 				"playlist",  "skin://icons/List.png",
 				"video",     "skin://icons/Movie.png",
-				"album",     "skin://icons/DVD.png"
+				"album",     "skin://icons/DVD.png",
+				"plugin",    "skin://icons/Plugin.png"
 			       );
 	    .shadow = true;
 	    .hqScaling = true;

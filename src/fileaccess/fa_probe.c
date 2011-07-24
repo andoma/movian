@@ -42,7 +42,7 @@
 #include "misc/string.h"
 #include "misc/isolang.h"
 #include "misc/jpeg.h"
-
+#include "htsmsg/htsmsg_json.h"
 
 #define METADATA_HASH_SIZE 101
 #define METADATA_CACHE_SIZE 1000
@@ -395,6 +395,27 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
   }
 
   if(buf[0] == 0x50 && buf[1] == 0x4b && buf[2] == 0x03 && buf[3] == 0x04) {
+
+    char path[256];
+    char *buf;
+    struct fa_stat fs;
+
+    snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
+    buf = fa_quickload(path, &fs, NULL, NULL, 0);
+    if(buf != NULL) {
+      htsmsg_t *json = htsmsg_json_deserialize(buf);
+      free(buf);
+
+      const char *title = htsmsg_get_str(json, "title");
+      if(title != NULL && htsmsg_get_str(json, "id") != NULL &&
+	 htsmsg_get_str(json, "type") != NULL) {
+	md->md_title = rstr_alloc(title);
+	md->md_type = CONTENT_PLUGIN;
+	htsmsg_destroy(json);
+	return 1;
+      }
+      htsmsg_destroy(json);
+    }
     metdata_set_redirect(md, "zip://%s", url);
     md->md_type = CONTENT_ARCHIVE;
     return 1;
