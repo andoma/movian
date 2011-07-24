@@ -459,7 +459,7 @@ typedef struct {
 
 /**
  *
-e */
+ */
 static void
 plugin_install(plugin_item_data_t *pid)
 {
