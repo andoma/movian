@@ -161,25 +161,6 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force)
 }
 
 
-#if 0
-static int
-plugin_scandir(const char *url, char *errbuf, size_t errsize)
-{
-  fa_dir_entry_t *fde;
-  fa_dir_t *fd = fa_scandir(url, errbuf, errsize);
-
-  if(fd == NULL)
-    return -1;
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-    plugin_load(fde->fde_url);
-  
-  fa_dir_free(fd);
-  return 0;
-}
-#endif
-
-
 /**
  *
  */
