@@ -19,6 +19,6 @@
 #ifndef PLUGINS_H__
 #define PLUGINS_H__
 
-void plugins_init(void);
+void plugins_init(const char *loadme);
 
 #endif // PLUGINS_H__

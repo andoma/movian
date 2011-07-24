@@ -36,8 +36,28 @@
 #define PLUGIN_REPO_URL "http://localhost:8000/files/plugins-v1.json"
 
 extern char *showtime_persistent_path;
-static htsmsg_t *installed_plugins;
+static htsmsg_t *loaded_plugins;
 static hts_mutex_t plugin_mutex;
+
+/**
+ *
+ */
+static htsmsg_t *
+plugin_get_conf_by_id(const char *srch)
+{
+  return htsmsg_get_map(loaded_plugins, srch);
+}
+
+
+/**
+ *
+ */
+static void
+plugin_delete_by_id(const char *srch)
+{
+  htsmsg_delete_field(loaded_plugins, srch);
+}
+
 
 
 /**
@@ -60,7 +80,7 @@ plugin_load_js(const char *id, const char *url,
  *
  */
 static int
-plugin_load(const char *url, char *errbuf, size_t errlen, int install)
+plugin_load(const char *url, char *errbuf, size_t errlen, int force)
 {
   char ctrlfile[URL_MAX];
   char *json;
@@ -81,57 +101,60 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int install)
     const char *id   = htsmsg_get_str(ctrl, "id");
 
     if(type == NULL) {
-      snprintf(errbuf, errlen,
-	    "Missing \"type\" element in control file %s",
+      snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
 	    ctrlfile);
       htsmsg_destroy(ctrl);
       return -1;
     }
 
     if(file == NULL) {
-      snprintf(errbuf, errlen,
-	       "Missing \"file\" element in control file %s",
+      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
 	       ctrlfile);
       htsmsg_destroy(ctrl);
       return -1;
     }
 
     if(id == NULL) {
-      snprintf(errbuf, errlen,
-	    "Missing \"id\" element in control file %s",
+      snprintf(errbuf, errlen, "Missing \"id\" element in control file %s",
 	    ctrlfile);
       htsmsg_destroy(ctrl);
       return -1;
+
+    } else {
+
+      if(!force && plugin_get_conf_by_id(id) != NULL) {
+	snprintf(errbuf, errlen, "Plugin \"%s\" already loaded",
+		 ctrlfile);
+	htsmsg_destroy(ctrl);
+	return -1;
+      }
+
     }
 
     char fullpath[URL_MAX];
-    
+    int r;
+
     snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
     
     if(!strcmp(type, "javascript")) {
-      
-      int r = plugin_load_js(id, fullpath, errbuf, errlen);
-
-      if(!r && install) {
-	htsmsg_add_msg(installed_plugins, NULL, ctrl);
-      } else {
-	htsmsg_destroy(ctrl);
-      } 
-      return r;
-
+      r = plugin_load_js(id, fullpath, errbuf, errlen);
     } else {
-      snprintf(errbuf, errlen,
-	       "Unknown type \"%s\" in control file %s",
+      snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);
-      htsmsg_destroy(ctrl);
-      return -1;
+      r = -1;
     }
 
+    if(!r) {
+      htsmsg_delete_field(loaded_plugins, id);
+      htsmsg_add_msg(loaded_plugins, id, ctrl);
+    } else {
+      htsmsg_destroy(ctrl);
+    } 
+    return r;
 
   } else {
 
-    snprintf(errbuf, errlen,
-	     "Unable parse JSON control file %s",
+    snprintf(errbuf, errlen, "Unable parse JSON control file %s",
 	     ctrlfile);
     return -1;
   }
@@ -174,7 +197,7 @@ plugin_init_thread(void *aux)
   if(fd != NULL) {
     TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
       snprintf(path, sizeof(path), "zip://%s", fde->fde_url);
-      if(plugin_load(path, errbuf, sizeof(errbuf), 1)) {
+      if(plugin_load(path, errbuf, sizeof(errbuf), 0)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
       }
     }
@@ -189,17 +212,25 @@ plugin_init_thread(void *aux)
  *
  */
 void
-plugins_init(void)
+plugins_init(const char *loadme)
 {
   hts_mutex_init(&plugin_mutex);
 
-  installed_plugins = htsmsg_create_list();
+  loaded_plugins = htsmsg_create_map();
 
-  /* Scanning plugins can be a bit slow, and we don't like slow,
-   * so let's do that in a different thread
-   */
   hts_mutex_lock(&plugin_mutex);
 
+  if(loadme != NULL) {
+    char errbuf[200];
+    if(plugin_load(loadme, errbuf, sizeof(errbuf), 0)) {
+      TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", loadme, errbuf);
+    }
+  }
+
+  /*
+   * Scanning and loaded installed plugins can be a bit slow, and we
+   * don't like slow, so let's do that in a different thread
+   */
   hts_thread_create_detached("plugininit", plugin_init_thread, NULL,
 			     THREAD_PRIO_LOW);
 }
@@ -221,17 +252,11 @@ plugin_canhandle(const char *url)
 static const char *
 plugin_installed_version(const char *srch)
 {
-  htsmsg_field_t *f;
-  HTSMSG_FOREACH(f, installed_plugins) {
-    htsmsg_t *pm =  htsmsg_get_map_by_field(f);
-    const char *id = htsmsg_get_str(pm, "id");
-    if(id == NULL || strcmp(srch, id))
-      continue;
-    
-    const char *ver = htsmsg_get_str(pm, "version");
-    return ver ?: "Unknown";
-  }
-  return NULL;
+  htsmsg_t *pm = plugin_get_conf_by_id(srch);
+
+  if(pm == NULL)
+    return NULL;
+  return htsmsg_get_str(pm, "version") ?: "Unknown";
 }
 
 
@@ -547,7 +572,6 @@ static void
 plugin_remove(plugin_item_data_t *pid)
 {
   char path[200];
-  htsmsg_field_t *f;
 
   snprintf(path, sizeof(path), "%s/plugins/%s.zip", showtime_persistent_path,
 	   pid->pid_id);
@@ -558,22 +582,14 @@ plugin_remove(plugin_item_data_t *pid)
 #endif
 
   hts_mutex_lock(&plugin_mutex);
-  HTSMSG_FOREACH(f, installed_plugins) {
-    htsmsg_t *pm =  htsmsg_get_map_by_field(f);
-    const char *id = htsmsg_get_str(pm, "id");
-    if(id == NULL || strcmp(pid->pid_id, id))
-      continue;
-    
-    htsmsg_field_destroy(installed_plugins, f);
-
-    prop_set_int(pid->pid_canUninstall, 0);
-    prop_set_int(pid->pid_canUpgrade, 0);
-    prop_set_int(pid->pid_canInstall, 1);
-    prop_set_string(pid->pid_installedversion, "Not installed");
-    prop_set_string(pid->pid_statustxt, "Not installed");
-    break;
-  }
+  plugin_delete_by_id(pid->pid_id);
   hts_mutex_unlock(&plugin_mutex);
+
+  prop_set_int(pid->pid_canUninstall, 0);
+  prop_set_int(pid->pid_canUpgrade, 0);
+  prop_set_int(pid->pid_canInstall, 1);
+  prop_set_string(pid->pid_installedversion, "Not installed");
+  prop_set_string(pid->pid_statustxt, "Not installed");
 }
 
 

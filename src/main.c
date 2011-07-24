@@ -158,6 +158,7 @@ main(int argc, char **argv)
   const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
   const char *forceview = NULL;
+  const char *plugin = NULL;
   int nuiargs = 0;
   int can_standby = 0;
   int can_poweroff = 0;
@@ -206,6 +207,8 @@ main(int argc, char **argv)
 #if ENABLE_SERDEV
 	     "   --serdev          - Probe service ports for devices.\n"
 #endif
+	     "   -p                - Path to plugin directory to load\n"
+	     "                       Intended for plugin development\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
@@ -254,6 +257,10 @@ main(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "-L") && argc > 1) {
       showtime_logtarget = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "-p") && argc > 1) {
+      plugin = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
@@ -352,7 +359,7 @@ main(int argc, char **argv)
   bookmarks_init();
 
   /* Initialize plugin manager and load plugins */
-  plugins_init();
+  plugins_init(plugin);
 
   /* Internationalization */
   i18n_init();
