@@ -1,0 +1,22 @@
+widget(container_z, {
+  widget(image, {
+    .color = 0.5 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+    .hqScaling = true;
+    .source = $self.metadata.icon;
+
+    .alpha = iir(isReady(), 10);
+    .saturation = 1 - iir(isReady(), 10);
+  });
+
+  widget(container_x, {
+    .alpha = select($self.metadata.installed, 1, 0);
+    space(1);
+    widget(container_y, {
+      space(1);
+      widget(icon, {
+	.color = 0.5 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+	.source = "skin://icons/Load.png";
+      });
+    });
+  });
+});

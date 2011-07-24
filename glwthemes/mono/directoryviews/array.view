@@ -84,7 +84,8 @@ widget(container_y, {
 		      .source = "theme://directoryviews/array/" +
 			translate($self.type, "default",
 				  "album", "album",
-				  "directory", "directory") + ".view";
+				  "directory", "directory",
+				  "plugin", "plugin") + ".view";
 		    });
 		  });
 		  widget(backdrop, {
