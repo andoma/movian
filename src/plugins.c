@@ -566,6 +566,8 @@ plugin_remove(plugin_item_data_t *pid)
   plugin_delete_by_id(pid->pid_id);
   hts_mutex_unlock(&plugin_mutex);
 
+  htsmsg_store_remove("plugins/%s", pid->pid_id);
+
   prop_set_int(pid->pid_canUninstall, 0);
   prop_set_int(pid->pid_canUpgrade, 0);
   prop_set_int(pid->pid_canInstall, 1);
