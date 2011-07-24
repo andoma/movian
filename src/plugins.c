@@ -146,6 +146,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force)
 
     if(!r) {
       htsmsg_delete_field(loaded_plugins, id);
+      htsmsg_add_str(ctrl, "basepath", url);
       htsmsg_add_msg(loaded_plugins, id, ctrl);
     } else {
       htsmsg_destroy(ctrl);
@@ -301,24 +302,32 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
   const char *id = htsmsg_get_str(pm, "id");
   const char *title = htsmsg_get_str(pm, "title");
   const char *icon = htsmsg_get_str(pm, "icon");
+  const char *basepath = htsmsg_get_str(pm, "basepath");
 
   if(id == NULL || title == NULL)
     return NULL;
 
-  snprintf(url, sizeof(url), "plugin:repo:%s", id);
 
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
 
   prop_set_string(prop_create(p, "type"), "plugin");
+  snprintf(url, sizeof(url), "plugin:repo:%s", id);
   prop_set_string(prop_create(p, "url"), url);
 
   prop_set_string(prop_create(metadata, "title"), title);
 
-  if(icon != NULL) {
-    char *iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
-    prop_set_string(prop_create(metadata, "icon"), iconurl);
-    free(iconurl);
+
+  if(basepath != NULL) {
+    prop_set_int(prop_create(metadata, "installed"), 1);
+    snprintf(url, sizeof(url), "%s/%s", basepath, icon);
+    prop_set_string(prop_create(metadata, "icon"), url);
+  } else {
+    if(icon != NULL) {
+      char *iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
+      prop_set_string(prop_create(metadata, "icon"), iconurl);
+      free(iconurl);
+    }
   }
 
   return p;
@@ -329,10 +338,12 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
  *
  */
 static void
-plugin_open_repo(prop_t *page)
+plugin_open_browse(prop_t *page)
 {
   char errbuf[200];
   htsmsg_t  *repo;
+  htsmsg_field_t *f;
+
   
   if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
     nav_open_errorf(page, "Unable to request plugin repository: %s", 
@@ -351,10 +362,30 @@ plugin_open_repo(prop_t *page)
 
   prop_t *nodes = prop_create(model, "nodes");
 
-  htsmsg_field_t *f;
+  // First loop over laoded plugins
+  
+  HTSMSG_FOREACH(f, loaded_plugins) {
+    htsmsg_t *pm = htsmsg_get_map_by_field(f);
+
+    prop_t *p = plugin_prop_from_htsmsg(pm);
+    if(p == NULL)
+      continue;
+
+    if(prop_set_parent(p, nodes))
+      prop_destroy(p);
+
+  }
+
+  // Then loop over plugins from repository
+
   HTSMSG_FOREACH(f, repo) {
     htsmsg_t *pm = htsmsg_get_map_by_field(f);
     if(pm == NULL)
+      continue;
+
+    const char *id = htsmsg_get_str(pm, "id");
+
+    if(htsmsg_get_map(loaded_plugins, id) != NULL)
       continue;
 
     prop_t *p = plugin_prop_from_htsmsg(pm);
@@ -794,8 +825,8 @@ static int
 plugin_open_url(prop_t *page, const char *url)
 {
   const char *s;
-  if(!strcmp(url, "plugin:repo")) {
-    plugin_open_repo(page);
+  if(!strcmp(url, "plugin:browse")) {
+    plugin_open_browse(page);
     return 0;
   }
 
