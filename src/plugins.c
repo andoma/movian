@@ -448,7 +448,7 @@ add_item_node_prop(prop_t *parent, const char *type, const char *id,
  */
 static prop_t *
 add_action_node(prop_t *parent, const char *type, const char *id,
-		const char *title, const char *data, int enabled)
+		const char *title, const char *data)
 {
   prop_t *p = prop_create_root(NULL);
 
@@ -458,7 +458,6 @@ add_action_node(prop_t *parent, const char *type, const char *id,
   prop_set_string(prop_create(p, "data"), data);
 
   prop_t *en = prop_ref_inc(prop_create(p, "enabled"));
-  prop_set_int(en, enabled);
 
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -472,12 +471,6 @@ add_action_node(prop_t *parent, const char *type, const char *id,
  */
 typedef struct {
   char *pid_id;
-
-  enum {
-    PLUGIN_AVAILABLE,
-    PLUGIN_INSTALLED_CURRENT,
-    PLUGIN_INSTALLED_UPGRADABLE,
-  } pid_status;
 
   htsmsg_t *pid_msg;
   prop_sub_t *pid_eventsub;
@@ -571,6 +564,65 @@ plugin_install(plugin_item_data_t *pid)
 }
 
 
+
+
+/**
+ *
+ */
+static void
+update_enabled_actions(plugin_item_data_t *pid)
+{
+  const char *min_showtime_ver;
+  const char *inst_ver = plugin_installed_version(pid->pid_id);
+  const char *repo_ver = htsmsg_get_str(pid->pid_msg, "version") ?: "Unknown";
+
+  int canInstall = 0;
+  int canUninstall = 0;
+  int canUpgrade = 0;
+
+  min_showtime_ver = htsmsg_get_str(pid->pid_msg, "showtimeVersion");
+
+  int version_dep_ok = 
+    min_showtime_ver == NULL ||
+    showtime_parse_version_int(min_showtime_ver) <= showtime_get_version_int();
+
+  if(inst_ver == NULL) {
+
+    if(!version_dep_ok) {
+
+      prop_set_stringf(pid->pid_statustxt,
+		       "Not installable\nNeed at least Showtime version %s",
+		       min_showtime_ver);
+
+    } else {
+
+      prop_set_string(pid->pid_statustxt, "Not installed");
+      canInstall = 1;
+    }
+
+  } else if(!strcmp(inst_ver, repo_ver)) {
+    prop_set_string(pid->pid_statustxt, "Up to date");
+    canUninstall = 1;
+
+  } else {
+    canUninstall = 1;
+
+    if(!version_dep_ok) {
+      prop_set_stringf(pid->pid_statustxt,
+		       "Not upgradable\nNeed at least Showtime version %s",
+		       min_showtime_ver);
+    } else {
+      prop_set_string(pid->pid_statustxt, "Upgradable");
+      canUpgrade = 1;
+    }
+  }
+
+  prop_set_int(pid->pid_canInstall,   canInstall);
+  prop_set_int(pid->pid_canUninstall, canUninstall);
+  prop_set_int(pid->pid_canUpgrade,   canUpgrade);
+}
+
+
 /**
  *
  */
@@ -593,10 +645,7 @@ plugin_remove(plugin_item_data_t *pid)
 
   htsmsg_store_remove("plugins/%s", pid->pid_id);
 
-  prop_set_int(pid->pid_canUninstall, 0);
-  prop_set_int(pid->pid_canUpgrade, 0);
-  prop_set_int(pid->pid_canInstall, 1);
-  prop_set_string(pid->pid_statustxt, "Not installed");
+  update_enabled_actions(pid);
 
   prop_t *pp = prop_create(plugin_root, pid->pid_id);
 
@@ -717,6 +766,8 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
 
   prop_set_string(prop_create(metadata, "icon"), icon);
 
+  // Nodes with data
+
   prop_t *nodes = prop_create(model, "nodes");
 
   const char *s;
@@ -736,7 +787,6 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
 
 
   const char *repo_ver = htsmsg_get_str(pm, "version") ?: "Unknown";
-  const char *inst_ver = plugin_installed_version(id);
   prop_t *pp = prop_create(plugin_root, id);
 
   add_item_node_str(nodes, "titledstring", "version", "Available version",
@@ -745,30 +795,22 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
   add_item_node_prop(nodes, "titledstring", "version", "Installed version", 
 		     prop_create(pp, "version"));
 
-  if(inst_ver == NULL) {
-    pid->pid_status = PLUGIN_AVAILABLE;
-    prop_set_string(pid->pid_statustxt, "Not installed");
-  } else if(!strcmp(inst_ver, repo_ver)) {
-    pid->pid_status = PLUGIN_INSTALLED_CURRENT;
-    prop_set_string(pid->pid_statustxt, "Up to date");
-  } else {
-    pid->pid_status = PLUGIN_INSTALLED_UPGRADABLE;
-    prop_set_string(pid->pid_statustxt, "Upgradable");
-  }
+  // Actions
 
   nodes = prop_create(model, "actions");
 
   pid->pid_canInstall = 
-    add_action_node(nodes, "pageevent", "install", "Install plugin", "install",
-		    pid->pid_status == PLUGIN_AVAILABLE);
+    add_action_node(nodes, "pageevent", "install", "Install plugin", "install");
 
   pid->pid_canUpgrade = 
-    add_action_node(nodes, "pageevent", "upgrade", "Upgrade plugin", "upgrade",
-		    pid->pid_status == PLUGIN_INSTALLED_UPGRADABLE);
+    add_action_node(nodes, "pageevent", "upgrade", "Upgrade plugin", "upgrade");
 
   pid->pid_canUninstall = 
-    add_action_node(nodes, "pageevent", "remove", "Uninstall plugin", "remove",
-		    pid->pid_status != PLUGIN_AVAILABLE);
+    add_action_node(nodes, "pageevent", "remove", "Uninstall plugin", "remove");
+
+  // ---
+
+  update_enabled_actions(pid);
 
   pid->pid_pc = prop_courier_create_waitable();
   pid->pid_running = 1;
