@@ -338,12 +338,12 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
  *
  */
 static void
-plugin_open_browse(prop_t *page)
+plugin_open_repo(prop_t *page)
 {
   char errbuf[200];
-  htsmsg_t  *repo;
+  htsmsg_t *repo, *pm;
   htsmsg_field_t *f;
-
+  prop_t *model, *metadata, *nodes, *p;
   
   if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
     nav_open_errorf(page, "Unable to request plugin repository: %s", 
@@ -351,45 +351,23 @@ plugin_open_browse(prop_t *page)
     return;
   }
 
-  prop_t *model = prop_create(page, "model");
+  model = prop_create(page, "model");
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
 
-  prop_t *metadata = prop_create(model, "metadata");
+  metadata = prop_create(model, "metadata");
   
-  prop_set_string(prop_create(metadata, "title"),
-		  "Available plugins");
+  prop_set_string(prop_create(metadata, "title"), "Available plugins");
 
-  prop_t *nodes = prop_create(model, "nodes");
-
-  // First loop over laoded plugins
-  
-  HTSMSG_FOREACH(f, loaded_plugins) {
-    htsmsg_t *pm = htsmsg_get_map_by_field(f);
-
-    prop_t *p = plugin_prop_from_htsmsg(pm);
-    if(p == NULL)
-      continue;
-
-    if(prop_set_parent(p, nodes))
-      prop_destroy(p);
-
-  }
+  nodes = prop_create(model, "nodes");
 
   // Then loop over plugins from repository
 
   HTSMSG_FOREACH(f, repo) {
-    htsmsg_t *pm = htsmsg_get_map_by_field(f);
-    if(pm == NULL)
+    if((pm = htsmsg_get_map_by_field(f)) == NULL)
       continue;
 
-    const char *id = htsmsg_get_str(pm, "id");
-
-    if(htsmsg_get_map(loaded_plugins, id) != NULL)
-      continue;
-
-    prop_t *p = plugin_prop_from_htsmsg(pm);
-    if(p == NULL)
+    if((p = plugin_prop_from_htsmsg(pm)) == NULL)
       continue;
 
     if(prop_set_parent(p, nodes))
@@ -825,8 +803,8 @@ static int
 plugin_open_url(prop_t *page, const char *url)
 {
   const char *s;
-  if(!strcmp(url, "plugin:browse")) {
-    plugin_open_browse(page);
+  if(!strcmp(url, "plugin:repo")) {
+    plugin_open_repo(page);
     return 0;
   }
 
