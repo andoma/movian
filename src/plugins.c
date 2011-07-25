@@ -337,9 +337,11 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
   const char *icon = htsmsg_get_str(pm, "icon");
   const char *basepath = htsmsg_get_str(pm, "basepath");
 
-  if(id == NULL || title == NULL)
+  if(id == NULL)
     return NULL;
 
+  if(title == NULL)
+    title = id;
 
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
@@ -807,7 +809,7 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
   prop_t *metadata = prop_create(model, "metadata");
   
   prop_set_string(prop_create(metadata, "title"),
-		  htsmsg_get_str(pm, "title"));
+		  htsmsg_get_str(pm, "title") ?: id);
 
   prop_set_string(prop_create(metadata, "icon"), icon);
 
