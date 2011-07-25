@@ -405,6 +405,23 @@ get_item_by_id(htsmsg_t *repo, const char *id)
 }
 
 
+
+/**
+ *
+ */
+static prop_t *
+create_item_node(const char *type, const char *id, const char *title)
+{
+  prop_t *p = prop_create_root(NULL);
+
+  prop_set_string(prop_create(p, "id"), id);
+  prop_set_string(prop_create(p, "type"), type);
+  prop_set_string(prop_create(p, "title"), title);
+  return p;
+
+}
+
+
 /**
  *
  */
@@ -412,13 +429,22 @@ static void
 add_item_node_str(prop_t *parent, const char *type, const char *id,
 		  const char *title, const char *data)
 {
-  prop_t *p = prop_create_root(NULL);
-
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "type"), type);
-  prop_set_string(prop_create(p, "title"), title);
+  prop_t *p = create_item_node(type, id, title);
   prop_set_string(prop_create(p, "data"), data);
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
 
+
+/**
+ *
+ */
+static void
+add_item_node_rich_str(prop_t *parent, const char *type, const char *id,
+		       const char *title, const char *data)
+{
+  prop_t *p = create_item_node(type, id, title);
+  prop_set_string_ex(prop_create(p, "data"), NULL, data, PROP_STR_RICH);
   if(prop_set_parent(p, parent))
     prop_destroy(p);
 }
@@ -431,13 +457,8 @@ static void
 add_item_node_prop(prop_t *parent, const char *type, const char *id,
 		   const char *title, prop_t *data)
 {
-  prop_t *p = prop_create_root(NULL);
-
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "type"), type);
-  prop_set_string(prop_create(p, "title"), title);
+  prop_t *p = create_item_node(type, id, title);
   prop_link(data, prop_create(p, "data"));
-
   if(prop_set_parent(p, parent))
     prop_destroy(p);
 }
@@ -772,10 +793,13 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
 
   const char *s;
 
-  if((s = htsmsg_get_str(pm, "description")) != NULL) {
-    add_item_node_str(nodes, "string", "description", NULL, s); 
-    add_item_node_str(nodes, "divider", NULL, NULL, NULL);
-  }
+  if((s = htsmsg_get_str(pm, "synopsis")) != NULL)
+    add_item_node_str(nodes, "string", "synopsis", NULL, s); 
+
+  if((s = htsmsg_get_str(pm, "description")) != NULL)
+    add_item_node_rich_str(nodes, "bodytext", "version", NULL, s);
+
+  add_item_node_str(nodes, "divider", NULL, NULL, NULL);
 
   if((s = htsmsg_get_str(pm, "author")) != NULL)
     add_item_node_str(nodes, "titledstring", "author", "Author", s);
@@ -794,6 +818,7 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
 
   add_item_node_prop(nodes, "titledstring", "version", "Installed version", 
 		     prop_create(pp, "version"));
+
 
   // Actions
 
