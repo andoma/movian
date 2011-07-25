@@ -86,15 +86,18 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	    int as_installed)
 {
   char ctrlfile[URL_MAX];
+  char err[200];
   char *json;
   struct fa_stat fs;
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  if((json = fa_quickload(ctrlfile, &fs, NULL, errbuf, errlen)) == NULL)
+  if((json = fa_quickload(ctrlfile, &fs, NULL, err, sizeof(err))) == NULL) {
+    snprintf(errbuf, errlen, "Unable to load %s -- %s", ctrlfile, err);
     return -1;
-  
+  }
+
   ctrl = htsmsg_json_deserialize(json);
   free(json);
   if(ctrl != NULL) {
@@ -140,7 +143,8 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
     
     if(!strcmp(type, "javascript")) {
-      r = plugin_load_js(id, fullpath, errbuf, errlen);
+      r = plugin_load_js(id, fullpath, err, sizeof(err));
+      snprintf(errbuf, errlen, "Unable to %s -- %s", fullpath, err);
     } else {
       snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);
@@ -213,10 +217,11 @@ plugins_init(const char *loadme)
 
   if(loadme != NULL) {
     char errbuf[200];
+    devplugin = strdup(loadme);
     if(plugin_load(loadme, errbuf, sizeof(errbuf), 1, 0)) {
-      TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", loadme, errbuf);
+      TRACE(TRACE_ERROR, "plugins",
+	    "Unable to load development plugin: %s\n%s", loadme, errbuf);
     } else {
-      devplugin = strdup(loadme);
       TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
   }
@@ -243,7 +248,8 @@ plugins_reload_dev_plugin(void)
   hts_mutex_lock(&plugin_mutex);
 
   if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0))
-    TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", devplugin, errbuf);
+    TRACE(TRACE_ERROR, "plugins", 
+	  "Unable to reload development plugin: %s\n%s", devplugin, errbuf);
   else
     TRACE(TRACE_INFO, "plugins", "Reloaded dev plugin %s", devplugin);
 
