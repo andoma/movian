@@ -23,4 +23,6 @@ void plugins_init(const char *loadme);
 
 void plugin_open_file(prop_t *page, const char *url);
 
+void plugins_reload_dev_plugin(void);
+
 #endif // PLUGINS_H__

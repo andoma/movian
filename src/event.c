@@ -28,6 +28,7 @@
 #include "event.h"
 #include "misc/strtab.h"
 #include "prop/prop.h"
+#include "plugins.h"
 
 /**
  *
@@ -161,6 +162,8 @@ static struct strtab actionnames[] = {
 
   { "AudioTrack",            ACTION_CYCLE_AUDIO },
   { "SubtitleTrack",         ACTION_CYCLE_SUBTITLE },
+
+  { "ReloadDevPlugin",       ACTION_RELOAD_DEV_PLUGIN },
 
 };
 
@@ -422,6 +425,10 @@ event_dispatch(event_t *e)
 
   } else if(event_is_action(e, ACTION_POWER_OFF)) {
     showtime_shutdown(11);
+
+  } else if(event_is_action(e, ACTION_RELOAD_DEV_PLUGIN)) {
+    plugins_reload_dev_plugin();
+
 
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||

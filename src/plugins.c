@@ -39,7 +39,7 @@ extern char *showtime_persistent_path;
 static htsmsg_t *loaded_plugins;
 static hts_mutex_t plugin_mutex;
 static prop_t *plugin_root;
-
+static char *devplugin;
 
 /**
  *
@@ -213,8 +213,11 @@ plugins_init(const char *loadme)
 
   if(loadme != NULL) {
     char errbuf[200];
-    if(plugin_load(loadme, errbuf, sizeof(errbuf), 0, 0)) {
+    if(plugin_load(loadme, errbuf, sizeof(errbuf), 1, 0)) {
       TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", loadme, errbuf);
+    } else {
+      devplugin = strdup(loadme);
+      TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
   }
 
@@ -224,6 +227,27 @@ plugins_init(const char *loadme)
    */
   hts_thread_create_detached("plugininit", plugin_init_thread, NULL,
 			     THREAD_PRIO_LOW);
+}
+
+
+/**
+ *
+ */
+void
+plugins_reload_dev_plugin(void)
+{
+  char errbuf[200];
+  if(devplugin == NULL)
+    return;
+
+  hts_mutex_lock(&plugin_mutex);
+
+  if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0))
+    TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", devplugin, errbuf);
+  else
+    TRACE(TRACE_INFO, "plugins", "Reloaded dev plugin %s", devplugin);
+
+  hts_mutex_unlock(&plugin_mutex);
 }
 
 
