@@ -422,19 +422,6 @@ js_time(JSContext *cx, JSObject *obj,
 /**
  *
  */
-static JSBool 
-js_version(JSContext *cx, JSObject *obj,
-	   uintN argc, jsval *argv, jsval *rval)
-{
-  uint32_t v = showtime_get_version_int();
-  *rval = INT_TO_JSVAL(v);
-  return JS_TRUE;
-}
-
-
-/**
- *
- */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -452,7 +439,6 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
     JS_FS("time",             js_time, 0, 0, 0),
-    JS_FS("currentVersion",   js_version, 0, 0, 0),
     JS_FS_END
 };
 
@@ -736,6 +722,7 @@ static int
 js_init(void)
 {
   JSContext *cx;
+  jsval val;
 
   JS_SetCStringsAreUTF8();
 
@@ -747,6 +734,13 @@ js_init(void)
 
   showtimeobj = JS_NewObject(cx, &showtime_class, NULL, NULL);
   JS_DefineFunctions(cx, showtimeobj, showtime_functions);
+
+  val = INT_TO_JSVAL(showtime_get_version_int());
+  JS_SetProperty(cx, showtimeobj, "currentVersionInt", &val);
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, htsversion));
+  JS_SetProperty(cx, showtimeobj, "currentVersionString", &val);
+
 
   JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
 				     js_RichText, 1, 0);
