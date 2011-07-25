@@ -50,6 +50,10 @@ struct prop *nls_get_prop(const char *string);
 
 void showtime_shutdown(int retcode);
 
+uint32_t showtime_get_version_int(void);
+
+uint32_t showtime_parse_version_int(const char *str);
+
 extern int64_t showtime_get_ts(void);
 
 extern uint64_t arch_get_seed(void);
