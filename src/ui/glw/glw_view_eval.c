@@ -90,8 +90,6 @@ typedef struct sub_cloner {
   prop_t *sc_pending_select;
 
   int sc_entries;
-  int sc_offset;
-  int sc_limit;
 
   prop_t *sc_originating_prop;
 
@@ -133,9 +131,7 @@ typedef struct clone {
   int c_pos;
   prop_t *c_prop;
 
-  char c_visible;      // Set if clone should visible to parent
   char c_evaluated;
-  char c_active;       // Set if widget is visible on screen
 
   prop_t *c_clone_root;
 
@@ -985,14 +981,6 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc, prop_t *view)
 
 static void cloner_resequence(sub_cloner_t *sc);
 
-/**
- *
- */
-static int
-clone_is_hidden(sub_cloner_t *sc, clone_t *c)
-{
-  return c->c_pos >= sc->sc_limit + sc->sc_offset || c->c_pos < sc->sc_offset;
-}
 
 
 /**
@@ -1005,7 +993,6 @@ clone_eval(clone_t *c)
   glw_view_eval_context_t n;
   token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
   const glw_class_t *gc = c->c_w->glw_class;
-  c->c_evaluated = 1;
 
   if(gc->gc_freeze != NULL)
     gc->gc_freeze(c->c_w);
@@ -1027,34 +1014,6 @@ clone_eval(clone_t *c)
 
   if(gc->gc_thaw != NULL)
     gc->gc_thaw(c->c_w);
-}
-
-
-/**
- *
- */
-static void
-clone_update(clone_t *c)
-{
-  sub_cloner_t *sc = c->c_sc;
-  int visible;
-
-  visible = !clone_is_hidden(sc, c);
-
-  if(visible == c->c_visible)
-    return;
-  
-  c->c_visible = visible;
-
-  if(visible) {
-
-    if(!c->c_evaluated)
-      clone_eval(c);
-
-    glw_unhide(c->c_w);
-  } else {
-    glw_hide(c->c_w);
-  }
 }
 
 
@@ -1199,7 +1158,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   if(flags & PROP_ADD_SELECTED && parent->glw_class->gc_select_child != NULL)
     parent->glw_class->gc_select_child(parent, c->c_w, NULL);
 
-  clone_update(c);
+  clone_eval(c);
 }
 
 
@@ -2093,16 +2052,11 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argc > 0 ? argv[0] : NULL;
   token_t *b = argc > 1 ? argv[1] : NULL;
   token_t *c = argc > 2 ? argv[2] : NULL;
-  token_t *d = argc > 3 ? argv[3] : NULL;
-  token_t *e = argc > 4 ? argv[4] : NULL;
   glw_prop_sub_pending_t *gpsp;
   int f;
   const glw_class_t *cl;
   glw_t *parent = ec->w;
   glw_t *w;
-
-  if(argc < 3)
-    return glw_view_seterr(ec->ei, self, "Cloner not enough arguments");
 
   if(parent == NULL) 
     return glw_view_seterr(ec->ei, self, 
@@ -2153,9 +2107,6 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
     sc->sc_anchor = self->t_extra;
-
-    sc->sc_offset = d ? token2int(d) : 0;
-    sc->sc_limit  = e ? token2int(e) : INT_MAX;
 
     cloner_cleanup(sc);
 
@@ -4628,7 +4579,7 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
  */
 static const token_func_t funcvec[] = {
   {"widget", 2, glwf_widget},
-  {"cloner", -1, glwf_cloner},
+  {"cloner", 3, glwf_cloner},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
