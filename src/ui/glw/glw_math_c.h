@@ -120,13 +120,24 @@ glw_vec4_store(float *p, const Vec4 v)
 
 
 #define glw_vec3_make(x,y,z) ((const float[3]){x,y,z})
+#define glw_vec4_make(x,y,z,w) ((const float[4]){x,y,z,w})
 
+    
 static inline void
 glw_vec3_copy(Vec3 dst, const Vec3 src)
 {
   dst[0] = src[0];
   dst[1] = src[1];
   dst[2] = src[2];
+}
+
+static inline void
+glw_vec4_copy(Vec4 dst, const Vec4 src)
+{
+  dst[0] = src[0];
+  dst[1] = src[1];
+  dst[2] = src[2];
+  dst[3] = src[3];
 }
 
 static inline void

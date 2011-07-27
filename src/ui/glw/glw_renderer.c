@@ -458,11 +458,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 /**
  *
  */
-static const Vec4 clip_planes[4] = {
-  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0, 1.0},
-  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0, 1.0},
-  [GLW_CLIP_LEFT]   = { 1.0,  0.0, 0.0, 1.0},
-  [GLW_CLIP_RIGHT]  = {-1.0,  0.0, 0.0, 1.0},
+static const float clip_planes[4][3] = {
+  [GLW_CLIP_TOP]    = { 0.0, -1.0, 0.0},
+  [GLW_CLIP_BOTTOM] = { 0.0,  1.0, 0.0},
+  [GLW_CLIP_LEFT]   = { 1.0,  0.0, 0.0},
+  [GLW_CLIP_RIGHT]  = {-1.0,  0.0, 0.0},
 };
 
 
@@ -470,9 +470,11 @@ static const Vec4 clip_planes[4] = {
  *
  */
 int
-glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
+glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
+		float distance)
 {
   int i;
+  Vec4 v4;
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if(!(gr->gr_active_clippers & (1 << i)))
       break;
@@ -480,8 +482,13 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
   if(i == NUM_CLIPPLANES)
     return -1;
 
+  glw_vec4_copy(v4, glw_vec4_make(clip_planes[how][0],
+				  clip_planes[how][1],
+				  clip_planes[how][2],
+				  1 - (distance * 2)));
+
   if(gr->gr_set_hw_clipper != NULL) {
-    gr->gr_set_hw_clipper(rc, i, clip_planes[how]);
+    gr->gr_set_hw_clipper(rc, i, v4);
 
   } else {
     Mtx inv;
@@ -489,7 +496,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how)
     if(!glw_mtx_invert(inv, rc->rc_mtx))
       return -1;
 
-    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, clip_planes[how]);
+    glw_mtx_trans_mul_vec4(gr->gr_clip[i], inv, v4);
     gr->gr_need_sw_clip = 1;
   }
 

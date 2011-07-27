@@ -331,12 +331,12 @@ glw_array_render(glw_t *w, glw_rctx_t *rc)
     }
 
     if(y < 0)
-      t = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP);
+      t = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP, 0);
     else
       t = -1;
 
     if(y + a->child_height_px > height)
-      b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM);
+      b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM, 0);
     else
       b = -1;
 

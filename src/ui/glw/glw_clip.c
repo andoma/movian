@@ -18,6 +18,24 @@
 
 #include "glw.h"
 
+typedef struct glw_clip {
+  glw_t w;
+
+  float gc_clipping[4];
+
+} glw_clip_t;
+
+
+/**
+ *
+ */
+static void
+set_clipping(glw_t *w, const float *v)
+{
+  glw_clip_t *gc = (glw_clip_t *)w;
+  memcpy(gc->gc_clipping, v, sizeof(float) * 4);
+}
+
 /**
  *
  */
@@ -44,14 +62,19 @@ static void
 glw_clip_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
+  glw_clip_t *gc = (glw_clip_t *)w;
 
   if(w->glw_flags & GLW_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
-  int l = glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT);
-  int r = glw_clip_enable(w->glw_root, rc, GLW_CLIP_RIGHT);
-  int t = glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP);
-  int b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM);
+  int l = gc->gc_clipping[0] ? 
+    glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT, gc->gc_clipping[0]) : -1;
+  int t = gc->gc_clipping[1] ? 
+    glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP, gc->gc_clipping[1]) : -1;
+  int r = gc->gc_clipping[2] ? 
+    glw_clip_enable(w->glw_root, rc, GLW_CLIP_RIGHT, gc->gc_clipping[2]) : -1;
+  int b = gc->gc_clipping[3] ? 
+    glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, gc->gc_clipping[3]) : -1;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     c->glw_class->gc_render(c, rc);
@@ -83,9 +106,10 @@ glw_clip_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
 static glw_class_t glw_clip = {
   .gc_name = "clip",
-  .gc_instance_size = sizeof(glw_t),
+  .gc_instance_size = sizeof(glw_clip_t),
   .gc_render = glw_clip_render,
   .gc_signal_handler = glw_clip_callback,
+  .gc_set_clipping = set_clipping,
 };
 
 

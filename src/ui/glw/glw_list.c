@@ -292,12 +292,12 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
     }
 
     if(y < 0)
-      t = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP);
+      t = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP, 0);
     else
       t = -1;
 
     if(y + c->glw_parent_height > height)
-      b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM);
+      b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM, 0);
     else
       b = -1;
 
@@ -360,12 +360,12 @@ glw_list_render_x(glw_t *w, glw_rctx_t *rc)
     }
 
     if(x < 0)
-      lclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT);
+      lclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_LEFT, 0);
     else
       lclip = -1;
 
     if(x + c->glw_parent_width > width)
-      rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT);
+      rclip = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_RIGHT, 0);
     else
       rclip = -1;
 

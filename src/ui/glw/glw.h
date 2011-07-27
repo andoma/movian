@@ -460,6 +460,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_clipping)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
   void (*gc_set_rotation)(struct glw *w, const float *v);
 
   /**
@@ -969,7 +974,8 @@ typedef enum {
   GLW_CLIP_RIGHT,
 } glw_clip_boundary_t;
 
-int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb);
+int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
+		    float distance);
 
 void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 

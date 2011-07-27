@@ -108,8 +108,10 @@ typedef Mtx PMtx;
 
 
 #define glw_vec3_make(x,y,z) _mm_set_ps(0, z, y, x)
+#define glw_vec4_make(x,y,z,w) _mm_set_ps(w, z, y, x)
 
 #define glw_vec3_copy(dst, src) (dst) = (src)
+#define glw_vec4_copy(dst, src) (dst) = (src)
 
 #define glw_vec3_addmul(dst, a, b, s) do { \
     dst = _mm_add_ps((a), _mm_mul_ps((b), _mm_set1_ps(s))); } while(0)
