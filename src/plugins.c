@@ -174,11 +174,13 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 }
 
 
+
+
 /**
  *
  */
-static void *
-plugin_init_thread(void *aux)
+static void
+plugin_load_installed(void)
 {
   char path[200];
   char errbuf[200];
@@ -192,13 +194,11 @@ plugin_init_thread(void *aux)
     TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
       snprintf(path, sizeof(path), "zip://%s", fde->fde_url);
       if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1)) {
-	TRACE(TRACE_ERROR, "plugins", "Unable to load %s -- %s", path, errbuf);
+	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }
     }
     fa_dir_free(fd);
   }
-  hts_mutex_unlock(&plugin_mutex);
-  return NULL;
 }
 
 
@@ -226,12 +226,8 @@ plugins_init(const char *loadme)
     }
   }
 
-  /*
-   * Scanning and loaded installed plugins can be a bit slow, and we
-   * don't like slow, so let's do that in a different thread
-   */
-  hts_thread_create_detached("plugininit", plugin_init_thread, NULL,
-			     THREAD_PRIO_LOW);
+  plugin_load_installed();
+  hts_mutex_unlock(&plugin_mutex);
 }
 
 
