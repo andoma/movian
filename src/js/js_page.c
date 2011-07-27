@@ -431,6 +431,57 @@ static JSFunctionSpec item_functions[] = {
  *
  */
 static JSBool 
+js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
+	       const char *url, const char *type, JSObject *metaobj,
+	       jsval *data, jsval *rval)
+{
+  prop_t *item = prop_create_root(NULL);
+
+  if(url != NULL)
+    prop_set_string(prop_create(item, "url"), url);
+
+  if(data != NULL)
+    js_prop_set_from_jsval(cx, prop_create(item, "data"), *data);
+
+  *rval = JSVAL_VOID;
+
+  if(type != NULL) {
+    prop_set_string(prop_create(item, "type"), type);
+
+    if(metaobj)
+      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
+
+  } else if(url != NULL) {
+
+    if(backend_resolve_item(url, item)) {
+      prop_destroy(item);
+      return JS_TRUE;
+    }
+  }
+
+  prop_t *p = prop_ref_inc(item);
+  
+  if(prop_set_parent(item, parent)) {
+    prop_destroy(item);
+    prop_ref_dec(p);
+  } else {
+    JSObject *robj = JS_NewObjectWithGivenProto(cx, &item_class, NULL, NULL);
+    *rval =  OBJECT_TO_JSVAL(robj);
+    JS_DefineFunctions(cx, robj, item_functions);
+    js_item_t *ji = calloc(1, sizeof(js_item_t));
+    ji->ji_model = model;
+    ji->ji_root =  p;
+    LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
+    JS_SetPrivate(cx, robj, ji);
+  }
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
 	      jsval *argv, jsval *rval)
 {
@@ -442,39 +493,30 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
 
-  prop_t *item = prop_create_root(NULL);
-  prop_set_string(prop_create(item, "url"), url);
-
-  *rval = JSVAL_VOID;
-
-  if(type != NULL) {
-    prop_set_string(prop_create(item, "type"), type);
-
-    if(metaobj)
-      js_prop_from_object(cx, metaobj, prop_create(item, "metadata"));
-
-  } else {
-
-    if(backend_resolve_item(url, item)) {
-      prop_destroy(item);
-      return JS_TRUE;
-    }
-  }
-  
-  if(prop_set_parent(item, model->jm_nodes)) {
-    prop_destroy(item);
-  } else {
-    JSObject *robj = JS_NewObjectWithGivenProto(cx, &item_class, NULL, NULL);
-    *rval =  OBJECT_TO_JSVAL(robj);
-    JS_DefineFunctions(cx, robj, item_functions);
-    js_item_t *ji = calloc(1, sizeof(js_item_t));
-    ji->ji_model = model;
-    ji->ji_root =  prop_ref_inc(item);
-    LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
-    JS_SetPrivate(cx, robj, ji);
-  }
-  return JS_TRUE;
+  return js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
+			rval);
 }
+
+
+/**
+ *
+ */
+static JSBool 
+js_appendPassiveItem(JSContext *cx, JSObject *obj, uintN argc,
+		     jsval *argv, jsval *rval)
+{
+  const char *type;
+  jsval data = 0;
+  JSObject *metaobj = NULL;
+  js_model_t *model = JS_GetPrivate(cx, obj);
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/vo", &type, &data, &metaobj))
+    return JS_FALSE;
+
+  return js_appendItem0(cx, model, model->jm_nodes, NULL, type, metaobj, &data,
+			rval);
+}
+
 
 /**
  *
@@ -679,8 +721,9 @@ js_page_wfv(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSFunctionSpec model_functions[] = {
-    JS_FS("appendItem",         js_appendItem,   1, 0, 0),
-    JS_FS("appendModel",        js_appendModel,  2, 0, 0),
+    JS_FS("appendItem",         js_appendItem,        1, 0, 0),
+    JS_FS("appendPassiveItem",  js_appendPassiveItem, 2, 0, 0),
+    JS_FS("appendModel",        js_appendModel,       2, 0, 0),
     JS_FS_END
 };
 
