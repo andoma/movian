@@ -455,7 +455,7 @@ nav_open_error(prop_t *root, const char *msg)
     prop_set_string(prop_create(model, "type"), "openerror");
     prop_set_int(prop_create(model, "loading"), 0);
     prop_set_string(prop_create(model, "error"), msg);
-    prop_set_int(prop_create(model, "directClose"), 1);
+    prop_set_int(prop_create(root, "directClose"), 1);
   }
   prop_ref_dec(model);
   return 0;
