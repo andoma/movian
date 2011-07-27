@@ -422,6 +422,33 @@ js_time(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_durationtostring(JSContext *cx, JSObject *obj,
+		    uintN argc, jsval *argv, jsval *rval)
+{
+  int s;
+  char tmp[32];
+  if (!JS_ConvertArguments(cx, argc, argv, "u", &s))
+    return JS_FALSE;
+
+  int m = s / 60;
+  int h = s / 3600;
+  
+  if(h > 0) {
+    snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
+  } else {
+    snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
+  }
+
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, tmp));
+  return JS_TRUE;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -439,6 +466,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
     JS_FS("time",             js_time, 0, 0, 0),
+    JS_FS("durationToString", js_durationtostring, 0, 0, 0),
     JS_FS_END
 };
 
