@@ -438,13 +438,14 @@ get_item_by_id(htsmsg_t *repo, const char *id)
  *
  */
 static prop_t *
-create_item_node(const char *type, const char *id, const char *title)
+create_item_node(const char *type, const char *class, const char *title)
 {
   prop_t *p = prop_create_root(NULL);
+  prop_t *metadata = prop_create(p, "metadata");
 
-  prop_set_string(prop_create(p, "id"), id);
   prop_set_string(prop_create(p, "type"), type);
-  prop_set_string(prop_create(p, "title"), title);
+  prop_set_string(prop_create(metadata, "title"), title);
+  prop_set_string(prop_create(metadata, "class"), class);
   return p;
 
 }
@@ -454,10 +455,10 @@ create_item_node(const char *type, const char *id, const char *title)
  *
  */
 static void
-add_item_node_str(prop_t *parent, const char *type, const char *id,
+add_item_node_str(prop_t *parent, const char *type, const char *class,
 		  const char *title, const char *data)
 {
-  prop_t *p = create_item_node(type, id, title);
+  prop_t *p = create_item_node(type, class, title);
   prop_set_string(prop_create(p, "data"), data);
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -468,10 +469,10 @@ add_item_node_str(prop_t *parent, const char *type, const char *id,
  *
  */
 static void
-add_item_node_rich_str(prop_t *parent, const char *type, const char *id,
+add_item_node_rich_str(prop_t *parent, const char *type, const char *class,
 		       const char *title, const char *data)
 {
-  prop_t *p = create_item_node(type, id, title);
+  prop_t *p = create_item_node(type, class, title);
   prop_set_string_ex(prop_create(p, "data"), NULL, data, PROP_STR_RICH);
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -482,10 +483,10 @@ add_item_node_rich_str(prop_t *parent, const char *type, const char *id,
  *
  */
 static void
-add_item_node_prop(prop_t *parent, const char *type, const char *id,
+add_item_node_prop(prop_t *parent, const char *type, const char *class,
 		   const char *title, prop_t *data)
 {
-  prop_t *p = create_item_node(type, id, title);
+  prop_t *p = create_item_node(type, class, title);
   prop_link(data, prop_create(p, "data"));
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -496,14 +497,10 @@ add_item_node_prop(prop_t *parent, const char *type, const char *id,
  *
  */
 static prop_t *
-add_action_node(prop_t *parent, const char *type, const char *id,
+add_action_node(prop_t *parent, const char *type, const char *class,
 		const char *title, const char *data)
 {
-  prop_t *p = prop_create_root(NULL);
-
-  prop_set_string(prop_create(p, "id"), id);
-  prop_set_string(prop_create(p, "type"), type);
-  prop_set_string(prop_create(p, "title"), title);
+  prop_t *p = create_item_node(type, class, title);
   prop_set_string(prop_create(p, "data"), data);
 
   prop_t *en = prop_ref_inc(prop_create(p, "enabled"));
@@ -822,7 +819,7 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
   const char *s;
 
   if((s = htsmsg_get_str(pm, "synopsis")) != NULL)
-    add_item_node_str(nodes, "string", "synopsis", NULL, s); 
+    add_item_node_str(nodes, "label", "synopsis", NULL, s); 
 
   if((s = htsmsg_get_str(pm, "description")) != NULL)
     add_item_node_rich_str(nodes, "bodytext", "version", NULL, s);
@@ -830,21 +827,21 @@ plugin_open_in_page(prop_t *page, const char *id, htsmsg_t *pm,
   add_item_node_str(nodes, "divider", NULL, NULL, NULL);
 
   if((s = htsmsg_get_str(pm, "author")) != NULL)
-    add_item_node_str(nodes, "titledstring", "author", "Author", s);
+    add_item_node_str(nodes, "label", "author", "Author", s);
 
 
   pid->pid_statustxt = prop_create_root(NULL);
-  add_item_node_prop(nodes, "titledstring", "status", "Status",
+  add_item_node_prop(nodes, "label", "status", "Status",
 		     pid->pid_statustxt);
 
 
   const char *repo_ver = htsmsg_get_str(pm, "version") ?: "Unknown";
   prop_t *pp = prop_create(plugin_root, id);
 
-  add_item_node_str(nodes, "titledstring", "version", "Available version",
+  add_item_node_str(nodes, "label", "version", "Available version",
 		    repo_ver);
 
-  add_item_node_prop(nodes, "titledstring", "version", "Installed version", 
+  add_item_node_prop(nodes, "label", "version", "Installed version", 
 		     prop_create(pp, "version"));
 
 
