@@ -316,6 +316,12 @@ repo_get(char *errbuf, size_t errlen)
     snprintf(errbuf, errlen, "Unsupported repository version %d", ver);
     goto bad;
   }
+
+  const char *msg = htsmsg_get_str(json, "message");
+  if(msg != NULL) {
+    snprintf(errbuf, errlen, "%s", msg);
+    goto bad;
+  }
   
   repository = htsmsg_get_list(json, "plugins");
   if(repository == NULL) {
