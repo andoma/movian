@@ -164,12 +164,10 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
  *
  */
 static JSBool 
-js_http_request(JSContext *cx, JSObject *obj, uintN argc,
-	     jsval *argv, jsval *rval, int post)
+js_http_request(JSContext *cx, jsval *rval,
+		const char *url, JSObject *argobj, JSObject *postobj,
+		JSBool disable_auto_auth)
 {
-  const char *url;
-  JSObject *argobj = NULL;
-  JSObject *postobj = NULL;
   char **httpargs = NULL;
   int i;
   char errbuf[256];
@@ -177,11 +175,6 @@ js_http_request(JSContext *cx, JSObject *obj, uintN argc,
   size_t resultsize;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
-  JSBool disable_auto_auth = 0;
-
-  if(!JS_ConvertArguments(cx, argc, argv, "s/oob", &url, &argobj, &postobj,
-			  &disable_auto_auth))
-    return JS_FALSE;
 
   if(argobj != NULL)
     js_http_add_args(&httpargs, cx, argobj);
@@ -292,7 +285,15 @@ JSBool
 js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 	   jsval *argv, jsval *rval)
 {
-  return js_http_request(cx, obj, argc, argv, rval, 0);
+  const char *url;
+  JSObject *argobj = NULL;
+  JSBool disable_auto_auth = 0;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/ob", &url, &argobj,
+			  &disable_auto_auth))
+    return JS_FALSE;
+
+  return js_http_request(cx, rval, url, argobj, NULL, disable_auto_auth);
 }
 
 /**
@@ -302,7 +303,16 @@ JSBool
 js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
 	   jsval *argv, jsval *rval)
 {
-  return js_http_request(cx, obj, argc, argv, rval, 1);
+  const char *url;
+  JSObject *argobj = NULL;
+  JSObject *postobj = NULL;
+  JSBool disable_auto_auth = 0;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "so/ob", &url, &postobj, &argobj,
+			  &disable_auto_auth))
+    return JS_FALSE;
+  
+  return js_http_request(cx, rval, url, argobj, postobj, disable_auto_auth);
 }
 
 
