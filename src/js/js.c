@@ -458,7 +458,6 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
     JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
-    JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
@@ -531,6 +530,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
 {
   js_page_flush_from_plugin(cx, jsp);
   js_io_flush_from_plugin(cx, jsp);
+  js_service_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -616,6 +616,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("addHTTPAuth",      js_addHTTPAuth, 2, 0, 0),
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
+    JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS_END
 };
 

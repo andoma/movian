@@ -21,6 +21,36 @@
 
 #include "service.h"
 
+typedef struct js_service {
+  service_t *jss_s;
+  LIST_ENTRY(js_service) jss_link;
+  int jss_ref;
+} js_service_t;
+
+
+/**
+ *
+ */
+static void 
+js_service_release(js_service_t *jss)
+{
+  jss->jss_ref--;
+  if(jss->jss_ref == 0)
+    free(jss);
+}
+
+
+/**
+ *
+ */
+static void
+js_service_destroy(js_service_t *jss)
+{
+  service_destroy(jss->jss_s);
+  LIST_REMOVE(jss, jss_link);
+  js_service_release(jss);
+}
+
 
 /**
  *
@@ -28,8 +58,13 @@
 static void
 service_finalize(JSContext *cx, JSObject *obj)
 {
-  service_destroy(JS_GetPrivate(cx, obj));
+  js_service_release(JS_GetPrivate(cx, obj));
 }
+
+
+/**
+ *
+ */
 
 
 static JSClass service_class = {
@@ -49,8 +84,18 @@ setEnabled(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 
   if(!JS_ValueToBoolean(cx, *vp, &on))
     return JS_FALSE;
+  
+  js_service_t *jss = JS_GetPrivate(cx, obj);
+  service_set_enabled(jss->jss_s, on);
+  return JS_TRUE;
+}
 
-  service_set_enabled(JS_GetPrivate(cx, obj), on);
+static JSBool 
+destroy(JSContext *cx, JSObject *obj,
+	uintN argc, jsval *argv, jsval *rval)
+{
+  js_service_destroy(JS_GetPrivate(cx, obj));
+  *rval = JSVAL_VOID;
   return JS_TRUE;
 }
 
@@ -68,21 +113,38 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
   const char *icon = NULL;
   JSObject *robj;
   JSBool enabled;
-  service_t *s;
 
   if (!JS_ConvertArguments(cx, argc, argv, "sssb/s",
 			   &title, &url, &type, &enabled, &icon))
     return JS_FALSE;
 
-  s = service_create(title, url, type, icon, 0, !!enabled);
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  js_service_t *jss = malloc(sizeof(js_service_t));
+  jss->jss_ref = 2;
+  jss->jss_s = service_create(title, url, type, icon, 0, enabled);
+  LIST_INSERT_HEAD(&jsp->jsp_services, jss, jss_link);
+
   robj = JS_NewObjectWithGivenProto(cx, &service_class, NULL, NULL);
   *rval = OBJECT_TO_JSVAL(robj);
 
-  JS_SetPrivate(cx, robj, s);
+  JS_SetPrivate(cx, robj, jss);
 
   JS_DefineProperty(cx, robj, "enabled", BOOLEAN_TO_JSVAL(enabled),
 		    NULL, setEnabled, JSPROP_PERMANENT);
 
+  JS_DefineFunction(cx, robj, "destroy", destroy, 0, 0);
   return JS_TRUE;
 }
 
+
+/**
+ *
+ */
+void
+js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp)
+{
+  js_service_t *jss;
+  while((jss = LIST_FIRST(&jsp->jsp_services)) != NULL)
+    js_service_destroy(jss);
+}

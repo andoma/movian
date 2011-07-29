@@ -10,6 +10,7 @@ LIST_HEAD(js_route_list, js_route);
 LIST_HEAD(js_searcher_list, js_searcher);
 LIST_HEAD(js_http_auth_list, js_http_auth);
 LIST_HEAD(js_plugin_list, js_plugin);
+LIST_HEAD(js_service_list, js_service);
 
 /**
  *
@@ -26,6 +27,7 @@ typedef struct js_plugin {
   struct js_route_list jsp_routes;
   struct js_searcher_list jsp_searchers;
   struct js_http_auth_list jsp_http_auths;
+  struct js_service_list jsp_services;
 
   struct fa_handle *jsp_ref;
 
@@ -75,6 +77,8 @@ void js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value);
 void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
 
 void js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+
+void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 
