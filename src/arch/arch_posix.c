@@ -26,6 +26,8 @@
  * Must be first or compilation might fail on linux
  *
  */
+const char *showtime_get_system_type(void);
+
 #ifdef linux
 
 #define _GNU_SOURCE
@@ -34,6 +36,13 @@
 #include <string.h>
 #include <sys/prctl.h>
 #include "linux.h"
+
+
+const char *
+showtime_get_system_type(void)
+{
+  return "Linux";
+}
 
 static int
 get_system_concurrency(void)
@@ -50,6 +59,12 @@ get_system_concurrency(void)
 }
 
 #elif defined(__APPLE__)
+
+const char *
+showtime_get_system_type(void)
+{
+  return "Apple";
+}
 
 #include <sys/types.h>
 #include <sys/sysctl.h>

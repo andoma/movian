@@ -584,3 +584,9 @@ arch_preload_fonts(void)
   freetype_load_font("file:///dev_flash/data/font/SCE-PS3-DH-R-CGB.TTF");
   freetype_load_font("file:///dev_flash/data/font/SCE-PS3-CP-R-KANA.TTF");
 }
+
+const char *
+showtime_get_system_type(void)
+{
+  return "PS3";
+}

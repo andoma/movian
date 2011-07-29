@@ -56,6 +56,8 @@ uint32_t showtime_parse_version_int(const char *str);
 
 extern int64_t showtime_get_ts(void);
 
+extern const char *showtime_get_system_type(void);
+
 extern uint64_t arch_get_seed(void);
 
 /**

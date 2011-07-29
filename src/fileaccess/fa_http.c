@@ -805,6 +805,17 @@ http_client_rawauth(struct http_auth_req *har, const char *str)
  *
  */
 static void
+http_ua_send(htsbuf_queue_t *q)
+{
+  htsbuf_qprintf(q, 
+ 		 "User-Agent: Showtime %s %s\r\n",
+		 showtime_get_system_type(), htsversion);
+}
+
+/**
+ *
+ */
+static void
 http_auth_send(http_file_t *hf, htsbuf_queue_t *q, const char *method,
 	       const char **parameters)
 {
@@ -1358,12 +1369,12 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   }
   htsbuf_qprintf(&q, 
 		 "Accept-Encoding: identity\r\n"
-		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n"
 		 "Connection: %s\r\n",
-		 htsversion,
 		 hf->hf_connection->hc_hostname,
 		 hf->hf_want_close ? "close" : "keep-alive");
+
+  http_ua_send(&q);
 
   htsbuf_qprintf(&q, "\r\n");
 
@@ -1587,13 +1598,11 @@ again:
   htsbuf_qprintf(&q, 
 		 "GET %s HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
-		 "User-Agent: Showtime %s\r\n"
 		 "Host: %s\r\n",
 		 hf->hf_path,
 		 hf->hf_version,
-		 htsversion,
 		 hf->hf_connection->hc_hostname);
-
+  http_ua_send(&q);
   http_auth_send(hf, &q, "GET", NULL);
   htsbuf_qprintf(&q, "\r\n");
 
@@ -1745,15 +1754,13 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       htsbuf_qprintf(&q, 
 		     "GET %s HTTP/1.%d\r\n"
 		     "Accept-Encoding: identity\r\n"
-		     "User-Agent: Showtime %s\r\n"
 		     "Host: %s\r\n"
 		     "Connection: %s\r\n",
 		     hf->hf_path,
 		     hf->hf_version,
-		     htsversion,
 		     hc->hc_hostname,
 		     hf->hf_want_close ? "close" : "keep-alive");
-
+      http_ua_send(&q);
       http_auth_send(hf, &q, "GET", NULL);
 
       char range[100];
@@ -2307,16 +2314,15 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   "PROPFIND %s HTTP/1.%d\r\n"
 		   "Depth: %d\r\n"
 		   "Accept-Encoding: identity\r\n"
-		   "User-Agent: Showtime %s\r\n"
 		   "Host: %s\r\n"
 		   "Connection: %s\r\n",
 		   hf->hf_path,
 		   hf->hf_version,
 		   fd != NULL ? 1 : 0,
-		   htsversion,
 		   hf->hf_connection->hc_hostname,
 		   hf->hf_want_close ? "close" : "keep-alive");
-    
+
+    http_ua_send(&q);
     http_auth_send(hf, &q, "PROPFIND", NULL);
     htsbuf_qprintf(&q, "\r\n");
 
@@ -2517,14 +2523,13 @@ http_request(const char *url, const char **arguments,
   htsbuf_qprintf(&q,
 		 " HTTP/1.%d\r\n"
 		 "Accept-Encoding: identity\r\n"
-		 "User-Agent: Showtime %s\r\n"
 		 "Connection: %s\r\n"
 		 "Host: %s\r\n",
 		 hf->hf_version,
-		 htsversion,
 		 hf->hf_want_close ? "close" : "keep-alive",
 		 hc->hc_hostname);
 
+  http_ua_send(&q);
   if(postdata != NULL) 
     htsbuf_qprintf(&q, "Content-Length: %d\r\n", postdata->hq_size);
 
