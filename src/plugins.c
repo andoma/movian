@@ -33,8 +33,7 @@
 #include "js/js.h"
 #endif
 
-#define PLUGIN_REPO_URL "http://localhost:8000/files/plugins-v1.json"
-
+const char *plugin_repo_url = "http://localhost:8000/files/plugins-v1.json";
 extern char *showtime_persistent_path;
 static htsmsg_t *loaded_plugins;
 static hts_mutex_t plugin_mutex;
@@ -206,8 +205,10 @@ plugin_load_installed(void)
  *
  */
 void
-plugins_init(const char *loadme)
+plugins_init(const char *loadme, const char *repo)
 {
+  if(repo != NULL)
+    plugin_repo_url = repo;
   hts_mutex_init(&plugin_mutex);
   plugin_root = prop_create_root(NULL);
 
@@ -294,7 +295,7 @@ repo_get(char *errbuf, size_t errlen)
     return repository;
   }
 
-  if(http_request(PLUGIN_REPO_URL, NULL, &result, NULL, errbuf, errlen,
+  if(http_request(plugin_repo_url, NULL, &result, NULL, errbuf, errlen,
 		  NULL, NULL, 0, NULL, NULL, NULL)) {
   bad:
     hts_mutex_unlock(&plugin_mutex);
@@ -365,7 +366,7 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
     prop_set_string(prop_create(metadata, "icon"), url);
   } else {
     if(icon != NULL) {
-      char *iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
+      char *iconurl = url_resolve_relative_from_base(plugin_repo_url, icon);
       prop_set_string(prop_create(metadata, "icon"), iconurl);
       free(iconurl);
     }
@@ -901,13 +902,13 @@ plugin_open_repo_item(prop_t *page, const char *id)
     nav_open_errorf(page, "Plugin ID %s have no download URL", id);
     return;
   }
-  char *package = url_resolve_relative_from_base(PLUGIN_REPO_URL, dlurl0);
+  char *package = url_resolve_relative_from_base(plugin_repo_url, dlurl0);
 
   const char *icon = htsmsg_get_str(pm, "icon");
   char *iconurl = NULL;
 
   if(icon != NULL)
-    iconurl = url_resolve_relative_from_base(PLUGIN_REPO_URL, icon);
+    iconurl = url_resolve_relative_from_base(plugin_repo_url, icon);
   
   plugin_open_in_page(page, id, pm, package, iconurl);
   free(package);

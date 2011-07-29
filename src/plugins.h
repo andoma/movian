@@ -19,7 +19,7 @@
 #ifndef PLUGINS_H__
 #define PLUGINS_H__
 
-void plugins_init(const char *loadme);
+void plugins_init(const char *loadme, const char *repo);
 
 void plugin_open_file(prop_t *page, const char *url);
 
