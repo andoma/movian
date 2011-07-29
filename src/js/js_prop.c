@@ -34,17 +34,6 @@ name_by_id(jsval id)
 /**
  *
  */
-static prop_t *
-prop_from_id(JSContext *cx, JSObject *obj, jsval id)
-{
-  const char *name = name_by_id(id);
-  return name ? prop_create_check(JS_GetPrivate(cx, obj), name) : NULL;
-}
-
-
-/**
- *
- */
 static JSBool
 pb_delProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
@@ -63,7 +52,8 @@ pb_delProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static JSBool
 pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-  prop_t *c = prop_from_id(cx, obj, id);
+  const char *name = name_by_id(id);
+  prop_t *c = name ? prop_create_check(JS_GetPrivate(cx, obj), name) : NULL;
 
   if(c != NULL) {
     js_prop_set_from_jsval(cx, c, *vp);

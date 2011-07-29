@@ -86,6 +86,7 @@ typedef struct js_model {
   jsval jm_openfunc;
 
   prop_t *jm_nodes;
+  prop_t *jm_actions;
   prop_t *jm_root;
 
   prop_t *jm_loading;
@@ -205,6 +206,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_root)      prop_ref_dec(jm->jm_root);
   if(jm->jm_loading)   prop_ref_dec(jm->jm_loading);
   if(jm->jm_nodes)     prop_ref_dec(jm->jm_nodes);
+  if(jm->jm_actions)   prop_ref_dec(jm->jm_actions);
   if(jm->jm_type)      prop_ref_dec(jm->jm_type);
   if(jm->jm_error)     prop_ref_dec(jm->jm_error);
   if(jm->jm_contents)  prop_ref_dec(jm->jm_contents);
@@ -306,6 +308,7 @@ typedef struct js_item {
   struct js_event_handler_list ji_event_handlers;
   prop_sub_t *ji_eventsub;
   jsval ji_this;
+  int ji_enable_set_property;
 } js_item_t;
 
 
@@ -326,9 +329,33 @@ item_finalize(JSContext *cx, JSObject *obj)
 /**
  *
  */
+static JSBool
+item_set_property(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+
+  if(!ji->ji_enable_set_property)
+    return JS_TRUE;
+
+  const char *name = JSVAL_IS_STRING(id) ? 
+    JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
+  prop_t *c = name ? prop_create_check(ji->ji_root, name) : NULL;
+
+  if(c != NULL) {
+    js_prop_set_from_jsval(cx, c, *vp);
+    prop_ref_dec(c);
+  }
+
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSClass item_class = {
   "item", JSCLASS_HAS_PRIVATE,
-  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  item_set_property,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
   JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, item_finalize,
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -433,7 +460,7 @@ static JSFunctionSpec item_functions[] = {
 static JSBool 
 js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 	       const char *url, const char *type, JSObject *metaobj,
-	       jsval *data, jsval *rval)
+	       jsval *data, jsval *rval, int enabled)
 {
   prop_t *item = prop_create_root(NULL);
 
@@ -459,20 +486,23 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     }
   }
 
+  prop_set_int(prop_create(item, "enabled"), enabled);
+
   prop_t *p = prop_ref_inc(item);
-  
+
   if(prop_set_parent(item, parent)) {
     prop_destroy(item);
     prop_ref_dec(p);
   } else {
     JSObject *robj = JS_NewObjectWithGivenProto(cx, &item_class, NULL, NULL);
     *rval =  OBJECT_TO_JSVAL(robj);
-    JS_DefineFunctions(cx, robj, item_functions);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
     ji->ji_model = model;
     ji->ji_root =  p;
     LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
     JS_SetPrivate(cx, robj, ji);
+    ji->ji_enable_set_property = 1; 
+    JS_DefineFunctions(cx, robj, item_functions);
   }
   return JS_TRUE;
 }
@@ -494,7 +524,7 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
-			rval);
+			rval, 1);
 }
 
 
@@ -514,7 +544,29 @@ js_appendPassiveItem(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_nodes, NULL, type, metaobj, &data,
-			rval);
+			rval, 1);
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_appendAction(JSContext *cx, JSObject *obj, uintN argc,
+		jsval *argv, jsval *rval)
+{
+  const char *type;
+  jsval data = 0;
+  JSBool enabled;
+  JSObject *metaobj = NULL;
+  js_model_t *model = JS_GetPrivate(cx, obj);
+
+  if(!JS_ConvertArguments(cx, argc, argv, "svb/o",
+			  &type, &data, &enabled, &metaobj))
+    return JS_FALSE;
+
+  return js_appendItem0(cx, model, model->jm_actions, NULL, type, metaobj,
+			&data, rval, enabled);
 }
 
 
@@ -527,6 +579,7 @@ init_model_props(js_model_t *jm, prop_t *model)
   struct prop_nf *pnf;
 
   jm->jm_nodes   = prop_ref_inc(prop_create(model, "items"));
+  jm->jm_actions = prop_ref_inc(prop_create(model, "actions"));
   jm->jm_type    = prop_ref_inc(prop_create(model, "type"));
   jm->jm_error   = prop_ref_inc(prop_create(model, "error"));
   jm->jm_contents= prop_ref_inc(prop_create(model, "contents"));
@@ -723,6 +776,7 @@ js_page_wfv(JSContext *cx, JSObject *obj, uintN argc,
 static JSFunctionSpec model_functions[] = {
     JS_FS("appendItem",         js_appendItem,        1, 0, 0),
     JS_FS("appendPassiveItem",  js_appendPassiveItem, 2, 0, 0),
+    JS_FS("appendAction",       js_appendAction,      3, 0, 0),
     JS_FS("appendModel",        js_appendModel,       2, 0, 0),
     JS_FS_END
 };
