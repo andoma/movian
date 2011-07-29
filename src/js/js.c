@@ -719,9 +719,11 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   JS_DefineProperty(cx, confobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableURIRoute, JSPROP_PERMANENT);
+  jsp->jsp_enable_uri_routing = 1;
 
   JS_DefineProperty(cx, confobj, "search", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableSearch, JSPROP_PERMANENT);
+  jsp->jsp_enable_search = 1;
 
   s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
   free(sbuf);
