@@ -27,6 +27,7 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "event.h"
+#include "plugins.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 
@@ -300,14 +301,8 @@ nav_page_direct_close_set(void *opaque, int v)
  *
  */
 static void
-nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
+nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
 {
-  nav_page_t *np = calloc(1, sizeof(nav_page_t));
-  np->np_nav = nav;
-  np->np_url = strdup(url);
-  np->np_direct_close = 0;
-  TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
-
   np->np_prop_root = prop_create_root("page");
   if(view != NULL) {
     np->np_view = strdup(view);
@@ -322,7 +317,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
 
-  prop_set_string(prop_create(np->np_prop_root, "url"), url);
+  prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
 
   np->np_direct_close_sub = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -330,14 +325,29 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 		   PROP_TAG_CALLBACK_INT, nav_page_direct_close_set, np,
 		   PROP_TAG_COURIER, nav->nav_pc,
 		   NULL);
-  
+}
+
+
+/**
+ *
+ */
+static void
+nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
+{
+  nav_page_t *np = calloc(1, sizeof(nav_page_t));
+
   TRACE(TRACE_INFO, "navigator", "Opening %s", url);
+
+  np->np_nav = nav;
+  np->np_url = strdup(url);
+  np->np_direct_close = 0;
+  TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
+
+  nav_page_setup_prop(nav, np, view);
 
   nav_insert_page(nav, np, origin);
   if(backend_open(np->np_prop_root, url))
     nav_open_errorf(np->np_prop_root, _("No handler for URL"));
-    
-
 }
 
 
@@ -389,6 +399,38 @@ nav_fwd(navigator_t *nav)
  *
  */
 static void
+nav_reload_current(navigator_t *nav)
+{
+  nav_page_t *np;
+
+  if((np = nav->nav_page_current) == NULL)
+    return;
+
+  plugins_reload_dev_plugin();
+
+  TRACE(TRACE_INFO, "navigator", "Reloading %s", np->np_url);
+
+  prop_unsubscribe(np->np_close_sub);
+  prop_unsubscribe(np->np_direct_close_sub);
+  prop_destroy(np->np_prop_root);
+  nav_page_setup_prop(nav, np, NULL);
+
+  if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
+    /* nav->nav_prop_pages is a zombie, this is an error */
+    abort();
+  }
+
+  nav_select(nav, np, NULL);
+    
+  if(backend_open(np->np_prop_root, np->np_url))
+    nav_open_errorf(np->np_prop_root, "No handler for URL");
+}
+
+
+/**
+ *
+ */
+static void
 nav_eventsink(void *opaque, prop_event_t event, ...)
 {
   navigator_t *nav = opaque;
@@ -411,6 +453,9 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
 
   } else if(event_is_action(e, ACTION_HOME)) {
     nav_open0(nav, NAV_HOME, NULL, NULL);
+
+  } else if(event_is_action(e, ACTION_RELOAD_DATA)) {
+    nav_reload_current(nav);
 
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;

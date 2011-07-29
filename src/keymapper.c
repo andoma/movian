@@ -93,7 +93,7 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_ZOOM_UI_DECR,           "Ctrl+minus"},
 
   { ACTION_RELOAD_UI,              "F5"},
-  { ACTION_RELOAD_DEV_PLUGIN,      "F6"},
+  { ACTION_RELOAD_DATA,            "Shift+F5"},
   { ACTION_FULLSCREEN_TOGGLE,      "F11"},
 
   { ACTION_PLAYPAUSE,              "MediaPlayPause"},
