@@ -775,7 +775,7 @@ js_page_wfv(JSContext *cx, JSObject *obj, uintN argc,
  */
 static JSFunctionSpec model_functions[] = {
     JS_FS("appendItem",         js_appendItem,        1, 0, 0),
-    JS_FS("appendPassiveItem",  js_appendPassiveItem, 2, 0, 0),
+    JS_FS("appendPassiveItem",  js_appendPassiveItem, 1, 0, 0),
     JS_FS("appendAction",       js_appendAction,      3, 0, 0),
     JS_FS("appendModel",        js_appendModel,       2, 0, 0),
     JS_FS_END
