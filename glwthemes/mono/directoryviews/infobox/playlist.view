@@ -7,7 +7,7 @@ widget(container_y, {
 
   widget(label, {
     .hidden = select($args.metadata.tracks, false, true);
-    .caption = int2str($args.metadata.tracks) + " tracks";
+    .caption = fmt("%d tracks", $args.metadata.tracks);
     .ellipsize = true;
   });
 

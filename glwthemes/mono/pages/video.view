@@ -145,7 +145,7 @@ widget(container_z, {
 	      });
 	      
 	      widget(label, {
-		.caption = int2str($self.media.video.bitrate) + "kb/s";
+		.caption = fmt("%d kb/s", $self.media.video.bitrate);
 	      });
 
 	      widget(label, {
@@ -161,21 +161,21 @@ widget(container_z, {
 	      });
 	      
 	      widget(label, {
-		.caption = int2str($self.media.video.decodetime_avg) + " ms";
+		.caption = fmt("%d ms", $self.media.video.decodetime_avg);
 	      });
 	      
 	      widget(label, {
-		.caption = int2str($self.media.avdiff * 1000) + " ms";
+		.caption = fmt("%d ms", $self.media.avdiff * 1000);
 	      });
 
 	      widget(label, {
 		.hidden = !$self.media.isRemote;
-		.caption = int2str($self.media.remote.qlen);
+		.caption = $self.media.remote.qlen;
 	      });
 
 	      widget(label, {
 		.hidden = !$self.media.isRemote;
-		.caption = int2str($self.media.remote.drops);
+		.caption = $self.media.remote.drops;
 	      });
 
 	    });

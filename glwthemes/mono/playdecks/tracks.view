@@ -51,7 +51,9 @@ widget(container_x, {
       widget(label, {
 	.align = right;
 	.sizeScale = 0.75;
-	.caption = "Track " + int2str($global.media.current.currentTrack) + " / " + int2str($global.media.current.totalTracks);
+	.caption = fmt("Track %d / %d",
+		       $global.media.current.currentTrack,
+		       $global.media.current.totalTracks);
       });
     });
   }));

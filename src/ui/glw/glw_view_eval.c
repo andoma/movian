@@ -2925,41 +2925,6 @@ glwf_scurve_dtor(struct token *self)
 
 
 /**
- * Int to string
- */
-static int 
-glwf_int2str(glw_view_eval_context_t *ec, struct token *self,
-	     token_t **argv, unsigned int argc)
-{
-  token_t *a = argv[0];
-  token_t *r;
-  int value;
-  char buf[30];
-  
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-  
-  switch(a->type) {
-    case TOKEN_FLOAT:
-      value = a->t_float;
-      break;
-    case TOKEN_INT:
-      value = a->t_int;
-      break;
-    default:
-      value = 0;
-      break;
-  }  
-  
-  snprintf(buf, sizeof(buf), "%d", value);
-  r = eval_alloc(self, ec, TOKEN_STRING);
-  r->t_rstring = rstr_alloc(buf);
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  *
  */
 static int
@@ -3013,7 +2978,7 @@ fmt_add_int(char *out, int len, int v, int zeropad, int fl1, int fl2)
   size_t l = strlen(buf);
 
   if(out)
-    memcpy(out, buf, l);
+    memcpy(out + len, buf, l);
 
   return len + l;
 }
@@ -3060,25 +3025,25 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
     } else {
       int zeropad = 0;
       int off = 1;
-      int fieldlen1 = -1;
-      int fieldlen2 = -1;
+      int fl1 = -1;
+      int fl2 = -1;
 
       if(fmt[off] == '0') {
 	zeropad = 1;
 	off++;
       }
       while(fmt[off] >= '0' && fmt[off] <= '9') {
-	if(fieldlen1 == -1)
-	  fieldlen1 = 0;
-	fieldlen1 = fieldlen1 * 10 + fmt[off++] - '0';
+	if(fl1 == -1)
+	  fl1 = 0;
+	fl1 = fl1 * 10 + fmt[off++] - '0';
       }
 
       if(fmt[off] == '.')  {
 	off++;
 	while(fmt[off] >= '0' && fmt[off] <= '9') {
-	  if(fieldlen2 == -1)
-	    fieldlen2 = 0;
-	  fieldlen2 = fieldlen2 * 10 + fmt[off++] - '0';
+	  if(fl2 == -1)
+	    fl2 = 0;
+	  fl2 = fl2 * 10 + fmt[off++] - '0';
 	}
       }
 
@@ -3088,30 +3053,69 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
       off++;
       fmt += off;
 
+      if(type == '%') {
+	if(out) 
+	  out[len] = '%';
+	len++;
+	continue;
+      }
+
       if(argptr == argc)
 	continue;
 
       token_t *arg = argv[argptr];
       argptr++;
+      int i32;
+      float flt;
 
-      switch(arg->type) {
-      case TOKEN_INT:
-	len = fmt_add_int(out, len, arg->t_int, zeropad, fieldlen1, fieldlen2);
+      switch(type) {
+      case 'd':
+	switch(arg->type) {
+	case TOKEN_INT:
+	  i32 = arg->t_int;
+	  break;
+	case TOKEN_FLOAT:
+	  i32 = arg->t_float;
+	  break;
+	default:
+	  i32 = 0;
+	  break;
+	}
+	len = fmt_add_int(out, len, i32, zeropad, fl1, fl2);
 	break;
 
-      case TOKEN_FLOAT:
-	len = fmt_add_float(out, len, arg->t_float, zeropad, fieldlen1, fieldlen2);
-	break;
-
-      case TOKEN_STRING:
-	len = fmt_add_string(out, len, rstr_get(arg->t_rstring));
-	break;
-
-      case TOKEN_LINK:
-	len = fmt_add_string(out, len, rstr_get(arg->t_link_rtitle));
+      case 'f':
+	switch(arg->type) {
+	case TOKEN_INT:
+	  flt = arg->t_int;
+	  break;
+	case TOKEN_FLOAT:
+	  flt = arg->t_float;
+	  break;
+	default:
+	  flt = 0;
+	  break;
+	}
+	len = fmt_add_float(out, len, flt, zeropad, fl1, fl2);
 	break;
 
       default:
+	switch(arg->type) {
+	case TOKEN_INT:
+	  len = fmt_add_int(out, len, arg->t_int, zeropad, fl1, fl2);
+	  break;
+	case TOKEN_FLOAT:
+	  len = fmt_add_float(out, len, arg->t_float, zeropad, fl1, fl2);
+	  break;
+	case TOKEN_STRING:
+	  len = fmt_add_string(out, len, rstr_get(arg->t_rstring));
+	  break;
+	case TOKEN_LINK:
+	  len = fmt_add_string(out, len, rstr_get(arg->t_link_rtitle));
+	  break;
+	default:
+	  break;
+	}
 	break;
       }
     }
@@ -4610,7 +4614,6 @@ static const token_func_t funcvec[] = {
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
   {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
-  {"int2str", 1, glwf_int2str},
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},

@@ -42,12 +42,12 @@ widget(container_y, {
       });
 
       widget(label, {
-	.caption = "Width: " + int2str($ui.width) + " px";
+	.caption = fmt("Width: %d px", $ui.width);
 	.color = 0.7;
       });
 
       widget(label, {
-	.caption = "Height: " + int2str($ui.height) + " px";
+	.caption = fmt("Height: %d px", $ui.height);
 	.color = 0.7;
       });
 
@@ -87,19 +87,19 @@ widget(container_y, {
 
       widget(label, {
 	.hidden = !$global.system.cpuinfo.available;
-	.caption = "Detected CPUs: " + int2str(count($global.system.cpuinfo.cpus));
+	.caption = fmt("Detected CPUs: %d", count($global.system.cpuinfo.cpus));
 	.color = 0.7;
       });
 
       widget(label, {
 	.hidden = !$global.system.mem.systotal;
-	.caption = "Total system RAM: " + int2str($global.system.mem.systotal) + " kB";
+	.caption = fmt("Total system RAM: %d kB", $global.system.mem.systotal);
 	.color = 0.7;
       });
 
       widget(label, {
 	.hidden = !$global.system.mem.sysfree;
-	.caption = "Avail system RAM: " + int2str($global.system.mem.sysfree) + " kB";
+	.caption = fmt("Avail system RAM: %d kB", $global.system.mem.sysfree);
 	.color = 0.7;
       });
     });

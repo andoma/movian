@@ -46,7 +46,7 @@ widget(container_x, {
 	  
 	  widget(label, {
 	    .align = center;
-	    .caption = int2str($self.model.value) + $self.model.unit;
+	    .caption = fmt("%d %s", $self.model.value, $self.model.unit);
 	  });
 	});
       });

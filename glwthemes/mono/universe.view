@@ -160,8 +160,7 @@ widget(container_z, {
 	.color = PLATE_COLOR_AUDIO();
 	
 	widget(label, {
-	  .caption = "Master volume: " +
-	    int2str($global.audio.mastervolume) + " dB";
+	  .caption = fmt("Master volume: %d dB", $global.audio.mastervolume);
 	  .align = center;
 	});
       });

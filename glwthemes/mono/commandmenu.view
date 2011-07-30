@@ -317,7 +317,7 @@ widget(container_x, {
 	  CMDSLIDER($global.media.current.type != "video",
 		    0.2, -1000, 1000, 10,
 		    $global.media.current.avdelta,
-		    int2str($global.media.current.avdelta) + "ms");
+		    fmt("%d ms", $global.media.current.avdelta));
 
 	  HORIZONTAL_SEPARATOR($global.media.current.type != "video");
 

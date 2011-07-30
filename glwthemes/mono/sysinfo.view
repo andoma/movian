@@ -73,9 +73,9 @@ widget(container_x, {
 	
 	widget(label, {
 	  .sizeScale = 0.5;
-	  .caption = "GPU Core temperature: " +
-	    int2str($ui.gpu.temperature.current) + " / " +
-	    int2str($ui.gpu.temperature.thres) + "°" ;
+	  .caption = fmt("GPU Core temperature: %d / %d °",
+			 $ui.gpu.temperature.current,
+			 $ui.gpu.temperature.thres);
 	});
 	
 	widget(bar, {
@@ -120,7 +120,9 @@ widget(container_x, {
 	cloner($global.system.cpuinfo.cpus, container_y, {
 	  widget(label, {
 	    .sizeScale = 0.5;
-	    .caption = $self.name + ": " + int2str($self.load * 100) + "%";
+	    .caption = fmt("%s: %d%%",
+			   $self.name,
+			   $self.load * 100);
 	  });
 	
 	  widget(dummy, {
