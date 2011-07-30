@@ -41,7 +41,15 @@ const char *showtime_get_system_type(void);
 const char *
 showtime_get_system_type(void)
 {
-  return "Linux";
+#if defined(__i386__)
+  return "Linux/i386";
+#elif defined(__x86_64__)
+  return "Linux/x86_64";
+#elif defined(__arm__)
+  return "Linux/arm";
+#else
+  return "Linux/other";
+#endif
 }
 
 static int
