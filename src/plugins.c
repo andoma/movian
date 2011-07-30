@@ -28,6 +28,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "backend/backend.h"
 #include "misc/string.h"
+#include "prop/prop_nodefilter.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -385,13 +386,81 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
 /**
  *
  */
+static prop_t *
+get_nodes_for_plugins(prop_t *page, const char *title, int only_installed)
+{
+  prop_t *model = prop_create(page, "model");
+  struct prop_nf *pnf;
+
+  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set_string(prop_create(model, "contents"), "items");
+
+  prop_t *metadata = prop_create(model, "metadata");
+  
+  prop_set_string(prop_create(metadata, "title"), title);
+
+  prop_t *source = prop_create(model, "source");
+
+  pnf = prop_nf_create(prop_create(model, "nodes"),
+		       source,
+		       prop_create(model, "filter"),
+		       "node.metadata.title",
+		       PROP_NF_AUTODESTROY);
+
+  if(only_installed) {
+    prop_nf_pred_int_add(pnf, "node.metadata.installed",
+			 PROP_NF_CMP_EQ, 0, NULL, 
+			 PROP_NF_MODE_EXCLUDE);
+  }
+
+  prop_nf_release(pnf);
+
+  prop_set_int(prop_create(model, "canFilter"), 1);
+  return source;
+}
+
+
+
+/**
+ *
+ */
+static void
+plugin_open_installed(prop_t *page)
+{
+  htsmsg_t *pm;
+  htsmsg_field_t *f;
+  prop_t *nodes, *p;
+  
+  nodes = get_nodes_for_plugins(page, "Plugins installed", 1);
+
+  // Then loop over plugins from repository
+
+  hts_mutex_lock(&plugin_mutex);
+
+  HTSMSG_FOREACH(f, loaded_plugins) {
+    if((pm = htsmsg_get_map_by_field(f)) == NULL)
+      continue;
+
+    if((p = plugin_prop_from_htsmsg(pm)) == NULL)
+      continue;
+
+    if(prop_set_parent(p, nodes))
+      prop_destroy(p);
+  }
+  hts_mutex_unlock(&plugin_mutex);
+}
+
+
+/**
+ *
+ */
 static void
 plugin_open_repo(prop_t *page)
 {
   char errbuf[200];
   htsmsg_t *repo, *pm;
   htsmsg_field_t *f;
-  prop_t *model, *metadata, *nodes, *p;
+  prop_t *nodes, *p;
   
   if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
     nav_open_errorf(page, "Unable to request plugin repository: %s", 
@@ -399,15 +468,7 @@ plugin_open_repo(prop_t *page)
     return;
   }
 
-  model = prop_create(page, "model");
-  prop_set_string(prop_create(model, "type"), "directory");
-  prop_set_string(prop_create(model, "contents"), "items");
-
-  metadata = prop_create(model, "metadata");
-  
-  prop_set_string(prop_create(metadata, "title"), "Available plugins");
-
-  nodes = prop_create(model, "nodes");
+  nodes = get_nodes_for_plugins(page, "Plugins available for install", 0);
 
   // Then loop over plugins from repository
 
@@ -925,12 +986,66 @@ plugin_open_repo_item(prop_t *page, const char *id)
 /**
  *
  */
+static void
+add_item(prop_t *parent, const char *title, const char *url)
+{
+  prop_t *p = prop_create_root(NULL);
+
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(p, "type"), "directory");
+
+  prop_t *metadata = prop_create(p, "metadata");
+  prop_set_string(prop_create(metadata, "title"), title);
+  prop_set_string(prop_create(metadata, "subtype"), "plugin");
+
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+static void
+plugin_open_start(prop_t *page)
+{
+  prop_t *model, *metadata, *nodes;
+
+  model = prop_create(page, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set_string(prop_create(model, "contents"), "items");
+
+  metadata = prop_create(model, "metadata");
+  
+  prop_set_string(prop_create(metadata, "title"),
+		  "Plugin central");
+
+  nodes = prop_create(model, "nodes");
+
+  add_item(nodes, "Installed", "plugin:installed");
+  add_item(nodes, "Available", "plugin:repo");
+}
+
+
+/**
+ *
+ */
 static int
 plugin_open_url(prop_t *page, const char *url)
 {
   const char *s;
+  if(!strcmp(url, "plugin:start")) {
+    plugin_open_start(page);
+    return 0;
+  }
+
   if(!strcmp(url, "plugin:repo")) {
     plugin_open_repo(page);
+    return 0;
+  }
+
+  if(!strcmp(url, "plugin:installed")) {
+    plugin_open_installed(page);
     return 0;
   }
 
