@@ -1,0 +1,20 @@
+#import "skin://buttons/buttons.skin"
+
+#define itemActionButton(ENABLED, EVENT, ICONCLASS, CAPTION) {
+  _glossybuttonTextRight(ICON=translate(ICONCLASS, "skin://icons/Command.png"),
+			 CAPTION=CAPTION,
+			 EVENT=EVENT,
+			 ENABLED=true,
+			 HIDDEN=!ENABLED);
+}
+
+
+#define actionGroup(BODY) {
+  widget(backdrop, {
+    .source = "skin://gfx/border.png";
+    .border = [12,12,12,12];
+    .borderOnly = true;
+    .color = 0.5;
+    BODY;
+  });
+}

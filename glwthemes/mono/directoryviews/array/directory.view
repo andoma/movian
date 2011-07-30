@@ -9,6 +9,7 @@ widget(image, {
               "inbox",         "Inbox.png",
               "favourites",    "Favorite.png",
               "tags",          "Tags.png",
+              "plugin",        "Plugin.png",
               "genres",        "Tags.png"
 	     );
 

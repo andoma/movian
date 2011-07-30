@@ -1,0 +1,71 @@
+widget(container_x, {
+  widget(label, {
+    .width = 200;
+    .autohide = true;
+    .caption = $self.metadata.title + ":";
+    .align = topRight;
+    .color = 0.7;
+  });
+
+  widget(container_z, {
+    widget(container_x, {
+      widget(icon, {
+	.color = [0.66, 0.66, 0];
+	.source = "skin://icons/NoStar.png";
+	.hqScaling = true;
+      });
+      widget(icon, {
+	.color = [0.66, 0.66, 0];
+	.source = "skin://icons/NoStar.png";
+	.hqScaling = true;
+      });
+      widget(icon, {
+	.color = [0.66, 0.66, 0];
+	.source = "skin://icons/NoStar.png";
+	.hqScaling = true;
+      });
+      widget(icon, {
+	.color = [0.66, 0.66, 0];
+	.source = "skin://icons/NoStar.png";
+	.hqScaling = true;
+      });
+      widget(icon, {
+	.color = [0.66, 0.66, 0];
+	.source = "skin://icons/NoStar.png";
+	.hqScaling = true;
+      });
+    });
+
+
+    widget(clip, {
+      .clipping = [0, 0, 1 - $self.data, 0];
+      widget(container_x, {
+	widget(icon, {
+	  .color = [1.0, 1.0, 0];
+	  .source = "skin://icons/Star.png";
+	  .hqScaling = true;
+	});
+	widget(icon, {
+	  .color = [1.0, 1.0, 0];
+	  .source = "skin://icons/Star.png";
+	  .hqScaling = true;
+	});
+	widget(icon, {
+	  .color = [1.0, 1.0, 0];
+	  .source = "skin://icons/Star.png";
+	  .hqScaling = true;
+	});
+	widget(icon, {
+	  .color = [1.0, 1.0, 0];
+	  .source = "skin://icons/Star.png";
+	  .hqScaling = true;
+	});
+	widget(icon, {
+	  .color = [1.0, 1.0, 0];
+	  .source = "skin://icons/Star.png";
+	  .hqScaling = true;
+	});
+      });
+    });
+  });
+});

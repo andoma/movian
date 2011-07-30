@@ -11,6 +11,7 @@
 			  "settings", "Settings",
 			  "about",    "Info",
 			  "power",    "Power",
+			  "plugin",   "Plugin",
 			  "exit",     "Exit") + ".png",
 		EVENT, ENABLED, HIDDEN, NAVSCALE());
 }

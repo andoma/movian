@@ -1,0 +1,53 @@
+#import "theme://include/separators.view"
+#import "theme://include/buttons.view"
+#import "skin://item.skin"
+
+widget(container_y, {
+   .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+   .blur  = iir(clamp(getLayer(), 0, 1), 7);
+
+  .filterConstraintY = true;
+  .filterConstraintX = true;
+
+  .padding = [40, 20];
+
+  widget(container_x, {
+    .spacing = 20;
+    widget(image, {
+      .hqScaling = true;
+      .source = $page.model.metadata.icon;
+      .width = 160;
+      .align = topLeft;
+      .aspectConstraint = true;
+    });
+
+    
+    widget(container_y, {
+      .filterConstraintY = true;
+      .filterConstraintX = true;
+      .spacing = 2;
+      cloner($page.model.nodes, loader, {
+	.source = "theme://itemviews/" + $self.type + ".view";
+      });	  
+      
+      widget(dummy, { .height = 20; });
+
+      actionGroup(widget(container_x, {
+	.spacing = 10;
+	.homogenous = true;
+	
+	cloner($page.model.actions, container_z, {
+	  .hidden = !$self.enabled;
+	  itemActionButton(true,
+			   translate($self.type, void,
+				     "pageevent", deliverEvent($page.eventSink, $self.data),
+				     "navopen", navOpen($self.data)
+				    ),
+			   
+			   $self.metadata.class, $self.metadata.title);
+	});
+      }));
+    });
+  });
+});
+
