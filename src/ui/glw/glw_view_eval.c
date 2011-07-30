@@ -2925,54 +2925,6 @@ glwf_scurve_dtor(struct token *self)
 
 
 /**
- * Float to string
- */
-static int 
-glwf_float2str(glw_view_eval_context_t *ec, struct token *self,
-	       token_t **argv, unsigned int argc)
-{
-  token_t *a = argv[0];
-  token_t *b = argv[1];
-  token_t *r;
-  float value;
-  char buf[30];
-  int prec;
-
-  if((a = token_resolve(ec, a)) == NULL)
-    return -1;
-  if((b = token_resolve(ec, b)) == NULL)
-    return -1;
-
-  switch(a->type) {
-  case TOKEN_FLOAT:
-    value = a->t_float;
-    break;
-  case TOKEN_INT:
-    value = a->t_int;
-    break;
-  default:
-    r = eval_alloc(self, ec, TOKEN_STRING);
-    r->t_rstring = rstr_alloc("0");
-    eval_push(ec, r);
-    return 0;
-  }
-  
-  prec = 2;
-  if(b != NULL && b->type == TOKEN_FLOAT)
-    prec = b->t_float;
-  if(b != NULL && b->type == TOKEN_INT)
-    prec = b->t_int;
-
-  snprintf(buf, sizeof(buf), "%.*f", prec, value);
-
-  r = eval_alloc(self, ec, TOKEN_STRING);
-  r->t_rstring = rstr_alloc(buf);
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  * Int to string
  */
 static int 
@@ -4658,7 +4610,6 @@ static const token_func_t funcvec[] = {
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
   {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
-  {"float2str", 2, glwf_float2str},
   {"int2str", 1, glwf_int2str},
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},

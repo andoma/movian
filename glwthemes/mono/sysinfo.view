@@ -90,7 +90,7 @@ widget(container_x, {
 	
 	widget(label, {
 	  .sizeScale = 0.5;
-	  .caption = "Refreshrate: " + float2str($ui.framerate, 4) + " Hz";
+	  .caption = fmt("Framerate: %.4f Hz", $ui.framerate);
 	});
 
 	widget(dummy, {

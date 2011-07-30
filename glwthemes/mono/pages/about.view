@@ -52,7 +52,7 @@ widget(container_y, {
       });
 
       widget(label, {
-	.caption = "Framerate: " + float2str($ui.framerate, 2) + " Hz";
+	.caption = fmt("Framerate: %.2f Hz", $ui.framerate);
 	.color = 0.7;
       });
 
