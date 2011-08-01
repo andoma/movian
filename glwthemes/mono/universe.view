@@ -3,15 +3,15 @@
 #import "theme://include/buttons.view"
 #import "theme://include/slider.view"
 
-settingInt("Starwars scroller tilt", "tilt",
+settingInt(_("Starwars scroller tilt"), "tilt",
 	   $ui.defaults.tilt, "deg", 0, 20, 1, $ui.tilt);
 
-settingBool("Top bar navigation buttons", "navtools", true, $ui.topBarTools);
+settingBool(_("Top bar navigation buttons"), "navtools", true, $ui.topBarTools);
 
-settingBool("Adjust background tint based on daytime", "daytimegradient", 
+settingBool(_("Adjust background tint based on daytime"), "daytimegradient", 
 	    true, $ui.dayTimeGradient);
 
-settingBool("Fancy UI animations", "fancyAnimations", true, $ui.fancyAnimations);
+settingBool(_("Fancy UI animations"), "fancyAnimations", true, $ui.fancyAnimations);
 
 onEvent(menu, {
   $ui.menu = !$ui.menu;
@@ -160,7 +160,7 @@ widget(container_z, {
 	.color = PLATE_COLOR_AUDIO();
 	
 	widget(label, {
-	  .caption = fmt("Master volume: %d dB", $global.audio.mastervolume);
+	  .caption = fmt(_("Master volume: %d dB"), $global.audio.mastervolume);
 	  .align = center;
 	});
       });
@@ -171,7 +171,7 @@ widget(container_z, {
 	.color = PLATE_COLOR_OFF();
 	
         widget(label, {
-	  .caption = "Audio muted";
+	  .caption = _("Audio muted");
 	  .align = center;
 	});
       });

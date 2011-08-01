@@ -26,6 +26,18 @@
 #include <htsmsg/htsmsg_store.h>
 #include <arch/threads.h>
 
+// NLS
+
+
+#define _(string) nls_get_rstring(string)
+#define _p(string) nls_get_prop(string)
+
+struct rstr;
+struct rstr *nls_get_rstring(const char *string);
+
+struct prop;
+struct prop *nls_get_prop(const char *string);
+
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif

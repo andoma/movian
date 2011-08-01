@@ -39,7 +39,7 @@ widget(container_x, {
 	  .source = "skin://icons/Alert.png";
 	});
 	widget(label, {
-	  .caption = "CPU is too slow to decode this video";
+	  .caption = _("CPU is too slow to decode this video");
 	});
       });
 

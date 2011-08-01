@@ -1216,7 +1216,7 @@ be_htsp_open(prop_t *page, const char *url)
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, sizeof(errbuf))) == NULL)
-    return nav_open_errorf(page, "%s", errbuf);
+    return nav_open_error(page, errbuf);
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
@@ -1238,7 +1238,7 @@ be_htsp_open(prop_t *page, const char *url)
     make_model(page, "Tags", hc->hc_tags_nodes);
 
   } else {
-    nav_open_errorf(page, "Invalid RTSP URL");
+    nav_open_errorf(page, _("Invalid HTSP URL"));
   }
   return 0;
 }

@@ -20,7 +20,7 @@ widget(container_y, {
 
   widget(label, {
     .align = center;
-    .caption = "Version: " + $global.showtime.version;
+    .caption = fmt(_("Version: %s"), $global.showtime.version);
     .color = 0.5;
     .sizeScale = 1.5;
   });
@@ -36,41 +36,41 @@ widget(container_y, {
       .align = top;
 
       widget(label, {
-	.caption = "Display info";
+	.caption = _("Display info");
 	.color = 0.7;
 	.sizeScale = 1.5;
       });
 
       widget(label, {
-	.caption = fmt("Width: %d px", $ui.width);
+	.caption = fmt(_("Width: %d px"), $ui.width);
 	.color = 0.7;
       });
 
       widget(label, {
-	.caption = fmt("Height: %d px", $ui.height);
+	.caption = fmt(_("Height: %d px"), $ui.height);
 	.color = 0.7;
       });
 
       widget(label, {
-	.caption = fmt("Framerate: %.2f Hz", $ui.framerate);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.autohide = true;
-	.caption = "GPU: " + $ui.gpu.name;
+	.caption = fmt(_("Framerate: %.2f Hz"), $ui.framerate);
 	.color = 0.7;
       });
 
       widget(label, {
 	.autohide = true;
-	.caption = "Renderer: " + $ui.rendermode;
+	.caption = fmt(_("GPU: %s"), $ui.gpu.name);
 	.color = 0.7;
       });
 
       widget(label, {
 	.autohide = true;
-	.caption = "Windowmanager: " + $ui.windowmanager;
+	.caption = fmt(_("Renderer: %s"), $ui.rendermode);
+	.color = 0.7;
+      });
+
+      widget(label, {
+	.autohide = true;
+	.caption = fmt(_("Windowmanager: %s"), $ui.windowmanager);
 	.color = 0.7;
       });
     });
@@ -80,26 +80,29 @@ widget(container_y, {
       .filterConstraintX = true;
       .align = top;
       widget(label, {
-	.caption = "System info";
+	.caption = _("System info");
 	.color = 0.7;
 	.sizeScale = 1.5;
       });
 
       widget(label, {
 	.hidden = !$global.system.cpuinfo.available;
-	.caption = fmt("Detected CPUs: %d", count($global.system.cpuinfo.cpus));
+	.caption = fmt(_("Detected CPUs: %d"),
+		       count($global.system.cpuinfo.cpus));
 	.color = 0.7;
       });
 
       widget(label, {
 	.hidden = !$global.system.mem.systotal;
-	.caption = fmt("Total system RAM: %d kB", $global.system.mem.systotal);
+	.caption = fmt(_("Total system RAM: %d kB"),
+		       $global.system.mem.systotal);
 	.color = 0.7;
       });
 
       widget(label, {
 	.hidden = !$global.system.mem.sysfree;
-	.caption = fmt("Avail system RAM: %d kB", $global.system.mem.sysfree);
+	.caption = fmt(_("Avail system RAM: %d kB"),
+		       $global.system.mem.sysfree);
 	.color = 0.7;
       });
     });

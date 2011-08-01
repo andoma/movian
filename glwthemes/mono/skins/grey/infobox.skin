@@ -27,14 +27,14 @@
   skinInfoboxFocusableCommand(
     ENABLED, EVENT,
     "skin://icons/Enqueue.png",
-    "Enqueue");
+    _("Enqueue"));
 }
 
 #define skinInfoboxDelete(ENABLED, EVENT) {
   skinInfoboxFocusableCommand(
     ENABLED, EVENT,
     "skin://icons/Delete.png",
-    "Delete");
+    _("Delete"));
 }
 
 

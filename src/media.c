@@ -329,31 +329,31 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_setting_vzoom = 
     settings_create_int(mp->mp_setting_video_root, "vzoom",
-			"Video zoom", 100, NULL, 50, 200,
+			_p("Video zoom"), 100, NULL, 50, 200,
 			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
 			"%", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_av_delta = 
     settings_create_int(mp->mp_setting_audio_root, "avdelta",
-			"Audio delay", 0, NULL, -5000, 5000,
+			_p("Audio delay"), 0, NULL, -5000, 5000,
 			50, update_av_delta, mp, SETTINGS_INITIAL_UPDATE,
 			"ms", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_sv_delta = 
     settings_create_int(mp->mp_setting_subtitle_root, "svdelta",
-			"Subtitle delay", 0, NULL, -60, 60,
+			_p("Subtitle delay"), 0, NULL, -60, 60,
 			1, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
 			"s", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_sub_scale = 
     settings_create_int(mp->mp_setting_subtitle_root, "subscale",
-			"Subtitle scaling", subtitle_settings.scaling,
+			_p("Subtitle scaling"), subtitle_settings.scaling,
 			NULL, 30, 500, 5, NULL, NULL, 0,
 			"%", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_sub_on_video = 
     settings_create_bool(mp->mp_setting_subtitle_root, "subonvideoframe",
-			 "Align subtitles on video frame", 
+			 _p("Align subtitles on video frame"), 
 			 subtitle_settings.align_on_video, NULL,
 			 NULL, NULL, 0,
 			 mp->mp_pc, NULL, NULL);

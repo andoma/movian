@@ -137,13 +137,13 @@ video_settings_init(void)
   prop_t *s;
   setting_t *x;
 
-  s = settings_add_dir(NULL, "Video playback", "video", NULL,
-		       "Video acceleration and display behaviour");
+  s = settings_add_dir(NULL, _p("Video playback"), "video", NULL,
+		       _p("Video acceleration and display behaviour"));
 
   if((store = htsmsg_store_load("videoplayback")) == NULL)
     store = htsmsg_create_map();
 #if ENABLE_VDPAU 
-  settings_create_bool(s, "vdpau", "Enable VDPAU", 1,
+  settings_create_bool(s, "vdpau", _p("Enable VDPAU"), 1,
 		       store, set_vdpau, NULL, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
@@ -151,88 +151,89 @@ video_settings_init(void)
 #endif
 
   settings_create_bool(s, "stretch_horizontal",
-		       "Stretch video to widescreen", 0,
+		       _p("Stretch video to widescreen"), 0,
 		       store, set_stretch_horizontal, NULL, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
 
 
-  s = settings_add_dir(NULL, "Subtitles", "subtitle", NULL,
-		       "Generic settings for video subtitles");
+  s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
+		       _p("Generic settings for video subtitles"));
   subtitle_settings_dir = s;
 
   if((store = htsmsg_store_load("subtitles")) == NULL)
     store = htsmsg_create_map();
 
-  settings_create_bool(s, "alwaysselect", "Always select a subtitle", 1, 
+  settings_create_bool(s, "alwaysselect",
+		       _p("Always try to select a subtitle"), 1, 
 		       store, set_subtitle_always_select, NULL,
 		       SETTINGS_INITIAL_UPDATE,  NULL,
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
   
-  settings_create_int(s, "scale", "Default subtitle size scaling",
+  settings_create_int(s, "scale", _p("Subtitle size"),
 		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
 		      SETTINGS_INITIAL_UPDATE, "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"subtitles");
 
   settings_create_bool(s, "subonvideoframe",
-		       "Default align subtitles on video frame", 0, 
+		       _p("Force subtitles to reside on video frame"), 0, 
 		       store, set_subtitle_align_on_video, NULL,
 		       SETTINGS_INITIAL_UPDATE,  NULL,
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
 
-  x = settings_create_multiopt(s, "align", "Default subtitle alignment",
+  x = settings_create_multiopt(s, "align", _p("Subtitle position"),
 			       set_subtitle_alignment, NULL);
 
-  settings_multiopt_add_opt(x, "2", "Center", 1);
-  settings_multiopt_add_opt(x, "1", "Left", 0);
-  settings_multiopt_add_opt(x, "3", "Right", 0);
-  settings_multiopt_add_opt(x, "0", "Auto", 0);
+  settings_multiopt_add_opt(x, "2", _p("Center"), 1);
+  settings_multiopt_add_opt(x, "1", _p("Left"), 0);
+  settings_multiopt_add_opt(x, "3", _p("Right"), 0);
+  settings_multiopt_add_opt(x, "0", _p("Auto"), 0);
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"subtitles");
 
-  settings_create_divider(s, "Subtitle style");
+  settings_create_divider(s, _p("Subtitle styling"));
 
-  settings_create_string(s, "color", "Subtitle color", "FFFFFF", 
+  settings_create_string(s, "color", _p("Color"), "FFFFFF", 
 			 store, set_subtitle_color, NULL,
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"subtitles");
 
-  settings_create_string(s, "shadowcolor", "Subtitle shadow color", "000000", 
+  settings_create_string(s, "shadowcolor", _p("Shadow color"),
+			 "000000", 
 			 store, set_subtitle_shadow_color, NULL,
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"subtitles");
 
-  settings_create_int(s, "shadowcolorsize", "Shadow offset",
+  settings_create_int(s, "shadowcolorsize", _p("Shadow offset"),
 		      2, store, 0, 10, 1, set_subtitle_shadow_size, NULL,
 		      SETTINGS_INITIAL_UPDATE, "px", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"subtitles");
 
-  settings_create_string(s, "outlinecolor", "Subtitle outline color", "000000", 
+  settings_create_string(s, "outlinecolor", _p("Outline color"),
+			 "000000", 
 			 store, set_subtitle_outline_color, NULL,
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"subtitles");
 
-  settings_create_int(s, "shadowoutlinesize", "Outline size",
+  settings_create_int(s, "shadowoutlinesize", _p("Outline size"),
 		      1, store, 0, 4, 1, set_subtitle_outline_size, NULL,
 		      SETTINGS_INITIAL_UPDATE, "px", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"subtitles");
 
   settings_create_bool(s, "styleoverride",
-		       "Override embedded styling", 0, 
+		       _p("Ignore embedded styling"), 0, 
 		       store, set_subtitle_style_override, NULL,
 		       SETTINGS_INITIAL_UPDATE,  NULL,
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
-
-
 }

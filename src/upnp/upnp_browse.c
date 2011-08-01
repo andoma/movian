@@ -515,14 +515,14 @@ upnp_browse_resolve(upnp_browse_t *ub)
 
   if(ud == NULL) {
     hts_mutex_unlock(&upnp_lock);
-    nav_open_errorf(ub->ub_page, "Device not found");
+    nav_open_errorf(ub->ub_page, _("Device not found"));
     return 1;
   }
   
   url += strlen(ud->ud_uuid);
   if(*url != ':') {
     hts_mutex_unlock(&upnp_lock);
-    nav_open_errorf(ub->ub_page, "Malformed URI after device");
+    nav_open_errorf(ub->ub_page, _("Malformed URI after device"));
     return 1;
   }
 
@@ -536,14 +536,14 @@ upnp_browse_resolve(upnp_browse_t *ub)
 
   if(us == NULL) {
     hts_mutex_unlock(&upnp_lock);
-    nav_open_errorf(ub->ub_page, "Service not found");
+    nav_open_errorf(ub->ub_page, _("Service not found"));
     return 1;
   }
   
   url += strlen(us->us_id);
   if(*url != ':') {
     hts_mutex_unlock(&upnp_lock);
-    nav_open_errorf(ub->ub_page, "Malformed URI after service");
+    nav_open_errorf(ub->ub_page, _("Malformed URI after service"));
     return 1;
   }
 

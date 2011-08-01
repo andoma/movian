@@ -325,17 +325,17 @@ openpage(prop_t *page, const char *url)
   char device[32];
   
   if((track = parse_audiocd_url(url, device, sizeof(device))) < 0)
-    return nav_open_errorf(page, "Invalid CD URL");
+    return nav_open_errorf(page, _("Invalid CD URL"));
 
   cd_meta_t *cm = get_cd_meta(device);
 
   if(cm == NULL)
-    return nav_open_errorf(page, "Unable to open CD");
+    return nav_open_errorf(page, _("Unable to open CD"));
 
   if(track) {
     cd_track_t *ct = get_track(cm, track);
     if(ct == NULL)
-      return nav_open_errorf(page, "Invalid track");
+      return nav_open_errorf(page, _("Invalid CD track"));
 
     prop_t *meta = prop_create_root("metadata");
     prop_link(ct->ct_metadata, meta);

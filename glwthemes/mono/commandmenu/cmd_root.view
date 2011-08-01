@@ -156,7 +156,7 @@ widget(container_y, {
     // -- Audio config ------------------------------------------------------
     commandGroup(widget(container_y, {
       widget(label, {
-	.caption = "Audio settings";
+	.caption = _("Audio settings");
 	.sizeScale = 1.5;
       });
 
@@ -164,8 +164,8 @@ widget(container_y, {
       .spacing = 5;
 
       commandTabGroup(
-	commandTab($view.audiopage, "Languages", 0);
-	commandTab($view.audiopage, "Settings", 1);
+	commandTab($view.audiopage, _("Languages"), 0);
+	commandTab($view.audiopage, _("Settings"), 1);
       );
 
       widget(deck, {
@@ -200,7 +200,7 @@ widget(container_y, {
     // -- Subtitle tracks ------------------------------------------------------
     commandGroup(widget(container_y, {
       widget(label, {
-	.caption = "Subtitle settings";
+	.caption = _("Subtitle settings");
 	.sizeScale = 1.5;
       });
 
@@ -208,8 +208,8 @@ widget(container_y, {
       .spacing = 5;
 
       commandTabGroup(
-	commandTab($view.subtitlepage, "Languages", 0);
-	commandTab($view.subtitlepage, "Settings", 1);
+	commandTab($view.subtitlepage, _("Languages"), 0);
+	commandTab($view.subtitlepage, _("Settings"), 1);
       );
       
       widget(deck, {
@@ -294,7 +294,7 @@ widget(container_y, {
       .spacing = 5;
 
       widget(label, {
-	.caption = "Video settings";
+	.caption = _("Video settings");
 	.sizeScale = 1.5;
       });
 

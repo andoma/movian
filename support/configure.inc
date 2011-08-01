@@ -295,6 +295,15 @@ finalize() {
 	echo >>${CONFIG_H} "#define SHOWTIME_FONT_LIBERATION_URL \""${LIBERATION_RESOURCE_URL}"\""
     fi
 
+    # Languages
+    if enabled embedded_resources; then
+	LANGUAGES_URL="bundle://lang"
+	echo >>${CONFIG_MAK} "BUNDLES+=lang"
+    else
+	LANGUAGES_URL="file://`cd lang && pwd`"
+    fi
+    echo >>${CONFIG_H} "#define SHOWTIME_LANGUAGES_URL \""${LANGUAGES_URL}"\""
+
 
     # Release tag
     if enabled release; then

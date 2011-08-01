@@ -231,12 +231,12 @@ lgtv_init(serdev_t *sd, int curpower)
   lg->sd = sd;
   lg->prior_input = -1;
 
-  s = settings_add_dir(NULL, "LG Television set", NULL, NULL, NULL);
+  s = settings_add_dir(NULL, _p("LG Television set"), NULL, NULL, NULL);
 
   lg->store = htsmsg_store_load(CONFNAME) ?: htsmsg_create_map();
   lg->prior_input = -1;
   
-  settings_create_bool(s, "autopower", "Automatic TV power on/off", 0, 
+  settings_create_bool(s, "autopower", _p("Automatic TV power on/off"), 0, 
 		       lg->store, NULL, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       lgtv_save_settings, lg);
@@ -268,13 +268,14 @@ lgtv_init(serdev_t *sd, int curpower)
   if(lg->prior_input != -1) {
     int input = lg->prior_input;
 
-    x = settings_create_multiopt(s, "inputsource", "Input source", NULL, NULL);
+    x = settings_create_multiopt(s, "inputsource", _p("Input source"),
+				 NULL, NULL);
 
-    settings_multiopt_add_opt(x, "none",      "None",        1);
-    settings_multiopt_add_opt(x, "hdmi1",     "HDMI-1",      input == 0x90);
-    settings_multiopt_add_opt(x, "hdmi2",     "HDMI-2",      input == 0x91);
-    settings_multiopt_add_opt(x, "vga1",      "VGA-1",       input == 0x60);
-    settings_multiopt_add_opt(x, "component1","Component-1", input == 0x40);
+    settings_multiopt_add_opt_cstr(x, "none",      "None",        1);
+    settings_multiopt_add_opt_cstr(x, "hdmi1",     "HDMI-1",      input == 0x90);
+    settings_multiopt_add_opt_cstr(x, "hdmi2",     "HDMI-2",      input == 0x91);
+    settings_multiopt_add_opt_cstr(x, "vga1",      "VGA-1",       input == 0x60);
+    settings_multiopt_add_opt_cstr(x, "component1","Component-1", input == 0x40);
 
     settings_multiopt_initiate(x, lg->store, lgtv_save_settings, lg);
 

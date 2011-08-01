@@ -163,7 +163,7 @@
       
       widget(label, {
 	.align = center;
-	.caption = "Off";
+	.caption = _("Off");
       });
     });
 
@@ -183,7 +183,7 @@
       
       widget(label, {
 	.align = center;
-	.caption = "On";
+	.caption = _("On");
       });
     });      
 

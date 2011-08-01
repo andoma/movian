@@ -51,7 +51,7 @@ widget(container_x, {
       widget(label, {
 	.align = right;
 	.sizeScale = 0.75;
-	.caption = fmt("Track %d / %d",
+	.caption = fmt(_("Track %d / %d"),
 		       $global.media.current.currentTrack,
 		       $global.media.current.totalTracks);
       });

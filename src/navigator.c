@@ -335,7 +335,8 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin)
 
   nav_insert_page(nav, np, origin);
   if(backend_open(np->np_prop_root, url))
-    nav_open_errorf(np->np_prop_root, "No handler for URL");
+    nav_open_errorf(np->np_prop_root, _("No handler for URL"));
+    
 
 }
 
@@ -446,24 +447,32 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
  *
  */
 int
-nav_open_errorf(prop_t *root, const char *fmt, ...)
+nav_open_error(prop_t *root, const char *msg)
 {
-  va_list ap;
-  char buf[200];
-
-  va_start(ap, fmt);
-  vsnprintf(buf, sizeof(buf), fmt, ap);
-  va_end(ap);
-  
   prop_t *model = prop_create_check(root, "model");
 
   if(model != NULL) {
     prop_set_string(prop_create(model, "type"), "openerror");
     prop_set_int(prop_create(model, "loading"), 0);
-    prop_set_string(prop_create(model, "error"), buf);
+    prop_set_string(prop_create(model, "error"), msg);
     prop_set_int(prop_create(model, "directClose"), 1);
   }
-
   prop_ref_dec(model);
   return 0;
+}
+
+/**
+ *
+ */
+int
+nav_open_errorf(prop_t *root, rstr_t *fmt, ...)
+{
+  va_list ap;
+  char buf[200];
+
+  va_start(ap, fmt);
+  vsnprintf(buf, sizeof(buf), rstr_get(fmt), ap);
+  va_end(ap);
+  rstr_release(fmt);
+  return nav_open_error(root, buf);
 }

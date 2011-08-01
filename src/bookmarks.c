@@ -24,6 +24,7 @@
 
 #include <htsmsg/htsmsg_store.h>
 
+#include "showtime.h"
 #include "service.h"
 #include "settings.h"
 #include "bookmarks.h"
@@ -225,7 +226,7 @@ bookmarks_init(void)
   htsmsg_t *m, *n, *o;
 
 
-  bookmarks = prop_create(settings_add_dir(NULL, "Bookmarks",
+  bookmarks = prop_create(settings_add_dir(NULL, _p("Bookmarks"),
 					   "bookmark", NULL, NULL),
 			  "model");
 

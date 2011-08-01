@@ -36,18 +36,22 @@ typedef struct settings_multiopt {
   const char *icon;
 } settings_multiopt_t;
 
-prop_t *settings_add_dir(prop_t *parent, const char *title,
+prop_t *settings_add_dir(prop_t *parent, prop_t *title,
 			 const char *subtype, const char *icon,
-			 const char *shortdesc);
+			 prop_t *shortdesc);
+
+prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
+			      const char *subtype, const char *icon,
+			      const char *shortdesc);
 
 prop_t *settings_get_dirlist(prop_t *parent);
 
-prop_t *settings_create_divider(prop_t *parent, const char *caption);
+prop_t *settings_create_divider(prop_t *parent, prop_t *caption);
 
 
 
 setting_t *settings_create_bool(prop_t *parent, const char *id, 
-				const char *title, int initial, htsmsg_t *store,
+				prop_t *title, int initial, htsmsg_t *store,
 				prop_callback_int_t *cb, void *opaque,
 				int flags, prop_courier_t *pc,
 				settings_saver_t *saver, void *saver_opaque);
@@ -57,30 +61,34 @@ void settings_set_bool(setting_t *s, int v);
 void settings_toggle_bool(setting_t *s);
 
 setting_t *settings_create_multiopt(prop_t *parent, const char *id,
-				    const char *title,
+				    prop_t *title,
 				    prop_callback_string_t *cb, void *opaque);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
-			       const char *title, int selected);
+			       prop_t *title, int selected);
+
+void settings_multiopt_add_opt_cstr(setting_t *parent, const char *id,
+				    const char *title, int selected);
 
 void settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
 				settings_saver_t *saver, void *saver_opaque);
 
 setting_t *settings_create_string(prop_t *parent, const char *id, 
-				  const char *title, const char *initial, 
+				  prop_t *title, const char *initial, 
 				  htsmsg_t *store,
 				  prop_callback_string_t *cb, void *opaque,
 				  int flags, prop_courier_t *pc,
 				  settings_saver_t *saver, void *saver_opaque);
 
 setting_t *settings_create_int(prop_t *parent, const char *id, 
-			       const char *title,
+			       prop_t *title,
 			       int initial, htsmsg_t *store,
 			       int min, int max, int step,
 			       prop_callback_int_t *cb, void *opaque,
 			       int flags, const char *unit,
 			       prop_courier_t *pc,
 			       settings_saver_t *saver, void *saver_opaque);
+
 
 void settings_set_int(setting_t *s, int v);
 
@@ -91,7 +99,7 @@ prop_t *settings_get_value(setting_t *s);
 prop_t *settings_get_node(setting_t *s);
 
 setting_t *settings_create_action(prop_t *parent, const char *id,
-				  const char *title,
+				  prop_t *title,
 				  prop_callback_t *cb, void *opaque,
 				  prop_courier_t *pc);
 
@@ -104,7 +112,7 @@ void settings_generic_save_settings(void *opaque, htsmsg_t *msg);
 void settings_generic_set_bool(void *opaque, int value);
 
 void settings_create_info(prop_t *parent, const char *image,
-			  const char *description);
+			  prop_t *description);
 
 extern prop_t *settings_apps;
 extern prop_t *settings_sd;

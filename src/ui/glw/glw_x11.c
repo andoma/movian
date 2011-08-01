@@ -1267,7 +1267,8 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 #endif
 
   settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
-		       "Map mouse wheel to up/down", 0, gr->gr_settings_store,
+		       _p("Map mouse wheel to up/down"),
+		       0, gr->gr_settings_store,
 		       gx11_set_wheel_mapping, gx11, 
 		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 		       glw_settings_save, gr);
@@ -1275,7 +1276,7 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   if(gx11->wm_flags) {
     gx11->fullscreen_setting = 
       settings_create_bool(gr->gr_settings, "fullscreen",
-			   "Fullscreen mode", 0, gr->gr_settings_store,
+			   _p("Fullscreen mode"), 0, gr->gr_settings_store,
 			   gx11_set_fullscreen, gx11, 
 			   SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 			   glw_settings_save, gr);

@@ -3902,6 +3902,16 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+typedef struct {
+  prop_t *title;
+  setting_t *s;
+
+} glwf_setting_t;
+
+
+
+
+
 /**
  *
  */
@@ -3917,8 +3927,13 @@ glwf_null_ctor(struct token *self)
 static void
 glwf_setting_dtor(struct token *self)
 {
-  if(self->t_extra != NULL)
-    setting_destroy(self->t_extra);
+  glwf_setting_t *gs = self->t_extra;
+  if(gs == NULL)
+    return;
+
+  setting_destroy(gs->s);
+  prop_destroy(gs->title);
+  free(gs);
 }
 
 
@@ -3939,13 +3954,11 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   token_t *prop  = argv[7];
 
   glw_root_t *gr = ec->w->glw_root;
+  glwf_setting_t *gs = self->t_extra;
 
-  if(self->t_extra != NULL)
-    return 0;
 
-  if(resolve_property_name(ec, prop, 0))
+  if((title = token_resolve(ec, title)) == NULL)
     return -1;
-
   if((def  = token_resolve(ec, def)) == NULL)
     return -1;
   if((unit = token_resolve(ec, unit)) == NULL)
@@ -3965,11 +3978,18 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   
   if(unit->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, unit, "Unit argument is not a string");
+
   
-  if(self->t_extra == NULL) {
-    self->t_extra = 
+  if(gs == NULL) {
+    if(resolve_property_name(ec, prop, 0))
+      return -1;
+
+    gs = malloc(sizeof(glwf_setting_t));
+    gs->title = prop_create_root(NULL);
+
+    gs->s = 
       settings_create_int(gr->gr_settings, rstr_get(id->t_rstring),
-			rstr_get(title->t_rstring), 
+			  gs->title, 
 			  token2int(def), gr->gr_settings_store, 
 			  token2int(min), token2int(max), token2int(step),
 			  NULL, NULL,
@@ -3977,8 +3997,11 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
 			  gr->gr_courier,
 			  glw_settings_save, gr);
     
-    prop_link(settings_get_value(self->t_extra), prop->t_prop);
+    prop_link(settings_get_value(gs->s), prop->t_prop);
+    self->t_extra = gs;
   }
+  prop_set_rstring(gs->title, title->t_rstring);
+
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   return 0;
 }
@@ -3996,11 +4019,11 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   token_t *prop  = argv[3];
 
   glw_root_t *gr = ec->w->glw_root;
+  glwf_setting_t *gs = self->t_extra;
 
-  if((def  = token_resolve(ec, def)) == NULL)
+  if((title = token_resolve(ec, title)) == NULL)
     return -1;
-
-  if(resolve_property_name(ec, prop, 0))
+  if((def  = token_resolve(ec, def)) == NULL)
     return -1;
 
   if(title->type != TOKEN_STRING)
@@ -4009,18 +4032,26 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   if(id->type != TOKEN_STRING)
     return glw_view_seterr(ec->ei, id, "Second argument is not a string");
 
-  if(self->t_extra == NULL) {
-    self->t_extra = 
+  if(gs == NULL) {
+    if(resolve_property_name(ec, prop, 0))
+      return -1;
+
+    gs = malloc(sizeof(glwf_setting_t));
+    gs->title = prop_create_root(NULL);
+
+    gs->s = 
       settings_create_bool(gr->gr_settings, rstr_get(id->t_rstring),
-			   rstr_get(title->t_rstring), 
+			   gs->title,
 			   token2int(def), gr->gr_settings_store, 
 			   NULL, NULL,
 			   SETTINGS_INITIAL_UPDATE,
 			   gr->gr_courier,
 			   glw_settings_save, gr);
     
-    prop_link(settings_get_value(self->t_extra), prop->t_prop);
+    prop_link(settings_get_value(gs->s), prop->t_prop);
+    self->t_extra = gs;
   }
+  prop_set_rstring(gs->title, title->t_rstring);
 
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   return 0;
@@ -4591,9 +4622,6 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
   eval_push(ec, r);
   return 0;
 }
-
-    
-
 
 /**
  *

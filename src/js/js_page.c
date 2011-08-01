@@ -893,7 +893,7 @@ js_open_error(JSContext *cx, const char *msg, JSErrorReport *r)
     level = TRACE_INFO;
   else {
     level = TRACE_ERROR;
-    nav_open_errorf(jm->jm_root, "%s", msg);
+    nav_open_error(jm->jm_root, msg);
   }
 
   TRACE(level, "JS", "%s:%u %s",  r->filename, r->lineno, msg);

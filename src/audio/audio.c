@@ -146,12 +146,13 @@ audio_init(void)
 {
   audio_mastervol_init();
 
-  audio_settings_root = settings_add_dir(NULL, "Audio output", "sound", NULL,
-					 "Select audio output device and related configurations");
+  audio_settings_root =
+    settings_add_dir(NULL, _p("Audio output"), "sound", NULL,
+		     _p("Select audio output device and related configurations"));
   
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 
-			     "Current output device",
+			     _p("Current output device"),
 			     audio_change_output_device, NULL);
   
   audio_global_load_settings();
@@ -337,7 +338,6 @@ audio_mode_register(audio_mode_t *am)
   prop_t *r;
   int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
   htsmsg_t *m;
-  char buf[256];
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
 
@@ -345,36 +345,36 @@ audio_mode_register(audio_mode_t *am)
      (audio_stored_device && !strcmp(audio_stored_device, am->am_id)))
     audio_mode_set(am);
   
-  settings_multiopt_add_opt(audio_settings_current_device,
-			    am->am_id, am->am_title, am == audio_mode_current);
+  settings_multiopt_add_opt_cstr(audio_settings_current_device,
+				 am->am_id, am->am_title,
+				 am == audio_mode_current);
   
   m = htsmsg_store_load("audio/devices/%s", am->am_id);
 
+  r = settings_add_dir_cstr(audio_settings_root, am->am_title, "sound", NULL,
+			    am->am_description);
 
-  snprintf(buf, sizeof(buf), "Configuration for %s", am->am_title);
-  r = settings_add_dir(audio_settings_root, buf, "sound", NULL,
-		       am->am_description);
-
-  settings_create_int(r, "delay", "Audio/Video sync delay",
+  settings_create_int(r, "delay", _p("Audio/Video sync delay"),
 		      0, m, -1000, 1000, 10, am_set_av_sync, am,
 		      SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
 
   if(multich) {
-    settings_create_bool(r, "phantom_center", "Phantom center",
-		      0, m, am_set_phantom_center, am,
-		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_create_bool(r, "phantom_lfe", "Phantom LFE",
-		      0, m, am_set_phantom_lfe, am,
-		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_create_bool(r, "small_front", "Small front speakers",
-		      0, m, am_set_small_front, am,
-		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_create_bool(r, "force_downmix", "Force stereo downmix",
-		      0, m, am_set_force_downmix, am,
-		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
-    settings_create_bool(r, "swap_surround", "Swap LFE+center with surround",
-		      0, m, am_set_swap_surround, am,
-		      SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
+    settings_create_bool(r, "phantom_center", _p("Phantom center"),
+			 0, m, am_set_phantom_center, am,
+			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
+    settings_create_bool(r, "phantom_lfe", _p("Phantom LFE"),
+			 0, m, am_set_phantom_lfe, am,
+			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
+    settings_create_bool(r, "small_front", _p("Small front speakers"),
+			 0, m, am_set_small_front, am,
+			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
+    settings_create_bool(r, "force_downmix", _p("Force stereo downmix"),
+			 0, m, am_set_force_downmix, am,
+			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
+    settings_create_bool(r, "swap_surround",
+			 _p("Swap LFE+center with surround"),
+			 0, m, am_set_swap_surround, am,
+			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);
   }
 
   if(m != NULL)

@@ -71,7 +71,7 @@ widget(container_y, {
 
   widget(label, {
     .color = 0.6;
-    .caption = "Added by: " + $args.metadata.user.name;
+    .caption = fmt(_("Added by: %s"), $args.metadata.user.name);
   });
 
   widget(container_x, {

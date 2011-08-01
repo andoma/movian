@@ -105,13 +105,13 @@ static void
 init_autostandby(void)
 {
 
-  prop_t *s = settings_add_dir(NULL, "Run control", NULL, NULL, NULL);
+  prop_t *s = settings_add_dir(NULL, _p("Run control"), NULL, NULL, NULL);
 
   htsmsg_t *store = htsmsg_store_load("runcontrol");
   if(store == NULL)
     store = htsmsg_create_map();
 
-  settings_create_int(s, "autostandby", "Automatic standby", 
+  settings_create_int(s, "autostandby", _p("Automatic standby"), 
 		      0, store, 0, 60, 5, set_autostandby, NULL,
 		      SETTINGS_INITIAL_UPDATE, " min", NULL,
 		      runcontrol_save_settings, NULL);

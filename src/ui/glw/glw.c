@@ -170,7 +170,6 @@ static void
 glw_init_settings(glw_root_t *gr, const char *instance,
 		  const char *instance_title)
 {
-  char title[256];
   prop_t *r = gr->gr_uii.uii_prop;
 
   if(gr->gr_base_size == 0)
@@ -184,21 +183,28 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     gr->gr_settings_store = htsmsg_create_map();
 
   if(instance_title) {
+    char title[256];
     snprintf(title, sizeof(title), "Display and user interface on screen %s",
 	     instance_title);
+
+    gr->gr_settings = settings_add_dir_cstr(NULL, title,
+					    "display", NULL, NULL);
+
   } else {
-    snprintf(title, sizeof(title), "Display and user interface");
+    gr->gr_settings = settings_add_dir(NULL, 
+				       _p("Display and user interface"),
+				       "display", NULL, NULL);
+
   }
 
   gr->gr_prop_size = prop_create(r, "size");
   gr->gr_prop_underscan_h = prop_create(r, "underscan_h");
   gr->gr_prop_underscan_v = prop_create(r, "underscan_v");
 
-  gr->gr_settings = settings_add_dir(NULL, title, "display", NULL, NULL);
 
   gr->gr_setting_size =
     settings_create_int(gr->gr_settings, "size",
-			"Userinterface size", 0,
+			_p("Userinterface size"), 0,
 			gr->gr_settings_store, -10, 30, 1,
 			glw_change_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
@@ -206,7 +212,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_setting_underscan_h =
     settings_create_int(gr->gr_settings, "underscan_h",
-			"Horizontal underscan", 0,
+			_p("Horizontal underscan"), 0,
 			gr->gr_settings_store, -100, +100, 1,
 			glw_change_underscan_h, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
@@ -214,7 +220,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_setting_underscan_v =
     settings_create_int(gr->gr_settings, "underscan_v",
-			"Vertical underscan", 0,
+			_p("Vertical underscan"), 0,
 			gr->gr_settings_store, -100, +100, 1,
 			glw_change_underscan_v, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
@@ -223,7 +229,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 
   gr->gr_setting_screensaver =
     settings_create_int(gr->gr_settings, "screensaver",
-			"Screensaver delay",
+			_p("Screensaver delay"),
 			10, gr->gr_settings_store, 1, 60, 1,
 			glw_set_screensaver_delay, gr,
 			SETTINGS_INITIAL_UPDATE, " min", gr->gr_courier,

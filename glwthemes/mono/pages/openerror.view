@@ -7,7 +7,7 @@ widget(container_y, {
 
   widget(label, {
     .align = center;
-    .caption = "Unable to open resource";
+    .caption = _("Unable to open resource");
   });
 
   widget(label, {

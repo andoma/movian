@@ -22,6 +22,9 @@
 #include "settings.h"
 #include "i18n.h"
 #include "misc/string.h"
+#include "fileaccess/fileaccess.h"
+
+static void nls_init(prop_t *parent, htsmsg_t *store);
 
 struct {
   const char *id, *title;
@@ -79,8 +82,8 @@ set_srt_charset(void *opaque, const char *str)
 void
 i18n_init(void)
 {
-  prop_t *s = settings_add_dir(NULL, "Languages", NULL, NULL,
-			       "Preferred languages");
+  prop_t *s = settings_add_dir(NULL, _p("Languages"), NULL, NULL,
+			       _p("Preferred languages"));
   setting_t *x;
   int i;
 
@@ -88,54 +91,58 @@ i18n_init(void)
   if(store == NULL)
     store = htsmsg_create_map();
 
+  nls_init(s, store);
+
+
   settings_create_info(s, 
 		       NULL,
-		       "Language codes should be configured as "
-		       "three character ISO codes, example (eng, swe, fra)");
+		       _p("Language codes should be configured as "
+			  "three character ISO codes, example (eng, swe, fra)"));
 
-  settings_create_string(s, "audio1", "Primary audio language code", NULL, 
+  settings_create_string(s, "audio1", _p("Primary audio language code"), NULL, 
 			 store, set_lang, &lang_audio[0],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  settings_create_string(s, "audio2", "Secondary audio language code", NULL, 
+  settings_create_string(s, "audio2", _p("Secondary audio language code"),
+			 NULL, 
 			 store, set_lang, &lang_audio[1],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  settings_create_string(s, "audio3", "Tertiary audio language code", NULL, 
+  settings_create_string(s, "audio3", _p("Tertiary audio language code"), NULL, 
 			 store, set_lang, &lang_audio[2],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
   
 
-  settings_create_string(s, "subtitle1", "Primary subtitle language code",
+  settings_create_string(s, "subtitle1", _p("Primary subtitle language code"),
 			 NULL, store, set_lang, &lang_subtitle[0],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  settings_create_string(s, "subtitle2", "Secondary subtitle language code",
+  settings_create_string(s, "subtitle2", _p("Secondary subtitle language code"),
 			 NULL, store, set_lang, &lang_subtitle[1],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  settings_create_string(s, "subtitle3", "Tertiary subtitle language code",
+  settings_create_string(s, "subtitle3", _p("Tertiary subtitle language code"),
 			 NULL, store, set_lang, &lang_subtitle[2],
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  x = settings_create_multiopt(s, "srt_charset", "SRT character set",
+  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"),
 			       set_srt_charset, NULL);
 
   for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++) {
-    settings_multiopt_add_opt(x, charsets[i].id,
-			      charsets[i].title, i == 0);
+    settings_multiopt_add_opt_cstr(x, charsets[i].id,
+				   charsets[i].title, i == 0);
   }
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
@@ -200,4 +207,290 @@ i18n_get_charset_name(const void *p)
     if(p == charsets[i].ptr)
       return charsets[i].title;
   return "???";
+}
+
+LIST_HEAD(nls_string_queue, nls_string);
+
+
+/**
+ *
+ */
+typedef struct nls_string {
+  rstr_t *ns_key;
+  LIST_ENTRY(nls_string) ns_link;
+  prop_t *ns_prop;
+  rstr_t *ns_value;
+} nls_string_t;
+
+static struct nls_string_queue nls_strings;
+
+
+
+/**
+ *
+ */
+static nls_string_t *
+nls_string_find(const char *key)
+{
+  nls_string_t *ns;
+
+  LIST_FOREACH(ns, &nls_strings, ns_link)
+    if(!strcmp(rstr_get(ns->ns_key), key))
+      break;
+
+  if(ns == NULL) {
+
+    ns = calloc(1, sizeof(nls_string_t));
+    ns->ns_key = rstr_alloc(key);
+    ns->ns_prop = prop_create_root(NULL);
+    prop_set_rstring(ns->ns_prop, ns->ns_key);
+
+  } else {
+    LIST_REMOVE(ns, ns_link);
+  }
+  LIST_INSERT_HEAD(&nls_strings, ns, ns_link);
+  return ns;
+}
+
+
+/**
+ *
+ */
+prop_t *
+nls_get_prop(const char *string)
+{
+  nls_string_t *ns = nls_string_find(string);
+  return ns->ns_prop;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+nls_get_rstring(const char *string)
+{
+  nls_string_t *ns = nls_string_find(string);
+  if(ns->ns_value == NULL)
+    return rstr_dup(ns->ns_key);
+  return rstr_dup(ns->ns_value);
+}
+
+
+/**
+ *
+ */
+static void
+nls_clear(void)
+{
+  nls_string_t *ns;
+  LIST_FOREACH(ns, &nls_strings, ns_link) {
+    rstr_release(ns->ns_value);
+    ns->ns_value = NULL;
+    prop_set_rstring(ns->ns_prop, ns->ns_key);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+deescape_cstyle(char *src)
+{
+  char *dst = src;
+  while(*src) {
+    if(*src == '\\') {
+      src++;
+      if(*src == 0)
+	break;
+      if(*src == 'n')
+	*dst++ = '\n';
+      src++;
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst = 0;
+}
+
+
+/**
+ *
+ */
+static void
+nls_load_lang(const char *path)
+{
+  char errbuf[200];
+  fa_stat_t fs;
+  char *data = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
+  char *s;
+  const char *s2;
+
+  if(data == NULL) {
+    TRACE(TRACE_ERROR, "NLS", "Unable to load %s -- %s", path, errbuf);
+    return;
+  }
+
+  s = data;
+  int l;
+  nls_string_t *ns = NULL;
+  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+    s[l] = 0;
+    if(s[0] == '#')
+      continue;
+
+    if((s2 = mystrbegins(s, "id:")) != NULL) {
+      while(*s2 <33 && *s2)
+	s2++;
+      
+      deescape_cstyle((char *)s2);
+      ns = nls_string_find(s2);
+      continue;
+    }
+
+    if(ns == NULL)
+      continue;
+
+    if((s2 = mystrbegins(s, "msg:")) != NULL) {
+      
+      while(*s2 <33 && *s2)
+	s2++;
+      
+      if(*s2) {
+	rstr_release(ns->ns_value);
+	deescape_cstyle((char *)s2);
+	ns->ns_value = rstr_alloc(s2);
+	prop_set_rstring(ns->ns_prop, ns->ns_value);
+      }
+    }
+  }
+  free(data);
+}
+
+
+/**
+ *
+ */
+static void
+set_language(void *opaque, const char *str)
+{
+  char buf[200];
+
+  nls_clear();
+
+  if(!strcmp(str, "none")) {
+    TRACE(TRACE_INFO, "i18n", "Unloading language definition");
+    return;
+  }
+
+  snprintf(buf, sizeof(buf), "%s/%s.lang", SHOWTIME_LANGUAGES_URL, str);
+  TRACE(TRACE_INFO, "i18n", "Loading language %s", str);
+  nls_load_lang(buf);
+}
+
+
+static int
+nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
+		  char *language, size_t languagesize,
+		  char *native, size_t nativesize)
+{
+  fa_stat_t fs;
+
+  char *data = fa_quickload(path, &fs, NULL, errbuf, errlen);
+  char *s;
+  const char *s2;
+  if(data == NULL)
+    return -1;
+
+
+  *language = 0;
+  *native = 0;
+
+  s = data;
+  int l;
+  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+    s[l] = 0;
+    if(s[0] == '#')
+      continue;
+    
+    
+    if((s2 = mystrbegins(s, "language:")) != NULL) {
+      while(*s2 <33 && *s2)
+	s2++;
+      snprintf(language, languagesize, "%s", s2);
+    }
+
+    if((s2 = mystrbegins(s, "native:")) != NULL) {
+      while(*s2 <33 && *s2)
+	s2++;
+      snprintf(native, nativesize, "%s", s2);
+    }
+    if(*language && *native)
+      break;
+  }
+
+  free(data);
+
+  if(*language && *native)
+    return 0;
+  
+  snprintf(errbuf, errlen, "Not a valid language file");
+  return -1;
+}
+
+
+/**
+ *
+ */
+static void 
+nls_init(prop_t *parent, htsmsg_t *store)
+{
+  setting_t  *x;
+  char buf[200];
+  char buf2[200];
+  fa_dir_t *fd = fa_scandir(SHOWTIME_LANGUAGES_URL, buf, sizeof(buf));
+  fa_dir_entry_t *fde;
+  char language[64];
+  char native[64];
+  char *e;
+  if(fd == NULL) {
+    TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s -- %s",
+	  SHOWTIME_LANGUAGES_URL, buf);
+    return;
+  }
+
+  x = settings_create_multiopt(parent, "language", _p("Language"),
+			       set_language, NULL);
+
+  settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
+  
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+
+    if(fde->fde_filename[strlen(fde->fde_filename) - 1] == '~')
+      continue;
+
+    snprintf(buf, sizeof(buf), "%s", fde->fde_filename);
+    if((e = strstr(buf, ".lang")) == NULL)
+      continue;
+    *e = 0;
+
+    if(nls_lang_metadata(fde->fde_url, 
+			 buf2, sizeof(buf2),
+			 language, sizeof(language), 
+			 native, sizeof(native))) {
+      TRACE(TRACE_ERROR, "i18n", "Unable to load language from %s -- %s",
+	    fde->fde_url, buf2);
+      continue;
+    }
+
+    snprintf(buf2, sizeof(buf2), "%s (%s)", native, language);
+
+    settings_multiopt_add_opt_cstr(x, buf, buf2, 0);
+  }
+
+  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+			     (void *)"i18n");
+  
+  fa_dir_free(fd);
 }

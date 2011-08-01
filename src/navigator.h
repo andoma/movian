@@ -33,6 +33,9 @@ prop_t *nav_spawn(void);
 
 void nav_open(const char *url, const char *view);
 
-int nav_open_errorf(prop_t *root, const char *fmt, ...);
+
+int nav_open_error(prop_t *root, const char *msg);
+
+int nav_open_errorf(prop_t *root, struct rstr *fmt, ...);
 
 #endif /* NAVIGATOR_H__ */

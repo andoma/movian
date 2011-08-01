@@ -183,7 +183,7 @@ file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
 
   default:
     prop_destroy(meta);
-    return nav_open_errorf(page, "%s", errbuf);
+    return nav_open_error(page, errbuf);
   }
 }
 
@@ -197,7 +197,7 @@ be_file_open(prop_t *page, const char *url)
   char errbuf[200];
 
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf)))
-    return nav_open_errorf(page, "%s", errbuf);
+    return nav_open_error(page, errbuf);
 
   return fs.fs_type == CONTENT_DIR ? 
     file_open_dir(page, url) : file_open_file(page, url, &fs);

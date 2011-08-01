@@ -145,23 +145,23 @@ sd_add_service(service_instance_t *si, const char *title,
     si->si_settings_path = strdup(tmp);
     si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
 
-    si->si_settings = settings_add_dir(settings_sd, title, NULL, NULL,
-				       description);
+    si->si_settings = settings_add_dir_cstr(settings_sd, title, NULL, NULL,
+					    description);
     
     si->si_setting_enabled = 
-      settings_create_bool(si->si_settings, "enabled", "Enabled", 1,
+      settings_create_bool(si->si_settings, "enabled", _p("Enabled"), 1,
 			   si->si_settings_store, NULL, NULL,
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   sd_settings_saver, si);
 
     si->si_setting_title = 
-      settings_create_string(si->si_settings, "title", "Name", title,
+      settings_create_string(si->si_settings, "title", _p("Name"), title,
 			     si->si_settings_store, NULL, NULL,
 			     SETTINGS_INITIAL_UPDATE, NULL,
 			     sd_settings_saver, si);
 
     si->si_setting_type = 
-      settings_create_string(si->si_settings, "type", "Type", contents,
+      settings_create_string(si->si_settings, "type", _p("Type"), contents,
 			     si->si_settings_store, NULL, NULL,
 			     SETTINGS_INITIAL_UPDATE, NULL,
 			     sd_settings_saver, si);

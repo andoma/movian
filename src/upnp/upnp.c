@@ -418,18 +418,18 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 
   snprintf(buf, sizeof(buf), "%s (%s) on %s:%d",
 	   title, ud->ud_modelNumber ?: "Unknown version", hostname, port);
-  us->us_settings = settings_add_dir(settings_sd, title, NULL, 
-				     us->us_icon_url, buf);
+  us->us_settings = settings_add_dir_cstr(settings_sd, title, NULL, 
+					  us->us_icon_url, buf);
 
   us->us_setting_enabled = 
     settings_create_bool(us->us_settings, "enabled",
-			 "Enabled on home screen", 1,
+			 _p("Enabled on home screen"), 1,
 			 us->us_settings_store, NULL, NULL,
 			 SETTINGS_INITIAL_UPDATE, NULL,
 			 upnp_settings_saver, us);
 
   us->us_setting_title =
-    settings_create_string(us->us_settings, "title", "Name", title,
+    settings_create_string(us->us_settings, "title", _p("Name"), title,
 			   us->us_settings_store, NULL, NULL,
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   upnp_settings_saver, us);
@@ -437,7 +437,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
   const char *contents = "other";
 
   us->us_setting_type = 
-    settings_create_string(us->us_settings, "type", "Type", contents,
+    settings_create_string(us->us_settings, "type", _p("Type"), contents,
 			   us->us_settings_store, NULL, NULL,
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   upnp_settings_saver, us);

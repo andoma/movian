@@ -1,2 +1,2 @@
 #import "skin://nav.skin"
-skinNavLocation("Playqueue");
+skinNavLocation(_("Playqueue"));

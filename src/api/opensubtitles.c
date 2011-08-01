@@ -85,25 +85,25 @@ opensub_init(void)
 
   s = subtitle_settings_dir;
 
-  settings_create_divider(s, "opensubtitles.org");
+  settings_create_divider(s, _p("Settings for opensubtitles.org"));
 
   htsmsg_t *store = htsmsg_store_load("opensubtitles");
   if(store == NULL)
     store = htsmsg_create_map();
 
-  settings_create_bool(s, "enable", "Use opensubtitles.org", 0, 
+  settings_create_bool(s, "enable", _p("Use opensubtitles.org"), 0, 
 		       store, set_enable, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings,
 		       (void *)"opensubtitles");
 
-  settings_create_string(s, "username", "Username", NULL, 
+  settings_create_string(s, "username", _p("Username"), NULL, 
 			 store, set_username, NULL,
 			 SETTINGS_INITIAL_UPDATE,  NULL,
 			 settings_generic_save_settings, 
 			 (void *)"opensubtitles");
 
-  settings_create_string(s, "password", "Password", NULL, 
+  settings_create_string(s, "password", _p("Password"), NULL, 
 			 store, set_password, NULL, 
 			 SETTINGS_INITIAL_UPDATE | SETTINGS_PASSWORD, NULL,
 			 settings_generic_save_settings,

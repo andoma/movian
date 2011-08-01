@@ -19,13 +19,13 @@ widget(container_x, {
 	
 	widget(label, {
 	  .align = center;
-	  .caption = "Audio output";
+	  .caption = _("Audio output");
 	});
 	
 	HORIZONTAL_SEPARATOR();
 
 	widget(label, {
-	  .caption = $global.media.current.metadata.title ?? "No media loaded";
+	  .caption = $global.media.current.metadata.title ?? _("No media loaded");
 	  .align = center;
 	  .sizeScale = 0.5;
 	  .ellipsize = true;
@@ -66,14 +66,14 @@ widget(container_x, {
 	
 	widget(label, {
 	  .align = center;
-	  .caption = "GPU & Display";
+	  .caption = _("GPU & Display");
 	});
 	
 	HORIZONTAL_SEPARATOR();
 	
 	widget(label, {
 	  .sizeScale = 0.5;
-	  .caption = fmt("GPU Core temperature: %d / %d °",
+	  .caption = fmt(_("GPU Core temperature: %d / %d °"),
 			 $ui.gpu.temperature.current,
 			 $ui.gpu.temperature.thres);
 	});
@@ -90,7 +90,7 @@ widget(container_x, {
 	
 	widget(label, {
 	  .sizeScale = 0.5;
-	  .caption = fmt("Framerate: %.4f Hz", $ui.framerate);
+	  .caption = fmt(_("Framerate: %.2f Hz"), $ui.framerate);
 	});
 
 	widget(dummy, {
@@ -112,7 +112,7 @@ widget(container_x, {
 	
 	widget(label, {
 	  .align = center;
-	  .caption = "CPUs";
+	  .caption = _("CPUs");
 	});
 	
 	HORIZONTAL_SEPARATOR();

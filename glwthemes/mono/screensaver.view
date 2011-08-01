@@ -12,7 +12,7 @@ widget(container_z, {
     space(1);
 
     widget(label, {
-      .caption = "No media loaded";
+      .caption = _("No media loaded");
       .align = center;
       .sizeScale = 2;
     });

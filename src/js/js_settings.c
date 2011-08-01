@@ -196,7 +196,7 @@ js_createBool(JSContext *cx, JSObject *obj, uintN argc,
   v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, jss->jss_obj, "callback", &v);
   jss->jss_cx = cx;
-  jss->jss_s = settings_create_bool(jsg->jsg_root, id, title,
+  jss->jss_s = settings_create_bool(jsg->jsg_root, id, _p(title),
 				    def, jsg->jsg_store,
 				    js_store_update_bool, jss,
 				    SETTINGS_INITIAL_UPDATE, NULL,
@@ -235,7 +235,7 @@ js_createString(JSContext *cx, JSObject *obj, uintN argc,
   v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, jss->jss_obj, "callback", &v);
   jss->jss_cx = cx;
-  jss->jss_s = settings_create_string(jsg->jsg_root, id, title,
+  jss->jss_s = settings_create_string(jsg->jsg_root, id, _p(title),
 				      def, jsg->jsg_store,
 				      js_store_update_string, jss,
 				      SETTINGS_INITIAL_UPDATE, NULL,
@@ -259,7 +259,7 @@ js_createInfo(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "sss", &id, &icon, &text))
     return JS_FALSE;
 
-  settings_create_info(jsg->jsg_root, icon, text);
+  settings_create_info(jsg->jsg_root, icon, _p(text));
   return JS_TRUE;
 }
 
@@ -449,7 +449,8 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jsg->jsg_frozen = 1;
   jsg->jsg_spath = strdup(spath);
   jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
-  jsg->jsg_root = settings_add_dir(settings_apps, title, type, icon, desc);
+  jsg->jsg_root = settings_add_dir(settings_apps, _p(title), type, icon,
+				   _p(desc));
 
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);

@@ -480,6 +480,7 @@ static void
 spotify_open_page_fail(spotify_page_t *sp, const char *msg)
 {
   if(sp->sp_error != NULL) {
+    // XXX(l10n): Missing
     prop_set_string(sp->sp_error, msg);
     prop_set_string(sp->sp_type, "openerror");
   }
@@ -1325,6 +1326,7 @@ static void
 bh_error(browse_helper_t *bh, const char *err)
 {
   prop_set_string(bh->sp->sp_type, "openerror");
+  // XXX(l10n): Missing
   prop_set_string(bh->sp->sp_error, err);
 }
 
@@ -1556,7 +1558,8 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 static void
 spotify_open_artist(sp_link *l, spotify_page_t *sp)
 {
-  sp_artist *artist = f_sp_link_as_artist(l);  prop_set_string(sp->sp_contents, "items");
+  sp_artist *artist = f_sp_link_as_artist(l);
+  prop_set_string(sp->sp_contents, "items");
   metadata_create(sp->sp_title, METADATA_ARTIST_NAME, artist);
 
   f_sp_artistbrowse_create(spotify_session, artist,
@@ -1574,7 +1577,7 @@ spotify_open_rootlist(spotify_page_t *sp, int flat)
   struct prop_nf *pnf;
 
   prop_set_string(sp->sp_type, "directory");
-  prop_set_string(sp->sp_title, "Spotify playlists");
+  prop_link(_p("Spotify playlists"), sp->sp_title);
   prop_link(current_user_rootlist->plc_pending, sp->sp_loading);
 
   pnf = prop_nf_create(sp->sp_nodes,
@@ -1595,7 +1598,7 @@ spotify_open_friends(spotify_page_t *sp)
   struct prop_nf *pnf;
 
   prop_set_string(sp->sp_type, "directory");
-  prop_set_string(sp->sp_title, "Spotify friends");
+  prop_link(_p("Spotify friends"), sp->sp_title);
   prop_set_int(sp->sp_loading, 0);
 
   pnf = prop_nf_create(sp->sp_nodes, friend_nodes,
@@ -1627,9 +1630,9 @@ static int
 spotify_open_search(spotify_page_t *sp, const char *query)
 {
   if(!strcmp(query, "tag:new")) {
-    prop_set_string(sp->sp_title, "New albums on Spotify");
+    prop_link(_p("New albums on Spotify"), sp->sp_title);
   } else {
-    prop_set_string(sp->sp_title, "Search result");
+    prop_link(_p("Search result"), sp->sp_title);
   }
 
   return f_sp_search_create(spotify_session, query,
@@ -3043,7 +3046,7 @@ plc_for_user(sp_session *sess, spotify_page_t *sp, const char *username)
 		   NULL);
 
   prop_set_string(sp->sp_type, "directory");
-  prop_set_string(sp->sp_title, "Playlists");
+  prop_link(_p("Spotify playlists"), sp->sp_title);
 
   pnf = prop_nf_create(sp->sp_nodes, sp->sp_items,
 		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
@@ -3571,7 +3574,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
  *
  */
 static void
-add_dir(prop_t *parent, const char *url, const char *title, const char *subtype)
+add_dir(prop_t *parent, const char *url, prop_t *title, const char *subtype)
 {
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata = prop_create(p, "metadata");
@@ -3579,7 +3582,7 @@ add_dir(prop_t *parent, const char *url, const char *title, const char *subtype)
   prop_set_string(prop_create(p, "type"), "directory");
   prop_set_string(prop_create(p, "url"), url);
 
-  prop_set_string(prop_create(metadata, "title"), title);
+  prop_link(title, prop_create(metadata, "title"));
   prop_set_string(prop_create(metadata, "subtype"), subtype);
   if(prop_set_parent(p, parent))
     abort();
@@ -3602,11 +3605,11 @@ startpage(prop_t *page)
 
   prop_t *nodes = prop_create(model, "nodes");
 
-  add_dir(nodes, "spotify:playlists", "Playlists", "playlists");
-  add_dir(nodes, "spotify:search:tag:new", "New releases", NULL);
-  add_dir(nodes, "spotify:starred", "Starred", "starred");
-  add_dir(nodes, "spotify:inbox", "Inbox", "inbox");
-  add_dir(nodes, "spotify:friends", "Friends", "friends");
+  add_dir(nodes, "spotify:playlists", _p("Playlists"), "playlists");
+  add_dir(nodes, "spotify:search:tag:new", _p("New releases"), NULL);
+  add_dir(nodes, "spotify:starred", _p("Starred"), "starred");
+  add_dir(nodes, "spotify:inbox", _p("Inbox"), "inbox");
+  add_dir(nodes, "spotify:friends", _p("Friends"), "friends");
 }
 
 
@@ -3645,7 +3648,7 @@ be_spotify_open(prop_t *page, const char *url)
   char errbuf[200];
 
   if(spotify_start(errbuf, sizeof(errbuf), 0))
-    return nav_open_errorf(page, "%s", errbuf);
+    return nav_open_error(page, errbuf);
 
   if(!strcmp(url, "spotify:start")) {
     startpage(page);
@@ -4017,8 +4020,11 @@ be_spotify_init(void)
     return 1;
 #endif
 
-  s = settings_add_dir(settings_apps, "Spotify", NULL, SPOTIFY_ICON_URL,
-		       "Spotify music service");
+  prop_t *title = prop_create_root(NULL);
+  prop_set_string(title, "Spotify");
+
+  s = settings_add_dir(settings_apps, title, NULL, SPOTIFY_ICON_URL,
+		       _p("Spotify music service"));
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 
@@ -4041,37 +4047,28 @@ be_spotify_init(void)
 
   settings_create_info(s, 
 		       "bundle://resources/spotify/spotify-core-logo-96x96.png",
-		       "Spotify offers you legal and free access to a "
-		       "huge library of music. "
-		       "To use Spotify in Showtime you need a "
-		       "Spotify Preemium account.\n"
-		       "For more information about Spotify, visit "
-		       "http://www.spotify.com/\n\n"
-		       "You will be prompted for your Spotify username and "
-		       "password "
-		       "when first accessing any of the Spotify features "
-		       "in Showtime.");
+		       _p("Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime."));
 
   spotify_service = service_create("Spotify", "spotify:start",
 				   "music", SPOTIFY_ICON_URL, 0, 0);
 
-  ena = settings_create_bool(s, "enable", "Enable Spotify", 0, 
+  ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
 			     store, spotify_set_enable, NULL,
 			     SETTINGS_INITIAL_UPDATE, NULL,
 			     settings_generic_save_settings, (void *)"spotify");
 
   settings_create_bool(s, "autologin", 
-		       "Automatic login when Showtime starts", 1, 
+		       _p("Automatic login when Showtime starts"), 1, 
 		       store, settings_generic_set_bool, &spotify_autologin,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
-  settings_create_bool(s, "highbitrate", "High bitrate", 0,
+  settings_create_bool(s, "highbitrate", _p("High bitrate"), 0,
 		       store, spotify_set_bitrate, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
-  settings_create_action(s, "relogin", "Relogin (switch user)",
+  settings_create_action(s, "relogin", _p("Relogin (switch user)"),
 			 spotify_relogin, NULL, spotify_courier);
 
   prop_link(settings_get_value(ena),

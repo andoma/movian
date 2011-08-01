@@ -18,7 +18,10 @@
 
 #include <assert.h>
 #include "glw_view.h"
+#include "i18n.h"
+
 #include <stdio.h>
+static void glw_view_nls_string(token_t *t, const char *str);
 
 static int parse_block(token_t *first, errorinfo_t *ei, token_type_t term);
 
@@ -134,6 +137,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     case TOKEN_IDENTIFIER:
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_BLOCK:
+    case TOKEN_PROPERTY_REF:
     case TOKEN_PROPERTY_VALUE_NAME:
     case TOKEN_PROPERTY_CANONICAL_NAME:
     case TOKEN_VOID:
@@ -346,9 +350,27 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
        */
       if(t1->type == TOKEN_LEFT_PARENTHESIS) {
 	/* Yep, try to resolve the identifier into a function */
-	if(glw_view_function_resolve(t))
+
+
+	if(!strcmp(rstr_get(t->t_rstring), "_") && 
+	   t1->next->type == TOKEN_STRING &&
+	   t1->next->next->type == TOKEN_RIGHT_PARENTHESIS) {
+
+	  glw_view_nls_string(t, rstr_get(t1->next->t_rstring));
+
+	  t->next = t1->next->next->next;
+	  glw_view_token_free(t1->next->next);
+	  glw_view_token_free(t1->next);
+	  glw_view_token_free(t1);
+
+	  t = t->next;
+	  continue;
+
+
+	} else if(glw_view_function_resolve(t)) {
 	  return glw_view_seterr(ei, t, "Unknown function: %s", 
 				  rstr_get(t->t_rstring));
+	}
 
 	t = t1->next;
 	continue;
@@ -469,4 +491,17 @@ int
 glw_view_parse(token_t *sof, errorinfo_t *ei)
 {
   return parse_block(sof, ei, TOKEN_END);
+}
+
+
+/**
+ * Transform a string token into a translated property
+ */
+static void
+glw_view_nls_string(token_t *t, const char *str)
+{
+  prop_t *p = nls_get_prop(str);
+  rstr_release(t->t_rstring);
+  t->type = TOKEN_PROPERTY_REF;
+  t->t_prop = prop_ref_inc(p);
 }

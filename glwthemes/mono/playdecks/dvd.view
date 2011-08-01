@@ -25,14 +25,14 @@ widget(container_x, {
 
       widget(label, {
 	.align = right;
-	.caption = fmt("Title %d / %d",
+	.caption = fmt(_("Title %d / %d"),
 		       $global.media.current.currenttitle,
 		       $global.media.current.metadata.titles);
       });
 
       widget(label, {
 	.align = right;
-	.caption = fmt("Chapter %d / %d",
+	.caption = fmt(_("Chapter %d / %d"),
 		       $global.media.current.currentchapter,
 		       $global.media.current.metadata.chapters);
       });
