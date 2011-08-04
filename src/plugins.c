@@ -34,7 +34,7 @@
 #include "js/js.h"
 #endif
 
-const char *plugin_repo_url = "http://localhost:8000/files/plugins-v1.json";
+const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
 extern char *showtime_persistent_path;
 static htsmsg_t *loaded_plugins;
 static hts_mutex_t plugin_mutex;
