@@ -22,7 +22,7 @@
 #include "glw_renderer.h"
 #include "fileaccess/fileaccess.h"
 
-
+#define SHADERPATH "bundle://src/ui/glw/opengl/"
 
 
 // #define DEBUG_SHADERS
@@ -99,7 +99,7 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 #if CONFIG_GLW_BACKEND_OPENGL
   glw_backend_root_t *gbr = &gr->gr_be;
   glw_load_program(gbr, gbr->gbr_renderer_flat);
-  glw_program_set_modelview(gbr, rc);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
   glw_program_set_uniform_color(gbr, 1,1,1,1);
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
@@ -124,7 +124,7 @@ glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
   glw_backend_root_t *gbr = &gr->gr_be;
 
   glw_load_program(gbr, gbr->gbr_renderer_flat);
-  glw_program_set_modelview(gbr, rc);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
   glw_program_set_uniform_color(gbr, 1,1,1,1);
 
   glBegin(GL_LINE_LOOP);
@@ -330,21 +330,11 @@ shader_render(struct glw_root *root,
 		1.5 * blur / tex->height);
   }
 
-  glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
-		     glw_mtx_get(m) ?: identitymtx);
+  glLoadMatrixf(glw_mtx_get(m) ?: identitymtx);
 
-  glVertexAttribPointer(gp->gp_attribute_position,
-			3, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			vertices);
-
-  glVertexAttribPointer(gp->gp_attribute_color,
-			4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			vertices + 5);
-
-  if(gp->gp_attribute_texcoord != -1)
-    glVertexAttribPointer(gp->gp_attribute_texcoord,
-			  2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			  vertices + 3);
+  glVertexPointer(3,   GL_FLOAT, sizeof(float) * VERTEX_SIZE, vertices);
+  glColorPointer(4,    GL_FLOAT, sizeof(float) * VERTEX_SIZE, vertices + 5);
+  glTexCoordPointer(2, GL_FLOAT, sizeof(float) * VERTEX_SIZE, vertices + 3);
   
   if(indices != NULL)
     glDrawElements(GL_TRIANGLES, num_triangles * 3,
@@ -447,11 +437,6 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   glUseProgram(p);
   gbr->gbr_current = gp;
 
-  gp->gp_attribute_position = glGetAttribLocation(p, "a_position");
-  gp->gp_attribute_texcoord = glGetAttribLocation(p, "a_texcoord");
-  gp->gp_attribute_color    = glGetAttribLocation(p, "a_color");
-
-  gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
   gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
@@ -460,10 +445,6 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   
 #ifdef DEBUG_SHADERS
   printf("Loaded %s\n", title);
-  printf("  a_position     = %d\n", gp->gp_attribute_position);
-  printf("  a_texcoord     = %d\n", gp->gp_attribute_texcoord);
-  printf("  a_color        = %d\n", gp->gp_attribute_color);
-
   printf("  u_modelview = %d\n", gp->gp_uniform_modelview);
   printf("  u_color     = %d\n", gp->gp_uniform_color);
   printf("  u_colormtx  = %d\n", gp->gp_uniform_colormtx);
@@ -495,16 +476,6 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
   if(gbr->gbr_current == gp)
     return;
 
-  if(gbr->gbr_current != NULL) {
-    glw_program_t *old = gbr->gbr_current;
-    if(old->gp_attribute_position != -1)
-      glDisableVertexAttribArray(old->gp_attribute_position);
-    if(old->gp_attribute_texcoord != -1)
-      glDisableVertexAttribArray(old->gp_attribute_texcoord);
-    if(old->gp_attribute_color != -1)
-      glDisableVertexAttribArray(old->gp_attribute_color);
-  }
-
   gbr->gbr_current = gp;
 
   if(gp == NULL) {
@@ -513,26 +484,8 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
   }
 
   glUseProgram(gp->gp_program);
-
-  if(gp->gp_attribute_position != -1)
-      glEnableVertexAttribArray(gp->gp_attribute_position);
-  if(gp->gp_attribute_texcoord != -1)
-    glEnableVertexAttribArray(gp->gp_attribute_texcoord);
-  if(gp->gp_attribute_color != -1)
-    glEnableVertexAttribArray(gp->gp_attribute_color);
 }
 
-
-
-/**
- *
- */
-void
-glw_program_set_modelview(glw_backend_root_t *gbr, glw_rctx_t *rc)
-{
-  const float *m = rc ? glw_mtx_get(rc->rc_mtx) : identitymtx;
-  glUniformMatrix4fv(gbr->gbr_current->gp_uniform_modelview, 1, 0, m);
-}
 
 /**
  *
@@ -602,59 +555,60 @@ glw_opengl_init_context(glw_root_t *gr)
   TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
 
   int use_shaders = 1;
-
+#if 0
   if(strstr(renderer, "Mesa"))
       use_shaders = 0;
-
+#endif
   if(use_shaders) {
 
     GLuint vs, fs;
 
-    vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
+    vs = glw_compile_shader(SHADERPATH"v1.glsl",
 			    GL_VERTEX_SHADER);
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex.glsl",
+    fs = glw_compile_shader(SHADERPATH"f_tex.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
     glDeleteShader(fs);
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex_blur.glsl",
+    fs = glw_compile_shader(SHADERPATH"f_tex_blur.glsl",
 			    GL_FRAGMENT_SHADER);
-    gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "Texture", vs, fs);
+    gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "BlurTexture", vs, fs);
     glDeleteShader(fs);
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
+    fs = glw_compile_shader(SHADERPATH"f_flat.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
     glDeleteShader(fs);
 
     glDeleteShader(vs);
 
-    //    gbr->gbr_renderer_draw = glw_renderer_shader;
-
-
     // Video renderer
 
-    vs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_v.glsl",
+    vs = glw_compile_shader(SHADERPATH "yuv2rgb_v.glsl",
 			    GL_VERTEX_SHADER);
 
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
+    fs = glw_compile_shader(SHADERPATH "yuv2rgb_1f_norm.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_yuv2rgb_1f = glw_make_program(gbr, "yuv2rgb_1f_norm", vs, fs);
     glDeleteShader(fs);
 
-    fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
+    fs = glw_compile_shader(SHADERPATH "yuv2rgb_2f_norm.glsl",
 			    GL_FRAGMENT_SHADER);
     gbr->gbr_yuv2rgb_2f = glw_make_program(gbr, "yuv2rgb_2f_norm", vs, fs);
     glDeleteShader(fs);
 
     glDeleteShader(vs);
 
-    gr->gr_render = shader_render;
 
+    gr->gr_render = shader_render;
     prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
 		    "OpenGL VP/FP shaders");
+
+    glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
   } else {
 
@@ -665,15 +619,15 @@ glw_opengl_init_context(glw_root_t *gr)
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
     gr->gr_render = ff_render;
-    
-    glMatrixMode(GL_PROJECTION);
-    glLoadMatrixf(projection);
-    glMatrixMode(GL_MODELVIEW);
 
     prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
 		    "OpenGL fixed function");
 
   }
+    
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(projection);
+  glMatrixMode(GL_MODELVIEW);
   return 0;
 }
 

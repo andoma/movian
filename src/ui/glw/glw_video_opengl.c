@@ -485,14 +485,15 @@ render_video_quad(int interlace, int rectmode, int width, int height,
 
   glw_load_program(gbr, gp);
   glw_program_set_uniform_color(gbr, 1, 1, 1, rc->rc_alpha);
-  glw_program_set_modelview(gbr, rc);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
   if(gp->gp_uniform_blend != -1)
     glUniform1f(gp->gp_uniform_blend, gv->gv_blend);
 
   glUniformMatrix4fv(gp->gp_uniform_colormtx, 1, GL_FALSE, gv->gv_cmatrix_cur);
-     
-  glVertexAttribPointer(gp->gp_attribute_texcoord, 3, GL_FLOAT, 0, 0, tc);
-  glVertexAttribPointer(gp->gp_attribute_position, 2, GL_FLOAT, 0, 0, vertices);
+
+  glVertexPointer(2,   GL_FLOAT, 0, vertices);
+  glTexCoordPointer(3, GL_FLOAT, 0, tc);
+
   glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_BYTE, elements);
 }
 

@@ -319,7 +319,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gxasm.S
 
 SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 
-BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glsl
+BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/opengl
 
 #
 # GTK based interface

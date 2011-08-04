@@ -56,13 +56,7 @@ typedef struct glw_program {
   const char *gp_title;
   GLuint gp_program;
 
-  // Attributes
-  GLint  gp_attribute_position;
-  GLint  gp_attribute_texcoord;
-  GLint  gp_attribute_color;
- 
   // Uniforms
-  GLint  gp_uniform_modelview;
   GLint  gp_uniform_color;
   GLint  gp_uniform_colormtx;
   GLint  gp_uniform_blend;
@@ -171,8 +165,6 @@ glw_program_t *glw_make_program(glw_backend_root_t *gbr,
 				const char *title, GLuint vs, GLuint fs);
 
 void glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp);
-
-void glw_program_set_modelview(glw_backend_root_t *gbr, struct glw_rctx *rc);
 
 void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 				   float r, float g, float b, float a);
