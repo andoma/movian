@@ -122,6 +122,12 @@ src_cb(void *opaque, prop_event_t event, ...)
 
     break;
 
+  case PROP_MOVE_CHILD:
+    p = va_arg(ap, prop_t *);
+    q = va_arg(ap, prop_t *);
+    prop_move0(prop_tag_get(p, pcs),
+	       q != NULL ? prop_tag_get(q, pcs) : find_next_out(pcs), NULL);
+    break;
 
   case PROP_SET_VOID:
     break;
@@ -133,7 +139,7 @@ src_cb(void *opaque, prop_event_t event, ...)
     break;
 
   default:
-    printf("Cant handle even %d\n", event);
+    printf("Cant handle event %d\n", event);
     abort();
   }
 }
