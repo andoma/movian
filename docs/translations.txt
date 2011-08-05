@@ -1,0 +1,96 @@
+
+		Documentation for translating Showtime
+		======================================
+
+		   by Andreas Öman, Project Leader
+
+
+Translations are stored in the lang/ directory in Showtime's root.
+
+The language files are in UTF-8 format. The name of the language files
+are not relevant except that they must end with '.lang'
+
+The language files starts with a few header lines:
+
+  language: Swedish
+  native: Svenska
+  maintainer: Andreas Öman <andreas@lonelycoder.com>
+
+  'language' should be the English name of the language
+  'native' should be the language's name in it's own language
+  'maintainer' if the language is activly maintained by someone, this should
+               be the maintainers email address
+
+Each entry to be translated then starts with a line prefixed with
+'id:' and the actual translation is prefixed with 'msg:'. Each entry
+must be on a single line (ie, no entries on multiple lines in the
+file). To insert line breaks, use '\n'.
+
+
+Creating a new translation
+--------------------------
+
+If you want to translate Showtime to a new language there are two
+options. Either copy an already existing file and give it a new name
+and start editing that one. This is probably easiest. The other
+alternative is to run the update_lang script (see below) with a
+non-existing file as second argument.
+
+If you want to try out your new translation you can upload it to
+Showtime via its built in HTTP server. To upload and use
+'lang/foo.lang' do like this:
+
+ curl --data-binary @lang/foo.lan http://ip.to.your.showtime:42000/showtime/translation
+
+This will just overwrite the currently loaded translation with the one
+supplied. Ie. nothing is installed and no persistent configuration is
+altered.
+
+To make the language file available as a configurable option you have
+to restart Showtime for it to index the available languages. If the
+Showtime is built with embedded resources (either in release mode or
+for consoles) you need to recompile the package.
+
+To include the translation in the official distribution either mail to
+to me (andreas@lonelycoder.com) or make a pull request from your own
+fork of Showtime on github.
+
+
+Updating language files with new entries
+----------------------------------------
+
+To update language files with new entries from Showtime's source code, do:
+
+  support/update_lang.py . <filename>
+
+ie:
+
+  support/update_lang.py . lang/sv_SV.lang
+
+or if you want to update all files
+
+  support/update_lang.py . lang/*.lang
+
+This will import the translated strings from the original language
+file and generate a new language file that replacese the older
+one. This means that if a user have moved around statements in the
+file they will be reordered again by the script.
+
+If the file does not exist it will be created and all translations
+will be empty. This can be used to begin a new translation of Showtime
+without having to copy an existing one.
+
+
+
+FAQ
+---
+
+Q: There are no support for plural forms
+
+A: There is currently no need for that.
+   As soon as need arise I will implement it.
+
+
+Q: How about language support for plugins?
+
+A: Will be fixed in the future.
