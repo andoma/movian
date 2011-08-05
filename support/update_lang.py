@@ -80,7 +80,7 @@ for path in sys.argv[2:]:
     print "Processing %s (%s / %s) maintained by %s" % \
         (path, language, native, maintainer)
 
-    for key, sources in sorted(phraselist, key=lambda (w, sources): '%s %s' % (sources[0], w)):
+    for key, sources in sorted(phraselist, key=lambda (w, sources): '%s %s' % (sorted(sources)[0], w)):
         source = sources[0]
 
         if source != last: 
