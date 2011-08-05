@@ -23,6 +23,7 @@
 #include "i18n.h"
 #include "misc/string.h"
 #include "fileaccess/fileaccess.h"
+#include "networking/http_server.h"
 
 static void nls_init(prop_t *parent, htsmsg_t *store);
 
@@ -319,20 +320,10 @@ deescape_cstyle(char *src)
  *
  */
 static void
-nls_load_lang(const char *path)
+nls_load_from_data(char *s)
 {
-  char errbuf[200];
-  fa_stat_t fs;
-  char *data = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
-  char *s;
   const char *s2;
 
-  if(data == NULL) {
-    TRACE(TRACE_ERROR, "NLS", "Unable to load %s -- %s", path, errbuf);
-    return;
-  }
-
-  s = data;
   // Skip UTF-8 BOM
   if(!memcmp(s, (const uint8_t []){0xef, 0xbb, 0xbf}, 3))
     s+=3;
@@ -369,6 +360,24 @@ nls_load_lang(const char *path)
       }
     }
   }
+}
+
+/**
+ *
+ */
+static void
+nls_load_lang(const char *path)
+{
+  char errbuf[200];
+  fa_stat_t fs;
+  char *data = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
+
+  if(data == NULL) {
+    TRACE(TRACE_ERROR, "NLS", "Unable to load %s -- %s", path, errbuf);
+    return;
+  }
+
+  nls_load_from_data(data);
   free(data);
 }
 
@@ -447,6 +456,26 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
   return -1;
 }
 
+/**
+ *
+ */
+static int
+upload_translation(http_connection_t *hc, const char *remain, void *opaque,
+		   http_cmd_t method)
+{
+  size_t len;
+  void *data = http_get_post_data(hc, &len, 0);
+
+  if(method != HTTP_CMD_POST || data == NULL)
+    return 405;
+
+  nls_clear();
+  nls_load_from_data(data);
+  TRACE(TRACE_INFO, "i18n", "Loading language from HTTP POST");
+  return HTTP_STATUS_OK;
+}
+
+
 
 /**
  *
@@ -462,6 +491,9 @@ nls_init(prop_t *parent, htsmsg_t *store)
   char language[64];
   char native[64];
   char *e;
+
+  http_path_add("/showtime/translation", NULL, upload_translation);
+
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s -- %s",
 	  SHOWTIME_LANGUAGES_URL, buf);
