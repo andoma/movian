@@ -463,7 +463,7 @@ plugin_open_repo(prop_t *page)
   prop_t *nodes, *p;
   
   if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
-    nav_open_errorf(page, "Unable to request plugin repository: %s", 
+    nav_open_errorf(page, _("Unable to request plugin repository: %s"), 
 		    errbuf);
     return;
   }
@@ -955,18 +955,18 @@ plugin_open_repo_item(prop_t *page, const char *id)
   htsmsg_t  *repo, *pm;
   
   if((repo = repo_get(errbuf, sizeof(errbuf))) == NULL) {
-    nav_open_errorf(page, "Unable to request plugin repository: %s", errbuf);
+    nav_open_errorf(page, _("Unable to request plugin repository: %s"), errbuf);
     return;
   }
 
   if((pm = get_item_by_id(repo, id)) == NULL) {
-    nav_open_errorf(page, "Plugin ID %s does not exist", id);
+    nav_open_errorf(page, _("Plugin ID %s does not exist"), id);
     return;
   }
 
   const char *dlurl0 = htsmsg_get_str(pm, "downloadURL");
   if(dlurl0 == NULL) {
-    nav_open_errorf(page, "Plugin ID %s have no download URL", id);
+    nav_open_errorf(page, _("Plugin ID %s have no download URL"), id);
     return;
   }
   char *package = url_resolve_relative_from_base(plugin_repo_url, dlurl0);
@@ -1054,7 +1054,7 @@ plugin_open_url(prop_t *page, const char *url)
     return 0;
   }
 
-  nav_open_errorf(page, "Invalud URI");
+  nav_open_errorf(page, _("Invalud URI"));
   return 0;
 }
 
@@ -1073,7 +1073,7 @@ plugin_open_file(prop_t *page, const char *url)
   snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
   buf = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
   if(buf == NULL) {
-    nav_open_errorf(page, "Unable to load plugin.json: %s", errbuf);
+    nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;
   }
 
@@ -1081,7 +1081,7 @@ plugin_open_file(prop_t *page, const char *url)
   free(buf);
 
   if(pm == NULL) {
-    nav_open_errorf(page, "Unable to load plugin.json: Malformed JSON");
+    nav_open_errorf(page, _("Unable to load plugin.json: Malformed JSON"));
     return;
   }
 
@@ -1089,7 +1089,7 @@ plugin_open_file(prop_t *page, const char *url)
   const char *icon = htsmsg_get_str(pm, "icon");
 
   if(id == NULL) {
-    nav_open_errorf(page, "Field \"id\" not found in plugin.json");
+    nav_open_errorf(page, _("Field \"id\" not found in plugin.json"));
     return;
   }
 

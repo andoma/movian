@@ -423,7 +423,7 @@ nav_reload_current(navigator_t *nav)
   nav_select(nav, np, NULL);
     
   if(backend_open(np->np_prop_root, np->np_url))
-    nav_open_errorf(np->np_prop_root, "No handler for URL");
+    nav_open_errorf(np->np_prop_root, _("No handler for URL"));
 }
 
 

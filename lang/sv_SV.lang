@@ -398,6 +398,27 @@ id: No handler for URL
 msg: Ingen hanterare för URLen
 
 #
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Felaktig URI
+
+id: Plugin ID %s does not exist
+msg: Plugin ID %s finns ej
+
+id: Plugin ID %s have no download URL
+msg: Plugin ID %s har ingen nerladdningsURL
+
+id: Unable to load plugin.json: %s
+msg: Kan ej ladda plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
+
+id: Unable to request plugin repository: %s
+msg: Kan ej begära plugin katalogen: %s
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
