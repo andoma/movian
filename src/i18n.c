@@ -97,8 +97,7 @@ i18n_init(void)
 
   settings_create_info(s, 
 		       NULL,
-		       _p("Language codes should be configured as "
-			  "three character ISO codes, example (eng, swe, fra)"));
+		       _p("Language codes should be configured as three character ISO codes, example (eng, swe, fra)"));
 
   settings_create_string(s, "audio1", _p("Primary audio language code"), NULL, 
 			 store, set_lang, &lang_audio[0],
