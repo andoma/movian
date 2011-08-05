@@ -1,0 +1,555 @@
+language: German
+native: Deutsch
+maintainer: 
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Audio Einstellungen
+
+id: Languages
+msg: Sprache
+
+id: Settings
+msg: Einstellungen
+
+id: Subtitle settings
+msg: Untertitel Einstellungen
+
+id: Video settings
+msg: Video Einstellungen
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Zugefügt durch: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Aus
+
+id: On
+msg: An
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Verf. Systemspeicher: %d kB
+
+id: Detected CPUs: %d
+msg: Gefundene CPUs: %d
+
+id: Display info
+msg: Anzeige Info
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Framerate: %.2f Hz
+msg: Bildrate %.2f Hz
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Höhe: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Systeminformation
+
+id: Total system RAM: %d kB
+msg: Gesamter Systemspeicher: %d kB
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Breite: %d px
+
+id: Windowmanager: %s
+msg: Windowmanager: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Über
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Home
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Quelle kann nicht geöffnet werden
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Seitenladefehler
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Abspielliste
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Kapitel %d / %d
+
+id: Title %d / %d
+msg: Titel %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Titel %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU ist zu langsam um das Video zu dekodieren
+
+#
+# ./glwthemes/mono/popups/message.view
+#
+id: Cancel
+msg: Abbrechen
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Passwort
+
+id: Remember me
+msg: Namen speichern
+
+id: Username
+msg: Benutzername
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Keine Medien geladen
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Löschen
+
+id: Enqueue
+msg: Hinzufügen
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Audio Ausgabe
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU und Anzeige
+
+id: GPU Core temperature: %d / %d °
+msg: GPU Kerntemperatur: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
+
+id: Audio muted
+msg: Ton aus
+
+id: Fancy UI animations
+msg: schicke Menüanimationen
+
+id: Master volume: %d dB
+msg: Lautstärke: %d dB
+
+id: Starwars scroller tilt
+msg: Neigung des Starwars-scroller
+
+id: Top bar navigation buttons
+msg: Navigationsknöpfe obere Leiste
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Einstellungen für opensubtitles.org
+
+id: Use opensubtitles.org
+msg: opensubtitles.org benutzen
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video sync Verzögerung
+
+id: Current output device
+msg: Aktuelles Ausgabegerät
+
+id: Force stereo downmix
+msg: Stereo-Downmix erzwingen
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-center
+
+id: Select audio output device and related configurations
+msg: Audiogerät Auswahl und Konfiguration
+
+id: Small front speakers
+msg: kleine Frontlautsprecher
+
+id: Swap LFE+center with surround
+msg: LFE+Center mit Surround tauschen
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Ungültige CD URL
+
+id: Invalid CD track
+msg: Ungültiger CD Titel
+
+id: Unable to open CD
+msg: CD kann nicht geöffnet werden
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Ungültige HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Suche
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automatisch bei Showtimestart einloggen
+
+id: Enable Spotify
+msg: Spotify anschalten
+
+id: Friends
+msg: Freunde
+
+id: High bitrate
+msg: Hohe bitrate
+
+id: Inbox
+msg: Eingang
+
+id: New albums on Spotify
+msg: Neue Alben auf Spotify
+
+id: New releases
+msg: Neuerscheinungen
+
+id: Playlists
+msg: Abspiellisten
+
+id: Relogin (switch user)
+msg: Neu einloggen (Benutzer wechseln)
+
+id: Search result
+msg: Suchergebnise
+
+id: Spotify friends
+msg: Spotify Freunde
+
+id: Spotify music service
+msg: Spotify Musikdienste
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamen und Passwort aufgefordert.
+
+id: Spotify playlists
+msg: Spotyfyabspielliste
+
+id: Starred
+msg: Starred
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Lesezeichen
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Suchen per Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: 
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Sprache
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: 
+
+id: Preferred languages
+msg: Bevorzugte Sprache
+
+id: Primary audio language code
+msg: Bevorzugte Audio-Sprache
+
+id: Primary subtitle language code
+msg: Bevorzugte Untertitel-Sprache
+
+id: SRT character set
+msg: Schriftsatz für srt-untertitel
+
+id: Secondary audio language code
+msg: Zweite Audio-Sprache
+
+id: Secondary subtitle language code
+msg: Zweite Untertitel-Sprache
+
+id: Tertiary audio language code
+msg: Dritte Audio-Sprache
+
+id: Tertiary subtitle language code
+msg: Dritte Untertitel-Sprache
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatisch Fernseher An/Aus
+
+id: Input source
+msg: Eingang
+
+id: LG Television set
+msg: LG TV apparat
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Tastenbelegun und Fernbedienungseinstellung
+
+id: Keymapper
+msg: Keymapper
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Untertitel dem Videoframe zuordnen
+
+id: Audio delay
+msg: Audioverzögerung
+
+id: Subtitle delay
+msg: Untertitelverzögerung
+
+id: Subtitle scaling
+msg: Untertitel Skalierung
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: kein handler für URL
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatischer standby
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Eingeschaltet
+
+id: Name
+msg: Name
+
+id: Type
+msg: Typ
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Anwendungen und installierte Zusätze
+
+id: Discovered media sources
+msg: Gefundene Medienquellen
+
+id: Global settings
+msg: Allgemeine Einstellungen
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Anzeige und Menü
+
+id: Horizontal underscan
+msg: Horizontal underscan
+
+id: Screensaver delay
+msg: Bildschirmschonerverzögerung
+
+id: Userinterface size
+msg: Menügröße
+
+id: Vertical underscan
+msg: Vertikal underscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Vollbildmodus
+
+id: Map mouse wheel to up/down
+msg: Mausrad für hoch/runter
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Verfügbar im Hauptbild
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Gerät nicht gefunden
+
+id: Malformed URI after device
+msg: ungültige URI nach Gerät
+
+id: Malformed URI after service
+msg: ungültige URI nach service
+
+id: Service not found
+msg: Service nicht gefunden
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Immer versuchen Untertitel auszuwählen
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Zentriert
+
+id: Color
+msg: Farbe
+
+id: Enable VDPAU
+msg: VDPAU aktivieren
+
+id: Force subtitles to reside on video frame
+msg: Untertitel auf Videofrom aufzwingen
+
+id: Generic settings for video subtitles
+msg: Allgemeine Einstellungen für Videountertitel
+
+id: Ignore embedded styling
+msg: eingebetteten Stil ignorieren
+
+id: Left
+msg: Links
+
+id: Outline color
+msg: Rahmenfarbe
+
+id: Outline size
+msg: Rahmengröße
+
+id: Right
+msg: Rechts
+
+id: Shadow color
+msg: Schattenfareb
+
+id: Shadow offset
+msg: Schattenabstand
+
+id: Stretch video to widescreen
+msg: Video auf "Widescreen" strecken 
+
+id: Subtitle position
+msg: Untertitelposition
+
+id: Subtitle size
+msg: Untertitelgröße
+
+id: Subtitle styling
+msg: Untertitelstil
+
+id: Subtitles
+msg: Untertiel
+
+id: Video acceleration and display behaviour
+msg: Videobeschleunigung und Anzeigeverhalten
+
+id: Video playback
+msg: Videowiedergabe
+
