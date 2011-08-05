@@ -124,6 +124,12 @@ msg: CPUn är för långsam för att spela upp videon
 #
 # ./glwthemes/mono/popups/auth.view
 #
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
+
 id: Password
 msg: Lösenord
 
@@ -132,15 +138,6 @@ msg: Kom ihåg mig
 
 id: Username
 msg: Användarnamn
-
-#
-# ./glwthemes/mono/popups/message.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -315,6 +312,13 @@ msg: Bokmärken
 #
 id: Search using Unix locatedb
 msg: Sök mha. Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Sök med spotlight
+
 
 #
 # ./src/i18n.c

@@ -5,23 +5,11 @@ import os
 import re
 import json
 
-M = re.compile('_p{0,1}\("([^"]*)"\)')
-
+M = re.compile('_p?\("([^"]*)"\)')
 
 def scanfile(path, p):
-    f = open(path)
-    s = f.read()
-    l = re.findall(M, s)
-    if len(l) > 0:
-        for w in l:
-            if w in p:
-                if path not in p:
-                    p[w].append(path)
-            else:
-                p[w] = [path]
-    f.close()
-
-
+    for w in re.findall(M, open(path).read()):
+        p.setdefault(w, []).append(path)
 
 def buildphrases(rootpath):
     p = {}
@@ -92,9 +80,8 @@ for path in sys.argv[2:]:
     print "Processing %s (%s / %s) maintained by %s" % \
         (path, language, native, maintainer)
 
-    for x in sorted(phraselist, key=lambda x: '%s %s' % (x[1][0], x[0])):
-        key = x[0]
-        source = x[1][0]
+    for key, sources in sorted(phraselist, key=lambda (w, sources): '%s %s' % (sources[0], w)):
+        source = sources[0]
 
         if source != last: 
             last = source
