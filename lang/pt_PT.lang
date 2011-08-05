@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer: 
+maintainer:
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -23,13 +23,13 @@ msg: Configurações de vídeo
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Adiconado por: %s
+msg: Adicionado por: %s
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: 
+msg: Desligado
 
 id: On
 msg: 
@@ -83,7 +83,7 @@ msg: Gestor de janelas: %s
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: Acerca
+msg: Sobre
 
 #
 # ./glwthemes/mono/pages/home_top.view
@@ -95,7 +95,7 @@ msg: Início
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Não foi possível abrir recurso
+msg: Não foi possível abrir o recurso
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
@@ -128,7 +128,7 @@ msg: Faixa %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: O CPUn é muito lento para descodificar este vídeo
+msg: O CPU é muito lento para descodificar este vídeo
 
 #
 # ./glwthemes/mono/popups/message.view
@@ -143,13 +143,13 @@ msg: OK
 # ./glwthemes/mono/popups/auth.view
 #
 id: Password
-msg: Palavra passe
+msg: Palavra-passe
 
 id: Remember me
 msg: Lembrar-me
 
 id: Username
-msg: Utilizador
+msg: Nome do utilizador
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -185,19 +185,19 @@ msg: Temperatura do núcleo do GPU: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Ajustar a tonalidade de fundo com base na altura do dia
+msg: Ajustar a tonalidade do fundo dependendo da altura do dia
 
 id: Audio muted
 msg: Sem áudio
 
 id: Fancy UI animations
-msg: Animações de IU
+msg: Animações do IU
 
 id: Master volume: %d dB
 msg: Volume principal: %d dB
 
 id: Starwars scroller tilt
-msg: Inclinação do scroller do género do Starwars
+msg: Inclinação do scroller Starwars
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -242,7 +242,7 @@ msg: Trocar LFE+center com surround
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: URL CD inválido
+msg: URL de CD inválido
 
 id: Invalid CD track
 msg: Faixa de CD inválida
@@ -254,7 +254,7 @@ msg: Não foi possível abrir o CD
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: URL HTSP inválido
+msg: URL de HTSP inválido
 
 #
 # ./src/backend/search.c
@@ -302,7 +302,7 @@ id: Spotify music service
 msg: Serviço de música do Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de música. Para usar o Spotify no Showtime você precisa de uma conta Premium Spotify.\nPara mais informações sobre o Spotify, visite http://www.spotify.com/\n\nYou e será requisitado o seu nome de utilizador e palavra passe quando tentar aceder a qualquer recurso do Spotify no Showtime.
+msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de música. Para usar o Spotify no Showtime você precisa de uma conta Premium Spotify.\nPara mais informações sobre o Spotify, visite http://www.spotify.com/\n\nYou e será requisitado o seu nome de utilizador e palavra-passe quando tentar aceder a qualquer recurso do Spotify no Showtime.
 
 id: Spotify playlists
 msg: Listas de reprodução do Spotify
@@ -341,31 +341,31 @@ id: Preferred languages
 msg: Idiomas preferidos
 
 id: Primary audio language code
-msg: Código de idioma de áudio primário
+msg: Código do idioma de áudio primário
 
 id: Primary subtitle language code
-msg: Código de idioma de legendas primário
+msg: Código do idioma de legendas primário
 
 id: SRT character set
 msg: Conjunto de caracteres SRT
 
 id: Secondary audio language code
-msg: Código de idioma de áudio secundário
+msg: Código do idioma de áudio secundário
 
 id: Secondary subtitle language code
-msg: Código de idioma de legendas secundário
+msg: Código do idioma de legendas secundário
 
 id: Tertiary audio language code
-msg: Código de idioma de áudio terciário
+msg: Código do idioma de áudio terciário
 
 id: Tertiary subtitle language code
-msg: Código de idioma de legendas terciário
+msg: Código do idioma de legendas terciário
 
 #
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Ligar/Desligar TV automáticamente
+msg: Ligar/Desligar TV automaticamente
 
 id: Input source
 msg: Fonte de entrada
@@ -377,16 +377,16 @@ msg: Aparelho de TV LG
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Configurar o mapeamento de teclado e as teclas do controle remoto
+msg: Configurar o mapeamento do teclado e as teclas do controle remoto
 
 id: Keymapper
-msg: Keymapper
+msg: Mapeamento do teclado
 
 #
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Alinhas as legendas no quadro de vídeo
+msg: Alinhar as legendas no quadro de vídeo
 
 id: Audio delay
 msg: Atraso de áudio
@@ -410,7 +410,7 @@ msg: Nenhum handler para o URL
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Standby automático
+msg: Modo de espera automático
 
 id: Run control
 msg: Controle de execução
@@ -431,7 +431,7 @@ msg: Tipo
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Applicações e plugins instalados
+msg: Aplicações e plugins instalados
 
 id: Discovered media sources
 msg: Fontes de media descobertos
@@ -443,7 +443,7 @@ msg: Definições globais
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Vizualização e interface do utilizador
+msg: Visualização e interface do utilizador
 
 id: Horizontal underscan
 msg: Underscan horizontal
@@ -464,7 +464,7 @@ id: Fullscreen mode
 msg: Modo de ecrã inteiro
 
 id: Map mouse wheel to up/down
-msg: Mapear a mouse wheel para cima/baixo
+msg: Mapear a roda do rato para cima/baixo
 
 #
 # ./src/upnp/upnp.c
@@ -512,7 +512,7 @@ id: Generic settings for video subtitles
 msg: Definições genéricas para legendas de vídeo
 
 id: Ignore embedded styling
-msg: Ignorar estilos imbutidos
+msg: Ignorar estilos embutidos
 
 id: Left
 msg: Esquerda
@@ -527,10 +527,10 @@ id: Right
 msg: Direita
 
 id: Shadow color
-msg: cor da sombra
+msg: Cor da sombra
 
 id: Shadow offset
-msg: Offset da sombra
+msg: Deslocamento da sombra
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen
@@ -548,7 +548,7 @@ id: Subtitles
 msg: Legendas
 
 id: Video acceleration and display behaviour
-msg: Acelaração de vídeo e comportamento da vizualização
+msg: Acelaração de vídeo e comportamento da visualização
 
 id: Video playback
 msg: Reprodução de vídeo
