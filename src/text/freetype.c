@@ -352,7 +352,7 @@ face_create_from_memory(const void *ptr, size_t len)
  *
  */
 static int
-face_resovle(int uc, uint8_t style, int family_id,
+face_resolve(int uc, uint8_t style, int family_id,
 	     char *urlbuf, size_t urllen)
 {
 #if ENABLE_LIBFONTCONFIG
@@ -430,7 +430,7 @@ face_find(int uc, uint8_t style, int family_id)
        FT_Get_Char_Index(f->face, uc))
       return f;
 
-  if(!face_resovle(uc, style, family_id, url, sizeof(url))) {
+  if(!face_resolve(uc, style, family_id, url, sizeof(url))) {
     TAILQ_FOREACH(f, &faces, link)
       if(f->url != NULL && !strcmp(f->url, url))
 	break;
