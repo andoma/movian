@@ -317,6 +317,13 @@ id: Search using Unix locatedb
 msg: Sök mha. Unix locatedb
 
 #
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Sök med spotlight
+
+
+#
 # ./src/i18n.c
 #
 id: Language

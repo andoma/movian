@@ -758,7 +758,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     return;
   
   gcocoa.fullscreen_setting = 
-  settings_create_bool(gcocoa.gr.gr_settings, "fullscreen", "Fullscreen mode",
+  settings_create_bool(gcocoa.gr.gr_settings, "fullscreen", _p("Fullscreen mode"),
                        0, gcocoa.gr.gr_settings_store,
                        glw_cocoa_set_fullscreen, NULL,
                        SETTINGS_INITIAL_UPDATE, gcocoa.gr.gr_courier,
