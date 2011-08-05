@@ -122,6 +122,34 @@ add2lineresolve(const char *binary, void *addr, char *buf0, size_t buflen)
 }
 
 
+/**
+ *
+ */
+static void
+addr2text(char *out, size_t outlen, void *ptr)
+{
+  Dl_info dli;
+  char buf[256];
+  int r = dladdr(ptr, &dli);
+  
+  if(r && dli.dli_sname != NULL && dli.dli_saddr != NULL) {
+    snprintf(out, outlen, "%s+0x%tx  (%s)",
+	     dli.dli_sname, ptr - dli.dli_saddr, dli.dli_fname);
+    return;
+  }
+  
+  if(self[0] && !add2lineresolve(self, ptr, buf, sizeof(buf))) {
+    snprintf(out, outlen, "%s %p", buf, ptr);
+    return;
+  }
+
+  if(dli.dli_fname != NULL && dli.dli_fbase != NULL) {
+    snprintf(out, outlen, "%s %p", dli.dli_fname, ptr);
+    return;
+  }
+  snprintf(out, outlen, "%p", ptr);
+}
+
 
 
 static void 
@@ -131,7 +159,6 @@ traphandler(int sig, siginfo_t *si, void *UC)
   static void *frames[MAXFRAMES];
   char buf[256];
   int nframes = backtrace(frames, MAXFRAMES);
-  Dl_info dli;
   int i;
   const char *reason = NULL;
 
@@ -152,8 +179,9 @@ traphandler(int sig, siginfo_t *si, void *UC)
     break;
   }
 
-  TRAPMSG("Fault address %p (%s)",
-	       si->si_addr, reason ?: "N/A");
+  addr2text(buf, sizeof(buf), si->si_addr);
+
+  TRAPMSG("Fault address %s (%s)", buf, reason ?: "N/A");
 
   TRAPMSG("Loaded libraries: %s ", libs);
   snprintf(tmpbuf, sizeof(tmpbuf), "Register dump [%d]: ", NGREG);
@@ -170,30 +198,8 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("STACKTRACE");
 
   for(i = 0; i < nframes; i++) {
-
-    
-    if(dladdr(frames[i], &dli)) {
-
-      if(dli.dli_sname != NULL && dli.dli_saddr != NULL) {
-      	TRAPMSG("%s+0x%tx  (%s)",
-		     dli.dli_sname,
-		     frames[i] - dli.dli_saddr,
-		     dli.dli_fname);
-	continue;
-      }
-
-      if(self[0] && !add2lineresolve(self, frames[i], buf, sizeof(buf))) {
-	TRAPMSG("%s %p", buf, frames[i]);
-	continue;
-      }
-
-      if(dli.dli_fname != NULL && dli.dli_fbase != NULL) {
-	TRAPMSG("%s %p", dli.dli_fname, frames[i]);
-	continue;
-      }
-
-      TRAPMSG("%p", frames[i]);
-    }
+    addr2text(buf, sizeof(buf), frames[i]);
+    TRAPMSG("%s", buf);
   }
 }
 
