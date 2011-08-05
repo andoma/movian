@@ -141,22 +141,30 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   if(glw_is_focusable(w) && w->glw_flags & GLW_NAV_FOCUSABLE) {
 
     x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
-    y1 = compute_position(w, GLW_ORIENTATION_VERTICAL, 0);
-
     x2 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 1);
+
+    y1 = compute_position(w, GLW_ORIENTATION_VERTICAL, 0);
     y2 = compute_position(w, GLW_ORIENTATION_VERTICAL, 1);
 
-
-    if(query->orientation == GLW_ORIENTATION_VERTICAL)
-      y1 = y2 = (y1 + y2) / 2;
-    else
-      x1 = x2 = (x1 + x2) / 2;
+    if(query->orientation == GLW_ORIENTATION_VERTICAL) {
+      if(query->direction) {
+	y2 = y1;
+      } else {
+	y1 = y2;
+      }
+    } else {
+      if(query->direction) {
+	x2 = x1;
+      } else {
+	x1 = x2;
+      }
+    }
 
     d0 = distance_to_line_segment(query->x1, query->y1, x1, y1, x2, y2);
-    dc = 100 * distance_to_line_segment(query->xc, query->yc, x1, y1, x2, y2);
-    d1 = 100 * distance_to_line_segment(query->x2, query->y2, x1, y1, x2, y2);
+    dc = distance_to_line_segment(query->xc, query->yc, x1, y1, x2, y2);
+    d1 = distance_to_line_segment(query->x2, query->y2, x1, y1, x2, y2);
 
-    d = GLW_MIN(d0, GLW_MIN(dc, d1));
+    d = sqrtf(d0 * d0 + dc * dc + d1 * d1);
     d *= d_mul;
 
     if(d < query->score) {
