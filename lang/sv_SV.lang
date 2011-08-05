@@ -1,0 +1,540 @@
+language: Swedish
+native: Svenska
+maintainer: Andreas Öman <andreas@lonelycoder.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Ljudinställningar
+
+id: Languages
+msg: Språk
+
+id: Settings
+msg: Inställningar
+
+id: Subtitle settings
+msg: Inställningar för undertexter
+
+id: Video settings
+msg: Videoinställningar
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Tillagd av: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Av
+
+id: On
+msg: På
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Tillgängligt systemminne: %d kB
+
+id: Detected CPUs: %d
+msg: Funna CPUer: %d
+
+id: Display info
+msg: Bildskärmsinformation
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Höjd: %d px
+
+id: Renderer: %s
+msg: Renderare: %s
+
+id: System info
+msg: Systeminformation
+
+id: Total system RAM: %d kB
+msg: Totalt systemminne: %d kB
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Bredd: %d px
+
+id: Windowmanager: %s
+msg: Fönsterhanterare: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Om
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Hem
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Kan ej öppna resurs
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Sidladdningsfel
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Spelkö
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Kapitel %d / %d
+
+id: Title %d / %d
+msg: Titel %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Spår %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPUn är för långsam för att spela upp videon
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Lösenord
+
+id: Remember me
+msg: Kom ihåg mig
+
+id: Username
+msg: Användarnamn
+
+#
+# ./glwthemes/mono/popups/message.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Ingen media laddad
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Radera
+
+id: Enqueue
+msg: Köa
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Ljudutgång
+
+id: CPUs
+msg: CPUer
+
+id: Framerate: %.2f Hz
+msg: Uppdateringsfrekvens %.2f Hz
+
+id: GPU & Display
+msg: GPU och bildskärm
+
+id: GPU Core temperature: %d / %d °
+msg: GPU kärntemperatur: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Justera bakgrundsfärgen beroende på tid på dygnet
+
+id: Audio muted
+msg: Ljud tyst
+
+id: Fancy UI animations
+msg: Häftiga anomationer i gränsnittet
+
+id: Master volume: %d dB
+msg: Huvudvolym: %d dB
+
+id: Starwars scroller tilt
+msg: Luta gränssnittet som en Starwars-scroller
+
+id: Top bar navigation buttons
+msg: Knappar för navigation i toppen av skärmen
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Inställningar för opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Använd opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video synk delay
+
+id: Current output device
+msg: Nuvarande ljudutgång
+
+id: Force stereo downmix
+msg: Tvinga stereo nermix
+
+id: Phantom LFE
+msg: Fantom-LFE
+
+id: Phantom center
+msg: Fantom-center
+
+id: Select audio output device and related configurations
+msg: Välj ljudutgång och relaterad konfiguration
+
+id: Small front speakers
+msg: Små fronthögtalare
+
+id: Swap LFE+center with surround
+msg: Byt LFE+center med surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Ogiltlig CD URL
+
+id: Invalid CD track
+msg: Ogiltlight CD track
+
+id: Unable to open CD
+msg: Kan ej öppna CD
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Ogiltligt HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Sök
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Logga automatiskt in när Showtime startar
+
+id: Enable Spotify
+msg: Använd Spotify
+
+id: Friends
+msg: Vänner
+
+id: High bitrate
+msg: Hög bithastighet
+
+id: Inbox
+msg: Inkorg
+
+id: New albums on Spotify
+msg: Nya album på Spotify
+
+id: New releases
+msg: Nya släpp
+
+id: Playlists
+msg: Spellistor
+
+id: Relogin (switch user)
+msg: Logga in igen (byt användare)
+
+id: Search result
+msg: Sökresultat
+
+id: Spotify friends
+msg: Vänner på Spotify
+
+id: Spotify music service
+msg: Spotify musiktjänst
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify erbjuder laglig och fri tillgång till ett stort bibliotek av musik. För att använda Spotify i Showtime behöver du ett Spotify Premium-konto.\nFör mer information om Spotify, besök http://www.spotify.com/\n\nDu kommer bli frågad efter ditt Spotifyanvändarnamn och lösenord när du använder någon av Spotify funktionerna i Showtime för första gången.
+
+id: Spotify playlists
+msg: Spotyfyspellistor
+
+id: Starred
+msg: Stjärnor
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Bokmärken
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Sök mha. Unix locatedb
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Språk
+
+id: Preferred languages
+msg: Föredragna språk
+
+id: Primary audio language code
+msg: Primärt språk för ljud
+
+id: Primary subtitle language code
+msg: Primärt språk för undertexter
+
+id: SRT character set
+msg: Teckenkodning för SRT undertexter
+
+id: Secondary audio language code
+msg: Sekundärt språk för ljud
+
+id: Secondary subtitle language code
+msg: Sekundärt språk för undertexter
+
+id: Tertiary audio language code
+msg: Tertiärt språk för ljud
+
+id: Tertiary subtitle language code
+msg: Tertiärt språk för undertexter
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatisk på/av kontroll av TVn
+
+id: Input source
+msg: Ingångskälla
+
+id: LG Television set
+msg: LG TV apparat
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Inställningar av tangentbord och fjärrkontroller
+
+id: Keymapper
+msg: Tangent- och knapp-hanterare
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Justera undertexter till videons storlek
+
+id: Audio delay
+msg: Ljuddelay
+
+id: Subtitle delay
+msg: Undertexterdelay
+
+id: Subtitle scaling
+msg: Storlek på undertexter
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Ingen hanterare för URLen
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatisk standby
+
+id: Run control
+msg: Körkontroll
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Påslagen
+
+id: Name
+msg: Namn
+
+id: Type
+msg: Typ
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Applikationer och installerade plugins
+
+id: Discovered media sources
+msg: Upptäckta mediakällor
+
+id: Global settings
+msg: Globala inställningar
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Bildskärm och användargränsitt
+
+id: Horizontal underscan
+msg: Horisontell underskanning
+
+id: Screensaver delay
+msg: Skärmsläckartid
+
+id: Userinterface size
+msg: Storlek på användargränsnitt
+
+id: Vertical underscan
+msg: Vertikal underskanning
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Fullskärmsläge
+
+id: Map mouse wheel to up/down
+msg: Tolka musens scrollhjul som upp- och ned-knappar
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Tillgänglig på hemsidan
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Kan ej hitta enhet
+
+id: Malformed URI after device
+msg: Ogiltlig del av URI efter enhet
+
+id: Malformed URI after service
+msg: Ogiltlig del av URI efter tjänst
+
+id: Service not found
+msg: Kan ej hitta tjänsten
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Försök alltid välja en undertext
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Centrerad
+
+id: Color
+msg: Färg
+
+id: Enable VDPAU
+msg: Aktivera VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Tvinga undertexter att alltid ligga ovanpå videobilden
+
+id: Generic settings for video subtitles
+msg: Generella inställningar för undertexter
+
+id: Ignore embedded styling
+msg: Ignorera inbäddade stilkoder
+
+id: Left
+msg: Vänster
+
+id: Outline color
+msg: Färg på konturer
+
+id: Outline size
+msg: Storlek på konturer
+
+id: Right
+msg: Höger
+
+id: Shadow color
+msg: Färg på skuggor
+
+id: Shadow offset
+msg: Skuggoffset
+
+id: Stretch video to widescreen
+msg: Sträck ut videon horisontellt 
+
+id: Subtitle position
+msg: Position på undertexter
+
+id: Subtitle size
+msg: Storlek på undertexter
+
+id: Subtitle styling
+msg: Stil på undertexter
+
+id: Subtitles
+msg: Undertexter
+
+id: Video acceleration and display behaviour
+msg: Videoacceleration och inställningar för videopresentation
+
+id: Video playback
+msg: Videouppspelning
+
