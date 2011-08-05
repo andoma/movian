@@ -333,6 +333,10 @@ nls_load_lang(const char *path)
   }
 
   s = data;
+  // Skip UTF-8 BOM
+  if(!memcmp(s, (const uint8_t []){0xef, 0xbb, 0xbf}, 3))
+    s+=3;
+
   int l;
   nls_string_t *ns = NULL;
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
@@ -408,6 +412,10 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
   *native = 0;
 
   s = data;
+  // Skip UTF-8 BOM
+  if(!memcmp(s, (const uint8_t []){0xef, 0xbb, 0xbf}, 3))
+    s+=3;
+
   int l;
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
