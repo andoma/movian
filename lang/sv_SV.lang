@@ -46,6 +46,15 @@ msg: Funna CPUer: %d
 id: Display info
 msg: Bildskärmsinformation
 
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Framerate: %.2f Hz
+msg: Uppdateringsfrekvens %.2f Hz
+
+#
+# ./glwthemes/mono/pages/about.view
+#
 id: GPU: %s
 msg: GPU: %s
 
@@ -122,7 +131,7 @@ id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
 
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/mono/popups/message.view
 #
 id: Cancel
 msg: Avbryt
@@ -130,6 +139,9 @@ msg: Avbryt
 id: OK
 msg: OK
 
+#
+# ./glwthemes/mono/popups/auth.view
+#
 id: Password
 msg: Lösenord
 
@@ -162,9 +174,6 @@ msg: Ljudutgång
 
 id: CPUs
 msg: CPUer
-
-id: Framerate: %.2f Hz
-msg: Uppdateringsfrekvens %.2f Hz
 
 id: GPU & Display
 msg: GPU och bildskärm
@@ -318,7 +327,6 @@ msg: Sök mha. Unix locatedb
 #
 id: Search using spotlight
 msg: Sök med spotlight
-
 
 #
 # ./src/i18n.c
