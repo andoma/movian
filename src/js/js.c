@@ -323,17 +323,22 @@ static JSBool
 js_getAuthCredentials(JSContext *cx, JSObject *obj,
 		      uintN argc, jsval *argv, jsval *rval)
 {
-  const char *id, *reason, *source;
+  char buf[256];
+  const char *id = NULL, *reason, *source;
   char *username, *password;
   JSBool query, forcetmp = 0;
   int r;
   jsval val;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
 
-  if(!JS_ConvertArguments(cx, argc, argv, "sssb/b",
-			  &id, &source, &reason, &query, &forcetmp))
+  if(!JS_ConvertArguments(cx, argc, argv, "ssb/sb",
+			  &source, &reason, &query, &id, &forcetmp))
     return JS_FALSE;
 
-  r = keyring_lookup(id, &username, &password, NULL, query, source, reason,
+  snprintf(buf, sizeof(buf), "plguin-%s%s%s", jsp->jsp_id,
+	   id ? "-" : "", id ?: "");
+
+  r = keyring_lookup(buf, &username, &password, NULL, query, source, reason,
 		     forcetmp);
 
   if(r == 1) {
@@ -459,7 +464,6 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
     JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
     JS_FS("canHandle",        js_canHandle, 1, 0, 0),
-    JS_FS("getAuthCredentials",  js_getAuthCredentials, 4, 0, 0),
     JS_FS("message",          js_message, 3, 0, 0),
     JS_FS("sleep",            js_sleep, 1, 0, 0),
     JS_FS("JSONEncode",       js_json_encode, 1, 0, 0),
@@ -586,23 +590,26 @@ jsp_setEnableSearch(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
 }
 
 
+static JSBool
+plugin_add_del_prop(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if(jsp->jsp_protect_object) {
+    JS_ReportError(cx, "Plugin object can not be modified");
+    return JS_FALSE;
+  }
+  return JS_TRUE;
+}
+
+
 /**
  *
  */
 static JSClass plugin_class = {
   "plugin", JSCLASS_HAS_PRIVATE,
-  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  plugin_add_del_prop,plugin_add_del_prop,JS_PropertyStub,JS_PropertyStub,
   JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, plugin_finalize,
-  JSCLASS_NO_OPTIONAL_MEMBERS
-};
-
-/**
- *
- */
-static JSClass plugin_conf_class = {
-  "pluginconf", JSCLASS_HAS_PRIVATE,
-  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
-  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, JS_FinalizeStub,
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
 
@@ -617,6 +624,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
+    JS_FS("getAuthCredentials",  js_getAuthCredentials, 3, 0, 0),
     JS_FS_END
 };
 
@@ -660,7 +668,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   struct fa_stat fs;
   JSContext *cx;
   js_plugin_t *jsp;
-  JSObject *pobj, *gobj, *confobj;
+  JSObject *pobj, *gobj;
   JSScript *s;
   char path[PATH_MAX];
   jsval val;
@@ -704,26 +712,24 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   JS_DefineFunctions(cx, pobj, plugin_functions);
 
-  /* Plugin config object */
-  confobj = JS_DefineObject(cx, pobj, "config", &plugin_conf_class, NULL, 0);
-
-  JS_SetPrivate(cx, confobj, jsp);
 
   val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
-  JS_SetProperty(cx, confobj, "url", &val);
+  JS_SetProperty(cx, pobj, "url", &val);
 
   if(!fa_parent(path, sizeof(path), url)) {
     val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, path));
-    JS_SetProperty(cx, confobj, "path", &val);
+    JS_SetProperty(cx, pobj, "path", &val);
   }
 
-  JS_DefineProperty(cx, confobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
+  JS_DefineProperty(cx, pobj, "URIRouting", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableURIRoute, JSPROP_PERMANENT);
   jsp->jsp_enable_uri_routing = 1;
 
-  JS_DefineProperty(cx, confobj, "search", BOOLEAN_TO_JSVAL(1),
+  JS_DefineProperty(cx, pobj, "search", BOOLEAN_TO_JSVAL(1),
 		    NULL, jsp_setEnableSearch, JSPROP_PERMANENT);
   jsp->jsp_enable_search = 1;
+
+  jsp->jsp_protect_object = 1;
 
   s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
   free(sbuf);

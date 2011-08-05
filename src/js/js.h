@@ -31,6 +31,8 @@ typedef struct js_plugin {
 
   struct fa_handle *jsp_ref;
 
+  int jsp_protect_object;
+
 } js_plugin_t;
 
 JSContext *js_newctx(JSErrorReporter er);
