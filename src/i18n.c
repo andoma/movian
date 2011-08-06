@@ -499,6 +499,8 @@ nls_init(prop_t *parent, htsmsg_t *store)
     return;
   }
 
+  fa_dir_sort(fd);
+
   x = settings_create_multiopt(parent, "language", _p("Language"),
 			       set_language, NULL);
 
