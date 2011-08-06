@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer:
+maintainer: 
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -32,6 +32,7 @@ id: Off
 msg: Desligado
 
 id: On
+# Missing translation
 msg: 
 
 #
@@ -326,6 +327,7 @@ msg: Procurar utilizando o locatedb do Unix
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
+# Missing translation
 msg: 
 
 #
@@ -335,6 +337,7 @@ id: Language
 msg: Idioma
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
 msg: 
 
 id: Preferred languages

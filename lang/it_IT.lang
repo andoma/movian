@@ -131,7 +131,7 @@ id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
 
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/mono/popups/message.view
 #
 id: Cancel
 msg: Annulla
@@ -139,6 +139,9 @@ msg: Annulla
 id: OK
 msg: OK
 
+#
+# ./glwthemes/mono/popups/auth.view
+#
 id: Password
 msg: Password
 
@@ -149,7 +152,7 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato

@@ -326,6 +326,7 @@ msg: Suchen per Unix locatedb
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
+# Missing translation
 msg: 
 
 #
@@ -335,6 +336,7 @@ id: Language
 msg: Sprache
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
 msg: 
 
 id: Preferred languages

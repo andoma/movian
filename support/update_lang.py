@@ -94,8 +94,9 @@ for path in sys.argv[2:]:
         if key in in_strings:
             print >>outfile, 'msg: %s' % in_strings[key]
         else:
-            print >>outfile, 'msg: '
             print " ! Missing translation for %s" % key
+            print >>outfile, "# Missing translation"
+            print >>outfile, 'msg: '
 
         print >>outfile
 
