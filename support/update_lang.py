@@ -18,17 +18,21 @@ def buildphrases(rootpath):
             if f.endswith(('.c', '.view', '.skin')):
                 scanfile(os.path.join(a[0], f), p)
 
-    return p
-
-
-
+    # invert dict to use first source as key and value is list of phrases
+    phrases = {}
+    for phrase, sources in p.iteritems():
+      phrases.setdefault(sorted(sources)[0], []).append(phrase)
+    # sort phrases for each source
+    for source in phrases:
+      phrases[source].sort()
+    
+    return phrases
 
 if len(sys.argv) < 3:
     print "Usage: %s rootpath <langfile> [<langfile...>]" % sys.argv[0]
     sys.exit(1)
 
-phraselist = [(k, v) for k,v in buildphrases(sys.argv[1]).iteritems()]
-
+phrases = buildphrases(sys.argv[1])
 
 for path in sys.argv[2:]:
 
@@ -39,7 +43,7 @@ for path in sys.argv[2:]:
     language = 'Unknown'
     native = 'Unknown'
 
-    in_strings = {}
+    in_phrases = {}
     if os.path.isfile(path):
         f = open(path)
 
@@ -64,7 +68,7 @@ for path in sys.argv[2:]:
                 mid = o.group(2)
 
             if o.group(1) == 'msg' and len(o.group(2)) > 0:
-                in_strings[mid] = o.group(2)
+                in_phrases[mid] = o.group(2)
 
         f.close()
 
@@ -78,26 +82,22 @@ for path in sys.argv[2:]:
     print >>outfile, 'maintainer: %s' % maintainer
 
     print "Processing %s (%s / %s) maintained by %s" % \
-        (path, language, native, maintainer)
+        (path, language, native, maintainer)  
 
-    for key, sources in sorted(phraselist, key=lambda (w, sources): '%s %s' % (sorted(sources)[0], w)):
-        source = sources[0]
+    for source in sorted(phrases):
+        print >>outfile, '#'
+        print >>outfile, '# %s' % source
+        print >>outfile, '#'
 
-        if source != last: 
-            last = source
-            print >>outfile, '#'
-            print >>outfile, '# %s' % last
-            print >>outfile, '#'
+        for phrase in phrases[source]:
+            print >>outfile, 'id: %s' % phrase
+            if phrase in in_phrases:
+                print >>outfile, 'msg: %s' % in_phrases[phrase]
+            else:
+		print >>outfile, "# Missing translation"
+                print >>outfile, 'msg: '
+                print " ! Missing translation for %s" % phrase
 
-        print >>outfile, 'id: %s' % key
-
-        if key in in_strings:
-            print >>outfile, 'msg: %s' % in_strings[key]
-        else:
-            print " ! Missing translation for %s" % key
-            print >>outfile, "# Missing translation"
-            print >>outfile, 'msg: '
-
-        print >>outfile
+            print >>outfile
 
     outfile.close()
