@@ -94,7 +94,7 @@ for path in sys.argv[2:]:
             if phrase in in_phrases:
                 print >>outfile, 'msg: %s' % in_phrases[phrase]
             else:
-		print >>outfile, "# Missing translation"
+                print >>outfile, "# Missing translation"
                 print >>outfile, 'msg: '
                 print " ! Missing translation for %s" % phrase
 
