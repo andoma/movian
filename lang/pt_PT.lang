@@ -51,7 +51,7 @@ msg: Informações de visualização
 # ./glwthemes/mono/sysinfo.view
 #
 id: Framerate: %.2f Hz
-msg: Framerate %.2f Hz
+msg: Framerate: %.2f Hz
 
 #
 # ./glwthemes/mono/pages/about.view
