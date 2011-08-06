@@ -473,6 +473,47 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 /**
  *
  */
+static int 
+fa_dir_sort_compar(const void *A, const void *B)
+{
+  const fa_dir_entry_t *a = *(fa_dir_entry_t * const *)A;
+  const fa_dir_entry_t *b = *(fa_dir_entry_t * const *)B;
+
+  return strcasecmp(a->fde_filename, b->fde_filename);
+}
+
+
+/**
+ *
+ */
+void
+fa_dir_sort(fa_dir_t *fd)
+{
+  fa_dir_entry_t **v;
+  fa_dir_entry_t *fde;
+  int i = 0;
+
+  if(fd->fd_count == 0)
+    return;
+
+  v = malloc(fd->fd_count * sizeof(fa_dir_entry_t *));
+
+  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+    v[i++] = fde;
+
+  qsort(v, fd->fd_count, sizeof(fa_dir_entry_t *), fa_dir_sort_compar);
+
+  TAILQ_INIT(&fd->fd_entries);
+  for(i = 0; i < fd->fd_count; i++)
+    TAILQ_INSERT_TAIL(&fd->fd_entries, v[i], fde_link);
+  
+  free(v);
+}
+
+
+/**
+ *
+ */
 int
 fa_dir_entry_stat(fa_dir_entry_t *fde)
 {
