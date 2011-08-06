@@ -327,8 +327,7 @@ msg: Procurar utilizando o locatedb do Unix
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-# Missing translation
-msg: 
+msg: Procurar utilizando o spotlight
 
 #
 # ./src/i18n.c
