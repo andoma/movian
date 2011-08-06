@@ -1,56 +1,56 @@
-language: Portuguese
-native: Português
-maintainer:
+language: Spanish
+native: Spanish
+maintainer: 
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Configurações de áudio
+msg: Configuracion de audio
 
 id: Languages
 msg: Idiomas
 
 id: Settings
-msg: Configurações
+msg: Configuracion
 
 id: Subtitle settings
-msg: Configurações de legendas
+msg: Configuracion de subtitulos
 
 id: Video settings
-msg: Configurações de vídeo
+msg: Confuguracion de video
 
 #
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Adicionado por: %s
+msg: A�adido por: %s
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Desligado
+msg: Off
 
 id: On
-msg: 
+msg: On
 
 #
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Memória RAM disponível: %d kB
+msg: Disponibilidad de la RAM: %d kB
 
 id: Detected CPUs: %d
-msg: CPUs detetados: %d
+msg: CPUs detectadas: %d
 
 id: Display info
-msg: Informações de visualização
+msg: Pantalla de informaci�n
 
 #
 # ./glwthemes/mono/sysinfo.view
 #
 id: Framerate: %.2f Hz
-msg: Framerate %.2f Hz
+msg: Framerate: %.2f Hz
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -65,70 +65,70 @@ id: Renderer: %s
 msg: Renderer: %s
 
 id: System info
-msg: Informações de sistema
+msg: Informacion del sistema
 
 id: Total system RAM: %d kB
-msg: Total de memória RAM: %d kB
+msg: Total de memoria RAM: %d kB
 
 id: Version: %s
-msg: Versão: %s
+msg: Version: %s
 
 id: Width: %d px
-msg: Largura: %d px
+msg: Anchura: %d px
 
 id: Windowmanager: %s
-msg: Gestor de janelas: %s
+msg: Windowmanager: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: Sobre
+msg: Acerca de
 
 #
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Início
+msg: Inicio
 
 #
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Não foi possível abrir o recurso
+msg: Imposible abrir el recurso
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Erro ao carregar página
+msg: Error de carga de la pagina
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Lista de reprodução
+msg: Playqueue
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
-msg: Capítulo %d / %d
+msg: Capitulo %d / %d
 
 id: Title %d / %d
-msg: Título %d / %d
+msg: Titulo %d / %d
 
 #
 # ./glwthemes/mono/playdecks/tracks.view
 #
 id: Track %d / %d
-msg: Faixa %d / %d
+msg: Pista %d / %d
 
 #
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: O CPU é muito lento para descodificar este vídeo
+msg: CPU es demasiado lenta para decodificar este video
 
 #
 # ./glwthemes/mono/popups/message.view
@@ -143,190 +143,190 @@ msg: OK
 # ./glwthemes/mono/popups/auth.view
 #
 id: Password
-msg: Palavra-passe
+msg: Password
 
 id: Remember me
-msg: Lembrar-me
+msg: Recuerdame
 
 id: Username
-msg: Nome do utilizador
+msg: Nombre de usuario
 
 #
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Nenhum media carregado
+msg: Ningun medio cargado
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
 #
 id: Delete
-msg: Eliminar
+msg: Borrar
 
 id: Enqueue
-msg: Adicionar à lista
+msg: Enqueue
 
 #
 # ./glwthemes/mono/sysinfo.view
 #
 id: Audio output
-msg: Saída de áudio
+msg: Salida de audio
 
 id: CPUs
 msg: CPUs
 
 id: GPU & Display
-msg: GPU & Visualização
+msg: GPU & Display
 
-id: GPU Core temperature: %d / %d °
-msg: Temperatura do núcleo do GPU: %d / %d °
+id: GPU Core temperature: %d / %d �
+msg: Temperatura GPU Core: %d / %d �
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Ajustar a tonalidade do fundo dependendo da altura do dia
+msg: Ajustar un matiz de fondo basandose en la hora del dia
 
 id: Audio muted
-msg: Sem áudio
+msg: Silenciar audio
 
 id: Fancy UI animations
-msg: Animações do IU
+msg: Animaciones de interfaz de usuario
 
 id: Master volume: %d dB
-msg: Volume principal: %d dB
+msg: Volumen maestro: %d dB
 
 id: Starwars scroller tilt
-msg: Inclinação do scroller Starwars
+msg: Inclinacion Starwars-scroller
 
 id: Top bar navigation buttons
-msg: Botões de navegação na barra superior
+msg: Ir al inicio de la barra de navegacion
 
 #
 # ./src/api/opensubtitles.c
 #
 id: Settings for opensubtitles.org
-msg: Configurações para o opensubtitles.org
+msg: Opciones de opensubtitles.org
 
 id: Use opensubtitles.org
-msg: Utilizar o opensubtitles.org
+msg: Usar opensubtitles.org
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Atraso de sincronização de áudio/vídeo
+msg: Sincronizar retraso de Audio/Video
 
 id: Current output device
-msg: Dispositivo de saída atual
+msg: Dispositivo de salida actual
 
 id: Force stereo downmix
-msg: Forçar stereo downmix
+msg: Forzar Stereo-Downmix
 
 id: Phantom LFE
-msg: LFE fantasma
+msg: Phantom-LFE
 
 id: Phantom center
-msg: Center fantasma
+msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Selecionar o dispositivo de saída de áudio e configurações relacionadas
+msg: Seleccionar dispositivo de salida de audio y su configuracion
 
 id: Small front speakers
-msg: Pequenos altifalantes frontais
+msg: Peque�os altavoces delanteros
 
 id: Swap LFE+center with surround
-msg: Trocar LFE+center com surround
+msg: Swap LFE+center con surround
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: URL de CD inválido
+msg: URL de CD invalida
 
 id: Invalid CD track
-msg: Faixa de CD inválida
+msg: Pista de CD Invalida
 
 id: Unable to open CD
-msg: Não foi possível abrir o CD
+msg: Imposible abrir CD
 
 #
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: URL de HTSP inválido
+msg: HTSP URL Invalida
 
 #
 # ./src/backend/search.c
 #
 id: Search
-msg: Procurar
+msg: Buscar
 
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Login automático quando o Showtime iniciar
+msg: Logearse automaticamente cuando inicie Showtime
 
 id: Enable Spotify
-msg: Ativar Spotify
+msg: Activar Spotify
 
 id: Friends
 msg: Amigos
 
 id: High bitrate
-msg: Alta bitrate
+msg: Bitrate Alto
 
 id: Inbox
-msg: Caixa de entrada
+msg: Bandeja de entrada
 
 id: New albums on Spotify
-msg: Novos albuns no Spotify
+msg: Nuevos albums en Spotify
 
 id: New releases
-msg: Novas releases
+msg: Nuevo lanzamiento
 
 id: Playlists
-msg: Listas de reprodução
+msg: Listas de reproduccion
 
 id: Relogin (switch user)
-msg: Relogin (trocar utilizador)
+msg: Relogin (cambiar de usuario)
 
 id: Search result
-msg: Resultado da pesquisa
+msg: Resultados de la busqueda
 
 id: Spotify friends
-msg: Amigos do Spotify
+msg: Amigos de Spotify
 
 id: Spotify music service
-msg: Serviço de música do Spotify
+msg: Servicio de musica de Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de música. Para usar o Spotify no Showtime você precisa de uma conta Premium Spotify.\nPara mais informações sobre o Spotify, visite http://www.spotify.com/\n\nYou e será requisitado o seu nome de utilizador e palavra-passe quando tentar aceder a qualquer recurso do Spotify no Showtime.
+msg: Spotify ofrece acceso legal y gratuito a una enorme biblioteca de m�sica. Para utilizar Spotify en Showtime necesita una cuenta de Spotify Preemium.\nPara mas informaci�n sobre Spotify, visite http://www.spotify.com/\n\nSe le pedir� su nombre de usuario y la contrase�a de Spotify la primera vez que acceda a cualquiera de las caracter�sticas de Spotify en Showtime.
 
 id: Spotify playlists
-msg: Listas de reprodução do Spotify
+msg: Lista de reproduccion de Spotify
 
 id: Starred
-msg: Estrelado
+msg: Starred
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
-msg: Bookmarks
+msg: Marcadores
 
 #
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Procurar utilizando o locatedb do Unix
+msg: Buscar usando Unix locatedb
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: 
+msg: Buscar usando spotlight
 
 #
 # ./src/i18n.c
@@ -338,91 +338,91 @@ id: Language codes should be configured as three character ISO codes, example (e
 msg: 
 
 id: Preferred languages
-msg: Idiomas preferidos
+msg: Idioma preferido
 
 id: Primary audio language code
-msg: Código do idioma de áudio primário
+msg: Codigo del lenguaje primario
 
 id: Primary subtitle language code
-msg: Código do idioma de legendas primário
+msg: Codigo del lenguaje primario de los subtitulos
 
 id: SRT character set
-msg: Conjunto de caracteres SRT
+msg: Conjunto de caracteres de los SRT
 
 id: Secondary audio language code
-msg: Código do idioma de áudio secundário
+msg: Idioma secundario de audio
 
 id: Secondary subtitle language code
-msg: Código do idioma de legendas secundário
+msg: Idioma secundario de los subtitulos
 
 id: Tertiary audio language code
-msg: Código do idioma de áudio terciário
+msg: Tercer idioma de audio
 
 id: Tertiary subtitle language code
-msg: Código do idioma de legendas terciário
+msg: Tercer idioma de los subtitulos
 
 #
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Ligar/Desligar TV automaticamente
+msg: On/Off automatico de la TV
 
 id: Input source
-msg: Fonte de entrada
+msg: Fuente de entrada
 
 id: LG Television set
-msg: Aparelho de TV LG
+msg: LG Television set
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Configurar o mapeamento do teclado e as teclas do controle remoto
+msg: Configurar mapeo del teclado y claves de control remoto
 
 id: Keymapper
-msg: Mapeamento do teclado
+msg: Keymapper
 
 #
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Alinhar as legendas no quadro de vídeo
+msg: Alinear los subt�tulos en el marco del v�deo
 
 id: Audio delay
-msg: Atraso de áudio
+msg: Retraso de audio
 
 id: Subtitle delay
-msg: Atraso de legendas
+msg: Retraso de los subtitulos
 
 id: Subtitle scaling
-msg: Redimensionamento de legendas
+msg: Escalar subtitulos
 
 id: Video zoom
-msg: Zoom de vídeo
+msg: Zoom de Video
 
 #
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: Nenhum handler para o URL
+msg: Ningun controlador para URL
 
 #
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Modo de espera automático
+msg: Standby automatico
 
 id: Run control
-msg: Controle de execução
+msg: Run control
 
 #
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: Ativo
+msg: Activado
 
 id: Name
-msg: Nome
+msg: Name
 
 id: Type
 msg: Tipo
@@ -431,125 +431,125 @@ msg: Tipo
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Aplicações e plugins instalados
+msg: Aplicaciones y plugins instalados
 
 id: Discovered media sources
-msg: Fontes de media descobertos
+msg: Fuentes de medios encontradas
 
 id: Global settings
-msg: Definições globais
+msg: Configuracion global
 
 #
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Visualização e interface do utilizador
+msg: Pantalla e interfaz de usuario
 
 id: Horizontal underscan
-msg: Underscan horizontal
+msg: Horizontal underscan
 
 id: Screensaver delay
-msg: Atraso da proteção de ecrã
+msg: Retraso del protecctor de pantalla
 
 id: Userinterface size
-msg: Tamanho do interface do utilizador
+msg: Tama�o de la interfaz de usuario
 
 id: Vertical underscan
-msg: Underscan vertical
+msg: Vertical underscan
 
 #
 # ./src/ui/glw/glw_x11.c
 #
 id: Fullscreen mode
-msg: Modo de ecrã inteiro
+msg: Modo Pantalla completa
 
 id: Map mouse wheel to up/down
-msg: Mapear a roda do rato para cima/baixo
+msg: Mapeo de la rueda del raton Arriba/Abajo
 
 #
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Ativo no ecrã de início
+msg: Activado en la pantalla de inicio
 
 #
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
-msg: O dispositivo não foi encontrado
+msg: Dispositivo no encontrado
 
 id: Malformed URI after device
-msg: URI mal formado depois do dispositivo
+msg: URI mal formado despues del dispositivo
 
 id: Malformed URI after service
-msg: URI mal formado depois do serviço
+msg: URI mal formado despues del servicio
 
 id: Service not found
-msg: O serviço não foi encontrado
+msg: Servicio no encontrado
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Tentar sempre selecionar as legendas
+msg: Siempre tratar de seleccionar un subtitulo
 
 id: Auto
-msg: Automático
+msg: Auto
 
 id: Center
 msg: Centrado
 
 id: Color
-msg: Cor
+msg: Color
 
 id: Enable VDPAU
-msg: Ativar VDPAU
+msg: Activar VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Forçar as legendas a residerem no quadro de vídeo
+msg: Forzar subtitulos a residir en em marco de video
 
 id: Generic settings for video subtitles
-msg: Definições genéricas para legendas de vídeo
+msg: Opciones genericas para los subtitulos de video
 
 id: Ignore embedded styling
-msg: Ignorar estilos embutidos
+msg: Ignorar el estilo incrustado
 
 id: Left
-msg: Esquerda
+msg: Izquierda
 
 id: Outline color
-msg: Cor do contorno
+msg: Color de linea exterior
 
 id: Outline size
-msg: Tamanho do contorno
+msg: Tama�o de linea exterior
 
 id: Right
-msg: Direita
+msg: Derecha
 
 id: Shadow color
-msg: Cor da sombra
+msg: Color de sombra
 
 id: Shadow offset
-msg: Deslocamento da sombra
+msg: Desplazamiento de la sombra
 
 id: Stretch video to widescreen
-msg: Esticar vídeo para widescreen
+msg: Ajustar video a pantalla completa
 
 id: Subtitle position
-msg: Posicionamento das legendas
+msg: Posicion de los subtitulos
 
 id: Subtitle size
-msg: Tamanho das legendas
+msg: Tama�o de los subtitulos
 
 id: Subtitle styling
-msg: Estilo das legendas
+msg: Estilo de los subtitulos
 
 id: Subtitles
-msg: Legendas
+msg: Subtitulos
 
 id: Video acceleration and display behaviour
-msg: Acelaração de vídeo e comportamento da visualização
+msg: Aceleracion de video y display behaviour
 
 id: Video playback
-msg: Reprodução de vídeo
+msg: Reproduccion de video
 
