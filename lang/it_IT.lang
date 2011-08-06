@@ -1,0 +1,552 @@
+language: Italian
+native: Italiano
+maintainer: Red Squirrel <iam@redsquirrel.tk>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Impostazioni Audio
+
+id: Languages
+msg: Linguaggio
+
+id: Settings
+msg: Impostazioni
+
+id: Subtitle settings
+msg: Impostazioni dei sottotitoli
+
+id: Video settings
+msg: Impostazioni video
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Aggiunto da: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Disattiva
+
+id: On
+msg: Attiva
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: RAM disponibile: %d kB
+
+id: Detected CPUs: %d
+msg: CPU rilevate: %d
+
+id: Display info
+msg: Informazioni di visualizzazione
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Framerate: %.2f Hz
+msg: Framerate: %.2f Hz
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Altezza: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Informazioni di sistema
+
+id: Total system RAM: %d kB
+msg: RAM totale: %d kB
+
+id: Version: %s
+msg: Versione: %s
+
+id: Width: %d px
+msg: Larghezza: %d px
+
+id: Windowmanager: %s
+msg: Gestore finestre: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Informazioni
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Home
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Impossibile aprire la risorsa
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Errore di caricamento pagina
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Coda di riproduzione
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Capitolo %d / %d
+
+id: Title %d / %d
+msg: Titolo %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Traccia %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU troppo lenta per poter decodificare questo video
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
+
+id: Password
+msg: Password
+
+id: Remember me
+msg: Ricordami
+
+id: Username
+msg: Nome Utente
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: No media loaded
+msg: Nessun media caricato
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Cancella
+
+id: Enqueue
+msg: Metti in coda
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Uscita audio
+
+id: CPUs
+msg: CPU
+
+id: GPU & Display
+msg: GPU e visualizzazione
+
+id: GPU Core temperature: %d / %d °
+msg: Temperatura GPU: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Modifica lo sfondo a seconda dell'ora 
+
+id: Audio muted
+msg: Audio silenziato
+
+id: Fancy UI animations
+msg: Animazioni dell'interfaccia
+
+id: Master volume: %d dB
+msg: Volume principale: %d dB
+
+id: Starwars scroller tilt
+msg: Inclinazione interfaccia in stile StarWars
+
+id: Top bar navigation buttons
+msg: Pulsanti nella barra di navigazione in alto
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Impostazioni per opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Utilizza opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Ritardo di sincronizzazione Audio/Video
+
+id: Current output device
+msg: Periferica d'uscita attuale
+
+id: Force stereo downmix
+msg: Forza stereo downmix
+
+id: Phantom LFE
+msg: Phantom LFE
+
+id: Phantom center
+msg: Phantom center
+
+id: Select audio output device and related configurations
+msg: Seleziona periferica d'uscita audio e relative impostazioni
+
+id: Small front speakers
+msg: Altoparlanti piccoli frontali
+
+id: Swap LFE+center with surround
+msg: Scambia LFE+center con surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: URL CD non valido
+
+id: Invalid CD track
+msg: Traccia CD non valida
+
+id: Unable to open CD
+msg: Impossibile aprire il CD
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: URL HTSP non valido
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Cerca
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Login automatico all'avvio di Showtime
+
+id: Enable Spotify
+msg: Attiva Spotify
+
+id: Friends
+msg: Amici
+
+id: High bitrate
+msg: Alto bitrate
+
+id: Inbox
+msg: Posta in arrivo
+
+id: New albums on Spotify
+msg: Nuovi album su Spotify
+
+id: New releases
+msg: Nuovi rilasci
+
+id: Playlists
+msg: Playlist
+
+id: Relogin (switch user)
+msg: Ripeti login (cambia utente)
+
+id: Search result
+msg: Risultati della ricerca
+
+id: Spotify friends
+msg: Amici su Spotify
+
+id: Spotify music service
+msg: Servizio musicale di Spotify
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify ti offre un accesso libero e legale a un'ingente raccolta di musica. Per usare Spotify in Showtime necessiti di un account Premium su Spotify.\nPer maggiori informazioni su Spotify visita http://www.spotify.com/\n\nTi verranno chiesti i tuoi dati login (nome utente e password) su Spotify quando accedi per la prima volta a qualsiasi funzione di Spotify in Showtime.
+
+id: Spotify playlists
+msg: Spotify playlist
+
+id: Starred
+msg: Speciali
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Segnalibri
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Cerca usando il locatedb Unix
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Cerca usando spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Linguaggio
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: I codici di linguaggio vanno impostati usando i corrispondenti 3 caratteri ISO.\nAd esempio ENG, SWE, FRA, ITA...
+
+id: Preferred languages
+msg: Imposta i linguaggi preferiti
+
+id: Primary audio language code
+msg: Codice di linguaggio primario per l'audio
+
+id: Primary subtitle language code
+msg: Codice di linguaggio primario per i sottotitoli
+
+id: SRT character set
+msg: Set di caratteri per sottotitoli in formato SRT
+
+id: Secondary audio language code
+msg: Codice di linguaggio secondario per l'audio
+
+id: Secondary subtitle language code
+msg: Codice di linguaggio secondario per i sottotitoli
+
+id: Tertiary audio language code
+msg: Codice di linguaggio terziario per l'audio
+
+id: Tertiary subtitle language code
+msg: Codice di linguaggio terziario per i sottotitoli
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Controllo spegnimento automatico TV
+
+id: Input source
+msg: Sorgente di ingresso
+
+id: LG Television set
+msg: Apparato TV LG
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Configura mappatura tastiera e comandi remoti
+
+id: Keymapper
+msg: Mappatura tasti
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Allineare sottotitoli su frame video
+
+id: Audio delay
+msg: Ritardo audio
+
+id: Subtitle delay
+msg: Ritardo sottotitoli
+
+id: Subtitle scaling
+msg: Dimensione dei sottotitoli
+
+id: Video zoom
+msg: Zoom video
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Nessun handler per URL
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Standby automatico
+
+id: Run control
+msg: Controllo d'avvio
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Attivo
+
+id: Name
+msg: Nome
+
+id: Type
+msg: Tipo
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Applicazioni e plugin installati
+
+id: Discovered media sources
+msg: Sorgenti media trovate
+
+id: Global settings
+msg: Impostazioni globali
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Schermo e interfaccia utente
+
+id: Horizontal underscan
+msg: Underscan orizzontale
+
+id: Screensaver delay
+msg: Attesa prima dello screensaver
+
+id: Userinterface size
+msg: Dimensione interfaccia utente
+
+id: Vertical underscan
+msg: Underscan verticale
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Modalità a schermo pieno
+
+id: Map mouse wheel to up/down
+msg: Usa rotellina del mouse per scorrere su/giù
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Attivo nella schermata principale
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Periferica non trovata
+
+id: Malformed URI after device
+msg: URI non corretto dopo la periferica
+
+id: Malformed URI after service
+msg: URI non corretto dopo il servizio
+
+id: Service not found
+msg: Servizio non trovato
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Prova sempre a selezionare un file di sottotitoli
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Al centro
+
+id: Color
+msg: Colore
+
+id: Enable VDPAU
+msg: Attiva VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Forza i sottotitoli a rimanere sempre in primo piano
+
+id: Generic settings for video subtitles
+msg: Impostazioni generiche per i sottotitoli
+
+id: Ignore embedded styling
+msg: Ignora i codici di stile incorporati
+
+id: Left
+msg: Sinistra
+
+id: Outline color
+msg: Colore contorni
+
+id: Outline size
+msg: Dimensioni contorni
+
+id: Right
+msg: Destra
+
+id: Shadow color
+msg: Colore ombra
+
+id: Shadow offset
+msg: Offset ombra
+
+id: Stretch video to widescreen
+msg: Adatta video a widescreen
+
+id: Subtitle position
+msg: Posizione sottotitoli
+
+id: Subtitle size
+msg: Dimensione sottotitoli
+
+id: Subtitle styling
+msg: Stile sottotitoli
+
+id: Subtitles
+msg: Sottotitoli
+
+id: Video acceleration and display behaviour
+msg: Accelerazione video e comportamento schermo
+
+id: Video playback
+msg: Riproduzione video
+
