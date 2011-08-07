@@ -36,20 +36,27 @@ phrases = buildphrases(sys.argv[1])
 
 for path in sys.argv[2:]:
 
+    linetrailer = '\n'
+
+    def emit(s):
+        outfile.write(s + linetrailer)
+
     if path.endswith('~'):
         continue
 
     maintainer = 'Unknown'
     language = 'Unknown'
     native = 'Unknown'
-
+    writebom = False
     in_phrases = {}
+
     if os.path.isfile(path):
         f = open(path)
 
         bom = f.read(3)
         if bom == '\xef\xbb\xbf':
             print "Skipping UTF-8 BOM"
+            writebom = True
         else:
             f.seek(0);
 
@@ -58,6 +65,10 @@ for path in sys.argv[2:]:
         entry = None
         
         for l in f:
+
+            if l.endswith('\r\n'):
+                linetrailer = '\r\n'
+
             l = l.rstrip('\n\r')
             o = re.match(R, l)
             if not o:
@@ -82,28 +93,30 @@ for path in sys.argv[2:]:
     last = None
 
     outfile = open(path, 'w')
+    if writebom:
+        outfile.write('\xef\xbb\xbf')
 
-    print >>outfile, 'language: %s' % language
-    print >>outfile, 'native: %s' % native
-    print >>outfile, 'maintainer: %s' % maintainer
+    emit('language: %s' % language)
+    emit('native: %s' % native)
+    emit('maintainer: %s' % maintainer)
 
     print "Processing %s (%s / %s) maintained by %s" % \
         (path, language, native, maintainer)  
 
     for source in sorted(phrases):
-        print >>outfile, '#'
-        print >>outfile, '# %s' % source
-        print >>outfile, '#'
+        emit('#')
+        emit('# %s' % source)
+        emit('#')
 
         for phrase in phrases[source]:
-            print >>outfile, 'id: %s' % phrase
+            emit('id: %s' % phrase)
             if phrase in in_phrases:
-                print >>outfile, 'msg: %s' % in_phrases[phrase]
+                emit('msg: %s' % in_phrases[phrase])
             else:
-                print >>outfile, "# Missing translation"
-                print >>outfile, 'msg: '
+                emit("# Missing translation")
+                emit('msg: ')
                 print " ! Missing translation for %s" % phrase
 
-            print >>outfile
+            emit('')
 
     outfile.close()
