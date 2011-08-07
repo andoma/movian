@@ -55,7 +55,6 @@ for path in sys.argv[2:]:
 
         bom = f.read(3)
         if bom == '\xef\xbb\xbf':
-            print "Skipping UTF-8 BOM"
             writebom = True
         else:
             f.seek(0);
