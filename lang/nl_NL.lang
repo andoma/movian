@@ -1,0 +1,548 @@
+language: Dutch
+native: Nederlands
+maintainer: GuardianSoul
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Geluidsinstellingen
+
+id: Languages
+msg: Talen
+
+id: Settings
+msg: Instellingen
+
+id: Subtitle settings
+msg: Ondertitelingsinstellingen
+
+id: Video settings
+msg: Video-instellingen
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Toegevoegd door: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Uit
+
+id: On
+msg: Aan
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: RAM-geheugen over: %d kB
+
+id: Detected CPUs: %d
+msg: Gedetecteerde CPU's: %d
+
+id: Display info
+msg: Weergaveinfo
+
+id: Framerate: %.2f Hz
+msg: Beeldfrequentie: %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Hoogte: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Systeeminformatie
+
+id: Total system RAM: %d kB
+msg: Totale RAM-geheugen: %d kB
+
+id: Version: %s
+msg: Versie: %s
+
+id: Width: %d px
+msg: Breedte: %d px
+
+id: Windowmanager: %s
+msg: Vensterbeheerder: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Info
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Home
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: De bron kon niet worden geopend
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Pagina-laadfout
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Afspeellijst
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Hoofdstuk %d / %d
+
+id: Title %d / %d
+msg: Titel %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Nummer %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU is te langzaam om deze video te decoderen
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Annuleren
+
+id: OK
+msg: Oké
+
+id: Password
+msg: Wachtwoord
+
+id: Remember me
+msg: Onthoud mij
+
+id: Username
+msg: Gebruikersnaam
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Geen media geladen
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Verwijderen
+
+id: Enqueue
+msg: Toevoegen
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Geluidsuitvoer
+
+id: CPUs
+msg: CPU's
+
+id: GPU & Display
+msg: GPU & Weergave
+
+id: GPU Core temperature: %d / %d °
+msg: GPU-kerntemperatuur: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Achtergrondtint aanpassen gebasseerd op tijd
+
+id: Audio muted
+msg: Geluid gedempt
+
+id: Fancy UI animations
+msg: Mooie UI-effecten
+
+id: Master volume: %d dB
+msg: Hoofdvolume: %d dB
+
+id: Starwars scroller tilt
+msg: Kanteling Starwars-scroller
+
+id: Top bar navigation buttons
+msg: Navigatieknoppen bovenste balk
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Instellingen voor opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Opensubtitles.org gebruiken
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Vertraging audio/video synchronisatie
+
+id: Current output device
+msg: Huidige uitvoerapparaat
+
+id: Force stereo downmix
+msg: Stereo-downmix forceren
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-center
+
+id: Select audio output device and related configurations
+msg: Geluidsuitvoerapparaat en gerelateerde configuraties selecteren
+
+id: Small front speakers
+msg: Kleine voorluidsprekers
+
+id: Swap LFE+center with surround
+msg: LFE+center wisselen met surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Ongeldige CD-URL
+
+id: Invalid CD track
+msg: Ongeldig CD-nummer
+
+id: Unable to open CD
+msg: Kan de CD niet openen
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Ongeldige HTSP-URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Zoeken
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automatisch inloggen als Showtime opstart
+
+id: Enable Spotify
+msg: Spotify inschakelen
+
+id: Friends
+msg: Vrienden
+
+id: High bitrate
+msg: Hoge bitsnelheid
+
+id: Inbox
+msg: Postvak IN
+
+id: New albums on Spotify
+msg: Nieuwe albums op Spotify
+
+id: New releases
+msg: Nieuwe uitgaves
+
+id: Playlists
+msg: Afspeellijsten
+
+id: Relogin (switch user)
+msg: Opnieuw inloggen (gebruiker wisselen)
+
+id: Search result
+msg: Zoekresultaat
+
+id: Spotify friends
+msg: Spotify-vrienden
+
+id: Spotify music service
+msg: Spotify-muziekservice
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify biedt u een legale en gratis toegang tot een enorme muziekbibliotheek. Om Spotify te kunnen gebruiken heeft u een Spotify Premium-account nodig.\nGa voor meer informatie over Spotify naar http://www.spotify.com/\n\nAls u de Spotify-functies in Showtime voor het eerst gebruikt, zal er gevraagd worden naar uw Spotify-gebruikersnaam en -wachtwoord.
+
+id: Spotify playlists
+msg: Spotify-afspeellijsten
+
+id: Starred
+msg: In de schijnwerpers
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Bladwijzers
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Zoeken via Unix-locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+# Missing translation
+msg: 
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Taal
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
+msg: 
+
+id: Preferred languages
+msg: Voorkeurstalen
+
+id: Primary audio language code
+msg: Primaire audiotaal
+
+id: Primary subtitle language code
+msg: Primaire ontertitelingstaal
+
+id: SRT character set
+msg: SRT-tekenset
+
+id: Secondary audio language code
+msg: Secondaire audiotaal
+
+id: Secondary subtitle language code
+msg: Secondaire ondertitelingstaal
+
+id: Tertiary audio language code
+msg: Tertiaire audiotaal
+
+id: Tertiary subtitle language code
+msg: Tertiaire audiotaal
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: TV automatisch aan- en uitzetten
+
+id: Input source
+msg: Invoerbron
+
+id: LG Television set
+msg: LG TV-apparaat
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Toetsenbordindeling en afstandbedieningstoetsen configureren
+
+id: Keymapper
+msg: Toetsindeling
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Ondertiteling op videoframe aanpassen
+
+id: Audio delay
+msg: Geluidsvertaging
+
+id: Subtitle delay
+msg: Ondertitelingsvertaging
+
+id: Subtitle scaling
+msg: Ondertitelingsgrootte
+
+id: Video zoom
+msg: Video-vergroting
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Geen handler voor URL
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatische slaapstand
+
+id: Run control
+msg: Uitvoercontrole
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Ingeschakeld
+
+id: Name
+msg: Naam
+
+id: Type
+msg: Type
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Applicaties en geïnstalleerde plugins
+
+id: Discovered media sources
+msg: Gevonden mediabronnen
+
+id: Global settings
+msg: Algemene instellingen
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Weergave en gebruikersinterface
+
+id: Horizontal underscan
+msg: Horizontale underscan
+
+id: Screensaver delay
+msg: Vertraging schermbeveiliging
+
+id: Userinterface size
+msg: Grootte gebruikersinterface
+
+id: Vertical underscan
+msg: Verticale underscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Volledig scherm
+
+id: Map mouse wheel to up/down
+msg: Muiswiel naar boven/onder indelen
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Ingeschakeld op beginscherm
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Apparaat niet gevonden
+
+id: Malformed URI after device
+msg: Onjuiste URI na-apparaat
+
+id: Malformed URI after service
+msg: Onjuiste URI na-service
+
+id: Service not found
+msg: Service niet gevonden
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Altijd proberen om een ondertiteling te selecteren
+
+id: Auto
+msg: Automatisch
+
+id: Center
+msg: Centreren
+
+id: Color
+msg: Kleur
+
+id: Enable VDPAU
+msg: VDPAU inschakelen
+
+id: Force subtitles to reside on video frame
+msg: Ondertitels forceren om op de videoframe te blijven
+
+id: Generic settings for video subtitles
+msg: Algemene instellingen voor video-ondertitels
+
+id: Ignore embedded styling
+msg: Geïntegreerde stijl nergeren
+
+id: Left
+msg: Links
+
+id: Outline color
+msg: Omtrekkleur
+
+id: Outline size
+msg: Omtrekgrootte
+
+id: Right
+msg: Rechts
+
+id: Shadow color
+msg: Schaduwkleur
+
+id: Shadow offset
+msg: Schaduwafstand
+
+id: Stretch video to widescreen
+msg: Video op widescreen uitrekken
+
+id: Subtitle position
+msg: Ondertitelingspositie
+
+id: Subtitle size
+msg: Ondertitelingsgrootte
+
+id: Subtitle styling
+msg: Ondertitelingsstijl
+
+id: Subtitles
+msg: Ondertiteling
+
+id: Video acceleration and display behaviour
+msg: Videoversnelling en weergavegedrag
+
+id: Video playback
+msg: Videoweergave
+
