@@ -46,15 +46,9 @@ msg: Gefundene CPUs: %d
 id: Display info
 msg: Anzeige Info
 
-#
-# ./glwthemes/mono/sysinfo.view
-#
 id: Framerate: %.2f Hz
 msg: Bildrate %.2f Hz
 
-#
-# ./glwthemes/mono/pages/about.view
-#
 id: GPU: %s
 msg: GPU: %s
 
@@ -131,7 +125,7 @@ id: CPU is too slow to decode this video
 msg: CPU ist zu langsam um das Video zu dekodieren
 
 #
-# ./glwthemes/mono/popups/message.view
+# ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
 msg: Abbrechen
@@ -139,9 +133,6 @@ msg: Abbrechen
 id: OK
 msg: OK
 
-#
-# ./glwthemes/mono/popups/auth.view
-#
 id: Password
 msg: Passwort
 
@@ -326,8 +317,7 @@ msg: Suchen per Unix locatedb
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-# Missing translation
-msg: 
+msg: Suchen per spotlight
 
 #
 # ./src/i18n.c
