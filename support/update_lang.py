@@ -47,12 +47,18 @@ for path in sys.argv[2:]:
     if os.path.isfile(path):
         f = open(path)
 
+        bom = f.read(3)
+        if bom == '\xef\xbb\xbf':
+            print "Skipping UTF-8 BOM"
+        else:
+            f.seek(0);
+
         R = re.compile('([^:]*): *(.*)')
         
         entry = None
         
         for l in f:
-            l = l.rstrip('\n')
+            l = l.rstrip('\n\r')
             o = re.match(R, l)
             if not o:
                 continue
