@@ -46,15 +46,9 @@ msg: CPU rilevate: %d
 id: Display info
 msg: Informazioni di visualizzazione
 
-#
-# ./glwthemes/mono/sysinfo.view
-#
 id: Framerate: %.2f Hz
 msg: Framerate: %.2f Hz
 
-#
-# ./glwthemes/mono/pages/about.view
-#
 id: GPU: %s
 msg: GPU: %s
 
@@ -131,7 +125,7 @@ id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
 
 #
-# ./glwthemes/mono/popups/message.view
+# ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
 msg: Annulla
@@ -139,9 +133,6 @@ msg: Annulla
 id: OK
 msg: OK
 
-#
-# ./glwthemes/mono/popups/auth.view
-#
 id: Password
 msg: Password
 

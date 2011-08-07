@@ -46,15 +46,9 @@ msg: Funna CPUer: %d
 id: Display info
 msg: Bildskärmsinformation
 
-#
-# ./glwthemes/mono/sysinfo.view
-#
 id: Framerate: %.2f Hz
 msg: Uppdateringsfrekvens %.2f Hz
 
-#
-# ./glwthemes/mono/pages/about.view
-#
 id: GPU: %s
 msg: GPU: %s
 
@@ -131,7 +125,7 @@ id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
 
 #
-# ./glwthemes/mono/popups/message.view
+# ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
 msg: Avbryt
@@ -139,9 +133,6 @@ msg: Avbryt
 id: OK
 msg: OK
 
-#
-# ./glwthemes/mono/popups/auth.view
-#
 id: Password
 msg: Lösenord
 
