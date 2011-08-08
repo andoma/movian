@@ -54,8 +54,8 @@ http_response_finalize(JSContext *cx, JSObject *obj)
  *
  */
 static JSBool
-http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
-		      jsval *argv, jsval *rval)
+http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
+		       jsval *argv, jsval *rval)
 {
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
   const char *r = jhr->data, *r2;
@@ -104,8 +104,8 @@ http_request_toString(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
-static JSFunctionSpec http_request_functions[] = {
-    JS_FS("toString",           http_request_toString,  0, 0, 0),
+static JSFunctionSpec http_response_functions[] = {
+    JS_FS("toString",           http_response_toString,  0, 0, 0),
     JS_FS_END
 };
 
@@ -256,7 +256,7 @@ js_http_request(JSContext *cx, jsval *rval,
   JS_SetPrivate(cx, robj, jhr);
   *rval = OBJECT_TO_JSVAL(robj);
 
-  JS_DefineFunctions(cx, robj, http_request_functions);
+  JS_DefineFunctions(cx, robj, http_response_functions);
 
   if(!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
