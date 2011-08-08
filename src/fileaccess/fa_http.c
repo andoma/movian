@@ -1300,7 +1300,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
 
   hts_mutex_unlock(&http_redirects_mutex);
 
-  ssl = !strcmp(proto, "https");
+  ssl = !strcmp(proto, "https") || !strcmp(proto, "webdavs");
   if(port < 0)
     port = ssl ? 443 : 80;
 
@@ -2187,13 +2187,16 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
       if(strcmp(rpath, ehref)) {
 	http_connection_t *hc = hf->hf_connection;
 
-	if(hc->hc_port != 80) {
-	  snprintf(path, URL_MAX, "webdav://%s:%d%s", 
-		   hc->hc_hostname, hc->hc_port, href);
-	} else {
-	  snprintf(path, URL_MAX, "webdav://%s%s", 
-		   hc->hc_hostname, href);
-	}
+        if(!hc->hc_ssl && hc->hc_port == 80)
+          snprintf(path, URL_MAX, "webdav://%s%s",
+                   hc->hc_hostname, href);
+        else if(hc->hc_ssl && hc->hc_port == 443)
+          snprintf(path, URL_MAX, "webdavs://%s%s",
+                   hc->hc_hostname, href);
+        else
+          snprintf(path, URL_MAX, "%s://%s:%d%s",
+                   hc->hc_ssl ? "webdavs" : "webdav", hc->hc_hostname,
+		   hc->hc_port, href);
 
 	if((q = strrchr(path, '/')) != NULL) {
 	  q++;
@@ -2438,6 +2441,23 @@ static fa_protocol_t fa_protocol_webdav = {
 };
 FAP_REGISTER(webdav);
 
+/**
+ *
+ */
+static fa_protocol_t fa_protocol_webdavs = {
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_name  = "webdavs",
+  .fap_scan  = dav_scandir,
+  .fap_open  = http_open,
+  .fap_close = http_close,
+  .fap_read  = http_read,
+  .fap_seek  = http_seek,
+  .fap_fsize = http_fsize,
+  .fap_stat  = dav_stat,
+  .fap_quickload = http_quickload,
+  .fap_get_last_component = http_get_last_component,
+};
+FAP_REGISTER(webdavs);
 
 /**
  *
