@@ -79,6 +79,9 @@ typedef struct js_event_handler {
  *
  */
 typedef struct js_model {
+
+  js_context_private_t jm_ctxpriv; // Must be first
+
   int jm_refcount;
 
   char **jm_args;

@@ -165,8 +165,7 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
  */
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
-		const char *url, JSObject *argobj, JSObject *postobj,
-		JSBool disable_auto_auth)
+		const char *url, JSObject *argobj, JSObject *postobj)
 {
   char **httpargs = NULL;
   int i;
@@ -219,7 +218,8 @@ js_http_request(JSContext *cx, jsval *rval,
 
   int flags = 0;
 
-  if(disable_auto_auth)
+  const js_context_private_t *jcp = JS_GetContextPrivate(cx);
+  if(jcp != NULL && jcp->jcp_flags & JCP_DISABLE_AUTH)
     flags |= HTTP_DISABLE_AUTH;
 
   struct http_header_list response_headers;
@@ -287,13 +287,11 @@ js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *url;
   JSObject *argobj = NULL;
-  JSBool disable_auto_auth = 0;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "s/ob", &url, &argobj,
-			  &disable_auto_auth))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &argobj))
     return JS_FALSE;
 
-  return js_http_request(cx, rval, url, argobj, NULL, disable_auto_auth);
+  return js_http_request(cx, rval, url, argobj, NULL);
 }
 
 /**
@@ -306,13 +304,11 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   JSObject *argobj = NULL;
   JSObject *postobj = NULL;
-  JSBool disable_auto_auth = 0;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "so/ob", &url, &postobj, &argobj,
-			  &disable_auto_auth))
+  if(!JS_ConvertArguments(cx, argc, argv, "so/o", &url, &postobj, &argobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, postobj, disable_auto_auth);
+  return js_http_request(cx, rval, url, argobj, postobj);
 }
 
 
@@ -520,6 +516,7 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
   void *mark;
   int argc, ret;
   JSObject *pobj;
+  js_context_private_t jcp = {0};
 
   LIST_FOREACH(jha, &js_http_auths, jha_global_link)
     if(!hts_regexec(&jha->jha_regex, url, 8, matches, 0))
@@ -529,6 +526,10 @@ js_http_auth_try(const char *url, struct http_auth_req *har)
     return 1;
 
   JSContext *cx = js_newctx(NULL);
+
+  jcp.jcp_flags = JCP_DISABLE_AUTH;
+  JS_SetContextPrivate(cx, &jcp);
+
   JS_BeginRequest(cx);
 
   pobj = JS_NewObject(cx, &http_auth_class, NULL, NULL);

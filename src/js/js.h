@@ -35,6 +35,18 @@ typedef struct js_plugin {
 
 } js_plugin_t;
 
+
+/**
+ * Whenever JS_SetContextPrivate() is used to point to something, this
+ * struct must be first in that
+ */
+typedef struct js_context_private {
+  int jcp_flags;
+
+#define JCP_DISABLE_AUTH 0x1
+
+} js_context_private_t;
+
 JSContext *js_newctx(JSErrorReporter er);
 
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
