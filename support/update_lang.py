@@ -11,12 +11,14 @@ def scanfile(path, p):
     for w in re.findall(M, open(path).read()):
         p.setdefault(w, []).append(path)
 
-def buildphrases(rootpath):
+def buildphrases():
     p = {}
-    for a in os.walk(rootpath):
-        for f in a[2]:
-            if f.endswith(('.c', '.view', '.skin')):
-                scanfile(os.path.join(a[0], f), p)
+
+    for r in ('./src', './glwthemes/mono'):
+        for a in os.walk(r):
+            for f in a[2]:
+                if f.endswith(('.c', '.view', '.skin')):
+                    scanfile(os.path.join(a[0], f), p)
 
     # invert dict to use first source as key and value is list of phrases
     phrases = {}
@@ -28,13 +30,13 @@ def buildphrases(rootpath):
     
     return phrases
 
-if len(sys.argv) < 3:
-    print "Usage: %s rootpath <langfile> [<langfile...>]" % sys.argv[0]
+if len(sys.argv) < 2:
+    print "Usage: %s <langfile> [<langfile...>]" % sys.argv[0]
     sys.exit(1)
 
-phrases = buildphrases(sys.argv[1])
+phrases = buildphrases()
 
-for path in sys.argv[2:]:
+for path in sys.argv[1:]:
 
     linetrailer = '\n'
 
