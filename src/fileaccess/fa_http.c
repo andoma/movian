@@ -2013,8 +2013,6 @@ http_quickload(struct fa_protocol *fap, const char *url,
     if((s = http_header_get(&headers, "last-modified")) != NULL)
       http_ctime(&fs->fs_mtime, s);
 
-    fs->fs_cache_age = 3600;
-
     if((s  = http_header_get(&headers, "date")) != NULL && 
        (s2 = http_header_get(&headers, "expires")) != NULL) {
       time_t expires, sdate;
