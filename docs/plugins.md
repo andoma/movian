@@ -41,20 +41,20 @@ containing information about the plugin
 
 Example of a plugin.json file (from the Headweb plugin):
 
-`
-{
-  "type": "javascript",
-  "id": "headweb",
-  "file": "headweb.js",
-  "showtimeVersion": "3.1",
-  "version": "1.0",
-  "author": "Andreas Öman",
-  "title": "Headweb",
-  "icon": "headweb_square.png",
-  "synopsis": "Headweb online video",
-  "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>"
-}
-`
+
+    {
+      "type": "javascript",
+      "id": "headweb",
+      "file": "headweb.js",
+      "showtimeVersion": "3.1",
+      "version": "1.0",
+      "author": "Andreas Öman",
+      "title": "Headweb",
+      "icon": "headweb_square.png",
+      "synopsis": "Headweb online video",
+      "description": "<p>Headweb is a Swedish online video store.<p>For more information, visit <a href=\"http://www.headweb.com\">http://www.headweb.com</a>"
+    }
+
 
 
 Description of fields and requirement of their presence:
@@ -125,29 +125,28 @@ via Showtime's plugin development argument (-p):
 
 Example:
 
-`build.linux/showtime -p testplugin`
+    build.linux/showtime -p testplugin
 
 This will output something like:
-`
-plugins [ERROR]: Unable to load development plugin: testplugin
-                 Unable to load testplugin/plugin.json -- File not found
-`
+
+    plugins [ERROR]: Unable to load development plugin: testplugin
+                     Unable to load testplugin/plugin.json -- File not found
+
 Go ahead and create the directory:
-`
-mkdir testplugin
-`
+
+    mkdir testplugin
+
 Edit the JSON file with your favorite text editor:
-`
-emacs testplugin/plugin.json
-`
+
+    emacs testplugin/plugin.json
+
 And put the required fields in there:
-`
-{
- "type": "javascript",
- "file": "testplugin.js",
- "id": "testplugin"
-}
-`
+
+    {
+     "type": "javascript",
+     "file": "testplugin.js",
+     "id": "testplugin"
+    }
 
 You can reload the development plugin at any time by pressing Shift+F5
 in Showtime (assuming you have not mapped that key/action to something
@@ -162,31 +161,30 @@ will first reload the plugin and then reload the page itself. This
 makes it very easy to do rapid development of plugins.
 
 Now go ahead and edit the javascript file
-`
-emacs testplugin/testplugin.js
-`
+
+    emacs testplugin/testplugin.js
+
 Put one single line in that file:
-`
-showtime.print('hello world');
-`
+
+    showtime.print('hello world');
+
 Press Shift+F5 and the console window from where you started showtime
 should say:
-`
-hello world
-plugins [INFO]: Reloaded dev plugin testplugin/
-`
+
+    hello world
+    plugins [INFO]: Reloaded dev plugin testplugin/
+
 Showtime will just execute the plugin which only outputs 'Hello world'
 on the console and then exits. So, how to create something more
 interesting?  First the javascript code needs to create a scope where
 its local variables will live and also need to remember 'this' which
 is, when the script is invoked, a plugin object created by
 Showtime. Change the code to:
-`
-(function(plugin) {
- showtime.print("Hello! I'm a plugin running inside Showtime " + 
-                showtime.currentVersionString);
-})(this);
-`
+
+    (function(plugin) {
+     showtime.print("Hello! I'm a plugin running inside Showtime " + 
+                    showtime.currentVersionString);
+    })(this);
 
 ## Routing an URI to the plugin
 
@@ -199,17 +197,16 @@ is possible to, for example, add routes for certain well known domains
 on the Internet (think http://www.youtube.com/ .. )
 
 Back to our test code:
-`
-(function(plugin) {
- // Enable URI routing for this plugin.
- plugin.config.URIRouting = true;
 
- // Add a URI route and a corresponding function to be invoked
- plugin.addURI("testplugin:hello", function(page) {
-   showtime.print("I was called");
- })
-})(this);
-`
+    (function(plugin) {
+     // Enable URI routing for this plugin.
+     plugin.config.URIRouting = true;
+    
+     // Add a URI route and a corresponding function to be invoked
+     plugin.addURI("testplugin:hello", function(page) {
+       showtime.print("I was called");
+     })
+    })(this);
 
 Now, reload the plugin (Shift+F5) and type "testplugin:hello" in the
 search input field on Showtime's home page. (Maybe you didn't know, but
@@ -366,11 +363,11 @@ sub-strings as matched by the regexp
 
 Example:
 
-`
-plugin.addURI("testplugin:foo:(.*)", function(page, arg) {
- showtime.print("The argument is " + arg);
-})
-`
+
+    plugin.addURI("testplugin:foo:(.*)", function(page, arg) {
+     showtime.print("The argument is " + arg);
+    })
+
 
 If the testplugin:foo:bar URI is opened in Showtime this will print:
 `The argument is bar` in the console
@@ -522,15 +519,14 @@ Current version of Showtime encoded as an integer. This can be used to
 check if running a given version X or greater, etc.
 
 The version number is encoded as:
-`
-v = major * 10000000 +  minor * 100000 + commit;
-`
+
+    v = major * 10000000 +  minor * 100000 + commit;
+
 So to check if the running Showtime is 3.4.2 or greater, just do
-`
-if(showtime.currentVersionInt >= 30400002) {
-  // yep
-}
-`
+
+    if(showtime.currentVersionInt >= 30400002) {
+      // yep
+    }
 
 #### currentVersionString
 
