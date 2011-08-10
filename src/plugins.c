@@ -186,7 +186,8 @@ plugin_load_installed(void)
   char errbuf[200];
   fa_dir_entry_t *fde;
 
-  snprintf(path, sizeof(path), "file://%s/plugins", showtime_persistent_path);
+  snprintf(path, sizeof(path), "file://%s/installedplugins",
+	   showtime_persistent_path);
 
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
@@ -636,11 +637,11 @@ plugin_install(plugin_item_data_t *pid)
 	pid->pid_id, (int)fs.fs_size);
   prop_set_string(pid->pid_statustxt, "Installing");
 
-  snprintf(path, sizeof(path), "%s/plugins", showtime_persistent_path);
+  snprintf(path, sizeof(path), "%s/installedplugins", showtime_persistent_path);
   mkdir(path, 0770);
 
-  snprintf(path, sizeof(path), "%s/plugins/%s.zip", showtime_persistent_path,
-	   pid->pid_id);
+  snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
+	   showtime_persistent_path, pid->pid_id);
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
@@ -661,7 +662,7 @@ plugin_install(plugin_item_data_t *pid)
   }
 
   snprintf(path, sizeof(path),
-	   "zip://file://%s/plugins/%s.zip", showtime_persistent_path,
+	   "zip://file://%s/installedplugins/%s.zip", showtime_persistent_path,
 	   pid->pid_id);
 
   hts_mutex_lock(&plugin_mutex);
@@ -745,8 +746,8 @@ plugin_remove(plugin_item_data_t *pid)
 {
   char path[200];
 
-  snprintf(path, sizeof(path), "%s/plugins/%s.zip", showtime_persistent_path,
-	   pid->pid_id);
+  snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
+	   showtime_persistent_path, pid->pid_id);
   unlink(path);
 
 #if ENABLE_SPIDERMONKEY
