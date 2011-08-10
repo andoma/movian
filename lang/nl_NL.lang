@@ -176,7 +176,7 @@ msg: GPU-kerntemperatuur: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Achtergrondtint aanpassen gebasseerd op tijd
+msg: Achtergrondtint op tijd gebasseerd aanpassen
 
 id: Audio muted
 msg: Geluid gedempt
@@ -239,7 +239,7 @@ id: Invalid CD track
 msg: Ongeldig CD-nummer
 
 id: Unable to open CD
-msg: Kan de CD niet openen
+msg: De CD kon niet worden geopend
 
 #
 # ./src/backend/htsp/htsp.c
@@ -299,7 +299,7 @@ id: Spotify playlists
 msg: Spotify-afspeellijsten
 
 id: Starred
-msg: In de schijnwerpers
+msg: Favorieten
 
 #
 # ./src/bookmarks.c
@@ -317,8 +317,7 @@ msg: Zoeken via Unix-locatedb
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-# Missing translation
-msg: 
+msg: Zoeken via Spotlight
 
 #
 # ./src/i18n.c
@@ -327,8 +326,7 @@ id: Language
 msg: Taal
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-# Missing translation
-msg: 
+msg: Configureer de taalcodes als ISO-codes met drie tekens, bijvoorbeeld (nld, eng, fra)
 
 id: Preferred languages
 msg: Voorkeurstalen
@@ -403,28 +401,22 @@ msg: Geen handler voor URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: Ongeldige URL 
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Plugin-ID %s bestaat niet
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Plugin-ID %s heeft geen download-URL
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: De plugin.json kon niet worden geladen: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: De plugin.json kon niet worden geladen: Misvormde JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: De plugin-opslagplaats kon niet worden aangevraagd
 
 #
 # ./src/runcontrol.c
@@ -553,7 +545,7 @@ id: Shadow offset
 msg: Schaduwafstand
 
 id: Stretch video to widescreen
-msg: Video op widescreen uitrekken
+msg: Video op breedbeeld uitrekken
 
 id: Subtitle position
 msg: Ondertitelingspositie
