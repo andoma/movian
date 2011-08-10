@@ -399,6 +399,33 @@ id: No handler for URL
 msg: kein handler für URL
 
 #
+# ./src/plugins.c
+#
+id: Invalud URI
+# Missing translation
+msg: 
+
+id: Plugin ID %s does not exist
+# Missing translation
+msg: 
+
+id: Plugin ID %s have no download URL
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: %s
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: Malformed JSON
+# Missing translation
+msg: 
+
+id: Unable to request plugin repository: %s
+# Missing translation
+msg: 
+
+#
 # ./src/runcontrol.c
 #
 id: Automatic standby
