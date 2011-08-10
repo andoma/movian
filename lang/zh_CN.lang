@@ -1,0 +1,566 @@
+﻿language: Simplified Chinese
+native: 简体中文
+maintainer: Rural Hunter<ruralhunter@gmail.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: 音频设置
+
+id: Languages
+msg: 语言
+
+id: Settings
+msg: 设置
+
+id: Subtitle settings
+msg: 字幕设置
+
+id: Video settings
+msg: 视频设置
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: 由%s添加
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: 关闭
+
+id: On
+msg: 开启
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: 系统可用内存: %d kB
+
+id: Detected CPUs: %d
+msg: 检测到CPU数: %d
+
+id: Display info
+msg: 显示信息
+
+id: Framerate: %.2f Hz
+msg: 帧速: %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: 高: %d px
+
+id: Renderer: %s
+msg: 渲染器: %s
+
+id: System info
+msg: 系统信息
+
+id: Total system RAM: %d kB
+msg: 系统内存总数: %d kB
+
+id: Version: %s
+msg: 版本: %s
+
+id: Width: %d px
+msg: 宽: %d px
+
+id: Windowmanager: %s
+msg: 窗口管理器: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: 关于
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: 首页
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: 不能打开资源
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: 载入页面出错
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: 播放队列
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: 章节 %d / %d
+
+id: Title %d / %d
+msg: 标题 %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: 轨道 %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU解码本视频太慢了
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 确定
+
+id: Password
+msg: 密码
+
+id: Remember me
+msg: 记住用户
+
+id: Username
+msg: 用户名
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: 未载入媒体
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: 删除
+
+id: Enqueue
+msg: 加入队列
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: 音频输出
+
+id: CPUs
+msg: CPU
+
+id: GPU & Display
+msg: GPU及显示
+
+id: GPU Core temperature: %d / %d °
+msg: GPU核心温度: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: 根据时间调整背景颜色
+
+id: Audio muted
+msg: 已静音
+
+id: Fancy UI animations
+msg: Fancy界面动画
+
+id: Master volume: %d dB
+msg: 主音量: %d dB
+
+id: Starwars scroller tilt
+msg: 星战式滚动条倾斜
+
+id: Top bar navigation buttons
+msg: 工具栏浏览按钮
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: opensubtitles.org设置
+
+id: Use opensubtitles.org
+msg: 使用opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: 音频/视频同步延迟
+
+id: Current output device
+msg: 当前输出设备
+
+id: Force stereo downmix
+msg: 强制混音到立体声
+
+id: Phantom LFE
+msg: 虚拟低音
+
+id: Phantom center
+msg: 虚拟中置
+
+id: Select audio output device and related configurations
+msg: 选择音频输出设备及相关配置
+
+id: Small front speakers
+msg: 小型前置音箱
+
+id: Swap LFE+center with surround
+msg: 切换低音+中置和环绕
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: 非法的CD URL
+
+id: Invalid CD track
+msg: 非法的CD音轨
+
+id: Unable to open CD
+msg: 不能打开CD
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: 非法的HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: 搜索
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Showtime启动时自动登录
+
+id: Enable Spotify
+msg: 启用Spotify
+
+id: Friends
+msg: 朋友
+
+id: High bitrate
+msg: 高比特率
+
+id: Inbox
+msg: 收件箱
+
+id: New albums on Spotify
+msg: Spotify新专辑
+
+id: New releases
+msg: 最新发布
+
+id: Playlists
+msg: 播放列表
+
+id: Relogin (switch user)
+msg: 重新登录(切换用户)
+
+id: Search result
+msg: 搜索结果
+
+id: Spotify friends
+msg: Spotify上的朋友
+
+id: Spotify music service
+msg: Spotify音乐服务
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify可以让你合法和免费的访问巨量音乐库。你需要一个Spotify的Preemium账号才能在Showtime中访问Spotify。\n请访问http://www.spotify.com/以了解更多关于Spotify的信息。\n\n你在Showtime中第一次使用Spotify功能时会提示您输入Spotify用户名和密码。
+
+id: Spotify playlists
+msg: Spotify播放列表
+
+id: Starred
+msg: 已加星
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: 收藏夹
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: 使用Unix locatedb搜索
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: 使用spotlight搜索
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: 语言
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: 请使用三个字母的ISO代码设置语言代码，例如: eng, swe, fra
+
+id: Preferred languages
+msg: 语言偏好
+
+id: Primary audio language code
+msg: 音频首选语言代码
+
+id: Primary subtitle language code
+msg: 字幕首选语言代码
+
+id: SRT character set
+msg: SRT字符集
+
+id: Secondary audio language code
+msg: 音频次选语言代码
+
+id: Secondary subtitle language code
+msg: 字幕次选语言代码
+
+id: Tertiary audio language code
+msg: 音频第三语言代码
+
+id: Tertiary subtitle language code
+msg: 字幕第三语言代码
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: 自动开启/关闭电视
+
+id: Input source
+msg: 输入源
+
+id: LG Television set
+msg: LG电视机
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: 设置键盘和遥控器按键映射
+
+id: Keymapper
+msg: 按键映射
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: 字幕显示在视频帧内
+
+id: Audio delay
+msg: 音频延迟
+
+id: Subtitle delay
+msg: 字幕延迟
+
+id: Subtitle scaling
+msg: 缩放字幕
+
+id: Video zoom
+msg: 缩放视频
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: 无法处理URL
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: 非法的URI
+
+id: Plugin ID %s does not exist
+msg: 插件(ID %s)不存在
+
+id: Plugin ID %s have no download URL
+msg: 插件(ID %s)没有下载链接
+
+id: Unable to load plugin.json: %s
+msg: 无法载入plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: 无法载入plugin.json: JSON格式不正确
+
+id: Unable to request plugin repository: %s
+msg: 无法向插件库发送请求: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: 自动待机
+
+id: Run control
+msg: 运行控制
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: 启用
+
+id: Name
+msg: 名称
+
+id: Type
+msg: 类型
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: 程序和已安装的插件
+
+id: Discovered media sources
+msg: 已检测到的媒体资源
+
+id: Global settings
+msg: 全局设置
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: 显示及用户界面
+
+id: Horizontal underscan
+msg: 水平欠扫描
+
+id: Screensaver delay
+msg: 屏幕保护延迟
+
+id: Userinterface size
+msg: 用户界面大小
+
+id: Vertical underscan
+msg: 垂直欠扫描
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: 全屏模式
+
+id: Map mouse wheel to up/down
+msg: 将鼠标滚轮映射到上/下按键
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: 已在首页启用
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: 未发现设备
+
+id: Malformed URI after device
+msg: 设备后的URI格式不正确
+
+id: Malformed URI after service
+msg: 服务后的URI格式不正确
+
+id: Service not found
+msg: 未发现服务
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: 默认显示字幕
+
+id: Auto
+msg: 自动
+
+id: Center
+msg: 居中
+
+id: Color
+msg: 颜色
+
+id: Enable VDPAU
+msg: 启用VDPAU
+
+id: Force subtitles to reside on video frame
+msg: 强制字幕在视频帧内显示
+
+id: Generic settings for video subtitles
+msg: 视频字幕通用设置
+
+id: Ignore embedded styling
+msg: 忽略嵌入样式
+
+id: Left
+msg: 靠左
+
+id: Outline color
+msg: 边框颜色
+
+id: Outline size
+msg: 边框大小
+
+id: Right
+msg: 靠右
+
+id: Shadow color
+msg: 阴影颜色
+
+id: Shadow offset
+msg: 阴影偏移
+
+id: Stretch video to widescreen
+msg: 拉伸视频
+
+id: Subtitle position
+msg: 字幕位置
+
+id: Subtitle size
+msg: 字幕大小
+
+id: Subtitle styling
+msg: 字幕样式
+
+id: Subtitles
+msg: 字幕
+
+id: Video acceleration and display behaviour
+msg: 视频加速及显示方式
+
+id: Video playback
+msg: 视频播放
