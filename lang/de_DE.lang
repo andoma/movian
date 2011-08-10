@@ -5,25 +5,25 @@ maintainer:
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Audio Einstellungen
+msg: Soundeinstellungen
 
 id: Languages
-msg: Sprache
+msg: Sprachen
 
 id: Settings
 msg: Einstellungen
 
 id: Subtitle settings
-msg: Untertitel Einstellungen
+msg: Untertiteleinstellungen
 
 id: Video settings
-msg: Video Einstellungen
+msg: Videoeinstellungen
 
 #
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Zugefügt durch: %s
+msg: Hinzugefügt von: %s
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -38,13 +38,13 @@ msg: An
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Verf. Systemspeicher: %d kB
+msg: Verfuegbarer Systemspeicher: %d kB
 
 id: Detected CPUs: %d
 msg: Gefundene CPUs: %d
 
 id: Display info
-msg: Anzeige Info
+msg: Zeige Infos an
 
 id: Framerate: %.2f Hz
 msg: Bildrate %.2f Hz
@@ -71,7 +71,7 @@ id: Width: %d px
 msg: Breite: %d px
 
 id: Windowmanager: %s
-msg: Windowmanager: %s
+msg: Fenstermanager: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -161,7 +161,7 @@ msg: Hinzufügen
 # ./glwthemes/mono/sysinfo.view
 #
 id: Audio output
-msg: Audio Ausgabe
+msg: Audioausgabe
 
 id: CPUs
 msg: CPUs
@@ -188,7 +188,7 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 id: Starwars scroller tilt
-msg: Neigung des Starwars-scroller
+msg: Neigung des Starwars-scrollers
 
 id: Top bar navigation buttons
 msg: Navigationsknöpfe obere Leiste
@@ -221,7 +221,7 @@ id: Phantom center
 msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Audiogerät Auswahl und Konfiguration
+msg: Wähle das Audioausgabegerät und eine Konfiguration
 
 id: Small front speakers
 msg: kleine Frontlautsprecher
@@ -257,7 +257,7 @@ msg: Suche
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Automatisch bei Showtimestart einloggen
+msg: Automatisch bei Programmstart einloggen
 
 id: Enable Spotify
 msg: Spotify anschalten
@@ -293,7 +293,7 @@ id: Spotify music service
 msg: Spotify Musikdienste
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamen und Passwort aufgefordert.
+msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamens und Passworts aufgefordert.
 
 id: Spotify playlists
 msg: Spotyfyabspielliste
@@ -330,7 +330,7 @@ id: Language codes should be configured as three character ISO codes, example (e
 msg: 
 
 id: Preferred languages
-msg: Bevorzugte Sprache
+msg: Bevorzugte Sprachen
 
 id: Primary audio language code
 msg: Bevorzugte Audio-Sprache
@@ -357,22 +357,22 @@ msg: Dritte Untertitel-Sprache
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Automatisch Fernseher An/Aus
+msg: Automatisch den Fernseher An-/Ausschalten
 
 id: Input source
 msg: Eingang
 
 id: LG Television set
-msg: LG TV apparat
+msg: LG Fernseher
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Tastenbelegun und Fernbedienungseinstellung
+msg: Tastenbelegung und Fernbedienungseinstellung
 
 id: Keymapper
-msg: Keymapper
+msg: Tastenbelegung
 
 #
 # ./src/media.c
@@ -429,7 +429,7 @@ msg:
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Automatischer standby
+msg: Automatisch in standby wechseln
 
 id: Run control
 msg: Run control
@@ -450,7 +450,7 @@ msg: Typ
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Anwendungen und installierte Zusätze
+msg: Anwendungen und installierte Plugins
 
 id: Discovered media sources
 msg: Gefundene Medienquellen
@@ -465,7 +465,7 @@ id: Display and user interface
 msg: Anzeige und Menü
 
 id: Horizontal underscan
-msg: Horizontal underscan
+msg: Horizontaler underscan
 
 id: Screensaver delay
 msg: Bildschirmschonerverzögerung
@@ -474,7 +474,7 @@ id: Userinterface size
 msg: Menügröße
 
 id: Vertical underscan
-msg: Vertikal underscan
+msg: Vertikaler underscan
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -483,13 +483,13 @@ id: Fullscreen mode
 msg: Vollbildmodus
 
 id: Map mouse wheel to up/down
-msg: Mausrad für hoch/runter
+msg: Mausrad für hoch/runter verwenden
 
 #
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Verfügbar im Hauptbild
+msg: Verfügbar im Homescreen
 
 #
 # ./src/upnp/upnp_browse.c
@@ -525,7 +525,7 @@ id: Enable VDPAU
 msg: VDPAU aktivieren
 
 id: Force subtitles to reside on video frame
-msg: Untertitel auf Videofrom aufzwingen
+msg: Untertitel auf Videoframe aufzwingen
 
 id: Generic settings for video subtitles
 msg: Allgemeine Einstellungen für Videountertitel
@@ -546,13 +546,13 @@ id: Right
 msg: Rechts
 
 id: Shadow color
-msg: Schattenfareb
+msg: Schattenfarbe
 
 id: Shadow offset
 msg: Schattenabstand
 
 id: Stretch video to widescreen
-msg: Video auf "Widescreen" strecken 
+msg: Video auf Widescreen strecken 
 
 id: Subtitle position
 msg: Untertitelposition
