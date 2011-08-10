@@ -273,16 +273,6 @@ finalize() {
 	echo >>${CONFIG_H} "#define SHOWTIME_GU_RESOURCES_URL \""${GU_RESOURCES_URL}"\""
     fi
 
-
-    if enabled embedded_resources; then
-	PLUGINS_URL="bundle://plugins"
-	echo >>${CONFIG_MAK} "BUNDLES+=plugins"
-    else
-	PLUGINS_URL="file://`cd plugins && pwd`"
-    fi
-    echo >>${CONFIG_H} "#define SHOWTIME_PLUGINS_URL \""${PLUGINS_URL}"\""
-
-
     # Fonts
     # Optionally embed the stuff if in release mode
     if enabled font_liberation; then
