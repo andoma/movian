@@ -25,7 +25,6 @@ interface(s)
 
 # Structure of a plugin
 
-
 Each plugin resides in a directory of their own. This directory must
 contain a file called ''plugin.json'' which contain information about
 the plugin.  For more information about this file, please see the
@@ -35,13 +34,10 @@ Apart for the plugin.json file there are no further restrictions of
 what the files are named in the plugin directory or if files are
 placed in sub-directories, etc
 
-
-
 ## plugin.json
 
-
-plugin.json is a JSON (http://www.json.org/) encoded text file containing
-information about the plugin
+plugin.json is a JSON (http://www.json.org/) encoded text file
+containing information about the plugin
 
 Example of a plugin.json file (from the Headweb plugin):
 
@@ -152,17 +148,18 @@ And put the required fields in there:
  "id": "testplugin"
 }
 `
-You can reload the development plugin at any time by pressing Shift-F5
+
+You can reload the development plugin at any time by pressing Shift+F5
 in Showtime (assuming you have not mapped that key/action to something
-else in keymapper setup). This works fine even if the plugin failed to
-load for whatever reason. All hooks and resources that are registered
-by the plugin is automatically removed when the plugin is reloaded.
-The same procedure happens when a plugin is uninstalled from the
-plugin repository browser.  Pressing Shift-F5 will also reload the
-data model for the current loaded page. Ir. If you have a page opened
-that links to your plugin in development mode Showtime will first
-reload the plugin and then reload the page itself. This makes it very
-easy to do rapid development of plugins.
+else in the keymapper setup). This works fine even if the plugin
+failed to load for whatever reason. All hooks and resources that are
+registered by the plugin is automatically removed when the plugin is
+reloaded.  The same procedure happens when a plugin is uninstalled
+from the plugin repository browser.  Pressing Shift+F5 will also
+reload the data model for the current loaded page. Ir. If you have a
+page opened that links to your plugin in development mode Showtime
+will first reload the plugin and then reload the page itself. This
+makes it very easy to do rapid development of plugins.
 
 Now go ahead and edit the javascript file
 `
@@ -190,9 +187,6 @@ Showtime. Change the code to:
                 showtime.currentVersionString);
 })(this);
 `
-
-
-
 
 ## Routing an URI to the plugin
 
@@ -266,11 +260,11 @@ Only used for user presentation purposes.
 
 #### paginator
 
-If this property is assigned a function, that function will be invoked
-when Showtime wants more items appended to the data model for, so
-called, paginated loading. If this property is not set Showtime will
-assume that the plugin populates the entire model during the initial
-page load.
+If a function is assigned to this property, that function will be
+invoked when Showtime wants more items appended to the data model for,
+so called, paginated loading. If this property is not set Showtime
+will assume that the plugin populates the entire model during the
+initial page load.
 
 
 ### Functions
@@ -371,12 +365,15 @@ is always the page object. The second and further arguments are
 sub-strings as matched by the regexp
 
 Example:
+
 `
 plugin.addURI("testplugin:foo:(.*)", function(page, arg) {
  showtime.print("The argument is " + arg);
 })
 `
-If the testplugin:foo:bar URI is opened in Showtime this will print: `The argument is bar` in the console
+
+If the testplugin:foo:bar URI is opened in Showtime this will print:
+`The argument is bar` in the console
 
 
 #### addSearcher(String Title, String Icon, Function Handler)
@@ -546,8 +543,6 @@ and dirty flag,
 
 Send Message to Showtime's log/trace engine on debug level.
 This will appear on the console if Showtime is started with the -d option
-
-
 
 #### print(String Message)
 
