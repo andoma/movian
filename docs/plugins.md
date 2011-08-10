@@ -8,7 +8,7 @@ This document is still work-in-progress. Some sections are missing and
 some are not complete. If you feel something particular is missing,
 please say so.
 
--- Andreas, andreas@lonelycoder.com or twitter.com/andoma
+-- Andreas, andreas@lonelycoder.com or http://twitter.com/andoma
 
 # Overview
 
