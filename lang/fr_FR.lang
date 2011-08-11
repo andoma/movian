@@ -1,0 +1,567 @@
+language: French
+native: Français
+maintainer: Jérôme Steunou <g_rom_sempai@hotmail.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Paramètres audio
+
+id: Languages
+msg: Langues
+
+id: Settings
+msg: Paramètres
+
+id: Subtitle settings
+msg: Paramètres des sous-titres
+
+id: Video settings
+msg: Paramètres vidéo
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Ajouté par : %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Arrêt
+
+id: On
+msg: Marche
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Mémoire disponible : %d kB
+
+id: Detected CPUs: %d
+msg: CPUs détectés: %d
+
+id: Display info
+msg: Afficher les informations
+
+id: Framerate: %.2f Hz
+msg: Fréquence d'affichage %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Hauteur: %d px
+
+id: Renderer: %s
+msg: Interpréteur de rendu : %s
+
+id: System info
+msg: Information système
+
+id: Total system RAM: %d kB
+msg: Mémoire système totale : %d kB
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Largeur : %d px
+
+id: Windowmanager: %s
+msg: Gestionnaire de fenêtres : %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: À propos
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Accueil
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Impossible d'ouvrir cette ressource
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Erreur de chargement de la page
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: File de lecture
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Chapitre %d / %d
+
+id: Title %d / %d
+msg: Titre %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Piste %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: Le CPU est trop faible pour décoder cette vidéo
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Annuler
+
+id: OK
+msg: OK
+
+id: Password
+msg: Mot de passe
+
+id: Remember me
+msg: Se souvenir de moi
+
+id: Username
+msg: Nom d'utilisateur
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Aucun media chargé
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Effacer
+
+id: Enqueue
+msg: Enlever de la file
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Sortie audio
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU & Affichage
+
+id: GPU Core temperature: %d / %d °
+msg: Température du cœur du GPU : %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Ajuster la teinte du fond selon l'heure du jour
+
+id: Audio muted
+msg: Son coupé
+
+id: Fancy UI animations
+msg: Animations de l'UI
+
+id: Master volume: %d dB
+msg: Volume du master : %d dB
+
+id: Starwars scroller tilt
+msg: Inclinaison du défilement à la Starwars
+
+id: Top bar navigation buttons
+msg: boutons de navigation de la barre du haut
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Paramètres pour opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Utiliser opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Délai de la synchro Audio/Video
+
+id: Current output device
+msg: Appareil en sortie
+
+id: Force stereo downmix
+msg: Forcer le remixage en stéréo
+
+id: Phantom LFE
+msg: LFE (basse) fantôme
+
+id: Phantom center
+msg: Centre fantôme
+
+id: Select audio output device and related configurations
+msg: Sélectionner la sortie audio et les configurations liées
+
+id: Small front speakers
+msg: Petites enceintes frontales
+
+id: Swap LFE+center with surround
+msg: Inverser LFE+centre avec le surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: URL CD invalide
+
+id: Invalid CD track
+msg: Piste CD invalide
+
+id: Unable to open CD
+msg: Impossible d'ouvrir le CD
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: URL HTSP invalide
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Chercher
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: S'authentifier automatiquement au démarrage de Showtime
+
+id: Enable Spotify
+msg: Activer Spotify
+
+id: Friends
+msg: Amis
+
+id: High bitrate
+msg: Haut taux d'échantillonnage
+
+id: Inbox
+msg: Boîte de réception
+
+id: New albums on Spotify
+msg: Nouveaux albums sur Spotify
+
+id: New releases
+msg: Nouveautés
+
+id: Playlists
+msg: Listes de lecture
+
+id: Relogin (switch user)
+msg: S'authentifier à nouveau (changer d'utilisateur)
+
+id: Search result
+msg: Résultat de la recherche
+
+id: Spotify friends
+msg: Amis de Spotify
+
+id: Spotify music service
+msg: Service musical de Spotify
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Grâce à Spotify, vous pouvez accéder gratuitement et en toute légalité à un énorme catalogue musical. Pour utiliser Spotify dans Showtime vous devez posséder un compte Spotify Premium.\nPour plus d'informations sur Spotify, visitez http://www.spotify.com/\n\nIl vous sera demandé votre nom d'utilisateur et votre mot de passe Spotify la première fois que vous voudrez accéder aux fonctions de Spotify dans Showtime.
+
+id: Spotify playlists
+msg: Listes de lecture Spotify
+
+id: Starred
+msg: Noté
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Favoris
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Chercher via Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Chercher via spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Langue
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Les codes de langue devront être configurés comme les codes ISO, sur trois lettres. Par exemple : fra, eng, swe
+
+id: Preferred languages
+msg: Langues préférées
+
+id: Primary audio language code
+msg: Code principale de la langue pour la piste audio
+
+id: Primary subtitle language code
+msg: Code principale de la langue pour les sous-titres
+
+id: SRT character set
+msg: Encodage des caractères pour les fichiers SRT
+
+id: Secondary audio language code
+msg: Code secondaire de la langue pour la piste audio
+
+id: Secondary subtitle language code
+msg: Code secondaire de la langue pour les sous-titres
+
+id: Tertiary audio language code
+msg: Code tertiaire de la langue pour la piste audio
+
+id: Tertiary subtitle language code
+msg: Code tertiaire de la langue pour les sous-titres
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatisk på/av kontroll av TVn
+
+id: Input source
+msg: Source d'entrée
+
+id: LG Television set
+msg: Paramètres des TV LG
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Configurer l'affectation des touches du clavier et les touches du contrôleur distant
+
+id: Keymapper
+msg: Affecteur des touches
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Faire correspondre les sous-titres avec l'image vidéo
+
+id: Audio delay
+msg: Délai audio
+
+id: Subtitle delay
+msg: Délai des sous-titres
+
+id: Subtitle scaling
+msg: Échelle des sous-titres
+
+id: Video zoom
+msg: Zoom vidéo
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Pas de prise en charge pour cette URL
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: URI invalide
+
+id: Plugin ID %s does not exist
+msg: L'ID de greffon %s n'existe pas
+
+id: Plugin ID %s have no download URL
+msg: L'ID de greffon %s n'a pas d'URL de download
+
+id: Unable to load plugin.json: %s
+msg: Impossible de charger le plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Impossible de charger le plugin.json: JSON malformé
+
+id: Unable to request plugin repository: %s
+msg: Impossible de requêter le dépôt du greffon : %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Mise en veille automatique
+
+id: Run control
+msg: Contrôle de fonctionnement
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Activé
+
+id: Name
+msg: Nom
+
+id: Type
+msg: Type
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Applications et greffons installés
+
+id: Discovered media sources
+msg: Sources de médias découvertes
+
+id: Global settings
+msg: Paramètres globaux
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Affichage et interface utilisateur
+
+id: Horizontal underscan
+msg: Underscan horizontal
+
+id: Screensaver delay
+msg: Délai avant l'économiseur d'écran
+
+id: Userinterface size
+msg: Taille de l'interface utilisateur
+
+id: Vertical underscan
+msg: Underscan vertical
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Mode plein écran
+
+id: Map mouse wheel to up/down
+msg: Lier la roue de la sourie à haut/bas
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Activé sur la page d'accueil
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Appareil non trouvé
+
+id: Malformed URI after device
+msg: URI malformée après l'appareil
+
+id: Malformed URI after service
+msg: URI malformée après le service
+
+id: Service not found
+msg: Service non trouvé
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Toujours essayer de sélectionner un sous-titre
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Centrer
+
+id: Color
+msg: Couleur
+
+id: Enable VDPAU
+msg: Activer VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Forcer les sous-titres à rester sur l'image vidéo
+
+id: Generic settings for video subtitles
+msg: Paramètres génériques pour les sous-titres
+
+id: Ignore embedded styling
+msg: Ignorer les styles embarqués
+
+id: Left
+msg: Gauche
+
+id: Outline color
+msg: Couleur du contour
+
+id: Outline size
+msg: Taille du contour
+
+id: Right
+msg: Droite
+
+id: Shadow color
+msg: Couleur de l'ombre
+
+id: Shadow offset
+msg: Décalage de l'ombre
+
+id: Stretch video to widescreen
+msg: Étirer la vidéo pour les écrans large
+
+id: Subtitle position
+msg: Position des sous-titres
+
+id: Subtitle size
+msg: Taille des sous-titres
+
+id: Subtitle styling
+msg: Style des sous-titres
+
+id: Subtitles
+msg: Sous-titres
+
+id: Video acceleration and display behaviour
+msg: Accélération vidéo et comportement de l'affichage
+
+id: Video playback
+msg: Lecture vidéo
+
