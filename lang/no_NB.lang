@@ -95,7 +95,7 @@ msg: Kan ikke åpne ressurs
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Sidladdningsfel
+msg: Feil ved sidehenting
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
@@ -122,7 +122,7 @@ msg: Spor %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPUen er for treg for å spille video
+msg: CPUen er for treg for å spille av denne videoen
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -176,7 +176,7 @@ msg: GPU kjernetemperatur: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Juster bakgrunnsfargen basert på tid på døgnet
+msg: Juster bakgrunnsfarge basert på tid på døgnet
 
 id: Audio muted
 msg: Lyd dempet
@@ -188,16 +188,16 @@ id: Master volume: %d dB
 msg: Hovedvolum: %d dB
 
 id: Starwars scroller tilt
-msg: Tilt brukergrensesnittet som i en Starwars-scroller
+msg: Vis brukergrensesnittet som i Starwars åpningsscene
 
 id: Top bar navigation buttons
-msg: Knapper for navigasjon på toppen av skjermen
+msg: Navigasjonknapper på toppen av skjermen
 
 #
 # ./src/api/opensubtitles.c
 #
 id: Settings for opensubtitles.org
-msg: Instillinger for opensubtitles.org
+msg: Innstillinger for opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Bruk opensubtitles.org
@@ -221,7 +221,7 @@ id: Phantom center
 msg: Fantom-senter
 
 id: Select audio output device and related configurations
-msg: Velge lydutgang og relaterte instillinger
+msg: Velg lydutgang og relaterte innstillinger
 
 id: Small front speakers
 msg: Små fronthøyttalere
@@ -299,7 +299,7 @@ id: Spotify playlists
 msg: Spotyfylister
 
 id: Starred
-msg: Stjernet
+msg: Stjernemerket
 
 #
 # ./src/bookmarks.c
@@ -311,13 +311,13 @@ msg: Bokmerker
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Søk med Unix locatedb
+msg: Søk via Unix locatedb
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Søk med spotlight
+msg: Søk via spotlight
 
 #
 # ./src/i18n.c
@@ -368,7 +368,7 @@ msg: LG TV-apparat
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Instillinger av tastatur og fjernkontroll
+msg: Innstillinger av tastatur og fjernkontroll
 
 id: Keymapper
 msg: Tastatur- og knappehåndterer
@@ -401,28 +401,22 @@ msg: Ingen håndterer for URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: Feil URI
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Plugin ID %s finnes ikke
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Plugin ID %s har ingen nedlastnings URL
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Kan ikke hente plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Kan ikke hente plugin.json: Feil formateret JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Kan ikke finne plugin-mappen: %s
 
 #
 # ./src/runcontrol.c
@@ -527,7 +521,7 @@ id: Force subtitles to reside on video frame
 msg: Tving undertekster til alltid å ligge over videobilde
 
 id: Generic settings for video subtitles
-msg: Generelle instillininger for undertekster
+msg: Generelle innstillininger for undertekster
 
 id: Ignore embedded styling
 msg: Overse innebygde stilkoder
@@ -566,7 +560,7 @@ id: Subtitles
 msg: Undertekster
 
 id: Video acceleration and display behaviour
-msg: Videoakselerasjon og instillinger for visning av video
+msg: Videoakselerasjon og innstillinger for visning av video
 
 id: Video playback
 msg: Videoavspiling
