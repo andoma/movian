@@ -61,15 +61,15 @@ Updating language files with new entries
 
 To update language files with new entries from Showtime's source code, do:
 
-  support/update_lang.py . <filename>
+  support/update_lang.py <filename>
 
 ie:
 
-  support/update_lang.py . lang/sv_SV.lang
+  support/update_lang.py lang/sv_SV.lang
 
 or if you want to update all files
 
-  support/update_lang.py . lang/*.lang
+  support/update_lang.py lang/*.lang
 
 This will import the translated strings from the original language
 file and generate a new language file that replacese the older
