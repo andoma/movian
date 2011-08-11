@@ -1,0 +1,574 @@
+language: Turkish
+native: Türkçe
+maintainer: CoDeR_WOLCER
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Ses Ayarları
+
+id: Languages
+msg: Dil
+
+id: Settings
+msg: Ayarlar
+
+id: Subtitle settings
+msg: Altyazı Ayarları
+
+id: Video settings
+msg: Video Ayarları
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Added by: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Kapalı
+
+id: On
+msg: Açık
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Mevcut system RAM: %d kB
+
+id: Detected CPUs: %d
+msg: kulanım CPUs: %d
+
+id: Display info
+msg: Ekran bilgileri
+
+id: Framerate: %.2f Hz
+msg: Framerate %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: yükseklik: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: System bilgi
+
+id: Total system RAM: %d kB
+msg: Toplam sistem RAM: %d kB
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Genişlik: %d px
+
+id: Windowmanager: %s
+msg: Window manager: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: hakkında
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Ev
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Unable to open resource
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Sayfa açılamadı
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Playqueue
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Bölüm %d / %d
+
+id: Title %d / %d
+msg: Başlık %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Başlık %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU yavaş kalıyor bu video'da
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
+
+id: Password
+msg: Şifre
+
+id: Remember me
+msg: Hatırla beni
+
+id: Username
+msg: Kulanıcı Adı
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Açılamadı
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Sil
+
+id: Enqueue
+msg: Enqueue
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Ses Çıkışı
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU & Display
+
+id: GPU Core temperature: %d / %d °
+msg: GPU çekirdek ısısı: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
+
+id: Audio muted
+msg: Sessiz
+
+id: Fancy UI animations
+msg: Fancy UI animations
+
+id: Master volume: %d dB
+msg: Ses seviyesi: %d dB
+
+id: Starwars scroller tilt
+msg: Starwars scroller tilt
+
+id: Top bar navigation buttons
+msg: Top Bar navigasyon düğmeleri
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Ayarlar için opensubtitles.org
+
+id: Use opensubtitles.org
+msg: opensubtitles.org kullan
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video sync geçikme
+
+id: Current output device
+msg: Current output device
+
+id: Force stereo downmix
+msg: Force stereo downmix
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-center
+
+id: Select audio output device and related configurations
+msg: Ses çıkış aygıtı seçin ve ilgili yapılandırmaları
+
+id: Small front speakers
+msg: Küçük ön hoparlör
+
+id: Swap LFE+center with surround
+msg: Swap LFE+center with surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Geçersiz CD URL
+
+id: Invalid CD track
+msg: Geçersiz CD Track
+
+id: Unable to open CD
+msg: CD açılamıyor
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Geçersiz HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Ara
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Showtime başlarken Otomatik giriş
+
+id: Enable Spotify
+msg: Spotify etkinleştirin
+
+id: Friends
+msg: Arkadaşlar
+
+id: High bitrate
+msg: Yüksek bitrate
+
+id: Inbox
+msg: Gelen kutusu
+
+id: New albums on Spotify
+msg: Yeni albüm aç Spotify
+
+id: New releases
+msg: Yenilikler
+
+id: Playlists
+msg: Oynatma listesi
+
+id: Relogin (switch user)
+msg: Relogin (switch user)
+
+id: Search result
+msg: Arama sonucu
+
+id: Spotify friends
+msg: Spotify Arkadalarım
+
+id: Spotify music service
+msg: Spotify Music service
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify büyük bir müzik kütüphanesi için yasal ve ücretsiz erişim sunmaktadır. Spotify Showtime olarak kullanmak için bir Spotify Preemium hesabı gerekir. \ NBu Spotify hakkında daha fazla bilgi \ n \ nBu ilk Spotify erişirken Spotify kullanıcı adınızı ve şifrenizi girmeniz istenecektir http://www.spotify.com/ ziyaret Showtime de sahiptir.
+
+id: Spotify playlists
+msg: Spotyfy Oynatma listesi 
+
+id: Starred
+msg: Starred
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Search using Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Search using spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Dil
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
+msg: 
+
+id: Preferred languages
+msg: tercih edilen dil
+
+id: Primary audio language code
+msg: Birincil ses dil kodu
+
+id: Primary subtitle language code
+msg: Birincil altyazı dil kodu
+
+id: SRT character set
+msg: SRT character set
+
+id: Secondary audio language code
+msg: İkincil ses dil kodu
+
+id: Secondary subtitle language code
+msg: İkincil altyazı dil kodu
+
+id: Tertiary audio language code
+msg: Üçüncül ses dil kodu
+
+id: Tertiary subtitle language code
+msg: Üçüncül altyazı dil kodu
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Otomatik TV açma / kapama
+
+id: Input source
+msg: Input source
+
+id: LG Television set
+msg: LG Television set
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Tastenbelegung und Fernbedienungseinstellung
+
+id: Keymapper
+msg: Keymapper
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Align subtitles on video frame
+
+id: Audio delay
+msg: ses delay
+
+id: Subtitle delay
+msg: altyazı delay
+
+id: Subtitle scaling
+msg: Altyazı ölçekleme
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: URL'si yok işleyici
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+# Missing translation
+msg: 
+
+id: Plugin ID %s does not exist
+# Missing translation
+msg: 
+
+id: Plugin ID %s have no download URL
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: %s
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: Malformed JSON
+# Missing translation
+msg: 
+
+id: Unable to request plugin repository: %s
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatic standby
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Etkin
+
+id: Name
+msg: isim
+
+id: Type
+msg: Type
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Uygulamalar ve yüklü eklentiler
+
+id: Discovered media sources
+msg: Bulundu medya kaynakları
+
+id: Global settings
+msg: Global ayarları
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Ekran ve kullanıcı arabirimi
+
+id: Horizontal underscan
+msg: Horizontal underscan
+
+id: Screensaver delay
+msg: Screensaver delay
+
+id: Userinterface size
+msg: Userinterface size
+
+id: Vertical underscan
+msg: Vertical underscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: tam ekran modu
+
+id: Map mouse wheel to up/down
+msg: Map mouse wheel to up/down
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Ana ekranda Etkin
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Aygıt bulunamadı
+
+id: Malformed URI after device
+msg: Malformed URI after device
+
+id: Malformed URI after service
+msg: Malformed URI after service
+
+id: Service not found
+msg: Service bulunamadı
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Always try to select a subtitle
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: merkez
+
+id: Color
+msg: renk
+
+id: Enable VDPAU
+msg: VDPAU etkin
+
+id: Force subtitles to reside on video frame
+msg: Force subtitles to reside on video frame
+
+id: Generic settings for video subtitles
+msg: Generic settings for video subtitles
+
+id: Ignore embedded styling
+msg: Ignore embedded styling
+
+id: Left
+msg: Sol
+
+id: Outline color
+msg: Outline Rengi
+
+id: Outline size
+msg: Outline boyutu
+
+id: Right
+msg: Sağ
+
+id: Shadow color
+msg: Gölgelenme rengi
+
+id: Shadow offset
+msg: Gölgelenme ayar
+
+id: Stretch video to widescreen
+msg: Stretch video to widescreen
+
+id: Subtitle position
+msg: Altyazı pozisyonu
+
+id: Subtitle size
+msg: Altyazı boyutu
+
+id: Subtitle styling
+msg: Altyazı modeli
+
+id: Subtitles
+msg: Altyazılar
+
+id: Video acceleration and display behaviour
+msg: Video hızlandırma ve görüntü davranışı
+
+id: Video playback
+msg: Video oynatma listesi
+
