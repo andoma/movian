@@ -130,6 +130,12 @@ set_stretch_horizontal(void *opaque, int on)
   video_settings.stretch_horizontal = on;
 }
 
+static void
+set_vzoom(void *opaque, int v)
+{
+  video_settings.vzoom = v;
+}
+
 void
 video_settings_init(void)
 {
@@ -156,6 +162,15 @@ video_settings_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
+
+  settings_create_int(s, "vzoom",
+		      _p("Video zoom"), 100, NULL, 50, 200,
+		      1, set_vzoom, NULL,
+		      SETTINGS_INITIAL_UPDATE,
+		      "%", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"videoplayback");
+
 
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,

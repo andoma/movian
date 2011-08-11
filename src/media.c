@@ -329,7 +329,7 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_setting_vzoom = 
     settings_create_int(mp->mp_setting_video_root, "vzoom",
-			_p("Video zoom"), 100, NULL, 50, 200,
+			_p("Video zoom"), video_settings.vzoom, NULL, 50, 200,
 			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
 			"%", mp->mp_pc, NULL, NULL);
 
