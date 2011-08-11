@@ -201,14 +201,14 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
  */
 static int64_t
 video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
-	   int64_t pos, int backward, const char *txt)
+	   int64_t pos, const char *txt)
 {
   pos = FFMAX(fctx->start_time, FFMIN(fctx->start_time + fctx->duration, pos));
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
 	(pos - fctx->start_time) / 1000000.0);
  
-  av_seek_frame(fctx, -1, pos, backward ? AVSEEK_FLAG_BACKWARD : 0);
+  av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
 
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
@@ -426,23 +426,23 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
 
-      seekbase = video_seek(fctx, mp, &mb, ts, 1, "direct");
+      seekbase = video_seek(fctx, mp, &mb, ts, "direct");
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, 1, "-60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, "-60s");
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, 1, "-15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, "-15s");
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, 1, "+15s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, "+15s");
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, 1, "+60s");
+      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, "+60s");
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
