@@ -126,7 +126,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   /*
    * If we are seeking, drop any non-reference frames
    */
-  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
+  ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
 
   avgtime_start(&vd->vd_decode_time);
 
