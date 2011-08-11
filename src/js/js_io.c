@@ -27,6 +27,8 @@
 #include "misc/string.h"
 #include "misc/regex.h"
 
+#include <ext/librtmp/rtmp.h>
+
 
 typedef struct js_http_response {
   char *data;
