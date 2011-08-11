@@ -1,0 +1,575 @@
+language: Finnish
+native: Suomi
+maintainer: 2600baud
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Ääniasetukset
+
+id: Languages
+msg: Kielet
+
+id: Settings
+msg: Asetukset
+
+id: Subtitle settings
+msg: Tekstityksien asetukset
+
+id: Video settings
+msg: Videon asetukset
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Lisännyt: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Pois
+
+id: On
+msg: Päälle
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: RAM muistia jäljellä: %d kB
+
+id: Detected CPUs: %d
+msg: CPU Ytimet: %d
+
+id: Display info
+msg: Näytä tiedot
+
+id: Framerate: %.2f Hz
+msg: FPS: %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Korkeus: %d px
+
+id: Renderer: %s
+msg: Renderoija: %s
+
+id: System info
+msg: Käyttöjärjestelmän tiedot
+
+id: Total system RAM: %d kB
+msg: RAM muistia yhteensä: %d kB
+
+id: Version: %s
+msg: Versionumero: %s
+
+id: Width: %d px
+msg: Leveys: %d px
+
+id: Windowmanager: %s
+msg: Ikkunoiden hallinta: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Lisätietoja
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Koti
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Tiedostoa ei voitu avata
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Sivua ei voi ladata
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Soittolista
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Kappale %d / %d
+
+id: Title %d / %d
+msg: Nimi %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Raita %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU on liian hidas käsittelemään videota
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Peruuta
+
+id: OK
+msg: OK
+
+id: Password
+msg: Salasana
+
+id: Remember me
+msg: Muista minut
+
+id: Username
+msg: Käyttäjätunnus
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Ei tiedostoa ladattuna
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Poista
+
+id: Enqueue
+msg: Lisää jonoon
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Ääniulostulo
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU & Näyttö
+
+id: GPU Core temperature: %d / %d °
+msg: GPU Ytimen lämpötila: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Säädä taustavalaistusta päivän kulun mukaan
+
+id: Audio muted
+msg: Mykistä ääni
+
+id: Fancy UI animations
+msg: UI Animaatiot
+
+id: Master volume: %d dB
+msg: Äänenvoimakkuus: %d dB
+
+id: Starwars scroller tilt
+msg: Star Wars -vieritys
+
+id: Top bar navigation buttons
+msg: Yläpalkin navigointinapit
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: opensubtitles.org asetukset
+
+id: Use opensubtitles.org
+msg: opensubtitles.org käyttö
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video synkkaus viive
+
+id: Current output device
+msg: Valittu ulostulo
+
+id: Force stereo downmix
+msg: Yhdistä stereokanavat
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-keskiääni
+
+id: Select audio output device and related configurations
+msg: Valitse äänen ulostulo ja muut ääniasetukset
+
+id: Small front speakers
+msg: Pienet etukaiuttimet
+
+id: Swap LFE+center with surround
+msg: Vaihda LFE+Center Surroundiin
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Tuntematon CD URL
+
+id: Invalid CD track
+msg: Tuntematon CD raita
+
+id: Unable to open CD
+msg: CD ei aukea
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Tuntematon HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Haku
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Kirjaudu sisään automaattisesti
+
+id: Enable Spotify
+msg: Spotify
+
+id: Friends
+msg: Ystävät
+
+id: High bitrate
+msg: Hyvälaatuinen ääni
+
+id: Inbox
+msg: Saapuneet
+
+id: New albums on Spotify
+msg: Uudet albumit Spotifyssä
+
+id: New releases
+msg: Uudet Julkaisut
+
+id: Playlists
+msg: Soittolistat
+
+id: Relogin (switch user)
+msg: Kirjaudu uudelleen (vaihda käyttäjää)
+
+id: Search result
+msg: Haun tulokset
+
+id: Spotify friends
+msg: Spotify ystävät
+
+id: Spotify music service
+msg: Spotify Musiikkipalvelu
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify tarjoaa laillisen ja ilmaisen musiikkikirjaston. Käyttääksesi Spotifyä Showtimellä, tarvitset Spotify Premium tilin. Lisätietoja http://www.spotify.com/\n\nKäyttäessäsi Spotifyn palveluita ensi kerran, sinun tulee kirjautua palveluun Spotify-tunnuksillasi.
+
+id: Spotify playlists
+msg: Spotyfy soittolistat
+
+id: Starred
+msg: Tähdellä merkityt
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Kirjanmerkit
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Etsi käyttäen Unix locatedb toimintoa
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+# Missing translation
+msg: 
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Kieli
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
+msg: 
+
+id: Preferred languages
+msg: Ensisijaiset Kielet
+
+id: Primary audio language code
+msg: Ensisijainen ääniraita
+
+id: Primary subtitle language code
+msg: Ensisijainen tekstitys
+
+id: SRT character set
+msg: SRT merkistö
+
+id: Secondary audio language code
+msg: Toissijainen ääniraita
+
+id: Secondary subtitle language code
+msg: Toissijainen tekstitys
+
+id: Tertiary audio language code
+msg: Kolmas ääniraita
+
+id: Tertiary subtitle language code
+msg: Kolmas tekstitys
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automaattinen TV:n sammutus
+
+id: Input source
+msg: Sisääntulo
+
+id: LG Television set
+msg: LG Televisio
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Näppäimistön ja langattoman ohjaimen asetukset
+
+id: Keymapper
+msg: Kirjainten uudelleenkartoitus
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Muuta tekstityksien kohtaa videolla
+
+id: Audio delay
+msg: Äänen viive
+
+id: Subtitle delay
+msg: Tekstityksien viive
+
+id: Subtitle scaling
+msg: Tekstityksien skaala
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: URL virhe
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+# Missing translation
+msg: 
+
+id: Plugin ID %s does not exist
+# Missing translation
+msg: 
+
+id: Plugin ID %s have no download URL
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: %s
+# Missing translation
+msg: 
+
+id: Unable to load plugin.json: Malformed JSON
+# Missing translation
+msg: 
+
+id: Unable to request plugin repository: %s
+# Missing translation
+msg: 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automaattinen virrankatkaisu
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Päällä
+
+id: Name
+msg: Nimi
+
+id: Type
+msg: Tyyppi
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Ohjelmistot ja plug-in toiminnot
+
+id: Discovered media sources
+msg: Löydetyt medialähteet
+
+id: Global settings
+msg: Yleiset asetukset
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Näyttö ja käyttöliittymä
+
+id: Horizontal underscan
+msg: Horisontaali aliskannaus
+
+id: Screensaver delay
+msg: Näytönsäästäjän viive
+
+id: Userinterface size
+msg: Käyttöliittymän koko
+
+id: Vertical underscan
+msg: Vertikaali aliskannaus
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Koko näyttö
+
+id: Map mouse wheel to up/down
+msg: Liitä hiiren scroll nappiin ylös/alas
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Päällä kotinäytössä
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Laitetta ei löydy
+
+id: Malformed URI after device
+msg: URI virhe (laite)
+
+id: Malformed URI after service
+msg: URI virhe (palvelu)
+
+id: Service not found
+msg: Palvelua ei löydy
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Etsi aina tekstityksiä
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Keskitys
+
+id: Color
+msg: Värit
+
+id: Enable VDPAU
+msg: VDPAU päälle / pois
+
+id: Force subtitles to reside on video frame
+msg: Suhteuta tekstitykset näytölle
+
+id: Generic settings for video subtitles
+msg: Yleiset tekstitysasetukset
+
+id: Ignore embedded styling
+msg: Ohita asetetut tyylit
+
+id: Left
+msg: Vasen
+
+id: Outline color
+msg: Reunan väri
+
+id: Outline size
+msg: Reunan koko
+
+id: Right
+msg: Oikea
+
+id: Shadow color
+msg: Varjon väri
+
+id: Shadow offset
+msg: Varjon korjaus
+
+id: Stretch video to widescreen
+msg: Venytä video widescreen muotoon 
+
+id: Subtitle position
+msg: Tekstityksen kohta ruudulla
+
+id: Subtitle size
+msg: Tekstityksen koko
+
+id: Subtitle styling
+msg: Tekstityksen tyylit
+
+id: Subtitles
+msg: Tekstitys
+
+id: Video acceleration and display behaviour
+msg: Videokuvan kiihdytys ja näytön toiminta
+
+id: Video playback
+msg: Videotoisto
+
