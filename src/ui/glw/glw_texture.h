@@ -28,10 +28,13 @@ typedef struct glw_loadable_texture {
   LIST_ENTRY(glw_loadable_texture) glt_global_link;
   LIST_ENTRY(glw_loadable_texture) glt_flush_link;
   TAILQ_ENTRY(glw_loadable_texture) glt_work_link;
+  struct glw_loadable_texture_queue *glt_q;
+
   int glt_flags;
 
   enum {
     GLT_STATE_INACTIVE,
+    GLT_STATE_QUEUED,
     GLT_STATE_LOADING,
     GLT_STATE_VALID,
     GLT_STATE_ERROR,
@@ -80,8 +83,6 @@ void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 void glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 void glw_tex_purge(glw_root_t *gr);
-
-void glw_tex_is_active(glw_root_t *gr, glw_loadable_texture_t *glt);
 
 void glw_tex_autoflush(glw_root_t *gr);
 
