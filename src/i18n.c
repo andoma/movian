@@ -475,6 +475,22 @@ upload_translation(http_connection_t *hc, const char *remain, void *opaque,
 }
 
 
+typedef struct lang {
+  LIST_ENTRY(lang) link;
+  const char *id;
+  const char *str;
+} lang_t;
+
+/**
+ *
+ */
+static int 
+langcmp(lang_t *a, lang_t *b)
+{
+  return dictcmp(a->str, b->str);
+}
+
+
 
 /**
  *
@@ -490,6 +506,8 @@ nls_init(prop_t *parent, htsmsg_t *store)
   char language[64];
   char native[64];
   char *e;
+  LIST_HEAD(, lang) list;
+  lang_t *l;
 
   http_path_add("/showtime/translation", NULL, upload_translation);
 
@@ -499,13 +517,12 @@ nls_init(prop_t *parent, htsmsg_t *store)
     return;
   }
 
-  fa_dir_sort(fd);
-
   x = settings_create_multiopt(parent, "language", _p("Language"),
 			       set_language, NULL);
 
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
-  
+  LIST_INIT(&list);
+
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
     if(fde->fde_filename[strlen(fde->fde_filename) - 1] == '~')
@@ -524,11 +541,15 @@ nls_init(prop_t *parent, htsmsg_t *store)
 	    fde->fde_url, buf2);
       continue;
     }
-
+    l = alloca(sizeof(lang_t));
+    l->id = mystrdupa(buf);
     snprintf(buf2, sizeof(buf2), "%s (%s)", native, language);
-
-    settings_multiopt_add_opt_cstr(x, buf, buf2, 0);
+    l->str = mystrdupa(buf2);
+    LIST_INSERT_SORTED(&list, l, link, langcmp);
   }
+
+  LIST_FOREACH(l, &list, link)
+    settings_multiopt_add_opt_cstr(x, l->id, l->str, 0);
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"i18n");
