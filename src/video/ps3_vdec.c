@@ -20,6 +20,7 @@
 
 #include <arch/threads.h>
 #include <sysmodule/sysmodule.h>
+#include <psl1ght/lv2.h>
 
 #include "showtime.h"
 #include "ps3_vdec.h"
@@ -676,7 +677,7 @@ decoder_close(struct media_codec *mc)
   vdec_au_buffer_t *vab;
 
   vdec_close(vdd->handle);
-  free(vdd->mem);
+  Lv2Syscall1(349, (uint64_t)vdd->mem);
 
   while((vab = TAILQ_FIRST(&vdd->vab_queue)) != NULL)
     vab_destroy(vdd, vab);
@@ -806,12 +807,18 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   vdd = calloc(1, sizeof(vdec_decoder_t));
 
-  vdd->mem = malloc(dec_attr.mem_size);
-  if(vdd->mem == NULL) {
+
+#define ROUND_UP(p, round) ((p + round - 1) & ~(round - 1))
+
+  size_t allocsize = ROUND_UP(dec_attr.mem_size, 1024*1024);
+  u32 taddr;
+
+  if(Lv2Syscall3(348, allocsize, 0x400, (u64)&taddr)) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to allocate %d bytes",
 	  dec_attr.mem_size);
     return 1;
   }
+  vdd->mem = (void *)(uint64_t)taddr;
 
   TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
 	id == CODEC_ID_H264 ? "h264" : "MPEG2", dec_type.profile_level,
@@ -831,7 +838,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   r = vdec_open(&dec_type, &vdd->config, &c, &vdd->handle);
   if(r) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to open codec: 0x%x", r);
-    free(vdd->mem);
+    Lv2Syscall1(349, (uint64_t)vdd->mem);
     free(vdd);
     return 1;
   }
