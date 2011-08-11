@@ -25,6 +25,7 @@
 #include "showtime.h"
 #include "ps3_vdec.h"
 #include "video_decoder.h"
+#include "video_settings.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
@@ -788,10 +789,14 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     }
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    if(mcp->level != 0 && mcp->level <= 42)
+    if((mcp->level != 0 && mcp->level <= 42) || !video_settings.force_42)
       dec_type.profile_level = mcp->level;
-    else
+    else {
       dec_type.profile_level = 42;
+      TRACE(TRACE_INFO, "VDEC",
+	    "Forcing level 42 for content in level %d. This may break",
+	    mcp->level);
+    }
     spu_threads = 4;
     break;
 
