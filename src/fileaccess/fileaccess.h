@@ -127,7 +127,6 @@ typedef enum {
 
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
-void fa_dir_sort(fa_dir_t *fd);
 
 void *fa_open(const char *url, char *errbuf, size_t errsize, int flags);
 void *fa_open_vpaths(const char *url, const char **vpaths);
