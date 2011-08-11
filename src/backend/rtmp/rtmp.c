@@ -39,7 +39,6 @@ typedef struct {
 
   RTMP *r;
 
-  double duration;
   int lastdts;
 
   int in_seek_skip;
@@ -94,26 +93,14 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
     snprintf(errstr, errlen, "No metadata in metadata packet");
     return -1;
   }
-  if(!RTMP_FindFirstMatchingProperty(obj, &av_duration, &prop) ||
-     prop.p_type != AMF_NUMBER) {
-    snprintf(errstr, errlen, "Unable to parse total duration");
-    return -1;
-  }
-  prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
-  r->duration = prop.p_vu.p_number;
+  if(RTMP_FindFirstMatchingProperty(obj, &av_duration, &prop) &&
+     prop.p_type == AMF_NUMBER)
+    prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
 
-
-
-  if(!RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) ||
-     prop.p_type != AMF_NUMBER) {
-
-    if(!RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop) ||
-       prop.p_type != AMF_NUMBER) {
-      snprintf(errstr, errlen, "Unable to parse video framerate");
-      return -1;
-    }
-  }
-  r->vframeduration = 1000000.0 / prop.p_vu.p_number;
+  if((RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) &&
+      RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop))
+     && prop.p_type == AMF_NUMBER)
+    r->vframeduration = 1000000.0 / prop.p_vu.p_number;
 
   r->width = r->height = 0;
   if(RTMP_FindFirstMatchingProperty(obj, &av_width, &prop) &&
