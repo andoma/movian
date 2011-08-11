@@ -14,7 +14,7 @@ id: Settings
 msg: Ajustes
 
 id: Subtitle settings
-msg: Ajustes de subtitulos
+msg: Ajustes de subtítulos
 
 id: Video settings
 msg: Ajustes de video
@@ -38,13 +38,13 @@ msg: Encendido
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: RAM disponible de sistema: %d kB
+msg: RAM disponible en sistema: %d kB
 
 id: Detected CPUs: %d
 msg: CPUs Detectados: %d
 
 id: Display info
-msg: Pantalla de informacion
+msg: Pantalla de información
 
 id: Framerate: %.2f Hz
 msg: Cuadros por segundo %.2f Hz
@@ -59,19 +59,19 @@ id: Renderer: %s
 msg: Renderizado: %s
 
 id: System info
-msg: Informacion de sistema
+msg: Información de sistema
 
 id: Total system RAM: %d kB
 msg: RAM total del sistema: %d kB
 
 id: Version: %s
-msg: Version: %s
+msg: Versión: %s
 
 id: Width: %d px
 msg: Ancho: %d px
 
 id: Windowmanager: %s
-msg: Administrador de ventana: %s
+msg: Administrador de ventanas: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -95,7 +95,7 @@ msg: Incapaz de abrir recursos
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Error de carga de pagina
+msg: Error en la carga de pagina
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
@@ -107,10 +107,10 @@ msg: Cola de reproduccion
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
-msg: Capitulo %d / %d
+msg: Capítulo %d / %d
 
 id: Title %d / %d
-msg: Titulo %d / %d
+msg: Título %d / %d
 
 #
 # ./glwthemes/mono/playdecks/tracks.view
@@ -146,7 +146,7 @@ msg: Nombre de Usuario
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Ningun medio cargado
+msg: Ningún medio cargado
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
@@ -170,7 +170,7 @@ id: GPU & Display
 msg: GPU & Pantalla
 
 id: GPU Core temperature: %d / %d °
-msg: GPU Temperatura de nucleo: %d / %d °
+msg: GPU Temperatura de núcleo: %d / %d °
 
 #
 # ./glwthemes/mono/universe.view
@@ -182,7 +182,7 @@ id: Audio muted
 msg: Audio apagado
 
 id: Fancy UI animations
-msg: Animacion elegante de Interfaz
+msg: Animación elegante de Interfaz
 
 id: Master volume: %d dB
 msg: Volumen principal: %d dB
@@ -191,7 +191,7 @@ id: Starwars scroller tilt
 msg: Desplazamiento inclinado tipo Star Wars
 
 id: Top bar navigation buttons
-msg: Botones de navegacion barra superior
+msg: Botones de navegación barra superior
 
 #
 # ./src/api/opensubtitles.c
@@ -206,25 +206,25 @@ msg: Usar opensubtitles.org
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Audio/Video sincronizacion de delay
+msg: Audio/Video sincronización de delay
 
 id: Current output device
 msg: Dispositivo de salida actual
 
 id: Force stereo downmix
-msg: Forzar salida de mezcla estereo
+msg: Forzar salida de mezcla estéreo
 
 id: Phantom LFE
 msg: Phantom-LFE
 
 id: Phantom center
-msg: Fantom-center
+msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Seleccion y configuracion dispositivo de salida de audio
+msg: Selección y configuración dispositivo de salida de audio
 
 id: Small front speakers
-msg: Parlantes chicos de frente
+msg: Parlantes frontales pequeños
 
 id: Swap LFE+center with surround
 msg: cambiar a LFE+centro con surround
@@ -257,7 +257,7 @@ msg: Busqueda
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Ingreso automatico al comienzo de Showtime
+msg: Ingreso automático al comienzo de Showtime
 
 id: Enable Spotify
 msg: Habilitar Spotify
@@ -269,7 +269,7 @@ id: High bitrate
 msg: Taza de bits alta
 
 id: Inbox
-msg: Buzon de entrada
+msg: Buzón de entrada
 
 id: New albums on Spotify
 msg: Nuevos albumes en Spotify
@@ -278,7 +278,7 @@ id: New releases
 msg: Nuevos lanzamientos
 
 id: Playlists
-msg: Listas de reproduccion
+msg: Listas de reproducción
 
 id: Relogin (switch user)
 msg: Re-Ingreso (cambiar usuario)
@@ -293,19 +293,19 @@ id: Spotify music service
 msg: Servicio de musica Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify te ofrece acceso libre y legal a una gigante libreria de musica. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara mas información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier caracteristica de Spotify en showtime debera ingresar su nombre de usuario y contraseña.
+msg: Spotify te ofrece acceso libre y legal a una enorme librería de música. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara mas información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier característica de Spotify en showtime deberá ingresar su nombre de usuario y contraseña.
 
 id: Spotify playlists
-msg: Lista de reproduccion de Spotyfy
+msg: Lista de reproducción de Spotyfy
 
 id: Starred
-msg: Estrellas
+msg: Favoritos
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
-msg: Favoritos
+msg: Marcadores
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -326,37 +326,37 @@ id: Language
 msg: Lenguaje
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Los codigos de lenguaje deben ser configurados como codigos de caracateres ISO, por ejemplo: eng, swe, fra
+msg: Los códigos de lenguaje deben ser configurados como códigos de caracateres ISO, por ejemplo: eng, swe, fra
 
 id: Preferred languages
 msg: Lenguajes preferidos
 
 id: Primary audio language code
-msg: Codigo primario de lenguaje de audio
+msg: Código primario de lenguaje de audio
 
 id: Primary subtitle language code
-msg: Codigo primario de lenguaje de subtitulos
+msg: Código primario de lenguaje de subtítulos
 
 id: SRT character set
 msg: Juego de caracteres SRT
 
 id: Secondary audio language code
-msg: Codigo secundario de lenguaje de audio
+msg: Código secundario de lenguaje de audio
 
 id: Secondary subtitle language code
-msg: Codigo secundario de lenguaje de subtitulos
+msg: Código secundario de lenguaje de subtítulos
 
 id: Tertiary audio language code
-msg: Codigo terciario de lenguaje de audio
+msg: Código terciario de lenguaje de audio
 
 id: Tertiary subtitle language code
-msg: Codigo terciario de lenguaje de subtitulos
+msg: Código terciario de lenguaje de subtítulos
 
 #
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Apagado automatico de TV on/off
+msg: Apagado automático de TV on/off
 
 id: Input source
 msg: Fuente de entrada
@@ -377,16 +377,16 @@ msg: Mapeo de teclas
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Alinear subtitulos en cuadro de video
+msg: Alinear subtítulos en cuadro de video
 
 id: Audio delay
 msg: Delay de audio
 
 id: Subtitle delay
-msg: Delay de subtitulos
+msg: Delay de subtítulos
 
 id: Subtitle scaling
-msg: Escala de subtitulos
+msg: Escala de subtítulos
 
 id: Video zoom
 msg: Zoom de Video
@@ -428,7 +428,7 @@ msg:
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Standby automatico
+msg: Modo espera automático
 
 id: Run control
 msg: Empezar control
@@ -482,7 +482,7 @@ id: Fullscreen mode
 msg: Modo pantalla completa
 
 id: Map mouse wheel to up/down
-msg: Mapear rueda de mouse para arriba/abajo
+msg: Mapear rueda de mouse arriba/abajo
 
 #
 # ./src/upnp/upnp.c
@@ -497,10 +497,10 @@ id: Device not found
 msg: Dispositivo no encontrado
 
 id: Malformed URI after device
-msg: Uri malformado despues de dispositivo
+msg: URI malformado después de dispositivo
 
 id: Malformed URI after service
-msg: Uri malformado despues de servicio
+msg: URI malformado después de servicio
 
 id: Service not found
 msg: Servicio no encontrado
@@ -509,10 +509,10 @@ msg: Servicio no encontrado
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Siempre tratar de seleccionar subtitulo
+msg: Siempre tratar de seleccionar subtítulo
 
 id: Auto
-msg: Automatico
+msg: Automático
 
 id: Center
 msg: Centrado
@@ -524,10 +524,10 @@ id: Enable VDPAU
 msg: Activar VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Forzar subtitulo sobre cuadro de video
+msg: Forzar subtítulo sobre cuadro de video
 
 id: Generic settings for video subtitles
-msg: Ajustes genericos para subtitulos
+msg: Ajustes genéricos para subtítulos
 
 id: Ignore embedded styling
 msg: Ignorar estilo integrado
@@ -551,23 +551,23 @@ id: Shadow offset
 msg: offset de sombra
 
 id: Stretch video to widescreen
-msg: Estirar video para widescreen
+msg: Estirar video para panorámica
 
 id: Subtitle position
-msg: Posicion de subtitulos
+msg: Posición de subtítulos
 
 id: Subtitle size
-msg: Tamaño de subtitulos
+msg: Tamaño de subtítulos
 
 id: Subtitle styling
-msg: Estilo de subtitulos
+msg: Estilo de subtítulos
 
 id: Subtitles
-msg: Subtitulos
+msg: Subtítulos
 
 id: Video acceleration and display behaviour
-msg: Aceleracion de video y comportamiento de pantalla
+msg: Aceleración de video y comportamiento de pantalla
 
 id: Video playback
-msg: Reproduccion de video
+msg: Reproducción de video
 
