@@ -288,7 +288,7 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
       if(title != NULL && htsmsg_get_str(json, "id") != NULL &&
 	 htsmsg_get_str(json, "type") != NULL) {
 	md->md_title = rstr_alloc(title);
-	md->md_type = CONTENT_PLUGIN;
+	md->md_contenttype = CONTENT_PLUGIN;
 	htsmsg_destroy(json);
 	return 1;
       }

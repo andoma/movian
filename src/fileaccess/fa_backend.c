@@ -101,7 +101,7 @@ file_open_dir(prop_t *page, const char *url)
     break;
 
   default:
-    nav_open_errorf(page, "Can't handle content type %d",
+    nav_open_errorf(page, _("Can't handle content type %d"),
 		    md->md_contenttype);
     break;
   }
@@ -176,7 +176,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
     md = fa_probe_metadata(url, errbuf, sizeof(errbuf));
 
   if(md == NULL) {
-    nav_open_errorf(page, "Unable to open file: %s", errbuf);
+    nav_open_errorf(page, _("Unable to open file: %s"), errbuf);
     return;
   }
 
@@ -213,7 +213,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
 
   case CONTENT_PLUGIN:
     plugin_open_file(page, url);
-    return 0;
+    break;
 
   default:
     prop_destroy(meta);

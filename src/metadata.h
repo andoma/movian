@@ -36,6 +36,7 @@ typedef enum {
   CONTENT_DVD         = 7,
   CONTENT_IMAGE       = 8,
   CONTENT_ALBUM       = 9,
+  CONTENT_PLUGIN      = 10,
 } contenttype_t;
 
 
