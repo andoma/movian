@@ -1,6 +1,0 @@
-#import "skin://nav.skin"
-
-widget(container_x, {
-  skinNavLocation($page.model.metadata.title + " (" + $page.model.metadata.year + ")", void);
-});
-
