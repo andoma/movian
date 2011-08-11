@@ -1,0 +1,567 @@
+language: Danish
+native: Dansk
+maintainer: Klaus Rauteberg <showtime@rautenberg.dk>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Lydindstillinger
+
+id: Languages
+msg: Sprog
+
+id: Settings
+msg: Indstillinger
+
+id: Subtitle settings
+msg: Indstillinger for undertekster
+
+id: Video settings
+msg: Videoindstillinger
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Tilføjet af: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Slukket
+
+id: On
+msg: Tændt
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Tilgængelig system RAM: %d kB
+
+id: Detected CPUs: %d
+msg: Fundne CPU'er: %d
+
+id: Display info
+msg: Skærminformation
+
+id: Framerate: %.2f Hz
+msg: Opdateringsfrekvens%.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Højde: %d px
+
+id: Renderer: %s
+msg: Renderere: %s
+
+id: System info
+msg: Systeminformation
+
+id: Total system RAM: %d kB
+msg: Totalt system RAM: %d kB
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Bredde: %d px
+
+id: Windowmanager: %s
+msg: Vindue manager: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Om
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Hjem
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Kan ikke åbne resource
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Side hentningsfejl
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Spilkø
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Kapitel %d / %d
+
+id: Title %d / %d
+msg: Titel %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Spor %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPUen er for langsom til at afkode denne video
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
+
+id: Password
+msg: Kodeord
+
+id: Remember me
+msg: Husk mig
+
+id: Username
+msg: Brugernavn
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Ingen media hentet
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Slet
+
+id: Enqueue
+msg: Tilføj
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Audio udgang
+
+id: CPUs
+msg: CPU'er
+
+id: GPU & Display
+msg: GPU og skærm
+
+id: GPU Core temperature: %d / %d °
+msg: GPU Core temperatur: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Juster baggrundsfarven baseret på tid på dagen
+
+id: Audio muted
+msg: Audio mute
+
+id: Fancy UI animations
+msg: Fancy UI animationer
+
+id: Master volume: %d dB
+msg: Master volume: %d dB
+
+id: Starwars scroller tilt
+msg: Vis tekster som en Starwars scroller
+
+id: Top bar navigation buttons
+msg: Navigationsknapper i toppen af skærmen
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Indstilinger for opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Anvend opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video sync delay
+
+id: Current output device
+msg: Nuværende lydudgang
+
+id: Force stereo downmix
+msg: Tving stereo nedmix
+
+id: Phantom LFE
+msg: Fantom LFE
+
+id: Phantom center
+msg: Fantom center
+
+id: Select audio output device and related configurations
+msg: Vælg lydudgang og relaterede konfigurationer
+
+id: Small front speakers
+msg: Små fronthøjtalere
+
+id: Swap LFE+center with surround
+msg: Byt LFE+center med surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Ugyldig CD URL
+
+id: Invalid CD track
+msg: Ugyldig CD track
+
+id: Unable to open CD
+msg: Kan ikke åbne CD
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Ugyldig HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Søg
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automatisk login når Showtime starter
+
+id: Enable Spotify
+msg: Anvend Spotify
+
+id: Friends
+msg: Venner
+
+id: High bitrate
+msg: Høj bithastighet
+
+id: Inbox
+msg: Indbakke
+
+id: New albums on Spotify
+msg: Nye album på Spotify
+
+id: New releases
+msg: Nye opdateringer
+
+id: Playlists
+msg: Spillister
+
+id: Relogin (switch user)
+msg: Login på ny (skift bruger)
+
+id: Search result
+msg: Søgeresultat
+
+id: Spotify friends
+msg: Venner på Spotify
+
+id: Spotify music service
+msg: Spotify musiktjeneste
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify tilbyder lovlig og fri tilgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nDu vil blive bedt om dit Spotify brugernavn og kodeord når du anvender nogen af Spotify funktionerne i Showtime.
+
+id: Spotify playlists
+msg: Spotyfy spillister
+
+id: Starred
+msg: Stjernemarkeret
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Bogmærker
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Søg via Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Søg via spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Sprog
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, den
+
+id: Preferred languages
+msg: Fortrukne sprog
+
+id: Primary audio language code
+msg: Primært sprog for lyd
+
+id: Primary subtitle language code
+msg: Primært sprog for undertekster
+
+id: SRT character set
+msg: Karaktersæt for SRT undertekster
+
+id: Secondary audio language code
+msg: Sekundær sprog for lyd
+
+id: Secondary subtitle language code
+msg: Sekundær sprog for undertekster
+
+id: Tertiary audio language code
+msg: Tertiær sprog for lyd
+
+id: Tertiary subtitle language code
+msg: Tertiær sprog for undertekster
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatisk tænd/sluk af TV
+
+id: Input source
+msg: Indputskilde
+
+id: LG Television set
+msg: LG TV
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Indstillinger af tastatur og fjercontroller knapper
+
+id: Keymapper
+msg: Tastatur mapning
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Juster undertekster til videobilled
+
+id: Audio delay
+msg: Lyddelay
+
+id: Subtitle delay
+msg: Underteksterdelay
+
+id: Subtitle scaling
+msg: Skalering af undertekster
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Ingen hanterare för URLen
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Felaktig URI
+
+id: Plugin ID %s does not exist
+msg: Plugin ID %s findes ikke
+
+id: Plugin ID %s have no download URL
+msg: Plugin ID %s har ingen download URL
+
+id: Unable to load plugin.json: %s
+msg: Kan ikke hente plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Kan ikke hente plugin.json: Forkert formateret JSON
+
+id: Unable to request plugin repository: %s
+msg: Kan ikke anmode om plugin mappen: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatisk standby
+
+id: Run control
+msg: Kørekontrol
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Aktiveret
+
+id: Name
+msg: Navn
+
+id: Type
+msg: Type
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Aplikationer og installerede plugins
+
+id: Discovered media sources
+msg: Fundet media kilder
+
+id: Global settings
+msg: Globale indstillinger
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Skærm og brugerinterface
+
+id: Horizontal underscan
+msg: Horisontaæ underscanning
+
+id: Screensaver delay
+msg: Screensaver forsinkelse
+
+id: Userinterface size
+msg: Brugerinterface størrelse
+
+id: Vertical underscan
+msg: Vertikal underscanning
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Fuldskærmstilstand
+
+id: Map mouse wheel to up/down
+msg: Tildel musens scrollhjul til op/ned
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Tillgænglig på startsiden
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Enhed findes ikke
+
+id: Malformed URI after device
+msg: Fejlagtig URI efter enhet
+
+id: Malformed URI after service
+msg: Fejlagtig URI efter tjeneste
+
+id: Service not found
+msg: Tjenesten findes ikke
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Forsøg altid at vælge en undertekst
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Centreret
+
+id: Color
+msg: Farve
+
+id: Enable VDPAU
+msg: Aktiver VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Tving undettekster til at ligge ovenpå videobilledet
+
+id: Generic settings for video subtitles
+msg: Generelle indstillinger for undertekster
+
+id: Ignore embedded styling
+msg: Ignorer indlejret stil
+
+id: Left
+msg: Venstre
+
+id: Outline color
+msg: Farve på konturer
+
+id: Outline size
+msg: Størrelse på konturer
+
+id: Right
+msg: Højre
+
+id: Shadow color
+msg: Farve på skygger
+
+id: Shadow offset
+msg: Skygge offset
+
+id: Stretch video to widescreen
+msg: Stræk video til widescreen
+
+id: Subtitle position
+msg: Position på undertekster
+
+id: Subtitle size
+msg: Størrelse på undertekster
+
+id: Subtitle styling
+msg: Stil på undertekster
+
+id: Subtitles
+msg: Undertekster
+
+id: Video acceleration and display behaviour
+msg: Videoacceleration og skærmpræsentation
+
+id: Video playback
+msg: Videoafspilling
+
