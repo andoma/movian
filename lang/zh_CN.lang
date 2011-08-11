@@ -122,7 +122,7 @@ msg: 轨道 %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPU解码本视频太慢了
+msg: 当前视频CPU解码过慢
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -188,10 +188,10 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 id: Starwars scroller tilt
-msg: 星战式滚动条倾斜
+msg: 星战式滚动条斜率
 
 id: Top bar navigation buttons
-msg: 工具栏浏览按钮
+msg: 工具栏导航按钮
 
 #
 # ./src/api/opensubtitles.c
@@ -338,7 +338,7 @@ id: Primary subtitle language code
 msg: 字幕首选语言代码
 
 id: SRT character set
-msg: SRT字符集
+msg: SRT字幕字符集
 
 id: Secondary audio language code
 msg: 音频次选语言代码
@@ -386,10 +386,10 @@ id: Subtitle delay
 msg: 字幕延迟
 
 id: Subtitle scaling
-msg: 缩放字幕
+msg: 字幕缩放
 
 id: Video zoom
-msg: 缩放视频
+msg: 视频缩放
 
 #
 # ./src/navigator.c
