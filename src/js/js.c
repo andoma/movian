@@ -622,6 +622,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("addHTTPAuth",      js_addHTTPAuth, 2, 0, 0),
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
+    JS_FS("createStore",   js_createStore, 1, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 3, 0, 0),
     JS_FS_END

@@ -451,6 +451,22 @@ The settings object is not resource tracked and explicitly destroyed
 like most other plugin related objects. Rather it is finalized when
 the Javascript garbage collector will destroy it.
 
+#### createStore(String ID, [Boolean perUser])
+
+`Available from 3.1.162`
+
+Creates an object that will be persisted on disk.
+
+* ID - Identifies the object. Each plugin can create multiple stores,
+  each with a different ID.
+* perUser - When Showtime will support switching between multiple
+  identities this will indicate that the store should be unique per
+  user. This is not something that is currently supported.
+
+The store object is not resource tracked and explicitly destroyed
+like most other plugin related objects. Rather it is finalized when
+the Javascript garbage collector will destroy it.
+
 #### getAuthCredentials(String Source, String Reason, Boolean QueryUser, [String ID], [Boolean ForceTemporary])
 
 Ask the user for authentication credentials.

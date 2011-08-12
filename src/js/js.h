@@ -76,6 +76,9 @@ JSBool js_createService(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc, 
 			 jsval *argv, jsval *rval);
 
+JSBool js_createStore(JSContext *cx, JSObject *obj, uintN argc, 
+		      jsval *argv, jsval *rval);
+
 struct backend;
 
 int js_backend_open(prop_t *page, const char *url);

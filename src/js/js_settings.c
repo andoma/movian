@@ -478,3 +478,34 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   return JS_TRUE;
 }
 
+
+
+/**
+ *
+ */
+JSBool 
+js_createStore(JSContext *cx, JSObject *obj, uintN argc, 
+	       jsval *argv, jsval *rval)
+{
+  const char *id;
+  char spath[URL_MAX];
+  JSBool per_user = 0;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/b", &id, &per_user))
+    return JS_FALSE;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+  snprintf(spath, sizeof(spath), "jsstore/%s-%s", jsp->jsp_id, id);
+
+  js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
+  JSObject *robj;
+  jsg->jsg_frozen = 1;
+  jsg->jsg_spath = strdup(spath);
+  jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
+
+  robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
+  *rval = OBJECT_TO_JSVAL(robj);
+  JS_SetPrivate(cx, robj, jsg);
+  jsg->jsg_frozen = 0;
+  return JS_TRUE;
+}
+
