@@ -524,6 +524,10 @@ msg: Farbe
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: Untertitel auf Videoframe aufzwingen
 

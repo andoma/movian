@@ -517,6 +517,10 @@ msg: Farve
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: Tving undettekster til at ligge ovenpå videobilledet
 

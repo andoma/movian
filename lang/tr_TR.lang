@@ -524,6 +524,10 @@ msg: renk
 id: Enable VDPAU
 msg: VDPAU etkin
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: Force subtitles to reside on video frame
 
