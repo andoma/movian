@@ -447,9 +447,7 @@ js_durationtostring(JSContext *cx, JSObject *obj,
 
   *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, tmp));
   return JS_TRUE;
-  return JS_TRUE;
 }
-
 
 /**
  *
