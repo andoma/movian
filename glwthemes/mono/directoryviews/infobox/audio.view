@@ -14,6 +14,8 @@ widget(container_y, {
     });
     widget(label, {
       .align = right;
+
+      .autohide = true;
       .caption = value2duration($args.metadata.duration);
       .sizeScale = 1.5;
     });
@@ -71,6 +73,7 @@ widget(container_y, {
 
   widget(label, {
     .color = 0.6;
+    .hidden = select($args.metadata.user.name, false, true);
     .caption = fmt(_("Added by: %s"), $args.metadata.user.name);
   });
 
