@@ -27,6 +27,8 @@
 #include "misc/string.h"
 #include "misc/regex.h"
 
+#include <ext/librtmp/rtmp.h>
+
 
 typedef struct js_http_response {
   char *data;
@@ -277,6 +279,33 @@ js_http_request(JSContext *cx, jsval *rval,
   return JS_TRUE;
 }
 
+
+/**
+ *
+ */
+JSBool 
+js_checkRtmp(JSContext *cx, JSObject *obj, uintN argc,
+	   jsval *argv, jsval *rval)
+{
+  char *rtmpurl;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &rtmpurl))
+    return JS_FALSE;
+  
+  RTMP* r = RTMP_Alloc();
+
+  RTMP_Init(r);
+
+  if (!RTMP_SetupURL(r, rtmpurl))
+  	return JS_FALSE;
+
+  if (!RTMP_Connect(r, NULL))
+  	return JS_FALSE;
+
+  *rval = BOOLEAN_TO_JSVAL(!!RTMP_ConnectStream(r, 0));;
+  
+  return JS_TRUE;
+}
 
 /**
  *
