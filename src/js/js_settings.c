@@ -266,6 +266,23 @@ js_createInfo(JSContext *cx, JSObject *obj, uintN argc,
 /**
  *
  */
+static JSBool 
+js_createDivider(JSContext *cx, JSObject *obj, uintN argc, 
+	      jsval *argv, jsval *rval)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *title;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &title))
+    return JS_FALSE;
+
+  settings_create_divider(jsg->jsg_root, _p(title));
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
 static jsval
 jsval_from_htsmsgfield(JSContext *cx, htsmsg_field_t *f)
 {
@@ -297,6 +314,7 @@ static JSFunctionSpec setting_functions[] = {
     JS_FS("createBool", js_createBool, 4, 0, 0),
     JS_FS("createString", js_createString, 4, 0, 0),
     JS_FS("createInfo", js_createInfo, 3, 0, 0),
+    JS_FS("createDivider", js_createDivider, 1, 0, 0),
     JS_FS_END
 };
 
