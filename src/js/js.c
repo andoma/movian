@@ -468,6 +468,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
     JS_FS("time",             js_time, 0, 0, 0),
     JS_FS("durationToString", js_durationtostring, 0, 0, 0),
+    JS_FS("probe",            js_probe, 1, 0, 0),
     JS_FS_END
 };
 

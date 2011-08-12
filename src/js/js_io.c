@@ -26,7 +26,7 @@
 #include "htsmsg/htsbuf.h"
 #include "misc/string.h"
 #include "misc/regex.h"
-
+#include "backend/backend.h"
 
 typedef struct js_http_response {
   char *data;
@@ -337,6 +337,39 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
   }
 
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+JSBool 
+js_probe(JSContext *cx, JSObject *obj, uintN argc,
+	 jsval *argv, jsval *rval)
+{
+  const char *url;
+  char errbuf[256];
+  backend_probe_result_t res;
+  jsval val;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
+    return JS_FALSE;
+
+  jsrefcount s = JS_SuspendRequest(cx);
+  res = backend_probe(url, errbuf, sizeof(errbuf));
+  JS_ResumeRequest(cx, s);
+
+  JSObject *robj = JS_NewObject(cx, NULL, NULL, NULL);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+  if(res != BACKEND_PROBE_OK) {
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, errbuf));
+    JS_SetProperty(cx, robj, "errmsg", &val);
+  }
+  
+  val = INT_TO_JSVAL(res);
+  JS_SetProperty(cx, robj, "result", &val);
   return JS_TRUE;
 }
 

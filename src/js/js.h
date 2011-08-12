@@ -58,6 +58,9 @@ JSBool js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 		   jsval *argv, jsval *rval);
 
+JSBool js_probe(JSContext *cx, JSObject *obj, uintN argc,
+		jsval *argv, jsval *rval);
+
 JSBool js_addURI(JSContext *cx, JSObject *obj, uintN argc, 
 		 jsval *argv, jsval *rval);
 

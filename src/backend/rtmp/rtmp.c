@@ -763,6 +763,45 @@ rtmp_init(void)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+rtmp_probe(const char *url0, char *errbuf, size_t errlen)
+{
+  RTMP *r;
+  char *url = mystrdupa(url0);
+
+  r = RTMP_Alloc();
+  RTMP_Init(r);
+
+  if(!RTMP_SetupURL(r, url)) {
+    snprintf(errbuf, errlen, "Unable to setup RTMP-session");
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  if(!RTMP_Connect(r, NULL)) {
+    snprintf(errbuf, errlen, "Unable to connect RTMP-session");
+    RTMP_Close(r);
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  if(!RTMP_ConnectStream(r, 0)) {
+    snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
+    RTMP_Close(r);
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  RTMP_Close(r);
+  RTMP_Free(r);
+
+  return BACKEND_PROBE_OK;
+}
+
+
 
 /**
  *
@@ -772,6 +811,7 @@ static backend_t be_rtmp = {
   .be_canhandle = rtmp_canhandle,
   .be_open = backend_open_video,
   .be_play_video = rtmp_playvideo,
+  .be_probe = rtmp_probe,
 };
 
 BE_REGISTER(rtmp);

@@ -626,6 +626,24 @@ for presentation of duration (of movies, etc)
   43 -> 0:43
   3601 -> 1:00:01
 
+#### probe(String URL) 
+
+`Available from 3.1.156`
+
+Probe the given URL to check if it is accessible.
+
+Returns an object with two properties
+
+* result - Result code, 0 means OK, the following codes are currently defined
+
+> * 1 - Authentication problem - Resource can not be probed due to missing authnetication credentials
+> * 2 - No URI handler - No support for the URI scheme
+> * 3 - Fail - Other failure
+
+* errmsg - Error message intended to be displyed to the user
+
+
+
 ## HTTP response object
 
 ### Properties

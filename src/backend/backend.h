@@ -28,9 +28,12 @@ struct event;
 
 /**
  * Kept in sync with service_status_t
+ * These are also directly exposed in the javascript API so they
+ * can never be changed. OK must be 0, all other are errors but should
+ * not be renumbered
  */
 typedef enum {
-  BACKEND_PROBE_OK,
+  BACKEND_PROBE_OK = 0,
   BACKEND_PROBE_AUTH,
   BACKEND_PROBE_NO_HANDLER,
   BACKEND_PROBE_FAIL,
