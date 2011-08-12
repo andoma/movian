@@ -1,0 +1,571 @@
+language: Romanian
+native: Română
+maintainer: Internetus România <internetusromania@gmail.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Setări audio
+
+id: Languages
+msg: Limba
+
+id: Settings
+msg: Setări
+
+id: Subtitle settings
+msg: Setări subtitrare
+
+id: Video settings
+msg: Setări video
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Tradus de : %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Oprire
+
+id: On
+msg: Pornire
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Memorie RAM liberă : %d kB
+
+id: Detected CPUs: %d
+msg: CPU detectat: %d
+
+id: Display info
+msg: Afișare informații
+
+id: Framerate: %.2f Hz
+msg: Numărul de frame-uri %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Înălțime: %d px
+
+id: Renderer: %s
+msg: Randator : %s
+
+id: System info
+msg: Informatii sistem
+
+id: Total system RAM: %d kB
+msg: Memorie RAM totală : %d kB
+
+id: Version: %s
+msg: Versiune: %s
+
+id: Width: %d px
+msg: Lățime : %d px
+
+id: Windowmanager: %s
+msg: Manager : %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Despre
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Acasă
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Imposibil de deschis acest fisier
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Eroare la incărcarea paginii
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Listă de așteptare
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Capitol %d / %d
+
+id: Title %d / %d
+msg: Titlu %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Track %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: Procesorul este prea lent pentru a decoda acest video
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Anulează
+
+id: OK
+msg: OK
+
+id: Password
+msg: Parola
+
+id: Remember me
+msg: Memorează datele
+
+id: Username
+msg: Nume de utilizator
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Nici un fisier media incărcat
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Șterge
+
+id: Enqueue
+msg: Marchează un fisier ca următorul
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Ieșire audio
+
+id: CPUs
+msg: Procesoare
+
+id: GPU & Display
+msg: GPU & Afișaj
+
+id: GPU Core temperature: %d / %d °
+msg: Temperatura GPU : %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Ajustează tenta fundalului în funcție de oră
+
+id: Audio muted
+msg: Sunet oprit
+
+id: Fancy UI animations
+msg: Animații UI
+
+id: Master volume: %d dB
+msg: Volumul general : %d dB
+
+id: Starwars scroller tilt
+msg: Inclinare scroller tip Starwars
+
+id: Top bar navigation buttons
+msg: Butoanele de navigare de pe bara de sus
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Paramentrii pentru opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Folosește subtitrari de pe opensubtitles.org
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Delay pentru sincronizarea Audio/Video
+
+id: Current output device
+msg: Ieșirea curentă
+
+id: Force stereo downmix
+msg: Forțează remixarea în stereo
+
+id: Phantom LFE
+msg: Phantom LFE
+
+id: Phantom center
+msg: Phantom centru
+
+id: Select audio output device and related configurations
+msg: Selectează ieșirea audio si alte configurații similare
+
+id: Small front speakers
+msg: Difuzoare mici față
+
+id: Swap LFE+center with surround
+msg: Inverseaza LFE+centru cu surround
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: URL CD invalid
+
+id: Invalid CD track
+msg: Track CD invalid
+
+id: Unable to open CD
+msg: Imposibil de citit CDul
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: URL HTSP invalid
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Caută
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Logare automată la pornirea Showtime
+
+id: Enable Spotify
+msg: Activează Spotify
+
+id: Friends
+msg: Prieteni
+
+id: High bitrate
+msg: Bitrate maxim
+
+id: Inbox
+msg: Primite
+
+id: New albums on Spotify
+msg: Albume noi pe Spotify
+
+id: New releases
+msg: Noutăți
+
+id: Playlists
+msg: Lista de fișiere
+
+id: Relogin (switch user)
+msg: Relogare (schimba userul)
+
+id: Search result
+msg: Rezultatele căutarii
+
+id: Spotify friends
+msg: Prietenii de pe Spotify
+
+id: Spotify music service
+msg: Serviciul muzical Spotify
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify oferă acces legal si gratuit la o imensă librarie muzicală. Pentru a folosi Spotify in Showtime trebuie sa aveti un cont premium Spotify. \nPentru mai multe informații despre Spotify, accesați http://www.spotify.com/\n\nPrima dată când veti accesa oricare dintre facilitățile oferite de Spotify în Showtime va trebui sa introduceți user-ul si parola contului dvs. Spotify.
+
+id: Spotify playlists
+msg: Lista de fișiere Spotify
+
+id: Starred
+msg: Notă
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Favorite
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Caută folosind Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Caută folosind spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Limba
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Codul limbii trebuie configurat ca un șir trei coduri de caractere ISO, fiecare cu câte trei litere. De exemplu : rom, eng, fra
+
+id: Preferred languages
+msg: Limba preferată
+
+id: Primary audio language code
+msg: Codul pistei audio principale
+
+id: Primary subtitle language code
+msg: Codul limbii principale pentru subtitrare
+
+id: SRT character set
+msg: Setul de caractere pentru subtitrările SRT
+
+id: Secondary audio language code
+msg: Codul pistei audio secundare
+
+id: Secondary subtitle language code
+msg: Codul limbii secundare pentru subtitrare
+
+id: Tertiary audio language code
+msg: Codul pistei audio terțiare
+
+id: Tertiary subtitle language code
+msg: Codul limbii terțiare pentru subtitrare
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Pornire/Oprire automată TV
+
+id: Input source
+msg: Sursa de intrare
+
+id: LG Television set
+msg: Setări TV LG
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Configurează butoanele tastaturii sau telecomenzii
+
+id: Keymapper
+msg: Configurează tastele
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Aliniază subtitrarea peste imaginea video
+
+id: Audio delay
+msg: Delay audio
+
+id: Subtitle delay
+msg: Delay subtitrare
+
+id: Subtitle scaling
+msg: Mărimea subtitrării
+
+id: Video zoom
+msg: Marește/Micșoarează imaginea folosind acest zoom video
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Nu există handler pentru acest URL
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: URI invalid
+
+id: Plugin ID %s does not exist
+msg: IDul acestui plugin nu există
+
+id: Plugin ID %s have no download URL
+msg: Idul pluginului %s nu are un URL de download
+
+id: Unable to load plugin.json: %s
+msg: Imposibil de incărcat pluginul.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Imposibil de incărcat pluginul.json: JSON defect
+
+id: Unable to request plugin repository: %s
+msg: Cerere imposibilă către pagina de download a pluginului : %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Trecere automată în modul standby 
+
+id: Run control
+msg: Controlul funcționării
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Activat
+
+id: Name
+msg: Nume
+
+id: Type
+msg: Tip
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Aplicații și pluginuri instalate
+
+id: Discovered media sources
+msg: Surse multimedia descoperite
+
+id: Global settings
+msg: Setări generale
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Afișaj si interfața utilizatorului 
+
+id: Horizontal underscan
+msg: Underscan orizontal
+
+id: Screensaver delay
+msg: Timpul până la activarea screensaverului
+
+id: Userinterface size
+msg: Mărimea interfaței utilizatorului
+
+id: Vertical underscan
+msg: Underscan vertical
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Modul Ecran complet
+
+id: Map mouse wheel to up/down
+msg: Configurează rotița sus/jos a mouselui
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Activat in ecranul de pornire
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Deviceul nu a fost gasit
+
+id: Malformed URI after device
+msg: URI defect după device
+
+id: Malformed URI after service
+msg: URI defect dupa serviciu
+
+id: Service not found
+msg: Serviciul nu a fost găsit
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Intotdeauna incearcă sa incărci o subtitrare
+
+id: Auto
+msg: Automat
+
+id: Center
+msg: Centru
+
+id: Color
+msg: Culoare
+
+id: Enable VDPAU
+msg: Activează VDPAU
+
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
+id: Force subtitles to reside on video frame
+msg: Forțează subtitrarea sa rămână pe imagine
+
+id: Generic settings for video subtitles
+msg: Setări generale pentru subtitrari
+
+id: Ignore embedded styling
+msg: Ignoră stilul embedded
+
+id: Left
+msg: Stânga
+
+id: Outline color
+msg: Culoare contur
+
+id: Outline size
+msg: Grosime contur
+
+id: Right
+msg: Dreapta
+
+id: Shadow color
+msg: Culoare umbră
+
+id: Shadow offset
+msg: Distanța față de umbră
+
+id: Stretch video to widescreen
+msg: Lărgește imaginea pentru ecrane late
+
+id: Subtitle position
+msg: Poziția subtitrării
+
+id: Subtitle size
+msg: Mărimea subtitrării
+
+id: Subtitle styling
+msg: Stilul subtitrarii
+
+id: Subtitles
+msg: Subtitrări
+
+id: Video acceleration and display behaviour
+msg: Accelerarea video și comportamentul afișajului
+
+id: Video playback
+msg: Playback video
+
