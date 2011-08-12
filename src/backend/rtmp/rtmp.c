@@ -27,6 +27,7 @@
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "video/video_playback.h"
+#include "video/video_settings.h"
 
 typedef struct {
 
@@ -220,27 +221,31 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     r->seekbase = ets->pts;
     
   } else if(event_is_type(e, EVENT_SEEK)) {
-    event_ts_t *ets = (event_ts_t *)e;
+    if (video_settings.rtmpseek)
+    {
+        event_ts_t *ets = (event_ts_t *)e;
 
-    r->epoch++;
+        r->epoch++;
       
-    r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
-
+        r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
+    }
+    
   } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, 1, "-60s");
+    if (video_settings.rtmpseek)
+        r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, 1, "-60s");
 
   } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, 1, "-15s");
+    if (video_settings.rtmpseek)
+        r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, 1, "-15s");
 
   } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, 1, "+15s");
+    if (video_settings.rtmpseek)
+        r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, 1, "+15s");
 
   } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, 1, "+60s");
+    if (video_settings.rtmpseek)
+        r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, 1, "+60s");
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);

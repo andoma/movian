@@ -144,6 +144,12 @@ set_force_42(void *opaque, int v)
 }
 #endif
 
+static void
+set_rtmpseek(void *opaque, int v)
+{
+    video_settings.rtmpseek = v;
+}
+
 void
 video_settings_init(void)
 {
@@ -187,6 +193,12 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
 #endif
+  
+  settings_create_bool(s, "rtmpseek", _p("Allow RTMP seek"), 0,
+		       store, set_rtmpseek, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
 
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,

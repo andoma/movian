@@ -23,6 +23,7 @@ struct video_settings {
   int stretch_horizontal;
   int vzoom;
   int force_42;
+  int rtmpseek;
 };
 
 extern struct video_settings video_settings;
