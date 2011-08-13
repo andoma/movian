@@ -53,6 +53,8 @@ typedef struct {
   int epoch;
   int64_t seekpos;
 
+  int can_seek;
+
 } rtmp_t;
 
 
@@ -94,8 +96,13 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
     return -1;
   }
   if(RTMP_FindFirstMatchingProperty(obj, &av_duration, &prop) &&
-     prop.p_type == AMF_NUMBER)
+     prop.p_type == AMF_NUMBER && prop.p_vu.p_number > 0) {
     prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
+    r->can_seek = 1;
+  } else {
+    r->can_seek = 0;
+  }
+  prop_set_int(mp->mp_prop_canSeek, r->can_seek);
 
   if((RTMP_FindFirstMatchingProperty(obj, &av_videoframerate, &prop) &&
       RTMP_FindFirstMatchingProperty(obj, &av_framerate, &prop))
@@ -219,26 +226,26 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     
     r->seekbase = ets->pts;
     
-  } else if(event_is_type(e, EVENT_SEEK)) {
+  } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
     r->epoch++;
       
     r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
 
-  } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
+  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
     r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, 1, "-60s");
 
-  } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
     r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, 1, "-15s");
 
-  } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
+  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FORWARD)) {
 
     r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, 1, "+15s");
 
-  } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
+  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
     r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, 1, "+60s");
 
@@ -574,7 +581,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  break;
 	}
 
-	if(!RTMP_ConnectStream(r->r, r->seekbase / 1000)) {
+	if(!RTMP_ConnectStream(r->r, r->can_seek ? r->seekbase / 1000 : 0)) {
 	  snprintf(errbuf, errlen, "Unable to stream RTMP session");
 	  return NULL;
 	}
@@ -714,8 +721,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
 
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
-	       MP_BUFFER_DEEP);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP);
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);
@@ -763,6 +769,45 @@ rtmp_init(void)
   return 0;
 }
 
+/**
+ *
+ */
+static int
+rtmp_probe(const char *url0, char *errbuf, size_t errlen)
+{
+  RTMP *r;
+  char *url = mystrdupa(url0);
+
+  r = RTMP_Alloc();
+  RTMP_Init(r);
+
+  if(!RTMP_SetupURL(r, url)) {
+    snprintf(errbuf, errlen, "Unable to setup RTMP-session");
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  if(!RTMP_Connect(r, NULL)) {
+    snprintf(errbuf, errlen, "Unable to connect RTMP-session");
+    RTMP_Close(r);
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  if(!RTMP_ConnectStream(r, 0)) {
+    snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
+    RTMP_Close(r);
+    RTMP_Free(r);
+    return BACKEND_PROBE_FAIL;
+  }
+
+  RTMP_Close(r);
+  RTMP_Free(r);
+
+  return BACKEND_PROBE_OK;
+}
+
+
 
 /**
  *
@@ -772,6 +817,7 @@ static backend_t be_rtmp = {
   .be_canhandle = rtmp_canhandle,
   .be_open = backend_open_video,
   .be_play_video = rtmp_playvideo,
+  .be_probe = rtmp_probe,
 };
 
 BE_REGISTER(rtmp);
