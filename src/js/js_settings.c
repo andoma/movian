@@ -153,6 +153,16 @@ js_store_update_string(void *opaque, const char *str)
 		  : JSVAL_NULL);
 }
 
+/**
+ *
+ */
+static void
+js_store_update_int(void *opaque, int value)
+{
+  js_setting_t *jss = opaque;
+  settings_update(settings_get_cx(jss), jss, INT_TO_JSVAL(value));
+}
+
 
 /**
  *
@@ -263,6 +273,7 @@ js_createInfo(JSContext *cx, JSObject *obj, uintN argc,
   return JS_TRUE;
 }
 
+
 /**
  *
  */
@@ -279,6 +290,52 @@ js_createDivider(JSContext *cx, JSObject *obj, uintN argc,
   settings_create_divider(jsg->jsg_root, _p(title));
   return JS_TRUE;
 }
+
+
+/**
+ *
+ */
+static JSBool 
+js_createInt(JSContext *cx, JSObject *obj, uintN argc, 
+		jsval *argv, jsval *rval)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *id;
+  const char *title;
+  int def;
+  int min;
+  int max;
+  int step;
+  const char* unit;
+  JSObject *func;
+  jsval v;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ssiiiiso",
+			  &id, &title, &def, &min, &max, &step, &unit, &func)){
+    return JS_FALSE;
+  }
+
+  if(!JS_ObjectIsFunction(cx, func)) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  js_setting_t *jss = jss_create(cx, obj, id, rval);
+
+  v = OBJECT_TO_JSVAL(func);
+  JS_SetProperty(cx, jss->jss_obj, "callback", &v);
+  jss->jss_cx = cx;
+  jss->jss_s = settings_create_int(jsg->jsg_root, id, _p(title),
+				      def, jsg->jsg_store,
+                                      min, max, step,
+				      js_store_update_int, jss,
+				      SETTINGS_INITIAL_UPDATE, unit, NULL,
+				      js_setting_group_save, jsg);
+  jss->jss_cx = NULL;
+
+  return JS_TRUE;
+}
+
 
 /**
  *
@@ -315,6 +372,7 @@ static JSFunctionSpec setting_functions[] = {
     JS_FS("createString", js_createString, 4, 0, 0),
     JS_FS("createInfo", js_createInfo, 3, 0, 0),
     JS_FS("createDivider", js_createDivider, 1, 0, 0),
+    JS_FS("createInt", js_createInt, 8, 0, 0),
     JS_FS_END
 };
 
