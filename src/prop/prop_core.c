@@ -1451,13 +1451,18 @@ void
 prop_set_parent_vector(prop_vec_t *pv, prop_t *parent, prop_t *before,
 		       prop_sub_t *skipme)
 {
+  int i;
+
   hts_mutex_lock(&prop_mutex);
 
   if(parent->hp_type == PROP_ZOMBIE) {
-    prop_vec_destroy_entries(pv);
+
+  for(i = 0; i < pv->pv_length; i++)
+    prop_destroy0(pv->pv_vec[i]);
+
   } else {
+
     prop_t *p;
-    int i;
 
     prop_make_dir(parent, NULL, "prop_set_parent_multi()");
 

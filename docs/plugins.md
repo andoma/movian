@@ -451,6 +451,22 @@ The settings object is not resource tracked and explicitly destroyed
 like most other plugin related objects. Rather it is finalized when
 the Javascript garbage collector will destroy it.
 
+#### createStore(String ID, [Boolean perUser])
+
+`Available from 3.1.162`
+
+Creates an object that will be persisted on disk.
+
+* ID - Identifies the object. Each plugin can create multiple stores,
+  each with a different ID.
+* perUser - When Showtime will support switching between multiple
+  identities this will indicate that the store should be unique per
+  user. This is not something that is currently supported.
+
+The store object is not resource tracked and explicitly destroyed
+like most other plugin related objects. Rather it is finalized when
+the Javascript garbage collector will destroy it.
+
 #### getAuthCredentials(String Source, String Reason, Boolean QueryUser, [String ID], [Boolean ForceTemporary])
 
 Ask the user for authentication credentials.
@@ -625,6 +641,24 @@ for presentation of duration (of movies, etc)
 
   43 -> 0:43
   3601 -> 1:00:01
+
+#### probe(String URL) 
+
+`Available from 3.1.156`
+
+Probe the given URL to check if it is accessible.
+
+Returns an object with two properties
+
+* result - Result code, 0 means OK, the following codes are currently defined
+
+> * 1 - Authentication problem - Resource can not be probed due to missing authnetication credentials
+> * 2 - No URI handler - No support for the URI scheme
+> * 3 - Fail - Other failure
+
+* errmsg - Error message intended to be displyed to the user
+
+
 
 ## HTTP response object
 

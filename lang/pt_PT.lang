@@ -525,6 +525,10 @@ msg: Cor
 id: Enable VDPAU
 msg: Ativar VDPAU
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: Forçar as legendas a residerem no quadro de vídeo
 

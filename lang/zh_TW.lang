@@ -1,571 +1,570 @@
-language: Norwegian (Bokmål)
-native: Norsk (Bokmål)
-maintainer: Hans Cats <hanscats@gmail.com>
+language: Traditional Chinese
+native: 正體中文
+maintainer: Chinghan Yu<cassine.bbs@ptt.cc>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Lydinnstillinger
+msg: 音訊設定
 
 id: Languages
-msg: Språk
+msg: 語言
 
 id: Settings
-msg: Innstillinger
+msg: 設定
 
 id: Subtitle settings
-msg: Innstillinger for undertekster
+msg: 字幕設定
 
 id: Video settings
-msg: Videoinnstillinger
+msg: 視訊設定
 
 #
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Lagt til av: %s
+msg: Added by: %s
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Av
+msg: 關閉
 
 id: On
-msg: På
+msg: 開啟
 
 #
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Tilgjengelig systemminne: %d kB
+msg: 系統記憶體可用容量： %d kB
 
 id: Detected CPUs: %d
-msg: Oppdagede CPUer: %d
+msg: 處理器數量： %d
 
 id: Display info
-msg: Visningsinformasjon
+msg: 顯示器資訊
 
 id: Framerate: %.2f Hz
-msg: Oppdateringsfrekvens %.2f Hz
+msg: 畫面更新率： %.2f Hz
 
 id: GPU: %s
-msg: GPU: %s
+msg: 視訊處理器： %s
 
 id: Height: %d px
-msg: Høyde: %d px
+msg: 高度： %d 像素
 
 id: Renderer: %s
-msg: Renderer: %s
+msg: 渲染器： %s
 
 id: System info
-msg: Systeminformasjon
+msg: 系統資訊
 
 id: Total system RAM: %d kB
-msg: Totalt systemminne: %d kB
+msg: 系統記憶體總容量： %d kB
 
 id: Version: %s
-msg: Versjon: %s
+msg: 版本: %s
 
 id: Width: %d px
-msg: Bredde: %d px
+msg: 寬度： %d 像素
 
 id: Windowmanager: %s
-msg: Vindubehandler: %s
+msg: 視窗管理員: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: Om
+msg: 關於
 
 #
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Hjem
+msg: 首頁
 
 #
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Kan ikke åpne ressurs
+msg: 無法開啟資源
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Feil ved sidehenting
+msg: 頁面載入錯誤
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Spillekø
+msg: 播放佇列
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
-msg: Kapittel %d / %d
+msg: 章節 %d / %d
 
 id: Title %d / %d
-msg: Tittel %d / %d
+msg: 標題 %d / %d
 
 #
 # ./glwthemes/mono/playdecks/tracks.view
 #
 id: Track %d / %d
-msg: Spor %d / %d
+msg: 音軌 %d / %d
 
 #
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPUen er for treg for å spille av denne videoen
+msg: 處理器速度過慢，無法正常解碼視訊信號
 
 #
 # ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
-msg: Avbryt
+msg: 取消
 
 id: OK
-msg: OK
+msg: 確定
 
 id: Password
-msg: Passord
+msg: 密碼
 
 id: Remember me
-msg: Husk passord
+msg: 記住登入資訊
 
 id: Username
-msg: Brukernavn
+msg: 使用者帳號
 
 #
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Ingen media lastet
+msg: 未載入任何媒體
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
 #
 id: Delete
-msg: Slett
+msg: 刪除
 
 id: Enqueue
-msg: Kø
+msg: 加入佇列
 
 #
 # ./glwthemes/mono/sysinfo.view
 #
 id: Audio output
-msg: Lydutgang
+msg: 音訊輸出
 
 id: CPUs
-msg: CPUer
+msg: 中央處理器
 
 id: GPU & Display
-msg: GPU og skjerm
+msg: 視訊處理器與顯示器
 
 id: GPU Core temperature: %d / %d °
-msg: GPU kjernetemperatur: %d / %d °
+msg: 視訊處理器核心溫度： %d / %d °
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Juster bakgrunnsfarge basert på tid på døgnet
+msg: 依照系統時間調整背景色彩
 
 id: Audio muted
-msg: Lyd dempet
+msg: 靜音模式
 
 id: Fancy UI animations
-msg: Heftige animasjoner i brukergrensesnittet
+msg: 使用者介面動態效果
 
 id: Master volume: %d dB
-msg: Hovedvolum: %d dB
+msg: 主音量： %d dB
 
 id: Starwars scroller tilt
-msg: Vis brukergrensesnittet som i Starwars åpningsscene
+msg: 星際大戰式畫面傾斜效果
 
 id: Top bar navigation buttons
-msg: Navigasjonknapper på toppen av skjermen
+msg: 頂部導覽工具列
 
 #
 # ./src/api/opensubtitles.c
 #
 id: Settings for opensubtitles.org
-msg: Innstillinger for opensubtitles.org
+msg: opensubtitles.org 相關設定
 
 id: Use opensubtitles.org
-msg: Bruk opensubtitles.org
+msg: 啟用 opensubtitles.org
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Audio/Video synkronisert forsinkelse
+msg: 視訊／音訊同步延遲
 
 id: Current output device
-msg: Nåværende lydutgang
+msg: 音訊輸出裝置
 
 id: Force stereo downmix
-msg: Tving stereo nedmiksing
+msg: 降低混音(downmix)至立體聲(stereo)
 
 id: Phantom LFE
-msg: Fantom-LFE
+msg: 虛擬低頻聲道(Phantom-LFE)
 
 id: Phantom center
-msg: Fantom-senter
+msg: 虛擬中置聲道(Phantom-center)
 
 id: Select audio output device and related configurations
-msg: Velg lydutgang og relaterte innstillinger
+msg: 選擇音訊輸出裝置與相關設定
 
 id: Small front speakers
-msg: Små fronthøyttalere
+msg: 迷你前置揚聲器
 
 id: Swap LFE+center with surround
-msg: Bytt LFE+senter med surround
+msg: 使用環繞效果代替低頻與中間聲道
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: Ugyldig CD URL
+msg: 不正確的 CD 位址
 
 id: Invalid CD track
-msg: Ugyldig CD track
+msg: 不正確的 CD 音軌
 
 id: Unable to open CD
-msg: Kan ikke åpne CD
+msg: 無法開啟 CD
 
 #
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: Ugyldig HTSP URL
+msg: 不正確的 HTSP 位址
 
 #
 # ./src/backend/search.c
 #
 id: Search
-msg: Søk
+msg: 搜尋
 
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Logg automatisk inn når Showtime starter
+msg: 啟動 Showtime 時自動登入
 
 id: Enable Spotify
-msg: Slå på Spotify
+msg: 啟用 Spotify
 
 id: Friends
-msg: Venner
+msg: 聯絡人
 
 id: High bitrate
-msg: Høy bithastighet
+msg: 高流量
 
 id: Inbox
-msg: Innboks
+msg: 收件匣
 
 id: New albums on Spotify
-msg: Nye album på Spotify
+msg: Spotify 上的新專輯
 
 id: New releases
-msg: Nye plateslipp
+msg: New releases
 
 id: Playlists
-msg: Spillelister
+msg: 播放列表
 
 id: Relogin (switch user)
-msg: Logg inn igjen (bytt bruker)
+msg: 重新登入（切換使用者）
 
 id: Search result
-msg: Søkeresultat
+msg: 搜尋結果
 
 id: Spotify friends
-msg: Venner på Spotify
+msg: Spotify 聯絡人
 
 id: Spotify music service
-msg: Spotify musikktjeneste
+msg: Spotify 音樂服務
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify tilbyr lovlig og fri tilgang til et stort bibliotek av musikk. For å bruke Spotify i Showtime må du ha en Spotify Premium-konto.\nFor mer informasjon om Spotify, besøk http://www.spotify.com/\n\nDu vil bli spurt om ditt Spotifybrukernavn og passord når du bruker Spotifys funksjoner i Showtime for første gang.
+msg: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
 
 id: Spotify playlists
-msg: Spotyfylister
+msg: Spotify 播放列表
 
 id: Starred
-msg: Stjernemerket
+msg: Starred
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
-msg: Bokmerker
+msg: 書籤
 
 #
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Søk via Unix locatedb
+msg: 使用 Unix locatedb 進行搜尋
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Søk via spotlight
+msg: 使用 spotlight 進行搜尋
 
 #
 # ./src/i18n.c
 #
 id: Language
-msg: Språk
+msg: 語言
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Språkkoder konfigureres som tre tegns ISO-koder, for eksempel: eng, swe, fra
+msg: 語言代碼必須符合 ISO 三碼標準（範例：eng, chi）
 
 id: Preferred languages
-msg: Foretrukket språk
+msg: 偏好語言
 
 id: Primary audio language code
-msg: Primærspråk for lyd
+msg: 主要音訊語言
 
 id: Primary subtitle language code
-msg: Primærspråk for undertekster
+msg: 主要字幕語言
 
 id: SRT character set
-msg: Tegnkodning for SRT-undertekster
+msg: SRT 字元集
 
 id: Secondary audio language code
-msg: Sekundærspråk for lyd
+msg: 次要音訊語言
 
 id: Secondary subtitle language code
-msg: Sekundærspråk for undertekster
+msg: 次要字幕語言
 
 id: Tertiary audio language code
-msg: Tertiærspråk for lyd
+msg: 第三音訊語言
 
 id: Tertiary subtitle language code
-msg: Tertiærspråk for undertekster
+msg: 第三字幕語言
 
 #
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Automatisk på/av-kontroll av TV
+msg: 自動開啟或關閉電視機
 
 id: Input source
-msg: Inngangskilde
+msg: 輸入訊號源
 
 id: LG Television set
-msg: LG TV-apparat
+msg: LG 電視機
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Innstillinger av tastatur og fjernkontroll
+msg: 設定鍵盤與遙控器按鍵對應
 
 id: Keymapper
-msg: Tastatur- og knappehåndterer
+msg: 鍵盤對應
 
 #
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Juster undertekster til videoens størrelse
+msg: 字幕與視訊校正
 
 id: Audio delay
-msg: Forsinkelse for lyd
+msg: 音訊延遲
 
 id: Subtitle delay
-msg: Forsinkelse for undertekster
+msg: 字幕延遲
 
 id: Subtitle scaling
-msg: Størrelse på undertekster
+msg: 字幕大小
 
 id: Video zoom
-msg: Video zoom
+msg: 視訊縮放
 
 #
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: Ingen håndterer for URL
+msg: No handler for URL
 
 #
 # ./src/plugins.c
 #
 id: Invalud URI
-msg: Feil URI
+msg: 不正確的 URI 位址
 
 id: Plugin ID %s does not exist
-msg: Plugin ID %s finnes ikke
+msg: 外掛 ID %s 不存在
 
 id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen nedlastnings URL
+msg: 外掛 ID %s 未指定下載位址
 
 id: Unable to load plugin.json: %s
-msg: Kan ikke hente plugin.json: %s
+msg: 無法載入 plugin.json ： %s
 
 id: Unable to load plugin.json: Malformed JSON
-msg: Kan ikke hente plugin.json: Feil formateret JSON
+msg: 無法載入 plugin.json ： JSON 檔案格式不正確
 
 id: Unable to request plugin repository: %s
-msg: Kan ikke finne plugin-mappen: %s
+msg: 無法取得外掛程式資料庫： %s
 
 #
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Automatisk standby
+msg: 自動待機
 
 id: Run control
-msg: Kjørekontroll
+msg: Run control
 
 #
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: På
+msg: 啟用
 
 id: Name
-msg: Navn
+msg: 名稱
 
 id: Type
-msg: Type
+msg: 類型
 
 #
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Applikasjoner og installerte plugins
+msg: 應用程式與擴充功能
 
 id: Discovered media sources
-msg: Oppdagede mediakilder
+msg: 搜尋到的媒體來源
 
 id: Global settings
-msg: Globale innstillninger
+msg: 設定
 
 #
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Skjerm og brukergrensesnitt
+msg: 顯示與使用者介面
 
 id: Horizontal underscan
-msg: Horisontal underskanning
+msg: 水平欠掃描(underscan)
 
 id: Screensaver delay
-msg: Skjermsparertid
+msg: 螢幕保護程式啟動時間
 
 id: Userinterface size
-msg: Størrelse på brukergrensesnitt
+msg: 使用者介面尺寸
 
 id: Vertical underscan
-msg: Vertikal underskanning
+msg: 垂直欠掃描
 
 #
 # ./src/ui/glw/glw_x11.c
 #
 id: Fullscreen mode
-msg: Fullskjermsmodus
+msg: 全螢幕模式
 
 id: Map mouse wheel to up/down
-msg: Tolk musens skrollhjul som opp- og ned-knapper
+msg: 滑鼠滾輪捲動
 
 #
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Tilgjengelig på hjem-siden
+msg: 顯示於首頁
 
 #
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
-msg: Kan ikke finne enhet
+msg: 找不到裝置
 
 id: Malformed URI after device
-msg: Misformet URI etter enheten
+msg: Malformed URI after device
 
 id: Malformed URI after service
-msg: Misformet URI etter tjensten
+msg: Malformed URI after service
 
 id: Service not found
-msg: Kan ikke finne tjenesten
+msg: 找不到服務
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Forsøk alltid å velge en undertekst
+msg: 自動選擇字幕
 
 id: Auto
-msg: Automatisk
+msg: 自動
 
 id: Center
-msg: Sentrert
+msg: 置中
 
 id: Color
-msg: Farge
+msg: 色彩
 
 id: Enable VDPAU
-msg: Aktiver VDPAU
+msg: 啟用 VDPAU
 
 id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
+msg: 強制使用 h264 Level 4.2 播放 h264 格式視訊
 
 id: Force subtitles to reside on video frame
-msg: Tving undertekster til alltid å ligge over videobilde
+msg: 字幕強制顯示於視訊影格上
 
 id: Generic settings for video subtitles
-msg: Generelle innstillininger for undertekster
+msg: 字幕設定
 
 id: Ignore embedded styling
-msg: Overse innebygde stilkoder
+msg: 忽略字幕既有樣式
 
 id: Left
-msg: Venstre
+msg: 左側
 
 id: Outline color
-msg: Farge på konturer
+msg: 外框色彩
 
 id: Outline size
-msg: Størrelse på konturer
+msg: 外框大小
 
 id: Right
-msg: Høyre
+msg: 右側
 
 id: Shadow color
-msg: Farge på skygger
+msg: 陰影色彩
 
 id: Shadow offset
-msg: Skyggeoffset
+msg: 陰影位置
 
 id: Stretch video to widescreen
-msg: Strekk ut video horisontalt 
+msg: 延展視訊信號比例至寬螢幕
 
 id: Subtitle position
-msg: Posisjon på undertekster
+msg: 字幕位置
 
 id: Subtitle size
-msg: Størrelse på undertekster
+msg: 字幕大小
 
 id: Subtitle styling
-msg: Stil på undertekster
+msg: 字幕樣式
 
 id: Subtitles
-msg: Undertekster
+msg: 字幕
 
 id: Video acceleration and display behaviour
-msg: Videoakselerasjon og innstillinger for visning av video
+msg: 視訊加速與顯示模式
 
 id: Video playback
-msg: Videoavspiling
+msg: 視訊播放
 

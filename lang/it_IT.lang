@@ -517,6 +517,9 @@ msg: Colore
 id: Enable VDPAU
 msg: Attiva VDPAU
 
+id: Force Level 4.2 for h264 content
+msg: Forza il Livello 4.2 per i contenuti h264
+
 id: Force subtitles to reside on video frame
 msg: Forza i sottotitoli a rimanere sempre in primo piano
 

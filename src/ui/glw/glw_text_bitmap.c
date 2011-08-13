@@ -610,7 +610,7 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   assert(gtb->gtb_type == 0 || gtb->gtb_type == 1);
 
   if(gtb->w.glw_flags2 & GLW2_AUTOHIDE) {
-    if(str == NULL)
+    if(str == NULL || *str == 0)
       glw_hide(&gtb->w);
     else
       glw_unhide(&gtb->w);

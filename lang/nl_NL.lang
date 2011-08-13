@@ -517,6 +517,10 @@ msg: Kleur
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: Ondertitels forceren om op de videoframe te blijven
 

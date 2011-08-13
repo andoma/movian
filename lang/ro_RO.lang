@@ -1,571 +1,571 @@
-language: Norwegian (Bokmål)
-native: Norsk (Bokmål)
-maintainer: Hans Cats <hanscats@gmail.com>
+language: Romanian
+native: Română
+maintainer: Internetus România <internetusromania@gmail.com>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Lydinnstillinger
+msg: Setări audio
 
 id: Languages
-msg: Språk
+msg: Limba
 
 id: Settings
-msg: Innstillinger
+msg: Setări
 
 id: Subtitle settings
-msg: Innstillinger for undertekster
+msg: Setări subtitrare
 
 id: Video settings
-msg: Videoinnstillinger
+msg: Setări video
 
 #
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Lagt til av: %s
+msg: Tradus de : %s
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Av
+msg: Oprire
 
 id: On
-msg: På
+msg: Pornire
 
 #
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Tilgjengelig systemminne: %d kB
+msg: Memorie RAM liberă : %d kB
 
 id: Detected CPUs: %d
-msg: Oppdagede CPUer: %d
+msg: CPU detectat: %d
 
 id: Display info
-msg: Visningsinformasjon
+msg: Afișare informații
 
 id: Framerate: %.2f Hz
-msg: Oppdateringsfrekvens %.2f Hz
+msg: Numărul de frame-uri %.2f Hz
 
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
-msg: Høyde: %d px
+msg: Înălțime: %d px
 
 id: Renderer: %s
-msg: Renderer: %s
+msg: Randator : %s
 
 id: System info
-msg: Systeminformasjon
+msg: Informatii sistem
 
 id: Total system RAM: %d kB
-msg: Totalt systemminne: %d kB
+msg: Memorie RAM totală : %d kB
 
 id: Version: %s
-msg: Versjon: %s
+msg: Versiune: %s
 
 id: Width: %d px
-msg: Bredde: %d px
+msg: Lățime : %d px
 
 id: Windowmanager: %s
-msg: Vindubehandler: %s
+msg: Manager : %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: Om
+msg: Despre
 
 #
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Hjem
+msg: Acasă
 
 #
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Kan ikke åpne ressurs
+msg: Imposibil de deschis acest fisier
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Feil ved sidehenting
+msg: Eroare la incărcarea paginii
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Spillekø
+msg: Listă de așteptare
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
-msg: Kapittel %d / %d
+msg: Capitol %d / %d
 
 id: Title %d / %d
-msg: Tittel %d / %d
+msg: Titlu %d / %d
 
 #
 # ./glwthemes/mono/playdecks/tracks.view
 #
 id: Track %d / %d
-msg: Spor %d / %d
+msg: Track %d / %d
 
 #
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPUen er for treg for å spille av denne videoen
+msg: Procesorul este prea lent pentru a decoda acest video
 
 #
 # ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
-msg: Avbryt
+msg: Anulează
 
 id: OK
 msg: OK
 
 id: Password
-msg: Passord
+msg: Parola
 
 id: Remember me
-msg: Husk passord
+msg: Memorează datele
 
 id: Username
-msg: Brukernavn
+msg: Nume de utilizator
 
 #
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Ingen media lastet
+msg: Nici un fisier media incărcat
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
 #
 id: Delete
-msg: Slett
+msg: Șterge
 
 id: Enqueue
-msg: Kø
+msg: Marchează un fisier ca următorul
 
 #
 # ./glwthemes/mono/sysinfo.view
 #
 id: Audio output
-msg: Lydutgang
+msg: Ieșire audio
 
 id: CPUs
-msg: CPUer
+msg: Procesoare
 
 id: GPU & Display
-msg: GPU og skjerm
+msg: GPU & Afișaj
 
 id: GPU Core temperature: %d / %d °
-msg: GPU kjernetemperatur: %d / %d °
+msg: Temperatura GPU : %d / %d °
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Juster bakgrunnsfarge basert på tid på døgnet
+msg: Ajustează tenta fundalului în funcție de oră
 
 id: Audio muted
-msg: Lyd dempet
+msg: Sunet oprit
 
 id: Fancy UI animations
-msg: Heftige animasjoner i brukergrensesnittet
+msg: Animații UI
 
 id: Master volume: %d dB
-msg: Hovedvolum: %d dB
+msg: Volumul general : %d dB
 
 id: Starwars scroller tilt
-msg: Vis brukergrensesnittet som i Starwars åpningsscene
+msg: Inclinare scroller tip Starwars
 
 id: Top bar navigation buttons
-msg: Navigasjonknapper på toppen av skjermen
+msg: Butoanele de navigare de pe bara de sus
 
 #
 # ./src/api/opensubtitles.c
 #
 id: Settings for opensubtitles.org
-msg: Innstillinger for opensubtitles.org
+msg: Paramentrii pentru opensubtitles.org
 
 id: Use opensubtitles.org
-msg: Bruk opensubtitles.org
+msg: Folosește subtitrari de pe opensubtitles.org
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Audio/Video synkronisert forsinkelse
+msg: Delay pentru sincronizarea Audio/Video
 
 id: Current output device
-msg: Nåværende lydutgang
+msg: Ieșirea curentă
 
 id: Force stereo downmix
-msg: Tving stereo nedmiksing
+msg: Forțează remixarea în stereo
 
 id: Phantom LFE
-msg: Fantom-LFE
+msg: Phantom LFE
 
 id: Phantom center
-msg: Fantom-senter
+msg: Phantom centru
 
 id: Select audio output device and related configurations
-msg: Velg lydutgang og relaterte innstillinger
+msg: Selectează ieșirea audio si alte configurații similare
 
 id: Small front speakers
-msg: Små fronthøyttalere
+msg: Difuzoare mici față
 
 id: Swap LFE+center with surround
-msg: Bytt LFE+senter med surround
+msg: Inverseaza LFE+centru cu surround
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: Ugyldig CD URL
+msg: URL CD invalid
 
 id: Invalid CD track
-msg: Ugyldig CD track
+msg: Track CD invalid
 
 id: Unable to open CD
-msg: Kan ikke åpne CD
+msg: Imposibil de citit CDul
 
 #
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: Ugyldig HTSP URL
+msg: URL HTSP invalid
 
 #
 # ./src/backend/search.c
 #
 id: Search
-msg: Søk
+msg: Caută
 
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Logg automatisk inn når Showtime starter
+msg: Logare automată la pornirea Showtime
 
 id: Enable Spotify
-msg: Slå på Spotify
+msg: Activează Spotify
 
 id: Friends
-msg: Venner
+msg: Prieteni
 
 id: High bitrate
-msg: Høy bithastighet
+msg: Bitrate maxim
 
 id: Inbox
-msg: Innboks
+msg: Primite
 
 id: New albums on Spotify
-msg: Nye album på Spotify
+msg: Albume noi pe Spotify
 
 id: New releases
-msg: Nye plateslipp
+msg: Noutăți
 
 id: Playlists
-msg: Spillelister
+msg: Lista de fișiere
 
 id: Relogin (switch user)
-msg: Logg inn igjen (bytt bruker)
+msg: Relogare (schimba userul)
 
 id: Search result
-msg: Søkeresultat
+msg: Rezultatele căutarii
 
 id: Spotify friends
-msg: Venner på Spotify
+msg: Prietenii de pe Spotify
 
 id: Spotify music service
-msg: Spotify musikktjeneste
+msg: Serviciul muzical Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify tilbyr lovlig og fri tilgang til et stort bibliotek av musikk. For å bruke Spotify i Showtime må du ha en Spotify Premium-konto.\nFor mer informasjon om Spotify, besøk http://www.spotify.com/\n\nDu vil bli spurt om ditt Spotifybrukernavn og passord når du bruker Spotifys funksjoner i Showtime for første gang.
+msg: Spotify oferă acces legal si gratuit la o imensă librarie muzicală. Pentru a folosi Spotify in Showtime trebuie sa aveti un cont premium Spotify. \nPentru mai multe informații despre Spotify, accesați http://www.spotify.com/\n\nPrima dată când veti accesa oricare dintre facilitățile oferite de Spotify în Showtime va trebui sa introduceți user-ul si parola contului dvs. Spotify.
 
 id: Spotify playlists
-msg: Spotyfylister
+msg: Lista de fișiere Spotify
 
 id: Starred
-msg: Stjernemerket
+msg: Notă
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
-msg: Bokmerker
+msg: Favorite
 
 #
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Søk via Unix locatedb
+msg: Caută folosind Unix locatedb
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Søk via spotlight
+msg: Caută folosind spotlight
 
 #
 # ./src/i18n.c
 #
 id: Language
-msg: Språk
+msg: Limba
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Språkkoder konfigureres som tre tegns ISO-koder, for eksempel: eng, swe, fra
+msg: Codul limbii trebuie configurat ca un șir trei coduri de caractere ISO, fiecare cu câte trei litere. De exemplu : rom, eng, fra
 
 id: Preferred languages
-msg: Foretrukket språk
+msg: Limba preferată
 
 id: Primary audio language code
-msg: Primærspråk for lyd
+msg: Codul pistei audio principale
 
 id: Primary subtitle language code
-msg: Primærspråk for undertekster
+msg: Codul limbii principale pentru subtitrare
 
 id: SRT character set
-msg: Tegnkodning for SRT-undertekster
+msg: Setul de caractere pentru subtitrările SRT
 
 id: Secondary audio language code
-msg: Sekundærspråk for lyd
+msg: Codul pistei audio secundare
 
 id: Secondary subtitle language code
-msg: Sekundærspråk for undertekster
+msg: Codul limbii secundare pentru subtitrare
 
 id: Tertiary audio language code
-msg: Tertiærspråk for lyd
+msg: Codul pistei audio terțiare
 
 id: Tertiary subtitle language code
-msg: Tertiærspråk for undertekster
+msg: Codul limbii terțiare pentru subtitrare
 
 #
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Automatisk på/av-kontroll av TV
+msg: Pornire/Oprire automată TV
 
 id: Input source
-msg: Inngangskilde
+msg: Sursa de intrare
 
 id: LG Television set
-msg: LG TV-apparat
+msg: Setări TV LG
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Innstillinger av tastatur og fjernkontroll
+msg: Configurează butoanele tastaturii sau telecomenzii
 
 id: Keymapper
-msg: Tastatur- og knappehåndterer
+msg: Configurează tastele
 
 #
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Juster undertekster til videoens størrelse
+msg: Aliniază subtitrarea peste imaginea video
 
 id: Audio delay
-msg: Forsinkelse for lyd
+msg: Delay audio
 
 id: Subtitle delay
-msg: Forsinkelse for undertekster
+msg: Delay subtitrare
 
 id: Subtitle scaling
-msg: Størrelse på undertekster
+msg: Mărimea subtitrării
 
 id: Video zoom
-msg: Video zoom
+msg: Marește/Micșoarează imaginea folosind acest zoom video
 
 #
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: Ingen håndterer for URL
+msg: Nu există handler pentru acest URL
 
 #
 # ./src/plugins.c
 #
 id: Invalud URI
-msg: Feil URI
+msg: URI invalid
 
 id: Plugin ID %s does not exist
-msg: Plugin ID %s finnes ikke
+msg: IDul acestui plugin nu există
 
 id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen nedlastnings URL
+msg: Idul pluginului %s nu are un URL de download
 
 id: Unable to load plugin.json: %s
-msg: Kan ikke hente plugin.json: %s
+msg: Imposibil de incărcat pluginul.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-msg: Kan ikke hente plugin.json: Feil formateret JSON
+msg: Imposibil de incărcat pluginul.json: JSON defect
 
 id: Unable to request plugin repository: %s
-msg: Kan ikke finne plugin-mappen: %s
+msg: Cerere imposibilă către pagina de download a pluginului : %s
 
 #
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Automatisk standby
+msg: Trecere automată în modul standby 
 
 id: Run control
-msg: Kjørekontroll
+msg: Controlul funcționării
 
 #
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: På
+msg: Activat
 
 id: Name
-msg: Navn
+msg: Nume
 
 id: Type
-msg: Type
+msg: Tip
 
 #
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Applikasjoner og installerte plugins
+msg: Aplicații și pluginuri instalate
 
 id: Discovered media sources
-msg: Oppdagede mediakilder
+msg: Surse multimedia descoperite
 
 id: Global settings
-msg: Globale innstillninger
+msg: Setări generale
 
 #
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Skjerm og brukergrensesnitt
+msg: Afișaj si interfața utilizatorului 
 
 id: Horizontal underscan
-msg: Horisontal underskanning
+msg: Underscan orizontal
 
 id: Screensaver delay
-msg: Skjermsparertid
+msg: Timpul până la activarea screensaverului
 
 id: Userinterface size
-msg: Størrelse på brukergrensesnitt
+msg: Mărimea interfaței utilizatorului
 
 id: Vertical underscan
-msg: Vertikal underskanning
+msg: Underscan vertical
 
 #
 # ./src/ui/glw/glw_x11.c
 #
 id: Fullscreen mode
-msg: Fullskjermsmodus
+msg: Modul Ecran complet
 
 id: Map mouse wheel to up/down
-msg: Tolk musens skrollhjul som opp- og ned-knapper
+msg: Configurează rotița sus/jos a mouselui
 
 #
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Tilgjengelig på hjem-siden
+msg: Activat in ecranul de pornire
 
 #
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
-msg: Kan ikke finne enhet
+msg: Deviceul nu a fost gasit
 
 id: Malformed URI after device
-msg: Misformet URI etter enheten
+msg: URI defect după device
 
 id: Malformed URI after service
-msg: Misformet URI etter tjensten
+msg: URI defect dupa serviciu
 
 id: Service not found
-msg: Kan ikke finne tjenesten
+msg: Serviciul nu a fost găsit
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Forsøk alltid å velge en undertekst
+msg: Intotdeauna incearcă sa incărci o subtitrare
 
 id: Auto
-msg: Automatisk
+msg: Automat
 
 id: Center
-msg: Sentrert
+msg: Centru
 
 id: Color
-msg: Farge
+msg: Culoare
 
 id: Enable VDPAU
-msg: Aktiver VDPAU
+msg: Activează VDPAU
 
 id: Force Level 4.2 for h264 content
 # Missing translation
 msg: 
 
 id: Force subtitles to reside on video frame
-msg: Tving undertekster til alltid å ligge over videobilde
+msg: Forțează subtitrarea sa rămână pe imagine
 
 id: Generic settings for video subtitles
-msg: Generelle innstillininger for undertekster
+msg: Setări generale pentru subtitrari
 
 id: Ignore embedded styling
-msg: Overse innebygde stilkoder
+msg: Ignoră stilul embedded
 
 id: Left
-msg: Venstre
+msg: Stânga
 
 id: Outline color
-msg: Farge på konturer
+msg: Culoare contur
 
 id: Outline size
-msg: Størrelse på konturer
+msg: Grosime contur
 
 id: Right
-msg: Høyre
+msg: Dreapta
 
 id: Shadow color
-msg: Farge på skygger
+msg: Culoare umbră
 
 id: Shadow offset
-msg: Skyggeoffset
+msg: Distanța față de umbră
 
 id: Stretch video to widescreen
-msg: Strekk ut video horisontalt 
+msg: Lărgește imaginea pentru ecrane late
 
 id: Subtitle position
-msg: Posisjon på undertekster
+msg: Poziția subtitrării
 
 id: Subtitle size
-msg: Størrelse på undertekster
+msg: Mărimea subtitrării
 
 id: Subtitle styling
-msg: Stil på undertekster
+msg: Stilul subtitrarii
 
 id: Subtitles
-msg: Undertekster
+msg: Subtitrări
 
 id: Video acceleration and display behaviour
-msg: Videoakselerasjon og innstillinger for visning av video
+msg: Accelerarea video și comportamentul afișajului
 
 id: Video playback
-msg: Videoavspiling
+msg: Playback video
 

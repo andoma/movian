@@ -447,9 +447,7 @@ js_durationtostring(JSContext *cx, JSObject *obj,
 
   *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, tmp));
   return JS_TRUE;
-  return JS_TRUE;
 }
-
 
 /**
  *
@@ -471,6 +469,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("JSONDecode",       js_json_decode, 1, 0, 0),
     JS_FS("time",             js_time, 0, 0, 0),
     JS_FS("durationToString", js_durationtostring, 0, 0, 0),
+    JS_FS("probe",            js_probe, 1, 0, 0),
     JS_FS_END
 };
 
@@ -624,6 +623,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("addHTTPAuth",      js_addHTTPAuth, 2, 0, 0),
     JS_FS("forceUnload",      js_forceUnload, 0, 0, 0),
     JS_FS("createSettings",   js_createSettings, 2, 0, 0),
+    JS_FS("createStore",   js_createStore, 1, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 3, 0, 0),
     JS_FS_END

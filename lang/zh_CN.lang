@@ -517,6 +517,10 @@ msg: 颜色
 id: Enable VDPAU
 msg: 启用VDPAU
 
+id: Force Level 4.2 for h264 content
+# Missing translation
+msg: 
+
 id: Force subtitles to reside on video frame
 msg: 强制字幕在视频帧内显示
 
@@ -564,3 +568,4 @@ msg: 视频加速及显示方式
 
 id: Video playback
 msg: 视频播放
+
