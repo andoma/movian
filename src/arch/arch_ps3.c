@@ -456,6 +456,27 @@ hts_mutex_init(hts_mutex_t *m)
 }
 
 
+
+void
+hts_mutex_init_recursive(hts_mutex_t *m)
+{
+  sys_mutex_attribute_t attr;
+  s32 r;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  attr.attr_pshared  = 0x00200;
+  attr.attr_adaptive = 0x02000;
+
+  strcpy(attr.name, "mutex");
+
+  if((r = sys_mutex_create(m, &attr)) != 0) {
+    my_trace("Failed to create mutex: error: 0x%x", r);
+    exit(0);
+  }
+}
+
+
 #else
 
 void
