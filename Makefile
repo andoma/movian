@@ -102,7 +102,8 @@ SRCS-${CONFIG_TREX} += ext/trex/trex.c
 #
 SRCS += ext/sqlite/sqlite3.c
 
-${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -Os \
+${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -O2 ${SQLITE_CFLAGS_cfg} \
+ -DSQLITE_THREADSAFE=2 \
  -DSQLITE_OMIT_UTF16 \
  -DSQLITE_OMIT_AUTOINIT \
  -DSQLITE_OMIT_COMPLETE \
@@ -111,8 +112,10 @@ ${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -Os \
  -DSQLITE_OMIT_EXPLAIN \
  -DSQLITE_OMIT_GET_TABLE \
  -DSQLITE_OMIT_TCL_VARIABLE \
+ -DSQLITE_OMIT_LOAD_EXTENSION \
  -DSQLITE_DEFAULT_FOREIGN_KEYS=1 \
 
+SRCS-$(CONFIG_SQLITE_VFS) += src/db/vfs.c
 
 #
 # HTSMSG

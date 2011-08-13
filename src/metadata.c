@@ -232,7 +232,7 @@ one_statement(sqlite3 *db, const char *sql)
   rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if(rc) {
     TRACE(TRACE_ERROR, "SQLITE", "%s failed -- %s", sql, errmsg);
-    sqlite3_free(&errmsg);
+    sqlite3_free(errmsg);
   }
   return rc;
 }
@@ -323,6 +323,12 @@ metadb_upgrade(sqlite3 *db)
 
   fa_dir_free(fd);
 
+  if(ver > tgtver) {
+    TRACE(TRACE_ERROR, "METADB", "Installed version %d is too high for "
+	  "this version of Showtime. Disabling metadb", ver);
+    return;
+  }
+
   while(1) {
 
     if(ver == tgtver) {
@@ -397,6 +403,8 @@ metadb_init(void)
   meta_db_path = strdup(buf);
 
   db = metadb_get();
+  if(db == NULL)
+    return;
 
   one_statement(db, "pragma journal_mode=wal;");
 
@@ -433,7 +441,7 @@ metadb_get(void)
     TRACE(TRACE_ERROR, 
 	  "metadata", "Unable to set synchronous mode to NORMAL: %s",
 	  errmsg);
-    sqlite3_free(&errmsg);
+    sqlite3_free(errmsg);
     sqlite3_close(db);
     return NULL;
   }
@@ -447,34 +455,11 @@ metadb_get(void)
 void 
 metadb_close(void *db)
 {
+  if(db == NULL)
+    return;
+
   sqlite3_close(db);
 }
-
-
-void
-metadb_playcount_incr(void *db, const char *url)
-{
-  int rc;
-  sqlite3_stmt *stmt;
-
-  if(!metadb_valid)
-    return;
-
-  rc = sqlite3_prepare_v2(db, 
-			  "UPDATE item SET playcount=playcount+1 WHERE URL=?1;",
-			  -1, &stmt, NULL);
-  
-  if(rc != SQLITE_OK)
-    return;
-
-  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-  sqlite3_step(stmt);
-  sqlite3_finalize(stmt);
-}
-
-
-
-
 
 
 /**
@@ -849,7 +834,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   int rc;
   sqlite3_stmt *stmt;
 
-  if(!metadb_valid)
+  if(!metadb_valid || db == NULL)
     return;
 
   if(begin(db))
@@ -1046,7 +1031,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   int rc;
   sqlite3_stmt *sel;
 
-  if(!metadb_valid)
+  if(!metadb_valid || db == NULL)
     return NULL;
 
   if(begin(db))
@@ -1104,4 +1089,30 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
     return NULL;
   }
   return md;
+}
+
+
+
+/**
+ *
+ */
+void
+metadb_playcount_incr(void *db, const char *url)
+{
+  int rc;
+  sqlite3_stmt *stmt;
+
+  if(!metadb_valid || db == NULL)
+    return;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "UPDATE item SET playcount=playcount+1 WHERE URL=?1;",
+			  -1, &stmt, NULL);
+  
+  if(rc != SQLITE_OK)
+    return;
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
 }
