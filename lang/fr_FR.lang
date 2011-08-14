@@ -38,7 +38,7 @@ msg: Marche
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Mémoire disponible : %d kB
+msg: Mémoire système disponible : %d kB
 
 id: Detected CPUs: %d
 msg: CPUs détectés: %d
@@ -356,7 +356,7 @@ msg: Code tertiaire de la langue pour les sous-titres
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: Automatisk på/av kontroll av TVn
+msg: Marche/Arrêt automatique de la TV
 
 id: Input source
 msg: Source d'entrée
@@ -518,8 +518,7 @@ id: Enable VDPAU
 msg: Activer VDPAU
 
 id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
+msg: Forcer le Level 4.2 pour les contenus h264
 
 id: Force subtitles to reside on video frame
 msg: Forcer les sous-titres à rester sur l'image vidéo
