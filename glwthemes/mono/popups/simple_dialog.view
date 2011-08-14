@@ -1,0 +1,55 @@
+#import "theme://include/defs.view"
+#import "theme://include/buttons.view"
+#import "theme://include/separators.view"
+
+#import "skin://popup.skin"
+
+widget(container_x, {
+  space(0.2);
+
+  widget(container_y, {
+
+    .weight = 1.0;
+
+    .align = center;
+    
+    popupGroup(
+      .filterConstraintX = true;
+      
+      widget(container_y, {
+	.spacing = 4;
+
+	widget(label, {
+	  .maxlines = 10;
+	  .align = center;
+	  .caption = $self.message;
+	});
+
+        popupInputField(
+ 	  widget(text, {
+	    .id = "input";
+	    .focusable = true;
+	    bind($self.input);
+
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(cancel, deliverEvent($self.eventSink));
+	  });
+	);
+
+	HORIZONTAL_SEPARATOR();
+
+	widget(container_x, {
+	  .align = center;
+	  .spacing = 20;
+	  .homogenous = true;
+
+	  popupButtonOK(deliverEvent($self.eventSink, _("OK")),
+			0.5, !$self.ok);
+	  popupButtonCancel(deliverEvent($self.eventSink, _("Cancel")),
+			    1.0, !$self.cancel);
+	});
+      });
+    );
+  });
+  space(0.2);
+});
