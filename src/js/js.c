@@ -452,6 +452,46 @@ js_durationtostring(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool
+js_simple_dialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+  const char *message;
+  char *input;
+  JSBool ok, cancel;
+  int r;
+  jsval val;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sbb", &message, &ok, &cancel))
+    return JS_FALSE;
+
+  r = simple_dialog_popup(message, &input, 
+		    (ok     ? MESSAGE_POPUP_OK : 0) |
+		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
+		    MESSAGE_POPUP_RICH_TEXT);
+  
+  if(r == 1) {
+    *rval = BOOLEAN_TO_JSVAL(0);
+    return JS_TRUE;
+  }
+
+  obj = JS_NewObject(cx, NULL, NULL, NULL);
+  *rval = OBJECT_TO_JSVAL(obj);
+
+  if(r == -1) {
+    val = BOOLEAN_TO_JSVAL(1);
+    JS_SetProperty(cx, obj, "rejected", &val);
+  } else {
+
+    val = STRING_TO_JSVAL(JS_NewString(cx, input, strlen(input)));
+    JS_SetProperty(cx, obj, "input", &val);
+  }
+  
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -469,6 +509,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("time",             js_time, 0, 0, 0),
     JS_FS("durationToString", js_durationtostring, 0, 0, 0),
     JS_FS("probe",            js_probe, 1, 0, 0),
+    JS_FS("simple_dialog",    js_simple_dialog, 3, 0, 0),
     JS_FS_END
 };
 
