@@ -206,7 +206,7 @@ msg: Opensubtitles.org gebruiken
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Vertraging audio/video synchronisatie
+msg: Vertraging audio/video-synchronisatie
 
 id: Current output device
 msg: Huidige uitvoerapparaat
@@ -221,7 +221,7 @@ id: Phantom center
 msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Geluidsuitvoerapparaat en gerelateerde configuraties selecteren
+msg: Geluidsuitvoerapparaat en gerelateerde configuraties kiezen
 
 id: Small front speakers
 msg: Kleine voorluidsprekers
@@ -518,8 +518,7 @@ id: Enable VDPAU
 msg: VDPAU inschakelen
 
 id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
+msg: Level 4.2 voor h264-inhoud forceren
 
 id: Force subtitles to reside on video frame
 msg: Ondertitels forceren om op de videoframe te blijven
