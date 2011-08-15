@@ -453,7 +453,7 @@ js_durationtostring(JSContext *cx, JSObject *obj,
  *
  */
 static JSBool
-js_simple_dialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+js_textDialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
   const char *message;
   char *input;
@@ -509,7 +509,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("time",             js_time, 0, 0, 0),
     JS_FS("durationToString", js_durationtostring, 0, 0, 0),
     JS_FS("probe",            js_probe, 1, 0, 0),
-    JS_FS("simple_dialog",    js_simple_dialog, 3, 0, 0),
+    JS_FS("textDialog",       js_textDialog, 3, 0, 0),
     JS_FS_END
 };
 
