@@ -227,14 +227,14 @@ message_popup(const char *message, int flags)
  *
  */
 int
-simple_dialog_popup(const char *message, char** answer, int flags)
+text_dialog(const char *message, char** answer, int flags)
 {
   htsmsg_t *m;
   rstr_t *r;
 
   prop_t *p = prop_create_root(NULL);
 
-  prop_set_string(prop_create(p, "type"), "simple_dialog");
+  prop_set_string(prop_create(p, "type"), "textDialog");
   prop_set_string_ex(prop_create(p, "message"), NULL, message,
 		     flags & MESSAGE_POPUP_RICH_TEXT ?
 		     PROP_STR_RICH : PROP_STR_UTF8);
