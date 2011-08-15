@@ -464,7 +464,7 @@ js_textDialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval
   if(!JS_ConvertArguments(cx, argc, argv, "sbb", &message, &ok, &cancel))
     return JS_FALSE;
 
-  r = simple_dialog_popup(message, &input, 
+  r = text_dialog(message, &input, 
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
 		    MESSAGE_POPUP_RICH_TEXT);
