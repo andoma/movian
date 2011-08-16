@@ -105,6 +105,8 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 #define FA_DEBUG 0x1
 // #define FA_DUMP  0x2
 #define FA_STREAMING 0x4
+#define FA_CACHE     0x8
+#define FA_HUGE_BUFFER     0x10
 
 /**
  *
@@ -194,5 +196,13 @@ void http_client_set_header(struct http_auth_req *har, const char *key,
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
+
+// Cache
+
+void fa_cache_init(void);
+
+fa_handle_t *fa_cache_open(const char *url, char *errbuf,
+			   size_t errsize, int flags);
+
 
 #endif /* FILEACCESS_H */

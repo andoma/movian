@@ -546,6 +546,8 @@ typedef struct http_file {
 		      * rather than random seeking 
 		      */
 
+  char hf_huge_buf;  // Ask TCP for huge receive buffers
+
 } http_file_t;
 
 
@@ -1349,6 +1351,9 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug);
 
+  if(hf->hf_connection && hf->hf_huge_buf)
+    tcp_huge_buffer(hf->hf_connection->hc_tc);
+
   return hf->hf_connection ? 0 : -1;
 }
 
@@ -1694,6 +1699,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG);
   hf->hf_streaming = !!(flags & FA_STREAMING);
+  hf->hf_huge_buf = !!(flags & FA_HUGE_BUFFER);
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
     hf->h.fh_proto = fap;
@@ -2105,7 +2111,7 @@ http_get_last_component(struct fa_protocol *fap, const char *url,
  */
 static fa_protocol_t fa_protocol_http = {
   .fap_init  = http_init,
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "http",
   .fap_scan  = http_scandir,
   .fap_open  = http_open,
@@ -2127,7 +2133,7 @@ FAP_REGISTER(http);
  */
 static fa_protocol_t fa_protocol_https = {
   .fap_init  = http_init,
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "https",
   .fap_scan  = http_scandir,
   .fap_open  = http_open,
@@ -2456,7 +2462,7 @@ dav_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  *
  */
 static fa_protocol_t fa_protocol_webdav = {
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "webdav",
   .fap_scan  = dav_scandir,
   .fap_open  = http_open,
@@ -2475,7 +2481,7 @@ FAP_REGISTER(webdav);
  *
  */
 static fa_protocol_t fa_protocol_webdavs = {
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "webdavs",
   .fap_scan  = dav_scandir,
   .fap_open  = http_open,

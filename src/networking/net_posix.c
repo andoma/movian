@@ -473,6 +473,19 @@ tcp_close(tcpcon_t *tc)
 }
 
 
+
+
+/**
+ *
+ */
+void
+tcp_huge_buffer(tcpcon_t *tc)
+{
+  int v = 192 * 1024;
+  if(setsockopt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v)) == -1)
+    TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
+}
+
 /**
  *
  */

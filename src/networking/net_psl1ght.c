@@ -129,7 +129,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
-  int fd, optval;
+  int fd, optval, r;
 
   fd = netSocket(family, SOCK_STREAM, IPPROTO_TCP);
   if(fd < 0) {
@@ -142,7 +142,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
    * Switch to nonblocking
    */
   optval = 1;
-  int r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
   if(r < 0) {
     snprintf(errbuf, errbufsize, "Unable to go nonblocking: %s",
 	     strerror(net_errno));
@@ -152,6 +152,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 
   return fd;
 }
+
 
 /**
  *
@@ -337,6 +338,21 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   return tc;
 }
+
+
+
+/**
+ *
+ */
+void
+tcp_huge_buffer(tcpcon_t *tc)
+{
+  int v = 192 * 1024;
+  int r = netSetSockOpt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v));
+  if(r < 0)
+    TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
+}
+
 
 
 /**

@@ -56,6 +56,7 @@ enable librtmp
 enable httpserver
 enable dvd
 enable ps3_vdec
+enable readahead_cache
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${TOOLCHAIN}gcc

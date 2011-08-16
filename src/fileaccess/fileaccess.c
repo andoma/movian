@@ -156,6 +156,10 @@ fa_open(const char *url, char *errbuf, size_t errsize, int flags)
   char *filename;
   fa_handle_t *fh;
 
+#if ENABLE_READAHEAD_CACHE
+  if(flags & FA_CACHE)
+    return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE);
+#endif
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
@@ -519,6 +523,10 @@ fileaccess_init(void)
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)
       fap->fap_init();
+
+#if ENABLE_READAHEAD_CACHE
+  fa_cache_init();
+#endif
   return 0;
 }
 

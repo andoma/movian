@@ -75,6 +75,8 @@ int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize);
 
 void tcp_close(tcpcon_t *nc);
 
+void tcp_huge_buffer(tcpcon_t *tc);
+
 
 
 

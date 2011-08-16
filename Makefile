@@ -130,6 +130,8 @@ SRCS-$(CONFIG_LOCATEDB) += src/fileaccess/fa_locatedb.c
 
 SRCS-$(CONFIG_SPOTLIGHT) += src/fileaccess/fa_spotlight.c
 
+SRCS-$(CONFIG_READAHEAD_CACHE) += src/fileaccess/fa_cache.c
+
 SRCS += ext/audio/sid.c
 
 #

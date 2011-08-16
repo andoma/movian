@@ -83,6 +83,7 @@ CONFIG_LIST="
  font_liberation
  libfontconfig
  binreplace
+ readahead_cache
 "
 
 die() {

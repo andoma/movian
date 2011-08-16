@@ -310,7 +310,7 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     AVFormatContext *fctx;
     AVIOContext *avio;
     
-    if((avio = fa_libav_open(url, 65536, NULL, 0, 0)) == NULL)
+    if((avio = fa_libav_open(url, 65536, NULL, 0, FA_CACHE)) == NULL)
       return NULL;
 
     if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {

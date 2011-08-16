@@ -190,7 +190,7 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_refcount = 1;
 
-  mp->mp_buffer_limit = 10 * 1000 * 1000; 
+  mp->mp_buffer_limit = 3 * 1000 * 1000; 
 
   mp->mp_name = name;
 
@@ -1357,7 +1357,7 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size)
     break;
 
   case MP_BUFFER_DEEP:
-    mp->mp_buffer_limit = 10 * 1000 * 1000;
+    mp->mp_buffer_limit = 3 * 1000 * 1000;
     break;
   }
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);

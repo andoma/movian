@@ -36,6 +36,7 @@ typedef struct fa_protocol {
 
   int fap_flags;
 #define FAP_INCLUDE_PROTO_IN_URL 0x1
+#define FAP_ALLOW_CACHE          0x2
 
   void (*fap_init)(void);
 
