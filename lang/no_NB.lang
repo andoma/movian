@@ -518,8 +518,7 @@ id: Enable VDPAU
 msg: Aktiver VDPAU
 
 id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
+msg: Tving Level 4.2 for H.264-media
 
 id: Force subtitles to reside on video frame
 msg: Tving undertekster til alltid å ligge over videobilde

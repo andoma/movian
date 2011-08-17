@@ -29,10 +29,10 @@ msg: Tradus de : %s
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Oprire
+msg: Oprit
 
 id: On
-msg: Pornire
+msg: Pornit
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -47,7 +47,7 @@ id: Display info
 msg: Afișare informații
 
 id: Framerate: %.2f Hz
-msg: Numărul de frame-uri %.2f Hz
+msg: Numărul de frameuri: %.2f Hz
 
 id: GPU: %s
 msg: GPU: %s
@@ -59,13 +59,13 @@ id: Renderer: %s
 msg: Randator : %s
 
 id: System info
-msg: Informatii sistem
+msg: Informații sistem
 
 id: Total system RAM: %d kB
 msg: Memorie RAM totală : %d kB
 
 id: Version: %s
-msg: Versiune: %s
+msg: Versiunea: %s
 
 id: Width: %d px
 msg: Lățime : %d px
@@ -83,19 +83,19 @@ msg: Despre
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Acasă
+msg: Meniul principal
 
 #
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Imposibil de deschis acest fisier
+msg: Imposibil de deschis acest fișier
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Eroare la incărcarea paginii
+msg: Eroare la încărcarea paginii
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
@@ -146,7 +146,7 @@ msg: Nume de utilizator
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Nici un fisier media incărcat
+msg: Nici un fișier media incărcat
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
@@ -155,7 +155,7 @@ id: Delete
 msg: Șterge
 
 id: Enqueue
-msg: Marchează un fisier ca următorul
+msg: Marchează un fișier ca următorul
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -227,7 +227,7 @@ id: Small front speakers
 msg: Difuzoare mici față
 
 id: Swap LFE+center with surround
-msg: Inverseaza LFE+centru cu surround
+msg: Inversează LFE+centru cu surround
 
 #
 # ./src/backend/dvd/cdda.c
@@ -326,7 +326,7 @@ id: Language
 msg: Limba
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Codul limbii trebuie configurat ca un șir trei coduri de caractere ISO, fiecare cu câte trei litere. De exemplu : rom, eng, fra
+msg: Codul limbii trebuie configurat ca un șir de trei coduri de caractere ISO, fiecare cu câte trei litere. De exemplu : rom, eng, fra
 
 id: Preferred languages
 msg: Limba preferată
@@ -482,7 +482,7 @@ msg: Configurează rotița sus/jos a mouselui
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Activat in ecranul de pornire
+msg: Activat in meniul principal
 
 #
 # ./src/upnp/upnp_browse.c
@@ -503,7 +503,7 @@ msg: Serviciul nu a fost găsit
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Intotdeauna incearcă sa incărci o subtitrare
+msg: Întotdeauna încearcă să incarci o subtitrare
 
 id: Auto
 msg: Automat
@@ -522,10 +522,10 @@ id: Force Level 4.2 for h264 content
 msg: 
 
 id: Force subtitles to reside on video frame
-msg: Forțează subtitrarea sa rămână pe imagine
+msg: Forțează subtitrarea să rămână pe imagine
 
 id: Generic settings for video subtitles
-msg: Setări generale pentru subtitrari
+msg: Setări generale pentru subtitrări
 
 id: Ignore embedded styling
 msg: Ignoră stilul embedded
@@ -558,7 +558,7 @@ id: Subtitle size
 msg: Mărimea subtitrării
 
 id: Subtitle styling
-msg: Stilul subtitrarii
+msg: Stilul subtitrării
 
 id: Subtitles
 msg: Subtitrări
@@ -567,5 +567,5 @@ id: Video acceleration and display behaviour
 msg: Accelerarea video și comportamentul afișajului
 
 id: Video playback
-msg: Playback video
+msg: Setări video
 
