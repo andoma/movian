@@ -43,11 +43,13 @@ install: ${PROG} ${MAN} ${DESKTOP} ${ICON}
 	mkdir -p ${DESTDIR}$(INSTICON)
 	install ${ICON} ${DESTDIR}$(INSTICON)
 
+	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
 
 
 uninstall:
-	rm -f ${DESTDIR}$(INSTBIN)/${PROG}
-	rm -f ${DESTDIR}$(INSTMAN)/${MAN}		
-	rm -f ${DESTDIR}${INSTDESKTOP}/${DESKTOP}
-	rm -f ${DESTDIR}${INSTICON}/${ICON}
+	rm -f ${DESTDIR}$(INSTBIN)/showtime
+	rm -f ${DESTDIR}$(INSTMAN)/showtime.1
+	rm -f ${DESTDIR}${INSTDESKTOP}/showtime.desktop
+	rm -f ${DESTDIR}${INSTICON}/showtime.svg
+	gtk-update-icon-cache $(prefix)/share/icons/hicolor/
 
