@@ -20,7 +20,7 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-PREFIX=/usr/local
+PREFIX=/usr
 
 show_help(){
   common_help
