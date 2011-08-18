@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "http.h"
@@ -57,6 +59,22 @@ http_header_add(struct http_header_list *headers, const char *key,
 /**
  *
  */
+void
+http_header_add_int(struct http_header_list *headers, const char *key,
+		    int value)
+{
+  http_header_t *hh = malloc(sizeof(http_header_t));
+  char str[20];
+  snprintf(str, sizeof(str), "%d", value);
+  hh->hh_key   = strdup(key);
+  hh->hh_value = strdup(str);
+  LIST_INSERT_HEAD(headers, hh, hh_link);
+}
+
+
+/**
+ *
+ */
 const char *
 http_header_get(struct http_header_list *headers, const char *key)
 {
@@ -67,3 +85,28 @@ http_header_get(struct http_header_list *headers, const char *key)
       return hh->hh_value;
   return NULL;
 }
+
+
+/**
+ *
+ */
+void
+http_header_merge(struct http_header_list *dst,
+		  const struct http_header_list *src)
+{
+  const http_header_t *hhs;
+  http_header_t *hhd;
+
+  LIST_FOREACH(hhs, src, hh_link) {
+    LIST_FOREACH(hhd, dst, hh_link)
+      if(!strcasecmp(hhs->hh_key, hhd->hh_key))
+	break;
+    if(hhd == NULL) {
+      http_header_add(dst, hhs->hh_key, hhs->hh_value);
+    } else {
+      free(hhd->hh_value);
+      hhd->hh_value = strdup(hhs->hh_value);
+    }
+  }
+}
+

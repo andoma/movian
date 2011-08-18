@@ -453,7 +453,7 @@ the Javascript garbage collector will destroy it.
 
 #### createStore(String ID, [Boolean perUser])
 
-`Available from 3.1.162`
+*Available from 3.1.162*
 
 Creates an object that will be persisted on disk.
 
@@ -566,16 +566,21 @@ This will appear on the console if Showtime is started with the -d option
 
 Print Message to the console.
 
-#### httpGet(String URL, [Object QueryArgs])
+#### httpGet(String URL, [Object QueryArgs], [Object Headers])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * QueryArgs - Object with properties that will be appended to the URL
   as query arguments. This can also be a list of objects and if so the
   properties from each object will be merged.
+* Headers - Object with properties that will be interpreted as extra
+  HTTP headers to send. If these includes a header that is default
+  sent by Showtime, the default will be overridden with the value from
+  this object. *Available from 3.1.177*
+
 
 Return a HTTP response object
 
-#### httpPost(String URL, Object PostData, [Object QueryArgs])
+#### httpPost(String URL, Object PostData, [Object QueryArgs], [Object Headers])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * PostData - Object where each property will be encoded and POSTed as
@@ -583,6 +588,10 @@ Return a HTTP response object
 * QueryArgs - Object with properties that will be appended to the URL
   as query arguments. This can also be a list of objects and if so the
   properties from each object will be merged.
+* Headers - Object with properties that will be interpreted as extra
+  HTTP headers to send. If these includes a header that is default
+  sent by Showtime, the default will be overridden with the value from
+  this object. *Available from 3.1.177*
 
 Return a HTTP response object
 
@@ -644,7 +653,7 @@ for presentation of duration (of movies, etc)
 
 #### probe(String URL) 
 
-`Available from 3.1.156`
+*Available from 3.1.156*
 
 Probe the given URL to check if it is accessible.
 
