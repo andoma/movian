@@ -41,5 +41,7 @@ struct event *popup_display(prop_t *p);
 #define MESSAGE_POPUP_RICH_TEXT 0x4
 
 int message_popup(const char *message, int flags);
+
+int text_dialog(const char *message, char** string, int flags);
  
 #endif // NOTIFICATIONS_H__
