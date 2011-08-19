@@ -338,8 +338,13 @@ js_getAuthCredentials(JSContext *cx, JSObject *obj,
   snprintf(buf, sizeof(buf), "plguin-%s%s%s", jsp->jsp_id,
 	   id ? "-" : "", id ?: "");
 
-  r = keyring_lookup(buf, &username, &password, NULL, query, source, reason,
-		     forcetmp);
+  int flags = 0;
+  flags |= query    ? KEYRING_QUERY_USER : 0;
+  flags |= forcetmp ? 0 : KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET;
+
+
+  r = keyring_lookup(buf, &username, &password, NULL, NULL,
+		     source, reason, flags);
 
   if(r == 1) {
     *rval = BOOLEAN_TO_JSVAL(0);

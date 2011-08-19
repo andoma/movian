@@ -22,8 +22,18 @@
 
 void keyring_init(void);
 
+
+#define KEYRING_USER_REJECTED -1
+#define KEYRING_OK             0
+#define KEYRING_NOT_FOUND      1
+
 int keyring_lookup(const char *id, char **username, char **password,
-		   char **domain, int may_query, const char *source,
-		   const char *reason, int force_temporary);
+		   char **domain, int *remember_me, const char *source,
+		   const char *reason, int flags);
+
+#define KEYRING_QUERY_USER       0x1
+#define KEYRING_SHOW_REMEMBER_ME 0x2
+#define KEYRING_REMEMBER_ME_SET  0x4
+#define KEYRING_ONE_SHOT         0x8
 
 #endif /* KEYRING__H_ */

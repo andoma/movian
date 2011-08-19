@@ -1276,9 +1276,10 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
     return -1;
   }
 
-  r = keyring_lookup(buf1, &username, &password, NULL, 
-		     hf->hf_auth_failed > 0,
-		     "HTTP Client", "Access denied", 0);
+  r = keyring_lookup(buf1, &username, &password, NULL, NULL,
+		     "HTTP Client", "Access denied",
+		     (hf->hf_auth_failed > 0 ? KEYRING_QUERY_USER : 0) |
+		     KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
 
   hf->hf_auth_failed++;
 

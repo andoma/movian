@@ -294,13 +294,15 @@ smb_auth(const char *server, const char *share,
       return;
     }
 
-    int r = keyring_lookup(buf, &username, &password, &domain, 
-			   query,
-			   "SMB Client", "Access denied", 0);
-    if(r == 0)
+    int r = keyring_lookup(buf, &username, &password, &domain, NULL,
+			   "SMB Client", "Access denied", 
+			   (query ? KEYRING_QUERY_USER : 0) |
+			   KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
+
+    if(r == KEYRING_OK)
       break;
 
-    if(r == -1)
+    if(r == KEYRING_USER_REJECTED)
       return;
   }
 

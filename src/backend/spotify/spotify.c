@@ -72,8 +72,8 @@ static int play_position;
 static int seek_pos;
 
 
-static int is_logged_in;
 static int is_thread_running;
+static int is_logged_in;
 static int login_rejected_by_user;
 static int pending_login;
 static int pending_relogin;
@@ -594,35 +594,47 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
 
   reason = reason ?: "Enter login credentials";
 
-  TRACE(TRACE_DEBUG, "spotify", "Attempting to login");
+  if(!retry) {
+    char ruser[256];
 
-  r = keyring_lookup("spotify", &username, &password, NULL,
-		     retry && !silent, "Spotify", reason, 0);
-  if(r == -1) {
-    assert(silent == 0);
+    if(f_sp_session_remembered_user(s, ruser, sizeof(ruser)) != -1) {
+
+      if(f_sp_session_relogin(s) == SP_ERROR_OK) {
+	pending_login = 1;
+	TRACE(TRACE_INFO, "Spotify", "Automatic login attempt as user %s",
+	      ruser);
+	return;
+      }
+    }
+  }
+
+  int remember_me;
+   
+  if(silent) {
+    fail_pending_messages("No credentials for autologin");
+    return;
+  }
+
+  r = keyring_lookup("spotify", &username, &password, NULL, &remember_me,
+		     "Spotify", reason,
+		     KEYRING_QUERY_USER | KEYRING_SHOW_REMEMBER_ME | 
+		     KEYRING_REMEMBER_ME_SET | KEYRING_ONE_SHOT);
+  
+  if(r) {
     login_rejected_by_user = 1;
     // Login canceled by user
     fail_pending_messages("Login canceled by user");
     return;
   }
-
-  if(r == 1) {
-    if(silent) {
-      fail_pending_messages("No credentials for autologin");
-      return;
-    }
-
-    /* Nothing found, but we must have a username / password */
-    return spotify_try_login(s, 1, NULL, 0);
-  }
-
-  TRACE(TRACE_INFO, "Spotify", "Logging in as user %s", username);
-
-  f_sp_session_login(s, username, password);
-  pending_login = 1;
-
+  TRACE(TRACE_INFO, "Spotify", "Attempting to login in as user '%s'%s",
+	username,
+	remember_me ? ", and remembering credentials" : "");
+  
+  f_sp_session_login(s, username, password, remember_me);
   free(username);
   free(password);
+
+  pending_login = 1;
 }
 
 
@@ -657,6 +669,8 @@ spotify_logged_in(sp_session *sess, sp_error error)
   pending_login = 0;
   if(error == 0) {
     
+    TRACE(TRACE_INFO, "Spotify", "Logged in");
+
     is_logged_in = 1;
 
     load_initial_playlists(sess);
@@ -666,10 +680,11 @@ spotify_logged_in(sp_session *sess, sp_error error)
 
     const char *msg = f_sp_error_message(error);
 
+    TRACE(TRACE_ERROR, "Spotify", "Failed to login");
+
     is_logged_in = 0;
 
     if(is_permanent_error(error)) {
-
       fail_pending_messages(msg);
     } else {
       sleep(1);
@@ -916,7 +931,7 @@ dispatch_action(track_action_ctrl_t *tac, const char *action)
 {
   if(!strcmp(action, "starToggle")) {
     int on = f_sp_track_is_starred(spotify_session, tac->t);
-    f_sp_track_set_starred(spotify_session, (const sp_track **)&tac->t, 1, !on);
+    f_sp_track_set_starred(spotify_session, &tac->t, 1, !on);
     prop_set_int(tac->prop_star, !on);
   } else {
     TRACE(TRACE_DEBUG, "Spotify", "Unknown action '%s' on track", action);
@@ -980,9 +995,11 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return -1;
 
+  album = f_sp_track_album(track);
+  artist = f_sp_track_artist(track, 0);
+  
   prop_set_int(m->m_available, f_sp_track_is_available(spotify_session, track));
 
-  album = f_sp_track_album(track);
 
   prop_set_string(m->m_title, f_sp_track_name(track));
   prop_set_int(m->m_trackindex, f_sp_track_index(track));
@@ -998,10 +1015,12 @@ spotify_metadata_update_track(metadata_t *m)
   }
 
   // Artists
-  artist = f_sp_track_artist(track, 0);
-  spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-  prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
-  
+
+  if(artist != NULL) {
+    spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
+    prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
+  }
+
   nartists = f_sp_track_num_artists(track);
   if(nartists > 1) {
     for(i = 1; i < nartists; i++) {
@@ -1026,13 +1045,15 @@ spotify_metadata_update_track(metadata_t *m)
     }
   }
 
-  if(!(m->m_flags & METADATA_ARTIST_IMAGES_SCRAPPED) &&
-     f_sp_track_num_artists(track) > 0 && 
-     (artist = f_sp_track_artist(track, 0)) != NULL) {
-    m->m_flags |= METADATA_ARTIST_IMAGES_SCRAPPED;
-
-    lastfm_artistpics_init(m->m_artist_images,
-			   rstr_alloc(f_sp_artist_name(artist)));
+  if(artist != NULL) {
+    if(!(m->m_flags & METADATA_ARTIST_IMAGES_SCRAPPED) &&
+       f_sp_track_num_artists(track) > 0 && 
+       (artist = f_sp_track_artist(track, 0)) != NULL) {
+      m->m_flags |= METADATA_ARTIST_IMAGES_SCRAPPED;
+      
+      lastfm_artistpics_init(m->m_artist_images,
+			     rstr_alloc(f_sp_artist_name(artist)));
+    }
   }
 
   prop_set_int(m->m_starred, f_sp_track_is_starred(spotify_session, track));
@@ -1904,6 +1925,22 @@ find_user(sp_user *u)
  *
  */
 static void
+clear_friend(spotify_user_t *su)
+{
+  if(su->su_prop_friend) {
+    prop_destroy(su->su_prop_friend);
+    su->su_prop_friend = NULL;
+    su->su_prop_title = NULL;
+    su->su_prop_url = NULL;
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
 spotify_userinfo_updated(sp_session *session)
 {
   spotify_user_t *su;
@@ -1937,15 +1974,9 @@ spotify_userinfo_updated(sp_session *session)
   }
 
   LIST_FOREACH(su, &spotify_users, su_link) {
-    if(su->su_mark) {
-      if(su->su_prop_friend) {
-	prop_destroy(su->su_prop_friend);
-	su->su_prop_friend = NULL;
-	su->su_prop_title = NULL;
-	su->su_prop_url = NULL;
-      }
-      su->su_mark = 0;
-    }
+    if(su->su_mark)
+      clear_friend(su);
+    su->su_mark = 0;
   }
 }
 
@@ -1957,12 +1988,8 @@ static void
 clear_friends(void)
 {
   spotify_user_t *su;
-  LIST_FOREACH(su, &spotify_users, su_link) {
-    if(su->su_prop_friend) {
-      prop_destroy(su->su_prop_friend);
-      su->su_prop_friend = NULL;
-    }
-  }
+  LIST_FOREACH(su, &spotify_users, su_link)
+    clear_friend(su);
 }
 
 
@@ -3136,6 +3163,12 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
     metadata = prop_create(p, "metadata");
     prop_set_string(prop_create(metadata, "title"), f_sp_artist_name(artist));
 
+    sp_link *l = f_sp_link_create_from_artist_portrait(artist);
+    if(l != NULL) {
+      spotify_make_link(l, link, sizeof(link));
+      prop_set_string(prop_create(metadata, "icon"), link);
+    }
+
     pv = prop_vec_append(pv, p);
     inc++;
   }
@@ -3406,7 +3439,7 @@ spotify_thread(void *aux)
 
     hts_mutex_unlock(&spotify_mutex);
 
-    if(!is_logged_in && !login_rejected_by_user) {
+    if(sm != NULL && !is_logged_in && !login_rejected_by_user) {
       spotify_try_login(s, 0, NULL, 0);
     }
     if(high_bitrate != spotify_high_bitrate) {
@@ -3423,7 +3456,7 @@ spotify_thread(void *aux)
     if(sm != NULL) {
       switch(sm->sm_op) {
       case SPOTIFY_LOGOUT:
-	TRACE(TRACE_DEBUG, "spotify", "Requesting logout");
+	TRACE(TRACE_INFO, "spotify", "Requesting logout");
 	if(!pending_relogin)
 	  f_sp_session_logout(s);
 	pending_relogin = 0;
@@ -3490,6 +3523,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 
   if(!is_thread_running) {
     is_thread_running = 1;
+    silent_start = silent;
     hts_thread_create_detached("spotify", spotify_thread, NULL,
 			       THREAD_PRIO_NORMAL);
     shutdown_hook_add(spotify_shutdown_early, NULL, 1);
@@ -3883,10 +3917,11 @@ spotify_set_bitrate(void *opaque, int value)
 static void
 spotify_relogin0(void)
 {
-  TRACE(TRACE_DEBUG, "spotify", "Switching account");
+  TRACE(TRACE_INFO, "spotify", "Switching account");
   unload_initial_playlists(spotify_session);
   clear_friends();
   f_sp_session_logout(spotify_session);
+  f_sp_session_forget_me(spotify_session);
   pending_relogin = 1;
 }
 
@@ -3895,6 +3930,12 @@ static void
 spotify_relogin(void *opaque, prop_event_t event, ...)
 {
   spotify_relogin0();
+}
+
+static void
+spotify_forget_me(void *opaque, prop_event_t event, ...)
+{
+  f_sp_session_forget_me(spotify_session);
 }
 
 
@@ -3951,6 +3992,8 @@ be_spotify_init(void)
     return 1;
 #endif
 
+  TRACE(TRACE_INFO, "Spotify", "Using library version %s", f_sp_build_id());
+
   prop_t *title = prop_create_root(NULL);
   prop_set_string(title, "Spotify");
 
@@ -4001,6 +4044,9 @@ be_spotify_init(void)
 
   settings_create_action(s, "relogin", _p("Relogin (switch user)"),
 			 spotify_relogin, NULL, spotify_courier);
+
+  settings_create_action(s, "forgetme", _p("Forget me"),
+			 spotify_forget_me, NULL, spotify_courier);
 
   prop_link(settings_get_value(ena),
 	    prop_create(spotify_service->s_root, "enabled"));

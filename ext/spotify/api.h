@@ -97,25 +97,25 @@ typedef enum sp_error {
 	SP_ERROR_BAD_API_VERSION           = 1,  ///< The library version targeted does not match the one you claim you support
 	SP_ERROR_API_INITIALIZATION_FAILED = 2,  ///< Initialization of library failed - are cache locations etc. valid?
 	SP_ERROR_TRACK_NOT_PLAYABLE        = 3,  ///< The track specified for playing cannot be played
-	SP_ERROR_RESOURCE_NOT_LOADED       = 4,  ///< One or several of the supplied resources is not yet loaded
 	SP_ERROR_BAD_APPLICATION_KEY       = 5,  ///< The application key is invalid
 	SP_ERROR_BAD_USERNAME_OR_PASSWORD  = 6,  ///< Login failed because of bad username and/or password
 	SP_ERROR_USER_BANNED               = 7,  ///< The specified username is banned
 	SP_ERROR_UNABLE_TO_CONTACT_SERVER  = 8,  ///< Cannot connect to the Spotify backend system
 	SP_ERROR_CLIENT_TOO_OLD            = 9,  ///< Client is too old, library will need to be updated
-	SP_ERROR_OTHER_PERMANENT           = 10, ///< Some other error occured, and it is permanent (e.g. trying to relogin will not help)
+	SP_ERROR_OTHER_PERMANENT           = 10, ///< Some other error occurred, and it is permanent (e.g. trying to relogin will not help)
 	SP_ERROR_BAD_USER_AGENT            = 11, ///< The user agent string is invalid or too long
 	SP_ERROR_MISSING_CALLBACK          = 12, ///< No valid callback registered to handle events
 	SP_ERROR_INVALID_INDATA            = 13, ///< Input data was either missing or invalid
 	SP_ERROR_INDEX_OUT_OF_RANGE        = 14, ///< Index out of range
 	SP_ERROR_USER_NEEDS_PREMIUM        = 15, ///< The specified user needs a premium account
-	SP_ERROR_OTHER_TRANSIENT           = 16, ///< A transient error occured.
+	SP_ERROR_OTHER_TRANSIENT           = 16, ///< A transient error occurred.
 	SP_ERROR_IS_LOADING                = 17, ///< The resource is currently loading
 	SP_ERROR_NO_STREAM_AVAILABLE       = 18, ///< Could not find any suitable stream to play
 	SP_ERROR_PERMISSION_DENIED         = 19, ///< Requested operation is not allowed
 	SP_ERROR_INBOX_IS_FULL             = 20, ///< Target inbox is full
 	SP_ERROR_NO_CACHE                  = 21, ///< Cache is not enabled
 	SP_ERROR_NO_SUCH_USER              = 22, ///< Requested user does not exist
+	SP_ERROR_NO_CREDENTIALS            = 23, ///< No credentials are stored
 } sp_error;
 
 /**
@@ -147,7 +147,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_create(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 8
+#define SPOTIFY_API_VERSION 9
 
 /**
  * Describes the current state of the connection
@@ -157,6 +157,7 @@ typedef enum sp_connectionstate {
 	SP_CONNECTION_STATE_LOGGED_IN    = 1, ///< Logged in against a Spotify access point
 	SP_CONNECTION_STATE_DISCONNECTED = 2, ///< Was logged in, but has now been disconnected
 	SP_CONNECTION_STATE_UNDEFINED    = 3, ///< The connection state is undefined
+	SP_CONNECTION_STATE_OFFLINE		 = 4  ///< Logged in in offline mode
 } sp_connectionstate;
 
 
@@ -195,7 +196,7 @@ typedef enum sp_playlist_type {
 	SP_PLAYLIST_TYPE_PLACEHOLDER  = 3, ///< Unknown entry.
 } sp_playlist_type;
 
-/*
+/**
  * Playlist offline status
  */
 typedef enum sp_playlist_offline_status {
@@ -217,7 +218,7 @@ typedef struct sp_audio_buffer_stats {
  * List of subscribers returned by sp_playlist_subscribers()
  */
 typedef struct sp_subscribers {
-	unsigned int count;
+	unsigned int count;    ///< Number of elements in 'subscribers'
 	char *subscribers[1];  ///< Actual size is 'count'. Array of pointers to canonical usernames
 } sp_subscribers;
 
@@ -388,7 +389,7 @@ typedef struct sp_session_callbacks {
 	 * @param[in]  format     Audio format descriptor sp_audioformat
 	 * @param[in]  frames     Points to raw PCM data as described by \p format
 	 * @param[in]  num_frames Number of available samples in \p frames.
-	 *                        If this is 0, a discontinuity has occured (such as after a seek). The application
+	 *                        If this is 0, a discontinuity has occurred (such as after a seek). The application
 	 *                        should flush its audio fifos, etc.
 	 *
 	 * @return                Number of frames consumed.
@@ -503,11 +504,14 @@ typedef struct sp_session_callbacks {
 typedef struct sp_session_config {
 	int api_version;                       ///< The version of the Spotify API your application is compiled with. Set to #SPOTIFY_API_VERSION
 	const char *cache_location;            /**< The location where Spotify will write cache files.
-						*   This cache include tracks, cached browse results and coverarts
+						*   This cache include tracks, cached browse results and coverarts.
 	                                        *   Set to empty string ("") to disable cache
 						*/
 	const char *settings_location;         /**< The location where Spotify will write setting files and per-user
-						*   cache items. This includes playlists, track metadata, etc
+						*   cache items. This includes playlists, track metadata, etc.
+						*   'settings_location' may be the same path as 'cache_location'.
+						*   'settings_location' folder will not be created (unlike 'cache_location'),
+						*   if you don't want to create the folder yourself, you can set 'settings_location' to 'cache_location'.
 						*/
 	const void *application_key;           ///< Your application key
 	size_t application_key_size;           ///< The size of the application key in bytes
@@ -525,7 +529,7 @@ typedef struct sp_session_config {
 
 	/**
 	 * Don't save metadata for local copies of playlists
-	 * Reduces disk space usage at the expence of needing
+	 * Reduces disk space usage at the expense of needing
 	 * to request metadata from Spotify backend when loading list
 	 */
 	bool dont_save_metadata_for_playlists;
@@ -540,6 +544,7 @@ typedef struct sp_session_config {
 /**
  * Initialize a session. The session returned will be initialized, but you will need
  * to log in before you can perform any other operation
+ * Currently it is not supported to have multiple active sessions, and it's recommended to only call this once per process.
  *
  * Here is a snippet from \c spshell.c:
  * @dontinclude spshell.c
@@ -565,21 +570,65 @@ SP_LIBEXPORT(sp_error) sp_session_create(const sp_session_config *config, sp_ses
  */
 SP_LIBEXPORT(void) sp_session_release(sp_session *sess);
 
+
 /**
- * Logs in the specified username/password combo. This initiates the download in the background.
+ * Logs in the specified username/password combo. This initiates the login in the background.
  * A callback is called when login is complete
+ *
+ * An application MUST NEVER store the user's password in clear text.
+ * If automatic relogin is required, use sp_session_relogin()
  *
  * Here is a snippet from \c spshell.c:
  * @dontinclude spshell.c
  * @skip sp_session_login
  * @until }
  *
- * @param[in]   session    Your session object
- * @param[in]   username   The username to log in
- * @param[in]   password   The password for the specified username
+ * @param[in]   session      Your session object
+ * @param[in]   username     The username to log in
+ * @param[in]   password     The password for the specified username
+ * @param[in]   remember_me  If set, the username / password will be remembered by libspotify
  *
  */
-SP_LIBEXPORT(void) sp_session_login(sp_session *session, const char *username, const char *password);
+SP_LIBEXPORT(void) sp_session_login(sp_session *session, const char *username, const char *password, bool remember_me);
+
+
+/**
+ * Log in the remembered user if last user that logged in logged in with remember_me set.
+ * If no credentials are stored, this will return SP_ERROR_NO_CREDENTIALS.
+ *
+ * @param[in]   session      Your session object
+ *
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
+ *                         SP_ERROR_NO_CREDENTIALS
+ */
+SP_LIBEXPORT(sp_error) sp_session_relogin(sp_session *session);
+
+
+/**
+ * Get username of the user that will be logged in via sp_session_relogin()
+ *
+ * @param[in]   session      Your session object
+ * @param[out]  buffer       The buffer to hold the username
+ * @param[in]   buffer_size  The max size of the buffer that will hold the username.
+ *                           The resulting string is guaranteed to always be null terminated if
+ *                           buffer_size > 0
+ *
+ * @return                   The number of characters in the username.
+ *                           If value is greater or equal than \p buffer_size, output was truncated.
+ *                           If returned value is -1 no credentials are stored in libspotify.
+ */
+SP_LIBEXPORT(int) sp_session_remembered_user(sp_session *session, char *buffer, size_t buffer_size);
+
+
+/**
+ * Remove stored credentials in libspotify. If no credentials are currently stored, nothing will happen.
+ *
+ * @param[in]   session      Your session object
+ *
+ */
+SP_LIBEXPORT(void) sp_session_forget_me(sp_session *session);
+
 
 /**
  * Fetches the currently logged in user
@@ -716,7 +765,7 @@ SP_LIBEXPORT(sp_playlistcontainer *) sp_session_playlistcontainer(sp_session *se
  *
  * @param[in]  session        Session object
  *
- * @return     A playlist.
+ * @return     A playlist or NULL if no user is logged in
  * @note You need to release the playlist when you are done with it.
  * @see sp_playlist_release()
  */
@@ -727,7 +776,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_inbox_create(sp_session *session);
  *
  * @param[in]  session        Session object
  *
- * @return     A playlist.
+ * @return     A playlist or NULL if no user is logged in
  * @note You need to release the playlist when you are done with it.
  * @see sp_playlist_release()
  */
@@ -739,7 +788,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_create(sp_session *session);
  * @param[in]  session        Session object
  * @param[in]  canonical_username       Canonical username
  *
- * @return     A playlist.
+ * @return     A playlist or NULL if no user is logged in
  * @note You need to release the playlist when you are done with it.
  * @see sp_playlist_release()
  */
@@ -755,7 +804,7 @@ SP_LIBEXPORT(sp_playlist *) sp_session_starred_for_user_create(sp_session *sessi
  * @param[in]   session    Your session object.
  * @param[in]   canonical_username   The canonical username, or NULL.
  *
- * @return Playlist container object, NULL if not logged in or not found.
+ * @return Playlist container object, NULL if not logged in.
  */
 SP_LIBEXPORT(sp_playlistcontainer *) sp_session_publishedcontainer_for_user_create(sp_session *session, const char *canonical_username);
 
@@ -856,8 +905,21 @@ SP_LIBEXPORT(int) sp_offline_num_playlists(sp_session *session);
  * @param[in]  session        Session object
  * @param[out] status         Status object that will be filled with info
  *
+ * @return false if no synching is in progress (in which case the contents
+ *               of status is undefined)
+ *
  */
-SP_LIBEXPORT(void) sp_offline_sync_get_status(sp_session *session, sp_offline_sync_status *status);
+SP_LIBEXPORT(bool) sp_offline_sync_get_status(sp_session *session, sp_offline_sync_status *status);
+
+/**
+ * Return remaining time (in seconds) until the offline key store expires
+ * and the user is required to relogin
+ *
+ * @param[in]  session        Session object
+ * @return                    Seconds until expiration
+ *
+ */
+SP_LIBEXPORT(int) sp_offline_time_left(sp_session *session);
 
 /**
  * Get currently logged in users country
@@ -962,6 +1024,20 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_album_cover(sp_album *album);
 SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
 
 /**
+ * Creates a link object pointing to an artist portrait
+ *
+ * @param[in]   artist     Artist browse object
+ *
+ * @return                 A link object representing an image
+ *
+ * @note You need to release the link when you are done with it.
+ * @see sp_link_release()
+ * @see sp_artistbrowse_num_portraits()
+ */
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artist *artist);
+
+
+/**
  * Creates a link object from an artist portrait
  *
  * @param[in]   arb        Artist browse object
@@ -972,8 +1048,13 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
  * @note You need to release the link when you are done with it.
  * @see sp_link_release()
  * @see sp_artistbrowse_num_portraits()
+ *
+ * @note The difference from sp_link_create_from_artist_portrait() is
+ * that the artist browse object may contain multiple portraits.
+ *
  */
-SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artistbrowse *arb, int index);
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artistbrowse_portrait(sp_artistbrowse *arb, int index);
+
 
 /**
  * Generate a link object representing the current search
@@ -1065,7 +1146,7 @@ SP_LIBEXPORT(sp_track *) sp_link_as_track(sp_link *link);
  * The track and offset into track representation for the given link
  *
  * @param[in]   link       The Spotify link whose track you are interested in
- * @param[out]  offset     Pointer to offset into track (in seconds). If the link
+ * @param[out]  offset     Pointer to offset into track (in milliseconds). If the link
  *                         does not contain an offset this will be set to 0.
  *
  * @return                 The track representation of the given track link
@@ -1135,7 +1216,7 @@ SP_LIBEXPORT(void) sp_link_release(sp_link *link);
  *
  * @return                 True if track is loaded
  *
- * @note  This is equivivalent to checking if sp_track_error() not returns SP_ERROR_IS_LOADING.
+ * @note  This is equivalent to checking if sp_track_error() not returns SP_ERROR_IS_LOADING.
  */
 SP_LIBEXPORT(bool) sp_track_is_loaded(sp_track *track);
 
@@ -1214,7 +1295,7 @@ SP_LIBEXPORT(bool) sp_track_is_starred(sp_session *session, sp_track *track);
  * @note This will fail silently if playlists are disabled.
  * @see sp_set_playlists_enabled()
  */
-SP_LIBEXPORT(void) sp_track_set_starred(sp_session *session, const sp_track **tracks, int num_tracks, bool star);
+SP_LIBEXPORT(void) sp_track_set_starred(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
 
 /**
  * The number of artists performing on the specified track
@@ -1274,7 +1355,7 @@ SP_LIBEXPORT(int) sp_track_duration(sp_track *track);
  *
  * @param[in]   track      A track object
  *
- * @return                 Popularity in range 0 to 100, 0 if undefined
+ * @return                 Popularity in range 0 to 100, 0 if undefined.
  *                         If no metadata is available for the track yet, this function returns 0.
  */
 SP_LIBEXPORT(int) sp_track_popularity(sp_track *track);
@@ -1960,7 +2041,7 @@ SP_LIBEXPORT(void) sp_image_release(sp_image *image);
 
 
 /**
- * @defgroup search Search subsysten
+ * @defgroup search Search subsystem
  * @{
  */
 
@@ -2501,7 +2582,7 @@ SP_LIBEXPORT(bool) sp_playlist_is_collaborative(sp_playlist *playlist);
 /**
  * Set collaborative status for a playlist.
  *
- * A playlist in collaborative state can be modifed by all users, not only the user owning the list
+ * A playlist in collaborative state can be modified by all users, not only the user owning the list
  *
  * @param[in]  playlist       Playlist object
  * @param[in]  collaborative  True or false
@@ -2570,7 +2651,7 @@ SP_LIBEXPORT(bool) sp_playlist_has_pending_changes(sp_playlist *playlist);
  *                        SP_ERROR_INVALID_INDATA - position is > current playlist length
  *                        SP_ERROR_PERMISSION_DENIED
  */
-SP_LIBEXPORT(sp_error) sp_playlist_add_tracks(sp_playlist *playlist, const sp_track **tracks, int num_tracks, int position, sp_session *session);
+SP_LIBEXPORT(sp_error) sp_playlist_add_tracks(sp_playlist *playlist, sp_track *const*tracks, int num_tracks, int position, sp_session *session);
 
 /**
  * Remove tracks from a playlist
@@ -2667,7 +2748,7 @@ SP_LIBEXPORT(void) sp_playlist_update_subscribers(sp_session *session, sp_playli
  *             There is one caveat tough: If libspotify has never seen the
  *             playlist before this metadata will also be unset.
  *             In order for libspotify to get the metadata the playlist
- *             needs to be loaded atleast once.
+ *             needs to be loaded at least once.
  *             In order words, if libspotify starts with an empty playlist
  *             cache and the application has set 'initially_unload_playlists'
  *             config parameter to True all playlists will be empty.
@@ -2705,7 +2786,8 @@ SP_LIBEXPORT(void) sp_playlist_set_in_ram(sp_session *session, sp_playlist *play
 SP_LIBEXPORT(sp_playlist *) sp_playlist_create(sp_session *session, sp_link *link);
 
 /**
- * Mark a playlist to be synchronized for offline playback
+ * Mark a playlist to be synchronized for offline playback.
+ * The playlist must be in the users playlistcontainer
  *
  * @param[in]  session        Session object
  * @param[in]  playlist       Playlist object
@@ -2734,6 +2816,7 @@ SP_LIBEXPORT(sp_playlist_offline_status) sp_playlist_get_offline_status(sp_sessi
  * @param[in]  playlist       Playlist object
  *
  * @return Value from 0 - 100 that indicates amount of playlist that is downloaded
+ * or 0 if the playlist is not in the SP_PLAYLIST_OFFLINE_STATUS_DOWNLOADING mode.
  *
  * @see sp_playlist_offline_status()
  */
@@ -2812,7 +2895,7 @@ typedef struct sp_playlistcontainer_callbacks {
  * @param[in]  callbacks Callbacks, see sp_playlistcontainer_callbacks
  * @param[in]  userdata  Opaque value passed to callbacks.
  *
- * @note Every sp_playlistcontainer_add_callbacks() needs to be paried with a corresponding
+ * @note Every sp_playlistcontainer_add_callbacks() needs to be paired with a corresponding
  *       sp_playlistcontainer_remove_callbacks() that is invoked before releasing the
  *       last reference you own for the container. In other words, you must make sure
  *       to have removed all the callbacks before the container gets destroyed.
@@ -2863,7 +2946,7 @@ SP_LIBEXPORT(bool) sp_playlistcontainer_is_loaded(sp_playlistcontainer *pc);
  * @param[in]  pc        Playlist container
  * @param[in]  index     Index in playlist container. Should be in the interval [0, sp_playlistcontainer_num_playlists() - 1]
  *
- * @return               Number of playlists.
+ * @return               The playlist object
  *
  * @sa sp_session_playlistcontainer()
  */
@@ -2885,11 +2968,12 @@ SP_LIBEXPORT(sp_playlist_type) sp_playlistcontainer_playlist_type(sp_playlistcon
  * Return the folder name at @a index
  *
  * @param[in]  pc           Playlist container
- * @param[in]  index        Index in playlist container. Should be in the interval [0, sp_playlistcontainer_num_playlists() - 1]
+ * @param[in]  index        Index in playlist container. Should be in the interval [0, sp_playlistcontainer_num_playlists() - 1].
+ *                          Index should point at a start-folder entry, otherwise the empty string is written to buffer.
  * @param[in]  buffer       Pointer to char[] where to store folder name
  * @param[in]  buffer_size  Size of array
  *
- * @return     error        One of the following errors, from ::sp_error
+ * @return                  One of the following errors, from ::sp_error
  *                          SP_ERROR_OK
  *                          SP_ERROR_INDEX_OUT_OF_RANGE
  *
@@ -2903,7 +2987,7 @@ SP_LIBEXPORT(sp_error) sp_playlistcontainer_playlist_folder_name(sp_playlistcont
  * @param[in]  pc        Playlist container
  * @param[in]  index     Index in playlist container. Should be in the interval [0, sp_playlistcontainer_num_playlists() - 1]
  *
- * @return               The group ID
+ * @return               The group ID of the folder. Returns 0 on index out of range, pc being NULL or indexed item not being a folder
  *
  * @sa sp_session_playlistcontainer()
  */
@@ -3122,7 +3206,7 @@ typedef enum {
  * country codes (in uppercase) encoded in an integer. There are also some reserved
  * codes used to denote non-country regions. See sp_toplistregion
  *
- * Example: SP_TOPLIST_REGION('S', 'E') // for sweden
+ * Example: SP_TOPLIST_REGION('S', 'E') for Sweden
  */
 #define SP_TOPLIST_REGION(a, b) ((a) << 8 | (b))
 
@@ -3270,7 +3354,7 @@ SP_LIBEXPORT(sp_track *) sp_toplistbrowse_track(sp_toplistbrowse *tlb, int index
 /** @} */
 
 /**
- * @defgroup inbox Inbox subsysten
+ * @defgroup inbox Inbox subsystem
  * @{
  */
 
@@ -3291,7 +3375,7 @@ typedef void SP_CALLCONV inboxpost_complete_cb(sp_inbox *result, void *userdata)
  *
  * @param[in]  session    Session object
  * @param[in]  user       Canonical username of recipient
- * @param[in]  tracks     Array of trancks to post
+ * @param[in]  tracks     Array of tracks to post
  * @param[in]  num_tracks Number of tracks in \p tracks
  * @param[in]  message    Message to attach to tracks. UTF-8
  * @param[in]  callback   Callback to be invoked when the request has completed
@@ -3333,6 +3417,14 @@ SP_LIBEXPORT(void) sp_inbox_add_ref(sp_inbox *inbox);
 SP_LIBEXPORT(void) sp_inbox_release(sp_inbox *inbox);
 
 /** @} */
+
+/**
+ * Return the libspotify build ID
+ *
+ * This might be useful to have available for display somewhere in your
+ * user interface.
+ */
+SP_LIBEXPORT(const char *) sp_build_id(void);
 
 
 #ifdef __cplusplus

@@ -236,8 +236,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
 
   snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
 
-  r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		     "TV client", "Access denied", 0);
+  r = keyring_lookup(id, &username, &password, NULL, NULL,
+		     "TV client", "Access denied",
+		     (retry ? KEYRING_QUERY_USER : 0) |
+		     KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
 
   if(r == -1) {
     /* User rejected */
