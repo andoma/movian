@@ -165,7 +165,8 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
  */
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
-		const char *url, JSObject *argobj, JSObject *postobj)
+		const char *url, JSObject *argobj, JSObject *postobj,
+		JSObject *headerobj)
 {
   char **httpargs = NULL;
   int i;
@@ -174,6 +175,8 @@ js_http_request(JSContext *cx, jsval *rval,
   size_t resultsize;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
+  struct http_header_list in_headers;
+  LIST_INIT(&in_headers);
 
   if(argobj != NULL)
     js_http_add_args(&httpargs, cx, argobj);
@@ -216,6 +219,30 @@ js_http_request(JSContext *cx, jsval *rval,
   }
 
 
+ if(headerobj != NULL) {
+    JSIdArray *ida;
+
+    if((ida = JS_Enumerate(cx, headerobj)) == NULL)
+      return JS_FALSE;
+
+    for(i = 0; i < ida->length; i++) {
+      jsval name, value;
+
+      if(!JS_IdToValue(cx, ida->vector[i], &name) ||
+	 !JSVAL_IS_STRING(name) ||
+	 !JS_GetProperty(cx, headerobj,
+			 JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value) || JSVAL_IS_VOID(value))
+      continue;
+
+      http_header_add(&in_headers,
+		      JS_GetStringBytes(JSVAL_TO_STRING(name)),
+		      JS_GetStringBytes(JS_ValueToString(cx, value)));
+    }
+    
+    JS_DestroyIdArray(cx, ida);
+  }
+
   int flags = 0;
 
   const js_context_private_t *jcp = JS_GetContextPrivate(cx);
@@ -229,7 +256,7 @@ js_http_request(JSContext *cx, jsval *rval,
 		       &result, &resultsize, errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
-		       &response_headers, NULL, NULL);
+		       &response_headers, &in_headers, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
@@ -287,11 +314,12 @@ js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *url;
   JSObject *argobj = NULL;
+  JSObject *hdrobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &argobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/oo", &url, &argobj, &hdrobj))
     return JS_FALSE;
 
-  return js_http_request(cx, rval, url, argobj, NULL);
+  return js_http_request(cx, rval, url, argobj, NULL, hdrobj);
 }
 
 /**
@@ -304,11 +332,13 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   JSObject *argobj = NULL;
   JSObject *postobj = NULL;
+  JSObject *hdrobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "so/o", &url, &postobj, &argobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "so/oo", &url, &postobj, &argobj,
+			  &hdrobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, postobj);
+  return js_http_request(cx, rval, url, argobj, postobj, hdrobj);
 }
 
 

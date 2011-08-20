@@ -176,7 +176,7 @@ int http_request(const char *url, const char **arguments,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
-		 struct http_header_list *headers_in, const char *method);
+		 const struct http_header_list *headers_in, const char *method);
 
 struct http_auth_req;
 int http_client_oauth(struct http_auth_req *har,
