@@ -126,7 +126,7 @@ control_parse_soap(upnp_local_service_t *uls, http_connection_t *hc,
       s++;
 
     int ver = *s++ - '0';
-    if(ver != uls->uls_version)
+    if(ver > uls->uls_version)
       continue;
 
     int i = 0;

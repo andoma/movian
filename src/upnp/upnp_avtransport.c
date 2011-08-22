@@ -44,6 +44,22 @@ static int   upnp_current_canSeek;
 static int   upnp_current_canPause;
 static int   upnp_current_canStop;
 
+
+  // TransportState
+static const char *
+current_playstate(void)
+{
+  if(upnp_current_playstatus == NULL)
+    return "NO_MEDIA_PRESENT";
+  else if(!strcmp(upnp_current_playstatus, "play"))
+    return "PLAYING";
+  else if(!strcmp(upnp_current_playstatus, "pause"))
+    return "PAUSED_PLAYBACK";
+  else
+    return "NO_MEDIA_PRESENT";
+}
+
+
 /**
  *
  */
@@ -312,6 +328,25 @@ avt_GetPositionInfo(http_connection_t *hc, htsmsg_t *args)
 }
 
 
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetTransportInfo(http_connection_t *hc, htsmsg_t *args)
+{
+  htsmsg_t *out = htsmsg_create_map();
+
+  hts_mutex_lock(&upnp_lock);
+  htsmsg_add_str(out, "CurrentTransportState", current_playstate());
+  htsmsg_add_str(out, "CurrentTransportStatus", "OK");
+  htsmsg_add_str(out, "CurrentSpeed", "1");
+ 
+  hts_mutex_unlock(&upnp_lock);
+  return out;
+}
+
+
 /**
  *
  */
@@ -354,17 +389,7 @@ avt_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
 		 "<InstanceID val=\"0\">");
 
 
-  // TransportState
-
-  if(upnp_current_playstatus == NULL)
-    s = "NO_MEDIA_PRESENT";
-  else if(!strcmp(upnp_current_playstatus, "play"))
-    s = "PLAYING";
-  else if(!strcmp(upnp_current_playstatus, "pause"))
-    s = "PAUSED_PLAYBACK";
-  else
-    s = "NO_MEDIA_PRESENT";
-  lc_encode_val_str(&xml, "TransportState", s);
+  lc_encode_val_str(&xml, "TransportState", current_playstate());
 
   // CurrentMediaCategory
 
@@ -465,10 +490,10 @@ upnp_local_service_t upnp_AVTransport_2 = {
     { "Next", avt_Next },
     { "Previous", avt_Previous },
     { "GetPositionInfo", avt_GetPositionInfo },
+    { "GetTransportInfo", avt_GetTransportInfo },
     { NULL, NULL},
   }
 };
-
 
 
 /**

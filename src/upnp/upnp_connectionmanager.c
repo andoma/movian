@@ -17,7 +17,7 @@
  */
 #include <stdio.h>
 
-#include "networking/http.h"
+#include "networking/http_server.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"
 #include "misc/string.h"
@@ -29,10 +29,23 @@
 /**
  *
  */
+static htsmsg_t *
+cm_GetProtocolInfo(http_connection_t *hc, htsmsg_t *args)
+{
+  htsmsg_t *out = htsmsg_create_map();
+  htsmsg_add_str(out, "Source", "");
+  htsmsg_add_str(out, "Sink", "http-get:*:*:*");
+  return out;
+}
+
+
+/**
+ *
+ */
 upnp_local_service_t upnp_ConnectionManager_2 = {
   .uls_name = "ConnectionManager",
   .uls_version = 2,
   .uls_methods = {
-    { NULL, NULL},
+    { "GetProtocolInfo", cm_GetProtocolInfo },
   }
 };

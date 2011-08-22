@@ -165,6 +165,10 @@ main(int argc, char **argv)
   int can_poweroff = 0;
   int r;
 
+#if ENABLE_HTTPSERVER
+  int do_upnp = 1;
+#endif
+
   trace_level = TRACE_INFO;
 
   gettimeofday(&tv, NULL);
@@ -208,6 +212,9 @@ main(int argc, char **argv)
 #if ENABLE_SERDEV
 	     "   --serdev          - Probe service ports for devices.\n"
 #endif
+#if ENABLE_HTTPSERVER
+	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
+#endif
 	     "   -p                - Path to plugin directory to load\n"
 	     "                       Intended for plugin development\n"
 	     "   --plugin-repo     - URL to plugin repository\n"
@@ -242,6 +249,12 @@ main(int argc, char **argv)
 #if ENABLE_SERDEV
     } else if(!strcmp(argv[0], "--serdev")) {
       enable_serdev = 1;
+      argc -= 1; argv += 1;
+      continue;
+#endif
+#if ENABLE_HTTPSERVER
+    } else if(!strcmp(argv[0], "--disable-upnp")) {
+      do_upnp = 0;
       argc -= 1; argv += 1;
       continue;
 #endif
@@ -393,7 +406,8 @@ main(int argc, char **argv)
   /* HTTP server and UPNP */
 #if ENABLE_HTTPSERVER
   http_server_init();
-  upnp_init();
+  if(do_upnp)
+    upnp_init();
 #endif
 
 
