@@ -63,7 +63,7 @@ set_title_from_url(prop_t *metadata, const char *url)
  *
  */
 static void
-file_open_browse(prop_t *page, const char *url)
+file_open_browse(prop_t *page, const char *url, time_t mtime)
 {
   prop_t *model;
   char parent[URL_MAX];
@@ -78,14 +78,14 @@ file_open_browse(prop_t *page, const char *url)
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(page, "parent"), parent);
   
-  fa_scanner(url, model, NULL);
+  fa_scanner(url, mtime, model, NULL);
 }
 
 /**
  *
  */
 static void
-file_open_dir(prop_t *page, const char *url)
+file_open_dir(prop_t *page, const char *url, time_t mtime)
 {
   fa_handle_t *ref = fa_reference(url);
   metadata_t *md = fa_probe_dir(url);
@@ -97,7 +97,7 @@ file_open_dir(prop_t *page, const char *url)
     
   case CONTENT_DIR:
   case CONTENT_ARCHIVE:
-    file_open_browse(page, url);
+    file_open_browse(page, url, mtime);
     break;
 
   default:
@@ -153,7 +153,7 @@ file_open_audio(prop_t *page, const char *url)
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(page, "parent"), parent2);
 
-  fa_scanner(parent, model, url);
+  fa_scanner(parent, fs.fs_mtime, model, url);
   return 0;
 }
 
@@ -189,7 +189,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    file_open_browse(page, url);
+    file_open_browse(page, url, fs->fs_mtime);
     break;
 
   case CONTENT_AUDIO:
@@ -237,7 +237,7 @@ be_file_open(prop_t *page, const char *url)
     return nav_open_error(page, errbuf);
 
   if(fs.fs_type == CONTENT_DIR) {
-    file_open_dir(page, url);
+    file_open_dir(page, url, fs.fs_mtime);
   } else {
     file_open_file(page, url, &fs);
   }

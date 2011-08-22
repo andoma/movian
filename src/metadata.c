@@ -466,14 +466,14 @@ metadb_close(void *db)
  *
  */
 static int64_t
-db_item_get(sqlite3 *db, const char *url)
+db_item_get(sqlite3 *db, const char *url, time_t *mtimep)
 {
   int rc;
   int64_t rval = -1;
   sqlite3_stmt *stmt;
 
   rc = sqlite3_prepare_v2(db, 
-			  "SELECT id from item where url=?1 ",
+			  "SELECT id,mtime from item where url=?1 ",
 			  -1, &stmt, NULL);
   if(rc)
     return -1;
@@ -481,9 +481,11 @@ db_item_get(sqlite3 *db, const char *url)
 
   rc = sqlite3_step(stmt);
   
-  if(rc == SQLITE_ROW)
-    rval = sqlite3_column_int(stmt, 0);
-
+  if(rc == SQLITE_ROW) {
+    rval = sqlite3_column_int64(stmt, 0);
+    if(mtimep != NULL)
+      *mtimep = sqlite3_column_int(stmt, 1);
+  }
   sqlite3_finalize(stmt);
   return rval;
 }
@@ -828,9 +830,11 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
  */
 void
 metadb_metadata_write(void *db, const char *url, time_t mtime,
-		      const metadata_t *md, const char *parent)
+		      const metadata_t *md, const char *parent,
+		      time_t parent_mtime)
 {
   int64_t item_id;
+  int64_t parent_id = 0;
   int rc;
   sqlite3_stmt *stmt;
 
@@ -839,10 +843,17 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
   if(begin(db))
     return;
+  
+  if(parent != NULL) {
+    parent_id = db_item_get(db, parent, NULL);
+    if(parent_id == -1)
+      parent_id = db_item_create(db, parent, CONTENT_DIR, parent_mtime, 0);
+  }
 
-  item_id = db_item_get(db, url);
+  item_id = db_item_get(db, url, NULL);
   if(item_id == -1) {
-    item_id = db_item_create(db, url, md->md_contenttype, mtime, 0);
+    
+    item_id = db_item_create(db, url, md->md_contenttype, mtime, parent_id);
 
     if(item_id == -1) {
       rollback(db);
@@ -852,6 +863,14 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   } else {
     
     rc = sqlite3_prepare_v2(db, 
+			    parent_id > 0 ? 
+			    "UPDATE item "
+			    "SET contenttype=?1, "
+			    "mtime=?2, "
+			    "metadataversion=" METADATA_VERSION_STR " "
+			    "parent=?4 "
+			    "WHERE id=?3"
+			    :
 			    "UPDATE item "
 			    "SET contenttype=?1, "
 			    "mtime=?2, "
@@ -869,6 +888,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     if(mtime)
       sqlite3_bind_int(stmt, 2, mtime);
     sqlite3_bind_int64(stmt, 3, item_id);
+    sqlite3_bind_int64(stmt, 4, parent_id);
 
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
@@ -902,21 +922,122 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 }
 
 
+typedef struct get_cache {
+  int64_t gc_album_id;
+  rstr_t *gc_album_title;
+
+  int64_t gc_artist_id;
+  rstr_t *gc_artist_title;
+
+} get_cache_t;
+
+
+/**
+ *
+ */
+static void
+get_cache_release(get_cache_t *gc)
+{
+  rstr_release(gc->gc_album_title);
+  rstr_release(gc->gc_artist_title);
+}
+
+
 /**
  *
  */
 static int
-metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id)
+metadb_metadata_get_artist(sqlite3 *db, get_cache_t *gc, int64_t id)
+{
+  if(id < 1)
+    return -1;
+
+  if(id == gc->gc_artist_id)
+    return 0;
+
+  int rc;
+  sqlite3_stmt *sel;
+
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT title "
+			  "FROM artist "
+			  "WHERE id = ?1",
+			  -1, &sel, NULL);
+  if(rc != SQLITE_OK)
+    return -1;
+
+  sqlite3_bind_int64(sel, 1, id);
+
+  rc = sqlite3_step(sel);
+
+  if(rc != SQLITE_ROW) {
+    sqlite3_finalize(sel);
+    return -1;
+  }
+
+  gc->gc_artist_id = id;
+
+  rstr_release(gc->gc_artist_title);
+  gc->gc_artist_title = rstr_alloc((void *)sqlite3_column_text(sel, 0));
+  sqlite3_finalize(sel);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+metadb_metadata_get_album(sqlite3 *db, get_cache_t *gc, int64_t id)
+{
+  if(id < 1)
+    return -1;
+
+  if(id == gc->gc_album_id)
+    return 0;
+
+  int rc;
+  sqlite3_stmt *sel;
+
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT title "
+			  "FROM album "
+			  "WHERE id = ?1",
+			  -1, &sel, NULL);
+  if(rc != SQLITE_OK)
+    return -1;
+
+  sqlite3_bind_int64(sel, 1, id);
+
+  rc = sqlite3_step(sel);
+
+  if(rc != SQLITE_ROW) {
+    sqlite3_finalize(sel);
+    return -1;
+  }
+
+  gc->gc_album_id = id;
+  rstr_release(gc->gc_album_title);
+  gc->gc_album_title = rstr_alloc((void *)sqlite3_column_text(sel, 0));
+  sqlite3_finalize(sel);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
+			  get_cache_t *gc)
 {
   int rc;
   sqlite3_stmt *sel;
 
   rc = sqlite3_prepare_v2(db,
-			  "SELECT audioitem.title, album.title, "
-			  "artist.title, duration "
-			  "FROM audioitem, album, artist "
-			  "WHERE album.id = album_id AND artist.id = artist_id "
-			  "AND item_id = ?1",
+			  "SELECT title, album_id, artist_id, duration "
+			  "FROM audioitem "
+			  "WHERE item_id = ?1",
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK)
     return -1;
@@ -931,15 +1052,18 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id)
   }
 
   md->md_title = rstr_alloc((void *)sqlite3_column_text(sel, 0));
-  md->md_album = rstr_alloc((void *)sqlite3_column_text(sel, 1));
-  md->md_artist = rstr_alloc((void *)sqlite3_column_text(sel, 2));
+  
+  if(!metadb_metadata_get_album(db, gc, sqlite3_column_int64(sel, 1)))
+    md->md_album = rstr_dup(gc->gc_album_title);
+
+  if(!metadb_metadata_get_artist(db, gc, sqlite3_column_int64(sel, 2)))
+    md->md_artist = rstr_dup(gc->gc_artist_title);
+
   md->md_duration = sqlite3_column_int(sel, 3) / 1000.0f;
 
   sqlite3_finalize(sel);
   return 0;
-
 }
-
 
 
 /**
@@ -1021,6 +1145,40 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 }
 
 
+/**
+ *
+ */
+static metadata_t *
+metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
+{
+  metadata_t *md = metadata_create();
+  md->md_cached = 1;
+  md->md_contenttype = contenttype; 
+
+  int r;
+  switch(md->md_contenttype) {
+  case CONTENT_AUDIO:
+    r = metadb_metadata_get_audio(db, md, item_id, gc);
+    break;
+
+  case CONTENT_VIDEO:
+    if((r = metadb_metadata_get_video(db, md, item_id)) != 0)
+      break;
+    r = metadb_metadata_get_streams(db, md, item_id);
+    break;
+
+  default:
+    r = 0;
+    break;
+  }
+  
+  if(r) {
+    metadata_destroy(md);
+    return NULL;
+  }
+  return md;
+}
+
 
 /**
  *
@@ -1059,38 +1217,89 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
     return NULL;
   }
 
-  int64_t item_id = sqlite3_column_int64(sel, 0);
-  metadata_t *md = metadata_create();
-  md->md_cached = 1;
-  md->md_contenttype = sqlite3_column_int(sel, 1);
+  get_cache_t gc = {0};
+
+  metadata_t *md = metadata_get(db, 
+				sqlite3_column_int64(sel, 0),
+				sqlite3_column_int(sel, 1),
+				&gc);
+  get_cache_release(&gc);
+
   sqlite3_finalize(sel);
-
-  int r;
-  switch(md->md_contenttype) {
-  case CONTENT_AUDIO:
-    r = metadb_metadata_get_audio(db, md, item_id);
-    break;
-
-  case CONTENT_VIDEO:
-    if((r = metadb_metadata_get_video(db, md, item_id)) != 0)
-      break;
-    r = metadb_metadata_get_streams(db, md, item_id);
-    break;
-
-  default:
-    r = 0;
-    break;
-  }
-
   rollback(db);
-
-  if(r) {
-    metadata_destroy(md);
-    return NULL;
-  }
   return md;
 }
 
+
+/**
+ *
+ */
+fa_dir_t *
+metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
+{
+  if(!metadb_valid || db == NULL)
+    return NULL;
+
+  if(begin(db))
+    return NULL;
+
+  int64_t parent_id = db_item_get(db, url, mtime);
+
+  if(parent_id == -1) {
+    rollback(db);
+    return NULL;
+  }
+
+  sqlite3_stmt *sel;
+  int rc;
+
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT id,url,contenttype,mtime,playcount,lastplay,metadataversion "
+			  "FROM item "
+			  "WHERE parent = ?1",
+			  -1, &sel, NULL);
+  
+  if(rc != SQLITE_OK) {
+    rollback(db);
+    return NULL;
+  }
+
+  sqlite3_bind_int64(sel, 1, parent_id);
+
+  fa_dir_t *fd = fa_dir_alloc();
+
+  get_cache_t gc = {0};
+
+  while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
+    int64_t item_id = sqlite3_column_int64(sel, 0);
+    const char *url = (const char *)sqlite3_column_text(sel, 1);
+    int contenttype = sqlite3_column_int(sel, 2);
+    char fname[256];
+    fa_dir_entry_t *fde;
+
+    fa_url_get_last_component(fname, sizeof(fname), url);
+
+    fde = fa_dir_add(fd, url, fname, contenttype);
+    if(fde != NULL) {
+      fde->fde_statdone = 1;
+      fde->fde_stat.fs_mtime = sqlite3_column_int(sel, 3);
+      fde->fde_md = metadata_get(db, item_id, contenttype, &gc);
+    }
+  }
+
+  sqlite3_finalize(sel);
+
+  get_cache_release(&gc);
+
+  rollback(db);
+
+  if(fd->fd_count == 0) {
+    fa_dir_free(fd);
+    fd = NULL;
+  }
+
+  return fd;
+}
 
 
 /**
