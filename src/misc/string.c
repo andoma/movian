@@ -1044,7 +1044,7 @@ extern const uint16_t CP1251[];
 
 
 const static charset_t charsets[] = {
-  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", NULL},  // Must be first
+  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", ISO_8859_1},  // Must be first
   {"ISO-8859-2", "ISO-8859-2 (Latin-2)", ISO_8859_2},
   {"ISO-8859-3", "ISO-8859-3 (Latin-3)", ISO_8859_3},
   {"ISO-8859-4", "ISO-8859-4 (Latin-4)", ISO_8859_4},

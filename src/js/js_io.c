@@ -61,25 +61,19 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   const char *r = jhr->data, *r2;
   char *tmpbuf = NULL;
   int isxml;
+  const charset_t *cs = NULL;
 
   if(jhr->contenttype != NULL) {
     const char *charset = strstr(jhr->contenttype, "charset=");
 
     if(charset != NULL) {
-      int conv;
-
       charset += strlen("charset=");
-      if(!strcasecmp(charset, "utf-8")) {
-	conv = 0;
-      } else if(!strcasecmp(charset, "ISO-8859-1")) {
-	conv = 1;
-      } else {
-	TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
-	conv = 1;
-      }
 
-      if(conv)
-	r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, NULL);
+      if(strcasecmp(charset, "utf-8")) {
+	cs = charset_get(charset);
+	if(cs == NULL)
+	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+      }
     }
 
     isxml =
@@ -88,6 +82,13 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   } else {
     isxml = 0;
   }
+  
+
+  if(cs == NULL && !utf8_verify(jhr->data))
+    cs = charset_get(NULL);
+
+  if(cs != NULL)
+    r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, cs->ptr);
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
