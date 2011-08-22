@@ -561,9 +561,30 @@ js_rawAuth(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool
+js_setHeader(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *key;
+  const char *value;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss", &key, &value))
+    return JS_FALSE;
+
+  *rval = JSVAL_NULL;
+  http_client_set_header(JS_GetPrivate(cx, obj), key, value);
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
 static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
     JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
+    JS_FS("setHeader",       js_setHeader,   2, 0, 0),
     JS_FS_END
 };
 
