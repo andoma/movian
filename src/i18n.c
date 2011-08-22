@@ -27,29 +27,6 @@
 
 static void nls_init(prop_t *parent, htsmsg_t *store);
 
-struct {
-  const char *id, *title;
-  const uint16_t *ptr;
-} charsets[] = {
-  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", NULL},
-  {"ISO-8859-2", "ISO-8859-2 (Latin-2)", ISO_8859_2},
-  {"ISO-8859-3", "ISO-8859-3 (Latin-3)", ISO_8859_3},
-  {"ISO-8859-4", "ISO-8859-4 (Latin-4)", ISO_8859_4},
-  {"ISO-8859-5", "ISO-8859-5 (Latin/Cyrillic)", ISO_8859_5},
-  {"ISO-8859-6", "ISO-8859-6 (Latin/Arabic)", ISO_8859_6},
-  {"ISO-8859-7", "ISO-8859-7 (Latin/Greek)", ISO_8859_7},
-  {"ISO-8859-8", "ISO-8859-8 (Latin/Hebrew)", ISO_8859_8},
-  {"ISO-8859-9", "ISO-8859-9 (Turkish)", ISO_8859_9},
-  {"ISO-8859-10", "ISO-8859-10 (Latin-5)", ISO_8859_10},
-  {"ISO-8859-11", "ISO-8859-11 (Latin/Thai)", ISO_8859_11},
-  {"ISO-8859-13", "ISO-8859-13 (Baltic Rim)", ISO_8859_13},
-  {"ISO-8859-14", "ISO-8859-14 (Celtic)", ISO_8859_14},
-  {"ISO-8859-15", "ISO-8859-15 (Latin-9)", ISO_8859_15},
-  {"ISO-8859-16", "ISO-8859-16 (Latin-10)", ISO_8859_16},
-  {"CP1250", "Windows 1250", CP1250},
-  {"CP1251", "Windows 1251", CP1251},
-};
-
 
 
 static char *lang_audio[3];
@@ -66,15 +43,11 @@ set_lang(void *opaque, const char *str)
 static void
 set_srt_charset(void *opaque, const char *str)
 {
-  int i;
-  if(str == NULL)
-    str = "ISO-8859-1";
+  const charset_t *cs = charset_get(str);
 
-  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++) {
-    if(!strcmp(str, charsets[i].id)) {
-      srt_charset = charsets[i].ptr;
-      TRACE(TRACE_DEBUG, "i18n", "SRT charset is %s", charsets[i].title);
-    }
+  if(cs != NULL) {
+    srt_charset = cs->ptr;
+    TRACE(TRACE_DEBUG, "i18n", "SRT charset is %s", cs->title);
   }
 }
 
@@ -140,10 +113,9 @@ i18n_init(void)
   x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"),
 			       set_srt_charset, NULL);
 
-  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++) {
-    settings_multiopt_add_opt_cstr(x, charsets[i].id,
-				   charsets[i].title, i == 0);
-  }
+  const charset_t *cs;
+  for(i = 0; (cs = charset_get_idx(i)) != NULL; i++)
+    settings_multiopt_add_opt_cstr(x, cs->id, cs->title, i == 0);
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"i18n");
@@ -195,19 +167,6 @@ i18n_get_srt_charset(void)
   return srt_charset;
 }
 
-
-/**
- *
- */
-const char *
-i18n_get_charset_name(const void *p)
-{
-  int i;
-  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++)
-    if(p == charsets[i].ptr)
-      return charsets[i].title;
-  return "???";
-}
 
 LIST_HEAD(nls_string_queue, nls_string);
 
