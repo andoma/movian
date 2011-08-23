@@ -139,6 +139,11 @@ typedef struct fa_protocol {
   void (*fap_get_last_component)(struct fa_protocol *fap, const char *url,
 				 char *dst, size_t dstlen);
 
+  /**
+   * Return true if the given file can seek in a good manner
+   */
+  int (*fap_seek_is_fast)(fa_handle_t *fh);
+
 } fa_protocol_t;
 
 

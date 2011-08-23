@@ -205,7 +205,19 @@ fa_close(void *fh_)
     close(fh->fh_dump_fd);
 #endif
   fh->fh_proto->fap_close(fh);
+}
 
+
+/**
+ *
+ */
+int
+fa_seek_is_fast(void *fh_)
+{
+  fa_handle_t *fh = fh_;
+  if(fh->fh_proto->fap_seek_is_fast != NULL)
+    return fh->fh_proto->fap_seek_is_fast(fh);
+  return 1;
 }
 
 /**
