@@ -288,21 +288,21 @@ js_json_decode(JSContext *cx, JSObject *obj,
 {
   char *str;
   JSObject *o;
-
+  char errbuf[256];
   if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
     return JS_FALSE;
 
   if(!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
 
-  o = json_deserialize(str, &json_to_jsapi, cx);
+  o = json_deserialize(str, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
 
   *rval = OBJECT_TO_JSVAL(o);
 
   JS_LeaveLocalRootScope(cx);
 
   if(o == NULL) {
-    JS_ReportError(cx, "Invalid JSON");
+    JS_ReportError(cx, "Invalid JSON -- %s", errbuf);
     return JS_FALSE;
   }
   return JS_TRUE;

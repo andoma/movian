@@ -201,5 +201,5 @@ static const json_deserializer_t json_to_htsmsg = {
 htsmsg_t *
 htsmsg_json_deserialize(const char *src)
 {
-  return json_deserialize(src, &json_to_htsmsg, NULL);
+  return json_deserialize(src, &json_to_htsmsg, NULL, NULL, 0);
 }

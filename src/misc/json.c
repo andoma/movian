@@ -19,20 +19,25 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <stdio.h>
 #include "json.h"
 #include "string.h"
 #include "dbl.h"
 
+#define NOT_THIS_TYPE ((void *)-1)
+
 static const char *json_parse_value(const char *s, void *parent, 
 				    const char *name,
 				    const json_deserializer_t *jd,
-				    void *opaque);
+				    void *opaque,
+				    const char **failp, const char **failmsg);
 
 /**
  * Returns a newly allocated string
  */
 static char *
-json_parse_string(const char *s, const char **endp)
+json_parse_string(const char *s, const char **endp,
+		  const char **failp, const char **failmsg)
 {
   const char *start;
   char *r, *a, *b;
@@ -42,14 +47,17 @@ json_parse_string(const char *s, const char **endp)
     s++;
 
   if(*s != '"')
-    return NULL;
+    return NOT_THIS_TYPE;
 
   s++;
   start = s;
 
   while(1) {
-    if(*s == 0)
+    if(*s == 0) {
+      *failmsg = "Unexpected end of JSON message";
+      *failp = s;
       return NULL;
+    }
 
     if(*s == '\\') {
       esc = 1;
@@ -100,6 +108,8 @@ json_parse_string(const char *s, const char **endp)
 		  break;
 		default:
 		  free(r);
+		  *failmsg = "Incorrect escape sequence";
+		  *failp = (a - r) + start;
 		  return NULL;
 		}
 	      }
@@ -127,7 +137,8 @@ json_parse_string(const char *s, const char **endp)
  */
 static void *
 json_parse_map(const char *s, const char **endp, const json_deserializer_t *jd,
-	       void *opaque)
+	       void *opaque, const char **failp, const char **failmsg)
+
 {
   char *name;
   const char *s2;
@@ -137,52 +148,66 @@ json_parse_map(const char *s, const char **endp, const json_deserializer_t *jd,
     s++;
 
   if(*s != '{')
-    return NULL;
+    return NOT_THIS_TYPE;
 
   s++;
 
   r = jd->jd_create_map(opaque);
   
-  while(1) {
+  while(*s > 0 && *s < 33)
+    s++;
 
-    if((name = json_parse_string(s, &s2)) == NULL) {
-      jd->jd_destroy_obj(opaque, r);
-      return NULL;
-    }
+  if(*s != '}') {
 
-    s = s2;
+    while(1) {
+      name = json_parse_string(s, &s2, failp, failmsg);
+      if(name == NOT_THIS_TYPE) {
+	*failmsg = "Expected string";
+	*failp = s;
+	return NULL;
+      }
+
+      if(name == NULL)
+	return NULL;
+
+      s = s2;
     
-    while(*s > 0 && *s < 33)
+      while(*s > 0 && *s < 33)
+	s++;
+
+      if(*s != ':') {
+	jd->jd_destroy_obj(opaque, r);
+	free(name);
+	*failmsg = "Expected ':'";
+	*failp = s;
+	return NULL;
+      }
       s++;
 
-    if(*s != ':') {
-      jd->jd_destroy_obj(opaque, r);
+      s2 = json_parse_value(s, r, name, jd, opaque, failp, failmsg);
       free(name);
-      return NULL;
-    }
-    s++;
 
-    s2 = json_parse_value(s, r, name, jd, opaque);
-    free(name);
+      if(s2 == NULL) {
+	jd->jd_destroy_obj(opaque, r);
+	return NULL;
+      }
 
-    if(s2 == NULL) {
-      jd->jd_destroy_obj(opaque, r);
-      return NULL;
-    }
+      s = s2;
 
-    s = s2;
+      while(*s > 0 && *s < 33)
+	s++;
 
-    while(*s > 0 && *s < 33)
+      if(*s == '}')
+	break;
+
+      if(*s != ',') {
+	jd->jd_destroy_obj(opaque, r);
+	*failmsg = "Expected ','";
+	*failp = s;
+	return NULL;
+      }
       s++;
-
-    if(*s == '}')
-      break;
-
-    if(*s != ',') {
-      jd->jd_destroy_obj(opaque, r);
-      return NULL;
     }
-    s++;
   }
 
   s++;
@@ -196,7 +221,7 @@ json_parse_map(const char *s, const char **endp, const json_deserializer_t *jd,
  */
 static void *
 json_parse_list(const char *s, const char **endp, const json_deserializer_t *jd,
-		void *opaque)
+		void *opaque, const char **failp, const char **failmsg)
 {
   const char *s2;
   void *r;
@@ -205,7 +230,7 @@ json_parse_list(const char *s, const char **endp, const json_deserializer_t *jd,
     s++;
 
   if(*s != '[')
-    return NULL;
+    return NOT_THIS_TYPE;
 
   s++;
 
@@ -218,7 +243,7 @@ json_parse_list(const char *s, const char **endp, const json_deserializer_t *jd,
 
     while(1) {
 
-      s2 = json_parse_value(s, r, NULL, jd, opaque);
+      s2 = json_parse_value(s, r, NULL, jd, opaque, failp, failmsg);
 
       if(s2 == NULL) {
 	jd->jd_destroy_obj(opaque, r);
@@ -235,6 +260,8 @@ json_parse_list(const char *s, const char **endp, const json_deserializer_t *jd,
 
       if(*s != ',') {
 	jd->jd_destroy_obj(opaque, r);
+	*failmsg = "Expected ','";
+	*failp = s;
 	return NULL;
       }
       s++;
@@ -294,7 +321,8 @@ json_parse_integer(const char *s, long *lp)
  */
 static const char *
 json_parse_value(const char *s, void *parent, const char *name,
-		 const json_deserializer_t *jd, void *opaque)
+		 const json_deserializer_t *jd, void *opaque,
+		 const char **failp, const char **failmsg)
 {
   const char *s2;
   char *str;
@@ -302,16 +330,31 @@ json_parse_value(const char *s, void *parent, const char *name,
   long l;
   void *c;
 
-  if((c = json_parse_map(s, &s2, jd, opaque)) != NULL) {
+  if((c = json_parse_map(s, &s2, jd, opaque, failp, failmsg)) == NULL)
+    return NULL;
+
+  if(c != NOT_THIS_TYPE) {
     jd->jd_add_obj(opaque, parent, name, c);
     return s2;
-  } else if((c = json_parse_list(s, &s2, jd, opaque)) != NULL) {
+  }
+
+  if((c = json_parse_list(s, &s2, jd, opaque, failp, failmsg)) == NULL)
+    return NULL;
+  
+  if(c != NOT_THIS_TYPE) {
     jd->jd_add_obj(opaque, parent, name, c);
     return s2;
-  } else if((str = json_parse_string(s, &s2)) != NULL) {
+  }
+
+  if((str = json_parse_string(s, &s2, failp, failmsg)) == NULL)
+    return NULL;
+
+  if(str != NOT_THIS_TYPE) {
     jd->jd_add_string(opaque, parent, name, str);
     return s2;
-  } else if((s2 = json_parse_integer(s, &l)) != NULL) {
+  }
+
+  if((s2 = json_parse_integer(s, &l)) != NULL) {
     jd->jd_add_long(opaque, parent, name, l);
     return s2;
   } else if((s2 = json_parse_double(s, &d)) != NULL) {
@@ -336,6 +379,9 @@ json_parse_value(const char *s, void *parent, const char *name,
     jd->jd_add_null(opaque, parent, name);
     return s + 4;
   }
+
+  *failmsg = "Unknown token";
+  *failp = s;
   return NULL;
 }
 
@@ -344,15 +390,35 @@ json_parse_value(const char *s, void *parent, const char *name,
  *
  */
 void *
-json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque)
+json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque,
+		 char *errbuf, size_t errlen)
 {
   const char *end;
   void *c;
+  const char *errmsg;
+  const char *errp;
 
-  if((c = json_parse_map(src, &end, jd, opaque)) != NULL)
-    return c;
+  c = json_parse_map(src, &end, jd, opaque, &errp, &errmsg);
+  if(c == NOT_THIS_TYPE)
+    c = json_parse_list(src, &end, jd, opaque, &errp, &errmsg);
 
-  if((c = json_parse_list(src, &end, jd, opaque)) != NULL)
-    return c;
-  return NULL;
+  if(c == NOT_THIS_TYPE) {
+    snprintf(errbuf, errlen, "Invalid JSON, expected '{' or '['");
+    return NULL;
+  }
+
+  if(c == NULL) {
+    size_t len = strlen(src);
+    size_t offset = errp - src;
+    if(offset > len || offset < 0) {
+      snprintf(errbuf, errlen, "%s at (bad) offset %zd", errmsg, offset);
+    } else {
+      offset -= 10;
+      if(offset < 0)
+	offset = 0;
+      snprintf(errbuf, errlen, "%s at offset %zd : '%.20s'", errmsg, offset,
+	       src + offset);
+    }
+  }
+  return c;
 }
