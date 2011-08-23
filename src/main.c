@@ -168,6 +168,7 @@ main(int argc, char **argv)
 #if ENABLE_HTTPSERVER
   int do_upnp = 1;
 #endif
+  int do_sd = 1;
 
   trace_level = TRACE_INFO;
 
@@ -215,6 +216,7 @@ main(int argc, char **argv)
 #if ENABLE_HTTPSERVER
 	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
 #endif
+	     "   --disable-sd      - Disable service discovery (mDNS, etc).\n"
 	     "   -p                - Path to plugin directory to load\n"
 	     "                       Intended for plugin development\n"
 	     "   --plugin-repo     - URL to plugin repository\n"
@@ -258,6 +260,10 @@ main(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
 #endif
+    } else if(!strcmp(argv[0], "--disable-sd")) {
+      do_sd = 0;
+      argc -= 1; argv += 1;
+      continue;
     } else if(!strcmp(argv[0], "--with-standby")) {
       can_standby = 1;
       argc -= 1; argv += 1;
@@ -398,7 +404,8 @@ main(int argc, char **argv)
   ipc_init();
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
-  sd_init();
+  if(do_sd)
+    sd_init();
 
   /* Initialize various external APIs */
   api_init();
