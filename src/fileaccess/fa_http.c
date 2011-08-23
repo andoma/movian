@@ -1217,13 +1217,6 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
     return -1;
   }
 
-  if(expect_content) {
-    if(http_drain_content(hf)) {
-      snprintf(errbuf, errlen, "Connection lost");
-      return -1;
-    }
-  }
-
   if(code == 301)
     add_premanent_redirect(hf->hf_url, hf->hf_location);
 
@@ -1242,6 +1235,9 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   free(hf->hf_location);
   hf->hf_location = NULL;
   
+  if(expect_content && http_drain_content(hf))
+    hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
+
   // Location changed, must detach from connection
   // We might still be able to reuse it if hostname+port is same
   // But that's for some other code to figure out
@@ -1270,12 +1266,8 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
   snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
 	   hf->hf_connection->hc_hostname);
 
-  if(expect_content) {
-    if(http_drain_content(hf)) {
-      snprintf(errbuf, errlen, "Connection lost");
-      return -1;
-    }
-  }
+  if(expect_content && http_drain_content(hf))
+    hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
 
   if(hf->hf_auth_realm == NULL) {
     snprintf(errbuf, errlen, "Authentication without realm");
