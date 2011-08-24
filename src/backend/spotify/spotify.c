@@ -82,15 +82,6 @@ static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
 static struct spotify_msg_queue spotify_msgs;
 
-typedef enum {
-  METADATA_TRACK,
-  METADATA_ALBUM_NAME,
-  METADATA_ALBUM_YEAR,
-  METADATA_ALBUM_ARTIST_NAME,
-  METADATA_ALBUM_IMAGE,
-  METADATA_ARTIST_NAME,
-} metadata_type_t;
-
 
 /**
  * Binds a property to metadata in spotify
@@ -99,10 +90,15 @@ typedef enum {
  * The structure self-destructs when the property tree is deleted (by
  * a subscription that checks PROP_DESTROYED)
  */
+
+LIST_HEAD(metadata_list, metadata);
+
 typedef struct metadata {
   LIST_ENTRY(metadata) m_link;
-  void *m_source;
-  metadata_type_t m_type;
+  sp_track *m_source;
+
+  prop_sub_t *m_sub;
+
   int m_flags;
 #define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
 
@@ -120,8 +116,6 @@ typedef struct metadata {
   prop_t *m_starred;
 
 } metadata_t;
-
-static LIST_HEAD(, metadata) metadatas;
 
 
 /**
@@ -199,6 +193,8 @@ typedef struct playlist {
 #define PL_SORT_ON_TIME 0x4
 
   struct playlist *pl_start; // End folder point to its start
+
+  struct metadata_list pl_pending_metadata;
 
 } playlist_t;
 
@@ -972,7 +968,7 @@ track_action_handler(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static void
+static int
 spotify_metadata_update_track(metadata_t *m)
 {
   sp_track *track = m->m_source;
@@ -982,7 +978,7 @@ spotify_metadata_update_track(metadata_t *m)
   int nartists, i;
 
   if(!f_sp_track_is_loaded(track))
-    return;
+    return -1;
 
   prop_set_int(m->m_available, f_sp_track_is_available(spotify_session, track));
 
@@ -1040,132 +1036,17 @@ spotify_metadata_update_track(metadata_t *m)
   }
 
   prop_set_int(m->m_starred, f_sp_track_is_starred(spotify_session, track));
+  return 0;
 }
 
- 
-/**
- *
- */
-static void
-spotify_metadata_update_albumname(prop_t *p, sp_album *album)
-{
-  prop_set_string(p, f_sp_album_name(album));
-}
-
- 
-/**
- *
- */
-static void
-spotify_metadata_update_albumyear(prop_t *p, sp_album *album)
-{
-  int y = f_sp_album_year(album);
-  if(y)
-    prop_set_int(p, y);
-}
 
 
 /**
  *
  */
 static void
-spotify_metadata_update_albumartistname(prop_t *p, sp_album *album)
+metadata_ref_dec(metadata_t *m)
 {
-  sp_artist *artist = f_sp_album_artist(album);
-  if(artist != NULL)
-    prop_set_string(p, f_sp_artist_name(artist));
-}
-
-
-/**
- *
- */
-static void
-spotify_metadata_update_artistname(prop_t *p, sp_artist *artist)
-{
-  prop_set_string(p, f_sp_artist_name(artist));
-}
-
-
-/**
- *
- */
-static void
-spotify_metadata_update_albumimage(prop_t *p, sp_album *album)
-{
-  set_image_uri(p, f_sp_link_create_from_album_cover(album));
-}
-
-
-/**
- *
- */
-static void
-metadata_update(metadata_t *m)
-{
-  switch(m->m_type) {
-  case METADATA_TRACK:
-    spotify_metadata_update_track(m);
-    break;
-    
-  case METADATA_ALBUM_NAME:
-    spotify_metadata_update_albumname(m->m_album, m->m_source);
-    break;
-
-  case METADATA_ALBUM_YEAR:
-    spotify_metadata_update_albumyear(m->m_album_year, m->m_source);
-    break;
-
-  case METADATA_ALBUM_ARTIST_NAME:
-    spotify_metadata_update_albumartistname(m->m_artist, m->m_source);
-    break;
-
-  case METADATA_ALBUM_IMAGE:
-    spotify_metadata_update_albumimage(m->m_album_art, m->m_source);
-    break;
-    
-  case METADATA_ARTIST_NAME:
-    spotify_metadata_update_artistname(m->m_artist, m->m_source);
-    break;
-  }
-}
-
-/**
- *
- */
-static void
-spotify_metadata_updated(sp_session *sess)
-{
-  metadata_t *m;
-
-  LIST_FOREACH(m, &metadatas, m_link)
-    metadata_update(m);
-
-  spotify_play_track_try();
-  spotify_try_pending();
-}
-
-
-/**
- *
- */
-static void
-metadata_prop_cb(void *opaque, prop_event_t event, ...)
-{
-  metadata_t *m = opaque;
-  prop_sub_t *s;
-  va_list ap;
-  va_start(ap, event);
-
-  if(event != PROP_DESTROYED) 
-    return;
-
-  (void)va_arg(ap, prop_t *);
-  s = va_arg(ap, prop_sub_t *);
-
-  prop_unsubscribe(s);
-
-  LIST_REMOVE(m, m_link);
   prop_ref_dec(m->m_available);
   prop_ref_dec(m->m_title);
   prop_ref_dec(m->m_trackindex);
@@ -1178,92 +1059,117 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
   prop_ref_dec(m->m_additional_artists);
   prop_ref_dec(m->m_artist_images);
   prop_ref_dec(m->m_starred);
+}
 
-  switch(m->m_type) {
-  case METADATA_TRACK:
-    f_sp_track_release(m->m_source);
-    break;
-    
-  case METADATA_ALBUM_NAME:
-  case METADATA_ALBUM_YEAR:
-  case METADATA_ALBUM_ARTIST_NAME:
-  case METADATA_ALBUM_IMAGE:
-    f_sp_album_release(m->m_source);
-    break;
 
-   case METADATA_ARTIST_NAME:
-    f_sp_artist_release(m->m_source);
-    break;
-
-  default:
-    abort();
-  }
+/**
+ *
+ */
+static void
+metadata_destroy(metadata_t *m)
+{
+  prop_unsubscribe(m->m_sub);
+  metadata_ref_dec(m);
+  LIST_REMOVE(m, m_link);
+  f_sp_track_release(m->m_source);
   free(m);
 }
 
 
+/**
+ *
+ */
 static void
-metadata_create(prop_t *p, metadata_type_t type, void *source)
+spotify_metadata_updated(sp_session *sess)
+{
+  spotify_play_track_try();
+  spotify_try_pending();
+}
+
+
+/**
+ *
+ */
+static void
+spotify_metadata_list_update(sp_session *sess, struct metadata_list *l)
+{
+  metadata_t *m, *n;
+
+  for(m = LIST_FIRST(l); m != NULL; m = n) {
+    n = LIST_NEXT(m, m_link);
+
+    if(!spotify_metadata_update_track(m))
+      metadata_destroy(m);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+spotify_metadata_list_clear(struct metadata_list *l)
+{
+  metadata_t *m;
+
+  while((m = LIST_FIRST(l)) != NULL) 
+    metadata_destroy(m);
+}
+
+
+
+/**
+ *
+ */
+static void
+metadata_prop_cb(void *opaque, prop_event_t event, ...)
+{
+  if(event == PROP_DESTROYED) 
+    metadata_destroy(opaque);
+}
+
+
+static void
+metadata_create(prop_t *p, sp_track *source, struct metadata_list *list)
 {
   metadata_t *m = calloc(1, sizeof(metadata_t));
 
-  m->m_type = type;
   m->m_source = source;
 
-  switch(m->m_type) {
-  case METADATA_TRACK:
-    m->m_available         = prop_ref_inc(prop_create(p, "available"));
-    m->m_title             = prop_ref_inc(prop_create(p, "title"));
-    m->m_trackindex        = prop_ref_inc(prop_create(p, "trackindex"));
-    m->m_duration          = prop_ref_inc(prop_create(p, "duration"));
-    m->m_popularity        = prop_ref_inc(prop_create(p, "popularity"));
-    m->m_album             = prop_ref_inc(prop_create(p, "album"));
-    m->m_album_art         = prop_ref_inc(prop_create(p, "album_art"));
-    m->m_album_year        = prop_ref_inc(prop_create(p, "album_year"));
-    m->m_artist            = prop_ref_inc(prop_create(p, "artist"));
-    m->m_additional_artists= prop_ref_inc(prop_create(p, "additional_artists"));
-    m->m_artist_images     = prop_ref_inc(prop_create(p, "artist_images"));
-    m->m_starred           = prop_ref_inc(prop_create(p, "starred"));
+  m->m_available         = prop_ref_inc(prop_create(p, "available"));
+  m->m_title             = prop_ref_inc(prop_create(p, "title"));
+  m->m_trackindex        = prop_ref_inc(prop_create(p, "trackindex"));
+  m->m_duration          = prop_ref_inc(prop_create(p, "duration"));
+  m->m_popularity        = prop_ref_inc(prop_create(p, "popularity"));
+  m->m_album             = prop_ref_inc(prop_create(p, "album"));
+  m->m_album_art         = prop_ref_inc(prop_create(p, "album_art"));
+  m->m_album_year        = prop_ref_inc(prop_create(p, "album_year"));
+  m->m_artist            = prop_ref_inc(prop_create(p, "artist"));
+  m->m_additional_artists= prop_ref_inc(prop_create(p, "additional_artists"));
+  m->m_artist_images     = prop_ref_inc(prop_create(p, "artist_images"));
+  m->m_starred           = prop_ref_inc(prop_create(p, "starred"));
 
 
-    f_sp_track_add_ref(source);
-    break;
-    
-  case METADATA_ALBUM_NAME:
-    m->m_album = prop_ref_inc(p);
-    f_sp_album_add_ref(source);
-    break;
-
-  case METADATA_ALBUM_YEAR:
-    m->m_album_year = prop_ref_inc(p);
-    f_sp_album_add_ref(source);
-    break;
-
-  case METADATA_ALBUM_IMAGE:
-    m->m_album_art = prop_ref_inc(p);
-    f_sp_album_add_ref(source);
-    break;
-
-  case METADATA_ALBUM_ARTIST_NAME:
-    m->m_artist = prop_ref_inc(p);
-    f_sp_album_add_ref(source);
-    break;
-
-  case METADATA_ARTIST_NAME:
-    m->m_artist = prop_ref_inc(p);
-    f_sp_artist_add_ref(source);
-    break;
+  if(!spotify_metadata_update_track(m)) {
+    metadata_ref_dec(m);
+    free(m);
+    return;
   }
 
-  LIST_INSERT_HEAD(&metadatas, m, m_link);
+  if(list == NULL) {
+    printf("No metadata for track %p\n", source);
+    metadata_ref_dec(m);
+    free(m);
+    return;
+  }
 
-  prop_subscribe(PROP_SUB_TRACK_DESTROY,
-		 PROP_TAG_CALLBACK, metadata_prop_cb, m,
-		 PROP_TAG_COURIER, spotify_courier,
-		 PROP_TAG_ROOT, p,
-		 NULL);
-  
-  metadata_update(m);
+  f_sp_track_add_ref(source);
+  LIST_INSERT_HEAD(list, m, m_link);
+  m->m_sub = prop_subscribe(PROP_SUB_TRACK_DESTROY,
+			    PROP_TAG_CALLBACK, metadata_prop_cb, m,
+			    PROP_TAG_COURIER, spotify_courier,
+			    PROP_TAG_ROOT, p,
+			    NULL);
 }
 
 
@@ -1271,7 +1177,8 @@ metadata_create(prop_t *p, metadata_type_t type, void *source)
  *
  */
 static prop_t *
-track_create(sp_track *track, prop_t **metadatap)
+track_create(sp_track *track, prop_t **metadatap,
+	     struct metadata_list *list)
 {
   char url[URL_MAX];
   prop_t *p = prop_create_root(NULL);
@@ -1286,7 +1193,7 @@ track_create(sp_track *track, prop_t **metadatap)
   if(metadatap != NULL)
     *metadatap = metadata;
 
-  metadata_create(metadata, METADATA_TRACK, track);
+  metadata_create(metadata, track, list);
 
   tac->prop_star = prop_ref_inc(prop_create(metadata, "starred"));
 
@@ -1370,6 +1277,20 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
   } else {
     sp_track *playme = NULL;
 
+    sp_album *alb = f_sp_albumbrowse_album(result);
+
+    prop_set_string(bh->sp->sp_title, f_sp_album_name(alb));
+    prop_set_string(bh->sp->sp_album_name, f_sp_album_name(alb));
+    int y = f_sp_album_year(alb);
+    if(y)
+      prop_set_int(bh->sp->sp_album_year, y);
+
+    set_image_uri(bh->sp->sp_icon, f_sp_link_create_from_album_cover(alb));
+    set_image_uri(bh->sp->sp_album_art, f_sp_link_create_from_album_cover(alb));
+
+    prop_set_string(bh->sp->sp_artist_name,
+		    f_sp_artist_name(f_sp_album_artist(alb)));
+
     if(bh->playme) {
       sp_link *l;
       if((l = f_sp_link_create_from_string(bh->playme)) != NULL) {
@@ -1387,7 +1308,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
-      p = track_create(track, NULL);
+      p = track_create(track, NULL, NULL);
 
       pv = prop_vec_append(pv, p);
 
@@ -1498,11 +1419,13 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
     bh_error(bh, "Artist not found");
   } else {
 
+
     // libspotify does not return the albums in any particular order.
     // thus, we need to do some sorting and filtering
 
     ntracks = f_sp_artistbrowse_num_tracks(result);
     artist = f_sp_artistbrowse_artist(result);
+    prop_set_string(bh->sp->sp_title, f_sp_artist_name(artist));
 
     for(i = 0; i < ntracks; i++) {
       album = f_sp_track_album(f_sp_artistbrowse_track(result, i));
@@ -1560,7 +1483,6 @@ spotify_open_artist(sp_link *l, spotify_page_t *sp)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
   prop_set_string(sp->sp_contents, "items");
-  metadata_create(sp->sp_title, METADATA_ARTIST_NAME, artist);
 
   f_sp_artistbrowse_create(spotify_session, artist,
 			   spotify_browse_artist_callback,
@@ -1648,13 +1570,6 @@ spotify_open_album(sp_album *alb, spotify_page_t *sp, const char *playme)
 {
   f_sp_albumbrowse_create(spotify_session, alb, spotify_browse_album_callback,
 			  bh_create(sp, playme));
-
-  metadata_create(sp->sp_title,       METADATA_ALBUM_NAME, alb);
-  metadata_create(sp->sp_album_name,  METADATA_ALBUM_NAME, alb);
-  metadata_create(sp->sp_album_year,  METADATA_ALBUM_YEAR, alb);
-  metadata_create(sp->sp_album_art,   METADATA_ALBUM_IMAGE, alb);
-  metadata_create(sp->sp_icon,        METADATA_ALBUM_IMAGE, alb);
-  metadata_create(sp->sp_artist_name, METADATA_ALBUM_ARTIST_NAME, alb);
 
   prop_set_string(sp->sp_contents, "albumTracks");
 }
@@ -2095,7 +2010,8 @@ pl_add_track(playlist_t *pl, sp_track *t, int pos)
   playlist_track_t *plt = calloc(1, sizeof(playlist_track_t));
   plt->plt_pl = pl;
   plt->plt_track = t;
-  plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata);
+  plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata,
+				    &pl->pl_pending_metadata);
 
   sp_user *u = f_sp_playlist_track_creator(pl->pl_playlist, pos);
 
@@ -2329,6 +2245,17 @@ playlist_state_changed(sp_playlist *plist, void *userdata)
   playlist_update_meta(pl);
 }
 
+/**
+ *
+ */
+static void
+playlist_metadata_updated(sp_playlist *plist, void *userdata)
+{
+  playlist_t *pl = userdata;
+  spotify_metadata_list_update(spotify_session, &pl->pl_pending_metadata);
+}
+
+
 
 /**
  * Callbacks for individual playlists
@@ -2351,6 +2278,7 @@ static sp_playlist_callbacks pl_callbacks_withtracks = {
   .playlist_renamed = playlist_renamed,
   .playlist_state_changed = playlist_state_changed,
   .track_created_changed = track_update_created,
+  .playlist_metadata_updated = playlist_metadata_updated,
 };
 
 
@@ -2416,6 +2344,8 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
 
  if(event != PROP_DESTROYED)
    return;
+
+ spotify_metadata_list_clear(&pl->pl_pending_metadata);
 
   if(pl->pl_node_sub) {
     f_sp_playlist_remove_callbacks(pl->pl_playlist,
@@ -3107,7 +3037,8 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
 
   for(i = 0; i < ntracks; i++)
-    pv = prop_vec_append(pv, track_create(f_sp_search_track(result, i), NULL));
+    pv = prop_vec_append(pv, track_create(f_sp_search_track(result, i), NULL,
+					  NULL));
 
   prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
   prop_vec_release(pv);
