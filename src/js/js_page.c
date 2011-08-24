@@ -120,7 +120,8 @@ typedef struct js_model {
 } js_model_t;
 
 
-static JSObject *make_model_object(JSContext *cx, js_model_t *jm);
+static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
+				   jsval *root);
 
 /**
  *
@@ -637,7 +638,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   if(prop_set_parent(item, parent->jm_nodes))
     prop_destroy(item);
 
-  robj = make_model_object(cx, jm);
+  robj = make_model_object(cx, jm, argv+argc);
 
   *rval = OBJECT_TO_JSVAL(robj);
   return JS_TRUE;
@@ -780,7 +781,7 @@ static JSFunctionSpec model_functions[] = {
     JS_FS("appendItem",         js_appendItem,        1, 0, 0),
     JS_FS("appendPassiveItem",  js_appendPassiveItem, 1, 0, 0),
     JS_FS("appendAction",       js_appendAction,      3, 0, 0),
-    JS_FS("appendModel",        js_appendModel,       2, 0, 0),
+    JS_FS("appendModel",        js_appendModel,       2, 0, 1),
     JS_FS_END
 };
 
@@ -895,9 +896,10 @@ js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  *
  */
 static JSObject *
-make_model_object(JSContext *cx, js_model_t *jm)
+make_model_object(JSContext *cx, js_model_t *jm, jsval *root)
 {
   JSObject *obj = JS_NewObjectWithGivenProto(cx, &model_class, NULL, NULL);
+  *root = OBJECT_TO_JSVAL(obj);
 
   JS_SetPrivate(cx, obj, jm);
   atomic_add(&jm->jm_refcount, 1);
@@ -946,7 +948,12 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   void *mark;
   char argfmt[10];
   int i = 0, argc;
-  JSObject *obj = make_model_object(cx, jm);
+  jsval pageobj = JSVAL_NULL;
+
+  JS_AddRoot(cx, &pageobj);
+
+  JSObject *obj = make_model_object(cx, jm, &pageobj);
+
   JS_DefineFunctions(cx, obj, page_functions);
 
   if(jm->jm_args != NULL) {
@@ -971,10 +978,11 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
     argv = JS_PushArguments(cx, &mark, "o", obj);
     argc = 2;
   }
-  if(argv == NULL)
-    return;
-  JS_CallFunctionValue(cx, NULL, jm->jm_openfunc, argc, argv, &result);
-  JS_PopArguments(cx, mark);
+  if(argv != NULL) {
+    JS_CallFunctionValue(cx, NULL, jm->jm_openfunc, argc, argv, &result);
+    JS_PopArguments(cx, mark);
+  }
+  JS_RemoveRoot(cx, &pageobj);
 }
 
 

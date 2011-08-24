@@ -592,7 +592,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  if(mimetype == NULL) {
+  int seek_is_fast = fa_seek_is_fast(avio->opaque);
+
+  if(seek_is_fast && mimetype == NULL) {
     if(fa_probe_iso(NULL, avio) == 0) {
       fa_libav_close(avio);
     isdvd:
@@ -605,7 +607,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  opensub_hash_rval = opensub_compute_hash(avio, &hash);
+  if(seek_is_fast)
+    opensub_hash_rval = opensub_compute_hash(avio, &hash);
+  else
+    opensub_hash_rval = 1;
+
   if(opensub_hash_rval == -1)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 

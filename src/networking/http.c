@@ -48,11 +48,21 @@ void
 http_header_add(struct http_header_list *headers, const char *key,
 		const char *value)
 {
-  http_header_t *hh = malloc(sizeof(http_header_t));
+  http_header_t *hh;
 
-  hh->hh_key   = strdup(key);
+  LIST_FOREACH(hh, headers, hh_link) {
+    if(!strcasecmp(hh->hh_key, key))
+      break;
+  }
+  
+  if(hh == NULL) {
+    hh = malloc(sizeof(http_header_t));
+    hh->hh_key   = strdup(key);
+    LIST_INSERT_HEAD(headers, hh, hh_link);
+  } else {
+    free(hh->hh_value);
+  }
   hh->hh_value = strdup(value);
-  LIST_INSERT_HEAD(headers, hh, hh_link);
 }
 
 
@@ -63,12 +73,9 @@ void
 http_header_add_int(struct http_header_list *headers, const char *key,
 		    int value)
 {
-  http_header_t *hh = malloc(sizeof(http_header_t));
   char str[20];
   snprintf(str, sizeof(str), "%d", value);
-  hh->hh_key   = strdup(key);
-  hh->hh_value = strdup(str);
-  LIST_INSERT_HEAD(headers, hh, hh_link);
+  http_header_add(headers, key, str);
 }
 
 

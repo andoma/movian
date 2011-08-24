@@ -238,7 +238,7 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   } else {
     TRACE(TRACE_INFO, "Subtitles",
 	  "%s is not valid UTF-8. Decoding it as %s",
-	  url, i18n_get_charset_name(i18n_get_srt_charset()));
+	  url, charset_get_name(i18n_get_srt_charset()));
     tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
     linereader_init(&lr, tmp, strlen(tmp));
   }

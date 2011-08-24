@@ -61,25 +61,19 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   const char *r = jhr->data, *r2;
   char *tmpbuf = NULL;
   int isxml;
+  const charset_t *cs = NULL;
 
   if(jhr->contenttype != NULL) {
     const char *charset = strstr(jhr->contenttype, "charset=");
 
     if(charset != NULL) {
-      int conv;
-
       charset += strlen("charset=");
-      if(!strcasecmp(charset, "utf-8")) {
-	conv = 0;
-      } else if(!strcasecmp(charset, "ISO-8859-1")) {
-	conv = 1;
-      } else {
-	TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
-	conv = 1;
-      }
 
-      if(conv)
-	r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, NULL);
+      if(strcasecmp(charset, "utf-8")) {
+	cs = charset_get(charset);
+	if(cs == NULL)
+	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+      }
     }
 
     isxml =
@@ -88,6 +82,13 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   } else {
     isxml = 0;
   }
+  
+
+  if(cs == NULL && !utf8_verify(jhr->data))
+    cs = charset_get(NULL);
+
+  if(cs != NULL)
+    r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, cs->ptr);
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
@@ -560,9 +561,30 @@ js_rawAuth(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool
+js_setHeader(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *key;
+  const char *value;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss", &key, &value))
+    return JS_FALSE;
+
+  *rval = JSVAL_NULL;
+  http_client_set_header(JS_GetPrivate(cx, obj), key, value);
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
 static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
     JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
+    JS_FS("setHeader",       js_setHeader,   2, 0, 0),
     JS_FS_END
 };
 

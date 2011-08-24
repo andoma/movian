@@ -806,6 +806,18 @@ http_client_rawauth(struct http_auth_req *har, const char *str)
 /**
  *
  */
+void
+http_client_set_header(struct http_auth_req *har, const char *key,
+		       const char *value)
+{
+  http_header_add(har->har_headers, key, value);
+}
+
+
+
+/**
+ *
+ */
 static void
 http_headers_init(struct http_header_list *l, const http_file_t *hf)
 {
@@ -1205,13 +1217,6 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
     return -1;
   }
 
-  if(expect_content) {
-    if(http_drain_content(hf)) {
-      snprintf(errbuf, errlen, "Connection lost");
-      return -1;
-    }
-  }
-
   if(code == 301)
     add_premanent_redirect(hf->hf_url, hf->hf_location);
 
@@ -1230,6 +1235,9 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   free(hf->hf_location);
   hf->hf_location = NULL;
   
+  if(expect_content && http_drain_content(hf))
+    hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
+
   // Location changed, must detach from connection
   // We might still be able to reuse it if hostname+port is same
   // But that's for some other code to figure out
@@ -1258,12 +1266,8 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
   snprintf(buf1, sizeof(buf1), "%s @ %s", hf->hf_auth_realm, 
 	   hf->hf_connection->hc_hostname);
 
-  if(expect_content) {
-    if(http_drain_content(hf)) {
-      snprintf(errbuf, errlen, "Connection lost");
-      return -1;
-    }
-  }
+  if(expect_content && http_drain_content(hf))
+    hf->hf_connection_mode = CONNECTION_MODE_CLOSE;
 
   if(hf->hf_auth_realm == NULL) {
     snprintf(errbuf, errlen, "Authentication without realm");
@@ -1727,6 +1731,17 @@ http_close(fa_handle_t *handle)
 
 
 /**
+ *
+ */
+static int
+http_seek_is_fast(fa_handle_t *handle)
+{
+  http_file_t *hf = (http_file_t *)handle;
+  return !hf->hf_no_ranges;
+}
+
+
+/**
  * Read from file
  */
 static int
@@ -1802,6 +1817,9 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 	htsbuf_qprintf(&q, "Range: %s\r\n", range);
 
       http_headers_send(&q, &headers, NULL);
+      if(hf->hf_debug)
+	htsbuf_dump_raw_stderr(&q);
+
       tcp_write_queue(hc->hc_tc, &q);
 
       code = http_read_response(hf, NULL);
@@ -1811,7 +1829,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 	break;
 
       case 200:
-	if(range[0] && hf->hf_no_ranges)
+	if(range[0])
 	  hf->hf_no_ranges = 1;
 
 	if(hf->hf_rsize == -1)
@@ -1829,8 +1847,8 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 	break;
 
       default:
-	TRACE(TRACE_INFO, "HTTP", 
-	      "Read error (%d) [%s] filesize %lld", code,
+	TRACE(TRACE_DEBUG, "HTTP", 
+	      "Read error (%d) [%s] filesize %lld -- retrying", code,
 	      range, hf->hf_filesize);
 	http_detach(hf, 0);
 	continue;
@@ -2106,6 +2124,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_stat  = http_stat,
   .fap_quickload = http_quickload,
   .fap_get_last_component = http_get_last_component,
+  .fap_seek_is_fast = http_seek_is_fast,
 };
 
 FAP_REGISTER(http);
@@ -2127,6 +2146,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_stat  = http_stat,
   .fap_quickload = http_quickload,
   .fap_get_last_component = http_get_last_component,
+  .fap_seek_is_fast = http_seek_is_fast,
 };
 
 FAP_REGISTER(https);
@@ -2455,6 +2475,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_stat  = dav_stat,
   .fap_quickload = http_quickload,
   .fap_get_last_component = http_get_last_component,
+  .fap_seek_is_fast = http_seek_is_fast,
 };
 FAP_REGISTER(webdav);
 
@@ -2473,6 +2494,7 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_stat  = dav_stat,
   .fap_quickload = http_quickload,
   .fap_get_last_component = http_get_last_component,
+  .fap_seek_is_fast = http_seek_is_fast,
 };
 FAP_REGISTER(webdavs);
 

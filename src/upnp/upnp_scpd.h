@@ -57,46 +57,6 @@ const char *cm_scpd = STRINGIFY(
       </argumentList>
     </action>
     <action>
-      <name>PrepareForConnection</name>
-      <argumentList>
-        <argument>
-          <name>RemoteProtocolInfo</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_ProtocolInfo</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>PeerConnectionManager</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_ConnectionManager</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>PeerConnectionID</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_ConnectionID</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>Direction</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_Direction</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>ConnectionID</name>
-          <direction>out</direction>
-          <relatedStateVariable>A_ARG_TYPE_ConnectionID</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>AVTransportID</name>
-          <direction>out</direction>
-          <relatedStateVariable>A_ARG_TYPE_AVTransportID</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>RcsID</name>
-          <direction>out</direction>
-          <relatedStateVariable>A_ARG_TYPE_RcsID</relatedStateVariable>
-        </argument>
-      </argumentList>
-    </action>
-    <action>
       <name>GetProtocolInfo</name>
       <argumentList>
         <argument>
@@ -118,16 +78,6 @@ const char *cm_scpd = STRINGIFY(
           <name>ConnectionIDs</name>
           <direction>out</direction>
           <relatedStateVariable>CurrentConnectionIDs</relatedStateVariable>
-        </argument>
-      </argumentList>
-    </action>
-    <action>
-      <name>ConnectionComplete</name>
-      <argumentList>
-        <argument>
-          <name>ConnectionID</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_ConnectionID</relatedStateVariable>
         </argument>
       </argumentList>
     </action>

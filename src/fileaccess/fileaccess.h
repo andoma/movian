@@ -134,6 +134,7 @@ void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
 int64_t fa_fsize(void *fh);
+int fa_seek_is_fast(void *fh);
 int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
@@ -186,6 +187,9 @@ int http_client_oauth(struct http_auth_req *har,
 		      const char *token_secret);
 
 int http_client_rawauth(struct http_auth_req *har, const char *str);
+
+void http_client_set_header(struct http_auth_req *har, const char *key,
+			    const char *value);
 
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 

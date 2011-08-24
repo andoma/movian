@@ -53,29 +53,21 @@ char *url_resolve_relative(const char *proto, const char *hostname, int port,
 char *url_resolve_relative_from_base(const char *base, const char *url);
 
 
-// ISO-8859-X  ->  UTF-8
-
-#define ISO_8859_1 NULL
-extern const uint16_t ISO_8859_2[];
-extern const uint16_t ISO_8859_3[];
-extern const uint16_t ISO_8859_4[];
-extern const uint16_t ISO_8859_5[];
-extern const uint16_t ISO_8859_6[];
-extern const uint16_t ISO_8859_7[];
-extern const uint16_t ISO_8859_8[];
-extern const uint16_t ISO_8859_9[];
-extern const uint16_t ISO_8859_10[];
-extern const uint16_t ISO_8859_11[];
-extern const uint16_t ISO_8859_13[];
-extern const uint16_t ISO_8859_14[];
-extern const uint16_t ISO_8859_15[];
-extern const uint16_t ISO_8859_16[];
-extern const uint16_t CP1250[];
-extern const uint16_t CP1251[];
 
 char *utf8_from_bytes(const char *str, int len, const uint16_t *table);
 
 int hexnibble(char c);
 
+
+typedef struct {
+  const char *id, *title;
+  const uint16_t *ptr;
+} charset_t;
+
+const charset_t *charset_get(const char *id);
+
+const charset_t *charset_get_idx(unsigned int i);
+
+const char *charset_get_name(const void *ptr);
 
 #endif
