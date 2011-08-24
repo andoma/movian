@@ -495,9 +495,17 @@ Ask the user for authentication credentials.
   
 ## The settings object
 
+#### createInt(String ID, String Title, Int Initial, Int Minimum, Int Maximum, Int Step, String Unit, Function Func)
+Shows a slider of integers to choose a value.
 
-
-
+* ID - String that identifies the setting. (e.g. integer)
+* Title - Synopsis of the setting. (e.g. Integer test)
+* Initial - Integer that's the default value. (e.g. 20)
+* Minimum - Integer of the lowest possible value. (e.g. 10)
+* Maximum - Integer of the highest possible value. (e.g. 50)
+* Step - Integer that is added to the current value. (e.g. 2)
+* Unit - String identifying the unit of the value. (e.g. Km/h)
+* Function - Function that handles the current value saving it (e.g. function(v){service.integer=v})
 
 ## The service object
 
