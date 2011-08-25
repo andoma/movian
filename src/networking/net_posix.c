@@ -367,7 +367,8 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-
+  htsbuf_queue_init(&tc->spill, 0);
+  
 
   if(ssl) {
 #if ENABLE_OPENSSL
@@ -467,6 +468,7 @@ tcp_close(tcpcon_t *tc)
   }
 #endif
   close(tc->fd);
+  htsbuf_queue_flush(&tc->spill);
   free(tc);
 }
 

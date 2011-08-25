@@ -40,6 +40,8 @@
 typedef struct tcpcon {
   int fd;
 
+  htsbuf_queue_t spill;
+
   int (*write)(struct tcpcon *, const void *, size_t);
   int (*read)(struct tcpcon *, void *, size_t, int);
 
@@ -65,14 +67,11 @@ int tcp_write_queue(tcpcon_t *nc, htsbuf_queue_t *q);
 
 int tcp_write_queue_dontfree(tcpcon_t *nc, htsbuf_queue_t *q);
 
-int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize,
-		  htsbuf_queue_t *spill);
+int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
-int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize,
-		  htsbuf_queue_t *spill);
+int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize);
 
-int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize, 
-			 htsbuf_queue_t *spill);
+int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize);
 
 void tcp_close(tcpcon_t *nc);
 

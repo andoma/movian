@@ -177,8 +177,6 @@ typedef struct http_connection {
   int hc_id;
   tcpcon_t *hc_tc;
 
-  htsbuf_queue_t hc_spill;
-
   TAILQ_ENTRY(http_connection) hc_link;
 
   char hc_ssl;
@@ -227,7 +225,6 @@ http_connection_get(const char *hostname, int port, int ssl,
   hc->hc_port = port;
   hc->hc_ssl = ssl;
   hc->hc_tc = tc;
-  htsbuf_queue_init(&hc->hc_spill, 0);
   hc->hc_reused = 0;
   hc->hc_id = id;
   return hc;
@@ -243,7 +240,6 @@ http_connection_destroy(http_connection_t *hc, int dbg)
   HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d)",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id);
   tcp_close(hc->hc_tc);
-  htsbuf_queue_flush(&hc->hc_spill);
   free(hc);
 }
 
@@ -910,22 +906,21 @@ http_read_content(http_file_t *hf)
     s = 0;
 
     while(1) {
-      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
-		       &hc->hc_spill) < 0)
+      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
 	break;
  
       csize = strtol(chunkheader, NULL, 16);
 
       if(csize > 0) {
 	buf = realloc(buf, s + csize + 1);
-	if(tcp_read_data(hc->hc_tc, buf + s, csize, &hc->hc_spill))
+	if(tcp_read_data(hc->hc_tc, buf + s, csize))
 	  break;
 
 	s += csize;
 	buf[s] = 0;
       }
 
-      if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2))
 	break;
 
       if(csize == 0) {
@@ -942,7 +937,7 @@ http_read_content(http_file_t *hf)
   buf = malloc(s + 1);
   buf[s] = 0;
   
-  if(tcp_read_data(hc->hc_tc, buf, s, &hc->hc_spill)) {
+  if(tcp_read_data(hc->hc_tc, buf, s)) {
     free(buf);
     return NULL;
   }
@@ -984,12 +979,11 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
   http_connection_t *hc = hf->hf_connection;
 
   if(!hf->hf_chunked_transfer)
-    return tcp_read_data(hc->hc_tc, NULL, bytes, &hc->hc_spill);
+    return tcp_read_data(hc->hc_tc, NULL, bytes);
   
   while(bytes > 0) {
     if(hf->hf_chunk_size == 0) {
-      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
-		       &hc->hc_spill) < 0) {
+      if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0) {
 	return -1;
       }
       hf->hf_chunk_size = strtol(chunkheader, NULL, 16);
@@ -997,14 +991,14 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
 
     size_t read_size = MIN(bytes, hf->hf_chunk_size);
     if(read_size > 0)
-      if(tcp_read_data(hc->hc_tc, NULL, read_size, &hc->hc_spill))
+      if(tcp_read_data(hc->hc_tc, NULL, read_size))
 	return -1;
 
     bytes -= read_size;
     hf->hf_chunk_size -= read_size;
 
     if(hf->hf_chunk_size == 0) {
-      if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2))
 	return -1;
     }
   }
@@ -1069,8 +1063,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   HF_TRACE(hf, "%s: Response:", hf->hf_url);
 
   for(li = 0; ;li++) {
-    if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line),
-		     &hc->hc_spill) < 0)
+    if(tcp_read_line(hc->hc_tc, hf->hf_line, sizeof(hf->hf_line)) < 0)
       return -1;
 
     HF_TRACE(hf, "  %s", hf->hf_line);
@@ -1862,8 +1855,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 
     if(hf->hf_chunked_transfer) {
       if(hf->hf_chunk_size == 0) {
-	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
-			 &hc->hc_spill) < 0)
+	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
 	  goto bad;
 	hf->hf_chunk_size = strtol(chunkheader, NULL, 16);
       }
@@ -1873,7 +1865,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 
     if(read_size > 0) {
       assert(totsize + read_size <= size);
-      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, &hc->hc_spill)) {
+      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size)) {
 	// Fail but we can retry a couple of times
 	http_detach(hf, 0);
 	continue;
@@ -1893,7 +1885,7 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
       hf->hf_chunk_size -= read_size;
 
       if(hf->hf_chunk_size == 0) {
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2))
 	  goto bad;
       }
     }
@@ -2646,8 +2638,7 @@ http_request(const char *url, const char **arguments,
 	mem = realloc(mem, capacity + 1);
       }
 
-      r = tcp_read_data_nowait(hc->hc_tc, mem + size,
-			       capacity - size, &hc->hc_spill);
+      r = tcp_read_data_nowait(hc->hc_tc, mem + size, capacity - size);
       if(r < 0)
 	break;
 
@@ -2673,8 +2664,7 @@ http_request(const char *url, const char **arguments,
 
       while(1) {
 	int csize;
-	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader),
-			 &hc->hc_spill) < 0)
+	if(tcp_read_line(hc->hc_tc, chunkheader, sizeof(chunkheader)) < 0)
 	  break;
  
 
@@ -2682,12 +2672,12 @@ http_request(const char *url, const char **arguments,
 
 	if(csize > 0) {
 	  buf = realloc(buf, size + csize + 1);
-	  if(tcp_read_data(hc->hc_tc, buf + size, csize, &hc->hc_spill))
+	  if(tcp_read_data(hc->hc_tc, buf + size, csize))
 	    break;
 
 	  size += csize;
 	}
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2, &hc->hc_spill))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2))
 	  break;
 
 	if(csize == 0)
@@ -2704,7 +2694,7 @@ http_request(const char *url, const char **arguments,
       size = hf->hf_filesize;
       buf = malloc(hf->hf_filesize + 1);
 
-      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize, &hc->hc_spill);
+      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize);
       
       if(r == -1) {
 	snprintf(errbuf, errlen, "HTTP read error");
