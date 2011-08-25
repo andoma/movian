@@ -86,17 +86,14 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	    int as_installed)
 {
   char ctrlfile[URL_MAX];
-  char err[200];
   char *json;
   struct fa_stat fs;
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  if((json = fa_quickload(ctrlfile, &fs, NULL, err, sizeof(err))) == NULL) {
-    snprintf(errbuf, errlen, "Unable to load %s -- %s", ctrlfile, err);
+  if((json = fa_quickload(ctrlfile, &fs, NULL, errbuf, errlen)) == NULL)
     return -1;
-  }
 
   ctrl = htsmsg_json_deserialize(json);
   free(json);
@@ -143,8 +140,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
     
     if(!strcmp(type, "javascript")) {
-      r = plugin_load_js(id, fullpath, err, sizeof(err));
-      snprintf(errbuf, errlen, "Unable to %s -- %s", fullpath, err);
+      r = plugin_load_js(id, fullpath, errbuf, errlen);
     } else {
       snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);
@@ -642,6 +638,12 @@ plugin_install(plugin_item_data_t *pid)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   showtime_persistent_path, pid->pid_id);
+
+  unlink(path);
+
+#if ENABLE_SPIDERMONKEY
+  js_plugin_unload(pid->pid_id);
+#endif
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
