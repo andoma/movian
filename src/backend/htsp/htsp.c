@@ -424,6 +424,8 @@ update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
 
 	prop_t *e = prop_create(events, buf);
 	prop_set_string(prop_create(e, "title"), htsmsg_get_str(m, "title"));
+	prop_set_string(prop_create(e, "description"),
+			htsmsg_get_str(m, "description"));
 	if(!htsmsg_get_u32(m, "start", &u32))
 	  prop_set_int(prop_create(e, "start"), u32);
 	
