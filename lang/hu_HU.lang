@@ -125,7 +125,7 @@ id: CPU is too slow to decode this video
 msg: A Processzor túl lassú hogy dekódolja ezt a videót
 
 #
-# ./glwthemes/mono/popups/message.view
+# ./glwthemes/mono/popups/auth.view
 #
 id: Cancel
 msg: Mégse
@@ -398,7 +398,7 @@ id: No handler for URL
 msg: Nincs kezelő az URL-hez
 
 #
-# ./src/runcontrol.c
+# ./src/plugins.c
 #
 id: Invalud URI
 msg: Érvénytelen URI 

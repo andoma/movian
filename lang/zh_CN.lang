@@ -518,7 +518,6 @@ id: Enable VDPAU
 msg: 启用VDPAU
 
 id: Force Level 4.2 for h264 content
-# Missing translation
 msg: 强制h264内容使用Level 4.2
 
 id: Force subtitles to reside on video frame
