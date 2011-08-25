@@ -241,6 +241,7 @@ glw_video_dtor(glw_t *w)
   video_decoder_t *vd = gv->gv_vd;
 
   prop_unsubscribe(gv->gv_vo_scaling_sub);
+  prop_unsubscribe(gv->gv_vzoom_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
 
   free(gv->gv_current_url);
