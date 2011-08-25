@@ -1,4 +1,5 @@
 #import "skin://playdeck.skin"
+#import "theme://include/separators.view"
 
 $ui.showplaydeck =  $ui.menu ||
   $global.media.current.error ||
@@ -22,6 +23,9 @@ widget(container_x, {
       .hqScaling = true;
       .align = top;
     });
+
+
+
 
     widget(container_y, {
       .filterConstraintX = true;
@@ -48,6 +52,7 @@ widget(container_x, {
 	    .autohide = true;
 	    .caption = $global.media.current.metadata.events.next.title;
 	  });
+
 	});
 
 
@@ -72,6 +77,20 @@ widget(container_x, {
 	});
 
       });
+
+      HORIZONTAL_SEPARATOR();	
+
+      widget(container_x, {      
+	.hidden = select($global.media.current.error, true, false);
+	  widget(label, {	
+            .sizeScale = 0.8;
+	    .autohide = true;
+	    .maxlines = 4;	
+	    .caption = $global.media.current.metadata.events.current.description;
+	  });           
+	});
+
+
 
       widget(container_x, {
 	.hidden = select($global.media.current.error, false, true);
