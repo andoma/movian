@@ -48,7 +48,6 @@ CONFIG_LIST="
  release
  embedded_resources
  coreaudio
- dbus
  avahi
  appleremote
  bonjour

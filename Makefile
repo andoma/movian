@@ -354,14 +354,6 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) \
 # IPC
 #
 SRCS                +=  src/ipc/ipc.c
-
-SRCS-$(CONFIG_DBUS) +=  src/ipc/dbus/dbus.c \
-			src/ipc/dbus/mpris.c \
-			src/ipc/dbus/mpkeys.c
-
-${BUILDDIR}/src/ipc/dbus/%.o : CFLAGS = $(CFLAGS_DBUS) \
--Wall -Werror -Wmissing-prototypes -Wno-cast-qual
-
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
 SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 

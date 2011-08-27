@@ -38,7 +38,6 @@
 #include "ui/linux/x11_common.h"
 #include "ui/linux/nvidia.h"
 #include "settings.h"
-#include "ipc/ipc.h"
 
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
@@ -981,10 +980,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
       
       switch(event.type) {
       case EnterNotify:
-	// This is _a_bit_ ugly
-#ifdef CONFIG_DBUS
-	mpkeys_grab();
-#endif
 	break;
 
       case LeaveNotify:
