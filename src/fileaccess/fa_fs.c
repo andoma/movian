@@ -97,7 +97,7 @@ fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	int flags)
+	int flags, struct prop *stats)
 {
   fs_handle_t *fh;
 

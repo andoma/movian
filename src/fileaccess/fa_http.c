@@ -547,6 +547,13 @@ typedef struct http_file {
 		      */
 
   char hf_huge_buf;  // Ask TCP for huge receive buffers
+  
+  prop_t *hf_stats_speed;
+
+#define STAT_VEC_SIZE 20
+  int hf_stats[STAT_VEC_SIZE];
+  int hf_stats_ptr;
+  int hf_num_stats;
 
 } http_file_t;
 
@@ -1525,6 +1532,7 @@ http_destroy(http_file_t *hf)
   free(hf->hf_auth_realm);
   free(hf->hf_location);
   free(hf->hf_content_type);
+  prop_ref_dec(hf->hf_stats_speed);
   free(hf);
 }
 
@@ -1692,7 +1700,7 @@ http_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
  */
 static fa_handle_t *
 http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-             int *non_interactive, int flags)
+             int *non_interactive, int flags, prop_t *stats)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   hf->hf_version = 1;
@@ -1700,6 +1708,11 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_debug = !!(flags & FA_DEBUG);
   hf->hf_streaming = !!(flags & FA_STREAMING);
   hf->hf_huge_buf = !!(flags & FA_HUGE_BUFFER);
+
+  if(stats != NULL) {
+    hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
+    prop_set_int(prop_create(stats, "bitrateValid"), 1);
+  }
 
   if(!http_open0(hf, 1, errbuf, errlen, non_interactive)) {
     hf->h.fh_proto = fap;
@@ -1712,9 +1725,9 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
 static fa_handle_t *
 http_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	  int flags)
+	  int flags, struct prop *stats)
 {
-  return http_open_ex(fap, url, errbuf, errlen, NULL, flags);
+  return http_open_ex(fap, url, errbuf, errlen, NULL, flags, stats);
 }
 
 
@@ -1744,9 +1757,8 @@ http_seek_is_fast(fa_handle_t *handle)
  * Read from file
  */
 static int
-http_read(fa_handle_t *handle, void *buf, const size_t size)
+http_read_i(http_file_t *hf, void *buf, const size_t size)
 {
-  http_file_t *hf = (http_file_t *)handle;
   htsbuf_queue_t q;
   int i, code;
   http_connection_t *hc;
@@ -1916,6 +1928,39 @@ http_read(fa_handle_t *handle, void *buf, const size_t size)
 }
 
 
+static int
+http_read(fa_handle_t *handle, void *buf, const size_t size)
+{
+  http_file_t *hf = (http_file_t *)handle;
+
+  if(hf->hf_stats_speed == NULL)
+    return http_read_i(hf, buf, size);
+
+  int64_t ts = showtime_get_ts();
+  int r = http_read_i(hf, buf, size);
+  ts = showtime_get_ts() - ts;
+  if(r <= 0)
+    return r;
+
+
+  int64_t bps = r * 1000000LL / ts;
+  hf->hf_stats[hf->hf_stats_ptr] = bps;
+  hf->hf_stats_ptr++;
+  if(hf->hf_stats_ptr == STAT_VEC_SIZE)
+    hf->hf_stats_ptr = 0;
+
+  if(hf->hf_num_stats < STAT_VEC_SIZE)
+    hf->hf_num_stats++;
+
+  int i, sum = 0;
+  
+  for(i = 0; i < hf->hf_num_stats; i++)
+    sum += hf->hf_stats[i];
+
+  prop_set_int(hf->hf_stats_speed, sum / hf->hf_num_stats);
+  return r;
+}
+
 /**
  * Seek in file
  */
@@ -2000,7 +2045,8 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   int statcode = -1;
 
   if((handle = http_open_ex(fap, url, errbuf, errlen,
-			    non_interactive ? &statcode : NULL, 0)) == NULL)
+			    non_interactive ? &statcode : NULL, 0,
+			    NULL)) == NULL)
     return statcode;
  
   memset(fs, 0, sizeof(struct fa_stat));

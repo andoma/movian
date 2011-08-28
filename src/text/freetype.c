@@ -290,7 +290,7 @@ face_create_from_uri(const char *path)
   FT_Error err;
   size_t s;
 
-  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf), 0);
+  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);

@@ -1244,7 +1244,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   subSong = atoi(p) - 1;
 
-  if((fh = fa_open(url, errbuf, errlen, 0)) == NULL)
+  if((fh = fa_open(url, errbuf, errlen)) == NULL)
     return NULL;
 
   fsize = fa_read(fh, sidfile, sizeof(sidfile));

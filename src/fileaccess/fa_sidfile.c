@@ -56,7 +56,7 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   }
 
   *p = 0;
-  if((fh = fa_open(fpath, errbuf, errlen, 0)) == NULL)
+  if((fh = fa_open(fpath, errbuf, errlen)) == NULL)
     return -1;
 
   if(fa_read(fh, buf, 128) != 128) {

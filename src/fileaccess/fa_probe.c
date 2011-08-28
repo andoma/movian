@@ -687,7 +687,7 @@ fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf,
   AVFormatContext *fctx;
   AVIOContext *avio;
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errsize, 0)) == NULL)
+  if((avio = fa_libav_open(url, 32768, errbuf, errsize, 0, NULL)) == NULL)
     return -1;
 
 #if ENABLE_LIBGME

@@ -227,9 +227,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0)) == NULL)
+  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0, NULL)) == NULL)
     return NULL;
-
 
   // First we need to check for a few other formats
 #if ENABLE_LIBOPENSPC || ENABLE_LIBGME

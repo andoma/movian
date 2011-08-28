@@ -150,7 +150,7 @@ typedef struct smb_handle {
  */
 static fa_handle_t *
 smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags)
+	 int flags, struct prop *stats)
 {
   smb_handle_t *fh;
   pthread_mutex_lock(&smb_mutex);

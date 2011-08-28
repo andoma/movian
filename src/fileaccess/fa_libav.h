@@ -6,7 +6,8 @@
 #include "fileaccess.h"
 
 AVIOContext *fa_libav_open(const char *url, int buf_size,
-			   char *errbuf, size_t errlen, int flags);
+			   char *errbuf, size_t errlen, int flags,
+			   struct prop *stats);
 
 AVIOContext *fa_libav_open_vpaths(const char *url, int buf_size,
 				  const char **vpaths);

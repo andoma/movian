@@ -68,11 +68,11 @@ fa_libav_reopen(fa_handle_t *fh, int buf_size)
  */
 AVIOContext *
 fa_libav_open(const char *url, int buf_size, char *errbuf, size_t errlen,
-	      int flags)
+	      int flags, struct prop *stats)
 {
   fa_handle_t *fh;
 
-  if((fh = fa_open(url, errbuf, errlen, flags)) == NULL)
+  if((fh = fa_open_ex(url, errbuf, errlen, flags, stats)) == NULL)
     return NULL;
   return fa_libav_reopen(fh, buf_size);
 }

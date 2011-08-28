@@ -583,7 +583,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Check file type
    */
-  if((avio = fa_libav_open(url, 65536, errbuf, errlen, FA_CACHE)) == NULL)
+  if((avio = fa_libav_open(url, 65536, errbuf, errlen, FA_CACHE,
+			   mp->mp_prop_io)) == NULL)
     return NULL;
 
   if(avio_read(avio, buf, sizeof(buf)) == sizeof(buf)) {

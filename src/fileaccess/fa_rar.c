@@ -305,7 +305,7 @@ rar_archive_load(rar_archive_t *ra)
 
   volume_index++;
 
-  if((fh = fa_open(filename, NULL, 0, 0)) == NULL)
+  if((fh = fa_open(filename, NULL, 0)) == NULL)
     return -1;
 
   /* Read & Verify RAR file signature */
@@ -647,7 +647,7 @@ typedef struct rar_fd {
  */
 static fa_handle_t *
 rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags)
+	 int flags, struct prop *stats)
 {
   rar_file_t *rf;
   rar_fd_t *rfd;
@@ -725,7 +725,7 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
-      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0, 0);
+      rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0);
       if(rfd->rfd_fh == NULL)
 	return -1;
     }

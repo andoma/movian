@@ -54,7 +54,8 @@ typedef struct fa_protocol {
    * Open url for reading
    */
   fa_handle_t *(*fap_open)(struct fa_protocol *fap, const char *url,
-			   char *errbuf, size_t errsize, int flags);
+			   char *errbuf, size_t errsize, int flags,
+			   struct prop *stats);
 
   /**
    * Close filehandle
