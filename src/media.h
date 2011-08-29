@@ -24,6 +24,7 @@
 #include <arch/atomic.h>
 #include "prop/prop.h"
 #include "event.h"
+#include "misc/pool.h"
 
 void media_init(void);
 struct media_buf;
@@ -76,6 +77,10 @@ typedef struct media_codec {
  * A buffer
  */
 typedef struct media_buf {
+  int64_t mb_dts;
+  int64_t mb_pts;
+  int64_t mb_time;
+
   TAILQ_ENTRY(media_buf) mb_link;
 
   enum {
@@ -109,39 +114,34 @@ typedef struct media_buf {
   } mb_data_type;
 
   void *mb_data;
+  media_codec_t *mb_cw;
+  void (*mb_dtor)(struct media_buf *mb);
+
   int mb_size;
 
-  int32_t mb_data32;
+  union {
+    int32_t mb_data32;
+    int mb_rate;
+    enum CodecID mb_codecid;
+  };
+
 
   uint32_t mb_duration;
 
-  uint8_t mb_aspect_override;
-  uint8_t mb_disable_deinterlacer;
+  uint8_t mb_aspect_override : 2;
+  uint8_t mb_disable_deinterlacer : 1;
+  uint8_t mb_skip : 2;
 
-  uint8_t mb_skip;
+  uint8_t mb_stream;
 
-  int64_t mb_dts;
-  int64_t mb_pts;
-  int64_t mb_time;  /* in ms */
-  int mb_epoch;
-
-  media_codec_t *mb_cw;
-  enum CodecID mb_codecid;
-
-  int mb_stream; /* For feedback */
-
-  /* Raw 16bit audio */
-  int mb_channels;
-  int mb_rate;
-
-  void (*mb_dtor)(struct media_buf *mb);
+  uint8_t mb_channels;
+  uint8_t mb_epoch;
 
 } media_buf_t;
 
 /*
  * Media queue
  */
-
 typedef struct media_queue {
   struct media_buf_queue mq_q;
 
@@ -210,6 +210,8 @@ typedef struct media_pipe {
 #define MP_PRIMABLE      0x1
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
+
+  pool_t *mp_mb_pool;
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
   unsigned int mp_buffer_limit;   // Max buffer size
@@ -340,9 +342,14 @@ media_codec_t *media_codec_create(enum CodecID id, int parser,
 				  media_format_t *fw, AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
-void media_buf_free(media_buf_t *mb);
+void media_buf_free(media_pipe_t *mp, media_buf_t *mb);
 
-media_buf_t *media_buf_alloc(void);
+#ifdef POOL_DEBUG
+media_buf_t *media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line);
+#define media_buf_alloc(mp) media_buf_alloc_ex(mp, __FILE__, __LINE__)
+#else
+media_buf_t *media_buf_alloc(media_pipe_t *mp);
+#endif
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 

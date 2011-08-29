@@ -590,3 +590,34 @@ showtime_get_system_type(void)
 {
   return "PS3";
 }
+
+
+
+#include "halloc.h"
+
+/**
+ *
+ */
+void *
+halloc(size_t size)
+{
+#define ROUND_UP(p, round) ((p + (round) - 1) & ~((round) - 1))
+
+  size_t allocsize = ROUND_UP(size, 64*1024);
+  u32 taddr;
+
+  if(Lv2Syscall3(348, allocsize, 0x200, (u64)&taddr))
+    return NULL;
+
+  return (void *)(uint64_t)taddr;
+}
+
+
+/**
+ *
+ */
+void
+hfree(void *ptr, size_t size)
+{
+  Lv2Syscall1(349, (uint64_t)ptr);
+}

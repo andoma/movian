@@ -164,7 +164,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   mp_flush(mp, 0);
   
   if(mbp != NULL && *mbp != NULL) {
-    media_buf_free(*mbp);
+    media_buf_free(mp, *mbp);
     *mbp = NULL;
   }
 
@@ -275,7 +275,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
 	size_t size, int skip, int dt, int duration)
 {
   event_t *e = NULL;
-  media_buf_t *mb = media_buf_alloc();
+  media_buf_t *mb = media_buf_alloc(r->mp);
 
   mb->mb_data_type = dt;
   mb->mb_duration = duration;

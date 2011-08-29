@@ -200,7 +200,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
   mp_flush(mp, 0);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free(*mbp);
+    media_buf_free(mp, *mbp);
   *mbp = NULL;
 }
 
@@ -332,7 +332,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       if(si == mp->mp_audio.mq_stream) {
 	/* Current audio stream */
-	mb = media_buf_alloc();
+	mb = media_buf_alloc(mp);
 	mb->mb_data_type = MB_AUDIO;
 
       } else {
@@ -474,7 +474,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   }
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
-    media_buf_free(mb);
+    media_buf_free(mp, mb);
 
   media_codec_deref(cw);
   media_format_deref(fw);

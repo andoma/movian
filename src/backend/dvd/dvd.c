@@ -197,7 +197,7 @@ dvd_video_push(dvd_player_t *dp)
   if(cw == NULL)
     return;
 
-  mb = media_buf_alloc();
+  mb = media_buf_alloc(mp);
   mb->mb_cw = media_codec_ref(cw);
   mb->mb_size = 0;
   mb->mb_data = NULL;
@@ -221,7 +221,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 		  int data_type, void *data, int datalen, int rate,
 		  int64_t dts, int64_t pts)
 {
-  media_buf_t *mb = media_buf_alloc();
+  media_buf_t *mb = media_buf_alloc(dp->dp_mp);
   event_t *e;
 
   AVCodecContext *ctx = cw->codec_ctx;

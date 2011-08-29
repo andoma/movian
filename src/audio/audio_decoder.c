@@ -196,7 +196,7 @@ ad_thread(void *aux)
     default:
       abort();
     }
-    media_buf_free(mb);
+    media_buf_free(mp, mb);
     hts_mutex_lock(&mp->mp_mutex);
   }
   hts_mutex_unlock(&mp->mp_mutex);

@@ -88,6 +88,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/dbl.c \
 	src/misc/json.c \
 	src/misc/unicode_composition.c \
+	src/misc/pool.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 

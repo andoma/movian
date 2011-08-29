@@ -359,7 +359,7 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
   mp_flush(mp, 0);
   
   if(*mbp != NULL) {
-    media_buf_free(*mbp);
+    media_buf_free(mp, *mbp);
     *mbp = NULL;
   }
 
@@ -422,7 +422,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
     if(mb == NULL) {
 
-      mb = media_buf_alloc();
+      mb = media_buf_alloc(mp);
       mb->mb_data_type = MB_AUDIO;
       
       mb->mb_size = CDIO_CD_FRAMESIZE_RAW * 2;
@@ -517,7 +517,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   }
 
   if(mb != NULL)
-    media_buf_free(mb);
+    media_buf_free(mp, mb);
 
   cdio_cddap_close(cdda);
 

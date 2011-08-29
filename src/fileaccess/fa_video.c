@@ -216,7 +216,7 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
   mp_flush(mp, 0);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free(*mbp);
+    media_buf_free(mp, *mbp);
   *mbp = NULL;
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
@@ -275,7 +275,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(si == mp->mp_video.mq_stream) {
 	/* Current video stream */
-	mb = media_buf_alloc();
+	mb = media_buf_alloc(mp);
 	mb->mb_data_type = MB_VIDEO;
 	mq = &mp->mp_video;
 
@@ -288,7 +288,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 
-	mb = media_buf_alloc();
+	mb = media_buf_alloc(mp);
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
 
@@ -296,7 +296,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
 	int duration = pkt.convergence_duration ?: pkt.duration;
 
-	mb = media_buf_alloc();
+	mb = media_buf_alloc(mp);
 	mb->mb_codecid = fctx->streams[si]->codec->codec_id;
 	mb->mb_data_type = MB_SUBTITLE;
 	mq = &mp->mp_video;
@@ -509,7 +509,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   }
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
-    media_buf_free(mb);
+    media_buf_free(mp, mb);
   return e;
 }
 

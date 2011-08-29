@@ -109,28 +109,39 @@ media_buf_dtor_freedata(media_buf_t *mb)
 /**
  *
  */
+#ifdef POOL_DEBUG
 media_buf_t *
-media_buf_alloc(void)
+media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line)
 {
-  media_buf_t *mb = calloc(1, sizeof(media_buf_t));
+  media_buf_t *mb = pool_get_ex(mp->mp_mb_pool, file, line);
   mb->mb_time = AV_NOPTS_VALUE;
   mb->mb_dtor = media_buf_dtor_freedata;
   return mb;
 }
 
+#else
+media_buf_t *
+media_buf_alloc(media_pipe_t *mp)
+{
+  media_buf_t *mb = pool_get(mp->mp_mb_pool);
+  mb->mb_time = AV_NOPTS_VALUE;
+  mb->mb_dtor = media_buf_dtor_freedata;
+  return mb;
+}
+#endif
 
 /**
  *
  */
 void
-media_buf_free(media_buf_t *mb)
+media_buf_free(media_pipe_t *mp, media_buf_t *mb)
 {
   mb->mb_dtor(mb);
 
   if(mb->mb_cw != NULL)
     media_codec_deref(mb->mb_cw);
   
-  free(mb);
+  pool_put(mp->mp_mb_pool, mb);
 }
 
 
@@ -184,6 +195,11 @@ mp_create(const char *name, int flags, const char *type)
   prop_t *p;
 
   mp = calloc(1, sizeof(media_pipe_t));
+
+  mp->mp_mb_pool = pool_create("packet headers", 
+			       sizeof(media_buf_t),
+			       POOL_REENTRANT | POOL_ZERO_MEM);
+
   mp->mp_flags = flags;
 
   TAILQ_INIT(&mp->mp_eq);
@@ -364,6 +380,25 @@ mp_create(const char *name, int flags, const char *type)
 }
 
 
+
+/**
+ * Must be called with mp locked
+ */
+static void
+mq_flush(media_pipe_t *mp, media_queue_t *mq)
+{
+  media_buf_t *mb;
+
+  while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
+    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mp->mp_buffer_current -= mb->mb_size;
+    media_buf_free(mp, mb);
+  }
+  mq->mq_packets_current = 0;
+  mq_update_stats(mp, mq);
+}
+
+
 /**
  *
  */
@@ -397,6 +432,9 @@ mp_destroy(media_pipe_t *mp)
     event_release(e);
   }
 
+  mq_flush(mp, &mp->mp_audio);
+  mq_flush(mp, &mp->mp_video);
+
   mq_destroy(&mp->mp_audio);
   mq_destroy(&mp->mp_video);
 
@@ -405,6 +443,8 @@ mp_destroy(media_pipe_t *mp)
   hts_cond_destroy(&mp->mp_backpressure);
   hts_mutex_destroy(&mp->mp_mutex);
   hts_mutex_destroy(&mp->mp_clock_mutex);
+
+  pool_destroy(mp->mp_mb_pool);
 
   free(mp);
 }
@@ -672,23 +712,6 @@ mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 }
 
 
-/**
- * Must be called with mp locked
- */
-static void
-mq_flush(media_pipe_t *mp, media_queue_t *mq)
-{
-  media_buf_t *mb;
-
-  while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
-    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mp->mp_buffer_current -= mb->mb_size;
-    media_buf_free(mb);
-  }
-  mq->mq_packets_current = 0;
-  mq_update_stats(mp, mq);
-}
-
 
 /**
  *
@@ -706,17 +729,17 @@ mp_flush(media_pipe_t *mp, int blank)
   mq_flush(mp, v);
 
   if(v->mq_stream >= 0) {
-    mb = media_buf_alloc();
+    mb = media_buf_alloc(mp);
     mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(mp, v, mb);
 
-    mb = media_buf_alloc();
+    mb = media_buf_alloc(mp);
     mb->mb_data_type = MB_BLACKOUT;
     mb_enq_tail(mp, v, mb);
   }
 
   if(a->mq_stream >= 0) {
-    mb = media_buf_alloc();
+    mb = media_buf_alloc(mp);
     mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(mp, a, mb);
   }
@@ -737,13 +760,13 @@ mp_end(media_pipe_t *mp)
   hts_mutex_lock(&mp->mp_mutex);
 
   if(v->mq_stream >= 0) {
-    mb = media_buf_alloc();
+    mb = media_buf_alloc(mp);
     mb->mb_data_type = MB_END;
     mb_enq_tail(mp, v, mb);
   }
 
   if(a->mq_stream >= 0) {
-    mb = media_buf_alloc();
+    mb = media_buf_alloc(mp);
     mb->mb_data_type = MB_END;
     mb_enq_tail(mp, a, mb);
   }
@@ -761,9 +784,7 @@ mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mb = media_buf_alloc();
-  mb->mb_cw = NULL;
-  mb->mb_data = NULL;
+  mb = media_buf_alloc(mp);
   mb->mb_data_type = cmd;
   mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -779,9 +800,7 @@ mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mb = media_buf_alloc();
-  mb->mb_cw = NULL;
-  mb->mb_data = NULL;
+  mb = media_buf_alloc(mp);
   mb->mb_data_type = cmd;
   mb_enq_head(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -798,8 +817,7 @@ mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mb = media_buf_alloc();
-  mb->mb_cw = NULL;
+  mb = media_buf_alloc(mp);
   mb->mb_data_type = cmd;
   mb->mb_data = d;
   mb_enq_tail(mp, mq, mb);
@@ -817,10 +835,8 @@ mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mb = media_buf_alloc();
-  mb->mb_cw = NULL;
+  mb = media_buf_alloc(mp);
   mb->mb_data_type = cmd;
-  mb->mb_data = NULL;
   mb->mb_data32 = u;
   mb_enq_head(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -837,10 +853,8 @@ mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u)
 
   hts_mutex_lock(&mp->mp_mutex);
 
-  mb = media_buf_alloc();
-  mb->mb_cw = NULL;
+  mb = media_buf_alloc(mp);
   mb->mb_data_type = cmd;
-  mb->mb_data = NULL;
   mb->mb_data32 = u;
   mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
@@ -1359,7 +1373,7 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size)
     break;
 
   case MP_BUFFER_DEEP:
-    mp->mp_buffer_limit = 3 * 1000 * 1000;
+    mp->mp_buffer_limit = 50 * 1000 * 1000;
     break;
   }
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
@@ -1859,7 +1873,7 @@ ext_sub_dtor(media_buf_t *mb)
 void
 mp_load_ext_sub(media_pipe_t *mp, const char *url)
 {
-  media_buf_t *mb = media_buf_alloc();
+  media_buf_t *mb = media_buf_alloc(mp);
   mb->mb_data_type = MB_EXT_SUBTITLE;
   
   if(url != NULL)
