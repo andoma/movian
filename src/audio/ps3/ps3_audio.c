@@ -25,6 +25,7 @@
 
 #include <audio/audio.h>
 #include <psl1ght/lv2/timer.h>
+#include <sysutil/audio.h>
 
 #include "showtime.h"
 #include "audio/audio_defs.h"
@@ -32,9 +33,11 @@
 #define SHW64(X) (u32)(((u64)X)>>32), (u32)(((u64)X)&0xFFFFFFFF)
 
 static float audio_vol;
-static sys_event_queue_t snd_queue;
-static u64	snd_queue_key;
 
+
+static int max_pcm;
+static int max_dts;
+static int max_ac3;
 
 /**
  * Convert dB to amplitude scale factor (-6dB ~= half volume)
@@ -46,51 +49,92 @@ set_mastervol(void *opaque, float value)
   audio_vol = v;
 }
 
+static void
+fillBuffersilence(float *buf, int channels)
+{
+  memset(buf, 0, sizeof(float) * channels);
+}
 
 
 static void
-fillBuffer(float *buf, audio_buf_t *ab)
+copy_buf_int16(float *buf, const audio_buf_t *ab, int channels)
 {
   int i;
   const int16_t *src = (const int16_t *)ab->ab_data;
 
-  for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-    buf[i * 2 + 0] = (float)src[i * 2 + 0] / 32767.0;
-    buf[i * 2 + 1] = (float)src[i * 2 + 1] / 32767.0;
+  if(ab->ab_channels == channels) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * channels; i++)
+      *buf++ = (float)src[i] / 32767.0;
+
+  } else if(ab->ab_channels == 6 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 6; i+=6) {
+      *buf++ = (float)src[i+0] / 32767.0;
+      *buf++ = (float)src[i+1] / 32767.0;
+      *buf++ = (float)src[i+2] / 32767.0;
+      *buf++ = (float)src[i+3] / 32767.0;
+      *buf++ = (float)src[i+4] / 32767.0;
+      *buf++ = (float)src[i+5] / 32767.0;
+      *buf++ = 0;
+      *buf++ = 0;
+    }
+  } else {
+    fillBuffersilence(buf, channels);
   }
 }
 
 
 static void
-fillBuffersilence(float *buf)
+copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
 {
   int i;
-  for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-    buf[i * 2 + 0] = 0;
-    buf[i * 2 + 1] = 0;
+  const float *src = (const float *)ab->ab_data;
+
+  if(ab->ab_channels == channels) {
+    memcpy(buf, src, sizeof(float) * AUDIO_BLOCK_SAMPLES * channels);
+
+  } else if(ab->ab_channels == 6 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 6; i+=6) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = src[i+2];
+      *buf++ = src[i+3];
+      *buf++ = src[i+4];
+      *buf++ = src[i+5];
+      *buf++ = 0;
+      *buf++ = 0;
+    }
+  } else {
+    fillBuffersilence(buf, channels);
   }
 }
 
 
+
+
 static u32
-playOneBlock(u64 *readIndex, float *audioDataStart,
-	     audio_mode_t *am, audio_buf_t *ab)
+playOneBlock(u64 *readIndex, float *dst,
+	     const audio_mode_t *am, const audio_buf_t *ab,
+	     sys_event_queue_t snd_queue, int channels)
 {
   u32 ret = 0;
-  //get position of the hardware
   u64 current_block = *readIndex;
   int64_t pts;
   u32 audio_block_index = (current_block + 1) % AUDIO_BLOCK_8;
   
   sys_event_t event;
-  ret = sys_event_queue_receive( snd_queue, &event, 20 * 1000);
+
+  ret = sys_event_queue_receive(snd_queue, &event, 20 * 1000);
   
-  //get position of the block to write
-  float *buf = audioDataStart + 2 /*channelcount*/ * AUDIO_BLOCK_SAMPLES * audio_block_index;
+  float *buf = dst + channels * AUDIO_BLOCK_SAMPLES * audio_block_index;
+
   if(ab == NULL) {
-    fillBuffersilence(buf);
+    fillBuffersilence(buf, channels);
   } else {
-    fillBuffer(buf, ab);
+    
+    if(ab->ab_isfloat)
+      copy_buf_float(buf, ab, channels);
+    else
+      copy_buf_int16(buf, ab, channels);
 
     if((pts = ab->ab_pts) != AV_NOPTS_VALUE && ab->ab_mp != NULL) {
       pts += am->am_audio_delay * 1000;
@@ -122,7 +166,12 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
   AudioPortConfig config;
 
   int ret;
+  int cur_channels = 0;
   int running = 0;
+
+  sys_event_queue_t snd_queue;
+  u64 snd_queue_key;
+  int achannels = 0;
 
   if(audioInit())
     return -1;
@@ -141,76 +190,128 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
       break;
     }
 
-    if(!running) {
-      AudioPortParam params;
+    if(ab != NULL) {
 
-      params.numChannels = AUDIO_PORT_2CH;
-      params.numBlocks = AUDIO_BLOCK_8;
-      params.attr = 0;
-      params.level = 1;
-  
-      ret = audioPortOpen(&params, &port_num);
+      if(ab->ab_channels != cur_channels) {
+      
+	if(running) {
+	  audioPortStop(port_num);
+	  audioRemoveNotifyEventQueue(snd_queue_key);
+	  audioPortClose(port_num);
+	  sys_event_queue_destroy(snd_queue, 0);
+	  running = 0;
+	}
 
-      TRACE(TRACE_DEBUG, "AUDIO", "PS3 audio port %d opened", port_num);
+	cur_channels = ab->ab_channels;
 
-      ret = audioGetPortConfig(port_num, &config);
-      TRACE(TRACE_DEBUG, "AUDIO", "audioGetPortConfig: %d\n",ret);
-      TRACE(TRACE_DEBUG, "AUDIO", "  readIndex: 0x%8X\n",config.readIndex);
-      TRACE(TRACE_DEBUG, "AUDIO", "  status: %d\n",config.status);
-      TRACE(TRACE_DEBUG, "AUDIO", "  channelCount: %ld\n",config.channelCount);
-      TRACE(TRACE_DEBUG, "AUDIO", "  numBlocks: %ld\n",config.numBlocks);
-      TRACE(TRACE_DEBUG, "AUDIO", "  portSize: %d\n",config.portSize);
-      TRACE(TRACE_DEBUG, "AUDIO", "  audioDataStart: 0x%8X\n",config.audioDataStart);
+	AudioOutConfiguration conf;
+	memset(&conf, 0, sizeof(conf));
 
-      // create an event queue that will tell when a block is read
-      ret = audioCreateNotifyEventQueue(&snd_queue, &snd_queue_key);
-      TRACE(TRACE_DEBUG, "AUDIO", "audioCreateNotifyEventQueue: %d\n",ret);
-      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue: 0x%08X.%08X\n",SHW64(snd_queue));
-      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n", SHW64(snd_queue_key));
-  
-      // Set it to the sprx
-      ret = audioSetNotifyEventQueue(snd_queue_key);
-      TRACE(TRACE_DEBUG, "AUDIO", "audioSetNotifyEventQueue: %d\n",ret);
-      TRACE(TRACE_DEBUG, "AUDIO", "  snd_queue_key: 0x%08X.%08X\n",SHW64(snd_queue_key));
-  
-      // clears the event queue
-      ret = sys_event_queue_drain(snd_queue);
-      TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_drain: %d\n",ret);
+	switch(cur_channels) {
+	case 2:
+	  achannels = 2;
+	  conf.channel = 2;
+	  conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
+	  break;
+
+	case 6:
+	  achannels = 8;
+	  if(max_pcm >= 6) {
+	    conf.channel = 6;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
+	  } else if(max_dts == 6) {
+	    conf.channel = 6;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
+	  } else if(max_ac3 == 6) {
+	    conf.channel = 6;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_AC3;
+	  } else {
+	    conf.channel = 2;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
+	    conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_A;
+	  }
+	  break;
+
+	case 8:
+	  achannels = 8;
+	  if(max_pcm == 8) {
+	    conf.channel = 8;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
+	  } else if(max_dts == 6) {
+	    conf.channel = 6;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_DTS;
+	    conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_B;
+	  } else if(max_ac3 == 6) {
+	    conf.channel = 6;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_AC3;
+	    conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_B;
+	  } else {
+	    conf.channel = 2;
+	    conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
+	    conf.down_mixer = AUDIO_OUT_DOWNMIXER_TYPE_A;
+	  }
+	  break;
+	}
 
 
-      ret=audioPortStart(port_num);
-      TRACE(TRACE_DEBUG, "AUDIO", "audioPortStart: %d\n",ret);
 
-      running = 1;
+	int r;
+	r = audioOutConfigure(AUDIO_OUT_PRIMARY, &conf, NULL, 1);
+	if(r == 0) {
+	  int i;
+	  for(i = 0; i < 100;i++) {
+	    AudioOutState state;
+	    r = audioOutGetState(AUDIO_OUT_PRIMARY, 0, &state );
+	    if(r != 0)
+	      break;
+	    TRACE(TRACE_DEBUG, "AUDIO", "The state is %d", state.state);
+	    if(state.state == 2)
+	      continue;
+	    usleep(100);
+	    break;
+	  }
+	}
+
+	AudioPortParam params;
+
+	params.numChannels = achannels;
+	params.numBlocks = AUDIO_BLOCK_8;
+	params.attr = 0;
+	params.level = 1;
+	
+	ret = audioPortOpen(&params, &port_num);
+
+	TRACE(TRACE_DEBUG, "AUDIO", "PS3 audio port %d opened", port_num);
+	
+	audioGetPortConfig(port_num, &config);
+	audioCreateNotifyEventQueue(&snd_queue, &snd_queue_key);
+	audioSetNotifyEventQueue(snd_queue_key);
+	sys_event_queue_drain(snd_queue);
+	audioPortStart(port_num);
+	
+	running = 1;
+      }
     }
     
     playOneBlock((u64*)(u64)config.readIndex,
 		 (float*)(u64)config.audioDataStart,
-		 am, ab);
+		 am, ab, snd_queue, achannels);
 
-
+    
     if(ab != NULL)
       ab_free(ab);
   }
   TRACE(TRACE_DEBUG, "AUDIO", "leaving the loop");
 
   if(running) {
-
-    //shutdown in reverse order
-    ret=audioPortStop(port_num);
-    TRACE(TRACE_DEBUG, "AUDIO", "audioPortStop: %d\n",ret);
-    ret=audioRemoveNotifyEventQueue(snd_queue_key);
-    TRACE(TRACE_DEBUG, "AUDIO", "audioRemoveNotifyEventQueue: %d\n",ret);
-    ret=audioPortClose(port_num);
-    TRACE(TRACE_DEBUG, "AUDIO", "audioPortClose: %d\n",ret);
-    ret=sys_event_queue_destroy(snd_queue, 0);
-    TRACE(TRACE_DEBUG, "AUDIO", "sys_event_queue_destroy: %d\n",ret);
+    audioPortStop(port_num);
+    audioRemoveNotifyEventQueue(snd_queue_key);
+    audioPortClose(port_num);
+    sys_event_queue_destroy(snd_queue, 0);
   }
 
   audioQuit();
-
   prop_unsubscribe(s_vol);
-
   return 0;
 }
 
@@ -223,18 +324,35 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 void
 audio_ps3_init(void)
 {
-  audio_mode_t *am;
+  audio_mode_t *am = calloc(1, sizeof(audio_mode_t));
 
-
-  am = calloc(1, sizeof(audio_mode_t));
-  /* Absolute minimum requirements */
-  am->am_formats = AM_FORMAT_PCM_STEREO;
+  am->am_formats =
+    AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
   am->am_sample_rates = AM_SR_48000;
+
+  max_pcm = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,
+					 AUDIO_OUT_CODING_TYPE_LPCM,
+					 AUDIO_OUT_FS_48KHZ,
+					 0);
+  
+  max_dts = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,
+					 AUDIO_OUT_CODING_TYPE_DTS,
+					 AUDIO_OUT_FS_48KHZ,
+					 0);
+
+  max_ac3 = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,
+					 AUDIO_OUT_CODING_TYPE_AC3,
+					 AUDIO_OUT_FS_48KHZ,
+					 0);
+
+
+  /* Absolute minimum requirements */
   am->am_title = strdup("PS3");
   am->am_id = strdup("ps3");
   am->am_preferred_size = AUDIO_BLOCK_SAMPLES;
 
   am->am_entry = ps3_audio_start;
+  am->am_float = 1;
 
   audio_mode_register(am);
 }
