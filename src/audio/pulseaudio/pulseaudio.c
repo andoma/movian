@@ -34,6 +34,7 @@ typedef struct pa_audio_mode {
 
   int cur_format;
   int cur_rate;
+  int cur_isfloat;
 
   prop_sub_t *sub_mvol; // Master volume subscription
   prop_sub_t *sub_mute; // Master mute subscription
@@ -104,7 +105,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
 
   memset(&pam->ss, 0, sizeof(pa_sample_spec));
 
-  pam->ss.format = PA_SAMPLE_S16NE; 
+  pam->ss.format = ab->ab_isfloat ? PA_SAMPLE_FLOAT32NE : PA_SAMPLE_S16NE;
   pam->ss.rate = ab->ab_samplerate;
 
   switch(ab->ab_format) {
@@ -120,10 +121,10 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
     map.channels = 6;
     map.map[0] = PA_CHANNEL_POSITION_LEFT;
     map.map[1] = PA_CHANNEL_POSITION_RIGHT;
-    map.map[2] = PA_CHANNEL_POSITION_SIDE_LEFT;
-    map.map[3] = PA_CHANNEL_POSITION_SIDE_RIGHT;
-    map.map[4] = PA_CHANNEL_POSITION_CENTER;
-    map.map[5] = PA_CHANNEL_POSITION_LFE;
+    map.map[2] = PA_CHANNEL_POSITION_CENTER;
+    map.map[3] = PA_CHANNEL_POSITION_LFE;
+    map.map[4] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[5] = PA_CHANNEL_POSITION_SIDE_RIGHT;
     break;
 
   case AM_FORMAT_PCM_7DOT1:
@@ -132,10 +133,10 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
     map.channels = 8;
     map.map[0] = PA_CHANNEL_POSITION_LEFT;
     map.map[1] = PA_CHANNEL_POSITION_RIGHT;
-    map.map[2] = PA_CHANNEL_POSITION_SIDE_LEFT;
-    map.map[3] = PA_CHANNEL_POSITION_SIDE_RIGHT;
-    map.map[4] = PA_CHANNEL_POSITION_CENTER;
-    map.map[5] = PA_CHANNEL_POSITION_LFE;
+    map.map[2] = PA_CHANNEL_POSITION_CENTER;
+    map.map[3] = PA_CHANNEL_POSITION_LFE;
+    map.map[4] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[5] = PA_CHANNEL_POSITION_SIDE_RIGHT;
     map.map[6] = PA_CHANNEL_POSITION_REAR_LEFT;
     map.map[7] = PA_CHANNEL_POSITION_REAR_RIGHT;
     break;
@@ -183,6 +184,7 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
   pam->stream = s;
   pam->cur_rate   = ab->ab_samplerate;
   pam->cur_format = ab->ab_format;
+  pam->cur_isfloat = ab->ab_isfloat;
 }
 
 
@@ -459,7 +461,8 @@ pa_audio_start(audio_mode_t *am, audio_fifo_t *af)
     }
     if(pam->stream != NULL &&
        (pam->cur_format != ab->ab_format ||
-	pam->cur_rate   != ab->ab_samplerate)) {
+	pam->cur_rate   != ab->ab_samplerate || 
+	pam->cur_isfloat != ab->ab_isfloat)) {
       stream_destroy(pam);
     }
 
@@ -604,6 +607,7 @@ audio_pa_init(void)
   am->am_id = strdup("pulseaudio");
   am->am_preferred_size = 1024;
   am->am_entry = pa_audio_start;
+  am->am_float = 1;
 
   audio_mode_register(am);
   return 1;

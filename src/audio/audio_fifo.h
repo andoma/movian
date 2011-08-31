@@ -29,6 +29,7 @@ typedef struct audio_buf {
   unsigned int ab_format;
   unsigned int ab_samplerate;
   unsigned int ab_channels;
+  char ab_isfloat;
   int64_t ab_pts;
   int ab_epoch;
   media_pipe_t *ab_mp;

@@ -299,6 +299,124 @@ set_mastermute(void *opaque, int v)
   *ptr = v;
 }
 
+/**
+ *
+ */
+static void
+conv_s16_be(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  for(i = 0; i < frames * channels; i++) {
+    outbuf[i] = htobe16(CLIP16((outbuf[i] * mastervol) >> 16));
+    outbuf[i] = htobe16(CLIP16((outbuf[i] * mastervol) >> 16));
+  }
+}
+
+
+/**
+ *
+ */
+static void
+conv_s16_le(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  for(i = 0; i < frames * channels; i++) {
+    outbuf[i] = htole16(CLIP16((outbuf[i] * mastervol) >> 16));
+    outbuf[i] = htole16(CLIP16((outbuf[i] * mastervol) >> 16));
+  }
+}
+
+
+/**
+ *
+ */
+static void
+conv_s16_be_6ch(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  int16_t t1, t2;
+  for(i = 0; i < frames * 6; i+=6) {
+    outbuf[i+0] = htobe16(CLIP16((outbuf[i+0] * mastervol) >> 16));
+    outbuf[i+1] = htobe16(CLIP16((outbuf[i+1] * mastervol) >> 16));
+    t1          = htobe16(CLIP16((outbuf[i+2] * mastervol) >> 16));
+    t2          = htobe16(CLIP16((outbuf[i+3] * mastervol) >> 16));
+    outbuf[i+2] = htobe16(CLIP16((outbuf[i+4] * mastervol) >> 16));
+    outbuf[i+3] = htobe16(CLIP16((outbuf[i+5] * mastervol) >> 16));
+    outbuf[i+4] = t1;
+    outbuf[i+5] = t2;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+conv_s16_le_6ch(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  int16_t t1, t2;
+  for(i = 0; i < frames * 6; i+=6) {
+    outbuf[i+0] = htole16(CLIP16((outbuf[i+0] * mastervol) >> 16));
+    outbuf[i+1] = htole16(CLIP16((outbuf[i+1] * mastervol) >> 16));
+    t1          = htole16(CLIP16((outbuf[i+2] * mastervol) >> 16));
+    t2          = htole16(CLIP16((outbuf[i+3] * mastervol) >> 16));
+    outbuf[i+2] = htole16(CLIP16((outbuf[i+4] * mastervol) >> 16));
+    outbuf[i+3] = htole16(CLIP16((outbuf[i+5] * mastervol) >> 16));
+    outbuf[i+4] = t1;
+    outbuf[i+5] = t2;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+conv_s16_be_8ch(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  int16_t t1, t2;
+  for(i = 0; i < frames * 8; i+=8) {
+    outbuf[i+0] = htobe16(CLIP16((outbuf[i+0] * mastervol) >> 16));
+    outbuf[i+1] = htobe16(CLIP16((outbuf[i+1] * mastervol) >> 16));
+    t1          = htobe16(CLIP16((outbuf[i+2] * mastervol) >> 16));
+    t2          = htobe16(CLIP16((outbuf[i+3] * mastervol) >> 16));
+    outbuf[i+2] = htobe16(CLIP16((outbuf[i+4] * mastervol) >> 16));
+    outbuf[i+3] = htobe16(CLIP16((outbuf[i+5] * mastervol) >> 16));
+    outbuf[i+4] = t1;
+    outbuf[i+5] = t2;
+    outbuf[i+6] = htobe16(CLIP16((outbuf[i+6] * mastervol) >> 16));
+    outbuf[i+7] = htobe16(CLIP16((outbuf[i+7] * mastervol) >> 16));
+  }
+}
+
+
+/**
+ *
+ */
+static void
+conv_s16_le_8ch(int16_t *outbuf, int frames, int channels, int mastervol)
+{
+  int i;
+  int16_t t1, t2;
+  for(i = 0; i < frames * 8; i+=8) {
+    outbuf[i+0] = htole16(CLIP16((outbuf[i+0] * mastervol) >> 16));
+    outbuf[i+1] = htole16(CLIP16((outbuf[i+1] * mastervol) >> 16));
+    t1          = htole16(CLIP16((outbuf[i+2] * mastervol) >> 16));
+    t2          = htole16(CLIP16((outbuf[i+3] * mastervol) >> 16));
+    outbuf[i+2] = htole16(CLIP16((outbuf[i+4] * mastervol) >> 16));
+    outbuf[i+3] = htole16(CLIP16((outbuf[i+5] * mastervol) >> 16));
+    outbuf[i+4] = t1;
+    outbuf[i+5] = t2;
+    outbuf[i+6] = htole16(CLIP16((outbuf[i+6] * mastervol) >> 16));
+    outbuf[i+7] = htole16(CLIP16((outbuf[i+7] * mastervol) >> 16));
+  }
+}
+
+
+
+
 
 /**
  *
@@ -312,7 +430,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
   audio_buf_t *ab;
   int16_t *outbuf;
   int outlen;
-  int c, i;
+  int c;
   int cur_format = 0;
   int cur_rate = 0;
   int silence_threshold = 0; 
@@ -326,6 +444,9 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 
   prop_sub_t *s_vol;
   prop_sub_t *s_mute;
+
+  typedef void (conv_fn_t)(int16_t *buf, int frames, int channels, int mastervol);
+  conv_fn_t *fn = NULL;
 
   hts_mutex_lock(&alsa_mutex);
   
@@ -398,6 +519,22 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	ret = -1;
 	break;
       }
+
+      if(aam->aam_format == SND_PCM_FORMAT_S16_BE) {
+	if(cur_format == AM_FORMAT_PCM_5DOT1)
+	  fn = conv_s16_be_6ch;
+	else if(cur_format == AM_FORMAT_PCM_7DOT1)
+	  fn = conv_s16_be_8ch;
+	else
+	  fn = conv_s16_be;
+      } else {
+	if(cur_format == AM_FORMAT_PCM_5DOT1)
+	  fn = conv_s16_le_6ch;
+	else if(cur_format == AM_FORMAT_PCM_7DOT1)
+	  fn = conv_s16_le_8ch;
+	else
+	  fn = conv_s16_le;
+      }
     }
 
 
@@ -422,12 +559,7 @@ alsa_audio_start(audio_mode_t *am, audio_fifo_t *af)
       if(mastermute) {
 	memset(outbuf, 0, ab->ab_frames * ab->ab_channels * sizeof(int16_t));
       } else {
-	if(aam->aam_format == SND_PCM_FORMAT_S16_BE)
-	  for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
-	    outbuf[i] = htobe16(CLIP16((outbuf[i] * mastervol) >> 16));
-	else
-	  for(i = 0; i < ab->ab_frames * ab->ab_channels; i++)
-	    outbuf[i] = htole16(CLIP16((outbuf[i] * mastervol) >> 16));
+	fn(outbuf, ab->ab_frames, ab->ab_channels, mastervol);
       }
       break;
     }
@@ -764,7 +896,7 @@ audio_alsa_init(int have_pulse_audio)
 {
   hts_mutex_init(&alsa_mutex);
 
-  if(!have_pulse_audio)
+  if(have_pulse_audio)
     alsa_probe("default", "default");
   alsa_probe(NULL, "iec958");
 

@@ -31,7 +31,6 @@
 #include "notifications.h"
 
 audio_mode_t *audio_mode_current;
-hts_mutex_t audio_mode_mutex;
 
 static struct audio_mode_queue audio_modes;
 
@@ -46,6 +45,17 @@ static int audio_run = 1;
 
 static hts_thread_t audio_thread_id;
 audio_fifo_t af0, *thefifo;
+
+
+/**
+ *
+ */
+int
+audio_mode_prefer_float(void)
+{
+  return audio_mode_current && audio_mode_current->am_float;
+}
+
 
 /**
  *
@@ -156,8 +166,6 @@ audio_init(void)
 			     audio_change_output_device, NULL);
   
   audio_global_load_settings();
-
-  hts_mutex_init(&audio_mode_mutex);
 
   TAILQ_INIT(&audio_modes);
 

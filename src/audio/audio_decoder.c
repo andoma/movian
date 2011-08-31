@@ -53,9 +53,11 @@ static int resample(audio_decoder_t *ad, int16_t *dstmix, int dstavail,
 static void ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp,
 			  media_queue_t *mq, media_buf_t *mb);
 
-static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
+static void audio_deliver(audio_decoder_t *ad, audio_mode_t *am, 
+			  const void *src, 
 			  int channels, int frames, int rate, int64_t pts,
-			  int epoch, media_pipe_t *mp);
+			  int epoch, media_pipe_t *mp,
+			  int isfloat);
 
 static void *ad_thread(void *aux);
 
@@ -252,7 +254,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
   enum CodecID codec_id;
-  int64_t pts, chlayout;
+  int64_t pts;
   
   if(cw == NULL) {
     /* Raw native endian PCM */
@@ -346,6 +348,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     avpkt.data = buf;
     avpkt.size = size;
 
+    if(am->am_float)
+      ctx->request_sample_fmt = AV_SAMPLE_FMT_FLT;
+
     r = avcodec_decode_audio3(ctx, ad->ad_outbuf, &data_size, &avpkt);
 
     if(r == -1)
@@ -357,67 +362,77 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     channels = ctx->channels;
     rate     = ctx->sample_rate;
     codec_id = ctx->codec_id;
-    chlayout = ctx->channel_layout;
 
     /* Convert to signed 16bit */
 
-    frames = data_size / sample_fmt_to_size[ctx->sample_fmt];
+    if(data_size > 0) {
 
-    switch(ctx->sample_fmt) {
-    case SAMPLE_FMT_NONE:
-    case SAMPLE_FMT_NB:
-      return;
+      frames = data_size / sample_fmt_to_size[ctx->sample_fmt];
 
-    case SAMPLE_FMT_U8:
-      for(i = frames - 1; i >= 0; i--)
-	ad->ad_outbuf[i] = (((uint8_t *)ad->ad_outbuf)[i] - 0x80) << 8;
-	  break;
-    case SAMPLE_FMT_S16:
-      break;
-    case SAMPLE_FMT_S32:
-      for(i = 0; i < frames; i++)
-	ad->ad_outbuf[i] = ((int32_t *)ad->ad_outbuf)[i] >> 16;
-      break;
-    case SAMPLE_FMT_FLT:
-      for(i = 0; i < frames; i++)
-	ad->ad_outbuf[i] = rintf(((float *)ad->ad_outbuf)[i] * 32768);
-      break;
-    case SAMPLE_FMT_DBL:
-      for(i = 0; i < frames; i++)
-	ad->ad_outbuf[i] = rint(((double *)ad->ad_outbuf)[i] * 32768);
-      break;
-    }
 
-    frames /= channels;
+      if(!mp_is_primary(mp)) {
+	mp->mp_audio_clock_epoch = 0;
 
-    if(mp_is_primary(mp)) {
-
-      /* We are the primary audio decoder == we may play, forward
-	 to the mixer stages */
-
-      /* But first, if we have any pending packets (due to a previous pause),
-	 release them */
-      
-      audio_fifo_reinsert(thefifo, &ad->ad_hold_queue);
-
-      if(data_size > 0)
-	audio_mix1(ad, am, channels, rate, chlayout, codec_id, ad->ad_outbuf, 
-		   frames, pts, mb->mb_epoch, mp);
-
-    } else {
-
-      /* We are just suppoed to be silent, emulate some kind of 
-	 delay, this is not accurate, so we also set the clock epoch
-	 to zero to avoid AV sync */
-
-      mp->mp_audio_clock_epoch = 0;
-
-      delay = (int64_t)frames * 1000000LL / rate;
-      usleep(delay); /* XXX: Must be better */
+	delay = (int64_t)(frames / channels) * 1000000LL / rate;
+	usleep(delay); /* XXX: Must be better */
 	
-      /* Flush any packets in the pause pending queue */
+	/* Flush any packets in the pause pending queue */
       
-      audio_fifo_clear_queue(&ad->ad_hold_queue);
+	audio_fifo_clear_queue(&ad->ad_hold_queue);
+
+      } else {
+
+
+	/* We are the primary audio decoder == we may play, forward
+	   to the mixer stages */
+	
+	/* But first, if we have any pending packets (due to a
+	   previous pause), release them */
+      
+	audio_fifo_reinsert(thefifo, &ad->ad_hold_queue);
+
+
+	if(ctx->sample_fmt == SAMPLE_FMT_FLT && am->am_float && 
+	   (am->am_sample_rates & AM_SR_ANY ||
+	    audio_rateflag_from_rate(rate) & am->am_sample_rates)) {
+
+	  frames /= channels;
+	  audio_deliver(ad, am, ad->ad_outbuf, channels, frames,
+			rate, pts, mb->mb_epoch, mp, 1);
+
+	} else {
+
+	  switch(ctx->sample_fmt) {
+	  case SAMPLE_FMT_NONE:
+	  case SAMPLE_FMT_NB:
+	    return;
+
+	  case SAMPLE_FMT_U8:
+	    for(i = frames - 1; i >= 0; i--)
+	      ad->ad_outbuf[i] = (((uint8_t *)ad->ad_outbuf)[i] - 0x80) << 8;
+	    break;
+	  case SAMPLE_FMT_S16:
+	    break;
+	  case SAMPLE_FMT_S32:
+	    for(i = 0; i < frames; i++)
+	      ad->ad_outbuf[i] = ((int32_t *)ad->ad_outbuf)[i] >> 16;
+	    break;
+	  case SAMPLE_FMT_FLT:
+	    for(i = 0; i < frames; i++)
+	      ad->ad_outbuf[i] = rintf(((float *)ad->ad_outbuf)[i] * 32768);
+	    break;
+	  case SAMPLE_FMT_DBL:
+	    for(i = 0; i < frames; i++)
+	      ad->ad_outbuf[i] = rint(((double *)ad->ad_outbuf)[i] * 32768);
+	    break;
+	  }
+	  frames /= channels;
+
+	  audio_mix1(ad, am, channels, rate, ctx->channel_layout,
+		     codec_id, ad->ad_outbuf, 
+		     frames, pts, mb->mb_epoch, mp);
+	}
+      }
     }
     pts = AV_NOPTS_VALUE;
     buf += r;
@@ -562,84 +577,11 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 	   int16_t *data0, int frames, int64_t pts, int epoch,
 	   media_pipe_t *mp)
 {
-  int16_t tmp[AUDIO_CHAN_MAX];
-  int x, y, z, i, c;
+  int x, y, z, i;
   int16_t *data, *src, *dst;
   int rf = audio_rateflag_from_rate(rate);
 
   astats(ad, mp, pts, epoch, data0, frames, channels, chlayout, rate);
-
-  /**
-   * Channel swizzling
-   */
-
-  if(chlayout != 0 && channels > 2) {
-
-    if(chlayout == 0x3f)
-      chlayout = 0x60f;
-
-    uint8_t s[AUDIO_CHAN_MAX], d[AUDIO_CHAN_MAX];
-    int ochan = 0;
-
-    x = 0;
-    i = 0;
-
-    if(chlayout & CH_FRONT_LEFT)            {s[x] = i++; d[x++] = 0;}
-    if(chlayout & CH_FRONT_RIGHT)           {s[x] = i++; d[x++] = 1;}
-    if(chlayout & CH_FRONT_CENTER)          {s[x] = i++; d[x++] = 4;}
-    if(chlayout & CH_LOW_FREQUENCY)         {s[x] = i++; d[x++] = 5;}
-    if(chlayout & CH_BACK_LEFT)             {s[x] = i++; d[x++] = 6;}
-    if(chlayout & CH_BACK_RIGHT)            {s[x] = i++; d[x++] = 7;}
-    if(chlayout & CH_FRONT_LEFT_OF_CENTER)          i++;
-    if(chlayout & CH_FRONT_RIGHT_OF_CENTER)         i++;
-    if(chlayout & CH_BACK_CENTER)                   i++;
-    if(chlayout & CH_SIDE_LEFT)             {s[x] = i++; d[x++] = 2;}
-    if(chlayout & CH_SIDE_RIGHT)            {s[x] = i++; d[x++] = 3;}
- 
-    ochan = 0;
-    for(i = 0; i < x; i++) if(d[i] > ochan) ochan = d[i];
-    ochan++;
-
-    memset(tmp, 0, sizeof(tmp));
-
-    if(ochan > channels) {
-
-      src = data0 + frames * channels;
-      dst = data0 + frames * ochan;
-
-      for(i = 0; i < frames; i++) {
-
-	src -= channels;
-	dst -= ochan;
-
-	for(c = 0; c < x; c++)
-	  tmp[d[c]] = src[s[c]];
-      
-	for(c = 0; c < ochan; c++)
-	  dst[c] = tmp[c];
-      }
-
-    } else {
-
-      src = data0;
-      dst = data0;
-
-      for(i = 0; i < frames; i++) {
-
-	for(c = 0; c < x; c++)
-	  tmp[d[c]] = src[s[c]];
-      
-	for(c = 0; c < ochan; c++)
-	  dst[c] = tmp[c];
-
-	src += channels;
-	dst += ochan;
-      }
-    }
-
-    channels = ochan;
-
-  }
 
 
   /**
@@ -655,19 +597,19 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       x = (src[0] * 26869) >> 16;
       y = (src[1] * 26869) >> 16;
 
-      z = (src[4] * 19196) >> 16;
+      z = (src[2] * 19196) >> 16;
       x += z;
       y += z;
 
-      z = (src[5] * 13571) >> 16;
+      z = (src[3] * 13571) >> 16;
       x += z;
       y += z;
 
-      z = (src[2] * 13571) >> 16;
+      z = (src[4] * 13571) >> 16;
       x -= z;
       y += z;
 
-      z = (src[3] * 19196) >> 16;
+      z = (src[5] * 19196) >> 16;
       x -= z;
       y += z;
 
@@ -688,13 +630,13 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       x = data[0];
       y = data[1];
 
-      z = (data[5] * 46334) >> 16;
+      z = (data[3] * 46334) >> 16;
       x += z;
       y += z;
 
       data[0] = CLIP16(x);
       data[1] = CLIP16(y);
-      data[5] = 0;
+      data[3] = 0;
       data += channels;
     }
   }
@@ -709,13 +651,13 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
       x = data[0];
       y = data[1];
 
-      z = (data[4] * 46334) >> 16;
+      z = (data[2] * 46334) >> 16;
       x += z;
       y += z;
 
       data[0] = CLIP16(x);
       data[1] = CLIP16(y);
-      data[4] = 0;
+      data[2] = 0;
       data += channels;
     }
   }
@@ -810,10 +752,10 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 
 	dst[0] = 0;
 	dst[1] = 0;
-	dst[2] = 0;
-	dst[3] = 0;
-	dst[4] = x;
-	dst[5] = x;
+	dst[2] = x;
+	dst[3] = x;
+	dst[4] = 0;
+	dst[5] = 0;
       }
       channels = 6;
     } else if(am->am_formats & AM_FORMAT_PCM_5DOT1 && !am->am_force_downmix) {
@@ -827,13 +769,13 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 
 	x = *src;
 
-	dst[5] = x;
+	dst[3] = x;
 	x = (x * 46334) >> 16;
 	dst[0] = x;
 	dst[1] = x;
 	dst[2] = 0;
-	dst[3] = 0;
 	dst[4] = 0;
+	dst[5] = 0;
       }
       channels = 6;
     } else {
@@ -862,8 +804,8 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
       if(channels >= 6) {
 	data = data0;
 	for(i = 0; i < frames; i++) {
-	  x = data[5] + (data[0] + data[1]) / 2;
-	  data[5] = CLIP16(x);
+	  x = data[3] + (data[0] + data[1]) / 2;
+	  data[3] = CLIP16(x);
 	  data += channels;
 	}
       } else {
@@ -882,7 +824,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	  for(; c < 5; c++)
 	    dst[c] = 0;
 
-	  dst[5] = x;
+	  dst[3] = x;
 	}
 	channels = 6;
       }
@@ -906,7 +848,7 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
     }
   }
 
-  audio_deliver(ad, am, data0, channels, frames, rate, pts, epoch, mp);
+  audio_deliver(ad, am, data0, channels, frames, rate, pts, epoch, mp, 0);
 }
 
 
@@ -916,15 +858,15 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
  * set by the audio output module, we use that size, otherwise 1024 frames.
  */
 static void
-audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src, 
+audio_deliver(audio_decoder_t *ad, audio_mode_t *am, const void *src, 
 	      int channels, int frames, int rate, int64_t pts, int epoch,
-	      media_pipe_t *mp)
+	      media_pipe_t *mp, int isfloat)
 {
   audio_buf_t *ab = ad->ad_buf;
   audio_fifo_t *af = thefifo;
   int outsize = am->am_preferred_size ?: 1024;
   int c, r;
-
+  int sample_size = (1 + isfloat) * 2;
   int format;
 
   switch(channels) {
@@ -937,18 +879,20 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
 
   while(frames > 0) {
 
-    if(ab != NULL && ab->ab_channels != channels) {
+    if(ab != NULL && (ab->ab_channels != channels ||
+		      ab->ab_isfloat != isfloat)) {
       /* Channels have changed, flush buffer */
       ab_free(ab);
       ab = NULL;
     }
 
     if(ab == NULL) {
-      ab = af_alloc(sizeof(int16_t) * channels * outsize, mp);
+      ab = af_alloc(sample_size * channels * outsize, mp);
       ab->ab_channels = channels;
       ab->ab_alloced = outsize;
       ab->ab_format = format;
       ab->ab_samplerate = rate;
+      ab->ab_isfloat = isfloat;
       ab->ab_frames = 0;
       ab->ab_pts = AV_NOPTS_VALUE;
     }
@@ -964,10 +908,10 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, int16_t *src,
     r = ab->ab_alloced - ab->ab_frames;
     c = r < frames ? r : frames;
 
-    memcpy(ab->ab_data + sizeof(int16_t) * channels * ab->ab_frames,
-	   src,          sizeof(int16_t) * channels * c);
+    memcpy(ab->ab_data + sample_size * channels * ab->ab_frames,
+	   src,          sample_size * channels * c);
 
-    src           += c * channels;
+    src           += c * channels * sample_size;
     ab->ab_frames += c;
     frames        -= c;
 
@@ -1009,7 +953,7 @@ close_resampler(audio_decoder_t *ad)
 
   av_resample_close(ad->ad_resampler);
   
-  for(c = 0; c < AUDIO_CHAN_MAX; c++) {
+  for(c = 0; c < 8; c++) {
     free(ad->ad_resampler_spill[c]);
     ad->ad_resampler_spill[c] = NULL;
   }
