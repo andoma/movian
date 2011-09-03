@@ -28,6 +28,7 @@
 #include "audio_defs.h"
 #include "event.h"
 #include "misc/strtab.h"
+#include "arch/halloc.h"
 
 extern audio_fifo_t *thefifo;
 extern audio_mode_t *audio_mode_current;
@@ -74,7 +75,7 @@ audio_decoder_create(media_pipe_t *mp)
 
   ad = calloc(1, sizeof(audio_decoder_t));
   ad->ad_mp = mp;
-  ad->ad_outbuf = av_malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE * 2);
+  ad->ad_outbuf = halloc(AVCODEC_MAX_AUDIO_FRAME_SIZE * 2);
 
   TAILQ_INIT(&ad->ad_hold_queue);
 
@@ -119,7 +120,7 @@ audio_decoder_destroy(audio_decoder_t *ad)
 
   audio_decoder_flush(ad);
 
-  av_free(ad->ad_outbuf);
+  hfree(ad->ad_outbuf, AVCODEC_MAX_AUDIO_FRAME_SIZE * 2);
  
   free(ad);
 }
