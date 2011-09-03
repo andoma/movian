@@ -413,6 +413,12 @@ picture_out(vdec_decoder_t *vdd)
       LIST_FOREACH(vp, &vdd->active_pictures, link)
 	if(vp->order == vdd->next_picture) 
 	  break;
+
+      if(vp == NULL) {
+	LIST_FOREACH(vp, &vdd->active_pictures, link)
+	  if(vp->order == vdd->next_picture - 1) 
+	    break;
+      }
     }
 
     if(vp == NULL)
