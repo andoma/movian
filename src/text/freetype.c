@@ -1160,7 +1160,7 @@ text_render0(const uint32_t *uc, const int len,
 
 
       if(oglyph != NULL && 
-	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 0))
+	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 1))
 	oglyph = NULL;
 
       if(items[i].shadow && (oglyph != NULL || glyph != NULL)) {
