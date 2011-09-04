@@ -200,7 +200,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
   mp_flush(mp, 0);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free(mp, *mbp);
+    media_buf_free_unlocked(mp, *mbp);
   *mbp = NULL;
 }
 
@@ -330,17 +330,15 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       si = pkt.stream_index;
 
-      if(si == mp->mp_audio.mq_stream) {
-	/* Current audio stream */
-	mb = media_buf_alloc(mp);
-	mb->mb_data_type = MB_AUDIO;
-
-      } else {
-	/* Check event queue ? */
+      if(si != mp->mp_audio.mq_stream) {
 	av_free_packet(&pkt);
 	continue;
       }
 
+
+
+      mb = media_buf_alloc_unlocked(mp, pkt.size);
+      mb->mb_data_type = MB_AUDIO;
 
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
@@ -352,13 +350,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       mb->mb_stream = pkt.stream_index;
 
-      av_dup_packet(&pkt);
-
-      mb->mb_data = pkt.data;
-      pkt.data = NULL;
-
-      mb->mb_size = pkt.size;
-      pkt.size = 0;
+      memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
 	if(fctx->start_time == AV_NOPTS_VALUE)
@@ -474,7 +466,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   }
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
-    media_buf_free(mp, mb);
+    media_buf_free_unlocked(mp, mb);
 
   media_codec_deref(cw);
   media_format_deref(fw);

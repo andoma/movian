@@ -1704,7 +1704,7 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       
     if(hss != NULL) {
 
-      mb = media_buf_alloc(mp);
+      mb = media_buf_alloc_unlocked(mp, binlen);
       mb->mb_data_type = hss->hss_data_type;
       mb->mb_stream = hss->hss_index;
 
@@ -1722,16 +1722,14 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(hss->hss_cw != NULL)
 	mb->mb_cw = media_codec_ref(hss->hss_cw);
 
-      mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(mb->mb_data, bin, binlen);
-      memset(mb->mb_data + binlen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   
       mb->mb_size = binlen;
 
       if(mb_enqueue_no_block(mp, hss->hss_mq, mb,
 			     mb->mb_data_type == MB_SUBTITLE ? 
 			     mb->mb_data_type : -1))
-	media_buf_free(mp, mb);
+	media_buf_free_unlocked(mp, mb);
     }
   }
   hts_mutex_unlock(&hc->hc_subscription_mutex);

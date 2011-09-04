@@ -199,8 +199,8 @@ ad_thread(void *aux)
     default:
       abort();
     }
-    media_buf_free(mp, mb);
     hts_mutex_lock(&mp->mp_mutex);
+    media_buf_free_locked(mp, mb);
   }
   hts_mutex_unlock(&mp->mp_mutex);
   audio_fifo_purge(thefifo, ad, NULL);

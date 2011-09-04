@@ -158,7 +158,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
   mp_flush(mp, 0);
   
   if(*mbp != NULL) {
-    media_buf_free(mp, *mbp);
+    media_buf_free_unlocked(mp, *mbp);
     *mbp = NULL;
   }
 }
@@ -217,11 +217,9 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
     }
 
     if(mb == NULL) {
-      mb = media_buf_alloc(mp);
+      mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels);
       mb->mb_data_type = MB_AUDIO;
       mb->mb_channels = 2;
-      mb->mb_size = sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels;
-      mb->mb_data = malloc(mb->mb_size);
       mb->mb_rate = sample_rate;
       mb->mb_time = gme_tell(emu) * 1000;
       gme_play(emu, CHUNK_SIZE * mb->mb_channels, mb->mb_data);
@@ -302,7 +300,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
   gme_delete(emu);
 
   if(mb != NULL)
-    media_buf_free(mp, mb);
+    media_buf_free_unlocked(mp, mb);
 
   if(hold) { 
     // If we were paused, release playback again.

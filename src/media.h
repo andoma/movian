@@ -342,13 +342,18 @@ media_codec_t *media_codec_create(enum CodecID id, int parser,
 				  media_format_t *fw, AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
-void media_buf_free(media_pipe_t *mp, media_buf_t *mb);
+void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
+
+void media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb);
 
 #ifdef POOL_DEBUG
-media_buf_t *media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line);
-#define media_buf_alloc(mp) media_buf_alloc_ex(mp, __FILE__, __LINE__)
+media_buf_t *media_buf_alloc_locked_ex(media_pipe_t *mp, const char *file, int line);
+#define media_buf_alloc_locked(mp) media_buf_alloc_locked_ex(mp, __FILE__, __LINE__)
+media_buf_t *media_buf_alloc_unlocked_ex(media_pipe_t *mp, const char *file, int line);
+#define media_buf_alloc_unlocked(mp) media_buf_alloc_unlocked_ex(mp, __FILE__, __LINE__)
 #else
-media_buf_t *media_buf_alloc(media_pipe_t *mp);
+media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
+media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
 #endif
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);

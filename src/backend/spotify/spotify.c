@@ -800,11 +800,9 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   if(mq->mq_packets_current > 100)
     return 0;
 
-  mb = media_buf_alloc(mp);
+  mb = media_buf_alloc_unlocked(mp,  num_frames * 2 * sizeof(int16_t));
   mb->mb_data_type = MB_AUDIO;
   
-  mb->mb_size = num_frames * 2 * sizeof(int16_t);
-  mb->mb_data = malloc(mb->mb_size);
   mb->mb_channels = format->channels;
   mb->mb_rate = format->sample_rate;
 

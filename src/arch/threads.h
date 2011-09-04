@@ -24,6 +24,9 @@
 #ifdef CONFIG_LIBPTHREAD
 
 #include <pthread.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
 /**
  * Mutexes
@@ -34,6 +37,19 @@ typedef pthread_mutex_t hts_mutex_t;
 #define hts_mutex_lock(m)            pthread_mutex_lock(m)
 #define hts_mutex_unlock(m)          pthread_mutex_unlock(m)
 #define hts_mutex_destroy(m)         pthread_mutex_destroy(m)
+
+
+static inline void
+hts_mutex_assert0(pthread_mutex_t *l, const char *file, int line)
+{
+  if(pthread_mutex_trylock(l) == EBUSY)
+    return;
+
+  fprintf(stderr, "Mutex not held at %s:%d\n", file, line);
+  abort();
+}
+
+#define hts_mutex_assert(l) hts_mutex_assert0(l, __FILE__, __LINE__)
 
 /**
  * Condition variables
@@ -97,7 +113,7 @@ extern void hts_mutex_init(hts_mutex_t *m);
 #define hts_mutex_lock(m)     LWP_MutexLock(*(m))
 #define hts_mutex_unlock(m)   LWP_MutexUnlock(*(m))
 #define hts_mutex_destroy(m)  LWP_MutexDestroy(*(m))
-
+#define hts_mutex_assert(m)
 
 /**
  * Condition variables
@@ -146,6 +162,7 @@ extern void hts_mutex_init(hts_mutex_t *m);
 #define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0)
 #define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
 #define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))
+#define hts_mutex_assert(m)
 
 #else
 

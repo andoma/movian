@@ -164,7 +164,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   mp_flush(mp, 0);
   
   if(mbp != NULL && *mbp != NULL) {
-    media_buf_free(mp, *mbp);
+    media_buf_free_unlocked(mp, *mbp);
     *mbp = NULL;
   }
 
@@ -275,7 +275,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
 	size_t size, int skip, int dt, int duration)
 {
   event_t *e = NULL;
-  media_buf_t *mb = media_buf_alloc(r->mp);
+  media_buf_t *mb = media_buf_alloc_unlocked(r->mp, size);
 
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
@@ -285,10 +285,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_pts = pts;
   mb->mb_skip = skip;
 
-  mb->mb_data = malloc(size +   FF_INPUT_BUFFER_PADDING_SIZE);
-  memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   memcpy(mb->mb_data, data, size);
-  mb->mb_size = size;
   mb->mb_epoch = r->epoch;
 
   do {

@@ -78,11 +78,9 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
 
     if(mb == NULL) {
 
-      mb = media_buf_alloc(mp);
+      mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels);
       mb->mb_data_type = MB_AUDIO;
       mb->mb_channels = 2;
-      mb->mb_size = sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels;
-      mb->mb_data = malloc(mb->mb_size);
       mb->mb_rate = 44100;
 
       mb->mb_time = sample * 1000000LL / mb->mb_rate;

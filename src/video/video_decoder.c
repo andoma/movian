@@ -431,8 +431,8 @@ vd_thread(void *aux)
       abort();
     }
 
-    media_buf_free(mp, mb);
     hts_mutex_lock(&mp->mp_mutex);
+    media_buf_free_locked(mp, mb);
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
