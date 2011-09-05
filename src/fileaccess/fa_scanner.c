@@ -32,6 +32,8 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 
+extern int media_buffer_hungry;
+
 typedef struct scanner {
   int s_refcount;
 
@@ -259,6 +261,9 @@ deep_analyzer(scanner_t *s)
   /* Scan all entries */
   TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
 
+    while(media_buffer_hungry && !s->s_stop) 
+      sleep(1);
+
     if(s->s_stop)
       break;
 
@@ -445,7 +450,9 @@ doscan(scanner_t *s)
 
   while(!s->s_stop) {
     sleep(3);
-    rescan(s);
+
+    if(!media_buffer_hungry)
+      rescan(s);
   }
 }
 

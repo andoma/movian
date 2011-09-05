@@ -48,6 +48,11 @@
 
 // -------------------------------
 
+int media_buffer_hungry; /* Set if we try to fill media buffers
+			    Code can check this and avoid doing IO
+			    intensive tasks
+			 */
+
 static hts_mutex_t media_mutex;
 
 static prop_t *media_prop_root;
@@ -228,6 +233,8 @@ mp_create(const char *name, int flags, const char *type)
   prop_t *p;
 
   mp = calloc(1, sizeof(media_pipe_t));
+
+  mp->mp_satisfied = -1;
 
   mp->mp_mb_pool = pool_create("packet headers", 
 			       sizeof(media_buf_t),
@@ -479,6 +486,8 @@ mp_destroy(media_pipe_t *mp)
 
   pool_destroy(mp->mp_mb_pool);
 
+  if(mp->mp_satisfied == 0)
+    atomic_add(&media_buffer_hungry, -1);
   free(mp);
 }
 
@@ -603,11 +612,26 @@ mp_wait_for_empty_queues(media_pipe_t *mp)
 void
 mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 {
-  if(!mp->mp_stats)
-    return;
+  int satisfied = mp->mp_buffer_current * 8 >  mp->mp_buffer_limit * 7;
 
-  prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
-  prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
+  if(satisfied) {
+    if(mp->mp_satisfied == 0) {
+      atomic_add(&media_buffer_hungry, -1);
+      mp->mp_satisfied = 1;
+    }
+  } else {
+    if(mp->mp_satisfied != 0) {
+      atomic_add(&media_buffer_hungry, 1);
+      mp->mp_satisfied = 0;
+    }
+  }
+
+
+  if(mp->mp_stats) {
+    prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
+    prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
+  }
+
 }
 
 /**
@@ -776,6 +800,12 @@ mp_flush(media_pipe_t *mp, int blank)
     mb->mb_data_type = MB_FLUSH;
     mb_enq_tail(mp, a, mb);
   }
+
+  if(mp->mp_satisfied == 0) {
+    atomic_add(&media_buffer_hungry, -1);
+    mp->mp_satisfied = 1;
+  }
+
   hts_mutex_unlock(&mp->mp_mutex);
 
 }
@@ -949,6 +979,8 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
   
   cw->codec_ctx = ctx ?: avcodec_alloc_context();
 
+  //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
+
   cw->codec_ctx->codec_id   = cw->codec->id;
   cw->codec_ctx->codec_type = cw->codec->type;
 
@@ -976,7 +1008,6 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     cw->codec = NULL;
     return -1;
   }
-
   return 0;
 }
 
