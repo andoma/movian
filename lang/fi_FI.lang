@@ -104,6 +104,17 @@ id: Playqueue
 msg: Soittolista
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU on liian hidas käsittelemään videota
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Peruuta
-
-id: OK
-msg: OK
-
 id: Password
 msg: Salasana
 
@@ -141,6 +146,15 @@ msg: Muista minut
 
 id: Username
 msg: Käyttäjätunnus
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Peruuta
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Kirjaudu sisään automaattisesti
 
 id: Enable Spotify
 msg: Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Ystävät
@@ -524,10 +542,6 @@ msg: Värit
 
 id: Enable VDPAU
 msg: VDPAU päälle / pois
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Suhteuta tekstitykset näytölle

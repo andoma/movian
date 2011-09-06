@@ -104,6 +104,17 @@ id: Playqueue
 msg: Cola de reproduccion
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU demasiado lento para decodificar video
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
 id: Password
 msg: Contraseña
 
@@ -141,6 +146,15 @@ msg: Recordarme
 
 id: Username
 msg: Nombre de Usuario
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Ingreso automático al comienzo de Showtime
 
 id: Enable Spotify
 msg: Habilitar Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Amigos
@@ -522,10 +540,6 @@ msg: Color
 
 id: Enable VDPAU
 msg: Activar VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Forzar subtítulo sobre cuadro de video

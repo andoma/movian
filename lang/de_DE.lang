@@ -104,6 +104,17 @@ id: Playqueue
 msg: Abspielliste
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU ist zu langsam um das Video zu dekodieren
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Abbrechen
-
-id: OK
-msg: OK
-
 id: Password
 msg: Passwort
 
@@ -141,6 +146,15 @@ msg: Namen speichern
 
 id: Username
 msg: Benutzername
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Abbrechen
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Automatisch bei Programmstart einloggen
 
 id: Enable Spotify
 msg: Spotify anschalten
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Freunde
@@ -523,10 +541,6 @@ msg: Farbe
 
 id: Enable VDPAU
 msg: VDPAU aktivieren
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Untertitel auf Videoframe aufzwingen

@@ -104,6 +104,17 @@ id: Playqueue
 msg: Listă de așteptare
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: Procesorul este prea lent pentru a decoda acest video
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Anulează
-
-id: OK
-msg: OK
-
 id: Password
 msg: Parola
 
@@ -141,6 +146,15 @@ msg: Memorează datele
 
 id: Username
 msg: Nume de utilizator
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Anulează
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Logare automată la pornirea Showtime
 
 id: Enable Spotify
 msg: Activează Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Prieteni
@@ -516,10 +534,6 @@ msg: Culoare
 
 id: Enable VDPAU
 msg: Activează VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Forțează subtitrarea să rămână pe imagine

@@ -104,6 +104,17 @@ id: Playqueue
 msg: 播放佇列
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: 處理器速度過慢，無法正常解碼視訊信號
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 確定
-
 id: Password
 msg: 密碼
 
@@ -141,6 +146,15 @@ msg: 記住登入資訊
 
 id: Username
 msg: 使用者帳號
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 確定
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: 啟動 Showtime 時自動登入
 
 id: Enable Spotify
 msg: 啟用 Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: 聯絡人
@@ -516,9 +534,6 @@ msg: 色彩
 
 id: Enable VDPAU
 msg: 啟用 VDPAU
-
-id: Force Level 4.2 for h264 content
-msg: 強制使用 h264 Level 4.2 播放 h264 格式視訊
 
 id: Force subtitles to reside on video frame
 msg: 字幕強制顯示於視訊影格上

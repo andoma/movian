@@ -105,6 +105,17 @@ id: Playqueue
 msg: Lista de reprodução
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -128,12 +139,6 @@ msg: O CPU é muito lento para descodificar este vídeo
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
 id: Password
 msg: Palavra-passe
 
@@ -142,6 +147,15 @@ msg: Lembrar-me
 
 id: Username
 msg: Nome do utilizador
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -262,6 +276,10 @@ msg: Login automático quando o Showtime iniciar
 
 id: Enable Spotify
 msg: Ativar Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Amigos
@@ -524,10 +542,6 @@ msg: Cor
 
 id: Enable VDPAU
 msg: Ativar VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Forçar as legendas a residerem no quadro de vídeo

@@ -104,6 +104,17 @@ id: Playqueue
 msg: Lista odtwarzania
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: Procesor jest zbyt wolny by dekodować te wideo
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Anuluj
-
-id: OK
-msg: OK
-
 id: Password
 msg: Hasło
 
@@ -141,6 +146,15 @@ msg: Zapamiętaj
 
 id: Username
 msg: Nazwa użytkownika
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Anuluj
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Automayczne logowanie przy starcie programu
 
 id: Enable Spotify
 msg: Włącz Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Przyjaciele
@@ -522,10 +540,6 @@ msg: Kolor
 
 id: Enable VDPAU
 msg: Włącz VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Wymuś wyswietlanie napisów

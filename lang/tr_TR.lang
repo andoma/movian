@@ -104,6 +104,17 @@ id: Playqueue
 msg: Playqueue
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU yavaş kalıyor bu video'da
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: İptal
-
-id: OK
-msg: Tammam
-
 id: Password
 msg: Şifre
 
@@ -141,6 +146,15 @@ msg: Hatırla beni
 
 id: Username
 msg: Kulanıcı Adı
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Showtime başlarken Otomatik giriş
 
 id: Enable Spotify
 msg: Spotify etkinleştirin
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Arkadaşlar
@@ -523,10 +541,6 @@ msg: renk
 
 id: Enable VDPAU
 msg: VDPAU etkin
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Force subtitles to reside on video frame

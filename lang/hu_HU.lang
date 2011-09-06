@@ -104,6 +104,17 @@ id: Playqueue
 msg: Lejátszási lista
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: A Processzor túl lassú hogy dekódolja ezt a videót
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Mégse
-
-id: OK
-msg: OK
-
 id: Password
 msg: Jelszó
 
@@ -141,6 +146,15 @@ msg: Emlékezz rám
 
 id: Username
 msg: Felhasználonév
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Mégse
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Automatikus bejelentkezés a Showtime inditásakor
 
 id: Enable Spotify
 msg: Spotify Engedélyezés
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Barátok
@@ -516,9 +534,6 @@ msg: Szin
 
 id: Enable VDPAU
 msg: VDPAU Engedélyezés
-
-id: Force Level 4.2 for h264 content
-msg: Eröltetett Level 4.2 a h264 tartalomhoz
 
 id: Force subtitles to reside on video frame
 msg: Eröltetett felirat a hozzátartozó képkockán

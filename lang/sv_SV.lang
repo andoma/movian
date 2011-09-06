@@ -104,6 +104,15 @@ id: Playqueue
 msg: Spelkö
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Uppspelningsstatus
+
+id: Unable to start video playback
+msg: Kan ej starta uppspelning av video
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +136,6 @@ msg: CPUn är för långsam för att spela upp videon
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
 id: Password
 msg: Lösenord
 
@@ -141,6 +144,15 @@ msg: Kom ihåg mig
 
 id: Username
 msg: Användarnamn
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +273,9 @@ msg: Logga automatiskt in när Showtime startar
 
 id: Enable Spotify
 msg: Använd Spotify
+
+id: Forget me
+msg: Glöm mig
 
 id: Friends
 msg: Vänner
@@ -516,10 +531,6 @@ msg: Färg
 
 id: Enable VDPAU
 msg: Aktivera VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Tvinga undertexter att alltid ligga ovanpå videobilden

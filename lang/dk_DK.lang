@@ -104,6 +104,17 @@ id: Playqueue
 msg: Spilkø
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPUen er for langsom til at afkode denne video
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
-
 id: Password
 msg: Kodeord
 
@@ -141,6 +146,15 @@ msg: Husk mig
 
 id: Username
 msg: Brugernavn
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Automatisk login når Showtime starter
 
 id: Enable Spotify
 msg: Anvend Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Venner
@@ -516,10 +534,6 @@ msg: Farve
 
 id: Enable VDPAU
 msg: Aktiver VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Tving undettekster til at ligge ovenpå videobilledet

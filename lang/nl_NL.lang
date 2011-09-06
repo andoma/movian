@@ -104,6 +104,17 @@ id: Playqueue
 msg: Afspeellijst
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU is te langzaam om deze video te decoderen
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Annuleren
-
-id: OK
-msg: Oké
-
 id: Password
 msg: Wachtwoord
 
@@ -141,6 +146,15 @@ msg: Onthoud mij
 
 id: Username
 msg: Gebruikersnaam
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Annuleren
+
+id: OK
+msg: Oké
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +275,10 @@ msg: Automatisch inloggen als Showtime opstart
 
 id: Enable Spotify
 msg: Spotify inschakelen
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Vrienden
@@ -516,9 +534,6 @@ msg: Kleur
 
 id: Enable VDPAU
 msg: VDPAU inschakelen
-
-id: Force Level 4.2 for h264 content
-msg: Level 4.2 voor h264-inhoud forceren
 
 id: Force subtitles to reside on video frame
 msg: Ondertitels forceren om op de videoframe te blijven
