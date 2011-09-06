@@ -21,7 +21,7 @@
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
   _glossybuttonTextRight(ICON="skin://icons/Check.png",
-			 CAPTION="OK",
+			 CAPTION=_("OK"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
 			 HIDDEN=HIDDEN);
@@ -29,7 +29,7 @@
 
 #define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
   _glossybuttonTextRight(ICON="skin://icons/Delete.png",
-			 CAPTION="Cancel",
+			 CAPTION=_("Cancel"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
 			 HIDDEN=HIDDEN);

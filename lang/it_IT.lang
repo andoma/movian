@@ -104,6 +104,15 @@ id: Playqueue
 msg: Coda di riproduzione
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Stato di riproduzione
+
+id: Unable to start video playback
+msg: Impossibile avviare la riproduzione del video
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +136,6 @@ msg: CPU troppo lenta per poter decodificare questo video
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
 id: Password
 msg: Password
 
@@ -141,6 +144,15 @@ msg: Ricordami
 
 id: Username
 msg: Nome Utente
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -261,6 +273,9 @@ msg: Login automatico all'avvio di Showtime
 
 id: Enable Spotify
 msg: Attiva Spotify
+
+id: Forget me
+msg: Dimenticami
 
 id: Friends
 msg: Amici

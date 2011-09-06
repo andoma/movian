@@ -32,9 +32,9 @@ widget(container_x, {
 	  .spacing = 20;
 	  .homogenous = true;
 
-	  popupButtonOK(deliverEvent($self.eventSink, _("OK")),
+	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
 			0.5, !$self.ok);
-	  popupButtonCancel(deliverEvent($self.eventSink, _("Cancel")),
+	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
 			    1.0, !$self.cancel);
 	});
       });
