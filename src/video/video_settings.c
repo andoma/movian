@@ -136,14 +136,6 @@ set_vzoom(void *opaque, int v)
   video_settings.vzoom = v;
 }
 
-#if ENABLE_PS3_VDEC
-static void
-set_force_42(void *opaque, int v)
-{
-  video_settings.force_42 = v;
-}
-#endif
-
 void
 video_settings_init(void)
 {
@@ -178,16 +170,6 @@ video_settings_init(void)
 		      "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
-
-
-#if ENABLE_PS3_VDEC
-  settings_create_bool(s, "force42", _p("Force Level 4.2 for h264 content"), 0,
-		       store, set_force_42, NULL, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"videoplayback");
-#endif
-
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
 		       _p("Generic settings for video subtitles"));
