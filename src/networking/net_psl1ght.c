@@ -105,8 +105,8 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int x;
   size_t off = 0;
   while(1) {
-
-    x = netRecv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
+    size_t r = MIN(65536, len - off);
+    x = netRecv(tc->fd, buf + off, r, all ? MSG_WAITALL : 0);
     if(x <= 0)
       return -1;
     
@@ -347,7 +347,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 void
 tcp_huge_buffer(tcpcon_t *tc)
 {
-  int v = 192 * 1024;
+  int v = 512 * 1024;
   int r = netSetSockOpt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v));
   if(r < 0)
     TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");

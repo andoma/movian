@@ -58,7 +58,7 @@ static uint8_t nonce[20];
  * If we read more than this in a sequence, we switch to a continous
  * HTTP stream (instead of ranges)
  */
-#define STREAMING_LIMIT 1000000
+#define STREAMING_LIMIT 128000
 
 
 
@@ -546,8 +546,6 @@ typedef struct http_file {
 		      * rather than random seeking 
 		      */
 
-  char hf_huge_buf;  // Ask TCP for huge receive buffers
-  
   prop_t *hf_stats_speed;
 
 #define STAT_VEC_SIZE 20
@@ -1359,9 +1357,6 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
 					  hf->hf_debug);
 
-  if(hf->hf_connection && hf->hf_huge_buf)
-    tcp_huge_buffer(hf->hf_connection->hc_tc);
-
   return hf->hf_connection ? 0 : -1;
 }
 
@@ -1401,6 +1396,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   if(hf->hf_streaming) {
     htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
     http_headers_auth(&headers, hf, "GET", NULL);
+    tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
     htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
@@ -1708,7 +1704,6 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG);
   hf->hf_streaming = !!(flags & FA_STREAMING);
-  hf->hf_huge_buf = !!(flags & FA_HUGE_BUFFER);
 
   if(stats != NULL) {
     hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
@@ -1815,6 +1810,8 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	  TRACE(TRACE_DEBUG, "HTTP", "%s: switching to streaming mode",
 		hf->hf_url);
 	snprintf(range, sizeof(range), "bytes=%"PRId64"-", hf->hf_pos);
+	tcp_huge_buffer(hf->hf_connection->hc_tc);
+
       } else {
 
 	int64_t end = hf->hf_pos + read_size;
