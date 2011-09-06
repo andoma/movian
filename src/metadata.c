@@ -35,6 +35,9 @@
 static int metadb_valid;
 static char *meta_db_path;
 
+static hts_mutex_t metadb_reuse_lock;
+static sqlite3 *metadb_reuse;
+
 /**
  *
  */
@@ -386,7 +389,6 @@ metadb_upgrade(sqlite3 *db)
   rollback(db);
 }
 
-
 /**
  *
  */
@@ -396,6 +398,8 @@ metadb_init(void)
   sqlite3 *db;
   extern char *showtime_persistent_path;
   char buf[256];
+
+  hts_mutex_init(&metadb_reuse_lock);
 
   snprintf(buf, sizeof(buf), "%s/metadb", showtime_persistent_path);
   mkdir(buf, 0770);
@@ -424,6 +428,13 @@ metadb_get(void)
   char *errmsg;
   sqlite3 *db;
  
+  hts_mutex_lock(&metadb_reuse_lock);
+  if((db = metadb_reuse) != NULL)
+    metadb_reuse = NULL;
+  hts_mutex_unlock(&metadb_reuse_lock);
+  if(db != NULL)
+    return db;
+
   rc = sqlite3_open_v2(meta_db_path, &db,
 		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | 
 		       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,
@@ -458,6 +469,13 @@ metadb_close(void *db)
   if(db == NULL)
     return;
 
+  hts_mutex_lock(&metadb_reuse_lock);
+  if(metadb_reuse == NULL) {
+    metadb_reuse = db;
+    hts_mutex_unlock(&metadb_reuse_lock);
+    return;
+  }
+  hts_mutex_unlock(&metadb_reuse_lock);
   sqlite3_close(db);
 }
 
