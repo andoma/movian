@@ -493,9 +493,9 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_json.c                \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
-	-Iext/spidermonkey -Isrc/arch/nspr -DDEBUG=1
+	-Iext/spidermonkey -Isrc/arch/nspr
 
-CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE -DJS_GC_ZEAL
+CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
 
 #
 # polarssl
@@ -556,7 +556,7 @@ OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
-CFLAGS_com += -g -funsigned-char ${OPTFLAGS}
+CFLAGS_com += -g -funsigned-char ${OPTFLAGS} ${CFLAGS_dbg}
 CFLAGS_com += -D_FILE_OFFSET_BITS=64
 CFLAGS_com += -I${BUILDDIR} -I${CURDIR}/src -I${CURDIR}
 

@@ -17,8 +17,6 @@ BUILDDIR=build.${PLATFORM}
 GLW_DEFAULT_THEME="mono"
 DEFAULT_LOGTARGET=""
 
-RELEASENAME=`head -n1 ${TOPDIR}/ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
-
 CONFIG_LIST="
  libasound
  libpulse
@@ -297,8 +295,9 @@ finalize() {
 
     # Release tag
     if enabled release; then
-	echo Release build: ${RELEASENAME}
-	echo >>${CONFIG_H} "#define SHOWTIME_RELEASE_TAG \"${RELEASENAME}\""
+	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DNDEBUG -D_NDEBUG"
+    else
+	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DJS_GC_ZEAL -DDEBUG=1"
     fi
 
     cat >> ${CONFIG_MAK} << EOF 
