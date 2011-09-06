@@ -11,7 +11,10 @@ widget(container_y, {
     .filterConstraintX = true;
   });
 
+
   widget(list_y, {
+    &view.focused = focusedChild();
+
     cloner($args.metadata.events.list, container_x, {
 
       widget(label, {
@@ -23,8 +26,22 @@ widget(container_y, {
       widget(label, {
 	.caption = $self.title;
 	.ellipsize = true;
+	.focusable = true;
+	.focusOnClick = true;
+        .color = select(isFocused(), 1.0, 0.6);
       });
 
     });
   });
+
+      HORIZONTAL_SEPARATOR();	
+
+	widget(label, {
+		.sizeScale = 0.8;
+		.autohide = true;
+		.maxlines = 10;
+		.caption = $view.focused.description;
+		.ellipsize = true;
+	});
 });
+
