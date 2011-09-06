@@ -92,7 +92,7 @@ waitFlip()
 static void
 flip(glw_ps3_t *gp, s32 buffer) 
 {
-  assert(gcmSetFlip(gp->gr.gr_be.be_ctx, buffer) == 0);
+  gcmSetFlip(gp->gr.gr_be.be_ctx, buffer);
   realityFlushBuffer(gp->gr.gr_be.be_ctx);
   gcmSetWaitFlip(gp->gr.gr_be.be_ctx);
 }
@@ -165,11 +165,10 @@ init_screen(glw_ps3_t *gp)
 
 
   VideoState state;
-  assert(videoGetState(0, 0, &state) == 0); // Get the state of the display
-  assert(state.state == 0); // Make sure display is enabled
+  videoGetState(0, 0, &state);
   
   // Get the current resolution
-  assert(videoGetResolution(state.displayMode.resolution, &gp->res) == 0);
+  videoGetResolution(state.displayMode.resolution, &gp->res);
   
   int num = gp->res.width;
   int den = gp->res.height;
@@ -200,8 +199,8 @@ init_screen(glw_ps3_t *gp)
   vconfig.format = VIDEO_BUFFER_FORMAT_XRGB;
   vconfig.pitch = gp->framebuffer_pitch;
 
-  assert(videoConfigure(0, &vconfig, NULL, 0) == 0);
-  assert(videoGetState(0, 0, &state) == 0); 
+  videoConfigure(0, &vconfig, NULL, 0);
+  videoGetState(0, 0, &state);
   
   const s32 buffer_size = gp->framebuffer_pitch * gp->res.height; 
   const s32 depth_buffer_size = gp->depthbuffer_pitch * gp->res.height;
