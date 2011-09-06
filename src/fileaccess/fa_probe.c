@@ -571,7 +571,7 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize)
   AVIOContext *avio;
 
   if((avio = fa_libav_open(url, 32768, errbuf, errsize, 0, NULL)) == NULL)
-    return -1;
+    return NULL;
 
   metadata_t *md = metadata_create();
 

@@ -510,13 +510,14 @@ doscan(scanner_t *s)
 	  "Unable to scan %s -- %s -- Retrying in background",
 	  s->s_url, errbuf);
     s->s_fd = fa_dir_alloc();
-    prop_set_int(s->s_loading, 0);
   }
+  prop_set_int(s->s_loading, 0);
 
   if(pending_rescan)
     rescan(s);
 
   closedb(s);
+
 
   if(fa_notify(s->s_url, s, scanner_notification, scanner_checkstop)) {
     /* Can not do notifcations */
