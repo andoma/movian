@@ -30,8 +30,6 @@
 #include "showtime.h"
 #include "audio/audio_defs.h"
 
-#define SHW64(X) (u32)(((u64)X)>>32), (u32)(((u64)X)&0xFFFFFFFF)
-
 static float audio_vol;
 
 
