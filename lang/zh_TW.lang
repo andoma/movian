@@ -65,13 +65,13 @@ id: Total system RAM: %d kB
 msg: 系統記憶體總容量： %d kB
 
 id: Version: %s
-msg: 版本: %s
+msg: 版本： %s
 
 id: Width: %d px
 msg: 寬度： %d 像素
 
 id: Windowmanager: %s
-msg: 視窗管理員: %s
+msg: 視窗管理員： %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -107,12 +107,10 @@ msg: 播放佇列
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: 影片資訊
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: 影片無法播放
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -277,8 +275,7 @@ id: Enable Spotify
 msg: 啟用 Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: 清除使用者資訊
 
 id: Friends
 msg: 聯絡人
@@ -347,28 +344,28 @@ id: Language codes should be configured as three character ISO codes, example (e
 msg: 語言代碼必須符合 ISO 三碼標準（範例：eng, chi）
 
 id: Preferred languages
-msg: 偏好語言
+msg: 設定偏好語言
 
 id: Primary audio language code
-msg: 主要音訊語言
+msg: 主要音訊語言代碼
 
 id: Primary subtitle language code
-msg: 主要字幕語言
+msg: 主要字幕語言代碼
 
 id: SRT character set
 msg: SRT 字元集
 
 id: Secondary audio language code
-msg: 次要音訊語言
+msg: 次要音訊語言代碼
 
 id: Secondary subtitle language code
-msg: 次要字幕語言
+msg: 次要字幕語言代碼
 
 id: Tertiary audio language code
-msg: 第三音訊語言
+msg: 第三音訊語言代碼
 
 id: Tertiary subtitle language code
-msg: 第三字幕語言
+msg: 第三字幕語言代碼
 
 #
 # ./src/ipc/serdev/lgtv.c
@@ -413,7 +410,7 @@ msg: 視訊縮放
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: No handler for URL
+msg: URL 位址沒有對應的處理規則
 
 #
 # ./src/plugins.c
@@ -473,7 +470,7 @@ msg: 設定
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: 顯示與使用者介面
+msg: 顯示器與使用者介面
 
 id: Horizontal underscan
 msg: 水平欠掃描(underscan)
@@ -530,7 +527,7 @@ id: Center
 msg: 置中
 
 id: Color
-msg: 色彩
+msg: 字幕色彩
 
 id: Enable VDPAU
 msg: 啟用 VDPAU
