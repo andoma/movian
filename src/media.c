@@ -999,7 +999,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
       cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
   }
 
-  if(audio_mode_prefer_float())
+  if(audio_mode_prefer_float() && cw->codec->id != CODEC_ID_AAC)
     cw->codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_FLT;
 
   if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
