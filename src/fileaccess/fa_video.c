@@ -707,7 +707,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
 
   // Start it
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+  mp_configure(mp, (seek_is_fast ? MP_PLAY_CAPS_SEEK : 0) | MP_PLAY_CAPS_PAUSE,
 	       MP_BUFFER_DEEP);
 
   if(!(flags & BACKEND_VIDEO_NO_AUDIO))
