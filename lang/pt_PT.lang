@@ -29,11 +29,10 @@ msg: Adicionado por: %s
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Desligado
+msg: Deslig.
 
 id: On
-# Missing translation
-msg: 
+msg: Ligado
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -108,12 +107,10 @@ msg: Lista de reprodução
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Estado da reprodução
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Não foi possível iniciar a reprodução do vídeo
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -278,8 +275,7 @@ id: Enable Spotify
 msg: Ativar Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Esquecer-me
 
 id: Friends
 msg: Amigos
@@ -345,8 +341,7 @@ id: Language
 msg: Idioma
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-# Missing translation
-msg: 
+msg: Os códigos de idioma devem ser configurados com códigos ISO de 3 caracteres (ex: eng, fra, por)
 
 id: Preferred languages
 msg: Idiomas preferidos
@@ -421,28 +416,22 @@ msg: Nenhum handler para o URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: URI inválido
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: O plugin com o ID %s não existe
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: O plugin com o ID %s não tem URL de download
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Não foi possível carregar o plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Não foi possível obter o repositório de plugins: %s
 
 #
 # ./src/runcontrol.c
@@ -517,10 +506,10 @@ id: Device not found
 msg: O dispositivo não foi encontrado
 
 id: Malformed URI after device
-msg: URI mal formado depois do dispositivo
+msg: Sintaxe de URI incorreta depois do dispositivo
 
 id: Malformed URI after service
-msg: URI mal formado depois do serviço
+msg: Sintaxe de URI incorreta depois do serviço
 
 id: Service not found
 msg: O serviço não foi encontrado
