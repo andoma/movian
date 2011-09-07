@@ -1,11 +1,11 @@
 language: German
 native: Deutsch
-maintainer: 
+maintainer: Maximilian Jänsch <showtime@jaensch-koloska.de>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Soundeinstellungen
+msg: Audioeinstellungen
 
 id: Languages
 msg: Sprachen
@@ -38,13 +38,13 @@ msg: An
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Verfuegbarer Systemspeicher: %d kB
+msg: Verfügbarer Systemspeicher: %d kB
 
 id: Detected CPUs: %d
 msg: Gefundene CPUs: %d
 
 id: Display info
-msg: Zeige Infos an
+msg: Anzeige Infos
 
 id: Framerate: %.2f Hz
 msg: Bildrate %.2f Hz
@@ -83,7 +83,7 @@ msg: Über
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Home
+msg: Hauptmenü
 
 #
 # ./glwthemes/mono/pages/openerror.view
@@ -101,18 +101,16 @@ msg: Seitenladefehler
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Abspielliste
+msg: Wiedergabeliste
 
 #
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Wiedergabe Status
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Videowiedergabe kann nicht gestartet werden
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -202,10 +200,10 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 id: Starwars scroller tilt
-msg: Neigung des Starwars-scrollers
+msg: Neigung des Starwars-Scrollers
 
 id: Top bar navigation buttons
-msg: Navigationsknöpfe obere Leiste
+msg: Navigationsknöpfe in der oberen Leiste
 
 #
 # ./src/api/opensubtitles.c
@@ -235,7 +233,7 @@ id: Phantom center
 msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Wähle das Audioausgabegerät und eine Konfiguration
+msg: Audiogerätewahl und Einstellungen
 
 id: Small front speakers
 msg: kleine Frontlautsprecher
@@ -277,8 +275,7 @@ id: Enable Spotify
 msg: Spotify anschalten
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Benutzer vergessen
 
 id: Friends
 msg: Freunde
@@ -296,13 +293,13 @@ id: New releases
 msg: Neuerscheinungen
 
 id: Playlists
-msg: Abspiellisten
+msg: Wiedergabelisten
 
 id: Relogin (switch user)
 msg: Neu einloggen (Benutzer wechseln)
 
 id: Search result
-msg: Suchergebnise
+msg: Suchergebnisse
 
 id: Spotify friends
 msg: Spotify Freunde
@@ -314,7 +311,7 @@ id: Spotify offers you legal and free access to a huge library of music. To use 
 msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamens und Passworts aufgefordert.
 
 id: Spotify playlists
-msg: Spotyfyabspielliste
+msg: Spotyfy Wiedergabeliste
 
 id: Starred
 msg: Starred
@@ -335,7 +332,7 @@ msg: Suchen per Unix locatedb
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Suchen per spotlight
+msg: Suchen per Spotlight
 
 #
 # ./src/i18n.c
@@ -344,8 +341,7 @@ id: Language
 msg: Sprache
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-# Missing translation
-msg: 
+msg: Sprachwahl als 3-stelligen ISO-Code, z.B.: eng,swe,ger
 
 id: Preferred languages
 msg: Bevorzugte Sprachen
@@ -414,34 +410,28 @@ msg: Video zoom
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: kein handler für URL
+msg: kann URL nicht verarbeiten
 
 #
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: Ungültige URI
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Plugin ID %s existiert nicht
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Plugin ID %s hat keine Download URL
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Kann plugin.json nicht laden
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: kann plugin.json nicht laden: fehlformatiertes JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Kann die Zustaz-Verwaltung nicht abfragen
 
 #
 # ./src/runcontrol.c
@@ -468,7 +458,7 @@ msg: Typ
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Anwendungen und installierte Plugins
+msg: Anwendungen und installierte Zusätze
 
 id: Discovered media sources
 msg: Gefundene Medienquellen
@@ -507,7 +497,7 @@ msg: Mausrad für hoch/runter verwenden
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Verfügbar im Homescreen
+msg: Verfügbar im Hauptmenü
 
 #
 # ./src/upnp/upnp_browse.c
@@ -582,7 +572,7 @@ id: Subtitle styling
 msg: Untertitelstil
 
 id: Subtitles
-msg: Untertiel
+msg: Untertitel
 
 id: Video acceleration and display behaviour
 msg: Videobeschleunigung und Anzeigeverhalten
