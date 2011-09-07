@@ -959,6 +959,7 @@ text_render0(const uint32_t *uc, const int len,
 
   int target_width  = siz_x / 64 + 3; /// +3 ???
   int target_height = 0;
+  int margin = 0;
 
   TAILQ_FOREACH(li, &lq, link) {
 
@@ -966,6 +967,7 @@ text_render0(const uint32_t *uc, const int len,
     int descender = 0;
     int shadow = 0;
     int outline = 0;
+    int topspill = 0;
 
     switch(li->type) {
 
@@ -979,12 +981,20 @@ text_render0(const uint32_t *uc, const int len,
 			64 * f->descender * g->size / f->units_per_EM);
 	shadow = MAX(items[i].shadow, shadow);
 	outline = MAX(items[i].outline, outline);
+
+	topspill = MAX(topspill, g->bbox.yMax - height * 64 - descender);
       }
 
       li->height = height ?: li->default_height;
       li->descender = descender;
       li->shadow = shadow;
       li->outline = outline;
+
+      if(li == TAILQ_FIRST(&lq))
+	margin = MAX(margin, 2 * li->outline + topspill);
+
+      if(li == TAILQ_LAST(&lq, line_queue))
+	margin = MAX(margin, MAX(li->shadow*64, li->outline*2));
 
       if(max_lines > 1 && li->alignment == TR_ALIGN_JUSTIFIED) {
 	int spaces = 0;
@@ -1008,15 +1018,6 @@ text_render0(const uint32_t *uc, const int len,
   int origin_y = target_height * 64;
   start_x = -bbox.xMin;
   start_y = 0;
-
-  int margin = 0;
-
-  li = TAILQ_FIRST(&lq);
-  if(li != NULL) {
-    margin = li->outline*2;
-    li = TAILQ_LAST(&lq, line_queue);
-    margin = MAX(margin, MAX(li->shadow*64, li->outline*2));
-  }
 
   margin = (margin + 63) / 64;
 
