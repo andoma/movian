@@ -30,11 +30,12 @@ typedef struct audio_mode {
   uint32_t am_formats;
 #define AM_FORMAT_PCM_STEREO        0x1
 #define AM_FORMAT_PCM_5DOT1         0x2
-#define AM_FORMAT_PCM_7DOT1         0x4
-#define AM_FORMAT_PCM_MASK          0x7
+#define AM_FORMAT_PCM_6DOT1         0x4
+#define AM_FORMAT_PCM_7DOT1         0x8
+#define AM_FORMAT_PCM_MASK          0xf
 
-#define AM_FORMAT_AC3               0x8
-#define AM_FORMAT_DTS               0x10
+#define AM_FORMAT_AC3               0x10
+#define AM_FORMAT_DTS               0x20
 
   uint32_t am_sample_rates;
 #define AM_SR_96000 0x1

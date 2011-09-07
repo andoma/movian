@@ -87,10 +87,7 @@ copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
   int i;
   const float *src = (const float *)ab->ab_data;
 
-  if(ab->ab_channels == channels) {
-    memcpy(buf, src, sizeof(float) * AUDIO_BLOCK_SAMPLES * channels);
-
-  } else if(ab->ab_channels == 6 && channels == 8) {
+  if(ab->ab_channels == 6 && channels == 8) {
     for (i = 0; i < AUDIO_BLOCK_SAMPLES * 6; i+=6) {
       *buf++ = src[i+0];
       *buf++ = src[i+1];
@@ -101,6 +98,41 @@ copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
       *buf++ = 0;
       *buf++ = 0;
     }
+    return;
+  }
+
+
+  if(ab->ab_channels == 7 && channels == 8) {
+    // 5.1 + rear center
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 7; i+=7) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = src[i+2];
+      *buf++ = src[i+3];
+      *buf++ = src[i+5];
+      *buf++ = src[i+6];
+      *buf++ = src[i+4] * 0.707;
+      *buf++ = src[i+4] * 0.707;
+    }
+    return;
+  }
+
+  if(ab->ab_channels == 8 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 8; i+=8) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = src[i+2];
+      *buf++ = src[i+3];
+      *buf++ = src[i+6];
+      *buf++ = src[i+7];
+      *buf++ = src[i+4];
+      *buf++ = src[i+5];
+    }
+    return;
+  }
+
+  if(ab->ab_channels == channels) {
+    memcpy(buf, src, sizeof(float) * AUDIO_BLOCK_SAMPLES * channels);
   } else {
     fillBuffersilence(buf, channels);
   }
@@ -230,6 +262,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	  }
 	  break;
 
+	case 7:
 	case 8:
 	  achannels = 8;
 	  if(max_pcm == 8) {
@@ -325,7 +358,8 @@ audio_ps3_init(void)
   audio_mode_t *am = calloc(1, sizeof(audio_mode_t));
 
   am->am_formats =
-    AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
+    AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | 
+    AM_FORMAT_PCM_6DOT1  | AM_FORMAT_PCM_7DOT1;
   am->am_sample_rates = AM_SR_48000;
 
   max_pcm = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,

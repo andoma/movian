@@ -873,6 +873,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, const void *src,
   switch(channels) {
   case 2: format = AM_FORMAT_PCM_STEREO; break;
   case 6: format = AM_FORMAT_PCM_5DOT1;  break;
+  case 7: format = AM_FORMAT_PCM_6DOT1;  break;
   case 8: format = AM_FORMAT_PCM_7DOT1;  break;
   default:
     return;
