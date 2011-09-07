@@ -76,7 +76,7 @@ typedef struct vdec_pic {
  */
 typedef struct vdec_decoder {
   uint32_t handle;
-  struct vdec_config_ex config;
+  struct vdec_config config;
   void *mem;
   
   video_decoder_t *vd;
@@ -772,9 +772,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
-  struct vdec_type_ex dec_type = {0};
+  struct vdec_type dec_type = {0};
   struct vdec_attr dec_attr = {0};
-  struct vdec_h264_specific_info h264_info;
   int spu_threads;
   int r;
 
@@ -799,14 +798,6 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     }
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    h264_info.thisSize = sizeof(h264_info);
-    h264_info.maxDecodedFrameWidth = mcp->width;
-    h264_info.maxDecodedFrameHeight = mcp->height;
-    h264_info.disableDeblockingFilter = 0;
-    h264_info.numberOfDecodedFrameBuffer = 0;
-
-    dec_type.specific_info_addr = (intptr_t)&h264_info;
-
     if(mcp->level != 0 && mcp->level <= 42)
       dec_type.profile_level = mcp->level;
     else {
@@ -822,7 +813,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     return 1;
   }
 
-  r = vdec_query_attr_ex(&dec_type, &dec_attr);
+  r = vdec_query_attr(&dec_type, &dec_attr);
   if(r) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to open decoder: 0x%x", r);
     return 1;
@@ -858,7 +849,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   c.fn = (intptr_t)OPD32(decoder_callback);
   c.arg = (intptr_t)vdd;
 
-  r = vdec_open_ex(&dec_type, &vdd->config, &c, &vdd->handle);
+  r = vdec_open(&dec_type, &vdd->config, &c, &vdd->handle);
   if(r) {
     TRACE(TRACE_ERROR, "VDEC", "Unable to open codec: 0x%x", r);
     Lv2Syscall1(349, (uint64_t)vdd->mem);
