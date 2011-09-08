@@ -19,6 +19,7 @@
                     .sizeScale = 1.0;
                     .caption = $page.model.metadata.content;
                     .ellipsize = true;
+                    .maxlines = 250;
                 });
             });
 	}));
