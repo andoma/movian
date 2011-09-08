@@ -229,7 +229,8 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   int64_t start, stop, pstart = -1, pstop = -1;
   linereader_t lr;
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
-  char *txt = NULL, *tmp = NULL, *txt_term = NULL;
+  char *txt = NULL, *tmp = NULL;
+  size_t txtoff = 0;
   
   RB_INIT(&es->es_entries);
 
@@ -249,11 +250,11 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
 
     if(get_srt_timestamp(&lr, &start, &stop) == 0) {
       if(txt != NULL && pstart != -1 && pstop != -1) {
-	if(txt_term != NULL)
-	  *txt_term = 0;
+	txt[txtoff] = 0;
 	ese_insert(es, txt, pstart, pstop);
 	txt = NULL;
 	tlen = 0;
+	txtoff = 0;
       }
       pstart = start;
       pstop  = stop;
@@ -266,13 +267,12 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
     memcpy(txt + tlen, lr.buf, lr.ll);
     txt[tlen + lr.ll] = 0x0a;
     if(lr.ll == 0 && tlen > 0)
-      txt_term = txt + tlen - 1;
+      txtoff = tlen - 1;
     tlen += lr.ll + 1;
   }
 
   if(txt != NULL && pstart != -1 && pstop != -1) {
-    if(txt_term != NULL)
-      *txt_term = 0;
+    txt[txtoff] = 0;
     ese_insert(es, txt, pstart, pstop);
     txt = NULL;
   }
