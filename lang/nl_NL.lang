@@ -107,12 +107,10 @@ msg: Afspeellijst
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Afspeelstatus
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: De video kon niet worden gestart
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -277,8 +275,7 @@ id: Enable Spotify
 msg: Spotify inschakelen
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Vergeet mij
 
 id: Friends
 msg: Vrienden
