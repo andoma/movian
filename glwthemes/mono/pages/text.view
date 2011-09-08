@@ -9,7 +9,6 @@
       widget(container_y, {
 	// ------ The Box --------------------------------------
 	skinInfoboxGroup(.filterConstraintX = true; .filterConstraintY = true; widget(container_y, {
-	  widget(loader, {
 	    .time = 0.1;
 	    .effect = blend;
 	    .source = "theme://directoryviews/infobox/" + $view.focused.type + ".view";
@@ -22,7 +21,6 @@
                     .ellipsize = true;
                 });
             });
-	  });
 	}));
       });
       LIST_Y_SLIDER("text");
