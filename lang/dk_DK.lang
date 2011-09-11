@@ -47,7 +47,7 @@ id: Display info
 msg: Skærminformation
 
 id: Framerate: %.2f Hz
-msg: Opdateringsfrekvens%.2f Hz
+msg: Opdateringsfrekvens: %.2f Hz
 
 id: GPU: %s
 msg: GPU: %s
@@ -62,7 +62,7 @@ id: System info
 msg: Systeminformation
 
 id: Total system RAM: %d kB
-msg: Totalt system RAM: %d kB
+msg: Total system RAM: %d kB
 
 id: Version: %s
 msg: Version: %s
@@ -71,7 +71,7 @@ id: Width: %d px
 msg: Bredde: %d px
 
 id: Windowmanager: %s
-msg: Vindue manager: %s
+msg: vindue håndtering: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -95,24 +95,22 @@ msg: Kan ikke åbne resource
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Side hentningsfejl
+msg: Siden kunne ikke hentes
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Spilkø
+msg: Afspilningskø
 
 #
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Afspilningsstatus
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Kan ikke start videoafspilning
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -133,7 +131,7 @@ msg: Spor %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPUen er for langsom til at afkode denne video
+msg: CPU'en er for langsom til at afkode denne video
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -156,11 +154,12 @@ msg: Afbryd
 id: OK
 msg: OK
 
+
 #
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Ingen media hentet
+msg: Intet medie hentet
 
 #
 # ./glwthemes/mono/skins/grey/infobox.skin
@@ -190,7 +189,7 @@ msg: GPU Core temperatur: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Juster baggrundsfarven baseret på tid på dagen
+msg: Juster baggrundsfarven afhængig af tid på dagen
 
 id: Audio muted
 msg: Audio mute
@@ -226,7 +225,7 @@ id: Current output device
 msg: Nuværende lydudgang
 
 id: Force stereo downmix
-msg: Tving stereo nedmix
+msg: Tving stereo downmix
 
 id: Phantom LFE
 msg: Fantom LFE
@@ -277,8 +276,7 @@ id: Enable Spotify
 msg: Anvend Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Glem mig
 
 id: Friends
 msg: Venner
@@ -296,7 +294,7 @@ id: New releases
 msg: Nye opdateringer
 
 id: Playlists
-msg: Spillister
+msg: Afspilningslister
 
 id: Relogin (switch user)
 msg: Login på ny (skift bruger)
@@ -305,19 +303,19 @@ id: Search result
 msg: Søgeresultat
 
 id: Spotify friends
-msg: Venner på Spotify
+msg: Spotify venner
 
 id: Spotify music service
 msg: Spotify musiktjeneste
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify tilbyder lovlig og fri tilgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nDu vil blive bedt om dit Spotify brugernavn og kodeord når du anvender nogen af Spotify funktionerne i Showtime.
+msg: Spotify tilbyder lovlig og fri adgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nFørste gang du bruger Spotify i Showtime, vil du blive bedt om at indtate dit Spotify brugernavn og kodeord.
 
 id: Spotify playlists
-msg: Spotyfy spillister
+msg: Spotyfy Afspilningslister
 
 id: Starred
-msg: Stjernemarkeret
+msg: Medvirkende
 
 #
 # ./src/bookmarks.c
@@ -344,7 +342,7 @@ id: Language
 msg: Sprog
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, den
+msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, dnk
 
 id: Preferred languages
 msg: Fortrukne sprog
@@ -377,7 +375,7 @@ id: Automatic TV power on/off
 msg: Automatisk tænd/sluk af TV
 
 id: Input source
-msg: Indputskilde
+msg: Kilde til indput
 
 id: LG Television set
 msg: LG TV
@@ -386,7 +384,7 @@ msg: LG TV
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Indstillinger af tastatur og fjercontroller knapper
+msg: Indstillinger af tastatur og knapper til fjerbetjening
 
 id: Keymapper
 msg: Tastatur mapning
@@ -395,13 +393,13 @@ msg: Tastatur mapning
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Juster undertekster til videobilled
+msg: Juster undertekster efter videobillede
 
 id: Audio delay
-msg: Lyddelay
+msg: Lyd forsinkelse
 
 id: Subtitle delay
-msg: Underteksterdelay
+msg: Undertekster forsinkelse
 
 id: Subtitle scaling
 msg: Skalering af undertekster
@@ -413,19 +411,19 @@ msg: Video zoom
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: Ingen hanterare för URLen
+msg: Ingen håndtering af URL-adressen
 
 #
 # ./src/plugins.c
 #
 id: Invalud URI
-msg: Felaktig URI
+msg: Forkert URI
 
 id: Plugin ID %s does not exist
 msg: Plugin ID %s findes ikke
 
 id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen download URL
+msg: Plugin ID %s har ingen download URL-adresse
 
 id: Unable to load plugin.json: %s
 msg: Kan ikke hente plugin.json: %s
@@ -443,7 +441,7 @@ id: Automatic standby
 msg: Automatisk standby
 
 id: Run control
-msg: Kørekontrol
+msg: Kør kontrol
 
 #
 # ./src/sd/sd.c
@@ -464,7 +462,7 @@ id: Applications and installed plugins
 msg: Aplikationer og installerede plugins
 
 id: Discovered media sources
-msg: Fundet media kilder
+msg: Mediekilder fundet
 
 id: Global settings
 msg: Globale indstillinger
@@ -476,16 +474,16 @@ id: Display and user interface
 msg: Skærm og brugerinterface
 
 id: Horizontal underscan
-msg: Horisontaæ underscanning
+msg: Vandret underscanning
 
 id: Screensaver delay
-msg: Screensaver forsinkelse
+msg: Pauseskærm forsinkelse
 
 id: Userinterface size
 msg: Brugerinterface størrelse
 
 id: Vertical underscan
-msg: Vertikal underscanning
+msg: Lodret underscanning
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -509,7 +507,7 @@ id: Device not found
 msg: Enhed findes ikke
 
 id: Malformed URI after device
-msg: Fejlagtig URI efter enhet
+msg: Fejlagtig URI efter enhed
 
 id: Malformed URI after service
 msg: Fejlagtig URI efter tjeneste
@@ -535,6 +533,9 @@ msg: Farve
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
+id: Force Level 4.2 for h264 content
+msg: Tving Level 4.2 til H.264 medie
+
 id: Force subtitles to reside on video frame
 msg: Tving undettekster til at ligge ovenpå videobilledet
 
@@ -548,19 +549,19 @@ id: Left
 msg: Venstre
 
 id: Outline color
-msg: Farve på konturer
+msg: Farve på kontur
 
 id: Outline size
-msg: Størrelse på konturer
+msg: Størrelse på kontur
 
 id: Right
 msg: Højre
 
 id: Shadow color
-msg: Farve på skygger
+msg: Farve på skygge
 
 id: Shadow offset
-msg: Skygge offset
+msg: Skyggens forskydning
 
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
@@ -581,5 +582,5 @@ id: Video acceleration and display behaviour
 msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
-msg: Videoafspilling
+msg: Videoafspilning
 
