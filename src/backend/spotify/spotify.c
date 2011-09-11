@@ -717,7 +717,8 @@ static void
 spotify_connection_error(sp_session *sess, sp_error error)
 {
   if(error != SP_ERROR_OK)
-    notify_add(NULL, NOTIFY_ERROR, NULL, 5, "Spotify: Connection error: %s",
+    notify_add(NULL, NOTIFY_INFO, NULL, 5, 
+	       _("Spotify: Connection error: %s"),
 	       f_sp_error_message(error));
 }
 

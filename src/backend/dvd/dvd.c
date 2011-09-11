@@ -730,7 +730,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
     block = dp->dp_buf;
     result = dvdnav_get_next_cache_block(dp->dp_dvdnav, &block, &event, &len);
     if(result == DVDNAV_STATUS_ERR) {
-      notify_add(NULL, NOTIFY_INFO, NULL, 5, "DVD read error, restarting disc");
+      notify_add(NULL, NOTIFY_ERROR, NULL, 5, 
+		 _("DVD read error, restarting disc"));
       dvd_release_codecs(dp);
       dvdnav_close(dp->dp_dvdnav);
       free(dp);
