@@ -237,7 +237,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       event_ts_t *ets = (event_ts_t *)e;
-      gme_seek(emu, ets->pts / 1000);
+      gme_seek(emu, ets->ts / 1000);
       seekflush(mp, &mb);
       
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {

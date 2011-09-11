@@ -245,8 +245,7 @@ video_deliver_frame(video_decoder_t *vd,
     vd->vd_nextpts = pts + duration;
 
     ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->pts = pts;
-    ets->dts = dts;
+    ets->ts = pts;
     mp_enqueue_event(mp, &ets->h);
     event_release(&ets->h);
   } else {

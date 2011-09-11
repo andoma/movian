@@ -447,7 +447,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       event_ts_t *ets = (event_ts_t *)e;
       
       lsn = cdseek(mp, &mb, track_first, track_last,
-		   track_first + ets->pts * CDIO_CD_FRAMES_PER_SEC /1000000LL);
+		   track_first + ets->ts * CDIO_CD_FRAMES_PER_SEC /1000000LL);
       
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 

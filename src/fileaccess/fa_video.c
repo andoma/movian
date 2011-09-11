@@ -403,14 +403,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
 
       ets = (event_ts_t *)e;
-      seekbase = ets->pts;
+      seekbase = ets->ts;
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       epoch++;
       ets = (event_ts_t *)e;
       
-      ts = ets->pts + fctx->start_time;
+      ts = ets->ts + fctx->start_time;
 
       if(ts < fctx->start_time)
 	ts = fctx->start_time;

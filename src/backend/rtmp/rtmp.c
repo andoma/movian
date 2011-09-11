@@ -224,14 +224,14 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
     event_ts_t *ets = (event_ts_t *)e;
     
-    r->seekbase = ets->pts;
+    r->seekbase = ets->ts;
     
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
     r->epoch++;
       
-    r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
+    r->seekbase = video_seek(r, mp, mbp, ets->ts, 1, "direct");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 

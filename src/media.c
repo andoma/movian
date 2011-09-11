@@ -1380,12 +1380,12 @@ seek_by_propchange(void *opaque, prop_event_t event, ...)
       continue;
 
     ets = (event_ts_t *)e;
-    ets->pts = t;
+    ets->ts = t;
     return;
   }
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
-  ets->pts = t;
+  ets->ts = t;
   mp_enqueue_event_locked(mp, &ets->h);
   event_release(&ets->h);
 }

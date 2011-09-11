@@ -432,6 +432,14 @@ picture_out(vdec_decoder_t *vdd)
     uint8_t *data[4] = {vp->buf, vp->buf + lumasize,
 			vp->buf + lumasize + lumasize / 4, 0};
 
+
+    if(vp->fi.pts != AV_NOPTS_VALUE) {
+      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = vp->fi.pts;
+      mp_enqueue_event(vd->vd_mp, &ets->h);
+      event_release(&ets->h);
+    }
+
     if(vd) {
       vd->vd_frame_deliver(data, linesizes, &vp->fi, vd->vd_opaque);
       video_decoder_scan_ext_sub(vd, vp->fi.pts);

@@ -393,7 +393,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      ts = ets->pts + fctx->start_time;
+      ts = ets->ts + fctx->start_time;
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);

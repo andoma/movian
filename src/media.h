@@ -33,9 +33,8 @@ struct video_decoder;
 
 typedef struct event_ts {
   event_t h;
-  int stream;
-  int64_t dts;
-  int64_t pts;
+  int64_t ts;
+
 } event_ts_t;
 
 

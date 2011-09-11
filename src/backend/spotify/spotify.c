@@ -3744,7 +3744,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->pts / 1000));
+      spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->ts / 1000));
 
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
