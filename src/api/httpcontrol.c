@@ -26,6 +26,7 @@
 #include "misc/string.h"
 #include "backend/backend.h"
 #include "ui/ui.h"
+#include "notifications.h"
 
 #define STRINGIFY(A)  #A
 
@@ -263,6 +264,28 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 
 
 
+static int
+hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
+	       http_cmd_t method)
+{
+  const char *msg  = http_arg_get_req(hc, "msg");
+  const char *icon = http_arg_get_req(hc, "icon");
+  const char *lstr = http_arg_get_req(hc, "level");
+  int timeout = atoi(http_arg_get_req(hc, "timeout") ?: "5");
+  notify_type_t type = NOTIFY_INFO;
+
+  if(msg == NULL)
+    return HTTP_STATUS_BAD_REQUEST;
+
+  if(lstr != NULL && !strcmp(lstr, "error"))
+    type = NOTIFY_ERROR;
+  else if(lstr != NULL && !strcmp(lstr, "warning"))
+    type = NOTIFY_WARNING;
+
+  notify_add(NULL, type, icon, timeout, rstr_alloc("%s"), msg);
+  return HTTP_STATUS_OK;
+}
+
 
 
 /**
@@ -276,6 +299,7 @@ httpcontrol_init(void)
   http_path_add("/showtime/prop", NULL, hc_prop);
   http_path_add("/showtime/input/action", NULL, hc_action);
   http_path_add("/showtime/input/utf8", NULL, hc_utf8);
+  http_path_add("/showtime/notifyuser", NULL, hc_notify_user);
 #if ENABLE_BINREPLACE
   http_path_add("/showtime/replace", NULL, hc_binreplace);
 #endif
