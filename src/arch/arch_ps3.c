@@ -40,6 +40,7 @@
 #include "service.h"
 #include "misc/callout.h"
 #include "text/text.h"
+#include "notifications.h"
 
 #if ENABLE_PS3_VDEC
 #include "video/ps3_vdec.h"
@@ -66,10 +67,17 @@ mftb(void)
 static prop_t *sysprop;
 static prop_t *memprop;
 
+#define LOW_MEM_LOW_WATER  20 * 1024 * 1024
+#define LOW_MEM_HIGH_WATER 30 * 1024 * 1024
+
+
 static void
 memlogger_fn(callout_t *co, void *aux)
 {
+  static int low_mem_warning;
+
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
   struct {
     uint32_t total;
     uint32_t avail;
@@ -79,6 +87,17 @@ memlogger_fn(callout_t *co, void *aux)
 
   prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
   prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
+
+  if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
+    low_mem_warning = 1;
+    notify_add(NULL, NOTIFY_ERROR, NULL, 5,
+	       _("System is low on memroy (%d kB RAM available)"),
+	       meminfo.avail / 1024);
+  }
+
+  if(meminfo.avail > LOW_MEM_HIGH_WATER)
+    low_mem_warning = 0;
+
 }
 
 
