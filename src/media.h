@@ -131,6 +131,7 @@ typedef struct media_buf {
   uint8_t mb_aspect_override : 2;
   uint8_t mb_disable_deinterlacer : 1;
   uint8_t mb_skip : 2;
+  uint8_t mb_keyframe : 1;
 
   uint8_t mb_stream;
 
@@ -384,6 +385,8 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 			  uint32_t u);
 
 void mp_flush(media_pipe_t *mp, int blackout);
+
+int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
 
 void mp_end(media_pipe_t *mp);
 

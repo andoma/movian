@@ -207,17 +207,19 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
 	(pos - fctx->start_time) / 1000000.0);
- 
-  av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
 
-  mp->mp_video.mq_seektarget = pos;
-  mp->mp_audio.mq_seektarget = pos;
+  if(mp_seek_in_queues(mp, pos)) {
+    av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
 
-  mp_flush(mp, 0);
-  
-  if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free_unlocked(mp, *mbp);
-  *mbp = NULL;
+    mp->mp_video.mq_seektarget = pos;
+    mp->mp_audio.mq_seektarget = pos;
+
+    mp_flush(mp, 0);
+    
+    if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
+      media_buf_free_unlocked(mp, *mbp);
+    *mbp = NULL;
+  }
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
 		 (pos - fctx->start_time) / 1000000.0);
@@ -335,6 +337,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       else
 	mb->mb_time = AV_NOPTS_VALUE;
 
+      mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
       av_free_packet(&pkt);
     }
 
