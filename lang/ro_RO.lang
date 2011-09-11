@@ -217,6 +217,13 @@ id: Use opensubtitles.org
 msg: Folosește subtitrari de pe opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -243,6 +250,10 @@ msg: Difuzoare mici față
 id: Swap LFE+center with surround
 msg: Inversează LFE+centru cu surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +265,13 @@ msg: Track CD invalid
 
 id: Unable to open CD
 msg: Imposibil de citit CDul
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -315,6 +333,10 @@ msg: Spotify oferă acces legal si gratuit la o imensă librarie muzicală. Pent
 
 id: Spotify playlists
 msg: Lista de fișiere Spotify
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: Notă
@@ -516,6 +538,29 @@ msg: URI defect dupa serviciu
 
 id: Service not found
 msg: Serviciul nu a fost găsit
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
 
 #
 # ./src/video/video_settings.c

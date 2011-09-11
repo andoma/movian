@@ -217,6 +217,13 @@ id: Use opensubtitles.org
 msg: 使用opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -243,6 +250,10 @@ msg: 小型前置音箱
 id: Swap LFE+center with surround
 msg: 切换低音+中置和环绕
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +265,13 @@ msg: 非法的CD音轨
 
 id: Unable to open CD
 msg: 不能打开CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -315,6 +333,10 @@ msg: Spotify可以让你合法和免费的访问巨量音乐库。你需要一�
 
 id: Spotify playlists
 msg: Spotify播放列表
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: 已加星
@@ -516,6 +538,29 @@ msg: 服务后的URI格式不正确
 
 id: Service not found
 msg: 未发现服务
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
 
 #
 # ./src/video/video_settings.c

@@ -217,6 +217,13 @@ id: Use opensubtitles.org
 msg: Korzystaj z opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -243,6 +250,10 @@ msg: Głośniki przednie
 id: Swap LFE+center with surround
 msg: Zamień bass i głośnik centralny z surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +265,13 @@ msg: Bład odczytu utworów z CD
 
 id: Unable to open CD
 msg: Nie można otworzyć CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -315,6 +333,10 @@ msg: Spotify oferuje bezpłatny i legalny dostęp do ogromnej biblioteki z muzyk
 
 id: Spotify playlists
 msg: Lista odtwarzania z Spotyfy
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: Najwyżej oceniane
@@ -522,6 +544,29 @@ msg: Nieprawidłowy URI w usłudze
 
 id: Service not found
 msg: Nie znaleziono usługi
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
 
 #
 # ./src/video/video_settings.c
