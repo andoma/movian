@@ -263,6 +263,7 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_primary = prop_create(mp->mp_prop_root, "primary");
 
   mp->mp_prop_io = prop_create(mp->mp_prop_root, "io");
+  mp->mp_prop_notifications = prop_create(mp->mp_prop_root, "notifications");
 
   //--------------------------------------------------
   // Video

@@ -6,7 +6,8 @@ $ui.showplaydeck =  $ui.menu ||
   changed($global.media.current.audio.current, 2) ||
   changed($global.media.current.subtitle.current, 2) ||
   changed($global.media.current.metadata.title, 5) ||
-  changed($global.media.current.seektime, 2, true);
+  changed($global.media.current.seektime, 2, true) ||
+  count($global.media.current.notifications);
 
 // -------------------------------------------------------------------
 
@@ -37,12 +38,33 @@ widget(container_x, {
 	.hidden = select($global.media.current.video.too_slow, false, true);
 	widget(icon, {
 	  .source = "skin://icons/Alert.png";
+	  .hqScaling = true;
 	});
 	widget(label, {
 	  .caption = _("CPU is too slow to decode this video");
 	});
       });
 
+
+      cloner($global.media.current.notifications, container_x, {
+	.spacing = 10;
+	widget(icon, {
+	  .hqScaling = true;
+	  .source = "skin://icons/Alert.png";
+	  .color = translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	});
+	
+	widget(label, {
+	  .caption = $self.text;
+	  .color = translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	});
+      });
 
       widget(container_x, {
 	.spacing = 10;

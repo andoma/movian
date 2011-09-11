@@ -27,6 +27,7 @@
 #include "video_decoder.h"
 #include "video_settings.h"
 #include "arch/halloc.h"
+#include "notifications.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
@@ -766,6 +767,17 @@ h264_load_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
 /**
  *
  */
+static int
+no_lib(media_pipe_t *mp, const char *codec)
+{
+  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	     _("Unable to accelerate %s, library not loaded."), codec);
+  return 1;
+}
+
+/**
+ *
+ */
 int
 video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 			    AVCodecContext *ctx, media_codec_params_t *mcp,
@@ -782,29 +794,25 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   switch(id) {
   case CODEC_ID_MPEG2VIDEO:
-    if(!vdec_mpeg2_loaded) {
-      TRACE(TRACE_DEBUG, "VDEC", "MPEG2 not accelerated, not loaded");
-      return 1;
-    }
+    if(!vdec_mpeg2_loaded)
+      return no_lib(mp, "MPEG-2");
+
     dec_type.codec_type = VDEC_CODEC_TYPE_MPEG2;
     dec_type.profile_level = VDEC_MPEG2_MP_HL;
     spu_threads = 1;
     break;
 
   case CODEC_ID_H264:
-    if(!vdec_h264_loaded) {
-      TRACE(TRACE_DEBUG, "VDEC", "H264 not accelerated, not loaded");
-      return 1;
-    }
+    if(!vdec_h264_loaded) 
+      return no_lib(mp, "h264");
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    if(mcp->level != 0 && mcp->level <= 42)
+    if(mcp->level != 0 && mcp->level <= 42) {
       dec_type.profile_level = mcp->level;
-    else {
+    } else {
       dec_type.profile_level = 42;
-      TRACE(TRACE_INFO, "VDEC",
-	    "Forcing level 4.2 for content in level %d.%d. This may break",
-	    mcp->level / 10, mcp->level % 10);
+      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     spu_threads = 4;
     break;
@@ -815,7 +823,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   r = vdec_query_attr(&dec_type, &dec_attr);
   if(r) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to open decoder: 0x%x", r);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to query Cell codec. Error 0x%x"), r);
     return 1;
   }
 
@@ -828,8 +837,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   u32 taddr;
 
   if(Lv2Syscall3(348, allocsize, 0x400, (u64)&taddr)) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to allocate %d bytes",
-	  dec_attr.mem_size);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to open Cell codec. Unable to allocate %d bytes of RAM"), dec_attr.mem_size);
     return 1;
   }
   vdd->mem = (void *)(uint64_t)taddr;
@@ -851,7 +860,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   r = vdec_open(&dec_type, &vdd->config, &c, &vdd->handle);
   if(r) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to open codec: 0x%x", r);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to open Cell codec. Error 0x%x"), r);
     Lv2Syscall1(349, (uint64_t)vdd->mem);
     free(vdd);
     return 1;
