@@ -2360,6 +2360,60 @@ playlist_node_callback(void *opaque, prop_event_t event, ...)
   }
 }
 
+
+/**
+ *
+ */
+static void
+delete_from_container(playlistcontainer_t *plc, prop_vec_t *pv)
+{
+  int i, j;
+  int num = prop_vec_len(pv);
+  if(num == 0)
+    return;
+
+  for(i = 0; i < num; i++) {
+    prop_t *p = prop_vec_get(pv, i);
+    for(j = plc->plc_playlists.size - 1; j >= 0; j--) {
+      playlist_t *pl = ptrvec_get_entry(&plc->plc_playlists, j);
+      if(p == pl->pl_prop_root_tree || p == pl->pl_prop_root_flat) {
+	if(pl->pl_type == SP_PLAYLIST_TYPE_PLAYLIST) {
+	  TRACE(TRACE_DEBUG, "Spotify", "Deleting playlist on index %d", j);
+	  f_sp_playlistcontainer_remove_playlist(plc->plc_pc, j);
+	}
+      }
+    }
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
+playlist_container_delete_callback(void *opaque, prop_event_t event, ...)
+{
+  playlistcontainer_t *plc = opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_DESTROYED:
+    (void)va_arg(ap, prop_t *);
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    printf("I WAS DESTROYED\n");
+    break;
+
+  case PROP_REQ_DELETE_VECTOR:
+    delete_from_container(plc, va_arg(ap, prop_vec_t *));
+    break;
+  }
+}
+
 /**
  *
  */
@@ -2723,6 +2777,12 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
     backend_prop_make(pl->pl_prop_root_tree, url, sizeof(url));
     prop_set_string(prop_create(pl->pl_prop_root_tree, "url"), url);
     pl->pl_prop_childs = prop_create(pl->pl_prop_root_tree, "nodes");
+
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, playlist_container_delete_callback, plc,
+		   PROP_TAG_ROOT, pl->pl_prop_childs,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
     break;
 
   case SP_PLAYLIST_TYPE_END_FOLDER:
@@ -2910,10 +2970,18 @@ playlistcontainer_unbind(sp_session *sess, playlistcontainer_t *plc,
  *
  */
 static playlistcontainer_t *
-playlistcontainer_create(const char *name)
+playlistcontainer_create(const char *name, int can_delete)
 {
   playlistcontainer_t *plc = calloc(1, sizeof(playlistcontainer_t));
   plc->plc_root_tree = prop_create_root(NULL);
+
+  if(can_delete)
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, playlist_container_delete_callback, plc,
+		   PROP_TAG_ROOT, plc->plc_root_tree,
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
+
   plc->plc_root_flat = prop_create_root(NULL);
   plc->plc_pending = prop_create_root(NULL);
   prop_set_int(plc->plc_pending, 1);
@@ -4005,7 +4073,7 @@ be_spotify_init(void)
 
   friend_nodes = prop_create(spotify, "friends");
 
-  current_user_rootlist = playlistcontainer_create("Self");
+  current_user_rootlist = playlistcontainer_create("Self", 1);
 
   TAILQ_INIT(&spotify_msgs);
 
