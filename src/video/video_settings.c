@@ -164,7 +164,7 @@ video_settings_init(void)
 		       (void *)"videoplayback");
 
   settings_create_int(s, "vzoom",
-		      _p("Video zoom"), 100, NULL, 50, 200,
+		      _p("Video zoom"), 100, store, 50, 200,
 		      1, set_vzoom, NULL,
 		      SETTINGS_INITIAL_UPDATE,
 		      "%", NULL,
