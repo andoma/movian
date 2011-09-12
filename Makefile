@@ -297,6 +297,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_clip.c \
 			src/ui/glw/glw_primitives.c \
 			src/ui/glw/glw_math.c \
+			src/ui/glw/glw_underscan.c \
 
 SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/glw/glw_rec.c \

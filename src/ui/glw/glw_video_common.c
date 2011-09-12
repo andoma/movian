@@ -41,8 +41,18 @@ static void  glw_video_input(uint8_t * const data[], const int pitch[],
  *
  */
 static void
-glw_video_rctx_aspect_adjust(glw_rctx_t *rc, glw_video_t *gv)
+glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 {
+  const glw_root_t *gr = gv->w.glw_root;
+
+  if(gr->gr_underscan_h || gr->gr_underscan_v) {
+    glw_reposition(rc,
+		   -gr->gr_underscan_h,
+		   rc->rc_height + gr->gr_underscan_v,
+		   rc->rc_width  + gr->gr_underscan_h,
+		   -gr->gr_underscan_v);
+  }
+
   float t_aspect = av_q2d(gv->gv_dar);
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
@@ -302,7 +312,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     rc = extra;
     rc0 = *rc;
-    glw_video_rctx_aspect_adjust(&rc0, gv);
+    glw_video_rctx_adjust(&rc0, gv);
     glw_video_overlay_layout(gv, rc, &rc0);
     return 0;
 
@@ -492,7 +502,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
-  glw_video_rctx_aspect_adjust(&rc0, gv);
+  glw_video_rctx_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;

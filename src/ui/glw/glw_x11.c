@@ -891,7 +891,7 @@ layout_draw(glw_x11_t *gx11)
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height);
+  glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height, 1);
   glw_layout0(gx11->gr.gr_universe, &rc);
   glw_render0(gx11->gr.gr_universe, &rc);
 }

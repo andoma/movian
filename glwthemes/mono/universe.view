@@ -3,9 +3,6 @@
 #import "theme://include/buttons.view"
 #import "theme://include/slider.view"
 
-settingInt(_("Starwars scroller tilt"), "tilt",
-	   $ui.defaults.tilt, "deg", 0, 20, 1, $ui.tilt);
-
 settingBool(_("Top bar navigation buttons"), "navtools", true, $ui.topBarTools);
 
 settingBool(_("Adjust background tint based on daytime"), "daytimegradient", 
@@ -63,17 +60,7 @@ widget(container_z, {
   });
 
 
-  widget(displacement, {
-
-    .padding = [$ui.underscan_h * 1,
-		$ui.underscan_v * 1,
-		$ui.underscan_h * 1,
-		$ui.underscan_v * 1];
-    .scaling = [1,1,1] - ($ui.tilt / 20) * [0.2, 0.2, 0.0];
-    .translation = [0, $ui.tilt / 200, 0];
-    .rotation = [$ui.tilt, -1, 0, 0];
-
-
+  widget(underscan, {
     widget(container_z, {
       widget(layer, {
 	.alpha = iir(1 - $ui.screensaverActive, 8);

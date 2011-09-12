@@ -421,7 +421,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height);
+  glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height, 1);
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   glw_render0(gcocoa.gr.gr_universe, &rc);
   

@@ -351,7 +351,7 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
   gp->gr.gr_height = gp->res.height;
 
   glw_rctx_t rc;
-  glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height);
+  glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1);
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
