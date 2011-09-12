@@ -428,7 +428,8 @@ browse_items(upnp_browse_t *ub)
   nodes_from_meta(meta, ub->ub_items, NULL, NULL, 
 		  ub->ub_base_url, ub->ub_itemsub);
   htsmsg_destroy(meta);
-  prop_have_more_childs(ub->ub_items);
+  if(ub->ub_loaded_entries < ub->ub_total_entries)
+    prop_have_more_childs(ub->ub_items);
   htsmsg_destroy(out);
 }
 
