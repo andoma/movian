@@ -218,8 +218,7 @@ msg: Anvend opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memroy (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Systemet mangler hukommelse (%d KB RAM tilgængelig)
 
 #
 # ./src/audio/audio.c
@@ -249,8 +248,7 @@ id: Swap LFE+center with surround
 msg: Byt LFE+center med surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Skifter lydudgang til %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -264,12 +262,8 @@ msg: Ugyldig CD track
 id: Unable to open CD
 msg: Kan ikke åbne CD
 
-#
-# ./src/backend/dvd/dvd.c
-#
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD læsefejl, genstarter disk
 
 #
 # ./src/backend/htsp/htsp.c
@@ -332,8 +326,7 @@ id: Spotify playlists
 msg: Spotyfy Afspilningslister
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: Forbindelsesfejl: %s
 
 id: Starred
 msg: Medvirkende
@@ -540,24 +533,19 @@ msg: Tjenesten findes ikke
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Kan ikke accelerere %s, bibliotek ikke hentet.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Kan ikke åbne Cell codec. Fejl 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Kan ikke åbne Cell codec. Kan ikke accelerere %d bytes af RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -624,4 +612,3 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
-
