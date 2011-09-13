@@ -152,6 +152,11 @@ thread_trampoline(void *aux)
   hts_thread_exit_specific();
 #endif
   free(ta);
+
+  extern int netFreethreadContext(long long, int);
+
+  netFreethreadContext(0, 1);
+
   sys_ppu_thread_exit(0);
   return r;
 }
