@@ -94,6 +94,7 @@ pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 		      int xdisp, int ydisp, int rgba);
 
-pixmap_t *pixmap_create(int width, int height, enum PixelFormat pixfmt);
+pixmap_t *pixmap_create(int width, int height, enum PixelFormat pixfmt,
+			int rowalign);
 
 #endif

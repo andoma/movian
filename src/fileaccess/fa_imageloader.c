@@ -419,11 +419,17 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       h = im->req_height;
     }
 
-    pm = pixmap_create(w, h, PIX_FMT_RGB24);
+    pm = pixmap_create(w, h, PIX_FMT_RGB24,
+#ifdef __PPC__
+		       16
+#else
+		       1
+#endif
+		       );
 
     struct SwsContext *sws;
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
-			 w, h, PIX_FMT_RGB24, SWS_LANCZOS, NULL, NULL, NULL);
+			 w, h, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
     if(sws == NULL) {
       ifv_close();
       return NULL;
@@ -479,7 +485,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
   void *data;
   size_t datasize;
 
-  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d",
+  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-2",
 	   url0, im->req_width, im->req_height);
 
   data = blobcache_get(cacheid, "videothumb", &datasize, 0);

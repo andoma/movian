@@ -1041,7 +1041,7 @@ text_render0(const uint32_t *uc, const int len,
   // --- allocate and init pixmap
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
-		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A);
+		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A, 1);
 
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;

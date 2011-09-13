@@ -84,17 +84,20 @@ pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
  *
  */
 pixmap_t *
-pixmap_create(int width, int height, enum PixelFormat pixfmt)
+pixmap_create(int width, int height, enum PixelFormat pixfmt, int rowalign)
 {
   int bpp = bytes_per_pixel(pixfmt);
-  if(bpp == 0)
+  if(bpp == 0 || rowalign < 1)
     return NULL;
+
+  rowalign--;
+  
 
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
   pm->pm_width = width;
   pm->pm_height = height;
-  pm->pm_linesize = pm->pm_width * bpp;
+  pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_pixfmt = pixfmt;
   pm->pm_codec = CODEC_ID_NONE;
   pm->pm_data = calloc(1, pm->pm_linesize * pm->pm_height);
