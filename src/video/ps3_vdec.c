@@ -133,12 +133,14 @@ video_ps3_vdec_init(void)
 static void
 end_sequence_and_wait(vdec_decoder_t *vdd)
 {
+  TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence");
   vdd->sequence_done = 0;
   vdec_end_sequence(vdd->handle);
   hts_mutex_lock(&vdd->mtx);
   while(vdd->sequence_done == 0)
     hts_cond_wait(&vdd->seqdone, &vdd->mtx);
   hts_mutex_unlock(&vdd->mtx);
+  TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence -> done");
 }
 
 
@@ -556,6 +558,7 @@ static void
 vdec_stop(void *opaque)
 {
   vdec_decoder_t *vdd = opaque;
+  TRACE(TRACE_DEBUG, "VDEC", "Video decoder stopping");
   if(vdd->mc != NULL) {
     end_sequence_and_wait(vdd);
     media_codec_deref(vdd->mc);
@@ -566,6 +569,7 @@ vdec_stop(void *opaque)
   free_picture_list(&vdd->avail_pictures);
 
   vdd->vd = NULL;
+  TRACE(TRACE_DEBUG, "VDEC", "Video decoder stopped");
 }
 
 
