@@ -399,9 +399,10 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     ifv_ctx->skip_frame = want_pic ? AVDISCARD_DEFAULT : AVDISCARD_NONREF;
     
     avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
-    if(got_pic == 0 || !want_pic)
+    av_free_packet(&pkt);
+    if(got_pic == 0 || !want_pic) {
       continue;
-
+    }
     int w,h;
 
     if(im->req_width != -1 && im->req_height != -1) {
