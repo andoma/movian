@@ -461,9 +461,9 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       pngencoder->pix_fmt = PIX_FMT_RGB24;
 
       r = avcodec_encode_video(pngencoder, output, outputsize, oframe);
-    
+      
       if(r > 0) 
-	blobcache_put(cacheid, "videothumb", output, outputsize, 86400 * 5);
+	blobcache_put(cacheid, "videothumb", output, r, 86400 * 5);
       free(output);
       av_free(oframe);
     }
