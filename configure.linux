@@ -207,57 +207,7 @@ fi
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
-
-#
-# libavcodec
-#
-if pkg-config --atleast-version 53.0.0 libavcodec; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavcodec`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavcodec`
-    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
-else
-    echo "libavcodec 53.0.0 or newer not found."
-    die
-fi
-
-#
-# libavformat
-#
-if pkg-config --atleast-version 53.0.0 libavformat; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavformat`
-    echo "Using libavformat:     `pkg-config --modversion libavformat`"
-else
-    echo "libavformat 53.0.0 or newer not found."
-    die
-fi
-
-
-#
-# libavutil
-#
-if pkg-config --atleast-version 51.0.0 libavutil; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
-    echo "Using libavutil:       `pkg-config --modversion libavutil`"
-else
-    echo "libavutil 51.0.0 or newer not found."
-    die
-fi
-
-
-#
-# libswscale
-#
-if pkg-config  --atleast-version 0.11.0 libswscale; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libswscale`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libswscale`
-    echo "Using libswscale:      `pkg-config --modversion libswscale`"
-else
-    echo "libswscale 0.11.0 or newer not found."
-    die
-fi
-
+libav_setup
 
 #
 # libfreetype2

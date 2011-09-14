@@ -236,6 +236,8 @@ libav_setup() {
 	return
     fi
 
+    echo
+    echo "Configuring libav..."
     git submodule update --init ext/libav
 
     LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
@@ -258,7 +260,7 @@ libav_setup() {
 finalize() {
 
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${LIBAV_PATH}/include"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lswscale -lavcodec -lavformat -lavutil"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lswscale -lavformat -lavcodec -lavutil"
 
     if enabled polarssl; then
 	echo "Using built-in polarssl"
