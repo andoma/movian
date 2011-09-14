@@ -154,9 +154,8 @@ common_help(){
   echo
   echo "Standard options:"
   echo "  --help                   Print this message"
-  echo "  --with-ffmpeg=PREFIX     Path to where FFmpeg is installed."
-  echo "                           By default Showtime will build FFmpeg from"
-  echo "                           the checked out version in the source"
+  echo "  --with-libav=PREFIX      Path to where libav is installed."
+  echo "                           By default Showtime will build libav itself."
   echo ""
   echo "Target specific options:"
 }
@@ -167,7 +166,7 @@ common_help(){
 common_opt(){
   case "$1" in
 
-  --with-ffmpeg=*) FFMPEG_PATH="$2"
+  --with-libav=*) LIBAV_PATH="$2"
   ;;
 
   --enable-?*|--disable-?*)
@@ -232,10 +231,34 @@ spotify_setup() {
 }
 
 
+libav_setup() {
+    if [ "x${LIBAV_PATH}" != "x" ]; then
+	return
+    fi
+
+    git submodule update --init ext/libav
+
+    LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
+    LIBAV_INSTALL_DIR=${BUILDDIR}/libav/install
+    mkdir -p ${LIBAV_BUILD_DIR}
+    mkdir -p ${LIBAV_INSTALL_DIR}
+
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-ffserver --disable-ffmpeg --disable-ffprobe --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
+
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR})
+
+    (cd ${LIBAV_BUILD_DIR} && make -j6)
+    (cd ${LIBAV_BUILD_DIR} && make install)
+    LIBAV_PATH=${LIBAV_INSTALL_DIR}
+}
+
 #
 # Do final common stuff
 #
 finalize() {
+
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${LIBAV_PATH}/include"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lswscale -lavcodec -lavformat -lavutil"
 
     if enabled polarssl; then
 	echo "Using built-in polarssl"

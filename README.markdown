@@ -32,34 +32,6 @@ Thus, to start it, just type:
 
 	build.linux/showtime
 
-If you need/want to build with a recent version of libav without
-installing it on your system:
-
-Create an libav directory somewhere, perhaps in your home dir:
-
-	cd
-	mkdir libav
-	cd libav
-	git clone git://git.libav.org/libav.git src
-
-Configure libav to build and install itself in current dir. Note that this
-will build static libraries so you don't need to mess around with
-`LD_LIBRARY_PATH` when running the binary. IF you enable shared libraries,
-remember to set that up as well.
-
-So while still in the same dir, do
-
-	src/configure --prefix=${PWD}
-	make -j4
-	make install
-
-Now go back and reconfigure Showtime with `PKG_CONFIG_PATH` set to the
-directories where the .pc files resides from the libav install:
-
-	cd showtime 
-	./configure --pkg-config-path=${HOME}/libav/lib/pkgconfig
-	make
-
 
 ## How to build for Mac OS X
 
@@ -78,15 +50,6 @@ architectures or SDKs as you are current running, or dont plan to compile with
 fancy extensions, i would recommend the MacPorts way.
 
 If you choose the custome script way, please continue to read support/osx/README
-
-MacPorts way:
-
-Install freetype and libav using MacPorts:
-
-	$ sudo /opt/local/bin/port install freetype ffmpeg-devel
-
-	(there is no libav port when i write this but i hope it works with the
-	 ffmpeg-devel port)
 
 Now run configure
 
