@@ -236,9 +236,9 @@ libav_setup() {
 	return
     fi
 
-    echo
-    echo "Configuring libav..."
+    echo "Updating libav... (if needed)"
     git submodule update --init ext/libav
+    echo "Configuring libav..."
 
     LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
     LIBAV_INSTALL_DIR=${BUILDDIR}/libav/install
@@ -247,7 +247,7 @@ libav_setup() {
 
     LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-ffserver --disable-ffmpeg --disable-ffprobe --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
 
-    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR})
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}")
 
     (cd ${LIBAV_BUILD_DIR} && make -j6)
     (cd ${LIBAV_BUILD_DIR} && make install)
