@@ -1,5 +1,18 @@
-widget(label, {
-  .sizeScale = 0.8;
-  .caption = $self.data;
-  .maxlines = 10;
+#import "theme://include/slider.view"
+
+widget(container_x, {
+  .focusable = true;
+  .focusOnClick = true;
+  widget(list_y, {
+    .focusable = true;
+    .focusOnClick = true;
+    .id = "body";
+    widget(label, {
+      .padding = [40, 20];
+      .sizeScale = 0.8;
+      .caption = $self.data;
+      .maxlines = 10;
+    });
+  });
+  LIST_Y_SLIDER("body");
 });
