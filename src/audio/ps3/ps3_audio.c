@@ -377,6 +377,7 @@ audio_ps3_init(void)
 					 AUDIO_OUT_FS_48KHZ,
 					 0);
 
+  audioOutSetCopyControl(AUDIO_OUT_PRIMARY, AUDIO_OUT_COPY_CONTROL_FREE);
 
   /* Absolute minimum requirements */
   am->am_title = strdup("PS3");
