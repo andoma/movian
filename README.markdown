@@ -85,6 +85,8 @@ build when using multiple arch arguments to gcc
 
 ## How to build for Nintendo Wii
 
+NOTE: Wii build is currently unmaintained and does not work
+
 For a Wii build you need:
 
 -  devkitPro:
