@@ -140,15 +140,13 @@ and a zip file is generated.
 You need the opensource PS3 toolchain. Follow the instructions at:
 [https://github.com/ps3dev/ps3toolchain](https://github.com/ps3dev/ps3toolchain)
 
+You also need correct version of PSL1GHT from [https://github.com/andoma/PSL1GHT](https://github.com/andoma/PSL1GHT)
+
 If you install it from scratch when you read this the stuff it downloads
 should be up to date. If you already have the toolchain and psl1ght
 you need to make sure that psl1ght is at least from Tue Feb 15 2011
 
-Once setup you need to build dependencies
-
-	$ support/ps3setup
-
-Then configure
+Configure
 
 	$ ./configure.ps3
 
