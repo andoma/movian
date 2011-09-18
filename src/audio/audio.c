@@ -345,7 +345,6 @@ void
 audio_mode_register(audio_mode_t *am)
 {
   prop_t *r;
-  int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
   htsmsg_t *m;
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
@@ -367,7 +366,7 @@ audio_mode_register(audio_mode_t *am)
 		      0, m, -1000, 1000, 10, am_set_av_sync, am,
 		      SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
 
-  if(multich) {
+  if(am->am_multich_controls) {
     settings_create_bool(r, "phantom_center", _p("Phantom center"),
 			 0, m, am_set_phantom_center, am,
 			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);

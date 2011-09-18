@@ -648,7 +648,7 @@ alsa_probe(const char *card, const char *dev)
 #endif
   int alsa_format;
   int i;
-  
+  char multich_controls = 0;
 
   info = alloca(snd_pcm_info_sizeof());
 
@@ -729,11 +729,14 @@ alsa_probe(const char *card, const char *dev)
   if(!snd_pcm_hw_params_test_channels(h, hwp, 2))
     formats |= AM_FORMAT_PCM_STEREO;
   
-  if(!snd_pcm_hw_params_test_channels(h, hwp, 6))
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 6)) {
     formats |= AM_FORMAT_PCM_5DOT1;
-  
-  if(!snd_pcm_hw_params_test_channels(h, hwp, 8))
+    multich_controls = 1;
+  }
+  if(!snd_pcm_hw_params_test_channels(h, hwp, 8)) {
     formats |= AM_FORMAT_PCM_7DOT1;
+    multich_controls = 1;
+  }
 
   if(formats == 0) {
     TRACE(TRACE_DEBUG, "ALSA", "%s: No usable channel configuration", dev);
@@ -773,6 +776,7 @@ alsa_probe(const char *card, const char *dev)
 
   aam = calloc(1, sizeof(alsa_audio_mode_t));
   aam->aam_head.am_formats = formats;
+  aam->aam_head.am_multich_controls = multich_controls;
   aam->aam_head.am_sample_rates = rates;
   aam->aam_head.am_title = strdup(name);
   aam->aam_head.am_id = strdup(id);

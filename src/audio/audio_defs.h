@@ -45,6 +45,7 @@ typedef struct audio_mode {
 #define AM_SR_24000 0x10
 #define AM_SR_ANY   0x20
   char am_float; // Can also output PCM in floating point mode
+  char am_multich_controls;
 
   char *am_title;
   char *am_description;

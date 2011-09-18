@@ -600,6 +600,7 @@ audio_pa_init(void)
 
   pam = calloc(1, sizeof(pa_audio_mode_t));
   am = &pam->am;
+  am->am_multich_controls = 1;
   am->am_formats = 
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
   am->am_sample_rates = AM_SR_ANY;
