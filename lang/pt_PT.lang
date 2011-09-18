@@ -47,7 +47,7 @@ id: Display info
 msg: Informações de visualização
 
 id: Framerate: %.2f Hz
-msg: Framerate: %.2f Hz
+msg: Taxa de quadros: %.2f Hz
 
 id: GPU: %s
 msg: GPU: %s
@@ -56,7 +56,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Renderer: %s
-msg: Renderer: %s
+msg: Renderizador: %s
 
 id: System info
 msg: Informações de sistema
