@@ -105,9 +105,9 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int x;
   size_t off = 0;
   while(1) {
-    size_t r = MIN(65536, len - off);
-    x = netRecv(tc->fd, buf + off, r, all ? MSG_WAITALL : 0);
-    if(x <= 0)
+    size_t r = len - off;
+    x = netRecv(tc->fd, buf + off, r, 0);
+    if(x < 1)
       return -1;
     
     if(all) {
@@ -117,7 +117,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 	return len;
 
     } else {
-      return x < 1 ? -1 : x;
+      return x;
     }
   }
 }
