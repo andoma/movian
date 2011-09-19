@@ -876,7 +876,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 			    "UPDATE item "
 			    "SET contenttype=?1, "
 			    "mtime=?2, "
-			    "metadataversion=" METADATA_VERSION_STR " "
+			    "metadataversion=" METADATA_VERSION_STR ", "
 			    "parent=?4 "
 			    "WHERE id=?3"
 			    :
