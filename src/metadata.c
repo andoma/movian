@@ -1220,8 +1220,13 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
     r = metadb_metadata_get_streams(db, md, item_id);
     break;
 
-  default:
+  case CONTENT_DIR:
+  case CONTENT_DVD:
     r = 0;
+    break;
+
+  default:
+    r = 1;
     break;
   }
 
@@ -1328,6 +1333,9 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
   get_cache_t gc = {0};
 
   while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
+    if(sqlite3_column_type(sel, 2) != SQLITE_INTEGER)
+      continue;
+
     int64_t item_id = sqlite3_column_int64(sel, 0);
     const char *url = (const char *)sqlite3_column_text(sel, 1);
     int contenttype = sqlite3_column_int(sel, 2);
@@ -1338,8 +1346,11 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 
     fde = fa_dir_add(fd, url, fname, contenttype);
     if(fde != NULL) {
-      fde->fde_statdone = 1;
-      fde->fde_stat.fs_mtime = sqlite3_column_int(sel, 3);
+      if(sqlite3_column_type(sel, 3) == SQLITE_INTEGER) {
+	fde->fde_statdone = 1;
+	fde->fde_stat.fs_mtime = sqlite3_column_int(sel, 3);
+      }
+
       fde->fde_md = metadata_get(db, item_id, contenttype, &gc);
     }
   }
