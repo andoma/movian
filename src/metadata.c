@@ -167,7 +167,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
   if(md->md_album) {
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
-    
+
     if(md->md_artist != NULL)
       lastfm_albumart_init(prop_create(proproot, "album_art"),
 			   md->md_artist, md->md_album);
@@ -215,7 +215,7 @@ one_statement(sqlite3 *db, const char *sql)
 {
   int rc;
   char *errmsg;
-  
+
   rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if(rc) {
     TRACE(TRACE_ERROR, "SQLITE", "%s failed -- %s", sql, errmsg);
@@ -240,7 +240,7 @@ db_get_int_from_query(sqlite3 *db, const char *query, int *v)
     return -1;
 
   rc = sqlite3_step(stmt);
-  
+
   if(rc == SQLITE_ROW) {
     *v = sqlite3_column_int(stmt, 0);
     rval = 0;
@@ -293,7 +293,7 @@ metadb_upgrade(sqlite3 *db)
 
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
-  
+
   fd = fa_scandir(METADB_SCHEMA_DIR, buf, sizeof(buf));
 
   if(fd == NULL) {
@@ -347,7 +347,7 @@ metadb_upgrade(sqlite3 *db)
 
     while(strchr(s, ';') != NULL) {
       sqlite3_stmt *stmt;
-  
+
       int rc = sqlite3_prepare_v2(db, s, -1, &stmt, &s);
       if(rc != SQLITE_OK) {
 	TRACE(TRACE_ERROR, "METADB",
@@ -413,7 +413,7 @@ metadb_get(void)
   int rc;
   char *errmsg;
   sqlite3 *db;
- 
+
   hts_mutex_lock(&metadb_reuse_lock);
   if((db = metadb_reuse) != NULL)
     metadb_reuse = NULL;
@@ -484,7 +484,7 @@ db_item_get(sqlite3 *db, const char *url, time_t *mtimep)
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
 
   rc = sqlite3_step(stmt);
-  
+
   if(rc == SQLITE_ROW) {
     rval = sqlite3_column_int64(stmt, 0);
     if(mtimep != NULL)
@@ -511,7 +511,7 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 			  "VALUES "
 			  "(?1, ?2, ?3, ?4, " METADATA_VERSION_STR ")",
 			  -1, &stmt, NULL);
-  
+
   if(rc != SQLITE_OK)
     return -1;
 
@@ -525,7 +525,7 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 
   rc = sqlite3_step(stmt);
   sqlite3_finalize(stmt);
-  
+
   if(rc == SQLITE_DONE)
     return sqlite3_last_insert_rowid(db);
   else
@@ -551,7 +551,7 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
 
   sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
-  
+
   if(rc == SQLITE_ROW) {
     rval = sqlite3_column_int64(sel, 0);
   } else if(rc == SQLITE_DONE) {
@@ -598,7 +598,7 @@ metadb_album_get_by_title(sqlite3 *db, const char *title)
 
   sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
-  
+
   if(rc == SQLITE_ROW) {
     rval = sqlite3_column_int64(sel, 0);
   } else if(rc == SQLITE_DONE) {
@@ -643,7 +643,7 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
     if(artist_id == -1)
       return -1;
   }
-    
+
   if(md->md_album != NULL) {
     album_id = metadb_album_get_by_title(db, rstr_get(md->md_album));
     if(album_id == -1)
@@ -671,7 +671,7 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			    "WHERE item_id = ?1"
 			    ,
 			    -1, &stmt, NULL);
-    
+
     if(rc != SQLITE_OK)
       return -1;
 
@@ -679,13 +679,13 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
     if(md->md_title != NULL)
       sqlite3_bind_text(stmt, 2, rstr_get(md->md_title), -1, SQLITE_STATIC);
-    
+
     if(album_id != -1)
       sqlite3_bind_int64(stmt, 3, album_id);
-    
+
     if(artist_id != -1)
       sqlite3_bind_int64(stmt, 4, artist_id);
-    
+
     sqlite3_bind_int(stmt, 5, md->md_duration * 1000);
 
     rc = sqlite3_step(stmt);
@@ -724,7 +724,7 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
 			  "(?1, ?2, ?3, ?4, ?5, ?6, ?7)"
 			  ,
 			  -1, &stmt, NULL);
-  
+
   if(rc != SQLITE_OK) {
     return -1;
   }
@@ -758,7 +758,7 @@ metadb_set_streams(sqlite3 *db, int64_t item_id, const metadata_t *md)
   rc = sqlite3_prepare_v2(db, 
 			  "DELETE FROM stream WHERE item_id = ?1",
 			  -1, &stmt, NULL);
-  
+
   if(rc != SQLITE_OK)
     return -1;
 
@@ -803,7 +803,7 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			    "WHERE item_id = ?1"
 			    ,
 			    -1, &stmt, NULL);
-    
+
     if(rc != SQLITE_OK)
       return -1;
 
@@ -814,7 +814,7 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
     if(md->md_format != NULL)
       sqlite3_bind_text(stmt, 4, rstr_get(md->md_format), -1, SQLITE_STATIC);
-    
+
     sqlite3_bind_int(stmt, 3, md->md_duration * 1000);
 
     rc = sqlite3_step(stmt);
@@ -852,7 +852,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
   if(begin(db))
     return;
-  
+
   if(parent != NULL) {
     parent_id = db_item_get(db, parent, NULL);
     if(parent_id == -1)
@@ -861,7 +861,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
   item_id = db_item_get(db, url, NULL);
   if(item_id == -1) {
-    
+
     item_id = db_item_create(db, url, md->md_contenttype, mtime, parent_id);
 
     if(item_id == -1) {
@@ -870,7 +870,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     }
 
   } else {
-    
+
     rc = sqlite3_prepare_v2(db, 
 			    parent_id > 0 ? 
 			    "UPDATE item "
@@ -886,7 +886,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 			    "metadataversion=" METADATA_VERSION_STR " "
 			    "WHERE id=?3",
 			    -1, &stmt, NULL);
-  
+
     if(rc != SQLITE_OK) {
       rollback(db);
       return;
@@ -923,7 +923,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     r = 1;
     break;
   }
-  
+
   if(r)
     rollback(db);
   else
@@ -1061,7 +1061,7 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
   }
 
   md->md_title = rstr_alloc((void *)sqlite3_column_text(sel, 0));
-  
+
   if(!metadb_metadata_get_album(db, gc, sqlite3_column_int64(sel, 1)))
     md->md_album = rstr_dup(gc->gc_album_title);
 
@@ -1181,7 +1181,7 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
     r = 0;
     break;
   }
-  
+
   if(r) {
     metadata_destroy(md);
     return NULL;
@@ -1220,7 +1220,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   sqlite3_bind_int(sel, 2, mtime);
 
   rc = sqlite3_step(sel);
-  
+
   if(rc != SQLITE_ROW) {
     sqlite3_finalize(sel);
     rollback(db);
@@ -1268,7 +1268,7 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 			  "FROM item "
 			  "WHERE parent = ?1",
 			  -1, &sel, NULL);
-  
+
   if(rc != SQLITE_OK) {
     rollback(db);
     return NULL;
