@@ -512,8 +512,11 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 			  "(?1, ?2, ?3, ?4, " METADATA_VERSION_STR ")",
 			  -1, &stmt, NULL);
 
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
   if(contenttype)
@@ -546,8 +549,11 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
   rc = sqlite3_prepare_v2(db, 
 			  "SELECT id from artist where title=?1 ",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
@@ -572,6 +578,9 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
       sqlite3_finalize(ins);
       if(rc == SQLITE_DONE)
 	rval = sqlite3_last_insert_rowid(db);
+    } else {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
     }
   }
 
@@ -593,8 +602,11 @@ metadb_album_get_by_title(sqlite3 *db, const char *title)
   rc = sqlite3_prepare_v2(db, 
 			  "SELECT id from album where title=?1 ",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
@@ -619,6 +631,9 @@ metadb_album_get_by_title(sqlite3 *db, const char *title)
       sqlite3_finalize(ins);
       if(rc == SQLITE_DONE)
 	rval = sqlite3_last_insert_rowid(db);
+    } else {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
     }
   }
 
@@ -672,8 +687,11 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			    ,
 			    -1, &stmt, NULL);
 
-    if(rc != SQLITE_OK)
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
       return -1;
+    }
 
     sqlite3_bind_int64(stmt, 1, item_id);
 
@@ -726,8 +744,11 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
 			  -1, &stmt, NULL);
 
   if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
   }
+
   sqlite3_bind_int64(stmt, 1, item_id);
   sqlite3_bind_int(stmt, 2, ms->ms_streamindex);
   if(ms->ms_info != NULL)
@@ -759,8 +780,11 @@ metadb_set_streams(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			  "DELETE FROM stream WHERE item_id = ?1",
 			  -1, &stmt, NULL);
 
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(stmt, 1, item_id);
 
@@ -804,9 +828,11 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 			    ,
 			    -1, &stmt, NULL);
 
-    if(rc != SQLITE_OK)
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
       return -1;
-
+    }
     sqlite3_bind_int64(stmt, 1, item_id);
 
     if(md->md_title != NULL)
@@ -889,6 +915,8 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
     if(rc != SQLITE_OK) {
       rollback(db);
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
       return;
     }
 
@@ -972,8 +1000,11 @@ metadb_metadata_get_artist(sqlite3 *db, get_cache_t *gc, int64_t id)
 			  "FROM artist "
 			  "WHERE id = ?1",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(sel, 1, id);
 
@@ -1013,8 +1044,11 @@ metadb_metadata_get_album(sqlite3 *db, get_cache_t *gc, int64_t id)
 			  "FROM album "
 			  "WHERE id = ?1",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(sel, 1, id);
 
@@ -1048,8 +1082,11 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
 			  "FROM audioitem "
 			  "WHERE item_id = ?1",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(sel, 1, item_id);
 
@@ -1089,8 +1126,11 @@ metadb_metadata_get_video(sqlite3 *db, metadata_t *md, int64_t item_id)
 			  "FROM videoitem "
 			  "WHERE item_id = ?1",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(sel, 1, item_id);
 
@@ -1124,8 +1164,11 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 			  "FROM stream "
 			  "WHERE item_id = ?1 ORDER BY streamindex",
 			  -1, &sel, NULL);
-  if(rc != SQLITE_OK)
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     return -1;
+  }
 
   sqlite3_bind_int64(sel, 1, item_id);
 
@@ -1212,6 +1255,8 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
 			  "metadataversion=" METADATA_VERSION_STR,
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     rollback(db);
     return NULL;
   }
@@ -1270,6 +1315,8 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 			  -1, &sel, NULL);
 
   if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
     rollback(db);
     return NULL;
   }
