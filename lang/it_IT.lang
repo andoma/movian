@@ -218,8 +218,7 @@ msg: Utilizza opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memroy (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Memoria in esaurimento (%d kB di RAM disponibile)
 
 #
 # ./src/audio/audio.c
@@ -249,8 +248,7 @@ id: Swap LFE+center with surround
 msg: Scambia LFE+center con surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Cambio dell'uscita audio a %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -268,8 +266,7 @@ msg: Impossibile aprire il CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: Errore nella lettura DVD, riavvio del disco in corso
 
 #
 # ./src/backend/htsp/htsp.c
@@ -332,8 +329,7 @@ id: Spotify playlists
 msg: Spotify playlist
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: errore di connessione: %s
 
 id: Starred
 msg: Speciali
@@ -540,24 +536,19 @@ msg: Servizio non trovato
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: Forzando il livello 4.2 per contenuto al livello %d.%d. Questo potrebbe inibire la riproduzione del video.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Impossibile accelerare %s, libreria non caricata.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Impossibile aprire il Cell codec. Errore 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Impossibile aprire il Cell codec. Impossibile allocare %d bytes di RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Impossibile richiedere il Cell codec. Errore 0x%x
 
 #
 # ./src/video/video_settings.c
