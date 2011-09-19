@@ -217,7 +217,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
     }
 
     if(mb == NULL) {
-      mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * mb->mb_channels);
+      mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * 2);
       mb->mb_data_type = MB_AUDIO;
       mb->mb_channels = 2;
       mb->mb_rate = sample_rate;
