@@ -550,7 +550,8 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 
     metadata_add_stream(md, codecname(avctx->codec_id),
 			avctx->codec_type, i, tmp1,
-			tag ? tag->value : NULL);
+			tag ? tag->value : NULL,
+			stream->disposition);
   }
   
   md->md_contenttype = CONTENT_FILE;

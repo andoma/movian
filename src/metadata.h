@@ -59,6 +59,8 @@ typedef struct metadata_stream {
 
   enum AVMediaType ms_type;
 
+  int ms_disposition;
+
 } metadata_stream_t;
 
 
@@ -90,7 +92,8 @@ void metadata_destroy(metadata_t *md);
 
 void metadata_add_stream(metadata_t *md, const char *codec,
 			 enum AVMediaType type, int streamindex,
-			 const char *info, const char *isolang);
+			 const char *info, const char *isolang,
+			 int disposition);
 
 struct prop;
 void metadata_to_proptree(const metadata_t *md, struct prop *proproot,

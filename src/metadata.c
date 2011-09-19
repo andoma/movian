@@ -29,7 +29,7 @@
 #include "metadata.h"
 #include "fileaccess/fileaccess.h"
 
-#define METADATA_VERSION_STR "1"
+#define METADATA_VERSION_STR "2"
 
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
@@ -78,13 +78,15 @@ metadata_destroy(metadata_t *md)
  */
 void
 metadata_add_stream(metadata_t *md, const char *codec, enum AVMediaType type,
-		    int streamindex, const char *info, const char *isolang)
+		    int streamindex, const char *info, const char *isolang,
+		    int disposition)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
   ms->ms_info = rstr_alloc(info);
   ms->ms_isolang = rstr_alloc(isolang);
   ms->ms_codec = rstr_alloc(codec);
   ms->ms_type = type;
+  ms->ms_disposition = disposition;
   ms->ms_streamindex = streamindex;
   TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
 }
@@ -122,11 +124,14 @@ content2type(contenttype_t ctype) {
  *
  */
 static void
-metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
+metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 {
   char url[16];
-
+  int score = 0;
   snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
+
+  if(ms->ms_disposition & AV_DISPOSITION_DEFAULT)
+    score += 10;
 
   mp_add_track(parent,
 	       NULL,
@@ -134,7 +139,8 @@ metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
 	       rstr_get(ms->ms_codec),
 	       rstr_get(ms->ms_info),
 	       rstr_get(ms->ms_isolang),
-	       NULL, 0);
+	       NULL,
+	       score);
 }
 
 
@@ -733,9 +739,9 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
 
   rc = sqlite3_prepare_v2(db, 
 			  "INSERT INTO stream "
-			  "(item_id, streamindex, info, isolang, codec, mediatype) "
+			  "(item_id, streamindex, info, isolang, codec, mediatype, disposition) "
 			  "VALUES "
-			  "(?1, ?2, ?3, ?4, ?5, ?6)"
+			  "(?1, ?2, ?3, ?4, ?5, ?6, ?7)"
 			  ,
 			  -1, &stmt, NULL);
   
@@ -751,6 +757,7 @@ metadb_insert_stream(sqlite3 *db, int64_t item_id, const metadata_stream_t *ms)
   if(ms->ms_codec != NULL)
     sqlite3_bind_text(stmt, 5, rstr_get(ms->ms_codec), -1, SQLITE_STATIC);
   sqlite3_bind_text(stmt, 6, media, -1, SQLITE_STATIC);
+  sqlite3_bind_int(stmt, 7, ms->ms_disposition);
 
   rc = sqlite3_step(stmt);
   sqlite3_finalize(stmt);
@@ -1128,7 +1135,7 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
   sqlite3_stmt *sel;
 
   rc = sqlite3_prepare_v2(db,
-			  "SELECT streamindex, info, isolang, codec, mediatype "
+			  "SELECT streamindex, info, isolang, codec, mediatype, disposition "
 			  "FROM stream "
 			  "WHERE item_id = ?1 ORDER BY streamindex",
 			  -1, &sel, NULL);
@@ -1155,8 +1162,8 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 			type,
 			sqlite3_column_int(sel, 0),
 			(const char *)sqlite3_column_text(sel, 1),
-			(const char *)sqlite3_column_text(sel, 2));
-			
+			(const char *)sqlite3_column_text(sel, 2),
+			sqlite3_column_int(sel, 5));
   }
   sqlite3_finalize(sel);
   return 0;

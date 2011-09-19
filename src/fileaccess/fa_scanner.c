@@ -489,6 +489,8 @@ doscan(scanner_t *s)
   else
     pending_rescan = 1;
 
+  prop_set_int(s->s_loading, 0);
+
   if(s->s_fd != NULL) {
 
     analyzer(s, 0);
@@ -511,7 +513,6 @@ doscan(scanner_t *s)
 	  s->s_url, errbuf);
     s->s_fd = fa_dir_alloc();
   }
-  prop_set_int(s->s_loading, 0);
 
   if(pending_rescan)
     rescan(s);
