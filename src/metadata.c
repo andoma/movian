@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <unistd.h>
 
 #include "prop/prop.h"
 #include "ext/sqlite/sqlite3.h"
@@ -29,7 +30,7 @@
 #include "metadata.h"
 #include "fileaccess/fileaccess.h"
 
-#define METADATA_VERSION_STR "2"
+#define METADATA_VERSION_STR "1"
 
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
@@ -411,6 +412,8 @@ metadb_init(void)
   mkdir(buf, 0770);
   snprintf(buf, sizeof(buf), "%s/metadb/meta.db", showtime_persistent_path);
   meta_db_path = strdup(buf);
+
+  //  unlink(meta_db_path);
 
   db = metadb_get();
   if(db == NULL)
@@ -812,13 +815,14 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
     rc = sqlite3_prepare_v2(db, 
 			    i == 0 ? 
 			    "INSERT OR FAIL INTO videoitem "
-			    "(item_id, title, duration) "
+			    "(item_id, title, duration, format) "
 			    "VALUES "
-			    "(?1, ?2, ?3)"
+			    "(?1, ?2, ?3, ?4)"
 			    :
 			    "UPDATE videoitem SET "
 			    "title = ?2, "
-			    "duration = ?3 "
+			    "duration = ?3, "
+			    "format = ?4 "
 			    "WHERE item_id = ?1"
 			    ,
 			    -1, &stmt, NULL);
@@ -830,6 +834,9 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
     if(md->md_title != NULL)
       sqlite3_bind_text(stmt, 2, rstr_get(md->md_title), -1, SQLITE_STATIC);
+
+    if(md->md_format != NULL)
+      sqlite3_bind_text(stmt, 4, rstr_get(md->md_format), -1, SQLITE_STATIC);
     
     sqlite3_bind_int(stmt, 3, md->md_duration * 1000);
 
@@ -1101,7 +1108,7 @@ metadb_metadata_get_video(sqlite3 *db, metadata_t *md, int64_t item_id)
   sqlite3_stmt *sel;
 
   rc = sqlite3_prepare_v2(db,
-			  "SELECT title, duration "
+			  "SELECT title, duration, format "
 			  "FROM videoitem "
 			  "WHERE item_id = ?1",
 			  -1, &sel, NULL);
@@ -1119,6 +1126,7 @@ metadb_metadata_get_video(sqlite3 *db, metadata_t *md, int64_t item_id)
 
   md->md_title = rstr_alloc((void *)sqlite3_column_text(sel, 0));
   md->md_duration = sqlite3_column_int(sel, 1) / 1000.0f;
+  md->md_format = rstr_alloc((void *)sqlite3_column_text(sel, 2));
 
   sqlite3_finalize(sel);
   return 0;

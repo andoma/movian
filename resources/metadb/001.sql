@@ -56,7 +56,8 @@ CREATE TABLE videoitem (
        item_id INTEGER UNIQUE REFERENCES item(id) ON DELETE CASCADE,
        title TEXT,
        duration FLOAT,
-       restartposition INTEGER DEFAULT 0
+       restartposition INTEGER DEFAULT 0,
+       format TEXT
 );
 CREATE INDEX videoitem_item_id_idx ON videoitem(item_id);
 
@@ -67,7 +68,8 @@ CREATE TABLE stream (
        info TEXT,
        isolang TEXT,
        codec TEXT,
-       mediatype TEXT 
+       mediatype TEXT,
+       disposition INTEGER
        );
 
 CREATE INDEX stream_item_id_idx ON stream(item_id);
