@@ -1032,15 +1032,9 @@ spotify_metadata_update_track(metadata_t *m)
 	 (prop_create_check) but it will also leave us with a
 	 reference that we must release */
 
-      prop_t *p = prop_create_check(m->m_additional_artists, url);
-      if(p != NULL) {
-	prop_t *p2 = prop_create_check(p, "artist");
-	if(p2 != NULL) {
-	  prop_set_link(p2, f_sp_artist_name(artist), url);
-	  prop_ref_dec(p2);
-	}
-	prop_ref_dec(p);
-      }
+      prop_t *p = prop_create(m->m_additional_artists, url);
+      prop_set_link(prop_create(p, "artist"),
+		    f_sp_artist_name(artist), url);
     }
   }
 

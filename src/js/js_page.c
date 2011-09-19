@@ -343,12 +343,9 @@ item_set_property(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
   const char *name = JSVAL_IS_STRING(id) ? 
     JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
-  prop_t *c = name ? prop_create_check(ji->ji_root, name) : NULL;
 
-  if(c != NULL) {
-    js_prop_set_from_jsval(cx, c, *vp);
-    prop_ref_dec(c);
-  }
+  if(name != NULL)
+    js_prop_set_from_jsval(cx, prop_create(ji->ji_root, name), *vp);
 
   return JS_TRUE;
 }

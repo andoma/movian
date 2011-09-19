@@ -155,11 +155,6 @@ prop_t *prop_create_root_ex(const char *name, int noalloc)
 #define prop_create_root(name) \
   prop_create_root_ex(name, __builtin_constant_p(name))
 
-prop_t *prop_create_check_ex(prop_t *parent, const char *name, int noalloc);
-
-#define prop_create_check(parent, name) \
-  prop_create_check_ex(parent, name, __builtin_constant_p(name))
-
 void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);

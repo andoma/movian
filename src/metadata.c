@@ -153,36 +153,24 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 		     int overwrite_title)
 {
   metadata_stream_t *ms;
-  prop_t *p;
 
-  if(md->md_title && (p = prop_create_check(proproot, "title")) != NULL) {
-    prop_set_rstring_ex(p, NULL, md->md_title, !overwrite_title);
-    prop_ref_dec(p);
-  }
+  if(md->md_title != NULL)
+    prop_set_rstring_ex(prop_create(proproot, "title"),
+			NULL, md->md_title, !overwrite_title);
 
   if(md->md_artist) {
-    if((p = prop_create_check(proproot, "artist")) != NULL) {
-      prop_set_rstring(p, md->md_artist);
-      prop_ref_dec(p);
-    }
+    prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
 
-    if((p = prop_create_check(proproot, "artist_images")) != NULL) {
-      lastfm_artistpics_init(p, md->md_artist);
-      prop_ref_dec(p);
-    }
+    lastfm_artistpics_init(prop_create(proproot, "artist_images"),
+			   md->md_artist);
   }
 
   if(md->md_album) {
-    if((p = prop_create_check(proproot, "album")) != NULL) {
-      prop_set_rstring(p,  md->md_album);
-      prop_ref_dec(p);
-    }
+    prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
     
-    if(md->md_artist != NULL &&
-       (p = prop_create_check(proproot, "album_art")) != NULL) {
-      lastfm_albumart_init(p, md->md_artist, md->md_album);
-      prop_ref_dec(p);
-    }
+    if(md->md_artist != NULL)
+      lastfm_albumart_init(prop_create(proproot, "album_art"),
+			   md->md_artist, md->md_album);
   }
 
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
@@ -191,42 +179,31 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
     switch(ms->ms_type) {
     case AVMEDIA_TYPE_AUDIO:
-      p = prop_create_check(proproot, "audiostreams");
+      p = prop_create(proproot, "audiostreams");
       break;
     case AVMEDIA_TYPE_VIDEO:
-      p = prop_create_check(proproot, "videostreams");
+      p = prop_create(proproot, "videostreams");
       break;
     case AVMEDIA_TYPE_SUBTITLE:
-      p = prop_create_check(proproot, "subtitlestreams");
+      p = prop_create(proproot, "subtitlestreams");
       break;
     default:
       continue;
     }
-    if(p != NULL) {
-      metadata_stream_make_prop(ms, p);
-      prop_ref_dec(p);
-    }
+    metadata_stream_make_prop(ms, p);
   }
 
-  if(md->md_format && (p = prop_create_check(proproot, "format")) != NULL) {
-    prop_set_rstring(p,  md->md_format);
-    prop_ref_dec(p);
-  }
+  if(md->md_format != NULL)
+    prop_set_rstring(prop_create(proproot, "format"), md->md_format);
 
-  if(md->md_duration && (p = prop_create_check(proproot, "duration")) != NULL) {
-    prop_set_float(p, md->md_duration);
-    prop_ref_dec(p);
-  }
+  if(md->md_duration)
+    prop_set_float(prop_create(proproot, "duration"), md->md_duration);
 
-  if(md->md_tracks && (p = prop_create_check(proproot, "tracks")) != NULL) {
-    prop_set_int(p,  md->md_tracks);
-    prop_ref_dec(p);
-  }
+  if(md->md_tracks)
+    prop_set_int(prop_create(proproot, "tracks"), md->md_tracks);
 
-  if(md->md_time && (p = prop_create_check(proproot, "timestamp")) != NULL) {
-    prop_set_int(p,  md->md_time);
-    prop_ref_dec(p);
-  }
+  if(md->md_time)
+    prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
 }
 
 

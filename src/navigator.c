@@ -494,15 +494,11 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
 int
 nav_open_error(prop_t *root, const char *msg)
 {
-  prop_t *model = prop_create_check(root, "model");
-
-  if(model != NULL) {
-    prop_set_string(prop_create(model, "type"), "openerror");
-    prop_set_int(prop_create(model, "loading"), 0);
-    prop_set_string(prop_create(model, "error"), msg);
-    prop_set_int(prop_create(root, "directClose"), 1);
-  }
-  prop_ref_dec(model);
+  prop_t *model = prop_create(root, "model");
+  prop_set_string(prop_create(model, "type"), "openerror");
+  prop_set_int(prop_create(model, "loading"), 0);
+  prop_set_string(prop_create(model, "error"), msg);
+  prop_set_int(prop_create(root, "directClose"), 1);
   return 0;
 }
 

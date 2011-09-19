@@ -94,13 +94,8 @@ set_type(prop_t *proproot, unsigned int type)
 {
   const char *typestr;
 
-  if((typestr = content2type(type))) {
-    prop_t *p = prop_create_check(proproot, "type");
-    if(p != NULL) {
-      prop_set_string(p, typestr);
-      prop_ref_dec(p);
-    }
-  }
+  if((typestr = content2type(type)) != NULL)
+    prop_set_string(prop_create(proproot, "type"), typestr);
 }
 
 
