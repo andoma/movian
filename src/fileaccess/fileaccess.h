@@ -25,7 +25,7 @@
 
 #include "misc/queue.h"
 #include "networking/http.h"
-
+#include "metadata.h"
 #include "navigator.h"
 
 struct prop;
@@ -75,8 +75,12 @@ typedef struct fa_dir_entry {
 
   } fde_probestatus;
 
-  int fde_statdone;
+  char fde_statdone;
+  char fde_ignore_cache;
   struct fa_stat fde_stat;
+
+  struct metadata *fde_md;
+
 } fa_dir_entry_t;
 
 /**
@@ -160,7 +164,8 @@ int fa_notify(const char *url, void *opaque,
 
 void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
-void fa_scanner(const char *url, prop_t *model, const char *playme);
+void fa_scanner(const char *url, time_t mtime, 
+		prop_t *model, const char *playme);
 
 void *fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
 		   char *errbuf, size_t errlen);

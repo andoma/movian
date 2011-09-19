@@ -61,49 +61,6 @@ extern const char *showtime_get_system_type(void);
 extern uint64_t arch_get_seed(void);
 
 /**
- * Content types
- */
-#define CONTENT_UNKNOWN  0
-#define CONTENT_DIR      1
-#define CONTENT_FILE     2
-#define CONTENT_ARCHIVE  3 /* Archive (a file, but we can dive into it) */
-#define CONTENT_AUDIO    4
-#define CONTENT_VIDEO    5
-#define CONTENT_PLAYLIST 6
-#define CONTENT_DVD      7
-#define CONTENT_IMAGE    8
-#define CONTENT_ALBUM    9
-#define CONTENT_PLUGIN   10
-#define CONTENT_MAX      10 /* Update me! */
-
-/**
- * Returns a "type" property name for the given CONTENT_..
- * or NULL on non-match/non-applicability.
- */
-static inline const char *content2type (int ctype) __attribute__((unused));
-static inline const char *content2type (int ctype) {
-  static const char *types[CONTENT_MAX+1] = {
-    [CONTENT_UNKNOWN]  = "unknown",
-    [CONTENT_DIR]      = "directory",
-    [CONTENT_FILE]     = "file",
-    [CONTENT_AUDIO]    = "audio",
-    [CONTENT_ARCHIVE]  = "archive",
-    [CONTENT_VIDEO]    = "video",
-    [CONTENT_PLAYLIST] = "playlist",
-    [CONTENT_DVD]      = "dvd",
-    [CONTENT_IMAGE]    = "image",
-    [CONTENT_ALBUM]    = "album",
-    [CONTENT_PLUGIN]   = "plugin",
-  };
-
-  if (ctype < 0 || ctype > CONTENT_MAX)
-    return NULL;
-
-  return types[ctype];
-}
-
-
-/**
  *
  */
 

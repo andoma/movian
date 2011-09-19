@@ -24,6 +24,7 @@
 #include "dvd.h"
 #include "notifications.h"
 #include "showtime.h"
+#include "metadata.h"
 
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>

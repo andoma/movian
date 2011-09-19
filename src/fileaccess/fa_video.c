@@ -563,7 +563,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
      * Is it a DVD ?
      */
     if(fs.fs_type == CONTENT_DIR) {
-      if(fa_probe_dir(NULL, url) == CONTENT_DVD)
+
+      metadata_t *md = fa_probe_dir(url);
+      int is_dvd = md->md_contenttype == CONTENT_DVD;
+      metadata_destroy(md);
+
+      if(is_dvd)
 	goto isdvd;
       return NULL;
     }
@@ -623,7 +628,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Update property metadata
    */
-  fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, url);
+  metadata_t *md = fa_metadata_from_fctx(fctx, url);
+  if(md != NULL) {
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
+    metadata_destroy(md);
+  }
 
   /**
    * Subtitles from filesystem

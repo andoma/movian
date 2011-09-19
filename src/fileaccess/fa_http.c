@@ -2305,18 +2305,20 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	  fde = fa_dir_add(fd, path, fname, 
 			   isdir ? CONTENT_DIR : CONTENT_FILE);
 
-	  if(fde != NULL && !isdir) {
+	  if(fde != NULL) {
 
 	    fde->fde_statdone = 1;
 
-	    if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
-	      fde->fde_stat.fs_size = strtoll(d, NULL, 10);
-	    else
-	      fde->fde_statdone = 0;
-	  
-	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) == NULL ||
-	       http_ctime(&fde->fde_stat.fs_mtime, d))
-	      fde->fde_statdone = 1;
+	    if(!isdir) {
+	      
+	      if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
+		fde->fde_stat.fs_size = strtoll(d, NULL, 10);
+	      else
+		fde->fde_statdone = 0;
+	    }
+
+	    if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
+	      http_ctime(&fde->fde_stat.fs_mtime, d);
 	  }
 	}
       }

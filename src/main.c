@@ -51,6 +51,8 @@
 #include "misc/string.h"
 #include "text/text.h"
 #include "video/video_settings.h"
+#include "metadata.h"
+#include "ext/sqlite/sqlite3.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -59,6 +61,10 @@
 #endif
 
 #include "misc/fs.h"
+
+#if ENABLE_SQLITE_LOCKING
+static struct sqlite3_mutex_methods sqlite_mutexes;
+#endif
 
 static void finalize(void) __attribute__((noreturn));
 
@@ -332,6 +338,12 @@ main(int argc, char **argv)
     showtime_cache_path = NULL;
   }
 
+  /* Initialize sqlite3 */
+#if ENABLE_SQLITE_LOCKING
+  sqlite3_config(SQLITE_CONFIG_MUTEX, &sqlite_mutexes);
+#endif
+  sqlite3_initialize();
+
   /* Initializte blob cache */
   blobcache_init();
 
@@ -346,6 +358,9 @@ main(int argc, char **argv)
 
   /* Initialize htsmsg_store() */
   htsmsg_store_init();
+
+  /* Metadata init */
+  metadb_init();
 
   /* Initialize keyring */
   keyring_init();
@@ -519,3 +534,93 @@ finalize(void)
   shutdown_hook_run(0);
   arch_exit(showtime_retcode);
 }
+
+
+#if ENABLE_SQLITE_LOCKING
+
+/**
+ * Sqlite mutex helpers
+ */
+static hts_mutex_t static_mutexes[6];
+
+static int
+sqlite_mutex_init(void)
+{
+  int i;
+  for(i = 0; i < 6; i++)
+    hts_mutex_init(&static_mutexes[i]);
+  return SQLITE_OK;
+}
+
+static int
+sqlite_mutex_end(void)
+{
+  return SQLITE_OK;
+}
+
+static sqlite3_mutex *
+sqlite_mutex_alloc(int id)
+{
+  hts_mutex_t *m;
+
+  switch(id) {
+  case SQLITE_MUTEX_FAST:
+    m = malloc(sizeof(hts_mutex_t));
+    hts_mutex_init(m);
+    break;
+
+  case SQLITE_MUTEX_RECURSIVE:
+    m = malloc(sizeof(hts_mutex_t));
+    hts_mutex_init_recursive(m);
+    break;
+    
+  case SQLITE_MUTEX_STATIC_MASTER: m=&static_mutexes[0]; break;
+  case SQLITE_MUTEX_STATIC_MEM:    m=&static_mutexes[1]; break;
+  case SQLITE_MUTEX_STATIC_MEM2:   m=&static_mutexes[2]; break;
+  case SQLITE_MUTEX_STATIC_PRNG:   m=&static_mutexes[3]; break;
+  case SQLITE_MUTEX_STATIC_LRU:    m=&static_mutexes[4]; break;
+  case SQLITE_MUTEX_STATIC_LRU2:   m=&static_mutexes[5]; break;
+  default:
+    return NULL;
+  }
+  return (sqlite3_mutex *)m;
+}
+
+static void
+sqlite_mutex_free(sqlite3_mutex *M)
+{
+  hts_mutex_t *m = (hts_mutex_t *)M;
+  hts_mutex_destroy(m);
+  free(m);
+}
+
+static void
+sqlite_mutex_enter(sqlite3_mutex *M)
+{
+  hts_mutex_t *m = (hts_mutex_t *)M;
+  hts_mutex_lock(m);
+}
+
+static void
+sqlite_mutex_leave(sqlite3_mutex *M)
+{
+  hts_mutex_t *m = (hts_mutex_t *)M;
+  hts_mutex_unlock(m);
+}
+
+static int
+sqlite_mutex_try(sqlite3_mutex *m)
+{
+  return SQLITE_BUSY;
+}
+
+static struct sqlite3_mutex_methods sqlite_mutexes = {
+  sqlite_mutex_init,
+  sqlite_mutex_end,
+  sqlite_mutex_alloc,
+  sqlite_mutex_free,
+  sqlite_mutex_enter,
+  sqlite_mutex_try,
+  sqlite_mutex_leave,
+};
+#endif

@@ -81,6 +81,8 @@ CONFIG_LIST="
  libfontconfig
  binreplace
  readahead_cache
+ sqlite_vfs
+ sqlite_locking
 "
 
 die() {
@@ -317,6 +319,14 @@ finalize() {
     fi
     echo >>${CONFIG_H} "#define SHOWTIME_LANGUAGES_URL \""${LANGUAGES_URL}"\""
 
+    # sqlite
+    if enabled sqlite_vfs; then
+	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_OS_OTHER=1 -DSQLITE_DEFAULT_LOCKING_MODE=1"
+    fi
+
+    if enabled sqlite_locking; then
+	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_MUTEX_NOOP"
+    fi
 
     # Release tag
     if enabled release; then
