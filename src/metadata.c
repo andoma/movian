@@ -1174,7 +1174,7 @@ metadb_playcount_incr(const char *url)
   if((db = metadb_get()) == NULL)
     return;
 
-  if(begin(db)) {
+  if(db_begin(db)) {
     metadb_close(db);
     return;
   }
@@ -1198,7 +1198,7 @@ metadb_playcount_incr(const char *url)
     if(rc != SQLITE_OK) {
       TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	    __FUNCTION__, __LINE__);
-      rollback(db);
+      db_rollback(db);
       metadb_close(db);
       return;
     }
