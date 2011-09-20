@@ -131,6 +131,7 @@ typedef struct media_buf {
   uint8_t mb_disable_deinterlacer : 1;
   uint8_t mb_skip : 2;
   uint8_t mb_keyframe : 1;
+  uint8_t mb_send_pts : 1;
 
   uint8_t mb_stream;
 

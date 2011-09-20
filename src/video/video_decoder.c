@@ -157,7 +157,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
 
 /**
- *
+ * This should not have to deal with mb really
  */
 void
 video_deliver_frame(video_decoder_t *vd,
@@ -244,10 +244,13 @@ video_deliver_frame(video_decoder_t *vd,
   if(pts != AV_NOPTS_VALUE) {
     vd->vd_nextpts = pts + duration;
 
-    ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->ts = pts;
-    mp_enqueue_event(mp, &ets->h);
-    event_release(&ets->h);
+    if(mb->mb_send_pts) {
+      ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = pts;
+      mp_enqueue_event(mp, &ets->h);
+      event_release(&ets->h);
+    }
+
   } else {
     vd->vd_nextpts = AV_NOPTS_VALUE;
   }

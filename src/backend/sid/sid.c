@@ -41,7 +41,7 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   media_buf_t *mb = NULL;
   event_t *e;
   int subsong;
-
+  int registered_play = 0;
 
   void *player;
   void *data;
@@ -73,7 +73,6 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_NONE);
   mp_become_primary(mp);
 
-
   while(1) {
 
     if(mb == NULL) {
@@ -84,6 +83,12 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
       mb->mb_rate = 44100;
 
       mb->mb_time = sample * 1000000LL / mb->mb_rate;
+
+      if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
+	registered_play = 1;
+	metadb_playcount_incr(url0);
+      }
+
       sample += CHUNK_SIZE;
 
       int16_t *samples = mb->mb_data;

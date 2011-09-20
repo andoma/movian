@@ -221,10 +221,11 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_ts_t *ets;
-  int64_t ts, pts4seek = 0;
+  int64_t ts, seekbase = 0;
   media_codec_t *cw;
   event_t *e;
   int lost_focus = 0;
+  int registered_play = 0;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
@@ -246,7 +247,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
 #if ENABLE_LIBGME
   if(*gme_identify_header(pb))
-    return fa_gme_playfile(mp, avio, errbuf, errlen, hold);
+    return fa_gme_playfile(mp, avio, errbuf, errlen, hold, url);
 #endif
 
 #if ENABLE_LIBOPENSPC
@@ -358,10 +359,10 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 	  mb->mb_time = mb->mb_pts;
 	else
 	  mb->mb_time = mb->mb_pts - fctx->start_time;
-	pts4seek = mb->mb_time;
       } else
 	mb->mb_time = AV_NOPTS_VALUE;
 
+      mb->mb_send_pts = 1;
 
       av_free_packet(&pkt);
     }
@@ -391,6 +392,18 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mp_flush(mp, 0);
       break;
 
+    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+
+      ets = (event_ts_t *)e;
+      seekbase = ets->ts;
+
+      if(registered_play == 0) {
+	if(ets->ts - fctx->start_time > METADB_AUDIO_PLAY_THRESHOLD) {
+	  registered_play = 1;
+	  metadb_playcount_incr(url);
+	}
+      }
+
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
@@ -402,22 +415,22 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(fctx, -1, seekbase - 60000000, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(fctx, -1, seekbase - 15000000, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
+      av_seek_frame(fctx, -1, seekbase + 60000000, 0);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
+      av_seek_frame(fctx, -1, seekbase + 15000000, 0);
       seekflush(mp, &mb);
 #if 0
     } else if(event_is_action(e, ACTION_RESTART_TRACK)) {

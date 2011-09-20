@@ -49,12 +49,14 @@ play_videoparams(const char *json, struct media_pipe *mp,
   htsmsg_field_t *f;
   int nsources = 0, i;
   vsource_t *vsvec, *vs;
+  const char *canonical_url;
 
   if(m == NULL) {
     snprintf(errbuf, errlen, "Invalid JSON");
     return NULL;
   }
 
+  canonical_url = htsmsg_get_str(m, "canonicalUrl");
 
   // Sources
 
@@ -121,8 +123,12 @@ play_videoparams(const char *json, struct media_pipe *mp,
 
   vs = vsvec;
   
+  if(canonical_url == NULL)
+    canonical_url = vs->vs_url;
+
   return backend_play_video(vs->vs_url, mp, flags, priority, 
-			    errbuf, errlen, vs->vs_mimetype);
+			    errbuf, errlen, vs->vs_mimetype,
+			    canonical_url);
 }
 
 
@@ -160,7 +166,7 @@ video_player_idle(void *aux)
 				errbuf, sizeof(errbuf));
       } else {
 	next = backend_play_video(ep->url, mp, flags, ep->priority,
-				  errbuf, sizeof(errbuf), NULL);
+				  errbuf, sizeof(errbuf), NULL, ep->url);
       }
 
       if(next == NULL)

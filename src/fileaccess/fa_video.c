@@ -243,7 +243,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_t *e;
   event_ts_t *ets;
   int64_t ts;
-  int64_t seekbase = AV_NOPTS_VALUE;
+  int64_t seekbase = 0;
 
   int hold = 0, lost_focus = 0, epoch = 1;
 
@@ -287,6 +287,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	} else {
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
+	mb->mb_send_pts = 1;
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 
@@ -535,7 +536,8 @@ event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype)
+		  const char *mimetype,
+		  const char *canonical_url)
 {
   AVFormatContext *fctx;
   AVIOContext *avio;
@@ -729,6 +731,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_t *seek_index = build_index(mp, fctx, url);
 
+  metadb_playcount_incr(canonical_url);
+
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen);
 
   prop_destroy(seek_index);
@@ -799,7 +803,8 @@ playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL);
+      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL,
+			     url);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;

@@ -1588,7 +1588,8 @@ static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype)
+		  const char *mimetype,
+		  const char *canonical_url)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];

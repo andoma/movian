@@ -1163,22 +1163,53 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
  *
  */
 void
-metadb_playcount_incr(void *db, const char *url)
+metadb_playcount_incr(const char *url)
 {
   int rc;
-  sqlite3_stmt *stmt;
-
-  if(!metadb_valid || db == NULL)
+  int i;
+  void *db;
+  if(!metadb_valid)
     return;
 
-  rc = sqlite3_prepare_v2(db, 
-			  "UPDATE item SET playcount=playcount+1 WHERE URL=?1;",
-			  -1, &stmt, NULL);
-  
-  if(rc != SQLITE_OK)
+  if((db = metadb_get()) == NULL)
     return;
 
-  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-  sqlite3_step(stmt);
-  sqlite3_finalize(stmt);
+  if(begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  for(i = 0; i < 2; i++) {
+    sqlite3_stmt *stmt;
+
+    rc = sqlite3_prepare_v2(db, 
+			    i == 0 ? 
+			    "UPDATE item "
+			    "SET playcount = playcount + 1, "
+			    "lastplay = ?2 "
+			    "WHERE url=?1"
+			    :
+			    "INSERT INTO item "
+			    "(url, playcount, lastplay) "
+			    "VALUES "
+			    "(?1, 1, ?2)",
+			    -1, &stmt, NULL);
+
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      rollback(db);
+      metadb_close(db);
+      return;
+    }
+
+    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, time(NULL));
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
+      break;
+  }
+  commit(db);
+  metadb_close(db);
 }

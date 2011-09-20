@@ -82,7 +82,8 @@ event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   int flags, int priority,
 		   char *errbuf, size_t errlen,
-		   const char *mimetype)
+		   const char *mimetype, 
+		   const char *canonical_url)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -91,7 +92,8 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype);
+  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
+			   canonical_url);
 }
 
 

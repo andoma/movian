@@ -27,6 +27,7 @@
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "video/video_playback.h"
+#include "metadata.h"
 
 typedef struct {
 
@@ -284,7 +285,8 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
-
+  mb->mb_send_pts = dt == MB_VIDEO;
+	
   memcpy(mb->mb_data, data, size);
   mb->mb_epoch = r->epoch;
 
@@ -684,7 +686,8 @@ static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
 	       char *errbuf, size_t errlen,
-	       const char *mimetype)
+	       const char *mimetype,
+	       const char *canonical_url)
 {
   rtmp_t r = {0};
   event_t *e;
@@ -722,6 +725,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);
+
+  metadb_playcount_incr(canonical_url);
 
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 

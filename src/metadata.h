@@ -108,8 +108,6 @@ void *metadb_get(void);
 
 void metadb_close(void *db);
 
-void metadb_playcount_incr(void *db, const char *url);
-
 void metadb_metadata_write(void *db, const char *url, time_t mtime,
 			   const metadata_t *md, const char *parent,
 			   time_t parent_mtime);
@@ -119,3 +117,9 @@ metadata_t *metadb_metadata_get(void *db, const char *url, time_t mtime);
 struct fa_dir;
 struct fa_dir *metadb_metadata_scandir(void *db, const char *url,
 				       time_t *mtimep);
+
+void metadb_playcount_incr(const char *url);
+
+#define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)
+
+#define METADB_VIDEO_PLAY_THRESHOLD (10 * 1000000)
