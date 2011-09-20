@@ -726,9 +726,12 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  metadb_playcount_incr(canonical_url);
+  metadb_register_play(canonical_url, 0);
 
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
+
+  if(e != NULL && event_is_type(e, EVENT_EOF))
+    metadb_register_play(canonical_url, 1);
 
   mp_flush(mp, 0);
   mp_shutdown(mp);

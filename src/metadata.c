@@ -37,6 +37,9 @@
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
 static db_pool_t *metadb_pool;
+static hts_mutex_t mip_mutex;
+
+static void mip_update_by_url(sqlite3 *db, const char *url);
 
 /**
  *
@@ -221,6 +224,8 @@ metadb_init(void)
   snprintf(buf, sizeof(buf), "%s/metadb/meta.db", showtime_persistent_path);
 
   //  unlink(buf);
+
+  hts_mutex_init(&mip_mutex);
 
   metadb_pool = db_pool_create(buf, 2);
   db = metadb_get();
@@ -1163,7 +1168,7 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
  *
  */
 void
-metadb_playcount_incr(const char *url)
+metadb_register_play(const char *url, int inc)
 {
   int rc;
   int i;
@@ -1185,14 +1190,14 @@ metadb_playcount_incr(const char *url)
     rc = sqlite3_prepare_v2(db, 
 			    i == 0 ? 
 			    "UPDATE item "
-			    "SET playcount = playcount + 1, "
+			    "SET playcount = playcount + ?3, "
 			    "lastplay = ?2 "
 			    "WHERE url=?1"
 			    :
 			    "INSERT INTO item "
 			    "(url, playcount, lastplay) "
 			    "VALUES "
-			    "(?1, 1, ?2)",
+			    "(?1, ?3, ?2)",
 			    -1, &stmt, NULL);
 
     if(rc != SQLITE_OK) {
@@ -1205,11 +1210,214 @@ metadb_playcount_incr(const char *url)
 
     sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 2, time(NULL));
+    sqlite3_bind_int(stmt, 3, inc);
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
       break;
   }
-  commit(db);
+  db_commit(db);
+  mip_update_by_url(db, url);
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+typedef struct metadb_item_prop {
+  LIST_ENTRY(metadb_item_prop) mip_link;
+  prop_t *mip_playcount;
+  prop_t *mip_lastplayed;
+  prop_t *mip_restartpos;
+
+  char *mip_url;
+  
+  prop_sub_t *mip_destroy_sub;
+
+} metadb_item_prop_t;
+
+#define MIP_HASHWIDTH 311
+
+static LIST_HEAD(, metadb_item_prop) mip_hash[MIP_HASHWIDTH];
+
+
+
+typedef struct metadb_item_info {
+  int mii_playcount;
+  int mii_lastplayed;
+  int mii_restartpos;
+} metadb_item_info_t;
+
+/**
+ *
+ */
+static int
+mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
+{
+  int rc, rval = -1;
+  sqlite3_stmt *stmt;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "SELECT "
+			  "id,contenttype,playcount,lastplay "
+			  "FROM item "
+			  "WHERE url=?1 ",
+			  -1, &stmt, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return -1;
+  }
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+
+  rc = sqlite3_step(stmt);
+
+  if(rc == SQLITE_ROW) {
+    mii->mii_playcount  = sqlite3_column_int(stmt, 2);
+    mii->mii_lastplayed = sqlite3_column_int(stmt, 3);
+    mii->mii_restartpos = 0;
+    rval = 0;
+    int64_t id = sqlite3_column_int64(stmt, 0);
+    if(sqlite3_column_int(stmt, 1) == CONTENT_VIDEO) {
+      sqlite3_finalize(stmt);
+      
+      rc = sqlite3_prepare_v2(db, 
+			      "SELECT "
+			      "restartposition "
+			      "FROM videoitem "
+			      "WHERE item_id=?1 ",
+			      -1, &stmt, NULL);
+      if(rc != SQLITE_OK) {
+	TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	      __FUNCTION__, __LINE__);
+	return -1;
+      }
+      sqlite3_bind_int64(stmt, 1, id);
+
+      rc = sqlite3_step(stmt);
+
+      if(rc == SQLITE_ROW)
+	mii->mii_restartpos = sqlite3_column_int(stmt, 0);
+    }
+  }
+
+  sqlite3_finalize(stmt);
+  return rval;
+}
+
+
+/**
+ *
+ */
+static void
+mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
+{
+  prop_set_int(mip->mip_playcount,  mii->mii_playcount);
+  prop_set_int(mip->mip_lastplayed, mii->mii_lastplayed);
+  prop_set_int(mip->mip_restartpos, mii->mii_restartpos);
+}
+
+
+/**
+ *
+ */
+static void
+mip_update_by_url(sqlite3 *db, const char *url)
+{
+  metadb_item_prop_t *mip;
+  metadb_item_info_t mii;
+  int loaded = 0;
+
+  unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
+
+  hts_mutex_lock(&mip_mutex);
+
+  LIST_FOREACH(mip, &mip_hash[hash], mip_link) {
+    if(strcmp(mip->mip_url, url))
+      continue;
+
+    if(loaded == 0) {
+      if(mip_get(db, url, &mii))
+	break;
+      loaded = 1;
+    }
+    mip_set(mip, &mii);
+  }
+  hts_mutex_unlock(&mip_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
+{
+  metadb_item_prop_t *mip = opaque;
+  if(event != PROP_DESTROYED)
+    return;
+  hts_mutex_lock(&mip_mutex);
+  LIST_REMOVE(mip, mip_link);
+  hts_mutex_unlock(&mip_mutex);
+
+  prop_unsubscribe(mip->mip_destroy_sub);
+  prop_ref_dec(mip->mip_playcount);
+  prop_ref_dec(mip->mip_lastplayed);
+  prop_ref_dec(mip->mip_restartpos);
+  free(mip->mip_url);
+  free(mip);
+}
+
+
+/**
+ *
+ */
+static void
+metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
+{
+  metadb_item_prop_t *mip = malloc(sizeof(metadb_item_prop_t));
+
+  mip->mip_destroy_sub =
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, metadb_item_prop_destroyed, mip,
+		   PROP_TAG_ROOT, parent,
+		   NULL);
+
+  if(mip->mip_destroy_sub == NULL) {
+    free(mip);
+
+  } else {
+
+    mip->mip_playcount  = prop_ref_inc(prop_create(parent, "playcount"));
+    mip->mip_lastplayed = prop_ref_inc(prop_create(parent, "lastplayed"));
+    mip->mip_restartpos = prop_ref_inc(prop_create(parent, "restartpos"));
+  
+    mip->mip_url = strdup(url);
+
+    unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
+
+    hts_mutex_lock(&mip_mutex);
+    LIST_INSERT_HEAD(&mip_hash[hash], mip, mip_link);
+    hts_mutex_unlock(&mip_mutex);
+
+    metadb_item_info_t mii;
+    if(!mip_get(db, url, &mii))
+      mip_set(mip, &mii);
+  }
+}
+
+
+void
+metadb_bind_url_to_prop(void *db, const char *url, prop_t *parent)
+{
+  if(!metadb_valid)
+    return;
+
+  if(db != NULL)
+    return metadb_bind_url_to_prop0(db, url, parent);
+
+  if((db = metadb_get()) != NULL)
+    metadb_bind_url_to_prop0(db, url, parent);
   metadb_close(db);
 }

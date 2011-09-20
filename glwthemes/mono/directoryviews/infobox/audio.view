@@ -89,6 +89,11 @@ widget(container_y, {
       .caption = $args.metadata.message;
     });
   });
+  widget(label, {
+    .color = 0.6;
+    // Need plural forms in localization
+    .caption = fmt(_("Played %d times"), $args.playcount);
+  });
 
   space(1);
   widget(container_x, {

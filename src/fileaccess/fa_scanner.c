@@ -252,6 +252,11 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       metadata_destroy(md);
     }
     prop_ref_dec(meta);
+
+    if(!fde->fde_bound_to_metadb) {
+      fde->fde_bound_to_metadb = 1;
+      metadb_bind_url_to_prop(getdb(s), fde->fde_url, fde->fde_prop);
+    }
   }
   set_type(fde->fde_prop, fde->fde_type);
 }

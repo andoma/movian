@@ -731,9 +731,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_t *seek_index = build_index(mp, fctx, url);
 
-  metadb_playcount_incr(canonical_url);
+  metadb_register_play(canonical_url, 0);
 
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen);
+
+  if(e != NULL && event_is_type(e, EVENT_EOF))
+    metadb_register_play(canonical_url, 1);
 
   prop_destroy(seek_index);
 

@@ -30,6 +30,8 @@
 #include "misc/regex.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"
+#include "metadata.h"
+#include "htsmsg/htsmsg_json.h"
 
 LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_item_list, js_item);
@@ -461,7 +463,8 @@ static JSFunctionSpec item_functions[] = {
 static JSBool 
 js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 	       const char *url, const char *type, JSObject *metaobj,
-	       jsval *data, jsval *rval, int enabled)
+	       jsval *data, jsval *rval, int enabled,
+	       const char *metabind)
 {
   prop_t *item = prop_create_root(NULL);
 
@@ -472,6 +475,9 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     js_prop_set_from_jsval(cx, prop_create(item, "data"), *data);
 
   *rval = JSVAL_VOID;
+
+  if(metabind != NULL)
+    metadb_bind_url_to_prop(NULL, metabind, item);
 
   if(type != NULL) {
     prop_set_string(prop_create(item, "type"), type);
@@ -520,12 +526,38 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   const char *type = NULL;
   JSObject *metaobj = NULL;
   js_model_t *model = JS_GetPrivate(cx, obj);
+  const char *canonical_url = NULL;
+  htsmsg_t *m = NULL;
+  JSBool r;
 
   if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
 
-  return js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
-			rval, 1);
+  if(!strncmp(url, "videoparams:", strlen("videoparams:"))) {
+    m = htsmsg_json_deserialize(url + strlen("videoparams:"));
+    if(m != NULL) {
+      canonical_url = htsmsg_get_str(m, "canonicalUrl");
+
+      if(canonical_url == NULL) {
+	htsmsg_t *sources;
+	if((sources = htsmsg_get_list(m, "sources")) == NULL) {
+	  htsmsg_field_t *f;
+	  HTSMSG_FOREACH(f, sources) {
+	    htsmsg_t *src = &f->hmf_msg;
+	    canonical_url = htsmsg_get_str(src, "url");
+	    if(canonical_url != NULL)
+	      break;
+	  }
+	}
+      }
+    }
+  } else {
+    canonical_url = url;
+  }
+  r = js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
+		     rval, 1, canonical_url);
+  htsmsg_destroy(m);
+  return r;
 }
 
 
@@ -545,7 +577,7 @@ js_appendPassiveItem(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_nodes, NULL, type, metaobj, &data,
-			rval, 1);
+			rval, 1, NULL);
 }
 
 
@@ -567,7 +599,7 @@ js_appendAction(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_actions, NULL, type, metaobj,
-			&data, rval, enabled);
+			&data, rval, enabled, NULL);
 }
 
 

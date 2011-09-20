@@ -1280,7 +1280,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
 
       if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
-	metadb_playcount_incr(url0);
+	metadb_register_play(url0, 1);
       }
 
       sample += CHUNK_SIZE;

@@ -77,6 +77,7 @@ typedef struct fa_dir_entry {
 
   char fde_statdone;
   char fde_ignore_cache;
+  char fde_bound_to_metadb;
   struct fa_stat fde_stat;
 
   struct metadata *fde_md;
