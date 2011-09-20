@@ -30,14 +30,13 @@
 #include "metadata.h"
 #include "fileaccess/fileaccess.h"
 
+#include "db/db_support.h"
+
 #define METADATA_VERSION_STR "1"
 
 // If not set to true by metadb_init() no metadb actions will occur
 static int metadb_valid;
-static char *meta_db_path;
-
-static hts_mutex_t metadb_reuse_lock;
-static sqlite3 *metadb_reuse;
+static db_pool_t *metadb_pool;
 
 /**
  *
@@ -207,172 +206,6 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 }
 
 
-
-
-
-static int
-one_statement(sqlite3 *db, const char *sql)
-{
-  int rc;
-  char *errmsg;
-
-  rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
-  if(rc) {
-    TRACE(TRACE_ERROR, "SQLITE", "%s failed -- %s", sql, errmsg);
-    sqlite3_free(errmsg);
-  }
-  return rc;
-}
-
-
-/**
- *
- */
-static int
-db_get_int_from_query(sqlite3 *db, const char *query, int *v)
-{
-  int rc;
-  int64_t rval = -1;
-  sqlite3_stmt *stmt;
-
-  rc = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
-  if(rc)
-    return -1;
-
-  rc = sqlite3_step(stmt);
-
-  if(rc == SQLITE_ROW) {
-    *v = sqlite3_column_int(stmt, 0);
-    rval = 0;
-  } else {
-    rval = -1;
-  }
-
-  sqlite3_finalize(stmt);
-  return rval;
-}
-
-
-
-static int
-begin(sqlite3 *db)
-{
-  return one_statement(db, "BEGIN;");
-}
-
-
-static int
-commit(sqlite3 *db)
-{
-  return one_statement(db, "COMMIT;");
-}
-
-
-static int
-rollback(sqlite3 *db)
-{
-  return one_statement(db, "ROLLBACK;");
-}
-
-
-#define METADB_SCHEMA_DIR "bundle://resources/metadb"
-
-/**
- *
- */
-static void
-metadb_upgrade(sqlite3 *db)
-{
-  int ver, tgtver = 0;
-  char path[256];
-  char buf[256];
-  if(db_get_int_from_query(db, "pragma user_version", &ver)) {
-    TRACE(TRACE_ERROR, "METADB", "Unable to query db version");
-    return;
-  }
-
-  fa_dir_t *fd;
-  fa_dir_entry_t *fde;
-
-  fd = fa_scandir(METADB_SCHEMA_DIR, buf, sizeof(buf));
-
-  if(fd == NULL) {
-    TRACE(TRACE_ERROR, "METADB",
-	  "Unable to scan schema dir %s -- %s", METADB_SCHEMA_DIR , buf);
-    return;
-  }
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(fde->fde_type != CONTENT_FILE || strchr(fde->fde_filename, '~'))
-      continue;
-    tgtver = MAX(tgtver, atoi(fde->fde_filename));
-  }
-
-  fa_dir_free(fd);
-
-  if(ver > tgtver) {
-    TRACE(TRACE_ERROR, "METADB", "Installed version %d is too high for "
-	  "this version of Showtime. Disabling metadb", ver);
-    return;
-  }
-
-  while(1) {
-
-    if(ver == tgtver) {
-      TRACE(TRACE_DEBUG, "METADB", "At current version %d", ver);
-      metadb_valid = 1;
-      return;
-    }
-
-    ver++;
-    snprintf(path, sizeof(path), METADB_SCHEMA_DIR"/%03d.sql", ver);
-
-    struct fa_stat fs;
-    char *sql = fa_quickload(path, &fs, NULL, buf, sizeof(buf));
-    if(sql == NULL) {
-      TRACE(TRACE_ERROR, "METADB",
-	    "Unable to upgrade db schema to version %d using %s -- %s",
-	    ver, path, buf);
-      return;
-    }
-
-    begin(db);
-    snprintf(buf, sizeof(buf), "PRAGMA user_version=%d", ver);
-    if(one_statement(db, buf)) {
-      free(sql);
-      break;
-    }
-
-    const char *s = sql;
-
-    while(strchr(s, ';') != NULL) {
-      sqlite3_stmt *stmt;
-
-      int rc = sqlite3_prepare_v2(db, s, -1, &stmt, &s);
-      if(rc != SQLITE_OK) {
-	TRACE(TRACE_ERROR, "METADB",
-	      "Unable to prepare statement in upgrade %d\n%s", ver, s);
-	goto fail;
-      }
-
-      rc = sqlite3_step(stmt);
-      if(rc != SQLITE_DONE) {
-	TRACE(TRACE_ERROR, "METADB",
-	      "Unable to execute statement error %d\n%s", rc, 
-	      sqlite3_sql(stmt));
-	goto fail;
-      }
-      sqlite3_finalize(stmt);
-    }
-
-    commit(db);
-    TRACE(TRACE_INFO, "METADB", "Upgraded to version %d", ver);
-    free(sql);
-  }
- fail:
-  rollback(db);
-}
-
 /**
  *
  */
@@ -383,22 +216,20 @@ metadb_init(void)
   extern char *showtime_persistent_path;
   char buf[256];
 
-  hts_mutex_init(&metadb_reuse_lock);
-
   snprintf(buf, sizeof(buf), "%s/metadb", showtime_persistent_path);
   mkdir(buf, 0770);
   snprintf(buf, sizeof(buf), "%s/metadb/meta.db", showtime_persistent_path);
-  meta_db_path = strdup(buf);
 
-  //  unlink(meta_db_path);
+  //  unlink(buf);
 
+  metadb_pool = db_pool_create(buf, 2);
   db = metadb_get();
   if(db == NULL)
     return;
 
-  one_statement(db, "pragma journal_mode=wal;");
+  if(!db_upgrade_schema(db, "bundle://resources/metadb", "metadb"))
+    metadb_valid = 1;
 
-  metadb_upgrade(db);
   metadb_close(db);
 }
 
@@ -410,39 +241,7 @@ metadb_init(void)
 void *
 metadb_get(void)
 {
-  int rc;
-  char *errmsg;
-  sqlite3 *db;
-
-  hts_mutex_lock(&metadb_reuse_lock);
-  if((db = metadb_reuse) != NULL)
-    metadb_reuse = NULL;
-  hts_mutex_unlock(&metadb_reuse_lock);
-  if(db != NULL)
-    return db;
-
-  rc = sqlite3_open_v2(meta_db_path, &db,
-		       SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | 
-		       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE,
-		       NULL);
-
-  if(rc) {
-    TRACE(TRACE_ERROR, "metadata", "Unable to open database: %s",
-	  sqlite3_errmsg(db));
-    sqlite3_close(db);
-    return NULL;
-  }
-
-  rc = sqlite3_exec(db, "PRAGMA synchronous = normal;", NULL, NULL, &errmsg);
-  if(rc) {
-    TRACE(TRACE_ERROR, 
-	  "metadata", "Unable to set synchronous mode to NORMAL: %s",
-	  errmsg);
-    sqlite3_free(errmsg);
-    sqlite3_close(db);
-    return NULL;
-  }
-  return db;
+  return db_pool_get(metadb_pool);
 }
 
 
@@ -452,17 +251,7 @@ metadb_get(void)
 void 
 metadb_close(void *db)
 {
-  if(db == NULL)
-    return;
-
-  hts_mutex_lock(&metadb_reuse_lock);
-  if(metadb_reuse == NULL) {
-    metadb_reuse = db;
-    hts_mutex_unlock(&metadb_reuse_lock);
-    return;
-  }
-  hts_mutex_unlock(&metadb_reuse_lock);
-  sqlite3_close(db);
+  db_pool_put(metadb_pool, db);
 }
 
 
@@ -876,7 +665,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   if(!metadb_valid || db == NULL)
     return;
 
-  if(begin(db))
+  if(db_begin(db))
     return;
 
   if(parent != NULL) {
@@ -891,7 +680,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     item_id = db_item_create(db, url, md->md_contenttype, mtime, parent_id);
 
     if(item_id == -1) {
-      rollback(db);
+      db_rollback(db);
       return;
     }
 
@@ -914,7 +703,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 			    -1, &stmt, NULL);
 
     if(rc != SQLITE_OK) {
-      rollback(db);
+      db_rollback(db);
       TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	    __FUNCTION__, __LINE__);
       return;
@@ -953,9 +742,9 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   }
 
   if(r)
-    rollback(db);
+    db_rollback(db);
   else
-    commit(db);
+    db_commit(db);
 }
 
 
@@ -1250,7 +1039,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   if(!metadb_valid || db == NULL)
     return NULL;
 
-  if(begin(db))
+  if(db_begin(db))
     return NULL;
 
   rc = sqlite3_prepare_v2(db, 
@@ -1262,7 +1051,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	  __FUNCTION__, __LINE__);
-    rollback(db);
+    db_rollback(db);
     return NULL;
   }
 
@@ -1273,7 +1062,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
 
   if(rc != SQLITE_ROW) {
     sqlite3_finalize(sel);
-    rollback(db);
+    db_rollback(db);
     return NULL;
   }
 
@@ -1286,7 +1075,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   get_cache_release(&gc);
 
   sqlite3_finalize(sel);
-  rollback(db);
+  db_rollback(db);
   return md;
 }
 
@@ -1300,13 +1089,13 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
   if(!metadb_valid || db == NULL)
     return NULL;
 
-  if(begin(db))
+  if(db_begin(db))
     return NULL;
 
   int64_t parent_id = db_item_get(db, url, mtime);
 
   if(parent_id == -1) {
-    rollback(db);
+    db_rollback(db);
     return NULL;
   }
 
@@ -1322,7 +1111,7 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	  __FUNCTION__, __LINE__);
-    rollback(db);
+    db_rollback(db);
     return NULL;
   }
 
@@ -1359,7 +1148,7 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 
   get_cache_release(&gc);
 
-  rollback(db);
+  db_rollback(db);
 
   if(fd->fd_count == 0) {
     fa_dir_free(fd);

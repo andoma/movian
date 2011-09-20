@@ -100,7 +100,8 @@ SRCS-${CONFIG_TREX} += ext/trex/trex.c
 #
 # Sqlite3
 #
-SRCS += ext/sqlite/sqlite3.c
+SRCS += ext/sqlite/sqlite3.c \
+	src/db/db_support.c \
 
 ${BUILDDIR}/ext/sqlite/sqlite3.o : CFLAGS = -O2 ${SQLITE_CFLAGS_cfg} \
  -DSQLITE_THREADSAFE=2 \
