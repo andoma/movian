@@ -1421,6 +1421,8 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 		   prop_sub_t *skipme)
 {
   int r;
+  if(parent == NULL)
+    return -1;
 
   hts_mutex_lock(&prop_mutex);
   r = prop_set_parent0(p, parent, before, skipme);
