@@ -1164,6 +1164,44 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 }
 
 
+
+
+
+/**
+ *
+ */
+void
+metadb_unparent_item(void *db, const char *url)
+{
+  int rc;
+
+  if(!metadb_valid)
+    return;
+
+  if(db_begin(db))
+    return;
+
+  sqlite3_stmt *stmt;
+    
+  rc = sqlite3_prepare_v2(db, "UPDATE item SET parent = NULL WHERE url=?1",
+			  -1, &stmt, NULL);
+  
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    db_rollback(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+  db_commit(db);
+}
+
+
+
+
 /**
  *
  */

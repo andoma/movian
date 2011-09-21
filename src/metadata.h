@@ -118,6 +118,8 @@ struct fa_dir;
 struct fa_dir *metadb_metadata_scandir(void *db, const char *url,
 				       time_t *mtimep);
 
+void metadb_unparent_item(void *db, const char *url);
+
 void metadb_register_play(const char *url, int inc);
 
 #define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)

@@ -360,8 +360,10 @@ scanner_checkstop(void *opaque)
  *
  */
 static void
-scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
+scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s", s->s_url, fde->fde_url, src);
+
   if(fde->fde_type == CONTENT_FILE)
     fde->fde_type = type_from_filename(fde->fde_filename);
 
@@ -380,8 +382,10 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
  *
  */
 static void
-scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde)
+scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s", s->s_url, fde->fde_url, src);
+  metadb_unparent_item(getdb(s), fde->fde_url);
   if(fde->fde_prop != NULL)
     prop_destroy(fde->fde_prop);
   fa_dir_entry_free(s->s_fd, fde);
@@ -407,11 +411,11 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 	break;
 
     if(fde != NULL)
-      scanner_entry_destroy(s, fde);
+      scanner_entry_destroy(s, fde, "notification");
     break;
 
   case FA_NOTIFY_ADD:
-    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
+    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type), "notification");
     break;
   }
   analyzer(s, 1);
@@ -430,6 +434,10 @@ rescan(scanner_t *s)
 
   if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL)
     return; 
+
+  if(s->s_fd->fd_count != fd->fd_count) {
+    TRACE(TRACE_DEBUG, "FA", "%s: Rescanning found %d items, previously %d", s->s_url, fd->fd_count, s->s_fd->fd_count);
+  }
 
   for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
     n = TAILQ_NEXT(a, fde_link);
@@ -453,22 +461,24 @@ rescan(scanner_t *s)
     } else {
       changed = 1;
       // Exists in old but not in new
-      scanner_entry_destroy(s, a);
+      scanner_entry_destroy(s, a, "rescan");
     }
   }
 
   while((b = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
     TAILQ_REMOVE(&fd->fd_entries, b, fde_link);
     TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, b, fde_link);
-    scanner_entry_setup(s, b);
+    s->s_fd->fd_count++;
+
+    scanner_entry_setup(s, b, "rescan");
     changed = 1;
   }
 
   if(changed)
     analyzer(s, 1);
+
+  fa_dir_free(fd);
 }
-
-
 
 
 /**
@@ -484,11 +494,13 @@ doscan(scanner_t *s)
 
   s->s_fd = metadb_metadata_scandir(getdb(s), s->s_url, NULL);
 
-  if(s->s_fd == NULL)
+  if(s->s_fd == NULL) {
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
-  else
+    TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning", s->s_url, s->s_fd->fd_count);
+  } else {
+    TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache", s->s_url, s->s_fd->fd_count);
     pending_rescan = 1;
-
+  }
   prop_set_int(s->s_loading, 0);
 
   if(s->s_fd != NULL) {
