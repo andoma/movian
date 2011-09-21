@@ -88,21 +88,21 @@ db_get_int_from_query(sqlite3 *db, const char *query, int *v)
 int
 db_begin(sqlite3 *db)
 {
-  return db_one_statement(db, "BEGIN;");
+  return db == NULL || db_one_statement(db, "BEGIN;");
 }
 
 
 int
 db_commit(sqlite3 *db)
 {
-  return db_one_statement(db, "COMMIT;");
+  return  db == NULL || db_one_statement(db, "COMMIT;");
 }
 
 
 int
 db_rollback(sqlite3 *db)
 {
-  return db_one_statement(db, "ROLLBACK;");
+  return  db == NULL || db_one_statement(db, "ROLLBACK;");
 }
 
 
@@ -242,6 +242,9 @@ db_pool_get(db_pool_t *dp)
   int i;
   char *errmsg;
   sqlite3 *db;
+
+  if(dp == NULL)
+    return NULL;
 
   hts_mutex_lock(&dp->dp_mutex);
   for(i = 0; i < dp->dp_size; i++) {

@@ -35,7 +35,6 @@
 #define METADATA_VERSION_STR "1"
 
 // If not set to true by metadb_init() no metadb actions will occur
-static int metadb_valid;
 static db_pool_t *metadb_pool;
 static hts_mutex_t mip_mutex;
 
@@ -232,10 +231,12 @@ metadb_init(void)
   if(db == NULL)
     return;
 
-  if(!db_upgrade_schema(db, "bundle://resources/metadb", "metadb"))
-    metadb_valid = 1;
+  int r = db_upgrade_schema(db, "bundle://resources/metadb", "metadb");
 
   metadb_close(db);
+
+  if(r)
+    metadb_pool = NULL; // Disable
 }
 
 
@@ -667,9 +668,6 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
   int rc;
   sqlite3_stmt *stmt;
 
-  if(!metadb_valid || db == NULL)
-    return;
-
   if(db_begin(db))
     return;
 
@@ -1041,9 +1039,6 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
   int rc;
   sqlite3_stmt *sel;
 
-  if(!metadb_valid || db == NULL)
-    return NULL;
-
   if(db_begin(db))
     return NULL;
 
@@ -1091,9 +1086,6 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
 fa_dir_t *
 metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
 {
-  if(!metadb_valid || db == NULL)
-    return NULL;
-
   if(db_begin(db))
     return NULL;
 
@@ -1175,9 +1167,6 @@ metadb_unparent_item(void *db, const char *url)
 {
   int rc;
 
-  if(!metadb_valid)
-    return;
-
   if(db_begin(db))
     return;
 
@@ -1211,8 +1200,6 @@ metadb_register_play(const char *url, int inc)
   int rc;
   int i;
   void *db;
-  if(!metadb_valid)
-    return;
 
   if((db = metadb_get()) == NULL)
     return;
@@ -1449,9 +1436,6 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
 void
 metadb_bind_url_to_prop(void *db, const char *url, prop_t *parent)
 {
-  if(!metadb_valid)
-    return;
-
   if(db != NULL)
     return metadb_bind_url_to_prop0(db, url, parent);
 
