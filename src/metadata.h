@@ -125,3 +125,5 @@ void metadb_register_play(const char *url, int inc);
 #define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)
 
 void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
+
+void metadb_set_video_restartpos(const char *url, int64_t pos);

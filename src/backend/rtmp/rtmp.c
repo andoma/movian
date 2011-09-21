@@ -56,6 +56,9 @@ typedef struct {
 
   int can_seek;
 
+  int restartpos_last;
+
+  const char *canonical_url;
 } rtmp_t;
 
 
@@ -227,6 +230,13 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     
     r->seekbase = ets->ts;
     
+    int sec = r->seekbase / 1000000;
+
+    if(sec != r->restartpos_last) {
+      r->restartpos_last = sec;
+      metadb_set_video_restartpos(r->canonical_url, r->seekbase / 1000);
+    }
+
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
@@ -728,10 +738,15 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   metadb_register_play(canonical_url, 0);
 
+  r.canonical_url = canonical_url;
+  r.restartpos_last = -1;
+
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
-  if(e != NULL && event_is_type(e, EVENT_EOF))
+  if(e != NULL && event_is_type(e, EVENT_EOF)) {
     metadb_register_play(canonical_url, 1);
+    metadb_set_video_restartpos(canonical_url, -1);
+  }
 
   mp_flush(mp, 0);
   mp_shutdown(mp);

@@ -1247,6 +1247,81 @@ metadb_register_play(const char *url, int inc)
 }
 
 
+
+/**
+ *
+ */
+void
+metadb_set_video_restartpos(const char *url, int64_t pos)
+{
+  int rc;
+  void *db;
+  sqlite3_stmt *stmt;
+
+  if((db = metadb_get()) == NULL)
+    return;
+
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  rc = sqlite3_prepare_v2(db, 
+			  "UPDATE videoitem "
+			  "SET restartposition = ?2 "
+			  "WHERE item_id = "
+			  "(SELECT id FROM item where url=?1)",
+			  -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    db_rollback(db);
+    metadb_close(db);
+    return;
+  }
+
+  
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  if(pos >= 0)
+    sqlite3_bind_int64(stmt, 2, pos);
+
+  rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+  if((rc != SQLITE_DONE || sqlite3_changes(db) == 0) && pos >= 0) {
+
+    int64_t item_id;
+    item_id = db_item_get(db, url, NULL);
+    if(item_id == -1)
+      item_id = db_item_create(db, url, 0, 0, 0);
+
+    if(item_id != -1) {
+      rc = sqlite3_prepare_v2(db, 
+			      "INSERT INTO videoitem "
+			      "(item_id, restartposition) "
+			      "VALUES "
+			      "(?1, ?2)",
+			      -1, &stmt, NULL);
+      
+      if(rc != SQLITE_OK) {
+	TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	      __FUNCTION__, __LINE__);
+	db_rollback(db);
+	metadb_close(db);
+	return;
+      }
+      sqlite3_bind_int64(stmt, 1, item_id);
+      sqlite3_bind_int64(stmt, 2, pos);
+      rc = sqlite3_step(stmt);
+      sqlite3_finalize(stmt);
+    }
+  }
+  db_commit(db);
+  mip_update_by_url(db, url);
+  metadb_close(db);
+}
+
+
 /**
  *
  */

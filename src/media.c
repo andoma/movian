@@ -588,19 +588,12 @@ mp_wait_for_empty_queues(media_pipe_t *mp)
   event_t *e;
   hts_mutex_lock(&mp->mp_mutex);
 
- again:
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
 	(mp->mp_audio.mq_packets_current || mp->mp_video.mq_packets_current))
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
 
-  if(e != NULL) {
+  if(e != NULL)
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
-    
-    if(event_is_type(e, EVENT_CURRENT_PTS)) {
-      event_release(e);
-      goto again;
-    }
-  }
 
   hts_mutex_unlock(&mp->mp_mutex);
   return e;
