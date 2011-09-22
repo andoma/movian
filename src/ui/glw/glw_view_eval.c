@@ -1042,7 +1042,7 @@ cloner_pagination_check(sub_cloner_t *sc)
 static int
 clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  clone_t *c = opaque, *d;
+  clone_t *c = opaque;
   sub_cloner_t *sc = c->c_sc;
 
   switch(signal) {
@@ -1073,8 +1073,6 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_DESTROY:
-    d = prop_tag_clear(w->glw_originating_prop, sc);
-    assert(d == c);
     sc->sc_entries--;
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
