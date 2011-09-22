@@ -270,7 +270,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 
     if(mb->mb_send_pts && mb->mb_pts != AV_NOPTS_VALUE) {
       event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-      ets->ts = pts;
+      ets->ts = mb->mb_pts;
       mp_enqueue_event(mp, &ets->h);
       event_release(&ets->h);
     }
