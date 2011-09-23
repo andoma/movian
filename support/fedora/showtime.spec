@@ -1,5 +1,5 @@
 Name:		showtime
-Version:	3.1.173
+Version:	3.2.3
 Release:	1%{?dist}
 Summary:	Showtime is a Linux based media player for usage on HTPC's.
 # buildt on fedora 15 with the rpmfusion free/nonfree repositories enabled
@@ -11,7 +11,7 @@ URL:		http://www.lonelycoder.com/hts
 Source0:	$home/rpmbuild/SOURCES/showtime-%{version}.tar.bz2
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-BuildRequires:	ffmpeg-devel >= 0.7
+#BuildRequires:	ffmpeg-devel >= 0.7
 BuildRequires:	gtk2-devel
 BuildRequires:	freetype-devel
 BuildRequires:	alsa-lib-devel
@@ -26,9 +26,9 @@ BuildRequires:	libXScrnSaver-devel
 BuildRequires:	mesa-libGL-devel
 BuildRequires:	mesa-libGLU-devel
 BuildRequires:	desktop-file-utils
-BuildRequires:	libvdpau-devel
+#BuildRequires:	libvdpau-devel
 
-Requires:       ffmpeg >= 0.7
+#Requires:       ffmpeg >= 0.7
 Requires:	gtk2
 Requires:	freetype
 Requires:	alsa-lib
@@ -42,7 +42,7 @@ Requires:	libXScrnSaver
 #Requires:	libXNVCtrl
 Requires:	mesa-libGL
 Requires:	mesa-libGLU
-Requires:	libvdpau
+#Requires:	libvdpau
 
 Requires(post): desktop-file-utils
 Requires(postun): desktop-file-utils
@@ -60,7 +60,8 @@ Easy to setup, no configuration files. All configuration is tuned from inside th
 # build now currently depends on the showtime branch of libav git repository 
 
 %build
-./configure --release --prefix=/usr --pkg-config-path=${HOME}/libav/lib/pkgconfig
+git checkout release/3.2
+./configure --release --prefix=/usr --disable-vdpau
 make %{?_smp_mflags}
 
 
@@ -114,6 +115,9 @@ fi
 
 
 %changelog
+* Thu Sep 22 2011 Jonas Karlsson <jonas Karlsson at fxdev dot com> 3.2.3
+- Showtime 3.2.3
+
 * Wed Aug 17 2011 Jonas Karlsson <Jonas Karlsson at fxdev dot com> 3.1.173
 - First rpm on the 3.x branch, compiling against showtime git branch of libav 0.7
 
