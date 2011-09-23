@@ -235,7 +235,7 @@ static event_t *
 video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  media_pipe_t *mp, int flags,
 		  char *errbuf, size_t errlen,
-		  const char *canonical_url)
+		  const char *canonical_url, int64_t start)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -252,6 +252,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
+
+  if(start)
+    seekbase = video_seek(fctx, mp, &mb, start, "restart position");
 
   while(1) {
     /**
@@ -742,7 +745,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   metadb_register_play(canonical_url, 0);
 
-  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url);
+  int64_t start = video_get_restartpos(url) * 1000;
+  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
+			start);
 
   if(e != NULL && event_is_type(e, EVENT_EOF)) {
     metadb_set_video_restartpos(canonical_url, -1);

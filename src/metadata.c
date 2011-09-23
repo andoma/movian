@@ -32,6 +32,8 @@
 
 #include "db/db_support.h"
 
+#include "video/video_settings.h"
+
 #define METADATA_VERSION_STR "1"
 
 // If not set to true by metadb_init() no metadb actions will occur
@@ -1321,6 +1323,45 @@ metadb_set_video_restartpos(const char *url, int64_t pos)
   metadb_close(db);
 }
 
+
+/**
+ *
+ */
+int64_t
+video_get_restartpos(const char *url)
+{
+  int rc;
+  void *db;
+  sqlite3_stmt *stmt;
+  int64_t rval = 0;
+
+  if(video_settings.resume_mode == VIDEO_RESUME_NO)
+    return 0;
+
+
+  if((db = metadb_get()) == NULL)
+    return 0;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "SELECT restartposition "
+			  "FROM videoitem, item "
+			  "WHERE item_id = id AND url = ?1",
+			  -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+  } else {
+    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+    rc = sqlite3_step(stmt);
+
+    if(rc == SQLITE_ROW)
+      rval = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+  }
+  metadb_close(db);
+  return rval;
+}
 
 /**
  *

@@ -136,6 +136,12 @@ set_vzoom(void *opaque, int v)
   video_settings.vzoom = v;
 }
 
+static void
+set_video_resumemode(void *opaque, const char *str)
+{
+  video_settings.resume_mode = atoi(str);
+}
+
 void
 video_settings_init(void)
 {
@@ -170,6 +176,20 @@ video_settings_init(void)
 		      "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
+  
+  video_settings.resume_mode = 1;
+  x = settings_create_multiopt(s, "resumemode",
+			       _p("Resume video playback"),
+			       set_video_resumemode,
+			       _p("Controls if video playback should restart where last played"));
+
+  settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
+  settings_multiopt_add_opt(x, "0", _p("No"), 0);
+
+  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+			     (void *)"videoplayback");
+
+  //----------------------------------------------------------
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
 		       _p("Generic settings for video subtitles"));

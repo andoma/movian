@@ -232,7 +232,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     
     int sec = r->seekbase / 1000000;
 
-    if(sec != r->restartpos_last) {
+    if(sec != r->restartpos_last && r->can_seek) {
       r->restartpos_last = sec;
       metadb_set_video_restartpos(r->canonical_url, r->seekbase / 1000);
     }
@@ -540,15 +540,6 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   uint32_t dts;
   event_t *e = NULL;
 
-  r->mp = mp;
-  r->hold = 0;
-  r->lost_focus = 0;
-  r->epoch = 1;
-  r->seekbase = AV_NOPTS_VALUE;
-  r->seekpos = AV_NOPTS_VALUE;
-
-  mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
-  mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
   while(1) {
@@ -710,6 +701,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   r.r = RTMP_Alloc();
   RTMP_Init(r.r);
 
+  int64_t start = video_get_restartpos(canonical_url);
+
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
     rtmp_free(&r);
@@ -722,14 +715,31 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     return NULL;
   }
 
-  if(!RTMP_ConnectStream(r.r, 0)) {
+  if(!RTMP_ConnectStream(r.r, start)) {
     snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
     rtmp_free(&r);
     return NULL;
   }
 
+  r.mp = mp;
+  r.hold = 0;
+  r.lost_focus = 0;
+  r.epoch = 1;
+  
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
+
+  if(start > 0) {
+    r.seekpos = start * 1000;
+    r.seekbase = r.seekpos;
+    mp->mp_video.mq_seektarget = r.seekpos;
+    mp->mp_audio.mq_seektarget = r.seekpos;
+  } else {
+    mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
+    mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
+    r.seekbase = AV_NOPTS_VALUE;
+    r.seekpos = AV_NOPTS_VALUE;
+  }
 
   mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP);
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;

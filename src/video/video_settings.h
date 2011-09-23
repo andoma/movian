@@ -22,9 +22,13 @@ struct video_settings {
   int vdpau;
   int stretch_horizontal;
   int vzoom;
+
+  enum {
+    VIDEO_RESUME_NO = 0,
+    VIDEO_RESUME_YES = 1,
+  } resume_mode;
 };
 
 extern struct video_settings video_settings;
 
 extern struct prop *subtitle_settings_dir;
-
