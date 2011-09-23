@@ -41,8 +41,18 @@ static void  glw_video_input(uint8_t * const data[], const int pitch[],
  *
  */
 static void
-glw_video_rctx_aspect_adjust(glw_rctx_t *rc, glw_video_t *gv)
+glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 {
+  const glw_root_t *gr = gv->w.glw_root;
+
+  if(gr->gr_underscan_h || gr->gr_underscan_v) {
+    glw_reposition(rc,
+		   -gr->gr_underscan_h,
+		   rc->rc_height + gr->gr_underscan_v,
+		   rc->rc_width  + gr->gr_underscan_h,
+		   -gr->gr_underscan_v);
+  }
+
   float t_aspect = av_q2d(gv->gv_dar);
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
@@ -141,6 +151,7 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 			 int64_t pts, int epoch)
 {
   int64_t aclock;
+  const char *status;
 
   if(mp->mp_audio_clock_epoch != epoch) {
     /* Not the same clock epoch, can not sync */
@@ -186,20 +197,21 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     } else {
       vd->vd_may_update_avdiff--;
     }
+    status = "lock";
+  } else {
+    status = "nolock";
   }
 
-#if 0
- {
+  if(0) {
    static int64_t lastpts, lastaclock;
    
-  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
+  printf("%s: AVDIFF = %10f %10d %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %s\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
 	 aclock, aclock - lastaclock, pts, pts - lastpts,
-	 mp->mp_audio_clock);
+	 mp->mp_audio_clock, status);
   lastpts = pts;
   lastaclock = aclock;
  }
-#endif
 }
 
 
@@ -241,6 +253,7 @@ glw_video_dtor(glw_t *w)
   video_decoder_t *vd = gv->gv_vd;
 
   prop_unsubscribe(gv->gv_vo_scaling_sub);
+  prop_unsubscribe(gv->gv_vzoom_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
 
   free(gv->gv_current_url);
@@ -301,7 +314,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     rc = extra;
     rc0 = *rc;
-    glw_video_rctx_aspect_adjust(&rc0, gv);
+    glw_video_rctx_adjust(&rc0, gv);
     glw_video_overlay_layout(gv, rc, &rc0);
     return 0;
 
@@ -491,7 +504,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
-  glw_video_rctx_aspect_adjust(&rc0, gv);
+  glw_video_rctx_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;

@@ -367,7 +367,8 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
-
+  htsbuf_queue_init(&tc->spill, 0);
+  
 
   if(ssl) {
 #if ENABLE_OPENSSL
@@ -467,9 +468,23 @@ tcp_close(tcpcon_t *tc)
   }
 #endif
   close(tc->fd);
+  htsbuf_queue_flush(&tc->spill);
   free(tc);
 }
 
+
+
+
+/**
+ *
+ */
+void
+tcp_huge_buffer(tcpcon_t *tc)
+{
+  int v = 192 * 1024;
+  if(setsockopt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v)) == -1)
+    TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
+}
 
 /**
  *

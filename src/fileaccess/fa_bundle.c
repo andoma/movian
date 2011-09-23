@@ -70,7 +70,7 @@ resolve_file(const char *url)
  */
 static fa_handle_t *
 b_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-       int flags)
+       int flags, struct prop *stats)
 {
   const struct filebundle_entry *fbe;
   fa_bundle_fh_t *fh;

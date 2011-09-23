@@ -272,9 +272,10 @@ upnp_init(void)
   http_path_add("/upnp/ConnectionManager/scpd.xml", NULL, send_cm_scpd);
   http_path_add("/upnp/RenderingControl/scpd.xml", NULL, send_rc_scpd);
 
+  http_path_add("/upnp/ConnectionManager/control",
+		&upnp_ConnectionManager_2, upnp_control);
   http_path_add("/upnp/RenderingControl/control",
 		&upnp_RenderingControl_2, upnp_control);
-
   http_path_add("/upnp/AVTransport/control",
 		&upnp_AVTransport_2, upnp_control);
 

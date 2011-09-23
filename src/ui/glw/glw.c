@@ -144,6 +144,7 @@ glw_change_underscan_h(void *opaque, int v)
   v += gr->gr_base_underscan_h;
   v = GLW_CLAMP(v, 0, 100);
   prop_set_int(gr->gr_prop_underscan_h, v);
+  gr->gr_underscan_h = v;
 }
 
 
@@ -158,6 +159,7 @@ glw_change_underscan_v(void *opaque, int v)
   v += gr->gr_base_underscan_v;
   v = GLW_CLAMP(v, 0, 100);
   prop_set_int(gr->gr_prop_underscan_v, v);
+  gr->gr_underscan_v = v;
 }
 
 
@@ -2105,13 +2107,14 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
  *
  */
 void
-glw_rctx_init(glw_rctx_t *rc, int width, int height)
+glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan)
 {
   memset(rc, 0, sizeof(glw_rctx_t));
   rc->rc_width  = width;
   rc->rc_height = height;
   rc->rc_alpha = 1.0f;
   rc->rc_blur  = 1.0f;
+  rc->rc_overscanning = overscan;
 
   glw_LoadIdentity(rc);
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));

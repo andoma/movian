@@ -104,6 +104,17 @@ id: Playqueue
 msg: Soittolista
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU on liian hidas käsittelemään videota
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Peruuta
-
-id: OK
-msg: OK
-
 id: Password
 msg: Salasana
 
@@ -141,6 +146,15 @@ msg: Muista minut
 
 id: Username
 msg: Käyttäjätunnus
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Peruuta
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -203,6 +217,13 @@ id: Use opensubtitles.org
 msg: opensubtitles.org käyttö
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -229,6 +250,10 @@ msg: Pienet etukaiuttimet
 id: Swap LFE+center with surround
 msg: Vaihda LFE+Center Surroundiin
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -240,6 +265,13 @@ msg: Tuntematon CD raita
 
 id: Unable to open CD
 msg: CD ei aukea
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -261,6 +293,10 @@ msg: Kirjaudu sisään automaattisesti
 
 id: Enable Spotify
 msg: Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Ystävät
@@ -297,6 +333,10 @@ msg: Spotify tarjoaa laillisen ja ilmaisen musiikkikirjaston. Käyttääksesi Sp
 
 id: Spotify playlists
 msg: Spotyfy soittolistat
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: Tähdellä merkityt
@@ -508,6 +548,29 @@ id: Service not found
 msg: Palvelua ei löydy
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -524,10 +587,6 @@ msg: Värit
 
 id: Enable VDPAU
 msg: VDPAU päälle / pois
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Suhteuta tekstitykset näytölle

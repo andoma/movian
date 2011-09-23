@@ -105,9 +105,9 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int x;
   size_t off = 0;
   while(1) {
-
-    x = netRecv(tc->fd, buf + off, len - off, all ? MSG_WAITALL : 0);
-    if(x <= 0)
+    size_t r = len - off;
+    x = netRecv(tc->fd, buf + off, r, 0);
+    if(x < 1)
       return -1;
     
     if(all) {
@@ -117,7 +117,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 	return len;
 
     } else {
-      return x < 1 ? -1 : x;
+      return x;
     }
   }
 }
@@ -129,7 +129,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
-  int fd, optval;
+  int fd, optval, r;
 
   fd = netSocket(family, SOCK_STREAM, IPPROTO_TCP);
   if(fd < 0) {
@@ -142,7 +142,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
    * Switch to nonblocking
    */
   optval = 1;
-  int r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
+  r = netSetSockOpt(fd, SOL_SOCKET, SO_NBIO, &optval, sizeof(optval));
   if(r < 0) {
     snprintf(errbuf, errbufsize, "Unable to go nonblocking: %s",
 	     strerror(net_errno));
@@ -152,6 +152,7 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 
   return fd;
 }
+
 
 /**
  *
@@ -289,6 +290,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
   tc->fd = fd;
+  htsbuf_queue_init(&tc->spill, 0);
 
 
   if(ssl) {
@@ -338,6 +340,21 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 }
 
 
+
+/**
+ *
+ */
+void
+tcp_huge_buffer(tcpcon_t *tc)
+{
+  int v = 512 * 1024;
+  int r = netSetSockOpt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v));
+  if(r < 0)
+    TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
+}
+
+
+
 /**
  *
  */
@@ -354,6 +371,7 @@ tcp_close(tcpcon_t *tc)
     free(tc->hs);
   }
 #endif
+  htsbuf_queue_flush(&tc->spill);
   netClose(tc->fd);
   free(tc);
 }

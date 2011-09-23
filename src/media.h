@@ -24,6 +24,7 @@
 #include <arch/atomic.h>
 #include "prop/prop.h"
 #include "event.h"
+#include "misc/pool.h"
 
 void media_init(void);
 struct media_buf;
@@ -32,9 +33,8 @@ struct video_decoder;
 
 typedef struct event_ts {
   event_t h;
-  int stream;
-  int64_t dts;
-  int64_t pts;
+  int64_t ts;
+
 } event_ts_t;
 
 
@@ -76,6 +76,10 @@ typedef struct media_codec {
  * A buffer
  */
 typedef struct media_buf {
+  int64_t mb_dts;
+  int64_t mb_pts;
+  int64_t mb_time;
+
   TAILQ_ENTRY(media_buf) mb_link;
 
   enum {
@@ -109,39 +113,36 @@ typedef struct media_buf {
   } mb_data_type;
 
   void *mb_data;
+  media_codec_t *mb_cw;
+  void (*mb_dtor)(struct media_buf *mb);
+
   int mb_size;
 
-  int32_t mb_data32;
+  union {
+    int32_t mb_data32;
+    int mb_rate;
+    enum CodecID mb_codecid;
+  };
+
 
   uint32_t mb_duration;
 
-  uint8_t mb_aspect_override;
-  uint8_t mb_disable_deinterlacer;
+  uint8_t mb_aspect_override : 2;
+  uint8_t mb_disable_deinterlacer : 1;
+  uint8_t mb_skip : 2;
+  uint8_t mb_keyframe : 1;
+  uint8_t mb_send_pts : 1;
 
-  uint8_t mb_skip;
+  uint8_t mb_stream;
 
-  int64_t mb_dts;
-  int64_t mb_pts;
-  int64_t mb_time;  /* in ms */
-  int mb_epoch;
-
-  media_codec_t *mb_cw;
-  enum CodecID mb_codecid;
-
-  int mb_stream; /* For feedback */
-
-  /* Raw 16bit audio */
-  int mb_channels;
-  int mb_rate;
-
-  void (*mb_dtor)(struct media_buf *mb);
+  uint8_t mb_channels;
+  uint8_t mb_epoch;
 
 } media_buf_t;
 
 /*
  * Media queue
  */
-
 typedef struct media_queue {
   struct media_buf_queue mq_q;
 
@@ -211,9 +212,13 @@ typedef struct media_pipe {
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
 
+  pool_t *mp_mb_pool;
+
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
   unsigned int mp_buffer_limit;   // Max buffer size
   unsigned int mp_max_realtime_delay; // Max delay in a queue (real time)
+  int mp_satisfied;        /* If true, means we are satisfied with buffer
+			      fullness */
 
   hts_mutex_t mp_mutex;
 
@@ -237,6 +242,8 @@ typedef struct media_pipe {
 
   prop_t *mp_prop_root;
   prop_t *mp_prop_type;
+  prop_t *mp_prop_io;
+  prop_t *mp_prop_notifications;
   prop_t *mp_prop_primary;
   prop_t *mp_prop_metadata;
   prop_t *mp_prop_model;
@@ -339,9 +346,19 @@ media_codec_t *media_codec_create(enum CodecID id, int parser,
 				  media_format_t *fw, AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
-void media_buf_free(media_buf_t *mb);
+void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
 
-media_buf_t *media_buf_alloc(void);
+void media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb);
+
+#ifdef POOL_DEBUG
+media_buf_t *media_buf_alloc_locked_ex(media_pipe_t *mp, const char *file, int line);
+#define media_buf_alloc_locked(mp) media_buf_alloc_locked_ex(mp, __FILE__, __LINE__)
+media_buf_t *media_buf_alloc_unlocked_ex(media_pipe_t *mp, const char *file, int line);
+#define media_buf_alloc_unlocked(mp) media_buf_alloc_unlocked_ex(mp, __FILE__, __LINE__)
+#else
+media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
+media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
+#endif
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 
@@ -368,6 +385,8 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 			  uint32_t u);
 
 void mp_flush(media_pipe_t *mp, int blackout);
+
+int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
 
 void mp_end(media_pipe_t *mp);
 

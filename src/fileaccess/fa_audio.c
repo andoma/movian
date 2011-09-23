@@ -32,6 +32,7 @@
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "notifications.h"
+#include "metadata.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>
@@ -200,7 +201,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
   mp_flush(mp, 0);
   
   if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free(*mbp);
+    media_buf_free_unlocked(mp, *mbp);
   *mbp = NULL;
 }
 
@@ -220,16 +221,16 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_ts_t *ets;
-  int64_t ts, pts4seek = 0;
+  int64_t ts, seekbase = 0;
   media_codec_t *cw;
   event_t *e;
   int lost_focus = 0;
+  int registered_play = 0;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0)) == NULL)
+  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0, NULL)) == NULL)
     return NULL;
-
 
   // First we need to check for a few other formats
 #if ENABLE_LIBOPENSPC || ENABLE_LIBGME
@@ -246,7 +247,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
 #if ENABLE_LIBGME
   if(*gme_identify_header(pb))
-    return fa_gme_playfile(mp, avio, errbuf, errlen, hold);
+    return fa_gme_playfile(mp, avio, errbuf, errlen, hold, url);
 #endif
 
 #if ENABLE_LIBOPENSPC
@@ -331,17 +332,15 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       si = pkt.stream_index;
 
-      if(si == mp->mp_audio.mq_stream) {
-	/* Current audio stream */
-	mb = media_buf_alloc();
-	mb->mb_data_type = MB_AUDIO;
-
-      } else {
-	/* Check event queue ? */
+      if(si != mp->mp_audio.mq_stream) {
 	av_free_packet(&pkt);
 	continue;
       }
 
+
+
+      mb = media_buf_alloc_unlocked(mp, pkt.size);
+      mb->mb_data_type = MB_AUDIO;
 
       mb->mb_pts      = rescale(fctx, pkt.pts,      si);
       mb->mb_dts      = rescale(fctx, pkt.dts,      si);
@@ -353,23 +352,17 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       mb->mb_stream = pkt.stream_index;
 
-      av_dup_packet(&pkt);
-
-      mb->mb_data = pkt.data;
-      pkt.data = NULL;
-
-      mb->mb_size = pkt.size;
-      pkt.size = 0;
+      memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
 	if(fctx->start_time == AV_NOPTS_VALUE)
 	  mb->mb_time = mb->mb_pts;
 	else
 	  mb->mb_time = mb->mb_pts - fctx->start_time;
-	pts4seek = mb->mb_time;
       } else
 	mb->mb_time = AV_NOPTS_VALUE;
 
+      mb->mb_send_pts = 1;
 
       av_free_packet(&pkt);
     }
@@ -399,10 +392,22 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mp_flush(mp, 0);
       break;
 
+    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+
+      ets = (event_ts_t *)e;
+      seekbase = ets->ts;
+
+      if(registered_play == 0) {
+	if(ets->ts - fctx->start_time > METADB_AUDIO_PLAY_THRESHOLD) {
+	  registered_play = 1;
+	  metadb_register_play(url, 1);
+	}
+      }
+
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      ts = ets->pts + fctx->start_time;
+      ts = ets->ts + fctx->start_time;
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
@@ -410,22 +415,22 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek - 60000000, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(fctx, -1, seekbase - 60000000, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek - 15000000, AVSEEK_FLAG_BACKWARD);
+      av_seek_frame(fctx, -1, seekbase - 15000000, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek + 60000000, 0);
+      av_seek_frame(fctx, -1, seekbase + 60000000, 0);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-      av_seek_frame(fctx, -1, pts4seek + 15000000, 0);
+      av_seek_frame(fctx, -1, seekbase + 15000000, 0);
       seekflush(mp, &mb);
 #if 0
     } else if(event_is_action(e, ACTION_RESTART_TRACK)) {
@@ -475,7 +480,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   }
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
-    media_buf_free(mb);
+    media_buf_free_unlocked(mp, mb);
 
   media_codec_deref(cw);
   media_format_deref(fw);

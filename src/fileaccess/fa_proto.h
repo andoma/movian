@@ -36,6 +36,7 @@ typedef struct fa_protocol {
 
   int fap_flags;
 #define FAP_INCLUDE_PROTO_IN_URL 0x1
+#define FAP_ALLOW_CACHE          0x2
 
   void (*fap_init)(void);
 
@@ -53,7 +54,8 @@ typedef struct fa_protocol {
    * Open url for reading
    */
   fa_handle_t *(*fap_open)(struct fa_protocol *fap, const char *url,
-			   char *errbuf, size_t errsize, int flags);
+			   char *errbuf, size_t errsize, int flags,
+			   struct prop *stats);
 
   /**
    * Close filehandle
@@ -138,6 +140,11 @@ typedef struct fa_protocol {
    */
   void (*fap_get_last_component)(struct fa_protocol *fap, const char *url,
 				 char *dst, size_t dstlen);
+
+  /**
+   * Return true if the given file can seek in a good manner
+   */
+  int (*fap_seek_is_fast)(fa_handle_t *fh);
 
 } fa_protocol_t;
 

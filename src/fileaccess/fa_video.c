@@ -207,17 +207,19 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
 	(pos - fctx->start_time) / 1000000.0);
- 
-  av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
 
-  mp->mp_video.mq_seektarget = pos;
-  mp->mp_audio.mq_seektarget = pos;
+  if(mp_seek_in_queues(mp, pos)) {
+    av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
 
-  mp_flush(mp, 0);
-  
-  if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
-    media_buf_free(*mbp);
-  *mbp = NULL;
+    mp->mp_video.mq_seektarget = pos;
+    mp->mp_audio.mq_seektarget = pos;
+
+    mp_flush(mp, 0);
+    
+    if(*mbp != NULL && *mbp != MB_SPECIAL_EOF)
+      media_buf_free_unlocked(mp, *mbp);
+    *mbp = NULL;
+  }
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
 		 (pos - fctx->start_time) / 1000000.0);
@@ -232,7 +234,8 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 static event_t *
 video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  media_pipe_t *mp, int flags,
-		  char *errbuf, size_t errlen)
+		  char *errbuf, size_t errlen,
+		  const char *canonical_url, int64_t start)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -241,13 +244,17 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_t *e;
   event_ts_t *ets;
   int64_t ts;
-  int64_t seekbase = AV_NOPTS_VALUE;
+  int64_t seekbase = 0;
 
   int hold = 0, lost_focus = 0, epoch = 1;
+  int restartpos_last = -1;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
+
+  if(start)
+    seekbase = video_seek(fctx, mp, &mb, start, "restart position");
 
   while(1) {
     /**
@@ -275,7 +282,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(si == mp->mp_video.mq_stream) {
 	/* Current video stream */
-	mb = media_buf_alloc();
+	mb = media_buf_alloc_unlocked(mp, pkt.size);
 	mb->mb_data_type = MB_VIDEO;
 	mq = &mp->mp_video;
 
@@ -285,10 +292,11 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	} else {
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
+	mb->mb_send_pts = 1;
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 
-	mb = media_buf_alloc();
+	mb = media_buf_alloc_unlocked(mp, pkt.size);
 	mb->mb_data_type = MB_AUDIO;
 	mq = &mp->mp_audio;
 
@@ -296,7 +304,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
 	int duration = pkt.convergence_duration ?: pkt.duration;
 
-	mb = media_buf_alloc();
+	mb = media_buf_alloc_unlocked(mp, pkt.size);
 	mb->mb_codecid = fctx->streams[si]->codec->codec_id;
 	mb->mb_data_type = MB_SUBTITLE;
 	mq = &mp->mp_video;
@@ -328,27 +336,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mb->mb_stream = pkt.stream_index;
 
-      if(pkt.destruct == av_destruct_packet) {
-	/* Move the data pointers from ffmpeg's packet */
-	mb->mb_data = pkt.data;
-	pkt.data = NULL;
-
-	mb->mb_size = pkt.size;
-	pkt.size = 0;
-
-      } else {
-
-	mb->mb_data = malloc(pkt.size +   FF_INPUT_BUFFER_PADDING_SIZE);
-	memset(mb->mb_data + pkt.size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
-	memcpy(mb->mb_data, pkt.data, pkt.size);
-	mb->mb_size = pkt.size;
-      }
+      memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
 	mb->mb_time = mb->mb_pts - fctx->start_time;
       else
 	mb->mb_time = AV_NOPTS_VALUE;
 
+      mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
       av_free_packet(&pkt);
     }
 
@@ -414,14 +409,21 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
 
       ets = (event_ts_t *)e;
-      seekbase = ets->pts;
+      seekbase = ets->ts;
+
+      int sec = seekbase / 1000000;
+
+      if(sec != restartpos_last) {
+	restartpos_last = sec;
+	metadb_set_video_restartpos(canonical_url, seekbase / 1000);
+      }
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       epoch++;
       ets = (event_ts_t *)e;
       
-      ts = ets->pts + fctx->start_time;
+      ts = ets->ts + fctx->start_time;
 
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
@@ -509,7 +511,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   }
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
-    media_buf_free(mb);
+    media_buf_free_unlocked(mp, mb);
   return e;
 }
 
@@ -546,7 +548,8 @@ event_t *
 be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype)
+		  const char *mimetype,
+		  const char *canonical_url)
 {
   AVFormatContext *fctx;
   AVIOContext *avio;
@@ -574,7 +577,12 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
      * Is it a DVD ?
      */
     if(fs.fs_type == CONTENT_DIR) {
-      if(fa_probe_dir(NULL, url) == CONTENT_DVD)
+
+      metadata_t *md = fa_probe_dir(url);
+      int is_dvd = md->md_contenttype == CONTENT_DVD;
+      metadata_destroy(md);
+
+      if(is_dvd)
 	goto isdvd;
       return NULL;
     }
@@ -583,7 +591,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Check file type
    */
-  if((avio = fa_libav_open(url, 65536, errbuf, errlen, 0)) == NULL)
+  if((avio = fa_libav_open(url, 65536, errbuf, errlen, FA_CACHE,
+			   mp->mp_prop_io)) == NULL)
     return NULL;
 
   if(avio_read(avio, buf, sizeof(buf)) == sizeof(buf)) {
@@ -592,7 +601,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  if(mimetype == NULL) {
+  int seek_is_fast = fa_seek_is_fast(avio->opaque);
+
+  if(seek_is_fast && mimetype == NULL) {
     if(fa_probe_iso(NULL, avio) == 0) {
       fa_libav_close(avio);
     isdvd:
@@ -605,7 +616,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  opensub_hash_rval = opensub_compute_hash(avio, &hash);
+  if(seek_is_fast)
+    opensub_hash_rval = opensub_compute_hash(avio, &hash);
+  else
+    opensub_hash_rval = 1;
+
   if(opensub_hash_rval == -1)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
@@ -627,7 +642,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Update property metadata
    */
-  fa_probe_load_metaprop(mp->mp_prop_metadata, fctx, url);
+  metadata_t *md = fa_metadata_from_fctx(fctx, url);
+  if(md != NULL) {
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
+    metadata_destroy(md);
+  }
 
   /**
    * Subtitles from filesystem
@@ -714,7 +733,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
 
   // Start it
-  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
+  mp_configure(mp, (seek_is_fast ? MP_PLAY_CAPS_SEEK : 0) | MP_PLAY_CAPS_PAUSE,
 	       MP_BUFFER_DEEP);
 
   if(!(flags & BACKEND_VIDEO_NO_AUDIO))
@@ -724,7 +743,16 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_t *seek_index = build_index(mp, fctx, url);
 
-  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen);
+  metadb_register_play(canonical_url, 0);
+
+  int64_t start = video_get_restartpos(url) * 1000;
+  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
+			start);
+
+  if(e != NULL && event_is_type(e, EVENT_EOF)) {
+    metadb_set_video_restartpos(canonical_url, -1);
+    metadb_register_play(canonical_url, 1);
+  }
 
   prop_destroy(seek_index);
 
@@ -794,7 +822,8 @@ playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
       url = htsmsg_get_str(c, "cdata");
       if(url == NULL)
 	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL);
+      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL,
+			     url);
       if(!event_is_type(e, EVENT_EOF)) {
 	htsmsg_destroy(xml);
 	return e;

@@ -664,6 +664,9 @@ typedef struct glw_root {
   prop_t *gr_prop_underscan_v;
   prop_t *gr_prop_underscan_h;
 
+  int gr_underscan_v;
+  int gr_underscan_h;
+
   // Base offsets, should be set by frontend
   int gr_base_size;
   int gr_base_underscan_v;
@@ -722,6 +725,7 @@ typedef struct glw_rctx {
   uint8_t rc_inhibit_shadows; // Used when rendering low res passes in bloom filter
   uint8_t rc_inhibit_matrix_store; // Avoid storing matrix in mirrored view, etc
   uint8_t rc_layer;
+  uint8_t rc_overscanning;
 
   // Current ModelView Matrix
   Mtx rc_mtx;
@@ -1109,7 +1113,7 @@ int glw_signal0(glw_t *w, glw_signal_t sig, void *extra);
 
 void glw_layout0(glw_t *w, glw_rctx_t *rc);
 
-void glw_rctx_init(glw_rctx_t *rc, int width, int height);
+void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan);
 
 int glw_check_system_features(glw_root_t *gr);
 

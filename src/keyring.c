@@ -88,16 +88,16 @@ set_remember(void *opaque, int v)
  */
 int
 keyring_lookup(const char *id, char **username, char **password,
-	       char **domain, int query, const char *source,
-	       const char *reason, int force_temporary)
+	       char **domain, int *remember_me, const char *source,
+	       const char *reason, int flags)
 {
   htsmsg_t *m;
   rstr_t *r;
-
+  int remember = !!(flags & KEYRING_REMEMBER_ME_SET);
 
   hts_mutex_lock(&keyring_mutex);
 
-  if(query) {
+  if(flags & KEYRING_QUERY_USER) {
     htsmsg_t *parent;
     prop_t *p = prop_create_root(NULL);
 
@@ -106,8 +106,8 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
 
-    int remember = !force_temporary;
-    prop_set_int(prop_create(p, "canRemember"), remember);
+    prop_set_int(prop_create(p, "canRemember"),
+		 !!(flags & KEYRING_SHOW_REMEMBER_ME));
     prop_t *rememberMe = prop_create(p, "rememberMe");
     prop_set_int(rememberMe, remember);
 
@@ -128,12 +128,15 @@ keyring_lookup(const char *id, char **username, char **password,
 
     prop_unsubscribe(remember_sub);
 
-    if(remember)
+    if(flags & KEYRING_ONE_SHOT)
+      parent = NULL;
+    else if(remember)
       parent = persistent_keyring;
     else
       parent = temporary_keyring;
 
-    htsmsg_delete_field(parent, id);
+    if(parent != NULL)
+      htsmsg_delete_field(parent, id);
 
     if(event_is_action(e, ACTION_OK)) {
       /* OK */
@@ -142,21 +145,29 @@ keyring_lookup(const char *id, char **username, char **password,
 
       r = prop_get_string(user);
       htsmsg_add_str(m, "username", r ? rstr_get(r) : "");
+      *username = strdup(r ? rstr_get(r) : "");
       rstr_release(r);
 
       r = prop_get_string(pass);
       htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
+      *password = strdup(r ? rstr_get(r) : "");
       rstr_release(r);
 
-      htsmsg_add_msg(parent, id, m);
+      if(parent != NULL) {
+	htsmsg_add_msg(parent, id, m);
 
-      if(parent == persistent_keyring)
-	keyring_store();
+	if(parent == persistent_keyring)
+	  keyring_store();
+      }
 
     } else {
-      /* CANCEL, store without adding anything */
-      keyring_store();
+      /* CANCEL */
+      if(parent == persistent_keyring)
+	keyring_store();
     }
+
+    if(remember_me != NULL)
+      *remember_me = remember;
 
     prop_destroy(p);
 
@@ -167,17 +178,19 @@ keyring_lookup(const char *id, char **username, char **password,
       return -1;
     }
     event_release(e);
-  }
 
-  if((m = htsmsg_get_map(temporary_keyring, id)) == NULL &&
-     (m = htsmsg_get_map(persistent_keyring, id)) == NULL) {
-    hts_mutex_unlock(&keyring_mutex);
-    return 1;
-  }
+  } else {
 
-  setstr(username, m, "username");
-  setstr(password, m, "password");
-  setstr(domain, m, "domain");
+    if((m = htsmsg_get_map(temporary_keyring, id)) == NULL &&
+       (m = htsmsg_get_map(persistent_keyring, id)) == NULL) {
+      hts_mutex_unlock(&keyring_mutex);
+      return 1;
+    }
+    
+    setstr(username, m, "username");
+    setstr(password, m, "password");
+    setstr(domain, m, "domain");
+  }
 
   hts_mutex_unlock(&keyring_mutex);
   return 0;

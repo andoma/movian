@@ -225,11 +225,12 @@ static ext_subtitles_t *
 load_srt(const char *url, const char *buf, size_t len, int force_utf8)
 {
   int n;
-  size_t tlen;
-  int64_t start, stop;
+  size_t tlen = 0;
+  int64_t start, stop, pstart = -1, pstop = -1;
   linereader_t lr;
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
-  char *txt, *tmp = NULL;
+  char *txt = NULL, *tmp = NULL;
+  size_t txtoff = 0;
   
   RB_INIT(&es->es_entries);
 
@@ -238,7 +239,7 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   } else {
     TRACE(TRACE_INFO, "Subtitles",
 	  "%s is not valid UTF-8. Decoding it as %s",
-	  url, i18n_get_charset_name(i18n_get_srt_charset()));
+	  url, charset_get_name(i18n_get_srt_charset()));
     tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
     linereader_init(&lr, tmp, strlen(tmp));
   }
@@ -246,38 +247,36 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   while(1) {
     if((n = linereader_next(&lr)) < 0)
       break;
-    if(n == 0)
+
+    if(get_srt_timestamp(&lr, &start, &stop) == 0) {
+      if(txt != NULL && pstart != -1 && pstop != -1) {
+	txt[txtoff] = 0;
+	ese_insert(es, txt, pstart, pstop);
+	txt = NULL;
+	tlen = 0;
+	txtoff = 0;
+      }
+      pstart = start;
+      pstop  = stop;
+      continue;
+    }
+    if(pstart == -1)
       continue;
 
-    if(get_int(&lr, &n) < 0)
-      break;
-    if(linereader_next(&lr) < 0)
-      break;
-    if(get_srt_timestamp(&lr, &start, &stop) < 0)
-      break;
-
-    tlen = 0;
-    txt = NULL;
-    // Text lines
-
-    while(1) {
-      if(linereader_next(&lr) < 1)
-	break;
-
-      txt = realloc(txt, tlen + lr.ll + 1);
-      memcpy(txt + tlen, lr.buf, lr.ll);
-      txt[tlen + lr.ll] = 10;
-
-      tlen += lr.ll + 1;
-    }
-
-    if(txt != NULL) {
-      txt[tlen - 1] = 0;
-      ese_insert(es, txt, start, stop);
-    }
-    if(lr.ll < 0)
-      break;
+    txt = realloc(txt, tlen + lr.ll + 1);
+    memcpy(txt + tlen, lr.buf, lr.ll);
+    txt[tlen + lr.ll] = 0x0a;
+    if(lr.ll == 0 && tlen > 0)
+      txtoff = tlen - 1;
+    tlen += lr.ll + 1;
   }
+
+  if(txt != NULL && pstart != -1 && pstop != -1) {
+    txt[txtoff] = 0;
+    ese_insert(es, txt, pstart, pstop);
+    txt = NULL;
+  }
+  free(txt);
   free(tmp);
   TRACE(TRACE_DEBUG, "Subtitles", "Loaded %s as SRT, %d pages", url,
 	es->es_entries.entries);

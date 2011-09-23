@@ -63,8 +63,9 @@ tcp_write_queue_dontfree(tcpcon_t *tc, htsbuf_queue_t *q)
  *
  */
 static int
-tcp_fill_htsbuf_from_fd(tcpcon_t *tc, htsbuf_queue_t *hq)
+tcp_read_into_spill(tcpcon_t *tc)
 {
+  htsbuf_queue_t *hq = &tc->spill;
   htsbuf_data_t *hd = TAILQ_LAST(&hq->hq_q, htsbuf_data_queue);
   int c;
 
@@ -105,16 +106,15 @@ tcp_fill_htsbuf_from_fd(tcpcon_t *tc, htsbuf_queue_t *hq)
  *
  */
 int
-tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize,
-	      htsbuf_queue_t *spill)
+tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize)
 {
   int len;
 
   while(1) {
-    len = htsbuf_find(spill, 0xa);
+    len = htsbuf_find(&tc->spill, 0xa);
 
     if(len == -1) {
-      if(tcp_fill_htsbuf_from_fd(tc, spill) < 0)
+      if(tcp_read_into_spill(tc) < 0)
 	return -1;
       continue;
     }
@@ -122,11 +122,11 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize,
     if(len >= bufsize - 1)
       return -1;
 
-    htsbuf_read(spill, buf, len);
+    htsbuf_read(&tc->spill, buf, len);
     buf[len] = 0;
     while(len > 0 && buf[len - 1] < 32)
       buf[--len] = 0;
-    htsbuf_drop(spill, 1); /* Drop the \n */
+    htsbuf_drop(&tc->spill, 1); /* Drop the \n */
     return 0;
   }
 }
@@ -136,10 +136,10 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize,
  *
  */
 int
-tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize,
-	      htsbuf_queue_t *spill)
+tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize)
 {
-  int r = buf ? htsbuf_read(spill, buf, bufsize) : htsbuf_drop(spill, bufsize);
+  int r = buf ? htsbuf_read(&tc->spill, buf, bufsize) :
+    htsbuf_drop(&tc->spill, bufsize);
   if(r == bufsize)
     return 0;
 
@@ -167,10 +167,9 @@ tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize,
  *
  */
 int
-tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize,
-		     htsbuf_queue_t *spill)
+tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize)
 {
-  int tot = htsbuf_read(spill, buf, bufsize);
+  int tot = htsbuf_read(&tc->spill, buf, bufsize);
 
   if(tot > 0)
     return tot;

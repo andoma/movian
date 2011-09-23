@@ -104,6 +104,17 @@ id: Playqueue
 msg: Playqueue
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: CPU yavaş kalıyor bu video'da
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: İptal
-
-id: OK
-msg: Tammam
-
 id: Password
 msg: Şifre
 
@@ -141,6 +146,15 @@ msg: Hatırla beni
 
 id: Username
 msg: Kulanıcı Adı
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -203,6 +217,13 @@ id: Use opensubtitles.org
 msg: opensubtitles.org kullan
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -229,6 +250,10 @@ msg: Küçük ön hoparlör
 id: Swap LFE+center with surround
 msg: Swap LFE+center with surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -240,6 +265,13 @@ msg: Geçersiz CD Track
 
 id: Unable to open CD
 msg: CD açılamıyor
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -261,6 +293,10 @@ msg: Showtime başlarken Otomatik giriş
 
 id: Enable Spotify
 msg: Spotify etkinleştirin
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Arkadaşlar
@@ -297,6 +333,10 @@ msg: Spotify büyük bir müzik kütüphanesi için yasal ve ücretsiz erişim s
 
 id: Spotify playlists
 msg: Spotyfy Oynatma listesi 
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: Starred
@@ -507,6 +547,29 @@ id: Service not found
 msg: Service bulunamadı
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -523,10 +586,6 @@ msg: renk
 
 id: Enable VDPAU
 msg: VDPAU etkin
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Force subtitles to reside on video frame

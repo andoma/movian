@@ -453,7 +453,7 @@ the Javascript garbage collector will destroy it.
 
 #### createStore(String ID, [Boolean perUser])
 
-`Available from 3.1.162`
+*Available from 3.1.162*
 
 Creates an object that will be persisted on disk.
 
@@ -495,9 +495,17 @@ Ask the user for authentication credentials.
   
 ## The settings object
 
+#### createInt(String ID, String Title, Int Initial, Int Minimum, Int Maximum, Int Step, String Unit, Function Func)
+Shows a slider of integers to choose a value.
 
-
-
+* ID - String that identifies the setting. (e.g. integer)
+* Title - Synopsis of the setting. (e.g. Integer test)
+* Initial - Integer that's the default value. (e.g. 20)
+* Minimum - Integer of the lowest possible value. (e.g. 10)
+* Maximum - Integer of the highest possible value. (e.g. 50)
+* Step - Integer that is added to the current value. (e.g. 2)
+* Unit - String identifying the unit of the value. (e.g. Km/h)
+* Function - Function that handles the current value saving it (e.g. function(v){service.integer=v})
 
 ## The service object
 
@@ -566,16 +574,21 @@ This will appear on the console if Showtime is started with the -d option
 
 Print Message to the console.
 
-#### httpGet(String URL, [Object QueryArgs])
+#### httpGet(String URL, [Object QueryArgs], [Object Headers])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * QueryArgs - Object with properties that will be appended to the URL
   as query arguments. This can also be a list of objects and if so the
   properties from each object will be merged.
+* Headers - Object with properties that will be interpreted as extra
+  HTTP headers to send. If these includes a header that is default
+  sent by Showtime, the default will be overridden with the value from
+  this object. *Available from 3.1.177*
+
 
 Return a HTTP response object
 
-#### httpPost(String URL, Object PostData, [Object QueryArgs])
+#### httpPost(String URL, Object PostData, [Object QueryArgs], [Object Headers])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * PostData - Object where each property will be encoded and POSTed as
@@ -583,6 +596,10 @@ Return a HTTP response object
 * QueryArgs - Object with properties that will be appended to the URL
   as query arguments. This can also be a list of objects and if so the
   properties from each object will be merged.
+* Headers - Object with properties that will be interpreted as extra
+  HTTP headers to send. If these includes a header that is default
+  sent by Showtime, the default will be overridden with the value from
+  this object. *Available from 3.1.177*
 
 Return a HTTP response object
 
@@ -644,7 +661,7 @@ for presentation of duration (of movies, etc)
 
 #### probe(String URL) 
 
-`Available from 3.1.156`
+*Available from 3.1.156*
 
 Probe the given URL to check if it is accessible.
 

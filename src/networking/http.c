@@ -15,6 +15,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "http.h"
@@ -46,11 +48,34 @@ void
 http_header_add(struct http_header_list *headers, const char *key,
 		const char *value)
 {
-  http_header_t *hh = malloc(sizeof(http_header_t));
+  http_header_t *hh;
 
-  hh->hh_key   = strdup(key);
+  LIST_FOREACH(hh, headers, hh_link) {
+    if(!strcasecmp(hh->hh_key, key))
+      break;
+  }
+  
+  if(hh == NULL) {
+    hh = malloc(sizeof(http_header_t));
+    hh->hh_key   = strdup(key);
+    LIST_INSERT_HEAD(headers, hh, hh_link);
+  } else {
+    free(hh->hh_value);
+  }
   hh->hh_value = strdup(value);
-  LIST_INSERT_HEAD(headers, hh, hh_link);
+}
+
+
+/**
+ *
+ */
+void
+http_header_add_int(struct http_header_list *headers, const char *key,
+		    int value)
+{
+  char str[20];
+  snprintf(str, sizeof(str), "%d", value);
+  http_header_add(headers, key, str);
 }
 
 
@@ -67,3 +92,28 @@ http_header_get(struct http_header_list *headers, const char *key)
       return hh->hh_value;
   return NULL;
 }
+
+
+/**
+ *
+ */
+void
+http_header_merge(struct http_header_list *dst,
+		  const struct http_header_list *src)
+{
+  const http_header_t *hhs;
+  http_header_t *hhd;
+
+  LIST_FOREACH(hhs, src, hh_link) {
+    LIST_FOREACH(hhd, dst, hh_link)
+      if(!strcasecmp(hhs->hh_key, hhd->hh_key))
+	break;
+    if(hhd == NULL) {
+      http_header_add(dst, hhs->hh_key, hhs->hh_value);
+    } else {
+      free(hhd->hh_value);
+      hhd->hh_value = strdup(hhs->hh_value);
+    }
+  }
+}
+

@@ -94,12 +94,8 @@ typedef struct vdpau_video_surface {
   struct vdpau_render_state vvs_rs;
   VdpVideoSurface vvs_surface;
 
-  int64_t vvs_pts;
-  int64_t vvs_dts;
-  int64_t vvs_time;
-  int vvs_epoch;
-  int vvs_duration;
   int vvs_idx;
+  struct media_buf vvs_mb;
 } vdpau_video_surface_t;
 
 

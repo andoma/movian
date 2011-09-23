@@ -104,6 +104,17 @@ id: Playqueue
 msg: File de lecture
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +138,6 @@ msg: Le CPU est trop faible pour décoder cette vidéo
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Annuler
-
-id: OK
-msg: OK
-
 id: Password
 msg: Mot de passe
 
@@ -141,6 +146,15 @@ msg: Se souvenir de moi
 
 id: Username
 msg: Nom d'utilisateur
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Annuler
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -203,6 +217,13 @@ id: Use opensubtitles.org
 msg: Utiliser opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -229,6 +250,10 @@ msg: Petites enceintes frontales
 id: Swap LFE+center with surround
 msg: Inverser LFE+centre avec le surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -240,6 +265,13 @@ msg: Piste CD invalide
 
 id: Unable to open CD
 msg: Impossible d'ouvrir le CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -261,6 +293,10 @@ msg: S'authentifier automatiquement au démarrage de Showtime
 
 id: Enable Spotify
 msg: Activer Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Amis
@@ -297,6 +333,10 @@ msg: Grâce à Spotify, vous pouvez accéder gratuitement et en toute légalité
 
 id: Spotify playlists
 msg: Listes de lecture Spotify
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
 
 id: Starred
 msg: Noté
@@ -500,6 +540,29 @@ id: Service not found
 msg: Service non trouvé
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -516,9 +579,6 @@ msg: Couleur
 
 id: Enable VDPAU
 msg: Activer VDPAU
-
-id: Force Level 4.2 for h264 content
-msg: Forcer le Level 4.2 pour les contenus h264
 
 id: Force subtitles to reside on video frame
 msg: Forcer les sous-titres à rester sur l'image vidéo

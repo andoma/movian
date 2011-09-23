@@ -19,8 +19,6 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-PKGCONFIG="/opt/local/bin/pkg-config"
-PKGCONFIGDIR="/opt/local/lib/pkgconfig"
 MACOSXTARGET=""
 MACOSXSDK=""
 APPDIR=${BUILDDIR}/Showtime.app
@@ -33,30 +31,9 @@ show_help(){
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
-  echo "  --pkg-config=PATH        pkg-config path [$PKGCONFIG]"
-  echo "  --pkg-config-dir=PATH    pkg-config config dir[$PKGCONFIGDIR]"
   echo "  --enable-spotify=keyfile Compile support for Spotify (R) Core"
   echo "  --spotify-framework=PATH Path to libspotify.framework"
   exit 1
-}
-
-# figure out what archives to link with by modifying output from pkg-config
-# this is done because gcc (on at least osx) cant be forced to mix
-# dynamic and static libraries using -static and -l
-pkg_config_static() {
-  # assume all packages use the same libdir
-  libdir=`$PKGCONFIG --variable=libdir $1`
-  args=""
-  for arg in `$PKGCONFIG --static --libs $*` ; do
-    if [ "${arg:0:2}" != "-l" -o -e "/usr/lib/lib${arg:2}.dylib" ] ; then
-      # pass along non -l or existing dynamic standard libraries
-      args+="$arg "
-    else
-      # pass full path to static archive
-      args+="${arg/-l/$libdir/lib}.a "
-    fi
-  done
-  echo $args
 }
 
 enable libfreetype
@@ -94,10 +71,6 @@ for opt do
   --arch=*) ARCH="$optval"
   ;;
   --macosx-sdk=*) MACOSXSDK="$optval"
-  ;;
-  --pkg-config=*) PKGCONFIG="$optval"
-  ;;
-  --pkg-config-dir=*) PKGCONFIGDIR="$optval"
   ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
@@ -218,79 +191,15 @@ if enabled appleremote; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 fi
 
-#
-# pkg-config, set LIBDIR to makes pkg-config only search that path
-#
-if [ ! -x "$PKGCONFIG" ] ; then
-    echo "$PKGCONFIG does not exist or is not executable, make sure it is installed"
-    echo "You can also specify another path with --pkg-config"
-    die
-fi
-if [ ! -d "$PKGCONFIGDIR" ] ; then
-    echo "$PKGCONFIGDIR does not exist, make sure pkg-config is installed"
-    echo "You can also specify another directory with --pkg-config-dir"
-    die
-fi
-export PKG_CONFIG_LIBDIR=$PKGCONFIGDIR
-PKGS=""
+libav_setup
+
 
 #
-# libavformat
-#
-if pkg-config --atleast-version 53.0.0 libavformat; then
-    PKGS+="libavformat "
-    echo "Using libavformat:     `pkg-config --modversion libavformat`"
-else
-    echo "libavformat 53.0.0 or newer not found."
-    die
-fi
+# Freetype
+# 
+echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/X11/include -I/usr/X11/include/freetype2"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/X11/lib -lfreetype"
 
-#
-# libavcodec
-#
-if pkg-config --atleast-version 53.0.0 libavcodec; then
-    PKGS+="libavcodec "
-    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
-else
-    echo "libavcodec 53.0.0 or newer not found."
-    die
-fi
-
-#
-# libavutil
-#
-if pkg-config --atleast-version 51.0.0 libavutil; then
-    PKGS+="libavutil "
-    echo "Using libavutil:       `pkg-config --modversion libavutil`"
-else
-    echo "libavutil 51.0.0 or newer not found."
-    die
-fi
-
-#
-# libswscale
-#
-if pkg-config  --atleast-version 0.11.0 libswscale; then
-    PKGS+="libswscale "
-    echo "Using libswscale:      `pkg-config --modversion libswscale`"
-else
-    echo "libswscale 0.11.0 or newer not found."
-    die
-fi
-
-#
-# libfreetype2
-#
-if $PKGCONFIG freetype2; then
-    PKGS+="freetype2 "
-    echo "Using Freetype2:       `$PKGCONFIG --modversion freetype2`"
-else
-    echo "FreeType 2 not found"
-    die
-fi
-
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg_config_static $PKGS`
-echo >>${CONFIG_MAK} "CFLAGS_cfg +=" `$PKGCONFIG --cflags $PKGS`
 
 #
 # Configure paths, etc

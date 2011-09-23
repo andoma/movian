@@ -7,7 +7,7 @@ ICON0 := $(TOPDIR)/support/ps3icon.png
 APPID		:=	HTSS00003
 CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
-SFOXML          := $(PSL1GHT)/host/bin/sfo.xml
+SFOXML          := $(TOPDIR)/support/sfo.xml
 
 BIN=${BUILDDIR}/showtime.elf
 

@@ -28,4 +28,4 @@ typedef struct json_deserializer {
 } json_deserializer_t;
 
 void *json_deserialize(const char *src, const json_deserializer_t *jd,
-		       void *opaque);
+		       void *opaque, char *errbuf, size_t errlen);

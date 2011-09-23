@@ -188,6 +188,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
   }
 
   tcpcon_t *tc = calloc(1, sizeof(tcpcon_t));
+  htsbuf_queue_init(&hc->hc_spill, 0);
   tc->fd = fd;
   tc->read = tcp_read;
   tc->write = tcp_write;
@@ -203,5 +204,6 @@ void
 tcp_close(tcpcon_t *tc)
 {
   net_close(tc->fd);
+  htsbuf_queue_flush(&hc->hc_spill);
   free(tc);
 }

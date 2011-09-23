@@ -24,6 +24,7 @@
 #include "dvd.h"
 #include "notifications.h"
 #include "showtime.h"
+#include "metadata.h"
 
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
@@ -84,7 +85,7 @@ static const char *dvd_langcode_to_string(uint16_t langcode);
 static void *
 dvd_fa_open(const char *url)
 {
-  return fa_open(url, NULL, 0, 0);
+  return fa_open(url, NULL, 0);
 }
 
 static int
@@ -197,10 +198,8 @@ dvd_video_push(dvd_player_t *dp)
   if(cw == NULL)
     return;
 
-  mb = media_buf_alloc();
+  mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_cw = media_codec_ref(cw);
-  mb->mb_size = 0;
-  mb->mb_data = NULL;
   mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_data_type = MB_VIDEO;
@@ -221,7 +220,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 		  int data_type, void *data, int datalen, int rate,
 		  int64_t dts, int64_t pts)
 {
-  media_buf_t *mb = media_buf_alloc();
+  media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, datalen);
   event_t *e;
 
   AVCodecContext *ctx = cw->codec_ctx;
@@ -237,10 +236,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
   //  mb->mb_time = (dvdnav_get_current_time(dp->dp_dvdnav) * 1000000) / 90000;
   mb->mb_epoch = dp->dp_epoch;
   
-  mb->mb_data = malloc(datalen + FF_INPUT_BUFFER_PADDING_SIZE);
-  mb->mb_size = datalen;
   memcpy(mb->mb_data, data, datalen);
-  memset(mb->mb_data + datalen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
 
   do {
 
@@ -735,7 +731,8 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
     block = dp->dp_buf;
     result = dvdnav_get_next_cache_block(dp->dp_dvdnav, &block, &event, &len);
     if(result == DVDNAV_STATUS_ERR) {
-      notify_add(NULL, NOTIFY_INFO, NULL, 5, "DVD read error, restarting disc");
+      notify_add(NULL, NOTIFY_ERROR, NULL, 5, 
+		 _("DVD read error, restarting disc"));
       dvd_release_codecs(dp);
       dvdnav_close(dp->dp_dvdnav);
       free(dp);

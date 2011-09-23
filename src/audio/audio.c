@@ -31,7 +31,6 @@
 #include "notifications.h"
 
 audio_mode_t *audio_mode_current;
-hts_mutex_t audio_mode_mutex;
 
 static struct audio_mode_queue audio_modes;
 
@@ -46,6 +45,17 @@ static int audio_run = 1;
 
 static hts_thread_t audio_thread_id;
 audio_fifo_t af0, *thefifo;
+
+
+/**
+ *
+ */
+int
+audio_mode_prefer_float(void)
+{
+  return audio_mode_current && audio_mode_current->am_float;
+}
+
 
 /**
  *
@@ -157,8 +167,6 @@ audio_init(void)
   
   audio_global_load_settings();
 
-  hts_mutex_init(&audio_mode_mutex);
-
   TAILQ_INIT(&audio_modes);
 
 #ifdef CONFIG_LIBOGC
@@ -232,7 +240,8 @@ audio_output_thread(void *aux)
       sleep(1);
     } else {
       if(am)
-	notify_add(NULL, NOTIFY_INFO, NULL, 5, "Switching audio output to %s", 
+	notify_add(NULL, NOTIFY_INFO, NULL, 5, 
+		   _("Switching audio output to %s"), 
 		   am->am_title);
     }
   }
@@ -336,7 +345,6 @@ void
 audio_mode_register(audio_mode_t *am)
 {
   prop_t *r;
-  int multich = am->am_formats & (AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1);
   htsmsg_t *m;
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
@@ -358,7 +366,7 @@ audio_mode_register(audio_mode_t *am)
 		      0, m, -1000, 1000, 10, am_set_av_sync, am,
 		      SETTINGS_INITIAL_UPDATE, "ms", NULL, NULL, NULL);
 
-  if(multich) {
+  if(am->am_multich_controls) {
     settings_create_bool(r, "phantom_center", _p("Phantom center"),
 			 0, m, am_set_phantom_center, am,
 			 SETTINGS_INITIAL_UPDATE, NULL, NULL, NULL);

@@ -58,4 +58,10 @@ const char *http_header_get(struct http_header_list *headers,
 void http_header_add(struct http_header_list *headers, const char *key,
 		     const char *value);
 
+void http_header_add_int(struct http_header_list *headers, const char *key,
+			 int value);
+
+void http_header_merge(struct http_header_list *dst,
+		       const struct http_header_list *src);
+
 #endif // HTTP_H__

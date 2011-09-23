@@ -24,5 +24,3 @@ int i18n_audio_score(const char *str);
 int i18n_subtitle_score(const char *str);
 
 const uint16_t *i18n_get_srt_charset(void);
-
-const char *i18n_get_charset_name(const void *);

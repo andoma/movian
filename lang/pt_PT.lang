@@ -29,11 +29,10 @@ msg: Adicionado por: %s
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Desligado
+msg: Deslig.
 
 id: On
-# Missing translation
-msg: 
+msg: Ligado
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -48,7 +47,7 @@ id: Display info
 msg: Informações de visualização
 
 id: Framerate: %.2f Hz
-msg: Framerate: %.2f Hz
+msg: Taxa de quadros: %.2f Hz
 
 id: GPU: %s
 msg: GPU: %s
@@ -57,7 +56,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Renderer: %s
-msg: Renderer: %s
+msg: Renderizador: %s
 
 id: System info
 msg: Informações de sistema
@@ -105,6 +104,15 @@ id: Playqueue
 msg: Lista de reprodução
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Estado da reprodução
+
+id: Unable to start video playback
+msg: Não foi possível iniciar a reprodução do vídeo
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -128,12 +136,6 @@ msg: O CPU é muito lento para descodificar este vídeo
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
 id: Password
 msg: Palavra-passe
 
@@ -142,6 +144,15 @@ msg: Lembrar-me
 
 id: Username
 msg: Nome do utilizador
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -204,6 +215,13 @@ id: Use opensubtitles.org
 msg: Utilizar o opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -230,6 +248,10 @@ msg: Pequenos altifalantes frontais
 id: Swap LFE+center with surround
 msg: Trocar LFE+center com surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -241,6 +263,13 @@ msg: Faixa de CD inválida
 
 id: Unable to open CD
 msg: Não foi possível abrir o CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
 
 #
 # ./src/backend/htsp/htsp.c
@@ -262,6 +291,9 @@ msg: Login automático quando o Showtime iniciar
 
 id: Enable Spotify
 msg: Ativar Spotify
+
+id: Forget me
+msg: Esquecer-me
 
 id: Friends
 msg: Amigos
@@ -299,6 +331,10 @@ msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de músi
 id: Spotify playlists
 msg: Listas de reprodução do Spotify
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Estrelado
 
@@ -327,8 +363,7 @@ id: Language
 msg: Idioma
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-# Missing translation
-msg: 
+msg: Os códigos de idioma devem ser configurados com códigos ISO de 3 caracteres (ex: eng, fra, por)
 
 id: Preferred languages
 msg: Idiomas preferidos
@@ -403,28 +438,22 @@ msg: Nenhum handler para o URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: URI inválido
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: O plugin com o ID %s não existe
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: O plugin com o ID %s não tem URL de download
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Não foi possível carregar o plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Não foi possível obter o repositório de plugins: %s
 
 #
 # ./src/runcontrol.c
@@ -499,13 +528,36 @@ id: Device not found
 msg: O dispositivo não foi encontrado
 
 id: Malformed URI after device
-msg: URI mal formado depois do dispositivo
+msg: Sintaxe de URI incorreta depois do dispositivo
 
 id: Malformed URI after service
-msg: URI mal formado depois do serviço
+msg: Sintaxe de URI incorreta depois do serviço
 
 id: Service not found
 msg: O serviço não foi encontrado
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
 
 #
 # ./src/video/video_settings.c
@@ -524,10 +576,6 @@ msg: Cor
 
 id: Enable VDPAU
 msg: Ativar VDPAU
-
-id: Force Level 4.2 for h264 content
-# Missing translation
-msg: 
 
 id: Force subtitles to reside on video frame
 msg: Forçar as legendas a residerem no quadro de vídeo

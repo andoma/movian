@@ -77,9 +77,9 @@ widget(container_x, {
 	  .spacing = 20;
 	  .homogenous = true;
 
-	  popupButtonOK(deliverEvent($self.eventSink, _("OK")),
+	  popupButtonOK(deliverEvent($self.eventSink, "OK"),
 			true, false);
-	  popupButtonCancel(deliverEvent($self.eventSink, _("Cancel")),
+	  popupButtonCancel(deliverEvent($self.eventSink, "Cancel"),
 			    true, false);
 	});
       });

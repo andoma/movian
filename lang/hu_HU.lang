@@ -1,0 +1,630 @@
+﻿language: Hungarian
+native: Magyar
+maintainer: prodi <prodizo@hotmail.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Hang beállitások
+
+id: Languages
+msg: Nyelvek
+
+id: Settings
+msg: Beállitások
+
+id: Subtitle settings
+msg: Felirat beállitások
+
+id: Video settings
+msg: Videó beállitások
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Hozzáadott: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Ki
+
+id: On
+msg: Be
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Elérhető rendszer RAM: %d kB
+
+id: Detected CPUs: %d
+msg: észlelt CPUs: %d
+
+id: Display info
+msg: Információ megjelenités
+
+id: Framerate: %.2f Hz
+msg: Frameráta %.2f Hz
+
+id: GPU: %s
+msg: Grafikus processzor: %s
+
+id: Height: %d px
+msg: Magasság: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Rendszer információ
+
+id: Total system RAM: %d kB
+msg: Teljes rendszer RAM: %d kB
+
+id: Version: %s
+msg: Verzió: %s
+
+id: Width: %d px
+msg: Szélesség: %d px
+
+id: Windowmanager: %s
+msg: Ablak kezelés: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: A programról
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Kezdőlap
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: A forrást nem lehet megnyitni
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Oldal betöltés hiba
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Lejátszási lista
+
+#
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Fejezet %d / %d
+
+id: Title %d / %d
+msg: Cím %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Track %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: A Processzor túl lassú hogy dekódolja ezt a videót
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Jelszó
+
+id: Remember me
+msg: Emlékezz rám
+
+id: Username
+msg: Felhasználonév
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Mégse
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Nincs média betöltve
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Törlés
+
+id: Enqueue
+msg: Sorba állítás
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Hang kimenet
+
+id: CPUs
+msg: Processzor
+
+id: GPU & Display
+msg: Grafikai processzor es képernyő 
+
+id: GPU Core temperature: %d / %d °
+msg: Grafikai processzor maghőmérséklet: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Háttér árnyalat állitás, nappali időszak alapján
+
+id: Audio muted
+msg: Hang némitva
+
+id: Fancy UI animations
+msg: Animácios felület
+
+id: Master volume: %d dB
+msg: Fő hangerő: %d dB
+
+id: Starwars scroller tilt
+msg: Starwars scroller tilt
+
+id: Top bar navigation buttons
+msg: Felső sáv navigációs gombok
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Beállitások a opensubtitles.org-hoz
+
+id: Use opensubtitles.org
+msg: opensubtitles.org-ot használ
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+# Missing translation
+msg: 
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Hang/kép csúszás szinkronizácio
+
+id: Current output device
+msg: Jelenlegi kimeneti eszköz
+
+id: Force stereo downmix
+msg: Eröltetett sztereó lemix
+
+id: Phantom LFE
+msg: Bass
+
+id: Phantom center
+msg: Középsugárzó
+
+id: Select audio output device and related configurations
+msg: Az audió kimeneti eszköz kiválasztása és beállításai
+
+id: Small front speakers
+msg: Első hangszórók
+
+id: Swap LFE+center with surround
+msg: Basszus és a surround hangszóró cseréje 
+
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Érvénytelen CD URL
+
+id: Invalid CD track
+msg: Érvénytelen CD track
+
+id: Unable to open CD
+msg: Nem lehet megnyitni a CD-t
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: érvénytelen HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Keresés
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automatikus bejelentkezés a Showtime inditásakor
+
+id: Enable Spotify
+msg: Spotify Engedélyezés
+
+id: Forget me
+# Missing translation
+msg: 
+
+id: Friends
+msg: Barátok
+
+id: High bitrate
+msg: Magas bitráta
+
+id: Inbox
+msg: Bejövő üzenetek
+
+id: New albums on Spotify
+msg: Új albumok a Spotify-n
+
+id: New releases
+msg: Új kiadások
+
+id: Playlists
+msg: Lejátszási lista
+
+id: Relogin (switch user)
+msg: Bejelentkezes újból (felhasználo váltás)
+
+id: Search result
+msg: Keresési eredmény
+
+id: Spotify friends
+msg: Spotify barátok
+
+id: Spotify music service
+msg: Spotify zene szolgáltatás
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: A Spotify legális es ingyenes hozzáférest nyujt nagy mennyisegű zenéhez. A Spotify használlatához a Showtime-ban szükség van Premium Spotify accountra.\nTöbb infoért a Spotify-ról, látogass el http://www.spotify.com/\n\nA Spotify bármely funkciójának eléréséhez a Showtime-ban be kellesz jelentkezned a Spotify felhasznállóneveddel es jelszavaddal.
+
+id: Spotify playlists
+msg: Spotify lejátszási lista
+
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
+id: Starred
+msg: Csillagos
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Könyvjelzők
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Keresés Unix locatedb által
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Keresés spotlight által
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Nyelv
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: A nyelv kódoknak három karakterü iso kódot kell megadni, pl  (eng, swe, hun)
+
+id: Preferred languages
+msg: Előnyben részesitett nyelvek
+
+id: Primary audio language code
+msg: Elsődleges szinkron hang kód
+
+id: Primary subtitle language code
+msg: Elsődleges felirat kód
+
+id: SRT character set
+msg: SRT karakterkészlet
+
+id: Secondary audio language code
+msg: Másodlagos szinkron hang kód
+
+id: Secondary subtitle language code
+msg: Másodlagos felirat kód
+
+id: Tertiary audio language code
+msg: Harmadlagos szinkron nyelv kód
+
+id: Tertiary subtitle language code
+msg: Harmadlagos felirat kód
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatikus TV be/ki
+
+id: Input source
+msg: Bemeneti forrás
+
+id: LG Television set
+msg: LG TV
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Billentyűzet és távirányító gombok konfigurácioja
+
+id: Keymapper
+msg: Billentyűzetkiosztás
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Feliratok képkockához igazitása
+
+id: Audio delay
+msg: Hang csúsztatás
+
+id: Subtitle delay
+msg: Felirat csúsztatás
+
+id: Subtitle scaling
+msg: Felirat méretezés
+
+id: Video zoom
+msg: Zoomolás
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Nincs kezelő az URL-hez
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Érvénytelen URI 
+
+id: Plugin ID %s does not exist
+msg: A plugin ID %s nem létezik
+
+id: Plugin ID %s have no download URL
+msg: A plugin ID %s nem rendelkezik letöltési URL-el
+
+id: Unable to load plugin.json: %s
+msg: Nem lehet betölteni a plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Nem lehet betölteni plugin.json: Hibas JSON 
+
+id: Unable to request plugin repository: %s
+msg: Nem lehet a plugin tárolót lekérni: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatikus készenlét
+
+id: Run control
+msg: Ellenőrzés
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Engedélyezve
+
+id: Name
+msg: Név
+
+id: Type
+msg: Tipus
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Alkalmazások es beépülő modulok
+
+id: Discovered media sources
+msg: Talált média források
+
+id: Global settings
+msg: Globális beállítások
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Kijelző beállítások és felhasználói felület
+
+id: Horizontal underscan
+msg: Vízszintes eltolás
+
+id: Screensaver delay
+msg: Képernyőkímélő késleltetés
+
+id: Userinterface size
+msg: Felhasználói felület mérete
+
+id: Vertical underscan
+msg: Függőleges eltolás
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Teljes képernyő
+
+id: Map mouse wheel to up/down
+msg: Egér görgetés fel/le feltérképezése 
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Főképernyőn engedélyezve
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Eszköz nem található
+
+id: Malformed URI after device
+msg: Hibás URI eszköz
+
+id: Malformed URI after service
+msg: Hibás URI szolgáltatás
+
+id: Service not found
+msg: Szolgáltatás nem található
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Mindig próbál feliratot választani 
+
+id: Auto
+msg: Automatikus
+
+id: Center
+msg: Középső
+
+id: Color
+msg: Szin
+
+id: Enable VDPAU
+msg: VDPAU Engedélyezés
+
+id: Force subtitles to reside on video frame
+msg: Eröltetett felirat a hozzátartozó képkockán
+
+id: Generic settings for video subtitles
+msg: Általános beállítások feliratokhoz
+
+id: Ignore embedded styling
+msg: Beágyazott stílus figyelmen kívül hagyása
+
+id: Left
+msg: Ball
+
+id: Outline color
+msg: Körvonal színe
+
+id: Outline size
+msg: Körvonal mérete
+
+id: Right
+msg: Jobb
+
+id: Shadow color
+msg: árnyék színe
+
+id: Shadow offset
+msg: árnyék offset
+
+id: Stretch video to widescreen
+msg: videó szélesvásznúra nyujtása
+
+id: Subtitle position
+msg: Felirat helyzete
+
+id: Subtitle size
+msg: Felirat mérete
+
+id: Subtitle styling
+msg: Felirat stilusa
+
+id: Subtitles
+msg: Feliratok
+
+id: Video acceleration and display behaviour
+msg: Videó gyorsitás es kijelzo működés
+
+id: Video playback
+msg: Videó lejátszás
+

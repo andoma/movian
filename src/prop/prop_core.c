@@ -1368,29 +1368,14 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme,
 {
   prop_t *p;
   hts_mutex_lock(&prop_mutex);
-  p = prop_create0(parent, name, skipme, noalloc);
-  hts_mutex_unlock(&prop_mutex);
-  return p;
-}
-
-
-/**
- *
- */
-prop_t *
-prop_create_check_ex(prop_t *parent, const char *name, int noalloc)
-{
-  prop_t *p;
-  hts_mutex_lock(&prop_mutex);
-  if(parent->hp_type != PROP_ZOMBIE) {
-    p = prop_ref_inc(prop_create0(parent, name, NULL, noalloc));
+  if(parent != NULL && parent->hp_type != PROP_ZOMBIE) {
+    p = prop_create0(parent, name, skipme, noalloc);
   } else {
     p = NULL;
   }
   hts_mutex_unlock(&prop_mutex);
   return p;
 }
-
 
 /**
  *
@@ -1436,6 +1421,8 @@ prop_set_parent_ex(prop_t *p, prop_t *parent, prop_t *before,
 		   prop_sub_t *skipme)
 {
   int r;
+  if(parent == NULL)
+    return -1;
 
   hts_mutex_lock(&prop_mutex);
   r = prop_set_parent0(p, parent, before, skipme);

@@ -26,7 +26,7 @@ typedef enum {
 } notify_type_t;
 
 void *notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
-		 const char *fmt, ...);
+		 rstr_t *fmt, ...);
 
 void notify_destroy(void *);
 
@@ -41,5 +41,7 @@ struct event *popup_display(prop_t *p);
 #define MESSAGE_POPUP_RICH_TEXT 0x4
 
 int message_popup(const char *message, int flags);
+
+int text_dialog(const char *message, char** string, int flags);
  
 #endif // NOTIFICATIONS_H__

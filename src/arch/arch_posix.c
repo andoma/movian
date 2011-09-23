@@ -177,6 +177,18 @@ arch_exit(int retcode)
 
 
 #include <errno.h>
+
+
+void
+hts_mutex_init_recursive(hts_mutex_t *m)
+{
+  pthread_mutexattr_t a;
+  pthread_mutexattr_init(&a);
+  pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(m, &a);
+  pthread_mutexattr_destroy(&a);
+}
+
 /**
  *
  */
@@ -402,4 +414,30 @@ arch_get_seed(void)
 void
 arch_preload_fonts(void)
 {
+}
+
+
+#include <sys/mman.h>
+#include "halloc.h"
+
+/**
+ *
+ */
+void *
+halloc(size_t size)
+{
+  void *p = mmap(NULL, size, PROT_READ | PROT_WRITE,
+		 MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+  if(p == MAP_FAILED)
+    return NULL;
+  return p;
+}
+
+/**
+ *
+ */
+void
+hfree(void *ptr, size_t size)
+{
+  munmap(ptr, size);
 }

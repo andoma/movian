@@ -62,37 +62,51 @@ set_title_from_url(prop_t *metadata, const char *url)
 /**
  *
  */
-static int
-file_open_dir(prop_t *page, const char *url)
+static void
+file_open_browse(prop_t *page, const char *url, time_t mtime)
 {
   prop_t *model;
-  int type;
   char parent[URL_MAX];
-  int r;
-  fa_handle_t *ref;
 
-  ref = fa_reference(url);
-  type = fa_probe_dir(NULL, url);
-  if(type == CONTENT_DVD) {
-    r =  backend_open_video(page, url);
-  } else {
+  model = prop_create(page, "model");
+  prop_set_string(prop_create(model, "type"), "directory");
+  
+  /* Find a meaningful page title (last component of URL) */
+  set_title_from_url(prop_create(model, "metadata"), url);
+  
+  // Set parent
+  if(!fa_parent(parent, sizeof(parent), url))
+    prop_set_string(prop_create(page, "parent"), parent);
+  
+  fa_scanner(url, mtime, model, NULL);
+}
 
-    model = prop_create(page, "model");
-    prop_set_string(prop_create(model, "type"), "directory");
+/**
+ *
+ */
+static void
+file_open_dir(prop_t *page, const char *url, time_t mtime)
+{
+  fa_handle_t *ref = fa_reference(url);
+  metadata_t *md = fa_probe_dir(url);
 
-    /* Find a meaningful page title (last component of URL) */
-    set_title_from_url(prop_create(model, "metadata"), url);
+  switch(md->md_contenttype) {
+  case CONTENT_DVD:
+    backend_open_video(page, url);
+    break;
+    
+  case CONTENT_DIR:
+  case CONTENT_ARCHIVE:
+    file_open_browse(page, url, mtime);
+    break;
 
-    // Set parent
-    if(!fa_parent(parent, sizeof(parent), url))
-      prop_set_string(prop_create(page, "parent"), parent);
-
-    fa_scanner(url, model, NULL);
-    r = 0;
+  default:
+    nav_open_errorf(page, _("Can't handle content type %d"),
+		    md->md_contenttype);
+    break;
   }
+  metadata_destroy(md);
   fa_unreference(ref);
-
-  return r;
 }
 
 
@@ -139,7 +153,7 @@ file_open_audio(prop_t *page, const char *url)
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(page, "parent"), parent2);
 
-  fa_scanner(parent, model, url);
+  fa_scanner(parent, fs.fs_mtime, model, url);
   return 0;
 }
 
@@ -147,49 +161,67 @@ file_open_audio(prop_t *page, const char *url)
 /**
  *
  */
-static int
-file_open_file(prop_t *page, const char *url, struct fa_stat *fs)
+static void
+file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
 {
-  char redir[URL_MAX];
   char errbuf[200];
-  int c;
   prop_t *meta;
+  metadata_t *md;
+
+  void *db = metadb_get();
+  md = metadb_metadata_get(db, url, fs->fs_mtime);
+  metadb_close(db);
+
+  if(md == NULL)
+    md = fa_probe_metadata(url, errbuf, sizeof(errbuf));
+
+  if(md == NULL) {
+    nav_open_errorf(page, _("Unable to open file: %s"), errbuf);
+    return;
+  }
+
+  if(md->md_redirect != NULL)
+    url = md->md_redirect;
 
   meta = prop_create_root("metadata");
 
-  c = fa_probe(meta, url, redir, sizeof(redir), errbuf, sizeof(errbuf), fs, 1);
-
-  switch(c) {
+  switch(md->md_contenttype) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
     prop_destroy(meta);
-    return file_open_dir(page, redir);
+    file_open_browse(page, url, fs->fs_mtime);
+    break;
 
   case CONTENT_AUDIO:
     if(!file_open_audio(page, url)) {
       prop_destroy(meta);
-      return 0;
+      break;
     }
-
     playqueue_play(url, meta, 0);
-    return playqueue_open(page);
+    playqueue_open(page);
+    break;
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    return backend_open_video(page, url);
+    backend_open_video(page, url);
+    break;
 
   case CONTENT_IMAGE:
-    return file_open_image(page, meta);
+    file_open_image(page, meta);
+    break;
 
   case CONTENT_PLUGIN:
     plugin_open_file(page, url);
-    return 0;
+    break;
 
   default:
     prop_destroy(meta);
-    return nav_open_error(page, errbuf);
+    nav_open_errorf(page, _("Can't handle content type %d"),
+		    md->md_contenttype);
+    break;
   }
+  metadata_destroy(md);
 }
 
 /**
@@ -204,8 +236,12 @@ be_file_open(prop_t *page, const char *url)
   if(fa_stat(url, &fs, errbuf, sizeof(errbuf)))
     return nav_open_error(page, errbuf);
 
-  return fs.fs_type == CONTENT_DIR ? 
-    file_open_dir(page, url) : file_open_file(page, url, &fs);
+  if(fs.fs_type == CONTENT_DIR) {
+    file_open_dir(page, url, fs.fs_mtime);
+  } else {
+    file_open_file(page, url, &fs);
+  }
+  return 0;
 }
 
 

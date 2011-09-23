@@ -148,4 +148,12 @@ widget(container_y, {
       });
     });
   });
+
+  HORIZONTAL_SEPARATOR();
+
+  widget(label, {
+    .color = 0.6;
+    // Need plural forms in localization
+    .caption = fmt(_("Played %d times"), $args.playcount);
+  });
 });

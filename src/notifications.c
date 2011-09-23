@@ -24,8 +24,26 @@
 #include "notifications.h"
 #include "misc/callout.h"
 #include "event.h"
+#include "keyring.h"
 
 static prop_t *notify_prop_entries;
+
+/**
+ *
+ */
+static void
+setstr(char **p, htsmsg_t *m, const char *fname)
+{
+  const char *s;
+
+  if(p == NULL)
+    return;
+
+  if((s = htsmsg_get_str(m, fname)) != NULL)
+    *p = strdup(s);
+  else
+    *p = NULL;
+}
 
 /**
  *
@@ -56,7 +74,7 @@ notify_timeout(callout_t *c, void *aux)
  */
 void *
 notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
-	   const char *fmt, ...)
+	   rstr_t *fmt, ...)
 {
   char msg[256];
   prop_t *p;
@@ -74,12 +92,14 @@ notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
   va_start(ap, fmt);
   va_copy(apx, ap);
 
-  tracev(0, tl, "notify", fmt, ap);
+  tracev(0, tl, "notify", rstr_get(fmt), ap);
 
-  vsnprintf(msg, sizeof(msg), fmt, apx);
+  vsnprintf(msg, sizeof(msg), rstr_get(fmt), apx);
 
   va_end(ap);
   va_end(apx);
+
+  rstr_release(fmt);
 
   p = prop_create_root(NULL);
 
@@ -201,4 +221,53 @@ message_popup(const char *message, int flags)
 
   event_release(e);
   return rval;
+}
+
+
+
+/**
+ *
+ */
+int
+text_dialog(const char *message, char** answer, int flags)
+{
+  htsmsg_t *m;
+  rstr_t *r;
+
+  prop_t *p = prop_create_root(NULL);
+
+  prop_set_string(prop_create(p, "type"), "textDialog");
+  prop_set_string_ex(prop_create(p, "message"), NULL, message,
+		     flags & MESSAGE_POPUP_RICH_TEXT ?
+		     PROP_STR_RICH : PROP_STR_UTF8);
+  prop_t *string = prop_create(p, "input");
+  if(flags & MESSAGE_POPUP_CANCEL)
+    prop_set_int(prop_create(p, "cancel"), 1);
+  if(flags & MESSAGE_POPUP_OK)
+    prop_set_int(prop_create(p, "ok"), 1);
+  
+  event_t *e = popup_display(p);
+  
+  if(event_is_action(e, ACTION_OK)) {
+    m = htsmsg_create_map();  
+      
+    r = prop_get_string(string);
+    htsmsg_add_str(m, "input", r ? rstr_get(r) : "");
+    rstr_release(r);
+      
+    htsmsg_get_str(m, "input");
+    
+    setstr(answer, m, "input");
+  }
+  
+  prop_destroy(p);
+  
+  if(event_is_action(e, ACTION_CANCEL)){
+      event_release(e);
+      return -1;
+  } 
+
+  event_release(e);
+  
+  return 0;
 }

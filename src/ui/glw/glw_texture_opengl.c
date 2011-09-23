@@ -409,8 +409,6 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 	       const void *src, int fmt, int width, int height, int flags)
 {
   int format;
-  int ext_format;
-  int ext_type;
   int m = gr->gr_be.gbr_primary_texture_mode;
 
   if(tex->tex == 0) {
@@ -429,22 +427,16 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   switch(fmt) {
   case GLW_TEXTURE_FORMAT_BGR32:
     format     = GL_RGBA;
-    ext_format = GL_RGBA;
-    ext_type   = GL_UNSIGNED_BYTE;
     tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
   case GLW_TEXTURE_FORMAT_RGB:
     format     = GL_RGB;
-    ext_format = GL_RGB;
-    ext_type   = GL_UNSIGNED_BYTE;
     tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
   case GLW_TEXTURE_FORMAT_I8A8:
-    format     = GL_LUMINANCE4_ALPHA4;
-    ext_format = GL_LUMINANCE_ALPHA;
-    ext_type   = GL_UNSIGNED_BYTE;
+    format     = GL_LUMINANCE_ALPHA;
     tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
@@ -455,7 +447,7 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   tex->width = width;
   tex->height = height;
 
-  glTexImage2D(m, 0, format, width, height, 0, ext_format, ext_type, src);
+  glTexImage2D(m, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
 }
 
 

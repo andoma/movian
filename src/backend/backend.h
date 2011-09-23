@@ -78,7 +78,8 @@ typedef struct backend {
 				 struct media_pipe *mp,
 				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype);
+				 const char *mimetype,
+				 const char *canonical_url);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
@@ -113,7 +114,8 @@ int backend_open(struct prop *page, const char *url)
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
 				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype)
+				 const char *mimetype,
+				 const char *canonical_url)
   __attribute__ ((warn_unused_result));
 
 
@@ -138,8 +140,7 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-int backend_open_video(prop_t *page, const char *url)
-     __attribute__ ((warn_unused_result));
+int backend_open_video(prop_t *page, const char *url);
 
 int backend_resolve_item(const char *url, prop_t *item)
      __attribute__ ((warn_unused_result));

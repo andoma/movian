@@ -1004,6 +1004,7 @@ font_render_thread(void *aux)
 
     gtb_set_constraints(gr, gtb);
   }
+  return NULL;
 }
 
 /**

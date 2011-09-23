@@ -26,6 +26,7 @@
 #include "fa_search.h"
 #include "service.h"
 #include "settings.h"
+#include "metadata.h"
 
 static int spotlight_enabled;
 
@@ -190,10 +191,10 @@ spotlight_searcher(void *aux)
     path = malloc(len);
     CFStringGetCString(pathRef, path, len, kCFStringEncodingUTF8);
     CFRelease(pathRef);
-    ctype = fa_probe(metadata, path, NULL, 0, NULL, 0, NULL, 1);
+    metadata_t *md = fa_probe_metadata(path, NULL, 0);
     
     t = 0;
-    switch(ctype) {
+    switch(md->md_contenttype) {
     case CONTENT_AUDIO:
       break;
     case CONTENT_VIDEO:
@@ -203,7 +204,8 @@ spotlight_searcher(void *aux)
     default:
       continue;
     }
-    
+    metadata_destroy(md);
+
     if(nodes[t] == NULL)
       if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
 			     t ? "Local video files" : "Local audio files",

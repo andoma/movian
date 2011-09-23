@@ -25,8 +25,10 @@
 
 #include "misc/queue.h"
 #include "networking/http.h"
-
+#include "metadata.h"
 #include "navigator.h"
+
+struct prop;
 
 #define FA_LOCALFILES_ICON "bundle://resources/fileaccess/fs_icon.png"
 
@@ -73,8 +75,13 @@ typedef struct fa_dir_entry {
 
   } fde_probestatus;
 
-  int fde_statdone;
+  char fde_statdone;
+  char fde_ignore_cache;
+  char fde_bound_to_metadb;
   struct fa_stat fde_stat;
+
+  struct metadata *fde_md;
+
 } fa_dir_entry_t;
 
 /**
@@ -105,6 +112,7 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 #define FA_DEBUG 0x1
 // #define FA_DUMP  0x2
 #define FA_STREAMING 0x4
+#define FA_CACHE     0x8
 
 /**
  *
@@ -128,12 +136,16 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
-void *fa_open(const char *url, char *errbuf, size_t errsize, int flags);
+#define fa_open(u, e, es) fa_open_ex(u, e, es, 0, NULL)
+
+void *fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
+		 struct prop *stats);
 void *fa_open_vpaths(const char *url, const char **vpaths);
 void fa_close(void *fh);
 int fa_read(void *fh, void *buf, size_t size);
 int64_t fa_seek(void *fh, int64_t pos, int whence);
 int64_t fa_fsize(void *fh);
+int fa_seek_is_fast(void *fh);
 int fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize);
 int fa_findfile(const char *path, const char *file, 
 		char *fullpath, size_t fullpathlen);
@@ -153,7 +165,8 @@ int fa_notify(const char *url, void *opaque,
 
 void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
-void fa_scanner(const char *url, prop_t *model, const char *playme);
+void fa_scanner(const char *url, time_t mtime, 
+		prop_t *model, const char *playme);
 
 void *fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
 		   char *errbuf, size_t errlen);
@@ -176,7 +189,7 @@ int http_request(const char *url, const char **arguments,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
-		 struct http_header_list *headers_in, const char *method);
+		 const struct http_header_list *headers_in, const char *method);
 
 struct http_auth_req;
 int http_client_oauth(struct http_auth_req *har,
@@ -187,8 +200,19 @@ int http_client_oauth(struct http_auth_req *har,
 
 int http_client_rawauth(struct http_auth_req *har, const char *str);
 
+void http_client_set_header(struct http_auth_req *har, const char *key,
+			    const char *value);
+
 void fa_pathjoin(char *dst, size_t dstlen, const char *p1, const char *p2);
 
 void fa_url_get_last_component(char *dst, size_t dstlen, const char *url);
+
+// Cache
+
+void fa_cache_init(void);
+
+fa_handle_t *fa_cache_open(const char *url, char *errbuf,
+			   size_t errsize, int flags, struct prop *stats);
+
 
 #endif /* FILEACCESS_H */

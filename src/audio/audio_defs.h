@@ -20,22 +20,6 @@
 
 #include "audio_fifo.h"
 
-#define AUDIO_CHAN_MAX 8
-
-/**
- * The channel order expected by audio output is as follows
- *
- * 0 - Front Left
- * 1 - Front Right
- * 2 - Side Left
- * 3 - Side Right
- * 4 - Center
- * 5 - LFE
- * 6 - Rear Left
- * 7 - Rear Right
- *
- */
-
 TAILQ_HEAD(audio_mode_queue, audio_mode);
 
 #define audio_mode_stereo_only(am) \
@@ -46,11 +30,12 @@ typedef struct audio_mode {
   uint32_t am_formats;
 #define AM_FORMAT_PCM_STEREO        0x1
 #define AM_FORMAT_PCM_5DOT1         0x2
-#define AM_FORMAT_PCM_7DOT1         0x4
-#define AM_FORMAT_PCM_MASK          0x7
+#define AM_FORMAT_PCM_6DOT1         0x4
+#define AM_FORMAT_PCM_7DOT1         0x8
+#define AM_FORMAT_PCM_MASK          0xf
 
-#define AM_FORMAT_AC3               0x8
-#define AM_FORMAT_DTS               0x10
+#define AM_FORMAT_AC3               0x10
+#define AM_FORMAT_DTS               0x20
 
   uint32_t am_sample_rates;
 #define AM_SR_96000 0x1
@@ -59,7 +44,8 @@ typedef struct audio_mode {
 #define AM_SR_32000 0x8
 #define AM_SR_24000 0x10
 #define AM_SR_ANY   0x20
-  unsigned int am_sample_rate;
+  char am_float; // Can also output PCM in floating point mode
+  char am_multich_controls;
 
   char *am_title;
   char *am_description;
@@ -92,6 +78,7 @@ extern prop_t *prop_mastervol, *prop_mastermute;
 
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
+int audio_mode_prefer_float(void);
 
 /**
  * Audio drivers

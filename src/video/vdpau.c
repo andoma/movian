@@ -288,11 +288,7 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
   pic->type = FF_BUFFER_TYPE_USER;
   pic->age = 256 * 256 * 256 * 64;
 
-  vvs->vvs_dts = mb->mb_dts;
-  vvs->vvs_pts = mb->mb_pts;
-  vvs->vvs_epoch = mb->mb_epoch;
-  vvs->vvs_duration = mb->mb_duration;
-  vvs->vvs_time = mb->mb_time;
+  memcpy(&vvs->vvs_mb, mb, sizeof(media_buf_t));
   return 0;
 }
 
@@ -414,9 +410,7 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 
   vd->vd_skip = 0;
   vvs = frame->opaque;
-  video_deliver_frame(vd, vd->vd_mp, mq, mb, ctx, frame,
-		      vvs->vvs_time, vvs->vvs_pts, vvs->vvs_dts,
-		      vvs->vvs_duration, vvs->vvs_epoch, 0);
+  video_deliver_frame(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
 }
 
 

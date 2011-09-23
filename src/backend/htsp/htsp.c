@@ -236,8 +236,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
 
   snprintf(id, sizeof(id), "htsp://%s:%d", hc->hc_hostname, hc->hc_port);
 
-  r = keyring_lookup(id, &username, &password, NULL, !!retry,
-		     "TV client", "Access denied", 0);
+  r = keyring_lookup(id, &username, &password, NULL, NULL,
+		     "TV client", "Access denied",
+		     (retry ? KEYRING_QUERY_USER : 0) |
+		     KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
 
   if(r == -1) {
     /* User rejected */
@@ -424,6 +426,8 @@ update_events(htsp_connection_t *hc, prop_t *metadata, int id, int next)
 
 	prop_t *e = prop_create(events, buf);
 	prop_set_string(prop_create(e, "title"), htsmsg_get_str(m, "title"));
+	prop_set_string(prop_create(e, "description"),
+			htsmsg_get_str(m, "description"));
 	if(!htsmsg_get_u32(m, "start", &u32))
 	  prop_set_int(prop_create(e, "start"), u32);
 	
@@ -1584,7 +1588,8 @@ static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype)
+		  const char *mimetype,
+		  const char *canonical_url)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
@@ -1700,7 +1705,7 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       
     if(hss != NULL) {
 
-      mb = media_buf_alloc();
+      mb = media_buf_alloc_unlocked(mp, binlen);
       mb->mb_data_type = hss->hss_data_type;
       mb->mb_stream = hss->hss_index;
 
@@ -1718,16 +1723,14 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(hss->hss_cw != NULL)
 	mb->mb_cw = media_codec_ref(hss->hss_cw);
 
-      mb->mb_data = malloc(binlen + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(mb->mb_data, bin, binlen);
-      memset(mb->mb_data + binlen, 0, FF_INPUT_BUFFER_PADDING_SIZE);
   
       mb->mb_size = binlen;
 
       if(mb_enqueue_no_block(mp, hss->hss_mq, mb,
 			     mb->mb_data_type == MB_SUBTITLE ? 
 			     mb->mb_data_type : -1))
-	media_buf_free(mb);
+	media_buf_free_unlocked(mp, mb);
     }
   }
   hts_mutex_unlock(&hc->hc_subscription_mutex);

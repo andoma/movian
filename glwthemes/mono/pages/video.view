@@ -33,7 +33,7 @@ widget(container_z, {
 
     widget(label, {
       .align = center;
-      .caption = "Unable to start video playback";
+      .caption = _("Unable to start video playback");
     });
     
     
@@ -57,7 +57,7 @@ widget(container_z, {
 	  .alpha = $view.statsAlpha;
 	  
 	  widget(label, {
-	    .caption = "Playback status";
+	    .caption = _("Playback status");
 	    .align = center;
 	  });
 
@@ -73,11 +73,6 @@ widget(container_z, {
 	      
 	      widget(label, {
 		.align = right;
-		.caption = "Buffer fullness:";
-	      });
-
-	      widget(label, {
-		.align = right;
 		.caption = "Video codec:";
 	      });
 	      
@@ -88,17 +83,7 @@ widget(container_z, {
 
 	      widget(label, {
 		.align = right;
-		.caption = "Video queue len:";
-	      });
-
-	      widget(label, {
-		.align = right;
 		.caption = "Audio codec:";
-	      });
-	      
-	      widget(label, {
-		.align = right;
-		.caption = "Audio queue len:";
 	      });
 	      
 	      widget(label, {
@@ -122,6 +107,27 @@ widget(container_z, {
 		.align = right;
 		.caption = "Remote queue drops:";
 	      });
+
+	      widget(label, {
+		.align = right;
+		.caption = "Packet buffer:";
+	      });
+
+	      widget(label, {
+		.align = right;
+		.caption = "Video queue len:";
+	      });
+
+	      widget(label, {
+		.align = right;
+		.caption = "Audio queue len:";
+	      });
+
+	      widget(label, {
+		.hidden = !$self.media.io.cacheSizeValid;
+		.align = right;
+		.caption = "Read-ahead cache:";
+	      });
 	    });
 
 	    widget(dummy, {
@@ -133,13 +139,6 @@ widget(container_z, {
 		.caption = $self.media.metadata.format;
 	      });
 	      
-	      widget(bar, {
-		.height = $ui.size;
-		.color1 = [1,1,1];
-		.color2 = [1,1,1];
-		.fill = $self.media.buffer.current / $self.media.buffer.limit;
-	      });
-
 	      widget(label, {
 		.caption = $self.media.video.codec;
 	      });
@@ -149,15 +148,7 @@ widget(container_z, {
 	      });
 
 	      widget(label, {
-		.caption = $self.media.video.dqlen;
-	      });
-
-	      widget(label, {
 		.caption = $self.media.audio.codec;
-	      });
-	      
-	      widget(label, {
-		.caption = $self.media.audio.dqlen;
 	      });
 	      
 	      widget(label, {
@@ -178,6 +169,30 @@ widget(container_z, {
 		.caption = $self.media.remote.drops;
 	      });
 
+	      widget(bar, {
+		.height = $ui.size;
+		.color1 = [1,1,1];
+		.color2 = [1,1,1];
+		.fill = $self.media.buffer.current / $self.media.buffer.limit;
+	      });
+
+	      widget(label, {
+		.caption = $self.media.video.dqlen;
+	      });
+
+	      widget(label, {
+		.caption = $self.media.audio.dqlen;
+	      });
+	      
+
+	      widget(bar, {
+		.hidden = !$self.media.io.cacheSizeValid;
+		.height = $ui.size;
+		.color1 = [1,1,1];
+		.color2 = [1,1,1];
+		.fill = $self.media.io.cacheSizeCurrent /
+		  $self.media.io.cacheSizeMax;
+	      });
 	    });
 	  });
 	});

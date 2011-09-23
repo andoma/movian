@@ -150,16 +150,21 @@ fa_normalize(const char *url, char *dst, size_t dstlen)
  *
  */
 void *
-fa_open(const char *url, char *errbuf, size_t errsize, int flags)
+fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
+	   struct prop *stats)
 {
   fa_protocol_t *fap;
   char *filename;
   fa_handle_t *fh;
 
+#if ENABLE_READAHEAD_CACHE
+  if(flags & FA_CACHE)
+    return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
+#endif
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, errbuf, errsize, flags);
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, stats);
   free(filename);
 #ifdef FA_DUMP
   if(flags & FA_DUMP) 
@@ -184,7 +189,7 @@ fa_open_vpaths(const char *url, const char **vpaths)
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, NULL, 0, 0);
+  fh = fap->fap_open(fap, filename, NULL, 0, 0, NULL);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
@@ -205,7 +210,19 @@ fa_close(void *fh_)
     close(fh->fh_dump_fd);
 #endif
   fh->fh_proto->fap_close(fh);
+}
 
+
+/**
+ *
+ */
+int
+fa_seek_is_fast(void *fh_)
+{
+  fa_handle_t *fh = fh_;
+  if(fh->fh_proto->fap_seek_is_fast != NULL)
+    return fh->fh_proto->fap_seek_is_fast(fh);
+  return 1;
 }
 
 /**
@@ -501,12 +518,15 @@ int
 fileaccess_init(void)
 {
   fa_protocol_t *fap;
-  fa_probe_init();
   fa_imageloader_init();
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
     if(fap->fap_init != NULL)
       fap->fap_init();
+
+#if ENABLE_READAHEAD_CACHE
+  fa_cache_init();
+#endif
   return 0;
 }
 
@@ -555,7 +575,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
     return data;
   }
 
-  fh = fap->fap_open(fap, filename, errbuf, errlen, 0);
+  fh = fap->fap_open(fap, filename, errbuf, errlen, 0, 0);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif

@@ -117,17 +117,29 @@ static int
 family_get(const char *name)
 {
   family_t *f;
+
   if(name == NULL)
     return 0;
 
+  char *n2 = mystrdupa(name), *e;
+  e = strrchr(n2, ' ');
+  if(e != NULL) {
+    e++;
+    if(!strcasecmp(e, "thin") ||
+       !strcasecmp(e, "light") ||
+       !strcasecmp(e, "bold") ||
+       !strcasecmp(e, "heavy"))
+      e[-1] = 0;
+  }
+
   LIST_FOREACH(f, &families, link)
-    if(!strcasecmp(name, f->name))
+    if(!strcasecmp(n2, f->name))
       break;
   
   if(f == NULL) {
     f = malloc(sizeof(family_t));
     f->id = ++family_id_tally;
-    f->name = strdup(name);
+    f->name = strdup(n2);
   } else {
     LIST_REMOVE(f, link);
   }
@@ -261,15 +273,20 @@ face_create_epilogue(face_t *face, const char *source)
 	family, style, source);
 
   if(style != NULL) {
-    if(!strcasecmp(style, "bold"))
-      face->style = TR_STYLE_BOLD;
-    if(!strcasecmp(style, "italic"))
-      face->style = TR_STYLE_ITALIC;
+    char *f = mystrdupa(style), *tmp = NULL;
+    const char *tok;
+    while((tok = strtok_r(f, " ", &tmp)) != NULL) {
+      f = NULL;
+      if(!strcasecmp(tok, "bold"))
+	face->style = TR_STYLE_BOLD;
+      if(!strcasecmp(tok, "italic"))
+	face->style = TR_STYLE_ITALIC;
+    }
   }
 
   face->family_id_vec = calloc(2, sizeof(int));
   face->family_id_vec[0] = family_get(family);
-  
+
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
   remove_face_alias(family_get(family));
@@ -290,7 +307,7 @@ face_create_from_uri(const char *path)
   FT_Error err;
   size_t s;
 
-  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf), 0);
+  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);
@@ -604,6 +621,7 @@ typedef struct line {
   int descender;
   int shadow;
   int outline;
+  int default_height;
   uint32_t color;
   enum {
     LINE_TYPE_TEXT = 0,
@@ -706,6 +724,7 @@ text_render0(const uint32_t *uc, const int len,
 
     if(li == NULL) {
       li = alloca(sizeof(line_t));
+      li->default_height = current_size;
       li->type = LINE_TYPE_TEXT;
       li->start = -1;
       li->count = 0;
@@ -729,6 +748,7 @@ text_render0(const uint32_t *uc, const int len,
 
     case TR_CODE_HR:
       li = alloca(sizeof(line_t));
+      li->default_height = current_size;
       li->type = LINE_TYPE_HR;
       li->start = -1;
       li->count = 0;
@@ -896,6 +916,7 @@ text_render0(const uint32_t *uc, const int len,
 
 	if(k > 0) {
 	  lix = alloca(sizeof(line_t));
+	  lix->default_height = li->default_height;
 	  lix->type = LINE_TYPE_TEXT;
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
@@ -955,6 +976,7 @@ text_render0(const uint32_t *uc, const int len,
 
   int target_width  = siz_x / 64 + 3; /// +3 ???
   int target_height = 0;
+  int margin = 0;
 
   TAILQ_FOREACH(li, &lq, link) {
 
@@ -962,6 +984,7 @@ text_render0(const uint32_t *uc, const int len,
     int descender = 0;
     int shadow = 0;
     int outline = 0;
+    int topspill = 0;
 
     switch(li->type) {
 
@@ -975,12 +998,20 @@ text_render0(const uint32_t *uc, const int len,
 			64 * f->descender * g->size / f->units_per_EM);
 	shadow = MAX(items[i].shadow, shadow);
 	outline = MAX(items[i].outline, outline);
+
+	topspill = MAX(topspill, g->bbox.yMax - height * 64 - descender);
       }
 
-      li->height = height;
+      li->height = height ?: li->default_height;
       li->descender = descender;
       li->shadow = shadow;
       li->outline = outline;
+
+      if(li == TAILQ_FIRST(&lq))
+	margin = MAX(margin, 2 * li->outline + topspill);
+
+      if(li == TAILQ_LAST(&lq, line_queue))
+	margin = MAX(margin, MAX(li->shadow*64, li->outline*2));
 
       if(max_lines > 1 && li->alignment == TR_ALIGN_JUSTIFIED) {
 	int spaces = 0;
@@ -1005,21 +1036,12 @@ text_render0(const uint32_t *uc, const int len,
   start_x = -bbox.xMin;
   start_y = 0;
 
-  int margin = 0;
-
-  li = TAILQ_FIRST(&lq);
-  if(li != NULL) {
-    margin = li->outline*2;
-    li = TAILQ_LAST(&lq, line_queue);
-    margin = MAX(margin, MAX(li->shadow*64, li->outline*2));
-  }
-
   margin = (margin + 63) / 64;
 
   // --- allocate and init pixmap
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
-		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A);
+		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A, 1);
 
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;
@@ -1160,7 +1182,7 @@ text_render0(const uint32_t *uc, const int len,
 
 
       if(oglyph != NULL && 
-	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 0))
+	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 1))
 	oglyph = NULL;
 
       if(items[i].shadow && (oglyph != NULL || glyph != NULL)) {

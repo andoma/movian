@@ -32,6 +32,44 @@
 
 
 /**
+ * UPNP browse request
+ */
+
+typedef struct upnp_browse {
+  int ub_run;
+  int ub_load_more;
+
+  char *ub_id;
+
+  char *ub_url;
+  char *ub_base_url;
+  char *ub_control_url;
+  char *ub_event_url;
+
+  prop_t *ub_page;
+  prop_t *ub_nodes;
+  prop_t *ub_items;
+  prop_t *ub_loading;
+  prop_t *ub_type;
+  prop_t *ub_source;
+  prop_t *ub_direct_close;
+  prop_t *ub_error;
+  prop_t *ub_title;
+  prop_t *ub_contents;
+  prop_t *ub_filter;
+  prop_t *ub_canFilter;
+
+  prop_sub_t *ub_itemsub;
+
+  int ub_loaded_entries;
+  int ub_total_entries;
+
+  int ub_images;
+
+} upnp_browse_t;
+
+
+/**
  *
  */
 static const char *
@@ -147,7 +185,8 @@ make_imageItem(prop_t *c, prop_t *m, htsmsg_t *item)
  */
 static void
 add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
-	 prop_sub_t *skip, const char *baseurl)
+	 prop_sub_t *skip, const char *baseurl, upnp_browse_t *ub,
+	 void *db)
 {
   const char *cls, *id, *url;
 
@@ -176,13 +215,19 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 	      strlen("object.item.audioItem"))) {
     prop_set_string(prop_create(c, "url"), url);
     make_audioItem(c, m, item);
+    if(db != NULL)
+      metadb_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
     make_videoItem(c, m, item, baseurl, id);
+    if(db != NULL)
+      metadb_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
     make_imageItem(c, m, item);
+    if(ub != NULL)
+      ub->ub_images++;
   } else {
     TRACE(TRACE_DEBUG, "UPNP", "Cant handle upnp:class %s (%s)", cls, url);
     prop_destroy(c);
@@ -238,7 +283,8 @@ add_container(htsmsg_t *item, prop_t *root, const char *baseurl,
  */
 static void
 nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
-		prop_t **trackptr, const char *baseurl, prop_sub_t *skip)
+		prop_t **trackptr, const char *baseurl, prop_sub_t *skip,
+		upnp_browse_t *ub)
 {
   htsmsg_t *items;
   htsmsg_field_t *f;
@@ -247,17 +293,20 @@ nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
   if(items == NULL)
     return;
 
+  void *db = metadb_get();
+
   HTSMSG_FOREACH(f, items) {
     if(!strcmp(f->hmf_name, "item")) {
       htsmsg_t *item = htsmsg_get_map_by_field(f);
       if(item != NULL)
-	add_item(item, root, trackid, trackptr, skip, baseurl);
+	add_item(item, root, trackid, trackptr, skip, baseurl, ub, db);
     } else if(baseurl != NULL && !strcmp(f->hmf_name, "container")) {
       htsmsg_t *container = htsmsg_get_map_by_field(f);
       if(container != NULL)
 	add_container(container, root, baseurl, skip);
     }
   }
+  metadb_close(db);
 }
 
 
@@ -313,48 +362,12 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
     return -1;
   }
 
-  nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL);
+  nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL, NULL);
   htsmsg_destroy(meta);
   htsmsg_destroy(out);
   return 0;
 }
 
-
-
-/**
- * UPNP browse request
- */
-
-typedef struct upnp_browse {
-  int ub_run;
-  int ub_load_more;
-
-  char *ub_id;
-
-  char *ub_url;
-  char *ub_base_url;
-  char *ub_control_url;
-  char *ub_event_url;
-
-  prop_t *ub_page;
-  prop_t *ub_nodes;
-  prop_t *ub_items;
-  prop_t *ub_loading;
-  prop_t *ub_type;
-  prop_t *ub_source;
-  prop_t *ub_direct_close;
-  prop_t *ub_error;
-  prop_t *ub_title;
-  prop_t *ub_contents;
-  prop_t *ub_filter;
-  prop_t *ub_canFilter;
-
-  prop_sub_t *ub_itemsub;
-
-  int ub_loaded_entries;
-  int ub_total_entries;
-
-} upnp_browse_t;
 
 
 /**
@@ -426,9 +439,17 @@ browse_items(upnp_browse_t *ub)
     return browse_fail(ub, "Malformed XML: %s", errbuf);
 
   nodes_from_meta(meta, ub->ub_items, NULL, NULL, 
-		  ub->ub_base_url, ub->ub_itemsub);
+		  ub->ub_base_url, ub->ub_itemsub, ub);
+
+  TRACE(TRACE_DEBUG, "UPNP", "Browsed %d of %d items",
+	ub->ub_loaded_entries, ub->ub_total_entries);
+
+  if(ub->ub_images * 4 > ub->ub_loaded_entries)
+    prop_set_string(ub->ub_contents, "images");
+
   htsmsg_destroy(meta);
-  prop_have_more_childs(ub->ub_items);
+  if(ub->ub_loaded_entries < ub->ub_total_entries)
+    prop_have_more_childs(ub->ub_items);
   htsmsg_destroy(out);
 }
 
@@ -798,7 +819,7 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
   
   if(!strcmp(cls, "object.container.album.musicAlbum"))
     prop_set_string(ub->ub_contents, "albumTracks");
-  
+
   browse_directory(ub);
 }
 

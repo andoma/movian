@@ -26,6 +26,8 @@
 #include "ps3_vdec.h"
 #include "video_decoder.h"
 #include "video_settings.h"
+#include "arch/halloc.h"
+#include "notifications.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
@@ -83,21 +85,17 @@ typedef struct vdec_decoder {
   hts_mutex_t mtx;
   hts_cond_t audone;
   hts_cond_t seqdone;
-  hts_cond_t picdone;
 
   media_codec_t *mc;
   int sequence_done;
 
   size_t extradata_size;
   uint8_t *extradata;
+  int extradata_injected;
 
   int convert_to_annexb;
 
   struct vdec_au_buffer_queue vab_queue;
-
-  int pending_pictures;
-  hts_thread_t picture_thread;
-  int picture_thread_stop;
 
   struct vdec_pic_list active_pictures;
   struct vdec_pic_list avail_pictures;
@@ -135,12 +133,14 @@ video_ps3_vdec_init(void)
 static void
 end_sequence_and_wait(vdec_decoder_t *vdd)
 {
+  TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence");
   vdd->sequence_done = 0;
   vdec_end_sequence(vdd->handle);
   hts_mutex_lock(&vdd->mtx);
   while(vdd->sequence_done == 0)
     hts_cond_wait(&vdd->seqdone, &vdd->mtx);
   hts_mutex_unlock(&vdd->mtx);
+  TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence -> done");
 }
 
 
@@ -173,11 +173,11 @@ alloc_picture(vdec_decoder_t *vdd, int lumasize)
     LIST_REMOVE(vp, link);
     if(vp->bufsize == bufsize)
       return vp;
-    free(vp->buf);
+    hfree(vp->buf, vp->bufsize);
   }
 
   vp->bufsize = bufsize;
-  vp->buf = malloc(bufsize);
+  vp->buf = halloc(bufsize);
   return vp;
 }
 
@@ -202,7 +202,7 @@ free_picture_list(struct vdec_pic_list *l)
   vdec_pic_t *vp;
   while((vp = LIST_FIRST(l)) != NULL) {
     LIST_REMOVE(vp, link);
-    free(vp->buf);
+    hfree(vp->buf, vp->bufsize);
     free(vp);
   }
 }
@@ -269,7 +269,6 @@ picture_out(vdec_decoder_t *vdd)
   vdec_pic_t *vp;
   char metainfo[64];
   union vdec_userdata ud;
-  int cnt = 0;
 
   picfmt.alpha = 0;
   picfmt.format_type = VDEC_PICFMT_YUV420P;
@@ -279,21 +278,23 @@ picture_out(vdec_decoder_t *vdd)
   if(r != 0)
     return;
 
+
   vdec_picture *pi = (void *)(intptr_t)addr;
 
   ud.u64 = pi->userdata[0];
 
-  if(pi->status != 0 || pi->attr != 0 || ud.s.skip) {
+  if(/* pi->status != 0 ||*/ pi->attr != 0 || ud.s.skip) {
     vdec_get_picture(vdd->handle, &picfmt, NULL);
     reset_active_pictures(vdd);
     vdd->next_picture = -1;
     return;
   }
 
+  int cnt = 0;
   LIST_FOREACH(vp, &vdd->active_pictures, link)
     cnt++;
 
-  if(cnt > 4) {
+  if(cnt > 6) {
     reset_active_pictures(vdd);
     vdd->next_picture = -1;
   }
@@ -388,6 +389,15 @@ picture_out(vdec_decoder_t *vdd)
 
   vp->fi.pix_fmt = PIX_FMT_YUV420P;
   vp->fi.pts = pi->pts[0].low + ((uint64_t)pi->pts[0].hi << 32);
+
+#if 0
+  static int64_t last;
+
+  TRACE(TRACE_DEBUG, "vdec-out", "PTS delta = %ld (%d)", vp->fi.pts - last,
+	vp->fi.duration);
+  last = vp->fi.pts;
+#endif
+
   vp->fi.epoch = ud.s.epoch;
   vp->fi.prescaled = 0;
   vp->fi.color_space = -1;
@@ -406,6 +416,12 @@ picture_out(vdec_decoder_t *vdd)
       LIST_FOREACH(vp, &vdd->active_pictures, link)
 	if(vp->order == vdd->next_picture) 
 	  break;
+
+      if(vp == NULL) {
+	LIST_FOREACH(vp, &vdd->active_pictures, link)
+	  if(vp->order == vdd->next_picture - 1) 
+	    break;
+      }
     }
 
     if(vp == NULL)
@@ -418,6 +434,14 @@ picture_out(vdec_decoder_t *vdd)
     uint8_t *data[4] = {vp->buf, vp->buf + lumasize,
 			vp->buf + lumasize + lumasize / 4, 0};
 
+
+    if(vp->fi.pts != AV_NOPTS_VALUE) {
+      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = vp->fi.pts;
+      mp_enqueue_event(vd->vd_mp, &ets->h);
+      event_release(&ets->h);
+    }
+
     if(vd) {
       vd->vd_frame_deliver(data, linesizes, &vp->fi, vd->vd_opaque);
       video_decoder_scan_ext_sub(vd, vp->fi.pts);
@@ -429,7 +453,7 @@ picture_out(vdec_decoder_t *vdd)
 
 
 
-
+#if 0
 /**
  *
  */
@@ -444,9 +468,7 @@ pic_thread(void *aux)
 
     if(vdd->pending_pictures > 0) {
       
-      hts_mutex_unlock(&vdd->mtx);
       picture_out(vdd);
-      hts_mutex_lock(&vdd->mtx);
 
       vdd->pending_pictures--;
       continue;
@@ -471,6 +493,8 @@ pic_thread(void *aux)
 
   return NULL;
 }
+#endif
+
 
 /**
  * Keep in mind, this callback fires on different threads
@@ -482,10 +506,10 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
   vdec_decoder_t *vdd = (vdec_decoder_t *)(intptr_t)arg;
   vdec_au_buffer_t *vab;
 
-  hts_mutex_lock(&vdd->mtx);
 
   switch(msg_type) {
   case VDEC_CALLBACK_AUDONE:
+    hts_mutex_lock(&vdd->mtx);
     vab = TAILQ_FIRST(&vdd->vab_queue);
     if(vab != NULL) {
       vab_destroy(vdd, vab);
@@ -494,23 +518,24 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
     } else {
       TRACE(TRACE_ERROR, "VDEC", "AUDONE but no buffers pending");
     }
+    hts_mutex_unlock(&vdd->mtx);
     break;
 
   case VDEC_CALLBACK_PICOUT:
-    vdd->pending_pictures++;
-    hts_cond_signal(&vdd->picdone);
+    picture_out(vdd);
     break;
 
   case VDEC_CALLBACK_SEQDONE:
+    hts_mutex_lock(&vdd->mtx);
     vdd->sequence_done = 1;
     hts_cond_signal(&vdd->seqdone);
+    hts_mutex_unlock(&vdd->mtx);
     break;
 
   case VDEC_CALLBACK_ERROR:
     TRACE(TRACE_ERROR, "VDEC", "ERROR %x", err_code);
     break;
   }
-  hts_mutex_unlock(&vdd->mtx);
   return 0;
 }
 
@@ -521,11 +546,7 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
 static void
 vdec_blackout(void *opaque)
 {
-  vdec_decoder_t *vdd = opaque;
-  hts_mutex_lock(&vdd->mtx);
-  vdd->pending_blackout = 1;
-  hts_cond_signal(&vdd->picdone);
-  hts_mutex_unlock(&vdd->mtx);
+  //  vdec_decoder_t *vdd = opaque;
 }
 
 
@@ -537,21 +558,18 @@ static void
 vdec_stop(void *opaque)
 {
   vdec_decoder_t *vdd = opaque;
+  TRACE(TRACE_DEBUG, "VDEC", "Video decoder stopping");
   if(vdd->mc != NULL) {
     end_sequence_and_wait(vdd);
     media_codec_deref(vdd->mc);
     vdd->mc = NULL;
   }
 
-  if(vdd->picture_thread != 0) {
-    hts_mutex_lock(&vdd->mtx);
-    vdd->picture_thread_stop = 1;
-    hts_cond_signal(&vdd->picdone);
-    hts_mutex_unlock(&vdd->mtx);
-    hts_thread_join(&vdd->picture_thread);
-  }
+  free_picture_list(&vdd->active_pictures);
+  free_picture_list(&vdd->avail_pictures);
 
   vdd->vd = NULL;
+  TRACE(TRACE_DEBUG, "VDEC", "Video decoder stopped");
 }
 
 
@@ -640,9 +658,12 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
     media_codec_ref(mc);
   }
 
-  if(vdd->picture_thread == 0)
-    hts_thread_create_joinable("vdecpic", &vdd->picture_thread, 
-			       pic_thread, vdd, THREAD_PRIO_NORMAL);
+  if(vd->vd_do_flush) {
+    end_sequence_and_wait(vdd);
+    vdec_start_sequence(vdd->handle);
+    vd->vd_do_flush = 0;
+    vdd->extradata_injected = 0;
+  }
 
   union vdec_userdata ud;
   ud.s.epoch = mb->mb_epoch;
@@ -653,11 +674,13 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   au.pts.hi  = mb->mb_pts >> 32;
   au.dts.low = mb->mb_dts;
   au.dts.hi  = mb->mb_dts >> 32;
-  
-  if(vdd->extradata != NULL) {
-    if(submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0))
-      free(vdd->extradata);
-    vdd->extradata = NULL;
+
+  if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
+    void *buf = malloc(vdd->extradata_size);
+    memcpy(buf, vdd->extradata, vdd->extradata_size);
+    if(submit_au(vdd, &au, buf, vdd->extradata_size, 0))
+      free(buf);
+    vdd->extradata_injected = 1;
   }
 
   if(vdd->convert_to_annexb)
@@ -686,10 +709,9 @@ decoder_close(struct media_codec *mc)
   hts_mutex_destroy(&vdd->mtx);
   hts_cond_destroy(&vdd->audone);
   hts_cond_destroy(&vdd->seqdone);
-  hts_cond_destroy(&vdd->picdone);
 
   prop_ref_dec(vdd->metainfo);
-
+  free(vdd->extradata);
   free(vdd);
 }
 
@@ -757,6 +779,17 @@ h264_load_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
 /**
  *
  */
+static int
+no_lib(media_pipe_t *mp, const char *codec)
+{
+  notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	     _("Unable to accelerate %s, library not loaded."), codec);
+  return 1;
+}
+
+/**
+ *
+ */
 int
 video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 			    AVCodecContext *ctx, media_codec_params_t *mcp,
@@ -773,29 +806,25 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   switch(id) {
   case CODEC_ID_MPEG2VIDEO:
-    if(!vdec_mpeg2_loaded) {
-      TRACE(TRACE_DEBUG, "VDEC", "MPEG2 not accelerated, not loaded");
-      return 1;
-    }
+    if(!vdec_mpeg2_loaded)
+      return no_lib(mp, "MPEG-2");
+
     dec_type.codec_type = VDEC_CODEC_TYPE_MPEG2;
     dec_type.profile_level = VDEC_MPEG2_MP_HL;
     spu_threads = 1;
     break;
 
   case CODEC_ID_H264:
-    if(!vdec_h264_loaded) {
-      TRACE(TRACE_DEBUG, "VDEC", "H264 not accelerated, not loaded");
-      return 1;
-    }
+    if(!vdec_h264_loaded) 
+      return no_lib(mp, "h264");
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-    if((mcp->level != 0 && mcp->level <= 42) || !video_settings.force_42)
+    if(mcp->level != 0 && mcp->level <= 42) {
       dec_type.profile_level = mcp->level;
-    else {
+    } else {
       dec_type.profile_level = 42;
-      TRACE(TRACE_INFO, "VDEC",
-	    "Forcing level 42 for content in level %d. This may break",
-	    mcp->level);
+      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     spu_threads = 4;
     break;
@@ -806,7 +835,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   r = vdec_query_attr(&dec_type, &dec_attr);
   if(r) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to open decoder: 0x%x", r);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to query Cell codec. Error 0x%x"), r);
     return 1;
   }
 
@@ -819,8 +849,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   u32 taddr;
 
   if(Lv2Syscall3(348, allocsize, 0x400, (u64)&taddr)) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to allocate %d bytes",
-	  dec_attr.mem_size);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to open Cell codec. Unable to allocate %d bytes of RAM"), dec_attr.mem_size);
     return 1;
   }
   vdd->mem = (void *)(uint64_t)taddr;
@@ -842,7 +872,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   r = vdec_open(&dec_type, &vdd->config, &c, &vdd->handle);
   if(r) {
-    TRACE(TRACE_ERROR, "VDEC", "Unable to open codec: 0x%x", r);
+    notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+	       _("Unable to open Cell codec. Error 0x%x"), r);
     Lv2Syscall1(349, (uint64_t)vdd->mem);
     free(vdd);
     return 1;
@@ -860,7 +891,6 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   hts_mutex_init(&vdd->mtx);
   hts_cond_init(&vdd->audone, &vdd->mtx);
   hts_cond_init(&vdd->seqdone, &vdd->mtx);
-  hts_cond_init(&vdd->picdone, &vdd->mtx);
 
   TRACE(TRACE_DEBUG, "VDEC", 
 	"Cell accelerated codec created using %d bytes of RAM",

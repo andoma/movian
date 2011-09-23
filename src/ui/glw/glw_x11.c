@@ -38,7 +38,6 @@
 #include "ui/linux/x11_common.h"
 #include "ui/linux/nvidia.h"
 #include "settings.h"
-#include "ipc/ipc.h"
 
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
@@ -892,7 +891,7 @@ layout_draw(glw_x11_t *gx11)
 
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height);
+  glw_rctx_init(&rc, gx11->gr.gr_width, gx11->gr.gr_height, 1);
   glw_layout0(gx11->gr.gr_universe, &rc);
   glw_render0(gx11->gr.gr_universe, &rc);
 }
@@ -981,10 +980,6 @@ glw_x11_mainloop(glw_x11_t *gx11)
       
       switch(event.type) {
       case EnterNotify:
-	// This is _a_bit_ ugly
-#ifdef CONFIG_DBUS
-	mpkeys_grab();
-#endif
 	break;
 
       case LeaveNotify:

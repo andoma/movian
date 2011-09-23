@@ -65,13 +65,13 @@ id: Total system RAM: %d kB
 msg: 系統記憶體總容量： %d kB
 
 id: Version: %s
-msg: 版本: %s
+msg: 版本： %s
 
 id: Width: %d px
 msg: 寬度： %d 像素
 
 id: Windowmanager: %s
-msg: 視窗管理員: %s
+msg: 視窗管理員： %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -104,6 +104,15 @@ id: Playqueue
 msg: 播放佇列
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: 影片資訊
+
+id: Unable to start video playback
+msg: 影片無法播放
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +136,6 @@ msg: 處理器速度過慢，無法正常解碼視訊信號
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 確定
-
 id: Password
 msg: 密碼
 
@@ -141,6 +144,15 @@ msg: 記住登入資訊
 
 id: Username
 msg: 使用者帳號
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 確定
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -203,6 +215,12 @@ id: Use opensubtitles.org
 msg: 啟用 opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+msg: 系統記憶體容量不足（可用容量 %d kB）
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -229,6 +247,9 @@ msg: 迷你前置揚聲器
 id: Swap LFE+center with surround
 msg: 使用環繞效果代替低頻與中間聲道
 
+id: Switching audio output to %s
+msg: 設定音訊輸出為 %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -240,6 +261,12 @@ msg: 不正確的 CD 音軌
 
 id: Unable to open CD
 msg: 無法開啟 CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+msg: DVD 讀取錯誤，嘗試重新讀取中
 
 #
 # ./src/backend/htsp/htsp.c
@@ -261,6 +288,9 @@ msg: 啟動 Showtime 時自動登入
 
 id: Enable Spotify
 msg: 啟用 Spotify
+
+id: Forget me
+msg: 清除使用者資訊
 
 id: Friends
 msg: 聯絡人
@@ -298,6 +328,9 @@ msg: Spotify offers you legal and free access to a huge library of music. To use
 id: Spotify playlists
 msg: Spotify 播放列表
 
+id: Spotify: Connection error: %s
+msg: 連線錯誤： %s
+
 id: Starred
 msg: Starred
 
@@ -329,28 +362,28 @@ id: Language codes should be configured as three character ISO codes, example (e
 msg: 語言代碼必須符合 ISO 三碼標準（範例：eng, chi）
 
 id: Preferred languages
-msg: 偏好語言
+msg: 設定偏好語言
 
 id: Primary audio language code
-msg: 主要音訊語言
+msg: 主要音訊語言代碼
 
 id: Primary subtitle language code
-msg: 主要字幕語言
+msg: 主要字幕語言代碼
 
 id: SRT character set
 msg: SRT 字元集
 
 id: Secondary audio language code
-msg: 次要音訊語言
+msg: 次要音訊語言代碼
 
 id: Secondary subtitle language code
-msg: 次要字幕語言
+msg: 次要字幕語言代碼
 
 id: Tertiary audio language code
-msg: 第三音訊語言
+msg: 第三音訊語言代碼
 
 id: Tertiary subtitle language code
-msg: 第三字幕語言
+msg: 第三字幕語言代碼
 
 #
 # ./src/ipc/serdev/lgtv.c
@@ -371,7 +404,7 @@ id: Configure mapping of keyboard and remote controller keys
 msg: 設定鍵盤與遙控器按鍵對應
 
 id: Keymapper
-msg: 鍵盤對應
+msg: 按鍵設置
 
 #
 # ./src/media.c
@@ -395,7 +428,7 @@ msg: 視訊縮放
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: No handler for URL
+msg: URL 位址沒有對應的處理規則
 
 #
 # ./src/plugins.c
@@ -455,7 +488,7 @@ msg: 設定
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: 顯示與使用者介面
+msg: 顯示器與使用者介面
 
 id: Horizontal underscan
 msg: 水平欠掃描(underscan)
@@ -493,11 +526,26 @@ msg: 找不到裝置
 id: Malformed URI after device
 msg: Malformed URI after device
 
-id: Malformed URI after service
-msg: Malformed URI after service
-
 id: Service not found
 msg: 找不到服務
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264： 強制以 H.264 level 4.2 解碼 level %d.%d 的影片。本選項有可能導致播放失敗
+
+id: Unable to accelerate %s, library not loaded.
+msg: 加速失敗 %s ：無法載入函式庫
+
+id: Unable to open Cell codec. Error 0x%x
+msg: 無法開啟 Cell 解碼套件。錯誤 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: 無法開啟 Cell 解碼套件。無法配置容量為 %d 位元組的記憶體空間
+
+id: Unable to query Cell codec. Error 0x%x
+msg: 無法查詢 Cell 解碼套件。錯誤 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -512,13 +560,10 @@ id: Center
 msg: 置中
 
 id: Color
-msg: 色彩
+msg: 字幕色彩
 
 id: Enable VDPAU
 msg: 啟用 VDPAU
-
-id: Force Level 4.2 for h264 content
-msg: 強制使用 h264 Level 4.2 播放 h264 格式視訊
 
 id: Force subtitles to reside on video frame
 msg: 字幕強制顯示於視訊影格上

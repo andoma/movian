@@ -3,10 +3,6 @@
 
 void ipc_init(void);
 
-void mpkeys_grab(void);
-
-void dbus_start(void);
-
 void lirc_start(void);
 
 void serdev_start(void);

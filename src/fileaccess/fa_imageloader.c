@@ -310,7 +310,7 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     AVFormatContext *fctx;
     AVIOContext *avio;
     
-    if((avio = fa_libav_open(url, 65536, NULL, 0, 0)) == NULL)
+    if((avio = fa_libav_open(url, 65536, NULL, 0, FA_CACHE, NULL)) == NULL)
       return NULL;
 
     if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {
@@ -399,9 +399,10 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     ifv_ctx->skip_frame = want_pic ? AVDISCARD_DEFAULT : AVDISCARD_NONREF;
     
     avcodec_decode_video2(ifv_ctx, frame, &got_pic, &pkt);
-    if(got_pic == 0 || !want_pic)
+    av_free_packet(&pkt);
+    if(got_pic == 0 || !want_pic) {
       continue;
-
+    }
     int w,h;
 
     if(im->req_width != -1 && im->req_height != -1) {
@@ -419,11 +420,17 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       h = im->req_height;
     }
 
-    pm = pixmap_create(w, h, PIX_FMT_RGB24);
+    pm = pixmap_create(w, h, PIX_FMT_RGB24,
+#ifdef __PPC__
+		       16
+#else
+		       1
+#endif
+		       );
 
     struct SwsContext *sws;
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
-			 w, h, PIX_FMT_RGB24, SWS_LANCZOS, NULL, NULL, NULL);
+			 w, h, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
     if(sws == NULL) {
       ifv_close();
       return NULL;
@@ -454,9 +461,9 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       pngencoder->pix_fmt = PIX_FMT_RGB24;
 
       r = avcodec_encode_video(pngencoder, output, outputsize, oframe);
-    
+      
       if(r > 0) 
-	blobcache_put(cacheid, "videothumb", output, outputsize, 86400 * 5);
+	blobcache_put(cacheid, "videothumb", output, r, 86400 * 5);
       free(output);
       av_free(oframe);
     }
@@ -479,7 +486,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
   void *data;
   size_t datasize;
 
-  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d",
+  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-2",
 	   url0, im->req_width, im->req_height);
 
   data = blobcache_get(cacheid, "videothumb", &datasize, 0);

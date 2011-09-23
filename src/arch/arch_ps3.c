@@ -40,6 +40,7 @@
 #include "service.h"
 #include "misc/callout.h"
 #include "text/text.h"
+#include "notifications.h"
 
 #if ENABLE_PS3_VDEC
 #include "video/ps3_vdec.h"
@@ -66,10 +67,17 @@ mftb(void)
 static prop_t *sysprop;
 static prop_t *memprop;
 
+#define LOW_MEM_LOW_WATER  20 * 1024 * 1024
+#define LOW_MEM_HIGH_WATER 30 * 1024 * 1024
+
+
 static void
 memlogger_fn(callout_t *co, void *aux)
 {
+  static int low_mem_warning;
+
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
+
   struct {
     uint32_t total;
     uint32_t avail;
@@ -79,6 +87,17 @@ memlogger_fn(callout_t *co, void *aux)
 
   prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
   prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
+
+  if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
+    low_mem_warning = 1;
+    notify_add(NULL, NOTIFY_ERROR, NULL, 5,
+	       _("System is low on memroy (%d kB RAM available)"),
+	       meminfo.avail / 1024);
+  }
+
+  if(meminfo.avail > LOW_MEM_HIGH_WATER)
+    low_mem_warning = 0;
+
 }
 
 
@@ -133,6 +152,11 @@ thread_trampoline(void *aux)
   hts_thread_exit_specific();
 #endif
   free(ta);
+
+  extern int netFreethreadContext(long long, int);
+
+  netFreethreadContext(0, 1);
+
   sys_ppu_thread_exit(0);
   return r;
 }
@@ -432,6 +456,27 @@ hts_mutex_init(hts_mutex_t *m)
 }
 
 
+
+void
+hts_mutex_init_recursive(hts_mutex_t *m)
+{
+  sys_mutex_attribute_t attr;
+  s32 r;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  attr.attr_pshared  = 0x00200;
+  attr.attr_adaptive = 0x02000;
+
+  strcpy(attr.name, "mutex");
+
+  if((r = sys_mutex_create(m, &attr)) != 0) {
+    my_trace("Failed to create mutex: error: 0x%x", r);
+    exit(0);
+  }
+}
+
+
 #else
 
 void
@@ -589,4 +634,35 @@ const char *
 showtime_get_system_type(void)
 {
   return "PS3";
+}
+
+
+
+#include "halloc.h"
+
+/**
+ *
+ */
+void *
+halloc(size_t size)
+{
+#define ROUND_UP(p, round) ((p + (round) - 1) & ~((round) - 1))
+
+  size_t allocsize = ROUND_UP(size, 64*1024);
+  u32 taddr;
+
+  if(Lv2Syscall3(348, allocsize, 0x200, (u64)&taddr))
+    return NULL;
+
+  return (void *)(uint64_t)taddr;
+}
+
+
+/**
+ *
+ */
+void
+hfree(void *ptr, size_t size)
+{
+  Lv2Syscall1(349, (uint64_t)ptr);
 }

@@ -258,7 +258,7 @@ zip_archive_load(zip_archive_t *za)
   asize = fs.fs_size;
   za->za_mtime = fs.fs_mtime;
 
-  if((fh = fa_open(za->za_url, NULL, 0, 0)) == NULL)
+  if((fh = fa_open(za->za_url, NULL, 0)) == NULL)
     return -1;
 
   scan_off = asize - TRAILER_SCAN_SIZE;
@@ -693,7 +693,7 @@ static fa_protocol_t zip_file_protocol = {
  */
 static fa_handle_t *
 zip_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	 int flags)
+	 int flags, struct prop *stat)
 {
   zip_file_t *zf;
   zip_fh_t *zfh;
@@ -716,7 +716,7 @@ zip_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   zfh->zfh_file = zf;
   zfh->h.fh_proto = fap;
 
-  if((zfh->zfh_archive_handle = fa_open(za->za_url, errbuf, errlen, 0)) == NULL) {
+  if((zfh->zfh_archive_handle = fa_open(za->za_url, errbuf, errlen)) == NULL) {
     zip_file_unref(zf);
     free(zfh);
     return NULL;

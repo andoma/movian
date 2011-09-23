@@ -61,25 +61,19 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   const char *r = jhr->data, *r2;
   char *tmpbuf = NULL;
   int isxml;
+  const charset_t *cs = NULL;
 
   if(jhr->contenttype != NULL) {
     const char *charset = strstr(jhr->contenttype, "charset=");
 
     if(charset != NULL) {
-      int conv;
-
       charset += strlen("charset=");
-      if(!strcasecmp(charset, "utf-8")) {
-	conv = 0;
-      } else if(!strcasecmp(charset, "ISO-8859-1")) {
-	conv = 1;
-      } else {
-	TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
-	conv = 1;
-      }
 
-      if(conv)
-	r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, NULL);
+      if(strcasecmp(charset, "utf-8")) {
+	cs = charset_get(charset);
+	if(cs == NULL)
+	  TRACE(TRACE_INFO, "JS", "Unable to handle charset %s", charset);
+      }
     }
 
     isxml =
@@ -88,6 +82,13 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   } else {
     isxml = 0;
   }
+  
+
+  if(cs == NULL && !utf8_verify(jhr->data))
+    cs = charset_get(NULL);
+
+  if(cs != NULL)
+    r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, cs->ptr);
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
@@ -165,7 +166,8 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
  */
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
-		const char *url, JSObject *argobj, JSObject *postobj)
+		const char *url, JSObject *argobj, JSObject *postobj,
+		JSObject *headerobj)
 {
   char **httpargs = NULL;
   int i;
@@ -174,6 +176,8 @@ js_http_request(JSContext *cx, jsval *rval,
   size_t resultsize;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
+  struct http_header_list in_headers;
+  LIST_INIT(&in_headers);
 
   if(argobj != NULL)
     js_http_add_args(&httpargs, cx, argobj);
@@ -216,6 +220,30 @@ js_http_request(JSContext *cx, jsval *rval,
   }
 
 
+ if(headerobj != NULL) {
+    JSIdArray *ida;
+
+    if((ida = JS_Enumerate(cx, headerobj)) == NULL)
+      return JS_FALSE;
+
+    for(i = 0; i < ida->length; i++) {
+      jsval name, value;
+
+      if(!JS_IdToValue(cx, ida->vector[i], &name) ||
+	 !JSVAL_IS_STRING(name) ||
+	 !JS_GetProperty(cx, headerobj,
+			 JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			 &value) || JSVAL_IS_VOID(value))
+      continue;
+
+      http_header_add(&in_headers,
+		      JS_GetStringBytes(JSVAL_TO_STRING(name)),
+		      JS_GetStringBytes(JS_ValueToString(cx, value)));
+    }
+    
+    JS_DestroyIdArray(cx, ida);
+  }
+
   int flags = 0;
 
   const js_context_private_t *jcp = JS_GetContextPrivate(cx);
@@ -229,7 +257,7 @@ js_http_request(JSContext *cx, jsval *rval,
 		       &result, &resultsize, errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
-		       &response_headers, NULL, NULL);
+		       &response_headers, &in_headers, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
@@ -287,11 +315,12 @@ js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *url;
   JSObject *argobj = NULL;
+  JSObject *hdrobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &argobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/oo", &url, &argobj, &hdrobj))
     return JS_FALSE;
 
-  return js_http_request(cx, rval, url, argobj, NULL);
+  return js_http_request(cx, rval, url, argobj, NULL, hdrobj);
 }
 
 /**
@@ -304,11 +333,13 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   JSObject *argobj = NULL;
   JSObject *postobj = NULL;
+  JSObject *hdrobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "so/o", &url, &postobj, &argobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "so/oo", &url, &postobj, &argobj,
+			  &hdrobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, postobj);
+  return js_http_request(cx, rval, url, argobj, postobj, hdrobj);
 }
 
 
@@ -530,9 +561,30 @@ js_rawAuth(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool
+js_setHeader(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *key;
+  const char *value;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "ss", &key, &value))
+    return JS_FALSE;
+
+  *rval = JSVAL_NULL;
+  http_client_set_header(JS_GetPrivate(cx, obj), key, value);
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
 static JSFunctionSpec http_auth_functions[] = {
     JS_FS("oauthToken",      js_oauth,       4, 0, 0),
     JS_FS("rawAuth",         js_rawAuth,     1, 0, 0),
+    JS_FS("setHeader",       js_setHeader,   2, 0, 0),
     JS_FS_END
 };
 

@@ -30,6 +30,8 @@
 #include "misc/regex.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"
+#include "metadata.h"
+#include "htsmsg/htsmsg_json.h"
 
 LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_item_list, js_item);
@@ -120,7 +122,8 @@ typedef struct js_model {
 } js_model_t;
 
 
-static JSObject *make_model_object(JSContext *cx, js_model_t *jm);
+static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
+				   jsval *root);
 
 /**
  *
@@ -342,12 +345,9 @@ item_set_property(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
   const char *name = JSVAL_IS_STRING(id) ? 
     JS_GetStringBytes(JSVAL_TO_STRING(id)) : NULL;
-  prop_t *c = name ? prop_create_check(ji->ji_root, name) : NULL;
 
-  if(c != NULL) {
-    js_prop_set_from_jsval(cx, c, *vp);
-    prop_ref_dec(c);
-  }
+  if(name != NULL)
+    js_prop_set_from_jsval(cx, prop_create(ji->ji_root, name), *vp);
 
   return JS_TRUE;
 }
@@ -463,7 +463,8 @@ static JSFunctionSpec item_functions[] = {
 static JSBool 
 js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 	       const char *url, const char *type, JSObject *metaobj,
-	       jsval *data, jsval *rval, int enabled)
+	       jsval *data, jsval *rval, int enabled,
+	       const char *metabind)
 {
   prop_t *item = prop_create_root(NULL);
 
@@ -474,6 +475,9 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     js_prop_set_from_jsval(cx, prop_create(item, "data"), *data);
 
   *rval = JSVAL_VOID;
+
+  if(metabind != NULL)
+    metadb_bind_url_to_prop(NULL, metabind, item);
 
   if(type != NULL) {
     prop_set_string(prop_create(item, "type"), type);
@@ -522,12 +526,38 @@ js_appendItem(JSContext *cx, JSObject *obj, uintN argc,
   const char *type = NULL;
   JSObject *metaobj = NULL;
   js_model_t *model = JS_GetPrivate(cx, obj);
+  const char *canonical_url = NULL;
+  htsmsg_t *m = NULL;
+  JSBool r;
 
   if(!JS_ConvertArguments(cx, argc, argv, "s/so", &url, &type, &metaobj))
     return JS_FALSE;
 
-  return js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
-			rval, 1);
+  if(!strncmp(url, "videoparams:", strlen("videoparams:"))) {
+    m = htsmsg_json_deserialize(url + strlen("videoparams:"));
+    if(m != NULL) {
+      canonical_url = htsmsg_get_str(m, "canonicalUrl");
+
+      if(canonical_url == NULL) {
+	htsmsg_t *sources;
+	if((sources = htsmsg_get_list(m, "sources")) == NULL) {
+	  htsmsg_field_t *f;
+	  HTSMSG_FOREACH(f, sources) {
+	    htsmsg_t *src = &f->hmf_msg;
+	    canonical_url = htsmsg_get_str(src, "url");
+	    if(canonical_url != NULL)
+	      break;
+	  }
+	}
+      }
+    }
+  } else {
+    canonical_url = url;
+  }
+  r = js_appendItem0(cx, model, model->jm_nodes, url, type, metaobj, NULL,
+		     rval, 1, canonical_url);
+  htsmsg_destroy(m);
+  return r;
 }
 
 
@@ -547,7 +577,7 @@ js_appendPassiveItem(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_nodes, NULL, type, metaobj, &data,
-			rval, 1);
+			rval, 1, NULL);
 }
 
 
@@ -569,7 +599,7 @@ js_appendAction(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   return js_appendItem0(cx, model, model->jm_actions, NULL, type, metaobj,
-			&data, rval, enabled);
+			&data, rval, enabled, NULL);
 }
 
 
@@ -637,7 +667,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   if(prop_set_parent(item, parent->jm_nodes))
     prop_destroy(item);
 
-  robj = make_model_object(cx, jm);
+  robj = make_model_object(cx, jm, argv+argc);
 
   *rval = OBJECT_TO_JSVAL(robj);
   return JS_TRUE;
@@ -780,7 +810,7 @@ static JSFunctionSpec model_functions[] = {
     JS_FS("appendItem",         js_appendItem,        1, 0, 0),
     JS_FS("appendPassiveItem",  js_appendPassiveItem, 1, 0, 0),
     JS_FS("appendAction",       js_appendAction,      3, 0, 0),
-    JS_FS("appendModel",        js_appendModel,       2, 0, 0),
+    JS_FS("appendModel",        js_appendModel,       2, 0, 1),
     JS_FS_END
 };
 
@@ -895,9 +925,10 @@ js_setPaginator(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  *
  */
 static JSObject *
-make_model_object(JSContext *cx, js_model_t *jm)
+make_model_object(JSContext *cx, js_model_t *jm, jsval *root)
 {
   JSObject *obj = JS_NewObjectWithGivenProto(cx, &model_class, NULL, NULL);
+  *root = OBJECT_TO_JSVAL(obj);
 
   JS_SetPrivate(cx, obj, jm);
   atomic_add(&jm->jm_refcount, 1);
@@ -946,7 +977,12 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   void *mark;
   char argfmt[10];
   int i = 0, argc;
-  JSObject *obj = make_model_object(cx, jm);
+  jsval pageobj = JSVAL_NULL;
+
+  JS_AddRoot(cx, &pageobj);
+
+  JSObject *obj = make_model_object(cx, jm, &pageobj);
+
   JS_DefineFunctions(cx, obj, page_functions);
 
   if(jm->jm_args != NULL) {
@@ -971,10 +1007,11 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
     argv = JS_PushArguments(cx, &mark, "o", obj);
     argc = 2;
   }
-  if(argv == NULL)
-    return;
-  JS_CallFunctionValue(cx, NULL, jm->jm_openfunc, argc, argv, &result);
-  JS_PopArguments(cx, mark);
+  if(argv != NULL) {
+    JS_CallFunctionValue(cx, NULL, jm->jm_openfunc, argc, argv, &result);
+    JS_PopArguments(cx, mark);
+  }
+  JS_RemoveRoot(cx, &pageobj);
 }
 
 
@@ -993,7 +1030,8 @@ js_open_error(JSContext *cx, const char *msg, JSErrorReport *r)
     level = TRACE_INFO;
   else {
     level = TRACE_ERROR;
-    nav_open_error(jm->jm_root, msg);
+    if(jm->jm_root != NULL)
+      nav_open_error(jm->jm_root, msg);
   }
 
   TRACE(level, "JS", "%s:%u %s",  r->filename, r->lineno, msg);

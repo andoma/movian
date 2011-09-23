@@ -36,6 +36,47 @@ rc_set_mute(struct http_connection *hc, htsmsg_t *args)
   return NULL;
 }
 
+#if 0
+
+/**
+ *
+ */
+static void
+lc_encode_val_str(htsbuf_queue_t *xml, const char *attrib, const char *str)
+{
+  str = str ?: "NOT_IMPLEMENTED";
+
+  htsbuf_qprintf(xml, "<%s val=\"", attrib);
+  htsbuf_append_and_escape_xml(xml, str);
+  htsbuf_qprintf(xml, "\"/>");
+}
+#endif
+
+/**
+ *
+ */
+static htsmsg_t *
+rc_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
+{
+  char *event;
+  htsbuf_queue_t xml;
+    
+  htsbuf_queue_init(&xml, 0);
+
+  htsbuf_qprintf(&xml,
+		 "<Event xmlns=\"urn:schemas-upnp-org:metadata-1-0/RCS/\">"
+		 "<InstanceID val=\"0\">");
+
+
+  htsbuf_qprintf(&xml, "</InstanceID></Event>");
+
+  event = htsbuf_to_string(&xml);
+
+  htsmsg_t *r = htsmsg_create_map();
+  htsmsg_add_str(r, "LastChange", event);
+  free(event);
+  return r;
+}
 
 
 /**
@@ -44,6 +85,7 @@ rc_set_mute(struct http_connection *hc, htsmsg_t *args)
 upnp_local_service_t upnp_RenderingControl_2 = {
   .uls_name = "RenderingControl",
   .uls_version = 2,
+  .uls_generate_props = rc_generate_props,
   .uls_methods = {
     { "SetMute", rc_set_mute },
     { NULL, NULL}

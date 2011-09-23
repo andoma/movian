@@ -1,7 +1,13 @@
- widget(loader, {
-   .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
-   .blur  = iir(clamp(getLayer(), 0, 1), 7);
-   .noInitialTransform = true;
-   .time = 0.1;
-   .source = "theme://directoryviews/" + $page.glw.curView + ".view";
+widget(container_z, {
+    widget(backdrop, {
+        .source = $page.model.metadata.background;
+    });
+
+    widget(loader, {
+        .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+        .blur  = iir(clamp(getLayer(), 0, 1), 7);
+        .noInitialTransform = true;
+        .time = 0.1;
+        .source = "theme://directoryviews/" + $page.glw.curView + ".view";
+    });
 });

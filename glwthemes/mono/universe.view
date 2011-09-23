@@ -3,9 +3,6 @@
 #import "theme://include/buttons.view"
 #import "theme://include/slider.view"
 
-settingInt(_("Starwars scroller tilt"), "tilt",
-	   $ui.defaults.tilt, "deg", 0, 20, 1, $ui.tilt);
-
 settingBool(_("Top bar navigation buttons"), "navtools", true, $ui.topBarTools);
 
 settingBool(_("Adjust background tint based on daytime"), "daytimegradient", 
@@ -63,17 +60,7 @@ widget(container_z, {
   });
 
 
-  widget(displacement, {
-
-    .padding = [$ui.underscan_h * 1,
-		$ui.underscan_v * 1,
-		$ui.underscan_h * 1,
-		$ui.underscan_v * 1];
-    .scaling = [1,1,1] - ($ui.tilt / 20) * [0.2, 0.2, 0.0];
-    .translation = [0, $ui.tilt / 200, 0];
-    .rotation = [$ui.tilt, -1, 0, 0];
-
-
+  widget(underscan, {
     widget(container_z, {
       widget(layer, {
 	.alpha = iir(1 - $ui.screensaverActive, 8);
@@ -147,6 +134,42 @@ widget(container_z, {
   });
 
   // Overlay that always should be visible even if screen saver is active
+
+  widget(container_y, {
+    .padding = 30;
+    .align = top;
+    cloner($global.notifications.nodes, container_x, {
+      widget(backdrop, {
+	.source = "skin://gfx/blackdrop.png";
+	.border = 12;
+	.padding = [4,-4];
+	.alphaSelf = 0.8;
+
+	widget(container_x, {
+	  .spacing = 10;
+	  widget(icon, {
+	    .hqScaling = true;
+	    .sizeScale = 1.5;
+	    .source = "skin://icons/Alert.png";
+	    .color = translate($self.type, [1,1,1],
+			       "info", [0.5, 1, 0.5],
+			       "warning",  [1, 1, 0.5],
+			       "error", [1, 0.5, 0.5]);
+	  });
+
+	  widget(label, {
+	    .caption = $self.text;
+	    .sizeScale = 1.5;
+	    .color = translate($self.type, [1,1,1],
+			       "info", [0.5, 1, 0.5],
+			       "warning",  [1, 1, 0.5],
+			       "error", [1, 0.5, 0.5]);
+	  });
+	});
+      });
+      space(1);
+    });
+  });
 
   widget(container_x, {
     space(1);

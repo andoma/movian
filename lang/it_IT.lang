@@ -104,6 +104,15 @@ id: Playqueue
 msg: Coda di riproduzione
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Stato di riproduzione
+
+id: Unable to start video playback
+msg: Impossibile avviare la riproduzione del video
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +136,6 @@ msg: CPU troppo lenta per poter decodificare questo video
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
 id: Password
 msg: Password
 
@@ -141,6 +144,15 @@ msg: Ricordami
 
 id: Username
 msg: Nome Utente
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/screensaver.view
@@ -203,6 +215,12 @@ id: Use opensubtitles.org
 msg: Utilizza opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+msg: Memoria in esaurimento (%d kB di RAM disponibile)
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -229,6 +247,9 @@ msg: Altoparlanti piccoli frontali
 id: Swap LFE+center with surround
 msg: Scambia LFE+center con surround
 
+id: Switching audio output to %s
+msg: Cambio dell'uscita audio a %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -240,6 +261,12 @@ msg: Traccia CD non valida
 
 id: Unable to open CD
 msg: Impossibile aprire il CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+msg: Errore nella lettura DVD, riavvio del disco in corso
 
 #
 # ./src/backend/htsp/htsp.c
@@ -261,6 +288,9 @@ msg: Login automatico all'avvio di Showtime
 
 id: Enable Spotify
 msg: Attiva Spotify
+
+id: Forget me
+msg: Dimenticami
 
 id: Friends
 msg: Amici
@@ -297,6 +327,9 @@ msg: Spotify ti offre un accesso libero e legale a un'ingente raccolta di musica
 
 id: Spotify playlists
 msg: Spotify playlist
+
+id: Spotify: Connection error: %s
+msg: Spotify: errore di connessione: %s
 
 id: Starred
 msg: Speciali
@@ -500,6 +533,24 @@ id: Service not found
 msg: Servizio non trovato
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Forzando il livello 4.2 per contenuto al livello %d.%d. Questo potrebbe inibire la riproduzione del video.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Impossibile accelerare %s, libreria non caricata.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Impossibile aprire il Cell codec. Errore 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Impossibile aprire il Cell codec. Impossibile allocare %d bytes di RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Impossibile richiedere il Cell codec. Errore 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -516,9 +567,6 @@ msg: Colore
 
 id: Enable VDPAU
 msg: Attiva VDPAU
-
-id: Force Level 4.2 for h264 content
-msg: Forza il Livello 4.2 per i contenuti h264
 
 id: Force subtitles to reside on video frame
 msg: Forza i sottotitoli a rimanere sempre in primo piano

@@ -136,13 +136,11 @@ set_vzoom(void *opaque, int v)
   video_settings.vzoom = v;
 }
 
-#if ENABLE_PS3_VDEC
 static void
-set_force_42(void *opaque, int v)
+set_video_resumemode(void *opaque, const char *str)
 {
-  video_settings.force_42 = v;
+  video_settings.resume_mode = atoi(str);
 }
-#endif
 
 void
 video_settings_init(void)
@@ -172,22 +170,26 @@ video_settings_init(void)
 		       (void *)"videoplayback");
 
   settings_create_int(s, "vzoom",
-		      _p("Video zoom"), 100, NULL, 50, 200,
+		      _p("Video zoom"), 100, store, 50, 200,
 		      1, set_vzoom, NULL,
 		      SETTINGS_INITIAL_UPDATE,
 		      "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
+  
+  video_settings.resume_mode = 1;
+  x = settings_create_multiopt(s, "resumemode",
+			       _p("Resume video playback"),
+			       set_video_resumemode,
+			       _p("Controls if video playback should restart where last played"));
 
+  settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
+  settings_multiopt_add_opt(x, "0", _p("No"), 0);
 
-#if ENABLE_PS3_VDEC
-  settings_create_bool(s, "force42", _p("Force Level 4.2 for h264 content"), 0,
-		       store, set_force_42, NULL, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"videoplayback");
-#endif
+  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+			     (void *)"videoplayback");
 
+  //----------------------------------------------------------
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
 		       _p("Generic settings for video subtitles"));

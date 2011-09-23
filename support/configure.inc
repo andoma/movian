@@ -17,8 +17,6 @@ BUILDDIR=build.${PLATFORM}
 GLW_DEFAULT_THEME="mono"
 DEFAULT_LOGTARGET=""
 
-RELEASENAME=`head -n1 ${TOPDIR}/ChangeLog | awk '{print $2}' | sed s/\(// | sed s/\)//`
-
 CONFIG_LIST="
  libasound
  libpulse
@@ -48,7 +46,6 @@ CONFIG_LIST="
  release
  embedded_resources
  coreaudio
- dbus
  avahi
  appleremote
  bonjour
@@ -83,6 +80,9 @@ CONFIG_LIST="
  font_liberation
  libfontconfig
  binreplace
+ readahead_cache
+ sqlite_vfs
+ sqlite_locking
 "
 
 die() {
@@ -156,9 +156,8 @@ common_help(){
   echo
   echo "Standard options:"
   echo "  --help                   Print this message"
-  echo "  --with-ffmpeg=PREFIX     Path to where FFmpeg is installed."
-  echo "                           By default Showtime will build FFmpeg from"
-  echo "                           the checked out version in the source"
+  echo "  --with-libav=PREFIX      Path to where libav is installed."
+  echo "                           By default Showtime will build libav itself."
   echo ""
   echo "Target specific options:"
 }
@@ -169,7 +168,7 @@ common_help(){
 common_opt(){
   case "$1" in
 
-  --with-ffmpeg=*) FFMPEG_PATH="$2"
+  --with-libav=*) LIBAV_PATH="$2"
   ;;
 
   --enable-?*|--disable-?*)
@@ -234,10 +233,36 @@ spotify_setup() {
 }
 
 
+libav_setup() {
+    if [ "x${LIBAV_PATH}" != "x" ]; then
+	return
+    fi
+
+    echo "Updating libav... (if needed)"
+    git submodule update --init ext/libav
+    echo "Configuring libav..."
+
+    LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
+    LIBAV_INSTALL_DIR=${BUILDDIR}/libav/install
+    mkdir -p ${LIBAV_BUILD_DIR}
+    mkdir -p ${LIBAV_INSTALL_DIR}
+
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-ffserver --disable-ffmpeg --disable-ffprobe --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
+
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}") || die
+
+    (cd ${LIBAV_BUILD_DIR} && make -j6) || die
+    (cd ${LIBAV_BUILD_DIR} && make install) || die
+    LIBAV_PATH=${LIBAV_INSTALL_DIR}
+}
+
 #
 # Do final common stuff
 #
 finalize() {
+
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${LIBAV_PATH}/include"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lswscale -lavformat -lavcodec -lavutil"
 
     if enabled polarssl; then
 	echo "Using built-in polarssl"
@@ -294,11 +319,20 @@ finalize() {
     fi
     echo >>${CONFIG_H} "#define SHOWTIME_LANGUAGES_URL \""${LANGUAGES_URL}"\""
 
+    # sqlite
+    if enabled sqlite_vfs; then
+	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_OS_OTHER=1 -DSQLITE_DEFAULT_LOCKING_MODE=1"
+    fi
+
+    if enabled sqlite_locking; then
+	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_MUTEX_NOOP"
+    fi
 
     # Release tag
     if enabled release; then
-	echo Release build: ${RELEASENAME}
-	echo >>${CONFIG_H} "#define SHOWTIME_RELEASE_TAG \"${RELEASENAME}\""
+	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DNDEBUG -D_NDEBUG"
+    else
+	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DJS_GC_ZEAL -DDEBUG=1"
     fi
 
     cat >> ${CONFIG_MAK} << EOF 

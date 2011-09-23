@@ -359,7 +359,7 @@ cdseek(media_pipe_t *mp, media_buf_t **mbp, int first, int last, int lsn)
   mp_flush(mp, 0);
   
   if(*mbp != NULL) {
-    media_buf_free(*mbp);
+    media_buf_free_unlocked(mp, *mbp);
     *mbp = NULL;
   }
 
@@ -422,11 +422,9 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
     if(mb == NULL) {
 
-      mb = media_buf_alloc();
+      mb = media_buf_alloc_unlocked(mp, CDIO_CD_FRAMESIZE_RAW * 2);
       mb->mb_data_type = MB_AUDIO;
       
-      mb->mb_size = CDIO_CD_FRAMESIZE_RAW * 2;
-      mb->mb_data = malloc(mb->mb_size);
       mb->mb_channels = 2;
       mb->mb_rate = 44100;
       mb->mb_time = (lsn - track_first) * 1000000LL / CDIO_CD_FRAMES_PER_SEC;
@@ -449,7 +447,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       event_ts_t *ets = (event_ts_t *)e;
       
       lsn = cdseek(mp, &mb, track_first, track_last,
-		   track_first + ets->pts * CDIO_CD_FRAMES_PER_SEC /1000000LL);
+		   track_first + ets->ts * CDIO_CD_FRAMES_PER_SEC /1000000LL);
       
     } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
@@ -517,7 +515,7 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   }
 
   if(mb != NULL)
-    media_buf_free(mb);
+    media_buf_free_unlocked(mp, mb);
 
   cdio_cddap_close(cdda);
 

@@ -24,11 +24,6 @@
 
 TAILQ_HEAD(audio_decoder_queue, audio_decoder);
 
-typedef void (ad_mix_func_t)(int frames, int channels, int16_t *src, 
-			     const uint8_t *swizzleptr,
-			     int16_t *output[AUDIO_CHAN_MAX],
-			     int stride, audio_mode_t *am);
-
 typedef struct audio_decoder {
   hts_thread_t ad_tid;  /* Thread id */
 
@@ -42,7 +37,7 @@ typedef struct audio_decoder {
   int ad_send_flush;
 
   struct AVResampleContext *ad_resampler;
-  int16_t *ad_resampler_spill[AUDIO_CHAN_MAX];
+  int16_t *ad_resampler_spill[8];
   int ad_resampler_spill_size;
   int ad_resampler_channels;
   int ad_resampler_srcrate;

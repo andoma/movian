@@ -27,6 +27,7 @@
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "video/video_playback.h"
+#include "metadata.h"
 
 typedef struct {
 
@@ -55,6 +56,9 @@ typedef struct {
 
   int can_seek;
 
+  int restartpos_last;
+
+  const char *canonical_url;
 } rtmp_t;
 
 
@@ -164,7 +168,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   mp_flush(mp, 0);
   
   if(mbp != NULL && *mbp != NULL) {
-    media_buf_free(*mbp);
+    media_buf_free_unlocked(mp, *mbp);
     *mbp = NULL;
   }
 
@@ -224,14 +228,21 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
     event_ts_t *ets = (event_ts_t *)e;
     
-    r->seekbase = ets->pts;
+    r->seekbase = ets->ts;
     
+    int sec = r->seekbase / 1000000;
+
+    if(sec != r->restartpos_last && r->can_seek) {
+      r->restartpos_last = sec;
+      metadb_set_video_restartpos(r->canonical_url, r->seekbase / 1000);
+    }
+
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
     r->epoch++;
       
-    r->seekbase = video_seek(r, mp, mbp, ets->pts, 1, "direct");
+    r->seekbase = video_seek(r, mp, mbp, ets->ts, 1, "direct");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
@@ -275,7 +286,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
 	size_t size, int skip, int dt, int duration)
 {
   event_t *e = NULL;
-  media_buf_t *mb = media_buf_alloc();
+  media_buf_t *mb = media_buf_alloc_unlocked(r->mp, size);
 
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
@@ -284,11 +295,9 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
-
-  mb->mb_data = malloc(size +   FF_INPUT_BUFFER_PADDING_SIZE);
-  memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  mb->mb_send_pts = dt == MB_VIDEO;
+	
   memcpy(mb->mb_data, data, size);
-  mb->mb_size = size;
   mb->mb_epoch = r->epoch;
 
   do {
@@ -531,15 +540,6 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
   uint32_t dts;
   event_t *e = NULL;
 
-  r->mp = mp;
-  r->hold = 0;
-  r->lost_focus = 0;
-  r->epoch = 1;
-  r->seekbase = AV_NOPTS_VALUE;
-  r->seekpos = AV_NOPTS_VALUE;
-
-  mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
-  mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
   while(1) {
@@ -687,7 +687,8 @@ static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
 	       char *errbuf, size_t errlen,
-	       const char *mimetype)
+	       const char *mimetype,
+	       const char *canonical_url)
 {
   rtmp_t r = {0};
   event_t *e;
@@ -699,6 +700,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   r.r = RTMP_Alloc();
   RTMP_Init(r.r);
+
+  int64_t start = video_get_restartpos(canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -712,21 +715,48 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     return NULL;
   }
 
-  if(!RTMP_ConnectStream(r.r, 0)) {
+  if(!RTMP_ConnectStream(r.r, start)) {
     snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
     rtmp_free(&r);
     return NULL;
   }
 
+  r.mp = mp;
+  r.hold = 0;
+  r.lost_focus = 0;
+  r.epoch = 1;
+  
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
+
+  if(start > 0) {
+    r.seekpos = start * 1000;
+    r.seekbase = r.seekpos;
+    mp->mp_video.mq_seektarget = r.seekpos;
+    mp->mp_audio.mq_seektarget = r.seekpos;
+  } else {
+    mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
+    mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
+    r.seekbase = AV_NOPTS_VALUE;
+    r.seekpos = AV_NOPTS_VALUE;
+  }
 
   mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP);
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);
 
+  metadb_register_play(canonical_url, 0);
+
+  r.canonical_url = canonical_url;
+  r.restartpos_last = -1;
+
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
+
+  if(e != NULL && event_is_type(e, EVENT_EOF)) {
+    metadb_register_play(canonical_url, 1);
+    metadb_set_video_restartpos(canonical_url, -1);
+  }
 
   mp_flush(mp, 0);
   mp_shutdown(mp);

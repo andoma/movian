@@ -1021,3 +1021,79 @@ hexnibble(char c)
     return -1;
   }
 }
+
+// ISO-8859-X  ->  UTF-8
+
+#define ISO_8859_1 NULL
+extern const uint16_t ISO_8859_2[];
+extern const uint16_t ISO_8859_3[];
+extern const uint16_t ISO_8859_4[];
+extern const uint16_t ISO_8859_5[];
+extern const uint16_t ISO_8859_6[];
+extern const uint16_t ISO_8859_7[];
+extern const uint16_t ISO_8859_8[];
+extern const uint16_t ISO_8859_9[];
+extern const uint16_t ISO_8859_10[];
+extern const uint16_t ISO_8859_11[];
+extern const uint16_t ISO_8859_13[];
+extern const uint16_t ISO_8859_14[];
+extern const uint16_t ISO_8859_15[];
+extern const uint16_t ISO_8859_16[];
+extern const uint16_t CP1250[];
+extern const uint16_t CP1251[];
+
+
+const static charset_t charsets[] = {
+  {"ISO-8859-1", "ISO-8859-1 (Latin-1)", ISO_8859_1},  // Must be first
+  {"ISO-8859-2", "ISO-8859-2 (Latin-2)", ISO_8859_2},
+  {"ISO-8859-3", "ISO-8859-3 (Latin-3)", ISO_8859_3},
+  {"ISO-8859-4", "ISO-8859-4 (Latin-4)", ISO_8859_4},
+  {"ISO-8859-5", "ISO-8859-5 (Latin/Cyrillic)", ISO_8859_5},
+  {"ISO-8859-6", "ISO-8859-6 (Latin/Arabic)", ISO_8859_6},
+  {"ISO-8859-7", "ISO-8859-7 (Latin/Greek)", ISO_8859_7},
+  {"ISO-8859-8", "ISO-8859-8 (Latin/Hebrew)", ISO_8859_8},
+  {"ISO-8859-9", "ISO-8859-9 (Turkish)", ISO_8859_9},
+  {"ISO-8859-10", "ISO-8859-10 (Latin-5)", ISO_8859_10},
+  {"ISO-8859-11", "ISO-8859-11 (Latin/Thai)", ISO_8859_11},
+  {"ISO-8859-13", "ISO-8859-13 (Baltic Rim)", ISO_8859_13},
+  {"ISO-8859-14", "ISO-8859-14 (Celtic)", ISO_8859_14},
+  {"ISO-8859-15", "ISO-8859-15 (Latin-9)", ISO_8859_15},
+  {"ISO-8859-16", "ISO-8859-16 (Latin-10)", ISO_8859_16},
+  {"CP1250", "Windows 1250", CP1250},
+  {"CP1251", "Windows 1251", CP1251},
+};
+
+const charset_t *
+charset_get_idx(unsigned int i)
+{
+  if(i < sizeof(charsets) / sizeof(charsets[0]))
+    return &charsets[i];
+  return NULL;
+}
+
+const charset_t *
+charset_get(const char *id)
+{
+  int i;
+
+  if(id == NULL)
+    return &charsets[0];
+
+  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++)
+    if(!strcmp(id, charsets[i].id)) 
+      return &charsets[i];
+  return NULL;
+}
+
+/**
+ *
+ */
+const char *
+charset_get_name(const void *p)
+{
+  int i;
+  for(i = 0; i < sizeof(charsets) / sizeof(charsets[0]); i++)
+    if(p == charsets[i].ptr)
+      return charsets[i].title;
+  return "???";
+}
