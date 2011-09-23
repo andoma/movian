@@ -151,6 +151,7 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 			 int64_t pts, int epoch)
 {
   int64_t aclock;
+  const char *status;
 
   if(mp->mp_audio_clock_epoch != epoch) {
     /* Not the same clock epoch, can not sync */
@@ -196,20 +197,21 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     } else {
       vd->vd_may_update_avdiff--;
     }
+    status = "lock";
+  } else {
+    status = "nolock";
   }
 
-#if 0
- {
+  if(0) {
    static int64_t lastpts, lastaclock;
    
-  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
+  printf("%s: AVDIFF = %10f %10d %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %s\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
 	 aclock, aclock - lastaclock, pts, pts - lastpts,
-	 mp->mp_audio_clock);
+	 mp->mp_audio_clock, status);
   lastpts = pts;
   lastaclock = aclock;
  }
-#endif
 }
 
 
