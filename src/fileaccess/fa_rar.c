@@ -138,8 +138,11 @@ typedef struct rar_file {
   int64_t rf_size;
   rar_archive_t *rf_archive;
 
+  char rf_method;
+  char rf_unpver;
+
   LIST_ENTRY(rar_file) rf_link;
-		       
+
 } rar_file_t;
 
 
@@ -160,7 +163,8 @@ typedef struct rar_segment {
  */
 static rar_file_t *
 rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
-		      const char *name, int create)
+		      const char *name, int create,
+		      char unpver, char method)
 {
   rar_file_t *rf;
   const char *s, *n = name;
@@ -198,9 +202,14 @@ rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
     rf->rf_name = strdup(n);
     rf->rf_type = s ? CONTENT_DIR : CONTENT_FILE;
     LIST_INSERT_HEAD(&parent->rf_files, rf, rf_link);
+    if(rf->rf_type == CONTENT_FILE) {
+      rf->rf_unpver = unpver;
+      rf->rf_method = method;
+    }
   } 
 
-  return s != NULL ? rar_archive_find_file(ra, rf, s, create) : rf;
+  return s != NULL ? rar_archive_find_file(ra, rf, s, create,
+					   unpver, method) : rf;
 }
 
 
@@ -386,10 +395,9 @@ rar_archive_load(rar_archive_t *ra)
       memcpy(fname, hdr + x, nsize);
       fname[nsize] = 0;
 
-      if(unpver == 20 && method == '0' && 
-	 ((flags & LHD_WINDOWMASK) != LHD_DIRECTORY) &&
-	 (rf = rar_archive_find_file(ra, ra->ra_root, fname, 1)) != NULL) {
-	
+      if(((flags & LHD_WINDOWMASK) != LHD_DIRECTORY) &&
+	 (rf = rar_archive_find_file(ra, ra->ra_root, fname, 1,
+				     unpver, method)) != NULL) {
 	rs = malloc(sizeof(rar_segment_t));
 	rs->rs_volume = rv;
 	rs->rs_offset = rf->rf_size;
@@ -546,7 +554,7 @@ rar_file_find(const char *url)
   if(ra == NULL)
     return NULL;
 
-  rf = *r ? rar_archive_find_file(ra, ra->ra_root, r, 0) : ra->ra_root;
+  rf = *r ? rar_archive_find_file(ra, ra->ra_root, r, 0, 0, 0) : ra->ra_root;
 
   if(rf == NULL)
     rar_archive_unref(ra);
@@ -660,6 +668,13 @@ rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   if(rf->rf_type != CONTENT_FILE) {
     rar_file_unref(rf);
     snprintf(errbuf, errlen, "Entry is not a file");
+    return NULL;
+  }
+
+  if(rf->rf_method != '0') {
+    rar_file_unref(rf);
+    snprintf(errbuf, errlen,
+	     "Showtime does not support compressed files in RAR archives");
     return NULL;
   }
 
