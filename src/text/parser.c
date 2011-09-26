@@ -246,6 +246,7 @@ parse_str(uint32_t *output, const char *str, int flags)
       continue;
 
     if(flags & TEXT_PARSE_TAGS && c == '<') {
+      const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)
 	tmp = malloc(l);
@@ -255,8 +256,13 @@ parse_str(uint32_t *output, const char *str, int flags)
 	  break;
 	tmp[lp++] = d;
       }
-      if(d == 0)
-	break;
+      if(d == 0) {
+	if(output != NULL)
+	  output[olen] = '<';
+	olen++;
+	str = s2;
+	continue;
+      }
       tmp[lp] = 0;
 
       olen = tag_to_code(tmp, output, olen);
@@ -264,6 +270,7 @@ parse_str(uint32_t *output, const char *str, int flags)
     }
 
     if(flags & TEXT_PARSE_HTML_ENTETIES && c == '&') {
+      const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)
 	tmp = malloc(l);
@@ -273,17 +280,22 @@ parse_str(uint32_t *output, const char *str, int flags)
 	  break;
 	tmp[lp++] = d;
       }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
+      if(d != 0) {
+	tmp[lp] = 0;
 
-      c = html_entity_lookup(tmp);
+	c = html_entity_lookup(tmp);
 
-      if(c != -1) {
-	if(output != NULL)
-	  output[olen] = c;
-	olen++;
+	if(c != -1) {
+	  if(output != NULL)
+	    output[olen] = c;
+	  olen++;
+	}
+	continue;
       }
+      if(output != NULL)
+	output[olen] = '&';
+      olen++;
+      str = s2;
       continue;
     }
 

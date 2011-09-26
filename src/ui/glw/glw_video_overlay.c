@@ -76,10 +76,9 @@ typedef struct glw_video_overlay {
  *
  */
 static glw_video_overlay_t *
-gvo_create(glw_video_t *gv, int64_t pts, int type)
+gvo_create(int64_t pts, int type)
 {
   glw_video_overlay_t *gvo = calloc(1, sizeof(glw_video_overlay_t));
-  LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
   gvo->gvo_start = pts;
   gvo->gvo_stop = AV_NOPTS_VALUE;
   gvo->gvo_alpha = 1;
@@ -189,6 +188,7 @@ glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
   glw_rctx_t *rc;
   int16_t f[4];
   layer_t *l;
+
   LIST_HEAD(, layer) layers;
   LIST_INIT(&layers);
 
@@ -224,29 +224,31 @@ glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
     gc->gc_set_size_scale(w, scaling);
     
     f[0] = scaling * gvo->gvo_padding_left;
-    f[1] = scaling * gvo->gvo_padding_top;
+    f[1] = 0;
     f[2] = scaling * gvo->gvo_padding_right;
-    f[3] = scaling * gvo->gvo_padding_bottom;
+    f[3] = 0;
 
-    if(l->used_height[gvo->gvo_alignment]) {
-      switch(gvo->gvo_alignment) {
-      case LAYOUT_ALIGN_TOP:
-      case LAYOUT_ALIGN_TOP_LEFT:
-      case LAYOUT_ALIGN_TOP_RIGHT:
-	f[1] += l->used_height[gvo->gvo_alignment];
-	break;
+    switch(gvo->gvo_alignment) {
+    case LAYOUT_ALIGN_TOP:
+    case LAYOUT_ALIGN_TOP_LEFT:
+    case LAYOUT_ALIGN_TOP_RIGHT:
+      f[1] = MAX(scaling * gvo->gvo_padding_top,
+		 l->used_height[gvo->gvo_alignment]);
+      l->used_height[gvo->gvo_alignment] = f[1];
+      break;
 
-      case LAYOUT_ALIGN_BOTTOM:
-      case LAYOUT_ALIGN_BOTTOM_LEFT:
-      case LAYOUT_ALIGN_BOTTOM_RIGHT:
-	f[3] += l->used_height[gvo->gvo_alignment];
-	break;
-      }
+    case LAYOUT_ALIGN_BOTTOM:
+    case LAYOUT_ALIGN_BOTTOM_LEFT:
+    case LAYOUT_ALIGN_BOTTOM_RIGHT:
+      f[3] = MAX(scaling * gvo->gvo_padding_bottom,
+		 l->used_height[gvo->gvo_alignment]);
+      l->used_height[gvo->gvo_alignment] = f[3];
+      break;
     }
-    gc->gc_set_padding(w, f);
 
+    gc->gc_set_padding(w, f);
     glw_layout0(w, rc);
-    l->used_height[gvo->gvo_alignment] += w->glw_req_size_y - f[1] - f[3];
+    l->used_height[gvo->gvo_alignment] += w->glw_req_size_y;
   }
 }
 
@@ -537,7 +539,8 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   gvo_flush_all(gv);
 
   
-  glw_video_overlay_t *gvo = gvo_create(gv, AV_NOPTS_VALUE, GVO_DVDSPU);
+  glw_video_overlay_t *gvo = gvo_create(AV_NOPTS_VALUE, GVO_DVDSPU);
+  LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
   glw_root_t *gr = gv->w.glw_root;
   gvo->gvo_videoframe_align = 1;
 
@@ -621,13 +624,15 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
 static void
 gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
 {
-  glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start, GVO_BITMAP);
+  glw_video_overlay_t *gvo = gvo_create(vo->vo_start, GVO_BITMAP);
   glw_root_t *gr = gv->w.glw_root;
   int fmt;
 
   pixmap_t *pm = vo->vo_pixmap;
   int W = pm->pm_width;
   int H = pm->pm_height;
+
+  LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
 
   gvo->gvo_stop = vo->vo_stop;
   gvo->gvo_fadein = vo->vo_fadein;
@@ -679,6 +684,25 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
   glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels, fmt, W, H, 0);
 }
 
+/**
+ *
+ */
+static int
+gvo_padding_cmp(const glw_video_overlay_t *a, const glw_video_overlay_t *b)
+{
+  int aa = (a->gvo_alignment - 1) / 3;
+  int ba = (b->gvo_alignment - 1) / 3;
+
+  if(aa != ba)
+    return aa - ba;
+  
+  if(aa == 0)
+    return a->gvo_padding_bottom - b->gvo_padding_bottom;
+  if(aa == 2)
+    return a->gvo_padding_top - b->gvo_padding_top;
+  return 0;
+}
+
 
 /**
  *
@@ -691,7 +715,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   if(gc == NULL)
     return; // huh?
 
-  glw_video_overlay_t *gvo = gvo_create(gv, vo->vo_start, GVO_TEXT);
+  glw_video_overlay_t *gvo = gvo_create(vo->vo_start, GVO_TEXT);
 
   gvo->gvo_stop           = vo->vo_stop;
   gvo->gvo_fadein         = vo->vo_fadein;
@@ -723,6 +747,8 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
     gvo->gvo_padding_right  = vo->vo_padding_right;
     gvo->gvo_padding_bottom = vo->vo_padding_bottom;
   }
+
+  LIST_INSERT_SORTED(&gv->gv_overlays, gvo, gvo_link, gvo_padding_cmp);
 
   gc->gc_set_max_lines(w, 10);
 
