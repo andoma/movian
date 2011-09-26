@@ -711,23 +711,25 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       }
 
       TAILQ_FOREACH(rs, &rf->rf_segments, rs_link) {
-	if(rfd->rfd_fpos < rs->rs_offset + rs->rs_size)
+	if(rfd->rfd_fpos <= rs->rs_offset + rs->rs_size)
 	  break;
       }
       if(rs == NULL)
 	return -1;
-
     }
 
     w = size - c;
     r = rs->rs_offset + rs->rs_size - rfd->rfd_fpos;
+
+    if(r == 0)
+      return c;
     if(w < r)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
       rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0);
       if(rfd->rfd_fh == NULL)
-	return -1;
+	return -2;
     }
 
     o = rfd->rfd_fpos - rs->rs_offset + rs->rs_voffset;
@@ -737,10 +739,9 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
     }
     x = fa_read(rfd->rfd_fh, buf + c, r);
     
-    if(x != r) {
+    if(x != r)
       return -1;
-    }
-    
+
     rfd->rfd_fpos += x;
     c += x;
   }
