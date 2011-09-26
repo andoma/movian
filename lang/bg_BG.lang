@@ -1,0 +1,618 @@
+language: Bulgarian
+native: Български 
+maintainer: Yuliyan <july_d_2004@yahoo.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Аудио настройки
+
+id: Languages
+msg: Езици
+
+id: Settings
+msg: Настройки
+
+id: Subtitle settings
+msg: Настройки на субтитрите
+
+id: Video settings
+msg: Видео настройки
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Добавено от: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Изкл.
+
+id: On
+msg: Вкл.
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Налична системна РАМ памет: %d КБ
+
+id: Detected CPUs: %d
+msg: Засечени CPU: %d
+
+id: Display info
+msg: Информация за екрана
+
+id: Framerate: %.2f Hz
+msg: Честота на кадрите %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Височина: %d px
+
+id: Renderer: %s
+msg: Рендератор: %s
+
+id: System info
+msg: Системна информация
+
+id: Total system RAM: %d kB
+msg: Обща системна РАМ памет: %d КБ
+
+id: Version: %s
+msg: Версия: %s
+
+id: Width: %d px
+msg: Ширина: %d px
+
+id: Windowmanager: %s
+msg: Мениджър на прозорците: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Относно програмата
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Главна страница
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Невъзможно отварянето на ресурса
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Грешка при зареждането на страницата
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Опашка за възпроизвеждане
+
+#
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Статус на възпроизвеждане
+
+id: Unable to start video playback
+msg: Невъзможно стартиране на видео възпроизвеждането
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Глава %d / %d
+
+id: Title %d / %d
+msg: Заглавие %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Трак %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU е твърде бавно за да декодира това видео
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Парола
+
+id: Remember me
+msg: Запомни ме
+
+id: Username
+msg: Потребителско име
+
+#
+# ./glwthemes/mono/popups/textDialog.view
+#
+id: Cancel
+msg: Отмяна
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Няма заредени медиини файлове
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Изтрии
+
+id: Enqueue
+msg: Добави към опашката за възпроизвеждане
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Аудио изход
+
+id: CPUs
+msg: CPU
+
+id: GPU & Display
+msg: GPU и изображение
+
+id: GPU Core temperature: %d / %d В°
+msg: Температура на ядрото на GPU: %d / %d В°
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Настройка нюанса на фона в зависимост от яркостта
+
+id: Audio muted
+msg: Заглушаване на аудиото
+
+id: Fancy UI animations
+msg: Анимация на интерфейса
+
+id: Master volume: %d dB
+msg: Сила на звука: %d dB
+
+id: Starwars scroller tilt
+msg: Интерфейс в стил Starwars
+
+id: Top bar navigation buttons
+msg: Бутони за навигация в горния панел
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Настройки за opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Използвай opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memroy (%d kB RAM available)
+msg: Недостатъчна памет в системата (%d кБ RAM достъпна)
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Синхронизация на Audio/Video закъснението
+
+id: Current output device
+msg: Текущо изходно устройство
+
+id: Force stereo downmix
+msg: Наложи stereo downmix
+
+id: Phantom LFE
+msg: Фантом LFE
+
+id: Phantom center
+msg: Фантом център
+
+id: Select audio output device and related configurations
+msg: Избор на изходно аудио устройство и неговите конфигурации
+
+id: Small front speakers
+msg: Малки предни говорители
+
+id: Swap LFE+center with surround
+msg: Замени LFE+център на surround
+
+id: Switching audio output to %s
+msg: Превключи аудио изхода на %s 
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Невалиден CD URL
+
+id: Invalid CD track
+msg: Невалиден CD трак
+
+id: Unable to open CD
+msg: Невъзможно отварянето на CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+msg: Грешка при четенето на DVD, рестартиране на диска
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Невалиден HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Търсене
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Автоматичен логин при пускане на Showtime
+
+id: Enable Spotify
+msg: Включи Spotify
+
+id: Forget me
+msg: Забрави ме
+
+id: Friends
+msg: Приятели
+
+id: High bitrate
+msg: Висок битрейт
+
+id: Inbox
+msg: Входящи съобщения
+
+id: New albums on Spotify
+msg: Нови албуми в Spotify
+
+id: New releases
+msg: Нови релиизи
+
+id: Playlists
+msg: Плейлистове
+
+id: Relogin (switch user)
+msg: Ре-логин (смяна на потребителя)
+
+id: Search result
+msg: Резултати от търсенето
+
+id: Spotify friends
+msg: Приятели в Spotify
+
+id: Spotify music service
+msg: Музикални услуги в Spotify
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify ви предлага легален и безплатен достъп до огромна библиотека от музика. За да използвате Spotify в Showtime ви е необходим Spotify Preemium account.\nЗа повече информация относно Spotify, посетете http://www.spotify.com/\n\nЩе ви бъде поискано вашето потребителско име и парола в Spotify при първото използване на някоя от функциите на Spotify в Showtime.
+
+id: Spotify playlists
+msg: Spotify плейлист
+
+id: Spotify: Connection error: %s
+msg: Spotify: Грешка при свързване: %s
+
+id: Starred
+msg: С висок рейтинг
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Маркери
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Търсене с изполването на Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Търсене с изполването на spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Език
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Кодът на езиците трябва да бъде настроен като три-символен ISO код, например: eng, swe, fra
+
+id: Preferred languages
+msg: Предпочитани езици
+
+id: Primary audio language code
+msg: Основен аудио език - код
+
+id: Primary subtitle language code
+msg: Основен език на субтитрите - код
+
+id: SRT character set
+msg: SRT знаков набор
+
+id: Secondary audio language code
+msg: Вторичен аудио език - код
+
+id: Secondary subtitle language code
+msg: Вторичен език на субтитрите - код
+
+id: Tertiary audio language code
+msg: Третичен аудио език - код
+
+id: Tertiary subtitle language code
+msg: Третичен език на субтитрите - код
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Автоматично вкл./изкл. на TV
+
+id: Input source
+msg: Източник на входа
+
+id: LG Television set
+msg: LG Телевизор
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Настройка на бутоните на клавиатура и дистанционно управление
+
+id: Keymapper
+msg: Keymapper
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Подравняване на субтитри на видео кадъра
+
+id: Audio delay
+msg: Аудио закъснение
+
+id: Subtitle delay
+msg: Закъснение на субтитрите
+
+id: Subtitle scaling
+msg: Мащаб на субтитрите
+
+id: Video zoom
+msg: Мащаб на видеото
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Няма handler за URL
+
+#
+# ./src/plugins.c
+#
+id: Invalid URI
+msg: Невалиден URL 
+
+id: Plugin ID %s does not exist
+msg: Plugin ID %s не съществува
+
+id: Plugin ID %s have no download URL
+msg: Plugin ID %s няма URL за сваляне
+
+id: Unable to load plugin.json: %s
+msg: Невъзможно зареждането на plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Невъзможно зареждането на plugin.json: Деформиран JSON
+
+id: Unable to request plugin repository: %s
+msg: Невъзможна връзка с plugin сървъра
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Автоматичен standby
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Включено
+
+id: Name
+msg: Име
+
+id: Type
+msg: Тип
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Приложения и инсталирани plugins
+
+id: Discovered media sources
+msg: Открити медия източници
+
+id: Global settings
+msg: Главни настройки
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Потребителски интерфейс и екран
+
+id: Horizontal underscan
+msg: Хоризонтален underscan
+
+id: Screensaver delay
+msg: Screensaver таймер
+
+id: Userinterface size
+msg: Размер на потребителския интерфейс
+
+id: Vertical underscan
+msg: Вертикален underscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Режим "Цял екран"
+
+id: Map mouse wheel to up/down
+msg: Настройка скрола на мишката нагоре/надолу
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Покажи на главната страница
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Устройството не е намерено
+
+id: Malformed URI after device
+msg: Деформиран URI след устройството
+
+id: Malformed URI after service
+msg: Деформиран URI след услугата
+
+id: Service not found
+msg: Услугата не е намерена
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Принудително използване на level 4.2 за съдържание от ниво %d.%d. Това може да наруши видео възпроизвеждането.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Невъзможно да ускори %s, библиотеката не е заредена.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Невъзможно отварянето на Cell-кодек. Грешка 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Невъзможно отварянето на Cell-кодек. Невъзможно да разпредели %d байта RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Невъзможна заявка към Cell-кодек. Грешка 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Винаги се опитвай да избереш субтитри
+
+id: Auto
+msg: Авто
+
+id: Center
+msg: Център
+
+id: Color
+msg: Цвят
+
+id: Enable VDPAU
+msg: Включи VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Принуди субтитрите да присъстват във видео кадъра
+
+id: Generic settings for video subtitles
+msg: Общи настройки за субтитри
+
+id: Ignore embedded styling
+msg: Игнорирай вградения стил
+
+id: Left
+msg: Ляво
+
+id: Outline color
+msg: Цвят на контура
+
+id: Outline size
+msg: Размер на контура
+
+id: Right
+msg: Дясно
+
+id: Shadow color
+msg: Цвят на сянката
+
+id: Shadow offset
+msg: Отместване на сянката
+
+id: Stretch video to widescreen
+msg: Разтегни видеото до широк екран
+
+id: Subtitle position
+msg: Позиция на субтитрите
+
+id: Subtitle size
+msg: Размер на субтитрите
+
+id: Subtitle styling
+msg: Стил на субтитрите
+
+id: Subtitles
+msg: Субтитри
+
+id: Video acceleration and display behaviour
+msg: Видео ускорение и поведение на екрана
+
+id: Video playback
+msg: Видео възпроизвеждане
+
