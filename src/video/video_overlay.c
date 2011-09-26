@@ -173,7 +173,7 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
     video_overlay_render_cleartext(vd, str, mb->mb_pts,
 				   mb->mb_duration ?
 				   mb->mb_pts + mb->mb_duration :
-				   AV_NOPTS_VALUE, 0);
+				   AV_NOPTS_VALUE, 1);
   } else {
     video_subtitles_lavc(vd, mb, cw->codec_ctx);
   }
