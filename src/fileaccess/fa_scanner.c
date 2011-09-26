@@ -496,7 +496,8 @@ doscan(scanner_t *s)
 
   if(s->s_fd == NULL) {
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
-    TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning", s->s_url, s->s_fd->fd_count);
+    if(s->s_fd != NULL)
+      TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning", s->s_url, s->s_fd->fd_count);
   } else {
     TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache", s->s_url, s->s_fd->fd_count);
     pending_rescan = 1;
