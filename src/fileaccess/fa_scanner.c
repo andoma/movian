@@ -454,10 +454,11 @@ rescan(scanner_t *s)
 
       if(a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
 	// Modification time has changed,  trig deep probe
-	a->fde_type = CONTENT_UNKNOWN;
+	a->fde_type = b->fde_type;
 	a->fde_probestatus = FDE_PROBE_FILENAME;
 	a->fde_stat = b->fde_stat;
 	a->fde_ignore_cache = 1;
+	changed = 1;
       }
 
       fa_dir_entry_free(fd, b);
