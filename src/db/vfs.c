@@ -30,11 +30,16 @@
 #include <fcntl.h>
 #include <libavutil/sha.h>
 
+
 #include "showtime.h"
 #include "ext/sqlite/sqlite3.h"
+#include "arch/atomic.h"
 
-//#define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
+#if 0
+#define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
+#else
 #define VFSTRACE(x...)
+#endif
 
 static uint64_t random_seed;
 
@@ -42,7 +47,7 @@ static uint64_t random_seed;
 typedef struct vfsfile {
   struct sqlite3_file hdr;
   int fd;
-  const char *fname;
+  char *fname;
 } vfsfile_t;
 
 
@@ -51,6 +56,8 @@ vfs_fs_Close(sqlite3_file *id)
 {
   vfsfile_t *vf = (vfsfile_t *)id;
   close(vf->fd);
+  free(vf->fname);
+  free(vf);
   return SQLITE_OK;
 }
 
@@ -177,6 +184,10 @@ static int
 vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
 	 int *pOutFlags)
 {
+  static int tmpfiletally;
+  char tmpfile[256];
+  int v;
+
   vfsfile_t *vf = (vfsfile_t *)id;
   vf->hdr.pMethods = &vfs_fs_methods;
 
@@ -193,8 +204,15 @@ vfs_open(sqlite3_vfs *pVfs, const char *zName, sqlite3_file *id, int flags,
   if( isExclusive ) openFlags |= O_EXCL;
 
 
+  if(zName == NULL) {
+    v = atomic_add(&tmpfiletally, 1);
+    snprintf(tmpfile, sizeof(tmpfile), "%s/sqlite.tmp.%d",
+	     showtime_cache_path, v);
+    zName = tmpfile;
+  }
+
   vf->fd = open(zName, openFlags, 0666);
-  vf->fname = zName;
+  vf->fname = strdup(zName);
 
   VFSTRACE("Open%s file %s : %s",
 	   isDelete ? "+Delete" : "",
