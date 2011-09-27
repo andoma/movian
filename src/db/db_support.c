@@ -28,14 +28,15 @@
  *
  */
 int
-db_one_statement(sqlite3 *db, const char *sql)
+db_one_statement(sqlite3 *db, const char *sql, const char *src)
 {
   int rc;
   char *errmsg;
 
   rc = sqlite3_exec(db, sql, NULL, NULL, &errmsg);
   if(rc) {
-    TRACE(TRACE_ERROR, "SQLITE", "%s failed -- %s", sql, errmsg);
+    TRACE(TRACE_ERROR, "SQLITE", "%s: %s failed -- %s",
+	  src ?: sql, sql, errmsg);
     sqlite3_free(errmsg);
   }
   return rc;
@@ -86,23 +87,23 @@ db_get_int_from_query(sqlite3 *db, const char *query, int *v)
 
 
 int
-db_begin(sqlite3 *db)
+db_begin0(sqlite3 *db, const char *src)
 {
-  return db == NULL || db_one_statement(db, "BEGIN;");
+  return db == NULL || db_one_statement(db, "BEGIN;", src);
 }
 
 
 int
-db_commit(sqlite3 *db)
+db_commit0(sqlite3 *db, const char *src)
 {
-  return  db == NULL || db_one_statement(db, "COMMIT;");
+  return  db == NULL || db_one_statement(db, "COMMIT;", src);
 }
 
 
 int
-db_rollback(sqlite3 *db)
+db_rollback0(sqlite3 *db, const char *src)
 {
-  return  db == NULL || db_one_statement(db, "ROLLBACK;");
+  return  db == NULL || db_one_statement(db, "ROLLBACK;", src);
 }
 
 
@@ -117,7 +118,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
   char path[256];
   char buf[256];
 
-  db_one_statement(db, "pragma journal_mode=wal;");
+  db_one_statement(db, "pragma journal_mode=wal;", NULL);
 
   if(db_get_int_from_query(db, "pragma user_version", &ver)) {
     TRACE(TRACE_ERROR, "DB", "%s: Unable to query db version", dbname);
@@ -170,7 +171,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
 
     db_begin(db);
     snprintf(buf, sizeof(buf), "PRAGMA user_version=%d", ver);
-    if(db_one_statement(db, buf)) {
+    if(db_one_statement(db, buf, NULL)) {
       free(sql);
       break;
     }
@@ -290,6 +291,14 @@ db_pool_put(db_pool_t *dp, sqlite3 *db)
   int i;
   if(db == NULL)
     return;
+
+  if(!sqlite3_get_autocommit(db)) {
+    TRACE(TRACE_ERROR, "DB",
+	  "%s: db handle returned to pool while in transaction, closing handle",
+	  dp->dp_path);
+    sqlite3_close(db);
+    return;
+  }
 
   hts_mutex_lock(&dp->dp_mutex);
   for(i = 0; i < dp->dp_size; i++) {
