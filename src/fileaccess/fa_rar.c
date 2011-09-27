@@ -715,6 +715,9 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
   int64_t o;
   int x;
 
+  if(rfd->rfd_fpos + size > rf->rf_size)
+    size = rf->rf_size - rfd->rfd_fpos;
+
   while(c < size) {
     if((rs = rfd->rfd_segment) == NULL || 
        rfd->rfd_fpos < rs->rs_offset ||
@@ -726,7 +729,7 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       }
 
       TAILQ_FOREACH(rs, &rf->rf_segments, rs_link) {
-	if(rfd->rfd_fpos <= rs->rs_offset + rs->rs_size)
+	if(rfd->rfd_fpos < rs->rs_offset + rs->rs_size)
 	  break;
       }
       if(rs == NULL)
@@ -736,8 +739,6 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
     w = size - c;
     r = rs->rs_offset + rs->rs_size - rfd->rfd_fpos;
 
-    if(r == 0)
-      return c;
     if(w < r)
       r = w;
     
