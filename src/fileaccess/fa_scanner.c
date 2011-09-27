@@ -362,7 +362,8 @@ scanner_checkstop(void *opaque)
 static void
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s", s->s_url, fde->fde_url, src);
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s",
+	s->s_url, fde->fde_url, src);
 
   if(fde->fde_type == CONTENT_FILE)
     fde->fde_type = type_from_filename(fde->fde_filename);
@@ -384,7 +385,8 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 static void
 scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
-  TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s", s->s_url, fde->fde_url, src);
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s",
+	s->s_url, fde->fde_url, src);
   metadb_unparent_item(getdb(s), fde->fde_url);
   if(fde->fde_prop != NULL)
     prop_destroy(fde->fde_prop);
@@ -415,7 +417,8 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     break;
 
   case FA_NOTIFY_ADD:
-    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type), "notification");
+    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type),
+			"notification");
     break;
   }
   analyzer(s, 1);
@@ -436,7 +439,8 @@ rescan(scanner_t *s)
     return; 
 
   if(s->s_fd->fd_count != fd->fd_count) {
-    TRACE(TRACE_DEBUG, "FA", "%s: Rescanning found %d items, previously %d", s->s_url, fd->fd_count, s->s_fd->fd_count);
+    TRACE(TRACE_DEBUG, "FA", "%s: Rescanning found %d items, previously %d",
+	  s->s_url, fd->fd_count, s->s_fd->fd_count);
   }
 
   for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
@@ -497,9 +501,11 @@ doscan(scanner_t *s)
   if(s->s_fd == NULL) {
     s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
     if(s->s_fd != NULL)
-      TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning", s->s_url, s->s_fd->fd_count);
+      TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning",
+	    s->s_url, s->s_fd->fd_count);
   } else {
-    TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache", s->s_url, s->s_fd->fd_count);
+    TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache",
+	  s->s_url, s->s_fd->fd_count);
     pending_rescan = 1;
   }
   prop_set_int(s->s_loading, 0);
