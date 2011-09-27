@@ -178,7 +178,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
   if(strchr(url, '#')) {
     pm = fa_image_from_video(url, im);
     if(pm == NULL)
-      snprintf(errbuf, errlen, "%s: Unable to extract image", url);
+      snprintf(errbuf, errlen, "Unable to extract image");
     return pm;
   }
 
@@ -186,12 +186,12 @@ fa_imageloader(const char *url, const struct image_meta *im,
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
   if((avio = fa_libav_open_vpaths(url, 32768, vpaths)) == NULL) {
-    snprintf(errbuf, errlen, "%s: Unable to open file", url);
+    snprintf(errbuf, errlen, "Unable to open file");
     return NULL;
   }
 
   if(avio_read(avio, p, sizeof(p)) != sizeof(p)) {
-    snprintf(errbuf, errlen, "%s: file too short", url);
+    snprintf(errbuf, errlen, "File too short");
     fa_libav_close(avio);
     return NULL;
   }
@@ -233,14 +233,14 @@ fa_imageloader(const char *url, const struct image_meta *im,
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     codec = CODEC_ID_GIF;
   } else {
-    snprintf(errbuf, errlen, "%s: unknown format", url);
+    snprintf(errbuf, errlen, "Unknown format");
     fa_libav_close(avio);
     return NULL;
   }
 
   size_t s = avio_size(avio);
   if(s < 0) {
-    snprintf(errbuf, errlen, "%s: Can't read from non-seekable file", url);
+    snprintf(errbuf, errlen, "Can't read from non-seekable file");
     fa_libav_close(avio);
     return NULL;
   }
@@ -248,7 +248,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
   pm = pixmap_alloc_coded(NULL, s, codec);
 
   if(pm == NULL) {
-    snprintf(errbuf, errlen, "%s: no memory", url);
+    snprintf(errbuf, errlen, "Out of memory");
     fa_libav_close(avio);
     return NULL;
   }
@@ -262,7 +262,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
 
   if(r != pm->pm_size) {
     pixmap_release(pm);
-    snprintf(errbuf, errlen, "%s: read error", url);
+    snprintf(errbuf, errlen, "Read error");
     return NULL;
   }
   return pm;
