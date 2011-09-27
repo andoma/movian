@@ -287,6 +287,7 @@ rar_archive_load(rar_archive_t *ra)
   snprintf(filename, sizeof(filename), "%s", ra->ra_url);
 
   if(volume_index >= 0) {
+
     if((s = strrchr(filename, '.')) == NULL) {
       return -1;
     }
@@ -295,17 +296,19 @@ rar_archive_load(rar_archive_t *ra)
     for(s2 = s-1; s2 >= filename; s2--)
       if(*s2 == '.')
         break;
-    if(s2 >= filename && !strncmp(s2+1,"part", 4)) {
+    if(s2 >= filename && !strcmp(s2, ".part1.rar")) {
       /* first was part01 */
       if(volume_index == 0)
         volume_index = 2;
-      s2 += strlen(".part");
-      if(strlen(s2) == strlen("00.rar"))
-        sprintf(s2, "%02d.rar", volume_index);
-      else if(strlen(s2) == strlen("000.rar"))
-        sprintf(s2, "%03d.rar", volume_index);
-      else
-        return -1;
+      sprintf(s2, ".part%d.rar", volume_index);
+    } else if(s2 >= filename && !strcmp(s2, ".part01.rar")) {
+      if(volume_index == 0)
+        volume_index = 2;
+      sprintf(s2, ".part%02d.rar", volume_index);
+    } else if(s2 >= filename && !strcmp(s2, ".part001.rar")) {
+      if(volume_index == 0)
+        volume_index = 2;
+      sprintf(s2, ".part%03d.rar", volume_index);
     } else {
       s++;
       sprintf(s, "r%02d", volume_index);
@@ -433,13 +436,10 @@ rar_archive_load(rar_archive_t *ra)
       fa_close(fh);
       fh = NULL;
 
-
-      if(flags & EARC_NEXT_VOLUME)
+      if(flags & EARC_NEXT_VOLUME) {
 	goto open_volume; 
+      }
       return 0;
-     
-    } else {
-      printf("Unknown header 0x%x, skip\n", buf[2]);
     }
     free(hdr);
   }
