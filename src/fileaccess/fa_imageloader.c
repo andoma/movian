@@ -42,7 +42,8 @@ static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 static hts_mutex_t image_from_video_mutex;
 static AVCodecContext *pngencoder;
 
-static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im);
+static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
+				     char *errbuf, size_t errlen);
 
 /**
  *
@@ -175,12 +176,8 @@ fa_imageloader(const char *url, const struct image_meta *im,
   AVIOContext *avio;
   pixmap_t *pm;
 
-  if(strchr(url, '#')) {
-    pm = fa_image_from_video(url, im);
-    if(pm == NULL)
-      snprintf(errbuf, errlen, "Unable to extract image");
-    return pm;
-  }
+  if(strchr(url, '#'))
+    return fa_image_from_video(url, im, errbuf, errlen);
 
   if(!im->want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
@@ -296,7 +293,7 @@ ifv_close(void)
  */
 static pixmap_t *
 fa_image_from_video2(const char *url0, const image_meta_t *im, 
-		     const char *cacheid)
+		     const char *cacheid, char *errbuf, size_t errlen)
 {
   pixmap_t *pm = NULL;
   char *url = mystrdupa(url0);
@@ -310,11 +307,13 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     AVFormatContext *fctx;
     AVIOContext *avio;
     
-    if((avio = fa_libav_open(url, 65536, NULL, 0, FA_CACHE, NULL)) == NULL)
+    if((avio = fa_libav_open(url, 65536, errbuf, errlen,
+			     FA_CACHE, NULL)) == NULL)
       return NULL;
 
     if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {
       fa_libav_close(avio);
+      snprintf(errbuf, errlen, "Unable to open format");
       return NULL;
     }
 
@@ -337,11 +336,13 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     AVCodec *codec = avcodec_find_decoder(ctx->codec_id);
     if(codec == NULL) {
       fa_libav_close_format(fctx);
+      snprintf(errbuf, errlen, "Unable to find codec");
       return NULL;
     }
 
     if(avcodec_open(ctx, codec) < 0) {
       fa_libav_close_format(fctx);
+      snprintf(errbuf, errlen, "Unable to open codec");
       return NULL;
     }
 
@@ -365,14 +366,15 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
 
   if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
     ifv_close();
+    snprintf(errbuf, errlen, "Unable to seek to %"PRId64, ts);
     return NULL;
   }
   
   avcodec_flush_buffers(ifv_ctx);
 
-
+#define MAX_FRAME_SCAN 500
   
-  int cnt = 500;
+  int cnt = MAX_FRAME_SCAN;
   while(1) {
     int r;
 
@@ -381,9 +383,9 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     if(r == AVERROR(EAGAIN))
       continue;
     
-    if(r == AVERROR_EOF)
+    if(r == AVERROR_EOF) {
       break;
-
+    }
     if(r != 0) {
       ifv_close();
       break;
@@ -433,6 +435,8 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
 			 w, h, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
     if(sws == NULL) {
       ifv_close();
+      snprintf(errbuf, errlen, "Scaling failed");
+      pixmap_release(pm);
       return NULL;
     }
     
@@ -471,6 +475,9 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
   }
 
   av_free(frame);
+  if(pm == NULL)
+    snprintf(errbuf, errlen, "Frame not found (scanned %d)", 
+	     MAX_FRAME_SCAN - cnt);
   return pm;
 }
 
@@ -479,7 +486,8 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
  *
  */
 static pixmap_t *
-fa_image_from_video(const char *url0, const image_meta_t *im)
+fa_image_from_video(const char *url0, const image_meta_t *im,
+		    char *errbuf, size_t errlen)
 {
   pixmap_t *pm = NULL;
   char cacheid[512];
@@ -497,7 +505,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im)
   }
 
   hts_mutex_lock(&image_from_video_mutex);
-  pm = fa_image_from_video2(url0, im, cacheid);
+  pm = fa_image_from_video2(url0, im, cacheid, errbuf, errlen);
   hts_mutex_unlock(&image_from_video_mutex);
   return pm;
 }
