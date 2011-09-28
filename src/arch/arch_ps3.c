@@ -30,8 +30,10 @@
 #include <net/net.h>
 #include <net/netctl.h>
 
+#include <sysmodule/sysmodule.h>
 #include <psl1ght/lv2.h>
 #include <psl1ght/lv2/spu.h>
+#include <rtc.h>
 
 #include "threads.h"
 #include "atomic.h"
@@ -424,6 +426,7 @@ arch_set_default_paths(int argc, char **argv)
   showtime_persistent_path = strdup(buf);
   strcpy(x, "cache");
   showtime_cache_path = strdup(buf);
+  SysLoadModule(SYSMODULE_RTC);
 }
 
 
@@ -665,4 +668,26 @@ void
 hfree(void *ptr, size_t size)
 {
   Lv2Syscall1(349, (uint64_t)ptr);
+}
+
+
+void
+my_localtime(const time_t *now, struct tm *tm)
+{
+  rtc_datetime dt;
+  rtc_tick utc, local;
+
+  rtc_convert_time_to_datetime(&dt, *now);
+  rtc_convert_datetime_to_tick(&dt, &utc);
+  rtc_convert_utc_to_localtime(&utc, &local);
+  rtc_convert_tick_to_datetime(&dt, &local);
+
+  memset(tm, 0, sizeof(struct tm));
+
+  tm->tm_year = dt.year - 1900;
+  tm->tm_mon  = dt.month - 1;
+  tm->tm_mday = dt.day;
+  tm->tm_hour = dt.hour;
+  tm->tm_min  = dt.minute;
+  tm->tm_sec  = dt.second;
 }
