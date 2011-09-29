@@ -1,6 +1,6 @@
 Name:		showtime
 Version:	3.2.3
-Release:	1%{?dist}
+Release:	2%{?dist}
 Summary:	Showtime is a Linux based media player for usage on HTPC's.
 # buildt on fedora 15 with the rpmfusion free/nonfree repositories enabled
 # showtime source manually checked out and put into showtime-%{version}.tar.bz2 file
@@ -26,7 +26,7 @@ BuildRequires:	libXScrnSaver-devel
 BuildRequires:	mesa-libGL-devel
 BuildRequires:	mesa-libGLU-devel
 BuildRequires:	desktop-file-utils
-#BuildRequires:	libvdpau-devel
+BuildRequires:	libvdpau-devel
 
 #Requires:       ffmpeg >= 0.7
 Requires:	gtk2
@@ -42,7 +42,7 @@ Requires:	libXScrnSaver
 #Requires:	libXNVCtrl
 Requires:	mesa-libGL
 Requires:	mesa-libGLU
-#Requires:	libvdpau
+Requires:	libvdpau
 
 Requires(post): desktop-file-utils
 Requires(postun): desktop-file-utils
@@ -57,11 +57,11 @@ Easy to setup, no configuration files. All configuration is tuned from inside th
 %setup -q
 
 #
-# build now currently depends on the showtime branch of libav git repository 
+# build now currently depends on the showtime branch of libav git repository (ffmpeg static) ffmpeg newer then in dist repos.
 
 %build
 git checkout release/3.2
-./configure --release --prefix=/usr --disable-vdpau
+./configure --release --prefix=/usr
 make %{?_smp_mflags}
 
 
@@ -115,6 +115,9 @@ fi
 
 
 %changelog
+* Thu Sep 29 2011 Jonas Karlsson <jonas karlsson at fxdev dot com> 3.2.3-2
+- Update to enable vdpau
+
 * Thu Sep 22 2011 Jonas Karlsson <jonas Karlsson at fxdev dot com> 3.2.3
 - Showtime 3.2.3
 
