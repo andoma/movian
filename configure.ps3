@@ -79,7 +79,7 @@ EOF
 # 
 #
 cat >> ${CONFIG_MAK} <<EOF
-LDFLAGS_cfg  += -lvdec
+LDFLAGS_cfg  += -lvdec -lrtc
 LDFLAGS_cfg  += -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib
 LDFLAGS_cfg  += -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lnetctl -lsysmodule
 LDFLAGS_cfg  += -lfreetype

@@ -2,17 +2,22 @@
 
 #include "ext/sqlite/sqlite3.h"
 
-int db_one_statement(sqlite3 *db, const char *sql);
+int db_one_statement(sqlite3 *db, const char *sql, const char *src);
 
 int db_get_int_from_query(sqlite3 *db, const char *query, int *v);
 
 int db_get_int64_from_query(sqlite3 *db, const char *query, int64_t *v);
 
-int db_begin(sqlite3 *db);
+int db_begin0(sqlite3 *db, const char *src);
 
-int db_commit(sqlite3 *db);
+int db_commit0(sqlite3 *db, const char *src);
 
-int db_rollback(sqlite3 *db);
+int db_rollback0(sqlite3 *db, const char *src);
+
+#define db_begin(db)    db_begin0(db, __FUNCTION__)
+#define db_commit(db)   db_commit0(db, __FUNCTION__)
+#define db_rollback(db) db_rollback0(db, __FUNCTION__)
+
 
 int db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname);
 

@@ -20,6 +20,7 @@
 #include "showtime.h"
 #include "prop/prop.h"
 #include "callout.h"
+#include "arch/arch.h"
 
 static LIST_HEAD(, callout) callouts;
 
@@ -151,24 +152,19 @@ static prop_t *prop_unixtime;
 static void
 set_global_clock(struct callout *c, void *aux)
 {
-  time_t now, next;
+  time_t now;
   struct tm tm;
-	
+
   time(&now);
 	
   prop_set_int(prop_unixtime, now);
 
-  localtime_r(&now, &tm);
+  my_localtime(&now, &tm);
 
   prop_set_int(prop_hour, tm.tm_hour);
   prop_set_int(prop_minute, tm.tm_min);
   prop_set_int(prop_dayminute, tm.tm_hour * 60 + tm.tm_min);
-
-  tm.tm_sec = 0;
-  tm.tm_min++;
-
-  next = mktime(&tm);
-  callout_arm(&callout_clock, set_global_clock, NULL, next - now);
+  callout_arm(&callout_clock, set_global_clock, NULL, 61 - tm.tm_sec);
 }
 
 

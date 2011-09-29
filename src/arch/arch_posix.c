@@ -441,3 +441,10 @@ hfree(void *ptr, size_t size)
 {
   munmap(ptr, size);
 }
+
+
+void
+my_localtime(const time_t *now, struct tm *tm)
+{
+  localtime_r(now, tm);
+}

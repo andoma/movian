@@ -1681,7 +1681,7 @@ static void
 mtm_rethink(media_track_mgr_t *mtm)
 {
   media_track_t *mt, *best = NULL;
-  int thres = 1;
+  int thres = 20;
   int best_score = 0;
 
   if (mtm->mtm_current_url) {

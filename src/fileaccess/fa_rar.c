@@ -138,8 +138,11 @@ typedef struct rar_file {
   int64_t rf_size;
   rar_archive_t *rf_archive;
 
+  char rf_method;
+  char rf_unpver;
+
   LIST_ENTRY(rar_file) rf_link;
-		       
+
 } rar_file_t;
 
 
@@ -160,7 +163,8 @@ typedef struct rar_segment {
  */
 static rar_file_t *
 rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
-		      const char *name, int create)
+		      const char *name, int create,
+		      char unpver, char method)
 {
   rar_file_t *rf;
   const char *s, *n = name;
@@ -198,9 +202,14 @@ rar_archive_find_file(rar_archive_t *ra, rar_file_t *parent,
     rf->rf_name = strdup(n);
     rf->rf_type = s ? CONTENT_DIR : CONTENT_FILE;
     LIST_INSERT_HEAD(&parent->rf_files, rf, rf_link);
+    if(rf->rf_type == CONTENT_FILE) {
+      rf->rf_unpver = unpver;
+      rf->rf_method = method;
+    }
   } 
 
-  return s != NULL ? rar_archive_find_file(ra, rf, s, create) : rf;
+  return s != NULL ? rar_archive_find_file(ra, rf, s, create,
+					   unpver, method) : rf;
 }
 
 
@@ -278,6 +287,7 @@ rar_archive_load(rar_archive_t *ra)
   snprintf(filename, sizeof(filename), "%s", ra->ra_url);
 
   if(volume_index >= 0) {
+
     if((s = strrchr(filename, '.')) == NULL) {
       return -1;
     }
@@ -286,17 +296,19 @@ rar_archive_load(rar_archive_t *ra)
     for(s2 = s-1; s2 >= filename; s2--)
       if(*s2 == '.')
         break;
-    if(s2 >= filename && !strncmp(s2+1,"part", 4)) {
+    if(s2 >= filename && !strcmp(s2, ".part1.rar")) {
       /* first was part01 */
       if(volume_index == 0)
         volume_index = 2;
-      s2 += strlen(".part");
-      if(strlen(s2) == strlen("00.rar"))
-        sprintf(s2, "%02d.rar", volume_index);
-      else if(strlen(s2) == strlen("000.rar"))
-        sprintf(s2, "%03d.rar", volume_index);
-      else
-        return -1;
+      sprintf(s2, ".part%d.rar", volume_index);
+    } else if(s2 >= filename && !strcmp(s2, ".part01.rar")) {
+      if(volume_index == 0)
+        volume_index = 2;
+      sprintf(s2, ".part%02d.rar", volume_index);
+    } else if(s2 >= filename && !strcmp(s2, ".part001.rar")) {
+      if(volume_index == 0)
+        volume_index = 2;
+      sprintf(s2, ".part%03d.rar", volume_index);
     } else {
       s++;
       sprintf(s, "r%02d", volume_index);
@@ -386,10 +398,9 @@ rar_archive_load(rar_archive_t *ra)
       memcpy(fname, hdr + x, nsize);
       fname[nsize] = 0;
 
-      if(unpver == 20 && method == '0' && 
-	 ((flags & LHD_WINDOWMASK) != LHD_DIRECTORY) &&
-	 (rf = rar_archive_find_file(ra, ra->ra_root, fname, 1)) != NULL) {
-	
+      if(((flags & LHD_WINDOWMASK) != LHD_DIRECTORY) &&
+	 (rf = rar_archive_find_file(ra, ra->ra_root, fname, 1,
+				     unpver, method)) != NULL) {
 	rs = malloc(sizeof(rar_segment_t));
 	rs->rs_volume = rv;
 	rs->rs_offset = rf->rf_size;
@@ -425,13 +436,10 @@ rar_archive_load(rar_archive_t *ra)
       fa_close(fh);
       fh = NULL;
 
-
-      if(flags & EARC_NEXT_VOLUME)
+      if(flags & EARC_NEXT_VOLUME) {
 	goto open_volume; 
+      }
       return 0;
-     
-    } else {
-      printf("Unknown header 0x%x, skip\n", buf[2]);
     }
     free(hdr);
   }
@@ -546,7 +554,7 @@ rar_file_find(const char *url)
   if(ra == NULL)
     return NULL;
 
-  rf = *r ? rar_archive_find_file(ra, ra->ra_root, r, 0) : ra->ra_root;
+  rf = *r ? rar_archive_find_file(ra, ra->ra_root, r, 0, 0, 0) : ra->ra_root;
 
   if(rf == NULL)
     rar_archive_unref(ra);
@@ -663,6 +671,13 @@ rar_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
     return NULL;
   }
 
+  if(rf->rf_method != '0') {
+    rar_file_unref(rf);
+    snprintf(errbuf, errlen,
+	     "Showtime does not support compressed files in RAR archives");
+    return NULL;
+  }
+
   rfd = calloc(1, sizeof(rar_fd_t));
   rfd->rfd_file = rf;
 
@@ -700,6 +715,9 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
   int64_t o;
   int x;
 
+  if(rfd->rfd_fpos + size > rf->rf_size)
+    size = rf->rf_size - rfd->rfd_fpos;
+
   while(c < size) {
     if((rs = rfd->rfd_segment) == NULL || 
        rfd->rfd_fpos < rs->rs_offset ||
@@ -716,18 +734,18 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
       }
       if(rs == NULL)
 	return -1;
-
     }
 
     w = size - c;
     r = rs->rs_offset + rs->rs_size - rfd->rfd_fpos;
+
     if(w < r)
       r = w;
     
     if(rfd->rfd_fh == NULL) {
       rfd->rfd_fh = fa_open(rs->rs_volume->rv_url, NULL, 0);
       if(rfd->rfd_fh == NULL)
-	return -1;
+	return -2;
     }
 
     o = rfd->rfd_fpos - rs->rs_offset + rs->rs_voffset;
@@ -737,10 +755,9 @@ rar_read(fa_handle_t *handle, void *buf, size_t size)
     }
     x = fa_read(rfd->rfd_fh, buf + c, r);
     
-    if(x != r) {
+    if(x != r)
       return -1;
-    }
-    
+
     rfd->rfd_fpos += x;
     c += x;
   }
