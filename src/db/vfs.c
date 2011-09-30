@@ -57,7 +57,6 @@ vfs_fs_Close(sqlite3_file *id)
   vfsfile_t *vf = (vfsfile_t *)id;
   close(vf->fd);
   free(vf->fname);
-  free(vf);
   return SQLITE_OK;
 }
 
