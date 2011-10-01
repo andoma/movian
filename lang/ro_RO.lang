@@ -1,6 +1,6 @@
 language: Romanian
 native: Română
-maintainer: Internetus România <internetusromania@gmail.com>
+maintainer: Alexandru Alin <alexandru_alin_2011@k.ro>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -108,11 +108,11 @@ msg: Listă de așteptare
 #
 id: Playback status
 # Missing translation
-msg: 
+msg: Informații redare
 
 id: Unable to start video playback
 # Missing translation
-msg: 
+msg: Imposibil de redat fișierul video
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -271,7 +271,7 @@ msg: Imposibil de citit CDul
 #
 id: DVD read error, restarting disc
 # Missing translation
-msg: 
+msg: Eroare la citirea DVDului, necesara restartare disc
 
 #
 # ./src/backend/htsp/htsp.c
@@ -296,7 +296,7 @@ msg: Activează Spotify
 
 id: Forget me
 # Missing translation
-msg: 
+msg: Uita-mă
 
 id: Friends
 msg: Prieteni
@@ -336,7 +336,7 @@ msg: Lista de fișiere Spotify
 
 id: Spotify: Connection error: %s
 # Missing translation
-msg: 
+msg: Eroare de conectare:
 
 id: Starred
 msg: Notă
@@ -504,7 +504,7 @@ id: Screensaver delay
 msg: Timpul până la activarea screensaverului
 
 id: Userinterface size
-msg: Mărimea interfaței utilizatorului
+msg: Mărimea interfeței utilizatorului
 
 id: Vertical underscan
 msg: Underscan vertical
@@ -544,29 +544,29 @@ msg: Serviciul nu a fost găsit
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 # Missing translation
-msg: 
+msg: Forțare level 4.2 pentru conținut în level %d.%d. Aceasta poate cauza o redare eronată.
 
 id: Unable to accelerate %s, library not loaded.
 # Missing translation
-msg: 
+msg: Imposibil de accelerat %s, librăria nu a fost încărcată.
 
 id: Unable to open Cell codec. Error 0x%x
 # Missing translation
-msg: 
+msg: Imposibil de deschis codecul Cell. Eroare 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
 # Missing translation
-msg: 
+msg: Imposibil de deschis codecul Cell. Imposibil de alocat %d bytes de RAM
 
 id: Unable to query Cell codec. Error 0x%x
 # Missing translation
-msg: 
+msg: Imposibil de deschis codecul Cell. Eroare 0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Întotdeauna încearcă să incarci o subtitrare
+msg: Întotdeauna încearcă să încarci o subtitrare
 
 id: Auto
 msg: Automat
