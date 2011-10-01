@@ -25,6 +25,9 @@ msg: 視訊設定
 id: Added by: %s
 msg: Added by: %s
 
+id: Played %d times
+msg: 已播放次數： %d
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -199,9 +202,6 @@ msg: 使用者介面動態效果
 id: Master volume: %d dB
 msg: 主音量： %d dB
 
-id: Starwars scroller tilt
-msg: 星際大戰式畫面傾斜效果
-
 id: Top bar navigation buttons
 msg: 頂部導覽工具列
 
@@ -305,7 +305,7 @@ id: New albums on Spotify
 msg: Spotify 上的新專輯
 
 id: New releases
-msg: New releases
+msg: 新上架
 
 id: Playlists
 msg: 播放列表
@@ -339,6 +339,15 @@ msg: Starred
 #
 id: Bookmarks
 msg: 書籤
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: 無法處理 %d 格式的檔案
+
+id: Unable to open file: %s
+msg: 無法開啟檔案： %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -524,7 +533,11 @@ id: Device not found
 msg: 找不到裝置
 
 id: Malformed URI after device
-msg: Malformed URI after device
+# Missing translation
+msg: 
+
+id: Malformed URI after service
+msg: 服務位址不正確
 
 id: Service not found
 msg: 找不到服務
@@ -562,6 +575,9 @@ msg: 置中
 id: Color
 msg: 字幕色彩
 
+id: Controls if video playback should restart where last played
+msg: 設定影片是否自中斷處開始播放
+
 id: Enable VDPAU
 msg: 啟用 VDPAU
 
@@ -577,11 +593,17 @@ msg: 忽略字幕既有樣式
 id: Left
 msg: 左側
 
+id: No
+msg: 否
+
 id: Outline color
 msg: 外框色彩
 
 id: Outline size
 msg: 外框大小
+
+id: Resume video playback
+msg: 自中斷處繼續播放影片
 
 id: Right
 msg: 右側
@@ -612,4 +634,7 @@ msg: 視訊加速與顯示模式
 
 id: Video playback
 msg: 視訊播放
+
+id: Yes
+msg: 是
 
