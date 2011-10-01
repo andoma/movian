@@ -56,13 +56,13 @@ id: Height: %d px
 msg: Wysokość: %d px
 
 id: Renderer: %s
-msg: Renering: %s
+msg: Rendering: %s
 
 id: System info
 msg: Informacje o systemie
 
 id: Total system RAM: %d kB
-msg: Całkowita dostępna pamieć RAM: %d kB
+msg: Całkowita dostępna pamięć RAM: %d kB
 
 id: Version: %s
 msg: Wersja: %s
@@ -108,11 +108,11 @@ msg: Lista odtwarzania
 #
 id: Playback status
 # Missing translation
-msg: 
+msg: Status odtwarzania
 
 id: Unable to start video playback
 # Missing translation
-msg: 
+msg: Nie można odtworzyć pliku wideo
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -169,7 +169,7 @@ id: Delete
 msg: Usuń
 
 id: Enqueue
-msg: Kolejka
+msg: Kolejkuj
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -221,7 +221,7 @@ msg: Korzystaj z opensubtitles.org
 #
 id: System is low on memroy (%d kB RAM available)
 # Missing translation
-msg: 
+msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 
 #
 # ./src/audio/audio.c
@@ -239,10 +239,10 @@ id: Phantom LFE
 msg: Bass
 
 id: Phantom center
-msg: Głosnik centralny
+msg: Głośnik centralny
 
 id: Select audio output device and related configurations
-msg: Wybór i ustawianie urządzenia wyjsciowego audio
+msg: Wybór i ustawianie urządzenia wyjściowego audio
 
 id: Small front speakers
 msg: Głośniki przednie
@@ -252,7 +252,7 @@ msg: Zamień bass i głośnik centralny z surround
 
 id: Switching audio output to %s
 # Missing translation
-msg: 
+msg: Zmiana wyjścia audio na %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -271,7 +271,7 @@ msg: Nie można otworzyć CD
 #
 id: DVD read error, restarting disc
 # Missing translation
-msg: 
+msg: Błąd odczytu DVD, restart płyty
 
 #
 # ./src/backend/htsp/htsp.c
@@ -296,7 +296,7 @@ msg: Włącz Spotify
 
 id: Forget me
 # Missing translation
-msg: 
+msg: Nie zapamiętuj
 
 id: Friends
 msg: Przyjaciele
@@ -332,11 +332,11 @@ id: Spotify offers you legal and free access to a huge library of music. To use 
 msg: Spotify oferuje bezpłatny i legalny dostęp do ogromnej biblioteki z muzyką. Aby korzystać z Spotify w Showtime wymagane jest konto Premium Spotify.\nWięcej informacji na temat Spotify, pod adresem http://www.spotify.com/\n\nAby uzyskać dostęp do dowolnej funkcji Spotify w Showtime, musisz podać login i hasło.
 
 id: Spotify playlists
-msg: Lista odtwarzania z Spotyfy
+msg: Lista odtwarzania z Spotify
 
 id: Spotify: Connection error: %s
 # Missing translation
-msg: 
+msg: Spotify: Błąd połączenia: %s
 
 id: Starred
 msg: Najwyżej oceniane
@@ -429,7 +429,7 @@ id: Subtitle scaling
 msg: Skalowanie napisów
 
 id: Video zoom
-msg: Zoom 
+msg: Zbliżenie 
 
 #
 # ./src/navigator.c
@@ -442,27 +442,27 @@ msg: Brak wsparcia dla URL
 #
 id: Invalud URI
 # Missing translation
-msg: 
+msg: Błędny URI
 
 id: Plugin ID %s does not exist
 # Missing translation
-msg: 
+msg: Wtyczka o ID %s nie istnieje
 
 id: Plugin ID %s have no download URL
 # Missing translation
-msg: 
+msg: Wtyczka o ID %s nie posiada adresu URL
 
 id: Unable to load plugin.json: %s
 # Missing translation
-msg: 
+msg: Nie można załadować plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 # Missing translation
-msg: 
+msg: Nie można załadować plugin.json: Uszkodzony plik JSON
 
 id: Unable to request plugin repository: %s
 # Missing translation
-msg: 
+msg: Nie można pobrać repozytorium wtyczki: %s
 
 #
 # ./src/runcontrol.c
@@ -477,7 +477,7 @@ msg: Sterowanie
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: Dostępne
+msg: Włączone
 
 id: Name
 msg: Nazwa
@@ -550,29 +550,29 @@ msg: Nie znaleziono usługi
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
 # Missing translation
-msg: 
+msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem wideo
 
 id: Unable to accelerate %s, library not loaded.
 # Missing translation
-msg: 
+msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
 
 id: Unable to open Cell codec. Error 0x%x
 # Missing translation
-msg: 
+msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
 # Missing translation
-msg: 
+msg: Nie można uruchomić kodeka Cell. Nie można przydzielić %d bajtów RAM
 
 id: Unable to query Cell codec. Error 0x%x
 # Missing translation
-msg: 
+msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Staraj sie wybierać napisy
+msg: Staraj się wybierać napisy
 
 id: Auto
 msg: Automatycznie
@@ -587,13 +587,13 @@ id: Enable VDPAU
 msg: Włącz VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Wymuś wyswietlanie napisów
+msg: Wymuś wyświetlanie napisów
 
 id: Generic settings for video subtitles
-msg: Generuj ustawienia napisów
+msg: Ustawienia domyślne dla napisów
 
 id: Ignore embedded styling
-msg: Ignoruj ustawiony styl
+msg: Ignoruj wbudowany styl
 
 id: Left
 msg: Lewy
@@ -617,7 +617,7 @@ id: Stretch video to widescreen
 msg: Rozciągnij do panoramicznego
 
 id: Subtitle position
-msg: Pozycja napisów
+msg: Położenie napisów
 
 id: Subtitle size
 msg: Rozmiar napisów
