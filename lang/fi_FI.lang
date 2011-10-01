@@ -25,6 +25,10 @@ msg: Videon asetukset
 id: Added by: %s
 msg: Lisännyt: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: UI Animaatiot
 id: Master volume: %d dB
 msg: Äänenvoimakkuus: %d dB
 
-id: Starwars scroller tilt
-msg: Star Wars -vieritys
-
 id: Top bar navigation buttons
 msg: Yläpalkin navigointinapit
 
@@ -346,6 +347,17 @@ msg: Tähdellä merkityt
 #
 id: Bookmarks
 msg: Kirjanmerkit
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -585,6 +597,10 @@ msg: Keskitys
 id: Color
 msg: Värit
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU päälle / pois
 
@@ -600,11 +616,19 @@ msg: Ohita asetetut tyylit
 id: Left
 msg: Vasen
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Reunan väri
 
 id: Outline size
 msg: Reunan koko
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Oikea
@@ -635,4 +659,8 @@ msg: Videokuvan kiihdytys ja näytön toiminta
 
 id: Video playback
 msg: Videotoisto
+
+id: Yes
+# Missing translation
+msg: 
 

@@ -25,6 +25,10 @@ msg: Videoinnstillinger
 id: Added by: %s
 msg: Lagt til av: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Heftige animasjoner i brukergrensesnittet
 id: Master volume: %d dB
 msg: Hovedvolum: %d dB
 
-id: Starwars scroller tilt
-msg: Vis brukergrensesnittet som i Starwars åpningsscene
-
 id: Top bar navigation buttons
 msg: Navigasjonknapper på toppen av skjermen
 
@@ -346,6 +347,17 @@ msg: Stjernemerket
 #
 id: Bookmarks
 msg: Bokmerker
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -577,6 +589,10 @@ msg: Sentrert
 id: Color
 msg: Farge
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
@@ -592,11 +608,19 @@ msg: Overse innebygde stilkoder
 id: Left
 msg: Venstre
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Farge på konturer
 
 id: Outline size
 msg: Størrelse på konturer
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Høyre
@@ -627,4 +651,8 @@ msg: Videoakselerasjon og innstillinger for visning av video
 
 id: Video playback
 msg: Videoavspiling
+
+id: Yes
+# Missing translation
+msg: 
 

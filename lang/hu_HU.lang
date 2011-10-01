@@ -25,6 +25,10 @@ msg: Videó beállitások
 id: Added by: %s
 msg: Hozzáadott: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Animácios felület
 id: Master volume: %d dB
 msg: Fő hangerő: %d dB
 
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
-
 id: Top bar navigation buttons
 msg: Felső sáv navigációs gombok
 
@@ -346,6 +347,17 @@ msg: Csillagos
 #
 id: Bookmarks
 msg: Könyvjelzők
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -577,6 +589,10 @@ msg: Középső
 id: Color
 msg: Szin
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU Engedélyezés
 
@@ -592,11 +608,19 @@ msg: Beágyazott stílus figyelmen kívül hagyása
 id: Left
 msg: Ball
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Körvonal színe
 
 id: Outline size
 msg: Körvonal mérete
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Jobb
@@ -627,4 +651,8 @@ msg: Videó gyorsitás es kijelzo működés
 
 id: Video playback
 msg: Videó lejátszás
+
+id: Yes
+# Missing translation
+msg: 
 

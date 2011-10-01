@@ -25,6 +25,10 @@ msg: Видео настройки
 id: Added by: %s
 msg: Добавено от: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -181,8 +185,9 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура на ядрото на GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
@@ -198,9 +203,6 @@ msg: Анимация на интерфейса
 
 id: Master volume: %d dB
 msg: Сила на звука: %d dB
-
-id: Starwars scroller tilt
-msg: Интерфейс в стил Starwars
 
 id: Top bar navigation buttons
 msg: Бутони за навигация в горния панел
@@ -341,6 +343,17 @@ id: Bookmarks
 msg: Маркери
 
 #
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
@@ -433,8 +446,9 @@ msg: Няма handler за URL
 #
 # ./src/plugins.c
 #
-id: Invalid URI
-msg: Невалиден URL 
+id: Invalud URI
+# Missing translation
+msg: 
 
 id: Plugin ID %s does not exist
 msg: Plugin ID %s не съществува
@@ -565,6 +579,10 @@ msg: Център
 id: Color
 msg: Цвят
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Включи VDPAU
 
@@ -580,11 +598,19 @@ msg: Игнорирай вградения стил
 id: Left
 msg: Ляво
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Цвят на контура
 
 id: Outline size
 msg: Размер на контура
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Дясно
@@ -615,4 +641,8 @@ msg: Видео ускорение и поведение на екрана
 
 id: Video playback
 msg: Видео възпроизвеждане
+
+id: Yes
+# Missing translation
+msg: 
 

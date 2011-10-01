@@ -25,6 +25,10 @@ msg: 视频设置
 id: Added by: %s
 msg: 由%s添加
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Fancy界面动画
 id: Master volume: %d dB
 msg: 主音量: %d dB
 
-id: Starwars scroller tilt
-msg: 星战式滚动条斜率
-
 id: Top bar navigation buttons
 msg: 工具栏导航按钮
 
@@ -346,6 +347,17 @@ msg: 已加星
 #
 id: Bookmarks
 msg: 收藏夹
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -577,6 +589,10 @@ msg: 居中
 id: Color
 msg: 颜色
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: 启用VDPAU
 
@@ -592,11 +608,19 @@ msg: 忽略嵌入样式
 id: Left
 msg: 靠左
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: 边框颜色
 
 id: Outline size
 msg: 边框大小
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: 靠右
@@ -627,4 +651,8 @@ msg: 视频加速及显示方式
 
 id: Video playback
 msg: 视频播放
+
+id: Yes
+# Missing translation
+msg: 
 

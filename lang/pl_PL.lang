@@ -25,6 +25,10 @@ msg: Ustawienia wideo
 id: Added by: %s
 msg: Dodane przez: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -107,11 +111,9 @@ msg: Lista odtwarzania
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
 msg: Status odtwarzania
 
 id: Unable to start video playback
-# Missing translation
 msg: Nie można odtworzyć pliku wideo
 
 #
@@ -201,9 +203,6 @@ msg: Animacja interfejsu
 id: Master volume: %d dB
 msg: Regulacja głośności: %d dB
 
-id: Starwars scroller tilt
-msg: Napisy wyświetlane ala Gwiezdne Wojny
-
 id: Top bar navigation buttons
 msg: Przyciski na pasku nawigacyjnym
 
@@ -220,7 +219,6 @@ msg: Korzystaj z opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memroy (%d kB RAM available)
-# Missing translation
 msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 
 #
@@ -251,7 +249,6 @@ id: Swap LFE+center with surround
 msg: Zamień bass i głośnik centralny z surround
 
 id: Switching audio output to %s
-# Missing translation
 msg: Zmiana wyjścia audio na %s
 
 #
@@ -270,7 +267,6 @@ msg: Nie można otworzyć CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
 msg: Błąd odczytu DVD, restart płyty
 
 #
@@ -295,7 +291,6 @@ id: Enable Spotify
 msg: Włącz Spotify
 
 id: Forget me
-# Missing translation
 msg: Nie zapamiętuj
 
 id: Friends
@@ -335,7 +330,6 @@ id: Spotify playlists
 msg: Lista odtwarzania z Spotify
 
 id: Spotify: Connection error: %s
-# Missing translation
 msg: Spotify: Błąd połączenia: %s
 
 id: Starred
@@ -346,6 +340,17 @@ msg: Najwyżej oceniane
 #
 id: Bookmarks
 msg: Zakładki
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -441,27 +446,21 @@ msg: Brak wsparcia dla URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
 msg: Błędny URI
 
 id: Plugin ID %s does not exist
-# Missing translation
 msg: Wtyczka o ID %s nie istnieje
 
 id: Plugin ID %s have no download URL
-# Missing translation
 msg: Wtyczka o ID %s nie posiada adresu URL
 
 id: Unable to load plugin.json: %s
-# Missing translation
 msg: Nie można załadować plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
 msg: Nie można załadować plugin.json: Uszkodzony plik JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
 msg: Nie można pobrać repozytorium wtyczki: %s
 
 #
@@ -549,23 +548,18 @@ msg: Nie znaleziono usługi
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
 msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem wideo
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
 msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
 msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
 msg: Nie można uruchomić kodeka Cell. Nie można przydzielić %d bajtów RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
 msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 
 #
@@ -583,6 +577,10 @@ msg: Środek
 id: Color
 msg: Kolor
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Włącz VDPAU
 
@@ -598,11 +596,19 @@ msg: Ignoruj wbudowany styl
 id: Left
 msg: Lewy
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Kolor obrysu
 
 id: Outline size
 msg: Rozmiar obrysu
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Prawy
@@ -633,4 +639,8 @@ msg: Akceleracja wideo i zachowanie wyświetlacza
 
 id: Video playback
 msg: Odtwarzanie wideo
+
+id: Yes
+# Missing translation
+msg: 
 

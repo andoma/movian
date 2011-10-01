@@ -25,6 +25,10 @@ msg: Video-instellingen
 id: Added by: %s
 msg: Toegevoegd door: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -199,9 +203,6 @@ msg: Mooie UI-effecten
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
 
-id: Starwars scroller tilt
-msg: Kanteling Starwars-scroller
-
 id: Top bar navigation buttons
 msg: Navigatieknoppen bovenste balk
 
@@ -343,6 +344,17 @@ msg: Favorieten
 #
 id: Bookmarks
 msg: Bladwijzers
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -574,6 +586,10 @@ msg: Centreren
 id: Color
 msg: Kleur
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
@@ -589,11 +605,19 @@ msg: Geïntegreerde stijl nergeren
 id: Left
 msg: Links
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Omtrekkleur
 
 id: Outline size
 msg: Omtrekgrootte
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Rechts
@@ -624,4 +648,8 @@ msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
+
+id: Yes
+# Missing translation
+msg: 
 

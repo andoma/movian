@@ -25,6 +25,10 @@ msg: Videoeinstellungen
 id: Added by: %s
 msg: Hinzugefügt von: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -199,9 +203,6 @@ msg: schicke Menüanimationen
 id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
-id: Starwars scroller tilt
-msg: Neigung des Starwars-Scrollers
-
 id: Top bar navigation buttons
 msg: Navigationsknöpfe in der oberen Leiste
 
@@ -343,6 +344,17 @@ msg: Starred
 #
 id: Bookmarks
 msg: Lesezeichen
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -574,6 +586,10 @@ msg: Zentriert
 id: Color
 msg: Farbe
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
@@ -589,11 +605,19 @@ msg: eingebetteten Stil ignorieren
 id: Left
 msg: Links
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Rahmenfarbe
 
 id: Outline size
 msg: Rahmengröße
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Rechts
@@ -624,4 +648,8 @@ msg: Videobeschleunigung und Anzeigeverhalten
 
 id: Video playback
 msg: Videowiedergabe
+
+id: Yes
+# Missing translation
+msg: 
 

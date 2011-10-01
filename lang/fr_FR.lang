@@ -25,6 +25,10 @@ msg: Paramètres vidéo
 id: Added by: %s
 msg: Ajouté par : %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Animations de l'UI
 id: Master volume: %d dB
 msg: Volume du master : %d dB
 
-id: Starwars scroller tilt
-msg: Inclinaison du défilement à la Starwars
-
 id: Top bar navigation buttons
 msg: boutons de navigation de la barre du haut
 
@@ -346,6 +347,17 @@ msg: Noté
 #
 id: Bookmarks
 msg: Favoris
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -577,6 +589,10 @@ msg: Centrer
 id: Color
 msg: Couleur
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Activer VDPAU
 
@@ -592,11 +608,19 @@ msg: Ignorer les styles embarqués
 id: Left
 msg: Gauche
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Couleur du contour
 
 id: Outline size
 msg: Taille du contour
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Droite
@@ -627,4 +651,8 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
+
+id: Yes
+# Missing translation
+msg: 
 

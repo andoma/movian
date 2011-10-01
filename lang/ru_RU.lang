@@ -25,6 +25,10 @@ msg: Нaстрoйки видеo
 id: Added by: %s
 msg: Дoбaвил: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Анимaция интерфейсa
 id: Master volume: %d dB
 msg: Общaя грoмкoсть: %d dB
 
-id: Starwars scroller tilt
-msg: Интерфейс в стиле Starwars
-
 id: Top bar navigation buttons
 msg: Верхняя пaнель кнoпoк нaвигaции
 
@@ -347,6 +348,17 @@ msg: Starrеd
 #
 id: Bookmarks
 msg: Зaклaдки
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -584,6 +596,10 @@ msg: Центр
 id: Color
 msg: Цвет
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Включить VDPAU
 
@@ -599,11 +615,19 @@ msg: Игнорировать встроенный стиль
 id: Left
 msg: Влево
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Цвет контура
 
 id: Outline size
 msg: Размер контура
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Вправо
@@ -634,4 +658,8 @@ msg: Ускорение видео и поведения отображения
 
 id: Video playback
 msg: Видеo вoспрoизведение
+
+id: Yes
+# Missing translation
+msg: 
 

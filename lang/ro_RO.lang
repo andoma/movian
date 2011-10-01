@@ -25,6 +25,10 @@ msg: Setări video
 id: Added by: %s
 msg: Tradus de : %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -107,11 +111,9 @@ msg: Listă de așteptare
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
 msg: Informații redare
 
 id: Unable to start video playback
-# Missing translation
 msg: Imposibil de redat fișierul video
 
 #
@@ -201,9 +203,6 @@ msg: Animații UI
 id: Master volume: %d dB
 msg: Volumul general : %d dB
 
-id: Starwars scroller tilt
-msg: Inclinare scroller tip Starwars
-
 id: Top bar navigation buttons
 msg: Butoanele de navigare de pe bara de sus
 
@@ -270,7 +269,6 @@ msg: Imposibil de citit CDul
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
 msg: Eroare la citirea DVDului, necesara restartare disc
 
 #
@@ -295,7 +293,6 @@ id: Enable Spotify
 msg: Activează Spotify
 
 id: Forget me
-# Missing translation
 msg: Uita-mă
 
 id: Friends
@@ -335,7 +332,6 @@ id: Spotify playlists
 msg: Lista de fișiere Spotify
 
 id: Spotify: Connection error: %s
-# Missing translation
 msg: Eroare de conectare:
 
 id: Starred
@@ -346,6 +342,17 @@ msg: Notă
 #
 id: Bookmarks
 msg: Favorite
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -543,23 +550,18 @@ msg: Serviciul nu a fost găsit
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
 msg: Forțare level 4.2 pentru conținut în level %d.%d. Aceasta poate cauza o redare eronată.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
 msg: Imposibil de accelerat %s, librăria nu a fost încărcată.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
 msg: Imposibil de deschis codecul Cell. Eroare 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
 msg: Imposibil de deschis codecul Cell. Imposibil de alocat %d bytes de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
 msg: Imposibil de deschis codecul Cell. Eroare 0x%x
 
 #
@@ -577,6 +579,10 @@ msg: Centru
 id: Color
 msg: Culoare
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Activează VDPAU
 
@@ -592,11 +598,19 @@ msg: Ignoră stilul embedded
 id: Left
 msg: Stânga
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Culoare contur
 
 id: Outline size
 msg: Grosime contur
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Dreapta
@@ -627,4 +641,8 @@ msg: Accelerarea video și comportamentul afișajului
 
 id: Video playback
 msg: Setări video
+
+id: Yes
+# Missing translation
+msg: 
 

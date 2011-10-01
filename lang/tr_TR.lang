@@ -25,6 +25,10 @@ msg: Video Ayarları
 id: Added by: %s
 msg: Added by: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -201,9 +205,6 @@ msg: Fancy UI animations
 id: Master volume: %d dB
 msg: Ses seviyesi: %d dB
 
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
-
 id: Top bar navigation buttons
 msg: Top Bar navigasyon düğmeleri
 
@@ -346,6 +347,17 @@ msg: Starred
 #
 id: Bookmarks
 msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -584,6 +596,10 @@ msg: merkez
 id: Color
 msg: renk
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU etkin
 
@@ -599,11 +615,19 @@ msg: Ignore embedded styling
 id: Left
 msg: Sol
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Outline Rengi
 
 id: Outline size
 msg: Outline boyutu
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Sağ
@@ -634,4 +658,8 @@ msg: Video hızlandırma ve görüntü davranışı
 
 id: Video playback
 msg: Video oynatma listesi
+
+id: Yes
+# Missing translation
+msg: 
 
