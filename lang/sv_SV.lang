@@ -25,6 +25,9 @@ msg: Videoinställningar
 id: Added by: %s
 msg: Tillagd av: %s
 
+id: Played %d times
+msg: Spelad %d gånger
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -199,9 +202,6 @@ msg: Häftiga anomationer i gränsnittet
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
-id: Starwars scroller tilt
-msg: Luta gränssnittet som en Starwars-scroller
-
 id: Top bar navigation buttons
 msg: Knappar för navigation i toppen av skärmen
 
@@ -339,6 +339,15 @@ msg: Stjärnor
 #
 id: Bookmarks
 msg: Bokmärken
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan inte hantera fil innehåll av typen %d
+
+id: Unable to open file: %s
+msg: Kan ej öppna fil: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -565,6 +574,9 @@ msg: Centrerad
 id: Color
 msg: Färg
 
+id: Controls if video playback should restart where last played
+msg: Kontrollerar om videouppspelning ska starta där den slutade
+
 id: Enable VDPAU
 msg: Aktivera VDPAU
 
@@ -580,11 +592,17 @@ msg: Ignorera inbäddade stilkoder
 id: Left
 msg: Vänster
 
+id: No
+msg: Nej
+
 id: Outline color
 msg: Färg på konturer
 
 id: Outline size
 msg: Storlek på konturer
+
+id: Resume video playback
+msg: Återuppta videouppspelning
 
 id: Right
 msg: Höger
@@ -615,4 +633,7 @@ msg: Videoacceleration och inställningar för videopresentation
 
 id: Video playback
 msg: Videouppspelning
+
+id: Yes
+msg: Ja
 
