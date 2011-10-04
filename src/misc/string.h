@@ -58,6 +58,15 @@ char *utf8_from_bytes(const char *str, int len, const uint16_t *table);
 
 int hexnibble(char c);
 
+void ucs2_to_utf8(uint8_t *dst, size_t dstlen,
+		  const uint8_t *src, size_t srclen);
+
+size_t utf8_to_ucs2(uint8_t *dst, const char *src);
+
+size_t utf8_to_ascii(uint8_t *dst, const char *src);
+
+
+
 
 typedef struct {
   const char *id, *title;

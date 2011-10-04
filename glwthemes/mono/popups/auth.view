@@ -40,10 +40,12 @@ widget(container_x, {
 	HORIZONTAL_SEPARATOR();
 
 	widget(label, {
+	  .hidden = $self.disableUsername;
 	  .caption = _("Username");
 	});
       
 	popupInputField(
+	  .hidden = $self.disableUsername;
  	  widget(text, {
 	    .id = "username";
 	    .focusable = true;

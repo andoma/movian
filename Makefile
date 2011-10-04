@@ -146,12 +146,13 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_zlib.c \
 	src/fileaccess/fa_bundle.c \
 	src/fileaccess/fa_sidfile.c \
+	src/fileaccess/fa_nativesmb.c \
 
 SRCS-$(CONFIG_LIBGME)   += src/fileaccess/fa_gmefile.c
 
-SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
+#SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
 
-SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c
+#SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c
 
 SRCS-$(CONFIG_LOCATEDB) += src/fileaccess/fa_locatedb.c
 

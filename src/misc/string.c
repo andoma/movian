@@ -1097,3 +1097,75 @@ charset_get_name(const void *p)
       return charsets[i].title;
   return "???";
 }
+
+/**
+ *
+ */
+void
+ucs2_to_utf8(uint8_t *dst, size_t dstlen, const uint8_t *src, size_t srclen)
+{
+  int c, r;
+  while(dstlen > 3 && srclen >= 2) {
+    c = src[0] | src[1] << 8;
+    if(c == 0)
+      break;
+    src += 2;
+    srclen -= 2;
+    r = utf8_put((char *)dst, c);
+    dst += r;
+    dstlen -= r;
+  }
+  *dst = 0;
+}
+
+
+/**
+ *
+ */
+size_t
+utf8_to_ucs2(uint8_t *dst, const char *src)
+{
+  int c;
+  size_t o = 0;
+  while((c = utf8_get(&src)) != 0) {
+    if(c > 0xffff)
+      return -1;
+    
+    if(dst != NULL) {
+      dst[o] = c;
+      dst[o+1] = c >> 8;
+    }
+    o+=2;
+  }
+  if(dst != NULL) {
+    dst[o] = 0;
+    dst[o+1] = 0;
+  }
+  o+=2;
+  return o;
+}
+
+
+/**
+ *
+ */
+size_t
+utf8_to_ascii(uint8_t *dst, const char *src)
+{
+  int c;
+  size_t o = 0;
+  while((c = utf8_get(&src)) != 0) {
+    if(c > 0xff)
+      return -1;
+    
+    if(dst != NULL) {
+      dst[o] = c;
+    }
+    o+=1;
+  }
+  if(dst != NULL) {
+    dst[o] = 0;
+  }
+  o+=1;
+  return o;
+}

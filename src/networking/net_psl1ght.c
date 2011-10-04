@@ -378,6 +378,13 @@ tcp_close(tcpcon_t *tc)
 
 
 
+void
+tcp_shutdown(tcpcon_t *tc)
+{
+  shutdown(tc->fd, SHUT_RDWR);
+}
+
+
 /**
  *
  */
