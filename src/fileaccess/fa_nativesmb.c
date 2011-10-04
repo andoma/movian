@@ -38,6 +38,8 @@
 #error No crypto
 #endif
 
+#define SAMBA_NEED_AUTH ((void *)-1)
+
 #define SMB_ECHO_INTERVAL 30
 
 #define SMB_ERROR_IO    -1
@@ -951,7 +953,8 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
  *
  */
 static int
-smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen)
+smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
+	       int non_interactive)
 {
   SMB_SETUP_ANDX_req_t *req;
   SMB_SETUP_ANDX_reply_t *reply;
@@ -984,6 +987,9 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen)
     char id[256];
     char name[256];
     char *password_cleartext = NULL;
+
+    if(retry_reason && non_interactive)
+      return FAP_STAT_NEED_AUTH;
 
     snprintf(id, sizeof(id), "smb:connection:%s:%d",
 	     cc->cc_hostname, cc->cc_port);
@@ -1163,17 +1169,22 @@ static void cifs_periodic(struct callout *c, void *opaque);
  *
  */
 static cifs_connection_t *
-cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen)
+cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
+		    int non_interactive)
 {
   cifs_connection_t *cc;
 
   hts_mutex_lock(&smb_global_mutex);
 
-  LIST_FOREACH(cc, &cifs_connections, cc_link)
-    if(!strcmp(cc->cc_hostname, hostname) && cc->cc_port == port &&
-       !cc->cc_broken && cc->cc_status < CC_ERROR)
-      break;
-  
+  if(!non_interactive) {
+    LIST_FOREACH(cc, &cifs_connections, cc_link)
+      if(!strcmp(cc->cc_hostname, hostname) && cc->cc_port == port &&
+	 !cc->cc_broken && cc->cc_status < CC_ERROR)
+	break;
+  } else {
+    cc = NULL;
+  }
+
   if(cc == NULL) {
     cc = calloc(1, sizeof(cifs_connection_t));
     cc->cc_uid = 1;
@@ -1204,7 +1215,15 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen)
       } else {
 	SMBTRACE("%s:%d Protocol negotiated", hostname, port);
 
-	if(smb_setup_andX(cc, cc->cc_errbuf, sizeof(cc->cc_errbuf))) {
+	int r;
+	r = smb_setup_andX(cc, cc->cc_errbuf, sizeof(cc->cc_errbuf),
+			   non_interactive);
+
+	if(r) {
+	  if(r == -2) {
+	    cifs_release_connection(cc);
+	    return SAMBA_NEED_AUTH;
+	  }
 	  cc->cc_status = CC_ERROR;
 	} else {
 	  SMBTRACE("%s:%d Session setup", hostname, port);
@@ -1334,7 +1353,7 @@ cifs_disconnect(cifs_connection_t *cc)
  */
 static cifs_tree_t *
 smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
-		      char *errbuf, size_t errlen)
+		      char *errbuf, size_t errlen, int non_interactive)
 {
   SMB_TREE_CONNECT_ANDX_req_t *req;
   SMB_TREE_CONNECT_ANDX_reply_t *reply;
@@ -1349,14 +1368,17 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
 
   cc->cc_auto_close = 0;
 
-  LIST_FOREACH(ct, &cc->cc_trees, ct_link) {
-    if(!strcmp(ct->ct_share, share)) {
-      ct->ct_refcount++;
-      cc->cc_refcount--;
-      break;
+  if(!non_interactive) {
+    LIST_FOREACH(ct, &cc->cc_trees, ct_link) {
+      if(!strcmp(ct->ct_share, share)) {
+	ct->ct_refcount++;
+	cc->cc_refcount--;
+	break;
+      }
     }
+  } else {
+    ct = NULL;
   }
-
   if(ct == NULL) {
 
     int password_len;
@@ -1377,13 +1399,18 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
       snprintf(name, sizeof(name), "Samba share '\\%s' on '%s'",
 	       share, cc->cc_hostname);
 
+      if(non_interactive && retry_reason) {
+	cifs_release_tree(ct);
+	return SAMBA_NEED_AUTH;
+      }
+
       r = keyring_lookup(id, NULL, &password_cleartext, NULL, NULL,
 			 name, retry_reason,
 			 (retry_reason ? KEYRING_QUERY_USER : 0) |
 			 KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
 
       if(r == -1) {
-      /* Rejected */
+	/* Rejected */
 	snprintf(ct->ct_errbuf, sizeof(ct->ct_errbuf),
 		 "Authentication rejected by user");
 	ct->ct_status = CT_ERROR;
@@ -1487,7 +1514,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
  */
 static cifs_tree_t *
 cifs_get_tree(const char *url, char *filename, size_t filenamesize,
-	      char *errbuf, size_t errlen)
+	      char *errbuf, size_t errlen, int non_interactive)
 {
   char hostname[128];
   int port;
@@ -1511,9 +1538,12 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
 
   snprintf(filename, filenamesize, "%s", fn ?: "");
 
-  if((cc = cifs_get_connection(hostname, port, errbuf, errlen)) == NULL)
+  if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
+			       non_interactive)) == NULL)
     return NULL;
-  return smb_tree_connect_andX(cc, p, errbuf, errlen);
+  if(cc == SAMBA_NEED_AUTH)
+    return SAMBA_NEED_AUTH;
+  return smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
 }
 
 
@@ -1760,7 +1790,7 @@ smb_scandir(fa_dir_t *fa, const char *url, char *errbuf, size_t errlen)
   char filename[512];
   cifs_tree_t *ct;
 
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen);
+  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen, 0);
   if(ct == NULL)
     return -1;
 
@@ -1798,7 +1828,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   const SMB_NTCREATE_ANDX_resp_t *resp;
   smb_file_t *sf;
 
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen);
+  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen, 0);
   if(ct == NULL)
     return NULL;
   cifs_connection_t *cc = ct->ct_cc;
@@ -1847,7 +1877,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
 
   resp = rbuf;
   sf->sf_fid = resp->fid;
-  sf->sf_file_size = htole_64(resp->file_size);
+  sf->sf_file_size = letoh_64(resp->file_size);
   sf->h.fh_proto = fap;
   free(rbuf);
   return &sf->h;
@@ -1896,12 +1926,15 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   const SMB_READ_ANDX_resp_t *resp;
   void *rbuf;
   int rlen;
-  size_t cnt;
+  size_t cnt, rcnt;
   size_t total = 0;
   cifs_tree_t *ct = sf->sf_ct;
 
   req = alloca(sizeof(SMB_READ_ANDX_req_t));
   memset(req, 0, sizeof(SMB_READ_ANDX_req_t));
+
+  if(sf->sf_pos + size > sf->sf_file_size)
+    size = sf->sf_file_size - sf->sf_pos;
 
   hts_mutex_lock(&smb_global_mutex);
 
@@ -1933,17 +1966,17 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
       return -1;
     }
 
-    cnt = letoh_16(resp->data_length_low);
-    memcpy(buf, rbuf + letoh_16(resp->data_offset), cnt);
+    rcnt = letoh_16(resp->data_length_low);
+    memcpy(buf, rbuf + letoh_16(resp->data_offset), rcnt);
     free(rbuf);
 
-    if(cnt == 0)
-      break;
+    sf->sf_pos += rcnt;
+    total += rcnt;
+    size -= rcnt;
+    buf += rcnt;
 
-    sf->sf_pos += cnt;
-    total += cnt;
-    size -= cnt;
-    buf += cnt;
+    if(rcnt < cnt)
+      break;
   }
   hts_mutex_unlock(&smb_global_mutex);
   return total;
@@ -2000,16 +2033,19 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   char filename[512];
   cifs_tree_t *ct;
 
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen);
+  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen,
+		     non_interactive);
+  if(ct == SAMBA_NEED_AUTH)
+    return FAP_STAT_NEED_AUTH;
   if(ct == NULL)
-    return -1;
+    return FAP_STAT_ERR;
 
   int r = cifs_stat(ct, filename, fs, errbuf, errlen);
   if(r != 0)
-    return -1;
+    return FAP_STAT_ERR;
 
   cifs_release_tree(ct);
-  return 0;
+  return FAP_STAT_OK;
 }
 
 
