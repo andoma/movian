@@ -150,10 +150,6 @@ SRCS += src/fileaccess/fileaccess.c \
 
 SRCS-$(CONFIG_LIBGME)   += src/fileaccess/fa_gmefile.c
 
-#SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
-
-#SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c
-
 SRCS-$(CONFIG_LOCATEDB) += src/fileaccess/fa_locatedb.c
 
 SRCS-$(CONFIG_SPOTLIGHT) += src/fileaccess/fa_spotlight.c

@@ -118,7 +118,6 @@ for opt do
   ;;
   --enable-all)
 	  enable libgme
-	  enable libsmbclient
 	  enable libsidplay2
   ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
@@ -567,16 +566,6 @@ if enabled libgme; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
 fi
 
-
-#
-# libsmbclient
-#
-if enabled libsmbclient; then
-    
-    check_header "libsmbclient.h" || fatal "libsmbclient" "Missing include file libsmbclient.h"
-    check_lib    "smbclient"      || fatal "libsmbclient" "Unable to link with libsmbclient"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsmbclient"
-fi
 
 #
 # libsidplay2 and libresid-builder

@@ -52,9 +52,7 @@ CONFIG_LIST="
  nvctrl
  libopenspc
  libgme
- tinysmb
  libxss
- libsmbclient
  libxv
  serdev
  openssl
