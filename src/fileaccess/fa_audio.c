@@ -305,7 +305,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       if(r == AVERROR(EAGAIN))
 	continue;
       
-      if(r == AVERROR_EOF) {
+      if(r == AVERROR_EOF || r == AVERROR(EIO)) {
 	mb = MB_SPECIAL_EOF;
 	continue;
       }
