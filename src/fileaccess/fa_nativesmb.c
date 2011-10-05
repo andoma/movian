@@ -773,10 +773,12 @@ nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
   int len;
   char *buf;
 
-  if(tcp_read_data(cc->cc_tc, (void *)&nbt, 4))
-    return -1;
-  
-  len = ntohs(nbt.length);
+  do {
+    if(tcp_read_data(cc->cc_tc, (void *)&nbt, 4))
+      return -1;
+    
+    len = ntohs(nbt.length);
+  } while(len == 0);
 
   buf = malloc(len);
   if(tcp_read_data(cc->cc_tc, buf, len)) {
@@ -1929,6 +1931,9 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   size_t cnt, rcnt;
   size_t total = 0;
   cifs_tree_t *ct = sf->sf_ct;
+
+  if(size == 0)
+    return 0;
 
   req = alloca(sizeof(SMB_READ_ANDX_req_t));
   memset(req, 0, sizeof(SMB_READ_ANDX_req_t));
