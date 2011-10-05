@@ -1932,9 +1932,6 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   size_t total = 0;
   cifs_tree_t *ct = sf->sf_ct;
 
-  if(size == 0)
-    return 0;
-
   req = alloca(sizeof(SMB_READ_ANDX_req_t));
   memset(req, 0, sizeof(SMB_READ_ANDX_req_t));
 

@@ -232,6 +232,8 @@ int
 fa_read(void *fh_, void *buf, size_t size)
 {
   fa_handle_t *fh = fh_;
+  if(size == 0)
+    return 0;
   int r = fh->fh_proto->fap_read(fh, buf, size);
 #ifdef FA_DUMP
   if(fh->fh_dump_fd != -1) {
