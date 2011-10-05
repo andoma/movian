@@ -1,6 +1,6 @@
 ﻿language: Polish
 native: Polski
-maintainer: sebf <sebf@ps3-hack.com.pl>
+maintainer: Cichy <ml.cichy@gmail.com>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -27,7 +27,7 @@ msg: Dodane przez: %s
 
 id: Played %d times
 # Missing translation
-msg: 
+msg: Odtworzono %d razy
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -258,7 +258,7 @@ id: Invalid CD URL
 msg: Nieprawidłowy adres URL
 
 id: Invalid CD track
-msg: Bład odczytu utworów z CD
+msg: Błąd odczytu utworów z CD
 
 id: Unable to open CD
 msg: Nie można otworzyć CD
@@ -285,7 +285,7 @@ msg: Szukaj
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Automayczne logowanie przy starcie programu
+msg: Automatyczne logowanie przy starcie programu
 
 id: Enable Spotify
 msg: Włącz Spotify
@@ -346,11 +346,11 @@ msg: Zakładki
 #
 id: Can't handle content type %d
 # Missing translation
-msg: 
+msg: Nieobsługiwana zawartość: %d
 
 id: Unable to open file: %s
 # Missing translation
-msg: 
+msg: Nie można otworzyć pliku: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -491,7 +491,7 @@ id: Applications and installed plugins
 msg: Aplikacje i wtyczki
 
 id: Discovered media sources
-msg: Znalezione media
+msg: Wykryte media
 
 id: Global settings
 msg: Ustawienia globalne
@@ -500,7 +500,7 @@ msg: Ustawienia globalne
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Ustawienia wyświetlacza oraz interfejsu użytkownika
+msg: Ustawienia wyświetlania oraz interfejsu użytkownika
 
 id: Horizontal underscan
 msg: Przesunięcie poziome
@@ -579,7 +579,7 @@ msg: Kolor
 
 id: Controls if video playback should restart where last played
 # Missing translation
-msg: 
+msg: Odtwórz od ostatniego miejsca
 
 id: Enable VDPAU
 msg: Włącz VDPAU
@@ -598,7 +598,7 @@ msg: Lewy
 
 id: No
 # Missing translation
-msg: 
+msg: Nie
 
 id: Outline color
 msg: Kolor obrysu
@@ -608,7 +608,7 @@ msg: Rozmiar obrysu
 
 id: Resume video playback
 # Missing translation
-msg: 
+msg: Wznów odtwarzanie wideo
 
 id: Right
 msg: Prawy
@@ -642,5 +642,5 @@ msg: Odtwarzanie wideo
 
 id: Yes
 # Missing translation
-msg: 
+msg: Tak
 
