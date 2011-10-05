@@ -400,9 +400,9 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_setting_sv_delta = 
     settings_create_int(mp->mp_setting_subtitle_root, "svdelta",
-			_p("Subtitle delay"), 0, NULL, -60, 60,
-			1, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
-			"s", mp->mp_pc, NULL, NULL);
+			_p("Subtitle delay"), 0, NULL, -60000, 60000,
+			100, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
+			"ms", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_sub_scale = 
     settings_create_int(mp->mp_setting_subtitle_root, "subscale",
@@ -1402,7 +1402,7 @@ static void
 update_sv_delta(void *opaque, int v)
 {
   media_pipe_t *mp = opaque;
-  mp->mp_svdelta = v * 1000000;
+  mp->mp_svdelta = v * 1000;
   TRACE(TRACE_DEBUG, "SVSYNC", "Set to %ds", v);
 }
 
