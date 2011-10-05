@@ -26,8 +26,7 @@ id: Added by: %s
 msg: Tilføjet af: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg: Afspillet %d gange
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -345,12 +344,10 @@ msg: Bogmærker
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Kan ikke håndtere indholdstype %d
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Kan ikke åbne filen: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -578,8 +575,7 @@ id: Color
 msg: Farve
 
 id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
+msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
 
 id: Enable VDPAU
 msg: Aktiver VDPAU
@@ -597,8 +593,7 @@ id: Left
 msg: Venstre
 
 id: No
-# Missing translation
-msg: 
+msg: Nej
 
 id: Outline color
 msg: Farve på kontur
@@ -607,8 +602,7 @@ id: Outline size
 msg: Størrelse på kontur
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Fortsæt video afspilning
 
 id: Right
 msg: Højre
@@ -641,6 +635,4 @@ id: Video playback
 msg: Videoafspilning
 
 id: Yes
-# Missing translation
-msg: 
-
+msg: Ja
