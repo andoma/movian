@@ -731,7 +731,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   gc->gc_freeze(w);
 
   w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
-  gvo->gvo_alignment = vo->vo_alignment;
+  gvo->gvo_alignment = w->glw_alignment;
 
   gc->gc_set_default_size(w, gv->w.glw_root->gr_fontsize * 1.5);
 
