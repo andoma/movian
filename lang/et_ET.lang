@@ -1,0 +1,569 @@
+﻿language: Estonian
+native: Eesti
+maintainer: 2600baud
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Heli seaded
+
+id: Languages
+msg: Keeled
+
+id: Settings
+msg: Seaded
+
+id: Subtitle settings
+msg: Subtiitrite seaded
+
+id: Video settings
+msg: Videon seaded
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Lisas: %s
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Väljas
+
+id: On
+msg: Sees
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Vaba süsteemi RAM: %d kB
+
+id: Detected CPUs: %d
+msg: Avastatud CPUd: %d
+
+id: Display info
+msg: Ekraani info
+
+id: Framerate: %.2f Hz
+msg: FPS: %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Kõrgus: %d px
+
+id: Renderer: %s
+msg: Renderdaja: %s
+
+id: System info
+msg: Süsteemi info
+
+id: Total system RAM: %d kB
+msg: Kogu süsteemi RAM: %d kB
+
+id: Version: %s
+msg: Versioon: %s
+
+id: Width: %d px
+msg: Laius: %d px
+
+id: Windowmanager: %s
+msg: Akende juhtimine: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Lisateave
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Avaleht
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Ressursi ei suuda avada
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Lehe laadimise viga
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Esitusjärjekord
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Peatükk %d / %d
+
+id: Title %d / %d
+msg: Pealkiri %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Rada %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU on liiga aeglane video dekodeerimiseks
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Cancel
+msg: Loobu
+
+id: OK
+msg: OK
+
+id: Password
+msg: Salasõna
+
+id: Remember me
+msg: Jäta mind meelde
+
+id: Username
+msg: Kasutajanimi
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Meediat ei laetud
+
+#
+# ./glwthemes/mono/skins/grey/infobox.skin
+#
+id: Delete
+msg: Kustuta
+
+id: Enqueue
+msg: Lisa ootelisti
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Audio väljund
+
+id: CPUs
+msg: CPUd
+
+id: GPU & Display
+msg: GPU & ekraan
+
+id: GPU Core temperature: %d / %d °
+msg: GPU temperatuur: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Reguleeri taustvärvi vastavalt päeva ajale
+
+id: Audio muted
+msg: Heli vaigistatud
+
+id: Fancy UI animations
+msg: UI animatsioon
+
+id: Master volume: %d dB
+msg: Peaheli tugevus: %d dB
+
+id: Starwars scroller tilt
+msg: Star Wars - kallutus
+
+id: Top bar navigation buttons
+msg: Ülemised navigaeerimise nupud
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: opensubtitles.org seaded
+
+id: Use opensubtitles.org
+msg: opensubtitles.org kasutamine
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video sünkroniseerimise viivitus
+
+id: Current output device
+msg: Valitud väljundseade
+
+id: Force stereo downmix
+msg: Ühenda stereokanalid
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-keskmine
+
+id: Select audio output device and related configurations
+msg: Vali heliväljundseade ja sellega seotud konfiguratsioon
+
+id: Small front speakers
+msg: Väikesed esimesed kõlarid
+
+id: Swap LFE+center with surround
+msg: Vaheta LFE+keskmine Surroundiga
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Vigane CD URL
+
+id: Invalid CD track
+msg: Vigane CD rada
+
+id: Unable to open CD
+msg: Ei suuda avada CD-d
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Vigane HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Otsi
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automaatne sisselogimine Showtime avamisel
+
+id: Enable Spotify
+msg: Luba Spotify
+
+id: Friends
+msg: Sõbrad
+
+id: High bitrate
+msg: Kõrge bitrate
+
+id: Inbox
+msg: Sisse
+
+id: New albums on Spotify
+msg: Spotify uued albumid 
+
+id: New releases
+msg: Uued väljalasked
+
+id: Playlists
+msg: Loendid
+
+id: Relogin (switch user)
+msg: Uuesti logimine (vaheta kasutajat)
+
+id: Search result
+msg: Otsingu tulemused
+
+id: Spotify friends
+msg: Spotify sõbrad
+
+id: Spotify music service
+msg: Spotify muusika teenus
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify pakub legaalset ja vaba juurdepääsu tohutule muusikakogule. Spotify kasutamiseks Showtimega vajad Spotify Premium kontot.\nKui soovite rohkem informatsiooni Spotify kohta, külastage http://www.spotify.com/\n\nSinult küsitakse Spotify kasutajanime ja parooli esmasel Spotify funktsioonide kasutamisel Showtime-ga.
+
+id: Spotify playlists
+msg: Spotyfy esitusloendid
+
+id: Starred
+msg: Tähistatud
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Järjehoidjad
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Otsi kasutades Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Otsi kasutades spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Keel
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Keele koodid peaks olema konfigureeritud kolmetähelise ISO koodiga, näiteks (eng, swe, est)
+
+id: Preferred languages
+msg: Eelistatud keeled
+
+id: Primary audio language code
+msg: Peamine audio keele kood
+
+id: Primary subtitle language code
+msg: Peamine subtiitrite keele kood
+
+id: SRT character set
+msg: SRT märgistik
+
+id: Secondary audio language code
+msg: Sekundaarne audio keele kood
+
+id: Secondary subtitle language code
+msg: Sekundaarne subtiitrite keele kood
+
+id: Tertiary audio language code
+msg: Kolmanda taseme audio keele kood
+
+id: Tertiary subtitle language code
+msg: Kolmanda taseme subtiitrite keele kood
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automaatne TV on/off
+
+id: Input source
+msg: Sisendi allikas
+
+id: LG Television set
+msg: LG televiisor
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Klaviatuuri ja puldi klahvide seadistamine
+
+id: Keymapper
+msg: Klahvide häälestus
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Joonda subtiitrid videoaknasse
+
+id: Audio delay
+msg: Heli viivitus
+
+id: Subtitle delay
+msg: Subtiitrite viivitus
+
+id: Subtitle scaling
+msg: Subtiitrite suurus
+
+id: Video zoom
+msg: Video suurendus
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Puudub URL töötleja
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Vigane URI
+
+id: Plugin ID %s does not exist
+msg: Pluginat ID %s ei eksisteeri
+
+id: Plugin ID %s have no download URL
+msg: Pluginal ID %s ei ole allalaadimise URLi
+
+id: Unable to load plugin.json: %s
+msg: Ei suuda laadida plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Ei suuda laadida plugin.json: Vale JSON
+
+id: Unable to request plugin repository: %s
+msg: Ei suuda esitada päringut plugina hoidlale: %s 
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automaatne ootereziim
+
+id: Run control
+msg: Käivituskontroll
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Lubatud
+
+id: Name
+msg: Nimi
+
+id: Type
+msg: Tüüp
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Rakendused ja paigaldatud pluginad
+
+id: Discovered media sources
+msg: Avastatud meedia allikad
+
+id: Global settings
+msg: Üldised seaded
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Ekraan ja kasutajaliides
+
+id: Horizontal underscan
+msg: Horisontaalne underscan
+
+id: Screensaver delay
+msg: Ekranisäästja viivitus
+
+id: Userinterface size
+msg: Kasutajaliidese suurus
+
+id: Vertical underscan
+msg: Vertikaalne underscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Täisekraanirežiim
+
+id: Map mouse wheel to up/down
+msg: Lisa hiire scrollimine üles/alla
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Lubatud koduekraanil
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Seadet ei leitud
+
+id: Malformed URI after device
+msg: Vigane URI (seadmel)
+
+id: Malformed URI after service
+msg: Vigane URI (teenusel)
+
+id: Service not found
+msg: Teenust ei leitud
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Proovi alati valida subtiitreid
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Keskel
+
+id: Color
+msg: Värv
+
+id: Enable VDPAU
+msg: Luba VDPAU
+
+id: Force Level 4.2 for h264 content
+msg: Sunni 4.2 tase h264 sisule
+
+id: Force subtitles to reside on video frame
+msg: Sunni subtiitrid video raami
+
+id: Generic settings for video subtitles
+msg: Üldised subtiitrite seaded
+
+id: Ignore embedded styling
+msg: Ignoreeri sisemist kujundust
+
+id: Left
+msg: Vasakul
+
+id: Outline color
+msg: Kontuuri värv
+
+id: Outline size
+msg: Kontuuri suurus
+
+id: Right
+msg: Paremal
+
+id: Shadow color
+msg: Varju värv
+
+id: Shadow offset
+msg: Varju nihe
+
+id: Stretch video to widescreen
+msg: Venita video laiekraanile
+
+id: Subtitle position
+msg: Subtiitrite asukoht
+
+id: Subtitle size
+msg: Subtiitrite suurus
+
+id: Subtitle styling
+msg: Subtiitrite kujundus
+
+id: Subtitles
+msg: Subtiitrid
+
+id: Video acceleration and display behaviour
+msg: Video kiirendamine ja ekraani toimimine
+
+id: Video playback
+msg: Video taasesitamine
