@@ -342,10 +342,10 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
   return js_http_request(cx, rval, url, argobj, postobj, hdrobj);
 }
 
-
 /**
  *
  */
+#if ENABLE_RELEASE == 0
 JSBool 
 js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 	       jsval *argv, jsval *rval)
@@ -370,7 +370,7 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
   *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
   return JS_TRUE;
 }
-
+#endif
 
 /**
  *

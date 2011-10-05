@@ -502,7 +502,9 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("print",            js_print,    1, 0, 0),
     JS_FS("httpGet",          js_httpGet, 2, 0, 0),
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
+#if ENABLE_RELEASE == 0
     JS_FS("readFile",         js_readFile, 1, 0, 0),
+#endif
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
     JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
