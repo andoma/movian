@@ -1,4 +1,4 @@
-#import "skin://nav.skin"
+#import "theme://include/nav.view"
 
 $view.canSlideShow = $page.model.contents == "images";
 $view.canCoverFlow = ($page.model.contents == "images" ||

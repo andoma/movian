@@ -58,7 +58,7 @@
     widget(container_z, {
       .width ?= WIDTH;
       widget(backdrop, {
-	.source = "skin://gfx/hsliderbackground.png";
+	.source = "theme://graphics/hsliderbackground.png";
 	.border = 5;
 	.padding = -5;
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -72,7 +72,7 @@
 	  .alwaysGrabKnob = true;
 	  widget(backdrop, {
 	    .width = $ui.size;
-	    .source = "skin://gfx/hsliderknob.png";
+	    .source = "theme://graphics/hsliderknob.png";
 	    .border = 6;
 	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	  });
@@ -92,7 +92,7 @@
 
 #define commandSlider(VALUE, MIN, MAX, STEP, CAPTION, ENABLED=true, HIDDEN=false) {
   widget(backdrop, {
-    .source = "skin://gfx/border-tiny.png";
+    .source = "theme://graphics/border-tiny.png";
     .border = 4;
     .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
     
@@ -104,7 +104,7 @@
       bind(VALUE);
       .alwaysGrabKnob = true;
       widget(backdrop, {
-	.source = "skin://gfx/focused.png";
+	.source = "theme://graphics/focused.png";
 	.border =  5;
 	.padding = [0, -3];
 	.additive = true;
@@ -185,7 +185,7 @@
 
 #define commandGroup(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/blackdrop.png";
+    .source = "theme://graphics/blackdrop.png";
     .border = 12;
     .alphaSelf = 0.8;
     BODY;
@@ -197,7 +197,7 @@
 
 #define commandGroupFullWidth(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/blackdrop.png";
+    .source = "theme://graphics/blackdrop.png";
     .border = 12;
     .alphaSelf = 0.66;
     .leftBorder = false;
@@ -213,13 +213,13 @@
     .height = $ui.size + 6;
     widget(backdrop, {
       .width = 30;
-      .source = "skin://gfx/tab-top.png";
+      .source = "theme://graphics/tab-top.png";
       .border = [2,0,2,0];
     });
 
     BODY;
     widget(backdrop, {
-      .source = "skin://gfx/tab-top.png";
+      .source = "theme://graphics/tab-top.png";
       .border = [2,0,2,0];
     });
     
@@ -230,8 +230,8 @@
 #define commandTab(PAGEPROP, CAPTION, PAGENUM) {
   widget(backdrop, {
     .source = select(PAGEPROP == PAGENUM,
-		     "skin://gfx/tab-selected.png",
-		     "skin://gfx/tab-unselected.png");
+		     "theme://graphics/tab-selected.png",
+		     "theme://graphics/tab-unselected.png");
     .border  = [15,0];
     .padding = [8,0];
     widget(label, {
@@ -279,16 +279,16 @@ widget(container_y, {
     commandGroup(widget(container_z, {
       .width = $ui.size * 4;
       widget(image, {
-	.source = "skin://gfx/clock.png";
+	.source = "theme://graphics/clock.png";
 	.hqScaling = true;
       });
       widget(image, {
-	.source = "skin://gfx/clock-hand-short.png";
+	.source = "theme://graphics/clock-hand-short.png";
 	.angle = ($global.clock.hour % 12) * 30 + 
 	  ($global.clock.minute) / 2;
       });
       widget(image, {
-	.source = "skin://gfx/clock-hand-long.png";
+	.source = "theme://graphics/clock-hand-long.png";
 	.angle = $global.clock.minute * 6;
       });
     }));
@@ -497,7 +497,7 @@ widget(container_y, {
       cloner($global.media.current.seekindex.positions, backdrop, {
 	.alphaSelf = 0.2 + (isFocused() || isHovered());
 	.width = $ui.size * 7 * 16 / 9;
-	.source = "skin://gfx/border.png";
+	.source = "theme://graphics/border.png";
 	.borderOnly = true;
 	.border = 12;
 	.padding = -4;

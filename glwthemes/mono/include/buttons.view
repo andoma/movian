@@ -231,7 +231,7 @@
 #define _gloss() {
   widget(backdrop, {
     .additive = true;
-    .source = "skin://gfx/bar-gloss.png";
+    .source = "theme://graphics/bar-gloss.png";
     .border = [2,4,2,4];
     .padding = [5,0,5,0];
     .color = [0.3, 0.3, 0.3];
@@ -246,7 +246,7 @@
     widget(container_z, {
       widget(backdrop, {
 	.focusable = ENABLED;
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -274,7 +274,7 @@
     widget(container_z, {
       widget(backdrop, {
 	.focusable = ENABLED;
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -305,7 +305,7 @@
     widget(container_z, {
       widget(backdrop, {
 	.focusable = ENABLED;
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -348,7 +348,7 @@
     widget(container_z, {
       widget(backdrop, {
 	
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -381,7 +381,7 @@
     widget(container_z, {
       widget(backdrop, {
 	.focusable = ENABLED;
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -407,7 +407,7 @@
   widget(container_z, {
     .filterConstraintX = true;
     widget(backdrop, {
-      .source = "skin://gfx/bar4.png";
+      .source = "theme://graphics/bar4.png";
       .border = [6,4,6,4];
       .color = BASECOLOR();
       BODY
@@ -419,7 +419,7 @@
 #define _glossycontainer2(BODY) {
   widget(container_z, {
     widget(backdrop, {
-      .source = "skin://gfx/bar3.png";
+      .source = "theme://graphics/bar3.png";
       .border = [2,4,2,4];
       .padding = [5,0,5,0];
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -440,7 +440,7 @@
 	onEvent(activate, EVENT);
 	
 	.color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
-	.source = "skin://gfx/bar3.png";
+	.source = "theme://graphics/bar3.png";
 	.border = [2,4,2,4];
 	.padding = [5,0,5,0];
 	

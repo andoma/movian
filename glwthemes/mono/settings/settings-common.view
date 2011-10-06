@@ -2,7 +2,7 @@
 
 #define settingGroup(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/border-tiny.png";
+    .source = "theme://graphics/border-tiny.png";
     .border = 4;
     .color = 0.5;
     BODY;

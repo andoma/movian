@@ -140,7 +140,7 @@ widget(container_z, {
     .align = top;
     cloner($global.notifications.nodes, container_x, {
       widget(backdrop, {
-	.source = "skin://gfx/blackdrop.png";
+	.source = "theme://graphics/blackdrop.png";
 	.border = 12;
 	.padding = [4,-4];
 	.alphaSelf = 0.8;

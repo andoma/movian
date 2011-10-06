@@ -2,7 +2,7 @@
 
 #define popupGroup(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/blackdrop.png";
+    .source = "theme://graphics/blackdrop.png";
     .border =12;
     .alphaSelf = 0.66;
     BODY;
@@ -11,7 +11,7 @@
 
 #define popupInputField(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/border-tiny.png";
+    .source = "theme://graphics/border-tiny.png";
     .borderOnly = true;
     .border = 4;
     .color = 0.5;
@@ -50,7 +50,7 @@
 
     widget(backdrop, {
       .width = $ui.size + 2;
-      .source = "skin://gfx/border-tiny.png";
+      .source = "theme://graphics/border-tiny.png";
       .borderOnly = true;
       .border = 4;
       .padding = -3;

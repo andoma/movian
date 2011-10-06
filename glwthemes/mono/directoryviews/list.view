@@ -1,4 +1,4 @@
-#import "skin://infobox.skin"
+#import "theme://include/infobox.view"
 #import "theme://include/buttons.view"
 #import "theme://include/separators.view"
 #import "theme://include/slider.view"

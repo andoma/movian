@@ -10,7 +10,7 @@ widget(container_x, {
   .align = center;
 
   widget(backdrop, {
-    .source = "skin://gfx/blackdrop.png";
+    .source = "theme://graphics/blackdrop.png";
     .border = [12,12,12,12];
     .alphaSelf = 0.66;
     .filterConstraintX = true;

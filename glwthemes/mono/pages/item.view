@@ -1,6 +1,24 @@
 #import "theme://include/separators.view"
 #import "theme://include/buttons.view"
-#import "skin://item.skin"
+
+#define itemActionButton(ENABLED, EVENT, ICONCLASS, CAPTION) {
+  _glossybuttonTextRight(ICON=translate(ICONCLASS, "theme://icons/Command.png"),
+			 CAPTION=CAPTION,
+			 EVENT=EVENT,
+			 ENABLED=true,
+			 HIDDEN=!ENABLED);
+}
+
+
+#define actionGroup(BODY) {
+  widget(backdrop, {
+    .source = "theme://graphics/border.png";
+    .border = [12,12,12,12];
+    .borderOnly = true;
+    .color = 0.5;
+    BODY;
+  });
+}
 
 widget(container_y, {
    .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
