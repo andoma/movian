@@ -63,6 +63,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 
 #define CHUNK_SIZE (1024*2)

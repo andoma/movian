@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
 
 #include "showtime.h"
 #include "navigator.h"

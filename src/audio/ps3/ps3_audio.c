@@ -27,6 +27,8 @@
 #include <psl1ght/lv2/timer.h>
 #include <sysutil/audio.h>
 
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "audio/audio_defs.h"
 

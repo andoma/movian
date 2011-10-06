@@ -1096,12 +1096,12 @@ media_codec_create(int codec_id, int parser,
   media_codec_t *mc = calloc(1, sizeof(media_codec_t));
 
 #if ENABLE_VDPAU
-  if(mcp && !vdpau_codec_create(mc, id, ctx, mcp, mp)) {
+  if(mcp && !vdpau_codec_create(mc, codec_id, ctx, mcp, mp)) {
     
   } else
 #endif
 #if ENABLE_PS3_VDEC
-  if(mcp && !video_ps3_vdec_codec_create(mc, id, ctx, mcp, mp)) {
+  if(mcp && !video_ps3_vdec_codec_create(mc, codec_id, ctx, mcp, mp)) {
 
   } else
 #endif
