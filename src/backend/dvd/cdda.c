@@ -23,13 +23,12 @@
 #include "navigator.h"
 #include "backend/backend.h"
 #include "playqueue.h"
+#include "misc/sha.h"
 
 #include <cdio/cdda.h>
 #if ENABLE_CDDB
 #include <cddb/cddb.h>
 #endif
-
-#include <libavutil/sha.h>
 
 
 hts_mutex_t cd_meta_mutex;
@@ -90,10 +89,10 @@ makeid(uint8_t *out, CdIo_t *cdio)
   for(i = 0; i < ntracks + 1; i++)
     lba[i] = cdio_get_track_lba(cdio, i + 1);
 
-  struct AVSHA *shactx = alloca(av_sha_size);
-  av_sha_init(shactx, 160);
-  av_sha_update(shactx, (const uint8_t *)lba, sizeof(int) * ntracks + 1);
-  av_sha_final(shactx, out);
+  sha1_decl(shactx);
+  sha1_init(shactx);
+  sha1_update(shactx, (const uint8_t *)lba, sizeof(int) * ntracks + 1);
+  sha1_final(shactx, out);
 }
 
 /**
@@ -285,7 +284,7 @@ parse_audiocd_url(const char *url, char *device, size_t devlen)
   if((t = strrchr(url, '/')) == NULL)
     return -1;
 
-  if(isdigit((int)t[1])) {
+  if(t[1] >= '0' && t[1] <= '9') {
     track = atoi(t + 1);
     if(track < 1)
       return -1;

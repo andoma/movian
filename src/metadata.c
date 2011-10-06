@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <libavformat/avformat.h>
+
 #include "prop/prop.h"
 #include "ext/sqlite/sqlite3.h"
 
@@ -81,7 +83,7 @@ metadata_destroy(metadata_t *md)
  *
  */
 void
-metadata_add_stream(metadata_t *md, const char *codec, enum AVMediaType type,
+metadata_add_stream(metadata_t *md, const char *codec, int type,
 		    int streamindex, const char *info, const char *isolang,
 		    int disposition)
 {

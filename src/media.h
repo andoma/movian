@@ -20,7 +20,6 @@
 #define MEDIA_H
 
 #include <stdlib.h>
-#include <libavformat/avformat.h>
 #include <arch/atomic.h>
 #include "prop/prop.h"
 #include "event.h"
@@ -48,7 +47,7 @@ TAILQ_HEAD(media_track_queue, media_track);
  */
 typedef struct media_format {
   int refcount;
-  AVFormatContext *fctx;
+  struct AVFormatContext *fctx;
 } media_format_t;
 
 
@@ -58,9 +57,9 @@ typedef struct media_format {
 typedef struct media_codec {
   int refcount;
   media_format_t *fw;
-  AVCodec *codec;
-  AVCodecContext *codec_ctx;
-  AVCodecParserContext *parser_ctx;
+  struct AVCodec *codec;
+  struct AVCodecContext *codec_ctx;
+  struct AVCodecParserContext *parser_ctx;
 
   void *opaque;
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
@@ -121,7 +120,7 @@ typedef struct media_buf {
   union {
     int32_t mb_data32;
     int mb_rate;
-    enum CodecID mb_codecid;
+    int mb_codecid;
   };
 
 
@@ -315,11 +314,13 @@ typedef struct media_pipe {
 
 } media_pipe_t;
 
+struct AVFormatContext;
+struct AVCodecContext;
 
 /**
  *
  */
-media_format_t *media_format_create(AVFormatContext *fctx);
+media_format_t *media_format_create(struct AVFormatContext *fctx);
 
 void media_format_deref(media_format_t *fw);
 
@@ -342,8 +343,9 @@ typedef struct media_codec_params {
 } media_codec_params_t;
 
 
-media_codec_t *media_codec_create(enum CodecID id, int parser,
-				  media_format_t *fw, AVCodecContext *ctx,
+media_codec_t *media_codec_create(int codec_id, int parser,
+				  media_format_t *fw, 
+				  struct AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
 void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
@@ -398,9 +400,9 @@ void mp_init_audio(struct media_pipe *mp);
 
 void mp_shutdown(struct media_pipe *mp);
 
-void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
+void media_update_codec_info_prop(prop_t *p, struct AVCodecContext *ctx);
 
-void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
+void media_get_codec_info(struct AVCodecContext *ctx, char *buf, size_t size);
 
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
 
@@ -432,9 +434,10 @@ void mp_configure(media_pipe_t *mp, int caps, int buffer_mode);
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 
 void metadata_from_ffmpeg(char *dst, size_t dstlen, 
-			  AVCodec *codec, AVCodecContext *avctx);
+			  struct AVCodec *codec, struct AVCodecContext *avctx);
 
-void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
+void mp_set_mq_meta(media_queue_t *mq, struct AVCodec *codec,
+		    struct AVCodecContext *avctx);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 

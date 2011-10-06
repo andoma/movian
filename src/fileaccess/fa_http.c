@@ -21,9 +21,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <libavutil/base64.h>
-#include <libavutil/avstring.h>
-#include <libavutil/common.h>
-#include <libavutil/sha.h>
 #include <assert.h>
 
 #include "keyring.h"
@@ -33,6 +30,7 @@
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
+#include "misc/sha.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -472,10 +470,10 @@ http_init(void)
 {
   uint64_t v = arch_get_seed();
 
-  struct AVSHA *shactx = alloca(av_sha_size);
-  av_sha_init(shactx, 160);
-  av_sha_update(shactx, (void *)&v, sizeof(v));
-  av_sha_final(shactx, nonce);
+  sha1_decl(ctx);
+  sha1_init(ctx);
+  sha1_update(ctx, (void *)&v, sizeof(v));
+  sha1_final(ctx, nonce);
 
   TAILQ_INIT(&http_connections);
   hts_mutex_init(&http_connections_mutex);

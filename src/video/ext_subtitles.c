@@ -25,7 +25,6 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "libavcodec/avcodec.h"
 #include "media.h"
 #include "misc/dbl.h"
 #include "misc/string.h"

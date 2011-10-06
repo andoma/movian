@@ -28,13 +28,11 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <libavutil/sha.h>
-
 
 #include "showtime.h"
 #include "ext/sqlite/sqlite3.h"
 #include "arch/atomic.h"
-
+#include "misc/sha.h"
 #if 0
 #define VFSTRACE(x...) TRACE(TRACE_DEBUG, "SQLITE_VFS", x)
 #else
@@ -293,14 +291,14 @@ vfs_access(sqlite3_vfs *NotUsed, const char *zPath, int flags, int *pResOut)
 static int
 vfs_randomness(sqlite3_vfs *NotUsed, int nBuf, char *zBuf)
 {
-  struct AVSHA *shactx = alloca(av_sha_size);
+  sha1_decl(shactx);
   uint8_t d[20];
   int w;
 
   while(nBuf > 0) {
-    av_sha_init(shactx, 160);
-    av_sha_update(shactx, (void *)&random_seed, sizeof(uint64_t));
-    av_sha_final(shactx, d);
+    sha1_init(shactx);
+    sha1_update(shactx, (void *)&random_seed, sizeof(uint64_t));
+    sha1_final(shactx, d);
 
     w = MIN(20, nBuf);
     memcpy(zBuf, d, w);

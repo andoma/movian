@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <math.h>
 
+#include <libavcodec/avcodec.h>
+
 #include "showtime.h"
 #include "audio_decoder.h"
 #include "audio_defs.h"
@@ -36,7 +38,6 @@ extern audio_mode_t *audio_mode_current;
 
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate, int64_t chlayout,
-		       enum CodecID codec_id,
 		       int16_t *data0, int frames, int64_t pts, int epoch,
 		       media_pipe_t *mp);
 
@@ -284,7 +285,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       memcpy(ad->ad_outbuf, mb->mb_data, mb->mb_size);
 
       audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
-		 CODEC_ID_NONE, ad->ad_outbuf, frames,
+		 ad->ad_outbuf, frames,
 		 mb->mb_pts, mb->mb_epoch, mp);
       
     } else {
@@ -444,7 +445,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 	  frames /= channels;
 
 	  audio_mix1(ad, am, channels, rate, ctx->channel_layout,
-		     codec_id, ad->ad_outbuf, 
+		     ad->ad_outbuf, 
 		     frames, pts, mb->mb_epoch, mp);
 	}
       }
@@ -588,7 +589,7 @@ astats(audio_decoder_t *ad, media_pipe_t *mp, int64_t pts, int epoch,
  */
 static void
 audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
-	   int channels, int rate, int64_t chlayout, enum CodecID codec_id,
+	   int channels, int rate, int64_t chlayout,
 	   int16_t *data0, int frames, int64_t pts, int epoch,
 	   media_pipe_t *mp)
 {

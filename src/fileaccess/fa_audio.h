@@ -19,9 +19,12 @@
 #ifndef FA_AUDIO_H
 #define FA_AUDIO_H
 
+#include <libavformat/avio.h>
+
 #include "media.h"
 struct backend;
 struct fa_handle;
+
 
 event_t *be_file_playaudio(const char *url, media_pipe_t *mp,
 			   char *errbuf, size_t errlen, int hold,

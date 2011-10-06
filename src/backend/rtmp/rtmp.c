@@ -20,6 +20,8 @@
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
 
+#include <libavcodec/avcodec.h>
+
 #include "navigator.h"
 #include "backend/backend.h"
 #include "media.h"
