@@ -27,7 +27,7 @@ widget(container_x, {
       widget(container_x, {
 	.hidden = select($global.media.current.error, false, true);
 	widget(icon, {
-	  .source = "skin://icons/Alert.png";
+	  .source = "theme://icons/Alert.png";
 	});
 	widget(label, {
 	  .caption = $global.media.current.error;
@@ -37,7 +37,7 @@ widget(container_x, {
       widget(container_x, {
 	.hidden = select($global.media.current.video.too_slow, false, true);
 	widget(icon, {
-	  .source = "skin://icons/Alert.png";
+	  .source = "theme://icons/Alert.png";
 	  .hqScaling = true;
 	});
 	widget(label, {
@@ -50,7 +50,7 @@ widget(container_x, {
 	.spacing = 10;
 	widget(icon, {
 	  .hqScaling = true;
-	  .source = "skin://icons/Alert.png";
+	  .source = "theme://icons/Alert.png";
 	  .color = translate($self.type, [1,1,1],
 			     "info", [0.5, 1, 0.5],
 			     "warning",  [1, 1, 0.5],
@@ -70,7 +70,7 @@ widget(container_x, {
 	.spacing = 10;
 	.hidden = !changed($global.media.current.audio.current, 5);
 	widget(icon, {
-	  .source = "skin://icons/Sound.png";
+	  .source = "theme://icons/Sound.png";
 	});
 	widget(deck, {
 	  .effect = flipHorizontal;
@@ -85,7 +85,7 @@ widget(container_x, {
 	.spacing = 10;
 	.hidden = !changed($global.media.current.subtitle.current, 5);
 	widget(icon, {
-	  .source = "skin://icons/Script.png";
+	  .source = "theme://icons/Script.png";
 	});
 	widget(deck, {
 	  .effect = flipHorizontal;

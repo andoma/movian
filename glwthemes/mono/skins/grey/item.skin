@@ -1,7 +1,7 @@
 #import "skin://buttons/buttons.skin"
 
 #define itemActionButton(ENABLED, EVENT, ICONCLASS, CAPTION) {
-  _glossybuttonTextRight(ICON=translate(ICONCLASS, "skin://icons/Command.png"),
+  _glossybuttonTextRight(ICON=translate(ICONCLASS, "theme://icons/Command.png"),
 			 CAPTION=CAPTION,
 			 EVENT=EVENT,
 			 ENABLED=true,

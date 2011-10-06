@@ -91,7 +91,7 @@ widget(container_x, {
       widget(container_x, {
 	.hidden = select($global.media.current.error, false, true);
 	widget(icon, {
-	  .source = "skin://icons/Alert.png";
+	  .source = "theme://icons/Alert.png";
 	  .hqScaling = true;
 	});
 	widget(label, {

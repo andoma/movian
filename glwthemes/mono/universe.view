@@ -150,7 +150,7 @@ widget(container_z, {
 	  widget(icon, {
 	    .hqScaling = true;
 	    .sizeScale = 1.5;
-	    .source = "skin://icons/Alert.png";
+	    .source = "theme://icons/Alert.png";
 	    .color = translate($self.type, [1,1,1],
 			       "info", [0.5, 1, 0.5],
 			       "warning",  [1, 1, 0.5],

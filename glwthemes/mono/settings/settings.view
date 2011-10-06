@@ -11,15 +11,15 @@ widget(container_x, {
     .color = select(isFocused() || isHovered(), 1, 0.3);
     .source = $self.model.metadata.icon ?? 
       translate($self.model.subtype,
-		"skin://icons/Settings.png",
-		"sound", "skin://icons/Sound.png",
-		"audio", "skin://icons/Music.png",
-		"video", "skin://icons/Movie.png",
-		"bookmark", "skin://icons/Bookmark.png",
-		"display", "skin://icons/Display.png",
-		"search", "skin://icons/Search.png",
-		"keymap", "skin://icons/Keyboard.png",
-		"subtitle", "skin://icons/Script.png"
+		"theme://icons/Settings.png",
+		"sound", "theme://icons/Sound.png",
+		"audio", "theme://icons/Music.png",
+		"video", "theme://icons/Movie.png",
+		"bookmark", "theme://icons/Bookmark.png",
+		"display", "theme://icons/Display.png",
+		"search", "theme://icons/Search.png",
+		"keymap", "theme://icons/Keyboard.png",
+		"subtitle", "theme://icons/Script.png"
 	       );
 
     .shadow = true;

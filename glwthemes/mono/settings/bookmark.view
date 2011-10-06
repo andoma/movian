@@ -31,7 +31,7 @@
 			[1.0, 1.0, 1.0],
 			COLOR);
 	.shadow = true; 
-	.source = "skin://icons/Selected.png"; 
+	.source = "theme://icons/Selected.png"; 
 	.sizeScale = 2; 
       });
     });
@@ -44,7 +44,7 @@ widget(container_x, {
   widget(icon, {
     .align = top;
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_OTHER());
-    .source = "skin://icons/Bookmark.png";
+    .source = "theme://icons/Bookmark.png";
     .shadow = true;
   });
   
@@ -131,11 +131,11 @@ widget(container_x, {
 
 	  .source = translate($self.model.status,
 			      void,
-			      "ok",   "skin://icons/Check.png",
-			      "auth", "skin://icons/Lock.png",
-			      "nohandler", "skin://icons/Alert.png",
-			      "fail", "skin://icons/Alert.png",
-			      "scanning", "skin://icons/Scan.png");
+			      "ok",   "theme://icons/Check.png",
+			      "auth", "theme://icons/Lock.png",
+			      "nohandler", "theme://icons/Alert.png",
+			      "fail", "theme://icons/Alert.png",
+			      "scanning", "theme://icons/Scan.png");
 	  .shadow = true;
 	});
       });
@@ -188,15 +188,15 @@ widget(container_x, {
       
 	  widget(container_x, {
 
-	    TYPE_ENTRY("music", "Music", "skin://icons/Music.png",
+	    TYPE_ENTRY("music", "Music", "theme://icons/Music.png",
 		       PLATE_COLOR_AUDIO());
-	    TYPE_ENTRY("video", "Video", "skin://icons/Movie.png",
+	    TYPE_ENTRY("video", "Video", "theme://icons/Movie.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("tv", "Tv", "skin://icons/Display.png",
+	    TYPE_ENTRY("tv", "Tv", "theme://icons/Display.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("image", "Image", "skin://icons/Image.png",
+	    TYPE_ENTRY("image", "Image", "theme://icons/Image.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("other", "Other", "skin://icons/Folder.png",
+	    TYPE_ENTRY("other", "Other", "theme://icons/Folder.png",
 		       PLATE_COLOR_VIDEO());
 	  });
 	});
@@ -218,7 +218,7 @@ widget(container_x, {
 	  .alphaSelf = 0.66;
 
 	  widget(container_x, {
-	    ICON2("skin://icons/Delete.png",
+	    ICON2("theme://icons/Delete.png",
 		  "Delete",
 		  {
 		    delete($self);

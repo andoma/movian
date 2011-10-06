@@ -15,7 +15,7 @@ widget(container_y, {
       .id = "list";
       .spacing = 5;
       LIST_ITEM_SIMPLE("Add new entry", 
-		       "skin://icons/Add.png",
+		       "theme://icons/Add.png",
 		       {
 			 createChild($page.model.nodes); 
 		       },

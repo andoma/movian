@@ -44,7 +44,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 0.5;
 
-    ICON2("skin://icons/Delete.png",
+    ICON2("theme://icons/Delete.png",
 	  "Clear",
 	  {
 	    $self.model.keycode1 = void;
@@ -90,7 +90,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 0.5;
 
-    ICON2("skin://icons/Delete.png",
+    ICON2("theme://icons/Delete.png",
 	  "Clear",
 	  {
 	    $self.model.keycode2 = void;

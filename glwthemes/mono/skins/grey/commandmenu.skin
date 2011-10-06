@@ -1,7 +1,7 @@
 #import "skin://buttons/buttons.skin"
 
 #define commandButton(EVENT, TYPE, ENABLED) {
-  _glossybutton(ICON="skin://icons/" + 
+  _glossybutton(ICON="theme://icons/" + 
 		translate(TYPE, TYPE,
 			  "SeekForward", "SeekFwd",
 			  "Subtitles", "Script",
@@ -14,7 +14,7 @@
 }
 
 #define commandButton2(EVENT, TYPE, ENABLED, VISIBLE) {
-  _glossybutton(ICON="skin://icons/" + 
+  _glossybutton(ICON="theme://icons/" + 
 		translate(TYPE, TYPE,
 			  "SeekForward", "SeekFwd",
 			  "Subtitles", "Script"
@@ -34,7 +34,7 @@
 }
 
 #define commandToggle(STATE, TYPE, ENABLED) {
-  _glossybuttontoggle(ICON="skin://icons/" +
+  _glossybuttontoggle(ICON="theme://icons/" +
 		      translate(TYPE, TYPE) + ".png",
 		      STATE=STATE,
 		      HIDDEN=!ENABLED,
@@ -124,7 +124,7 @@
     onEvent(activate, EVENT);
     
     widget(icon, {
-      .source = "skin://icons/Check.png";
+      .source = "theme://icons/Check.png";
       .shadow = true;
       .alpha = iir(SELECTED, 8);
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -152,7 +152,7 @@
     onEvent(activate, EVENT);
     
     widget(icon, {
-      .source = "skin://icons/Check.png";
+      .source = "theme://icons/Check.png";
       .shadow = true;
       .alpha = iir(SELECTED, 8);
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());

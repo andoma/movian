@@ -20,7 +20,7 @@
 }
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
-  _glossybuttonTextRight(ICON="skin://icons/Check.png",
+  _glossybuttonTextRight(ICON="theme://icons/Check.png",
 			 CAPTION=_("OK"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
@@ -28,7 +28,7 @@
 }
 
 #define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
-  _glossybuttonTextRight(ICON="skin://icons/Delete.png",
+  _glossybuttonTextRight(ICON="theme://icons/Delete.png",
 			 CAPTION=_("Cancel"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
@@ -56,7 +56,7 @@
       .padding = -3;
       .color = 0.5;
       widget(image, {
-	.source = "skin://icons/Check.png";
+	.source = "theme://icons/Check.png";
 	.alpha = select(STATE, 1, 0);
       });
     });

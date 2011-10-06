@@ -232,7 +232,7 @@
 	    .alpha = iir($page.glw.curView == TYPE, 4);
 	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	    .shadow = true;
-	    .source = "skin://icons/Selected.png";
+	    .source = "theme://icons/Selected.png";
 	    .sizeScale = SCALE;
 	  });
 	});
