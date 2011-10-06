@@ -890,7 +890,6 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   char confname[PATH_MAX];
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   const char *displayname_title  = NULL;
-  const char *skin = NULL;
 
   gp->gr.gr_uii.uii_prop = root;
 
@@ -906,10 +905,6 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   while(argc > 0) {
     if(!strcmp(argv[0], "--theme") && argc > 1) {
       theme_path = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "--skin") && argc > 1) {
-      skin = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else {
@@ -940,7 +935,7 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 
 
   
-  if(glw_init(gr, theme_path, skin, ui, primary, confname, displayname_title))
+  if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
 
   TRACE(TRACE_INFO, "GLW", "loading universe");

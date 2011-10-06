@@ -899,7 +899,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *theme, const char *skin,
+int glw_init(glw_root_t *gr, const char *theme,
 	     ui_t *ui, int primary,
 	     const char *instance, const char *instance_title );
 
