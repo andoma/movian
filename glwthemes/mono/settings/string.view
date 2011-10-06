@@ -1,5 +1,5 @@
 #import "theme://include/buttons.view"
-#import "skin://settings.skin"
+#import "theme://settings/settings-common.view"
 
 
 widget(container_x, {

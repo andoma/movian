@@ -1,4 +1,4 @@
-#import "skin://buttons/buttons.skin";
+#import "theme://include/buttons.view"
 
 // $view.sizer = -10 + $ui.size;
 
