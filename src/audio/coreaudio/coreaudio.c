@@ -30,6 +30,8 @@
 #include <CoreFoundation/CFString.h>
 #include <CoreAudio/CoreAudio.h>
 
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "audio/audio_defs.h"
 
