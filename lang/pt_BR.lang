@@ -134,7 +134,7 @@ msg: Faixa %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: A CPU é muita lento para decodificar este vídeo
+msg: A CPU está muita lenta para decodificar este vídeo
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -143,7 +143,7 @@ id: Password
 msg: Senha
 
 id: Remember me
-msg: Lembre-me
+msg: Lembrar
 
 id: Username
 msg: Nome do usuário
