@@ -113,7 +113,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
 
   /**
-   * Keep previous and next images 'hot' (ie, loaded into texture memroy)
+   * Keep previous and next images 'hot' (ie, loaded into texture memory)
    */
   p = glw_prev_widget(c);
   if(p == NULL)
