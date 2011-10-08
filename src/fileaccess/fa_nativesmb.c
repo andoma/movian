@@ -748,7 +748,7 @@ smb_init_t2_header(cifs_connection_t *cc, TRANS2_req_t *t2, int cmd,
 
   t2->wordcount = 15;
   t2->max_param_count = htole_16(256);
-  t2->max_data_count = htole_16(MIN(65535, cc->cc_max_buffer_size));
+  t2->max_data_count = htole_16(cc->cc_max_buffer_size);
   t2->setup_count = 1;
   t2->sub_cmd = htole_16(cmd);
 
@@ -937,7 +937,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
   cc->cc_session_key = reply->session_key;
   cc->cc_security_mode = reply->security_mode;
 
-  cc->cc_max_buffer_size = letoh_16(MIN(65535, reply->max_buffer_size));
+  cc->cc_max_buffer_size = MIN(65000, letoh_32(reply->max_buffer_size));
   cc->cc_max_mpx_count   = letoh_16(reply->max_mpx_count);
 
   len -= sizeof(SMB_NEG_PROTOCOL_reply_t);
@@ -1038,7 +1038,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   req->wordcount = 13;
   req->andx_command = 0xff;
-  req->max_buffer_size = htole_16(MIN(65535, cc->cc_max_buffer_size));
+  req->max_buffer_size = htole_16(cc->cc_max_buffer_size);
   req->max_mpx_count = htole_16(cc->cc_max_mpx_count);
   req->vc_number = 1;
   req->session_key = cc->cc_session_key;
