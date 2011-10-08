@@ -165,11 +165,13 @@ glw_tex_flush_all(glw_root_t *gr)
   hts_mutex_lock(&gr->gr_tex_mutex);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
-    if(glt->glt_state != GLT_STATE_INACTIVE)
+    if(glt->glt_state == GLT_STATE_INACTIVE)
       continue;
     LIST_REMOVE(glt, glt_flush_link);
     if(glt->glt_state == GLT_STATE_VALID)
       glw_tex_backend_free_render_resources(gr, glt);
+    if(glt->glt_state == GLT_STATE_QUEUED)
+      TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
