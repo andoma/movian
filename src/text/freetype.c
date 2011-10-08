@@ -479,7 +479,7 @@ face_find(int uc, uint8_t style, int family_id)
   if(f != NULL)
     face_set_family(f, family_id);
 
-  return NULL;
+  return f;
 }
 
 
