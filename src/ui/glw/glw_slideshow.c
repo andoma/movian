@@ -238,11 +238,12 @@ glw_slideshow_set(glw_t *w, va_list ap)
       s->time = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_PROPROOTS:
+    case GLW_ATTRIB_PROPROOTS3:
       p = va_arg(ap, void *);
       s->playstatus = prop_create(prop_create(p, "slideshow"), "playstatus");
 
-      p = va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Clone, just throw it away
       glw_slideshow_update_playstatus(s);
       break;
 

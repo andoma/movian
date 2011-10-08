@@ -302,7 +302,7 @@ glw_load_universe(glw_root_t *gr)
 
   gr->gr_universe = glw_view_create(gr,
 				    "theme://universe.view", NULL, page,
-				    NULL, NULL, 0);
+				    NULL, NULL, NULL, 0);
 
   glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }

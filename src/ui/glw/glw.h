@@ -104,7 +104,7 @@ typedef enum {
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
-  GLW_ATTRIB_PROPROOTS,
+  GLW_ATTRIB_PROPROOTS3,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
@@ -991,7 +991,8 @@ void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
  */
 glw_t *glw_view_create(glw_root_t *gr, const char *src, 
 		       glw_t *parent, struct prop *prop,
-		       struct prop *prop_parent, prop_t *args, int cache);
+		       struct prop *prop_parent, prop_t *args,
+		       struct prop *prop_clone, int cache);
 
 /**
  * Transitions
@@ -1017,7 +1018,8 @@ do {						\
     break;					\
   case GLW_ATTRIB_num ... UINT32_MAX:           \
     abort();                                    \
-  case GLW_ATTRIB_PROPROOTS:         		\
+  case GLW_ATTRIB_PROPROOTS3:         		\
+    (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\

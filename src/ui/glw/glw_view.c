@@ -132,7 +132,7 @@ typedef struct glw_cached_view {
 glw_t *
 glw_view_create(glw_root_t *gr, const char *src,
 		glw_t *parent, prop_t *prop, prop_t *prop_parent, prop_t *args,
-		int cache)
+		prop_t *prop_clone, int cache)
 {
   token_t *eof, *l, *t;
   errorinfo_t ei;
@@ -196,6 +196,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   ec.prop = prop;
   ec.prop_parent = prop_parent;
   ec.prop_args    = args;
+  ec.prop_clone = prop_clone;
   v->viewprop = ec.prop_viewx = prop_create_root(NULL);
   ec.sublist = &ec.w->glw_prop_subscriptions;
 

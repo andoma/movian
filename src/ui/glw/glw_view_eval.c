@@ -1147,7 +1147,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
   c->c_w->glw_clone = c;
 
   glw_set(c->c_w,
-	  GLW_ATTRIB_PROPROOTS, p, sc->sc_originating_prop,
+	  GLW_ATTRIB_PROPROOTS3, p, sc->sc_originating_prop, c->c_clone_root,
 	  NULL);
 
   prop_tag_set(p, sc, c);
@@ -2027,7 +2027,7 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
     c->gc_freeze(n.w);
 
   glw_set(n.w,
-	  GLW_ATTRIB_PROPROOTS, ec->prop, ec->prop_parent,
+	  GLW_ATTRIB_PROPROOTS3, ec->prop, ec->prop_parent, ec->prop_clone,
 	  NULL);
 
   n.sublist = &n.w->glw_prop_subscriptions;

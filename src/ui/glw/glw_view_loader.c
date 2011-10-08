@@ -25,6 +25,7 @@ typedef struct glw_view_loader {
   
   struct prop *prop;
   struct prop *prop_parent;
+  struct prop *prop_clone;
   struct prop *prop_parent_override;
   struct prop *args;
 
@@ -204,7 +205,8 @@ set_source(glw_t *w, const char *filename)
 
   if(filename && *filename) {
     glw_view_create(w->glw_root, filename, w,a->prop, 
-		    a->prop_parent_override ?: a->prop_parent, a->args, 1);
+		    a->prop_parent_override ?: a->prop_parent, a->args, 
+		    a->prop_clone, 1);
   } else {
     /* Fade out all */
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
@@ -234,9 +236,10 @@ glw_view_loader_set(glw_t *w, va_list ap)
       a->time = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_PROPROOTS:
+    case GLW_ATTRIB_PROPROOTS3:
       a->prop = va_arg(ap, void *);
       a->prop_parent = va_arg(ap, void *);
+      a->prop_clone = va_arg(ap, void *);
       /* REFcount ?? */
       break;
 
