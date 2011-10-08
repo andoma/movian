@@ -940,6 +940,12 @@ font_render_thread(void *aux)
 
     if(gtb->gtb_flags & GTB_ELLIPSIZE)
       flags |= TR_RENDER_ELLIPSIZE;
+
+    if(gtb->gtb_flags & GTB_BOLD)
+      flags |= TR_RENDER_BOLD;
+
+    if(gtb->gtb_flags & GTB_ITALIC)
+      flags |= TR_RENDER_ITALIC;
     
     if(gtb->gtb_edit_ptr >= 0)
       flags |= TR_RENDER_CHARACTER_POS;

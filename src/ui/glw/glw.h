@@ -130,6 +130,8 @@ typedef enum {
  */
 #define GTB_PASSWORD      0x1   /* Don't display real contents */
 #define GTB_ELLIPSIZE     0x2
+#define GTB_BOLD          0x4
+#define GTB_ITALIC        0x8
 
 typedef struct glw_vertex {
   float x, y, z;

@@ -801,6 +801,8 @@ static const token_attrib_t attribtab[] = {
 
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
+  {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
+  {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
 
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},

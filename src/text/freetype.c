@@ -712,6 +712,13 @@ text_render0(const uint32_t *uc, const int len,
   pen_x = 0;
   pen_y = 0;
   style = 0;
+
+  if(flags & TR_RENDER_BOLD)
+    style |= TR_STYLE_BOLD;
+
+  if(flags & TR_RENDER_ITALIC)
+    style |= TR_STYLE_ITALIC;
+
   prev = 0;
   li = NULL;
 
