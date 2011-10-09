@@ -217,7 +217,7 @@ msg: 啟用 opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: 系統記憶體容量不足（可用容量 %d kB）
 
 #
