@@ -27,6 +27,8 @@ struct video_settings {
     VIDEO_RESUME_NO = 0,
     VIDEO_RESUME_YES = 1,
   } resume_mode;
+
+  int played_threshold;
 };
 
 extern struct video_settings video_settings;

@@ -142,6 +142,12 @@ set_video_resumemode(void *opaque, const char *str)
   video_settings.resume_mode = atoi(str);
 }
 
+static void
+set_played_threshold(void *opaque, int v)
+{
+  video_settings.played_threshold = v;
+}
+
 void
 video_settings_init(void)
 {
@@ -188,6 +194,17 @@ video_settings_init(void)
 
   settings_multiopt_initiate(x, store, settings_generic_save_settings, 
 			     (void *)"videoplayback");
+
+  settings_create_int(s, "played_threshold",
+		      _p("Count video as played when reaching"),
+		      90, store, 1, 100,
+		      1, set_played_threshold, NULL,
+		      SETTINGS_INITIAL_UPDATE,
+		      "%", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"videoplayback");
+
+
 
   //----------------------------------------------------------
 

@@ -41,6 +41,7 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "text/text.h"
+#include "video/video_settings.h"
 
 LIST_HEAD(attachment_list, attachment);
 
@@ -235,7 +236,7 @@ static event_t *
 video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  media_pipe_t *mp, int flags,
 		  char *errbuf, size_t errlen,
-		  const char *canonical_url, int64_t start)
+		  const char *canonical_url)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -253,6 +254,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
+  int64_t start = video_get_restartpos(canonical_url) * 1000;
   if(start)
     seekbase = video_seek(fctx, mp, &mb, start, "restart position");
 
@@ -512,6 +514,17 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
   if(mb != NULL && mb != MB_SPECIAL_EOF)
     media_buf_free_unlocked(mp, mb);
+
+  // Compute stop position (in percentage of video length)
+
+  int spp = (seekbase - fctx->start_time) * 100 / fctx->duration;
+
+  if(spp >= video_settings.played_threshold) {
+    metadb_set_video_restartpos(canonical_url, -1);
+    metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+    TRACE(TRACE_DEBUG, "Video", "Playback reached %d%%, counting as played",
+	  spp);
+  }
   return e;
 }
 
@@ -743,16 +756,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_t *seek_index = build_index(mp, fctx, url);
 
-  metadb_register_play(canonical_url, 0);
+  metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
-  int64_t start = video_get_restartpos(url) * 1000;
-  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
-			start);
-
-  if(e != NULL && event_is_type(e, EVENT_EOF)) {
-    metadb_set_video_restartpos(canonical_url, -1);
-    metadb_register_play(canonical_url, 1);
-  }
+  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url);
 
   prop_destroy(seek_index);
 

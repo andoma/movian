@@ -1291,7 +1291,7 @@ metadb_unparent_item(void *db, const char *url)
  *
  */
 void
-metadb_register_play(const char *url, int inc)
+metadb_register_play(const char *url, int inc, int content_type)
 {
   int rc;
   int i;
@@ -1316,9 +1316,9 @@ metadb_register_play(const char *url, int inc)
 			    "WHERE url=?1"
 			    :
 			    "INSERT INTO item "
-			    "(url, playcount, lastplay) "
+			    "(url, contenttype, playcount, lastplay) "
 			    "VALUES "
-			    "(?1, ?3, ?2)",
+			    "(?1, ?4, ?3, ?2)",
 			    -1, &stmt, NULL);
 
     if(rc != SQLITE_OK) {
@@ -1332,6 +1332,7 @@ metadb_register_play(const char *url, int inc)
     sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 2, time(NULL));
     sqlite3_bind_int(stmt, 3, inc);
+    sqlite3_bind_int(stmt, 4, content_type);
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
@@ -1389,7 +1390,7 @@ metadb_set_video_restartpos(const char *url, int64_t pos)
     int64_t item_id;
     item_id = db_item_get(db, url, NULL);
     if(item_id == -1)
-      item_id = db_item_create(db, url, 0, 0, 0);
+      item_id = db_item_create(db, url, CONTENT_VIDEO, 0, 0);
 
     if(item_id != -1) {
       rc = sqlite3_prepare_v2(db, 
@@ -1550,7 +1551,7 @@ mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
 {
   prop_set_int(mip->mip_playcount,  mii->mii_playcount);
   prop_set_int(mip->mip_lastplayed, mii->mii_lastplayed);
-  prop_set_int(mip->mip_restartpos, mii->mii_restartpos);
+  prop_set_float(mip->mip_restartpos, mii->mii_restartpos / 1000.0);
 }
 
 

@@ -29,6 +29,7 @@
 #include "i18n.h"
 #include "misc/isolang.h"
 #include "video/video_playback.h"
+#include "video/video_settings.h"
 #include "metadata.h"
 
 typedef struct {
@@ -61,6 +62,9 @@ typedef struct {
   int restartpos_last;
 
   const char *canonical_url;
+
+  int seek_origin;
+  int total_duration;
 } rtmp_t;
 
 
@@ -104,9 +108,11 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
   if(RTMP_FindFirstMatchingProperty(obj, &av_duration, &prop) &&
      prop.p_type == AMF_NUMBER && prop.p_vu.p_number > 0) {
     prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
+    r->total_duration = prop.p_vu.p_number * 1000;
     r->can_seek = 1;
   } else {
     r->can_seek = 0;
+    r->total_duration = 0;
   }
   prop_set_int(mp->mp_prop_canSeek, r->can_seek);
 
@@ -160,7 +166,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, pos / 1000000.0);
  
-  RTMP_SendSeek(r->r, pos / 1000);
+  RTMP_SendSeek(r->r, (pos / 1000) - r->seek_origin);
 
   r->seekpos = pos;
 
@@ -722,7 +728,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     rtmp_free(&r);
     return NULL;
   }
-
+  r.seek_origin = start;
   r.mp = mp;
   r.hold = 0;
   r.lost_focus = 0;
@@ -748,16 +754,21 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  metadb_register_play(canonical_url, 0);
+  metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
   r.canonical_url = canonical_url;
   r.restartpos_last = -1;
 
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
-  if(e != NULL && event_is_type(e, EVENT_EOF)) {
-    metadb_register_play(canonical_url, 1);
-    metadb_set_video_restartpos(canonical_url, -1);
+  if(r.total_duration) {
+    int p = r.seekbase / (r.total_duration * 10);
+    if(p >= video_settings.played_threshold) {
+      TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
+	    p);
+      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+      metadb_set_video_restartpos(canonical_url, -1);
+    }
   }
 
   mp_flush(mp, 0);

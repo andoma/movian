@@ -400,7 +400,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       if(registered_play == 0) {
 	if(ets->ts - fctx->start_time > METADB_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
-	  metadb_register_play(url, 1);
+	  metadb_register_play(url, 1, CONTENT_AUDIO);
 	}
       }
 
