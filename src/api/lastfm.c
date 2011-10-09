@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -488,6 +489,7 @@ lastfm_artistpics_init(prop_t *prop, rstr_t *artist)
 		   PROP_TAG_COURIER, lastfm_courier,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
+  assert(lp->lp_sub != NULL);
 }
 
 
@@ -511,6 +513,7 @@ lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
 		   PROP_TAG_COURIER, lastfm_courier,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
+  assert(lp->lp_sub != NULL);
 }
 
 
