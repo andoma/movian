@@ -217,7 +217,7 @@ msg: Anvend opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: Systemet mangler hukommelse (%d KB RAM tilgængelig)
 
 #
