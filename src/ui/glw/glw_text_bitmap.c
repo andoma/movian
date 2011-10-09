@@ -713,7 +713,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
+  w->glw_flags |= GLW_FOCUS_ON_CLICK;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_size_scale = 1.0;
   gtb->gtb_color.r = 1.0;
@@ -946,11 +946,17 @@ font_render_thread(void *aux)
 
     if(gtb->gtb_flags & GTB_ITALIC)
       flags |= TR_RENDER_ITALIC;
+
+    if(gtb->gtb_flags & GTB_OUTLINE)
+      flags |= TR_RENDER_OUTLINE;
     
     if(gtb->gtb_edit_ptr >= 0)
       flags |= TR_RENDER_CHARACTER_POS;
 
     tr_align = TR_ALIGN_JUSTIFIED;
+
+    if(gtb->w.glw_flags2 & GLW2_SHADOW)
+      flags |= TR_RENDER_SHADOW;
 
     switch(gtb->w.glw_alignment) {
     case LAYOUT_ALIGN_CENTER:
@@ -1123,6 +1129,10 @@ mod_flags2(glw_t *w, int set, int clr)
 
   if(clr & GLW2_AUTOHIDE)
     glw_unhide(w);
+
+
+  if((set | clr) & GLW2_SHADOW)
+    gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
 
 

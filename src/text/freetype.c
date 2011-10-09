@@ -719,6 +719,12 @@ text_render0(const uint32_t *uc, const int len,
   if(flags & TR_RENDER_ITALIC)
     style |= TR_STYLE_ITALIC;
 
+  if(flags & TR_RENDER_SHADOW)
+    current_shadow = 2;
+
+  if(flags & TR_RENDER_OUTLINE)
+    current_outline = 64;
+
   prev = 0;
   li = NULL;
 

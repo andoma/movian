@@ -61,6 +61,8 @@ struct pixmap;
 #define TR_RENDER_CHARACTER_POS 0x4
 #define TR_RENDER_BOLD          0x8
 #define TR_RENDER_ITALIC        0x10
+#define TR_RENDER_SHADOW        0x20
+#define TR_RENDER_OUTLINE       0x40
 
 #define TR_ALIGN_AUTO      0
 #define TR_ALIGN_LEFT      1

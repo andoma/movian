@@ -132,6 +132,7 @@ typedef enum {
 #define GTB_ELLIPSIZE     0x2
 #define GTB_BOLD          0x4
 #define GTB_ITALIC        0x8
+#define GTB_OUTLINE       0x10
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -844,7 +845,6 @@ typedef struct glw {
 
 #define GLW_FOCUS_ON_CLICK       0x4000000
 
-#define GLW_SHADOW               0x8000000
 
 #define GLW_CONSTRAINT_CONF_W    0x10000000
 #define GLW_CONSTRAINT_CONF_X    0x20000000
@@ -857,6 +857,7 @@ typedef struct glw {
 #define GLW2_ALWAYS_LAYOUT  0x4
 #define GLW2_ALWAYS_GRAB_KNOB 0x8
 #define GLW2_AUTOHIDE        0x10
+#define GLW2_SHADOW          0x20
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000

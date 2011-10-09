@@ -776,7 +776,6 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintWeight",  mod_flag, GLW_CONSTRAINT_IGNORE_W, mod_flags1},
   {"hidden",                  mod_flag, GLW_HIDDEN, mod_flags1},
   {"noInitialTransform",      mod_flag, GLW_NO_INITIAL_TRANS, mod_flags1},
-  {"shadow",                  mod_flag, GLW_SHADOW, mod_flags1},
   {"focusOnClick",            mod_flag, GLW_FOCUS_ON_CLICK, mod_flags1},
   {"autoRefocusable",         mod_flag, GLW_AUTOREFOCUSABLE, mod_flags1},
   {"navFocusable",            mod_flag, GLW_NAV_FOCUSABLE, mod_flags1},
@@ -786,6 +785,7 @@ static const token_attrib_t attribtab[] = {
   {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
   {"alwaysGrabKnob",          mod_flag, GLW2_ALWAYS_GRAB_KNOB, mod_flags2},
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
+  {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
 
   {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
@@ -803,7 +803,8 @@ static const token_attrib_t attribtab[] = {
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
   {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
   {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
-
+  {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
+  
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 
