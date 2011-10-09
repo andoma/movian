@@ -77,6 +77,8 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 	width += c->glw_req_size_x;
       }
     } else if(f & GLW_CONSTRAINT_W) {
+      if(c->glw_req_weight == 0)
+	continue;
       if(c->glw_req_weight > 0)
 	weight += c->glw_req_weight;
       else
@@ -177,6 +179,9 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 	cw = c->glw_req_size_x * fixscale;
     } else {
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
+      if(w == 0)
+	continue;
+
       if(w > 0) {
 	cw = weightavail * w / co->weight_sum;
       } else {
