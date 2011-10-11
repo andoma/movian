@@ -559,7 +559,14 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
       if(ret == 2) {
 	/* Wait for queues to drain */
+      again:
 	e = mp_wait_for_empty_queues(mp);
+
+	if(e != NULL) {
+	  e = rtmp_process_event(r, e, NULL);
+	  if(e == NULL)
+	    goto again;
+	}
 	mp_set_playstatus_stop(mp);
 
 	if(e == NULL)
