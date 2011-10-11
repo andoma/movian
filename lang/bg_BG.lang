@@ -219,7 +219,7 @@ msg: Използвай opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: Недостатъчна памет в системата (%d кБ RAM достъпна)
 
 #

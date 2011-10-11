@@ -93,7 +93,7 @@ memlogger_fn(callout_t *co, void *aux)
   if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
     low_mem_warning = 1;
     notify_add(NULL, NOTIFY_ERROR, NULL, 5,
-	       _("System is low on memroy (%d kB RAM available)"),
+	       _("System is low on memory (%d kB RAM available)"),
 	       meminfo.avail / 1024);
   }
 

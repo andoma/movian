@@ -218,7 +218,7 @@ msg: Korzystaj z opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 
 #
