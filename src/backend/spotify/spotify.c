@@ -3212,7 +3212,7 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
     prop_set_link(prop_create(metadata, "artist"),
 		  f_sp_artist_name(artist), link);
 
-    set_image_uri(prop_create(metadata, "album_art"),
+    set_image_uri(prop_create(metadata, "icon"),
 		  f_sp_link_create_from_album_cover(album));
 
     pv = prop_vec_append(pv, p);
