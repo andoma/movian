@@ -1,6 +1,8 @@
 #import "theme://include/separators.view"
 #import "theme://include/defs.view"
 
+$self.directClose = 1;
+
 // If playstatus is set to stop, close the page
 $self.close = $self.media.playstatus == "stop";
 
