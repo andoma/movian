@@ -30,6 +30,20 @@ id: Played %d times
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -37,6 +51,24 @@ msg: Uit
 
 id: On
 msg: Aan
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Verwijderen
+
+id: Enqueue
+msg: Toevoegen
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annuleren
+
+id: OK
+msg: Oké
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -150,28 +182,10 @@ id: Username
 msg: Gebruikersnaam
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annuleren
-
-id: OK
-msg: Oké
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Geen media geladen
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Verwijderen
-
-id: Enqueue
-msg: Toevoegen
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -193,6 +207,10 @@ msg: GPU-kerntemperatuur: %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: Achtergrondtint op tijd gebasseerd aanpassen
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Geluid gedempt
@@ -283,6 +301,10 @@ msg: Ongeldige HTSP-URL
 #
 id: Search
 msg: Zoeken
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c
@@ -528,6 +550,25 @@ id: Map mouse wheel to up/down
 msg: Muiswiel naar boven/onder indelen
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -587,6 +628,10 @@ id: Color
 msg: Kleur
 
 id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
 # Missing translation
 msg: 
 

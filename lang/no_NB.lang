@@ -30,6 +30,20 @@ id: Played %d times
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -37,6 +51,24 @@ msg: Av
 
 id: On
 msg: På
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Slett
+
+id: Enqueue
+msg: Kø
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -152,28 +184,10 @@ id: Username
 msg: Brukernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Ingen media lastet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slett
-
-id: Enqueue
-msg: Kø
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -195,6 +209,10 @@ msg: GPU kjernetemperatur: %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: Juster bakgrunnsfarge basert på tid på døgnet
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Lyd dempet
@@ -285,6 +303,10 @@ msg: Ugyldig HTSP URL
 #
 id: Search
 msg: Søk
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c
@@ -531,6 +553,25 @@ id: Map mouse wheel to up/down
 msg: Tolk musens skrollhjul som opp- og ned-knapper
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -590,6 +631,10 @@ id: Color
 msg: Farge
 
 id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
 # Missing translation
 msg: 
 

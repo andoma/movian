@@ -29,6 +29,20 @@ id: Played %d times
 msg: Пpoигpaнo %d paз
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -184,14 +198,19 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура ядра GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
 msg: Настройка оттенка фона в зависимости от яркости
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Приглушение аудио
@@ -279,6 +298,10 @@ msg: Недопустимый HTSP URL
 #
 id: Search
 msg: Поиск
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c

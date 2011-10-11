@@ -25,6 +25,24 @@ msg: Videon seaded
 id: Added by: %s
 msg: Lisas: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Väljas
 
 id: On
 msg: Sees
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Kustuta
+
+id: Enqueue
+msg: Lisa ootelisti
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Loobu
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -104,6 +140,17 @@ id: Playqueue
 msg: Esitusjärjekord
 
 #
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+# Missing translation
+msg: 
+
+id: Unable to start video playback
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
@@ -127,12 +174,6 @@ msg: CPU on liiga aeglane video dekodeerimiseks
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Cancel
-msg: Loobu
-
-id: OK
-msg: OK
-
 id: Password
 msg: Salasõna
 
@@ -147,15 +188,6 @@ msg: Kasutajanimi
 #
 id: No media loaded
 msg: Meediat ei laetud
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Kustuta
-
-id: Enqueue
-msg: Lisa ootelisti
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -178,6 +210,10 @@ msg: GPU temperatuur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Reguleeri taustvärvi vastavalt päeva ajale
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Heli vaigistatud
 
@@ -186,9 +222,6 @@ msg: UI animatsioon
 
 id: Master volume: %d dB
 msg: Peaheli tugevus: %d dB
-
-id: Starwars scroller tilt
-msg: Star Wars - kallutus
 
 id: Top bar navigation buttons
 msg: Ülemised navigaeerimise nupud
@@ -201,6 +234,13 @@ msg: opensubtitles.org seaded
 
 id: Use opensubtitles.org
 msg: opensubtitles.org kasutamine
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -229,6 +269,10 @@ msg: Väikesed esimesed kõlarid
 id: Swap LFE+center with surround
 msg: Vaheta LFE+keskmine Surroundiga
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -242,6 +286,13 @@ id: Unable to open CD
 msg: Ei suuda avada CD-d
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -253,6 +304,10 @@ msg: Vigane HTSP URL
 id: Search
 msg: Otsi
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
@@ -261,6 +316,10 @@ msg: Automaatne sisselogimine Showtime avamisel
 
 id: Enable Spotify
 msg: Luba Spotify
+
+id: Forget me
+# Missing translation
+msg: 
 
 id: Friends
 msg: Sõbrad
@@ -298,6 +357,10 @@ msg: Spotify pakub legaalset ja vaba juurdepääsu tohutule muusikakogule. Spoti
 id: Spotify playlists
 msg: Spotyfy esitusloendid
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Tähistatud
 
@@ -306,6 +369,17 @@ msg: Tähistatud
 #
 id: Bookmarks
 msg: Järjehoidjad
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -479,6 +553,25 @@ id: Map mouse wheel to up/down
 msg: Lisa hiire scrollimine üles/alla
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -500,6 +593,29 @@ id: Service not found
 msg: Teenust ei leitud
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -514,11 +630,16 @@ msg: Keskel
 id: Color
 msg: Värv
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Luba VDPAU
-
-id: Force Level 4.2 for h264 content
-msg: Sunni 4.2 tase h264 sisule
 
 id: Force subtitles to reside on video frame
 msg: Sunni subtiitrid video raami
@@ -532,11 +653,19 @@ msg: Ignoreeri sisemist kujundust
 id: Left
 msg: Vasakul
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Kontuuri värv
 
 id: Outline size
 msg: Kontuuri suurus
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Paremal
@@ -567,3 +696,8 @@ msg: Video kiirendamine ja ekraani toimimine
 
 id: Video playback
 msg: Video taasesitamine
+
+id: Yes
+# Missing translation
+msg: 
+

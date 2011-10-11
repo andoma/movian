@@ -29,6 +29,20 @@ id: Played %d times
 msg: 已播放次數： %d
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -36,6 +50,24 @@ msg: 關閉
 
 id: On
 msg: 開啟
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: 刪除
+
+id: Enqueue
+msg: 加入佇列
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 確定
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -149,28 +181,10 @@ id: Username
 msg: 使用者帳號
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 確定
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: 未載入任何媒體
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: 刪除
-
-id: Enqueue
-msg: 加入佇列
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +206,10 @@ msg: 視訊處理器核心溫度： %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: 依照系統時間調整背景色彩
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: 靜音模式
@@ -279,6 +297,10 @@ msg: 不正確的 HTSP 位址
 #
 id: Search
 msg: 搜尋
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c
@@ -521,6 +543,25 @@ id: Map mouse wheel to up/down
 msg: 滑鼠滾輪捲動
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -577,6 +618,10 @@ msg: 字幕色彩
 
 id: Controls if video playback should restart where last played
 msg: 設定影片是否自中斷處開始播放
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: 啟用 VDPAU

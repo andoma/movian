@@ -26,8 +26,21 @@ id: Added by: %s
 msg: Dodane przez: %s
 
 id: Played %d times
-# Missing translation
 msg: Odtworzono %d razy
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -37,6 +50,24 @@ msg: Wyłącz
 
 id: On
 msg: Włącz
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Usuń
+
+id: Enqueue
+msg: Kolejkuj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Anuluj
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -150,28 +181,10 @@ id: Username
 msg: Nazwa użytkownika
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Anuluj
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Brak danych
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Usuń
-
-id: Enqueue
-msg: Kolejkuj
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -193,6 +206,10 @@ msg: Temperatura procesora graficznego: %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: Ustawienie podświetlenia w zależności od pory dnia
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Wycisz
@@ -281,6 +298,10 @@ msg: Nieprawidłowy adres HTSP
 id: Search
 msg: Szukaj
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
@@ -345,11 +366,9 @@ msg: Zakładki
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
 msg: Nieobsługiwana zawartość: %d
 
 id: Unable to open file: %s
-# Missing translation
 msg: Nie można otworzyć pliku: %s
 
 #
@@ -524,6 +543,25 @@ id: Map mouse wheel to up/down
 msg: Mapuj kółko myszy
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -578,8 +616,11 @@ id: Color
 msg: Kolor
 
 id: Controls if video playback should restart where last played
-# Missing translation
 msg: Odtwórz od ostatniego miejsca
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: Włącz VDPAU
@@ -597,7 +638,6 @@ id: Left
 msg: Lewy
 
 id: No
-# Missing translation
 msg: Nie
 
 id: Outline color
@@ -607,7 +647,6 @@ id: Outline size
 msg: Rozmiar obrysu
 
 id: Resume video playback
-# Missing translation
 msg: Wznów odtwarzanie wideo
 
 id: Right
@@ -641,6 +680,5 @@ id: Video playback
 msg: Odtwarzanie wideo
 
 id: Yes
-# Missing translation
 msg: Tak
 

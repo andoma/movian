@@ -29,6 +29,20 @@ id: Played %d times
 msg: 已播放%d次
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -36,6 +50,24 @@ msg: 关闭
 
 id: On
 msg: 开启
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: 删除
+
+id: Enqueue
+msg: 加入队列
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 确定
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -149,28 +181,10 @@ id: Username
 msg: 用户名
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 确定
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: 未载入媒体
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: 删除
-
-id: Enqueue
-msg: 加入队列
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +206,10 @@ msg: GPU核心温度: %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: 根据时间调整背景颜色
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: 已静音
@@ -279,6 +297,10 @@ msg: 非法的HTSP URL
 #
 id: Search
 msg: 搜索
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c
@@ -521,6 +543,25 @@ id: Map mouse wheel to up/down
 msg: 将鼠标滚轮映射到上/下按键
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -576,6 +617,10 @@ msg: 颜色
 
 id: Controls if video playback should restart where last played
 msg: 控制视频播放是否从上次播放位置开始
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: 启用VDPAU

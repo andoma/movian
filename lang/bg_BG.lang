@@ -27,6 +27,21 @@ msg: Добавено от: %s
 
 id: Played %d times
 msg: Възпроизведено %d пъти 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,6 +50,24 @@ msg: Изкл.
 
 id: On
 msg: Вкл.
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Изтрии
+
+id: Enqueue
+msg: Добави към опашката за възпроизвеждане
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Отмяна
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -148,28 +181,10 @@ id: Username
 msg: Потребителско име
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Отмяна
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Няма заредени медиини файлове
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Изтрии
-
-id: Enqueue
-msg: Добави към опашката за възпроизвеждане
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -183,14 +198,19 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура на ядрото на GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
 msg: Настройка нюанса на фона в зависимост от яркостта
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Заглушаване на аудиото
@@ -200,9 +220,6 @@ msg: Анимация на интерфейса
 
 id: Master volume: %d dB
 msg: Сила на звука: %d dB
-
-id: Starwars scroller tilt
-msg: Интерфейс в стил Starwars
 
 id: Top bar navigation buttons
 msg: Бутони за навигация в горния панел
@@ -282,6 +299,10 @@ msg: Невалиден HTSP URL
 id: Search
 msg: Търсене
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
@@ -341,6 +362,7 @@ msg: С висок рейтинг
 #
 id: Bookmarks
 msg: Маркери
+
 #
 # ./src/fileaccess/fa_backend.c
 #
@@ -443,8 +465,9 @@ msg: Няма handler за URL
 #
 # ./src/plugins.c
 #
-id: Invalid URI
-msg: Невалиден URI 
+id: Invalud URI
+# Missing translation
+msg: 
 
 id: Plugin ID %s does not exist
 msg: Plugin ID %s не съществува
@@ -522,6 +545,25 @@ id: Map mouse wheel to up/down
 msg: Настройка скрола на мишката нагоре/надолу
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -577,6 +619,11 @@ msg: Цвят
 
 id: Controls if video playback should restart where last played
 msg: Настройка дали видео възпроизвеждането трябва да продължи от където е спрян за последно файла
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Включи VDPAU
 
@@ -594,6 +641,7 @@ msg: Ляво
 
 id: No
 msg: Не
+
 id: Outline color
 msg: Цвят на контура
 
@@ -602,6 +650,7 @@ msg: Размер на контура
 
 id: Resume video playback
 msg: Възобнови видео възпроизвеждането
+
 id: Right
 msg: Дясно
 
@@ -634,3 +683,4 @@ msg: Видео възпроизвеждане
 
 id: Yes
 msg: Да 
+

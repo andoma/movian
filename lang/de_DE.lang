@@ -29,6 +29,20 @@ id: Played %d times
 msg: %d x Abgespielt 
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -193,6 +207,10 @@ msg: GPU Kerntemperatur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Ton aus
 
@@ -279,6 +297,10 @@ msg: Ungültige HTSP URL
 #
 id: Search
 msg: Suche
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c

@@ -29,6 +29,20 @@ id: Played %d times
 msg: Afspillet %d gange
 
 #
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -36,6 +50,24 @@ msg: Slukket
 
 id: On
 msg: Tændt
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Slet
+
+id: Enqueue
+msg: Tilføj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -149,28 +181,10 @@ id: Username
 msg: Brugernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Intet medie hentet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slet
-
-id: Enqueue
-msg: Tilføj
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +206,10 @@ msg: GPU Core temperatur: %d / %d °
 #
 id: Adjust background tint based on daytime
 msg: Juster baggrundsfarven afhængig af tid på dagen
+
+id: Alternate list layout
+# Missing translation
+msg: 
 
 id: Audio muted
 msg: Audio mute
@@ -279,6 +297,10 @@ msg: Ugyldig HTSP URL
 #
 id: Search
 msg: Søg
+
+id: Search result for: %s
+# Missing translation
+msg: 
 
 #
 # ./src/backend/spotify/spotify.c
@@ -521,6 +543,25 @@ id: Map mouse wheel to up/down
 msg: Tildel musens scrollhjul til op/ned
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -576,6 +617,10 @@ msg: Farve
 
 id: Controls if video playback should restart where last played
 msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: Aktiver VDPAU
@@ -636,3 +681,4 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
+
