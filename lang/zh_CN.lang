@@ -26,8 +26,7 @@ id: Added by: %s
 msg: 由%s添加
 
 id: Played %d times
-# Missing translation
-msg: 
+msg: 已播放%d次
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -111,12 +110,10 @@ msg: 播放队列
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: 播放信息
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: 无法播放
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -221,8 +218,7 @@ msg: 使用opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: 系统内存偏少(%d kB RAM可用)
 
 #
 # ./src/audio/audio.c
@@ -252,8 +248,7 @@ id: Swap LFE+center with surround
 msg: 切换低音+中置和环绕
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: 切换音频输出到%s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -271,8 +266,7 @@ msg: 不能打开CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD读取错误，重新开始读取光盘
 
 #
 # ./src/backend/htsp/htsp.c
@@ -296,8 +290,7 @@ id: Enable Spotify
 msg: 启用Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: 忘记我
 
 id: Friends
 msg: 朋友
@@ -336,8 +329,7 @@ id: Spotify playlists
 msg: Spotify播放列表
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: 连接错误：%s
 
 id: Starred
 msg: 已加星
@@ -352,12 +344,10 @@ msg: 收藏夹
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: 无法处理内容类型%d
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: 无法打开文件%s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -555,30 +545,25 @@ msg: 未发现服务
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: 无法加速%s，未载入类库。
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: 无法启用Cell解码器，错误码0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: 无法启用Cell解码器，不能分配%d字节的内存。
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: 无法查询Cell解码器，错误码0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: 默认显示字幕
+msg: 总是显示字幕
 
 id: Auto
 msg: 自动
@@ -590,8 +575,7 @@ id: Color
 msg: 颜色
 
 id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
+msg: 控制视频播放是否从上次播放位置开始
 
 id: Enable VDPAU
 msg: 启用VDPAU
@@ -609,8 +593,7 @@ id: Left
 msg: 靠左
 
 id: No
-# Missing translation
-msg: 
+msg: 否
 
 id: Outline color
 msg: 边框颜色
@@ -619,8 +602,7 @@ id: Outline size
 msg: 边框大小
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: 继续播放
 
 id: Right
 msg: 靠右
@@ -653,6 +635,5 @@ id: Video playback
 msg: 视频播放
 
 id: Yes
-# Missing translation
-msg: 
+msg: 是
 
