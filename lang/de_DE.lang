@@ -26,8 +26,7 @@ id: Added by: %s
 msg: Hinzugefügt von: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg: %d x Abgespielt 
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -37,6 +36,24 @@ msg: Aus
 
 id: On
 msg: An
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Löschen
+
+id: Enqueue
+msg: Hinzufügen
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Abbrechen
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -150,28 +167,10 @@ id: Username
 msg: Benutzername
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Abbrechen
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Keine Medien geladen
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Löschen
-
-id: Enqueue
-msg: Hinzufügen
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -219,8 +218,7 @@ msg: opensubtitles.org benutzen
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Speicher ist knapp (%d kb RAM verfügbar)
 
 #
 # ./src/audio/audio.c
@@ -250,8 +248,7 @@ id: Swap LFE+center with surround
 msg: LFE+Center mit Surround tauschen
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Schalte Audioausgabe auf %s um
 
 #
 # ./src/backend/dvd/cdda.c
@@ -269,8 +266,7 @@ msg: CD kann nicht geöffnet werden
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD Lesefehler, Disk wird neugestartet
 
 #
 # ./src/backend/htsp/htsp.c
@@ -333,8 +329,7 @@ id: Spotify playlists
 msg: Spotyfy Wiedergabeliste
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Verbindungsfehler: %s
 
 id: Starred
 msg: Starred
@@ -349,18 +344,16 @@ msg: Lesezeichen
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Kann Inhalt %D nicht verarbeiten
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Kann Datei: %d nicht öffnen
 
 #
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Suchen per Unix locatedb
+msg: Suchen per Unix Locatedb
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -387,7 +380,7 @@ id: Primary subtitle language code
 msg: Bevorzugte Untertitel-Sprache
 
 id: SRT character set
-msg: Schriftsatz für srt-untertitel
+msg: Schriftsatz für srt-Untertitel
 
 id: Secondary audio language code
 msg: Zweite Audio-Sprache
@@ -426,7 +419,7 @@ msg: Tastenbelegung
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Untertitel dem Videoframe zuordnen
+msg: Untertitel im Bild anzeigen
 
 id: Audio delay
 msg: Audioverzögerung
@@ -435,10 +428,10 @@ id: Subtitle delay
 msg: Untertitelverzögerung
 
 id: Subtitle scaling
-msg: Untertitel Skalierung
+msg: Untertitelskalierung
 
 id: Video zoom
-msg: Video zoom
+msg: Videozoom
 
 #
 # ./src/navigator.c
@@ -528,6 +521,21 @@ id: Map mouse wheel to up/down
 msg: Mausrad für hoch/runter verwenden
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Automatisch auf diesen Modus schalten 
+
+id: DVI-Video color range
+msg: DVI-Video Farbraum
+
+id: Switch to this mode now
+msg: Jetzt auf diesen Modus umschalten
+
+id: Video modes
+msg: Video Modus
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -552,24 +560,19 @@ msg: Service nicht gefunden
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, kann zu Wiedergabeproblemen führen.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Kann %s nicht beschleunigen, Bibliothek nicht geladen.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Kann Cell-Codec nicht öffnen. Fehler 0x%x.
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Kann Cell-Codec nicht öfffnen. Kann keine %d Bytes Speicher zuweisen.
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -587,17 +590,19 @@ id: Color
 msg: Farbe
 
 id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
+msg: Einstellung ob die Wiedergabe von der lezten Position starten soll
+
+id: Count video as played when reaching
+msg: Video als abgespielt markieren ab
 
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
 id: Force subtitles to reside on video frame
-msg: Untertitel auf Videoframe aufzwingen
+msg: Untertitel im Bild anzeigen
 
 id: Generic settings for video subtitles
-msg: Allgemeine Einstellungen für Videountertitel
+msg: Allgemeine Einstellungen für Untertitel
 
 id: Ignore embedded styling
 msg: eingebetteten Stil ignorieren
@@ -606,8 +611,7 @@ id: Left
 msg: Links
 
 id: No
-# Missing translation
-msg: 
+msg: Nein
 
 id: Outline color
 msg: Rahmenfarbe
@@ -616,8 +620,7 @@ id: Outline size
 msg: Rahmengröße
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Wiedergabe von letzter Position
 
 id: Right
 msg: Rechts
@@ -644,12 +647,11 @@ id: Subtitles
 msg: Untertitel
 
 id: Video acceleration and display behaviour
-msg: Videobeschleunigung und Anzeigeverhalten
+msg: Videobeschleunigungs- und Wiedergabeeinstellungen
 
 id: Video playback
 msg: Videowiedergabe
 
 id: Yes
-# Missing translation
-msg: 
+msg: Ja 
 
