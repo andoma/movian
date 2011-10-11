@@ -183,6 +183,7 @@ typedef struct playlist {
   prop_t *pl_prop_num_tracks;
   prop_t *pl_prop_user;
   prop_t *pl_prop_childs;
+  prop_t *pl_prop_icon;
 
   prop_sub_t *pl_node_sub;
   prop_sub_t *pl_destroy_sub;
@@ -1171,7 +1172,6 @@ metadata_create(prop_t *p, sp_track *source, struct metadata_list *list)
   }
 
   if(list == NULL) {
-    printf("No metadata for track %p\n", source);
     metadata_ref_dec(m);
     free(m);
     return;
@@ -2276,6 +2276,32 @@ playlist_metadata_updated(sp_playlist *plist, void *userdata)
 }
 
 
+/**
+ *
+ */
+static void
+playlist_set_image(playlist_t *pl, const byte *b)
+{
+  char uri[80];
+  snprintf(uri, sizeof(uri), "spotify:image:"
+	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
+	   b[0],b[1],b[2],b[3],b[4],b[5],b[6],b[7],b[8],b[9],
+	   b[10],b[11],b[12],b[13],b[14],b[15],b[16],b[17],b[18],b[19]);
+  prop_set_string(pl->pl_prop_icon, uri);
+}
+
+
+/**
+ *
+ */
+static void
+playlist_image_changed(sp_playlist *plist, const byte *image, void *userdata)
+{
+  playlist_t *pl = userdata;
+  playlist_set_image(pl, image);
+}
+
 
 /**
  * Callbacks for individual playlists
@@ -2284,6 +2310,7 @@ static sp_playlist_callbacks pl_callbacks = {
   .tracks_added     = tracks_added_simple,
   .tracks_removed   = tracks_removed_simple,
   .playlist_renamed = playlist_renamed,
+  .image_changed    = playlist_image_changed,
   .playlist_state_changed = playlist_state_changed,
 };
 
@@ -2296,6 +2323,7 @@ static sp_playlist_callbacks pl_callbacks_withtracks = {
   .tracks_removed   = tracks_removed,
   .tracks_moved     = tracks_moved,
   .playlist_renamed = playlist_renamed,
+  .image_changed    = playlist_image_changed,
   .playlist_state_changed = playlist_state_changed,
   .track_created_changed = track_update_created,
   .playlist_metadata_updated = playlist_metadata_updated,
@@ -2399,7 +2427,6 @@ playlist_container_delete_callback(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
     (void)va_arg(ap, prop_t *);
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    printf("I WAS DESTROYED\n");
     break;
 
   case PROP_REQ_DELETE_VECTOR:
@@ -2463,6 +2490,7 @@ pl_create(sp_playlist *plist, const char *name,
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
   int i, n;
+  uint8_t img[20];
 
   pl->pl_type = SP_PLAYLIST_TYPE_PLAYLIST;
   pl->pl_flags = flags;
@@ -2476,6 +2504,7 @@ pl_create(sp_playlist *plist, const char *name,
   prop_set_string(type, flags & PL_WITH_TRACKS ? "directory" : "playlist");
 
   pl->pl_prop_title = prop_ref_inc(title);
+  pl->pl_prop_icon = prop_ref_inc(icon);
   pl->pl_prop_canDelete = prop_ref_inc(canDelete);
   pl->pl_prop_url = prop_ref_inc(url);
   pl->pl_prop_num_tracks = prop_ref_inc(numtracks);
@@ -2490,6 +2519,9 @@ pl_create(sp_playlist *plist, const char *name,
   playlist_update_meta(pl);
 
   prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
+
+  if(f_sp_playlist_get_image(plist, img))
+    playlist_set_image(pl, img);
 
   if(pl->pl_flags & PL_WITH_TRACKS) {
 
