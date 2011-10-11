@@ -38,6 +38,24 @@ id: On
 msg: Attiva
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Cancella
+
+id: Enqueue
+msg: Metti in coda
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
@@ -149,28 +167,10 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Cancella
-
-id: Enqueue
-msg: Metti in coda
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -521,6 +521,21 @@ id: Map mouse wheel to up/down
 msg: Usa rotellina del mouse per scorrere su/giù
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Passa automaticamente a questa modalità
+
+id: DVI-Video color range
+msg: Gamma di colori DVI-Video
+
+id: Switch to this mode now
+msg: Passa a questa modalità ora
+
+id: Video modes
+msg: Modalità video
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -576,6 +591,9 @@ msg: Colore
 
 id: Controls if video playback should restart where last played
 msg: Controlla se la riproduzione del video dovrebbe riprendere dall'ultima posizione
+
+id: Count video as played when reaching
+msg: Conteggia il video come riprodotto quando raggiunge
 
 id: Enable VDPAU
 msg: Attiva VDPAU
