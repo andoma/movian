@@ -5,14 +5,14 @@ $view.canCoverFlow = ($page.model.contents == "images" ||
 		      $page.model.contents == "albums");
 
 $page.glw.curView = $page.glw.userView ?? $page.requestedView ??
-  translate($page.model.contents, "list",
+  translate($page.model.contents, select($ui.list2, "list2", "list"),
 	    "items", "array",
 	    "albums", "coverflow",
 	    "images", "coverflow");
 
 widget(container_x, {
   skinNavLocation($page.model.metadata.title, $page.model.metadata.logo);
-  skinNavSelection("list", true);
+  skinNavSelection(select($ui.list2, "list2", "list"), true);
   skinNavSelection("array", true);
   skinNavSelection("coverflow", $view.canCoverFlow);
   skinNavSelection("slideshow", $view.canSlideShow);

@@ -1,0 +1,26 @@
+widget(detachable, {
+  widget(backdrop, {
+  .width = $ui.size * 8;
+
+  .focusable = isLink($self.metadata.album) * 0.1;
+  onEvent(activate, select($ui.fancyAnimations,
+			   navOpen($self.metadata.album, void, $self),
+			   navOpen($self.metadata.album)));
+
+  .source = "theme://graphics/8x8round.png";
+  .border = 3;
+  .alphaSelf = 0.2 + 0.4 * select(isLink($self.metadata.album),
+				  isHovered() || isFocused(),
+				  $clone.active);
+  .color = 0;
+
+  widget(icon, {
+    .source = $self.metadata.album_art ?? "theme://icons/256x256/Music.png";
+    .hqScaling = true;
+    .sizeScale = 4;
+    .alpha = iir(isReady(), 10);
+    .saturation = 1 - iir(isReady(), 10);
+    
+  });
+});
+});

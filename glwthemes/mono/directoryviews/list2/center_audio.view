@@ -1,0 +1,29 @@
+widget(container_x, {
+  widget(container_y, {
+    .filterConstraintX = true;
+    space(1);
+
+    widget(icon, {
+      .source = translate($self.media.playstatus, void,
+			  "play", "theme://icons/Play.png",
+			  "pause", "theme://icons/Pause.png");
+      .align = left;
+      .caption = $self.media.playstatus;
+      .shadow = true;
+      .hqScaling = true;
+      .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+    });
+    
+  });
+
+
+  widget(container_y, {
+    space(1);
+    widget(label, {
+      .caption = value2duration($self.metadata.duration);
+      .align = right;
+      .shadow = true;
+      .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+    });
+  });
+});

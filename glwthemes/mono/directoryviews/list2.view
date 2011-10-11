@@ -1,0 +1,125 @@
+#import "theme://include/infobox.view"
+#import "theme://include/buttons.view"
+#import "theme://include/separators.view"
+#import "theme://include/slider.view"
+
+$view.showFilter = $page.model.filter && 1;
+
+widget(keyintercept, {
+  bind($page.model.filter);
+  .enabled = $page.model.canFilter;
+  
+  widget(container_y, {
+    .filterConstraintX = true;
+    
+    widget(expander_y, {
+      .filterConstraintX = true;
+      .expansion = scurve($view.showFilter, 0.25);
+      .alpha     = scurve($view.showFilter, 0.25);
+      
+      widget(container_x, {
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .color = [0.3, 0.3, 0.3];
+	  PLATE_GFX();
+	  widget(container_x, {
+	    
+	    widget(label, {
+	      .caption = "Filter: ";
+	    });
+	    
+	    widget(label, {
+	      .caption = $page.model.filter;
+	    });
+	    
+	  });
+	});
+	ICON2("theme://icons/Delete.png",
+	      "Clear",
+	      {
+		$page.model.filter = void;
+	      },
+	      PLATE_COLOR_DELETE(),
+	      1, 0.1);
+      });
+    });
+
+
+    widget(list_y, {
+      .spacing = 3;
+      .padding = [20,0];
+      cloner($page.model.nodes, container_x, {
+
+	$clone.active = isFocused();
+
+	.spacing = 3;
+
+	widget(loader, {
+
+	  .time = 0.3;
+	  .noInitialTransform = true;
+	  .source = "theme://directoryviews/list2/" +
+	    translate($self.type, "left_default",
+		      "audio", "left_audio"
+		     ) + ".view";
+	});
+
+	widget(backdrop, {
+	  .filterConstraintX = true;
+	  .focusable = true;
+	  onEvent(activate,
+		  translate($self.type, navOpen($self.url),
+			    "audio", playTrackFromSource($self, $parent.model)
+			   ));
+	  
+	  .source = "theme://graphics/8x8round.png";
+	  
+	  .border = 3;
+	  .padding = [3,0];
+	  
+	  .alphaSelf = 0.2 +  (isHovered() || isFocused()) * 0.4;
+	  .color = 0;
+	  
+	  widget(container_y, {
+	    widget(label, {
+	      .align = topLeft;
+	      .caption = $self.metadata.title;
+	      .ellipsize = true;
+	      .shadow = true;
+	      .sizeScale = 1.5;
+	      .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+	    });
+
+	    widget(loader, {
+	      .time = 0.3;
+	      .noInitialTransform = true;
+	      	  .source = "theme://directoryviews/list2/" +
+		translate($self.type, void,
+			  "audio", "center_audio",
+			  "playlist", "center_playlist",
+			  "directory", "center_directory",
+			  "video", "center_video"
+			 ) + ".view";
+	    });
+	  });
+	});
+	
+	widget(loader, {
+	  .filterConstraintX = true;
+	    
+	  .time = 0.3;
+	  .noInitialTransform = true;
+	  .source = "theme://directoryviews/list2/" +
+	    translate($self.type, "right_default",
+		      "audio", "right_audio"
+		     ) + ".view";
+	  
+	});
+      });
+    });
+    widget(dummy, {
+      .height = $ui.playdeckheight;
+    });
+
+  });
+});

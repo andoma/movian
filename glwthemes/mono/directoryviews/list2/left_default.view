@@ -1,0 +1,26 @@
+widget(backdrop, {
+  .width = $ui.size * 8;
+
+  .source = "theme://graphics/8x8round.png";
+  .border = 3;
+  .alphaSelf = 0.2 + $clone.active * 0.4;
+  .color = 0;
+
+  widget(icon, {
+    .source = $self.metadata.icon ?? 
+      "theme://icons/256x256/" + 
+      translate($self.type, "File.png",
+		"video", "Movie.png",
+		"dvd", "Disc.png",
+		"album", "Disc.png",
+		"archive", "Archive.png",
+		"playlist", "List.png",
+		"directory", "Folder.png");
+    .hqScaling = true;
+    .sizeScale = 4;
+    .alpha = iir(isReady(), 10);
+    .saturation = 1 - iir(isReady(), 10);
+    .color = 0.5 + $clone.active * 0.5;
+    .shadow = true;
+  });
+});

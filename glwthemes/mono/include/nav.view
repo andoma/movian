@@ -39,6 +39,7 @@
 #define skinNavSelection(TYPE, ENABLED) {
   _glossySelection(translate(TYPE, void,
 			     "list",      "theme://icons/List.png",
+			     "list2",     "theme://icons/List.png",
 			     "array",     "theme://icons/Array.png",
 			     "coverflow", "theme://icons/Coverflow.png",
 			     "slideshow", "theme://icons/Picture.png"),
