@@ -391,7 +391,8 @@ lastfm_albumart_query(lastfm_prop_t *lp)
 static void
 lp_destroy(lastfm_prop_t *lp)
 {
-  prop_unsubscribe(lp->lp_sub);
+  if(lp->lp_sub != NULL)
+    prop_unsubscribe(lp->lp_sub);
   prop_ref_dec(lp->lp_prop);
   rstr_release(lp->lp_artist);
   rstr_release(lp->lp_album);
@@ -483,13 +484,17 @@ lastfm_artistpics_init(prop_t *prop, rstr_t *artist)
 
   lp->lp_prop = prop_ref_inc(prop);
 
+  hts_mutex_lock(&lastfm_mutex);
+
   lp->lp_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK, lastfm_prop_artist_cb, lp,
 		   PROP_TAG_COURIER, lastfm_courier,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
-  assert(lp->lp_sub != NULL);
+  if(lp->lp_sub == NULL)
+    lp_destroy(lp);
+  hts_mutex_unlock(&lastfm_mutex);
 }
 
 
@@ -507,13 +512,17 @@ lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
 
   lp->lp_prop = prop_ref_inc(prop);
 
+  hts_mutex_lock(&lastfm_mutex);
+
   lp->lp_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
 		   PROP_TAG_CALLBACK, lastfm_prop_album_cb, lp,
 		   PROP_TAG_COURIER, lastfm_courier,
 		   PROP_TAG_ROOT, prop,
 		   NULL);
-  assert(lp->lp_sub != NULL);
+  if(lp->lp_sub == NULL)
+    lp_destroy(lp);
+  hts_mutex_unlock(&lastfm_mutex);
 }
 
 
