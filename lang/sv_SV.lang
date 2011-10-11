@@ -32,15 +32,13 @@ msg: Spelad %d gånger
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d poster
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d spår
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -208,8 +206,7 @@ id: Adjust background tint based on daytime
 msg: Justera bakgrundsfärgen beroende på tid på dygnet
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Alternativ layout av listor
 
 id: Audio muted
 msg: Ljud tyst
@@ -299,8 +296,7 @@ id: Search
 msg: Sök
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Sökresultat för: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -546,20 +542,16 @@ msg: Tolka musens scrollhjul som upp- och ned-knappar
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Byt automatiskt till detta läge
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: DVI-Video färgskala
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Byt till detta läge nu
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Videolägen
 
 #
 # ./src/upnp/upnp.c
@@ -619,8 +611,7 @@ id: Controls if video playback should restart where last played
 msg: Kontrollerar om videouppspelning ska starta där den slutade
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Räkna videon som spelad när den nått
 
 id: Enable VDPAU
 msg: Aktivera VDPAU
