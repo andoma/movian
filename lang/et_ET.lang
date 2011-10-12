@@ -1,6 +1,6 @@
 ﻿language: Estonian
-native: Eesti
-maintainer: 2600baud
+native: eesti
+maintainer: saaq
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -26,8 +26,7 @@ id: Added by: %s
 msg: Lisas: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg: Mängitud %d korda
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
@@ -143,12 +142,10 @@ msg: Esitusjärjekord
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Esitamise staatus
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Ei suuda alustada esitamist
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -270,8 +267,7 @@ id: Swap LFE+center with surround
 msg: Vaheta LFE+keskmine Surroundiga
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Heliväljund vahetatakse %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -289,8 +285,7 @@ msg: Ei suuda avada CD-d
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD lugemise viga, taaskäivitamine
 
 #
 # ./src/backend/htsp/htsp.c
@@ -318,8 +313,7 @@ id: Enable Spotify
 msg: Luba Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Unusta mind
 
 id: Friends
 msg: Sõbrad
@@ -358,8 +352,7 @@ id: Spotify playlists
 msg: Spotyfy esitusloendid
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: Ühenduse viga: %s
 
 id: Starred
 msg: Tähistatud
@@ -374,12 +367,10 @@ msg: Järjehoidjad
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Ei suuda käsitseda sisutüüpi %d
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Ei suuda avada faili: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -596,24 +587,19 @@ msg: Teenust ei leitud
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264:  Sunni 4.2 tase sisule tasemele %d.%d. See võib katkestada video esitamise.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Ei saa kiirendada %s, loendit ei laetud.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Ei suuda avada Cell koodekit. Viga 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Ei suuda avada Cell koodekit. Ei saa eralada %d baiti RAMi
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Ei suuda esitada Cell koodeki päringut. Viga 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -631,8 +617,7 @@ id: Color
 msg: Värv
 
 id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
+msg: Kontrollib, kas video esitlust peab jätkama viimasest vaatamiskohast
 
 id: Count video as played when reaching
 # Missing translation
@@ -654,8 +639,7 @@ id: Left
 msg: Vasakul
 
 id: No
-# Missing translation
-msg: 
+msg: Ei
 
 id: Outline color
 msg: Kontuuri värv
@@ -664,8 +648,7 @@ id: Outline size
 msg: Kontuuri suurus
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Jätka video esitamist
 
 id: Right
 msg: Paremal
@@ -698,6 +681,5 @@ id: Video playback
 msg: Video taasesitamine
 
 id: Yes
-# Missing translation
-msg: 
+msg: Jah
 
