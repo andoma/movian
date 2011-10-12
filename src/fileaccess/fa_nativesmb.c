@@ -570,16 +570,13 @@ typedef struct {
 
 #if defined(__BIG_ENDIAN__)
 
-#include <libavutil/bswap.h>
+#define htole_64(v) __builtin_bswap64(v)
+#define htole_32(v) __builtin_bswap32(v)
+#define htole_16(v) __builtin_bswap16(v)
 
-
-#define htole_64(v) av_bswap64(v)
-#define htole_32(v) av_bswap32(v)
-#define htole_16(v) av_bswap16(v)
-
-#define letoh_16(v) av_bswap16(v)
-#define letoh_32(v) av_bswap32(v)
-#define letoh_64(v) av_bswap64(v)
+#define letoh_16(v) __builtin_bswap16(v)
+#define letoh_32(v) __builtin_bswap32(v)
+#define letoh_64(v) __builtin_bswap64(v)
 
 #elif defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER == __LITTLE_ENDIAN)
 
@@ -914,7 +911,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
 
   if(reply->hdr.errorcode) {
     snprintf(errbuf, errlen, "Negotiation error 0x%08x",
-	     letoh_32(reply->hdr.errorcode));
+	     (int)letoh_32(reply->hdr.errorcode));
     free(rbuf);
     return -1;
   }
@@ -1081,7 +1078,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
       goto again;
     }
     snprintf(errbuf, errlen, "Login failed (0x%x)",
-	     letoh_32(reply->hdr.errorcode));
+	     (int)letoh_32(reply->hdr.errorcode));
     free(rbuf);
     return -1;
   }
