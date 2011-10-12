@@ -22,6 +22,9 @@
 #include <sys/time.h>
 #include <time.h>
 #include <string.h>
+
+#include <libavformat/avformat.h>
+
 #include "media.h"
 #include "showtime.h"
 #include "audio/audio_decoder.h"

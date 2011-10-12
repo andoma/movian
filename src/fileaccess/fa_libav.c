@@ -15,6 +15,10 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
+
 #include "showtime.h"
 #include "fa_libav.h"
 

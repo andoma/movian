@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <libavutil/imgutils.h>
+#include <libavformat/avformat.h>
 #include <libswscale/swscale.h>
 
 #include "showtime.h"

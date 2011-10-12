@@ -36,8 +36,6 @@
 #include "fileaccess.h"
 #include "backend/backend.h"
 
-#include <libavformat/avio.h>
-
 #include <fileaccess/svfs.h>
 
 #include "fa_proto.h"

@@ -26,6 +26,7 @@
 #include <libgen.h>
 #include <sys/types.h>
 #include <regex.h>
+#include <ctype.h>
 
 #include "showtime.h"
 #include "backend/backend.h"

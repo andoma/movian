@@ -31,6 +31,8 @@
 #endif
 
 #include <libavutil/avstring.h>
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
