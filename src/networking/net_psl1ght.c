@@ -150,6 +150,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
     return -1;
   }
 
+  optval = 1;
+  if(netSetSockOpt(fd, 6, 1, &optval, sizeof(optval)) < 0)
+    TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
+
   return fd;
 }
 

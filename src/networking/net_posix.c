@@ -188,6 +188,8 @@ static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
   int fd;
+  int val = 1;
+
   fd = socket(family, SOCK_STREAM, 0);
   if(fd == -1) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
@@ -202,7 +204,6 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 
   /* Darwin send() does not have MSG_NOSIGNAL, but has SO_NOSIGPIPE sockopt */
 #ifdef SO_NOSIGPIPE
-  int val = 1;
   if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, sizeof(val)) == -1) {
     snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
 	     strerror(errno));
@@ -210,6 +211,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
     return -1; 
   } 
 #endif
+
+  if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) < 0)
+    TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
+
   return fd;
 }
 
