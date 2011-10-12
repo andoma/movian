@@ -26,7 +26,7 @@
 
 metadata_t *fa_probe_dir(const char *url);
 
-int fa_probe_iso(struct metadata *md, AVIOContext *avio);
+int fa_probe_iso(struct metadata *md, fa_handle_t *fh);
 
 metadata_t *fa_metadata_from_fctx(AVFormatContext *fctx, const char *url);
 

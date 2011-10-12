@@ -213,7 +213,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen, int hold, const char *mimetype)
 {
   AVFormatContext *fctx;
-  AVIOContext *avio;
   AVCodecContext *ctx;
   AVPacket pkt;
   media_format_t *fw;
@@ -229,7 +228,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0, NULL)) == NULL)
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, NULL);
+  if(fh == NULL)
     return NULL;
 
   // First we need to check for a few other formats
@@ -238,24 +238,32 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   uint8_t pb[128];
   size_t psiz;
   
-  psiz = avio_read(avio, pb, sizeof(pb));
+  psiz = fa_read(fh, pb, sizeof(pb));
   if(psiz < sizeof(pb)) {
-    fa_libav_close(avio);
+    fa_close(fh);
     snprintf(errbuf, errlen, "Fill too small");
     return NULL;
   }
 
 #if ENABLE_LIBGME
   if(*gme_identify_header(pb))
-    return fa_gme_playfile(mp, avio, errbuf, errlen, hold, url);
+    return fa_gme_playfile(mp, fh, errbuf, errlen, hold, url);
 #endif
 
 #if ENABLE_LIBOPENSPC
   if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27))
-    return openspc_play(mp, avio, errbuf, errlen);
+    return openspc_play(mp, fh, errbuf, errlen);
 #endif
 
 #endif
+
+  
+  AVIOContext *avio = fa_libav_reopen(fh);
+
+  if(avio == NULL) {
+    fa_close(fh);
+    return NULL;
+  }
 
   if((fctx = fa_libav_open_format(avio, url, 
 				  errbuf, errlen, mimetype)) == NULL) {

@@ -323,14 +323,14 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
  *
  */
 event_t *
-fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
+fa_gme_playfile(media_pipe_t *mp, fa_handle_t *fh,
 		char *errbuf, size_t errlen, int hold, const char *url)
 {
   uint8_t *mem;
   size_t size;
   event_t *e;
 
-  if((mem = fa_libav_load_and_close(avio, &size)) == NULL) {
+  if((mem = fa_load_and_close(fh, &size)) == NULL) {
     snprintf(errbuf, errlen, "Unable to read data from file");
     return NULL;
   }

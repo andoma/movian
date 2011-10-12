@@ -147,6 +147,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_bundle.c \
 	src/fileaccess/fa_sidfile.c \
 	src/fileaccess/fa_nativesmb.c \
+	src/fileaccess/fa_buffer.c \
 
 SRCS-$(CONFIG_LIBGME)   += src/fileaccess/fa_gmefile.c
 

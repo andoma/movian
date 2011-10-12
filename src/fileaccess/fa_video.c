@@ -58,7 +58,7 @@ static void attachment_unload_all(struct attachment_list *alist);
 
 
 
-static event_t *playlist_play(AVIOContext *avio, media_pipe_t *mp, int primary,
+static event_t *playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
 			      int flags, char *errbuf, size_t errlen);
 
 
@@ -565,7 +565,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  const char *canonical_url)
 {
   AVFormatContext *fctx;
-  AVIOContext *avio;
   AVCodecContext *ctx;
   media_format_t *fw;
   int i;
@@ -604,21 +603,22 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Check file type
    */
-  if((avio = fa_libav_open(url, 65536, errbuf, errlen, FA_CACHE,
-			   mp->mp_prop_io)) == NULL)
+  fa_handle_t *fh;
+  fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, mp->mp_prop_io);
+  if(fh == NULL)
     return NULL;
 
-  if(avio_read(avio, buf, sizeof(buf)) == sizeof(buf)) {
+  if(fa_read(fh, buf, sizeof(buf)) == sizeof(buf)) {
     if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
-      return playlist_play(avio, mp, flags, priority, errbuf, errlen);
+      return playlist_play(fh, mp, flags, priority, errbuf, errlen);
     }
   }
 
-  int seek_is_fast = fa_seek_is_fast(avio->opaque);
+  int seek_is_fast = fa_seek_is_fast(fh);
 
   if(seek_is_fast && mimetype == NULL) {
-    if(fa_probe_iso(NULL, avio) == 0) {
-      fa_libav_close(avio);
+    if(fa_probe_iso(NULL, fh) == 0) {
+      fa_close(fh);
     isdvd:
 #if ENABLE_DVD
       return dvd_play(url, mp, errbuf, errlen, 1);
@@ -630,15 +630,15 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
   if(seek_is_fast)
-    opensub_hash_rval = opensub_compute_hash(avio, &hash);
+    opensub_hash_rval = opensub_compute_hash(fh, &hash);
   else
     opensub_hash_rval = 1;
 
   if(opensub_hash_rval == -1)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
+  AVIOContext *avio = fa_libav_reopen(fh);
   fsize = avio_size(avio);
-  avio_seek(avio, 0, SEEK_SET);
 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen,
 				  mimetype)) == NULL) {
@@ -783,7 +783,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
  *
  */
 static event_t *
-playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
+playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
 	      int priority, char *errbuf, size_t errlen)
 {
   void *mem;
@@ -794,7 +794,7 @@ playlist_play(AVIOContext *avio, media_pipe_t *mp, int flags,
   htsmsg_field_t *f;
   int played_something;
 
-  mem = fa_libav_load_and_close(avio, NULL);
+  mem = fa_load_and_close(fh, NULL);
 
   if((xml = htsmsg_xml_deserialize(mem, errbuf, errlen)) == NULL)
     return NULL;

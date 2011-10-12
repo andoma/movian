@@ -460,7 +460,7 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
   int syncok;
   int outw, outh;
 
-  if(vo->vo_w < 1 || vo->vo_h < 1)
+  if(vo->vo_w < 1 || vo->vo_h < 1 || fi == NULL)
     return;
 
   if(vo->vo_xv_image == NULL) {

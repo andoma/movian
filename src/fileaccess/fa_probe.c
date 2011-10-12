@@ -209,19 +209,18 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 static int
 jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 {
-  AVIOContext *avio = handle;
-  if(avio_seek(avio, offset, SEEK_SET) != offset)
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
     return -1;
-  return avio_read(avio, buf, size);
+  return fa_read(handle, buf, size);
 }
 
 
 static void
-fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, AVIOContext *avio)
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
 {
   jpeginfo_t ji;
 
-  if(jpeg_info(&ji, jpeginfo_reader, avio, 
+  if(jpeg_info(&ji, jpeginfo_reader, fh, 
 	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
 	       pb, 256, NULL, 0))
     return;
@@ -236,12 +235,12 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, AVIOContext *avio)
  * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
+fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
 {
   uint16_t flags;
   uint8_t buf[256];
 
-  if(avio_read(avio, buf, sizeof(buf)) != sizeof(buf))
+  if(fa_read(fh, buf, sizeof(buf)) != sizeof(buf))
     return 0;
 
   if(!memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
@@ -312,7 +311,7 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
      (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f')) {
     /* JPEG image */
     md->md_contenttype = CONTENT_IMAGE;
-    fa_probe_exif(md, url, buf, avio); // Try to get more info
+    fa_probe_exif(md, url, buf, fh); // Try to get more info
     return 1;
   }
 
@@ -375,14 +374,14 @@ fa_probe_iso0(metadata_t *md, uint8_t *pb)
  * pb is guaranteed to point at 64k of data
  */
 int
-fa_probe_iso(metadata_t *md, AVIOContext *avio)
+fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 {
   uint8_t pb[128];
 
-  if(avio_seek(avio, 0x8000, SEEK_SET) != 0x8000)
+  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
     return -1;
 
-  if(avio_read(avio, pb, sizeof(pb)) != sizeof(pb))
+  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
     return -1;
   return fa_probe_iso0(md, pb);
 }
@@ -393,7 +392,7 @@ fa_probe_iso(metadata_t *md, AVIOContext *avio)
  *
  */
 static int
-gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
+gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
 {
   uint8_t b4[4], *buf;
   gme_err_t err;
@@ -403,7 +402,7 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
   size_t size;
   const char *type;
 
-  if(avio_read(avio, b4, 4) != 4)
+  if(fa_read(fh, b4, 4) != 4)
     return 0;
 
   type = gme_identify_header(b4);
@@ -411,15 +410,15 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
   if(*type == 0)
     return 0;
 
-  size = avio_size(avio);
+  size = fa_fsize(fh);
   if(size == -1)
     return -1;
 
   buf = malloc(size);
 
-  avio_seek(avio, 0, SEEK_SET);
+  fa_seek(fh, 0, SEEK_SET);
 
-  if(avio_read(avio, buf, size) != size) {
+  if(fa_read(fh, buf, size) != size) {
     free(buf);
     return 0;
   }
@@ -569,25 +568,28 @@ metadata_t *
 fa_probe_metadata(const char *url, char *errbuf, size_t errsize)
 {
   AVFormatContext *fctx;
-  AVIOContext *avio;
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errsize, 0, NULL)) == NULL)
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED, NULL);
+
+  if(fh == NULL) 
     return NULL;
 
   metadata_t *md = metadata_create();
 
 #if ENABLE_LIBGME
-  if(gme_probe(md, url, avio))
+  if(gme_probe(md, url, fh))
     return md;
 #endif
 
-  avio_seek(avio, 0, SEEK_SET);
+  fa_seek(fh, 0, SEEK_SET);
 
-  if(fa_probe_header(md, url, avio)) {
-    fa_libav_close(avio);
+  if(fa_probe_header(md, url, fh)) {
+    fa_close(fh);
     return md;
   }
 
+  AVIOContext *avio = fa_libav_reopen(fh);
+ 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errsize, NULL)) == NULL) {
     fa_libav_close(avio);
     metadata_destroy(md);

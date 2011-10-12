@@ -156,9 +156,9 @@ fa_imageloader2(const char *url, const char **vpaths,
 static int
 jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 {
-  if(avio_seek(handle, offset, SEEK_SET) != offset)
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
     return -1;
-  return avio_read(handle, buf, size);
+  return fa_read(handle, buf, size);
 }
 
 
@@ -173,7 +173,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
   int r;
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
-  AVIOContext *avio;
+  fa_handle_t *fh;
   pixmap_t *pm;
 
   if(strchr(url, '#'))
@@ -182,14 +182,12 @@ fa_imageloader(const char *url, const struct image_meta *im,
   if(!im->want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
-  if((avio = fa_libav_open_vpaths(url, 32768, vpaths)) == NULL) {
-    snprintf(errbuf, errlen, "Unable to open file");
+  if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen, FA_BUFFERED)) == NULL)
     return NULL;
-  }
 
-  if(avio_read(avio, p, sizeof(p)) != sizeof(p)) {
+  if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
     snprintf(errbuf, errlen, "File too short");
-    fa_libav_close(avio);
+    fa_close(fh);
     return NULL;
   }
 
@@ -200,18 +198,18 @@ fa_imageloader(const char *url, const struct image_meta *im,
       
     jpeginfo_t ji;
     
-    if(jpeg_info(&ji, jpeginfo_reader, avio,
+    if(jpeg_info(&ji, jpeginfo_reader, fh,
 		 JPEG_INFO_DIMENSIONS |
 		 JPEG_INFO_ORIENTATION |
 		 (im->want_thumb ? JPEG_INFO_THUMBNAIL : 0),
 		 p, sizeof(p), errbuf, errlen)) {
-      fa_libav_close(avio);
+      fa_close(fh);
       return NULL;
     }
 
     if(im->want_thumb && ji.ji_thumbnail) {
       pixmap_t *pm = pixmap_dup(ji.ji_thumbnail);
-      fa_libav_close(avio);
+      fa_close(fh);
       jpeg_info_clear(&ji);
       return pm;
     }
@@ -231,14 +229,14 @@ fa_imageloader(const char *url, const struct image_meta *im,
     codec = CODEC_ID_GIF;
   } else {
     snprintf(errbuf, errlen, "Unknown format");
-    fa_libav_close(avio);
+    fa_close(fh);
     return NULL;
   }
 
-  size_t s = avio_size(avio);
+  size_t s = fa_fsize(fh);
   if(s < 0) {
     snprintf(errbuf, errlen, "Can't read from non-seekable file");
-    fa_libav_close(avio);
+    fa_close(fh);
     return NULL;
   }
 
@@ -246,16 +244,16 @@ fa_imageloader(const char *url, const struct image_meta *im,
 
   if(pm == NULL) {
     snprintf(errbuf, errlen, "Out of memory");
-    fa_libav_close(avio);
+    fa_close(fh);
     return NULL;
   }
 
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_orientation = orientation;
-  avio_seek(avio, SEEK_SET, 0);
-  r = avio_read(avio, pm->pm_data, pm->pm_size);
-  fa_libav_close(avio);
+  fa_seek(fh, SEEK_SET, 0);
+  r = fa_read(fh, pm->pm_data, pm->pm_size);
+  fa_close(fh);
 
   if(r != pm->pm_size) {
     pixmap_release(pm);
@@ -305,11 +303,12 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
     // Need to open
     int i;
     AVFormatContext *fctx;
-    AVIOContext *avio;
-    
-    if((avio = fa_libav_open(url, 65536, errbuf, errlen,
-			     FA_CACHE, NULL)) == NULL)
+    fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, NULL);
+
+    if(fh == NULL)
       return NULL;
+
+    AVIOContext *avio = fa_libav_reopen(fh);
 
     if((fctx = fa_libav_open_format(avio, url, NULL, 0, NULL)) == NULL) {
       fa_libav_close(avio);

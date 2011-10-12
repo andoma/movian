@@ -159,6 +159,10 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   if(flags & FA_CACHE)
     return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
 #endif
+  if(flags & FA_BUFFERED)
+    return fa_buffered_open(url, errbuf, errsize, flags & ~FA_BUFFERED, stats);
+
+
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
@@ -178,7 +182,8 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
  *
  */
 void *
-fa_open_vpaths(const char *url, const char **vpaths)
+fa_open_vpaths(const char *url, const char **vpaths,
+	       char *errbuf, size_t errsize, int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -187,7 +192,10 @@ fa_open_vpaths(const char *url, const char **vpaths)
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, NULL, 0, 0, NULL);
+  if(flags & FA_BUFFERED)
+    return fa_buffered_open(url, errbuf, errsize, flags & ~FA_BUFFERED, NULL);
+
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, NULL);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
@@ -733,4 +741,34 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
     dstlen = e - b + 1;
   memcpy(dst, url + b, dstlen);
   dst[dstlen - 1] = 0;
+}
+
+
+
+/**
+ *
+ */
+uint8_t *
+fa_load_and_close(fa_handle_t *fh, size_t *sizep)
+{
+  size_t r;
+  size_t size = fa_fsize(fh);
+  if(size == -1)
+    return NULL;
+
+  uint8_t *mem = malloc(size+1);
+
+  fa_seek(fh, 0, SEEK_SET);
+  r = fa_read(fh, mem, size);
+  fa_close(fh);
+
+  if(r != size) {
+    free(mem);
+    return NULL;
+  }
+
+  if(sizep != NULL)
+    *sizep = size;
+  mem[size] = 0; 
+  return mem;
 }
