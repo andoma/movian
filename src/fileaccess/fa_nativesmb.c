@@ -181,6 +181,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint16_t bytecount;
@@ -215,6 +216,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint8_t andx_command;
@@ -259,6 +261,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint8_t andx_command;
@@ -283,6 +286,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
 
@@ -403,6 +407,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint8_t andx_command;
@@ -455,6 +460,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint16_t fid;
@@ -464,6 +470,7 @@ typedef struct {
 
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
 
   uint8_t wordcount;
@@ -532,6 +539,7 @@ typedef struct {
 } __attribute__((packed)) StandardFileInfo_t;
 
 typedef struct {
+  NBT_t nbt;
   SMB_t hdr;
   uint8_t wordcount;
   uint16_t echo_count;
@@ -794,13 +802,11 @@ nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
 static int
 nbt_write(cifs_connection_t *cc, void *buf, int len)
 {
-  NBT_t nbt;
+  NBT_t *nbt = buf;
 
-  nbt.msg = NBT_SESSION_MSG;
-  nbt.flags = 0;
-  nbt.length = htons(len);
-
-  tcp_write_data(cc->cc_tc, &nbt, 4);
+  nbt->msg = NBT_SESSION_MSG;
+  nbt->flags = 0;
+  nbt->length = htons(len - 4);
   tcp_write_data(cc->cc_tc, buf, len);
   return 0;
 }
@@ -1265,7 +1271,7 @@ nbt_async_req_reply(cifs_connection_t *cc,
 		    void *request, int request_len,
 		    void **responsep, int *response_lenp)
 {
-  SMB_t *h = request;
+  SMB_t *h = request + 4;
   nbt_req_t *nr = malloc(sizeof(nbt_req_t));
   int r;
 
