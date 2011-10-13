@@ -1134,6 +1134,11 @@ smb_dispatch(void *aux)
     h = buf;
     mid = letoh_16(h->mid);
 
+    if(h->pid == htole_16(1)) {
+      free(buf);
+      continue;
+    }
+
     hts_mutex_lock(&smb_global_mutex);
 
     LIST_FOREACH(nr, &cc->cc_pending_nbt_requests, nr_link)
@@ -1148,8 +1153,8 @@ smb_dispatch(void *aux)
       hts_cond_broadcast(&cc->cc_cond);
 
     } else {
-      SMBTRACE("%s:%d unexpected response mid=%d",
-	       cc->cc_hostname, cc->cc_port, mid);
+      SMBTRACE("%s:%d unexpected response pid=%d mid=%d",
+	       cc->cc_hostname, cc->cc_port, letoh_16(h->pid), mid);
       free(buf);
     }
     hts_mutex_unlock(&smb_global_mutex);
@@ -1897,8 +1902,6 @@ smb_close(fa_handle_t *fh)
 {
   smb_file_t *sf = (smb_file_t *)fh;
   SMB_CLOSE_req_t *req;
-  void *rbuf;
-  int rlen;
   cifs_tree_t *ct = sf->sf_ct;
 
   hts_mutex_lock(&smb_global_mutex);
@@ -1911,11 +1914,7 @@ smb_close(fa_handle_t *fh)
   
   req->fid = sf->sf_fid;
   req->wordcount = 3;
-
-  if(!nbt_async_req_reply(ct->ct_cc, req, sizeof(SMB_CLOSE_req_t),
-			  &rbuf, &rlen))
-    free(rbuf);
-
+  nbt_write(ct->ct_cc, req, sizeof(SMB_CLOSE_req_t));
   cifs_release_tree(sf->sf_ct);
   free(sf);
 }
