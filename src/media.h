@@ -37,7 +37,7 @@ typedef struct event_ts {
 } event_ts_t;
 
 
-TAILQ_HEAD(media_buf_queue, media_buf);
+SIMPLEQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 TAILQ_HEAD(media_track_queue, media_track);
@@ -79,7 +79,7 @@ typedef struct media_buf {
   int64_t mb_pts;
   int64_t mb_time;
 
-  TAILQ_ENTRY(media_buf) mb_link;
+  SIMPLEQ_ENTRY(media_buf) mb_link;
 
   enum {
     MB_VIDEO,
