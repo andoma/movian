@@ -774,16 +774,23 @@ smb_init_t2_header(cifs_connection_t *cc, TRANS2_req_t *t2, int cmd,
 static int
 nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
 {
-  NBT_t nbt;
+  char data[4];
   int len;
   char *buf;
 
   do {
-    if(tcp_read_data(cc->cc_tc, (void *)&nbt, 4))
+    if(tcp_read_data(cc->cc_tc, data, 4))
       return -1;
     
-    len = ntohs(nbt.length);
+    if(data[0] == 0x85)
+      continue; // Keep alive
+
+    if(data[0] != 0)
+      return -1;
+
+    len = data[1] << 16 | data[2] << 8 | data[3];
   } while(len == 0);
+
 
   buf = malloc(len);
   if(tcp_read_data(cc->cc_tc, buf, len)) {
@@ -1943,15 +1950,15 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   hts_mutex_lock(&smb_global_mutex);
 
   while(size > 0) {
-
-    cnt = MIN(size, 32768);
+    cnt = MIN(size, 131072);
     smb_init_header(ct->ct_cc, &req->hdr, SMB_READ_ANDX,
 		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
     
     req->fid = sf->sf_fid;
     req->offset_low = htole_32((uint32_t)sf->sf_pos);
     req->offset_high = htole_32((uint32_t)(sf->sf_pos >> 32));
-    req->max_count_low = htole_16(cnt);
+    req->max_count_low = htole_16(cnt & 0xffff);
+    req->max_count_high = htole_32(cnt >> 16);
     req->wordcount = 12;
     req->andx_command = 0xff;
 
@@ -1971,6 +1978,7 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
     }
 
     rcnt = letoh_16(resp->data_length_low);
+    rcnt += letoh_32(resp->data_length_high) << 16;
     memcpy(buf, rbuf + letoh_16(resp->data_offset), rcnt);
     free(rbuf);
 
@@ -2106,7 +2114,7 @@ smb_init(void)
  * Main SMB protocol dispatch
  */
 static fa_protocol_t fa_protocol_smb = {
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_init  = smb_init,
   .fap_name  = "smb",
   .fap_scan  = smb_scandir,
