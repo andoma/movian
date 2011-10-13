@@ -70,6 +70,7 @@ typedef struct buffered_file {
 
 
 
+#ifdef DEBUG
 /**
  *
  */
@@ -78,6 +79,7 @@ intersect(int a, int as, int b, int bs)
 {
   return b < a + as && a < b + bs;
 }
+#endif
 
 
 /**
