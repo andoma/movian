@@ -124,7 +124,7 @@ dump_zones(const char *prefix, buffered_file_t *bf)
     buffered_zone_t *bz = &bf->bf_zones[i];
     if(bz->bz_size == 0)
       continue;
-    printf("#%d  (%d +%d) => %ld\n",
+    printf("#%d  (%d +%d) => %"PRId64"\n",
 	   i, bz->bz_mpos, bz->bz_size, bz->bz_fpos);
   }
 }
