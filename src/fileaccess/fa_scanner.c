@@ -187,6 +187,10 @@ static struct strtab postfixtab[] = {
   { "nfo",             CONTENT_UNKNOWN },
   { "gz",              CONTENT_UNKNOWN },
   { "txt",             CONTENT_UNKNOWN },
+  { "srt",             CONTENT_UNKNOWN },
+  { "smi",             CONTENT_UNKNOWN },
+  { "ass",             CONTENT_UNKNOWN },
+  { "ssa",             CONTENT_UNKNOWN },
 };
 
 
