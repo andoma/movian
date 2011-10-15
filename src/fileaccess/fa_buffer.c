@@ -125,7 +125,7 @@ dump_zones(const char *prefix, buffered_file_t *bf)
     if(bz->bz_size == 0)
       continue;
     printf("#%d  (%d +%d) => %ld\n",
-	   i, bz->bz_mpos, bz->bz_size, bz->bz_fpos);
+	   i, bz->bz_mpos, bz->bz_size, (long int)bz->bz_fpos);
   }
 }
 #endif
