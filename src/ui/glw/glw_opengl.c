@@ -383,12 +383,11 @@ GLuint
 glw_compile_shader(const char *url, int type)
 {
   char *src;
-  struct fa_stat st;
   GLint v, len;
   GLuint s;
   char log[4096];
   
-  if((src = fa_quickload(url, &st, NULL, log, sizeof(log))) == NULL) {
+  if((src = fa_quickload(url, NULL, NULL, log, sizeof(log), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return 0;

@@ -97,16 +97,16 @@ fa_imageloader2(const char *url, const char **vpaths,
 		char *errbuf, size_t errlen)
 {
   uint8_t *p;
-  struct fa_stat fs;
+  size_t size;
   meminfo_t mi;
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
 
-  if((p = fa_quickload(url, &fs, vpaths, errbuf, errlen)) == NULL) 
+  if((p = fa_quickload(url, &size, vpaths, errbuf, errlen, NULL)) == NULL) 
     return NULL;
 
   mi.data = p;
-  mi.size = fs.fs_size;
+  mi.size = size;
 
   /* Probe format */
 
@@ -117,7 +117,7 @@ fa_imageloader2(const char *url, const char **vpaths,
     
     if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
 		 JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
-		 p, fs.fs_size, errbuf, errlen)) {
+		 p, size, errbuf, errlen)) {
       free(p);
       return NULL;
     }
@@ -141,7 +141,7 @@ fa_imageloader2(const char *url, const char **vpaths,
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(p, fs.fs_size, codec);
+  pixmap_t *pm = pixmap_alloc_coded(p, size, codec);
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_orientation = orientation;
@@ -467,7 +467,8 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       r = avcodec_encode_video(pngencoder, output, outputsize, oframe);
       
       if(r > 0) 
-	blobcache_put(cacheid, "videothumb", output, r, 86400 * 5);
+	blobcache_put(cacheid, "videothumb", output, r, 86400 * 5,
+		      NULL, 0);
       free(output);
       av_free(oframe);
     }
@@ -497,7 +498,8 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-2",
 	   url0, im->req_width, im->req_height);
 
-  data = blobcache_get(cacheid, "videothumb", &datasize, 0);
+  data = blobcache_get(cacheid, "videothumb", &datasize, 0, 0,
+		       NULL, NULL);
   if(data != NULL) {
     pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
     free(data);

@@ -141,9 +141,11 @@ glw_tex_init(glw_root_t *gr)
 
   la = lacreate(gr, LQ_ALL_OTHER);
 
-  for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++)
+  for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++) {
     hts_thread_create_detached("GLW texture loader", loader_thread, la,
 			       THREAD_PRIO_NORMAL);
+    break;
+  }
 
   la = lacreate(gr, LQ_THEME);
   hts_thread_create_detached("texture theme loader", loader_thread, la,

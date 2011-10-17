@@ -191,7 +191,8 @@ write_to_blobcache(const char *artist, struct artist_image_queue *q)
     free(ai);
   }
   
-  blobcache_put(artist, "lastfm.artist.images", blob, blobsize, 86400);
+  blobcache_put(artist, "lastfm.artist.images", blob, blobsize, 86400,
+		NULL, 0);
   free(blob);
 }
 
@@ -206,7 +207,8 @@ load_from_blobcache(const char *artist, prop_t *parent)
   size_t size;
   prop_t *p;
 
-  s0 = data = blobcache_get(artist, "lastfm.artist.images", &size, 1);
+  s0 = data = blobcache_get(artist, "lastfm.artist.images", &size, 1, 0,
+			    NULL, NULL);
   if(data == NULL)
     return 0;
 

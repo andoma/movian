@@ -555,33 +555,74 @@ fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
  *
  */
 void *
-fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
-	     char *errbuf, size_t errlen)
+fa_quickload(const char *url, size_t *sizep, const char **vpaths,
+	     char *errbuf, size_t errlen, int *cache_control)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
   size_t size;
-  char *data, *filename;
+  char *data = NULL, *filename;
   int r;
+  char *etag = NULL;
+  time_t mtime = 0;
+  int is_expired = 0;
 
-  data = blobcache_get(url, "fa_quickload", &size, 1);
-  if(data != NULL) {
-    if(fs != NULL)
-      fs->fs_size = size;
-    return data;
+  if(sizep == NULL) // For convenience
+    sizep = &size;
+
+  if(cache_control != FA_DISABLE_CACHE) {
+    data = blobcache_get(url, "fa_quickload", sizep, 1, &is_expired,
+			 &etag, &mtime);
+
+    if(data != NULL) {
+      if(cache_control != NULL) {
+	// Upper layer can deal with expired data, pass it
+	*cache_control = is_expired;
+	return data;
+      }
+
+      // It was not expired, return it
+      if(!is_expired)
+	return data;
+    }
   }
 
-  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL) {
+    free(etag);
     return NULL;
+  }
 
-  if(fap->fap_quickload != NULL) {
-    data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
+  if(fap->fap_load != NULL) {
+    char *data2;
+    size_t size2;
+    int max_age = 0;
 
-    if(fs != NULL && fs->fs_cache_age > 0)
-      blobcache_put(url, "fa_quickload", data, fs->fs_size, fs->fs_cache_age);
+    if(cache_control == FA_DISABLE_CACHE)
+      blobcache_get_meta(url, "fa_quickload", &etag, &mtime);
+
+    data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
+			  &etag, &mtime, &max_age);
+
+    if(data2 == FA_NOT_MODIFIED) {
+
+      if(cache_control == FA_DISABLE_CACHE)
+	return FA_NOT_MODIFIED;
+
+      if(data != NULL) {
+	free(etag);
+	return data;
+      }
+    }
+
+    free(data);
+
+    blobcache_put(url, "fa_quickload", data2, size2,
+		  max_age, etag, mtime);
 
     free(filename);
-    return data;
+    if(sizep != NULL)
+      *sizep = size2;
+    return data2;
   }
 
   fh = fap->fap_open(fap, filename, errbuf, errlen, 0, 0);
@@ -612,8 +653,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
     return NULL;
   }
   data[size] = 0;
-  if(fs != NULL)
-    fs->fs_size = size;
+  *sizep = size;
   return data;
 }
 

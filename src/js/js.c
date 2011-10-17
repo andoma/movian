@@ -713,7 +713,7 @@ int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
   char *sbuf;
-  struct fa_stat fs;
+  size_t size;
   JSContext *cx;
   js_plugin_t *jsp;
   JSObject *pobj, *gobj;
@@ -724,7 +724,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL) {
+  if((sbuf = fa_quickload(url, &size, NULL, errbuf, errlen, NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }
@@ -779,7 +779,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   jsp->jsp_protect_object = 1;
 
-  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
+  s = JS_CompileScript(cx, pobj, sbuf, size, url, 1);
   free(sbuf);
 
   if(s != NULL) {

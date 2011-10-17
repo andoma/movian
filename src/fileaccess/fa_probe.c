@@ -277,10 +277,9 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
 
     char path[256];
     char *buf;
-    struct fa_stat fs;
 
     snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-    buf = fa_quickload(path, &fs, NULL, NULL, 0);
+    buf = fa_quickload(path, NULL, NULL, NULL, 0, NULL);
     if(buf != NULL) {
       htsmsg_t *json = htsmsg_json_deserialize(buf);
       free(buf);

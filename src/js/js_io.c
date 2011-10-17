@@ -353,13 +353,13 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   char errbuf[256];
   void *result;
-  struct fa_stat fs;
+  size_t size;
 
   if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
+  result = fa_quickload(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {
@@ -367,7 +367,7 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, size));
   return JS_TRUE;
 }
 #endif

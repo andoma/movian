@@ -51,10 +51,6 @@ typedef struct fa_stat {
 
   time_t fs_mtime;
 
-  int fs_cache_age;
-
-  uint8_t fs_mimetype[32];
-  
 } fa_stat_t;
 
 /**
@@ -170,8 +166,11 @@ void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 void fa_scanner(const char *url, time_t mtime, 
 		prop_t *model, const char *playme);
 
-void *fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
-		   char *errbuf, size_t errlen);
+#define FA_DISABLE_CACHE ((int *)-1)
+#define FA_NOT_MODIFIED  ((void *)-1)
+
+void *fa_quickload(const char *url, size_t *sizep, const char **vpaths,
+		   char *errbuf, size_t errlen, int *from_cache);
 
 uint8_t *fa_load_and_close(fa_handle_t *fh, size_t *sizep);
 

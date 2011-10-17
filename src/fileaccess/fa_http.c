@@ -73,6 +73,14 @@ static int http_tokenize(char *buf, char **vec, int vecsize, int delimiter);
       TRACE(TRACE_DEBUG, "HTTP", x);		\
   } while(0)
 
+
+static const char *http_months[12] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+static const char *http_weekdays[7] = {
+  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
 /**
  *
  */
@@ -84,9 +92,6 @@ http_ctime(time_t *tp, const char *d)
   char month[4];
   int i;
   char dummy;
-  static const char *months[12] = {
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
   if(sscanf(d, "%3s, %d%c%3s%c%d %d:%d:%d",
 	    wday, &tm.tm_mday, &dummy, month, &dummy, &tm.tm_year,
@@ -97,7 +102,7 @@ http_ctime(time_t *tp, const char *d)
   tm.tm_isdst = -1;
 	      
   for(i = 0; i < 12; i++)
-    if(!strcasecmp(months[i], month)) {
+    if(!strcasecmp(http_months[i], month)) {
       tm.tm_mon = i;
       break;
     }
@@ -108,6 +113,27 @@ http_ctime(time_t *tp, const char *d)
   *tp = mktime(&tm);
 #endif
   return 0;
+}
+
+/**
+ *
+ */
+static const char *
+http_asctime(time_t tp, char *out, size_t outlen)
+{
+  struct tm tm = {0};
+
+  gmtime_r(&tp, &tm);
+
+  snprintf(out, outlen, "%s, %02d %s %04d %02d:%02d:%02d GMT",
+	   http_weekdays[tm.tm_wday],
+	   tm.tm_mday,
+	   http_months[tm.tm_mon],
+	   tm.tm_year + 1900,
+	   tm.tm_hour,
+	   tm.tm_min,
+	   tm.tm_sec);
+  return out;
 }
 
 
@@ -2064,47 +2090,78 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
  *
  */
 static void *
-http_quickload(struct fa_protocol *fap, const char *url,
-	       struct fa_stat *fs, char *errbuf, size_t errlen)
+http_load(struct fa_protocol *fap, const char *url,
+	  size_t *sizep, char *errbuf, size_t errlen,
+	  char **etag, time_t *mtime, int *max_age)
 {
   char *res;
-  size_t siz;
+  int err;
+  struct http_header_list headers_in;
+  struct http_header_list headers_out;
+  const char *s, *s2;
 
-  struct http_header_list headers;
-  LIST_INIT(&headers);
+  LIST_INIT(&headers_in);
+  LIST_INIT(&headers_out);
 
-  if(http_request(url, NULL, &res, &siz, errbuf, errlen, NULL, 0,
-		  0, &headers, NULL, NULL))
-    return NULL;
+  if(mtime != NULL) {
+    char txt[40];
+    http_asctime(*mtime, txt, sizeof(txt));
+    http_header_add(&headers_in, "If-Modified-Since", txt);
+  }
 
-  if(fs != NULL) {
-    const char *s, *s2;
+  if(etag != NULL && *etag != NULL) {
+    http_header_add(&headers_in, "If-None-Match", *etag);
+  }
 
-    memset(fs, 0, sizeof(struct fa_stat));
-    fs->fs_type = CONTENT_FILE;
-    fs->fs_size = siz;
+  err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
+		     0, // mtime ? HTTP_REQUEST_DEBUG : 0,
+		     &headers_out, &headers_in, NULL);
+  if(err == -1) {
+    res = NULL;
+    goto done;
+  }
 
-    if((s = http_header_get(&headers, "last-modified")) != NULL)
-      http_ctime(&fs->fs_mtime, s);
+  if(err == 304) {
+    res = FA_NOT_MODIFIED;
+    goto done;
+  }
 
-    if((s  = http_header_get(&headers, "date")) != NULL && 
-       (s2 = http_header_get(&headers, "expires")) != NULL) {
+  if(mtime != NULL) {
+    *mtime = 0;
+    if((s = http_header_get(&headers_out, "last-modified")) != NULL) {
+      http_ctime(mtime, s);
+    }
+  }
+
+  if(etag != NULL) {
+    free(*etag);
+    if((s = http_header_get(&headers_out, "etag")) != NULL) {
+      *etag = strdup(s);
+    }
+  }
+
+  if(max_age != NULL) {
+    if((s  = http_header_get(&headers_out, "date")) != NULL && 
+       (s2 = http_header_get(&headers_out, "expires")) != NULL) {
       time_t expires, sdate;
       if(!http_ctime(&sdate, s) && !http_ctime(&expires, s2))
-	fs->fs_cache_age = expires - sdate;
+	*max_age = expires - sdate;
     }
 
-    if((s = http_header_get(&headers, "cache-control")) != NULL) {
+    if((s = http_header_get(&headers_out, "cache-control")) != NULL) {
       if((s2 = strstr(s, "max-age=")) != NULL) {
-	fs->fs_cache_age = atoi(s2 + strlen("max-age="));
+	*max_age = atoi(s2 + strlen("max-age="));
       }
-
+      
       if(strstr(s, "no-cache") || strstr(s, "no-store")) {
-	fs->fs_cache_age = 0;
+	*max_age = 0;
       }
     }
   }
-  http_headers_free(&headers);
+
+ done:
+  http_headers_free(&headers_in);
+  http_headers_free(&headers_out);
   return res;
 }
 
@@ -2162,7 +2219,7 @@ static fa_protocol_t fa_protocol_http = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = http_stat,
-  .fap_quickload = http_quickload,
+  .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
 };
@@ -2184,7 +2241,7 @@ static fa_protocol_t fa_protocol_https = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = http_stat,
-  .fap_quickload = http_quickload,
+  .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
 };
@@ -2515,7 +2572,7 @@ static fa_protocol_t fa_protocol_webdav = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = dav_stat,
-  .fap_quickload = http_quickload,
+  .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
 };
@@ -2534,7 +2591,7 @@ static fa_protocol_t fa_protocol_webdavs = {
   .fap_seek  = http_seek,
   .fap_fsize = http_fsize,
   .fap_stat  = dav_stat,
-  .fap_quickload = http_quickload,
+  .fap_load = http_load,
   .fap_get_last_component = http_get_last_component,
   .fap_seek_is_fast = http_seek_is_fast,
 };
@@ -2640,6 +2697,12 @@ http_request(const char *url, const char **arguments,
       return 0;
     }
     break;
+
+  case 304:
+    // Not modified
+    http_drain_content(hf);
+    http_destroy(hf);
+    return 304;
 
   case 302:
   case 303:

@@ -46,7 +46,7 @@
 static int
 gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  fa_stat_t fs;
+  size_t size;
   char *p, *fpath = mystrdupa(url);
   char name[32];
   char turl[URL_MAX];
@@ -65,10 +65,10 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   *p = 0;
 
-  if((buf = fa_quickload(fpath, &fs, NULL, errbuf, errlen)) == NULL)
+  if((buf = fa_quickload(fpath, &size, NULL, errbuf, errlen, NULL)) == NULL)
     return -1;
 
-  err = gme_open_data(buf, fs.fs_size, &emu, gme_info_only);
+  err = gme_open_data(buf, size, &emu, gme_info_only);
   free(buf);
   if(err != NULL)
     return 0;
@@ -352,7 +352,7 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   char *url, *p;
   int track;
   void *mem;
-  struct fa_stat fs;
+  size_t size;
 
   url0 += strlen("gmeplayer:");
 
@@ -366,10 +366,10 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   track = atoi(p) - 1;
 
-  if((mem = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
+  if((mem = fa_quickload(url, &size, NULL, errbuf, errlen, NULL)) == NULL)
     return NULL;
 
-  e = fa_gme_playfile_internal(mp, mem, fs.fs_size,
+  e = fa_gme_playfile_internal(mp, mem, size,
 			       errbuf, errlen, hold, track, url0);
   free(mem);
   return e;
