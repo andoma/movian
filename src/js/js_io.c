@@ -359,7 +359,7 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_quickload(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
+  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {

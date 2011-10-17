@@ -91,7 +91,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  if((json = fa_quickload(ctrlfile, NULL, NULL, errbuf, errlen, NULL)) == NULL)
+  if((json = fa_load(ctrlfile, NULL, NULL, errbuf, errlen, NULL)) == NULL)
     return -1;
 
   ctrl = htsmsg_json_deserialize(json);
@@ -615,8 +615,8 @@ plugin_install(plugin_item_data_t *pid)
 
   size_t size;
 
-  char *buf = fa_quickload(pid->pid_package, &size, NULL,
-			   errbuf, sizeof(errbuf), NULL);
+  char *buf = fa_load(pid->pid_package, &size, NULL,
+		      errbuf, sizeof(errbuf), NULL);
 
   if(buf == NULL) {
     prop_set_stringf(pid->pid_statustxt, errbuf);
@@ -1073,7 +1073,7 @@ plugin_open_file(prop_t *page, const char *url)
   char *buf;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-  buf = fa_quickload(path, NULL, NULL, errbuf, sizeof(errbuf), NULL);
+  buf = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL);
   if(buf == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;

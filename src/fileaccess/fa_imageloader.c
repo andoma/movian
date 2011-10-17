@@ -89,7 +89,7 @@ jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
 }
 
 /**
- * Load entire image into memory using fileaccess quickload method.
+ * Load entire image into memory using fileaccess load method.
  * Faster than open+read+close.
  */
 static pixmap_t *
@@ -102,7 +102,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
 
-  if((p = fa_quickload(url, &size, vpaths, errbuf, errlen, NULL)) == NULL) 
+  if((p = fa_load(url, &size, vpaths, errbuf, errlen, NULL)) == NULL) 
     return NULL;
 
   mi.data = p;

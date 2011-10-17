@@ -555,8 +555,8 @@ fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
  *
  */
 void *
-fa_quickload(const char *url, size_t *sizep, const char **vpaths,
-	     char *errbuf, size_t errlen, int *cache_control)
+fa_load(const char *url, size_t *sizep, const char **vpaths,
+	char *errbuf, size_t errlen, int *cache_control)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
@@ -571,8 +571,7 @@ fa_quickload(const char *url, size_t *sizep, const char **vpaths,
     sizep = &size;
 
   if(cache_control != FA_DISABLE_CACHE) {
-    data = blobcache_get(url, "fa_quickload", sizep, 1, &is_expired,
-			 &etag, &mtime);
+    data = blobcache_get(url, "fa_load", sizep, 1, &is_expired, &etag, &mtime);
 
     if(data != NULL) {
       if(cache_control != NULL) {
@@ -598,7 +597,7 @@ fa_quickload(const char *url, size_t *sizep, const char **vpaths,
     int max_age = 0;
 
     if(cache_control == FA_DISABLE_CACHE)
-      blobcache_get_meta(url, "fa_quickload", &etag, &mtime);
+      blobcache_get_meta(url, "fa_load", &etag, &mtime);
 
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
 			  &etag, &mtime, &max_age);
@@ -616,8 +615,7 @@ fa_quickload(const char *url, size_t *sizep, const char **vpaths,
 
     free(data);
 
-    blobcache_put(url, "fa_quickload", data2, size2,
-		  max_age, etag, mtime);
+    blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
 
     free(filename);
     if(sizep != NULL)

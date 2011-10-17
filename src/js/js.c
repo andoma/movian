@@ -724,7 +724,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((sbuf = fa_quickload(url, &size, NULL, errbuf, errlen, NULL)) == NULL) {
+  if((sbuf = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }
