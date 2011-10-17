@@ -837,10 +837,10 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	  for(c = 0; c < channels; c++)
 	    dst[c] = src[c];
 
-	  for(; c < 5; c++)
-	    dst[c] = 0;
-
+	  dst[2] = 0;
 	  dst[3] = x;
+	  dst[4] = 0;
+	  dst[5] = 0;
 	}
 	channels = 6;
       }
