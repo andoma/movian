@@ -2283,6 +2283,10 @@ static void
 playlist_set_image(playlist_t *pl, const byte *b)
 {
   char uri[80];
+  if(b == NULL) {
+    prop_set_void(pl->pl_prop_icon);
+    return;
+  }
   snprintf(uri, sizeof(uri), "spotify:image:"
 	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
 	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x",
