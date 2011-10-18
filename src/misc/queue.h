@@ -147,14 +147,6 @@
         (newhead)->tqh_last = (oldhead)->tqh_last;                     \
 } while (/*CONSTCOND*/0) 
  
-/**
- * SimpleQ extensions
- */
-
-#ifndef SIMPLEQ_LAST
-#define SIMPLEQ_LAST(head, headname) \
-        (*(((struct headname *)((head)->sqh_last))->sqh_last))
-#endif
 
 #ifndef SIMPLEQ_HEAD
 #define SIMPLEQ_HEAD(name, type)					\

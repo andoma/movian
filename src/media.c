@@ -193,7 +193,7 @@ media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb)
 static void
 mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex)
 {
-  SIMPLEQ_INIT(&mq->mq_q);
+  TAILQ_INIT(&mq->mq_q);
 
   mq->mq_packets_current = 0;
   mq->mq_packets_threshold = 5;
@@ -433,8 +433,8 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq)
 {
   media_buf_t *mb;
 
-  while((mb = SIMPLEQ_FIRST(&mq->mq_q)) != NULL) {
-    SIMPLEQ_REMOVE_HEAD(&mq->mq_q, mb_link);
+  while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
+    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mp->mp_buffer_current -= mb->mb_size;
     media_buf_free_locked(mp, mb);
   }
@@ -637,7 +637,7 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 static void
 mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
-  SIMPLEQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
+  TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_packets_current++;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
@@ -650,7 +650,7 @@ mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 static void
 mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
-  SIMPLEQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
+  TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_packets_current++;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
@@ -666,8 +666,8 @@ mq_realtime_delay(media_queue_t *mq)
 {
   media_buf_t *f, *l;
 
-  f = SIMPLEQ_FIRST(&mq->mq_q);
-  l = SIMPLEQ_LAST(&mq->mq_q, media_buf_queue);
+  f = TAILQ_FIRST(&mq->mq_q);
+  l = TAILQ_LAST(&mq->mq_q, media_buf_queue);
 
   if(f != NULL) {
     if(f->mb_epoch == l->mb_epoch) {
@@ -729,19 +729,19 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   }
 
   if(auxtype != -1) {
-    media_buf_t *after = NULL, *a;
-    SIMPLEQ_FOREACH(a, &mq->mq_q, mb_link) {
-      if(a->mb_data_type == auxtype)
-	after = a;
+    media_buf_t *after;
+    TAILQ_FOREACH_REVERSE(after, &mq->mq_q, media_buf_queue, mb_link) {
+      if(after->mb_data_type == auxtype)
+	break;
     }
     
     if(after == NULL)
-      SIMPLEQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
+      TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
     else
-      SIMPLEQ_INSERT_AFTER(&mq->mq_q, after, mb, mb_link);
+      TAILQ_INSERT_AFTER(&mq->mq_q, after, mb, mb_link);
 
   } else {
-    SIMPLEQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
+    TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   }
 
   mq->mq_packets_current++;
@@ -776,14 +776,14 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
   int rval = 1;
   hts_mutex_lock(&mp->mp_mutex);
 
-  SIMPLEQ_FOREACH(abuf, &mp->mp_audio.mq_q, mb_link)
+  TAILQ_FOREACH(abuf, &mp->mp_audio.mq_q, mb_link)
     if(abuf->mb_pts != AV_NOPTS_VALUE && abuf->mb_pts >= pos)
       break;
 
   if(abuf != NULL) {
     vk = NULL;
 
-    SIMPLEQ_FOREACH(vbuf, &mp->mp_video.mq_q, mb_link) {
+    TAILQ_FOREACH(vbuf, &mp->mp_video.mq_q, mb_link) {
       if(vbuf->mb_keyframe)
 	vk = vbuf;
       if(vbuf->mb_pts != AV_NOPTS_VALUE && vbuf->mb_pts >= pos)
@@ -793,10 +793,10 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
     if(vbuf != NULL && vk != NULL) {
       int adrop = 0, vdrop = 0, vskip = 0;
       while(1) {
-	mb = SIMPLEQ_FIRST(&mp->mp_audio.mq_q);
+	mb = TAILQ_FIRST(&mp->mp_audio.mq_q);
 	if(mb == abuf)
 	  break;
-	SIMPLEQ_REMOVE_HEAD(&mp->mp_audio.mq_q, mb_link);
+	TAILQ_REMOVE(&mp->mp_audio.mq_q, mb, mb_link);
 	mp->mp_audio.mq_packets_current--;
 	mp->mp_buffer_current -= mb->mb_size;
 	media_buf_free_locked(mp, mb);
@@ -805,10 +805,10 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       mq_update_stats(mp, &mp->mp_audio);
 
       while(1) {
-	mb = SIMPLEQ_FIRST(&mp->mp_video.mq_q);
+	mb = TAILQ_FIRST(&mp->mp_video.mq_q);
 	if(mb == vk)
 	  break;
-	SIMPLEQ_REMOVE_HEAD(&mp->mp_video.mq_q, mb_link);
+	TAILQ_REMOVE(&mp->mp_video.mq_q, mb, mb_link);
 	mp->mp_video.mq_packets_current--;
 	mp->mp_buffer_current -= mb->mb_size;
 	media_buf_free_locked(mp, mb);
@@ -819,7 +819,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 
       while(mb != vbuf) {
 	mb->mb_skip = 1;
-	mb = SIMPLEQ_NEXT(mb, mb_link);
+	mb = TAILQ_NEXT(mb, mb_link);
 	vskip++;
       }
       mb->mb_skip = 2;

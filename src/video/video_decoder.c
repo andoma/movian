@@ -300,7 +300,7 @@ vd_thread(void *aux)
 
   while(run) {
 
-    if((mb = SIMPLEQ_FIRST(&mq->mq_q)) == NULL) {
+    if((mb = TAILQ_FIRST(&mq->mq_q)) == NULL) {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
@@ -311,7 +311,7 @@ vd_thread(void *aux)
       continue;
     }
 
-    SIMPLEQ_REMOVE_HEAD(&mq->mq_q, mb_link);
+    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
