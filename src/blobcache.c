@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include "showtime.h"
 #include "blobcache.h"
