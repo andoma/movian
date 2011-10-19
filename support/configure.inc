@@ -149,6 +149,10 @@ print_config(){
     done
 }
 
+cp_if_changed(){
+    cmp -s "$1" "$2" || cp -f "$1" "$2"
+}
+
 common_help(){
   echo "Usage: configure [options]"
   echo "Options: [defaults in brackets after descriptions]"
@@ -191,8 +195,8 @@ setup_env(){
     mkdir -p ${BUILDDIR}
     BUILDDIR=`cd ${BUILDDIR} && pwd`
 
-    CONFIG_H=${BUILDDIR}/config.h
-    CONFIG_MAK=${BUILDDIR}/config.mak
+    CONFIG_H=${BUILDDIR}/config.h.tmp
+    CONFIG_MAK=${BUILDDIR}/config.mak.tmp
     CONFIG_DEF=${TOPDIR}/config.default
 
     mkdir -p ${BUILDDIR}
@@ -356,6 +360,11 @@ EOF
 
     # Generate config files
     print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
+
+    cp_if_changed ${CONFIG_H} ${BUILDDIR}/config.h
+    cp_if_changed ${CONFIG_MAK} ${BUILDDIR}/config.mak
+    rm -f ${CONFIG_H} ${CONFIG_MAK}
+
     echo "Final binary is: ${PROG}"
     die
 }
