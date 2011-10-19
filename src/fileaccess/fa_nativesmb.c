@@ -1950,7 +1950,7 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   hts_mutex_lock(&smb_global_mutex);
 
   while(size > 0) {
-    cnt = MIN(size, 131072);
+    cnt = MIN(size, 57344); // 14 * 4096 is max according to spec
     smb_init_header(ct->ct_cc, &req->hdr, SMB_READ_ANDX,
 		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
     
