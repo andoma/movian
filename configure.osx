@@ -14,6 +14,7 @@
 PLATFORM="osx"
 OSENV="posix"
 DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="osx"
 
 source support/configure.inc
 

@@ -15,6 +15,7 @@ PLATFORM="linux"
 OSENV="posix"
 DEFAULT_UI="glw"
 GLWFRONTEND="x11"
+CONFIGURE_POSTFIX="linux"
 
 source support/configure.inc
 

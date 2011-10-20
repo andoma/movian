@@ -22,7 +22,7 @@ include ${CURDIR}/config.default
 
 OPTFLAGS ?= -O2
 
-BUILDDIR = build.${PLATFORM}
+BUILDDIR = build.${BUILD}
 
 include ${BUILDDIR}/config.mak
 
@@ -625,7 +625,7 @@ distclean: clean
 	rm -rf build.*
 
 reconfigure:
-	$(CURDIR)/configure.${PLATFORM} $(CONFIGURE_ARGS)
+	$(CURDIR)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
 
 showconfig:
 	@echo $(CONFIGURE_ARGS)
