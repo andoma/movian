@@ -37,6 +37,7 @@ CONFIG_LIST="
  glw_backend_opengl
  glw_backend_gx
  glw_backend_rsx
+ glw_backend_opengl_es
  gu
  libogc
  spotify
