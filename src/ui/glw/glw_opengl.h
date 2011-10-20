@@ -99,7 +99,7 @@ typedef struct glw_backend_root {
    *
    */
   struct vdpau_dev *gbr_vdpau_dev;
-#if ENALBE_GLW_FRONTEND_X11
+#if ENABLE_GLW_FRONTEND_X11
   PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
   PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
 #endif
@@ -176,5 +176,10 @@ void glw_program_set_modelview(glw_backend_root_t *gbr, struct glw_rctx *rc);
 
 void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 				   float r, float g, float b, float a);
+
+
+int glw_opengl_ff_init(struct glw_root *gr);
+
+int glw_opengl_shaders_init(struct glw_root *gr);
 
 #endif /* GLW_OPENGL_H__ */

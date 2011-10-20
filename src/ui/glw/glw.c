@@ -36,6 +36,12 @@ static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
 
+const float glw_identitymtx[16] = {
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1};
+
 /*
  *
  */

@@ -1204,4 +1204,6 @@ void glw_frontface(struct glw_root *gr, int how);
 
 void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
 
+extern const float glw_identitymtx[16];
+
 #endif /* GLW_H */
