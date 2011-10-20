@@ -654,7 +654,6 @@ is_permanent_error(sp_error e)
   case SP_ERROR_BAD_USER_AGENT:
   case SP_ERROR_MISSING_CALLBACK:
   case SP_ERROR_INVALID_INDATA:
-  case SP_ERROR_USER_NEEDS_PREMIUM:
     return 1;
   default:
     return 0;
@@ -681,7 +680,7 @@ spotify_logged_in(sp_session *sess, sp_error error)
 
     const char *msg = f_sp_error_message(error);
 
-    TRACE(TRACE_ERROR, "Spotify", "Failed to login");
+    TRACE(TRACE_ERROR, "Spotify", "Failed to login -- %s", msg);
 
     is_logged_in = 0;
 
