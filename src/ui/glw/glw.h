@@ -48,7 +48,7 @@ LIST_HEAD(glw_video_list, glw_video);
 
 // ------------------- Backends -----------------
 
-#if CONFIG_GLW_BACKEND_OPENGL
+#if CONFIG_GLW_BACKEND_OPENGL || CONFIG_GLW_BACKEND_OPENGL_ES
 #include "glw_opengl.h"
 #elif CONFIG_GLW_BACKEND_GX
 #include "glw_gx.h"

@@ -19,6 +19,12 @@
 #ifndef GLW_OPENGL_H__
 #define GLW_OPENGL_H__
 
+#if ENABLE_GLW_BACKEND_OPENGL_ES
+
+#include <GLES2/gl2.h>
+
+#else
+
 #define GL_GLEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
 
@@ -39,6 +45,8 @@
 #ifdef linux
 #include <GL/glx.h>
 #include <GL/glxext.h>
+#endif
+
 #endif
 
 
