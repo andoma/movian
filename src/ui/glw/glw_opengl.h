@@ -99,7 +99,7 @@ typedef struct glw_backend_root {
    *
    */
   struct vdpau_dev *gbr_vdpau_dev;
-#ifdef linux
+#if ENALBE_GLW_FRONTEND_X11
   PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
   PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
 #endif
