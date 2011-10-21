@@ -2103,7 +2103,7 @@ http_load(struct fa_protocol *fap, const char *url,
   LIST_INIT(&headers_in);
   LIST_INIT(&headers_out);
 
-  if(mtime != NULL) {
+  if(mtime != NULL && *mtime) {
     char txt[40];
     http_asctime(*mtime, txt, sizeof(txt));
     http_header_add(&headers_in, "If-Modified-Since", txt);

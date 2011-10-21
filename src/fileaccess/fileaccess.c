@@ -603,14 +603,11 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
 			  &etag, &mtime, &max_age);
 
     if(data2 == FA_NOT_MODIFIED) {
-
       if(cache_control == FA_DISABLE_CACHE)
 	return FA_NOT_MODIFIED;
 
-      if(data != NULL) {
-	free(etag);
-	return data;
-      }
+      free(etag);
+      return data;
     }
 
     free(data);
