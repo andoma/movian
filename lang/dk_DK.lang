@@ -32,15 +32,13 @@ msg: Afspillet %d gange
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d indtastninger
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d spor
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -73,7 +71,7 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Tilgængelig system RAM: %d kB
+msg: Tilgængelig system RAM: %d Kb
 
 id: Detected CPUs: %d
 msg: Fundne CPU'er: %d
@@ -208,8 +206,7 @@ id: Adjust background tint based on daytime
 msg: Juster baggrundsfarven afhængig af tid på dagen
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Alternativ listelayout
 
 id: Audio muted
 msg: Audio mute
@@ -236,7 +233,7 @@ msg: Anvend opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-msg: Systemet mangler hukommelse (%d KB RAM tilgængelig)
+msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 
 #
 # ./src/audio/audio.c
@@ -299,8 +296,7 @@ id: Search
 msg: Søg
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Søgeresultat for: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -546,20 +542,16 @@ msg: Tildel musens scrollhjul til op/ned
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Auto-skift til denne tilstand
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: DVI-video farveudvalg 
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Skift til denne tilstand nu
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Videotilstande
 
 #
 # ./src/upnp/upnp.c
@@ -619,8 +611,7 @@ id: Controls if video playback should restart where last played
 msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Marker video som vist når den når
 
 id: Enable VDPAU
 msg: Aktiver VDPAU
@@ -681,4 +672,3 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
-
