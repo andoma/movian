@@ -33,14 +33,14 @@ msg: Riprodotto %d volte
 #
 id: %d entries
 # Missing translation
-msg: 
+msg: %d voci
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
 # Missing translation
-msg: 
+msg: %d tracce
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -209,7 +209,7 @@ msg: Modifica lo sfondo a seconda dell'ora
 
 id: Alternate list layout
 # Missing translation
-msg: 
+msg: Alterna il layout della lista
 
 id: Audio muted
 msg: Audio silenziato
@@ -300,7 +300,7 @@ msg: Cerca
 
 id: Search result for: %s
 # Missing translation
-msg: 
+msg: Risultati della ricerca per: %s
 
 #
 # ./src/backend/spotify/spotify.c
