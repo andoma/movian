@@ -1442,7 +1442,7 @@ prop_set_parent_vector(prop_vec_t *pv, prop_t *parent, prop_t *before,
 
   hts_mutex_lock(&prop_mutex);
 
-  if(parent->hp_type == PROP_ZOMBIE) {
+  if(parent == NULL || parent->hp_type == PROP_ZOMBIE) {
 
   for(i = 0; i < pv->pv_length; i++)
     prop_destroy0(pv->pv_vec[i]);
