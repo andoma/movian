@@ -603,7 +603,7 @@ MKBUNDLE = $(CURDIR)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC MKBUNDLE CXX
+BRIEF  = CC MKBUNDLE CXX STRIP
 MSG    = $@
 $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
@@ -640,6 +640,12 @@ reconfigure:
 
 showconfig:
 	@echo $(CONFIGURE_ARGS)
+
+${PROG}.stripped: ${PROG}
+	${STRIP} -o $@ $<
+
+strip: ${PROG}.stripped
+
 
 # Create showtimeversion.h
 src/version.c: $(BUILDDIR)/showtimeversion.h
