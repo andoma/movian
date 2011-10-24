@@ -22,7 +22,6 @@ CPU=generic
 ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
-APPDIR=${BUILDDIR}/Showtime.app
 
 show_help(){
   common_help
@@ -112,6 +111,7 @@ enable dvd
 # Application bundle
 # Override PROG to put binary inside app bundle
 #
+APPDIR=${BUILDDIR}/Showtime.app
 echo >>${CONFIG_MAK} "APPDIR=${APPDIR}"
 PROG="${APPDIR}/Contents/MacOS/showtime"
 
