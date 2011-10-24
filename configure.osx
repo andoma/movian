@@ -22,7 +22,7 @@ CPU=generic
 ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
-APPDIR=${BUILDDIR}/Showtime.app
+APPDIR=build.${BUILD}/Showtime.app
 
 show_help(){
   common_help
