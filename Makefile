@@ -359,6 +359,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gxasm.S
 SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 
 BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glsl
+BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL_ES) += src/ui/glw/glsl
 
 #
 # GTK based interface
@@ -584,7 +585,7 @@ DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))
 
 # File bundles
-BUNDLES += $(BUNDLES-yes)
+BUNDLES += $(sort $(BUNDLES-yes))
 BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
 BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
 BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
