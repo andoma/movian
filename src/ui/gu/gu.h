@@ -62,8 +62,7 @@ typedef struct gu_window {
 
   GtkWidget *gw_vbox;
   GtkWidget *gw_menubar;
-  GtkWidget *gw_toolbar;
-  struct toolbar *gw_toolbarinfo;
+
   GtkWidget *gw_playdeck;
   GtkWidget *gw_statusbar;
 
@@ -106,6 +105,9 @@ typedef struct gu_tab {
   
   gu_window_t *gt_gw;
 
+  GtkWidget *gt_toolbar;
+  GtkWidget *gt_vbox;
+
   prop_t *gt_nav;
 
 } gu_tab_t;
@@ -117,8 +119,6 @@ void gu_tab_destroy(gu_tab_t *gu);
 void gu_tab_send_event(gu_tab_t *gw, struct event *e);
 
 void gu_tab_open(gu_tab_t *gt, const char *url);
-
-void gu_toolbar_select_tab(gu_tab_t *gt);
 
 void gu_nav_open_newtab(gu_window_t *gt, const char *url);
 
@@ -159,7 +159,7 @@ void gu_directory_create(gu_nav_page_t *gnp);
 
 GtkWidget *gu_menubar_add(gu_window_t *gw, GtkWidget *parent);
 
-GtkWidget *gu_toolbar_add(gu_window_t *gw, GtkWidget *parent);
+GtkWidget *gu_toolbar_add(gu_tab_t *gw, GtkWidget *parent);
 
 GtkWidget *gu_playdeck_add(gu_window_t *gw, GtkWidget *parent);
 

@@ -24,7 +24,7 @@
 
 typedef struct toolbar {
 
-  gu_window_t *gw;
+  gu_tab_t *gt;
 
   char *parent_url;
 
@@ -39,6 +39,7 @@ typedef struct toolbar {
   GtkToolItem *home;
   GtkToolItem *up;
   GtkWidget *url;
+  GtkToolItem *opts;
 
 } toolbar_t;
 
@@ -49,8 +50,8 @@ typedef struct toolbar {
 static void
 back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  gu_window_t *gw = user_data;
-  gu_tab_send_event(gw->gw_current_tab, event_create_action(ACTION_NAV_BACK));
+  gu_tab_t *gt = user_data;
+  gu_tab_send_event(gt, event_create_action(ACTION_NAV_BACK));
 }
 
 
@@ -60,8 +61,8 @@ back_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  gu_window_t *gw = user_data;
-  gu_tab_send_event(gw->gw_current_tab, event_create_action(ACTION_NAV_FWD));
+  gu_tab_t *gt = user_data;
+  gu_tab_send_event(gt, event_create_action(ACTION_NAV_FWD));
 }
 
 
@@ -71,8 +72,8 @@ fwd_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 home_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  gu_window_t *gw = user_data;
-  gu_tab_send_event(gw->gw_current_tab, event_create_action(ACTION_HOME));
+  gu_tab_t *gt = user_data;
+  gu_tab_send_event(gt, event_create_action(ACTION_HOME));
 }
 
 
@@ -93,8 +94,8 @@ gu_nav_url_updated(void *opaque, const char *str)
 static void
 gu_nav_url_set(GtkEntry *e, gpointer user_data)
 {
-  gu_window_t *gw = user_data;
-  gu_tab_open(gw->gw_current_tab, gtk_entry_get_text(e));
+  gu_tab_t *gt = user_data;
+  gu_tab_open(gt, gtk_entry_get_text(e));
 }
 
 
@@ -120,7 +121,7 @@ up_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
   toolbar_t *t = user_data;
   if(t->parent_url != NULL)
-    gu_tab_open(t->gw->gw_current_tab, t->parent_url);
+    gu_tab_open(t->gt, t->parent_url);
 }
 
 
@@ -145,26 +146,76 @@ toolbar_dtor(GtkObject *object, gpointer user_data)
 /**
  *
  */
-void
-gu_toolbar_select_tab(gu_tab_t *gt)
+static void
+opts_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  toolbar_t *t = gt->gt_gw->gw_toolbarinfo;
+  
+
+}
+
+
+/**
+ *
+ */
+GtkWidget *
+gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
+{
+  toolbar_t *t = calloc(1, sizeof(toolbar_t));
   prop_courier_t *pc = gt->gt_gw->gw_gu->gu_pc;
+  GtkWidget *toolbar;
+  GtkWidget *w;
 
-  if(t->sub_canGoBack)
-    prop_unsubscribe(t->sub_canGoBack);
+  t->gt = gt;
 
-  if(t->sub_canGoFwd)
-    prop_unsubscribe(t->sub_canGoFwd);
+  /* Top Toolbar */
+  toolbar = gtk_toolbar_new();
+  gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
+  gtk_box_pack_start(GTK_BOX(parent), toolbar, FALSE, TRUE, 0);
 
-  if(t->sub_canGoHome)
-    prop_unsubscribe(t->sub_canGoHome);
+  /* Back button */
+  t->back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->back, -1);
+  g_signal_connect(G_OBJECT(t->back), "clicked", G_CALLBACK(back_clicked), gt);
+  gtk_widget_show(GTK_WIDGET(t->back));
 
-  if(t->sub_parent)
-    prop_unsubscribe(t->sub_parent);
+  /* Forward button */
+  t->fwd = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->fwd, -1);
+  g_signal_connect(G_OBJECT(t->fwd), "clicked", G_CALLBACK(fwd_clicked), gt);
+  gtk_widget_show(GTK_WIDGET(t->fwd));
+  
+  /* Up button */
+  t->up = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->up, -1);
+  g_signal_connect(G_OBJECT(t->up), "clicked", G_CALLBACK(up_clicked), t);
+  gtk_widget_show(GTK_WIDGET(t->up));
 
-  if(t->sub_url)
-    prop_unsubscribe(t->sub_url);
+  /* Home button */
+  t->home = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->home, -1);
+  g_signal_connect(G_OBJECT(t->home), "clicked", G_CALLBACK(home_clicked), gt);
+  gtk_widget_show(GTK_WIDGET(t->home));
+
+
+  /* URL entry */
+  GtkToolItem *ti = gtk_tool_item_new();
+  t->url = w = gtk_entry_new();
+
+  g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(gu_nav_url_set), gt);
+
+  gtk_container_add(GTK_CONTAINER(ti), w);
+  gtk_tool_item_set_expand(ti, TRUE);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
+
+  gtk_widget_show_all(GTK_WIDGET(ti));
+
+  g_signal_connect(toolbar, "destroy", G_CALLBACK(toolbar_dtor), t);
+
+  /* Opts button */
+  t->opts = gtk_tool_button_new_from_stock(GTK_STOCK_EDIT);
+  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->opts, -1);
+  g_signal_connect(G_OBJECT(t->opts), "clicked", G_CALLBACK(opts_clicked), gt);
+  gtk_widget_show(GTK_WIDGET(t->opts));
 
   t->sub_canGoBack =
     prop_subscribe(0,
@@ -208,66 +259,8 @@ gu_toolbar_select_tab(gu_tab_t *gt)
 		   PROP_TAG_COURIER, pc,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
-}
 
-
-
-/**
- *
- */
-GtkWidget *
-gu_toolbar_add(gu_window_t *gw, GtkWidget *parent)
-{
-  toolbar_t *t = calloc(1, sizeof(toolbar_t));
-  GtkWidget *toolbar;
-  GtkWidget *w;
-
-  t->gw = gw;
-  gw->gw_toolbarinfo = t;
-
-  /* Top Toolbar */
-  toolbar = gtk_toolbar_new();
-  gtk_toolbar_set_style(GTK_TOOLBAR(toolbar), GTK_TOOLBAR_ICONS);
-  gtk_box_pack_start(GTK_BOX(parent), toolbar, FALSE, TRUE, 0);
-
-  /* Back button */
-  t->back = gtk_tool_button_new_from_stock(GTK_STOCK_GO_BACK);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->back, -1);
-  g_signal_connect(G_OBJECT(t->back), "clicked", G_CALLBACK(back_clicked), gw);
-  gtk_widget_show(GTK_WIDGET(t->back));
-
-  /* Forward button */
-  t->fwd = gtk_tool_button_new_from_stock(GTK_STOCK_GO_FORWARD);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->fwd, -1);
-  g_signal_connect(G_OBJECT(t->fwd), "clicked", G_CALLBACK(fwd_clicked), gw);
-  gtk_widget_show(GTK_WIDGET(t->fwd));
-  
-  /* Up button */
-  t->up = gtk_tool_button_new_from_stock(GTK_STOCK_GO_UP);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->up, -1);
-  g_signal_connect(G_OBJECT(t->up), "clicked", G_CALLBACK(up_clicked), t);
-  gtk_widget_show(GTK_WIDGET(t->up));
-
-  /* Home button */
-  t->home = gtk_tool_button_new_from_stock(GTK_STOCK_HOME);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), t->home, -1);
-  g_signal_connect(G_OBJECT(t->home), "clicked", G_CALLBACK(home_clicked), gw);
-  gtk_widget_show(GTK_WIDGET(t->home));
-
-
-  /* URL entry */
-  GtkToolItem *ti = gtk_tool_item_new();
-  t->url = w = gtk_entry_new();
-
-  g_signal_connect(G_OBJECT(w), "activate", G_CALLBACK(gu_nav_url_set), gw);
-
-  gtk_container_add(GTK_CONTAINER(ti), w);
-  gtk_tool_item_set_expand(ti, TRUE);
-  gtk_toolbar_insert(GTK_TOOLBAR(toolbar), ti, -1);
-
-  gtk_widget_show_all(GTK_WIDGET(ti));
-
-  g_signal_connect(toolbar, "destroy", G_CALLBACK(toolbar_dtor), t);
+  gtk_widget_show_all(toolbar);
 
   return toolbar;
 }
