@@ -129,7 +129,7 @@ glw_compile_shader(const char *url, int type)
   char log[4096];
   
   if((src = fa_load(url, NULL, NULL, log, sizeof(log), NULL)) == NULL) {
-    TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
+    TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s",
 	  url, log);
     return 0;
   }
