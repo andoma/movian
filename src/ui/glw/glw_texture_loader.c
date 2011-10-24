@@ -243,7 +243,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   ctx = avcodec_alloc_context();
   codec = avcodec_find_decoder(pm->pm_codec);
-  
+  if(codec == NULL) {
+    pixmap_release(pm);
+    TRACE(TRACE_ERROR, "glw", "%s: No codec for image format", url);
+    return -1;
+  }
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
 
