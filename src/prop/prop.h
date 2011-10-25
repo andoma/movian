@@ -117,6 +117,8 @@ void prop_init(void);
 #define PROP_SUB_MULTI                0x40
 #define PROP_SUB_INTERNAL             0x80
 #define PROP_SUB_DONTLOCK             0x100
+#define PROP_SUB_IGNORE_VOID          0x200
+#define PROP_SUB_AUTO_DESTROY         0x400
 
 enum {
   PROP_TAG_END = 0,

@@ -424,7 +424,7 @@ trampoline_int(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, va_arg(ap, double));
   } else if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, atoi(rstr_get(va_arg(ap, rstr_t *))));
-  } else {
+  } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, 0);
   }
 }
@@ -1605,6 +1605,8 @@ prop_destroy0(prop_t *p)
 
     if(s->hps_flags & PROP_SUB_TRACK_DESTROY)
       prop_notify_destroyed(s, p);
+    if(s->hps_flags & PROP_SUB_AUTO_DESTROY)
+      prop_unsubscribe0(s);
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
