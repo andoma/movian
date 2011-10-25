@@ -2464,7 +2464,7 @@ prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
   } else {
     rstr_release(p->hp_rstring);
   }
-  printf("cstring %s\n", cstr);
+
   p->hp_cstring = cstr;
   p->hp_type = PROP_CSTRING;
   p->hp_rstrtype = 0;
