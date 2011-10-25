@@ -309,7 +309,7 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 	return NULL;
       }
 
-      prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_STRING);
+      prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_RSTRING);
       if(stop == '\'')
 	prev->t_rstrtype = PROP_STR_RICH;
       src++;

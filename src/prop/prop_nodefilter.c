@@ -70,9 +70,11 @@ typedef struct nfnode {
 #define SORTKEY_RSTR  1
 #define SORTKEY_INT   2
 #define SORTKEY_FLOAT 3
+#define SORTKEY_CSTR  4
 
   union {
     rstr_t *sortkey_rstr;
+    const char *sortkey_cstr;
     int sortkey_int;
     float sortkey_float;
   };
@@ -210,8 +212,11 @@ nf_filtercheck(prop_t *p, const char *q)
     p = p->hp_originator;
 
   switch(p->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     return filterstr(rstr_get(p->hp_rstring), q);
+
+  case PROP_CSTRING:
+    return filterstr(p->hp_cstring, q);
 
   case PROP_LINK:
     return filterstr(rstr_get(p->hp_link_rtitle), q);
@@ -242,6 +247,10 @@ nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
   switch(a->sortkey_type) {
   case SORTKEY_RSTR:
     r = dictcmp(rstr_get(a->sortkey_rstr), rstr_get(b->sortkey_rstr));
+    break;
+
+  case SORTKEY_CSTR:
+    r = dictcmp(a->sortkey_cstr, b->sortkey_cstr);
     break;
 
   case SORTKEY_INT:

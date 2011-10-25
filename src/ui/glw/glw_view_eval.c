@@ -331,6 +331,21 @@ static int eval_op_isub(int a, int b) { return a - b; }
 static int eval_op_imul(int a, int b) { return a * b; }
 static int eval_op_imod(int a, int b) { return a % b; }
 
+
+/**
+ *
+ */
+static const char *
+token_as_string(const token_t *t)
+{
+  if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+    return rstr_get(t->t_rstring);
+  if(t->type == TOKEN_CSTRING)
+    return t->t_cstring;
+  return NULL;
+}
+
+
 /**
  *
  */
@@ -340,7 +355,8 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
   float (*f_fn)(float, float);
   int   (*i_fn)(int, int);
-  int i, al, bl;
+  int i;
+  const char *aa, *bb;
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -355,15 +371,16 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 
   switch(self->type) {
   case TOKEN_ADD:
-    if(token_is_string(a) && token_is_string(b)) {
+    if((aa = token_as_string(a)) != NULL &&
+       (bb = token_as_string(b)) != NULL) {
       /* Concatenation of strings */
-      al = strlen(rstr_get(a->t_rstring));
-      bl = strlen(rstr_get(b->t_rstring));
+      int al = strlen(aa);
+      int bl = strlen(bb);
 
-      r = eval_alloc(self, ec, TOKEN_STRING);
+      r = eval_alloc(self, ec, TOKEN_RSTRING);
       r->t_rstring = rstr_allocl(NULL, al + bl);
-      memcpy(rstr_data(r->t_rstring),      rstr_get(a->t_rstring), al);
-      memcpy(rstr_data(r->t_rstring) + al, rstr_get(b->t_rstring), bl);
+      memcpy(rstr_data(r->t_rstring),      aa, al);
+      memcpy(rstr_data(r->t_rstring) + al, bb, bl);
       eval_push(ec, r);
       return 0;
     }
@@ -496,8 +513,10 @@ token2bool(token_t *t)
   switch(t->type) {
   case TOKEN_VOID:
     return 0;
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
     return !!rstr_get(t->t_rstring)[0];
+  case TOKEN_CSTRING:
+    return !!t->t_cstring[0];
   case TOKEN_INT:
     return !!t->t_int;
   case TOKEN_FLOAT:
@@ -580,14 +599,15 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
 {
   token_t *b = eval_pop(ec), *a = eval_pop(ec), *r;
   int rr;
-
+  const char *aa, *bb;
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(token_is_string(a) && token_is_string(b)) {
-    rr = !strcmp(rstr_get(a->t_rstring), rstr_get(b->t_rstring));
+    if((aa = token_as_string(a)) != NULL &&
+       (bb = token_as_string(b)) != NULL) {
+      rr = !strcmp(aa, bb);
   } else if(a->type != b->type) {
     rr = 0;
   } else {
@@ -625,7 +645,7 @@ eval_lt(glw_view_eval_context_t *ec, struct token *self, int gt)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(token_is_string(a) && token_is_string(b)) {
+  if(token_as_string(a) && token_as_string(b)) {
     rr = 0;
   } else if(a->type != b->type) {
     rr = 0;
@@ -744,8 +764,12 @@ set_prop_from_token(prop_t *p, token_t *t)
     prop_set_void(p);
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
     prop_set_rstring(p, t->t_rstring);
+    break;
+
+  case TOKEN_CSTRING:
+    prop_set_cstring(p, t->t_cstring);
     break;
 
   case TOKEN_LINK:
@@ -787,7 +811,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
       return 0;
-    b = eval_alloc(self, ec, TOKEN_STRING);
+    b = eval_alloc(self, ec, TOKEN_RSTRING);
     b->t_rstring = rstr_alloc(ec->event->e_payload);
   } else if(b->type == TOKEN_BLOCK) {
     glw_view_eval_context_t n;
@@ -848,8 +872,11 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
   case TOKEN_PROPERTY_REF:
     
     switch(b->type) {
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
       prop_set_rstring(a->t_prop, b->t_rstring);
+      break;
+    case TOKEN_CSTRING:
+      prop_set_cstring(a->t_prop, b->t_cstring);
       break;
     case TOKEN_LINK:
       prop_set_link(a->t_prop, rstr_get(b->t_link_rtitle),
@@ -1351,6 +1378,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SET_VOID:
   case PROP_SET_RSTRING:
+  case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
   case PROP_SET_PIXMAP:
@@ -1464,11 +1492,18 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_RSTRING:
-    t = prop_callback_alloc_token(gps, TOKEN_STRING);
+    t = prop_callback_alloc_token(gps, TOKEN_RSTRING);
     t->propsubr = gps;
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
     (void)va_arg(ap, prop_t *);
     t->t_rstrtype = va_arg(ap, prop_str_type_t);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_CSTRING:
+    t = prop_callback_alloc_token(gps, TOKEN_CSTRING);
+    t->propsubr = gps;
+    t->t_cstring = va_arg(ap, const char *);
     rpn = gps->gps_rpn;
     break;
 
@@ -1560,6 +1595,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_SET_VOID:
   case PROP_SET_RSTRING:
+  case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
   case PROP_SET_DIR:
@@ -1806,7 +1842,8 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
   for(t = t0->child; t != NULL; t = t->next) {
     switch(t->type) {
     case TOKEN_BLOCK:
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
+    case TOKEN_CSTRING:
     case TOKEN_LINK:
     case TOKEN_FLOAT:
     case TOKEN_INT:
@@ -2353,8 +2390,10 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 
   if(a->type == TOKEN_VOID)
     url = NULL;
-  else if(a->type == TOKEN_STRING)
+  else if(a->type == TOKEN_RSTRING)
     url = rstr_get(a->t_rstring);
+  else if(a->type == TOKEN_CSTRING)
+    url = a->t_cstring;
   else if(a->type == TOKEN_LINK)
     url = rstr_get(a->t_link_rurl);
   else
@@ -2367,7 +2406,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 
     if(b->type == TOKEN_VOID)
       view = NULL;
-    else if(b->type == TOKEN_STRING)
+    else if(b->type == TOKEN_RSTRING)
       view = rstr_get(b->t_rstring);
     else
       return glw_view_seterr(ec->ei, b, "navOpen(): "
@@ -2416,7 +2455,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     if((b = token_resolve(ec, argv[1])) == NULL)
       return -1;
 
-    action = b->type == TOKEN_STRING ? b->t_rstring : NULL;
+    action = b->type == TOKEN_RSTRING ? b->t_rstring : NULL;
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
@@ -2482,7 +2521,7 @@ glwf_selectTrack(glw_view_eval_context_t *ec, struct token *self,
   r = eval_alloc(self, ec, TOKEN_EVENT);
 
 
-  if(a && a->type == TOKEN_STRING)
+  if(a && a->type == TOKEN_RSTRING)
     str = rstr_get(a->t_rstring);
   else if(a && a->type == TOKEN_INT) {
     snprintf(buf, sizeof(buf), "%d", a->t_int);
@@ -2552,7 +2591,7 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
-  if(a->type != TOKEN_STRING)
+  if(a->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "event(): "
 			    "First argument is not a string");
   
@@ -2634,7 +2673,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
     supp_first = token2bool(c);
   }
 
-  if(a->type != TOKEN_FLOAT && a->type != TOKEN_STRING &&
+  if(a->type != TOKEN_FLOAT && a->type != TOKEN_RSTRING &&
      a->type != TOKEN_VOID)
     return glw_view_seterr(ec->ei, self, "Invalid first operand to changed()");
 
@@ -2644,14 +2683,14 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 			    "expected scalar");
 
   if(a->type != e->type) {
-    if(e->type == TOKEN_STRING)
+    if(e->type == TOKEN_RSTRING)
       rstr_release(e->u.rstr);
 
     e->type = a->type;
 
     switch(a->type) {
 
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
       e->u.rstr = rstr_dup(a->t_rstring);
       break;
 
@@ -2670,7 +2709,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
    switch(a->type) {
 
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
       if(strcmp(rstr_get(e->u.rstr), rstr_get(a->t_rstring))) {
 	change = 1;
 	rstr_release(e->u.rstr);
@@ -2729,7 +2768,7 @@ glwf_changed_dtor(struct token *self)
 {
   glwf_changed_extra_t *e = self->t_extra;
 
-  if(e->type == TOKEN_STRING)
+  if(e->type == TOKEN_RSTRING)
     rstr_release(e->u.rstr);
   free(e);
 }
@@ -2765,10 +2804,10 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
     springmode = 0;
   }
   if(a == NULL || (a->type != TOKEN_FLOAT  && a->type != TOKEN_INT &&
-		   a->type != TOKEN_STRING && a->type != TOKEN_VOID))
+		   a->type != TOKEN_RSTRING && a->type != TOKEN_VOID))
     return glw_view_seterr(ec->ei, self, "Invalid first operand to iir()");
 
-  if(a->type == TOKEN_STRING || a->type == TOKEN_VOID)
+  if(a->type == TOKEN_RSTRING || a->type == TOKEN_VOID)
     f = 0;
   else
     f = a->type == TOKEN_INT ? a->t_int : a->t_float;
@@ -3057,8 +3096,11 @@ dofmt(char *out, const char *fmt, token_t **argv, unsigned int argc)
 	case TOKEN_FLOAT:
 	  len = fmt_add_float(out, len, arg->t_float, zeropad, fl1, fl2);
 	  break;
-	case TOKEN_STRING:
+	case TOKEN_RSTRING:
 	  len = fmt_add_string(out, len, rstr_get(arg->t_rstring));
+	  break;
+	case TOKEN_CSTRING:
+	  len = fmt_add_string(out, len, arg->t_cstring);
 	  break;
 	case TOKEN_LINK:
 	  len = fmt_add_string(out, len, rstr_get(arg->t_link_rtitle));
@@ -3083,6 +3125,7 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *a = argv[0];
   token_t *r;
+  const char *fmt;
   int i;
   token_t **res_args;
   unsigned int num_res_args;
@@ -3094,7 +3137,7 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
   
-  if(a->type != TOKEN_STRING)
+  if((fmt = token_as_string(a)) == NULL)
     return glw_view_seterr(ec->ei, a,
 			   "fmt() first argument is not a string");
 
@@ -3109,11 +3152,10 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
     res_args = NULL;
   }
 
-  const char *str = rstr_get(a->t_rstring);
-  size_t len = dofmt(NULL, str, res_args, num_res_args);
-  r = eval_alloc(self, ec, TOKEN_STRING);
+  size_t len = dofmt(NULL, fmt, res_args, num_res_args);
+  r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring  = rstr_allocl(NULL, len);
-  dofmt(rstr_data(r->t_rstring), str, res_args, num_res_args);
+  dofmt(rstr_data(r->t_rstring), fmt, res_args, num_res_args);
   eval_push(ec, r);
   return 0;
 }
@@ -3125,13 +3167,15 @@ glwf_fmt(glw_view_eval_context_t *ec, struct token *self,
 static int 
 token_cmp(token_t *a, token_t *b)
 {
+  const char *aa, *bb;
   if(a->type == TOKEN_INT   && b->type == TOKEN_FLOAT)
     return a->t_int != b->t_float;
   if(a->type == TOKEN_FLOAT && b->type == TOKEN_INT)
     return a->t_float != b->t_int;
 
-  if(token_is_string(a) && token_is_string(b))
-    return strcmp(rstr_get(a->t_rstring), rstr_get(b->t_rstring));
+  if((aa = token_as_string(a)) != NULL &&
+     (bb = token_as_string(b)) != NULL)
+    return strcmp(aa, bb);
 
   if(a->type != b->type)
     return -1;
@@ -3207,7 +3251,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if(b->type != TOKEN_STRING)
+  if(b->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, self, 
 			    "Invalid second operand to strftime()");
 
@@ -3218,7 +3262,7 @@ glwf_strftime(glw_view_eval_context_t *ec, struct token *self,
   } else {
     buf[0] = 0;
   }
-  r = eval_alloc(self, ec, TOKEN_STRING);
+  r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring = rstr_alloc(buf);
   eval_push(ec, r);
   return 0;
@@ -3244,7 +3288,7 @@ glwf_isset(glw_view_eval_context_t *ec, struct token *self,
     rv = 1;
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     rv = rstr_get(a->t_rstring)[0] != 0;
     break;
@@ -3286,7 +3330,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
   } else {
 
     switch(a->type) {
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
       str = rstr_get(a->t_rstring);
       break;
     case TOKEN_FLOAT:
@@ -3313,7 +3357,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
     }
   }
 
-  r = eval_alloc(self, ec, TOKEN_STRING);
+  r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring = rstr_alloc(str);
   eval_push(ec, r);
   return 0;
@@ -3488,11 +3532,11 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
-  if(a != NULL && a->type == TOKEN_STRING) {
+  if(a != NULL && a->type == TOKEN_RSTRING) {
     w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
 
     if(w != NULL && !glw_get_text(w, buf, sizeof(buf))) {
-      r = eval_alloc(self, ec, TOKEN_STRING);
+      r = eval_alloc(self, ec, TOKEN_RSTRING);
       r->t_rstring = rstr_alloc(buf);
       eval_push(ec, r);
       return 0;
@@ -3530,7 +3574,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
 					    ec->prop_viewx, ec->prop_args,
 					    ec->prop_clone);
 
-  } else if(a != NULL && a->type == TOKEN_STRING) {
+  } else if(a != NULL && a->type == TOKEN_RSTRING) {
     glw_set(ec->w, GLW_ATTRIB_BIND_TO_ID, rstr_get(a->t_rstring), NULL);
 
   } else {
@@ -3576,7 +3620,7 @@ glwf_delta(glw_view_eval_context_t *ec, struct token *self,
   case TOKEN_INT:
     f = b->t_int;
     break;
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
     f = strlen(rstr_get(b->t_rstring)) > 0;
     break;
   case TOKEN_LINK:
@@ -3737,15 +3781,18 @@ glwf_trace(glw_view_eval_context_t *ec, struct token *self,
   }
   ec->debug--;
 
-  if(a->type != TOKEN_STRING)
+  if(a->type != TOKEN_RSTRING)
     return 0;
 
   switch(b->type) {
   case TOKEN_LINK:
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
     TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), 
 	  rstr_get(b->t_rstring));
+    break;
+  case TOKEN_CSTRING:
+    TRACE(TRACE_DEBUG, "GLW", "%s: %s", rstr_get(a->t_rstring), b->t_cstring);
     break;
   case TOKEN_FLOAT:
     TRACE(TRACE_DEBUG, "GLW", "%s: %f", rstr_get(a->t_rstring), b->t_float);
@@ -3814,7 +3861,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   switch(a->type) {
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
     url = a->t_rstring;
     break;
 
@@ -3920,13 +3967,13 @@ glw_settingInt(glw_view_eval_context_t *ec, struct token *self,
   if((step = token_resolve(ec, step)) == NULL)
     return -1;
 
-  if(title->type != TOKEN_STRING)
+  if(title->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, title, "Title argument is not a string");
   
-  if(id->type != TOKEN_STRING)
+  if(id->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, id, "ID argument is not a string");
   
-  if(unit->type != TOKEN_STRING)
+  if(unit->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, unit, "Unit argument is not a string");
 
   
@@ -3976,10 +4023,10 @@ glw_settingBool(glw_view_eval_context_t *ec, struct token *self,
   if((def  = token_resolve(ec, def)) == NULL)
     return -1;
 
-  if(title->type != TOKEN_STRING)
+  if(title->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, title, "First argument is not a string");
   
-  if(id->type != TOKEN_STRING)
+  if(id->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, id, "Second argument is not a string");
 
   if(gs == NULL) {
@@ -4235,7 +4282,7 @@ glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
   if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
 
-  if(b->type != TOKEN_STRING)
+  if(b->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "propGrouper(): "
 			   "Second argument is not a string");
   
@@ -4279,7 +4326,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
 
-  if(b->type != TOKEN_STRING)
+  if(b->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, a, "propSorter(): "
 			   "Second argument is not a string");
   
@@ -4551,14 +4598,14 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
   if((sep = token_resolve(ec, argv[0])) == NULL)
     return -1;
   
-  if(sep->type != TOKEN_STRING)
+  if(sep->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, sep,
 			   "first arg (separator) must be a string");
 
   for(i = 1; i < argc; i++)  {
     if((t = token_resolve(ec, argv[i])) == NULL)
       continue;
-    if(t->type != TOKEN_STRING)
+    if(t->type != TOKEN_RSTRING)
       continue;
     if(s != NULL)
       strappend(&ret, s);
@@ -4566,7 +4613,7 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
     if(s == NULL)
       s = rstr_get(sep->t_rstring);
   }
-  token_t *r = eval_alloc(self, ec, TOKEN_STRING);
+  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
   r->t_rstring = rstr_alloc(ret);
   free(ret);
   eval_push(ec, r);

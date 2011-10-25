@@ -74,6 +74,7 @@ struct gds_cell {
     float f;
     int i;
     rstr_t *rstr;
+    const char *cstr;
     struct {
       rstr_t *title;
       rstr_t *url;
@@ -397,6 +398,9 @@ gu_dir_store_get_value(GtkTreeModel   *tree_model,
   if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_RSTRING) {
     g_value_set_string(value, rstr_get(c->rstr));
   }
+  else if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_CSTRING) {
+    g_value_set_string(value, c->cstr);
+  }
   else if(coltypes[column] == G_TYPE_STRING && c->type == PROP_SET_RLINK) {
     g_value_set_string(value, rstr_get(c->rlink.title));
   }
@@ -525,6 +529,10 @@ gds_cell_set(void *opaque, prop_event_t event, ...)
 
   case PROP_SET_RSTRING:
     c->rstr = rstr_dup(va_arg(ap, rstr_t *));
+    break;
+
+  case PROP_SET_CSTRING:
+    c->cstr = va_arg(ap, const char *);
     break;
 
   case PROP_SET_INT:

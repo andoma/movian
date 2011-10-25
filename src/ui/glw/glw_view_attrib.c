@@ -40,7 +40,11 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
     str = "";
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    str = t->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     str = rstr_get(t->t_rstring);
     break;
@@ -90,7 +94,11 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
     str = NULL;
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    str = t->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
     type = t->t_rstrtype;
     /* FALLTHRU */
   case TOKEN_LINK:
@@ -129,7 +137,11 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
   float v;
 
   switch(t->type) {
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    v = strtod(t->t_cstring, NULL);
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     v = strtod(rstr_get(t->t_rstring), NULL);
     break;
@@ -213,7 +225,11 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int v;
 
   switch(t->type) {
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    v = atoi(t->t_cstring);
+    break;
+    
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     v = atoi(rstr_get(t->t_rstring));
     break;
@@ -707,7 +723,12 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
       w->glw_class->gc_set_source(w, NULL);
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, t->t_cstring);
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     if(w->glw_class->gc_set_source != NULL)
       w->glw_class->gc_set_source(w, rstr_get(t->t_rstring));

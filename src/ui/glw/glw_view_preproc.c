@@ -297,7 +297,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
       if(!strcmp(rstr_get(t->t_rstring), "include")) {
 	consumetoken();
 
-	if(t->type != TOKEN_STRING) 
+	if(t->type != TOKEN_RSTRING) 
 	  return glw_view_seterr(ei, t, "Invalid filename after include");
 
 	x = t->next;
@@ -317,7 +317,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	import_t *i;
 	consumetoken();
 
-	if(t->type != TOKEN_STRING) 
+	if(t->type != TOKEN_RSTRING) 
 	  return glw_view_seterr(ei, t, "Invalid filename after import");
 
 	LIST_FOREACH(i, il, link) {

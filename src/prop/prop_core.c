@@ -122,6 +122,7 @@ typedef struct prop_notify {
       rstr_t *rtitle;
       rstr_t *rurl;
     } link;
+    const char *str;
 
   } u;
 
@@ -132,6 +133,7 @@ typedef struct prop_notify {
 #define hpn_int    u.i
 #define hpn_rstring u.rstr.rstr
 #define hpn_rstrtype u.rstr.type
+#define hpn_cstring u.str
 #define hpn_pixmap u.pp
 #define hpn_ext_event  u.e
 #define hpn_link_rtitle u.link.rtitle
@@ -349,6 +351,10 @@ prop_notify_free(prop_notify_t *n)
     prop_ref_dec(n->hpn_prop2);
     break;
 
+  case PROP_SET_CSTRING:
+    prop_ref_dec(n->hpn_prop2);
+    break;
+
   case PROP_SET_RLINK:
     rstr_release(n->hpn_link_rtitle);
     rstr_release(n->hpn_link_rurl);
@@ -424,6 +430,8 @@ trampoline_int(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, va_arg(ap, double));
   } else if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, atoi(rstr_get(va_arg(ap, rstr_t *))));
+  } else if(event == PROP_SET_CSTRING) {
+    cb(s->hps_opaque, atoi(va_arg(ap, const char *)));
   } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, 0);
   }
@@ -467,6 +475,8 @@ trampoline_int_set(prop_sub_t *s, prop_event_t event, ...)
     *ptr = va_arg(ap, double);
   } else if(event == PROP_SET_RSTRING) {
     *ptr = atoi(rstr_get(va_arg(ap, rstr_t *)));
+  } else if(event == PROP_SET_CSTRING) {
+    *ptr = atoi(va_arg(ap, const char *));
   } else {
     *ptr = 0;
   }
@@ -508,6 +518,8 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
 
   if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
+  } else if(event == PROP_SET_CSTRING) {
+    cb(s->hps_opaque, va_arg(ap, const char *));
   } else if(event == PROP_SET_RLINK) {
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
   } else {
@@ -569,6 +581,14 @@ prop_notify_dispatch(struct prop_notify_queue *q)
       else
 	cb(s->hps_opaque, n->hpn_event, n->hpn_rstring, n->hpn_prop2, n->hpn_rstrtype);
       rstr_release(n->hpn_rstring);
+      prop_ref_dec(n->hpn_prop2);
+      break;
+
+    case PROP_SET_CSTRING:
+      if(pt != NULL)
+	pt(s, n->hpn_event, n->hpn_cstring, n->hpn_prop2);
+      else
+	cb(s->hps_opaque, n->hpn_event, n->hpn_cstring, n->hpn_prop2);
       prop_ref_dec(n->hpn_prop2);
       break;
 
@@ -793,10 +813,15 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   if(s->hps_flags & PROP_SUB_DEBUG) {
     switch(p->hp_type) {
-    case PROP_STRING:
-      PROPTRACE("str(%s) by %s%s", 
-	    rstr_get(p->hp_rstring), origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+    case PROP_RSTRING:
+      PROPTRACE("rstr(%s) by %s%s", 
+		rstr_get(p->hp_rstring), origin,
+		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
+      break;
+    case PROP_CSTRING:
+      PROPTRACE("cstr(%s) by %s%s", 
+		p->hp_cstring, origin,
+		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_LINK:
       PROPTRACE("link(%s,%s) by %s%s", 
@@ -840,11 +865,18 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
     prop_trampoline_t *pt = s->hps_trampoline;
 
     switch(p->hp_type) {
-    case PROP_STRING:
+    case PROP_RSTRING:
       if(pt != NULL)
 	pt(s, PROP_SET_RSTRING, p->hp_rstring, p, p->hp_rstrtype);
       else
 	cb(s->hps_opaque, PROP_SET_RSTRING, p->hp_rstring, p, p->hp_rstrtype);
+      break;
+
+    case PROP_CSTRING:
+      if(pt != NULL)
+	pt(s, PROP_SET_CSTRING, p->hp_cstring, p);
+      else
+	cb(s->hps_opaque, PROP_SET_CSTRING, p->hp_cstring, p);
       break;
 
     case PROP_LINK:
@@ -903,10 +935,15 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   n->hpn_prop2 = prop_ref_inc(p);
 
   switch(p->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     n->hpn_rstring = rstr_dup(p->hp_rstring);
     n->hpn_rstrtype = p->hp_rstrtype;
     n->hpn_event = PROP_SET_RSTRING;
+    break;
+
+  case PROP_CSTRING:
+    n->hpn_cstring = p->hp_cstring;
+    n->hpn_event = PROP_SET_CSTRING;
     break;
 
   case PROP_LINK:
@@ -1241,9 +1278,10 @@ prop_clean(prop_t *p)
   case PROP_VOID:
   case PROP_INT:
   case PROP_FLOAT:
+  case PROP_CSTRING:
     break;
 
-  case PROP_STRING:
+  case PROP_RSTRING:
     rstr_release(p->hp_rstring);
     break;
 
@@ -1577,7 +1615,7 @@ prop_destroy0(prop_t *p)
     }
     break;
 
-  case PROP_STRING:
+  case PROP_RSTRING:
     rstr_release(p->hp_rstring);
     break;
 
@@ -1593,6 +1631,7 @@ prop_destroy0(prop_t *p)
   case PROP_FLOAT:
   case PROP_INT:
   case PROP_VOID:
+  case PROP_CSTRING:
     break;
   }
 
@@ -2310,7 +2349,7 @@ prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
   if(p->hp_type == PROP_ZOMBIE)
     return;
 
-  if(p->hp_type != PROP_STRING) {
+  if(p->hp_type != PROP_RSTRING) {
 
     if(prop_clean(p))
       return;
@@ -2322,7 +2361,7 @@ prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
   }
 
   p->hp_rstring = rstr_alloc(str);
-  p->hp_type = PROP_STRING;
+  p->hp_type = PROP_RSTRING;
 
   p->hp_rstrtype = type;
   prop_notify_value(p, skipme, "prop_set_string()", 0);
@@ -2370,7 +2409,7 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr, int noupdate)
     return;
   }
 
-  if(p->hp_type != PROP_STRING) {
+  if(p->hp_type != PROP_RSTRING) {
 
     if(prop_clean(p)) {
       hts_mutex_unlock(&prop_mutex);
@@ -2384,10 +2423,53 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr, int noupdate)
     rstr_release(p->hp_rstring);
   }
   p->hp_rstring = rstr_dup(rstr);
-  p->hp_type = PROP_STRING;
+  p->hp_type = PROP_RSTRING;
   p->hp_rstrtype = 0;
 
-  prop_set_epilogue(skipme, p, "prop_set_string()");
+  prop_set_epilogue(skipme, p, "prop_set_rstring()");
+}
+
+
+/**
+ *
+ */
+void
+prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
+{
+  if(p == NULL)
+    return;
+
+  if(cstr == NULL) {
+    prop_set_void_ex(p, skipme);
+    return;
+  }
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  if(p->hp_type != PROP_CSTRING) {
+
+    if(prop_clean(p)) {
+      hts_mutex_unlock(&prop_mutex);
+      return;
+    }
+
+  } else if(!strcmp(p->hp_cstring, cstr)) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  } else {
+    rstr_release(p->hp_rstring);
+  }
+  printf("cstring %s\n", cstr);
+  p->hp_cstring = cstr;
+  p->hp_type = PROP_CSTRING;
+  p->hp_rstrtype = 0;
+
+  prop_set_epilogue(skipme, p, "prop_set_cstring()");
 }
 
 /**
@@ -2877,8 +2959,11 @@ prop_value_compare(prop_t *a, prop_t *b)
     return 0;
 
   switch(a->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     return !strcmp(rstr_get(a->hp_rstring), rstr_get(b->hp_rstring));
+
+  case PROP_CSTRING:
+    return !strcmp(a->hp_cstring, b->hp_cstring);
 
   case PROP_LINK:
     return !strcmp(rstr_get(a->hp_link_rtitle), rstr_get(b->hp_link_rtitle)) &&
@@ -3430,8 +3515,11 @@ prop_get_string(prop_t *p)
   hts_mutex_lock(&prop_mutex);
 
   switch(p->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     r = rstr_dup(p->hp_rstring);
+    break;
+  case PROP_CSTRING:
+    r = rstr_alloc(p->hp_cstring);
     break;
   case PROP_LINK:
     r = rstr_dup(p->hp_link_rtitle);
@@ -3558,8 +3646,12 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
   }
 
   switch(p->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     fprintf(stderr, "\"%s\"\n", rstr_get(p->hp_rstring));
+    break;
+
+  case PROP_CSTRING:
+    fprintf(stderr, "\"%s\"\n", p->hp_cstring);
     break;
 
   case PROP_LINK:
@@ -3618,8 +3710,12 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
   htsmsg_t *sub;
 
   switch(p->hp_type) {
-  case PROP_STRING:
+  case PROP_RSTRING:
     htsmsg_add_str(m, p->hp_name, rstr_get(p->hp_rstring));
+    break;
+
+  case PROP_CSTRING:
+    htsmsg_add_str(m, p->hp_name, p->hp_cstring);
     break;
 
   case PROP_FLOAT:

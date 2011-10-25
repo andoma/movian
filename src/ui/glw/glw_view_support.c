@@ -66,6 +66,7 @@ glw_view_token_free(token_t *t)
   case TOKEN_PROPERTY_SUBSCRIPTION:
   case TOKEN_VOID:
   case TOKEN_DIRECTORY:
+  case TOKEN_CSTRING:
     break;
 
   case TOKEN_VECTOR_STRING:
@@ -109,7 +110,7 @@ glw_view_token_free(token_t *t)
   case TOKEN_NOP:
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
   case TOKEN_PROPERTY_VALUE_NAME:
   case TOKEN_PROPERTY_CANONICAL_NAME:
@@ -187,7 +188,11 @@ glw_view_token_copy(token_t *src)
     dst->t_attrib = src->t_attrib;
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    dst->t_cstring = src->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
     dst->t_rstrtype = src->t_rstrtype;
     // FALLTHRU
   case TOKEN_IDENTIFIER:
@@ -325,7 +330,9 @@ token2name(token_t *t)
   case TOKEN_LEFT_PARENTHESIS:  return "(";
   case TOKEN_RIGHT_PARENTHESIS:  return ")";
 
-  case TOKEN_STRING:        return "<string>";
+  case TOKEN_RSTRING: return rstr_get(t->t_rstring);
+  case TOKEN_CSTRING: return t->t_cstring;
+
 
   case TOKEN_DOT:           return ".";
   case TOKEN_HASH:          return "#";

@@ -54,6 +54,7 @@ typedef struct prop_vec {
 typedef enum {
   PROP_SET_VOID,
   PROP_SET_RSTRING,
+  PROP_SET_CSTRING,
   PROP_SET_INT,
   PROP_SET_FLOAT,
   PROP_SET_DIR,
@@ -173,6 +174,8 @@ void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
 			 int noupdate);
 
+void prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *str);
+
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
 #define PROP_SET_NORMAL    0
@@ -200,7 +203,12 @@ void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
 
-#define prop_set_string(p, str) prop_set_string_ex(p, NULL, str, 0)
+#define prop_set_string(p, str) do {		\
+  if(__builtin_constant_p(str))			\
+    prop_set_cstring_ex(p, NULL, str);		\
+  else						\
+    prop_set_string_ex(p, NULL, str, 0);	\
+  } while(0)
 
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
 
@@ -221,6 +229,8 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 #define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
 
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr, 0)
+
+#define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
 
 rstr_t *prop_get_string(prop_t *p);
 

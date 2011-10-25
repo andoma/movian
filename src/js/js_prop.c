@@ -114,7 +114,7 @@ vfw_setval(void *opaque, prop_event_t event, ...)
   wfv_t *wfv = opaque;
   va_list ap;
   rstr_t *r;
-  
+  const char *s;
   va_start(ap, event);
 
   switch(event) {
@@ -129,6 +129,15 @@ vfw_setval(void *opaque, prop_event_t event, ...)
 
     r = va_arg(ap, rstr_t *);
     if(strcmp(JS_GetStringBytes(JSVAL_TO_STRING(wfv->value)), rstr_get(r)))
+      return;
+    break;
+
+  case PROP_SET_CSTRING:
+    if(!JSVAL_IS_STRING(wfv->value))
+      return;
+
+    s = va_arg(ap, const char *);
+    if(strcmp(JS_GetStringBytes(JSVAL_TO_STRING(wfv->value)), s))
       return;
     break;
 
