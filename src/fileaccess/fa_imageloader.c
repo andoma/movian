@@ -291,14 +291,11 @@ ifv_close(void)
  *
  */
 static pixmap_t *
-fa_image_from_video2(const char *url0, const image_meta_t *im, 
-		     const char *cacheid, char *errbuf, size_t errlen)
+fa_image_from_video2(const char *url, const image_meta_t *im, 
+		     const char *cacheid, char *errbuf, size_t errlen,
+		     int sec, time_t mtime)
 {
   pixmap_t *pm = NULL;
-  char *url = mystrdupa(url0);
-  char *tim = strchr(url, '#');
-
-  *tim++ = 0;
 
   if(ifv_url == NULL || strcmp(url, ifv_url)) {
     // Need to open
@@ -359,10 +356,8 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
   int got_pic;
 
 
-  int secs = atoi(tim);
-
   AVStream *st = ifv_fctx->streams[ifv_stream];
-  int64_t ts = av_rescale(secs, st->time_base.den, st->time_base.num);
+  int64_t ts = av_rescale(sec, st->time_base.den, st->time_base.num);
 
   if(av_seek_frame(ifv_fctx, ifv_stream, ts, AVSEEK_FLAG_BACKWARD) < 0) {
     ifv_close();
@@ -467,8 +462,8 @@ fa_image_from_video2(const char *url0, const image_meta_t *im,
       r = avcodec_encode_video(pngencoder, output, outputsize, oframe);
       
       if(r > 0) 
-	blobcache_put(cacheid, "videothumb", output, r, 86400 * 5,
-		      NULL, 0);
+	blobcache_put(cacheid, "videothumb", output, r, INT32_MAX,
+		      NULL, mtime);
       free(output);
       av_free(oframe);
     }
@@ -490,24 +485,48 @@ static pixmap_t *
 fa_image_from_video(const char *url0, const image_meta_t *im,
 		    char *errbuf, size_t errlen)
 {
+  static char *stated_url;
+  static fa_stat_t fs;
+  time_t stattime = 0;
+  time_t mtime = 0;
   pixmap_t *pm = NULL;
   char cacheid[512];
   void *data;
   size_t datasize;
+  char *url = mystrdupa(url0);
+  char *tim = strchr(url, '#');
 
-  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-2",
+  *tim++ = 0;
+  int secs = atoi(tim);
+
+  hts_mutex_lock(&image_from_video_mutex);
+  
+  if(strcmp(url, stated_url ?: "")) {
+    free(stated_url);
+    stated_url = NULL;
+    if(fa_stat(url, &fs, errbuf, errlen)) {
+      hts_mutex_unlock(&image_from_video_mutex);
+      return NULL;
+    }
+    stated_url = strdup(url);
+  }
+  stattime = fs.fs_mtime;
+  hts_mutex_unlock(&image_from_video_mutex);
+
+  snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-3",
 	   url0, im->req_width, im->req_height);
 
   data = blobcache_get(cacheid, "videothumb", &datasize, 0, 0,
-		       NULL, NULL);
-  if(data != NULL) {
+		       NULL, &mtime);
+  if(data != NULL && mtime == stattime) {
     pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
     free(data);
     return pm;
   }
 
   hts_mutex_lock(&image_from_video_mutex);
-  pm = fa_image_from_video2(url0, im, cacheid, errbuf, errlen);
+  pm = fa_image_from_video2(url, im, cacheid, errbuf, errlen,
+			    secs, stattime);
   hts_mutex_unlock(&image_from_video_mutex);
   return pm;
 }
