@@ -81,7 +81,7 @@ blobcache_put0(sqlite3 *db, const char *key, const char *stash,
   sqlite3_bind_text(stmt, 2, stash, -1, SQLITE_STATIC);
   sqlite3_bind_blob(stmt, 3, data, size, SQLITE_STATIC);
   sqlite3_bind_int(stmt,  4, now);
-  sqlite3_bind_int(stmt,  5, now + maxage);
+  sqlite3_bind_int64(stmt,  5, (int64_t)now + maxage);
 
   if(etag != NULL)
     sqlite3_bind_text(stmt, 6, etag, -1, SQLITE_STATIC);
@@ -153,7 +153,7 @@ blobcache_get0(sqlite3 *db, const char *key, const char *stash,
     return NULL;
   }
 
-  int expired = now > sqlite3_column_int(stmt, 1);
+  int expired = now > sqlite3_column_int64(stmt, 1);
 
   if(!expired || is_expired != NULL) {
     sqlite3_column_blob(stmt, 0);
@@ -371,6 +371,7 @@ blobcache_init(void)
   else
     callout_arm(&blobcache_callout, blobcache_do_prune, NULL, 1);
 }
+
 
 
 /**
