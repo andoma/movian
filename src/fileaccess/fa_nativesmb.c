@@ -64,6 +64,10 @@ typedef struct nbt_req {
   void *nr_response;
   int nr_response_len;
   int nr_result;
+  LIST_ENTRY(nbt_req) nr_multi_link;
+  int nr_offset;
+  int nr_cnt;
+  int nr_last;
 } nbt_req_t;
 
 
@@ -1278,25 +1282,33 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
 /**
  *
  */
-static int
-nbt_async_req_reply(cifs_connection_t *cc,
-		    void *request, int request_len,
-		    void **responsep, int *response_lenp)
+static nbt_req_t *
+nbt_async_req(cifs_connection_t *cc, void *request, int request_len)
 {
   SMB_t *h = request + 4;
   nbt_req_t *nr = malloc(sizeof(nbt_req_t));
-  int r;
 
   nr->nr_result = -1;
   nr->nr_response = NULL;
   nr->nr_mid = cc->cc_mid_generator++;
   h->pid = htole_16(2);
   h->mid = htole_16(nr->nr_mid);
-
-
   nbt_write(cc, request, request_len);
 
   LIST_INSERT_HEAD(&cc->cc_pending_nbt_requests, nr, nr_link);
+  return nr;
+}
+
+
+/**
+ *
+ */
+static int
+nbt_async_req_reply(cifs_connection_t *cc,
+		    void *request, int request_len,
+		    void **responsep, int *response_lenp)
+{
+  nbt_req_t *nr = nbt_async_req(cc, request, request_len);
 
   while(nr->nr_result == -1) {
     if(hts_cond_wait_timeout(&cc->cc_cond, &smb_global_mutex, 5000)) {
@@ -1308,13 +1320,15 @@ nbt_async_req_reply(cifs_connection_t *cc,
   }
   LIST_REMOVE(nr, nr_link);
 
-  r = nr->nr_result;
+  int r = nr->nr_result;
   *responsep = nr->nr_response;
   *response_lenp = nr->nr_response_len;
 
   free(nr);
   return r;
 }
+
+
 
 
 /**
@@ -1926,6 +1940,7 @@ smb_close(fa_handle_t *fh)
   free(sf);
 }
 
+
 /**
  *
  */
@@ -1935,17 +1950,23 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   smb_file_t *sf = (smb_file_t *)fh;
   SMB_READ_ANDX_req_t *req;
   const SMB_READ_ANDX_resp_t *resp;
-  void *rbuf;
-  int rlen;
   size_t cnt, rcnt;
   size_t total = 0;
   cifs_tree_t *ct = sf->sf_ct;
+  nbt_req_t *nr = NULL;
+  struct nbt_req_list reqs;
 
-  req = alloca(sizeof(SMB_READ_ANDX_req_t));
-  memset(req, 0, sizeof(SMB_READ_ANDX_req_t));
 
   if(sf->sf_pos + size > sf->sf_file_size)
     size = sf->sf_file_size - sf->sf_pos;
+
+  if(size == 0)
+    return 0;
+
+  LIST_INIT(&reqs);
+
+  req = alloca(sizeof(SMB_READ_ANDX_req_t));
+  memset(req, 0, sizeof(SMB_READ_ANDX_req_t));
 
   hts_mutex_lock(&smb_global_mutex);
 
@@ -1955,43 +1976,81 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
 		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
     
     req->fid = sf->sf_fid;
-    req->offset_low = htole_32((uint32_t)sf->sf_pos);
-    req->offset_high = htole_32((uint32_t)(sf->sf_pos >> 32));
+    int64_t pos = sf->sf_pos + total;
+    req->offset_low = htole_32((uint32_t)pos);
+    req->offset_high = htole_32((uint32_t)(pos >> 32));
     req->max_count_low = htole_16(cnt & 0xffff);
     req->max_count_high = htole_32(cnt >> 16);
     req->wordcount = 12;
     req->andx_command = 0xff;
 
-    if(nbt_async_req_reply(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t),
-			   &rbuf, &rlen)) {
-      hts_mutex_unlock(&smb_global_mutex);
-      return -1;
-    }
-    
-    resp = rbuf;
+    nr = nbt_async_req(ct->ct_cc, req, sizeof(SMB_READ_ANDX_req_t));
+    LIST_INSERT_HEAD(&reqs, nr, nr_multi_link);
 
+    nr->nr_offset = total;
+    nr->nr_cnt = cnt;
+    total += cnt;
+    size -= cnt;
+    nr->nr_last = 0;
+  }
+  nr->nr_last = 1;
+
+  while(1) {
+    LIST_FOREACH(nr, &reqs, nr_multi_link)
+      if(nr->nr_result == -1)
+	break;
+
+    if(nr != NULL) {
+      if(hts_cond_wait_timeout(&ct->ct_cc->cc_cond, &smb_global_mutex, 5000)) {
+	break;
+      }
+    } else {
+      break;
+    }
+  }
+  
+  total = 0;
+  while((nr = LIST_FIRST(&reqs)) != NULL) {
+    if(nr->nr_result)
+      goto fail;
+
+    resp = nr->nr_response;
     uint32_t errcode = letoh_32(resp->hdr.errorcode);
+    if(errcode)
+      goto fail;
 
-    if(errcode) {
-      hts_mutex_unlock(&smb_global_mutex);
-      return -1;
-    }
+    LIST_REMOVE(nr, nr_link);
+    LIST_REMOVE(nr, nr_multi_link);
 
     rcnt = letoh_16(resp->data_length_low);
     rcnt += letoh_32(resp->data_length_high) << 16;
-    memcpy(buf, rbuf + letoh_16(resp->data_offset), rcnt);
-    free(rbuf);
+    memcpy(buf + nr->nr_offset, 
+	   nr->nr_response + letoh_16(resp->data_offset), rcnt);
+    free(nr->nr_response);
 
     sf->sf_pos += rcnt;
     total += rcnt;
-    size -= rcnt;
-    buf += rcnt;
 
-    if(rcnt < cnt)
+    if(nr->nr_last && rcnt < nr->nr_cnt) {
+      free(nr);
       break;
+    }
+    free(nr);
   }
   hts_mutex_unlock(&smb_global_mutex);
   return total;
+
+ fail:
+
+  while((nr = LIST_FIRST(&reqs)) != NULL) {
+    LIST_REMOVE(nr, nr_link);
+    LIST_REMOVE(nr, nr_multi_link);
+    free(nr->nr_response);
+    free(nr);
+  }
+  hts_mutex_unlock(&smb_global_mutex);
+  return -1;
+
 }
 
 
