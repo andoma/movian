@@ -30,9 +30,6 @@
 
 #define BF_CHK 0
 
-#define BF_MIN_READ   (64 * 1024)
-#define BF_CACHE_SIZE (256 * 1024)
-
 #define BF_ZONES 8
 #define BF_MASK (BF_ZONES - 1)
 
@@ -54,6 +51,7 @@ typedef struct buffered_file {
 #endif
   void *bf_mem;
   size_t bf_mem_size;
+  int bf_min_request;
 
   int bf_mem_ptr;
 
@@ -349,7 +347,6 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
   fa_handle_t *src = bf->bf_src;
 
   if(bf->bf_mem == NULL) {
-    bf->bf_mem_size = BF_CACHE_SIZE;
     bf->bf_mem = halloc(bf->bf_mem_size);
   }
 
@@ -371,7 +368,7 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
     }
 
     int rreq = need_to_fill(bf, bf->bf_fpos, size);
-    if(rreq >= BF_MIN_READ) {
+    if(rreq >= bf->bf_min_request) {
 
       if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET) != bf->bf_fpos)
 	return -1;
@@ -391,16 +388,16 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
       continue;
     }
 
-    if(bf->bf_mem_ptr + BF_MIN_READ > bf->bf_mem_size)
+    if(bf->bf_mem_ptr + bf->bf_min_request > bf->bf_mem_size)
       bf->bf_mem_ptr = 0;
     
-    erase_zone(bf, bf->bf_mem_ptr, BF_MIN_READ);
+    erase_zone(bf, bf->bf_mem_ptr, bf->bf_min_request);
 
     if(src->fh_proto->fap_seek(src, bf->bf_fpos, SEEK_SET) != bf->bf_fpos)
       return -1;
 
     int r = src->fh_proto->fap_read(src, bf->bf_mem + bf->bf_mem_ptr,
-				    BF_MIN_READ);
+				    bf->bf_min_request);
     if(r < 1) {
       bf->bf_size = bf->bf_fpos;
       return r < 0 ? r : rval;
@@ -408,7 +405,7 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
 
     map_zone(bf, bf->bf_mem_ptr, r, bf->bf_fpos);
 
-    if(r != BF_MIN_READ) {
+    if(r != bf->bf_min_request) {
       // EOF
       bf->bf_size = bf->bf_fpos + r;
 
@@ -503,6 +500,9 @@ fa_handle_t *
 fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 		 struct prop *stats)
 {
+  int mflags = flags;
+  flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG);
+
   fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, flags, stats);
   if(fh == NULL)
     return NULL;
@@ -511,6 +511,10 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
     return fh;
 
   buffered_file_t *bf = calloc(1, sizeof(buffered_file_t));
+
+  bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;
+  bf->bf_mem_size = bf->bf_min_request * 4;
+
   bf->bf_src = fh;
   bf->bf_size = -1;
   bf->h.fh_proto = &fa_protocol_buffered;

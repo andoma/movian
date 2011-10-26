@@ -229,7 +229,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, NULL);
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_SMALL, NULL);
   if(fh == NULL)
     return NULL;
 

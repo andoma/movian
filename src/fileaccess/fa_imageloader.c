@@ -183,7 +183,8 @@ fa_imageloader(const char *url, const struct image_meta *im,
   if(!im->want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
-  if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen, FA_BUFFERED)) == NULL)
+  if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
+			  FA_BUFFERED_SMALL)) == NULL)
     return NULL;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
@@ -301,7 +302,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     // Need to open
     int i;
     AVFormatContext *fctx;
-    fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, NULL);
+    fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, NULL);
 
     if(fh == NULL)
       return NULL;

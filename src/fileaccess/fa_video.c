@@ -604,7 +604,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
    * Check file type
    */
   fa_handle_t *fh;
-  fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED, mp->mp_prop_io);
+  fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_BIG, mp->mp_prop_io);
   if(fh == NULL)
     return NULL;
 

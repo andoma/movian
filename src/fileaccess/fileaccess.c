@@ -157,9 +157,8 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   if(flags & FA_CACHE)
     return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
 #endif
-  if(flags & FA_BUFFERED)
-    return fa_buffered_open(url, errbuf, errsize, flags & ~FA_BUFFERED, stats);
-
+  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
+    return fa_buffered_open(url, errbuf, errsize, flags, stats);
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
@@ -190,8 +189,8 @@ fa_open_vpaths(const char *url, const char **vpaths,
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  if(flags & FA_BUFFERED)
-    return fa_buffered_open(url, errbuf, errsize, flags & ~FA_BUFFERED, NULL);
+  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
+    return fa_buffered_open(url, errbuf, errsize, flags, NULL);
 
   fh = fap->fap_open(fap, filename, errbuf, errsize, flags, NULL);
 #ifdef FA_DUMP
