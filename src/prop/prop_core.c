@@ -2461,8 +2461,6 @@ prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *cstr)
   } else if(!strcmp(p->hp_cstring, cstr)) {
     hts_mutex_unlock(&prop_mutex);
     return;
-  } else {
-    rstr_release(p->hp_rstring);
   }
 
   p->hp_cstring = cstr;
