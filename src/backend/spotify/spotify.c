@@ -44,6 +44,7 @@
 #include "service.h"
 #include "misc/pixmap.h"
 #include "settings.h"
+#include "htsmsg/htsbuf.h"
 
 #include "api/lastfm.h"
 
@@ -67,6 +68,7 @@ static media_pipe_t *spotify_mp;
 static hts_mutex_t spotify_mutex;
 static hts_cond_t spotify_cond_main;
 static int spotify_high_bitrate;
+static int spotify_offline_bitrate_96;
 
 static int play_position;
 static int seek_pos;
@@ -76,7 +78,7 @@ static int is_thread_running;
 static int is_logged_in;
 static int login_rejected_by_user;
 static int pending_login;
-static int pending_relogin;
+static const char *pending_relogin;
 
 static sp_session *spotify_session;
 TAILQ_HEAD(spotify_msg_queue, spotify_msg);
@@ -99,9 +101,7 @@ typedef struct metadata {
 
   prop_sub_t *m_sub;
 
-  int m_flags;
-#define METADATA_ARTIST_IMAGES_SCRAPPED 0x1
-
+  char m_static_set;
   prop_t *m_available;
   prop_t *m_title;
   prop_t *m_trackindex;
@@ -114,6 +114,7 @@ typedef struct metadata {
   prop_t *m_additional_artists;
   prop_t *m_artist_images;
   prop_t *m_starred;
+  prop_t *m_status;
 
 } metadata_t;
 
@@ -138,7 +139,9 @@ typedef struct spotify_user {
 
 static LIST_HEAD(, spotify_user) spotify_users;
 
+#if SPOTIFY_WITH_SOCIAL
 static void spotify_userinfo_updated(sp_session *session);
+#endif
 
 static prop_t *friend_nodes;
 
@@ -167,8 +170,12 @@ static playlistcontainer_t *current_user_rootlist;
 static void plc_for_user(sp_session *sess, struct spotify_page *sp,
 			 const char *username);
 
+static LIST_HEAD(, playlist) playlists;
+
 typedef struct playlist {
   
+  LIST_ENTRY(playlist) pl_link;
+
   sp_playlist *pl_playlist;
   sp_playlist_type pl_type;
   uint64_t pl_folder_id;
@@ -185,6 +192,12 @@ typedef struct playlist {
   prop_t *pl_prop_childs;
   prop_t *pl_prop_icon;
 
+  prop_t *pl_prop_offline;
+  prop_sub_t *pl_offline_sub;
+
+  prop_t *pl_prop_collab;
+  prop_sub_t *pl_collab_sub;
+
   prop_sub_t *pl_node_sub;
   prop_sub_t *pl_destroy_sub;
 
@@ -200,14 +213,10 @@ typedef struct playlist {
 } playlist_t;
 
 
-typedef struct playlist_track {
-  sp_track *plt_track;
-  int plt_position;
-  prop_t *plt_prop_root;
-  prop_t *plt_prop_metadata;
-  prop_t *plt_prop_title;
-  playlist_t *plt_pl;
-} playlist_track_t;
+typedef struct playlist_item {
+  prop_t *pli_prop_root;
+  prop_t *pli_prop_metadata;
+} playlist_item_t;
 
 static void load_initial_playlists(sp_session *sess);
 static void unload_initial_playlists(sp_session *sess);
@@ -333,6 +342,8 @@ typedef struct spotify_search {
 #define SS_ARTISTS 2
 
 } spotify_search_t;
+
+static void spotify_relogin0(const char *reason);
 
 
 static void parse_search_reply(sp_search *result, prop_t *nodes, 
@@ -649,11 +660,13 @@ is_permanent_error(sp_error e)
   case SP_ERROR_BAD_API_VERSION:
   case SP_ERROR_API_INITIALIZATION_FAILED:
   case SP_ERROR_BAD_APPLICATION_KEY:
+  case SP_ERROR_APPLICATION_BANNED:
   case SP_ERROR_CLIENT_TOO_OLD:
   case SP_ERROR_OTHER_PERMANENT:
   case SP_ERROR_BAD_USER_AGENT:
   case SP_ERROR_MISSING_CALLBACK:
   case SP_ERROR_INVALID_INDATA:
+  case SP_ERROR_UNABLE_TO_CONTACT_SERVER:
     return 1;
   default:
     return 0;
@@ -674,20 +687,21 @@ spotify_logged_in(sp_session *sess, sp_error error)
     is_logged_in = 1;
 
     load_initial_playlists(sess);
+#if SPOTIFY_WITH_SOCIAL
     spotify_userinfo_updated(sess);
+#endif
 
   } else {
 
     const char *msg = f_sp_error_message(error);
 
-    TRACE(TRACE_ERROR, "Spotify", "Failed to login -- %s", msg);
+    TRACE(TRACE_ERROR, "Spotify", "Failed to login : %s", msg);
 
     is_logged_in = 0;
 
     if(is_permanent_error(error)) {
       fail_pending_messages(msg);
     } else {
-      sleep(1);
       spotify_try_login(sess, 1, f_sp_error_message(error), 0);
     }
   }
@@ -703,9 +717,9 @@ spotify_logged_out(sp_session *sess)
   is_logged_in = 0;
   fail_pending_messages("Logged out");
 
-  if(pending_relogin) {
-    pending_relogin = 0;
-    spotify_try_login(sess, 1, "Relogin", 0);
+  if(pending_relogin != NULL) {
+    spotify_try_login(sess, 1, pending_relogin, 0);
+    pending_relogin = NULL;
   }
 }
 
@@ -716,6 +730,9 @@ spotify_logged_out(sp_session *sess)
 static void
 spotify_connection_error(sp_session *sess, sp_error error)
 {
+  if(error == SP_ERROR_BAD_USERNAME_OR_PASSWORD)
+    return spotify_relogin0("Bad username or password");
+
   if(error != SP_ERROR_OK)
     notify_add(NULL, NOTIFY_INFO, NULL, 5, 
 	       _("Spotify: Connection error: %s"),
@@ -842,7 +859,7 @@ spotify_play_track_try(void)
     err = f_sp_session_player_load(spotify_session, su->su_track);
 
   if(err != SP_ERROR_OK) {
-    snprintf(su->su_errbuf, su->su_errlen, "Unable to load track:\n%s",
+    snprintf(su->su_errbuf, su->su_errlen, "Spotify: %s",
 	     f_sp_error_message(err));
     spotify_uri_return(su, 1);
     return;
@@ -994,63 +1011,83 @@ spotify_metadata_update_track(metadata_t *m)
   if(!f_sp_track_is_loaded(track))
     return -1;
 
-  album = f_sp_track_album(track);
-  artist = f_sp_track_artist(track, 0);
+  if(!m->m_static_set) {
+    m->m_static_set = 1;
+
+    album = f_sp_track_album(track);
+    artist = f_sp_track_artist(track, 0);
   
-  prop_set_int(m->m_available, f_sp_track_is_available(spotify_session, track));
+    prop_set_int(m->m_available, f_sp_track_get_availability(spotify_session, track));
 
+    prop_set_string(m->m_title, f_sp_track_name(track));
+    prop_set_int(m->m_trackindex, f_sp_track_index(track));
+    prop_set_float(m->m_duration, f_sp_track_duration(track) / 1000.0);
 
-  prop_set_string(m->m_title, f_sp_track_name(track));
-  prop_set_int(m->m_trackindex, f_sp_track_index(track));
-  prop_set_float(m->m_duration, f_sp_track_duration(track) / 1000.0);
+    prop_set_float(m->m_popularity, f_sp_track_popularity(track) / 100.0);
 
-  prop_set_float(m->m_popularity, f_sp_track_popularity(track) / 100.0);
+    if(album != NULL) {
+      spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
+      prop_set_link(m->m_album, f_sp_album_name(album), url);
+      set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover(album));
+      prop_set_int(m->m_album_year, f_sp_album_year(album));
+    }
 
-  if(album != NULL) {
-    spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
-    prop_set_link(m->m_album, f_sp_album_name(album), url);
-    set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover(album));
-    prop_set_int(m->m_album_year, f_sp_album_year(album));
-  }
+    // Artists
 
-  // Artists
-
-  if(artist != NULL) {
-    spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-    prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
-  }
-
-  nartists = f_sp_track_num_artists(track);
-  if(nartists > 1) {
-    for(i = 1; i < nartists; i++) {
-      artist = f_sp_track_artist(track, i);
+    if(artist != NULL) {
       spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
-
-      /* m->m_additional_artists can turn into a zombie at any time so
-	 we can't just rely on prop_create() as it will abort() on
-	 zombie parents, instead we use a more elaborate version
-	 (prop_create_check) but it will also leave us with a
-	 reference that we must release */
-
-      prop_t *p = prop_create(m->m_additional_artists, url);
-      prop_set_link(prop_create(p, "artist"),
-		    f_sp_artist_name(artist), url);
+      prop_set_link(m->m_artist, f_sp_artist_name(artist), url);
     }
-  }
 
-  if(artist != NULL) {
-    if(!(m->m_flags & METADATA_ARTIST_IMAGES_SCRAPPED) &&
-       f_sp_track_num_artists(track) > 0 && 
-       (artist = f_sp_track_artist(track, 0)) != NULL) {
-      m->m_flags |= METADATA_ARTIST_IMAGES_SCRAPPED;
+    nartists = f_sp_track_num_artists(track);
+    if(nartists > 1) {
+      for(i = 1; i < nartists; i++) {
+	artist = f_sp_track_artist(track, i);
+	spotify_make_link(f_sp_link_create_from_artist(artist), url, sizeof(url));
+	prop_t *p = prop_create(m->m_additional_artists, url);
+	prop_set_link(prop_create(p, "artist"),
+		      f_sp_artist_name(artist), url);
+      }
+    }
+
+    if(artist != NULL) {
+      if(f_sp_track_num_artists(track) > 0 && 
+	 (artist = f_sp_track_artist(track, 0)) != NULL) {
       
-      lastfm_artistpics_init(m->m_artist_images,
-			     rstr_alloc(f_sp_artist_name(artist)));
+	lastfm_artistpics_init(m->m_artist_images,
+			       rstr_alloc(f_sp_artist_name(artist)));
+      }
     }
   }
-
+  
   prop_set_int(m->m_starred, f_sp_track_is_starred(spotify_session, track));
-  return 0;
+
+  if(m->m_status == NULL)
+    return -1;
+
+  const char *status = NULL;
+  switch(f_sp_track_offline_get_status(track)) {
+  case SP_TRACK_OFFLINE_NO:
+    status = NULL;
+    break;
+  case SP_TRACK_OFFLINE_WAITING:
+    status = "waiting";
+    break;
+  case SP_TRACK_OFFLINE_DOWNLOADING:
+    status = "downloading";
+    break;
+  case SP_TRACK_OFFLINE_DONE:
+  case SP_TRACK_OFFLINE_DONE_RESYNC:
+    status = "downloaded";
+    break;
+  case SP_TRACK_OFFLINE_ERROR:
+  case SP_TRACK_OFFLINE_DONE_EXPIRED:
+  case SP_TRACK_OFFLINE_LIMIT_EXCEEDED:
+    status = "error";
+    break;
+  }
+  prop_set_string(m->m_status, status);
+  return -1;
 }
 
 
@@ -1073,6 +1110,7 @@ metadata_ref_dec(metadata_t *m)
   prop_ref_dec(m->m_additional_artists);
   prop_ref_dec(m->m_artist_images);
   prop_ref_dec(m->m_starred);
+  prop_ref_dec(m->m_status);
 }
 
 
@@ -1144,7 +1182,8 @@ metadata_prop_cb(void *opaque, prop_event_t event, ...)
 
 
 static void
-metadata_create(prop_t *p, sp_track *source, struct metadata_list *list)
+metadata_create(prop_t *p, sp_track *source, struct metadata_list *list,
+		int with_status)
 {
   metadata_t *m = calloc(1, sizeof(metadata_t));
 
@@ -1162,7 +1201,8 @@ metadata_create(prop_t *p, sp_track *source, struct metadata_list *list)
   m->m_additional_artists= prop_ref_inc(prop_create(p, "additional_artists"));
   m->m_artist_images     = prop_ref_inc(prop_create(p, "artist_images"));
   m->m_starred           = prop_ref_inc(prop_create(p, "starred"));
-
+  if(with_status)
+    m->m_status          = prop_ref_inc(prop_create(p, "status"));
 
   if(!spotify_metadata_update_track(m)) {
     metadata_ref_dec(m);
@@ -1191,7 +1231,7 @@ metadata_create(prop_t *p, sp_track *source, struct metadata_list *list)
  */
 static prop_t *
 track_create(sp_track *track, prop_t **metadatap,
-	     struct metadata_list *list)
+	     struct metadata_list *list, int with_status)
 {
   char url[URL_MAX];
   prop_t *p = prop_create_root(NULL);
@@ -1206,7 +1246,7 @@ track_create(sp_track *track, prop_t **metadatap,
   if(metadatap != NULL)
     *metadatap = metadata;
 
-  metadata_create(metadata, track, list);
+  metadata_create(metadata, track, list, with_status);
 
   tac->prop_star = prop_ref_inc(prop_create(metadata, "starred"));
 
@@ -1321,7 +1361,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
-      p = track_create(track, NULL, NULL);
+      p = track_create(track, NULL, NULL, 0);
 
       pv = prop_vec_append(pv, p);
 
@@ -1349,9 +1389,6 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
  */
 typedef struct album {
   sp_album *album;
-  int duration;
-  int tracks;
-  int firsttrack;
   sp_albumtype type;
 } album_t;
 
@@ -1377,6 +1414,8 @@ album_cmp(const void *A, const void *B)
 
   return strcasecmp(f_sp_album_name(a->album), f_sp_album_name(b->album));
 }
+
+
 
 /**
  *
@@ -1422,62 +1461,48 @@ static void
 spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 {
   browse_helper_t *bh = userdata;
-  int nalbums = 0, ntracks, i, j;
-  sp_album *prev = NULL, *album;
+  int nalbums = 0, i, j;
+  sp_album *album;
   sp_artist *artist;
-  sp_track *t;
   album_t *av;
+  album_t *last = NULL;
 
   if(f_sp_artistbrowse_error(result)) {
     bh_error(bh, "Artist not found");
   } else {
 
-
     // libspotify does not return the albums in any particular order.
     // thus, we need to do some sorting and filtering
 
-    ntracks = f_sp_artistbrowse_num_tracks(result);
+    nalbums = f_sp_artistbrowse_num_albums(result);
     artist = f_sp_artistbrowse_artist(result);
     prop_set_string(bh->sp->sp_title, f_sp_artist_name(artist));
 
-    for(i = 0; i < ntracks; i++) {
-      album = f_sp_track_album(f_sp_artistbrowse_track(result, i));
-      if(album == prev || !f_sp_album_is_available(album))
-	continue;
-      nalbums++;
-      prev = album;
-    }
-
-    av = alloca(nalbums * sizeof(album_t));
+    av = malloc(nalbums * sizeof(album_t));
     j = 0;
-    prev = NULL;
-    for(i = 0; i < ntracks; i++) {
-      t = f_sp_artistbrowse_track(result, i);
-      album = f_sp_track_album(t);
 
+    for(i = 0; i < nalbums; i++) {
+      album = f_sp_artistbrowse_album(result, i);
+      
       if(!f_sp_album_is_available(album))
 	continue;
 
-      if(album != prev) {
-	av[j].type = my_album_type(album, artist);
-	av[j].duration = 0;
-	av[j].tracks = 0;
-	av[j].firsttrack = i;
-	av[j++].album = album;
-	prev = album;
-      }
-      av[j-1].duration += f_sp_track_duration(t);
-      av[j-1].tracks++;
+      av[j].type = my_album_type(album, artist);
+      av[j++].album = album;
     }
 
-    assert(j == nalbums);
+    qsort(av, j, sizeof(album_t), album_cmp);
 
-    qsort(av, nalbums, sizeof(album_t), album_cmp);
-
-    for(i = 0; i < nalbums; i++) {
+    for(i = 0; i < j; i++) {
       album_t *a = av + i;
+
+      if(last != NULL && !strcmp(f_sp_album_name(a->album),
+				 f_sp_album_name(last->album)))
+	continue;
       spotify_add_album(a->album, artist, bh->sp->sp_items);
+      last = a;
     }
+    free(av);
 
     spotify_metadata_updated(spotify_session);
   }
@@ -1498,6 +1523,7 @@ spotify_open_artist(sp_link *l, spotify_page_t *sp)
   prop_set_string(sp->sp_contents, "items");
 
   f_sp_artistbrowse_create(spotify_session, artist,
+			   SP_ARTISTBROWSE_NO_TRACKS,
 			   spotify_browse_artist_callback,
 			   bh_create(sp, NULL));
 }
@@ -1524,6 +1550,7 @@ spotify_open_rootlist(spotify_page_t *sp, int flat)
 }
 
 
+#if SPOTIFY_WITH_SOCIAL
 /**
  *
  */
@@ -1541,7 +1568,7 @@ spotify_open_friends(spotify_page_t *sp)
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 }
-
+#endif
 
 /**
  *
@@ -1693,8 +1720,10 @@ spotify_open_page(spotify_page_t *sp)
     spotify_open_rootlist(sp, 0);
   } else if(!strcmp(sp->sp_url, "spotify:playlistsflat")) {
     spotify_open_rootlist(sp, 1);
+#if SPOTIFY_WITH_SOCIAL
   } else if(!strcmp(sp->sp_url, "spotify:friends")) {
     spotify_open_friends(sp);
+#endif
   } else if(!strcmp(sp->sp_url, "spotify:starred")) {
     
     plist = f_sp_session_starred_create(spotify_session);
@@ -1860,10 +1889,13 @@ static void
 update_userdata(spotify_user_t *su)
 {
   char url[200];
-  const char *name = f_sp_user_full_name(su->su_user);
+  const char *name;
+#if SPOTIFY_WITH_SOCIAL
+  name = f_sp_user_full_name(su->su_user);
   if(name == NULL)
     name = f_sp_user_display_name(su->su_user);
   if(name == NULL)
+#endif
     name = f_sp_user_canonical_name(su->su_user);
 
   sp_link *l = f_sp_link_create_from_user(su->su_user);
@@ -1878,7 +1910,9 @@ update_userdata(spotify_user_t *su)
   prop_set_link(su->su_prop_name, name, url);
   f_sp_link_release(l);
 
+#if SPOTIFY_WITH_SOCIAL
   prop_set_string(su->su_prop_picture, f_sp_user_picture(su->su_user));
+#endif
 }
 
 
@@ -1928,7 +1962,7 @@ clear_friend(spotify_user_t *su)
 }
 
 
-
+#if SPOTIFY_WITH_SOCIAL
 /**
  *
  */
@@ -1957,8 +1991,8 @@ spotify_userinfo_updated(sp_session *session)
       
       su->su_prop_title = prop_create(metadata, "title");
       prop_link(su->su_prop_picture, prop_create(metadata, "picture"));
-      update_userdata(su);
     }
+    update_userdata(su);
 
     if(prop_set_parent_ex(su->su_prop_friend, friend_nodes, before, NULL))
       abort();
@@ -1971,7 +2005,7 @@ spotify_userinfo_updated(sp_session *session)
     su->su_mark = 0;
   }
 }
-
+#endif
 
 /**
  *
@@ -2000,6 +2034,116 @@ spotify_streaming_error(sp_session *session, sp_error error)
     mp_enqueue_event(mp, event_create_type(EVENT_EOF));
 }
 
+#if SPOTIFY_WITH_SOCIAL
+#include "networking/http.h"  // ugly
+struct htsbuf_queue;
+
+#define HTTP_DISABLE_AUTH  0x1
+#define HTTP_REQUEST_DEBUG 0x2
+
+int http_request(const char *url, const char **arguments, 
+		 char **result, size_t *result_sizep,
+		 char *errbuf, size_t errlen,
+		 struct htsbuf_queue *postdata, const char *postcontenttype,
+		 int flags, struct http_header_list *headers_out,
+		 const struct http_header_list *headers_in, const char *method);
+
+
+static void spotify_perform_http(sp_session *session, const char *url,
+				 const void *postdata, size_t postlen,
+				 void *opaque)
+{
+  char errbuf[256];
+
+  char *result;
+  size_t size;
+  int r;
+  htsbuf_queue_t *postdataq = NULL;
+
+  if(postdata != NULL) {
+    htsbuf_queue_t hq;
+    htsbuf_queue_init(&hq, 0);
+    htsbuf_append(&hq, postdata, postlen);
+    postdataq = &hq;
+  }
+  
+  r = http_request(url, NULL, &result, &size, errbuf, sizeof(errbuf), postdataq, NULL, 0, NULL, NULL, NULL);
+
+  if(postdataq != NULL)
+    htsbuf_queue_flush(postdataq);
+
+  if(r == 0) {
+    f_sp_http_perfomed(session, opaque, result, size, SP_ERROR_OK, 200);
+  } else {
+    f_sp_http_perfomed(session, opaque, result, size, SP_ERROR_OTHER_PERMANENT, 0);
+  }
+}
+#endif
+
+
+/**
+ *
+ */
+static void
+playlist_update_offline(sp_session *session, playlist_t *pl)
+{
+  sp_playlist_offline_status s;
+  const char *status = NULL;
+  int p = 0;
+  s = f_sp_playlist_get_offline_status(session, pl->pl_playlist);
+
+  prop_set_int_ex(prop_create(pl->pl_prop_offline, "value"),
+		  pl->pl_offline_sub, !!s);
+    
+  switch(s) {
+  case SP_PLAYLIST_OFFLINE_STATUS_NO:
+    break;
+  case SP_PLAYLIST_OFFLINE_STATUS_YES:
+    status = "synchronized";
+    p = 100;
+    break;
+
+  case SP_PLAYLIST_OFFLINE_STATUS_DOWNLOADING:
+    status = "downloading";
+    p = f_sp_playlist_get_offline_download_completed(session,
+                                                    pl->pl_playlist);
+    break;
+
+  case SP_PLAYLIST_OFFLINE_STATUS_WAITING:
+    status = "waiting";
+    break;
+  }
+  //  prop_set_string(pl->pl_prop_offline_status, status);
+  //  prop_set_int(pl->pl_prop_offline_percentage, p);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_offline_status_updated(sp_session *session)
+{
+  playlist_t *pl;
+  LIST_FOREACH(pl, &playlists, pl_link)
+    if(pl->pl_prop_offline != NULL)
+      playlist_update_offline(session, pl);
+}
+
+
+/**
+ *
+ */
+static void
+spotify_offline_error(sp_session *session, sp_error error)
+{
+  if(error == SP_ERROR_OK) {
+    return;
+  } else {
+    TRACE(TRACE_ERROR, "Spotify", "Offline error: %s",
+	  f_sp_error_message(error));
+  }
+}
 
 /**
  * Session callbacks
@@ -2015,7 +2159,13 @@ static const sp_session_callbacks spotify_session_callbacks = {
   .end_of_track        = spotify_end_of_track,
   .log_message         = spotify_log_message,
   .streaming_error     = spotify_streaming_error,
+  .offline_status_updated = spotify_offline_status_updated,
+  .offline_error       = spotify_offline_error,
+
+#if SPOTIFY_WITH_SOCIAL
   .userinfo_updated    = spotify_userinfo_updated,
+  .perform_http        = spotify_perform_http,
+#endif
 };
 
 
@@ -2026,31 +2176,43 @@ static const sp_session_callbacks spotify_session_callbacks = {
 static prop_t *
 pl_add_track(playlist_t *pl, sp_track *t, int pos)
 {
-  playlist_track_t *plt = calloc(1, sizeof(playlist_track_t));
-  plt->plt_pl = pl;
-  plt->plt_track = t;
-  plt->plt_prop_root = track_create(t, &plt->plt_prop_metadata,
-				    &pl->pl_pending_metadata);
+  playlist_item_t *pli = calloc(1, sizeof(playlist_item_t));
 
+  if(f_sp_track_is_placeholder(t)) {
+    char url[URL_MAX];
+    spotify_make_link(f_sp_link_create_from_track(t,0), url, sizeof(url));
+
+    pli->pli_prop_root = prop_create_root(NULL);
+    prop_set_string(prop_create(pli->pli_prop_root, "url"), url);
+    prop_set_string(prop_create(pli->pli_prop_root, "type"), "directory");
+    pli->pli_prop_metadata = prop_create(pli->pli_prop_root, "metadata");
+    prop_set_string(prop_create(pli->pli_prop_metadata, "title"), url);
+    prop_set_int(prop_create(pli->pli_prop_metadata, "available"), 1);
+
+  } else {
+
+    pli->pli_prop_root = track_create(t, &pli->pli_prop_metadata,
+				      &pl->pl_pending_metadata, 1);
+
+  }
   sp_user *u = f_sp_playlist_track_creator(pl->pl_playlist, pos);
-
+  
   if(u != NULL) {
     spotify_user_t *su = find_user(u);
-    prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+    prop_link(su->su_prop, prop_create(pli->pli_prop_metadata, "user"));
   }
 
   int when = f_sp_playlist_track_create_time(pl->pl_playlist, pos);
   if(when > 1)
-    prop_set_int(prop_create(plt->plt_prop_metadata, "timestamp"), when);
+    prop_set_int(prop_create(pli->pli_prop_metadata, "timestamp"), when);
   
   if(pl->pl_flags & PL_MESSAGES) {
     const char *msg = f_sp_playlist_track_message(pl->pl_playlist, pos);
     if(msg != NULL)
-      prop_set_string(prop_create(plt->plt_prop_metadata, "message"), msg);
+      prop_set_string(prop_create(pli->pli_prop_metadata, "message"), msg);
   }
-  
-  ptrvec_insert_entry(&pl->pl_tracks, pos, plt);
-  return plt->plt_prop_root;
+  ptrvec_insert_entry(&pl->pl_tracks, pos, pli);
+  return pli->pli_prop_root;
 }
 
 
@@ -2062,7 +2224,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
 	     int num_tracks, int position, void *userdata)
 {
   playlist_t *pl = userdata;
-  playlist_track_t *before;
+  playlist_item_t *before;
   int i;
   prop_vec_t *pv = prop_vec_create(num_tracks);
 
@@ -2072,7 +2234,7 @@ tracks_added(sp_playlist *plist, sp_track * const * tracks,
     pv = prop_vec_append(pv, pl_add_track(pl, tracks[i], position + i));
   
   prop_set_parent_vector(pv, pl->pl_prop_tracks, 
-			 before ? before->plt_prop_root : NULL,
+			 before ? before->pli_prop_root : NULL,
 			 pl->pl_node_sub);
 
   prop_vec_release(pv);
@@ -2112,7 +2274,7 @@ tracks_removed(sp_playlist *plist, const int *tracks,
 {
   int *positions;
   playlist_t *pl = userdata;
-  playlist_track_t *plt;
+  playlist_item_t *pli;
   int i;
 
   /* Sort so we always delete from the end. Better safe then sorry */
@@ -2121,9 +2283,9 @@ tracks_removed(sp_playlist *plist, const int *tracks,
   qsort(positions, num_tracks, sizeof(int), intcmp_dec);
 
   for(i = 0; i < num_tracks; i++) {
-    plt = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
-    prop_destroy(plt->plt_prop_root);
-    free(plt);
+    pli = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
+    prop_destroy(pli->pli_prop_root);
+    free(pli);
   }
   prop_set_int(pl->pl_prop_num_tracks, f_sp_playlist_num_tracks(plist));
 }
@@ -2151,7 +2313,7 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   playlist_t *pl = userdata;
   int i;
   int *positions;
-  playlist_track_t *plt, *before, **vec;
+  playlist_item_t *pli, *before, **vec;
 
   /* Sort so we always delete from the end. Better safe then sorry */
   positions = alloca(num_tracks * sizeof(int));
@@ -2159,7 +2321,7 @@ tracks_moved(sp_playlist *plist, const int *tracks,
   qsort(positions, num_tracks, sizeof(int), intcmp_dec);
 
   before = ptrvec_get_entry(&pl->pl_tracks, new_position);
-  vec = alloca(num_tracks * sizeof(playlist_track_t *));
+  vec = alloca(num_tracks * sizeof(playlist_item_t *));
 
   for(i = 0; i < num_tracks; i++) {
     vec[num_tracks-1-i] = ptrvec_remove_entry(&pl->pl_tracks, positions[i]);
@@ -2167,12 +2329,12 @@ tracks_moved(sp_playlist *plist, const int *tracks,
       new_position--;
   }
   for(i = num_tracks - 1; i >= 0; i--) {
-    plt = vec[i];
+    pli = vec[i];
     before = ptrvec_get_entry(&pl->pl_tracks, new_position);
-    ptrvec_insert_entry(&pl->pl_tracks, new_position, plt);
+    ptrvec_insert_entry(&pl->pl_tracks, new_position, pli);
 
-    if(plt->plt_prop_root != NULL)
-      prop_move(plt->plt_prop_root, before ? before->plt_prop_root : NULL);
+    if(pli->pli_prop_root != NULL)
+      prop_move(pli->pli_prop_root, before ? before->pli_prop_root : NULL);
   }
 }
 
@@ -2185,9 +2347,11 @@ track_update_created(sp_playlist *playlist, int position, sp_user *user,
 		     int when, void *userdata)
 {
   playlist_t *pl = userdata;
-  playlist_track_t *plt = ptrvec_get_entry(&pl->pl_tracks, position);
+  playlist_item_t *pli = ptrvec_get_entry(&pl->pl_tracks, position);
   spotify_user_t *su = find_user(user);
-  prop_link(su->su_prop, prop_create(plt->plt_prop_metadata, "user"));
+  prop_link(su->su_prop, prop_create(pli->pli_prop_metadata, "user"));
+  if(when > 0)
+    prop_set_int(prop_create(pli->pli_prop_metadata, "timestamp"), when);
 }
 
 
@@ -2244,6 +2408,8 @@ playlist_update_meta(playlist_t *pl)
       char url[URL_MAX];
       spotify_make_link(l, url, sizeof(url));
       prop_set_string(pl->pl_prop_url, url);
+      prop_set_int_ex(prop_create(pl->pl_prop_collab, "value"),
+		      pl->pl_collab_sub, colab);
     }
   }
 
@@ -2262,6 +2428,9 @@ playlist_state_changed(sp_playlist *plist, void *userdata)
 {
   playlist_t *pl = userdata;
   playlist_update_meta(pl);
+
+  if(pl->pl_prop_offline != NULL)
+    playlist_update_offline(spotify_session, pl);
 }
 
 /**
@@ -2339,7 +2508,7 @@ static sp_playlist_callbacks pl_callbacks_withtracks = {
 static void
 spotify_delete_tracks(playlist_t *pl, prop_vec_t *pv)
 {
-  playlist_track_t *plt;
+  playlist_item_t *pli;
   int *targets;
   int k = 0, i, j = 0, m = 0, ntracks = prop_vec_len(pv);
   if(ntracks == 0)
@@ -2348,9 +2517,9 @@ spotify_delete_tracks(playlist_t *pl, prop_vec_t *pv)
   targets = malloc(sizeof(int) * ntracks);
 
   for(i = 0; i < pl->pl_tracks.size; i++) {
-    plt = pl->pl_tracks.vec[i];
+    pli = pl->pl_tracks.vec[i];
     for(j = k; j < ntracks; j++) {
-      if(prop_vec_get(pv, j) == plt->plt_prop_root) {
+      if(prop_vec_get(pv, j) == pli->pli_prop_root) {
 	if(j == k)
 	  k++;
 	targets[m++] = i;
@@ -2446,10 +2615,13 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
 {
   playlist_t *pl = opaque;
 
- if(event != PROP_DESTROYED)
-   return;
-
- spotify_metadata_list_clear(&pl->pl_pending_metadata);
+  if(event != PROP_DESTROYED)
+    return;
+  
+  spotify_metadata_list_clear(&pl->pl_pending_metadata);
+  
+  if(pl->pl_offline_sub != NULL)
+    prop_unsubscribe(pl->pl_offline_sub);
 
   if(pl->pl_node_sub) {
     f_sp_playlist_remove_callbacks(pl->pl_playlist,
@@ -2467,7 +2639,83 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(pl->pl_destroy_sub);
 
   free(pl->pl_tracks.vec);
+  LIST_REMOVE(pl, pl_link);
   free(pl);
+}
+
+
+/**
+ *
+ */
+static prop_t *
+item_opt_add_toggle(prop_t *parent, prop_t *title,
+		    int on, prop_callback_int_t *cb,
+		    void *opaque, prop_courier_t *pc,
+		    prop_sub_t **sp)
+{
+  prop_sub_t *s;
+  prop_t *n = prop_create_root(NULL);
+  prop_t *v = prop_create(n, "value");
+  prop_set_string(prop_create(n, "type"), "toggle");
+  prop_set_int(prop_create(n, "enabled"), 1);
+  prop_set_int(v, on);
+  prop_link(title, prop_create(n, "title"));
+  
+  s = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID |
+		     PROP_SUB_AUTO_DESTROY,
+		     PROP_TAG_CALLBACK_INT, cb, opaque,
+		     PROP_TAG_ROOT, v,
+		     PROP_TAG_COURIER, pc,
+		     NULL);
+
+  if(prop_set_parent(n, parent)) {
+    prop_destroy(n);
+    return NULL;
+  }
+  if(sp != NULL)
+    *sp = s;
+  return n;
+}
+
+
+
+/**
+ *
+ */
+static prop_t *
+item_opt_add_separator(prop_t *parent)
+{
+  prop_t *n = prop_create_root(NULL);
+  prop_set_string(prop_create(n, "type"), "separator");
+
+  if(prop_set_parent(n, parent)) {
+    prop_destroy(n);
+    return NULL;
+  }
+  return n;
+}
+
+
+
+/**
+ *
+ */
+static void
+set_offline_status(void *opaque, int v)
+{
+  playlist_t *pl = opaque;
+  f_sp_playlist_set_offline_mode(spotify_session, pl->pl_playlist, v);
+}
+
+
+/**
+ *
+ */
+static void
+set_collab_status(void *opaque, int v)
+{
+  playlist_t *pl = opaque;
+  f_sp_playlist_set_collaborative(pl->pl_playlist, v);
 }
 
 
@@ -2492,10 +2740,13 @@ pl_create(sp_playlist *plist, const char *name,
 	  int flags)
 {
   playlist_t *pl = calloc(1, sizeof(playlist_t));
-  int i, n;
+  int i, n, v;
   uint8_t img[20];
 
+  prop_t *options = prop_create(model, "options");
+
   pl->pl_type = SP_PLAYLIST_TYPE_PLAYLIST;
+  LIST_INSERT_HEAD(&playlists, pl, pl_link);
   pl->pl_flags = flags;
 
   f_sp_playlist_add_ref(plist);
@@ -2506,6 +2757,24 @@ pl_create(sp_playlist *plist, const char *name,
 
   prop_set_string(type, flags & PL_WITH_TRACKS ? "directory" : "playlist");
 
+
+  v = f_sp_playlist_get_offline_status(spotify_session, plist);
+  pl->pl_prop_offline =
+    prop_ref_inc(item_opt_add_toggle(options, _p("Offline"), v,
+				     set_offline_status, pl, 
+				     spotify_courier,
+				     &pl->pl_offline_sub));
+
+  item_opt_add_separator(options);
+
+  v = f_sp_playlist_is_collaborative(plist);
+  pl->pl_prop_collab =
+    prop_ref_inc(item_opt_add_toggle(options, _p("Collaborative"), v,
+				     set_collab_status, pl, 
+				     spotify_courier,
+				     &pl->pl_collab_sub));
+		      
+  // Reference leakage here. Fix some day
   pl->pl_prop_title = prop_ref_inc(title);
   pl->pl_prop_icon = prop_ref_inc(icon);
   pl->pl_prop_canDelete = prop_ref_inc(canDelete);
@@ -3161,7 +3430,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
   for(i = 0; i < ntracks; i++)
     pv = prop_vec_append(pv, track_create(f_sp_search_track(result, i), NULL,
-					  NULL));
+					  NULL, 0));
 
   prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
   prop_vec_release(pv);
@@ -3471,6 +3740,7 @@ spotify_thread(void *aux)
   int next_timeout = 0;
   char cache[PATH_MAX];
   int high_bitrate = 0;
+  int offline_bitrate_96 = 0;
 
   memset(&sesconf, 0, sizeof(sesconf));
 
@@ -3539,13 +3809,24 @@ spotify_thread(void *aux)
       spotify_try_login(s, 0, NULL, 0);
     }
     if(high_bitrate != spotify_high_bitrate) {
+      high_bitrate = spotify_high_bitrate;
       f_sp_session_preferred_bitrate(s, 
 				     high_bitrate ? SP_BITRATE_320k : 
 				     SP_BITRATE_160k);
-      high_bitrate = spotify_high_bitrate;
 
       TRACE(TRACE_DEBUG, "spotify", "Bitrate set to %dk",
 	    high_bitrate ? 320 : 160);
+    }
+
+
+    if(offline_bitrate_96 != spotify_offline_bitrate_96) {
+      offline_bitrate_96 = spotify_offline_bitrate_96;
+      f_sp_session_preferred_offline_bitrate(s, 
+					     offline_bitrate_96  ? SP_BITRATE_96k : 
+					     SP_BITRATE_160k, 0);
+
+      TRACE(TRACE_DEBUG, "spotify", "Bitrate set to %dk",
+	    offline_bitrate_96 ? 96 : 160);
     }
 
 
@@ -3555,7 +3836,7 @@ spotify_thread(void *aux)
 	TRACE(TRACE_INFO, "spotify", "Requesting logout");
 	if(!pending_relogin)
 	  f_sp_session_logout(s);
-	pending_relogin = 0;
+	pending_relogin = NULL;
 	break;
       case SPOTIFY_OPEN_PAGE:
 	spotify_open_page(sm->sm_ptr);
@@ -3670,7 +3951,9 @@ startpage(prop_t *page)
   add_dir(nodes, "spotify:search:tag:new", _p("New releases"), NULL);
   add_dir(nodes, "spotify:starred", _p("Starred"), "starred");
   add_dir(nodes, "spotify:inbox", _p("Inbox"), "inbox");
+#if SPOTIFY_WITH_SOCIAL
   add_dir(nodes, "spotify:friends", _p("Friends"), "friends");
+#endif
 }
 
 
@@ -4010,22 +4293,36 @@ spotify_set_bitrate(void *opaque, int value)
   hts_mutex_unlock(&spotify_mutex);
 }
 
+/**
+ *
+ */
 static void
-spotify_relogin0(void)
+spotify_set_offline_bitrate(void *opaque, int value)
 {
-  TRACE(TRACE_INFO, "spotify", "Switching account");
+  hts_mutex_lock(&spotify_mutex);
+  spotify_offline_bitrate_96 = value;
+  spotify_pending_events = 1;
+  hts_cond_signal(&spotify_cond_main);
+  hts_mutex_unlock(&spotify_mutex);
+}
+
+
+static void
+spotify_relogin0(const char *reason)
+{
+  TRACE(TRACE_INFO, "spotify", "Attempting to relogin: %s", reason);
   unload_initial_playlists(spotify_session);
   clear_friends();
   f_sp_session_logout(spotify_session);
   f_sp_session_forget_me(spotify_session);
-  pending_relogin = 1;
+  pending_relogin = reason;
 }
 
 
 static void
 spotify_relogin(void *opaque, prop_event_t event, ...)
 {
-  spotify_relogin0();
+  spotify_relogin0("Requested by user");
 }
 
 static void
@@ -4042,7 +4339,7 @@ static void
 spotify_dispatch_action(const char *ev)
 {
   if(!strcmp(ev, "relogin")) {
-    spotify_relogin0();
+    spotify_relogin0("Requested by user");
   }
 }
 
@@ -4135,6 +4432,11 @@ be_spotify_init(void)
 
   settings_create_bool(s, "highbitrate", _p("High bitrate"), 0,
 		       store, spotify_set_bitrate, NULL,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, (void *)"spotify");
+
+  settings_create_bool(s, "offlinebitrate", _p("Offline sync in 96kbps"), 0,
+		       store, spotify_set_offline_bitrate, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 

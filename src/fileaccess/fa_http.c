@@ -2636,7 +2636,9 @@ http_request(const char *url, const char **arguments,
 
   const char *m = method ?: postdata ? "POST": (result ? "GET" : "HEAD");
 
-  htsbuf_qprintf(&q, "%s %s", m, hf->hf_path);
+  htsbuf_append(&q, m, strlen(m));
+  htsbuf_append(&q, " ", 1);
+  htsbuf_append(&q, hf->hf_path, strlen(hf->hf_path));
 
   if(arguments != NULL) {
     const char **args = arguments;

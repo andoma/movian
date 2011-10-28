@@ -25,8 +25,8 @@ static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session,
 static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user_create)(sp_session *session, const char *canonical_username);
 static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
 static void(*f_sp_session_preferred_offline_bitrate)(sp_session *session, sp_bitrate bitrate, bool allow_resync);
-static int(*f_sp_session_num_friends)(sp_session *session);
-static sp_user *(*f_sp_session_friend)(sp_session *session, int index);
+static bool(*f_sp_session_get_volume_normalization)(sp_session *session);
+static void(*f_sp_session_set_volume_normalization)(sp_session *session, bool on);
 static void(*f_sp_session_set_connection_type)(sp_session *session, sp_connection_type type);
 static void(*f_sp_session_set_connection_rules)(sp_session *session, sp_connection_rules rules);
 static int(*f_sp_offline_tracks_to_sync)(sp_session *session);
@@ -56,9 +56,11 @@ static void(*f_sp_link_add_ref)(sp_link *link);
 static void(*f_sp_link_release)(sp_link *link);
 static bool(*f_sp_track_is_loaded)(sp_track *track);
 static sp_error(*f_sp_track_error)(sp_track *track);
-static bool(*f_sp_track_is_available)(sp_session *session, sp_track *track);
+static sp_track_offline_status(*f_sp_track_offline_get_status)(sp_track *track);
+static sp_track_availability(*f_sp_track_get_availability)(sp_session *session, sp_track *track);
 static bool(*f_sp_track_is_local)(sp_session *session, sp_track *track);
 static bool(*f_sp_track_is_autolinked)(sp_session *session, sp_track *track);
+static bool(*f_sp_track_is_placeholder)(sp_track *track);
 static bool(*f_sp_track_is_starred)(sp_session *session, sp_track *track);
 static void(*f_sp_track_set_starred)(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
 static int(*f_sp_track_num_artists)(sp_track *track);
@@ -83,6 +85,7 @@ static void(*f_sp_album_add_ref)(sp_album *album);
 static void(*f_sp_album_release)(sp_album *album);
 static const char *(*f_sp_artist_name)(sp_artist *artist);
 static bool(*f_sp_artist_is_loaded)(sp_artist *artist);
+static const byte *(*f_sp_artist_portrait)(sp_artist *artist);
 static void(*f_sp_artist_add_ref)(sp_artist *artist);
 static void(*f_sp_artist_release)(sp_artist *artist);
 static sp_albumbrowse *(*f_sp_albumbrowse_create)(sp_session *session, sp_album *album, albumbrowse_complete_cb *callback, void *userdata);
@@ -95,9 +98,10 @@ static const char *(*f_sp_albumbrowse_copyright)(sp_albumbrowse *alb, int index)
 static int(*f_sp_albumbrowse_num_tracks)(sp_albumbrowse *alb);
 static sp_track *(*f_sp_albumbrowse_track)(sp_albumbrowse *alb, int index);
 static const char *(*f_sp_albumbrowse_review)(sp_albumbrowse *alb);
+static int(*f_sp_albumbrowse_backend_request_duration)(sp_albumbrowse *alb);
 static void(*f_sp_albumbrowse_add_ref)(sp_albumbrowse *alb);
 static void(*f_sp_albumbrowse_release)(sp_albumbrowse *alb);
-static sp_artistbrowse *(*f_sp_artistbrowse_create)(sp_session *session, sp_artist *artist, artistbrowse_complete_cb *callback, void *userdata);
+static sp_artistbrowse *(*f_sp_artistbrowse_create)(sp_session *session, sp_artist *artist, sp_artistbrowse_type type, artistbrowse_complete_cb *callback, void *userdata);
 static bool(*f_sp_artistbrowse_is_loaded)(sp_artistbrowse *arb);
 static sp_error(*f_sp_artistbrowse_error)(sp_artistbrowse *arb);
 static sp_artist *(*f_sp_artistbrowse_artist)(sp_artistbrowse *arb);
@@ -110,6 +114,7 @@ static sp_album *(*f_sp_artistbrowse_album)(sp_artistbrowse *arb, int index);
 static int(*f_sp_artistbrowse_num_similar_artists)(sp_artistbrowse *arb);
 static sp_artist *(*f_sp_artistbrowse_similar_artist)(sp_artistbrowse *arb, int index);
 static const char *(*f_sp_artistbrowse_biography)(sp_artistbrowse *arb);
+static int(*f_sp_artistbrowse_backend_request_duration)(sp_artistbrowse *arb);
 static void(*f_sp_artistbrowse_add_ref)(sp_artistbrowse *arb);
 static void(*f_sp_artistbrowse_release)(sp_artistbrowse *arb);
 static sp_image *(*f_sp_image_create)(sp_session *session, const byte image_id[20]);
@@ -193,9 +198,6 @@ static void(*f_sp_playlistcontainer_release)(sp_playlistcontainer *pc);
 static const char *(*f_sp_user_canonical_name)(sp_user *user);
 static const char *(*f_sp_user_display_name)(sp_user *user);
 static bool(*f_sp_user_is_loaded)(sp_user *user);
-static const char *(*f_sp_user_full_name)(sp_user *user);
-static const char *(*f_sp_user_picture)(sp_user *user);
-static sp_relation_type(*f_sp_user_relation_type)(sp_session *session, sp_user *user);
 static void(*f_sp_user_add_ref)(sp_user *user);
 static void(*f_sp_user_release)(sp_user *user);
 static sp_toplistbrowse *(*f_sp_toplistbrowse_create)(sp_session *session, sp_toplisttype type, sp_toplistregion region, const char *username, toplistbrowse_complete_cb *callback, void *userdata);
@@ -209,6 +211,7 @@ static int(*f_sp_toplistbrowse_num_albums)(sp_toplistbrowse *tlb);
 static sp_album *(*f_sp_toplistbrowse_album)(sp_toplistbrowse *tlb, int index);
 static int(*f_sp_toplistbrowse_num_tracks)(sp_toplistbrowse *tlb);
 static sp_track *(*f_sp_toplistbrowse_track)(sp_toplistbrowse *tlb, int index);
+static int(*f_sp_toplistbrowse_backend_request_duration)(sp_toplistbrowse *tlb);
 static sp_inbox *(*f_sp_inbox_post_tracks)(sp_session *session, const char *user, sp_track * const *tracks, int num_tracks, const char *message, inboxpost_complete_cb *callback, void *userdata);
 static sp_error(*f_sp_inbox_error)(sp_inbox *inbox);
 static void(*f_sp_inbox_add_ref)(sp_inbox *inbox);
@@ -240,8 +243,8 @@ if((f_sp_session_starred_for_user_create=dlsym(handle,"sp_session_starred_for_us
 if((f_sp_session_publishedcontainer_for_user_create=dlsym(handle,"sp_session_publishedcontainer_for_user_create"))==NULL) return "sp_session_publishedcontainer_for_user_create";
 if((f_sp_session_preferred_bitrate=dlsym(handle,"sp_session_preferred_bitrate"))==NULL) return "sp_session_preferred_bitrate";
 if((f_sp_session_preferred_offline_bitrate=dlsym(handle,"sp_session_preferred_offline_bitrate"))==NULL) return "sp_session_preferred_offline_bitrate";
-if((f_sp_session_num_friends=dlsym(handle,"sp_session_num_friends"))==NULL) return "sp_session_num_friends";
-if((f_sp_session_friend=dlsym(handle,"sp_session_friend"))==NULL) return "sp_session_friend";
+if((f_sp_session_get_volume_normalization=dlsym(handle,"sp_session_get_volume_normalization"))==NULL) return "sp_session_get_volume_normalization";
+if((f_sp_session_set_volume_normalization=dlsym(handle,"sp_session_set_volume_normalization"))==NULL) return "sp_session_set_volume_normalization";
 if((f_sp_session_set_connection_type=dlsym(handle,"sp_session_set_connection_type"))==NULL) return "sp_session_set_connection_type";
 if((f_sp_session_set_connection_rules=dlsym(handle,"sp_session_set_connection_rules"))==NULL) return "sp_session_set_connection_rules";
 if((f_sp_offline_tracks_to_sync=dlsym(handle,"sp_offline_tracks_to_sync"))==NULL) return "sp_offline_tracks_to_sync";
@@ -271,9 +274,11 @@ if((f_sp_link_add_ref=dlsym(handle,"sp_link_add_ref"))==NULL) return "sp_link_ad
 if((f_sp_link_release=dlsym(handle,"sp_link_release"))==NULL) return "sp_link_release";
 if((f_sp_track_is_loaded=dlsym(handle,"sp_track_is_loaded"))==NULL) return "sp_track_is_loaded";
 if((f_sp_track_error=dlsym(handle,"sp_track_error"))==NULL) return "sp_track_error";
-if((f_sp_track_is_available=dlsym(handle,"sp_track_is_available"))==NULL) return "sp_track_is_available";
+if((f_sp_track_offline_get_status=dlsym(handle,"sp_track_offline_get_status"))==NULL) return "sp_track_offline_get_status";
+if((f_sp_track_get_availability=dlsym(handle,"sp_track_get_availability"))==NULL) return "sp_track_get_availability";
 if((f_sp_track_is_local=dlsym(handle,"sp_track_is_local"))==NULL) return "sp_track_is_local";
 if((f_sp_track_is_autolinked=dlsym(handle,"sp_track_is_autolinked"))==NULL) return "sp_track_is_autolinked";
+if((f_sp_track_is_placeholder=dlsym(handle,"sp_track_is_placeholder"))==NULL) return "sp_track_is_placeholder";
 if((f_sp_track_is_starred=dlsym(handle,"sp_track_is_starred"))==NULL) return "sp_track_is_starred";
 if((f_sp_track_set_starred=dlsym(handle,"sp_track_set_starred"))==NULL) return "sp_track_set_starred";
 if((f_sp_track_num_artists=dlsym(handle,"sp_track_num_artists"))==NULL) return "sp_track_num_artists";
@@ -298,6 +303,7 @@ if((f_sp_album_add_ref=dlsym(handle,"sp_album_add_ref"))==NULL) return "sp_album
 if((f_sp_album_release=dlsym(handle,"sp_album_release"))==NULL) return "sp_album_release";
 if((f_sp_artist_name=dlsym(handle,"sp_artist_name"))==NULL) return "sp_artist_name";
 if((f_sp_artist_is_loaded=dlsym(handle,"sp_artist_is_loaded"))==NULL) return "sp_artist_is_loaded";
+if((f_sp_artist_portrait=dlsym(handle,"sp_artist_portrait"))==NULL) return "sp_artist_portrait";
 if((f_sp_artist_add_ref=dlsym(handle,"sp_artist_add_ref"))==NULL) return "sp_artist_add_ref";
 if((f_sp_artist_release=dlsym(handle,"sp_artist_release"))==NULL) return "sp_artist_release";
 if((f_sp_albumbrowse_create=dlsym(handle,"sp_albumbrowse_create"))==NULL) return "sp_albumbrowse_create";
@@ -310,6 +316,7 @@ if((f_sp_albumbrowse_copyright=dlsym(handle,"sp_albumbrowse_copyright"))==NULL) 
 if((f_sp_albumbrowse_num_tracks=dlsym(handle,"sp_albumbrowse_num_tracks"))==NULL) return "sp_albumbrowse_num_tracks";
 if((f_sp_albumbrowse_track=dlsym(handle,"sp_albumbrowse_track"))==NULL) return "sp_albumbrowse_track";
 if((f_sp_albumbrowse_review=dlsym(handle,"sp_albumbrowse_review"))==NULL) return "sp_albumbrowse_review";
+if((f_sp_albumbrowse_backend_request_duration=dlsym(handle,"sp_albumbrowse_backend_request_duration"))==NULL) return "sp_albumbrowse_backend_request_duration";
 if((f_sp_albumbrowse_add_ref=dlsym(handle,"sp_albumbrowse_add_ref"))==NULL) return "sp_albumbrowse_add_ref";
 if((f_sp_albumbrowse_release=dlsym(handle,"sp_albumbrowse_release"))==NULL) return "sp_albumbrowse_release";
 if((f_sp_artistbrowse_create=dlsym(handle,"sp_artistbrowse_create"))==NULL) return "sp_artistbrowse_create";
@@ -325,6 +332,7 @@ if((f_sp_artistbrowse_album=dlsym(handle,"sp_artistbrowse_album"))==NULL) return
 if((f_sp_artistbrowse_num_similar_artists=dlsym(handle,"sp_artistbrowse_num_similar_artists"))==NULL) return "sp_artistbrowse_num_similar_artists";
 if((f_sp_artistbrowse_similar_artist=dlsym(handle,"sp_artistbrowse_similar_artist"))==NULL) return "sp_artistbrowse_similar_artist";
 if((f_sp_artistbrowse_biography=dlsym(handle,"sp_artistbrowse_biography"))==NULL) return "sp_artistbrowse_biography";
+if((f_sp_artistbrowse_backend_request_duration=dlsym(handle,"sp_artistbrowse_backend_request_duration"))==NULL) return "sp_artistbrowse_backend_request_duration";
 if((f_sp_artistbrowse_add_ref=dlsym(handle,"sp_artistbrowse_add_ref"))==NULL) return "sp_artistbrowse_add_ref";
 if((f_sp_artistbrowse_release=dlsym(handle,"sp_artistbrowse_release"))==NULL) return "sp_artistbrowse_release";
 if((f_sp_image_create=dlsym(handle,"sp_image_create"))==NULL) return "sp_image_create";
@@ -408,9 +416,6 @@ if((f_sp_playlistcontainer_release=dlsym(handle,"sp_playlistcontainer_release"))
 if((f_sp_user_canonical_name=dlsym(handle,"sp_user_canonical_name"))==NULL) return "sp_user_canonical_name";
 if((f_sp_user_display_name=dlsym(handle,"sp_user_display_name"))==NULL) return "sp_user_display_name";
 if((f_sp_user_is_loaded=dlsym(handle,"sp_user_is_loaded"))==NULL) return "sp_user_is_loaded";
-if((f_sp_user_full_name=dlsym(handle,"sp_user_full_name"))==NULL) return "sp_user_full_name";
-if((f_sp_user_picture=dlsym(handle,"sp_user_picture"))==NULL) return "sp_user_picture";
-if((f_sp_user_relation_type=dlsym(handle,"sp_user_relation_type"))==NULL) return "sp_user_relation_type";
 if((f_sp_user_add_ref=dlsym(handle,"sp_user_add_ref"))==NULL) return "sp_user_add_ref";
 if((f_sp_user_release=dlsym(handle,"sp_user_release"))==NULL) return "sp_user_release";
 if((f_sp_toplistbrowse_create=dlsym(handle,"sp_toplistbrowse_create"))==NULL) return "sp_toplistbrowse_create";
@@ -424,6 +429,7 @@ if((f_sp_toplistbrowse_num_albums=dlsym(handle,"sp_toplistbrowse_num_albums"))==
 if((f_sp_toplistbrowse_album=dlsym(handle,"sp_toplistbrowse_album"))==NULL) return "sp_toplistbrowse_album";
 if((f_sp_toplistbrowse_num_tracks=dlsym(handle,"sp_toplistbrowse_num_tracks"))==NULL) return "sp_toplistbrowse_num_tracks";
 if((f_sp_toplistbrowse_track=dlsym(handle,"sp_toplistbrowse_track"))==NULL) return "sp_toplistbrowse_track";
+if((f_sp_toplistbrowse_backend_request_duration=dlsym(handle,"sp_toplistbrowse_backend_request_duration"))==NULL) return "sp_toplistbrowse_backend_request_duration";
 if((f_sp_inbox_post_tracks=dlsym(handle,"sp_inbox_post_tracks"))==NULL) return "sp_inbox_post_tracks";
 if((f_sp_inbox_error=dlsym(handle,"sp_inbox_error"))==NULL) return "sp_inbox_error";
 if((f_sp_inbox_add_ref=dlsym(handle,"sp_inbox_add_ref"))==NULL) return "sp_inbox_add_ref";
@@ -456,8 +462,8 @@ return NULL;}
 #define f_sp_session_publishedcontainer_for_user_create sp_session_publishedcontainer_for_user_create
 #define f_sp_session_preferred_bitrate sp_session_preferred_bitrate
 #define f_sp_session_preferred_offline_bitrate sp_session_preferred_offline_bitrate
-#define f_sp_session_num_friends sp_session_num_friends
-#define f_sp_session_friend sp_session_friend
+#define f_sp_session_get_volume_normalization sp_session_get_volume_normalization
+#define f_sp_session_set_volume_normalization sp_session_set_volume_normalization
 #define f_sp_session_set_connection_type sp_session_set_connection_type
 #define f_sp_session_set_connection_rules sp_session_set_connection_rules
 #define f_sp_offline_tracks_to_sync sp_offline_tracks_to_sync
@@ -487,9 +493,11 @@ return NULL;}
 #define f_sp_link_release sp_link_release
 #define f_sp_track_is_loaded sp_track_is_loaded
 #define f_sp_track_error sp_track_error
-#define f_sp_track_is_available sp_track_is_available
+#define f_sp_track_offline_get_status sp_track_offline_get_status
+#define f_sp_track_get_availability sp_track_get_availability
 #define f_sp_track_is_local sp_track_is_local
 #define f_sp_track_is_autolinked sp_track_is_autolinked
+#define f_sp_track_is_placeholder sp_track_is_placeholder
 #define f_sp_track_is_starred sp_track_is_starred
 #define f_sp_track_set_starred sp_track_set_starred
 #define f_sp_track_num_artists sp_track_num_artists
@@ -514,6 +522,7 @@ return NULL;}
 #define f_sp_album_release sp_album_release
 #define f_sp_artist_name sp_artist_name
 #define f_sp_artist_is_loaded sp_artist_is_loaded
+#define f_sp_artist_portrait sp_artist_portrait
 #define f_sp_artist_add_ref sp_artist_add_ref
 #define f_sp_artist_release sp_artist_release
 #define f_sp_albumbrowse_create sp_albumbrowse_create
@@ -526,6 +535,7 @@ return NULL;}
 #define f_sp_albumbrowse_num_tracks sp_albumbrowse_num_tracks
 #define f_sp_albumbrowse_track sp_albumbrowse_track
 #define f_sp_albumbrowse_review sp_albumbrowse_review
+#define f_sp_albumbrowse_backend_request_duration sp_albumbrowse_backend_request_duration
 #define f_sp_albumbrowse_add_ref sp_albumbrowse_add_ref
 #define f_sp_albumbrowse_release sp_albumbrowse_release
 #define f_sp_artistbrowse_create sp_artistbrowse_create
@@ -541,6 +551,7 @@ return NULL;}
 #define f_sp_artistbrowse_num_similar_artists sp_artistbrowse_num_similar_artists
 #define f_sp_artistbrowse_similar_artist sp_artistbrowse_similar_artist
 #define f_sp_artistbrowse_biography sp_artistbrowse_biography
+#define f_sp_artistbrowse_backend_request_duration sp_artistbrowse_backend_request_duration
 #define f_sp_artistbrowse_add_ref sp_artistbrowse_add_ref
 #define f_sp_artistbrowse_release sp_artistbrowse_release
 #define f_sp_image_create sp_image_create
@@ -624,9 +635,6 @@ return NULL;}
 #define f_sp_user_canonical_name sp_user_canonical_name
 #define f_sp_user_display_name sp_user_display_name
 #define f_sp_user_is_loaded sp_user_is_loaded
-#define f_sp_user_full_name sp_user_full_name
-#define f_sp_user_picture sp_user_picture
-#define f_sp_user_relation_type sp_user_relation_type
 #define f_sp_user_add_ref sp_user_add_ref
 #define f_sp_user_release sp_user_release
 #define f_sp_toplistbrowse_create sp_toplistbrowse_create
@@ -640,6 +648,7 @@ return NULL;}
 #define f_sp_toplistbrowse_album sp_toplistbrowse_album
 #define f_sp_toplistbrowse_num_tracks sp_toplistbrowse_num_tracks
 #define f_sp_toplistbrowse_track sp_toplistbrowse_track
+#define f_sp_toplistbrowse_backend_request_duration sp_toplistbrowse_backend_request_duration
 #define f_sp_inbox_post_tracks sp_inbox_post_tracks
 #define f_sp_inbox_error sp_inbox_error
 #define f_sp_inbox_add_ref sp_inbox_add_ref

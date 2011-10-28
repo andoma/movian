@@ -1131,6 +1131,7 @@ player_thread(void *aux)
     prop_ref_dec(m);
 
     if(e == NULL) {
+      TRACE(TRACE_ERROR, "Playqueue", "Unable to play %s -- %s", pqe->pqe_url, errbuf);
       pqe = playqueue_advance(pqe, 0);
       continue;
     }
