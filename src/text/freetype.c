@@ -98,7 +98,9 @@ typedef struct glyph {
 
   LIST_ENTRY(glyph) hash_link;
   TAILQ_ENTRY(glyph) lru_link;
-  FT_Glyph glyph;
+  FT_Glyph orig_glyph;
+  FT_Glyph bmp;
+  FT_Glyph outline;
   int adv_x;
 
   FT_BBox bbox;
@@ -174,7 +176,11 @@ glyph_destroy(glyph_t *g)
   LIST_REMOVE(g, face_link);
   TAILQ_REMOVE(&allglyphs, g, lru_link);
   LIST_REMOVE(g, hash_link);
-  FT_Done_Glyph(g->glyph);
+  FT_Done_Glyph(g->orig_glyph);
+  if(g->bmp)
+    FT_Done_Glyph(g->bmp);
+  if(g->outline)
+    FT_Done_Glyph(g->outline);
   free(g);
   num_glyphs--;
 }
@@ -541,12 +547,12 @@ glyph_get(int uc, int size, uint8_t style, int family_id)
 
     g = calloc(1, sizeof(glyph_t));
 
-    if((err = FT_Get_Glyph(gs, &g->glyph)) != 0) {
+    if((err = FT_Get_Glyph(gs, &g->orig_glyph)) != 0) {
       free(g);
       return NULL;
     }
 
-    FT_Glyph_Get_CBox(g->glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
+    FT_Glyph_Get_CBox(g->orig_glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
 
     g->gi = gi;
     LIST_INSERT_HEAD(&f->glyphs, g, face_link);
@@ -1171,12 +1177,13 @@ text_render0(const uint32_t *uc, const int len,
       pen.x &= ~63;
       pen.y &= ~63;
 
-      FT_Glyph glyph = g->glyph;
-      FT_Glyph oglyph = NULL;
+      pen.x >>= 6;
+      pen.y >>= 6;
+
 
       
-      if(items[i].outline > 0) {
-	oglyph = g->glyph;
+      if(items[i].outline > 0 && g->outline == NULL) {
+	g->outline = g->orig_glyph;
 	
 	if(stroker == NULL)
 	  FT_Stroker_New(text_library, &stroker);
@@ -1186,55 +1193,48 @@ text_render0(const uint32_t *uc, const int len,
 		       FT_STROKER_LINECAP_ROUND,
 		       FT_STROKER_LINEJOIN_ROUND,
 		       0);
-	FT_Glyph_StrokeBorder(&oglyph, stroker, 0, 0);
+	if(FT_Glyph_StrokeBorder(&g->outline, stroker, 0, 0))
+	  g->outline = NULL;
+	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
+	  g->outline = NULL;
       }
       
-      if(glyph != NULL && 
-	 FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0))
-	glyph = NULL;
-
-
-      if(oglyph != NULL && 
-	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 1))
-	oglyph = NULL;
-
-      if(items[i].shadow && (oglyph != NULL || glyph != NULL)) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(oglyph ?: glyph);
+      if(g->bmp == NULL) {
+	g->bmp = g->orig_glyph;
+	if(FT_Glyph_To_Bitmap(&g->bmp, FT_RENDER_MODE_NORMAL, NULL, 0))
+	  g->bmp = NULL;
+      }
+      if(items[i].shadow && (g->outline != NULL || g->bmp != NULL)) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(g->outline ?: g->bmp);
 	draw_glyph(pm,
-		   bmp->left + items[i].shadow + margin,
-		   target_height - bmp->top + items[i].shadow + margin,
+		   bmp->left + items[i].shadow + margin + pen.x,
+		   target_height - bmp->top + items[i].shadow + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].shadow_color);
       }
 
-      if(oglyph != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)oglyph;
+      if(items[i].outline > 0 && g->outline != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->outline;
 	draw_glyph(pm,
-		   bmp->left + margin,
-		   target_height - bmp->top + margin,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].outline_color);
       }
 
-      if(glyph != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
+      if(g->bmp != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->bmp;
 	draw_glyph(pm,
-		   bmp->left + margin,
-		   target_height - bmp->top + margin,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].color);
 
 	if(pm->pm_charpos != NULL) {
-	  pm->pm_charpos[i * 2 + 0] = bmp->left;
-	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width;
+	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
+	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
 	}
       }
-
-      if(glyph != NULL)
-	FT_Done_Glyph(glyph);
-
-      if(oglyph != NULL)
-	FT_Done_Glyph(oglyph);
 
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 0] = pen_x / 64;
