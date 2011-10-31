@@ -244,6 +244,15 @@ metadb_init(void)
 }
 
 
+/**
+ *
+ */
+void
+metadb_fini(void)
+{
+  db_pool_close(metadb_pool);
+}
+
 
 /**
  *

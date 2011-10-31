@@ -31,4 +31,6 @@ void blobcache_put(const char *key, const char *stash, const void *data,
 
 void blobcache_init(void);
 
+void blobcache_fini(void);
+
 #endif // BLOBCACHE_H__

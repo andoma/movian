@@ -213,6 +213,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
  */
 struct db_pool {
   int dp_size;
+  int dp_closed;
   char *dp_path;
   hts_mutex_t dp_mutex;
   sqlite3 *dp_pool[0];
@@ -248,6 +249,12 @@ db_pool_get(db_pool_t *dp)
     return NULL;
 
   hts_mutex_lock(&dp->dp_mutex);
+
+  if(dp->dp_closed) {
+    hts_mutex_unlock(&dp->dp_mutex);
+    return NULL;
+  }
+
   for(i = 0; i < dp->dp_size; i++) {
     if(dp->dp_pool[i] != NULL) {
       db = dp->dp_pool[i];
@@ -256,6 +263,7 @@ db_pool_get(db_pool_t *dp)
       return db;
     }
   }
+
   hts_mutex_unlock(&dp->dp_mutex);
 
   rc = sqlite3_open_v2(dp->dp_path, &db,
@@ -311,4 +319,23 @@ db_pool_put(db_pool_t *dp, sqlite3 *db)
 
   hts_mutex_unlock(&dp->dp_mutex);
   sqlite3_close(db);
+}
+
+
+/**
+ *
+ */
+void
+db_pool_close(db_pool_t *dp)
+{
+  int i;
+  if(dp == NULL)
+    return;
+
+  hts_mutex_lock(&dp->dp_mutex);
+  dp->dp_closed = 1;
+  for(i = 0; i < dp->dp_size; i++)
+    if(dp->dp_pool[i] != NULL)
+      sqlite3_close(dp->dp_pool[i]);
+  hts_mutex_unlock(&dp->dp_mutex);
 }

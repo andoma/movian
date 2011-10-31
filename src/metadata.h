@@ -103,6 +103,8 @@ void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
 
 void metadb_init(void);
 
+void metadb_fini(void);
+
 void *metadb_get(void);
 
 void metadb_close(void *db);

@@ -532,6 +532,8 @@ finalize(void)
   audio_fini();
   backend_fini();
   shutdown_hook_run(0);
+  blobcache_fini();
+  metadb_fini();
   arch_exit(showtime_retcode);
 }
 

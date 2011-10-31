@@ -374,6 +374,12 @@ blobcache_init(void)
 }
 
 
+void
+blobcache_fini(void)
+{
+  db_pool_close(cachedb_pool);
+}
+
 
 /**
  *
