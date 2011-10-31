@@ -99,7 +99,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   uint8_t *p;
   size_t size;
   meminfo_t mi;
-  enum CodecID codec;
+  pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
   if((p = fa_load(url, &size, vpaths, errbuf, errlen, NULL)) == NULL) 
@@ -122,7 +122,7 @@ fa_imageloader2(const char *url, const char **vpaths,
       return NULL;
     }
 
-    codec = CODEC_ID_MJPEG;
+    fmt = PIXMAP_JPEG;
 
     width = ji.ji_width;
     height = ji.ji_height;
@@ -131,17 +131,17 @@ fa_imageloader2(const char *url, const char **vpaths,
     jpeg_info_clear(&ji);
 
   } else if(!memcmp(pngsig, p, 8)) {
-    codec = CODEC_ID_PNG;
+    fmt = PIXMAP_PNG;
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
-    codec = CODEC_ID_GIF;
+    fmt = PIXMAP_GIF;
   } else {
     snprintf(errbuf, errlen, "%s: unknown format", url);
     free(p);
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(p, size, codec);
+  pixmap_t *pm = pixmap_alloc_coded(p, size, fmt);
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_orientation = orientation;
@@ -172,10 +172,10 @@ fa_imageloader(const char *url, const struct image_meta *im,
 {
   uint8_t p[16];
   int r;
-  enum CodecID codec;
   int width = -1, height = -1, orientation = 0;
   fa_handle_t *fh;
   pixmap_t *pm;
+  pixmap_type_t fmt;
 
   if(strchr(url, '#'))
     return fa_image_from_video(url, im, errbuf, errlen);
@@ -216,7 +216,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
       return pm;
     }
 
-    codec = CODEC_ID_MJPEG;
+    fmt = PIXMAP_JPEG;
 
     width = ji.ji_width;
     height = ji.ji_height;
@@ -225,10 +225,10 @@ fa_imageloader(const char *url, const struct image_meta *im,
     jpeg_info_clear(&ji);
 
   } else if(!memcmp(pngsig, p, 8)) {
-    codec = CODEC_ID_PNG;
+    fmt = PIXMAP_PNG;
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
-    codec = CODEC_ID_GIF;
+    fmt = PIXMAP_GIF;
   } else {
     snprintf(errbuf, errlen, "Unknown format");
     fa_close(fh);
@@ -242,7 +242,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
     return NULL;
   }
 
-  pm = pixmap_alloc_coded(NULL, s, codec);
+  pm = pixmap_alloc_coded(NULL, s, fmt);
 
   if(pm == NULL) {
     snprintf(errbuf, errlen, "Out of memory");

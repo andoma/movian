@@ -72,8 +72,8 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   if(pm == NULL)
     return http_error(hc, 404, "Unable to load image %s : %s",
 		      remain, errbuf);
-
-  if(pm->pm_codec == CODEC_ID_NONE) {
+  
+  if(!pixmap_is_coded(pm)) {
     pixmap_release(pm);
     return http_error(hc, 404, 
 		      "Unable to load image %s : Original data not available",
@@ -83,14 +83,14 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_init(&out, 0);
   htsbuf_append(&out, pm->pm_data, pm->pm_size);
 
-  switch(pm->pm_codec) {
-  case CODEC_ID_MJPEG:
+  switch(pm->pm_type) {
+  case PIXMAP_JPEG:
     content = "image/jpeg";
     break;
-  case CODEC_ID_PNG:
+  case PIXMAP_PNG:
     content = "image/png";
     break;
-  case CODEC_ID_GIF:
+  case PIXMAP_GIF:
     content = "image/gif";
     break;
   default:

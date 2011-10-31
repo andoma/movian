@@ -200,3 +200,16 @@ fa_libav_close_format(AVFormatContext *fctx)
   av_close_input_stream(fctx);
   fa_libav_close(avio);
 }
+
+
+/**
+ *
+ */
+void
+fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
+{
+  
+if(av_strerror(err, errbuf, errlen))
+    snprintf(errbuf, errlen, "libav error %d", err);
+}
+

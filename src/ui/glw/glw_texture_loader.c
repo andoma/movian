@@ -182,6 +182,22 @@ glw_tex_flush_all(glw_root_t *gr)
 /**
  *
  */
+static enum PixelFormat 
+pixmapfmt_to_libav(pixmap_type_t t)
+{
+  switch(t) {
+  case PIXMAP_I:
+    return PIX_FMT_GRAY8;
+  case PIXMAP_IA:
+    return PIX_FMT_Y400A;
+  default:
+    return -1;
+  }
+}
+
+/**
+ *
+ */
 static int
 glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
@@ -195,10 +211,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_pixmap != NULL) {
     pixmap_t *pm = glt->glt_pixmap;
     AVPicture pict;
+
     pict.data[0] = pm->pm_pixels;
     pict.linesize[0] = pm->pm_linesize;
     r = glw_tex_backend_load(gr, glt, &pict,
-			     pm->pm_pixfmt,
+			     pixmapfmt_to_libav(pm->pm_type),
 			     pm->pm_width, pm->pm_height,
 			     pm->pm_width, pm->pm_height);
     return r;
@@ -226,7 +243,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   glt->glt_orientation = pm->pm_orientation;
 
-  if(pm->pm_codec == CODEC_ID_NONE) {
+  if(!pixmap_is_coded(pm)) {
     glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
 
     AVPicture pict;
@@ -234,20 +251,35 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     pict.linesize[0] = pm->pm_linesize;
 
     r = glw_tex_backend_load(gr, glt, &pict,
-			     pm->pm_pixfmt,
+			     pixmapfmt_to_libav(pm->pm_type),
 			     pm->pm_width, pm->pm_height,
 			     pm->pm_width, pm->pm_height);
     pixmap_release(pm);
     return r;
   }
 
-  ctx = avcodec_alloc_context();
-  codec = avcodec_find_decoder(pm->pm_codec);
+
+  switch(pm->pm_type) {
+  case PIXMAP_PNG:
+    codec = avcodec_find_decoder(CODEC_ID_PNG);
+    break;
+  case PIXMAP_JPEG:
+    codec = avcodec_find_decoder(CODEC_ID_MJPEG);
+    break;
+  case PIXMAP_GIF:
+    codec = avcodec_find_decoder(CODEC_ID_GIF);
+    break;
+  default:
+    codec = NULL;
+    break;
+  }
+
   if(codec == NULL) {
     pixmap_release(pm);
     TRACE(TRACE_ERROR, "glw", "%s: No codec for image format", url);
     return -1;
   }
+  ctx = avcodec_alloc_context();
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
 

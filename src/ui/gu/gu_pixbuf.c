@@ -110,22 +110,32 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   if(pm == NULL)
     return NULL;
 
-  if(pm->pm_codec == CODEC_ID_NONE) {
-
-      pixmap_release(pm);
-      return NULL;
-
-
-    width  = pm->pm_width;
-    height = pm->pm_height;
-    pixfmt = pm->pm_pixfmt;
-    
+  if(!pixmap_is_coded(pm)) {
+    pixmap_release(pm);
+    return NULL;
 
   } else {
     
+    switch(pm->pm_type) {
+    case PIXMAP_PNG:
+      codec = avcodec_find_decoder(CODEC_ID_PNG);
+      break;
+    case PIXMAP_JPEG:
+      codec = avcodec_find_decoder(CODEC_ID_MJPEG);
+      break;
+    case PIXMAP_GIF:
+      codec = avcodec_find_decoder(CODEC_ID_GIF);
+      break;
+    default:
+      codec = NULL;
+      break;
+    }
+    if(codec == NULL) {
+      pixmap_release(pm);
+      return NULL;
+    }  
     ctx = avcodec_alloc_context();
-    codec = avcodec_find_decoder(pm->pm_codec);
-  
+
     ctx->codec_id   = codec->id;
     ctx->codec_type = codec->type;
 

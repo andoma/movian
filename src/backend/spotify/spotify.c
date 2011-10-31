@@ -3387,7 +3387,7 @@ spotify_got_image(sp_image *image, void *userdata)
   size_t size;
   const void *pixels = f_sp_image_data(image, &size);
 
-  si->si_pixmap = pixmap_alloc_coded(pixels, size, CODEC_ID_MJPEG);
+  si->si_pixmap = pixmap_alloc_coded(pixels, size, PIXMAP_JPEG);
 
   hts_mutex_lock(&spotify_mutex);
   si->si_errcode = 0;

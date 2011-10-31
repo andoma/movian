@@ -668,12 +668,12 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
     gvo->gvo_height = pm->pm_height;
   }
 
-  switch(pm->pm_pixfmt) {
-  case PIX_FMT_Y400A:
+  switch(pm->pm_type) {
+  case PIXMAP_IA:
     fmt = GLW_TEXTURE_FORMAT_I8A8;
     break;
 
-  case PIX_FMT_BGR32:
+  case PIXMAP_BGR32:
     fmt = GLW_TEXTURE_FORMAT_BGR32;
     break;
 

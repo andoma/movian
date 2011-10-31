@@ -592,8 +592,7 @@ static void
 draw_glyph(pixmap_t *pm, int left, int top, FT_Bitmap *bmp, int color)
 {
   pixmap_t src;
-  src.pm_pixfmt = PIX_FMT_GRAY8;
-  src.pm_codec = CODEC_ID_NONE;
+  src.pm_type = PIXMAP_I;
   src.pm_pixels = bmp->buffer;
   src.pm_width = bmp->width;
   src.pm_height = bmp->rows;
@@ -1060,7 +1059,7 @@ text_render0(const uint32_t *uc, const int len,
   // --- allocate and init pixmap
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
-		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A, 1);
+		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, 1);
 
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;
@@ -1097,8 +1096,8 @@ text_render0(const uint32_t *uc, const int len,
       ypos = MIN(target_height, MAX(0, ypos));
 
       
-      switch(pm->pm_pixfmt) {
-      case PIX_FMT_BGR32: 
+      switch(pm->pm_type) {
+      case PIXMAP_BGR32: 
 	{
 	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
 	  int i;
@@ -1121,7 +1120,7 @@ text_render0(const uint32_t *uc, const int len,
 	}
 	break;
 	
-      case PIX_FMT_Y400A:
+      case PIXMAP_IA:
 	{
 	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
 	  int i;

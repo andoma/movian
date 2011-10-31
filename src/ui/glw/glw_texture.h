@@ -19,6 +19,7 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
+#include <libavcodec/avcodec.h>
 #include "misc/pixmap.h"
 
 #define GLW_TEX_REPEAT 0x1

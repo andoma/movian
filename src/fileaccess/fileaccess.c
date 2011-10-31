@@ -542,17 +542,6 @@ fileaccess_init(void)
 /**
  *
  */
-void
-fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
-{
-  if(av_strerror(err, errbuf, errlen))
-    snprintf(errbuf, errlen, "libav error %d", err);
-}
-
-
-/**
- *
- */
 void *
 fa_load(const char *url, size_t *sizep, const char **vpaths,
 	char *errbuf, size_t errlen, int *cache_control)
