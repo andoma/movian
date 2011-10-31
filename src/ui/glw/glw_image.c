@@ -1021,6 +1021,17 @@ glw_image_ready(glw_t *w)
 /**
  *
  */
+static const char *
+get_identity(glw_t *w)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  glw_loadable_texture_t *glt = gi->gi_current;
+  return glt ? glt->glt_filename : "unloaded";
+}
+
+/**
+ *
+ */
 static glw_class_t glw_image = {
   .gc_name = "image",
   .gc_instance_size = sizeof(glw_image_t),
@@ -1083,6 +1094,7 @@ static glw_class_t glw_backdrop = {
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);

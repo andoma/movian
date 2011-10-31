@@ -541,6 +541,11 @@ typedef struct glw_class {
   void (*gc_set_max_lines)(struct glw *w, int lines);
 
   /**
+   *
+   */
+  const char *(*gc_get_identity)(struct glw *w);
+
+  /**
    * Registration link
    */
   LIST_ENTRY(glw_class) gc_link;
