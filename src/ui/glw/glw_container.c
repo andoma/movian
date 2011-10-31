@@ -429,7 +429,7 @@ glw_container_y_render(glw_t *w, glw_rctx_t *rc)
     glw_Translatef(&rc0, 0, c->glw_parent_pos, 0);
     glw_Scalef(&rc0, 1.0, c->glw_parent_scale, c->glw_parent_scale);
 
-    c->glw_class->gc_render(c, &rc0);
+    glw_render0(c, &rc0);
   }
 }
 
@@ -475,7 +475,7 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
     glw_Translatef(&rc0, c->glw_parent_pos, 0, 0);
     glw_Scalef(&rc0, c->glw_parent_scale, 1.0, c->glw_parent_scale);
 
-    c->glw_class->gc_render(c, &rc0);
+    glw_render0(c, &rc0);
   }
 }
 
@@ -503,7 +503,7 @@ glw_container_z_render(glw_t *w, glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    c->glw_class->gc_render(c, &rc0);
+    glw_render0(c, &rc0);
   }
 }
 

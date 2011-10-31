@@ -77,7 +77,7 @@ glw_clip_render(glw_t *w, glw_rctx_t *rc)
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, gc->gc_clipping[3]) : -1;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    c->glw_class->gc_render(c, rc);
+    glw_render0(c, rc);
 
   glw_clip_disable(w->glw_root, rc, l);
   glw_clip_disable(w->glw_root, rc, r);

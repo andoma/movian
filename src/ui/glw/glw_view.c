@@ -79,7 +79,7 @@ glw_view_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
   if(c != NULL)
-    c->glw_class->gc_render(c, rc);
+    glw_render0(c, rc);
 }
 
 

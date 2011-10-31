@@ -171,7 +171,7 @@ glw_slider_render_x(glw_t *w, glw_rctx_t *rc)
 		 s->knob_pos_px + s->knob_size_px / 2,
 		 0);
 
-  c->glw_class->gc_render(c, &rc0);
+  glw_render0(c, &rc0);
 }
 
 
@@ -200,7 +200,7 @@ glw_slider_render_y(glw_t *w, glw_rctx_t *rc)
 		 rc->rc_width,
 		 s->knob_pos_px - s->knob_size_px / 2);
 
-  c->glw_class->gc_render(c, &rc0);
+  glw_render0(c, &rc0);
 }
 
 
