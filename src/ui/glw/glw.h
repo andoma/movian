@@ -108,7 +108,6 @@ typedef enum {
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
-  GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
   GLW_ATTRIB_CHILD_WIDTH,
@@ -1030,7 +1029,6 @@ do {						\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
-  case GLW_ATTRIB_PIXMAP: 			\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_MODE:                         \

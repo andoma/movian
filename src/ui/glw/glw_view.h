@@ -87,7 +87,6 @@ typedef enum {
   TOKEN_VECTOR_STRING,
   TOKEN_VECTOR_INT,
   TOKEN_EVENT,
-  TOKEN_PIXMAP,                // prop.c:prop_pixmap_t
   TOKEN_LINK,                  // A link with title and url
   TOKEN_num,
 

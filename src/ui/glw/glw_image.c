@@ -977,17 +977,6 @@ glw_image_set(glw_t *w, va_list ap)
       compute_colors(gi);
       break;
       
-    case GLW_ATTRIB_PIXMAP:
-      if(gi->gi_pending != NULL)
-	glw_tex_deref(w->glw_root, gi->gi_pending);
-
-      free(gi->gi_pending_filename);
-      gi->gi_pending_filename = NULL;
-
-      gi->gi_pending = glw_tex_create_from_pixmap(w->glw_root, 
-						  va_arg(ap, pixmap_t *));
-      break;
-
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;

@@ -1381,7 +1381,6 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
-  case PROP_SET_PIXMAP:
     t = prop_callback_alloc_token(gps, TOKEN_VOID);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
@@ -1523,13 +1522,6 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     rpn = gps->gps_rpn;
     break;
 
-  case PROP_SET_PIXMAP:
-    t = prop_callback_alloc_token(gps, TOKEN_PIXMAP);
-    t->propsubr = gps;
-    t->t_pixmap = pixmap_dup(va_arg(ap, pixmap_t *));
-    rpn = gps->gps_rpn;
-    break;
-
   case PROP_SET_RLINK:
     t = prop_callback_alloc_token(gps, TOKEN_LINK);
     t->propsubr = gps;
@@ -1599,7 +1591,6 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
   case PROP_SET_DIR:
-  case PROP_SET_PIXMAP:
   case PROP_SET_RLINK:
     sc->sc_entries = 0;
     break;

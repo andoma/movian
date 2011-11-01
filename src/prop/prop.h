@@ -32,7 +32,6 @@
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
-struct pixmap;
 TAILQ_HEAD(prop_notify_queue, prop_notify);
 
 
@@ -58,7 +57,6 @@ typedef enum {
   PROP_SET_INT,
   PROP_SET_FLOAT,
   PROP_SET_DIR,
-  PROP_SET_PIXMAP,
   PROP_SET_RLINK,
 
   PROP_ADD_CHILD,
@@ -198,8 +196,6 @@ void prop_set_int_clipping_range(prop_t *p, int min, int max);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
-void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
-
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
 
@@ -223,8 +219,6 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 #define prop_toggle_int(p) prop_toggle_int_ex(p, NULL)
 
 #define prop_set_void(p) prop_set_void_ex(p, NULL)
-
-#define prop_set_pixmap(p, pp) prop_set_pixmap_ex(p, NULL, pp)
 
 #define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
 

@@ -117,10 +117,6 @@ glw_view_token_free(token_t *t)
     rstr_release(t->t_rstring);
     break;
 
-  case TOKEN_PIXMAP:
-    pixmap_release(t->t_pixmap);
-    break;
-
   case TOKEN_EVENT:
     t->t_gem->gem_dtor(t->t_gem);
     break;
@@ -235,10 +231,6 @@ glw_view_token_copy(token_t *src)
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_VOID:
-    break;
-
-  case TOKEN_PIXMAP:
-    dst->t_pixmap = pixmap_dup(src->t_pixmap);
     break;
 
   case TOKEN_LINK:

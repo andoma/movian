@@ -28,7 +28,6 @@
 
 #include "showtime.h"
 #include "prop_i.h"
-#include "misc/pixmap.h"
 #include "misc/string.h"
 #include "event.h"
 
@@ -116,7 +115,6 @@ typedef struct prop_notify {
       rstr_t *rstr;
       prop_str_type_t type;
     } rstr;
-    struct pixmap *pp;
     struct event *e;
     struct {
       rstr_t *rtitle;
@@ -134,7 +132,6 @@ typedef struct prop_notify {
 #define hpn_rstring u.rstr.rstr
 #define hpn_rstrtype u.rstr.type
 #define hpn_cstring u.str
-#define hpn_pixmap u.pp
 #define hpn_ext_event  u.e
 #define hpn_link_rtitle u.link.rtitle
 #define hpn_link_rurl   u.link.rurl
@@ -366,11 +363,6 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_SET_FLOAT:
-    prop_ref_dec(n->hpn_prop2);
-    break;
-
-  case PROP_SET_PIXMAP:
-    pixmap_release(n->hpn_pixmap);
     prop_ref_dec(n->hpn_prop2);
     break;
 
@@ -622,15 +614,6 @@ prop_notify_dispatch(struct prop_notify_queue *q)
       prop_ref_dec(n->hpn_prop2);
       break;
 
-    case PROP_SET_PIXMAP:
-      if(pt != NULL)
-	pt(s, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
-      else
-	cb(s->hps_opaque, n->hpn_event, n->hpn_pixmap, n->hpn_prop2);
-      pixmap_release(n->hpn_pixmap);
-      prop_ref_dec(n->hpn_prop2);
-      break;
-
     case PROP_ADD_CHILD:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_prop, n->hpn_flags);
@@ -845,10 +828,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
       PROPTRACE("void by %s%s", origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
-    case PROP_PIXMAP:
-      PROPTRACE("pixmap by %s%s", origin,
-	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
-      break;
     case PROP_ZOMBIE:
       break;
     }
@@ -916,13 +895,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 	cb(s->hps_opaque, PROP_SET_VOID, p);
       break;
 
-    case PROP_PIXMAP:
-      if(pt != NULL)
-	pt(s, PROP_SET_PIXMAP, p->hp_pixmap, p);
-      else
-	cb(s->hps_opaque, PROP_SET_PIXMAP, p->hp_pixmap, p);
-      break;
-
     case PROP_ZOMBIE:
       abort();
 
@@ -965,11 +937,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   case PROP_DIR:
     n->hpn_event = PROP_SET_DIR;
-    break;
-
-  case PROP_PIXMAP:
-    n->hpn_pixmap = pixmap_dup(p->hp_pixmap);
-    n->hpn_event = PROP_SET_PIXMAP;
     break;
 
   case PROP_VOID:
@@ -1288,10 +1255,6 @@ prop_clean(prop_t *p)
   case PROP_LINK:
     rstr_release(p->hp_link_rtitle);
     rstr_release(p->hp_link_rurl);
-    break;
-
-  case PROP_PIXMAP:
-    pixmap_release(p->hp_pixmap);
     break;
   }
   return 0;
@@ -1622,10 +1585,6 @@ prop_destroy0(prop_t *p)
   case PROP_LINK:
     rstr_release(p->hp_link_rtitle);
     rstr_release(p->hp_link_rurl);
-    break;
-
-  case PROP_PIXMAP:
-    pixmap_release(p->hp_pixmap);
     break;
 
   case PROP_FLOAT:
@@ -2908,44 +2867,6 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
   prop_set_epilogue(skipme, p, "prop_set_void()");
 }
 
-/**
- *
- */
-void
-prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm)
-{
-  if(p == NULL)
-    return;
-
-  if(pm == NULL) {
-    prop_set_void_ex(p, skipme);
-    return;
-  }
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_type != PROP_PIXMAP) {
-
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
-      return;
-    }
-
-  } else {
-    pixmap_release(p->hp_pixmap);
-  }
-
-  p->hp_pixmap = pixmap_dup(pm);
-  p->hp_type = PROP_PIXMAP;
-
-  prop_set_epilogue(skipme, p, "prop_set_pixmap()");
-}
-
 
 /**
  * Compare the value of two props, return 1 if equal 0 if not equal
@@ -2972,9 +2893,6 @@ prop_value_compare(prop_t *a, prop_t *b)
 
   case PROP_INT:
     return a->hp_int == b->hp_int;
-
-  case PROP_PIXMAP:
-    return a->hp_pixmap == b->hp_pixmap;
 
   case PROP_VOID:
   case PROP_ZOMBIE:
@@ -3678,10 +3596,6 @@ prop_print_tree0(prop_t *p, int indent, int followlinks)
   case PROP_ZOMBIE:
     fprintf(stderr, "<zombie, ref=%d>\n", p->hp_refcount);
     break;
-
-  case PROP_PIXMAP:
-    fprintf(stderr, "<pixmap>\n");
-    break;
   }
 }
 
@@ -3735,9 +3649,6 @@ prop_tree_to_htsmsg0(prop_t *p, htsmsg_t *m)
     break;
     
   case PROP_ZOMBIE:
-    break;
-
-  case PROP_PIXMAP:
     break;
   }
 }
