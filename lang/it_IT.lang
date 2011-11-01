@@ -32,14 +32,12 @@ msg: Riprodotto %d volte
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
 msg: %d voci
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
 msg: %d tracce
 
 #
@@ -208,7 +206,6 @@ id: Adjust background tint based on daytime
 msg: Modifica lo sfondo a seconda dell'ora 
 
 id: Alternate list layout
-# Missing translation
 msg: Alterna il layout della lista
 
 id: Audio muted
@@ -299,7 +296,6 @@ id: Search
 msg: Cerca
 
 id: Search result for: %s
-# Missing translation
 msg: Risultati della ricerca per: %s
 
 #
@@ -307,6 +303,10 @@ msg: Risultati della ricerca per: %s
 #
 id: Automatic login when Showtime starts
 msg: Login automatico all'avvio di Showtime
+
+id: Collaborative
+# Missing translation
+msg: Collaborativo
 
 id: Enable Spotify
 msg: Attiva Spotify
@@ -328,6 +328,14 @@ msg: Nuovi album su Spotify
 
 id: New releases
 msg: Nuovi rilasci
+
+id: Offline
+# Missing translation
+msg: Offline
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: Sync offline in 96kbps
 
 id: Playlists
 msg: Playlist
