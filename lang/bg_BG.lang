@@ -32,15 +32,13 @@ msg: Възпроизведено %d пъти
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d записи
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d тракове
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -55,7 +53,7 @@ msg: Вкл.
 # ./glwthemes/mono/include/infobox.view
 #
 id: Delete
-msg: Изтрии
+msg: Изтрий
 
 id: Enqueue
 msg: Добави към опашката за възпроизвеждане
@@ -64,7 +62,7 @@ msg: Добави към опашката за възпроизвеждане
 # ./glwthemes/mono/include/popup.view
 #
 id: Cancel
-msg: Отмяна
+msg: Отмени
 
 id: OK
 msg: OK
@@ -166,7 +164,7 @@ msg: Трак %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPU е твърде бавно за да декодира това видео
+msg: CPU е твърде бавно, за да декодира това видео
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -184,7 +182,7 @@ msg: Потребителско име
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Няма заредени медиини файлове
+msg: Няма заредени медийни файлове
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -199,8 +197,7 @@ id: GPU & Display
 msg: GPU и изображение
 
 id: GPU Core temperature: %d / %d °
-# Missing translation
-msg: 
+msg: Температура на ядрото на GPU: %d / %d °
 
 #
 # ./glwthemes/mono/universe.view
@@ -209,8 +206,7 @@ id: Adjust background tint based on daytime
 msg: Настройка нюанса на фона в зависимост от яркостта
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Алтернативен изглед на списъка
 
 id: Audio muted
 msg: Заглушаване на аудиото
@@ -300,14 +296,16 @@ id: Search
 msg: Търсене
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Резултати от търсенето за: %s
 
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Автоматичен логин при пускане на Showtime
+msg: Автоматичено вписване при пускане на Showtime
+
+id: Collaborative
+msg: Съвместимост
 
 id: Enable Spotify
 msg: Включи Spotify
@@ -328,13 +326,19 @@ id: New albums on Spotify
 msg: Нови албуми в Spotify
 
 id: New releases
-msg: Нови релиизи
+msg: Нови попълнения
+
+id: Offline
+msg: Офлайин
+
+id: Offline sync in 96kbps
+msg: Офлайн синхронизация при 96kbps
 
 id: Playlists
 msg: Плейлистове
 
 id: Relogin (switch user)
-msg: Ре-логин (смяна на потребителя)
+msg: Повторно вписване (смяна на потребителя)
 
 id: Search result
 msg: Резултати от търсенето
@@ -548,20 +552,16 @@ msg: Настройка скрола на мишката нагоре/надол
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Автоматично превключване към този режим
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: DVI-Видео цветова гама
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Превключи към този режим сега
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Видео режими
 
 #
 # ./src/upnp/upnp.c
@@ -621,8 +621,7 @@ id: Controls if video playback should restart where last played
 msg: Настройка дали видео възпроизвеждането трябва да продължи от където е спрян за последно файла
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Маркирай видеото като възпроизведено при достигане на
 
 id: Enable VDPAU
 msg: Включи VDPAU
