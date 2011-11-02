@@ -285,6 +285,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 	right = left + 10;
       }
 
+      left  += gtb->gtb_padding_left;
+      right += gtb->gtb_padding_left;
+
     } else {
 
       left = 0;
