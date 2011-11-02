@@ -312,6 +312,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Ativar Spotify
 
@@ -332,6 +336,14 @@ msg: Novos albuns no Spotify
 
 id: New releases
 msg: Novas releases
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Listas de reprodução

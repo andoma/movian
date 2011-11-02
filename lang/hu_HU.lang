@@ -314,6 +314,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Automatikus bejelentkezés a Showtime inditásakor
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Spotify Engedélyezés
 
@@ -335,6 +339,14 @@ msg: Új albumok a Spotify-n
 
 id: New releases
 msg: Új kiadások
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Lejátszási lista

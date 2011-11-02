@@ -311,6 +311,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Logare automată la pornirea Showtime
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Activează Spotify
 
@@ -331,6 +335,14 @@ msg: Albume noi pe Spotify
 
 id: New releases
 msg: Noutăți
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Lista de fișiere

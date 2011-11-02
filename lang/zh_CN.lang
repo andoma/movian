@@ -308,6 +308,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Showtime启动时自动登录
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: 启用Spotify
 
@@ -328,6 +332,14 @@ msg: Spotify新专辑
 
 id: New releases
 msg: 最新发布
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: 播放列表

@@ -309,6 +309,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Automaatne sisselogimine Showtime avamisel
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Luba Spotify
 
@@ -329,6 +333,14 @@ msg: Spotify uued albumid
 
 id: New releases
 msg: Uued väljalasked
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Loendid

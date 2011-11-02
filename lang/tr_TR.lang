@@ -314,6 +314,10 @@ msg:
 id: Automatic login when Showtime starts
 msg: Showtime başlarken Otomatik giriş
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Spotify etkinleştirin
 
@@ -335,6 +339,14 @@ msg: Yeni albüm aç Spotify
 
 id: New releases
 msg: Yenilikler
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Oynatma listesi

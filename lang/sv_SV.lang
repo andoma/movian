@@ -304,6 +304,10 @@ msg: Sökresultat för: %s
 id: Automatic login when Showtime starts
 msg: Logga automatiskt in när Showtime startar
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Använd Spotify
 
@@ -324,6 +328,14 @@ msg: Nya album på Spotify
 
 id: New releases
 msg: Nya släpp
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Spellistor
