@@ -725,7 +725,7 @@ text_render0(const uint32_t *uc, const int len,
     style |= TR_STYLE_ITALIC;
 
   if(flags & TR_RENDER_SHADOW)
-    current_shadow = 2;
+    current_shadow = -1;
 
   if(flags & TR_RENDER_OUTLINE)
     current_outline = 64;
@@ -891,7 +891,11 @@ text_render0(const uint32_t *uc, const int len,
     items[out].outline = current_outline;
     items[out].outline_color = current_outline_color | current_outline_alpha;
 
-    items[out].shadow = current_shadow;
+    if(current_shadow == -1)
+      items[out].shadow = 1 + current_shadow / 20;
+    else
+      items[out].shadow = current_shadow;
+
     items[out].shadow_color = current_shadow_color | current_shadow_alpha;
 
     prev = g->gi;
