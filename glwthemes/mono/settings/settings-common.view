@@ -4,6 +4,7 @@
   widget(backdrop, {
     .source = "theme://graphics/border-tiny.png";
     .border = 4;
+    .padding = -2;
     .color = 0.5;
     BODY;
   });
