@@ -143,52 +143,57 @@
 
 #define ONOFF(PROP)
 {
-  widget(deck, {
-    .effect = flipVertical;
-    .noInitialTransform = true;
-    .time = 0.2;
+  widget(clip, {
+    .clipping = 0;
+    widget(deck, {
+      .effect = flipVertical;
+      .noInitialTransform = true;
+      .time = 0.2;
 
-    widget(backdrop, {
-      .width = KNOB_SIZE();
-      .focusable = 1.0;
-      
-      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
-      
-      .color = PLATE_COLOR_OFF();
-      PLATE_GFX4();
-      
-      onEvent(activate, {
-	(PROP) = !PROP;
+      widget(backdrop, {
+	.width = KNOB_SIZE();
+	.focusable = 1.0;
+	
+	.alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+	
+	.color = PLATE_COLOR_OFF();
+	PLATE_GFX4();
+	
+	onEvent(activate, {
+	  (PROP) = !PROP;
+	});
+	
+	widget(label, {
+	  .align = center;
+	  .shadow = true;
+	  .caption = _("Off");
+	});
       });
-      
-      widget(label, {
-	.align = center;
-	.caption = _("Off");
-      });
+
+
+      widget(backdrop, {
+	.width = KNOB_SIZE();
+	.focusable = 1.0;
+	
+	.alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+	.color = PLATE_COLOR_ON();
+	
+	PLATE_GFX4();
+	
+	onEvent(activate, {
+	  (PROP) = !PROP;
+	});
+	
+	widget(label, {
+	  .align = center;
+	  .shadow = true;
+	  .caption = _("On");
+	});
+      });      
+
+      // Must be after the widgets
+      .page = PROP;
     });
-
-
-    widget(backdrop, {
-      .width = KNOB_SIZE();
-      .focusable = 1.0;
-      
-      .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
-      .color = PLATE_COLOR_ON();
-      
-      PLATE_GFX4();
-      
-      onEvent(activate, {
-	(PROP) = !PROP;
-      });
-      
-      widget(label, {
-	.align = center;
-	.caption = _("On");
-      });
-    });      
-
-    // Must be after the widgets
-    .page = PROP;
   });
 }
 
