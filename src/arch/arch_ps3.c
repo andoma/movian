@@ -85,10 +85,17 @@ memlogger_fn(callout_t *co, void *aux)
     uint32_t avail;
   } meminfo;
 
+  struct mallinfo mi = mallinfo();
+
   Lv2Syscall1(352, (uint64_t) &meminfo);
 
   prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
   prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
+  prop_set_int(prop_create(memprop, "arena"), (mi.hblks + mi.arena) / 1024);
+  prop_set_int(prop_create(memprop, "unusedChunks"), mi.ordblks);
+  prop_set_int(prop_create(memprop, "activeMem"), mi.uordblks / 1024);
+  prop_set_int(prop_create(memprop, "inactiveMem"), mi.fordblks / 1024);
+
 
   if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
     low_mem_warning = 1;

@@ -26,6 +26,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <malloc.h>
 
 #include "linux.h"
 #include "misc/callout.h"
@@ -114,6 +115,13 @@ meminfo_do(void)
   char s1[64];
   FILE *f;
   prop_t *mem = prop_create(p_sys, "mem");
+
+  struct mallinfo mi = mallinfo();
+
+  prop_set_int(prop_create(mem, "arena"), (mi.hblks + mi.arena) / 1024);
+  prop_set_int(prop_create(mem, "unusedChunks"), mi.ordblks);
+  prop_set_int(prop_create(mem, "activeMem"), mi.uordblks / 1024);
+  prop_set_int(prop_create(mem, "inactiveMem"), mi.fordblks / 1024);
 
   f = fopen("/proc/meminfo", "r");
   if(f == NULL)
