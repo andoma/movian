@@ -849,10 +849,16 @@ static void
 http_headers_init(struct http_header_list *l, const http_file_t *hf)
 {
   char str[200];
+  const http_connection_t *hc = hf->hf_connection;
 
   LIST_INIT(l);
 
-  http_header_add(l, "Host", hf->hf_connection->hc_hostname);
+  if(hc->hc_port != 80) {
+    snprintf(str, sizeof(str), "%s:%d", hc->hc_hostname, hc->hc_port);
+    http_header_add(l, "Host", str);
+  } else {
+    http_header_add(l, "Host", hf->hf_connection->hc_hostname);
+  }
   http_header_add(l, "Accept-Encoding", "identity");
   http_header_add(l, "Connection", hf->hf_want_close ? "close" : "keep-alive");
   snprintf(str, sizeof(str), "Showtime %s %s",
