@@ -237,16 +237,6 @@ http_rc2str(int code)
   }
 }
 
-static const char *httpdays[7] = {
-  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-};
-
-static const char *httpmonths[12] = {
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
-  "Dec"
-};
-
-
 /**
  * Transmit a HTTP reply
  */
@@ -259,7 +249,9 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   htsbuf_queue_t hdrs;
   time_t t;
   http_header_t *hh;
+  char date[64];
 
+  time(&t);
 
   htsbuf_queue_init(&hdrs, 0);
 
@@ -270,26 +262,20 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   htsbuf_qprintf(&hdrs, "Server: HTS/Showtime %s\r\n",
 		 htsversion_full);
 
+  htsbuf_qprintf(&hdrs, "Date: %s\r\n", http_asctime(t, date, sizeof(date)));
+
   if(maxage == 0) {
     htsbuf_qprintf(&hdrs, "Cache-Control: no-cache\r\n");
   } else {
-    time(&t);
 
-    tm = gmtime_r(&t, &tm0);
-    htsbuf_qprintf(&hdrs, 
-		   "Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
-		   httpmonths[tm->tm_mon], tm->tm_mday,
-		   tm->tm_hour, tm->tm_min, tm->tm_sec);
+    htsbuf_qprintf(&hdrs,  "Last-Modified: %s\r\n",
+		   http_asctime(t, date, sizeof(date)));
 
     t += maxage;
 
     tm = gmtime_r(&t, &tm0);
-    htsbuf_qprintf(&hdrs, 
-		   "Expires: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
-		   httpmonths[tm->tm_mon], tm->tm_mday,
-		   tm->tm_hour, tm->tm_min, tm->tm_sec);
+    htsbuf_qprintf(&hdrs, "Expires: %s\r\n",
+		   http_asctime(t, date, sizeof(date)));
       
     htsbuf_qprintf(&hdrs, "Cache-Control: max-age=%d\r\n", maxage);
   }
