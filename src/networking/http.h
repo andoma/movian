@@ -40,7 +40,7 @@ typedef enum {
 #define HTTP_STATUS_METHOD_NOT_ALLOWED 405
 #define HTTP_STATUS_PRECONDITION_FAILED 412
 #define HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE 415
-
+#define HTTP_NOT_IMPLEMENTED 501
 
 LIST_HEAD(http_header_list, http_header);
 
@@ -58,6 +58,8 @@ const char *http_header_get(struct http_header_list *headers,
 
 void http_header_add(struct http_header_list *headers, const char *key,
 		     const char *value);
+
+void http_header_add_lws(struct http_header_list *headers, const char *data);
 
 void http_header_add_int(struct http_header_list *headers, const char *key,
 			 int value);

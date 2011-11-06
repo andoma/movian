@@ -30,10 +30,50 @@
  *
  */
 static htsmsg_t *
-rc_set_mute(struct http_connection *hc, htsmsg_t *args)
+rc_SetMute(struct http_connection *hc, htsmsg_t *args,
+	   const char *myhost, int myport)
 {
   
   return NULL;
+}
+
+
+
+/**
+ *
+ */
+static htsmsg_t *
+rc_SetVolume(struct http_connection *hc, htsmsg_t *args,
+	     const char *myhost, int myport)
+{
+  
+  return NULL;
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+rc_SelectPreset(struct http_connection *hc, htsmsg_t *args,
+		const char *myhost, int myport)
+{
+  
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+static htsmsg_t *
+rc_ListPresets(struct http_connection *hc, htsmsg_t *args,
+	       const char *myhost, int myport)
+{
+  htsmsg_t *out = htsmsg_create_map();
+  htsmsg_add_str(out, "CurrentPresetNameList ", "");
+  return out;
 }
 
 #if 0
@@ -87,7 +127,10 @@ upnp_local_service_t upnp_RenderingControl_2 = {
   .uls_version = 2,
   .uls_generate_props = rc_generate_props,
   .uls_methods = {
-    { "SetMute", rc_set_mute },
+    { "SetMute", rc_SetMute },
+    { "SetVolume", rc_SetVolume },
+    { "SelectPreset", rc_SelectPreset },
+    { "ListPresets", rc_ListPresets },
     { NULL, NULL}
   }
 };

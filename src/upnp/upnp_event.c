@@ -23,13 +23,83 @@
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "misc/string.h"
+#include "misc/sha.h"
 #include "api/soap.h"
 
 #include "upnp.h"
 
+static uint64_t sidbase;
+static uint32_t sidtally;
+
+LIST_HEAD(send_event_list, send_event);
+
+/**
+ *
+ */
+typedef struct send_event {
+  LIST_ENTRY(send_event) link;
+  struct http_header_list hdrs;
+  char *url;
+  htsbuf_queue_t out;
+} send_event_t;
 
 
 
+static send_event_t *
+upnp_event_generate_one(upnp_local_service_t *uls,
+			upnp_subscription_t *us)
+{
+  send_event_t *set;
+  char str[32];
+    
+  set = malloc(sizeof(send_event_t));
+
+  htsbuf_queue_init(&set->out, 0);
+  htsbuf_qprintf(&set->out,
+		 "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
+		 "<e:propertyset xmlns:e=\"urn:schemas-upnp-org:event-1-0\">");
+    
+  if(uls->uls_generate_props != NULL) {
+    htsmsg_t *p = uls->uls_generate_props(uls, us->us_myhost, us->us_myport);
+    htsmsg_field_t *f;
+    
+    HTSMSG_FOREACH(f, p) {
+      htsbuf_qprintf(&set->out, "<e:property>");
+      soap_encode_arg(&set->out, f);
+      htsbuf_qprintf(&set->out, "</e:property>");
+    }
+    htsmsg_destroy(p);
+  }
+  htsbuf_qprintf(&set->out, "</e:propertyset>");
+    
+
+  LIST_INIT(&set->hdrs);
+
+  http_header_add(&set->hdrs, "NT", "upnp:event");
+  http_header_add(&set->hdrs, "NTS", "upnp:propchange");
+  http_header_add(&set->hdrs, "SID", us->us_uuid);
+
+  snprintf(str, sizeof(str), "%d", us->us_seq);
+  http_header_add(&set->hdrs, "SEQ", str);
+  us->us_seq++;
+  set->url = strdup(us->us_callback);
+  return set;
+}
+
+
+/**
+ *
+ */
+static void
+upnp_event_send_and_free(send_event_t *set)
+{
+  http_request(set->url, NULL, NULL, NULL, NULL, 0, &set->out,
+	       "text/xml; charset=\"utf-8\"", 0, NULL, &set->hdrs, "NOTIFY");
+  http_headers_free(&set->hdrs);
+  htsbuf_queue_flush(&set->out);
+  free(set->url);
+  free(set);
+}
 
 
 /**
@@ -38,49 +108,23 @@
 static void
 upnp_event_send_all(upnp_local_service_t *uls)
 {
-  htsbuf_queue_t out;
-  htsmsg_field_t *f;
   upnp_subscription_t *us;
+  send_event_t *set;
+  struct send_event_list list;
 
-  if(uls->uls_generate_props == NULL)
-    return;
+  LIST_INIT(&list);
+
+  hts_mutex_lock(&upnp_lock);
 
   LIST_FOREACH(us, &uls->uls_subscriptions, us_link) {
-    char str[32];
-    struct http_header_list hdrs;
-
-    htsbuf_queue_init(&out, 0);
-    htsbuf_qprintf(&out,
-		   "<?xml version=\"1.0\" encoding=\"utf-8\"?>"
-		   "<e:propertyset xmlns:e=\"urn:schemas-upnp-org:event-1-0\">");
-    
-    htsmsg_t *props = uls->uls_generate_props(uls, 
-					      us->us_myhost, us->us_myport);
-    
-    HTSMSG_FOREACH(f, props) {
-      htsbuf_qprintf(&out, "<e:property>");
-      soap_encode_arg(&out, f);
-      htsbuf_qprintf(&out, "</e:property>");
-    }
-    htsbuf_qprintf(&out, "</e:propertyset>");
-    
-    htsmsg_destroy(props);
-
-    LIST_INIT(&hdrs);
-
-    http_header_add(&hdrs, "NT", "upnp:event");
-    http_header_add(&hdrs, "NTS", "upnp:propchange");
-    snprintf(str, sizeof(str), "%d", us->us_sid);
-    http_header_add(&hdrs, "SID", str);
-
-    snprintf(str, sizeof(str), "%d", us->us_seq);
-    http_header_add(&hdrs, "SEQ", str);
-    us->us_seq++;
-
-    http_request(us->us_callback, NULL, NULL, NULL, NULL, 0, &out,
-		 "text/xml;charset=\"utf-8\"", 0, NULL, &hdrs, "NOTIFY");
-    http_headers_free(&hdrs);
-    htsbuf_queue_flush(&out);
+    set = upnp_event_generate_one(uls, us);
+    LIST_INSERT_HEAD(&list, set, link);
+  }
+  hts_mutex_unlock(&upnp_lock);
+  
+  while((set = LIST_FIRST(&list)) != NULL) {
+    LIST_REMOVE(set, link);
+    upnp_event_send_and_free(set);
   }
 }
 
@@ -91,11 +135,8 @@ upnp_event_send_all(upnp_local_service_t *uls)
 static void
 do_notify(callout_t *c, void *opaque)
 {
-  hts_mutex_lock(&upnp_lock);
   upnp_event_send_all(opaque);
-  hts_mutex_unlock(&upnp_lock);
 }
-
 
 
 /**
@@ -105,6 +146,18 @@ void
 upnp_schedule_notify(upnp_local_service_t *uls)
 {
   callout_arm_hires(&uls->uls_notifytimer, do_notify, uls, 10000);
+}
+
+
+
+/**
+ *
+ */
+static void
+do_notify_one(callout_t *c, void *opaque)
+{
+  upnp_event_send_and_free(opaque);
+  free(c);
 }
 
 
@@ -119,12 +172,13 @@ subscription_destroy(upnp_subscription_t *us, const char *reason)
 {
   upnp_local_service_t *uls = us->us_service;
   TRACE(TRACE_DEBUG, "UPNP", 
-	"Deleted subscription for %s:%d callback: %s SID: %d -- %s",
-	uls->uls_name, uls->uls_version, us->us_callback, us->us_sid, reason);
+	"Deleted subscription for %s:%d callback: %s SID: %s -- %s",
+	uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid, reason);
 
   LIST_REMOVE(us, us_link);
   free(us->us_callback);
   free(us->us_myhost);
+  free(us->us_uuid);
   free(us);
 }
 
@@ -136,16 +190,49 @@ static upnp_subscription_t *
 subscription_find(upnp_local_service_t *uls, const char *str)
 {
   upnp_subscription_t *us;
-  int sid = atoi(str);
+
+  if(str == NULL)
+    return NULL;
+
   hts_mutex_lock(&upnp_lock);
       
   LIST_FOREACH(us, &uls->uls_subscriptions, us_link)
-    if(us->us_sid == sid)
+    if(!strcmp(us->us_uuid, str))
       break;
   
   if(us == NULL)
     hts_mutex_unlock(&upnp_lock);
   return us;
+}
+
+
+/**
+ *
+ */
+static char *
+sub_gen_uuid(void)
+{
+  char uuid[64];
+  uint8_t d[20];
+  sha1_decl(shactx);
+  
+  sha1_init(shactx);
+  sha1_update(shactx, (void *)&sidbase, sizeof(uint64_t));
+  sidtally++;
+
+  sha1_update(shactx, (void *)&sidtally, sizeof(uint32_t));
+
+  sha1_final(shactx, d);
+
+  snprintf(uuid, sizeof(uuid),
+	   "uuid:%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
+	   "%02x%02x%02x%02x%02x%02x",
+	   d[0x0], d[0x1], d[0x2], d[0x3],
+	   d[0x4], d[0x5], d[0x6], d[0x7],
+	   d[0x8], d[0x9], d[0xa], d[0xb],
+	   d[0xc], d[0xd], d[0xe], d[0xf]);
+  
+  return strdup(uuid);
 }
 
 
@@ -164,24 +251,39 @@ upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
   upnp_subscription_t *us;
   int timeout;
   char timeouttxt[50];
-  static int sid_tally;
-
-  if(tstr != NULL && !strncasecmp(tstr, "Second-", strlen("Second-"))) {
-    timeout = atoi(tstr + strlen("Second-"));
-  } else {
-    timeout = 1800;
-  }
-
-  snprintf(timeouttxt, sizeof(timeouttxt), "Second-%d", timeout);
 
   switch(method) {
   default:
     return HTTP_STATUS_METHOD_NOT_ALLOWED;
 
   case HTTP_CMD_SUBSCRIBE:
+    if(tstr == NULL) {
+      timeout = 1800;
+    } else {
+      if(!strncasecmp(tstr, "Second-", strlen("Second-"))) {
+	tstr += strlen("Second-");
+	if(!strcasecmp(tstr, "infinite")) {
+	  timeout = -1;
+	} else if(tstr[0] < '0' || tstr[0] > '9' ||
+		  (timeout = atoi(tstr)) == 0) {
+	  return http_error(hc, HTTP_STATUS_PRECONDITION_FAILED,
+			    "Invalid timeout");
+	}
+      } else {
+	return http_error(hc, HTTP_STATUS_PRECONDITION_FAILED,
+			  "Invalid timeout");
+      }
+    }
+  
+    if(timeout == -1) {
+      snprintf(timeouttxt, sizeof(timeouttxt), "Second-infinite");
+    } else {
+      snprintf(timeouttxt, sizeof(timeouttxt), "Second-%d", timeout);
+    }
+
+
     if(sidstr == NULL) {
       char *c, *d;
-      char sidtxt[50];
 
       // New subscription
       
@@ -205,27 +307,28 @@ upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
 			  "Misformated callback");
       *d = 0;
 
-      sid_tally++;
-      
+     
       us = calloc(1, sizeof(upnp_subscription_t));
       us->us_service = uls;
-      us->us_sid = sid_tally;
       us->us_callback = strdup(c);
-      us->us_expire = time(NULL) + timeout;
+
       us->us_myhost = strdup(http_get_my_host(hc));
       us->us_myport = http_get_my_port(hc);
 
       hts_mutex_lock(&upnp_lock);
       LIST_INSERT_HEAD(&uls->uls_subscriptions, us, us_link);
 
-      snprintf(sidtxt, sizeof(sidtxt), "%d", us->us_sid);
-      http_set_response_hdr(hc, "SID", sidtxt);
+      us->us_uuid = sub_gen_uuid();
+      http_set_response_hdr(hc, "SID", us->us_uuid);
       
       TRACE(TRACE_DEBUG, "UPNP", 
-	    "Created subscription for %s:%d callback: %s SID: %d "
+	    "Created subscription for %s:%d callback: %s SID: %s "
 	    "(timeout: %d seconds)",
-	    uls->uls_name, uls->uls_version, us->us_callback, us->us_sid,
+	    uls->uls_name, uls->uls_version, us->us_callback, us->us_uuid,
 	    timeout);
+
+      callout_arm_hires(NULL, do_notify_one, upnp_event_generate_one(uls, us),
+			0);
 
     } else {
       if(callback != NULL || type != NULL)
@@ -236,16 +339,16 @@ upnp_subscribe(http_connection_t *hc, const char *remain, void *opaque,
 	return http_error(hc, HTTP_STATUS_PRECONDITION_FAILED,
 			  "Subscription not found");
     
-      us->us_expire = time(NULL) + timeout;
     }
+    us->us_expire = timeout > 0 ? time(NULL) + timeout : -1;
 
     http_set_response_hdr(hc, "TIMEOUT", timeouttxt);
     break;
 
   case HTTP_CMD_UNSUBSCRIBE:
     if(callback != NULL || type != NULL)
-	return http_error(hc, HTTP_STATUS_BAD_REQUEST,
-			  "Callback or type sent in unsubscribe request");
+      return http_error(hc, HTTP_STATUS_BAD_REQUEST,
+			"Callback or type sent in unsubscribe request");
     if((us = subscription_find(uls, sidstr)) == NULL)
       return http_error(hc, HTTP_STATUS_PRECONDITION_FAILED,
 			"Subscription not found");
@@ -269,7 +372,7 @@ purge_subscriptions(upnp_local_service_t *uls, time_t now)
   upnp_subscription_t *us, *next;
   for(us = LIST_FIRST(&uls->uls_subscriptions); us != NULL; us = next) {
     next = LIST_NEXT(us, us_link);
-    if(us->us_expire + 60 < now)
+    if(us->us_expire != -1 && us->us_expire + 60 < now)
       subscription_destroy(us, "Timed out");
   }
 }
@@ -305,5 +408,31 @@ upnp_flush(callout_t *c, void *opaque)
 void
 upnp_event_init(void)
 {
+  sidtally = arch_get_seed();
   callout_arm(&upnp_flush_timer, upnp_flush, NULL, 60);
+}
+
+
+
+/**
+ *
+ */
+void
+upnp_event_encode_str(htsbuf_queue_t *xml, const char *attrib, const char *str)
+{
+  str = str ?: "NOT_IMPLEMENTED";
+
+  htsbuf_qprintf(xml, "<%s val=\"", attrib);
+  htsbuf_append_and_escape_xml(xml, str);
+  htsbuf_qprintf(xml, "\"/>");
+}
+
+
+/**
+ *
+ */
+void
+upnp_event_encode_int(htsbuf_queue_t *xml, const char *attrib, int v)
+{
+  htsbuf_qprintf(xml, "<%s val=\"%d\"/>", attrib, v);
 }

@@ -66,6 +66,24 @@ http_header_add(struct http_header_list *headers, const char *key,
   hh->hh_value = strdup(value);
 }
 
+/**
+ *
+ */
+void
+http_header_add_lws(struct http_header_list *headers, const char *data)
+{
+  http_header_t *hh;
+  int cl;
+  hh = LIST_FIRST(headers);
+  if(hh == NULL)
+    return;
+  
+  cl = strlen(hh->hh_value);
+  hh->hh_value = realloc(hh->hh_value, strlen(data) + cl + 2);
+  hh->hh_value[cl] = ' ';
+  strcpy(hh->hh_value + cl + 1, data);
+}
+
 
 /**
  *

@@ -465,7 +465,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_HEAD(, lang) list;
   lang_t *l;
 
-  http_path_add("/showtime/translation", NULL, upload_translation);
+  http_path_add("/showtime/translation", NULL, upload_translation, 1);
 
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s -- %s",

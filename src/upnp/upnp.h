@@ -94,7 +94,8 @@ typedef struct upnp_device {
  */
 typedef struct upnp_service_method {
   const char *usm_name;
-  htsmsg_t *(*usm_fn)(struct http_connection *hc, htsmsg_t *in);
+  htsmsg_t *(*usm_fn)(struct http_connection *hc, htsmsg_t *in,
+		      const char *myhost, int myport);
 
 } upnp_service_method_t;
 
@@ -105,7 +106,7 @@ typedef struct upnp_service_method {
 typedef struct upnp_subscription {
   LIST_ENTRY(upnp_subscription) us_link;
   char *us_callback;
-  int us_sid;
+  char *us_uuid;
   int us_seq;
   time_t us_expire;
   struct upnp_local_service *us_service;
@@ -144,13 +145,14 @@ struct http_connection;
 int upnp_control(struct http_connection *hc, const char *remain, void *opaque,
 		 http_cmd_t method);
 
+#define UPNP_CONTROL_INVALID_ARGS ((void *)-1)
+
 void upnp_avtransport_init(void);
 
 struct prop;
 
 int upnp_browse_children(const char *uri, const char *id, struct prop *nodes,
 			 const char *trackid, struct prop **trackp);
-
 
 
 /**
@@ -163,6 +165,15 @@ void upnp_event_init(void);
 int upnp_subscribe(struct http_connection *hc, const char *remain, void *opaque,
 		   http_cmd_t method);
 
+void upnp_event_encode_str(htsbuf_queue_t *xml, const char *attrib,
+			   const char *str);
+
+void upnp_event_encode_int(htsbuf_queue_t *xml, const char *attrib, int v);
+
+
+/**
+ * Global UPnP stuff
+ */
 extern hts_mutex_t upnp_lock;
 extern hts_cond_t upnp_device_cond;
 extern struct upnp_device_list upnp_devices;

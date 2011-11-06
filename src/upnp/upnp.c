@@ -26,7 +26,6 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
 #include "misc/sha.h"
-#include "api/soap.h"
 
 #include "upnp.h"
 #include "upnp_scpd.h"
@@ -265,24 +264,24 @@ upnp_init(void)
 
   upnp_avtransport_init();
 
-  http_path_add("/upnp/description.xml", NULL, send_dev_description);
-  http_path_add("/upnp/AVTransport/scpd.xml", NULL, send_avt_scpd);
-  http_path_add("/upnp/ConnectionManager/scpd.xml", NULL, send_cm_scpd);
-  http_path_add("/upnp/RenderingControl/scpd.xml", NULL, send_rc_scpd);
+  http_path_add("/upnp/description.xml", NULL, send_dev_description, 1);
+  http_path_add("/upnp/AVTransport/scpd.xml", NULL, send_avt_scpd, 1);
+  http_path_add("/upnp/ConnectionManager/scpd.xml", NULL, send_cm_scpd, 1);
+  http_path_add("/upnp/RenderingControl/scpd.xml", NULL, send_rc_scpd, 1);
 
   http_path_add("/upnp/ConnectionManager/control",
-		&upnp_ConnectionManager_2, upnp_control);
+		&upnp_ConnectionManager_2, upnp_control, 1);
   http_path_add("/upnp/RenderingControl/control",
-		&upnp_RenderingControl_2, upnp_control);
+		&upnp_RenderingControl_2, upnp_control, 1);
   http_path_add("/upnp/AVTransport/control",
-		&upnp_AVTransport_2, upnp_control);
+		&upnp_AVTransport_2, upnp_control, 1);
 
   http_path_add("/upnp/ConnectionManager/subscribe",
-		&upnp_ConnectionManager_2, upnp_subscribe);
+		&upnp_ConnectionManager_2, upnp_subscribe, 1);
   http_path_add("/upnp/RenderingControl/subscribe",
-		&upnp_RenderingControl_2, upnp_subscribe);
+		&upnp_RenderingControl_2, upnp_subscribe, 1);
   http_path_add("/upnp/AVTransport/subscribe",
-		&upnp_AVTransport_2, upnp_subscribe);
+		&upnp_AVTransport_2, upnp_subscribe, 1);
 
 
   ssdp_init(upnp_uuid);

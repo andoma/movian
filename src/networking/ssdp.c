@@ -157,16 +157,28 @@ ssdp_response(struct http_header_list *args)
  */
 static void
 ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst, 
-	  const char *type, const char *usn, const char *nts,
-	  const char *location)
+	  const char *nt, const char *nts,
+	  const char *location, int incl_host, const char *usn_postfix)
 {
   char buf[1000];
+  char date[64];
+
+  if(dst) {
+    time_t now;
+    time(&now);
+    http_asctime(now, date, sizeof(date));
+  } else {
+    date[0] = 0;
+  }
+
   struct sockaddr_in mcast;
 
   snprintf(buf, sizeof(buf),
 	   "%s\r\n"
-	   "USN: uuid:%s::%s\r\n"
-	   "SERVER: Showtime,%s,UPnp/1.0,Showtime,%s\r\n"
+	   "USN: uuid:%s%s\r\n"
+	   "%s"
+	   "SERVER: Showtime,%s,UPnP/1.0,Showtime,%s\r\n"
+	   "%s%s%s"
 	   "%s"
 	   "LOCATION: http://%d.%d.%d.%d:%d%s\r\n"
 	   "CACHE-CONTROL: max-age=90\r\n"
@@ -174,9 +186,10 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 	   "%s%s%s"
 	   "\r\n",
 	   dst ? "HTTP/1.1 200 OK" : "NOTIFY * HTTP/1.1",
-	   ssdp_uuid,
-	   usn ?: type,
+	   ssdp_uuid, usn_postfix ?: "",
+	   incl_host ? "HOST: 239.255.255.250:1900\r\n" : "",
 	   htsversion, htsversion,
+	   *date ? "DATE: " : "", date, *date ? "\r\n" : "",
 	   dst ? "EXT:\r\n" : "",
 	   (uint8_t)(myaddr >> 24),
 	   (uint8_t)(myaddr >> 16),
@@ -184,7 +197,8 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 	   (uint8_t)(myaddr),
 	   http_server_port,
 	   location,
-	   dst ? "ST" : "NT", type,
+
+	   dst ? "ST" : "NT", nt,
 	   nts ? "NTS: " : "", nts ?: "", nts ? "\r\n" :"");
 
   if(dst == NULL) {
@@ -207,33 +221,44 @@ ssdp_send(int fd, uint32_t myaddr, struct sockaddr_in *dst,
 static void
 ssdp_send_all(int fd, uint32_t myaddr, struct sockaddr_in *dst, const char *nts)
 {
-  char devurn[64];
+  char nt[100];
+  snprintf(nt, sizeof(nt), "uuid:%s", ssdp_uuid);
 
+  // Root device discovery
   ssdp_send(fd, myaddr, dst,
 	    "upnp:rootdevice",
-	    NULL, nts, "/upnp/description.xml");
-
-  snprintf(devurn, sizeof(devurn), "urn:%s", ssdp_uuid);
-
+	    nts, "/upnp/description.xml", 1,
+	    "::upnp:rootdevice");
+  
   ssdp_send(fd, myaddr, dst,
-	    devurn,
-	    NULL, nts, "/upnp/description.xml");
-
+	    nt,
+	    nts, "/upnp/description.xml", 1,
+	    NULL);
+    
   ssdp_send(fd, myaddr, dst,
 	    "urn:schemas-upnp-org:device:MediaRenderer:2",
-	    NULL, nts, "/upnp/description.xml");
+	    nts, "/upnp/description.xml", 1,
+	    "::urn:schemas-upnp-org:device:MediaRenderer:2");
+
+  // Service discovery
 
   ssdp_send(fd, myaddr, dst,
 	    "urn:schemas-upnp-org:service:ConnectionManager:2",
-	    NULL, nts, "/upnp/description.xml");
+	    nts, "/upnp/description.xml", 1,
+	    "::urn:schemas-upnp-org:service:ConnectionManager:2");
+
 
   ssdp_send(fd, myaddr, dst,
 	    "urn:schemas-upnp-org:service:AVTransport:2",
-	    NULL, nts, "/upnp/description.xml");
+	    nts, "/upnp/description.xml", 1,
+	    "::urn:schemas-upnp-org:service:AVTransport:2");
+
 
   ssdp_send(fd, myaddr, dst,
 	    "urn:schemas-upnp-org:service:RenderingControl:2",
-	    NULL, nts, "/upnp/description.xml");
+	    nts, "/upnp/description.xml", 1,
+	    "::urn:schemas-upnp-org:service:RenderingControl:2");
+
 }
 
 

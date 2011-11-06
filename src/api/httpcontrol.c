@@ -294,13 +294,13 @@ hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
 void
 httpcontrol_init(void)
 {
-  http_path_add("/showtime/image", NULL, hc_image);
-  http_path_add("/showtime/open", NULL, hc_open);
-  http_path_add("/showtime/prop", NULL, hc_prop);
-  http_path_add("/showtime/input/action", NULL, hc_action);
-  http_path_add("/showtime/input/utf8", NULL, hc_utf8);
-  http_path_add("/showtime/notifyuser", NULL, hc_notify_user);
+  http_path_add("/showtime/image", NULL, hc_image, 0);
+  http_path_add("/showtime/open", NULL, hc_open, 1);
+  http_path_add("/showtime/prop", NULL, hc_prop, 0);
+  http_path_add("/showtime/input/action", NULL, hc_action, 0);
+  http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);
+  http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
 #if ENABLE_BINREPLACE
-  http_path_add("/showtime/replace", NULL, hc_binreplace);
+  http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
 #endif
 }
