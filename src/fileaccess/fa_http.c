@@ -2637,7 +2637,7 @@ http_request(const char *url, const char **arguments,
   int no_content = method == NULL && postdata == NULL && result == NULL;
 
   switch(code) {
-  case 200:
+  case 200 ... 205:
     if(no_content) {
       hf->hf_rsize = 0;
       http_destroy(hf);
