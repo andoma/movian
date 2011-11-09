@@ -190,6 +190,10 @@ pixmapfmt_to_libav(pixmap_type_t t)
     return PIX_FMT_GRAY8;
   case PIXMAP_IA:
     return PIX_FMT_Y400A;
+  case PIXMAP_RGB24:
+    return PIX_FMT_RGB24;
+  case PIXMAP_BGR32:
+    return PIX_FMT_BGR32;
   default:
     return -1;
   }

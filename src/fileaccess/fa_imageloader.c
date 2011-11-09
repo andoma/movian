@@ -418,7 +418,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       h = im->req_height;
     }
 
-    pm = pixmap_create(w, h, PIX_FMT_RGB24,
+    pm = pixmap_create(w, h, PIXMAP_RGB24,
 #ifdef __PPC__
 		       16
 #else
