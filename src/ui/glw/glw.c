@@ -1498,18 +1498,6 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
 				     -100));
 
 
-#if 0
-  p[0] = gpe->x;
-  p[1] = gpe->y;
-  p[2] = -2.41;
-
-  dir[0] = p[0] - gpe->x * 42.38; // 42.38 comes from unprojecting
-  dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
-  dir[2] = p[2] - -100;
- #endif
-
-
-
   if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
     runcontrol_activity();
     gr->gr_screensaver_counter = 0;
