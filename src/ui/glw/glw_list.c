@@ -31,6 +31,8 @@ typedef struct glw_list {
   int page_size;
   int touched;
 
+  int velocity;
+
   glw_t *scroll_to_me;
 
   glw_t *suggested;
@@ -126,6 +128,9 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     l->filtered_pos = l->current_pos;
 
   } else {
+
+    l->current_pos += l->velocity;
+    l->velocity *= 0.75;
 
     l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
 					l->total_size - l->page_size));
@@ -423,10 +428,13 @@ handle_pointer_event(glw_list_t *l, glw_pointer_event_t *gpe)
     y = (0.5 - gpe->y * 0.5) *  l->page_size;
     l->touch_pos = l->current_pos + y;
     l->touched = 1;
+    l->velocity = 0;
     break;
 
   case GLW_POINTER_TOUCH_RELEASE:
     l->touched = 0;
+    gpe->vel_y = 3;
+    l->velocity = (0.5 - gpe->vel_y * 0.5) *  l->page_size;
     break;
 
   case GLW_POINTER_TOUCH_MOTION:
