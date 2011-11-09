@@ -648,6 +648,7 @@ typedef struct glw_root {
   struct glw *gr_current_focus;
   prop_t *gr_last_focused_interactive;
   prop_t *gr_pointer_visible;
+  int gr_focus_work;
 
   /**
    * Backend specifics

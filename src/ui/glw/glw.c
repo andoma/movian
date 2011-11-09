@@ -986,6 +986,11 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
   glw_signal_t sig;
   float weight = w ? w->glw_focus_weight : 0;
 
+  if(gr->gr_focus_work)
+    return;
+
+  gr->gr_focus_work = 1;
+
   if(how == GLW_FOCUS_SET_AUTOMATIC) {
     sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
   } else {
@@ -997,8 +1002,10 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
 
       if(how != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
-	 x->glw_flags & GLW_FOCUS_BLOCKED)
+	 x->glw_flags & GLW_FOCUS_BLOCKED) {
+	gr->gr_focus_work = 0;
 	return;
+      }
 
       if(x->glw_parent->glw_focused != x) {
 	/* Path switches */
@@ -1025,38 +1032,59 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	  glw_signal0(x->glw_parent, sig, x);
 	} else {
 	  /* Other path outranks our weight, stop now */
+	  gr->gr_focus_work = 0;
 	  return;
 	}
       }
     }
   }
 
-  if(gr->gr_current_focus == w)
+  if(gr->gr_current_focus == w) {
+    gr->gr_focus_work = 0;
     return;
-
+  }
   com = find_common_ancestor(gr->gr_current_focus, w);
 
-  if(gr->gr_current_focus != NULL)
-    glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH, com);
+  glw_t *ww = gr->gr_current_focus;
+
+  if(ww != NULL)
+    glw_path_modify(ww, 0, GLW_IN_FOCUS_PATH, com);
 
   gr->gr_current_focus = w;
-  if(w == NULL)
-    return;
 
-  glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
+#if 0
+  glw_t *h = w;
+  while(h->glw_parent != NULL) {
+    printf("Verifying %p %p %p\n", h, h->glw_parent, h->glw_parent->glw_focused);
+    if(h->glw_parent->glw_focused != h) {
+      glw_t *f = h->glw_parent->glw_focused;
+      printf("Parent %p %s points to %p %s <%s> instead of %p %s <%s>\n",
+	     h->glw_parent, h->glw_parent->glw_class->gc_name,
+	     f, f->glw_class->gc_name, glw_get_a_name(f),
+	     h, h->glw_class->gc_name, glw_get_a_name(h));
+    }
+    h = h->glw_parent;
+  }
+#endif
+
+  if(w != NULL) {
+
+    glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 
   
-  if(how) {
-    prop_t *p = get_originating_prop(w);
+    if(how) {
+      prop_t *p = get_originating_prop(w);
 
-    if(p != NULL) {
+      if(p != NULL) {
     
-      if(gr->gr_last_focused_interactive != NULL)
-	prop_ref_dec(gr->gr_last_focused_interactive);
+	if(gr->gr_last_focused_interactive != NULL)
+	  prop_ref_dec(gr->gr_last_focused_interactive);
 
-      gr->gr_last_focused_interactive = prop_ref_inc(p);
+	gr->gr_last_focused_interactive = prop_ref_inc(p);
+      }
     }
   }
+  gr->gr_focus_work = 0;
 }
 
 /**
