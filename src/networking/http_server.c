@@ -160,7 +160,7 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
   hp->hp_path = strdup(path);
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
-  hp->hp_leaf = 1;
+  hp->hp_leaf = leaf;
   LIST_INSERT_HEAD(&http_paths, hp, hp_link);
   return hp;
 }
