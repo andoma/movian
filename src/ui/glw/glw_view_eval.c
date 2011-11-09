@@ -3314,6 +3314,26 @@ glwf_isset(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Return 1 if the given token is void
+ */
+static int 
+glwf_isvoid(glw_view_eval_context_t *ec, struct token *self,
+	   token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  token_t *r;
+
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+
+  r = eval_alloc(self, ec, TOKEN_INT);
+  r->t_int = a->type == TOKEN_VOID;
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
  * Int to string
  */
 static int 
@@ -4645,6 +4665,7 @@ static const token_func_t funcvec[] = {
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
+  {"isVoid", 1, glwf_isvoid},
   {"value2duration", 1, glwf_value2duration},
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
