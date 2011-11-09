@@ -255,7 +255,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
   int size, r, data_size, channels, rate, frames, delay, i;
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
-  enum CodecID codec_id;
   int64_t pts;
   
   if(cw == NULL) {
@@ -377,7 +376,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 
     channels = ctx->channels;
     rate     = ctx->sample_rate;
-    codec_id = ctx->codec_id;
 
     /* Convert to signed 16bit */
 

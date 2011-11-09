@@ -251,7 +251,6 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 		 int contentlen, const char *encoding, const char *location, 
 		 int maxage, const char *range)
 {
-  struct tm tm0, *tm;
   htsbuf_queue_t hdrs;
   time_t t;
   http_header_t *hh;
@@ -279,7 +278,6 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 
     t += maxage;
 
-    tm = gmtime_r(&t, &tm0);
     htsbuf_qprintf(&hdrs, "Expires: %s\r\n",
 		   http_asctime(t, date, sizeof(date)));
       
