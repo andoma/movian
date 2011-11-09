@@ -172,11 +172,15 @@ typedef enum {
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
+  GLW_POINTER_TOUCH_PRESS,
+  GLW_POINTER_TOUCH_RELEASE,
+  GLW_POINTER_TOUCH_MOTION,
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
   float x, y;
   float delta_y;
+  float vel_x, vel_y;
   glw_pointer_event_type_t type;
   int flags;
 } glw_pointer_event_t;
