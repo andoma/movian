@@ -67,6 +67,7 @@ widget(keyintercept, {
 	widget(backdrop, {
 	  .filterConstraintX = true;
 	  .focusable = true;
+	  .focusOnClick = true;
 	  onEvent(activate,
 		  translate($self.type, navOpen($self.url),
 			    "audio", playTrackFromSource($self, $parent.model)
@@ -75,38 +76,45 @@ widget(keyintercept, {
 	  .source = "theme://graphics/8x8round.png";
 	  
 	  .border = 3;
-	  .padding = [3,0];
-	  
+	  .padding = -3;
 	  .alphaSelf = 0.2 +  (isHovered() || isFocused()) * 0.4;
 	  .color = 0;
 	  
-	  widget(container_y, {
-	    widget(label, {
-	      .align = topLeft;
-	      .caption = $self.metadata.title;
-	      .ellipsize = true;
-	      .shadow = true;
-	      .sizeScale = 1.5;
-	      .color = 0.5 + (isHovered() || isFocused()) * 0.5;
-	    });
+	  widget(backdrop, {
+	    .source = "theme://graphics/8x8round-open.png";
+	    .borderOnly = true;
+	    .border = 3;
+	    .color = [0.9, 0.9, 1.0];
+	    .padding = [6,3];
+	    .alphaSelf = iir(isFocused() * 0.5, 5);
 
-	    widget(loader, {
-	      .time = 0.3;
-	      .noInitialTransform = true;
-	      	  .source = "theme://directoryviews/list2/" +
-		translate($self.type, void,
-			  "audio", "center_audio",
-			  "playlist", "center_playlist",
-			  "directory", "center_directory",
-			  "video", "center_video"
-			 ) + ".view";
+	    widget(container_y, {
+	      widget(label, {
+		.align = topLeft;
+		.caption = $self.metadata.title;
+		.ellipsize = true;
+		.shadow = true;
+		.sizeScale = 1.5;
+		.color = 0.75 + (isHovered() || isFocused()) * 0.25;
+		.shadow = true;
+	      });
+	      
+	      widget(loader, {
+		.time = 0.3;
+		.noInitialTransform = true;
+	      	.source = "theme://directoryviews/list2/" +
+		  translate($self.type, void,
+			    "audio", "center_audio",
+			    "playlist", "center_playlist",
+			    "directory", "center_directory",
+			    "video", "center_video"
+			   ) + ".view";
+	      });
 	    });
 	  });
 	});
 	
 	widget(loader, {
-	  .filterConstraintX = true;
-	    
 	  .time = 0.3;
 	  .noInitialTransform = true;
 	  .source = "theme://directoryviews/list2/" +

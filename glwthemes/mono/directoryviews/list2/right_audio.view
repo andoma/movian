@@ -1,24 +1,45 @@
-widget(backdrop, {
-  .focusable = true;
+.filterConstraintX = true;
+widget(container_x, {
+  .spacing = 3;
 
-  .focusable = isLink($self.metadata.artist);
-  onEvent(activate, navOpen($self.metadata.artist));
-  .source = "theme://graphics/8x8round.png";
-  .border = 3;
-  .padding = [3,0];
-  .alphaSelf = 0.2 + 0.4 * select(isLink($self.metadata.artist),
-				  isHovered() || isFocused(),
-				  $clone.active);
-  .color = 0;
+  widget(backdrop, {
+    .focusable = true;
+    
+    .focusable = isLink($self.metadata.artist);
+    onEvent(activate, navOpen($self.metadata.artist));
+    .source = "theme://graphics/8x8round.png";
+    .border = 3;
+    .padding = -3;
+    .alphaSelf = 0.2 + 0.4 * select(isLink($self.metadata.artist),
+				    isHovered() || isFocused(),
+				    0);
+    .color = 0;
 
-  widget(container_z, {
-    widget(label, {
-      .align = topLeft;
-      .caption = $self.metadata.artist;
-      .ellipsize = true;
-      .shadow = true;
-      .sizeScale = 1.5;
-      .color = 0.5 + isHovered() * 0.4 + isFocused() * 0.4 + isPressed() * 0.4;
+    widget(backdrop, {
+      .source = "theme://graphics/8x8round-open.png";
+      .borderOnly = true;
+      .border = 3;
+      .color = [0.9, 0.9, 1.0];
+      .padding = [6,3];
+      .alphaSelf = iir(isFocused() * 0.5, 5);
+      
+      widget(label, {
+	.align = topLeft;
+	.caption = $self.metadata.artist;
+	.ellipsize = true;
+	.shadow = true;
+	.sizeScale = 1.5;
+	.color = 0.8 + (isHovered() || isFocused()) * 0.2;
+      });
     });
+  });
+
+  widget(loader, {
+    .effect = flipHorizontal;
+    .time = 0.2;
+    .noInitialTransform = true;
+    .source = select(isFocused(), 
+		     "theme://directoryviews/list2/options_audio.view",
+		     "theme://directoryviews/list2/no-options.view");
   });
 });

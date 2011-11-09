@@ -1,0 +1,47 @@
+widget(backdrop, {
+  .width = $ui.size * 5;
+  .source = "theme://graphics/8x8round.png";
+  .border = 3;
+  .padding = -3;
+  .color = 0;
+  
+  .alphaSelf = 0.2 + 0.4 * (isHovered() || isFocused());
+
+  widget(backdrop, {
+    .source = "theme://graphics/8x8round-open.png";
+    .borderOnly = true;
+    .border = 3;
+    .color = [0.9, 0.9, 1.0];
+    .padding = [3,0];
+    .alphaSelf = iir(isFocused() * 0.5, 10);
+
+    widget(list_y, {
+
+      widget(label, {
+	.caption = _("Queue");
+	.focusable = true;
+	.color = 0.5 + iir(isHovered() || isFocused(), 5);
+	onEvent(activate, {
+	  fireEvent(enqueuetrack($self));
+	});
+      });
+
+      widget(label, {
+	.caption = _("Delete");
+	.hidden = !$parent.model.canDelete;
+	.focusable = true;
+	.color = 0.5 + iir(isHovered() || isFocused(), 5);
+	onEvent(activate, {
+	  delete($self);
+	});
+      });
+      widget(label, {
+	.hidden = isVoid($self.metadata.starred);
+	.caption = select($self.metadata.starred, _("Unstar"), _("Star"));
+	.focusable = true;
+	.color = 0.5 + iir(isHovered() || isFocused(), 5);
+	onEvent(activate, deliverEvent($self, "starToggle"));
+      });
+    });
+  });
+});
