@@ -520,7 +520,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   data = blobcache_get(cacheid, "videothumb", &datasize, 0, 0,
 		       NULL, &mtime);
   if(data != NULL && mtime == stattime) {
-    pm = pixmap_alloc_coded(data, datasize, CODEC_ID_PNG);
+    pm = pixmap_alloc_coded(data, datasize, PIXMAP_PNG);
     free(data);
     return pm;
   }
