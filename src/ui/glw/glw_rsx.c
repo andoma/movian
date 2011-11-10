@@ -56,7 +56,7 @@ load_vp(const char *url)
   int i;
   const char *name;
 
-  if((vp = fa_quickload(url, NULL, NULL, errmsg, sizeof(errmsg))) == NULL) {
+  if((vp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;
@@ -126,7 +126,7 @@ load_fp(glw_root_t *gr, const char *url)
   int i;
   const char *name;
 
-  if((fp = fa_quickload(url, NULL, NULL, errmsg, sizeof(errmsg))) == NULL) {
+  if((fp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;

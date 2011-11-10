@@ -18,8 +18,6 @@
 
 #include <stdio.h>
 
-#include <libavutil/sha.h>
-
 #include "networking/http_server.h"
 #include "networking/ssdp.h"
 #include "htsmsg/htsmsg_xml.h"
@@ -27,7 +25,7 @@
 #include "playqueue.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/string.h"
-#include "api/soap.h"
+#include "misc/sha.h"
 
 #include "upnp.h"
 #include "upnp_scpd.h"
@@ -232,23 +230,22 @@ upnp_init(void)
   if(s != NULL) {
     upnp_uuid = strdup(s);
   } else {
-    
-    struct AVSHA *shactx = alloca(av_sha_size);
+    sha1_decl(shactx);
     uint64_t v;
     uint8_t d[20];
     char uuid[40];
 
     if(conf == NULL)
       conf = htsmsg_create_map();
-
-    av_sha_init(shactx, 160);
+    
+    sha1_init(shactx);
     v = showtime_get_ts();
-    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
+    sha1_update(shactx, (void *)&v, sizeof(uint64_t));
 
     v = arch_get_seed();
-    av_sha_update(shactx, (void *)&v, sizeof(uint64_t));
+    sha1_update(shactx, (void *)&v, sizeof(uint64_t));
 
-    av_sha_final(shactx, d);
+    sha1_final(shactx, d);
 
     snprintf(uuid, sizeof(uuid),
 	     "%02x%02x%02x%02x-%02x%02x-%02x%02x-%02x%02x-"
@@ -267,24 +264,24 @@ upnp_init(void)
 
   upnp_avtransport_init();
 
-  http_path_add("/upnp/description.xml", NULL, send_dev_description);
-  http_path_add("/upnp/AVTransport/scpd.xml", NULL, send_avt_scpd);
-  http_path_add("/upnp/ConnectionManager/scpd.xml", NULL, send_cm_scpd);
-  http_path_add("/upnp/RenderingControl/scpd.xml", NULL, send_rc_scpd);
+  http_path_add("/upnp/description.xml", NULL, send_dev_description, 1);
+  http_path_add("/upnp/AVTransport/scpd.xml", NULL, send_avt_scpd, 1);
+  http_path_add("/upnp/ConnectionManager/scpd.xml", NULL, send_cm_scpd, 1);
+  http_path_add("/upnp/RenderingControl/scpd.xml", NULL, send_rc_scpd, 1);
 
   http_path_add("/upnp/ConnectionManager/control",
-		&upnp_ConnectionManager_2, upnp_control);
+		&upnp_ConnectionManager_2, upnp_control, 1);
   http_path_add("/upnp/RenderingControl/control",
-		&upnp_RenderingControl_2, upnp_control);
+		&upnp_RenderingControl_2, upnp_control, 1);
   http_path_add("/upnp/AVTransport/control",
-		&upnp_AVTransport_2, upnp_control);
+		&upnp_AVTransport_2, upnp_control, 1);
 
   http_path_add("/upnp/ConnectionManager/subscribe",
-		&upnp_ConnectionManager_2, upnp_subscribe);
+		&upnp_ConnectionManager_2, upnp_subscribe, 1);
   http_path_add("/upnp/RenderingControl/subscribe",
-		&upnp_RenderingControl_2, upnp_subscribe);
+		&upnp_RenderingControl_2, upnp_subscribe, 1);
   http_path_add("/upnp/AVTransport/subscribe",
-		&upnp_AVTransport_2, upnp_subscribe);
+		&upnp_AVTransport_2, upnp_subscribe, 1);
 
 
   ssdp_init(upnp_uuid);

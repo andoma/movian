@@ -1,4 +1,4 @@
-#import "skin://buttons/buttons.skin";
+#import "theme://include/buttons.view"
 
 // $view.sizer = -10 + $ui.size;
 
@@ -25,7 +25,7 @@ widget(container_y, {
       widget(container_x, {
 	.filterConstraintX = true;
         widget(icon, {
-          .source = "skin://icons/Search.png";
+          .source = "theme://icons/Search.png";
 	  .sizeScale = 1.5;
           .alpha = $view.searchAlpha;
         });

@@ -211,7 +211,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 
     if(alpha_self > 0.01f) {
 
-      if(w->glw_flags & GLW_SHADOW && !rc0.rc_inhibit_shadows) {
+      if(w->glw_flags2 & GLW2_SHADOW && !rc0.rc_inhibit_shadows) {
 	float xd =  3.0f / rc0.rc_width;
 	float yd = -3.0f / rc0.rc_height;
 
@@ -977,17 +977,6 @@ glw_image_set(glw_t *w, va_list ap)
       compute_colors(gi);
       break;
       
-    case GLW_ATTRIB_PIXMAP:
-      if(gi->gi_pending != NULL)
-	glw_tex_deref(w->glw_root, gi->gi_pending);
-
-      free(gi->gi_pending_filename);
-      gi->gi_pending_filename = NULL;
-
-      gi->gi_pending = glw_tex_create_from_pixmap(w->glw_root, 
-						  va_arg(ap, pixmap_t *));
-      break;
-
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;
@@ -1017,6 +1006,17 @@ glw_image_ready(glw_t *w)
 			 glt->glt_state == GLT_STATE_ERROR);
 }
 
+
+/**
+ *
+ */
+static const char *
+get_identity(glw_t *w)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  glw_loadable_texture_t *glt = gi->gi_current;
+  return glt ? glt->glt_filename : "unloaded";
+}
 
 /**
  *
@@ -1083,6 +1083,7 @@ static glw_class_t glw_backdrop = {
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);

@@ -25,6 +25,21 @@ msg: Videoindstillinger
 id: Added by: %s
 msg: Tilføjet af: %s
 
+id: Played %d times
+msg: Afspillet %d gange
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg: %d indtastninger
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg: %d spor
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,10 +50,28 @@ id: On
 msg: Tændt
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Slet
+
+id: Enqueue
+msg: Tilføj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
 id: Avail system RAM: %d kB
-msg: Tilgængelig system RAM: %d kB
+msg: Tilgængelig system RAM: %d Kb
 
 id: Detected CPUs: %d
 msg: Fundne CPU'er: %d
@@ -146,28 +179,10 @@ id: Username
 msg: Brugernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Intet medie hentet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slet
-
-id: Enqueue
-msg: Tilføj
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +205,9 @@ msg: GPU Core temperatur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Juster baggrundsfarven afhængig af tid på dagen
 
+id: Alternate list layout
+msg: Alternativ listelayout
+
 id: Audio muted
 msg: Audio mute
 
@@ -198,9 +216,6 @@ msg: Fancy UI animationer
 
 id: Master volume: %d dB
 msg: Master volume: %d dB
-
-id: Starwars scroller tilt
-msg: Vis tekster som en Starwars scroller
 
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
@@ -217,8 +232,8 @@ msg: Anvend opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
-msg: Systemet mangler hukommelse (%d KB RAM tilgængelig)
+id: System is low on memory (%d kB RAM available)
+msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 
 #
 # ./src/audio/audio.c
@@ -262,6 +277,9 @@ msg: Ugyldig CD track
 id: Unable to open CD
 msg: Kan ikke åbne CD
 
+#
+# ./src/backend/dvd/dvd.c
+#
 id: DVD read error, restarting disc
 msg: DVD læsefejl, genstarter disk
 
@@ -277,11 +295,18 @@ msg: Ugyldig HTSP URL
 id: Search
 msg: Søg
 
+id: Search result for: %s
+msg: Søgeresultat for: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatisk login når Showtime starter
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Anvend Spotify
@@ -303,6 +328,14 @@ msg: Nye album på Spotify
 
 id: New releases
 msg: Nye opdateringer
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Afspilningslister
@@ -336,6 +369,15 @@ msg: Medvirkende
 #
 id: Bookmarks
 msg: Bogmærker
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan ikke håndtere indholdstype %d
+
+id: Unable to open file: %s
+msg: Kan ikke åbne filen: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -509,6 +551,21 @@ id: Map mouse wheel to up/down
 msg: Tildel musens scrollhjul til op/ned
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Auto-skift til denne tilstand
+
+id: DVI-Video color range
+msg: DVI-video farveudvalg 
+
+id: Switch to this mode now
+msg: Skift til denne tilstand nu
+
+id: Video modes
+msg: Videotilstande
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -562,6 +619,12 @@ msg: Centreret
 id: Color
 msg: Farve
 
+id: Controls if video playback should restart where last played
+msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
+
+id: Count video as played when reaching
+msg: Marker video som vist når den når
+
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
@@ -577,11 +640,17 @@ msg: Ignorer indlejret stil
 id: Left
 msg: Venstre
 
+id: No
+msg: Nej
+
 id: Outline color
 msg: Farve på kontur
 
 id: Outline size
 msg: Størrelse på kontur
+
+id: Resume video playback
+msg: Fortsæt video afspilning
 
 id: Right
 msg: Højre
@@ -612,3 +681,7 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
+
+id: Yes
+msg: Ja
+

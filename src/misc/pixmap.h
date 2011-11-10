@@ -19,9 +19,23 @@
 #ifndef PIXMAP_H__
 #define PIXMAP_H__
 
-#include <libavcodec/avcodec.h>
+#include <inttypes.h>
 #include "layout.h"
 
+
+typedef enum {
+  PIXMAP_PNG,
+  PIXMAP_JPEG,
+  PIXMAP_GIF,
+  PIXMAP_coded,
+  PIXMAP_BGR32,
+  PIXMAP_RGB24,
+  PIXMAP_IA,
+  PIXMAP_I,
+} pixmap_type_t;
+
+#define pixmap_type_is_coded(t) ((t) < PIXMAP_coded)
+#define pixmap_is_coded(pm) pixmap_type_is_coded((pm)->pm_type)
 
 /**
  * Internal struct for passing images
@@ -43,21 +57,17 @@ typedef struct pixmap {
 #define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
 #define PIXMAP_TEXT_ELLIPSIZED 0x4 // Contains ellipsized text
 
-  enum CodecID pm_codec;
+  pixmap_type_t pm_type;
 
   union {
     struct {
-      // if pm_codec == CODEC_ID_NONE
       uint8_t *pixels;
       int *charpos;
-
-      enum PixelFormat pixfmt;
       int linesize;
       int charposlen;
     } raw;
 
     struct {
-      // if pm_codec != CODEC_ID_NONE
       void *data;
       size_t size;
     } codec;
@@ -68,14 +78,13 @@ typedef struct pixmap {
 #define pm_data codec.data
 #define pm_size codec.size
 
-#define pm_pixfmt     raw.pixfmt
 #define pm_pixels     raw.pixels
 #define pm_linesize   raw.linesize
 #define pm_charpos    raw.charpos
 #define pm_charposlen raw.charposlen
 
-pixmap_t *pixmap_alloc_coded(const void *data, size_t size, 
-			     enum CodecID codec);
+pixmap_t *pixmap_alloc_coded(const void *data, size_t size,
+			     pixmap_type_t type);
 
 pixmap_t *pixmap_dup(pixmap_t *pm);
 
@@ -94,7 +103,7 @@ pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 		      int xdisp, int ydisp, int rgba);
 
-pixmap_t *pixmap_create(int width, int height, enum PixelFormat pixfmt,
+pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
 			int rowalign);
 
 #endif

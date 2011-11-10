@@ -210,8 +210,8 @@
  *
  * Uncomment to enable support for (rare) MD4-signed X.509 certs.
  *
-#define POLARSSL_MD4_C
  */
+#define POLARSSL_MD4_C
 
 /*
  * Module:  library/md5.c

@@ -1,5 +1,3 @@
-#import "skin://playdeck.skin"
-
 $ui.showplaydeck =  $ui.menu ||
   $global.media.current.error ||
   changed($self.media.metadata.title, 2, true);
@@ -8,36 +6,43 @@ $ui.showplaydeck =  $ui.menu ||
 
 widget(container_x, {
   .padding = [5, 0, 5, 5];
-      
+  
   .align = center;
-  skinPlaydeckGroup(.filterConstraintX = true; widget(container_x, {
-    .spacing = 10;
-    widget(container_y, {
-      .filterConstraintX = true;
-      widget(label, {
-	.sizeScale = 1.5;
-	.caption = $global.media.current.metadata.title;
-      });
-    });
 
-    widget(container_y, {
-      .align = bottom;
+  widget(backdrop, {
+    .source = "theme://graphics/blackdrop.png";
+    .border = [12,12,12,12];
+    .alphaSelf = 0.66;
+    .filterConstraintX = true;
 
-      widget(label, {
-	.align = right;
-	.caption = fmt(_("Title %d / %d"),
-		       $global.media.current.currenttitle,
-		       $global.media.current.metadata.titles);
+    widget(container_x, {
+      .spacing = 10;
+      widget(container_y, {
+	.filterConstraintX = true;
+	widget(label, {
+	  .sizeScale = 1.5;
+	  .caption = $global.media.current.metadata.title;
+	});
       });
 
-      widget(label, {
-	.align = right;
-	.caption = fmt(_("Chapter %d / %d"),
-		       $global.media.current.currentchapter,
-		       $global.media.current.metadata.chapters);
-      });
+      widget(container_y, {
+	.align = bottom;
 
-/* Don't have time yet...
+	widget(label, {
+	  .align = right;
+	  .caption = fmt(_("Title %d / %d"),
+			 $global.media.current.currenttitle,
+			 $global.media.current.metadata.titles);
+	});
+
+	widget(label, {
+	  .align = right;
+	  .caption = fmt(_("Chapter %d / %d"),
+			 $global.media.current.currentchapter,
+			 $global.media.current.metadata.chapters);
+	});
+
+	/* Don't have time yet...
       widget(label, {
 	.align = right;
 	.caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
@@ -45,6 +50,7 @@ widget(container_x, {
 		 " / " + value2duration($global.media.current.metadata.duration), "");
       });
 */
+      });
     });
-  }));
+  });
 });

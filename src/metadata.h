@@ -16,7 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <libavutil/avutil.h>
 #include <misc/rstr.h>
 
 #pragma once
@@ -57,7 +56,7 @@ typedef struct metadata_stream {
   rstr_t *ms_isolang;
   rstr_t *ms_codec;
 
-  enum AVMediaType ms_type;
+  int ms_type;
 
   int ms_disposition;
 
@@ -91,7 +90,7 @@ metadata_t *metadata_create(void);
 void metadata_destroy(metadata_t *md);
 
 void metadata_add_stream(metadata_t *md, const char *codec,
-			 enum AVMediaType type, int streamindex,
+			 int type, int streamindex,
 			 const char *info, const char *isolang,
 			 int disposition);
 
@@ -103,6 +102,8 @@ void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
 
 
 void metadb_init(void);
+
+void metadb_fini(void);
 
 void *metadb_get(void);
 
@@ -120,7 +121,7 @@ struct fa_dir *metadb_metadata_scandir(void *db, const char *url,
 
 void metadb_unparent_item(void *db, const char *url);
 
-void metadb_register_play(const char *url, int inc);
+void metadb_register_play(const char *url, int inc, int content_type);
 
 #define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)
 

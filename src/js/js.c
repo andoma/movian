@@ -502,7 +502,9 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("print",            js_print,    1, 0, 0),
     JS_FS("httpGet",          js_httpGet, 2, 0, 0),
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
+#if ENABLE_RELEASE == 0
     JS_FS("readFile",         js_readFile, 1, 0, 0),
+#endif
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
     JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
@@ -711,7 +713,7 @@ int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
   char *sbuf;
-  struct fa_stat fs;
+  size_t size;
   JSContext *cx;
   js_plugin_t *jsp;
   JSObject *pobj, *gobj;
@@ -722,7 +724,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL) {
+  if((sbuf = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }
@@ -777,7 +779,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   jsp->jsp_protect_object = 1;
 
-  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
+  s = JS_CompileScript(cx, pobj, sbuf, size, url, 1);
   free(sbuf);
 
   if(s != NULL) {

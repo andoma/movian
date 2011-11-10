@@ -1,60 +1,65 @@
-#import "skin://playdeck.skin"
-
 $ui.showplaydeck = true;
 
 // -------------------------------------------------------------------
 
 widget(container_x, {
   .padding = [5, 0, 5, 5];
-      
+  
   .align = center;
-  skinPlaydeckGroup(.filterConstraintX = true; widget(container_x, {
-    .spacing = 10;
-    widget(image, {
-      .hidden = select($global.media.current.metadata.album_art, false, true);
-      .width  = $ui.size * 4;
-      .height = $ui.size * 4;
-      .source = $global.media.current.metadata.album_art;
-      .hqScaling = true;
-    });
-    widget(container_y, {
-      .filterConstraintX = true;
-      widget(label, {
-	.sizeScale = 1.5;
-	.caption = $global.media.current.metadata.title;
-      });
-      widget(label, {
-	.sizeScale = 1;
-	.caption = $global.media.current.metadata.artist;
-      });
-      widget(label, {
-	.sizeScale = 1;
-	.caption = $global.media.current.metadata.album;
-      });
-    });
+  widget(backdrop, {
+    .source = "theme://graphics/blackdrop.png";
+    .border = [12,12,12,12];
+    .alphaSelf = 0.66;
+    .filterConstraintX = true;
 
-    widget(container_y, {
-      .align = bottom;
-      widget(label, {
-	.align = right;
-	.sizeScale = 0.75;
-	.caption = $global.media.current.pausereason;
+    widget(container_x, {
+      .spacing = 10;
+      widget(image, {
+	.hidden = select($global.media.current.metadata.album_art, false, true);
+	.width  = $ui.size * 4;
+	.height = $ui.size * 4;
+	.source = $global.media.current.metadata.album_art;
+	.hqScaling = true;
+      });
+      widget(container_y, {
+	.filterConstraintX = true;
+	widget(label, {
+	  .sizeScale = 1.5;
+	  .caption = $global.media.current.metadata.title;
+	});
+	widget(label, {
+	  .sizeScale = 1;
+	  .caption = $global.media.current.metadata.artist;
+	});
+	widget(label, {
+	  .sizeScale = 1;
+	  .caption = $global.media.current.metadata.album;
+	});
       });
 
-      widget(label, {
-	.align = right;
-	.caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
-	  select($global.media.current.metadata.duration,
-		 " / " + value2duration($global.media.current.metadata.duration), "");
-      });
+      widget(container_y, {
+	.align = bottom;
+	widget(label, {
+	  .align = right;
+	  .sizeScale = 0.75;
+	  .caption = $global.media.current.pausereason;
+	});
 
-      widget(label, {
-	.align = right;
-	.sizeScale = 0.75;
-	.caption = fmt(_("Track %d / %d"),
-		       $global.media.current.currentTrack,
-		       $global.media.current.totalTracks);
+	widget(label, {
+	  .align = right;
+	  .caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
+	    select($global.media.current.metadata.duration,
+		   " / " + value2duration($global.media.current.metadata.duration), "");
+	});
+
+	widget(label, {
+	  .align = right;
+	  .sizeScale = 0.75;
+	  .caption = fmt(_("Track %d / %d"),
+			 $global.media.current.currentTrack,
+			 $global.media.current.totalTracks);
+	});
       });
     });
-  }));
+  });
 });

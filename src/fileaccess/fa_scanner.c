@@ -187,6 +187,12 @@ static struct strtab postfixtab[] = {
   { "nfo",             CONTENT_UNKNOWN },
   { "gz",              CONTENT_UNKNOWN },
   { "txt",             CONTENT_UNKNOWN },
+  { "srt",             CONTENT_UNKNOWN },
+  { "smi",             CONTENT_UNKNOWN },
+  { "ass",             CONTENT_UNKNOWN },
+  { "ssa",             CONTENT_UNKNOWN },
+  { "idx",             CONTENT_UNKNOWN },
+  { "sub",             CONTENT_UNKNOWN },
 };
 
 
@@ -221,35 +227,32 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
     prop_t *meta = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
     
-    metadata_t *md = NULL;
 
-    if(fde->fde_md != NULL) {
-      md = fde->fde_md;
-      fde->fde_md = NULL;
+    if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) {
+      if(fde->fde_md != NULL)
+	metadata_destroy(fde->fde_md);
+      fde->fde_md = metadb_metadata_get(getdb(s), fde->fde_url,
+					fde->fde_stat.fs_mtime);
     }
 
-    if(md == NULL && !fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) 
-      md = metadb_metadata_get(getdb(s), fde->fde_url, fde->fde_stat.fs_mtime);
-
-    if(md == NULL) {
+    if(fde->fde_md == NULL) {
 
       if(fde->fde_type == CONTENT_DIR)
-        md = fa_probe_dir(fde->fde_url);
+        fde->fde_md = fa_probe_dir(fde->fde_url);
       else
-	md = fa_probe_metadata(fde->fde_url, NULL, 0);
+	fde->fde_md = fa_probe_metadata(fde->fde_url, NULL, 0);
     }
     
-    if(md != NULL) {
-      fde->fde_type = md->md_contenttype;
+    if(fde->fde_md != NULL) {
+      fde->fde_type = fde->fde_md->md_contenttype;
       fde->fde_ignore_cache = 0;
-      metadata_to_proptree(md, meta, 1);
+      metadata_to_proptree(fde->fde_md, meta, 1);
       
-      if(md->md_cached == 0) {
+      if(fde->fde_md->md_cached == 0) {
 	metadb_metadata_write(getdb(s), fde->fde_url,
 			      fde->fde_stat.fs_mtime,
-			      md, s->s_url, s->s_mtime);
+			      fde->fde_md, s->s_url, s->s_mtime);
       }
-      metadata_destroy(md);
     }
     prop_ref_dec(meta);
 
@@ -455,7 +458,7 @@ rescan(scanner_t *s)
       if(a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
 	// Modification time has changed,  trig deep probe
 	a->fde_type = b->fde_type;
-	a->fde_probestatus = FDE_PROBE_FILENAME;
+	a->fde_probestatus = FDE_PROBE_NONE;
 	a->fde_stat = b->fde_stat;
 	a->fde_ignore_cache = 1;
 	changed = 1;

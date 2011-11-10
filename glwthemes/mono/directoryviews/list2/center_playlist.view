@@ -1,0 +1,10 @@
+widget(container_y, {
+  .spacing = 2;
+  space(1);
+  widget(label, {
+    .align = right;
+    .caption = fmt(_("%d tracks"), $self.metadata.tracks);
+    .shadow = true;
+    .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+  });
+});

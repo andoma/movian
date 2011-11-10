@@ -22,7 +22,7 @@ include ${CURDIR}/config.default
 
 OPTFLAGS ?= -O2
 
-BUILDDIR = build.${PLATFORM}
+BUILDDIR = build.${BUILD}
 
 include ${BUILDDIR}/config.mak
 
@@ -75,6 +75,7 @@ endif
 SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 
 BUNDLES += resources/metadb
+BUNDLES += resources/cachedb
 
 #
 # Misc support
@@ -146,12 +147,10 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_zlib.c \
 	src/fileaccess/fa_bundle.c \
 	src/fileaccess/fa_sidfile.c \
+	src/fileaccess/fa_nativesmb.c \
+	src/fileaccess/fa_buffer.c \
 
 SRCS-$(CONFIG_LIBGME)   += src/fileaccess/fa_gmefile.c
-
-SRCS-$(CONFIG_TINYSMB)  += src/fileaccess/fa_tinysmb.c
-
-SRCS-$(CONFIG_LIBSMBCLIENT) += src/fileaccess/fa_smb.c
 
 SRCS-$(CONFIG_LOCATEDB) += src/fileaccess/fa_locatedb.c
 
@@ -330,11 +329,21 @@ SRCS-$(CONFIG_GLW_FRONTEND_X11)	  += src/ui/glw/glw_x11.c \
 				     src/ui/linux/x11_common.c
 
 SRCS-$(CONFIG_GLW_FRONTEND_COCOA) += src/ui/glw/glw_cocoa.m
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_glx.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_texture_opengl.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_opengl.c
-SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_video_vdpau.c
+
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_common.c \
+                                     src/ui/glw/glw_opengl_shaders.c \
+                                     src/ui/glw/glw_opengl_ff.c \
+                                     src/ui/glw/glw_opengl_ogl.c \
+                                     src/ui/glw/glw_opengl_glx.c \
+                                     src/ui/glw/glw_texture_opengl.c \
+                                     src/ui/glw/glw_video_opengl.c \
+                                     src/ui/glw/glw_video_vdpau.c \
+
+SRCS-$(CONFIG_GLW_BACKEND_OPENGL_ES) += src/ui/glw/glw_opengl_common.c \
+                                        src/ui/glw/glw_opengl_shaders.c \
+                                        src/ui/glw/glw_opengl_es.c \
+                                        src/ui/glw/glw_texture_opengl.c \
+
 
 SRCS-$(CONFIG_GLW_FRONTEND_PS3)   += src/ui/glw/glw_ps3.c
 SRCS-$(CONFIG_GLW_BACKEND_RSX)    += src/ui/glw/glw_rsx.c
@@ -350,6 +359,7 @@ SRCS-$(CONFIG_GLW_BACKEND_GX)     += src/ui/glw/glw_gxasm.S
 SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 
 BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glsl
+BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL_ES) += src/ui/glw/glsl
 
 #
 # GTK based interface
@@ -575,7 +585,7 @@ DEPS=    ${OBJS:%.o=%.d}
 OBJDIRS= $(sort $(dir $(OBJS)))
 
 # File bundles
-BUNDLES += $(BUNDLES-yes)
+BUNDLES += $(sort $(BUNDLES-yes))
 BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
 BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
 BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
@@ -593,7 +603,7 @@ MKBUNDLE = $(CURDIR)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
-BRIEF  = CC MKBUNDLE CXX
+BRIEF  = CC MKBUNDLE CXX STRIP
 MSG    = $@
 $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
@@ -626,10 +636,16 @@ distclean: clean
 	rm -rf build.*
 
 reconfigure:
-	$(CURDIR)/configure.${PLATFORM} $(CONFIGURE_ARGS)
+	$(CURDIR)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
 
 showconfig:
 	@echo $(CONFIGURE_ARGS)
+
+${PROG}.stripped: ${PROG}
+	${STRIP} -o $@ $<
+
+strip: ${PROG}.stripped
+
 
 # Create showtimeversion.h
 src/version.c: $(BUILDDIR)/showtimeversion.h

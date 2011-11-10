@@ -59,12 +59,42 @@ current_playstate(void)
     return "NO_MEDIA_PRESENT";
 }
 
+/**
+ *
+ */
+static const char *
+current_playMode(void)
+{
+  if(upnp_current_shuffle)
+    return "SHUFFLE";
+  else if(upnp_current_repeat)
+    return "REPEAT_ALL";
+  return "NORMAL";
+}
+
+
+/**
+ *
+ */
+static void
+current_transportActions(char *str, size_t len)
+{  
+  snprintf(str, len, "Play%s%s%s%s%s",
+	   upnp_current_canSkipBackward ? ",Previous" : "",
+	   upnp_current_canSkipForward  ? ",Next"     : "",
+	   upnp_current_canSeek         ? ",Seek"     : "",
+	   upnp_current_canPause        ? ",Pause"    : "",
+	   upnp_current_canStop         ? ",Stop"     : "");
+}
+
+
 
 /**
  *
  */
 static htsmsg_t *
-avt_Stop(http_connection_t *hc, htsmsg_t *args)
+avt_Stop(http_connection_t *hc, htsmsg_t *args,
+	 const char *myhost, int myport)
 {
   event_dispatch(event_create_action(ACTION_STOP));
   return NULL;
@@ -75,9 +105,23 @@ avt_Stop(http_connection_t *hc, htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Pause(http_connection_t *hc, htsmsg_t *args)
+avt_Pause(http_connection_t *hc, htsmsg_t *args,
+	  const char *myhost, int myport)
 {
   event_dispatch(event_create_action(ACTION_PAUSE));
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_Seek(http_connection_t *hc, htsmsg_t *args,
+	  const char *myhost, int myport)
+{
   return NULL;
 }
 
@@ -86,7 +130,8 @@ avt_Pause(http_connection_t *hc, htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Play(http_connection_t *hc, htsmsg_t *args)
+avt_Play(http_connection_t *hc, htsmsg_t *args,
+	 const char *myhost, int myport)
 {
   event_dispatch(event_create_action(ACTION_PLAY));
   return NULL;
@@ -96,7 +141,8 @@ avt_Play(http_connection_t *hc, htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Next(http_connection_t *hc, htsmsg_t *args)
+avt_Next(http_connection_t *hc, htsmsg_t *args,
+	 const char *myhost, int myport)
 {
   event_dispatch(event_create_action(ACTION_NEXT_TRACK));
   return NULL;
@@ -106,7 +152,8 @@ avt_Next(http_connection_t *hc, htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_Previous(http_connection_t *hc, htsmsg_t *args)
+avt_Previous(http_connection_t *hc, htsmsg_t *args,
+	     const char *myhost, int myport)
 {
   event_dispatch(event_create_action(ACTION_PREV_TRACK));
   return NULL;
@@ -183,7 +230,8 @@ play_with_context(const char *uri, htsmsg_t *meta)
  *
  */
 static htsmsg_t *
-avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args)
+avt_SetAVTransportURI(http_connection_t *hc, htsmsg_t *args,
+		      const char *myhost, int myport)
 {
   const char *uri = htsmsg_get_str(args, "CurrentURI");
   const char *metaxml = htsmsg_get_str(args, "CurrentURIMetaData");
@@ -299,7 +347,8 @@ fmttime(char *out, size_t outlen, unsigned int t)
  *
  */
 static htsmsg_t *
-avt_GetPositionInfo(http_connection_t *hc, htsmsg_t *args)
+avt_GetPositionInfo(http_connection_t *hc, htsmsg_t *args,
+		    const char *myhost, int myport)
 {
   htsmsg_t *out = htsmsg_create_map();
   char tbuf[16];
@@ -333,7 +382,8 @@ avt_GetPositionInfo(http_connection_t *hc, htsmsg_t *args)
  *
  */
 static htsmsg_t *
-avt_GetTransportInfo(http_connection_t *hc, htsmsg_t *args)
+avt_GetTransportInfo(http_connection_t *hc, htsmsg_t *args,
+		     const char *myhost, int myport)
 {
   htsmsg_t *out = htsmsg_create_map();
 
@@ -347,27 +397,112 @@ avt_GetTransportInfo(http_connection_t *hc, htsmsg_t *args)
 }
 
 
+
 /**
  *
  */
-static void
-lc_encode_val_str(htsbuf_queue_t *xml, const char *attrib, const char *str)
+static htsmsg_t *
+avt_GetTransportSettings(http_connection_t *hc, htsmsg_t *args,
+			 const char *myhost, int myport)
 {
-  str = str ?: "NOT_IMPLEMENTED";
+  htsmsg_t *out = htsmsg_create_map();
 
-  htsbuf_qprintf(xml, "<%s val=\"", attrib);
-  htsbuf_append_and_escape_xml(xml, str);
-  htsbuf_qprintf(xml, "\"/>");
+  hts_mutex_lock(&upnp_lock);
+  htsmsg_add_str(out, "PlayMode", current_playMode());
+  hts_mutex_unlock(&upnp_lock);
+  return out;
 }
 
 
 /**
  *
  */
-static void
-lc_encode_val_int(htsbuf_queue_t *xml, const char *attrib, int v)
+static const char *
+current_mediaCategory(void)
 {
-  htsbuf_qprintf(xml, "<%s val=\"%d\"/>", attrib, v);
+  if(upnp_current_playstatus == NULL)
+    return "NO_MEDIA";
+  if(!strcmp(upnp_current_type ?: "", "tracks"))
+    return "TRACK_AWARE";
+  return "TRACK_UNAWARE";
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetMediaInfo_common(http_connection_t *hc, htsmsg_t *args,
+			const char *myhost, int myport, int ext)
+{
+  char str[256];
+  htsmsg_t *out = htsmsg_create_map();
+
+  hts_mutex_lock(&upnp_lock);
+  if(ext)
+    htsmsg_add_str(out, "CurrentType", current_mediaCategory());
+  htsmsg_add_u32(out, "NrTracks", upnp_current_total_tracks);
+  fmttime(str, sizeof(str), upnp_current_track_duration);
+  htsmsg_add_str(out, "MediaDuration", str);
+  htsmsg_add_str(out, "CurrentURI", upnp_current_url ?: "");
+
+  char *meta = build_didl(myhost, myport);
+  htsmsg_add_str(out, "CurrentURIMetaData", meta);
+  free(meta);
+
+  htsmsg_add_str(out, "PlayMedium", upnp_current_playstatus == NULL ?
+		 "NONE" : "NETWORK");
+  hts_mutex_unlock(&upnp_lock);
+  return out;
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetMediaInfo_Ext(http_connection_t *hc, htsmsg_t *args,
+		     const char *myhost, int myport)
+{
+  return avt_GetMediaInfo_common(hc, args, myhost, myport, 1);
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetMediaInfo(http_connection_t *hc, htsmsg_t *args,
+		     const char *myhost, int myport)
+{
+  return avt_GetMediaInfo_common(hc, args, myhost, myport, 0);
+}
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetDeviceCapabilities(http_connection_t *hc, htsmsg_t *args,
+		       const char *myhost, int myport)
+{
+  htsmsg_t *out = avt_GetMediaInfo(hc, args, myhost, myport);
+  htsmsg_add_str(out, "PlayMedia", "NETWORK");
+  return out;
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+avt_GetCurrentTransportActions(http_connection_t *hc, htsmsg_t *args,
+			       const char *myhost, int myport)
+{
+  htsmsg_t *out = avt_GetMediaInfo(hc, args, myhost, myport);
+  char str[256];
+  current_transportActions(str, sizeof(str));
+  htsmsg_add_str(out, "Actions", str);
+  return out;
 }
 
 
@@ -389,18 +524,9 @@ avt_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
 		 "<InstanceID val=\"0\">");
 
 
-  lc_encode_val_str(&xml, "TransportState", current_playstate());
+  upnp_event_encode_str(&xml, "TransportState", current_playstate());
 
-  // CurrentMediaCategory
-
-  if(upnp_current_playstatus == NULL)
-    s = "NO_MEDIA";
-  if(!strcmp(upnp_current_type ?: "", "tracks"))
-    s = "TRACK_AWARE";
-  else
-    s = "TRACK_UNAWARE";
-
-  lc_encode_val_str(&xml, "CurrentMediaCategory", s);
+  upnp_event_encode_str(&xml, "CurrentMediaCategory", current_mediaCategory());
 
   // PlaybackStorageMedium
 
@@ -408,55 +534,39 @@ avt_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
     s = "NONE";
   else
     s = "NETWORK";
-  lc_encode_val_str(&xml, "PlaybackStorageMedium", s);
+  upnp_event_encode_str(&xml, "PlaybackStorageMedium", s);
 
-  // CurrentPlayMode
+  upnp_event_encode_str(&xml, "CurrentPlayMode", current_playMode());
 
-  if(upnp_current_shuffle)
-    s = "SHUFFLE";
-  else if(upnp_current_repeat)
-    s = "REPEAT_ALL";
-  else
-    s = "NORMAL";
-  lc_encode_val_str(&xml, "CurrentPlayMode", s);
+  current_transportActions(str, sizeof(str));
+  upnp_event_encode_str(&xml, "CurrentTransportActions", str);
 
-  // CurrentTransportActions
-  
-  snprintf(str, sizeof(str), "Play%s%s%s%s%s",
-	   upnp_current_canSkipBackward ? ",Previous" : "",
-	   upnp_current_canSkipForward  ? ",Next"     : "",
-	   upnp_current_canSeek         ? ",Seek"     : "",
-	   upnp_current_canPause        ? ",Pause"    : "",
-	   upnp_current_canStop         ? ",Stop"     : "");
-
-  lc_encode_val_str(&xml, "CurrentTransportActions", str);
-
-  lc_encode_val_int(&xml, "NumberOfTracks", upnp_current_total_tracks);
-  lc_encode_val_int(&xml, "CurrentTrack", upnp_current_track);
-  lc_encode_val_str(&xml, "AVTransportURI", upnp_current_url ?: "");
-  lc_encode_val_int(&xml, "TransportPlaySpeed", 1);
+  upnp_event_encode_int(&xml, "NumberOfTracks", upnp_current_total_tracks);
+  upnp_event_encode_int(&xml, "CurrentTrack", upnp_current_track);
+  upnp_event_encode_str(&xml, "AVTransportURI", upnp_current_url ?: "");
+  upnp_event_encode_int(&xml, "TransportPlaySpeed", 1);
 
   // Metadata
 
   char *meta = build_didl(myhost, myport);
-  lc_encode_val_str(&xml, "AVTransportURIMetaData", meta);
-  lc_encode_val_str(&xml, "CurrentTrackMetaData", meta);
+  upnp_event_encode_str(&xml, "AVTransportURIMetaData", meta);
+  upnp_event_encode_str(&xml, "CurrentTrackMetaData", meta);
   free(meta);
 
   fmttime(str, sizeof(str), upnp_current_track_duration);
-  lc_encode_val_str(&xml, "CurrentTrackDuration", str);
-  lc_encode_val_str(&xml, "CurrentMediaDuration", str);
+  upnp_event_encode_str(&xml, "CurrentTrackDuration", str);
+  upnp_event_encode_str(&xml, "CurrentMediaDuration", str);
 
-  lc_encode_val_str(&xml, "PossibleRecordQualityModes", NULL);
-  lc_encode_val_str(&xml, "TransportStatus", "OK");
-  lc_encode_val_str(&xml, "DRMState", "UNKNOWN");
-  lc_encode_val_str(&xml, "RecordMediumWriteStatus", NULL);
-  lc_encode_val_str(&xml, "RecordStorageMedium", NULL);
-  lc_encode_val_str(&xml, "PossibleRecordStorageMedia", NULL);
-  lc_encode_val_str(&xml, "NextAVTransportURI", "");
-  lc_encode_val_str(&xml, "NextAVTransportURIMetaData", NULL);
-  lc_encode_val_str(&xml, "CurrentRecordQualityMode", NULL);
-  lc_encode_val_str(&xml, "PossiblePlaybackStorageMedia", "NETWORK");
+  upnp_event_encode_str(&xml, "PossibleRecordQualityModes", NULL);
+  upnp_event_encode_str(&xml, "TransportStatus", "OK");
+  upnp_event_encode_str(&xml, "DRMState", "UNKNOWN");
+  upnp_event_encode_str(&xml, "RecordMediumWriteStatus", NULL);
+  upnp_event_encode_str(&xml, "RecordStorageMedium", NULL);
+  upnp_event_encode_str(&xml, "PossibleRecordStorageMedia", NULL);
+  upnp_event_encode_str(&xml, "NextAVTransportURI", "");
+  upnp_event_encode_str(&xml, "NextAVTransportURIMetaData", NULL);
+  upnp_event_encode_str(&xml, "CurrentRecordQualityMode", NULL);
+  upnp_event_encode_str(&xml, "PossiblePlaybackStorageMedia", "NETWORK");
 
 
 
@@ -487,10 +597,16 @@ upnp_local_service_t upnp_AVTransport_2 = {
     { "SetAVTransportURI", avt_SetAVTransportURI },
     { "Play", avt_Play },
     { "Pause", avt_Pause },
+    { "Seek", avt_Seek },
     { "Next", avt_Next },
     { "Previous", avt_Previous },
     { "GetPositionInfo", avt_GetPositionInfo },
     { "GetTransportInfo", avt_GetTransportInfo },
+    { "GetTransportSettings", avt_GetTransportSettings },
+    { "GetMediaInfo", avt_GetMediaInfo },
+    { "GetMediaInfo_Ext", avt_GetMediaInfo_Ext },
+    { "GetDeviceCapabilities", avt_GetDeviceCapabilities },
+    { "GetCurrentTransportActions", avt_GetCurrentTransportActions },
     { NULL, NULL},
   }
 };

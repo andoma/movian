@@ -45,7 +45,7 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
 
   void *player;
   void *data;
-  struct fa_stat fs;
+  size_t size;
 
   
   url0 += strlen("sidplayer:");
@@ -60,10 +60,10 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   subsong = atoi(p);
 
-  if((data = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL)
+  if((data = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL)
     return NULL;
 
-  player = sidcxx_load(data, fs.fs_size, subsong, errbuf, errlen);
+  player = sidcxx_load(data, size, subsong, errbuf, errlen);
   free(data);
   if(player == NULL)
     return NULL;
@@ -86,7 +86,7 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
 
       if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
-	metadb_register_play(url0, 1);
+	metadb_register_play(url0, 1, CONTENT_AUDIO);
       }
 
       sample += CHUNK_SIZE;

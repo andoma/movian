@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <libavformat/avformat.h>
+#include <libavformat/avio.h>
 
 #include "showtime.h"
 #include "fa_audio.h"
@@ -213,7 +214,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen, int hold, const char *mimetype)
 {
   AVFormatContext *fctx;
-  AVIOContext *avio;
   AVCodecContext *ctx;
   AVPacket pkt;
   media_format_t *fw;
@@ -229,7 +229,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errlen, 0, NULL)) == NULL)
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_SMALL, NULL);
+  if(fh == NULL)
     return NULL;
 
   // First we need to check for a few other formats
@@ -238,24 +239,32 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   uint8_t pb[128];
   size_t psiz;
   
-  psiz = avio_read(avio, pb, sizeof(pb));
+  psiz = fa_read(fh, pb, sizeof(pb));
   if(psiz < sizeof(pb)) {
-    fa_libav_close(avio);
+    fa_close(fh);
     snprintf(errbuf, errlen, "Fill too small");
     return NULL;
   }
 
 #if ENABLE_LIBGME
   if(*gme_identify_header(pb))
-    return fa_gme_playfile(mp, avio, errbuf, errlen, hold, url);
+    return fa_gme_playfile(mp, fh, errbuf, errlen, hold, url);
 #endif
 
 #if ENABLE_LIBOPENSPC
   if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27))
-    return openspc_play(mp, avio, errbuf, errlen);
+    return openspc_play(mp, fh, errbuf, errlen);
 #endif
 
 #endif
+
+  
+  AVIOContext *avio = fa_libav_reopen(fh);
+
+  if(avio == NULL) {
+    fa_close(fh);
+    return NULL;
+  }
 
   if((fctx = fa_libav_open_format(avio, url, 
 				  errbuf, errlen, mimetype)) == NULL) {
@@ -305,7 +314,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       if(r == AVERROR(EAGAIN))
 	continue;
       
-      if(r == AVERROR_EOF) {
+      if(r == AVERROR_EOF || r == AVERROR(EIO)) {
 	mb = MB_SPECIAL_EOF;
 	continue;
       }
@@ -400,7 +409,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       if(registered_play == 0) {
 	if(ets->ts - fctx->start_time > METADB_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
-	  metadb_register_play(url, 1);
+	  metadb_register_play(url, 1, CONTENT_AUDIO);
 	}
       }
 

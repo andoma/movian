@@ -763,67 +763,6 @@ init_type_col(directory_list_t *d, const char *title, int idx)
  *
  */
 static void
-view_list_header_set_title(void *opaque, const char *str)
-{
-  if(str != NULL) {
-    char *m = g_markup_printf_escaped("<span size=\"x-large\">%s</span>", str);
-    gtk_label_set_markup(GTK_LABEL(opaque), m);
-    g_free(m);
-  } else {
-    gtk_label_set(GTK_LABEL(opaque), "");
-  }
-}
-
-
-/**
- *
- */
-static void
-add_headers(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
-{
-  GtkWidget *hbox, *w;
-  prop_sub_t *s;
-
-  hbox = gtk_hbox_new(FALSE, 1);
-  gtk_box_pack_start(GTK_BOX(parent), hbox, FALSE, TRUE, 0);
-
-  /* Image */
-  w = gtk_image_new();
-  gtk_misc_set_alignment(GTK_MISC(w), 0.5, 0.5);
-  gtk_box_pack_start(GTK_BOX(hbox), w, FALSE, TRUE, 0);
-
-  s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "type"),
-		     PROP_TAG_CALLBACK_STRING, gu_set_icon_by_type, w,
-		     PROP_TAG_COURIER, pc, 
-		     PROP_TAG_NAMED_ROOT, root, "self",
-		     NULL);
-
-  gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
-
-
-  /* Title */
-  w = gtk_label_new("");
-  gtk_misc_set_alignment(GTK_MISC(w), 0, 0);
-  gtk_label_set_ellipsize(GTK_LABEL(w), PANGO_ELLIPSIZE_END);
-
-  gtk_box_pack_start(GTK_BOX(hbox), w, TRUE, TRUE, 0);
-
-  s = prop_subscribe(0,
-		     PROP_TAG_NAME("self", "metadata", "title"),
-		     PROP_TAG_CALLBACK_STRING, view_list_header_set_title, w,
-		     PROP_TAG_COURIER, pc, 
-		     PROP_TAG_NAMED_ROOT, root, "self",
-		     NULL);
-
-  gu_unsubscribe_on_destroy(GTK_OBJECT(w), s);
-}
-
-
-/**
- *
- */
-static void
 directory_list_destroy(GtkObject *object, gpointer opaque)
 {
   directory_list_t *d = opaque;
@@ -887,6 +826,8 @@ gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags)
   if(flags & GU_DIR_COL_USER)
     init_text_col(d,     "User",    GDS_COL_USER, 1, 1);
 
+  init_text_col(d, "Status", GDS_COL_STATUS, 1, 0);
+
   g_signal_connect(G_OBJECT(d->tree), "row-activated", 
 		   G_CALLBACK(row_activated), d);
 
@@ -913,9 +854,6 @@ gu_directory_list_create(gu_tab_t *gt, prop_t *root, int flags)
   /* Page vbox */
 
   view = gtk_vbox_new(FALSE, 1);
-
-  if(flags & GU_DIR_HEADERS)
-    add_headers(d->gt->gt_gw->gw_gu->gu_pc, view, root);
 
   if(flags & GU_DIR_SCROLLBOX) {
 

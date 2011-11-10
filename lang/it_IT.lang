@@ -25,6 +25,21 @@ msg: Impostazioni video
 id: Added by: %s
 msg: Aggiunto da: %s
 
+id: Played %d times
+msg: Riprodotto %d volte
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg: %d voci
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg: %d tracce
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +48,24 @@ msg: Disattiva
 
 id: On
 msg: Attiva
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Cancella
+
+id: Enqueue
+msg: Metti in coda
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -146,28 +179,10 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Cancella
-
-id: Enqueue
-msg: Metti in coda
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +205,9 @@ msg: Temperatura GPU: %d / %d °
 id: Adjust background tint based on daytime
 msg: Modifica lo sfondo a seconda dell'ora 
 
+id: Alternate list layout
+msg: Alterna il layout della lista
+
 id: Audio muted
 msg: Audio silenziato
 
@@ -198,9 +216,6 @@ msg: Animazioni dell'interfaccia
 
 id: Master volume: %d dB
 msg: Volume principale: %d dB
-
-id: Starwars scroller tilt
-msg: Inclinazione interfaccia in stile StarWars
 
 id: Top bar navigation buttons
 msg: Pulsanti nella barra di navigazione in alto
@@ -217,7 +232,7 @@ msg: Utilizza opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: Memoria in esaurimento (%d kB di RAM disponibile)
 
 #
@@ -280,11 +295,17 @@ msg: URL HTSP non valido
 id: Search
 msg: Cerca
 
+id: Search result for: %s
+msg: Risultati della ricerca per: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Login automatico all'avvio di Showtime
+
+id: Collaborative
+msg: Collaborativo
 
 id: Enable Spotify
 msg: Attiva Spotify
@@ -306,6 +327,12 @@ msg: Nuovi album su Spotify
 
 id: New releases
 msg: Nuovi rilasci
+
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Sync offline in 96kbps
 
 id: Playlists
 msg: Playlist
@@ -339,6 +366,15 @@ msg: Speciali
 #
 id: Bookmarks
 msg: Segnalibri
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Impossibile gestire questo tipo di contenuti %d
+
+id: Unable to open file: %s
+msg: Impossibile aprire il file: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -512,6 +548,21 @@ id: Map mouse wheel to up/down
 msg: Usa rotellina del mouse per scorrere su/giù
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Passa automaticamente a questa modalità
+
+id: DVI-Video color range
+msg: Gamma di colori DVI-Video
+
+id: Switch to this mode now
+msg: Passa a questa modalità ora
+
+id: Video modes
+msg: Modalità video
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -565,6 +616,12 @@ msg: Al centro
 id: Color
 msg: Colore
 
+id: Controls if video playback should restart where last played
+msg: Controlla se la riproduzione del video dovrebbe riprendere dall'ultima posizione
+
+id: Count video as played when reaching
+msg: Conteggia il video come riprodotto quando raggiunge
+
 id: Enable VDPAU
 msg: Attiva VDPAU
 
@@ -580,11 +637,17 @@ msg: Ignora i codici di stile incorporati
 id: Left
 msg: Sinistra
 
+id: No
+msg: No
+
 id: Outline color
 msg: Colore contorni
 
 id: Outline size
 msg: Dimensioni contorni
+
+id: Resume video playback
+msg: Riprendi riproduzione del video
 
 id: Right
 msg: Destra
@@ -615,4 +678,7 @@ msg: Accelerazione video e comportamento schermo
 
 id: Video playback
 msg: Riproduzione video
+
+id: Yes
+msg: Si
 

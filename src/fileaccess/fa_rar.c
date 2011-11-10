@@ -576,10 +576,19 @@ rar_file_unref(rar_file_t *rf)
  *
  */
 static int
-rar_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
+rar_scandir(fa_dir_t *fd, const char *url0, char *errbuf, size_t errlen)
 {
   rar_file_t *c, *rf;
   char buf[URL_MAX];
+  char *url = mystrdupa(url0);
+  int n;
+
+  for(n = strlen(url)-1; n > 0; n--) {
+    if(url[n] == '/')
+      url[n] = 0;
+    else
+      break;
+  }
 
   if((rf = rar_file_find(url)) == NULL) {
     snprintf(errbuf, errlen, "Entry not found in archive");

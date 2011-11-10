@@ -44,7 +44,7 @@ glw_tex_autoflush(glw_root_t *gr)
   hts_mutex_lock(&gr->gr_tex_mutex);
 
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
-    assert(glt->glt_filename != NULL || glt->glt_pixmap != NULL);
+    assert(glt->glt_filename != NULL);
     LIST_REMOVE(glt, glt_flush_link);
     glw_tex_backend_free_render_resources(gr, glt);
 
@@ -141,9 +141,11 @@ glw_tex_init(glw_root_t *gr)
 
   la = lacreate(gr, LQ_ALL_OTHER);
 
-  for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++)
+  for(i = 0; i < GLW_MAX(concurrency / 2, 2); i++) {
     hts_thread_create_detached("GLW texture loader", loader_thread, la,
 			       THREAD_PRIO_NORMAL);
+    break;
+  }
 
   la = lacreate(gr, LQ_THEME);
   hts_thread_create_detached("texture theme loader", loader_thread, la,
@@ -165,14 +167,36 @@ glw_tex_flush_all(glw_root_t *gr)
   hts_mutex_lock(&gr->gr_tex_mutex);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
-    if(glt->glt_state != GLT_STATE_INACTIVE)
+    if(glt->glt_state == GLT_STATE_INACTIVE)
       continue;
     LIST_REMOVE(glt, glt_flush_link);
     if(glt->glt_state == GLT_STATE_VALID)
       glw_tex_backend_free_render_resources(gr, glt);
+    if(glt->glt_state == GLT_STATE_QUEUED)
+      TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
     glt->glt_state = GLT_STATE_INACTIVE;
   }
   hts_mutex_unlock(&gr->gr_tex_mutex);
+}
+
+/**
+ *
+ */
+static enum PixelFormat 
+pixmapfmt_to_libav(pixmap_type_t t)
+{
+  switch(t) {
+  case PIXMAP_I:
+    return PIX_FMT_GRAY8;
+  case PIXMAP_IA:
+    return PIX_FMT_Y400A;
+  case PIXMAP_RGB24:
+    return PIX_FMT_RGB24;
+  case PIXMAP_BGR32:
+    return PIX_FMT_BGR32;
+  default:
+    return -1;
+  }
 }
 
 /**
@@ -187,18 +211,6 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   int r, got_pic, w, h;
   const char *url;
   char errbuf[128];
-
-  if(glt->glt_pixmap != NULL) {
-    pixmap_t *pm = glt->glt_pixmap;
-    AVPicture pict;
-    pict.data[0] = pm->pm_pixels;
-    pict.linesize[0] = pm->pm_linesize;
-    r = glw_tex_backend_load(gr, glt, &pict,
-			     pm->pm_pixfmt,
-			     pm->pm_width, pm->pm_height,
-			     pm->pm_width, pm->pm_height);
-    return r;
-  }
 
   if(glt->glt_filename == NULL)
     return -1;
@@ -222,7 +234,7 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   glt->glt_orientation = pm->pm_orientation;
 
-  if(pm->pm_codec == CODEC_ID_NONE) {
+  if(!pixmap_is_coded(pm)) {
     glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
 
     AVPicture pict;
@@ -230,16 +242,35 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
     pict.linesize[0] = pm->pm_linesize;
 
     r = glw_tex_backend_load(gr, glt, &pict,
-			     pm->pm_pixfmt,
+			     pixmapfmt_to_libav(pm->pm_type),
 			     pm->pm_width, pm->pm_height,
 			     pm->pm_width, pm->pm_height);
     pixmap_release(pm);
     return r;
   }
 
+
+  switch(pm->pm_type) {
+  case PIXMAP_PNG:
+    codec = avcodec_find_decoder(CODEC_ID_PNG);
+    break;
+  case PIXMAP_JPEG:
+    codec = avcodec_find_decoder(CODEC_ID_MJPEG);
+    break;
+  case PIXMAP_GIF:
+    codec = avcodec_find_decoder(CODEC_ID_GIF);
+    break;
+  default:
+    codec = NULL;
+    break;
+  }
+
+  if(codec == NULL) {
+    pixmap_release(pm);
+    TRACE(TRACE_ERROR, "glw", "%s: No codec for image format", url);
+    return -1;
+  }
   ctx = avcodec_alloc_context();
-  codec = avcodec_find_decoder(pm->pm_codec);
-  
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
 
@@ -372,9 +403,6 @@ glw_tex_deref_locked(glw_root_t *gr, glw_loadable_texture_t *glt)
     free(glt->glt_filename);
   }
   
-  if(glt->glt_pixmap != NULL)
-    pixmap_release(glt->glt_pixmap);
-
   LIST_REMOVE(glt, glt_global_link);
 
   glw_tex_backend_free_loader_resources(glt);
@@ -431,29 +459,6 @@ glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
   return glt;
 }
 
-
-/**
- *
- */
-glw_loadable_texture_t *
-glw_tex_create_from_pixmap(glw_root_t *gr, pixmap_t *pm)
-{
-  glw_loadable_texture_t *glt;
-
-  hts_mutex_lock(&gr->gr_tex_mutex);
-
-  glt = calloc(1, sizeof(glw_loadable_texture_t));
-  glt->glt_filename = NULL;
-  glt->glt_pixmap = pixmap_dup(pm);
-
-  LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
-  glt->glt_state = GLT_STATE_INACTIVE;
-
-  glt->glt_refcnt++;
-
-  hts_mutex_unlock(&gr->gr_tex_mutex);
-  return glt;
-}
 
 
 /**

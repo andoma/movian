@@ -467,14 +467,15 @@ glw_video_set(glw_t *w, va_list ap)
     attrib = va_arg(ap, int);
     switch(attrib) {
 
-    case GLW_ATTRIB_PROPROOTS:
+    case GLW_ATTRIB_PROPROOTS3:
       p = va_arg(ap, void *);
       assert(p != NULL);
       p2 = prop_create(p, "media");
       
       prop_link(gv->gv_mp->mp_prop_root, p2);
       
-      p = va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Clone, just throw it away
       break;
 
     case GLW_ATTRIB_PRIORITY:

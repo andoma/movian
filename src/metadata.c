@@ -19,6 +19,8 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <libavformat/avformat.h>
+
 #include "prop/prop.h"
 #include "ext/sqlite/sqlite3.h"
 
@@ -81,7 +83,7 @@ metadata_destroy(metadata_t *md)
  *
  */
 void
-metadata_add_stream(metadata_t *md, const char *codec, enum AVMediaType type,
+metadata_add_stream(metadata_t *md, const char *codec, int type,
 		    int streamindex, const char *info, const char *isolang,
 		    int disposition)
 {
@@ -241,6 +243,15 @@ metadb_init(void)
     metadb_pool = NULL; // Disable
 }
 
+
+/**
+ *
+ */
+void
+metadb_fini(void)
+{
+  db_pool_close(metadb_pool);
+}
 
 
 /**
@@ -654,6 +665,54 @@ metadb_insert_videoitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
 
 
+/**
+ *
+ */
+static int
+metadb_insert_imageitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
+{
+  int i;
+  int rc = 0;
+  for(i = 0; i < 2; i++) {
+    sqlite3_stmt *stmt;
+
+    rc = sqlite3_prepare_v2(db, 
+			    i == 0 ? 
+			    "INSERT OR FAIL INTO imageitem "
+			    "(item_id, original_time) "
+			    "VALUES "
+			    "(?1, ?2)"
+			    :
+			    "UPDATE imageitem SET "
+			    "original_time = ?2 "
+			    "WHERE item_id = ?1"
+			    ,
+			    -1, &stmt, NULL);
+
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      return -1;
+    }
+    sqlite3_bind_int64(stmt, 1, item_id);
+
+    if(md->md_time)
+      sqlite3_bind_int(stmt, 2, md->md_time);
+
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if(rc == SQLITE_CONSTRAINT && i == 0)
+      continue;
+    break;
+  }
+
+  if(rc != SQLITE_DONE)
+    return 1;
+  return 0;
+}
+
+
+
 
 
 
@@ -734,6 +793,10 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
   case CONTENT_VIDEO:
     r = metadb_insert_videoitem(db, item_id, md);
+    break;
+
+  case CONTENT_IMAGE:
+    r = metadb_insert_imageitem(db, item_id, md);
     break;
 
   case CONTENT_DIR:
@@ -995,6 +1058,42 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 /**
  *
  */
+static int
+metadb_metadata_get_image(sqlite3 *db, metadata_t *md, int64_t item_id)
+{
+  int rc;
+  sqlite3_stmt *sel;
+
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT original_time "
+			  "FROM imageitem "
+			  "WHERE item_id = ?1",
+			  -1, &sel, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  sqlite3_bind_int64(sel, 1, item_id);
+
+  rc = sqlite3_step(sel);
+
+  if(rc != SQLITE_ROW) {
+    sqlite3_finalize(sel);
+    return -1;
+  }
+
+  md->md_time = sqlite3_column_int(sel, 0);
+
+  sqlite3_finalize(sel);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static metadata_t *
 metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
 {
@@ -1012,6 +1111,10 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
     if((r = metadb_metadata_get_video(db, md, item_id)) != 0)
       break;
     r = metadb_metadata_get_streams(db, md, item_id);
+    break;
+
+  case CONTENT_IMAGE:
+    r = metadb_metadata_get_image(db, md, item_id);
     break;
 
   case CONTENT_DIR:
@@ -1197,7 +1300,7 @@ metadb_unparent_item(void *db, const char *url)
  *
  */
 void
-metadb_register_play(const char *url, int inc)
+metadb_register_play(const char *url, int inc, int content_type)
 {
   int rc;
   int i;
@@ -1222,9 +1325,9 @@ metadb_register_play(const char *url, int inc)
 			    "WHERE url=?1"
 			    :
 			    "INSERT INTO item "
-			    "(url, playcount, lastplay) "
+			    "(url, contenttype, playcount, lastplay) "
 			    "VALUES "
-			    "(?1, ?3, ?2)",
+			    "(?1, ?4, ?3, ?2)",
 			    -1, &stmt, NULL);
 
     if(rc != SQLITE_OK) {
@@ -1238,6 +1341,7 @@ metadb_register_play(const char *url, int inc)
     sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 2, time(NULL));
     sqlite3_bind_int(stmt, 3, inc);
+    sqlite3_bind_int(stmt, 4, content_type);
     rc = sqlite3_step(stmt);
     sqlite3_finalize(stmt);
     if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
@@ -1295,7 +1399,7 @@ metadb_set_video_restartpos(const char *url, int64_t pos)
     int64_t item_id;
     item_id = db_item_get(db, url, NULL);
     if(item_id == -1)
-      item_id = db_item_create(db, url, 0, 0, 0);
+      item_id = db_item_create(db, url, CONTENT_VIDEO, 0, 0);
 
     if(item_id != -1) {
       rc = sqlite3_prepare_v2(db, 
@@ -1456,7 +1560,7 @@ mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
 {
   prop_set_int(mip->mip_playcount,  mii->mii_playcount);
   prop_set_int(mip->mip_lastplayed, mii->mii_lastplayed);
-  prop_set_int(mip->mip_restartpos, mii->mii_restartpos);
+  prop_set_float(mip->mip_restartpos, mii->mii_restartpos / 1000.0);
 }
 
 

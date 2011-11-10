@@ -1,0 +1,41 @@
+widget(container_y, {
+  .spacing = 2;
+  space(1);
+  widget(label, {
+    .caption = fmt(_("Played %d times"), $self.playcount);
+    .align = right;
+    .shadow = true;
+    .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+    .hidden = !$self.playcount;
+  });
+
+  widget(container_x, {
+    .hidden = !$self.restartpos;
+    .align = right;
+    widget(container_z, {
+      .width = $view.durationWidth;
+      .height = 3;
+      widget(bar, {
+	.color1 = 0.1;
+	.color2 = 0.1;
+	.fill = 1;
+      });
+      
+      widget(bar, {
+	.color1 = 1;
+	.color2 = 1;
+	.fill = $self.restartpos / $self.metadata.duration;
+      });
+    });
+  });
+
+  widget(label, {
+    $view.durationWidth = getWidth();
+    .caption = select($self.restartpos,
+		      value2duration($self.restartpos) + ' / ',
+		      '') + value2duration($self.metadata.duration);
+    .align = right;
+    .shadow = true;
+    .color = 0.5 + (isHovered() || isFocused()) * 0.5;
+  });
+});

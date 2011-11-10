@@ -113,7 +113,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   c->glw_parent_alpha = GLW_MIN(c->glw_parent_alpha + delta, 1.0f);
 
   /**
-   * Keep previous and next images 'hot' (ie, loaded into texture memroy)
+   * Keep previous and next images 'hot' (ie, loaded into texture memory)
    */
   p = glw_prev_widget(c);
   if(p == NULL)
@@ -238,11 +238,12 @@ glw_slideshow_set(glw_t *w, va_list ap)
       s->time = va_arg(ap, double);
       break;
 
-    case GLW_ATTRIB_PROPROOTS:
+    case GLW_ATTRIB_PROPROOTS3:
       p = va_arg(ap, void *);
       s->playstatus = prop_create(prop_create(p, "slideshow"), "playstatus");
 
-      p = va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Clone, just throw it away
       glw_slideshow_update_playstatus(s);
       break;
 

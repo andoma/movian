@@ -67,17 +67,17 @@ glw_clip_render(glw_t *w, glw_rctx_t *rc)
   if(w->glw_flags & GLW_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
-  int l = gc->gc_clipping[0] ? 
+  int l = gc->gc_clipping[0] >= 0 ? 
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_LEFT, gc->gc_clipping[0]) : -1;
-  int t = gc->gc_clipping[1] ? 
+  int t = gc->gc_clipping[1] >= 0 ? 
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_TOP, gc->gc_clipping[1]) : -1;
-  int r = gc->gc_clipping[2] ? 
+  int r = gc->gc_clipping[2] >= 0 ? 
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_RIGHT, gc->gc_clipping[2]) : -1;
-  int b = gc->gc_clipping[3] ? 
+  int b = gc->gc_clipping[3] >= 0 ? 
     glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, gc->gc_clipping[3]) : -1;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    c->glw_class->gc_render(c, rc);
+    glw_render0(c, rc);
 
   glw_clip_disable(w->glw_root, rc, l);
   glw_clip_disable(w->glw_root, rc, r);

@@ -1183,7 +1183,6 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   char confname[PATH_MAX];
   const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
   const char *displayname_title  = NULL;
-  const char *skin = NULL;
   int force_fs = 0;
 
   gx11->gr.gr_uii.uii_prop = root;
@@ -1205,10 +1204,6 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
       continue;
     } else if(!strcmp(argv[0], "--theme") && argc > 1) {
       theme_path = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "--skin") && argc > 1) {
-      skin = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "--force-no-vsync")) {
@@ -1251,7 +1246,7 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 
   glw_root_t *gr = &gx11->gr;
   
-  if(glw_init(gr, theme_path, skin, ui, primary, confname, displayname_title))
+  if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
 
 #ifdef CONFIG_NVCTRL

@@ -48,7 +48,7 @@ LIST_HEAD(glw_video_list, glw_video);
 
 // ------------------- Backends -----------------
 
-#if CONFIG_GLW_BACKEND_OPENGL
+#if CONFIG_GLW_BACKEND_OPENGL || CONFIG_GLW_BACKEND_OPENGL_ES
 #include "glw_opengl.h"
 #elif CONFIG_GLW_BACKEND_GX
 #include "glw_gx.h"
@@ -104,11 +104,10 @@ typedef enum {
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
-  GLW_ATTRIB_PROPROOTS,
+  GLW_ATTRIB_PROPROOTS3,
   GLW_ATTRIB_TRANSITION_EFFECT,
   GLW_ATTRIB_EXPANSION,
   GLW_ATTRIB_BIND_TO_ID,
-  GLW_ATTRIB_PIXMAP,
   GLW_ATTRIB_CHILD_ASPECT,
   GLW_ATTRIB_CHILD_HEIGHT,
   GLW_ATTRIB_CHILD_WIDTH,
@@ -130,6 +129,9 @@ typedef enum {
  */
 #define GTB_PASSWORD      0x1   /* Don't display real contents */
 #define GTB_ELLIPSIZE     0x2
+#define GTB_BOLD          0x4
+#define GTB_ITALIC        0x8
+#define GTB_OUTLINE       0x10
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -170,11 +172,15 @@ typedef enum {
   GLW_POINTER_FOCUS_MOTION,
   GLW_POINTER_SCROLL,
   GLW_POINTER_GONE,
+  GLW_POINTER_TOUCH_PRESS,
+  GLW_POINTER_TOUCH_RELEASE,
+  GLW_POINTER_TOUCH_MOTION,
 } glw_pointer_event_type_t;
 
 typedef struct glw_pointer_event {
   float x, y;
   float delta_y;
+  float vel_x, vel_y;
   glw_pointer_event_type_t type;
   int flags;
 } glw_pointer_event_t;
@@ -538,6 +544,11 @@ typedef struct glw_class {
   void (*gc_set_max_lines)(struct glw *w, int lines);
 
   /**
+   *
+   */
+  const char *(*gc_get_identity)(struct glw *w);
+
+  /**
    * Registration link
    */
   LIST_ENTRY(glw_class) gc_link;
@@ -641,6 +652,7 @@ typedef struct glw_root {
   struct glw *gr_current_focus;
   prop_t *gr_last_focused_interactive;
   prop_t *gr_pointer_visible;
+  int gr_focus_work;
 
   /**
    * Backend specifics
@@ -842,7 +854,6 @@ typedef struct glw {
 
 #define GLW_FOCUS_ON_CLICK       0x4000000
 
-#define GLW_SHADOW               0x8000000
 
 #define GLW_CONSTRAINT_CONF_W    0x10000000
 #define GLW_CONSTRAINT_CONF_X    0x20000000
@@ -855,6 +866,7 @@ typedef struct glw {
 #define GLW2_ALWAYS_LAYOUT  0x4
 #define GLW2_ALWAYS_GRAB_KNOB 0x8
 #define GLW2_AUTOHIDE        0x10
+#define GLW2_SHADOW          0x20
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
@@ -899,7 +911,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *theme, const char *skin,
+int glw_init(glw_root_t *gr, const char *theme,
 	     ui_t *ui, int primary,
 	     const char *instance, const char *instance_title );
 
@@ -989,7 +1001,8 @@ void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
  */
 glw_t *glw_view_create(glw_root_t *gr, const char *src, 
 		       glw_t *parent, struct prop *prop,
-		       struct prop *prop_parent, prop_t *args, int cache);
+		       struct prop *prop_parent, prop_t *args,
+		       struct prop *prop_clone, int cache);
 
 /**
  * Transitions
@@ -1015,12 +1028,12 @@ do {						\
     break;					\
   case GLW_ATTRIB_num ... UINT32_MAX:           \
     abort();                                    \
-  case GLW_ATTRIB_PROPROOTS:         		\
+  case GLW_ATTRIB_PROPROOTS3:         		\
+    (void)va_arg(ap, void *);			\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
-  case GLW_ATTRIB_PIXMAP: 			\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_MODE:                         \
@@ -1198,5 +1211,7 @@ void glw_frontface(struct glw_root *gr, int how);
 // text bitmap semi-private stuff
 
 void glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len);
+
+extern const float glw_identitymtx[16];
 
 #endif /* GLW_H */

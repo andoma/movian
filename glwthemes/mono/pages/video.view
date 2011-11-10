@@ -1,6 +1,7 @@
 #import "theme://include/separators.view"
 #import "theme://include/defs.view"
-#import "skin://playdeck.skin"
+
+$self.directClose = 1;
 
 // If playstatus is set to stop, close the page
 $self.close = $self.media.playstatus == "stop";
@@ -50,7 +51,9 @@ widget(container_z, {
   widget(container_y, {
     .padding = 5;
     widget(container_x, {
-      skinPlaydeckGroup(
+      widget(backdrop, {
+        .source = "theme://graphics/blackdrop.png";
+        .border = [12,12,12,12];
 	.alphaSelf = $view.statsAlpha * 0.66;
 	
 	widget(container_y, {
@@ -196,7 +199,7 @@ widget(container_z, {
 	    });
 	  });
 	});
-      );
+      });
     });
   });
 });

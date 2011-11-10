@@ -221,7 +221,7 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
     //    printf("  Thumbnail @ %d, %d bytes\n", thumbnail_jpeg_offset, thumbnail_jpeg_size);
     ji->ji_thumbnail = pixmap_alloc_coded(buf + thumbnail_jpeg_offset,
 					  thumbnail_jpeg_size,
-					  CODEC_ID_MJPEG);
+					  PIXMAP_JPEG);
     ji->ji_thumbnail->pm_flags |= PIXMAP_THUMBNAIL;
     ji->ji_thumbnail->pm_orientation = ji->ji_orientation;
   }

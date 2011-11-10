@@ -68,7 +68,7 @@ render(glw_t *w, glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    c->glw_class->gc_render(c, &rc0);
+    glw_render0(c, &rc0);
   }
   if(w->glw_flags & GLW_DEBUG)
     glw_wirebox(w->glw_root, &rc0);

@@ -25,6 +25,24 @@ msg: Video-instellingen
 id: Added by: %s
 msg: Toegevoegd door: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Uit
 
 id: On
 msg: Aan
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Verwijderen
+
+id: Enqueue
+msg: Toevoegen
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annuleren
+
+id: OK
+msg: Oké
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -146,28 +182,10 @@ id: Username
 msg: Gebruikersnaam
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annuleren
-
-id: OK
-msg: Oké
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Geen media geladen
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Verwijderen
-
-id: Enqueue
-msg: Toevoegen
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +208,10 @@ msg: GPU-kerntemperatuur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Achtergrondtint op tijd gebasseerd aanpassen
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Geluid gedempt
 
@@ -198,9 +220,6 @@ msg: Mooie UI-effecten
 
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
-
-id: Starwars scroller tilt
-msg: Kanteling Starwars-scroller
 
 id: Top bar navigation buttons
 msg: Navigatieknoppen bovenste balk
@@ -217,7 +236,7 @@ msg: Opensubtitles.org gebruiken
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 # Missing translation
 msg: 
 
@@ -283,11 +302,19 @@ msg: Ongeldige HTSP-URL
 id: Search
 msg: Zoeken
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatisch inloggen als Showtime opstart
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify inschakelen
@@ -309,6 +336,14 @@ msg: Nieuwe albums op Spotify
 
 id: New releases
 msg: Nieuwe uitgaves
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Afspeellijsten
@@ -343,6 +378,17 @@ msg: Favorieten
 #
 id: Bookmarks
 msg: Bladwijzers
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -516,6 +562,25 @@ id: Map mouse wheel to up/down
 msg: Muiswiel naar boven/onder indelen
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -574,6 +639,14 @@ msg: Centreren
 id: Color
 msg: Kleur
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
@@ -589,11 +662,19 @@ msg: Geïntegreerde stijl nergeren
 id: Left
 msg: Links
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Omtrekkleur
 
 id: Outline size
 msg: Omtrekgrootte
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Rechts
@@ -624,4 +705,8 @@ msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
+
+id: Yes
+# Missing translation
+msg: 
 

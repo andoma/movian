@@ -25,7 +25,6 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "libavcodec/avcodec.h"
 #include "media.h"
 #include "misc/dbl.h"
 #include "misc/string.h"
@@ -508,9 +507,9 @@ subtitles_load(const char *url)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
-  struct fa_stat fs;
+  size_t size;
   int datalen;
-  char *data = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
+  char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
@@ -518,13 +517,13 @@ subtitles_load(const char *url)
     return NULL;
   }
 
-  if(gz_check(data, fs.fs_size)) {
+  if(gz_check(data, size)) {
     // is .gz compressed, inflate it
 
     char *inflated;
     size_t inflatedlen;
 
-    inflated = gz_inflate(data, fs.fs_size,
+    inflated = gz_inflate(data, size,
 			  &inflatedlen, errbuf, sizeof(errbuf));
 
     free(data);
@@ -536,7 +535,7 @@ subtitles_load(const char *url)
     data = inflated;
     datalen = inflatedlen;
   } else {
-    datalen = fs.fs_size;
+    datalen = size;
   }
 
   sub = subtitles_create(url, &data, datalen);

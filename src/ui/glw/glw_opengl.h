@@ -19,6 +19,12 @@
 #ifndef GLW_OPENGL_H__
 #define GLW_OPENGL_H__
 
+#if ENABLE_GLW_BACKEND_OPENGL_ES
+
+#include <GLES2/gl2.h>
+
+#else
+
 #define GL_GLEXT_PROTOTYPES
 #define GLX_GLXEXT_PROTOTYPES
 
@@ -39,6 +45,8 @@
 #ifdef linux
 #include <GL/glx.h>
 #include <GL/glxext.h>
+#endif
+
 #endif
 
 
@@ -99,7 +107,7 @@ typedef struct glw_backend_root {
    *
    */
   struct vdpau_dev *gbr_vdpau_dev;
-#ifdef linux
+#if ENABLE_GLW_FRONTEND_X11
   PFNGLXBINDTEXIMAGEEXTPROC gbr_bind_tex_image;
   PFNGLXRELEASETEXIMAGEEXTPROC gbr_release_tex_image;
 #endif
@@ -176,5 +184,10 @@ void glw_program_set_modelview(glw_backend_root_t *gbr, struct glw_rctx *rc);
 
 void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 				   float r, float g, float b, float a);
+
+
+int glw_opengl_ff_init(struct glw_root *gr);
+
+int glw_opengl_shaders_init(struct glw_root *gr);
 
 #endif /* GLW_OPENGL_H__ */

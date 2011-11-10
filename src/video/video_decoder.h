@@ -19,6 +19,8 @@
 #ifndef VIDEO_DECODER_H
 #define VIDEO_DECODER_H
 
+#include <libavcodec/avcodec.h>
+
 #include "media.h"
 #include "misc/avgtime.h"
 #include "misc/kalman.h"

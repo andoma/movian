@@ -1,9 +1,9 @@
-#import "skin://buttons/buttons.skin"
+#import "theme://include/buttons.view"
 
 #define NAVSCALE() {1.5}
 
 #define skinNavButton(TYPE, EVENT, ENABLED=true, HIDDEN=false) {
-  _glossybutton("skin://icons/" + 
+  _glossybutton("theme://icons/" + 
 		translate(TYPE, "Blank",
 			  "back",     "NavLeft",
 			  "forward",  "NavRight",
@@ -38,10 +38,11 @@
 
 #define skinNavSelection(TYPE, ENABLED) {
   _glossySelection(translate(TYPE, void,
-			     "list",      "skin://icons/List.png",
-			     "array",     "skin://icons/Array.png",
-			     "coverflow", "skin://icons/Coverflow.png",
-			     "slideshow", "skin://icons/Picture.png"),
+			     "list",      "theme://icons/List.png",
+			     "list2",     "theme://icons/List.png",
+			     "array",     "theme://icons/Array.png",
+			     "coverflow", "theme://icons/Coverflow.png",
+			     "slideshow", "theme://icons/Picture.png"),
 		   TYPE,
 		   { $page.glw.userView = TYPE; },
 		   ENABLED,

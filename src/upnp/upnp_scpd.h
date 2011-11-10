@@ -342,26 +342,6 @@ const char *avt_scpd = STRINGIFY(
   </specVersion>
   <actionList>
     <action>
-      <name>SetNextAVTransportURI</name>
-      <argumentList>
-        <argument>
-          <name>InstanceID</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_InstanceID</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>NextURI</name>
-          <direction>in</direction>
-          <relatedStateVariable>NextAVTransportURI</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>NextURIMetaData</name>
-          <direction>in</direction>
-          <relatedStateVariable>NextAVTransportURIMetaData</relatedStateVariable>
-        </argument>
-      </argumentList>
-    </action>
-    <action>
       <name>GetMediaInfo_Ext</name>
       <argumentList>
         <argument>
@@ -638,21 +618,6 @@ const char *avt_scpd = STRINGIFY(
           <name>CurrentURIMetaData</name>
           <direction>in</direction>
           <relatedStateVariable>AVTransportURIMetaData</relatedStateVariable>
-        </argument>
-      </argumentList>
-    </action>
-    <action>
-      <name>GetDRMState</name>
-      <argumentList>
-        <argument>
-          <name>InstanceID</name>
-          <direction>in</direction>
-          <relatedStateVariable>A_ARG_TYPE_InstanceID</relatedStateVariable>
-        </argument>
-        <argument>
-          <name>CurrentDRMState</name>
-          <direction>out</direction>
-          <relatedStateVariable>DRMState</relatedStateVariable>
         </argument>
       </argumentList>
     </action>

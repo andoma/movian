@@ -15,28 +15,31 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include <sys/param.h>
 #include <arch/atomic.h>
+#include <string.h>
+#include <stdlib.h>
 #include "pixmap.h"
 
 
 /**
- * Maybe use libavutil instead
+ *
  */
 static int 
-bytes_per_pixel(int fmt)
+bytes_per_pixel(pixmap_type_t fmt)
 {
   switch(fmt) {
-  case PIX_FMT_BGR32:
+  case PIXMAP_BGR32:
     return 4;
 
-  case PIX_FMT_RGB24:
+  case PIXMAP_RGB24:
     return 3;
 
-  case PIX_FMT_Y400A:
+  case PIXMAP_IA:
     return 2;
     
-  case PIX_FMT_GRAY8:
+  case PIXMAP_I:
     return 1;
 
   default:
@@ -60,8 +63,9 @@ pixmap_dup(pixmap_t *pm)
  *
  */
 pixmap_t *
-pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
+pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
 {
+  int pad = 32;
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
   pm->pm_size = size;
@@ -69,13 +73,13 @@ pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
   pm->pm_width = -1;
   pm->pm_height = -1;
 
-  pm->pm_data = malloc(size + FF_INPUT_BUFFER_PADDING_SIZE);
+  pm->pm_data = malloc(size + pad);
   if(data != NULL)
     memcpy(pm->pm_data, data, size);
 
-  memset(pm->pm_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+  memset(pm->pm_data + size, 0, pad);
 
-  pm->pm_codec = codec;
+  pm->pm_type = type;
   return pm;
 }
 
@@ -84,9 +88,9 @@ pixmap_alloc_coded(const void *data, size_t size, enum CodecID codec)
  *
  */
 pixmap_t *
-pixmap_create(int width, int height, enum PixelFormat pixfmt, int rowalign)
+pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
 {
-  int bpp = bytes_per_pixel(pixfmt);
+  int bpp = bytes_per_pixel(type);
   if(bpp == 0 || rowalign < 1)
     return NULL;
 
@@ -98,8 +102,7 @@ pixmap_create(int width, int height, enum PixelFormat pixfmt, int rowalign)
   pm->pm_width = width;
   pm->pm_height = height;
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
-  pm->pm_pixfmt = pixfmt;
-  pm->pm_codec = CODEC_ID_NONE;
+  pm->pm_type = type;
   pm->pm_data = calloc(1, pm->pm_linesize * pm->pm_height);
   return pm;
 }
@@ -114,8 +117,8 @@ pixmap_release(pixmap_t *pm)
 {
   if(atomic_add(&pm->pm_refcount, -1) > 1)
     return;
-  
-  if(pm->pm_codec == CODEC_ID_NONE) {
+
+  if(!pixmap_is_coded(pm)) {
     free(pm->pm_pixels);
     free(pm->pm_charpos);
   } else {
@@ -136,8 +139,7 @@ pixmap_clone(const pixmap_t *src, int clear)
   dst->pm_width = src->pm_width;
   dst->pm_linesize = src->pm_linesize;
   dst->pm_height = src->pm_height;
-  dst->pm_codec = CODEC_ID_NONE;
-  dst->pm_pixfmt = src->pm_pixfmt;
+  dst->pm_type = src->pm_type;
 
   if(clear)
     dst->pm_pixels = calloc(1, dst->pm_linesize * dst->pm_height);
@@ -340,23 +342,20 @@ pixmap_convolution_filter(const pixmap_t *src, int kernel)
   const int *k = kernels[kernel];
   kfn_t *kfn = kernelfuncs[kernel];
 
-  if(src->pm_codec != CODEC_ID_NONE)
+  if(pixmap_is_coded(src))
     return NULL;
-
-
-
 
   pixmap_t *dst = pixmap_clone(src, 0);
 
 
-  switch(src->pm_pixfmt) {
-  case PIX_FMT_GRAY8:
+  switch(src->pm_type) {
+  case PIXMAP_I:
     convolute_pixels(dst->pm_pixels, src->pm_pixels,
 		     dst->pm_width, dst->pm_height, 1, dst->pm_linesize,
 		     k, kfn);
     break;
 
-  case PIX_FMT_Y400A:
+  case PIXMAP_IA:
     convolute_pixels(dst->pm_pixels, src->pm_pixels,
 		     dst->pm_width, dst->pm_height, 2, dst->pm_linesize,
 		     k, kfn);
@@ -375,7 +374,7 @@ pixmap_convolution_filter(const pixmap_t *src, int kernel)
  *
  */
 static void
-multiply_alpha_PIX_FMT_Y400A(uint8_t *dst, const uint8_t *src, 
+multiply_alpha_PIX_FMT_IA(uint8_t *dst, const uint8_t *src, 
 			     int w, int h, int linesize)
 {
   int x, y;
@@ -402,14 +401,14 @@ multiply_alpha_PIX_FMT_Y400A(uint8_t *dst, const uint8_t *src,
 pixmap_t *
 pixmap_multiply_alpha(const pixmap_t *src)
 {
-  if(src->pm_codec != CODEC_ID_NONE)
+  if(pixmap_is_coded(src))
     return NULL;
 
   pixmap_t *dst = pixmap_clone(src, 0);
 
-  switch(src->pm_pixfmt) {
-  case PIX_FMT_Y400A:
-    multiply_alpha_PIX_FMT_Y400A(dst->pm_pixels, src->pm_pixels,
+  switch(src->pm_type) {
+  case PIXMAP_IA:
+    multiply_alpha_PIX_FMT_IA(dst->pm_pixels, src->pm_pixels,
 				 dst->pm_width, dst->pm_height,
 				 dst->pm_linesize);
     break;
@@ -452,20 +451,19 @@ extract_channel(uint8_t *dst, const uint8_t *src,
 pixmap_t *
 pixmap_extract_channel(const pixmap_t *src, unsigned int channel)
 {
-  if(src->pm_codec != CODEC_ID_NONE)
+  if(pixmap_is_coded(src))
     return NULL;
 
   pixmap_t *dst = calloc(1, sizeof(pixmap_t));
   dst->pm_refcount = 1;
   dst->pm_linesize = dst->pm_width = src->pm_width;
   dst->pm_height = src->pm_height;
-  dst->pm_codec = CODEC_ID_NONE;
-  dst->pm_pixfmt = PIX_FMT_GRAY8;
+  dst->pm_type = PIXMAP_I;
 
   dst->pm_pixels = malloc(dst->pm_linesize * dst->pm_height);
 
-  switch(src->pm_pixfmt) {
-  case PIX_FMT_Y400A:
+  switch(src->pm_type) {
+  case PIXMAP_IA:
     channel = MIN(channel, 1);
     extract_channel(dst->pm_pixels, src->pm_pixels + channel,
 		    dst->pm_width, dst->pm_height,
@@ -486,7 +484,7 @@ pixmap_extract_channel(const pixmap_t *src, unsigned int channel)
 
 
 static void
-composite_GRAY8_on_Y400A(uint8_t *dst, const uint8_t *src,
+composite_GRAY8_on_IA(uint8_t *dst, const uint8_t *src,
 			 int i0, int foo_, int bar_, int a0,
 			 int width)
 {
@@ -514,6 +512,42 @@ composite_GRAY8_on_Y400A(uint8_t *dst, const uint8_t *src,
     dst += 2;
   }
 }
+
+
+
+static void
+composite_GRAY8_on_IA_full_alpha(uint8_t *dst, const uint8_t *src,
+				    int i0, int b0_, int g0_, int a0_,
+				    int width)
+{
+  int i, a, pa, y;
+  int x;
+  for(x = 0; x < width; x++) {
+
+    if(*src == 255) {
+      dst[0] = i0;
+      dst[1] = 255;
+    } else if(*src) {
+      i = dst[0];
+      a = dst[1];
+
+      pa = a;
+      y = *src;
+      a = y + FIXMUL(a, 255 - y);
+
+      if(a) {
+	i = ((FIXMUL(i0, y) + FIX3MUL(i, pa, (255 - y))) * 255) / a;
+      } else {
+	i = 0;
+      }
+      dst[0] = i;
+      dst[1] = a;
+    }
+    src++;
+    dst += 2;
+  }
+}
+
 
 
 #if 0
@@ -633,18 +667,18 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
   uint8_t b = rgba >> 16;
   uint8_t a = rgba >> 24;
 
-  if(src->pm_codec != CODEC_ID_NONE)
-    return;
-
-  if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_Y400A)
-    fn = composite_GRAY8_on_Y400A;
-  else if(src->pm_pixfmt == PIX_FMT_GRAY8 && dst->pm_pixfmt == PIX_FMT_BGR32)
+  if(src->pm_type == PIXMAP_I && dst->pm_type == PIXMAP_IA && 
+     a == 255)
+    fn = composite_GRAY8_on_IA_full_alpha;
+  else if(src->pm_type == PIXMAP_I && dst->pm_type == PIXMAP_IA)
+    fn = composite_GRAY8_on_IA;
+  else if(src->pm_type == PIXMAP_I && dst->pm_type == PIXMAP_BGR32)
     fn = composite_GRAY8_on_BGR32;
   else
     return;
   
-  readstep  = bytes_per_pixel(src->pm_pixfmt);
-  writestep = bytes_per_pixel(dst->pm_pixfmt);
+  readstep  = bytes_per_pixel(src->pm_type);
+  writestep = bytes_per_pixel(dst->pm_type);
 
   s0 = src->pm_pixels;
   d0 = dst->pm_pixels;

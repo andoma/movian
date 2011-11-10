@@ -1,5 +1,3 @@
-#import "skin://playdeck.skin"
-
 $ui.showplaydeck =  $ui.menu ||
   $global.media.current.error ||
   $global.media.current.video.too_slow ||
@@ -13,99 +11,107 @@ $ui.showplaydeck =  $ui.menu ||
 
 widget(container_x, {
   .padding = [5, 0, 5, 5];
-      
+  
   .align = center;
-  skinPlaydeckGroup(.filterConstraintX = true; widget(container_x, {
-    .spacing = 10;
-    widget(container_y, {
-      .filterConstraintX = true;
-      widget(label, {
-	.sizeScale = 1.5;
-	.caption = $global.media.current.metadata.title;
-      });
 
-      widget(container_x, {
-	.hidden = select($global.media.current.error, false, true);
-	widget(icon, {
-	  .source = "skin://icons/Alert.png";
-	});
+  widget(backdrop, {
+    .source = "theme://graphics/blackdrop.png";
+    .border = [12,12,12,12];
+    .alphaSelf = 0.66;
+    .filterConstraintX = true;
+
+    widget(container_x, {
+      .spacing = 10;
+      widget(container_y, {
+	.filterConstraintX = true;
 	widget(label, {
-	  .caption = $global.media.current.error;
+	  .sizeScale = 1.5;
+	  .caption = $global.media.current.metadata.title;
 	});
-      });
 
-      widget(container_x, {
-	.hidden = select($global.media.current.video.too_slow, false, true);
-	widget(icon, {
-	  .source = "skin://icons/Alert.png";
-	  .hqScaling = true;
+	widget(container_x, {
+	  .hidden = select($global.media.current.error, false, true);
+	  widget(icon, {
+	    .source = "theme://icons/Alert.png";
+	  });
+	  widget(label, {
+	    .caption = $global.media.current.error;
+	  });
 	});
-	widget(label, {
-	  .caption = _("CPU is too slow to decode this video");
+
+	widget(container_x, {
+	  .hidden = select($global.media.current.video.too_slow, false, true);
+	  widget(icon, {
+	    .source = "theme://icons/Alert.png";
+	    .hqScaling = true;
+	  });
+	  widget(label, {
+	    .caption = _("CPU is too slow to decode this video");
+	  });
 	});
-      });
 
 
-      cloner($global.media.current.notifications, container_x, {
-	.spacing = 10;
-	widget(icon, {
-	  .hqScaling = true;
-	  .source = "skin://icons/Alert.png";
-	  .color = translate($self.type, [1,1,1],
-			     "info", [0.5, 1, 0.5],
-			     "warning",  [1, 1, 0.5],
-			     "error", [1, 0.5, 0.5]);
+	cloner($global.media.current.notifications, container_x, {
+	  .spacing = 10;
+	  widget(icon, {
+	    .hqScaling = true;
+	    .source = "theme://icons/Alert.png";
+	    .color = translate($self.type, [1,1,1],
+			       "info", [0.5, 1, 0.5],
+			       "warning",  [1, 1, 0.5],
+			       "error", [1, 0.5, 0.5]);
+	  });
+	  
+	  widget(label, {
+	    .caption = $self.text;
+	    .color = translate($self.type, [1,1,1],
+			       "info", [0.5, 1, 0.5],
+			       "warning",  [1, 1, 0.5],
+			       "error", [1, 0.5, 0.5]);
+	  });
 	});
-	
-	widget(label, {
-	  .caption = $self.text;
-	  .color = translate($self.type, [1,1,1],
-			     "info", [0.5, 1, 0.5],
-			     "warning",  [1, 1, 0.5],
-			     "error", [1, 0.5, 0.5]);
-	});
-      });
 
-      widget(container_x, {
-	.spacing = 10;
-	.hidden = !changed($global.media.current.audio.current, 5);
-	widget(icon, {
-	  .source = "skin://icons/Sound.png";
+	widget(container_x, {
+	  .spacing = 10;
+	  .hidden = !changed($global.media.current.audio.current, 5);
+	  widget(icon, {
+	    .source = "theme://icons/Sound.png";
+	  });
+	  widget(deck, {
+	    .effect = flipHorizontal;
+	    .time = 0.1;
+	    cloner($global.media.current.metadata.audiostreams, label, {
+	      .caption = join(" - ", $self.title, $self.language, $self.source, $self.longformat ?? $self.format);
+	    });
+	  });
 	});
-	widget(deck, {
-	  .effect = flipHorizontal;
-	  .time = 0.1;
-	  cloner($global.media.current.metadata.audiostreams, label, {
-	    .caption = join(" - ", $self.title, $self.language, $self.source, $self.longformat ?? $self.format);
+
+	widget(container_x, {
+	  .spacing = 10;
+	  .hidden = !changed($global.media.current.subtitle.current, 5);
+	  widget(icon, {
+	    .source = "theme://icons/Script.png";
+	  });
+	  widget(deck, {
+	    .effect = flipHorizontal;
+	    .time = 0.1;
+	    cloner($global.media.current.metadata.subtitlestreams, label, {
+	      .caption = join(" - ", $self.title, $self.language, $self.source, $self.format);
+	    });
 	  });
 	});
       });
 
-      widget(container_x, {
-	.spacing = 10;
-	.hidden = !changed($global.media.current.subtitle.current, 5);
-	widget(icon, {
-	  .source = "skin://icons/Script.png";
-	});
-	widget(deck, {
-	  .effect = flipHorizontal;
-	  .time = 0.1;
-	  cloner($global.media.current.metadata.subtitlestreams, label, {
-	    .caption = join(" - ", $self.title, $self.language, $self.source, $self.format);
-	  });
+      widget(container_y, {
+	.align = bottom;
+
+	widget(label, {
+	  .align = right;
+	  .caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
+	    select($global.media.current.metadata.duration,
+		   " / " + value2duration($global.media.current.metadata.duration), "");
 	});
       });
     });
-
-    widget(container_y, {
-      .align = bottom;
-
-      widget(label, {
-	.align = right;
-	.caption = value2duration(ignoreTentative($global.media.current.currenttime)) + 
-	  select($global.media.current.metadata.duration,
-		 " / " + value2duration($global.media.current.metadata.duration), "");
-      });
-    });
-  }));
+  });
 });

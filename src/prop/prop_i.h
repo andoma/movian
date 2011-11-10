@@ -62,7 +62,8 @@ struct prop_courier {
 typedef enum {
   PROP_VOID,
   PROP_DIR,
-  PROP_STRING,
+  PROP_RSTRING,
+  PROP_CSTRING,
   PROP_FLOAT,
   PROP_INT,
   PROP_PIXMAP,
@@ -197,7 +198,7 @@ struct prop {
       rstr_t *rstr;
       prop_str_type_t type;
     } rstr;
-
+    const char *cstr;
     struct {
       struct prop_queue childs;
       struct prop *selected;
@@ -209,6 +210,7 @@ struct prop {
     } link;
   } u;
 
+#define hp_cstring   u.cstr
 #define hp_rstring   u.rstr.rstr
 #define hp_rstrtype  u.rstr.type
 #define hp_float    u.f.val

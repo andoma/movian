@@ -10,6 +10,8 @@ settingBool(_("Adjust background tint based on daytime"), "daytimegradient",
 
 settingBool(_("Fancy UI animations"), "fancyAnimations", true, $ui.fancyAnimations);
 
+settingBool(_("Alternate list layout"), "list2", false, $ui.list2);
+
 onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
@@ -38,11 +40,8 @@ $ui.fullwindow = 0;
 widget(container_z, {
 
   widget(gradient, {
-    .color1 = [0,0,0];
-    .color2 = iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16)
-      * ([0.1, 0.1, 0.1] + 
-	 [1.0, 0.0, 0.0] *  0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18) + 
-	 [0.0, 1.0, 1.0] * -0.03 * select($ui.dayTimeGradient, 1, 0) * sin(1.5 + $global.clock.dayminute / 229.18));
+    .color1 = [0.1, 0.05, 0.05] * iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+    .color2 = [0.15, 0.13, 0.13] * iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
   });
   
   widget(container_y, {
@@ -140,7 +139,7 @@ widget(container_z, {
     .align = top;
     cloner($global.notifications.nodes, container_x, {
       widget(backdrop, {
-	.source = "skin://gfx/blackdrop.png";
+	.source = "theme://graphics/blackdrop.png";
 	.border = 12;
 	.padding = [4,-4];
 	.alphaSelf = 0.8;
@@ -150,7 +149,7 @@ widget(container_z, {
 	  widget(icon, {
 	    .hqScaling = true;
 	    .sizeScale = 1.5;
-	    .source = "skin://icons/Alert.png";
+	    .source = "theme://icons/Alert.png";
 	    .color = translate($self.type, [1,1,1],
 			       "info", [0.5, 1, 0.5],
 			       "warning",  [1, 1, 0.5],

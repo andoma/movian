@@ -1,8 +1,8 @@
-#import "skin://buttons/buttons.skin"
+#import "theme://include/buttons.view"
 
 #define popupGroup(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/blackdrop.png";
+    .source = "theme://graphics/blackdrop.png";
     .border =12;
     .alphaSelf = 0.66;
     BODY;
@@ -11,7 +11,7 @@
 
 #define popupInputField(BODY) {
   widget(backdrop, {
-    .source = "skin://gfx/border-tiny.png";
+    .source = "theme://graphics/border-tiny.png";
     .borderOnly = true;
     .border = 4;
     .color = 0.5;
@@ -20,7 +20,7 @@
 }
 
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
-  _glossybuttonTextRight(ICON="skin://icons/Check.png",
+  _glossybuttonTextRight(ICON="theme://icons/Check.png",
 			 CAPTION=_("OK"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
@@ -28,7 +28,7 @@
 }
 
 #define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
-  _glossybuttonTextRight(ICON="skin://icons/Delete.png",
+  _glossybuttonTextRight(ICON="theme://icons/Delete.png",
 			 CAPTION=_("Cancel"),
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,
@@ -50,13 +50,13 @@
 
     widget(backdrop, {
       .width = $ui.size + 2;
-      .source = "skin://gfx/border-tiny.png";
+      .source = "theme://graphics/border-tiny.png";
       .borderOnly = true;
       .border = 4;
       .padding = -3;
       .color = 0.5;
       widget(image, {
-	.source = "skin://icons/Check.png";
+	.source = "theme://icons/Check.png";
 	.alpha = select(STATE, 1, 0);
       });
     });

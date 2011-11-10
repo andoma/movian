@@ -98,7 +98,9 @@ typedef struct glyph {
 
   LIST_ENTRY(glyph) hash_link;
   TAILQ_ENTRY(glyph) lru_link;
-  FT_Glyph glyph;
+  FT_Glyph orig_glyph;
+  FT_Glyph bmp;
+  FT_Glyph outline;
   int adv_x;
 
   FT_BBox bbox;
@@ -174,7 +176,11 @@ glyph_destroy(glyph_t *g)
   LIST_REMOVE(g, face_link);
   TAILQ_REMOVE(&allglyphs, g, lru_link);
   LIST_REMOVE(g, hash_link);
-  FT_Done_Glyph(g->glyph);
+  FT_Done_Glyph(g->orig_glyph);
+  if(g->bmp)
+    FT_Done_Glyph(g->bmp);
+  if(g->outline)
+    FT_Done_Glyph(g->outline);
   free(g);
   num_glyphs--;
 }
@@ -479,7 +485,7 @@ face_find(int uc, uint8_t style, int family_id)
   if(f != NULL)
     face_set_family(f, family_id);
 
-  return NULL;
+  return f;
 }
 
 
@@ -541,12 +547,12 @@ glyph_get(int uc, int size, uint8_t style, int family_id)
 
     g = calloc(1, sizeof(glyph_t));
 
-    if((err = FT_Get_Glyph(gs, &g->glyph)) != 0) {
+    if((err = FT_Get_Glyph(gs, &g->orig_glyph)) != 0) {
       free(g);
       return NULL;
     }
 
-    FT_Glyph_Get_CBox(g->glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
+    FT_Glyph_Get_CBox(g->orig_glyph, FT_GLYPH_BBOX_GRIDFIT, &g->bbox);
 
     g->gi = gi;
     LIST_INSERT_HEAD(&f->glyphs, g, face_link);
@@ -586,8 +592,7 @@ static void
 draw_glyph(pixmap_t *pm, int left, int top, FT_Bitmap *bmp, int color)
 {
   pixmap_t src;
-  src.pm_pixfmt = PIX_FMT_GRAY8;
-  src.pm_codec = CODEC_ID_NONE;
+  src.pm_type = PIXMAP_I;
   src.pm_pixels = bmp->buffer;
   src.pm_width = bmp->width;
   src.pm_height = bmp->rows;
@@ -712,6 +717,19 @@ text_render0(const uint32_t *uc, const int len,
   pen_x = 0;
   pen_y = 0;
   style = 0;
+
+  if(flags & TR_RENDER_BOLD)
+    style |= TR_STYLE_BOLD;
+
+  if(flags & TR_RENDER_ITALIC)
+    style |= TR_STYLE_ITALIC;
+
+  if(flags & TR_RENDER_SHADOW)
+    current_shadow = -1;
+
+  if(flags & TR_RENDER_OUTLINE)
+    current_outline = 64;
+
   prev = 0;
   li = NULL;
 
@@ -873,7 +891,11 @@ text_render0(const uint32_t *uc, const int len,
     items[out].outline = current_outline;
     items[out].outline_color = current_outline_color | current_outline_alpha;
 
-    items[out].shadow = current_shadow;
+    if(current_shadow == -1)
+      items[out].shadow = 1 + current_shadow / 20;
+    else
+      items[out].shadow = current_shadow;
+
     items[out].shadow_color = current_shadow_color | current_shadow_alpha;
 
     prev = g->gi;
@@ -1041,7 +1063,7 @@ text_render0(const uint32_t *uc, const int len,
   // --- allocate and init pixmap
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
-		     color_output ? PIX_FMT_BGR32 : PIX_FMT_Y400A, 1);
+		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, 1);
 
   pm->pm_lines = lines;
   pm->pm_flags = pmflags;
@@ -1078,8 +1100,8 @@ text_render0(const uint32_t *uc, const int len,
       ypos = MIN(target_height, MAX(0, ypos));
 
       
-      switch(pm->pm_pixfmt) {
-      case PIX_FMT_BGR32: 
+      switch(pm->pm_type) {
+      case PIXMAP_BGR32: 
 	{
 	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
 	  int i;
@@ -1102,7 +1124,7 @@ text_render0(const uint32_t *uc, const int len,
 	}
 	break;
 	
-      case PIX_FMT_Y400A:
+      case PIXMAP_IA:
 	{
 	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
 	  int i;
@@ -1158,12 +1180,13 @@ text_render0(const uint32_t *uc, const int len,
       pen.x &= ~63;
       pen.y &= ~63;
 
-      FT_Glyph glyph = g->glyph;
-      FT_Glyph oglyph = NULL;
+      pen.x >>= 6;
+      pen.y >>= 6;
+
 
       
-      if(items[i].outline > 0) {
-	oglyph = g->glyph;
+      if(items[i].outline > 0 && g->outline == NULL) {
+	g->outline = g->orig_glyph;
 	
 	if(stroker == NULL)
 	  FT_Stroker_New(text_library, &stroker);
@@ -1173,55 +1196,48 @@ text_render0(const uint32_t *uc, const int len,
 		       FT_STROKER_LINECAP_ROUND,
 		       FT_STROKER_LINEJOIN_ROUND,
 		       0);
-	FT_Glyph_StrokeBorder(&oglyph, stroker, 0, 0);
+	if(FT_Glyph_StrokeBorder(&g->outline, stroker, 0, 0))
+	  g->outline = NULL;
+	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
+	  g->outline = NULL;
       }
       
-      if(glyph != NULL && 
-	 FT_Glyph_To_Bitmap(&glyph, FT_RENDER_MODE_NORMAL, &pen, 0))
-	glyph = NULL;
-
-
-      if(oglyph != NULL && 
-	 FT_Glyph_To_Bitmap(&oglyph, FT_RENDER_MODE_NORMAL, &pen, 1))
-	oglyph = NULL;
-
-      if(items[i].shadow && (oglyph != NULL || glyph != NULL)) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(oglyph ?: glyph);
+      if(g->bmp == NULL) {
+	g->bmp = g->orig_glyph;
+	if(FT_Glyph_To_Bitmap(&g->bmp, FT_RENDER_MODE_NORMAL, NULL, 0))
+	  g->bmp = NULL;
+      }
+      if(items[i].shadow && (g->outline != NULL || g->bmp != NULL)) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(g->outline ?: g->bmp);
 	draw_glyph(pm,
-		   bmp->left + items[i].shadow + margin,
-		   target_height - bmp->top + items[i].shadow + margin,
+		   bmp->left + items[i].shadow + margin + pen.x,
+		   target_height - bmp->top + items[i].shadow + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].shadow_color);
       }
 
-      if(oglyph != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)oglyph;
+      if(items[i].outline > 0 && g->outline != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->outline;
 	draw_glyph(pm,
-		   bmp->left + margin,
-		   target_height - bmp->top + margin,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].outline_color);
       }
 
-      if(glyph != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)glyph;
+      if(g->bmp != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->bmp;
 	draw_glyph(pm,
-		   bmp->left + margin,
-		   target_height - bmp->top + margin,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].color);
 
 	if(pm->pm_charpos != NULL) {
-	  pm->pm_charpos[i * 2 + 0] = bmp->left;
-	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width;
+	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
+	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
 	}
       }
-
-      if(glyph != NULL)
-	FT_Done_Glyph(glyph);
-
-      if(oglyph != NULL)
-	FT_Done_Glyph(oglyph);
 
       if(pm->pm_charpos != NULL && items[i].code == ' ')
 	pm->pm_charpos[2 * i + 0] = pen_x / 64;

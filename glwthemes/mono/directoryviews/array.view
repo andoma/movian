@@ -38,7 +38,7 @@ widget(container_y, {
 		});
       	      });
 	    });
-	    ICON2("skin://icons/Delete.png",
+	    ICON2("theme://icons/Delete.png",
 		  "Clear",
 		  {
 		    $page.model.filter = void;

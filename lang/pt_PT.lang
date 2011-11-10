@@ -25,6 +25,24 @@ msg: Configurações de vídeo
 id: Added by: %s
 msg: Adicionado por: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Deslig.
 
 id: On
 msg: Ligado
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Eliminar
+
+id: Enqueue
+msg: Adicionar à lista
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -146,28 +182,10 @@ id: Username
 msg: Nome do utilizador
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nenhum media carregado
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Eliminar
-
-id: Enqueue
-msg: Adicionar à lista
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +208,10 @@ msg: Temperatura do núcleo do GPU: %d / %d °
 id: Adjust background tint based on daytime
 msg: Ajustar a tonalidade do fundo dependendo da altura do dia
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Sem áudio
 
@@ -198,9 +220,6 @@ msg: Animações do IU
 
 id: Master volume: %d dB
 msg: Volume principal: %d dB
-
-id: Starwars scroller tilt
-msg: Inclinação do scroller Starwars
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -217,7 +236,7 @@ msg: Utilizar o opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 # Missing translation
 msg: 
 
@@ -283,11 +302,19 @@ msg: URL de HTSP inválido
 id: Search
 msg: Procurar
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Ativar Spotify
@@ -309,6 +336,14 @@ msg: Novos albuns no Spotify
 
 id: New releases
 msg: Novas releases
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Listas de reprodução
@@ -343,6 +378,17 @@ msg: Estrelado
 #
 id: Bookmarks
 msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -516,6 +562,25 @@ id: Map mouse wheel to up/down
 msg: Mapear a roda do rato para cima/baixo
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -574,6 +639,14 @@ msg: Centrado
 id: Color
 msg: Cor
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Ativar VDPAU
 
@@ -589,11 +662,19 @@ msg: Ignorar estilos embutidos
 id: Left
 msg: Esquerda
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Cor do contorno
 
 id: Outline size
 msg: Tamanho do contorno
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Direita
@@ -624,4 +705,8 @@ msg: Acelaração de vídeo e comportamento da visualização
 
 id: Video playback
 msg: Reprodução de vídeo
+
+id: Yes
+# Missing translation
+msg: 
 

@@ -176,6 +176,10 @@ node_set_group(void *opaque, prop_event_t event, ...)
     group = rstr_get(va_arg(ap, rstr_t *));
     break;
 
+  case PROP_SET_CSTRING:
+    group = va_arg(ap, const char *);
+    break;
+
   case PROP_SET_INT:
     snprintf(buf, sizeof(buf), "%d", va_arg(ap, int));
     group = buf;

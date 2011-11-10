@@ -63,6 +63,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 
 #define CHUNK_SIZE (1024*2)
@@ -1280,7 +1281,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
 
       if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
-	metadb_register_play(url0, 1);
+	metadb_register_play(url0, 1, CONTENT_AUDIO);
       }
 
       sample += CHUNK_SIZE;

@@ -25,6 +25,24 @@ msg: Videoinnstillinger
 id: Added by: %s
 msg: Lagt til av: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Av
 
 id: On
 msg: På
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Slett
+
+id: Enqueue
+msg: Kø
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -148,28 +184,10 @@ id: Username
 msg: Brukernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Ingen media lastet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slett
-
-id: Enqueue
-msg: Kø
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +210,10 @@ msg: GPU kjernetemperatur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Juster bakgrunnsfarge basert på tid på døgnet
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Lyd dempet
 
@@ -200,9 +222,6 @@ msg: Heftige animasjoner i brukergrensesnittet
 
 id: Master volume: %d dB
 msg: Hovedvolum: %d dB
-
-id: Starwars scroller tilt
-msg: Vis brukergrensesnittet som i Starwars åpningsscene
 
 id: Top bar navigation buttons
 msg: Navigasjonknapper på toppen av skjermen
@@ -219,7 +238,7 @@ msg: Bruk opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 # Missing translation
 msg: 
 
@@ -285,11 +304,19 @@ msg: Ugyldig HTSP URL
 id: Search
 msg: Søk
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Logg automatisk inn når Showtime starter
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Slå på Spotify
@@ -312,6 +339,14 @@ msg: Nye album på Spotify
 
 id: New releases
 msg: Nye plateslipp
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Spillelister
@@ -346,6 +381,17 @@ msg: Stjernemerket
 #
 id: Bookmarks
 msg: Bokmerker
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -519,6 +565,25 @@ id: Map mouse wheel to up/down
 msg: Tolk musens skrollhjul som opp- og ned-knapper
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -577,6 +642,14 @@ msg: Sentrert
 id: Color
 msg: Farge
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
@@ -592,11 +665,19 @@ msg: Overse innebygde stilkoder
 id: Left
 msg: Venstre
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Farge på konturer
 
 id: Outline size
 msg: Størrelse på konturer
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Høyre
@@ -627,4 +708,8 @@ msg: Videoakselerasjon og innstillinger for visning av video
 
 id: Video playback
 msg: Videoavspiling
+
+id: Yes
+# Missing translation
+msg: 
 

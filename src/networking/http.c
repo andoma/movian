@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +64,24 @@ http_header_add(struct http_header_list *headers, const char *key,
     free(hh->hh_value);
   }
   hh->hh_value = strdup(value);
+}
+
+/**
+ *
+ */
+void
+http_header_add_lws(struct http_header_list *headers, const char *data)
+{
+  http_header_t *hh;
+  int cl;
+  hh = LIST_FIRST(headers);
+  if(hh == NULL)
+    return;
+  
+  cl = strlen(hh->hh_value);
+  hh->hh_value = realloc(hh->hh_value, strlen(data) + cl + 2);
+  hh->hh_value[cl] = ' ';
+  strcpy(hh->hh_value + cl + 1, data);
 }
 
 
@@ -117,3 +136,66 @@ http_header_merge(struct http_header_list *dst,
   }
 }
 
+
+
+static const char *http_months[12] = {
+  "Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
+
+static const char *http_weekdays[7] = {
+  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+
+/**
+ *
+ */
+int 
+http_ctime(time_t *tp, const char *d)
+{
+  struct tm tm = {0};
+  char wday[4];
+  char month[4];
+  int i;
+  char dummy;
+
+  if(sscanf(d, "%3s, %d%c%3s%c%d %d:%d:%d",
+	    wday, &tm.tm_mday, &dummy, month, &dummy, &tm.tm_year,
+	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 9)
+    return -1;
+
+  tm.tm_year -= 1900;
+  tm.tm_isdst = -1;
+	      
+  for(i = 0; i < 12; i++)
+    if(!strcasecmp(http_months[i], month)) {
+      tm.tm_mon = i;
+      break;
+    }
+  
+#if ENABLE_TIMEGM
+  *tp = timegm(&tm);
+#else
+  *tp = mktime(&tm);
+#endif
+  return 0;
+}
+
+/**
+ *
+ */
+const char *
+http_asctime(time_t tp, char *out, size_t outlen)
+{
+  struct tm tm = {0};
+
+  gmtime_r(&tp, &tm);
+
+  snprintf(out, outlen, "%s, %02d %s %04d %02d:%02d:%02d GMT",
+	   http_weekdays[tm.tm_wday],
+	   tm.tm_mday,
+	   http_months[tm.tm_mon],
+	   tm.tm_year + 1900,
+	   tm.tm_hour,
+	   tm.tm_min,
+	   tm.tm_sec);
+  return out;
+}

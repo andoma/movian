@@ -25,6 +25,21 @@ msg: Видео настройки
 id: Added by: %s
 msg: Добавено от: %s
 
+id: Played %d times
+msg: Възпроизведено %d пъти 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg: %d записи
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg: %d тракове
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +48,24 @@ msg: Изкл.
 
 id: On
 msg: Вкл.
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Изтрий
+
+id: Enqueue
+msg: Добави към опашката за възпроизвеждане
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Отмени
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -131,7 +164,7 @@ msg: Трак %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPU е твърде бавно за да декодира това видео
+msg: CPU е твърде бавно, за да декодира това видео
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -146,28 +179,10 @@ id: Username
 msg: Потребителско име
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Отмяна
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Няма заредени медиини файлове
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Изтрии
-
-id: Enqueue
-msg: Добави към опашката за възпроизвеждане
+msg: Няма заредени медийни файлове
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -181,14 +196,17 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура на ядрото на GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+msg: Температура на ядрото на GPU: %d / %d °
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
 msg: Настройка нюанса на фона в зависимост от яркостта
+
+id: Alternate list layout
+msg: Алтернативен изглед на списъка
 
 id: Audio muted
 msg: Заглушаване на аудиото
@@ -198,9 +216,6 @@ msg: Анимация на интерфейса
 
 id: Master volume: %d dB
 msg: Сила на звука: %d dB
-
-id: Starwars scroller tilt
-msg: Интерфейс в стил Starwars
 
 id: Top bar navigation buttons
 msg: Бутони за навигация в горния панел
@@ -217,7 +232,7 @@ msg: Използвай opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 msg: Недостатъчна памет в системата (%d кБ RAM достъпна)
 
 #
@@ -280,11 +295,17 @@ msg: Невалиден HTSP URL
 id: Search
 msg: Търсене
 
+id: Search result for: %s
+msg: Резултати от търсенето за: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Автоматичен логин при пускане на Showtime
+msg: Автоматичено вписване при пускане на Showtime
+
+id: Collaborative
+msg: Съвместимост
 
 id: Enable Spotify
 msg: Включи Spotify
@@ -305,13 +326,19 @@ id: New albums on Spotify
 msg: Нови албуми в Spotify
 
 id: New releases
-msg: Нови релиизи
+msg: Нови попълнения
+
+id: Offline
+msg: Офлайин
+
+id: Offline sync in 96kbps
+msg: Офлайн синхронизация при 96kbps
 
 id: Playlists
 msg: Плейлистове
 
 id: Relogin (switch user)
-msg: Ре-логин (смяна на потребителя)
+msg: Повторно вписване (смяна на потребителя)
 
 id: Search result
 msg: Резултати от търсенето
@@ -339,6 +366,15 @@ msg: С висок рейтинг
 #
 id: Bookmarks
 msg: Маркери
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Не може да обработи вида съдържание %d
+
+id: Unable to open file: %s
+msg: Невъзможно отварянето на файла : %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -404,7 +440,7 @@ id: Configure mapping of keyboard and remote controller keys
 msg: Настройка на бутоните на клавиатура и дистанционно управление
 
 id: Keymapper
-msg: Keymapper
+msg: Карта на бутоните
 
 #
 # ./src/media.c
@@ -433,8 +469,9 @@ msg: Няма handler за URL
 #
 # ./src/plugins.c
 #
-id: Invalid URI
-msg: Невалиден URL 
+id: Invalud URI
+# Missing translation
+msg: 
 
 id: Plugin ID %s does not exist
 msg: Plugin ID %s не съществува
@@ -512,6 +549,21 @@ id: Map mouse wheel to up/down
 msg: Настройка скрола на мишката нагоре/надолу
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Автоматично превключване към този режим
+
+id: DVI-Video color range
+msg: DVI-Видео цветова гама
+
+id: Switch to this mode now
+msg: Превключи към този режим сега
+
+id: Video modes
+msg: Видео режими
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -565,6 +617,12 @@ msg: Център
 id: Color
 msg: Цвят
 
+id: Controls if video playback should restart where last played
+msg: Настройка дали видео възпроизвеждането трябва да продължи от където е спрян за последно файла
+
+id: Count video as played when reaching
+msg: Маркирай видеото като възпроизведено при достигане на
+
 id: Enable VDPAU
 msg: Включи VDPAU
 
@@ -580,11 +638,17 @@ msg: Игнорирай вградения стил
 id: Left
 msg: Ляво
 
+id: No
+msg: Не
+
 id: Outline color
 msg: Цвят на контура
 
 id: Outline size
 msg: Размер на контура
+
+id: Resume video playback
+msg: Възобнови видео възпроизвеждането
 
 id: Right
 msg: Дясно
@@ -615,4 +679,7 @@ msg: Видео ускорение и поведение на екрана
 
 id: Video playback
 msg: Видео възпроизвеждане
+
+id: Yes
+msg: Да 
 

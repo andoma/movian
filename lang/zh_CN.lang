@@ -25,6 +25,23 @@ msg: 视频设置
 id: Added by: %s
 msg: 由%s添加
 
+id: Played %d times
+msg: 已播放%d次
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +50,24 @@ msg: 关闭
 
 id: On
 msg: 开启
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: 删除
+
+id: Enqueue
+msg: 加入队列
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 确定
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -107,12 +142,10 @@ msg: 播放队列
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: 播放信息
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: 无法播放
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -148,28 +181,10 @@ id: Username
 msg: 用户名
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 确定
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: 未载入媒体
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: 删除
-
-id: Enqueue
-msg: 加入队列
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +207,10 @@ msg: GPU核心温度: %d / %d °
 id: Adjust background tint based on daytime
 msg: 根据时间调整背景颜色
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: 已静音
 
@@ -200,9 +219,6 @@ msg: Fancy界面动画
 
 id: Master volume: %d dB
 msg: 主音量: %d dB
-
-id: Starwars scroller tilt
-msg: 星战式滚动条斜率
 
 id: Top bar navigation buttons
 msg: 工具栏导航按钮
@@ -219,9 +235,8 @@ msg: 使用opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
-# Missing translation
-msg: 
+id: System is low on memory (%d kB RAM available)
+msg: 系统内存偏少(%d kB RAM可用)
 
 #
 # ./src/audio/audio.c
@@ -251,8 +266,7 @@ id: Swap LFE+center with surround
 msg: 切换低音+中置和环绕
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: 切换音频输出到%s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -270,8 +284,7 @@ msg: 不能打开CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD读取错误，重新开始读取光盘
 
 #
 # ./src/backend/htsp/htsp.c
@@ -285,18 +298,25 @@ msg: 非法的HTSP URL
 id: Search
 msg: 搜索
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Showtime启动时自动登录
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: 启用Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: 忘记我
 
 id: Friends
 msg: 朋友
@@ -312,6 +332,14 @@ msg: Spotify新专辑
 
 id: New releases
 msg: 最新发布
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: 播放列表
@@ -335,8 +363,7 @@ id: Spotify playlists
 msg: Spotify播放列表
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: 连接错误：%s
 
 id: Starred
 msg: 已加星
@@ -346,6 +373,15 @@ msg: 已加星
 #
 id: Bookmarks
 msg: 收藏夹
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: 无法处理内容类型%d
+
+id: Unable to open file: %s
+msg: 无法打开文件%s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -519,6 +555,25 @@ id: Map mouse wheel to up/down
 msg: 将鼠标滚轮映射到上/下按键
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -543,30 +598,25 @@ msg: 未发现服务
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: 强制级别%d.%d的内容为级别4.2。可能会影响播放。
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: 无法加速%s，未载入类库。
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: 无法启用Cell解码器，错误码0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: 无法启用Cell解码器，不能分配%d字节的内存。
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: 无法查询Cell解码器，错误码0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: 默认显示字幕
+msg: 总是显示字幕
 
 id: Auto
 msg: 自动
@@ -576,6 +626,13 @@ msg: 居中
 
 id: Color
 msg: 颜色
+
+id: Controls if video playback should restart where last played
+msg: 控制视频播放是否从上次播放位置开始
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: 启用VDPAU
@@ -592,11 +649,17 @@ msg: 忽略嵌入样式
 id: Left
 msg: 靠左
 
+id: No
+msg: 否
+
 id: Outline color
 msg: 边框颜色
 
 id: Outline size
 msg: 边框大小
+
+id: Resume video playback
+msg: 继续播放
 
 id: Right
 msg: 靠右
@@ -627,4 +690,7 @@ msg: 视频加速及显示方式
 
 id: Video playback
 msg: 视频播放
+
+id: Yes
+msg: 是
 

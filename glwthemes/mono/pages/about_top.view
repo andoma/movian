@@ -1,4 +1,4 @@
-#import "skin://nav.skin"
+#import "theme://include/nav.view"
 
 widget(container_x, {
   skinNavLocation(_("About"));

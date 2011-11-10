@@ -1,4 +1,4 @@
-#import "skin://infobox.skin"
+#import "theme://include/infobox.view"
 #import "theme://include/buttons.view"
 #import "theme://include/separators.view"
 #import "theme://include/slider.view"
@@ -34,7 +34,7 @@ widget(keyintercept, {
 	    
 	  });
 	});
-	ICON2("skin://icons/Delete.png",
+	ICON2("theme://icons/Delete.png",
 	      "Clear",
 	      {
 		$page.model.filter = void;
@@ -67,16 +67,16 @@ widget(keyintercept, {
 
 	  widget(icon, {
 	    .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_AUDIO());
-	    .source = translate($self.type,  "skin://icons/File.png",
-				"archive",   "skin://icons/Archive.png",
-				"artist",    "skin://icons/User.png",
-				"audio",     "skin://icons/Music.png",
-				"directory", "skin://icons/Folder.png",
-				"dvd",       "skin://icons/DVD.png",
-				"playlist",  "skin://icons/List.png",
-				"video",     "skin://icons/Movie.png",
-				"album",     "skin://icons/DVD.png",
-				"plugin",    "skin://icons/Plugin.png"
+	    .source = translate($self.type,  "theme://icons/File.png",
+				"archive",   "theme://icons/Archive.png",
+				"artist",    "theme://icons/User.png",
+				"audio",     "theme://icons/Music.png",
+				"directory", "theme://icons/Folder.png",
+				"dvd",       "theme://icons/DVD.png",
+				"playlist",  "theme://icons/List.png",
+				"video",     "theme://icons/Movie.png",
+				"album",     "theme://icons/DVD.png",
+				"plugin",    "theme://icons/Plugin.png"
 			       );
 	    .shadow = true;
 	    .hqScaling = true;

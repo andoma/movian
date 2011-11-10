@@ -1,7 +1,6 @@
 #import "theme://include/defs.view"
 #import "theme://include/separators.view"
-#import "skin://infobox.skin"
-
+#import "theme://include/infobox.view"
 
 widget(container_y, {
   .spacing = 5;
@@ -80,7 +79,7 @@ widget(container_y, {
   widget(container_x, {
     .hidden = select($args.metadata.message, false, true);
     widget(icon, {
-      .source = "skin://icons/Mail.png";
+      .source = "theme://icons/Mail.png";
       .color = 0.6;
       .hqScaling = true;
     });

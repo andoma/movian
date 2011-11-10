@@ -27,6 +27,8 @@
 #include <endian.h>
 #include <alsa/asoundlib.h>
 
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "audio/audio_defs.h"
 #include "audio/audio_iec958.h"

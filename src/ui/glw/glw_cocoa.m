@@ -752,7 +752,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   timer_cursor = nil;
   
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL, NULL,
+  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL,
               gcocoa.start_ui, gcocoa.start_primary,
               "glw/cocoa/default", NULL))
     return;

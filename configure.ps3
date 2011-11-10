@@ -14,6 +14,7 @@
 PLATFORM="ps3"
 OSENV="ps3"
 DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="ps3"
 
 source support/configure.inc
 GLW_DEFAULT_THEME="mono"

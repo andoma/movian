@@ -28,3 +28,5 @@ db_pool_t *db_pool_create(const char *path, int size);
 sqlite3 *db_pool_get(db_pool_t *p);
 
 void db_pool_put(db_pool_t *p, sqlite3 *db);
+
+void db_pool_close(db_pool_t *dp);

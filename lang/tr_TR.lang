@@ -25,6 +25,24 @@ msg: Video Ayarları
 id: Added by: %s
 msg: Added by: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Kapalı
 
 id: On
 msg: Açık
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Sil
+
+id: Enqueue
+msg: Enqueue
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -148,28 +184,10 @@ id: Username
 msg: Kulanıcı Adı
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: İptal
-
-id: OK
-msg: Tammam
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Açılamadı
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Sil
-
-id: Enqueue
-msg: Enqueue
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +210,10 @@ msg: GPU çekirdek ısısı: %d / %d °
 id: Adjust background tint based on daytime
 msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Sessiz
 
@@ -200,9 +222,6 @@ msg: Fancy UI animations
 
 id: Master volume: %d dB
 msg: Ses seviyesi: %d dB
-
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
 
 id: Top bar navigation buttons
 msg: Top Bar navigasyon düğmeleri
@@ -219,7 +238,7 @@ msg: opensubtitles.org kullan
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 # Missing translation
 msg: 
 
@@ -285,11 +304,19 @@ msg: Geçersiz HTSP URL
 id: Search
 msg: Ara
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Showtime başlarken Otomatik giriş
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify etkinleştirin
@@ -312,6 +339,14 @@ msg: Yeni albüm aç Spotify
 
 id: New releases
 msg: Yenilikler
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Oynatma listesi
@@ -346,6 +381,17 @@ msg: Starred
 #
 id: Bookmarks
 msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -526,6 +572,25 @@ id: Map mouse wheel to up/down
 msg: Map mouse wheel to up/down
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -584,6 +649,14 @@ msg: merkez
 id: Color
 msg: renk
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU etkin
 
@@ -599,11 +672,19 @@ msg: Ignore embedded styling
 id: Left
 msg: Sol
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Outline Rengi
 
 id: Outline size
 msg: Outline boyutu
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Sağ
@@ -634,4 +715,8 @@ msg: Video hızlandırma ve görüntü davranışı
 
 id: Video playback
 msg: Video oynatma listesi
+
+id: Yes
+# Missing translation
+msg: 
 

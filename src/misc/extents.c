@@ -265,9 +265,25 @@ extent_create(int start, int size)
  *
  */
 void
-extent_stats(extent_pool_t *ep, int *totalp, int *availp, int *fragmentsp)
+extent_destroy(extent_pool_t *ep)
 {
   extent_freeseg_t *ef;
+  
+  while((ef = ep->ep_freesegs.root) != NULL)
+    ef_destroy(ep, ef);
+  
+  assert(ep->ep_sizes.root == NULL);
+  free(ep);
+}
+
+
+/**
+ *
+ */
+void
+extent_stats(const extent_pool_t *ep, int *totalp, int *availp, int *fragmentsp)
+{
+  const extent_freeseg_t *ef;
   int avail = 0;
   int fragments = 0;
   RB_FOREACH(ef, &ep->ep_freesegs, ef_link) {
@@ -285,7 +301,6 @@ extent_stats(extent_pool_t *ep, int *totalp, int *availp, int *fragmentsp)
     *fragmentsp = fragments;
 }
 
-#if 0
 
 /**
  *
@@ -302,10 +317,15 @@ extent_dump(extent_pool_t *ep)
 
   printf("      size dist\n");
   RB_FOREACH(es, &ep->ep_sizes, es_link) {
-    printf("  %10d\n", es->es_size);
+    int segs = 0;
+    LIST_FOREACH(ef, &es->es_freesegs, ef_size_link)
+      segs++;
+    printf("  %10d * %d\n", es->es_size, segs);
   }
 
 }
+
+#if 0
 
 #define ASIZE 10
 #define BSIZE 100

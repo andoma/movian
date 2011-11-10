@@ -26,6 +26,8 @@
 #include "showtime.h"
 #include "metadata.h"
 
+#include <libavcodec/avcodec.h>
+
 #include <fileaccess/svfs.h>
 #include <dvdnav/dvdnav.h>
 

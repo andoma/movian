@@ -25,6 +25,24 @@ msg: Videó beállitások
 id: Added by: %s
 msg: Hozzáadott: %s
 
+id: Played %d times
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -33,6 +51,24 @@ msg: Ki
 
 id: On
 msg: Be
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Törlés
+
+id: Enqueue
+msg: Sorba állítás
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Mégse
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
@@ -148,28 +184,10 @@ id: Username
 msg: Felhasználonév
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Mégse
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nincs média betöltve
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Törlés
-
-id: Enqueue
-msg: Sorba állítás
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +210,10 @@ msg: Grafikai processzor maghőmérséklet: %d / %d °
 id: Adjust background tint based on daytime
 msg: Háttér árnyalat állitás, nappali időszak alapján
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Hang némitva
 
@@ -200,9 +222,6 @@ msg: Animácios felület
 
 id: Master volume: %d dB
 msg: Fő hangerő: %d dB
-
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
 
 id: Top bar navigation buttons
 msg: Felső sáv navigációs gombok
@@ -219,7 +238,7 @@ msg: opensubtitles.org-ot használ
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
+id: System is low on memory (%d kB RAM available)
 # Missing translation
 msg: 
 
@@ -285,11 +304,19 @@ msg: érvénytelen HTSP URL
 id: Search
 msg: Keresés
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatikus bejelentkezés a Showtime inditásakor
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify Engedélyezés
@@ -312,6 +339,14 @@ msg: Új albumok a Spotify-n
 
 id: New releases
 msg: Új kiadások
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Lejátszási lista
@@ -346,6 +381,17 @@ msg: Csillagos
 #
 id: Bookmarks
 msg: Könyvjelzők
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -519,6 +565,25 @@ id: Map mouse wheel to up/down
 msg: Egér görgetés fel/le feltérképezése 
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -577,6 +642,14 @@ msg: Középső
 id: Color
 msg: Szin
 
+id: Controls if video playback should restart where last played
+# Missing translation
+msg: 
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU Engedélyezés
 
@@ -592,11 +665,19 @@ msg: Beágyazott stílus figyelmen kívül hagyása
 id: Left
 msg: Ball
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Körvonal színe
 
 id: Outline size
 msg: Körvonal mérete
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Jobb
@@ -627,4 +708,8 @@ msg: Videó gyorsitás es kijelzo működés
 
 id: Video playback
 msg: Videó lejátszás
+
+id: Yes
+# Missing translation
+msg: 
 
