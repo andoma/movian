@@ -4,27 +4,41 @@ How to compile, install and make rpm packages of showtime in Fedora 16
 First of you need (a clean install of) Fedora 16 (Graphical Desktop)
 
 
+###############################################################################
+
+
+Section 0 - RPMFusion Repositories
 
 Section 1 - Nvidia Graphics Drivers (if you like the nvidia blob and have a nvidia card)
+(Showtime works prefect with the drivers provided in the default fedora installation so you can skip this part and continue at Section 2)
+
 Section 2 - Install Development packages
 Section 3 - Showtime Source
 Section 4 - RPM
 
 
+###############################################################################
 
 
 If you like to work with a good graphical package manager install yumex for future use, (this turtorial uses command line)
 root@computer ~]# yum install yumex
 
 
+###############################################################################
+## Section 0 - RPMFusion Repositories
+###############################################################################
 
-Section 1 - Nvidia Graphics Drivers
 
 Setup your Fedora to use RPMfusion as 3'rd party repositories by web or command line
 
 Browse to rpmfusion.org and goto the configuration page and install both the free and nonfree libraries that is correct for this version or do it command line stile.
 
 root@computer ~]# yum localinstall --nogpgcheck http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-stable.noarch.rpm
+
+
+###############################################################################
+## Section 1 - Nvidia Graphics Drivers (Showtime works without section 1...)
+###############################################################################
 
 
 Nvidia will conflict with the free Nouveau drivers so to be on the safe side we do
@@ -52,9 +66,10 @@ reboot end nvidia proprietary drivers should engage
 root@computer ~]# reboot
 
 
+###############################################################################
+## Section 2 - Install Development packages
+###############################################################################
 
-
-Section 2 - Install Development packages
 
 Become root in a shell (su -) and add theese groups to make the computer a basic development workstation
 
@@ -89,9 +104,10 @@ polarssl-devel
 root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel libcdio-devel libcddb libcddb-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel polarssl polarssl-devel ffmpeg ffmpeg-devel
 
 
+###############################################################################
+## Section 3 - Showtime Source
+###############################################################################
 
-
-Section 3 - Showtime Source
 
 //as user
 
@@ -100,9 +116,10 @@ user@computer ~]$ git clone git://github.com/andoma/showtime
 //if you intend to make an rpm do not run ./configure in the folder.. (will fail to build later because folder will be renamed)
 
 
+###############################################################################
+## Section 4 - RPM
+###############################################################################
 
-
-Section 4 - RPM
 
 add rpmdevtools to create rpm packages 
 root@computer ~]# yum install rpmdevtools
@@ -122,15 +139,6 @@ change directory to $home/rpmbuild/SPEC  and make the rpm files.
 
 user@computer ~]$ rpmbuild -ba showtime.spec
 user@computer ~]$ rpmbuild -ba --target i686 showtime.spec  //if you are on a 64bit machine and need to make the 32bit rpm
-
-
-
-
-
-
-
-
-
 
 
 
