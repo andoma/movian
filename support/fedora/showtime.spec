@@ -1,8 +1,8 @@
 Name:		showtime
 Version:	3.2.3
-Release:	2%{?dist}
+Release:	3%{?dist}
 Summary:	Showtime is a Linux based media player for usage on HTPC's.
-# buildt on fedora 15 with the rpmfusion free/nonfree repositories enabled
+# buildt on fedora 16 with the rpmfusion free/nonfree repositories enabled
 # showtime source manually checked out and put into showtime-%{version}.tar.bz2 file
 # within rpmbuild environment
 Group:		Applications/Multimedia
@@ -12,37 +12,39 @@ Source0:	$home/rpmbuild/SOURCES/showtime-%{version}.tar.bz2
 BuildRoot:	%{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
 #BuildRequires:	ffmpeg-devel >= 0.7
-BuildRequires:	gtk2-devel
-BuildRequires:	freetype-devel
 BuildRequires:	alsa-lib-devel
 BuildRequires:	pulseaudio-libs-devel
-BuildRequires:	avahi-devel
+BuildRequires:	libXScrnSaver-devel
+BuildRequires:	libXv-devel
 BuildRequires:	libcdio-devel
 BuildRequires:	libcddb-devel
-BuildRequires:	openssl-devel
-BuildRequires:	libXv-devel
-BuildRequires:	libXScrnSaver-devel
-#BuildRequires:	libXNVCtrl-devel
-BuildRequires:	mesa-libGL-devel
-BuildRequires:	mesa-libGLU-devel
-BuildRequires:	desktop-file-utils
+BuildRequires:	avahi-devel
 BuildRequires:	libvdpau-devel
+BuildRequires:	mesa-libGLw-devel
+BuildRequires:	mesa-libGLU-devel
+BuildRequires:	librtmp-devel
+BuildRequires:	libdvdread-devel
+BuildRequires:	libdvdnav-devel
+BuildRequires:	polarssl-devel
+BuildRequires:	freetype-devel
+BuildRequires:	desktop-file-utils
 
 #Requires:       ffmpeg >= 0.7
-Requires:	gtk2
-Requires:	freetype
 Requires:	alsa-lib
 Requires:	pulseaudio-libs
-Requires:	avahi
+Requires:	libXScrnSaver
+Requires:	libXv
 Requires:	libcdio
 Requires:	libcddb
-Requires:	openssl
-Requires:	libXv
-Requires:	libXScrnSaver
-#Requires:	libXNVCtrl
-Requires:	mesa-libGL
-Requires:	mesa-libGLU
+Requires:	avahi
 Requires:	libvdpau
+Requires:	mesa-libGLw
+Requires:	mesa-libGLU
+Requires:	librtmp
+Requires:	libdvdread
+Requires:	libdvdnav
+Requires:	polarssl
+Requires:	freetype
 
 Requires(post): desktop-file-utils
 Requires(postun): desktop-file-utils
@@ -115,6 +117,9 @@ fi
 
 
 %changelog
+* Thu Nov 10 2011 Jonas Karlsson <jonas karlsson at fxdev dot com> 3.2.3-3
+- Update for Fedora 16
+
 * Thu Sep 29 2011 Jonas Karlsson <jonas karlsson at fxdev dot com> 3.2.3-2
 - Update to enable vdpau
 
