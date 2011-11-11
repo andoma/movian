@@ -554,6 +554,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_loadable_texture_t *glt;
   glw_rctx_t rc0;
   glw_t *c;
+  int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
 
   if(gi->gi_pending_filename != NULL) {
     // Request to load
@@ -580,8 +581,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	flags |= GLW_TEX_REPEAT;
 
 
-      if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING) {
-
+      if(hq) {
 	if(rc->rc_width < rc->rc_height) {
 	  xs = rc->rc_width;
 	} else {
@@ -689,7 +689,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	break;
       }
 
-      if(gi->gi_bitmap_flags & GLW_IMAGE_HQ_SCALING && gi->gi_pending == NULL &&
+      if(hq && gi->gi_pending == NULL &&
 	 gi->gi_pending_filename == NULL && rc->rc_width && rc->rc_height) {
 
 	int xs = -1, ys = -1, rescale;

@@ -23,7 +23,6 @@
       .spacing = 10;
       widget(image, {
 	.aspectConstraint = true;
-	.hqScaling = true;
 	.hidden = select(LOGO, 0, 1);
 	.source = LOGO;
       });

@@ -147,7 +147,6 @@ widget(container_z, {
 	widget(container_x, {
 	  .spacing = 10;
 	  widget(icon, {
-	    .hqScaling = true;
 	    .sizeScale = 1.5;
 	    .source = "theme://icons/Alert.png";
 	    .color = translate($self.type, [1,1,1],

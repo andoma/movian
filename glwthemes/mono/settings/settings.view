@@ -24,7 +24,6 @@ widget(container_x, {
 
     .shadow = true;
     .sizeScale = 2;
-    .hqScaling = true;
   });
 
   widget(container_y, {

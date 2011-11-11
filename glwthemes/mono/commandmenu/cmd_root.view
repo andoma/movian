@@ -280,7 +280,6 @@ widget(container_y, {
       .width = $ui.size * 4;
       widget(image, {
 	.source = "theme://graphics/clock.png";
-	.hqScaling = true;
       });
       widget(image, {
 	.source = "theme://graphics/clock-hand-short.png";
@@ -509,7 +508,6 @@ widget(container_y, {
 	
 	widget(container_z, {
 	  widget(image, {
-	    .hqScaling = true;
 	    .source = $self.image;
 	  });
 

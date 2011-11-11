@@ -16,7 +16,6 @@ widget(backdrop, {
 		"archive", "Archive.png",
 		"playlist", "List.png",
 		"directory", "Folder.png");
-    .hqScaling = true;
     .sizeScale = 4;
     .alpha = iir(isReady(), 10);
     .saturation = 1 - iir(isReady(), 10);

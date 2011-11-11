@@ -43,7 +43,6 @@ widget(container_x, {
 	  .hidden = select($global.media.current.video.too_slow, false, true);
 	  widget(icon, {
 	    .source = "theme://icons/Alert.png";
-	    .hqScaling = true;
 	  });
 	  widget(label, {
 	    .caption = _("CPU is too slow to decode this video");
@@ -54,7 +53,6 @@ widget(container_x, {
 	cloner($global.media.current.notifications, container_x, {
 	  .spacing = 10;
 	  widget(icon, {
-	    .hqScaling = true;
 	    .source = "theme://icons/Alert.png";
 	    .color = translate($self.type, [1,1,1],
 			       "info", [0.5, 1, 0.5],

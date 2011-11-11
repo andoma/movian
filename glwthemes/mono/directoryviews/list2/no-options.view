@@ -18,7 +18,6 @@ widget(backdrop, {
     .alphaSelf = iir(isFocused() * 0.5, 10);
 
     widget(icon, {
-      .hqScaling = true;
       .source = "theme://icons/256x256/Enter.png";
       .sizeScale = 4;
       .alpha = iir(isHovered() || isFocused(), 5) + 0.05;

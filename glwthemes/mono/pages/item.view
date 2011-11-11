@@ -32,7 +32,6 @@ widget(container_y, {
   widget(container_x, {
     .spacing = 20;
     widget(image, {
-      .hqScaling = true;
       .source = $page.model.metadata.icon;
       .width = 160;
       .align = topLeft;

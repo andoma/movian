@@ -19,7 +19,6 @@ widget(container_x, {
 	.width  = $ui.size * 4;
 	.height = $ui.size * 4;
 	.source = $global.media.current.metadata.album_art;
-	.hqScaling = true;
       });
       widget(container_y, {
 	.filterConstraintX = true;

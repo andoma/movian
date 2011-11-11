@@ -7,7 +7,6 @@ widget(image, {
   .focusOnClick = true;
   .alphaEdges = 2;
   .source = $self.metadata.album_art ?? "theme://icons/256x256/CD.png";
-  .hqScaling = true;
   onEvent(activate, navOpen($self.url));
 
 });

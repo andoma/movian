@@ -804,7 +804,6 @@ static const token_attrib_t attribtab[] = {
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
   {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
 
-  {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT, mod_img_flags},
   {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP, mod_img_flags},

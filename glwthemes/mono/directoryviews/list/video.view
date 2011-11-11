@@ -52,7 +52,6 @@ widget(container_x, {
 	  widget(image, {
 	    .height = select($self.metadata.icon, $ui.fontsize * 6, 0);
 	    .width =  select($self.metadata.icon, $ui.fontsize * 6, 0);
-	    .hqScaling = true;
 	    .source = $self.metadata.icon;
 	  });
 

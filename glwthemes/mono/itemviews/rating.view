@@ -12,27 +12,22 @@ widget(container_x, {
       widget(icon, {
 	.color = [0.66, 0.66, 0];
 	.source = "theme://icons/NoStar.png";
-	.hqScaling = true;
       });
       widget(icon, {
 	.color = [0.66, 0.66, 0];
 	.source = "theme://icons/NoStar.png";
-	.hqScaling = true;
       });
       widget(icon, {
 	.color = [0.66, 0.66, 0];
 	.source = "theme://icons/NoStar.png";
-	.hqScaling = true;
       });
       widget(icon, {
 	.color = [0.66, 0.66, 0];
 	.source = "theme://icons/NoStar.png";
-	.hqScaling = true;
       });
       widget(icon, {
 	.color = [0.66, 0.66, 0];
 	.source = "theme://icons/NoStar.png";
-	.hqScaling = true;
       });
     });
 
@@ -43,27 +38,22 @@ widget(container_x, {
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
 	  .source = "theme://icons/Star.png";
-	  .hqScaling = true;
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
 	  .source = "theme://icons/Star.png";
-	  .hqScaling = true;
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
 	  .source = "theme://icons/Star.png";
-	  .hqScaling = true;
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
 	  .source = "theme://icons/Star.png";
-	  .hqScaling = true;
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
 	  .source = "theme://icons/Star.png";
-	  .hqScaling = true;
 	});
       });
     });

@@ -10,7 +10,6 @@ widget(container_x, {
       .align = left;
       .caption = $self.media.playstatus;
       .shadow = true;
-      .hqScaling = true;
       .sizeScale = 2;
       .color = 0.5 + (isHovered() || isFocused()) * 0.5;
     });

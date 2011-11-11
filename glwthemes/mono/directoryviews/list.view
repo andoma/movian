@@ -79,7 +79,6 @@ widget(keyintercept, {
 				"plugin",    "theme://icons/Plugin.png"
 			       );
 	    .shadow = true;
-	    .hqScaling = true;
 	  });
 	  
 	  widget(backdrop, {

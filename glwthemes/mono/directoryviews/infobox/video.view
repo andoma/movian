@@ -8,7 +8,6 @@ widget(container_y, {
       .height = $ui.size * 10;
       .aspectConstraint = true;
       .source = $args.metadata.icon;
-      .hqScaling = true;
       .hidden = select($args.metadata.icon, false, true);
     });
     

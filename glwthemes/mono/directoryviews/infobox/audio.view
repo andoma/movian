@@ -64,7 +64,6 @@ widget(container_y, {
       .width = $ui.size * 6;
       .height = $ui.size * 6;
       .source = $args.metadata.album_art;
-      .hqScaling = true;
     });
   });
 
@@ -81,7 +80,6 @@ widget(container_y, {
     widget(icon, {
       .source = "theme://icons/Mail.png";
       .color = 0.6;
-      .hqScaling = true;
     });
     widget(label, {
       .color = 0.6;

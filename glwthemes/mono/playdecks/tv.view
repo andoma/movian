@@ -25,7 +25,6 @@ widget(container_x, {
 	.height = $ui.size * 4.5;
 	.aspectConstraint = true;
 	.source = $global.media.current.metadata.icon;
-	.hqScaling = true;
 	.align = top;
       });
 
@@ -97,7 +96,6 @@ widget(container_x, {
 	  .hidden = select($global.media.current.error, false, true);
 	  widget(icon, {
 	    .source = "theme://icons/Alert.png";
-	    .hqScaling = true;
 	  });
 	  widget(label, {
 	    .caption = $global.media.current.error;

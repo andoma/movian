@@ -1,5 +1,4 @@
 widget(image, {
   .source = $self.focused.url;
-  .hqScaling = true;
   .alpha = iir(isReady(), 6);
 });

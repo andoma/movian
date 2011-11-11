@@ -24,7 +24,6 @@ widget(detachable, {
 
       widget(icon, {
 	.source = $self.metadata.album_art ?? "theme://icons/256x256/Music.png";
-	.hqScaling = true;
 	.sizeScale = 4;
 	.alpha = iir(isReady(), 10);
 	.saturation = 1 - iir(isReady(), 10);

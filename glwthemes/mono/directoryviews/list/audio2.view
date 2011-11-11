@@ -117,7 +117,6 @@ widget(container_x, {
       widget(icon, {
 	.align = left;
 	.source = $self.metadata.album_art;
-	.hqScaling = true;
 	.sizeScale = select($self.metadata.album_art, 4, 0);
       });
       
