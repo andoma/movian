@@ -76,8 +76,10 @@ static int
 ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
 {
   int c, tot = 0;
-  if(!all)
-    return SSL_read(tc->ssl, buf, len);
+  if(!all) {
+    c = SSL_read(tc->ssl, buf, len);
+    return c > 0 ? c : -1;
+  }
 
   while(tot != len) {
     c = SSL_read(tc->ssl, buf + tot, len - tot);
@@ -113,9 +115,7 @@ polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int ret, tot = 0;
   if(!all) {
     ret = ssl_read(tc->ssl, buf, len);
-    if(ret >= 0) 
-      return ret;
-    return -1;
+    return ret > 0 ? ret : -1;
   }
 
   while(tot != len) {
