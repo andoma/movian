@@ -723,8 +723,8 @@ get_ts(void)
 int
 main(int argc, char **argv)
 {
-  pixmap_t *dst = pixmap_create(2048, 2048, PIX_FMT_BGR32);
-  pixmap_t *src = pixmap_create(2048, 2048, PIX_FMT_GRAY8);
+  pixmap_t *dst = pixmap_create(2048, 2048, PIXMAP_BGR32);
+  pixmap_t *src = pixmap_create(2048, 2048, PIXMAP_GRAY8);
 
   memset(src->pm_pixels, 0xff, src->pm_linesize * src->pm_height);
 
