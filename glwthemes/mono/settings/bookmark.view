@@ -194,7 +194,7 @@ widget(container_x, {
 		       PLATE_COLOR_VIDEO());
 	    TYPE_ENTRY("tv", "Tv", "theme://icons/Display.png",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("image", "Image", "theme://icons/Image.png",
+	    TYPE_ENTRY("photos", "Image", "theme://icons/Image.png",
 		       PLATE_COLOR_VIDEO());
 	    TYPE_ENTRY("other", "Other", "theme://icons/Folder.png",
 		       PLATE_COLOR_VIDEO());
