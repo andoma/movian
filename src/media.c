@@ -118,6 +118,18 @@ media_buf_dtor_freedata(media_buf_t *mb)
 /**
  *
  */
+static void
+media_buf_dtor_avpkt(media_buf_t *mb)
+{
+  av_free_packet(mb->mb_data);
+  free(mb->mb_data);
+}
+
+
+
+/**
+ *
+ */
 #ifdef POOL_DEBUG
 media_buf_t *
 media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line)
@@ -152,6 +164,23 @@ media_buf_alloc_unlocked(media_pipe_t *mp, size_t size)
   media_buf_t *mb;
   hts_mutex_lock(&mp->mp_mutex);
   mb = media_buf_alloc_locked(mp, size);
+  hts_mutex_unlock(&mp->mp_mutex);
+  return mb;
+}
+
+media_buf_t *
+media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
+{
+  media_buf_t *mb;
+  hts_mutex_lock(&mp->mp_mutex);
+
+  mb = pool_get(mp->mp_mb_pool);
+  mb->mb_time = AV_NOPTS_VALUE;
+  mb->mb_dtor = media_buf_dtor_avpkt;
+  mb->mb_data = malloc(sizeof(AVPacket));
+  mb->mb_size = pkt->size;
+
+  memcpy(mb->mb_data, pkt, sizeof(AVPacket));
   hts_mutex_unlock(&mp->mp_mutex);
   return mb;
 }
@@ -630,7 +659,28 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
     prop_set_int(mq->mq_prop_qlen_cur, mq->mq_packets_current);
     prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
   }
+}
 
+/**
+ *
+ */
+static void
+mb_promote(media_buf_t *mb)
+{
+  if(mb->mb_dtor != media_buf_dtor_avpkt)
+    return;
+  
+  AVPacket *pkt = mb->mb_data;
+  assert(pkt->size == mb->mb_size);
+
+  void *d = malloc(mb->mb_size + FF_INPUT_BUFFER_PADDING_SIZE);
+  memcpy(d, pkt->data, mb->mb_size);
+  memset(d + mb->mb_size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+
+  av_free_packet(pkt);
+  free(pkt);
+  mb->mb_data = d;
+  mb->mb_dtor = media_buf_dtor_freedata;
 }
 
 /**
@@ -706,6 +756,7 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
   if(e != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
   } else {
+    mb_promote(mb);
     mb_enq_tail(mp, mq, mb);
   }
 
@@ -746,6 +797,8 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
     TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   }
 
+  mb_promote(mb);
+
   mq->mq_packets_current++;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
@@ -763,6 +816,7 @@ void
 mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   hts_mutex_lock(&mp->mp_mutex);
+  mb_promote(mb);
   mb_enq_tail(mp, mq, mb);
   hts_mutex_unlock(&mp->mp_mutex);
 }
