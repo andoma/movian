@@ -165,7 +165,8 @@ int fa_notify(const char *url, void *opaque,
 void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
 void fa_scanner(const char *url, time_t mtime, 
-		prop_t *model, const char *playme);
+		prop_t *model, const char *playme,
+		prop_t *direct_close);
 
 #define FA_DISABLE_CACHE ((int *)-1)
 #define FA_NOT_MODIFIED  ((void *)-1)

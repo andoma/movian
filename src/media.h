@@ -211,6 +211,8 @@ typedef struct media_pipe {
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
 
+  int mp_eof;   // End of file: We don't expect to need to read more data
+
   pool_t *mp_mb_pool;
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)

@@ -264,6 +264,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
      */
     if(mb == NULL) {
 
+      mp->mp_eof = 0;
       r = av_read_frame(fctx, &pkt);
 
       if(r == AVERROR(EAGAIN))
@@ -271,6 +272,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(r == AVERROR_EOF) {
 	mb = MB_SPECIAL_EOF;
+	mp->mp_eof = 1;
 	continue;
       }
 

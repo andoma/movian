@@ -555,10 +555,12 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
     if(pos == -1) {
 
+      mp->mp_eof = 0;
       ret = RTMP_GetNextMediaPacket(r->r, &p);
 
       if(ret == 2) {
 	/* Wait for queues to drain */
+	mp->mp_eof = 1;
       again:
 	e = mp_wait_for_empty_queues(mp);
 

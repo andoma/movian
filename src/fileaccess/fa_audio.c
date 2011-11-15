@@ -310,12 +310,14 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
      */
     if(mb == NULL) {
       
+      mp->mp_eof = 0;
       r = av_read_frame(fctx, &pkt);
       if(r == AVERROR(EAGAIN))
 	continue;
       
       if(r == AVERROR_EOF || r == AVERROR(EIO)) {
 	mb = MB_SPECIAL_EOF;
+	mp->mp_eof = 1;
 	continue;
       }
       

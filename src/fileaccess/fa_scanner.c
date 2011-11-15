@@ -45,6 +45,7 @@ typedef struct scanner {
   prop_t *s_contents;
   prop_t *s_loading;
   prop_t *s_root;
+  prop_t *s_direct_close;
 
   int s_stop;
 
@@ -544,13 +545,7 @@ doscan(scanner_t *s)
 
 
   if(fa_notify(s->s_url, s, scanner_notification, scanner_checkstop)) {
-    /* Can not do notifcations */
-    while(!s->s_stop) {
-      sleep(3);
-      if(!media_buffer_hungry)
-	rescan(s);
-      closedb(s);
-    }
+    prop_set_int(s->s_direct_close, 1);
   }
   fa_dir_free(s->s_fd);
 }
@@ -576,7 +571,7 @@ scanner(void *aux)
   prop_ref_dec(s->s_nodes);
   prop_ref_dec(s->s_contents);
   prop_ref_dec(s->s_loading);
-
+  prop_ref_dec(s->s_direct_close);
   scanner_unref(s);
   return NULL;
 }
@@ -609,7 +604,8 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  */
 void
 fa_scanner(const char *url, time_t url_mtime, 
-	   prop_t *model, const char *playme)
+	   prop_t *model, const char *playme,
+	   prop_t *direct_close)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
   prop_t *source = prop_create(model, "source");
@@ -639,6 +635,7 @@ fa_scanner(const char *url, time_t url_mtime,
   s->s_nodes = prop_ref_inc(source);
   s->s_contents = prop_ref_inc(prop_create(model, "contents"));
   s->s_loading = prop_ref_inc(prop_create(model, "loading"));
+  s->s_direct_close = prop_ref_inc(direct_close);
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 

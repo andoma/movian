@@ -78,7 +78,7 @@ file_open_browse(prop_t *page, const char *url, time_t mtime)
   if(!fa_parent(parent, sizeof(parent), url))
     prop_set_string(prop_create(page, "parent"), parent);
   
-  fa_scanner(url, mtime, model, NULL);
+  fa_scanner(url, mtime, model, NULL, prop_create(page, "directClose"));
 }
 
 /**
@@ -153,7 +153,7 @@ file_open_audio(prop_t *page, const char *url)
   if(!fa_parent(parent2, sizeof(parent2), parent))
     prop_set_string(prop_create(page, "parent"), parent2);
 
-  fa_scanner(parent, fs.fs_mtime, model, url);
+  fa_scanner(parent, fs.fs_mtime, model, url, prop_create(page, "directClose"));
   return 0;
 }
 

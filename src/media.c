@@ -609,7 +609,9 @@ mp_wait_for_empty_queues(media_pipe_t *mp)
 void
 mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
 {
-  int satisfied = mp->mp_buffer_current * 8 >  mp->mp_buffer_limit * 7;
+  int satisfied = mp->mp_eof ||
+    mp->mp_buffer_current == 0 ||
+    mp->mp_buffer_current * 8 > mp->mp_buffer_limit * 7;
 
   if(satisfied) {
     if(mp->mp_satisfied == 0) {
