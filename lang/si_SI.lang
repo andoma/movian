@@ -1,0 +1,675 @@
+language: Slovenian
+native: Slovenski
+maintainer: Drago Kraner <djkidy@gmail.com>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Nastavitve zvoka
+
+id: Languages
+msg: Jezik
+
+id: Settings
+msg: Nastavitve
+
+id: Subtitle settings
+msg: Nastavitve podnapisov
+
+id: Video settings
+msg: Nastavitve videa
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Dodal: %s
+
+id: Played %d times
+msg: %d x Predvajan 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg: %d Vnosi
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg: %d Naslov
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Izklop
+
+id: On
+msg: Vklop
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Delete
+msg: Izbriši
+
+id: Enqueue
+msg: Dodaj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Prekliči
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Avail system RAM: %d kB
+msg: Na voljo sistemskega pomnilnika: %d kB
+
+id: Detected CPUs: %d
+msg: Najdeni CPU-ji: %d
+
+id: Display info
+msg: Prikaži info
+
+id: Framerate: %.2f Hz
+msg: Hitrost slik %.2f Hz
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Višina: %d px
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Sistemske informacije
+
+id: Total system RAM: %d kB
+msg: Celoten sistemski pomnilnik: %d kB
+
+id: Version: %s
+msg: Verzija: %s
+
+id: Width: %d px
+msg: Širina: %d px
+
+id: Windowmanager: %s
+msg: Upravljalec oken: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: O
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Domov
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Nemorem odpreti izvora
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Napaka pri nalaganju strani
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Lista ponovitev
+
+#
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Status predvajanja
+
+id: Unable to start video playback
+msg: Predvajanje videa ni uspelo
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Odstavek %d / %d
+
+id: Title %d / %d
+msg: Naslov %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Skladba %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU je prepočasen za dekodiranje videa
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Geslo
+
+id: Remember me
+msg: Zapomni si
+
+id: Username
+msg: Uporabniško ime
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Medij ni zagnan
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Izhod zvoka
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU in Zaslon
+
+id: GPU Core temperature: %d / %d °
+msg: GPU Temperatura jedra: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Nastavitev barve ozadja glede na čas
+
+id: Alternate list layout
+msg: Alternativna postavitev liste
+
+id: Audio muted
+msg: Izklop zvoka
+
+id: Fancy UI animations
+msg: Lepe UI animacije
+
+id: Master volume: %d dB
+msg: Glasnost: %d dB
+
+id: Top bar navigation buttons
+msg: Navigacijske tipke v vrhnji vrstici
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Nastavitve za opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Uporaba opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video sinhronizacija upočasnjena
+
+id: Current output device
+msg: Trenutna izhodna naprava
+
+id: Force stereo downmix
+msg: Prisiliti Stereo-Downmix
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-center
+
+id: Select audio output device and related configurations
+msg: Izbor avdio izhodnih naprav danih nastavitev
+
+id: Small front speakers
+msg: Majhen sprednji zvočnik
+
+id: Swap LFE+center with surround
+msg: Zamenjati LFE+Center z Surround-om
+
+id: Switching audio output to %s
+msg: Preklop avdio izhoda na %s um
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Napačen CD URL
+
+id: Invalid CD track
+msg: Napačna CD skladba
+
+id: Unable to open CD
+msg: Napaka pri odpiranju CD-ja
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD read error, restarting disc
+msg: Napaka pri branju DVD-ja, disk bo ponovno zagnan
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Napačen HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Iskanje
+
+id: Search result for: %s
+msg: Rezultat iskanja za: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Samodejna prijava pri zagonu Showtime-a
+
+id: Enable Spotify
+msg: Omogoči Spotify
+
+id: Forget me
+msg: Pozabi uporabnika
+
+id: Friends
+msg: Prijatelji
+
+id: High bitrate
+msg: Visoka bitrate
+
+id: Inbox
+msg: Inbox
+
+id: New albums on Spotify
+msg: Nov album na Spotify
+
+id: New releases
+msg: Nove objave
+
+id: Playlists
+msg: Lista predvajanj
+
+id: Relogin (switch user)
+msg: Ponovno logiranje (menjava uporabnika)
+
+id: Search result
+msg: rezultati iskanja
+
+id: Spotify friends
+msg: Spotify Prijatelji
+
+id: Spotify music service
+msg: Spotify glasbena storitev
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify vam ponuja pravni in prost dostop do raznovrstnih glasbe. Da bi lahko uporabljali Spotify s Showtime, potrebujete dostop Spotify Premium. \n Za več informacij o Spotify, obiščite http://www.spotify.com/\n\n Pred prvo uporabo Spotify v Showtime, boste morali vnesti svoje uporabniško ime in geslo Spotify.
+
+id: Spotify playlists
+msg: Spotyfy Lista predvajanja
+
+id: Spotify: Connection error: %s
+msg: Spotify: Napaka pri povezavi: %s
+
+id: Starred
+msg: Zagnano
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Priljubljene
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Vsebine %d nemorem uporabiti
+
+id: Unable to open file: %s
+msg: Datoteka: %d se ne odpre
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Za iskanje uporabi Unix Locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Za iskanje uporabi Spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Jezik
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, slo)
+msg: Jezik kot 3-mestno ISO kodo, npr.: eng,swe,slo
+
+id: Preferred languages
+msg: Prednostni jezik
+
+id: Primary audio language code
+msg: Jezik zvoka
+
+id: Primary subtitle language code
+msg: Prednostni jezik podnapisov
+
+id: SRT character set
+msg: Nastavitve za SRT podnapise
+
+id: Secondary audio language code
+msg: Drugi jezik zvoka
+
+id: Secondary subtitle language code
+msg: Drug jezik podnapisov
+
+id: Tertiary audio language code
+msg: Tretji jezik zvoka
+
+id: Tertiary subtitle language code
+msg: Tretji jezik podnapisov
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Avtomatski TV izklop/vklop
+
+id: Input source
+msg: Vhod
+
+id: LG Television set
+msg: Nastavitve za LG TV
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Nastavitve tipk za daljinsko upravljanje
+
+id: Keymapper
+msg: Položaj tipk
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Poravnava podnapisov z sliko
+
+id: Audio delay
+msg: Zamik zvoka
+
+id: Subtitle delay
+msg: Zamik podnapisov
+
+id: Subtitle scaling
+msg: skaliranje podnapisov
+
+id: Video zoom
+msg: Video približevanje
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: URL povezave ni mogoče obdelati
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Nepravilen URI
+
+id: Plugin ID %s does not exist
+msg: ID vtičnika %s ne obstaja
+
+id: Plugin ID %s have no download URL
+msg: ID vtičnika %s nima URL za prenos
+
+id: Unable to load plugin.json: %s
+msg: Dodatek.json nemorem naložit: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Dodatek.json nemorem naložit: Nepravilen JSON
+
+id: Unable to request plugin repository: %s
+msg: Nemogoč dostop do baze dodatkov: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Avtomazsko mirovanje
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Omogočeno
+
+id: Name
+msg: Ime
+
+id: Type
+msg: Tip
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Isšalacija aplikacij in vtičnikov
+
+id: Discovered media sources
+msg: Gefundene Medienquellen
+
+id: Global settings
+msg: Glavne nastavitve
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Prikaz in vmesnik
+
+id: Horizontal underscan
+msg: Horizontalen podscan
+
+id: Screensaver delay
+msg: Zamik ohranjevalnika zaslona
+
+id: Userinterface size
+msg: Velikost vmesnika
+
+id: Vertical underscan
+msg: Vertikalen podscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Celozaslonski način
+
+id: Map mouse wheel to up/down
+msg: Miškin kolešček za gor/dol
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Samodejni vklop za to možnost 
+
+id: DVI-Video color range
+msg: DVI-Video Paleta barv
+
+id: Switch to this mode now
+msg: Preklop na to možnost
+
+id: Video modes
+msg: Video Možnost
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Omogočen v glavnem meniju
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Naprava ni najdena
+
+id: Malformed URI after device
+msg: Nepravilna URI po napravi
+
+id: Malformed URI after service
+msg: Nepravilna URI po storitvi
+
+id: Service not found
+msg: Storitev ni najdena
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Prisiljen nivo 4.2 za nivo %d.%d vsebine. To lahko onemogoči predvajanje videa.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Pospešitev %s ni mogoča, Knjižnica ni naložena.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x.
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Ne morem odpreti Cell-Kodeka. Nemogoče najti %d bytov pomnilnika.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Vedno probajte izbrati podnapise
+
+id: Auto
+msg: Avto
+
+id: Center
+msg: Sredina
+
+id: Color
+msg: Barva
+
+id: Controls if video playback should restart where last played
+msg: Nastavitve za ponovno predvajanje videa, kjer je nazadnje ostal
+
+id: Count video as played when reaching
+msg: Štetje videa kadar predvajanje doseže
+
+id: Enable VDPAU
+msg: Omogočiti VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Prisiliti podnapise da so na video okvirju
+
+id: Generic settings for video subtitles
+msg: Generične nastavitve za video podnapise
+
+id: Ignore embedded styling
+msg: Ignoriraj vgrajeno oblikovanje
+
+id: Left
+msg: Levo
+
+id: No
+msg: Ne
+
+id: Outline color
+msg: Okvirne barve
+
+id: Outline size
+msg: Okvirna velikost
+
+id: Resume video playback
+msg: Nadaljevanje predvajanja
+
+id: Right
+msg: Desno
+
+id: Shadow color
+msg: Prikaži barve
+
+id: Shadow offset
+msg: Izravnava senčenja
+
+id: Stretch video to widescreen
+msg: Raztegni video za Widescreen 
+
+id: Subtitle position
+msg: Položaj podnapisov
+
+id: Subtitle size
+msg: Velikost podnapisov
+
+id: Subtitle styling
+msg: Stil podnapisov
+
+id: Subtitles
+msg: Podnapisi
+
+id: Video acceleration and display behaviour
+msg: Video pospeševanje in prikaz obnašanja
+
+id: Video playback
+msg: Predvajanje videa
+
+id: Yes
+msg: Da 
+
