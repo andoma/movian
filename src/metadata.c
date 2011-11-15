@@ -1358,11 +1358,11 @@ metadb_register_play(const char *url, int inc, int content_type)
  *
  */
 void
-metadb_set_video_restartpos(const char *url, int64_t pos)
+metadb_set_video_restartpos(const char *url, int64_t pos_ms)
 {
   int rc;
+  int i;
   void *db;
-  sqlite3_stmt *stmt;
 
   if((db = metadb_get()) == NULL)
     return;
@@ -1372,55 +1372,36 @@ metadb_set_video_restartpos(const char *url, int64_t pos)
     return;
   }
 
-  rc = sqlite3_prepare_v2(db, 
-			  "UPDATE videoitem "
-			  "SET restartposition = ?2 "
-			  "WHERE item_id = "
-			  "(SELECT id FROM item where url=?1)",
-			  -1, &stmt, NULL);
+  for(i = 0; i < 2; i++) {
+    sqlite3_stmt *stmt;
 
-  if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
-    db_rollback(db);
-    metadb_close(db);
-    return;
-  }
+    rc = sqlite3_prepare_v2(db, 
+			    i == 0 ? 
+			    "UPDATE item "
+			    "SET restartposition = ?2 "
+			    "WHERE url=?1"
+			    :
+			    "INSERT INTO item "
+			    "(url, contenttype, restartposition) "
+			    "VALUES "
+			    "(?1, ?3, ?2)",
+			    -1, &stmt, NULL);
 
-  
-  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-  if(pos >= 0)
-    sqlite3_bind_int64(stmt, 2, pos);
-
-  rc = sqlite3_step(stmt);
-  sqlite3_finalize(stmt);
-  if((rc != SQLITE_DONE || sqlite3_changes(db) == 0) && pos >= 0) {
-
-    int64_t item_id;
-    item_id = db_item_get(db, url, NULL);
-    if(item_id == -1)
-      item_id = db_item_create(db, url, CONTENT_VIDEO, 0, 0);
-
-    if(item_id != -1) {
-      rc = sqlite3_prepare_v2(db, 
-			      "INSERT INTO videoitem "
-			      "(item_id, restartposition) "
-			      "VALUES "
-			      "(?1, ?2)",
-			      -1, &stmt, NULL);
-      
-      if(rc != SQLITE_OK) {
-	TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	      __FUNCTION__, __LINE__);
-	db_rollback(db);
-	metadb_close(db);
-	return;
-      }
-      sqlite3_bind_int64(stmt, 1, item_id);
-      sqlite3_bind_int64(stmt, 2, pos);
-      rc = sqlite3_step(stmt);
-      sqlite3_finalize(stmt);
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      db_rollback(db);
+      metadb_close(db);
+      return;
     }
+
+    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+    sqlite3_bind_int64(stmt, 2, pos_ms);
+    sqlite3_bind_int(stmt, 3, CONTENT_VIDEO);
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    if(i == 0 && rc == SQLITE_DONE && sqlite3_changes(db) > 0)
+      break;
   }
   db_commit(db);
   mip_update_by_url(db, url);
@@ -1448,8 +1429,8 @@ video_get_restartpos(const char *url)
 
   rc = sqlite3_prepare_v2(db, 
 			  "SELECT restartposition "
-			  "FROM videoitem, item "
-			  "WHERE item_id = id AND url = ?1",
+			  "FROM item "
+			  "WHERE url = ?1",
 			  -1, &stmt, NULL);
 
   if(rc != SQLITE_OK) {
@@ -1500,12 +1481,12 @@ typedef struct metadb_item_info {
 static int
 mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
 {
-  int rc, rval = -1;
+  int rc;
   sqlite3_stmt *stmt;
 
   rc = sqlite3_prepare_v2(db, 
 			  "SELECT "
-			  "id,contenttype,playcount,lastplay "
+			  "playcount,lastplay,restartposition "
 			  "FROM item "
 			  "WHERE url=?1 ",
 			  -1, &stmt, NULL);
@@ -1517,38 +1498,14 @@ mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
 
   rc = sqlite3_step(stmt);
-
   if(rc == SQLITE_ROW) {
-    mii->mii_playcount  = sqlite3_column_int(stmt, 2);
-    mii->mii_lastplayed = sqlite3_column_int(stmt, 3);
-    mii->mii_restartpos = 0;
-    rval = 0;
-    int64_t id = sqlite3_column_int64(stmt, 0);
-    if(sqlite3_column_int(stmt, 1) == CONTENT_VIDEO) {
-      sqlite3_finalize(stmt);
-      
-      rc = sqlite3_prepare_v2(db, 
-			      "SELECT "
-			      "restartposition "
-			      "FROM videoitem "
-			      "WHERE item_id=?1 ",
-			      -1, &stmt, NULL);
-      if(rc != SQLITE_OK) {
-	TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	      __FUNCTION__, __LINE__);
-	return -1;
-      }
-      sqlite3_bind_int64(stmt, 1, id);
-
-      rc = sqlite3_step(stmt);
-
-      if(rc == SQLITE_ROW)
-	mii->mii_restartpos = sqlite3_column_int(stmt, 0);
-    }
+    mii->mii_playcount  = sqlite3_column_int(stmt, 0);
+    mii->mii_lastplayed = sqlite3_column_int(stmt, 1);
+    mii->mii_restartpos = sqlite3_column_int(stmt, 2);
   }
 
   sqlite3_finalize(stmt);
-  return rval;
+  return 0;
 }
 
 
