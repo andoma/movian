@@ -1,0 +1,144 @@
+
+How to compile, install and make rpm packages of showtime in Fedora 16
+
+First of you need (a clean install of) Fedora 16 (Graphical Desktop)
+
+
+###############################################################################
+
+
+Section 0 - RPMFusion Repositories
+
+Section 1 - Nvidia Graphics Drivers (if you like the nvidia blob and have a nvidia card)
+(Showtime works prefect with the drivers provided in the default fedora installation so you can skip this part and continue at Section 2)
+
+Section 2 - Install Development packages
+Section 3 - Showtime Source
+Section 4 - RPM
+
+
+###############################################################################
+
+
+If you like to work with a good graphical package manager install yumex for future use, (this turtorial uses command line)
+root@computer ~]# yum install yumex
+
+
+###############################################################################
+## Section 0 - RPMFusion Repositories
+###############################################################################
+
+
+Setup your Fedora to use RPMfusion as 3'rd party repositories by web or command line
+
+Browse to rpmfusion.org and goto the configuration page and install both the free and nonfree libraries that is correct for this version or do it command line stile.
+
+root@computer ~]# yum localinstall --nogpgcheck http://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-stable.noarch.rpm http://download1.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-stable.noarch.rpm
+
+
+###############################################################################
+## Section 1 - Nvidia Graphics Drivers (Showtime works without section 1...)
+###############################################################################
+
+
+Nvidia will conflict with the free Nouveau drivers so to be on the safe side we do
+
+Disable the SELinux environment
+root@computer ~]# gedit /etc/selinux/config and change enforcing to disabled
+
+Reboot to disable selinux and enter runlevel 3
+root@computer ~]# reboot
+root@computer ~]# init 3
+
+//
+you can also enter runlevel 3 from grub by pressing e to edit the grubconfig and enter the digit 3 last in the vmlinuz line (after UTF.8) then press F10 to boot
+//
+
+when in runlevel 3 delete the nouveau drivers and rebuild the initramfs and install the nvidia drivers
+
+root@computer ~]# yum remove xorg-x11-drv-nouveau
+root@computer ~]# mv /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/nouveau/nouveau.ko /lib/modules/$(uname -r)/kernel/drivers/gpu/drm/nouveau/nouveau.ko.old
+root@computer ~]# mv /boot/initramfs-$(uname -r).img /boot/initramfs-$(uname -r)-nouveau.img
+root@computer ~]# dracut /boot/initramfs-$(uname -r).img $(uname -r)
+root@computer ~]# yum install kmod-nvidia akmod-nvidia
+
+reboot end nvidia proprietary drivers should engage
+root@computer ~]# reboot
+
+
+###############################################################################
+## Section 2 - Install Development packages
+###############################################################################
+
+
+Become root in a shell (su -) and add theese groups to make the computer a basic development workstation
+
+root@computer ~]# yum groupinstall "Development Tools" "Development Libraries" "GNOME Software Development"
+
+
+Next add the development packages that Showtime depends on
+
+yasm			to compile the libav
+alsa-lib-devel		alsa support
+pulseaudio-libs-devel	pulse support
+libXScrnSaver		X.Org screen saver support, not default on fedora
+libXScrnSaver-devel	X.Org screen saver support
+libXv-devel		X.Org libXv support
+libcdio-devel		cdio cdda support
+libcddb			cddb servers support, not default on fedora
+libcddb-devel		cddb servers support
+avahi-devel		Avahi support
+libvdpau-devel		VDPAU support
+mesa-libGLw
+mesa-libGLw-devel
+mesa-libGLU-devel
+librtmp-devel
+libdvdread-devel
+libdvdnav-devel
+polarssl
+polarssl-devel
+
+// ffmpeg		will be needed when libav is not in main branch			
+// ffmpeg-devel
+
+root@computer ~]# yum install yasm alsa-lib-devel pulseaudio-libs-devel libXScrnSaver libXScrnSaver-devel libXv-devel libcdio-devel libcddb libcddb-devel avahi-devel libvdpau-devel mesa-libGLw mesa-libGLw-devel mesa-libGLU-devel librtmp-devel libdvdread-devel libdvdnav-devel polarssl polarssl-devel ffmpeg ffmpeg-devel
+
+
+###############################################################################
+## Section 3 - Showtime Source
+###############################################################################
+
+
+//as user
+
+user@computer ~]$ git clone git://github.com/andoma/showtime
+
+//if you intend to make an rpm do not run ./configure in the folder.. (will fail to build later because folder will be renamed)
+
+
+###############################################################################
+## Section 4 - RPM
+###############################################################################
+
+
+add rpmdevtools to create rpm packages 
+root@computer ~]# yum install rpmdevtools
+
+Then in you home folder as user (not as root) run
+user@computer ~]$ rpmdev-setuptree
+
+copy showtime-f16.spec from the $HOME/showtime/support/fedora folder into $HOME/rpmbuild/SPEC directory
+
+Check the spec file for the version it intends to build and rename the showtime folder to showtime-3.2.3 if 3.2.3 is the version in the spec file
+
+Add that folder to a bz2 archive.  showtime-3.2.3.tar.bz2 (this archive now has the showtime folder and all it's subcontents within.
+
+Move the archive to your newly created $home/rpmbuild/SOURCES folder (was created with rpmdev-setuptree)
+
+change directory to $home/rpmbuild/SPEC  and make the rpm files.
+
+user@computer ~]$ rpmbuild -ba showtime.spec
+user@computer ~]$ rpmbuild -ba --target i686 showtime.spec  //if you are on a 64bit machine and need to make the 32bit rpm
+
+
+
