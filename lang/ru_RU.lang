@@ -32,15 +32,13 @@ msg: Пpoигpaнo %d paз
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d пунктов
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d треков
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -72,6 +70,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+
+id: Allocated by application: %d kB
+msg: Выделено приложению: %d КБ
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: Выделено malloc: %d КБ
+
 id: Avail system RAM: %d kB
 msg: Доступная память RAM: %d КБ
 
@@ -84,11 +90,19 @@ msg: Отображение информации
 id: Framerate: %.2f Hz
 msg: Частота кадров %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: Свободные части: %d
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Высота: %d px
+
+id: Memory status
+# Missing translation
+msg: Состояние памяти
 
 id: Renderer: %s
 msg: Рендер: %s
@@ -98,6 +112,10 @@ msg: Системная информация
 
 id: Total system RAM: %d kB
 msg: Общая память RAM: %d КБ
+
+id: Unused memory: %d kB
+# Missing translation
+msg: Неиспользованная память: %d КБ
 
 id: Version: %s
 msg: Версия: %s
@@ -198,9 +216,8 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d °
-# Missing translation
-msg: 
+id: GPU Core temperature: %d / %d В°
+msg: Температура ядра GPU: %d / %d В°
 
 #
 # ./glwthemes/mono/universe.view
@@ -209,8 +226,7 @@ id: Adjust background tint based on daytime
 msg: Настройка оттенка фона в зависимости от яркости
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Альтернативный список раскладки
 
 id: Audio muted
 msg: Приглушение аудио
@@ -236,7 +252,7 @@ msg: Использовать opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memory (%d kB RAM available)
+id: System is low on memroy (%d kB RAM available)
 msg: Системе не хватает памяти (%d кБ RAM доступно)
 
 #
@@ -300,8 +316,7 @@ id: Search
 msg: Поиск
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Результаты поиска для: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -310,8 +325,7 @@ id: Automatic login when Showtime starts
 msg: Автоматический логин при запуске Showtime
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Совместный
 
 id: Enable Spotify
 msg: Включить Spotify
@@ -335,12 +349,10 @@ id: New releases
 msg: Новые релизы
 
 id: Offline
-# Missing translation
-msg: 
+msg: Оффлайн
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Оффлайн синхронизация в 96кб/с
 
 id: Playlists
 msg: Плейлисты
