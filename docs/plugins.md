@@ -607,6 +607,9 @@ Return a HTTP response object
 
 Open the file specified by URL and return the contents as a String
 
+This method should only be used for development and is not available
+in release builds of Showtime
+
 #### querySplitString(String s)
 
 Returns object with properties set to values according to contents
