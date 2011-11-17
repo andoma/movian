@@ -1921,7 +1921,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	snprintf(url, sizeof(url), "sub:%d", idx);
 	mp_add_track(mp->mp_prop_subtitle_tracks,
-		     NULL, url, nicename, NULL, lang, "HTSP", 0);
+		     NULL, url, nicename, NULL, lang, "HTSP", NULL, 0);
 	break;
 
       case AVMEDIA_TYPE_AUDIO:
@@ -1933,7 +1933,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	snprintf(url, sizeof(url), "audio:%d", idx);
 	mp_add_track(mp->mp_prop_audio_tracks,
-		     NULL, url, nicename, NULL, lang, "HTSP", 0);
+		     NULL, url, nicename, NULL, lang, "HTSP", NULL, 0);
 	break;
       }
 

@@ -271,7 +271,7 @@ async_query_do(prop_t *node, htsmsg_t *query)
 		 htsmsg_get_str(entry, "SubFormat"),
 		 NULL,
 		 htsmsg_get_str(entry, "SubLanguageID"),
-		 "opensubtitles.org", 0);
+		 "opensubtitles.org", NULL, 0);
   }
 
   htsmsg_destroy(out);

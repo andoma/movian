@@ -471,6 +471,7 @@ void mp_add_track(prop_t *parent,
 		  const char *longformat,
 		  const char *isolang,
 		  const char *source,
+		  prop_t *sourcep,
 		  int score);
 
 void mp_add_track_off(prop_t *tracks, const char *title);

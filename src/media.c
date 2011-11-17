@@ -1754,17 +1754,24 @@ mp_add_track(prop_t *parent,
 	     const char *longformat,
 	     const char *isolang,
 	     const char *source,
+	     prop_t *sourcep,
 	     int score)
 {
   const char *language = NULL;
 
   prop_t *p = prop_create_root(NULL);
-  
+  prop_t *s;
+
   prop_set_string(prop_create(p, "url"), url);
   prop_set_string(prop_create(p, "format"), format);
   prop_set_string(prop_create(p, "longformat"), longformat);
+  
+  s = prop_create(p, "source");
 
-  prop_set_string(prop_create(p, "source"), source);
+  if(sourcep != NULL)
+    prop_link(sourcep, s);
+  else
+    prop_set_string(s, source);
 
   if(isolang != NULL) {
     prop_set_string(prop_create(p, "isolang"), isolang);
@@ -1787,7 +1794,7 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, 0);
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 0);
 }
 
 

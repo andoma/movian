@@ -112,7 +112,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
       const char *source = htsmsg_get_str(sub, "source");
 
       mp_add_track(mp->mp_prop_subtitle_tracks, NULL, url, 
-		   NULL, NULL, lang, source, 0);
+		   NULL, NULL, lang, source, NULL, 0);
     }
   }
 

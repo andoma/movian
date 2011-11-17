@@ -523,7 +523,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     AVStream *stream = fctx->streams[i];
     AVCodecContext *avctx = stream->codec;
     AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
-    AVMetadataTag *tag;
+    AVMetadataTag *lang, *title;
 
     switch(avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
@@ -545,12 +545,17 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
-    tag = av_metadata_get(stream->metadata, "language", NULL,
+    lang = av_metadata_get(stream->metadata, "language", NULL,
 			  AV_METADATA_IGNORE_SUFFIX);
 
+    title = av_metadata_get(stream->metadata, "title", NULL,
+			    AV_METADATA_IGNORE_SUFFIX);
+
     metadata_add_stream(md, codecname(avctx->codec_id),
-			avctx->codec_type, i, tmp1,
-			tag ? tag->value : NULL,
+			avctx->codec_type, i,
+			title ? title->value : NULL,
+			tmp1,
+			lang ? lang->value : NULL,
 			stream->disposition);
   }
   
