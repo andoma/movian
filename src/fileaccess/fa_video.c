@@ -126,7 +126,8 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
 
       int score = video && fs_sub_match(video, fde->fde_url);
 
-      mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,
+      if ( score > 0 )
+        mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,
 		   "External file", score);
     }
   }
