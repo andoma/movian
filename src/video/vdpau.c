@@ -360,7 +360,7 @@ vdpau_draw_horiz_band(struct AVCodecContext *ctx,
 /**
  *
  */
-static void
+static int
 vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 	     struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
@@ -406,11 +406,12 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
 
   if(!got_pic || mb->mb_skip == 1)
-    return;
+    return 0;
 
   vd->vd_skip = 0;
   vvs = frame->opaque;
   video_deliver_frame(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
+  return 0;
 }
 
 

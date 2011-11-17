@@ -28,6 +28,7 @@
 void media_init(void);
 struct media_buf;
 struct media_queue;
+struct media_pipe;
 struct video_decoder;
 
 typedef struct event_ts {
@@ -62,8 +63,10 @@ typedef struct media_codec {
   struct AVCodecParserContext *parser_ctx;
 
   void *opaque;
-  void (*decode)(struct media_codec *mc, struct video_decoder *vd,
-		 struct media_queue *mq, struct media_buf *mb, int reqsize);
+
+  // If decode returns 1 the accelerator keeps ownership of mb
+  int (*decode)(struct media_codec *mc, struct video_decoder *vd,
+		struct media_queue *mq, struct media_buf *mb, int reqsize);
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
@@ -136,6 +139,9 @@ typedef struct media_buf {
 
   uint8_t mb_channels;
   uint8_t mb_epoch;
+  struct media_queue *mb_mq;
+
+  uint32_t mb_tailptr;
 
 } media_buf_t;
 
@@ -144,6 +150,9 @@ typedef struct media_buf {
  */
 typedef struct media_queue {
   struct media_buf_queue mq_q;
+
+  uint32_t mq_huge_buf_tail;
+  int mq_freeze_tail;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
   unsigned int mq_packets_threshold;  /* If we are below this threshold
@@ -169,6 +178,8 @@ typedef struct media_queue {
   prop_t *mq_prop_codec;
 
   prop_t *mq_prop_too_slow;
+
+  struct media_pipe *mq_mp;
 
 } media_queue_t;
 
@@ -214,6 +225,11 @@ typedef struct media_pipe {
   int mp_eof;   // End of file: We don't expect to need to read more data
 
   pool_t *mp_mb_pool;
+
+  void *mp_huge_buf;
+  uint32_t mp_huge_buf_head;
+  int mp_huge_buf_size;
+
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
   unsigned int mp_buffer_limit;   // Max buffer size

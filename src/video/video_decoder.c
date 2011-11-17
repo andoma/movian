@@ -33,7 +33,7 @@
 #include "media.h"
 #include "ext_subtitles.h"
 #include "video_overlay.h"
-
+#include "misc/sha.h"
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -261,12 +261,12 @@ video_deliver_frame(video_decoder_t *vd,
  */
 static void
 update_vbitrate(media_pipe_t *mp, media_queue_t *mq, 
-		media_buf_t *mb, video_decoder_t *vd)
+		int size, video_decoder_t *vd)
 {
   int i;
   int64_t sum;
 
-  vd->vd_frame_size[vd->vd_frame_size_ptr] = mb->mb_size;
+  vd->vd_frame_size[vd->vd_frame_size_ptr] = size;
   vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
 
   if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
@@ -294,6 +294,7 @@ vd_thread(void *aux)
   int run = 1;
   int reqsize = -1;
   int reinit = 0;
+  int size;
   vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -312,6 +313,7 @@ vd_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mq->mq_freeze_tail = 1;
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
@@ -351,12 +353,15 @@ vd_thread(void *aux)
       if(mb->mb_skip == 2)
 	vd->vd_skip = 1;
 
-      if(mc->decode)
-	mc->decode(mc, vd, mq, mb, reqsize);
-      else
+      size = mb->mb_size;
+
+      if(mc->decode) {
+	if(mc->decode(mc, vd, mq, mb, reqsize))
+	  mb = NULL;
+      } else
 	vd_decode_video(vd, mq, mb);
 
-      update_vbitrate(mp, mq, mb, vd);
+      update_vbitrate(mp, mq, size, vd);
       reqsize = -1;
       break;
 
@@ -412,7 +417,11 @@ vd_thread(void *aux)
     }
 
     hts_mutex_lock(&mp->mp_mutex);
-    media_buf_free_locked(mp, mb);
+    if(mb != NULL) {
+      mq->mq_freeze_tail--;
+      media_buf_free_locked(mp, mb);
+    }
+      
   }
 
   hts_mutex_unlock(&mp->mp_mutex);

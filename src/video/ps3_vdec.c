@@ -54,6 +54,7 @@ LIST_HEAD(vdec_pic_list, vdec_pic);
 typedef struct vdec_au_buffer {
   TAILQ_ENTRY(vdec_au_buffer) vab_link;
   void *vab_mem;
+  media_buf_t *vab_buf;
 } vdec_au_buffer_t;
 
 
@@ -151,7 +152,21 @@ static void
 vab_destroy(vdec_decoder_t *vdd, vdec_au_buffer_t *vab)
 {
   TAILQ_REMOVE(&vdd->vab_queue, vab, vab_link);
-  free(vab->vab_mem);
+  if(vab->vab_buf != NULL) {
+    media_buf_t *mb = vab->vab_buf;
+    media_queue_t *mq = mb->mb_mq;
+    media_pipe_t *mp = mq->mq_mp;
+
+    hts_mutex_lock(&mp->mp_mutex);
+    mq->mq_freeze_tail = 0;
+    media_buf_free_locked(mp, mb);
+    mq->mq_freeze_tail = 1;
+    hts_mutex_unlock(&mp->mp_mutex);
+
+  } else {
+    free(vab->vab_mem);
+  }
+
   free(vab);
 }
 
@@ -596,7 +611,7 @@ h264_to_annexb(uint8_t *b, size_t fsize)
  */
 static int
 submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
-	  int drop_non_ref)
+	  int drop_non_ref, media_buf_t *mb)
 {
   vdec_au_buffer_t *vab;
 
@@ -630,6 +645,7 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
 
   vab = malloc(sizeof(vdec_au_buffer_t));
   vab->vab_mem = data;
+  vab->vab_buf = mb;
   hts_mutex_lock(&vdd->mtx);
   TAILQ_INSERT_TAIL(&vdd->vab_queue, vab, vab_link);
   hts_mutex_unlock(&vdd->mtx);
@@ -639,7 +655,7 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
 /**
  *
  */
-static void
+static int
 decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 	       struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
@@ -678,7 +694,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
     void *buf = malloc(vdd->extradata_size);
     memcpy(buf, vdd->extradata, vdd->extradata_size);
-    if(submit_au(vdd, &au, buf, vdd->extradata_size, 0))
+    if(submit_au(vdd, &au, buf, vdd->extradata_size, 0, NULL))
       free(buf);
     vdd->extradata_injected = 1;
   }
@@ -686,8 +702,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vdd->convert_to_annexb)
     h264_to_annexb(mb->mb_data, mb->mb_size);
   
-  if(!submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1))
-    mb->mb_data = NULL;
+  return !submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, mb);
 }
 
 
