@@ -686,7 +686,7 @@ mb_promote(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb, int doit)
 {
   int mask;
   int siz = mb->mb_size + FF_INPUT_BUFFER_PADDING_SIZE;
-  int vd = -1, ad = -1;
+
   if(mb->mb_dtor != media_buf_dtor_avpkt) {
 
     if(doit)
@@ -729,13 +729,11 @@ mb_promote(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb, int doit)
   if(mp->mp_audio.mq_huge_buf_tail != h) {
 
     e = (mp->mp_audio.mq_huge_buf_tail - h) & mask;
-    ad = e;
     d = MIN(e, d);
   }
 
   if(mp->mp_video.mq_huge_buf_tail != h) {
     e = (mp->mp_video.mq_huge_buf_tail - h) & mask;
-    vd = e;
     d = MIN(e, d);
   }
 
