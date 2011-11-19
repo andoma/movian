@@ -21,8 +21,8 @@
 
 #include "prop/prop.h"
 #include "fileaccess.h"
-#include "metadata.h"
 
+struct metadata;
 struct AVFormatContext;
 
 metadata_t *fa_probe_dir(const char *url);

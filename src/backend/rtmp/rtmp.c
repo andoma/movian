@@ -30,7 +30,7 @@
 #include "misc/isolang.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
-#include "metadata.h"
+#include "metadata/metadata.h"
 
 typedef struct {
 

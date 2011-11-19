@@ -33,7 +33,6 @@
 #include "fileaccess.h"
 #include "fa_libav.h"
 #include "notifications.h"
-#include "metadata.h"
 
 #if ENABLE_LIBGME
 #include <gme/gme.h>

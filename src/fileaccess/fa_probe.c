@@ -44,7 +44,6 @@
 #include "misc/isolang.h"
 #include "misc/jpeg.h"
 #include "htsmsg/htsmsg_json.h"
-#include "metadata.h"
 
 /**
  *

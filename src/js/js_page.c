@@ -30,7 +30,7 @@
 #include "misc/regex.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"
-#include "metadata.h"
+#include "metadata/metadata.h"
 #include "htsmsg/htsmsg_json.h"
 
 LIST_HEAD(js_event_handler_list, js_event_handler);

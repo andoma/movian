@@ -24,7 +24,7 @@
 #include "dvd.h"
 #include "notifications.h"
 #include "showtime.h"
-#include "metadata.h"
+#include "metadata/metadata.h"
 
 #include <libavcodec/avcodec.h>
 

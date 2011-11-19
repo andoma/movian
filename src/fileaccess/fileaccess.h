@@ -25,7 +25,7 @@
 
 #include "misc/queue.h"
 #include "networking/http.h"
-#include "metadata.h"
+#include "metadata/metadata.h"
 #include "navigator.h"
 
 struct prop;
