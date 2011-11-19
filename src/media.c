@@ -1745,6 +1745,53 @@ mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
  *
  */
 void
+mp_add_trackr(prop_t *parent,
+	      rstr_t *title,
+	      const char *url,
+	      rstr_t *format,
+	      rstr_t *longformat,
+	      rstr_t *isolang,
+	      rstr_t *source,
+	      prop_t *sourcep,
+	      int score)
+{
+  prop_t *p = prop_create_root(NULL);
+  prop_t *s;
+
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_rstring(prop_create(p, "format"), format);
+  prop_set_rstring(prop_create(p, "longformat"), longformat);
+  
+  s = prop_create(p, "source");
+
+  if(sourcep != NULL)
+    prop_link(sourcep, s);
+  else
+    prop_set_rstring(s, source);
+
+  if(isolang != NULL) {
+    prop_set_rstring(prop_create(p, "isolang"), isolang);
+    
+    const char *language = isolang_iso2lang(rstr_get(isolang));
+    if(language != NULL) {
+      prop_set_string(prop_create(p, "language"), language);
+    } else {
+      prop_set_rstring(prop_create(p, "language"), isolang);
+    }
+  }
+
+  prop_set_rstring(prop_create(p, "title"), title);
+  prop_set_int(prop_create(p, "score"), score);
+
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+void
 mp_add_track(prop_t *parent,
 	     const char *title,
 	     const char *url,
@@ -1755,34 +1802,20 @@ mp_add_track(prop_t *parent,
 	     prop_t *sourcep,
 	     int score)
 {
-  const char *language = NULL;
+  rstr_t *rtitle      = rstr_alloc(title);
+  rstr_t *rformat     = rstr_alloc(format);
+  rstr_t *rlongformat = rstr_alloc(longformat);
+  rstr_t *risolang    = rstr_alloc(isolang);
+  rstr_t *rsource     = rstr_alloc(source);
 
-  prop_t *p = prop_create_root(NULL);
-  prop_t *s;
-
-  prop_set_string(prop_create(p, "url"), url);
-  prop_set_string(prop_create(p, "format"), format);
-  prop_set_string(prop_create(p, "longformat"), longformat);
+  mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
+		rsource, sourcep, score);
   
-  s = prop_create(p, "source");
-
-  if(sourcep != NULL)
-    prop_link(sourcep, s);
-  else
-    prop_set_string(s, source);
-
-  if(isolang != NULL) {
-    prop_set_string(prop_create(p, "isolang"), isolang);
-    
-    language = isolang_iso2lang(isolang) ?: isolang;
-    prop_set_string(prop_create(p, "language"), language);
-  }
-
-  prop_set_string(prop_create(p, "title"), title);
-  prop_set_int(prop_create(p, "score"), score);
-
-  if(prop_set_parent(p, parent))
-    prop_destroy(p);
+  rstr_release(rtitle);
+  rstr_release(rformat);
+  rstr_release(rlongformat);
+  rstr_release(risolang);
+  rstr_release(rsource);
 }
 
 

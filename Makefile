@@ -62,6 +62,7 @@ SRCS += src/main.c \
 	src/prop/prop_grouper.c \
 	src/prop/prop_concat.c \
 	src/metadata/metadata.c \
+	src/metadata/metadb.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c

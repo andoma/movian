@@ -48,6 +48,27 @@ TAILQ_HEAD(metadata_stream_queue, metadata_stream);
 /**
  *
  */
+typedef struct metadata_stream {
+  TAILQ_ENTRY(metadata_stream) ms_link;
+
+  int ms_streamindex;
+
+  rstr_t *ms_title;
+  rstr_t *ms_info;
+  rstr_t *ms_isolang;
+  rstr_t *ms_codec;
+
+  int ms_type;
+
+  int ms_disposition;
+
+} metadata_stream_t;
+
+
+
+/**
+ *
+ */
 typedef struct metadata {
   int md_cached;  // Set if data is from a cached lookup
 
