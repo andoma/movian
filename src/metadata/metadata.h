@@ -16,10 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <misc/queue.h>
 #include <misc/rstr.h>
 
 #pragma once
 
+struct prop;
 
 /**
  * Content types
@@ -36,10 +38,13 @@ typedef enum {
   CONTENT_IMAGE       = 8,
   CONTENT_ALBUM       = 9,
   CONTENT_PLUGIN      = 10,
+  CONTENT_num
 } contenttype_t;
 
 
 const char *content2type(contenttype_t ctype);
+
+contenttype_t type2content(const char *str);
 
 TAILQ_HEAD(metadata_stream_queue, metadata_stream);
 
@@ -98,7 +103,6 @@ void metadata_add_stream(metadata_t *md, const char *codec,
 			 const char *info, const char *isolang,
 			 int disposition);
 
-struct prop;
 void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
 			  int overwrite_title);
 
@@ -134,3 +138,9 @@ void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
 void metadb_set_video_restartpos(const char *url, int64_t pos);
 
 int64_t video_get_restartpos(const char *url);
+
+
+
+void decoration_init(void);
+
+void decorated_browse_create(struct prop *model);

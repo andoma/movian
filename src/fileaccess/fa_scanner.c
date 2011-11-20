@@ -42,7 +42,6 @@ typedef struct scanner {
   char *s_playme;
 
   prop_t *s_nodes;
-  prop_t *s_contents;
   prop_t *s_loading;
   prop_t *s_root;
   prop_t *s_direct_close;
@@ -297,10 +296,8 @@ analyzer(scanner_t *s, int probe)
   int images = 0;
 
   /* Empty */
-  if(s->s_fd->fd_count == 0) {
-    prop_set_string(s->s_contents, "empty");
+  if(s->s_fd->fd_count == 0)
     return;
-  }
   
   if(probe)
     tryplay(s);
@@ -327,11 +324,7 @@ analyzer(scanner_t *s, int probe)
     if(fde->fde_type == CONTENT_IMAGE)
       images++;
   }
-
-  if(images * 4 > s->s_fd->fd_count * 3)
-    prop_set_string(s->s_contents, "images");
 }
-
 
 
 /**
@@ -569,7 +562,6 @@ scanner(void *aux)
 
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
-  prop_ref_dec(s->s_contents);
   prop_ref_dec(s->s_loading);
   prop_ref_dec(s->s_direct_close);
   scanner_unref(s);
@@ -621,9 +613,15 @@ fa_scanner(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
+  prop_nf_pred_int_add(pnf, "node.hidden",
+		       PROP_NF_CMP_EQ, 1, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
   prop_nf_release(pnf);
 
   prop_set_int(prop_create(model, "canFilter"), 1);
+
+  decorated_browse_create(model);
 
   s->s_url = strdup(url);
   s->s_mtime = url_mtime;
@@ -633,7 +631,6 @@ fa_scanner(const char *url, time_t url_mtime,
 
   s->s_root = prop_ref_inc(model);
   s->s_nodes = prop_ref_inc(source);
-  s->s_contents = prop_ref_inc(prop_create(model, "contents"));
   s->s_loading = prop_ref_inc(prop_create(model, "loading"));
   s->s_direct_close = prop_ref_inc(direct_close);
 

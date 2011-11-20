@@ -362,6 +362,9 @@ main(int argc, char **argv)
   /* Metadata init */
   metadb_init();
 
+  /* Metadata decoration init */
+  decoration_init();
+
   /* Initialize keyring */
   keyring_init();
 

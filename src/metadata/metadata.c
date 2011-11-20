@@ -94,32 +94,44 @@ metadata_add_stream(metadata_t *md, const char *codec, int type,
 }
 
 
+
+static const char *types[] = {
+  [CONTENT_UNKNOWN]  = "unknown",
+  [CONTENT_DIR]      = "directory",
+  [CONTENT_FILE]     = "file",
+  [CONTENT_AUDIO]    = "audio",
+  [CONTENT_ARCHIVE]  = "archive",
+  [CONTENT_VIDEO]    = "video",
+  [CONTENT_PLAYLIST] = "playlist",
+  [CONTENT_DVD]      = "dvd",
+  [CONTENT_IMAGE]    = "image",
+  [CONTENT_ALBUM]    = "album",
+};
+
+
 /**
  *
  */
-
 const char *
-content2type(contenttype_t ctype) {
-
-  static const char *types[] = {
-    [CONTENT_UNKNOWN]  = "unknown",
-    [CONTENT_DIR]      = "directory",
-    [CONTENT_FILE]     = "file",
-    [CONTENT_AUDIO]    = "audio",
-    [CONTENT_ARCHIVE]  = "archive",
-    [CONTENT_VIDEO]    = "video",
-    [CONTENT_PLAYLIST] = "playlist",
-    [CONTENT_DVD]      = "dvd",
-    [CONTENT_IMAGE]    = "image",
-    [CONTENT_ALBUM]    = "album",
-  };
-
+content2type(contenttype_t ctype)
+{
   if (ctype < 0 || ctype >= sizeof(types) / sizeof(types[0]))
     return NULL;
 
   return types[ctype];
 }
 
+
+contenttype_t
+type2content(const char *str)
+{
+  int i;
+  for(i = 0; i < sizeof(types) / sizeof(types[0]); i++) {
+    if(!strcmp(str, types[i]))
+      return i;
+  }
+  return CONTENT_UNKNOWN;
+}
 
 
 /**
