@@ -62,6 +62,14 @@ static inline void rstr_release(rstr_t *rs)
     free(rs);
 }
 
+static inline void rstr_set(rstr_t **p, rstr_t *r)
+{
+  rstr_release(*p);
+  *p = r ? rstr_dup(r) : NULL;
+}
+
+
+
 #else
 
 #include <string.h>
