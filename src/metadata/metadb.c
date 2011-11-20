@@ -1296,7 +1296,7 @@ typedef struct metadb_item_info {
 static int
 mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
 {
-  int rc;
+  int rc = -1;
   sqlite3_stmt *stmt;
 
   rc = sqlite3_prepare_v2(db, 
@@ -1317,10 +1317,11 @@ mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
     mii->mii_playcount  = sqlite3_column_int(stmt, 0);
     mii->mii_lastplayed = sqlite3_column_int(stmt, 1);
     mii->mii_restartpos = sqlite3_column_int(stmt, 2);
+    rc = 0;
   }
 
   sqlite3_finalize(stmt);
-  return 0;
+  return rc;
 }
 
 
