@@ -82,7 +82,7 @@ typedef struct deco_item {
   contenttype_t di_type;
 
   prop_sub_t *di_sub_album;
-  char *di_album;
+  rstr_t *di_album;
 
 } deco_item_t;
 
@@ -125,7 +125,6 @@ full_analysis(deco_browse_t *db)
     prop_set_string(db->db_prop_contents, "images");
     return;
   }
-  
 }
 
 
@@ -196,9 +195,9 @@ di_set_url(deco_item_t *di, rstr_t *str)
  *
  */
 static void
-di_set_album(deco_item_t *di, const char *str)
+di_set_album(deco_item_t *di, rstr_t *str)
 {
-  mystrset(&di->di_album, str);
+  rstr_set(&di->di_album, str);
 }
 
 
@@ -212,8 +211,7 @@ di_set_type(deco_item_t *di, const char *str)
 
   if(di->di_sub_album != NULL) {
     prop_unsubscribe(di->di_sub_album);
-    free(di->di_album);
-    di->di_album = NULL;
+    rstr_set(&di->di_album, NULL);
   }
 
   db->db_types[di->di_type]--;
@@ -224,7 +222,7 @@ di_set_type(deco_item_t *di, const char *str)
     di->di_sub_album = 
       prop_subscribe(0,
 		     PROP_TAG_NAME("node", "metadata", "album"),
-		     PROP_TAG_CALLBACK_STRING, di_set_album, di,
+		     PROP_TAG_CALLBACK_RSTR, di_set_album, di,
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     NULL);
 
@@ -317,7 +315,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);
-  free(di->di_album);
+  rstr_release(di->di_album);
   rstr_release(di->di_url);
   free(di);
 }
