@@ -44,6 +44,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Törlés
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -55,9 +73,6 @@ msg: Be
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Törlés
-
 id: Enqueue
 msg: Sorba állítás
 
@@ -73,6 +88,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Elérhető rendszer RAM: %d kB
 
@@ -85,11 +108,19 @@ msg: Információ megjelenités
 id: Framerate: %.2f Hz
 msg: Frameráta %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: Grafikus processzor: %s
 
 id: Height: %d px
 msg: Magasság: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -99,6 +130,10 @@ msg: Rendszer információ
 
 id: Total system RAM: %d kB
 msg: Teljes rendszer RAM: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Verzió: %s
@@ -288,6 +323,10 @@ msg: Nem lehet megnyitni a CD-t
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 # Missing translation
 msg: 
@@ -406,6 +445,13 @@ id: Search using spotlight
 msg: Keresés spotlight által
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -476,6 +522,13 @@ msg: Felirat méretezés
 
 id: Video zoom
 msg: Zoomolás
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

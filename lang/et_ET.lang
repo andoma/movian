@@ -43,6 +43,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Kustuta
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -54,9 +72,6 @@ msg: Sees
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Kustuta
-
 id: Enqueue
 msg: Lisa ootelisti
 
@@ -72,6 +87,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Vaba süsteemi RAM: %d kB
 
@@ -84,11 +107,19 @@ msg: Ekraani info
 id: Framerate: %.2f Hz
 msg: FPS: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Kõrgus: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderdaja: %s
@@ -98,6 +129,10 @@ msg: Süsteemi info
 
 id: Total system RAM: %d kB
 msg: Kogu süsteemi RAM: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versioon: %s
@@ -284,6 +319,10 @@ msg: Ei suuda avada CD-d
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: DVD lugemise viga, taaskäivitamine
 
@@ -397,6 +436,13 @@ id: Search using spotlight
 msg: Otsi kasutades spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -467,6 +513,13 @@ msg: Subtiitrite suurus
 
 id: Video zoom
 msg: Video suurendus
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

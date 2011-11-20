@@ -41,6 +41,24 @@ id: %d tracks
 msg: %d Naslov
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Izbriši
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -52,9 +70,6 @@ msg: Vklop
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Izbriši
-
 id: Enqueue
 msg: Dodaj
 
@@ -70,6 +85,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Na voljo sistemskega pomnilnika: %d kB
 
@@ -82,11 +105,19 @@ msg: Prikaži info
 id: Framerate: %.2f Hz
 msg: Hitrost slik %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Višina: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -96,6 +127,10 @@ msg: Sistemske informacije
 
 id: Total system RAM: %d kB
 msg: Celoten sistemski pomnilnik: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Verzija: %s
@@ -280,6 +315,10 @@ msg: Napaka pri odpiranju CD-ja
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: Napaka pri branju DVD-ja, disk bo ponovno zagnan
 
@@ -304,6 +343,10 @@ msg: Rezultat iskanja za: %s
 id: Automatic login when Showtime starts
 msg: Samodejna prijava pri zagonu Showtime-a
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Omogoči Spotify
 
@@ -324,6 +367,14 @@ msg: Nov album na Spotify
 
 id: New releases
 msg: Nove objave
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Lista predvajanj
@@ -380,13 +431,21 @@ id: Search using spotlight
 msg: Za iskanje uporabi Spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
 msg: Jezik
 
-id: Language codes should be configured as three character ISO codes, example (eng, swe, slo)
-msg: Jezik kot 3-mestno ISO kodo, npr.: eng,swe,slo
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+# Missing translation
+msg: 
 
 id: Preferred languages
 msg: Prednostni jezik
@@ -450,6 +509,13 @@ msg: skaliranje podnapisov
 
 id: Video zoom
 msg: Video približevanje
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

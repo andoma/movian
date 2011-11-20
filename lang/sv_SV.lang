@@ -41,6 +41,24 @@ id: %d tracks
 msg: %d spår
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Radera
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -52,9 +70,6 @@ msg: På
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Radera
-
 id: Enqueue
 msg: Köa
 
@@ -70,6 +85,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Tillgängligt systemminne: %d kB
 
@@ -82,11 +105,19 @@ msg: Bildskärmsinformation
 id: Framerate: %.2f Hz
 msg: Uppdateringsfrekvens %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Höjd: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderare: %s
@@ -96,6 +127,10 @@ msg: Systeminformation
 
 id: Total system RAM: %d kB
 msg: Totalt systemminne: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Version: %s
@@ -280,6 +315,10 @@ msg: Kan ej öppna CD
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: Problem att läsa DVD, startar om skivan
 
@@ -392,6 +431,13 @@ id: Search using spotlight
 msg: Sök med spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -462,6 +508,13 @@ msg: Storlek på undertexter
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

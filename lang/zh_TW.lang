@@ -43,6 +43,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: 刪除
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -54,9 +72,6 @@ msg: 開啟
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: 刪除
-
 id: Enqueue
 msg: 加入佇列
 
@@ -72,6 +87,14 @@ msg: 確定
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: 系統記憶體可用容量： %d kB
 
@@ -84,11 +107,19 @@ msg: 顯示器資訊
 id: Framerate: %.2f Hz
 msg: 畫面更新率： %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: 視訊處理器： %s
 
 id: Height: %d px
 msg: 高度： %d 像素
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: 渲染器： %s
@@ -98,6 +129,10 @@ msg: 系統資訊
 
 id: Total system RAM: %d kB
 msg: 系統記憶體總容量： %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: 版本： %s
@@ -283,6 +318,10 @@ msg: 無法開啟 CD
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: DVD 讀取錯誤，嘗試重新讀取中
 
@@ -396,6 +435,13 @@ id: Search using spotlight
 msg: 使用 spotlight 進行搜尋
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -466,6 +512,13 @@ msg: 字幕大小
 
 id: Video zoom
 msg: 視訊縮放
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

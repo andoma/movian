@@ -44,6 +44,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Poista
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -55,9 +73,6 @@ msg: Päälle
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Poista
-
 id: Enqueue
 msg: Lisää jonoon
 
@@ -73,6 +88,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: RAM muistia jäljellä: %d kB
 
@@ -85,11 +108,19 @@ msg: Näytä tiedot
 id: Framerate: %.2f Hz
 msg: FPS: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Korkeus: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderoija: %s
@@ -99,6 +130,10 @@ msg: Käyttöjärjestelmän tiedot
 
 id: Total system RAM: %d kB
 msg: RAM muistia yhteensä: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versionumero: %s
@@ -288,6 +323,10 @@ msg: CD ei aukea
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 # Missing translation
 msg: 
@@ -407,6 +446,13 @@ id: Search using spotlight
 msg: 
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -478,6 +524,13 @@ msg: Tekstityksien skaala
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

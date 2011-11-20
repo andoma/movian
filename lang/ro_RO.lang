@@ -44,6 +44,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Șterge
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -55,9 +73,6 @@ msg: Pornit
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Șterge
-
 id: Enqueue
 msg: Marchează un fișier ca următorul
 
@@ -73,6 +88,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Memorie RAM liberă : %d kB
 
@@ -85,11 +108,19 @@ msg: Afișare informații
 id: Framerate: %.2f Hz
 msg: Numărul de frameuri: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Înălțime: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Randator : %s
@@ -99,6 +130,10 @@ msg: Informații sistem
 
 id: Total system RAM: %d kB
 msg: Memorie RAM totală : %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versiunea: %s
@@ -286,6 +321,10 @@ msg: Imposibil de citit CDul
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: Eroare la citirea DVDului, necesara restartare disc
 
@@ -401,6 +440,13 @@ id: Search using spotlight
 msg: Caută folosind spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -471,6 +517,13 @@ msg: Mărimea subtitrării
 
 id: Video zoom
 msg: Marește/Micșoarează imaginea folosind acest zoom video
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

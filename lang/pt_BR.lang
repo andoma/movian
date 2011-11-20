@@ -43,6 +43,24 @@ id: %d tracks
 msg: 
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Apagar
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -54,9 +72,6 @@ msg: Ligado
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Apagar
-
 id: Enqueue
 msg: Adicionar à lista
 
@@ -72,6 +87,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Memória RAM disponível: %d kB
 
@@ -84,11 +107,19 @@ msg: Informações de visualização
 id: Framerate: %.2f Hz
 msg: Taxa de quadros: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Altura: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderizador: %s
@@ -98,6 +129,10 @@ msg: Informações do sistema
 
 id: Total system RAM: %d kB
 msg: Memória RAM total: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versão: %s
@@ -283,6 +318,10 @@ msg: Não foi possível abrir o CD
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: Erro no DVD, reiniciando disco
 
@@ -396,6 +435,13 @@ id: Search using spotlight
 msg: Procurar utilizando o spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -466,6 +512,13 @@ msg: Redimensionamento de legendas
 
 id: Video zoom
 msg: Zoom de vídeo
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

@@ -41,6 +41,24 @@ id: %d tracks
 msg: %d треков
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Удалить
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -52,9 +70,6 @@ msg: Вкл
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Удалить
-
 id: Enqueue
 msg: Ставить в очередь
 
@@ -70,12 +85,10 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
-
 id: Allocated by application: %d kB
 msg: Выделено приложению: %d КБ
 
 id: Allocated by malloc: %d kB
-# Missing translation
 msg: Выделено malloc: %d КБ
 
 id: Avail system RAM: %d kB
@@ -91,7 +104,6 @@ id: Framerate: %.2f Hz
 msg: Частота кадров %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
 msg: Свободные части: %d
 
 id: GPU: %s
@@ -101,7 +113,6 @@ id: Height: %d px
 msg: Высота: %d px
 
 id: Memory status
-# Missing translation
 msg: Состояние памяти
 
 id: Renderer: %s
@@ -114,7 +125,6 @@ id: Total system RAM: %d kB
 msg: Общая память RAM: %d КБ
 
 id: Unused memory: %d kB
-# Missing translation
 msg: Неиспользованная память: %d КБ
 
 id: Version: %s
@@ -216,8 +226,9 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура ядра GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
@@ -252,8 +263,9 @@ msg: Использовать opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
-msg: Системе не хватает памяти (%d кБ RAM доступно)
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -300,6 +312,10 @@ msg: Невозможно открыть CD
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: Ошибка чтения DVD, перезапуск диска
 
@@ -409,6 +425,13 @@ id: Search using spotlight
 msg: Поиск с использованием spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -479,6 +502,13 @@ msg: Масштаб субтитров
 
 id: Video zoom
 msg: Видеозум
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

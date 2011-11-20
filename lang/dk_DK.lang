@@ -41,6 +41,24 @@ id: %d tracks
 msg: %d spor
 
 #
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Slet
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -52,9 +70,6 @@ msg: Tændt
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Slet
-
 id: Enqueue
 msg: Tilføj
 
@@ -70,6 +85,14 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Tilgængelig system RAM: %d Kb
 
@@ -82,11 +105,19 @@ msg: Skærminformation
 id: Framerate: %.2f Hz
 msg: Opdateringsfrekvens: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Højde: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderere: %s
@@ -96,6 +127,10 @@ msg: Systeminformation
 
 id: Total system RAM: %d kB
 msg: Total system RAM: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Version: %s
@@ -280,6 +315,10 @@ msg: Kan ikke åbne CD
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: DVD læsefejl, genstarter disk
 
@@ -389,6 +428,13 @@ id: Search using spotlight
 msg: Søg via spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -459,6 +505,13 @@ msg: Skalering af undertekster
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -681,3 +734,4 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
+

@@ -497,7 +497,7 @@ id: Video zoom
 msg: Zoom video
 
 #
-# ./src/metadata.c
+# ./src/metadata/metadata.c
 #
 id: Embedded in file
 msg: Incorporato nel file
