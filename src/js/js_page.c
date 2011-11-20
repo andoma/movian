@@ -1058,7 +1058,7 @@ js_open_trampoline(void *arg)
   while(jm->jm_subs) {
     struct prop_notify_queue exp, nor;
     jsrefcount s = JS_SuspendRequest(cx);
-    prop_courier_wait(jm->jm_pc, &nor, &exp);
+    prop_courier_wait(jm->jm_pc, &nor, &exp, 0);
     JS_ResumeRequest(cx, s);
     prop_notify_dispatch(&exp);
     prop_notify_dispatch(&nor);

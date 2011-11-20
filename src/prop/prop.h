@@ -316,9 +316,10 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 
 prop_courier_t *prop_courier_create_waitable(void);
 
-void prop_courier_wait(prop_courier_t *pc,
-		       struct prop_notify_queue *exp,
-		       struct prop_notify_queue *nor);
+int prop_courier_wait(prop_courier_t *pc,
+		      struct prop_notify_queue *exp,
+		      struct prop_notify_queue *nor,
+		      int timeout);
 
 void prop_courier_wait_and_dispatch(prop_courier_t *pc);
 
