@@ -47,16 +47,13 @@ id: Delete
 msg: Radera
 
 id: Queue
-# Missing translation
-msg: 
+msg: Köa
 
 id: Star
-# Missing translation
-msg: 
+msg: Favorit
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Icke favorit
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -86,12 +83,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Allokerat av applikationen: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Allokerat av malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: Tillgängligt systemminne: %d kB
@@ -106,8 +101,7 @@ id: Framerate: %.2f Hz
 msg: Uppdateringsfrekvens %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Lediga segment: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -116,8 +110,7 @@ id: Height: %d px
 msg: Höjd: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Minnesstatus
 
 id: Renderer: %s
 msg: Renderare: %s
@@ -129,8 +122,7 @@ id: Total system RAM: %d kB
 msg: Totalt systemminne: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Oanvänt minne: %d kB
 
 id: Version: %s
 msg: Version: %s
@@ -316,8 +308,7 @@ msg: Kan ej öppna CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: Problem att läsa DVD, startar om skivan
@@ -344,8 +335,7 @@ id: Automatic login when Showtime starts
 msg: Logga automatiskt in när Showtime startar
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Kollaborativ
 
 id: Enable Spotify
 msg: Använd Spotify
@@ -369,12 +359,10 @@ id: New releases
 msg: Nya släpp
 
 id: Offline
-# Missing translation
-msg: 
+msg: Offline
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Offlink synk i 96kbps
 
 id: Playlists
 msg: Spellistor
@@ -434,8 +422,7 @@ msg: Sök med spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Extern fil
 
 #
 # ./src/i18n.c
@@ -513,8 +500,7 @@ msg: Video zoom
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Inbäddad i fil
 
 #
 # ./src/navigator.c
