@@ -85,6 +85,7 @@ typedef enum {
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 typedef void (prop_callback_string_t)(void *opaque, const char *str);
+typedef void (prop_callback_rstr_t)(void *opaque, rstr_t *rstr);
 typedef void (prop_callback_int_t)(void *opaque, int value);
 typedef void (prop_callback_float_t)(void *opaque, float value);
 
@@ -124,6 +125,7 @@ enum {
   PROP_TAG_NAME_VECTOR,
   PROP_TAG_CALLBACK,
   PROP_TAG_CALLBACK_STRING,
+  PROP_TAG_CALLBACK_RSTR,
   PROP_TAG_CALLBACK_INT,
   PROP_TAG_CALLBACK_FLOAT,
   PROP_TAG_SET_INT,
