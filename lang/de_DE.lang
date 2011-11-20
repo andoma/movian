@@ -32,15 +32,13 @@ msg: %d x Abgespielt
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d Einträge
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d Titel
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -49,16 +47,13 @@ id: Delete
 msg: Löschen
 
 id: Queue
-# Missing translation
-msg: 
+msg: Liste
 
 id: Star
-# Missing translation
-msg: 
+msg: Stern hinzufügen
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Stern entfernen
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -88,12 +83,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Zugewiesen durch Anwendung: %d kb
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Zugewiesen durch malloc: %d kb
 
 id: Avail system RAM: %d kB
 msg: Verfügbarer Systemspeicher: %d kB
@@ -108,8 +101,7 @@ id: Framerate: %.2f Hz
 msg: Bildrate %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Freie chunks: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -118,8 +110,7 @@ id: Height: %d px
 msg: Höhe: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Speicher Status
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -131,8 +122,7 @@ id: Total system RAM: %d kB
 msg: Gesamter Systemspeicher: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Ungenutzter Speicher: %d kb
 
 id: Version: %s
 msg: Version: %s
@@ -243,8 +233,7 @@ id: Adjust background tint based on daytime
 msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Alternatives Layout
 
 id: Audio muted
 msg: Ton aus
@@ -318,10 +307,6 @@ msg: CD kann nicht geöffnet werden
 #
 # ./src/backend/dvd/dvd.c
 #
-id: DVD
-# Missing translation
-msg: 
-
 id: DVD read error, restarting disc
 msg: DVD Lesefehler, Disk wird neugestartet
 
@@ -338,8 +323,7 @@ id: Search
 msg: Suche
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Suchergebnis für: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -348,8 +332,7 @@ id: Automatic login when Showtime starts
 msg: Automatisch bei Programmstart einloggen
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Gemeinschaftlich
 
 id: Enable Spotify
 msg: Spotify anschalten
@@ -373,12 +356,10 @@ id: New releases
 msg: Neuerscheinungen
 
 id: Offline
-# Missing translation
-msg: 
+msg: Offline
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Offline sync mit 96kbps
 
 id: Playlists
 msg: Wiedergabelisten
@@ -433,13 +414,6 @@ msg: Suchen per Unix Locatedb
 #
 id: Search using spotlight
 msg: Suchen per Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-# Missing translation
-msg: 
 
 #
 # ./src/i18n.c
@@ -512,13 +486,6 @@ msg: Untertitelskalierung
 
 id: Video zoom
 msg: Videozoom
-
-#
-# ./src/metadata/metadata.c
-#
-id: Embedded in file
-# Missing translation
-msg: 
 
 #
 # ./src/navigator.c
