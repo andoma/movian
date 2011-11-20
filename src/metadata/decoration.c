@@ -68,6 +68,8 @@ typedef struct deco_item {
   TAILQ_ENTRY(deco_item) di_link;
   deco_browse_t *di_db;
 
+  rstr_t *di_url;
+
   LIST_ENTRY(deco_item) di_stem_link;
   deco_stem_t *di_ds;
 
@@ -106,10 +108,7 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 
   if(video && image) {
     prop_t *icon = prop_create(prop_create(video->di_root, "metadata"), "icon");
-    prop_set_stringf(icon, "%s%s%s", ds->ds_stem,
-		     image->di_postfix ? "." : "",
-		     image->di_postfix ?: "");
-
+    prop_set_rstring(icon, image->di_url);
     prop_set_int(prop_create(image->di_root, "hidden"), 1);
   }
 
@@ -154,10 +153,12 @@ stem_get(deco_browse_t *db, const char *str)
  *
  */
 static void
-di_set_url(deco_item_t *di, const char *str)
+di_set_url(deco_item_t *di, rstr_t *str)
 {
   char *s, *p;
   deco_browse_t *db = di->di_db;
+
+  rstr_set(&di->di_url, str);
 
   if(di->di_ds != NULL) {
     LIST_REMOVE(di, di_stem_link);
@@ -169,7 +170,7 @@ di_set_url(deco_item_t *di, const char *str)
   if(str == NULL)
     return;
 
-  s = strdup(str);
+  s = strdup(rstr_get(str));
   
   p = strrchr(s, '.');
   if(p != NULL) {
@@ -259,7 +260,7 @@ deco_browse_add_node(deco_browse_t *db, prop_t *p, deco_item_t *before)
   di->di_sub_url = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "url"),
-		   PROP_TAG_CALLBACK_STRING, di_set_url, di,
+		   PROP_TAG_CALLBACK_RSTR, di_set_url, di,
 		   PROP_TAG_NAMED_ROOT, p, "node",
 		   NULL);
 
@@ -317,7 +318,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);
   free(di->di_album);
-
+  rstr_release(di->di_url);
   free(di);
 }
 
