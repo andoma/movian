@@ -36,7 +36,7 @@
 #include "fileaccess.h"
 #include "backend/backend.h"
 
-#include <fileaccess/svfs.h>
+#include "fileaccess/svfs.h"
 
 #include "fa_proto.h"
 #include "fa_probe.h"

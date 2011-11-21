@@ -2,7 +2,7 @@
 #define PRTYPES_H__
 
 #include <stdint.h>
-#include <arch/threads.h>
+#include "arch/threads.h"
 
 typedef hts_mutex_t PRLock;
 

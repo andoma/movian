@@ -20,7 +20,7 @@
 #define MEDIA_H
 
 #include <stdlib.h>
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 #include "prop/prop.h"
 #include "event.h"
 #include "misc/pool.h"

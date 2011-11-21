@@ -23,8 +23,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
-#include <htsmsg/htsmsg_store.h>
-#include <arch/threads.h>
+#include "htsmsg/htsmsg_store.h"
+#include "arch/threads.h"
 
 // NLS
 

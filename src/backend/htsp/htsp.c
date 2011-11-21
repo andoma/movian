@@ -21,10 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <htsmsg/htsmsg.h>
-#include <htsmsg/htsmsg_binary.h>
-#include <arch/threads.h>
-#include <arch/atomic.h>
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_binary.h"
+#include "arch/threads.h"
+#include "arch/atomic.h"
 
 #include <libavcodec/avcodec.h>
 
