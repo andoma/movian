@@ -503,8 +503,7 @@ id: Embedded in file
 msg: Inbäddad i fil
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Spår %d
 
 #
 # ./src/navigator.c
