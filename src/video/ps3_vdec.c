@@ -18,10 +18,10 @@
 
 #include <codec/vdec.h>
 
-#include <arch/threads.h>
 #include <sysmodule/sysmodule.h>
 #include <psl1ght/lv2.h>
 
+#include "arch/threads.h"
 #include "showtime.h"
 #include "ps3_vdec.h"
 #include "video_decoder.h"
