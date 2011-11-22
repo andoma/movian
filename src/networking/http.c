@@ -46,8 +46,8 @@ http_headers_free(struct http_header_list *headers)
  *
  */
 void
-http_header_add(struct http_header_list *headers, const char *key,
-		const char *value)
+http_header_add_alloced(struct http_header_list *headers, const char *key,
+			char *value)
 {
   http_header_t *hh;
 
@@ -63,7 +63,17 @@ http_header_add(struct http_header_list *headers, const char *key,
   } else {
     free(hh->hh_value);
   }
-  hh->hh_value = strdup(value);
+  hh->hh_value = value;
+}
+
+/**
+ *
+ */
+void
+http_header_add(struct http_header_list *headers, const char *key,
+		const char *value)
+{
+  http_header_add_alloced(headers, key, strdup(value));
 }
 
 /**
