@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer: 
+maintainer: andreus sebes
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -26,22 +26,19 @@ id: Added by: %s
 msg: Adicionado por: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg: Reproduzido %d vezes
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d entradas
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d faixas
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -50,16 +47,13 @@ id: Delete
 msg: Eliminar
 
 id: Queue
-# Missing translation
-msg: 
+msg: Lista de espera
 
 id: Star
-# Missing translation
-msg: 
+msg: Votar
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Remover voto
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -89,12 +83,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Alocada pela aplicação: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Alocada pelo malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: Memória RAM disponível: %d kB
@@ -109,8 +101,7 @@ id: Framerate: %.2f Hz
 msg: Taxa de quadros: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Chunks livres: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -119,8 +110,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Estado da memória
 
 id: Renderer: %s
 msg: Renderizador: %s
@@ -132,8 +122,7 @@ id: Total system RAM: %d kB
 msg: Total de memória RAM: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Memória livre: %d kB
 
 id: Version: %s
 msg: Versão: %s
@@ -244,8 +233,7 @@ id: Adjust background tint based on daytime
 msg: Ajustar a tonalidade do fundo dependendo da altura do dia
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Disposição em lista alternativo
 
 id: Audio muted
 msg: Sem áudio
@@ -272,8 +260,7 @@ msg: Utilizar o opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: O sistema está com pouca memória (%d kB RAM disponível)
 
 #
 # ./src/audio/audio.c
@@ -303,8 +290,7 @@ id: Swap LFE+center with surround
 msg: Trocar LFE+center com surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: A alterar a saída de áudio para %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -322,12 +308,10 @@ msg: Não foi possível abrir o CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: Erro na leitura do DVD, a reiniciar disco
 
 #
 # ./src/backend/htsp/htsp.c
@@ -342,8 +326,7 @@ id: Search
 msg: Procurar
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Resultado da pesquisa por: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -352,8 +335,7 @@ id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Colaborativo
 
 id: Enable Spotify
 msg: Ativar Spotify
@@ -377,12 +359,10 @@ id: New releases
 msg: Novas releases
 
 id: Offline
-# Missing translation
-msg: 
+msg: Offline
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Sincronização offline de 96kbps
 
 id: Playlists
 msg: Listas de reprodução
@@ -406,8 +386,7 @@ id: Spotify playlists
 msg: Listas de reprodução do Spotify
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: Erro na connexão: %s
 
 id: Starred
 msg: Estrelado
@@ -422,12 +401,10 @@ msg: Bookmarks
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Não foi possível abrir o tipo de conteúdo: %d
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Não foi possível abrir o ficheiro: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -445,8 +422,7 @@ msg: Procurar utilizando o spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Ficheiro externo
 
 #
 # ./src/i18n.c
@@ -524,8 +500,7 @@ msg: Zoom de vídeo
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Embebido no ficheiro
 
 #
 # ./src/navigator.c
@@ -618,20 +593,16 @@ msg: Mapear a roda do rato para cima/baixo
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Alterar automaticamente para este modo
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: Intervalo de cores DVI-Video
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Alterar para este modo agora
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Modos de vídeo
 
 #
 # ./src/upnp/upnp.c
@@ -658,24 +629,19 @@ msg: O serviço não foi encontrado
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode quebrar a reprodução de vídeo.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Não foi possível acelerar %s, a biblioteca não foi carregada.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Não foi possível abrir o codificador Cell. Erro 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Não foi possível abrir o codificador Cell. Não foi possível alocar %d bytes de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -693,12 +659,10 @@ id: Color
 msg: Cor
 
 id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
+msg: Controla se a reprodução de vídeo deve reiniciar onde foi pela última vez reproduzido
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Marcar vídeo como reproduzido quando chegar a
 
 id: Enable VDPAU
 msg: Ativar VDPAU
@@ -716,8 +680,7 @@ id: Left
 msg: Esquerda
 
 id: No
-# Missing translation
-msg: 
+msg: Não
 
 id: Outline color
 msg: Cor do contorno
@@ -726,8 +689,7 @@ id: Outline size
 msg: Tamanho do contorno
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Retomar a reprodução de vídeo
 
 id: Right
 msg: Direita
@@ -760,6 +722,5 @@ id: Video playback
 msg: Reprodução de vídeo
 
 id: Yes
-# Missing translation
-msg: 
+msg: Sim
 
