@@ -22,7 +22,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include <arch/halloc.h>
+#include "arch/halloc.h"
 
 #include "showtime.h"
 #include "fileaccess.h"

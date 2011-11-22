@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 
 #include "showtime.h"
 #include "prop_i.h"

@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <htsmsg/htsmsg.h>
-#include <htsmsg/htsmsg_xml.h>
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_xml.h"
 
 #include "showtime.h"
 #include "lastfm.h"

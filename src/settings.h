@@ -20,7 +20,7 @@
 #define SETTINGS_H__
 
 #include "prop/prop.h"
-#include <htsmsg/htsmsg.h>
+#include "htsmsg/htsmsg.h"
 
 #define SETTINGS_INITIAL_UPDATE 0x1
 #define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)

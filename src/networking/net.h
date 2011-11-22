@@ -35,7 +35,7 @@
 
 #include <sys/types.h>
 #include <stdint.h>
-#include <htsmsg/htsbuf.h>
+#include "htsmsg/htsbuf.h"
 
 typedef struct tcpcon {
   int fd;

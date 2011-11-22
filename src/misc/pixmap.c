@@ -17,7 +17,7 @@
  */
 
 #include <sys/param.h>
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 #include <string.h>
 #include <stdlib.h>
 #include "pixmap.h"

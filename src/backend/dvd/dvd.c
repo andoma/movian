@@ -28,8 +28,8 @@
 
 #include <libavcodec/avcodec.h>
 
-#include <fileaccess/svfs.h>
-#include <dvdnav/dvdnav.h>
+#include "fileaccess/svfs.h"
+#include "dvdnav/dvdnav.h"
 
 static char *make_nice_title(const char *t);
 
