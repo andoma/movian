@@ -411,19 +411,31 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
  *
  */
 static void
-http_cookie_send(const char *req_host, const char *req_path, htsbuf_queue_t *q)
+http_cookie_append(const char *req_host, const char *req_path,
+		   struct http_header_list *headers)
 {
   http_cookie_t *hc;
+  htsbuf_queue_t hq;
+  const char *s = "";
+  htsbuf_queue_init(&hq, 0);
 
   hts_mutex_lock(&http_cookies_mutex);
   LIST_FOREACH(hc, &http_cookies, hc_link) {
     if(!validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
       continue;
-
-    htsbuf_qprintf(q, "Cookie: %s=%s\r\n", hc->hc_name, hc->hc_value);
+    htsbuf_append(&hq, s, strlen(s));
+    htsbuf_append(&hq, hc->hc_name, strlen(hc->hc_name));
+    htsbuf_append(&hq, "=", 1);
+    htsbuf_append(&hq, hc->hc_value, strlen(hc->hc_value));
+    s="; ";
   }
 
   hts_mutex_unlock(&http_cookies_mutex);
+
+  if(hq.hq_size == 0)
+    return;
+
+  http_header_add_alloced(headers, "Cookie", htsbuf_to_string(&hq));
 }
 
 
@@ -1375,6 +1387,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     http_headers_auth(&headers, hf, "HEAD", NULL);
   }
 
+  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
   http_headers_send(&q, &headers, NULL);
 
 
@@ -1601,6 +1614,7 @@ again:
 
   http_headers_init(&headers, hf);
   http_headers_auth(&headers, hf, "GET", NULL);
+  http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
   http_headers_send(&q, &headers, NULL);
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -1794,6 +1808,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       if(range[0])
 	htsbuf_qprintf(&q, "Range: %s\r\n", range);
 
+      http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
       http_headers_send(&q, &headers, NULL);
       if(hf->hf_debug)
 	htsbuf_dump_raw_stderr(&q);
@@ -2399,6 +2414,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
 		   fd != NULL ? 1 : 0);
 
     http_headers_auth(&headers, hf, "PROPFIND", NULL);
+    http_cookie_append(hf->hf_connection->hc_hostname, hf->hf_path, &headers);
     http_headers_send(&q, &headers, NULL);
 
     tcp_write_queue(hf->hf_connection->hc_tc, &q);
@@ -2613,7 +2629,7 @@ http_request(const char *url, const char **arguments,
   if(!(flags & HTTP_DISABLE_AUTH))
     http_headers_auth(&headers, hf, m, arguments);
 
-  http_cookie_send(hc->hc_hostname, hf->hf_path, &q);
+  http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
   http_headers_send(&q, &headers, headers_in);
 
   if(hf->hf_debug)
