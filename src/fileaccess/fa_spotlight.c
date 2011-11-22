@@ -26,7 +26,7 @@
 #include "fa_search.h"
 #include "service.h"
 #include "settings.h"
-#include "metadata.h"
+#include "metadata/metadata.h"
 
 static int spotlight_enabled;
 

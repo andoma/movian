@@ -3,7 +3,7 @@
 #include "prcvar.h"
 #include "prthread.h"
 
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 #include <stdlib.h>
 
 PRInt32

@@ -24,7 +24,7 @@
 
 #include "keymapper.h"
 
-#include <arch/threads.h>
+#include "arch/threads.h"
 
 #include "glw.h"
 #include "glw_text_bitmap.h"

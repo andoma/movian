@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arch/halloc.h>
-#include <arch/threads.h>
+#include "arch/halloc.h"
+#include "arch/threads.h"
 
 #include "queue.h"
 #include "showtime.h"

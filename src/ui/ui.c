@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <arch/threads.h>
+#include "arch/threads.h"
 
 #include "showtime.h"
 #include "event.h"

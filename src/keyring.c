@@ -20,7 +20,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <inttypes.h>
-#include <htsmsg/htsmsg_store.h>
+#include "htsmsg/htsmsg_store.h"
 
 #include "showtime.h"
 #include "event.h"

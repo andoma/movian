@@ -16,8 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <misc/queue.h>
-#include <misc/rstr.h>
+#include "misc/queue.h"
+#include "misc/rstr.h"
 
 #pragma once
 
