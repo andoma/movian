@@ -307,6 +307,10 @@ msg: CD kann nicht geöffnet werden
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+# Missing translation
+msg: 
+
 id: DVD read error, restarting disc
 msg: DVD Lesefehler, Disk wird neugestartet
 
@@ -416,6 +420,13 @@ id: Search using spotlight
 msg: Suchen per Spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/i18n.c
 #
 id: Language
@@ -486,6 +497,17 @@ msg: Untertitelskalierung
 
 id: Video zoom
 msg: Videozoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c

@@ -521,6 +521,10 @@ id: Embedded in file
 # Missing translation
 msg: 
 
+id: Track %d
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #

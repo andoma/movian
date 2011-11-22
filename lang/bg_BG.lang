@@ -502,6 +502,10 @@ msg: Мащаб на видеото
 id: Embedded in file
 msg: Вградено във файла
 
+id: Track %d
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #

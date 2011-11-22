@@ -502,6 +502,10 @@ msg: Zoom video
 id: Embedded in file
 msg: Incorporato nel file
 
+id: Track %d
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
