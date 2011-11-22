@@ -516,6 +516,10 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     return;
   }
 
+  int atrack = 0;
+  int strack = 0;
+  int vtrack = 0;
+
   /* Check each stream */
 
   for(i = 0; i < fctx->nb_streams; i++) {
@@ -523,15 +527,19 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     AVCodecContext *avctx = stream->codec;
     AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
     AVMetadataTag *lang, *title;
+    int tn;
 
     switch(avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
       has_video = !!codec;
+      tn = ++vtrack;
       break;
     case AVMEDIA_TYPE_AUDIO:
       has_audio = !!codec;
+      tn = ++atrack;
       break;
     case AVMEDIA_TYPE_SUBTITLE:
+      tn = ++strack;
       break;
 
     default:
@@ -555,7 +563,8 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
 			title ? title->value : NULL,
 			tmp1,
 			lang ? lang->value : NULL,
-			stream->disposition);
+			stream->disposition,
+			tn);
   }
   
   md->md_contenttype = CONTENT_FILE;

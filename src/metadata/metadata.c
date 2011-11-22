@@ -80,7 +80,7 @@ void
 metadata_add_stream(metadata_t *md, const char *codec, int type,
 		    int streamindex,
 		    const char *title, const char *info, const char *isolang,
-		    int disposition)
+		    int disposition, int tracknum)
 {
   metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
   ms->ms_title = rstr_alloc(title);
@@ -90,6 +90,7 @@ metadata_add_stream(metadata_t *md, const char *codec, int type,
   ms->ms_type = type;
   ms->ms_disposition = disposition;
   ms->ms_streamindex = streamindex;
+  ms->ms_tracknum = tracknum;
   TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
 }
 
@@ -142,13 +143,26 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 {
   char url[16];
   int score = 0;
+  rstr_t *title;
+
   snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
 
   if(ms->ms_disposition & AV_DISPOSITION_DEFAULT)
     score += 10;
+  
+  if(ms->ms_title != NULL) {
+    title = rstr_dup(ms->ms_title);
+  } else {
+    char buf[256];
+    rstr_t *fmt = _("Track %d");
+
+    snprintf(buf, sizeof(buf), rstr_get(fmt), ms->ms_tracknum);
+    title = rstr_alloc(buf);
+    rstr_release(fmt);
+  }
 
   mp_add_trackr(parent,
-		ms->ms_title,
+		title,
 		url,
 		ms->ms_codec,
 		ms->ms_info,
@@ -156,6 +170,8 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 		NULL,
 		_p("Embedded in file"),
 	       score);
+
+  rstr_release(title);
 }
 
 

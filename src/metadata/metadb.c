@@ -829,6 +829,9 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 {
   int rc;
   sqlite3_stmt *sel;
+  int atrack = 0;
+  int strack = 0;
+  int vtrack = 0;
 
   rc = sqlite3_prepare_v2(db,
 			  "SELECT streamindex, info, isolang, codec, mediatype, disposition, title "
@@ -845,17 +848,20 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 
   while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
     enum AVMediaType type;
-
+    int tn;
     const char *str = (const char *)sqlite3_column_text(sel, 4);
-    if(!strcmp(str, "audio"))
+    if(!strcmp(str, "audio")) {
       type = AVMEDIA_TYPE_AUDIO;
-    else if(!strcmp(str, "video"))
+      tn = ++atrack;
+    } else if(!strcmp(str, "video")) {
       type = AVMEDIA_TYPE_VIDEO;
-    else if(!strcmp(str, "subtitle"))
+      tn = ++vtrack;
+    } else if(!strcmp(str, "subtitle")) {
       type = AVMEDIA_TYPE_SUBTITLE;
-    else
+      tn = ++strack;
+    } else {
       continue;
-
+    }
     metadata_add_stream(md, 
 			(const char *)sqlite3_column_text(sel, 3),
 			type,
@@ -863,7 +869,8 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t item_id)
 			(const char *)sqlite3_column_text(sel, 6),
 			(const char *)sqlite3_column_text(sel, 1),
 			(const char *)sqlite3_column_text(sel, 2),
-			sqlite3_column_int(sel, 5));
+			sqlite3_column_int(sel, 5),
+			tn);
   }
   sqlite3_finalize(sel);
   return 0;

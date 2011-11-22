@@ -64,9 +64,8 @@ typedef struct metadata_stream {
   rstr_t *ms_codec;
 
   int ms_type;
-
+  int ms_tracknum;
   int ms_disposition;
-
 } metadata_stream_t;
 
 
@@ -101,7 +100,7 @@ void metadata_add_stream(metadata_t *md, const char *codec,
 			 int type, int streamindex,
 			 const char *title,
 			 const char *info, const char *isolang,
-			 int disposition);
+			 int disposition, int tracknum);
 
 void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
 			  int overwrite_title);
