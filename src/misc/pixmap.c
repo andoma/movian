@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <sys/param.h>
 #include "arch/atomic.h"
 #include <string.h>
@@ -707,6 +708,79 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
   }
 }
 
+
+
+
+static unsigned int
+blur_read(const unsigned int *t, int w, int h, int x, int y, int stride,
+	  int channel, int bpp)
+{
+	if (x<0) x=0; else if (x>=w) x=w-1;
+	if (y<0) y=0; else if (y>=h) y=h-1;
+	return t[x*bpp+y*stride+channel];
+}
+
+
+/**
+ *
+ */
+void
+pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
+{
+  unsigned int *tmp, *t;
+  int x, y, i, v;
+  const uint8_t *s;
+  const int w = pm->pm_width;
+  const int h = pm->pm_height;
+  const int ls = pm->pm_linesize;
+  const int z = bytes_per_pixel(pm->pm_type);
+
+  tmp = malloc(ls * h * sizeof(unsigned int));
+
+  s = pm->pm_data;
+  t = tmp;
+
+  for(i = 0; i < z; i++)
+    *t++ = *s++;
+
+  for(x = 0; x < (w-1)*z; x++) {
+    t[0] = *s++ + t[-z];
+    t++;
+  }
+
+  for(y = 1; y < h; y++) {
+
+    s = pm->pm_data + y * ls;
+    t = tmp + y * ls;
+
+    for(i = 0; i < z; i++) {
+      t[0] = *s++ + t[-ls];
+      t++;
+    }
+
+    for(x = 0; x < (w-1)*z; x++) {
+      t[0] = *s++ + t[-z] + t[-ls] - t[-ls - z];
+      t++;
+    }
+  }
+
+  int m = 65536 / ((boxw * 2 + 1) * (boxh * 2 + 1));
+
+  for(y = 0; y < h; y++) {
+    uint8_t *d = pm->pm_data + y * ls;
+    for(x = 0; x < w; x++) {
+      for(i = 0; i < z; i++) {
+	v = blur_read(tmp, w, h, x+boxw, y+boxh, ls, i, z)
+	  + blur_read(tmp, w, h, x-boxw, y-boxh, ls, i, z)
+	  - blur_read(tmp, w, h, x-boxw, y+boxh, ls, i, z)
+	  - blur_read(tmp, w, h, x+boxw, y-boxh, ls, i, z);
+	
+	*d++ = (v * m) >> 16;
+      }
+    }
+  }
+  free(tmp);
+}
 
 // gcc -O3 src/misc/pixmap.c -o /tmp/pixmap -Isrc -DLOCAL_MAIN
 

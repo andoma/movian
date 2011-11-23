@@ -106,4 +106,6 @@ void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
 			int rowalign);
 
+void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
+
 #endif
