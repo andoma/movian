@@ -44,6 +44,7 @@
 #define ftver ver(FREETYPE_MAJOR, FREETYPE_MINOR, FREETYPE_PATCH)
 
 static FT_Library text_library;
+static FT_Stroker text_stroker;
 static hts_mutex_t text_mutex;
 
 
@@ -664,6 +665,189 @@ static const float legacy_size_mult[16] = {
 /**
  *
  */
+static int
+draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
+	    int siz_x, item_t *items, int start_x, int start_y,
+	    int origin_y, int margin, int pass)
+{
+  FT_Vector pen;
+  line_t *li;
+  int i;
+  int pen_y = 0;
+  int pen_x = 0;
+  glyph_t *g;
+  int did_something = 0;
+
+  TAILQ_FOREACH(li, lq, link) {
+
+    pen_y -= li->height * 64;
+
+    if(li->type == LINE_TYPE_HR) {
+      int ypos = 0;
+      ypos = target_height - (pen_y + li->height * 64);
+			      
+      ypos = ypos >> 6;
+      ypos = MIN(target_height, MAX(0, ypos));
+
+      
+      switch(pm->pm_type) {
+      case PIXMAP_BGR32: 
+	{
+	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
+	  int i;
+	  for(i = 0; i < pm->pm_width; i++)
+	    *yptr++ = li->color;
+
+	  yptr = (uint32_t *)(pm->pm_pixels + (ypos + 1) * pm->pm_linesize);
+	  uint32_t color;
+
+	  uint8_t r = li->color;
+	  uint8_t g = li->color >> 8;
+	  uint8_t b = li->color >> 16;
+	  uint8_t a = li->color >> 24;
+
+	  color = (a << 24) | ((b >> 1) << 16) |
+	    ((g >> 1) << 8) | (r >> 1);
+	  
+	  for(i = 0; i < pm->pm_width; i++)
+	    *yptr++ = color;
+	}
+	break;
+	
+      case PIXMAP_IA:
+	{
+	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
+	  int i;
+	  uint8_t r = li->color;
+	  uint8_t a = li->color >> 24;
+	  for(i = 0; i < pm->pm_width; i++) {
+	    *yptr++ = li->color;
+	    *yptr++ = li->color >> 24;
+	  }
+
+	  yptr = pm->pm_pixels + (ypos + 1) * pm->pm_linesize;
+
+	  r = li->color >> 1;
+	  
+	  for(i = 0; i < pm->pm_width; i++) {
+	    *yptr++ = r;
+	    *yptr++ = a;
+	  }
+	}
+	break;
+	
+      default:
+	break;
+      }
+      continue;
+    }
+
+    pen_x = 0;
+    
+    switch(li->alignment) {
+    case TR_ALIGN_LEFT:
+    case TR_ALIGN_JUSTIFIED:
+      break;
+    case TR_ALIGN_CENTER:
+      pen_x += (siz_x - li->width) / 2;
+      break;
+    case TR_ALIGN_RIGHT:
+      pen_x += li->width - siz_x;
+      break;
+    }
+
+    for(i = li->start; i < li->start + li->count; i++) {
+
+      g = items[i].g;
+      if(g == NULL)
+	continue;
+
+      pen_x += items[i].kerning;
+      
+      pen.x = start_x + pen_x + 31;
+      pen.y = start_y + pen_y + origin_y + 31 - li->descender;
+
+      pen.x &= ~63;
+      pen.y &= ~63;
+
+      pen.x >>= 6;
+      pen.y >>= 6;
+
+
+      
+      if(items[i].outline > 0 && g->outline == NULL) {
+	g->outline = g->orig_glyph;
+	
+	
+	FT_Stroker_Set(text_stroker,
+		       items[i].outline,
+		       FT_STROKER_LINECAP_ROUND,
+		       FT_STROKER_LINEJOIN_ROUND,
+		       0);
+	if(FT_Glyph_StrokeBorder(&g->outline, text_stroker, 0, 0))
+	  g->outline = NULL;
+	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
+	  g->outline = NULL;
+      }
+      
+      if(g->bmp == NULL) {
+	g->bmp = g->orig_glyph;
+	if(FT_Glyph_To_Bitmap(&g->bmp, FT_RENDER_MODE_NORMAL, NULL, 0))
+	  g->bmp = NULL;
+      }
+      if(pass == 0 && items[i].shadow && (g->outline != NULL || g->bmp != NULL)) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(g->outline ?: g->bmp);
+	draw_glyph(pm,
+		   bmp->left + items[i].shadow + margin + pen.x,
+		   target_height - bmp->top + items[i].shadow + margin - pen.y,
+		   &bmp->bitmap, 
+		   items[i].shadow_color);
+	did_something = 1;
+      }
+
+      if(pass == 1 && items[i].outline > 0 && g->outline != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->outline;
+	draw_glyph(pm,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
+		   &bmp->bitmap, 
+		   items[i].outline_color);
+	did_something = 1;
+      }
+
+      if(pass == 1 && g->bmp != NULL) {
+	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->bmp;
+	draw_glyph(pm,
+		   bmp->left + margin + pen.x,
+		   target_height - bmp->top + margin - pen.y,
+		   &bmp->bitmap, 
+		   items[i].color);
+
+	did_something = 1;
+
+	if(pm->pm_charpos != NULL) {
+	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
+	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
+	}
+      }
+
+      if(pm->pm_charpos != NULL && items[i].code == ' ')
+	pm->pm_charpos[2 * i + 0] = pen_x / 64;
+
+      pen_x += items[i].adv_x;
+      if(items[i].code == ' ')
+	pen_x += li->xspace;
+
+      if(pm->pm_charpos != NULL && items[i].code == ' ')
+	pm->pm_charpos[2 * i + 1] = pen_x / 64;
+    }
+  }
+  return did_something;
+}
+
+/**
+ *
+ */
 static struct pixmap *
 text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
@@ -675,7 +859,7 @@ text_render0(const uint32_t *uc, const int len,
   pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
-  FT_Vector pen, delta;
+  FT_Vector delta;
   FT_Stroker stroker = NULL;
   int pen_x, pen_y;
 
@@ -892,7 +1076,7 @@ text_render0(const uint32_t *uc, const int len,
     items[out].outline_color = current_outline_color | current_outline_alpha;
 
     if(current_shadow == -1)
-      items[out].shadow = 1 + current_shadow / 20;
+      items[out].shadow = 1 + current_size / 20;
     else
       items[out].shadow = current_shadow;
 
@@ -1086,170 +1270,14 @@ text_render0(const uint32_t *uc, const int len,
     pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
   }
 
-  pen_y = 0;
 
-  TAILQ_FOREACH(li, &lq, link) {
+  if(draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		 origin_y, margin, 0))
+     pixmap_box_blur(pm, 4, 4);
 
-    pen_y -= li->height * 64;
+  draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+	     origin_y, margin, 1);
 
-    if(li->type == LINE_TYPE_HR) {
-      int ypos = 0;
-      ypos = target_height - (pen_y + li->height * 64);
-			      
-      ypos = ypos >> 6;
-      ypos = MIN(target_height, MAX(0, ypos));
-
-      
-      switch(pm->pm_type) {
-      case PIXMAP_BGR32: 
-	{
-	  uint32_t *yptr = (uint32_t *)(pm->pm_pixels + ypos * pm->pm_linesize);
-	  int i;
-	  for(i = 0; i < pm->pm_width; i++)
-	    *yptr++ = li->color;
-
-	  yptr = (uint32_t *)(pm->pm_pixels + (ypos + 1) * pm->pm_linesize);
-	  uint32_t color;
-
-	  uint8_t r = li->color;
-	  uint8_t g = li->color >> 8;
-	  uint8_t b = li->color >> 16;
-	  uint8_t a = li->color >> 24;
-
-	  color = (a << 24) | ((b >> 1) << 16) |
-	    ((g >> 1) << 8) | (r >> 1);
-	  
-	  for(i = 0; i < pm->pm_width; i++)
-	    *yptr++ = color;
-	}
-	break;
-	
-      case PIXMAP_IA:
-	{
-	  uint8_t *yptr = pm->pm_pixels + ypos * pm->pm_linesize;
-	  int i;
-	  uint8_t r = li->color;
-	  uint8_t a = li->color >> 24;
-	  for(i = 0; i < pm->pm_width; i++) {
-	    *yptr++ = li->color;
-	    *yptr++ = li->color >> 24;
-	  }
-
-	  yptr = pm->pm_pixels + (ypos + 1) * pm->pm_linesize;
-
-	  r = li->color >> 1;
-	  
-	  for(i = 0; i < pm->pm_width; i++) {
-	    *yptr++ = r;
-	    *yptr++ = a;
-	  }
-	}
-	break;
-	
-      default:
-	break;
-      }
-      continue;
-    }
-
-    pen_x = 0;
-    
-    switch(li->alignment) {
-    case TR_ALIGN_LEFT:
-    case TR_ALIGN_JUSTIFIED:
-      break;
-    case TR_ALIGN_CENTER:
-      pen_x += (siz_x - li->width) / 2;
-      break;
-    case TR_ALIGN_RIGHT:
-      pen_x += li->width - siz_x;
-      break;
-    }
-
-    for(i = li->start; i < li->start + li->count; i++) {
-
-      g = items[i].g;
-      if(g == NULL)
-	continue;
-
-      pen_x += items[i].kerning;
-      
-      pen.x = start_x + pen_x + 31;
-      pen.y = start_y + pen_y + origin_y + 31 - li->descender;
-
-      pen.x &= ~63;
-      pen.y &= ~63;
-
-      pen.x >>= 6;
-      pen.y >>= 6;
-
-
-      
-      if(items[i].outline > 0 && g->outline == NULL) {
-	g->outline = g->orig_glyph;
-	
-	if(stroker == NULL)
-	  FT_Stroker_New(text_library, &stroker);
-	
-	FT_Stroker_Set(stroker,
-		       items[i].outline,
-		       FT_STROKER_LINECAP_ROUND,
-		       FT_STROKER_LINEJOIN_ROUND,
-		       0);
-	if(FT_Glyph_StrokeBorder(&g->outline, stroker, 0, 0))
-	  g->outline = NULL;
-	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
-	  g->outline = NULL;
-      }
-      
-      if(g->bmp == NULL) {
-	g->bmp = g->orig_glyph;
-	if(FT_Glyph_To_Bitmap(&g->bmp, FT_RENDER_MODE_NORMAL, NULL, 0))
-	  g->bmp = NULL;
-      }
-      if(items[i].shadow && (g->outline != NULL || g->bmp != NULL)) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)(g->outline ?: g->bmp);
-	draw_glyph(pm,
-		   bmp->left + items[i].shadow + margin + pen.x,
-		   target_height - bmp->top + items[i].shadow + margin - pen.y,
-		   &bmp->bitmap, 
-		   items[i].shadow_color);
-      }
-
-      if(items[i].outline > 0 && g->outline != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->outline;
-	draw_glyph(pm,
-		   bmp->left + margin + pen.x,
-		   target_height - bmp->top + margin - pen.y,
-		   &bmp->bitmap, 
-		   items[i].outline_color);
-      }
-
-      if(g->bmp != NULL) {
-	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->bmp;
-	draw_glyph(pm,
-		   bmp->left + margin + pen.x,
-		   target_height - bmp->top + margin - pen.y,
-		   &bmp->bitmap, 
-		   items[i].color);
-
-	if(pm->pm_charpos != NULL) {
-	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
-	  pm->pm_charpos[i * 2 + 1] = bmp->left + bmp->bitmap.width + pen.x;
-	}
-      }
-
-      if(pm->pm_charpos != NULL && items[i].code == ' ')
-	pm->pm_charpos[2 * i + 0] = pen_x / 64;
-
-      pen_x += items[i].adv_x;
-      if(items[i].code == ' ')
-	pen_x += li->xspace;
-
-      if(pm->pm_charpos != NULL && items[i].code == ' ')
-	pm->pm_charpos[2 * i + 1] = pen_x / 64;
-    }
-  }
   free(items);
 
   if(stroker != NULL)
@@ -1297,6 +1325,7 @@ freetype_init(void)
     TRACE(TRACE_ERROR, "Freetype", "Freetype init error\n");
     return -1;
   }
+  FT_Stroker_New(text_library, &text_stroker);
   TAILQ_INIT(&faces);
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
