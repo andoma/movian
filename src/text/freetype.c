@@ -102,6 +102,7 @@ typedef struct glyph {
   FT_Glyph orig_glyph;
   FT_Glyph bmp;
   FT_Glyph outline;
+  int outline_amt;
   int adv_x;
 
   FT_BBox bbox;
@@ -665,7 +666,7 @@ static const float legacy_size_mult[16] = {
 /**
  *
  */
-static int
+static void
 draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	    int siz_x, item_t *items, int start_x, int start_y,
 	    int origin_y, int margin, int pass)
@@ -676,7 +677,6 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
   int pen_y = 0;
   int pen_x = 0;
   glyph_t *g;
-  int did_something = 0;
 
   TAILQ_FOREACH(li, lq, link) {
 
@@ -775,15 +775,18 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 
 
       
-      if(items[i].outline > 0 && g->outline == NULL) {
+      if(items[i].outline > 0 && (g->outline == NULL ||
+				  g->outline_amt != items[i].outline)) {
+	if(g->outline)
+	  FT_Done_Glyph(g->outline);
+	
 	g->outline = g->orig_glyph;
-	
-	
 	FT_Stroker_Set(text_stroker,
 		       items[i].outline,
 		       FT_STROKER_LINECAP_ROUND,
 		       FT_STROKER_LINEJOIN_ROUND,
 		       0);
+	g->outline_amt = items[i].outline;
 	if(FT_Glyph_StrokeBorder(&g->outline, text_stroker, 0, 0))
 	  g->outline = NULL;
 	else if(FT_Glyph_To_Bitmap(&g->outline, FT_RENDER_MODE_NORMAL, NULL, 1))
@@ -802,7 +805,6 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 		   target_height - bmp->top + items[i].shadow + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].shadow_color);
-	did_something = 1;
       }
 
       if(pass == 1 && items[i].outline > 0 && g->outline != NULL) {
@@ -812,18 +814,15 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].outline_color);
-	did_something = 1;
       }
 
-      if(pass == 1 && g->bmp != NULL) {
+      if(pass == 2 && g->bmp != NULL) {
 	FT_BitmapGlyph bmp = (FT_BitmapGlyph)g->bmp;
 	draw_glyph(pm,
 		   bmp->left + margin + pen.x,
 		   target_height - bmp->top + margin - pen.y,
 		   &bmp->bitmap, 
 		   items[i].color);
-
-	did_something = 1;
 
 	if(pm->pm_charpos != NULL) {
 	  pm->pm_charpos[i * 2 + 0] = bmp->left + pen.x;
@@ -842,7 +841,6 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
 	pm->pm_charpos[2 * i + 1] = pen_x / 64;
     }
   }
-  return did_something;
 }
 
 /**
@@ -886,6 +884,9 @@ text_render0(const uint32_t *uc, const int len,
   int current_shadow = 0;
   uint32_t current_shadow_color = 0x00;
   uint32_t current_shadow_alpha = 0xff000000;
+
+  int need_shadow_pass = 0;
+  int need_outline_pass = 0;
 
   if(current_size < 3 || scale < 0.001)
     return NULL;
@@ -1075,10 +1076,14 @@ text_render0(const uint32_t *uc, const int len,
     items[out].outline = current_outline;
     items[out].outline_color = current_outline_color | current_outline_alpha;
 
+    need_outline_pass |= items[out].outline;
+
     if(current_shadow == -1)
       items[out].shadow = 1 + current_size / 20;
     else
       items[out].shadow = current_shadow;
+
+    need_shadow_pass |= items[out].shadow;
 
     items[out].shadow_color = current_shadow_color | current_shadow_alpha;
 
@@ -1271,12 +1276,19 @@ text_render0(const uint32_t *uc, const int len,
   }
 
 
-  if(draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		 origin_y, margin, 0))
-     pixmap_box_blur(pm, 4, 4);
+  if(need_shadow_pass) {
+    draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		origin_y, margin, 0);
+    pixmap_box_blur(pm, 4, 4);
+  }
+
+  if(need_outline_pass)
+    draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		origin_y, margin, 1);
+
 
   draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-	     origin_y, margin, 1);
+	     origin_y, margin, 2);
 
   free(items);
 
