@@ -24,6 +24,7 @@
 
 
 typedef enum {
+  PIXMAP_none,
   PIXMAP_PNG,
   PIXMAP_JPEG,
   PIXMAP_GIF,
@@ -37,6 +38,22 @@ typedef enum {
 #define pixmap_type_is_coded(t) ((t) < PIXMAP_coded)
 #define pixmap_is_coded(pm) pixmap_type_is_coded((pm)->pm_type)
 
+
+/**
+ *
+ */
+typedef struct image_meta {
+  int im_want_thumb;
+  int im_req_width;
+  int im_req_height;
+  int im_max_width;
+  int im_max_height;
+  char im_pot;
+  char im_can_mono;
+  char im_no_decoding;
+  char im_32bit_swizzle; // can do full 32bit swizzle in hardware
+} image_meta_t;
+
 /**
  * Internal struct for passing images
  */
@@ -49,6 +66,8 @@ typedef struct pixmap {
   uint16_t pm_height;
   uint16_t pm_lines;   // Lines of text
   uint16_t pm_margin;
+
+  float pm_aspect;
 
   int pm_flags;
 
@@ -107,5 +126,8 @@ pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
 			int rowalign);
 
 void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
+
+pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,
+			char *errbuf, size_t errlen);
 
 #endif

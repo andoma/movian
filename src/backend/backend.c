@@ -29,6 +29,7 @@
 #include "navigator.h"
 #include "event.h"
 #include "notifications.h"
+#include "misc/pixmap.h"
 
 prop_t *global_sources; // Move someplace else
 
@@ -160,12 +161,30 @@ struct pixmap *
 backend_imageloader(const char *url, const image_meta_t *im,
 		    const char **vpaths, char *errbuf, size_t errlen)
 {
+  if(!strncmp(url, "thumb://", 8)) {
+    image_meta_t im0;
+
+    if(im != NULL) {
+      im0 = *im;
+    } else {
+      memset(&im0, 0, sizeof(im0));
+    }
+    url = url + 8;
+    im0.im_want_thumb = 1;
+    im = &im0;
+  }
+
   backend_t *nb = backend_canhandle(url);
+  pixmap_t *pm;
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  return nb->be_imageloader(url, im, vpaths, errbuf, errlen);
+  pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen);
+  if(pm == NULL)
+    return NULL;
+
+  return pixmap_decode(pm, im, errbuf, errlen);
 }
 
 

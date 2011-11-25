@@ -16,8 +16,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <assert.h>
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
 
 #include "backend/backend.h"
 #include "gu.h"
@@ -73,7 +71,7 @@ pixbuf_free_prop_pixmap(guchar *pixels, gpointer data)
 static void 
 pixbuf_avfree_pixels(guchar *pixels, gpointer data)
 {
-  av_free(pixels);
+  pixmap_release(data);
 }
 
 /**
@@ -83,149 +81,27 @@ static GdkPixbuf *
 gu_pixbuf_get_internal(const char *url, int *sizep,
 		       int req_width, int req_height, int relock)
 {
-  AVCodecContext *ctx = NULL;
-  AVCodec *codec;
-  AVFrame *frame = NULL;
-  AVPicture *src, dst;
-  struct SwsContext *sws;
-  GdkPixbuf *gp;
-  int r;
-  int got_pic;
-  enum PixelFormat outfmt;
-  enum PixelFormat pixfmt;
-  int width;
-  int height;
-  const uint8_t *ptr[4];
   image_meta_t im = {0};
 
-  if(!strncmp(url, "thumb://", 8)) {
-    url = url + 8;
-    im.want_thumb = 1;
-  }
-
-  im.req_width  = req_width;
-  im.req_height = req_height;
+  im.im_req_width  = req_width;
+  im.im_req_height = req_height;
   
   pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0);
   if(pm == NULL)
     return NULL;
 
-  if(!pixmap_is_coded(pm)) {
-    pixmap_release(pm);
-    return NULL;
-
-  } else {
-    
-    switch(pm->pm_type) {
-    case PIXMAP_PNG:
-      codec = avcodec_find_decoder(CODEC_ID_PNG);
-      break;
-    case PIXMAP_JPEG:
-      codec = avcodec_find_decoder(CODEC_ID_MJPEG);
-      break;
-    case PIXMAP_GIF:
-      codec = avcodec_find_decoder(CODEC_ID_GIF);
-      break;
-    default:
-      codec = NULL;
-      break;
-    }
-    if(codec == NULL) {
-      pixmap_release(pm);
-      return NULL;
-    }  
-    ctx = avcodec_alloc_context();
-
-    ctx->codec_id   = codec->id;
-    ctx->codec_type = codec->type;
-
-    if(avcodec_open(ctx, codec) < 0) {
-      av_free(ctx);
-      pixmap_release(pm);
-      return NULL;
-    }
-    
-    frame = avcodec_alloc_frame();
-
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = pm->pm_data;
-    avpkt.size = pm->pm_size;
-
-    r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-    if(r < 0) {
-      av_free(frame);
-      av_free(ctx);
-      pixmap_release(pm);
-      return NULL;
-    }
-    height = ctx->height;
-    width  = ctx->width;
-    pixfmt = ctx->pix_fmt;
-
-    src = (AVPicture *)frame;
-  }
-
-  if(req_width == -1 && req_height == -1) {
-    req_width  = width; 
-    req_height = height;
-  } else if(req_width == -1) {
-    req_width = width * req_height / height;
-  } else if(req_height == -1) {
-    req_height = height * req_width / width;
-  } 
-
-  outfmt = isALPHA(pixfmt) ? PIX_FMT_RGBA : PIX_FMT_RGB24;
-
-  sws = sws_getContext(width, height, pixfmt, 
-		       req_width, req_height, outfmt,
-		       SWS_BICUBIC, NULL, NULL, NULL);
-  if(sws == NULL) {
-    av_free(frame);
-    av_free(ctx);
-    pixmap_release(pm);
-    return NULL;
-  }
-
-  avpicture_alloc(&dst, outfmt, req_width, req_height);
-
-  ptr[0] = src->data[0];
-  ptr[1] = src->data[1];
-  ptr[2] = src->data[2];
-  ptr[3] = src->data[3];
-
-  sws_scale(sws, ptr, src->linesize, 0, height,
-	    dst.data, dst.linesize);
-  
-  sws_freeContext(sws);
-
-  if(sizep != NULL)
-    *sizep = dst.linesize[0] * req_height;
-
-
   if(relock)
     hts_mutex_lock(&gu_mutex);
 
-  gp = gdk_pixbuf_new_from_data(dst.data[0],
-				GDK_COLORSPACE_RGB,
-				isALPHA(pixfmt),
-				8,
-				req_width,
-				req_height,
-				dst.linesize[0],
-				pixbuf_avfree_pixels,
-				dst.data[0]);
-
-  if(frame != NULL)
-    av_free(frame);
-
-  if(ctx != NULL) {
-    avcodec_close(ctx);
-    av_free(ctx);
-  }
-
-  pixmap_release(pm);
-  return gp;
+  return gdk_pixbuf_new_from_data(pm->pm_data,
+				  GDK_COLORSPACE_RGB,
+				  pm->pm_type == PIXMAP_BGR32,
+				  8,
+				  pm->pm_width,
+				  pm->pm_height,
+				  pm->pm_linesize,
+				  pixbuf_avfree_pixels,
+				  pm);
 }
 
 

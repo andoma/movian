@@ -18,9 +18,14 @@
 
 #include <stdio.h>
 #include <sys/param.h>
-#include "arch/atomic.h"
 #include <string.h>
 #include <stdlib.h>
+
+#include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
+
+#include "showtime.h"
+#include "arch/atomic.h"
 #include "pixmap.h"
 
 
@@ -781,6 +786,418 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
   }
   free(tmp);
 }
+
+
+
+
+/**
+ * Round v to nearest power of two
+ */
+static int
+make_powerof2(int v)
+{
+  int m;
+  m = ((1 << (av_log2(v))) + (1 << (av_log2(v) + 1))) / 2;
+  return 1 << (av_log2(v) + (v > m));
+}
+
+
+/**
+ * Rescaling with FFmpeg's swscaler
+ */
+static pixmap_t *
+pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
+		       int src_w, int src_h,
+		       int dst_w, int dst_h)
+{
+  AVPicture pic;
+  int dst_pix_fmt;
+  struct SwsContext *sws;
+  const uint8_t *ptr[4];
+  int strides[4];
+  pixmap_t *pm;
+
+  switch(src_pix_fmt) {
+  case PIX_FMT_Y400A:
+  case PIX_FMT_BGRA:
+  case PIX_FMT_RGBA:
+  case PIX_FMT_ABGR:
+  case PIX_FMT_ARGB:
+#ifdef __PPC__
+    return NULL;
+#endif
+    dst_pix_fmt = PIX_FMT_BGR32;
+    break;
+
+  default:
+    dst_pix_fmt = PIX_FMT_RGB24;
+    break;
+  }
+
+  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
+		       dst_w, dst_h, dst_pix_fmt,
+		       SWS_LANCZOS, NULL, NULL, NULL);
+  if(sws == NULL)
+    return NULL;
+
+  ptr[0] = pict->data[0];
+  ptr[1] = pict->data[1];
+  ptr[2] = pict->data[2];
+  ptr[3] = pict->data[3];
+
+  strides[0] = pict->linesize[0];
+  strides[1] = pict->linesize[1];
+  strides[2] = pict->linesize[2];
+  strides[3] = pict->linesize[3];
+
+  int align = 1;
+#ifdef __PPC__
+  align = 16;
+#endif
+
+
+  switch(dst_pix_fmt) {
+  case PIX_FMT_RGB24:
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, align);
+    break;
+
+  default:
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, align);
+    break;
+  }
+
+  pic.data[0] = pm->pm_data;
+  pic.linesize[0] = pm->pm_linesize;
+  
+  sws_scale(sws, ptr, strides, 0, src_h, pic.data, pic.linesize);
+#if 0  
+  if(pm->pm_type == PIXMAP_BGR32) {
+    uint32_t *dst = pm->pm_data;
+    int i;
+
+    for(i = 0; i < pm->pm_linesize * pm->pm_height; i+= 4) {
+      *dst |= 0xff000000;
+      dst++;
+    }
+
+  }
+#endif
+
+  sws_freeContext(sws);
+  return pm;
+}
+
+
+static void   __attribute__((unused))
+
+swizzle_xwzy(uint32_t *dst, const uint32_t *src, int len)
+{
+  int i;
+  uint32_t u32;
+  for(i = 0; i < len; i++) {
+    u32 = *src++;
+    *dst++ = (u32 & 0xff00ff00) | (u32 & 0xff) << 16 | (u32 & 0xff0000) >> 16;
+  }
+}
+
+static pixmap_t *
+pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h)
+{
+#if defined(__BIG_ENDIAN__)
+  void (*fn)(uint32_t *dst, const uint32_t *src, int len);
+  // go to BGR32 which is ABGR on big endian.
+  switch(pix_fmt) {
+  case PIX_FMT_ARGB:
+    fn = swizzle_xwzy;
+    break;
+  default:
+    return NULL;
+  }
+
+  int y;
+  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, 1);
+
+  for(y = 0; y < h; y++) {
+    fn((uint32_t *)(pm->pm_data + y * pm->pm_linesize),
+       (uint32_t *)(pict->data[0] + y * pict->linesize[0]),
+       w);
+  }
+  return pm;
+#else
+  return NULL;
+#endif
+}
+
+
+
+/**
+ *
+ */
+static pixmap_t *
+pixmap_from_avpic(AVPicture *pict, int pix_fmt, 
+		  int src_w, int src_h,
+		  int req_w0, int req_h0,
+		  const image_meta_t *im)
+{
+  int x, y, i;
+  int need_format_conv = 0;
+  int want_rescale = 0; // Want rescaling cause it looks better
+  int must_rescale = 0; // Must rescale cause we cant display it otherwise
+  uint32_t *palette, *u32p;
+  uint8_t *map;
+  pixmap_type_t fmt = 0;
+  pixmap_t *pm;
+
+  switch(pix_fmt) {
+  default:
+    need_format_conv = 1;
+    break;
+
+  case PIX_FMT_RGB24:
+    fmt = PIXMAP_RGB24;
+    break;
+
+  case PIX_FMT_BGR32:
+    fmt = PIXMAP_BGR32;
+    break;
+    
+  case PIX_FMT_Y400A:
+    if(!im->im_can_mono) {
+      need_format_conv = 1;
+      break;
+    }
+
+    fmt = PIXMAP_IA;
+    break;
+
+  case PIX_FMT_GRAY8:
+    if(!im->im_can_mono) {
+      need_format_conv = 1;
+      break;
+    }
+
+    fmt = PIXMAP_I;
+    break;
+
+  case PIX_FMT_PAL8:
+    /* FFmpeg can not convert palette alpha values so we need to
+       do this ourselfs */
+    
+    /* It seems that some png implementation leavs the color set even
+       if alpha is set to zero. This resluts in ugly aliasing effects
+       when scaling image in opengl, so if alpha == 0, clear RGB */
+
+    map = pict->data[1];
+    for(i = 0; i < 4*256; i+=4) {
+      if(map[i + 3] == 0) {
+	map[i + 0] = 0;
+	map[i + 1] = 0;
+	map[i + 2] = 0;
+      }
+    }
+
+    map = pict->data[0];
+    palette = (uint32_t *)pict->data[1];
+
+    AVPicture pict2;
+    
+    memset(&pict2, 0, sizeof(pict2));
+    
+    pict2.data[0] = av_malloc(src_w * src_h * 4);
+    pict2.linesize[0] = src_w * 4;
+
+    u32p = (void *)pict2.data[0];
+
+    for(y = 0; y < src_h; y++) {
+      for(x = 0; x < src_w; x++) {
+	*u32p++ = palette[map[x]];
+      }
+      map += pict->linesize[0];
+    }
+
+    pm = pixmap_from_avpic(&pict2, PIX_FMT_BGRA, 
+			   src_w, src_h, req_w0, req_h0, im);
+
+    av_free(pict2.data[0]);
+    return pm;
+  }
+
+  int req_w = req_w0, req_h = req_h0;
+
+  if(im->im_pot) {
+    /* We lack non-power-of-two texture support, check if we must rescale.
+     * Since the bitmap aspect is already calculated, it will automatically 
+     * compensate the rescaling when we render the texture.
+     */
+    
+    if(1 << av_log2(req_w0) != req_w0)
+      req_w = make_powerof2(req_w0);
+
+    if(1 << av_log2(req_h0) != req_h0)
+      req_h = make_powerof2(req_h0);
+
+    must_rescale = req_w != src_w || req_h != src_h;
+  } else {
+    want_rescale = req_w != src_w || req_h != src_h;
+  }
+
+
+  if(must_rescale || want_rescale || need_format_conv) {
+    pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h);
+    
+    if(pm != NULL)
+      return pm;
+
+    if(need_format_conv) {
+      pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h);
+      if(pm != NULL)
+	return pm;
+
+      return pixmap_32bit_swizzle(pict, pix_fmt, src_w, src_h);
+    }
+  }
+
+  pm = pixmap_create(src_w, src_h, fmt, 1);
+
+  uint8_t *dst = pm->pm_data;
+  uint8_t *src = pict->data[0];
+  int h = src_h;
+
+  if(pict->linesize[0] != pm->pm_linesize) {
+    while(h--) {
+      memcpy(dst, src, pm->pm_linesize);
+      src += pict->linesize[0];
+      dst +=  pm->pm_linesize;
+    }
+  } else {
+    memcpy(dst, src, pm->pm_linesize * src_h);
+  }
+  return pm;
+}
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_decode(pixmap_t *pm, const image_meta_t *im,
+	      char *errbuf, size_t errlen)
+{
+  AVCodecContext *ctx;
+  AVCodec *codec;
+  AVFrame *frame;
+  int r, got_pic, w, h;
+  int orientation = pm->pm_orientation;
+
+  pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
+
+  if(!pixmap_is_coded(pm))
+    return pm;
+
+  switch(pm->pm_type) {
+  case PIXMAP_PNG:
+    codec = avcodec_find_decoder(CODEC_ID_PNG);
+    break;
+  case PIXMAP_JPEG:
+    codec = avcodec_find_decoder(CODEC_ID_MJPEG);
+    break;
+  case PIXMAP_GIF:
+    codec = avcodec_find_decoder(CODEC_ID_GIF);
+    break;
+  default:
+    codec = NULL;
+    break;
+  }
+
+  if(codec == NULL) {
+    pixmap_release(pm);
+    snprintf(errbuf, errlen, "No codec for image format");
+    return NULL;
+  }
+  ctx = avcodec_alloc_context();
+  ctx->codec_id   = codec->id;
+  ctx->codec_type = codec->type;
+
+  if(avcodec_open(ctx, codec) < 0) {
+    av_free(ctx);
+    pixmap_release(pm);
+    snprintf(errbuf, errlen, "Unable to open codec");
+    return NULL;
+  }
+  
+  frame = avcodec_alloc_frame();
+
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = pm->pm_data;
+  avpkt.size = pm->pm_size;
+
+  r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
+
+  if(ctx->width == 0 || ctx->height == 0) {
+    av_free(ctx);
+    pixmap_release(pm);
+    avcodec_close(ctx);
+    av_free(frame);
+    snprintf(errbuf, errlen, "Invalid picture dimensions");
+    return NULL;
+  }
+
+  if(im->im_want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
+    w = 160;
+    h = 160 * ctx->height / ctx->width;
+  } else {
+    w = ctx->width;
+    h = ctx->height;
+  }
+
+  if(im->im_req_width != -1 && im->im_req_height != -1) {
+    w = im->im_req_width;
+    h = im->im_req_height;
+
+  } else if(im->im_req_width != -1) {
+    w = im->im_req_width;
+    h = im->im_req_width * ctx->height / ctx->width;
+
+  } else if(im->im_req_height != -1) {
+    w = im->im_req_height * ctx->width / ctx->height;
+    h = im->im_req_height;
+
+  } else if(w > 64 && h > 64) {
+
+    if(im->im_max_width && w > im->im_max_width) {
+      h = h * im->im_max_width / w;
+      w = im->im_max_width;
+    }
+
+    if(im->im_max_height && h > im->im_max_height) {
+      w = w * im->im_max_height / h;
+      h = im->im_max_height;
+    }
+  }
+
+  pixmap_release(pm);
+
+  pm = pixmap_from_avpic((AVPicture *)frame, 
+			 ctx->pix_fmt, ctx->width, ctx->height, w, h, im);
+
+  if(pm != NULL) {
+    pm->pm_orientation = orientation;
+    // Compute correct aspect ratio based on orientation
+    if(pm->pm_orientation < LAYOUT_ORIENTATION_TRANSPOSE) {
+      pm->pm_aspect = (float)w / (float)h;
+    } else {
+      pm->pm_aspect = (float)h / (float)w;
+    }
+  }
+  av_free(frame);
+
+  avcodec_close(ctx);
+  av_free(ctx);
+  return pm;
+}
+
+
 
 // gcc -O3 src/misc/pixmap.c -o /tmp/pixmap -Isrc -DLOCAL_MAIN
 

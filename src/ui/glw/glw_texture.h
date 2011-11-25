@@ -19,7 +19,6 @@
 #ifndef GLW_TEXTURE_H
 #define GLW_TEXTURE_H
 
-#include <libavcodec/avcodec.h>
 #include "misc/pixmap.h"
 
 #define GLW_TEX_REPEAT 0x1
@@ -49,8 +48,8 @@ typedef struct glw_loadable_texture {
 
   char *glt_filename;
 
-  void *glt_bitmap;
-  size_t glt_bitmap_size;
+  pixmap_t *glt_pixmap;
+
   int16_t glt_req_xs;
   int16_t glt_req_ys;
 
@@ -89,9 +88,7 @@ void glw_tex_flush_all(glw_root_t *gr);
  * Backend interface
  */
 int glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-			 AVPicture *pict, int pix_fmt,
-			 int src_w, int src_h,
-			 int req_w, int req_h);
+			 pixmap_t *pm);
 
 void glw_tex_backend_free_render_resources(glw_root_t *gr,
 					   glw_loadable_texture_t *glt);

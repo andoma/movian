@@ -182,33 +182,10 @@ glw_tex_flush_all(glw_root_t *gr)
 /**
  *
  */
-static enum PixelFormat 
-pixmapfmt_to_libav(pixmap_type_t t)
-{
-  switch(t) {
-  case PIXMAP_I:
-    return PIX_FMT_GRAY8;
-  case PIXMAP_IA:
-    return PIX_FMT_Y400A;
-  case PIXMAP_RGB24:
-    return PIX_FMT_RGB24;
-  case PIXMAP_BGR32:
-    return PIX_FMT_BGR32;
-  default:
-    return -1;
-  }
-}
-
-/**
- *
- */
 static int
 glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
-  AVCodecContext *ctx;
-  AVCodec *codec;
-  AVFrame *frame;
-  int r, got_pic, w, h;
+  int r;
   const char *url;
   char errbuf[128];
 
@@ -218,12 +195,11 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
   url = glt->glt_filename;
   image_meta_t im = {0};
 
-  if(!strncmp(url, "thumb://", 8)) {
-    url = url + 8;
-    im.want_thumb = 1;
-  }
-  im.req_width  = glt->glt_req_xs;
-  im.req_height = glt->glt_req_ys;
+  im.im_req_width  = glt->glt_req_xs;
+  im.im_req_height = glt->glt_req_ys;
+  im.im_max_width  = gr->gr_width;
+  im.im_max_height = gr->gr_height;
+  im.im_can_mono = 1;
 
   pixmap_t *pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, 
 				     sizeof(errbuf));
@@ -234,136 +210,10 @@ glw_tex_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 
   glt->glt_orientation = pm->pm_orientation;
 
-  if(!pixmap_is_coded(pm)) {
-    glt->glt_aspect = (float)pm->pm_width / (float)pm->pm_height;
-
-    AVPicture pict;
-    pict.data[0] = pm->pm_pixels;
-    pict.linesize[0] = pm->pm_linesize;
-
-    r = glw_tex_backend_load(gr, glt, &pict,
-			     pixmapfmt_to_libav(pm->pm_type),
-			     pm->pm_width, pm->pm_height,
-			     pm->pm_width, pm->pm_height);
-    pixmap_release(pm);
-    return r;
-  }
-
-
-  switch(pm->pm_type) {
-  case PIXMAP_PNG:
-    codec = avcodec_find_decoder(CODEC_ID_PNG);
-    break;
-  case PIXMAP_JPEG:
-    codec = avcodec_find_decoder(CODEC_ID_MJPEG);
-    break;
-  case PIXMAP_GIF:
-    codec = avcodec_find_decoder(CODEC_ID_GIF);
-    break;
-  default:
-    codec = NULL;
-    break;
-  }
-
-  if(codec == NULL) {
-    pixmap_release(pm);
-    TRACE(TRACE_ERROR, "glw", "%s: No codec for image format", url);
-    return -1;
-  }
-  ctx = avcodec_alloc_context();
-  ctx->codec_id   = codec->id;
-  ctx->codec_type = codec->type;
-
-  if(avcodec_open(ctx, codec) < 0) {
-    av_free(ctx);
-    pixmap_release(pm);
-    TRACE(TRACE_ERROR, "glw", "%s: unable to open codec", url);
-    return -1;
-  }
-  
-  frame = avcodec_alloc_frame();
-
-#ifdef WII
-  if(pm->pm_width > 1280 || pm->pm_height > 960)
-    ctx->lowres = 1;
-  if(pm->pm_width > 2560  || pm->pm_height > 1920)
-    ctx->lowres = 2;
-#endif
-
-  if(ctx->lowres)
-    TRACE(TRACE_DEBUG, "GLW", "%s: DCT-Scaling image down by factor %d",
-	  url, 1 << ctx->lowres);
-
-  AVPacket avpkt;
-  av_init_packet(&avpkt);
-  avpkt.data = pm->pm_data;
-  avpkt.size = pm->pm_size;
-
-  r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-
-  if(ctx->width == 0 || ctx->height == 0) {
-    av_free(ctx);
-    pixmap_release(pm);
-    avcodec_close(ctx);
-    av_free(frame);
-    TRACE(TRACE_INFO, "glw", "%s: invalid picture dimensions", url);
-    return -1;
-  }
-
-
-  if(im.want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
-    w = 160;
-    h = 160 * ctx->height / ctx->width;
-  } else {
-    w = ctx->width;
-    h = ctx->height;
-  }
-
+  assert(!pixmap_is_coded(pm));
+  glt->glt_aspect = pm->pm_aspect;
+  r = glw_tex_backend_load(gr, glt, pm);
   pixmap_release(pm);
-
-  if(glt->glt_req_xs != -1 && glt->glt_req_ys != -1) {
-    w = glt->glt_req_xs;
-    h = glt->glt_req_ys;
-
-  } else if(glt->glt_req_xs != -1) {
-    w = glt->glt_req_xs;
-    h = glt->glt_req_xs * ctx->height / ctx->width;
-
-  } else if(glt->glt_req_ys != -1) {
-    w = glt->glt_req_ys * ctx->width / ctx->height;
-    h = glt->glt_req_ys;
-
-  } else if(w > 64 && h > 64) {
-    if(w > gr->gr_width) {
-      h = h * gr->gr_width / w;
-      w = gr->gr_width;
-    }
-
-    if(h > gr->gr_height) {
-      w = w * gr->gr_height / h;
-      h = gr->gr_height;
-    }
-  }
-
-  // Compute correct aspect ratio based on orientation
-  // See pixmap.h for the secret constant '5'
-  if(glt->glt_orientation < 5) {
-    glt->glt_aspect = (float)w / (float)h;
-  } else {
-    glt->glt_aspect = (float)h / (float)w;
-  }
-
-
-
-  r = glw_tex_backend_load(gr, glt, (AVPicture *)frame, 
-			   ctx->pix_fmt, ctx->width, ctx->height, w, h);
-  if(r)
-    TRACE(TRACE_INFO, "GLW", "Unable to load %s", url);
-  av_free(frame);
-
-  avcodec_close(ctx);
-  av_free(ctx);
-
   return r;
 }
 

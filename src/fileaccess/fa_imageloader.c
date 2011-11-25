@@ -180,7 +180,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
   if(strchr(url, '#'))
     return fa_image_from_video(url, im, errbuf, errlen);
 
-  if(!im->want_thumb)
+  if(!im->im_want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen);
 
   if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
@@ -203,13 +203,13 @@ fa_imageloader(const char *url, const struct image_meta *im,
     if(jpeg_info(&ji, jpeginfo_reader, fh,
 		 JPEG_INFO_DIMENSIONS |
 		 JPEG_INFO_ORIENTATION |
-		 (im->want_thumb ? JPEG_INFO_THUMBNAIL : 0),
+		 (im->im_want_thumb ? JPEG_INFO_THUMBNAIL : 0),
 		 p, sizeof(p), errbuf, errlen)) {
       fa_close(fh);
       return NULL;
     }
 
-    if(im->want_thumb && ji.ji_thumbnail) {
+    if(im->im_want_thumb && ji.ji_thumbnail) {
       pixmap_t *pm = pixmap_dup(ji.ji_thumbnail);
       fa_close(fh);
       jpeg_info_clear(&ji);
@@ -403,19 +403,19 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     }
     int w,h;
 
-    if(im->req_width != -1 && im->req_height != -1) {
-      w = im->req_width;
-      h = im->req_height;
-    } else if(im->req_width != -1) {
-      w = im->req_width;
-      h = im->req_width * ifv_ctx->height / ifv_ctx->width;
+    if(im->im_req_width != -1 && im->im_req_height != -1) {
+      w = im->im_req_width;
+      h = im->im_req_height;
+    } else if(im->im_req_width != -1) {
+      w = im->im_req_width;
+      h = im->im_req_width * ifv_ctx->height / ifv_ctx->width;
 
-    } else if(im->req_height != -1) {
-      w = im->req_height * ifv_ctx->width / ifv_ctx->height;
-      h = im->req_height;
+    } else if(im->im_req_height != -1) {
+      w = im->im_req_height * ifv_ctx->width / ifv_ctx->height;
+      h = im->im_req_height;
     } else {
-      w = im->req_width;
-      h = im->req_height;
+      w = im->im_req_width;
+      h = im->im_req_height;
     }
 
     pm = pixmap_create(w, h, PIXMAP_RGB24,
@@ -515,7 +515,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   hts_mutex_unlock(&image_from_video_mutex);
 
   snprintf(cacheid, sizeof(cacheid), "%s-%d-%d-3",
-	   url0, im->req_width, im->req_height);
+	   url0, im->im_req_width, im->im_req_height);
 
   data = blobcache_get(cacheid, "videothumb", &datasize, 0, 0,
 		       NULL, &mtime);
