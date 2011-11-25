@@ -156,7 +156,9 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
     break;
   }
   
-  assert(glt->glt_pixmap == NULL);
+  if(glt->glt_pixmap != NULL) 
+    pixmap_release(glt->glt_pixmap);
+
   glt->glt_pixmap = pixmap_dup(pm);
 
   glt->glt_xs = pm->pm_width;

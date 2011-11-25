@@ -627,7 +627,6 @@ typedef struct glw_root {
   /**
    * Image/Texture loader
    */
-  hts_mutex_t gr_tex_mutex;
 
   hts_cond_t gr_tex_load_cond[3];
   struct glw_loadable_texture_queue gr_tex_load_queue[3];
