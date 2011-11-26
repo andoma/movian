@@ -1086,7 +1086,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   AVCodecContext *ctx;
   AVCodec *codec;
   AVFrame *frame;
-  int r, got_pic, w, h;
+  int got_pic, w, h;
   int orientation = pm->pm_orientation;
 
   pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
@@ -1132,7 +1132,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   avpkt.data = pm->pm_data;
   avpkt.size = pm->pm_size;
 
-  r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
+  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(ctx->width == 0 || ctx->height == 0) {
     av_free(ctx);
