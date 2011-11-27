@@ -96,7 +96,6 @@ widget(keyintercept, {
 		.shadow = true;
 		.sizeScale = 1.5;
 		.color = 0.75 + (isHovered() || isFocused()) * 0.25;
-		.shadow = true;
 	      });
 	      
 	      widget(loader, {
@@ -123,6 +122,19 @@ widget(keyintercept, {
 		     ) + ".view";
 	  
 	});
+
+	widget(loader, {
+	  .effect = flipHorizontal;
+	  .time = 0.2;
+	  .noInitialTransform = true;
+	  .source = "theme://directoryviews/list2/" + 
+	    translate($self.type, "options_none",
+		      "audio", select(isFocused(),
+				      "options_audio",
+				      "no-options")
+		     ) + ".view";
+	});
+
       });
     });
     widget(dummy, {
