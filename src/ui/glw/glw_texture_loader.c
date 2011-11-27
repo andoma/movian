@@ -104,7 +104,6 @@ loader_thread(void *aux)
 
       glw_unlock(gr);
       pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf));
-      assert(!pixmap_is_coded(pm));
       glw_lock(gr);
       
       if(pm == NULL) {
@@ -112,6 +111,7 @@ loader_thread(void *aux)
 	glt->glt_state = GLT_STATE_ERROR;
 
       } else {
+	assert(!pixmap_is_coded(pm));
 
 	if(glt->glt_state == GLT_STATE_LOADING) {
 	  LIST_INSERT_HEAD(&gr->gr_tex_active_list, glt, glt_flush_link);
