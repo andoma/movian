@@ -138,10 +138,9 @@ play_videoparams(const char *json, struct media_pipe *mp,
 static void *
 video_player_idle(void *aux)
 {
-  video_playback_t *vp = aux;
   int run = 1;
   event_t *e = NULL, *next;
-  media_pipe_t *mp = vp->vp_mp;
+  media_pipe_t *mp = aux;
   char errbuf[256];
   prop_t *errprop = prop_ref_inc(prop_create(mp->mp_prop_root, "error"));
 
@@ -184,21 +183,19 @@ video_player_idle(void *aux)
     e = NULL;
   }
   prop_ref_dec(errprop);
+  mp_ref_dec(mp);
   return NULL;
 }
 
 /**
  *
  */
-video_playback_t *
+void
 video_playback_create(media_pipe_t *mp)
 {
-  video_playback_t *vp = calloc(1, sizeof(video_playback_t));
-  vp->vp_mp = mp;
-  hts_thread_create_joinable("video player", 
-			     &vp->vp_thread, video_player_idle, vp,
+  mp_ref_inc(mp);
+  hts_thread_create_detached("video player",  video_player_idle, mp,
 			     THREAD_PRIO_NORMAL);
-  return vp;
 }
 
 
@@ -206,13 +203,9 @@ video_playback_create(media_pipe_t *mp)
  *
  */
 void
-video_playback_destroy(video_playback_t *vp)
+video_playback_destroy(media_pipe_t *mp)
 {
   event_t *e = event_create_type(EVENT_EXIT);
-
-  mp_enqueue_event(vp->vp_mp, e);
+  mp_enqueue_event(mp, e);
   event_release(e);
-
-  hts_thread_join(&vp->vp_thread);
-  free(vp);
 }

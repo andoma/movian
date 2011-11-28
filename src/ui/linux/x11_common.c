@@ -140,7 +140,6 @@ typedef struct video_output {
 
   video_decoder_t *vo_vd;
   media_pipe_t *vo_mp;
-  video_playback_t *vo_vp;
 
   prop_sub_t *vo_sub_source;
 
@@ -309,7 +308,7 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 
   vo->vo_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
   vo->vo_vd = video_decoder_create(vo->vo_mp, deliver_fn, vo);
-  vo->vo_vp = video_playback_create(vo->vo_mp);
+  video_playback_create(vo->vo_mp);
 
   prop_link(vo->vo_mp->mp_prop_root, prop_create(self, "media"));
 
@@ -337,7 +336,8 @@ x11_vo_destroy(struct video_output *vo)
 
   prop_unsubscribe(vo->vo_sub_source);
 
-  video_playback_destroy(vo->vo_vp);
+  
+  video_playback_destroy(vo->vo_mp);
   video_decoder_stop(vo->vo_vd);
   mp_ref_dec(vo->vo_mp);
   video_decoder_destroy(vo->vo_vd);
