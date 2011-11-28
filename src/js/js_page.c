@@ -1078,10 +1078,9 @@ static void
 model_launch(js_model_t *jm)
 {
   jm->jm_pc = prop_courier_create_waitable();
-
+  prop_set_int(jm->jm_loading, 1);
   hts_thread_create_detached("jsmodel", js_open_trampoline, jm,
 			     THREAD_PRIO_NORMAL);
-  prop_set_int(jm->jm_loading, 1);
 }
 
 /**
