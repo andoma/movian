@@ -859,7 +859,6 @@ text_render0(const uint32_t *uc, const int len,
   FT_BBox bbox;
   FT_Vector delta;
   FT_Stroker stroker = NULL;
-  int pen_x, pen_y;
 
   int i, j;
   glyph_t *g = NULL;
@@ -899,8 +898,6 @@ text_render0(const uint32_t *uc, const int len,
 
 
   /* Compute position for each glyph */
-  pen_x = 0;
-  pen_y = 0;
   style = 0;
 
   if(flags & TR_RENDER_BOLD)
@@ -935,7 +932,6 @@ text_render0(const uint32_t *uc, const int len,
       li->alignment = alignment;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
-      pen_x = 0;
     }
 
     switch(uc[i]) {

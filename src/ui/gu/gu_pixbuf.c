@@ -179,7 +179,7 @@ GdkPixbuf *
 gu_pixbuf_get_sync(const char *url, int width, int height)
 {
   GdkPixbuf *pb;
-  int size;
+  int size = 0;
 
   pb = gu_pixbuf_get_from_cache(url, width, height);
   if(pb != NULL) {
@@ -253,7 +253,7 @@ static void *
 pixbuf_loader_thread(void *aux)
 {
   pb_asyncload_t *pba;
-  int size;
+  int size = 0;
   GdkPixbuf *pb;
 
   hts_mutex_lock(&gu_mutex);

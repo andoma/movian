@@ -2088,25 +2088,24 @@ static void
 playlist_update_offline(sp_session *session, playlist_t *pl)
 {
   sp_playlist_offline_status s;
-  const char *status = NULL;
-  int p = 0;
+  //  const char *status = NULL;
   s = f_sp_playlist_get_offline_status(session, pl->pl_playlist);
 
   prop_set_int_ex(prop_create(pl->pl_prop_offline, "value"),
 		  pl->pl_offline_sub, !!s);
-    
+
+#if 0    
   switch(s) {
   case SP_PLAYLIST_OFFLINE_STATUS_NO:
     break;
   case SP_PLAYLIST_OFFLINE_STATUS_YES:
     status = "synchronized";
-    p = 100;
     break;
 
   case SP_PLAYLIST_OFFLINE_STATUS_DOWNLOADING:
     status = "downloading";
-    p = f_sp_playlist_get_offline_download_completed(session,
-                                                    pl->pl_playlist);
+    f_sp_playlist_get_offline_download_completed(session,
+						 pl->pl_playlist);
     break;
 
   case SP_PLAYLIST_OFFLINE_STATUS_WAITING:
@@ -2115,6 +2114,7 @@ playlist_update_offline(sp_session *session, playlist_t *pl)
   }
   //  prop_set_string(pl->pl_prop_offline_status, status);
   //  prop_set_int(pl->pl_prop_offline_percentage, p);
+#endif
 }
 
 
