@@ -85,7 +85,6 @@ typedef struct video_decoder {
 
   media_pipe_t *vd_mp;
 
-  int vd_decoder_running;
   int vd_do_flush;
   int vd_skip;
 

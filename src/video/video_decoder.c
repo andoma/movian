@@ -418,7 +418,7 @@ vd_thread(void *aux)
 
     hts_mutex_lock(&mp->mp_mutex);
     if(mb != NULL) {
-      mq->mq_freeze_tail--;
+      mq->mq_freeze_tail = 0;
       media_buf_free_locked(mp, mb);
     }
       
@@ -451,7 +451,6 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
 
   mp_ref_inc(mp);
   vd->vd_mp = mp;
-  vd->vd_decoder_running = 1;
 
   vd_init_timings(vd);
 
@@ -480,7 +479,6 @@ video_decoder_stop(video_decoder_t *vd)
 
   mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_EXIT);
 
-  vd->vd_decoder_running = 0;
   hts_thread_join(&vd->vd_decoder_thread);
   mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;

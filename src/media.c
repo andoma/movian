@@ -475,14 +475,19 @@ mp_create(const char *name, int flags, const char *type)
 static void
 mq_flush(media_pipe_t *mp, media_queue_t *mq)
 {
-  media_buf_t *mb;
+  media_buf_t *mb, *next;
 
-  while((mb = TAILQ_FIRST(&mq->mq_q)) != NULL) {
+  for(mb = TAILQ_FIRST(&mq->mq_q); mb != NULL; mb = next) {
+    next = TAILQ_NEXT(mb, mb_link);
+
+    if(mb->mb_data_type == MB_CTRL_EXIT)
+      continue;
+
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     media_buf_free_locked(mp, mb);
   }
-  mq->mq_packets_current = 0;
   mq_update_stats(mp, mq);
 }
 
