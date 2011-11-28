@@ -177,7 +177,7 @@ EOF
     
 
 if [ "x$CC" != "x" ]; then
-    echo >${CONFIG_MAK} "CC=$CC"
+    echo >>${CONFIG_MAK} "CC=$CC"
 else
     CC=cc
 fi
