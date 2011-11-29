@@ -104,6 +104,7 @@ loader_thread(void *aux)
 
       glw_unlock(gr);
       pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf));
+      free(url);
       glw_lock(gr);
       
       if(pm == NULL) {
