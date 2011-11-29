@@ -43,19 +43,7 @@ union vdec_userdata {
   } s;
 };
 
-TAILQ_HEAD(vdec_au_buffer_queue, vdec_au_buffer);
 LIST_HEAD(vdec_pic_list, vdec_pic);
-
-/**
- * We need to keep the packets valid in memory until the decoder
- * says it has processed the entire AU (which is signalled in the 
- * decoder callback). Use this struct for that
- */
-typedef struct vdec_au_buffer {
-  TAILQ_ENTRY(vdec_au_buffer) vab_link;
-  void *vab_mem;
-  media_buf_t *vab_buf;
-} vdec_au_buffer_t;
 
 
 /**
@@ -96,8 +84,6 @@ typedef struct vdec_decoder {
 
   int convert_to_annexb;
 
-  struct vdec_au_buffer_queue vab_queue;
-
   struct vdec_pic_list active_pictures;
   struct vdec_pic_list avail_pictures;
 
@@ -109,7 +95,7 @@ typedef struct vdec_decoder {
   uint8_t level_minor;
 
   int pending_blackout;
-
+  int submitted_au;
 } vdec_decoder_t;
 
 /**
@@ -142,32 +128,6 @@ end_sequence_and_wait(vdec_decoder_t *vdd)
     hts_cond_wait(&vdd->seqdone, &vdd->mtx);
   hts_mutex_unlock(&vdd->mtx);
   TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence -> done");
-}
-
-
-/**
- *
- */
-static void
-vab_destroy(vdec_decoder_t *vdd, vdec_au_buffer_t *vab)
-{
-  TAILQ_REMOVE(&vdd->vab_queue, vab, vab_link);
-  if(vab->vab_buf != NULL) {
-    media_buf_t *mb = vab->vab_buf;
-    media_queue_t *mq = mb->mb_mq;
-    media_pipe_t *mp = mq->mq_mp;
-
-    hts_mutex_lock(&mp->mp_mutex);
-    mq->mq_freeze_tail = 0;
-    media_buf_free_locked(mp, mb);
-    mq->mq_freeze_tail = 1;
-    hts_mutex_unlock(&mp->mp_mutex);
-
-  } else {
-    free(vab->vab_mem);
-  }
-
-  free(vab);
 }
 
 /**
@@ -519,20 +479,15 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
 		 uint32_t arg)
 {
   vdec_decoder_t *vdd = (vdec_decoder_t *)(intptr_t)arg;
-  vdec_au_buffer_t *vab;
-
 
   switch(msg_type) {
   case VDEC_CALLBACK_AUDONE:
     hts_mutex_lock(&vdd->mtx);
-    vab = TAILQ_FIRST(&vdd->vab_queue);
-    if(vab != NULL) {
-      vab_destroy(vdd, vab);
-      if(TAILQ_FIRST(&vdd->vab_queue) == NULL)
-	hts_cond_signal(&vdd->audone);
-    } else {
+    if(!vdd->submitted_au)
       TRACE(TRACE_ERROR, "VDEC", "AUDONE but no buffers pending");
-    }
+    hts_mutex_unlock(&vdd->mtx);
+    vdd->submitted_au = 0;
+    hts_cond_signal(&vdd->audone);
     hts_mutex_unlock(&vdd->mtx);
     break;
 
@@ -609,53 +564,34 @@ h264_to_annexb(uint8_t *b, size_t fsize)
 /**
  * Return 0 if ownership of 'data' has been transfered from caller
  */
-static int
+static void
 submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
 	  int drop_non_ref, media_buf_t *mb)
 {
-  vdec_au_buffer_t *vab;
-
   au->packet_addr = (intptr_t)data;
   au->packet_size = len;
-
-  while(1) {
-    int r = vdec_decode_au(vdd->handle, 
-			   drop_non_ref ? VDEC_DECODER_MODE_SKIP_NON_REF : 
-			   VDEC_DECODER_MODE_NORMAL, au);
-    
-    if(r == 0)
-      break;
-    
-    if(r == VDEC_ERROR_BUSY) {
-      hts_mutex_lock(&vdd->mtx);
-      while(TAILQ_FIRST(&vdd->vab_queue) != NULL)  {
-  	if(hts_cond_wait_timeout(&vdd->audone, &vdd->mtx, 1000)) {
-	  TRACE(TRACE_ERROR, "VDEC", "Decoder too slow");
-	  hts_mutex_unlock(&vdd->mtx);
-	  return -1;
-	}
-      }
-      hts_mutex_unlock(&vdd->mtx);
-      continue;
-    }
-
-    TRACE(TRACE_ERROR, "VDEC", "Decoding = 0x%x", r);
-    return -1;
-  }
-
-  vab = malloc(sizeof(vdec_au_buffer_t));
-  vab->vab_mem = data;
-  vab->vab_buf = mb;
+  
   hts_mutex_lock(&vdd->mtx);
-  TAILQ_INSERT_TAIL(&vdd->vab_queue, vab, vab_link);
+  vdd->submitted_au = 1;
+  int r = vdec_decode_au(vdd->handle, 
+			 drop_non_ref ? VDEC_DECODER_MODE_SKIP_NON_REF : 
+			 VDEC_DECODER_MODE_NORMAL, au);
+    
+  if(r == 0) {
+    while(vdd->submitted_au) {
+      if(hts_cond_wait_timeout(&vdd->audone, &vdd->mtx, 1000)) {
+	TRACE(TRACE_ERROR, "VDEC", "Decoder too slow");
+	break;
+      }
+    }
+  }
   hts_mutex_unlock(&vdd->mtx);
-  return 0;
 }
 
 /**
  *
  */
-static int
+static void
 decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 	       struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
@@ -692,17 +628,14 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   au.dts.hi  = mb->mb_dts >> 32;
 
   if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
-    void *buf = malloc(vdd->extradata_size);
-    memcpy(buf, vdd->extradata, vdd->extradata_size);
-    if(submit_au(vdd, &au, buf, vdd->extradata_size, 0, NULL))
-      free(buf);
+    submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0, NULL);
     vdd->extradata_injected = 1;
   }
 
   if(vdd->convert_to_annexb)
     h264_to_annexb(mb->mb_data, mb->mb_size);
   
-  return !submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, mb);
+  submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, mb);
 }
 
 
@@ -713,13 +646,9 @@ static void
 decoder_close(struct media_codec *mc)
 {
   vdec_decoder_t *vdd = mc->opaque;
-  vdec_au_buffer_t *vab;
 
   vdec_close(vdd->handle);
   Lv2Syscall1(349, (uint64_t)vdd->mem);
-
-  while((vab = TAILQ_FIRST(&vdd->vab_queue)) != NULL)
-    vab_destroy(vdd, vab);
 
   hts_mutex_destroy(&vdd->mtx);
   hts_cond_destroy(&vdd->audone);
@@ -900,7 +829,6 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   if(id == CODEC_ID_H264 && ctx->extradata_size)
     h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);
 
-  TAILQ_INIT(&vdd->vab_queue);
   vdd->next_picture = -1;
 
   hts_mutex_init(&vdd->mtx);

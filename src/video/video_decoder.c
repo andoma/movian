@@ -355,10 +355,9 @@ vd_thread(void *aux)
 
       size = mb->mb_size;
 
-      if(mc->decode) {
-	if(mc->decode(mc, vd, mq, mb, reqsize))
-	  mb = NULL;
-      } else
+      if(mc->decode)
+	mc->decode(mc, vd, mq, mb, reqsize);
+      else
 	vd_decode_video(vd, mq, mb);
 
       update_vbitrate(mp, mq, size, vd);
@@ -417,11 +416,8 @@ vd_thread(void *aux)
     }
 
     hts_mutex_lock(&mp->mp_mutex);
-    if(mb != NULL) {
-      mq->mq_freeze_tail = 0;
-      media_buf_free_locked(mp, mb);
-    }
-      
+    mq->mq_freeze_tail = 0;
+    media_buf_free_locked(mp, mb);
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
