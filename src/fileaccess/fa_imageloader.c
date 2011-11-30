@@ -40,6 +40,9 @@ static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t gif89sig[6] = {'G', 'I', 'F', '8', '9', 'a'};
 static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 
+static const uint8_t svgsig1[5] = {'<', '?', 'x', 'm', 'l'};
+static const uint8_t svgsig2[4] = {'<', 's', 'v', 'g'};
+
 static hts_mutex_t image_from_video_mutex;
 static AVCodecContext *pngencoder;
 
@@ -108,6 +111,9 @@ fa_imageloader2(const char *url, const char **vpaths,
   mi.data = p;
   mi.size = size;
 
+  if(size < 16)
+    goto bad;
+
   /* Probe format */
 
   if((p[6] == 'J' && p[7] == 'F' && p[8] == 'I' && p[9] == 'F') ||
@@ -135,8 +141,12 @@ fa_imageloader2(const char *url, const char **vpaths,
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     fmt = PIXMAP_GIF;
+  } else if(!memcmp(svgsig1, p, sizeof(svgsig1)) ||
+	    !memcmp(svgsig2, p, sizeof(svgsig2))) {
+    fmt = PIXMAP_SVG;
   } else {
-    snprintf(errbuf, errlen, "%s: unknown format", url);
+  bad:
+    snprintf(errbuf, errlen, "Unknown format");
     free(p);
     return NULL;
   }
@@ -229,6 +239,9 @@ fa_imageloader(const char *url, const struct image_meta *im,
   } else if(!memcmp(gif87sig, p, sizeof(gif87sig)) ||
 	    !memcmp(gif89sig, p, sizeof(gif89sig))) {
     fmt = PIXMAP_GIF;
+  } else if(!memcmp(svgsig1, p, sizeof(svgsig1)) ||
+	    !memcmp(svgsig2, p, sizeof(svgsig2))) {
+    fmt = PIXMAP_SVG;
   } else {
     snprintf(errbuf, errlen, "Unknown format");
     fa_close(fh);

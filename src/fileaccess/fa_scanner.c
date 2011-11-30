@@ -164,7 +164,8 @@ static struct strtab postfixtab[] = {
   { "jpg",             CONTENT_IMAGE },
   { "png",             CONTENT_IMAGE },
   { "gif",             CONTENT_IMAGE },
-
+  { "svg",             CONTENT_IMAGE },
+  
   { "mp3",             CONTENT_AUDIO },
   { "m4a",             CONTENT_AUDIO },
   { "flac",            CONTENT_AUDIO },

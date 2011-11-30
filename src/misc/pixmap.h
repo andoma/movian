@@ -28,6 +28,7 @@ typedef enum {
   PIXMAP_PNG,
   PIXMAP_JPEG,
   PIXMAP_GIF,
+  PIXMAP_SVG,
   PIXMAP_coded,
   PIXMAP_BGR32,
   PIXMAP_RGB24,
@@ -129,5 +130,12 @@ void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 
 pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 			char *errbuf, size_t errlen);
+
+pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
+		     char *errbuf, size_t errlen);
+
+void svg_init(void);
+
+int color_is_not_gray(uint32_t rgb);
 
 #endif

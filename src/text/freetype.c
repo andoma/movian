@@ -603,15 +603,6 @@ draw_glyph(pixmap_t *pm, int left, int top, FT_Bitmap *bmp, int color)
 }
 
 
-static int
-is_not_gray(uint32_t rgb)
-{
-  uint8_t r = rgb;
-  uint8_t g = rgb >> 8;
-  uint8_t b = rgb >> 16;
-  return (r != g) || (g != b);
-}
-
 /**
  *
  */
@@ -1004,17 +995,17 @@ text_render0(const uint32_t *uc, const int len,
 
     case TR_CODE_COLOR ... TR_CODE_COLOR + 0xffffff:
       current_color = uc[i] & 0xffffff; // BGR host order
-      color_output |= is_not_gray(current_color);
+      color_output |= color_is_not_gray(current_color);
       break;
 
     case TR_CODE_SHADOW_COLOR ... TR_CODE_SHADOW_COLOR + 0xffffff:
       current_shadow_color = uc[i] & 0xffffff; // BGR host order
-      color_output |= is_not_gray(current_shadow_color);
+      color_output |= color_is_not_gray(current_shadow_color);
       break;
 
     case TR_CODE_OUTLINE_COLOR ... TR_CODE_OUTLINE_COLOR + 0xffffff:
       current_outline_color = uc[i] & 0xffffff; // BGR host order
-      color_output |= is_not_gray(current_outline_color);
+      color_output |= color_is_not_gray(current_outline_color);
       break;
 
     case  TR_CODE_FONT_FAMILY ...  TR_CODE_FONT_FAMILY + 0xffffff:

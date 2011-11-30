@@ -1169,3 +1169,27 @@ utf8_to_ascii(uint8_t *dst, const char *src)
   o+=1;
   return o;
 }
+
+
+
+/**
+ *
+ */
+uint32_t
+html_makecolor(const char *str)
+{
+  uint8_t r, g, b;
+  if(*str == '#')
+    str++;
+  if(strlen(str) == 3) {
+    r = hexnibble(str[0]) * 0x11;
+    g = hexnibble(str[1]) * 0x11;
+    b = hexnibble(str[2]) * 0x11;
+  } else if(strlen(str) == 6) {
+    r = (hexnibble(str[0]) << 4) | hexnibble(str[1]);
+    g = (hexnibble(str[2]) << 4) | hexnibble(str[3]);
+    b = (hexnibble(str[4]) << 4) | hexnibble(str[5]);
+  } else
+    return 0;
+  return b << 16  | g << 8 | r;
+}

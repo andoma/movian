@@ -28,6 +28,18 @@
 #include "arch/atomic.h"
 #include "pixmap.h"
 
+/**
+ *
+ */
+int
+color_is_not_gray(uint32_t rgb)
+{
+  uint8_t r = rgb;
+  uint8_t g = rgb >> 8;
+  uint8_t b = rgb >> 16;
+  return (r != g) || (g != b);
+}
+
 
 /**
  *
@@ -110,6 +122,7 @@ pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
   pm->pm_data = calloc(1, pm->pm_linesize * pm->pm_height);
+  pm->pm_aspect = (float)width / (float)height;
   return pm;
 }
 
@@ -1089,12 +1102,15 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   int got_pic, w, h;
   int orientation = pm->pm_orientation;
 
-  pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
 
-  if(!pixmap_is_coded(pm))
+  if(!pixmap_is_coded(pm)) {
+    pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
     return pm;
+  }
 
   switch(pm->pm_type) {
+  case PIXMAP_SVG:
+    return svg_decode(pm, im, errbuf, errlen);
   case PIXMAP_PNG:
     codec = avcodec_find_decoder(CODEC_ID_PNG);
     break;

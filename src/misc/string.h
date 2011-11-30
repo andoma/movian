@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 
+uint32_t html_makecolor(const char *str);
+
 void url_deescape(char *s);
 
 #define URL_ESCAPE_PATH   1
