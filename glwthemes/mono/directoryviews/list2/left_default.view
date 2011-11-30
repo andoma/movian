@@ -8,14 +8,14 @@ widget(backdrop, {
 
   widget(icon, {
     .source = $self.metadata.icon ?? 
-      "theme://icons/256x256/" + 
-      translate($self.type, "File.png",
-		"video", "Movie.png",
-		"dvd", "Disc.png",
-		"album", "Disc.png",
-		"archive", "Archive.png",
-		"playlist", "List.png",
-		"directory", "Folder.png");
+      "theme://svg/" + 
+      translate($self.type, "File",
+		"video", "Movie",
+		"dvd", "Disc",
+		"album", "Disc",
+		"archive", "Archive",
+		"playlist", "List",
+		"directory", "Folder") + ".svg";
     .sizeScale = 4;
     .alpha = iir(isReady(), 10);
     .saturation = 1 - iir(isReady(), 10);

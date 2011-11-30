@@ -11,21 +11,21 @@
 }
 
 #define settingButtonUp(EVENT, ENABLED, HIDDEN) {
-  _glossybutton(ICON="theme://icons/Up.png",
+  _glossybutton(ICON="theme://svg/Arrow up.svg",
 		EVENT=EVENT,
 		ENABLED=ENABLED,
 		HIDDEN=HIDDEN);
 }
 
 #define settingButtonDown(EVENT, ENABLED, HIDDEN) {
-  _glossybutton(ICON="theme://icons/Down.png",
+  _glossybutton(ICON="theme://svg/Arrow down.svg",
 		EVENT=EVENT,
 		ENABLED=ENABLED,
 		HIDDEN=HIDDEN);
 }
 
 #define settingButtonAction(CAPTION, EVENT, ENABLED, HIDDEN) {
-  _glossybuttonTextRight(ICON="theme://icons/Command.png",
+  _glossybuttonTextRight(ICON="theme://svg/Command.svg",
 			 CAPTION=CAPTION,
 			 EVENT=EVENT,
 			 ENABLED=ENABLED,

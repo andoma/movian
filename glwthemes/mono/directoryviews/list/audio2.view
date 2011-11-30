@@ -18,19 +18,19 @@ widget(container_x, {
 	  .noInitialTransform = true;
 	  .time = 0.2;
 	  
-	  ICON2("theme://icons/48x48/Pause.png",
+	  ICON2("theme://svg/Pause.svg",
 		"Pause",
 		event(Pause),
 		PLATE_COLOR_AUDIO(),
 		1);
 	  
-	  ICON2("theme://icons/48x48/Play.png",
+	  ICON2("theme://svg/Play.svg",
 		"Play",
 		event(Play),
 		PLATE_COLOR_AUDIO(),
 		1);
 
-	  ICON2("theme://icons/48x48/Play.png",
+	  ICON2("theme://svg/Play.svg",
 		"Play",
 		playTrackFromSource($self, $parent.source),
 		PLATE_COLOR_AUDIO(),
@@ -43,7 +43,7 @@ widget(container_x, {
 	});
 	
 
-	ICON2("theme://icons/48x48/Enqueue.png",
+	ICON2("theme://svg/Enqueue.svg",
 	      "Enqueue",
 	      {
 		fireEvent(enqueuetrack($self));
@@ -51,7 +51,7 @@ widget(container_x, {
 	      PLATE_COLOR_AUDIO(),
 	      1);
 
-	ICON2("theme://icons/48x48/Delete.png",
+	ICON2("theme://svg/Delete.svg",
 	      "Delete",
 	      {
 		delete($self);

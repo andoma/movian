@@ -40,7 +40,7 @@ $ui.fullwindow = 0;
 widget(container_z, {
 
   widget(gradient, {
-    .color1 = [0.1, 0.05, 0.05] * iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+    .color1 = [0, 0, 0] * iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
     .color2 = [0.15, 0.13, 0.13] * iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
   });
   
@@ -148,7 +148,7 @@ widget(container_z, {
 	  .spacing = 10;
 	  widget(icon, {
 	    .sizeScale = 1.5;
-	    .source = "theme://icons/Alert.png";
+	    .source = "theme://svg/Alert.svg";
 	    .color = translate($self.type, [1,1,1],
 			       "info", [0.5, 1, 0.5],
 			       "warning",  [1, 1, 0.5],

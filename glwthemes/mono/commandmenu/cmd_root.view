@@ -1,12 +1,12 @@
 #import "theme://include/buttons.view"
 
 #define commandButton(EVENT, TYPE, ENABLED) {
-  _glossybutton(ICON="theme://icons/" + 
+  _glossybutton(ICON="theme://svg/" + 
 		translate(TYPE, TYPE,
 			  "SeekForward", "SeekFwd",
 			  "Subtitles", "Script",
-			  "Video", "Cam"
-			 ) + ".png",
+			  "Video", "Camcorder"
+			 ) + ".svg",
 		EVENT=EVENT,
 		HIDDEN=!ENABLED,
 		ENABLED=0.9,
@@ -14,11 +14,11 @@
 }
 
 #define commandButton2(EVENT, TYPE, ENABLED, VISIBLE) {
-  _glossybutton(ICON="theme://icons/" + 
+  _glossybutton(ICON="theme://svg/" + 
 		translate(TYPE, TYPE,
 			  "SeekForward", "SeekFwd",
 			  "Subtitles", "Script"
-			 ) + ".png",
+			 ) + ".svg",
 		EVENT=EVENT,
 		HIDDEN=!(VISIBLE),
 		ENABLED=0.9 * (ENABLED),
@@ -34,8 +34,8 @@
 }
 
 #define commandToggle(STATE, TYPE, ENABLED) {
-  _glossybuttontoggle(ICON="theme://icons/" +
-		      translate(TYPE, TYPE) + ".png",
+  _glossybuttontoggle(ICON="theme://svg/" +
+		      translate(TYPE, TYPE) + ".svg",
 		      STATE=STATE,
 		      HIDDEN=!ENABLED,
 		      ENABLED=0.9,
@@ -124,7 +124,7 @@
     onEvent(activate, EVENT);
     
     widget(icon, {
-      .source = "theme://icons/Check.png";
+      .source = "theme://svg/Check.svg";
       .shadow = true;
       .alpha = iir(SELECTED, 8);
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
@@ -152,7 +152,7 @@
     onEvent(activate, EVENT);
     
     widget(icon, {
-      .source = "theme://icons/Check.png";
+      .source = "theme://svg/Check.svg";
       .shadow = true;
       .alpha = iir(SELECTED, 8);
       .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());

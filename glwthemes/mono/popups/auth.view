@@ -19,7 +19,7 @@ widget(container_x, {
 	widget(container_x, {
 	  widget(icon, {
 	    .color = [1.0, 0.8, 0.2];
-	    .source = "theme://icons/Lock.png";
+	    .source = "theme://svg/Lock.svg";
 	    .sizeScale = 2;
 	  });
 

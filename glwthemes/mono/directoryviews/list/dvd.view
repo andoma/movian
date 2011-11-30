@@ -2,6 +2,6 @@
 #import "theme://include/listitems.view"
 
 LIST_ITEM_SIMPLE($self.metadata.title,
-		 "theme://icons/48x48/DVD.png",
+		 "theme://svg/DVD.svg",
 		 navOpen($self.url),
 		 PLATE_COLOR_VIDEO());

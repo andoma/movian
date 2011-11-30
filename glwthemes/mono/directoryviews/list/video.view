@@ -5,7 +5,7 @@ widget(container_x, {
   widget(icon, {
     .align = top;
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_VIDEO());
-    .source = "theme://icons/48x48/Movie.png";
+    .source = "theme://svg/Movie.svg";
     .shadow = true;
     .debug = true;
   });
@@ -71,7 +71,7 @@ widget(container_x, {
 	widget(container_x, {
 	  .hidden = select($self.metadata.format, 0, 1);
 	  widget(icon, {
-	    .source = "theme://icons/48x48/Container.png";
+	    .source = "theme://svg/Container.svg";
 	    .sizeScale = 0.75;
 	  });
 	  widget(label, {
@@ -82,7 +82,7 @@ widget(container_x, {
 	
 	cloner($self.metadata.videostreams, container_x, {
 	  widget(icon, {
-	    .source = "theme://icons/48x48/Cam.png";
+	    .source = "theme://svg/Camcorder.svg";
 	    .sizeScale = 0.75;
 	  });
 	  widget(label, {
@@ -94,7 +94,7 @@ widget(container_x, {
 
 	cloner($self.metadata.audiostreams, container_x, {
 	  widget(icon, {
-	    .source = "theme://icons/48x48/Sound.png";
+	    .source = "theme://svg/Sound.svg";
 	    .sizeScale = 0.75;
 	  });
 	  widget(label, {

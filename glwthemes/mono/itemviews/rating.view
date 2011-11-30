@@ -10,24 +10,24 @@ widget(container_x, {
   widget(container_z, {
     widget(container_x, {
       widget(icon, {
-	.color = [0.66, 0.66, 0];
-	.source = "theme://icons/NoStar.png";
+	.color = [0.2, 0.2, 0];
+	.source = "theme://svg/Star.svg";
       });
       widget(icon, {
-	.color = [0.66, 0.66, 0];
-	.source = "theme://icons/NoStar.png";
+	.color = [0.2, 0.2, 0];
+	.source = "theme://svg/Star.svg";
       });
       widget(icon, {
-	.color = [0.66, 0.66, 0];
-	.source = "theme://icons/NoStar.png";
+	.color = [0.2, 0.2, 0];
+	.source = "theme://svg/Star.svg";
       });
       widget(icon, {
-	.color = [0.66, 0.66, 0];
-	.source = "theme://icons/NoStar.png";
+	.color = [0.2, 0.2, 0];
+	.source = "theme://svg/Star.svg";
       });
       widget(icon, {
-	.color = [0.66, 0.66, 0];
-	.source = "theme://icons/NoStar.png";
+	.color = [0.2, 0.2, 0];
+	.source = "theme://svg/Star.svg";
       });
     });
 
@@ -37,23 +37,23 @@ widget(container_x, {
       widget(container_x, {
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
-	  .source = "theme://icons/Star.png";
+	  .source = "theme://svg/Star.svg";
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
-	  .source = "theme://icons/Star.png";
+	  .source = "theme://svg/Star.svg";
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
-	  .source = "theme://icons/Star.png";
+	  .source = "theme://svg/Star.svg";
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
-	  .source = "theme://icons/Star.png";
+	  .source = "theme://svg/Star.svg";
 	});
 	widget(icon, {
 	  .color = [1.0, 1.0, 0];
-	  .source = "theme://icons/Star.png";
+	  .source = "theme://svg/Star.svg";
 	});
       });
     });

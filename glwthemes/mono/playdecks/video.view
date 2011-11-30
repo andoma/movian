@@ -32,7 +32,7 @@ widget(container_x, {
 	widget(container_x, {
 	  .hidden = select($global.media.current.error, false, true);
 	  widget(icon, {
-	    .source = "theme://icons/Alert.png";
+	    .source = "theme://svg/Alert.svg";
 	  });
 	  widget(label, {
 	    .caption = $global.media.current.error;
@@ -42,7 +42,7 @@ widget(container_x, {
 	widget(container_x, {
 	  .hidden = select($global.media.current.video.too_slow, false, true);
 	  widget(icon, {
-	    .source = "theme://icons/Alert.png";
+	    .source = "theme://svg/Alert.svg";
 	  });
 	  widget(label, {
 	    .caption = _("CPU is too slow to decode this video");
@@ -53,7 +53,7 @@ widget(container_x, {
 	cloner($global.media.current.notifications, container_x, {
 	  .spacing = 10;
 	  widget(icon, {
-	    .source = "theme://icons/Alert.png";
+	    .source = "theme://svg/Alert.svg";
 	    .color = translate($self.type, [1,1,1],
 			       "info", [0.5, 1, 0.5],
 			       "warning",  [1, 1, 0.5],
@@ -73,7 +73,7 @@ widget(container_x, {
 	  .spacing = 10;
 	  .hidden = !changed($global.media.current.audio.current, 5);
 	  widget(icon, {
-	    .source = "theme://icons/Sound.png";
+	    .source = "theme://svg/Sound.svg";
 	  });
 	  widget(deck, {
 	    .effect = flipHorizontal;
@@ -88,7 +88,7 @@ widget(container_x, {
 	  .spacing = 10;
 	  .hidden = !changed($global.media.current.subtitle.current, 5);
 	  widget(icon, {
-	    .source = "theme://icons/Script.png";
+	    .source = "theme://svg/Script.svg";
 	  });
 	  widget(deck, {
 	    .effect = flipHorizontal;

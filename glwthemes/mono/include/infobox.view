@@ -26,14 +26,14 @@
 #define skinInfoboxEnqueue(ENABLED, EVENT) {
   skinInfoboxFocusableCommand(
     ENABLED, EVENT,
-    "theme://icons/Enqueue.png",
+    "theme://svg/Enqueue.svg",
     _("Enqueue"));
 }
 
 #define skinInfoboxDelete(ENABLED, EVENT) {
   skinInfoboxFocusableCommand(
     ENABLED, EVENT,
-    "theme://icons/Delete.png",
+    "theme://svg/Delete.svg",
     _("Delete"));
 }
 

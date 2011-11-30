@@ -34,7 +34,7 @@ widget(keyintercept, {
 	    
 	  });
 	});
-	ICON2("theme://icons/Delete.png",
+	ICON2("theme://svg/Delete.svg",
 	      "Clear",
 	      {
 		$page.model.filter = void;

@@ -40,6 +40,7 @@ widget(container_x, {
 	.sizeScale = 1.2;
 	.align = left;
 	.focusable = true;
+	.shadow = true;
 	.password = $self.model.password;
 	bind($self.model.value);
       });

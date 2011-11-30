@@ -75,17 +75,6 @@ widget(container_y, {
     .caption = fmt(_("Added by: %s"), $args.metadata.user.name);
   });
 
-  widget(container_x, {
-    .hidden = select($args.metadata.message, false, true);
-    widget(icon, {
-      .source = "theme://icons/Mail.png";
-      .color = 0.6;
-    });
-    widget(label, {
-      .color = 0.6;
-      .caption = $args.metadata.message;
-    });
-  });
   widget(label, {
     .color = 0.6;
     // Need plural forms in localization

@@ -2,12 +2,12 @@
 
 skinNavLocation($page.model.metadata.title,
 		translate($page.model.subtype,
-			  "theme://icons/Settings.png",
-			  "sound", "theme://icons/Sound.png",
-			  "audio", "theme://icons/Music.png",
-			  "video", "theme://icons/Movie.png",
-			  "bookmark", "theme://icons/Bookmark.png",
-			  "display", "theme://icons/Display.png",
-			  "search", "theme://icons/Search.png",
-			  "keymap", "theme://icons/Keyboard.png"
+			  "theme://svg/Settings.svg",
+			  "sound", "theme://svg/Sound.svg",
+			  "audio", "theme://svg/Music.svg",
+			  "video", "theme://svg/Movie.svg",
+			  "bookmark", "theme://svg/Bookmark.svg",
+			  "display", "theme://svg/Display.svg",
+			  "search", "theme://svg/Search.svg",
+			  "keymap", "theme://svg/Keyboard.svg"
 			 ));

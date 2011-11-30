@@ -95,7 +95,7 @@ widget(container_x, {
 	widget(container_x, {
 	  .hidden = select($global.media.current.error, false, true);
 	  widget(icon, {
-	    .source = "theme://icons/Alert.png";
+	    .source = "theme://svg/Alert.svg";
 	  });
 	  widget(label, {
 	    .caption = $global.media.current.error;

@@ -462,7 +462,7 @@
 	    .alpha = iir($page.glw.curView == TYPE, 4);
 	    .color = select(isHovered() || isFocused(), SELCOLOR(), BASECOLOR());
 	    .shadow = true;
-	    .source = "theme://icons/Selected.png";
+	    .source = "theme://svg/Selected.svg";
 	    .sizeScale = SCALE;
 	  });
 	});

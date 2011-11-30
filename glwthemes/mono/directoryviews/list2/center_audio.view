@@ -5,8 +5,8 @@ widget(container_x, {
 
     widget(icon, {
       .source = translate($self.media.playstatus, void,
-			  "play", "theme://icons/Play.png",
-			  "pause", "theme://icons/Pause.png");
+			  "play", "theme://svg/Play.svg",
+			  "pause", "theme://svg/Pause.svg");
       .align = left;
       .caption = $self.media.playstatus;
       .shadow = true;

@@ -21,6 +21,7 @@ widget(container_x, {
       .sizeScale = 0.8;
       .color = select($view.highlight, 1, 0.4);
       .alpha = select($view.highlight, 1, 0.5);
+      .shadow = true;
     });
   });
     
@@ -47,6 +48,7 @@ widget(container_x, {
 	    .align = left;
 	    .caption = $self.title;
 	    .sizeScale = 1.2;
+	    .shadow = true;
 	  });
 	});
       });

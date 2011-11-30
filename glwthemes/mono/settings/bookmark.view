@@ -31,7 +31,7 @@
 			[1.0, 1.0, 1.0],
 			COLOR);
 	.shadow = true; 
-	.source = "theme://icons/Selected.png"; 
+	.source = "theme://svg/Selected.svg"; 
 	.sizeScale = 2; 
       });
     });
@@ -44,7 +44,7 @@ widget(container_x, {
   widget(icon, {
     .align = top;
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_OTHER());
-    .source = "theme://icons/Bookmark.png";
+    .source = "theme://svg/Bookmark.svg";
     .shadow = true;
   });
   
@@ -131,11 +131,11 @@ widget(container_x, {
 
 	  .source = translate($self.model.status,
 			      void,
-			      "ok",   "theme://icons/Check.png",
-			      "auth", "theme://icons/Lock.png",
-			      "nohandler", "theme://icons/Alert.png",
-			      "fail", "theme://icons/Alert.png",
-			      "scanning", "theme://icons/Scan.png");
+			      "ok",   "theme://svg/Check.svg",
+			      "auth", "theme://svg/Lock.svg",
+			      "nohandler", "theme://svg/Alert.svg",
+			      "fail", "theme://svg/Alert.svg",
+			      "scanning", "theme://svg/Scan.svg");
 	  .shadow = true;
 	});
       });
@@ -188,15 +188,15 @@ widget(container_x, {
       
 	  widget(container_x, {
 
-	    TYPE_ENTRY("music", "Music", "theme://icons/Music.png",
+	    TYPE_ENTRY("music", "Music", "theme://svg/Music.svg",
 		       PLATE_COLOR_AUDIO());
-	    TYPE_ENTRY("video", "Video", "theme://icons/Movie.png",
+	    TYPE_ENTRY("video", "Video", "theme://svg/Movie.svg",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("tv", "Tv", "theme://icons/Display.png",
+	    TYPE_ENTRY("tv", "Tv", "theme://svg/Display.svg",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("photos", "Image", "theme://icons/Image.png",
+	    TYPE_ENTRY("photos", "Image", "theme://svg/Pictures.svg",
 		       PLATE_COLOR_VIDEO());
-	    TYPE_ENTRY("other", "Other", "theme://icons/Folder.png",
+	    TYPE_ENTRY("other", "Other", "theme://svg/Folder.svg",
 		       PLATE_COLOR_VIDEO());
 	  });
 	});
@@ -218,7 +218,7 @@ widget(container_x, {
 	  .alphaSelf = 0.66;
 
 	  widget(container_x, {
-	    ICON2("theme://icons/Delete.png",
+	    ICON2("theme://svg/Delete.svg",
 		  "Delete",
 		  {
 		    delete($self);

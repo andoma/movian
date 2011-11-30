@@ -23,7 +23,7 @@ widget(detachable, {
       .alphaSelf = iir(isFocused() * 0.5, 5);
 
       widget(icon, {
-	.source = $self.metadata.album_art ?? "theme://icons/256x256/Music.png";
+	.source = $self.metadata.album_art ?? "theme://svg/Music.svg";
 	.sizeScale = 4;
 	.alpha = iir(isReady(), 10);
 	.saturation = 1 - iir(isReady(), 10);

@@ -13,26 +13,4 @@ widget(container_z, {
       .source = $self.url;
     });
   });
-/*
-  widget(container_x, {
-    .align = top;
-    widget(container_y, {
-      .align = left;
-
-      widget(backdrop, {
-        PLATE_PROPS();
-        
-        .alphaSelf = 0.75;
-        .alpha = iir(changed($self.slideshow.playstatus, 2, true), 7);
-
-        widget(icon, {
-          .sizeScale = 2.0;
-          .source = translate($self.slideshow.playstatus, void,
-                              "pause", "theme://icons/64x64/pause.png",
-                              "play",  "theme://icons/64x64/play.png");
-        });
-      });
-    });
-  });
-*/
 });

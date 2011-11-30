@@ -7,7 +7,7 @@ widget(container_x, {
 
   widget(icon, {
 
-    .source = $self.metadata.album_art ?? "theme://icons/48x48/DVD.png";
+    .source = $self.metadata.album_art ?? "theme://svg/Disc.svg";
     .shadow    = select($self.metadata.album_art, false, true);
     .color = select(isFocused() || $self.metadata.album_art,
 		    [1.0, 1.0, 1.0], PLATE_COLOR_AUDIO());

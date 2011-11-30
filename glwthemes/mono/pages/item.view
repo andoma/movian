@@ -2,7 +2,7 @@
 #import "theme://include/buttons.view"
 
 #define itemActionButton(ENABLED, EVENT, ICONCLASS, CAPTION) {
-  _glossybuttonTextRight(ICON=translate(ICONCLASS, "theme://icons/Command.png"),
+  _glossybuttonTextRight(ICON=translate(ICONCLASS, "theme://svg/Command.svg"),
 			 CAPTION=CAPTION,
 			 EVENT=EVENT,
 			 ENABLED=true,
