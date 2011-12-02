@@ -101,6 +101,7 @@ widget(container_y, {
 		.caption = $self.metadata.title;
 		.align = center;
 		.ellipsize = true;
+		.shadow = true;
 	      });
 	    });
 	  });
