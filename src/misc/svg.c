@@ -381,9 +381,9 @@ stroke_path(svg_state_t *state, const char *str)
     }
 
     if(cur_cmd != NULL) {
-      char *endptr;
+      const char *endptr;
 
-      double d = strtod(str, &endptr);
+      double d = my_str2double(str, &endptr);
 
       if(endptr != str) {
 	values[cur_param] = d;
@@ -794,11 +794,12 @@ svg_parse_root(svg_state_t *s, htsmsg_t *tags)
   htsmsg_field_t *f;
   HTSMSG_FOREACH(f, tags) {
     htsmsg_t *c;
-    if(strcmp(f->hmf_name, "g"))
-      continue;
     if((c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
-    svg_parse_g(s, c);
+    if(!strcmp(f->hmf_name, "g"))
+      svg_parse_g(s, c);
+    if(!strcmp(f->hmf_name, "path"))
+      svg_parse_path(s, c);
   }
 }
 
