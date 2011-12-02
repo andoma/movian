@@ -77,7 +77,7 @@ widget(keyintercept, {
 				"video",     "theme://svg/Movie",
 				"album",     "theme://svg/Disc",
 				"plugin",    "theme://svg/Plugin"
-			       ) + ".svG";
+			       ) + ".svg";
 	    .shadow = true;
 	  });
 	  
