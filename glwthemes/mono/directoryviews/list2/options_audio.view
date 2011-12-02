@@ -1,3 +1,25 @@
+
+#define OPTION(CAPTION, ICON, EVENT, HIDDEN=false) {
+  widget(container_x, {
+    .hidden = HIDDEN;
+    .spacing = 5;
+    widget(icon, {
+      .source = ICON;
+      .color = 0.5 + iir(isHovered() || isFocused(), 5);
+    });
+    widget(label, {
+      .caption = CAPTION;
+      .focusable = true;
+      .color = 0.5 + iir(isHovered() || isFocused(), 5);
+      onEvent(activate, EVENT);
+    });
+  });
+}
+  
+
+
+
+
 widget(backdrop, {
   .width = $ui.size * 5;
   .source = "theme://graphics/8x8round.png";
@@ -17,31 +39,20 @@ widget(backdrop, {
 
     widget(list_y, {
 
-      widget(label, {
-	.caption = _("Queue");
-	.focusable = true;
-	.color = 0.5 + iir(isHovered() || isFocused(), 5);
-	onEvent(activate, {
+      OPTION(_("Queue"), "theme://svg/Enqueue.svg", {
 	  fireEvent(enqueuetrack($self));
-	});
       });
 
-      widget(label, {
-	.caption = _("Delete");
-	.hidden = !$parent.model.canDelete;
-	.focusable = true;
-	.color = 0.5 + iir(isHovered() || isFocused(), 5);
-	onEvent(activate, {
-	  delete($self);
-	});
-      });
-      widget(label, {
-	.hidden = isVoid($self.metadata.starred);
-	.caption = select($self.metadata.starred, _("Unstar"), _("Star"));
-	.focusable = true;
-	.color = 0.5 + iir(isHovered() || isFocused(), 5);
-	onEvent(activate, deliverEvent($self, "starToggle"));
-      });
+      OPTION(_("Delete"), "theme://svg/Delete.svg", {
+	delete($self);
+      }, !$parent.model.canDelete);
+
+      OPTION(select($self.metadata.starred, _("Unstar"), _("Star")),
+	     select($self.metadata.starred,
+		    "theme://svg/Star.svg",
+		    "theme://svg/Nostar.svg"),
+	     deliverEvent($self, "starToggle"),
+	     isVoid($self.metadata.starred));
     });
   });
 });
