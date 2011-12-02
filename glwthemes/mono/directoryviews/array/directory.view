@@ -4,7 +4,7 @@ widget(image, {
     "theme://svg/" + 
     translate($self.metadata.subtype, "Folder",
               "playlists",     "List",
-              "starred",       "Favorite",
+              "starred",       "Star",
               "inbox",         "Inbox",
               "favourites",    "Favorite",
               "tags",          "Tags",
