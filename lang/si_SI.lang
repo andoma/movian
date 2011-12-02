@@ -41,24 +41,6 @@ id: %d tracks
 msg: %d Naslov
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
-#
-id: Delete
-msg: Izbriši
-
-id: Queue
-# Missing translation
-msg: 
-
-id: Star
-# Missing translation
-msg: 
-
-id: Unstar
-# Missing translation
-msg: 
-
-#
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
@@ -70,6 +52,9 @@ msg: Vklop
 #
 # ./glwthemes/mono/include/infobox.view
 #
+id: Delete
+msg: Izbriši
+
 id: Enqueue
 msg: Dodaj
 
@@ -85,14 +70,6 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
-id: Allocated by application: %d kB
-# Missing translation
-msg: 
-
-id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
-
 id: Avail system RAM: %d kB
 msg: Na voljo sistemskega pomnilnika: %d kB
 
@@ -105,19 +82,11 @@ msg: Prikaži info
 id: Framerate: %.2f Hz
 msg: Hitrost slik %.2f Hz
 
-id: Free chunks: %d
-# Missing translation
-msg: 
-
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Višina: %d px
-
-id: Memory status
-# Missing translation
-msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -127,10 +96,6 @@ msg: Sistemske informacije
 
 id: Total system RAM: %d kB
 msg: Celoten sistemski pomnilnik: %d kB
-
-id: Unused memory: %d kB
-# Missing translation
-msg: 
 
 id: Version: %s
 msg: Verzija: %s
@@ -145,7 +110,7 @@ msg: Upravljalec oken: %s
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: O
+msg: O Show Time MC
 
 #
 # ./glwthemes/mono/pages/home_top.view
@@ -247,13 +212,13 @@ id: Audio muted
 msg: Izklop zvoka
 
 id: Fancy UI animations
-msg: Lepe UI animacije
+msg: Polepšane UI Animacije
 
 id: Master volume: %d dB
 msg: Glasnost: %d dB
 
 id: Top bar navigation buttons
-msg: Navigacijske tipke v vrhnji vrstici
+msg: Navigacijske tipke v zgornji vrstici
 
 #
 # ./src/api/opensubtitles.c
@@ -315,10 +280,6 @@ msg: Napaka pri odpiranju CD-ja
 #
 # ./src/backend/dvd/dvd.c
 #
-id: DVD
-# Missing translation
-msg: 
-
 id: DVD read error, restarting disc
 msg: Napaka pri branju DVD-ja, disk bo ponovno zagnan
 
@@ -343,10 +304,6 @@ msg: Rezultat iskanja za: %s
 id: Automatic login when Showtime starts
 msg: Samodejna prijava pri zagonu Showtime-a
 
-id: Collaborative
-# Missing translation
-msg: 
-
 id: Enable Spotify
 msg: Omogoči Spotify
 
@@ -368,22 +325,14 @@ msg: Nov album na Spotify
 id: New releases
 msg: Nove objave
 
-id: Offline
-# Missing translation
-msg: 
-
-id: Offline sync in 96kbps
-# Missing translation
-msg: 
-
 id: Playlists
 msg: Lista predvajanj
 
 id: Relogin (switch user)
-msg: Ponovno logiranje (menjava uporabnika)
+msg: Ponovno prijava (menjava uporabnika)
 
 id: Search result
-msg: rezultati iskanja
+msg: Rezultati iskanja
 
 id: Spotify friends
 msg: Spotify Prijatelji
@@ -431,21 +380,13 @@ id: Search using spotlight
 msg: Za iskanje uporabi Spotlight
 
 #
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-# Missing translation
-msg: 
-
-#
 # ./src/i18n.c
 #
 id: Language
 msg: Jezik
 
-id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-# Missing translation
-msg: 
+id: Language codes should be configured as three character ISO codes, example (eng, swe, slo)
+msg: Jezik kot 3-mestno ISO kodo, npr.: eng,swe,slo
 
 id: Preferred languages
 msg: Prednostni jezik
@@ -457,7 +398,7 @@ id: Primary subtitle language code
 msg: Prednostni jezik podnapisov
 
 id: SRT character set
-msg: Nastavitve za SRT podnapise
+msg: Nastavitve za SRT Podnapise SLO-1250
 
 id: Secondary audio language code
 msg: Drugi jezik zvoka
@@ -511,17 +452,6 @@ id: Video zoom
 msg: Video približevanje
 
 #
-# ./src/metadata/metadata.c
-#
-id: Embedded in file
-# Missing translation
-msg: 
-
-id: Track %d
-# Missing translation
-msg: 
-
-#
 # ./src/navigator.c
 #
 id: No handler for URL
@@ -573,7 +503,7 @@ msg: Tip
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Isšalacija aplikacij in vtičnikov
+msg: Inštalacija aplikacij in vtičnikov
 
 id: Discovered media sources
 msg: Gefundene Medienquellen
