@@ -16,6 +16,7 @@ BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_THEME="mono"
 DEFAULT_LOGTARGET=""
+JARGS=""
 
 CONFIG_LIST="
  libasound
@@ -85,9 +86,14 @@ CONFIG_LIST="
  libav
 "
 
-die() {
+cleanup() {
     rm -rf $TMPDIR
-    exit
+}
+
+die() {
+    cleanup
+    echo "Configure failed"
+    exit 1
 }
 
 die_invalid_opt() {
@@ -163,6 +169,7 @@ common_help(){
   echo "  --with-libav=PREFIX      Path to where libav is installed."
   echo "                           By default Showtime will build libav itself."
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
+  echo "  --jobs=N                 Allow N jobs at once"
   echo ""
   echo "Platform specific options:"
 }
@@ -176,6 +183,9 @@ common_opt(){
   --with-libav=*) LIBAV_PATH="$2"
   ;;
 
+  --build=*) BUILD="$2"
+  ;;
+
   --enable-?*|--disable-?*)
   eval $(echo "$1" | sed 's/--/action=/;s/-/ option=/;s/-/_/g')
   if is_in $option $CONFIG_LIST; then
@@ -183,6 +193,9 @@ common_opt(){
   else
       die_invalid_opt $1
   fi
+  ;;
+
+  --jobs=*) JARGS="-j$2"
   ;;
 
   *)
@@ -265,8 +278,8 @@ libav_setup() {
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}") || die
 
-    (cd ${LIBAV_BUILD_DIR} && make -j6) || die
-    (cd ${LIBAV_BUILD_DIR} && make install) || die
+    (cd ${LIBAV_BUILD_DIR} && make ${JARGS}) || die
+    (cd ${LIBAV_BUILD_DIR} && make ${JARGS} install) || die
     LIBAV_PATH=${LIBAV_INSTALL_DIR}
 }
 
@@ -370,5 +383,6 @@ EOF
     rm -f ${CONFIG_H} ${CONFIG_MAK}
 
     echo "Final binary is: ${PROG}"
-    die
+    cleanup
+    exit 0
 }
