@@ -696,7 +696,7 @@ vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm, int width, int height)
 					       MIXER_FEATURES, mixer_features,
 					       supported);
   if(st != VDP_STATUS_OK) {
-    TRACE(TRACE_ERROR, "VDPAU", "Unable to quiery video mixer features");
+    TRACE(TRACE_ERROR, "VDPAU", "Unable to query video mixer features");
     return st;
   }
 
@@ -728,7 +728,7 @@ vdpau_mixer_deinit(vdpau_mixer_t *vm)
  *
  */
 void
-vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
+vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode)
 {
   int best;
   VdpVideoMixerFeature f;
@@ -737,18 +737,18 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
   VdpBool values[1];
   VdpStatus st;
 
-  if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS) {
+  if(mode & vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS) {
     best = VDPAU_MIXER_DEINTERLACE_TS;
     f = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
     type = "Temporal/Spatial";
-  } else if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_T) {
+  } else if(mode & vm->vm_caps & VDPAU_MIXER_DEINTERLACE_T) {
     best = VDPAU_MIXER_DEINTERLACE_T;
     f = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL;
     type = "Temporal";
   } else
     return;
-
-  if(on) {
+  
+  if(mode) {
     if(vm->vm_enabled & best)
       return;
     vm->vm_enabled |= best;
@@ -761,16 +761,16 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
 
   features[0] = f;
 
-  values[0]= !!on;
+  values[0]= !!(mode > 0);
 
   st = vm->vm_vd->vdp_video_mixer_set_feature_enables(vm->vm_mixer,
 						      1, features, values);
   if(st != VDP_STATUS_OK) {
     TRACE(TRACE_ERROR, "VDPAU", "Unable to %s %s deinterlacer",
-	  on ? "enable" : "disable", type);
+	  mode ? "enable" : "disable", type);
   } else {
     TRACE(TRACE_DEBUG, "VDPAU", "%s %s deinterlacer",
-	  on ? "Enabled" : "Disabled", type);
+	  mode ? "Enabled" : "Disabled", type);
 	  
 	  
   }

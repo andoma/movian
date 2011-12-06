@@ -121,6 +121,12 @@ set_vdpau(void *opaque, int on)
 {
   video_settings.vdpau = on;
 }
+
+static void
+set_vdpau_deinterlace(void *opaque, const char *str)
+{
+  video_settings.vdpau_deinterlace = atoi(str);
+}
 #endif
 
 
@@ -166,6 +172,22 @@ video_settings_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
+  /*
+  settings_create_bool(s, "vdpau_deinterlace", _p("Enable VDPAU deinterlacer for interlaced content"), 1,
+		       store, set_vdpau_deinterlace, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
+  */
+  x = settings_create_multiopt(s, "vdpau_deinterlace", _p("Preferred VDPAU deinterlacer method"),
+			       set_vdpau_deinterlace, NULL);
+
+  settings_multiopt_add_opt(x, "2", _p("Temporal/Spacial"), 1);
+  settings_multiopt_add_opt(x, "1", _p("Temporal"), 0);
+  settings_multiopt_add_opt(x, "0", _p("Off"), 0);
+
+  settings_multiopt_initiate(x, store, settings_generic_save_settings,
+                             (void *)"videoplayback");
 #endif
 
   settings_create_bool(s, "stretch_horizontal",

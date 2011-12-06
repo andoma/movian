@@ -33,6 +33,7 @@
 #include "glw_video_common.h"
 
 #include "GL/glx.h"
+#include "video/video_settings.h"
 
 /*
  * Replace the pixbuf magic with:
@@ -423,7 +424,7 @@ glw_video_input_vdpau(glw_video_t *gv,
 
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
-    vdpau_mixer_set_deinterlacer(vm, 1);
+    vdpau_mixer_set_deinterlacer(vm, video_settings.vdpau_deinterlace);
 
     vm->vm_surface_win[3] = vm->vm_surface_win[2];
     vm->vm_surface_win[2] = vm->vm_surface_win[1];

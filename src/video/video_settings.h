@@ -29,6 +29,7 @@ struct video_settings {
   } resume_mode;
 
   int played_threshold;
+  int vdpau_deinterlace;
 };
 
 extern struct video_settings video_settings;
