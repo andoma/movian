@@ -131,6 +131,12 @@ set_stretch_horizontal(void *opaque, int on)
 }
 
 static void
+set_stretch_fullscreen(void *opaque, int on)
+{
+  video_settings.stretch_fullscreen = on;
+}
+
+static void
 set_vzoom(void *opaque, int v)
 {
   video_settings.vzoom = v;
@@ -171,6 +177,13 @@ video_settings_init(void)
   settings_create_bool(s, "stretch_horizontal",
 		       _p("Stretch video to widescreen"), 0,
 		       store, set_stretch_horizontal, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
+
+  settings_create_bool(s, "stretch_fullscreen",
+		       _p("Stretch video to fullscreen"), 0,
+		       store, set_stretch_fullscreen, NULL, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
