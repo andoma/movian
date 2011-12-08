@@ -55,6 +55,9 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
   float t_aspect = av_q2d(gv->gv_dar);
 
+    if(video_settings.stretch_fullscreen)
+      return;
+
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
     if(video_settings.stretch_horizontal)
