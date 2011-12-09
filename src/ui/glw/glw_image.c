@@ -66,7 +66,7 @@ typedef struct glw_image {
 
   uint8_t gi_alpha_edge;
 
-  uint8_t gi_was_valid;
+  uint8_t gi_is_ready;
 
   glw_renderer_t gi_gr;
 
@@ -182,15 +182,12 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   float blur = 1 - (rc->rc_blur * w->glw_blur);
   glw_rctx_t rc0;
 
-  if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
-    return;
-
-  if(!glw_is_tex_inited(&glt->glt_texture))
-    alpha_self = 0;
-  else
-    alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
+  alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
+
+    if(glt == NULL || !glw_is_tex_inited(&glt->glt_texture))
+      return;
 
     rc0 = *rc;
 
@@ -241,7 +238,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
-    if(alpha_self > 0.01f) {
+    if(glt && glw_is_tex_inited(&glt->glt_texture) && alpha_self > 0.01f) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
@@ -605,7 +602,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
-    if(glt->glt_state == GLT_STATE_VALID || 
+    if(glw_is_tex_inited(&glt->glt_texture) ||
        glt->glt_state == GLT_STATE_ERROR) {
       // Pending texture completed, ok or error: transfer to current
 
@@ -624,15 +621,15 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_tex_layout(gr, glt);
 
   if(glt->glt_state == GLT_STATE_ERROR) {
-    if(!gi->gi_was_valid) {
+    if(!gi->gi_is_ready) {
       glw_signal0(w, GLW_SIGNAL_READY, NULL);
-      gi->gi_was_valid = 1;
+      gi->gi_is_ready = 1;
     }
-  } else if(glt->glt_state == GLT_STATE_VALID) {
+  } else if(glw_is_tex_inited(&glt->glt_texture)) {
 
-    if(!gi->gi_was_valid) {
+    if(!gi->gi_is_ready) {
       glw_signal0(w, GLW_SIGNAL_READY, NULL);
-      gi->gi_was_valid = 1;
+      gi->gi_is_ready = 1;
     }
 
     if(gi->gi_update) {
@@ -1002,7 +999,7 @@ glw_image_ready(glw_t *w)
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
  
-  return glt != NULL && (glt->glt_state == GLT_STATE_VALID || 
+  return glt != NULL && (glw_is_tex_inited(&glt->glt_texture) ||
 			 glt->glt_state == GLT_STATE_ERROR);
 }
 

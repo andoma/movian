@@ -2082,7 +2082,7 @@ http_load(struct fa_protocol *fap, const char *url,
   }
 
   if(err == 304) {
-    res = FA_NOT_MODIFIED;
+    res = NOT_MODIFIED;
     goto done;
   }
 

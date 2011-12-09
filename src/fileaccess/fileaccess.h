@@ -168,11 +168,8 @@ void fa_scanner(const char *url, time_t mtime,
 		prop_t *model, const char *playme,
 		prop_t *direct_close);
 
-#define FA_DISABLE_CACHE ((int *)-1)
-#define FA_NOT_MODIFIED  ((void *)-1)
-
 void *fa_load(const char *url, size_t *sizep, const char **vpaths,
-	      char *errbuf, size_t errlen, int *from_cache);
+	      char *errbuf, size_t errlen, int *cache_control);
 
 uint8_t *fa_load_and_close(fa_handle_t *fh, size_t *sizep);
 
