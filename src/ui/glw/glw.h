@@ -627,10 +627,16 @@ typedef struct glw_root {
   /**
    * Image/Texture loader
    */
+  hts_cond_t gr_tex_load_cond;
 
-  hts_cond_t gr_tex_load_cond[3];
-  struct glw_loadable_texture_queue gr_tex_load_queue[3];
+#define LQ_THEME      0
+#define LQ_TENTATIVE  1
+#define LQ_THUMBS     2
+#define LQ_OTHER      3
+#define LQ_REFRESH    4
+#define LQ_num        5
 
+  struct glw_loadable_texture_queue gr_tex_load_queue[LQ_num];
 
   struct glw_loadable_texture_list gr_tex_active_list;
   struct glw_loadable_texture_list gr_tex_flush_list;

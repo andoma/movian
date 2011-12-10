@@ -47,7 +47,8 @@ static hts_mutex_t image_from_video_mutex;
 static AVCodecContext *pngencoder;
 
 static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
-				     char *errbuf, size_t errlen);
+				     char *errbuf, size_t errlen,
+				     int *cache_control);
 
 /**
  *
@@ -97,7 +98,7 @@ jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
  */
 static pixmap_t *
 fa_imageloader2(const char *url, const char **vpaths,
-		char *errbuf, size_t errlen)
+		char *errbuf, size_t errlen, int *cache_control)
 {
   uint8_t *p;
   size_t size;
@@ -105,8 +106,9 @@ fa_imageloader2(const char *url, const char **vpaths,
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
-  if((p = fa_load(url, &size, vpaths, errbuf, errlen, NULL)) == NULL) 
-    return NULL;
+  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control);
+  if(p == NULL || p == NOT_MODIFIED)
+    return (pixmap_t *)p;
 
   mi.data = p;
   mi.size = size;
@@ -178,7 +180,8 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
  */
 pixmap_t *
 fa_imageloader(const char *url, const struct image_meta *im,
-	       const char **vpaths, char *errbuf, size_t errlen)
+	       const char **vpaths, char *errbuf, size_t errlen,
+	       int *cache_control)
 {
   uint8_t p[16];
   int r;
@@ -188,14 +191,17 @@ fa_imageloader(const char *url, const struct image_meta *im,
   pixmap_type_t fmt;
 
   if(strchr(url, '#'))
-    return fa_image_from_video(url, im, errbuf, errlen);
+    return fa_image_from_video(url, im, errbuf, errlen, cache_control);
 
   if(!im->im_want_thumb)
-    return fa_imageloader2(url, vpaths, errbuf, errlen);
+    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control);
 
   if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
 			  FA_BUFFERED_SMALL)) == NULL)
     return NULL;
+
+  if(cache_control)
+    *cache_control = 0;
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
     snprintf(errbuf, errlen, "File too short");
@@ -497,7 +503,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
  */
 static pixmap_t *
 fa_image_from_video(const char *url0, const image_meta_t *im,
-		    char *errbuf, size_t errlen)
+		    char *errbuf, size_t errlen, int *cache_control)
 {
   static char *stated_url;
   static fa_stat_t fs;
@@ -536,6 +542,11 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
     pm = pixmap_alloc_coded(data, datasize, PIXMAP_PNG);
     free(data);
     return pm;
+  }
+
+  if(ONLY_CACHED(cache_control)) {
+    snprintf(errbuf, errlen, "Not cached");
+    return NULL;
   }
 
   hts_mutex_lock(&image_from_video_mutex);

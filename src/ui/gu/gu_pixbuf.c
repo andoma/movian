@@ -86,7 +86,7 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   im.im_req_width  = req_width;
   im.im_req_height = req_height;
   
-  pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0);
+  pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0, NULL);
   if(pm == NULL)
     return NULL;
 

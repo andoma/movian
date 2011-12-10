@@ -71,7 +71,7 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   image_meta_t im = {0};
   im.im_no_decoding = 1;
 
-  pm = backend_imageloader(remain, &im, NULL, errbuf, sizeof(errbuf));
+  pm = backend_imageloader(remain, &im, NULL, errbuf, sizeof(errbuf), NULL);
   if(pm == NULL)
     return http_error(hc, 404, "Unable to load image %s : %s",
 		      remain, errbuf);

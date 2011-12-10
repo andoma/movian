@@ -159,7 +159,8 @@ BE_REGISTER(page);
  */
 struct pixmap *
 backend_imageloader(const char *url, const image_meta_t *im,
-		    const char **vpaths, char *errbuf, size_t errlen)
+		    const char **vpaths, char *errbuf, size_t errlen,
+		    int *cache_control)
 {
   if(!strncmp(url, "thumb://", 8)) {
     image_meta_t im0;
@@ -180,9 +181,10 @@ backend_imageloader(const char *url, const image_meta_t *im,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
-  pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen);
-  if(pm == NULL)
-    return NULL;
+  pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen, cache_control);
+
+  if(pm == NULL || pm == NOT_MODIFIED)
+    return pm;
 
   return pixmap_decode(pm, im, errbuf, errlen);
 }

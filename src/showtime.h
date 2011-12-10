@@ -26,6 +26,11 @@
 #include "htsmsg/htsmsg_store.h"
 #include "arch/threads.h"
 
+#define DISABLE_CACHE ((int *)-1)
+#define NOT_MODIFIED  ((void *)-1)
+
+#define ONLY_CACHED(p) ((p) != DISABLE_CACHE && (p) != NULL)
+
 // NLS
 
 

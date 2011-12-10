@@ -4200,8 +4200,14 @@ be_spotify_play(const char *url, media_pipe_t *mp,
  */
 static pixmap_t *
 be_spotify_imageloader(const char *url, const image_meta_t *im,
-		       const char **vpaths, char *errbuf, size_t errlen)
+		       const char **vpaths, char *errbuf, size_t errlen,
+		       int *cache_control)
 {
+  if(ONLY_CACHED(cache_control)) {
+    snprintf(errbuf, errlen, "Not cached");
+    return NULL;
+  }
+
   spotify_image_t si = {0};
 
   if(spotify_start(errbuf, errlen, 0))
