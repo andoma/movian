@@ -503,8 +503,7 @@ id: Embedded in file
 msg: Incorporato nel file
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Traccia %d
 
 #
 # ./src/navigator.c
@@ -703,6 +702,9 @@ msg: Colore ombra
 
 id: Shadow offset
 msg: Offset ombra
+
+id: Stretch video to fullscreen
+msg: Adatta video a Schermo Pieno
 
 id: Stretch video to widescreen
 msg: Adatta video a widescreen
