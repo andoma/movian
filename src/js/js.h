@@ -47,6 +47,8 @@ typedef struct js_context_private {
 
 } js_context_private_t;
 
+void js_load(const char *url);
+
 JSContext *js_newctx(JSErrorReporter er);
 
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,

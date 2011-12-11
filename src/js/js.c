@@ -869,7 +869,16 @@ js_fini(void)
 }
 
 
-
+/**
+ *
+ */
+void
+js_load(const char *url)
+{
+  char errbuf[128];
+  if(js_plugin_load("test-fromcmdline", url, errbuf, sizeof(errbuf)))
+    TRACE(TRACE_ERROR, "JS", "Unable to load %s -- %s", url, errbuf);
+}
 
 
 /**

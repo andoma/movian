@@ -54,6 +54,7 @@
 #include "video/video_settings.h"
 #include "metadata/metadata.h"
 #include "ext/sqlite/sqlite3.h"
+#include "js/js.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -167,11 +168,11 @@ main(int argc, char **argv)
   const char *forceview = NULL;
   const char *devplugin = NULL;
   const char *plugin_repo = NULL;
+  const char *jsfile = NULL;
   int nuiargs = 0;
   int can_standby = 0;
   int can_poweroff = 0;
   int r;
-
 #if ENABLE_HTTPSERVER
   int do_upnp = 1;
 #endif
@@ -228,6 +229,7 @@ main(int argc, char **argv)
 	     "                       Intended for plugin development\n"
 	     "   --plugin-repo     - URL to plugin repository\n"
 	     "                       Intended for plugin development\n"
+	     "   -j <path>           Load javascript file\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
@@ -294,6 +296,10 @@ main(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "--plugin-repo") && argc > 1) {
       plugin_repo = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "-j") && argc > 1) {
+      jsfile = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
@@ -413,6 +419,8 @@ main(int argc, char **argv)
   /* Video settings */
   video_settings_init();
 
+  if(jsfile)
+    js_load(jsfile);
 
   nav_open(NAV_HOME, NULL);
 
