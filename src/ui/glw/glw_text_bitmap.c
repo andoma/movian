@@ -154,7 +154,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
       if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
-	if(pm->pm_flags & PIXMAP_TEXT_ELLIPSIZED) {
+	if(pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
 	  gtb->gtb_status = GTB_NEED_RERENDER;
 	} else {
 
