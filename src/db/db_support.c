@@ -36,10 +36,10 @@ unlock_notify_cb(void **apArg, int nArg){
   int i;
   for(i=0; i<nArg; i++){
     unlock_notify_t *p = apArg[i];
-    pthread_mutex_lock(&p->mutex);
+    hts_mutex_lock(&p->mutex);
     p->fired = 1;
-    pthread_cond_signal(&p->cond);
-    pthread_mutex_unlock(&p->mutex);
+    hts_cond_signal(&p->cond);
+    hts_mutex_unlock(&p->mutex);
   }
 }
 
