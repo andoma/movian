@@ -871,6 +871,28 @@ js_fini(void)
 
 
 
+static void *
+js_load_thread(void *aux)
+{
+  const char *url = aux;
+  char errbuf[128];
+  
+  if(js_plugin_load("test-fromcmdline", url, errbuf, sizeof(errbuf)))
+    TRACE(TRACE_ERROR, "JS", "Unable to load %s -- %s", url, errbuf);
+  return NULL;
+}
+
+/**
+ *
+ */
+void
+js_load(const char *url)
+{
+  char *u = strdup(url);
+  
+  hts_thread_create_detached("rawjs", js_load_thread, u, THREAD_PRIO_LOW);
+}
+
 
 /**
  *

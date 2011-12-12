@@ -89,6 +89,20 @@ copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
   int i;
   const float *src = (const float *)ab->ab_data;
 
+  if(ab->ab_channels == 5 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 5; i+=5) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = src[i+2];
+      *buf++ = 0;
+      *buf++ = src[i+3];
+      *buf++ = src[i+4];
+      *buf++ = 0;
+      *buf++ = 0;
+    }
+    return;
+  }
+
   if(ab->ab_channels == 6 && channels == 8) {
     for (i = 0; i < AUDIO_BLOCK_SAMPLES * 6; i+=6) {
       *buf++ = src[i+0];
@@ -246,6 +260,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	  conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
 	  break;
 
+	case 5:
 	case 6:
 	  achannels = 8;
 	  if(max_pcm >= 6) {

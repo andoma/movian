@@ -127,6 +127,24 @@ audio_decoder_destroy(audio_decoder_t *ad)
 }
 
 
+  
+static int
+channels_to_format(int channels)
+{
+  int format;
+  switch(channels) {
+  case 2: format = AM_FORMAT_PCM_STEREO; break;
+  case 5: format = AM_FORMAT_PCM_5DOT0;  break;
+  case 6: format = AM_FORMAT_PCM_5DOT1;  break;
+  case 7: format = AM_FORMAT_PCM_6DOT1;  break;
+  case 8: format = AM_FORMAT_PCM_7DOT1;  break;
+  default:
+    return -1;
+  }
+  return format;
+}
+
+
 /**
  *
  */
@@ -410,8 +428,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 
 	if(ctx->sample_fmt == SAMPLE_FMT_FLT && am->am_float && 
 	   (am->am_sample_rates & AM_SR_ANY ||
-	    audio_rateflag_from_rate(rate) & am->am_sample_rates)) {
-
+	    audio_rateflag_from_rate(rate) & am->am_sample_rates) &&
+	   channels_to_format(channels) & am->am_formats) {
+	  
 	  frames /= channels;
 	  audio_deliver(ad, am, ad->ad_outbuf, channels, frames,
 			rate, pts, mb->mb_epoch, mp, 1);
@@ -599,6 +618,24 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 
   astats(ad, mp, pts, epoch, data0, frames, channels, chlayout, rate);
 
+  if(channels == 5) {
+    // 5.0 -> 5.1 
+    src = data0 + frames * 5;
+    dst = data0 + frames * 6;
+    
+    for(i = 0; i < frames; i++) {
+      src -= 5;
+      dst -= 6;
+      
+      dst[5] = src[4];
+      dst[4] = src[3];
+      dst[3] = 0;
+      dst[2] = src[2];
+      dst[1] = src[1];
+      dst[0] = src[0];
+    }
+    channels = 6;      
+  }
 
   /**
    * 5.1 to stereo downmixing, coeffs are stolen from AAC spec
@@ -883,16 +920,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, const void *src,
   int outsize = am->am_preferred_size ?: 1024;
   int c, r;
   int sample_size = (1 + isfloat) * 2;
-  int format;
-
-  switch(channels) {
-  case 2: format = AM_FORMAT_PCM_STEREO; break;
-  case 6: format = AM_FORMAT_PCM_5DOT1;  break;
-  case 7: format = AM_FORMAT_PCM_6DOT1;  break;
-  case 8: format = AM_FORMAT_PCM_7DOT1;  break;
-  default:
-    return;
-  }
+  int format = channels_to_format(channels);
 
   while(frames > 0) {
 

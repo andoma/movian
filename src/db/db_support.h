@@ -14,6 +14,11 @@ int db_commit0(sqlite3 *db, const char *src);
 
 int db_rollback0(sqlite3 *db, const char *src);
 
+int db_step(sqlite3_stmt *pStmt);
+
+int db_prepare(sqlite3 *db, const char *zSql, int nSql,
+	       sqlite3_stmt **ppStmt, const char **pz);
+
 #define db_begin(db)    db_begin0(db, __FUNCTION__)
 #define db_commit(db)   db_commit0(db, __FUNCTION__)
 #define db_rollback(db) db_rollback0(db, __FUNCTION__)
