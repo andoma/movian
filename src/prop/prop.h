@@ -316,6 +316,11 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 
 prop_courier_t *prop_courier_create_waitable(void);
 
+prop_courier_t *prop_courier_create_lockmgr(const char *name, 
+					    prop_lockmgr_t *mgr, void *lock,
+					    void (*prologue)(void),
+					    void (*epilogue)(void));
+
 int prop_courier_wait(prop_courier_t *pc,
 		      struct prop_notify_queue *exp,
 		      struct prop_notify_queue *nor,
