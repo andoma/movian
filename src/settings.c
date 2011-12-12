@@ -541,6 +541,7 @@ setting_detach(setting_t *s)
 void
 setting_destroy(setting_t *s)
 {
+  s->s_callback = NULL;
   free(s->s_id);
   prop_unsubscribe(s->s_sub);
   prop_destroy(s->s_root);
