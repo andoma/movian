@@ -269,7 +269,7 @@ lgtv_init(serdev_t *sd, int curpower)
     int input = lg->prior_input;
 
     x = settings_create_multiopt(s, "inputsource", _p("Input source"),
-				 NULL, NULL);
+				 NULL, NULL, NULL);
 
     settings_multiopt_add_opt_cstr(x, "none",      "None",        1);
     settings_multiopt_add_opt_cstr(x, "hdmi1",     "HDMI-1",      input == 0x90);

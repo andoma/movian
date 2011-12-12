@@ -353,7 +353,8 @@ callback_opt(void *opaque, prop_event_t event, ...)
  */
 setting_t *
 settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
-			 prop_callback_string_t *cb, void *opaque)
+			 prop_callback_string_t *cb, void *opaque,
+			 prop_courier_t *pc)
 {
   setting_t *s = setting_create_leaf(parent, title, "multiopt", "options");
 
@@ -364,6 +365,7 @@ settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
   s->s_sub = prop_subscribe(0,
 			    PROP_TAG_CALLBACK, callback_opt, s, 
 			    PROP_TAG_ROOT, s->s_val, 
+			    PROP_TAG_COURIER, pc,
 			    NULL);
   return s;
 }

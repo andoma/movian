@@ -111,7 +111,7 @@ i18n_init(void)
 			 (void *)"i18n");
 
   x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"),
-			       set_srt_charset, NULL);
+			       set_srt_charset, NULL, NULL);
 
   const charset_t *cs;
   for(i = 0; (cs = charset_get_idx(i)) != NULL; i++)
@@ -474,7 +474,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   }
 
   x = settings_create_multiopt(parent, "language", _p("Language"),
-			       set_language, NULL);
+			       set_language, NULL, NULL);
 
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
