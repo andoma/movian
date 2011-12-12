@@ -280,7 +280,7 @@ settings_create_int(prop_t *parent, const char *id, prop_t *title,
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, initial);
 
-  sub = prop_subscribe(0,
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
