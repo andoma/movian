@@ -322,7 +322,7 @@ callback_opt(void *opaque, prop_event_t event, ...)
   setting_t *s = opaque;
   prop_callback_string_t *cb;
   prop_t *c;
-
+  rstr_t *name;
   va_list ap;
   va_start(ap, event);
 
@@ -333,14 +333,18 @@ callback_opt(void *opaque, prop_event_t event, ...)
 
   c = va_arg(ap, prop_t *);
 
-  if(cb) cb(s->s_opaque, c ? prop_get_name(c) : NULL);
+  name = c ? prop_get_name(c) : NULL;
 
-  if(s->s_store && s->s_saver) {
+  if(cb != NULL)
+    cb(s->s_opaque, rstr_get(name));
+
+  if(s->s_store != NULL && s->s_saver != NULL) {
     htsmsg_delete_field(s->s_store, s->s_id);
-    if(c != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, prop_get_name(c));
+    if(name != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
     s->s_saver(s->s_saver_opaque, s->s_store);
   }
+  rstr_release(name);
 }
 
 

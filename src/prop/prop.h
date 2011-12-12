@@ -360,7 +360,7 @@ void prop_vec_destroy_entries(prop_vec_t *pv);
 
 
 
-const char *prop_get_name(prop_t *p);
+rstr_t *prop_get_name(prop_t *p);
 
 void prop_want_more_childs(prop_sub_t *s);
 
