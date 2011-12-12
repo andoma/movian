@@ -522,7 +522,14 @@ settings_create_action(prop_t *parent, const char *id, prop_t *title,
 }
 
 
-
+/**
+ *
+ */
+void
+setting_detach(setting_t *s)
+{
+  prop_unparent(s->s_root);
+}
 
 /**
  *

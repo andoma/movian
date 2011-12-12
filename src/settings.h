@@ -105,6 +105,8 @@ setting_t *settings_create_action(prop_t *parent, const char *id,
 
 void setting_destroy(setting_t *s);
 
+void setting_detach(setting_t *s);
+
 void settings_init(void);
 
 void settings_generic_save_settings(void *opaque, htsmsg_t *msg);
