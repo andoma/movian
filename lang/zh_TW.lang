@@ -23,24 +23,22 @@ msg: 視訊設定
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Added by: %s
+msg: 添加人： %s
 
 id: Played %d times
-msg: 已播放次數： %d
+msg: 已播放 %d 次
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg: %d 個項目
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg: %d 個音軌
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -49,16 +47,13 @@ id: Delete
 msg: 刪除
 
 id: Queue
-# Missing translation
-msg: 
+msg: 佇列
 
 id: Star
-# Missing translation
-msg: 
+msg: 評價
 
 id: Unstar
-# Missing translation
-msg: 
+msg: 取消評價
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -88,15 +83,13 @@ msg: 確定
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: 程式使用： %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: 動態宣告： %d kB
 
 id: Avail system RAM: %d kB
-msg: 系統記憶體可用容量： %d kB
+msg: 可用： %d kB
 
 id: Detected CPUs: %d
 msg: 處理器數量： %d
@@ -108,8 +101,7 @@ id: Framerate: %.2f Hz
 msg: 畫面更新率： %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: 可用區塊： %d
 
 id: GPU: %s
 msg: 視訊處理器： %s
@@ -118,8 +110,7 @@ id: Height: %d px
 msg: 高度： %d 像素
 
 id: Memory status
-# Missing translation
-msg: 
+msg: 記憶體資訊
 
 id: Renderer: %s
 msg: 渲染器： %s
@@ -128,11 +119,10 @@ id: System info
 msg: 系統資訊
 
 id: Total system RAM: %d kB
-msg: 系統記憶體總容量： %d kB
+msg: 總共： %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: 未使用： %d kB
 
 id: Version: %s
 msg: 版本： %s
@@ -243,20 +233,19 @@ id: Adjust background tint based on daytime
 msg: 依照系統時間調整背景色彩
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: 替換列表式樣
 
 id: Audio muted
 msg: 靜音模式
 
 id: Fancy UI animations
-msg: 使用者介面動態效果
+msg: 動態使用者介面
 
 id: Master volume: %d dB
 msg: 主音量： %d dB
 
 id: Top bar navigation buttons
-msg: 頂部導覽工具列
+msg: 頂部導覽列
 
 #
 # ./src/api/opensubtitles.c
@@ -271,7 +260,7 @@ msg: 啟用 opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-msg: 系統記憶體容量不足（可用容量 %d kB）
+msg: 系統記憶體不足（剩餘 %d kB 可用）
 
 #
 # ./src/audio/audio.c
@@ -319,8 +308,7 @@ msg: 無法開啟 CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD 光碟
 
 id: DVD read error, restarting disc
 msg: DVD 讀取錯誤，嘗試重新讀取中
@@ -338,8 +326,7 @@ id: Search
 msg: 搜尋
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: %s 的搜尋結果：
 
 #
 # ./src/backend/spotify/spotify.c
@@ -348,8 +335,7 @@ id: Automatic login when Showtime starts
 msg: 啟動 Showtime 時自動登入
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: 協作列表
 
 id: Enable Spotify
 msg: 啟用 Spotify
@@ -373,8 +359,7 @@ id: New releases
 msg: 新上架
 
 id: Offline
-# Missing translation
-msg: 
+msg: 離線
 
 id: Offline sync in 96kbps
 # Missing translation
@@ -405,7 +390,7 @@ id: Spotify: Connection error: %s
 msg: 連線錯誤： %s
 
 id: Starred
-msg: Starred
+msg: 評價
 
 #
 # ./src/bookmarks.c
@@ -438,8 +423,7 @@ msg: 使用 spotlight 進行搜尋
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: 外部檔案
 
 #
 # ./src/i18n.c
@@ -517,12 +501,10 @@ msg: 視訊縮放
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: 檔案內容(Embedded in file)
 
 id: Track %d
-# Missing translation
-msg: 
+msg: 第 %d 軌
 
 #
 # ./src/navigator.c
@@ -558,7 +540,7 @@ id: Automatic standby
 msg: 自動待機
 
 id: Run control
-msg: Run control
+msg: 待機設定
 
 #
 # ./src/sd/sd.c
@@ -591,7 +573,7 @@ id: Display and user interface
 msg: 顯示器與使用者介面
 
 id: Horizontal underscan
-msg: 水平欠掃描(underscan)
+msg: 水平欠掃描
 
 id: Screensaver delay
 msg: 螢幕保護程式啟動時間
@@ -615,20 +597,16 @@ msg: 滑鼠滾輪捲動
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: 自動切換至此一模式
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: DVI 視訊輸出色域
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: 立即套用此一模式
 
 id: Video modes
-# Missing translation
-msg: 
+msg: 視訊模式
 
 #
 # ./src/upnp/upnp.c
@@ -640,11 +618,10 @@ msg: 顯示於首頁
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
-msg: 找不到裝置
+msg: 找不到裝置 
 
 id: Malformed URI after device
-# Missing translation
-msg: 
+msg: 設備位址不正確
 
 id: Malformed URI after service
 msg: 服務位址不正確
@@ -689,14 +666,13 @@ id: Controls if video playback should restart where last played
 msg: 設定影片是否自中斷處開始播放
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: 觀賞影片達到若干比例時增加已播放次數紀錄
 
 id: Enable VDPAU
 msg: 啟用 VDPAU
 
 id: Force subtitles to reside on video frame
-msg: 字幕強制顯示於視訊影格上
+msg: 強制顯示字幕於視訊影格
 
 id: Generic settings for video subtitles
 msg: 字幕設定
@@ -728,8 +704,11 @@ msg: 陰影色彩
 id: Shadow offset
 msg: 陰影位置
 
+id: Stretch video to fullscreen
+msg: 延展影片至全螢幕
+
 id: Stretch video to widescreen
-msg: 延展視訊信號比例至寬螢幕
+msg: 延展影片至寬螢幕
 
 id: Subtitle position
 msg: 字幕位置
