@@ -160,6 +160,9 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
 
   item_set_str(m, item, "title", "http://purl.org/dc/elements/1.1/title");
 
+  item_set_str(m, item, "icon",
+	       "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI");
+
   snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
   prop_set_string(prop_create(c, "url"), url);
@@ -174,9 +177,11 @@ make_imageItem(prop_t *c, prop_t *m, htsmsg_t *item)
 {
   prop_set_string(prop_create(c, "type"), "image");
 
+  item_set_str(m, item, "icon",
+	       "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI");
+
   item_set_str(m, item, "title",
 	       "http://purl.org/dc/elements/1.1/title");
-
 }
 
 
