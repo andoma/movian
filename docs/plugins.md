@@ -526,6 +526,9 @@ Shows a bool on/off setting
 
 
 #### createMultiOpt(String ID, String Title, Object Values, Function Func)
+
+*Available from 3.3.328*
+
 Shows a multioption field (combobox style)
 
 * ID - String that identifies the setting. (e.g. boolean)
