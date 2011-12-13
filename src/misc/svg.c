@@ -49,6 +49,7 @@ typedef struct svg_state {
   float scaling;
 } svg_state_t;
 
+static void svg_parse_g(svg_state_t *s0, htsmsg_t *c);
 
 
 /**
@@ -617,12 +618,56 @@ rasterize_ia(const int yy, const int count, const FT_Span * const spans,
 }
 
 
+static int
+stroke_path_element(svg_state_t *s, htsmsg_t *attribs)
+{
+  const char *d = htsmsg_get_str(attribs, "d");
+  if(d == NULL)
+    return -1;
+  stroke_path(s, d);
+  return 0;
+}
+
+
+
+static int
+stroke_rect_element(svg_state_t *s, htsmsg_t *attribs)
+{
+  const char *str_width  = htsmsg_get_str(attribs, "width");
+  const char *str_height = htsmsg_get_str(attribs, "height");
+  const char *str_x      = htsmsg_get_str(attribs, "x");
+  const char *str_y      = htsmsg_get_str(attribs, "y");
+  
+  if(str_width == NULL || str_height == NULL || str_x == NULL || str_y == NULL)
+    return -1;
+
+  float width  = my_str2double(str_width,  NULL);
+  float height = my_str2double(str_height, NULL);
+  float x      = my_str2double(str_x,      NULL);
+  float y      = my_str2double(str_y,      NULL);
+
+  float v[2];
+
+  v[0] = x;
+  v[1] = y;
+  cmd_move_abs(s, v, 0);
+  v[0] += width;
+  cmd_lineto_abs(s, v, 0);
+  v[1] += height;
+  cmd_lineto_abs(s, v, 0);
+  v[0] = x;
+  cmd_lineto_abs(s, v, 0);
+  cmd_close(s);
+  return 0;
+}
+
 
 /**
  *
  */
 static void
-svg_parse_path(svg_state_t *s0, htsmsg_t *path)
+svg_parse_element(svg_state_t *s0, htsmsg_t *element, 
+		  int (*element_parser)(svg_state_t *s, htsmsg_t *element))
 {
   svg_state_t s = *s0;
   FT_Outline ol;
@@ -633,7 +678,7 @@ svg_parse_path(svg_state_t *s0, htsmsg_t *path)
   int stroke_color = 0xffffffff;
   int stroke_width = 0;
 
-  htsmsg_t *a = htsmsg_get_map(path, "attrib");
+  htsmsg_t *a = htsmsg_get_map(element, "attrib");
   if(a == NULL)
     return;
 
@@ -683,9 +728,6 @@ svg_parse_path(svg_state_t *s0, htsmsg_t *path)
   if(transform != NULL)
     svg_parse_transform(&s, transform);
 
-  const char *d = htsmsg_get_str(a, "d");
-  if(d == NULL)
-    return;
 
   FT_Stroker_Rewind(s.stroker);
 
@@ -698,7 +740,10 @@ svg_parse_path(svg_state_t *s0, htsmsg_t *path)
 
   s.cur[0] = 0;
   s.cur[1] = 0;
-  stroke_path(&s, d);
+
+  if(element_parser(&s, a))
+    return;
+
   if(s.inpath) {
     FT_Stroker_EndSubPath(s.stroker);
     s.inpath = 0;
@@ -757,33 +802,6 @@ svg_parse_path(svg_state_t *s0, htsmsg_t *path)
 }
 
 
-/**
- *
- */
-static void
-svg_parse_g(svg_state_t *s0, htsmsg_t *c)
-{
-  svg_state_t s = *s0;
-  const char *transform = htsmsg_get_str_multi(c, "attrib", "transform", NULL);
-  if(transform != NULL)
-    svg_parse_transform(&s, transform);
-
-  htsmsg_t *tags = htsmsg_get_map(c, "tags");
-  if(tags == NULL)
-    return;
-  htsmsg_field_t *f;
-
-  HTSMSG_FOREACH(f, tags) {
-    htsmsg_t *c;
-    if((c = htsmsg_get_map_by_field(f)) == NULL)
-      continue;
-    if(!strcmp(f->hmf_name, "path"))
-      svg_parse_path(&s, c);
-    if(!strcmp(f->hmf_name, "g"))
-      svg_parse_g(&s, c);
-  }
-}
-
 
 /**
  *
@@ -796,12 +814,32 @@ svg_parse_root(svg_state_t *s, htsmsg_t *tags)
     htsmsg_t *c;
     if((c = htsmsg_get_map_by_field(f)) == NULL)
       continue;
-    if(!strcmp(f->hmf_name, "g"))
-      svg_parse_g(s, c);
     if(!strcmp(f->hmf_name, "path"))
-      svg_parse_path(s, c);
+      svg_parse_element(s, c, stroke_path_element);
+    else if(!strcmp(f->hmf_name, "rect"))
+      svg_parse_element(s, c, stroke_rect_element);
+    else if(!strcmp(f->hmf_name, "g"))
+      svg_parse_g(s, c);
   }
 }
+
+
+/**
+ *
+ */
+static void
+svg_parse_g(svg_state_t *s0, htsmsg_t *c)
+{
+  svg_state_t s = *s0;
+  const char *transform = htsmsg_get_str_multi(c, "attrib", "transform", NULL);
+  if(transform != NULL)
+    svg_parse_transform(&s, transform);
+
+  htsmsg_t *tags = htsmsg_get_map(c, "tags");
+  if(tags != NULL)
+    svg_parse_root(&s, tags);
+}
+
 
 /**
  *
