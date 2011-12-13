@@ -11,14 +11,14 @@
 }
 
 #define settingButtonUp(EVENT, ENABLED, HIDDEN) {
-  _glossybutton(ICON="theme://svg/Arrow up.svg",
+  _glossybutton(ICON="theme://svg/ArrowUp.svg",
 		EVENT=EVENT,
 		ENABLED=ENABLED,
 		HIDDEN=HIDDEN);
 }
 
 #define settingButtonDown(EVENT, ENABLED, HIDDEN) {
-  _glossybutton(ICON="theme://svg/Arrow down.svg",
+  _glossybutton(ICON="theme://svg/ArrowDown.svg",
 		EVENT=EVENT,
 		ENABLED=ENABLED,
 		HIDDEN=HIDDEN);
