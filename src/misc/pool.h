@@ -25,3 +25,5 @@ void *pool_get(pool_t *p) __attribute__ ((malloc));
 void pool_put(pool_t *p, void *ptr);
 
 void pool_destroy(pool_t *p);
+
+int pool_num(pool_t *p);
