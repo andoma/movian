@@ -155,37 +155,59 @@ static const char *http_months[12] = {
 static const char *http_weekdays[7] = {
   "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
+static int
+leapyear(int year)
+{
+  return (year & 3) == 0 && (year % 100 != 0 || year % 400 == 0);
+}
+
+
+static const int mdays[2][12] = {
+  {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
+  {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
+};
+
 /**
  *
  */
 int 
 http_ctime(time_t *tp, const char *d)
 {
-  struct tm tm = {0};
+  int year;
+  int mday;
   char wday[4];
   char month[4];
+  int hour;
+  int min;
+  int sec;
   int i;
   char dummy;
 
   if(sscanf(d, "%3s, %d%c%3s%c%d %d:%d:%d",
-	    wday, &tm.tm_mday, &dummy, month, &dummy, &tm.tm_year,
-	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 9)
+	    wday, &mday, &dummy, month, &dummy, &year, &hour, &min, &sec) != 9)
     return -1;
 
-  tm.tm_year -= 1900;
-  tm.tm_isdst = -1;
-	      
+  if(year < 1970 || year > 2038)
+    return -1;
+
+  i = 1970;
+  if(year >= 2011) {
+    sec += 1293840000;
+    i = 2011;
+  }
+
+  for(; i < year; i++) 
+    sec += 86400 * (365 + leapyear(i));
+
   for(i = 0; i < 12; i++)
-    if(!strcasecmp(http_months[i], month)) {
-      tm.tm_mon = i;
+    if(!strcasecmp(http_months[i], month))
       break;
-    }
-  
-#if ENABLE_TIMEGM
-  *tp = timegm(&tm);
-#else
-  *tp = mktime(&tm);
-#endif
+  if(i == 12)
+    return -1;
+
+  sec += mdays[leapyear(year)][i] * 86400;
+  sec += 86400 * (mday - 1) + hour * 3600 + min * 60;
+  *tp = sec;
   return 0;
 }
 
