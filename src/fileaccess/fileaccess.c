@@ -610,9 +610,14 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
 
     free(data);
 
-    blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    int d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
 
     free(etag);
+
+    if(cache_control == DISABLE_CACHE && d) {
+      free(data2);
+      return NOT_MODIFIED;
+    }
 
     if(sizep != NULL)
       *sizep = size2;
