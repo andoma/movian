@@ -157,6 +157,8 @@ ad_thread(void *aux)
   media_buf_t *mb;
   int hold = 0;
   int run = 1;
+  int64_t silence_start_pts = AV_NOPTS_VALUE;
+  uint64_t silence_start_realtime = 0;
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -206,10 +208,28 @@ ad_thread(void *aux)
       if(mb->mb_skip != 0)
 	break;
 
-      if(mb->mb_stream != mq->mq_stream)
-	break;
+      if(mq->mq_stream == -1) {
+	if(mb->mb_pts == AV_NOPTS_VALUE)
+	  break;
 
+	if(silence_start_pts == AV_NOPTS_VALUE) {
+	  silence_start_pts = mb->mb_pts;
+	  silence_start_realtime = showtime_get_ts();
+	} else {
+	  int64_t d = mb->mb_pts - silence_start_pts;
+	  if(d > 0) {
+	    int64_t sleeptime = silence_start_realtime + d - showtime_get_ts();
+	    if(sleeptime > 0)
+	      usleep(sleeptime);
+	  }
+	}
+	break;
+      }
+
+      if(mb->mb_stream != mq->mq_stream) 
+	break;
       ad_decode_buf(ad, mp, mq, mb);
+      silence_start_pts = AV_NOPTS_VALUE;
       break;
 
     case MB_END:
