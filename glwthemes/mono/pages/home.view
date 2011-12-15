@@ -90,6 +90,9 @@ widget(container_y, {
 			    "video",    "Movie",
 			    "tv",       "Display",
 			    "usb",      "Usb",
+			    "dvd",      "Disc",
+			    "cd",       "Disc",
+			    "bluray",   "Disc",
 			    "photos",   "Pictures") + ".svg";
 	      });
 	    });
