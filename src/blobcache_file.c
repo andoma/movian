@@ -138,7 +138,7 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
   uint8_t dir = hash;
   if(for_write) {
     snprintf(buf, len, "%s/bc2/%02x", showtime_cache_path, dir);
-    mkdir(buf, 0770);
+    mkdir(buf, 0777);
   }
   snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, showtime_cache_path, dir, hash);
 }
@@ -155,7 +155,7 @@ save_index(void)
   int i, j;
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
-
+  size_t siz;
   snprintf(filename, sizeof(filename), "%s/bc2/index.dat", showtime_cache_path);
   
   int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
@@ -164,8 +164,9 @@ save_index(void)
 
   hts_mutex_lock(&cache_lock);
   int tot = pool_num(item_pool);
-  
-  out = malloc(4 + tot * sizeof(blobcache_diskitem_t) + 20);
+
+  siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
+  out = malloc(siz);
   *(uint32_t *)out = BC2_MAGIC;
   j = 0;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
@@ -186,7 +187,9 @@ save_index(void)
   sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
   sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
   
-  write(fd, out, 4 + tot * sizeof(blobcache_diskitem_t) + 20);
+  if(write(fd, out, siz) != siz)
+    TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
+	  filename, strerror(errno));
   free(out);
   close(fd);
 }
@@ -498,7 +501,6 @@ prune_stale(void)
     }
   }
   closedir(d1);
-  rmdir(path);
 }  
 
 
@@ -634,9 +636,10 @@ blobcache_init(void)
   char buf[256];
 
   blobcache_prune_old();
-
   snprintf(buf, sizeof(buf), "%s/bc2", showtime_cache_path);
-  mkdir(buf, 0770);
+  if(mkdir(buf, 0777) && errno != EEXIST)
+    TRACE(TRACE_ERROR, "blobcache", "Unable to create cache dir %s -- %s",
+	  buf, strerror(errno));
 
   hts_mutex_init(&cache_lock);
   item_pool = pool_create("blobcacheitems", sizeof(blobcache_item_t), 0);
@@ -645,8 +648,8 @@ blobcache_init(void)
   prune_stale();
   prune_to_size();
   TRACE(TRACE_INFO, "blobcache",
-	"Initialized: %d items consuming %"PRId64" bytes on disk",
-	pool_num(item_pool), current_cache_size);
+	"Initialized: %d items consuming %"PRId64" bytes on disk in %s",
+	pool_num(item_pool), current_cache_size, buf);
 }
 
 
