@@ -280,7 +280,7 @@ settings_create_int(prop_t *parent, const char *id, prop_t *title,
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, initial);
 
-  sub = prop_subscribe(0,
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
@@ -322,7 +322,7 @@ callback_opt(void *opaque, prop_event_t event, ...)
   setting_t *s = opaque;
   prop_callback_string_t *cb;
   prop_t *c;
-
+  rstr_t *name;
   va_list ap;
   va_start(ap, event);
 
@@ -333,14 +333,18 @@ callback_opt(void *opaque, prop_event_t event, ...)
 
   c = va_arg(ap, prop_t *);
 
-  if(cb) cb(s->s_opaque, c ? prop_get_name(c) : NULL);
+  name = c ? prop_get_name(c) : NULL;
 
-  if(s->s_store && s->s_saver) {
+  if(cb != NULL)
+    cb(s->s_opaque, rstr_get(name));
+
+  if(s->s_store != NULL && s->s_saver != NULL) {
     htsmsg_delete_field(s->s_store, s->s_id);
-    if(c != NULL)
-      htsmsg_add_str(s->s_store, s->s_id, prop_get_name(c));
+    if(name != NULL)
+      htsmsg_add_str(s->s_store, s->s_id, rstr_get(name));
     s->s_saver(s->s_saver_opaque, s->s_store);
   }
+  rstr_release(name);
 }
 
 
@@ -349,7 +353,8 @@ callback_opt(void *opaque, prop_event_t event, ...)
  */
 setting_t *
 settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
-			 prop_callback_string_t *cb, void *opaque)
+			 prop_callback_string_t *cb, void *opaque,
+			 prop_courier_t *pc)
 {
   setting_t *s = setting_create_leaf(parent, title, "multiopt", "options");
 
@@ -360,6 +365,7 @@ settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
   s->s_sub = prop_subscribe(0,
 			    PROP_TAG_CALLBACK, callback_opt, s, 
 			    PROP_TAG_ROOT, s->s_val, 
+			    PROP_TAG_COURIER, pc,
 			    NULL);
   return s;
 }
@@ -522,7 +528,14 @@ settings_create_action(prop_t *parent, const char *id, prop_t *title,
 }
 
 
-
+/**
+ *
+ */
+void
+setting_detach(setting_t *s)
+{
+  prop_unparent(s->s_root);
+}
 
 /**
  *
@@ -530,6 +543,7 @@ settings_create_action(prop_t *parent, const char *id, prop_t *title,
 void
 setting_destroy(setting_t *s)
 {
+  s->s_callback = NULL;
   free(s->s_id);
   prop_unsubscribe(s->s_sub);
   prop_destroy(s->s_root);

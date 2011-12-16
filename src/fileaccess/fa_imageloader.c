@@ -200,8 +200,10 @@ fa_imageloader(const char *url, const struct image_meta *im,
 			  FA_BUFFERED_SMALL)) == NULL)
     return NULL;
 
-  if(cache_control)
-    *cache_control = 0;
+  if(ONLY_CACHED(cache_control)) {
+    snprintf(errbuf, errlen, "Not cached");
+    return NULL;
+  }
 
   if(fa_read(fh, p, sizeof(p)) != sizeof(p)) {
     snprintf(errbuf, errlen, "File too short");

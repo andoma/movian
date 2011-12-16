@@ -295,6 +295,11 @@ scan_root_fs(callout_t *co, void *aux)
 	type = "usb";
 	name = dpyname;
       }
+      else if(!strcmp(name, "dev_bdvd") ||
+	      !strcmp(name, "dev_ps2disc")) {
+	name = "BluRay Drive";
+	type = "bluray";
+      }
 
       rfn->service = service_create(name, fname, type, NULL, 0, 1);
       LIST_INSERT_HEAD(&rootfsnodes, rfn, link);

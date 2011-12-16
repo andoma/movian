@@ -447,9 +447,9 @@ plugin is unloaded (or reloaded)
 Create a setting group (that will appear in the settings page) and
 return a settings object.
 
-The settings object is not resource tracked and explicitly destroyed
-like most other plugin related objects. Rather it is finalized when
-the Javascript garbage collector will destroy it.
+The created settings group is resource-tracked and will be removed when the
+plugin is unloaded (or reloaded). The object has a destroy method that
+can be used to destroy the object.
 
 #### createStore(String ID, [Boolean perUser])
 
@@ -506,6 +506,41 @@ Shows a slider of integers to choose a value.
 * Step - Integer that is added to the current value. (e.g. 2)
 * Unit - String identifying the unit of the value. (e.g. Km/h)
 * Function - Function that handles the current value saving it (e.g. function(v){service.integer=v})
+
+#### createString(String ID, String Title, String Initial, Function Func)
+Shows a text input field.
+
+* ID - String that identifies the setting. (e.g. string)
+* Title - Synopsis of the setting. (e.g. String test)
+* Initial - Initial value of string
+* Function - Function that handles the current value saving it (e.g. function(v){somevalue = v})
+
+
+#### createBool(String ID, String Title, Bool Initial, Function Func)
+Shows a bool on/off setting
+
+* ID - String that identifies the setting. (e.g. boolean)
+* Title - Synopsis of the setting. (e.g. Boolean test)
+* Initial - Initial value of bool
+* Function - Function that handles the current value saving it (e.g. function(v){somevalue = v})
+
+
+#### createMultiOpt(String ID, String Title, Object Values, Function Func)
+
+*Available from 3.3.328*
+
+Shows a multioption field (combobox style)
+
+* ID - String that identifies the setting. (e.g. boolean)
+* Title - Synopsis of the setting. (e.g. Boolean test)
+* Values - List of List objects describing each option. An example list
+  looks like [['a', 'Alpha'], ['b', 'Beta', true]]. In this example
+  the callback would be called with 'a' if 'Alpha' is selected and 'b' if
+  'Beta' is selected. The optional third per-item value denotes if the
+  option is default.
+* Function - Function that handles the current value saving it (e.g. function(v){somevalue = v})
+
+   
 
 ## The service object
 

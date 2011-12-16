@@ -2,6 +2,19 @@
 
 widget(container_y, {
   .spacing = 10;
+
+  widget(label, {
+    .caption = $args.metadata.title;
+    .ellipsize = true;
+    .sizeScale = 1.5;
+  });
+  widget(label, {
+    .hidden = select($args.metadata.year, false, true);
+    .caption = $args.metadata.year;
+    .ellipsize = true;
+    .sizeScale = 1;
+  });
+
   widget(container_x, {
     .spacing = 10;
     widget(image, {
@@ -12,18 +25,6 @@ widget(container_y, {
     });
     
     widget(container_y, {
-      widget(label, {
-	.caption = $args.metadata.title;
-	.ellipsize = true;
-	.sizeScale = 1.5;
-      });
-      widget(label, {
-	.hidden = select($args.metadata.year, false, true);
-	.caption = $args.metadata.year;
-	.ellipsize = true;
-	.sizeScale = 1;
-      });
-
 
       widget(container_x, {
 	.filterConstraintX = true;

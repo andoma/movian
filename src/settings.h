@@ -62,7 +62,8 @@ void settings_toggle_bool(setting_t *s);
 
 setting_t *settings_create_multiopt(prop_t *parent, const char *id,
 				    prop_t *title,
-				    prop_callback_string_t *cb, void *opaque);
+				    prop_callback_string_t *cb, void *opaque,
+				    prop_courier_t *pc);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       prop_t *title, int selected);
@@ -104,6 +105,8 @@ setting_t *settings_create_action(prop_t *parent, const char *id,
 				  prop_courier_t *pc);
 
 void setting_destroy(setting_t *s);
+
+void setting_detach(setting_t *s);
 
 void settings_init(void);
 

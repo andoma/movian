@@ -270,16 +270,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       if(r == AVERROR(EAGAIN))
 	continue;
 
-      if(r == AVERROR_EOF) {
+      if(r) {
 	mb = MB_SPECIAL_EOF;
 	mp->mp_eof = 1;
 	continue;
-      }
-
-      if(r != 0) {
-	fa_ffmpeg_error_to_txt(r, errbuf, errlen);
-	e = NULL;
-	break;
       }
 
       si = pkt.stream_index;

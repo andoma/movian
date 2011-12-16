@@ -228,7 +228,7 @@ video_settings_init(void)
   x = settings_create_multiopt(s, "resumemode",
 			       _p("Resume video playback"),
 			       set_video_resumemode,
-			       _p("Controls if video playback should restart where last played"));
+			       _p("Controls if video playback should restart where last played"), NULL);
 
   settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
   settings_multiopt_add_opt(x, "0", _p("No"), 0);
@@ -277,7 +277,7 @@ video_settings_init(void)
 		       (void *)"subtitles");
 
   x = settings_create_multiopt(s, "align", _p("Subtitle position"),
-			       set_subtitle_alignment, NULL);
+			       set_subtitle_alignment, NULL, NULL);
 
   settings_multiopt_add_opt(x, "2", _p("Center"), 1);
   settings_multiopt_add_opt(x, "1", _p("Left"), 0);

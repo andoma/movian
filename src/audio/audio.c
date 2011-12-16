@@ -163,7 +163,7 @@ audio_init(void)
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 
 			     _p("Current output device"),
-			     audio_change_output_device, NULL);
+			     audio_change_output_device, NULL, NULL);
   
   audio_global_load_settings();
 

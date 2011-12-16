@@ -47,16 +47,13 @@ id: Delete
 msg: Удалить
 
 id: Queue
-# Missing translation
-msg: 
+msg: Очередь
 
 id: Star
-# Missing translation
-msg: 
+msg: Пометить
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Снять метку
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -70,6 +67,7 @@ msg: Вкл
 #
 # ./glwthemes/mono/include/infobox.view
 #
+
 id: Enqueue
 msg: Ставить в очередь
 
@@ -85,6 +83,7 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+
 id: Allocated by application: %d kB
 msg: Выделено приложению: %d КБ
 
@@ -226,9 +225,8 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d °
-# Missing translation
-msg: 
+id: GPU Core temperature: %d / %d В°
+msg: Температура ядра GPU: %d / %d В°
 
 #
 # ./glwthemes/mono/universe.view
@@ -263,9 +261,8 @@ msg: Использовать opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+id: System is low on memroy (%d kB RAM available)
+msg: Системе не хватает памяти (%d кБ RAM доступно)
 
 #
 # ./src/audio/audio.c
@@ -312,9 +309,9 @@ msg: Невозможно открыть CD
 #
 # ./src/backend/dvd/dvd.c
 #
+
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: Ошибка чтения DVD, перезапуск диска
@@ -428,8 +425,7 @@ msg: Поиск с использованием spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Внешний файл
 
 #
 # ./src/i18n.c
@@ -507,12 +503,10 @@ msg: Видеозум
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Встроен в файл
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Трек %d
 
 #
 # ./src/navigator.c
@@ -711,6 +705,9 @@ msg: Цвет тени
 
 id: Shadow offset
 msg: Смещение тени
+
+id: Stretch video to fullscreen
+msg: Растянуть видео во весь экран
 
 id: Stretch video to widescreen
 msg: Растянуть видео на широкий экран

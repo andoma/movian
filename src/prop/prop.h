@@ -316,6 +316,11 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 
 prop_courier_t *prop_courier_create_waitable(void);
 
+prop_courier_t *prop_courier_create_lockmgr(const char *name, 
+					    prop_lockmgr_t *mgr, void *lock,
+					    void (*prologue)(void),
+					    void (*epilogue)(void));
+
 int prop_courier_wait(prop_courier_t *pc,
 		      struct prop_notify_queue *exp,
 		      struct prop_notify_queue *nor,
@@ -360,7 +365,7 @@ void prop_vec_destroy_entries(prop_vec_t *pv);
 
 
 
-const char *prop_get_name(prop_t *p);
+rstr_t *prop_get_name(prop_t *p);
 
 void prop_want_more_childs(prop_sub_t *s);
 
