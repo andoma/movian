@@ -498,6 +498,12 @@ msg: Untertitelskalierung
 id: Video zoom
 msg: Videozoom
 
+id: Video stretch height
+msg: Videohöhe
+
+id: Video stretch width
+msg: Videobreite
+
 #
 # ./src/metadata/metadata.c
 #
@@ -709,6 +715,9 @@ msg: Schattenabstand
 
 id: Stretch video to widescreen
 msg: Video auf Widescreen strecken 
+
+id: Stretch video to fullscreen
+msg: Video auf Vollbild strecken
 
 id: Subtitle position
 msg: Untertitelposition
