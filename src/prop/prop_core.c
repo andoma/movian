@@ -3203,28 +3203,6 @@ prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme)
  *
  */
 void
-prop_select_first(prop_t *parent)
-{
-  prop_t *child;
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(parent->hp_type == PROP_DIR && parent->hp_selected == NULL) {
-    child = TAILQ_FIRST(&parent->hp_childs);
-    if(child != NULL) {
-      assert(parent->hp_type == PROP_DIR);
-      prop_notify_child2(child, parent, NULL, PROP_SELECT_CHILD, NULL, 0);
-      parent->hp_selected = child;
-    }
-  }
-  hts_mutex_unlock(&prop_mutex);
-}
-
-
-/**
- *
- */
-void
 prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
 {
   hts_mutex_lock(&prop_mutex);

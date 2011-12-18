@@ -291,8 +291,6 @@ void prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme);
 
 #define prop_select(p) prop_select_ex(p, NULL, NULL)
 
-void prop_select_first(prop_t *parent);
-
 void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 #define prop_unselect(parent) prop_unselect_ex(parent, NULL)
