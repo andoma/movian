@@ -362,7 +362,7 @@ settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
   s->s_callback = cb;
   s->s_opaque = opaque;
   
-  s->s_sub = prop_subscribe(0,
+  s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			    PROP_TAG_CALLBACK, callback_opt, s, 
 			    PROP_TAG_ROOT, s->s_val, 
 			    PROP_TAG_COURIER, pc,
@@ -410,11 +410,11 @@ settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
 			   settings_saver_t *saver, void *saver_opaque)
 {
   const char *str = htsmsg_get_str(store, s->s_id);
-  if(str != NULL) {
-    prop_t *o = prop_find(s->s_val, str, NULL);
-    if(o != NULL)
-      prop_select(o);
-  }
+  prop_t *o = str ? prop_find(s->s_val, str, NULL) : NULL;
+  if(o != NULL)
+    prop_select(o);
+  else
+    prop_select_first(s->s_val);
 
   s->s_store = store;
   s->s_saver = saver;
