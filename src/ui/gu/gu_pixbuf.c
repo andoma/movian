@@ -35,7 +35,7 @@ static unsigned int pixbufcachesize;
 
 typedef struct pbcache {
   TAILQ_ENTRY(pbcache) pbc_link;
-  char *pbc_url;
+  rstr_t *pbc_url;
   GdkPixbuf *pbc_pixbuf;
   int pbc_bytes;
 
@@ -78,7 +78,7 @@ pixbuf_avfree_pixels(guchar *pixels, gpointer data)
  *
  */
 static GdkPixbuf *
-gu_pixbuf_get_internal(const char *url, int *sizep,
+gu_pixbuf_get_internal(rstr_t *url, int *sizep,
 		       int req_width, int req_height, int relock)
 {
   image_meta_t im = {0};
@@ -87,6 +87,7 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
   im.im_req_height = req_height;
   
   pixmap_t *pm = backend_imageloader(url, &im, NULL, NULL, 0, NULL);
+
   if(pm == NULL)
     return NULL;
 
@@ -109,12 +110,12 @@ gu_pixbuf_get_internal(const char *url, int *sizep,
  *
  */
 static GdkPixbuf *
-gu_pixbuf_get_from_cache(const char *url, int width, int height)
+gu_pixbuf_get_from_cache(rstr_t *url, int width, int height)
 {
   pbcache_t *pbc;
 
   TAILQ_FOREACH(pbc, &pixbufcache, pbc_link) {
-    if(!strcmp(pbc->pbc_url, url) &&
+    if(!strcmp(rstr_get(pbc->pbc_url), rstr_get(url)) &&
        pbc->pbc_width == width &&
        pbc->pbc_height == height) {
       /* Cache hit, move entry to front */
@@ -141,7 +142,7 @@ gu_pixbuf_flush_cache(void)
     pixbufcachesize -= pbc->pbc_bytes;
     TAILQ_REMOVE(&pixbufcache, pbc, pbc_link);
     g_object_unref(G_OBJECT(pbc->pbc_pixbuf));
-    free(pbc->pbc_url);
+    rstr_release(pbc->pbc_url);
     free(pbc);
   }
 
@@ -152,7 +153,7 @@ gu_pixbuf_flush_cache(void)
  *
  */
 static void
-gu_pixbuf_add_to_cache(const char *url, int size, int width, int height,
+gu_pixbuf_add_to_cache(rstr_t *url, int size, int width, int height,
 		       GdkPixbuf *pb)
 {
   pbcache_t *pbc;
@@ -162,7 +163,7 @@ gu_pixbuf_add_to_cache(const char *url, int size, int width, int height,
   gu_pixbuf_flush_cache();
 
   pbc = malloc(sizeof(pbcache_t));
-  pbc->pbc_url = strdup(url);
+  pbc->pbc_url = rstr_dup(url);
   pbc->pbc_pixbuf = pb;
   pbc->pbc_bytes = size;
   pbc->pbc_width = width;
@@ -181,22 +182,24 @@ gu_pixbuf_get_sync(const char *url, int width, int height)
   GdkPixbuf *pb;
   int size = 0;
 
-  pb = gu_pixbuf_get_from_cache(url, width, height);
+  rstr_t *r = rstr_alloc(url);
+
+  pb = gu_pixbuf_get_from_cache(r, width, height);
   if(pb != NULL) {
     /* We are assumed to give a reference */
     g_object_ref(G_OBJECT(pb));
+    rstr_release(r);
     return pb;
   }
 
-  pb = gu_pixbuf_get_internal(url, &size, width, height, 0);
-  if(pb == NULL)
-    return NULL;
+  pb = gu_pixbuf_get_internal(r, &size, width, height, 0);
+  if(pb != NULL) {
+    gu_pixbuf_add_to_cache(r, size, width, height, pb);
 
-  gu_pixbuf_add_to_cache(url, size, width, height, pb);
-
-  /* We are assumed to give a reference */
-  g_object_ref(G_OBJECT(pb));
-
+    /* We are assumed to give a reference */
+    g_object_ref(G_OBJECT(pb));
+  }
+  rstr_release(r);
   return pb;
 }
 
@@ -210,7 +213,7 @@ static struct pb_asyncload_queue pbaqueue;
 typedef struct pb_asyncload {
   TAILQ_ENTRY(pb_asyncload) pba_link;
 
-  char *pba_url;
+  rstr_t *pba_url;
   int pba_width;
   int pba_height;
 
@@ -226,16 +229,19 @@ gu_pixbuf_async_set(const char *url, int width, int height, GtkObject *target)
 {
   pb_asyncload_t *pba;
   GdkPixbuf *pb;
-  
-  pb = gu_pixbuf_get_from_cache(url, width, height);
+
+  rstr_t *r = rstr_alloc(url);
+
+  pb = gu_pixbuf_get_from_cache(r, width, height);
   if(pb != NULL) {
     g_object_set(G_OBJECT(target), "pixbuf", pb, NULL);
+    rstr_release(r);
     return;
   }
 
   pba = calloc(1, sizeof(pb_asyncload_t));
   
-  pba->pba_url = strdup(url);
+  pba->pba_url = r;
   pba->pba_width = width;
   pba->pba_height = height;
   pba->pba_target = target;
@@ -285,7 +291,7 @@ pixbuf_loader_thread(void *aux)
       }
     }
     g_object_unref(pba->pba_target);
-    free(pba->pba_url);
+    rstr_release(pba->pba_url);
     free(pba);
   }
   

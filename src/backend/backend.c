@@ -154,14 +154,29 @@ static backend_t be_page = {
 BE_REGISTER(page);
 
 
+
+
+typedef struct cached_image {
+  LIST_ENTRY(cached_image) ci_link;
+  
+  rstr_t *ci_url;
+  pixmap_t *ci_pixmap;
+
+} cached_image_t;
+
+
+
+
 /**
  *
  */
 struct pixmap *
-backend_imageloader(const char *url, const image_meta_t *im,
+backend_imageloader(rstr_t *url0, const image_meta_t *im,
 		    const char **vpaths, char *errbuf, size_t errlen,
 		    int *cache_control)
 {
+  const char *url = rstr_get(url0);
+
   if(!strncmp(url, "thumb://", 8)) {
     image_meta_t im0;
 
@@ -321,3 +336,4 @@ backend_search(prop_t *model, const char *url)
     if(be->be_search != NULL)
       be->be_search(model, url);
 }
+

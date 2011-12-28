@@ -33,7 +33,7 @@ typedef struct glw_view_loader {
   float time;
 
   glw_transition_type_t efx_conf;
-  char *filename;
+  rstr_t *url;
 
 } glw_view_loader_t;
 
@@ -178,7 +178,7 @@ static void
 glw_view_loader_dtor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
-  free(a->filename);
+  rstr_release(a->url);
 }
 
 
@@ -186,25 +186,26 @@ glw_view_loader_dtor(glw_t *w)
  *
  */
 static void
-set_source(glw_t *w, const char *filename)
+set_source(glw_t *w, rstr_t *url)
 {
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
-
+  
   if(w->glw_flags & GLW_DEBUG)
-    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", filename ?: "(void)");
+    TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", 
+	  rstr_get(url) ?: "(void)");
 
-  if(!strcmp(filename ?: "", a->filename ?: ""))
+  if(!strcmp(rstr_get(url) ?: "", rstr_get(a->url) ?: ""))
     return;
 
-  free(a->filename);
-  a->filename = filename ? strdup(filename) : NULL;
+  rstr_release(a->url);
+  a->url = rstr_dup(url);
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_suspend_subscriptions(c);
 
-  if(filename && *filename) {
-    glw_view_create(w->glw_root, filename, w,a->prop, 
+  if(url && rstr_get(url)[0]) {
+    glw_view_create(w->glw_root, url, w, a->prop, 
 		    a->prop_parent_override ?: a->prop_parent, a->args, 
 		    a->prop_clone, 1);
   } else {

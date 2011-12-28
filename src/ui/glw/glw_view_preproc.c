@@ -301,7 +301,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  return glw_view_seterr(ei, t, "Invalid filename after include");
 
 	x = t->next;
-	if((n = glw_view_load1(gr, rstr_get(t->t_rstring), ei, t)) == NULL)
+	if((n = glw_view_load1(gr, t->t_rstring, ei, t)) == NULL)
 	  return -1;
 
 	n->next = x;
@@ -332,7 +332,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	  LIST_INSERT_HEAD(il, i, link);
 
 	  x = t->next;
-	  if((n = glw_view_load1(gr, rstr_get(t->t_rstring), ei, t)) == NULL)
+	  if((n = glw_view_load1(gr, t->t_rstring, ei, t)) == NULL)
 	    return -1;
 	  
 	  n->next = x;

@@ -27,7 +27,7 @@ typedef struct glw_image {
 
   float gi_angle;
 
-  char *gi_pending_filename;
+  rstr_t *gi_pending_url;
   glw_loadable_texture_t *gi_current;
   glw_loadable_texture_t *gi_pending;
 
@@ -107,7 +107,7 @@ glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
-  free(gi->gi_pending_filename);
+  rstr_release(gi->gi_pending_url);
 
   if(gi->gi_current != NULL)
     glw_tex_deref(w->glw_root, gi->gi_current);
@@ -553,7 +553,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
 
-  if(gi->gi_pending_filename != NULL) {
+  if(gi->gi_pending_url != NULL) {
     // Request to load
     int xs = -1, ys = -1;
     int flags = 0;
@@ -561,7 +561,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_pending != NULL)
       glw_tex_deref(w->glw_root, gi->gi_pending);
     
-    if(gi->gi_pending_filename[0] == 0) {
+    if(rstr_get(gi->gi_pending_url)[0] == 0) {
       gi->gi_pending = NULL;
 
       if(gi->gi_current != NULL) {
@@ -588,11 +588,11 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(xs && ys) {
 
-	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
+	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_url,
 					flags, xs, ys);
 
-	free(gi->gi_pending_filename);
-	gi->gi_pending_filename = NULL;
+	rstr_release(gi->gi_pending_url);
+	gi->gi_pending_url = NULL;
       } else {
 	gi->gi_pending = NULL;
       }
@@ -687,7 +687,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       }
 
       if(hq && gi->gi_pending == NULL &&
-	 gi->gi_pending_filename == NULL && rc->rc_width && rc->rc_height) {
+	 gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
 
 	int xs = -1, ys = -1, rescale;
 	
@@ -704,7 +704,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	  if(w->glw_class == &glw_repeatedimage)
 	    flags |= GLW_TEX_REPEAT;
 
-	  gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_filename,
+	  gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
 					  flags, xs, ys);
 	}
       }
@@ -904,28 +904,29 @@ mod_image_flags(glw_t *w, int set, int clr)
  *
  */
 static void
-set_source(glw_t *w, const char *filename)
+set_source(glw_t *w, rstr_t *filename)
 {
   glw_image_t *gi = (glw_image_t *)w;
   
-  const char *curname;
+  const rstr_t *curname;
 
-  if(gi->gi_pending_filename != NULL)
-    curname = gi->gi_pending_filename;
+  if(gi->gi_pending_url != NULL)
+    curname = gi->gi_pending_url;
   else if(gi->gi_pending != NULL) 
-    curname = gi->gi_pending->glt_filename;
+    curname = gi->gi_pending->glt_url;
   else if(gi->gi_current != NULL) 
-    curname = gi->gi_current->glt_filename;
+    curname = gi->gi_current->glt_url;
   else 
     curname = NULL;
   
-  if(curname != NULL && filename != NULL && !strcmp(filename, curname))
+  if(curname != NULL && filename != NULL && !strcmp(rstr_get(filename),
+						    rstr_get(curname)))
     return;
   
-  if(gi->gi_pending_filename != NULL)
-    free(gi->gi_pending_filename);
+  if(gi->gi_pending_url != NULL)
+    rstr_release(gi->gi_pending_url);
   
-  gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
+  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
 }
 
 
@@ -1012,7 +1013,7 @@ get_identity(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
-  return glt ? glt->glt_filename : "unloaded";
+  return glt ? rstr_get(glt->glt_url) : "unloaded";
 }
 
 /**

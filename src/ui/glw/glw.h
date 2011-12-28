@@ -510,7 +510,7 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_source)(struct glw *w, const char *str);
+  void (*gc_set_source)(struct glw *w, rstr_t *url);
 
   /**
    *
@@ -1003,7 +1003,7 @@ void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 /**
  * Views
  */
-glw_t *glw_view_create(glw_root_t *gr, const char *src, 
+glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, 
 		       glw_t *parent, struct prop *prop,
 		       struct prop *prop_parent, prop_t *args,
 		       struct prop *prop_clone, int cache);
