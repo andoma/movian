@@ -568,7 +568,12 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   TAILQ_INIT(&vc->vc_vvs_free);
   vc->vc_vd = vd;
   vc->vc_width = mcp->width;
-  vc->vc_height = mcp->height;
+
+  if(mcp->height == 1088)
+    mcp->height = 1080;
+  else
+    vc->vc_height = mcp->height;
+
   vc->vc_profile = profile;
   vc->vc_refframes = refframes;
 
