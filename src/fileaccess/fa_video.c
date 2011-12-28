@@ -124,7 +124,9 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
 	lang = isolang_iso2lang(b);
       }
 
-      int score = video && fs_sub_match(video, fde->fde_url);
+      int score = fs_sub_match(video, fde->fde_url);
+      if(score == 0)
+	continue;
 
       mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,
 		   NULL, _p("External file"), score);
@@ -144,13 +146,11 @@ fs_sub_scan_thread(void *aux)
   char parent[URL_MAX];
   char *fname = mystrdupa(fss->url);
 
-  fname = strrchr(fname, '/');
-  if(fname != NULL) {
-    fname++;
-    char *dot = strrchr(fname, '.');
-    if(dot)
-      *dot = 0;
-  }
+  fname = strrchr(fname, '/') ?: fname;
+  fname++;
+  char *dot = strrchr(fname, '.');
+  if(dot)
+    *dot = 0;
 
   fa_parent(parent, sizeof(parent), fss->url);
 
