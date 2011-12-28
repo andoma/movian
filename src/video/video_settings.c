@@ -198,14 +198,13 @@ video_settings_init(void)
   
   video_settings.resume_mode = 1;
   x = settings_create_multiopt(s, "resumemode",
-			       _p("Resume video playback"),
-			       set_video_resumemode,
-			       _p("Controls if video playback should restart where last played"), NULL);
+			       _p("Resume video playback"));
 
   settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
   settings_multiopt_add_opt(x, "0", _p("No"), 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x, set_video_resumemode, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"videoplayback");
 
   settings_create_int(s, "played_threshold",
@@ -248,15 +247,16 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
 
-  x = settings_create_multiopt(s, "align", _p("Subtitle position"),
-			       set_subtitle_alignment, NULL, NULL);
+  x = settings_create_multiopt(s, "align", _p("Subtitle position"));
+			       
 
   settings_multiopt_add_opt(x, "2", _p("Center"), 1);
   settings_multiopt_add_opt(x, "1", _p("Left"), 0);
   settings_multiopt_add_opt(x, "3", _p("Right"), 0);
   settings_multiopt_add_opt(x, "0", _p("Auto"), 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,set_subtitle_alignment, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"subtitles");
 
   settings_create_divider(s, _p("Subtitle styling"));

@@ -110,14 +110,16 @@ i18n_init(void)
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"),
-			       set_srt_charset, NULL, NULL);
+  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"));
+			       
 
   const charset_t *cs;
   for(i = 0; (cs = charset_get_idx(i)) != NULL; i++)
     settings_multiopt_add_opt_cstr(x, cs->id, cs->title, i == 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,
+			     set_srt_charset, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"i18n");
 }
 
@@ -473,8 +475,8 @@ nls_init(prop_t *parent, htsmsg_t *store)
     return;
   }
 
-  x = settings_create_multiopt(parent, "language", _p("Language"),
-			       set_language, NULL, NULL);
+  x = settings_create_multiopt(parent, "language", _p("Language"));
+			       
 
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
@@ -507,7 +509,9 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_FOREACH(l, &list, link)
     settings_multiopt_add_opt_cstr(x, l->id, l->str, 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,
+			     set_language, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"i18n");
   
   fa_dir_free(fd);
