@@ -151,7 +151,20 @@ loader_thread(void *aux)
 			       ccptr);
 
       glw_lock(gr);
-      
+
+#if 0
+      if(pm != NULL && pm != NOT_MODIFIED) {
+	static int fail_simulator;
+	fail_simulator++;
+	if(fail_simulator == 10) {
+	  fail_simulator = 0;
+	  pixmap_release(pm);
+	  pm = NULL;
+	  snprintf(errbuf, sizeof(errbuf), "Simulated failure");
+	}
+      }
+#endif
+ 
       if(pm == NULL) {
 
 	if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
