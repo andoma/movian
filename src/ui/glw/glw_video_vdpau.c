@@ -423,7 +423,7 @@ glw_video_input_vdpau(glw_video_t *gv,
 
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
-    vdpau_mixer_set_deinterlacer(vm, 1);
+    vdpau_mixer_set_deinterlacer(vm, 1, fi->height);
 
     vm->vm_surface_win[3] = vm->vm_surface_win[2];
     vm->vm_surface_win[2] = vm->vm_surface_win[1];
@@ -454,7 +454,7 @@ glw_video_input_vdpau(glw_video_t *gv,
 			       &dst_rect, &dst_rect, 0, NULL);
 
   } else {
-    vdpau_mixer_set_deinterlacer(vm, 0);
+    vdpau_mixer_set_deinterlacer(vm, 0, fi->height);
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
 			       VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
