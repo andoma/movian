@@ -271,6 +271,7 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   }
 
   if(txt != NULL && pstart != -1 && pstop != -1) {
+    txt[txtoff] = 0;
     ese_insert(es, txt, pstart, pstop);
     txt = NULL;
   }
@@ -395,20 +396,19 @@ load_ttml(const char *url, char **buf, size_t len)
 }
 
 
-#if 0
 /**
  *
  */
-static void
-dump_subtitles(subtitles_t *s)
+static void __attribute__((unused))
+dump_subtitles(ext_subtitles_t *es)
 {
-  subtitle_entry_t *se;
+  ext_subtitle_entry_t *se;
 
-  RB_FOREACH(se, &es->es_entries, se_link) {
-    printf("PAGE: %lld -> %lld\n--\n%s\n--\n", se->se_start, se->se_stop, se->se_text);
+  RB_FOREACH(se, &es->es_entries, ese_link) {
+    printf("PAGE: %"PRId64" -> %"PRId64"\n--\n%s\n--\n",
+	   se->ese_start, se->ese_stop, se->ese_text);
   }
 }
-#endif
 
 /**
  *
@@ -425,7 +425,13 @@ subtitles_create(const char *path, char **bufp, size_t len)
     int force_utf8 = 0;
     const char *buf = *bufp;
 
-    if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
+    if(len > 2 && ((buf[0] == 0xff && buf[1] == 0xfe) ||
+		   (buf[0] == 0xfe && buf[1] == 0xff))) {
+      // UTF-16 BOM
+      utf16_to_utf8(bufp, &len);
+      buf = *bufp;
+      force_utf8 = 1;
+    } else if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
       // UTF-8 BOM
       force_utf8 = 1;
       buf += 3;
