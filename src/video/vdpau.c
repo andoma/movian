@@ -570,7 +570,7 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   vc->vc_width = mcp->width;
 
   if(mcp->height == 1088)
-    mcp->height = 1080;
+    vc->vc_height = 1080;
   else
     vc->vc_height = mcp->height;
 
