@@ -1233,7 +1233,6 @@ utf16_to_utf8(char **bufp, size_t *lenp)
   while(len2 >= 2) {
     int c = src2[!le] | src2[le] << 8;
     o2 += utf8_put(o2, c);
-    printf("%04x: %C\n", c, c);
     src2 += 2;
     len2 -= 2;
   }
