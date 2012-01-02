@@ -60,8 +60,10 @@ case $TARGET in
 
     ps3)
 	./configure.ps3 ${JARGS} --build=${TARGET} ${RELEASE}
-	make ${JARGS} BUILD=${TARGET} pkg self
+	make ${JARGS} BUILD=${TARGET} all pkg self
 	artifact build.${TARGET}/showtime.self bin application/octect-stream showtime.self
+	artifact build.${TARGET}/showtime.pkg bin application/octect-stream showtime.pkg
+	artifact build.${TARGET}/showtime_geohot.pkg bin application/octect-stream showtime-gh.pkg
 	;;
 
     *)
