@@ -254,7 +254,8 @@ glw_tex_flush_all(glw_root_t *gr)
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
     if(glt->glt_state == GLT_STATE_INACTIVE)
       continue;
-    LIST_REMOVE(glt, glt_flush_link);
+    if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
+      LIST_REMOVE(glt, glt_flush_link);
     if(glt->glt_state == GLT_STATE_VALID)
       glw_tex_backend_free_render_resources(gr, glt);
     if(glt->glt_state == GLT_STATE_QUEUED)
@@ -291,7 +292,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
     return;
   
   if(glt->glt_url != NULL) {
-    if(glt->glt_state != GLT_STATE_INACTIVE)
+    if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
       LIST_REMOVE(glt, glt_flush_link);
     rstr_release(glt->glt_url);
   }
