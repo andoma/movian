@@ -30,7 +30,6 @@ show_help(){
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using compiler CC [cc]"
-  echo "  --release                Stage for release"
   echo "  --enable-spotify=KEYFILE Compile support for Spotify (R) Core"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
@@ -111,10 +110,6 @@ for opt do
   ;;
   --help) show_help
   ;;
-  --release) 
-	  enable release
-	  enable embedded_resources
-  ;;
   --cc=*) CC="$optval"
   ;;
   --enable-all)
@@ -140,6 +135,11 @@ enable zlib
 enable posix_networking
 enable dvd
 enable dvd_linux
+
+if enabled release; then
+    enable embedded_resources
+fi
+
 
 #
 # pkgconfig

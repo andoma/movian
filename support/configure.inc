@@ -170,6 +170,7 @@ common_help(){
   echo "                           By default Showtime will build libav itself."
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
   echo "  --jobs=N                 Allow N jobs at once"
+  echo "  --release                Stage for release"
   echo ""
   echo "Platform specific options:"
 }
@@ -197,7 +198,8 @@ common_opt(){
 
   --jobs=*) JARGS="-j$2"
   ;;
-
+  --release) enable release
+  ;;
   *)
   die_invalid_opt $1
   esac
