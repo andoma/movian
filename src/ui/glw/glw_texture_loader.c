@@ -33,7 +33,6 @@ glw_tex_autoflush(glw_root_t *gr)
   glw_loadable_texture_t *glt;
 
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
-    assert(glt->glt_url != NULL);
     assert(glt->glt_state != GLT_STATE_LOADING);
     assert(glt->glt_state != GLT_STATE_ERROR);
 
@@ -291,11 +290,9 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_refcnt > 0)
     return;
   
-  if(glt->glt_url != NULL) {
-    if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
-      LIST_REMOVE(glt, glt_flush_link);
-    rstr_release(glt->glt_url);
-  }
+  if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
+    LIST_REMOVE(glt, glt_flush_link);
+  rstr_release(glt->glt_url);
   
   LIST_REMOVE(glt, glt_global_link);
 
@@ -318,8 +315,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs,
   assert(ys != 0);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
-    if(glt->glt_url != NULL && !strcmp(rstr_get(glt->glt_url),
-				       rstr_get(filename)) &&
+    if(!strcmp(rstr_get(glt->glt_url), rstr_get(filename)) &&
        glt->glt_flags == flags &&
        glt->glt_req_xs == xs &&
        glt->glt_req_ys == ys)
