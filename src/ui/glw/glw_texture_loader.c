@@ -33,7 +33,6 @@ glw_tex_autoflush(glw_root_t *gr)
   glw_loadable_texture_t *glt;
 
   while((glt = LIST_FIRST(&gr->gr_tex_flush_list)) != NULL) {
-    assert(glt->glt_filename != NULL);
     assert(glt->glt_state != GLT_STATE_LOADING);
     assert(glt->glt_state != GLT_STATE_ERROR);
 
@@ -127,7 +126,7 @@ loader_thread(void *aux)
     LIST_REMOVE(glt, glt_flush_link);
     
     if(glt->glt_refcnt > 1) {
-      char *url = strdup(glt->glt_filename);
+      rstr_t *url = rstr_dup(glt->glt_url);
 
       im.im_req_width  = glt->glt_req_xs;
       im.im_req_height = glt->glt_req_ys;
@@ -151,18 +150,33 @@ loader_thread(void *aux)
 			       ccptr);
 
       glw_lock(gr);
-      
+
+#if 0
+      if(pm != NULL && pm != NOT_MODIFIED) {
+	static int fail_simulator;
+	fail_simulator++;
+	if(fail_simulator == 10) {
+	  fail_simulator = 0;
+	  pixmap_release(pm);
+	  pm = NULL;
+	  snprintf(errbuf, sizeof(errbuf), "Simulated failure");
+	}
+      }
+#endif
+ 
       if(pm == NULL) {
 
 	if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	  glt_enqueue(gr, glt, LQ_OTHER);
 	} else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
 	  TRACE(TRACE_INFO, "GLW",
-		"Unable to load %s -- %s -- using cached copy", url, errbuf);
+		"Unable to load %s -- %s -- using cached copy", 
+		rstr_get(url), errbuf);
 	  LIST_INSERT_HEAD(&gr->gr_tex_active_list, glt, glt_flush_link);
 	  glt->glt_state = GLT_STATE_VALID;
 	} else {
-	  TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", url, errbuf);
+	  TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", 
+		rstr_get(url), errbuf);
 	  glt->glt_state = GLT_STATE_ERROR;
 	}
 
@@ -189,7 +203,7 @@ loader_thread(void *aux)
 	if(pm != NOT_MODIFIED)
 	  pixmap_release(pm);
       }
-      free(url);
+      rstr_release(url);
     }
     glw_tex_deref(gr, glt);
   }
@@ -239,7 +253,8 @@ glw_tex_flush_all(glw_root_t *gr)
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link) {
     if(glt->glt_state == GLT_STATE_INACTIVE)
       continue;
-    LIST_REMOVE(glt, glt_flush_link);
+    if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
+      LIST_REMOVE(glt, glt_flush_link);
     if(glt->glt_state == GLT_STATE_VALID)
       glw_tex_backend_free_render_resources(gr, glt);
     if(glt->glt_state == GLT_STATE_QUEUED)
@@ -275,12 +290,9 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_refcnt > 0)
     return;
   
-  if(glt->glt_filename != NULL) {
-    if(glt->glt_state != GLT_STATE_INACTIVE)
-      LIST_REMOVE(glt, glt_flush_link);
-
-    free(glt->glt_filename);
-  }
+  if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
+    LIST_REMOVE(glt, glt_flush_link);
+  rstr_release(glt->glt_url);
   
   LIST_REMOVE(glt, glt_global_link);
 
@@ -294,7 +306,7 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
+glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs,
 	       int ys)
 {
   glw_loadable_texture_t *glt;
@@ -303,7 +315,7 @@ glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
   assert(ys != 0);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
-    if(glt->glt_filename != NULL && !strcmp(glt->glt_filename, filename) &&
+    if(!strcmp(rstr_get(glt->glt_url), rstr_get(filename)) &&
        glt->glt_flags == flags &&
        glt->glt_req_xs == xs &&
        glt->glt_req_ys == ys)
@@ -311,7 +323,7 @@ glw_tex_create(glw_root_t *gr, const char *filename, int flags, int xs,
 
   if(glt == NULL) {
     glt = calloc(1, sizeof(glw_loadable_texture_t));
-    glt->glt_filename = strdup(filename);
+    glt->glt_url = rstr_dup(filename);
     LIST_INSERT_HEAD(&gr->gr_tex_list, glt, glt_global_link);
     glt->glt_state = GLT_STATE_INACTIVE;
     glt->glt_flags = flags;
@@ -333,7 +345,7 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   int q;
 
-  if(!strncmp(glt->glt_filename, "theme://", 8)) {
+  if(!strncmp(rstr_get(glt->glt_url), "theme://", 8)) {
     q = LQ_THEME;
   } else {
     q = LQ_TENTATIVE;

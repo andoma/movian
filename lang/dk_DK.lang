@@ -47,16 +47,13 @@ id: Delete
 msg: Slet
 
 id: Queue
-# Missing translation
-msg: 
+msg: Kø
 
 id: Star
-# Missing translation
-msg: 
+msg: Stjerne
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Fjern stjerne
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -86,12 +83,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Tildelt af applikationen: %d Kb
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Tildelt af malloc: %d Kb
 
 id: Avail system RAM: %d kB
 msg: Tilgængelig system RAM: %d Kb
@@ -106,8 +101,7 @@ id: Framerate: %.2f Hz
 msg: Opdateringsfrekvens: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Ledige stykker: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -116,8 +110,7 @@ id: Height: %d px
 msg: Højde: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Hukommelsesstatus
 
 id: Renderer: %s
 msg: Renderere: %s
@@ -129,8 +122,7 @@ id: Total system RAM: %d kB
 msg: Total system RAM: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Ubrugt hukommelse: %d Kb
 
 id: Version: %s
 msg: Version: %s
@@ -316,8 +308,7 @@ msg: Kan ikke åbne CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: DVD læsefejl, genstarter disk
@@ -431,8 +422,7 @@ msg: Søg via spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Ekstern fil
 
 #
 # ./src/i18n.c
@@ -510,12 +500,10 @@ msg: Video zoom
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Indlejret i fil
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Spor %d
 
 #
 # ./src/navigator.c
@@ -738,4 +726,3 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
-

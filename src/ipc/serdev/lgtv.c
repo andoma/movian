@@ -268,8 +268,8 @@ lgtv_init(serdev_t *sd, int curpower)
   if(lg->prior_input != -1) {
     int input = lg->prior_input;
 
-    x = settings_create_multiopt(s, "inputsource", _p("Input source"),
-				 NULL, NULL, NULL);
+    x = settings_create_multiopt(s, "inputsource", _p("Input source"));
+
 
     settings_multiopt_add_opt_cstr(x, "none",      "None",        1);
     settings_multiopt_add_opt_cstr(x, "hdmi1",     "HDMI-1",      input == 0x90);
@@ -277,7 +277,8 @@ lgtv_init(serdev_t *sd, int curpower)
     settings_multiopt_add_opt_cstr(x, "vga1",      "VGA-1",       input == 0x60);
     settings_multiopt_add_opt_cstr(x, "component1","Component-1", input == 0x40);
 
-    settings_multiopt_initiate(x, lg->store, lgtv_save_settings, lg);
+    settings_multiopt_initiate(x, NULL, NULL, NULL,
+			       lg->store, lgtv_save_settings, lg);
 
     if(!curpower) {
       int v = get_confed_input(lg);

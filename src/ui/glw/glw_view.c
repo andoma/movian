@@ -123,14 +123,14 @@ glw_view_error(glw_root_t *gr, errorinfo_t *ei, glw_t *parent)
 typedef struct glw_cached_view {
   LIST_ENTRY(glw_cached_view) gcv_link;
   token_t *gcv_sof;
-  char *gcv_source;
+  rstr_t *gcv_url;
 } glw_cached_view_t;
 
 /**
  *
  */
 glw_t *
-glw_view_create(glw_root_t *gr, const char *src,
+glw_view_create(glw_root_t *gr, rstr_t *url,
 		glw_t *parent, prop_t *prop, prop_t *prop_parent, prop_t *args,
 		prop_t *prop_clone, int cache)
 {
@@ -142,7 +142,7 @@ glw_view_create(glw_root_t *gr, const char *src,
   glw_view_t *v;
 
   LIST_FOREACH(gcv, &gr->gr_views, gcv_link) {
-    if(!strcmp(gcv->gcv_source, src))
+    if(!strcmp(rstr_get(gcv->gcv_url), rstr_get(url)))
       break;
   }
 
@@ -150,17 +150,17 @@ glw_view_create(glw_root_t *gr, const char *src,
     token_t *sof = calloc(1, sizeof(token_t));
     sof->type = TOKEN_START;
 #ifdef GLW_VIEW_ERRORINFO
-    sof->file = rstr_alloc(src);
+    sof->file = rstr_dup(url);
 #endif
 
-    if((l = glw_view_load1(gr, src, &ei, sof)) == NULL) {
+    if((l = glw_view_load1(gr, url, &ei, sof)) == NULL) {
       glw_view_free_chain(sof);
       return glw_view_error(gr, &ei, parent);
     }
     eof = calloc(1, sizeof(token_t));
     eof->type = TOKEN_END;
 #ifdef GLW_VIEW_ERRORINFO
-    eof->file = rstr_alloc(src);
+    eof->file = rstr_dup(url);
 #endif
     l->next = eof;
   
@@ -172,7 +172,7 @@ glw_view_create(glw_root_t *gr, const char *src,
     if(cache) {
       gcv = malloc(sizeof(glw_cached_view_t));
       gcv->gcv_sof = sof;
-      gcv->gcv_source = strdup(src);
+      gcv->gcv_url = rstr_dup(url);
       LIST_INSERT_HEAD(&gr->gr_views, gcv, gcv_link);
       t = glw_view_clone_chain(gcv->gcv_sof);
     } else {
@@ -220,7 +220,7 @@ glw_view_cache_flush(glw_root_t *gr)
 
   while((gcv = LIST_FIRST(&gr->gr_views)) != NULL) {
     glw_view_free_chain(gcv->gcv_sof);
-    free(gcv->gcv_source);
+    rstr_release(gcv->gcv_url);
     LIST_REMOVE(gcv, gcv_link);
     free(gcv);
   }

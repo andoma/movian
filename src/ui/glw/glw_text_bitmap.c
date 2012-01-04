@@ -152,6 +152,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
 	gtb->gtb_status = GTB_NEED_RERENDER;
 
+      if(rc->rc_width > gtb->gtb_saved_width && 
+	 pm->pm_flags & PIXMAP_TEXT_TRUNCATED)
+	gtb->gtb_status = GTB_NEED_RERENDER;
+	
       if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
 	if(pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {

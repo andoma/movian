@@ -1484,6 +1484,8 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   prop_set_string(mp->mp_prop_playstatus, "play");
 
+  mp_configure(mp, 0, MP_BUFFER_DEEP);
+
   if(primary)
     mp_become_primary(mp);
   else

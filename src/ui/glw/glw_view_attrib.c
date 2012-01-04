@@ -716,22 +716,24 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   glw_t *w = ec->w;
+  rstr_t *r;
+  if(w->glw_class->gc_set_source == NULL)
+    return 0;
 
   switch(t->type) {
   case TOKEN_VOID:
-    if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, NULL);
+    w->glw_class->gc_set_source(w, NULL);
     break;
 
   case TOKEN_CSTRING:
-    if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, t->t_cstring);
+    r = rstr_alloc(t->t_cstring);
+    w->glw_class->gc_set_source(w, r);
+    rstr_release(r);
     break;
 
   case TOKEN_RSTRING:
   case TOKEN_LINK:
-    if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, rstr_get(t->t_rstring));
+    w->glw_class->gc_set_source(w, t->t_rstring);
     break;
 
   default:

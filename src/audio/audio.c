@@ -40,7 +40,6 @@ static setting_t *audio_settings_current_device;
 static void *audio_output_thread(void *aux);
 static void audio_mastervol_init(void);
 
-static char *audio_stored_device;
 static int audio_run = 1;
 
 static hts_thread_t audio_thread_id;
@@ -87,38 +86,6 @@ audio_format_to_string(int format)
   }
 }
 
-/**
- *
- */
-static void
-audio_global_save_settings(void)
-{
-  htsmsg_t *m = htsmsg_create_map();
-  htsmsg_add_str(m, "current", audio_mode_current->am_id);
-  htsmsg_store_save(m, "audio/current");
-  htsmsg_destroy(m);
-}
-
-/**
- *
- */
-static void
-audio_global_load_settings(void)
-{
-  htsmsg_t *m = htsmsg_store_load("audio/current");
-  const char *cur;
-
-  if(m == NULL)
-    return;
-
-  cur = htsmsg_get_str(m, "current");
-
-  if(cur)
-    audio_stored_device = strdup(cur);
-
-  htsmsg_destroy(m);
-}
-
 
 /**
  *
@@ -143,8 +110,6 @@ audio_change_output_device(void *opaque, const char *string)
   TAILQ_FOREACH(am, &audio_modes, am_link)
     if(!strcmp(string, am->am_id))
       audio_mode_set(am);
-
-  audio_global_save_settings();
 }
 
 
@@ -154,6 +119,10 @@ audio_change_output_device(void *opaque, const char *string)
 void
 audio_init(void)
 {
+  htsmsg_t *m = htsmsg_store_load("audio/current");
+  if(m == NULL)
+    m = htsmsg_create_map();
+
   audio_mastervol_init();
 
   audio_settings_root =
@@ -162,11 +131,8 @@ audio_init(void)
   
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 
-			     _p("Current output device"),
-			     audio_change_output_device, NULL, NULL);
+			     _p("Current output device"));
   
-  audio_global_load_settings();
-
   TAILQ_INIT(&audio_modes);
 
 #ifdef CONFIG_LIBOGC
@@ -192,6 +158,12 @@ audio_init(void)
 #endif
 
   audio_dummy_init();
+
+
+  settings_multiopt_initiate(audio_settings_current_device,
+			     audio_change_output_device, NULL, NULL,
+			     m, settings_generic_save_settings,
+			     (void *)"audio/current");
 
   audio_run = 1;
   hts_thread_create_joinable("audio output", &audio_thread_id, 
@@ -349,14 +321,10 @@ audio_mode_register(audio_mode_t *am)
 
   TAILQ_INSERT_TAIL(&audio_modes, am, am_link);
 
-  if(audio_mode_current == NULL ||
-     (audio_stored_device && !strcmp(audio_stored_device, am->am_id)))
-    audio_mode_set(am);
-  
   settings_multiopt_add_opt_cstr(audio_settings_current_device,
 				 am->am_id, am->am_title,
-				 am == audio_mode_current);
-  
+				 0);
+ 
   m = htsmsg_store_load("audio/devices/%s", am->am_id);
 
   r = settings_add_dir_cstr(audio_settings_root, am->am_title, "sound", NULL,

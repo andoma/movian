@@ -306,9 +306,13 @@ glw_load_universe(glw_root_t *gr)
   prop_t *page = prop_create(gr->gr_uii.uii_prop, "root");
   glw_unload_universe(gr);
 
+  rstr_t *universe = rstr_alloc("theme://universe.view");
+
   gr->gr_universe = glw_view_create(gr,
-				    "theme://universe.view", NULL, page,
+				    universe, NULL, page,
 				    NULL, NULL, NULL, 0);
+
+  rstr_release(universe);
 
   glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }

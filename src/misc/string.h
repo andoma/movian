@@ -67,7 +67,7 @@ size_t utf8_to_ucs2(uint8_t *dst, const char *src);
 
 size_t utf8_to_ascii(uint8_t *dst, const char *src);
 
-
+void utf16_to_utf8(char **bufp, size_t *lenp);
 
 
 typedef struct {

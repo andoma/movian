@@ -124,26 +124,33 @@ item_set_duration(prop_t *meta, htsmsg_t *item)
 static void
 make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
 {
-  const char *artist, *album;
+  const char *s;
+  rstr_t *artist, *album;
   prop_set_string(prop_create(c, "type"), "audio");
 
   item_set_str(m, item, "title",
 	       "http://purl.org/dc/elements/1.1/title");
 
-  artist = item_set_str(m, item, "artist",
-			"urn:schemas-upnp-org:metadata-1-0/upnp/artist");
+  s = item_set_str(m, item, "artist",
+		   "urn:schemas-upnp-org:metadata-1-0/upnp/artist");
+  artist = rstr_alloc(s);
 
-  album = item_set_str(m, item, "album",
-		       "urn:schemas-upnp-org:metadata-1-0/upnp/album");
+  s = item_set_str(m, item, "album",
+		   "urn:schemas-upnp-org:metadata-1-0/upnp/album");
+  album = rstr_alloc(s);
 
   if(!item_set_str(m, item, "album_art",
 		   "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI")) {
     
-    if(artist != NULL && album != NULL) {
-      lastfm_albumart_init(prop_create(m, "album_art"),
-			   rstr_alloc(artist), rstr_alloc(album));
-    }
+    if(artist != NULL && album != NULL)
+      lastfm_albumart_init(prop_create(m, "album_art"), artist, album);
   }
+
+  if(artist != NULL)
+    lastfm_artistpics_init(prop_create(m, "artist_images"), artist);
+
+  rstr_release(artist);
+  rstr_release(album);
 }
 
 

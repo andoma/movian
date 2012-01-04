@@ -139,6 +139,9 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     if(pts != AV_NOPTS_VALUE)
       gv->gv_nextpts = pts + s->gvs_duration;
 
+    gv->gv_fwidth  = s->gvs_width;
+    gv->gv_fheight = s->gvs_height;
+
     TAILQ_REMOVE(&gv->gv_decoded_queue, s, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, s, gvs_link);
   }
@@ -182,9 +185,14 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
 
   gr->gr_be.gbr_bind_tex_image(vd->vd_dpy, gv->gv_glx_pixmap,
 			       GLX_FRONT_LEFT_EXT, NULL);
-
+  
+#if 0
   int w = gv->gv_rwidth  - 1;
   int h = gv->gv_rheight - 1;
+#else
+  int w = gv->gv_fwidth  - 1;
+  int h = gv->gv_fheight - 1;
+#endif
 
   glMatrixMode(GL_PROJECTION);
   glLoadMatrixf(projmtx);
@@ -409,21 +417,30 @@ glw_video_input_vdpau(glw_video_t *gv,
   int wvec[3] = {fi->width};
   int hvec[3] = {fi->height};
   VdpRect src_rect = { 0, 0, fi->width, fi->height };
+
+#if 0
   VdpRect dst_rect = { 0, 0, 
 		       gv->gv_rwidth ?: fi->width,
 		       gv->gv_rheight ?: fi->height };
+#else
+  VdpRect dst_rect = { 0, 0, 
+		       fi->width,
+		       fi->height };
+#endif
 
   if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0))
     return;
 
   if((s = glw_video_get_surface(gv)) == NULL)
     return;
+  s->gvs_width = fi->width;
+  s->gvs_height = fi->height;
 
   vdpau_mixer_set_color_matrix(vm, fi);
 
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
-    vdpau_mixer_set_deinterlacer(vm, 1);
+    vdpau_mixer_set_deinterlacer(vm, 1, fi->height);
 
     vm->vm_surface_win[3] = vm->vm_surface_win[2];
     vm->vm_surface_win[2] = vm->vm_surface_win[1];
@@ -445,6 +462,9 @@ glw_video_input_vdpau(glw_video_t *gv,
     if((s = glw_video_get_surface(gv)) == NULL)
       return;
 
+    s->gvs_width = fi->width;
+    s->gvs_height = fi->height;
+
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
 			       fi->tff,
 			       2, &vm->vm_surface_win[2],
@@ -454,7 +474,7 @@ glw_video_input_vdpau(glw_video_t *gv,
 			       &dst_rect, &dst_rect, 0, NULL);
 
   } else {
-    vdpau_mixer_set_deinterlacer(vm, 0);
+    vdpau_mixer_set_deinterlacer(vm, 0, fi->height);
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
 			       VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,

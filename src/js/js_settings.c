@@ -219,11 +219,11 @@ js_store_update_string(void *opaque, const char *str)
 {
   js_setting_t *jss = opaque;
   JSContext *cx = settings_get_cx(jss);
-
   settings_update(cx, jss,
 		  str ? STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str))
 		  : JSVAL_NULL);
 }
+
 
 /**
  *
@@ -254,6 +254,7 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
   }
 
   js_setting_t *jss = calloc(1, sizeof(js_setting_t));
+  jss->jss_cx = cx;
   jss->jss_refcount = 1;
   jss->jss_jsg = jsg;
   LIST_INSERT_HEAD(&jsg->jsg_settings, jss, jss_link);
@@ -266,7 +267,6 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
 
   jsval v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "callback", &v);
-  jss->jss_cx = cx;
 
 
   return jss;
@@ -401,13 +401,14 @@ js_createMultiOpt(JSContext *cx, JSObject *obj, uintN argc,
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_multiopt(jsg->jsg_root, id, _p(title),
-					js_store_update_string, jss, 
-					js_global_pc);
+  jss->jss_s = settings_create_multiopt(jsg->jsg_root, id, _p(title));
 
   add_multiopt(cx, jss, options);
 
-  settings_multiopt_initiate(jss->jss_s, jsg->jsg_store,
+  settings_multiopt_initiate(jss->jss_s,
+			     js_store_update_string, jss, 
+			     js_global_pc,
+			     jsg->jsg_store,
 			     js_setting_group_save, jsg);
 
   jss->jss_cx = NULL;

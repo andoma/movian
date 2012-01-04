@@ -568,7 +568,12 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   TAILQ_INIT(&vc->vc_vvs_free);
   vc->vc_vd = vd;
   vc->vc_width = mcp->width;
-  vc->vc_height = mcp->height;
+
+  if(mcp->height == 1088)
+    vc->vc_height = 1080;
+  else
+    vc->vc_height = mcp->height;
+
   vc->vc_profile = profile;
   vc->vc_refframes = refframes;
 
@@ -728,7 +733,7 @@ vdpau_mixer_deinit(vdpau_mixer_t *vm)
  *
  */
 void
-vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
+vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on, int height)
 {
   int best;
   VdpVideoMixerFeature f;
@@ -737,7 +742,7 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
   VdpBool values[1];
   VdpStatus st;
 
-  if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS) {
+  if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS && height < 1080) {
     best = VDPAU_MIXER_DEINTERLACE_TS;
     f = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
     type = "Temporal/Spatial";

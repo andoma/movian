@@ -46,7 +46,7 @@ typedef struct glw_loadable_texture {
 
   glw_backend_texture_t glt_texture;
 
-  char *glt_filename;
+  rstr_t *glt_url;
 
   pixmap_t *glt_pixmap;
 
@@ -70,7 +70,7 @@ typedef struct glw_loadable_texture {
 
 void glw_tex_init(glw_root_t *gr);
 
-glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename,
+glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
