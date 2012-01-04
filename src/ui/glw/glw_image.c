@@ -68,6 +68,8 @@ typedef struct glw_image {
 
   uint8_t gi_is_ready;
 
+  uint8_t gi_need_reload;
+
   glw_renderer_t gi_gr;
 
   int16_t gi_last_width;
@@ -685,28 +687,32 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
       }
+      gi->gi_need_reload = hq;
+    }
 
-      if(hq && gi->gi_pending == NULL &&
-	 gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
 
-	int xs = -1, ys = -1, rescale;
+    if(gi->gi_need_reload && gi->gi_pending == NULL &&
+       gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
+
+      gi->gi_need_reload = 0;
 	
-	if(rc->rc_width < rc->rc_height) {
-	  rescale = abs(rc->rc_width - glt->glt_xs) > glt->glt_xs / 10;
-	  xs = rc->rc_width;
-	} else {
-	  rescale = abs(rc->rc_height - glt->glt_ys) > glt->glt_ys / 10;
-	  ys = rc->rc_height;
-	}
+      int xs = -1, ys = -1, rescale;
 	
-	if(rescale) {
-	  int flags = 0;
-	  if(w->glw_class == &glw_repeatedimage)
-	    flags |= GLW_TEX_REPEAT;
-
-	  gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
-					  flags, xs, ys);
-	}
+      if(rc->rc_width < rc->rc_height) {
+	rescale = rc->rc_width != glt->glt_xs;
+	xs = rc->rc_width;
+      } else {
+	rescale = rc->rc_height != glt->glt_ys;
+	ys = rc->rc_height;
+      }
+      
+      if(rescale) {
+	int flags = 0;
+	if(w->glw_class == &glw_repeatedimage)
+	  flags |= GLW_TEX_REPEAT;
+	
+	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
+					flags, xs, ys);
       }
     }
   }
