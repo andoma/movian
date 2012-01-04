@@ -59,8 +59,7 @@ fa_libav_reopen(fa_handle_t *fh)
     return NULL;
 
   int buf_size = 32768;
-  void *buf = malloc(buf_size);
-
+  void *buf = av_malloc(buf_size);
 
   avio = avio_alloc_context(buf, buf_size, 0, fh, fa_libav_read, NULL, 
 			    fa_libav_seek);
@@ -185,7 +184,7 @@ void
 fa_libav_close(AVIOContext *avio)
 {
   fa_close(avio->opaque);
-  free(avio->buffer);
+  av_free(avio->buffer);
   av_free(avio);
 }
 
