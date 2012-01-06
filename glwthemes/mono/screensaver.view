@@ -17,6 +17,14 @@ widget(container_z, {
   });
   }    
 
+
+  widget(deck, {
+    widget(label, {
+      .caption = _("No media loaded");
+      .align = center;
+      .sizeScale = 3;
+    });
+
   widget(freefloat, {
     .hidden = select($global.media.current.type, true, false);
     ffitem("No media loaded");
@@ -42,5 +50,6 @@ widget(container_z, {
     ffitem("未载入媒体");
     ffitem("未載入任何媒體");
    });
-
+   .page = $ui.nmlmode;
+});
 });

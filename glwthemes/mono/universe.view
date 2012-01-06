@@ -12,6 +12,8 @@ settingBool(_("Fancy UI animations"), "fancyAnimations", true, $ui.fancyAnimatio
 
 settingBool(_("Alternate list layout"), "list2", false, $ui.list2);
 
+settingBool(_("Multilingual 'No media loaded'"), "nmlmode", true, $ui.nmlmode);
+
 onEvent(menu, {
   $ui.menu = !$ui.menu;
 });
