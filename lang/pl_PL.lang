@@ -33,14 +33,14 @@ msg: Odtworzono %d razy
 #
 id: %d entries
 # Missing translation
-msg: 
+msg: %d wpisy
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
 # Missing translation
-msg: 
+msg: %d ścieżki 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -50,24 +50,24 @@ msg: Usuń
 
 id: Queue
 # Missing translation
-msg: 
+msg: Kolejka
 
 id: Star
 # Missing translation
-msg: 
+msg: Dodaj gwiazdkę
 
 id: Unstar
 # Missing translation
-msg: 
+msg: Usuń gwiazdkę
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Wyłącz
+msg: Wyłączony
 
 id: On
-msg: Włącz
+msg: Włączony
 
 #
 # ./glwthemes/mono/include/infobox.view
@@ -89,11 +89,11 @@ msg: OK
 #
 id: Allocated by application: %d kB
 # Missing translation
-msg: 
+msg: Zajęte przez aplikację: %d kB
 
 id: Allocated by malloc: %d kB
 # Missing translation
-msg: 
+msg: Zajęte przez funkcję malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: Dostępna pamięć RAM: %d kB
@@ -109,7 +109,7 @@ msg: Częstotliwość wyświetlanego obrazu %.2f Hz
 
 id: Free chunks: %d
 # Missing translation
-msg: 
+msg: Wolne segmenty: %d
 
 id: GPU: %s
 msg: Procesor graficzny: %s
@@ -119,7 +119,7 @@ msg: Wysokość: %d px
 
 id: Memory status
 # Missing translation
-msg: 
+msg: Status pamięci
 
 id: Renderer: %s
 msg: Rendering: %s
@@ -132,7 +132,7 @@ msg: Całkowita dostępna pamięć RAM: %d kB
 
 id: Unused memory: %d kB
 # Missing translation
-msg: 
+msg: Wolna pamięć: %d kB
 
 id: Version: %s
 msg: Wersja: %s
@@ -153,7 +153,7 @@ msg: O programie
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Home
+msg: Strona główna
 
 #
 # ./glwthemes/mono/pages/openerror.view
@@ -244,13 +244,13 @@ msg: Ustawienie podświetlenia w zależności od pory dnia
 
 id: Alternate list layout
 # Missing translation
-msg: 
+msg: Alternatywny wygląd listy
 
 id: Audio muted
-msg: Wycisz
+msg: Wyciszono
 
 id: Fancy UI animations
-msg: Animacja interfejsu
+msg: Animacje interfejsu
 
 id: Master volume: %d dB
 msg: Regulacja głośności: %d dB
@@ -320,7 +320,7 @@ msg: Nie można otworzyć CD
 #
 id: DVD
 # Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: Błąd odczytu DVD, restart płyty
@@ -339,7 +339,7 @@ msg: Szukaj
 
 id: Search result for: %s
 # Missing translation
-msg: 
+msg: Wyniki wyszukiwania dla: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -349,7 +349,7 @@ msg: Automatyczne logowanie przy starcie programu
 
 id: Collaborative
 # Missing translation
-msg: 
+msg: Wspólne
 
 id: Enable Spotify
 msg: Włącz Spotify
@@ -374,11 +374,11 @@ msg: Nowości
 
 id: Offline
 # Missing translation
-msg: 
+msg: Rozłączony
 
 id: Offline sync in 96kbps
 # Missing translation
-msg: 
+msg: Synchronizacja przy 96kbps
 
 id: Playlists
 msg: Lista odtwarzania
@@ -439,7 +439,7 @@ msg: Szukaj za pomocą spotlight
 #
 id: External file
 # Missing translation
-msg: 
+msg: Zewnętrzny plik
 
 #
 # ./src/i18n.c
@@ -518,11 +518,11 @@ msg: Zbliżenie
 #
 id: Embedded in file
 # Missing translation
-msg: 
+msg: Wpisane w plik
 
 id: Track %d
 # Missing translation
-msg: 
+msg: Ścieżka %d
 
 #
 # ./src/navigator.c
@@ -616,19 +616,19 @@ msg: Mapuj kółko myszy
 #
 id: Auto-switch to this mode
 # Missing translation
-msg: 
+msg: Automatycznie przełącz na ten tryb
 
 id: DVI-Video color range
 # Missing translation
-msg: 
+msg: Paleta kolorów z DVI-Video
 
 id: Switch to this mode now
 # Missing translation
-msg: 
+msg: Przełącz na ten tryb
 
 id: Video modes
 # Missing translation
-msg: 
+msg: Tryby wyświetlania wideo
 
 #
 # ./src/upnp/upnp.c
@@ -689,7 +689,7 @@ msg: Odtwórz od ostatniego miejsca
 
 id: Count video as played when reaching
 # Missing translation
-msg: 
+msg: Traktuj wideo jako obejrzane po osiągnięciu
 
 id: Enable VDPAU
 msg: Włącz VDPAU
