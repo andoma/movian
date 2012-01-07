@@ -87,16 +87,16 @@ typedef struct glw_image {
 
 static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage;
 
-static uint8_t texcords[9][8] = {
-    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
-    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
-    { 1, 1,   0, 1,   0, 0,  1, 0},  // Mirror X
-    { 1, 0,   0, 0,   0, 1,  1, 1},  // 180 deg. rotate
-    { 0, 0,   1, 0,   1, 1,  0, 1},  // Mirror Y
-    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transpose ???
-    { 1, 1,   1, 0,   0, 0,  0, 1},  // Rot 90
-    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transverse ???
-    { 0, 0,   0, 1,   1, 1,  1, 0},  // Rot 270
+static int8_t tex_transform[9][4] = {
+  { 1, 0, 0, 1},  // No transform
+  { 1, 0, 0, 1},  // No transform
+  { -1, 0,0, 1},  // Mirror X
+  { -1, 0,0, -1}, // 180° rotate
+  { 1, 0,0, -1},  // Mirror Y
+  { 0,1,1,0},     // Transpose
+  { 0,1,-1,0},    // 90° rotate
+  { 0,1,1,0},     // Transverse ???
+  { 0,-1,1,0},    // 270° rotate
 };
 
 
@@ -319,39 +319,54 @@ static const float alphaborder[4][4] = {
   {0,0,0,0},
 };
 
+
+
+static void
+settexcoord(glw_renderer_t *gr, int c, float s0, float t0,
+	    const glw_root_t *root, const glw_loadable_texture_t *glt)
+{
+  const int8_t *m = glt->glt_orientation < 9 ?
+    tex_transform[glt->glt_orientation] : tex_transform[0];
+
+  s0 = s0 * 2 - 1;
+  t0 = t0 * 2 - 1;
+
+  float s = s0 * m[0] + t0 * m[1];
+  float t = s0 * m[2] + t0 * m[3];
+
+  if(root->gr_normalized_texture_coords) {
+    s = (s + 1.0) * 0.5;
+    t = (t + 1.0) * 0.5;
+  } else {
+    s = (s + 1.0) * 0.5 * glt->glt_xs;
+    t = (t + 1.0) * 0.5 * glt->glt_ys;
+  }
+  glw_renderer_vtx_st(gr, c, s, t);
+}
+
+
 /**
  *
  */
 static void
-glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
-			       glw_loadable_texture_t *glt)
+glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, 
+			     glw_image_t *gi, 
+			     const glw_loadable_texture_t *glt)
 {
   float tex[4][2];
   float vex[4][2];
 
   int x, y, i = 0;
 
-  if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0f;
-    tex[1][0] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_xs;
-    tex[2][0] = glt->glt_s - (float)gi->gi_alpha_edge / glt->glt_xs;
-    tex[3][0] = glt->glt_s;
+  tex[0][0] = 0;
+  tex[1][0] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_xs;
+  tex[2][0] = glt->glt_s - (float)gi->gi_alpha_edge / glt->glt_xs;
+  tex[3][0] = glt->glt_s;
 
-    tex[0][1] = 0.0f;
-    tex[1][1] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_ys;
-    tex[2][1] = glt->glt_t - (float)gi->gi_alpha_edge / glt->glt_ys;
-    tex[3][1] = glt->glt_t;
-  } else {
-    tex[0][0] = 0.0f;
-    tex[1][0] = gi->gi_alpha_edge;
-    tex[2][0] = glt->glt_xs - gi->gi_alpha_edge;
-    tex[3][0] = glt->glt_xs;
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = gi->gi_alpha_edge;
-    tex[2][1] = glt->glt_ys - gi->gi_alpha_edge;
-    tex[3][1] = glt->glt_ys;
-  }
+  tex[0][1] = 0;
+  tex[1][1] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_ys;
+  tex[2][1] = glt->glt_t - (float)gi->gi_alpha_edge / glt->glt_ys;
+  tex[3][1] = glt->glt_t;
 
   vex[0][0] = -1.0f;
   vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
@@ -366,7 +381,7 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
       glw_renderer_vtx_pos(&gi->gi_gr, i, vex[x][0], vex[y][1], 0.0f);
-      glw_renderer_vtx_st (&gi->gi_gr, i, tex[x][0], tex[y][1]);
+      settexcoord(&gi->gi_gr, i, tex[x][0], tex[y][1], gr, glt);
       glw_renderer_vtx_col(&gi->gi_gr, i, 1, 1, 1, alphaborder[x][y]);
       i++;
     }
@@ -381,29 +396,17 @@ static void
 glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
 			glw_loadable_texture_t *glt)
 {
-  float xs = gr->gr_normalized_texture_coords ? glt->glt_s : glt->glt_xs;
-  float ys = gr->gr_normalized_texture_coords ? glt->glt_t : glt->glt_ys;
-
-  uint8_t tex[8];
-  int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
-  memcpy(tex, texcords[o], 8);
-
-
   glw_renderer_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 0, 
-		       tex[0] * xs , tex[1] * ys);
+  settexcoord(&gi->gi_gr, 0, 0, 1, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 1,
-		       tex[2] * xs , tex[3] * ys);
+  settexcoord(&gi->gi_gr, 1, 1, 1, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 2,
-		       tex[4] * xs , tex[5] * ys);
+  settexcoord(&gi->gi_gr, 2, 1, 0, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 3,
-		       tex[6] * xs , tex[7] * ys);
+  settexcoord(&gi->gi_gr, 3, 0, 0, gr, glt);
 }
 
 
