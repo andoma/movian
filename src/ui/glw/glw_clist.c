@@ -23,7 +23,6 @@ typedef struct glw_clist {
 
   float child_aspect;
 
-  float filtered_pos;
   int total_size;
   int current_pos;
   int page_size;
@@ -38,12 +37,13 @@ typedef struct glw_clist {
   int16_t saved_height;
   int16_t saved_width;
 
+  float trail;
+
 } glw_clist_t;
 
 #define glw_parent_height glw_parent_val[0].i32
-#define glw_parent_width  glw_parent_val[1].i32
-#define glw_parent_pos    glw_parent_val[2].f
-#define glw_parent_expand glw_parent_val[3].f
+#define glw_parent_pos    glw_parent_val[1].f
+#define glw_parent_
 
 
 /**
@@ -52,47 +52,38 @@ typedef struct glw_clist {
 static int
 layout(glw_clist_t *l, glw_rctx_t *rc)
 {
-  glw_t *c, *w = &l->w;
+  glw_t *c, *w = &l->w, *n;
   int ypos = 0;
   glw_rctx_t rc0 = *rc;
   float IH = 1.0f / rc->rc_height;
+  int itemh = rc->rc_height / 10;
 
-  l->filtered_pos = GLW_LP(32, l->filtered_pos, l->current_pos);
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+    c->glw_parent_pos = GLW_LP(8, c->glw_parent_pos, 
+			       ypos - l->current_pos + rc->rc_height / 2);
+    ypos += itemh;
+    if(c == w->glw_focused) {
+      l->current_pos = ypos;
+      ypos += itemh;
+    }
+  }
+  l->trail = GLW_LP(8, l->trail, 
+		    ypos - l->current_pos + rc->rc_height / 2);
+
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    int f = glw_filter_constraints(c->glw_flags);
+    n = glw_next_widget(c);
 
-    if(c == w->glw_focused) {
-      c->glw_parent_expand = GLW_MIN(1, c->glw_parent_expand + 0.1);
-    } else {
-      c->glw_parent_expand = GLW_MAX(0, c->glw_parent_expand - 0.1);
-    }
-
-    if(f & GLW_CONSTRAINT_Y) {
-      rc0.rc_height = c->glw_req_size_y;
-    } else {
-      rc0.rc_height = rc->rc_width / 10;
-    }
-    
-    rc0.rc_height *= c->glw_parent_expand * 2 + 1;
-
-    c->glw_parent_pos = ypos;
+    rc0.rc_height = (n ? n->glw_parent_pos : l->trail) - c->glw_parent_pos;
     c->glw_parent_height = rc0.rc_height;
     c->glw_norm_weight = rc0.rc_height * IH;
-    
 
-    if(ypos - l->filtered_pos > -rc->rc_height &&
-       ypos - l->filtered_pos <  rc->rc_height * 2)
-      glw_layout0(c, &rc0);
-
-    if(c == w->glw_focused) {
-      l->current_pos = ypos - rc->rc_height / 2 + rc0.rc_height / 2;
-    }
-
-    ypos += c->glw_parent_height;
+    glw_layout0(c, &rc0);
   }
 
   return 0;
@@ -107,7 +98,6 @@ static void
 render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
-  glw_clist_t *l = (glw_clist_t *)w;
   glw_rctx_t rc0, rc1;
   int t, b;
   float y;
@@ -118,13 +108,12 @@ render(glw_t *w, glw_rctx_t *rc)
   glw_store_matrix(w, rc);
 
   rc0 = *rc;
-  glw_Translatef(&rc0, 0, 2.0f * l->filtered_pos / rc->rc_height, 0);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    y = c->glw_parent_pos - l->filtered_pos;
+    y = c->glw_parent_pos;
     if(y + c->glw_parent_height < 0 || y > rc->rc_height) {
       c->glw_flags |= GLW_CLIPPED;
       continue;

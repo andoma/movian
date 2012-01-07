@@ -218,6 +218,18 @@ set_size_scale(glw_t *w, float v)
 /**
  *
  */
+static void
+set_size(glw_t *w, float v)
+{
+  if(w->glw_class->gc_set_default_size != NULL)
+    w->glw_class->gc_set_default_size(w, v);
+}
+
+
+
+/**
+ *
+ */
 static int
 set_int(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
@@ -839,6 +851,7 @@ static const token_attrib_t attribtab[] = {
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"sizeScale",       set_float,  0, set_size_scale},
+  {"size",            set_float,  0, set_size},
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 
