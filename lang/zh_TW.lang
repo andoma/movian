@@ -26,19 +26,22 @@ id: Added by: %s
 msg: 添加人： %s
 
 id: Played %d times
-msg: 已播放 %d 次
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d 個項目
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d 個音軌
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: 動態使用者介面
 
 id: Master volume: %d dB
 msg: 主音量： %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: 頂部導覽列
@@ -661,9 +668,6 @@ msg: 置中
 
 id: Color
 msg: 字幕色彩
-
-id: Controls if video playback should restart where last played
-msg: 設定影片是否自中斷處開始播放
 
 id: Count video as played when reaching
 msg: 觀賞影片達到若干比例時增加已播放次數紀錄

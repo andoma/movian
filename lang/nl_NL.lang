@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Toegevoegd door: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -255,6 +255,10 @@ msg: Mooie UI-effecten
 
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigatieknoppen bovenste balk
@@ -696,10 +700,6 @@ msg: Centreren
 id: Color
 msg: Kleur
 
-id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -741,6 +741,10 @@ msg: Schaduwkleur
 
 id: Shadow offset
 msg: Schaduwafstand
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Video op breedbeeld uitrekken

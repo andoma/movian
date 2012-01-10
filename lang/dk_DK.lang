@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Tilføjet af: %s
 
 id: Played %d times
-msg: Afspillet %d gange
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d indtastninger
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d spor
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Fancy UI animationer
 
 id: Master volume: %d dB
 msg: Master volume: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
@@ -661,9 +668,6 @@ msg: Centreret
 id: Color
 msg: Farve
 
-id: Controls if video playback should restart where last played
-msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
-
 id: Count video as played when reaching
 msg: Marker video som vist når den når
 
@@ -703,6 +707,10 @@ msg: Farve på skygge
 id: Shadow offset
 msg: Skyggens forskydning
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
 
@@ -726,3 +734,4 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
+

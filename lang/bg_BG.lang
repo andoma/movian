@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Добавено от: %s
 
 id: Played %d times
-msg: Възпроизведено %d пъти 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d записи
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d тракове
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Анимация на интерфейса
 
 id: Master volume: %d dB
 msg: Сила на звука: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Бутони за навигация в горния панел
@@ -663,9 +670,6 @@ msg: Център
 id: Color
 msg: Цвят
 
-id: Controls if video playback should restart where last played
-msg: Настройка дали видео възпроизвеждането трябва да продължи от където е спрян за последно файла
-
 id: Count video as played when reaching
 msg: Маркирай видеото като възпроизведено при достигане на
 
@@ -704,6 +708,10 @@ msg: Цвят на сянката
 
 id: Shadow offset
 msg: Отместване на сянката
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Разтегни видеото до широк екран

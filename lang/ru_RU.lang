@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Добавил: %s
 
 id: Played %d times
-msg: Пpoигpaнo %d paз
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d пунктов
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d треков
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -67,7 +70,6 @@ msg: Вкл
 #
 # ./glwthemes/mono/include/infobox.view
 #
-
 id: Enqueue
 msg: Ставить в очередь
 
@@ -83,7 +85,6 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
-
 id: Allocated by application: %d kB
 msg: Выделено приложению: %d КБ
 
@@ -225,8 +226,9 @@ msg: CPU
 id: GPU & Display
 msg: GPU и изображение
 
-id: GPU Core temperature: %d / %d В°
-msg: Температура ядра GPU: %d / %d В°
+id: GPU Core temperature: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
@@ -246,6 +248,10 @@ msg: Анимация интерфейса
 id: Master volume: %d dB
 msg: Общая громкость: %d dB
 
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
+
 id: Top bar navigation buttons
 msg: Верхняя панель кнопок навигации
 
@@ -261,8 +267,9 @@ msg: Использовать opensubtitles.org
 #
 # ./src/arch/arch_ps3.c
 #
-id: System is low on memroy (%d kB RAM available)
-msg: Системе не хватает памяти (%d кБ RAM доступно)
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -309,7 +316,6 @@ msg: Невозможно открыть CD
 #
 # ./src/backend/dvd/dvd.c
 #
-
 id: DVD
 msg: DVD
 
@@ -663,9 +669,6 @@ msg: Центр
 
 id: Color
 msg: Цвет
-
-id: Controls if video playback should restart where last played
-msg: Упpaвлeниe вoзoбнoвлeниeм вocпpoизвeдeния видeo c мecтa ocтaнoвки
 
 id: Count video as played when reaching
 msg: Считать видео проигранным при достижении

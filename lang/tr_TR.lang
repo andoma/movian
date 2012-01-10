@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Added by: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -257,6 +257,10 @@ msg: Fancy UI animations
 
 id: Master volume: %d dB
 msg: Ses seviyesi: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Top Bar navigasyon düğmeleri
@@ -706,10 +710,6 @@ msg: merkez
 id: Color
 msg: renk
 
-id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -751,6 +751,10 @@ msg: Gölgelenme rengi
 
 id: Shadow offset
 msg: Gölgelenme ayar
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Stretch video to widescreen

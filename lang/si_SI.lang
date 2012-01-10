@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Dodal: %s
 
 id: Played %d times
-msg: %d x Predvajan 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d Vnosi
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d Naslov
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Animacije UI vmesnika
 
 id: Master volume: %d dB
 msg: Glasnost: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigacijske tipke v zgornji vrstici
@@ -661,9 +668,6 @@ msg: Sredina
 id: Color
 msg: Barva
 
-id: Controls if video playback should restart where last played
-msg: Nastavitve za ponovno predvajanje videa, kjer je nazadnje ostal
-
 id: Count video as played when reaching
 msg: Štetje videa kadar predvajanje doseže
 
@@ -702,6 +706,10 @@ msg: Prikaži barve
 
 id: Shadow offset
 msg: Izravnava senčenja
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Raztegni video za Widescreen 

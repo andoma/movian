@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Adicionado por: %s
 
 id: Played %d times
-msg: Reproduzido %d vezes
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d entradas
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d faixas
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Animações do IU
 
 id: Master volume: %d dB
 msg: Volume principal: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -662,9 +669,6 @@ msg: Centrado
 id: Color
 msg: Cor
 
-id: Controls if video playback should restart where last played
-msg: Controla se a reprodução de vídeo deve reiniciar onde foi pela última vez reproduzido
-
 id: Count video as played when reaching
 msg: Marcar vídeo como reproduzido quando chegar a
 
@@ -703,6 +707,10 @@ msg: Cor da sombra
 
 id: Shadow offset
 msg: Deslocamento da sombra
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen

@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Hinzugefügt von: %s
 
 id: Played %d times
-msg: %d x Abgespielt 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d Einträge
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d Titel
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: schicke Menüanimationen
 
 id: Master volume: %d dB
 msg: Lautstärke: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigationsknöpfe in der oberen Leiste
@@ -498,12 +505,6 @@ msg: Untertitelskalierung
 id: Video zoom
 msg: Videozoom
 
-id: Video stretch height
-msg: Videohöhe
-
-id: Video stretch width
-msg: Videobreite
-
 #
 # ./src/metadata/metadata.c
 #
@@ -671,9 +672,6 @@ msg: Zentriert
 id: Color
 msg: Farbe
 
-id: Controls if video playback should restart where last played
-msg: Einstellung ob die Wiedergabe von der lezten Position starten soll
-
 id: Count video as played when reaching
 msg: Video als abgespielt markieren ab
 
@@ -713,11 +711,11 @@ msg: Schattenfarbe
 id: Shadow offset
 msg: Schattenabstand
 
-id: Stretch video to widescreen
-msg: Video auf Widescreen strecken 
-
 id: Stretch video to fullscreen
 msg: Video auf Vollbild strecken
+
+id: Stretch video to widescreen
+msg: Video auf Widescreen strecken 
 
 id: Subtitle position
 msg: Untertitelposition

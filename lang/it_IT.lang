@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Aggiunto da: %s
 
 id: Played %d times
-msg: Riprodotto %d volte
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d voci
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d tracce
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Animazioni dell'interfaccia
 
 id: Master volume: %d dB
 msg: Volume principale: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Pulsanti nella barra di navigazione in alto
@@ -660,9 +667,6 @@ msg: Al centro
 
 id: Color
 msg: Colore
-
-id: Controls if video playback should restart where last played
-msg: Controlla se la riproduzione del video dovrebbe riprendere dall'ultima posizione
 
 id: Count video as played when reaching
 msg: Conteggia il video come riprodotto quando raggiunge

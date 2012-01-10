@@ -26,21 +26,22 @@ id: Added by: %s
 msg: Adicionado por: %s
 
 id: Played %d times
-msg: Executado %d vezes
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -254,6 +255,10 @@ msg: Animações
 
 id: Master volume: %d dB
 msg: Volume principal: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -680,9 +685,6 @@ msg: Centralizado
 id: Color
 msg: Cor
 
-id: Controls if video playback should restart where last played
-msg: Reiniciar execução de vídeo da última posição
-
 id: Count video as played when reaching
 msg: Marcar video como executado ao alcançar
 
@@ -721,6 +723,10 @@ msg: Cor da sombra
 
 id: Shadow offset
 msg: Deslocamento da sombra
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen

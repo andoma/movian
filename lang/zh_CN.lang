@@ -26,21 +26,22 @@ id: Added by: %s
 msg: 由%s添加
 
 id: Played %d times
-msg: 已播放%d次
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -254,6 +255,10 @@ msg: Fancy界面动画
 
 id: Master volume: %d dB
 msg: 主音量: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: 工具栏导航按钮
@@ -684,9 +689,6 @@ msg: 居中
 id: Color
 msg: 颜色
 
-id: Controls if video playback should restart where last played
-msg: 控制视频播放是否从上次播放位置开始
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -726,6 +728,10 @@ msg: 阴影颜色
 
 id: Shadow offset
 msg: 阴影偏移
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: 拉伸视频

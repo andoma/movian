@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Tradus de : %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -255,6 +255,10 @@ msg: Animații UI
 
 id: Master volume: %d dB
 msg: Volumul general : %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Butoanele de navigare de pe bara de sus
@@ -689,10 +693,6 @@ msg: Centru
 id: Color
 msg: Culoare
 
-id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -734,6 +734,10 @@ msg: Culoare umbră
 
 id: Shadow offset
 msg: Distanța față de umbră
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Lărgește imaginea pentru ecrane late

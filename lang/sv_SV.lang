@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Tillagd av: %s
 
 id: Played %d times
-msg: Spelad %d gånger
+msg[0]: Spelad %d gånger
+msg[1]: Spelad %d gång
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d poster
+msg[0]: %d poster
+msg[1]: %d post
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d spår
+msg[0]: %d spår
+msg[1]: %d spår
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,10 @@ msg: Häftiga anomationer i gränsnittet
 
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Knappar för navigation i toppen av skärmen
@@ -661,9 +668,6 @@ msg: Centrerad
 id: Color
 msg: Färg
 
-id: Controls if video playback should restart where last played
-msg: Kontrollerar om videouppspelning ska starta där den slutade
-
 id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
 
@@ -702,6 +706,10 @@ msg: Färg på skuggor
 
 id: Shadow offset
 msg: Skuggoffset
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Sträck ut videon horisontellt 

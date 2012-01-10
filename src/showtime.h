@@ -43,6 +43,9 @@ struct rstr *nls_get_rstring(const char *string);
 struct prop;
 struct prop *nls_get_prop(const char *string);
 
+struct rstr *nls_get_rstringp(const char *string, const char *singularis,
+			      int val);
+
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif

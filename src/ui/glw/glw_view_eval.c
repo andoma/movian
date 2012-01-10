@@ -4643,6 +4643,33 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
+
+static int 
+glwf_pluralise(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *c;
+  
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  if((b = token_resolve(ec, argv[1])) == NULL)
+    return -1;
+  if((c = token_resolve(ec, argv[2])) == NULL)
+    return -1;
+  
+  if(a->type != TOKEN_RSTRING)
+    return glw_view_seterr(ec->ei, a, "first arg must be a string");
+  if(b->type != TOKEN_RSTRING)
+    return glw_view_seterr(ec->ei, b, "second arg must be a string");
+
+  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
+  r->t_rstring = nls_get_rstringp(rstr_get(a->t_rstring),
+				  rstr_get(b->t_rstring), token2int(c));
+  eval_push(ec, r);
+  return 0;
+}
+
 /**
  *
  */
@@ -4704,6 +4731,7 @@ static const token_func_t funcvec[] = {
   {"clamp", 3, glwf_clamp},
   {"join", -1, glwf_join},
   {"fmt", -1, glwf_fmt},
+  {"_pl", 3, glwf_pluralise},
 };
 
 

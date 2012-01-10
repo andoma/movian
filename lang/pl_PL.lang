@@ -26,21 +26,22 @@ id: Added by: %s
 msg: Dodane przez: %s
 
 id: Played %d times
-msg: Odtworzono %d razy
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: %d wpisy
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: %d ścieżki 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -49,15 +50,12 @@ id: Delete
 msg: Usuń
 
 id: Queue
-# Missing translation
 msg: Kolejka
 
 id: Star
-# Missing translation
 msg: Dodaj gwiazdkę
 
 id: Unstar
-# Missing translation
 msg: Usuń gwiazdkę
 
 #
@@ -88,11 +86,9 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
 msg: Zajęte przez aplikację: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
 msg: Zajęte przez funkcję malloc: %d kB
 
 id: Avail system RAM: %d kB
@@ -108,7 +104,6 @@ id: Framerate: %.2f Hz
 msg: Częstotliwość wyświetlanego obrazu %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
 msg: Wolne segmenty: %d
 
 id: GPU: %s
@@ -118,7 +113,6 @@ id: Height: %d px
 msg: Wysokość: %d px
 
 id: Memory status
-# Missing translation
 msg: Status pamięci
 
 id: Renderer: %s
@@ -131,7 +125,6 @@ id: Total system RAM: %d kB
 msg: Całkowita dostępna pamięć RAM: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
 msg: Wolna pamięć: %d kB
 
 id: Version: %s
@@ -243,7 +236,6 @@ id: Adjust background tint based on daytime
 msg: Ustawienie podświetlenia w zależności od pory dnia
 
 id: Alternate list layout
-# Missing translation
 msg: Alternatywny wygląd listy
 
 id: Audio muted
@@ -254,6 +246,10 @@ msg: Animacje interfejsu
 
 id: Master volume: %d dB
 msg: Regulacja głośności: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Przyciski na pasku nawigacyjnym
@@ -319,7 +315,6 @@ msg: Nie można otworzyć CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
 msg: DVD
 
 id: DVD read error, restarting disc
@@ -338,7 +333,6 @@ id: Search
 msg: Szukaj
 
 id: Search result for: %s
-# Missing translation
 msg: Wyniki wyszukiwania dla: %s
 
 #
@@ -348,7 +342,6 @@ id: Automatic login when Showtime starts
 msg: Automatyczne logowanie przy starcie programu
 
 id: Collaborative
-# Missing translation
 msg: Wspólne
 
 id: Enable Spotify
@@ -373,11 +366,9 @@ id: New releases
 msg: Nowości
 
 id: Offline
-# Missing translation
 msg: Rozłączony
 
 id: Offline sync in 96kbps
-# Missing translation
 msg: Synchronizacja przy 96kbps
 
 id: Playlists
@@ -438,7 +429,6 @@ msg: Szukaj za pomocą spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
 msg: Zewnętrzny plik
 
 #
@@ -517,11 +507,9 @@ msg: Zbliżenie
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
 msg: Wpisane w plik
 
 id: Track %d
-# Missing translation
 msg: Ścieżka %d
 
 #
@@ -615,19 +603,15 @@ msg: Mapuj kółko myszy
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
 msg: Automatycznie przełącz na ten tryb
 
 id: DVI-Video color range
-# Missing translation
 msg: Paleta kolorów z DVI-Video
 
 id: Switch to this mode now
-# Missing translation
 msg: Przełącz na ten tryb
 
 id: Video modes
-# Missing translation
 msg: Tryby wyświetlania wideo
 
 #
@@ -684,11 +668,7 @@ msg: Środek
 id: Color
 msg: Kolor
 
-id: Controls if video playback should restart where last played
-msg: Odtwórz od ostatniego miejsca
-
 id: Count video as played when reaching
-# Missing translation
 msg: Traktuj wideo jako obejrzane po osiągnięciu
 
 id: Enable VDPAU
@@ -726,6 +706,10 @@ msg: Kolor cienia
 
 id: Shadow offset
 msg: Offset cienia
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Rozciągnij do panoramicznego
