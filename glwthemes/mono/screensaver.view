@@ -19,6 +19,7 @@ widget(container_z, {
 
 
   widget(deck, {
+    .hidden = select($global.media.current.type, true, false);
     widget(label, {
       .caption = _("No media loaded");
       .align = center;
@@ -26,7 +27,6 @@ widget(container_z, {
     });
 
   widget(freefloat, {
-    .hidden = select($global.media.current.type, true, false);
     ffitem("No media loaded");
     ffitem("Няма заредени медийни файлове");
     ffitem("Keine Medien geladen");
