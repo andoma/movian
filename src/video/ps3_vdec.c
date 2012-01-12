@@ -32,6 +32,8 @@
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
 
+#define VDEC_DETAILED_DEBUG 0
+
 #define VDEC_SPU_PRIO 100
 #define VDEC_PPU_PRIO 1000
 
@@ -40,6 +42,7 @@ union vdec_userdata {
   struct {
     int epoch;
     char skip;
+    char flush;
   } s;
 };
 
@@ -97,6 +100,8 @@ typedef struct vdec_decoder {
   int pending_blackout;
   int submitted_au;
   int poc_delta;
+  int pending_flush;
+
 } vdec_decoder_t;
 
 /**
@@ -191,7 +196,7 @@ static void
 reset_active_pictures(vdec_decoder_t *vdd, const char *reason, int marked)
 {
   vdec_pic_t *vp, *next;
-#if 0
+#if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DEC", "RESET: %s", reason);
 #endif
   vdd->poc_delta = 0;
@@ -201,8 +206,8 @@ reset_active_pictures(vdec_decoder_t *vdd, const char *reason, int marked)
     next = LIST_NEXT(vp, link);
     
     if(!marked || (marked && vp->marked)) {
-#if 0
-      TRACE(TRACE_DEBUG, "VDEC DEC", "DROP POC=%d (%s:%s)", vp->order,
+#if VDEC_DETAILED_DEBUG
+      TRACE(TRACE_DEBUG, "VDEC DEC", "DROP POC=%3d (%s:%s)", vp->order,
 	    marked ? "Only marked" : "",
 	    vp->marked ? "marked" : "");
 #endif
@@ -218,8 +223,8 @@ mark_active_pictures(vdec_decoder_t *vdd)
   vdec_pic_t *vp;
   LIST_FOREACH(vp, &vdd->active_pictures, link) {
     vp->marked = 1;
-#if 0
-    TRACE(TRACE_DEBUG, "VDEC DEC", "MARK POC=%d", vp->order);
+#if VDEC_DETAILED_DEBUG
+    TRACE(TRACE_DEBUG, "VDEC DEC", "MARK POC=%3d", vp->order);
 #endif
   }
 }
@@ -287,6 +292,7 @@ picture_out(vdec_decoder_t *vdd)
   vdec_picture *pi = (void *)(intptr_t)addr;
 
   ud.u64 = pi->userdata[0];
+  vdd->pending_flush |= ud.s.flush;
 
   if(/* pi->status != 0 ||*/ pi->attr != 0 || ud.s.skip) {
     vdec_get_picture(vdd->handle, &picfmt, NULL);
@@ -306,6 +312,11 @@ picture_out(vdec_decoder_t *vdd)
     if(cnt > 6) {
       reset_active_pictures(vdd, "Excess ref-frames", 0);
     }
+  }
+
+  if(vdd->pending_flush) {
+    reset_active_pictures(vdd, "stream flush", 0);
+    vdd->pending_flush = 0;
   }
 
   if(pi->codec_type == VDEC_CODEC_TYPE_MPEG2) {
@@ -379,8 +390,8 @@ picture_out(vdec_decoder_t *vdd)
     vp->fi.dar = av_mul_q(vp->fi.dar, sar);
 
     vp->order = h264->pic_order_count[0];
-#if 0
-    TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%d:%d IDR=%d PS=%d LD=%d %x",
+#if VDEC_DETAILED_DEBUG
+    TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x",
 	  h264->pic_order_count[0],
 	  h264->pic_order_count[1],
 	  h264->idr_picture_flag,
@@ -446,10 +457,10 @@ picture_out(vdec_decoder_t *vdd)
       break;
 
     vdd->next_picture = vp->order + (vdd->poc_delta ? 1 : 2);
-#if 0
+#if VDEC_DETAILED_DEBUG
     static int64_t last;
 
-    TRACE(TRACE_DEBUG, "VDEC DPY", "POC=%d duration=%d PTS=%ld (delta=%ld)",
+    TRACE(TRACE_DEBUG, "VDEC DPY", "POC=%3d duration=%d PTS=%ld (delta=%ld)",
 	  vp->order, vp->fi.duration, vp->fi.pts, vp->fi.pts - last);
     last = vp->fi.pts;
 #endif
@@ -662,13 +673,13 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vd->vd_do_flush) {
     end_sequence_and_wait(vdd);
     vdec_start_sequence(vdd->handle);
-    vd->vd_do_flush = 0;
     vdd->extradata_injected = 0;
   }
 
   union vdec_userdata ud;
   ud.s.epoch = mb->mb_epoch;
   ud.s.skip = mb->mb_skip == 1;
+  ud.s.flush = vd->vd_do_flush;
 
   au.userdata = ud.u64;
   au.pts.low = mb->mb_pts;
@@ -685,6 +696,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
     h264_to_annexb(mb->mb_data, mb->mb_size);
   
   submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, mb);
+  vd->vd_do_flush = 0;
 }
 
 
