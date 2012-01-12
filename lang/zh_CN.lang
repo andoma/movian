@@ -26,22 +26,22 @@ id: Added by: %s
 msg: 由%s添加
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: 已播放%d次
+msg[1]: 已播放%d次
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: 总数：%d
+msg[1]: 总数：%d
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: 轨道数：%d
+msg[1]: 轨道数：%d
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -50,16 +50,13 @@ id: Delete
 msg: 删除
 
 id: Queue
-# Missing translation
-msg: 
+msg: 队列
 
 id: Star
-# Missing translation
-msg: 
+msg: 加星
 
 id: Unstar
-# Missing translation
-msg: 
+msg: 去星
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -89,12 +86,10 @@ msg: 确定
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: 程序已分配：%d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: mallock已分配：%d kB
 
 id: Avail system RAM: %d kB
 msg: 系统可用内存: %d kB
@@ -109,8 +104,7 @@ id: Framerate: %.2f Hz
 msg: 帧速: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: 剩余块：%d
 
 id: GPU: %s
 msg: GPU: %s
@@ -119,8 +113,7 @@ id: Height: %d px
 msg: 高: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: 内存状态
 
 id: Renderer: %s
 msg: 渲染器: %s
@@ -132,8 +125,7 @@ id: Total system RAM: %d kB
 msg: 系统内存总数: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: 剩余内存：%d kB
 
 id: Version: %s
 msg: 版本: %s
@@ -244,8 +236,7 @@ id: Adjust background tint based on daytime
 msg: 根据时间调整背景颜色
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: 更改列表布局
 
 id: Audio muted
 msg: 已静音
@@ -257,8 +248,7 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: 多语言'未载入媒体'
 
 id: Top bar navigation buttons
 msg: 工具栏导航按钮
@@ -324,8 +314,7 @@ msg: 不能打开CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: DVD读取错误，重新开始读取光盘
@@ -343,8 +332,7 @@ id: Search
 msg: 搜索
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: "%s"的查询结果
 
 #
 # ./src/backend/spotify/spotify.c
@@ -353,8 +341,7 @@ id: Automatic login when Showtime starts
 msg: Showtime启动时自动登录
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: 协作
 
 id: Enable Spotify
 msg: 启用Spotify
@@ -378,12 +365,10 @@ id: New releases
 msg: 最新发布
 
 id: Offline
-# Missing translation
-msg: 
+msg: 离线
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: 离线同步(96kbs)
 
 id: Playlists
 msg: 播放列表
@@ -443,8 +428,7 @@ msg: 使用spotlight搜索
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: 外部文件
 
 #
 # ./src/i18n.c
@@ -522,12 +506,10 @@ msg: 视频缩放
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: 文件内置
 
 id: Track %d
-# Missing translation
-msg: 
+msg: 轨道%d
 
 #
 # ./src/navigator.c
@@ -620,20 +602,16 @@ msg: 将鼠标滚轮映射到上/下按键
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: 自动切换到当前模式
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: DVI视频颜色范围
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: 立刻切换到当前模式
 
 id: Video modes
-# Missing translation
-msg: 
+msg: 视频模式
 
 #
 # ./src/upnp/upnp.c
@@ -690,8 +668,7 @@ id: Color
 msg: 颜色
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: 将视频视为已播放当播放进度达到
 
 id: Enable VDPAU
 msg: 启用VDPAU
@@ -730,11 +707,10 @@ id: Shadow offset
 msg: 阴影偏移
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: 拉升视频至全屏
 
 id: Stretch video to widescreen
-msg: 拉伸视频
+msg: 拉伸视频至宽屏
 
 id: Subtitle position
 msg: 字幕位置
