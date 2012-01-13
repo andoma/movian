@@ -58,7 +58,7 @@ typedef struct vdec_pic {
 
   frame_info_t fi;
   int order;
-  int marked;
+  int age;
   uint8_t *buf;
   size_t bufsize;
 } vdec_pic_t;
@@ -136,32 +136,6 @@ end_sequence_and_wait(vdec_decoder_t *vdd)
   TRACE(TRACE_DEBUG, "VDEC", "Waiting for end sequence -> done");
 }
 
-/**
- * yuv420 only
- */
-static vdec_pic_t *
-alloc_picture(vdec_decoder_t *vdd, int lumasize)
-{
-  vdec_pic_t *vp;
-  int bufsize = lumasize + lumasize / 2;
-
-  vp = LIST_FIRST(&vdd->avail_pictures);
-  if(vp == NULL) {
-    vp = calloc(1, sizeof(vdec_pic_t));
-    vdd->allocated_pictures++;
-  } else {
-
-    LIST_REMOVE(vp, link);
-    if(vp->bufsize == bufsize)
-      return vp;
-    hfree(vp->buf, vp->bufsize);
-  }
-
-  vp->bufsize = bufsize;
-  vp->buf = halloc(bufsize);
-  return vp;
-}
-
 
 /**
  * yuv420 only
@@ -171,6 +145,57 @@ release_picture(vdec_decoder_t *vdd, vdec_pic_t *vp)
 {
   LIST_REMOVE(vp, link);
   LIST_INSERT_HEAD(&vdd->avail_pictures, vp, link);
+}
+
+
+
+/**
+ * yuv420 only
+ */
+static vdec_pic_t *
+alloc_picture(vdec_decoder_t *vdd, int lumasize, int order)
+{
+  vdec_pic_t *vp;
+  int bufsize = lumasize + lumasize / 2;
+
+  LIST_FOREACH(vp, &vdd->active_pictures, link)
+    if(vp->age > 16)
+      break;
+  if(vp != NULL) {
+#if VDEC_DETAILED_DEBUG
+    TRACE(TRACE_DEBUG, "VDEC DEC", "Drop old pic POC=%d", order);
+#endif
+    release_picture(vdd, vp);
+  }
+
+
+  LIST_FOREACH(vp, &vdd->active_pictures, link)
+    if(vp->order == order)
+      break;
+  if(vp != NULL) {
+#if VDEC_DETAILED_DEBUG
+    TRACE(TRACE_DEBUG, "VDEC DEC", "Drop duplicate POC=%d", order);
+#endif
+    release_picture(vdd, vp);
+  }
+  vp = LIST_FIRST(&vdd->avail_pictures);
+  if(vp == NULL) {
+    vp = calloc(1, sizeof(vdec_pic_t));
+    vdd->allocated_pictures++;
+  } else {
+    vp->order = order;
+    vp->age = 0;
+    LIST_REMOVE(vp, link);
+    if(vp->bufsize == bufsize)
+      return vp;
+    hfree(vp->buf, vp->bufsize);
+  }
+
+  vp->order = order;
+  vp->age = 0;
+  vp->bufsize = bufsize;
+  vp->buf = halloc(bufsize);
+  return vp;
 }
 
 
@@ -195,37 +220,19 @@ free_picture_list(struct vdec_pic_list *l)
 static void
 reset_active_pictures(vdec_decoder_t *vdd, const char *reason, int marked)
 {
-  vdec_pic_t *vp, *next;
+  vdec_pic_t *vp;
+
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DEC", "RESET: %s", reason);
 #endif
   vdd->poc_delta = 0;
-  if(!marked)
-    vdd->next_picture = INT32_MIN;
-  for(vp = LIST_FIRST(&vdd->active_pictures); vp != NULL; vp = next) {
-    next = LIST_NEXT(vp, link);
-    
-    if(!marked || (marked && vp->marked)) {
-#if VDEC_DETAILED_DEBUG
-      TRACE(TRACE_DEBUG, "VDEC DEC", "DROP POC=%3d (%s:%s)", vp->order,
-	    marked ? "Only marked" : "",
-	    vp->marked ? "marked" : "");
-#endif
-      release_picture(vdd, vp);
-    }
-  }
-}
+  vdd->next_picture = INT32_MIN;
 
-
-static void
-mark_active_pictures(vdec_decoder_t *vdd)
-{
-  vdec_pic_t *vp;
-  LIST_FOREACH(vp, &vdd->active_pictures, link) {
-    vp->marked = 1;
+  while((vp = LIST_FIRST(&vdd->active_pictures)) != NULL) {
 #if VDEC_DETAILED_DEBUG
-    TRACE(TRACE_DEBUG, "VDEC DEC", "MARK POC=%3d", vp->order);
+    TRACE(TRACE_DEBUG, "VDEC DEC", "DROP POC=%3d", vp->order);
 #endif
+    release_picture(vdd, vp);
   }
 }
 
@@ -323,7 +330,7 @@ picture_out(vdec_decoder_t *vdd)
     vdec_mpeg2_info *mpeg2 = (void *)(intptr_t)pi->codec_specific_addr;
 
     lumasize = mpeg2->width * mpeg2->height;
-    vp = alloc_picture(vdd, lumasize);
+    vp = alloc_picture(vdd, lumasize, 0);
 
     vp->fi.width = mpeg2->width;
     vp->fi.height = mpeg2->height;
@@ -353,7 +360,6 @@ picture_out(vdec_decoder_t *vdd)
 
     // No reordering
     reset_active_pictures(vdd, "mpeg2", 0);
-    vp->order = 0;
 
     snprintf(metainfo, sizeof(metainfo),
 	     "MPEG2 %dx%d%c (Cell)",
@@ -364,7 +370,7 @@ picture_out(vdec_decoder_t *vdd)
     AVRational sar;
 
     lumasize = h264->width * h264->height;
-    vp = alloc_picture(vdd, lumasize);
+    vp = alloc_picture(vdd, lumasize, h264->pic_order_count[0]);
 
     vp->fi.width = h264->width;
     vp->fi.height = h264->height;
@@ -389,7 +395,6 @@ picture_out(vdec_decoder_t *vdd)
     }
     vp->fi.dar = av_mul_q(vp->fi.dar, sar);
 
-    vp->order = h264->pic_order_count[0];
 #if VDEC_DETAILED_DEBUG
     TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x",
 	  h264->pic_order_count[0],
@@ -399,12 +404,8 @@ picture_out(vdec_decoder_t *vdd)
 	  h264->low_delay_hrd_flag,
 	  h264->nalUnitPresentFlags);
 #endif
-    if(h264->idr_picture_flag) {
-      mark_active_pictures(vdd);
+    if(h264->idr_picture_flag)
       vdd->next_picture = vp->order;
-    }
-
-    //      reset_active_pictures(vdd, "IDR");
 
     if(vp->order & 1) {
       if(vdd->next_picture == 2)
@@ -448,9 +449,11 @@ picture_out(vdec_decoder_t *vdd)
       vp = LIST_FIRST(&vdd->active_pictures);
     } else {
 
-      LIST_FOREACH(vp, &vdd->active_pictures, link)
+      LIST_FOREACH(vp, &vdd->active_pictures, link) {
 	if(vp->order == vdd->next_picture) 
 	  break;
+	vp->age++;
+      }
     }
 
     if(vp == NULL)
@@ -460,8 +463,8 @@ picture_out(vdec_decoder_t *vdd)
 #if VDEC_DETAILED_DEBUG
     static int64_t last;
 
-    TRACE(TRACE_DEBUG, "VDEC DPY", "POC=%3d duration=%d PTS=%ld (delta=%ld)",
-	  vp->order, vp->fi.duration, vp->fi.pts, vp->fi.pts - last);
+    TRACE(TRACE_DEBUG, "VDEC DPY", "POC=%3d duration=%d PTS=%ld (delta=%ld) %d",
+	  vp->order, vp->fi.duration, vp->fi.pts, vp->fi.pts - last, vp->age);
     last = vp->fi.pts;
 #endif
     int linesizes[4] = {vp->fi.width, vp->fi.width / 2, vp->fi.width / 2, 0};
