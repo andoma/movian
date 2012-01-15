@@ -19,7 +19,7 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <htsmsg/htsmsg_xml.h>
+#include "htsmsg/htsmsg_xml.h"
 
 #include "fileaccess/fileaccess.h" // HTTP client lives here
 

@@ -19,8 +19,8 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <htsmsg/htsmsg.h>
-#include <htsmsg/htsmsg_xml.h>
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_xml.h"
 
 #include "showtime.h"
 #include "opensubtitles.h"
@@ -271,7 +271,7 @@ async_query_do(prop_t *node, htsmsg_t *query)
 		 htsmsg_get_str(entry, "SubFormat"),
 		 NULL,
 		 htsmsg_get_str(entry, "SubLanguageID"),
-		 "opensubtitles.org", 0);
+		 "opensubtitles.org", NULL, 0);
   }
 
   htsmsg_destroy(out);
@@ -322,30 +322,51 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
  * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
  */
 int
-opensub_compute_hash(AVIOContext *avio, uint64_t *hashp)
+opensub_compute_hash(fa_handle_t *fh, uint64_t *hashp)
 {
   int i;
   uint64_t hash;
+  int64_t *mem;
 
-  int64_t size = avio_size(avio);
+  int64_t size = fa_fsize(fh);
   
   if(size < 65536)
     return -1;
 
   hash = size;
 
-  if(avio_seek(avio, 0, SEEK_SET) == -1)
+  if(fa_seek(fh, 0, SEEK_SET) != 0)
     return -1;
 
-  for(i = 0; i < 8192; i++)
-    hash += avio_rl64(avio);
+  mem = malloc(sizeof(int64_t) * 8192);
 
-  if(avio_seek(avio, size-65536, SEEK_SET) == -1)
+  if(fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
     return -1;
+  }
 
-  for(i = 0; i < 8192; i++)
-    hash += avio_rl64(avio);
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
 
+  if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
+     fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
+    return -1;
+  }
+
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
+  free(mem);
   *hashp = hash;
   return 0;
 }

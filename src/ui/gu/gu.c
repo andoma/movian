@@ -123,7 +123,7 @@ resolvetab(gu_window_t *gw, int page_num)
   gu_tab_t *gt;
   c = gtk_notebook_get_nth_page(GTK_NOTEBOOK(gw->gw_notebook), page_num);
   LIST_FOREACH(gt, &gw->gw_tabs, gt_link)
-    if(c == gt->gt_notebook)
+    if(c == gt->gt_vbox)
       return gt;
   return NULL;
 
@@ -140,8 +140,6 @@ tab_changed(GtkWidget *w, GtkNotebookPage *page,
   gu_window_t *gw = user_data;
   gu_tab_t *gt = resolvetab(gw, page_num);
   assert(gt != NULL);
-
-  gu_toolbar_select_tab(gt);
   gw->gw_current_tab = gt;
 }
 
@@ -180,11 +178,6 @@ gu_win_create(gtk_ui_t *gu, prop_t *nav, int all)
   gw->gw_menubar = gu_menubar_add(gw, gw->gw_vbox);
   gtk_widget_show_all(gw->gw_menubar);
  
-  /* Top Toolbar */
-  gw->gw_toolbar = gu_toolbar_add(gw, gw->gw_vbox);
-  if(gw->gw_view_toolbar)
-    gtk_widget_show(gw->gw_toolbar);
-
   /* Notebook (that which contains tabs) */
   gw->gw_notebook = gtk_notebook_new();
   gtk_box_pack_start(GTK_BOX(gw->gw_vbox),
@@ -314,12 +307,17 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
     gt->gt_nav = prop_xref_addref(nav);
   }
 
+  gt->gt_vbox = gtk_vbox_new(FALSE, 1);
+  gtk_widget_show(gt->gt_vbox);
 
   gt->gt_notebook = gtk_notebook_new();
   gtk_widget_show(gt->gt_notebook);
 
   gtk_notebook_set_show_border(GTK_NOTEBOOK(gt->gt_notebook), 0);
   gtk_notebook_set_show_tabs(GTK_NOTEBOOK(gt->gt_notebook), 0);
+  
+  gu_toolbar_add(gt, gt->gt_vbox);
+  gtk_container_add(GTK_CONTAINER(gt->gt_vbox), gt->gt_notebook);
 
   build_tab_header(gt);
 
@@ -333,13 +331,13 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
   gu_unsubscribe_on_destroy(GTK_OBJECT(gt->gt_notebook), s);
 
 
-  // Add to notebook
+  // Add to tab's notebook
 
   idx = gtk_notebook_append_page(GTK_NOTEBOOK(gw->gw_notebook),
-				 gt->gt_notebook, gt->gt_label);
+				 gt->gt_vbox, gt->gt_label);
 
   gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(gw->gw_notebook), 
-				   gt->gt_notebook, 1);
+				   gt->gt_vbox, 1);
 
 
   if(select)
@@ -406,10 +404,11 @@ gu_fullwindow_update(gu_window_t *gw)
   if(gw->gw_menubar != NULL)
     g_object_set(G_OBJECT(gw->gw_menubar), "visible",
 		 req ? 0 : 1, NULL);
-
+#if 0
   if(gw->gw_toolbar != NULL)
     g_object_set(G_OBJECT(gw->gw_toolbar), "visible", 
 		 req ? 0 : gw->gw_view_toolbar, NULL);
+#endif
 
   if(gw->gw_playdeck != NULL)
     g_object_set(G_OBJECT(gw->gw_playdeck), "visible", 
@@ -514,5 +513,3 @@ ui_t gu_ui = {
   .ui_dispatch_event = gu_dispatch_event,
   .ui_flags = UI_SINGLETON,
 };
-
-

@@ -37,6 +37,7 @@ typedef pthread_mutex_t hts_mutex_t;
 #define hts_mutex_lock(m)            pthread_mutex_lock(m)
 #define hts_mutex_unlock(m)          pthread_mutex_unlock(m)
 #define hts_mutex_destroy(m)         pthread_mutex_destroy(m)
+extern void hts_mutex_init_recursive(hts_mutex_t *m);
 
 
 static inline void
@@ -159,6 +160,7 @@ typedef sys_mutex_t hts_mutex_t;
 #ifndef PS3_DEBUG_MUTEX
 
 extern void hts_mutex_init(hts_mutex_t *m);
+extern void hts_mutex_init_recursive(hts_mutex_t *m);
 #define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0)
 #define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
 #define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))

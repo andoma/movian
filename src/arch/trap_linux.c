@@ -282,6 +282,8 @@ trap_init(void)
 
 #else
 
+void trap_init(void);
+
 void
 trap_init(void)
 {

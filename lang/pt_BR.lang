@@ -1,0 +1,754 @@
+language: Brazilian Portuguese
+native: Português Brasileiro
+maintainer: Alexandre Zia <alexandre@zia.com.br>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Configurações de áudio
+
+id: Languages
+msg: Idiomas
+
+id: Settings
+msg: Configurações
+
+id: Subtitle settings
+msg: Configurações de legendas
+
+id: Video settings
+msg: Configurações de vídeo
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Adicionado por: %s
+
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Apagar
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Deslig.
+
+id: On
+msg: Ligado
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Adicionar à lista
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
+id: Avail system RAM: %d kB
+msg: Memória RAM disponível: %d kB
+
+id: Detected CPUs: %d
+msg: CPUs detectados: %d
+
+id: Display info
+msg: Informações de visualização
+
+id: Framerate: %.2f Hz
+msg: Taxa de quadros: %.2f Hz
+
+id: Free chunks: %d
+# Missing translation
+msg: 
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Altura: %d px
+
+id: Memory status
+# Missing translation
+msg: 
+
+id: Renderer: %s
+msg: Renderizador: %s
+
+id: System info
+msg: Informações do sistema
+
+id: Total system RAM: %d kB
+msg: Memória RAM total: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
+
+id: Version: %s
+msg: Versão: %s
+
+id: Width: %d px
+msg: Largura: %d px
+
+id: Windowmanager: %s
+msg: Gerenciador de janelas: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: Sobre
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Início
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Não foi possível abrir o recurso
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Erro ao carregar a página
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Lista de reprodução
+
+#
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Estado da reprodução
+
+id: Unable to start video playback
+msg: Não foi possível iniciar a reprodução do vídeo
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Capítulo %d / %d
+
+id: Title %d / %d
+msg: Título %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Faixa %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: A CPU está muita lenta para decodificar este vídeo
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Password
+msg: Senha
+
+id: Remember me
+msg: Lembrar
+
+id: Username
+msg: Nome do usuário
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Nenhuma media carregada
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Saída de áudio
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU & Visualização
+
+id: GPU Core temperature: %d / %d °
+msg: Temperatura da GPU: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Ajustar a cor do fundo dependendo do horário do dia
+
+id: Alternate list layout
+# Missing translation
+msg: 
+
+id: Audio muted
+msg: Sem áudio
+
+id: Fancy UI animations
+msg: Animações
+
+id: Master volume: %d dB
+msg: Volume principal: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
+
+id: Top bar navigation buttons
+msg: Botões de navegação na barra superior
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Configurações para opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Utilizar opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Memória do sistema baixa (%d kb disponíveis)
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Atraso de sincronização de áudio/vídeo
+
+id: Current output device
+msg: Dispositivo de saída atual
+
+id: Force stereo downmix
+msg: Forçar stereo downmix
+
+id: Phantom LFE
+msg: LFE fantasma
+
+id: Phantom center
+msg: Fantasma central
+
+id: Select audio output device and related configurations
+msg: Selecionar o dispositivo de saída de áudio e configurações relacionadas
+
+id: Small front speakers
+msg: Pequenos alto-falantes frontais
+
+id: Swap LFE+center with surround
+msg: Alterar LFE+centro para surround
+
+id: Switching audio output to %s
+msg: Alterando saída de audio para %s
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: URL de CD inválido
+
+id: Invalid CD track
+msg: Faixa de CD inválida
+
+id: Unable to open CD
+msg: Não foi possível abrir o CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+msg: Erro no DVD, reiniciando disco
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: URL de HTSP inválido
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Busca
+
+id: Search result for: %s
+# Missing translation
+msg: 
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Login automático quando o Showtime iniciar
+
+id: Collaborative
+# Missing translation
+msg: 
+
+id: Enable Spotify
+msg: Ativar Spotify
+
+id: Forget me
+msg: Esquecer
+
+id: Friends
+msg: Amigos
+
+id: High bitrate
+msg: Taxa de bits alta
+
+id: Inbox
+msg: Caixa de entrada
+
+id: New albums on Spotify
+msg: Novos albuns no Spotify
+
+id: New releases
+msg: Novos lançamentos
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
+id: Playlists
+msg: Listas de reprodução
+
+id: Relogin (switch user)
+msg: Relogin (trocar usuário)
+
+id: Search result
+msg: Resultado da busca
+
+id: Spotify friends
+msg: Amigos do Spotify
+
+id: Spotify music service
+msg: Serviço de música do Spotify
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de música. Para usar o Spotify no Showtime você precisa de uma conta Premium Spotify.\nPara mais informações sobre o Spotify, visite http://www.spotify.com/\n\nYou e será requisitado o seu nome de usuário e senha quando tentar acessar  qualquer recurso do Spotify no Showtime.
+
+id: Spotify playlists
+msg: Listas de reprodução do Spotify
+
+id: Spotify: Connection error: %s
+msg: Spotify: Erro de conexão: %s
+
+id: Starred
+msg: Favorito
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Marcadores
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Não foi possível interpretar o conteúdo %s
+
+id: Unable to open file: %s
+msg: Não foi possível abrir arquivo: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Procurar utilizando o locatedb do Unix
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Procurar utilizando o spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Idioma
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Os códigos de idioma devem ser configurados com códigos ISO de 3 caracteres (ex: eng, fra, por)
+
+id: Preferred languages
+msg: Idiomas preferidos
+
+id: Primary audio language code
+msg: Código do idioma de áudio primário
+
+id: Primary subtitle language code
+msg: Código do idioma de legendas primário
+
+id: SRT character set
+msg: Conjunto de caracteres SRT
+
+id: Secondary audio language code
+msg: Código do idioma de áudio secundário
+
+id: Secondary subtitle language code
+msg: Código do idioma de legendas secundário
+
+id: Tertiary audio language code
+msg: Código do idioma de áudio terciário
+
+id: Tertiary subtitle language code
+msg: Código do idioma de legendas terciário
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Ligar/Desligar TV automaticamente
+
+id: Input source
+msg: Fonte de entrada
+
+id: LG Television set
+msg: Aparelho de TV LG
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Configurar o mapeamento do teclado e as teclas do controle remoto
+
+id: Keymapper
+msg: Mapeamento do teclado
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Alinhar as legendas no quadro de vídeo
+
+id: Audio delay
+msg: Atraso de áudio
+
+id: Subtitle delay
+msg: Atraso de legendas
+
+id: Subtitle scaling
+msg: Redimensionamento de legendas
+
+id: Video zoom
+msg: Zoom de vídeo
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Nenhum interpretador para a URL
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: URI inválido
+
+id: Plugin ID %s does not exist
+msg: O plugin com o ID %s não existe
+
+id: Plugin ID %s have no download URL
+msg: O plugin com o ID %s não tem URL de download
+
+id: Unable to load plugin.json: %s
+msg: Não foi possível carregar o plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
+
+id: Unable to request plugin repository: %s
+msg: Não foi possível obter o repositório de plugins: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Modo de espera automático
+
+id: Run control
+msg: Controle de execução
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Ativo
+
+id: Name
+msg: Nome
+
+id: Type
+msg: Tipo
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Aplicações e plugins instalados
+
+id: Discovered media sources
+msg: Fontes de media descobertos
+
+id: Global settings
+msg: Definições globais
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Visualização e interface de usuário
+
+id: Horizontal underscan
+msg: Underscan horizontal
+
+id: Screensaver delay
+msg: Atraso da proteção de tela
+
+id: Userinterface size
+msg: Tamanho do interface do utilizador
+
+id: Vertical underscan
+msg: Underscan vertical
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Modo de tela cheia
+
+id: Map mouse wheel to up/down
+msg: Mapear a roda do mouse para cima/baixo
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Mudar automaticamente para esse modo
+
+id: DVI-Video color range
+msg: Feixa de cor DVI-Video
+
+id: Switch to this mode now
+msg: Mudar para esse modo agora
+
+id: Video modes
+msg: Modos de video
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Ativo na tela de início
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: O dispositivo não foi encontrado
+
+id: Malformed URI after device
+msg: Sintaxe de URI incorreta depois do dispositivo
+
+id: Malformed URI after service
+msg: Sintaxe de URI incorreta depois do serviço
+
+id: Service not found
+msg: O serviço não foi encontrado
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Forçando nível 4.2 para conteúdo em nível %d.%d. Isso pode impedir a execução do vídeo.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Impossível acelerar %s, biblioteca não carregada.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Incapaz de abrir codec Cell. Erro 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Incapaz de abrir codec Cell. Incapaz de alocar %d bytes de memória RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Incapaz de obter informações do codec Cell. Erro 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Tentar sempre selecionar as legendas
+
+id: Auto
+msg: Automático
+
+id: Center
+msg: Centralizado
+
+id: Color
+msg: Cor
+
+id: Count video as played when reaching
+msg: Marcar video como executado ao alcançar
+
+id: Enable VDPAU
+msg: Ativar VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Forçar legendas dentro do quadro de vídeo
+
+id: Generic settings for video subtitles
+msg: Definições gerais para legendas
+
+id: Ignore embedded styling
+msg: Ignorar estilos embutidos
+
+id: Left
+msg: Esquerda
+
+id: No
+msg: Não
+
+id: Outline color
+msg: Cor do contorno
+
+id: Outline size
+msg: Tamanho do contorno
+
+id: Resume video playback
+msg: Resumir execução de vídeo
+
+id: Right
+msg: Direita
+
+id: Shadow color
+msg: Cor da sombra
+
+id: Shadow offset
+msg: Deslocamento da sombra
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
+id: Stretch video to widescreen
+msg: Esticar vídeo para widescreen
+
+id: Subtitle position
+msg: Posicionamento das legendas
+
+id: Subtitle size
+msg: Tamanho das legendas
+
+id: Subtitle styling
+msg: Estilo das legendas
+
+id: Subtitles
+msg: Legendas
+
+id: Video acceleration and display behaviour
+msg: Acelaração de vídeo e comportamento da visualização
+
+id: Video playback
+msg: Reprodução de vídeo
+
+id: Yes
+msg: Sim
+

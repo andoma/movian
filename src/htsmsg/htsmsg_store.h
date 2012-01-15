@@ -19,7 +19,7 @@
 #ifndef HTSMSG_STORE_H__
 #define HTSMSG_STORE_H__
 
-#include <htsmsg/htsmsg.h>
+#include "htsmsg/htsmsg.h"
 #include <stdarg.h>
 
 void htsmsg_store_init(void);

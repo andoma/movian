@@ -25,6 +25,7 @@ struct pixmap;
 struct media_pipe;
 struct navigator;
 struct event;
+struct image_meta;
 
 /**
  * Kept in sync with service_status_t
@@ -44,17 +45,6 @@ typedef enum {
 #define BACKEND_VIDEO_NO_AUDIO    0x2
 #define BACKEND_VIDEO_NO_AUTOSTOP 0x4
 #define BACKEND_VIDEO_NO_FS_SCAN  0x8 // Don't scan FS for subtitles
-
-
-/**
- *
- */
-typedef struct image_meta {
-  int want_thumb;
-  int req_width;
-  int req_height;
-} image_meta_t;
-
 
 /**
  *
@@ -78,15 +68,17 @@ typedef struct backend {
 				 struct media_pipe *mp,
 				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype);
+				 const char *mimetype,
+				 const char *canonical_url);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
 				 const char *mimetype);
 
-  struct pixmap *(*be_imageloader)(const char *url, const image_meta_t *im,
+  struct pixmap *(*be_imageloader)(const char *url, const struct image_meta *im,
 				   const char **vpaths,
-				   char *errbuf, size_t errlen);
+				   char *errbuf, size_t errlen,
+				   int *cache_control);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -113,7 +105,8 @@ int backend_open(struct prop *page, const char *url)
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
 				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype)
+				 const char *mimetype,
+				 const char *canonical_url)
   __attribute__ ((warn_unused_result));
 
 
@@ -123,9 +116,10 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
   __attribute__ ((warn_unused_result));
 
 
-struct pixmap *backend_imageloader(const char *url, const image_meta_t *im,
+struct pixmap *backend_imageloader(rstr_t *url, const struct image_meta *im,
 				   const char **vpaths,
-				   char *errbuf, size_t errlen)
+				   char *errbuf, size_t errlen,
+				   int *cache_control)
      __attribute__ ((warn_unused_result));
 
 backend_t *backend_canhandle(const char *url)
@@ -138,8 +132,7 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-int backend_open_video(prop_t *page, const char *url)
-     __attribute__ ((warn_unused_result));
+int backend_open_video(prop_t *page, const char *url);
 
 int backend_resolve_item(const char *url, prop_t *item)
      __attribute__ ((warn_unused_result));

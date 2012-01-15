@@ -17,6 +17,7 @@
  */
 
 #include <pulse/pulseaudio.h>
+#include <libavutil/avutil.h>
 
 #include "showtime.h"
 #include "audio/audio_defs.h"
@@ -114,9 +115,21 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
     pa_channel_map_init_stereo(&map);
     break;
 
+  case AM_FORMAT_PCM_5DOT0:
+    pam->ss.channels = 5;
+    pa_channel_map_init(&map);
+
+    map.channels = 5;
+    map.map[0] = PA_CHANNEL_POSITION_LEFT;
+    map.map[1] = PA_CHANNEL_POSITION_RIGHT;
+    map.map[2] = PA_CHANNEL_POSITION_CENTER;
+    map.map[3] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[4] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+    break;
+
   case AM_FORMAT_PCM_5DOT1:
     pam->ss.channels = 6;
-    pa_channel_map_init(&map); //, 6, PA_CHANNEL_MAP_WAVEEX);
+    pa_channel_map_init(&map);
 
     map.channels = 6;
     map.map[0] = PA_CHANNEL_POSITION_LEFT;
@@ -139,6 +152,19 @@ stream_setup(pa_audio_mode_t *pam, audio_buf_t *ab)
     map.map[5] = PA_CHANNEL_POSITION_SIDE_RIGHT;
     map.map[6] = PA_CHANNEL_POSITION_REAR_LEFT;
     map.map[7] = PA_CHANNEL_POSITION_REAR_RIGHT;
+    break;
+
+  case AM_FORMAT_PCM_6DOT1:
+    pam->ss.channels = 7;
+    pa_channel_map_init(&map);
+    map.channels = 7;
+    map.map[0] = PA_CHANNEL_POSITION_LEFT;
+    map.map[1] = PA_CHANNEL_POSITION_RIGHT;
+    map.map[2] = PA_CHANNEL_POSITION_CENTER;
+    map.map[3] = PA_CHANNEL_POSITION_LFE;
+    map.map[4] = PA_CHANNEL_POSITION_SIDE_LEFT;
+    map.map[5] = PA_CHANNEL_POSITION_SIDE_RIGHT;
+    map.map[6] = PA_CHANNEL_POSITION_REAR_CENTER;
     break;
 
   default:
@@ -600,6 +626,7 @@ audio_pa_init(void)
 
   pam = calloc(1, sizeof(pa_audio_mode_t));
   am = &pam->am;
+  am->am_multich_controls = 1;
   am->am_formats = 
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | AM_FORMAT_PCM_7DOT1;
   am->am_sample_rates = AM_SR_ANY;

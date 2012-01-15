@@ -523,9 +523,21 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
   vo->vo_alignment = as->as_alignment;
 
   vo->vo_padding_left  =  as->as_margin_left;
-  vo->vo_padding_top    = as->as_margin_vertical;
   vo->vo_padding_right  = as->as_margin_right;
-  vo->vo_padding_bottom = as->as_margin_vertical;
+
+  switch(vo->vo_alignment) {
+  case LAYOUT_ALIGN_TOP:
+  case LAYOUT_ALIGN_TOP_LEFT:
+  case LAYOUT_ALIGN_TOP_RIGHT:
+    vo->vo_padding_top    = as->as_margin_vertical;
+    break;
+
+  case LAYOUT_ALIGN_BOTTOM:
+  case LAYOUT_ALIGN_BOTTOM_LEFT:
+  case LAYOUT_ALIGN_BOTTOM_RIGHT:
+    vo->vo_padding_bottom = as->as_margin_vertical;
+    break;
+  }
 
   vo->vo_canvas_width  = ad->ad_adc.adc_canvas_width ?: -1;
   vo->vo_canvas_height = ad->ad_adc.adc_canvas_height ?: -1;

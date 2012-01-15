@@ -308,14 +308,7 @@ glw_navigate(glw_t *w, event_t *e, int local)
       if(query.orientation == GLW_ORIENTATION_VERTICAL
 	 && query.direction == 1 && w->glw_flags2 & GLW2_BOTTOM_EDGE)
 	break;
-#if 0
-      if(query.orientation == GLW_ORIENTATION_HORIZONTAL
-	 && query.direction == 0 && w->glw_flags2 & GLW2_LEFT_EDGE)
-	break;
-      if(query.orientation == GLW_ORIENTATION_HORIZONTAL
-	 && query.direction == 1 && w->glw_flags2 & GLW2_RIGHT_EDGE)
-	break;
-#endif
+
       if(query.orientation == GLW_ORIENTATION_VERTICAL) {
 
 	int xentries = p->glw_class->gc_get_num_children_x(p);
@@ -400,6 +393,8 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	if(c == NULL)
 	  break;
 	find_candidate(c, &query, escape_score);
+	if(query.best)
+	  break;
       }
       break;
     }

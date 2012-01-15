@@ -22,9 +22,9 @@
 #include <termios.h>
 #include <string.h>
 
-#include <arch/threads.h>
-#include <event.h>
-#include <ui/ui.h>
+#include "arch/threads.h"
+#include "event.h"
+#include "ui/ui.h"
 
 #include "ipc.h"
 

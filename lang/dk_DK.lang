@@ -25,6 +25,39 @@ msg: Videoindstillinger
 id: Added by: %s
 msg: Tilføjet af: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Slet
+
+id: Queue
+msg: Kø
+
+id: Star
+msg: Stjerne
+
+id: Unstar
+msg: Fjern stjerne
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,10 +68,31 @@ id: On
 msg: Tændt
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Tilføj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Tildelt af applikationen: %d Kb
+
+id: Allocated by malloc: %d kB
+msg: Tildelt af malloc: %d Kb
+
 id: Avail system RAM: %d kB
-msg: Tilgængelig system RAM: %d kB
+msg: Tilgængelig system RAM: %d Kb
 
 id: Detected CPUs: %d
 msg: Fundne CPU'er: %d
@@ -47,13 +101,19 @@ id: Display info
 msg: Skærminformation
 
 id: Framerate: %.2f Hz
-msg: Opdateringsfrekvens%.2f Hz
+msg: Opdateringsfrekvens: %.2f Hz
+
+id: Free chunks: %d
+msg: Ledige stykker: %d
 
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Højde: %d px
+
+id: Memory status
+msg: Hukommelsesstatus
 
 id: Renderer: %s
 msg: Renderere: %s
@@ -62,7 +122,10 @@ id: System info
 msg: Systeminformation
 
 id: Total system RAM: %d kB
-msg: Totalt system RAM: %d kB
+msg: Total system RAM: %d kB
+
+id: Unused memory: %d kB
+msg: Ubrugt hukommelse: %d Kb
 
 id: Version: %s
 msg: Version: %s
@@ -71,7 +134,7 @@ id: Width: %d px
 msg: Bredde: %d px
 
 id: Windowmanager: %s
-msg: Vindue manager: %s
+msg: vindue håndtering: %s
 
 #
 # ./glwthemes/mono/pages/about_top.view
@@ -95,24 +158,22 @@ msg: Kan ikke åbne resource
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Side hentningsfejl
+msg: Siden kunne ikke hentes
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Spilkø
+msg: Afspilningskø
 
 #
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Afspilningsstatus
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Kan ikke start videoafspilning
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -133,7 +194,7 @@ msg: Spor %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPUen er for langsom til at afkode denne video
+msg: CPU'en er for langsom til at afkode denne video
 
 #
 # ./glwthemes/mono/popups/auth.view
@@ -148,28 +209,10 @@ id: Username
 msg: Brugernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Ingen media hentet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slet
-
-id: Enqueue
-msg: Tilføj
+msg: Intet medie hentet
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,7 +233,10 @@ msg: GPU Core temperatur: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Juster baggrundsfarven baseret på tid på dagen
+msg: Juster baggrundsfarven afhængig af tid på dagen
+
+id: Alternate list layout
+msg: Alternativ listelayout
 
 id: Audio muted
 msg: Audio mute
@@ -201,8 +247,9 @@ msg: Fancy UI animationer
 id: Master volume: %d dB
 msg: Master volume: %d dB
 
-id: Starwars scroller tilt
-msg: Vis tekster som en Starwars scroller
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
@@ -217,6 +264,12 @@ id: Use opensubtitles.org
 msg: Anvend opensubtitles.org
 
 #
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
+
+#
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
@@ -226,7 +279,7 @@ id: Current output device
 msg: Nuværende lydudgang
 
 id: Force stereo downmix
-msg: Tving stereo nedmix
+msg: Tving stereo downmix
 
 id: Phantom LFE
 msg: Fantom LFE
@@ -243,6 +296,9 @@ msg: Små fronthøjtalere
 id: Swap LFE+center with surround
 msg: Byt LFE+center med surround
 
+id: Switching audio output to %s
+msg: Skifter lydudgang til %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +312,15 @@ id: Unable to open CD
 msg: Kan ikke åbne CD
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD læsefejl, genstarter disk
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,18 +332,23 @@ msg: Ugyldig HTSP URL
 id: Search
 msg: Søg
 
+id: Search result for: %s
+msg: Søgeresultat for: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatisk login når Showtime starter
 
+id: Collaborative
+msg: Samarbejde
+
 id: Enable Spotify
 msg: Anvend Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Glem mig
 
 id: Friends
 msg: Venner
@@ -295,8 +365,14 @@ msg: Nye album på Spotify
 id: New releases
 msg: Nye opdateringer
 
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offline sync i 96 kbps
+
 id: Playlists
-msg: Spillister
+msg: Afspilningslister
 
 id: Relogin (switch user)
 msg: Login på ny (skift bruger)
@@ -305,25 +381,37 @@ id: Search result
 msg: Søgeresultat
 
 id: Spotify friends
-msg: Venner på Spotify
+msg: Spotify venner
 
 id: Spotify music service
 msg: Spotify musiktjeneste
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify tilbyder lovlig og fri tilgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nDu vil blive bedt om dit Spotify brugernavn og kodeord når du anvender nogen af Spotify funktionerne i Showtime.
+msg: Spotify tilbyder lovlig og fri adgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nFørste gang du bruger Spotify i Showtime, vil du blive bedt om at indtate dit Spotify brugernavn og kodeord.
 
 id: Spotify playlists
-msg: Spotyfy spillister
+msg: Spotyfy Afspilningslister
+
+id: Spotify: Connection error: %s
+msg: Spotify: Forbindelsesfejl: %s
 
 id: Starred
-msg: Stjernemarkeret
+msg: Medvirkende
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
 msg: Bogmærker
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan ikke håndtere indholdstype %d
+
+id: Unable to open file: %s
+msg: Kan ikke åbne filen: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -338,13 +426,19 @@ id: Search using spotlight
 msg: Søg via spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Ekstern fil
+
+#
 # ./src/i18n.c
 #
 id: Language
 msg: Sprog
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, den
+msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, dnk
 
 id: Preferred languages
 msg: Fortrukne sprog
@@ -377,7 +471,7 @@ id: Automatic TV power on/off
 msg: Automatisk tænd/sluk af TV
 
 id: Input source
-msg: Indputskilde
+msg: Kilde til indput
 
 id: LG Television set
 msg: LG TV
@@ -386,7 +480,7 @@ msg: LG TV
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Indstillinger af tastatur og fjercontroller knapper
+msg: Indstillinger af tastatur og knapper til fjerbetjening
 
 id: Keymapper
 msg: Tastatur mapning
@@ -395,13 +489,13 @@ msg: Tastatur mapning
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Juster undertekster til videobilled
+msg: Juster undertekster efter videobillede
 
 id: Audio delay
-msg: Lyddelay
+msg: Lyd forsinkelse
 
 id: Subtitle delay
-msg: Underteksterdelay
+msg: Undertekster forsinkelse
 
 id: Subtitle scaling
 msg: Skalering af undertekster
@@ -410,22 +504,31 @@ id: Video zoom
 msg: Video zoom
 
 #
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Indlejret i fil
+
+id: Track %d
+msg: Spor %d
+
+#
 # ./src/navigator.c
 #
 id: No handler for URL
-msg: Ingen hanterare för URLen
+msg: Ingen håndtering af URL-adressen
 
 #
 # ./src/plugins.c
 #
 id: Invalud URI
-msg: Felaktig URI
+msg: Forkert URI
 
 id: Plugin ID %s does not exist
 msg: Plugin ID %s findes ikke
 
 id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen download URL
+msg: Plugin ID %s har ingen download URL-adresse
 
 id: Unable to load plugin.json: %s
 msg: Kan ikke hente plugin.json: %s
@@ -443,7 +546,7 @@ id: Automatic standby
 msg: Automatisk standby
 
 id: Run control
-msg: Kørekontrol
+msg: Kør kontrol
 
 #
 # ./src/sd/sd.c
@@ -464,7 +567,7 @@ id: Applications and installed plugins
 msg: Aplikationer og installerede plugins
 
 id: Discovered media sources
-msg: Fundet media kilder
+msg: Mediekilder fundet
 
 id: Global settings
 msg: Globale indstillinger
@@ -476,16 +579,16 @@ id: Display and user interface
 msg: Skærm og brugerinterface
 
 id: Horizontal underscan
-msg: Horisontaæ underscanning
+msg: Vandret underscanning
 
 id: Screensaver delay
-msg: Screensaver forsinkelse
+msg: Pauseskærm forsinkelse
 
 id: Userinterface size
 msg: Brugerinterface størrelse
 
 id: Vertical underscan
-msg: Vertikal underscanning
+msg: Lodret underscanning
 
 #
 # ./src/ui/glw/glw_x11.c
@@ -495,6 +598,21 @@ msg: Fuldskærmstilstand
 
 id: Map mouse wheel to up/down
 msg: Tildel musens scrollhjul til op/ned
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Auto-skift til denne tilstand
+
+id: DVI-Video color range
+msg: DVI-video farveudvalg 
+
+id: Switch to this mode now
+msg: Skift til denne tilstand nu
+
+id: Video modes
+msg: Videotilstande
 
 #
 # ./src/upnp/upnp.c
@@ -509,13 +627,31 @@ id: Device not found
 msg: Enhed findes ikke
 
 id: Malformed URI after device
-msg: Fejlagtig URI efter enhet
+msg: Fejlagtig URI efter enhed
 
 id: Malformed URI after service
 msg: Fejlagtig URI efter tjeneste
 
 id: Service not found
 msg: Tjenesten findes ikke
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Kan ikke accelerere %s, bibliotek ikke hentet.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Kan ikke åbne Cell codec. Fejl 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Kan ikke åbne Cell codec. Kan ikke accelerere %d bytes af RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -532,6 +668,9 @@ msg: Centreret
 id: Color
 msg: Farve
 
+id: Count video as played when reaching
+msg: Marker video som vist når den når
+
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
@@ -547,20 +686,30 @@ msg: Ignorer indlejret stil
 id: Left
 msg: Venstre
 
+id: No
+msg: Nej
+
 id: Outline color
-msg: Farve på konturer
+msg: Farve på kontur
 
 id: Outline size
-msg: Størrelse på konturer
+msg: Størrelse på kontur
+
+id: Resume video playback
+msg: Fortsæt video afspilning
 
 id: Right
 msg: Højre
 
 id: Shadow color
-msg: Farve på skygger
+msg: Farve på skygge
 
 id: Shadow offset
-msg: Skygge offset
+msg: Skyggens forskydning
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
@@ -581,5 +730,8 @@ id: Video acceleration and display behaviour
 msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
-msg: Videoafspilling
+msg: Videoafspilning
+
+id: Yes
+msg: Ja
 

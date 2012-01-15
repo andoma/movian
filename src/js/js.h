@@ -6,11 +6,15 @@
 #include "prop/prop.h"
 #include "ext/spidermonkey/jsapi.h"
 
+extern prop_courier_t *js_global_pc;
+extern JSContext *js_global_cx;
+
 LIST_HEAD(js_route_list, js_route);
 LIST_HEAD(js_searcher_list, js_searcher);
 LIST_HEAD(js_http_auth_list, js_http_auth);
 LIST_HEAD(js_plugin_list, js_plugin);
 LIST_HEAD(js_service_list, js_service);
+LIST_HEAD(js_setting_group_list, js_setting_group);
 
 /**
  *
@@ -28,6 +32,7 @@ typedef struct js_plugin {
   struct js_searcher_list jsp_searchers;
   struct js_http_auth_list jsp_http_auths;
   struct js_service_list jsp_services;
+  struct js_setting_group_list jsp_setting_groups;
 
   struct fa_handle *jsp_ref;
 
@@ -46,6 +51,8 @@ typedef struct js_context_private {
 #define JCP_DISABLE_AUTH 0x1
 
 } js_context_private_t;
+
+void js_load(const char *url);
 
 JSContext *js_newctx(JSErrorReporter er);
 
@@ -97,6 +104,8 @@ void js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value);
 void js_page_flush_from_plugin(JSContext *cx, js_plugin_t *jp);
 
 void js_io_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+
+void js_setting_group_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
 void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 

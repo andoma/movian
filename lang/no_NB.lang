@@ -25,6 +25,42 @@ msg: Videoinnstillinger
 id: Added by: %s
 msg: Lagt til av: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Slett
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: På
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Kø
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Tilgjengelig systemminne: %d kB
 
@@ -49,11 +108,19 @@ msg: Visningsinformasjon
 id: Framerate: %.2f Hz
 msg: Oppdateringsfrekvens %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Høyde: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -63,6 +130,10 @@ msg: Systeminformasjon
 
 id: Total system RAM: %d kB
 msg: Totalt systemminne: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versjon: %s
@@ -148,28 +219,10 @@ id: Username
 msg: Brukernavn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Ingen media lastet
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Slett
-
-id: Enqueue
-msg: Kø
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +245,10 @@ msg: GPU kjernetemperatur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Juster bakgrunnsfarge basert på tid på døgnet
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Lyd dempet
 
@@ -201,8 +258,9 @@ msg: Heftige animasjoner i brukergrensesnittet
 id: Master volume: %d dB
 msg: Hovedvolum: %d dB
 
-id: Starwars scroller tilt
-msg: Vis brukergrensesnittet som i Starwars åpningsscene
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigasjonknapper på toppen av skjermen
@@ -215,6 +273,13 @@ msg: Innstillinger for opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Bruk opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -243,6 +308,10 @@ msg: Små fronthøyttalere
 id: Swap LFE+center with surround
 msg: Bytt LFE+senter med surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +325,17 @@ id: Unable to open CD
 msg: Kan ikke åpne CD
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,11 +347,19 @@ msg: Ugyldig HTSP URL
 id: Search
 msg: Søk
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Logg automatisk inn når Showtime starter
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Slå på Spotify
@@ -295,6 +383,14 @@ msg: Nye album på Spotify
 id: New releases
 msg: Nye plateslipp
 
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
 id: Playlists
 msg: Spillelister
 
@@ -316,6 +412,10 @@ msg: Spotify tilbyr lovlig og fri tilgang til et stort bibliotek av musikk. For 
 id: Spotify playlists
 msg: Spotyfylister
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Stjernemerket
 
@@ -324,6 +424,17 @@ msg: Stjernemerket
 #
 id: Bookmarks
 msg: Bokmerker
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -336,6 +447,13 @@ msg: Søk via Unix locatedb
 #
 id: Search using spotlight
 msg: Søk via spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -408,6 +526,17 @@ msg: Størrelse på undertekster
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -497,6 +626,25 @@ id: Map mouse wheel to up/down
 msg: Tolk musens skrollhjul som opp- og ned-knapper
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -518,6 +666,29 @@ id: Service not found
 msg: Kan ikke finne tjenesten
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -531,6 +702,10 @@ msg: Sentrert
 
 id: Color
 msg: Farge
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: Aktiver VDPAU
@@ -547,11 +722,19 @@ msg: Overse innebygde stilkoder
 id: Left
 msg: Venstre
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Farge på konturer
 
 id: Outline size
 msg: Størrelse på konturer
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Høyre
@@ -561,6 +744,10 @@ msg: Farge på skygger
 
 id: Shadow offset
 msg: Skyggeoffset
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Strekk ut video horisontalt 
@@ -582,4 +769,8 @@ msg: Videoakselerasjon og innstillinger for visning av video
 
 id: Video playback
 msg: Videoavspiling
+
+id: Yes
+# Missing translation
+msg: 
 

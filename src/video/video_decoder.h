@@ -19,6 +19,8 @@
 #ifndef VIDEO_DECODER_H
 #define VIDEO_DECODER_H
 
+#include <libavcodec/avcodec.h>
+
 #include "media.h"
 #include "misc/avgtime.h"
 #include "misc/kalman.h"
@@ -83,7 +85,6 @@ typedef struct video_decoder {
 
   media_pipe_t *vd_mp;
 
-  int vd_decoder_running;
   int vd_do_flush;
   int vd_skip;
 
@@ -170,10 +171,9 @@ void video_decoder_stop(video_decoder_t *gv);
 void video_decoder_destroy(video_decoder_t *gv);
 
 void video_deliver_frame(video_decoder_t *vd,
-			 media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+			 media_pipe_t *mp, media_queue_t *mq,
 			 AVCodecContext *ctx, AVFrame *frame,
-			 int64_t tim, int64_t pts, int64_t dts,
-			 int duration, int epoch, int decode_time);
+			 const media_buf_t *mb, int decode_time);
 
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),

@@ -1,4 +1,4 @@
-#import "skin://settings.skin"
+#import "theme://settings/settings-common.view"
 
 widget(container_x, {
 
@@ -13,6 +13,7 @@ widget(container_x, {
       .caption = $self.model.metadata.title;
       .sizeScale = 1.2;
       .color = select($view.highlight, 1, 0.4);
+      .shadow = true;
     });
   
     widget(label, {
@@ -20,6 +21,7 @@ widget(container_x, {
       .sizeScale = 0.8;
       .color = select($view.highlight, 1, 0.4);
       .alpha = select($view.highlight, 1, 0.5);
+      .shadow = true;
     });
   });
     
@@ -46,6 +48,7 @@ widget(container_x, {
 	    .align = left;
 	    .caption = $self.title;
 	    .sizeScale = 1.2;
+	    .shadow = true;
 	  });
 	});
       });

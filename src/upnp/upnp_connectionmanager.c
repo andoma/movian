@@ -30,7 +30,8 @@
  *
  */
 static htsmsg_t *
-cm_GetProtocolInfo(http_connection_t *hc, htsmsg_t *args)
+cm_GetProtocolInfo(http_connection_t *hc, htsmsg_t *args,
+		   const char *myhost, int myport)
 {
   htsmsg_t *out = htsmsg_create_map();
   htsmsg_add_str(out, "Source", "");
@@ -42,10 +43,64 @@ cm_GetProtocolInfo(http_connection_t *hc, htsmsg_t *args)
 /**
  *
  */
+static htsmsg_t *
+cm_GetCurrentConnectionInfo(http_connection_t *hc, htsmsg_t *args,
+			    const char *myhost, int myport)
+{
+  htsmsg_t *out = htsmsg_create_map();
+  htsmsg_add_u32(out, "RcsID", 0);
+  htsmsg_add_u32(out, "AVTransportID", 0);
+  htsmsg_add_str(out, "ProtocolInfo", "");
+  htsmsg_add_str(out, "PeerConnectionManager", "");
+  htsmsg_add_u32(out, "PeerConnectionID", -1);
+  htsmsg_add_str(out, "Direction", "Input");
+  htsmsg_add_str(out, "Status", "OK");
+  return out;
+}
+
+
+
+/**
+ *
+ */
+static htsmsg_t *
+cm_GetCurrentConnectionIDs(http_connection_t *hc, htsmsg_t *args,
+			   const char *myhost, int myport)
+{
+  const char *uri = htsmsg_get_str(args, "ConnectionID");
+  if(uri == NULL || strcmp(uri, "0"))
+    return UPNP_CONTROL_INVALID_ARGS;
+  
+  htsmsg_t *out = htsmsg_create_map();
+  htsmsg_add_str(out, "ConnectionIDs", "0");
+  return out;
+}
+
+
+/**
+ *
+ */
+static htsmsg_t *
+cm_generate_props(upnp_local_service_t *uls, const char *myhost, int myport)
+{
+  htsmsg_t *r = htsmsg_create_map();
+  htsmsg_add_str(r, "SourceProtocolInfo", "");
+  htsmsg_add_str(r, "SinkProtocolInfo", "http-get:*:*:*");
+  htsmsg_add_str(r, "CurrentConnectionIDs", "0");
+
+  return r;
+}
+
+/**
+ *
+ */
 upnp_local_service_t upnp_ConnectionManager_2 = {
   .uls_name = "ConnectionManager",
   .uls_version = 2,
+  .uls_generate_props = cm_generate_props,
   .uls_methods = {
     { "GetProtocolInfo", cm_GetProtocolInfo },
+    { "GetCurrentConnectionInfo", cm_GetCurrentConnectionInfo },
+    { "GetCurrentConnectionIDs", cm_GetCurrentConnectionIDs },
   }
 };

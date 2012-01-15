@@ -27,6 +27,8 @@
 
 #include <netinet/in.h>
 
+#define hsprintf(fmt...) // printf(fmt)
+
 #if ENABLE_POSIX_NETWORKING
 #include <netinet/tcp.h>  // for TCP_ defines
 #endif
@@ -111,6 +113,7 @@ typedef struct http_path {
   void *hp_opaque;
   http_callback_t *hp_callback;
   int hp_len;
+  int hp_leaf;
 } http_path_t;
 
 
@@ -148,7 +151,8 @@ http_get_post_data(http_connection_t *hc, size_t *sizep, int steal)
  * Add a callback for a given "virtual path" on our HTTP server
  */
 void *
-http_path_add(const char *path, void *opaque, http_callback_t *callback)
+http_path_add(const char *path, void *opaque, http_callback_t *callback,
+	      int leaf)
 {
   http_path_t *hp = malloc(sizeof(http_path_t));
 
@@ -156,6 +160,7 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback)
   hp->hp_path = strdup(path);
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
+  hp->hp_leaf = leaf;
   LIST_INSERT_HEAD(&http_paths, hp, hp_link);
   return hp;
 }
@@ -231,21 +236,12 @@ http_rc2str(int code)
   case HTTP_STATUS_METHOD_NOT_ALLOWED: return "Method not allowed";
   case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition failed";
   case HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE: return "Unsupported media type";
+  case HTTP_NOT_IMPLEMENTED: return "Not implemented";
   default:
     return "Unknown returncode";
     break;
   }
 }
-
-static const char *httpdays[7] = {
-  "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
-};
-
-static const char *httpmonths[12] = {
-  "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov",
-  "Dec"
-};
-
 
 /**
  * Transmit a HTTP reply
@@ -255,11 +251,12 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
 		 int contentlen, const char *encoding, const char *location, 
 		 int maxage, const char *range)
 {
-  struct tm tm0, *tm;
   htsbuf_queue_t hdrs;
   time_t t;
   http_header_t *hh;
+  char date[64];
 
+  time(&t);
 
   htsbuf_queue_init(&hdrs, 0);
 
@@ -270,26 +267,19 @@ http_send_header(http_connection_t *hc, int rc, const char *content,
   htsbuf_qprintf(&hdrs, "Server: HTS/Showtime %s\r\n",
 		 htsversion_full);
 
+  htsbuf_qprintf(&hdrs, "Date: %s\r\n", http_asctime(t, date, sizeof(date)));
+
   if(maxage == 0) {
     htsbuf_qprintf(&hdrs, "Cache-Control: no-cache\r\n");
   } else {
-    time(&t);
 
-    tm = gmtime_r(&t, &tm0);
-    htsbuf_qprintf(&hdrs, 
-		   "Last-Modified: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
-		   httpmonths[tm->tm_mon], tm->tm_mday,
-		   tm->tm_hour, tm->tm_min, tm->tm_sec);
+    htsbuf_qprintf(&hdrs,  "Last-Modified: %s\r\n",
+		   http_asctime(t, date, sizeof(date)));
 
     t += maxage;
 
-    tm = gmtime_r(&t, &tm0);
-    htsbuf_qprintf(&hdrs, 
-		   "Expires: %s, %02d %s %d %02d:%02d:%02d GMT\r\n",
-		   httpdays[tm->tm_wday],	tm->tm_year + 1900,
-		   httpmonths[tm->tm_mon], tm->tm_mday,
-		   tm->tm_hour, tm->tm_min, tm->tm_sec);
+    htsbuf_qprintf(&hdrs, "Expires: %s\r\n",
+		   http_asctime(t, date, sizeof(date)));
       
     htsbuf_qprintf(&hdrs, "Cache-Control: max-age=%d\r\n", maxage);
   }
@@ -449,7 +439,10 @@ static void
 http_exec(http_connection_t *hc, http_path_t *hp, char *remain,
 	  http_cmd_t method)
 {
+  hsprintf("%p: Dispatching [%s] on thread 0x%lx\n",
+	 hc, hp->hp_path, pthread_self());
   int err = hp->hp_callback(hc, remain, hp->hp_opaque, method);
+  hsprintf("%p: Returned from fn, err = %d\n", hc, err);
 
   if(err == HTTP_STATUS_OK) {
     htsbuf_queue_t out;
@@ -615,7 +608,7 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   char *args;
 
   hp = http_resolve(hc, &remain, &args);
-  if(hp == NULL) {
+  if(hp == NULL || (hp->hp_leaf && remain != NULL)) {
     http_error(hc, HTTP_STATUS_NOT_FOUND, NULL);
     return 0;
   }
@@ -690,7 +683,6 @@ http_cmd_post(http_connection_t *hc)
 {
   const char *v;
 
-  /* Set keep-alive status */
   v = http_header_get(&hc->hc_request_headers, "Content-Length");
   if(v == NULL) {
     /* No content length in POST, make us disconnect */
@@ -710,6 +702,14 @@ http_cmd_post(http_connection_t *hc)
   hc->hc_post_data = calloc(1, hc->hc_post_len + 1);
   hc->hc_post_data[hc->hc_post_len] = 0;
   hc->hc_post_offset = 0;
+
+  v = http_header_get(&hc->hc_request_headers, "Expect");
+  if(v != NULL) {
+    if(!strcasecmp(v, "100-continue")) {
+      htsbuf_qprintf(&hc->hc_output, "HTTP/1.1 100 Continue\r\n\r\n");
+    }
+  }
+
 
   hc->hc_state = HCS_POSTDATA;
   return http_read_post(hc);
@@ -740,6 +740,10 @@ http_handle_request(http_connection_t *hc)
   hc->hc_no_output = hc->hc_cmd == HTTP_CMD_HEAD;
 
   switch(hc->hc_cmd) {
+  default:
+    http_error(hc, HTTP_NOT_IMPLEMENTED, NULL);
+    return 0;
+    
   case HTTP_CMD_POST:
     return http_cmd_post(hc);
 
@@ -802,11 +806,12 @@ http_handle_input(http_connection_t *hc)
       if(r == 0)
 	return 0;
 
+      hsprintf("%p: %s\n", hc, buf);
+
       if((n = http_tokenize(buf, argv, 3, -1)) != 3)
 	return 1;
 
-      if((hc->hc_cmd = str2val(argv[0], HTTP_cmdtab)) == -1)
-	return 1;
+      hc->hc_cmd = str2val(argv[0], HTTP_cmdtab);
 
       mystrset(&hc->hc_url, argv[1]);
       mystrset(&hc->hc_url_orig, argv[1]);
@@ -828,20 +833,29 @@ http_handle_input(http_connection_t *hc)
       if(r == 0)
 	return 0;
 
-      if(buf[0] == 0) {
+      hsprintf("%p: %s\n", hc, buf);
+
+      if(buf[0] == 32 || buf[0] == '\t') {
+	// LWS
+
+	http_header_add_lws(&hc->hc_request_headers, buf+1);
+
+      } else if(buf[0] == 0) {
 	
 	if(http_handle_request(hc))
 	  return 1;
+
+	if(TAILQ_FIRST(&hc->hc_output.hq_q) == NULL && !hc->hc_keep_alive)
+	  return 1;
+
       } else {
 
-	if((n = http_tokenize(buf, argv, 2, -1)) < 2)
+	if((c = strchr(buf, ':')) == NULL)
 	  return 1;
-
-	if((c = strrchr(argv[0], ':')) == NULL)
-	  return 1;
-
-	*c = 0;
-	http_header_add(&hc->hc_request_headers, argv[0], argv[1]);
+	*c++ = 0;
+	while(*c == 32)
+	  c++;
+	http_header_add(&hc->hc_request_headers, buf, c);
       }
       break;
 
@@ -889,7 +903,7 @@ http_write(http_connection_t *hc)
     free(hd);
   }
   hc->hc_events &= ~POLLOUT;
-  return 0;
+  return !hc->hc_keep_alive;
 }
 
 
@@ -927,6 +941,7 @@ http_io(http_connection_t *hc, int revents)
 static void
 http_close(http_server_t *hs, http_connection_t *hc)
 {
+  hsprintf("%p: ----------------- CLOSED CONNECTION\n", hc);
   htsbuf_queue_flush(&hc->hc_input);
   htsbuf_queue_flush(&hc->hc_output);
   http_headers_free(&hc->hc_req_args);
@@ -1024,6 +1039,7 @@ http_accept(http_server_t *hs)
   } else {
     hc->hc_myaddr[0] = 0;
   }
+  hsprintf("%p: ----------------- NEW CONNECTION\n", hc);
 }
 
 

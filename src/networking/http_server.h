@@ -32,7 +32,8 @@ typedef int (http_callback_t)(http_connection_t *hc,
 
 void http_server_init(void);
 
-void *http_path_add(const char *path, void *opaque, http_callback_t *callback);
+void *http_path_add(const char *path, void *opaque, http_callback_t *callback,
+		    int leaf);
 
 int http_send_reply(http_connection_t *hc, int rc, const char *content, 
 		    const char *encoding, const char *location, int maxage,

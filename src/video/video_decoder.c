@@ -33,7 +33,7 @@
 #include "media.h"
 #include "ext_subtitles.h"
 #include "video_overlay.h"
-
+#include "misc/sha.h"
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -48,42 +48,22 @@ vd_init_timings(video_decoder_t *vd)
 /**
  *
  */
-typedef struct {
-  int64_t pts;
-  int64_t dts;
-  int epoch;
-  int duration;
-  int64_t time;
-} frame_meta_t;
-
-
-/**
- *
- */
 static int
 vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
-  media_buf_t *mb = c->opaque;
   int ret = avcodec_default_get_buffer(c, pic);
-  frame_meta_t *fm = malloc(sizeof(frame_meta_t));
-
-  fm->pts = mb->mb_pts;
-  fm->dts = mb->mb_dts;
-  fm->time = mb->mb_time;
-  fm->duration = mb->mb_duration;
-  fm->epoch = mb->mb_epoch;
-  pic->opaque = fm;
-
+  media_buf_t *mb = malloc(sizeof(media_buf_t));
+  memcpy(mb, c->opaque, sizeof(media_buf_t));
+  pic->opaque = mb;
   return ret;
 }
+
 
 static void
 vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
 {
-  frame_meta_t *fm = pic->opaque;
-
-  if(fm != NULL)
-    free(fm);
+  if(pic->opaque != NULL)
+    free(pic->opaque);
 
   avcodec_default_release_buffer(c, pic);
 }
@@ -99,7 +79,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx = cw->codec_ctx;
   AVFrame *frame = vd->vd_frame;
-  frame_meta_t *fm;
   int t;
   
   if(vd->vd_do_flush) {
@@ -143,16 +122,13 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   if(mp->mp_stats)
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
 
+  mb = frame->opaque;
+
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;
 
   vd->vd_skip = 0;
-
-  fm = frame->opaque;
-  assert(fm != NULL);
-
-  video_deliver_frame(vd, mp, mq, mb, ctx, frame, fm->time, fm->pts, fm->dts,
-		      fm->duration, fm->epoch, t);
+  video_deliver_frame(vd, mp, mq, ctx, frame, mb, t);
 }
 
 
@@ -161,16 +137,15 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
  */
 void
 video_deliver_frame(video_decoder_t *vd,
-		    media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+		    media_pipe_t *mp, media_queue_t *mq,
 		    AVCodecContext *ctx, AVFrame *frame,
-		    int64_t tim, int64_t pts, int64_t dts, int duration,
-		    int epoch, int decode_time)
+		    const media_buf_t *mb, int decode_time)
 {
   event_ts_t *ets;
   frame_info_t fi;
 
-  if(tim != AV_NOPTS_VALUE)
-    mp_set_current_time(mp, tim);
+  if(mb->mb_time != AV_NOPTS_VALUE)
+    mp_set_current_time(mp, mb->mb_time);
 
   /* Compute aspect ratio */
   switch(mb->mb_aspect_override) {
@@ -195,11 +170,15 @@ video_deliver_frame(video_decoder_t *vd,
     break;
   }
 
+  int64_t pts = mb->mb_pts;
+
   /* Compute duration and PTS of frame */
-  if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
+  if(pts == AV_NOPTS_VALUE && mb->mb_dts != AV_NOPTS_VALUE &&
      (ctx->has_b_frames == 0 || frame->pict_type == FF_B_TYPE)) {
-    pts = dts;
+    pts = mb->mb_dts;
   }
+
+  int duration = mb->mb_duration;
 
   if(!vd_valid_duration(duration)) {
     /* duration is zero or very invalid, use duration from last output */
@@ -240,15 +219,16 @@ video_deliver_frame(video_decoder_t *vd,
 
   prop_set_int(mq->mq_prop_too_slow, decode_time > duration);
 
-
   if(pts != AV_NOPTS_VALUE) {
     vd->vd_nextpts = pts + duration;
 
-    ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->pts = pts;
-    ets->dts = dts;
-    mp_enqueue_event(mp, &ets->h);
-    event_release(&ets->h);
+    if(mb->mb_send_pts) {
+      ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = pts;
+      mp_enqueue_event(mp, &ets->h);
+      event_release(&ets->h);
+    }
+
   } else {
     vd->vd_nextpts = AV_NOPTS_VALUE;
   }
@@ -260,7 +240,7 @@ video_deliver_frame(video_decoder_t *vd,
   fi.height = ctx->height;
   fi.pix_fmt = ctx->pix_fmt;
   fi.pts = pts;
-  fi.epoch = epoch;
+  fi.epoch = mb->mb_epoch;
   fi.duration = duration;
 
   fi.interlaced = !!vd->vd_interlaced;
@@ -281,12 +261,12 @@ video_deliver_frame(video_decoder_t *vd,
  */
 static void
 update_vbitrate(media_pipe_t *mp, media_queue_t *mq, 
-		media_buf_t *mb, video_decoder_t *vd)
+		int size, video_decoder_t *vd)
 {
   int i;
   int64_t sum;
 
-  vd->vd_frame_size[vd->vd_frame_size_ptr] = mb->mb_size;
+  vd->vd_frame_size[vd->vd_frame_size_ptr] = size;
   vd->vd_frame_size_ptr = (vd->vd_frame_size_ptr + 1) & VD_FRAME_SIZE_MASK;
 
   if(vd->vd_estimated_duration == 0 || !mp->mp_stats)
@@ -314,6 +294,7 @@ vd_thread(void *aux)
   int run = 1;
   int reqsize = -1;
   int reinit = 0;
+  int size;
   vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -332,6 +313,7 @@ vd_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mq->mq_freeze_tail = 1;
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
@@ -371,12 +353,14 @@ vd_thread(void *aux)
       if(mb->mb_skip == 2)
 	vd->vd_skip = 1;
 
+      size = mb->mb_size;
+
       if(mc->decode)
 	mc->decode(mc, vd, mq, mb, reqsize);
       else
 	vd_decode_video(vd, mq, mb);
 
-      update_vbitrate(mp, mq, mb, vd);
+      update_vbitrate(mp, mq, size, vd);
       reqsize = -1;
       break;
 
@@ -432,6 +416,7 @@ vd_thread(void *aux)
     }
 
     hts_mutex_lock(&mp->mp_mutex);
+    mq->mq_freeze_tail = 0;
     media_buf_free_locked(mp, mb);
   }
 
@@ -462,7 +447,6 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
 
   mp_ref_inc(mp);
   vd->vd_mp = mp;
-  vd->vd_decoder_running = 1;
 
   vd_init_timings(vd);
 
@@ -491,7 +475,6 @@ video_decoder_stop(video_decoder_t *vd)
 
   mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_EXIT);
 
-  vd->vd_decoder_running = 0;
   hts_thread_join(&vd->vd_decoder_thread);
   mp_ref_dec(vd->vd_mp);
   vd->vd_mp = NULL;

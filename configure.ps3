@@ -14,14 +14,17 @@
 PLATFORM="ps3"
 OSENV="ps3"
 DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="ps3"
 
 source support/configure.inc
 GLW_DEFAULT_THEME="mono"
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
-FFMPEG="${TOPDIR}/ps3support/ffmpeg"
-
 enable psl1ght
 enable embedded_resources
+
+LIBAV_CFLAGS="-mminimal-toc -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
+
+LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none"
 
 show_help(){
   common_help
@@ -56,25 +59,28 @@ enable librtmp
 enable httpserver
 enable dvd
 enable ps3_vdec
+enable sqlite_vfs
+enable sqlite_locking
+
+libav_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${TOOLCHAIN}gcc
 STRIP=${TOOLCHAIN}strip
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
-CFLAGS_cfg += -I${FFMPEG}/include
 CFLAGS_cfg += -DPATH_MAX=512 -DPS3
 CFLAGS_cfg += -I${PSL1GHT}/target/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include
 CFLAGS_cfg += -I${PS3DEV}/host/ppu/include/freetype2
 BUNDLES+=src/ui/glw/rsx
+SQLITE_PLATFORM_DEFINES += -DSQLITE_OS_OTHER=1
 EOF
 
 #
 # 
 #
 cat >> ${CONFIG_MAK} <<EOF
-LDFLAGS_cfg  += -lvdec
-LDFLAGS_cfg  += -L${FFMPEG}/lib -lswscale -lavformat -lavcodec -lavutil
+LDFLAGS_cfg  += -lvdec -lrtc
 LDFLAGS_cfg  += -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib
 LDFLAGS_cfg  += -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lnetctl -lsysmodule
 LDFLAGS_cfg  += -lfreetype

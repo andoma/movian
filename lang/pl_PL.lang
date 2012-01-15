@@ -1,6 +1,6 @@
 ﻿language: Polish
 native: Polski
-maintainer: sebf <sebf@ps3-hack.com.pl>
+maintainer: Cichy <ml.cichy@gmail.com>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -25,18 +25,72 @@ msg: Ustawienia wideo
 id: Added by: %s
 msg: Dodane przez: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Usuń
+
+id: Queue
+msg: Kolejka
+
+id: Star
+msg: Dodaj gwiazdkę
+
+id: Unstar
+msg: Usuń gwiazdkę
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Wyłącz
+msg: Wyłączony
 
 id: On
-msg: Włącz
+msg: Włączony
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Kolejkuj
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Anuluj
+
+id: OK
+msg: OK
 
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Zajęte przez aplikację: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Zajęte przez funkcję malloc: %d kB
+
 id: Avail system RAM: %d kB
 msg: Dostępna pamięć RAM: %d kB
 
@@ -49,20 +103,29 @@ msg: Informacje
 id: Framerate: %.2f Hz
 msg: Częstotliwość wyświetlanego obrazu %.2f Hz
 
+id: Free chunks: %d
+msg: Wolne segmenty: %d
+
 id: GPU: %s
 msg: Procesor graficzny: %s
 
 id: Height: %d px
 msg: Wysokość: %d px
 
+id: Memory status
+msg: Status pamięci
+
 id: Renderer: %s
-msg: Renering: %s
+msg: Rendering: %s
 
 id: System info
 msg: Informacje o systemie
 
 id: Total system RAM: %d kB
-msg: Całkowita dostępna pamieć RAM: %d kB
+msg: Całkowita dostępna pamięć RAM: %d kB
+
+id: Unused memory: %d kB
+msg: Wolna pamięć: %d kB
 
 id: Version: %s
 msg: Wersja: %s
@@ -83,7 +146,7 @@ msg: O programie
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Home
+msg: Strona główna
 
 #
 # ./glwthemes/mono/pages/openerror.view
@@ -107,12 +170,10 @@ msg: Lista odtwarzania
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Status odtwarzania
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Nie można odtworzyć pliku wideo
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -148,28 +209,10 @@ id: Username
 msg: Nazwa użytkownika
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Anuluj
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Brak danych
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Usuń
-
-id: Enqueue
-msg: Kolejka
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,17 +235,21 @@ msg: Temperatura procesora graficznego: %d / %d °
 id: Adjust background tint based on daytime
 msg: Ustawienie podświetlenia w zależności od pory dnia
 
+id: Alternate list layout
+msg: Alternatywny wygląd listy
+
 id: Audio muted
-msg: Wycisz
+msg: Wyciszono
 
 id: Fancy UI animations
-msg: Animacja interfejsu
+msg: Animacje interfejsu
 
 id: Master volume: %d dB
 msg: Regulacja głośności: %d dB
 
-id: Starwars scroller tilt
-msg: Napisy wyświetlane ala Gwiezdne Wojny
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Przyciski na pasku nawigacyjnym
@@ -215,6 +262,12 @@ msg: Ustawienia dla opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Korzystaj z opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Mała ilość dostępnej pamięci (dostępne %d kB RAM)
 
 #
 # ./src/audio/audio.c
@@ -232,16 +285,19 @@ id: Phantom LFE
 msg: Bass
 
 id: Phantom center
-msg: Głosnik centralny
+msg: Głośnik centralny
 
 id: Select audio output device and related configurations
-msg: Wybór i ustawianie urządzenia wyjsciowego audio
+msg: Wybór i ustawianie urządzenia wyjściowego audio
 
 id: Small front speakers
 msg: Głośniki przednie
 
 id: Swap LFE+center with surround
 msg: Zamień bass i głośnik centralny z surround
+
+id: Switching audio output to %s
+msg: Zmiana wyjścia audio na %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -250,10 +306,19 @@ id: Invalid CD URL
 msg: Nieprawidłowy adres URL
 
 id: Invalid CD track
-msg: Bład odczytu utworów z CD
+msg: Błąd odczytu utworów z CD
 
 id: Unable to open CD
 msg: Nie można otworzyć CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Błąd odczytu DVD, restart płyty
 
 #
 # ./src/backend/htsp/htsp.c
@@ -267,18 +332,23 @@ msg: Nieprawidłowy adres HTSP
 id: Search
 msg: Szukaj
 
+id: Search result for: %s
+msg: Wyniki wyszukiwania dla: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: Automayczne logowanie przy starcie programu
+msg: Automatyczne logowanie przy starcie programu
+
+id: Collaborative
+msg: Wspólne
 
 id: Enable Spotify
 msg: Włącz Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Nie zapamiętuj
 
 id: Friends
 msg: Przyjaciele
@@ -294,6 +364,12 @@ msg: Nowe albumy w Spotify
 
 id: New releases
 msg: Nowości
+
+id: Offline
+msg: Rozłączony
+
+id: Offline sync in 96kbps
+msg: Synchronizacja przy 96kbps
 
 id: Playlists
 msg: Lista odtwarzania
@@ -314,7 +390,10 @@ id: Spotify offers you legal and free access to a huge library of music. To use 
 msg: Spotify oferuje bezpłatny i legalny dostęp do ogromnej biblioteki z muzyką. Aby korzystać z Spotify w Showtime wymagane jest konto Premium Spotify.\nWięcej informacji na temat Spotify, pod adresem http://www.spotify.com/\n\nAby uzyskać dostęp do dowolnej funkcji Spotify w Showtime, musisz podać login i hasło.
 
 id: Spotify playlists
-msg: Lista odtwarzania z Spotyfy
+msg: Lista odtwarzania z Spotify
+
+id: Spotify: Connection error: %s
+msg: Spotify: Błąd połączenia: %s
 
 id: Starred
 msg: Najwyżej oceniane
@@ -324,6 +403,15 @@ msg: Najwyżej oceniane
 #
 id: Bookmarks
 msg: Zakładki
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Nieobsługiwana zawartość: %d
+
+id: Unable to open file: %s
+msg: Nie można otworzyć pliku: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -336,6 +424,12 @@ msg: Szukaj za pomocą Unix locatedb
 #
 id: Search using spotlight
 msg: Szukaj za pomocą spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Zewnętrzny plik
 
 #
 # ./src/i18n.c
@@ -407,7 +501,16 @@ id: Subtitle scaling
 msg: Skalowanie napisów
 
 id: Video zoom
-msg: Zoom 
+msg: Zbliżenie 
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Wpisane w plik
+
+id: Track %d
+msg: Ścieżka %d
 
 #
 # ./src/navigator.c
@@ -419,28 +522,22 @@ msg: Brak wsparcia dla URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: Błędny URI
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Wtyczka o ID %s nie istnieje
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Wtyczka o ID %s nie posiada adresu URL
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Nie można załadować plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Nie można załadować plugin.json: Uszkodzony plik JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Nie można pobrać repozytorium wtyczki: %s
 
 #
 # ./src/runcontrol.c
@@ -455,7 +552,7 @@ msg: Sterowanie
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: Dostępne
+msg: Włączone
 
 id: Name
 msg: Nazwa
@@ -470,7 +567,7 @@ id: Applications and installed plugins
 msg: Aplikacje i wtyczki
 
 id: Discovered media sources
-msg: Znalezione media
+msg: Wykryte media
 
 id: Global settings
 msg: Ustawienia globalne
@@ -479,7 +576,7 @@ msg: Ustawienia globalne
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
-msg: Ustawienia wyświetlacza oraz interfejsu użytkownika
+msg: Ustawienia wyświetlania oraz interfejsu użytkownika
 
 id: Horizontal underscan
 msg: Przesunięcie poziome
@@ -503,6 +600,21 @@ id: Map mouse wheel to up/down
 msg: Mapuj kółko myszy
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Automatycznie przełącz na ten tryb
+
+id: DVI-Video color range
+msg: Paleta kolorów z DVI-Video
+
+id: Switch to this mode now
+msg: Przełącz na ten tryb
+
+id: Video modes
+msg: Tryby wyświetlania wideo
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -524,10 +636,28 @@ id: Service not found
 msg: Nie znaleziono usługi
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Wymuszenie poziomu 4.2 dla poziomu %d.%d. Możliwe problemy z odtworzeniem wideo
+
+id: Unable to accelerate %s, library not loaded.
+msg: Brak przyspieszenia dla %s, biblioteka nie załadowana
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Nie można uruchomić kodeka Cell. Błąd 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Nie można uruchomić kodeka Cell. Nie można przydzielić %d bajtów RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Staraj sie wybierać napisy
+msg: Staraj się wybierać napisy
 
 id: Auto
 msg: Automatycznie
@@ -538,26 +668,35 @@ msg: Środek
 id: Color
 msg: Kolor
 
+id: Count video as played when reaching
+msg: Traktuj wideo jako obejrzane po osiągnięciu
+
 id: Enable VDPAU
 msg: Włącz VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Wymuś wyswietlanie napisów
+msg: Wymuś wyświetlanie napisów
 
 id: Generic settings for video subtitles
-msg: Generuj ustawienia napisów
+msg: Ustawienia domyślne dla napisów
 
 id: Ignore embedded styling
-msg: Ignoruj ustawiony styl
+msg: Ignoruj wbudowany styl
 
 id: Left
 msg: Lewy
+
+id: No
+msg: Nie
 
 id: Outline color
 msg: Kolor obrysu
 
 id: Outline size
 msg: Rozmiar obrysu
+
+id: Resume video playback
+msg: Wznów odtwarzanie wideo
 
 id: Right
 msg: Prawy
@@ -568,11 +707,15 @@ msg: Kolor cienia
 id: Shadow offset
 msg: Offset cienia
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
 id: Stretch video to widescreen
 msg: Rozciągnij do panoramicznego
 
 id: Subtitle position
-msg: Pozycja napisów
+msg: Położenie napisów
 
 id: Subtitle size
 msg: Rozmiar napisów
@@ -588,4 +731,7 @@ msg: Akceleracja wideo i zachowanie wyświetlacza
 
 id: Video playback
 msg: Odtwarzanie wideo
+
+id: Yes
+msg: Tak
 

@@ -99,29 +99,6 @@ attrib_parser(char *v, uint32_t *output, int olen,
 /**
  *
  */
-static uint32_t
-makecolor(const char *str)
-{
-  uint8_t r, g, b;
-  if(*str == '#')
-    str++;
-  if(strlen(str) == 3) {
-    r = hexnibble(str[0]) * 0x11;
-    g = hexnibble(str[1]) * 0x11;
-    b = hexnibble(str[2]) * 0x11;
-  } else if(strlen(str) == 6) {
-    r = (hexnibble(str[0]) << 4) | hexnibble(str[1]);
-    g = (hexnibble(str[2]) << 4) | hexnibble(str[3]);
-    b = (hexnibble(str[4]) << 4) | hexnibble(str[5]);
-  } else
-    return 0;
-  return b << 16  | g << 8 | r;
-}
-
-
-/**
- *
- */
 static int
 font_tag(uint32_t *output, int olen, const char *attrib, const char *value)
 {
@@ -133,7 +110,7 @@ font_tag(uint32_t *output, int olen, const char *attrib, const char *value)
 			freetype_family_id(value), output, olen);
   if(!strcasecmp(attrib, "color"))
     return add_one_code(TR_CODE_COLOR |
-			makecolor(value), output, olen);
+			html_makecolor(value), output, olen);
   return olen;
 }
 
@@ -149,7 +126,7 @@ outline_tag(uint32_t *output, int olen, const char *attrib, const char *value)
 			MIN(atoi(value), 10), output, olen);
   if(!strcasecmp(attrib, "color"))
     return add_one_code(TR_CODE_OUTLINE_COLOR |
-			makecolor(value), output, olen);
+			html_makecolor(value), output, olen);
   return olen;
 }
 
@@ -165,7 +142,7 @@ shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value)
 			MIN(atoi(value), 10), output, olen);
   if(!strcasecmp(attrib, "color"))
     return add_one_code(TR_CODE_SHADOW_COLOR |
-			makecolor(value), output, olen);
+			html_makecolor(value), output, olen);
   return olen;
 }
 
@@ -246,6 +223,7 @@ parse_str(uint32_t *output, const char *str, int flags)
       continue;
 
     if(flags & TEXT_PARSE_TAGS && c == '<') {
+      const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)
 	tmp = malloc(l);
@@ -255,8 +233,13 @@ parse_str(uint32_t *output, const char *str, int flags)
 	  break;
 	tmp[lp++] = d;
       }
-      if(d == 0)
-	break;
+      if(d == 0) {
+	if(output != NULL)
+	  output[olen] = '<';
+	olen++;
+	str = s2;
+	continue;
+      }
       tmp[lp] = 0;
 
       olen = tag_to_code(tmp, output, olen);
@@ -264,6 +247,7 @@ parse_str(uint32_t *output, const char *str, int flags)
     }
 
     if(flags & TEXT_PARSE_HTML_ENTETIES && c == '&') {
+      const char *s2 = str;
       int lp = 0;
       if(tmp == NULL)
 	tmp = malloc(l);
@@ -273,17 +257,22 @@ parse_str(uint32_t *output, const char *str, int flags)
 	  break;
 	tmp[lp++] = d;
       }
-      if(d == 0)
-	break;
-      tmp[lp] = 0;
+      if(d != 0) {
+	tmp[lp] = 0;
 
-      c = html_entity_lookup(tmp);
+	c = html_entity_lookup(tmp);
 
-      if(c != -1) {
-	if(output != NULL)
-	  output[olen] = c;
-	olen++;
+	if(c != -1) {
+	  if(output != NULL)
+	    output[olen] = c;
+	  olen++;
+	}
+	continue;
       }
+      if(output != NULL)
+	output[olen] = '&';
+      olen++;
+      str = s2;
       continue;
     }
 

@@ -25,6 +25,39 @@ msg: Videoinställningar
 id: Added by: %s
 msg: Tillagd av: %s
 
+id: Played %d times
+msg[0]: Spelad %d gånger
+msg[1]: Spelad %d gång
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: %d poster
+msg[1]: %d post
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: %d spår
+msg[1]: %d spår
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Radera
+
+id: Queue
+msg: Köa
+
+id: Star
+msg: Favorit
+
+id: Unstar
+msg: Icke favorit
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +68,29 @@ id: On
 msg: På
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Köa
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Allokerat av applikationen: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Allokerat av malloc: %d kB
+
 id: Avail system RAM: %d kB
 msg: Tillgängligt systemminne: %d kB
 
@@ -49,11 +103,17 @@ msg: Bildskärmsinformation
 id: Framerate: %.2f Hz
 msg: Uppdateringsfrekvens %.2f Hz
 
+id: Free chunks: %d
+msg: Lediga segment: %d
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Höjd: %d px
+
+id: Memory status
+msg: Minnesstatus
 
 id: Renderer: %s
 msg: Renderare: %s
@@ -63,6 +123,9 @@ msg: Systeminformation
 
 id: Total system RAM: %d kB
 msg: Totalt systemminne: %d kB
+
+id: Unused memory: %d kB
+msg: Oanvänt minne: %d kB
 
 id: Version: %s
 msg: Version: %s
@@ -146,28 +209,10 @@ id: Username
 msg: Användarnamn
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Ingen media laddad
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Radera
-
-id: Enqueue
-msg: Köa
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +235,9 @@ msg: GPU kärntemperatur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Justera bakgrundsfärgen beroende på tid på dygnet
 
+id: Alternate list layout
+msg: Alternativ layout av listor
+
 id: Audio muted
 msg: Ljud tyst
 
@@ -199,8 +247,9 @@ msg: Häftiga anomationer i gränsnittet
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
-id: Starwars scroller tilt
-msg: Luta gränssnittet som en Starwars-scroller
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Knappar för navigation i toppen av skärmen
@@ -213,6 +262,12 @@ msg: Inställningar för opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Använd opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 
 #
 # ./src/audio/audio.c
@@ -241,6 +296,9 @@ msg: Små fronthögtalare
 id: Swap LFE+center with surround
 msg: Byt LFE+center med surround
 
+id: Switching audio output to %s
+msg: Byter till ljud utgång %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +312,15 @@ id: Unable to open CD
 msg: Kan ej öppna CD
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Problem att läsa DVD, startar om skivan
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -265,11 +332,17 @@ msg: Ogiltligt HTSP URL
 id: Search
 msg: Sök
 
+id: Search result for: %s
+msg: Sökresultat för: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Logga automatiskt in när Showtime startar
+
+id: Collaborative
+msg: Kollaborativ
 
 id: Enable Spotify
 msg: Använd Spotify
@@ -292,6 +365,12 @@ msg: Nya album på Spotify
 id: New releases
 msg: Nya släpp
 
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offlink synk i 96kbps
+
 id: Playlists
 msg: Spellistor
 
@@ -313,6 +392,9 @@ msg: Spotify erbjuder laglig och fri tillgång till ett stort bibliotek av musik
 id: Spotify playlists
 msg: Spotyfyspellistor
 
+id: Spotify: Connection error: %s
+msg: Spotify: Problem att ansluta: %s
+
 id: Starred
 msg: Stjärnor
 
@@ -321,6 +403,15 @@ msg: Stjärnor
 #
 id: Bookmarks
 msg: Bokmärken
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan inte hantera fil innehåll av typen %d
+
+id: Unable to open file: %s
+msg: Kan ej öppna fil: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -333,6 +424,12 @@ msg: Sök mha. Unix locatedb
 #
 id: Search using spotlight
 msg: Sök med spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Extern fil
 
 #
 # ./src/i18n.c
@@ -405,6 +502,15 @@ msg: Storlek på undertexter
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Inbäddad i fil
+
+id: Track %d
+msg: Spår %d
 
 #
 # ./src/navigator.c
@@ -494,6 +600,21 @@ id: Map mouse wheel to up/down
 msg: Tolka musens scrollhjul som upp- och ned-knappar
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Byt automatiskt till detta läge
+
+id: DVI-Video color range
+msg: DVI-Video färgskala
+
+id: Switch to this mode now
+msg: Byt till detta läge nu
+
+id: Video modes
+msg: Videolägen
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -515,6 +636,24 @@ id: Service not found
 msg: Kan ej hitta tjänsten
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Tvingar level 4.2 för media i  level %d.%d. Detta kan förstöra video uppspelningen.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Kan ej accelerera %s, biblioteket är ej laddat.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Kan ej öppna Cell codec. Fel 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Kan ej öppna Cell codec. Kan ej allokera %d bytes RAM.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Kan ej fråga Cell codec. Fel 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -528,6 +667,9 @@ msg: Centrerad
 
 id: Color
 msg: Färg
+
+id: Count video as played when reaching
+msg: Räkna videon som spelad när den nått
 
 id: Enable VDPAU
 msg: Aktivera VDPAU
@@ -544,11 +686,17 @@ msg: Ignorera inbäddade stilkoder
 id: Left
 msg: Vänster
 
+id: No
+msg: Nej
+
 id: Outline color
 msg: Färg på konturer
 
 id: Outline size
 msg: Storlek på konturer
+
+id: Resume video playback
+msg: Återuppta videouppspelning
 
 id: Right
 msg: Höger
@@ -558,6 +706,10 @@ msg: Färg på skuggor
 
 id: Shadow offset
 msg: Skuggoffset
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Sträck ut videon horisontellt 
@@ -579,4 +731,7 @@ msg: Videoacceleration och inställningar för videopresentation
 
 id: Video playback
 msg: Videouppspelning
+
+id: Yes
+msg: Ja
 

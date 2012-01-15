@@ -30,9 +30,12 @@ $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
 	@cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
-	package_finalize $(BUILDDIR)/showtime.pkg
 
-pkg: $(BUILDDIR)/showtime.pkg
+$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg
+	cp $< $@
+	package_finalize $@
+
+pkg: $(BUILDDIR)/showtime.pkg $(BUILDDIR)/showtime_geohot.pkg
 self: $(BUILDDIR)/showtime.self
 
 install: $(BUILDDIR)/showtime.pkg
@@ -45,10 +48,13 @@ $(BUILDDIR)/dist/showtime-$(VERSION).self: $(BUILDDIR)/showtime.self
 $(BUILDDIR)/dist/showtime-$(VERSION).pkg: $(BUILDDIR)/showtime.pkg
 	cp $< $@
 
+$(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg: $(BUILDDIR)/showtime_geohot.pkg
+	cp $< $@
+
 $(BUILDDIR)/dist:
 	mkdir -p $@
 
-dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg
+dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
 
 upgrade: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
 	 curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace

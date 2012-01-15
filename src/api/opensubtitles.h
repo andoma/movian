@@ -19,14 +19,13 @@
 #ifndef OPENSUBTITLES_H__
 #define OPENSUBTITLES_H__
 
-#include <libavformat/avio.h>
 #include "htsmsg/htsmsg.h"
 
 struct prop;
-
+struct fa_handle;
 void opensub_init(void);
 
-int opensub_compute_hash(AVIOContext *avio, uint64_t *hashp);
+int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
 
 htsmsg_t *opensub_build_query(const char *lang, int64_t hash, int64_t movsize,
 			      const char *imdb, const char *title);

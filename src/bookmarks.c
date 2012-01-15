@@ -22,7 +22,7 @@
 #include <unistd.h>
 #include <stdio.h>
 
-#include <htsmsg/htsmsg_store.h>
+#include "htsmsg/htsmsg_store.h"
 
 #include "showtime.h"
 #include "service.h"

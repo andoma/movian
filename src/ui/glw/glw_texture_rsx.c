@@ -20,8 +20,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libswscale/swscale.h>
-
 #include "glw.h"
 #include "glw_texture.h"
 
@@ -116,7 +114,7 @@ realloc_tex(glw_root_t *gr, glw_backend_texture_t *tex, int size)
   return tex->size ? rsx_to_ppu(gr, tex->tex.offset) : NULL;
 }
 
-
+#if 0
 /**
  *
  */
@@ -136,7 +134,7 @@ init_argb(glw_root_t *gr, glw_backend_texture_t *tex,
 	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	   );
 }
-
+#endif
 
 /**
  *
@@ -158,7 +156,7 @@ init_abgr(glw_root_t *gr, glw_backend_texture_t *tex,
 	   );
 }
 
-
+#if 0
 /**
  *
  */
@@ -178,7 +176,7 @@ init_rgba(glw_root_t *gr, glw_backend_texture_t *tex,
 	   NV30_3D_TEX_SWIZZLE_S1_Z_W | NV30_3D_TEX_SWIZZLE_S1_W_X
 	   );
 }
-
+#endif
 
 /**
  *
@@ -234,128 +232,37 @@ init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
 /**
  *
  */
-static int
-convert_with_swscale(glw_root_t *gr, 
-		     glw_loadable_texture_t *glt, AVPicture *pict, 
-		     int src_pix_fmt, 
-		     int src_w, int src_h, int dst_w, int dst_h,
-		     int repeat)
+int
+glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
+		     pixmap_t *pm)
 {
-  int dst_pix_fmt;
-  struct SwsContext *sws;
-  AVPicture dst;
-  const uint8_t *ptr[4];
-  int strides[4];
-  int bpp;
+  int repeat = glt->glt_flags & GLW_TEX_REPEAT;
 
-  switch(src_pix_fmt) {
-  case PIX_FMT_Y400A:
-  case PIX_FMT_BGRA:
-  case PIX_FMT_RGBA:
-  case PIX_FMT_ABGR:
-  case PIX_FMT_ARGB:
-    dst_pix_fmt = PIX_FMT_RGBA;
-    bpp = 4;
-    break;
-  default:
-    dst_pix_fmt = PIX_FMT_RGB24;
-    bpp = 3;
-    break;
-  }
-
-
-  ptr[0] = pict->data[0];
-  ptr[1] = pict->data[1];
-  ptr[2] = pict->data[2];
-  ptr[3] = pict->data[3];
-
-  strides[0] = pict->linesize[0];
-  strides[1] = pict->linesize[1];
-  strides[2] = pict->linesize[2];
-  strides[3] = pict->linesize[3];
-
-  sws = sws_getContext(src_w, src_h, src_pix_fmt, 
-		       dst_w, dst_h, dst_pix_fmt,
-		       SWS_PRINT_INFO | SWS_BILINEAR, NULL, NULL, NULL);
-  if(sws == NULL)
-    return 1;
-
-  memset(&dst, 0, sizeof(dst));
-  dst.linesize[0] = ((bpp * dst_w) + 15) & ~15;
-  dst.data[0] = malloc(dst.linesize[0] * dst_h);
-  sws_scale(sws, ptr, strides, 0, src_h, dst.data, dst.linesize);
-
-  glt->glt_xs = dst_w;
-  glt->glt_ys = dst_h;
+  glt->glt_xs = pm->pm_width;
+  glt->glt_ys = pm->pm_height;
   glt->glt_s = 1;
   glt->glt_t = 1;
 
-  if(bpp == 4) {
-    init_rgba(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
-	      dst_w, dst_h, repeat);
-  } else
-    init_rgb(gr, &glt->glt_texture, dst.data[0], dst.linesize[0],
-	     dst_w, dst_h, repeat);
+  switch(pm->pm_type) {
+  case PIXMAP_BGR32:
+    init_abgr(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
+	      pm->pm_width, pm->pm_height, repeat);
+    break;
 
-  free(dst.data[0]);
-  sws_freeContext(sws);
-  return 0;
-}
+  case PIXMAP_RGB24:
+    init_rgb(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
+	      pm->pm_width, pm->pm_height, repeat);
+    break;
 
-/**
- *
- */
-int
-glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-		     AVPicture *pict, int pix_fmt, 
-		     int src_w, int src_h,
-		     int req_w, int req_h)
-{
-  int need_rescale = req_w != src_w || req_h != src_h;
-  int repeat = glt->glt_flags & GLW_TEX_REPEAT;
-
-  switch(pix_fmt) {
-
-  case PIX_FMT_ARGB:
-    if(need_rescale && 0)
-      break;
-    glt->glt_xs = src_w;
-    glt->glt_ys = src_h;
-    glt->glt_s = 1;
-    glt->glt_t = 1;
-    init_argb(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
-	      src_w, src_h, repeat);
-    return 0;
-
-  case PIX_FMT_Y400A:
-    if(need_rescale && 0)
-      break;
-    glt->glt_xs = src_w;
-    glt->glt_ys = src_h;
-    glt->glt_s = 1;
-    glt->glt_t = 1;
-    init_i8a8(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
-	      src_w, src_h, repeat);
-    return 0;
-
-  case PIX_FMT_RGB24:
-    if(need_rescale && 0)
-      break;
-    glt->glt_xs = src_w;
-    glt->glt_ys = src_h;
-    glt->glt_s = 1;
-    glt->glt_t = 1;
-    init_rgb(gr, &glt->glt_texture, pict->data[0], pict->linesize[0],
-	     src_w, src_h, repeat);
-    return 0;
-
+  case PIXMAP_IA:
+    init_i8a8(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
+	      pm->pm_width, pm->pm_height, repeat);
+    break;
 
   default:
-    break;
+    return 1;
   }
-
-  return convert_with_swscale(gr, glt, pict, pix_fmt,
-			      src_w, src_h, req_w, req_h, repeat);
+  return 0;
 }
 
 /**

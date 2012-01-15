@@ -121,10 +121,14 @@ update_playstatus(void *opaque, prop_event_t event, ...)
     bar_sensitivity(pd, FALSE);
     break;
 
+  case PROP_SET_CSTRING:
+    status = va_arg(ap, const char *);
+    if(0)
   case PROP_SET_RSTRING:
+      status = rstr_get(va_arg(ap, const rstr_t *));
+
     bar_sensitivity(pd, TRUE);
 
-    status = rstr_get(va_arg(ap, const rstr_t *));
     gtk_tool_button_set_stock_id(GTK_TOOL_BUTTON(pd->playpause), 
 				 !strcmp(status, "play") ? 
 				 GTK_STOCK_MEDIA_PAUSE:

@@ -27,6 +27,8 @@
 #include <psl1ght/lv2/timer.h>
 #include <sysutil/audio.h>
 
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "audio/audio_defs.h"
 
@@ -86,6 +88,28 @@ copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
 {
   int i;
   const float *src = (const float *)ab->ab_data;
+
+  if(ab->ab_channels == 1 && channels == 2) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+0];
+    }
+    return;
+  }
+
+  if(ab->ab_channels == 5 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 5; i+=5) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = src[i+2];
+      *buf++ = 0;
+      *buf++ = src[i+3];
+      *buf++ = src[i+4];
+      *buf++ = 0;
+      *buf++ = 0;
+    }
+    return;
+  }
 
   if(ab->ab_channels == 6 && channels == 8) {
     for (i = 0; i < AUDIO_BLOCK_SAMPLES * 6; i+=6) {
@@ -238,12 +262,14 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	memset(&conf, 0, sizeof(conf));
 
 	switch(cur_channels) {
+	case 1:
 	case 2:
 	  achannels = 2;
 	  conf.channel = 2;
 	  conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
 	  break;
 
+	case 5:
 	case 6:
 	  achannels = 8;
 	  if(max_pcm >= 6) {
@@ -357,7 +383,8 @@ audio_ps3_init(void)
 {
   audio_mode_t *am = calloc(1, sizeof(audio_mode_t));
 
-  am->am_formats =
+  am->am_formats = 
+    AM_FORMAT_PCM_MONO |
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | 
     AM_FORMAT_PCM_6DOT1  | AM_FORMAT_PCM_7DOT1;
   am->am_sample_rates = AM_SR_48000;
@@ -377,6 +404,7 @@ audio_ps3_init(void)
 					 AUDIO_OUT_FS_48KHZ,
 					 0);
 
+  audioOutSetCopyControl(AUDIO_OUT_PRIMARY, AUDIO_OUT_COPY_CONTROL_FREE);
 
   /* Absolute minimum requirements */
   am->am_title = strdup("PS3");

@@ -166,7 +166,7 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
  */
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
-		const char *url, JSObject *argobj, JSObject *postobj,
+		const char *url, JSObject *argobj, jsval *postval,
 		JSObject *headerobj)
 {
   char **httpargs = NULL;
@@ -182,45 +182,56 @@ js_http_request(JSContext *cx, jsval *rval,
   if(argobj != NULL)
     js_http_add_args(&httpargs, cx, argobj);
 
-  if(postobj != NULL) {
+  if(postval != NULL) {
     htsbuf_queue_t hq;
     JSIdArray *ida;
     const char *str;
     const char *prefix = NULL;
 
-    if((ida = JS_Enumerate(cx, postobj)) == NULL)
-      return JS_FALSE;
+    if(JSVAL_IS_OBJECT(*postval)) {
+      JSObject *postobj = JSVAL_TO_OBJECT(*postval);
 
-    htsbuf_queue_init(&hq, 0);
+      if((ida = JS_Enumerate(cx, postobj)) == NULL)
+	return JS_FALSE;
 
-    for(i = 0; i < ida->length; i++) {
-      jsval name, value;
+      htsbuf_queue_init(&hq, 0);
 
-      if(!JS_IdToValue(cx, ida->vector[i], &name) ||
-	 !JSVAL_IS_STRING(name) ||
-	 !JS_GetProperty(cx, postobj, JS_GetStringBytes(JSVAL_TO_STRING(name)),
-			 &value) || JSVAL_IS_VOID(value))
-      continue;
+      for(i = 0; i < ida->length; i++) {
+	jsval name, value;
 
-      str = JS_GetStringBytes(JSVAL_TO_STRING(name));
-      if(prefix)
-	htsbuf_append(&hq, prefix, strlen(prefix));
-      htsbuf_append_and_escape_url(&hq, str);
+	if(!JS_IdToValue(cx, ida->vector[i], &name) ||
+	   !JSVAL_IS_STRING(name) ||
+	   !JS_GetProperty(cx, postobj,
+			   JS_GetStringBytes(JSVAL_TO_STRING(name)),
+			   &value) || JSVAL_IS_VOID(value))
+	  continue;
 
-      str = JS_GetStringBytes(JS_ValueToString(cx, value));
-      htsbuf_append(&hq, "=", 1);
-      htsbuf_append_and_escape_url(&hq, str);
+	str = JS_GetStringBytes(JSVAL_TO_STRING(name));
+	if(prefix)
+	  htsbuf_append(&hq, prefix, strlen(prefix));
+	htsbuf_append_and_escape_url(&hq, str);
+
+	str = JS_GetStringBytes(JS_ValueToString(cx, value));
+	htsbuf_append(&hq, "=", 1);
+	htsbuf_append_and_escape_url(&hq, str);
       
-      prefix = "&";
-    }
+	prefix = "&";
+      }
     
-    JS_DestroyIdArray(cx, ida);
-    postdata = &hq;
-    postcontenttype =  "application/x-www-form-urlencoded";
+      JS_DestroyIdArray(cx, ida);
+      postdata = &hq;
+      postcontenttype =  "application/x-www-form-urlencoded";
+    } else if(JSVAL_IS_STRING(*postval)) {
+
+      str = JS_GetStringBytes(JSVAL_TO_STRING(*postval));
+      htsbuf_queue_init(&hq, 0);
+      htsbuf_append(&hq, str, strlen(str));
+      postdata = &hq;
+      postcontenttype =  "text/ascii";
+    }
   }
 
-
- if(headerobj != NULL) {
+  if(headerobj != NULL) {
     JSIdArray *ida;
 
     if((ida = JS_Enumerate(cx, headerobj)) == NULL)
@@ -234,7 +245,7 @@ js_http_request(JSContext *cx, jsval *rval,
 	 !JS_GetProperty(cx, headerobj,
 			 JS_GetStringBytes(JSVAL_TO_STRING(name)),
 			 &value) || JSVAL_IS_VOID(value))
-      continue;
+	continue;
 
       http_header_add(&in_headers,
 		      JS_GetStringBytes(JSVAL_TO_STRING(name)),
@@ -332,20 +343,20 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *url;
   JSObject *argobj = NULL;
-  JSObject *postobj = NULL;
+  jsval postval;
   JSObject *hdrobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "so/oo", &url, &postobj, &argobj,
+  if(!JS_ConvertArguments(cx, argc, argv, "sv/oo", &url, &postval, &argobj,
 			  &hdrobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, postobj, hdrobj);
+  return js_http_request(cx, rval, url, argobj, &postval, hdrobj);
 }
-
 
 /**
  *
  */
+#if ENABLE_RELEASE == 0
 JSBool 
 js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 	       jsval *argv, jsval *rval)
@@ -353,13 +364,13 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   char errbuf[256];
   void *result;
-  struct fa_stat fs;
+  size_t size;
 
   if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
+  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {
@@ -367,10 +378,10 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, fs.fs_size));
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, size));
   return JS_TRUE;
 }
-
+#endif
 
 /**
  *

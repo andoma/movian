@@ -29,6 +29,8 @@
 #include "navigator.h"
 #include "event.h"
 #include "notifications.h"
+#include "misc/pixmap.h"
+#include "htsmsg/htsmsg_json.h"
 
 prop_t *global_sources; // Move someplace else
 
@@ -82,7 +84,8 @@ event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
 		   int flags, int priority,
 		   char *errbuf, size_t errlen,
-		   const char *mimetype)
+		   const char *mimetype, 
+		   const char *canonical_url)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -91,7 +94,8 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype);
+  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
+			   canonical_url);
 }
 
 
@@ -151,19 +155,110 @@ static backend_t be_page = {
 BE_REGISTER(page);
 
 
+
+
+typedef struct cached_image {
+  LIST_ENTRY(cached_image) ci_link;
+  
+  rstr_t *ci_url;
+  pixmap_t *ci_pixmap;
+
+} cached_image_t;
+
+
+
+
 /**
  *
  */
 struct pixmap *
-backend_imageloader(const char *url, const image_meta_t *im,
-		    const char **vpaths, char *errbuf, size_t errlen)
+backend_imageloader(rstr_t *url0, const image_meta_t *im,
+		    const char **vpaths, char *errbuf, size_t errlen,
+		    int *cache_control)
 {
+  const char *url = rstr_get(url0);
+  htsmsg_t *m = NULL;
+
+  if(!strncmp(url, "thumb://", 8)) {
+    image_meta_t im0;
+
+    if(im != NULL) {
+      im0 = *im;
+    } else {
+      memset(&im0, 0, sizeof(im0));
+    }
+    url = url + 8;
+    im0.im_want_thumb = 1;
+    im = &im0;
+  }
+
+  if(!strncmp(url, "imageset:", 9)) {
+
+    m = htsmsg_json_deserialize(url+9);
+    if(m == NULL) {
+      snprintf(errbuf, errlen, "Invalid JSON");
+      return NULL;
+    }
+    htsmsg_field_t *f;
+
+    const char *best = NULL;
+    int best_width = -1;
+    int best_height = -1;
+
+    HTSMSG_FOREACH(f, m) {
+      htsmsg_t *img = htsmsg_get_map_by_field(f);
+      if(img == NULL)
+	continue;
+      int w = htsmsg_get_u32_or_default(img, "width", 0);
+      int h = htsmsg_get_u32_or_default(img, "height", 0);
+      const char *u = htsmsg_get_str(img, "url");
+      if(!w || !h || !u)
+	continue;
+
+      if(best != NULL) {
+
+	if(im->im_req_width != -1) {
+	  if(w >= im->im_req_width && w < best_width)
+	    goto gotone;
+	  if(w < im->im_req_width && w > best_width)
+	    goto gotone;
+
+	} else if(im->im_req_height != -1) {
+	  if(h >= im->im_req_height && h < best_height)
+	    goto gotone;
+	  if(h < im->im_req_height && h > best_height)
+	    goto gotone;
+	} else {
+	  if(w > best_width)
+	    goto gotone;
+	  if(h > best_height)
+	    goto gotone;
+	}
+	continue;
+      }
+    gotone:
+      best = u;
+      best_width = w;
+      best_height = h;
+
+    }
+    if(best == NULL) {
+      snprintf(errbuf, errlen, "No image in set");
+      return NULL;
+    }
+    url = best;
+  }
+
   backend_t *nb = backend_canhandle(url);
+  pixmap_t *pm = NULL;
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
-    return NULL;
+  } else {
+    pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen, cache_control);
+    if(pm != NULL && pm != NOT_MODIFIED)
+      pm = pixmap_decode(pm, im, errbuf, errlen);
   }
-  return nb->be_imageloader(url, im, vpaths, errbuf, errlen);
+  return pm;
 }
 
 
@@ -298,3 +393,4 @@ backend_search(prop_t *model, const char *url)
     if(be->be_search != NULL)
       be->be_search(model, url);
 }
+

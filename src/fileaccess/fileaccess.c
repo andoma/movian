@@ -36,11 +36,7 @@
 #include "fileaccess.h"
 #include "backend/backend.h"
 
-#include <libavutil/avstring.h>
-#include <libavformat/avformat.h>
-#include <libavformat/avio.h>
-
-#include <fileaccess/svfs.h>
+#include "fileaccess/svfs.h"
 
 #include "fa_proto.h"
 #include "fa_probe.h"
@@ -161,6 +157,9 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
   if(flags & FA_CACHE)
     return fa_cache_open(url, errbuf, errsize, flags & ~FA_CACHE, stats);
 #endif
+  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
+    return fa_buffered_open(url, errbuf, errsize, flags, stats);
+
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return NULL;
   
@@ -180,7 +179,8 @@ fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,
  *
  */
 void *
-fa_open_vpaths(const char *url, const char **vpaths)
+fa_open_vpaths(const char *url, const char **vpaths,
+	       char *errbuf, size_t errsize, int flags)
 {
   fa_protocol_t *fap;
   char *filename;
@@ -189,7 +189,10 @@ fa_open_vpaths(const char *url, const char **vpaths)
   if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
     return NULL;
   
-  fh = fap->fap_open(fap, filename, NULL, 0, 0, NULL);
+  if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
+    return fa_buffered_open(url, errbuf, errsize, flags, NULL);
+
+  fh = fap->fap_open(fap, filename, errbuf, errsize, flags, NULL);
 #ifdef FA_DUMP
   fh->fh_dump_fd = -1;
 #endif
@@ -232,6 +235,8 @@ int
 fa_read(void *fh_, void *buf, size_t size)
 {
   fa_handle_t *fh = fh_;
+  if(size == 0)
+    return 0;
   int r = fh->fh_proto->fap_read(fh, buf, size);
 #ifdef FA_DUMP
   if(fh->fh_dump_fd != -1) {
@@ -432,6 +437,9 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
   if(fde->fde_metadata != NULL)
     prop_destroy(fde->fde_metadata);
 
+  if(fde->fde_md != NULL)
+    metadata_destroy(fde->fde_md);
+
   fd->fd_count--;
   TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
   free(fde->fde_filename);
@@ -518,7 +526,6 @@ int
 fileaccess_init(void)
 {
   fa_protocol_t *fap;
-  fa_probe_init();
   fa_imageloader_init();
 
   LIST_FOREACH(fap, &fileaccess_all_protocols, fap_link)
@@ -535,45 +542,90 @@ fileaccess_init(void)
 /**
  *
  */
-void
-fa_ffmpeg_error_to_txt(int err, char *errbuf, size_t errlen)
-{
-  if(av_strerror(err, errbuf, errlen))
-    snprintf(errbuf, errlen, "libav error %d", err);
-}
-
-
-/**
- *
- */
 void *
-fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
-	     char *errbuf, size_t errlen)
+fa_load(const char *url, size_t *sizep, const char **vpaths,
+	char *errbuf, size_t errlen, int *cache_control)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
   size_t size;
-  char *data, *filename;
+  char *data = NULL, *filename;
   int r;
+  char *etag = NULL;
+  time_t mtime = 0;
+  int is_expired = 0;
 
-  data = blobcache_get(url, "fa_quickload", &size, 1);
-  if(data != NULL) {
-    if(fs != NULL)
-      fs->fs_size = size;
-    return data;
-  }
+  if(sizep == NULL) // For convenience
+    sizep = &size;
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
 
-  if(fap->fap_quickload != NULL) {
-    data = fap->fap_quickload(fap, filename, fs, errbuf, errlen);
+  if(fap->fap_load != NULL) {
+    char *data2;
+    size_t size2;
+    int max_age = 0;
+    
+    if(cache_control != DISABLE_CACHE) {
+      data = blobcache_get(url, "fa_load", sizep, 1,
+			   &is_expired, &etag, &mtime);
 
-    if(fs != NULL && fs->fs_cache_age > 0)
-      blobcache_put(url, "fa_quickload", data, fs->fs_size, fs->fs_cache_age);
+      if(data != NULL) {
+	if(cache_control != NULL) {
+	  // Upper layer can deal with expired data, pass it
+	  *cache_control = is_expired;
+	  free(etag);
+	  free(filename);
+	  return data;
+	}
+	
+	// It was not expired, return it
+	if(!is_expired) {
+	  free(etag);
+	  free(filename);
+	  return data;
+	}
+      } else if(cache_control != NULL) {
+	snprintf(errbuf, errlen, "Not cached");
+	free(etag);
+	free(filename);
+	return NULL;
+      }
+    }
 
+    if(cache_control == DISABLE_CACHE)
+      blobcache_get_meta(url, "fa_load", &etag, &mtime);
+    
+    data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
+			  &etag, &mtime, &max_age);
+    
     free(filename);
-    return data;
+    if(data2 == NOT_MODIFIED) {
+      if(cache_control == DISABLE_CACHE)
+	return NOT_MODIFIED;
+
+      free(etag);
+      return data;
+    }
+
+    free(data);
+
+    int d;
+    if(data2)
+      d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    else
+      d = 0;
+
+    free(etag);
+
+    if(cache_control == DISABLE_CACHE && d) {
+      free(data2);
+      return NOT_MODIFIED;
+    }
+
+    if(sizep != NULL)
+      *sizep = size2;
+    return data2;
   }
 
   fh = fap->fap_open(fap, filename, errbuf, errlen, 0, 0);
@@ -604,8 +656,7 @@ fa_quickload(const char *url, struct fa_stat *fs, const char **vpaths,
     return NULL;
   }
   data[size] = 0;
-  if(fs != NULL)
-    fs->fs_size = size;
+  *sizep = size;
   return data;
 }
 
@@ -734,4 +785,34 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
     dstlen = e - b + 1;
   memcpy(dst, url + b, dstlen);
   dst[dstlen - 1] = 0;
+}
+
+
+
+/**
+ *
+ */
+uint8_t *
+fa_load_and_close(fa_handle_t *fh, size_t *sizep)
+{
+  size_t r;
+  size_t size = fa_fsize(fh);
+  if(size == -1)
+    return NULL;
+
+  uint8_t *mem = malloc(size+1);
+
+  fa_seek(fh, 0, SEEK_SET);
+  r = fa_read(fh, mem, size);
+  fa_close(fh);
+
+  if(r != size) {
+    free(mem);
+    return NULL;
+  }
+
+  if(sizep != NULL)
+    *sizep = size;
+  mem[size] = 0; 
+  return mem;
 }

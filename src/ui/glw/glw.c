@@ -24,7 +24,7 @@
 
 #include "keymapper.h"
 
-#include <arch/threads.h>
+#include "arch/threads.h"
 
 #include "glw.h"
 #include "glw_text_bitmap.h"
@@ -35,6 +35,12 @@
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
+
+const float glw_identitymtx[16] = {
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1};
 
 /*
  *
@@ -144,6 +150,7 @@ glw_change_underscan_h(void *opaque, int v)
   v += gr->gr_base_underscan_h;
   v = GLW_CLAMP(v, 0, 100);
   prop_set_int(gr->gr_prop_underscan_h, v);
+  gr->gr_underscan_h = v;
 }
 
 
@@ -158,6 +165,7 @@ glw_change_underscan_v(void *opaque, int v)
   v += gr->gr_base_underscan_v;
   v = GLW_CLAMP(v, 0, 100);
   prop_set_int(gr->gr_prop_underscan_v, v);
+  gr->gr_underscan_v = v;
 }
 
 
@@ -249,23 +257,16 @@ glw_init_settings(glw_root_t *gr, const char *instance,
  *
  */
 int
-glw_init(glw_root_t *gr, const char *theme, const char *skin,
+glw_init(glw_root_t *gr, const char *theme,
 	 ui_t *ui, int primary, 
 	 const char *instance, const char *instance_title)
 {
-  char buf[256];
-
-  skin = skin ?: "grey"; // Read from theme
-
-  snprintf(buf, sizeof(buf), "%s/skins/%s", theme, skin);
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
 
   gr->gr_vpaths[0] = "theme";
   gr->gr_vpaths[1] = theme;
-  gr->gr_vpaths[2] = "skin";
-  gr->gr_vpaths[3] = strdup(buf);
-  gr->gr_vpaths[4] = NULL;
+  gr->gr_vpaths[2] = NULL;
 
   gr->gr_uii.uii_ui = ui;
 
@@ -305,9 +306,13 @@ glw_load_universe(glw_root_t *gr)
   prop_t *page = prop_create(gr->gr_uii.uii_prop, "root");
   glw_unload_universe(gr);
 
+  rstr_t *universe = rstr_alloc("theme://universe.view");
+
   gr->gr_universe = glw_view_create(gr,
-				    "theme://universe.view", NULL, page,
-				    NULL, NULL, 0);
+				    universe, NULL, page,
+				    NULL, NULL, NULL, 0);
+
+  rstr_release(universe);
 
   glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }
@@ -985,6 +990,11 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
   glw_signal_t sig;
   float weight = w ? w->glw_focus_weight : 0;
 
+  if(gr->gr_focus_work)
+    return;
+
+  gr->gr_focus_work = 1;
+
   if(how == GLW_FOCUS_SET_AUTOMATIC) {
     sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
   } else {
@@ -996,8 +1006,10 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
 
       if(how != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
-	 x->glw_flags & GLW_FOCUS_BLOCKED)
+	 x->glw_flags & GLW_FOCUS_BLOCKED) {
+	gr->gr_focus_work = 0;
 	return;
+      }
 
       if(x->glw_parent->glw_focused != x) {
 	/* Path switches */
@@ -1024,38 +1036,59 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	  glw_signal0(x->glw_parent, sig, x);
 	} else {
 	  /* Other path outranks our weight, stop now */
+	  gr->gr_focus_work = 0;
 	  return;
 	}
       }
     }
   }
 
-  if(gr->gr_current_focus == w)
+  if(gr->gr_current_focus == w) {
+    gr->gr_focus_work = 0;
     return;
-
+  }
   com = find_common_ancestor(gr->gr_current_focus, w);
 
-  if(gr->gr_current_focus != NULL)
-    glw_path_modify(gr->gr_current_focus, 0, GLW_IN_FOCUS_PATH, com);
+  glw_t *ww = gr->gr_current_focus;
+
+  if(ww != NULL)
+    glw_path_modify(ww, 0, GLW_IN_FOCUS_PATH, com);
 
   gr->gr_current_focus = w;
-  if(w == NULL)
-    return;
 
-  glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
+#if 0
+  glw_t *h = w;
+  while(h->glw_parent != NULL) {
+    printf("Verifying %p %p %p\n", h, h->glw_parent, h->glw_parent->glw_focused);
+    if(h->glw_parent->glw_focused != h) {
+      glw_t *f = h->glw_parent->glw_focused;
+      printf("Parent %p %s points to %p %s <%s> instead of %p %s <%s>\n",
+	     h->glw_parent, h->glw_parent->glw_class->gc_name,
+	     f, f->glw_class->gc_name, glw_get_a_name(f),
+	     h, h->glw_class->gc_name, glw_get_a_name(h));
+    }
+    h = h->glw_parent;
+  }
+#endif
+
+  if(w != NULL) {
+
+    glw_path_modify(w, GLW_IN_FOCUS_PATH, 0, com);
 
   
-  if(how) {
-    prop_t *p = get_originating_prop(w);
+    if(how) {
+      prop_t *p = get_originating_prop(w);
 
-    if(p != NULL) {
+      if(p != NULL) {
     
-      if(gr->gr_last_focused_interactive != NULL)
-	prop_ref_dec(gr->gr_last_focused_interactive);
+	if(gr->gr_last_focused_interactive != NULL)
+	  prop_ref_dec(gr->gr_last_focused_interactive);
 
-      gr->gr_last_focused_interactive = prop_ref_inc(p);
+	gr->gr_last_focused_interactive = prop_ref_inc(p);
+      }
     }
   }
+  gr->gr_focus_work = 0;
 }
 
 /**
@@ -1467,18 +1500,6 @@ glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe)
   glw_vec3_sub(dir, p, glw_vec3_make(gpe->x * 42.38,
 				     gpe->y * 42.38,
 				     -100));
-
-
-#if 0
-  p[0] = gpe->x;
-  p[1] = gpe->y;
-  p[2] = -2.41;
-
-  dir[0] = p[0] - gpe->x * 42.38; // 42.38 comes from unprojecting
-  dir[1] = p[1] - gpe->y * 42.38; // this camera and projection matrix
-  dir[2] = p[2] - -100;
- #endif
-
 
 
   if(gpe->type != GLW_POINTER_MOTION_REFRESH) {
@@ -2105,13 +2126,14 @@ glw_store_matrix(glw_t *w, glw_rctx_t *rc)
  *
  */
 void
-glw_rctx_init(glw_rctx_t *rc, int width, int height)
+glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan)
 {
   memset(rc, 0, sizeof(glw_rctx_t));
   rc->rc_width  = width;
   rc->rc_height = height;
   rc->rc_alpha = 1.0f;
   rc->rc_blur  = 1.0f;
+  rc->rc_overscanning = overscan;
 
   glw_LoadIdentity(rc);
   glw_Translatef(rc, 0, 0, -1 / tan(45 * M_PI / 360));

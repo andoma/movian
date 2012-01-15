@@ -309,7 +309,7 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 	return NULL;
       }
 
-      prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_STRING);
+      prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_RSTRING);
       if(stop == '\'')
 	prev->t_rstrtype = PROP_STR_RICH;
       src++;
@@ -365,26 +365,22 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
  *
  */
 token_t *
-glw_view_load1(glw_root_t *gr, const char *filename, 
-		errorinfo_t *ei, token_t *prev)
+glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev)
 {
   char *src;
-  rstr_t *f;
   token_t *last;
   char errbuf[256];
 
-  if((src = fa_quickload(filename, NULL, gr->gr_vpaths, 
-			 errbuf, sizeof(errbuf))) == NULL) {
+  if((src = fa_load(rstr_get(url), NULL, gr->gr_vpaths, 
+		    errbuf, sizeof(errbuf), NULL)) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
-	     filename, errbuf);
+	     rstr_get(url), errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
     ei->line = prev->line;
     return NULL;
   }
 
-  f = rstr_alloc(filename);
-  last = lexer(src, ei, f, prev);
-  rstr_release(f);
+  last = lexer(src, ei, url, prev);
   free(src);
   return last;
 }

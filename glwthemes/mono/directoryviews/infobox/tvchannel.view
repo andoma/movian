@@ -1,6 +1,5 @@
 #import "theme://include/defs.view"
 #import "theme://include/separators.view"
-#import "skin://infobox.skin"
 
 widget(container_y, {
   .spacing = 4;
@@ -34,14 +33,14 @@ widget(container_y, {
     });
   });
 
-      HORIZONTAL_SEPARATOR();	
+  HORIZONTAL_SEPARATOR();	
 
-	widget(label, {
-		.sizeScale = 0.8;
-		.autohide = true;
-		.maxlines = 10;
-		.caption = $view.focused.description;
-		.ellipsize = true;
-	});
+  widget(label, {
+    .sizeScale = 0.8;
+    .autohide = true;
+    .maxlines = 10;
+    .caption = $view.focused.description;
+    .ellipsize = true;
+  });
 });
 

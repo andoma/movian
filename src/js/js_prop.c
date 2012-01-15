@@ -53,13 +53,8 @@ static JSBool
 pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   const char *name = name_by_id(id);
-  prop_t *c = name ? prop_create_check(JS_GetPrivate(cx, obj), name) : NULL;
-
-  if(c != NULL) {
-    js_prop_set_from_jsval(cx, c, *vp);
-    prop_ref_dec(c);
-  }
-
+  if(name != NULL)
+    js_prop_set_from_jsval(cx, prop_create(JS_GetPrivate(cx, obj), name), *vp);
   return JS_TRUE;
 }
 
@@ -119,7 +114,7 @@ vfw_setval(void *opaque, prop_event_t event, ...)
   wfv_t *wfv = opaque;
   va_list ap;
   rstr_t *r;
-  
+  const char *s;
   va_start(ap, event);
 
   switch(event) {
@@ -134,6 +129,15 @@ vfw_setval(void *opaque, prop_event_t event, ...)
 
     r = va_arg(ap, rstr_t *);
     if(strcmp(JS_GetStringBytes(JSVAL_TO_STRING(wfv->value)), rstr_get(r)))
+      return;
+    break;
+
+  case PROP_SET_CSTRING:
+    if(!JSVAL_IS_STRING(wfv->value))
+      return;
+
+    s = va_arg(ap, const char *);
+    if(strcmp(JS_GetStringBytes(JSVAL_TO_STRING(wfv->value)), s))
       return;
     break;
 
@@ -174,7 +178,7 @@ js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
 
     struct prop_notify_queue exp, nor;
     jsrefcount s = JS_SuspendRequest(cx);
-    prop_courier_wait(pc, &nor, &exp);
+    prop_courier_wait(pc, &nor, &exp, 0);
     JS_ResumeRequest(cx, s);
     prop_notify_dispatch(&exp);
     prop_notify_dispatch(&nor);

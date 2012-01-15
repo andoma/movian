@@ -23,13 +23,13 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <assert.h>
+#include <time.h>
 
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
 #include "playqueue.h"
 #include "media.h"
-#include "notifications.h"
 #include "event.h"
 
 
@@ -1086,8 +1086,6 @@ player_thread(void *aux)
     }
 
     if(pqe->pqe_url == NULL) {
-      notify_add(NULL, NOTIFY_ERROR, NULL, 5,
-		 "Playqueue error: An entry lacks URL");
       pqe = playqueue_advance(pqe, 0);
       continue;
     }
@@ -1133,8 +1131,7 @@ player_thread(void *aux)
     prop_ref_dec(m);
 
     if(e == NULL) {
-      notify_add(NULL, NOTIFY_ERROR, NULL, 5, "URL: %s\nPlayqueue error: %s",
-		 pqe->pqe_url, errbuf);
+      TRACE(TRACE_ERROR, "Playqueue", "Unable to play %s -- %s", pqe->pqe_url, errbuf);
       pqe = playqueue_advance(pqe, 0);
       continue;
     }

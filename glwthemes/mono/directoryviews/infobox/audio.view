@@ -1,7 +1,6 @@
 #import "theme://include/defs.view"
 #import "theme://include/separators.view"
-#import "skin://infobox.skin"
-
+#import "theme://include/infobox.view"
 
 widget(container_y, {
   .spacing = 5;
@@ -65,7 +64,6 @@ widget(container_y, {
       .width = $ui.size * 6;
       .height = $ui.size * 6;
       .source = $args.metadata.album_art;
-      .hqScaling = true;
     });
   });
 
@@ -77,17 +75,9 @@ widget(container_y, {
     .caption = fmt(_("Added by: %s"), $args.metadata.user.name);
   });
 
-  widget(container_x, {
-    .hidden = select($args.metadata.message, false, true);
-    widget(icon, {
-      .source = "skin://icons/Mail.png";
-      .color = 0.6;
-      .hqScaling = true;
-    });
-    widget(label, {
-      .color = 0.6;
-      .caption = $args.metadata.message;
-    });
+  widget(label, {
+    .color = 0.6;
+    .caption = fmt(_pl("Played %d times", "Played %d time", $args.playcount), $args.playcount);
   });
 
   space(1);

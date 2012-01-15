@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <libavutil/common.h>
+
 #include "glw.h"
 #include "glw_renderer.h"
 #include "glw_texture.h"

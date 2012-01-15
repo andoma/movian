@@ -128,7 +128,7 @@ glw_expander_render(glw_t *w, glw_rctx_t *rc)
     rc0.rc_width = c->glw_req_size_x;
   else
     rc0.rc_height = c->glw_req_size_y;
-  c->glw_class->gc_render(c, &rc0);
+  glw_render0(c, &rc0);
 }
 
 

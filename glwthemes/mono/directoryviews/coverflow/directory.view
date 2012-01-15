@@ -2,6 +2,6 @@
 #import "theme://include/squareitems.view"
 
 SQUARE_ITEM_SIMPLE($self.metadata.title,
-		   "theme://icons/256x256/Folder.png",
+		   "theme://svg/Folder.svg",
 		   navOpen($self.url),
 		   PLATE_COLOR_DIR());

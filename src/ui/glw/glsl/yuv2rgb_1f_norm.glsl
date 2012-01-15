@@ -1,3 +1,7 @@
+#ifdef GL_ES
+precision highp float;
+#endif
+
 uniform sampler2D u_t0;
 uniform sampler2D u_t1;
 uniform sampler2D u_t2;

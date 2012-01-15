@@ -131,7 +131,8 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
   while(t != NULL) {
 
     switch(t->type) {
-    case TOKEN_STRING:
+    case TOKEN_RSTRING:
+    case TOKEN_CSTRING:
     case TOKEN_FLOAT:
     case TOKEN_INT:
     case TOKEN_IDENTIFIER:
@@ -353,7 +354,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 
 
 	if(!strcmp(rstr_get(t->t_rstring), "_") && 
-	   t1->next->type == TOKEN_STRING &&
+	   t1->next->type == TOKEN_RSTRING &&
 	   t1->next->next->type == TOKEN_RIGHT_PARENTHESIS) {
 
 	  glw_view_nls_string(t, rstr_get(t1->next->t_rstring));

@@ -74,7 +74,7 @@ notify_timeout(callout_t *c, void *aux)
  */
 void *
 notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
-	   const char *fmt, ...)
+	   rstr_t *fmt, ...)
 {
   char msg[256];
   prop_t *p;
@@ -92,12 +92,14 @@ notify_add(prop_t *root, notify_type_t type, const char *icon, int delay,
   va_start(ap, fmt);
   va_copy(apx, ap);
 
-  tracev(0, tl, "notify", fmt, ap);
+  tracev(0, tl, "notify", rstr_get(fmt), ap);
 
-  vsnprintf(msg, sizeof(msg), fmt, apx);
+  vsnprintf(msg, sizeof(msg), rstr_get(fmt), apx);
 
   va_end(ap);
   va_end(apx);
+
+  rstr_release(fmt);
 
   p = prop_create_root(NULL);
 

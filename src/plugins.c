@@ -87,12 +87,11 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 {
   char ctrlfile[URL_MAX];
   char *json;
-  struct fa_stat fs;
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  if((json = fa_quickload(ctrlfile, &fs, NULL, errbuf, errlen)) == NULL)
+  if((json = fa_load(ctrlfile, NULL, NULL, errbuf, errlen, NULL)) == NULL)
     return -1;
 
   ctrl = htsmsg_json_deserialize(json);
@@ -614,23 +613,24 @@ plugin_install(plugin_item_data_t *pid)
   prop_set_int(pid->pid_canUpgrade, 0);
   prop_set_string(pid->pid_statustxt, "Downloading");
 
-  fa_stat_t fs;
+  size_t size;
 
-  char *buf = fa_quickload(pid->pid_package, &fs, NULL, errbuf, sizeof(errbuf));
+  char *buf = fa_load(pid->pid_package, &size, NULL,
+		      errbuf, sizeof(errbuf), NULL);
 
   if(buf == NULL) {
     prop_set_stringf(pid->pid_statustxt, errbuf);
     return;
   }
 
-  if(fs.fs_size < 4 ||
+  if(size < 4 ||
      buf[0] != 0x50 || buf[1] != 0x4b || buf[2] != 0x03 || buf[3] != 0x04) {
     prop_set_stringf(pid->pid_statustxt, "Invalid plugin archive");
     return;
   }
   
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
-	pid->pid_id, (int)fs.fs_size);
+	pid->pid_id, (int)size);
   prop_set_string(pid->pid_statustxt, "Installing");
 
   snprintf(path, sizeof(path), "%s/installedplugins", showtime_persistent_path);
@@ -654,9 +654,9 @@ plugin_install(plugin_item_data_t *pid)
     return;
   }
 
-  size_t r = write(fd, buf, fs.fs_size);
+  size_t r = write(fd, buf, size);
   free(buf);
-  if(close(fd) || r != fs.fs_size) {
+  if(close(fd) || r != size) {
     prop_set_string(pid->pid_statustxt, "Disk write error");
     TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
 	  path, strerror(errno));
@@ -1071,10 +1071,9 @@ plugin_open_file(prop_t *page, const char *url)
   char path[200];
   char errbuf[200];
   char *buf;
-  struct fa_stat fs;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-  buf = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
+  buf = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL);
   if(buf == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;

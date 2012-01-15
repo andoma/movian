@@ -24,7 +24,7 @@
 #include <unistd.h>
 #include <math.h>
 
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 
 #include "showtime.h"
 #include "prop_i.h"
@@ -174,6 +174,10 @@ node_set_group(void *opaque, prop_event_t event, ...)
   case PROP_SET_RSTRING:
   case PROP_SET_RLINK:
     group = rstr_get(va_arg(ap, rstr_t *));
+    break;
+
+  case PROP_SET_CSTRING:
+    group = va_arg(ap, const char *);
     break;
 
   case PROP_SET_INT:

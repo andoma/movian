@@ -1097,3 +1097,146 @@ charset_get_name(const void *p)
       return charsets[i].title;
   return "???";
 }
+
+/**
+ *
+ */
+void
+ucs2_to_utf8(uint8_t *dst, size_t dstlen, const uint8_t *src, size_t srclen)
+{
+  int c, r;
+  while(dstlen > 3 && srclen >= 2) {
+    c = src[0] | src[1] << 8;
+    if(c == 0)
+      break;
+    src += 2;
+    srclen -= 2;
+    r = utf8_put((char *)dst, c);
+    dst += r;
+    dstlen -= r;
+  }
+  *dst = 0;
+}
+
+
+/**
+ *
+ */
+size_t
+utf8_to_ucs2(uint8_t *dst, const char *src)
+{
+  int c;
+  size_t o = 0;
+  while((c = utf8_get(&src)) != 0) {
+    if(c > 0xffff)
+      return -1;
+    
+    if(dst != NULL) {
+      dst[o] = c;
+      dst[o+1] = c >> 8;
+    }
+    o+=2;
+  }
+  if(dst != NULL) {
+    dst[o] = 0;
+    dst[o+1] = 0;
+  }
+  o+=2;
+  return o;
+}
+
+
+/**
+ *
+ */
+size_t
+utf8_to_ascii(uint8_t *dst, const char *src)
+{
+  int c;
+  size_t o = 0;
+  while((c = utf8_get(&src)) != 0) {
+    if(c > 0xff)
+      return -1;
+    
+    if(dst != NULL) {
+      dst[o] = c;
+    }
+    o+=1;
+  }
+  if(dst != NULL) {
+    dst[o] = 0;
+  }
+  o+=1;
+  return o;
+}
+
+
+
+/**
+ *
+ */
+uint32_t
+html_makecolor(const char *str)
+{
+  uint8_t r, g, b;
+  if(*str == '#')
+    str++;
+  if(strlen(str) == 3) {
+    r = hexnibble(str[0]) * 0x11;
+    g = hexnibble(str[1]) * 0x11;
+    b = hexnibble(str[2]) * 0x11;
+  } else if(strlen(str) == 6) {
+    r = (hexnibble(str[0]) << 4) | hexnibble(str[1]);
+    g = (hexnibble(str[2]) << 4) | hexnibble(str[3]);
+    b = (hexnibble(str[4]) << 4) | hexnibble(str[5]);
+  } else
+    return 0;
+  return b << 16  | g << 8 | r;
+}
+
+
+/**
+ *
+ */
+void
+utf16_to_utf8(char **bufp, size_t *lenp)
+{
+  void *freeme = *bufp;
+  const char *src = *bufp;
+  size_t len = *lenp;
+  int le = 0;
+  if(len < 2)
+    return;
+
+  if(src[0] == 0xff && src[1] == 0xfe) {
+    le = 1;
+    src += 2;
+    len -= 2;
+  } else if(src[0] == 0xfe && src[1] == 0xff) {
+    src += 2;
+    len -= 2;
+  }
+
+  const char *src2 = src;
+  size_t len2 = len;
+
+  int olen = 1;
+  while(len >= 2) {
+    int c = src[!le] | src[le] << 8;
+    olen += utf8_put(NULL, c);
+    src += 2;
+    len -= 2;
+  }
+  freeme = *bufp;
+  *lenp = olen - 1;
+  char *o2 = *bufp = malloc(olen);
+  while(len2 >= 2) {
+    int c = src2[!le] | src2[le] << 8;
+    o2 += utf8_put(o2, c);
+    src2 += 2;
+    len2 -= 2;
+  }
+  *o2++ = 0;
+  assert(o2 == *bufp + olen);
+  free(freeme);
+}

@@ -177,6 +177,18 @@ arch_exit(int retcode)
 
 
 #include <errno.h>
+
+
+void
+hts_mutex_init_recursive(hts_mutex_t *m)
+{
+  pthread_mutexattr_t a;
+  pthread_mutexattr_init(&a);
+  pthread_mutexattr_settype(&a, PTHREAD_MUTEX_RECURSIVE);
+  pthread_mutex_init(m, &a);
+  pthread_mutexattr_destroy(&a);
+}
+
 /**
  *
  */
@@ -428,4 +440,11 @@ void
 hfree(void *ptr, size_t size)
 {
   munmap(ptr, size);
+}
+
+
+void
+my_localtime(const time_t *now, struct tm *tm)
+{
+  localtime_r(now, tm);
 }

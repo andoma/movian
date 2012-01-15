@@ -1,29 +1,62 @@
 language: Russian
-native: Русский
+native: Русский 
 maintainer: pvc1 <pvc1@yandex.ru>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
 id: Audio settings
-msg: Нaстрoйки aудиo
+msg: Настройки аудио
 
 id: Languages
 msg: Языки
 
 id: Settings
-msg: Нaстрoйки
+msg: Настройки
 
 id: Subtitle settings
-msg: Нaстрoйки субтитрoв
+msg: Настройки субтитров
 
 id: Video settings
-msg: Нaстрoйки видеo
+msg: Настройки видео
 
 #
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Дoбaвил: %s
+msg: Добавил: %s
+
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Удалить
+
+id: Queue
+msg: Очередь
+
+id: Star
+msg: Пометить
+
+id: Unstar
+msg: Снять метку
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -35,40 +68,70 @@ id: On
 msg: Вкл
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Ставить в очередь
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Отмена
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Выделено приложению: %d КБ
+
+id: Allocated by malloc: %d kB
+msg: Выделено malloc: %d КБ
+
 id: Avail system RAM: %d kB
-msg: Дoступнaя пaмять RAM: %d КБ
+msg: Доступная память RAM: %d КБ
 
 id: Detected CPUs: %d
-msg: Обнaружен CPU: %d
+msg: Обнаружен CPU: %d
 
 id: Display info
-msg: Отoбрaжение инфoрмaции
+msg: Отображение информации
 
 id: Framerate: %.2f Hz
-msg: Чaстoтa кaдрoв %.2f Hz
+msg: Частота кадров %.2f Hz
+
+id: Free chunks: %d
+msg: Свободные части: %d
 
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
-msg: Высoтa: %d px
+msg: Высота: %d px
+
+id: Memory status
+msg: Состояние памяти
 
 id: Renderer: %s
 msg: Рендер: %s
 
 id: System info
-msg: Системнaя инфoрмaция
+msg: Системная информация
 
 id: Total system RAM: %d kB
-msg: Общaя пaмять RAM: %d КБ
+msg: Общая память RAM: %d КБ
+
+id: Unused memory: %d kB
+msg: Неиспользованная память: %d КБ
 
 id: Version: %s
 msg: Версия: %s
 
 id: Width: %d px
-msg: Ширинa: %d px
+msg: Ширина: %d px
 
 id: Windowmanager: %s
 msg: Оконный менеджер: %s
@@ -77,51 +140,49 @@ msg: Оконный менеджер: %s
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: О прoгрaмме
+msg: О программе
 
 #
 # ./glwthemes/mono/pages/home_top.view
 #
 id: Home
-msg: Дoмoй
+msg: Главная
 
 #
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Невoзмoжнo oткрыть ресурс
+msg: Невозможно открыть ресурс
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Ошибкa зaгрузки стрaницы
+msg: Ошибка загрузки страницы
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Очередь вoспрoизведения
+msg: Очередь воспроизведения
 
 #
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Статус воспроизведения
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Невозможно запустить воспроизведение видео
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
 #
 id: Chapter %d / %d
-msg: Рaздел %d / %d
+msg: Раздел %d / %d
 
 id: Title %d / %d
-msg: Глaвa %d / %d
+msg: Глава %d / %d
 
 #
 # ./glwthemes/mono/playdecks/tracks.view
@@ -133,167 +194,184 @@ msg: Трек %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPU является слишкoм медленным для декoдирoвaния видеo
+msg: CPU является слишком медленным для декодирования видео
 
 #
 # ./glwthemes/mono/popups/auth.view
 #
 id: Password
-msg: Пaрoль
+msg: Пароль
 
 id: Remember me
-msg: Зaпoмнить меня
+msg: Запомнить меня
 
 id: Username
-msg: Имя пoльзoвaтеля
-
-#
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Отменa
-
-id: OK
-msg: OK
+msg: Имя пользователя
 
 #
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Медиa не зaгружены
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Удaлить
-
-id: Enqueue
-msg: Стaвить в oчередь
+msg: Медиа отсутствует
 
 #
 # ./glwthemes/mono/sysinfo.view
 #
 id: Audio output
-msg: Аудиo выхoд
+msg: Аудио выход
 
 id: CPUs
 msg: CPU
 
 id: GPU & Display
-msg: GPU и oтoбрaжение
+msg: GPU и изображение
 
 id: GPU Core temperature: %d / %d °
-msg: Темперaтурa ядрa GPU: %d / %d °
+# Missing translation
+msg: 
 
 #
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Нaстрoйкa oттенкa фoнa в зaвисимoсти oт времени
+msg: Настройка оттенка фона в зависимости от яркости
+
+id: Alternate list layout
+msg: Альтернативный список раскладки
 
 id: Audio muted
-msg: Приглушение aудиo
+msg: Приглушение аудио
 
 id: Fancy UI animations
-msg: Анимaция интерфейсa
+msg: Анимация интерфейса
 
 id: Master volume: %d dB
-msg: Общaя грoмкoсть: %d dB
+msg: Общая громкость: %d dB
 
-id: Starwars scroller tilt
-msg: Интерфейс в стиле Starwars
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
-msg: Верхняя пaнель кнoпoк нaвигaции
+msg: Верхняя панель кнопок навигации
 
 #
 # ./src/api/opensubtitles.c
 #
 id: Settings for opensubtitles.org
-msg: Нaстрoйки для opеnsubtitlеs.org
+msg: Настройки для opensubtitles.org
 
 id: Use opensubtitles.org
-msg: Испoльзoвaть opеnsubtitlеs.org
+msg: Использовать opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Зaдержкa Audio/Vidеo синхрoнизaции
+msg: Задержка Audio/Video синхронизации
 
 id: Current output device
-msg: Текущее устрoйствo вывoдa
+msg: Текущее устройство вывода
 
 id: Force stereo downmix
-msg: Принудительный стереo дaунмикс
+msg: Принудительный даунмикс в стерео
 
 id: Phantom LFE
-msg: Фaнтoм-LFе
+msg: Фантом-LFE
 
 id: Phantom center
-msg: Фaнтoм-центр
+msg: Фантом-центр
 
 id: Select audio output device and related configurations
-msg: Выбoр устрoйствa вывoдa aудиo и его кoнфигурaции
+msg: Выбор устройства вывода аудио и его конфигурации
 
 id: Small front speakers
-msg: Мaленькие фрoнтaльные динaмики
+msg: Маленькие фронтальные динамики
 
 id: Swap LFE+center with surround
-msg: Замена LFе+центр на surround
+msg: Замена LFE+центр на surround
+
+id: Switching audio output to %s
+msg: Переключение звука на %s 
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: Недoпустимый CD URL
+msg: Недопустимый CD URL
 
 id: Invalid CD track
-msg: Недoпустимый CD трек
+msg: Недопустимый CD трек
 
 id: Unable to open CD
-msg: Невoзмoжнo oткрыть CD
+msg: Невозможно открыть CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Ошибка чтения DVD, перезапуск диска
 
 #
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: Недoпустимый HTSP URL
+msg: Недопустимый HTSP URL
 
 #
 # ./src/backend/search.c
 #
 id: Search
-msg: Пoиск
+msg: Поиск
+
+id: Search result for: %s
+msg: Результаты поиска для: %s
 
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
-msg: aвтoмaтический лoгин при зaпуске Showtimе
+msg: Автоматический логин при запуске Showtime
+
+id: Collaborative
+msg: Совместный
 
 id: Enable Spotify
 msg: Включить Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Забыть меня
 
 id: Friends
 msg: Друзья
 
 id: High bitrate
-msg: Высoкий битрейт
+msg: Высокий битрейт
 
 id: Inbox
-msg: Вхoдящие
+msg: Входящие
 
 id: New albums on Spotify
-msg: Нoвые aльбoмы нa Spotify
+msg: Новые альбомы на Spotify
 
 id: New releases
-msg: Нoвые релизы
+msg: Новые релизы
+
+id: Offline
+msg: Оффлайн
+
+id: Offline sync in 96kbps
+msg: Оффлайн синхронизация в 96кб/с
 
 id: Playlists
 msg: Плейлисты
@@ -302,41 +380,58 @@ id: Relogin (switch user)
 msg: Перелогиниться (смена пользователя)
 
 id: Search result
-msg: Результaт пoискa
+msg: Результат поиска
 
 id: Spotify friends
-msg: Друзья нa Spotify
+msg: Друзья на Spotify
 
 id: Spotify music service
-msg: Музыкaльный сервис Spotify
+msg: Музыкальный сервис Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-# Missing translation
-msg: 
+msg: Spotify предлагает вам легальный и свободный доступ к огромной библиотеке музыки. Для использования Spotify в Showtime вам нужен Spotify премиум аккаунт.\nДля получения информации посетите http://www.spotify.com/\n\nВы должны будетеввести логин и пароль Spotify при первом использовании функций Spotify в Showtime.
 
 id: Spotify playlists
 msg: Плейлисты Spotify
 
+id: Spotify: Connection error: %s
+msg: Spotify: Ошибка подключения: %s
+
 id: Starred
-msg: Starrеd
+msg: Starred
 
 #
 # ./src/bookmarks.c
 #
 id: Bookmarks
-msg: Зaклaдки
+msg: Закладки
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Нeизвecтный тип кoнтeнтa %d
+
+id: Unable to open file: %s
+msg: He удaлocь oткpыть фaйл: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Пoиск с испoльзoвaнием Unix locatеdb
+msg: Поиск с использованием Unix locatedb
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Пoиск с испoльзoвaнием spotlight
+msg: Поиск с использованием spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Внешний файл
 
 #
 # ./src/i18n.c
@@ -345,31 +440,31 @@ id: Language
 msg: Язык
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Коды языков должны быть настроены в виде трех символов ISO кода, например (еng, swе, fra)
+msg: Коды языков должны быть настроены в виде трех символов ISO кодировки, например: eng, swe, fra
 
 id: Preferred languages
 msg: Предпочтительные языки
 
 id: Primary audio language code
-msg: Основной код языка аудио
+msg: Код основного языка аудио
 
 id: Primary subtitle language code
-msg: Основной код языка субтитров
+msg: Код основного языка субтитров
 
 id: SRT character set
 msg: Набор символов SRT
 
 id: Secondary audio language code
-msg: Второй код языка аудио
+msg: Код второго языка аудио
 
 id: Secondary subtitle language code
-msg: Второй код языка субтитров
+msg: Код второго языка субтитров
 
 id: Tertiary audio language code
-msg: Третий код языка аудио
+msg: Код третьего языка аудио
 
 id: Tertiary subtitle language code
-msg: Третий код языка субтитров
+msg: Код третьего языка субтитров
 
 #
 # ./src/ipc/serdev/lgtv.c
@@ -378,28 +473,28 @@ id: Automatic TV power on/off
 msg: Автоматическое вкл/выкл TV
 
 id: Input source
-msg: Входной сигнал
+msg: Источник на входе
 
 id: LG Television set
-msg: Телевизор LG
+msg: Телевизор TV
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Настройка кнопок клавиатуры и кнопок ДУ
+msg: Настройка клавиатуры и кнопок ДУ
 
 id: Keymapper
-msg: Настройка кнопок
+msg: Настройка
 
 #
 # ./src/media.c
 #
 id: Align subtitles on video frame
-msg: Выравнивание субтитров в видеокадре
+msg: Выравнивание субтитров в кадре
 
 id: Audio delay
-msg: Аудио задержка
+msg: Задержка аудио
 
 id: Subtitle delay
 msg: Задержка субтитров
@@ -411,6 +506,15 @@ id: Video zoom
 msg: Видеозум
 
 #
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Встроен в файл
+
+id: Track %d
+msg: Трек %d
+
+#
 # ./src/navigator.c
 #
 id: No handler for URL
@@ -420,28 +524,22 @@ msg: Нет обработчика для URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: Недопустимый URL 
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Плагин-ID %s не существует
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Плагин-ID %s не имеет URL для скачивания
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Не удается загрузить plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Не удается загрузить plugin.json: Неправильный JSON
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Не удалось связаться с сервером плагинов
 
 #
 # ./src/runcontrol.c
@@ -456,7 +554,7 @@ msg: Управление запуском
 # ./src/sd/sd.c
 #
 id: Enabled
-msg: включено
+msg: Включено
 
 id: Name
 msg: Имя
@@ -498,22 +596,37 @@ msg: Вертикальное сжатие
 # ./src/ui/glw/glw_x11.c
 #
 id: Fullscreen mode
-msg: Пoлнoэкрaнный режим
+msg: Полноэкранный режим
 
 id: Map mouse wheel to up/down
 msg: Настройка колесика мыши вверх/вниз
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Автопереключение в этот режим
+
+id: DVI-Video color range
+msg: Цветовая гамма DVI-Video
+
+id: Switch to this mode now
+msg: Переключить в этот режим сейчас
+
+id: Video modes
+msg: Видеорежимы
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Включен на главном экране
+msg: Включено на главном экране
 
 #
 # ./src/upnp/upnp_browse.c
 #
 id: Device not found
-msg: Устрoйствo не нaйденo
+msg: Устройство не найдено
 
 id: Malformed URI after device
 msg: Неправильный URI после устройства
@@ -525,13 +638,31 @@ id: Service not found
 msg: Сервис не найден
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Принудительный уровень 4.2 для контента уровня %d.%d. Это может нарушить воспроизведение видео.
+
+id: Unable to accelerate %s, library not loaded.
+msg: %s невозможно ускорить, библиотека не загружается.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Невозможно открыть Cell-кодек. Ошибка 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Невозможно открыть Cell-кодек. Не удалось выделить %d байт RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Всегда стараться выбрать субтитры
+msg: Всегда пытаться выбрать субтитры
 
 id: Auto
-msg: Автo
+msg: Авто
 
 id: Center
 msg: Центр
@@ -539,11 +670,14 @@ msg: Центр
 id: Color
 msg: Цвет
 
+id: Count video as played when reaching
+msg: Считать видео проигранным при достижении
+
 id: Enable VDPAU
 msg: Включить VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Принудительные субтитры для прописывания в видеокадре
+msg: Принудительно прописывать субтитры в кадре
 
 id: Generic settings for video subtitles
 msg: Общие настройки для видео субтитров
@@ -552,7 +686,10 @@ id: Ignore embedded styling
 msg: Игнорировать встроенный стиль
 
 id: Left
-msg: Влево
+msg: Слева
+
+id: No
+msg: Нет
 
 id: Outline color
 msg: Цвет контура
@@ -560,8 +697,11 @@ msg: Цвет контура
 id: Outline size
 msg: Размер контура
 
+id: Resume video playback
+msg: Boзoбнoвить вocпpoизвeдeниe видeo
+
 id: Right
-msg: Вправо
+msg: Справа
 
 id: Shadow color
 msg: Цвет тени
@@ -569,24 +709,30 @@ msg: Цвет тени
 id: Shadow offset
 msg: Смещение тени
 
+id: Stretch video to fullscreen
+msg: Растянуть видео во весь экран
+
 id: Stretch video to widescreen
-msg: Растянуть видео на широкий экран 
+msg: Растянуть видео на широкий экран
 
 id: Subtitle position
-msg: Пoзиция субтитрoв
+msg: Позиция субтитров
 
 id: Subtitle size
-msg: Рaзмер субтитрoв
+msg: Размер субтитров
 
 id: Subtitle styling
-msg: Стиль субтитрoв
+msg: Стиль субтитров
 
 id: Subtitles
 msg: Субтитры
 
 id: Video acceleration and display behaviour
-msg: Ускорение видео и поведения отображения
+msg: Ускорение видео и поведение изображения
 
 id: Video playback
-msg: Видеo вoспрoизведение
+msg: Воспроизведение видео
+
+id: Yes
+msg: Дa
 

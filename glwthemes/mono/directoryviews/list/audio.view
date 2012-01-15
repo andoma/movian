@@ -8,7 +8,7 @@ widget(container_x, {
 
   widget(icon, {
     .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_AUDIO());
-    .source = "theme://icons/48x48/Music.png";
+    .source = "theme://svg/Music.svg";
     .shadow = true;
     .align = top;
   });

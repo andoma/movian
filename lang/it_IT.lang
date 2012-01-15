@@ -25,6 +25,39 @@ msg: Impostazioni video
 id: Added by: %s
 msg: Aggiunto da: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Cancella
+
+id: Queue
+msg: In coda
+
+id: Star
+msg: Segna
+
+id: Unstar
+msg: Non segnare
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +68,29 @@ id: On
 msg: Attiva
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Metti in coda
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Allocati dall'applicazione: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Allocati da malloc: %d kB
+
 id: Avail system RAM: %d kB
 msg: RAM disponibile: %d kB
 
@@ -49,11 +103,17 @@ msg: Informazioni di visualizzazione
 id: Framerate: %.2f Hz
 msg: Framerate: %.2f Hz
 
+id: Free chunks: %d
+msg: Chunks disponibili: %d
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Altezza: %d px
+
+id: Memory status
+msg: Stato della Memoria
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -63,6 +123,9 @@ msg: Informazioni di sistema
 
 id: Total system RAM: %d kB
 msg: RAM totale: %d kB
+
+id: Unused memory: %d kB
+msg: Memoria inutilizzata: %d kB
 
 id: Version: %s
 msg: Versione: %s
@@ -146,28 +209,10 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Cancella
-
-id: Enqueue
-msg: Metti in coda
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +235,9 @@ msg: Temperatura GPU: %d / %d °
 id: Adjust background tint based on daytime
 msg: Modifica lo sfondo a seconda dell'ora 
 
+id: Alternate list layout
+msg: Alterna il layout della lista
+
 id: Audio muted
 msg: Audio silenziato
 
@@ -199,8 +247,9 @@ msg: Animazioni dell'interfaccia
 id: Master volume: %d dB
 msg: Volume principale: %d dB
 
-id: Starwars scroller tilt
-msg: Inclinazione interfaccia in stile StarWars
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Pulsanti nella barra di navigazione in alto
@@ -213,6 +262,12 @@ msg: Impostazioni per opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Utilizza opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Memoria in esaurimento (%d kB di RAM disponibile)
 
 #
 # ./src/audio/audio.c
@@ -241,6 +296,9 @@ msg: Altoparlanti piccoli frontali
 id: Swap LFE+center with surround
 msg: Scambia LFE+center con surround
 
+id: Switching audio output to %s
+msg: Cambio dell'uscita audio a %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +312,15 @@ id: Unable to open CD
 msg: Impossibile aprire il CD
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Errore nella lettura DVD, riavvio del disco in corso
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -265,11 +332,17 @@ msg: URL HTSP non valido
 id: Search
 msg: Cerca
 
+id: Search result for: %s
+msg: Risultati della ricerca per: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Login automatico all'avvio di Showtime
+
+id: Collaborative
+msg: Collaborativo
 
 id: Enable Spotify
 msg: Attiva Spotify
@@ -292,6 +365,12 @@ msg: Nuovi album su Spotify
 id: New releases
 msg: Nuovi rilasci
 
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Sync offline in 96kbps
+
 id: Playlists
 msg: Playlist
 
@@ -313,6 +392,9 @@ msg: Spotify ti offre un accesso libero e legale a un'ingente raccolta di musica
 id: Spotify playlists
 msg: Spotify playlist
 
+id: Spotify: Connection error: %s
+msg: Spotify: errore di connessione: %s
+
 id: Starred
 msg: Speciali
 
@@ -321,6 +403,15 @@ msg: Speciali
 #
 id: Bookmarks
 msg: Segnalibri
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Impossibile gestire questo tipo di contenuti %d
+
+id: Unable to open file: %s
+msg: Impossibile aprire il file: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -333,6 +424,12 @@ msg: Cerca usando il locatedb Unix
 #
 id: Search using spotlight
 msg: Cerca usando spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: File esterno
 
 #
 # ./src/i18n.c
@@ -405,6 +502,15 @@ msg: Dimensione dei sottotitoli
 
 id: Video zoom
 msg: Zoom video
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Incorporato nel file
+
+id: Track %d
+msg: Traccia %d
 
 #
 # ./src/navigator.c
@@ -494,6 +600,21 @@ id: Map mouse wheel to up/down
 msg: Usa rotellina del mouse per scorrere su/giù
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Passa automaticamente a questa modalità
+
+id: DVI-Video color range
+msg: Gamma di colori DVI-Video
+
+id: Switch to this mode now
+msg: Passa a questa modalità ora
+
+id: Video modes
+msg: Modalità video
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -515,6 +636,24 @@ id: Service not found
 msg: Servizio non trovato
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Forzando il livello 4.2 per contenuto al livello %d.%d. Questo potrebbe inibire la riproduzione del video.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Impossibile accelerare %s, libreria non caricata.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Impossibile aprire il Cell codec. Errore 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Impossibile aprire il Cell codec. Impossibile allocare %d bytes di RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Impossibile richiedere il Cell codec. Errore 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -528,6 +667,9 @@ msg: Al centro
 
 id: Color
 msg: Colore
+
+id: Count video as played when reaching
+msg: Conteggia il video come riprodotto quando raggiunge
 
 id: Enable VDPAU
 msg: Attiva VDPAU
@@ -544,11 +686,17 @@ msg: Ignora i codici di stile incorporati
 id: Left
 msg: Sinistra
 
+id: No
+msg: No
+
 id: Outline color
 msg: Colore contorni
 
 id: Outline size
 msg: Dimensioni contorni
+
+id: Resume video playback
+msg: Riprendi riproduzione del video
 
 id: Right
 msg: Destra
@@ -558,6 +706,9 @@ msg: Colore ombra
 
 id: Shadow offset
 msg: Offset ombra
+
+id: Stretch video to fullscreen
+msg: Adatta video a Schermo Pieno
 
 id: Stretch video to widescreen
 msg: Adatta video a widescreen
@@ -579,4 +730,7 @@ msg: Accelerazione video e comportamento schermo
 
 id: Video playback
 msg: Riproduzione video
+
+id: Yes
+msg: Si
 

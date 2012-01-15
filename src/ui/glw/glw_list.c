@@ -24,9 +24,14 @@ typedef struct glw_list {
   float child_aspect;
 
   float filtered_pos;
+  int touch_pos;
+
   int total_size;
   int current_pos;
   int page_size;
+  int touched;
+
+  int velocity;
 
   glw_t *scroll_to_me;
 
@@ -118,10 +123,20 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
   }
 
   
-  l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
-				      l->total_size - l->page_size));
-  l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
-  
+  if(l->touched) {
+
+    l->filtered_pos = l->current_pos;
+
+  } else {
+
+    l->current_pos += l->velocity;
+    l->velocity *= 0.75;
+
+    l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
+					l->total_size - l->page_size));
+    l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+  }
+
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -396,6 +411,47 @@ glw_list_scroll(glw_list_t *l, glw_scroll_t *gs)
 }
 
 
+
+
+static void
+handle_pointer_event(glw_list_t *l, glw_pointer_event_t *gpe)
+{
+  int y;
+
+  switch(gpe->type) {
+  case GLW_POINTER_SCROLL:
+    l->current_pos += l->page_size * gpe->delta_y;
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
+    break;
+
+  case GLW_POINTER_TOUCH_PRESS:
+    y = (0.5 - gpe->y * 0.5) *  l->page_size;
+    l->touch_pos = l->current_pos + y;
+    l->touched = 1;
+    l->velocity = 0;
+    break;
+
+  case GLW_POINTER_TOUCH_RELEASE:
+    l->touched = 0;
+    gpe->vel_y = 3;
+    l->velocity = (0.5 - gpe->vel_y * 0.5) *  l->page_size;
+    break;
+
+  case GLW_POINTER_TOUCH_MOTION:
+    if(!l->touched)
+      return;
+    
+    y = (0.5 - gpe->y * 0.5) *  l->page_size;
+    l->current_pos = l->touch_pos - y;
+    l->w.glw_flags |= GLW_UPDATE_METRICS;
+    break;
+
+  default:
+    break;
+  }
+}
+
+
 /**
  *
  */
@@ -403,7 +459,6 @@ static int
 glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_list_t *l = (void *)w;
-  glw_pointer_event_t *gpe;
 
   switch(signal) {
   default:
@@ -423,12 +478,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
-    gpe = extra;
-
-    if(gpe->type == GLW_POINTER_SCROLL) {
-      l->current_pos += l->page_size * gpe->delta_y;
-      l->w.glw_flags |= GLW_UPDATE_METRICS;
-    }
+    handle_pointer_event(l, extra);
     break;
 
   case GLW_SIGNAL_SCROLL:

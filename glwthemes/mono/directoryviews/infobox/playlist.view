@@ -24,6 +24,5 @@ widget(container_y, {
     .align = left;
     .height = $ui.size * 5;
     .source = $args.metadata.user.picture;
-    .hqScaling = true;
   });
 });

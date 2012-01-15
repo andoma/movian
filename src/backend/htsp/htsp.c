@@ -21,11 +21,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <htsmsg/htsmsg.h>
-#include <htsmsg/htsmsg_binary.h>
-#include <arch/threads.h>
-#include <arch/atomic.h>
-#include <libavutil/sha.h>
+#include "htsmsg/htsmsg.h"
+#include "htsmsg/htsmsg_binary.h"
+#include "arch/threads.h"
+#include "arch/atomic.h"
+
+#include <libavcodec/avcodec.h>
 
 #include "showtime.h"
 #include "prop/prop_nodefilter.h"
@@ -35,6 +36,7 @@
 #include "keyring.h"
 #include "media.h"
 #include "misc/string.h"
+#include "misc/sha.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 
@@ -222,7 +224,7 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
   char id[100];
   char *username;
   char *password;
-  struct AVSHA *shactx = alloca(av_sha_size);
+  sha1_decl(shactx);
   uint8_t d[20];
 
   if(tc == NULL)
@@ -255,10 +257,10 @@ htsp_reqreply(htsp_connection_t *hc, htsmsg_t *m)
       htsmsg_add_str(m, "username", username);
 
     if(password != NULL) {
-      av_sha_init(shactx, 160);
-      av_sha_update(shactx, (const uint8_t *)password, strlen(password));
-      av_sha_update(shactx, hc->hc_challenge, 32);
-      av_sha_final(shactx, d);
+      sha1_init(shactx);
+      sha1_update(shactx, (const uint8_t *)password, strlen(password));
+      sha1_update(shactx, hc->hc_challenge, 32);
+      sha1_final(shactx, d);
       htsmsg_add_bin(m, "digest", d, 20);
     }
 
@@ -1482,6 +1484,8 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
 
   prop_set_string(mp->mp_prop_playstatus, "play");
 
+  mp_configure(mp, 0, MP_BUFFER_DEEP);
+
   if(primary)
     mp_become_primary(mp);
   else
@@ -1588,7 +1592,8 @@ static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype)
+		  const char *mimetype,
+		  const char *canonical_url)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
@@ -1918,7 +1923,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	snprintf(url, sizeof(url), "sub:%d", idx);
 	mp_add_track(mp->mp_prop_subtitle_tracks,
-		     NULL, url, nicename, NULL, lang, "HTSP", 0);
+		     NULL, url, nicename, NULL, lang, "HTSP", NULL, 0);
 	break;
 
       case AVMEDIA_TYPE_AUDIO:
@@ -1930,7 +1935,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	snprintf(url, sizeof(url), "audio:%d", idx);
 	mp_add_track(mp->mp_prop_audio_tracks,
-		     NULL, url, nicename, NULL, lang, "HTSP", 0);
+		     NULL, url, nicename, NULL, lang, "HTSP", NULL, 0);
 	break;
       }
 

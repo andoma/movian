@@ -21,14 +21,8 @@
 
 #include "media.h"
 
-typedef struct video_playback {
-  hts_thread_t vp_thread;
-  media_pipe_t *vp_mp;
-} video_playback_t;
+void video_playback_create(media_pipe_t *mp);
 
-
-video_playback_t *video_playback_create(media_pipe_t *mp);
-
-void video_playback_destroy(video_playback_t *vp);
+void video_playback_destroy(media_pipe_t *mp);
 
 #endif /* PLAY_VIDEO_H */

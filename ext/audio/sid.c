@@ -63,6 +63,7 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 
 #define CHUNK_SIZE (1024*2)
@@ -1230,6 +1231,7 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
   int nSamplesRendered = 0;
   int nSamplesPerCall = 882;  /* This is PAL SID single speed (44100/50Hz) */
   int nSamplesToRender = 0;
+  int registered_play = 0;
 
   
   url0 += strlen("sidplayer:");
@@ -1276,6 +1278,12 @@ be_sidplayer_play(const char *url0, media_pipe_t *mp,
       mb->mb_rate = 44100;
 
       mb->mb_time = sample * 1000000LL / mb->mb_rate;
+
+      if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
+	registered_play = 1;
+	metadb_register_play(url0, 1, CONTENT_AUDIO);
+      }
+
       sample += CHUNK_SIZE;
 
       int16_t *samples = mb->mb_data;

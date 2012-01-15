@@ -1,2 +1,2 @@
-#import "skin://nav.skin"
+#import "theme://include/nav.view"
 skinNavLocation(_("Playqueue"));

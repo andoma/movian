@@ -30,6 +30,9 @@
 #include "keyring.h"
 #include "notifications.h"
 
+prop_courier_t *js_global_pc;
+JSContext *js_global_cx;
+
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
 static JSObject *RichText;
@@ -502,7 +505,9 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("print",            js_print,    1, 0, 0),
     JS_FS("httpGet",          js_httpGet, 2, 0, 0),
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
+#if ENABLE_RELEASE == 0
     JS_FS("readFile",         js_readFile, 1, 0, 0),
+#endif
     JS_FS("queryStringSplit", js_queryStringSplit, 1, 0, 0),
     JS_FS("pathEscape",       js_pathEscape, 1, 0, 0),
     JS_FS("paramEscape",      js_paramEscape, 1, 0, 0),
@@ -580,6 +585,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_page_flush_from_plugin(cx, jsp);
   js_io_flush_from_plugin(cx, jsp);
   js_service_flush_from_plugin(cx, jsp);
+  js_setting_group_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -711,7 +717,7 @@ int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
   char *sbuf;
-  struct fa_stat fs;
+  size_t size;
   JSContext *cx;
   js_plugin_t *jsp;
   JSObject *pobj, *gobj;
@@ -722,7 +728,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((sbuf = fa_quickload(url, &fs, NULL, errbuf, errlen)) == NULL) {
+  if((sbuf = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }
@@ -777,7 +783,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   jsp->jsp_protect_object = 1;
 
-  s = JS_CompileScript(cx, pobj, sbuf, fs.fs_size, url, 1);
+  s = JS_CompileScript(cx, pobj, sbuf, size, url, 1);
   free(sbuf);
 
   if(s != NULL) {
@@ -796,6 +802,32 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   return 0;
 }
 
+
+/**
+ * Prop lockmanager for locking JS global context
+ */
+static void
+js_lockmgr(void *ptr, int lock)
+{
+  if(lock)
+    JS_BeginRequest(ptr);
+  else
+    JS_EndRequest(ptr);
+}
+
+
+static void
+js_global_pc_prologue(void)
+{
+  JS_SetContextThread(js_global_cx);
+}
+
+
+static void
+js_global_pc_epilogue(void)
+{
+  JS_ClearContextThread(js_global_cx);
+}
 
 
 /**
@@ -831,9 +863,12 @@ js_init(void)
 	     
   JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
+  js_global_cx = cx;
   JS_EndRequest(cx);
-  JS_DestroyContext(cx);
-
+  JS_ClearContextThread(cx);
+  js_global_pc = prop_courier_create_lockmgr("js", js_lockmgr, cx,
+					     js_global_pc_prologue,
+					     js_global_pc_epilogue);
   return 0;
 }
 
@@ -846,9 +881,10 @@ static void
 js_fini(void)
 {
   js_plugin_t *jsp, *n;
-  JSContext *cx;
+  JSContext *cx = js_global_cx;
 
-  cx = js_newctx(err_reporter);
+  prop_courier_destroy(js_global_pc);
+  JS_SetContextThread(cx);
   JS_BeginRequest(cx);
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
@@ -868,6 +904,28 @@ js_fini(void)
 
 
 
+
+static void *
+js_load_thread(void *aux)
+{
+  const char *url = aux;
+  char errbuf[128];
+  
+  if(js_plugin_load("test-fromcmdline", url, errbuf, sizeof(errbuf)))
+    TRACE(TRACE_ERROR, "JS", "Unable to load %s -- %s", url, errbuf);
+  return NULL;
+}
+
+/**
+ *
+ */
+void
+js_load(const char *url)
+{
+  char *u = strdup(url);
+  
+  hts_thread_create_detached("rawjs", js_load_thread, u, THREAD_PRIO_LOW);
+}
 
 
 /**

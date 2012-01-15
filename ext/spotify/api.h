@@ -43,6 +43,8 @@ extern "C" {
 /* Includes */
 #include <stddef.h>
 
+
+
 #ifdef _WIN32
 typedef unsigned __int64 sp_uint64;
 #else
@@ -116,6 +118,17 @@ typedef enum sp_error {
 	SP_ERROR_NO_CACHE                  = 21, ///< Cache is not enabled
 	SP_ERROR_NO_SUCH_USER              = 22, ///< Requested user does not exist
 	SP_ERROR_NO_CREDENTIALS            = 23, ///< No credentials are stored
+	SP_ERROR_NETWORK_DISABLED          = 24, ///< Network disabled
+	SP_ERROR_INVALID_DEVICE_ID         = 25, ///< Invalid device ID
+	SP_ERROR_CANT_OPEN_TRACE_FILE      = 26, ///< Unable to open trace file
+	SP_ERROR_APPLICATION_BANNED        = 27, ///< This application is no longer allowed to use the Spotify service
+
+	SP_ERROR_OFFLINE_TOO_MANY_TRACKS   = 31, ///< Reached the device limit for number of tracks to download
+	SP_ERROR_OFFLINE_DISK_CACHE        = 32, ///< Disk cache is full so no more tracks can be downloaded to offline mode
+	SP_ERROR_OFFLINE_EXPIRED           = 33, ///< Offline key has expired, the user needs to go online again
+	SP_ERROR_OFFLINE_NOT_ALLOWED       = 34, ///< This user is not allowed to use offline mode
+	SP_ERROR_OFFLINE_LICENSE_LOST      = 35, ///< The license for this device has been lost. Most likely because the user used offline on three other device
+	SP_ERROR_OFFLINE_LICENSE_ERROR     = 36, ///< The Spotify license server does not respond correctly
 } sp_error;
 
 /**
@@ -147,7 +160,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_create(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 9
+#define SPOTIFY_API_VERSION 10
 
 /**
  * Describes the current state of the connection
@@ -207,6 +220,30 @@ typedef enum sp_playlist_offline_status {
 } sp_playlist_offline_status;
 
 /**
+ * Track availability
+ */
+typedef enum sp_availability {
+	SP_TRACK_AVAILABILITY_UNAVAILABLE = 0, ///< Track is not available
+	SP_TRACK_AVAILABILITY_AVAILABLE   = 1, ///< Track is available and can be played
+	SP_TRACK_AVAILABILITY_NOT_STREAMABLE = 2, ///< Track can not be streamed using this account
+	SP_TRACK_AVAILABILITY_BANNED_BY_ARTIST = 3, ///< Track not available on artist's reqeust
+} sp_track_availability;
+
+/**
+ * Track offline status
+ */
+typedef enum sp_track_offline_status {
+	SP_TRACK_OFFLINE_NO             = 0, ///< Not marked for offline
+	SP_TRACK_OFFLINE_WAITING        = 1, ///< Waiting for download
+	SP_TRACK_OFFLINE_DOWNLOADING    = 2, ///< Currently downloading
+	SP_TRACK_OFFLINE_DONE           = 3, ///< Downloaded OK and can be played
+	SP_TRACK_OFFLINE_ERROR          = 4, ///< Error during download
+	SP_TRACK_OFFLINE_DONE_EXPIRED   = 5, ///< Downloaded OK but not playable due to expiery
+	SP_TRACK_OFFLINE_LIMIT_EXCEEDED = 6, ///< Waiting because device have reached max number of allowed tracks
+	SP_TRACK_OFFLINE_DONE_RESYNC    = 7, ///< Downloaded OK and available but scheduled for re-download
+} sp_track_offline_status;
+
+/**
  * Buffer stats used by get_audio_buffer_stats callback
  */
 typedef struct sp_audio_buffer_stats {
@@ -247,6 +284,23 @@ typedef enum sp_connection_rules {
 	SP_CONNECTION_RULE_ALLOW_SYNC_OVER_MOBILE = 0x4, ///< Set to allow syncing of offline content over mobile connections
 	SP_CONNECTION_RULE_ALLOW_SYNC_OVER_WIFI   = 0x8, ///< Set to allow syncing of offline content over WiFi
 } sp_connection_rules;
+
+
+/**
+ * Controls the type of data that will be included in artist browse queries
+ */
+typedef enum sp_artistbrowse_type {
+	SP_ARTISTBROWSE_FULL,         /**< All information */
+	SP_ARTISTBROWSE_NO_TRACKS,    /**< Only albums and data about them, no tracks.
+					   In other words, sp_artistbrowse_num_tracks() will return 0
+				      */
+	SP_ARTISTBROWSE_NO_ALBUMS,    /**< Only return data about the artist (artist name, similar artist
+					   biography, etc
+					   No tracks or album will be abailable.
+					   sp_artistbrowse_num_tracks() and sp_artistbrowse_num_albums()
+					   will both return 0
+				      */
+} sp_artistbrowse_type;
 
 
 /**
@@ -292,8 +346,6 @@ typedef struct sp_offline_sync_status {
 	bool syncing;
 
 } sp_offline_sync_status;
-
-
 
 
 /**
@@ -496,6 +548,16 @@ typedef struct sp_session_callbacks {
 	 */
 	void (SP_CALLCONV *offline_status_updated)(sp_session *session);
 
+	/**
+	 * Called when offline synchronization status is updated
+	 *
+	 * @param[in]  session    Session
+	 * @param[in]  error      Offline error. Will be SP_ERROR_OK if the offline synchronization
+	 *                        error state has cleared
+	 */
+	void (SP_CALLCONV *offline_error)(sp_session *session, sp_error error);
+
+
 } sp_session_callbacks;
 
 /**
@@ -539,6 +601,17 @@ typedef struct sp_session_config {
 	 * See sp_playlist_is_in_ram() for more details.
 	 */
 	bool initially_unload_playlists;
+
+	/**
+	 * Device ID for offline synchronization
+	 */
+	const char *device_id;
+
+	/**
+	 * Path to API trace file
+	 */
+	const char *tracefile;
+
 } sp_session_config;
 
 /**
@@ -560,6 +633,7 @@ typedef struct sp_session_config {
  *                        SP_ERROR_BAD_USER_AGENT
  *                        SP_ERROR_BAD_APPLICATION_KEY
  *                        SP_ERROR_API_INITIALIZATION_FAILED
+ *                        SP_ERROR_INVALID_DEVICE_ID
  */
 SP_LIBEXPORT(sp_error) sp_session_create(const sp_session_config *config, sp_session **sess);
 
@@ -583,11 +657,10 @@ SP_LIBEXPORT(void) sp_session_release(sp_session *sess);
  * @skip sp_session_login
  * @until }
  *
- * @param[in]   session      Your session object
- * @param[in]   username     The username to log in
- * @param[in]   password     The password for the specified username
- * @param[in]   remember_me  If set, the username / password will be remembered by libspotify
- *
+ * @param[in]   session             Your session object
+ * @param[in]   username            The username to log in
+ * @param[in]   password            The password for the specified username
+ * @param[in]   remember_me         If set, the username / password will be remembered by libspotify
  */
 SP_LIBEXPORT(void) sp_session_login(sp_session *session, const char *username, const char *password, bool remember_me);
 
@@ -831,25 +904,25 @@ SP_LIBEXPORT(void) sp_session_preferred_offline_bitrate(sp_session *session, sp_
 
 
 /**
- * Return number of friends in the currently logged in users friends list.
+ * Return status of volume normalization
  *
  * @param[in]  session        Session object
+ * 
+ * @return true iff volume normalization is enabled
  *
- * @return     Number of users in friends. Each user can be extracted using the sp_session_friend() method
- *             The number of users in the list will not be updated nor change order between calls to
- *             sp_session_process_events()
  */
-SP_LIBEXPORT(int) sp_session_num_friends(sp_session *session);
+SP_LIBEXPORT(bool) sp_session_get_volume_normalization(sp_session *session);
+
 
 /**
- * Retrun the given user from the currently logged in users list of friends
+ * Set volume normalization
  *
  * @param[in]  session        Session object
- * @param[in]  index          Index in list
+ * @param[in]  on             True iff volume normalization should be enabled
  *
- * @return     A user. The object is owned by the session so the caller should not release it.
  */
-SP_LIBEXPORT(sp_user *) sp_session_friend(sp_session *session, int index);
+SP_LIBEXPORT(void) sp_session_set_volume_normalization(sp_session *session, bool on);
+
 
 
 /**
@@ -930,7 +1003,6 @@ SP_LIBEXPORT(int) sp_offline_time_left(sp_session *session);
  * @return  Country encoded in an integer 'SE' = 'S' << 8 | 'E'
  */
 SP_LIBEXPORT(int) sp_session_user_country(sp_session *session);
-
 
 
 /** @} */
@@ -1232,18 +1304,30 @@ SP_LIBEXPORT(bool) sp_track_is_loaded(sp_track *track);
  */
 SP_LIBEXPORT(sp_error) sp_track_error(sp_track *track);
 
+
 /**
- * Return true if the track is available for playback.
+ * Return offline status for a track. sp_session_callbacks::metadata_updated() will be invoked when
+ * offline status of a track changes
+ *
+ * @param[in]   track      The track
+ *
+ * @return                 Stats as described by ::sp_track_offline_status
+ *
+ */
+SP_LIBEXPORT(sp_track_offline_status) sp_track_offline_get_status(sp_track *track);
+
+/**
+ * Return availability for a track
  *
  * @param[in]   session    Session
  * @param[in]   track      The track
  *
- * @return                 True if track is available for playback, otherwise false.
+ * @return                 Availability status, see ::sp_track_availability
  *
- * @note The track must be loaded or this function will always return false.
+ * @note The track must be loaded or this function will always SP_TRACK_AVAILABILITY_UNAVAILABLE
  * @see sp_track_is_loaded()
  */
-SP_LIBEXPORT(bool) sp_track_is_available(sp_session *session, sp_track *track);
+SP_LIBEXPORT(sp_track_availability) sp_track_get_availability(sp_session *session, sp_track *track);
 
 /**
  * Return true if the track is a local file.
@@ -1270,6 +1354,24 @@ SP_LIBEXPORT(bool) sp_track_is_local(sp_session *session, sp_track *track);
  * @see sp_track_is_loaded()
  */
 SP_LIBEXPORT(bool) sp_track_is_autolinked(sp_session *session, sp_track *track);
+
+/**
+ * Return true if the track is a placeholder. Placeholder tracks are used
+ * to store other objects than tracks in the playlist. Currently this is
+ * used in the inbox to store artists, albums and playlists.
+ *
+ * Use sp_link_create_from_track() to get a link object that points
+ * to the real object this "track" points to.
+ *
+ * @param[in]   track      The track
+ *
+ * @return                 True if track is a placeholder
+ *
+ * @note Contrary to most functions the track does not have to be
+ *       loaded for this function to return correct value
+ */
+SP_LIBEXPORT(bool) sp_track_is_placeholder(sp_track *track);
+
 
 /**
  * Return true if the track is starred by the currently logged in user.
@@ -1544,6 +1646,17 @@ SP_LIBEXPORT(const char *) sp_artist_name(sp_artist *artist);
  */
 SP_LIBEXPORT(bool) sp_artist_is_loaded(sp_artist *artist);
 
+/**
+ * Return portrait for artist
+ *
+ * @param[in]   artist       The artist object
+ *
+ * @return                 ID byte sequence that can be passed to sp_image_create()
+ *                         If the album has no image or the metadata for the album is not
+ *                         loaded yet, this function returns NULL.
+ *
+ */
+SP_LIBEXPORT(const byte *) sp_artist_portrait(sp_artist *artist);
 
 /**
  * Increase the reference count of a artist
@@ -1693,6 +1806,16 @@ SP_LIBEXPORT(sp_track *) sp_albumbrowse_track(sp_albumbrowse *alb, int index);
  */
 SP_LIBEXPORT(const char *) sp_albumbrowse_review(sp_albumbrowse *alb);
 
+/**
+ * Return the time (in ms) that was spent waiting for the Spotify backend to serve the request
+ *
+ * @param[in] alb         Album browse object
+ *
+ * @return                -1 if the request was served from the local cache
+ *                        If the result is not yet loaded the return value is undefined
+ */
+SP_LIBEXPORT(int) sp_albumbrowse_backend_request_duration(sp_albumbrowse *alb);
+
 
 /**
  * Increase the reference count of an album browse result
@@ -1742,6 +1865,7 @@ typedef void SP_CALLCONV artistbrowse_complete_cb(sp_artistbrowse *result, void 
  *
  * @param[in] session         Session object
  * @param[in] artist          Artist to be browsed. The artist metadata does not have to be loaded
+ * @param[in] type            Type of data requested, see the sp_artistbrowse_type enum for details
  * @param[in] callback        Callback to be invoked when browsing has been completed. Pass NULL if you are not interested in this event.
  * @param[in] userdata        Userdata passed to callback.
  *
@@ -1749,7 +1873,7 @@ typedef void SP_CALLCONV artistbrowse_complete_cb(sp_artistbrowse *result, void 
  *
  * @see ::artistbrowse_complete_cb
  */
-SP_LIBEXPORT(sp_artistbrowse *) sp_artistbrowse_create(sp_session *session, sp_artist *artist, artistbrowse_complete_cb *callback, void *userdata);
+SP_LIBEXPORT(sp_artistbrowse *) sp_artistbrowse_create(sp_session *session, sp_artist *artist, sp_artistbrowse_type type, artistbrowse_complete_cb *callback, void *userdata);
 
 /**
  * Check if an artist browse request is completed
@@ -1877,6 +2001,16 @@ SP_LIBEXPORT(sp_artist *) sp_artistbrowse_similar_artist(sp_artistbrowse *arb, i
  *                            and no longer than the next call to sp_session_process_events()
  */
 SP_LIBEXPORT(const char *) sp_artistbrowse_biography(sp_artistbrowse *arb);
+
+/**
+ * Return the time (in ms) that was spent waiting for the Spotify backend to serve the request
+ *
+ * @param[in] arb         Artist browse object
+ *
+ * @return                -1 if the request was served from the local cache
+ *                        If the result is not yet loaded the return value is undefined
+ */
+SP_LIBEXPORT(int) sp_artistbrowse_backend_request_duration(sp_artistbrowse *arb);
 
 
 /**
@@ -3141,33 +3275,7 @@ SP_LIBEXPORT(const char *) sp_user_display_name(sp_user *user);
  */
 SP_LIBEXPORT(bool) sp_user_is_loaded(sp_user *user);
 
-/**
- * Get a pointer to a string representing the user's full name as returned from social networks.
- *
- * @param[in]   user         The Spotify user whose displayable username you would like a string representation of
- *
- * @return                   A string, NULL if the full name is not known.
- */
-SP_LIBEXPORT(const char *) sp_user_full_name(sp_user *user);
 
-/**
- * Get a pointer to an URL for an picture representing the user
- *
- * @param[in]   user         The Spotify user whose displayable username you would like a string representation of
- *
- * @return                   A string, NULL if the URL is not known.
- */
-SP_LIBEXPORT(const char *) sp_user_picture(sp_user *user);
-
-/**
- * Get relation type for a given user
- *
- * @param[in]   session      Session
- * @param[in]   user         The Spotify user you want to query relation type for
- *
- * @return                   ::sp_relation_type 
- */
-SP_LIBEXPORT(sp_relation_type) sp_user_relation_type(sp_session *session, sp_user *user);
 
 /**
  * Increase the reference count of an user
@@ -3350,6 +3458,16 @@ SP_LIBEXPORT(int) sp_toplistbrowse_num_tracks(sp_toplistbrowse *tlb);
  */
 SP_LIBEXPORT(sp_track *) sp_toplistbrowse_track(sp_toplistbrowse *tlb, int index);
 
+/**
+ * Return the time (in ms) that was spent waiting for the Spotify backend to serve the request
+ *
+ * @param[in]  tlb        Toplist object
+ *
+ * @return                -1 if the request was served from the local cache
+ *                        If the result is not yet loaded the return value is undefined
+ */
+SP_LIBEXPORT(int) sp_toplistbrowse_backend_request_duration(sp_toplistbrowse *tlb);
+
 
 /** @} */
 
@@ -3425,6 +3543,7 @@ SP_LIBEXPORT(void) sp_inbox_release(sp_inbox *inbox);
  * user interface.
  */
 SP_LIBEXPORT(const char *) sp_build_id(void);
+
 
 
 #ifdef __cplusplus

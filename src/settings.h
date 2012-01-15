@@ -20,7 +20,7 @@
 #define SETTINGS_H__
 
 #include "prop/prop.h"
-#include <htsmsg/htsmsg.h>
+#include "htsmsg/htsmsg.h"
 
 #define SETTINGS_INITIAL_UPDATE 0x1
 #define SETTINGS_PASSWORD       0x2 // Make a password entry (hidden display)
@@ -61,8 +61,7 @@ void settings_set_bool(setting_t *s, int v);
 void settings_toggle_bool(setting_t *s);
 
 setting_t *settings_create_multiopt(prop_t *parent, const char *id,
-				    prop_t *title,
-				    prop_callback_string_t *cb, void *opaque);
+				    prop_t *title);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       prop_t *title, int selected);
@@ -70,7 +69,10 @@ void settings_multiopt_add_opt(setting_t *parent, const char *id,
 void settings_multiopt_add_opt_cstr(setting_t *parent, const char *id,
 				    const char *title, int selected);
 
-void settings_multiopt_initiate(setting_t *s, htsmsg_t *store,
+void settings_multiopt_initiate(setting_t *s,
+				prop_callback_string_t *cb, void *opaque,
+				prop_courier_t *pc,
+				htsmsg_t *store,
 				settings_saver_t *saver, void *saver_opaque);
 
 setting_t *settings_create_string(prop_t *parent, const char *id, 
@@ -104,6 +106,8 @@ setting_t *settings_create_action(prop_t *parent, const char *id,
 				  prop_courier_t *pc);
 
 void setting_destroy(setting_t *s);
+
+void setting_detach(setting_t *s);
 
 void settings_init(void);
 

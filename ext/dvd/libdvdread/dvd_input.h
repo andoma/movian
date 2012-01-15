@@ -21,7 +21,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111, USA.
  */
 
-#include <fileaccess/svfs.h>
+#include "fileaccess/svfs.h"
 
 /**
  * Defines and flags.  Make sure they fit the libdvdcss API!

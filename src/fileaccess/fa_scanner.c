@@ -38,12 +38,13 @@ typedef struct scanner {
   int s_refcount;
 
   char *s_url;
+  time_t s_mtime; // modifiaction time of s_url
   char *s_playme;
 
   prop_t *s_nodes;
-  prop_t *s_contents;
   prop_t *s_loading;
   prop_t *s_root;
+  prop_t *s_direct_close;
 
   int s_stop;
 
@@ -51,7 +52,34 @@ typedef struct scanner {
 
   void *s_ref;
 
+  void *s_metadb;
+
 } scanner_t;
+
+
+/**
+ *
+ */
+static void
+closedb(scanner_t *s)
+{
+  if(s->s_metadb != NULL)
+    metadb_close(s->s_metadb);
+  s->s_metadb = NULL;
+}
+
+
+/**
+ *
+ */
+static void *
+getdb(scanner_t *s)
+{
+  if(s->s_metadb == NULL)
+    s->s_metadb = metadb_get();
+  return s->s_metadb;
+}
+
 
 
 
@@ -66,13 +94,8 @@ set_type(prop_t *proproot, unsigned int type)
 {
   const char *typestr;
 
-  if((typestr = content2type(type))) {
-    prop_t *p = prop_create_check(proproot, "type");
-    if(p != NULL) {
-      prop_set_string(p, typestr);
-      prop_ref_dec(p);
-    }
-  }
+  if((typestr = content2type(type)) != NULL)
+    prop_set_string(prop_create(proproot, "type"), typestr);
 }
 
 
@@ -141,7 +164,8 @@ static struct strtab postfixtab[] = {
   { "jpg",             CONTENT_IMAGE },
   { "png",             CONTENT_IMAGE },
   { "gif",             CONTENT_IMAGE },
-
+  { "svg",             CONTENT_IMAGE },
+  
   { "mp3",             CONTENT_AUDIO },
   { "m4a",             CONTENT_AUDIO },
   { "flac",            CONTENT_AUDIO },
@@ -164,6 +188,12 @@ static struct strtab postfixtab[] = {
   { "nfo",             CONTENT_UNKNOWN },
   { "gz",              CONTENT_UNKNOWN },
   { "txt",             CONTENT_UNKNOWN },
+  { "srt",             CONTENT_UNKNOWN },
+  { "smi",             CONTENT_UNKNOWN },
+  { "ass",             CONTENT_UNKNOWN },
+  { "ssa",             CONTENT_UNKNOWN },
+  { "idx",             CONTENT_UNKNOWN },
+  { "sub",             CONTENT_UNKNOWN },
 };
 
 
@@ -185,78 +215,93 @@ type_from_filename(const char *filename)
   return type;
 }
 
-/**
- *
- */
-static void
-quick_analyzer(fa_dir_t *fd, prop_t *contents)
-{
-  fa_dir_entry_t *fde;
-  int images = 0;
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-
-    if(fde->fde_probestatus != FDE_PROBE_NONE)
-      continue;
-
-    if(fde->fde_type == CONTENT_DIR)
-      continue;
-    
-    if(fde->fde_type == CONTENT_FILE)
-      fde->fde_type = type_from_filename(fde->fde_filename);
-
-    fde->fde_probestatus = FDE_PROBE_FILENAME;
-
-    if(fde->fde_type == CONTENT_IMAGE)
-      images++;
-  }
-
-  if(images * 4 > fd->fd_count * 3)
-    prop_set_string(contents, "images");
-}
-
 
 /**
  *
  */
 static void
-deep_probe(fa_dir_entry_t *fde)
+deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 {
-  prop_t *metadata;
-
   fde->fde_probestatus = FDE_PROBE_DEEP;
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
 
-    metadata = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    prop_t *meta = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
     
-    if(fde->fde_type == CONTENT_DIR) {
-      fde->fde_type = fa_probe_dir(metadata, fde->fde_url);
-    } else {
-      fde->fde_type = fa_probe(metadata, fde->fde_url, NULL, 0,
-			       NULL, 0,
-			       fde->fde_statdone ? &fde->fde_stat : NULL, 1);
+
+    if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) {
+      if(fde->fde_md != NULL)
+	metadata_destroy(fde->fde_md);
+      fde->fde_md = metadb_metadata_get(getdb(s), fde->fde_url,
+					fde->fde_stat.fs_mtime);
     }
-    prop_ref_dec(metadata);
+
+    if(fde->fde_md == NULL) {
+
+      if(fde->fde_type == CONTENT_DIR)
+        fde->fde_md = fa_probe_dir(fde->fde_url);
+      else
+	fde->fde_md = fa_probe_metadata(fde->fde_url, NULL, 0);
+    }
+    
+    if(fde->fde_md != NULL) {
+      fde->fde_type = fde->fde_md->md_contenttype;
+      fde->fde_ignore_cache = 0;
+      metadata_to_proptree(fde->fde_md, meta, 1);
+      
+      if(fde->fde_md->md_cached == 0) {
+	metadb_metadata_write(getdb(s), fde->fde_url,
+			      fde->fde_stat.fs_mtime,
+			      fde->fde_md, s->s_url, s->s_mtime);
+      }
+    }
+    prop_ref_dec(meta);
+
+    if(!fde->fde_bound_to_metadb) {
+      fde->fde_bound_to_metadb = 1;
+      metadb_bind_url_to_prop(getdb(s), fde->fde_url, fde->fde_prop);
+    }
   }
   set_type(fde->fde_prop, fde->fde_type);
 }
 
 
+/**
+ *
+ */
+static void
+tryplay(scanner_t *s)
+{
+  fa_dir_entry_t *fde;
+
+  if(s->s_playme == NULL)
+    return;
+
+  TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
+    if(!strcmp(s->s_playme, fde->fde_url)) {
+      playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
+      free(s->s_playme);
+      s->s_playme = NULL;
+    }
+  }
+}
+
 
 /**
  *
  */
 static void
-deep_analyzer(scanner_t *s)
+analyzer(scanner_t *s, int probe)
 {
   fa_dir_entry_t *fde;
+  int images = 0;
 
   /* Empty */
-  if(s->s_fd->fd_count == 0) {
-    prop_set_string(s->s_contents, "empty");
+  if(s->s_fd->fd_count == 0)
     return;
-  }
+  
+  if(probe)
+    tryplay(s);
 
   /* Scan all entries */
   TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
@@ -267,8 +312,18 @@ deep_analyzer(scanner_t *s)
     if(s->s_stop)
       break;
 
-    if(fde->fde_probestatus != FDE_PROBE_DEEP)
-      deep_probe(fde);
+    if(fde->fde_probestatus == FDE_PROBE_NONE) {
+      if(fde->fde_type == CONTENT_FILE)
+	fde->fde_type = type_from_filename(fde->fde_filename);
+
+      fde->fde_probestatus = FDE_PROBE_FILENAME;
+    }
+
+    if(fde->fde_probestatus == FDE_PROBE_FILENAME && probe)
+      deep_probe(fde, s);
+
+    if(fde->fde_type == CONTENT_IMAGE)
+      images++;
   }
 }
 
@@ -294,6 +349,7 @@ static int
 scanner_checkstop(void *opaque)
 {
   scanner_t *s = opaque;
+  closedb(s);
   return !!s->s_stop;
 }
 
@@ -302,14 +358,17 @@ scanner_checkstop(void *opaque)
  *
  */
 static void
-scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
+scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s",
+	s->s_url, fde->fde_url, src);
+
   if(fde->fde_type == CONTENT_FILE)
     fde->fde_type = type_from_filename(fde->fde_filename);
 
   make_prop(fde);
 
-  deep_probe(fde);
+  deep_probe(fde, s);
 
   if(!prop_set_parent(fde->fde_prop, s->s_nodes))
     return; // OK
@@ -322,8 +381,11 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde)
  *
  */
 static void
-scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde)
+scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
+  TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s",
+	s->s_url, fde->fde_url, src);
+  metadb_unparent_item(getdb(s), fde->fde_url);
   if(fde->fde_prop != NULL)
     prop_destroy(fde->fde_prop);
   fa_dir_entry_free(s->s_fd, fde);
@@ -349,21 +411,20 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
 	break;
 
     if(fde != NULL)
-      scanner_entry_destroy(s, fde);
+      scanner_entry_destroy(s, fde, "notification");
     break;
 
   case FA_NOTIFY_ADD:
-    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type));
+    scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type),
+			"notification");
     break;
   }
-  deep_analyzer(s);
+  analyzer(s, 1);
 }
 
 
 /**
  * Very simple and O^2 diff
- *
- * We should also check mtime and trig change if needed
  */
 static void
 rescan(scanner_t *s)
@@ -375,6 +436,11 @@ rescan(scanner_t *s)
   if((fd = fa_scandir(s->s_url, NULL, 0)) == NULL)
     return; 
 
+  if(s->s_fd->fd_count != fd->fd_count) {
+    TRACE(TRACE_DEBUG, "FA", "%s: Rescanning found %d items, previously %d",
+	  s->s_url, fd->fd_count, s->s_fd->fd_count);
+  }
+
   for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
     n = TAILQ_NEXT(a, fde_link);
     TAILQ_FOREACH(b, &fd->fd_entries, fde_link)
@@ -382,24 +448,39 @@ rescan(scanner_t *s)
 	break;
 
     if(b != NULL) {
-      // Exists in old and new set, all fine
+      // Exists in old and new set
+
+      if(a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
+	// Modification time has changed,  trig deep probe
+	a->fde_type = b->fde_type;
+	a->fde_probestatus = FDE_PROBE_NONE;
+	a->fde_stat = b->fde_stat;
+	a->fde_ignore_cache = 1;
+	changed = 1;
+      }
+
       fa_dir_entry_free(fd, b);
+
     } else {
       changed = 1;
       // Exists in old but not in new
-      scanner_entry_destroy(s, a);
+      scanner_entry_destroy(s, a, "rescan");
     }
   }
 
   while((b = TAILQ_FIRST(&fd->fd_entries)) != NULL) {
     TAILQ_REMOVE(&fd->fd_entries, b, fde_link);
     TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, b, fde_link);
-    scanner_entry_setup(s, b);
+    s->s_fd->fd_count++;
+
+    scanner_entry_setup(s, b, "rescan");
     changed = 1;
   }
 
   if(changed)
-    deep_analyzer(s);
+    analyzer(s, 1);
+
+  fa_dir_free(fd);
 }
 
 
@@ -410,50 +491,57 @@ static void
 doscan(scanner_t *s)
 {
   fa_dir_entry_t *fde;
-  fa_dir_t *fd = s->s_fd;
   prop_vec_t *pv;
+  char errbuf[256];
+  int pending_rescan = 0;
 
-  quick_analyzer(s->s_fd, s->s_contents);
+  s->s_fd = metadb_metadata_scandir(getdb(s), s->s_url, NULL);
 
-  pv = prop_vec_create(fd->fd_count);
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    make_prop(fde);
-    pv = prop_vec_append(pv, fde->fde_prop);
+  if(s->s_fd == NULL) {
+    s->s_fd = fa_scandir(s->s_url, errbuf, sizeof(errbuf));
+    if(s->s_fd != NULL)
+      TRACE(TRACE_DEBUG, "FA", "%s: Found %d by directory scanning",
+	    s->s_url, s->s_fd->fd_count);
+  } else {
+    TRACE(TRACE_DEBUG, "FA", "%s: Found %d items in cache",
+	  s->s_url, s->s_fd->fd_count);
+    pending_rescan = 1;
   }
-
-  prop_set_parent_vector(pv, s->s_nodes, NULL, NULL);
-  prop_vec_release(pv);
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(s->s_playme != NULL &&
-       !strcmp(s->s_playme, fde->fde_url)) {
-      playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
-      free(s->s_playme);
-      s->s_playme = NULL;
-    }
-  }
-
   prop_set_int(s->s_loading, 0);
 
-  deep_analyzer(s);
+  if(s->s_fd != NULL) {
 
-  if(!fa_notify(s->s_url, s, scanner_notification, scanner_checkstop))
-    return;
-  
-  /* Can not do notifcations */
+    analyzer(s, 0);
 
-#ifdef WII
-  // We don't want to keep threads running on wii 
-  return;
-#endif
+    pv = prop_vec_create(s->s_fd->fd_count);
+    
+    TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
+      make_prop(fde);
+      pv = prop_vec_append(pv, fde->fde_prop);
+    }
+    
+    prop_set_parent_vector(pv, s->s_nodes, NULL, NULL);
+    prop_vec_release(pv);
 
-  while(!s->s_stop) {
-    sleep(3);
+    analyzer(s, 1);
 
-    if(!media_buffer_hungry)
-      rescan(s);
+  } else {
+    TRACE(TRACE_INFO, "scanner",
+	  "Unable to scan %s -- %s -- Retrying in background",
+	  s->s_url, errbuf);
+    s->s_fd = fa_dir_alloc();
   }
+
+  if(pending_rescan)
+    rescan(s);
+
+  closedb(s);
+
+
+  if(fa_notify(s->s_url, s, scanner_notification, scanner_checkstop)) {
+    prop_set_int(s->s_direct_close, 1);
+  }
+  fa_dir_free(s->s_fd);
 }
 
 /**
@@ -464,10 +552,9 @@ scanner(void *aux)
 {
   scanner_t *s = aux;
 
-  if((s->s_fd = fa_scandir(s->s_url, NULL, 0)) != NULL) {
-    doscan(s);
-    fa_dir_free(s->s_fd);
-  }
+  doscan(s);
+
+  closedb(s);
 
   prop_set_int(s->s_loading, 0);
 
@@ -476,9 +563,8 @@ scanner(void *aux)
 
   prop_ref_dec(s->s_root);
   prop_ref_dec(s->s_nodes);
-  prop_ref_dec(s->s_contents);
   prop_ref_dec(s->s_loading);
-
+  prop_ref_dec(s->s_direct_close);
   scanner_unref(s);
   return NULL;
 }
@@ -510,7 +596,9 @@ scanner_stop(void *opaque, prop_event_t event, ...)
  *
  */
 void
-fa_scanner(const char *url, prop_t *model, const char *playme)
+fa_scanner(const char *url, time_t url_mtime, 
+	   prop_t *model, const char *playme,
+	   prop_t *direct_close)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
   prop_t *source = prop_create(model, "source");
@@ -526,19 +614,26 @@ fa_scanner(const char *url, prop_t *model, const char *playme)
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
+  prop_nf_pred_int_add(pnf, "node.hidden",
+		       PROP_NF_CMP_EQ, 1, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
   prop_nf_release(pnf);
 
   prop_set_int(prop_create(model, "canFilter"), 1);
 
+  decorated_browse_create(model);
+
   s->s_url = strdup(url);
+  s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
   prop_set_int(prop_create(model, "loading"), 1);
 
   s->s_root = prop_ref_inc(model);
   s->s_nodes = prop_ref_inc(source);
-  s->s_contents = prop_ref_inc(prop_create(model, "contents"));
   s->s_loading = prop_ref_inc(prop_create(model, "loading"));
+  s->s_direct_close = prop_ref_inc(direct_close);
 
   s->s_refcount = 2; // One held by scanner thread, one by the subscription
 

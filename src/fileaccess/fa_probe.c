@@ -31,126 +31,23 @@
 #endif
 
 #include <libavutil/avstring.h>
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
 #include "fa_libav.h"
 #include "navigator.h"
-#include "api/lastfm.h"
 #include "media.h"
 #include "misc/string.h"
 #include "misc/isolang.h"
 #include "misc/jpeg.h"
 #include "htsmsg/htsmsg_json.h"
 
-#define METADATA_HASH_SIZE 101
-#define METADATA_CACHE_SIZE 1000
-
-LIST_HEAD(metadata_list, metadata);
-TAILQ_HEAD(metadata_queue, metadata);
-
-static struct metadata_queue metadata_entries;
-static int metadata_nentries;
-static struct metadata_list metadata_hash[METADATA_HASH_SIZE];
-static hts_mutex_t metadata_mutex;
-
-TAILQ_HEAD(metadata_stream_queue, metadata_stream);
-
-typedef struct metadata_stream {
-  TAILQ_ENTRY(metadata_stream) ms_link;
-
-  int ms_streamindex;
-
-  rstr_t *ms_info;
-  rstr_t *ms_isolang;
-
-  enum CodecID ms_codecid;
-  enum AVMediaType ms_type;
-
-} metadata_stream_t;
-
 /**
  *
  */
-typedef struct metadata {
-  char *md_url;
-  time_t md_mtime;
-
-  char *md_redirect;
-
-  LIST_ENTRY(metadata) md_hash_link;
-  TAILQ_ENTRY(metadata) md_queue_link;
-
-  int md_type;
-  float md_duration;
-  int md_tracks;
-  time_t md_time;
-
-  rstr_t *md_title;
-  rstr_t *md_album;
-  rstr_t *md_artist;
-  rstr_t *md_format;
-
-  struct metadata_stream_queue md_streams;
-
-} metadata_t;
-
-
-/**
- *
- */
-static void
-metadata_clean(metadata_t *md)
-{
-  metadata_stream_t *ms;
-  rstr_release(md->md_title);
-  rstr_release(md->md_album);
-  rstr_release(md->md_artist);
-  rstr_release(md->md_format);
-
-  free(md->md_url);
-  free(md->md_redirect);
-
-  while((ms = TAILQ_FIRST(&md->md_streams)) != NULL) {
-    TAILQ_REMOVE(&md->md_streams, ms, ms_link);
-    rstr_release(ms->ms_info);
-    rstr_release(ms->ms_isolang);
-    free(ms);
-  }
-}
-
-
-/**
- *
- */
-static void
-metadata_add_stream(metadata_t *md, enum CodecID codecid, enum AVMediaType type,
-		    int streamindex, const char *info, const char *isolang)
-{
-  metadata_stream_t *ms = malloc(sizeof(metadata_stream_t));
-  ms->ms_info = rstr_alloc(info);
-  ms->ms_isolang = rstr_alloc(isolang);
-
-  ms->ms_codecid = codecid;
-  ms->ms_type = type;
-  ms->ms_streamindex = streamindex;
-  TAILQ_INSERT_TAIL(&md->md_streams, ms, ms_link);
-}
-
-
-/**
- *
- */
-static void
-metadata_destroy(metadata_t *md)
-{
-  metadata_clean(md);
-  TAILQ_REMOVE(&metadata_entries, md, md_queue_link);
-  LIST_REMOVE(md, md_hash_link);
-  free(md);
-}
-
 static const char *
 codecname(enum CodecID id)
 {
@@ -180,24 +77,6 @@ codecname(enum CodecID id)
 
 
 
-/**
- *
- */
-static void
-metadata_stream_make_prop(metadata_stream_t *ms, prop_t *parent)
-{
-  char url[16];
-
-  snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
-
-  mp_add_track(parent,
-	       NULL,
-	       url,
-	       codecname(ms->ms_codecid),
-	       rstr_get(ms->ms_info),
-	       rstr_get(ms->ms_isolang),
-	       NULL, 0);
-}
 
 
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
@@ -331,19 +210,18 @@ metdata_set_redirect(metadata_t *md, const char *fmt, ...)
 static int
 jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 {
-  AVIOContext *avio = handle;
-  if(avio_seek(avio, offset, SEEK_SET) != offset)
+  if(fa_seek(handle, offset, SEEK_SET) != offset)
     return -1;
-  return avio_read(avio, buf, size);
+  return fa_read(handle, buf, size);
 }
 
 
 static void
-fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, AVIOContext *avio)
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
 {
   jpeginfo_t ji;
 
-  if(jpeg_info(&ji, jpeginfo_reader, avio, 
+  if(jpeg_info(&ji, jpeginfo_reader, fh, 
 	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
 	       pb, 256, NULL, 0))
     return;
@@ -358,23 +236,23 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, AVIOContext *avio)
  * pb is guaranteed to point to at least 256 bytes of valid data
  */
 static int
-fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
+fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
 {
   uint16_t flags;
   uint8_t buf[256];
 
-  if(avio_read(avio, buf, sizeof(buf)) != sizeof(buf))
+  if(fa_read(fh, buf, sizeof(buf)) != sizeof(buf))
     return 0;
 
   if(!memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
     fa_probe_spc(md, buf);
-    md->md_type = CONTENT_AUDIO;
+    md->md_contenttype = CONTENT_AUDIO;
     return 1;
   }
 
   if(!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4)) {
     fa_probe_psid(md, buf); 
-    md->md_type = CONTENT_ALBUM;
+    md->md_contenttype = CONTENT_ALBUM;
     metdata_set_redirect(md, "sidfile://%s/", url);
     return 1;
   }
@@ -385,12 +263,12 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
     flags = buf[10] | buf[11] << 8;
     if((flags & 0x101) == 1) {
       /* Don't include slave volumes */
-      md->md_type = CONTENT_UNKNOWN;
+      md->md_contenttype = CONTENT_UNKNOWN;
       return 1;
     }
 
     metdata_set_redirect(md, "rar://%s", url);
-    md->md_type = CONTENT_ARCHIVE;
+    md->md_contenttype = CONTENT_ARCHIVE;
     return 1;
   }
 
@@ -398,10 +276,9 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
 
     char path[256];
     char *buf;
-    struct fa_stat fs;
 
     snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-    buf = fa_quickload(path, &fs, NULL, NULL, 0);
+    buf = fa_load(path, NULL, NULL, NULL, 0, NULL);
     if(buf != NULL) {
       htsmsg_t *json = htsmsg_json_deserialize(buf);
       free(buf);
@@ -410,14 +287,14 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
       if(title != NULL && htsmsg_get_str(json, "id") != NULL &&
 	 htsmsg_get_str(json, "type") != NULL) {
 	md->md_title = rstr_alloc(title);
-	md->md_type = CONTENT_PLUGIN;
+	md->md_contenttype = CONTENT_PLUGIN;
 	htsmsg_destroy(json);
 	return 1;
       }
       htsmsg_destroy(json);
     }
     metdata_set_redirect(md, "zip://%s", url);
-    md->md_type = CONTENT_ARCHIVE;
+    md->md_contenttype = CONTENT_ARCHIVE;
     return 1;
   }
 
@@ -425,7 +302,7 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
   if(!strncasecmp((char *)buf, "[playlist]", 10)) {
     /* Playlist */
     fa_probe_playlist(md, url, buf, sizeof(buf));
-    md->md_type = CONTENT_PLAYLIST;
+    md->md_contenttype = CONTENT_PLAYLIST;
     return 1;
   }
 #endif
@@ -433,31 +310,31 @@ fa_probe_header(metadata_t *md, const char *url, AVIOContext *avio)
   if((buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F') ||
      (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f')) {
     /* JPEG image */
-    md->md_type = CONTENT_IMAGE;
-    fa_probe_exif(md, url, buf, avio); // Try to get more info
+    md->md_contenttype = CONTENT_IMAGE;
+    fa_probe_exif(md, url, buf, fh); // Try to get more info
     return 1;
   }
 
   if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
     /* Ugly playlist thing (see fa_video.c) */
-    md->md_type = CONTENT_VIDEO;
+    md->md_contenttype = CONTENT_VIDEO;
     return 1;
   }
 
   if(!memcmp(buf, pngsig, 8)) {
     /* PNG */
-    md->md_type = CONTENT_IMAGE;
+    md->md_contenttype = CONTENT_IMAGE;
     return 1;
   }
 
   if(!memcmp(buf, gifsig, sizeof(gifsig))) {
     /* GIF */
-    md->md_type = CONTENT_IMAGE;
+    md->md_contenttype = CONTENT_IMAGE;
     return 1;
   }
 
   if(buf[0] == '%' && buf[1] == 'P' && buf[2] == 'D' && buf[3] == 'F') {
-    md->md_type = CONTENT_UNKNOWN;
+    md->md_contenttype = CONTENT_UNKNOWN;
     return 1;
   }
 
@@ -485,7 +362,7 @@ fa_probe_iso0(metadata_t *md, uint8_t *pb)
 
   if(md != NULL) {
     md->md_title = rstr_alloc((const char *)pb + 40);
-    md->md_type = CONTENT_DVD;
+    md->md_contenttype = CONTENT_DVD;
   }
   return 0;
 }
@@ -497,14 +374,14 @@ fa_probe_iso0(metadata_t *md, uint8_t *pb)
  * pb is guaranteed to point at 64k of data
  */
 int
-fa_probe_iso(metadata_t *md, AVIOContext *avio)
+fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 {
   uint8_t pb[128];
 
-  if(avio_seek(avio, 0x8000, SEEK_SET) != 0x8000)
+  if(fa_seek(fh, 0x8000, SEEK_SET) != 0x8000)
     return -1;
 
-  if(avio_read(avio, pb, sizeof(pb)) != sizeof(pb))
+  if(fa_read(fh, pb, sizeof(pb)) != sizeof(pb))
     return -1;
   return fa_probe_iso0(md, pb);
 }
@@ -515,7 +392,7 @@ fa_probe_iso(metadata_t *md, AVIOContext *avio)
  *
  */
 static int
-gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
+gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
 {
   uint8_t b4[4], *buf;
   gme_err_t err;
@@ -525,7 +402,7 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
   size_t size;
   const char *type;
 
-  if(avio_read(avio, b4, 4) != 4)
+  if(fa_read(fh, b4, 4) != 4)
     return 0;
 
   type = gme_identify_header(b4);
@@ -533,15 +410,15 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
   if(*type == 0)
     return 0;
 
-  size = avio_size(avio);
+  size = fa_fsize(fh);
   if(size == -1)
     return -1;
 
   buf = malloc(size);
 
-  avio_seek(avio, 0, SEEK_SET);
+  fa_seek(fh, 0, SEEK_SET);
 
-  if(avio_read(avio, buf, size) != size) {
+  if(fa_read(fh, buf, size) != size) {
     free(buf);
     return 0;
   }
@@ -578,14 +455,14 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
     md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
 
     md->md_duration = info->play_length / 1000.0;
-    md->md_type = CONTENT_AUDIO;
+    md->md_contenttype = CONTENT_AUDIO;
 
   } else {
 
     md->md_title  = info->game[0] ? rstr_alloc(info->game)   : NULL;
     md->md_artist = info->author[0] ? rstr_alloc(info->author) : NULL;
 
-    md->md_type = CONTENT_ALBUM;
+    md->md_contenttype = CONTENT_ALBUM;
     metdata_set_redirect(md, "gmefile://%s/", url);
   }
 
@@ -597,7 +474,7 @@ gme_probe(metadata_t *md, const char *url, AVIOContext *avio)
 
 
 /**
- * 
+ *
  */
 static void
 fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
@@ -606,8 +483,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   char tmp1[1024];
   int has_video = 0;
   int has_audio = 0;
-
-  av_metadata_conv(fctx, NULL, fctx->iformat->metadata_conv);
 
   /* Format meta info */
 
@@ -634,22 +509,37 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   if(fctx->duration != AV_NOPTS_VALUE)
     md->md_duration = (float)fctx->duration / 1000000;
 
+
+  if(fctx->nb_streams == 1 && 
+     fctx->streams[0]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
+    md->md_contenttype = CONTENT_AUDIO;
+    return;
+  }
+
+  int atrack = 0;
+  int strack = 0;
+  int vtrack = 0;
+
   /* Check each stream */
 
   for(i = 0; i < fctx->nb_streams; i++) {
     AVStream *stream = fctx->streams[i];
     AVCodecContext *avctx = stream->codec;
     AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
-    AVMetadataTag *tag;
+    AVMetadataTag *lang, *title;
+    int tn;
 
     switch(avctx->codec_type) {
     case AVMEDIA_TYPE_VIDEO:
       has_video = !!codec;
+      tn = ++vtrack;
       break;
     case AVMEDIA_TYPE_AUDIO:
       has_audio = !!codec;
+      tn = ++atrack;
       break;
     case AVMEDIA_TYPE_SUBTITLE:
+      tn = ++strack;
       break;
 
     default:
@@ -662,252 +552,105 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
       metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
     }
 
-    tag = av_metadata_get(stream->metadata, "language", NULL,
+    lang = av_metadata_get(stream->metadata, "language", NULL,
 			  AV_METADATA_IGNORE_SUFFIX);
 
-    metadata_add_stream(md, avctx->codec_id, avctx->codec_type, i, tmp1,
-			tag ? tag->value : NULL);
+    title = av_metadata_get(stream->metadata, "title", NULL,
+			    AV_METADATA_IGNORE_SUFFIX);
+
+    metadata_add_stream(md, codecname(avctx->codec_id),
+			avctx->codec_type, i,
+			title ? title->value : NULL,
+			tmp1,
+			lang ? lang->value : NULL,
+			stream->disposition,
+			tn);
   }
   
-  md->md_type = CONTENT_FILE;
+  md->md_contenttype = CONTENT_FILE;
   if(has_video)
-    md->md_type = CONTENT_VIDEO;
+    md->md_contenttype = CONTENT_VIDEO;
   else if(has_audio)
-    md->md_type = CONTENT_AUDIO;
+    md->md_contenttype = CONTENT_AUDIO;
 }
   
 
 /**
  *
  */
-static int
-fa_probe_fill_cache(metadata_t *md, const char *url, char *errbuf, 
-		    size_t errsize, struct fa_stat *fs)
+metadata_t *
+fa_probe_metadata(const char *url, char *errbuf, size_t errsize)
 {
   AVFormatContext *fctx;
-  AVIOContext *avio;
 
-  if((avio = fa_libav_open(url, 32768, errbuf, errsize, 0, NULL)) == NULL)
-    return -1;
+  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, FA_BUFFERED_SMALL, NULL);
+
+  if(fh == NULL) 
+    return NULL;
+
+  metadata_t *md = metadata_create();
 
 #if ENABLE_LIBGME
-  if(gme_probe(md, url, avio))
-    return 0;
+  if(gme_probe(md, url, fh))
+    return md;
 #endif
 
-  avio_seek(avio, 0, SEEK_SET);
+  fa_seek(fh, 0, SEEK_SET);
 
-  if(fa_probe_header(md, url, avio)) {
-    fa_libav_close(avio);
-    return 0;
+  if(fa_probe_header(md, url, fh)) {
+    fa_close(fh);
+    return md;
   }
 
+  AVIOContext *avio = fa_libav_reopen(fh);
+ 
   if((fctx = fa_libav_open_format(avio, url, errbuf, errsize, NULL)) == NULL) {
     fa_libav_close(avio);
-    return -1;
+    metadata_destroy(md);
+    return NULL;
   }
 
   fa_lavf_load_meta(md, fctx, url);
   fa_libav_close_format(fctx);
-  return 0;
+  return md;
 }
 
 
 /**
  *
  */
-static int
-fa_probe_set_from_cache(const metadata_t *md, prop_t *proproot, 
-			char *newurl, size_t newurlsize,
-			int overwrite_title)
+metadata_t *
+fa_metadata_from_fctx(AVFormatContext *fctx, const char *url)
 {
-  metadata_stream_t *ms;
-  prop_t *p;
-
-  if(md->md_redirect != NULL && newurl != NULL)
-    av_strlcpy(newurl, md->md_redirect, newurlsize);
-
-  if(md->md_title && (p = prop_create_check(proproot, "title")) != NULL) {
-    prop_set_rstring_ex(p, NULL, md->md_title, !overwrite_title);
-    prop_ref_dec(p);
-  }
-
-  if(md->md_artist) {
-    if((p = prop_create_check(proproot, "artist")) != NULL) {
-      prop_set_rstring(p, md->md_artist);
-      prop_ref_dec(p);
-    }
-
-    if((p = prop_create_check(proproot, "artist_images")) != NULL) {
-      lastfm_artistpics_init(p, md->md_artist);
-      prop_ref_dec(p);
-    }
-  }
-
-  if(md->md_album) {
-    if((p = prop_create_check(proproot, "album")) != NULL) {
-      prop_set_rstring(p,  md->md_album);
-      prop_ref_dec(p);
-    }
-    
-    if(md->md_artist != NULL &&
-       (p = prop_create_check(proproot, "album_art")) != NULL) {
-      lastfm_albumart_init(p, md->md_artist, md->md_album);
-      prop_ref_dec(p);
-    }
-  }
-
-  TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
-
-    prop_t *p;
-
-    switch(ms->ms_type) {
-    case AVMEDIA_TYPE_AUDIO:
-      p = prop_create_check(proproot, "audiostreams");
-      break;
-    case AVMEDIA_TYPE_VIDEO:
-      p = prop_create_check(proproot, "videostreams");
-      break;
-    case AVMEDIA_TYPE_SUBTITLE:
-      p = prop_create_check(proproot, "subtitlestreams");
-      break;
-    default:
-      continue;
-    }
-    if(p != NULL) {
-      metadata_stream_make_prop(ms, p);
-      prop_ref_dec(p);
-    }
-  }
-
-  if(md->md_format && (p = prop_create_check(proproot, "format")) != NULL) {
-    prop_set_rstring(p,  md->md_format);
-    prop_ref_dec(p);
-  }
-
-  if(md->md_duration && (p = prop_create_check(proproot, "duration")) != NULL) {
-    prop_set_float(p, md->md_duration);
-    prop_ref_dec(p);
-  }
-
-  if(md->md_tracks && (p = prop_create_check(proproot, "tracks")) != NULL) {
-    prop_set_int(p,  md->md_tracks);
-    prop_ref_dec(p);
-  }
-
-  if(md->md_time && (p = prop_create_check(proproot, "timestamp")) != NULL) {
-    prop_set_int(p,  md->md_time);
-    prop_ref_dec(p);
-  }
-
-  return md->md_type;
+  metadata_t *md = metadata_create();
+  fa_lavf_load_meta(md, fctx, url);
+  return md;
 }
 
-
-
-
-/**
- * Probe a file for its type
- */
-unsigned int
-fa_probe(prop_t *proproot, const char *url, char *newurl, size_t newurlsize,
-	 char *errbuf, size_t errsize, struct fa_stat *fs, int overwrite_title)
-{
-  struct fa_stat fs0;
-  unsigned int hash, r;
-  metadata_t *md;
-
-  if(fs == NULL) {
-    if(fa_stat(url, &fs0, errbuf, errsize))
-      return CONTENT_UNKNOWN;
-    fs = &fs0;
-  }
-
-  hash = mystrhash(url) % METADATA_HASH_SIZE;
-
-  hts_mutex_lock(&metadata_mutex);
-  
-  LIST_FOREACH(md, &metadata_hash[hash], md_hash_link)
-    if(md->md_mtime == fs->fs_mtime && !strcmp(md->md_url, url))
-      break;
-
-  if(md != NULL) {
-    TAILQ_REMOVE(&metadata_entries, md, md_queue_link);
-    TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
-
-  } else {
-    if(metadata_nentries == METADATA_CACHE_SIZE) {
-      md = TAILQ_FIRST(&metadata_entries);
-      metadata_destroy(md);
-    }
-
-    md = calloc(1, sizeof(metadata_t));
-    TAILQ_INIT(&md->md_streams);
-    LIST_INSERT_HEAD(&metadata_hash[hash], md, md_hash_link);
-    TAILQ_INSERT_TAIL(&metadata_entries, md, md_queue_link);
-    md->md_mtime = fs->fs_mtime;
-    md->md_url = strdup(url);
-
-    if(fa_probe_fill_cache(md, url, errbuf, errsize, fs)) {
-      metadata_destroy(md);
-      hts_mutex_unlock(&metadata_mutex);
-      return CONTENT_UNKNOWN;
-    }
-  }
-
-  r = fa_probe_set_from_cache(md, proproot, newurl, newurlsize,
-			      overwrite_title);
-
-  hts_mutex_unlock(&metadata_mutex);
-  return r;
-}
-
-
-/**
- *
- */
-void
-fa_probe_load_metaprop(prop_t *p, AVFormatContext *fctx, const char *url)
-{
-  metadata_t md = {0};
-  TAILQ_INIT(&md.md_streams);
-
-  fa_lavf_load_meta(&md, fctx, url);
-  fa_probe_set_from_cache(&md, p, NULL, 0, 0);
-  metadata_clean(&md);
-}
 
 /**
  * Probe a directory
  */
-unsigned int
-fa_probe_dir(prop_t *proproot, const char *url)
+metadata_t *
+fa_probe_dir(const char *url)
 {
+  metadata_t *md = metadata_create();
   char path[URL_MAX];
   struct fa_stat fs;
-  int type;
 
-  type = CONTENT_DIR;
+  md->md_contenttype = CONTENT_DIR;
 
   fa_pathjoin(path, sizeof(path), url, "VIDEO_TS");
   if(fa_stat(path, &fs, NULL, 0) == 0 && fs.fs_type == CONTENT_DIR) {
-    type = CONTENT_DVD;
-  } else {
-    fa_pathjoin(path, sizeof(path), url, "video_ts");
-    if(fa_stat(path, &fs, NULL, 0) == 0 && fs.fs_type == CONTENT_DIR)
-      type = CONTENT_DVD;
+    md->md_contenttype = CONTENT_DVD;
+    return md;
   }
 
-  return type;
-}
-
-
-/**
- *
- */
-void
-fa_probe_init(void)
-{
-  TAILQ_INIT(&metadata_entries);
-  hts_mutex_init(&metadata_mutex);
+  fa_pathjoin(path, sizeof(path), url, "video_ts");
+  if(fa_stat(path, &fs, NULL, 0) == 0 && fs.fs_type == CONTENT_DIR) {
+    md->md_contenttype = CONTENT_DVD;
+    return md;
+  }
+  
+  return md;
 }

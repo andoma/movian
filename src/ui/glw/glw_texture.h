@@ -46,10 +46,10 @@ typedef struct glw_loadable_texture {
 
   glw_backend_texture_t glt_texture;
 
-  char *glt_filename;
+  rstr_t *glt_url;
 
-  void *glt_bitmap;
-  size_t glt_bitmap_size;
+  pixmap_t *glt_pixmap;
+
   int16_t glt_req_xs;
   int16_t glt_req_ys;
 
@@ -59,8 +59,6 @@ typedef struct glw_loadable_texture {
   int glt_format;
   int glt_ext_format;
   int glt_ext_type;
-
-  struct pixmap *glt_pixmap;
 
   unsigned int glt_orientation;
 
@@ -72,12 +70,9 @@ typedef struct glw_loadable_texture {
 
 void glw_tex_init(glw_root_t *gr);
 
-glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, const char *filename,
+glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
 				       int flags, int xs, int ys);
 
-glw_loadable_texture_t *glw_tex_create_from_pixmap(glw_root_t *gr, 
-						   pixmap_t *pp);
- 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 
 void glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt);
@@ -93,9 +88,7 @@ void glw_tex_flush_all(glw_root_t *gr);
  * Backend interface
  */
 int glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
-			 AVPicture *pict, int pix_fmt,
-			 int src_w, int src_h,
-			 int req_w, int req_h);
+			 pixmap_t *pm);
 
 void glw_tex_backend_free_render_resources(glw_root_t *gr,
 					   glw_loadable_texture_t *glt);

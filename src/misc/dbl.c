@@ -54,22 +54,22 @@ my_str2double(const char *str, const char **endp)
     }
 
     ret *= (n + pow(10, m) * o);
-    
-    if(*str == 'e' || *str == 'E') {
-      int esign = 1;
-      str++;
-      
-      if(*str == '+')
-	str++;
-      else if(*str == '-') {
-	str++;
-	esign = -1;
-      }
+  }
 
-      while(*str >= '0' && *str <= '9')
-	e = e * 10 + *str++ - '0';
-      ret *= pow(10, e * esign);
+  if(*str == 'e' || *str == 'E') {
+    int esign = 1;
+    str++;
+    
+    if(*str == '+')
+      str++;
+    else if(*str == '-') {
+      str++;
+      esign = -1;
     }
+    
+    while(*str >= '0' && *str <= '9')
+      e = e * 10 + *str++ - '0';
+    ret *= pow(10, e * esign);
   }
 
   if(endp != NULL)

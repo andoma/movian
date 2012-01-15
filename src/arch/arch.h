@@ -20,6 +20,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <time.h>
 
 void arch_init(void);
 
@@ -34,3 +35,5 @@ int64_t arch_cache_avail_bytes(void);
 void trap_init(void);
 
 void arch_preload_fonts(void);
+
+void my_localtime(const time_t *timep, struct tm *tm);

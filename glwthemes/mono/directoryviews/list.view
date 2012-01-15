@@ -1,4 +1,4 @@
-#import "skin://infobox.skin"
+#import "theme://include/infobox.view"
 #import "theme://include/buttons.view"
 #import "theme://include/separators.view"
 #import "theme://include/slider.view"
@@ -34,7 +34,7 @@ widget(keyintercept, {
 	    
 	  });
 	});
-	ICON2("skin://icons/Delete.png",
+	ICON2("theme://svg/Delete.svg",
 	      "Clear",
 	      {
 		$page.model.filter = void;
@@ -67,19 +67,18 @@ widget(keyintercept, {
 
 	  widget(icon, {
 	    .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_AUDIO());
-	    .source = translate($self.type,  "skin://icons/File.png",
-				"archive",   "skin://icons/Archive.png",
-				"artist",    "skin://icons/User.png",
-				"audio",     "skin://icons/Music.png",
-				"directory", "skin://icons/Folder.png",
-				"dvd",       "skin://icons/DVD.png",
-				"playlist",  "skin://icons/List.png",
-				"video",     "skin://icons/Movie.png",
-				"album",     "skin://icons/DVD.png",
-				"plugin",    "skin://icons/Plugin.png"
-			       );
+	    .source = translate($self.type,  "theme://svg/File",
+				"archive",   "theme://svg/Archive",
+				"artist",    "theme://svg/User",
+				"audio",     "theme://svg/Music",
+				"directory", "theme://svg/Folder",
+				"dvd",       "theme://svg/Disc",
+				"playlist",  "theme://svg/List",
+				"video",     "theme://svg/Movie",
+				"album",     "theme://svg/Disc",
+				"plugin",    "theme://svg/Plugin"
+			       ) + ".svg";
 	    .shadow = true;
-	    .hqScaling = true;
 	  });
 	  
 	  widget(backdrop, {

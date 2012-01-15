@@ -50,10 +50,11 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
 	htsmsg_add_str(in, f->hmf_name, s);
     }
   } else {
-    in = NULL;
+    in = htsmsg_create_map();
   }
 
-  htsmsg_t *out = usm->usm_fn(hc, in);
+  htsmsg_t *out = usm->usm_fn(hc, in, http_get_my_host(hc),
+			      http_get_my_port(hc));
   htsmsg_destroy(in);
 
   htsbuf_queue_init(&xml, 0);
@@ -61,24 +62,37 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
   htsbuf_qprintf(&xml,
 		 "<?xml version=\"1.0\"?>"
 		 "<s:Envelope xmlns:s=\"http://schemas.xmlsoap.org/soap/envelope/\" s:encodingStyle=\"http://schemas.xmlsoap.org/soap/encoding/\">"
-		 "<s:Body>"
-		 "<u:%sResponse xmlns:u=\"urn:schemas-upnp-org:service:%s:%d\">",
-		 usm->usm_name,
-		 uls->uls_name,
-		 uls->uls_version);
-  
-  if(out != NULL) {
-    soap_encode_args(&xml, out);
-    htsmsg_destroy(out);
+		 "<s:Body>");
+
+  if(out == UPNP_CONTROL_INVALID_ARGS) {
+    htsbuf_qprintf(&xml,
+		   "<s:Fault>"
+		   "<s:faultcode>500</s:faultcode></s:Fault>");
+  } else {
+    htsbuf_qprintf(&xml,
+		   "<u:%sResponse "
+		   "xmlns:u=\"urn:schemas-upnp-org:service:%s:%d\">",
+		   usm->usm_name,
+		   uls->uls_name,
+		   uls->uls_version);
+    
+    if(out != NULL) {
+      soap_encode_args(&xml, out);
+      htsmsg_destroy(out);
+    }
+
+    htsbuf_qprintf(&xml,
+		   "</u:%sResponse>",
+		   usm->usm_name);
   }
 
   htsbuf_qprintf(&xml,
-		 "</u:%sResponse>"
 		 "</s:Body>"
-		 "</s:Envelope>",
-		 usm->usm_name);
+		 "</s:Envelope>");
 
-  return http_send_reply(hc, 0, "text/xml; charset=\"UTF-8\"",
+  http_set_response_hdr(hc, "EXT", "");
+
+  return http_send_reply(hc, 0, "text/xml; charset=\"utf-8\"",
 			 NULL, NULL, 0, &xml);
 }
 
@@ -131,11 +145,11 @@ control_parse_soap(upnp_local_service_t *uls, http_connection_t *hc,
 
     int i = 0;
     while(1) {
-      if(uls->uls_methods[i].usm_name == NULL)
-	return http_error(hc, HTTP_STATUS_BAD_REQUEST, 
+      if(uls->uls_methods[i].usm_name == NULL) {
+	return http_error(hc, 500, 
 			  "Method %s:%d::%s not found",
 			  uls->uls_name, uls->uls_version, s);
-
+      }
       if(!strcmp(s, uls->uls_methods[i].usm_name))
 	return control_dispatch_method(uls, &uls->uls_methods[i], hc, m);
       i++;

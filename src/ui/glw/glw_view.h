@@ -63,7 +63,8 @@ typedef enum {
   TOKEN_NULL_COALESCE,         // ??
   TOKEN_LT,                    // <
   TOKEN_GT,                    // >
-  TOKEN_STRING,                // A quoted string: " ... "
+  TOKEN_RSTRING,               // A ref allocated string
+  TOKEN_CSTRING,               // A compile time constant string
   TOKEN_FLOAT,
   TOKEN_INT,
   TOKEN_IDENTIFIER,
@@ -86,7 +87,6 @@ typedef enum {
   TOKEN_VECTOR_STRING,
   TOKEN_VECTOR_INT,
   TOKEN_EVENT,
-  TOKEN_PIXMAP,                // prop.c:prop_pixmap_t
   TOKEN_LINK,                  // A link with title and url
   TOKEN_num,
 
@@ -159,9 +159,12 @@ typedef struct token {
 
     } rstr;
 
+    const char *cstr;
+
   } u;
 
 
+#define t_cstring         u.cstr
 #define t_rstring         u.rstr.rstr
 #define t_rstrtype        u.rstr.type
 #define t_string_vector   u.string_vec
@@ -179,10 +182,6 @@ typedef struct token {
 #define t_link_rurl       u.link.rurl
 
 } token_t;
-
-#define token_is_string(t) \
-  ((t)->type == TOKEN_STRING || (t)->type == TOKEN_LINK)
-
 
 /**
  *
@@ -264,8 +263,8 @@ token_t *glw_view_lexer(const char *src, errorinfo_t *ei,
 			 rstr_t *f, token_t *prev);
 
 
-token_t *glw_view_load1(glw_root_t *gr, const char *filename,
-			 errorinfo_t *ei, token_t *prev);
+token_t *glw_view_load1(glw_root_t *gr, rstr_t *url,
+			errorinfo_t *ei, token_t *prev);
 
 int glw_view_parse(token_t *sof, errorinfo_t *ei);
 

@@ -38,7 +38,7 @@ widget(container_y, {
 		});
       	      });
 	    });
-	    ICON2("skin://icons/Delete.png",
+	    ICON2("theme://svg/Delete.svg",
 		  "Clear",
 		  {
 		    $page.model.filter = void;
@@ -101,6 +101,7 @@ widget(container_y, {
 		.caption = $self.metadata.title;
 		.align = center;
 		.ellipsize = true;
+		.shadow = true;
 	      });
 	    });
 	  });

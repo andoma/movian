@@ -40,7 +40,11 @@ set_string(glw_view_eval_context_t *ec, const token_attrib_t *a,
     str = "";
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    str = t->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     str = rstr_get(t->t_rstring);
     break;
@@ -90,7 +94,11 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
     str = NULL;
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    str = t->t_cstring;
+    break;
+
+  case TOKEN_RSTRING:
     type = t->t_rstrtype;
     /* FALLTHRU */
   case TOKEN_LINK:
@@ -129,7 +137,11 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
   float v;
 
   switch(t->type) {
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    v = strtod(t->t_cstring, NULL);
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     v = strtod(rstr_get(t->t_rstring), NULL);
     break;
@@ -206,6 +218,18 @@ set_size_scale(glw_t *w, float v)
 /**
  *
  */
+static void
+set_size(glw_t *w, float v)
+{
+  if(w->glw_class->gc_set_default_size != NULL)
+    w->glw_class->gc_set_default_size(w, v);
+}
+
+
+
+/**
+ *
+ */
 static int
 set_int(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
@@ -213,7 +237,11 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
   int v;
 
   switch(t->type) {
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    v = atoi(t->t_cstring);
+    break;
+    
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
     v = atoi(rstr_get(t->t_rstring));
     break;
@@ -700,21 +728,24 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   glw_t *w = ec->w;
+  rstr_t *r;
+  if(w->glw_class->gc_set_source == NULL)
+    return 0;
 
   switch(t->type) {
   case TOKEN_VOID:
-    if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, NULL);
+    w->glw_class->gc_set_source(w, NULL);
     break;
 
-  case TOKEN_STRING:
+  case TOKEN_CSTRING:
+    r = rstr_alloc(t->t_cstring);
+    w->glw_class->gc_set_source(w, r);
+    rstr_release(r);
+    break;
+
+  case TOKEN_RSTRING:
   case TOKEN_LINK:
-    if(w->glw_class->gc_set_source != NULL)
-      w->glw_class->gc_set_source(w, rstr_get(t->t_rstring));
-    break;
-
-  case TOKEN_PIXMAP:
-    glw_set(ec->w, GLW_ATTRIB_PIXMAP, t->t_pixmap, NULL);
+    w->glw_class->gc_set_source(w, t->t_rstring);
     break;
 
   default:
@@ -776,7 +807,6 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintWeight",  mod_flag, GLW_CONSTRAINT_IGNORE_W, mod_flags1},
   {"hidden",                  mod_flag, GLW_HIDDEN, mod_flags1},
   {"noInitialTransform",      mod_flag, GLW_NO_INITIAL_TRANS, mod_flags1},
-  {"shadow",                  mod_flag, GLW_SHADOW, mod_flags1},
   {"focusOnClick",            mod_flag, GLW_FOCUS_ON_CLICK, mod_flags1},
   {"autoRefocusable",         mod_flag, GLW_AUTOREFOCUSABLE, mod_flags1},
   {"navFocusable",            mod_flag, GLW_NAV_FOCUSABLE, mod_flags1},
@@ -786,8 +816,8 @@ static const token_attrib_t attribtab[] = {
   {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
   {"alwaysGrabKnob",          mod_flag, GLW2_ALWAYS_GRAB_KNOB, mod_flags2},
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
+  {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
 
-  {"hqScaling",       mod_flag, GLW_IMAGE_HQ_SCALING, mod_img_flags},
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
   {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT, mod_img_flags},
   {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP, mod_img_flags},
@@ -801,7 +831,10 @@ static const token_attrib_t attribtab[] = {
 
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
-
+  {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
+  {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
+  {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
+  
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
 
@@ -818,6 +851,7 @@ static const token_attrib_t attribtab[] = {
   {"step",            set_float,  GLW_ATTRIB_INT_STEP},
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"sizeScale",       set_float,  0, set_size_scale},
+  {"size",            set_float,  0, set_size},
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
 

@@ -148,4 +148,85 @@
 } while (/*CONSTCOND*/0) 
  
 
+#ifndef SIMPLEQ_HEAD
+#define SIMPLEQ_HEAD(name, type)					\
+struct name {								\
+struct type *sqh_first;                                                 \
+struct type **sqh_last;                                                 \
+}
+#endif
+
+#ifndef SIMPLEQ_ENTRY
+#define SIMPLEQ_ENTRY(type)						\
+struct {								\
+struct type *sqe_next;                                                  \
+}
+#endif
+
+#ifndef SIMPLEQ_FIRST
+#define	SIMPLEQ_FIRST(head)	    ((head)->sqh_first)
+#endif
+
+#ifndef SIMPLEQ_REMOVE_HEAD
+#define SIMPLEQ_REMOVE_HEAD(head, field) do {			        \
+if (((head)->sqh_first = (head)->sqh_first->field.sqe_next) == NULL)    \
+(head)->sqh_last = &(head)->sqh_first;			                \
+} while (0)
+#endif
+
+#ifndef SIMPLEQ_INSERT_TAIL
+#define SIMPLEQ_INSERT_TAIL(head, elm, field) do {			\
+(elm)->field.sqe_next = NULL;					        \
+*(head)->sqh_last = (elm);					        \
+(head)->sqh_last = &(elm)->field.sqe_next;			        \
+} while (0)
+#endif
+
+#ifndef SIMPLEQ_INIT
+#define	SIMPLEQ_INIT(head) do {						\
+(head)->sqh_first = NULL;					        \
+(head)->sqh_last = &(head)->sqh_first;				        \
+} while (0)
+#endif
+
+#ifndef SIMPLEQ_INSERT_HEAD
+#define SIMPLEQ_INSERT_HEAD(head, elm, field) do {			\
+if (((elm)->field.sqe_next = (head)->sqh_first) == NULL)	        \
+(head)->sqh_last = &(elm)->field.sqe_next;		                \
+(head)->sqh_first = (elm);					        \
+} while (0)
+#endif
+
+#ifndef SIMPLEQ_FOREACH
+#define SIMPLEQ_FOREACH(var, head, field)				\
+for((var) = SIMPLEQ_FIRST(head);				        \
+(var) != SIMPLEQ_END(head);					        \
+(var) = SIMPLEQ_NEXT(var, field))
+#endif
+
+#ifndef SIMPLEQ_INSERT_AFTER
+#define SIMPLEQ_INSERT_AFTER(head, listelm, elm, field) do {		\
+if (((elm)->field.sqe_next = (listelm)->field.sqe_next) == NULL)        \
+(head)->sqh_last = &(elm)->field.sqe_next;		                \
+(listelm)->field.sqe_next = (elm);				        \
+} while (0)
+#endif
+
+#ifndef SIMPLEQ_END
+#define	SIMPLEQ_END(head)	    NULL
+#endif
+
+#ifndef SIMPLEQ_NEXT
+#define	SIMPLEQ_NEXT(elm, field)    ((elm)->field.sqe_next)
+#endif
+
+#ifndef SIMPLEQ_HEAD_INITIALIZER
+#define SIMPLEQ_HEAD_INITIALIZER(head)					\
+{ NULL, &(head).sqh_first }
+#endif
+
+#ifndef SIMPLEQ_EMPTY
+#define	SIMPLEQ_EMPTY(head)	    (SIMPLEQ_FIRST(head) == SIMPLEQ_END(head))
+#endif
+
 #endif /* HTSQ_H */

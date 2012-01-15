@@ -49,7 +49,7 @@ static inline int _private_gettimeofday( struct timeval *tv, void *tz )
 
 #else
 
-#include <arch/threads.h>
+#include "arch/threads.h"
 
 #endif /* WIN32 */
 

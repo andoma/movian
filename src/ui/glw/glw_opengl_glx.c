@@ -73,7 +73,7 @@ glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
 
   glClear(GL_COLOR_BUFFER_BIT);
 
-  glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height);
+  glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height, 0);
 }
 
 

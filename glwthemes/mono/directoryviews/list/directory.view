@@ -15,7 +15,7 @@ widget(backdrop, {
     widget(icon, {
       .color = select(isFocused() || $self.metadata.icon,
 		      [1.0, 1.0, 1.0], PLATE_COLOR_DIR());
-      .source = $self.metadata.icon ?? "theme://icons/48x48/Folder.png";
+      .source = $self.metadata.icon ?? "theme://svg/Folder.svg";
       .shadow = true;
     });
   

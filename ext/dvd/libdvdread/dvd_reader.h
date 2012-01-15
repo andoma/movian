@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 #include <inttypes.h>
-#include <fileaccess/svfs.h>
+#include "fileaccess/svfs.h"
 
 /**
  * The DVD access interface.

@@ -131,9 +131,27 @@ set_stretch_horizontal(void *opaque, int on)
 }
 
 static void
+set_stretch_fullscreen(void *opaque, int on)
+{
+  video_settings.stretch_fullscreen = on;
+}
+
+static void
 set_vzoom(void *opaque, int v)
 {
   video_settings.vzoom = v;
+}
+
+static void
+set_video_resumemode(void *opaque, const char *str)
+{
+  video_settings.resume_mode = atoi(str);
+}
+
+static void
+set_played_threshold(void *opaque, int v)
+{
+  video_settings.played_threshold = v;
 }
 
 void
@@ -163,13 +181,44 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
 
+  settings_create_bool(s, "stretch_fullscreen",
+		       _p("Stretch video to fullscreen"), 0,
+		       store, set_stretch_fullscreen, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
+
   settings_create_int(s, "vzoom",
-		      _p("Video zoom"), 100, NULL, 50, 200,
+		      _p("Video zoom"), 100, store, 50, 200,
 		      1, set_vzoom, NULL,
 		      SETTINGS_INITIAL_UPDATE,
 		      "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
+  
+  video_settings.resume_mode = 1;
+  x = settings_create_multiopt(s, "resumemode",
+			       _p("Resume video playback"));
+
+  settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
+  settings_multiopt_add_opt(x, "0", _p("No"), 0);
+
+  settings_multiopt_initiate(x, set_video_resumemode, NULL, NULL,
+			     store, settings_generic_save_settings, 
+			     (void *)"videoplayback");
+
+  settings_create_int(s, "played_threshold",
+		      _p("Count video as played when reaching"),
+		      90, store, 1, 100,
+		      1, set_played_threshold, NULL,
+		      SETTINGS_INITIAL_UPDATE,
+		      "%", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"videoplayback");
+
+
+
+  //----------------------------------------------------------
 
   s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
 		       _p("Generic settings for video subtitles"));
@@ -198,15 +247,16 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
 
-  x = settings_create_multiopt(s, "align", _p("Subtitle position"),
-			       set_subtitle_alignment, NULL);
+  x = settings_create_multiopt(s, "align", _p("Subtitle position"));
+			       
 
   settings_multiopt_add_opt(x, "2", _p("Center"), 1);
   settings_multiopt_add_opt(x, "1", _p("Left"), 0);
   settings_multiopt_add_opt(x, "3", _p("Right"), 0);
   settings_multiopt_add_opt(x, "0", _p("Auto"), 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,set_subtitle_alignment, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"subtitles");
 
   settings_create_divider(s, _p("Subtitle styling"));

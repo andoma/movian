@@ -1,6 +1,6 @@
 language: Portuguese
 native: Português
-maintainer: 
+maintainer: andreus sebes
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -25,6 +25,39 @@ msg: Configurações de vídeo
 id: Added by: %s
 msg: Adicionado por: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Eliminar
+
+id: Queue
+msg: Lista de espera
+
+id: Star
+msg: Votar
+
+id: Unstar
+msg: Remover voto
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +68,29 @@ id: On
 msg: Ligado
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Adicionar à lista
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Alocada pela aplicação: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Alocada pelo malloc: %d kB
+
 id: Avail system RAM: %d kB
 msg: Memória RAM disponível: %d kB
 
@@ -47,7 +101,10 @@ id: Display info
 msg: Informações de visualização
 
 id: Framerate: %.2f Hz
-msg: Framerate: %.2f Hz
+msg: Taxa de quadros: %.2f Hz
+
+id: Free chunks: %d
+msg: Chunks livres: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -55,14 +112,20 @@ msg: GPU: %s
 id: Height: %d px
 msg: Altura: %d px
 
+id: Memory status
+msg: Estado da memória
+
 id: Renderer: %s
-msg: Renderer: %s
+msg: Renderizador: %s
 
 id: System info
 msg: Informações de sistema
 
 id: Total system RAM: %d kB
 msg: Total de memória RAM: %d kB
+
+id: Unused memory: %d kB
+msg: Memória livre: %d kB
 
 id: Version: %s
 msg: Versão: %s
@@ -146,28 +209,10 @@ id: Username
 msg: Nome do utilizador
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nenhum media carregado
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Eliminar
-
-id: Enqueue
-msg: Adicionar à lista
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +235,9 @@ msg: Temperatura do núcleo do GPU: %d / %d °
 id: Adjust background tint based on daytime
 msg: Ajustar a tonalidade do fundo dependendo da altura do dia
 
+id: Alternate list layout
+msg: Disposição em lista alternativo
+
 id: Audio muted
 msg: Sem áudio
 
@@ -199,8 +247,9 @@ msg: Animações do IU
 id: Master volume: %d dB
 msg: Volume principal: %d dB
 
-id: Starwars scroller tilt
-msg: Inclinação do scroller Starwars
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -213,6 +262,12 @@ msg: Configurações para o opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Utilizar o opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: O sistema está com pouca memória (%d kB RAM disponível)
 
 #
 # ./src/audio/audio.c
@@ -241,6 +296,9 @@ msg: Pequenos altifalantes frontais
 id: Swap LFE+center with surround
 msg: Trocar LFE+center com surround
 
+id: Switching audio output to %s
+msg: A alterar a saída de áudio para %s
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +312,15 @@ id: Unable to open CD
 msg: Não foi possível abrir o CD
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Erro na leitura do DVD, a reiniciar disco
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -265,11 +332,17 @@ msg: URL de HTSP inválido
 id: Search
 msg: Procurar
 
+id: Search result for: %s
+msg: Resultado da pesquisa por: %s
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
+
+id: Collaborative
+msg: Colaborativo
 
 id: Enable Spotify
 msg: Ativar Spotify
@@ -292,6 +365,12 @@ msg: Novos albuns no Spotify
 id: New releases
 msg: Novas releases
 
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Sincronização offline de 96kbps
+
 id: Playlists
 msg: Listas de reprodução
 
@@ -313,6 +392,9 @@ msg: O Spotify oferece-lhe acesso livre e legal a uma enorme biblioteca de músi
 id: Spotify playlists
 msg: Listas de reprodução do Spotify
 
+id: Spotify: Connection error: %s
+msg: Spotify: Erro na connexão: %s
+
 id: Starred
 msg: Estrelado
 
@@ -321,6 +403,15 @@ msg: Estrelado
 #
 id: Bookmarks
 msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Não foi possível abrir o tipo de conteúdo: %d
+
+id: Unable to open file: %s
+msg: Não foi possível abrir o ficheiro: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -333,6 +424,12 @@ msg: Procurar utilizando o locatedb do Unix
 #
 id: Search using spotlight
 msg: Procurar utilizando o spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Ficheiro externo
 
 #
 # ./src/i18n.c
@@ -405,6 +502,16 @@ msg: Redimensionamento de legendas
 
 id: Video zoom
 msg: Zoom de vídeo
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Embebido no ficheiro
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -494,6 +601,21 @@ id: Map mouse wheel to up/down
 msg: Mapear a roda do rato para cima/baixo
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Alterar automaticamente para este modo
+
+id: DVI-Video color range
+msg: Intervalo de cores DVI-Video
+
+id: Switch to this mode now
+msg: Alterar para este modo agora
+
+id: Video modes
+msg: Modos de vídeo
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -515,6 +637,24 @@ id: Service not found
 msg: O serviço não foi encontrado
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: A forçar nível 4.2 para conteúdo no nível %d.%d. Isto pode quebrar a reprodução de vídeo.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Não foi possível acelerar %s, a biblioteca não foi carregada.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Não foi possível abrir o codificador Cell. Erro 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Não foi possível abrir o codificador Cell. Não foi possível alocar %d bytes de RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -528,6 +668,9 @@ msg: Centrado
 
 id: Color
 msg: Cor
+
+id: Count video as played when reaching
+msg: Marcar vídeo como reproduzido quando chegar a
 
 id: Enable VDPAU
 msg: Ativar VDPAU
@@ -544,11 +687,17 @@ msg: Ignorar estilos embutidos
 id: Left
 msg: Esquerda
 
+id: No
+msg: Não
+
 id: Outline color
 msg: Cor do contorno
 
 id: Outline size
 msg: Tamanho do contorno
+
+id: Resume video playback
+msg: Retomar a reprodução de vídeo
 
 id: Right
 msg: Direita
@@ -558,6 +707,10 @@ msg: Cor da sombra
 
 id: Shadow offset
 msg: Deslocamento da sombra
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen
@@ -579,4 +732,7 @@ msg: Acelaração de vídeo e comportamento da visualização
 
 id: Video playback
 msg: Reprodução de vídeo
+
+id: Yes
+msg: Sim
 

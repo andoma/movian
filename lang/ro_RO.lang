@@ -1,6 +1,6 @@
 language: Romanian
 native: Română
-maintainer: Internetus România <internetusromania@gmail.com>
+maintainer: Alexandru Alin <alexandru_alin_2011@k.ro>
 #
 # ./glwthemes/mono/commandmenu/cmd_root.view
 #
@@ -25,6 +25,42 @@ msg: Setări video
 id: Added by: %s
 msg: Tradus de : %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Șterge
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: Pornit
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Marchează un fișier ca următorul
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Anulează
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Memorie RAM liberă : %d kB
 
@@ -49,11 +108,19 @@ msg: Afișare informații
 id: Framerate: %.2f Hz
 msg: Numărul de frameuri: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Înălțime: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Randator : %s
@@ -63,6 +130,10 @@ msg: Informații sistem
 
 id: Total system RAM: %d kB
 msg: Memorie RAM totală : %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versiunea: %s
@@ -107,12 +178,10 @@ msg: Listă de așteptare
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Informații redare
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Imposibil de redat fișierul video
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -148,28 +217,10 @@ id: Username
 msg: Nume de utilizator
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Anulează
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nici un fișier media incărcat
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Șterge
-
-id: Enqueue
-msg: Marchează un fișier ca următorul
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +243,10 @@ msg: Temperatura GPU : %d / %d °
 id: Adjust background tint based on daytime
 msg: Ajustează tenta fundalului în funcție de oră
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Sunet oprit
 
@@ -201,8 +256,9 @@ msg: Animații UI
 id: Master volume: %d dB
 msg: Volumul general : %d dB
 
-id: Starwars scroller tilt
-msg: Inclinare scroller tip Starwars
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Butoanele de navigare de pe bara de sus
@@ -215,6 +271,13 @@ msg: Paramentrii pentru opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Folosește subtitrari de pe opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -243,6 +306,10 @@ msg: Difuzoare mici față
 id: Swap LFE+center with surround
 msg: Inversează LFE+centru cu surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +323,16 @@ id: Unable to open CD
 msg: Imposibil de citit CDul
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+msg: Eroare la citirea DVDului, necesara restartare disc
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,18 +344,25 @@ msg: URL HTSP invalid
 id: Search
 msg: Caută
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Logare automată la pornirea Showtime
 
+id: Collaborative
+# Missing translation
+msg: 
+
 id: Enable Spotify
 msg: Activează Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Uita-mă
 
 id: Friends
 msg: Prieteni
@@ -294,6 +378,14 @@ msg: Albume noi pe Spotify
 
 id: New releases
 msg: Noutăți
+
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
 
 id: Playlists
 msg: Lista de fișiere
@@ -316,6 +408,9 @@ msg: Spotify oferă acces legal si gratuit la o imensă librarie muzicală. Pent
 id: Spotify playlists
 msg: Lista de fișiere Spotify
 
+id: Spotify: Connection error: %s
+msg: Eroare de conectare:
+
 id: Starred
 msg: Notă
 
@@ -324,6 +419,17 @@ msg: Notă
 #
 id: Bookmarks
 msg: Favorite
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -336,6 +442,13 @@ msg: Caută folosind Unix locatedb
 #
 id: Search using spotlight
 msg: Caută folosind spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -410,6 +523,17 @@ id: Video zoom
 msg: Marește/Micșoarează imaginea folosind acest zoom video
 
 #
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
+
+#
 # ./src/navigator.c
 #
 id: No handler for URL
@@ -482,7 +606,7 @@ id: Screensaver delay
 msg: Timpul până la activarea screensaverului
 
 id: Userinterface size
-msg: Mărimea interfaței utilizatorului
+msg: Mărimea interfeței utilizatorului
 
 id: Vertical underscan
 msg: Underscan vertical
@@ -495,6 +619,25 @@ msg: Modul Ecran complet
 
 id: Map mouse wheel to up/down
 msg: Configurează rotița sus/jos a mouselui
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
 
 #
 # ./src/upnp/upnp.c
@@ -518,10 +661,28 @@ id: Service not found
 msg: Serviciul nu a fost găsit
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Forțare level 4.2 pentru conținut în level %d.%d. Aceasta poate cauza o redare eronată.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Imposibil de accelerat %s, librăria nu a fost încărcată.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Imposibil de deschis codecul Cell. Eroare 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Imposibil de deschis codecul Cell. Imposibil de alocat %d bytes de RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Imposibil de deschis codecul Cell. Eroare 0x%x
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
-msg: Întotdeauna încearcă să incarci o subtitrare
+msg: Întotdeauna încearcă să încarci o subtitrare
 
 id: Auto
 msg: Automat
@@ -531,6 +692,10 @@ msg: Centru
 
 id: Color
 msg: Culoare
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: Activează VDPAU
@@ -547,11 +712,19 @@ msg: Ignoră stilul embedded
 id: Left
 msg: Stânga
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Culoare contur
 
 id: Outline size
 msg: Grosime contur
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Dreapta
@@ -561,6 +734,10 @@ msg: Culoare umbră
 
 id: Shadow offset
 msg: Distanța față de umbră
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Lărgește imaginea pentru ecrane late
@@ -582,4 +759,8 @@ msg: Accelerarea video și comportamentul afișajului
 
 id: Video playback
 msg: Setări video
+
+id: Yes
+# Missing translation
+msg: 
 

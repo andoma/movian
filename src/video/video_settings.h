@@ -21,10 +21,17 @@ extern struct subtitle_settings subtitle_settings;
 struct video_settings {
   int vdpau;
   int stretch_horizontal;
+  int stretch_fullscreen;
   int vzoom;
+
+  enum {
+    VIDEO_RESUME_NO = 0,
+    VIDEO_RESUME_YES = 1,
+  } resume_mode;
+
+  int played_threshold;
 };
 
 extern struct video_settings video_settings;
 
 extern struct prop *subtitle_settings_dir;
-

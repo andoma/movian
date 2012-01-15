@@ -19,7 +19,7 @@
 #ifndef LASTFM_H__
 #define LASTFM_H__
 
-#include <misc/rstr.h>
+#include "misc/rstr.h"
 
 struct prop;
 

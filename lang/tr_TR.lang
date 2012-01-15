@@ -25,6 +25,42 @@ msg: Video Ayarları
 id: Added by: %s
 msg: Added by: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Sil
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: Açık
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Enqueue
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Mevcut system RAM: %d kB
 
@@ -49,11 +108,19 @@ msg: Ekran bilgileri
 id: Framerate: %.2f Hz
 msg: Framerate %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: yükseklik: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -63,6 +130,10 @@ msg: System bilgi
 
 id: Total system RAM: %d kB
 msg: Toplam sistem RAM: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Version: %s
@@ -148,28 +219,10 @@ id: Username
 msg: Kulanıcı Adı
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: İptal
-
-id: OK
-msg: Tammam
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Açılamadı
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Sil
-
-id: Enqueue
-msg: Enqueue
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +245,10 @@ msg: GPU çekirdek ısısı: %d / %d °
 id: Adjust background tint based on daytime
 msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Sessiz
 
@@ -201,8 +258,9 @@ msg: Fancy UI animations
 id: Master volume: %d dB
 msg: Ses seviyesi: %d dB
 
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Top Bar navigasyon düğmeleri
@@ -215,6 +273,13 @@ msg: Ayarlar için opensubtitles.org
 
 id: Use opensubtitles.org
 msg: opensubtitles.org kullan
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -243,6 +308,10 @@ msg: Küçük ön hoparlör
 id: Swap LFE+center with surround
 msg: Swap LFE+center with surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +325,17 @@ id: Unable to open CD
 msg: CD açılamıyor
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,11 +347,19 @@ msg: Geçersiz HTSP URL
 id: Search
 msg: Ara
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Showtime başlarken Otomatik giriş
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify etkinleştirin
@@ -295,6 +383,14 @@ msg: Yeni albüm aç Spotify
 id: New releases
 msg: Yenilikler
 
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
 id: Playlists
 msg: Oynatma listesi
 
@@ -316,6 +412,10 @@ msg: Spotify büyük bir müzik kütüphanesi için yasal ve ücretsiz erişim s
 id: Spotify playlists
 msg: Spotyfy Oynatma listesi 
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Starred
 
@@ -324,6 +424,17 @@ msg: Starred
 #
 id: Bookmarks
 msg: Bookmarks
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -336,6 +447,13 @@ msg: Search using Unix locatedb
 #
 id: Search using spotlight
 msg: Search using spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -409,6 +527,17 @@ msg: Altyazı ölçekleme
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -504,6 +633,25 @@ id: Map mouse wheel to up/down
 msg: Map mouse wheel to up/down
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -525,6 +673,29 @@ id: Service not found
 msg: Service bulunamadı
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -538,6 +709,10 @@ msg: merkez
 
 id: Color
 msg: renk
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: VDPAU etkin
@@ -554,11 +729,19 @@ msg: Ignore embedded styling
 id: Left
 msg: Sol
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Outline Rengi
 
 id: Outline size
 msg: Outline boyutu
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Sağ
@@ -568,6 +751,10 @@ msg: Gölgelenme rengi
 
 id: Shadow offset
 msg: Gölgelenme ayar
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Stretch video to widescreen
@@ -589,4 +776,8 @@ msg: Video hızlandırma ve görüntü davranışı
 
 id: Video playback
 msg: Video oynatma listesi
+
+id: Yes
+# Missing translation
+msg: 
 

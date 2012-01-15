@@ -23,13 +23,15 @@
 struct backend;
 struct fa_handle;
 
+
 event_t *be_file_playaudio(const char *url, media_pipe_t *mp,
 			   char *errbuf, size_t errlen, int hold,
 			   const char *mimetype);
 
 #if ENABLE_LIBGME
-event_t *fa_gme_playfile(media_pipe_t *mp, AVIOContext *avio,
-			 char *errbuf, size_t errlen, int hold);
+event_t *fa_gme_playfile(media_pipe_t *mp, struct fa_handle *fh,
+			 char *errbuf, size_t errlen, int hold,
+			 const char *url);
 #endif
 
 #endif /* FA_AUDIO_H */

@@ -25,6 +25,42 @@ msg: Videó beállitások
 id: Added by: %s
 msg: Hozzáadott: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Törlés
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: Be
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Sorba állítás
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Mégse
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: Elérhető rendszer RAM: %d kB
 
@@ -49,11 +108,19 @@ msg: Információ megjelenités
 id: Framerate: %.2f Hz
 msg: Frameráta %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: Grafikus processzor: %s
 
 id: Height: %d px
 msg: Magasság: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -63,6 +130,10 @@ msg: Rendszer információ
 
 id: Total system RAM: %d kB
 msg: Teljes rendszer RAM: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Verzió: %s
@@ -148,28 +219,10 @@ id: Username
 msg: Felhasználonév
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Mégse
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Nincs média betöltve
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Törlés
-
-id: Enqueue
-msg: Sorba állítás
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +245,10 @@ msg: Grafikai processzor maghőmérséklet: %d / %d °
 id: Adjust background tint based on daytime
 msg: Háttér árnyalat állitás, nappali időszak alapján
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Hang némitva
 
@@ -201,8 +258,9 @@ msg: Animácios felület
 id: Master volume: %d dB
 msg: Fő hangerő: %d dB
 
-id: Starwars scroller tilt
-msg: Starwars scroller tilt
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Felső sáv navigációs gombok
@@ -215,6 +273,13 @@ msg: Beállitások a opensubtitles.org-hoz
 
 id: Use opensubtitles.org
 msg: opensubtitles.org-ot használ
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -243,6 +308,10 @@ msg: Első hangszórók
 id: Swap LFE+center with surround
 msg: Basszus és a surround hangszóró cseréje 
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +325,17 @@ id: Unable to open CD
 msg: Nem lehet megnyitni a CD-t
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,11 +347,19 @@ msg: érvénytelen HTSP URL
 id: Search
 msg: Keresés
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatikus bejelentkezés a Showtime inditásakor
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify Engedélyezés
@@ -295,6 +383,14 @@ msg: Új albumok a Spotify-n
 id: New releases
 msg: Új kiadások
 
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
 id: Playlists
 msg: Lejátszási lista
 
@@ -316,6 +412,10 @@ msg: A Spotify legális es ingyenes hozzáférest nyujt nagy mennyisegű zenéhe
 id: Spotify playlists
 msg: Spotify lejátszási lista
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Csillagos
 
@@ -324,6 +424,17 @@ msg: Csillagos
 #
 id: Bookmarks
 msg: Könyvjelzők
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -336,6 +447,13 @@ msg: Keresés Unix locatedb által
 #
 id: Search using spotlight
 msg: Keresés spotlight által
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -408,6 +526,17 @@ msg: Felirat méretezés
 
 id: Video zoom
 msg: Zoomolás
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -497,6 +626,25 @@ id: Map mouse wheel to up/down
 msg: Egér görgetés fel/le feltérképezése 
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -518,6 +666,29 @@ id: Service not found
 msg: Szolgáltatás nem található
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -531,6 +702,10 @@ msg: Középső
 
 id: Color
 msg: Szin
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: VDPAU Engedélyezés
@@ -547,11 +722,19 @@ msg: Beágyazott stílus figyelmen kívül hagyása
 id: Left
 msg: Ball
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Körvonal színe
 
 id: Outline size
 msg: Körvonal mérete
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Jobb
@@ -561,6 +744,10 @@ msg: árnyék színe
 
 id: Shadow offset
 msg: árnyék offset
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: videó szélesvásznúra nyujtása
@@ -582,4 +769,8 @@ msg: Videó gyorsitás es kijelzo működés
 
 id: Video playback
 msg: Videó lejátszás
+
+id: Yes
+# Missing translation
+msg: 
 

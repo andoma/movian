@@ -288,11 +288,7 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
   pic->type = FF_BUFFER_TYPE_USER;
   pic->age = 256 * 256 * 256 * 64;
 
-  vvs->vvs_dts = mb->mb_dts;
-  vvs->vvs_pts = mb->mb_pts;
-  vvs->vvs_epoch = mb->mb_epoch;
-  vvs->vvs_duration = mb->mb_duration;
-  vvs->vvs_time = mb->mb_time;
+  memcpy(&vvs->vvs_mb, mb, sizeof(media_buf_t));
   return 0;
 }
 
@@ -414,9 +410,8 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 
   vd->vd_skip = 0;
   vvs = frame->opaque;
-  video_deliver_frame(vd, vd->vd_mp, mq, mb, ctx, frame,
-		      vvs->vvs_time, vvs->vvs_pts, vvs->vvs_dts,
-		      vvs->vvs_duration, vvs->vvs_epoch, 0);
+  video_deliver_frame(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
+  return;
 }
 
 
@@ -573,7 +568,12 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   TAILQ_INIT(&vc->vc_vvs_free);
   vc->vc_vd = vd;
   vc->vc_width = mcp->width;
-  vc->vc_height = mcp->height;
+
+  if(mcp->height == 1088)
+    vc->vc_height = 1080;
+  else
+    vc->vc_height = mcp->height;
+
   vc->vc_profile = profile;
   vc->vc_refframes = refframes;
 
@@ -733,7 +733,7 @@ vdpau_mixer_deinit(vdpau_mixer_t *vm)
  *
  */
 void
-vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
+vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on, int height)
 {
   int best;
   VdpVideoMixerFeature f;
@@ -742,7 +742,7 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on)
   VdpBool values[1];
   VdpStatus st;
 
-  if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS) {
+  if(vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS && height < 1080) {
     best = VDPAU_MIXER_DEINTERLACE_TS;
     f = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
     type = "Temporal/Spatial";

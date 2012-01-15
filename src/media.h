@@ -20,8 +20,7 @@
 #define MEDIA_H
 
 #include <stdlib.h>
-#include <libavformat/avformat.h>
-#include <arch/atomic.h>
+#include "arch/atomic.h"
 #include "prop/prop.h"
 #include "event.h"
 #include "misc/pool.h"
@@ -29,13 +28,13 @@
 void media_init(void);
 struct media_buf;
 struct media_queue;
+struct media_pipe;
 struct video_decoder;
 
 typedef struct event_ts {
   event_t h;
-  int stream;
-  int64_t dts;
-  int64_t pts;
+  int64_t ts;
+
 } event_ts_t;
 
 
@@ -49,7 +48,7 @@ TAILQ_HEAD(media_track_queue, media_track);
  */
 typedef struct media_format {
   int refcount;
-  AVFormatContext *fctx;
+  struct AVFormatContext *fctx;
 } media_format_t;
 
 
@@ -59,11 +58,13 @@ typedef struct media_format {
 typedef struct media_codec {
   int refcount;
   media_format_t *fw;
-  AVCodec *codec;
-  AVCodecContext *codec_ctx;
-  AVCodecParserContext *parser_ctx;
+  struct AVCodec *codec;
+  struct AVCodecContext *codec_ctx;
+  struct AVCodecParserContext *parser_ctx;
 
   void *opaque;
+
+  // If decode returns 1 the accelerator keeps ownership of mb
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
@@ -122,7 +123,7 @@ typedef struct media_buf {
   union {
     int32_t mb_data32;
     int mb_rate;
-    enum CodecID mb_codecid;
+    int mb_codecid;
   };
 
 
@@ -131,11 +132,16 @@ typedef struct media_buf {
   uint8_t mb_aspect_override : 2;
   uint8_t mb_disable_deinterlacer : 1;
   uint8_t mb_skip : 2;
+  uint8_t mb_keyframe : 1;
+  uint8_t mb_send_pts : 1;
 
   uint8_t mb_stream;
 
   uint8_t mb_channels;
   uint8_t mb_epoch;
+  struct media_queue *mb_mq;
+
+  uint32_t mb_tailptr;
 
 } media_buf_t;
 
@@ -144,6 +150,9 @@ typedef struct media_buf {
  */
 typedef struct media_queue {
   struct media_buf_queue mq_q;
+
+  uint32_t mq_huge_buf_tail;
+  int mq_freeze_tail;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
   unsigned int mq_packets_threshold;  /* If we are below this threshold
@@ -169,6 +178,8 @@ typedef struct media_queue {
   prop_t *mq_prop_codec;
 
   prop_t *mq_prop_too_slow;
+
+  struct media_pipe *mq_mp;
 
 } media_queue_t;
 
@@ -211,7 +222,14 @@ typedef struct media_pipe {
 #define MP_ON_STACK      0x2
 #define MP_VIDEO         0x4
 
+  int mp_eof;   // End of file: We don't expect to need to read more data
+
   pool_t *mp_mb_pool;
+
+  void *mp_huge_buf;
+  uint32_t mp_huge_buf_head;
+  int mp_huge_buf_size;
+
 
   unsigned int mp_buffer_current; // Bytes current queued (total for all queues)
   unsigned int mp_buffer_limit;   // Max buffer size
@@ -242,6 +260,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_root;
   prop_t *mp_prop_type;
   prop_t *mp_prop_io;
+  prop_t *mp_prop_notifications;
   prop_t *mp_prop_primary;
   prop_t *mp_prop_metadata;
   prop_t *mp_prop_model;
@@ -313,11 +332,13 @@ typedef struct media_pipe {
 
 } media_pipe_t;
 
+struct AVFormatContext;
+struct AVCodecContext;
 
 /**
  *
  */
-media_format_t *media_format_create(AVFormatContext *fctx);
+media_format_t *media_format_create(struct AVFormatContext *fctx);
 
 void media_format_deref(media_format_t *fw);
 
@@ -340,8 +361,9 @@ typedef struct media_codec_params {
 } media_codec_params_t;
 
 
-media_codec_t *media_codec_create(enum CodecID id, int parser,
-				  media_format_t *fw, AVCodecContext *ctx,
+media_codec_t *media_codec_create(int codec_id, int parser,
+				  media_format_t *fw, 
+				  struct AVCodecContext *ctx,
 				  media_codec_params_t *mcp, media_pipe_t *mp);
 
 void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
@@ -354,8 +376,13 @@ media_buf_t *media_buf_alloc_locked_ex(media_pipe_t *mp, const char *file, int l
 media_buf_t *media_buf_alloc_unlocked_ex(media_pipe_t *mp, const char *file, int line);
 #define media_buf_alloc_unlocked(mp) media_buf_alloc_unlocked_ex(mp, __FILE__, __LINE__)
 #else
+
+struct AVPacket;
+
 media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
+media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pkt);
+
 #endif
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
@@ -384,6 +411,8 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 
 void mp_flush(media_pipe_t *mp, int blackout);
 
+int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
+
 void mp_end(media_pipe_t *mp);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
@@ -394,9 +423,9 @@ void mp_init_audio(struct media_pipe *mp);
 
 void mp_shutdown(struct media_pipe *mp);
 
-void media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx);
+void media_update_codec_info_prop(prop_t *p, struct AVCodecContext *ctx);
 
-void media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size);
+void media_get_codec_info(struct AVCodecContext *ctx, char *buf, size_t size);
 
 void media_set_metatree(media_pipe_t *mp, prop_t *src);
 
@@ -428,9 +457,10 @@ void mp_configure(media_pipe_t *mp, int caps, int buffer_mode);
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 
 void metadata_from_ffmpeg(char *dst, size_t dstlen, 
-			  AVCodec *codec, AVCodecContext *avctx);
+			  struct AVCodec *codec, struct AVCodecContext *avctx);
 
-void mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx);
+void mp_set_mq_meta(media_queue_t *mq, struct AVCodec *codec,
+		    struct AVCodecContext *avctx);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 
@@ -441,7 +471,18 @@ void mp_add_track(prop_t *parent,
 		  const char *longformat,
 		  const char *isolang,
 		  const char *source,
+		  prop_t *sourcep,
 		  int score);
+
+void mp_add_trackr(prop_t *parent,
+		   rstr_t *title,
+		   const char *url,
+		   rstr_t *format,
+		   rstr_t *longformat,
+		   rstr_t *isolang,
+		   rstr_t *source,
+		   prop_t *sourcep,
+		   int score);
 
 void mp_add_track_off(prop_t *tracks, const char *title);
 

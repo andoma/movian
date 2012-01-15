@@ -26,6 +26,7 @@
 #include "misc/string.h"
 #include "backend/backend.h"
 #include "ui/ui.h"
+#include "notifications.h"
 
 #define STRINGIFY(A)  #A
 
@@ -67,12 +68,18 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   pixmap_t *pm;
   char errbuf[200];
   const char *content;
-  pm = backend_imageloader(remain, NULL, NULL, errbuf, sizeof(errbuf));
+  image_meta_t im = {0};
+  im.im_no_decoding = 1;
+
+  rstr_t *url = rstr_alloc(remain);
+
+  pm = backend_imageloader(url, &im, NULL, errbuf, sizeof(errbuf), NULL);
+  rstr_release(url);
   if(pm == NULL)
     return http_error(hc, 404, "Unable to load image %s : %s",
 		      remain, errbuf);
-
-  if(pm->pm_codec == CODEC_ID_NONE) {
+  
+  if(!pixmap_is_coded(pm)) {
     pixmap_release(pm);
     return http_error(hc, 404, 
 		      "Unable to load image %s : Original data not available",
@@ -82,14 +89,14 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_init(&out, 0);
   htsbuf_append(&out, pm->pm_data, pm->pm_size);
 
-  switch(pm->pm_codec) {
-  case CODEC_ID_MJPEG:
+  switch(pm->pm_type) {
+  case PIXMAP_JPEG:
     content = "image/jpeg";
     break;
-  case CODEC_ID_PNG:
+  case PIXMAP_PNG:
     content = "image/png";
     break;
-  case CODEC_ID_GIF:
+  case PIXMAP_GIF:
     content = "image/gif";
     break;
   default:
@@ -263,6 +270,28 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 
 
 
+static int
+hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
+	       http_cmd_t method)
+{
+  const char *msg  = http_arg_get_req(hc, "msg");
+  const char *icon = http_arg_get_req(hc, "icon");
+  const char *lstr = http_arg_get_req(hc, "level");
+  int timeout = atoi(http_arg_get_req(hc, "timeout") ?: "5");
+  notify_type_t type = NOTIFY_INFO;
+
+  if(msg == NULL)
+    return HTTP_STATUS_BAD_REQUEST;
+
+  if(lstr != NULL && !strcmp(lstr, "error"))
+    type = NOTIFY_ERROR;
+  else if(lstr != NULL && !strcmp(lstr, "warning"))
+    type = NOTIFY_WARNING;
+
+  notify_add(NULL, type, icon, timeout, rstr_alloc("%s"), msg);
+  return HTTP_STATUS_OK;
+}
+
 
 
 /**
@@ -271,12 +300,13 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 void
 httpcontrol_init(void)
 {
-  http_path_add("/showtime/image", NULL, hc_image);
-  http_path_add("/showtime/open", NULL, hc_open);
-  http_path_add("/showtime/prop", NULL, hc_prop);
-  http_path_add("/showtime/input/action", NULL, hc_action);
-  http_path_add("/showtime/input/utf8", NULL, hc_utf8);
+  http_path_add("/showtime/image", NULL, hc_image, 0);
+  http_path_add("/showtime/open", NULL, hc_open, 1);
+  http_path_add("/showtime/prop", NULL, hc_prop, 0);
+  http_path_add("/showtime/input/action", NULL, hc_action, 0);
+  http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);
+  http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
 #if ENABLE_BINREPLACE
-  http_path_add("/showtime/replace", NULL, hc_binreplace);
+  http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
 #endif
 }

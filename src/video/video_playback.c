@@ -49,12 +49,14 @@ play_videoparams(const char *json, struct media_pipe *mp,
   htsmsg_field_t *f;
   int nsources = 0, i;
   vsource_t *vsvec, *vs;
+  const char *canonical_url;
 
   if(m == NULL) {
     snprintf(errbuf, errlen, "Invalid JSON");
     return NULL;
   }
 
+  canonical_url = htsmsg_get_str(m, "canonicalUrl");
 
   // Sources
 
@@ -110,7 +112,7 @@ play_videoparams(const char *json, struct media_pipe *mp,
       const char *source = htsmsg_get_str(sub, "source");
 
       mp_add_track(mp->mp_prop_subtitle_tracks, NULL, url, 
-		   NULL, NULL, lang, source, 0);
+		   NULL, NULL, lang, source, NULL, 0);
     }
   }
 
@@ -121,8 +123,12 @@ play_videoparams(const char *json, struct media_pipe *mp,
 
   vs = vsvec;
   
+  if(canonical_url == NULL)
+    canonical_url = vs->vs_url;
+
   return backend_play_video(vs->vs_url, mp, flags, priority, 
-			    errbuf, errlen, vs->vs_mimetype);
+			    errbuf, errlen, vs->vs_mimetype,
+			    canonical_url);
 }
 
 
@@ -132,10 +138,9 @@ play_videoparams(const char *json, struct media_pipe *mp,
 static void *
 video_player_idle(void *aux)
 {
-  video_playback_t *vp = aux;
   int run = 1;
   event_t *e = NULL, *next;
-  media_pipe_t *mp = vp->vp_mp;
+  media_pipe_t *mp = aux;
   char errbuf[256];
   prop_t *errprop = prop_ref_inc(prop_create(mp->mp_prop_root, "error"));
 
@@ -160,7 +165,7 @@ video_player_idle(void *aux)
 				errbuf, sizeof(errbuf));
       } else {
 	next = backend_play_video(ep->url, mp, flags, ep->priority,
-				  errbuf, sizeof(errbuf), NULL);
+				  errbuf, sizeof(errbuf), NULL, ep->url);
       }
 
       if(next == NULL)
@@ -178,21 +183,19 @@ video_player_idle(void *aux)
     e = NULL;
   }
   prop_ref_dec(errprop);
+  mp_ref_dec(mp);
   return NULL;
 }
 
 /**
  *
  */
-video_playback_t *
+void
 video_playback_create(media_pipe_t *mp)
 {
-  video_playback_t *vp = calloc(1, sizeof(video_playback_t));
-  vp->vp_mp = mp;
-  hts_thread_create_joinable("video player", 
-			     &vp->vp_thread, video_player_idle, vp,
+  mp_ref_inc(mp);
+  hts_thread_create_detached("video player",  video_player_idle, mp,
 			     THREAD_PRIO_NORMAL);
-  return vp;
 }
 
 
@@ -200,13 +203,9 @@ video_playback_create(media_pipe_t *mp)
  *
  */
 void
-video_playback_destroy(video_playback_t *vp)
+video_playback_destroy(media_pipe_t *mp)
 {
   event_t *e = event_create_type(EVENT_EXIT);
-
-  mp_enqueue_event(vp->vp_mp, e);
+  mp_enqueue_event(mp, e);
   event_release(e);
-
-  hts_thread_join(&vp->vp_thread);
-  free(vp);
 }

@@ -76,7 +76,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
       vo->vo_x = r->x;
       vo->vo_y = r->y;
 
-      vo->vo_pixmap = pixmap_create(r->w, r->h, PIX_FMT_BGR32);
+      vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 1);
 
       const uint8_t *src = r->pict.data[0];
       const uint32_t *clut = (uint32_t *)r->pict.data[1];
@@ -173,7 +173,7 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
     video_overlay_render_cleartext(vd, str, mb->mb_pts,
 				   mb->mb_duration ?
 				   mb->mb_pts + mb->mb_duration :
-				   AV_NOPTS_VALUE, 0);
+				   AV_NOPTS_VALUE, 1);
   } else {
     video_subtitles_lavc(vd, mb, cw->codec_ctx);
   }

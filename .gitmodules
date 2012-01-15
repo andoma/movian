@@ -1,0 +1,3 @@
+[submodule "ext/libav"]
+	path = ext/libav
+	url = git://github.com/andoma/libav.git

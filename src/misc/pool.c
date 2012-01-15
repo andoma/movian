@@ -20,8 +20,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <arch/halloc.h>
-#include <arch/threads.h>
+#include "arch/halloc.h"
+#include "arch/threads.h"
 
 #include "queue.h"
 #include "showtime.h"
@@ -272,3 +272,12 @@ pool_put(pool_t *p, void *ptr)
     hts_mutex_unlock(&p->p_mutex);
 }
 
+
+/**
+ *
+ */
+int
+pool_num(pool_t *p)
+{
+  return p->p_num_out;
+}

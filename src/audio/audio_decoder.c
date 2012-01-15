@@ -23,6 +23,8 @@
 #include <assert.h>
 #include <math.h>
 
+#include <libavcodec/avcodec.h>
+
 #include "showtime.h"
 #include "audio_decoder.h"
 #include "audio_defs.h"
@@ -36,7 +38,6 @@ extern audio_mode_t *audio_mode_current;
 
 static void audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
 		       int channels, int rate, int64_t chlayout,
-		       enum CodecID codec_id,
 		       int16_t *data0, int frames, int64_t pts, int epoch,
 		       media_pipe_t *mp);
 
@@ -126,6 +127,24 @@ audio_decoder_destroy(audio_decoder_t *ad)
 }
 
 
+  
+static int
+channels_to_format(int channels)
+{
+  int format;
+  switch(channels) {
+  case 2: format = AM_FORMAT_PCM_STEREO; break;
+  case 5: format = AM_FORMAT_PCM_5DOT0;  break;
+  case 6: format = AM_FORMAT_PCM_5DOT1;  break;
+  case 7: format = AM_FORMAT_PCM_6DOT1;  break;
+  case 8: format = AM_FORMAT_PCM_7DOT1;  break;
+  default:
+    return -1;
+  }
+  return format;
+}
+
+
 /**
  *
  */
@@ -138,6 +157,8 @@ ad_thread(void *aux)
   media_buf_t *mb;
   int hold = 0;
   int run = 1;
+  int64_t silence_start_pts = AV_NOPTS_VALUE;
+  uint64_t silence_start_realtime = 0;
 
   hts_mutex_lock(&mp->mp_mutex);
 
@@ -154,6 +175,7 @@ ad_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
+    mq->mq_freeze_tail = 1;
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
@@ -186,10 +208,28 @@ ad_thread(void *aux)
       if(mb->mb_skip != 0)
 	break;
 
-      if(mb->mb_stream != mq->mq_stream)
-	break;
+      if(mq->mq_stream == -1) {
+	if(mb->mb_pts == AV_NOPTS_VALUE)
+	  break;
 
+	if(silence_start_pts == AV_NOPTS_VALUE) {
+	  silence_start_pts = mb->mb_pts;
+	  silence_start_realtime = showtime_get_ts();
+	} else {
+	  int64_t d = mb->mb_pts - silence_start_pts;
+	  if(d > 0) {
+	    int64_t sleeptime = silence_start_realtime + d - showtime_get_ts();
+	    if(sleeptime > 0)
+	      usleep(sleeptime);
+	  }
+	}
+	break;
+      }
+
+      if(mb->mb_stream != mq->mq_stream) 
+	break;
       ad_decode_buf(ad, mp, mq, mb);
+      silence_start_pts = AV_NOPTS_VALUE;
       break;
 
     case MB_END:
@@ -200,6 +240,7 @@ ad_thread(void *aux)
       abort();
     }
     hts_mutex_lock(&mp->mp_mutex);
+    mq->mq_freeze_tail = 0;
     media_buf_free_locked(mp, mb);
   }
   hts_mutex_unlock(&mp->mp_mutex);
@@ -254,7 +295,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
   int size, r, data_size, channels, rate, frames, delay, i;
   media_codec_t *cw = mb->mb_cw;
   AVCodecContext *ctx;
-  enum CodecID codec_id;
   int64_t pts;
   
   if(cw == NULL) {
@@ -268,6 +308,13 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     } else if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
+    if(mb->mb_send_pts && mb->mb_pts != AV_NOPTS_VALUE) {
+      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = mb->mb_pts;
+      mp_enqueue_event(mp, &ets->h);
+      event_release(&ets->h);
+    }
+
     frames = mb->mb_size / sizeof(int16_t) / mb->mb_channels;
 
 
@@ -277,7 +324,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       memcpy(ad->ad_outbuf, mb->mb_data, mb->mb_size);
 
       audio_mix1(ad, am, mb->mb_channels, mb->mb_rate, 0,
-		 CODEC_ID_NONE, ad->ad_outbuf, frames,
+		 ad->ad_outbuf, frames,
 		 mb->mb_pts, mb->mb_epoch, mp);
       
     } else {
@@ -335,6 +382,13 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     } else if(mb->mb_time != AV_NOPTS_VALUE)
       mp_set_current_time(mp, mb->mb_time);
 
+    if(mb->mb_send_pts && mb->mb_pts != AV_NOPTS_VALUE) {
+      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
+      ets->ts = pts;
+      mp_enqueue_event(mp, &ets->h);
+      event_release(&ets->h);
+    }
+
     if(audio_mode_stereo_only(am) &&
        cw->codec->id != CODEC_ID_TRUEHD &&
        cw->codec->id != CODEC_ID_MLP)
@@ -362,7 +416,6 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 
     channels = ctx->channels;
     rate     = ctx->sample_rate;
-    codec_id = ctx->codec_id;
 
     /* Convert to signed 16bit */
 
@@ -395,8 +448,9 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 
 	if(ctx->sample_fmt == SAMPLE_FMT_FLT && am->am_float && 
 	   (am->am_sample_rates & AM_SR_ANY ||
-	    audio_rateflag_from_rate(rate) & am->am_sample_rates)) {
-
+	    audio_rateflag_from_rate(rate) & am->am_sample_rates) &&
+	   channels_to_format(channels) & am->am_formats) {
+	  
 	  frames /= channels;
 	  audio_deliver(ad, am, ad->ad_outbuf, channels, frames,
 			rate, pts, mb->mb_epoch, mp, 1);
@@ -430,7 +484,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 	  frames /= channels;
 
 	  audio_mix1(ad, am, channels, rate, ctx->channel_layout,
-		     codec_id, ad->ad_outbuf, 
+		     ad->ad_outbuf, 
 		     frames, pts, mb->mb_epoch, mp);
 	}
       }
@@ -574,7 +628,7 @@ astats(audio_decoder_t *ad, media_pipe_t *mp, int64_t pts, int epoch,
  */
 static void
 audio_mix1(audio_decoder_t *ad, audio_mode_t *am, 
-	   int channels, int rate, int64_t chlayout, enum CodecID codec_id,
+	   int channels, int rate, int64_t chlayout,
 	   int16_t *data0, int frames, int64_t pts, int epoch,
 	   media_pipe_t *mp)
 {
@@ -584,6 +638,24 @@ audio_mix1(audio_decoder_t *ad, audio_mode_t *am,
 
   astats(ad, mp, pts, epoch, data0, frames, channels, chlayout, rate);
 
+  if(channels == 5) {
+    // 5.0 -> 5.1 
+    src = data0 + frames * 5;
+    dst = data0 + frames * 6;
+    
+    for(i = 0; i < frames; i++) {
+      src -= 5;
+      dst -= 6;
+      
+      dst[5] = src[4];
+      dst[4] = src[3];
+      dst[3] = 0;
+      dst[2] = src[2];
+      dst[1] = src[1];
+      dst[0] = src[0];
+    }
+    channels = 6;      
+  }
 
   /**
    * 5.1 to stereo downmixing, coeffs are stolen from AAC spec
@@ -822,10 +894,10 @@ audio_mix2(audio_decoder_t *ad, audio_mode_t *am,
 	  for(c = 0; c < channels; c++)
 	    dst[c] = src[c];
 
-	  for(; c < 5; c++)
-	    dst[c] = 0;
-
+	  dst[2] = 0;
 	  dst[3] = x;
+	  dst[4] = 0;
+	  dst[5] = 0;
 	}
 	channels = 6;
       }
@@ -868,16 +940,7 @@ audio_deliver(audio_decoder_t *ad, audio_mode_t *am, const void *src,
   int outsize = am->am_preferred_size ?: 1024;
   int c, r;
   int sample_size = (1 + isfloat) * 2;
-  int format;
-
-  switch(channels) {
-  case 2: format = AM_FORMAT_PCM_STEREO; break;
-  case 6: format = AM_FORMAT_PCM_5DOT1;  break;
-  case 7: format = AM_FORMAT_PCM_6DOT1;  break;
-  case 8: format = AM_FORMAT_PCM_7DOT1;  break;
-  default:
-    return;
-  }
+  int format = channels_to_format(channels);
 
   while(frames > 0) {
 

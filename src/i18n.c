@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdio.h>
 
 #include "showtime.h"
@@ -110,14 +111,16 @@ i18n_init(void)
 			 settings_generic_save_settings, 
 			 (void *)"i18n");
 
-  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"),
-			       set_srt_charset, NULL);
+  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"));
+			       
 
   const charset_t *cs;
   for(i = 0; (cs = charset_get_idx(i)) != NULL; i++)
     settings_multiopt_add_opt_cstr(x, cs->id, cs->title, i == 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,
+			     set_srt_charset, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"i18n");
 }
 
@@ -177,12 +180,97 @@ LIST_HEAD(nls_string_queue, nls_string);
 typedef struct nls_string {
   rstr_t *ns_key;
   LIST_ENTRY(nls_string) ns_link;
+
   prop_t *ns_prop;
-  rstr_t *ns_value;
+
+  int ns_values;
+
+  union {
+    rstr_t *rstr;
+    rstr_t **vec;
+  } ns_u;
+
 } nls_string_t;
 
 static struct nls_string_queue nls_strings;
 
+
+/**
+ *
+ */
+static void
+ns_val_set(nls_string_t *ns, int idx, const char *value)
+{
+  if(ns->ns_values == 0 && idx == 0) {
+    ns->ns_values = 1;
+    ns->ns_u.rstr = rstr_alloc(value);
+    return;
+  }
+  if(ns->ns_values == 1 && idx == 0) {
+    rstr_release(ns->ns_u.rstr);
+    ns->ns_u.rstr = rstr_alloc(value);
+    return;
+  }
+
+  if(idx < ns->ns_values) {
+    assert(ns->ns_values > 1);
+    rstr_release(ns->ns_u.vec[idx]);
+    ns->ns_u.vec[idx] = rstr_alloc(value);
+    return;
+  }
+
+
+  rstr_t *p = NULL;
+  if(ns->ns_values == 1) {
+    p = ns->ns_u.rstr;
+    ns->ns_values = 0;
+    assert(idx > 0);
+  }
+  ns->ns_u.vec = realloc(ns->ns_values ? ns->ns_u.vec : NULL,
+			 (1+idx) * sizeof(rstr_t *));
+  if(p)
+    ns->ns_u.vec[0] = p;
+
+  ns->ns_u.vec[idx] = rstr_alloc(value);
+  ns->ns_values = idx + 1;
+}
+
+
+/**
+ *
+ */
+static rstr_t *
+ns_val_get(nls_string_t *ns, int idx)
+{
+  if(ns->ns_values == 0)
+    return NULL;
+  if(ns->ns_values == 1 && idx == 0)
+    return ns->ns_u.rstr;
+  if(idx < ns->ns_values)
+    return ns->ns_u.vec[idx];
+  else
+    return NULL;
+}
+
+
+/**
+ *
+ */
+static void
+ns_val_clr(nls_string_t *ns)
+{
+  if(ns->ns_values == 1) {
+    rstr_release(ns->ns_u.rstr);
+    ns->ns_u.rstr = NULL;
+  } else if(ns->ns_values > 1) {
+    int i;
+    for(i = 0; i < ns->ns_values; i++)
+      rstr_release(ns->ns_u.vec[i]);
+    free(ns->ns_u.vec);
+    ns->ns_u.vec = NULL;
+  }
+  ns->ns_values = 0;
+}
 
 
 /**
@@ -218,8 +306,23 @@ nls_string_find(const char *key)
 prop_t *
 nls_get_prop(const char *string)
 {
+  return nls_string_find(string)->ns_prop;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+nls_get_rstringp(const char *string, const char *singularis, int val)
+{
+  rstr_t *r;
   nls_string_t *ns = nls_string_find(string);
-  return ns->ns_prop;
+  if(val == 1)
+    r =  rstr_dup(ns_val_get(ns, 1) ?: rstr_alloc(singularis));
+  else
+    r = rstr_dup(ns_val_get(ns, 0) ?: ns->ns_key);
+  return r;
 }
 
 
@@ -230,9 +333,7 @@ rstr_t *
 nls_get_rstring(const char *string)
 {
   nls_string_t *ns = nls_string_find(string);
-  if(ns->ns_value == NULL)
-    return rstr_dup(ns->ns_key);
-  return rstr_dup(ns->ns_value);
+  return rstr_dup(ns_val_get(ns, 0) ?: ns->ns_key);
 }
 
 
@@ -244,8 +345,7 @@ nls_clear(void)
 {
   nls_string_t *ns;
   LIST_FOREACH(ns, &nls_strings, ns_link) {
-    rstr_release(ns->ns_value);
-    ns->ns_value = NULL;
+    ns_val_clr(ns);
     prop_set_rstring(ns->ns_prop, ns->ns_key);
   }
 }
@@ -299,6 +399,7 @@ nls_load_from_data(char *s)
       
       deescape_cstyle((char *)s2);
       ns = nls_string_find(s2);
+      ns_val_clr(ns);
       continue;
     }
 
@@ -311,10 +412,35 @@ nls_load_from_data(char *s)
 	s2++;
       
       if(*s2) {
-	rstr_release(ns->ns_value);
 	deescape_cstyle((char *)s2);
-	ns->ns_value = rstr_alloc(s2);
-	prop_set_rstring(ns->ns_prop, ns->ns_value);
+	ns_val_set(ns, 0, s2);
+	prop_set_rstring(ns->ns_prop, ns_val_get(ns, 0));
+      }
+      continue;
+    }
+
+    if((s2 = mystrbegins(s, "msg[")) != NULL) {
+      while(*s2 <33 && *s2)
+	s2++;
+      
+      int i = atoi(s2);
+      while(*s2 != ']' && *s2)
+	s2++;
+      if(*s2)
+	s2++;
+      while(*s2 <33 && *s2)
+	s2++;
+      if(*s2 != ':')
+	continue;
+      s2++;
+      while(*s2 <33 && *s2)
+	s2++;
+      
+      if(*s2) {
+	deescape_cstyle((char *)s2);
+	ns_val_set(ns, i, s2);
+	if(i == 0)
+	  prop_set_rstring(ns->ns_prop, ns_val_get(ns, 0));
       }
     }
   }
@@ -327,8 +453,7 @@ static void
 nls_load_lang(const char *path)
 {
   char errbuf[200];
-  fa_stat_t fs;
-  char *data = fa_quickload(path, &fs, NULL, errbuf, sizeof(errbuf));
+  char *data = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL);
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "NLS", "Unable to load %s -- %s", path, errbuf);
@@ -366,9 +491,7 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
 		  char *language, size_t languagesize,
 		  char *native, size_t nativesize)
 {
-  fa_stat_t fs;
-
-  char *data = fa_quickload(path, &fs, NULL, errbuf, errlen);
+  char *data = fa_load(path, NULL, NULL, errbuf, errlen, NULL);
   char *s;
   const char *s2;
   if(data == NULL)
@@ -468,7 +591,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_HEAD(, lang) list;
   lang_t *l;
 
-  http_path_add("/showtime/translation", NULL, upload_translation);
+  http_path_add("/showtime/translation", NULL, upload_translation, 1);
 
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s -- %s",
@@ -476,8 +599,8 @@ nls_init(prop_t *parent, htsmsg_t *store)
     return;
   }
 
-  x = settings_create_multiopt(parent, "language", _p("Language"),
-			       set_language, NULL);
+  x = settings_create_multiopt(parent, "language", _p("Language"));
+			       
 
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
@@ -510,7 +633,9 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_FOREACH(l, &list, link)
     settings_multiopt_add_opt_cstr(x, l->id, l->str, 0);
 
-  settings_multiopt_initiate(x, store, settings_generic_save_settings, 
+  settings_multiopt_initiate(x,
+			     set_language, NULL, NULL,
+			     store, settings_generic_save_settings, 
 			     (void *)"i18n");
   
   fa_dir_free(fd);

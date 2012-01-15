@@ -25,6 +25,42 @@ msg: Videon asetukset
 id: Added by: %s
 msg: Lisännyt: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Poista
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: Päälle
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Lisää jonoon
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Peruuta
+
+id: OK
+msg: OK
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: RAM muistia jäljellä: %d kB
 
@@ -49,11 +108,19 @@ msg: Näytä tiedot
 id: Framerate: %.2f Hz
 msg: FPS: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Korkeus: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderoija: %s
@@ -63,6 +130,10 @@ msg: Käyttöjärjestelmän tiedot
 
 id: Total system RAM: %d kB
 msg: RAM muistia yhteensä: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versionumero: %s
@@ -148,28 +219,10 @@ id: Username
 msg: Käyttäjätunnus
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Peruuta
-
-id: OK
-msg: OK
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Ei tiedostoa ladattuna
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Poista
-
-id: Enqueue
-msg: Lisää jonoon
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -192,6 +245,10 @@ msg: GPU Ytimen lämpötila: %d / %d °
 id: Adjust background tint based on daytime
 msg: Säädä taustavalaistusta päivän kulun mukaan
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Mykistä ääni
 
@@ -201,8 +258,9 @@ msg: UI Animaatiot
 id: Master volume: %d dB
 msg: Äänenvoimakkuus: %d dB
 
-id: Starwars scroller tilt
-msg: Star Wars -vieritys
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Yläpalkin navigointinapit
@@ -215,6 +273,13 @@ msg: opensubtitles.org asetukset
 
 id: Use opensubtitles.org
 msg: opensubtitles.org käyttö
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -243,6 +308,10 @@ msg: Pienet etukaiuttimet
 id: Swap LFE+center with surround
 msg: Vaihda LFE+Center Surroundiin
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -256,6 +325,17 @@ id: Unable to open CD
 msg: CD ei aukea
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -267,11 +347,19 @@ msg: Tuntematon HTSP URL
 id: Search
 msg: Haku
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Kirjaudu sisään automaattisesti
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify
@@ -295,6 +383,14 @@ msg: Uudet albumit Spotifyssä
 id: New releases
 msg: Uudet Julkaisut
 
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
 id: Playlists
 msg: Soittolistat
 
@@ -316,6 +412,10 @@ msg: Spotify tarjoaa laillisen ja ilmaisen musiikkikirjaston. Käyttääksesi Sp
 id: Spotify playlists
 msg: Spotyfy soittolistat
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Tähdellä merkityt
 
@@ -324,6 +424,17 @@ msg: Tähdellä merkityt
 #
 id: Bookmarks
 msg: Kirjanmerkit
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -335,6 +446,13 @@ msg: Etsi käyttäen Unix locatedb toimintoa
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
 # Missing translation
 msg: 
 
@@ -410,6 +528,17 @@ msg: Tekstityksien skaala
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -505,6 +634,25 @@ id: Map mouse wheel to up/down
 msg: Liitä hiiren scroll nappiin ylös/alas
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -526,6 +674,29 @@ id: Service not found
 msg: Palvelua ei löydy
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -539,6 +710,10 @@ msg: Keskitys
 
 id: Color
 msg: Värit
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: VDPAU päälle / pois
@@ -555,11 +730,19 @@ msg: Ohita asetetut tyylit
 id: Left
 msg: Vasen
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Reunan väri
 
 id: Outline size
 msg: Reunan koko
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Oikea
@@ -569,6 +752,10 @@ msg: Varjon väri
 
 id: Shadow offset
 msg: Varjon korjaus
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Venytä video widescreen muotoon 
@@ -590,4 +777,8 @@ msg: Videokuvan kiihdytys ja näytön toiminta
 
 id: Video playback
 msg: Videotoisto
+
+id: Yes
+# Missing translation
+msg: 
 

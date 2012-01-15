@@ -10,7 +10,6 @@ widget(container_y, {
     .align = center;
     .source = $args.metadata.album_art;
     .height = $ui.size * 16;
-    .hqScaling = true;
   });
   widget(label, {
     .align = center;

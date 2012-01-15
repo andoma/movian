@@ -25,7 +25,6 @@
 #include "fileaccess/fileaccess.h"
 #include "misc/gz.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "libavcodec/avcodec.h"
 #include "media.h"
 #include "misc/dbl.h"
 #include "misc/string.h"
@@ -397,20 +396,19 @@ load_ttml(const char *url, char **buf, size_t len)
 }
 
 
-#if 0
 /**
  *
  */
-static void
-dump_subtitles(subtitles_t *s)
+static void __attribute__((unused))
+dump_subtitles(ext_subtitles_t *es)
 {
-  subtitle_entry_t *se;
+  ext_subtitle_entry_t *se;
 
-  RB_FOREACH(se, &es->es_entries, se_link) {
-    printf("PAGE: %lld -> %lld\n--\n%s\n--\n", se->se_start, se->se_stop, se->se_text);
+  RB_FOREACH(se, &es->es_entries, ese_link) {
+    printf("PAGE: %"PRId64" -> %"PRId64"\n--\n%s\n--\n",
+	   se->ese_start, se->ese_stop, se->ese_text);
   }
 }
-#endif
 
 /**
  *
@@ -427,7 +425,13 @@ subtitles_create(const char *path, char **bufp, size_t len)
     int force_utf8 = 0;
     const char *buf = *bufp;
 
-    if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
+    if(len > 2 && ((buf[0] == 0xff && buf[1] == 0xfe) ||
+		   (buf[0] == 0xfe && buf[1] == 0xff))) {
+      // UTF-16 BOM
+      utf16_to_utf8(bufp, &len);
+      buf = *bufp;
+      force_utf8 = 1;
+    } else if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
       // UTF-8 BOM
       force_utf8 = 1;
       buf += 3;
@@ -508,9 +512,9 @@ subtitles_load(const char *url)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
-  struct fa_stat fs;
+  size_t size;
   int datalen;
-  char *data = fa_quickload(url, &fs, NULL, errbuf, sizeof(errbuf));
+  char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
@@ -518,13 +522,13 @@ subtitles_load(const char *url)
     return NULL;
   }
 
-  if(gz_check(data, fs.fs_size)) {
+  if(gz_check(data, size)) {
     // is .gz compressed, inflate it
 
     char *inflated;
     size_t inflatedlen;
 
-    inflated = gz_inflate(data, fs.fs_size,
+    inflated = gz_inflate(data, size,
 			  &inflatedlen, errbuf, sizeof(errbuf));
 
     free(data);
@@ -536,7 +540,7 @@ subtitles_load(const char *url)
     data = inflated;
     datalen = inflatedlen;
   } else {
-    datalen = fs.fs_size;
+    datalen = size;
   }
 
   sub = subtitles_create(url, &data, datalen);

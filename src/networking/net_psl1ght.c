@@ -49,18 +49,13 @@ static int
 polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
 {
   int ret, tot = 0;
-  TRACE(TRACE_INFO, "SSL", "Read %d bytes %d", len, all);
   if(!all) {
     ret = ssl_read(tc->ssl, buf, len);
-    TRACE(TRACE_INFO, "SSL", "Read -> 0x%x", ret);
-    if(ret >= 0) 
-      return ret;
-    return -1;
+    return ret > 0 ? ret : -1;
   }
 
   while(tot != len) {
     ret = ssl_read(tc->ssl, buf + tot, len - tot);
-    TRACE(TRACE_INFO, "SSL", "Read -> 0x%x", ret);
     if(ret < 0) 
       return -1;
     tot += ret;
@@ -75,7 +70,6 @@ polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
 static int
 polarssl_write(tcpcon_t *tc, const void *data, size_t len)
 {
-  TRACE(TRACE_INFO, "SSL", "Write %d bytes", len);
   return ssl_write(tc->ssl, data, len) != len ? ECONNRESET : 0;
 }
 
@@ -105,9 +99,9 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int x;
   size_t off = 0;
   while(1) {
-    size_t r = MIN(65536, len - off);
-    x = netRecv(tc->fd, buf + off, r, all ? MSG_WAITALL : 0);
-    if(x <= 0)
+    size_t r = len - off;
+    x = netRecv(tc->fd, buf + off, r, 0);
+    if(x < 1)
       return -1;
     
     if(all) {
@@ -117,7 +111,7 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
 	return len;
 
     } else {
-      return x < 1 ? -1 : x;
+      return x;
     }
   }
 }
@@ -149,6 +143,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
     netClose(fd);
     return -1;
   }
+
+  optval = 1;
+  if(netSetSockOpt(fd, 6, 1, &optval, sizeof(optval)) < 0)
+    TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
 
   return fd;
 }
@@ -376,6 +374,13 @@ tcp_close(tcpcon_t *tc)
   free(tc);
 }
 
+
+
+void
+tcp_shutdown(tcpcon_t *tc)
+{
+  shutdown(tc->fd, SHUT_RDWR);
+}
 
 
 /**

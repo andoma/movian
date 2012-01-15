@@ -25,6 +25,42 @@ msg: Video-instellingen
 id: Added by: %s
 msg: Toegevoegd door: %s
 
+id: Played %d times
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Verwijderen
+
+id: Queue
+# Missing translation
+msg: 
+
+id: Star
+# Missing translation
+msg: 
+
+id: Unstar
+# Missing translation
+msg: 
+
 #
 # ./glwthemes/mono/include/buttons.view
 #
@@ -35,8 +71,31 @@ id: On
 msg: Aan
 
 #
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Toevoegen
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Annuleren
+
+id: OK
+msg: Oké
+
+#
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+# Missing translation
+msg: 
+
+id: Allocated by malloc: %d kB
+# Missing translation
+msg: 
+
 id: Avail system RAM: %d kB
 msg: RAM-geheugen over: %d kB
 
@@ -49,11 +108,19 @@ msg: Weergaveinfo
 id: Framerate: %.2f Hz
 msg: Beeldfrequentie: %.2f Hz
 
+id: Free chunks: %d
+# Missing translation
+msg: 
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Hoogte: %d px
+
+id: Memory status
+# Missing translation
+msg: 
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -63,6 +130,10 @@ msg: Systeeminformatie
 
 id: Total system RAM: %d kB
 msg: Totale RAM-geheugen: %d kB
+
+id: Unused memory: %d kB
+# Missing translation
+msg: 
 
 id: Version: %s
 msg: Versie: %s
@@ -146,28 +217,10 @@ id: Username
 msg: Gebruikersnaam
 
 #
-# ./glwthemes/mono/popups/textDialog.view
-#
-id: Cancel
-msg: Annuleren
-
-id: OK
-msg: Oké
-
-#
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
 msg: Geen media geladen
-
-#
-# ./glwthemes/mono/skins/grey/infobox.skin
-#
-id: Delete
-msg: Verwijderen
-
-id: Enqueue
-msg: Toevoegen
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -190,6 +243,10 @@ msg: GPU-kerntemperatuur: %d / %d °
 id: Adjust background tint based on daytime
 msg: Achtergrondtint op tijd gebasseerd aanpassen
 
+id: Alternate list layout
+# Missing translation
+msg: 
+
 id: Audio muted
 msg: Geluid gedempt
 
@@ -199,8 +256,9 @@ msg: Mooie UI-effecten
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
 
-id: Starwars scroller tilt
-msg: Kanteling Starwars-scroller
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigatieknoppen bovenste balk
@@ -213,6 +271,13 @@ msg: Instellingen voor opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Opensubtitles.org gebruiken
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+# Missing translation
+msg: 
 
 #
 # ./src/audio/audio.c
@@ -241,6 +306,10 @@ msg: Kleine voorluidsprekers
 id: Swap LFE+center with surround
 msg: LFE+center wisselen met surround
 
+id: Switching audio output to %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/dvd/cdda.c
 #
@@ -254,6 +323,17 @@ id: Unable to open CD
 msg: De CD kon niet worden geopend
 
 #
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+# Missing translation
+msg: 
+
+id: DVD read error, restarting disc
+# Missing translation
+msg: 
+
+#
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
@@ -265,11 +345,19 @@ msg: Ongeldige HTSP-URL
 id: Search
 msg: Zoeken
 
+id: Search result for: %s
+# Missing translation
+msg: 
+
 #
 # ./src/backend/spotify/spotify.c
 #
 id: Automatic login when Showtime starts
 msg: Automatisch inloggen als Showtime opstart
+
+id: Collaborative
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Spotify inschakelen
@@ -292,6 +380,14 @@ msg: Nieuwe albums op Spotify
 id: New releases
 msg: Nieuwe uitgaves
 
+id: Offline
+# Missing translation
+msg: 
+
+id: Offline sync in 96kbps
+# Missing translation
+msg: 
+
 id: Playlists
 msg: Afspeellijsten
 
@@ -313,6 +409,10 @@ msg: Spotify biedt u een legale en gratis toegang tot een enorme muziekbibliothe
 id: Spotify playlists
 msg: Spotify-afspeellijsten
 
+id: Spotify: Connection error: %s
+# Missing translation
+msg: 
+
 id: Starred
 msg: Favorieten
 
@@ -321,6 +421,17 @@ msg: Favorieten
 #
 id: Bookmarks
 msg: Bladwijzers
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+# Missing translation
+msg: 
+
+id: Unable to open file: %s
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -333,6 +444,13 @@ msg: Zoeken via Unix-locatedb
 #
 id: Search using spotlight
 msg: Zoeken via Spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+# Missing translation
+msg: 
 
 #
 # ./src/i18n.c
@@ -405,6 +523,17 @@ msg: Ondertitelingsgrootte
 
 id: Video zoom
 msg: Video-vergroting
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+# Missing translation
+msg: 
+
+id: Track %d
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -494,6 +623,25 @@ id: Map mouse wheel to up/down
 msg: Muiswiel naar boven/onder indelen
 
 #
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+# Missing translation
+msg: 
+
+id: DVI-Video color range
+# Missing translation
+msg: 
+
+id: Switch to this mode now
+# Missing translation
+msg: 
+
+id: Video modes
+# Missing translation
+msg: 
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -515,6 +663,29 @@ id: Service not found
 msg: Service niet gevonden
 
 #
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+# Missing translation
+msg: 
+
+id: Unable to accelerate %s, library not loaded.
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+# Missing translation
+msg: 
+
+id: Unable to query Cell codec. Error 0x%x
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: Always try to select a subtitle
@@ -528,6 +699,10 @@ msg: Centreren
 
 id: Color
 msg: Kleur
+
+id: Count video as played when reaching
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: VDPAU inschakelen
@@ -544,11 +719,19 @@ msg: Geïntegreerde stijl nergeren
 id: Left
 msg: Links
 
+id: No
+# Missing translation
+msg: 
+
 id: Outline color
 msg: Omtrekkleur
 
 id: Outline size
 msg: Omtrekgrootte
+
+id: Resume video playback
+# Missing translation
+msg: 
 
 id: Right
 msg: Rechts
@@ -558,6 +741,10 @@ msg: Schaduwkleur
 
 id: Shadow offset
 msg: Schaduwafstand
+
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
 
 id: Stretch video to widescreen
 msg: Video op breedbeeld uitrekken
@@ -579,4 +766,8 @@ msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
+
+id: Yes
+# Missing translation
+msg: 
 

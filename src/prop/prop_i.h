@@ -41,7 +41,9 @@ struct prop_courier {
   struct prop_notify_queue pc_queue_nor;
   struct prop_notify_queue pc_queue_exp;
 
-  hts_mutex_t *pc_entry_mutex;
+  void *pc_entry_lock;
+  prop_lockmgr_t *pc_lockmgr;
+
   hts_cond_t pc_cond;
   int pc_has_cond;
 
@@ -51,7 +53,10 @@ struct prop_courier {
 
   void (*pc_notify)(void *opaque);
   void *pc_opaque;
-  
+
+  void (*pc_prologue)(void);
+  void (*pc_epilogue)(void);
+
 };
 
 
@@ -62,7 +67,8 @@ struct prop_courier {
 typedef enum {
   PROP_VOID,
   PROP_DIR,
-  PROP_STRING,
+  PROP_RSTRING,
+  PROP_CSTRING,
   PROP_FLOAT,
   PROP_INT,
   PROP_PIXMAP,
@@ -197,7 +203,7 @@ struct prop {
       rstr_t *rstr;
       prop_str_type_t type;
     } rstr;
-
+    const char *cstr;
     struct {
       struct prop_queue childs;
       struct prop *selected;
@@ -209,6 +215,7 @@ struct prop {
     } link;
   } u;
 
+#define hp_cstring   u.cstr
 #define hp_rstring   u.rstr.rstr
 #define hp_rstrtype  u.rstr.type
 #define hp_float    u.f.val

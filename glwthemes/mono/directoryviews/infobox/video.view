@@ -2,29 +2,29 @@
 
 widget(container_y, {
   .spacing = 10;
+
+  widget(label, {
+    .caption = $args.metadata.title;
+    .ellipsize = true;
+    .sizeScale = 1.5;
+  });
+  widget(label, {
+    .hidden = select($args.metadata.year, false, true);
+    .caption = $args.metadata.year;
+    .ellipsize = true;
+    .sizeScale = 1;
+  });
+
   widget(container_x, {
     .spacing = 10;
     widget(image, {
       .height = $ui.size * 10;
       .aspectConstraint = true;
       .source = $args.metadata.icon;
-      .hqScaling = true;
       .hidden = select($args.metadata.icon, false, true);
     });
     
     widget(container_y, {
-      widget(label, {
-	.caption = $args.metadata.title;
-	.ellipsize = true;
-	.sizeScale = 1.5;
-      });
-      widget(label, {
-	.hidden = select($args.metadata.year, false, true);
-	.caption = $args.metadata.year;
-	.ellipsize = true;
-	.sizeScale = 1;
-      });
-
 
       widget(container_x, {
 	.filterConstraintX = true;
@@ -147,5 +147,12 @@ widget(container_y, {
 	.caption = $self.language;
       });
     });
+  });
+
+  HORIZONTAL_SEPARATOR();
+
+  widget(label, {
+    .color = 0.6;
+    .caption = fmt(_pl("Played %d times", "Played %d time", $args.playcount), $args.playcount);
   });
 });

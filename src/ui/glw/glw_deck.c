@@ -203,9 +203,9 @@ deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
       v = 1 - (v + 1);
     glw_transition_render(gd->efx_conf, v, 
 			  rc->rc_alpha * gd->w.glw_alpha, &rc0);
-    w->glw_class->gc_render(w, &rc0);
+    glw_render0(w, &rc0);
   } else {
-    w->glw_class->gc_render(w, rc);
+    glw_render0(w, rc);
   }
 }
 

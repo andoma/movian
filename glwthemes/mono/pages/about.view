@@ -1,3 +1,13 @@
+#define INFO(caption, hidden=false) {
+  widget(label, {
+    .caption = caption;
+    .color = 0.7;
+    .shadow = true;
+  });
+}
+
+
+
 widget(container_y, {
 
   .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
@@ -8,18 +18,21 @@ widget(container_y, {
 
   widget(label, {
     .align = center;
+    .shadow = true;
     .caption = "Showtime Mediacenter";
     .sizeScale = 3;
   });
 
   widget(label, {
     .align = center;
+    .shadow = true;
     .caption = $global.showtime.copyright;
     .sizeScale = 1.5;
   });
 
   widget(label, {
     .align = center;
+    .shadow = true;
     .caption = fmt(_("Version: %s"), $global.showtime.version);
     .color = 0.5;
     .sizeScale = 1.5;
@@ -37,44 +50,18 @@ widget(container_y, {
 
       widget(label, {
 	.caption = _("Display info");
-	.color = 0.7;
 	.sizeScale = 1.5;
+	.color = 0.7;
+	.shadow = true;
       });
 
-      widget(label, {
-	.caption = fmt(_("Width: %d px"), $ui.width);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.caption = fmt(_("Height: %d px"), $ui.height);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.caption = fmt(_("Framerate: %.2f Hz"), $ui.framerate);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.autohide = true;
-	.caption = fmt(_("GPU: %s"), $ui.gpu.name);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.autohide = true;
-	.caption = fmt(_("Renderer: %s"), $ui.rendermode);
-	.color = 0.7;
-      });
-
-      widget(label, {
-	.autohide = true;
-	.caption = fmt(_("Windowmanager: %s"), $ui.windowmanager);
-	.color = 0.7;
-      });
+      INFO(fmt(_("Width: %d px"), $ui.width));
+      INFO(fmt(_("Height: %d px"), $ui.height));
+      INFO(fmt(_("Framerate: %.2f Hz"), $ui.framerate));
+      INFO(fmt(_("GPU: %s"), $ui.gpu.name), !$ui.gpu.name);
+      INFO(fmt(_("Renderer: %s"), $ui.rendermode), !$ui.rendermode);
+      INFO(fmt(_("Windowmanager: %s"), $ui.windowmanager), !$ui.windowmanager);
     });
-
 
     widget(container_y, {
       .filterConstraintX = true;
@@ -83,28 +70,50 @@ widget(container_y, {
 	.caption = _("System info");
 	.color = 0.7;
 	.sizeScale = 1.5;
+	.shadow = true;
       });
 
+      INFO(fmt(_("Detected CPUs: %d"),
+	       count($global.system.cpuinfo.cpus)),
+	   !$global.system.cpuinfo.available);
+
+    });
+
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
       widget(label, {
-	.hidden = !$global.system.cpuinfo.available;
-	.caption = fmt(_("Detected CPUs: %d"),
-		       count($global.system.cpuinfo.cpus));
+	.caption = _("Memory status");
 	.color = 0.7;
+	.sizeScale = 1.5;
+	.shadow = true;
       });
 
-      widget(label, {
-	.hidden = !$global.system.mem.systotal;
-	.caption = fmt(_("Total system RAM: %d kB"),
-		       $global.system.mem.systotal);
-	.color = 0.7;
-      });
 
-      widget(label, {
-	.hidden = !$global.system.mem.sysfree;
-	.caption = fmt(_("Avail system RAM: %d kB"),
-		       $global.system.mem.sysfree);
-	.color = 0.7;
-      });
+      INFO(fmt(_("Total system RAM: %d kB"),
+	       $global.system.mem.systotal),
+	   !$global.system.mem.systotal);
+
+      INFO(fmt(_("Avail system RAM: %d kB"),
+	       $global.system.mem.sysfree),
+	   !$global.system.mem.sysfree);
+
+      INFO(fmt(_("Allocated by malloc: %d kB"),
+	       $global.system.mem.arena),
+	   !$global.system.mem.arena);
+
+      INFO(fmt(_("Allocated by application: %d kB"),
+	       $global.system.mem.activeMem),
+	   !$global.system.mem.activeMem);
+
+      INFO(fmt(_("Unused memory: %d kB"),
+	       $global.system.mem.inactiveMem),
+	   !$global.system.mem.inactiveMem);
+
+      INFO(fmt(_("Free chunks: %d"),
+	       $global.system.mem.unusedChunks),
+	   !$global.system.mem.unusedChunks);
     });
   });
 });

@@ -136,6 +136,7 @@ static const struct {
   { NSF1FunctionKey,         0,   ACTION_MENU },
   { NSF2FunctionKey,         0,   ACTION_SHOW_MEDIA_STATS },
   { NSF3FunctionKey,         0,   ACTION_SYSINFO },
+  { NSF4FunctionKey,         0,   ACTION_ENABLE_SCREENSAVER },
   
   { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
   { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
@@ -421,7 +422,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
   
-  glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height);
+  glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height, 1);
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   glw_render0(gcocoa.gr.gr_universe, &rc);
   
@@ -752,7 +753,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   timer_cursor = nil;
   
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL, NULL,
+  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL,
               gcocoa.start_ui, gcocoa.start_primary,
               "glw/cocoa/default", NULL))
     return;

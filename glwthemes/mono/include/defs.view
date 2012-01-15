@@ -26,26 +26,26 @@
 
 #define PLATE_GFX() {
   .source = "theme://graphics/shadedplate.png";
-  .border =  [4, 4, 4, 4];
+  .border =  4;
   .padding = [0, -2, 0, -2];
 }
 
 #define PLATE_GFX2() {
   .source = "theme://graphics/shadedplate2.png";
-  .border =  [4, 4, 4, 4];
-  .padding = [0, 0, 0, 0];
+  .border =  4;
+  .padding = 0;
 }
 
 #define PLATE_GFX3() {
   .source = "theme://graphics/shadedplate4.png";
-  .border =  [6, 6, 6, 6];
-  .padding = [0, 0, 0, 0];
+  .border =  6;
+  .padding = 0;
 }
 
 #define PLATE_GFX4() {
   .source = "theme://graphics/shadedplate.png";
-  .border =  [4, 4, 4, 4];
-  .padding = [-4, -4, -4, -4];
+  .border =  4;
+  .padding = -4;
 }
 
 #define KNOB_SIZE() { $ui.size * 3 }

@@ -30,6 +30,8 @@
 #include <CoreFoundation/CFString.h>
 #include <CoreAudio/CoreAudio.h>
 
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "audio/audio_defs.h"
 
@@ -178,7 +180,6 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   coreaudio_audio_mode_t *cam = inClientData;
   int i, j, k;
   int outframes;
-  SInt16 *inbuf;
   audio_buf_t *ab;
   float vol = cam->cam_master_volume;
   
@@ -212,19 +213,39 @@ audioDeviceIOProc(AudioDeviceID inDevice,
   }
   
   if(!cam->cam_master_mute) {
-    inbuf = (SInt16 *)ab->ab_data;
+    if(ab->ab_isfloat) {
+      const float *flt = (const float *)ab->ab_data;
 
-    for(i = 0; i < outOutputData->mNumberBuffers; i++) {
-      Float32 *samples = outOutputData->mBuffers[i].mData;
+      for(i = 0; i < outOutputData->mNumberBuffers; i++) {
+	Float32 *samples = outOutputData->mBuffers[i].mData;
 
-      outframes = 
-        outOutputData->mBuffers[i].mDataByteSize / 
-        cam->cam_asbd.mBytesPerFrame;
+	outframes = 
+	  outOutputData->mBuffers[i].mDataByteSize / 
+	  cam->cam_asbd.mBytesPerFrame;
 
-      for(j = 0; j < outframes; j++) {
-        for(k = 0; k < outOutputData->mBuffers[i].mNumberChannels; k++) {
-          *samples++ = ((Float32)inbuf[j*2+k] / INT16_MAX) * vol;
-        }
+	for(j = 0; j < outframes; j++) {
+	  for(k = 0; k < outOutputData->mBuffers[i].mNumberChannels; k++) {
+	    *samples++ = flt[j*2+k] * vol;
+	  }
+	}
+      }
+
+
+    } else {
+      const SInt16 *in16 = (const SInt16 *)ab->ab_data;
+
+      for(i = 0; i < outOutputData->mNumberBuffers; i++) {
+	Float32 *samples = outOutputData->mBuffers[i].mData;
+
+	outframes = 
+	  outOutputData->mBuffers[i].mDataByteSize / 
+	  cam->cam_asbd.mBytesPerFrame;
+
+	for(j = 0; j < outframes; j++) {
+	  for(k = 0; k < outOutputData->mBuffers[i].mNumberChannels; k++) {
+	    *samples++ = ((Float32)in16[j*2+k] / INT16_MAX) * vol;
+	  }
+	}
       }
     }
   }
@@ -507,7 +528,7 @@ coreaudio_probe_device(AudioDeviceID id)
   cam->cam_head.am_title = strdup(name);
   cam->cam_head.am_id = strdup(uid);
   cam->cam_head.am_entry = coreaudio_start;
-  
+  cam->cam_head.am_float = 1;
   audio_mode_register(&cam->cam_head);
 }
 

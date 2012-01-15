@@ -100,7 +100,7 @@ search_open(prop_t *page, const char *url0)
 {
   const char *url;
   prop_t *model, *meta, *source;
-
+  char title[256];
   if((url = strchr(url0, ':')) == NULL)
     abort();
   url++;
@@ -112,7 +112,10 @@ search_open(prop_t *page, const char *url0)
   prop_set_string(prop_create(model, "type"), "directory");
   
   meta = prop_create(model, "metadata");
-  prop_set_string(prop_create(meta, "title"), url);
+  rstr_t *fmt = _("Search result for: %s");
+  snprintf(title, sizeof(title), rstr_get(fmt), url);
+  rstr_release(fmt);
+  prop_set_string(prop_create(meta, "title"), title);
 
 
   source = prop_create(page, "source");

@@ -22,11 +22,16 @@ typedef struct extent_pool extent_pool_t;
 
 extent_pool_t *extent_create(int start, int size);
 
-void extent_stats(extent_pool_t *ep, int *totalp, int *availp, int *fragmentsp);
+void extent_destroy(extent_pool_t *ep);
+
+void extent_stats(const extent_pool_t *ep,
+		  int *totalp, int *availp, int *fragmentsp);
 
 int extent_alloc_aligned(extent_pool_t *ep, int size, int alignment);
 
 int extent_alloc(extent_pool_t *ep, int size);
 
 int extent_free(extent_pool_t *ep, int pos, int size);
+
+void extent_dump(extent_pool_t *ep);
 

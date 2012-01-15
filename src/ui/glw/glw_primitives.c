@@ -44,7 +44,7 @@ glw_quad_render(glw_t *w, glw_rctx_t *rc)
   }
 
   glw_renderer_draw(&q->r, w->glw_root, rc, NULL, &q->color, NULL, 
-		    rc->rc_alpha, 0);
+		    rc->rc_alpha * w->glw_alpha, 0);
 }
 
 
@@ -164,7 +164,7 @@ glw_raster_render(glw_t *w, glw_rctx_t *rc)
   glw_renderer_vtx_st (&q->r, 3, 0, 0);
 
   glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex,
-		    &q->color, NULL, rc->rc_alpha, 0);
+		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
 }
 
 

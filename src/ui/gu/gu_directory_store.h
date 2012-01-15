@@ -51,6 +51,7 @@ enum {
   GDS_COL_POPULARITY,
   GDS_COL_STARRED,
   GDS_COL_USER,
+  GDS_COL_STATUS,
   GDS_COL_num,
 };
 

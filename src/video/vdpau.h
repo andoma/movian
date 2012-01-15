@@ -94,12 +94,8 @@ typedef struct vdpau_video_surface {
   struct vdpau_render_state vvs_rs;
   VdpVideoSurface vvs_surface;
 
-  int64_t vvs_pts;
-  int64_t vvs_dts;
-  int64_t vvs_time;
-  int vvs_epoch;
-  int vvs_duration;
   int vvs_idx;
+  struct media_buf vvs_mb;
 } vdpau_video_surface_t;
 
 
@@ -176,7 +172,7 @@ int vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm,
 
 void vdpau_mixer_deinit(vdpau_mixer_t *vm);
 
-void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on);
+void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on, int height);
 
 void vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, 
 				  const struct frame_info *fi);

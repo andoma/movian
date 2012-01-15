@@ -122,10 +122,11 @@ typedef struct fa_protocol {
   /**
    * Load the 'url' into memory
    *
-   * Return size in *sizeptr and actual data is returned by the function
+   * Return size in *sizep and actual data is returned by the function
    */
-  void *(*fap_quickload)(struct fa_protocol *fap, const char *url,
-			 struct fa_stat *fs, char *errbuf, size_t errlen);
+  void *(*fap_load)(struct fa_protocol *fap, const char *url,
+		    size_t *sizep, char *errbuf, size_t errlen,
+		    char **etag, time_t *mtime, int *max_age);
 
   /**
    * Normalize the given URL.

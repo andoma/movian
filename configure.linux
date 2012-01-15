@@ -15,6 +15,7 @@ PLATFORM="linux"
 OSENV="posix"
 DEFAULT_UI="glw"
 GLWFRONTEND="x11"
+CONFIGURE_POSTFIX="linux"
 
 source support/configure.inc
 
@@ -29,7 +30,6 @@ show_help(){
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using compiler CC [cc]"
-  echo "  --release                Stage for release"
   echo "  --enable-spotify=KEYFILE Compile support for Spotify (R) Core"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
@@ -110,15 +110,10 @@ for opt do
   ;;
   --help) show_help
   ;;
-  --release) 
-	  enable release
-	  enable embedded_resources
-  ;;
   --cc=*) CC="$optval"
   ;;
   --enable-all)
 	  enable libgme
-	  enable libsmbclient
 	  enable libsidplay2
   ;;
   --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
@@ -140,6 +135,11 @@ enable zlib
 enable posix_networking
 enable dvd
 enable dvd_linux
+
+if enabled release; then
+    enable embedded_resources
+fi
+
 
 #
 # pkgconfig
@@ -177,7 +177,7 @@ EOF
     
 
 if [ "x$CC" != "x" ]; then
-    echo >${CONFIG_MAK} "CC=$CC"
+    echo >>${CONFIG_MAK} "CC=$CC"
 else
     CC=cc
 fi
@@ -207,57 +207,7 @@ fi
 
 echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
-
-#
-# libavcodec
-#
-if pkg-config --atleast-version 53.0.0 libavcodec; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavcodec`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavcodec`
-    echo "Using libavcodec:      `pkg-config --modversion libavcodec`"
-else
-    echo "libavcodec 53.0.0 or newer not found."
-    die
-fi
-
-#
-# libavformat
-#
-if pkg-config --atleast-version 53.0.0 libavformat; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavformat`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavformat`
-    echo "Using libavformat:     `pkg-config --modversion libavformat`"
-else
-    echo "libavformat 53.0.0 or newer not found."
-    die
-fi
-
-
-#
-# libavutil
-#
-if pkg-config --atleast-version 51.0.0 libavutil; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libavutil`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libavutil`
-    echo "Using libavutil:       `pkg-config --modversion libavutil`"
-else
-    echo "libavutil 51.0.0 or newer not found."
-    die
-fi
-
-
-#
-# libswscale
-#
-if pkg-config  --atleast-version 0.11.0 libswscale; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs libswscale`
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags libswscale`
-    echo "Using libswscale:      `pkg-config --modversion libswscale`"
-else
-    echo "libswscale 0.11.0 or newer not found."
-    die
-fi
-
+libav_setup
 
 #
 # libfreetype2
@@ -617,16 +567,6 @@ if enabled libgme; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
 fi
 
-
-#
-# libsmbclient
-#
-if enabled libsmbclient; then
-    
-    check_header "libsmbclient.h" || fatal "libsmbclient" "Missing include file libsmbclient.h"
-    check_lib    "smbclient"      || fatal "libsmbclient" "Unable to link with libsmbclient"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lsmbclient"
-fi
 
 #
 # libsidplay2 and libresid-builder

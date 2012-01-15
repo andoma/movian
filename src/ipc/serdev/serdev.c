@@ -29,9 +29,8 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#include <arch/threads.h>
-
 #include "config.h"
+#include "arch/threads.h"
 #include "ipc/ipc.h"
 #include "serdev.h"
 

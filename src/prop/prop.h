@@ -32,7 +32,6 @@
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
 typedef struct prop_sub prop_sub_t;
-struct pixmap;
 TAILQ_HEAD(prop_notify_queue, prop_notify);
 
 
@@ -54,10 +53,10 @@ typedef struct prop_vec {
 typedef enum {
   PROP_SET_VOID,
   PROP_SET_RSTRING,
+  PROP_SET_CSTRING,
   PROP_SET_INT,
   PROP_SET_FLOAT,
   PROP_SET_DIR,
-  PROP_SET_PIXMAP,
   PROP_SET_RLINK,
 
   PROP_ADD_CHILD,
@@ -86,6 +85,7 @@ typedef enum {
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 typedef void (prop_callback_string_t)(void *opaque, const char *str);
+typedef void (prop_callback_rstr_t)(void *opaque, rstr_t *rstr);
 typedef void (prop_callback_int_t)(void *opaque, int value);
 typedef void (prop_callback_float_t)(void *opaque, float value);
 
@@ -117,12 +117,15 @@ void prop_init(void);
 #define PROP_SUB_MULTI                0x40
 #define PROP_SUB_INTERNAL             0x80
 #define PROP_SUB_DONTLOCK             0x100
+#define PROP_SUB_IGNORE_VOID          0x200
+#define PROP_SUB_AUTO_DESTROY         0x400
 
 enum {
   PROP_TAG_END = 0,
   PROP_TAG_NAME_VECTOR,
   PROP_TAG_CALLBACK,
   PROP_TAG_CALLBACK_STRING,
+  PROP_TAG_CALLBACK_RSTR,
   PROP_TAG_CALLBACK_INT,
   PROP_TAG_CALLBACK_FLOAT,
   PROP_TAG_SET_INT,
@@ -155,11 +158,6 @@ prop_t *prop_create_root_ex(const char *name, int noalloc)
 #define prop_create_root(name) \
   prop_create_root_ex(name, __builtin_constant_p(name))
 
-prop_t *prop_create_check_ex(prop_t *parent, const char *name, int noalloc);
-
-#define prop_create_check(parent, name) \
-  prop_create_check_ex(parent, name, __builtin_constant_p(name))
-
 void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);
@@ -175,6 +173,8 @@ void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 
 void prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr,
 			 int noupdate);
+
+void prop_set_cstring_ex(prop_t *p, prop_sub_t *skipme, const char *str);
 
 void prop_set_stringf_ex(prop_t *p, prop_sub_t *skipme, const char *fmt, ...);
 
@@ -198,12 +198,15 @@ void prop_set_int_clipping_range(prop_t *p, int min, int max);
 
 void prop_set_void_ex(prop_t *p, prop_sub_t *skipme);
 
-void prop_set_pixmap_ex(prop_t *p, prop_sub_t *skipme, struct pixmap *pm);
-
 void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 		      const char *url);
 
-#define prop_set_string(p, str) prop_set_string_ex(p, NULL, str, 0)
+#define prop_set_string(p, str) do {		\
+  if(__builtin_constant_p(str))			\
+    prop_set_cstring_ex(p, NULL, str);		\
+  else						\
+    prop_set_string_ex(p, NULL, str, 0);	\
+  } while(0)
 
 #define prop_set_stringf(p, fmt...) prop_set_stringf_ex(p, NULL, fmt)
 
@@ -219,11 +222,11 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_void(p) prop_set_void_ex(p, NULL)
 
-#define prop_set_pixmap(p, pp) prop_set_pixmap_ex(p, NULL, pp)
-
 #define prop_set_link(p, title, link) prop_set_link_ex(p, NULL, title, link)
 
 #define prop_set_rstring(p, rstr) prop_set_rstring_ex(p, NULL, rstr, 0)
+
+#define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
 
 rstr_t *prop_get_string(prop_t *p);
 
@@ -313,9 +316,15 @@ prop_courier_t *prop_courier_create_notify(void (*notify)(void *opaque),
 
 prop_courier_t *prop_courier_create_waitable(void);
 
-void prop_courier_wait(prop_courier_t *pc,
-		       struct prop_notify_queue *exp,
-		       struct prop_notify_queue *nor);
+prop_courier_t *prop_courier_create_lockmgr(const char *name, 
+					    prop_lockmgr_t *mgr, void *lock,
+					    void (*prologue)(void),
+					    void (*epilogue)(void));
+
+int prop_courier_wait(prop_courier_t *pc,
+		      struct prop_notify_queue *exp,
+		      struct prop_notify_queue *nor,
+		      int timeout);
 
 void prop_courier_wait_and_dispatch(prop_courier_t *pc);
 
@@ -356,7 +365,7 @@ void prop_vec_destroy_entries(prop_vec_t *pv);
 
 
 
-const char *prop_get_name(prop_t *p);
+rstr_t *prop_get_name(prop_t *p);
 
 void prop_want_more_childs(prop_sub_t *s);
 

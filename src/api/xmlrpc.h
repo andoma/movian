@@ -19,7 +19,7 @@
 #ifndef XMLRPC_H__
 #define XMLRPC_H__
 
-#include <htsmsg/htsmsg.h>
+#include "htsmsg/htsmsg.h"
 
 htsmsg_t *xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 			 char *errbuf, size_t errlen);

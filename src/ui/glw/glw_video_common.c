@@ -41,9 +41,22 @@ static void  glw_video_input(uint8_t * const data[], const int pitch[],
  *
  */
 static void
-glw_video_rctx_aspect_adjust(glw_rctx_t *rc, glw_video_t *gv)
+glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 {
+  const glw_root_t *gr = gv->w.glw_root;
+
+  if(gr->gr_underscan_h || gr->gr_underscan_v) {
+    glw_reposition(rc,
+		   -gr->gr_underscan_h,
+		   rc->rc_height + gr->gr_underscan_v,
+		   rc->rc_width  + gr->gr_underscan_h,
+		   -gr->gr_underscan_v);
+  }
+
   float t_aspect = av_q2d(gv->gv_dar);
+
+    if(video_settings.stretch_fullscreen)
+      return;
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
@@ -141,6 +154,7 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 			 int64_t pts, int epoch)
 {
   int64_t aclock;
+  const char *status;
 
   if(mp->mp_audio_clock_epoch != epoch) {
     /* Not the same clock epoch, can not sync */
@@ -186,20 +200,21 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     } else {
       vd->vd_may_update_avdiff--;
     }
+    status = "lock";
+  } else {
+    status = "nolock";
   }
 
-#if 0
- {
+  if(0) {
    static int64_t lastpts, lastaclock;
    
-  printf("%s: AVDIFF = %10f %10d %15lld %15lld %15lld %15lld %15lld\n", 
+  printf("%s: AVDIFF = %10f %10d %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %s\n", 
 	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
 	 aclock, aclock - lastaclock, pts, pts - lastpts,
-	 mp->mp_audio_clock);
+	 mp->mp_audio_clock, status);
   lastpts = pts;
   lastaclock = aclock;
  }
-#endif
 }
 
 
@@ -302,7 +317,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     rc = extra;
     rc0 = *rc;
-    glw_video_rctx_aspect_adjust(&rc0, gv);
+    glw_video_rctx_adjust(&rc0, gv);
     glw_video_overlay_layout(gv, rc, &rc0);
     return 0;
 
@@ -311,7 +326,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   case GLW_SIGNAL_DESTROY:
     hts_cond_signal(&gv->gv_avail_queue_cond);
-    video_playback_destroy(gv->gv_vp);
+    video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
     mp_ref_dec(gv->gv_mp);
     gv->gv_mp = NULL;
@@ -359,7 +374,7 @@ glw_video_ctor(glw_t *w)
   LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
   gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
-  gv->gv_vp = video_playback_create(gv->gv_mp);
+  video_playback_create(gv->gv_mp);
 
   gv->gv_vo_scaling_sub =
     prop_subscribe(0,
@@ -405,14 +420,14 @@ mod_video_flags(glw_t *w, int set, int clr)
  *
  */
 static void
-set_source(glw_t *w, const char *url)
+set_source(glw_t *w, rstr_t *url)
 {
   glw_video_t *gv = (glw_video_t *)w;
 
   if(url == NULL)
     return;
   
-  mystrset(&gv->gv_pending_url, url);
+  mystrset(&gv->gv_pending_url, rstr_get(url));
   glw_video_play(gv);
 }
 
@@ -455,14 +470,15 @@ glw_video_set(glw_t *w, va_list ap)
     attrib = va_arg(ap, int);
     switch(attrib) {
 
-    case GLW_ATTRIB_PROPROOTS:
+    case GLW_ATTRIB_PROPROOTS3:
       p = va_arg(ap, void *);
       assert(p != NULL);
       p2 = prop_create(p, "media");
       
       prop_link(gv->gv_mp->mp_prop_root, p2);
       
-      p = va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Parent, just throw it away
+      (void)va_arg(ap, void *); // Clone, just throw it away
       break;
 
     case GLW_ATTRIB_PRIORITY:
@@ -492,7 +508,7 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
-  glw_video_rctx_aspect_adjust(&rc0, gv);
+  glw_video_rctx_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
   gv->gv_rheight = rc0.rc_height;

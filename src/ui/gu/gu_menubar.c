@@ -227,18 +227,6 @@ gu_menubar_File(gu_window_t *gw, GtkAccelGroup *accel_group)
   return M;
 }
 
-/**
- *
- */
-static void
-m_toggle_toolbar(GtkCheckMenuItem *w, gpointer data)
-{
-  gu_window_t *gw = data;
-  gw->gw_view_toolbar = gtk_check_menu_item_get_active(w);
-  g_object_set(G_OBJECT(gw->gw_toolbar), "visible", 
-	       gw->gw_view_toolbar, NULL);
-}
-
 
 /**
  *
@@ -306,10 +294,6 @@ gu_menubar_View(gu_window_t *gw, GtkAccelGroup *accel_group)
 
   gtk_menu_set_accel_group(GTK_MENU(m), accel_group);
   gtk_menu_item_set_submenu(GTK_MENU_ITEM(M), m);
-
-  gu_menu_add_toggle(m, "_Toolbar", 
-		     m_toggle_toolbar, gw, gw->gw_view_toolbar,
-		     NULL, TRUE);
 
   gu_menu_add_toggle(m, "_Playdeck", 
 		     m_toggle_playdeck, gw, gw->gw_view_playdeck,

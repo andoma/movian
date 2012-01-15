@@ -76,8 +76,10 @@ static int
 ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
 {
   int c, tot = 0;
-  if(!all)
-    return SSL_read(tc->ssl, buf, len);
+  if(!all) {
+    c = SSL_read(tc->ssl, buf, len);
+    return c > 0 ? c : -1;
+  }
 
   while(tot != len) {
     c = SSL_read(tc->ssl, buf + tot, len - tot);
@@ -113,9 +115,7 @@ polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
   int ret, tot = 0;
   if(!all) {
     ret = ssl_read(tc->ssl, buf, len);
-    if(ret >= 0) 
-      return ret;
-    return -1;
+    return ret > 0 ? ret : -1;
   }
 
   while(tot != len) {
@@ -188,6 +188,8 @@ static int
 getstreamsocket(int family, char *errbuf, size_t errbufsize)
 {
   int fd;
+  int val = 1;
+
   fd = socket(family, SOCK_STREAM, 0);
   if(fd == -1) {
     snprintf(errbuf, errbufsize, "Unable to create socket: %s",
@@ -202,7 +204,6 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
 
   /* Darwin send() does not have MSG_NOSIGNAL, but has SO_NOSIGPIPE sockopt */
 #ifdef SO_NOSIGPIPE
-  int val = 1;
   if(setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &val, sizeof(val)) == -1) {
     snprintf(errbuf, errbufsize, "setsockopt SO_NOSIGPIPE error: %s",
 	     strerror(errno));
@@ -210,6 +211,10 @@ getstreamsocket(int family, char *errbuf, size_t errbufsize)
     return -1; 
   } 
 #endif
+
+  if(setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &val, sizeof(val)) < 0)
+    TRACE(TRACE_INFO, "TCP", "Unable to turn on TCP_NODELAY");
+
   return fd;
 }
 
@@ -470,6 +475,12 @@ tcp_close(tcpcon_t *tc)
   close(tc->fd);
   htsbuf_queue_flush(&tc->spill);
   free(tc);
+}
+
+void
+tcp_shutdown(tcpcon_t *tc)
+{
+  shutdown(tc->fd, SHUT_RDWR);
 }
 
 

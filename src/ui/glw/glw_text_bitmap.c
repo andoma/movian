@@ -132,7 +132,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   if(pm != NULL && pm->pm_pixels != NULL && gtb->gtb_status == GTB_VALID) {
     int fmt;
 
-    fmt = pm->pm_pixfmt == PIX_FMT_Y400A ? GLW_TEXTURE_FORMAT_I8A8 : GLW_TEXTURE_FORMAT_BGR32;
+    fmt = pm->pm_type == PIXMAP_IA ? GLW_TEXTURE_FORMAT_I8A8 : GLW_TEXTURE_FORMAT_BGR32;
 
     glw_tex_upload(gr, &gtb->gtb_texture, pm->pm_pixels,
 		   fmt, pm->pm_width, pm->pm_height, 0);
@@ -152,9 +152,13 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       if(pm->pm_flags & PIXMAP_TEXT_WRAPPED)
 	gtb->gtb_status = GTB_NEED_RERENDER;
 
+      if(rc->rc_width > gtb->gtb_saved_width && 
+	 pm->pm_flags & PIXMAP_TEXT_TRUNCATED)
+	gtb->gtb_status = GTB_NEED_RERENDER;
+	
       if(gtb->gtb_flags & GTB_ELLIPSIZE) {
 	
-	if(pm->pm_flags & PIXMAP_TEXT_ELLIPSIZED) {
+	if(pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
 	  gtb->gtb_status = GTB_NEED_RERENDER;
 	} else {
 
@@ -284,6 +288,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 	left  = pm->pm_charpos[2*pm->pm_charposlen - 1];
 	right = left + 10;
       }
+
+      left  += gtb->gtb_padding_left;
+      right += gtb->gtb_padding_left;
 
     } else {
 
@@ -713,7 +720,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK | GLW_SHADOW;
+  w->glw_flags |= GLW_FOCUS_ON_CLICK;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_size_scale = 1.0;
   gtb->gtb_color.r = 1.0;
@@ -940,11 +947,23 @@ font_render_thread(void *aux)
 
     if(gtb->gtb_flags & GTB_ELLIPSIZE)
       flags |= TR_RENDER_ELLIPSIZE;
+
+    if(gtb->gtb_flags & GTB_BOLD)
+      flags |= TR_RENDER_BOLD;
+
+    if(gtb->gtb_flags & GTB_ITALIC)
+      flags |= TR_RENDER_ITALIC;
+
+    if(gtb->gtb_flags & GTB_OUTLINE)
+      flags |= TR_RENDER_OUTLINE;
     
     if(gtb->gtb_edit_ptr >= 0)
       flags |= TR_RENDER_CHARACTER_POS;
 
     tr_align = TR_ALIGN_JUSTIFIED;
+
+    if(gtb->w.glw_flags2 & GLW2_SHADOW)
+      flags |= TR_RENDER_SHADOW;
 
     switch(gtb->w.glw_alignment) {
     case LAYOUT_ALIGN_CENTER:
@@ -1117,6 +1136,10 @@ mod_flags2(glw_t *w, int set, int clr)
 
   if(clr & GLW2_AUTOHIDE)
     glw_unhide(w);
+
+
+  if((set | clr) & GLW2_SHADOW)
+    gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
 }
 
 

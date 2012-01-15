@@ -1,13 +1,13 @@
-#import "skin://nav.skin"
+#import "theme://include/nav.view"
 
 skinNavLocation($page.model.metadata.title,
 		translate($page.model.subtype,
-			  "skin://icons/Settings.png",
-			  "sound", "skin://icons/Sound.png",
-			  "audio", "skin://icons/Music.png",
-			  "video", "skin://icons/Movie.png",
-			  "bookmark", "skin://icons/Bookmark.png",
-			  "display", "skin://icons/Display.png",
-			  "search", "skin://icons/Search.png",
-			  "keymap", "skin://icons/Keyboard.png"
+			  "theme://svg/Settings.svg",
+			  "sound", "theme://svg/Sound.svg",
+			  "audio", "theme://svg/Music.svg",
+			  "video", "theme://svg/Movie.svg",
+			  "bookmark", "theme://svg/Bookmark.svg",
+			  "display", "theme://svg/Display.svg",
+			  "search", "theme://svg/Search.svg",
+			  "keymap", "theme://svg/Keyboard.svg"
 			 ));
