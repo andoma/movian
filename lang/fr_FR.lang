@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Ajouté par : %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Joué %d fois
+msg[1]: Joué %d fois
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d entrée
+msg[1]: %d entrées
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d piste
+msg[1]: %d pistes
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -50,16 +50,13 @@ id: Delete
 msg: Effacer
 
 id: Queue
-# Missing translation
-msg: 
+msg: File
 
 id: Star
-# Missing translation
-msg: 
+msg: Note
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Dé-note
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -89,12 +86,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Alloué par l'application : %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Alloué par malloc : %d kB
 
 id: Avail system RAM: %d kB
 msg: Mémoire système disponible : %d kB
@@ -109,8 +104,7 @@ id: Framerate: %.2f Hz
 msg: Fréquence d'affichage %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Morceaux disponibles : %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -119,8 +113,7 @@ id: Height: %d px
 msg: Hauteur: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Statut de la mémoire
 
 id: Renderer: %s
 msg: Interpréteur de rendu : %s
@@ -132,8 +125,7 @@ id: Total system RAM: %d kB
 msg: Mémoire système totale : %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Mémoire inutilisée : %d kB
 
 id: Version: %s
 msg: Version: %s
@@ -244,8 +236,7 @@ id: Adjust background tint based on daytime
 msg: Ajuster la teinte du fond selon l'heure du jour
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Alterner l'affichage des listes
 
 id: Audio muted
 msg: Son coupé
@@ -257,8 +248,7 @@ id: Master volume: %d dB
 msg: Volume du master : %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: Multilingual 'Pas de média chargé'
 
 id: Top bar navigation buttons
 msg: boutons de navigation de la barre du haut
@@ -276,8 +266,7 @@ msg: Utiliser opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Mémoire système faible (%d kB de RAM restant)
 
 #
 # ./src/audio/audio.c
@@ -307,8 +296,7 @@ id: Swap LFE+center with surround
 msg: Inverser LFE+centre avec le surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Changer la sortie pour %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -326,12 +314,10 @@ msg: Impossible d'ouvrir le CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: Erreur de lecture du DVD, redémarrage du disque
 
 #
 # ./src/backend/htsp/htsp.c
@@ -346,8 +332,7 @@ id: Search
 msg: Chercher
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Résultat de recherche pour : %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -356,8 +341,7 @@ id: Automatic login when Showtime starts
 msg: S'authentifier automatiquement au démarrage de Showtime
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: En collaboration
 
 id: Enable Spotify
 msg: Activer Spotify
@@ -381,12 +365,10 @@ id: New releases
 msg: Nouveautés
 
 id: Offline
-# Missing translation
-msg: 
+msg: Déconnecté
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Synchro déconnecté en 96kbps
 
 id: Playlists
 msg: Listes de lecture
@@ -410,8 +392,7 @@ id: Spotify playlists
 msg: Listes de lecture Spotify
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Soitify : Erreur de connection : %s
 
 id: Starred
 msg: Noté
@@ -426,12 +407,10 @@ msg: Favoris
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Ne peut gérer le contenu de type %d
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Incapable d'ouvre le fichier : %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -449,8 +428,7 @@ msg: Chercher via spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Fichier externe
 
 #
 # ./src/i18n.c
@@ -528,12 +506,10 @@ msg: Zoom vidéo
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Incorporé dans le fichier
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Piste %d
 
 #
 # ./src/navigator.c
@@ -626,20 +602,16 @@ msg: Lier la roue de la sourie à haut/bas
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Basculer automatiquement vers ce mode
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: Gamme de couleur DVI-Video
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Basculer vers ce mode maintenant
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Modes vidéo
 
 #
 # ./src/upnp/upnp.c
@@ -666,24 +638,19 @@ msg: Service non trouvé
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: Force le niveau 4.2 pour le contenu de niveau %d.%d. Ceci peut mettre fin à la lecture.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Impossible d'accélérer %s, librairie non chargée.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Impossible d'ouvrir le codec Cell. Error 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Impossible d'ouvrir le codec Cell. Incapable d'allouer %d octects de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Imposible d'avoir le codec Cell. Error 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -701,8 +668,7 @@ id: Color
 msg: Couleur
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Compter la vidéo comme jouée quand la lecture atteind
 
 id: Enable VDPAU
 msg: Activer VDPAU
@@ -720,8 +686,7 @@ id: Left
 msg: Gauche
 
 id: No
-# Missing translation
-msg: 
+msg: Non
 
 id: Outline color
 msg: Couleur du contour
@@ -730,8 +695,7 @@ id: Outline size
 msg: Taille du contour
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Reprendre la lecture vidéo
 
 id: Right
 msg: Droite
@@ -743,8 +707,7 @@ id: Shadow offset
 msg: Décalage de l'ombre
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Étirer la vidéo en plein écran
 
 id: Stretch video to widescreen
 msg: Étirer la vidéo pour les écrans large
@@ -768,6 +731,5 @@ id: Video playback
 msg: Lecture vidéo
 
 id: Yes
-# Missing translation
-msg: 
+msg: Oui
 
