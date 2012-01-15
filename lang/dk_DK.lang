@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Tilføjet af: %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Afspillet %d gange
+msg[1]: Afspillet %d gang
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d indhold
+msg[1]: %d indhold
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d spor
+msg[1]: %d spor
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -248,8 +248,7 @@ id: Master volume: %d dB
 msg: Master volume: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: Flersprogede 'Intet medie hentet"
 
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
@@ -708,8 +707,7 @@ id: Shadow offset
 msg: Skyggens forskydning
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Stræk video til fuld skærm
 
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
@@ -734,4 +732,3 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
-
