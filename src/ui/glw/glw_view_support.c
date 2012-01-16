@@ -38,8 +38,6 @@
 void
 glw_view_token_free(token_t *t)
 {
-  int i;
-
 #ifdef GLW_VIEW_ERRORINFO
   rstr_release(t->file);
 #endif
@@ -61,17 +59,11 @@ glw_view_token_free(token_t *t)
   case TOKEN_FLOAT:
   case TOKEN_INT:
   case TOKEN_VECTOR_FLOAT:
-  case TOKEN_VECTOR_INT:
   case TOKEN_OBJECT_ATTRIBUTE:
   case TOKEN_PROPERTY_SUBSCRIPTION:
   case TOKEN_VOID:
   case TOKEN_DIRECTORY:
   case TOKEN_CSTRING:
-    break;
-
-  case TOKEN_VECTOR_STRING:
-    for(i = 0; i < t->t_elements; i++)
-      free(t->t_string_vector[i]);
     break;
 
   case TOKEN_START:
@@ -239,8 +231,6 @@ glw_view_token_copy(token_t *src)
     break;
 
   case TOKEN_VECTOR_FLOAT:
-  case TOKEN_VECTOR_STRING:
-  case TOKEN_VECTOR_INT:
   case TOKEN_num:
   case TOKEN_EVENT:
     abort();
@@ -384,19 +374,6 @@ token2name(token_t *t)
     for(i = 0; i < t->t_elements; i++)
       snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%f ", 
 	       t->t_float_vector[i]);
-
-    snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "]");
-    
-    return buf;
-
-
-  case TOKEN_VECTOR_STRING:
-    buf[0] = '[';
-    buf[1] = 0;
-
-    for(i = 0; i < t->t_elements; i++)
-      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "\"%s\" ", 
-	       t->t_string_vector[i]);
 
     snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "]");
     

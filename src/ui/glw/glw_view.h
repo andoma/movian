@@ -84,8 +84,6 @@ typedef enum {
   TOKEN_BLOCK,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
-  TOKEN_VECTOR_STRING,
-  TOKEN_VECTOR_INT,
   TOKEN_EVENT,
   TOKEN_LINK,                  // A link with title and url
   TOKEN_num,
@@ -97,8 +95,6 @@ typedef enum {
  *
  */
 typedef struct token {
-  token_type_t type;
-
   struct token *next;   /* Next statement, initially (after lexing)
 			   all tokens are linked via 'next' only */
 
@@ -109,6 +105,9 @@ typedef struct token {
   rstr_t *file;
   int line;
 #endif
+
+  token_type_t type;
+  int t_num_args;
 
   union {
     int elements;
@@ -123,14 +122,10 @@ typedef struct token {
 #define t_extra_float arg.f
 #define t_extra_int   arg.i
 
-  int t_num_args;
   struct glw_prop_sub *propsubr;
 
   union {
     int  ival;
-    double int_vec[0];
-
-    char *string_vec[0];
 
     struct {
       float value;
