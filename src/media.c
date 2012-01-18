@@ -144,20 +144,6 @@ media_buf_dtor_hugebuf(media_buf_t *mb)
 }
 
 
-/**
- *
- */
-#ifdef POOL_DEBUG
-media_buf_t *
-media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line)
-{
-  media_buf_t *mb = pool_get_ex(mp->mp_mb_pool, file, line);
-  mb->mb_time = AV_NOPTS_VALUE;
-  mb->mb_dtor = media_buf_dtor_freedata;
-  return mb;
-}
-
-#else
 media_buf_t *
 media_buf_alloc_locked(media_pipe_t *mp, size_t size)
 {
@@ -202,7 +188,6 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
   return mb;
 }
 
-#endif
 
 /**
  *
