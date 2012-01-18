@@ -52,7 +52,7 @@ typedef struct glw_event_navOpen {
  *
  */
 static void
-glw_event_map_navOpen_dtor(glw_event_map_t *gem)
+glw_event_map_navOpen_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_navOpen_t *no = (glw_event_navOpen_t *)gem;
 
@@ -119,7 +119,7 @@ typedef struct glw_event_playTrack {
  *
  */
 static void
-glw_event_map_playTrack_dtor(glw_event_map_t *gem)
+glw_event_map_playTrack_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_playTrack_t *g = (glw_event_playTrack_t *)gem;
 
@@ -176,7 +176,7 @@ typedef struct glw_event_selectTrack {
  *
  */
 static void
-glw_event_map_selectTrack_dtor(glw_event_map_t *gem)
+glw_event_map_selectTrack_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_selectTrack_t *g = (glw_event_selectTrack_t *)gem;
 
@@ -236,7 +236,7 @@ typedef struct glw_event_deliverEvent {
  *
  */
 static void
-glw_event_map_deliverEvent_dtor(glw_event_map_t *gem)
+glw_event_map_deliverEvent_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_deliverEvent_t *g = (glw_event_deliverEvent_t *)gem;
 
@@ -291,7 +291,7 @@ glw_event_map_add(glw_t *w, glw_event_map_t *gem)
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
     if(o->gem_action == gem->gem_action) {
       LIST_REMOVE(o, gem_link);
-      o->gem_dtor(o);
+      o->gem_dtor(w->glw_root, o);
       break;
     }
   }
@@ -310,7 +310,7 @@ glw_event_map_remove_by_action(glw_t *w, action_type_t action)
   LIST_FOREACH(o, &w->glw_event_maps, gem_link) {
     if(o->gem_action == action) {
       LIST_REMOVE(o, gem_link);
-      o->gem_dtor(o);
+      o->gem_dtor(w->glw_root, o);
       break;
     }
   }
@@ -385,7 +385,7 @@ typedef struct glw_event_internal {
  *
  */
 static void
-glw_event_map_internal_dtor(glw_event_map_t *gem)
+glw_event_map_internal_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_internal_t *g = (glw_event_internal_t *)gem;
 

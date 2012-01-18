@@ -33,7 +33,7 @@
 #include "prop/prop_nodefilter.h"
 #include "arch/arch.h"
 
-LIST_HEAD(clone_list, clone);
+LIST_HEAD(clone_list, glw_clone);
 
 static token_t t_zero = {
   .type = TOKEN_INT,
@@ -122,51 +122,35 @@ typedef struct sub_counter {
 
 
 
-/**
- *
- */
-typedef struct clone {
-  LIST_ENTRY(clone) c_link;
-  sub_cloner_t *c_sc;
-  glw_t *c_w;
-  int c_pos;
-  prop_t *c_prop;
-
-  char c_evaluated;
-
-  prop_t *c_clone_root;
-
-} clone_t;
-
 
 static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
 			  int type);
 
-static void clone_free(clone_t *c);
+static void clone_free(glw_root_t *gr, glw_clone_t *c);
 
 
 /**
  *
  */
 static void
-cloner_cleanup(sub_cloner_t *sc)
+cloner_cleanup(glw_root_t *gr, sub_cloner_t *sc)
 {
-  clone_t *c;
+  glw_clone_t *c;
 
   while((c = LIST_FIRST(&sc->sc_clones)) != NULL) {
     prop_tag_clear(c->c_prop, sc);
-    clone_free(c);
+    clone_free(gr, c);
   }
 
   if(sc->sc_cloner_body != NULL)
-    glw_view_free_chain(sc->sc_cloner_body);
+    glw_view_free_chain(gr, sc->sc_cloner_body);
 }
 
 /**
  *
  */
 void
-glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
+glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
 {
   glw_prop_sub_t *gps;
   sub_cloner_t *sc;
@@ -177,7 +161,7 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
       prop_unsubscribe(gps->gps_sub);
 
     if(gps->gps_token != NULL)
-      glw_view_token_free(gps->gps_token);
+      glw_view_token_free(gr, gps->gps_token);
 
     LIST_REMOVE(gps, gps_link);
 
@@ -189,7 +173,7 @@ glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l)
     case GPS_CLONER:
       sc = (sub_cloner_t *)gps;
  
-      cloner_cleanup(sc);
+      cloner_cleanup(gr, sc);
 
       if(sc->sc_originating_prop)
 	prop_ref_dec(sc->sc_originating_prop);
@@ -256,15 +240,13 @@ eval_pop(glw_view_eval_context_t *ec)
   return r;
 }
 
-
 /**
  *
  */
 static token_t *
-eval_alloc_sized(token_t *src, glw_view_eval_context_t *ec, 
-		 token_type_t type, size_t size)
+eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
 {
-  token_t *r = calloc(1, size);
+  token_t *r = glw_view_token_alloc(ec->gr);
 
 #ifdef GLW_VIEW_ERRORINFO
   if(src->file != NULL)
@@ -276,15 +258,6 @@ eval_alloc_sized(token_t *src, glw_view_eval_context_t *ec,
   r->next = ec->alloc;
   ec->alloc = r;
   return r;
-}
-
-/**
- *
- */
-static token_t *
-eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
-{
-  return eval_alloc_sized(src, ec, type, sizeof(token_t));
 }
 
 
@@ -438,30 +411,28 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
 			      "Arithmetic op is invalid for "
 			      "non-equal sized vectors");
     
-    r = eval_alloc_sized(self, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
-			 sizeof(a->u) * (a->t_elements - 1));
+    r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
-      r->t_float_vector[i] = f_fn(a->t_float_vector[i], b->t_float_vector[i]);
+      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i],
+				      b->t_float_vector_int[i]);
 
   } else if(a->type == TOKEN_VECTOR_FLOAT && b->type == TOKEN_FLOAT) {
 
-    r = eval_alloc_sized(self, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
-			 sizeof(a->u) * (a->t_elements - 1));
+    r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = a->t_elements;
     for(i = 0; i < a->t_elements; i++)
-      r->t_float_vector[i] = f_fn(a->t_float_vector[i], b->t_float);
+      r->t_float_vector_int[i] = f_fn(a->t_float_vector_int[i], b->t_float);
 
   } else if(a->type == TOKEN_FLOAT && b->type == TOKEN_VECTOR_FLOAT) {
 
-    r = eval_alloc_sized(self, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
-			 sizeof(b->u) * (b->t_elements - 1));
+    r = eval_alloc(self, ec, TOKEN_VECTOR_FLOAT);
 
     r->t_elements = b->t_elements;
     for(i = 0; i < b->t_elements; i++)
-      r->t_float_vector[i] = f_fn(a->t_float, b->t_float_vector[i]);
+      r->t_float_vector_int[i] = f_fn(a->t_float, b->t_float_vector_int[i]);
   } else {
     r = eval_alloc(self, ec, TOKEN_VOID);
   }
@@ -724,7 +695,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
   
-  glw_view_free_chain(a->child);
+  glw_view_free_chain(ec->gr, a->child);
   a->child = NULL;
   rstr_release(a->t_rstring);
   a->type = TOKEN_PROPERTY_REF;
@@ -980,7 +951,7 @@ eval_dynamic(glw_t *w, token_t *rpn, struct glw_rctx *rc, prop_t *view)
 
   glw_view_eval_rpn0(rpn, &ec);
 
-  glw_view_free_chain(ec.alloc);
+  glw_view_free_chain(ec.gr, ec.alloc);
 
   if(ec.dynamic_eval & GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME)
     glw_signal_handler_register(w, eval_dynamic_every_frame_sig, rpn, 1000);
@@ -1015,11 +986,11 @@ static void cloner_resequence(sub_cloner_t *sc);
  *
  */
 static void
-clone_eval(clone_t *c)
+clone_eval(glw_clone_t *c)
 {
   sub_cloner_t *sc = c->c_sc;
   glw_view_eval_context_t n;
-  token_t *body = glw_view_clone_chain(sc->sc_cloner_body);
+  token_t *body = glw_view_clone_chain(c->c_w->glw_root, sc->sc_cloner_body);
   const glw_class_t *gc = c->c_w->glw_class;
 
   if(gc->gc_freeze != NULL)
@@ -1038,7 +1009,7 @@ clone_eval(clone_t *c)
 
   n.sublist = &n.w->glw_prop_subscriptions;
   glw_view_eval_block(body, &n);
-  glw_view_free_chain(body);
+  glw_view_free_chain(n.gr, body);
 
   if(gc->gc_thaw != NULL)
     gc->gc_thaw(c->c_w);
@@ -1070,9 +1041,9 @@ cloner_pagination_check(sub_cloner_t *sc)
 static int
 clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
-  clone_t *c = opaque;
+  glw_clone_t *c = opaque;
   sub_cloner_t *sc = c->c_sc;
-
+  glw_root_t *gr;
   switch(signal) {
   case GLW_SIGNAL_ACTIVE:
     if(!sc->sc_positions_valid)
@@ -1101,11 +1072,12 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_DESTROY:
+    gr = w->glw_root;
     sc->sc_entries--;
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
     c->c_w = NULL;
-    clone_free(c);
+    clone_free(gr, c);
     break;
 
   default:
@@ -1127,7 +1099,7 @@ cloner_resequence(sub_cloner_t *sc)
   TAILQ_FOREACH(w, &sc->sc_sub.gps_widget->glw_childs, glw_parent_link) {
     LIST_FOREACH(gsh, &w->glw_signal_handlers, gsh_link) {
       if(gsh->gsh_func == clone_sig_handler) {
-	clone_t *c = gsh->gsh_opaque;
+	glw_clone_t *c = gsh->gsh_opaque;
 	c->c_pos = pos;
 	break;
       }
@@ -1149,12 +1121,13 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		  glw_t *parent, errorinfo_t *ei, int flags)
 {
   glw_t *b;
-  clone_t *c = calloc(1, sizeof(clone_t));
+  glw_root_t *gr = parent->glw_root;
+  glw_clone_t *c = pool_get(gr->gr_clone_pool);
 
   LIST_INSERT_HEAD(&sc->sc_clones, c, c_link);
 
   if(before != NULL) {
-    clone_t *bb = prop_tag_get(before, sc);
+    glw_clone_t *bb = prop_tag_get(before, sc);
     assert(bb != NULL);
     sc->sc_positions_valid = 0;
     b = bb->c_w;
@@ -1170,7 +1143,7 @@ cloner_add_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 
   c->c_clone_root = prop_create_root(NULL);
 
-  c->c_w = glw_create(parent->glw_root, sc->sc_cloner_class, parent, b, p);
+  c->c_w = glw_create(gr, sc->sc_cloner_class, parent, b, p);
   c->c_w->glw_clone = c;
 
   glw_set(c->c_w,
@@ -1233,8 +1206,8 @@ static void
 cloner_move_child0(sub_cloner_t *sc, prop_t *p, prop_t *before,
 		   glw_t *parent, errorinfo_t *ei)
 {
-  clone_t *c =          prop_tag_get(p, sc);
-  clone_t *b = before ? prop_tag_get(before, sc) : NULL;
+  glw_clone_t *c =          prop_tag_get(p, sc);
+  glw_clone_t *b = before ? prop_tag_get(before, sc) : NULL;
 
   sc->sc_positions_valid = 0;
   glw_move(c->c_w, b ? b->c_w : NULL);
@@ -1272,7 +1245,7 @@ cloner_move_child(sub_cloner_t *sc, prop_t *p, prop_t *before,
  *
  */
 static void
-clone_free(clone_t *c)
+clone_free(glw_root_t *gr, glw_clone_t *c)
 {
   glw_t *w = c->c_w;
   if(w != NULL) {
@@ -1284,7 +1257,7 @@ clone_free(clone_t *c)
   LIST_REMOVE(c, c_link);
   prop_ref_dec(c->c_prop);
   prop_destroy(c->c_clone_root);
-  free(c);
+  pool_put(gr->gr_clone_pool, c);
 }
 
 
@@ -1292,9 +1265,9 @@ clone_free(clone_t *c)
  *
  */
 static void
-cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
+cloner_del_child(glw_root_t *gr, sub_cloner_t *sc, prop_t *p, glw_t *parent)
 {
-  clone_t *c;
+  glw_clone_t *c;
   glw_prop_sub_pending_t *gpsp;
 
   if((c = prop_tag_clear(p, sc)) != NULL) {
@@ -1304,7 +1277,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
     if(TAILQ_NEXT(w, glw_parent_link) != NULL)
       sc->sc_positions_valid = 0;
 
-    clone_free(c);
+    clone_free(gr, c);
     return;
   }
 
@@ -1326,7 +1299,7 @@ cloner_del_child(sub_cloner_t *sc, prop_t *p, glw_t *parent)
 static void
 cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
 {
-  clone_t *c;
+  glw_clone_t *c;
   if(p == NULL) {
     parent->glw_class->gc_select_child(parent, NULL, extra);
     return;
@@ -1347,9 +1320,10 @@ cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
  *
  */
 static token_t *
-prop_callback_alloc_token(glw_prop_sub_t *gps, token_type_t type)
+prop_callback_alloc_token(glw_root_t *gr, glw_prop_sub_t *gps,
+			  token_type_t type)
 {
-  token_t *t = calloc(1, sizeof(token_t));
+  token_t *t = glw_view_token_alloc(gr);
   t->type = type;
 
 #ifdef GLW_VIEW_ERRORINFO
@@ -1373,6 +1347,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   token_t *rpn = NULL, *t = NULL;
   int flags, i;
   va_list ap;
+  glw_root_t *gr = gps->gps_widget->glw_root;
   va_start(ap, event);
 
   switch(event) {
@@ -1381,13 +1356,13 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_SET_CSTRING:
   case PROP_SET_INT:
   case PROP_SET_FLOAT:
-    t = prop_callback_alloc_token(gps, TOKEN_VOID);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
     break;
 
   case PROP_SET_DIR:
-    t = prop_callback_alloc_token(gps, TOKEN_DIRECTORY);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_DIRECTORY);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
     break;
@@ -1426,7 +1401,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
 
   case PROP_DEL_CHILD:
     p = va_arg(ap, prop_t *);
-    cloner_del_child(sc, p, gps->gps_widget);
+    cloner_del_child(gr, sc, p, gps->gps_widget);
     break;
 
   case PROP_SELECT_CHILD:
@@ -1436,7 +1411,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_RLINK:
-    t = prop_callback_alloc_token(gps, TOKEN_LINK);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->propsubr = gps;
     t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
     t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
@@ -1461,7 +1436,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   if(t != NULL) {
       
     if(gps->gps_token != NULL) {
-      glw_view_token_free(gps->gps_token);
+      glw_view_token_free(gr, gps->gps_token);
       gps->gps_token = NULL;
     }
     gps->gps_token = t;
@@ -1479,19 +1454,20 @@ static void
 prop_callback_value(void *opaque, prop_event_t event, ...)
 {
   glw_prop_sub_t *gps = opaque;
+  glw_root_t *gr = gps->gps_widget->glw_root;
   token_t *rpn = NULL, *t = NULL;
   va_list ap;
   va_start(ap, event);
 
   switch(event) {
   case PROP_SET_VOID:
-    t = prop_callback_alloc_token(gps, TOKEN_VOID);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
     break;
 
   case PROP_SET_RSTRING:
-    t = prop_callback_alloc_token(gps, TOKEN_RSTRING);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
     t->propsubr = gps;
     t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
     (void)va_arg(ap, prop_t *);
@@ -1500,21 +1476,21 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_CSTRING:
-    t = prop_callback_alloc_token(gps, TOKEN_CSTRING);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_CSTRING);
     t->propsubr = gps;
     t->t_cstring = va_arg(ap, const char *);
     rpn = gps->gps_rpn;
     break;
 
   case PROP_SET_INT:
-    t = prop_callback_alloc_token(gps, TOKEN_INT);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_INT);
     t->propsubr = gps;
     t->t_int = va_arg(ap, int);
     rpn = gps->gps_rpn;
     break;
 
   case PROP_SET_FLOAT:
-    t = prop_callback_alloc_token(gps, TOKEN_FLOAT);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
     t->propsubr = gps;
     t->t_float = va_arg(ap, double);
     (void)va_arg(ap, prop_t *);
@@ -1523,7 +1499,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_RLINK:
-    t = prop_callback_alloc_token(gps, TOKEN_LINK);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->propsubr = gps;
     t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
     t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
@@ -1531,7 +1507,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SET_DIR:
-    t = prop_callback_alloc_token(gps, TOKEN_PROPERTY_REF);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_PROPERTY_REF);
     t->propsubr = gps;
     rpn = gps->gps_rpn;
     t->t_prop = prop_ref_inc(va_arg(ap, prop_t *));
@@ -1557,7 +1533,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   if(t != NULL) {
       
     if(gps->gps_token != NULL) {
-      glw_view_token_free(gps->gps_token);
+      glw_view_token_free(gps->gps_widget->glw_root, gps->gps_token);
       gps->gps_token = NULL;
     }
     gps->gps_token = t;
@@ -1577,12 +1553,11 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
 {
   sub_counter_t *sc = opaque;
   glw_prop_sub_t *gps = &sc->sc_sub;
+  glw_root_t *gr = gps->gps_widget->glw_root;
   prop_vec_t *pv;
   token_t *rpn = NULL, *t = NULL;
   va_list ap;
   va_start(ap, event);
-
-  gps = opaque;
 
   switch(event) {
   case PROP_SET_VOID:
@@ -1622,14 +1597,14 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
     break;
   }
 
-  t = prop_callback_alloc_token(gps, TOKEN_INT);
+  t = prop_callback_alloc_token(gr, gps, TOKEN_INT);
   t->propsubr = gps;
   t->t_int = sc->sc_entries;
 
   rpn = gps->gps_rpn;
 
   if(gps->gps_token != NULL)
-    glw_view_token_free(gps->gps_token);
+    glw_view_token_free(gr, gps->gps_token);
 
   gps->gps_token = t;
 
@@ -1713,6 +1688,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   gps->gps_line = self->line;
 #endif
 
+  gps->gps_widget = w;
+
   int f = PROP_SUB_DIRECT_UPDATE;
 
   if(ec->w->glw_class->gc_flags & GLW_EXPEDITE_SUBSCRIPTIONS)
@@ -1749,14 +1726,13 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   gps->gps_sub = s;
 
-  gps->gps_widget = w;
   LIST_INSERT_HEAD(ec->sublist, gps, gps_link);
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
   if(self->type == TOKEN_PROPERTY_VALUE_NAME) {
     rstr_release(self->t_rstring);
-    glw_view_free_chain(self->child);
+    glw_view_free_chain(ec->gr, self->child);
     self->child = NULL;
   }
 
@@ -1803,18 +1779,17 @@ make_vector(glw_view_eval_context_t *ec, token_t *t)
   token_t *a, *r;
   int i;
 
-  if(t->t_num_args < 1)
+  if(t->t_num_args < 1 || t->t_num_args > 4)
     return glw_view_seterr(ec->ei, t, "Invalid vector length (%d)",
 			   t->t_num_args);
 
-  r = eval_alloc_sized(t, ec, TOKEN_VECTOR_FLOAT, sizeof(token_t) + 
-		       sizeof(t->u) * (t->t_num_args - 1));
+  r = eval_alloc(t, ec, TOKEN_VECTOR_FLOAT);
   r->t_elements = t->t_num_args;
  
   for(i = t->t_num_args - 1; i >= 0; i--) {
     if((a = token_resolve(ec, eval_pop(ec))) == NULL)
       return -1;
-    r->t_float_vector[i] = token2float(a);
+    r->t_float_vector_int[i] = token2float(a);
   }
   eval_push(ec, r);
   return 0;
@@ -1949,7 +1924,7 @@ glw_view_eval_rpn(token_t *t, glw_view_eval_context_t *pec, int *copyp)
   r = glw_view_eval_rpn0(t, &ec);
 
   *copyp = ec.dynamic_eval;
-  glw_view_free_chain(ec.alloc);
+  glw_view_free_chain(ec.gr, ec.alloc);
   return r;
 }
 
@@ -2128,16 +2103,16 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 			glw_queue, glw_parent_link)) != NULL &&
 	w->glw_clone != NULL) {
     prop_tag_clear(w->glw_clone->c_prop, w->glw_clone->c_sc);
-    clone_free(w->glw_clone);
+    clone_free(ec->gr, w->glw_clone);
   }
 
   if(a->type == TOKEN_DIRECTORY) {
     sub_cloner_t *sc = (sub_cloner_t *)a->propsubr;
     sc->sc_anchor = self->t_extra;
 
-    cloner_cleanup(sc);
+    cloner_cleanup(ec->gr, sc);
 
-    sc->sc_cloner_body = glw_view_clone_chain(c);
+    sc->sc_cloner_body = glw_view_clone_chain(ec->gr, c);
     sc->sc_cloner_class = cl;
 
     /* Create pending childs */
@@ -2228,21 +2203,21 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.sublist = &l;
   n.event = src;
 
-  body = glw_view_clone_chain(b->block);
+  body = glw_view_clone_chain(n.gr, b->block);
   glw_view_eval_block(body, &n);
-  glw_prop_subscription_destroy_list(&l);
-  glw_view_free_chain(body);
+  glw_prop_subscription_destroy_list(w->glw_root, &l);
+  glw_view_free_chain(n.gr, body);
 }
 
 /**
  *
  */
 static void
-glw_event_map_eval_block_dtor(glw_event_map_t *gem)
+glw_event_map_eval_block_dtor(glw_root_t *gr, glw_event_map_t *gem)
 {
   glw_event_map_eval_block_t *b = (glw_event_map_eval_block_t *)gem;
 
-  glw_view_free_chain(b->block);
+  glw_view_free_chain(gr, b->block);
 
   if(b->prop)
     prop_ref_dec(b->prop);
@@ -2273,7 +2248,7 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 {
   glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
 
-  b->block = glw_view_clone_chain(block);
+  b->block = glw_view_clone_chain(ec->gr, block);
 
   b->prop        = prop_ref_inc(ec->prop);
   b->prop_parent = prop_ref_inc(ec->prop_parent);
@@ -2767,7 +2742,7 @@ glwf_changed_ctor(struct token *self)
  *
  */
 static void
-glwf_changed_dtor(struct token *self)
+glwf_changed_dtor(glw_root_t *gr, struct token *self)
 {
   glwf_changed_extra_t *e = self->t_extra;
 
@@ -2910,7 +2885,7 @@ glwf_scurve_ctor(struct token *self)
  *
  */
 static void
-glwf_scurve_dtor(struct token *self)
+glwf_scurve_dtor(glw_root_t *gr, struct token *self)
 {
   free(self->t_extra);
 }
@@ -3691,7 +3666,7 @@ glwf_delta_ctor(struct token *self)
  *
  */
 static void
-glwf_delta_dtor(struct token *self)
+glwf_delta_dtor(glw_root_t *Gr, struct token *self)
 {
   glwf_delta_extra_t *de = self->t_extra;
 
@@ -3856,7 +3831,7 @@ glwf_browse_ctor(struct token *self)
  *
  */
 static void
-glwf_browse_dtor(struct token *self)
+glwf_browse_dtor(glw_root_t *gr, struct token *self)
 {
   glwf_browse_extra_t *be = self->t_extra;
 
@@ -3945,7 +3920,7 @@ glwf_null_ctor(struct token *self)
  *
  */
 static void
-glwf_setting_dtor(struct token *self)
+glwf_setting_dtor(glw_root_t *gr, struct token *self)
 {
   glwf_setting_t *gs = self->t_extra;
   if(gs == NULL)
@@ -4202,7 +4177,7 @@ glwf_delay_ctor(struct token *self)
  *
  */
 static void
-glwf_delay_dtor(struct token *self)
+glwf_delay_dtor(glw_root_t *gr, struct token *self)
 {
   free(self->t_extra);
 }
@@ -4283,7 +4258,7 @@ glwf_count(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static void
-glwf_propGrouper_dtor(struct token *self)
+glwf_propGrouper_dtor(glw_root_t *gr, struct token *self)
 {
   if(self->t_extra != NULL)
     prop_grouper_destroy(self->t_extra);
@@ -4328,7 +4303,7 @@ glwf_propGrouper(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static void
-glwf_propSorter_dtor(struct token *self)
+glwf_propSorter_dtor(glw_root_t *gr, struct token *self)
 {
   if(self->t_extra != NULL)
     prop_nf_release(self->t_extra);
@@ -4472,13 +4447,13 @@ glwf_preferTentative(glw_view_eval_context_t *ec, struct token *self,
 
   case PROP_SET_TENTATIVE:
     if(self->t_extra != NULL)
-      glw_view_token_free(self->t_extra);
-    self->t_extra = r = glw_view_token_copy(a);
+      glw_view_token_free(ec->gr, self->t_extra);
+    self->t_extra = r = glw_view_token_copy(ec->gr, a);
     break;
 
   case PROP_SET_COMMIT:
     if(self->t_extra != NULL)
-      glw_view_token_free(self->t_extra);
+      glw_view_token_free(ec->gr, self->t_extra);
     self->t_extra = NULL;
     r = a;
     break;
@@ -4496,10 +4471,10 @@ glwf_preferTentative(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static void
-glwf_freetoken_dtor(struct token *self)
+glwf_freetoken_dtor(glw_root_t *gr, struct token *self)
 {
   if(self->t_extra != NULL)
-    glw_view_token_free(self->t_extra);
+    glw_view_token_free(gr, self->t_extra);
 }
 
 
@@ -4530,8 +4505,8 @@ glwf_ignoreTentative(glw_view_eval_context_t *ec, struct token *self,
   case PROP_SET_NORMAL:
   case PROP_SET_COMMIT:
     if(self->t_extra != NULL)
-      glw_view_token_free(self->t_extra);
-    self->t_extra = r = glw_view_token_copy(a);
+      glw_view_token_free(ec->gr, self->t_extra);
+    self->t_extra = r = glw_view_token_copy(ec->gr, a);
     break;
 
   case PROP_SET_TENTATIVE:

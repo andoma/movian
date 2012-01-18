@@ -31,12 +31,19 @@
 
 #include "misc/pixmap.h"
 
+
+token_t *
+glw_view_token_alloc(glw_root_t *gr)
+{
+  return pool_get(gr->gr_token_pool);
+}
+
 /**
  * Free a token.
  * It must be delinked for all lists before
  */
 void
-glw_view_token_free(token_t *t)
+glw_view_token_free(glw_root_t *gr, token_t *t)
 {
 #ifdef GLW_VIEW_ERRORINFO
   rstr_release(t->file);
@@ -45,7 +52,7 @@ glw_view_token_free(token_t *t)
   switch(t->type) {
   case TOKEN_FUNCTION:
     if(t->t_func->ctor != NULL)
-      t->t_func->dtor(t);
+      t->t_func->dtor(gr, t);
     break;
 
   case TOKEN_PROPERTY_REF:
@@ -110,7 +117,7 @@ glw_view_token_free(token_t *t)
     break;
 
   case TOKEN_EVENT:
-    t->t_gem->gem_dtor(t->t_gem);
+    t->t_gem->gem_dtor(gr, t->t_gem);
     break;
 
   case TOKEN_LINK:
@@ -122,7 +129,7 @@ glw_view_token_free(token_t *t)
     abort();
 
   }
-  free(t);
+  pool_put(gr->gr_token_pool, t);
 }
 
 
@@ -131,9 +138,9 @@ glw_view_token_free(token_t *t)
  * Clone a token
  */
 token_t *
-glw_view_token_copy(token_t *src)
+glw_view_token_copy(glw_root_t *gr, token_t *src)
 {
-  token_t *dst = calloc(1, sizeof(token_t));
+  token_t *dst = pool_get(gr->gr_token_pool);
 
 #ifdef GLW_VIEW_ERRORINFO
   dst->file = rstr_dup(src->file);
@@ -242,18 +249,18 @@ glw_view_token_copy(token_t *src)
  *
  */
 static void
-glw_view_free_chain2(token_t *t, int indent)
+glw_view_free_chain2(glw_root_t *gr, token_t *t, int indent)
 {
   token_t *n;
 
   for(; t != NULL; t = n) {
     n = t->next;
     if(t->child != NULL)
-      glw_view_free_chain2(t->child, indent + 2);
+      glw_view_free_chain2(gr, t->child, indent + 2);
 
     //    printf("%*.sFree: %p\n", indent, "",  t);
     //    printf("%*.sFree: %s\n", indent, "",  token2name(t));
-    glw_view_token_free(t);
+    glw_view_token_free(gr, t);
   }
 }
 
@@ -263,9 +270,9 @@ glw_view_free_chain2(token_t *t, int indent)
  *
  */
 void
-glw_view_free_chain(token_t *t)
+glw_view_free_chain(glw_root_t *gr, token_t *t)
 {
-  glw_view_free_chain2(t, 0);
+  glw_view_free_chain2(gr, t, 0);
 }
 
 
@@ -273,17 +280,17 @@ glw_view_free_chain(token_t *t)
  *
  */
 token_t *
-glw_view_clone_chain(token_t *src)
+glw_view_clone_chain(glw_root_t *gr, token_t *src)
 {
   token_t *r = NULL, *d;
   token_t **pp = &r;
 
   for(; src != NULL; src = src->next) {
-    d = glw_view_token_copy(src);
+    d = glw_view_token_copy(gr, src);
     *pp = d;
     pp = &d->next;
 
-    d->child = glw_view_clone_chain(src->child);
+    d->child = glw_view_clone_chain(gr, src->child);
   }
   return r;
 }
@@ -373,7 +380,7 @@ token2name(token_t *t)
 
     for(i = 0; i < t->t_elements; i++)
       snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%f ", 
-	       t->t_float_vector[i]);
+	       t->t_float_vector_int[i]);
 
     snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "]");
     

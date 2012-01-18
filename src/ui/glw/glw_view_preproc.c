@@ -53,7 +53,7 @@ typedef struct import {
  *
  */
 static void
-macro_destroy(macro_t *m)
+macro_destroy(glw_root_t *gr, macro_t *m)
 {
   macro_arg_t *ma;
 
@@ -61,12 +61,12 @@ macro_destroy(macro_t *m)
     TAILQ_REMOVE(&m->args, ma, link);
     rstr_release(ma->rname);
     if(ma->def)
-      glw_view_token_free(ma->def);
+      glw_view_token_free(gr, ma->def);
     free(ma);
   }
 
   LIST_REMOVE(m, link);
-  glw_view_free_chain(m->body);
+  glw_view_free_chain(gr, m->body);
   rstr_release(m->rname);
   free(m);
 }
@@ -85,7 +85,7 @@ macro_add_arg(macro_t *m, rstr_t *name)
 
 
 
-#define consumetoken() assert(p != t); p->next = t->next; glw_view_token_free(t); t = p->next
+#define consumetoken() assert(p != t); p->next = t->next; glw_view_token_free(gr, t); t = p->next
 
 
 /**
@@ -237,7 +237,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      e = ma->first;
 
 	      if(e == NULL && ma->def != NULL) {
-		b = glw_view_token_copy(ma->def);
+		b = glw_view_token_copy(gr, ma->def);
 		p->next = b;
 		p = b;
 
@@ -251,7 +251,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 					   "Too few arguments to macro %s",
 					   rstr_get(m->rname));
 		  
-		  b = glw_view_token_copy(e);
+		  b = glw_view_token_copy(gr, e);
 		  p->next = b;
 		  p = b;
 		
@@ -261,7 +261,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 		}
 	      }
 	    } else {
-	      b = glw_view_token_copy(a);
+	      b = glw_view_token_copy(gr, a);
 	      p->next = b;
 	      p = b;
 	    }
@@ -271,7 +271,7 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	    b->next = d;
 
 	  p = x;
-	  glw_view_free_chain(c);
+	  glw_view_free_chain(gr, c);
 
 	  continue;
 	}
@@ -471,7 +471,7 @@ glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei)
   r = glw_view_preproc0(gr, p, ei, &ml, &il);
   
   while((m = LIST_FIRST(&ml)) != NULL)
-    macro_destroy(m);
+    macro_destroy(gr, m);
 
   while((i = LIST_FIRST(&il)) != NULL) {
     LIST_REMOVE(i, link);
