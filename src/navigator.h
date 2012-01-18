@@ -20,6 +20,7 @@
 #define NAVIGATOR_H__
 
 #include "prop/prop.h"
+#include "misc/rstr.h"
 
 #define NAV_HOME "page:home"
 
@@ -36,6 +37,6 @@ void nav_open(const char *url, const char *view);
 
 int nav_open_error(prop_t *root, const char *msg);
 
-int nav_open_errorf(prop_t *root, struct rstr *fmt, ...);
+int nav_open_errorf(prop_t *root, rstr_t *fmt, ...);
 
 #endif /* NAVIGATOR_H__ */

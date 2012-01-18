@@ -19,6 +19,8 @@
 #ifndef NOTIFICATIONS_H__
 #define NOTIFICATIONS_H__
 
+#include "misc/rstr.h"
+
 typedef enum {
   NOTIFY_INFO,
   NOTIFY_WARNING,
