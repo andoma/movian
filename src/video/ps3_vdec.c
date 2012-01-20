@@ -823,6 +823,9 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
     break;
 
   case CODEC_ID_H264:
+    if(mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
+      return 1; // can't play this
+
     if(!vdec_h264_loaded) 
       return no_lib(mp, "h264");
 
