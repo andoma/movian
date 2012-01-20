@@ -682,6 +682,10 @@ msg: 视频字幕通用设置
 id: Ignore embedded styling
 msg: 忽略嵌入样式
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: 靠左
 
@@ -717,6 +721,10 @@ msg: 字幕位置
 
 id: Subtitle size
 msg: 字幕大小
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: 字幕样式

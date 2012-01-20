@@ -687,6 +687,10 @@ msg: Allgemeine Einstellungen für Untertitel
 id: Ignore embedded styling
 msg: eingebetteten Stil ignorieren
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Links
 
@@ -722,6 +726,10 @@ msg: Untertitelposition
 
 id: Subtitle size
 msg: Untertitelgröße
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Untertitelstil

@@ -683,6 +683,10 @@ msg: Generične nastavitve za video podnapise
 id: Ignore embedded styling
 msg: Ignoriraj vgrajeno oblikovanje
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Levo
 
@@ -719,6 +723,10 @@ msg: Položaj podnapisov
 
 id: Subtitle size
 msg: Velikost podnapisov
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil podnapisov

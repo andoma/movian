@@ -683,6 +683,10 @@ msg: Generella inställningar för undertexter
 id: Ignore embedded styling
 msg: Ignorera inbäddade stilkoder
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Vänster
 
@@ -719,6 +723,10 @@ msg: Position på undertexter
 
 id: Subtitle size
 msg: Storlek på undertexter
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil på undertexter

@@ -725,6 +725,10 @@ msg: Ajustes genéricos para subtítulos
 id: Ignore embedded styling
 msg: Ignorar estilo integrado
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Izquierda
 
@@ -763,6 +767,10 @@ msg: Posición de subtítulos
 
 id: Subtitle size
 msg: Tamaño de subtítulos
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Estilo de subtítulos

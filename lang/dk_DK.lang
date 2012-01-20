@@ -682,6 +682,10 @@ msg: Generelle indstillinger for undertekster
 id: Ignore embedded styling
 msg: Ignorer indlejret stil
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Venstre
 
@@ -718,6 +722,10 @@ msg: Position på undertekster
 id: Subtitle size
 msg: Størrelse på undertekster
 
+id: Subtitle size and positioning
+# Missing translation
+msg: 
+
 id: Subtitle styling
 msg: Stil på undertekster
 
@@ -732,3 +740,4 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
+

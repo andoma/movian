@@ -683,6 +683,10 @@ msg: Ustawienia domyślne dla napisów
 id: Ignore embedded styling
 msg: Ignoruj wbudowany styl
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Lewy
 
@@ -719,6 +723,10 @@ msg: Położenie napisów
 
 id: Subtitle size
 msg: Rozmiar napisów
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Styl napisów

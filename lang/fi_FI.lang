@@ -727,6 +727,10 @@ msg: Yleiset tekstitysasetukset
 id: Ignore embedded styling
 msg: Ohita asetetut tyylit
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Vasen
 
@@ -765,6 +769,10 @@ msg: Tekstityksen kohta ruudulla
 
 id: Subtitle size
 msg: Tekstityksen koko
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Tekstityksen tyylit

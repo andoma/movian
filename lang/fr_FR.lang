@@ -682,6 +682,10 @@ msg: Paramètres génériques pour les sous-titres
 id: Ignore embedded styling
 msg: Ignorer les styles embarqués
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Gauche
 
@@ -717,6 +721,10 @@ msg: Position des sous-titres
 
 id: Subtitle size
 msg: Taille des sous-titres
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Style des sous-titres

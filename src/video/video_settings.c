@@ -53,9 +53,23 @@ parse_bgr(const char *str)
 
 
 static void
+set_subtitle_include_all_subs(void *opaque, int v)
+{
+  subtitle_settings.include_all_subs = v;
+}
+
+
+static void
 set_subtitle_always_select(void *opaque, int v)
 {
   subtitle_settings.always_select = v;
+}
+
+
+static void
+set_subtitle_style_override(void *opaque, int v)
+{
+  subtitle_settings.outline_size = v;
 }
 
 static void
@@ -74,12 +88,6 @@ static void
 set_subtitle_align_on_video(void *opaque, int v)
 {
   subtitle_settings.align_on_video = v;
-}
-
-static void
-set_subtitle_style_override(void *opaque, int v)
-{
-  subtitle_settings.style_override = v;
 }
 
 static void
@@ -227,13 +235,22 @@ video_settings_init(void)
   if((store = htsmsg_store_load("subtitles")) == NULL)
     store = htsmsg_create_map();
 
+  settings_create_bool(s, "allsubsindir",
+		       _p("Include all subtitle files from movie directory"), 0, 
+		       store, set_subtitle_include_all_subs, NULL,
+		       SETTINGS_INITIAL_UPDATE,  NULL,
+		       settings_generic_save_settings, 
+		       (void *)"subtitles");
+
   settings_create_bool(s, "alwaysselect",
 		       _p("Always try to select a subtitle"), 1, 
 		       store, set_subtitle_always_select, NULL,
 		       SETTINGS_INITIAL_UPDATE,  NULL,
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
-  
+
+  settings_create_divider(s, _p("Subtitle size and positioning"));
+
   settings_create_int(s, "scale", _p("Subtitle size"),
 		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
 		      SETTINGS_INITIAL_UPDATE, "%", NULL,

@@ -716,6 +716,10 @@ msg: Algemene instellingen voor video-ondertitels
 id: Ignore embedded styling
 msg: Geïntegreerde stijl nergeren
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Links
 
@@ -754,6 +758,10 @@ msg: Ondertitelingspositie
 
 id: Subtitle size
 msg: Ondertitelingsgrootte
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Ondertitelingsstijl

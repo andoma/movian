@@ -685,6 +685,10 @@ msg: Общие настройки для видео субтитров
 id: Ignore embedded styling
 msg: Игнорировать встроенный стиль
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Слева
 
@@ -720,6 +724,10 @@ msg: Позиция субтитров
 
 id: Subtitle size
 msg: Размер субтитров
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Стиль субтитров

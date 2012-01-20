@@ -719,6 +719,10 @@ msg: Általános beállítások feliratokhoz
 id: Ignore embedded styling
 msg: Beágyazott stílus figyelmen kívül hagyása
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Ball
 
@@ -757,6 +761,10 @@ msg: Felirat helyzete
 
 id: Subtitle size
 msg: Felirat mérete
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Felirat stilusa

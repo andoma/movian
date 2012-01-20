@@ -706,6 +706,10 @@ msg: Üldised subtiitrite seaded
 id: Ignore embedded styling
 msg: Ignoreeri sisemist kujundust
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Vasakul
 
@@ -742,6 +746,10 @@ msg: Subtiitrite asukoht
 
 id: Subtitle size
 msg: Subtiitrite suurus
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Subtiitrite kujundus

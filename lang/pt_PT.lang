@@ -684,6 +684,10 @@ msg: Definições genéricas para legendas de vídeo
 id: Ignore embedded styling
 msg: Ignorar estilos embutidos
 
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
+
 id: Left
 msg: Esquerda
 
@@ -720,6 +724,10 @@ msg: Posicionamento das legendas
 
 id: Subtitle size
 msg: Tamanho das legendas
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Estilo das legendas
