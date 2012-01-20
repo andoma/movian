@@ -31,7 +31,6 @@ show_help(){
   echo "  --cc=CC                  Build using the given compiler"
   echo "  --release                Stage for release"
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
-  echo "  --enable-spotify=keyfile Compile support for Spotify (R) Core"
   echo "  --spotify-framework=PATH Path to libspotify.framework"
   exit 1
 }
@@ -72,8 +71,6 @@ for opt do
   ;;
   --macosx-sdk=*) MACOSXSDK="$optval"
   ;;
-  --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
-  ;;
   --spotify-framework=*) SPOTIFY_FRAMEWORK="$optval"
   ;;
   *)
@@ -81,12 +78,7 @@ for opt do
   esac
 done
 
-if [ "$SPOTIFY_KEYFILE" != "" ] ; then
-  if [ ! -f "$SPOTIFY_KEYFILE" ]  ; then
-    echo "$SPOTIFY_KEYFILE does not exist"  
-    die
-  fi
-  
+if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
   if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
     echo "You must specify where the libspotify.framework directory can be found."
     echo "Use the --spotify-framework argument"
@@ -97,6 +89,7 @@ if [ "$SPOTIFY_KEYFILE" != "" ] ; then
     echo "$SPOTIFY_FRAMEWORK does not exist"
     die
   fi
+  enable spotify
 fi
 
 setup_env "$@"

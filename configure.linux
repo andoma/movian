@@ -30,7 +30,6 @@ show_help(){
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using compiler CC [cc]"
-  echo "  --enable-spotify=KEYFILE Compile support for Spotify (R) Core"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
   echo "                            none     Disable GLW"
@@ -83,6 +82,7 @@ enable lirc
 enable stdin
 enable gu
 enable avahi
+enable spotify
 enable libspotify_load_runtime
 enable cdda
 enable cddb
@@ -115,8 +115,6 @@ for opt do
   --enable-all)
 	  enable libgme
 	  enable libsidplay2
-  ;;
-  --enable-spotify=*) SPOTIFY_KEYFILE="$optval"
   ;;
   --glw-frontend=*) GLWFRONTEND="$optval"
   ;;
