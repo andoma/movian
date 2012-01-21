@@ -18,18 +18,12 @@ CONFIGURE_POSTFIX="osx"
 
 source support/configure.inc
 
-CPU=generic
-ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
 
 show_help(){
   common_help
-  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
-  echo "  --arch=arch              Build for this architecture [$ARCH]"
-  echo "  --cpu=cpu                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using the given compiler"
-  echo "  --release                Stage for release"
+  compiler_help
   echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
   echo "  --spotify-framework=PATH Path to libspotify.framework"
   exit 1
@@ -52,31 +46,20 @@ enable polarssl
 enable librtmp
 enable font_liberation
 
-for opt do
-  optval="${opt#*=}"
-  case "$opt" in
-  --prefix=*) PREFIX="$optval"
-  ;;
-  --cpu=*) CPU="$optval"
-  ;;
+osx_opt() {
+  case "$1" in
   --help) show_help
   ;;
-  --release) 
-    enable release
-    enable embedded_resources
+  --macosx-sdk) MACOSXSDK="$2"
   ;;
-  --cc=*) CC="$optval"
+  --spotify-framework) SPOTIFY_FRAMEWORK="$2"
   ;;
-  --arch=*) ARCH="$optval"
-  ;;
-  --macosx-sdk=*) MACOSXSDK="$optval"
-  ;;
-  --spotify-framework=*) SPOTIFY_FRAMEWORK="$optval"
-  ;;
-  *)
-  common_opt $opt $optval
+  *) return 1
   esac
-done
+  return 0
+}
+
+parse_args "osx_opt compiler_opt common_opt" "$@"
 
 if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
   if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
@@ -99,6 +82,9 @@ enable zlib
 enable posix_networking
 enable dvd
 
+if enabled release ; then
+  enabled embedded_resources
+fi
 
 #
 # Application bundle

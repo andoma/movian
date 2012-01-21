@@ -19,17 +19,12 @@ CONFIGURE_POSTFIX="linux"
 
 source support/configure.inc
 
-CPU=generic
-ARCH=`uname -m`
 PREFIX=/usr
 
 show_help(){
   common_help
-
+  compiler_help
   echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
-  echo "  --arch=ARCH              Build for this architecture [$ARCH]"
-  echo "  --cpu=CPU                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using compiler CC [cc]"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
   echo "                            none     Disable GLW"
@@ -101,30 +96,26 @@ enable realpath
 enable font_liberation
 #enable libxrandr  -- code does not really work yet
 
-for opt do
-  optval="${opt#*=}"
-  case "$opt" in
-  --prefix=*) PREFIX="$optval"
-  ;;
-  --cpu=*) CPU="$optval"
-  ;;
-  --help) show_help
-  ;;
-  --cc=*) CC="$optval"
-  ;;
-  --enable-all)
-	  enable libgme
-	  enable libsidplay2
-  ;;
-  --glw-frontend=*) GLWFRONTEND="$optval"
-  ;;
-  --pkg-config-path=*) export PKG_CONFIG_PATH="$optval"
-  ;;
-  *)
-  common_opt $opt $optval
-  esac
-done
+linux_opt() {
+    case "$1" in
+    --help) show_help
+    ;;
+    --prefix) PREFIX="$2"
+    ;;
+    --enable-all)
+	enable libgme
+	enable libsidplay2
+    ;;
+    --glw-frontend) GLWFRONTEND="$2"
+    ;;
+    --pkg-config-path) export PKG_CONFIG_PATH="$2"
+    ;;
+    *) return 1
+    esac
+    return 0
+}
 
+parse_args "linux_opt compiler_opt common_opt" "$@"
 
 setup_env "$@"
 
@@ -138,6 +129,7 @@ if enabled release; then
     enable embedded_resources
 fi
 
+compiler_setup
 
 #
 # pkgconfig
@@ -148,62 +140,6 @@ if [ $? -ne 0 ]; then
     echo "pkg-config not found. Can not configure."
     die
 fi
-
-#
-# c compiler
-#
-
-checkcc() {
-    cat >$TMPDIR/1.c <<EOF
-int main() {
- return 0;
-}
-EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
-}
-    
-
-
-checkcxx() {
-    cat >$TMPDIR/1.cpp <<EOF
-int main() {
- return 0;
-}
-EOF
-    $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin 
-}
-    
-
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-else
-    CC=cc
-fi
-
-if checkcc; then 
-    echo "Using C compiler:      $CC"
-else
-    echo "C compiler ($CC) is not working"
-    die
-fi
-
-
-
-if [ "x$CXX" != "x" ]; then
-    echo >${CONFIG_MAK} "CXX=$CXX"
-else
-    CXX=c++
-fi
-
-if checkcxx; then 
-    echo "Using C++ compiler:    $CXX"
-else
-    echo "C++ compiler ($CXX) is not working"
-    die
-fi
-
-
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
 
 libav_setup
 
