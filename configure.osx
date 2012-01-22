@@ -24,6 +24,7 @@ MACOSXSDK=""
 show_help(){
     common_help
     compiler_help
+    echo "  --arch=ARCH              Compile for ARCH"
     echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
     echo "  --spotify-framework=PATH Path to libspotify.framework"
     exit 1
@@ -49,6 +50,8 @@ enable font_liberation
 osx_opt() {
     case "$1" in
     --help) show_help
+    ;;
+    --arch) ARCH="$2"
     ;;
     --macosx-sdk) MACOSXSDK="$2"
     ;;
@@ -88,7 +91,10 @@ fi
 
 
 compiler_setup
-
+if [ "x$ARCH" != "x" ]; then
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -arch $ARCH"
+    echo "Compiling for arch:    $ARCH"
+fi
 
 #
 # Application bundle
@@ -146,6 +152,11 @@ fi
 # Carbon, Remote Control Wrapper uses it
 if enabled appleremote; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
+fi
+
+LIBAV_ARCH_FLAGS="--cc=$CC"
+if [ "x$ARCH" != "x" ]; then
+    LIBAV_ARCH_FLAGS="$LIBAV_ARCH_FLAGS --arch=$ARCH"
 fi
 
 libav_setup
