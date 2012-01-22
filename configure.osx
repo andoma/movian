@@ -79,14 +79,9 @@ for opt do
 done
 
 if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
-  if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
-    echo "You must specify where the libspotify.framework directory can be found."
-    echo "Use the --spotify-framework argument"
-    die
-  fi
-
   if [ ! -d "$SPOTIFY_FRAMEWORK" ] ; then
-    echo "$SPOTIFY_FRAMEWORK does not exist"
+    echo "Could not find Spotify framework at $SPOTIFY_FRAMEWORK"
+    echo "Ex: --spotify-framework=/path/to/libspotify/libspotify.framework"
     die
   fi
   enable spotify

@@ -779,7 +779,7 @@ static int
 nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
 {
   char data[4];
-  int len;
+  int len = 0;
   char *buf;
 
   do {
