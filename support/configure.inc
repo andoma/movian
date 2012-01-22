@@ -250,18 +250,6 @@ parse_opts() {
 }
 
 compiler_setup() {
-    if [ "x$CC" != "x" ]; then
-	echo >>${CONFIG_MAK} "CC=$CC"
-    else
-	CC=cc
-    fi
-    if checkcc; then
-	echo "Using C compiler:      $CC"
-    else
-	echo "C compiler ($CC) is not working"
-      die
-    fi
-
     if [ "x$CXX" != "x" ]; then
 	echo >>${CONFIG_MAK} "CXX=$CXX"
     elif [ "x$CC" != "x" ]; then
@@ -271,6 +259,20 @@ compiler_setup() {
     else
 	CXX=c++
     fi
+
+    if [ "x$CC" != "x" ]; then
+	echo >>${CONFIG_MAK} "CC=$CC"
+    else
+	CC=cc
+    fi
+
+    if checkcc; then
+	echo "Using C compiler:      $CC"
+    else
+	echo "C compiler ($CC) is not working"
+      die
+    fi
+
     if checkcxx; then
 	echo "Using C++ compiler:    $CXX"
     else
