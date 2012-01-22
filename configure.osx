@@ -154,6 +154,9 @@ if enabled appleremote; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 fi
 
+
+LIBAV_CFLAGS="$MACOSXSDK_CFLAGS"
+LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS"
 LIBAV_ARCH_FLAGS="--cc=$CC"
 if [ "x$ARCH" != "x" ]; then
     LIBAV_ARCH_FLAGS="$LIBAV_ARCH_FLAGS --arch=$ARCH"
