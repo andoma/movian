@@ -264,6 +264,10 @@ compiler_setup() {
 
   if [ "x$CXX" != "x" ]; then
     echo >>${CONFIG_MAK} "CXX=$CXX"
+  elif [ "x$CC" != "x" ]; then
+    # fallback to CC
+    echo >>${CONFIG_MAK} "CXX=$CC"
+    CXX="$CC"
   else
     CXX=c++
   fi
