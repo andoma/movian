@@ -86,6 +86,10 @@ if enabled release ; then
     enabled embedded_resources
 fi
 
+
+compiler_setup
+
+
 #
 # Application bundle
 # Override PROG to put binary inside app bundle
@@ -94,34 +98,6 @@ APPDIR=${BUILDDIR}/Showtime.app
 echo >>${CONFIG_MAK} "APPDIR=${APPDIR}"
 PROG="${APPDIR}/Contents/MacOS/showtime"
 
-
-#
-# c compiler
-#
-checkcc() {
-    cat >$TMPDIR/1.c <<EOF
-int main() {
-  return 0;
-}
-EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
-}
-
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-    CC="$CC"
-else
-    CC=cc
-fi
-
-if checkcc; then
-    echo "Using C compiler:      $CC"
-else
-    echo "C compiler ($CC) is not working"
-    die
-fi
-
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 
 #
 # Check SDK path and set target version
