@@ -458,8 +458,7 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
 	} else {
 
 	  switch(ctx->sample_fmt) {
-	  case SAMPLE_FMT_NONE:
-	  case SAMPLE_FMT_NB:
+	  default:
 	    return;
 
 	  case SAMPLE_FMT_U8:
