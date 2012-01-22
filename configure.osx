@@ -22,11 +22,11 @@ MACOSXTARGET=""
 MACOSXSDK=""
 
 show_help(){
-  common_help
-  compiler_help
-  echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
-  echo "  --spotify-framework=PATH Path to libspotify.framework"
-  exit 1
+    common_help
+    compiler_help
+    echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
+    echo "  --spotify-framework=PATH Path to libspotify.framework"
+    exit 1
 }
 
 enable libfreetype
@@ -47,32 +47,32 @@ enable librtmp
 enable font_liberation
 
 osx_opt() {
-  case "$1" in
-  --help) show_help
-  ;;
-  --macosx-sdk) MACOSXSDK="$2"
-  ;;
-  --spotify-framework) SPOTIFY_FRAMEWORK="$2"
-  ;;
-  *) return 1
-  esac
-  return 0
+    case "$1" in
+    --help) show_help
+    ;;
+    --macosx-sdk) MACOSXSDK="$2"
+    ;;
+    --spotify-framework) SPOTIFY_FRAMEWORK="$2"
+    ;;
+    *) return 1
+    esac
+    return 0
 }
 
 parse_opts "osx_opt compiler_opt common_opt" "$@"
 
 if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
-  if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
-    echo "You must specify where the libspotify.framework directory can be found."
-    echo "Use the --spotify-framework argument"
-    die
-  fi
+    if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then
+	echo "You must specify where the libspotify.framework directory can be found."
+	echo "Use the --spotify-framework argument"
+	die
+    fi
 
-  if [ ! -d "$SPOTIFY_FRAMEWORK" ] ; then
-    echo "$SPOTIFY_FRAMEWORK does not exist"
-    die
-  fi
-  enable spotify
+    if [ ! -d "$SPOTIFY_FRAMEWORK" ] ; then
+	echo "$SPOTIFY_FRAMEWORK does not exist"
+	die
+    fi
+    enable spotify
 fi
 
 setup_env "$@"
@@ -83,7 +83,7 @@ enable posix_networking
 enable dvd
 
 if enabled release ; then
-  enabled embedded_resources
+    enabled embedded_resources
 fi
 
 #
@@ -114,14 +114,14 @@ else
     CC=cc
 fi
 
-if checkcc; then 
+if checkcc; then
     echo "Using C compiler:      $CC"
 else
     echo "C compiler ($CC) is not working"
     die
 fi
 
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
+echo >>${CONFIG_MAK} $CC_CONFIG_MAK
 
 #
 # Check SDK path and set target version
@@ -133,7 +133,7 @@ if [ "x$MACOSXSDK" != "x" ] ; then
             echo "Could not find $SDKSETTINGS.plist"
             die
         fi
-        
+
         MACOSXTARGET=`defaults read $SDKSETTINGS Version`
         echo "Mac OS X SDK:          $MACOSXSDK"
         echo "Mac OS X target:       $MACOSXTARGET"
@@ -141,7 +141,7 @@ if [ "x$MACOSXSDK" != "x" ] ; then
         echo "Mac OS X SDK directory $MACOSXSDK does not exist"
         die
     fi
-    
+
     MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET -isysroot $MACOSXSDK"
     MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_LDFLAGS"
@@ -150,6 +150,7 @@ else
     echo "Mac OS X SDK:          default"
     echo "Mac OS X target:       default (`sw_vers -productVersion`)"
 fi
+
 
 #
 # Standard Mac OS X frameworks
@@ -176,7 +177,7 @@ libav_setup
 
 #
 # Freetype
-# 
+#
 echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/X11/include -I/usr/X11/include/freetype2"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/X11/lib -lfreetype"
 
@@ -190,6 +191,7 @@ if disabled release; then
     echo  the current build tree. If you plan to install the binary,
     echo  please reconfigure with '--release'.
 fi
+
 
 #
 # Some compatibility defines
@@ -212,6 +214,7 @@ if [ "$SPOTIFY_FRAMEWORK" != "" ] ; then
     echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
 fi
+
 
 #
 # Finalize

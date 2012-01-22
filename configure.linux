@@ -22,14 +22,14 @@ source support/configure.inc
 PREFIX=/usr
 
 show_help(){
-  common_help
-  compiler_help
-  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
-  echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
-  echo "                            x11      X11 Windows"
-  echo "                            none     Disable GLW"
-  echo "  --pkg-config-path=PATH   Extra paths for pkg-config"
-  exit 1
+    common_help
+    compiler_help
+    echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
+    echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
+    echo "                            x11      X11 Windows"
+    echo "                            none     Disable GLW"
+    echo "  --pkg-config-path=PATH   Extra paths for pkg-config"
+    exit 1
 }
 
 
@@ -129,7 +129,9 @@ if enabled release; then
     enable embedded_resources
 fi
 
+
 compiler_setup
+
 
 #
 # pkgconfig
@@ -141,7 +143,9 @@ if [ $? -ne 0 ]; then
     die
 fi
 
+
 libav_setup
+
 
 #
 # libfreetype2
@@ -173,7 +177,6 @@ if enabled libfontconfig; then
 	die
     fi
 fi
-
 
 
 #
@@ -213,7 +216,6 @@ case "$GLWFRONTEND" in
 esac
 
 echo "Using GLW Frontend:    $GLWFRONTEND"
-
 
 
 #
@@ -397,6 +399,7 @@ if enabled cdda; then
     fi
 fi
 
+
 #
 # libcddb
 #
@@ -409,6 +412,7 @@ if enabled cddb; then
 	die
     fi
 fi
+
 
 #
 # AVAHI
@@ -425,6 +429,7 @@ if enabled avahi; then
     fi
 fi
 
+
 #
 # polaressl
 #
@@ -432,6 +437,7 @@ if enabled polarssl; then
     enable librtmp
     disable openssl
 fi
+
 
 #
 # OpenSSL
@@ -473,7 +479,6 @@ fi
 # NVCtrl
 #
 if enabled nvctrl; then
-    
     check_header "NVCtrl/NVCtrl.h" || fatal "nvctrl" "Missing include file NVCtrl/NVCtrl.h"
     check_lib    "XNVCtrl"         || fatal "nvctrl" "Unable to link with libXNVCtrl"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lXNVCtrl"
@@ -484,7 +489,6 @@ fi
 # libopenspc
 #
 if enabled libopenspc; then
-    
     check_header "openspc.h" || fatal "openspc" "Missing include file openspc.h"
     check_lib    "openspc"   || fatal "openspc" "Unable to link with libopenspc"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lopenspc"
@@ -495,7 +499,6 @@ fi
 # libgme
 #
 if enabled libgme; then
-    
     check_header "gme/gme.h" || fatal "libgme" "Missing include file gme/gme.h"
     check_lib    "gme"       || fatal "libgme" "Unable to link with libgme"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lgme"
@@ -515,18 +518,16 @@ if enabled libsidplay2; then
 fi
 
 
-
-
-
 #
 # Configure paths, etc
 #
 if disabled release; then
-    echo  Development build. 
+    echo  Development build.
     echo  The generated binary will contain compiled-in paths to
     echo  the current build tree. If you plan to install the binary,
     echo  please reconfigure with '--release'.
 fi
+
 
 #
 # Finalize

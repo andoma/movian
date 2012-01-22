@@ -161,18 +161,18 @@ cp_if_changed(){
 }
 
 common_help(){
-  echo "Usage: configure [options]"
-  echo "Options: [defaults in brackets after descriptions]"
-  echo
-  echo "Standard options:"
-  echo "  --help                   Print this message"
-  echo "  --with-libav=PREFIX      Path to where libav is installed."
-  echo "                           By default Showtime will build libav itself."
-  echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
-  echo "  --jobs=N                 Allow N jobs at once"
-  echo "  --release                Stage for release"
-  echo ""
-  echo "Platform specific options:"
+    echo "Usage: configure [options]"
+    echo "Options: [defaults in brackets after descriptions]"
+    echo
+    echo "Standard options:"
+    echo "  --help                   Print this message"
+    echo "  --with-libav=PREFIX      Path to where libav is installed."
+    echo "                           By default Showtime will build libav itself."
+    echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
+    echo "  --jobs=N                 Allow N jobs at once"
+    echo "  --release                Stage for release"
+    echo ""
+    echo "Platform specific options:"
 }
 
 common_opt(){
@@ -216,18 +216,18 @@ compiler_help() {
 
 checkcc() {
     cat >$TMPDIR/1.c <<EOF
-    int main() {
-      return 0;
-    }
+int main() {
+  return 0;
+}
 EOF
     $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin
 }
 
 checkcxx() {
     cat >$TMPDIR/1.cpp <<EOF
-    int main() {
-      return 0;
-    }
+int main() {
+  return 0;
+}
 EOF
     $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin
 }
@@ -250,33 +250,33 @@ parse_opts() {
 }
 
 compiler_setup() {
-  if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-  else
-    CC=cc
-  fi
-  if checkcc; then
-    echo "Using C compiler:      $CC"
-  else
-    echo "C compiler ($CC) is not working"
-    die
-  fi
+    if [ "x$CC" != "x" ]; then
+	echo >>${CONFIG_MAK} "CC=$CC"
+    else
+	CC=cc
+    fi
+    if checkcc; then
+	echo "Using C compiler:      $CC"
+    else
+	echo "C compiler ($CC) is not working"
+      die
+    fi
 
-  if [ "x$CXX" != "x" ]; then
-    echo >>${CONFIG_MAK} "CXX=$CXX"
-  elif [ "x$CC" != "x" ]; then
-    # fallback to CC
-    echo >>${CONFIG_MAK} "CXX=$CC"
-    CXX="$CC"
-  else
-    CXX=c++
-  fi
-  if checkcxx; then
-    echo "Using C++ compiler:    $CXX"
-  else
-    echo "C++ compiler ($CXX) is not working"
-    die
-  fi
+    if [ "x$CXX" != "x" ]; then
+	echo >>${CONFIG_MAK} "CXX=$CXX"
+    elif [ "x$CC" != "x" ]; then
+	# fallback to CC
+	echo >>${CONFIG_MAK} "CXX=$CC"
+	CXX="$CC"
+    else
+	CXX=c++
+    fi
+    if checkcxx; then
+	echo "Using C++ compiler:    $CXX"
+    else
+	echo "C++ compiler ($CXX) is not working"
+	die
+    fi
 }
 
 setup_env(){
