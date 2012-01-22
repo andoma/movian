@@ -59,7 +59,7 @@ osx_opt() {
   return 0
 }
 
-parse_args "osx_opt compiler_opt common_opt" "$@"
+parse_opts "osx_opt compiler_opt common_opt" "$@"
 
 if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
   if [ "$SPOTIFY_FRAMEWORK" = "" ] ; then

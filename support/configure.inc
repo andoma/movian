@@ -232,10 +232,10 @@ EOF
     $CXX 2>/dev/null $TMPDIR/1.cpp -o $TMPDIR/1.bin
 }
 
-# parse_args "first_optfunc second_optfunc" "$@"
-# calls optfunc in order with opt name and opt value as args
+# parse_opts "first_optfunc second_optfunc" "$@"
+# calls optfunc in order with opt name and value as args
 # should return zero for handled and non-zero for unhandled
-parse_args() {
+parse_opts() {
     local optfuncs="$1"
     shift
     for opt do
