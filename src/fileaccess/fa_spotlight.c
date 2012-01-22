@@ -194,6 +194,7 @@ spotlight_searcher(void *aux)
     metadata_t *md = fa_probe_metadata(path, NULL, 0);
     
     t = 0;
+    ctype = md->md_contenttype;
     switch(md->md_contenttype) {
     case CONTENT_AUDIO:
       break;
