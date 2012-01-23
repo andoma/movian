@@ -683,8 +683,7 @@ id: Ignore embedded styling
 msg: Ignorer les styles embarqués
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: Inclure tous les fichiers de sous-titre du répertoire du film
 
 id: Left
 msg: Gauche
@@ -723,8 +722,7 @@ id: Subtitle size
 msg: Taille des sous-titres
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Taille et position des sous-titres
 
 id: Subtitle styling
 msg: Style des sous-titres
