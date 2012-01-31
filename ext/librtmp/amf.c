@@ -1111,7 +1111,7 @@ AMF_AddProp(AMFObject *obj, const AMFObjectProperty *prop)
   if (!(obj->o_num & 0x0f))
     obj->o_props =
       realloc(obj->o_props, (obj->o_num + 16) * sizeof(AMFObjectProperty));
-  obj->o_props[obj->o_num++] = *prop;
+  memcpy(&obj->o_props[obj->o_num++],prop,sizeof(AMFObjectProperty));
 }
 
 int
