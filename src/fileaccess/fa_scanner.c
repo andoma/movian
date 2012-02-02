@@ -452,7 +452,8 @@ rescan(scanner_t *s)
     if(b != NULL) {
       // Exists in old and new set
 
-      if(a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
+      if(!fa_dir_entry_stat(b) && 
+	 a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
 	// Modification time has changed,  trig deep probe
 	a->fde_type = b->fde_type;
 	a->fde_probestatus = FDE_PROBE_NONE;
