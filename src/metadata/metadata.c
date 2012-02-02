@@ -183,6 +183,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 		     int overwrite_title)
 {
   metadata_stream_t *ms;
+  int ac = 0, vc = 0, sc = 0, *pc;
 
   if(md->md_title != NULL)
     prop_set_rstring_ex(prop_create(proproot, "title"),
@@ -210,15 +211,22 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
     switch(ms->ms_type) {
     case AVMEDIA_TYPE_AUDIO:
       p = prop_create(proproot, "audiostreams");
+      pc = &ac;
       break;
     case AVMEDIA_TYPE_VIDEO:
       p = prop_create(proproot, "videostreams");
+      pc = &vc;
       break;
     case AVMEDIA_TYPE_SUBTITLE:
       p = prop_create(proproot, "subtitlestreams");
+      pc = &sc;
       break;
     default:
       continue;
+    }
+    if(*pc == 0) {
+      prop_destroy_childs(p);
+      *pc = 1;
     }
     metadata_stream_make_prop(ms, p);
   }
