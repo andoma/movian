@@ -478,6 +478,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_settings.c            \
                         src/js/js_prop.c                \
                         src/js/js_json.c                \
+                        src/js/js_event.c               \
 
 
 #
