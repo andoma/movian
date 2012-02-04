@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Tilføjet af: %s
 
 id: Played %d times
-msg: Afspillet %d gange
+msg[0]: Afspillet %d gange
+msg[1]: Afspillet %d gang
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d indtastninger
+msg[0]: %d indhold
+msg[1]: %d indhold
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d spor
+msg[0]: %d spor
+msg[1]: %d spor
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,9 @@ msg: Fancy UI animationer
 
 id: Master volume: %d dB
 msg: Master volume: %d dB
+
+id: Multilingual 'No media loaded'
+msg: Flersprogede 'Intet medie hentet"
 
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
@@ -661,9 +667,6 @@ msg: Centreret
 id: Color
 msg: Farve
 
-id: Controls if video playback should restart where last played
-msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
-
 id: Count video as played when reaching
 msg: Marker video som vist når den når
 
@@ -678,6 +681,10 @@ msg: Generelle indstillinger for undertekster
 
 id: Ignore embedded styling
 msg: Ignorer indlejret stil
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Venstre
@@ -703,6 +710,9 @@ msg: Farve på skygge
 id: Shadow offset
 msg: Skyggens forskydning
 
+id: Stretch video to fullscreen
+msg: Stræk video til fuld skærm
+
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
 
@@ -711,6 +721,10 @@ msg: Position på undertekster
 
 id: Subtitle size
 msg: Størrelse på undertekster
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil på undertekster
@@ -726,3 +740,4 @@ msg: Videoafspilning
 
 id: Yes
 msg: Ja
+

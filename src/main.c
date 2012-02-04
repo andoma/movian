@@ -151,7 +151,7 @@ init_global_info(void)
 
   prop_set_string(prop_create(s, "version"), htsversion);
   prop_set_string(prop_create(s, "fullversion"), htsversion_full);
-  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2011 Andreas Öman");
+  prop_set_string(prop_create(s, "copyright"), "© 2006 - 2012 Andreas Öman");
 
 }
 

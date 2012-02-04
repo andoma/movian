@@ -263,6 +263,9 @@ glw_init(glw_root_t *gr, const char *theme,
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
+  gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
+  gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
+				  POOL_ZERO_MEM);
 
   gr->gr_vpaths[0] = "theme";
   gr->gr_vpaths[1] = theme;
@@ -280,6 +283,17 @@ glw_init(glw_root_t *gr, const char *theme,
   uii_register(&gr->gr_uii, primary);
 
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_fini(glw_root_t *gr)
+{
+  pool_destroy(gr->gr_token_pool);
+  pool_destroy(gr->gr_clone_pool);
 }
 
 
@@ -605,11 +619,11 @@ glw_destroy(glw_t *w)
   if(gr->gr_pointer_press == w)
     gr->gr_pointer_press = NULL;
 
-  glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
+  glw_prop_subscription_destroy_list(gr, &w->glw_prop_subscriptions);
 
   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
     LIST_REMOVE(gem, gem_link);
-    gem->gem_dtor(gem);
+    gem->gem_dtor(gr, gem);
   }
 
   free(w->glw_matrix);
@@ -638,7 +652,7 @@ glw_destroy(glw_t *w)
 
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
-  glw_view_free_chain(w->glw_dynamic_expressions);
+  glw_view_free_chain(gr, w->glw_dynamic_expressions);
 }
 
 

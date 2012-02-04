@@ -147,25 +147,25 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
   }
 
   if(gcv == NULL) {
-    token_t *sof = calloc(1, sizeof(token_t));
+    token_t *sof = glw_view_token_alloc(gr);
     sof->type = TOKEN_START;
 #ifdef GLW_VIEW_ERRORINFO
     sof->file = rstr_dup(url);
 #endif
 
     if((l = glw_view_load1(gr, url, &ei, sof)) == NULL) {
-      glw_view_free_chain(sof);
+      glw_view_free_chain(gr, sof);
       return glw_view_error(gr, &ei, parent);
     }
-    eof = calloc(1, sizeof(token_t));
+    eof = glw_view_token_alloc(gr);
     eof->type = TOKEN_END;
 #ifdef GLW_VIEW_ERRORINFO
     eof->file = rstr_dup(url);
 #endif
     l->next = eof;
   
-    if(glw_view_preproc(gr, sof, &ei) || glw_view_parse(sof, &ei)) {
-      glw_view_free_chain(sof);
+    if(glw_view_preproc(gr, sof, &ei) || glw_view_parse(sof, &ei, gr)) {
+      glw_view_free_chain(gr, sof);
       return glw_view_error(gr, &ei, parent);
     }
 
@@ -174,12 +174,12 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
       gcv->gcv_sof = sof;
       gcv->gcv_url = rstr_dup(url);
       LIST_INSERT_HEAD(&gr->gr_views, gcv, gcv_link);
-      t = glw_view_clone_chain(gcv->gcv_sof);
+      t = glw_view_clone_chain(gr, gcv->gcv_sof);
     } else {
       t = sof;
     }
   } else {
-    t = glw_view_clone_chain(gcv->gcv_sof);
+    t = glw_view_clone_chain(gr, gcv->gcv_sof);
   }
 
 
@@ -202,10 +202,10 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
 
   if(glw_view_eval_block(t, &ec)) {
     glw_destroy(ec.w);
-    glw_view_free_chain(t);
+    glw_view_free_chain(gr, t);
     return glw_view_error(gr, &ei, parent);
   }
-  glw_view_free_chain(t);
+  glw_view_free_chain(gr, t);
   return r;
 }
 
@@ -219,7 +219,7 @@ glw_view_cache_flush(glw_root_t *gr)
   glw_cached_view_t *gcv;
 
   while((gcv = LIST_FIRST(&gr->gr_views)) != NULL) {
-    glw_view_free_chain(gcv->gcv_sof);
+    glw_view_free_chain(gr, gcv->gcv_sof);
     rstr_release(gcv->gcv_url);
     LIST_REMOVE(gcv, gcv_link);
     free(gcv);

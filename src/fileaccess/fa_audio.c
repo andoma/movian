@@ -25,6 +25,7 @@
 
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
+#include <libavutil/mathematics.h>
 
 #include "showtime.h"
 #include "fa_audio.h"

@@ -23,7 +23,8 @@
 #include <stdio.h>
 static void glw_view_nls_string(token_t *t, const char *str);
 
-static int parse_block(token_t *first, errorinfo_t *ei, token_type_t term);
+static int parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
+		       glw_root_t *gr);
 
 
 typedef struct tokenqueue {
@@ -119,7 +120,7 @@ static const int tokenprecedence[TOKEN_num] = {
  */
 
 static int
-parse_shunting_yard(token_t *expr, errorinfo_t *ei)
+parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 {
   tokenqueue_t outq = {NULL, NULL};
   token_t *stack = NULL;
@@ -197,7 +198,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
 	glw_view_seterr(ei, t, "Unbalanced parentheses");
 	goto err;
       }
-      glw_view_token_free(tokenstack_pop(&stack));
+      glw_view_token_free(gr, tokenstack_pop(&stack));
 
       if(stack && stack->type == TOKEN_FUNCTION) {
 	assert(stack == curfunc);
@@ -240,7 +241,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
     }
     x = t;
     t = t->next;
-    glw_view_token_free(x);
+    glw_view_token_free(gr, x);
   }
 
   while(stack) {
@@ -259,10 +260,10 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
  err:
 
   while(stack != NULL)
-    glw_view_token_free(tokenstack_pop(&stack));
+    glw_view_token_free(gr, tokenstack_pop(&stack));
 
   while(outq.head != NULL)
-    glw_view_token_free(tokenstack_pop(&outq.head));
+    glw_view_token_free(gr, tokenstack_pop(&outq.head));
 
   return -1;
 }
@@ -271,7 +272,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei)
  *
  */
 static int
-parse_prep_expression(token_t *expr, errorinfo_t *ei)
+parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 
 {
   token_t *t = expr->child, *t0, *t1, *t2;
@@ -296,7 +297,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
       t0->t_rstring = t1->t_rstring;
       t1->t_rstring = NULL;
 
-      glw_view_token_free(t1);
+      glw_view_token_free(gr, t1);
 
 
       t = t0->next;
@@ -311,7 +312,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 	t0->next = t1->next;
 	t1->next = NULL;
 
-	glw_view_token_free(t);
+	glw_view_token_free(gr, t);
 
 	t2->child = t1;
 	t2 = t1;
@@ -339,7 +340,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 
       t->next = t1->next;
       t = t1->next;
-      glw_view_token_free(t1);
+      glw_view_token_free(gr, t1);
       continue;
     }
 
@@ -360,9 +361,9 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
 	  glw_view_nls_string(t, rstr_get(t1->next->t_rstring));
 
 	  t->next = t1->next->next->next;
-	  glw_view_token_free(t1->next->next);
-	  glw_view_token_free(t1->next);
-	  glw_view_token_free(t1);
+	  glw_view_token_free(gr, t1->next->next);
+	  glw_view_token_free(gr, t1->next);
+	  glw_view_token_free(gr, t1);
 
 	  t = t->next;
 	  continue;
@@ -379,7 +380,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
     }
     t = t1;
   }
-  return parse_shunting_yard(expr, ei);
+  return parse_shunting_yard(expr, ei, gr);
 }
 
 
@@ -390,7 +391,8 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei)
  *
  */
 static int
-parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei)
+parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
+		     glw_root_t *gr)
 {
   token_t *t = first, *l = NULL;
   int balance = 0;
@@ -403,7 +405,7 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei)
       return -1;
 
     case TOKEN_BLOCK_OPEN:
-      if(parse_block(t, ei, TOKEN_BLOCK_CLOSE))
+      if(parse_block(t, ei, TOKEN_BLOCK_CLOSE, gr))
 	return -1;
       break;
 
@@ -418,7 +420,7 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei)
       l->next = NULL;
       prev->next = t;
       t->child = first;
-      return parse_prep_expression(t, ei);
+      return parse_prep_expression(t, ei, gr);
 
     case TOKEN_BLOCK_CLOSE:
       glw_view_seterr(ei, t, "Unexpected '}'");
@@ -449,7 +451,8 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei)
  * A block consists of N expressions inside the block
  */
 static int
-parse_block(token_t *first, errorinfo_t *ei, token_type_t term)
+parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
+	    glw_root_t *gr)
 {
   token_t *p;
 
@@ -457,7 +460,7 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term)
   if(first->next->type == term) {
     p = first->next;
     first->next = p->next;
-    glw_view_token_free(p);
+    glw_view_token_free(gr, p);
     return 0;
   }
 
@@ -469,12 +472,12 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term)
 
       first->child = first->next;
       first->next = p->next->next;
-      glw_view_token_free(p->next);
+      glw_view_token_free(gr, p->next);
       p->next = NULL;
       return 0;
     }
 
-    if(parse_one_expression(p, p->next, ei))
+    if(parse_one_expression(p, p->next, ei, gr))
       return -1;
 
     p = p->next;
@@ -489,9 +492,9 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term)
  *
  */
 int
-glw_view_parse(token_t *sof, errorinfo_t *ei)
+glw_view_parse(token_t *sof, errorinfo_t *ei, glw_root_t *gr)
 {
-  return parse_block(sof, ei, TOKEN_END);
+  return parse_block(sof, ei, TOKEN_END, gr);
 }
 
 

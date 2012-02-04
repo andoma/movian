@@ -249,15 +249,6 @@ EOF
 
 }
 
-
-spotify_setup() {
-    enable spotify
-    echo >${BUILDDIR}/spotify_app_key.h "static const uint8_t appkey[] = {"
-    od <"$1" -v -An -b | awk '{for(i = 1; i <= NF; i++) print "0"  $i  ","}' >>${BUILDDIR}/spotify_app_key.h
-    echo >>${BUILDDIR}/spotify_app_key.h "};"
-}
-
-
 libav_setup() {
     if disabled libav; then
 	return
@@ -300,10 +291,6 @@ finalize() {
 	echo >>${CONFIG_MAK} "CFLAGS_cfg += -DUSE_POLARSSL"
     fi
 
-
-    if [ "x${SPOTIFY_KEYFILE}" != "x" ]; then
-	spotify_setup "${SPOTIFY_KEYFILE}"
-    fi
 
     # Generate default theme path for GLW
     # Optionally embed the theme if in release mode

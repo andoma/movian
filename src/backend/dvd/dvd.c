@@ -27,6 +27,7 @@
 #include "metadata/metadata.h"
 
 #include <libavcodec/avcodec.h>
+#include <libavutil/mathematics.h>
 
 #include "fileaccess/svfs.h"
 #include "dvdnav/dvdnav.h"

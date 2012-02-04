@@ -28,15 +28,16 @@ TAILQ_HEAD(audio_mode_queue, audio_mode);
 
 typedef struct audio_mode {
   uint32_t am_formats;
-#define AM_FORMAT_PCM_STEREO        0x1
-#define AM_FORMAT_PCM_5DOT0         0x2
-#define AM_FORMAT_PCM_5DOT1         0x4
-#define AM_FORMAT_PCM_6DOT1         0x8
-#define AM_FORMAT_PCM_7DOT1         0x10
-#define AM_FORMAT_PCM_MASK          0x1f
+#define AM_FORMAT_PCM_MONO          0x1
+#define AM_FORMAT_PCM_STEREO        0x2
+#define AM_FORMAT_PCM_5DOT0         0x4
+#define AM_FORMAT_PCM_5DOT1         0x8
+#define AM_FORMAT_PCM_6DOT1         0x10
+#define AM_FORMAT_PCM_7DOT1         0x20
+#define AM_FORMAT_PCM_MASK          0x3f
 
-#define AM_FORMAT_AC3               0x20
-#define AM_FORMAT_DTS               0x40
+#define AM_FORMAT_AC3               0x40
+#define AM_FORMAT_DTS               0x80
 
   uint32_t am_sample_rates;
 #define AM_SR_96000 0x1

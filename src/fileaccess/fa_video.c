@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include <libavformat/avformat.h>
+#include <libavutil/mathematics.h>
 
 #include "showtime.h"
 #include "fa_video.h"
@@ -125,7 +126,7 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
       }
 
       int score = fs_sub_match(video, fde->fde_url);
-      if(score == 0)
+      if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
 
       mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,

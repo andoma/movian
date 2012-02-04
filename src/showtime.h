@@ -25,6 +25,10 @@
 #include <sys/time.h>
 #include "htsmsg/htsmsg_store.h"
 #include "arch/threads.h"
+#include "misc/rstr.h"
+
+#define HTS_GLUE(a, b) a ## b
+#define HTS_JOIN(a, b) HTS_GLUE(a, b)
 
 #define DISABLE_CACHE ((int *)-1)
 #define NOT_MODIFIED  ((void *)-1)
@@ -37,11 +41,12 @@
 #define _(string) nls_get_rstring(string)
 #define _p(string) nls_get_prop(string)
 
-struct rstr;
-struct rstr *nls_get_rstring(const char *string);
+rstr_t *nls_get_rstring(const char *string);
 
 struct prop;
 struct prop *nls_get_prop(const char *string);
+
+rstr_t *nls_get_rstringp(const char *string, const char *singularis, int val);
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))

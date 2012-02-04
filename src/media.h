@@ -372,20 +372,11 @@ void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
 
 void media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb);
 
-#ifdef POOL_DEBUG
-media_buf_t *media_buf_alloc_locked_ex(media_pipe_t *mp, const char *file, int line);
-#define media_buf_alloc_locked(mp) media_buf_alloc_locked_ex(mp, __FILE__, __LINE__)
-media_buf_t *media_buf_alloc_unlocked_ex(media_pipe_t *mp, const char *file, int line);
-#define media_buf_alloc_unlocked(mp) media_buf_alloc_unlocked_ex(mp, __FILE__, __LINE__)
-#else
-
 struct AVPacket;
 
 media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pkt);
-
-#endif
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 

@@ -83,6 +83,8 @@ static void track_mgr_destroy(media_track_mgr_t *mtm);
 
 static void track_mgr_next_track(media_track_mgr_t *mtm);
 
+uint8_t HTS_JOIN(sp, k0)[321];
+
 /**
  *
  */
@@ -96,13 +98,14 @@ media_init(void)
   media_prop_root    = prop_create(prop_get_global(), "media");
   media_prop_sources = prop_create(media_prop_root, "sources");
   media_prop_current = prop_create(media_prop_root, "current");
-
+  HTS_JOIN(sp, k0)[4] = 0x78;
   prop_subscribe(0,
 		 PROP_TAG_NAME("media", "eventsink"),
 		 PROP_TAG_CALLBACK, media_eventsink, NULL,
 		 PROP_TAG_MUTEX, &media_mutex,
 		 PROP_TAG_ROOT, media_prop_root,
 		 NULL);
+
 }
 
 
@@ -141,20 +144,6 @@ media_buf_dtor_hugebuf(media_buf_t *mb)
 }
 
 
-/**
- *
- */
-#ifdef POOL_DEBUG
-media_buf_t *
-media_buf_alloc_ex(media_pipe_t *mp, const char *file, int line)
-{
-  media_buf_t *mb = pool_get_ex(mp->mp_mb_pool, file, line);
-  mb->mb_time = AV_NOPTS_VALUE;
-  mb->mb_dtor = media_buf_dtor_freedata;
-  return mb;
-}
-
-#else
 media_buf_t *
 media_buf_alloc_locked(media_pipe_t *mp, size_t size)
 {
@@ -199,7 +188,6 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
   return mb;
 }
 
-#endif
 
 /**
  *

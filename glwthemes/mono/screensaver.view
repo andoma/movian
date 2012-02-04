@@ -6,17 +6,50 @@ widget(container_z, {
     });
   });
 
-  widget(container_y, {
+
+  #define ffitem(STR) {
+    widget(container_y, {
+      widget(label, {
+        .caption = STR;
+        .align = center;
+        .sizeScale = 5;
+      });
+  });
+  }    
+
+
+  widget(deck, {
     .hidden = select($global.media.current.type, true, false);
-
-    space(1);
-
     widget(label, {
       .caption = _("No media loaded");
       .align = center;
-      .sizeScale = 2;
+      .sizeScale = 3;
     });
 
-    space(1);
-  });
+  widget(freefloat, {
+    ffitem("No media loaded");
+    ffitem("Няма заредени медийни файлове");
+    ffitem("Keine Medien geladen");
+    ffitem("Intet medie hentet");
+    ffitem("Meediat ei laetud");
+    ffitem("Ei tiedostoa ladattuna");
+    ffitem("Aucun media chargé");
+    ffitem("Nincs média betöltve");
+    ffitem("Nessun media caricato");
+    ffitem("Geen media geladen");
+    ffitem("Ingen media lastet");
+    ffitem("Brak danych");
+    ffitem("Nenhuma media carregada");
+    ffitem("Nenhum media carregado");
+    ffitem("Nici un fișier media incărcat");
+    ffitem("Медиа отсутствует");
+    ffitem("Medij ni naložen");
+    ffitem("Ningún medio cargado");
+    ffitem("Ingen media laddad");
+    ffitem("Açılamadı");
+    ffitem("未载入媒体");
+    ffitem("未載入任何媒體");
+   });
+   .page = $ui.nmlmode;
+});
 });

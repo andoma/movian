@@ -6,6 +6,7 @@ struct subtitle_settings {
   int scaling;
   int alignment;   // LAYOUT_ALIGN_ from layout.h
   int always_select;
+  int include_all_subs;
   int align_on_video;
   int style_override;
   int color;

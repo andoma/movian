@@ -153,7 +153,6 @@ widget(container_y, {
 
   widget(label, {
     .color = 0.6;
-    // Need plural forms in localization
-    .caption = fmt(_("Played %d times"), $args.playcount);
+    .caption = fmt(_pl("Played %d times", "Played %d time", $args.playcount), $args.playcount);
   });
 });

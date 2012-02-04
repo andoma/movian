@@ -29,6 +29,7 @@
 
 #include "misc/queue.h"
 #include "misc/layout.h"
+#include "misc/pool.h"
 #include "prop/prop.h"
 #include "ui/ui.h"
 #include "showtime.h"
@@ -569,6 +570,9 @@ const glw_class_t *glw_class_find_by_name(const char *name);
 typedef struct glw_root {
   uii_t gr_uii;
 
+  pool_t *gr_token_pool;
+  pool_t *gr_clone_pool;
+
   int gr_frames;
 
   struct glw *gr_universe;
@@ -897,7 +901,7 @@ typedef struct glw {
 
   Mtx *glw_matrix;
 
-  struct clone *glw_clone;
+  struct glw_clone *glw_clone;
 
 } glw_t;
 
@@ -918,6 +922,8 @@ typedef struct glw {
 int glw_init(glw_root_t *gr, const char *theme,
 	     ui_t *ui, int primary,
 	     const char *instance, const char *instance_title );
+
+void glw_fini(glw_root_t *gr);
 
 void glw_load_universe(glw_root_t *gr);
 

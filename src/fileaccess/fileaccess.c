@@ -610,7 +610,11 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
 
     free(data);
 
-    int d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    int d;
+    if(data2)
+      d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    else
+      d = 0;
 
     free(etag);
 
