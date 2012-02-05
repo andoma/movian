@@ -394,6 +394,31 @@ event_is_action(event_t *e, action_type_t at)
  *
  */
 static void
+event_prop_dtor(event_t *e)
+{
+  event_prop_t *ep = (event_prop_t *)e;
+  prop_ref_dec(ep->p);
+  free(e);
+}
+
+
+/**
+ *
+ */
+event_t *
+event_create_prop(event_type_t type, prop_t *p)
+{
+  event_prop_t *e = event_create(type, sizeof(event_prop_t));
+  e->p = prop_ref_inc(p);
+  e->h.e_dtor = event_prop_dtor;
+  return &e->h;
+}
+
+
+/**
+ *
+ */
+static void
 event_to_prop(prop_t *p, event_t *e)
 {
   prop_send_ext_event(p, e);
