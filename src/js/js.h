@@ -34,6 +34,7 @@ typedef struct js_plugin {
   struct js_http_auth_list jsp_http_auths;
   struct js_service_list jsp_services;
   struct js_setting_group_list jsp_setting_groups;
+  struct js_event_handler_list jsp_event_handlers;
 
   struct fa_handle *jsp_ref;
 
@@ -86,6 +87,9 @@ JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
 
 JSBool js_createStore(JSContext *cx, JSObject *obj, uintN argc, 
 		      jsval *argv, jsval *rval);
+
+JSBool js_onEvent(JSContext *cx, JSObject *obj,
+		  uintN argc, jsval *argv, jsval *rval);
 
 struct backend;
 
