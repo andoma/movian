@@ -89,3 +89,27 @@ js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
     js_event_dispatch_action(cx, list, e->e_payload, this);
   }
 }
+
+
+/**
+ *
+ */
+JSBool 
+js_onEvent(JSContext *cx, JSObject *obj,
+	   uintN argc, jsval *argv, jsval *rval)
+{
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
+    JS_ReportError(cx, "Argument is not a function");
+    return JS_FALSE;
+  }
+
+  js_event_handler_create(cx, &jsp->jsp_event_handlers,
+			  JS_GetStringBytes(JS_ValueToString(cx,
+							     argv[0])),
+			  argv[1]);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
