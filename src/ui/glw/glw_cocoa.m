@@ -143,9 +143,9 @@ static const struct {
   { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
   { NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
   
-  { NSF5FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
-  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
-  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
+  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
+  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
+  { NSF8FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
   
   { NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
   { NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
@@ -161,6 +161,7 @@ static const struct {
   { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
   
   { NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
+  { NSF5FunctionKey,	    NSShiftKeyMask,	ACTION_RELOAD_DATA },
 };
 
 
