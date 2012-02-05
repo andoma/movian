@@ -187,9 +187,9 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
 
     rc = sqlite3_prepare_v2(db, 
 			    "INSERT INTO artist "
-			    "(title) "
+			    "(title, ds_id) "
 			    "VALUES "
-			    "(?1)",
+			    "(?1, 1)",
 			    -1, &ins, NULL);
 
     if(rc == SQLITE_OK) {
@@ -240,9 +240,9 @@ metadb_album_get_by_title(sqlite3 *db, const char *title)
 
     rc = sqlite3_prepare_v2(db, 
 			    "INSERT INTO album "
-			    "(title) "
+			    "(title, ds_id) "
 			    "VALUES "
-			    "(?1)",
+			    "(?1, 1)",
 			    -1, &ins, NULL);
 
     if(rc == SQLITE_OK) {
@@ -294,16 +294,16 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
     rc = sqlite3_prepare_v2(db, 
 			    i == 0 ? 
 			    "INSERT OR FAIL INTO audioitem "
-			    "(item_id, title, album_id, artist_id, duration) "
+			    "(item_id, title, album_id, artist_id, duration, ds_id) "
 			    "VALUES "
-			    "(?1, ?2, ?3, ?4, ?5)"
+			    "(?1, ?2, ?3, ?4, ?5, 1)"
 			    :
 			    "UPDATE audioitem SET "
 			    "title = ?2, "
 			    "album_id = ?3, "
 			    "artist_id = ?4, "
 			    "duration = ?5 "
-			    "WHERE item_id = ?1"
+			    "WHERE item_id = ?1 AND ds_id = 1"
 			    ,
 			    -1, &stmt, NULL);
 
@@ -669,7 +669,7 @@ metadb_metadata_get_artist(sqlite3 *db, get_cache_t *gc, int64_t id)
   rc = sqlite3_prepare_v2(db,
 			  "SELECT title "
 			  "FROM artist "
-			  "WHERE id = ?1",
+			  "WHERE id = ?1 AND ds_id=1",
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
@@ -713,7 +713,7 @@ metadb_metadata_get_album(sqlite3 *db, get_cache_t *gc, int64_t id)
   rc = sqlite3_prepare_v2(db,
 			  "SELECT title "
 			  "FROM album "
-			  "WHERE id = ?1",
+			  "WHERE id = ?1 AND ds_id=1",
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
@@ -751,7 +751,7 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
   rc = sqlite3_prepare_v2(db,
 			  "SELECT title, album_id, artist_id, duration "
 			  "FROM audioitem "
-			  "WHERE item_id = ?1",
+			  "WHERE item_id = ?1 AND ds_id = 1",
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
