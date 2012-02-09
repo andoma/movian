@@ -45,6 +45,7 @@
 #include "misc/pixmap.h"
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
+#include "metadata/metadata.h"
 
 #include "api/lastfm.h"
 
@@ -93,10 +94,10 @@ static struct spotify_msg_queue spotify_msgs;
  * a subscription that checks PROP_DESTROYED)
  */
 
-LIST_HEAD(metadata_list, metadata);
+LIST_HEAD(spotify_metadata_list, spotify_metadata);
 
-typedef struct metadata {
-  LIST_ENTRY(metadata) m_link;
+typedef struct spotify_metadata {
+  LIST_ENTRY(spotify_metadata) m_link;
   sp_track *m_source;
 
   prop_sub_t *m_sub;
@@ -116,7 +117,7 @@ typedef struct metadata {
   prop_t *m_starred;
   prop_t *m_status;
 
-} metadata_t;
+} spotify_metadata_t;
 
 
 /**
@@ -208,7 +209,7 @@ typedef struct playlist {
 
   struct playlist *pl_start; // End folder point to its start
 
-  struct metadata_list pl_pending_metadata;
+  struct spotify_metadata_list pl_pending_metadata;
 
 } playlist_t;
 
@@ -1000,7 +1001,7 @@ track_action_handler(void *opaque, prop_event_t event, ...)
  *
  */
 static int
-spotify_metadata_update_track(metadata_t *m)
+spotify_metadata_update_track(spotify_metadata_t *m)
 {
   sp_track *track = m->m_source;
   sp_album *album;
@@ -1053,9 +1054,9 @@ spotify_metadata_update_track(metadata_t *m)
     if(artist != NULL) {
       if(f_sp_track_num_artists(track) > 0 && 
 	 (artist = f_sp_track_artist(track, 0)) != NULL) {
-      
-	lastfm_artistpics_init(m->m_artist_images,
-			       rstr_alloc(f_sp_artist_name(artist)));
+	rstr_t *r = rstr_alloc(f_sp_artist_name(artist));
+	metadata_bind_artistpics(m->m_artist_images, r);
+	rstr_release(r);
       }
     }
   }
@@ -1096,7 +1097,7 @@ spotify_metadata_update_track(metadata_t *m)
  *
  */
 static void
-metadata_ref_dec(metadata_t *m)
+metadata_ref_dec(spotify_metadata_t *m)
 {
   prop_ref_dec(m->m_available);
   prop_ref_dec(m->m_title);
@@ -1118,7 +1119,7 @@ metadata_ref_dec(metadata_t *m)
  *
  */
 static void
-metadata_destroy(metadata_t *m)
+spotify_metadata_destroy(spotify_metadata_t *m)
 {
   prop_unsubscribe(m->m_sub);
   metadata_ref_dec(m);
@@ -1143,15 +1144,15 @@ spotify_metadata_updated(sp_session *sess)
  *
  */
 static void
-spotify_metadata_list_update(sp_session *sess, struct metadata_list *l)
+spotify_metadata_list_update(sp_session *sess, struct spotify_metadata_list *l)
 {
-  metadata_t *m, *n;
+  spotify_metadata_t *m, *n;
 
   for(m = LIST_FIRST(l); m != NULL; m = n) {
     n = LIST_NEXT(m, m_link);
 
     if(!spotify_metadata_update_track(m))
-      metadata_destroy(m);
+      spotify_metadata_destroy(m);
   }
 }
 
@@ -1160,12 +1161,12 @@ spotify_metadata_list_update(sp_session *sess, struct metadata_list *l)
  *
  */
 static void
-spotify_metadata_list_clear(struct metadata_list *l)
+spotify_metadata_list_clear(struct spotify_metadata_list *l)
 {
-  metadata_t *m;
+  spotify_metadata_t *m;
 
   while((m = LIST_FIRST(l)) != NULL) 
-    metadata_destroy(m);
+    spotify_metadata_destroy(m);
 }
 
 
@@ -1177,15 +1178,16 @@ static void
 metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
   if(event == PROP_DESTROYED) 
-    metadata_destroy(opaque);
+    spotify_metadata_destroy(opaque);
 }
 
 
 static void
-metadata_create(prop_t *p, sp_track *source, struct metadata_list *list,
-		int with_status)
+spotify_metadata_create(prop_t *p, sp_track *source,
+			struct spotify_metadata_list *list,
+			int with_status)
 {
-  metadata_t *m = calloc(1, sizeof(metadata_t));
+  spotify_metadata_t *m = calloc(1, sizeof(spotify_metadata_t));
 
   m->m_source = source;
 
@@ -1231,7 +1233,7 @@ metadata_create(prop_t *p, sp_track *source, struct metadata_list *list,
  */
 static prop_t *
 track_create(sp_track *track, prop_t **metadatap,
-	     struct metadata_list *list, int with_status)
+	     struct spotify_metadata_list *list, int with_status)
 {
   char url[URL_MAX];
   prop_t *p = prop_create_root(NULL);
@@ -1246,7 +1248,7 @@ track_create(sp_track *track, prop_t **metadatap,
   if(metadatap != NULL)
     *metadatap = metadata;
 
-  metadata_create(metadata, track, list, with_status);
+  spotify_metadata_create(metadata, track, list, with_status);
 
   tac->prop_star = prop_ref_inc(prop_create(metadata, "starred"));
 
