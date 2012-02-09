@@ -22,6 +22,7 @@
 #include <string.h>
 #include <libavutil/base64.h>
 #include <assert.h>
+#include <zlib.h>
 
 #include "keyring.h"
 #include "fileaccess.h"
@@ -521,6 +522,13 @@ typedef struct http_file {
 		      * rather than random seeking 
 		      */
 
+  char hf_req_compression;
+  
+  char hf_content_encoding;
+#define HTTP_CE_IDENTITY 0
+#define HTTP_CE_GZIP 1
+
+
   prop_t *hf_stats_speed;
 
 #define STAT_VEC_SIZE 20
@@ -810,7 +818,11 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
   } else {
     http_header_add(l, "Host", hf->hf_connection->hc_hostname);
   }
-  http_header_add(l, "Accept-Encoding", "identity");
+  if(hf->hf_req_compression)
+    http_header_add(l, "Accept-Encoding", "gzip");
+  else
+    http_header_add(l, "Accept-Encoding", "identity");
+  
   http_header_add(l, "Connection", hf->hf_want_close ? "close" : "keep-alive");
   snprintf(str, sizeof(str), "Showtime %s %s",
 	   showtime_get_system_type(), htsversion);
@@ -1041,7 +1053,8 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   http_connection_t *hc = hf->hf_connection;
 
   http_headers_free(headers);
-  
+
+  hf->hf_content_encoding = HTTP_CE_IDENTITY;
   hf->hf_connection_mode = CONNECTION_MODE_PERSISTENT;
   hf->hf_rsize = -1;
   hf->hf_chunked_transfer = 0;
@@ -1116,6 +1129,15 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       continue;
     }
 
+    if(!strcasecmp(argv[0], "Content-Encoding")) {
+      printf("%s\n", argv[1]);
+      if(!strcasecmp(argv[1], "gzip"))
+	hf->hf_content_encoding = HTTP_CE_GZIP;
+      else if(!strcasecmp(argv[1], "identity"))
+	hf->hf_content_encoding = HTTP_CE_IDENTITY;
+      else
+	return -1;
+    }
     if(!strcasecmp(argv[0], "Content-Length")) {
       i64 = strtoll(argv[1], NULL, 0);
       hf->hf_rsize = i64;
@@ -2579,6 +2601,7 @@ http_request(const char *url, const char **arguments,
     LIST_INIT(headers_out);
   hf->hf_version = 1;
   hf->hf_debug = !!(flags & HTTP_REQUEST_DEBUG);
+  hf->hf_req_compression = !!(flags & HTTP_COMPRESSION);
   hf->hf_url = strdup(url);
 
  retry:
@@ -2701,6 +2724,12 @@ http_request(const char *url, const char **arguments,
   }
   
 
+  z_stream z;
+  if(hf->hf_content_encoding == HTTP_CE_GZIP) {
+    memset(&z, 0, sizeof(z));
+    inflateInit2(&z, 16+MAX_WBITS);
+  }
+
   if(hf->hf_chunked_transfer == 0 && 
      hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
     int capacity = 16384;
@@ -2714,11 +2743,43 @@ http_request(const char *url, const char **arguments,
 	mem = realloc(mem, capacity + 1);
       }
 
-      r = tcp_read_data_nowait(hc->hc_tc, mem + size, capacity - size);
-      if(r < 0)
-	break;
+      if(hf->hf_content_encoding == HTTP_CE_GZIP) {
+        char zbuf[2048];
+	r = tcp_read_data_nowait(hc->hc_tc, zbuf, sizeof(zbuf));
+	
+	z.next_in = (void *)zbuf;
+	z.avail_in = r > 0 ? r : 0;
+	while(1) {
+	
+	  z.next_out = (void *)(mem + size);
+	  z.avail_out = capacity - size;
 
-      size += r;
+	  int zr = inflate(&z, r < 0 ? Z_FINISH : Z_NO_FLUSH);
+	  if(zr < 0) {
+	    snprintf(errbuf, errlen, "zlib error %d", zr);
+	    free(mem);
+	    goto error;
+	  }
+	  size += (capacity - size) - z.avail_out;
+
+	  if(z.avail_in == 0)
+	    break;
+
+	  capacity *= 2;
+	  mem = realloc(mem, capacity + 1);
+	}
+
+	if(r < 0)
+	  break;
+	
+      } else {
+
+	r = tcp_read_data_nowait(hc->hc_tc, mem + size, capacity - size);
+	if(r < 0)
+	  break;
+	size += r;
+      }
+
     }
 
     mem[size] = 0;
@@ -2759,28 +2820,57 @@ http_request(const char *url, const char **arguments,
 	if(csize == 0)
 	  goto done;
       }
-      free(buf);
       snprintf(errbuf, errlen, "Chunked transfer error");
-      http_destroy(hf);
-      http_headers_free(headers_out);
-      return -1;
+      free(buf);
+      goto error;
 
     } else {
 
       size = hf->hf_filesize;
       buf = malloc(hf->hf_filesize + 1);
-
+      
       r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize);
       
       if(r == -1) {
 	snprintf(errbuf, errlen, "HTTP read error");
 	free(buf);
-	http_destroy(hf);
-	http_headers_free(headers_out);
-	return -1;    
+	goto error;
       }
     }
+
   done:
+
+    if(hf->hf_content_encoding == HTTP_CE_GZIP) {
+      z.next_in = (void *)buf;
+      z.avail_in = size;
+      
+      z.avail_out = 3 * hf->hf_filesize;
+      uint8_t *buf2 = z.next_out = malloc(z.avail_out + 1);
+
+      while(1) {
+	int zr = inflate(&z, 0);
+	if(zr < 0) {
+	  snprintf(errbuf, errlen, "zlib error %d", zr);
+	  free(buf);
+	  free(buf2);
+	  goto error;
+	}
+
+	if(z.avail_in == 0)
+	  break;
+
+	if(z.avail_out == 0) {
+	  buf2 = realloc(buf2, z.total_out * 2 + 1);
+	  z.next_out = buf2 + z.total_out;
+	  z.avail_out = z.total_out;
+	}
+      }
+	
+      free(buf);
+      buf = (void *)buf2;
+      size = z.total_out;
+    }
+
     buf[size] = 0;
     if(result == NULL)
       free(buf);
@@ -2791,6 +2881,17 @@ http_request(const char *url, const char **arguments,
       *result_sizep = size;
   }
 
+  if(hf->hf_content_encoding == HTTP_CE_GZIP)
+    inflateEnd(&z);
+
   http_destroy(hf);
   return 0;
+  
+ error:
+  if(hf->hf_content_encoding == HTTP_CE_GZIP)
+    inflateEnd(&z);
+  http_destroy(hf);
+  http_headers_free(headers_out);
+  return -1;
+
 }
