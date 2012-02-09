@@ -175,11 +175,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   showtime_shutdown(0);
 }
 
-/* delegated from window */
-- (void)windowWillClose:(NSNotification *)aNotification {
-  showtime_shutdown(0);
-}
-
 - (IBAction)clickIncreaseZoom:(id)sender {
   glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
                            event_create_action(ACTION_ZOOM_UI_INCR));
