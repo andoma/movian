@@ -15,6 +15,7 @@
 #include "db/db_support.h"
 #include "video/video_settings.h"
 #include "fileaccess/fileaccess.h"
+#include "htsmsg/htsmsg_json.h"
 
 #define METADATA_VERSION_STR "1"
 
@@ -83,6 +84,60 @@ void
 metadb_close(void *db)
 {
   db_pool_put(metadb_pool, db);
+}
+
+
+/**
+ *
+ */
+int
+metadb_get_datasource(void *db, const char *name)
+{
+  int rc;
+  int rval = -1;
+  sqlite3_stmt *stmt;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "SELECT id FROM datasource WHERE name=?1",
+			  -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+
+  rc = sqlite3_step(stmt);
+
+  if(rc == SQLITE_ROW)
+    rval = sqlite3_column_int(stmt, 0);
+
+  sqlite3_finalize(stmt);
+  if(rval == -1) {
+
+    rc = sqlite3_prepare_v2(db, 
+			    "INSERT INTO datasource "
+			    "(name) "
+			    "VALUES "
+			    "(?1)",
+			  -1, &stmt, NULL);
+
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      return -1;
+    }
+    sqlite3_bind_text(stmt, 1, name, -1, SQLITE_STATIC);
+
+    rc = sqlite3_step(stmt);
+    sqlite3_finalize(stmt);
+    
+    if(rc == SQLITE_DONE)
+      rval = sqlite3_last_insert_rowid(db);
+  }
+  return rval;
 }
 
 
@@ -159,15 +214,20 @@ db_item_create(sqlite3 *db, const char *url, int contenttype, time_t mtime,
 /**
  *
  */
-static int64_t
-metadb_artist_get_by_title(sqlite3 *db, const char *title)
+int64_t
+metadb_artist_get_by_title(void *db, const char *title, int ds_id,
+			   const char *ext_id)
 {
   int rc;
   int64_t rval = -1;
   sqlite3_stmt *sel;
 
   rc = sqlite3_prepare_v2(db, 
-			  "SELECT id from artist where title=?1 ",
+			  "SELECT id "
+			  "FROM artist "
+			  "WHERE title=?1 "
+			  "AND ds_id=?2"
+			  "AND (?3 OR ext_id = ?4)",
 			  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
@@ -176,6 +236,10 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
   }
 
   sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
+  sqlite3_bind_int(sel, 2, ds_id);
+  sqlite3_bind_int(sel, 3, !ext_id);
+  if(ext_id != NULL)
+    sqlite3_bind_text(sel, 4, ext_id, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
 
   if(rc == SQLITE_ROW) {
@@ -187,13 +251,16 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
 
     rc = sqlite3_prepare_v2(db, 
 			    "INSERT INTO artist "
-			    "(title, ds_id) "
+			    "(title, ds_id, ext_id) "
 			    "VALUES "
-			    "(?1, 1)",
+			    "(?1, ?2, ?3)",
 			    -1, &ins, NULL);
 
     if(rc == SQLITE_OK) {
       sqlite3_bind_text(ins, 1, title, -1, SQLITE_STATIC);
+      sqlite3_bind_int(ins, 2, ds_id);
+      if(ext_id)
+	sqlite3_bind_text(ins, 3, ext_id, -1, SQLITE_STATIC);
       rc = sqlite3_step(ins);
       sqlite3_finalize(ins);
       if(rc == SQLITE_DONE)
@@ -212,41 +279,60 @@ metadb_artist_get_by_title(sqlite3 *db, const char *title)
 /**
  *
  */
-static int64_t
-metadb_album_get_by_title(sqlite3 *db, const char *title)
+int64_t
+metadb_album_get_by_title(void *db, const char *album, int64_t artist_id,
+			  int ds_id, const char *ext_id)
 {
   int rc;
   int64_t rval = -1;
   sqlite3_stmt *sel;
 
+
   rc = sqlite3_prepare_v2(db, 
-			  "SELECT id from album where title=?1 ",
+			  "SELECT id "
+			  "FROM album "
+			  "WHERE title=?1 "
+			  "AND artist_id IS ?2 "
+			  "AND ds_id = ?3 "
+			  "AND (?4 OR ext_id = ?5)",
 			  -1, &sel, NULL);
+
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	  __FUNCTION__, __LINE__);
     return -1;
   }
 
-  sqlite3_bind_text(sel, 1, title, -1, SQLITE_STATIC);
+  sqlite3_bind_text(sel, 1, album, -1, SQLITE_STATIC);
+  if(artist_id != -1)
+    sqlite3_bind_int64(sel, 2, artist_id);
+  sqlite3_bind_int(sel, 3, ds_id);
+  sqlite3_bind_int(sel, 4, !ext_id);
+  if(ext_id != NULL)
+    sqlite3_bind_text(sel, 5, ext_id, -1, SQLITE_STATIC);
   rc = sqlite3_step(sel);
 
   if(rc == SQLITE_ROW) {
     rval = sqlite3_column_int64(sel, 0);
   } else if(rc == SQLITE_DONE) {
     // No entry found, INSERT it
-
     sqlite3_stmt *ins;
 
     rc = sqlite3_prepare_v2(db, 
 			    "INSERT INTO album "
-			    "(title, ds_id) "
+			    "(title, ds_id, artist_id, ext_id) "
 			    "VALUES "
-			    "(?1, 1)",
+			    "(?1, ?3, ?2, ?4)",
 			    -1, &ins, NULL);
 
     if(rc == SQLITE_OK) {
-      sqlite3_bind_text(ins, 1, title, -1, SQLITE_STATIC);
+      sqlite3_bind_text(ins, 1, album, -1, SQLITE_STATIC);
+      if(artist_id != -1)
+	sqlite3_bind_int64(ins, 2, artist_id);
+      sqlite3_bind_int(ins, 3, ds_id);
+      if(ext_id != NULL)
+	sqlite3_bind_text(ins, 4, ext_id, -1, SQLITE_STATIC);
+
       rc = sqlite3_step(ins);
       sqlite3_finalize(ins);
       if(rc == SQLITE_DONE)
@@ -263,24 +349,89 @@ metadb_album_get_by_title(sqlite3 *db, const char *title)
 
 
 
+/**
+ *
+ */
+void
+metadb_insert_albumart(void *db, int64_t album_id, const char *url,
+		       int width, int height)
+{
+  sqlite3_stmt *ins;
+  int rc;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "INSERT INTO albumart "
+			  "(album_id, url, width, height) "
+			  "VALUES "
+			  "(?1, ?2, ?3, ?4)",
+			  -1, &ins, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return;
+  }
+  
+  sqlite3_bind_int64(ins, 1, album_id);
+  sqlite3_bind_text(ins, 2, url, -1, SQLITE_STATIC);
+  if(width) sqlite3_bind_int64(ins, 3, width);
+  if(height) sqlite3_bind_int64(ins, 4, height);
+  sqlite3_step(ins);
+  sqlite3_finalize(ins);
+}
+
+
+/**
+ *
+ */
+void
+metadb_insert_artistpic(void *db, int64_t artist_id, const char *url,
+			int width, int height)
+{
+  sqlite3_stmt *ins;
+  int rc;
+
+  rc = sqlite3_prepare_v2(db, 
+			  "INSERT INTO artistpic "
+			  "(artist_id, url, width, height) "
+			  "VALUES "
+			  "(?1, ?2, ?3, ?4)",
+			  -1, &ins, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return;
+  }
+  
+  sqlite3_bind_int64(ins, 1, artist_id);
+  sqlite3_bind_text(ins, 2, url, -1, SQLITE_STATIC);
+  if(width) sqlite3_bind_int64(ins, 3, width);
+  if(height) sqlite3_bind_int64(ins, 4, height);
+  sqlite3_step(ins);
+  sqlite3_finalize(ins);
+}
 
 /**
  *
  */
 static int
-metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
+metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md,
+			int ds_id)
 {
   int64_t artist_id = -1;
   int64_t album_id = -1;
 
   if(md->md_artist != NULL) {
-    artist_id = metadb_artist_get_by_title(db, rstr_get(md->md_artist));
+    artist_id = metadb_artist_get_by_title(db, rstr_get(md->md_artist),
+					   ds_id, NULL);
     if(artist_id == -1)
       return -1;
   }
 
   if(md->md_album != NULL) {
-    album_id = metadb_album_get_by_title(db, rstr_get(md->md_album));
+    album_id = metadb_album_get_by_title(db, rstr_get(md->md_album),
+					 artist_id, ds_id, NULL);
     if(album_id == -1)
       return -1;
   }
@@ -335,6 +486,97 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 
   return rc != SQLITE_DONE;
 }
+
+
+/**
+ *
+ */
+rstr_t *
+metadb_get_album_art(void *db, const char *album, const char *artist)
+{
+  int rc;
+  sqlite3_stmt *sel;
+
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT aa.url, aa.width, aa.height "
+			  "FROM artist,album,albumart AS aa "
+			  "WHERE artist.title=?1 "
+			  "AND album.title=?2 "
+			  "AND album.artist_id = artist.id "
+			  "AND aa.album_id = album.id",
+			  -1, &sel, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  sqlite3_bind_text(sel, 1, artist, -1, SQLITE_STATIC);
+  sqlite3_bind_text(sel, 2, album, -1, SQLITE_STATIC);
+
+  htsmsg_t *m = htsmsg_create_list();
+
+  while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
+    htsmsg_t *img = htsmsg_create_map();
+    htsmsg_add_str(img, "url", (const char *)sqlite3_column_text(sel, 0));
+    htsmsg_add_u32(img, "width", sqlite3_column_int(sel, 1));
+    htsmsg_add_u32(img, "height", sqlite3_column_int(sel, 2));
+    htsmsg_add_msg(m, NULL, img);
+  }
+  sqlite3_finalize(sel);
+
+  rstr_t *rstr = NULL;
+  if(TAILQ_FIRST(&m->hm_fields) != NULL) {
+    htsbuf_queue_t hq;
+    htsbuf_queue_init(&hq, 0);
+    htsbuf_qprintf(&hq, "imageset:");
+    htsmsg_json_serialize(m, &hq, 0);
+    rstr = htsbuf_to_rstr(&hq);
+    htsbuf_queue_flush(&hq);
+  }
+  htsmsg_destroy(m);
+  return rstr;
+}
+		     
+
+/**
+ *
+ */
+int
+metadb_get_artist_pics(void *db, const char *artist, 
+		       void (*cb)(void *opaque, const char *url,
+				  int width, int height),
+		       void *opaque)
+{
+  int rc;
+  sqlite3_stmt *sel;
+  int rval = -1;
+  rc = sqlite3_prepare_v2(db,
+			  "SELECT ap.url, ap.width, ap.height "
+			  "FROM artist,artistpic AS ap "
+			  "WHERE artist.title=?1 "
+			  "AND ap.artist_id = artist.id",
+			  -1, &sel, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return -1;
+  }
+
+  sqlite3_bind_text(sel, 1, artist, -1, SQLITE_STATIC);
+
+  while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
+    cb(opaque, (const char *)sqlite3_column_text(sel, 0),
+       sqlite3_column_int(sel, 1),
+       sqlite3_column_int(sel, 2));
+    rval = 0;
+  }
+  sqlite3_finalize(sel);
+  return rval;
+}
+
+
+
 
 
 /**
@@ -602,7 +844,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
   switch(md->md_contenttype) {
   case CONTENT_AUDIO:
-    r = metadb_insert_audioitem(db, item_id, md);
+    r = metadb_insert_audioitem(db, item_id, md, 1);
     break;
 
   case CONTENT_VIDEO:

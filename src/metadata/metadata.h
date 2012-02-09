@@ -136,10 +136,38 @@ void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);
 
 void metadb_set_video_restartpos(const char *url, int64_t pos);
 
+int metadb_get_datasource(void *db, const char *name);
+
+rstr_t *metadb_get_album_art(void *db, const char *album, const char *artist);
+
+int metadb_get_artist_pics(void *db, const char *artist, 
+			   void (*cb)(void *opaque, const char *url,
+				      int width, int height),
+			   void *opaque);
+
 int64_t video_get_restartpos(const char *url);
 
+int64_t metadb_artist_get_by_title(void *db, const char *title, int ds_id,
+				   const char *ext_id);
 
+int64_t metadb_album_get_by_title(void *db, const char *album,
+				  int64_t artist_id,
+				  int ds_id, const char *ext_id);
+
+void metadb_insert_albumart(void *db, int64_t album_id, const char *url,
+			    int width, int height);
+
+void metadb_insert_artistpic(void *db, int64_t artist_id, const char *url,
+			     int width, int height);
 
 void decoration_init(void);
 
 void decorated_browse_create(struct prop *model);
+
+void metadata_init(void);
+
+void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
+
+void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
+
+

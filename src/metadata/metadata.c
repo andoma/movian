@@ -26,6 +26,7 @@
 
 #include "showtime.h"
 #include "media.h"
+#include "htsmsg/htsmsg_json.h"
 
 #include "api/lastfm.h"
 
@@ -35,6 +36,9 @@
 #include "db/db_support.h"
 
 #include "video/video_settings.h"
+
+static hts_mutex_t metadata_mutex;
+static prop_courier_t *metadata_courier;
 
 /**
  *
@@ -192,16 +196,16 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   if(md->md_artist) {
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);
 
-    lastfm_artistpics_init(prop_create(proproot, "artist_images"),
-			   md->md_artist);
+    metadata_bind_artistpics(prop_create(proproot, "artist_images"),
+			     md->md_artist);
   }
 
   if(md->md_album) {
     prop_set_rstring(prop_create(proproot, "album"),  md->md_album);
 
     if(md->md_artist != NULL)
-      lastfm_albumart_init(prop_create(proproot, "album_art"),
-			   md->md_artist, md->md_album);
+      metadata_bind_albumart(prop_create(proproot, "album_art"),
+			     md->md_artist, md->md_album);
   }
 
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
@@ -242,5 +246,214 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
+}
+
+
+
+typedef struct metadata_lazy_prop {
+  prop_t *mlp_prop;
+  prop_sub_t *mlp_sub;
+
+  rstr_t *mlp_album;
+  rstr_t *mlp_artist;
+} metadata_lazy_prop_t;
+
+
+/**
+ *
+ */
+static void
+mlp_destroy(metadata_lazy_prop_t *mlp)
+{
+  if(mlp->mlp_sub != NULL)
+    prop_unsubscribe(mlp->mlp_sub);
+  prop_ref_dec(mlp->mlp_prop);
+  rstr_release(mlp->mlp_artist);
+  rstr_release(mlp->mlp_album);
+  free(mlp);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_add_artist_to_prop(void *opaque, const char *url, int width, int height)
+{
+  prop_t *p = prop_create_root(NULL);
+  
+  prop_set_string(prop_create(p, "url"), url);
+  
+  if(prop_set_parent(p, opaque))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_get_artist(metadata_lazy_prop_t *mlp)
+{
+  void *db = metadb_get();
+  int r;
+
+  if(db_begin(db))
+    return;
+
+  r = metadb_get_artist_pics(db, rstr_get(mlp->mlp_artist),
+			     mlp_add_artist_to_prop, mlp->mlp_prop);
+
+  if(r)
+    lastfm_load_artistinfo(db, rstr_get(mlp->mlp_artist),
+			   mlp_add_artist_to_prop, mlp->mlp_prop);
+
+  db_commit(db);
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_artist_cb(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_prop_t *mlp = opaque;
+
+  switch(event) {
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    mlp_get_artist(mlp);
+    // FALLTHRU
+  case PROP_DESTROYED:
+    mlp_destroy(mlp);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+mlp_get_album(metadata_lazy_prop_t *mlp)
+{
+  void *db = metadb_get();
+  rstr_t *r;
+
+  if(db_begin(db))
+    return;
+
+  r = metadb_get_album_art(db,rstr_get(mlp->mlp_album),
+			   rstr_get(mlp->mlp_artist));
+  
+  if(r == NULL) {
+    // No album art available in our db, try to get some
+
+    lastfm_load_albuminfo(db, rstr_get(mlp->mlp_album),
+			  rstr_get(mlp->mlp_artist));
+    
+    r = metadb_get_album_art(db,rstr_get(mlp->mlp_album),
+			     rstr_get(mlp->mlp_artist));
+  }
+
+  prop_set_rstring(mlp->mlp_prop, r);
+  rstr_release(r);
+
+  db_commit(db);
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_album_cb(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_prop_t *mlp = opaque;
+
+  switch(event) {
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    mlp_get_album(mlp);
+    // FALLTHRU
+  case PROP_DESTROYED:
+    mlp_destroy(mlp);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
+
+
+/**
+ *
+ */
+void
+metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
+{
+  metadata_lazy_prop_t *mlp;
+
+  mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
+
+  mlp->mlp_prop = prop_ref_inc(prop);
+
+  hts_mutex_lock(&metadata_mutex);
+
+  mlp->mlp_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
+		   PROP_TAG_CALLBACK, mlp_artist_cb, mlp,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_ROOT, prop,
+		   NULL);
+  if(mlp->mlp_sub == NULL)
+    mlp_destroy(mlp);
+  hts_mutex_unlock(&metadata_mutex);
+}
+
+
+/**
+ *
+ */
+void
+metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
+{
+  metadata_lazy_prop_t *mlp;
+
+  mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
+  mlp->mlp_album  = rstr_spn(album, "[]()");
+
+  mlp->mlp_prop = prop_ref_inc(prop);
+
+  hts_mutex_lock(&metadata_mutex);
+
+  mlp->mlp_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
+		   PROP_TAG_CALLBACK, mlp_album_cb, mlp,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_ROOT, prop,
+		   NULL);
+  if(mlp->mlp_sub == NULL)
+    mlp_destroy(mlp);
+  hts_mutex_unlock(&metadata_mutex);
+}
+
+
+/**
+ *
+ */
+void
+metadata_init(void)
+{
+  hts_mutex_init(&metadata_mutex);
+  metadata_courier = prop_courier_create_thread(&metadata_mutex, "metadata");
 }
 
