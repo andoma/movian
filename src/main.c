@@ -68,7 +68,7 @@
 static struct sqlite3_mutex_methods sqlite_mutexes;
 #endif
 
-static void finalize(void) __attribute__((noreturn));
+static void finalize(void);
 
 /**
  *
@@ -455,6 +455,8 @@ main(int argc, char **argv)
   ui_start(nuiargs, uiargs, argv0);
 
   finalize();
+
+  arch_exit(showtime_retcode);
 }
 
 /**
@@ -500,17 +502,6 @@ shutdown_hook_run(int early)
 /**
  *
  */
-static void *
-showtime_shutdown0(void *aux)
-{
-  finalize();
-  return NULL;
-}
-
-
-/**
- *
- */
 void
 showtime_shutdown(int retcode)
 {
@@ -528,11 +519,8 @@ showtime_shutdown(int retcode)
 
   htsmsg_store_flush();
 
-  if(ui_shutdown() == -1) {
-    // Primary UI has no shutdown method, launch a new thread to stop
-    hts_thread_create_detached("shutdown", showtime_shutdown0, NULL,
-			       THREAD_PRIO_NORMAL);
-  }
+  if(ui_shutdown() == -1)
+    finalize();
 }
 
 
@@ -547,7 +535,6 @@ finalize(void)
   shutdown_hook_run(0);
   blobcache_fini();
   metadb_fini();
-  arch_exit(showtime_retcode);
 }
 
 
