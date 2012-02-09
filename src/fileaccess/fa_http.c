@@ -1130,7 +1130,6 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     }
 
     if(!strcasecmp(argv[0], "Content-Encoding")) {
-      printf("%s\n", argv[1]);
       if(!strcasecmp(argv[1], "gzip"))
 	hf->hf_content_encoding = HTTP_CE_GZIP;
       else if(!strcasecmp(argv[1], "identity"))
