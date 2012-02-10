@@ -979,10 +979,10 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   const char *os = "Unix";
   const char *lanmgr = "Showtime";
 
-  const char *domain = cc->cc_domain[0] ? (const char *)cc->cc_domain : "WORKGROUP";
+  char *domain = NULL;
+
 
   size_t ulen = 0;
-  size_t dlen = utf8_to_smb(cc, NULL, domain);
   size_t olen = utf8_to_smb(cc, NULL, os);
   size_t llen = utf8_to_smb(cc, NULL, lanmgr);
 
@@ -998,6 +998,8 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   password[0] = 0;
   password_len = 1;
   ulen = 2;
+  free(domain);
+  domain = strdup(cc->cc_domain[0] ? (const char *)cc->cc_domain : "WORKGROUP");
 
   if(cc->cc_security_mode & SECURITY_USER_LEVEL) {
     char id[256];
@@ -1012,7 +1014,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
     snprintf(name, sizeof(name), "Samba server '%s'", cc->cc_hostname);
 
-    int r = keyring_lookup(id, &username, &password_cleartext, NULL, NULL,
+    int r = keyring_lookup(id, &username, &password_cleartext, &domain, NULL,
 			   name, retry_reason,
 			   (retry_reason ? KEYRING_QUERY_USER : 0) |
 			   KEYRING_SHOW_REMEMBER_ME | KEYRING_REMEMBER_ME_SET);
@@ -1025,6 +1027,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     if(r == -1) {
       /* Rejected */
       snprintf(errbuf, errlen, "Authentication rejected by user");
+      free(domain);
       return -1;
     }
 
@@ -1038,6 +1041,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     }
   }
 
+  size_t dlen = utf8_to_smb(cc, NULL, domain);
   int password_pad = cc->cc_unicode && (password_len & 1) == 0;
   int bytecount = password_len + password_pad + ulen + dlen + olen + llen;
   int tlen = bytecount + sizeof(SMB_SETUP_ANDX_req_t);
@@ -1079,6 +1083,9 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   ptr += utf8_to_smb(cc, ptr, os);
   ptr += utf8_to_smb(cc, ptr, lanmgr);
   assert((ptr - (void *)req) == tlen);
+
+  free(domain);
+  domain = NULL;
 
   nbt_write(cc, req, tlen);
 
