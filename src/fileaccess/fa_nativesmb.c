@@ -999,7 +999,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   password_len = 1;
   ulen = 2;
   free(domain);
-  domain = strdup(cc->cc_domain[0] ? (const char *)cc->cc_domain : "WORKGROUP");
+  domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
 
   if(cc->cc_security_mode & SECURITY_USER_LEVEL) {
     char id[256];
@@ -1040,6 +1040,10 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
       free(password_cleartext);
     }
   }
+
+  // Reset domain if it was cleared by the keyring handler
+  if(domain == NULL)
+    domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
 
   size_t dlen = utf8_to_smb(cc, NULL, domain);
   int password_pad = cc->cc_unicode && (password_len & 1) == 0;
