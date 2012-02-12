@@ -43,7 +43,6 @@ typedef struct glw_clist {
 
 #define glw_parent_height glw_parent_val[0].i32
 #define glw_parent_pos    glw_parent_val[1].f
-#define glw_parent_
 
 
 /**
