@@ -1103,6 +1103,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   if(reply->hdr.errorcode) {
     if(retry_reason == NULL) {
       retry_reason = "Login failed";
+      free(rbuf);
       goto again;
     }
     snprintf(errbuf, errlen, "Login failed (0x%x)",
@@ -1119,6 +1120,14 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   }
 
   cc->cc_guest = letoh_16(reply->action) & 1;
+
+  if(cc->cc_security_mode & SECURITY_USER_LEVEL && cc->cc_guest &&
+     username != NULL && strcasecmp(username, "guest")) {
+    retry_reason = "Login failed";
+    free(rbuf);
+    goto again;
+  }
+
   cc->cc_uid = letoh_16(reply->hdr.uid);
   free(rbuf);
 
