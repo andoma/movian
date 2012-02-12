@@ -39,7 +39,14 @@ typedef struct glw_clist {
 
   float trail;
 
+  int spacing;
+
+  float center;
+
+  int child_height;
+
 } glw_clist_t;
+
 
 #define glw_parent_height glw_parent_val[0].i32
 #define glw_parent_pos    glw_parent_val[1].f
@@ -55,21 +62,26 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
   int ypos = 0;
   glw_rctx_t rc0 = *rc;
   float IH = 1.0f / rc->rc_height;
-  int itemh = rc->rc_height / 10;
+  int itemh = l->child_height ?: rc->rc_height * 0.1;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
     c->glw_parent_pos = GLW_LP(8, c->glw_parent_pos, 
-			       ypos - l->current_pos + rc->rc_height / 2);
+			       ypos - l->current_pos +
+			       rc->rc_height * l->center);
+
     ypos += itemh;
     if(c == w->glw_focused) {
       l->current_pos = ypos;
-      ypos += itemh;
+      ypos += itemh * 2;
     }
+
+    ypos += l->spacing;
+
   }
   l->trail = GLW_LP(8, l->trail, 
-		    ypos - l->current_pos + rc->rc_height / 2);
+		    ypos - l->current_pos + rc->rc_height * l->center);
 
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -78,7 +90,8 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
 
     n = glw_next_widget(c);
 
-    rc0.rc_height = (n ? n->glw_parent_pos : l->trail) - c->glw_parent_pos;
+    rc0.rc_height = (n ? n->glw_parent_pos : l->trail) - c->glw_parent_pos - l->spacing;
+
     c->glw_parent_height = rc0.rc_height;
     c->glw_norm_weight = rc0.rc_height * IH;
 
@@ -188,7 +201,42 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 ctor(glw_t *w)
 {
+  glw_clist_t *l = (glw_clist_t *)w;
   w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  l->center = 0.5;
+}
+
+
+/**
+ *
+ */
+static void 
+glw_clist_set(glw_t *w, va_list ap)
+{
+  glw_attribute_t attrib;
+  glw_clist_t *l = (glw_clist_t *)w;
+
+  do {
+    attrib = va_arg(ap, int);
+    switch(attrib) {
+
+    case GLW_ATTRIB_SPACING:
+      l->spacing = va_arg(ap, int);
+      break;
+
+    case GLW_ATTRIB_CENTER:
+      l->center = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_CHILD_HEIGHT:
+      l->child_height = va_arg(ap, int);
+      break;
+
+    default:
+      GLW_ATTRIB_CHEW(attrib, ap);
+      break;
+    }
+  } while(attrib);
 }
 
 
@@ -205,6 +253,7 @@ static glw_class_t glw_clist = {
   .gc_ctor = ctor,
   .gc_signal_handler = signal_handler,
   .gc_escape_score = 100,
+  .gc_set = glw_clist_set,
 };
 
 GLW_REGISTER_CLASS(glw_clist);
