@@ -725,7 +725,7 @@ lmresponse(uint8_t *out, const uint8_t *hash, const uint8_t *challenge)
  *
  */
 static void
-smb_init_header(cifs_connection_t *cc, SMB_t *h, int cmd, int flags, 
+smb_init_header(const cifs_connection_t *cc, SMB_t *h, int cmd, int flags, 
 		int flags2, uint16_t tid)
 {
   h->proto = htole_32(SMB_PROTO);
