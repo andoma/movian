@@ -2606,6 +2606,7 @@ typedef struct glwf_changed_extra {
     rstr_t *rstr;
     float value;
     const char *cstr;
+    prop_t *prop;
   } u;
 
   int transition;
@@ -2641,8 +2642,11 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   }
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_RSTRING &&
-     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING)
-    return glw_view_seterr(ec->ei, self, "Invalid first operand to changed()");
+     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING && 
+     a->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, self,
+			   "Invalid first operand (%s) to changed()",
+			   token2name(a));
 
   if(b->type != TOKEN_FLOAT)
     return glw_view_seterr(ec->ei, self, 
@@ -2652,6 +2656,8 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != e->type) {
     if(e->type == TOKEN_RSTRING)
       rstr_release(e->u.rstr);
+    else if(e->type == TOKEN_PROPERTY_REF)
+      prop_ref_dec(e->u.prop);
 
     e->type = a->type;
 
@@ -2667,6 +2673,10 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
     case TOKEN_FLOAT:
       e->u.value = a->t_float;
+      break;
+
+    case TOKEN_PROPERTY_REF:
+      e->u.prop = prop_ref_inc(a->t_prop);
       break;
 
     case TOKEN_VOID:
@@ -2698,6 +2708,14 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
     case TOKEN_FLOAT:
       if(e->u.value != a->t_float) {
 	e->u.value = a->t_float;
+	change = 1;
+      }
+      break;
+
+    case TOKEN_PROPERTY_REF:
+      if(e->u.prop != a->t_prop) {
+	prop_ref_dec(e->u.prop);
+	e->u.prop = prop_ref_inc(a->t_prop);
 	change = 1;
       }
       break;
@@ -2748,6 +2766,8 @@ glwf_changed_dtor(glw_root_t *gr, struct token *self)
 
   if(e->type == TOKEN_RSTRING)
     rstr_release(e->u.rstr);
+  else if(e->type == TOKEN_PROPERTY_REF)
+    prop_ref_dec(e->u.prop);
   free(e);
 }
 
