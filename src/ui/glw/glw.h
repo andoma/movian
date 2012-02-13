@@ -122,6 +122,7 @@ typedef enum {
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_SATURATION,
+  GLW_ATTRIB_CENTER,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -1070,6 +1071,7 @@ do {						\
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
+  case GLW_ATTRIB_CENTER:                       \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
