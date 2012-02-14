@@ -2841,7 +2841,8 @@ typedef struct glw_scurve_extra {
   float start;
   float current;
   float target;
-  float time;
+  float time_up;
+  float time_down;
 
 } glw_scurve_extra_t;
 
@@ -2853,26 +2854,38 @@ static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
-  token_t *b = argv[1];
+  token_t *a, *b, *c;
   token_t *r;
-  float f, v, t;
+  float f, v, tup, tdown;
   glw_scurve_extra_t *s = self->t_extra;
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(argc < 2) 
+    return glw_view_seterr(ec->ei, self,
+			    "scurve() requires at least two arguments");
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, b)) == NULL)
+  if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
+  if(argc > 2) {
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+  } else {
+    c = NULL;
+  }
 
   f = token2float(a);
-  t = token2float(b);
+  tup = token2float(b);
+  tdown = token2float(c?:b);
 
-  if(s->target != f || s->time != t) {
+  if(s->target != f || s->time_up != tup || s->time_down != tdown) {
     s->start = s->target;
     s->target = f;
-    s->time = t;
+    s->time_up = tup;
+    s->time_down = tdown;
     s->x = 0;
-    s->xd = 1.0 / (1000000 * s->time / ec->w->glw_root->gr_frameduration);
+    float t = s->target < s->start ? tdown : tup;
+    s->xd = 1.0 / (1000000 * t / ec->w->glw_root->gr_frameduration);
   }
 
   s->x += s->xd;
@@ -4683,7 +4696,7 @@ static const token_func_t funcvec[] = {
   {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
-  {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
+  {"scurve", -1, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
