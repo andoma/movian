@@ -179,6 +179,11 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
   const char *url = rstr_get(url0);
   htsmsg_t *m = NULL;
 
+  if(im && (im->im_req_width < -1 || im->im_req_height < -1)) {
+    snprintf(errbuf, errlen, "Invalid dimensions");
+    return NULL;
+  }
+
   if(!strncmp(url, "thumb://", 8)) {
     image_meta_t im0;
 
