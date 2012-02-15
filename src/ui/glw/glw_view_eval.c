@@ -4370,7 +4370,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   token_t *a, *b, *c, *d, *r;
 
   if(argc < 2)
-    return glw_view_seterr(ec->ei, a, "propSorter(): "
+    return glw_view_seterr(ec->ei, self, "propSorter(): "
 			   "Too few arguments");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
