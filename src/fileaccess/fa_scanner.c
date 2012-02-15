@@ -284,6 +284,7 @@ tryplay(scanner_t *s)
       playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
       free(s->s_playme);
       s->s_playme = NULL;
+      return;
     }
   }
 }
