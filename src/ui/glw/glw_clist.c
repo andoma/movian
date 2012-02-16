@@ -51,7 +51,7 @@ typedef struct glw_clist {
 #define glw_parent_height glw_parent_val[0].i32
 #define glw_parent_pos    glw_parent_val[1].f
 #define glw_parent_height2 glw_parent_val[2].i32
-
+#define glw_parent_inited  glw_parent_val[3].i32
 
 /**
  *
@@ -69,10 +69,15 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-    c->glw_parent_pos = GLW_LP(6, c->glw_parent_pos, 
-			       ypos - l->current_pos +
-			       rc->rc_height * l->center);
-
+    
+    const int tpos = ypos - l->current_pos + rc->rc_height * l->center;
+    
+    if(c->glw_parent_inited) {
+      c->glw_parent_pos = GLW_LP(6, c->glw_parent_pos, tpos);
+    } else {
+      c->glw_parent_pos = tpos;
+      c->glw_parent_inited = 1;
+    }
 
     int f = glw_filter_constraints(c->glw_flags);
 	
