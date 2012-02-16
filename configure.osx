@@ -88,6 +88,7 @@ fi
 compiler_setup
 if [ "x$ARCH" != "x" ]; then
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -arch $ARCH"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -arch $ARCH"
     echo "Compiling for arch:    $ARCH"
 fi
 
@@ -150,11 +151,13 @@ if enabled appleremote; then
 fi
 
 
-LIBAV_CFLAGS="$MACOSXSDK_CFLAGS"
-LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS"
 LIBAV_ARCH_FLAGS="--cc=$CC"
-if [ "x$ARCH" != "x" ]; then
-    LIBAV_ARCH_FLAGS="$LIBAV_ARCH_FLAGS --arch=$ARCH"
+if [ "$ARCH" = "x86_64" ]; then
+    LIBAV_CFLAGS="$MACOSXSDK_CFLAGS -m64"
+    LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS -m64"
+else
+    LIBAV_CFLAGS="$MACOSXSDK_CFLAGS -m32"
+    LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS -m32"
 fi
 
 libav_setup
