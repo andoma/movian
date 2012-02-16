@@ -478,23 +478,6 @@ token2float(token_t *t)
 /**
  *
  */
-static const char *
-token2string(token_t *t)
-{
-  switch(t->type) {
-  case TOKEN_RSTRING:
-    return rstr_get(t->t_rstring);
-  case TOKEN_CSTRING:
-    return t->t_cstring;
-  default:
-    return NULL;
-  }
-}
-
-
-/**
- *
- */
 static int
 token2bool(token_t *t)
 {
@@ -4407,7 +4390,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
     if((d = token_resolve(ec, argv[3])) == NULL)
       return -1;
     
-    const char *path = token2string(a);
+    const char *path = token_as_string(a);
     if(path == NULL)
       continue;
 
@@ -4430,7 +4413,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
     else
       continue;
     
-    const char *val = token2string(c);
+    const char *val = token_as_string(c);
 
     if(val != NULL) {
       prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
