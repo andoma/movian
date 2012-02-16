@@ -347,13 +347,30 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
     if((aa = token_as_string(a)) != NULL &&
        (bb = token_as_string(b)) != NULL) {
       /* Concatenation of strings */
-      int al = strlen(aa);
-      int bl = strlen(bb);
+      
+      int rich = 
+	(a->type == TOKEN_RSTRING && a->t_rstrtype == PROP_STR_RICH) ||
+	(b->type == TOKEN_RSTRING && b->t_rstrtype == PROP_STR_RICH);
+
+      int al = rich && a->t_rstrtype == PROP_STR_UTF8 ? 
+	html_enteties_escape(aa, NULL) - 1 : strlen(aa);
+      int bl = rich && b->t_rstrtype == PROP_STR_UTF8 ? 
+	html_enteties_escape(bb, NULL) - 1 : strlen(bb);
 
       r = eval_alloc(self, ec, TOKEN_RSTRING);
       r->t_rstring = rstr_allocl(NULL, al + bl);
-      memcpy(rstr_data(r->t_rstring),      aa, al);
-      memcpy(rstr_data(r->t_rstring) + al, bb, bl);
+      r->t_rstrtype = rich ? PROP_STR_RICH : PROP_STR_UTF8;
+
+      if(rich && a->t_rstrtype == PROP_STR_UTF8)
+	html_enteties_escape(aa, rstr_data(r->t_rstring));
+      else
+	memcpy(rstr_data(r->t_rstring),      aa, al);
+
+      if(rich && b->t_rstrtype == PROP_STR_UTF8)
+	html_enteties_escape(bb, rstr_data(r->t_rstring) + al);
+      else
+	memcpy(rstr_data(r->t_rstring) + al, bb, bl);
+
       eval_push(ec, r);
       return 0;
     }
