@@ -211,15 +211,15 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01f) {
 
       if(w->glw_flags2 & GLW2_SHADOW && !rc0.rc_inhibit_shadows) {
-	float xd =  3.0f / rc0.rc_width;
-	float yd = -3.0f / rc0.rc_height;
+	float xd =  6.0f / rc0.rc_width;
+	float yd = -6.0f / rc0.rc_height;
 
 	glw_Translatef(&rc0, xd, yd, 0.0f);
 	
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, NULL, alpha_self * 0.75f, blur);
+			  &black, NULL, alpha_self * 0.75f, 1);
 	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
