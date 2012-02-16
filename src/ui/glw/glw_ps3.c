@@ -917,23 +917,6 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
      return 1;
 
   glw_root_t *gr = &gp->gr;
-
-
-  if(gp->res.height >= 1080) {
-    gr->gr_base_size = 26;
-    gr->gr_base_underscan_h = 66;
-    gr->gr_base_underscan_v = 34;
-  } else if(gp->res.height >= 720) {
-    gr->gr_base_size = 21;
-    gr->gr_base_underscan_h = 43;
-    gr->gr_base_underscan_v = 22;
-  } else {
-    gr->gr_base_size = 18;
-    gr->gr_base_underscan_h = 36;
-    gr->gr_base_underscan_v = 20;
-  }
-
-
   
   if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
