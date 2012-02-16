@@ -193,6 +193,9 @@ spotlight_searcher(void *aux)
     CFRelease(pathRef);
     metadata_t *md = fa_probe_metadata(path, NULL, 0);
     
+    if(md == NULL)
+      continue;
+
     t = 0;
     ctype = md->md_contenttype;
     switch(md->md_contenttype) {

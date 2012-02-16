@@ -478,6 +478,23 @@ token2float(token_t *t)
 /**
  *
  */
+static const char *
+token2string(token_t *t)
+{
+  switch(t->type) {
+  case TOKEN_RSTRING:
+    return rstr_get(t->t_rstring);
+  case TOKEN_CSTRING:
+    return t->t_cstring;
+  default:
+    return NULL;
+  }
+}
+
+
+/**
+ *
+ */
 static int
 token2bool(token_t *t)
 {
@@ -2606,6 +2623,7 @@ typedef struct glwf_changed_extra {
     rstr_t *rstr;
     float value;
     const char *cstr;
+    prop_t *prop;
   } u;
 
   int transition;
@@ -2641,8 +2659,11 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   }
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_RSTRING &&
-     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING)
-    return glw_view_seterr(ec->ei, self, "Invalid first operand to changed()");
+     a->type != TOKEN_VOID && a->type != TOKEN_CSTRING && 
+     a->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, self,
+			   "Invalid first operand (%s) to changed()",
+			   token2name(a));
 
   if(b->type != TOKEN_FLOAT)
     return glw_view_seterr(ec->ei, self, 
@@ -2652,6 +2673,8 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
   if(a->type != e->type) {
     if(e->type == TOKEN_RSTRING)
       rstr_release(e->u.rstr);
+    else if(e->type == TOKEN_PROPERTY_REF)
+      prop_ref_dec(e->u.prop);
 
     e->type = a->type;
 
@@ -2667,6 +2690,10 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
     case TOKEN_FLOAT:
       e->u.value = a->t_float;
+      break;
+
+    case TOKEN_PROPERTY_REF:
+      e->u.prop = prop_ref_inc(a->t_prop);
       break;
 
     case TOKEN_VOID:
@@ -2698,6 +2725,14 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
     case TOKEN_FLOAT:
       if(e->u.value != a->t_float) {
 	e->u.value = a->t_float;
+	change = 1;
+      }
+      break;
+
+    case TOKEN_PROPERTY_REF:
+      if(e->u.prop != a->t_prop) {
+	prop_ref_dec(e->u.prop);
+	e->u.prop = prop_ref_inc(a->t_prop);
 	change = 1;
       }
       break;
@@ -2748,6 +2783,8 @@ glwf_changed_dtor(glw_root_t *gr, struct token *self)
 
   if(e->type == TOKEN_RSTRING)
     rstr_release(e->u.rstr);
+  else if(e->type == TOKEN_PROPERTY_REF)
+    prop_ref_dec(e->u.prop);
   free(e);
 }
 
@@ -2821,7 +2858,8 @@ typedef struct glw_scurve_extra {
   float start;
   float current;
   float target;
-  float time;
+  float time_up;
+  float time_down;
 
 } glw_scurve_extra_t;
 
@@ -2833,26 +2871,38 @@ static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
-  token_t *b = argv[1];
+  token_t *a, *b, *c;
   token_t *r;
-  float f, v, t;
+  float f, v, tup, tdown;
   glw_scurve_extra_t *s = self->t_extra;
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(argc < 2) 
+    return glw_view_seterr(ec->ei, self,
+			    "scurve() requires at least two arguments");
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, b)) == NULL)
+  if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
+  if(argc > 2) {
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+  } else {
+    c = NULL;
+  }
 
   f = token2float(a);
-  t = token2float(b);
+  tup = token2float(b);
+  tdown = token2float(c?:b);
 
-  if(s->target != f || s->time != t) {
+  if(s->target != f || s->time_up != tup || s->time_down != tdown) {
     s->start = s->target;
     s->target = f;
-    s->time = t;
+    s->time_up = tup;
+    s->time_down = tdown;
     s->x = 0;
-    s->xd = 1.0 / (1000000 * s->time / ec->w->glw_root->gr_frameduration);
+    float t = s->target < s->start ? tdown : tup;
+    s->xd = 1.0 / (1000000 * t / ec->w->glw_root->gr_frameduration);
   }
 
   s->x += s->xd;
@@ -4317,7 +4367,11 @@ static int
 glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *r;
+  token_t *a, *b, *c, *d, *r;
+
+  if(argc < 2)
+    return glw_view_seterr(ec->ei, self, "propSorter(): "
+			   "Too few arguments");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
@@ -4339,6 +4393,52 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 rstr_get(b->t_rstring),
 				 PROP_NF_TAKE_DST_OWNERSHIP);
+
+  argc -= 2;
+  argv += 2;
+  for(; argc >= 4; argc -= 4, argv += 4) {
+
+    if((a = token_resolve(ec, argv[0])) == NULL)
+      return -1;
+    if((b = token_resolve(ec, argv[1])) == NULL)
+      return -1;
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+    if((d = token_resolve(ec, argv[3])) == NULL)
+      return -1;
+    
+    const char *path = token2string(a);
+    if(path == NULL)
+      continue;
+
+    if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
+      continue;
+
+    prop_nf_cmp_t cf;
+    if(!strcmp(rstr_get(b->t_rstring), "eq"))
+      cf = PROP_NF_CMP_EQ;
+    else if(!strcmp(rstr_get(b->t_rstring), "neq"))
+      cf = PROP_NF_CMP_NEQ;
+    else
+      continue;
+
+    prop_nf_mode_t mode;
+    if(!strcmp(rstr_get(d->t_rstring), "include"))
+      mode = PROP_NF_MODE_INCLUDE;
+    else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
+      mode = PROP_NF_MODE_EXCLUDE;
+    else
+      continue;
+    
+    const char *val = token2string(c);
+
+    if(val != NULL) {
+      prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+    } else {
+      prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+    }
+  }
+
   return 0;
 }
 
@@ -4663,7 +4763,7 @@ static const token_func_t funcvec[] = {
   {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
-  {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
+  {"scurve", -1, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
@@ -4696,7 +4796,7 @@ static const token_func_t funcvec[] = {
   {"count", 1, glwf_count},
   {"deliverEvent", -1, glwf_deliverEvent},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
-  {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
+  {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"getLayer", 0, glwf_getLayer},
   {"getWidth", 0, glwf_getWidth},
   {"getHeight", 0, glwf_getHeight},

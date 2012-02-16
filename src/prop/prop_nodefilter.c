@@ -448,6 +448,36 @@ nfnp_update_int(void *opaque, int val)
 }
 
 
+/**
+ *
+ */
+static void
+nfn_insert_pred(prop_nf_t *nf, nfnode_t *nfn, prop_nf_pred_t *pnp)
+{
+  nfn_pred_t *nfnp = calloc(1, sizeof(nfn_pred_t));
+
+  nfnp->nfnp_conf = pnp;
+  nfnp->nfnp_nfn = nfn;
+
+  LIST_INSERT_HEAD(&nfn->preds, nfnp, nfnp_link);
+
+  if(pnp->pnp_str != NULL) {
+    nfnp->nfnp_sub = 
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
+		     PROP_TAG_CALLBACK_STRING, nfnp_update_str, nfnp,
+		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
+		     PROP_TAG_NAME_VECTOR, pnp->pnp_path,
+		     NULL);
+  } else {
+    nfnp->nfnp_sub = 
+      prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
+		     PROP_TAG_CALLBACK_INT, nfnp_update_int, nfnp,
+		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
+		     PROP_TAG_NAME_VECTOR, pnp->pnp_path,
+		     NULL);
+  }
+}
+
 
 /**
  *
@@ -457,31 +487,8 @@ nfn_insert_preds(prop_nf_t *nf, nfnode_t *nfn)
 {
   prop_nf_pred_t *pnp;
 
-  LIST_FOREACH(pnp, &nf->preds, pnp_link) {
-
-    nfn_pred_t *nfnp = calloc(1, sizeof(nfn_pred_t));
-
-    nfnp->nfnp_conf = pnp;
-    nfnp->nfnp_nfn = nfn;
-
-    LIST_INSERT_HEAD(&nfn->preds, nfnp, nfnp_link);
-
-    if(pnp->pnp_str != NULL) {
-      nfnp->nfnp_sub = 
-	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
-		       PROP_TAG_CALLBACK_STRING, nfnp_update_str, nfnp,
-		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
-		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
-		       NULL);
-    } else {
-      nfnp->nfnp_sub = 
-	prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
-		       PROP_TAG_CALLBACK_INT, nfnp_update_int, nfnp,
-		       PROP_TAG_NAMED_ROOT, nfn->in, "node",
-		       PROP_TAG_NAME_VECTOR, pnp->pnp_path,
-		       NULL);
-    }
-  }
+  LIST_FOREACH(pnp, &nf->preds, pnp_link)
+    nfn_insert_pred(nf, nfn, pnp);
 }
 
 
@@ -1024,6 +1031,8 @@ prop_nf_pred_add(struct prop_nf *nf,
 		 prop_nf_mode_t mode,
 		 struct prop_nf_pred *pnp)
 {
+  nfnode_t *nfn;
+
   pnp->pnp_path = strvec_split(path, '.');
   pnp->pnp_cf = cf;
   pnp->pnp_mode = mode;
@@ -1038,11 +1047,10 @@ prop_nf_pred_add(struct prop_nf *nf,
 		     NULL);
   } else {
     pnp->pnp_enabled = 1;
-    nfnode_t *nfn;
-
-    TAILQ_FOREACH(nfn, &nf->in, in_link)
-      nf_update_egress(nf, nfn);
   }
+
+  TAILQ_FOREACH(nfn, &nf->in, in_link)
+    nfn_insert_pred(nf, nfn, pnp);
 }
 
 

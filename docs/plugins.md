@@ -492,6 +492,13 @@ Ask the user for authentication credentials.
   Showtime to get a token that can be renewed to retain authentication
   against the service. For these type of services it makes no sense to
   store the Username/Password in clear text.
+
+
+#### onEvent(String event, Function handler)
+
+*Available from 3.5.6*
+
+Receive global events.
   
 ## The settings object
 

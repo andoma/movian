@@ -122,6 +122,7 @@ typedef enum {
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_SATURATION,
+  GLW_ATTRIB_CENTER,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -689,6 +690,9 @@ typedef struct glw_root {
 
   // Base offsets, should be set by frontend
   int gr_base_size;
+  int gr_user_size;
+  int gr_current_size;
+
   int gr_base_underscan_v;
   int gr_base_underscan_h;
 
@@ -1070,6 +1074,7 @@ do {						\
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
+  case GLW_ATTRIB_CENTER:                       \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -1175,6 +1180,8 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 void glw_gf_do(void);
 
 void glw_font_change_size(void *opaque, int fontsize);
+
+void glw_update_size(glw_root_t *gr);
 
 /**
  *

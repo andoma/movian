@@ -49,7 +49,7 @@ typedef struct glw_cocoa {
   /* used to pass args from glw_cocoa_start to prepareOpenGL */
   ui_t *start_ui;
   int start_primary;
-  char *start_theme;
+  const char *theme_path;
   
   int glready; /* prepareOpenGL has been run */
   
@@ -143,9 +143,9 @@ static const struct {
   { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
   { NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
   
-  { NSF5FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
-  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
-  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
+  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
+  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
+  { NSF8FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
   
   { NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
   { NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
@@ -161,6 +161,7 @@ static const struct {
   { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
   
   { NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
+  { NSF5FunctionKey,	    NSShiftKeyMask,	ACTION_RELOAD_DATA },
 };
 
 
@@ -174,10 +175,13 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   showtime_shutdown(0);
 }
 
+
 /* delegated from window */
 - (void)windowWillClose:(NSNotification *)aNotification {
   showtime_shutdown(0);
+  exit(0);
 }
+
 
 - (IBAction)clickIncreaseZoom:(id)sender {
   glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
@@ -753,7 +757,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   timer_cursor = nil;
   
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa.gr, SHOWTIME_GLW_DEFAULT_THEME_URL,
+  if(glw_init(&gcocoa.gr, gcocoa.theme_path ?: SHOWTIME_GLW_DEFAULT_THEME_URL,
               gcocoa.start_ui, gcocoa.start_primary,
               "glw/cocoa/default", NULL))
     return;
@@ -851,6 +855,24 @@ glw_cocoa_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   gcocoa.start_ui = ui;
   gcocoa.start_primary = primary;
   gcocoa.gr.gr_uii.uii_prop = root;
+
+
+  /* Parse options */
+
+  argv++;
+  argc--;
+
+  while(argc > 0) {
+    if(!strcmp(argv[0], "--theme") && argc > 1) {
+      gcocoa.theme_path = argv[1];
+      argc -= 2; argv += 2;
+
+      continue;
+    } else {
+      break;
+    }
+  }
+
 
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };

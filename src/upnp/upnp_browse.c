@@ -143,11 +143,11 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
 		   "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI")) {
     
     if(artist != NULL && album != NULL)
-      lastfm_albumart_init(prop_create(m, "album_art"), artist, album);
+      metadata_bind_albumart(prop_create(m, "album_art"), artist, album);
   }
 
   if(artist != NULL)
-    lastfm_artistpics_init(prop_create(m, "artist_images"), artist);
+    metadata_bind_artistpics(prop_create(m, "artist_images"), artist);
 
   rstr_release(artist);
   rstr_release(album);
