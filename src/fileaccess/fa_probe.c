@@ -484,21 +484,6 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   int has_video = 0;
   int has_audio = 0;
 
-  /* Format meta info */
-
-  md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
-  if(md->md_title == NULL) {
-    fa_url_get_last_component(tmp1, sizeof(tmp1), url);
-
-    // Strip .xxx ending in filenames
-    i = strlen(tmp1);
-    if(i > 4 && tmp1[i - 4] == '.')
-      tmp1[i - 4] = 0;
-
-    url_deescape(tmp1);
-    md->md_title = rstr_alloc(tmp1);
-  }
-
   md->md_artist = ffmpeg_metadata_get(fctx->metadata, "artist") ?:
     ffmpeg_metadata_get(fctx->metadata, "author");
 
@@ -570,8 +555,20 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   md->md_contenttype = CONTENT_FILE;
   if(has_video)
     md->md_contenttype = CONTENT_VIDEO;
-  else if(has_audio)
+  else if(has_audio) {
     md->md_contenttype = CONTENT_AUDIO;
+
+    // Only grab title if it's audio
+    md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
+  }
+
+  /* Format meta info */
+
+  if(md->md_title == NULL) {
+    fa_url_get_last_component(tmp1, sizeof(tmp1), url);
+
+    md->md_title = metadata_filename_to_title(tmp1, NULL);
+  }
 }
   
 

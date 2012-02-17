@@ -2394,7 +2394,7 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
  *
  */
 void
-prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr, int noupdate)
+prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
 {
   if(p == NULL)
     return;
@@ -2406,7 +2406,7 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr, int noupdate)
 
   hts_mutex_lock(&prop_mutex);
 
-  if(p->hp_type == PROP_ZOMBIE || (p->hp_type != PROP_VOID && noupdate)) {
+  if(p->hp_type == PROP_ZOMBIE) {
     hts_mutex_unlock(&prop_mutex);
     return;
   }

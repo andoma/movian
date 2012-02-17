@@ -27,6 +27,7 @@
 #include "showtime.h"
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
+#include "misc/string.h"
 
 #include "api/lastfm.h"
 
@@ -192,7 +193,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   metadata_stream_t *ms;
   int ac = 0, vc = 0, sc = 0, *pc;
 
-  if(md->md_title != NULL && md->md_contenttype != CONTENT_VIDEO)
+  if(md->md_title != NULL)
     prop_set_rstring(prop_create(proproot, "title"), md->md_title);
 
   if(md->md_artist) {
@@ -461,3 +462,24 @@ metadata_init(void)
   metadata_courier = prop_courier_create_thread(&metadata_mutex, "metadata");
 }
 
+
+/**
+ *
+ */
+rstr_t *
+metadata_filename_to_title(const char *filename, int *yearp)
+{
+  if(yearp != NULL)
+    *yearp = -1;
+
+  char *s = mystrdupa(filename);
+
+  url_deescape(s);
+
+  // Strip .xxx ending in filenames
+  int i = strlen(s);
+  if(i > 4 && s[i - 4] == '.')
+    s[i - 4] = 0;
+
+  return rstr_alloc(s);
+}

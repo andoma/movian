@@ -107,9 +107,6 @@ struct prop_vec *metadata_to_proptree(const metadata_t *md,
 				      int cleanup_streams,
 				      struct prop_vec *streams);
 
-
-
-
 void metadb_init(void);
 
 void metadb_fini(void);
@@ -172,4 +169,5 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
+rstr_t *metadata_filename_to_title(const char *filename, int *yearp);
 

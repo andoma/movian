@@ -102,54 +102,39 @@ set_type(prop_t *proproot, unsigned int type)
 /**
  *
  */
-static rstr_t *
-make_filename(const char *filename)
-{
-  char *s = mystrdupa(filename);
-  char *p = strrchr(s, '.');
-  if(p != NULL)
-    *p = 0;
-
-  return rstr_alloc(s);
-}
-
-
-
-/**
- *
- */
 static void
 make_prop(fa_dir_entry_t *fde)
 {
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata;
-  rstr_t *fname;
-
-  if(fde->fde_type == CONTENT_DIR) {
-    fname = rstr_alloc(fde->fde_filename);
-  } else {
-    fname = make_filename(fde->fde_filename);
-  }
 
   prop_set_string(prop_create(p, "url"), fde->fde_url);
   set_type(p, fde->fde_type);
 
-  prop_set_rstring(prop_create(p, "filename"), fname);
-
   if(fde->fde_metadata != NULL) {
 
     metadata = fde->fde_metadata;
-
+    
     if(prop_set_parent(metadata, p))
       abort();
 
     fde->fde_metadata = NULL;
   } else {
+
+    rstr_t *title;
+    
+    if(fde->fde_type == CONTENT_DIR) {
+      title = rstr_alloc(fde->fde_filename);
+    } else {
+      title = metadata_filename_to_title(fde->fde_filename, NULL);
+    }
+    
     metadata = prop_create(p, "metadata");
-    prop_set_rstring(prop_create(metadata, "title"), fname);
+    prop_set_rstring(prop_create(metadata, "title"), title);
+
+    rstr_release(title);
   }
 
-  rstr_release(fname);
   assert(fde->fde_prop == NULL);
   fde->fde_prop = prop_ref_inc(p);
 }
@@ -612,7 +597,7 @@ fa_scanner(const char *url, time_t url_mtime,
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       source,
 		       prop_create(model, "filter"),
-		       "node.filename", PROP_NF_AUTODESTROY);
+		       "node.metadata.title", PROP_NF_AUTODESTROY);
   
   prop_nf_pred_str_add(pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
