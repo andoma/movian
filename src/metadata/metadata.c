@@ -463,6 +463,8 @@ metadata_init(void)
 }
 
 
+#define isnum(a) ((a) >= '0' && (a) <= '9')
+
 /**
  *
  */
@@ -478,8 +480,59 @@ metadata_filename_to_title(const char *filename, int *yearp)
 
   // Strip .xxx ending in filenames
   int i = strlen(s);
-  if(i > 4 && s[i - 4] == '.')
-    s[i - 4] = 0;
+  if(i > 4 && s[i - 4] == '.') {
+    i -= 4;
+    s[i] = 0;
+  }
 
+  while(i > 0) {
+    
+    if(i > 5 && s[i-5] == '.' &&
+       isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) && isnum(s[i-1])) {
+      if(yearp)
+	*yearp = atoi(s + i - 4);
+      i -= 5;
+      s[i] = 0;
+      continue;
+    }
+
+    if(i > 7 && s[i-7] == ' ' && s[i-6] == '(' && 
+       isnum(s[i-5]) && isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) &&
+       s[i-1] == ')') {
+      if(yearp)
+	*yearp = atoi(s + i - 5);
+      i -= 7;
+      s[i] = 0;
+      continue;
+    }
+
+    if(i > 5 && !strncmp(s+i-5, ".720p", 5)) {
+      i -= 5;
+      s[i] = 0;
+      continue;
+    }
+    
+    if(i > 6 && !strncmp(s+i-6, ".1080p", 6)) {
+      i -= 6;
+      s[i] = 0;
+      continue;
+    }
+
+    if(i > 4 && !strncmp(s+i-4, "x264", 4)) {
+      i -= 4;
+      s[i] = 0;
+      continue;
+    }
+
+    i--;
+  }
+
+  i = 0;
+  while(s[i]) {
+    if(s[i] == '.')
+      s[i] = ' ';
+    i++;
+  }
+ 
   return rstr_alloc(s);
 }

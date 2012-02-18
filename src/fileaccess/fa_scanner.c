@@ -122,15 +122,19 @@ make_prop(fa_dir_entry_t *fde)
   } else {
 
     rstr_t *title;
+    int year = -1;
     
     if(fde->fde_type == CONTENT_DIR) {
-      title = rstr_alloc(fde->fde_filename);
+      //      title = rstr_alloc(fde->fde_filename);
+      title = metadata_filename_to_title(fde->fde_filename, &year);
     } else {
-      title = metadata_filename_to_title(fde->fde_filename, NULL);
+      title = metadata_filename_to_title(fde->fde_filename, &year);
     }
     
     metadata = prop_create(p, "metadata");
     prop_set_rstring(prop_create(metadata, "title"), title);
+    if(year != -1)
+      prop_set_int(prop_create(metadata, "year"), year);
 
     rstr_release(title);
   }
@@ -166,6 +170,8 @@ static struct strtab postfixtab[] = {
   { "ts",              CONTENT_VIDEO },
   { "mpg",             CONTENT_VIDEO },
   { "wmv",             CONTENT_VIDEO },
+  { "mp4",             CONTENT_VIDEO },
+  { "mts",             CONTENT_VIDEO },
 
   { "sid",             CONTENT_ALBUM },
 
@@ -345,7 +351,7 @@ scanner_checkstop(void *opaque)
 /**
  *
  */
-static void
+static int
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
   TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s",
@@ -356,14 +362,16 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 
   make_prop(fde);
 
-  deep_probe(fde, s);
+  //  deep_probe(fde, s);
 
   if(!prop_set_parent(fde->fde_prop, s->s_nodes))
-    return; // OK
+    return 1; // OK
   
   prop_destroy(fde->fde_prop);
   fde->fde_prop = NULL;
+  return 0;
 }
+
 
 /**
  *
@@ -462,8 +470,7 @@ rescan(scanner_t *s)
     TAILQ_INSERT_TAIL(&s->s_fd->fd_entries, b, fde_link);
     s->s_fd->fd_count++;
 
-    scanner_entry_setup(s, b, "rescan");
-    changed = 1;
+    changed |= scanner_entry_setup(s, b, "rescan");
   }
 
   if(changed)

@@ -553,9 +553,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   }
   
   md->md_contenttype = CONTENT_FILE;
-  if(has_video)
+  if(has_video) {
     md->md_contenttype = CONTENT_VIDEO;
-  else if(has_audio) {
+  } else if(has_audio) {
     md->md_contenttype = CONTENT_AUDIO;
 
     // Only grab title if it's audio
