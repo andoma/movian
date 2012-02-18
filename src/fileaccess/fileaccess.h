@@ -127,6 +127,7 @@ typedef struct fa_handle {
 typedef enum {
   FA_NOTIFY_ADD,
   FA_NOTIFY_DEL,
+  FA_NOTIFY_DIR_CHANGE,
 } fa_notify_op_t;
 
 

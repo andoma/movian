@@ -309,6 +309,80 @@ fs_notify(struct fa_protocol *fap, const char *url,
 
 #endif
 
+#if ENABLE_FSEVENTS
+#include <CoreFoundation/CoreFoundation.h>
+#include <CoreServices/CoreServices.h>
+
+struct fs_notify_aux {
+  void *opaque;
+  void (*change)(void *opaque,
+		 fa_notify_op_t op, 
+		 const char *filename,
+		 const char *url,
+		 int type);  
+}; 
+
+
+static void 
+fs_notify_callback(ConstFSEventStreamRef streamRef,
+		   void *clientCallBackInfo,
+		   size_t numEvents,
+		   void *eventPaths,
+		   const FSEventStreamEventFlags eventFlags[],
+		   const FSEventStreamEventId eventIds[])
+{
+  struct fs_notify_aux *fna = clientCallBackInfo;
+  fna->change(fna->opaque, FA_NOTIFY_DIR_CHANGE, NULL, NULL, 0);
+}
+
+/**
+ *
+ */
+static void
+fs_notify(struct fa_protocol *fap, const char *url,
+	  void *opaque,
+	  void (*change)(void *opaque,
+			 fa_notify_op_t op, 
+			 const char *filename,
+			 const char *url,
+			 int type),
+	  int (*breakcheck)(void *opaque))
+{
+  FSEventStreamRef fse;
+  FSEventStreamContext ctx = {0};
+  struct fs_notify_aux fna;
+  fna.opaque = opaque;
+  fna.change = change;
+  ctx.info = &fna;
+
+  CFStringRef p = CFStringCreateWithCString(NULL, url, kCFStringEncodingUTF8);
+
+  CFArrayRef paths = CFArrayCreate(NULL, (const void **)&p, 1, NULL);
+
+  fse = FSEventStreamCreate(kCFAllocatorDefault, 
+			    fs_notify_callback, &ctx, paths,
+			    kFSEventStreamEventIdSinceNow,
+			    0.1, 0);
+  CFRelease(paths);
+  CFRelease(p);
+
+  FSEventStreamScheduleWithRunLoop(fse, CFRunLoopGetCurrent(),
+				   kCFRunLoopDefaultMode);
+  FSEventStreamStart(fse);				   
+  while(1) {
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false);
+
+    if(breakcheck(opaque))
+      break;
+  }
+
+  FSEventStreamStop(fse);
+  FSEventStreamInvalidate(fse);
+  FSEventStreamRelease(fse);
+}
+#endif
+
+
 #if ENABLE_REALPATH
 /**
  *
@@ -336,6 +410,9 @@ fa_protocol_t fa_protocol_fs = {
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
 #if ENABLE_INOTIFY
+  .fap_notify = fs_notify,
+#endif
+#if ENABLE_FSEVENTS
   .fap_notify = fs_notify,
 #endif
 #if ENABLE_REALPATH

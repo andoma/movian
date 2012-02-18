@@ -73,6 +73,7 @@ CONFIG_LIST="
  psl1ght
  timegm
  inotify
+ fsevents
  realpath
  trex
  emu_thread_specifics

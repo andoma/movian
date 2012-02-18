@@ -56,6 +56,8 @@ typedef struct scanner {
 
 } scanner_t;
 
+static void rescan(scanner_t *s);
+
 
 /**
  *
@@ -397,7 +399,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
   scanner_t *s = opaque;
   fa_dir_entry_t *fde;
 
-  if(filename[0] == '.')
+  if(filename && filename[0] == '.')
     return; /* Skip all dot-filenames */
 
   switch(op) {
@@ -414,6 +416,10 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
     scanner_entry_setup(s, fa_dir_add(s->s_fd, url, filename, type),
 			"notification");
     break;
+
+  case FA_NOTIFY_DIR_CHANGE:
+    rescan(s);
+    return;
   }
   analyzer(s, 1);
 }
