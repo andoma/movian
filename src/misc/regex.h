@@ -34,7 +34,6 @@ typedef struct {
 } hts_regmatch_t;
 
 #define REG_EXTENDED 0
-#define REG_EXTENDED 0
 
 static inline int hts_regcomp(hts_regex_t *r, const char *pat)
 {
