@@ -2659,6 +2659,9 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
   if(pl->pl_offline_sub != NULL)
     prop_unsubscribe(pl->pl_offline_sub);
 
+  if(pl->pl_collab_sub != NULL)
+    prop_unsubscribe(pl->pl_collab_sub);
+
   if(pl->pl_node_sub) {
     f_sp_playlist_remove_callbacks(pl->pl_playlist,
 				   &pl_callbacks_withtracks, pl);
@@ -2697,8 +2700,7 @@ item_opt_add_toggle(prop_t *parent, prop_t *title,
   prop_set_int(v, on);
   prop_link(title, prop_create(n, "title"));
   
-  s = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID |
-		     PROP_SUB_AUTO_DESTROY,
+  s = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		     PROP_TAG_CALLBACK_INT, cb, opaque,
 		     PROP_TAG_ROOT, v,
 		     PROP_TAG_COURIER, pc,
