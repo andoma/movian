@@ -292,7 +292,7 @@ struct prop_sub {
   /**
    * Flags as passed to prop_subscribe(). May never be changed
    */
-  uint8_t hps_flags;
+  uint16_t hps_flags;
 
   /**
    * Linkage to property. Protected by global mutex
