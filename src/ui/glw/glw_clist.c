@@ -65,6 +65,7 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
   float IH = 1.0f / rc->rc_height;
   int itemh0 = l->child_height ?: rc->rc_height * 0.1;
   int itemh;
+  int lptrail = 1;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
@@ -74,9 +75,11 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
     
     if(c->glw_parent_inited) {
       c->glw_parent_pos = GLW_LP(6, c->glw_parent_pos, tpos);
+      lptrail = 1;
     } else {
       c->glw_parent_pos = tpos;
       c->glw_parent_inited = 1;
+      lptrail = 0;
     }
 
     int f = glw_filter_constraints(c->glw_flags);
@@ -94,9 +97,11 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
     ypos += l->spacing;
   }
 
-  l->trail = GLW_LP(6, l->trail, 
-		    ypos - l->current_pos + rc->rc_height * l->center);
-
+  if(lptrail)
+    l->trail = GLW_LP(6, l->trail, 
+		      ypos - l->current_pos + rc->rc_height * l->center);
+  else
+    l->trail = ypos - l->current_pos + rc->rc_height * l->center;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
