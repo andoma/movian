@@ -2910,6 +2910,7 @@ http_request(const char *url, const char **arguments,
   if(hf->hf_content_encoding == HTTP_CE_GZIP)
     inflateEnd(&z);
 
+  hf->hf_rsize = 0;
   http_destroy(hf);
   return 0;
   
