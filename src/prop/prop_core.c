@@ -756,8 +756,11 @@ prop_courier(void *aux)
     TAILQ_MOVE(&q_exp, &pc->pc_queue_exp, hpn_link);
     TAILQ_INIT(&pc->pc_queue_exp);
 
-    TAILQ_MOVE(&q_nor, &pc->pc_queue_nor, hpn_link);
-    TAILQ_INIT(&pc->pc_queue_nor);
+    TAILQ_INIT(&q_nor);
+    if((n = TAILQ_FIRST(&pc->pc_queue_nor)) != NULL) {
+      TAILQ_REMOVE(&pc->pc_queue_nor, n, hpn_link);
+      TAILQ_INSERT_TAIL(&q_nor, n, hpn_link);
+    }
 
     hts_mutex_unlock(&prop_mutex);
     prop_notify_dispatch(&q_exp);
@@ -790,6 +793,19 @@ prop_courier(void *aux)
  *
  */
 static void
+courier_notify(prop_courier_t *pc)
+{
+  if(pc->pc_has_cond)
+    hts_cond_signal(&pc->pc_cond);
+  else if(pc->pc_notify != NULL)
+    pc->pc_notify(pc->pc_opaque);
+}
+
+
+/**
+ *
+ */
+static void
 courier_enqueue(prop_sub_t *s, prop_notify_t *n)
 {
   prop_courier_t *pc = s->hps_courier;
@@ -798,11 +814,9 @@ courier_enqueue(prop_sub_t *s, prop_notify_t *n)
     TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
   else
     TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
-  if(pc->pc_has_cond)
-    hts_cond_signal(&pc->pc_cond);
-  else if(pc->pc_notify != NULL)
-    pc->pc_notify(pc->pc_opaque);
+  courier_notify(pc);
 }
+
 
 
 /**
@@ -1026,7 +1040,13 @@ prop_notify_destroyed(prop_sub_t *s, prop_t *p)
   n->hpn_event = PROP_DESTROYED;
   n->hpn_prop = p;
   atomic_add(&p->hp_refcount, 1);
-  courier_enqueue(s, n);
+
+  prop_courier_t *pc = s->hps_courier;  
+  if(s->hps_flags & (PROP_SUB_EXPEDITE | PROP_SUB_TRACK_DESTROY_EXP))
+    TAILQ_INSERT_TAIL(&pc->pc_queue_exp, n, hpn_link);
+  else
+    TAILQ_INSERT_TAIL(&pc->pc_queue_nor, n, hpn_link);
+  courier_notify(pc);
 }
 
 
@@ -1635,7 +1655,7 @@ prop_destroy0(prop_t *p)
     LIST_REMOVE(s, hps_canonical_prop_link);
     s->hps_canonical_prop = NULL;
 
-    if(s->hps_flags & PROP_SUB_TRACK_DESTROY)
+    if(s->hps_flags & (PROP_SUB_TRACK_DESTROY | PROP_SUB_TRACK_DESTROY_EXP))
       prop_notify_destroyed(s, p);
     if(s->hps_flags & PROP_SUB_AUTO_DESTROY)
       prop_unsubscribe0(s);
