@@ -292,8 +292,8 @@ repo_get(char *errbuf, size_t errlen)
     return repository;
   }
 
-  if(http_request(plugin_repo_url, NULL, &result, NULL, errbuf, errlen,
-		  NULL, NULL, 0, NULL, NULL, NULL)) {
+  result = fa_load(plugin_repo_url, NULL, NULL, errbuf, errlen, NULL);
+  if(result == NULL) {
   bad:
     hts_mutex_unlock(&plugin_mutex);
     return NULL;
