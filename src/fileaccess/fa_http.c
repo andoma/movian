@@ -199,10 +199,10 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_destroy(http_connection_t *hc, int dbg)
+http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
 {
-  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d)",
-	     hc->hc_hostname, hc->hc_port, hc->hc_id);
+  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
   tcp_close(hc->hc_tc);
   free(hc);
 }
@@ -222,7 +222,7 @@ http_connection_park(http_connection_t *hc, int dbg)
   if(http_parked_connections == 5) {
     hc = TAILQ_FIRST(&http_connections);
     TAILQ_REMOVE(&http_connections, hc, hc_link);
-    http_connection_destroy(hc, dbg);
+    http_connection_destroy(hc, dbg, "Too many idle connections");
   } else {
     http_parked_connections++;
   }
@@ -515,7 +515,7 @@ typedef struct http_file {
 } http_file_t;
 
 
-static void http_detach(http_file_t *hf, int reusable);
+static void http_detach(http_file_t *hf, int reusable, const char *reason);
 
 
 
@@ -944,7 +944,7 @@ http_drain_content(http_file_t *hf)
   free(buf);
 
   if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-    http_detach(hf, 0);
+    http_detach(hf, 0, "Connection-mode = close");
 
   return 0;
 }
@@ -1168,7 +1168,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
  *
  */
 static void
-http_detach(http_file_t *hf, int reusable)
+http_detach(http_file_t *hf, int reusable, const char *reason)
 {
   if(hf->hf_connection == NULL)
     return;
@@ -1176,7 +1176,7 @@ http_detach(http_file_t *hf, int reusable)
   if(reusable) {
     http_connection_park(hf->hf_connection, hf->hf_debug);
   } else {
-    http_connection_destroy(hf->hf_connection, hf->hf_debug);
+    http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
   }
   hf->hf_connection = NULL;
 }
@@ -1224,7 +1224,8 @@ redirect(http_file_t *hf, int *redircount, char *errbuf, size_t errlen,
   // Location changed, must detach from connection
   // We might still be able to reuse it if hostname+port is same
   // But that's for some other code to figure out
-  http_detach(hf, hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT);
+  http_detach(hf, hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT,
+	      "Location changed");
   return 0;
 }
 
@@ -1310,7 +1311,7 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   hf->hf_rsize = 0;
 
   if(hf->hf_connection != NULL)
-    http_detach(hf, 0);
+    http_detach(hf, 0, "Reconnect");
 
   url = hf->hf_url;
 
@@ -1400,7 +1401,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
-    http_detach(hf, 0);
+    http_detach(hf, 0, "Read error on reused connection, retrying");
     goto reconnect;
   }
 
@@ -1438,7 +1439,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     hf->hf_rsize = 0;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Head request");
 
     return 0;
     
@@ -1461,7 +1462,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Redirect");
 
     goto reconnect;
 
@@ -1472,7 +1473,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       return -1;
 
     if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Connection-mode = close");
       goto reconnect;
     }
 
@@ -1507,7 +1508,8 @@ http_destroy(http_file_t *hf)
 {
   http_detach(hf, 
 	      hf->hf_rsize == 0 &&
-	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT);
+	      hf->hf_connection_mode == CONNECTION_MODE_PERSISTENT,
+	      "Request destroyed");
   free(hf->hf_url);
   free(hf->hf_auth);
   free(hf->hf_auth_realm);
@@ -1622,7 +1624,7 @@ again:
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
   code = http_read_response(hf, NULL);
   if(code == -1 && hf->hf_connection->hc_reused) {
-    http_detach(hf, 0);
+    http_detach(hf, 0, "Read error on reused connection");
     goto reconnect;
   }
   
@@ -1638,7 +1640,7 @@ again:
       free(buf);
 
       if(hf->hf_connection_mode == CONNECTION_MODE_CLOSE)
-	http_detach(hf, 0);
+	http_detach(hf, 0, "Connection-mode = close");
 
       return retval;
       
@@ -1835,7 +1837,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 		"Skipping by reading %"PRId64" bytes", hf->hf_pos);
 
 	  if(hf_drain_bytes(hf, hf->hf_pos)) {
-	    http_detach(hf, 0);
+	    http_detach(hf, 0, "Read error during drain");
 	    continue;
 	  }
 	}
@@ -1845,7 +1847,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	TRACE(TRACE_DEBUG, "HTTP", 
 	      "Read error (%d) [%s] filesize %lld -- retrying", code,
 	      range, hf->hf_filesize);
-	http_detach(hf, 0);
+	http_detach(hf, 0, "Read error");
 	continue;
       }
 
@@ -1869,7 +1871,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       assert(totsize + read_size <= size);
       if(tcp_read_data(hc->hc_tc, buf + totsize, read_size)) {
 	// Fail but we can retry a couple of times
-	http_detach(hf, 0);
+	http_detach(hf, 0, "Read error during fa_read()");
 	continue;
       }
 
@@ -1896,7 +1898,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       return totsize;
       
     if(hf->hf_rsize == 0 && hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Connection-mode = close");
       return totsize;
     }
 
@@ -1907,7 +1909,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
     return totsize;
   }
  bad:
-  http_detach(hf, 0);
+  http_detach(hf, 0, "Error during fa_read()");
   return -1;
 }
 
@@ -1997,7 +1999,7 @@ http_seek(fa_handle_t *handle, int64_t pos, int whence)
 	}
       }
       // Still got stale data on the socket, disconnect
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Seeking during streaming");
     }
   }
   hf->hf_pos = np;
@@ -2444,7 +2446,7 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     code = http_read_response(hf, NULL);
 
     if(code == -1) {
-      http_detach(hf, 0);
+      http_detach(hf, 0, "Read error");
       continue;
     }
 
@@ -2672,7 +2674,7 @@ http_request(const char *url, const char **arguments,
 
   code = http_read_response(hf, headers_out);
   if(code == -1 && hf->hf_connection->hc_reused) {
-    http_detach(hf, 0);
+    http_detach(hf, 0, "Read error on reused connection");
     goto retry;
   }
 
