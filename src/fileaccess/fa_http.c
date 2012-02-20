@@ -798,6 +798,8 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
     http_header_add(l, "Accept-Encoding", "gzip", 0);
   else
     http_header_add(l, "Accept-Encoding", "identity", 0);
+
+  http_header_add(l, "Accept", "*/*");
   
   http_header_add(l, "Connection",
 		  hf->hf_want_close ? "close" : "keep-alive", 0);
