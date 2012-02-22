@@ -116,28 +116,30 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
 
-    if(fde->fde_type == CONTENT_DIR && !strcasecmp(fde->fde_filename, "subs")) {
-      fs_sub_scan_dir(prop, fde->fde_url, video);
+    if(fde->fde_type == CONTENT_DIR &&
+       !strcasecmp(rstr_get(fde->fde_filename), "subs")) {
+      fs_sub_scan_dir(prop, rstr_get(fde->fde_url), video);
       continue;
     }
-
-    postfix = strrchr(fde->fde_filename, '.');
+    const char *filename = rstr_get(fde->fde_filename);
+    postfix = strrchr(filename, '.');
     if(postfix != NULL && !strcasecmp(postfix, ".srt")) {
       const char *lang = NULL;
-      if(postfix - fde->fde_filename > 4 && postfix[-4] == '.') {
+      if(postfix - filename > 4 && postfix[-4] == '.') {
 	char b[4];
 	memcpy(b, postfix - 3, 3);
 	b[3] = 0;
 	lang = isolang_iso2lang(b);
       }
 
-      int score = fs_sub_match(video, fde->fde_url);
+      int score = fs_sub_match(video, rstr_get(fde->fde_url));
       TRACE(TRACE_DEBUG, "Video", "SRT %s score=%d", fde->fde_url, score); 
+
       if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
 
-      mp_add_track(prop, fde->fde_filename, fde->fde_url, "SRT", NULL, lang,
-		   NULL, _p("External file"), score);
+      mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
+		   "SRT", NULL, lang, NULL, _p("External file"), score);
     }
   }
   fa_dir_free(fd);

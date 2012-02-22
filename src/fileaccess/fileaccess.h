@@ -56,8 +56,8 @@ typedef struct fa_stat {
  */
 typedef struct fa_dir_entry {
   TAILQ_ENTRY(fa_dir_entry) fde_link;
-  char *fde_filename;
-  char *fde_url;
+  rstr_t *fde_filename;
+  rstr_t *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
   struct prop *fde_prop;
   struct prop *fde_metadata;

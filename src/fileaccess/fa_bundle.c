@@ -188,7 +188,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	  *s = 0;
       
 	TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-	  if(!strcmp(fde->fde_filename, buf2))
+	  if(!strcmp(rstr_get(fde->fde_filename), buf2))
 	    break;
 	if(fde != NULL)
 	  continue;
@@ -215,7 +215,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	    *s = 0;
 
 	  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-	    if(!strcmp(fde->fde_filename, buf2))
+	    if(!strcmp(rstr_get(fde->fde_filename), buf2))
 	      break;
 	  if(fde != NULL)
 	    continue;
@@ -238,7 +238,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	    *s = 0;
 
 	    fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
-	    if(fde != NULL && !strcmp(fde->fde_filename, buf2))
+	    if(fde != NULL && !strcmp(rstr_get(fde->fde_filename), buf2))
 	      continue;
 	    snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix, buf2);
 	  } else {
@@ -273,7 +273,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	  *s = 0;
 
 	  fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
-	  if(fde != NULL && !strcmp(fde->fde_filename, buf2))
+	  if(fde != NULL && !strcmp(rstr_get(fde->fde_filename), buf2))
 	    continue;
 	  
 	  snprintf(buf, sizeof(buf), "bundle://%s/%.*s/%s", fb->prefix,

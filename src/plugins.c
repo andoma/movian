@@ -188,7 +188,7 @@ plugin_load_installed(void)
 
   if(fd != NULL) {
     TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-      snprintf(path, sizeof(path), "zip://%s", fde->fde_url);
+      snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
       if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
       }

@@ -607,21 +607,21 @@ nls_init(prop_t *parent, htsmsg_t *store)
   LIST_INIT(&list);
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-
-    if(fde->fde_filename[strlen(fde->fde_filename) - 1] == '~')
+    const char *filename = rstr_get(fde->fde_filename);
+    if(filename[strlen(filename) - 1] == '~')
       continue;
 
-    snprintf(buf, sizeof(buf), "%s", fde->fde_filename);
+    snprintf(buf, sizeof(buf), "%s", filename);
     if((e = strstr(buf, ".lang")) == NULL)
       continue;
     *e = 0;
 
-    if(nls_lang_metadata(fde->fde_url, 
+    if(nls_lang_metadata(rstr_get(fde->fde_url), 
 			 buf2, sizeof(buf2),
 			 language, sizeof(language), 
 			 native, sizeof(native))) {
       TRACE(TRACE_ERROR, "i18n", "Unable to load language from %s -- %s",
-	    fde->fde_url, buf2);
+	    rstr_get(fde->fde_url), buf2);
       continue;
     }
     l = alloca(sizeof(lang_t));

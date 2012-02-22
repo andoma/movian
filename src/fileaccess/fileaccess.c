@@ -339,10 +339,10 @@ fa_findfile(const char *path, const char *file,
     return -2;
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
-    if(!strcasecmp(fde->fde_filename, file)) {
+    if(!strcasecmp(rstr_get(fde->fde_filename), file)) {
       snprintf(fullpath, fullpathlen, "%s%s%s", path, 
 	       path[strlen(path)-1] == '/' ? "" : "/",
-	       fde->fde_filename);
+	       rstr_get(fde->fde_filename));
       fa_dir_free(fd);
       return 0;
     }
@@ -442,8 +442,8 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
 
   fd->fd_count--;
   TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
-  free(fde->fde_filename);
-  free(fde->fde_url);
+  rstr_release(fde->fde_filename);
+  rstr_release(fde->fde_url);
   free(fde);
 }
 
@@ -475,8 +475,8 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
 
   fde = calloc(1, sizeof(fa_dir_entry_t));
  
-  fde->fde_url      = strdup(url);
-  fde->fde_filename = strdup(filename);
+  fde->fde_url      = rstr_alloc(url);
+  fde->fde_filename = rstr_alloc(filename);
   fde->fde_type     = type;
 
   TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
@@ -504,7 +504,7 @@ fa_dir_entry_stat(fa_dir_entry_t *fde)
   if(fde->fde_statdone)
     return 0;
 
-  if(!fa_stat(fde->fde_url, &fde->fde_stat, NULL, 0))
+  if(!fa_stat(rstr_get(fde->fde_url), &fde->fde_stat, NULL, 0))
     fde->fde_statdone = 1;
   return !fde->fde_statdone;
 }

@@ -110,7 +110,7 @@ make_prop(fa_dir_entry_t *fde)
   prop_t *p = prop_create_root(NULL);
   prop_t *metadata;
 
-  prop_set_string(prop_create(p, "url"), fde->fde_url);
+  prop_set_rstring(prop_create(p, "url"), fde->fde_url);
   set_type(p, fde->fde_type);
 
   if(fde->fde_metadata != NULL) {
@@ -127,9 +127,9 @@ make_prop(fa_dir_entry_t *fde)
     int year = 0;
     
     if(fde->fde_type == CONTENT_DIR) {
-      title = rstr_alloc(fde->fde_filename);
+      title = rstr_dup(fde->fde_filename);
     } else {
-      title = metadata_filename_to_title(fde->fde_filename, &year);
+      title = metadata_filename_to_title(rstr_get(fde->fde_filename), &year);
     }
     
     metadata = prop_create(p, "metadata");
@@ -226,16 +226,16 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
     if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) {
       if(fde->fde_md != NULL)
 	metadata_destroy(fde->fde_md);
-      fde->fde_md = metadb_metadata_get(getdb(s), fde->fde_url,
+      fde->fde_md = metadb_metadata_get(getdb(s), rstr_get(fde->fde_url),
 					fde->fde_stat.fs_mtime);
     }
 
     if(fde->fde_md == NULL) {
 
       if(fde->fde_type == CONTENT_DIR)
-        fde->fde_md = fa_probe_dir(fde->fde_url);
+        fde->fde_md = fa_probe_dir(rstr_get(fde->fde_url));
       else
-	fde->fde_md = fa_probe_metadata(fde->fde_url, NULL, 0);
+	fde->fde_md = fa_probe_metadata(rstr_get(fde->fde_url), NULL, 0);
     }
     
     if(fde->fde_md != NULL) {
@@ -244,7 +244,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       metadata_to_proptree(fde->fde_md, meta, 1, NULL);
       
       if(fde->fde_md->md_cached == 0) {
-	metadb_metadata_write(getdb(s), fde->fde_url,
+	metadb_metadata_write(getdb(s), rstr_get(fde->fde_url),
 			      fde->fde_stat.fs_mtime,
 			      fde->fde_md, s->s_url, s->s_mtime);
       }
@@ -253,7 +253,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
     if(!fde->fde_bound_to_metadb) {
       fde->fde_bound_to_metadb = 1;
-      metadb_bind_url_to_prop(getdb(s), fde->fde_url, fde->fde_prop);
+      metadb_bind_url_to_prop(getdb(s), rstr_get(fde->fde_url), fde->fde_prop);
     }
   }
   set_type(fde->fde_prop, fde->fde_type);
@@ -272,7 +272,7 @@ tryplay(scanner_t *s)
     return;
 
   TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
-    if(!strcmp(s->s_playme, fde->fde_url)) {
+    if(!strcmp(s->s_playme, rstr_get(fde->fde_url))) {
       playqueue_load_with_source(fde->fde_prop, s->s_root, 0);
       free(s->s_playme);
       s->s_playme = NULL;
@@ -309,7 +309,7 @@ analyzer(scanner_t *s, int probe)
 
     if(fde->fde_probestatus == FDE_PROBE_NONE) {
       if(fde->fde_type == CONTENT_FILE)
-	fde->fde_type = type_from_filename(fde->fde_filename);
+	fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
 
       fde->fde_probestatus = FDE_PROBE_FILENAME;
     }
@@ -356,10 +356,10 @@ static int
 scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
   TRACE(TRACE_DEBUG, "FA", "%s: File %s added by %s",
-	s->s_url, fde->fde_url, src);
+	s->s_url, rstr_get(fde->fde_url), src);
 
   if(fde->fde_type == CONTENT_FILE)
-    fde->fde_type = type_from_filename(fde->fde_filename);
+    fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
 
   make_prop(fde);
 
@@ -381,8 +381,8 @@ static void
 scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
 {
   TRACE(TRACE_DEBUG, "FA", "%s: File %s removed by %s",
-	s->s_url, fde->fde_url, src);
-  metadb_unparent_item(getdb(s), fde->fde_url);
+	s->s_url, rstr_get(fde->fde_url), src);
+  metadb_unparent_item(getdb(s), rstr_get(fde->fde_url));
   if(fde->fde_prop != NULL)
     prop_destroy(fde->fde_prop);
   fa_dir_entry_free(s->s_fd, fde);
@@ -404,7 +404,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
   switch(op) {
   case FA_NOTIFY_DEL:
     TAILQ_FOREACH(fde, &s->s_fd->fd_entries, fde_link)
-      if(!strcmp(filename, fde->fde_filename))
+      if(!strcmp(filename, rstr_get(fde->fde_filename)))
 	break;
 
     if(fde != NULL)
@@ -445,7 +445,7 @@ rescan(scanner_t *s)
   for(a = TAILQ_FIRST(&s->s_fd->fd_entries); a != NULL; a = n) {
     n = TAILQ_NEXT(a, fde_link);
     TAILQ_FOREACH(b, &fd->fd_entries, fde_link)
-      if(!strcmp(a->fde_url, b->fde_url))
+      if(!strcmp(rstr_get(a->fde_url), rstr_get(b->fde_url)))
 	break;
 
     if(b != NULL) {
