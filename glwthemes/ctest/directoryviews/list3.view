@@ -1,0 +1,26 @@
+
+
+widget(clist, {
+  .filterConstraintX = true;
+  .center = 0.2;
+  .spacing = $ui.size / 2;
+  
+  &view.focused = focusedChild();
+  $view.change = changed($view.focused, 1);
+  
+  cloner($page.model.nodes, loader, {
+
+    .alpha = 0.3 + scurve(clamp(isFocused() + $view.change, 0, 1), 0.1, 10);
+    .blur = 1 - scurve(select(isFocused(), 1, $view.change), 0.1, 10);
+
+    .time = 0.3;
+    .noInitialTransform = true;
+    .source = "theme://directoryviews/list3/" + 
+      translate($self.type, "default",
+		"audio", "audio",
+		"video", "video",
+		"playlist", "playlist"
+	       ) + ".view";
+  });
+});
+

@@ -1,0 +1,12 @@
+#import "theme://settings/settings-common.view"
+
+widget(container_x, {
+  .spacing = $ui.size / 2;
+
+  widget(dummy, { .width = $ui.size * 2; });
+
+  .align = left;
+  settingButtonAction($self.model.metadata.title,
+		      deliverEvent($self.model.action),
+		      true, false);
+});

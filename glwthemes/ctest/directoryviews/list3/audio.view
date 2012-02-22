@@ -1,0 +1,6 @@
+#import "theme://directoryviews/list3/common.view"
+
+
+ITEM($self.metadata.album_art ?? "theme://svg/Music.svg",
+     $self.metadata.title + ' <font color="#888" size="#2">by ' + $self.metadata.artist,
+     playTrackFromSource($self, $parent.model));

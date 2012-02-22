@@ -1,0 +1,40 @@
+#import "theme://include/defs.view"
+#import "theme://settings/settings-common.view"
+
+widget(container_y, {
+  .debug = true;
+  
+  widget(label, {
+    .caption = $self.model.metadata.title;
+    .color = select($view.highlight, 1, 0.4);
+    .shadow = true;
+  });
+  
+  $view.highlight = isFocused() || isHovered();
+
+  settingGroup(
+    .alphaSelf = select($view.highlight, 1, 0.5);
+    
+    widget(slider_x, {
+      .debug = true;
+      .focusable = true;
+      .min = $self.model.min;
+      .max = $self.model.max;
+      .step = $self.model.step;
+      bind($self.model.value);
+      
+      widget(backdrop, {
+	.alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
+	.color = PLATE_COLOR_OTHER();
+	PLATE_GFX();
+	  
+	widget(label, {
+	  .debug = true;
+	  .align = center;
+	  .caption = fmt("%d %s", $self.model.value, $self.model.unit);
+	  .shadow = true;
+	});
+      });
+    });
+  );
+});
