@@ -154,6 +154,7 @@ SRCS += 		src/api/api.c \
 			src/api/soap.c \
 			src/api/opensubtitles.c \
 			src/api/lastfm.c \
+			src/api/tmdb.c \
 
 SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c \
 

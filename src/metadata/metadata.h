@@ -24,7 +24,9 @@
 struct prop;
 struct prop_vec;
 /**
- * Content types
+ * Content types.
+ * These are stored directly in the sqlite metadata database so they
+ * must never be changed
  */
 typedef enum {
   CONTENT_UNKNOWN     = 0,
@@ -40,6 +42,22 @@ typedef enum {
   CONTENT_PLUGIN      = 10,
   CONTENT_num
 } contenttype_t;
+
+
+/**
+ * Metadata tags.
+ * These are stored directly in the sqlite metadata database so they
+ * must never be changed
+ */
+typedef enum {
+  METATAG_DESCRIPTION = 1,
+
+} metadata_tag_t;
+
+
+
+
+
 
 
 const char *content2type(contenttype_t ctype);
@@ -89,6 +107,8 @@ typedef struct metadata {
   rstr_t *md_format;
 
   struct metadata_stream_queue md_streams;
+
+  int md_year;
 
 } metadata_t;
 
@@ -168,6 +188,9 @@ void metadata_init(void);
 void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
+
+void metadata_bind_movie_info(struct prop *prop, rstr_t *title, int year,
+			      metadata_tag_t mtag);
 
 rstr_t *metadata_filename_to_title(const char *filename, int *yearp);
 

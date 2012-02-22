@@ -84,6 +84,9 @@ typedef struct deco_item {
   prop_sub_t *di_sub_album;
   rstr_t *di_album;
 
+  prop_sub_t *di_sub_year;
+  int di_year;
+  
 } deco_item_t;
 
 
@@ -250,6 +253,16 @@ di_set_album(deco_item_t *di, rstr_t *str)
  *
  */
 static void
+di_set_year(deco_item_t *di, int v)
+{
+  di->di_year = v;
+}
+
+
+/**
+ *
+ */
+static void
 di_set_type(deco_item_t *di, const char *str)
 {
   deco_browse_t *db = di->di_db;
@@ -258,6 +271,12 @@ di_set_type(deco_item_t *di, const char *str)
     prop_unsubscribe(di->di_sub_album);
     rstr_set(&di->di_album, NULL);
     di->di_sub_album = NULL;
+  }
+
+  if(di->di_sub_year != NULL) {
+    prop_unsubscribe(di->di_sub_year);
+    di->di_year = 0;
+    di->di_sub_year = NULL;
   }
 
   db->db_types[di->di_type]--;
@@ -269,6 +288,15 @@ di_set_type(deco_item_t *di, const char *str)
       prop_subscribe(0,
 		     PROP_TAG_NAME("node", "metadata", "album"),
 		     PROP_TAG_CALLBACK_RSTR, di_set_album, di,
+		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
+		     PROP_TAG_COURIER, deco_courier,
+		     NULL);
+
+  if(di->di_type == CONTENT_VIDEO)
+    di->di_sub_year = 
+      prop_subscribe(0,
+		     PROP_TAG_NAME("node", "metadata", "year"),
+		     PROP_TAG_CALLBACK_INT, di_set_year, di,
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
@@ -355,6 +383,8 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   prop_unsubscribe(di->di_sub_type);
   if(di->di_sub_album != NULL)
     prop_unsubscribe(di->di_sub_album);
+  if(di->di_sub_year != NULL)
+    prop_unsubscribe(di->di_sub_year);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);

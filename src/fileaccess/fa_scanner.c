@@ -124,18 +124,17 @@ make_prop(fa_dir_entry_t *fde)
   } else {
 
     rstr_t *title;
-    int year = -1;
+    int year = 0;
     
     if(fde->fde_type == CONTENT_DIR) {
-      //      title = rstr_alloc(fde->fde_filename);
-      title = metadata_filename_to_title(fde->fde_filename, &year);
+      title = rstr_alloc(fde->fde_filename);
     } else {
       title = metadata_filename_to_title(fde->fde_filename, &year);
     }
     
     metadata = prop_create(p, "metadata");
     prop_set_rstring(prop_create(metadata, "title"), title);
-    if(year != -1)
+    if(year > 0)
       prop_set_int(prop_create(metadata, "year"), year);
 
     rstr_release(title);

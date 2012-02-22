@@ -30,6 +30,7 @@
 #include "misc/string.h"
 
 #include "api/lastfm.h"
+#include "api/tmdb.h"
 
 #include "metadata.h"
 #include "fileaccess/fileaccess.h"
@@ -250,17 +251,26 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
 
+  if(md->md_title != NULL && md->md_contenttype == CONTENT_VIDEO) {
+    metadata_bind_movie_info(prop_create(proproot, "description"),
+			     md->md_title, md->md_year, 
+			     METATAG_DESCRIPTION);
+  }
   return streams;
 }
 
 
 
 typedef struct metadata_lazy_prop {
+  void (*mlp_cb)(struct metadata_lazy_prop *mlp);
   prop_t *mlp_prop;
   prop_sub_t *mlp_sub;
-
+	    
   rstr_t *mlp_album;
   rstr_t *mlp_artist;
+  rstr_t *mlp_title;
+  int mlp_year;
+  metadata_tag_t mlp_mtag;
 } metadata_lazy_prop_t;
 
 
@@ -275,6 +285,7 @@ mlp_destroy(metadata_lazy_prop_t *mlp)
   prop_ref_dec(mlp->mlp_prop);
   rstr_release(mlp->mlp_artist);
   rstr_release(mlp->mlp_album);
+  rstr_release(mlp->mlp_title);
   free(mlp);
 }
 
@@ -322,28 +333,6 @@ mlp_get_artist(metadata_lazy_prop_t *mlp)
  *
  */
 static void
-mlp_artist_cb(void *opaque, prop_event_t event, ...)
-{
-  metadata_lazy_prop_t *mlp = opaque;
-
-  switch(event) {
-  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    mlp_get_artist(mlp);
-    // FALLTHRU
-  case PROP_DESTROYED:
-    mlp_destroy(mlp);
-    break;
-
-  default:
-    break;
-  }
-}
-
-
-/**
- *
- */
-static void
 mlp_get_album(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
@@ -377,18 +366,27 @@ mlp_get_album(metadata_lazy_prop_t *mlp)
  *
  */
 static void
-mlp_album_cb(void *opaque, prop_event_t event, ...)
+mlp_get_movie(metadata_lazy_prop_t *mlp)
+{
+  tmdb_query_by_title_and_year(rstr_get(mlp->mlp_title), mlp->mlp_year);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_sub_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_lazy_prop_t *mlp = opaque;
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    mlp_get_album(mlp);
-    // FALLTHRU
+    printf("Queyrying for data\n");
+    mlp->mlp_cb(mlp);
   case PROP_DESTROYED:
+    printf("MLP destroyed\n");
     mlp_destroy(mlp);
-    break;
-
   default:
     break;
   }
@@ -399,15 +397,17 @@ mlp_album_cb(void *opaque, prop_event_t event, ...)
  */
 static void
 mlp_setup(metadata_lazy_prop_t *mlp, prop_t *p,
-	  void (*cb)(void *opaque, prop_event_t event, ...))
+	  void (*cb)(metadata_lazy_prop_t *mlp),
+	  metadata_tag_t mtag)
 {
+  mlp->mlp_mtag = mtag;
   mlp->mlp_prop = prop_ref_inc(p);
-
+  mlp->mlp_cb = cb;
   hts_mutex_lock(&metadata_mutex);
 
   mlp->mlp_sub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
-		   PROP_TAG_CALLBACK, cb, mlp,
+    prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
+		   PROP_TAG_CALLBACK, mlp_sub_cb, mlp,
 		   PROP_TAG_COURIER, metadata_courier,
 		   PROP_TAG_ROOT, mlp->mlp_prop,
 		   NULL);
@@ -426,7 +426,7 @@ metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 {
   metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
-  mlp_setup(mlp, prop, mlp_artist_cb);
+  mlp_setup(mlp, prop, mlp_get_artist, 0);
 }
 
 
@@ -439,7 +439,21 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
   metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
   mlp->mlp_album  = rstr_spn(album, "[]()");
-  mlp_setup(mlp, prop, mlp_album_cb);
+  mlp_setup(mlp, prop, mlp_get_album, 0);
+}
+
+
+/**
+ *
+ */
+void
+metadata_bind_movie_info(prop_t *prop, rstr_t *title, int year,
+			 metadata_tag_t mtag)
+{
+  metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  mlp->mlp_title = rstr_spn(title, "[]()");
+  mlp->mlp_year = year;
+  mlp_setup(mlp, prop, mlp_get_movie, mtag);
 }
 
 
@@ -463,7 +477,7 @@ rstr_t *
 metadata_filename_to_title(const char *filename, int *yearp)
 {
   if(yearp != NULL)
-    *yearp = -1;
+    *yearp = 0;
 
   char *s = mystrdupa(filename);
 

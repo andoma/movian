@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "showtime.h"
 #include "htsmsg/htsmsg_json.h"
 #include "fileaccess/fileaccess.h"
 
@@ -31,29 +32,109 @@
 /**
  *
  */
-struct htsmsg *
-tmdb_query_by_hash(uint64_t hash, char *errbuf, size_t errlen)
+static void
+tmdb_load_movie_info(uint32_t id)
 {
-  char url[256];
+  char url[300];
+  char errbuf[256];
   char *result;
   size_t resultsize;
-  htsmsg_t *r;
 
-  snprintf(url, sizeof(url),
-	   "http://api.themoviedb.org/2.1/Hash.getInfo/en/json/"
-	   TMDB_APIKEY"/%016llx",
-	   hash);
+  snprintf(url, sizeof(url), "http://api.themoviedb.org/v3/movie/%d", id);
+  int n = http_request(url,
+		       (const char *[]){
+			   "api_key", TMDB_APIKEY,
+			   NULL, NULL},
+		       &result, &resultsize, errbuf, sizeof(errbuf),
+		       NULL, NULL, HTTP_COMPRESSION,
+		       NULL, NULL, NULL);
+  if(n) {
+    TRACE(TRACE_INFO, "TMDB", "Load error %s", errbuf);
+    return;
+  }
 
-  int n = http_request(url, NULL, &result, &resultsize, errbuf, errlen,
-		       NULL, NULL);
+  htsmsg_t *doc = htsmsg_json_deserialize(result);
+  free(result);
+  if(doc == NULL)
+    return;
+  
+  htsmsg_print(doc);
+  htsmsg_destroy(doc);
+
+}
+
+/**
+ *
+ */
+void
+tmdb_query_by_title_and_year(const char *title, int year)
+{
+  char buf[300];
+  char errbuf[256];
+  const char *q;
+  char *result;
+  size_t resultsize;
+
+  if(year > 0) {
+    snprintf(buf, sizeof(buf), "%s %d", title, year);
+    q = buf;
+  } else {
+    q = title;
+  }
+
+  int n = http_request("http://api.themoviedb.org/3/search/movie",
+		       (const char *[]){"query", q,
+			   "api_key", TMDB_APIKEY,
+			   NULL, NULL},
+		       &result, &resultsize, errbuf, sizeof(errbuf),
+		       NULL, NULL, HTTP_COMPRESSION,
+		       NULL, NULL, NULL);
   
   if(n)
-    return NULL;
+    return;
 
-  r = htsmsg_json_deserialize(result);
+  htsmsg_t *doc = htsmsg_json_deserialize(result);
   free(result);
-  if(r == NULL)
-    snprintf(errbuf, errlen, "Unable to parse JSON");
-  return r;
+  if(doc == NULL)
+    return;
+
+  TRACE(TRACE_DEBUG, "TMDB", "Query '%s' -> %d pages %d results",
+	q,
+	htsmsg_get_s32_or_default(doc, "total_pages", -1),
+	htsmsg_get_s32_or_default(doc, "total_results", -1));
+  
+  htsmsg_t *resultlist = htsmsg_get_list(doc, "results");
+  if(resultlist == NULL)
+    goto done1;
+  htsmsg_field_t *f;
+  htsmsg_t *best = NULL;
+  float best_pop = 0;
+
+  HTSMSG_FOREACH(f, resultlist) {
+    htsmsg_t *res = htsmsg_get_map_by_field(f);
+    double pop;
+    if(res == NULL)
+      continue;
+    if(htsmsg_get_dbl(res, "popularity", &pop))
+      pop = 0;
+    if(best == NULL || pop > best_pop) {
+      best = res;
+      best_pop = pop;
+    }
+  }
+
+  if(best != NULL)  {
+    htsmsg_print(best);
+    int32_t id;
+    if(!htsmsg_get_s32(best, "id", &id))
+      tmdb_load_movie_info(id);
+
+
+  }
+
+
+ done1:
+  htsmsg_destroy(doc);
+    
 }
 

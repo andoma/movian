@@ -567,7 +567,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   if(md->md_title == NULL) {
     fa_url_get_last_component(tmp1, sizeof(tmp1), url);
 
-    md->md_title = metadata_filename_to_title(tmp1, NULL);
+    md->md_title = metadata_filename_to_title(tmp1, &md->md_year);
   }
 }
   
