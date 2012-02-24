@@ -498,76 +498,74 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   if(fctx->nb_streams == 1 && 
      fctx->streams[0]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
     md->md_contenttype = CONTENT_AUDIO;
-    return;
-  }
+  } else {
 
-  int atrack = 0;
-  int strack = 0;
-  int vtrack = 0;
+    int atrack = 0;
+    int strack = 0;
+    int vtrack = 0;
 
-  /* Check each stream */
+    /* Check each stream */
 
-  for(i = 0; i < fctx->nb_streams; i++) {
-    AVStream *stream = fctx->streams[i];
-    AVCodecContext *avctx = stream->codec;
-    AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
-    AVMetadataTag *lang, *title;
-    int tn;
+    for(i = 0; i < fctx->nb_streams; i++) {
+      AVStream *stream = fctx->streams[i];
+      AVCodecContext *avctx = stream->codec;
+      AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
+      AVMetadataTag *lang, *title;
+      int tn;
 
-    switch(avctx->codec_type) {
-    case AVMEDIA_TYPE_VIDEO:
-      has_video = !!codec;
-      tn = ++vtrack;
-      break;
-    case AVMEDIA_TYPE_AUDIO:
-      has_audio = !!codec;
-      tn = ++atrack;
-      break;
-    case AVMEDIA_TYPE_SUBTITLE:
-      tn = ++strack;
-      break;
+      switch(avctx->codec_type) {
+      case AVMEDIA_TYPE_VIDEO:
+	has_video = !!codec;
+	tn = ++vtrack;
+	break;
+      case AVMEDIA_TYPE_AUDIO:
+	has_audio = !!codec;
+	tn = ++atrack;
+	break;
+      case AVMEDIA_TYPE_SUBTITLE:
+	tn = ++strack;
+	break;
 
-    default:
-      continue;
+      default:
+	continue;
+      }
+
+      if(codec == NULL) {
+	snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
+      } else {
+	metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
+      }
+
+      lang = av_metadata_get(stream->metadata, "language", NULL,
+			     AV_METADATA_IGNORE_SUFFIX);
+
+      title = av_metadata_get(stream->metadata, "title", NULL,
+			      AV_METADATA_IGNORE_SUFFIX);
+
+      metadata_add_stream(md, codecname(avctx->codec_id),
+			  avctx->codec_type, i,
+			  title ? title->value : NULL,
+			  tmp1,
+			  lang ? lang->value : NULL,
+			  stream->disposition,
+			  tn);
     }
-
-    if(codec == NULL) {
-      snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
-    } else {
-      metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
-    }
-
-    lang = av_metadata_get(stream->metadata, "language", NULL,
-			  AV_METADATA_IGNORE_SUFFIX);
-
-    title = av_metadata_get(stream->metadata, "title", NULL,
-			    AV_METADATA_IGNORE_SUFFIX);
-
-    metadata_add_stream(md, codecname(avctx->codec_id),
-			avctx->codec_type, i,
-			title ? title->value : NULL,
-			tmp1,
-			lang ? lang->value : NULL,
-			stream->disposition,
-			tn);
-  }
   
-  md->md_contenttype = CONTENT_FILE;
-  if(has_video) {
-    md->md_contenttype = CONTENT_VIDEO;
-  } else if(has_audio) {
-    md->md_contenttype = CONTENT_AUDIO;
+    md->md_contenttype = CONTENT_FILE;
+    if(has_video) {
+      md->md_contenttype = CONTENT_VIDEO;
+    } else if(has_audio) {
+      md->md_contenttype = CONTENT_AUDIO;
+    }
+  }
 
+  if(md->md_contenttype == CONTENT_AUDIO)
     // Only grab title if it's audio
     md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
-  }
-
-  /* Format meta info */
 
   if(md->md_title == NULL) {
     fa_url_get_last_component(tmp1, sizeof(tmp1), url);
-
-    md->md_title = metadata_filename_to_title(tmp1, &md->md_year);
+    md->md_title = metadata_remove_postfix(tmp1, '.');
   }
 }
   

@@ -111,6 +111,7 @@ make_prop(fa_dir_entry_t *fde)
   prop_t *metadata;
 
   prop_set_rstring(prop_create(p, "url"), fde->fde_url);
+  prop_set_rstring(prop_create(p, "filename"), fde->fde_filename);
   set_type(p, fde->fde_type);
 
   if(fde->fde_metadata != NULL) {
@@ -124,19 +125,14 @@ make_prop(fa_dir_entry_t *fde)
   } else {
 
     rstr_t *title;
-    int year = 0;
-    
     if(fde->fde_type == CONTENT_DIR) {
       title = rstr_dup(fde->fde_filename);
     } else {
-      title = metadata_filename_to_title(rstr_get(fde->fde_filename), &year);
+      title = metadata_remove_postfix(rstr_get(fde->fde_filename), '.');
     }
     
     metadata = prop_create(p, "metadata");
     prop_set_rstring(prop_create(metadata, "title"), title);
-    if(year > 0)
-      prop_set_int(prop_create(metadata, "year"), year);
-
     rstr_release(title);
   }
 
@@ -289,7 +285,6 @@ static void
 analyzer(scanner_t *s, int probe)
 {
   fa_dir_entry_t *fde;
-  int images = 0;
 
   /* Empty */
   if(s->s_fd->fd_count == 0)
@@ -316,9 +311,6 @@ analyzer(scanner_t *s, int probe)
 
     if(fde->fde_probestatus == FDE_PROBE_FILENAME && probe)
       deep_probe(fde, s);
-
-    if(fde->fde_type == CONTENT_IMAGE)
-      images++;
   }
 }
 
@@ -362,8 +354,6 @@ scanner_entry_setup(scanner_t *s, fa_dir_entry_t *fde, const char *src)
     fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
 
   make_prop(fde);
-
-  //  deep_probe(fde, s);
 
   if(!prop_set_parent(fde->fde_prop, s->s_nodes))
     return 1; // OK

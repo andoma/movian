@@ -68,26 +68,43 @@ typedef struct deco_item {
   TAILQ_ENTRY(deco_item) di_link;
   deco_browse_t *di_db;
 
-  rstr_t *di_url;
 
   LIST_ENTRY(deco_item) di_stem_link;
   deco_stem_t *di_ds;
 
   prop_t *di_root;
 
-  prop_sub_t *di_sub_url;
   prop_sub_t *di_sub_type;
-
-  char *di_postfix;
   contenttype_t di_type;
+
+  prop_sub_t *di_sub_url;
+  rstr_t *di_url;
+  char *di_postfix;
+
+  prop_sub_t *di_sub_filename;
+  rstr_t *di_filename;
 
   prop_sub_t *di_sub_album;
   rstr_t *di_album;
 
-  prop_sub_t *di_sub_year;
-  int di_year;
-  
 } deco_item_t;
+
+
+/**
+ *
+ */
+static void
+item_analysis(deco_item_t *di)
+{
+  if(di->di_type == CONTENT_VIDEO && di->di_filename) {
+    rstr_t *title;
+    int year;
+    title = metadata_filename_to_title(rstr_get(di->di_filename), &year); 
+    printf("Video title = %s (%d)\n", rstr_get(title), year);
+    rstr_release(title);
+
+  }
+}
 
 
 /**
@@ -253,9 +270,10 @@ di_set_album(deco_item_t *di, rstr_t *str)
  *
  */
 static void
-di_set_year(deco_item_t *di, int v)
+di_set_filename(deco_item_t *di, rstr_t *str)
 {
-  di->di_year = v;
+  rstr_set(&di->di_filename, str);
+  item_analysis(di);
 }
 
 
@@ -273,12 +291,6 @@ di_set_type(deco_item_t *di, const char *str)
     di->di_sub_album = NULL;
   }
 
-  if(di->di_sub_year != NULL) {
-    prop_unsubscribe(di->di_sub_year);
-    di->di_year = 0;
-    di->di_sub_year = NULL;
-  }
-
   db->db_types[di->di_type]--;
   di->di_type = str ? type2content(str) : CONTENT_UNKNOWN;
   db->db_types[di->di_type]++;
@@ -292,18 +304,10 @@ di_set_type(deco_item_t *di, const char *str)
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
 
-  if(di->di_type == CONTENT_VIDEO)
-    di->di_sub_year = 
-      prop_subscribe(0,
-		     PROP_TAG_NAME("node", "metadata", "year"),
-		     PROP_TAG_CALLBACK_INT, di_set_year, di,
-		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
-		     PROP_TAG_COURIER, deco_courier,
-		     NULL);
-
   type_analysis(db);
   if(di->di_ds != NULL)
     stem_analysis(db, di->di_ds);
+  item_analysis(di);
 }
 
 
@@ -334,6 +338,14 @@ deco_browse_add_node(deco_browse_t *db, prop_t *p, deco_item_t *before)
     prop_subscribe(0,
 		   PROP_TAG_NAME("node", "url"),
 		   PROP_TAG_CALLBACK_RSTR, di_set_url, di,
+		   PROP_TAG_NAMED_ROOT, p, "node",
+		   PROP_TAG_COURIER, deco_courier,
+		   NULL);
+
+  di->di_sub_filename = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "filename"),
+		   PROP_TAG_CALLBACK_RSTR, di_set_filename, di,
 		   PROP_TAG_NAMED_ROOT, p, "node",
 		   PROP_TAG_COURIER, deco_courier,
 		   NULL);
@@ -380,16 +392,16 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   db->db_total--;
   prop_ref_dec(di->di_root);
   prop_unsubscribe(di->di_sub_url);
+  prop_unsubscribe(di->di_sub_filename);
   prop_unsubscribe(di->di_sub_type);
   if(di->di_sub_album != NULL)
     prop_unsubscribe(di->di_sub_album);
-  if(di->di_sub_year != NULL)
-    prop_unsubscribe(di->di_sub_year);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);
   rstr_release(di->di_album);
   rstr_release(di->di_url);
+  rstr_release(di->di_filename);
   free(di);
 }
 
