@@ -194,3 +194,4 @@ void metadata_bind_movie_info(struct prop *prop, rstr_t *title, int year,
 
 rstr_t *metadata_filename_to_title(const char *filename, int *yearp);
 
+rstr_t *metadata_remove_postfix(const char *filename, char c);

@@ -541,3 +541,17 @@ metadata_filename_to_title(const char *filename, int *yearp)
  
   return rstr_alloc(s);
 }
+
+
+
+/**
+ *
+ */
+rstr_t *
+metadata_remove_postfix(const char *in, char c)
+{
+  char *x = strrchr(in, c);
+  if(x == NULL)
+    return rstr_alloc(in);
+  return rstr_allocl(in, x - in);
+}
