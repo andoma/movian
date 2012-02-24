@@ -1398,6 +1398,15 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
   if(name != NULL) {
     TAILQ_FOREACH(hp, &parent->hp_childs, hp_parent_link) {
       if(hp->hp_name != NULL && !strcmp(hp->hp_name, name)) {
+
+	if(!(hp->hp_flags & PROP_NAME_NOT_ALLOCATED) && noalloc) {
+	  // Trick: We have a pointer to a compile time constant string
+	  // and the current prop does not have that, we could switch to
+	  // it and thus save some memory allocation
+	  free((void *)hp->hp_name);
+	  hp->hp_name = name;
+	  hp->hp_flags |= PROP_NAME_NOT_ALLOCATED;
+	}
 	return hp;
       }
     }
