@@ -215,9 +215,11 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
    * the first call and it is the same file as last argv argument */
   if(!gcocoa.skip_first_openfile_check) {
     gcocoa.skip_first_openfile_check = 1;
-    
-    if(_argc > 1 && strcmp(cfilename, _argv[_argc - 1]) == 0)
-      return NO;
+
+    int i;
+    for(i = 1; i < _argc; i++)
+      if(_argc > 1 && strcmp(cfilename, _argv[i]) == 0)
+	return NO;
   }
   
   /* stringWithFormat uses autorelease */
