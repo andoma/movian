@@ -107,7 +107,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
-  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control);
+  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control, 0);
   if(p == NULL || p == NOT_MODIFIED)
     return (pixmap_t *)p;
 

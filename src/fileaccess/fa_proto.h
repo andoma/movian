@@ -126,7 +126,8 @@ typedef struct fa_protocol {
    */
   void *(*fap_load)(struct fa_protocol *fap, const char *url,
 		    size_t *sizep, char *errbuf, size_t errlen,
-		    char **etag, time_t *mtime, int *max_age);
+		    char **etag, time_t *mtime, int *max_age,
+		    int flags);
 
   /**
    * Normalize the given URL.

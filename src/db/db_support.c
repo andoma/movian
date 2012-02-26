@@ -238,7 +238,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
     snprintf(path, sizeof(path), "%s/%03d.sql", schemadir, ver);
 
     size_t size;
-    char *sql = fa_load(path, &size, NULL, buf, sizeof(buf), NULL);
+    char *sql = fa_load(path, &size, NULL, buf, sizeof(buf), NULL, 0);
     if(sql == NULL) {
       TRACE(TRACE_ERROR, "DB",
 	    "%s: Unable to upgrade db schema to version %d using %s -- %s",

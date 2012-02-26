@@ -290,7 +290,7 @@ js_http_request(JSContext *cx, jsval *rval,
 
   const js_context_private_t *jcp = JS_GetContextPrivate(cx);
   if(jcp != NULL && jcp->jcp_flags & JCP_DISABLE_AUTH)
-    flags |= HTTP_DISABLE_AUTH;
+    flags |= FA_DISABLE_AUTH;
 
   struct http_header_list response_headers;
 
@@ -438,7 +438,7 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
+  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL, 0);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {

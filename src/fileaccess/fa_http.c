@@ -2056,7 +2056,8 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 static void *
 http_load(struct fa_protocol *fap, const char *url,
 	  size_t *sizep, char *errbuf, size_t errlen,
-	  char **etag, time_t *mtime, int *max_age)
+	  char **etag, time_t *mtime, int *max_age,
+	  int flags)
 {
   char *res;
   int err;
@@ -2078,7 +2079,7 @@ http_load(struct fa_protocol *fap, const char *url,
   }
 
   err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
-		     0, // mtime ? HTTP_REQUEST_DEBUG : 0,
+		     flags,
 		     &headers_out, &headers_in, NULL);
   if(err == -1) {
     res = NULL;
@@ -2603,8 +2604,8 @@ http_request(const char *url, const char **arguments,
   if(headers_out != NULL)
     LIST_INIT(headers_out);
   hf->hf_version = 1;
-  hf->hf_debug = !!(flags & HTTP_REQUEST_DEBUG);
-  hf->hf_req_compression = !!(flags & HTTP_COMPRESSION);
+  hf->hf_debug = !!(flags & FA_DEBUG);
+  hf->hf_req_compression = !!(flags & FA_COMPRESSION);
   hf->hf_url = strdup(url);
 
  retry:
@@ -2654,7 +2655,7 @@ http_request(const char *url, const char **arguments,
   if(postcontenttype != NULL) 
     http_header_add(&headers, "Content-Type", postcontenttype, 0);
 
-  if(!(flags & HTTP_DISABLE_AUTH))
+  if(!(flags & FA_DISABLE_AUTH))
     http_headers_auth(&headers, hf, m, arguments);
 
   http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);

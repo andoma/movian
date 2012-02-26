@@ -362,7 +362,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
 
   char p1[500];
   snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path, n);
-  char *buf = fa_load(p1, &size, NULL, NULL, 0, NULL);
+  char *buf = fa_load(p1, &size, NULL, NULL, 0, NULL, 0);
   
   if(buf == NULL)
     return 404;

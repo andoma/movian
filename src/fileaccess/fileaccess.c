@@ -42,6 +42,7 @@
 #include "fa_probe.h"
 #include "fa_imageloader.h"
 #include "blobcache.h"
+#include "htsmsg/htsbuf.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 
@@ -544,7 +545,7 @@ fileaccess_init(void)
  */
 void *
 fa_load(const char *url, size_t *sizep, const char **vpaths,
-	char *errbuf, size_t errlen, int *cache_control)
+	char *errbuf, size_t errlen, int *cache_control, int flags)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
@@ -597,7 +598,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
-			  &etag, &mtime, &max_age);
+			  &etag, &mtime, &max_age, 0);
     
     free(filename);
     if(data2 == NOT_MODIFIED) {
@@ -822,4 +823,40 @@ fa_load_and_close(fa_handle_t *fh, size_t *sizep)
     *sizep = size;
   mem[size] = 0; 
   return mem;
+}
+
+
+/**
+ *
+ */
+void *
+fa_load_query(const char *url0, size_t *sizep,
+	      char *errbuf, size_t errlen, int *cache_control,
+	      const char **arguments, int flags)
+{
+  htsbuf_queue_t q;
+  void *r;
+  htsbuf_queue_init(&q, 0);
+
+  htsbuf_append(&q, url0, strlen(url0));
+  if(arguments != NULL) {
+    const char **args = arguments;
+    char prefix = '?';
+    
+    while(args[0] != NULL) {
+      htsbuf_append(&q, &prefix, 1);
+      htsbuf_append_and_escape_url(&q, args[0]);
+      htsbuf_append(&q, "=", 1);
+      htsbuf_append_and_escape_url(&q, args[1]);
+      args += 2;
+      prefix = '&';
+    }
+  }
+  
+  char *url = htsbuf_to_string(&q);
+
+  r = fa_load(url, sizep, NULL, errbuf, errlen, cache_control, flags);
+  free(url);
+  htsbuf_queue_flush(&q);
+  return r;
 }
