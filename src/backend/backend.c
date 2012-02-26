@@ -214,10 +214,10 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
       htsmsg_t *img = htsmsg_get_map_by_field(f);
       if(img == NULL)
 	continue;
-      int w = htsmsg_get_u32_or_default(img, "width", 0);
-      int h = htsmsg_get_u32_or_default(img, "height", 0);
+      int w = htsmsg_get_u32_or_default(img, "width", 10000);
+      int h = htsmsg_get_u32_or_default(img, "height", 10000);
       const char *u = htsmsg_get_str(img, "url");
-      if(!w || !h || !u)
+      if(!u)
 	continue;
 
       if(best != NULL) {
