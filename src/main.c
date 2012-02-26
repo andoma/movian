@@ -440,12 +440,6 @@ main(int argc, char **argv)
   if(jsfile)
     js_load(jsfile);
 
-  nav_open(NAV_HOME, NULL);
-
-  /* Open initial page */
-  if(argc > 0)
-    nav_open(argv[0], forceview);
-
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();
 
@@ -455,6 +449,12 @@ main(int argc, char **argv)
 
   /* Initialize various external APIs */
   api_init();
+
+  /* Open initial page(s) */
+  nav_open(NAV_HOME, NULL);
+  if(argc > 0)
+    nav_open(argv[0], forceview);
+
 
   /* HTTP server and UPNP */
 #if ENABLE_HTTPSERVER

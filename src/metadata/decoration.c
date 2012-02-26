@@ -23,6 +23,9 @@
 #include "metadata.h"
 #include "prop/prop.h"
 #include "prop/prop_nodefilter.h"
+#include "api/tmdb.h" // wrong
+#include "db/db_support.h"
+#include "fileaccess/fileaccess.h"
 
 static prop_courier_t *deco_courier;
 static hts_mutex_t deco_mutex;
@@ -57,6 +60,7 @@ typedef struct deco_stem {
   LIST_ENTRY(deco_stem) ds_link;
   char *ds_stem;
   struct deco_item_list ds_items;
+  rstr_t *ds_imdb_id;
 
 } deco_stem_t;
 
@@ -67,7 +71,6 @@ typedef struct deco_stem {
 typedef struct deco_item {
   TAILQ_ENTRY(deco_item) di_link;
   deco_browse_t *di_db;
-
 
   LIST_ENTRY(deco_item) di_stem_link;
   deco_stem_t *di_ds;
@@ -87,8 +90,13 @@ typedef struct deco_item {
   prop_sub_t *di_sub_album;
   rstr_t *di_album;
 
+  metadata_lazy_prop_t *di_mlp;
+  int di_level; 
+
 } deco_item_t;
 
+
+static void load_nfo(deco_item_t *di);
 
 /**
  *
@@ -96,13 +104,41 @@ typedef struct deco_item {
 static void
 item_analysis(deco_item_t *di)
 {
-  if(di->di_type == CONTENT_VIDEO && di->di_filename) {
-    rstr_t *title;
-    int year;
-    title = metadata_filename_to_title(rstr_get(di->di_filename), &year); 
-    printf("Video title = %s (%d)\n", rstr_get(title), year);
-    rstr_release(title);
+  if(di->di_url == NULL)
+    return;
 
+  if(di->di_type == CONTENT_VIDEO) {
+    
+
+    int lvl;
+    rstr_t *title = NULL;
+    int year = 0;
+
+    if(di->di_filename != NULL) {
+      title = metadata_filename_to_title(rstr_get(di->di_filename), &year); 
+      printf("Video title = %s (%d)\n", rstr_get(title), year);
+    }
+
+    
+
+    if(title != NULL)
+      lvl = 2;
+    if(di->di_ds->ds_imdb_id != NULL)
+      lvl = 3;
+
+    if(lvl >= di->di_level) {
+      di->di_level = lvl;
+
+      prop_t *metadata = prop_create(di->di_root, "metadata");
+
+      if(di->di_mlp != NULL)
+	metadata_unbind(di->di_mlp);
+      
+      di->di_mlp = metadata_bind_movie_info(metadata,
+					    di->di_url, title, year,
+					    di->di_ds->ds_imdb_id);
+    }
+    rstr_release(title);
   }
 }
 
@@ -114,7 +150,6 @@ static void
 stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 {
   deco_item_t *di;
-  
   deco_item_t *video = NULL;
   deco_item_t *image = NULL;
 
@@ -127,11 +162,15 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
   }
 
   if(video && image) {
-    prop_t *icon = prop_create(prop_create(video->di_root, "metadata"), "icon");
-    prop_set_rstring(icon, image->di_url);
+
+    if(video->di_level == 0) {
+      prop_t *icon;
+      icon = prop_create(prop_create(video->di_root, "metadata"), "icon");
+      prop_set_rstring(icon, image->di_url);
+      video->di_level = 1;
+    }
     prop_set_int(prop_create(image->di_root, "hidden"), 1);
   }
-
 }
 
 
@@ -207,6 +246,7 @@ stem_release(deco_stem_t *ds)
     return;
   LIST_REMOVE(ds, ds_link);
   free(ds->ds_stem);
+  rstr_release(ds->ds_imdb_id);
   free(ds);
 }
 
@@ -250,6 +290,12 @@ di_set_url(deco_item_t *di, rstr_t *str)
   di->di_ds = ds;
   di->di_postfix = p ? strdup(p) : NULL;
   free(s);
+
+  if(di->di_postfix != NULL) {
+    if(!strcasecmp(di->di_postfix, "nfo")) {
+      load_nfo(di);
+    }
+  }
   
   stem_analysis(db, ds);
 }
@@ -372,7 +418,6 @@ deco_browse_add_nodes(deco_browse_t *db, prop_vec_t *pv, deco_item_t *before)
     prop_t *p = prop_vec_get(pv, i);
     deco_browse_add_node(db, p, before);
   }
-
 }
 
 		     
@@ -402,6 +447,10 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   rstr_release(di->di_album);
   rstr_release(di->di_url);
   rstr_release(di->di_filename);
+  
+  if(di->di_mlp != NULL)
+    metadata_unbind(di->di_mlp);
+
   free(di);
 }
 
@@ -562,4 +611,26 @@ decoration_init(void)
   deco_courier = prop_courier_create_waitable();
 
   hts_thread_create_detached("deco", deco_thread, NULL, THREAD_PRIO_LOW);
+}
+
+
+/**
+ *
+ */
+static void
+load_nfo(deco_item_t *di)
+{
+  char *buf = fa_load(rstr_get(di->di_url), NULL, NULL, NULL, 0, NULL, 0);
+  if(buf == NULL)
+    return;
+
+  char *tt = strstr(buf, "http://www.imdb.com/title/tt");
+  if(tt != NULL) {
+    tt += strlen("http://www.imdb.com/title/");
+    tt[strspn(tt, "t0123456789")] = 0;
+
+    rstr_release(di->di_ds->ds_imdb_id);
+    di->di_ds->ds_imdb_id = rstr_alloc(tt);
+  }
+  free(buf);
 }

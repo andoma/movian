@@ -50,6 +50,8 @@ metadata_create(void)
 {
   metadata_t *md = calloc(1, sizeof(metadata_t));
   TAILQ_INIT(&md->md_streams);
+  md->md_rating = -1;
+  md->md_rate_count = -1;
   return md;
 }
 
@@ -64,6 +66,11 @@ metadata_destroy(metadata_t *md)
   rstr_release(md->md_album);
   rstr_release(md->md_artist);
   rstr_release(md->md_format);
+  rstr_release(md->md_description);
+  rstr_release(md->md_tagline);
+  rstr_release(md->md_imdb_id);
+  rstr_release(md->md_icon);
+  rstr_release(md->md_backdrop);
 
   free(md->md_redirect);
 
@@ -251,27 +258,31 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
 
-  if(md->md_title != NULL && md->md_contenttype == CONTENT_VIDEO) {
-    metadata_bind_movie_info(prop_create(proproot, "description"),
-			     md->md_title, md->md_year, 
-			     METATAG_DESCRIPTION);
-  }
   return streams;
 }
 
 
 
-typedef struct metadata_lazy_prop {
+struct metadata_lazy_prop {
   void (*mlp_cb)(struct metadata_lazy_prop *mlp);
-  prop_t *mlp_prop;
-  prop_sub_t *mlp_sub;
 	    
   rstr_t *mlp_album;
   rstr_t *mlp_artist;
   rstr_t *mlp_title;
-  int mlp_year;
-  metadata_tag_t mlp_mtag;
-} metadata_lazy_prop_t;
+  rstr_t *mlp_url;
+  rstr_t *mlp_imdb_id;
+
+  int16_t mlp_year;
+  int16_t mlp_refcount;
+
+
+  int16_t mlp_num_props;
+
+  struct {
+    prop_t *p;
+    prop_sub_t *s;
+  } mlp_props[0];
+};
 
 
 /**
@@ -280,14 +291,40 @@ typedef struct metadata_lazy_prop {
 static void
 mlp_destroy(metadata_lazy_prop_t *mlp)
 {
-  if(mlp->mlp_sub != NULL)
-    prop_unsubscribe(mlp->mlp_sub);
-  prop_ref_dec(mlp->mlp_prop);
+  int i;
+  for(i = 0; i < mlp->mlp_num_props; i++) {
+    if(mlp->mlp_props[i].s != NULL) {
+      prop_unsubscribe(mlp->mlp_props[i].s);
+      mlp->mlp_props[i].s = NULL;
+    }
+  }
+
+  mlp->mlp_refcount--;
+  if(mlp->mlp_refcount > 0)
+    return;
+  for(i = 0; i < mlp->mlp_num_props; i++)
+    prop_ref_dec(mlp->mlp_props[i].p);
+
   rstr_release(mlp->mlp_artist);
   rstr_release(mlp->mlp_album);
   rstr_release(mlp->mlp_title);
+  rstr_release(mlp->mlp_url);
+  rstr_release(mlp->mlp_imdb_id);
   free(mlp);
 }
+
+
+/**
+ *
+ */
+void
+metadata_unbind(metadata_lazy_prop_t *mlp)
+{
+  hts_mutex_lock(&metadata_mutex);
+  mlp_destroy(mlp);
+  hts_mutex_unlock(&metadata_mutex);
+}
+
 
 
 /**
@@ -314,17 +351,16 @@ mlp_get_artist(metadata_lazy_prop_t *mlp)
   void *db = metadb_get();
   int r;
 
-  if(db_begin(db))
-    return;
-
-  r = metadb_get_artist_pics(db, rstr_get(mlp->mlp_artist),
-			     mlp_add_artist_to_prop, mlp->mlp_prop);
-
-  if(r)
-    lastfm_load_artistinfo(db, rstr_get(mlp->mlp_artist),
-			   mlp_add_artist_to_prop, mlp->mlp_prop);
-
-  db_commit(db);
+  if(!db_begin(db)) {
+    r = metadb_get_artist_pics(db, rstr_get(mlp->mlp_artist),
+			       mlp_add_artist_to_prop, mlp->mlp_props[0].p);
+    
+    if(r)
+      lastfm_load_artistinfo(db, rstr_get(mlp->mlp_artist),
+			     mlp_add_artist_to_prop, mlp->mlp_props[0].p);
+    
+    db_commit(db);
+  }
   metadb_close(db);
 }
 
@@ -338,38 +374,27 @@ mlp_get_album(metadata_lazy_prop_t *mlp)
   void *db = metadb_get();
   rstr_t *r;
 
-  if(db_begin(db))
-    return;
-
-  r = metadb_get_album_art(db,rstr_get(mlp->mlp_album),
-			   rstr_get(mlp->mlp_artist));
-  
-  if(r == NULL) {
-    // No album art available in our db, try to get some
-
-    lastfm_load_albuminfo(db, rstr_get(mlp->mlp_album),
-			  rstr_get(mlp->mlp_artist));
-    
+  if(!db_begin(db)) {
     r = metadb_get_album_art(db,rstr_get(mlp->mlp_album),
 			     rstr_get(mlp->mlp_artist));
+  
+    if(r == NULL) {
+      // No album art available in our db, try to get some
+      
+      lastfm_load_albuminfo(db, rstr_get(mlp->mlp_album),
+			    rstr_get(mlp->mlp_artist));
+      
+      r = metadb_get_album_art(db,rstr_get(mlp->mlp_album),
+			       rstr_get(mlp->mlp_artist));
+    }
+    
+    prop_set_rstring(mlp->mlp_props[0].p, r);
+    rstr_release(r);
+    db_commit(db);
   }
-
-  prop_set_rstring(mlp->mlp_prop, r);
-  rstr_release(r);
-
-  db_commit(db);
   metadb_close(db);
 }
 
-
-/**
- *
- */
-static void
-mlp_get_movie(metadata_lazy_prop_t *mlp)
-{
-  tmdb_query_by_title_and_year(rstr_get(mlp->mlp_title), mlp->mlp_year);
-}
 
 
 /**
@@ -382,10 +407,8 @@ mlp_sub_cb(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    printf("Queyrying for data\n");
     mlp->mlp_cb(mlp);
   case PROP_DESTROYED:
-    printf("MLP destroyed\n");
     mlp_destroy(mlp);
   default:
     break;
@@ -395,24 +418,41 @@ mlp_sub_cb(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static void
-mlp_setup(metadata_lazy_prop_t *mlp, prop_t *p,
-	  void (*cb)(metadata_lazy_prop_t *mlp),
-	  metadata_tag_t mtag)
+static metadata_lazy_prop_t *
+mlp_alloc(int props)
 {
-  mlp->mlp_mtag = mtag;
-  mlp->mlp_prop = prop_ref_inc(p);
+  metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t) + 
+				     sizeof(void *) * 2 * props);
+  mlp->mlp_num_props = props;
+  return mlp;
+}
+
+
+/**
+ *
+ */
+static void
+mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
+	  void (*cb)(metadata_lazy_prop_t *mlp))
+{
+  int i;
+  mlp->mlp_refcount++;
   mlp->mlp_cb = cb;
   hts_mutex_lock(&metadata_mutex);
 
-  mlp->mlp_sub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
-		   PROP_TAG_CALLBACK, mlp_sub_cb, mlp,
-		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, mlp->mlp_prop,
-		   NULL);
-  if(mlp->mlp_sub == NULL)
-    mlp_destroy(mlp);
+  for(i = 0; i < mlp->mlp_num_props; i++) {
+    mlp->mlp_props[i].p = prop_ref_inc(p[i]);
+    mlp->mlp_props[i].s = 
+      prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
+		     PROP_TAG_CALLBACK, mlp_sub_cb, mlp,
+		     PROP_TAG_COURIER, metadata_courier,
+		     PROP_TAG_ROOT, mlp->mlp_props[i].p,
+		     NULL);
+    if(mlp->mlp_props[i].s == NULL) {
+      mlp_destroy(mlp);
+      break;
+    }
+  }
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -424,9 +464,9 @@ mlp_setup(metadata_lazy_prop_t *mlp, prop_t *p,
 void
 metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 {
-  metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  metadata_lazy_prop_t *mlp = mlp_alloc(1);
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
-  mlp_setup(mlp, prop, mlp_get_artist, 0);
+  mlp_setup(mlp, &prop, mlp_get_artist);
 }
 
 
@@ -436,24 +476,83 @@ metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 void
 metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
 {
-  metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  metadata_lazy_prop_t *mlp = mlp_alloc(1);
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
   mlp->mlp_album  = rstr_spn(album, "[]()");
-  mlp_setup(mlp, prop, mlp_get_album, 0);
+  mlp_setup(mlp, &prop, mlp_get_album);
+}
+
+
+
+/**
+ *
+ */
+static void
+mlp_get_video_info(metadata_lazy_prop_t *mlp)
+{
+  void *db = metadb_get();
+
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+  
+
+  if(mlp->mlp_imdb_id != NULL)
+    tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
+			  rstr_get(mlp->mlp_imdb_id));
+  else
+    tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+				 rstr_get(mlp->mlp_title), mlp->mlp_year);
+
+  metadata_t *md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url));
+  
+  if(md != NULL) {
+    
+    prop_set_rstring(mlp->mlp_props[0].p, md->md_title);
+    prop_set_rstring(mlp->mlp_props[1].p, md->md_tagline);
+    prop_set_rstring(mlp->mlp_props[2].p, md->md_description);
+    if(md->md_year)
+      prop_set_int(mlp->mlp_props[3].p, md->md_year);
+    if(md->md_rating != -1)
+      prop_set_int(mlp->mlp_props[4].p, md->md_rating);
+    if(md->md_rate_count != -1)
+      prop_set_int(mlp->mlp_props[5].p, md->md_rate_count);
+    prop_set_rstring(mlp->mlp_props[6].p, md->md_icon);
+    prop_set_rstring(mlp->mlp_props[7].p, md->md_backdrop);
+  }
+  db_commit(db);
+  metadb_close(db);
+
 }
 
 
 /**
  *
  */
-void
-metadata_bind_movie_info(prop_t *prop, rstr_t *title, int year,
-			 metadata_tag_t mtag)
+metadata_lazy_prop_t *
+metadata_bind_movie_info(prop_t *prop, rstr_t *url, rstr_t *title, int year,
+			 rstr_t *imdb_id)
 {
-  metadata_lazy_prop_t *mlp = calloc(1, sizeof(metadata_lazy_prop_t));
+  metadata_lazy_prop_t *mlp = mlp_alloc(8);
+  prop_t *props[8];
+
+  props[0] = prop_create(prop, "title");
+  props[1] = prop_create(prop, "tagline");
+  props[2] = prop_create(prop, "description");
+  props[3] = prop_create(prop, "year");
+  props[4] = prop_create(prop, "rating");
+  props[5] = prop_create(prop, "rating_count");
+  props[6] = prop_create(prop, "icon");
+  props[7] = prop_create(prop, "backdrop");
+
+  mlp->mlp_refcount = 1;
   mlp->mlp_title = rstr_spn(title, "[]()");
+  mlp->mlp_url = rstr_dup(url);
   mlp->mlp_year = year;
-  mlp_setup(mlp, prop, mlp_get_movie, mtag);
+  mlp->mlp_imdb_id = rstr_dup(imdb_id);
+  mlp_setup(mlp, props, mlp_get_video_info);
+  return mlp;
 }
 
 

@@ -416,3 +416,13 @@ db_pool_close(db_pool_t *dp)
       sqlite3_close(dp->dp_pool[i]);
   hts_mutex_unlock(&dp->dp_mutex);
 }
+
+
+/**
+ *
+ */
+rstr_t *
+db_rstr(sqlite3_stmt *stmt, int col)
+{
+  return rstr_alloc((const char *)sqlite3_column_text(stmt, col));
+}

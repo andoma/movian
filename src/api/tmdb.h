@@ -17,4 +17,11 @@
  */
 #pragma once
 
-void tmdb_query_by_title_and_year(const char *title, int year);
+void tmdb_query_by_title_and_year(void *db, const char *item_url, 
+				  const char *title, int year);
+
+void tmdb_query_by_imdb_id(void *db, const char *item_url, 
+			   const char *imdb_id);
+
+void tmdb_init(void);
+

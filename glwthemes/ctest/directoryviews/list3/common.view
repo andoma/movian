@@ -22,7 +22,7 @@
       widget(label, {	
 	.filterConstraintX = true;
 	.caption = TITLE;
-	.sizeScale = 1.5 + isFocused() * 0.5;
+	.sizeScale = 1.5 + isFocused() * 1.5;
 	.outline = true;
 	.shadow = true;
 	.alpha = iir(isFocused(), 5) + 0.4;

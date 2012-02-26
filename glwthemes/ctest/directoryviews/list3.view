@@ -7,6 +7,8 @@ widget(clist, {
   
   &view.focused = focusedChild();
   $view.change = changed($view.focused, 1);
+
+  $page.backdrop = $view.focused.metadata.backdrop;
   
   cloner($page.model.nodes, loader, {
 

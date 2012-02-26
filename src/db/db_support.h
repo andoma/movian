@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ext/sqlite/sqlite3.h"
+#include "misc/rstr.h"
 
 int db_one_statement(sqlite3 *db, const char *sql, const char *src);
 
@@ -35,3 +36,5 @@ sqlite3 *db_pool_get(db_pool_t *p);
 void db_pool_put(db_pool_t *p, sqlite3 *db);
 
 void db_pool_close(db_pool_t *dp);
+
+rstr_t *db_rstr(sqlite3_stmt *stmt, int col);

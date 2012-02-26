@@ -23,6 +23,8 @@
 
 struct prop;
 struct prop_vec;
+typedef struct metadata_lazy_prop metadata_lazy_prop_t;
+
 /**
  * Content types.
  * These are stored directly in the sqlite metadata database so they
@@ -45,17 +47,27 @@ typedef enum {
 
 
 /**
- * Metadata tags.
+ * Video types.
  * These are stored directly in the sqlite metadata database so they
  * must never be changed
  */
 typedef enum {
-  METATAG_DESCRIPTION = 1,
+  METADATA_VIDEO_MOVIE = 1,
+  METADATA_VIDEO_TVSHOW = 2,
+  METADATA_VIDEO_MUSICVIDEO = 3,
+} metadata_video_type_t;
 
-} metadata_tag_t;
 
-
-
+/**
+ * Image types.
+ * These are stored directly in the sqlite metadata database so they
+ * must never be changed
+ */
+typedef enum {
+  METADATA_IMAGE_POSTER = 1,
+  METADATA_IMAGE_BACKDROP = 2,
+  METADATA_IMAGE_PROFILE = 3,
+} metadata_image_type_t;
 
 
 
@@ -109,6 +121,17 @@ typedef struct metadata {
   struct metadata_stream_queue md_streams;
 
   int md_year;
+  rstr_t *md_description;
+  rstr_t *md_tagline;
+
+  rstr_t *md_imdb_id;
+  int md_rating;  // 0 - 100
+  int md_rate_count;
+  
+  metadata_video_type_t md_video_type;
+
+  rstr_t *md_backdrop;
+  rstr_t *md_icon;
 
 } metadata_t;
 
@@ -179,6 +202,16 @@ void metadb_insert_albumart(void *db, int64_t album_id, const char *url,
 void metadb_insert_artistpic(void *db, int64_t artist_id, const char *url,
 			     int width, int height);
 
+void metadb_insert_videoart(void *db, int64_t videoitem_id, const char *url,
+			    metadata_image_type_t type,
+			    int width, int height);
+
+int metadb_insert_videoitem(void *db, const char *url, int ds_id,
+			    const char *ext_id, const metadata_t *md);
+
+metadata_t *metadb_get_videoinfo(void *db, const char *url);
+
+
 void decoration_init(void);
 
 void decorated_browse_create(struct prop *model);
@@ -189,8 +222,11 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-void metadata_bind_movie_info(struct prop *prop, rstr_t *title, int year,
-			      metadata_tag_t mtag);
+metadata_lazy_prop_t *metadata_bind_movie_info(struct prop *prop, rstr_t *url,
+					       rstr_t *title, int year,
+					       rstr_t *imdb_id);
+
+void metadata_unbind(metadata_lazy_prop_t *mlp);
 
 rstr_t *metadata_filename_to_title(const char *filename, int *yearp);
 

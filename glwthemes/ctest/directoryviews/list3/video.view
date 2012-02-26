@@ -7,4 +7,4 @@ ITEM($self.metadata.icon ?? "theme://svg/Movie.svg",
 	    fmt("(%d)", $self.metadata.year),
 	    $self.metadata.title),
      navOpen($self.url),
-    $self.metadata.description);
+    $self.metadata.tagline);
