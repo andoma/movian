@@ -21,6 +21,7 @@
 
 #include <stdlib.h>
 #include <stdint.h>
+#include <string.h>
 #include "arch/atomic.h"
 
 #define USE_RSTR
@@ -69,6 +70,17 @@ static inline void rstr_set(rstr_t **p, rstr_t *r)
 }
 
 rstr_t *rstr_spn(rstr_t *s, const char *set);
+
+static inline int rstr_eq(const rstr_t *a, const rstr_t *b)
+{
+  if(a == NULL && b == NULL)
+    return 1;
+  if(a == NULL || b == NULL)
+    return 0;
+  return !strcmp(rstr_get(a), rstr_get(b));
+}
+
+
 
 #else
 
