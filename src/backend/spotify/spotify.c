@@ -1647,7 +1647,7 @@ spotify_open_album(sp_album *alb, spotify_page_t *sp, const char *playme)
   f_sp_albumbrowse_create(spotify_session, alb, spotify_browse_album_callback,
 			  bh_create(sp, playme));
 
-  prop_set_string(sp->sp_contents, "albumTracks");
+  prop_set_string(sp->sp_contents, "album");
 }
 
 
