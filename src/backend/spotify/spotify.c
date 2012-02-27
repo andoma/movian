@@ -4066,7 +4066,7 @@ add_metadata_props(spotify_page_t *sp)
 
   sp->sp_album_art  = prop_ref_inc(prop_create(m, "album_art"));
 
-  sp->sp_artist_name = prop_ref_inc(prop_create(m, "aritst_name"));
+  sp->sp_artist_name = prop_ref_inc(prop_create(m, "artist_name"));
 
   sp->sp_numtracks = prop_ref_inc(prop_create(m, "tracks"));
 
