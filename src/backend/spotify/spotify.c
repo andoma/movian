@@ -1266,7 +1266,8 @@ spotify_metadata_create(prop_t *p, sp_track *source,
  */
 static prop_t *
 track_create(sp_track *track, prop_t **metadatap,
-	     struct spotify_metadata_list *list, int with_status)
+	     struct spotify_metadata_list *list, int with_status,
+	     int tracknum)
 {
   char url[URL_MAX];
   prop_t *p = prop_create_root(NULL);
@@ -1280,6 +1281,9 @@ track_create(sp_track *track, prop_t **metadatap,
   metadata = prop_create(p, "metadata");
   if(metadatap != NULL)
     *metadatap = metadata;
+
+  if(tracknum)
+    prop_set_int(prop_create(metadata, "tracknum"), tracknum);
 
   spotify_metadata_create(metadata, track, list, with_status);
 
@@ -1396,7 +1400,7 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
     for(i = 0; i < ntracks; i++) {
       track = f_sp_albumbrowse_track(result, i);
-      p = track_create(track, NULL, NULL, 0);
+      p = track_create(track, NULL, NULL, 0, i+1);
 
       pv = prop_vec_append(pv, p);
 
@@ -2228,7 +2232,7 @@ pl_add_track(playlist_t *pl, sp_track *t, int pos)
   } else {
 
     pli->pli_prop_root = track_create(t, &pli->pli_prop_metadata,
-				      &pl->pl_pending_metadata, 1);
+				      &pl->pl_pending_metadata, 1, 0);
 
   }
   sp_user *u = f_sp_playlist_track_creator(pl->pl_playlist, pos);
@@ -3468,7 +3472,7 @@ ss_fill_tracks(sp_search *result, spotify_search_request_t *ssr)
 
   for(i = 0; i < ntracks; i++)
     pv = prop_vec_append(pv, track_create(f_sp_search_track(result, i), NULL,
-					  NULL, 0));
+					  NULL, 0, 0));
 
   prop_set_parent_vector(pv, ssr->ssr_nodes, NULL, NULL);
   prop_vec_release(pv);
