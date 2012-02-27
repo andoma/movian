@@ -61,6 +61,7 @@ typedef struct deco_stem {
   char *ds_stem;
   struct deco_item_list ds_items;
   rstr_t *ds_imdb_id;
+  rstr_t *ds_icon;
 
 } deco_stem_t;
 
@@ -91,12 +92,35 @@ typedef struct deco_item {
   rstr_t *di_album;
 
   metadata_lazy_prop_t *di_mlp;
-  int di_level; 
 
 } deco_item_t;
 
 
 static void load_nfo(deco_item_t *di);
+
+
+/**
+ *
+ */
+static void
+analyze_video(deco_item_t *di)
+{
+  rstr_t *title = NULL;
+  int year = 0;
+  prop_t *metadata = prop_create(di->di_root, "metadata");
+
+  if(di->di_filename != NULL)
+    title = metadata_filename_to_title(rstr_get(di->di_filename), &year);
+
+  metadata_bind_movie_info(&di->di_mlp, metadata,
+			   di->di_url, title, year,
+			   di->di_ds->ds_imdb_id,
+			   di->di_ds->ds_icon);
+  
+  rstr_release(title);
+}
+
+
 
 /**
  *
@@ -106,39 +130,13 @@ item_analysis(deco_item_t *di)
 {
   if(di->di_url == NULL)
     return;
-
-  if(di->di_type == CONTENT_VIDEO) {
-    
-
-    int lvl;
-    rstr_t *title = NULL;
-    int year = 0;
-
-    if(di->di_filename != NULL) {
-      title = metadata_filename_to_title(rstr_get(di->di_filename), &year); 
-      printf("Video title = %s (%d)\n", rstr_get(title), year);
-    }
-
-    
-
-    if(title != NULL)
-      lvl = 2;
-    if(di->di_ds->ds_imdb_id != NULL)
-      lvl = 3;
-
-    if(lvl >= di->di_level) {
-      di->di_level = lvl;
-
-      prop_t *metadata = prop_create(di->di_root, "metadata");
-
-      if(di->di_mlp != NULL)
-	metadata_unbind(di->di_mlp);
-      
-      di->di_mlp = metadata_bind_movie_info(metadata,
-					    di->di_url, title, year,
-					    di->di_ds->ds_imdb_id);
-    }
-    rstr_release(title);
+  
+  switch(di->di_type) {
+  case CONTENT_VIDEO:
+    analyze_video(di);
+    break;
+  default:
+    break;
   }
 }
 
@@ -154,24 +152,21 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
   deco_item_t *image = NULL;
 
   LIST_FOREACH(di, &ds->ds_items, di_stem_link) {
-    if(di->di_type == CONTENT_VIDEO)
-      video = di;
-    
     if(di->di_type == CONTENT_IMAGE)
       image = di;
+    if(di->di_type == CONTENT_VIDEO)
+      video = di;
   }
+
 
   if(video && image) {
-
-    if(video->di_level == 0) {
-      prop_t *icon;
-      icon = prop_create(prop_create(video->di_root, "metadata"), "icon");
-      prop_set_rstring(icon, image->di_url);
-      video->di_level = 1;
-    }
+    rstr_set(&ds->ds_icon, image->di_url);
     prop_set_int(prop_create(image->di_root, "hidden"), 1);
   }
-}
+
+  LIST_FOREACH(di, &ds->ds_items, di_stem_link)
+    item_analysis(di);
+  }
 
 
 /**
@@ -247,6 +242,7 @@ stem_release(deco_stem_t *ds)
   LIST_REMOVE(ds, ds_link);
   free(ds->ds_stem);
   rstr_release(ds->ds_imdb_id);
+  rstr_release(ds->ds_icon);
   free(ds);
 }
 
@@ -353,7 +349,8 @@ di_set_type(deco_item_t *di, const char *str)
   type_analysis(db);
   if(di->di_ds != NULL)
     stem_analysis(db, di->di_ds);
-  item_analysis(di);
+  else
+    item_analysis(di);
 }
 
 

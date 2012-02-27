@@ -222,9 +222,10 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-metadata_lazy_prop_t *metadata_bind_movie_info(struct prop *prop, rstr_t *url,
-					       rstr_t *title, int year,
-					       rstr_t *imdb_id);
+void metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
+			      struct prop *prop, rstr_t *url, rstr_t *title,
+			      int year, rstr_t *imdb_id,
+			      rstr_t *default_icon);
 
 void metadata_unbind(metadata_lazy_prop_t *mlp);
 
