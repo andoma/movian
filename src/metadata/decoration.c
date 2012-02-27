@@ -50,6 +50,8 @@ typedef struct deco_browse {
 
   struct deco_stem_list db_stems[STEM_HASH_SIZE];
 
+  rstr_t *db_imdb_id;
+
 } deco_browse_t;
 
 
@@ -105,6 +107,10 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
+  if(di->di_url == NULL)
+    return;
+  
+  deco_browse_t *db = di->di_db;
   rstr_t *title = NULL;
   int year = 0;
   prop_t *metadata = prop_create(di->di_root, "metadata");
@@ -114,7 +120,7 @@ analyze_video(deco_item_t *di)
 
   metadata_bind_movie_info(&di->di_mlp, metadata,
 			   di->di_url, title, year,
-			   di->di_ds->ds_imdb_id,
+			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
 			   di->di_ds->ds_icon);
   
   rstr_release(title);
@@ -126,11 +132,8 @@ analyze_video(deco_item_t *di)
  *
  */
 static void
-item_analysis(deco_item_t *di)
+analyze_item(deco_item_t *di)
 {
-  if(di->di_url == NULL)
-    return;
-  
   switch(di->di_type) {
   case CONTENT_VIDEO:
     analyze_video(di);
@@ -165,8 +168,8 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
   }
 
   LIST_FOREACH(di, &ds->ds_items, di_stem_link)
-    item_analysis(di);
-  }
+    analyze_item(di);
+}
 
 
 /**
@@ -290,6 +293,12 @@ di_set_url(deco_item_t *di, rstr_t *str)
   if(di->di_postfix != NULL) {
     if(!strcasecmp(di->di_postfix, "nfo")) {
       load_nfo(di);
+
+      TAILQ_FOREACH(di, &db->db_items, di_link) {
+	if(di->di_type == CONTENT_VIDEO)
+	  analyze_video(di);
+      }
+      return;
     }
   }
   
@@ -315,7 +324,7 @@ static void
 di_set_filename(deco_item_t *di, rstr_t *str)
 {
   rstr_set(&di->di_filename, str);
-  item_analysis(di);
+  analyze_item(di);
 }
 
 
@@ -350,7 +359,7 @@ di_set_type(deco_item_t *di, const char *str)
   if(di->di_ds != NULL)
     stem_analysis(db, di->di_ds);
   else
-    item_analysis(di);
+    analyze_item(di);
 }
 
 
@@ -484,6 +493,7 @@ deco_browse_destroy(deco_browse_t *db)
   deco_browse_clear(db);
   prop_unsubscribe(db->db_sub);
   prop_ref_dec(db->db_prop_contents);
+  rstr_release(db->db_imdb_id);
   free(db);
 }
 
@@ -621,13 +631,16 @@ load_nfo(deco_item_t *di)
   if(buf == NULL)
     return;
 
-  char *tt = strstr(buf, "http://www.imdb.com/title/tt");
+  const char *tt = strstr(buf, "http://www.imdb.com/title/tt");
   if(tt != NULL) {
     tt += strlen("http://www.imdb.com/title/");
-    tt[strspn(tt, "t0123456789")] = 0;
 
-    rstr_release(di->di_ds->ds_imdb_id);
-    di->di_ds->ds_imdb_id = rstr_alloc(tt);
+    rstr_t *r = rstr_allocl(tt, strspn(tt, "t0123456789"));
+
+    rstr_set(&di->di_ds->ds_imdb_id, r);
+    rstr_set(&di->di_db->db_imdb_id, r);
+    
+    rstr_release(r);
   }
   free(buf);
 }
