@@ -1171,9 +1171,9 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(ctx->width == 0 || ctx->height == 0) {
-    av_free(ctx);
     pixmap_release(pm);
     avcodec_close(ctx);
+    av_free(ctx);
     av_free(frame);
     snprintf(errbuf, errlen, "Invalid picture dimensions");
     return NULL;
