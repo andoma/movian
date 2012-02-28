@@ -88,7 +88,7 @@ static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
  *
  */
 static rstr_t *
-ffmpeg_metadata_get(AVMetadata *m, const char *key)
+ffmpeg_metadata_rstr(AVMetadata *m, const char *key)
 {
   AVMetadataTag *tag;
   int len;
@@ -484,12 +484,10 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   int has_video = 0;
   int has_audio = 0;
 
-  md->md_title = ffmpeg_metadata_get(fctx->metadata, "title");
+  md->md_artist = ffmpeg_metadata_rstr(fctx->metadata, "artist") ?:
+    ffmpeg_metadata_rstr(fctx->metadata, "author");
 
-  md->md_artist = ffmpeg_metadata_get(fctx->metadata, "artist") ?:
-    ffmpeg_metadata_get(fctx->metadata, "author");
-
-  md->md_album = ffmpeg_metadata_get(fctx->metadata, "album");
+  md->md_album = ffmpeg_metadata_rstr(fctx->metadata, "album");
 
   md->md_format = rstr_alloc(fctx->iformat->long_name);
 
@@ -500,6 +498,9 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
   if(fctx->nb_streams == 1 && 
      fctx->streams[0]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
     md->md_contenttype = CONTENT_AUDIO;
+
+    md->md_title = ffmpeg_metadata_rstr(fctx->metadata, "title");
+  
   } else {
 
     int atrack = 0;

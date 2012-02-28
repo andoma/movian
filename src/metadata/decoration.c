@@ -63,7 +63,6 @@ typedef struct deco_stem {
   char *ds_stem;
   struct deco_item_list ds_items;
   rstr_t *ds_imdb_id;
-  rstr_t *ds_icon;
 
 } deco_stem_t;
 
@@ -120,8 +119,7 @@ analyze_video(deco_item_t *di)
 
   metadata_bind_movie_info(&di->di_mlp, metadata,
 			   di->di_url, title, year,
-			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
-			   di->di_ds->ds_icon);
+			   di->di_ds->ds_imdb_id ?: db->db_imdb_id);
   
   rstr_release(title);
 }
@@ -163,12 +161,10 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 
 
   if(video && image) {
-    rstr_set(&ds->ds_icon, image->di_url);
+    prop_t *m = prop_create(video->di_root, "metadata");
+    prop_set_rstring(prop_create(m, "fallbackicon"), image->di_url);
     prop_set_int(prop_create(image->di_root, "hidden"), 1);
   }
-
-  LIST_FOREACH(di, &ds->ds_items, di_stem_link)
-    analyze_item(di);
 }
 
 
@@ -245,7 +241,6 @@ stem_release(deco_stem_t *ds)
   LIST_REMOVE(ds, ds_link);
   free(ds->ds_stem);
   rstr_release(ds->ds_imdb_id);
-  rstr_release(ds->ds_icon);
   free(ds);
 }
 
@@ -346,7 +341,10 @@ di_set_type(deco_item_t *di, const char *str)
   di->di_type = str ? type2content(str) : CONTENT_UNKNOWN;
   db->db_types[di->di_type]++;
 
-  if(di->di_type == CONTENT_AUDIO)
+
+  switch(di->di_type) {
+
+  case CONTENT_AUDIO:
     di->di_sub_album = 
       prop_subscribe(0,
 		     PROP_TAG_NAME("node", "metadata", "album"),
@@ -354,12 +352,16 @@ di_set_type(deco_item_t *di, const char *str)
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
+    break;
+  default:
+    break;
+  }
+
 
   type_analysis(db);
   if(di->di_ds != NULL)
     stem_analysis(db, di->di_ds);
-  else
-    analyze_item(di);
+  analyze_item(di);
 }
 
 
