@@ -49,15 +49,20 @@ static tmdb_image_size_t *poster_sizes, *backdrop_sizes, *profile_sizes;
  *
  */
 static void
-addsize(tmdb_image_size_t **p, const char *str)
+addsize(tmdb_image_size_t **p, const char *str, float aspect)
 {
   int width = 0, height = 0;
   
-  if(*str == 'w')
+  if(*str == 'w') {
     width = atoi(str+1);
-  else if(*str == 'h')
+    if(aspect > 0)
+      height = width / aspect;
+  }
+  else if(*str == 'h') {
     height = atoi(str+1);
-
+    if(aspect > 0)
+      width = height * aspect;
+  }
   tmdb_image_size_t *x = malloc(sizeof(tmdb_image_size_t));
   x->prefix = strdup(str);
   x->width = width;
@@ -68,7 +73,7 @@ addsize(tmdb_image_size_t **p, const char *str)
 
 
 static void
-addsizes(tmdb_image_size_t **p, htsmsg_t *img, const char *field)
+addsizes(tmdb_image_size_t **p, htsmsg_t *img, const char *field, float aspect)
 {
   htsmsg_t *l = htsmsg_get_list(img, field);
   htsmsg_field_t *f;
@@ -77,7 +82,7 @@ addsizes(tmdb_image_size_t **p, htsmsg_t *img, const char *field)
 
   HTSMSG_FOREACH(f, l) {
     if(f->hmf_type == HMF_STR)
-      addsize(p, f->hmf_str);
+      addsize(p, f->hmf_str, aspect);
   }
 }
 
@@ -113,12 +118,11 @@ tmdb_parse_config(htsmsg_t *doc)
   if(s == NULL)
     return -1;
   tmdb_image_base_url = strdup(s);
-  addsizes(&poster_sizes, img, "poster_sizes");
-  addsizes(&backdrop_sizes, img, "backdrop_sizes");
-  addsizes(&profile_sizes, img, "profile_sizes");
+  addsizes(&poster_sizes, img, "poster_sizes", 0.675);
+  addsizes(&backdrop_sizes, img, "backdrop_sizes", 1.777777);
+  addsizes(&profile_sizes, img, "profile_sizes", 0.675);
   return 0;
 }
-
 
 
 /**
