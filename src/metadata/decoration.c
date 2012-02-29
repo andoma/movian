@@ -27,12 +27,15 @@
 #include "db/db_support.h"
 #include "fileaccess/fileaccess.h"
 
-static prop_courier_t *deco_courier;
-static hts_mutex_t deco_mutex;
-
+LIST_HEAD(deco_browse_list, deco_browse);
 TAILQ_HEAD(deco_item_queue, deco_item);
 LIST_HEAD(deco_item_list,deco_item);
 LIST_HEAD(deco_stem_list, deco_stem);
+
+static prop_courier_t *deco_courier;
+static hts_mutex_t deco_mutex;
+static struct deco_browse_list deco_browses;
+static int deco_pendings;
 
 #define STEM_HASH_SIZE 503
 
@@ -40,10 +43,12 @@ LIST_HEAD(deco_stem_list, deco_stem);
  *
  */
 typedef struct deco_browse {
+  LIST_ENTRY(deco_browse) db_link;
   prop_sub_t *db_sub;
   struct deco_item_queue db_items;
 
   prop_t *db_prop_contents;
+  prop_t *db_prop_model;
 
   int db_total;
   int db_types[CONTENT_num];
@@ -51,6 +56,9 @@ typedef struct deco_browse {
   struct deco_stem_list db_stems[STEM_HASH_SIZE];
 
   rstr_t *db_imdb_id;
+
+  int db_pending_flags;
+#define DB_PENDING_ALBUM_ANALYSIS 0x1
 
 } deco_browse_t;
 
@@ -91,6 +99,9 @@ typedef struct deco_item {
 
   prop_sub_t *di_sub_album;
   rstr_t *di_album;
+
+  prop_sub_t *di_sub_artist;
+  rstr_t *di_artist;
 
   metadata_lazy_prop_t *di_mlp;
 
@@ -180,32 +191,115 @@ type_analysis(deco_browse_t *db)
   }
 }
 
+
+/**
+ *
+ */
+typedef struct deco_artist {
+  LIST_ENTRY(deco_artist) da_link;
+  rstr_t *da_artist;
+  int da_count;
+} deco_artist_t;
+
+
+/**
+ *
+ */
+static int 
+artist_compar(const void *A, const void *B)
+{
+  const deco_artist_t *a = *(const deco_artist_t **)A;
+  const deco_artist_t *b = *(const deco_artist_t **)B;
+  return b->da_count - a->da_count;
+}
+
+
+/**
+ *
+ */
 static void
 album_analysis(deco_browse_t *db)
 {
   deco_item_t *di;
   rstr_t *v = NULL;
 
-  if(db->db_types[CONTENT_AUDIO] > 1 && 
-     db->db_types[CONTENT_VIDEO] == 0 &&
-     db->db_types[CONTENT_ARCHIVE] == 0 &&
-     db->db_types[CONTENT_DIR] == 0 &&
-     db->db_types[CONTENT_ALBUM] == 0 &&
-     db->db_types[CONTENT_PLUGIN] == 0) {
+  LIST_HEAD(, deco_artist) artists;
+  deco_artist_t *da;
+  int artist_count = 0;
+  int item_count = 0;
 
-    TAILQ_FOREACH(di, &db->db_items, di_link) {
-      if(di->di_type != CONTENT_AUDIO)
-	continue;
-      if(di->di_album == NULL)
-	return;
-      
-      if(v == NULL)
-	v = di->di_album;
-      else
-	if(strcmp(rstr_get(v), rstr_get(di->di_album)))
-	  return;
+  db->db_pending_flags &= ~DB_PENDING_ALBUM_ANALYSIS;
+
+  LIST_INIT(&artists);
+
+  if(!(db->db_types[CONTENT_AUDIO] > 1 && 
+       db->db_types[CONTENT_VIDEO] == 0 &&
+       db->db_types[CONTENT_ARCHIVE] == 0 &&
+       db->db_types[CONTENT_DIR] == 0 &&
+       db->db_types[CONTENT_ALBUM] == 0 &&
+       db->db_types[CONTENT_PLUGIN] == 0)) 
+    return;
+
+  TAILQ_FOREACH(di, &db->db_items, di_link) {
+    if(di->di_type != CONTENT_AUDIO)
+      continue;
+    if(di->di_album == NULL)
+      goto cleanup;
+
+
+    item_count++;
+
+    if(v == NULL)
+      v = di->di_album;
+    else if(strcmp(rstr_get(v), rstr_get(di->di_album)))
+      goto cleanup;
+    
+    if(di->di_artist == NULL)
+      continue;
+
+    LIST_FOREACH(da, &artists, da_link) {
+      if(!strcmp(rstr_get(da->da_artist), rstr_get(di->di_artist)))
+	break;
     }
-    prop_set_string(db->db_prop_contents, "album");
+    
+    if(da == NULL) {
+      da = malloc(sizeof(deco_artist_t));
+      da->da_count = 1;
+      da->da_artist = di->di_artist;
+      artist_count++;
+    } else {
+      da->da_count++;
+      LIST_REMOVE(da, da_link);
+    }
+    LIST_INSERT_HEAD(&artists, da, da_link);
+  }
+
+  prop_set_string(db->db_prop_contents, "album");
+  
+  prop_t *m = prop_create(db->db_prop_model, "metadata");
+  prop_set_rstring(prop_create(m, "album_name"), v);
+  
+  if(artist_count > 0) {
+    deco_artist_t **vec = malloc(artist_count * sizeof(deco_artist_t *));
+    int i;
+    da = LIST_FIRST(&artists);
+    for(i = 0; i < artist_count; i++) {
+      vec[i] = da;
+      da = LIST_NEXT(da, da_link);
+    }
+    qsort(vec, artist_count, sizeof(deco_artist_t *), artist_compar);
+    da = vec[0];
+    free(vec);
+
+    if(da->da_count * 2 >= item_count) {
+      prop_set_rstring(prop_create(m, "artist_name"), da->da_artist);
+    }
+  }
+
+ cleanup:
+  while((da = LIST_FIRST(&artists)) != NULL) {
+    LIST_REMOVE(da, da_link);
+    free(da);
   }
 }
 
@@ -308,7 +402,20 @@ static void
 di_set_album(deco_item_t *di, rstr_t *str)
 {
   rstr_set(&di->di_album, str);
-  album_analysis(di->di_db);
+  di->di_db->db_pending_flags |= DB_PENDING_ALBUM_ANALYSIS;
+  deco_pendings = 1;
+}
+
+
+/**
+ *
+ */
+static void
+di_set_artist(deco_item_t *di, rstr_t *str)
+{
+  rstr_set(&di->di_artist, str);
+  di->di_db->db_pending_flags |= DB_PENDING_ALBUM_ANALYSIS;
+  deco_pendings = 1;
 }
 
 
@@ -337,6 +444,12 @@ di_set_type(deco_item_t *di, const char *str)
     di->di_sub_album = NULL;
   }
 
+  if(di->di_sub_artist != NULL) {
+    prop_unsubscribe(di->di_sub_artist);
+    rstr_set(&di->di_artist, NULL);
+    di->di_sub_artist = NULL;
+  }
+
   db->db_types[di->di_type]--;
   di->di_type = str ? type2content(str) : CONTENT_UNKNOWN;
   db->db_types[di->di_type]++;
@@ -349,6 +462,14 @@ di_set_type(deco_item_t *di, const char *str)
       prop_subscribe(0,
 		     PROP_TAG_NAME("node", "metadata", "album"),
 		     PROP_TAG_CALLBACK_RSTR, di_set_album, di,
+		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
+		     PROP_TAG_COURIER, deco_courier,
+		     NULL);
+
+    di->di_sub_artist = 
+      prop_subscribe(0,
+		     PROP_TAG_NAME("node", "metadata", "artist"),
+		     PROP_TAG_CALLBACK_RSTR, di_set_artist, di,
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
@@ -449,10 +570,13 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   prop_unsubscribe(di->di_sub_type);
   if(di->di_sub_album != NULL)
     prop_unsubscribe(di->di_sub_album);
+  if(di->di_sub_artist != NULL)
+    prop_unsubscribe(di->di_sub_artist);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);
   rstr_release(di->di_album);
+  rstr_release(di->di_artist);
   rstr_release(di->di_url);
   rstr_release(di->di_filename);
   
@@ -495,7 +619,9 @@ deco_browse_destroy(deco_browse_t *db)
   deco_browse_clear(db);
   prop_unsubscribe(db->db_sub);
   prop_ref_dec(db->db_prop_contents);
+  prop_ref_dec(db->db_prop_model);
   rstr_release(db->db_imdb_id);
+  LIST_REMOVE(db, db_link);
   free(db);
 }
 
@@ -580,6 +706,9 @@ decorated_browse_create(prop_t *model)
   if(db->db_sub == NULL) {
     free(db);
   } else {
+
+    LIST_INSERT_HEAD(&deco_browses, db, db_link);
+    db->db_prop_model = prop_ref_inc(model);
     db->db_prop_contents = prop_ref_inc(prop_create(model, "contents"));
   }
 
@@ -593,18 +722,33 @@ decorated_browse_create(prop_t *model)
 static void *
 deco_thread(void *aux)
 {
+  int r;
   hts_mutex_lock(&deco_mutex);
 
   while(1) {
     struct prop_notify_queue exp, nor;
 
+    int do_timo = 0;
+    if(deco_pendings)
+      do_timo = 50;
+
     hts_mutex_unlock(&deco_mutex);
-    prop_courier_wait(deco_courier, &nor, &exp, 0);
+    r = prop_courier_wait(deco_courier, &nor, &exp, do_timo);
     hts_mutex_lock(&deco_mutex);
 
     prop_notify_dispatch(&exp);
     prop_notify_dispatch(&nor);
 
+    if(r && deco_pendings) {
+      deco_pendings = 0;
+      deco_browse_t *db;
+
+      LIST_FOREACH(db, &deco_browses, db_link) {
+	if(db->db_pending_flags & DB_PENDING_ALBUM_ANALYSIS)
+	  album_analysis(db);
+	db->db_pending_flags = 0;
+      }
+    }
   }
   return NULL;
 }
