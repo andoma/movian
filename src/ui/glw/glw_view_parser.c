@@ -344,6 +344,19 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
       continue;
     }
 
+
+    /**
+     * Transform 'name = ' into a attribute assignment
+     */
+    if(t->type == TOKEN_IDENTIFIER &&
+       t1 != NULL && t1->type == TOKEN_ASSIGNMENT) {
+      if(glw_view_attrib_resolve(t))
+	return glw_view_seterr(ei, t, "Unknown attribute: %s",
+				rstr_get(t->t_rstring));
+      t = t1;
+      continue;
+    }
+
     if(t->type == TOKEN_IDENTIFIER && t1 != NULL) {
       
       /**
