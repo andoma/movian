@@ -211,8 +211,6 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
   const char *artist_mbid = NULL;
 
   const char *album_mbid = htsmsg_get_str_multi(tags, "mbid", "cdata", NULL);
-  if(album_mbid == NULL)
-    return;
 
   if((tracks = htsmsg_get_map_multi(tags, "tracks", "tags", NULL)) != NULL) {
 
@@ -248,10 +246,6 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
   }
 
   int src = metadb_get_datasource(db, "lastfm");
-
-  if(artist_mbid == NULL)
-    return;
-
   int64_t artist_id = metadb_artist_get_by_title(db, artist,
 						 src, artist_mbid);
 
