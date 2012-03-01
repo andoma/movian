@@ -1,0 +1,16 @@
+#import "theme://include/separators.view"
+
+#define DIVIDER(TITLE) {
+  widget(container_y, {
+    .padding = [20, 0];
+     widget(label, {
+      .caption = TITLE;
+      .sizeScale = 1.5;
+      .outline = true;
+      .shadow = true;
+    });
+    HORIZONTAL_SEPARATOR();
+  });
+}
+
+DIVIDER($self.metadata.title);

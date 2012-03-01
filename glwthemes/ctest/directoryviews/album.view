@@ -1,20 +1,73 @@
-#include "theme://include/separators.view"
-#include "theme://include/slider.view"
 
-widget(container_x, {
 
-  widget(dummy, { .width = 2; });
-  
-  widget(list_y, {
-    .id = "list";
-    cloner($page.model.nodes, loader, {
-      .time = 0.3;
-      .noInitialTransform = true;
-      .source = "theme://directoryviews/list/" + $self.type + ".view";
+widget(container_y, {
+
+  widget(container_x, {
+      .padding = [40, 20, 0, 0];
+      .spacing = 40;
+    widget(icon, {
+	.sizeScale = 8;
+	.source = $page.model.metadata.album_art;
+    });
+    widget(container_y, {
+      widget(label, {
+	  .sizeScale = 2.5;
+	  .caption = select($self.model.metadata.album_year,
+			    $self.model.metadata.album_name + ' <font size="1">' + 
+			    fmt("(%d)", $self.model.metadata.album_year),
+			    $self.model.metadata.album_name);
+	  .outline = true;
+	  .shadow = true;
+	  .ellipsize = true;
+      });
+      widget(label, {
+	  .sizeScale = 1.5;
+	  .caption = $self.model.metadata.artist_name;
+	  .outline = true;
+	  .shadow = true;
+	  .ellipsize = true;
+	  .color = 0.7;
+      });
     });
   });
   
-  widget(dummy, { .width = 2; });
-  LIST_Y_SLIDER("list");
-  widget(dummy, { .width = 2; });
+
+  widget(clist, {
+
+      .filterConstraintX = true;
+      .center = 	0.2;
+      .spacing = $ui.size / 2;
+    
+    cloner($page.model.nodes, container_x, {
+
+	.spacing = 10;
+	.padding = [40, 0];
+	.focusable = true;
+	  .alpha = iir(isFocused(), 5) + 0.4;
+
+      widget(label, {
+	  .hidden = !$self.metadata.tracknum;
+	  .caption = $self.metadata.tracknum;
+	  .sizeScale = 1.5 + isFocused() * 1.5;
+	  .outline = true;
+	  .shadow = true;
+      });
+
+      widget(label, {
+	  .caption = $self.metadata.title;
+	  .sizeScale = 1.5 + isFocused() * 1.5;
+	  .outline = true;
+	  .shadow = true;
+	  .ellipsize = true;
+      });
+
+      widget(label, {
+	  .align = right;
+	  .caption = value2duration($self.metadata.duration);
+	  .sizeScale = 1.5 + isFocused() * 1.5;
+	  .outline = true;
+	  .shadow = true;
+      });
+    });
+  });
 });

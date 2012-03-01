@@ -1,7 +1,6 @@
 #import "theme://directoryviews/list3/common.view"
 
-
-ITEM($self.metadata.icon ?? "theme://svg/Movie.svg",
+ITEM($self.metadata.icon ?? $self.metadata.fallbackicon ?? "theme://svg/Movie.svg",
      select($self.metadata.year,
 	    $self.metadata.title + ' <font size="2">' + 
 	    fmt("(%d)", $self.metadata.year),
