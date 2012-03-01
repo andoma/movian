@@ -47,8 +47,7 @@
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg_json.h"
 #include "metadata/metadata.h"
-
-#include "api/lastfm.h"
+#include "prop/prop_concat.h"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -1744,6 +1743,74 @@ try_resolve_track_item(spotify_page_t *sp)
 }
 
 
+/**
+ *
+ */
+static void
+add_dir(prop_t *parent, const char *url, prop_t *title, const char *subtype)
+{
+  prop_t *p = prop_create_root(NULL);
+  prop_t *metadata = prop_create(p, "metadata");
+
+  prop_set_string(prop_create(p, "type"), "directory");
+  prop_set_string(prop_create(p, "url"), url);
+
+  prop_link(title, prop_create(metadata, "title"));
+  prop_set_string(prop_create(metadata, "subtype"), subtype);
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+static void
+add_sep(prop_t *parent, prop_t *title)
+{
+  prop_t *p = prop_create_root(NULL);
+  prop_t *metadata = prop_create(p, "metadata");
+
+  prop_set_string(prop_create(p, "type"), "separator");
+
+  prop_link(title, prop_create(metadata, "title"));
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+/**
+ *
+ */
+static void
+startpage(spotify_page_t *sp)
+{
+  prop_t *model = sp->sp_model;
+  prop_t *metadata = prop_create(model, "metadata");
+
+  prop_set_string(prop_create(model, "type"), "directory");
+  prop_set_string(prop_create(model, "contents"), "items");
+  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
+  prop_set_string(prop_create(metadata, "title"), "Spotify");
+
+  prop_t *navnodes = prop_create_root(NULL);
+
+  add_dir(navnodes, "spotify:inbox", _p("Inbox"), "inbox");
+  add_dir(navnodes, "spotify:starred", _p("Starred"), "starred");
+  add_dir(navnodes, "spotify:search:tag:new", _p("New releases"), NULL);
+#if SPOTIFY_WITH_SOCIAL
+  add_dir(navnodes, "spotify:friends", _p("Friends"), "friends");
+#endif
+  add_sep(navnodes, _p("Playlists"));
+  
+
+  // This leaks a bit of memory
+  prop_concat_t *pc = prop_concat_create(prop_create(model, "nodes"), 0);
+  prop_concat_add_source(pc, navnodes, NULL);
+  prop_concat_add_source(pc, current_user_rootlist->plc_root_tree, NULL);
+  prop_link(current_user_rootlist->plc_pending, sp->sp_loading);
+}
+
 
 /**
  * Fill sp->sp_root with info from sp->sp_url
@@ -1756,8 +1823,8 @@ spotify_open_page(spotify_page_t *sp)
   sp_playlist *plist;
   sp_user *user;
 
-  if(!strcmp(sp->sp_url, "spotify:playlists")) {
-    spotify_open_rootlist(sp, 0);
+  if(!strcmp(sp->sp_url, "spotify:start")) {
+    startpage(sp);
   } else if(!strcmp(sp->sp_url, "spotify:playlistsflat")) {
     spotify_open_rootlist(sp, 1);
 #if SPOTIFY_WITH_SOCIAL
@@ -4011,51 +4078,6 @@ spotify_start(char *errbuf, size_t errlen, int silent)
  *
  */
 static void
-add_dir(prop_t *parent, const char *url, prop_t *title, const char *subtype)
-{
-  prop_t *p = prop_create_root(NULL);
-  prop_t *metadata = prop_create(p, "metadata");
-
-  prop_set_string(prop_create(p, "type"), "directory");
-  prop_set_string(prop_create(p, "url"), url);
-
-  prop_link(title, prop_create(metadata, "title"));
-  prop_set_string(prop_create(metadata, "subtype"), subtype);
-  if(prop_set_parent(p, parent))
-    abort();
-
-}
-
-/**
- *
- */
-static void
-startpage(prop_t *page)
-{
-  prop_t *model = prop_create(page, "model");
-  prop_t *metadata = prop_create(model, "metadata");
-
-  prop_set_string(prop_create(model, "type"), "directory");
-  prop_set_string(prop_create(model, "contents"), "items");
-  prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
-  prop_set_string(prop_create(metadata, "title"), "Spotify");
-
-  prop_t *nodes = prop_create(model, "nodes");
-
-  add_dir(nodes, "spotify:playlists", _p("Playlists"), "playlists");
-  add_dir(nodes, "spotify:search:tag:new", _p("New releases"), NULL);
-  add_dir(nodes, "spotify:starred", _p("Starred"), "starred");
-  add_dir(nodes, "spotify:inbox", _p("Inbox"), "inbox");
-#if SPOTIFY_WITH_SOCIAL
-  add_dir(nodes, "spotify:friends", _p("Friends"), "friends");
-#endif
-}
-
-
-/**
- *
- */
-static void
 add_metadata_props(spotify_page_t *sp)
 {
   prop_t *m = prop_create(sp->sp_model, "metadata");
@@ -4089,12 +4111,7 @@ be_spotify_open(prop_t *page, const char *url)
   if(spotify_start(errbuf, sizeof(errbuf), 0))
     return nav_open_error(page, errbuf);
 
-  if(!strcmp(url, "spotify:start")) {
-    startpage(page);
-    return 0;
-  }
-
-  spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
+   spotify_page_t *sp = calloc(1, sizeof(spotify_page_t));
 
   sp->sp_url = strdup(url);
 
