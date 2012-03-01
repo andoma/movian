@@ -24,6 +24,10 @@
 
 TAILQ_HEAD(prop_concat_source_queue, prop_concat_source);
 
+
+/**
+ *
+ */
 typedef struct prop_concat_source {
   prop_concat_t *pcs_pc;
   TAILQ_ENTRY(prop_concat_source) pcs_link;
@@ -33,13 +37,18 @@ typedef struct prop_concat_source {
   prop_t *pcs_header;
 
   int pcs_count;
+  int pcs_flags;
 
 } prop_concat_source_t;
 
+
+/**
+ *
+ */
 struct prop_concat {
   struct prop_concat_source_queue pc_queue;
   prop_t *pc_dst;
-
+  prop_sub_t *pc_dstsub;
 };
 
 
@@ -58,6 +67,24 @@ find_next_out(prop_concat_source_t *pcs)
   }
   return NULL;
 }
+
+
+
+/**
+ *
+ */
+static void
+pcs_destroy(prop_concat_source_t *pcs)
+{
+  prop_concat_t *pc = pcs->pcs_pc;
+  assert(pcs->pcs_count == 0);
+  assert(pcs->pcs_first == NULL);
+  TAILQ_REMOVE(&pc->pc_queue, pcs, pcs_link);
+  if(pcs->pcs_header != NULL)
+    prop_destroy0(pcs->pcs_header);
+  free(pcs);
+}
+
 
 /**
  *
@@ -102,9 +129,6 @@ src_cb(void *opaque, prop_event_t event, ...)
     pcs->pcs_count++;
     break;
 
-    
-
-
   case PROP_DEL_CHILD:
     p = va_arg(ap, prop_t *);
     out = prop_tag_clear(p, pcs);
@@ -138,6 +162,10 @@ src_cb(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
     break;
 
+  case PROP_DESTROYED:
+    pcs_destroy(pcs);
+    break;
+
   default:
     printf("Cant handle event %d\n", event);
     abort();
@@ -161,10 +189,11 @@ prop_concat_add_source(prop_concat_t *pc, prop_t *src, prop_t *header)
 
   TAILQ_INSERT_TAIL(&pc->pc_queue, pcs, pcs_link);
 
-  pcs->pcs_srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
-				 PROP_TAG_CALLBACK, src_cb, pcs,
-				 PROP_TAG_ROOT, src,
-				 NULL);
+  pcs->pcs_srcsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK | 
+				   PROP_SUB_TRACK_DESTROY,
+				   PROP_TAG_CALLBACK, src_cb, pcs,
+				   PROP_TAG_ROOT, src,
+				   NULL);
 
   hts_mutex_unlock(&prop_mutex);
 }
@@ -177,10 +206,10 @@ prop_concat_t *
 prop_concat_create(prop_t *dst, int flags)
 {
   prop_concat_t *pc = calloc(1, sizeof(prop_concat_t));
-
-  pc->pc_dst = flags & PROP_CONCAT_TAKE_DST_OWNERSHIP
-    ? dst : prop_xref_addref(dst);
+  
+  pc->pc_dst = flags & PROP_CONCAT_TAKE_DST_OWNERSHIP ?
+    dst : prop_xref_addref(dst);
   TAILQ_INIT(&pc->pc_queue);
+
   return pc;
 }
-
