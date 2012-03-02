@@ -18,6 +18,7 @@
 
 #include <stdio.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 #include "networking/http_server.h"
 #include "httpcontrol.h"
@@ -27,6 +28,7 @@
 #include "backend/backend.h"
 #include "ui/ui.h"
 #include "notifications.h"
+#include "fileaccess/fileaccess.h"
 
 #define STRINGIFY(A)  #A
 
@@ -270,6 +272,9 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 
 
 
+/**
+ *
+ */
 static int
 hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
 	       http_cmd_t method)
@@ -291,6 +296,82 @@ hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
   notify_add(NULL, type, icon, timeout, rstr_alloc("%s"), msg);
   return HTTP_STATUS_OK;
 }
+
+
+/**
+ *
+ */
+static int
+hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
+	       http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+  extern const char *htsversion_full;
+  char p1[1000];
+  time_t t0;
+  int i;
+
+  time(&t0);
+
+  htsbuf_qprintf(&out, 
+		 "<html><body>"
+		 "Showtime version %s<br><br>"
+		 ,
+		 htsversion_full);
+
+  for(i = 0; i <= 5; i++) {
+    struct stat st;
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path,i);
+    if(stat(p1, &st)) 
+      continue;
+    char timestr[32];
+    time_t modtime = t0 - st.st_mtime;
+    if(modtime < 60)
+      snprintf(timestr, sizeof(timestr), "%d seconds", (int)modtime);
+    else if(modtime < 3600)
+      snprintf(timestr, sizeof(timestr), "%d minutes", (int)modtime / 60);
+    else
+      snprintf(timestr, sizeof(timestr), "%d hours", (int)modtime / 3600);
+
+
+    htsbuf_qprintf(&out,
+		   "<a href=\"/showtime/logfile/%d\">showtime.log.%d</a> Last modified %s ago<br>", i, i, timestr);
+  }
+  htsbuf_qprintf(&out, 
+		 "</body></html>");
+
+  return http_send_reply(hc, 0, "text/html", NULL, NULL, 0, &out);
+}
+
+
+/**
+ *
+ */
+static int
+hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+
+  if(remain == NULL)
+    return 400;
+  const int n = atoi(remain);
+  size_t size;
+
+  char p1[500];
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path, n);
+  char *buf = fa_load(p1, &size, NULL, NULL, 0, NULL, 0);
+  
+  if(buf == NULL)
+    return 404;
+  htsbuf_append_prealloc(&out, buf, size);
+  snprintf(p1, sizeof(p1), "attachment; filename=\"showtime.log.%d\"", n);
+  http_set_response_hdr(hc, "Content-Disposition", p1);
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
 
 #if 0
 
@@ -492,6 +573,8 @@ httpcontrol_init(void)
   http_path_add("/showtime/input/action", NULL, hc_action, 0);
   http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);
   http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
+  http_path_add("/showtime/diag", NULL, hc_diagnostics, 1);
+  http_path_add("/showtime/logfile", NULL, hc_logfile, 0);
 #if ENABLE_BINREPLACE
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
 #endif

@@ -17,6 +17,10 @@
  */
 
 #include <stdio.h>
+#include <limits.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 #include "prop/prop.h"
 #include "showtime.h"
@@ -38,7 +42,7 @@ typedef struct trace_entry {
 extern int trace_level;
 
 static int trace_initialized;
-
+static int log_fd;
 
 /**
  *
@@ -108,6 +112,11 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
       trace_arch(level, buf2, s);
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG)
       trace_prop(level, buf2, s, leveltxt);
+    if(log_fd != -1) {
+      write(log_fd, buf2, strlen(buf2));
+      write(log_fd, s, strlen(s));
+      write(log_fd, "\n", 1);
+    }
     memset(buf2, ' ', l);
   }
 
@@ -167,8 +176,31 @@ hexdump(const char *pfx, const void *data_, int len)
 void
 trace_init(void)
 {
+  char p1[PATH_MAX], p2[PATH_MAX];
+  int i;
+
+  snprintf(p1, sizeof(p1), "%s/log", showtime_cache_path);
+  mkdir(p1, 0777);
+
+  // Rotate logfiles
+
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.5", showtime_cache_path);
+  unlink(p1);
+
+  for(i = 4; i >= 0; i--) {
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path,i);
+    snprintf(p2, sizeof(p2), "%s/log/showtime.log.%d", showtime_cache_path,i+1);
+    rename(p1, p2);
+  }
+  
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.0", showtime_cache_path);
+  log_fd = open(p1, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+
   TAILQ_INIT(&traces);
   log_root = prop_create(prop_get_global(), "logbuffer");
   hts_mutex_init(&trace_mutex);
   trace_initialized = 1;
+  extern const char *htsversion_full;
+
+  TRACE(TRACE_INFO, "SYSTEM", "Showtime %s starting", htsversion_full);
 }
