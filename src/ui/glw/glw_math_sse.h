@@ -148,6 +148,15 @@ static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
     __builtin_ia32_vec_ext_v4sf(b, 3);
 }
 
+static inline void
+glw_mtx_copy(Mtx dst, const Mtx src)
+{
+  dst[0] = src[0];
+  dst[1] = src[1];
+  dst[2] = src[2];
+  dst[3] = src[3];
+}
+
 extern int glw_mtx_invert(Mtx dst, const Mtx src);
 
 #define glw_vec3_extract(a, pos)  __builtin_ia32_vec_ext_v4sf(a, pos)

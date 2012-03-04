@@ -46,6 +46,9 @@ void
 glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  if(gbr->gbr_delayed_rendering)
+    return;
+
   glw_load_program(gbr, gbr->gbr_renderer_flat);
   glw_program_set_modelview(gbr, rc);
   glw_program_set_uniform_color(gbr, 1,1,1,1);
@@ -68,6 +71,8 @@ void
 glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
+  if(gbr->gbr_delayed_rendering)
+    return;
 
   glw_load_program(gbr, gbr->gbr_renderer_flat);
   glw_program_set_modelview(gbr, rc);
@@ -135,7 +140,8 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
-  gbr->gbr_culling = 1;
+
+  gbr->gbr_frontface = GLW_CCW;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // We should try to fix this
 

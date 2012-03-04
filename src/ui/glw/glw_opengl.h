@@ -116,9 +116,20 @@ typedef struct glw_backend_root {
   struct glw_program *gbr_renderer_tex_blur;
   struct glw_program *gbr_renderer_flat;
 
-  int gbr_culling;
+  int gbr_blendmode;
+  int gbr_frontface;
+  int gbr_delayed_rendering;
 
-  int be_blendmode;
+  /**
+   * Delayed rendering (For rendering without holding glw_mutex)
+   */
+  int gbr_num_render_jobs;
+  int gbr_render_jobs_capacity;
+  struct render_job *gbr_render_jobs;
+
+  float *gbr_vertex_buffer;
+  int gbr_vertex_buffer_capacity;
+  int gbr_vertex_offset;
 
 } glw_backend_root_t;
 
@@ -178,7 +189,7 @@ GLuint glw_compile_shader(const char *url, int type);
 glw_program_t *glw_make_program(glw_backend_root_t *gbr,
 				const char *title, GLuint vs, GLuint fs);
 
-void glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp);
+int glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp);
 
 void glw_program_set_modelview(glw_backend_root_t *gbr, struct glw_rctx *rc);
 

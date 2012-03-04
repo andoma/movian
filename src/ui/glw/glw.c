@@ -540,6 +540,9 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   gr->gr_screensaver_counter++;
 
+  if(gr->gr_be_prepare != NULL)
+    gr->gr_be_prepare(gr);
+
   prop_set_int(gr->gr_screensaver_active, glw_screensaver_is_active(gr));
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
@@ -568,7 +571,17 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     gpe.type = GLW_POINTER_MOTION_REFRESH;
     glw_pointer_event(gr, &gpe);
   }
+}
 
+
+/**
+ *
+ */
+void
+glw_post_scene(glw_root_t *gr)
+{
+  if(gr->gr_be_render_unlocked != NULL)
+    gr->gr_be_render_unlocked(gr);
 }
 
 /*

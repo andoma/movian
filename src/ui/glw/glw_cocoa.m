@@ -431,8 +431,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   glw_rctx_init(&rc, gcocoa.gr.gr_width, gcocoa.gr.gr_height, 1);
   glw_layout0(gcocoa.gr.gr_universe, &rc);
   glw_render0(gcocoa.gr.gr_universe, &rc);
-  
   glw_unlock(&gcocoa.gr);
+  glw_post_scene(&gcocoa.gr);
 }
 
 - (void)glwWindowedTimerStart {

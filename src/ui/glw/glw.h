@@ -668,6 +668,8 @@ typedef struct glw_root {
    * Backend specifics
    */ 
   glw_backend_root_t gr_be;
+  void (*gr_be_prepare)(struct glw_root *gr);
+  void (*gr_be_render_unlocked)(struct glw_root *gr);
 
   /**
    * Settings
@@ -942,6 +944,8 @@ void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 #define GLW_REINITIALIZE_VDPAU 0x1
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
+
+void glw_post_scene(glw_root_t *gr);
 
 void glw_reap(glw_root_t *gr);
 

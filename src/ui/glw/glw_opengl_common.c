@@ -24,6 +24,13 @@
 void
 glw_frontface(struct glw_root *gr, int how)
 {
+  if(how == gr->gr_be.gbr_frontface)
+    return;
+  gr->gr_be.gbr_frontface = how;
+
+  if(gr->gr_be.gbr_delayed_rendering)
+    return;
+
   glFrontFace(how == GLW_CW ? GL_CW : GL_CCW);
 }
 
@@ -35,9 +42,12 @@ glw_frontface(struct glw_root *gr, int how)
 void
 glw_blendmode(struct glw_root *gr, int mode)
 {
-  if(mode == gr->gr_be.be_blendmode)
+  if(mode == gr->gr_be.gbr_blendmode)
     return;
-  gr->gr_be.be_blendmode = mode;
+  gr->gr_be.gbr_blendmode = mode;
+
+  if(gr->gr_be.gbr_delayed_rendering)
+    return;
 
   switch(mode) {
   case GLW_BLEND_NORMAL:

@@ -77,7 +77,7 @@ ff_render(struct glw_root *gr,
   glw_backend_root_t *gbr = &gr->gr_be;
   float r,g,b;
 
-  switch(gbr->be_blendmode) {
+  switch(gbr->gbr_blendmode) {
   case GLW_BLEND_NORMAL:
     r = rgb_mul->r;
     g = rgb_mul->g;
