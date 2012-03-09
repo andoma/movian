@@ -37,13 +37,17 @@
 #include <stdint.h>
 #include "htsmsg/htsbuf.h"
 
+
+typedef int (net_read_cb_t)(void *opaque, int done);
+
 typedef struct tcpcon {
   int fd;
 
   htsbuf_queue_t spill;
 
   int (*write)(struct tcpcon *, const void *, size_t);
-  int (*read)(struct tcpcon *, void *, size_t, int);
+  int (*read)(struct tcpcon *, void *, size_t, int,
+	      net_read_cb_t *cb, void *opaque);
 
 #if ENABLE_OPENSSL
   SSL *ssl;
@@ -71,7 +75,8 @@ int tcp_read_line(tcpcon_t *nc, char *buf, const size_t bufsize);
 
 #define tcp_write_data(tc, data, len) ((tc)->write(tc, data, len))
 
-int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize);
+int tcp_read_data(tcpcon_t *nc, char *buf, const size_t bufsize,
+		  net_read_cb_t *cb, void *opaque);
 
 int tcp_read_data_nowait(tcpcon_t *nc, char *buf, const size_t bufsize);
 

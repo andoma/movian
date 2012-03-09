@@ -103,6 +103,17 @@ glt_enqueue(glw_root_t *gr, glw_loadable_texture_t *glt, int q)
 /**
  *
  */
+static int
+img_load_cb(void *opaque, int loaded, int total)
+{
+  glw_loadable_texture_t *glt = opaque;
+  return glt->glt_url == NULL;
+}
+
+
+/**
+ *
+ */
 static void *
 loader_thread(void *aux)
 {
@@ -147,7 +158,7 @@ loader_thread(void *aux)
 
       glw_unlock(gr);
       pm = backend_imageloader(url, &im, gr->gr_vpaths, errbuf, sizeof(errbuf),
-			       ccptr);
+			       ccptr, img_load_cb, glt);
 
       glw_lock(gr);
 
@@ -175,8 +186,14 @@ loader_thread(void *aux)
 	  LIST_INSERT_HEAD(&gr->gr_tex_active_list, glt, glt_flush_link);
 	  glt->glt_state = GLT_STATE_VALID;
 	} else {
-	  TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", 
-		rstr_get(url), errbuf);
+	  // if glt->glt_url is NULL we have aborted so don't ERR log
+	  if(glt->glt_url != NULL)
+	    TRACE(TRACE_ERROR, "GLW", "Unable to load %s -- %s", 
+		  rstr_get(url), errbuf);
+	  else
+	    TRACE(TRACE_DEBUG, "GLW", "Aborted load of %s", 
+		  rstr_get(url));
+	  
 	  glt->glt_state = GLT_STATE_ERROR;
 	}
 
@@ -287,18 +304,26 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   glt->glt_refcnt--;
 
-  if(glt->glt_refcnt > 0)
+  if(glt->glt_refcnt > 0) {
+
+    if(glt->glt_refcnt == 1 && glt->glt_state == GLT_STATE_LOADING)
+      goto unlink;
     return;
-  
+  }
+
   if(glt->glt_state == GLT_STATE_VALID || glt->glt_state == GLT_STATE_QUEUED)
     LIST_REMOVE(glt, glt_flush_link);
-  rstr_release(glt->glt_url);
-  
-  LIST_REMOVE(glt, glt_global_link);
 
   glw_tex_backend_free_loader_resources(glt);
 
   TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, glt, glt_work_link);
+
+  if(glt->glt_url == NULL)
+    return;
+ unlink:
+  rstr_release(glt->glt_url);
+  glt->glt_url = NULL;
+  LIST_REMOVE(glt, glt_global_link);
 }
 
 

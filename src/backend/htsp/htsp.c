@@ -188,7 +188,7 @@ htsp_recv(htsp_connection_t *hc)
   uint8_t len[4];
   uint32_t l;
 
-  if(tc->read(tc, len, 4, 1) < 0)
+  if(tc->read(tc, len, 4, 1, NULL, NULL) < 0)
     return NULL;
   
   l = (len[0] << 24) | (len[1] << 16) | (len[2] << 8) | len[3];
@@ -197,7 +197,7 @@ htsp_recv(htsp_connection_t *hc)
 
   buf = malloc(l);
 
-  if(buf == NULL || tc->read(tc, buf, l, 1) < 0) {
+  if(buf == NULL || tc->read(tc, buf, l, 1, NULL, NULL) < 0) {
     free(buf);
     return NULL;
   }

@@ -28,6 +28,8 @@
 #include "metadata/metadata.h"
 #include "navigator.h"
 
+typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
+
 struct prop;
 
 int fileaccess_init(void);
@@ -171,7 +173,8 @@ void fa_scanner(const char *url, time_t mtime,
 		prop_t *direct_close);
 
 void *fa_load(const char *url, size_t *sizep, const char **vpaths,
-	      char *errbuf, size_t errlen, int *cache_control, int flags);
+	      char *errbuf, size_t errlen, int *cache_control, int flags,
+	      fa_load_cb_t *cb, void *opaque);
 
 uint8_t *fa_load_and_close(fa_handle_t *fh, size_t *sizep);
 
@@ -194,7 +197,8 @@ int http_request(const char *url, const char **arguments,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
-		 const struct http_header_list *headers_in, const char *method);
+		 const struct http_header_list *headers_in, const char *method,
+		 fa_load_cb_t *cb, void *opaque);
 
 struct http_auth_req;
 int http_client_oauth(struct http_auth_req *har,

@@ -337,7 +337,7 @@ tmdb_query_by_imdb_id(void *db, const char *item_url,
 	   TMDB_APIKEY, imdb_id);
 
   result = fa_load(buf, NULL, NULL, errbuf, sizeof(errbuf),
-		   NULL, FA_COMPRESSION);
+		   NULL, FA_COMPRESSION, NULL, NULL);
 
   if(result == NULL)
     return;

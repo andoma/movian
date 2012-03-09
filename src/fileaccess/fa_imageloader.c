@@ -49,7 +49,8 @@ static AVCodecContext *pngencoder;
 
 static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 				     char *errbuf, size_t errlen,
-				     int *cache_control);
+				     int *cache_control,
+				     fa_load_cb_t *cb, void *opaque);
 
 /**
  *
@@ -99,7 +100,8 @@ jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
  */
 static pixmap_t *
 fa_imageloader2(const char *url, const char **vpaths,
-		char *errbuf, size_t errlen, int *cache_control)
+		char *errbuf, size_t errlen, int *cache_control,
+		fa_load_cb_t *cb, void *opaque)
 {
   uint8_t *p;
   size_t size;
@@ -107,7 +109,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
-  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control, 0);
+  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control, 0, cb, opaque);
   if(p == NULL || p == NOT_MODIFIED)
     return (pixmap_t *)p;
 
@@ -185,7 +187,7 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 pixmap_t *
 fa_imageloader(const char *url, const struct image_meta *im,
 	       const char **vpaths, char *errbuf, size_t errlen,
-	       int *cache_control)
+	       int *cache_control, fa_load_cb_t *cb, void *opaque)
 {
   uint8_t p[16];
   int r;
@@ -195,10 +197,12 @@ fa_imageloader(const char *url, const struct image_meta *im,
   pixmap_type_t fmt;
 
   if(strchr(url, '#'))
-    return fa_image_from_video(url, im, errbuf, errlen, cache_control);
+    return fa_image_from_video(url, im, errbuf, errlen, cache_control,
+			       cb, opaque);
 
   if(!im->im_want_thumb)
-    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control);
+    return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control,
+			   cb, opaque);
 
   if((fh = fa_open_vpaths(url, vpaths, errbuf, errlen,
 			  FA_BUFFERED_SMALL)) == NULL)
@@ -517,7 +521,8 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
  */
 static pixmap_t *
 fa_image_from_video(const char *url0, const image_meta_t *im,
-		    char *errbuf, size_t errlen, int *cache_control)
+		    char *errbuf, size_t errlen, int *cache_control,
+		    fa_load_cb_t *cb, void *opaque)
 {
   static char *stated_url;
   static fa_stat_t fs;

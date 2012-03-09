@@ -773,7 +773,8 @@ decoration_init(void)
 static void
 load_nfo(deco_item_t *di)
 {
-  char *buf = fa_load(rstr_get(di->di_url), NULL, NULL, NULL, 0, NULL, 0);
+  char *buf = fa_load(rstr_get(di->di_url), NULL, NULL, NULL, 0, NULL, 0,
+		      NULL, NULL);
   if(buf == NULL)
     return;
 

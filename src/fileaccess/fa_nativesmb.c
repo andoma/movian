@@ -862,7 +862,7 @@ nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
   char *buf;
 
   do {
-    if(tcp_read_data(cc->cc_tc, data, 4))
+    if(tcp_read_data(cc->cc_tc, data, 4, NULL, 0))
       return -1;
     
     if(data[0] == 0x85)
@@ -876,7 +876,7 @@ nbt_read(cifs_connection_t *cc, void **bufp, int *lenp)
 
 
   buf = malloc(len);
-  if(tcp_read_data(cc->cc_tc, buf, len)) {
+  if(tcp_read_data(cc->cc_tc, buf, len, NULL, 0)) {
     free(buf);
     return -1;
   }

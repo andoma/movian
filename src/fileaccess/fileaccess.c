@@ -545,7 +545,8 @@ fileaccess_init(void)
  */
 void *
 fa_load(const char *url, size_t *sizep, const char **vpaths,
-	char *errbuf, size_t errlen, int *cache_control, int flags)
+	char *errbuf, size_t errlen, int *cache_control, int flags,
+	fa_load_cb_t *cb, void *opaque)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
@@ -598,7 +599,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
-			  &etag, &mtime, &max_age, 0);
+			  &etag, &mtime, &max_age, 0, cb, opaque);
     
     free(filename);
     if(data2 == NOT_MODIFIED) {
@@ -855,7 +856,8 @@ fa_load_query(const char *url0, size_t *sizep,
   
   char *url = htsbuf_to_string(&q);
 
-  r = fa_load(url, sizep, NULL, errbuf, errlen, cache_control, flags);
+  r = fa_load(url, sizep, NULL, errbuf, errlen, cache_control, flags,
+	      NULL, NULL);
   free(url);
   htsbuf_queue_flush(&q);
   return r;

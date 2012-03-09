@@ -376,7 +376,7 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev)
   char errbuf[256];
 
   if((src = fa_load(rstr_get(url), NULL, gr->gr_vpaths, 
-		    errbuf, sizeof(errbuf), NULL, 0)) == NULL) {
+		    errbuf, sizeof(errbuf), NULL, 0, NULL, NULL)) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
 	     rstr_get(url), errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));

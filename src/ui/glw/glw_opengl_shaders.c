@@ -360,7 +360,8 @@ glw_compile_shader(const char *filename, int type)
   
   snprintf(path, sizeof(path), "%s/src/ui/glw/glsl/%s", 
 	   showtime_dataroot(), filename);
-  if((src = fa_load(path, NULL, NULL, log, sizeof(log), NULL, 0)) == NULL) {
+  if((src = fa_load(path, NULL, NULL, log, sizeof(log), NULL, 0,
+		    NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s",
 	  path, log);
     return 0;

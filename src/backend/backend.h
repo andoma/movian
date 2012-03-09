@@ -27,6 +27,8 @@ struct navigator;
 struct event;
 struct image_meta;
 
+typedef int (be_load_cb_t)(void *opaque, int loaded, int total);
+
 /**
  * Kept in sync with service_status_t
  * These are also directly exposed in the javascript API so they
@@ -78,7 +80,8 @@ typedef struct backend {
   struct pixmap *(*be_imageloader)(const char *url, const struct image_meta *im,
 				   const char **vpaths,
 				   char *errbuf, size_t errlen,
-				   int *cache_control);
+				   int *cache_control,
+				   be_load_cb_t *cb, void *opaque);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -119,7 +122,8 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
 struct pixmap *backend_imageloader(rstr_t *url, const struct image_meta *im,
 				   const char **vpaths,
 				   char *errbuf, size_t errlen,
-				   int *cache_control)
+				   int *cache_control,
+				   be_load_cb_t *cb, void *opaque)
      __attribute__ ((warn_unused_result));
 
 backend_t *backend_canhandle(const char *url)

@@ -453,7 +453,8 @@ static void
 nls_load_lang(const char *path)
 {
   char errbuf[200];
-  char *data = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0);
+  char *data = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0,
+		       NULL, NULL);
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "NLS", "Unable to load %s -- %s", path, errbuf);
@@ -491,7 +492,8 @@ nls_lang_metadata(const char *path, char *errbuf, size_t errlen,
 		  char *language, size_t languagesize,
 		  char *native, size_t nativesize)
 {
-  char *data = fa_load(path, NULL, NULL, errbuf, errlen, NULL, 0);
+  char *data = fa_load(path, NULL, NULL, errbuf, errlen, NULL, 0,
+		       NULL, NULL);
   char *s;
   const char *s2;
   if(data == NULL)

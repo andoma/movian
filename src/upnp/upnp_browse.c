@@ -651,7 +651,7 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
   http_header_add(&in, "getCaptionInfo.sec", "1", 0);
 
   if(!http_request(url, NULL, NULL, NULL, NULL, 0, NULL, 0,
-		   0, &out, &in, NULL)) {
+		   0, &out, &in, NULL, NULL, NULL)) {
     if((s = http_header_get(&out, "CaptionInfo.sec")) != NULL) {
 
       htsmsg_t *sub = htsmsg_create_map();
@@ -683,7 +683,7 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
 
   LIST_INIT(&out);
   if(!http_request(srt, NULL, NULL, NULL, NULL, 0, NULL, 0,
-		   0, &out, NULL, NULL)) {
+		   0, &out, NULL, NULL, NULL, NULL)) {
     const char *s;
     if((s = http_header_get(&out, "Content-Type")) != NULL) {
       if(!strcasecmp(s, "application/x-srt")) {

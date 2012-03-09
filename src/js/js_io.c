@@ -301,7 +301,7 @@ js_http_request(JSContext *cx, jsval *rval,
 		       errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
-		       &response_headers, &in_headers, NULL);
+		       &response_headers, &in_headers, NULL, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)
@@ -438,7 +438,8 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL, 0);
+  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL, 0,
+		   NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {

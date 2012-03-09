@@ -27,6 +27,7 @@ void fa_imageloader_init(void);
 
 pixmap_t *fa_imageloader(const char *url, const struct image_meta *im,
 			 const char **vpaths, char *errbuf, size_t errlen,
-			 int *cache_control);
+			 int *cache_control, fa_load_cb_t *cb, void *opaque);
+
 
 #endif /* FA_IMAGELOADER_H */

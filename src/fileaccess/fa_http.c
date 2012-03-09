@@ -892,14 +892,14 @@ http_read_content(http_file_t *hf)
 
       if(csize > 0) {
 	buf = myrealloc(buf, s + csize + 1);
-	if(tcp_read_data(hc->hc_tc, buf + s, csize))
+	if(tcp_read_data(hc->hc_tc, buf + s, csize, NULL, 0))
 	  break;
 
 	s += csize;
 	buf[s] = 0;
       }
 
-      if(tcp_read_data(hc->hc_tc, chunkheader, 2))
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, 0))
 	break;
 
       if(csize == 0) {
@@ -918,7 +918,7 @@ http_read_content(http_file_t *hf)
     return NULL;
   buf[s] = 0;
   
-  if(tcp_read_data(hc->hc_tc, buf, s)) {
+  if(tcp_read_data(hc->hc_tc, buf, s, NULL, 0)) {
     free(buf);
     return NULL;
   }
@@ -960,7 +960,7 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
   http_connection_t *hc = hf->hf_connection;
 
   if(!hf->hf_chunked_transfer)
-    return tcp_read_data(hc->hc_tc, NULL, bytes);
+    return tcp_read_data(hc->hc_tc, NULL, bytes, NULL, NULL);
   
   while(bytes > 0) {
     if(hf->hf_chunk_size == 0) {
@@ -972,14 +972,14 @@ hf_drain_bytes(http_file_t *hf, int64_t bytes)
 
     size_t read_size = MIN(bytes, hf->hf_chunk_size);
     if(read_size > 0)
-      if(tcp_read_data(hc->hc_tc, NULL, read_size))
+      if(tcp_read_data(hc->hc_tc, NULL, read_size, NULL, NULL))
 	return -1;
 
     bytes -= read_size;
     hf->hf_chunk_size -= read_size;
 
     if(hf->hf_chunk_size == 0) {
-      if(tcp_read_data(hc->hc_tc, chunkheader, 2))
+      if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, NULL))
 	return -1;
     }
   }
@@ -1869,7 +1869,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
     if(read_size > 0) {
       assert(totsize + read_size <= size);
-      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size)) {
+      if(tcp_read_data(hc->hc_tc, buf + totsize, read_size, NULL, NULL)) {
 	// Fail but we can retry a couple of times
 	http_detach(hf, 0, "Read error during fa_read()");
 	continue;
@@ -1889,7 +1889,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       hf->hf_chunk_size -= read_size;
 
       if(hf->hf_chunk_size == 0) {
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, NULL))
 	  goto bad;
       }
     }
@@ -2057,7 +2057,7 @@ static void *
 http_load(struct fa_protocol *fap, const char *url,
 	  size_t *sizep, char *errbuf, size_t errlen,
 	  char **etag, time_t *mtime, int *max_age,
-	  int flags)
+	  int flags, fa_load_cb_t *cb, void *opaque)
 {
   char *res;
   int err;
@@ -2080,7 +2080,8 @@ http_load(struct fa_protocol *fap, const char *url,
 
   err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
 		     flags,
-		     &headers_out, &headers_in, NULL);
+		     &headers_out, &headers_in, NULL,
+		     cb, opaque);
   if(err == -1) {
     res = NULL;
     goto done;
@@ -2584,6 +2585,27 @@ static fa_protocol_t fa_protocol_webdavs = {
 };
 FAP_REGISTER(webdavs);
 
+
+
+typedef struct http_read_aux {
+  size_t total;
+  fa_load_cb_t *cb;
+  void *opaque;
+} http_read_aux_t;
+
+/**
+ *
+ */
+static int
+http_request_partial(void *opaque, int amount)
+{
+  http_read_aux_t *hra = opaque;
+
+  if(hra->cb != NULL)
+    return hra->cb(hra->opaque, amount, hra->total);
+  return 0;
+}
+
 /**
  *
  */
@@ -2593,13 +2615,18 @@ http_request(const char *url, const char **arguments,
 	     char *errbuf, size_t errlen,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
 	     int flags, struct http_header_list *headers_out,
-	     const struct http_header_list *headers_in, const char *method)
+	     const struct http_header_list *headers_in, const char *method,
+	     fa_load_cb_t *cb, void *opaque)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
   int code, r;
   int redircount = 0;
   struct http_header_list headers;
+  http_read_aux_t hra;
+
+  hra.cb = cb;
+  hra.opaque = opaque;
 
   if(headers_out != NULL)
     LIST_INIT(headers_out);
@@ -2813,6 +2840,8 @@ http_request(const char *url, const char **arguments,
     char *buf = NULL;
     size_t size = 0;
 
+    hra.total = 0;
+
     if(hf->hf_chunked_transfer) {
       char chunkheader[100];
 
@@ -2830,12 +2859,13 @@ http_request(const char *url, const char **arguments,
 	    snprintf(errbuf, errlen, "Out of memory (%zd)", size + csize + 1);
 	    goto error;
 	  }
-	  if(tcp_read_data(hc->hc_tc, buf + size, csize))
+	  if(tcp_read_data(hc->hc_tc, buf + size, csize,
+			   http_request_partial, &hra))
 	    break;
 
 	  size += csize;
 	}
-	if(tcp_read_data(hc->hc_tc, chunkheader, 2))
+	if(tcp_read_data(hc->hc_tc, chunkheader, 2, NULL, 0))
 	  break;
 
 	if(csize == 0)
@@ -2853,8 +2883,8 @@ http_request(const char *url, const char **arguments,
 	snprintf(errbuf, errlen, "Out of memory (%"PRId64")", hf->hf_filesize + 1);
 	goto error;
       }
-      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize);
-      
+      r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize,
+			http_request_partial, &hra);
       if(r == -1) {
 	snprintf(errbuf, errlen, "HTTP read error");
 	free(buf);

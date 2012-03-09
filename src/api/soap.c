@@ -96,7 +96,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
 
   r = http_request(uri, NULL, &xmldata, &xmlsize, errbuf, errlen,
 		   &post, "text/xml; charset=\"utf-8\"",
-		   0, NULL, &hdrs, NULL);
+		   0, NULL, &hdrs, NULL, NULL, NULL);
 
   http_headers_free(&hdrs);
 

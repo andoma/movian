@@ -75,7 +75,7 @@ tcp_read_into_spill(tcpcon_t *tc)
 
     if(c > 0) {
 
-      if((c = tc->read(tc, hd->hd_data + hd->hd_data_len, c, 0)) < 0)
+      if((c = tc->read(tc, hd->hd_data + hd->hd_data_len, c, 0, NULL, 0)) < 0)
 	return -1;
 
       hd->hd_data_len += c;
@@ -89,7 +89,7 @@ tcp_read_into_spill(tcpcon_t *tc)
   hd->hd_data_size = 1000;
   hd->hd_data = malloc(hd->hd_data_size);
 
-  if((c = tc->read(tc, hd->hd_data, hd->hd_data_size, 0)) < 0) {
+  if((c = tc->read(tc, hd->hd_data, hd->hd_data_size, 0, NULL, 0)) < 0) {
     free(hd->hd_data);
     free(hd);
     return -1;
@@ -136,7 +136,8 @@ tcp_read_line(tcpcon_t *tc, char *buf,const size_t bufsize)
  *
  */
 int
-tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize)
+tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize,
+	      net_read_cb_t *cb, void *opaque)
 {
   int r = buf ? htsbuf_read(&tc->spill, buf, bufsize) :
     htsbuf_drop(&tc->spill, bufsize);
@@ -144,7 +145,7 @@ tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize)
     return 0;
 
   if(buf != NULL)
-    return tc->read(tc, buf + r, bufsize - r, 1) < 0 ? -1 : 0;
+    return tc->read(tc, buf + r, bufsize - r, 1, cb, opaque) < 0 ? -1 : 0;
 
   size_t remain = bufsize - r;
 
@@ -152,7 +153,7 @@ tcp_read_data(tcpcon_t *tc, char *buf, size_t bufsize)
 
   while(remain > 0) {
     size_t n = MIN(remain, 5000);
-    r = tc->read(tc, buf, n, 1) < 0 ? -1 : 0;
+    r = tc->read(tc, buf, n, 1, NULL, 0) < 0 ? -1 : 0;
     if(r != 0)
       break;
     remain -= n;
@@ -174,5 +175,5 @@ tcp_read_data_nowait(tcpcon_t *tc, char *buf, const size_t bufsize)
   if(tot > 0)
     return tot;
 
-  return tc->read(tc, buf + tot, bufsize - tot, 0);
+  return tc->read(tc, buf + tot, bufsize - tot, 0, NULL, NULL);
 }

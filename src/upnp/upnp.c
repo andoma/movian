@@ -578,7 +578,7 @@ introspect_device(upnp_device_t *ud)
   const char *uuid;
 
   if(http_request(ud->ud_url, NULL, &xmldata, &xmlsize, errbuf, sizeof(errbuf),
-		  NULL, NULL, 0, NULL, NULL, NULL)) {
+		  NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL)) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- %s",
 	  ud->ud_url, errbuf);
     return;
