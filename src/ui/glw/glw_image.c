@@ -70,6 +70,8 @@ typedef struct glw_image {
 
   uint8_t gi_need_reload;
 
+  uint8_t gi_loading_new_url;
+
   glw_renderer_t gi_gr;
 
   int16_t gi_last_width;
@@ -82,6 +84,8 @@ typedef struct glw_image {
   float gi_size_scale;
 
   float gi_saturation;
+
+  float gi_autofade;
 
 } glw_image_t;
 
@@ -184,7 +188,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   float blur = 1 - (rc->rc_blur * w->glw_blur);
   glw_rctx_t rc0;
 
-  alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
+  alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self * gi->gi_autofade;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
@@ -562,11 +566,14 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     // Request to load
     int xs = -1, ys = -1;
     int flags = 0;
-    
+    gi->gi_loading_new_url = 1;
+
     if(gi->gi_pending != NULL)
       glw_tex_deref(w->glw_root, gi->gi_pending);
     
     if(rstr_get(gi->gi_pending_url)[0] == 0) {
+      // Empty string, unload all
+
       gi->gi_pending = NULL;
 
       if(gi->gi_current != NULL) {
@@ -617,11 +624,18 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       gi->gi_current = gi->gi_pending;
       gi->gi_pending = NULL;
       gi->gi_update = 1;
+      gi->gi_loading_new_url = 0;
     }
   }
 
   if((glt = gi->gi_current) == NULL)
     return;
+
+  if(gi->gi_loading_new_url) {
+    gi->gi_autofade = GLW_LP(8, gi->gi_autofade, 0);
+  } else {
+    gi->gi_autofade = GLW_LP(8, gi->gi_autofade, 1);
+  }
 
   glw_tex_layout(gr, glt);
 
@@ -793,7 +807,7 @@ glw_image_ctor(glw_t *w)
   glw_image_t *gi = (void *)w;
 
   gi->gi_bitmap_flags = GLW_IMAGE_BORDER_LEFT | GLW_IMAGE_BORDER_RIGHT;
-
+  gi->gi_autofade = 1;
   gi->gi_alpha_self = 1;
   gi->gi_color.r = 1.0;
   gi->gi_color.g = 1.0;
