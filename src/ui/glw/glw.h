@@ -35,7 +35,10 @@
 #include "showtime.h"
 #include "settings.h"
 
+
+// Beware: If you bump these over 16 remember to fix bitmasks too
 #define NUM_CLIPPLANES 6
+#define NUM_FADERS 6
 
 struct event;
 
@@ -63,7 +66,7 @@ LIST_HEAD(glw_video_list, glw_video);
 
 // all supported apple devices should support SSE
 #if (defined(__x86_64) || defined(__APPLE__)) && !defined(__llvm__)
-#define ENABLE_GLW_MATH_SSE 1
+#define ENABLE_GLW_MATH_SSE 0
 #else
 #define ENABLE_GLW_MATH_SSE 0
 #endif
@@ -708,8 +711,17 @@ typedef struct glw_root {
   Vec4 gr_clip[NUM_CLIPPLANES];
   int gr_active_clippers;
 
+
+  Vec4 gr_fader[NUM_FADERS];
+  float gr_fader_alpha[NUM_FADERS];
+  float gr_fader_blur[NUM_FADERS];
+
+  int gr_active_faders;
+
+
   char gr_need_sw_clip;          /* Set if software clipping is needed
 				    at the moment */
+
 
   void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const Vec4 vec);
   void (*gr_clr_hw_clipper)(struct glw_rctx *rc, int which);
@@ -1014,6 +1026,11 @@ int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
 		    float distance);
 
 void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
+
+int glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
+		     float distance, float alpha, float blur);
+
+void glw_fader_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 
 
 /**

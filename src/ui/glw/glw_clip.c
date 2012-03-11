@@ -17,7 +17,7 @@
  */
 
 #include "glw.h"
-
+ 
 typedef struct glw_clip {
   glw_t w;
 
@@ -115,3 +115,116 @@ static glw_class_t glw_clip = {
 
 
 GLW_REGISTER_CLASS(glw_clip);
+
+
+
+
+
+
+  
+typedef struct glw_fade {
+  glw_t w;
+
+  float gc_fadeping[4];
+
+} glw_fade_t;
+
+
+/**
+ *
+ */
+static void
+set_fadeping(glw_t *w, const float *v)
+{
+  glw_fade_t *gc = (glw_fade_t *)w;
+  memcpy(gc->gc_fadeping, v, sizeof(float) * 4);
+}
+
+/**
+ *
+ */
+static int
+glw_fade_layout(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+
+  if(w->glw_alpha < 0.01)
+    return 0;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+    glw_layout0(c, rc);
+  }
+  return 0;
+}
+
+
+
+
+static void
+glw_fade_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+  glw_fade_t *gc = (glw_fade_t *)w;
+
+  if(w->glw_flags & GLW_DEBUG)
+    glw_wirebox(w->glw_root, rc);
+
+  float al = 1, bl = 0;
+
+  int l = gc->gc_fadeping[0] > 0 ? 
+    glw_fader_enable(w->glw_root, rc, GLW_CLIP_LEFT, gc->gc_fadeping[0], al, bl) : -1;
+  int t = gc->gc_fadeping[1] > 0 ? 
+    glw_fader_enable(w->glw_root, rc, GLW_CLIP_TOP, gc->gc_fadeping[1], al, bl) : -1;
+  int r = gc->gc_fadeping[2] > 0 ? 
+    glw_fader_enable(w->glw_root, rc, GLW_CLIP_RIGHT, gc->gc_fadeping[2], al, bl) : -1;
+  int b = gc->gc_fadeping[3] > 0 ? 
+    glw_fader_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, gc->gc_fadeping[3], al, bl) : -1;
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_render0(c, rc);
+
+  glw_fader_disable(w->glw_root, rc, l);
+  glw_fader_disable(w->glw_root, rc, r);
+  glw_fader_disable(w->glw_root, rc, t);
+  glw_fader_disable(w->glw_root, rc, b);
+
+}
+
+static int
+glw_fade_callback(glw_t *w, void *opaque, glw_signal_t signal,
+		  void *extra)
+{
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    return glw_fade_layout(w, extra);
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+  case GLW_SIGNAL_CHILD_CREATED:
+    glw_copy_constraints(w, extra);
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+
+
+static glw_class_t glw_fader = {
+  .gc_name = "fader",
+  .gc_instance_size = sizeof(glw_fade_t),
+  .gc_render = glw_fade_render,
+  .gc_signal_handler = glw_fade_callback,
+  .gc_set_clipping = set_fadeping,
+};
+
+
+
+GLW_REGISTER_CLASS(glw_fader);
+
+
+
+
+
+
+ 

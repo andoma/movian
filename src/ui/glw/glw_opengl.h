@@ -68,6 +68,7 @@ typedef struct glw_program {
   GLint  gp_attribute_position;
   GLint  gp_attribute_texcoord;
   GLint  gp_attribute_color;
+  GLint  gp_attribute_blur;
  
   // Uniforms
   GLint  gp_uniform_modelview;

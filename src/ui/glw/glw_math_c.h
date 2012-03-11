@@ -185,3 +185,9 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
 #define glw_vec3_extract(v, i) v[i]
 #define glw_vec4_extract(v, i) v[i]
 #define glw_mtx_get(m) (m)
+
+static inline void
+glw_mtx_copy(Mtx dst, const Mtx src)
+{
+  memcpy(dst, src, sizeof(Mtx));
+}

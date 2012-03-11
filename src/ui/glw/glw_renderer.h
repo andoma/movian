@@ -18,8 +18,22 @@
 
 #pragma once
 
-#define VERTEX_SIZE 9 // Number of floats per vertex
+#define VERTEX_SIZE 10 // Number of floats per vertex
 
+/**
+ * Vertex layout
+ *
+ * [0] = x
+ * [1] = y
+ * [2] = z
+ * [3] = s ( sharpness )
+ * [4] = r
+ * [5] = g
+ * [6] = b
+ * [7] = a
+ * [8] = s0
+ * [9] = t0
+ */
 
 
 /**
@@ -27,8 +41,13 @@
  */
 typedef struct glw_renderer_cache {
   Mtx grc_mtx; // ModelView matrix
-  int grc_active_clippers;
+  uint16_t grc_active_clippers;
+  uint16_t grc_active_faders;
   Vec4 grc_clip[NUM_CLIPPLANES];
+
+  Vec4 grc_fader[NUM_FADERS];
+  float grc_fader_alpha[NUM_FADERS];
+  float grc_fader_blur[NUM_FADERS];
 
   float *grc_vertices;
   uint16_t grc_num_vertices;

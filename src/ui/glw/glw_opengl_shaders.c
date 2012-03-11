@@ -110,6 +110,8 @@ render_unlocked(glw_root_t *gr)
       glVertexAttribPointer(gp->gp_attribute_texcoord,
 			    2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			    vertices + 3);
+
+      abort(); // Fix blur
     }
 
     glUniform4f(gp->gp_uniform_color_offset,
@@ -283,7 +285,7 @@ shader_render(struct glw_root *root,
     gp = gbr->gbr_renderer_flat;
   } else {
     
-    if(blur > 0.05) {
+    if(blur > 0.05 || 1) {
       gp = gbr->gbr_renderer_tex_blur;
     } else {
       gp = gbr->gbr_renderer_tex;
@@ -316,10 +318,18 @@ shader_render(struct glw_root *root,
     break;
   }
 
+#if 0
   if(blur > 0.05 && tex != NULL) {
     glUniform2f(gp->gp_uniform_blur_amount, 
 		1.5 * blur / tex->width,
 		1.5 * blur / tex->height);
+  }
+#endif
+
+  if(tex != NULL) {
+    glUniform2f(gp->gp_uniform_blur_amount, 
+		1.5 / tex->width,
+		1.5 / tex->height);
   }
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
@@ -337,6 +347,11 @@ shader_render(struct glw_root *root,
     glVertexAttribPointer(gp->gp_attribute_texcoord,
 			  2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			  vertices + 3);
+
+  if(gp->gp_attribute_blur != -1)
+    glVertexAttribPointer(gp->gp_attribute_blur,
+			  1, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			  vertices + 9);
   
   if(indices != NULL)
     glDrawElements(GL_TRIANGLES, num_triangles * 3, GL_UNSIGNED_SHORT, indices);
@@ -423,6 +438,7 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_attribute_position = glGetAttribLocation(p, "a_position");
   gp->gp_attribute_texcoord = glGetAttribLocation(p, "a_texcoord");
   gp->gp_attribute_color    = glGetAttribLocation(p, "a_color");
+  gp->gp_attribute_blur     = glGetAttribLocation(p, "a_blur");
 
   gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
@@ -476,6 +492,8 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
       glDisableVertexAttribArray(old->gp_attribute_texcoord);
     if(old->gp_attribute_color != -1)
       glDisableVertexAttribArray(old->gp_attribute_color);
+    if(old->gp_attribute_blur != -1)
+      glDisableVertexAttribArray(old->gp_attribute_blur);
   }
 
   gbr->gbr_current = gp;
@@ -493,6 +511,8 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
     glEnableVertexAttribArray(gp->gp_attribute_texcoord);
   if(gp->gp_attribute_color != -1)
     glEnableVertexAttribArray(gp->gp_attribute_color);
+  if(gp->gp_attribute_blur != -1)
+    glEnableVertexAttribArray(gp->gp_attribute_blur);
   return 1;
 }
 
