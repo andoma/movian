@@ -398,7 +398,7 @@ glw_container_y_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
-  float blur  = rc->rc_blur  * w->glw_blur;
+  float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0;
 
@@ -424,7 +424,7 @@ glw_container_y_render(glw_t *w, glw_rctx_t *rc)
 
     rc0 = *rc;
     rc0.rc_alpha = alpha;
-    rc0.rc_blur  = blur;
+    rc0.rc_sharpness  = sharpness;
 
     rc0.rc_height = c->glw_parent_size;
     
@@ -444,7 +444,7 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
-  float blur  = rc->rc_blur  * w->glw_blur;
+  float sharpness = rc->rc_sharpness * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0;
 
@@ -470,7 +470,7 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
 
     rc0 = *rc;
     rc0.rc_alpha = alpha;
-    rc0.rc_blur  = blur;
+    rc0.rc_sharpness = sharpness;
 
     rc0.rc_width = c->glw_parent_size;
     

@@ -189,7 +189,7 @@ set_alpha(glw_t *w, float v)
 static void
 set_blur(glw_t *w, float v)
 {
-  w->glw_blur = GLW_CLAMP(1 - v, 0, 1);
+  w->glw_sharpness = GLW_CLAMP(1 - v, 0, 1);
 }
 
 /**

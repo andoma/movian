@@ -353,15 +353,15 @@ rsx_render(struct glw_root *gr,
   if(indices != NULL) {
     for(i = 0; i < num_triangles * 3; i++) {
       const float *v = &vertices[indices[i] * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
+      realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
       realityVertex4f(ctx, v[0], v[1], v[2], 1);
     }
   } else {
     for(i = 0; i < num_vertices; i++) {
       const float *v = &vertices[i * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[3], v[4]);
-      realityAttr4f(ctx, rvp->rvp_a_color, v[5], v[6], v[7], v[8]);
+      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
+      realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
       realityVertex4f(ctx, v[0], v[1], v[2], 1);
     }
   }

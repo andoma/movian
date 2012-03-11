@@ -42,11 +42,12 @@ glw_renderer_init(glw_renderer_t *gr, int num_vertices, int num_triangles,
   gr->gr_num_triangles = num_triangles;
 
   for(i = 0; i < num_vertices; i++) {
+    gr->gr_vertices[i * VERTEX_SIZE + 3] = 1;
+
+    gr->gr_vertices[i * VERTEX_SIZE + 4] = 1;
     gr->gr_vertices[i * VERTEX_SIZE + 5] = 1;
     gr->gr_vertices[i * VERTEX_SIZE + 6] = 1;
     gr->gr_vertices[i * VERTEX_SIZE + 7] = 1;
-    gr->gr_vertices[i * VERTEX_SIZE + 8] = 1;
-    gr->gr_vertices[i * VERTEX_SIZE + 9] = 1;
   }
   gr->gr_dirty = 1;
   gr->gr_blended_attributes = 0;
@@ -136,8 +137,8 @@ void
 glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 		    float s, float t)
 {
-  gr->gr_vertices[vertex * VERTEX_SIZE + 3] = s;
-  gr->gr_vertices[vertex * VERTEX_SIZE + 4] = t;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 8] = s;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 9] = t;
   gr->gr_dirty = 1;
 }
 
@@ -148,10 +149,10 @@ void
 glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 		     float r, float g, float b, float a)
 {
-  gr->gr_vertices[vertex * VERTEX_SIZE + 5] = r;
-  gr->gr_vertices[vertex * VERTEX_SIZE + 6] = g;
-  gr->gr_vertices[vertex * VERTEX_SIZE + 7] = b;
-  gr->gr_vertices[vertex * VERTEX_SIZE + 8] = a;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 4] = r;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 5] = g;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 6] = b;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 7] = a;
   if(a <= 0.99)
     gr->gr_blended_attributes = 1;
   gr->gr_dirty = 1;
@@ -165,10 +166,9 @@ glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
  */
 static void
 emit_triangle(glw_root_t *gr,
-	      const Vec3 V1, const Vec3 V2, const Vec3 V3,
+	      const Vec4 V1, const Vec4 V2, const Vec4 V3,
 	      const Vec4 C1, const Vec4 C2, const Vec4 C3,
-	      const Vec2 T1, const Vec2 T2, const Vec2 T3,
-	      const float B1, const float B2, const float B3)
+	      const Vec2 T1, const Vec2 T2, const Vec2 T3)
 {
   if(gr->gr_vtmp_size + 3 > gr->gr_vtmp_capacity) {
     gr->gr_vtmp_capacity += 3;
@@ -179,68 +179,65 @@ emit_triangle(glw_root_t *gr,
   float *f = gr->gr_vtmp_buffer + gr->gr_vtmp_size * VERTEX_SIZE;
   gr->gr_vtmp_size += 3;
 
-  glw_vec3_store(f,   V1);
-  glw_vec2_store(f+3, T1);
-  glw_vec4_store(f+5, C1);
-  f[9] = B1;
+  glw_vec4_store(f,   V1);
+  glw_vec4_store(f+4, C1);
+  glw_vec2_store(f+8, T1);
 
-  glw_vec3_store(f+VERTEX_SIZE,   V2);
-  glw_vec2_store(f+VERTEX_SIZE+3, T2);
-  glw_vec4_store(f+VERTEX_SIZE+5, C2);
-  f[VERTEX_SIZE + 9] = B2;
+  glw_vec4_store(f+VERTEX_SIZE,   V2);
+  glw_vec4_store(f+VERTEX_SIZE+4, C2);
+  glw_vec2_store(f+VERTEX_SIZE+8, T2);
 
-  glw_vec3_store(f+VERTEX_SIZE*2,   V3);
-  glw_vec2_store(f+VERTEX_SIZE*2+3, T3);
-  glw_vec4_store(f+VERTEX_SIZE*2+5, C3);
-  f[VERTEX_SIZE*2 + 9] = B3;
+  glw_vec4_store(f+VERTEX_SIZE*2,   V3);
+  glw_vec4_store(f+VERTEX_SIZE*2+4, C3);
+  glw_vec2_store(f+VERTEX_SIZE*2+8, T3);
 }
 
 
 /**
  * Fade a triangle in eye space
- * This could be done in the vertex shader
+ * This could just as well be done in the vertex shader
  */
 static void
 fader(glw_root_t *gr, glw_renderer_cache_t *grc,
-      const Vec3 V1, const Vec3 V2, const Vec3 V3,
+      const Vec4 V1, const Vec4 V2, const Vec4 V3,
       const Vec4 C1, const Vec4 C2, const Vec4 C3,
       const Vec2 T1, const Vec2 T2, const Vec2 T3,
-      float B1, float B2, float B3,
       int plane)
 {
-  while(1) {
-    if(plane == NUM_FADERS) {
-      emit_triangle(gr, V1, V2, V3, C1, C2, C3, T1, T2, T3, B1, B2, B3);
-      return;
-    }
-    if(grc->grc_active_faders & (1 << plane))
-      break;
-    plane++;
-  }
+  int i;
 
-  const float D1 = glw_vec34_dot(V1, grc->grc_fader[plane]);
-  const float D2 = glw_vec34_dot(V2, grc->grc_fader[plane]);
-  const float D3 = glw_vec34_dot(V3, grc->grc_fader[plane]);
-
-  plane++;
-
-  float br = 0.3;
   Vec4 c1, c2, c3;
-
+  Vec4 v1, v2, v3;
+  
   glw_vec4_copy(c1, C1);
   glw_vec4_copy(c2, C2);
   glw_vec4_copy(c3, C3);
+    
 
-  float ar = 1;
-  c1[3] *= 1 + D1 / ar;
-  c2[3] *= 1 + D2 / ar;
-  c3[3] *= 1 + D3 / ar;
+  glw_vec4_copy(v1, V1);
+  glw_vec4_copy(v2, V2);
+  glw_vec4_copy(v3, V3);
 
-  B1 *= 1 + D1 / br;
-  B2 *= 1 + D2 / br;
-  B3 *= 1 + D3 / br;
+  for(i = 0; i < NUM_FADERS; i++) {
+    if(!(grc->grc_active_faders & (1 << plane)))
+      continue;
 
-  fader(gr, grc, V1, V2, V3, c1, c2, c3, T1, T2, T3, B1, B2, B3, plane);
+    const float D1 = glw_vec34_dot(V1, grc->grc_fader[i]);
+    const float D2 = glw_vec34_dot(V2, grc->grc_fader[i]);
+    const float D3 = glw_vec34_dot(V3, grc->grc_fader[i]);
+
+    float br = 0.3;
+    float ar = 1;
+    
+    c1[3] *= 1 + D1 / ar;
+    c2[3] *= 1 + D2 / ar;
+    c3[3] *= 1 + D3 / ar;
+    
+    v1[3] *= 1 + D1 / br;
+    v2[3] *= 1 + D2 / br;
+    v3[3] *= 1 + D3 / br;
+  }
+  emit_triangle(gr, v1, v2, v3, c1, c2, c3, T1, T2, T3);
 }
 
 
@@ -249,15 +246,14 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
  */
 static void
 clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
-	const Vec3 V1, const Vec3 V2, const Vec3 V3,
+	const Vec4 V1, const Vec4 V2, const Vec4 V3,
 	const Vec4 C1, const Vec4 C2, const Vec4 C3,
 	const Vec2 T1, const Vec2 T2, const Vec2 T3,
-	float B1, float B2, float B3,
 	int plane)
 {
   while(1) {
     if(plane == NUM_CLIPPLANES) {
-      fader(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, B1, B2, B3, 0);
+      fader(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, 0);
       return;
     }
     if(grc->grc_active_clippers & (1 << plane))
@@ -275,20 +271,20 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
   float s13;
   float s23;
 
-  Vec3 V12, V13, V23;
+  Vec4 V12, V13, V23;
   Vec4 C12, C13, C23;
   Vec2 T12, T13, T23;
 
   if(D1 >= 0) {
     if(D2 >= 0) {
       if(D3 >= 0) {
-	clipper(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, B1, B2, B3, plane);
+	clipper(gr, grc, V1, V2, V3, C1, C2, C3, T1, T2, T3, plane);
       } else {
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
 	
-	glw_vec3_lerp(V13, s13, V1, V3);
-	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(V23, s23, V2, V3);
 
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec4_lerp(C23, s23, C2, C3);
@@ -296,66 +292,58 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	glw_vec2_lerp(T13, s13, T1, T3);
 	glw_vec2_lerp(T23, s23, T2, T3);
 	
-	clipper(gr, grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23,
-		B1, B2, B3, plane);
-	clipper(gr, grc, V1, V23, V13, C1, C23, C13, T1, T23, T13,
-		B1, B2, B3, plane);
+	clipper(gr, grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
+	clipper(gr, grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
       }
 
     } else {
       s12 = D1 / (D1 - D2);
-      glw_vec3_lerp(V12, s12, V1, V2);
+      glw_vec4_lerp(V12, s12, V1, V2);
       glw_vec4_lerp(C12, s12, C1, C2);
       glw_vec2_lerp(T12, s12, T1, T2);
 
       if(D3 >= 0) {
 	s23 = D2 / (D2 - D3);
-	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(V23, s23, V2, V3);
 	glw_vec4_lerp(C23, s23, C2, C3);
 	glw_vec2_lerp(T23, s23, T2, T3);
 
-	clipper(gr, grc, V1, V12, V23, C1, C12, C23, T1, T12, T23,
-		B1, B2, B3, plane);
-	clipper(gr, grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3,
-		B1, B2, B3, plane);
+	clipper(gr, grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
+	clipper(gr, grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
 
       } else {
 	s13 = D1 / (D1 - D3);
-	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(V13, s13, V1, V3);
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec2_lerp(T13, s13, T1, T3);
 
-	clipper(gr, grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, 
-		B1, B2, B3, plane);
+	clipper(gr, grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
       }
 
     }
   } else {
     if(D2 >= 0) {
       s12 = D1 / (D1 - D2);
-      glw_vec3_lerp(V12, s12, V1, V2);
+      glw_vec4_lerp(V12, s12, V1, V2);
       glw_vec4_lerp(C12, s12, C1, C2);
       glw_vec2_lerp(T12, s12, T1, T2);
       
       if(D3 >= 0) {
 	s13 = D1 / (D1 - D3);
-	glw_vec3_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(V13, s13, V1, V3);
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec2_lerp(T13, s13, T1, T3);
 
-	clipper(gr, grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3,
-		B1, B2, B3, plane);
-	clipper(gr, grc, V12, V3, V13, C12, C3, C13, T12, T3, T13,
-		B1, B2, B3, plane);
+	clipper(gr, grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
+	clipper(gr, grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
 
       } else {
 	s23 = D2 / (D2 - D3);
-	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(V23, s23, V2, V3);
 	glw_vec4_lerp(C23, s23, C2, C3);
 	glw_vec2_lerp(T23, s23, T2, T3);
 
-	clipper(gr, grc, V12, V2, V23, C12, C2, C23, T12, T2, T23,
-		B1, B2, B3, plane);
+	clipper(gr, grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
 
       }
     } else {
@@ -363,8 +351,8 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	s13 = D1 / (D1 - D3);
 	s23 = D2 / (D2 - D3);
 	
-	glw_vec3_lerp(V13, s13, V1, V3);
-	glw_vec3_lerp(V23, s23, V2, V3);
+	glw_vec4_lerp(V13, s13, V1, V3);
+	glw_vec4_lerp(V23, s23, V2, V3);
 
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec4_lerp(C23, s23, C2, C3);
@@ -372,8 +360,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	glw_vec2_lerp(T13, s13, T1, T3);
 	glw_vec2_lerp(T23, s23, T2, T3);
 
-	clipper(gr, grc, V13, V23, V3, C13, C23, C3, T13, T23, T3,
-		B1, B2, B3, plane);
+	clipper(gr, grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
       }
     }
   }
@@ -417,23 +404,20 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
     int v2 = *ip++;
     int v3 = *ip++;
 
-    Vec3 V1, V2, V3;
+    Vec4 V1, V2, V3;
 
-    glw_pmtx_mul_vec3(V1, pmtx, glw_vec3_get(a + v1*VERTEX_SIZE));
-    glw_pmtx_mul_vec3(V2, pmtx, glw_vec3_get(a + v2*VERTEX_SIZE));
-    glw_pmtx_mul_vec3(V3, pmtx, glw_vec3_get(a + v3*VERTEX_SIZE));
+    glw_pmtx_mul_vec4_i(V1, pmtx, glw_vec4_get(a + v1*VERTEX_SIZE));
+    glw_pmtx_mul_vec4_i(V2, pmtx, glw_vec4_get(a + v2*VERTEX_SIZE));
+    glw_pmtx_mul_vec4_i(V3, pmtx, glw_vec4_get(a + v3*VERTEX_SIZE));
 
     clipper(root, grc,
 	    V1, V2, V3,
-	    glw_vec4_get(a + v1 * VERTEX_SIZE + 5),
-	    glw_vec4_get(a + v2 * VERTEX_SIZE + 5),
-	    glw_vec4_get(a + v3 * VERTEX_SIZE + 5),
-	    glw_vec2_get(a + v1 * VERTEX_SIZE + 3),
-	    glw_vec2_get(a + v2 * VERTEX_SIZE + 3),
-	    glw_vec2_get(a + v3 * VERTEX_SIZE + 3),
-	    a[v1 * VERTEX_SIZE + 9],
-	    a[v2 * VERTEX_SIZE + 9],
-	    a[v3 * VERTEX_SIZE + 9],
+	    glw_vec4_get(a + v1 * VERTEX_SIZE + 4),
+	    glw_vec4_get(a + v2 * VERTEX_SIZE + 4),
+	    glw_vec4_get(a + v3 * VERTEX_SIZE + 4),
+	    glw_vec2_get(a + v1 * VERTEX_SIZE + 8),
+	    glw_vec2_get(a + v2 * VERTEX_SIZE + 8),
+	    glw_vec2_get(a + v3 * VERTEX_SIZE + 8),
 	    0);
   }
 

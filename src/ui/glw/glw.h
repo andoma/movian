@@ -736,8 +736,14 @@ typedef struct glw_root {
 		    const uint16_t *indices,
 		    int num_triangles,
 		    int flags);
+
 #define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes
 					   are != [1,1,1,1] */
+
+#define GLW_RENDER_BLUR_ATTRIBUTE   0x2 /* set if pos.w != 1 (sharpness)
+					 * ie, the triangle should be blurred
+					 */
+
 
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
   int gr_vtmp_size;     // gr_clip_buffer size in vertices
@@ -754,7 +760,7 @@ void glw_settings_save(void *opaque, htsmsg_t *msg);
  */
 typedef struct glw_rctx {
   float rc_alpha;
-  float rc_blur;
+  float rc_sharpness;
 
   int16_t rc_width;
   int16_t rc_horizontal_avail;
@@ -904,7 +910,7 @@ typedef struct glw {
 
   float glw_norm_weight;             /* Relative weight (normalized) */
   float glw_alpha;                   /* Alpha set by user */
-  float glw_blur;                    /* Blur set by user */
+  float glw_sharpness;               /* 1-Blur set by user */
 
   float glw_focus_weight;
 

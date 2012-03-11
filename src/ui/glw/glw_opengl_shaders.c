@@ -336,23 +336,18 @@ shader_render(struct glw_root *root,
 		     glw_mtx_get(m) ?: glw_identitymtx);
 
   glVertexAttribPointer(gp->gp_attribute_position,
-			3, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices);
 
   glVertexAttribPointer(gp->gp_attribute_color,
 			4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			vertices + 5);
+			vertices + 4);
 
   if(gp->gp_attribute_texcoord != -1)
     glVertexAttribPointer(gp->gp_attribute_texcoord,
 			  2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			  vertices + 3);
+			  vertices + 8);
 
-  if(gp->gp_attribute_blur != -1)
-    glVertexAttribPointer(gp->gp_attribute_blur,
-			  1, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			  vertices + 9);
-  
   if(indices != NULL)
     glDrawElements(GL_TRIANGLES, num_triangles * 3, GL_UNSIGNED_SHORT, indices);
   else
@@ -438,7 +433,6 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_attribute_position = glGetAttribLocation(p, "a_position");
   gp->gp_attribute_texcoord = glGetAttribLocation(p, "a_texcoord");
   gp->gp_attribute_color    = glGetAttribLocation(p, "a_color");
-  gp->gp_attribute_blur     = glGetAttribLocation(p, "a_blur");
 
   gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
@@ -492,8 +486,6 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
       glDisableVertexAttribArray(old->gp_attribute_texcoord);
     if(old->gp_attribute_color != -1)
       glDisableVertexAttribArray(old->gp_attribute_color);
-    if(old->gp_attribute_blur != -1)
-      glDisableVertexAttribArray(old->gp_attribute_blur);
   }
 
   gbr->gbr_current = gp;
@@ -511,8 +503,6 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
     glEnableVertexAttribArray(gp->gp_attribute_texcoord);
   if(gp->gp_attribute_color != -1)
     glEnableVertexAttribArray(gp->gp_attribute_color);
-  if(gp->gp_attribute_blur != -1)
-    glEnableVertexAttribArray(gp->gp_attribute_blur);
   return 1;
 }
 

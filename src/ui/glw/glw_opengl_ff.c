@@ -107,13 +107,13 @@ ff_render(struct glw_root *gr,
     }
     for(i = 0; i < num_vertices; i++) {
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 0] =
-	vertices[i * VERTEX_SIZE + 5] * r;
+	vertices[i * VERTEX_SIZE + 4] * r;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 1] =
-	vertices[i * VERTEX_SIZE + 6] * g;
+	vertices[i * VERTEX_SIZE + 5] * g;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 2] =
-	vertices[i * VERTEX_SIZE + 7] * b;
+	vertices[i * VERTEX_SIZE + 6] * b;
       gr->gr_vtmp_buffer[i * VERTEX_SIZE + 3] =
-	vertices[i * VERTEX_SIZE + 8] * alpha;
+	vertices[i * VERTEX_SIZE + 7] * alpha;
     }
 
     glEnableClientState(GL_COLOR_ARRAY);
@@ -134,7 +134,7 @@ ff_render(struct glw_root *gr,
   } else {
     glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
     glTexCoordPointer(2, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
-		      vertices + 3);
+		      vertices + 8);
   }
 
   if(indices != NULL)

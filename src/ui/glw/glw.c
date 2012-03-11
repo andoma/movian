@@ -402,7 +402,7 @@ glw_create(glw_root_t *gr, const glw_class_t *class,
   w->glw_root = gr;
   w->glw_class = class;
   w->glw_alpha = 1.0f;
-  w->glw_blur  = 1.0f;
+  w->glw_sharpness = 1.0f;
   w->glw_refcnt = 1;
   w->glw_alignment = class->gc_default_alignment;
   w->glw_flags = GLW_NAV_FOCUSABLE;
@@ -2186,7 +2186,7 @@ glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan)
   rc->rc_width  = width;
   rc->rc_height = height;
   rc->rc_alpha = 1.0f;
-  rc->rc_blur  = 1.0f;
+  rc->rc_sharpness  = 1.0f;
   rc->rc_overscanning = overscan;
 
   glw_LoadIdentity(rc);

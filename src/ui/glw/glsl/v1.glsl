@@ -3,7 +3,7 @@ uniform vec4 u_color_offset;
 uniform mat4 u_modelview;
 uniform vec2 u_blur_amount;
 
-attribute vec3 a_position;
+attribute vec4 a_position;
 attribute vec4 a_color;
 attribute vec2 a_texcoord;
 attribute float a_blur;
@@ -22,9 +22,9 @@ varying vec2 f_blur_amount;
 
 void main()
 {
-  gl_Position = projection * u_modelview * vec4(a_position, 1);
+  gl_Position = projection * u_modelview * vec4(a_position.xyz, 1);
   f_col_mul = a_color * clamp(u_color, 0.0, 1.0);
   f_col_off = u_color_offset;
   f_tex = a_texcoord;
-  f_blur_amount = u_blur_amount * (1.0 - a_blur);
+  f_blur_amount = u_blur_amount * (1.0 - a_position.w);
 }

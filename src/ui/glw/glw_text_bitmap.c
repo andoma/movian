@@ -338,7 +338,7 @@ glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   pixmap_t *pm = gtb->gtb_pixmap;
   float alpha;
-  float blur = 1 - (rc->rc_blur * w->glw_blur);
+  float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
 
   if(glw_is_focusable(w))
     glw_store_matrix(w, rc);

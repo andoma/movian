@@ -185,7 +185,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   glw_image_t *gi = (void *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
-  float blur = 1 - (rc->rc_blur * w->glw_blur);
+  float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
   glw_rctx_t rc0;
 
   alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self * gi->gi_autofade;
