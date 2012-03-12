@@ -1,29 +1,44 @@
+widget(container_x, {
 
 
-widget(clist, {
-  filterConstraintX = true;
-  center = 0.2;
-  spacing = $ui.size / 2;
-  
-  $view.focused = focusedChild();
-  $view.change = changed($view.focused, 1);
-  
-  $page.backdrop = $view.focused.metadata.backdrop;
-  
-  cloner($page.model.nodes, loader, {
+  widget(clist, {
+    filterConstraintX = true;
+    center = 0.2;
+    spacing = $ui.size / 2;
     
-    alpha = 0.3 + scurve(clamp(isFocused() + $view.change, 0, 1), 0.1, 10);
-    blur = 1 - scurve(select(isFocused(), 1, $view.change), 0.1, 10);
+    $view.focused = focusedChild();
+    $view.change = changed($view.focused, 1);
+    
+    $page.backdrop = $view.focused.metadata.backdrop;
+    
+    cloner($page.model.nodes, loader, {
+      
+      alpha = 0.3 + scurve(clamp(isFocused() + $view.change, 0, 1), 0.1, 10);
+      blur = 1 - scurve(select(isFocused(), 1, $view.change), 0.1, 10);
 
+      time = 0.3;
+      noInitialTransform = true;
+      source = "theme://directoryviews/list3/" + 
+	translate($self.type, "default",
+		  "audio", "audio",
+		  "video", "video",
+		  "separator", "separator",
+		  "playlist", "playlist"
+		 ) + ".view";
+    });
+  });
+
+  widget(loader, {
+    filterConstraintX = true;
     time = 0.3;
-    noInitialTransform = true;
-    source = "theme://directoryviews/list3/" + 
-      translate($self.type, "default",
-		"audio", "audio",
-		"video", "video",
-		"separator", "separator",
-		"playlist", "playlist"
+    effect = blend;
+    source = "theme://directoryviews/list3/overlays/" + 
+      translate($view.focused.type, "default",
+		"video", "video"
 	       ) + ".view";
+
+    .args ?= $view.focused;
+
+      
   });
 });
-
