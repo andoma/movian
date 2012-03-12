@@ -93,6 +93,8 @@ typedef Mtx PMtx;
     dst = _mm_add_ps(_mm_add_ps(a0, a1), _mm_add_ps(a2, a3));	\
   } while(0)
 
+#define glw_pmtx_mul_vec4_i glw_pmtx_mul_vec4
+
 #define glw_pmtx_mul_vec3(dst, pmt, V) do {			\
     __v4sf v = _mm_set_ps(1,					\
 			  __builtin_ia32_vec_ext_v4sf(V, 2),	\
@@ -109,6 +111,7 @@ typedef Mtx PMtx;
 
 #define glw_vec3_make(x,y,z) _mm_set_ps(0, z, y, x)
 #define glw_vec4_make(x,y,z,w) _mm_set_ps(w, z, y, x)
+#define glw_vec4_make1(w) _mm_set_ss(w)
 
 #define glw_vec3_copy(dst, src) (dst) = (src)
 #define glw_vec4_copy(dst, src) (dst) = (src)
@@ -159,9 +162,15 @@ glw_mtx_copy(Mtx dst, const Mtx src)
 
 extern int glw_mtx_invert(Mtx dst, const Mtx src);
 
-#define glw_vec3_extract(a, pos)  __builtin_ia32_vec_ext_v4sf(a, pos)
+#define glw_vec3_extract(a, pos) __builtin_ia32_vec_ext_v4sf(a, pos)
 
 #define glw_vec4_extract(a, pos) __builtin_ia32_vec_ext_v4sf(a, pos)
+
+#define glw_vec4_mul_c3(a, v) do { \
+    a = _mm_mul_ps(a, _mm_set_ps(v, 1, 1, 1));	\
+  } while(0)
+
+#define glw_vec4_insert3(a, v)  _mm_load_ss(a, v);
 
 const static inline float *
 glw_mtx_get(const Mtx src)

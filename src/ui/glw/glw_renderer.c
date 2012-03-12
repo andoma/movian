@@ -228,14 +228,15 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
 
     float br = 0.3;
     float ar = 1;
-    
-    c1[3] *= 1 + D1 / ar;
-    c2[3] *= 1 + D2 / ar;
-    c3[3] *= 1 + D3 / ar;
-    
-    v1[3] *= 1 + D1 / br;
-    v2[3] *= 1 + D2 / br;
-    v3[3] *= 1 + D3 / br;
+
+
+    glw_vec4_mul_c3(c1, 1 + D1 / ar);
+    glw_vec4_mul_c3(c2, 1 + D2 / ar);
+    glw_vec4_mul_c3(c3, 1 + D3 / ar);
+
+    glw_vec4_mul_c3(v1, 1 + D1 / br);
+    glw_vec4_mul_c3(v2, 1 + D2 / br);
+    glw_vec4_mul_c3(v3, 1 + D3 / br);
   }
   emit_triangle(gr, v1, v2, v3, c1, c2, c3, T1, T2, T3);
 }
