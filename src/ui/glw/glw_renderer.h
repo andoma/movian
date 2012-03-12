@@ -49,6 +49,8 @@ typedef struct glw_renderer_cache {
   float grc_fader_alpha[NUM_FADERS];
   float grc_fader_blur[NUM_FADERS];
 
+  char grc_blurred;
+
   float *grc_vertices;
   uint16_t grc_num_vertices;
 } glw_renderer_cache_t;

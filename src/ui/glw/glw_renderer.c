@@ -237,9 +237,17 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
     }
 
     if(br > 0) {
-      glw_vec4_mul_c3(v1, 1 + D1 / br);
-      glw_vec4_mul_c3(v2, 1 + D2 / br);
-      glw_vec4_mul_c3(v3, 1 + D3 / br);
+
+      float b1 = 1 + D1 / br;
+      float b2 = 1 + D2 / br;
+      float b3 = 1 + D3 / br;
+
+      if(b1 < 1 || b2 < 1 || b3 < 1) {
+	grc->grc_blurred = 1;
+	glw_vec4_mul_c3(v1, b1);
+	glw_vec4_mul_c3(v2, b2);
+	glw_vec4_mul_c3(v3, b3);
+      }
     }
   }
   emit_triangle(gr, v1, v2, v3, c1, c2, c3, T1, T2, T3);
@@ -390,6 +398,7 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
 
   grc->grc_active_clippers = root->gr_active_clippers;
   grc->grc_active_faders   = root->gr_active_faders;
+  grc->grc_blurred = 0;
 
   for(i = 0; i < NUM_CLIPPLANES; i++)
     if((1 << i) & root->gr_active_clippers)
@@ -523,6 +532,9 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
        glw_renderer_faders_cmp(grc, root)) {
       glw_renderer_tesselate(gr, root, rc, grc);
     }
+
+    if(grc->grc_blurred)
+      flags |= GLW_RENDER_BLUR_ATTRIBUTE;
 
     root->gr_render(root, NULL, tex, rgb_mul, rgb_off, alpha, blur,
 		    grc->grc_vertices, grc->grc_num_vertices,

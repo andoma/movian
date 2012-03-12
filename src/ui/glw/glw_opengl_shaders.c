@@ -121,9 +121,12 @@ render_unlocked(glw_root_t *gr)
 				  rj->rgb_mul.b, rj->alpha);
 
     if(rj->blur > 0.05 && tex != NULL) {
+      abort(); // fix blur
+      /*
       glUniform2f(gp->gp_uniform_blur_amount, 
 		  1.5 * rj->blur / tex->width,
 		  1.5 * rj->blur / tex->height);
+      */
     }
 
     if(rj->eyespace) {
@@ -285,7 +288,7 @@ shader_render(struct glw_root *root,
     gp = gbr->gbr_renderer_flat;
   } else {
     
-    if(blur > 0.05 || 1) {
+    if(blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE) {
       gp = gbr->gbr_renderer_tex_blur;
     } else {
       gp = gbr->gbr_renderer_tex;
@@ -318,19 +321,14 @@ shader_render(struct glw_root *root,
     break;
   }
 
-#if 0
-  if(blur > 0.05 && tex != NULL) {
-    glUniform2f(gp->gp_uniform_blur_amount, 
-		1.5 * blur / tex->width,
-		1.5 * blur / tex->height);
-  }
-#endif
-
-  if(tex != NULL) {
-    glUniform2f(gp->gp_uniform_blur_amount, 
+  if(gp == gbr->gbr_renderer_tex_blur) {
+    glUniform2f(gp->gp_uniform_texture_blur_scale, 
 		1.5 / tex->width,
 		1.5 / tex->height);
+
+    glUniform1f(gp->gp_uniform_blur_amount_2, blur);
   }
+
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
 		     glw_mtx_get(m) ?: glw_identitymtx);
@@ -439,7 +437,8 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_uniform_colormtx   = glGetUniformLocation(p, "u_colormtx");
   gp->gp_uniform_blend      = glGetUniformLocation(p, "u_blend");
   gp->gp_uniform_color_offset= glGetUniformLocation(p, "u_color_offset");
-  gp->gp_uniform_blur_amount = glGetUniformLocation(p, "u_blur_amount");
+  gp->gp_uniform_blur_amount_2 = glGetUniformLocation(p, "u_blur_amount");
+  gp->gp_uniform_texture_blur_scale = glGetUniformLocation(p, "u_texture_blur_scale");
   
 #ifdef DEBUG_SHADERS
   printf("Loaded %s\n", title);

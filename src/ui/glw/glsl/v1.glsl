@@ -1,7 +1,7 @@
 uniform vec4 u_color;
 uniform vec4 u_color_offset;
 uniform mat4 u_modelview;
-uniform vec2 u_blur_amount;
+uniform float u_blur_amount;
 
 attribute vec4 a_position;
 attribute vec4 a_color;
@@ -18,7 +18,7 @@ const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 varying vec4 f_col_mul;
 varying vec4 f_col_off;
 varying vec2 f_tex;
-varying vec2 f_blur_amount;
+varying float f_blur_amount;
 
 void main()
 {
@@ -26,5 +26,5 @@ void main()
   f_col_mul = a_color * clamp(u_color, 0.0, 1.0);
   f_col_off = u_color_offset;
   f_tex = a_texcoord;
-  f_blur_amount = u_blur_amount * (1.0 - a_position.w);
+  f_blur_amount = u_blur_amount + (1.0 - a_position.w);
 }
