@@ -566,6 +566,17 @@ set_clipping(glw_t *w, const float *xyzw)
 }
 
 
+/**
+ *
+ */
+static void
+set_plane(glw_t *w, const float *xyzw)
+{
+  if(w->glw_class->gc_set_plane != NULL)
+    w->glw_class->gc_set_plane(w, xyzw);
+}
+
+
 static struct strtab aligntab[] = {
   { "center",        LAYOUT_ALIGN_CENTER},
   { "left",          LAYOUT_ALIGN_LEFT},
@@ -891,6 +902,11 @@ static const token_attrib_t attribtab[] = {
   {"margin",          set_int16_4, 0, set_margin},
   {"rotation",        set_float4, 0, set_rotation},
   {"clipping",        set_float4, 0, set_clipping},
+  {"plane",           set_float4, 0, set_plane},
+  {"alphaFallOff",    set_float, GLW_ATTRIB_ALPHA_FALLOFF},
+  {"blurFallOff",     set_float, GLW_ATTRIB_BLUR_FALLOFF},
+  
+
 
   {"align",           set_align,  0},
   {"effect",          set_transition_effect,  0},

@@ -226,17 +226,21 @@ fader(glw_root_t *gr, glw_renderer_cache_t *grc,
     const float D2 = glw_vec34_dot(V2, grc->grc_fader[i]);
     const float D3 = glw_vec34_dot(V3, grc->grc_fader[i]);
 
-    float br = 0.3;
-    float ar = 1;
+    float br = grc->grc_fader_blur[i];
+    float ar = grc->grc_fader_alpha[i];
 
 
-    glw_vec4_mul_c3(c1, 1 + D1 / ar);
-    glw_vec4_mul_c3(c2, 1 + D2 / ar);
-    glw_vec4_mul_c3(c3, 1 + D3 / ar);
+    if(ar > 0) {
+      glw_vec4_mul_c3(c1, 1 + D1 / ar);
+      glw_vec4_mul_c3(c2, 1 + D2 / ar);
+      glw_vec4_mul_c3(c3, 1 + D3 / ar);
+    }
 
-    glw_vec4_mul_c3(v1, 1 + D1 / br);
-    glw_vec4_mul_c3(v2, 1 + D2 / br);
-    glw_vec4_mul_c3(v3, 1 + D3 / br);
+    if(br > 0) {
+      glw_vec4_mul_c3(v1, 1 + D1 / br);
+      glw_vec4_mul_c3(v2, 1 + D2 / br);
+      glw_vec4_mul_c3(v3, 1 + D3 / br);
+    }
   }
   emit_triangle(gr, v1, v2, v3, c1, c2, c3, T1, T2, T3);
 }
@@ -608,8 +612,8 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
  *
  */
 int
-glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
-		 float distance, float a, float b)
+glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, const float *plane,
+		 float a, float b)
 {
   int i;
   Vec4 v4;
@@ -620,10 +624,10 @@ glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
   if(i == NUM_FADERS)
     return -1;
 
-  glw_vec4_copy(v4, glw_vec4_make(clip_planes[how][0],
-				  clip_planes[how][1],
-				  clip_planes[how][2],
-				  1 - (distance * 2)));
+  glw_vec4_copy(v4, glw_vec4_make(plane[0],
+				  plane[1],
+				  plane[2],
+				  plane[3]));
 
   Mtx inv;
   
@@ -631,6 +635,8 @@ glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
     return -1;
   
   glw_mtx_trans_mul_vec4(gr->gr_fader[i], inv, v4);
+  gr->gr_fader_alpha[i] = a;
+  gr->gr_fader_blur[i] = b;
 
   gr->gr_active_faders |= (1 << i);
   return i;

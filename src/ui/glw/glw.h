@@ -127,6 +127,8 @@ typedef enum {
   GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_SATURATION,
   GLW_ATTRIB_CENTER,
+  GLW_ATTRIB_ALPHA_FALLOFF,
+  GLW_ATTRIB_BLUR_FALLOFF,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -472,6 +474,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_clipping)(struct glw *w, const float *v);
+
+  /**
+   *
+   */
+  void (*gc_set_plane)(struct glw *w, const float *v);
 
   /**
    *
@@ -1033,8 +1040,8 @@ int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
 
 void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 
-int glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
-		     float distance, float alpha, float blur);
+int glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, const float *plane,
+		     float alphafo, float blurfo);
 
 void glw_fader_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 
@@ -1105,6 +1112,8 @@ do {						\
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
   case GLW_ATTRIB_CENTER:                       \
+  case GLW_ATTRIB_ALPHA_FALLOFF:                \
+  case GLW_ATTRIB_BLUR_FALLOFF:                 \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
