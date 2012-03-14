@@ -110,3 +110,5 @@ void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       const struct glw_rgb *rgb_mul,
 		       const struct glw_rgb *rgb_off,
 		       float alpha, float blur);
+
+void glw_vtmp_resize(glw_root_t *gr, int num_float);

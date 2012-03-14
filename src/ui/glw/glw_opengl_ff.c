@@ -100,25 +100,17 @@ ff_render(struct glw_root *gr,
   if(flags & GLW_RENDER_COLOR_ATTRIBUTES) {
     int i;
 
-    if(num_vertices > gr->gr_vtmp_capacity) {
-      gr->gr_vtmp_capacity = num_vertices;
-      gr->gr_vtmp_buffer = realloc(gr->gr_vtmp_buffer, sizeof(float) *
-				   VERTEX_SIZE * gr->gr_vtmp_capacity);
-    }
+    glw_vtmp_resize(gr, num_vertices * 4);
+
     for(i = 0; i < num_vertices; i++) {
-      gr->gr_vtmp_buffer[i * VERTEX_SIZE + 0] =
-	vertices[i * VERTEX_SIZE + 4] * r;
-      gr->gr_vtmp_buffer[i * VERTEX_SIZE + 1] =
-	vertices[i * VERTEX_SIZE + 5] * g;
-      gr->gr_vtmp_buffer[i * VERTEX_SIZE + 2] =
-	vertices[i * VERTEX_SIZE + 6] * b;
-      gr->gr_vtmp_buffer[i * VERTEX_SIZE + 3] =
-	vertices[i * VERTEX_SIZE + 7] * alpha;
+      gr->gr_vtmp_buffer[i * 4 + 0] = vertices[i * VERTEX_SIZE + 4] * r;
+      gr->gr_vtmp_buffer[i * 4 + 1] = vertices[i * VERTEX_SIZE + 5] * g;
+      gr->gr_vtmp_buffer[i * 4 + 2] = vertices[i * VERTEX_SIZE + 6] * b;
+      gr->gr_vtmp_buffer[i * 4 + 3] = vertices[i * VERTEX_SIZE + 7] * alpha;
     }
 
     glEnableClientState(GL_COLOR_ARRAY);
-    glColorPointer(4, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
-		   gr->gr_vtmp_buffer);
+    glColorPointer(4, GL_FLOAT, 0, gr->gr_vtmp_buffer);
   } else {
     glColor4f(r, g, b, alpha);
   }

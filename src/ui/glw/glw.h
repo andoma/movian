@@ -753,8 +753,8 @@ typedef struct glw_root {
 
 
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
-  int gr_vtmp_size;     // gr_clip_buffer size in vertices
-  int gr_vtmp_capacity; // gr_clip_buffer capacity in vertices
+  int gr_vtmp_cur;
+  int gr_vtmp_capacity;
 
 } glw_root_t;
 

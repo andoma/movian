@@ -21,6 +21,21 @@
 
 static const glw_rgb_t white = {.r = 1,.g = 1,.b = 1};
 
+
+/**
+ *
+ */
+void
+glw_vtmp_resize(glw_root_t *gr, int num_float)
+{
+  if(gr->gr_vtmp_capacity >= num_float)
+    return;
+  gr->gr_vtmp_capacity = num_float * 10;
+
+  gr->gr_vtmp_buffer = realloc(gr->gr_vtmp_buffer,
+			       gr->gr_vtmp_capacity * sizeof(float));
+}
+
 /**
  * 
  */
@@ -170,14 +185,9 @@ emit_triangle(glw_root_t *gr,
 	      const Vec4 C1, const Vec4 C2, const Vec4 C3,
 	      const Vec2 T1, const Vec2 T2, const Vec2 T3)
 {
-  if(gr->gr_vtmp_size + 3 > gr->gr_vtmp_capacity) {
-    gr->gr_vtmp_capacity += 3;
-    gr->gr_vtmp_buffer = realloc(gr->gr_vtmp_buffer, sizeof(float) *
-				 VERTEX_SIZE * gr->gr_vtmp_capacity);
-  }
+  glw_vtmp_resize(gr, (gr->gr_vtmp_cur + 3) * VERTEX_SIZE + 4);
 
-  float *f = gr->gr_vtmp_buffer + gr->gr_vtmp_size * VERTEX_SIZE;
-  gr->gr_vtmp_size += 3;
+  float *f = gr->gr_vtmp_buffer + gr->gr_vtmp_cur * VERTEX_SIZE;
 
   glw_vec4_store(f,   V1);
   glw_vec4_store(f+4, C1);
@@ -190,6 +200,8 @@ emit_triangle(glw_root_t *gr,
   glw_vec4_store(f+VERTEX_SIZE*2,   V3);
   glw_vec4_store(f+VERTEX_SIZE*2+4, C3);
   glw_vec2_store(f+VERTEX_SIZE*2+8, T3);
+
+  gr->gr_vtmp_cur += 3;
 }
 
 
@@ -392,7 +404,7 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
   const float *a = gr->gr_vertices;
   PMtx pmtx;
   
-  root->gr_vtmp_size = 0;
+  root->gr_vtmp_cur = 0;
 
   memcpy(grc->grc_mtx, rc->rc_mtx, sizeof(Mtx));
 
@@ -435,12 +447,11 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
 	    0);
   }
 
-  int size = root->gr_vtmp_size * sizeof(float) * VERTEX_SIZE;
+  int size = root->gr_vtmp_cur * sizeof(float) * VERTEX_SIZE;
 
-  if(root->gr_vtmp_size != grc->grc_num_vertices) {
-    grc->grc_num_vertices = root->gr_vtmp_size;
-    free(grc->grc_vertices);
-    grc->grc_vertices = size ? malloc(size) : NULL;
+  if(root->gr_vtmp_cur != grc->grc_num_vertices) {
+    grc->grc_num_vertices = root->gr_vtmp_cur;
+    grc->grc_vertices = realloc(grc->grc_vertices, size);
   }
 
   if(size)
