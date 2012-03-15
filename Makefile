@@ -172,8 +172,9 @@ clean:
 	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles
 	find . -name "*~" | xargs rm -f
 
-distclean: clean
+distclean:
 	rm -rf build.*
+	find . -name "*~" | xargs rm -f
 
 reconfigure:
 	$(CURDIR)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
