@@ -469,6 +469,43 @@ html_entity_lookup(const char *name)
 }
 
 
+size_t
+html_enteties_escape(const char *src, char *dst)
+{
+  size_t olen = 0;
+  const char *entity = NULL;
+  for(;*src;src++) {
+    switch(*src) {
+    case 38:
+      entity = "amp";
+      break;
+    case 60:
+      entity = "lt";
+      break;
+    case 62:
+      entity = "gt";
+      break;
+    default:
+      if(dst) dst[olen] = *src;
+      olen++;
+      continue;
+    }
+    if(dst) {
+      dst[olen++] = '&';
+      while(*entity)
+	dst[olen++] = *entity++;
+      dst[olen++] = ';';
+    } else {
+      olen += 2 + strlen(entity);
+    }
+  }
+  if(dst)
+    dst[olen] = 0;
+  olen++;
+  return olen;
+}
+
+
 /**
  * based on url_split form ffmpeg, renamed to 
  */
@@ -1192,4 +1229,51 @@ html_makecolor(const char *str)
   } else
     return 0;
   return b << 16  | g << 8 | r;
+}
+
+
+/**
+ *
+ */
+void
+utf16_to_utf8(char **bufp, size_t *lenp)
+{
+  void *freeme = *bufp;
+  const char *src = *bufp;
+  size_t len = *lenp;
+  int le = 0;
+  if(len < 2)
+    return;
+
+  if(src[0] == 0xff && src[1] == 0xfe) {
+    le = 1;
+    src += 2;
+    len -= 2;
+  } else if(src[0] == 0xfe && src[1] == 0xff) {
+    src += 2;
+    len -= 2;
+  }
+
+  const char *src2 = src;
+  size_t len2 = len;
+
+  int olen = 1;
+  while(len >= 2) {
+    int c = src[!le] | src[le] << 8;
+    olen += utf8_put(NULL, c);
+    src += 2;
+    len -= 2;
+  }
+  freeme = *bufp;
+  *lenp = olen - 1;
+  char *o2 = *bufp = malloc(olen);
+  while(len2 >= 2) {
+    int c = src2[!le] | src2[le] << 8;
+    o2 += utf8_put(o2, c);
+    src2 += 2;
+    len2 -= 2;
+  }
+  *o2++ = 0;
+  assert(o2 == *bufp + olen);
+  free(freeme);
 }

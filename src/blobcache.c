@@ -64,17 +64,19 @@ blobcache_put0(sqlite3 *db, const char *key, const char *stash,
 {
   int rc;
   time_t now = time(NULL);
-
   sqlite3_stmt *stmt;
 
-  rc = sqlite3_prepare_v2(db,
-			  "INSERT OR REPLACE INTO item "
-			  "(k, stash, payload, lastaccess, expiry, etag, modtime) " 
-			  "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-			  -1, &stmt, NULL);
+ restart:
+  rc = db_prepare(db,
+		  "INSERT OR REPLACE INTO item "
+		  "(k, stash, payload, lastaccess, expiry, etag, modtime) " 
+		  "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+		  -1, &stmt, NULL);
   if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
+	  rc, __FUNCTION__, __LINE__);
+    if(rc == SQLITE_LOCKED)
+      goto restart;
     return;
   }
 
@@ -90,8 +92,11 @@ blobcache_put0(sqlite3 *db, const char *key, const char *stash,
   if(mtime != 0)
     sqlite3_bind_int(stmt,  7, mtime);
 
-  rc = sqlite3_step(stmt);
+  rc = db_step(stmt);
   sqlite3_finalize(stmt);
+
+  if(rc == SQLITE_LOCKED)
+    goto restart;
 
   int s = atomic_add(&estimated_cache_size, size) + size;
   if(blobcache_compute_maxsize(s) < s && !callout_isarmed(&blobcache_callout))
@@ -130,15 +135,21 @@ blobcache_get0(sqlite3 *db, const char *key, const char *stash,
   sqlite3_stmt *stmt;
   time_t now;
 
+ restart:
+
   if(db_begin(db))
     return NULL;
 
-  rc = sqlite3_prepare_v2(db, 
-			  "SELECT payload,expiry,etag,modtime FROM item "
-			  "WHERE k=?1 AND stash=?2",
-			  -1, &stmt, NULL);
+  rc = db_prepare(db, 
+		  "SELECT payload,expiry,etag,modtime FROM item "
+		  "WHERE k=?1 AND stash=?2",
+		  -1, &stmt, NULL);
   if(rc) {
     db_rollback(db);
+    if(rc == SQLITE_LOCKED)
+      goto restart;
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
+	  rc, __FUNCTION__, __LINE__);
     return NULL;
   }
 
@@ -146,11 +157,13 @@ blobcache_get0(sqlite3 *db, const char *key, const char *stash,
 
   sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
   sqlite3_bind_text(stmt, 2, stash, -1, SQLITE_STATIC);
-  rc = sqlite3_step(stmt);
+  rc = db_step(stmt);
 
   if(rc != SQLITE_ROW) {
     sqlite3_finalize(stmt);
     db_rollback(db);
+    if(rc == SQLITE_LOCKED)
+      goto restart;
     return NULL;
   }
 
@@ -184,22 +197,22 @@ blobcache_get0(sqlite3 *db, const char *key, const char *stash,
 
   // Update atime
 
-  rc = sqlite3_prepare_v2(db,
-			  "UPDATE item SET "
-			  "lastaccess = ?3 "
-			  "WHERE k = ?1 AND stash = ?2",
-			  -1, &stmt, NULL);
-
+  rc = db_prepare(db,
+		  "UPDATE item SET "
+		  "lastaccess = ?3 "
+		  "WHERE k = ?1 AND stash = ?2",
+		  -1, &stmt, NULL);
+  
   if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
+	  rc, __FUNCTION__, __LINE__);
     db_rollback(db);
     return rval;
   } else {
     sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
     sqlite3_bind_text(stmt, 2, stash, -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 3, time(NULL));
-    rc = sqlite3_step(stmt);
+    rc = db_step(stmt);
     sqlite3_finalize(stmt);
   }
 
@@ -246,21 +259,26 @@ blobcache_get_meta0(sqlite3 *db, const char *key, const char *stash,
   sqlite3_stmt *stmt;
   time_t now;
 
-  rc = sqlite3_prepare_v2(db, 
-			  "SELECT etag,mtime FROM item "
-			  "WHERE k=?1 AND stash=?2",
-			  -1, &stmt, NULL);
-  if(rc)
+ restart:
+  rc = db_prepare(db, 
+		  "SELECT etag,modtime FROM item "
+		  "WHERE k=?1 AND stash=?2",
+		  -1, &stmt, NULL);
+  if(rc) {
+    if(rc == SQLITE_LOCKED)
+      goto restart;
     return -1;
-
+  }
   time(&now);
 
   sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
   sqlite3_bind_text(stmt, 2, stash, -1, SQLITE_STATIC);
-  rc = sqlite3_step(stmt);
+  rc = db_step(stmt);
 
   if(rc != SQLITE_ROW) {
     sqlite3_finalize(stmt);
+    if(rc == SQLITE_LOCKED)
+      goto restart;
     return -1;
   }
 
@@ -407,11 +425,11 @@ blobcache_prune(sqlite3 *db)
     return;
   }
 
-  rc = sqlite3_prepare_v2(db, 
-			  "SELECT _rowid_,length(payload) "
-			  "FROM item "
-			  "ORDER BY lastaccess",
-			  -1, &sel, NULL);
+  rc = db_prepare(db, 
+		  "SELECT _rowid_,length(payload) "
+		  "FROM item "
+		  "ORDER BY lastaccess",
+		  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
 	  rc, __FUNCTION__, __LINE__);
@@ -419,21 +437,21 @@ blobcache_prune(sqlite3 *db)
     return;
   }
 
-  while((rc = sqlite3_step(sel)) == SQLITE_ROW) {
+  while((rc = db_step(sel)) == SQLITE_ROW) {
     int itemsize = sqlite3_column_int(sel, 1);
     int64_t id = sqlite3_column_int64(sel, 0);
 
-    rc = sqlite3_prepare_v2(db, "DELETE FROM item WHERE _rowid_ = ?1",
-			    -1, &del, NULL);
+    rc = db_prepare(db, "DELETE FROM item WHERE _rowid_ = ?1",
+		    -1, &del, NULL);
     if(rc != SQLITE_OK) {
-      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	    __FUNCTION__, __LINE__);
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error %d at %s:%d",
+	    rc, __FUNCTION__, __LINE__);
       sqlite3_finalize(sel);
       db_rollback(db);
       return;
     }
     sqlite3_bind_int(del, 1, id);
-    rc = sqlite3_step(del);
+    rc = db_step(del);
     sqlite3_finalize(del);
 
     if(rc != SQLITE_DONE) {

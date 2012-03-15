@@ -45,6 +45,7 @@
 #include "misc/pixmap.h"
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
+#include "metadata/metadata.h"
 
 #include "api/lastfm.h"
 
@@ -54,7 +55,7 @@
 #include <dlfcn.h>
 #endif
 #include "ext/spotify/apifunctions.h"
-#include "spotify_app_key.h"
+
 
 struct spotify_page;
 
@@ -93,10 +94,10 @@ static struct spotify_msg_queue spotify_msgs;
  * a subscription that checks PROP_DESTROYED)
  */
 
-LIST_HEAD(metadata_list, metadata);
+LIST_HEAD(spotify_metadata_list, spotify_metadata);
 
-typedef struct metadata {
-  LIST_ENTRY(metadata) m_link;
+typedef struct spotify_metadata {
+  LIST_ENTRY(spotify_metadata) m_link;
   sp_track *m_source;
 
   prop_sub_t *m_sub;
@@ -116,7 +117,7 @@ typedef struct metadata {
   prop_t *m_starred;
   prop_t *m_status;
 
-} metadata_t;
+} spotify_metadata_t;
 
 
 /**
@@ -208,7 +209,7 @@ typedef struct playlist {
 
   struct playlist *pl_start; // End folder point to its start
 
-  struct metadata_list pl_pending_metadata;
+  struct spotify_metadata_list pl_pending_metadata;
 
 } playlist_t;
 
@@ -1000,7 +1001,7 @@ track_action_handler(void *opaque, prop_event_t event, ...)
  *
  */
 static int
-spotify_metadata_update_track(metadata_t *m)
+spotify_metadata_update_track(spotify_metadata_t *m)
 {
   sp_track *track = m->m_source;
   sp_album *album;
@@ -1053,9 +1054,9 @@ spotify_metadata_update_track(metadata_t *m)
     if(artist != NULL) {
       if(f_sp_track_num_artists(track) > 0 && 
 	 (artist = f_sp_track_artist(track, 0)) != NULL) {
-      
-	lastfm_artistpics_init(m->m_artist_images,
-			       rstr_alloc(f_sp_artist_name(artist)));
+	rstr_t *r = rstr_alloc(f_sp_artist_name(artist));
+	metadata_bind_artistpics(m->m_artist_images, r);
+	rstr_release(r);
       }
     }
   }
@@ -1096,7 +1097,7 @@ spotify_metadata_update_track(metadata_t *m)
  *
  */
 static void
-metadata_ref_dec(metadata_t *m)
+metadata_ref_dec(spotify_metadata_t *m)
 {
   prop_ref_dec(m->m_available);
   prop_ref_dec(m->m_title);
@@ -1118,7 +1119,7 @@ metadata_ref_dec(metadata_t *m)
  *
  */
 static void
-metadata_destroy(metadata_t *m)
+spotify_metadata_destroy(spotify_metadata_t *m)
 {
   prop_unsubscribe(m->m_sub);
   metadata_ref_dec(m);
@@ -1143,15 +1144,15 @@ spotify_metadata_updated(sp_session *sess)
  *
  */
 static void
-spotify_metadata_list_update(sp_session *sess, struct metadata_list *l)
+spotify_metadata_list_update(sp_session *sess, struct spotify_metadata_list *l)
 {
-  metadata_t *m, *n;
+  spotify_metadata_t *m, *n;
 
   for(m = LIST_FIRST(l); m != NULL; m = n) {
     n = LIST_NEXT(m, m_link);
 
     if(!spotify_metadata_update_track(m))
-      metadata_destroy(m);
+      spotify_metadata_destroy(m);
   }
 }
 
@@ -1160,12 +1161,12 @@ spotify_metadata_list_update(sp_session *sess, struct metadata_list *l)
  *
  */
 static void
-spotify_metadata_list_clear(struct metadata_list *l)
+spotify_metadata_list_clear(struct spotify_metadata_list *l)
 {
-  metadata_t *m;
+  spotify_metadata_t *m;
 
   while((m = LIST_FIRST(l)) != NULL) 
-    metadata_destroy(m);
+    spotify_metadata_destroy(m);
 }
 
 
@@ -1177,15 +1178,16 @@ static void
 metadata_prop_cb(void *opaque, prop_event_t event, ...)
 {
   if(event == PROP_DESTROYED) 
-    metadata_destroy(opaque);
+    spotify_metadata_destroy(opaque);
 }
 
 
 static void
-metadata_create(prop_t *p, sp_track *source, struct metadata_list *list,
-		int with_status)
+spotify_metadata_create(prop_t *p, sp_track *source,
+			struct spotify_metadata_list *list,
+			int with_status)
 {
-  metadata_t *m = calloc(1, sizeof(metadata_t));
+  spotify_metadata_t *m = calloc(1, sizeof(spotify_metadata_t));
 
   m->m_source = source;
 
@@ -1231,7 +1233,7 @@ metadata_create(prop_t *p, sp_track *source, struct metadata_list *list,
  */
 static prop_t *
 track_create(sp_track *track, prop_t **metadatap,
-	     struct metadata_list *list, int with_status)
+	     struct spotify_metadata_list *list, int with_status)
 {
   char url[URL_MAX];
   prop_t *p = prop_create_root(NULL);
@@ -1246,7 +1248,7 @@ track_create(sp_track *track, prop_t **metadatap,
   if(metadatap != NULL)
     *metadatap = metadata;
 
-  metadata_create(metadata, track, list, with_status);
+  spotify_metadata_create(metadata, track, list, with_status);
 
   tac->prop_star = prop_ref_inc(prop_create(metadata, "starred"));
 
@@ -3726,6 +3728,8 @@ do_rethink_playlistcontainers(void)
   }
 }
 
+uint8_t spk0[321] = {
+0001,0353,0205,0377,0171,0244,0200,0312,0134,0162,0072,0303,0334,0015,0230,0356,0257,0166,0346,0073,0045,0374,0340,0021,0015,0230,0153,0210,0310,0121,0160,0355,0162,0112,0012,0036,0306,0021,0343,0331,0117,0377,0105,0055,0246,0112,0160,0243,0004,0151,0172,0175,0255,0254,0073,0132,0113,0315,0070,0272,0150,0224,0241,0244,0235,0141,0100,0073,0333,0046,0141,0066,0274,0365,0002,0305,0133,0160,0375,0131,0176,0227,0137,0273,0377,0035,0240,0136,0145,0055,0061,0134,0062,0262,0362,0210,0304,0360,0067,0063,0024,0111,0212,0372,0051,0060,0226,0267,0100,0065,0113,0111,0302,0256,0001,0160,0264,0313,0110,0227,0147,0157,0114,0324,0234,0236,0132,0042,0117,0136,0273,0104,0330,0064,0156,0254,0026,0341,0063,0055,0044,0326,0250,0262,0345,0276,0325,0244,0302,0210,0074,0250,0063,0323,0022,0343,0262,0226,0203,0343,0200,0005,0254,0036,0376,0371,0224,0350,0024,0135,0233,0022,0036,0250,0334,0344,0330,0046,0314,0146,0031,0314,0362,0121,0350,0020,0270,0200,0326,0134,0336,0071,0141,0166,0170,0345,0307,0367,0333,0270,0106,0357,0204,0104,0145,0241,0343,0360,0106,0043,0350,0055,0101,0251,0064,0223,0171,0134,0312,0312,0256,0131,0032,0251,0357,0205,0375,0377,0012,0135,0365,0101,0326,0245,0263,0135,0103,0370,0374,0257,0135,0376,0374,0201,0156,0124,0176,0250,0014,0233,0076,0204,0034,0163,0261,0101,0252,0375,0060,0134,0221,0077,0345,0213,0220,0005,0252,0013,0102,0160,0114,0351,0206,0224,0167,0361,0362,0210,0242,0066,0343,0075,0273,0035,0151,0060,0024,0375,0234,0311,0224,0251,0175,0275,0331,0134,0224,0330,0337,0201,0273,0125,0256,0276,0316,0345,0043,0222,0133,0121,0357,0076,0310,0167,0367,0104,0375,0340,0054,0102,0021};
 
 /**
  *
@@ -3755,8 +3759,8 @@ spotify_thread(void *aux)
 
   TRACE(TRACE_DEBUG, "spotify", "Cache location: %s", sesconf.cache_location);
 
-  sesconf.application_key = appkey;
-  sesconf.application_key_size = sizeof(appkey);
+  sesconf.application_key = spk0;
+  sesconf.application_key_size = sizeof(spk0);
   sesconf.user_agent = "Showtime";
   sesconf.callbacks = &spotify_session_callbacks;
   
@@ -4200,8 +4204,14 @@ be_spotify_play(const char *url, media_pipe_t *mp,
  */
 static pixmap_t *
 be_spotify_imageloader(const char *url, const image_meta_t *im,
-		       const char **vpaths, char *errbuf, size_t errlen)
+		       const char **vpaths, char *errbuf, size_t errlen,
+		       int *cache_control)
 {
+  if(ONLY_CACHED(cache_control)) {
+    snprintf(errbuf, errlen, "Not cached");
+    return NULL;
+  }
+
   spotify_image_t si = {0};
 
   if(spotify_start(errbuf, errlen, 0))

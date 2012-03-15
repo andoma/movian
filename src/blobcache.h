@@ -26,8 +26,8 @@ void *blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
 int blobcache_get_meta(const char *key, const char *stash,
 		       char **etag, time_t *mtime);
 
-void blobcache_put(const char *key, const char *stash, const void *data,
-		   size_t size, int maxage, const char *etag, time_t mtime);
+int blobcache_put(const char *key, const char *stash, const void *data,
+		  size_t size, int maxage, const char *etag, time_t mtime);
 
 void blobcache_init(void);
 

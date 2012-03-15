@@ -29,6 +29,7 @@
 
 #include "misc/queue.h"
 #include "misc/layout.h"
+#include "misc/pool.h"
 #include "prop/prop.h"
 #include "ui/ui.h"
 #include "showtime.h"
@@ -121,6 +122,7 @@ typedef enum {
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_SATURATION,
+  GLW_ATTRIB_CENTER,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -510,7 +512,7 @@ typedef struct glw_class {
   /**
    *
    */
-  void (*gc_set_source)(struct glw *w, const char *str);
+  void (*gc_set_source)(struct glw *w, rstr_t *url);
 
   /**
    *
@@ -568,6 +570,9 @@ const glw_class_t *glw_class_find_by_name(const char *name);
  */
 typedef struct glw_root {
   uii_t gr_uii;
+
+  pool_t *gr_token_pool;
+  pool_t *gr_clone_pool;
 
   int gr_frames;
 
@@ -627,10 +632,16 @@ typedef struct glw_root {
   /**
    * Image/Texture loader
    */
+  hts_cond_t gr_tex_load_cond;
 
-  hts_cond_t gr_tex_load_cond[3];
-  struct glw_loadable_texture_queue gr_tex_load_queue[3];
+#define LQ_THEME      0
+#define LQ_TENTATIVE  1
+#define LQ_THUMBS     2
+#define LQ_OTHER      3
+#define LQ_REFRESH    4
+#define LQ_num        5
 
+  struct glw_loadable_texture_queue gr_tex_load_queue[LQ_num];
 
   struct glw_loadable_texture_list gr_tex_active_list;
   struct glw_loadable_texture_list gr_tex_flush_list;
@@ -679,6 +690,9 @@ typedef struct glw_root {
 
   // Base offsets, should be set by frontend
   int gr_base_size;
+  int gr_user_size;
+  int gr_current_size;
+
   int gr_base_underscan_v;
   int gr_base_underscan_h;
 
@@ -891,7 +905,7 @@ typedef struct glw {
 
   Mtx *glw_matrix;
 
-  struct clone *glw_clone;
+  struct glw_clone *glw_clone;
 
 } glw_t;
 
@@ -912,6 +926,8 @@ typedef struct glw {
 int glw_init(glw_root_t *gr, const char *theme,
 	     ui_t *ui, int primary,
 	     const char *instance, const char *instance_title );
+
+void glw_fini(glw_root_t *gr);
 
 void glw_load_universe(glw_root_t *gr);
 
@@ -997,7 +1013,7 @@ void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
 /**
  * Views
  */
-glw_t *glw_view_create(glw_root_t *gr, const char *src, 
+glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, 
 		       glw_t *parent, struct prop *prop,
 		       struct prop *prop_parent, prop_t *args,
 		       struct prop *prop_clone, int cache);
@@ -1058,6 +1074,7 @@ do {						\
   case GLW_ATTRIB_CHILD_ASPECT:                 \
   case GLW_ATTRIB_FILL:                         \
   case GLW_ATTRIB_SATURATION:                   \
+  case GLW_ATTRIB_CENTER:                       \
     (void)va_arg(ap, double);			\
     break;					\
   }						\
@@ -1163,6 +1180,8 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 void glw_gf_do(void);
 
 void glw_font_change_size(void *opaque, int fontsize);
+
+void glw_update_size(glw_root_t *gr);
 
 /**
  *

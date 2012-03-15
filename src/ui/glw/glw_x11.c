@@ -1280,6 +1280,7 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   glw_unload_universe(gr);
   glw_reap(gr);
   glw_reap(gr);
+  glw_fini(gr);
   return 0;
 }
 

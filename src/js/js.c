@@ -30,10 +30,14 @@
 #include "keyring.h"
 #include "notifications.h"
 
+prop_courier_t *js_global_pc;
+JSContext *js_global_cx;
+prop_sub_t *js_event_sub;
+
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
 static JSObject *RichText;
-static struct js_plugin_list js_plugins;
+struct js_plugin_list js_plugins;
 
 static JSClass global_class = {
   "global", JSCLASS_GLOBAL_FLAGS,
@@ -582,6 +586,8 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_page_flush_from_plugin(cx, jsp);
   js_io_flush_from_plugin(cx, jsp);
   js_service_flush_from_plugin(cx, jsp);
+  js_setting_group_flush_from_plugin(cx, jsp);
+  js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
 }
 
 /**
@@ -673,6 +679,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("createStore",   js_createStore, 1, 0, 0),
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 3, 0, 0),
+    JS_FS("onEvent",             js_onEvent, 2, 0, 0),
     JS_FS_END
 };
 
@@ -799,6 +806,52 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 }
 
 
+/**
+ * Prop lockmanager for locking JS global context
+ */
+static void
+js_lockmgr(void *ptr, int lock)
+{
+  if(lock)
+    JS_BeginRequest(ptr);
+  else
+    JS_EndRequest(ptr);
+}
+
+
+static void
+js_global_pc_prologue(void)
+{
+  JS_SetContextThread(js_global_cx);
+}
+
+
+static void
+js_global_pc_epilogue(void)
+{
+  JS_ClearContextThread(js_global_cx);
+}
+
+
+
+static void
+js_global_event(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+
+  va_start(ap, event);
+
+  if(event != PROP_EXT_EVENT)
+    return;
+
+  event_t *e = va_arg(ap, event_t *);
+  js_plugin_t *jsp;
+
+  LIST_FOREACH(jsp, &js_plugins, jsp_link)
+    js_event_dispatch(js_global_cx, &jsp->jsp_event_handlers, e, NULL);
+  va_end(ap);
+}
+
 
 /**
  *
@@ -833,8 +886,18 @@ js_init(void)
 	     
   JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
+  js_global_cx = cx;
   JS_EndRequest(cx);
-  JS_DestroyContext(cx);
+  JS_ClearContextThread(cx);
+  js_global_pc = prop_courier_create_lockmgr("js", js_lockmgr, cx,
+					     js_global_pc_prologue,
+					     js_global_pc_epilogue);
+
+  js_event_sub = prop_subscribe(0,
+				PROP_TAG_CALLBACK, js_global_event, NULL,
+				PROP_TAG_NAME("global", "eventsink"),
+				PROP_TAG_COURIER, js_global_pc,
+				NULL);
 
   return 0;
 }
@@ -848,9 +911,13 @@ static void
 js_fini(void)
 {
   js_plugin_t *jsp, *n;
-  JSContext *cx;
+  JSContext *cx = js_global_cx;
 
-  cx = js_newctx(err_reporter);
+  //  prop_unsubscribe(js_event_sub);
+
+  prop_courier_destroy(js_global_pc);
+
+  JS_SetContextThread(cx);
   JS_BeginRequest(cx);
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
@@ -870,6 +937,28 @@ js_fini(void)
 
 
 
+
+static void *
+js_load_thread(void *aux)
+{
+  const char *url = aux;
+  char errbuf[128];
+  
+  if(js_plugin_load("test-fromcmdline", url, errbuf, sizeof(errbuf)))
+    TRACE(TRACE_ERROR, "JS", "Unable to load %s -- %s", url, errbuf);
+  return NULL;
+}
+
+/**
+ *
+ */
+void
+js_load(const char *url)
+{
+  char *u = strdup(url);
+  
+  hts_thread_create_detached("rawjs", js_load_thread, u, THREAD_PRIO_LOW);
+}
 
 
 /**

@@ -33,7 +33,6 @@
 #include "metadata/metadata.h"
 #include "htsmsg/htsmsg_json.h"
 
-LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_item_list, js_item);
 
 static struct js_route_list js_routes;
@@ -65,16 +64,6 @@ typedef struct js_searcher {
   char *jss_icon;
 
 } js_searcher_t;
-
-
-/**
- *
- */
-typedef struct js_event_handler {
-  LIST_ENTRY(js_event_handler) jeh_link;
-  char *jeh_action;
-  jsval jeh_function;
-} js_event_handler_t;
 
 
 /**
@@ -124,63 +113,6 @@ typedef struct js_model {
 
 static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
 				   jsval *root);
-
-/**
- *
- */
-static void
-destroy_event_handlers(JSContext *cx, struct js_event_handler_list *list)
-{
-  js_event_handler_t *jeh;
-
-  while((jeh = LIST_FIRST(list)) != NULL) {
-    LIST_REMOVE(jeh, jeh_link);
-    JS_RemoveRoot(cx, &jeh->jeh_function);
-    free(jeh->jeh_action);
-    free(jeh);
-  }
-}
-
-
-
-/**
- *
- */
-static void
-js_event_dispatch_action(JSContext *cx, struct js_event_handler_list *list,
-			 const char *action, JSObject *this)
-{
-  js_event_handler_t *jeh;
-  jsval result;
-  if(action == NULL)
-    return;
-
-  LIST_FOREACH(jeh, list, jeh_link) {
-    if(!strcmp(jeh->jeh_action, action)) {
-      JS_CallFunctionValue(cx, this, jeh->jeh_function, 0, NULL, &result);
-      return;
-    }
-  }
-}
-
-
-/**
- *
- */
-static void
-js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
-		  event_t *e, JSObject *this)
-{
-  if(event_is_type(e, EVENT_ACTION_VECTOR)) {
-  event_action_vector_t *eav = (event_action_vector_t *)e;
-  int i;
-  for(i = 0; i < eav->num; i++)
-    js_event_dispatch_action(cx, list, action_code2str(eav->actions[i]), this);
-    
-  } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-    js_event_dispatch_action(cx, list, e->e_payload, this);
-  }
-}
 
 
 /**
@@ -380,7 +312,7 @@ js_item_eventsub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    destroy_event_handlers(ji->ji_model->jm_cx, &ji->ji_event_handlers);
+    js_event_destroy_handlers(ji->ji_model->jm_cx, &ji->ji_event_handlers);
     prop_unsubscribe(ji->ji_eventsub);
     ji->ji_eventsub = NULL;
     ji->ji_model->jm_subs--;
@@ -404,7 +336,6 @@ js_item_onEvent(JSContext *cx, JSObject *obj,
 		uintN argc, jsval *argv, jsval *rval)
 {
   js_item_t *ji = JS_GetPrivate(cx, obj);
-  js_event_handler_t *jeh;
 
   if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
     JS_ReportError(cx, "Argument is not a function");
@@ -423,12 +354,10 @@ js_item_onEvent(JSContext *cx, JSObject *obj,
     JS_AddNamedRoot(cx, &ji->ji_this, "item_this");
   }
 
-  jeh = malloc(sizeof(js_event_handler_t));
-  jeh->jeh_action = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
-  jeh->jeh_function = argv[1];
-  JS_AddNamedRoot(cx, &jeh->jeh_function, "eventhandler");
-  LIST_INSERT_HEAD(&ji->ji_event_handlers, jeh, jeh_link);
-
+  js_event_handler_create(cx, &ji->ji_event_handlers,
+			  JS_GetStringBytes(JS_ValueToString(cx, argv[0])),
+			  argv[1]);
+  
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
@@ -691,7 +620,7 @@ js_model_eventsub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    destroy_event_handlers(jm->jm_cx, &jm->jm_event_handlers);
+    js_event_destroy_handlers(jm->jm_cx, &jm->jm_event_handlers);
     prop_unsubscribe(jm->jm_eventsub);
     jm->jm_eventsub = NULL;
     jm->jm_subs--;
@@ -714,7 +643,6 @@ js_page_onEvent(JSContext *cx, JSObject *obj,
 		uintN argc, jsval *argv, jsval *rval)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
-  js_event_handler_t *jeh;
 
   if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(argv[1]))) {
     JS_ReportError(cx, "Argument is not a function");
@@ -736,11 +664,9 @@ js_page_onEvent(JSContext *cx, JSObject *obj,
     jm->jm_subs++;
   }
 
-  jeh = malloc(sizeof(js_event_handler_t));
-  jeh->jeh_action = strdup(JS_GetStringBytes(JS_ValueToString(cx, argv[0])));
-  jeh->jeh_function = argv[1];
-  JS_AddNamedRoot(cx, &jeh->jeh_function, "eventhandler");
-  LIST_INSERT_HEAD(&jm->jm_event_handlers, jeh, jeh_link);
+  js_event_handler_create(cx, &jm->jm_event_handlers,
+			  JS_GetStringBytes(JS_ValueToString(cx, argv[0])),
+			  argv[1]);
   
   *rval = JSVAL_VOID;
   return JS_TRUE;

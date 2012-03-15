@@ -126,16 +126,31 @@ glw_set_screensaver_delay(void *opaque, int v)
 /**
  *
  */
+void
+glw_update_size(glw_root_t *gr)
+{
+  int v = gr->gr_base_size + gr->gr_user_size;
+  v = GLW_CLAMP(v, 14, 40);
+
+  if(gr->gr_current_size == v)
+    return;
+  gr->gr_current_size = v;
+
+  prop_set_int(gr->gr_prop_size, v);
+  glw_font_change_size(gr, v);
+  TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
+}
+
+
+/**
+ *
+ */
 static void
-glw_change_size(void *opaque, int v)
+glw_change_user_size(void *opaque, int v)
 {
   glw_root_t *gr = opaque;
-
-  v += gr->gr_base_size;
-  v = GLW_CLAMP(v, 14, 40);
-  prop_set_int(gr->gr_prop_size, v);
-  TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
-  glw_font_change_size(gr, v);
+  gr->gr_user_size = v;
+  glw_update_size(gr);
 }
 
 
@@ -214,7 +229,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     settings_create_int(gr->gr_settings, "size",
 			_p("Userinterface size"), 0,
 			gr->gr_settings_store, -10, 30, 1,
-			glw_change_size, gr,
+			glw_change_user_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
 
@@ -263,6 +278,9 @@ glw_init(glw_root_t *gr, const char *theme,
 {
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
+  gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
+  gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
+				  POOL_ZERO_MEM);
 
   gr->gr_vpaths[0] = "theme";
   gr->gr_vpaths[1] = theme;
@@ -280,6 +298,17 @@ glw_init(glw_root_t *gr, const char *theme,
   uii_register(&gr->gr_uii, primary);
 
   return 0;
+}
+
+
+/**
+ *
+ */
+void
+glw_fini(glw_root_t *gr)
+{
+  pool_destroy(gr->gr_token_pool);
+  pool_destroy(gr->gr_clone_pool);
 }
 
 
@@ -306,9 +335,13 @@ glw_load_universe(glw_root_t *gr)
   prop_t *page = prop_create(gr->gr_uii.uii_prop, "root");
   glw_unload_universe(gr);
 
+  rstr_t *universe = rstr_alloc("theme://universe.view");
+
   gr->gr_universe = glw_view_create(gr,
-				    "theme://universe.view", NULL, page,
+				    universe, NULL, page,
 				    NULL, NULL, NULL, 0);
+
+  rstr_release(universe);
 
   glw_signal_handler_register(gr->gr_universe, top_event_handler, gr, 1000);
 }
@@ -476,6 +509,12 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
 
+  int v = gr->gr_height / 35;
+  if(gr->gr_base_size != v) {
+    gr->gr_base_size = v;
+    glw_update_size(gr);
+  }
+
   gr->gr_frame_start = showtime_get_ts();
 
   if((gr->gr_frames & 0x7f) == 0) {
@@ -601,11 +640,11 @@ glw_destroy(glw_t *w)
   if(gr->gr_pointer_press == w)
     gr->gr_pointer_press = NULL;
 
-  glw_prop_subscription_destroy_list(&w->glw_prop_subscriptions);
+  glw_prop_subscription_destroy_list(gr, &w->glw_prop_subscriptions);
 
   while((gem = LIST_FIRST(&w->glw_event_maps)) != NULL) {
     LIST_REMOVE(gem, gem_link);
-    gem->gem_dtor(gem);
+    gem->gem_dtor(gr, gem);
   }
 
   free(w->glw_matrix);
@@ -634,7 +673,7 @@ glw_destroy(glw_t *w)
 
   TAILQ_INSERT_TAIL(&gr->gr_destroyer_queue, w, glw_parent_link);
 
-  glw_view_free_chain(w->glw_dynamic_expressions);
+  glw_view_free_chain(gr, w->glw_dynamic_expressions);
 }
 
 

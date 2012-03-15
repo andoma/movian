@@ -168,11 +168,8 @@ void fa_scanner(const char *url, time_t mtime,
 		prop_t *model, const char *playme,
 		prop_t *direct_close);
 
-#define FA_DISABLE_CACHE ((int *)-1)
-#define FA_NOT_MODIFIED  ((void *)-1)
-
 void *fa_load(const char *url, size_t *sizep, const char **vpaths,
-	      char *errbuf, size_t errlen, int *from_cache);
+	      char *errbuf, size_t errlen, int *cache_control);
 
 uint8_t *fa_load_and_close(fa_handle_t *fh, size_t *sizep);
 
@@ -188,6 +185,7 @@ struct htsbuf_queue;
 
 #define HTTP_DISABLE_AUTH  0x1
 #define HTTP_REQUEST_DEBUG 0x2
+#define HTTP_COMPRESSION   0x4
 
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,

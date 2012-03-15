@@ -75,7 +75,7 @@ typedef struct pixmap {
 
 #define PIXMAP_THUMBNAIL 0x1       // This is a thumbnail
 #define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
-#define PIXMAP_TEXT_ELLIPSIZED 0x4 // Contains ellipsized text
+#define PIXMAP_TEXT_TRUNCATED 0x4 // Contains truncated text
 
   pixmap_type_t pm_type;
 

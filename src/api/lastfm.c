@@ -28,89 +28,22 @@
 #include "fileaccess/fileaccess.h"
 #include "blobcache.h"
 
-static prop_courier_t *lastfm_courier;
-static hts_mutex_t lastfm_mutex;
 #define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 
-LIST_HEAD(album_art_cache_list, album_art_cache);
-TAILQ_HEAD(album_art_cache_queue, album_art_cache);
-
-#define AAC_HASHWIDTH 67
-
-typedef struct album_art_cache {
-  TAILQ_ENTRY(album_art_cache) aac_link;
-  LIST_ENTRY(album_art_cache) aac_hash_link;
-  rstr_t *aac_artist;
-  rstr_t *aac_album;
-  rstr_t *aac_url;
-} album_art_cache_t;
-
-static struct album_art_cache_queue aacqueue;
-static struct album_art_cache_list aachash[AAC_HASHWIDTH];
-static int naaclist;
-
-
-typedef struct lastfm_prop {
-  prop_t *lp_prop;
-  prop_sub_t *lp_sub;
-
-  rstr_t *lp_album;
-  rstr_t *lp_artist;
-} lastfm_prop_t;
-
-
-TAILQ_HEAD(artist_image_queue, artist_image);
-
-/**
- *
- */
-typedef struct artist_image {
-  TAILQ_ENTRY(artist_image) link;
-  char *url;
-} artist_image_t;
-
-
 
 /**
  *
  */
 static void
-aac_insert(rstr_t *artist, rstr_t *album, rstr_t *url)
-{
-  album_art_cache_t *aac = malloc(sizeof(album_art_cache_t));
-  unsigned int hash = mystrhash(rstr_get(album)) % AAC_HASHWIDTH;
-
-  aac->aac_artist = rstr_dup(artist);
-  aac->aac_album = rstr_dup(album);
-  aac->aac_url = rstr_dup(url);
-  LIST_INSERT_HEAD(&aachash[hash], aac, aac_hash_link);
-  TAILQ_INSERT_TAIL(&aacqueue, aac, aac_link);
-  if(naaclist < 512) {
-    naaclist++;
-    return;
-  }
-  aac = TAILQ_FIRST(&aacqueue);
-  LIST_REMOVE(aac, aac_hash_link);
-  TAILQ_REMOVE(&aacqueue, aac, aac_link);
-  rstr_release(aac->aac_url);
-  rstr_release(aac->aac_artist);
-  rstr_release(aac->aac_album);
-  free(aac);
-}
-
-
-/**
- *
- */
-static void
-lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
-			   struct artist_image_queue *q)
+lastfm_parse_artist_images(void *db, int64_t artist_id, htsmsg_t *xml,
+			   int *totalpages,
+			   void (*cb)(void *opaque, const char *url,
+				      int width, int height),
+			   void *opaque)
 {
   htsmsg_t *images, *image, *sizes, *size, *attr;
   htsmsg_field_t *f, *s;
   const char *url, *str;
-  prop_t *p;
-  artist_image_t *ai;
 
   *totalpages = 1;
 
@@ -140,6 +73,7 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
 	 ((size = htsmsg_get_map_by_field(s)) == NULL))
 	continue;
 
+
       if((attr = htsmsg_get_map(size, "attrib")) == NULL)
 	continue;
       
@@ -149,132 +83,102 @@ lastfm_parse_artist_images(htsmsg_t *xml, prop_t *parent, int *totalpages,
       if((url = htsmsg_get_str(size, "cdata")) == NULL)
 	continue;
 
+      int width = htsmsg_get_s32_or_default(attr, "width", 0);
+      int height = htsmsg_get_s32_or_default(attr, "height", 0);
+
+      metadb_insert_artistpic(db, artist_id, url, width, height);
+      cb(opaque, url, width, height);
+#if 0
       p = prop_create_root(NULL);
 
       prop_set_string(prop_create(p, "url"), url);
 
       if(prop_set_parent(p, parent))
 	prop_destroy(p);
-
-      ai = malloc(sizeof(artist_image_t));
-      ai->url = strdup(url);
-      TAILQ_INSERT_TAIL(q, ai, link);
+#endif
     }
   }
 }
 
 
-/**
- *
- */
-static void
-write_to_blobcache(const char *artist, struct artist_image_queue *q)
-{
-  artist_image_t *ai;
-  int blobsize = 0;
-  char *blob, *ptr;
-
-  TAILQ_FOREACH(ai, q, link)
-    blobsize += strlen(ai->url) + 1;
-
-  ptr = blob = malloc(blobsize);
-
-
-  while((ai = TAILQ_FIRST(q)) != NULL) {
-    TAILQ_REMOVE(q, ai, link);
-    int l = strlen(ai->url);
-    memcpy(ptr, ai->url, l);
-    ptr += l;
-
-    *ptr++ = TAILQ_NEXT(ai, link) ? '\n' : 0;
-    free(ai->url);
-    free(ai);
-  }
-  
-  blobcache_put(artist, "lastfm.artist.images", blob, blobsize, 86400,
-		NULL, 0);
-  free(blob);
-}
-
 
 /**
  *
  */
-static int
-load_from_blobcache(const char *artist, prop_t *parent)
-{
-  char *data, *s0, *s;
-  size_t size;
-  prop_t *p;
-
-  s0 = data = blobcache_get(artist, "lastfm.artist.images", &size, 1, 0,
-			    NULL, NULL);
-  if(data == NULL)
-    return 0;
-
-  while((s = strsep(&s0, "\n")) != NULL) {
-      p = prop_create_root(NULL);
-
-      prop_set_string(prop_create(p, "url"), s);
-
-      if(prop_set_parent(p, parent))
-	prop_destroy(p);
-  }
-  free(data);
-  return 1;
-}
-
-
-/**
- *
- */
-static void
-lastfm_artistpics_query(lastfm_prop_t *lp)
+void
+lastfm_load_artistinfo(void *db, const char *artist,
+		       void (*cb)(void *opaque, const char *url,
+				  int width, int height),
+		       void *opaque)
 {
   char *result;
   size_t resultsize;
   char errbuf[100];
   int n, page = 1;
-  htsmsg_t *xml;
+  htsmsg_t *xml, *info;
   char str[20];
-  char *artist = mystrdupa(rstr_get(lp->lp_artist));
   int totalpages;
-  struct artist_image_queue q;
 
-  artist[strcspn(artist, ";:,-[]")] = 0;
-
-  if(load_from_blobcache(artist, lp->lp_prop))
-    return;
-
-  TAILQ_INIT(&q);
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
+
+  n = http_request("http://ws.audioscrobbler.com/2.0/",
+		   (const char *[]){"method", "artist.getinfo",
+		       "artist", artist,
+		       "api_key", LASTFM_APIKEY,
+		       NULL, NULL},
+		   &result, &resultsize, errbuf, sizeof(errbuf),
+		   NULL, NULL, HTTP_COMPRESSION, NULL, NULL, NULL);
+  if(n) {
+    TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
+    return;
+  }
+  
+  /* XML parser consumes 'buf' */
+  if((info = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
+    return;
+  }
+
+  int src = metadb_get_datasource(db, "lastfm");
+
+  const char *mbid = htsmsg_get_str_multi(info,
+					  "tags", "lfm",
+					  "tags", "artist",
+					  "tags", "mbid", 
+					  "cdata", NULL);
+  
+  int64_t artist_id = metadb_artist_get_by_title(db, artist, src, mbid);
+
+  if(artist_id == -1) {
+    htsmsg_destroy(info);
+    return;
+  }
 
   while(1) {
 
     snprintf(str, sizeof(str), "%d", page);
     n = http_request("http://ws.audioscrobbler.com/2.0/",
 		     (const char *[]){"method", "artist.getimages",
-			 "artist", artist,
+			 "mbid", mbid,
 			 "api_key", LASTFM_APIKEY,
 			 "order", "popularity",
 			 "page", str,
 			 NULL, NULL},
 		     &result, &resultsize, errbuf, sizeof(errbuf),
-		     NULL, NULL, 0, NULL, NULL, NULL);
+		     NULL, NULL, HTTP_COMPRESSION, NULL, NULL, NULL);
 
     if(n) {
       TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
-      return;
+      break;
     }
-
 
     /* XML parser consumes 'buf' */
     if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
       TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
-      return;
+      break;
     }
 
-    lastfm_parse_artist_images(xml, lp->lp_prop, &totalpages, &q);
+    lastfm_parse_artist_images(db, artist_id, xml, &totalpages, cb, opaque);
 
     htsmsg_destroy(xml);
     
@@ -283,8 +187,7 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
 
     page++;
   }
-
-  write_to_blobcache(artist, &q);
+  htsmsg_destroy(info);
 }
 
 
@@ -292,13 +195,12 @@ lastfm_artistpics_query(lastfm_prop_t *lp)
  *
  */
 static void
-lastfm_parse_coverart(htsmsg_t *xml, lastfm_prop_t *lp)
+lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
+		       const char *album)
 {
-  htsmsg_t *tags, *image;
-  htsmsg_field_t *f;
-  int curscore = -1, s;
-  const char *size, *url, *best = NULL;
-  rstr_t *img;
+  htsmsg_t *tags, *tracks;
+  htsmsg_field_t *f, *g;
+  const char *size, *url;
 
   if((tags = htsmsg_get_map_multi(xml, "tags", "lfm", 
 				  "tags", "album", 
@@ -306,7 +208,62 @@ lastfm_parse_coverart(htsmsg_t *xml, lastfm_prop_t *lp)
     return;
   }
 
+  const char *artist_mbid = NULL;
+
+  const char *album_mbid = htsmsg_get_str_multi(tags, "mbid", "cdata", NULL);
+  if(album_mbid == NULL)
+    return;
+
+  if((tracks = htsmsg_get_map_multi(tags, "tracks", "tags", NULL)) != NULL) {
+
+    const char *artstr = htsmsg_get_str_multi(tags, "artist", "cdata", NULL);
+
+    HTSMSG_FOREACH(f, tracks) {
+      htsmsg_t *track;
+      if(artist_mbid != NULL)
+	break;
+      if(strcmp(f->hmf_name, "track") ||
+	 ((track = htsmsg_get_map_by_field(f)) == NULL))
+	continue;
+      htsmsg_t *ttags = htsmsg_get_map(track, "tags");
+      
+      HTSMSG_FOREACH(g, ttags) {
+	htsmsg_t *artist;
+	if(artist_mbid != NULL)
+	  break;
+	if(strcmp(g->hmf_name, "artist") ||
+	   ((artist = htsmsg_get_map_by_field(g)) == NULL))
+	  continue;
+	const char *ta;
+	ta = htsmsg_get_str_multi(artist, "tags", "name", "cdata", NULL);
+	if(ta == NULL)
+	  continue;
+
+	if(!strcmp(artstr, ta)) {
+	  artist_mbid = htsmsg_get_str_multi(artist, "tags", "mbid",
+					     "cdata", NULL);
+	}
+      }
+    }
+  }
+
+  int src = metadb_get_datasource(db, "lastfm");
+
+  if(artist_mbid == NULL)
+    return;
+
+  int64_t artist_id = metadb_artist_get_by_title(db, artist,
+						 src, artist_mbid);
+
+  if(artist_id == -1) {
+    return;
+  }
+
+  int64_t album_id = metadb_album_get_by_title(db, album, artist_id,
+					       src, album_mbid);
+
   HTSMSG_FOREACH(f, tags) {
+    htsmsg_t *image;
     if(strcmp(f->hmf_name, "image") ||
        ((image = htsmsg_get_map_by_field(f)) == NULL))
       continue;
@@ -314,52 +271,36 @@ lastfm_parse_coverart(htsmsg_t *xml, lastfm_prop_t *lp)
     if((url = htsmsg_get_str(image, "cdata")) == NULL)
       continue;
 
-    s = 0;
-    if((size = htsmsg_get_str_multi(image, "attrib", "size", NULL)) != NULL) {
-
-      if(!strcmp(size, "small"))
-	s = 1;
-      else if(!strcmp(size, "medium"))
-	s = 2;
-      else if(!strcmp(size, "large"))
-	s = 3;
-      else if(!strcmp(size, "extralarge"))
-	s = 4;
-    }
-
-    if(s <= curscore)
+    if((size = htsmsg_get_str_multi(image, "attrib", "size", NULL)) == NULL)
       continue;
 
-    curscore = s;
-    best = url;
+    int width = 0, height = 0;
+
+    if(!strcmp(size, "medium")) {
+      width = 64; height = 64;
+    } else if(!strcmp(size, "large")) {
+      width = 174; height = 174;
+    } else if(!strcmp(size, "extralarge")) {
+      width = 300; height = 300;
+    } else
+      continue;
+
+    metadb_insert_albumart(db, album_id, url, width, height);
   }
-  if(best == NULL)
-    return;
-
-  img = rstr_alloc(best);
-
-  aac_insert(lp->lp_artist, lp->lp_album, img);
-  prop_set_rstring(lp->lp_prop, img);
-  rstr_release(img);
 }
 
 
 /**
  *
  */
-static void
-lastfm_albumart_query(lastfm_prop_t *lp)
+void
+lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 {
   char *result;
   size_t resultsize;
   char errbuf[100];
   int n;
   htsmsg_t *xml;
-  char *artist = mystrdupa(rstr_get(lp->lp_artist));
-  char *album  = mystrdupa(rstr_get(lp->lp_album));
-
-  artist[strcspn(artist, ";:,-[]")] = 0;
-  album[strcspn(album, "[]()")] = 0;
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
 
@@ -370,171 +311,21 @@ lastfm_albumart_query(lastfm_prop_t *lp)
 		       "api_key", LASTFM_APIKEY,
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
-		   NULL, NULL, 0, NULL, NULL, NULL);
+		   NULL, NULL, HTTP_COMPRESSION, NULL, NULL, NULL);
 
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
-    return;
+   return;
   }
-
   /* XML parser consumes 'buf' */
   if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }
 
-  lastfm_parse_coverart(xml, lp);
+  lastfm_parse_albuminfo(db, xml, artist, album);
   htsmsg_destroy(xml);
-}
-
-/**
- *
- */
-static void
-lp_destroy(lastfm_prop_t *lp)
-{
-  if(lp->lp_sub != NULL)
-    prop_unsubscribe(lp->lp_sub);
-  prop_ref_dec(lp->lp_prop);
-  rstr_release(lp->lp_artist);
-  rstr_release(lp->lp_album);
-  free(lp);
+  return;
 }
 
 
-/**
- *
- */
-static void
-lastfm_prop_artist_cb(void *opaque, prop_event_t event, ...)
-{
-  lastfm_prop_t *lp = opaque;
-
-  switch(event) {
-  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    lastfm_artistpics_query(lp);
-    // FALLTHRU
-  case PROP_DESTROYED:
-    lp_destroy(lp);
-    break;
-
-  default:
-    break;
-  }
-}
-
-
-/**
- *
- */
-static int
-lastfm_albumart_from_cache(lastfm_prop_t *lp)
-{
-  album_art_cache_t *aac;
-  unsigned int hash = mystrhash(rstr_get(lp->lp_album)) % AAC_HASHWIDTH;
-
-  LIST_FOREACH(aac, &aachash[hash], aac_hash_link) {
-    if(!strcmp(rstr_get(aac->aac_artist), rstr_get(lp->lp_artist)) &&
-       !strcmp(rstr_get(aac->aac_album),  rstr_get(lp->lp_album)))
-      break;
-  }
-  if(aac == NULL)
-    return -1;
-
-  TAILQ_REMOVE(&aacqueue, aac, aac_link);
-  TAILQ_INSERT_TAIL(&aacqueue, aac, aac_link);
-  prop_set_rstring(lp->lp_prop, aac->aac_url);
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-lastfm_prop_album_cb(void *opaque, prop_event_t event, ...)
-{
-  lastfm_prop_t *lp = opaque;
-
-  switch(event) {
-  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    if(lastfm_albumart_from_cache(lp))
-      lastfm_albumart_query(lp);
-    // FALLTHRU
-  case PROP_DESTROYED:
-    lp_destroy(lp);
-    break;
-
-  default:
-    break;
-  }
-}
-
-
-
-
-/**
- *
- */
-void
-lastfm_artistpics_init(prop_t *prop, rstr_t *artist)
-{
-  lastfm_prop_t *lp;
-
-  lp = calloc(1, sizeof(lastfm_prop_t));
-  lp->lp_artist = rstr_dup(artist);
-
-  lp->lp_prop = prop_ref_inc(prop);
-
-  hts_mutex_lock(&lastfm_mutex);
-
-  lp->lp_sub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
-		   PROP_TAG_CALLBACK, lastfm_prop_artist_cb, lp,
-		   PROP_TAG_COURIER, lastfm_courier,
-		   PROP_TAG_ROOT, prop,
-		   NULL);
-  if(lp->lp_sub == NULL)
-    lp_destroy(lp);
-  hts_mutex_unlock(&lastfm_mutex);
-}
-
-
-/**
- *
- */
-void
-lastfm_albumart_init(prop_t *prop, rstr_t *artist, rstr_t *album)
-{
-  lastfm_prop_t *lp;
-
-  lp = calloc(1, sizeof(lastfm_prop_t));
-  lp->lp_artist = rstr_dup(artist);
-  lp->lp_album  = rstr_dup(album);
-
-  lp->lp_prop = prop_ref_inc(prop);
-
-  hts_mutex_lock(&lastfm_mutex);
-
-  lp->lp_sub = 
-    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SUBSCRIPTION_MONITOR,
-		   PROP_TAG_CALLBACK, lastfm_prop_album_cb, lp,
-		   PROP_TAG_COURIER, lastfm_courier,
-		   PROP_TAG_ROOT, prop,
-		   NULL);
-  if(lp->lp_sub == NULL)
-    lp_destroy(lp);
-  hts_mutex_unlock(&lastfm_mutex);
-}
-
-
-/**
- *
- */
-void
-lastfm_init(void)
-{
-  hts_mutex_init(&lastfm_mutex);
-  TAILQ_INIT(&aacqueue);
-  lastfm_courier = prop_courier_create_thread(&lastfm_mutex, "lastfm");
-}

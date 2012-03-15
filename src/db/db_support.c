@@ -24,6 +24,75 @@
 
 #include "db_support.h"
 
+
+typedef struct unlock_notify {
+  int fired;
+  hts_cond_t cond;
+  hts_mutex_t mutex;
+} unlock_notify_t;
+
+static void
+unlock_notify_cb(void **apArg, int nArg){
+  int i;
+  for(i=0; i<nArg; i++){
+    unlock_notify_t *p = apArg[i];
+    hts_mutex_lock(&p->mutex);
+    p->fired = 1;
+    hts_cond_signal(&p->cond);
+    hts_mutex_unlock(&p->mutex);
+  }
+}
+
+static int
+wait_for_unlock_notify(sqlite3 *db)
+{
+  int rc;
+  unlock_notify_t un;
+
+  /* Initialize the UnlockNotification structure. */
+  un.fired = 0;
+  hts_mutex_init(&un.mutex);
+  hts_cond_init(&un.cond, &un.mutex);
+
+  /* Register for an unlock-notify callback. */
+  rc = sqlite3_unlock_notify(db, unlock_notify_cb, (void *)&un);
+
+  if(rc==SQLITE_OK ) {
+    hts_mutex_lock(&un.mutex);
+    while(!un.fired)
+      hts_cond_wait(&un.cond, &un.mutex);
+    hts_mutex_unlock(&un.mutex);
+  }
+
+  hts_cond_destroy(&un.cond);
+  hts_mutex_destroy(&un.mutex);
+  return rc;
+}
+
+int
+db_step(sqlite3_stmt *pStmt)
+{
+  int rc;
+  while( SQLITE_LOCKED==(rc = sqlite3_step(pStmt)) ){
+    rc = wait_for_unlock_notify(sqlite3_db_handle(pStmt));
+    if( rc!=SQLITE_OK ) break;
+    sqlite3_reset(pStmt);
+  }
+  return rc;
+}
+
+int
+db_prepare(sqlite3 *db, const char *zSql, int nSql,
+	   sqlite3_stmt **ppStmt, const char **pz)
+{
+  int rc;
+  while( SQLITE_LOCKED==(rc = sqlite3_prepare_v2(db, zSql, nSql, ppStmt, pz)) ){
+    rc = wait_for_unlock_notify(db);
+    if( rc!=SQLITE_OK ) break;
+  }
+  return rc;
+}
+
 /**
  *
  */
@@ -53,11 +122,19 @@ db_get_int64_from_query(sqlite3 *db, const char *query, int64_t *v)
   int64_t rval = -1;
   sqlite3_stmt *stmt;
 
-  rc = sqlite3_prepare_v2(db, query, -1, &stmt, NULL);
-  if(rc)
+ restart:
+  rc = db_prepare(db, query, -1, &stmt, NULL);
+  if(rc) {
+    if(rc == SQLITE_LOCKED)
+      goto restart;
     return -1;
+  }
 
   rc = sqlite3_step(stmt);
+  if(rc == SQLITE_LOCKED) {
+    sqlite3_finalize(stmt);
+    goto restart;
+  }
 
   if(rc == SQLITE_ROW) {
     *v = sqlite3_column_int64(stmt, 0);

@@ -86,10 +86,17 @@ propname(prop_t *p)
 /**
  *
  */
-const char *
+rstr_t *
 prop_get_name(prop_t *p)
 {
-  return p->hp_name;
+  rstr_t *r;
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_name != NULL)
+    r = rstr_alloc(p->hp_name);
+  else
+    r = NULL;
+  hts_mutex_unlock(&prop_mutex);
+  return r;
 }
 
 
@@ -733,7 +740,9 @@ prop_courier(void *aux)
   struct prop_notify_queue q_exp, q_nor;
   prop_notify_t *n;
 
-
+  if(pc->pc_prologue)
+    pc->pc_prologue();
+  
   hts_mutex_lock(&prop_mutex);
 
   while(pc->pc_run) {
@@ -770,6 +779,10 @@ prop_courier(void *aux)
     free(pc);
 
   hts_mutex_unlock(&prop_mutex);
+
+  if(pc->pc_epilogue)
+    pc->pc_epilogue();
+
   return NULL;
 }
 
@@ -2166,12 +2179,13 @@ prop_subscribe(int flags, ...)
   s->hps_flags = flags;
   if(pc != NULL) {
     s->hps_courier = pc;
-    s->hps_lock = pc->pc_entry_mutex;
+    s->hps_lock = pc->pc_entry_lock;
+    s->hps_lockmgr = pc->pc_lockmgr ?: lockmgr;
   } else {
     s->hps_courier = global_courier;
     s->hps_lock = lock;
+    s->hps_lockmgr = lockmgr;
   }
-  s->hps_lockmgr = lockmgr;
 
   LIST_INSERT_HEAD(&canonical->hp_canonical_subscriptions, s, 
 		   hps_canonical_prop_link);
@@ -3307,7 +3321,7 @@ prop_courier_create_thread(hts_mutex_t *entrymutex, const char *name)
 {
   prop_courier_t *pc = prop_courier_create();
   char buf[URL_MAX];
-  pc->pc_entry_mutex = entrymutex;
+  pc->pc_entry_lock = entrymutex;
   snprintf(buf, sizeof(buf), "PC:%s", name);
 
   pc->pc_has_cond = 1;
@@ -3357,6 +3371,34 @@ prop_courier_create_waitable(void)
   pc->pc_has_cond = 1;
   hts_cond_init(&pc->pc_cond, &prop_mutex);
 
+  return pc;
+}
+
+
+
+/**
+ *
+ */
+prop_courier_t *
+prop_courier_create_lockmgr(const char *name, prop_lockmgr_t *mgr, void *lock,
+			    void (*prologue)(void),
+			    void (*epilogue)(void))
+{
+  prop_courier_t *pc = prop_courier_create();
+  char buf[URL_MAX];
+  pc->pc_entry_lock = lock;
+  pc->pc_lockmgr = mgr;
+  pc->pc_prologue = prologue;
+  pc->pc_epilogue = epilogue;
+
+  snprintf(buf, sizeof(buf), "PC:%s", name);
+
+  pc->pc_has_cond = 1;
+  hts_cond_init(&pc->pc_cond, &prop_mutex);
+
+  pc->pc_run = 1;
+  hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc,
+			     THREAD_PRIO_LOW);
   return pc;
 }
 

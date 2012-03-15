@@ -21,7 +21,7 @@ void main()
     texture2D(u_t0, f_tex + vec2(-f_blur_amount.x, f_blur_amount.y)) +
     texture2D(u_t0, f_tex - vec2(-f_blur_amount.x, f_blur_amount.y));
 
-  col = col * 0.12;
+  col = col * 0.125;
 
   gl_FragColor = f_col_mul * col + f_col_off;
 }

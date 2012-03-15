@@ -84,8 +84,6 @@ typedef enum {
   TOKEN_BLOCK,
   TOKEN_NOP,
   TOKEN_VECTOR_FLOAT,
-  TOKEN_VECTOR_STRING,
-  TOKEN_VECTOR_INT,
   TOKEN_EVENT,
   TOKEN_LINK,                  // A link with title and url
   TOKEN_num,
@@ -97,8 +95,6 @@ typedef enum {
  *
  */
 typedef struct token {
-  token_type_t type;
-
   struct token *next;   /* Next statement, initially (after lexing)
 			   all tokens are linked via 'next' only */
 
@@ -109,6 +105,9 @@ typedef struct token {
   rstr_t *file;
   int line;
 #endif
+
+  token_type_t type;
+  int t_num_args;
 
   union {
     int elements;
@@ -123,21 +122,17 @@ typedef struct token {
 #define t_extra_float arg.f
 #define t_extra_int   arg.i
 
-  int t_num_args;
   struct glw_prop_sub *propsubr;
 
   union {
     int  ival;
-    double int_vec[0];
-
-    char *string_vec[0];
 
     struct {
       float value;
       int how;  // same as PROP_SET_ ...
     } f;
 
-    float value_vec[0];
+    float float_vec_int[4];
 
     const struct token_func   *func;
     const struct token_attrib *attrib;
@@ -167,12 +162,10 @@ typedef struct token {
 #define t_cstring         u.cstr
 #define t_rstring         u.rstr.rstr
 #define t_rstrtype        u.rstr.type
-#define t_string_vector   u.string_vec
 #define t_float           u.f.value
 #define t_float_how       u.f.how
-#define t_float_vector    u.value_vec
+#define t_float_vector_int u.float_vec_int
 #define t_int             u.ival
-#define t_int_vector      u.int_vec
 #define t_func            u.func
 #define t_attrib          u.attrib
 #define t_gem             u.gem
@@ -229,6 +222,23 @@ typedef struct glw_view_eval_context {
 } glw_view_eval_context_t;
 
 
+
+/**
+ *
+ */
+typedef struct glw_clone {
+  LIST_ENTRY(glw_clone) c_link;
+  struct sub_cloner *c_sc;
+  glw_t *c_w;
+  int c_pos;
+  prop_t *c_prop;
+
+  char c_evaluated;
+
+  prop_t *c_clone_root;
+
+} glw_clone_t;
+
 /**
  *
  */
@@ -238,7 +248,7 @@ typedef struct token_func {
   int (*cb)(glw_view_eval_context_t *ec, struct token *self, 
 	    struct token **argv, unsigned int argc);
   void (*ctor)(struct token *self);
-  void (*dtor)(struct token *self);
+  void (*dtor)(glw_root_t *gr, struct token *self);
 } token_func_t;
 
 
@@ -254,21 +264,22 @@ typedef struct token_attrib {
 } token_attrib_t;
 
 
+token_t *glw_view_token_alloc(glw_root_t *gr)  __attribute__ ((malloc));
 
-void glw_view_token_free(token_t *t);
+void glw_view_token_free(glw_root_t *gr, token_t *t);
 
-token_t *glw_view_token_copy(token_t *src);
+token_t *glw_view_token_copy(glw_root_t *gr, token_t *src);
 
 token_t *glw_view_lexer(const char *src, errorinfo_t *ei, 
 			 rstr_t *f, token_t *prev);
 
 
-token_t *glw_view_load1(glw_root_t *gr, const char *filename,
-			 errorinfo_t *ei, token_t *prev);
+token_t *glw_view_load1(glw_root_t *gr, rstr_t *url,
+			errorinfo_t *ei, token_t *prev);
 
-int glw_view_parse(token_t *sof, errorinfo_t *ei);
+int glw_view_parse(token_t *sof, errorinfo_t *ei, glw_root_t *gr);
 
-void glw_view_free_chain(token_t *t);
+void glw_view_free_chain(glw_root_t *gr, token_t *t);
 
 const char *token2name(token_t *t);
 
@@ -284,12 +295,13 @@ int glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec);
 
 int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei);
 
-token_t *glw_view_clone_chain(token_t *src);
+token_t *glw_view_clone_chain(glw_root_t *gr, token_t *src);
 
 void glw_view_cache_flush(glw_root_t *gr);
 
 struct glw_prop_sub_list;
-void glw_prop_subscription_destroy_list(struct glw_prop_sub_list *l);
+void glw_prop_subscription_destroy_list(glw_root_t *gr, 
+					struct glw_prop_sub_list *l);
 
 void glw_prop_subscription_suspend_list(struct glw_prop_sub_list *l);
 

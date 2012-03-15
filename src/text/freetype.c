@@ -1134,12 +1134,12 @@ text_render0(const uint32_t *uc, const int len,
       }
 
 
-      if(lines == max_lines - 1 && (flags & TR_RENDER_ELLIPSIZE) && g != NULL) {
-	glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
-				g->face->family_id_vec[0]);
-	if(eg != NULL) {
-	  int ellipsize_width = g->adv_x;
-	  if(w >= max_width - ellipsize_width) {
+      if(lines == max_lines - 1 && g != NULL && max_width) {
+	
+	if(flags & TR_RENDER_ELLIPSIZE) {
+	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
+			 g->face->family_id_vec[0]);
+	  if(w >= max_width - eg->adv_x) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
 	      j--;
@@ -1149,10 +1149,17 @@ text_render0(const uint32_t *uc, const int len,
 	    
 	    items[li->start + j].g = eg;
 	    items[li->start + j].kerning = 0;
-	    pmflags |= PIXMAP_TEXT_ELLIPSIZED;
+	    pmflags |= PIXMAP_TEXT_TRUNCATED;
 	    
-	    w += ellipsize_width;
+	    w += eg->adv_x;
 	    li->count = j + 1;
+	    break;
+	  }
+	} else {
+
+	  if(w >= max_width) {
+	    pmflags |= PIXMAP_TEXT_TRUNCATED;
+	    li->count = j;
 	    break;
 	  }
 	}

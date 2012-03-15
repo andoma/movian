@@ -26,19 +26,37 @@ id: Added by: %s
 msg: Dodal: %s
 
 id: Played %d times
-msg: %d x Predvajan 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d Vnosi
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d Naslov
+msg[0]: 
+msg[1]: 
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Izbriši
+
+id: Queue
+msg: Vrsta
+
+id: Star
+msg: Star
+
+id: Unstar
+msg: Unstar
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -52,9 +70,6 @@ msg: Vklop
 #
 # ./glwthemes/mono/include/infobox.view
 #
-id: Delete
-msg: Izbriši
-
 id: Enqueue
 msg: Dodaj
 
@@ -70,6 +85,12 @@ msg: OK
 #
 # ./glwthemes/mono/pages/about.view
 #
+id: Allocated by application: %d kB
+msg: Dodeljeno iz aplikacije: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Dodeljeno iz malloc: %d kB
+
 id: Avail system RAM: %d kB
 msg: Na voljo sistemskega pomnilnika: %d kB
 
@@ -82,11 +103,17 @@ msg: Prikaži info
 id: Framerate: %.2f Hz
 msg: Hitrost slik %.2f Hz
 
+id: Free chunks: %d
+msg: Zastonj koščki: %d
+
 id: GPU: %s
 msg: GPU: %s
 
 id: Height: %d px
 msg: Višina: %d px
+
+id: Memory status
+msg: Status pomnilnika
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -96,6 +123,9 @@ msg: Sistemske informacije
 
 id: Total system RAM: %d kB
 msg: Celoten sistemski pomnilnik: %d kB
+
+id: Unused memory: %d kB
+msg: Neuporabljen pomnilnik: %d kB
 
 id: Version: %s
 msg: Verzija: %s
@@ -110,7 +140,7 @@ msg: Upravljalec oken: %s
 # ./glwthemes/mono/pages/about_top.view
 #
 id: About
-msg: O Show Time MC
+msg: O
 
 #
 # ./glwthemes/mono/pages/home_top.view
@@ -182,7 +212,7 @@ msg: Uporabniško ime
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Medij ni zagnan
+msg: Medij ni naložen
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -212,10 +242,14 @@ id: Audio muted
 msg: Izklop zvoka
 
 id: Fancy UI animations
-msg: Polepšane UI Animacije
+msg: Animacije UI vmesnika
 
 id: Master volume: %d dB
 msg: Glasnost: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigacijske tipke v zgornji vrstici
@@ -280,6 +314,9 @@ msg: Napaka pri odpiranju CD-ja
 #
 # ./src/backend/dvd/dvd.c
 #
+id: DVD
+msg: DVD
+
 id: DVD read error, restarting disc
 msg: Napaka pri branju DVD-ja, disk bo ponovno zagnan
 
@@ -304,6 +341,9 @@ msg: Rezultat iskanja za: %s
 id: Automatic login when Showtime starts
 msg: Samodejna prijava pri zagonu Showtime-a
 
+id: Collaborative
+msg: Kolaborativno
+
 id: Enable Spotify
 msg: Omogoči Spotify
 
@@ -325,11 +365,17 @@ msg: Nov album na Spotify
 id: New releases
 msg: Nove objave
 
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offline sinhronizacija v 96kbps
+
 id: Playlists
 msg: Lista predvajanj
 
 id: Relogin (switch user)
-msg: Ponovno prijava (menjava uporabnika)
+msg: Ponovno logiranje (menjava uporabnika)
 
 id: Search result
 msg: Rezultati iskanja
@@ -380,13 +426,19 @@ id: Search using spotlight
 msg: Za iskanje uporabi Spotlight
 
 #
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Zunanja datoteka
+
+#
 # ./src/i18n.c
 #
 id: Language
 msg: Jezik
 
-id: Language codes should be configured as three character ISO codes, example (eng, swe, slo)
-msg: Jezik kot 3-mestno ISO kodo, npr.: eng,swe,slo
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Koda jezika mora biti konfigurirana s tremi znaki ISO kode, primer (eng, swe, slo)
 
 id: Preferred languages
 msg: Prednostni jezik
@@ -398,7 +450,7 @@ id: Primary subtitle language code
 msg: Prednostni jezik podnapisov
 
 id: SRT character set
-msg: Nastavitve za SRT Podnapise SLO-1250
+msg: Nastavitve za SRT podnapise
 
 id: Secondary audio language code
 msg: Drugi jezik zvoka
@@ -446,10 +498,19 @@ id: Subtitle delay
 msg: Zamik podnapisov
 
 id: Subtitle scaling
-msg: skaliranje podnapisov
+msg: Velikost podnapisov
 
 id: Video zoom
 msg: Video približevanje
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Vgrajeni v datotki
+
+id: Track %d
+msg: Track %d
 
 #
 # ./src/navigator.c
@@ -476,13 +537,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Dodatek.json nemorem naložit: Nepravilen JSON
 
 id: Unable to request plugin repository: %s
-msg: Nemogoč dostop do baze dodatkov: %s
+msg: Neuspešen dostop do baze dodatkov: %s
 
 #
 # ./src/runcontrol.c
 #
 id: Automatic standby
-msg: Avtomazsko mirovanje
+msg: Avtomatsko mirovanje
 
 id: Run control
 msg: Run control
@@ -503,10 +564,10 @@ msg: Tip
 # ./src/settings.c
 #
 id: Applications and installed plugins
-msg: Inštalacija aplikacij in vtičnikov
+msg: Naložene aplikacije in vtičniki
 
 id: Discovered media sources
-msg: Gefundene Medienquellen
+msg: Najdeni medija viri
 
 id: Global settings
 msg: Glavne nastavitve
@@ -607,9 +668,6 @@ msg: Sredina
 id: Color
 msg: Barva
 
-id: Controls if video playback should restart where last played
-msg: Nastavitve za ponovno predvajanje videa, kjer je nazadnje ostal
-
 id: Count video as played when reaching
 msg: Štetje videa kadar predvajanje doseže
 
@@ -617,13 +675,17 @@ id: Enable VDPAU
 msg: Omogočiti VDPAU
 
 id: Force subtitles to reside on video frame
-msg: Prisiliti podnapise da so na video okvirju
+msg: Prisiliti podnapise v video okvir
 
 id: Generic settings for video subtitles
 msg: Generične nastavitve za video podnapise
 
 id: Ignore embedded styling
 msg: Ignoriraj vgrajeno oblikovanje
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Levo
@@ -649,6 +711,10 @@ msg: Prikaži barve
 id: Shadow offset
 msg: Izravnava senčenja
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
 id: Stretch video to widescreen
 msg: Raztegni video za Widescreen 
 
@@ -657,6 +723,10 @@ msg: Položaj podnapisov
 
 id: Subtitle size
 msg: Velikost podnapisov
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil podnapisov

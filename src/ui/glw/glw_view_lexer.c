@@ -41,9 +41,10 @@ lexer_link_token(token_t *prev, rstr_t *f, int line, token_t *t,
  *
  */
 static token_t *
-lexer_add_token_simple(token_t *prev, rstr_t *f, int line, token_type_t type)
+lexer_add_token_simple(glw_root_t *gr, 
+		       token_t *prev, rstr_t *f, int line, token_type_t type)
 {
-  token_t *t = calloc(1, sizeof(token_t));
+  token_t *t = glw_view_token_alloc(gr);
   lexer_link_token(prev, f, line, t, type);
   return t;
 }
@@ -53,10 +54,11 @@ lexer_add_token_simple(token_t *prev, rstr_t *f, int line, token_type_t type)
  *
  */
 static token_t *
-lexer_add_token_string(token_t *prev, rstr_t *f, int line,
+lexer_add_token_string(glw_root_t *gr,
+		       token_t *prev, rstr_t *f, int line,
 		       const char *start, const char *end, token_type_t type)
 {
-  token_t *t = calloc(1, sizeof(token_t));
+  token_t *t = glw_view_token_alloc(gr);
   t->t_rstring = rstr_allocl(start, end - start);
   lexer_link_token(prev, f, line, t, type);
   return t;
@@ -67,10 +69,10 @@ lexer_add_token_string(token_t *prev, rstr_t *f, int line,
  *
  */
 static token_t *
-lexer_add_token_float(token_t *prev, rstr_t *f, int line,
+lexer_add_token_float(glw_root_t *gr, token_t *prev, rstr_t *f, int line,
 		       const char *start, const char *end)
 {
-  token_t *t = lexer_add_token_simple(prev, f, line, TOKEN_FLOAT);
+  token_t *t = lexer_add_token_simple(gr, prev, f, line, TOKEN_FLOAT);
   float sign = 1.0f;
   int n, s = 0, m = 0;
 
@@ -118,7 +120,7 @@ lexer_add_token_float(token_t *prev, rstr_t *f, int line,
  *
  */
 static token_t *
-lexer_single_char(token_t *next, rstr_t *f, int line, char s)
+lexer_single_char(glw_root_t *gr, token_t *next, rstr_t *f, int line, char s)
 {
   token_type_t ty;
   switch(s) {
@@ -147,7 +149,7 @@ lexer_single_char(token_t *next, rstr_t *f, int line, char s)
   default:
     return NULL;
   }
-  return lexer_add_token_simple(next, f, line, ty);
+  return lexer_add_token_simple(gr, next, f, line, ty);
 }
 
 
@@ -169,7 +171,8 @@ lexer_single_char(token_t *next, rstr_t *f, int line, char s)
  * If an error occured 'ei' will be filled with data
  */
 static token_t *
-lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
+lexer(glw_root_t *gr, 
+      const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 {
   const char *start;
   int line = 1;
@@ -192,13 +195,13 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
     }
 
     if(src[0] == 'v' && src[1] == 'o' && src[2] == 'i' && src[3] == 'd') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_VOID);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_VOID);
       src+=4;
       continue;
     }
 
     if(src[0] == 't' && src[1] == 'r' && src[2] == 'u' && src[3] == 'e') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_INT);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_INT);
       src+=4;
       prev->t_int = 1;
       continue;
@@ -206,7 +209,7 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 
     if(src[0] == 'f' && src[1] == 'a' && src[2] == 'l' && src[3] == 's' &&
        src[4] == 'e') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_INT);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_INT);
       src+=5;
       prev->t_int = 0;
       continue;
@@ -237,50 +240,50 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
     }
 
     if(src[0] == '&' && src[1] == '&') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_BOOLEAN_AND);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_BOOLEAN_AND);
       src+=2;
       continue;
     }
 
     if(src[0] == '?' && src[1] == '=') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_COND_ASSIGNMENT);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_COND_ASSIGNMENT);
       src+=2;
       continue;
     }
 
     if(src[0] == '|' && src[1] == '|') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_BOOLEAN_OR);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_BOOLEAN_OR);
       src+=2;
       continue;
     }
 
     if(src[0] == '^' && src[1] == '^') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_BOOLEAN_XOR);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_BOOLEAN_XOR);
       src+=2;
       continue;
     }
 
     if(src[0] == '=' && src[1] == '=') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_EQ);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_EQ);
       src+=2;
       continue;
     }
 
     if(src[0] == '!' && src[1] == '=') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_NEQ);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_NEQ);
       src+=2;
       continue;
     }
 
     if(src[0] == '?' && src[1] == '?') {
-      prev = lexer_add_token_simple(prev, f, line, TOKEN_NULL_COALESCE);
+      prev = lexer_add_token_simple(gr, prev, f, line, TOKEN_NULL_COALESCE);
       src+=2;
       continue;
     }
 
 
     if(!(src[0] == '-' && lex_isdigit(src[1]))) {
-      if((t = lexer_single_char(prev, f, line, *src)) != NULL) {
+      if((t = lexer_single_char(gr, prev, f, line, *src)) != NULL) {
 	src++;
 	prev = t;
 	continue;
@@ -309,7 +312,8 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 	return NULL;
       }
 
-      prev = lexer_add_token_string(prev, f, line, start, src, TOKEN_RSTRING);
+      prev = lexer_add_token_string(gr, prev, f, line, start, src,
+				    TOKEN_RSTRING);
       if(stop == '\'')
 	prev->t_rstrtype = PROP_STR_RICH;
       src++;
@@ -322,7 +326,7 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
       while(lex_isalnum(*src))
 	src++;
 
-      prev = lexer_add_token_string(prev, f, line, start, src, 
+      prev = lexer_add_token_string(gr, prev, f, line, start, src, 
 				    TOKEN_IDENTIFIER);
       continue;
     }
@@ -343,7 +347,7 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
 	/* we support having the 'f' postfix around too */
 	src++;
       
-      prev = lexer_add_token_float(prev, f, line, start, src);
+      prev = lexer_add_token_float(gr, prev, f, line, start, src);
       continue;
     }
 
@@ -365,26 +369,22 @@ lexer(const char *src, errorinfo_t *ei, rstr_t *f, token_t *prev)
  *
  */
 token_t *
-glw_view_load1(glw_root_t *gr, const char *filename, 
-		errorinfo_t *ei, token_t *prev)
+glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev)
 {
   char *src;
-  rstr_t *f;
   token_t *last;
   char errbuf[256];
 
-  if((src = fa_load(filename, NULL, gr->gr_vpaths, 
+  if((src = fa_load(rstr_get(url), NULL, gr->gr_vpaths, 
 		    errbuf, sizeof(errbuf), NULL)) == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
-	     filename, errbuf);
+	     rstr_get(url), errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
     ei->line = prev->line;
     return NULL;
   }
 
-  f = rstr_alloc(filename);
-  last = lexer(src, ei, f, prev);
-  rstr_release(f);
+  last = lexer(gr, src, ei, url, prev);
   free(src);
   return last;
 }

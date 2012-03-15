@@ -27,7 +27,7 @@ typedef struct glw_image {
 
   float gi_angle;
 
-  char *gi_pending_filename;
+  rstr_t *gi_pending_url;
   glw_loadable_texture_t *gi_current;
   glw_loadable_texture_t *gi_pending;
 
@@ -66,7 +66,9 @@ typedef struct glw_image {
 
   uint8_t gi_alpha_edge;
 
-  uint8_t gi_was_valid;
+  uint8_t gi_is_ready;
+
+  uint8_t gi_need_reload;
 
   glw_renderer_t gi_gr;
 
@@ -85,16 +87,16 @@ typedef struct glw_image {
 
 static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage;
 
-static uint8_t texcords[9][8] = {
-    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
-    { 0, 1,   1, 1,   1, 0,  0, 0},  // Normal
-    { 1, 1,   0, 1,   0, 0,  1, 0},  // Mirror X
-    { 1, 0,   0, 0,   0, 1,  1, 1},  // 180 deg. rotate
-    { 0, 0,   1, 0,   1, 1,  0, 1},  // Mirror Y
-    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transpose ???
-    { 1, 1,   1, 0,   0, 0,  0, 1},  // Rot 90
-    { 0, 0,   0, 0,   0, 0,  0, 0},  // Transverse ???
-    { 0, 0,   0, 1,   1, 1,  1, 0},  // Rot 270
+static int8_t tex_transform[9][4] = {
+  { 1, 0, 0, 1},  // No transform
+  { 1, 0, 0, 1},  // No transform
+  { -1, 0,0, 1},  // Mirror X
+  { -1, 0,0, -1}, // 180° rotate
+  { 1, 0,0, -1},  // Mirror Y
+  { 0,1,1,0},     // Transpose
+  { 0,1,-1,0},    // 90° rotate
+  { 0,1,1,0},     // Transverse ???
+  { 0,-1,1,0},    // 270° rotate
 };
 
 
@@ -107,7 +109,7 @@ glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
-  free(gi->gi_pending_filename);
+  rstr_release(gi->gi_pending_url);
 
   if(gi->gi_current != NULL)
     glw_tex_deref(w->glw_root, gi->gi_current);
@@ -182,15 +184,12 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
   float blur = 1 - (rc->rc_blur * w->glw_blur);
   glw_rctx_t rc0;
 
-  if(glt == NULL || glt->glt_state != GLT_STATE_VALID)
-    return;
-
-  if(!glw_is_tex_inited(&glt->glt_texture))
-    alpha_self = 0;
-  else
-    alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
+  alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
+
+    if(glt == NULL || !glw_is_tex_inited(&glt->glt_texture))
+      return;
 
     rc0 = *rc;
 
@@ -212,15 +211,15 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(alpha_self > 0.01f) {
 
       if(w->glw_flags2 & GLW2_SHADOW && !rc0.rc_inhibit_shadows) {
-	float xd =  3.0f / rc0.rc_width;
-	float yd = -3.0f / rc0.rc_height;
+	float xd =  6.0f / rc0.rc_width;
+	float yd = -6.0f / rc0.rc_height;
 
 	glw_Translatef(&rc0, xd, yd, 0.0f);
 	
 	static const glw_rgb_t black = {0,0,0};
 
 	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0, &glt->glt_texture,
-			  &black, NULL, alpha_self * 0.75f, blur);
+			  &black, NULL, alpha_self * 0.75f, 1);
 	glw_Translatef(&rc0, -xd, -yd, 0.0f);
       }
 
@@ -241,7 +240,7 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
-    if(alpha_self > 0.01f) {
+    if(glt && glw_is_tex_inited(&glt->glt_texture) && alpha_self > 0.01f) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
@@ -320,39 +319,54 @@ static const float alphaborder[4][4] = {
   {0,0,0,0},
 };
 
+
+
+static void
+settexcoord(glw_renderer_t *gr, int c, float s0, float t0,
+	    const glw_root_t *root, const glw_loadable_texture_t *glt)
+{
+  const int8_t *m = glt->glt_orientation < 9 ?
+    tex_transform[glt->glt_orientation] : tex_transform[0];
+
+  s0 = s0 * 2 - 1;
+  t0 = t0 * 2 - 1;
+
+  float s = s0 * m[0] + t0 * m[1];
+  float t = s0 * m[2] + t0 * m[3];
+
+  if(root->gr_normalized_texture_coords) {
+    s = (s + 1.0) * 0.5;
+    t = (t + 1.0) * 0.5;
+  } else {
+    s = (s + 1.0) * 0.5 * glt->glt_xs;
+    t = (t + 1.0) * 0.5 * glt->glt_ys;
+  }
+  glw_renderer_vtx_st(gr, c, s, t);
+}
+
+
 /**
  *
  */
 static void
-glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
-			       glw_loadable_texture_t *glt)
+glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, 
+			     glw_image_t *gi, 
+			     const glw_loadable_texture_t *glt)
 {
   float tex[4][2];
   float vex[4][2];
 
   int x, y, i = 0;
 
-  if(gr->gr_normalized_texture_coords) {
-    tex[0][0] = 0.0f;
-    tex[1][0] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_xs;
-    tex[2][0] = glt->glt_s - (float)gi->gi_alpha_edge / glt->glt_xs;
-    tex[3][0] = glt->glt_s;
+  tex[0][0] = 0;
+  tex[1][0] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_xs;
+  tex[2][0] = glt->glt_s - (float)gi->gi_alpha_edge / glt->glt_xs;
+  tex[3][0] = glt->glt_s;
 
-    tex[0][1] = 0.0f;
-    tex[1][1] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_ys;
-    tex[2][1] = glt->glt_t - (float)gi->gi_alpha_edge / glt->glt_ys;
-    tex[3][1] = glt->glt_t;
-  } else {
-    tex[0][0] = 0.0f;
-    tex[1][0] = gi->gi_alpha_edge;
-    tex[2][0] = glt->glt_xs - gi->gi_alpha_edge;
-    tex[3][0] = glt->glt_xs;
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = gi->gi_alpha_edge;
-    tex[2][1] = glt->glt_ys - gi->gi_alpha_edge;
-    tex[3][1] = glt->glt_ys;
-  }
+  tex[0][1] = 0;
+  tex[1][1] = 0.0f + (float)gi->gi_alpha_edge / glt->glt_ys;
+  tex[2][1] = glt->glt_t - (float)gi->gi_alpha_edge / glt->glt_ys;
+  tex[3][1] = glt->glt_t;
 
   vex[0][0] = -1.0f;
   vex[1][0] = GLW_MIN(-1.0f + 2.0f * gi->gi_alpha_edge / rc->rc_width, 0.0f);
@@ -367,7 +381,7 @@ glw_image_layout_alpha_edges(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
       glw_renderer_vtx_pos(&gi->gi_gr, i, vex[x][0], vex[y][1], 0.0f);
-      glw_renderer_vtx_st (&gi->gi_gr, i, tex[x][0], tex[y][1]);
+      settexcoord(&gi->gi_gr, i, tex[x][0], tex[y][1], gr, glt);
       glw_renderer_vtx_col(&gi->gi_gr, i, 1, 1, 1, alphaborder[x][y]);
       i++;
     }
@@ -382,29 +396,17 @@ static void
 glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
 			glw_loadable_texture_t *glt)
 {
-  float xs = gr->gr_normalized_texture_coords ? glt->glt_s : glt->glt_xs;
-  float ys = gr->gr_normalized_texture_coords ? glt->glt_t : glt->glt_ys;
-
-  uint8_t tex[8];
-  int o = glt->glt_orientation < 9 ? glt->glt_orientation : 0;
-  memcpy(tex, texcords[o], 8);
-
-
   glw_renderer_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 0, 
-		       tex[0] * xs , tex[1] * ys);
+  settexcoord(&gi->gi_gr, 0, 0, 1, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 1,
-		       tex[2] * xs , tex[3] * ys);
+  settexcoord(&gi->gi_gr, 1, 1, 1, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 2,
-		       tex[4] * xs , tex[5] * ys);
+  settexcoord(&gi->gi_gr, 2, 1, 0, gr, glt);
 
   glw_renderer_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
-  glw_renderer_vtx_st (&gi->gi_gr, 3,
-		       tex[6] * xs , tex[7] * ys);
+  settexcoord(&gi->gi_gr, 3, 0, 0, gr, glt);
 }
 
 
@@ -556,7 +558,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
 
-  if(gi->gi_pending_filename != NULL) {
+  if(gi->gi_pending_url != NULL) {
     // Request to load
     int xs = -1, ys = -1;
     int flags = 0;
@@ -564,7 +566,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     if(gi->gi_pending != NULL)
       glw_tex_deref(w->glw_root, gi->gi_pending);
     
-    if(gi->gi_pending_filename[0] == 0) {
+    if(rstr_get(gi->gi_pending_url)[0] == 0) {
       gi->gi_pending = NULL;
 
       if(gi->gi_current != NULL) {
@@ -591,11 +593,11 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(xs && ys) {
 
-	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_filename,
+	gi->gi_pending = glw_tex_create(w->glw_root, gi->gi_pending_url,
 					flags, xs, ys);
 
-	free(gi->gi_pending_filename);
-	gi->gi_pending_filename = NULL;
+	rstr_release(gi->gi_pending_url);
+	gi->gi_pending_url = NULL;
       } else {
 	gi->gi_pending = NULL;
       }
@@ -605,7 +607,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((glt = gi->gi_pending) != NULL) {
     glw_tex_layout(gr, glt);
 
-    if(glt->glt_state == GLT_STATE_VALID || 
+    if(glw_is_tex_inited(&glt->glt_texture) ||
        glt->glt_state == GLT_STATE_ERROR) {
       // Pending texture completed, ok or error: transfer to current
 
@@ -624,15 +626,15 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_tex_layout(gr, glt);
 
   if(glt->glt_state == GLT_STATE_ERROR) {
-    if(!gi->gi_was_valid) {
+    if(!gi->gi_is_ready) {
       glw_signal0(w, GLW_SIGNAL_READY, NULL);
-      gi->gi_was_valid = 1;
+      gi->gi_is_ready = 1;
     }
-  } else if(glt->glt_state == GLT_STATE_VALID) {
+  } else if(glw_is_tex_inited(&glt->glt_texture)) {
 
-    if(!gi->gi_was_valid) {
+    if(!gi->gi_is_ready) {
       glw_signal0(w, GLW_SIGNAL_READY, NULL);
-      gi->gi_was_valid = 1;
+      gi->gi_is_ready = 1;
     }
 
     if(gi->gi_update) {
@@ -688,28 +690,32 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
       }
+      gi->gi_need_reload = hq;
+    }
 
-      if(hq && gi->gi_pending == NULL &&
-	 gi->gi_pending_filename == NULL && rc->rc_width && rc->rc_height) {
 
-	int xs = -1, ys = -1, rescale;
+    if(gi->gi_need_reload && gi->gi_pending == NULL &&
+       gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
+
+      gi->gi_need_reload = 0;
 	
-	if(rc->rc_width < rc->rc_height) {
-	  rescale = abs(rc->rc_width - glt->glt_xs) > glt->glt_xs / 10;
-	  xs = rc->rc_width;
-	} else {
-	  rescale = abs(rc->rc_height - glt->glt_ys) > glt->glt_ys / 10;
-	  ys = rc->rc_height;
-	}
+      int xs = -1, ys = -1, rescale;
 	
-	if(rescale) {
-	  int flags = 0;
-	  if(w->glw_class == &glw_repeatedimage)
-	    flags |= GLW_TEX_REPEAT;
-
-	  gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_filename,
-					  flags, xs, ys);
-	}
+      if(rc->rc_width < rc->rc_height) {
+	rescale = rc->rc_width != glt->glt_xs;
+	xs = rc->rc_width;
+      } else {
+	rescale = rc->rc_height != glt->glt_ys;
+	ys = rc->rc_height;
+      }
+      
+      if(rescale) {
+	int flags = 0;
+	if(w->glw_class == &glw_repeatedimage)
+	  flags |= GLW_TEX_REPEAT;
+	
+	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
+					flags, xs, ys);
       }
     }
   }
@@ -907,28 +913,29 @@ mod_image_flags(glw_t *w, int set, int clr)
  *
  */
 static void
-set_source(glw_t *w, const char *filename)
+set_source(glw_t *w, rstr_t *filename)
 {
   glw_image_t *gi = (glw_image_t *)w;
   
-  const char *curname;
+  const rstr_t *curname;
 
-  if(gi->gi_pending_filename != NULL)
-    curname = gi->gi_pending_filename;
+  if(gi->gi_pending_url != NULL)
+    curname = gi->gi_pending_url;
   else if(gi->gi_pending != NULL) 
-    curname = gi->gi_pending->glt_filename;
+    curname = gi->gi_pending->glt_url;
   else if(gi->gi_current != NULL) 
-    curname = gi->gi_current->glt_filename;
+    curname = gi->gi_current->glt_url;
   else 
     curname = NULL;
   
-  if(curname != NULL && filename != NULL && !strcmp(filename, curname))
+  if(curname != NULL && filename != NULL && !strcmp(rstr_get(filename),
+						    rstr_get(curname)))
     return;
   
-  if(gi->gi_pending_filename != NULL)
-    free(gi->gi_pending_filename);
+  if(gi->gi_pending_url != NULL)
+    rstr_release(gi->gi_pending_url);
   
-  gi->gi_pending_filename = filename ? strdup(filename) : strdup("");
+  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
 }
 
 
@@ -1002,7 +1009,7 @@ glw_image_ready(glw_t *w)
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
  
-  return glt != NULL && (glt->glt_state == GLT_STATE_VALID || 
+  return glt != NULL && (glw_is_tex_inited(&glt->glt_texture) ||
 			 glt->glt_state == GLT_STATE_ERROR);
 }
 
@@ -1015,7 +1022,7 @@ get_identity(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
-  return glt ? glt->glt_filename : "unloaded";
+  return glt ? rstr_get(glt->glt_url) : "unloaded";
 }
 
 /**

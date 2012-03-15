@@ -129,7 +129,6 @@ typedef enum {
   EVENT_PLAY_URL,
   EVENT_EXIT,
   EVENT_DVD_PCI,
-  EVENT_DVD_,
   EVENT_DVD_SELECT_BUTTON,
   EVENT_DVD_ACTIVATE_BUTTON,  /* "Press" button */
   EVENT_OPENURL,
@@ -243,6 +242,14 @@ typedef struct event_playtrack {
 } event_playtrack_t;
 
 
+/**
+ *
+ */
+typedef struct event_prop {
+  event_t h;
+  struct prop *p;
+} event_prop_t;
+
 void event_generic_dtor(event_t *e);
 
 void *event_create(event_type_t type, size_t size);
@@ -274,6 +281,8 @@ event_t *event_create_playtrack(struct prop *track,
 
 event_t *event_create_select_track(const char *id, event_type_t type, 
 				   int manual);
+
+event_t *event_create_prop(event_type_t type, struct prop *p);
 
 const char *action_code2str(action_type_t code);
 

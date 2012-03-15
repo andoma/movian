@@ -55,6 +55,9 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
   float t_aspect = av_q2d(gv->gv_dar);
 
+    if(video_settings.stretch_fullscreen)
+      return;
+
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
     if(video_settings.stretch_horizontal)
@@ -417,14 +420,14 @@ mod_video_flags(glw_t *w, int set, int clr)
  *
  */
 static void
-set_source(glw_t *w, const char *url)
+set_source(glw_t *w, rstr_t *url)
 {
   glw_video_t *gv = (glw_video_t *)w;
 
   if(url == NULL)
     return;
   
-  mystrset(&gv->gv_pending_url, url);
+  mystrset(&gv->gv_pending_url, rstr_get(url));
   glw_video_play(gv);
 }
 

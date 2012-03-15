@@ -71,7 +71,10 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   image_meta_t im = {0};
   im.im_no_decoding = 1;
 
-  pm = backend_imageloader(remain, &im, NULL, errbuf, sizeof(errbuf));
+  rstr_t *url = rstr_alloc(remain);
+
+  pm = backend_imageloader(url, &im, NULL, errbuf, sizeof(errbuf), NULL);
+  rstr_release(url);
   if(pm == NULL)
     return http_error(hc, 404, "Unable to load image %s : %s",
 		      remain, errbuf);
@@ -289,7 +292,96 @@ hc_notify_user(http_connection_t *hc, const char *remain, void *opaque,
   return HTTP_STATUS_OK;
 }
 
+#if 0
 
+extern void my_malloc_stats(void (*fn)(const char *fmt, ...));
+
+char hugebuf[1024 * 1024];
+int hugeptr;
+
+static void __attribute__((unused))memdumpf(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  hugeptr += vsprintf(hugebuf + hugeptr, fmt, ap);
+  va_end(ap);
+  hugebuf[hugeptr++] = '\n';
+
+}
+
+
+/**
+ *
+ */
+static int
+hc_memstats(http_connection_t *hc, const char * remain, void *opaque,
+	    http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  hugeptr = 0;
+
+  my_malloc_stats(memdumpf);
+
+  htsbuf_queue_init(&out, 0);
+
+  htsbuf_append(&out, hugebuf, hugeptr);
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
+/**
+ *
+ */
+static void
+hexdump(const char *pfx, const uint8_t *data, int len, htsbuf_queue_t *out)
+{
+  int i, j;
+  for(i = 0; i < len; i+= 16) {
+    htsbuf_qprintf(out, "%s: 0x%06x: ", pfx, i);
+
+    for(j = 0; j + i < len && j < 16; j++) {
+      htsbuf_qprintf(out, "%02x ", data[i+j]);
+    }
+    
+    for(; j < 16; j++) {
+      htsbuf_qprintf(out, "   ");
+    }
+
+    htsbuf_qprintf(out, "  ");
+
+
+    for(j = 0; j + i < len && j < 16; j++) {
+      htsbuf_qprintf(out, "%c", data[i+j] < 32 ? '.' : data[i+j]);
+    }
+    htsbuf_qprintf(out, "\n");
+  }
+  htsbuf_qprintf(out, "\n");
+
+}
+
+/**
+ *
+ */
+static int
+hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
+	    http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  const char *atxt = http_arg_get_req(hc, "addr");
+  const char *ltxt = http_arg_get_req(hc, "len");
+
+  if(atxt == NULL || ltxt == NULL)
+    return HTTP_STATUS_BAD_REQUEST;
+
+  void *a = (void *)strtol(atxt, NULL, 16);
+  long len = strtol(ltxt, NULL, 0);
+  
+  htsbuf_queue_init(&out, 0);
+
+  hexdump("mem", a, len, &out);
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
+#endif
 
 /**
  *
@@ -305,5 +397,9 @@ httpcontrol_init(void)
   http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
 #if ENABLE_BINREPLACE
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
+#endif
+#if 0
+  http_path_add("/showtime/memstats", NULL, hc_memstats, 1);
+  http_path_add("/showtime/hexdump", NULL, hc_hexdump, 1);
 #endif
 }

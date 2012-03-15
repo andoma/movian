@@ -2,7 +2,7 @@ widget(container_y, {
   .spacing = 2;
   space(1);
   widget(label, {
-    .caption = fmt(_("Played %d times"), $self.playcount);
+    .caption = fmt(_pl("Played %d times", "Played %d time", $self.playcount), $self.playcount);
     .align = right;
     .shadow = true;
     .color = 0.5 + (isHovered() || isFocused()) * 0.5;

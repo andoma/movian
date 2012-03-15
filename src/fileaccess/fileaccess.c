@@ -558,41 +558,51 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
   if(sizep == NULL) // For convenience
     sizep = &size;
 
-  if(cache_control != FA_DISABLE_CACHE) {
-    data = blobcache_get(url, "fa_load", sizep, 1, &is_expired, &etag, &mtime);
-
-    if(data != NULL) {
-      if(cache_control != NULL) {
-	// Upper layer can deal with expired data, pass it
-	*cache_control = is_expired;
-	return data;
-      }
-
-      // It was not expired, return it
-      if(!is_expired)
-	return data;
-    }
-  }
-
-  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL) {
-    free(etag);
+  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
-  }
 
   if(fap->fap_load != NULL) {
     char *data2;
     size_t size2;
     int max_age = 0;
+    
+    if(cache_control != DISABLE_CACHE) {
+      data = blobcache_get(url, "fa_load", sizep, 1,
+			   &is_expired, &etag, &mtime);
 
-    if(cache_control == FA_DISABLE_CACHE)
+      if(data != NULL) {
+	if(cache_control != NULL) {
+	  // Upper layer can deal with expired data, pass it
+	  *cache_control = is_expired;
+	  free(etag);
+	  free(filename);
+	  return data;
+	}
+	
+	// It was not expired, return it
+	if(!is_expired) {
+	  free(etag);
+	  free(filename);
+	  return data;
+	}
+      } else if(cache_control != NULL) {
+	snprintf(errbuf, errlen, "Not cached");
+	free(etag);
+	free(filename);
+	return NULL;
+      }
+    }
+
+    if(cache_control == DISABLE_CACHE)
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
-
+    
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
 			  &etag, &mtime, &max_age);
-
-    if(data2 == FA_NOT_MODIFIED) {
-      if(cache_control == FA_DISABLE_CACHE)
-	return FA_NOT_MODIFIED;
+    
+    free(filename);
+    if(data2 == NOT_MODIFIED) {
+      if(cache_control == DISABLE_CACHE)
+	return NOT_MODIFIED;
 
       free(etag);
       return data;
@@ -600,9 +610,19 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
 
     free(data);
 
-    blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    int d;
+    if(data2)
+      d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+    else
+      d = 0;
 
-    free(filename);
+    free(etag);
+
+    if(cache_control == DISABLE_CACHE && d) {
+      free(data2);
+      return NOT_MODIFIED;
+    }
+
     if(sizep != NULL)
       *sizep = size2;
     return data2;

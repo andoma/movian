@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Lagt til av: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -257,6 +257,10 @@ msg: Heftige animasjoner i brukergrensesnittet
 
 id: Master volume: %d dB
 msg: Hovedvolum: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Navigasjonknapper på toppen av skjermen
@@ -699,10 +703,6 @@ msg: Sentrert
 id: Color
 msg: Farge
 
-id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -718,6 +718,10 @@ msg: Generelle innstillininger for undertekster
 
 id: Ignore embedded styling
 msg: Overse innebygde stilkoder
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Venstre
@@ -745,6 +749,10 @@ msg: Farge på skygger
 id: Shadow offset
 msg: Skyggeoffset
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
 id: Stretch video to widescreen
 msg: Strekk ut video horisontalt 
 
@@ -753,6 +761,10 @@ msg: Posisjon på undertekster
 
 id: Subtitle size
 msg: Størrelse på undertekster
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil på undertekster

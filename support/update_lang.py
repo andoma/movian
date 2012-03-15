@@ -6,9 +6,14 @@ import re
 import json
 
 M = re.compile('_p?\("([^"]*)"\)')
+MPL = re.compile('_pl\("([^"]*)"[^,]*,[^"]*"([^"]*)"[^,]*,[^"]*[^"]*\)')
 
 def scanfile(path, p):
-    for w in re.findall(M, open(path).read()):
+    d = open(path).read()
+    for w in re.findall(M, d):
+        p.setdefault(w, []).append(path)
+
+    for w in re.findall(MPL, d):
         p.setdefault(w, []).append(path)
 
 def buildphrases():
@@ -17,7 +22,7 @@ def buildphrases():
     for r in ('./src', './glwthemes/mono'):
         for a in os.walk(r):
             for f in a[2]:
-                if f.endswith(('.c', '.view', '.skin')):
+                if f.endswith(('.c', '.view')):
                     scanfile(os.path.join(a[0], f), p)
 
     # invert dict to use first source as key and value is list of phrases
@@ -51,6 +56,7 @@ for path in sys.argv[1:]:
     native = 'Unknown'
     writebom = False
     in_phrases = {}
+    in_plural_phrases = {}
 
     if os.path.isfile(path):
         f = open(path)
@@ -61,7 +67,8 @@ for path in sys.argv[1:]:
         else:
             f.seek(0);
 
-        R = re.compile('([^:]*): *(.*)')
+        R = re.compile('([a-z]*): *(.*)')
+        RPL = re.compile('([a-z]*)\[([0-9]*)\]: *(.*)')
         
         entry = None
         
@@ -72,23 +79,24 @@ for path in sys.argv[1:]:
 
             l = l.rstrip('\n\r')
             o = re.match(R, l)
-            if not o:
+            if o:
+                if o.group(1) == 'maintainer':
+                    maintainer = o.group(2)
+                elif o.group(1) == 'language':
+                    language = o.group(2)
+                elif o.group(1) == 'native':
+                    native = o.group(2)
+                elif o.group(1) == 'id':
+                    mid = o.group(2)
+                elif o.group(1) == 'msg' and len(o.group(2)) > 0:
+                    in_phrases[mid] = o.group(2)
                 continue
-            
-            if o.group(1) == 'maintainer':
-                maintainer = o.group(2)
-            if o.group(1) == 'language':
-                language = o.group(2)
-            if o.group(1) == 'native':
-                native = o.group(2)
 
-            if o.group(1) == 'id':
-                mid = o.group(2)
-
-            if o.group(1) == 'msg' and len(o.group(2)) > 0:
-                in_phrases[mid] = o.group(2)
-
+            o = re.match(RPL, l)
+            if o:
+                in_plural_phrases.setdefault(mid, {})[int(o.group(2))] = o.group(3)
         f.close()
+
 
     outlist = []
     last = None
@@ -110,13 +118,29 @@ for path in sys.argv[1:]:
         emit('#')
 
         for phrase in phrases[source]:
-            emit('id: %s' % phrase)
-            if phrase in in_phrases:
-                emit('msg: %s' % in_phrases[phrase])
+
+            if isinstance(phrase, tuple):
+                emit('id: %s' % phrase[0])
+                if phrase[0] in in_plural_phrases:
+                    d = in_plural_phrases[phrase[0]]
+                    idx = d.keys()
+                    idx.sort()
+                    for i in idx:
+                        emit('msg[%d]: %s' % (i, d[i]))
+                else:
+                    emit("# Missing plural translation for '%s' and '%s'" % (
+                            phrase[0], phrase[1]))
+                    emit('msg[0]: ')
+                    emit('msg[1]: ')
+                    print " ! Missing plural translation for %s" % phrase[0]
             else:
-                emit("# Missing translation")
-                emit('msg: ')
-                print " ! Missing translation for %s" % phrase
+                emit('id: %s' % phrase)
+                if phrase in in_phrases:
+                    emit('msg: %s' % in_phrases[phrase])
+                else:
+                    emit("# Missing translation")
+                    emit('msg: ')
+                    print " ! Missing translation for %s" % phrase
 
             emit('')
 

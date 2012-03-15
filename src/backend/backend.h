@@ -77,7 +77,8 @@ typedef struct backend {
 
   struct pixmap *(*be_imageloader)(const char *url, const struct image_meta *im,
 				   const char **vpaths,
-				   char *errbuf, size_t errlen);
+				   char *errbuf, size_t errlen,
+				   int *cache_control);
 
   int (*be_normalize)(const char *url, char *dst, size_t dstlen);
 
@@ -115,9 +116,10 @@ struct event *backend_play_audio(const char *url, struct media_pipe *mp,
   __attribute__ ((warn_unused_result));
 
 
-struct pixmap *backend_imageloader(const char *url, const struct image_meta *im,
+struct pixmap *backend_imageloader(rstr_t *url, const struct image_meta *im,
 				   const char **vpaths,
-				   char *errbuf, size_t errlen)
+				   char *errbuf, size_t errlen,
+				   int *cache_control)
      __attribute__ ((warn_unused_result));
 
 backend_t *backend_canhandle(const char *url)

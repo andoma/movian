@@ -70,6 +70,24 @@ widget(container_x, {
 	  });
 	);
 
+
+	widget(label, {
+          .hidden = $self.disableDomain;
+	  .caption = _("Domain");
+	});
+      
+	popupInputField(
+          .hidden = $self.disableDomain;
+	  widget(text, {
+	    .id = "domain";
+	    .focusable = true;
+	    bind($self.domain);
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(cancel, deliverEvent($self.eventSink));
+	  });
+	);
+
+
 	popupCheckbox($self.rememberMe, _("Remember me"), true,
 		      !$self.canRemember);
 

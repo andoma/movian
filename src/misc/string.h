@@ -17,6 +17,8 @@ void html_entities_decode(char *s);
 
 int html_entity_lookup(const char *name);
 
+size_t html_enteties_escape(const char *src, char *dst);
+
 void 
 url_split(char *proto, int proto_size,
 	  char *authorization, int authorization_size,
@@ -67,7 +69,7 @@ size_t utf8_to_ucs2(uint8_t *dst, const char *src);
 
 size_t utf8_to_ascii(uint8_t *dst, const char *src);
 
-
+void utf16_to_utf8(char **bufp, size_t *lenp);
 
 
 typedef struct {

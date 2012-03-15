@@ -44,6 +44,17 @@ rstr_allocl(const char *in, size_t len)
   return rs;
 }
 
+rstr_t *
+rstr_spn(rstr_t *s, const char *set)
+{
+  size_t len = strlen(rstr_get(s));
+  size_t l = strcspn(rstr_get(s), set);
+  if(l == len)
+    return rstr_dup(s);
+  return rstr_allocl(rstr_get(s), l);
+}
+
+
 #else
 
 rstr_t *

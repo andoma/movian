@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Lisännyt: %s
 
 id: Played %d times
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-# Missing translation
-msg: 
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -257,6 +257,10 @@ msg: UI Animaatiot
 
 id: Master volume: %d dB
 msg: Äänenvoimakkuus: %d dB
+
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
 
 id: Top bar navigation buttons
 msg: Yläpalkin navigointinapit
@@ -707,10 +711,6 @@ msg: Keskitys
 id: Color
 msg: Värit
 
-id: Controls if video playback should restart where last played
-# Missing translation
-msg: 
-
 id: Count video as played when reaching
 # Missing translation
 msg: 
@@ -726,6 +726,10 @@ msg: Yleiset tekstitysasetukset
 
 id: Ignore embedded styling
 msg: Ohita asetetut tyylit
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Vasen
@@ -753,6 +757,10 @@ msg: Varjon väri
 id: Shadow offset
 msg: Varjon korjaus
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
 id: Stretch video to widescreen
 msg: Venytä video widescreen muotoon 
 
@@ -761,6 +769,10 @@ msg: Tekstityksen kohta ruudulla
 
 id: Subtitle size
 msg: Tekstityksen koko
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Tekstityksen tyylit

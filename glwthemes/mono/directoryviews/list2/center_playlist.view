@@ -3,7 +3,7 @@ widget(container_y, {
   space(1);
   widget(label, {
     .align = right;
-    .caption = fmt(_("%d tracks"), $self.metadata.tracks);
+    .caption = fmt(_pl("%d tracks", "%d track", $self.metadata.tracks), $self.metadata.tracks);
     .shadow = true;
     .color = 0.5 + (isHovered() || isFocused()) * 0.5;
   });

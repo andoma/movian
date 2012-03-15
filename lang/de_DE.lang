@@ -23,22 +23,25 @@ msg: Videoeinstellungen
 # ./glwthemes/mono/directoryviews/infobox/audio.view
 #
 id: Added by: %s
-msg: Hinzugefügt von: %s
+msg: Hinzugefügt durch: %s
 
 id: Played %d times
-msg: %d x Abgespielt 
+msg[0]: %d x abgespielt
+msg[1]: %d x abgespielt
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d Einträge
+msg[0]: %d Einträge
+msg[1]: %d Eintrag
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d Titel
+msg[0]: %d Titel
+msg[1]: %d Titel
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -110,7 +113,7 @@ id: Height: %d px
 msg: Höhe: %d px
 
 id: Memory status
-msg: Speicher Status
+msg: Speicherstatus
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -167,7 +170,7 @@ msg: Wiedergabeliste
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-msg: Wiedergabe Status
+msg: Wiedergabestatus
 
 id: Unable to start video playback
 msg: Videowiedergabe kann nicht gestartet werden
@@ -244,6 +247,9 @@ msg: schicke Menüanimationen
 id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
+id: Multilingual 'No media loaded'
+msg: Keine Medien geladen
+
 id: Top bar navigation buttons
 msg: Navigationsknöpfe in der oberen Leiste
 
@@ -308,8 +314,7 @@ msg: CD kann nicht geöffnet werden
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: DVD Lesefehler, Disk wird neugestartet
@@ -384,10 +389,10 @@ id: Spotify offers you legal and free access to a huge library of music. To use 
 msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamens und Passworts aufgefordert.
 
 id: Spotify playlists
-msg: Spotyfy Wiedergabeliste
+msg: Spotyfy Wiedergabelisten
 
 id: Spotify: Connection error: %s
-msg: Verbindungsfehler: %s
+msg: Spotify: Verbindungsfehler: %s
 
 id: Starred
 msg: Starred
@@ -423,8 +428,7 @@ msg: Suchen per Spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: externe Datei
 
 #
 # ./src/i18n.c
@@ -502,12 +506,10 @@ msg: Videozoom
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: in Datei eingebunden
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Titel %d
 
 #
 # ./src/navigator.c
@@ -636,7 +638,7 @@ msg: Service nicht gefunden
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, kann zu Wiedergabeproblemen führen.
+msg: Cell-h264: Erzwinge Level 4.2 für Level %d.%d Inhalt, \nkann zu Wiedergabeproblemen führen.
 
 id: Unable to accelerate %s, library not loaded.
 msg: Kann %s nicht beschleunigen, Bibliothek nicht geladen.
@@ -645,7 +647,7 @@ id: Unable to open Cell codec. Error 0x%x
 msg: Kann Cell-Codec nicht öffnen. Fehler 0x%x.
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Kann Cell-Codec nicht öfffnen. Kann keine %d Bytes Speicher zuweisen.
+msg: Kann Cell-Codec nicht öfffnen. \nKann keine %d Bytes Speicher zuweisen.
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
@@ -665,9 +667,6 @@ msg: Zentriert
 id: Color
 msg: Farbe
 
-id: Controls if video playback should restart where last played
-msg: Einstellung ob die Wiedergabe von der lezten Position starten soll
-
 id: Count video as played when reaching
 msg: Video als abgespielt markieren ab
 
@@ -682,6 +681,9 @@ msg: Allgemeine Einstellungen für Untertitel
 
 id: Ignore embedded styling
 msg: eingebetteten Stil ignorieren
+
+id: Include all subtitle files from movie directory
+msg: Alle Untertitel im Verzeichnis anzeigen
 
 id: Left
 msg: Links
@@ -707,14 +709,20 @@ msg: Schattenfarbe
 id: Shadow offset
 msg: Schattenabstand
 
+id: Stretch video to fullscreen
+msg: Video auf Vollbild strecken
+
 id: Stretch video to widescreen
-msg: Video auf Widescreen strecken 
+msg: Video auf Bildschirmbreite strecken 
 
 id: Subtitle position
 msg: Untertitelposition
 
 id: Subtitle size
 msg: Untertitelgröße
+
+id: Subtitle size and positioning
+msg: Untertitelgröße und Position
 
 id: Subtitle styling
 msg: Untertitelstil

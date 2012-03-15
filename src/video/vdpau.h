@@ -172,7 +172,7 @@ int vdpau_mixer_create(vdpau_dev_t *vd, vdpau_mixer_t *vm,
 
 void vdpau_mixer_deinit(vdpau_mixer_t *vm);
 
-void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on);
+void vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int on, int height);
 
 void vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, 
 				  const struct frame_info *fi);

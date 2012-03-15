@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Tilføjet af: %s
 
 id: Played %d times
-msg: Afspillet %d gange
+msg[0]: Afspillet %d gange
+msg[1]: Afspillet %d gang
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d indtastninger
+msg[0]: %d indhold
+msg[1]: %d indhold
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d spor
+msg[0]: %d spor
+msg[1]: %d spor
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -47,16 +50,13 @@ id: Delete
 msg: Slet
 
 id: Queue
-# Missing translation
-msg: 
+msg: Kø
 
 id: Star
-# Missing translation
-msg: 
+msg: Stjerne
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Fjern stjerne
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -86,12 +86,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Tildelt af applikationen: %d Kb
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Tildelt af malloc: %d Kb
 
 id: Avail system RAM: %d kB
 msg: Tilgængelig system RAM: %d Kb
@@ -106,8 +104,7 @@ id: Framerate: %.2f Hz
 msg: Opdateringsfrekvens: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Ledige stykker: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -116,8 +113,7 @@ id: Height: %d px
 msg: Højde: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Hukommelsesstatus
 
 id: Renderer: %s
 msg: Renderere: %s
@@ -129,8 +125,7 @@ id: Total system RAM: %d kB
 msg: Total system RAM: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Ubrugt hukommelse: %d Kb
 
 id: Version: %s
 msg: Version: %s
@@ -252,6 +247,9 @@ msg: Fancy UI animationer
 id: Master volume: %d dB
 msg: Master volume: %d dB
 
+id: Multilingual 'No media loaded'
+msg: Flersprogede 'Intet medie hentet"
+
 id: Top bar navigation buttons
 msg: Navigationsknapper i toppen af skærmen
 
@@ -316,8 +314,7 @@ msg: Kan ikke åbne CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: DVD læsefejl, genstarter disk
@@ -431,8 +428,7 @@ msg: Søg via spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Ekstern fil
 
 #
 # ./src/i18n.c
@@ -510,12 +506,10 @@ msg: Video zoom
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Indlejret i fil
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Spor %d
 
 #
 # ./src/navigator.c
@@ -673,9 +667,6 @@ msg: Centreret
 id: Color
 msg: Farve
 
-id: Controls if video playback should restart where last played
-msg: Bestemmer om videoafspilning skal fortsætte fra sidste afspilning
-
 id: Count video as played when reaching
 msg: Marker video som vist når den når
 
@@ -690,6 +681,10 @@ msg: Generelle indstillinger for undertekster
 
 id: Ignore embedded styling
 msg: Ignorer indlejret stil
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Venstre
@@ -715,6 +710,9 @@ msg: Farve på skygge
 id: Shadow offset
 msg: Skyggens forskydning
 
+id: Stretch video to fullscreen
+msg: Stræk video til fuld skærm
+
 id: Stretch video to widescreen
 msg: Stræk video til widescreen
 
@@ -723,6 +721,10 @@ msg: Position på undertekster
 
 id: Subtitle size
 msg: Størrelse på undertekster
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Stil på undertekster

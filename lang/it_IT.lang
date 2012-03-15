@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Aggiunto da: %s
 
 id: Played %d times
-msg: Riprodotto %d volte
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d voci
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d tracce
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -243,6 +246,9 @@ msg: Animazioni dell'interfaccia
 
 id: Master volume: %d dB
 msg: Volume principale: %d dB
+
+id: Multilingual 'No media loaded'
+msg: 'Nessun media caricato' plurilingue
 
 id: Top bar navigation buttons
 msg: Pulsanti nella barra di navigazione in alto
@@ -503,8 +509,7 @@ id: Embedded in file
 msg: Incorporato nel file
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Traccia %d
 
 #
 # ./src/navigator.c
@@ -662,9 +667,6 @@ msg: Al centro
 id: Color
 msg: Colore
 
-id: Controls if video playback should restart where last played
-msg: Controlla se la riproduzione del video dovrebbe riprendere dall'ultima posizione
-
 id: Count video as played when reaching
 msg: Conteggia il video come riprodotto quando raggiunge
 
@@ -679,6 +681,9 @@ msg: Impostazioni generiche per i sottotitoli
 
 id: Ignore embedded styling
 msg: Ignora i codici di stile incorporati
+
+id: Include all subtitle files from movie directory
+msg: Includi tutti i file di sottotitoli presenti nella cartella del filmato
 
 id: Left
 msg: Sinistra
@@ -704,6 +709,9 @@ msg: Colore ombra
 id: Shadow offset
 msg: Offset ombra
 
+id: Stretch video to fullscreen
+msg: Adatta video a Schermo Pieno
+
 id: Stretch video to widescreen
 msg: Adatta video a widescreen
 
@@ -712,6 +720,9 @@ msg: Posizione sottotitoli
 
 id: Subtitle size
 msg: Dimensione sottotitoli
+
+id: Subtitle size and positioning
+msg: Dimensione e posizione dei sottotitoli
 
 id: Subtitle styling
 msg: Stile sottotitoli

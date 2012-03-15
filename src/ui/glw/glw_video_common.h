@@ -118,6 +118,9 @@ typedef struct glw_video {
   int gv_rwidth;
   int gv_rheight;
 
+  int gv_fwidth;
+  int gv_fheight;
+
   char *gv_current_url;
   char *gv_pending_url;
 

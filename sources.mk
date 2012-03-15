@@ -39,7 +39,7 @@ SRCS += src/main.c \
 	src/ui/ui.c \
 	src/keymapper.c \
 	src/plugins.c \
-	src/blobcache.c \
+	src/blobcache_file.c \
 	src/i18n.c \
 	src/prop/prop_core.c \
 	src/prop/prop_nodefilter.c \
@@ -260,6 +260,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_dummy.c \
 			src/ui/glw/glw_container.c \
 			src/ui/glw/glw_list.c \
+			src/ui/glw/glw_clist.c \
 			src/ui/glw/glw_array.c \
 			src/ui/glw/glw_deck.c \
 			src/ui/glw/glw_playfield.c \
@@ -477,6 +478,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_settings.c            \
                         src/js/js_prop.c                \
                         src/js/js_json.c                \
+                        src/js/js_event.c               \
 
 
 #

@@ -68,7 +68,7 @@ static inline void rstr_set(rstr_t **p, rstr_t *r)
   *p = r ? rstr_dup(r) : NULL;
 }
 
-
+rstr_t *rstr_spn(rstr_t *s, const char *set);
 
 #else
 
@@ -87,6 +87,12 @@ rstr_t *rstr_dup(rstr_t *);
 rstr_t *rstr_alloc(const char *in);
 
 rstr_t *rstr_allocl(const char *in, size_t len);
+
+static inline void rstr_set(rstr_t **p, rstr_t *r)
+{
+  free(*p);
+  *p = r ? strdup(r) : NULL;
+}
 
 #endif
 

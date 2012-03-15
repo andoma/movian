@@ -376,7 +376,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       if(type != 0 || size < 0)
 	return NULL;
 	
-      ctx = avcodec_alloc_context();
+      ctx = avcodec_alloc_context3(NULL);
       ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(ctx->extradata, data, size);
       ctx->extradata_size =  size;
@@ -386,7 +386,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       if(size < 1)
 	return NULL;
 
-      ctx = avcodec_alloc_context();
+      ctx = avcodec_alloc_context3(NULL);
       ctx->extradata = av_mallocz(1 + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(ctx->extradata, &type, 1);
       ctx->extradata_size =  1;
@@ -468,7 +468,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       if(type != 0 || size < 0)
 	return NULL;
 	
-      ctx = avcodec_alloc_context();
+      ctx = avcodec_alloc_context3(NULL);
       ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
       memcpy(ctx->extradata, data, size);
       ctx->extradata_size =  size;
@@ -476,7 +476,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
       break;
 
     case CODEC_ID_MP3:
-      ctx = avcodec_alloc_context();
+      ctx = avcodec_alloc_context3(NULL);
       parse = 1;
       fmt = "MP3";
       break;

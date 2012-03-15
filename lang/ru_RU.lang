@@ -26,19 +26,22 @@ id: Added by: %s
 msg: Добавил: %s
 
 id: Played %d times
-msg: Пpoигpaнo %d paз
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg: %d пунктов
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg: %d треков
+msg[0]: 
+msg[1]: 
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -47,16 +50,13 @@ id: Delete
 msg: Удалить
 
 id: Queue
-# Missing translation
-msg: 
+msg: Очередь
 
 id: Star
-# Missing translation
-msg: 
+msg: Пометить
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Снять метку
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -248,6 +248,10 @@ msg: Анимация интерфейса
 id: Master volume: %d dB
 msg: Общая громкость: %d dB
 
+id: Multilingual 'No media loaded'
+# Missing translation
+msg: 
+
 id: Top bar navigation buttons
 msg: Верхняя панель кнопок навигации
 
@@ -313,8 +317,7 @@ msg: Невозможно открыть CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: Ошибка чтения DVD, перезапуск диска
@@ -428,8 +431,7 @@ msg: Поиск с использованием spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Внешний файл
 
 #
 # ./src/i18n.c
@@ -507,12 +509,10 @@ msg: Видеозум
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Встроен в файл
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Трек %d
 
 #
 # ./src/navigator.c
@@ -670,9 +670,6 @@ msg: Центр
 id: Color
 msg: Цвет
 
-id: Controls if video playback should restart where last played
-msg: Упpaвлeниe вoзoбнoвлeниeм вocпpoизвeдeния видeo c мecтa ocтaнoвки
-
 id: Count video as played when reaching
 msg: Считать видео проигранным при достижении
 
@@ -687,6 +684,10 @@ msg: Общие настройки для видео субтитров
 
 id: Ignore embedded styling
 msg: Игнорировать встроенный стиль
+
+id: Include all subtitle files from movie directory
+# Missing translation
+msg: 
 
 id: Left
 msg: Слева
@@ -712,6 +713,9 @@ msg: Цвет тени
 id: Shadow offset
 msg: Смещение тени
 
+id: Stretch video to fullscreen
+msg: Растянуть видео во весь экран
+
 id: Stretch video to widescreen
 msg: Растянуть видео на широкий экран
 
@@ -720,6 +724,10 @@ msg: Позиция субтитров
 
 id: Subtitle size
 msg: Размер субтитров
+
+id: Subtitle size and positioning
+# Missing translation
+msg: 
 
 id: Subtitle styling
 msg: Стиль субтитров
