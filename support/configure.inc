@@ -197,6 +197,8 @@ common_help(){
   echo "  --release                Stage for release"
   echo "  --cleanbuild             Erase builddir before configuring"
   echo "  --ccache                 Enable use of ccache"
+  echo "  --extra-cflags           Extra cflags"
+  echo "  --extra-ldflags          Extra ldflags"
   echo ""
   echo "Platform specific options:"
 }
@@ -211,6 +213,10 @@ common_opt(){
   ;;
 
   --build=*) BUILD="$2"
+  ;;
+  --extra-cflags=*) EXTRA_CFLAGS="$2"
+  ;;
+  --extra-ldflags=*) EXTRA_LDFLAGS="$2"
   ;;
 
   --enable-?*|--disable-?*)
@@ -267,6 +273,8 @@ CONFIGURE_ARGS=$@
 TOPDIR=$TOPDIR
 PLATFORM=$PLATFORM
 CONFIGURE_POSTFIX=$CONFIGURE_POSTFIX
+CFLAGS_cfg += ${EXTRA_CFLAGS}
+LDFLAGS_cfg += ${EXTRA_LDFLAGS}
 EOF
    
     # Create config.h
@@ -311,7 +319,7 @@ libav_setup() {
 
     LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png --disable-ffmpeg --disable-demuxer=applehttp --disable-avconv --disable-avprobe"
 
-    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}" --cc="${CC}") || die
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS}) || die
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS} install) || die

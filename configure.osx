@@ -103,7 +103,7 @@ if [ "x$CC" != "x" ]; then
     echo >>${CONFIG_MAK} "CC=$CC"
     CC="$CC"
 else
-    CC=cc
+    CC="cc"
 fi
 
 if checkcc; then 
