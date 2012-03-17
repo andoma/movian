@@ -1,0 +1,29 @@
+
+* Get rid of blurring on list
+
+* Fix settings
+
+* Make list widget really good
+
+  Overall list requirements:
+  Support for page options
+  Type-as-you-write filtering
+
+  Item Requirements:
+  Display metadata
+  Display last play, # times played, etc
+  Controls for options
+
+* Minor cleanup on home menu
+
+* Do some kind of plugin for backdrops
+
+
+
+Low prio
+
+* Some kind of plugins for user interface
+
+* Clean up font handling a bit
+
+* 

@@ -1,0 +1,161 @@
+#import "theme://include/buttons.view"
+#import "theme://include/separators.view"
+
+#define DIVIDER(TITLE, HIDDEN = false) {
+  widget(container_y, {
+    .hidden = HIDDEN;
+    widget(dummy, {
+      .height = $ui.size;
+    });
+    widget(label, {
+      .caption = TITLE;
+      .outline = true;
+      .shadow = true;
+      .sizeScale = 1.5;
+      .align = center;
+    });
+    HORIZONTAL_SEPARATOR();
+  });
+}
+
+#define commandButton(EVENT, TYPE, ENABLED) {
+  _glossybutton(ICON="theme://svg/" + 
+		translate(TYPE, TYPE,
+			  "SeekForward", "SeekFwd",
+			  "Subtitles", "Script",
+			  "Video", "Camcorder"
+			 ) + ".svg",
+		EVENT=EVENT,
+		HIDDEN=!ENABLED,
+		ENABLED=0.9,
+		SCALE=2.0);
+}
+
+#define commandButton2(EVENT, TYPE, ENABLED, VISIBLE) {
+  _glossybutton(ICON="theme://svg/" + 
+		translate(TYPE, TYPE,
+			  "SeekForward", "SeekFwd",
+			  "Subtitles", "Script"
+			 ) + ".svg",
+		EVENT=EVENT,
+		HIDDEN=!(VISIBLE),
+		ENABLED=0.9 * (ENABLED),
+		SCALE=2.0);
+}
+
+
+#define ITEM(LABEL, ICON, EVENT) {
+
+  widget(container_x, {
+    .spacing = 3;
+    .focusable = 0.1;
+    .alpha = isFocused() + 0.5;
+    onEvent(activate, EVENT);
+    
+    widget(icon, {
+      .source = ICON;
+    });
+    widget(label, {
+      .caption = LABEL;
+    });
+  });
+}
+
+$view.videofeatures =
+  $global.media.current.type == "video" ||
+  $global.media.current.type == "tv";
+
+/*
+onEvent(back, {
+  $view.settingpage = 0;
+}, $view.settingpage && $view.videofeatures);
+*/
+
+widget(container_y, {
+  .hidden = !$ui.menu;
+  widget(container_x, {
+
+    .padding = [0,0,5,0];
+
+    .align = right;
+
+    space(3);
+
+    widget(backdrop, {
+      .weight = 1;
+      .source = "theme://graphics/blackdrop.png";
+      .border = 12;
+      .padding = -4;
+      .alphaSelf = 0.8;
+      
+      widget(clist, {
+	.center = 0.2;
+	.spacing = 5;
+
+	DIVIDER("Playcontrol");
+	
+	widget(container_x, {
+	  .align = center;
+	  .spacing = 3;
+
+	  commandButton2(event(PreviousTrack), "SkipBack",
+			 $global.media.current.canSkipBackward,
+			 $global.media.current.canSkipBackward ||
+			 $global.media.current.canSkipForward);
+
+
+	  widget(deck, {
+	    .hidden = !$global.media.current.canPause;
+	    .effect = flipVertical;
+	    .noInitialTransform = true;
+	    .time = 0.2;
+	    
+	    commandButton(event(Pause), "Pause", true);
+	    commandButton(event(Play), "Play", true);
+	    
+	    .page = $global.media.current.playstatus == "pause";
+	  });
+
+	  commandButton2(event(NextTrack), "SkipNext",
+			 $global.media.current.canSkipForward,
+			 $global.media.current.canSkipBackward ||
+			 $global.media.current.canSkipForward);
+
+	});	
+
+	DIVIDER("Go to");
+
+	ITEM("Global settings", "theme://svg/Settings.svg",
+	     {
+	       $ui.menu = false;
+	       fireEvent(navOpen("settings:"));
+	     });
+
+
+	ITEM("Playqueue", "theme://svg/List.svg",
+	     {
+	       $ui.menu = false;
+	       fireEvent(navOpen("playqueue:"));
+	     });
+
+	DIVIDER("Subtitle settings");
+
+
+	  cloner($global.media.current.subtitle.settings.model.nodes, loader, {
+	    .source = "theme://settings2/" + $self.model.type + ".view";
+	    .time = 0.3;
+	    .noInitialTransform = true;
+	  });
+
+
+
+
+	
+
+      });
+    });		
+  });
+  widget(dummy, {
+    .height = $ui.playdeckheight;
+  });
+});
