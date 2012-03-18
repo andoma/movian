@@ -1,3 +1,5 @@
+#include <smmintrin.h>
+
 static inline void
 glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 {
@@ -73,14 +75,14 @@ typedef Mtx PMtx;
 
 #define glw_pmtx_mul_prepare(dst, src) do {				\
     __v4sf __r0 = (src)[0], __r1 = (src)[1], __r2 = (src)[2], __r3 = (src)[3]; \
-    __v4sf __t0 = __builtin_ia32_unpcklps (__r0, __r1);			\
-    __v4sf __t1 = __builtin_ia32_unpcklps (__r2, __r3);			\
-    __v4sf __t2 = __builtin_ia32_unpckhps (__r0, __r1);			\
-    __v4sf __t3 = __builtin_ia32_unpckhps (__r2, __r3);			\
-    (dst)[0] = __builtin_ia32_movlhps (__t0, __t1);			\
-    (dst)[1] = __builtin_ia32_movhlps (__t1, __t0);			\
-    (dst)[2] = __builtin_ia32_movlhps (__t2, __t3);			\
-    (dst)[3] = __builtin_ia32_movhlps (__t3, __t2);			\
+    __v4sf __t0 = _mm_unpacklo_ps (__r0, __r1);			\
+    __v4sf __t1 = _mm_unpacklo_ps (__r2, __r3);			\
+    __v4sf __t2 = _mm_unpacklo_ps (__r0, __r1);			\
+    __v4sf __t3 = _mm_unpacklo_ps (__r2, __r3);			\
+    (dst)[0] = _mm_movelh_ps (__t0, __t1);			\
+    (dst)[1] = _mm_movehl_ps (__t1, __t0);			\
+    (dst)[2] = _mm_movelh_ps (__t2, __t3);			\
+    (dst)[3] = _mm_movehl_ps (__t3, __t2);			\
   } while (0)
 
 
@@ -95,9 +97,9 @@ typedef Mtx PMtx;
 
 #define glw_pmtx_mul_vec3(dst, pmt, V) do {			\
     __v4sf v = _mm_set_ps(1,					\
-			  __builtin_ia32_vec_ext_v4sf(V, 2),	\
-			  __builtin_ia32_vec_ext_v4sf(V, 1),	\
-			  __builtin_ia32_vec_ext_v4sf(V, 0));	\
+			  _mm_extract_ps(V, 2),	\
+			  _mm_extract_ps(V, 1),	\
+			  _mm_extract_ps(V, 0));	\
     __v4sf a0 = _mm_mul_ps(pmt[0], v);				\
     __v4sf a1 = _mm_mul_ps(pmt[1], v);				\
     __v4sf a2 = _mm_mul_ps(pmt[2], v);				\
@@ -133,26 +135,26 @@ static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
 {
   __v4sf n = _mm_mul_ps(a,b);
   return 
-    __builtin_ia32_vec_ext_v4sf(n, 0) + 
-    __builtin_ia32_vec_ext_v4sf(n, 1) + 
-    __builtin_ia32_vec_ext_v4sf(n, 2);
+    _mm_extract_ps(n, 0) + 
+    _mm_extract_ps(n, 1) + 
+    _mm_extract_ps(n, 2);
 }
 
 static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
 {
   __v4sf n = _mm_mul_ps(a,b);
   return 
-    __builtin_ia32_vec_ext_v4sf(n, 0) + 
-    __builtin_ia32_vec_ext_v4sf(n, 1) + 
-    __builtin_ia32_vec_ext_v4sf(n, 2) + 
-    __builtin_ia32_vec_ext_v4sf(b, 3);
+    _mm_extract_ps(n, 0) + 
+    _mm_extract_ps(n, 1) + 
+    _mm_extract_ps(n, 2) + 
+    _mm_extract_ps(b, 3);
 }
 
 extern int glw_mtx_invert(Mtx dst, const Mtx src);
 
-#define glw_vec3_extract(a, pos)  __builtin_ia32_vec_ext_v4sf(a, pos)
+#define glw_vec3_extract(a, pos)  _mm_extract_ps(a, pos)
 
-#define glw_vec4_extract(a, pos) __builtin_ia32_vec_ext_v4sf(a, pos)
+#define glw_vec4_extract(a, pos) _mm_extract_ps(a, pos)
 
 const static inline float *
 glw_mtx_get(const Mtx src)
