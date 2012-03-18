@@ -11,14 +11,14 @@ widget(container_x, {
     .filterConstraintX = true;
 
     widget(label, {
-      .caption = $self.model.metadata.title;
+      .caption = $self.metadata.title;
       .sizeScale = 1.2;
       .color = select($view.highlight, 1, 0.4);
       .shadow = true;
     });
   
     widget(label, {
-      .caption = $self.model.metadata.shortdesc;
+      .caption = $self.metadata.shortdesc;
       .sizeScale = 0.8;
       .color = select($view.highlight, 1, 0.4);
       .alpha = select($view.highlight, 1, 0.5);
@@ -37,10 +37,10 @@ widget(container_x, {
 
       widget(slider_x, {
 	.focusable = true;
-	.min = $self.model.min;
-	.max = $self.model.max;
-	.step = $self.model.step;
-	bind($self.model.value);
+	.min = $self.min;
+	.max = $self.max;
+	.step = $self.step;
+	bind($self.value);
 	
 	widget(backdrop, {
 	  .alphaSelf = 0.2 + iir(isFocused() * 1, 8) + isHovered() * 0.1;
@@ -49,7 +49,7 @@ widget(container_x, {
 	  
 	  widget(label, {
 	    .align = center;
-	    .caption = fmt("%d %s", $self.model.value, $self.model.unit);
+	    .caption = fmt("%d %s", $self.value, $self.unit);
 	    .shadow = true;
 	  });
 	});

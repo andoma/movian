@@ -9,7 +9,7 @@ widget(container_y, {
 
     widget(image, {
       .fixedSize = true;
-      .source = $self.model.image;
+      .source = $self.image;
       .align = top;
     });
     
@@ -18,7 +18,7 @@ widget(container_y, {
     });
     
     widget(label, {
-      .caption = $self.model.description;
+      .caption = $self.description;
       .maxlines = 10;
       .ellipsize = true;
       .align = topLeft;

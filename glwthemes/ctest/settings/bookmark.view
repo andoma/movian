@@ -6,7 +6,7 @@
     .focusable = 0.1;
     .focusOnClick = true;
     onEvent(activate, {
-      $self.model.svctype = LABEL;
+      $self.svctype = LABEL;
     });
 
     .alphaSelf = iir(isFocused() * 1, 8) * 0.8;
@@ -15,7 +15,7 @@
     PLATE_GFX();
     widget(container_z, {
       widget(icon, {
-	.color = select($self.model.svctype == LABEL ||
+	.color = select($self.svctype == LABEL ||
 			isHovered() || isFocused(),
 			[1.0, 1.0, 1.0],
 			COLOR);
@@ -25,8 +25,8 @@
       });
 
       widget(icon, { 
-	.alpha = iir($self.model.svctype == LABEL, 4); 
-	.color = select($self.model.svctype == LABEL ||
+	.alpha = iir($self.svctype == LABEL, 4); 
+	.color = select($self.svctype == LABEL ||
 			isHovered() || isFocused(),
 			[1.0, 1.0, 1.0],
 			COLOR);
@@ -83,7 +83,7 @@ widget(container_x, {
       
 	  widget(text, {
 	    .focusable = 1.0;
-	    bind($self.model.title);
+	    bind($self.title);
 	  });
 	});
       });
@@ -112,7 +112,7 @@ widget(container_x, {
       
 	  widget(text, {
 	    .focusable = 1.0;
-	    bind($self.model.url);
+	    bind($self.url);
 	  });
 	});
 
@@ -121,7 +121,7 @@ widget(container_x, {
 	});
 
 	widget(icon, {
-	  .color = translate($self.model.status,
+	  .color = translate($self.status,
 			     [1.0, 1.0, 1.0],
 			     "ok",   [0.2, 1.0, 0.2],
 			     "auth", [1.0, 0.2, 0.2],
@@ -129,7 +129,7 @@ widget(container_x, {
 			     "fail", [1.0, 0.2, 0.2],
 			     "scanning", [0.7, 0.7, 0.2]);
 
-	  .source = translate($self.model.status,
+	  .source = translate($self.status,
 			      void,
 			      "ok",   "theme://svg/Check.svg",
 			      "auth", "theme://svg/Lock.svg",
@@ -142,8 +142,8 @@ widget(container_x, {
 
       widget(expander_y, {
 
-	.expansion = scurve(select($self.model.statustxt, 1, 0), 0.15);
-	.alpha     = scurve(select($self.model.statustxt, 1, 0), 0.15);
+	.expansion = scurve(select($self.statustxt, 1, 0), 0.15);
+	.alpha     = scurve(select($self.statustxt, 1, 0), 0.15);
 
 	widget(container_x, {
 	
@@ -153,7 +153,7 @@ widget(container_x, {
 
 	  widget(label, {
 	    .color = [1.0, 0.2, 0.2];
-	    .caption = $self.model.statustxt;
+	    .caption = $self.statustxt;
 	  });
 	});
       });

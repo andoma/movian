@@ -129,7 +129,8 @@ audio_init(void)
 
   audio_settings_root =
     settings_add_dir(NULL, _p("Audio output"), "sound", NULL,
-		     _p("Select audio output device and related configurations"));
+		     _p("Select audio output device and related configurations"),
+		     "settings:audio");
   
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 

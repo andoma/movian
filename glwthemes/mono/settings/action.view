@@ -6,7 +6,7 @@ widget(container_x, {
   widget(dummy, { .width = $ui.size * 2; });
 
   .align = left;
-  settingButtonAction($self.model.metadata.title,
-		      deliverEvent($self.model.action),
+  settingButtonAction($self.metadata.title,
+		      deliverEvent($self.action),
 		      true, false);
 });

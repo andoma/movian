@@ -9,8 +9,8 @@ widget(container_x, {
 
   widget(icon, {
     .color = select(isFocused() || isHovered(), 1, 0.3);
-    .source = $self.model.metadata.icon ?? 
-      translate($self.model.subtype,
+    .source = $self.metadata.icon ?? 
+      translate($self.subtype,
 		"theme://svg/Settings.svg",
 		"sound", "theme://svg/Sound.svg",
 		"audio", "theme://svgs/Music.svg",
@@ -28,14 +28,14 @@ widget(container_x, {
 
   widget(container_y, {
     widget(label, {
-      .caption = $self.model.metadata.title;
+      .caption = $self.metadata.title;
       .sizeScale = 1.2;
       .color = select(isFocused() || isHovered(), 1, 0.4);
       .shadow = true;
     });
 
     widget(label, {
-      .caption = $self.model.metadata.shortdesc;
+      .caption = $self.metadata.shortdesc;
       .sizeScale = 0.8;
       .color = select(isFocused() || isHovered(), 1, 0.4);
       .alpha = select(isFocused() || isHovered(), 1, 0.5);

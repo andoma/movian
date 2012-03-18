@@ -216,7 +216,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
   } else {
     gr->gr_settings = settings_add_dir(NULL, 
 				       _p("Display and user interface"),
-				       "display", NULL, NULL);
+				       "display", NULL, NULL, NULL);
 
   }
 

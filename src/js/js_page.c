@@ -569,7 +569,6 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   js_model_t *parent = JS_GetPrivate(cx, obj);
   const char *type;
   JSObject *metaobj = NULL;
-  char url[URL_MAX];
   prop_t *item, *metadata;
   js_model_t *jm;
   JSObject *robj;
@@ -579,14 +578,15 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
 
   item = prop_create_root(NULL);
 
-  backend_prop_make(item, url, sizeof(url));
+  rstr_t *url = backend_prop_make(item, NULL);
  
   metadata = prop_create(item, "metadata");
 
   if(metaobj)
     js_prop_from_object(cx, metaobj, metadata);
 
-  prop_set_string(prop_create(item, "url"), url);
+  prop_set_rstring(prop_create(item, "url"), url);
+  rstr_release(url);
 
   jm = js_model_create(JSVAL_VOID);
 

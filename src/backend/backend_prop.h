@@ -15,11 +15,8 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef BACKEND_PROP_H__
-#define BACKEND_PROP_H__
+#pragma once
 
 struct prop;
-void backend_prop_make(struct prop *model, char *url, size_t urllen);
-
-#endif // BACKEND_PROP_H__
+struct rstr;
+struct rstr *backend_prop_make(struct prop *model, const char *suggest);

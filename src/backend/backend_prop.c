@@ -41,7 +41,7 @@ typedef struct proppage {
   prop_sub_t *pp_model_sub;
   prop_t *pp_model;
 
-  char *pp_url;
+  rstr_t *pp_url;
 
 } proppage_t;
 
@@ -61,7 +61,7 @@ pp_cb(void *opaque, prop_event_t event, ...)
   LIST_REMOVE(pp, pp_link);
   prop_ref_dec(pp->pp_model);
   prop_unsubscribe(pp->pp_model_sub);
-  free(pp->pp_url);
+  rstr_release(pp->pp_url);
   free(pp);
 }
 
@@ -69,19 +69,24 @@ pp_cb(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void
-backend_prop_make(prop_t *model, char *url, size_t urllen)
+rstr_t *
+backend_prop_make(prop_t *model, const char *suggest)
 {
   proppage_t *pp;
-
+  rstr_t *r;
   hts_mutex_lock(&pp_mutex);
 
   pp = malloc(sizeof(proppage_t));
 
-  pp_tally++;
-
-  snprintf(url, urllen, "prop:%d", pp_tally);
-  pp->pp_url = strdup(url);
+  if(suggest == NULL) {
+    char url[50];
+    pp_tally++;
+    snprintf(url, sizeof(url), "prop:%d", pp_tally);
+    r = rstr_alloc(url);
+  } else {
+    r = rstr_alloc(suggest);
+  }
+  pp->pp_url = rstr_dup(r);
 
   pp->pp_model = prop_ref_inc(model);
 
@@ -94,6 +99,7 @@ backend_prop_make(prop_t *model, char *url, size_t urllen)
 
   LIST_INSERT_HEAD(&proppages, pp, pp_link);
   hts_mutex_unlock(&pp_mutex);
+  return r;
 }
 
 
@@ -110,7 +116,7 @@ be_prop_open(prop_t *page, const char *url)
   hts_mutex_lock(&pp_mutex);
 
   LIST_FOREACH(pp, &proppages, pp_link)
-    if(!strcmp(pp->pp_url, url))
+    if(!strcmp(rstr_get(pp->pp_url), url))
       break;
 
   if(pp == NULL) {

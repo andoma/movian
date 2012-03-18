@@ -58,7 +58,8 @@ void
 i18n_init(void)
 {
   prop_t *s = settings_add_dir(NULL, _p("Languages"), NULL, NULL,
-			       _p("Preferred languages"));
+			       _p("Preferred languages"),
+			       "settings:i18n");
   setting_t *x;
   int i;
 

@@ -43,10 +43,9 @@ search_class_create(prop_t *parent, prop_t **nodesp, prop_t **entriesp,
   prop_t *m = prop_create(p, "metadata");
   prop_t *n, *e;
   
-  char url[URL_MAX];
-
-  backend_prop_make(p, url, sizeof(url));
-  prop_set_string(prop_create(p, "url"), url);
+  rstr_t *url = backend_prop_make(p, NULL);
+  prop_set_rstring(prop_create(p, "url"), url);
+  rstr_release(url);
 
   prop_set_string(prop_create(m, "title"), title);
   if(icon != NULL)
@@ -77,7 +76,8 @@ search_get_settings(void)
   static prop_t *p;
 
   if(p == NULL)
-    p = settings_add_dir(NULL, _p("Search"), "search", NULL, NULL);
+    p = settings_add_dir(NULL, _p("Search"), "search", NULL, NULL,
+			 "settings:search");
   return p;
 }
 

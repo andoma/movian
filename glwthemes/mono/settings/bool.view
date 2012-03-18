@@ -12,14 +12,14 @@ widget(container_x, {
     .filterConstraintX = true;
 
     widget(label, {
-      .caption = $self.model.metadata.title;
+      .caption = $self.metadata.title;
       .sizeScale = 1.2;
       .color = select($view.highlight, 1, 0.4);
       .shadow = true;
     });
   
     widget(label, {
-      .caption = $self.model.metadata.shortdesc;
+      .caption = $self.metadata.shortdesc;
       .sizeScale = 0.8;
       .color = select($view.highlight, 1, 0.4);
       .alpha = select($view.highlight, 1, 0.5);
@@ -33,7 +33,7 @@ widget(container_x, {
     .align = left;
     settingGroup(
       .alphaSelf = select($view.highlight, 1, 0.2);
-      ONOFF($self.model.value);
+      ONOFF($self.value);
     );
   });
 });

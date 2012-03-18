@@ -217,7 +217,7 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
 		    const char *eventname, action_type_t a)
 {
   keymap_entry_t *ke;
-  prop_t *p, *src;
+  prop_t *p;
   
   ke = malloc(sizeof(keymap_entry_t));
   ke->ke_km = km;
@@ -227,12 +227,11 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
   LIST_INSERT_HEAD(&km->km_entries, ke, ke_link);
 
   ke->ke_prop =  prop_create_root(NULL);
-  src = prop_create(ke->ke_prop, "model");
 
-  prop_set_string(prop_create(src, "type"), "keymapentry");
+  prop_set_string(prop_create(ke->ke_prop, "type"), "keymapentry");
 
-  p = prop_create(src, "keycode1");
-  prop_set_string(prop_create(src, "keycode1"), kc1);
+  p = prop_create(ke->ke_prop, "keycode1");
+  prop_set_string(prop_create(ke->ke_prop, "keycode1"), kc1);
 
   ke->ke_sub_keycode = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -241,8 +240,8 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
 		   NULL);
 
 
-  p = prop_create(src, "keycode2");
-  prop_set_string(prop_create(src, "keycode2"), kc2);
+  p = prop_create(ke->ke_prop, "keycode2");
+  prop_set_string(prop_create(ke->ke_prop, "keycode2"), kc2);
 
   ke->ke_sub_keycode = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -251,7 +250,7 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
 		   NULL);
 
 
-  p = prop_create(prop_create(src, "metadata"), "title");
+  p = prop_create(prop_create(ke->ke_prop, "metadata"), "title");
   prop_set_string(p, eventname);
 
   if(prop_set_parent(ke->ke_prop, prop_create(km->km_settings, "nodes")))
@@ -366,9 +365,8 @@ keymapper_create(prop_t *settingsparent, const char *name, prop_t *title,
 
   km->km_name = strdup(name);
   km->km_settings =
-    prop_create(settings_add_dir(settingsparent, title,
-				 "keymap", NULL, desc),
-		"model");
+    settings_add_dir(settingsparent, title,
+		     "keymap", NULL, desc, "settings:keymapper");
 
   keymapper_create_entries(km, def);
   return km;

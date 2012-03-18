@@ -3157,8 +3157,9 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   sp_playlist_type type = f_sp_playlistcontainer_playlist_type(pc, position);
   playlist_t *pl;
   prop_t *metadata;
-  char url[200], buf[200];
+  char buf[200];
   const char *name;
+  rstr_t *url;
 
   switch(type) {
   case SP_PLAYLIST_TYPE_PLAYLIST:
@@ -3181,8 +3182,10 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
     prop_set_string(prop_create(metadata, "title"), name);
     prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
 
-    backend_prop_make(pl->pl_prop_root_tree, url, sizeof(url));
-    prop_set_string(prop_create(pl->pl_prop_root_tree, "url"), url);
+    url = backend_prop_make(pl->pl_prop_root_tree, NULL);
+    prop_set_rstring(prop_create(pl->pl_prop_root_tree, "url"), url);
+    rstr_release(url);
+
     pl->pl_prop_childs = prop_create(pl->pl_prop_root_tree, "nodes");
 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
@@ -3206,9 +3209,6 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
   default:
     return;
   }
-
-  snprintf(url, sizeof(url),
-	   "%s 0x%016"PRId64, name, pl->pl_folder_id);
 
   pl->pl_type = type;
 
@@ -4508,7 +4508,8 @@ be_spotify_init(void)
   prop_set_string(title, "Spotify");
 
   s = settings_add_dir(settings_apps, title, NULL, iconurl,
-		       _p("Spotify music service"));
+		       _p("Spotify music service"),
+		       "spotify:settings");
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
 

@@ -739,7 +739,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jsg->jsg_spath = strdup(spath);
   jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
   jsg->jsg_root = settings_add_dir(settings_apps, _p(title), NULL, icon,
-				   desc ? _p(desc) : NULL);
+				   desc ? _p(desc) : NULL, NULL);
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   jsg->jsg_val = *rval = OBJECT_TO_JSVAL(robj);
   JS_AddNamedRoot(cx, &jsg->jsg_val, "jsg");

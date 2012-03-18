@@ -149,21 +149,20 @@ bookmark_add(const char *title, const char *url, const char *type)
 {
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
   prop_t *p = prop_create_root(NULL);
-  prop_t *src = prop_create(p, "model");
  
-  prop_set_string(prop_create(src, "type"), "bookmark");
+  prop_set_string(prop_create(p, "type"), "bookmark");
 
-  bm->bm_title_sub = bookmark_add_prop(src, "title",    title,   bm, set_title);
-  bm->bm_url_sub   = bookmark_add_prop(src, "url",      url,     bm, set_url);
-  bm->bm_type_sub  = bookmark_add_prop(src, "svctype",  type,    bm, set_type);
+  bm->bm_title_sub = bookmark_add_prop(p, "title",    title,   bm, set_title);
+  bm->bm_url_sub   = bookmark_add_prop(p, "url",      url,     bm, set_url);
+  bm->bm_type_sub  = bookmark_add_prop(p, "svctype",  type,    bm, set_type);
 
   bm->bm_service = service_create(title, url, type, NULL, 1, 1);
 
   prop_link(service_get_status_prop(bm->bm_service),
-	    prop_create(src, "status"));
+	    prop_create(p, "status"));
 
   prop_link(service_get_statustxt_prop(bm->bm_service),
-	    prop_create(src, "statustxt"));
+	    prop_create(p, "statustxt"));
 
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
@@ -226,9 +225,9 @@ bookmarks_init(void)
   htsmsg_t *m, *n, *o;
 
 
-  bookmarks = prop_create(settings_add_dir(NULL, _p("Bookmarks"),
-					   "bookmark", NULL, NULL),
-			  "model");
+  bookmarks = settings_add_dir(NULL, _p("Bookmarks"),
+			       "bookmark", NULL, NULL,
+			       "settings:bookmarks");
 
   prop_set_int(prop_create(bookmarks, "mayadd"), 1);
 

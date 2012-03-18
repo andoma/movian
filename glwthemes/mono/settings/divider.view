@@ -4,7 +4,7 @@
 widget(container_y, {
   widget(dummy, { .height = 10;   });
   widget(label, {
-    .caption = $self.model.metadata.title;
+    .caption = $self.metadata.title;
     .sizeScale = 1.5;
     .color = 0.5;
     .shadow = true;

@@ -25,7 +25,7 @@ widget(container_y, {
 
 
       cloner($page.model.nodes, loader, {
-	.source = "theme://settings/" + $self.model.type + ".view";
+	.source = "theme://settings/" + $self.type + ".view";
 	.time = 0.3;
 	.noInitialTransform = true;
       });

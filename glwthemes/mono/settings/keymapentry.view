@@ -8,7 +8,7 @@ widget(container_x, {
     .filterConstraintX = true;
     .weight = 1.0;
     .align = left;
-    .caption = $self.model.metadata.title;
+    .caption = $self.metadata.title;
   });
 
   VERTICAL_SEPARATOR();
@@ -28,13 +28,13 @@ widget(container_x, {
     .focusable = true;
     .focusOnClick = true;
     onEvent(KeyCode, {
-      $self.model.keycode1 = $event;
+      $self.keycode1 = $event;
     });
 
     widget(label, {
       .align = center;
-      .alpha = select($self.model.keycode1, 1.0, 0.5);
-      .caption = $self.model.keycode1 ?? "<not set>";
+      .alpha = select($self.keycode1, 1.0, 0.5);
+      .caption = $self.keycode1 ?? "<not set>";
     });
   });
 
@@ -47,7 +47,7 @@ widget(container_x, {
     ICON2("theme://svg/Delete.svg",
 	  "Clear",
 	  {
-	    $self.model.keycode1 = void;
+	    $self.keycode1 = void;
 	  },
 	  PLATE_COLOR_DELETE(),
 	  1, 0.1);
@@ -75,13 +75,13 @@ widget(container_x, {
     .focusable = true;
     .focusOnClick = true;
     onEvent(KeyCode, {
-      $self.model.keycode2 = $event;
+      $self.keycode2 = $event;
     });
 
     widget(label, {
       .align = center;
-      .alpha = select($self.model.keycode2, 1.0, 0.5);
-      .caption = $self.model.keycode2 ?? "<not set>";
+      .alpha = select($self.keycode2, 1.0, 0.5);
+      .caption = $self.keycode2 ?? "<not set>";
     });
   });
 
@@ -93,7 +93,7 @@ widget(container_x, {
     ICON2("theme://svg/Delete.svg",
 	  "Clear",
 	  {
-	    $self.model.keycode2 = void;
+	    $self.keycode2 = void;
 	  },
 	  PLATE_COLOR_DELETE(),
 	  1, 0.1);
