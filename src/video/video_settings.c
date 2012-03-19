@@ -151,6 +151,18 @@ set_vzoom(void *opaque, int v)
 }
 
 static void
+set_vstretchh(void *opaque, int vh)
+{
+  video_settings.vstretchh = vh;
+}
+
+static void
+set_vstretchw(void *opaque, int vw)
+{
+  video_settings.vstretchw = vw;
+}
+
+static void
 set_video_resumemode(void *opaque, const char *str)
 {
   video_settings.resume_mode = atoi(str);
@@ -203,7 +215,23 @@ video_settings_init(void)
 		      "%", NULL,
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
+ 
+  settings_create_int(s, "vstretchh",
+		      _p("Video stretch height"), 0, store, 0, 240,
+		      1, set_vstretchh, NULL,
+		      SETTINGS_INITIAL_UPDATE,
+		      "%", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"videoplayback");		      
   
+  settings_create_int(s, "vstretchw",
+		      _p("Video stretch width"), 0, store, 0, 240,
+		      1, set_vstretchw, NULL,
+		      SETTINGS_INITIAL_UPDATE,
+		      "%", NULL,
+		      settings_generic_save_settings, 
+		      (void *)"videoplayback");
+ 
   video_settings.resume_mode = 1;
   x = settings_create_multiopt(s, "resumemode",
 			       _p("Resume video playback"));
