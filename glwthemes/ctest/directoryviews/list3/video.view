@@ -1,9 +1,17 @@
 #import "theme://directoryviews/list3/common.view"
 
-ITEM($self.metadata.icon ?? $self.metadata.fallbackicon ?? "theme://svg/Movie.svg",
-     select($self.metadata.year,
-	    $self.metadata.title + ' <font size="2">' + 
-	    fmt("(%d)", $self.metadata.year),
-	    $self.metadata.title),
-     navOpen($self.url),
-    $self.metadata.tagline);
+widget(backdrop, {
+  source = "theme://graphics/blackdrop.png";
+  border = 12;
+  margin = [0,-12];
+  padding = [-12,0];
+  alphaSelf = 0.4 * iir(isFocused(), 10);
+  
+  ITEM($self.metadata.icon ?? $self.metadata.fallbackicon ?? "theme://svg/Movie.svg",
+       select($self.metadata.year,
+	      $self.metadata.title + ' <font size="2">' + 
+	      fmt("(%d)", $self.metadata.year),
+	      $self.metadata.title),
+       navOpen($self.url),
+       $self.metadata.tagline);
+});
