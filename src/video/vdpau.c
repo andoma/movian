@@ -733,7 +733,7 @@ vdpau_mixer_deinit(vdpau_mixer_t *vm)
  *
  */
 void
-vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode, int height)
+vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode)
 {
   int best;
   VdpVideoMixerFeature f;
@@ -742,7 +742,9 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode, int height)
   VdpBool values[1];
   VdpStatus st;
 
-  if(mode & vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS && height < 1080) {
+  // TRACE(TRACE_DEBUG, "VDPAU", "nothing decided yet: %d", mode);
+
+  if(mode & vm->vm_caps & VDPAU_MIXER_DEINTERLACE_TS) {
     best = VDPAU_MIXER_DEINTERLACE_TS;
     f = VDP_VIDEO_MIXER_FEATURE_DEINTERLACE_TEMPORAL_SPATIAL;
     type = "Temporal/Spatial";
@@ -752,6 +754,8 @@ vdpau_mixer_set_deinterlacer(vdpau_mixer_t *vm, int mode, int height)
     type = "Temporal";
   } else
     return;
+
+  TRACE(TRACE_DEBUG, "VDPAU", "Setting deinterlacer type to %s", type);
   
   if(mode) {
     if(vm->vm_enabled & best)

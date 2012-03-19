@@ -427,15 +427,6 @@ mp_create(const char *name, int flags, const char *type)
 			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
 			"%", mp->mp_pc, NULL, NULL);
 
-#if ENABLE_VDPAU
-  mp->mp_setting_vdpau_deinterlace = 
-    settings_create_bool(mp->mp_setting_video_root, "vdpau_deinterlace",
-			 _p("VDPAU deinterlace"), 
-			 video_settings.vdpau_deinterlace, NULL,
-			 NULL, NULL, 0,
-			 mp->mp_pc, NULL, NULL);
-#endif
-
   mp->mp_setting_av_delta = 
     settings_create_int(mp->mp_setting_audio_root, "avdelta",
 			_p("Audio delay"), 0, NULL, -5000, 5000,
@@ -508,10 +499,6 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_sub_scale);
   setting_destroy(mp->mp_setting_sub_on_video);
   setting_destroy(mp->mp_setting_vzoom);
-
-#if ENABLE_VDPAU
-  setting_destroy(mp->mp_setting_vdpau_deinterlace);
-#endif
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);

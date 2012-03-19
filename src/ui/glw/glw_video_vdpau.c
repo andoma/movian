@@ -442,7 +442,13 @@ glw_video_input_vdpau(glw_video_t *gv,
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
 
-    vdpau_mixer_set_deinterlacer(vm, video_settings.vdpau_deinterlace, fi->height);
+    TRACE(TRACE_DEBUG, "VDPAU", " mode is %d, resolution limit is %d", video_settings.vdpau_deinterlace, video_settings.vdpau_deinterlace_resolution_limit);
+
+    if(video_settings.vdpau_deinterlace_resolution_limit > 0 && 
+       fi->height > video_settings.vdpau_deinterlace_resolution_limit)
+      vdpau_mixer_set_deinterlacer(vm, 0);
+    else
+      vdpau_mixer_set_deinterlacer(vm, video_settings.vdpau_deinterlace);
 
     vm->vm_surface_win[3] = vm->vm_surface_win[2];
     vm->vm_surface_win[2] = vm->vm_surface_win[1];
@@ -476,7 +482,7 @@ glw_video_input_vdpau(glw_video_t *gv,
 			       &dst_rect, &dst_rect, 0, NULL);
 
   } else {
-    vdpau_mixer_set_deinterlacer(vm, 0, fi->height);
+    vdpau_mixer_set_deinterlacer(vm, 0);
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
 			       VDP_VIDEO_MIXER_PICTURE_STRUCTURE_FRAME,
