@@ -1,0 +1,744 @@
+language: Czech
+native: Česky
+maintainer: Jirka Dutka <jirka@dutka.net>
+#
+# ./glwthemes/mono/commandmenu/cmd_root.view
+#
+id: Audio settings
+msg: Nastavení zvuku
+
+id: Languages
+msg: Jazyk
+
+id: Settings
+msg: Nastavení
+
+id: Subtitle settings
+msg: Nastavení titulků
+
+id: Video settings
+msg: Nastavení videa
+
+#
+# ./glwthemes/mono/directoryviews/infobox/audio.view
+#
+id: Added by: %s
+msg: Zařadil: %s
+
+id: Played %d times
+msg[0]: Přehráno jednou
+msg[1]: Přehráno %d krát
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_directory.view
+#
+id: %d entries
+msg[0]: %d soubor
+msg[1]: %d souborů
+
+#
+# ./glwthemes/mono/directoryviews/list2/center_playlist.view
+#
+id: %d tracks
+msg[0]: %d stopa
+msg[1]: %d stop
+
+#
+# ./glwthemes/mono/directoryviews/list2/options_audio.view
+#
+id: Delete
+msg: Smazat
+
+id: Queue
+msg: Fronta
+
+id: Star
+msg: Star
+
+id: Unstar
+msg: Unstar
+
+#
+# ./glwthemes/mono/include/buttons.view
+#
+id: Off
+msg: Vyp
+
+id: On
+msg: Zap
+
+#
+# ./glwthemes/mono/include/infobox.view
+#
+id: Enqueue
+msg: Zařaď
+
+#
+# ./glwthemes/mono/include/popup.view
+#
+id: Cancel
+msg: Storno
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/mono/pages/about.view
+#
+id: Allocated by application: %d kB
+msg: Obsazeno aplikací: %d kB
+
+id: Allocated by malloc: %d kB
+msg: Obsazeno pomocí malloc: %d kB
+
+id: Avail system RAM: %d kB
+msg: Paměť RAM k dispozici: %d kB
+
+id: Detected CPUs: %d
+msg: Nalezené procesory: %d
+
+id: Display info
+msg: Displej
+
+id: Framerate: %.2f Hz
+msg: Obnovovací frekvence %.2f Hz
+
+id: Free chunks: %d
+msg: Volné segmenty: %d
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Výška: %d px
+
+id: Memory status
+msg: Stav paměti
+
+id: Renderer: %s
+msg: Renderer: %s
+
+id: System info
+msg: Systémové informace
+
+id: Total system RAM: %d kB
+msg: Celková velikost paměti: %d kB
+
+id: Unused memory: %d kB
+msg: Nevyužitá paměť: %d kB
+
+id: Version: %s
+msg: Verze: %s
+
+id: Width: %d px
+msg: Šířka: %d px
+
+id: Windowmanager: %s
+msg: Správce oken: %s
+
+#
+# ./glwthemes/mono/pages/about_top.view
+#
+id: About
+msg: O programu
+
+#
+# ./glwthemes/mono/pages/home_top.view
+#
+id: Home
+msg: Domů
+
+#
+# ./glwthemes/mono/pages/openerror.view
+#
+id: Unable to open resource
+msg: Zdroj nelze otevřít 
+
+#
+# ./glwthemes/mono/pages/openerror_top.view
+#
+id: Page load error
+msg: Stránku nelze načíst
+
+#
+# ./glwthemes/mono/pages/playqueue_top.view
+#
+id: Playqueue
+msg: Fronta přehrávání 
+
+#
+# ./glwthemes/mono/pages/video.view
+#
+id: Playback status
+msg: Stav přehrávání
+
+id: Unable to start video playback
+msg: Přehrávání videa se nezdařilo
+
+#
+# ./glwthemes/mono/playdecks/dvd.view
+#
+id: Chapter %d / %d
+msg: Kapitola %d / %d
+
+id: Title %d / %d
+msg: Název %d / %d
+
+#
+# ./glwthemes/mono/playdecks/tracks.view
+#
+id: Track %d / %d
+msg: Skladba %d / %d
+
+#
+# ./glwthemes/mono/playdecks/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU je příliš pomalý pro dekódování tohoto videa
+
+#
+# ./glwthemes/mono/popups/auth.view
+#
+id: Domain
+msg: Doména
+
+id: Password
+msg: Heslo
+
+id: Remember me
+msg: Pamatovat si
+
+id: Username
+msg: Uživatel
+
+#
+# ./glwthemes/mono/screensaver.view
+#
+id: No media loaded
+msg: Žádné médium
+
+#
+# ./glwthemes/mono/sysinfo.view
+#
+id: Audio output
+msg: Výstup zvuku
+
+id: CPUs
+msg: CPUs
+
+id: GPU & Display
+msg: GPU a displej
+
+id: GPU Core temperature: %d / %d °
+msg: GPU - teplota jádra: %d / %d °
+
+#
+# ./glwthemes/mono/universe.view
+#
+id: Adjust background tint based on daytime
+msg: Nastavit barvu pozadi podle času
+
+id: Alternate list layout
+msg: Alternativní vzhled seznamu
+
+id: Audio muted
+msg: Zvuk ztišen
+
+id: Fancy UI animations
+msg: Animace rozhraní
+
+id: Master volume: %d dB
+msg: Hlasitost: %d dB
+
+id: Multilingual 'No media loaded'
+msg: Vícejazyčné 'No media loaded'
+
+id: Top bar navigation buttons
+msg: Navigační ikony na horní liště
+
+#
+# ./src/api/opensubtitles.c
+#
+id: Settings for opensubtitles.org
+msg: Nastavení pro opensubtitles.org
+
+id: Use opensubtitles.org
+msg: Používat opensubtitles.org
+
+#
+# ./src/arch/arch_ps3.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Systém má málo paměti (%d kb RAM volných)
+
+#
+# ./src/audio/audio.c
+#
+id: Audio/Video sync delay
+msg: Audio/Video synchronizace
+
+id: Current output device
+msg: Aktivní výstupní zařízení
+
+id: Force stereo downmix
+msg: Vnutit Stereo-Downmix
+
+id: Phantom LFE
+msg: Phantom-LFE
+
+id: Phantom center
+msg: Phantom-center
+
+id: Select audio output device and related configurations
+msg: Výběr zvukového výstupního zařízení a související nastavení
+
+id: Small front speakers
+msg: Malé přední reproduktory
+
+id: Swap LFE+center with surround
+msg: Zaměnit LFE+Center <-> Surround
+
+id: Switching audio output to %s
+msg: Přepnout výstup zvuku na %s
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Neplatný CD URL
+
+id: Invalid CD track
+msg: Neplatná CD skladba
+
+id: Unable to open CD
+msg: Chyba při otvírání CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: Chyba při čtení DVD, disk bude načtenm znovu
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Neplatný HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Hledání
+
+id: Search result for: %s
+msg: Výsledky hledání pro: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Automatic login when Showtime starts
+msg: Automatické přihlášení při startu programu
+
+id: Collaborative
+msg: Spolupráce
+
+id: Enable Spotify
+msg: Povolit Spotify
+
+id: Forget me
+msg: Nepamatovat si mě 
+
+id: Friends
+msg: Přátelé
+
+id: High bitrate
+msg: Vysoký bitrate
+
+id: Inbox
+msg: Inbox
+
+id: New albums on Spotify
+msg: Nová alba na Spotify
+
+id: New releases
+msg: Nové verze
+
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offline synchronizace na 96kbps
+
+id: Playlists
+msg: Seznamy skladeb
+
+id: Relogin (switch user)
+msg: Nové přihlášení (přepnout uživatele)
+
+id: Search result
+msg: Výsledky hledání
+
+id: Spotify friends
+msg: Spotify přátele
+
+id: Spotify music service
+msg: Spotify hudební služby
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify vám nabízí legální a volný přístup k obrovskému hudebnímu archivu. Pro jeho využití v tomto programu potřebujete účet Spotify Premium. \n Pro více informací o Spotify  navštivte http://www.spotify.com/\n\n Před prvním spuštění Spotify v Showtime budete požádáni o vaše uživatelské jméno a heslo.
+
+id: Spotify playlists
+msg: Spotyfy seznamy skladeb
+
+id: Spotify: Connection error: %s
+msg: Spotify: Chyba připojení: %s
+
+id: Starred
+msg: S hvězdičkou
+
+#
+# ./src/bookmarks.c
+#
+id: Bookmarks
+msg: Oblíbené
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Nelze zpracovat %d
+
+id: Unable to open file: %s
+msg: Nejde otevřít soubor: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Pro hledání použít Unix locatedb
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Hledat pomocí Spotlight
+
+#
+# ./src/fileaccess/fa_video.c
+#
+id: External file
+msg: Externí soubor
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Jazyk
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Tříznakový ISO kód jazyka, např. (eng, swe, cze)
+
+id: Preferred languages
+msg: Výchozí jazyk
+
+id: Primary audio language code
+msg: Jazyk zvuku
+
+id: Primary subtitle language code
+msg: Výchozí jazyk titulků
+
+id: SRT character set
+msg: Znaková sada SRT titulků
+
+id: Secondary audio language code
+msg: Druhý jazyk zvuku
+
+id: Secondary subtitle language code
+msg: Druhý jazyk titulků
+
+id: Tertiary audio language code
+msg: Třetí jazyk zvuku
+
+id: Tertiary subtitle language code
+msg: Třetí jazyk titulků
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatické zapnutí/vypnutí TV
+
+id: Input source
+msg: Vstup
+
+id: LG Television set
+msg: Nastavení LG TV
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Nastavení klávesnice a dálkového ovládání
+
+id: Keymapper
+msg: Ovládání
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Zarovnat titulky do obrazu
+
+id: Audio delay
+msg: Zpoždění zvuku
+
+id: Subtitle delay
+msg: Zpoždění titulků
+
+id: Subtitle scaling
+msg: Velikost titulků
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/metadata/metadata.c
+#
+id: Embedded in file
+msg: Vloženo v souboru
+
+id: Track %d
+msg: Track %d
+
+#
+# ./src/navigator.c
+#
+id: No handler for URL
+msg: Nelze zpracovat URL
+
+#
+# ./src/plugins.c
+#
+id: Invalud URI
+msg: Neplatné URI
+
+id: Plugin ID %s does not exist
+msg: Plugin s ID %s neexistuje
+
+id: Plugin ID %s have no download URL
+msg: Plugin s ID %s nemá URL pro stažení
+
+id: Unable to load plugin.json: %s
+msg: Nelze načíst plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Nelze načíst plugin.json: nesprávné JSON
+
+id: Unable to request plugin repository: %s
+msg: Neúspěšný požadavek na repozitář pluginů: %s
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatické vypnutí
+
+id: Run control
+msg: Run control
+
+#
+# ./src/sd/sd.c
+#
+id: Enabled
+msg: Povoleno
+
+id: Name
+msg: Název
+
+id: Type
+msg: Typ
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Aplikace a nainstalované doplňky
+
+id: Discovered media sources
+msg: Vyhledat zdroje videa a zvuku
+
+id: Global settings
+msg: Hlavní nastavení
+
+#
+# ./src/ui/glw/glw.c
+#
+id: Display and user interface
+msg: Displej a uživatelské rozhraní
+
+id: Horizontal underscan
+msg: Horizontální podscan
+
+id: Screensaver delay
+msg: Zpoždění spořiče
+
+id: Userinterface size
+msg: Velikost rozhraní
+
+id: Vertical underscan
+msg: Vertikální podscan
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Fullscreen mode
+msg: Celá obrazovka
+
+id: Map mouse wheel to up/down
+msg: Kolečko myši posouvá nahoru/dolů
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Automaticky přepnout do tohoto režimu
+
+id: DVI-Video color range
+msg: DVI-Video rozsah barev
+
+id: Switch to this mode now
+msg: Přepnout ihned do tohoto režimu
+
+id: Video modes
+msg: Režimy videa
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Omogočen v glavnem meniju
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Zařízení nebylo nalezeno
+
+id: Malformed URI after device
+msg: Malformed URI after device
+
+id: Malformed URI after service
+msg: Malformed URI after service
+
+id: Service not found
+msg: Služba nebyla nalezena
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Unable to accelerate %s, library not loaded.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Unable to open Cell codec. Error 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Unable to query Cell codec. Error 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: Always try to select a subtitle
+msg: Vždy zkusit vybrat titulky
+
+id: Auto
+msg: Auto
+
+id: Center
+msg: Střed
+
+id: Color
+msg: Barva
+
+id: Count video as played when reaching
+msg: Považovat video za přehrané po dosažení
+
+id: Enable VDPAU
+msg: Povolit VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Vynutit titulky na ploše videa
+
+id: Generic settings for video subtitles
+msg: Obecná nastavení video titulků
+
+id: Ignore embedded styling
+msg: Ignorovat vložené styly
+
+id: Include all subtitle files from movie directory
+msg: Načíst všecny titulky z adresáře s filmem
+
+id: Left
+msg: Levý
+
+id: No
+msg: Ne
+
+id: Outline color
+msg: Barva obrysu
+
+id: Outline size
+msg: Velikost obrysu
+
+id: Resume video playback
+msg: Obnovit přehrávání
+
+id: Right
+msg: Pravý
+
+id: Shadow color
+msg: Barva stínu
+
+id: Shadow offset
+msg: Posun stínu
+
+id: Stretch video to fullscreen
+msg: Roztáhnout video na celou obrazovku
+
+id: Stretch video to widescreen
+msg: Roztáhnout video na šířku 
+
+id: Subtitle position
+msg: Pozice titulků
+
+id: Subtitle size
+msg: Velikost titulků
+
+id: Subtitle size and positioning
+msg: Velikost a pozice titulků
+
+id: Subtitle styling
+msg: Styl titulků
+
+id: Subtitles
+msg: Titulky
+
+id: Video acceleration and display behaviour
+msg: Video akcelerace a nastavení displeje
+
+id: Video playback
+msg: Přehrávání videa
+
+id: Yes
+msg: Ano 
+
