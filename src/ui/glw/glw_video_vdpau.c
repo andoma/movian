@@ -442,8 +442,6 @@ glw_video_input_vdpau(glw_video_t *gv,
   if(fi->interlaced) {
     int duration = fi->duration >> 1;
 
-    TRACE(TRACE_DEBUG, "VDPAU", " mode is %d, resolution limit is %d", video_settings.vdpau_deinterlace, video_settings.vdpau_deinterlace_resolution_limit);
-
     if(video_settings.vdpau_deinterlace_resolution_limit > 0 && 
        fi->height > video_settings.vdpau_deinterlace_resolution_limit)
       vdpau_mixer_set_deinterlacer(vm, 0);
