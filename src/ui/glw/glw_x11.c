@@ -1130,6 +1130,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
     glw_prepare_frame(&gx11->gr, flags);
     layout_draw(gx11);
     glw_unlock(&gx11->gr);
+    glw_post_scene(&gx11->gr);
 
     frame++;
 
