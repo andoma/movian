@@ -43,6 +43,7 @@ typedef struct render_job {
   char blendmode;
   char frontface;
   char eyespace;
+  char flags;
 } render_job_t;
 
 
@@ -84,7 +85,7 @@ render_unlocked(glw_root_t *gr)
       gp = gbr->gbr_renderer_flat;
     } else {
       
-      if(rj->blur > 0.05) {
+      if(rj->blur > 0.05 || rj->flags & GLW_RENDER_BLUR_ATTRIBUTE) {
 	gp = gbr->gbr_renderer_tex_blur;
       } else {
 	gp = gbr->gbr_renderer_tex;
@@ -97,21 +98,19 @@ render_unlocked(glw_root_t *gr)
     
     if(glw_load_program(gbr, gp)) {
       program_switches++;
-      float *vertices = gbr->gbr_vertex_buffer;
+      const float *vertices = gbr->gbr_vertex_buffer;
 
       glVertexAttribPointer(gp->gp_attribute_position,
-			    3, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			    4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			    vertices);
       
       glVertexAttribPointer(gp->gp_attribute_color,
 			    4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			    vertices + 5);
+			    vertices + 4);
       
       glVertexAttribPointer(gp->gp_attribute_texcoord,
 			    2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			    vertices + 3);
-
-      abort(); // Fix blur
+			    vertices + 8);
     }
 
     glUniform4f(gp->gp_uniform_color_offset,
@@ -120,13 +119,12 @@ render_unlocked(glw_root_t *gr)
     glw_program_set_uniform_color(gbr, rj->rgb_mul.r, rj->rgb_mul.g,
 				  rj->rgb_mul.b, rj->alpha);
 
-    if(rj->blur > 0.05 && tex != NULL) {
-      abort(); // fix blur
-      /*
-      glUniform2f(gp->gp_uniform_blur_amount, 
-		  1.5 * rj->blur / tex->width,
-		  1.5 * rj->blur / tex->height);
-      */
+    if(gp == gbr->gbr_renderer_tex_blur) {
+      glUniform2f(gp->gp_uniform_texture_blur_scale, 
+		  1.5 / tex->width,
+		  1.5 / tex->height);
+      
+      glUniform1f(gp->gp_uniform_blur_amount_2, rj->blur);
     }
 
     if(rj->eyespace) {
@@ -166,7 +164,7 @@ render_unlocked(glw_root_t *gr)
   tssum += ts;
   cnt++;
 
-  //  printf("%16lld (%lld) %d switches\n", ts, tssum/cnt, program_switches);
+  // printf("%16d (%d) %d switches\n", (int)ts, (int)(tssum/cnt), program_switches);
 }
 
 
@@ -257,6 +255,7 @@ shader_render_delayed(struct glw_root *root,
     memcpy(vdst, vertices, num_vertices * VERTEX_SIZE * sizeof(float));
   }
 
+  rj->flags = flags;
   rj->vertex_offset = gbr->gbr_vertex_offset;
   rj->num_vertices = vnum;
   gbr->gbr_vertex_offset += vnum;
