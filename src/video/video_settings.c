@@ -129,6 +129,18 @@ set_vdpau(void *opaque, int on)
 {
   video_settings.vdpau = on;
 }
+
+static void
+set_vdpau_deinterlace(void *opaque, const char *str)
+{
+  video_settings.vdpau_deinterlace = atoi(str);
+}
+
+static void
+set_vdpau_deinterlace_resolution_limit(void *opaque, const char *str)
+{
+  video_settings.vdpau_deinterlace_resolution_limit = atoi(str);
+}
 #endif
 
 
@@ -180,6 +192,27 @@ video_settings_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
+
+  x = settings_create_multiopt(s, "vdpau_deinterlace", _p("Preferred VDPAU deinterlacer method"));
+
+  settings_multiopt_add_opt(x, "2", _p("Temporal/Spatial"), 1);
+  settings_multiopt_add_opt(x, "1", _p("Temporal"), 0);
+  settings_multiopt_add_opt(x, "0", _p("Off"), 0);
+
+  settings_multiopt_initiate(x, set_vdpau_deinterlace, NULL, NULL, 
+			     store, settings_generic_save_settings,
+                             (void *)"videoplayback");
+
+  x = settings_create_multiopt(s, "vdpau_deinterlace_resolution_limit", _p("Maximum resolution for deinterlacer"));
+  settings_multiopt_add_opt(x, "576", _p("576"), 0);
+  settings_multiopt_add_opt(x, "720", _p("720"), 0);
+  settings_multiopt_add_opt(x, "1080", _p("1080"), 0);
+  settings_multiopt_add_opt(x, "0", _p("No limit"), 1);
+
+  settings_multiopt_initiate(x, set_vdpau_deinterlace_resolution_limit, NULL, NULL, 
+			     store, settings_generic_save_settings,
+                             (void *)"videoplayback");
+
 #endif
 
   settings_create_bool(s, "stretch_horizontal",
