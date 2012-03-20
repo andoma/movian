@@ -306,13 +306,12 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs,
-	       int ys)
+glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys)
 {
   glw_loadable_texture_t *glt;
 
-  assert(xs != 0);
-  assert(ys != 0);
+  assert(xs == -1 || xs > 0);
+  assert(ys == -1 || ys > 0);
 
   LIST_FOREACH(glt, &gr->gr_tex_list, glt_global_link)
     if(!strcmp(rstr_get(glt->glt_url), rstr_get(filename)) &&

@@ -690,6 +690,9 @@ typedef struct glw_root {
 
   // Base offsets, should be set by frontend
   int gr_base_size;
+  int gr_user_size;
+  int gr_current_size;
+
   int gr_base_underscan_v;
   int gr_base_underscan_h;
 
@@ -1177,6 +1180,8 @@ void glw_gf_unregister(glw_gf_ctrl_t *ggc);
 void glw_gf_do(void);
 
 void glw_font_change_size(void *opaque, int fontsize);
+
+void glw_update_size(glw_root_t *gr);
 
 /**
  *

@@ -347,13 +347,30 @@ eval_op(glw_view_eval_context_t *ec, struct token *self)
     if((aa = token_as_string(a)) != NULL &&
        (bb = token_as_string(b)) != NULL) {
       /* Concatenation of strings */
-      int al = strlen(aa);
-      int bl = strlen(bb);
+      
+      int rich = 
+	(a->type == TOKEN_RSTRING && a->t_rstrtype == PROP_STR_RICH) ||
+	(b->type == TOKEN_RSTRING && b->t_rstrtype == PROP_STR_RICH);
+
+      int al = rich && a->t_rstrtype == PROP_STR_UTF8 ? 
+	html_enteties_escape(aa, NULL) - 1 : strlen(aa);
+      int bl = rich && b->t_rstrtype == PROP_STR_UTF8 ? 
+	html_enteties_escape(bb, NULL) - 1 : strlen(bb);
 
       r = eval_alloc(self, ec, TOKEN_RSTRING);
       r->t_rstring = rstr_allocl(NULL, al + bl);
-      memcpy(rstr_data(r->t_rstring),      aa, al);
-      memcpy(rstr_data(r->t_rstring) + al, bb, bl);
+      r->t_rstrtype = rich ? PROP_STR_RICH : PROP_STR_UTF8;
+
+      if(rich && a->t_rstrtype == PROP_STR_UTF8)
+	html_enteties_escape(aa, rstr_data(r->t_rstring));
+      else
+	memcpy(rstr_data(r->t_rstring),      aa, al);
+
+      if(rich && b->t_rstrtype == PROP_STR_UTF8)
+	html_enteties_escape(bb, rstr_data(r->t_rstring) + al);
+      else
+	memcpy(rstr_data(r->t_rstring) + al, bb, bl);
+
       eval_push(ec, r);
       return 0;
     }
@@ -2841,7 +2858,8 @@ typedef struct glw_scurve_extra {
   float start;
   float current;
   float target;
-  float time;
+  float time_up;
+  float time_down;
 
 } glw_scurve_extra_t;
 
@@ -2853,26 +2871,38 @@ static int
 glwf_scurve(glw_view_eval_context_t *ec, struct token *self,
 	    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
-  token_t *b = argv[1];
+  token_t *a, *b, *c;
   token_t *r;
-  float f, v, t;
+  float f, v, tup, tdown;
   glw_scurve_extra_t *s = self->t_extra;
 
-  if((a = token_resolve(ec, a)) == NULL)
+  if(argc < 2) 
+    return glw_view_seterr(ec->ei, self,
+			    "scurve() requires at least two arguments");
+
+  if((a = token_resolve(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, b)) == NULL)
+  if((b = token_resolve(ec, argv[1])) == NULL)
     return -1;
+  if(argc > 2) {
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+  } else {
+    c = NULL;
+  }
 
   f = token2float(a);
-  t = token2float(b);
+  tup = token2float(b);
+  tdown = token2float(c?:b);
 
-  if(s->target != f || s->time != t) {
+  if(s->target != f || s->time_up != tup || s->time_down != tdown) {
     s->start = s->target;
     s->target = f;
-    s->time = t;
+    s->time_up = tup;
+    s->time_down = tdown;
     s->x = 0;
-    s->xd = 1.0 / (1000000 * s->time / ec->w->glw_root->gr_frameduration);
+    float t = s->target < s->start ? tdown : tup;
+    s->xd = 1.0 / (1000000 * t / ec->w->glw_root->gr_frameduration);
   }
 
   s->x += s->xd;
@@ -4337,7 +4367,11 @@ static int
 glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *r;
+  token_t *a, *b, *c, *d, *r;
+
+  if(argc < 2)
+    return glw_view_seterr(ec->ei, self, "propSorter(): "
+			   "Too few arguments");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
@@ -4359,6 +4393,52 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 rstr_get(b->t_rstring),
 				 PROP_NF_TAKE_DST_OWNERSHIP);
+
+  argc -= 2;
+  argv += 2;
+  for(; argc >= 4; argc -= 4, argv += 4) {
+
+    if((a = token_resolve(ec, argv[0])) == NULL)
+      return -1;
+    if((b = token_resolve(ec, argv[1])) == NULL)
+      return -1;
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+    if((d = token_resolve(ec, argv[3])) == NULL)
+      return -1;
+    
+    const char *path = token_as_string(a);
+    if(path == NULL)
+      continue;
+
+    if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
+      continue;
+
+    prop_nf_cmp_t cf;
+    if(!strcmp(rstr_get(b->t_rstring), "eq"))
+      cf = PROP_NF_CMP_EQ;
+    else if(!strcmp(rstr_get(b->t_rstring), "neq"))
+      cf = PROP_NF_CMP_NEQ;
+    else
+      continue;
+
+    prop_nf_mode_t mode;
+    if(!strcmp(rstr_get(d->t_rstring), "include"))
+      mode = PROP_NF_MODE_INCLUDE;
+    else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
+      mode = PROP_NF_MODE_EXCLUDE;
+    else
+      continue;
+    
+    const char *val = token_as_string(c);
+
+    if(val != NULL) {
+      prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+    } else {
+      prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+    }
+  }
+
   return 0;
 }
 
@@ -4683,7 +4763,7 @@ static const token_func_t funcvec[] = {
   {"event", 1, glwf_event},
   {"changed", -1, glwf_changed, glwf_changed_ctor, glwf_changed_dtor},
   {"iir", -1, glwf_iir},
-  {"scurve", 2, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
+  {"scurve", -1, glwf_scurve, glwf_scurve_ctor, glwf_scurve_dtor},
   {"translate", -1, glwf_translate},
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
@@ -4716,7 +4796,7 @@ static const token_func_t funcvec[] = {
   {"count", 1, glwf_count},
   {"deliverEvent", -1, glwf_deliverEvent},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
-  {"propSorter", 2, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
+  {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"getLayer", 0, glwf_getLayer},
   {"getWidth", 0, glwf_getWidth},
   {"getHeight", 0, glwf_getHeight},
