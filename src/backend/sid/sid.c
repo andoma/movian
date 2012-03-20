@@ -60,7 +60,8 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   subsong = atoi(p);
 
-  if((data = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL)
+  if((data = fa_load(url, &size, NULL, errbuf, errlen, NULL, 0,
+		     NULL, NULL)) == NULL)
     return NULL;
 
   player = sidcxx_load(data, size, subsong, errbuf, errlen);

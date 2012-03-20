@@ -73,7 +73,8 @@ ssl_lock_fn(int mode, int n, const char *file, int line)
  *
  */
 static int
-ssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
+ssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
+	 net_read_cb_t *cb, void *opaque)
 {
   int c, tot = 0;
   if(!all) {

@@ -65,7 +65,8 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   *p = 0;
 
-  if((buf = fa_load(fpath, &size, NULL, errbuf, errlen, NULL)) == NULL)
+  if((buf = fa_load(fpath, &size, NULL, errbuf, errlen, NULL,
+		    0, NULL, NULL)) == NULL)
     return -1;
 
   err = gme_open_data(buf, size, &emu, gme_info_only);
@@ -347,7 +348,8 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   track = atoi(p) - 1;
 
-  if((mem = fa_load(url, &size, NULL, errbuf, errlen, NULL)) == NULL)
+  if((mem = fa_load(url, &size, NULL, errbuf, errlen, NULL,
+		    0, NULL, NULL)) == NULL)
     return NULL;
 
   e = fa_gme_playfile_internal(mp, mem, size,
