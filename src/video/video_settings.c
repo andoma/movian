@@ -195,7 +195,7 @@ video_settings_init(void)
 
   x = settings_create_multiopt(s, "vdpau_deinterlace", _p("Preferred VDPAU deinterlacer method"));
 
-  settings_multiopt_add_opt(x, "2", _p("Temporal/Spacial"), 1);
+  settings_multiopt_add_opt(x, "2", _p("Temporal/Spatial"), 1);
   settings_multiopt_add_opt(x, "1", _p("Temporal"), 0);
   settings_multiopt_add_opt(x, "0", _p("Off"), 0);
 
