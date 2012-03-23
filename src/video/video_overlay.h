@@ -21,6 +21,7 @@ typedef struct video_overlay {
 
   int64_t vo_start;
   int64_t vo_stop;
+  int vo_stop_estimated;
 
   int vo_x;
   int vo_y;
@@ -61,3 +62,5 @@ void video_overlay_decode_ext_subtitle(video_decoder_t *vd,
 
 void video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 				    int64_t start, int64_t stop, int tags);
+
+int calculate_subtitle_duration(int txt_len);
