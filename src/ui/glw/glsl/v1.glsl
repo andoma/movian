@@ -1,12 +1,12 @@
+attribute vec4 a_position;
+attribute vec4 a_color;
+attribute vec2 a_texcoord;
+
 uniform vec4 u_color;
 uniform vec4 u_color_offset;
 uniform mat4 u_modelview;
 uniform float u_blur_amount;
 
-attribute vec4 a_position;
-attribute vec4 a_color;
-attribute vec2 a_texcoord;
-attribute float a_blur;
 
 const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 			     0.000000,2.414213,0.000000,0.000000,

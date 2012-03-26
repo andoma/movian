@@ -76,6 +76,17 @@ render_unlocked(glw_root_t *gr)
 
   int program_switches = 0;
 
+  const float *vertices = gbr->gbr_vertex_buffer;
+
+  glVertexAttribPointer(0, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			vertices);
+      
+  glVertexAttribPointer(1, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			vertices + 4);
+      
+  glVertexAttribPointer(2, 2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			vertices + 8);
+
   for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
 
     struct glw_backend_texture *tex = rj->tex;
@@ -98,19 +109,6 @@ render_unlocked(glw_root_t *gr)
     
     if(glw_load_program(gbr, gp)) {
       program_switches++;
-      const float *vertices = gbr->gbr_vertex_buffer;
-
-      glVertexAttribPointer(gp->gp_attribute_position,
-			    4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			    vertices);
-      
-      glVertexAttribPointer(gp->gp_attribute_color,
-			    4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			    vertices + 4);
-      
-      glVertexAttribPointer(gp->gp_attribute_texcoord,
-			    2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
-			    vertices + 8);
     }
 
     glUniform4f(gp->gp_uniform_color_offset,
@@ -424,12 +422,17 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   gp->gp_title = strdup(title);
   gp->gp_program = p;
 
+  glBindAttribLocation(p, 0, "a_position");
+  glBindAttribLocation(p, 1, "a_color");
+  glBindAttribLocation(p, 2, "a_texcoord");
+
   glUseProgram(p);
   gbr->gbr_current = gp;
 
-  gp->gp_attribute_position = glGetAttribLocation(p, "a_position");
-  gp->gp_attribute_texcoord = glGetAttribLocation(p, "a_texcoord");
-  gp->gp_attribute_color    = glGetAttribLocation(p, "a_color");
+
+  gp->gp_attribute_position = 0;
+  gp->gp_attribute_color    = 1;
+  gp->gp_attribute_texcoord = 2;
 
   gp->gp_uniform_modelview  = glGetUniformLocation(p, "u_modelview");
   gp->gp_uniform_color      = glGetUniformLocation(p, "u_color");
@@ -476,16 +479,6 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
   if(gbr->gbr_current == gp)
     return 0;
 
-  if(gbr->gbr_current != NULL) {
-    glw_program_t *old = gbr->gbr_current;
-    if(old->gp_attribute_position != -1)
-      glDisableVertexAttribArray(old->gp_attribute_position);
-    if(old->gp_attribute_texcoord != -1)
-      glDisableVertexAttribArray(old->gp_attribute_texcoord);
-    if(old->gp_attribute_color != -1)
-      glDisableVertexAttribArray(old->gp_attribute_color);
-  }
-
   gbr->gbr_current = gp;
 
   if(gp == NULL) {
@@ -495,12 +488,6 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
 
   glUseProgram(gp->gp_program);
 
-  if(gp->gp_attribute_position != -1)
-      glEnableVertexAttribArray(gp->gp_attribute_position);
-  if(gp->gp_attribute_texcoord != -1)
-    glEnableVertexAttribArray(gp->gp_attribute_texcoord);
-  if(gp->gp_attribute_color != -1)
-    glEnableVertexAttribArray(gp->gp_attribute_color);
   return 1;
 }
 
@@ -581,6 +568,10 @@ glw_opengl_shaders_init(glw_root_t *gr)
     gbr->gbr_delayed_rendering = 1;
     
   }
+
+  glEnableVertexAttribArray(0);
+  glEnableVertexAttribArray(1);
+  glEnableVertexAttribArray(2);
 
   prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
 		  "OpenGL VP/FP shaders");
