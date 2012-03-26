@@ -293,6 +293,7 @@ album_analysis(deco_browse_t *db)
 
     if(da->da_count * 2 >= item_count) {
       prop_set_rstring(prop_create(m, "artist_name"), da->da_artist);
+      metadata_bind_albumart(prop_create(m, "album_art"), da->da_artist, v);
     }
   }
 
