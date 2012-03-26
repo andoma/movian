@@ -1,6 +1,4 @@
 
-* Get rid of blurring on list
-
 * Make list widget really good
 
   Overall list requirements:
@@ -23,5 +21,3 @@ Low prio
 * Some kind of plugins for user interface
 
 * Clean up font handling a bit
-
-* 

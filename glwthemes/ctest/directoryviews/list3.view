@@ -10,8 +10,8 @@ widget(clist, {
   
   cloner($page.model.nodes, loader, {
     
-    alpha = 0.3 + scurve(clamp(isFocused() + $view.change, 0, 1), 0.1, 10);
-    blur = 1 - scurve(select(isFocused(), 1, $view.change), 0.1, 10);
+    //    alpha = 0.3 + scurve(clamp(isFocused() + $view.change, 0, 1), 0.1, 10);
+    //    blur = 1 - scurve(select(isFocused(), 1, $view.change), 0.1, 10);
 
     time = 0.3;
     noInitialTransform = true;
