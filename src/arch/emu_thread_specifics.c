@@ -18,8 +18,10 @@
  */
 
 #include <stdlib.h>
+#include <sys/param.h>
 
 #include "misc/queue.h"
+#include "misc/pool.h"
 #include "threads.h"
 
 static hts_mutex_t ets_mutex;
@@ -44,20 +46,22 @@ static struct ets_key_list ets_keys;
 
 static int keytally;
 
-void
+static pool_t ets_pool;
+
+static void __attribute__((constructor))
 hts_thread_key_init(void)
 {
+  pool_init(&ets_pool, "ETS", MAX(sizeof(ets_key_t),
+				  sizeof(ets_value_t)), 0);
   hts_mutex_init(&ets_mutex);
 }
-
-
 
 int
 hts_thread_key_create(unsigned int *k, void (*destructor)(void *))
 {
-  ets_key_t *ek = malloc(sizeof(ets_key_t));
-  ek->ek_dtor = destructor;
   hts_mutex_lock(&ets_mutex);
+  ets_key_t *ek = pool_get(&ets_pool);
+  ek->ek_dtor = destructor;
   keytally++;
   ek->ek_key = keytally;
   *k = keytally;
@@ -92,11 +96,11 @@ hts_thread_key_delete(unsigned int k)
 
   while((ev = LIST_FIRST(&ek->ek_values)) != NULL) {
     LIST_REMOVE(ev, ev_link);
-    free(ev);
+    pool_put(&ets_pool, ev);
   }
 
   LIST_REMOVE(ek, ek_link);
-  free(ek);
+  pool_put(&ets_pool, ek);
 
   hts_mutex_unlock(&ets_mutex);
   return 0;
@@ -118,7 +122,7 @@ hts_thread_set_specific(unsigned int k, void *p)
       break;
 
   if(ev == NULL) {
-    ev = malloc(sizeof(ets_value_t));
+    ev = pool_get(&ets_pool);
     ev->ev_tid = self;
     LIST_INSERT_HEAD(&ek->ek_values, ev, ev_link);
   }
@@ -167,7 +171,7 @@ hts_thread_exit_specific(void)
 
       ek->ek_dtor(ev->ev_value);
       LIST_REMOVE(ev, ev_link);
-      free(ev);
+      pool_put(&ets_pool, ev);
     }
   }
   hts_mutex_unlock(&ets_mutex);

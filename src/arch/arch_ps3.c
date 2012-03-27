@@ -118,9 +118,6 @@ arch_init(void)
 
   concurrency = 2;
 
-#if ENABLE_EMU_THREAD_SPECIFICS
-  hts_thread_key_init();
-#endif
 
   trace_level = TRACE_DEBUG;
   sysprop = prop_create(prop_get_global(), "system");
