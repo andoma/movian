@@ -13,7 +13,8 @@ EXTRA_BUILD_NAME=""
 JARGS=""
 TARGET=""
 RELEASE="--release"
-while getopts "vht:e:j:" OPTION
+WORKINGDIR="/var/tmp/showtime-autobuild"
+while getopts "vht:e:j:w:" OPTION
 do
   case $OPTION in
       v)
@@ -32,6 +33,9 @@ do
 	  ;;
       j)
 	  JARGS="--jobs=$OPTARG"
+	  ;;
+      w)
+	  WORKINGDIR="$OPTARG"
 	  ;;
   esac
 done
@@ -52,22 +56,9 @@ artifact() {
     echo "doozer-artifact:$PWD/$1:$2:$3:$4"
 }
 
-case $TARGET in
-    linux-all)
-	./configure ${JARGS} --build=${TARGET} --enable-all ${RELEASE}
-	make ${JARGS} BUILD=${TARGET}
-	;;
-
-    ps3)
-	./configure.ps3 ${JARGS} --build=${TARGET} ${RELEASE}
-	make ${JARGS} BUILD=${TARGET} all pkg self
-	artifact build.${TARGET}/showtime.self bin application/octect-stream showtime.self
-	artifact build.${TARGET}/showtime.pkg bin application/octect-stream showtime.pkg
-	artifact build.${TARGET}/showtime_geohot.pkg bin application/octect-stream showtime-gh.pkg
-	;;
-
-    *)
-	echo "target $TARGET not supported"
-	exit 1
-	;;
-esac
+if [ -f Autobuild/${TARGET}.sh ]; then
+    source Autobuild/${TARGET}.sh
+else
+    echo "target $TARGET not supported"
+    exit 1
+fi
