@@ -21,6 +21,8 @@
 
 #include "config.h"
 
+extern int get_system_concurrency(void);
+
 #ifdef CONFIG_LIBPTHREAD
 
 #include <pthread.h>

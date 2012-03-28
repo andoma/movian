@@ -85,6 +85,7 @@ CONFIG_LIST="
  sqlite_locking
  libav
  vda
+ jemalloc
 "
 
 cleanup() {

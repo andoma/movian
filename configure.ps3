@@ -62,6 +62,10 @@ enable dvd
 enable ps3_vdec
 enable sqlite_vfs
 enable sqlite_locking
+enable jemalloc
+
+${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${TMPDIR}/mallocstub.o ${TOPDIR}/support/mallocstub.c
+LIBAV_LDFLAGS="${TMPDIR}/mallocstub.o"
 
 libav_setup
 

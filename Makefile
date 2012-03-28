@@ -83,6 +83,9 @@ ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr
 
+${BUILDDIR}/ext/jemalloc/src/%.o : CFLAGS = \
+	-Iext/jemalloc/include -iquote${BUILDDIR}/jemalloc
+
 CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
 
 ${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}

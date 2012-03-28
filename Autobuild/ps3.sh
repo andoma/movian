@@ -1,4 +1,4 @@
-TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/1493a5314319b6f0a9fee7fe5ff6ea7b5bf8f466
+TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/7f0b49665b4816bd1bdfa748624a1e5dddb57bda
 TOOLCHAIN_HASH=`echo $1 | sha1sum  | awk '{print $1}'`
 TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
 
