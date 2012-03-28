@@ -18,21 +18,16 @@ CONFIGURE_POSTFIX="osx"
 
 source support/configure.inc
 
-CPU=generic
-ARCH=`uname -m`
 MACOSXTARGET=""
 MACOSXSDK=""
 
 show_help(){
-  common_help
-  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
-  echo "  --arch=arch              Build for this architecture [$ARCH]"
-  echo "  --cpu=cpu                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using the given compiler"
-  echo "  --release                Stage for release"
-  echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
-  echo "  --spotify-framework=PATH Path to libspotify.framework"
-  exit 1
+    common_help
+    compiler_help
+    echo "  --arch=ARCH              Compile for ARCH"
+    echo "  --macosxsdk=PATH         Mac OS X SDK path [$MACOSXSDK]"
+    echo "  --spotify-framework=PATH Path to libspotify.framework"
+    exit 1
 }
 
 enable libfreetype
@@ -52,31 +47,22 @@ enable polarssl
 enable librtmp
 enable font_liberation
 
-for opt do
-  optval="${opt#*=}"
-  case "$opt" in
-  --prefix=*) PREFIX="$optval"
-  ;;
-  --cpu=*) CPU="$optval"
-  ;;
-  --help) show_help
-  ;;
-  --release) 
-    enable release
-    enable embedded_resources
-  ;;
-  --cc=*) CC="$optval"
-  ;;
-  --arch=*) ARCH="$optval"
-  ;;
-  --macosx-sdk=*) MACOSXSDK="$optval"
-  ;;
-  --spotify-framework=*) SPOTIFY_FRAMEWORK="$optval"
-  ;;
-  *)
-  common_opt $opt $optval
-  esac
-done
+osx_opt() {
+    case "$1" in
+    --help) show_help
+    ;;
+    --arch) ARCH="$2"
+    ;;
+    --macosx-sdk) MACOSXSDK="$2"
+    ;;
+    --spotify-framework) SPOTIFY_FRAMEWORK="$2"
+    ;;
+    *) return 1
+    esac
+    return 0
+}
+
+parse_opts "osx_opt compiler_opt common_opt" "$@"
 
 if [ "x$SPOTIFY_FRAMEWORK" != "x" ] ; then
   if [ ! -d "$SPOTIFY_FRAMEWORK" ] ; then
@@ -94,6 +80,17 @@ enable zlib
 enable posix_networking
 enable dvd
 
+if enabled release ; then
+    enabled embedded_resources
+fi
+
+
+compiler_setup
+if [ "x$ARCH" != "x" ]; then
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -arch $ARCH"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -arch $ARCH"
+    echo "Compiling for arch:    $ARCH"
+fi
 
 #
 # Application bundle
@@ -105,34 +102,6 @@ PROG="${APPDIR}/Contents/MacOS/showtime"
 
 
 #
-# c compiler
-#
-checkcc() {
-    cat >$TMPDIR/1.c <<EOF
-int main() {
-  return 0;
-}
-EOF
-    $CC 2>/dev/null $TMPDIR/1.c -o $TMPDIR/1.bin 
-}
-
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-    CC="$CC"
-else
-    CC=cc
-fi
-
-if checkcc; then 
-    echo "Using C compiler:      $CC"
-else
-    echo "C compiler ($CC) is not working"
-    die
-fi
-
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
-
-#
 # Check SDK path and set target version
 #
 if [ "x$MACOSXSDK" != "x" ] ; then
@@ -142,7 +111,7 @@ if [ "x$MACOSXSDK" != "x" ] ; then
             echo "Could not find $SDKSETTINGS.plist"
             die
         fi
-        
+
         MACOSXTARGET=`defaults read $SDKSETTINGS Version`
         echo "Mac OS X SDK:          $MACOSXSDK"
         echo "Mac OS X target:       $MACOSXTARGET"
@@ -150,7 +119,7 @@ if [ "x$MACOSXSDK" != "x" ] ; then
         echo "Mac OS X SDK directory $MACOSXSDK does not exist"
         die
     fi
-    
+
     MACOSXSDK_CFLAGS="-mmacosx-version-min=$MACOSXTARGET -isysroot $MACOSXSDK"
     MACOSXSDK_LDFLAGS="$MACOSXSDK_CFLAGS"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += $MACOSXSDK_LDFLAGS"
@@ -159,6 +128,7 @@ else
     echo "Mac OS X SDK:          default"
     echo "Mac OS X target:       default (`sw_vers -productVersion`)"
 fi
+
 
 #
 # Standard Mac OS X frameworks
@@ -180,12 +150,22 @@ if enabled appleremote; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 fi
 
+
+LIBAV_ARCH_FLAGS="--cc=$CC"
+if [ "$ARCH" = "x86_64" ]; then
+    LIBAV_CFLAGS="$MACOSXSDK_CFLAGS -m64"
+    LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS -m64"
+else
+    LIBAV_CFLAGS="$MACOSXSDK_CFLAGS -m32"
+    LIBAV_LDFLAGS="$MACOSXSDK_LDFLAGS -m32"
+fi
+
 libav_setup
 
 
 #
 # Freetype
-# 
+#
 echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/X11/include -I/usr/X11/include/freetype2"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/X11/lib -lfreetype"
 
@@ -199,6 +179,7 @@ if disabled release; then
     echo  the current build tree. If you plan to install the binary,
     echo  please reconfigure with '--release'.
 fi
+
 
 #
 # Some compatibility defines
@@ -221,6 +202,7 @@ if [ "$SPOTIFY_FRAMEWORK" != "" ] ; then
     echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
 fi
+
 
 #
 # Finalize
