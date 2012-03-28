@@ -1,4 +1,4 @@
-TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/c00954d27699c644c09780202d595928df5a14b9
+TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/e74ce5cbe4707adf1317be95337353673a1fcdf9
 TOOLCHAIN_HASH=`echo $1 | sha1sum  | awk '{print $1}'`
 TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
 
@@ -44,3 +44,7 @@ make ${JARGS} BUILD=${TARGET} all pkg self
 artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
 artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg
 artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
+
+#on debian/ubuntu
+#apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev
+
