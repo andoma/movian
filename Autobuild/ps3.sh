@@ -1,4 +1,4 @@
-TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/496f539477230aeb56407bbd31a613ac7c0466e2
+TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/c00954d27699c644c09780202d595928df5a14b9
 TOOLCHAIN_HASH=`echo $1 | sha1sum  | awk '{print $1}'`
 TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
 
@@ -9,7 +9,10 @@ cleanup() {
 }
 
 export PS3DEV=${TOOLCHAIN}/ps3dev
+export PSL1GHT=${TOOLCHAIN}/PSL1GHT
 export PATH=$PATH:$PS3DEV/bin:$PS3DEV/host/ppu/bin:$PS3DEV/host/spu/bin
+export PATH=$PATH:$PSL1GHT/host/bin
+
 echo "Toolchain from: '${TOOLCHAIN_URL}' Local install in: ${TOOLCHAIN}"
 
 if [ -d $TOOLCHAIN ]; then
@@ -23,7 +26,7 @@ else
 	cd ${TOOLCHAIN}
 	curl -L "${TOOLCHAIN_URL}" | tar xfz -
 	cd *
-	./toolchain.sh 1 2 3 4 5 11 12
+	PARALLEL=${JARGS} ./toolchain.sh 1 2 3 4 11 12
     )
 
     STATUS=$?
