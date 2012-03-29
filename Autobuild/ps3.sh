@@ -39,12 +39,12 @@ else
 fi
 
 
-./configure.ps3 ${JARGS} --build=${TARGET} ${RELEASE}
+./configure.ps3 ${JARGS} --build=${TARGET} ${RELEASE} --cleanbuild --ccache
 make ${JARGS} BUILD=${TARGET} all pkg self
 artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
 artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg
 artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
 
 #on debian/ubuntu
-#apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev
+#apt-get install git-core build-essential autoconf bison flex libelf-dev libtool pkg-config texinfo libncurses5-dev libz-dev python-dev libssl-dev libgmp3-dev ccache
 

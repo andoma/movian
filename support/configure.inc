@@ -171,6 +171,8 @@ common_help(){
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
   echo "  --jobs=N                 Allow N jobs at once"
   echo "  --release                Stage for release"
+  echo "  --cleanbuild             Erase builddir before configuring"
+  echo "  --ccache                 Enable use of ccache"
   echo ""
   echo "Platform specific options:"
 }
@@ -198,6 +200,13 @@ common_opt(){
 
   --jobs=*) JARGS="-j$2"
   ;;
+
+  --cleanbuild) enable cleanbuild
+  ;;
+
+  --ccache) CC="ccache $CC"
+  ;;
+
   --release) enable release
   ;;
   *)
@@ -208,6 +217,11 @@ common_opt(){
 
 setup_env(){
     BUILDDIR=build.${BUILD}
+
+    if enabled cleanbuild; then
+	echo "Cleaning builddir: ${BUILDDIR}"
+	rm -rf ${BUILDDIR}
+    fi
 
     mkdir -p ${BUILDDIR}
     BUILDDIR=`cd ${BUILDDIR} && pwd`
@@ -269,7 +283,7 @@ libav_setup() {
 
     LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-ffserver --disable-ffmpeg --disable-ffprobe --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
 
-    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}") || die
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}" --cc="${CC}") || die
 
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS}) || die
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS} install) || die

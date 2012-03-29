@@ -22,6 +22,8 @@ source support/configure.inc
 CPU=generic
 ARCH=`uname -m`
 PREFIX=/usr
+CC=cc
+CXX=c++
 
 show_help(){
   common_help
@@ -29,7 +31,7 @@ show_help(){
   echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using compiler CC [cc]"
+  echo "  --cc=CC                  Build using compiler CC [$CC]"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
   echo "                            none     Disable GLW"
@@ -150,7 +152,7 @@ if [ $? -ne 0 ]; then
 fi
 
 #
-# c compiler
+# Check for compilers
 #
 
 checkcc() {
@@ -174,25 +176,12 @@ EOF
 }
     
 
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-else
-    CC=cc
-fi
 
 if checkcc; then 
     echo "Using C compiler:      $CC"
 else
     echo "C compiler ($CC) is not working"
     die
-fi
-
-
-
-if [ "x$CXX" != "x" ]; then
-    echo >${CONFIG_MAK} "CXX=$CXX"
-else
-    CXX=c++
 fi
 
 if checkcxx; then 
@@ -202,10 +191,8 @@ else
     die
 fi
 
-
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
-
-libav_setup
+echo >>${CONFIG_MAK} "CC=$CC"
+echo >>${CONFIG_MAK} "CXX=$CXX"
 
 #
 # libfreetype2
@@ -579,8 +566,7 @@ if enabled libsidplay2; then
 fi
 
 
-
-
+libav_setup
 
 #
 # Configure paths, etc
