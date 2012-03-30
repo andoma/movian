@@ -52,6 +52,10 @@
 #include "video/ps3_vdec.h"
 #endif
 
+#if ENABLE_VDA
+#include "video/vda.h"
+#endif
+
 // -------------------------------
 
 int media_buffer_hungry; /* Set if we try to fill media buffers
@@ -1198,8 +1202,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
 
   cw->codec_ctx->codec_id   = cw->codec->id;
   cw->codec_ctx->codec_type = cw->codec->type;
-
-
+  cw->codec_ctx->opaque = cw;
 
   if(mcp != NULL && mcp->extradata != NULL) {
     cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
@@ -1244,6 +1247,11 @@ media_codec_create(int codec_id, int parser,
 #endif
 #if ENABLE_PS3_VDEC
   if(mcp && !video_ps3_vdec_codec_create(mc, codec_id, ctx, mcp, mp)) {
+
+  } else
+#endif
+#if ENABLE_VDA
+  if(mcp && !video_vda_codec_create(mc, codec_id, ctx, mcp, mp)) {
 
   } else
 #endif

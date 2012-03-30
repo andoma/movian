@@ -84,6 +84,7 @@ CONFIG_LIST="
  sqlite_vfs
  sqlite_locking
  libav
+ vda
 "
 
 cleanup() {

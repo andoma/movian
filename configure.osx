@@ -170,7 +170,7 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreVideo"
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework VideoDecodeAcceleration"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 
 # CoreAudio
 if enabled coreaudio; then
@@ -183,6 +183,7 @@ if enabled appleremote; then
 fi
 
 libav_setup
+#enable vda Does not work 100% yet
 
 
 #
