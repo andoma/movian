@@ -273,14 +273,18 @@ libav_setup() {
 	return
     fi
 
-    echo "Updating libav... (if needed)"
+
+    status=`git submodule status ext/libav | cut -b 1`
+    echo "Updating libav, submodule status = $status"
     git submodule update --init ext/libav
     echo "Configuring libav..."
-
+    
     LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
     LIBAV_INSTALL_DIR=${BUILDDIR}/libav/install
-    mkdir -p ${LIBAV_BUILD_DIR}
-    mkdir -p ${LIBAV_INSTALL_DIR}
+
+    [ "$status" = "+" ] && echo "Cleaning libav build dir" && rm -rf "${LIBAV_BUILD_DIR}"
+    mkdir -p "${LIBAV_BUILD_DIR}"
+    mkdir -p "${LIBAV_INSTALL_DIR}"
 
     LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
 
