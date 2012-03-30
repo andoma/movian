@@ -257,7 +257,7 @@ fa_imageloader(const char *url, const struct image_meta *im,
     return NULL;
   }
 
-  size_t s = fa_fsize(fh);
+  int64_t s = fa_fsize(fh);
   if(s < 0) {
     snprintf(errbuf, errlen, "Can't read from non-seekable file");
     fa_close(fh);

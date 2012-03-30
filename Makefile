@@ -179,7 +179,7 @@ include support/${PLATFORM}.mk
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c Makefile
-	$(CC) -I${CURDIR}/src/fileaccess -c -o $@ $<
+	$(CC) $(CFLAGS) $(CFLAGS_cfg) -I${CURDIR}/src/fileaccess -c -o $@ $<
 
 $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle Makefile
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<

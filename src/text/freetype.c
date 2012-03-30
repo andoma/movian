@@ -313,7 +313,7 @@ face_create_from_uri(const char *path)
   char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
-  size_t s;
+  int64_t s;
 
   fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {

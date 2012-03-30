@@ -325,7 +325,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
  *
  */
 static event_t *
-get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
+get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 	     media_pipe_t *mp)
 {
   uint8_t flags;
@@ -427,7 +427,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
  *
  */
 static event_t *
-get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts, 
+get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts, 
 	     media_pipe_t *mp)
 {
   uint8_t flags;
