@@ -1,0 +1,7 @@
+Upgrade Showtime to use libav 0.8.1
+
+This adds better support for multithreaded decoders and a lot
+of stability fixes.
+
+For more details please see
+http://www.libav.org/releases/libav-0.8.release
