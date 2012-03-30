@@ -25,6 +25,10 @@
 
 #include <libavformat/avformat.h>
 
+#include <libavformat/version.h>
+#include <libavcodec/version.h>
+#include <libavutil/avutil.h>
+
 #include "showtime.h"
 #include "event.h"
 #include "prop/prop.h"
@@ -383,6 +387,7 @@ main(int argc, char **argv)
   av_log_set_callback(fflog);
   av_register_all();
 
+  TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT);
   /* Freetype keymapper */
 #if ENABLE_LIBFREETYPE
   freetype_init();
