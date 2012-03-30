@@ -32,6 +32,8 @@ TAILQ_HEAD(dvdspu_queue, dvdspu);
 
 TAILQ_HEAD(video_overlay_queue, video_overlay);
 
+#define VIDEO_DECODER_REORDER_SIZE 16
+#define VIDEO_DECODER_REORDER_MASK (VIDEO_DECODER_REORDER_SIZE-1)
 
 struct AVCodecContext;
 struct AVFrame;
@@ -160,6 +162,13 @@ typedef struct video_decoder {
   void (*vd_accelerator_blackout)(void *opaque);
   void (*vd_accelerator_stop)(void *opaque);
 
+
+  /**
+   * Reordering 
+   */
+
+  int vd_reorder_ptr;
+  struct media_buf vd_reorder[VIDEO_DECODER_REORDER_SIZE];
 } video_decoder_t;
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp, 
