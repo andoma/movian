@@ -373,7 +373,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
 
     switch(id) {
     case CODEC_ID_H264:
-      if(type != 0 || size < 0)
+      if(type != 0)
 	return NULL;
 	
       ctx = avcodec_alloc_context3(NULL);
@@ -465,7 +465,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, size_t size, int64_t dts,
     switch(id) {
       
     case CODEC_ID_AAC:
-      if(type != 0 || size < 0)
+      if(type != 0)
 	return NULL;
 	
       ctx = avcodec_alloc_context3(NULL);
