@@ -1,3 +1,12 @@
+#ifdef __llvm__
+#include <smmintrin.h>
+#define __builtin_ia32_vec_ext_v4sf	_mm_extract_ps
+#define __builtin_ia32_unpcklps		_mm_unpacklo_ps
+#define __builtin_ia32_unpckhps		_mm_unpackhi_ps
+#define __builtin_ia32_movlhps		_mm_movelh_ps
+#define __builtin_ia32_movhlps		_mm_movehl_ps
+#endif
+
 static inline void
 glw_Translatef(glw_rctx_t *rc, float x, float y, float z)
 {
