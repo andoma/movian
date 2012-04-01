@@ -1,5 +1,5 @@
 TOOLCHAIN_URL=https://github.com/andoma/ps3toolchain/tarball/a927e6fc25c9ba10a07c0e8e22d92dcc6a0c59cb
-TOOLCHAIN_HASH=`echo ${TOOLCHAIN_URL} | sha1sum  | awk '{print $1}'`
+TOOLCHAIN_HASH=`echo ${TOOLCHAIN_URL}b | sha1sum  | awk '{print $1}'`
 TOOLCHAIN="${WORKINGDIR}/${TOOLCHAIN_HASH}"
 
 cleanup() {
@@ -26,7 +26,7 @@ else
 	cd ${TOOLCHAIN}
 	curl -L "${TOOLCHAIN_URL}" | tar xfz -
 	cd *
-	PARALLEL=${JARGS} ./toolchain.sh 1 2 3 4 11 12
+	PARALLEL=${JARGS} ./toolchain.sh 1 2 3 4 11 12 13
     )
 
     STATUS=$?
