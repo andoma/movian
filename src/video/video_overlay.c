@@ -112,10 +112,12 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 			       int64_t start, int64_t stop, int tags)
 {
   uint32_t *uc;
-  int len;
+  int len, txt_len;
   video_overlay_t *vo;
-
-  if(strlen(txt) == 0) {
+  
+  txt_len = strlen(txt);
+  
+  if(txt_len == 0) {
     vo = calloc(1, sizeof(video_overlay_t));
   } else {
 
@@ -139,11 +141,26 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
     vo->vo_text_length = len;
     vo->vo_padding_left = -1;  // auto padding
   }
+
+  if(stop == AV_NOPTS_VALUE) {
+    stop = start + calculate_subtitle_duration(txt_len) * 1000000;
+    vo->vo_stop_estimated = 1;
+  }
   
   vo->vo_start = start;
   vo->vo_stop = stop;
-
+  
   video_overlay_enqueue(vd, vo);
+}
+
+/**
+ * Calculate the number of seconds a subtitle should be displayed.
+ * Min 2 seconds, max 7 seconds. 
+ */
+int
+calculate_subtitle_duration(int txt_len) 
+{
+  return 2 + (txt_len / 74.0F) * 5; //74 is the maximum amount of characters a subtitler may fit on 2 lines of text.
 }
 
 

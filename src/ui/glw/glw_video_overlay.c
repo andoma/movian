@@ -44,6 +44,7 @@ typedef struct glw_video_overlay {
 
   int64_t gvo_start;
   int64_t gvo_stop;
+  int gvo_stop_estimated;
 
   int gvo_fadein;
   int gvo_fadeout;
@@ -126,7 +127,7 @@ gvo_flush_infinite(glw_video_t *gv)
   for(gvo = LIST_FIRST(&gv->gv_overlays); gvo != NULL; gvo = next) {
     next = LIST_NEXT(gvo, gvo_link);
 
-    if(gvo->gvo_stop == AV_NOPTS_VALUE)
+    if(gvo->gvo_stop == AV_NOPTS_VALUE || gvo->gvo_stop_estimated)
       gvo_destroy(gv, gvo);
   }
 }
@@ -718,6 +719,7 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   glw_video_overlay_t *gvo = gvo_create(vo->vo_start, GVO_TEXT);
 
   gvo->gvo_stop           = vo->vo_stop;
+  gvo->gvo_stop_estimated = vo->vo_stop_estimated;
   gvo->gvo_fadein         = vo->vo_fadein;
   gvo->gvo_fadeout        = vo->vo_fadeout;
   gvo->gvo_canvas_width   = vo->vo_canvas_width;
@@ -786,13 +788,13 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
 	break;
       gvo_flush_infinite(gv);
       if(vo->vo_pixmap != NULL)
-	gvo_create_from_vo_bitmap(gv, vo);
+        gvo_create_from_vo_bitmap(gv, vo);
       video_overlay_destroy(vd, vo);
       continue;
 
     case VO_TEXT:
       if(vo->vo_start > pts)
-	break;
+        break;
       gvo_flush_infinite(gv);
       gvo_create_from_vo_text(gv, vo);
       video_overlay_destroy(vd, vo);
