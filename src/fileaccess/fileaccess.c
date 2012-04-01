@@ -611,11 +611,11 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     free(data);
 
     int d;
-    if(data2)
+    if(data2 && (cache_control || max_age || etag || mtime)) {
       d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
-    else
+    } else {
       d = 0;
-
+    }
     free(etag);
 
     if(cache_control == DISABLE_CACHE && d) {
