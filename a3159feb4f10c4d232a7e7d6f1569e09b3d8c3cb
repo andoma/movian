@@ -2,7 +2,7 @@ PS3: Use jemalloc instead of newlib's malloc
 
 Using jemalloc significantly reduces memory fragmentation
 and thus mitigates the out of memory conditions that happens
-now and then when using Showitme (in particular during movie
+now and then when using Showtime (in particular during movie
 playback)
 
 It's also much more efficient than newlib's malloc thanks
