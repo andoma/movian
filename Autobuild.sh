@@ -14,12 +14,16 @@ JARGS=""
 TARGET=""
 RELEASE="--release"
 WORKINGDIR="/var/tmp/showtime-autobuild"
-while getopts "vht:e:j:w:" OPTION
+UPLOAD_BUILD_ARTIFACTS=1
+while getopts "vht:e:j:w:R" OPTION
 do
   case $OPTION in
       v)
 	  echo $BUILD_API_VERSION
 	  exit 0
+	  ;;
+      R)
+	  UPLOAD_BUILD_ARTIFACTS=0
 	  ;;
       h)
 	  echo "This script is intended to be used by the autobuild system only"
@@ -53,7 +57,11 @@ fi
 # $4 = filename
 #
 artifact() {
-    echo "doozer-artifact:$PWD/$1:$2:$3:$4"
+    if [ $UPLOAD_BUILD_ARTIFACTS -eq 1 ]; then
+	echo "doozer-artifact:$PWD/$1:$2:$3:$4"
+    else
+	echo "Ignoring: $1:$2:$3:$4"
+    fi
 }
 
 if [ -f Autobuild/${TARGET}.sh ]; then
