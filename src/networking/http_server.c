@@ -237,6 +237,7 @@ http_rc2str(int code)
   case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition failed";
   case HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE: return "Unsupported media type";
   case HTTP_NOT_IMPLEMENTED: return "Not implemented";
+  case 500: return "Internal Server Error";
   default:
     return "Unknown returncode";
     break;

@@ -38,6 +38,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
   htsmsg_t *in, *a;
   const char *s;
   htsbuf_queue_t xml;
+  int http_code = 200;
 
   inargs = htsmsg_get_map(inargs, "tags");
   if(inargs != NULL) {
@@ -68,6 +69,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
     htsbuf_qprintf(&xml,
 		   "<s:Fault>"
 		   "<s:faultcode>500</s:faultcode></s:Fault>");
+    http_code = 500;
   } else {
     htsbuf_qprintf(&xml,
 		   "<u:%sResponse "
@@ -91,8 +93,7 @@ control_dispatch_method(upnp_local_service_t *uls, upnp_service_method_t *usm,
 		 "</s:Envelope>");
 
   http_set_response_hdr(hc, "EXT", "");
-
-  return http_send_reply(hc, 0, "text/xml; charset=\"utf-8\"",
+  return http_send_reply(hc, http_code, "text/xml; charset=\"utf-8\"",
 			 NULL, NULL, 0, &xml);
 }
 
