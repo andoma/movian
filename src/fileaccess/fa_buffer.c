@@ -271,10 +271,6 @@ fab_seek(fa_handle_t *handle, int64_t pos, int whence)
     return -1;
   }
 
-  if(np < 0) {
-    return -1;
-  }
-
   bf->bf_fpos = np;
   return np;
 }

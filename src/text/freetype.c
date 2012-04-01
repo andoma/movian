@@ -323,13 +323,6 @@ face_create_from_uri(const char *path)
   }
 
   s = fa_fsize(fh);
-  if(s < 0) {
-    TRACE(TRACE_ERROR, "Freetype",
-	  "Unable to load font: %s -- Not a seekable file",
-	  path);
-    fa_close(fh);
-    return NULL;
-  }
 
   face_t *face = calloc(1, sizeof(face_t));
 

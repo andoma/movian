@@ -258,11 +258,6 @@ fa_imageloader(const char *url, const struct image_meta *im,
   }
 
   size_t s = fa_fsize(fh);
-  if(s < 0) {
-    snprintf(errbuf, errlen, "Can't read from non-seekable file");
-    fa_close(fh);
-    return NULL;
-  }
 
   pm = pixmap_alloc_coded(NULL, s, fmt);
 

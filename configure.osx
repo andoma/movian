@@ -229,5 +229,6 @@ fi
 # Finalize
 #
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread
+echo >>${CONFIG_MAK} CFLAGS_cfg += -msse4
 
 finalize

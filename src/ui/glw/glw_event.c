@@ -404,7 +404,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   glw_t *t;
   event_t *e;
 
-  e = event_create_action(g->event);
+  e = event_create_action((action_type_t) g->event);
   e->e_mapped = 1;
 
   if(g->target != NULL) {
