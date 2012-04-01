@@ -411,12 +411,12 @@ json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque,
     size_t len = strlen(src);
     ssize_t offset = errp - src;
     if(offset > len || offset < 0) {
-      snprintf(errbuf, errlen, "%s at (bad) offset %zd", errmsg, offset);
+      snprintf(errbuf, errlen, "%s at (bad) offset %d", errmsg, (int)offset);
     } else {
       offset -= 10;
       if(offset < 0)
 	offset = 0;
-      snprintf(errbuf, errlen, "%s at offset %zd : '%.20s'", errmsg, offset,
+      snprintf(errbuf, errlen, "%s at offset %d : '%.20s'", errmsg, (int)offset,
 	       src + offset);
     }
   }
