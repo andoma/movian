@@ -247,7 +247,7 @@ fab_seek(fa_handle_t *handle, int64_t pos, int whence)
 {
   buffered_file_t *bf = (buffered_file_t *)handle;
   fa_handle_t *src = bf->bf_src;
-  uint64_t np;
+  int64_t np;
 
   switch(whence) {
   case SEEK_SET:

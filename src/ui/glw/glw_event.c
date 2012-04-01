@@ -374,7 +374,7 @@ typedef struct glw_event_internal {
   glw_event_map_t map;
 
   char *target;
-  event_type_t event;
+  action_type_t event;
 
 } glw_event_internal_t;
 
@@ -426,7 +426,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  *
  */
 glw_event_map_t *
-glw_event_map_internal_create(const char *target, event_type_t event)
+glw_event_map_internal_create(const char *target, action_type_t event)
 {
   glw_event_internal_t *g = malloc(sizeof(glw_event_internal_t));
   

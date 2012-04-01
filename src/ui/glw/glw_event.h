@@ -82,7 +82,7 @@ glw_event_map_t *glw_event_map_playTrack_create(prop_t *track,
  *
  */
 glw_event_map_t *glw_event_map_internal_create(const char *target,
-					       event_type_t event);
+					       action_type_t event);
 
 
 /**

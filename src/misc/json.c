@@ -409,7 +409,7 @@ json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque,
 
   if(c == NULL) {
     size_t len = strlen(src);
-    size_t offset = errp - src;
+    ssize_t offset = errp - src;
     if(offset > len || offset < 0) {
       snprintf(errbuf, errlen, "%s at (bad) offset %zd", errmsg, offset);
     } else {

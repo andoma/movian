@@ -120,7 +120,7 @@ static const char *types[] = {
 const char *
 content2type(contenttype_t ctype)
 {
-  if (ctype < 0 || ctype >= sizeof(types) / sizeof(types[0]))
+  if(ctype >= sizeof(types) / sizeof(types[0]))
     return NULL;
 
   return types[ctype];
