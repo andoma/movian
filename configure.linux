@@ -21,7 +21,9 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-PREFIX=/usr
+prefix=/usr/local
+bindir="\${prefix}/bin"
+mandir="\${prefix}/share/man"
 CC=cc
 CXX=c++
 
@@ -29,6 +31,8 @@ show_help(){
   common_help
 
   echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
+  echo "  --bindir=DIR             Install binaries in DIR [$bindir]"
+  echo "  --mandir=DIR             Install man pages in DIR [$mandir]"
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using compiler CC [$CC]"
@@ -106,8 +110,6 @@ enable font_liberation
 for opt do
   optval="${opt#*=}"
   case "$opt" in
-  --prefix=*) PREFIX="$optval"
-  ;;
   --cpu=*) CPU="$optval"
   ;;
   --help) show_help
@@ -121,6 +123,30 @@ for opt do
   --glw-frontend=*) GLWFRONTEND="$optval"
   ;;
   --pkg-config-path=*) export PKG_CONFIG_PATH="$optval"
+  ;;
+
+  --prefix=*)
+  prefix="$optval"
+  ;;
+  --bindir=*)
+  bindir="$optval"
+  ;;
+  --mandir=*)
+  mandir="$optval"
+  ;;
+  --includedir=*)
+  ;;
+  --infodir=*)
+  ;;
+  --sysconfdir=*)
+  ;;
+  --localstatedir=*)
+  ;;
+  --libexecdir=*)
+  ;;
+  --disable-maintainer-mode)
+  ;;
+  --disable-dependency-tracking)
   ;;
   *)
   common_opt $opt $optval
@@ -580,8 +606,16 @@ fi
 
 #
 # Finalize
-
-echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
+#
+echo
+echo "Installation paths:"
+echo "  Prefix:        ${prefix}"
+echo "  Binaries:      ${bindir}"
+echo "  Man pages:     ${mandir}"
+echo
+echo >>${CONFIG_MAK} "prefix=$prefix"
+echo >>${CONFIG_MAK} "bindir=\${DESTDIR}$bindir"
+echo >>${CONFIG_MAK} "mandir=\${DESTDIR}$mandir"
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt -ldl
 
 finalize

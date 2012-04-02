@@ -11,6 +11,7 @@ set -eu
 BUILD_API_VERSION=2
 EXTRA_BUILD_NAME=""
 JARGS=""
+JOBSARGS=""
 TARGET=""
 RELEASE="--release"
 WORKINGDIR="/var/tmp/showtime-autobuild"
@@ -36,7 +37,8 @@ do
 	  EXTRA_BUILD_NAME="$OPTARG"
 	  ;;
       j)
-	  JARGS="--jobs=$OPTARG"
+	  JOBSARGS="--jobs=$OPTARG"
+	  JARGS="-j$OPTARG"
 	  ;;
       w)
 	  WORKINGDIR="$OPTARG"
