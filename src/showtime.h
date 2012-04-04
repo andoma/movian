@@ -94,6 +94,8 @@ void trace_arch(int level, const char *prefix, const char *buf);
 
 #define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
 
+void hexdump(const char *pfx, const void *data, int len);
+
 #define mystrdupa(n) ({ int my_l = strlen(n); \
  char *my_b = alloca(my_l + 1); \
  memcpy(my_b, n, my_l + 1); })
