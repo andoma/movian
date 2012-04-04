@@ -685,10 +685,29 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   ud.s.flush = vd->vd_do_flush;
 
   au.userdata = ud.u64;
-  au.pts.low = mb->mb_pts;
-  au.pts.hi  = mb->mb_pts >> 32;
-  au.dts.low = mb->mb_dts;
-  au.dts.hi  = mb->mb_dts >> 32;
+
+  int64_t pts = mb->mb_pts, dts = mb->mb_dts;
+
+  if(dts < 0)
+    dts = 0;
+  if(pts < 0)
+    pts = 0;
+
+  /**
+     I've no idea why routing timestamps to ms precision is required.
+     But without this it seems that some movies (in particular MP4) just 
+     freezes.
+
+     see ticket #640 #662 #890
+  */
+
+  pts = (pts / 1000) * 1000;
+  dts = (dts / 1000) * 1000;
+
+  au.pts.low = pts;
+  au.pts.hi  = pts >> 32;
+  au.dts.low = dts;
+  au.dts.hi  = dts >> 32;
 
   if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
     submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0, NULL);
