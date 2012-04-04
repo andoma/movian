@@ -12,7 +12,7 @@ SFOXML          := $(TOPDIR)/support/sfo.xml
 BIN=${BUILDDIR}/showtime.elf
 
 
-${BIN}: ${BUILDDIR}/showtime
+${BIN}: ${BUILDDIR}/showtime.bundle
 	${STRIP} -o $@ $<
 	sprxlinker $@
 

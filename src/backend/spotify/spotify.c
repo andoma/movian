@@ -49,8 +49,6 @@
 
 #include "api/lastfm.h"
 
-#define SPOTIFY_ICON_URL "bundle://resources/spotify/spotify_icon.png"
-
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
 #endif
@@ -73,7 +71,7 @@ static int spotify_offline_bitrate_96;
 
 static int play_position;
 static int seek_pos;
-
+rstr_t *spotify_icon_url;
 
 static int is_thread_running;
 static int is_logged_in;
@@ -3074,7 +3072,7 @@ playlist_added(sp_playlistcontainer *pc, sp_playlist *plist,
 
     metadata = prop_create(pl->pl_prop_root_tree, "metadata");
     prop_set_string(prop_create(metadata, "title"), name);
-    prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
+    prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
 
     backend_prop_make(pl->pl_prop_root_tree, url, sizeof(url));
     prop_set_string(prop_create(pl->pl_prop_root_tree, "url"), url);
@@ -4002,7 +4000,7 @@ startpage(prop_t *page)
 
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
-  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
+  prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
   prop_set_string(prop_create(metadata, "title"), "Spotify");
 
   prop_t *nodes = prop_create(model, "nodes");
@@ -4028,7 +4026,7 @@ add_metadata_props(spotify_page_t *sp)
 
   sp->sp_title = prop_ref_inc(prop_create(m, "title"));
   sp->sp_icon = prop_ref_inc(prop_create(m, "logo"));
-  prop_set_string(sp->sp_icon, SPOTIFY_ICON_URL);
+  prop_set_rstring(sp->sp_icon, spotify_icon_url);
 
   sp->sp_album_name = prop_ref_inc(prop_create(m, "album_name"));
   sp->sp_album_year = prop_ref_inc(prop_create(m, "album_year"));
@@ -4445,18 +4443,23 @@ be_spotify_init(void)
   prop_t *spotify;
   prop_t *s, *ctrl;
   setting_t *ena;
+  char iconurl[512];
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
     return 1;
 #endif
 
+  snprintf(iconurl, sizeof(iconurl),
+	   "%s/resources/spotify/spotify_icon.png", showtime_dataroot);
+  spotify_icon_url = rstr_alloc(iconurl);
+
   TRACE(TRACE_INFO, "Spotify", "Using library version %s", f_sp_build_id());
 
   prop_t *title = prop_create_root(NULL);
   prop_set_string(title, "Spotify");
 
-  s = settings_add_dir(settings_apps, title, NULL, SPOTIFY_ICON_URL,
+  s = settings_add_dir(settings_apps, title, NULL, iconurl,
 		       _p("Spotify music service"));
 
   spotify_courier = prop_courier_create_notify(courier_notify, NULL);
@@ -4479,11 +4482,11 @@ be_spotify_init(void)
   htsmsg_t *store = htsmsg_store_load("spotify") ?: htsmsg_create_map();
 
   settings_create_info(s, 
-		       "bundle://resources/spotify/spotify-core-logo-96x96.png",
+		       iconurl,
 		       _p("Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime."));
 
   spotify_service = service_create("Spotify", "spotify:start",
-				   "music", SPOTIFY_ICON_URL, 0, 0);
+				   "music", iconurl, 0, 0);
 
   ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
 			     store, spotify_set_enable, NULL,
@@ -4615,7 +4618,7 @@ be_spotify_search(prop_t *source, const char *query)
     }
 
     search_class_create(n, &ssr->ssr_nodes, &ssr->ssr_entries, title,
-			SPOTIFY_ICON_URL);
+			rstr_get(spotify_icon_url));
   }
 
   ss->ss_query = strdup(query);

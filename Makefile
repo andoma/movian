@@ -105,14 +105,12 @@ OBJS3=   $(OBJS4:%.S=$(BUILDDIR)/%.o)
 OBJS2=   $(OBJS3:%.c=$(BUILDDIR)/%.o)
 OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
-OBJDIRS= $(sort $(dir $(OBJS)))
 
 # File bundles
 BUNDLES += $(sort $(BUNDLES-yes))
 BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
 BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
 BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
-OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
@@ -136,19 +134,35 @@ all:	makever ${PROG}
 
 .PHONY:	clean distclean makever
 
-${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) src/version.c
-	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/wd.c
+	$(CC) -o $@ $(OBJS) support/dataroot/wd.c $(LDFLAGS) ${LDFLAGS_cfg}
 
-$(OBJDIRS):
-	@mkdir -p $@
+${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) src/version.c support/dataroot/bundle.c
+	$(CC) -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
+
+${PROG}.datadir: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/datadir.c
+	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
+
+.PHONY: ${PROG}.zipbundle
+${PROG}.zipbundle: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/datadir.c
+	rm -rf  ${BUILDDIR}/zipbundles
+	mkdir -p ${BUILDDIR}/zipbundles
+	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
+	$(eval SUM:=$(shell sha1sum ${BUILDDIR}/zipbundles/bundle.zip | cut -d' ' -f1))
+	mv ${BUILDDIR}/zipbundles/bundle.zip ${BUILDDIR}/zipbundles/${SUM}.zip
+	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(LDFLAGS) ${LDFLAGS_cfg}
+
 
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/%.o: %.m $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 ${BUILDDIR}/%.o: %.cpp $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 clean:
@@ -188,4 +202,5 @@ $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
 	$(CC) -I${CURDIR}/src/fileaccess -c -o $@ $<
 
 $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<

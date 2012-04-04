@@ -276,6 +276,12 @@ glw_init(glw_root_t *gr, const char *theme,
 	 ui_t *ui, int primary, 
 	 const char *instance, const char *instance_title)
 {
+  char themebuf[PATH_MAX];
+  if(theme == NULL) {
+    snprintf(themebuf, sizeof(themebuf),
+	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot);
+    theme = themebuf;
+  }
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
   gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
@@ -283,7 +289,7 @@ glw_init(glw_root_t *gr, const char *theme,
 				  POOL_ZERO_MEM);
 
   gr->gr_vpaths[0] = "theme";
-  gr->gr_vpaths[1] = theme;
+  gr->gr_vpaths[1] = strdup(theme);
   gr->gr_vpaths[2] = NULL;
 
   gr->gr_uii.uii_ui = ui;

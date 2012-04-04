@@ -1181,7 +1181,7 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[PATH_MAX];
-  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
+  const char *theme_path = NULL;
   const char *displayname_title  = NULL;
   int force_fs = 0;
 

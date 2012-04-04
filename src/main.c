@@ -341,6 +341,8 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot);
+
   /* Try to create cache path */
   if(showtime_cache_path != NULL &&
      (r = makedirs(showtime_cache_path)) != 0) {

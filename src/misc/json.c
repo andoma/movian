@@ -327,7 +327,7 @@ json_parse_value(const char *s, void *parent, const char *name,
   const char *s2;
   char *str;
   double d = 0;
-  long l;
+  long l = 0;
   void *c;
 
   if((c = json_parse_map(s, &s2, jd, opaque, failp, failmsg)) == NULL)

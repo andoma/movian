@@ -27,6 +27,8 @@
 #include "arch/threads.h"
 #include "misc/rstr.h"
 
+extern const char *showtime_dataroot;
+
 #define HTS_GLUE(a, b) a ## b
 #define HTS_JOIN(a, b) HTS_GLUE(a, b)
 

@@ -48,7 +48,9 @@ metadb_init(void)
   if(db == NULL)
     return;
 
-  int r = db_upgrade_schema(db, "bundle://resources/metadb", "metadb");
+  snprintf(buf, sizeof(buf), "%s/resources/metadb", showtime_dataroot);
+
+  int r = db_upgrade_schema(db, buf, "metadb");
 
   metadb_close(db);
 

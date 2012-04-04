@@ -46,7 +46,6 @@ CONFIG_LIST="
  lirc
  stdin
  release
- embedded_resources
  coreaudio
  avahi
  appleremote
@@ -313,49 +312,23 @@ finalize() {
 
 
     # Generate default theme path for GLW
-    # Optionally embed the theme if in release mode
     if enabled glw; then
-	if enabled embedded_resources; then
-	    GLW_DEFAULT_THEME_URL="bundle://glwthemes/${GLW_DEFAULT_THEME}"
-	    echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
-	else
-	    GLW_DEFAULT_THEME_URL="file://`cd glwthemes/$GLW_DEFAULT_THEME && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME_URL \""${GLW_DEFAULT_THEME_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
+	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME \""${GLW_DEFAULT_THEME}"\""
     fi
 
     # Generate resource path for GU
-    # Optionally embed the stuff if in release mode
     if enabled gu; then
-	if enabled embedded_resources; then
-	    GU_RESOURCES_URL="bundle://guresources"
-	    echo >>${CONFIG_MAK} "BUNDLES+=guresources"
-	else
-	    GU_RESOURCES_URL="file://`cd guresources && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_GU_RESOURCES_URL \""${GU_RESOURCES_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=guresources"
     fi
 
     # Fonts
-    # Optionally embed the stuff if in release mode
     if enabled font_liberation; then
-	if enabled embedded_resources; then
-	    LIBERATION_RESOURCE_URL="bundle://resources/fonts/liberation"
-	    echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
-	else
-	    LIBERATION_RESOURCE_URL="file://`cd resources/fonts/liberation && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_FONT_LIBERATION_URL \""${LIBERATION_RESOURCE_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
     fi
 
     # Languages
-    if enabled embedded_resources; then
-	LANGUAGES_URL="bundle://lang"
-	echo >>${CONFIG_MAK} "BUNDLES+=lang"
-    else
-	LANGUAGES_URL="file://`cd lang && pwd`"
-    fi
-    echo >>${CONFIG_H} "#define SHOWTIME_LANGUAGES_URL \""${LANGUAGES_URL}"\""
+    echo >>${CONFIG_MAK} "BUNDLES+=lang"
 
     # sqlite
     if enabled sqlite_vfs; then

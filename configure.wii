@@ -19,7 +19,6 @@ source support/configure.inc
 DEVKITPRO="${TOPDIR}/wiisupport/devkitpro"
 LIBFREETYPEPATH="${TOPDIR}/wiisupport/freetype-ppc"
 
-enable embedded_resources
 enable tinysmb
 enable dvd
 enable dvd_wii
