@@ -1,0 +1,8 @@
+ps3: Round timestamps to ms precision before feeding them to the SPU decoder
+
+For some unholy reason the SPU decoder seems to hang when timestamps are not
+rounded to ms precision. I've no idea why.
+
+Fixes #640
+Fixes #662
+Fixes #890
