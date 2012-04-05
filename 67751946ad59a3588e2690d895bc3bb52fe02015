@@ -1,0 +1,3 @@
+ps3: Fix support for 4.0 audio channel layout
+
+Fixes #886
