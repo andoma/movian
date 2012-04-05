@@ -97,6 +97,20 @@ copy_buf_float(float *buf, const audio_buf_t *ab, int channels)
     return;
   }
 
+  if(ab->ab_channels == 4 && channels == 8) {
+    for (i = 0; i < AUDIO_BLOCK_SAMPLES * 4; i+=4) {
+      *buf++ = src[i+0];
+      *buf++ = src[i+1];
+      *buf++ = 0;
+      *buf++ = 0;
+      *buf++ = src[i+2];
+      *buf++ = src[i+3];
+      *buf++ = 0;
+      *buf++ = 0;
+    }
+    return;
+  }
+
   if(ab->ab_channels == 5 && channels == 8) {
     for (i = 0; i < AUDIO_BLOCK_SAMPLES * 5; i+=5) {
       *buf++ = src[i+0];
@@ -269,6 +283,7 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	  conf.encoder = AUDIO_OUT_CODING_TYPE_LPCM;
 	  break;
 
+	case 4:
 	case 5:
 	case 6:
 	  achannels = 8;
@@ -386,7 +401,9 @@ audio_ps3_init(void)
   am->am_formats = 
     AM_FORMAT_PCM_MONO |
     AM_FORMAT_PCM_STEREO | AM_FORMAT_PCM_5DOT1 | 
-    AM_FORMAT_PCM_6DOT1  | AM_FORMAT_PCM_7DOT1;
+    AM_FORMAT_PCM_6DOT1  | AM_FORMAT_PCM_7DOT1 |
+    AM_FORMAT_PCM_5DOT0 | AM_FORMAT_PCM_4DOT0;
+
   am->am_sample_rates = AM_SR_48000;
 
   max_pcm = audioOutGetSoundAvailability(AUDIO_OUT_PRIMARY,

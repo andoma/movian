@@ -134,6 +134,7 @@ channels_to_format(int channels)
   int format;
   switch(channels) {
   case 2: format = AM_FORMAT_PCM_STEREO; break;
+  case 4: format = AM_FORMAT_PCM_4DOT0;  break;
   case 5: format = AM_FORMAT_PCM_5DOT0;  break;
   case 6: format = AM_FORMAT_PCM_5DOT1;  break;
   case 7: format = AM_FORMAT_PCM_6DOT1;  break;
