@@ -45,18 +45,22 @@ install: $(BUILDDIR)/showtime.pkg
 	sync
 
 $(BUILDDIR)/dist/showtime-$(VERSION).self: $(BUILDDIR)/showtime.self
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 $(BUILDDIR)/dist/showtime-$(VERSION).pkg: $(BUILDDIR)/showtime.pkg
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg: $(BUILDDIR)/showtime_geohot.pkg
+	@mkdir -p $(dir $@)
 	cp $< $@
 
-$(BUILDDIR)/dist:
-	mkdir -p $@
+dist:  $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
 
-dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
+$(BUILDDIR)/devupgrade/EBOOT.BIN: ${BIN}.bundle
+	@mkdir -p $(dir $@)
+	make_self_npdrm $< $@ $(CONTENTID)
 
-upgrade: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
-	 curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace
+upgrade: $(BUILDDIR)/devupgrade/EBOOT.BIN
+	curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace
