@@ -27,7 +27,7 @@
 #include "arch/threads.h"
 #include "misc/rstr.h"
 
-extern const char *showtime_dataroot;
+extern const char *showtime_dataroot(void);
 
 #define HTS_GLUE(a, b) a ## b
 #define HTS_JOIN(a, b) HTS_GLUE(a, b)
@@ -142,6 +142,7 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 
 extern char *showtime_cache_path;
 extern char *showtime_persistent_path;
+extern char *showtime_path;
 
 
 /* From version.c */

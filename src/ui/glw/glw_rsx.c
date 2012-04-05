@@ -58,7 +58,7 @@ load_vp(const char *filename)
   char url[512];
 
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
-	   showtime_dataroot, filename);
+	   showtime_dataroot(), filename);
 
   if((vp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
@@ -132,7 +132,7 @@ load_fp(glw_root_t *gr, const char *filename)
 
   char url[512];
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
-	   showtime_dataroot, filename);
+	   showtime_dataroot(), filename);
 
   if((fp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",

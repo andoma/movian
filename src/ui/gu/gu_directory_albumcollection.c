@@ -112,7 +112,7 @@ album_set_art(void *opaque, const char *str)
     return;
   }
 
-  snprintf(path, sizeof(path), "%s/guresources/cd.png", showtime_dataroot);
+  snprintf(path, sizeof(path), "%s/guresources/cd.png", showtime_dataroot());
   pb = gu_pixbuf_get_sync(path, 256, -1);
   g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
   if(pb != NULL)

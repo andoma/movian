@@ -279,7 +279,7 @@ glw_init(glw_root_t *gr, const char *theme,
   char themebuf[PATH_MAX];
   if(theme == NULL) {
     snprintf(themebuf, sizeof(themebuf),
-	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot);
+	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot());
     theme = themebuf;
   }
   hts_mutex_init(&gr->gr_mutex);

@@ -12,22 +12,24 @@ SFOXML          := $(TOPDIR)/support/sfo.xml
 BIN=${BUILDDIR}/showtime.elf
 
 
-${BIN}: ${BUILDDIR}/showtime.bundle
+${BIN}.bundle: ${BUILDDIR}/showtime.bundle
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-$(BUILDDIR)/showtime.self: ${BIN}
+${BIN}.zipbundle: ${BUILDDIR}/showtime.zipbundle
+	${STRIP} -o $@ $<
+	sprxlinker $@
+
+$(BUILDDIR)/showtime.self: ${BIN}.bundle
 	$(SELF) $< $@
 
-$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}
-	@mkdir -p $(BUILDDIR)/pkg
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}.zipbundle
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
-	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
+	make_self_npdrm $< $@ $(CONTENTID)
 
 $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
-	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
-
-	@cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
+	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
+	cp ${BUILDDIR}/zipbundles/*.zip $(BUILDDIR)/pkg/USRDIR/
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 

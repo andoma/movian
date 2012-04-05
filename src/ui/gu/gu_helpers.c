@@ -242,7 +242,7 @@ gu_contentstr_to_icon(const char *str, int height)
     return NULL;
 
   snprintf(buf, sizeof(buf), 
-	   "%s/guresources/content-%s.png", showtime_dataroot, str);
+	   "%s/guresources/content-%s.png", showtime_dataroot(), str);
   return gu_pixbuf_get_sync(buf, -1, height);
 }
 

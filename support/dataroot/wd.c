@@ -1,1 +1,4 @@
-const char *showtime_dataroot = "./";
+const char *showtime_dataroot(void)
+{
+  return "./";
+}

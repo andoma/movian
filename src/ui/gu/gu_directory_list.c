@@ -295,7 +295,7 @@ contentstr_to_icon(const char *str, int height)
     return NULL;
 
   snprintf(buf, sizeof(buf), 
-	   "%s/guresources/content-%s.png", showtime_dataroot, str);
+	   "%s/guresources/content-%s.png", showtime_dataroot(), str);
   return gu_pixbuf_get_sync(buf, -1, height);
 }
 
@@ -663,7 +663,7 @@ starred2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
     char path[PATH_MAX];
 
     snprintf(path, sizeof(path), "%s/guresources/%sstar.png",
-	     showtime_dataroot, g_value_get_int(&gv) ? "" : "no");
+	     showtime_dataroot(), g_value_get_int(&gv) ? "" : "no");
     pb = gu_pixbuf_get_sync(path, -1, 16);
     g_object_set(G_OBJECT(cell), "pixbuf", pb, NULL);
     if(pb != NULL)

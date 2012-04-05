@@ -480,7 +480,7 @@ set_language(void *opaque, const char *str)
     return;
   }
 
-  snprintf(buf, sizeof(buf), "%s/lang/%s.lang", showtime_dataroot, str);
+  snprintf(buf, sizeof(buf), "%s/lang/%s.lang", showtime_dataroot(), str);
   TRACE(TRACE_INFO, "i18n", "Loading language %s", str);
   nls_load_lang(buf);
 }
@@ -583,7 +583,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   setting_t  *x;
   char buf[200];
   char buf2[200];
-  snprintf(buf2, sizeof(buf2), "%s/lang", showtime_dataroot);
+  snprintf(buf2, sizeof(buf2), "%s/lang", showtime_dataroot());
   fa_dir_t *fd = fa_scandir(buf2, buf, sizeof(buf));
   fa_dir_entry_t *fde;
   char language[64];
@@ -596,7 +596,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
 
   if(fd == NULL) {
     TRACE(TRACE_ERROR, "i18n", "Unable to scan languages in %s/lang -- %s",
-	  showtime_dataroot, buf);
+	  showtime_dataroot(), buf);
     return;
   }
 

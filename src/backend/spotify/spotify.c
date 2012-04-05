@@ -4451,7 +4451,7 @@ be_spotify_init(void)
 #endif
 
   snprintf(iconurl, sizeof(iconurl),
-	   "%s/resources/spotify/spotify_icon.png", showtime_dataroot);
+	   "%s/resources/spotify/spotify_icon.png", showtime_dataroot());
   spotify_icon_url = rstr_alloc(iconurl);
 
   TRACE(TRACE_INFO, "Spotify", "Using library version %s", f_sp_build_id());

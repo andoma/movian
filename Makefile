@@ -143,14 +143,20 @@ ${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) src/version.c support/dataroot
 ${PROG}.datadir: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/datadir.c
 	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
 
-.PHONY: ${PROG}.zipbundle
-${PROG}.zipbundle: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/datadir.c
+.PHONY: ${BUILDDIR}/zipbundles/bundle.zip
+
+${BUILDDIR}/zipbundles/bundle.zip:
 	rm -rf  ${BUILDDIR}/zipbundles
 	mkdir -p ${BUILDDIR}/zipbundles
 	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
+
+${BUILDDIR}/zipbundles/zipbundle.o: ${BUILDDIR}/zipbundles/bundle.zip support/dataroot/zipbundle.c
 	$(eval SUM:=$(shell sha1sum ${BUILDDIR}/zipbundles/bundle.zip | cut -d' ' -f1))
 	mv ${BUILDDIR}/zipbundles/bundle.zip ${BUILDDIR}/zipbundles/${SUM}.zip
-	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(LDFLAGS) ${LDFLAGS_cfg}
+	$(CC) -c -o ${BUILDDIR}/zipbundles/zipbundle.o -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)
+
+${PROG}.zipbundle: $(OBJS) $(ALLDEPS) src/version.c ${BUILDDIR}/zipbundles/zipbundle.o
+	$(CC) -o $@ $(OBJS) ${BUILDDIR}/zipbundles/zipbundle.o $(LDFLAGS) ${LDFLAGS_cfg}
 
 
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)
