@@ -115,6 +115,10 @@ spotlight_searcher(void *aux)
   prop_t *entries[2] = {NULL, NULL};
   prop_t *nodes[2] = {NULL, NULL};
   int i, t;
+  char iconpath[PATH_MAX];
+
+  snprintf(iconpath, sizeof(iconpath), "%s/resources/fileaccess/fs_icon.png",
+	   showtime_dataroot());
 
   fas->fas_pc = prop_courier_create_passive();
   fas->fas_sub = 
@@ -213,7 +217,7 @@ spotlight_searcher(void *aux)
     if(nodes[t] == NULL)
       if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
 			     t ? "Local video files" : "Local audio files",
-                             FA_LOCALFILES_ICON)) {
+                             iconpath)) {
 	free(path);
 	break;
       }
