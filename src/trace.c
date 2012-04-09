@@ -113,9 +113,12 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG)
       trace_prop(level, buf2, s, leveltxt);
     if(log_fd != -1) {
-      write(log_fd, buf2, strlen(buf2));
-      write(log_fd, s, strlen(s));
-      write(log_fd, "\n", 1);
+      if(write(log_fd, buf2, strlen(buf2)) != strlen(buf2) ||
+	 write(log_fd, s, strlen(s)) != strlen(s) ||
+	 write(log_fd, "\n", 1) != 1) {
+	close(log_fd);
+	log_fd = -1;
+      }
     }
     memset(buf2, ' ', l);
   }
