@@ -1790,7 +1790,7 @@ startpage(spotify_page_t *sp)
 
   prop_set_string(prop_create(model, "type"), "directory");
   prop_set_string(prop_create(model, "contents"), "items");
-  prop_set_string(prop_create(metadata, "logo"), SPOTIFY_ICON_URL);
+  prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
   prop_set_string(prop_create(metadata, "title"), "Spotify");
 
   prop_t *navnodes = prop_create_root(NULL);
