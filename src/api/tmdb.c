@@ -187,13 +187,13 @@ tmdb_configure(void)
  *
  */
 static void
-tmdb_load_movie_info(void *db, const char *item_url, uint32_t id)
+tmdb_load_movie_info(void *db, const char *item_url, const char *id)
 {
   char url[300];
   char errbuf[256];
   char *result;
 
-  snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%d", id);
+  snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", id);
 
   result = fa_load_query(url, NULL, errbuf, sizeof(errbuf),
 			 NULL,
@@ -227,10 +227,8 @@ tmdb_load_movie_info(void *db, const char *item_url, uint32_t id)
   md->md_rate_count = htsmsg_get_s32_or_default(doc, "vote_count", -1);
   md->md_duration = htsmsg_get_s32_or_default(doc, "runtime", 0) * 60;
   md->md_year = atoi(htsmsg_get_str(doc, "release_date") ?: "");
-  char idtxt[20];
-  snprintf(idtxt, sizeof(idtxt), "%d", id);
   int64_t itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource,
-					   idtxt, md);
+					   id, md);
 
   metadata_destroy(md);
 
@@ -310,8 +308,11 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 
   if(best != NULL)  {
     int32_t id;
-    if(!htsmsg_get_s32(best, "id", &id))
-      tmdb_load_movie_info(db, item_url, id);
+    if(!htsmsg_get_s32(best, "id", &id)) {
+      char idtxt[20];
+      snprintf(idtxt, sizeof(idtxt), "%d", id);
+      tmdb_load_movie_info(db, item_url, idtxt);
+    }
   }
 
  done1:
@@ -326,36 +327,10 @@ void
 tmdb_query_by_imdb_id(void *db, const char *item_url,
 		      const char *imdb_id)
 {
-  char buf[300];
-  char errbuf[256];
-  char *result;
-
   if(tmdb_configure())
     return;
 
-  snprintf(buf, sizeof(buf), 
-	   "http://api.themoviedb.org/2.1/Movie.imdbLookup/en/json/%s/%s",
-	   TMDB_APIKEY, imdb_id);
-
-  result = fa_load(buf, NULL, NULL, errbuf, sizeof(errbuf),
-		   NULL, FA_COMPRESSION, NULL, NULL);
-
-  if(result == NULL)
-    return;
-
-  htsmsg_t *doc = htsmsg_json_deserialize(result);
-  free(result);
-  if(doc == NULL)
-    return;
-
-  htsmsg_t *item = htsmsg_get_map_in_list(doc, 1);
-  if(item != NULL) {
-    int64_t id;
-    if(!htsmsg_get_s64(item, "id", &id)) {
-      tmdb_load_movie_info(db, item_url, id);
-    }
-  }
-  htsmsg_destroy(doc);
+  tmdb_load_movie_info(db, item_url, imdb_id);
 }
 
 
