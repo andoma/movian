@@ -436,7 +436,7 @@ http_cookie_append(const char *req_host, const char *req_path,
   if(hq.hq_size == 0)
     return;
 
-  http_header_add_alloced(headers, "Cookie", htsbuf_to_string(&hq));
+  http_header_add_alloced(headers, "Cookie", htsbuf_to_string(&hq), 0);
 }
 
 
@@ -772,7 +772,7 @@ http_client_oauth(struct http_auth_req *har,
 	     URL_ESCAPE_PARAM);
   snprintf(str + strlen(str), sizeof(str) - strlen(str), "\"");
 
-  http_header_add(har->har_headers, "Authorization", str);
+  http_header_add(har->har_headers, "Authorization", str, 0);
 
   return 0;
 }
@@ -784,7 +784,7 @@ http_client_oauth(struct http_auth_req *har,
 int
 http_client_rawauth(struct http_auth_req *har, const char *str)
 {
-  http_header_add(har->har_headers, "Authorization", str);
+  http_header_add(har->har_headers, "Authorization", str, 0);
   return 0;
 }
 
@@ -796,7 +796,7 @@ void
 http_client_set_header(struct http_auth_req *har, const char *key,
 		       const char *value)
 {
-  http_header_add(har->har_headers, key, value);
+  http_header_add(har->har_headers, key, value, 0);
 }
 
 
@@ -814,19 +814,20 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
 
   if(hc->hc_port != 80) {
     snprintf(str, sizeof(str), "%s:%d", hc->hc_hostname, hc->hc_port);
-    http_header_add(l, "Host", str);
+    http_header_add(l, "Host", str, 0);
   } else {
-    http_header_add(l, "Host", hf->hf_connection->hc_hostname);
+    http_header_add(l, "Host", hf->hf_connection->hc_hostname, 0);
   }
   if(hf->hf_req_compression)
-    http_header_add(l, "Accept-Encoding", "gzip");
+    http_header_add(l, "Accept-Encoding", "gzip", 0);
   else
-    http_header_add(l, "Accept-Encoding", "identity");
+    http_header_add(l, "Accept-Encoding", "identity", 0);
   
-  http_header_add(l, "Connection", hf->hf_want_close ? "close" : "keep-alive");
+  http_header_add(l, "Connection",
+		  hf->hf_want_close ? "close" : "keep-alive", 0);
   snprintf(str, sizeof(str), "Showtime %s %s",
 	   showtime_get_system_type(), htsversion);
-  http_header_add(l, "User-Agent", str);
+  http_header_add(l, "User-Agent", str, 0);
 }
 
 
@@ -874,7 +875,7 @@ http_headers_auth(struct http_header_list *headers, http_file_t *hf,
 #endif
 
   if(hf->hf_auth != NULL) {
-    http_header_add(headers, "Authorization", hf->hf_auth);
+    http_header_add(headers, "Authorization", hf->hf_auth, 0);
     return;
   }
 
@@ -882,7 +883,7 @@ http_headers_auth(struct http_header_list *headers, http_file_t *hf,
   LIST_FOREACH(hac, &http_auth_caches, hac_link) {
     if(!strcmp(hostname, hac->hac_hostname) && port == hac->hac_port) {
       hf->hf_auth = strdup(hac->hac_credentials);
-      http_header_add(headers, "Authorization", hac->hac_credentials);
+      http_header_add(headers, "Authorization", hac->hac_credentials, 0);
       break;
     }
   }
@@ -1090,7 +1091,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     *c = 0;
 
     if(headers != NULL)
-      http_header_add(headers, argv[0], argv[1]);
+      http_header_add(headers, argv[0], argv[1], 1);
 
     if(!strcasecmp(argv[0], "Transfer-Encoding")) {
 
@@ -2087,11 +2088,11 @@ http_load(struct fa_protocol *fap, const char *url,
   if(mtime != NULL && *mtime) {
     char txt[40];
     http_asctime(*mtime, txt, sizeof(txt));
-    http_header_add(&headers_in, "If-Modified-Since", txt);
+    http_header_add(&headers_in, "If-Modified-Since", txt, 0);
   }
 
   if(etag != NULL && *etag != NULL) {
-    http_header_add(&headers_in, "If-None-Match", *etag);
+    http_header_add(&headers_in, "If-None-Match", *etag, 0);
   }
 
   err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
@@ -2646,7 +2647,7 @@ http_request(const char *url, const char **arguments,
     http_header_add_int(&headers, "Content-Length", postdata->hq_size);
 
   if(postcontenttype != NULL) 
-    http_header_add(&headers, "Content-Type", postcontenttype);
+    http_header_add(&headers, "Content-Type", postcontenttype, 0);
 
   if(!(flags & HTTP_DISABLE_AUTH))
     http_headers_auth(&headers, hf, m, arguments);

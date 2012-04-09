@@ -71,7 +71,7 @@ ssdp_parse(char *buf, struct http_header_list *list)
       *s++ = 0;
       while(*s == 32)
 	s++;
-      http_header_add(list, l, s);
+      http_header_add(list, l, s, 0);
     }
     if(*e == '\n')
       e++;

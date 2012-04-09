@@ -648,7 +648,7 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
   LIST_INIT(&in);
   LIST_INIT(&out);
   
-  http_header_add(&in, "getCaptionInfo.sec", "1");
+  http_header_add(&in, "getCaptionInfo.sec", "1", 0);
 
   if(!http_request(url, NULL, NULL, NULL, NULL, 0, NULL, 0,
 		   0, &out, &in, NULL)) {

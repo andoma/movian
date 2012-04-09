@@ -249,7 +249,7 @@ js_http_request(JSContext *cx, jsval *rval,
 
       http_header_add(&in_headers,
 		      JS_GetStringBytes(JSVAL_TO_STRING(name)),
-		      JS_GetStringBytes(JS_ValueToString(cx, value)));
+		      JS_GetStringBytes(JS_ValueToString(cx, value)), 0);
     }
     
     JS_DestroyIdArray(cx, ida);
@@ -299,6 +299,8 @@ js_http_request(JSContext *cx, jsval *rval,
 
   if(!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
+
+  // HTTP headers
     
   JSObject *hdrs = JS_NewObject(cx, NULL, NULL, NULL);
   http_header_t *hh;
@@ -310,6 +312,34 @@ js_http_request(JSContext *cx, jsval *rval,
   
   jsval val = OBJECT_TO_JSVAL(hdrs);
   JS_SetProperty(cx, robj, "headers", &val);
+
+
+  JSObject *multiheaders = JS_NewObject(cx, NULL, NULL, NULL);
+
+  LIST_FOREACH(hh, &response_headers, hh_link) {
+
+    jsval key;
+    JSObject *array;
+    if(JS_GetProperty(cx, multiheaders, hh->hh_key, &key) &&
+       JSVAL_IS_OBJECT(key)) {
+      array = JSVAL_TO_OBJECT(key);
+    } else {
+      array = JS_NewObject(cx, NULL, NULL, NULL);
+      key = OBJECT_TO_JSVAL(array);
+      JS_SetProperty(cx, multiheaders, hh->hh_key, &key);
+    }
+
+    jsuint length;
+    if(JS_GetArrayLength(cx, array, &length)) {
+      jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, hh->hh_value));
+      JS_SetElement(cx, array, length, &val);
+      JS_SetArrayLength(cx, array, length + 1);
+    }
+  }
+
+  val = OBJECT_TO_JSVAL(multiheaders);
+  JS_SetProperty(cx, robj, "multiheaders", &val);
+
   JS_LeaveLocalRootScope(cx);
 
   http_headers_free(&response_headers);
