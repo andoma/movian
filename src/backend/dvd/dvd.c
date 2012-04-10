@@ -153,7 +153,6 @@ typedef struct dvd_player {
   uint32_t dp_end_ptm;  /* end ptm from last nav packet */
 
   int dp_hold;
-  int dp_lost_focus;
 
   prop_t *dp_audio_props[8];
   prop_t *dp_spu_props[32];
@@ -878,25 +877,6 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     mp_send_cmd_head(mp, &mp->mp_audio, 
 		     dp->dp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
-    dp->dp_lost_focus = 0;
-
-  } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-    dp->dp_hold = 1;
-    dp->dp_lost_focus = 1;
-    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-    mp_set_playstatus_by_hold(mp, dp->dp_hold, e->e_payload);
-    
-  } else if(!dvd_in_menu(dp) && event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-    if(dp->dp_lost_focus) {
-      dp->dp_hold = 0;
-      dp->dp_lost_focus = 0;
-      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
-      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
-    }
 
   } else if(event_is_action(e, ACTION_ACTIVATE)) {
 

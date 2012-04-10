@@ -54,7 +54,7 @@ openspc_play(media_pipe_t *mp, AVIOContext *avio, char *errbuf, size_t errlen)
   uint8_t *buf = malloc(siz);
   media_buf_t *mb = NULL;
   event_t *e;
-  int hold = 0, lost_focus = 0;
+  int hold = 0;
   int sample = 0;
   unsigned int duration = INT32_MAX;
 
@@ -136,13 +136,11 @@ openspc_play(media_pipe_t *mp, AVIOContext *avio, char *errbuf, size_t errlen)
 
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      lost_focus = 0;
       mp_set_playstatus_by_hold(mp, hold, NULL);
 
     } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
 
       hold = 1;
-      lost_focus = 1;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
@@ -224,7 +222,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   int64_t ts, seekbase = 0;
   media_codec_t *cw;
   event_t *e;
-  int lost_focus = 0;
   int registered_play = 0;
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
@@ -455,29 +452,11 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       hold = action_update_hold_by_event(hold, e);
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      lost_focus = 0;
       mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-      hold = 1;
-      lost_focus = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-      if(lost_focus) {
-	hold = 0;
-	lost_focus = 0;
-	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold, NULL);
-      }
 
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
       hold = 1;
-      lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 

@@ -4106,7 +4106,6 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   spotify_uri_t su;
   event_t *e, *eof = NULL;
   event_ts_t *ets;
-  int lost_focus = 0;
   media_queue_t *mq = &mp->mp_audio;
   
   memset(&su, 0, sizeof(su));
@@ -4192,30 +4191,10 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
       mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_set_playstatus_by_hold(mp, hold, NULL);
-      lost_focus = 0;
-
-    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-      hold = 1;
-      lost_focus = 1;
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 1));
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-      if(lost_focus) {
-	hold = 0;
-	lost_focus = 0;
-	spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, 0));
-	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold, NULL);
-      }
 
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
       hold = 1;
-      lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 

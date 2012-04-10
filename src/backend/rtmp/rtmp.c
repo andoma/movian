@@ -51,7 +51,6 @@ typedef struct {
   int height;
 
   int hold;
-  int lost_focus;
 
   int64_t seekbase;
   int epoch;
@@ -204,31 +203,11 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     mp_send_cmd_head(mp, &mp->mp_video, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_send_cmd_head(mp, &mp->mp_audio, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
     mp_set_playstatus_by_hold(mp, r->hold, NULL);
-    r->lost_focus = 0;
     
 
-  } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-    r->hold = 1;
-    r->lost_focus = 1;
-    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-    mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
-    
-  } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-    
-    if(r->lost_focus) {
-      r->hold = 0;
-      r->lost_focus = 0;
-      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
-      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, r->hold, NULL);
-    }
-    
   } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
     
     r->hold = 1;
-    r->lost_focus = 0;
     mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
     mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
     mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
@@ -741,7 +720,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   r.seek_origin = start;
   r.mp = mp;
   r.hold = 0;
-  r.lost_focus = 0;
   r.epoch = 1;
   
   mp->mp_audio.mq_stream = 0;
