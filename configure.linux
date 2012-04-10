@@ -31,7 +31,7 @@ CXX=c++
 show_help(){
   common_help
 
-  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
+  echo "  --prefix=PREFIX          Install in PREFIX [$prefix]"
   echo "  --bindir=DIR             Install binaries in DIR [$bindir]"
   echo "  --mandir=DIR             Install man pages in DIR [$mandir]"
   echo "  --datadir=DIR            Install data files in DIR [$datadir]"
