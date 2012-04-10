@@ -1,13 +1,8 @@
-#include "showtimeversion.h"
+#include "buildversion.h"
 #include "config.h"
 
-#ifdef HTS_RELEASE_TAG
-const char *htsversion=HTS_RELEASE_TAG;
-const char *htsversion_full=HTS_RELEASE_TAG " (" HTS_VERSION ")";
-#else
-const char *htsversion=HTS_VERSION;
-const char *htsversion_full=HTS_VERSION;
-#endif
+const char *htsversion=BUILD_VERSION;
+const char *htsversion_full=BUILD_VERSION;
 
 #include "showtime.h"
 #include <stdio.h>
@@ -29,6 +24,6 @@ showtime_parse_version_int(const char *str)
 uint32_t
 showtime_get_version_int(void) 
 {
-  return showtime_parse_version_int(HTS_VERSION);
+  return showtime_parse_version_int(BUILD_VERSION);
 }
 

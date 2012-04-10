@@ -189,9 +189,9 @@ ${PROG}.stripped: ${PROG}
 
 strip: ${PROG}.stripped
 
-# Create showtimeversion.h
-src/version.c: $(BUILDDIR)/showtimeversion.h
-$(BUILDDIR)/showtimeversion.h: FORCE
+# Create buildversion.h
+src/version.c: $(BUILDDIR)/buildversion.h
+$(BUILDDIR)/buildversion.h: FORCE
 	@$(CURDIR)/support/version.sh $(CURDIR) $@
 FORCE:
 
