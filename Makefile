@@ -130,17 +130,17 @@ $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
 endif
 
-all:	makever ${PROG}
+all:	${PROG}
 
 .PHONY:	clean distclean makever
 
-${PROG}: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/wd.c
+${PROG}: $(OBJS) $(ALLDEPS)  support/dataroot/wd.c
 	$(CC) -o $@ $(OBJS) support/dataroot/wd.c $(LDFLAGS) ${LDFLAGS_cfg}
 
-${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS) src/version.c support/dataroot/bundle.c
+${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
 	$(CC) -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
-${PROG}.datadir: $(OBJS) $(ALLDEPS) src/version.c support/dataroot/datadir.c
+${PROG}.datadir: $(OBJS) $(ALLDEPS)  support/dataroot/datadir.c
 	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
 
 .PHONY: ${BUILDDIR}/zipbundles/bundle.zip
@@ -155,7 +155,7 @@ ${BUILDDIR}/zipbundles/zipbundle.o: ${BUILDDIR}/zipbundles/bundle.zip support/da
 	mv ${BUILDDIR}/zipbundles/bundle.zip ${BUILDDIR}/zipbundles/${SUM}.zip
 	$(CC) -c -o ${BUILDDIR}/zipbundles/zipbundle.o -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)
 
-${PROG}.zipbundle: $(OBJS) $(ALLDEPS) src/version.c ${BUILDDIR}/zipbundles/zipbundle.o
+${PROG}.zipbundle: $(OBJS) $(ALLDEPS)  ${BUILDDIR}/zipbundles/zipbundle.o
 	$(CC) -o $@ $(OBJS) ${BUILDDIR}/zipbundles/zipbundle.o $(LDFLAGS) ${LDFLAGS_cfg}
 
 
@@ -189,13 +189,11 @@ ${PROG}.stripped: ${PROG}
 
 strip: ${PROG}.stripped
 
-
 # Create showtimeversion.h
 src/version.c: $(BUILDDIR)/showtimeversion.h
-
-makever:
-	@$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h
-
+$(BUILDDIR)/showtimeversion.h: FORCE
+	@$(CURDIR)/support/version.sh $(CURDIR) $@
+FORCE:
 
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
