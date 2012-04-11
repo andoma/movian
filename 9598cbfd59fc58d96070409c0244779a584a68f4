@@ -1,0 +1,7 @@
+ps3: Fix DVD playback
+
+Showtime should now be able to play back both ISO files and
+VIDEO_TS DVD folders.
+
+Fixes #507
+Fixes #921
