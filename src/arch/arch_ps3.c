@@ -712,3 +712,17 @@ my_localtime(const time_t *now, struct tm *tm)
   tm->tm_min  = dt.minute;
   tm->tm_sec  = dt.second;
 }
+
+
+void
+__assert_func(const char *file, int line,
+	      const char *func, const char *failedexpr);
+
+void
+__assert_func(const char *file, int line,
+	      const char *func, const char *failedexpr)
+{
+  TRACE(TRACE_ERROR, "ASSERT",
+	"%s:%d %s %s", file, line, func, failedexpr);
+  exit(1);
+}
