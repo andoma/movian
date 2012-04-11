@@ -327,8 +327,8 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
 
-    mcp.width = dp->dp_vwidth;
-    mcp.height = dp->dp_vheight;
+    //    mcp.width = dp->dp_vwidth;
+    //    mcp.height = dp->dp_vheight;
 
   } else if((sc >= 0x80 && sc <= 0x9f) || (sc >= 0x1c0 && sc <= 0x1df)) {
 
