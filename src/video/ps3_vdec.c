@@ -912,7 +912,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   vdd->level_major = mcp->level / 10;
   vdd->level_minor = mcp->level % 10;
 
-  if(id == CODEC_ID_H264 && ctx->extradata_size)
+  if(id == CODEC_ID_H264 && ctx && ctx->extradata_size)
     h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);
 
   vdd->next_picture = INT32_MIN;
@@ -924,6 +924,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   TRACE(TRACE_DEBUG, "VDEC", 
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
+
+  mc->codec_ctx = ctx ?: avcodec_alloc_context();
+  mc->codec_ctx->codec_id   = id;
+  mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
   mc->opaque = vdd;
   mc->decode = decoder_decode;
