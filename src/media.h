@@ -58,7 +58,8 @@ typedef struct media_format {
 typedef struct media_codec {
   int refcount;
   media_format_t *fw;
-  struct AVCodec *codec;
+  int codec_id;
+  struct AVCodec *codec; // This may be NULL for HW accelerated decoders
   struct AVCodecContext *codec_ctx;
   struct AVCodecParserContext *parser_ctx;
 

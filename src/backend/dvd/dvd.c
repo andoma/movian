@@ -387,7 +387,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   
   cw = *cwp;
 
-  if(cw == NULL || cw->codec->id != codec_id) {
+  if(cw == NULL || cw->codec_id != codec_id) {
     if(cw != NULL)
       media_codec_deref(cw);
 

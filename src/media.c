@@ -1263,7 +1263,8 @@ media_codec_create(int codec_id, int parser,
   mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
   mc->refcount = 1;
   mc->fw = fw;
-  
+  mc->codec_id = codec_id;
+
   if(fw != NULL)
     atomic_add(&fw->refcount, 1);
 
