@@ -386,9 +386,10 @@ face_resolve(int uc, uint8_t style, int family_id,
     return 0;
 #endif
 
-#ifdef SHOWTIME_FONT_LIBERATION_URL
+#if ENABLE_FONT_LIBERATION
   snprintf(urlbuf, urllen,
-	   SHOWTIME_FONT_LIBERATION_URL"/LiberationSans-Regular.ttf");
+	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
+	   showtime_dataroot());
   return 0;
 #endif
   return -1;

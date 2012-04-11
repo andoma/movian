@@ -26,6 +26,7 @@ include ${CURDIR}/config.default
 OPTFLAGS ?= -O2
 
 BUILDDIR = build.${BUILD}
+PROG=${BUILDDIR}/showtime
 
 include ${BUILDDIR}/config.mak
 
@@ -130,8 +131,6 @@ $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
 endif
 
-all:	${PROG}
-
 .PHONY:	clean distclean makever
 
 ${PROG}: $(OBJS) $(ALLDEPS)  support/dataroot/wd.c
@@ -142,6 +141,9 @@ ${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
 
 ${PROG}.datadir: $(OBJS) $(ALLDEPS)  support/dataroot/datadir.c
 	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
+
+${PROG}.osxapp: $(OBJS) $(ALLDEPS) support/dataroot/osxapp.c
+	$(CC) -o $@ $(OBJS) support/dataroot/osxapp.c $(LDFLAGS) ${LDFLAGS_cfg}
 
 .PHONY: ${BUILDDIR}/zipbundles/bundle.zip
 

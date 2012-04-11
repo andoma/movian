@@ -1,53 +1,31 @@
-${PROG}: Showtime.app
+.DEFAULT_GOAL := ${BUILDDIR}/Showtime.app/Contents/MacOS/showtime
 
-all: frameworks
+APPDIR        := ${BUILDDIR}/Showtime.app
+APPPROG       := ${PROG}
+include support/osx-stage.mk
 
-clean: Showtime.app-clean
+APPDIR        := ${BUILDDIR}/dist/Showtime.app
+APPPROG       := ${PROG}.osxapp
+include support/osx-stage.mk
 
-frameworks:
+RESOUCES := ${APPDIR}/Contents/Resources
 
-Showtime.app-clean:
-	rm -rf ${APPDIR}
+.PHONY: dist
+dist: ${BUILDDIR}/dist/Showtime.app/Contents/MacOS/showtime
 
-Showtime.app: \
-	${APPDIR}/Contents/MacOS \
-	${APPDIR}/Contents/Info.plist \
-	${APPDIR}/Contents/Resources/hts.icns \
-	${APPDIR}/Contents/Resources/MainMenu.nib
+	for bundle in ${BUNDLES}; do \
+		mkdir -p ${RESOUCES}/$$bundle ;\
+		cp -r $$bundle/*  ${RESOUCES}/$$bundle ;\
+	done
 
-.PHONY: ${APPDIR}/Contents/MacOS
-${APPDIR}/Contents/MacOS:
-	@mkdir -p $@
+	support/osx_checkbundlelink.sh ${APPPROG}
+	support/mkdmg ${APPDIR} Showtime support/Showtime.app/Contents/Resources/hts.icns ${BUILDDIR}/Showtime.dmg
 
-$(APPDIR)/Contents/Info.plist: support/osx/Info.plist
-	@mkdir -p `dirname $@`
-	@cp $< $@
+#
+#
+#
+clean: osx-clean
 
-$(APPDIR)/Contents/Resources/hts.icns: support/osx/hts.icns
-	@mkdir -p `dirname $@`
-	@cp $< $@
-        
-$(APPDIR)/Contents/Resources/MainMenu.nib: support/osx/MainMenu.xib
-	@mkdir -p `dirname $@`
-	@ibtool --compile $@ $<
-
-ifdef SPOTIFY_FRAMEWORK
-frameworks: $(APPDIR)/Contents/Frameworks/libspotify.framework/libspotify
-
-$(APPDIR)/Contents/Frameworks/libspotify.framework/libspotify:
-	@echo "Copying and stripping spotify framework"
-	@mkdir -p `dirname $@`
-	@cp -a \
-	  "${SPOTIFY_FRAMEWORK}/Versions" \
-	  "${SPOTIFY_FRAMEWORK}/libspotify" \
-	  "`dirname $@`"
-	@support/osx_striparch.sh \
-	  ${PROG} \
-	  "`dirname $@`/Versions/Current/libspotify"
-endif
-
-.PHONY: Showtime.dmg
-Showtime.dmg:
-	support/osx_checkbundlelink.sh ${PROG}
-	support/mkdmg ${APPDIR} Showtime support/osx/hts.icns Showtime.dmg
+osx-clean:
+	rm -rf ${BUILDDIR}/*.app ${BUILDDIR}/*.dmg 
 

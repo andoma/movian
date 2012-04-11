@@ -351,12 +351,6 @@ OSENV=${OSENV}
 LDFLAGS_cfg += -lz -lm
 EOF
   
-    # PROG not set, set to default binary path
-    if [ "x${PROG}" == "x" ]; then
-        PROG="build.${BUILD}/showtime"
-    fi
-    echo >>${CONFIG_MAK} "PROG=${PROG}"
-
     # Generate config files
     print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
 
@@ -364,7 +358,6 @@ EOF
     cp_if_changed ${CONFIG_MAK} ${BUILDDIR}/config.mak
     rm -f ${CONFIG_H} ${CONFIG_MAK}
 
-    echo "Final binary is: ${PROG}"
     cleanup
     exit 0
 }

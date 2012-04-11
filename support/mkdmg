@@ -9,16 +9,18 @@ SRCDIR=$1
 VOLNAME=$2
 ICONFILE=$3
 DMGFILE=$4
-
+xcode=`xcode-select -print-path`
 rm -f $DMGFILE
 hdiutil create -format UDRW -volname $VOLNAME -srcfolder $SRCDIR $DMGFILE
-mkdir tmpmnt
+rm -rf tmpmnt
+mkdir -p tmpmnt
 hdiutil attach $DMGFILE -readwrite -mountroot tmpmnt
 ln -s /Applications tmpmnt/$VOLNAME/Applications
 cp $ICONFILE tmpmnt/$VOLNAME/.VolumeIcon.icns
-/Developer/Tools/SetFile -a C tmpmnt/$VOLNAME/.VolumeIcon.icns tmpmnt/$VOLNAME
+${xcode}/Tools/SetFile -c icnC tmpmnt/$VOLNAME/.VolumeIcon.icns
+${xcode}/Tools/SetFile -a C tmpmnt/$VOLNAME
 hdiutil detach tmpmnt/$VOLNAME
-rmdir tmpmnt
+rm -rf tmpmnt
 mv $DMGFILE $DMGFILE.UDRW
 hdiutil convert $DMGFILE.UDRW -format UDBZ -o $DMGFILE
 rm $DMGFILE.UDRW
