@@ -39,7 +39,7 @@ else
 fi
 
 ./configure.ps3 ${JOBSARGS} --build=${TARGET} ${RELEASE} --cleanbuild --ccache
-make ${JARGS} BUILD=${TARGET} all pkg self
+make ${JARGS} BUILD=${TARGET} pkg self
 artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
 artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg
 artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
