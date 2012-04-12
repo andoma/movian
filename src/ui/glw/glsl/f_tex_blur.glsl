@@ -6,6 +6,7 @@ uniform sampler2D u_t0;
 uniform vec2 u_texture_blur_scale;
 
 varying vec4 f_col_mul;
+varying vec4 f_col_mul2;
 varying vec4 f_col_off;
 varying vec2 f_tex;
 varying float f_blur_amount;
@@ -26,5 +27,5 @@ void main()
   
   col = col * 0.125;
 
-  gl_FragColor = f_col_mul * col + f_col_off;
+  gl_FragColor = clamp(f_col_mul, 0.0, 1.0) * f_col_mul2 * col + f_col_off;
 }
