@@ -187,13 +187,13 @@ tmdb_configure(void)
  *
  */
 static void
-tmdb_load_movie_info(void *db, const char *item_url, const char *id)
+tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
 {
   char url[300];
   char errbuf[256];
   char *result;
-
-  snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", id);
+  
+  snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
 
   result = fa_load_query(url, NULL, errbuf, sizeof(errbuf),
 			 NULL,
@@ -227,21 +227,24 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *id)
   md->md_rate_count = htsmsg_get_s32_or_default(doc, "vote_count", -1);
   md->md_duration = htsmsg_get_s32_or_default(doc, "runtime", 0) * 60;
   md->md_year = atoi(htsmsg_get_str(doc, "release_date") ?: "");
-  int64_t itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource,
-					   id, md);
 
-  metadata_destroy(md);
+  uint32_t id = htsmsg_get_u32_or_default(doc, "id", 0);
+  if(id) {
+    char tmdb_id[16];
+    snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
+    int64_t itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource,
+					     tmdb_id, md);
 
-  const char *s;
+    const char *s;
   
   
-  if((s = htsmsg_get_str(doc, "poster_path")) != NULL)
-    insert_images(db, itemid, METADATA_IMAGE_POSTER, s, poster_sizes);
-  if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL)
-    insert_images(db, itemid, METADATA_IMAGE_BACKDROP, s, backdrop_sizes);
-
+    if((s = htsmsg_get_str(doc, "poster_path")) != NULL)
+      insert_images(db, itemid, METADATA_IMAGE_POSTER, s, poster_sizes);
+    if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL)
+      insert_images(db, itemid, METADATA_IMAGE_BACKDROP, s, backdrop_sizes);
+  }
   htsmsg_destroy(doc);
-
+  metadata_destroy(md);
 }
 
 /**
