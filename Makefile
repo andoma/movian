@@ -18,11 +18,15 @@
 .SUFFIXES:
 SUFFIXES=
 
+# All targets deps on Makefile, but we can comment that out during dev:ing
+ALLDEPS=${BUILDDIR}/config.mak Makefile
+
 include ${CURDIR}/config.default
 
 OPTFLAGS ?= -O2
 
 BUILDDIR = build.${BUILD}
+PROG=${BUILDDIR}/showtime
 
 include ${BUILDDIR}/config.mak
 
@@ -80,6 +84,9 @@ ${BUILDDIR}/ext/dvd/dvdnav/%.o : CFLAGS = ${OPTFLAGS} \
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr
 
+${BUILDDIR}/ext/jemalloc/src/%.o : CFLAGS = \
+	-Iext/jemalloc/include -iquote${BUILDDIR}/jemalloc
+
 CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
 
 ${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
@@ -99,14 +106,12 @@ OBJS3=   $(OBJS4:%.S=$(BUILDDIR)/%.o)
 OBJS2=   $(OBJS3:%.c=$(BUILDDIR)/%.o)
 OBJS=    $(OBJS2:%.m=$(BUILDDIR)/%.o)
 DEPS=    ${OBJS:%.o=%.d}
-OBJDIRS= $(sort $(dir $(OBJS)))
 
 # File bundles
 BUNDLES += $(sort $(BUNDLES-yes))
 BUNDLE_SRCS=$(BUNDLES:%=$(BUILDDIR)/bundles/%.c)
 BUNDLE_DEPS=$(BUNDLE_SRCS:%.c=%.d)
 BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
-OBJDIRS+= $(sort $(dir $(BUNDLE_OBJS)))
 .PRECIOUS: ${BUNDLE_SRCS}
 
 # Common CFLAGS for all files
@@ -126,23 +131,46 @@ $(foreach VAR,$(BRIEF), \
     $(eval $(VAR) = @$$(call ECHO,$(VAR),$$(MSG)); $($(VAR))))
 endif
 
-all:	makever ${PROG}
-
 .PHONY:	clean distclean makever
 
-${PROG}: ${FFBUILDDEP} $(OBJDIRS) $(OBJS) $(BUNDLE_OBJS) Makefile src/version.c
-	$(CC) -o $@ $(OBJS) $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}: $(OBJS) $(ALLDEPS)  support/dataroot/wd.c
+	$(CC) -o $@ $(OBJS) support/dataroot/wd.c $(LDFLAGS) ${LDFLAGS_cfg}
 
-$(OBJDIRS):
-	@mkdir -p $@
+${PROG}.bundle: $(OBJS) $(BUNDLE_OBJS) $(ALLDEPS)  support/dataroot/bundle.c
+	$(CC) -o $@ $(OBJS) support/dataroot/bundle.c $(BUNDLE_OBJS) $(LDFLAGS) ${LDFLAGS_cfg}
 
-${BUILDDIR}/%.o: %.c ${BUILDDIR}/config.mak Makefile
+${PROG}.datadir: $(OBJS) $(ALLDEPS)  support/dataroot/datadir.c
+	$(CC) -o $@ $(OBJS) -iquote${BUILDDIR} support/dataroot/datadir.c $(LDFLAGS) ${LDFLAGS_cfg}
+
+${PROG}.osxapp: $(OBJS) $(ALLDEPS) support/dataroot/osxapp.c
+	$(CC) -o $@ $(OBJS) support/dataroot/osxapp.c $(LDFLAGS) ${LDFLAGS_cfg}
+
+.PHONY: ${BUILDDIR}/zipbundles/bundle.zip
+
+${BUILDDIR}/zipbundles/bundle.zip:
+	rm -rf  ${BUILDDIR}/zipbundles
+	mkdir -p ${BUILDDIR}/zipbundles
+	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
+
+${BUILDDIR}/zipbundles/zipbundle.o: ${BUILDDIR}/zipbundles/bundle.zip support/dataroot/zipbundle.c
+	$(eval SUM:=$(shell sha1sum ${BUILDDIR}/zipbundles/bundle.zip | cut -d' ' -f1))
+	mv ${BUILDDIR}/zipbundles/bundle.zip ${BUILDDIR}/zipbundles/${SUM}.zip
+	$(CC) -c -o ${BUILDDIR}/zipbundles/zipbundle.o -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)
+
+${PROG}.zipbundle: $(OBJS) $(ALLDEPS)  ${BUILDDIR}/zipbundles/zipbundle.o
+	$(CC) -o $@ $(OBJS) ${BUILDDIR}/zipbundles/zipbundle.o $(LDFLAGS) ${LDFLAGS_cfg}
+
+
+${BUILDDIR}/%.o: %.c $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.m ${BUILDDIR}/config.mak Makefile
+${BUILDDIR}/%.o: %.m $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
-${BUILDDIR}/%.o: %.cpp ${BUILDDIR}/config.mak Makefile
+${BUILDDIR}/%.o: %.cpp $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
 
 clean:
@@ -163,13 +191,11 @@ ${PROG}.stripped: ${PROG}
 
 strip: ${PROG}.stripped
 
-
-# Create showtimeversion.h
-src/version.c: $(BUILDDIR)/showtimeversion.h
-
-makever:
-	@$(CURDIR)/support/version.sh $(CURDIR) $(BUILDDIR)/showtimeversion.h
-
+# Create buildversion.h
+src/version.c: $(BUILDDIR)/buildversion.h
+$(BUILDDIR)/buildversion.h: FORCE
+	@$(CURDIR)/support/version.sh $(CURDIR) $@
+FORCE:
 
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
@@ -178,8 +204,9 @@ makever:
 include support/${PLATFORM}.mk
 
 # Bundle files
-$(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c Makefile
+$(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
 	$(CC) -I${CURDIR}/src/fileaccess -c -o $@ $<
 
-$(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle Makefile
+$(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
+	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<

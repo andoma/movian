@@ -46,7 +46,6 @@ CONFIG_LIST="
  lirc
  stdin
  release
- embedded_resources
  coreaudio
  avahi
  appleremote
@@ -84,6 +83,8 @@ CONFIG_LIST="
  sqlite_vfs
  sqlite_locking
  libav
+ vda
+ jemalloc
 "
 
 cleanup() {
@@ -171,6 +172,8 @@ common_help(){
   echo "  --build=BUILD            Build in build.BUILD [build.$BUILD]"
   echo "  --jobs=N                 Allow N jobs at once"
   echo "  --release                Stage for release"
+  echo "  --cleanbuild             Erase builddir before configuring"
+  echo "  --ccache                 Enable use of ccache"
   echo ""
   echo "Platform specific options:"
 }
@@ -198,6 +201,13 @@ common_opt(){
 
   --jobs=*) JARGS="-j$2"
   ;;
+
+  --cleanbuild) enable cleanbuild
+  ;;
+
+  --ccache) CC="ccache $CC"
+  ;;
+
   --release) enable release
   ;;
   *)
@@ -208,6 +218,11 @@ common_opt(){
 
 setup_env(){
     BUILDDIR=build.${BUILD}
+
+    if enabled cleanbuild; then
+	echo "Cleaning builddir: ${BUILDDIR}"
+	rm -rf ${BUILDDIR}
+    fi
 
     mkdir -p ${BUILDDIR}
     BUILDDIR=`cd ${BUILDDIR} && pwd`
@@ -258,18 +273,22 @@ libav_setup() {
 	return
     fi
 
-    echo "Updating libav... (if needed)"
+
+    status=`git submodule status ext/libav | cut -b 1`
+    echo "Updating libav, submodule status = $status"
     git submodule update --init ext/libav
     echo "Configuring libav..."
-
+    
     LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
     LIBAV_INSTALL_DIR=${BUILDDIR}/libav/install
-    mkdir -p ${LIBAV_BUILD_DIR}
-    mkdir -p ${LIBAV_INSTALL_DIR}
 
-    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-ffserver --disable-ffmpeg --disable-ffprobe --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png"
+    [ "$status" = "+" ] && echo "Cleaning libav build dir" && rm -rf "${LIBAV_BUILD_DIR}"
+    mkdir -p "${LIBAV_BUILD_DIR}"
+    mkdir -p "${LIBAV_INSTALL_DIR}"
 
-    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}") || die
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-shared --enable-static --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png --disable-ffmpeg --disable-demuxer=applehttp --disable-avconv --disable-avprobe"
+
+    (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS}" --cc="${CC}") || die
 
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS}) || die
     (cd ${LIBAV_BUILD_DIR} && make ${JARGS} install) || die
@@ -293,49 +312,23 @@ finalize() {
 
 
     # Generate default theme path for GLW
-    # Optionally embed the theme if in release mode
     if enabled glw; then
-	if enabled embedded_resources; then
-	    GLW_DEFAULT_THEME_URL="bundle://glwthemes/${GLW_DEFAULT_THEME}"
-	    echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
-	else
-	    GLW_DEFAULT_THEME_URL="file://`cd glwthemes/$GLW_DEFAULT_THEME && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME_URL \""${GLW_DEFAULT_THEME_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
+	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME \""${GLW_DEFAULT_THEME}"\""
     fi
 
     # Generate resource path for GU
-    # Optionally embed the stuff if in release mode
     if enabled gu; then
-	if enabled embedded_resources; then
-	    GU_RESOURCES_URL="bundle://guresources"
-	    echo >>${CONFIG_MAK} "BUNDLES+=guresources"
-	else
-	    GU_RESOURCES_URL="file://`cd guresources && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_GU_RESOURCES_URL \""${GU_RESOURCES_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=guresources"
     fi
 
     # Fonts
-    # Optionally embed the stuff if in release mode
     if enabled font_liberation; then
-	if enabled embedded_resources; then
-	    LIBERATION_RESOURCE_URL="bundle://resources/fonts/liberation"
-	    echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
-	else
-	    LIBERATION_RESOURCE_URL="file://`cd resources/fonts/liberation && pwd`"
-	fi
-	echo >>${CONFIG_H} "#define SHOWTIME_FONT_LIBERATION_URL \""${LIBERATION_RESOURCE_URL}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
     fi
 
     # Languages
-    if enabled embedded_resources; then
-	LANGUAGES_URL="bundle://lang"
-	echo >>${CONFIG_MAK} "BUNDLES+=lang"
-    else
-	LANGUAGES_URL="file://`cd lang && pwd`"
-    fi
-    echo >>${CONFIG_H} "#define SHOWTIME_LANGUAGES_URL \""${LANGUAGES_URL}"\""
+    echo >>${CONFIG_MAK} "BUNDLES+=lang"
 
     # sqlite
     if enabled sqlite_vfs; then
@@ -358,12 +351,6 @@ OSENV=${OSENV}
 LDFLAGS_cfg += -lz -lm
 EOF
   
-    # PROG not set, set to default binary path
-    if [ "x${PROG}" == "x" ]; then
-        PROG="build.${BUILD}/showtime"
-    fi
-    echo >>${CONFIG_MAK} "PROG=${PROG}"
-
     # Generate config files
     print_config CONFIG_ ${CONFIG_H} ${CONFIG_MAK} $CONFIG_LIST
 
@@ -371,7 +358,6 @@ EOF
     cp_if_changed ${CONFIG_MAK} ${BUILDDIR}/config.mak
     rm -f ${CONFIG_H} ${CONFIG_MAK}
 
-    echo "Final binary is: ${PROG}"
     cleanup
     exit 0
 }

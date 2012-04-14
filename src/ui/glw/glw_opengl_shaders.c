@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <limits.h>
 
 #include "glw.h"
 #include "glw_renderer.h"
@@ -121,16 +122,20 @@ shader_render(struct glw_root *root,
  *
  */
 GLuint
-glw_compile_shader(const char *url, int type)
+glw_compile_shader(const char *filename, int type)
 {
   char *src;
   GLint v, len;
   GLuint s;
+  char path[PATH_MAX];
   char log[4096];
   
-  if((src = fa_load(url, NULL, NULL, log, sizeof(log), NULL)) == NULL) {
+  snprintf(path, sizeof(path), "%s/src/ui/glw/glsl/%s", 
+	   showtime_dataroot(), filename);
+
+  if((src = fa_load(path, NULL, NULL, log, sizeof(log), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s",
-	  url, log);
+	  path, log);
     return 0;
   }
   
@@ -144,7 +149,7 @@ glw_compile_shader(const char *url, int type)
   free(src);
 
   if(!v) {
-    TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", url);
+    TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", path);
     TRACE(TRACE_ERROR, "GLW", "%s", log);
     return 0;
   }
@@ -296,21 +301,17 @@ glw_opengl_shaders_init(glw_root_t *gr)
 
   GLuint vs, fs;
 
-  vs = glw_compile_shader("bundle://src/ui/glw/glsl/v1.glsl",
-			  GL_VERTEX_SHADER);
+  vs = glw_compile_shader("v1.glsl", GL_VERTEX_SHADER);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex.glsl",
-			  GL_FRAGMENT_SHADER);
+  fs = glw_compile_shader("f_tex.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
   glDeleteShader(fs);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_tex_blur.glsl",
-			  GL_FRAGMENT_SHADER);
+  fs = glw_compile_shader("f_tex_blur.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "Texture", vs, fs);
   glDeleteShader(fs);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/f_flat.glsl",
-			  GL_FRAGMENT_SHADER);
+  fs = glw_compile_shader("f_flat.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
   glDeleteShader(fs);
 
@@ -321,17 +322,14 @@ glw_opengl_shaders_init(glw_root_t *gr)
 
   // Video renderer
 
-  vs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_v.glsl",
-			  GL_VERTEX_SHADER);
+  vs = glw_compile_shader("yuv2rgb_v.glsl", GL_VERTEX_SHADER);
 
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_1f_norm.glsl",
-			  GL_FRAGMENT_SHADER);
+  fs = glw_compile_shader("yuv2rgb_1f_norm.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_yuv2rgb_1f = glw_make_program(gbr, "yuv2rgb_1f_norm", vs, fs);
   glDeleteShader(fs);
 
-  fs = glw_compile_shader("bundle://src/ui/glw/glsl/yuv2rgb_2f_norm.glsl",
-			  GL_FRAGMENT_SHADER);
+  fs = glw_compile_shader("yuv2rgb_2f_norm.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_yuv2rgb_2f = glw_make_program(gbr, "yuv2rgb_2f_norm", vs, fs);
   glDeleteShader(fs);
 

@@ -47,6 +47,9 @@ resolve_file(const char *url)
   const struct filebundle_entry *fbe;
   const char *u;
 
+  while(*url == '/')
+    url++;
+
   for(fb = filebundles; fb != NULL; fb = fb->next) {
     if(strncmp(url, fb->prefix, strlen(fb->prefix)))
       continue;
@@ -196,6 +199,9 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     }
     return 0;
   }
+
+  while(*url == '/')
+    url++;
 
   for(fb = filebundles; fb != NULL; fb = fb->next) {
 

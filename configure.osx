@@ -63,7 +63,6 @@ for opt do
   ;;
   --release) 
     enable release
-    enable embedded_resources
   ;;
   --cc=*) CC="$optval"
   ;;
@@ -93,16 +92,6 @@ enable libpthread
 enable zlib
 enable posix_networking
 enable dvd
-
-
-#
-# Application bundle
-# Override PROG to put binary inside app bundle
-#
-APPDIR=${BUILDDIR}/Showtime.app
-echo >>${CONFIG_MAK} "APPDIR=${APPDIR}"
-PROG="${APPDIR}/Contents/MacOS/showtime"
-
 
 #
 # c compiler
@@ -169,6 +158,8 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
 # IOKit for dvd
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreVideo"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 
 # CoreAudio
 if enabled coreaudio; then
@@ -181,6 +172,7 @@ if enabled appleremote; then
 fi
 
 libav_setup
+#enable vda Does not work 100% yet
 
 
 #
@@ -189,16 +181,6 @@ libav_setup
 echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/X11/include -I/usr/X11/include/freetype2"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/X11/lib -lfreetype"
 
-
-#
-# Configure paths, etc
-#
-if disabled release; then
-    echo  Development build. 
-    echo  The generated binary will contain compiled-in paths to
-    echo  the current build tree. If you plan to install the binary,
-    echo  please reconfigure with '--release'.
-fi
 
 #
 # Some compatibility defines

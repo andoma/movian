@@ -27,8 +27,6 @@
 #include "showtime.h"
 #include "pool.h"
 
-LIST_HEAD(pool_segment_list, pool_segment);
-
 /**
  *
  */
@@ -52,7 +50,8 @@ typedef struct pool_item {
 typedef struct pool_segment {
   LIST_ENTRY(pool_segment) ps_link;
   void *ps_addr;
-  size_t ps_size;
+  size_t ps_alloc_size;
+  size_t ps_avail_size;
 
 #ifdef POOL_DEBUG
   uint8_t *ps_mark;
@@ -61,23 +60,7 @@ typedef struct pool_segment {
 } pool_segment_t;
 
 
-/**
- *
- */
-struct pool {
-  struct pool_segment_list p_segments;
-  
-  size_t p_item_size;
-
-  int p_flags;
-
-  hts_mutex_t p_mutex;
-  pool_item_t *p_item;
-
-  int p_num_out;
-  char *p_name;
-};
-
+#define ROUND_UP(p, round) ((p + round - 1) & ~(round - 1))
 
 /**
  *
@@ -85,14 +68,19 @@ struct pool {
 static void
 pool_segment_create(pool_t *p)
 {
-  pool_segment_t *ps = malloc(sizeof(pool_segment_t));
   size_t i;
   pool_item_t *pi, *prev = NULL;
 
-  ps->ps_size = 65536;
-  ps->ps_addr = halloc(ps->ps_size);
+  size_t size = 65536;
+  void *addr = halloc(size);
+  size_t topsiz =  ROUND_UP(sizeof(pool_segment_t), sizeof(void *));
 
-  for(i = 0; i <= ps->ps_size - p->p_item_size; i += p->p_item_size) {
+  pool_segment_t *ps = addr + size - topsiz;
+  ps->ps_addr = addr;
+  ps->ps_alloc_size = size;
+  ps->ps_avail_size = ps->ps_alloc_size - topsiz;
+
+  for(i = 0; i <= ps->ps_avail_size - p->p_item_size; i += p->p_item_size) {
     pi = ps->ps_addr + i;
     pi->link = prev;
     prev = pi;
@@ -101,19 +89,16 @@ pool_segment_create(pool_t *p)
   p->p_item = pi;
 }
 
-#define ROUND_UP(p, round) ((p + round - 1) & ~(round - 1))
 
 /**
  *
  */
-pool_t *
-pool_create(const char *name, size_t item_size, int flags)
+void
+pool_init(pool_t *p, const char *name, size_t item_size, int flags)
 {
-  pool_t *p = calloc(1, sizeof(pool_t));
-
   item_size = ROUND_UP(item_size, 8);
 
-  p->p_name = strdup(name);
+  p->p_name = name;
 
 #ifdef POOL_DEBUG
   item_size += sizeof(pool_item_dbg_t);
@@ -124,7 +109,18 @@ pool_create(const char *name, size_t item_size, int flags)
 
   if(flags & POOL_REENTRANT)
     hts_mutex_init(&p->p_mutex);
+}
 
+
+
+/**
+ *
+ */
+pool_t *
+pool_create(const char *name, size_t item_size, int flags)
+{
+  pool_t *p = calloc(1, sizeof(pool_t));
+  pool_init(p, name, item_size, flags);
   return p;
 }
 
@@ -142,14 +138,14 @@ pool_destroy(pool_t *p)
     pool_item_t *pi;
 
     LIST_FOREACH(ps, &p->p_segments, ps_link) {
-      ps->ps_mark = malloc(ps->ps_size / p->p_item_size);
-      memset(ps->ps_mark, 0xff, ps->ps_size / p->p_item_size);
+      ps->ps_mark = malloc(ps->ps_avail_size / p->p_item_size);
+      memset(ps->ps_mark, 0xff, ps->ps_avail_size / p->p_item_size);
     }
 
     for(pi = p->p_item; pi != NULL; pi = pi->link) {
       LIST_FOREACH(ps, &p->p_segments, ps_link) {
 	if((intptr_t)pi >= (intptr_t)ps->ps_addr && 
-	   (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_size) {
+	   (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size) {
 	  size_t off = ((void *)pi - ps->ps_addr) / p->p_item_size;
 	  ps->ps_mark[off] = 0;
 	}
@@ -157,7 +153,7 @@ pool_destroy(pool_t *p)
     }
    
     LIST_FOREACH(ps, &p->p_segments, ps_link) {
-      int items = ps->ps_size / p->p_item_size;
+      int items = ps->ps_avail_size / p->p_item_size;
       int i;
       for(i = 0; i < items; i++) {
 	if(ps->ps_mark[i]) {
@@ -176,12 +172,11 @@ pool_destroy(pool_t *p)
 #endif
 
   while((ps = LIST_FIRST(&p->p_segments)) != NULL) {
-    hfree(ps->ps_addr, ps->ps_size);
     LIST_REMOVE(ps, ps_link);
+    hfree(ps->ps_addr, ps->ps_alloc_size);
 #ifdef POOL_DEBUG
     free(ps->ps_mark);
 #endif
-    free(ps);
   }
     
   if(p->p_num_out)
@@ -190,7 +185,6 @@ pool_destroy(pool_t *p)
 
   if(p->p_flags & POOL_REENTRANT)
     hts_mutex_destroy(&p->p_mutex);
-  free(p->p_name);
   free(p);
 }
 
@@ -253,7 +247,7 @@ pool_put(pool_t *p, void *ptr)
   pool_segment_t *ps;
   LIST_FOREACH(ps, &p->p_segments, ps_link)
     if((intptr_t)pi >= (intptr_t)ps->ps_addr && 
-       (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_size)
+       (intptr_t)pi < (intptr_t)ps->ps_addr + ps->ps_avail_size)
       break;
 
   assert(ps != NULL);

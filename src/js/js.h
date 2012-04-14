@@ -15,6 +15,7 @@ LIST_HEAD(js_http_auth_list, js_http_auth);
 LIST_HEAD(js_plugin_list, js_plugin);
 LIST_HEAD(js_service_list, js_service);
 LIST_HEAD(js_setting_group_list, js_setting_group);
+LIST_HEAD(js_event_handler_list, js_event_handler);
 
 /**
  *
@@ -33,6 +34,7 @@ typedef struct js_plugin {
   struct js_http_auth_list jsp_http_auths;
   struct js_service_list jsp_services;
   struct js_setting_group_list jsp_setting_groups;
+  struct js_event_handler_list jsp_event_handlers;
 
   struct fa_handle *jsp_ref;
 
@@ -86,6 +88,9 @@ JSBool js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_createStore(JSContext *cx, JSObject *obj, uintN argc, 
 		      jsval *argv, jsval *rval);
 
+JSBool js_onEvent(JSContext *cx, JSObject *obj,
+		  uintN argc, jsval *argv, jsval *rval);
+
 struct backend;
 
 int js_backend_open(prop_t *page, const char *url);
@@ -122,5 +127,14 @@ JSBool  js_json_decode(JSContext *cx, JSObject *obj,
 
 struct http_auth_req;
 int js_http_auth_try(const char *url, struct http_auth_req *har);
+
+void js_event_destroy_handlers(JSContext *cx,
+			       struct js_event_handler_list *list);
+
+void js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
+		       event_t *e, JSObject *this);
+
+void js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
+			     const char *filter, jsval fun);
 
 #endif // JS_H__ 

@@ -1,13 +1,35 @@
 #pragma once
+#include "arch/threads.h"
 
 // #define POOL_DEBUG
 
-typedef struct pool pool_t;
+LIST_HEAD(pool_segment_list, pool_segment);
+
+
+/**
+ *
+ */
+typedef struct pool {
+  struct pool_segment_list p_segments;
+  
+  size_t p_item_size;
+
+  int p_flags;
+
+  hts_mutex_t p_mutex;
+  struct pool_item *p_item;
+
+  int p_num_out;
+  const char *p_name;
+} pool_t;
+
 
 #define POOL_REENTRANT 0x1
 #define POOL_ZERO_MEM  0x2
 
 pool_t *pool_create(const char *name, size_t item_size, int flags);
+
+void pool_init(pool_t *pool, const char *name, size_t item_size, int flags);
 
 #ifdef POOL_DEBUG
 

@@ -132,10 +132,6 @@ static int decorate_trace;
 void
 arch_init(void)
 {
-#if ENABLE_EMU_THREAD_SPECIFICS
-  hts_thread_key_init();
-#endif
-
   setlocale(LC_ALL, "");
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);

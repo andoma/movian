@@ -45,30 +45,6 @@ vd_init_timings(video_decoder_t *vd)
 }
 
 
-/**
- *
- */
-static int
-vd_get_buffer(struct AVCodecContext *c, AVFrame *pic)
-{
-  int ret = avcodec_default_get_buffer(c, pic);
-  media_buf_t *mb = malloc(sizeof(media_buf_t));
-  memcpy(mb, c->opaque, sizeof(media_buf_t));
-  pic->opaque = mb;
-  return ret;
-}
-
-
-static void
-vd_release_buffer(struct AVCodecContext *c, AVFrame *pic)
-{
-  if(pic->opaque != NULL)
-    free(pic->opaque);
-
-  avcodec_default_release_buffer(c, pic);
-}
-
-
 #define vd_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
 
 static void 
@@ -98,9 +74,9 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
     vd->vd_compensate_thres = 5;
   }
 
-  ctx->opaque = mb;
-  ctx->get_buffer = vd_get_buffer;
-  ctx->release_buffer = vd_release_buffer;
+  vd->vd_reorder[vd->vd_reorder_ptr] = *mb;
+  ctx->reordered_opaque = vd->vd_reorder_ptr;
+  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
 
   /*
    * If we are seeking, drop any non-reference frames
@@ -117,12 +93,12 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   t = avgtime_stop(&vd->vd_decode_time, mq->mq_prop_decode_avg,
-	       mq->mq_prop_decode_peak);
+		   mq->mq_prop_decode_peak);
 
   if(mp->mp_stats)
     mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
 
-  mb = frame->opaque;
+  mb = &vd->vd_reorder[frame->reordered_opaque];
 
   if(got_pic == 0 || mb->mb_skip == 1) 
     return;

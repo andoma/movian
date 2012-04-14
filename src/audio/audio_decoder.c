@@ -134,6 +134,8 @@ channels_to_format(int channels)
   int format;
   switch(channels) {
   case 2: format = AM_FORMAT_PCM_STEREO; break;
+  case 3: format = AM_FORMAT_PCM_3DOT0;  break;
+  case 4: format = AM_FORMAT_PCM_4DOT0;  break;
   case 5: format = AM_FORMAT_PCM_5DOT0;  break;
   case 6: format = AM_FORMAT_PCM_5DOT1;  break;
   case 7: format = AM_FORMAT_PCM_6DOT1;  break;
@@ -390,8 +392,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
     }
 
     if(audio_mode_stereo_only(am) &&
-       cw->codec->id != CODEC_ID_TRUEHD &&
-       cw->codec->id != CODEC_ID_MLP)
+       cw->codec_id != CODEC_ID_TRUEHD &&
+       cw->codec_id != CODEC_ID_MLP)
       ctx->request_channels = 2; /* We can only output stereo.
 				    Ask codecs to do downmixing for us. */
     else

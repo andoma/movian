@@ -16,17 +16,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LASTFM_H__
-#define LASTFM_H__
+#pragma once
 
-#include "misc/rstr.h"
+void lastfm_load_artistinfo(void *db, const char *artist,
+			   void (*cb)(void *opaque, const char *url,
+				      int width, int height),
+			   void *opaque);
 
-struct prop;
-
-void lastfm_artistpics_init(struct prop *prop, rstr_t *artist);
-
-void lastfm_albumart_init(struct prop *prop, rstr_t *artist, rstr_t *album);
-
-void lastfm_init(void);
-
-#endif /* LASTFM_H__ */
+void lastfm_load_albuminfo(void *db, const char *album, const char *artist);

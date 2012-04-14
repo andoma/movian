@@ -27,6 +27,8 @@
 #include "arch/threads.h"
 #include "misc/rstr.h"
 
+extern const char *showtime_dataroot(void);
+
 #define HTS_GLUE(a, b) a ## b
 #define HTS_JOIN(a, b) HTS_GLUE(a, b)
 
@@ -92,6 +94,8 @@ void trace_arch(int level, const char *prefix, const char *buf);
 
 #define TRACE(level, subsys, fmt...) trace(0, level, subsys, fmt)
 
+void hexdump(const char *pfx, const void *data, int len);
+
 #define mystrdupa(n) ({ int my_l = strlen(n); \
  char *my_b = alloca(my_l + 1); \
  memcpy(my_b, n, my_l + 1); })
@@ -138,6 +142,7 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 
 extern char *showtime_cache_path;
 extern char *showtime_persistent_path;
+extern char *showtime_path;
 
 
 /* From version.c */

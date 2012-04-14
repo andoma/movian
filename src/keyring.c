@@ -106,7 +106,7 @@ keyring_lookup(const char *id, char **username, char **password,
     prop_set_string(prop_create(p, "source"), source);
     prop_set_string(prop_create(p, "reason"), reason);
     prop_set_int(prop_create(p, "disableUsername"), username == NULL);
-
+    prop_set_int(prop_create(p, "disableDomain"), domain == NULL);
 
     prop_set_int(prop_create(p, "canRemember"),
 		 !!(flags & KEYRING_SHOW_REMEMBER_ME));
@@ -121,7 +121,10 @@ keyring_lookup(const char *id, char **username, char **password,
 
     prop_t *user = prop_create(p, "username");
     prop_t *pass = prop_create(p, "password");
- 
+    prop_t *dom = prop_create(p, "domain");
+    if(domain != NULL)
+      prop_set_string(dom, *domain);
+
     TRACE(TRACE_INFO, "keyring", "Requesting credentials for %s : %s : %s",
 	  id, source, reason);
 
@@ -149,6 +152,13 @@ keyring_lookup(const char *id, char **username, char **password,
 	r = prop_get_string(user);
 	htsmsg_add_str(m, "username", r ? rstr_get(r) : "");
 	*username = strdup(r ? rstr_get(r) : "");
+	rstr_release(r);
+      }
+
+      if(domain != NULL) {
+	r = prop_get_string(dom);
+	htsmsg_add_str(m, "domain", r ? rstr_get(r) : "");
+	*domain = strdup(r ? rstr_get(r) : "");
 	rstr_release(r);
       }
 

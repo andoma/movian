@@ -19,8 +19,8 @@ CONFIGURE_POSTFIX="ps3"
 source support/configure.inc
 GLW_DEFAULT_THEME="mono"
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
+CC=${TOOLCHAIN}gcc
 enable psl1ght
-enable embedded_resources
 
 LIBAV_CFLAGS="-mminimal-toc -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 
@@ -61,11 +61,15 @@ enable dvd
 enable ps3_vdec
 enable sqlite_vfs
 enable sqlite_locking
+enable jemalloc
+
+${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${TMPDIR}/mallocstub.o ${TOPDIR}/support/mallocstub.c
+LIBAV_LDFLAGS="${TMPDIR}/mallocstub.o"
 
 libav_setup
 
 cat >> ${CONFIG_MAK} <<EOF
-CC=${TOOLCHAIN}gcc
+CC=${CC}
 STRIP=${TOOLCHAIN}strip
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
 CFLAGS_cfg += -DPATH_MAX=512 -DPS3

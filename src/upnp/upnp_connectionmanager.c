@@ -47,12 +47,16 @@ static htsmsg_t *
 cm_GetCurrentConnectionInfo(http_connection_t *hc, htsmsg_t *args,
 			    const char *myhost, int myport)
 {
+  const char *uri = htsmsg_get_str(args, "ConnectionID");
+  if(uri == NULL || strcmp(uri, "0"))
+    return UPNP_CONTROL_INVALID_ARGS;
+
   htsmsg_t *out = htsmsg_create_map();
   htsmsg_add_u32(out, "RcsID", 0);
   htsmsg_add_u32(out, "AVTransportID", 0);
   htsmsg_add_str(out, "ProtocolInfo", "");
   htsmsg_add_str(out, "PeerConnectionManager", "");
-  htsmsg_add_u32(out, "PeerConnectionID", -1);
+  htsmsg_add_s32(out, "PeerConnectionID", -1);
   htsmsg_add_str(out, "Direction", "Input");
   htsmsg_add_str(out, "Status", "OK");
   return out;
@@ -67,10 +71,11 @@ static htsmsg_t *
 cm_GetCurrentConnectionIDs(http_connection_t *hc, htsmsg_t *args,
 			   const char *myhost, int myport)
 {
+#if 0
   const char *uri = htsmsg_get_str(args, "ConnectionID");
   if(uri == NULL || strcmp(uri, "0"))
     return UPNP_CONTROL_INVALID_ARGS;
-  
+#endif
   htsmsg_t *out = htsmsg_create_map();
   htsmsg_add_str(out, "ConnectionIDs", "0");
   return out;

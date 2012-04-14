@@ -685,10 +685,29 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   ud.s.flush = vd->vd_do_flush;
 
   au.userdata = ud.u64;
-  au.pts.low = mb->mb_pts;
-  au.pts.hi  = mb->mb_pts >> 32;
-  au.dts.low = mb->mb_dts;
-  au.dts.hi  = mb->mb_dts >> 32;
+
+  int64_t pts = mb->mb_pts, dts = mb->mb_dts;
+
+  if(dts < 0)
+    dts = 0;
+  if(pts < 0)
+    pts = 0;
+
+  /**
+     I've no idea why routing timestamps to ms precision is required.
+     But without this it seems that some movies (in particular MP4) just 
+     freezes.
+
+     see ticket #640 #662 #890
+  */
+
+  pts = (pts / 1000) * 1000;
+  dts = (dts / 1000) * 1000;
+
+  au.pts.low = pts;
+  au.pts.hi  = pts >> 32;
+  au.dts.low = dts;
+  au.dts.hi  = dts >> 32;
 
   if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
     submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0, NULL);
@@ -893,7 +912,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   vdd->level_major = mcp->level / 10;
   vdd->level_minor = mcp->level % 10;
 
-  if(id == CODEC_ID_H264 && ctx->extradata_size)
+  if(id == CODEC_ID_H264 && ctx && ctx->extradata_size)
     h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);
 
   vdd->next_picture = INT32_MIN;
@@ -905,6 +924,10 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   TRACE(TRACE_DEBUG, "VDEC", 
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
+
+  mc->codec_ctx = ctx ?: avcodec_alloc_context();
+  mc->codec_ctx->codec_id   = id;
+  mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
   mc->opaque = vdd;
   mc->decode = decoder_decode;

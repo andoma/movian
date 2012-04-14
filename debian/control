@@ -1,12 +1,19 @@
-Source: hts
+Source: showtime
 Section: main
 Priority: extra
-Maintainer: Andreas Öman <andreas@lonelycoder.com>
+Maintainer: Andreas Ã–man <andreas@lonelycoder.com>
+Build-Depends: debhelper (>= 7.0.50)
 
-Package: hts-showtime
+Package: showtime
+Section: main
 Architecture: any
 Depends: ${shlibs:Depends}
-Suggests: hts-tvheadend
 Description: OpenGL based Mediaplayer
  An OpenGL based media player focused for use as a home-entertainment-system.
  Based on ffmpeg 'http://www.ffmpeg.org'.
+
+Package: showtime-dbg
+Section: debug
+Architecture: any
+Depends: showtime (= ${Source-Version})
+Description: Debug symbols for Showtime

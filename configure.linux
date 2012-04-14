@@ -21,15 +21,23 @@ source support/configure.inc
 
 CPU=generic
 ARCH=`uname -m`
-PREFIX=/usr
+prefix=/usr/local
+bindir="\${prefix}/bin"
+mandir="\${prefix}/share/man"
+datadir="\${prefix}/share/showtime"
+CC=cc
+CXX=c++
 
 show_help(){
   common_help
 
-  echo "  --prefix=PREFIX          Install in PREFIX [$PREFIX]"
+  echo "  --prefix=PREFIX          Install in PREFIX [$prefix]"
+  echo "  --bindir=DIR             Install binaries in DIR [$bindir]"
+  echo "  --mandir=DIR             Install man pages in DIR [$mandir]"
+  echo "  --datadir=DIR            Install data files in DIR [$datadir]"
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
-  echo "  --cc=CC                  Build using compiler CC [cc]"
+  echo "  --cc=CC                  Build using compiler CC [$CC]"
   echo "  --glw-frontend=FRONTEND  Build GLW for FRONTEND [$GLWFRONTEND]"
   echo "                            x11      X11 Windows"
   echo "                            none     Disable GLW"
@@ -104,8 +112,6 @@ enable font_liberation
 for opt do
   optval="${opt#*=}"
   case "$opt" in
-  --prefix=*) PREFIX="$optval"
-  ;;
   --cpu=*) CPU="$optval"
   ;;
   --help) show_help
@@ -119,6 +125,33 @@ for opt do
   --glw-frontend=*) GLWFRONTEND="$optval"
   ;;
   --pkg-config-path=*) export PKG_CONFIG_PATH="$optval"
+  ;;
+
+  --prefix=*)
+  prefix="$optval"
+  ;;
+  --bindir=*)
+  bindir="$optval"
+  ;;
+  --mandir=*)
+  mandir="$optval"
+  ;;
+  --datadir=*)
+  datadir="$optval"
+  ;;
+  --includedir=*)
+  ;;
+  --infodir=*)
+  ;;
+  --sysconfdir=*)
+  ;;
+  --localstatedir=*)
+  ;;
+  --libexecdir=*)
+  ;;
+  --disable-maintainer-mode)
+  ;;
+  --disable-dependency-tracking)
   ;;
   *)
   common_opt $opt $optval
@@ -134,10 +167,6 @@ enable posix_networking
 enable dvd
 enable dvd_linux
 
-if enabled release; then
-    enable embedded_resources
-fi
-
 
 #
 # pkgconfig
@@ -150,7 +179,7 @@ if [ $? -ne 0 ]; then
 fi
 
 #
-# c compiler
+# Check for compilers
 #
 
 checkcc() {
@@ -174,25 +203,12 @@ EOF
 }
     
 
-if [ "x$CC" != "x" ]; then
-    echo >>${CONFIG_MAK} "CC=$CC"
-else
-    CC=cc
-fi
 
 if checkcc; then 
     echo "Using C compiler:      $CC"
 else
     echo "C compiler ($CC) is not working"
     die
-fi
-
-
-
-if [ "x$CXX" != "x" ]; then
-    echo >${CONFIG_MAK} "CXX=$CXX"
-else
-    CXX=c++
 fi
 
 if checkcxx; then 
@@ -202,10 +218,8 @@ else
     die
 fi
 
-
-echo >>${CONFIG_MAK} $CC_CONFIG_MAK 
-
-libav_setup
+echo >>${CONFIG_MAK} "CC=$CC"
+echo >>${CONFIG_MAK} "CXX=$CXX"
 
 #
 # libfreetype2
@@ -579,23 +593,24 @@ if enabled libsidplay2; then
 fi
 
 
-
-
-
-#
-# Configure paths, etc
-#
-if disabled release; then
-    echo  Development build. 
-    echo  The generated binary will contain compiled-in paths to
-    echo  the current build tree. If you plan to install the binary,
-    echo  please reconfigure with '--release'.
-fi
+libav_setup
 
 #
 # Finalize
-
-echo >>${CONFIG_MAK} INSTALLPREFIX=$PREFIX
+#
+echo
+echo "Installation paths:"
+echo "  Prefix:        ${prefix}"
+echo "  Binaries:      ${bindir}"
+echo "  Man pages:     ${mandir}"
+echo "  Data files:    ${datadir}"
+echo
+echo >>${CONFIG_MAK} "prefix=$prefix"
+echo >>${CONFIG_MAK} "bindir=\${DESTDIR}$bindir"
+echo >>${CONFIG_MAK} "mandir=\${DESTDIR}$mandir"
+echo >>${CONFIG_MAK} "datadir=\${DESTDIR}$datadir"
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt -ldl
+eval datadirpath=${datadir}
+echo >>${CONFIG_H} "#define SHOWTIME_DATADIR \"${datadirpath}\""
 
 finalize

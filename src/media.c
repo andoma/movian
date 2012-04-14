@@ -52,6 +52,10 @@
 #include "video/ps3_vdec.h"
 #endif
 
+#if ENABLE_VDA
+#include "video/vda.h"
+#endif
+
 // -------------------------------
 
 int media_buffer_hungry; /* Set if we try to fill media buffers
@@ -1212,8 +1216,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
 
   cw->codec_ctx->codec_id   = cw->codec->id;
   cw->codec_ctx->codec_type = cw->codec->type;
-
-
+  cw->codec_ctx->opaque = cw;
 
   if(mcp != NULL && mcp->extradata != NULL) {
     cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
@@ -1261,6 +1264,11 @@ media_codec_create(int codec_id, int parser,
 
   } else
 #endif
+#if ENABLE_VDA
+  if(mcp && !video_vda_codec_create(mc, codec_id, ctx, mcp, mp)) {
+
+  } else
+#endif
   if(media_codec_create_lavc(mc, codec_id, ctx, mcp)) {
     free(mc);
     return NULL;
@@ -1269,7 +1277,8 @@ media_codec_create(int codec_id, int parser,
   mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
   mc->refcount = 1;
   mc->fw = fw;
-  
+  mc->codec_id = codec_id;
+
   if(fw != NULL)
     atomic_add(&fw->refcount, 1);
 
@@ -1310,10 +1319,6 @@ static void
 mp_set_primary(media_pipe_t *mp)
 {
   media_primary = mp;
-  event_t *e = event_create_type(EVENT_MP_IS_PRIMARY);
-  mp_enqueue_event(mp, e);
-  event_release(e);
-
   prop_select(mp->mp_prop_root);
   prop_link(mp->mp_prop_root, media_prop_current);
   prop_set_int(mp->mp_prop_primary, 1);
@@ -1351,9 +1356,9 @@ mp_become_primary(struct media_pipe *mp)
     LIST_INSERT_HEAD(&media_pipe_stack, media_primary, mp_stack_link);
     media_primary->mp_flags |= MP_ON_STACK;
 
-    mp_enqueue_event(media_primary, 
-		     event_create_str(EVENT_MP_NO_LONGER_PRIMARY,
-				      "Paused by other playback"));
+    event_t *e = event_create_action(ACTION_STOP);
+    mp_enqueue_event(media_primary, e);
+    event_release(e);
   }
 
   mp_ref_inc(mp);

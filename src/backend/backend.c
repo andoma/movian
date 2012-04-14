@@ -179,6 +179,11 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
   const char *url = rstr_get(url0);
   htsmsg_t *m = NULL;
 
+  if(im && (im->im_req_width < -1 || im->im_req_height < -1)) {
+    snprintf(errbuf, errlen, "Invalid dimensions");
+    return NULL;
+  }
+
   if(!strncmp(url, "thumb://", 8)) {
     image_meta_t im0;
 
@@ -218,13 +223,15 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
       if(best != NULL) {
 
 	if(im->im_req_width != -1) {
-	  if(w >= im->im_req_width && w < best_width)
+	  if(w >= im->im_req_width &&
+	     (w < best_width || best_width < im->im_req_width))
 	    goto gotone;
 	  if(w < im->im_req_width && w > best_width)
 	    goto gotone;
 
 	} else if(im->im_req_height != -1) {
-	  if(h >= im->im_req_height && h < best_height)
+	  if(h >= im->im_req_height &&
+	     (h < best_height || best_height < im->im_req_height))
 	    goto gotone;
 	  if(h < im->im_req_height && h > best_height)
 	    goto gotone;

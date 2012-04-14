@@ -126,16 +126,31 @@ glw_set_screensaver_delay(void *opaque, int v)
 /**
  *
  */
+void
+glw_update_size(glw_root_t *gr)
+{
+  int v = gr->gr_base_size + gr->gr_user_size;
+  v = GLW_CLAMP(v, 14, 40);
+
+  if(gr->gr_current_size == v)
+    return;
+  gr->gr_current_size = v;
+
+  prop_set_int(gr->gr_prop_size, v);
+  glw_font_change_size(gr, v);
+  TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
+}
+
+
+/**
+ *
+ */
 static void
-glw_change_size(void *opaque, int v)
+glw_change_user_size(void *opaque, int v)
 {
   glw_root_t *gr = opaque;
-
-  v += gr->gr_base_size;
-  v = GLW_CLAMP(v, 14, 40);
-  prop_set_int(gr->gr_prop_size, v);
-  TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
-  glw_font_change_size(gr, v);
+  gr->gr_user_size = v;
+  glw_update_size(gr);
 }
 
 
@@ -214,7 +229,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
     settings_create_int(gr->gr_settings, "size",
 			_p("Userinterface size"), 0,
 			gr->gr_settings_store, -10, 30, 1,
-			glw_change_size, gr,
+			glw_change_user_size, gr,
 			SETTINGS_INITIAL_UPDATE, "px", gr->gr_courier,
 			glw_settings_save, gr);
 
@@ -261,6 +276,12 @@ glw_init(glw_root_t *gr, const char *theme,
 	 ui_t *ui, int primary, 
 	 const char *instance, const char *instance_title)
 {
+  char themebuf[PATH_MAX];
+  if(theme == NULL) {
+    snprintf(themebuf, sizeof(themebuf),
+	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot());
+    theme = themebuf;
+  }
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
   gr->gr_token_pool = pool_create("glwtokens", sizeof(token_t), POOL_ZERO_MEM);
@@ -268,7 +289,7 @@ glw_init(glw_root_t *gr, const char *theme,
 				  POOL_ZERO_MEM);
 
   gr->gr_vpaths[0] = "theme";
-  gr->gr_vpaths[1] = theme;
+  gr->gr_vpaths[1] = strdup(theme);
   gr->gr_vpaths[2] = NULL;
 
   gr->gr_uii.uii_ui = ui;
@@ -493,6 +514,12 @@ void
 glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
+
+  int v = gr->gr_height / 35;
+  if(gr->gr_base_size != v) {
+    gr->gr_base_size = v;
+    glw_update_size(gr);
+  }
 
   gr->gr_frame_start = showtime_get_ts();
 

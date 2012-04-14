@@ -47,13 +47,17 @@ http_headers_free(struct http_header_list *headers)
  */
 void
 http_header_add_alloced(struct http_header_list *headers, const char *key,
-			char *value)
+			char *value, int append)
 {
   http_header_t *hh;
 
-  LIST_FOREACH(hh, headers, hh_link) {
-    if(!strcasecmp(hh->hh_key, key))
-      break;
+  if(append) {
+    hh = NULL;
+  } else {
+    LIST_FOREACH(hh, headers, hh_link) {
+      if(!strcasecmp(hh->hh_key, key))
+	break;
+    }
   }
   
   if(hh == NULL) {
@@ -71,9 +75,9 @@ http_header_add_alloced(struct http_header_list *headers, const char *key,
  */
 void
 http_header_add(struct http_header_list *headers, const char *key,
-		const char *value)
+		const char *value, int append)
 {
-  http_header_add_alloced(headers, key, strdup(value));
+  http_header_add_alloced(headers, key, strdup(value), append);
 }
 
 /**
@@ -104,7 +108,7 @@ http_header_add_int(struct http_header_list *headers, const char *key,
 {
   char str[20];
   snprintf(str, sizeof(str), "%d", value);
-  http_header_add(headers, key, str);
+  http_header_add(headers, key, str, 0);
 }
 
 
@@ -138,7 +142,7 @@ http_header_merge(struct http_header_list *dst,
       if(!strcasecmp(hhs->hh_key, hhd->hh_key))
 	break;
     if(hhd == NULL) {
-      http_header_add(dst, hhs->hh_key, hhs->hh_value);
+      http_header_add(dst, hhs->hh_key, hhs->hh_value, 0);
     } else {
       free(hhd->hh_value);
       hhd->hh_value = strdup(hhs->hh_value);

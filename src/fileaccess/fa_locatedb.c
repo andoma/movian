@@ -198,6 +198,7 @@ static void
 fa_locate_searcher (fa_search_t *fas)
 {
   char buf[PATH_MAX];
+  char iconpath[PATH_MAX];
   regex_t preg;
 
   prop_t *entries[2] = {NULL, NULL};
@@ -206,6 +207,9 @@ fa_locate_searcher (fa_search_t *fas)
 
   if (fa_create_paths_regex(&preg) == -1)
     return fa_search_destroy(fas);
+
+  snprintf(iconpath, sizeof(iconpath), "%s/resources/fileaccess/fs_icon.png",
+	   showtime_dataroot());
 
   /* Consume 'locate' results. */
   while (1) {
@@ -305,7 +309,7 @@ fa_locate_searcher (fa_search_t *fas)
     if(nodes[t] == NULL)
       if(search_class_create(fas->fas_nodes, &nodes[t], &entries[t],
 			     t ? "Local video files" : "Local audio files",
-			     FA_LOCALFILES_ICON))
+			     iconpath))
 	break;
 
     prop_add_int(entries[t], 1);

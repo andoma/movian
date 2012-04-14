@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include "showtime.h"
 #include "navigator.h"
 #include "gu.h"
 #include "gu_directory.h"
@@ -103,13 +104,16 @@ static void
 album_set_art(void *opaque, const char *str)
 {
   GdkPixbuf *pb;
+  char path[PATH_MAX];
+	   
 
   if(str != NULL) {
     gu_pixbuf_async_set(str, 256, -1, GTK_OBJECT(opaque));
     return;
   }
 
-  pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/cd.png", 256, -1);
+  snprintf(path, sizeof(path), "%s/guresources/cd.png", showtime_dataroot());
+  pb = gu_pixbuf_get_sync(path, 256, -1);
   g_object_set(G_OBJECT(opaque), "pixbuf", pb, NULL);
   if(pb != NULL)
     g_object_unref(G_OBJECT(pb));

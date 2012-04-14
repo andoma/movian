@@ -30,8 +30,6 @@
 
 struct prop;
 
-#define FA_LOCALFILES_ICON "bundle://resources/fileaccess/fs_icon.png"
-
 int fileaccess_init(void);
 
 
@@ -185,6 +183,7 @@ struct htsbuf_queue;
 
 #define HTTP_DISABLE_AUTH  0x1
 #define HTTP_REQUEST_DEBUG 0x2
+#define HTTP_COMPRESSION   0x4
 
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,

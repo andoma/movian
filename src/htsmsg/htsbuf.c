@@ -25,7 +25,7 @@
 
 #include "htsbuf.h"
 #include "showtime.h"
-
+#include "misc/rstr.h"
 
 /**
  *
@@ -395,6 +395,7 @@ htsbuf_append_and_escape_jsonstr(htsbuf_queue_t *hq, const char *str)
 }
 
 
+
 /**
  *
  */
@@ -404,5 +405,17 @@ htsbuf_to_string(htsbuf_queue_t *hq)
   char *r = malloc(hq->hq_size + 1);
   r[hq->hq_size] = 0;
   htsbuf_read(hq, r, hq->hq_size);
+  return r;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+htsbuf_to_rstr(htsbuf_queue_t *hq)
+{
+  rstr_t *r = rstr_allocl(NULL, hq->hq_size);
+  htsbuf_read(hq, rstr_data(r), hq->hq_size);
   return r;
 }

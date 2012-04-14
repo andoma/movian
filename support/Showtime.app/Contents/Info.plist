@@ -9,7 +9,7 @@
 	<key>CFBundleIconFile</key>
 	<string>hts</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.lonelycoder.hts.showtime</string>
+	<string>com.lonelycoder.showtime</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

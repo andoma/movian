@@ -49,12 +49,16 @@ vp_get_vector_const(realityVertexProgram *vp, const char *name)
  *
  */
 static rsx_vp_t *
-load_vp(const char *url)
+load_vp(const char *filename)
 {
   char errmsg[100];
   realityVertexProgram *vp;
   int i;
   const char *name;
+  char url[512];
+
+  snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
+	   showtime_dataroot(), filename);
 
   if((vp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
@@ -119,12 +123,16 @@ load_vp(const char *url)
  *
  */
 static rsx_fp_t *
-load_fp(glw_root_t *gr, const char *url)
+load_fp(glw_root_t *gr, const char *filename)
 {
   char errmsg[100];
   realityFragmentProgram *fp;
   int i;
   const char *name;
+
+  char url[512];
+  snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
+	   showtime_dataroot(), filename);
 
   if((fp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
@@ -373,16 +381,14 @@ glw_rsx_init_context(glw_root_t *gr)
   gr->gr_normalized_texture_coords = 1;
   gr->gr_render = rsx_render;
   
-  be->be_vp_1 = load_vp("bundle://src/ui/glw/rsx/v1.vp");
-  be->be_fp_tex = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex.fp");
-  be->be_fp_flat = load_fp(gr, "bundle://src/ui/glw/rsx/f_flat.fp");
-  be->be_fp_tex_blur = load_fp(gr, "bundle://src/ui/glw/rsx/f_tex_blur.fp");
+  be->be_vp_1          = load_vp("v1.vp");
+  be->be_fp_tex        = load_fp(gr, "f_tex.fp");
+  be->be_fp_flat       = load_fp(gr, "f_flat.fp");
+  be->be_fp_tex_blur   = load_fp(gr, "f_tex_blur.fp");
   
-  be->be_vp_yuv2rgb = load_vp("bundle://src/ui/glw/rsx/yuv2rgb_v.vp");
-  be->be_fp_yuv2rgb_1f =
-    load_fp(gr, "bundle://src/ui/glw/rsx/yuv2rgb_1f_norm.fp");
-  be->be_fp_yuv2rgb_2f =
-    load_fp(gr, "bundle://src/ui/glw/rsx/yuv2rgb_2f_norm.fp");
+  be->be_vp_yuv2rgb    = load_vp("yuv2rgb_v.vp");
+  be->be_fp_yuv2rgb_1f = load_fp(gr, "yuv2rgb_1f_norm.fp");
+  be->be_fp_yuv2rgb_2f = load_fp(gr, "yuv2rgb_2f_norm.fp");
 
   return 0;
 }

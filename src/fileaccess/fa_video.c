@@ -248,7 +248,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   int64_t ts;
   int64_t seekbase = 0;
 
-  int hold = 0, lost_focus = 0, epoch = 1;
+  int hold = 0, epoch = 1;
   int restartpos_last = -1;
 
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
@@ -374,31 +374,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
       mp_set_playstatus_by_hold(mp, hold, NULL);
-      lost_focus = 0;
       
-    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-      hold = 1;
-      lost_focus = 1;
-      mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-      mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-      if(lost_focus) {
-	hold = 0;
-	lost_focus = 0;
-	mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PLAY);
-	mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold, NULL);
-
-      }
-
     } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
 
       hold = 1;
-      lost_focus = 0;
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 

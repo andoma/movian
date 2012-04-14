@@ -236,13 +236,13 @@ gu_cloner_subscription(void *opaque, prop_event_t event, ...)
 GdkPixbuf *
 gu_contentstr_to_icon(const char *str, int height)
 {
-  char buf[100];
+  char buf[PATH_MAX];
 
   if(str == NULL)
     return NULL;
 
   snprintf(buf, sizeof(buf), 
-	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
+	   "%s/guresources/content-%s.png", showtime_dataroot(), str);
   return gu_pixbuf_get_sync(buf, -1, height);
 }
 

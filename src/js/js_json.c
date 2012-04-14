@@ -163,6 +163,11 @@ js_json_encode(JSContext *cx, JSObject *obj,
   if(!JS_ConvertArguments(cx, argc, argv, "o", &o))
     return JS_FALSE;
 
+  if(o == NULL) {
+    JS_ReportError(cx, "Not an object");
+    return JS_FALSE;
+  }
+
   htsbuf_queue_init(&out, 0);
 
   json_encode_from_object(cx, o, &out);

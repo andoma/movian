@@ -327,7 +327,7 @@ json_parse_value(const char *s, void *parent, const char *name,
   const char *s2;
   char *str;
   double d = 0;
-  long l;
+  long l = 0;
   void *c;
 
   if((c = json_parse_map(s, &s2, jd, opaque, failp, failmsg)) == NULL)
@@ -409,14 +409,14 @@ json_deserialize(const char *src, const json_deserializer_t *jd, void *opaque,
 
   if(c == NULL) {
     size_t len = strlen(src);
-    size_t offset = errp - src;
+    ssize_t offset = errp - src;
     if(offset > len || offset < 0) {
-      snprintf(errbuf, errlen, "%s at (bad) offset %zd", errmsg, offset);
+      snprintf(errbuf, errlen, "%s at (bad) offset %d", errmsg, (int)offset);
     } else {
       offset -= 10;
       if(offset < 0)
 	offset = 0;
-      snprintf(errbuf, errlen, "%s at offset %zd : '%.20s'", errmsg, offset,
+      snprintf(errbuf, errlen, "%s at offset %d : '%.20s'", errmsg, (int)offset,
 	       src + offset);
     }
   }

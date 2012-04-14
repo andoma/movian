@@ -57,10 +57,10 @@ const char *http_header_get(struct http_header_list *headers,
 			    const char *key);
 
 void http_header_add(struct http_header_list *headers, const char *key,
-		     const char *value);
+		     const char *value, int appene);
 
 void http_header_add_alloced(struct http_header_list *headers, const char *key,
-			     char *value);
+			     char *value, int append);
 
 void http_header_add_lws(struct http_header_list *headers, const char *data);
 

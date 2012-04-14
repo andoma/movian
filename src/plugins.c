@@ -126,7 +126,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
       if(!force && plugin_get_conf_by_id(id) != NULL) {
 	snprintf(errbuf, errlen, "Plugin \"%s\" already loaded",
-		 ctrlfile);
+		 id);
 	htsmsg_destroy(ctrl);
 	return -1;
       }

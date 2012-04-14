@@ -85,17 +85,21 @@ memlogger_fn(callout_t *co, void *aux)
     uint32_t avail;
   } meminfo;
 
-  struct mallinfo mi = mallinfo();
 
   Lv2Syscall1(352, (uint64_t) &meminfo);
 
   prop_set_int(prop_create(memprop, "systotal"), meminfo.total / 1024);
   prop_set_int(prop_create(memprop, "sysfree"), meminfo.avail / 1024);
+
+#if ENABLE_JEMALLOC
+
+#else
+  struct mallinfo mi = mallinfo();
   prop_set_int(prop_create(memprop, "arena"), (mi.hblks + mi.arena) / 1024);
   prop_set_int(prop_create(memprop, "unusedChunks"), mi.ordblks);
   prop_set_int(prop_create(memprop, "activeMem"), mi.uordblks / 1024);
   prop_set_int(prop_create(memprop, "inactiveMem"), mi.fordblks / 1024);
-
+#endif
 
   if(meminfo.avail < LOW_MEM_LOW_WATER && !low_mem_warning) {
     low_mem_warning = 1;
@@ -110,6 +114,12 @@ memlogger_fn(callout_t *co, void *aux)
 }
 
 
+int
+get_system_concurrency(void)
+{
+  return 2;
+}
+
 void
 arch_init(void)
 {
@@ -118,9 +128,6 @@ arch_init(void)
 
   concurrency = 2;
 
-#if ENABLE_EMU_THREAD_SPECIFICS
-  hts_thread_key_init();
-#endif
 
   trace_level = TRACE_DEBUG;
   sysprop = prop_create(prop_get_global(), "system");
@@ -434,6 +441,8 @@ arch_set_default_paths(int argc, char **argv)
   if(x == NULL)
     return;
   x++;
+  *x = 0;
+  showtime_path = strdup(buf);
   strcpy(x, "settings");
   showtime_persistent_path = strdup(buf);
   strcpy(x, "cache");
@@ -702,4 +711,18 @@ my_localtime(const time_t *now, struct tm *tm)
   tm->tm_hour = dt.hour;
   tm->tm_min  = dt.minute;
   tm->tm_sec  = dt.second;
+}
+
+
+void
+__assert_func(const char *file, int line,
+	      const char *func, const char *failedexpr);
+
+void
+__assert_func(const char *file, int line,
+	      const char *func, const char *failedexpr)
+{
+  TRACE(TRACE_ERROR, "ASSERT",
+	"%s:%d %s %s", file, line, func, failedexpr);
+  exit(1);
 }

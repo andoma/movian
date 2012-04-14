@@ -75,12 +75,12 @@ upnp_event_generate_one(upnp_local_service_t *uls,
 
   LIST_INIT(&set->hdrs);
 
-  http_header_add(&set->hdrs, "NT", "upnp:event");
-  http_header_add(&set->hdrs, "NTS", "upnp:propchange");
-  http_header_add(&set->hdrs, "SID", us->us_uuid);
+  http_header_add(&set->hdrs, "NT", "upnp:event", 0);
+  http_header_add(&set->hdrs, "NTS", "upnp:propchange", 0);
+  http_header_add(&set->hdrs, "SID", us->us_uuid, 0);
 
   snprintf(str, sizeof(str), "%d", us->us_seq);
-  http_header_add(&set->hdrs, "SEQ", str);
+  http_header_add(&set->hdrs, "SEQ", str, 0);
   us->us_seq++;
   set->url = strdup(us->us_callback);
   return set;

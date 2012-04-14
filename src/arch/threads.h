@@ -21,6 +21,8 @@
 
 #include "config.h"
 
+extern int get_system_concurrency(void);
+
 #ifdef CONFIG_LIBPTHREAD
 
 #include <pthread.h>
@@ -86,6 +88,8 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *,
 #define hts_thread_current()                pthread_self()
 
 #if !ENABLE_EMU_THREAD_SPECIFICS
+
+typedef pthread_key_t hts_key_t;
 
 #define hts_thread_key_create(k, f) pthread_key_create((pthread_key_t *)k, f)
 #define hts_thread_key_delete(k)    pthread_key_delete(k)
@@ -249,7 +253,8 @@ extern hts_thread_t hts_thread_current(void);
 
 #if ENABLE_EMU_THREAD_SPECIFICS
 
-extern void hts_thread_key_init(void);
+typedef int hts_key_t;
+
 extern int hts_thread_key_create(unsigned int *k, void (*destrutor)(void *));
 extern int hts_thread_key_delete(unsigned int k);
 extern int hts_thread_set_specific(unsigned int k, void *p);

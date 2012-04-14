@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include "showtime.h"
 #include "navigator.h"
 #include "gu.h"
 #include "gu_directory.h"
@@ -288,13 +289,13 @@ widget_popup_menu_handler(GtkWidget *widget, gpointer opaque)
 static GdkPixbuf *
 contentstr_to_icon(const char *str, int height)
 {
-  char buf[100];
+  char buf[PATH_MAX];
 
   if(str == NULL)
     return NULL;
 
   snprintf(buf, sizeof(buf), 
-	   SHOWTIME_GU_RESOURCES_URL"/content-%s.png", str);
+	   "%s/guresources/content-%s.png", showtime_dataroot(), str);
   return gu_pixbuf_get_sync(buf, -1, height);
 }
 
@@ -659,12 +660,11 @@ starred2pixbuf(GtkTreeViewColumn *tree_column, GtkCellRenderer *cell,
   gtk_tree_model_get_value(model, iter, GDS_COL_STARRED, &gv);
   if(G_VALUE_HOLDS_INT(&gv)) {
     GdkPixbuf *pb;
+    char path[PATH_MAX];
 
-    if(g_value_get_int(&gv))
-      pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/star.png", -1, 16);
-    else
-      pb = gu_pixbuf_get_sync(SHOWTIME_GU_RESOURCES_URL"/nostar.png", -1, 16);
-
+    snprintf(path, sizeof(path), "%s/guresources/%sstar.png",
+	     showtime_dataroot(), g_value_get_int(&gv) ? "" : "no");
+    pb = gu_pixbuf_get_sync(path, -1, 16);
     g_object_set(G_OBJECT(cell), "pixbuf", pb, NULL);
     if(pb != NULL)
       g_object_unref(G_OBJECT(pb));

@@ -237,6 +237,7 @@ http_rc2str(int code)
   case HTTP_STATUS_PRECONDITION_FAILED: return "Precondition failed";
   case HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE: return "Unsupported media type";
   case HTTP_NOT_IMPLEMENTED: return "Not implemented";
+  case 500: return "Internal Server Error";
   default:
     return "Unknown returncode";
     break;
@@ -540,7 +541,7 @@ void
 http_set_response_hdr(http_connection_t *hc, const char *name,
 		      const char *value)
 {
-  http_header_add(&hc->hc_response_headers, name, value);
+  http_header_add(&hc->hc_response_headers, name, value, 0);
 }
 
 
@@ -592,7 +593,7 @@ http_parse_get_args(http_connection_t *hc, char *args)
 
     http_deescape(k);
     http_deescape(v);
-    http_header_add(&hc->hc_req_args, k, v);
+    http_header_add(&hc->hc_req_args, k, v, 0);
   }
 }
 
@@ -855,7 +856,7 @@ http_handle_input(http_connection_t *hc)
 	*c++ = 0;
 	while(*c == 32)
 	  c++;
-	http_header_add(&hc->hc_request_headers, buf, c);
+	http_header_add(&hc->hc_request_headers, buf, c, 0);
       }
       break;
 

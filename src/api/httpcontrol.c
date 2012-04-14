@@ -383,6 +383,103 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
 
 #endif
 
+
+
+/**
+ *
+ */
+#if ENABLE_JEMALLOC
+#include "arch/halloc.h"
+#define MEMSTATUS_BUFSIZE 65536
+
+typedef struct memstatus {
+  void *mem;
+  int offset;
+} memstatus_t;
+
+
+void
+stats_print(void (*write_cb)(void *, const char *), void *cbopaque,
+	    const char *opts);
+
+
+void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+static void
+memstatus_cb(void *opaque, const char *s)
+{
+  memstatus_t *ms = opaque;
+  int len = strlen(s);
+
+  if(ms->offset + len > MEMSTATUS_BUFSIZE)
+    return;
+  
+  memcpy(ms->mem + ms->offset, s, len);
+  ms->offset += len;
+}
+
+static int
+hc_memstatus(http_connection_t *hc, const char *remain, void *opaque,
+	     http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  memstatus_t ms;
+
+  ms.mem = halloc(MEMSTATUS_BUFSIZE);
+  ms.offset = 0;
+
+  stats_print(memstatus_cb, &ms,  http_arg_get_req(hc, "opts"));
+
+  htsbuf_queue_init(&out, 0);
+  htsbuf_append(&out, ms.mem, ms.offset);
+  hfree(ms.mem, MEMSTATUS_BUFSIZE);
+
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
+#if 0
+#include <stdbool.h>
+extern bool prof_mdump(const char *filename);
+extern bool opt_prof;
+extern bool prof_booted;
+
+static int
+hc_memprof(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  char path[1024];
+  int fd;
+  char *buf;
+  struct stat st;
+  snprintf(path, sizeof(path), "%s/memprof", showtime_cache_path);
+  TRACE(TRACE_DEBUG, "PROF", "%d:%d", opt_prof, prof_booted);
+
+  if(prof_mdump(path))
+    return 400;
+
+  fd = open(path, O_RDONLY);
+  unlink(path);
+  if(fd == -1)
+    return 404;
+
+  if(fstat(fd, &st)) {
+    close(fd);
+    return 404;
+  }
+
+  buf = malloc(st.st_size);
+  read(fd, buf, st.st_size);
+  close(fd);
+
+  htsbuf_queue_t out;
+  htsbuf_queue_init(&out, 0);
+  htsbuf_append_prealloc(&out, buf, st.st_size);
+
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+#endif
+#endif
+
 /**
  *
  */
@@ -397,6 +494,10 @@ httpcontrol_init(void)
   http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
 #if ENABLE_BINREPLACE
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
+#endif
+#if ENABLE_JEMALLOC
+  http_path_add("/showtime/memstatus", NULL, hc_memstatus, 1);
+  //  http_path_add("/showtime/memprof", NULL, hc_memprof, 1);
 #endif
 #if 0
   http_path_add("/showtime/memstats", NULL, hc_memstats, 1);

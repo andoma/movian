@@ -12,22 +12,24 @@ SFOXML          := $(TOPDIR)/support/sfo.xml
 BIN=${BUILDDIR}/showtime.elf
 
 
-${BIN}: ${BUILDDIR}/showtime
+${BIN}.bundle: ${BUILDDIR}/showtime.bundle
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-$(BUILDDIR)/showtime.self: ${BIN}
+${BIN}.zipbundle: ${BUILDDIR}/showtime.zipbundle
+	${STRIP} -o $@ $<
+	sprxlinker $@
+
+$(BUILDDIR)/showtime.self: ${BIN}.bundle
 	$(SELF) $< $@
 
-$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}
-	@mkdir -p $(BUILDDIR)/pkg
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}.zipbundle
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
-	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
+	make_self_npdrm $< $@ $(CONTENTID)
 
 $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
-	make_self_npdrm ${BIN} $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(CONTENTID)
-
-	@cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
+	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
+	cp ${BUILDDIR}/zipbundles/*.zip $(BUILDDIR)/pkg/USRDIR/
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
@@ -43,18 +45,22 @@ install: $(BUILDDIR)/showtime.pkg
 	sync
 
 $(BUILDDIR)/dist/showtime-$(VERSION).self: $(BUILDDIR)/showtime.self
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 $(BUILDDIR)/dist/showtime-$(VERSION).pkg: $(BUILDDIR)/showtime.pkg
+	@mkdir -p $(dir $@)
 	cp $< $@
 
 $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg: $(BUILDDIR)/showtime_geohot.pkg
+	@mkdir -p $(dir $@)
 	cp $< $@
 
-$(BUILDDIR)/dist:
-	mkdir -p $@
+dist:  $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
 
-dist:  $(BUILDDIR)/dist $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
+$(BUILDDIR)/devupgrade/EBOOT.BIN: ${BIN}.bundle
+	@mkdir -p $(dir $@)
+	make_self_npdrm $< $@ $(CONTENTID)
 
-upgrade: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
-	 curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace
+upgrade: $(BUILDDIR)/devupgrade/EBOOT.BIN
+	curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace

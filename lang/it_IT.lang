@@ -199,6 +199,9 @@ msg: CPU troppo lenta per poter decodificare questo video
 #
 # ./glwthemes/mono/popups/auth.view
 #
+id: Domain
+msg: Dominio
+
 id: Password
 msg: Password
 
@@ -655,6 +658,15 @@ msg: Impossibile richiedere il Cell codec. Errore 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+msg: 1080
+
+id: 576
+msg: 576
+
+id: 720
+msg: 720
+
 id: Always try to select a subtitle
 msg: Prova sempre a selezionare un file di sottotitoli
 
@@ -688,14 +700,23 @@ msg: Includi tutti i file di sottotitoli presenti nella cartella del filmato
 id: Left
 msg: Sinistra
 
+id: Maximum resolution for deinterlacer
+msg: Risoluzione massima per il deinterlacciatore
+
 id: No
 msg: No
+
+id: No limit
+msg: Nessun limite
 
 id: Outline color
 msg: Colore contorni
 
 id: Outline size
 msg: Dimensioni contorni
+
+id: Preferred VDPAU deinterlacer method
+msg: Metodo di deinterlacciamento VDPAU preferito
 
 id: Resume video playback
 msg: Riprendi riproduzione del video
@@ -729,6 +750,12 @@ msg: Stile sottotitoli
 
 id: Subtitles
 msg: Sottotitoli
+
+id: Temporal
+msg: Temporale
+
+id: Temporal/Spatial
+msg: Temporale/Spaziale
 
 id: Video acceleration and display behaviour
 msg: Accelerazione video e comportamento schermo

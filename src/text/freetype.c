@@ -313,7 +313,7 @@ face_create_from_uri(const char *path)
   char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
-  size_t s;
+  int64_t s;
 
   fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
@@ -386,9 +386,10 @@ face_resolve(int uc, uint8_t style, int family_id,
     return 0;
 #endif
 
-#ifdef SHOWTIME_FONT_LIBERATION_URL
+#if ENABLE_FONT_LIBERATION
   snprintf(urlbuf, urllen,
-	   SHOWTIME_FONT_LIBERATION_URL"/LiberationSans-Regular.ttf");
+	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
+	   showtime_dataroot());
   return 0;
 #endif
   return -1;
