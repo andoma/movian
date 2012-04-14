@@ -357,6 +357,8 @@ static const ass_style_t *
 adc_find_style(ass_decoder_ctx_t *adc, const char *name)
 {
   ass_style_t *as;
+  if(*name == '*')
+    name++;
   LIST_FOREACH(as, &adc->adc_styles, as_link)
     if(!strcasecmp(as->as_name, name))
       return as;
