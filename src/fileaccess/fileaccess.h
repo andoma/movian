@@ -184,6 +184,7 @@ struct htsbuf_queue;
 #define HTTP_DISABLE_AUTH  0x1
 #define HTTP_REQUEST_DEBUG 0x2
 #define HTTP_COMPRESSION   0x4
+#define HTTP_NOFOLLOW      0x8
 
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,

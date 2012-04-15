@@ -2698,6 +2698,9 @@ http_request(const char *url, const char **arguments,
     // FALLTHRU
   case 301:
   case 307:
+    if(flags & HTTP_NOFOLLOW)
+      break;
+
     if(redirect(hf, &redircount, errbuf, errlen, code, !no_content)) {
       http_destroy(hf);
       http_headers_free(headers_out);
