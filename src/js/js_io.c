@@ -164,10 +164,26 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
 /**
  *
  */
+static JSBool
+js_is_prop_true(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  JSBool b;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return 0;
+  if(!JS_ValueToBoolean(cx, val, &b))
+    return 0;
+  return b;
+}
+
+
+/**
+ *
+ */
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
 		const char *url, JSObject *argobj, jsval *postval,
-		JSObject *headerobj)
+		JSObject *headerobj, JSObject *ctrlobj)
 {
   char **httpargs = NULL;
   int i;
@@ -177,7 +193,16 @@ js_http_request(JSContext *cx, jsval *rval,
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
   struct http_header_list in_headers;
+  int flags = 0;
+
   LIST_INIT(&in_headers);
+
+  if(ctrlobj) {
+    if(js_is_prop_true(cx, ctrlobj, "debug"))
+      flags |= HTTP_REQUEST_DEBUG;
+    if(js_is_prop_true(cx, ctrlobj, "noFollow"))
+      flags |= HTTP_NOFOLLOW;
+  }
 
   if(argobj != NULL)
     js_http_add_args(&httpargs, cx, argobj);
@@ -254,8 +279,6 @@ js_http_request(JSContext *cx, jsval *rval,
     
     JS_DestroyIdArray(cx, ida);
   }
-
-  int flags = 0;
 
   const js_context_private_t *jcp = JS_GetContextPrivate(cx);
   if(jcp != NULL && jcp->jcp_flags & JCP_DISABLE_AUTH)
@@ -357,11 +380,13 @@ js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
   const char *url;
   JSObject *argobj = NULL;
   JSObject *hdrobj = NULL;
+  JSObject *ctrlobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "s/oo", &url, &argobj, &hdrobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "s/ooo", &url, &argobj, &hdrobj,
+			  &ctrlobj))
     return JS_FALSE;
 
-  return js_http_request(cx, rval, url, argobj, NULL, hdrobj);
+  return js_http_request(cx, rval, url, argobj, NULL, hdrobj, ctrlobj);
 }
 
 /**
@@ -375,12 +400,13 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
   JSObject *argobj = NULL;
   jsval postval;
   JSObject *hdrobj = NULL;
+  JSObject *ctrlobj = NULL;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "sv/oo", &url, &postval, &argobj,
-			  &hdrobj))
+  if(!JS_ConvertArguments(cx, argc, argv, "sv/ooo", &url, &postval, &argobj,
+			  &hdrobj, &ctrlobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, &postval, hdrobj);
+  return js_http_request(cx, rval, url, argobj, &postval, hdrobj, ctrlobj);
 }
 
 /**

@@ -616,7 +616,7 @@ This will appear on the console if Showtime is started with the -d option
 
 Print Message to the console.
 
-#### httpGet(String URL, [Object QueryArgs], [Object Headers])
+#### httpGet(String URL, [Object QueryArgs], [Object Headers], [Object Control])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * QueryArgs - Object with properties that will be appended to the URL
@@ -626,11 +626,14 @@ Print Message to the console.
   HTTP headers to send. If these includes a header that is default
   sent by Showtime, the default will be overridden with the value from
   this object. *Available from 3.1.177*
-
+* Control - Object with properties that control the HTTP client.
+  The following properties are understood: *Available from 3.5.125*
+> * debug - If set to true, it will print debug info about the transfer
+> * noFollow - If set to true, no redirects will be followed
 
 Return a HTTP response object
 
-#### httpPost(String URL, Object PostData, [Object QueryArgs], [Object Headers])
+#### httpPost(String URL, Object PostData, [Object QueryArgs], [Object Headers], [Object Control])
 
 * URL - URL to request. HTTP:// and HTTPS:// is supported.
 * PostData - Object where each property will be encoded and POSTed as
@@ -642,6 +645,7 @@ Return a HTTP response object
   HTTP headers to send. If these includes a header that is default
   sent by Showtime, the default will be overridden with the value from
   this object. *Available from 3.1.177*
+* Control - See httpGet method
 
 Return a HTTP response object
 
