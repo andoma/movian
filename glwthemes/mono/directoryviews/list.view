@@ -66,6 +66,7 @@ widget(keyintercept, {
 
 
 	  widget(icon, {
+	    .align = left;
 	    .color = select(isFocused(), [1.0, 1.0, 1.0], PLATE_COLOR_AUDIO());
 	    .source = translate($self.type,  "theme://svg/File",
 				"archive",   "theme://svg/Archive",
@@ -86,7 +87,6 @@ widget(keyintercept, {
 	    .autoRefocusable = true;
 	    .focusable = 1.0;
 	    .focusOnClick = true;
-	    .filterConstraintX = true;
 	    
 	    onEvent(activate,
 		    translate($self.type, navOpen($self.url),
