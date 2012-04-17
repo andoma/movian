@@ -41,12 +41,6 @@ malloc_mutex_lock(malloc_mutex_t *mutex)
 	hts_mutex_lock(mutex);
 }
 
-JEMALLOC_INLINE bool
-malloc_mutex_trylock(malloc_mutex_t *mutex)
-{
-	return (hts_mutex_trylock(mutex) != 0);
-}
-
 JEMALLOC_INLINE void
 malloc_mutex_unlock(malloc_mutex_t *mutex)
 {

@@ -1277,7 +1277,7 @@ JEMALLOC_P(realloc)(void *ptr, size_t size)
 
 	if (ptr != NULL) {
 		assert(malloc_initialized || malloc_initializer ==
-		    pthread_self());
+		    hts_thread_current());
 
 #if (defined(JEMALLOC_PROF) || defined(JEMALLOC_STATS))
 		old_size = isalloc(ptr);
@@ -1406,7 +1406,7 @@ JEMALLOC_P(free)(void *ptr)
 #endif
 
 		assert(malloc_initialized || malloc_initializer ==
-		    pthread_self());
+		    hts_thread_current());
 
 #ifdef JEMALLOC_STATS
 		usize = isalloc(ptr);
@@ -1491,7 +1491,7 @@ JEMALLOC_P(malloc_usable_size)(const void *ptr)
 {
 	size_t ret;
 
-	assert(malloc_initialized || malloc_initializer == pthread_self());
+	assert(malloc_initialized || malloc_initializer == hts_thread_current());
 
 #ifdef JEMALLOC_IVSALLOC
 	ret = ivsalloc(ptr);
@@ -1667,7 +1667,7 @@ JEMALLOC_P(rallocm)(void **ptr, size_t *rsize, size_t size, size_t extra,
 	assert(*ptr != NULL);
 	assert(size != 0);
 	assert(SIZE_T_MAX - size >= extra);
-	assert(malloc_initialized || malloc_initializer == pthread_self());
+	assert(malloc_initialized || malloc_initializer == hts_thread_current());
 
 	p = *ptr;
 #ifdef JEMALLOC_PROF
@@ -1760,7 +1760,7 @@ JEMALLOC_P(sallocm)(const void *ptr, size_t *rsize, int flags)
 {
 	size_t sz;
 
-	assert(malloc_initialized || malloc_initializer == pthread_self());
+	assert(malloc_initialized || malloc_initializer == hts_thread_current());
 
 #ifdef JEMALLOC_IVSALLOC
 	sz = ivsalloc(ptr);
@@ -1784,7 +1784,7 @@ JEMALLOC_P(dallocm)(void *ptr, int flags)
 #endif
 
 	assert(ptr != NULL);
-	assert(malloc_initialized || malloc_initializer == pthread_self());
+	assert(malloc_initialized || malloc_initializer == hts_thread_current());
 
 #ifdef JEMALLOC_STATS
 	usize = isalloc(ptr);
