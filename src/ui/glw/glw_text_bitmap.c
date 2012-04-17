@@ -45,6 +45,7 @@ typedef struct glw_text_bitmap {
 
   int16_t gtb_saved_width;
   int16_t gtb_saved_height;
+  int16_t gtb_saved_horizontal_avail;
 
   char *gtb_caption;
   prop_str_type_t gtb_type;
@@ -143,6 +144,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   }
 
   // Check if we need to repaint
+
+  if(gtb->gtb_saved_horizontal_avail != rc->rc_horizontal_avail)
+    gtb->gtb_saved_horizontal_avail = rc->rc_horizontal_avail;
 
   if((gtb->gtb_saved_width  != rc->rc_width || 
       gtb->gtb_saved_height != rc->rc_height)) {
@@ -938,7 +942,8 @@ font_render_thread(void *aux)
     scale = gtb->gtb_size_scale;
 
     max_width =
-      gtb->gtb_saved_width - gtb->gtb_padding_left - gtb->gtb_padding_right;
+      gtb->gtb_saved_width - gtb->gtb_padding_left - gtb->gtb_padding_right +
+      gtb->gtb_saved_horizontal_avail;
     max_lines = gtb->gtb_maxlines;
 
     flags = 0;

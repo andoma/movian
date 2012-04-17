@@ -742,6 +742,7 @@ typedef struct glw_rctx {
   float rc_blur;
 
   int16_t rc_width;
+  int16_t rc_horizontal_avail;
   int16_t rc_height;
 
   struct glw_cursor_painter *rc_cursor_painter;

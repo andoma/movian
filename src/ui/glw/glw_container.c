@@ -164,6 +164,9 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
 
   IW = 1.0f / rc->rc_width;
 
+
+  rc0.rc_horizontal_avail = weightavail;
+
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     float cw;
 
@@ -193,7 +196,6 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     right = rintf(pos);
     
     rc0.rc_width = right - left;
-
     c->glw_parent_pos = -1.0f + (right + left) * IW;
     c->glw_parent_scale = rc0.rc_width * IW;
       
