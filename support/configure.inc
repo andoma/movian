@@ -85,6 +85,7 @@ CONFIG_LIST="
  libav
  vda
  jemalloc
+ tlsf
 "
 
 cleanup() {

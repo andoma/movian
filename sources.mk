@@ -537,3 +537,12 @@ SRCS-${CONFIG_JEMALLOC} += \
 	ext/jemalloc/src/rtree.c \
 	ext/jemalloc/src/tcache.c \
 	ext/jemalloc/src/chunk_lv2.c \
+
+
+#
+# TLSF (Two Level Segregated Fit) memory allocator
+#
+
+SRCS-${CONFIG_TLSF} += \
+	ext/tlsf/tlsf.c \
+	ext/tlsf/tlsf_ps3.c \
