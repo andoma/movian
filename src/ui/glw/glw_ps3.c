@@ -34,6 +34,7 @@
 #include "misc/extents.h"
 
 
+#include <psl1ght/lv2.h>
 #include <rsx/commands.h>
 #include <rsx/nv40.h>
 #include <rsx/reality.h>
@@ -146,7 +147,9 @@ init_screen(glw_ps3_t *gp)
 {
 
   // Allocate a 1Mb buffer, alligned to a 1Mb boundary to be our shared IO memory with the RSX.
-  void *host_addr = memalign(1024*1024, 1024*1024);
+  u32 taddr;
+  Lv2Syscall3(348, 1024*1024, 0x400, (u64)&taddr);
+  void *host_addr = (void *)(uint64_t)taddr;
   assert(host_addr != NULL);
 
   // Initilise Reality, which sets up the command buffer and shared IO memory
