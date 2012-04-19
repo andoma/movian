@@ -119,6 +119,8 @@ audio_change_output_device(void *opaque, const char *string)
 void
 audio_init(void)
 {
+  audio_fifo_init(&af0, 16000, 8000);
+
   htsmsg_t *m = htsmsg_store_load("audio/current");
   if(m == NULL)
     m = htsmsg_create_map();
@@ -195,7 +197,6 @@ audio_output_thread(void *aux)
   int r;
   audio_fifo_t *af = &af0;
 
-  audio_fifo_init(af, 16000, 8000);
   thefifo = af;
 
   am = audio_mode_current;

@@ -159,15 +159,15 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
  * Mutexes
  */
 // #define PS3_DEBUG_MUTEX
-typedef sys_mutex_t hts_mutex_t;
+typedef sys_lwmutex_t hts_mutex_t;
 
 #ifndef PS3_DEBUG_MUTEX
 
 extern void hts_mutex_init(hts_mutex_t *m);
 extern void hts_mutex_init_recursive(hts_mutex_t *m);
-#define hts_mutex_lock(m)     sys_mutex_lock(*(m), 0)
-#define hts_mutex_unlock(m)   sys_mutex_unlock(*(m))
-#define hts_mutex_destroy(m)  sys_mutex_destroy(*(m))
+#define hts_mutex_lock(m)     sys_lwmutex_lock(m, 0)
+#define hts_mutex_unlock(m)   sys_lwmutex_unlock(m)
+#define hts_mutex_destroy(m)  sys_lwmutex_destroy(m)
 #define hts_mutex_assert(m)
 
 #else
@@ -188,16 +188,16 @@ extern void hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line);
  * Condition variables
  */
 // #define PS3_DEBUG_COND
-typedef sys_cond_t hts_cond_t;
+typedef sys_lwcond_t hts_cond_t;
 
 
 #ifndef PS3_DEBUG_COND
 
 extern void hts_cond_init(hts_cond_t *c, hts_mutex_t *m);
-#define hts_cond_destroy(c) sys_cond_destroy(*(c))
-#define hts_cond_signal(c) sys_cond_signal(*(c))
-#define hts_cond_broadcast(c) sys_cond_signal_all(*(c))
-#define hts_cond_wait(c,m ) sys_cond_wait(*(c), 0)
+#define hts_cond_destroy(c) sys_lwcond_destroy(c)
+#define hts_cond_signal(c) sys_lwcond_signal(c)
+#define hts_cond_broadcast(c) sys_lwcond_signal_all(c)
+#define hts_cond_wait(c,m ) sys_lwcond_wait(c, 0)
 extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay);
 
 
@@ -226,7 +226,7 @@ extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, cons
 typedef sys_ppu_thread_t hts_thread_t;
 
 #define THREAD_PRIO_LOW    3000
-#define THREAD_PRIO_NORMAL 1000
+#define THREAD_PRIO_NORMAL 2999
 #define THREAD_PRIO_HIGH   3
 
 extern void hts_thread_create_detached(const char *, void *(*)(void *), void *,

@@ -463,17 +463,15 @@ arch_cache_avail_bytes(void)
 void
 hts_mutex_init(hts_mutex_t *m)
 {
-  sys_mutex_attribute_t attr;
+  sys_lwmutex_attribute_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
   attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
   attr.attr_recursive = MUTEX_NOT_RECURSIVE;
-  attr.attr_pshared  = 0x00200;
-  attr.attr_adaptive = 0x02000;
 
   strcpy(attr.name, "mutex");
 
-  if((r = sys_mutex_create(m, &attr)) != 0) {
+  if((r = sys_lwmutex_create(m, &attr)) != 0) {
     my_trace("Failed to create mutex: error: 0x%x", r);
     exit(0);
   }
@@ -484,17 +482,15 @@ hts_mutex_init(hts_mutex_t *m)
 void
 hts_mutex_init_recursive(hts_mutex_t *m)
 {
-  sys_mutex_attribute_t attr;
+  sys_lwmutex_attribute_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
   attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
   attr.attr_recursive = MUTEX_RECURSIVE;
-  attr.attr_pshared  = 0x00200;
-  attr.attr_adaptive = 0x02000;
 
   strcpy(attr.name, "mutex");
 
-  if((r = sys_mutex_create(m, &attr)) != 0) {
+  if((r = sys_lwmutex_create(m, &attr)) != 0) {
     my_trace("Failed to create mutex: error: 0x%x", r);
     exit(0);
   }
@@ -556,12 +552,11 @@ hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line)
 void
 hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 {
-  sys_cond_attribute_t attr;
+  sys_lwcond_attribute_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_pshared = 0x00200;
   strcpy(attr.name, "cond");
-  if((r = sys_cond_create(c, *m, &attr) != 0)) {
+  if((r = sys_lwcond_create(c, m, &attr) != 0)) {
     my_trace("Failed to create cond: error: 0x%x", r);
     exit(0);
   }
@@ -572,7 +567,7 @@ hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
 int
 hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay)
 {
-  return !!sys_cond_wait(*c, delay * 1000LL);
+  return !!sys_lwcond_wait(c, delay * 1000LL);
 }
 
 
@@ -583,11 +578,10 @@ void
 hts_cond_initx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 {
   my_trace("%s:%d: Init cond @ %p,%p by %ld", file, line, c, m, hts_thread_current());
-  sys_cond_attribute_t attr;
+  sys_lwcond_attribute_t attr;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_pshared = 0x00200;
   strcpy(attr.name, "cond");
-  s32 r = sys_cond_create(c, *m, &attr);
+  s32 r = sys_lwcond_create(c, m, &attr);
   if(r) {
     my_trace("%s:%d: Failed to create cond: error: 0x%x", file, line, r);
     exit(0);
@@ -598,32 +592,32 @@ hts_cond_initx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 void hts_cond_destroyx(hts_cond_t *c, const char *file, int line)
 {
   my_trace("%s:%d: Destroy cond @ %p by %ld", file, line, c, hts_thread_current());
-  sys_cond_destroy(*c);
+  sys_lwcond_destroy(c);
 }
 
 void hts_cond_signalx(hts_cond_t *c, const char *file, int line)
 {
   my_trace("%s:%d: Signal cond @ %p by %ld", file, line, c, hts_thread_current());
-  sys_cond_signal(*c);
+  sys_lwcond_signal(c);
 }
 
 void hts_cond_broadcastx(hts_cond_t *c, const char *file, int line)
 {
   my_trace("%s:%d: Broadcast cond @ %p by %ld", file, line, c, hts_thread_current());
-  sys_cond_signal_all(*c);
+  sys_lwcond_signal_all(c);
 }
 
 void hts_cond_waitx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 {
   my_trace("%s:%d: Wait cond @ %p %p by %ld", file, line, c, m, hts_thread_current());
-  sys_cond_wait(*c, 0);
+  sys_lwcond_wait(c, 0);
   my_trace("%s:%d: Wait cond @ %p %p by %ld => done", file, line, c, m, hts_thread_current());
 }
 
 int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, const char *file, int line)
 {
   my_trace("%s:%d: Wait cond @ %p %p %dms by %ld", file, line, c, m, delay, hts_thread_current());
-  s32 v = sys_cond_wait(*c, delay * 1000LL);
+  s32 v = sys_lwcond_wait(c, delay * 1000LL);
   my_trace("%s:%d: Wait cond @ %p %p %dms by %ld => %d", file, line, c, m, delay, hts_thread_current(), v);
   return !!v;
 }
