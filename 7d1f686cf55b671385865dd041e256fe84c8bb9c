@@ -1,0 +1,5 @@
+ps3: Switch memory allocator to TLSF
+
+This is another attempt to fix the out of memory issues that has
+been plauging Showtime for quite some while.
+So far it looks much better than when using jemalloc
