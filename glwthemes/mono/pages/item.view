@@ -20,6 +20,12 @@
   });
 }
 
+widget(container_z, {
+    widget(backdrop, {
+        .source = $page.model.metadata.background;
+	.alpha = 0.6;
+    });
+
 widget(container_y, {
    .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
    .blur  = iir(clamp(getLayer(), 0, 1), 7);
@@ -66,5 +72,6 @@ widget(container_y, {
       }));
     });
   });
+});
 });
 
