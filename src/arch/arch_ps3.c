@@ -466,7 +466,7 @@ hts_mutex_init(hts_mutex_t *m)
   sys_lwmutex_attribute_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
   attr.attr_recursive = MUTEX_NOT_RECURSIVE;
 
   strcpy(attr.name, "mutex");
@@ -485,7 +485,7 @@ hts_mutex_init_recursive(hts_mutex_t *m)
   sys_lwmutex_attribute_t attr;
   s32 r;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
   attr.attr_recursive = MUTEX_RECURSIVE;
 
   strcpy(attr.name, "mutex");
