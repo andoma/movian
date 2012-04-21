@@ -289,7 +289,6 @@ vd_thread(void *aux)
     }
 
     TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
-    mq->mq_freeze_tail = 1;
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
@@ -392,7 +391,6 @@ vd_thread(void *aux)
     }
 
     hts_mutex_lock(&mp->mp_mutex);
-    mq->mq_freeze_tail = 0;
     media_buf_free_locked(mp, mb);
   }
 
