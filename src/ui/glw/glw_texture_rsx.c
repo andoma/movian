@@ -104,14 +104,14 @@ realloc_tex(glw_root_t *gr, glw_backend_texture_t *tex, int size)
   if(tex->size != size) {
 
     if(tex->size != 0)
-      rsx_free(gr, tex->tex.offset, tex->size);
+      rsx_free(tex->tex.offset, tex->size);
 
     tex->size = size;
 
     if(tex->size != 0)
-      tex->tex.offset = rsx_alloc(gr, tex->size, 16);
+      tex->tex.offset = rsx_alloc(tex->size, 16);
   }
-  return tex->size ? rsx_to_ppu(gr, tex->tex.offset) : NULL;
+  return tex->size ? rsx_to_ppu(tex->tex.offset) : NULL;
 }
 
 #if 0
@@ -304,7 +304,7 @@ void
 glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex)
 {
   if(tex->size != 0) {
-    rsx_free(gr, tex->tex.offset, tex->size);
+    rsx_free(tex->tex.offset, tex->size);
     tex->size = 0;
   }
 }

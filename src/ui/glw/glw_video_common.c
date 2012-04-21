@@ -33,7 +33,7 @@
 static glw_video_engine_t glw_video_blank;
 
 
-static void  glw_video_input(uint8_t * const data[], const int pitch[],
+static void  glw_video_input(frame_buffer_type_t type, void *frame,
 			     const frame_info_t *info, void *opaque);
 
 
@@ -634,10 +634,11 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
  * Frame delivery from video decoder
  */
 static void 
-glw_video_input(uint8_t * const data[], const int pitch[],
+glw_video_input(frame_buffer_type_t type, void *frame,
 		const frame_info_t *fi, void *opaque)
 {
   glw_video_t *gv = opaque;
+  const AVFrame *avframe;
 
   if(fi) {
     gv->gv_dar = fi->dar;
@@ -645,44 +646,56 @@ glw_video_input(uint8_t * const data[], const int pitch[],
   }
   hts_mutex_lock(&gv->gv_surface_mutex);
 
-  if(data == NULL) {
+  if(frame == NULL) {
     // Blackout
     glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0);
     hts_mutex_unlock(&gv->gv_surface_mutex);
     return;
   }
   
-  switch(fi->pix_fmt) {
-  case PIX_FMT_YUV420P:
-  case PIX_FMT_YUV422P:
-  case PIX_FMT_YUV444P:
-  case PIX_FMT_YUV410P:
-  case PIX_FMT_YUV411P:
-  case PIX_FMT_YUV440P:
+  switch(type) {
+  case FRAME_BUFFER_TYPE_LIBAV_FRAME:
+    avframe = frame;
 
-  case PIX_FMT_YUVJ420P:
-  case PIX_FMT_YUVJ422P:
-  case PIX_FMT_YUVJ444P:
-  case PIX_FMT_YUVJ440P:
-    glw_video_input_yuvp(gv, data, pitch, fi);
-    break;
+    switch(fi->pix_fmt) {
+    case PIX_FMT_YUV420P:
+    case PIX_FMT_YUV422P:
+    case PIX_FMT_YUV444P:
+    case PIX_FMT_YUV410P:
+    case PIX_FMT_YUV411P:
+    case PIX_FMT_YUV440P:
 
+    case PIX_FMT_YUVJ420P:
+    case PIX_FMT_YUVJ422P:
+    case PIX_FMT_YUVJ444P:
+    case PIX_FMT_YUVJ440P:
+      glw_video_input_yuvp(gv, avframe->data, avframe->linesize, fi);
+      break;
+      
 #if ENABLE_VDPAU
-  case PIX_FMT_VDPAU_H264:
-  case PIX_FMT_VDPAU_MPEG1:
-  case PIX_FMT_VDPAU_MPEG2:
-  case PIX_FMT_VDPAU_WMV3:
-  case PIX_FMT_VDPAU_VC1:
-  case PIX_FMT_VDPAU_MPEG4:
-    glw_video_input_vdpau(gv, data, pitch, fi);
-    break;
+    case PIX_FMT_VDPAU_H264:
+    case PIX_FMT_VDPAU_MPEG1:
+    case PIX_FMT_VDPAU_MPEG2:
+    case PIX_FMT_VDPAU_WMV3:
+    case PIX_FMT_VDPAU_VC1:
+    case PIX_FMT_VDPAU_MPEG4:
+      glw_video_input_vdpau(gv, avframe->data, avframe->linesize, fi);
+      break;
 #endif
-
-  default:
-    TRACE(TRACE_ERROR, "GLW", 
+      
+    default:
+      TRACE(TRACE_ERROR, "GLW", 
 	  "PIX_FMT %s (0x%x) does not have a video engine",
 	   av_pix_fmt_descriptors[fi->pix_fmt].name, fi->pix_fmt);
+      break;
+    }
     break;
+
+  default:
+      TRACE(TRACE_ERROR, "GLW", 
+	    "buffer type %d  does not have a video engine",
+	    type);
+      break;
   }
 
   hts_mutex_unlock(&gv->gv_surface_mutex);

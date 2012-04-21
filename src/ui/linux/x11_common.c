@@ -193,7 +193,7 @@ vo_set_source(void *opaque, const char *url)
 /**
  *
  */
-static void xv_video_frame_deliver(uint8_t * const data[], const int pitch[],
+static void xv_video_frame_deliver(frame_buffer_type_t type, void *frame,
 				   const frame_info_t *fi, void *opaque);
 
 /**
@@ -234,7 +234,7 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
-static void xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
+static void xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
 				   const frame_info_t *fi, void *opaque);
 
 /**
@@ -453,12 +453,17 @@ compute_output_dimensions(video_output_t *vo, AVRational dar,
  *
  */
 static void 
-xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
+xv_video_frame_deliver(frame_buffer_type_t type, void *frame,
 		       const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   int syncok;
   int outw, outh;
+
+  if(type != FRAME_BUFFER_TYPE_LIBAV_FRAME)
+    return;
+
+  const AVFrame *avframe = frame;
 
   if(vo->vo_w < 1 || vo->vo_h < 1 || fi == NULL)
     return;
@@ -503,14 +508,14 @@ xv_video_frame_deliver(uint8_t * const data[], const int linesize[],
       h = h / 2;
     }
 
-    const uint8_t *src = data[i];
+    const uint8_t *src = avframe->data[i];
     char *dst = vo->vo_xv_image->data + vo->vo_xv_image->offsets[i];
     int pitch = vo->vo_xv_image->pitches[i];
     
     while(h--) {
       memcpy(dst, src, w);
       dst += pitch;
-      src += linesize[i];
+      src += avframe->linesize[i];
     }
   }
 
@@ -567,7 +572,7 @@ get_pix_fmt(video_output_t *vo)
  *
  */
 static void
-xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
+xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
 		       const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
@@ -575,6 +580,11 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   int dstpitch[4] = {0,0,0,0};
   int syncok;
   int outw, outh;
+
+  if(type != FRAME_BUFFER_TYPE_LIBAV_FRAME)
+    return;
+
+  const AVFrame *avframe = frame;
 
   if(vo->vo_w < 1 || vo->vo_h < 1)
     return;
@@ -643,9 +653,9 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
   if(vo->vo_ximage->width          == fi->width &&
      vo->vo_ximage->height         == fi->height &&
      vo->vo_pix_fmt                == fi->pix_fmt &&
-     vo->vo_ximage->bytes_per_line == pitch[0]) {
+     vo->vo_ximage->bytes_per_line == avframe->linesize[0]) {
 
-    memcpy(vo->vo_ximage->data, data[0], 
+    memcpy(vo->vo_ximage->data, avframe->data[0], 
 	   vo->vo_ximage->bytes_per_line * vo->vo_ximage->height);
 
   } else {
@@ -662,7 +672,8 @@ xi_video_frame_deliver(uint8_t * const data[], const int pitch[],
     dst[0] = (uint8_t *)vo->vo_ximage->data;
     dstpitch[0] = vo->vo_ximage->bytes_per_line;
     
-    sws_scale(vo->vo_scaler, (void *)data, pitch, 0, fi->height, dst, dstpitch);
+    sws_scale(vo->vo_scaler, (void *)avframe->data, avframe->linesize, 0,
+	      fi->height, dst, dstpitch);
   }
 
 

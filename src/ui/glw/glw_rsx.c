@@ -173,8 +173,8 @@ load_fp(glw_root_t *gr, const char *filename)
 	  name, attributes[i].index);
   }
 
-  int offset = rsx_alloc(gr, fp->num_insn * 16, 256);
-  uint32_t *buf = rsx_to_ppu(gr, offset);
+  int offset = rsx_alloc(fp->num_insn * 16, 256);
+  uint32_t *buf = rsx_to_ppu(offset);
   TRACE(TRACE_INFO, "glw", "  PPU location: 0x%08x  %d bytes",
 	buf, fp->num_insn * 16);
   const uint32_t *src = (uint32_t *)((char*)fp + fp->ucode_off);

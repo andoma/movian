@@ -40,6 +40,13 @@ struct AVFrame;
 struct video_decoder;
 struct pixmap;
 
+typedef enum {
+  FRAME_BUFFER_TYPE_BLACKOUT,
+  FRAME_BUFFER_TYPE_LIBAV_FRAME,
+  FRAME_BUFFER_TYPE_RSX_MEMORY,
+} frame_buffer_type_t;
+
+
 typedef struct frame_info {
   int width;
   int height;
@@ -64,7 +71,7 @@ typedef struct frame_info {
 /**
  *
  */
-typedef void (vd_frame_deliver_t)(uint8_t * const data[], const int pitch[],
+typedef void (vd_frame_deliver_t)(frame_buffer_type_t type, void *frame,
 				  const frame_info_t *info, void *opaque);
 
 /**

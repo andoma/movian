@@ -84,11 +84,6 @@ typedef struct glw_backend_root {
   struct rsx_fp *be_fp_yuv2rgb_1f;
   struct rsx_fp *be_fp_yuv2rgb_2f;
 
-
-  struct extent_pool *be_mempool;
-  char *be_rsx_address;
-  hts_mutex_t be_mempool_lock;
-
   int be_blendmode;
   
 } glw_backend_root_t;
@@ -139,11 +134,13 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 /**
  *
  */
-int rsx_alloc(struct glw_root *gr, int size, int alignment);
+int rsx_alloc(int size, int alignment);
 
-void rsx_free(struct glw_root *gr, int pos, int size);
+void rsx_free(int pos, int size);
 
-#define rsx_to_ppu(gr, pos) ((void *)((gr)->gr_be.be_rsx_address + (pos)))
+extern char *rsx_address;
+
+#define rsx_to_ppu(pos) ((void *)(rsx_address + (pos)))
 
 
 

@@ -73,6 +73,12 @@ typedef struct glw_ps3 {
 } glw_ps3_t;
 
 
+char *rsx_address;
+static struct extent_pool *rsx_mempool;
+static hts_mutex_t rsx_mempool_lock;
+
+
+
 extern s32 ioPadGetDataExtra(u32 port, u32* type, PadData* data);
 
 static void
@@ -103,16 +109,15 @@ flip(glw_ps3_t *gp, s32 buffer)
  *
  */
 int
-rsx_alloc(glw_root_t *gr, int size, int alignment)
+rsx_alloc(int size, int alignment)
 {
   int pos;
 
-  hts_mutex_lock(&gr->gr_be.be_mempool_lock);
-  pos = extent_alloc_aligned(gr->gr_be.be_mempool,
-			     (size + 15) >> 4, alignment >> 4);
+  hts_mutex_lock(&rsx_mempool_lock);
+  pos = extent_alloc_aligned(rsx_mempool, (size + 15) >> 4, alignment >> 4);
   if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
 	size, alignment, pos << 4);
-  hts_mutex_unlock(&gr->gr_be.be_mempool_lock);
+  hts_mutex_unlock(&rsx_mempool_lock);
   return pos << 4;
 }
 
@@ -121,12 +126,12 @@ rsx_alloc(glw_root_t *gr, int size, int alignment)
  *
  */
 void
-rsx_free(glw_root_t *gr, int pos, int size)
+rsx_free(int pos, int size)
 {
   int r;
 
-  hts_mutex_lock(&gr->gr_be.be_mempool_lock);
-  r = extent_free(gr->gr_be.be_mempool, pos >> 4, (size + 15) >> 4);
+  hts_mutex_lock(&rsx_mempool_lock);
+  r = extent_free(rsx_mempool, pos >> 4, (size + 15) >> 4);
 
   if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Free %d + %d = %d", pos, size, r);
 
@@ -134,7 +139,7 @@ rsx_free(glw_root_t *gr, int pos, int size)
     TRACE(TRACE_ERROR, "GLX", "RSX memory corrupted, error %d", r);
   }
 
-  hts_mutex_unlock(&gr->gr_be.be_mempool_lock);
+  hts_mutex_unlock(&rsx_mempool_lock);
 }
 
 
@@ -162,9 +167,9 @@ init_screen(glw_ps3_t *gp)
   TRACE(TRACE_INFO, "RSX", "memory @ 0x%x size = %d\n",
 	config.localAddress, config.localSize);
 
-  hts_mutex_init(&gp->gr.gr_be.be_mempool_lock);
-  gp->gr.gr_be.be_mempool = extent_create(0, config.localSize >> 4);
-  gp->gr.gr_be.be_rsx_address = (void *)(uint64_t)config.localAddress;
+  hts_mutex_init(&rsx_mempool_lock);
+  rsx_mempool = extent_create(0, config.localSize >> 4);
+  rsx_address = (void *)(uint64_t)config.localAddress;
 
 
   VideoState state;
@@ -212,13 +217,13 @@ init_screen(glw_ps3_t *gp)
   gcmSetFlipMode(GCM_FLIP_VSYNC); // Wait for VSYNC to flip
   
   // Allocate two buffers for the RSX to draw to the screen (double buffering)
-  gp->framebuffer[0] = rsx_alloc(&gp->gr, buffer_size, 16);
-  gp->framebuffer[1] = rsx_alloc(&gp->gr, buffer_size, 16);
+  gp->framebuffer[0] = rsx_alloc(buffer_size, 16);
+  gp->framebuffer[1] = rsx_alloc(buffer_size, 16);
 
   TRACE(TRACE_INFO, "RSX", "Buffers at 0x%x 0x%x\n",
 	gp->framebuffer[0], gp->framebuffer[1]);
 
-  gp->depthbuffer = rsx_alloc(&gp->gr, depth_buffer_size * 4, 16);
+  gp->depthbuffer = rsx_alloc(depth_buffer_size * 4, 16);
   
   // Setup the display buffers
   gcmSetDisplayBuffer(0, gp->framebuffer[0],

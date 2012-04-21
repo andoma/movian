@@ -50,12 +50,11 @@
 static void
 surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
-  glw_root_t *gr = gv->w.glw_root;
   int i;
 
   for(i = 0; i < 3; i++) {
     if(gvs->gvs_offset[i]) {
-      rsx_free(gr, gvs->gvs_offset[i], gvs->gvs_size[i]);
+      rsx_free(gvs->gvs_offset[i], gvs->gvs_size[i]);
       gvs->gvs_offset[i] = 0;
     }
   }
@@ -123,13 +122,12 @@ static void
 surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 	     const glw_video_config_t *gvc)
 {
-  glw_root_t *gr = gv->w.glw_root;
   int i;
 
   for(i = 0; i < 3; i++) {
     gvs->gvs_size[i] = gvc->gvc_width[i] * gvc->gvc_height[i];
-    gvs->gvs_offset[i]  = rsx_alloc(gr, gvs->gvs_size[i], 16);
-    gvs->gvs_data[i] = rsx_to_ppu(gr, gvs->gvs_offset[i]);
+    gvs->gvs_offset[i]  = rsx_alloc(gvs->gvs_size[i], 16);
+    gvs->gvs_data[i] = rsx_to_ppu(gvs->gvs_offset[i]);
 
     init_tex(&gvs->gvs_tex[i],
 	     gvs->gvs_offset[i],

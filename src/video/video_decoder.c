@@ -226,7 +226,8 @@ video_deliver_frame(video_decoder_t *vd,
   fi.color_space = ctx->colorspace;
   fi.color_range = ctx->color_range;
 
-  vd->vd_frame_deliver(frame->data, frame->linesize, &fi, vd->vd_opaque);
+  vd->vd_frame_deliver(FRAME_BUFFER_TYPE_LIBAV_FRAME, frame,
+		       &fi, vd->vd_opaque);
 
   video_decoder_scan_ext_sub(vd, fi.pts);
 }
@@ -369,7 +370,8 @@ vd_thread(void *aux)
       if(vd->vd_accelerator_blackout)
 	vd->vd_accelerator_blackout(vd->vd_accelerator_opaque);
       else
-	vd->vd_frame_deliver(NULL, NULL, NULL, vd->vd_opaque);
+	vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
+			     vd->vd_opaque);
       break;
 
     case MB_FLUSH_SUBTITLES:
