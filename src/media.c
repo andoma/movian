@@ -282,7 +282,8 @@ mp_create(const char *name, int flags, const char *type)
   hts_mutex_init(&mp->mp_mutex);
   hts_mutex_init(&mp->mp_clock_mutex);
   hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
-  
+  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
+
   mp->mp_prop_root = prop_create(media_prop_sources, NULL);
   mp->mp_prop_metadata    = prop_create(mp->mp_prop_root, "metadata");
 
@@ -394,8 +395,6 @@ mp_create(const char *name, int flags, const char *type)
   prop_set_int(prop_create(mp->mp_prop_root, "canStop"), 1);
 
   mp->mp_prop_model = prop_create(mp->mp_prop_root, "model");
-
-  mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
 
   mp->mp_sub_currenttime = 
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
