@@ -127,11 +127,10 @@ be_prop_open(prop_t *page, const char *url)
 /**
  *
  */
-static int
-be_prop_init(void)
+static void __attribute__((constructor))
+doinit(void)
 {
   hts_mutex_init(&pp_mutex);
-  return 0;
 }
 
 
@@ -139,7 +138,6 @@ be_prop_init(void)
  *
  */
 static backend_t be_prop = {
-  .be_init = be_prop_init,
   .be_flags = BACKEND_OPEN_CHECKS_URI,
   .be_open = be_prop_open,
 };
