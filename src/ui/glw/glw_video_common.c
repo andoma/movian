@@ -290,9 +290,9 @@ glw_video_newframe(glw_t *w, int flags)
   if(memcmp(&gv->gv_cfg_cur, &gv->gv_cfg_req, sizeof(glw_video_config_t)))
     glw_video_surface_reconfigure(gv);
 
-  hts_mutex_unlock(&gv->gv_surface_mutex);
-
   pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
+
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 
   if(pts != AV_NOPTS_VALUE)
     glw_video_overlay_set_pts(gv, pts);
@@ -325,7 +325,10 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
 
   case GLW_SIGNAL_DESTROY:
+    hts_mutex_lock(&gv->gv_surface_mutex);
+    hts_cond_signal(&gv->gv_reconf_cond);
     hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_mutex_unlock(&gv->gv_surface_mutex);
     video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
     mp_ref_dec(gv->gv_mp);
@@ -611,6 +614,7 @@ glw_video_get_surface(glw_video_t *gv)
   }
 
   TAILQ_REMOVE(&gv->gv_avail_queue, s, gvs_link);
+  hts_mutex_assert(&gv->gv_surface_mutex);
   return s;
 }
 
@@ -627,6 +631,7 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
   s->gvs_duration = duration;
   s->gvs_yshift = yshift;
   TAILQ_INSERT_TAIL(&gv->gv_decoded_queue, s, gvs_link);
+  hts_mutex_assert(&gv->gv_surface_mutex);
 }
 
 

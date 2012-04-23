@@ -107,6 +107,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
   }
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  hts_mutex_assert(&gv->gv_surface_mutex);
 }
 
 
@@ -202,7 +203,6 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 {
   int i;
 
-  hts_mutex_lock(&gv->gv_surface_mutex);
   TAILQ_REMOVE(fromqueue, gvs, gvs_link);
 
   if(gvs->gvs_uploaded) {
@@ -227,7 +227,6 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
   hts_cond_signal(&gv->gv_avail_queue_cond);
-  hts_mutex_unlock(&gv->gv_surface_mutex);
 }
 
 
@@ -369,6 +368,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 
   
   /* Find new surface to display */
+  hts_mutex_assert(&gv->gv_surface_mutex);
   sa = TAILQ_FIRST(&gv->gv_decoded_queue);
   if(sa == NULL) {
     /* No frame available */

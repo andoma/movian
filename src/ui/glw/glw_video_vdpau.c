@@ -82,17 +82,12 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     
     mp_send_cmd_head(mp, &mp->mp_video, MB_REINITIALIZE);
 
-    hts_mutex_lock(&gv->gv_surface_mutex);
-    
     drain(gv, &gv->gv_displaying_queue);
     drain(gv, &gv->gv_decoded_queue);
     hts_cond_signal(&gv->gv_avail_queue_cond);
-    hts_mutex_unlock(&gv->gv_surface_mutex);
     
     return AV_NOPTS_VALUE;
   }
-
-  hts_mutex_lock(&gv->gv_surface_mutex);
 
   /* Remove frames from displaying queue if they are idle and push
    * back to the decoder 
@@ -146,8 +141,6 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     TAILQ_REMOVE(&gv->gv_decoded_queue, s, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, s, gvs_link);
   }
-
-  hts_mutex_unlock(&gv->gv_surface_mutex);
   return pts;
 }
 

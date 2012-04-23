@@ -173,11 +173,9 @@ gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
 			  const glw_video_config_t *gvc,
 			  struct glw_video_surface_queue *fromqueue)
 {
-  hts_mutex_lock(&gv->gv_surface_mutex);
   TAILQ_REMOVE(fromqueue, gvs, gvs_link);
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
   hts_cond_signal(&gv->gv_avail_queue_cond);
-  hts_mutex_unlock(&gv->gv_surface_mutex);
 }
 
 
