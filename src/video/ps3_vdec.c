@@ -552,7 +552,6 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
     hts_mutex_lock(&vdd->mtx);
     if(!vdd->submitted_au)
       TRACE(TRACE_ERROR, "VDEC", "AUDONE but no buffers pending");
-    hts_mutex_unlock(&vdd->mtx);
     vdd->submitted_au = 0;
     hts_cond_signal(&vdd->audone);
     hts_mutex_unlock(&vdd->mtx);
