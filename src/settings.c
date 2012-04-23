@@ -498,7 +498,7 @@ settings_create_string(prop_t *parent, const char *id, prop_t *title,
     settings_string_callback(s, initial);
 
   s->s_sub =
-    prop_subscribe(0,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
 		   PROP_TAG_ROOT, s->s_val,
 		   PROP_TAG_COURIER, pc,
