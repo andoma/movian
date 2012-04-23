@@ -852,12 +852,14 @@ playqueue_init(void)
 		 PROP_TAG_NAME("self", "shuffle"),
 		 PROP_TAG_CALLBACK_INT, playqueue_set_shuffle, NULL,
 		 PROP_TAG_NAMED_ROOT, playqueue_mp->mp_prop_root, "self",
+		 PROP_TAG_MUTEX, &playqueue_mutex,
 		 NULL);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("self", "repeat"),
 		 PROP_TAG_CALLBACK_INT, playqueue_set_repeat, NULL,
 		 PROP_TAG_NAMED_ROOT, playqueue_mp->mp_prop_root, "self",
+		 PROP_TAG_MUTEX, &playqueue_mutex,
 		 NULL);
 
   playqueue_root = prop_create(prop_get_global(), "playqueue");
