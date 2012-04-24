@@ -161,3 +161,17 @@ memstats(http_connection_t *hc, const char *remain, void *opaque,
 
   return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
 }
+
+void verify_heap(void);
+
+
+void 
+verify_heap(void)
+{
+  hts_mutex_lock(&mutex);
+  if(tlsf_check_heap(gpool))
+    trace(TRACE_NO_PROP, TRACE_ERROR, "HEAPCHECK", "Heap check verify failed");
+  else
+    trace(TRACE_NO_PROP, TRACE_DEBUG, "HEAPCHECK", "Heap OK");
+  hts_mutex_unlock(&mutex);
+}
