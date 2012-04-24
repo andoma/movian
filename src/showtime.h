@@ -77,6 +77,7 @@ extern uint64_t arch_get_seed(void);
  */
 
 enum {
+  TRACE_EMERG,
   TRACE_ERROR,
   TRACE_INFO,
   TRACE_DEBUG

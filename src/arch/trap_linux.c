@@ -38,7 +38,7 @@
 #include "showtime.h"
 #include "arch.h"
 
-#define TRAPMSG(fmt...) trace(TRACE_NO_PROP, TRACE_ERROR, "CRASH", fmt)
+#define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
 
 #define MAXFRAMES 100
 

@@ -226,6 +226,7 @@ trace_arch(int level, const char *prefix, const char *str)
   int prio = LOG_ERR;
 
   switch(level) {
+  case TRACE_EMERG: sgr = "\033[31m"; prio = LOG_ERR;   break;
   case TRACE_ERROR: sgr = "\033[31m"; prio = LOG_ERR;   break;
   case TRACE_INFO:  sgr = "\033[33m"; prio = LOG_INFO;  break;
   case TRACE_DEBUG: sgr = "\033[32m"; prio = LOG_DEBUG; break;

@@ -89,6 +89,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   hts_mutex_lock(&trace_mutex);
 
   switch(level) {
+  case TRACE_EMERG: leveltxt = "EMERG"; break;
   case TRACE_ERROR: leveltxt = "ERROR"; break;
   case TRACE_INFO:  leveltxt = "INFO";  break;
   case TRACE_DEBUG: leveltxt = "DEBUG"; break;
@@ -105,7 +106,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   while((s = strsep(&p, "\n")) != NULL) {
     if(level <= trace_level)
       trace_arch(level, buf2, s);
-    if(!(flags & TRACE_NO_PROP))
+    if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG)
       trace_prop(level, buf2, s, leveltxt);
     memset(buf2, ' ', l);
   }
