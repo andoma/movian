@@ -851,15 +851,14 @@ zip_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 /**
  *
  */
-static void
-zip_init(void)
+static void __attribute__((constructor))
+zipinit(void)
 {
   hts_mutex_init(&zip_global_mutex);
 }
 
 
 static fa_protocol_t fa_protocol_zip = {
-  .fap_init = zip_init,
   .fap_name = "zip",
   .fap_scan =  zip_scandir,
   .fap_open  = zip_open,
