@@ -736,9 +736,9 @@ decoder_close(struct media_codec *mc)
   vdec_close(vdd->handle);
   Lv2Syscall1(349, (uint64_t)vdd->mem);
 
-  hts_mutex_destroy(&vdd->mtx);
   hts_cond_destroy(&vdd->audone);
   hts_cond_destroy(&vdd->seqdone);
+  hts_mutex_destroy(&vdd->mtx);
 
   prop_ref_dec(vdd->metainfo);
   free(vdd->extradata);
