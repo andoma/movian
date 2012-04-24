@@ -822,18 +822,18 @@ JS_DestroyRuntime(JSRuntime *rt)
     js_FinishDeflatedStringCache(rt);
     js_FinishGC(rt);
 #ifdef JS_THREADSAFE
-    if (rt->gcLock)
-        JS_DESTROY_LOCK(rt->gcLock);
     if (rt->gcDone)
         JS_DESTROY_CONDVAR(rt->gcDone);
     if (rt->requestDone)
         JS_DESTROY_CONDVAR(rt->requestDone);
-    if (rt->rtLock)
-        JS_DESTROY_LOCK(rt->rtLock);
     if (rt->stateChange)
         JS_DESTROY_CONDVAR(rt->stateChange);
     if (rt->titleSharingDone)
         JS_DESTROY_CONDVAR(rt->titleSharingDone);
+    if (rt->gcLock)
+        JS_DESTROY_LOCK(rt->gcLock);
+    if (rt->rtLock)
+        JS_DESTROY_LOCK(rt->rtLock);
     if (rt->debuggerLock)
         JS_DESTROY_LOCK(rt->debuggerLock);
 #else
