@@ -153,34 +153,78 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #elif CONFIG_PSL1GHT
 
+// #define PS3_LW_PRIMITIVES
+
+
 #include <sys/thread.h>
 
 /**
  * Mutexes
  */
 // #define PS3_DEBUG_MUTEX
-typedef sys_lwmutex_t hts_mutex_t;
+
 
 #ifndef PS3_DEBUG_MUTEX
 
+#ifdef PS3_LW_PRIMITIVES
+typedef sys_lwmutex_t hts_mutex_t;
+#else
+typedef sys_mutex_t hts_mutex_t;
+#endif
+
 extern void hts_mutex_init(hts_mutex_t *m);
 extern void hts_mutex_init_recursive(hts_mutex_t *m);
-#define hts_mutex_lock(m)     sys_lwmutex_lock(m, 0)
-#define hts_mutex_unlock(m)   sys_lwmutex_unlock(m)
-#define hts_mutex_destroy(m)  sys_lwmutex_destroy(m)
+extern void hts_mutex_lock(hts_mutex_t *m);
+extern void hts_mutex_unlock(hts_mutex_t *m);
+extern void hts_mutex_destroy(hts_mutex_t *m);
 #define hts_mutex_assert(m)
 
 #else
 
-extern void hts_mutex_initx(hts_mutex_t *m, const char *file, int line);
+typedef struct {
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwmutex_t mtx;
+#else
+  sys_mutex_t mtx;
+#endif
+  int dbg;
+  int logptr;
+  struct {
+    enum {
+      MTX_CREATE = 1,
+      MTX_LOCK,
+      MTX_UNLOCK,
+      MTX_DESTROY,
+      MTX_SAMPLE,
+    } op;
+    const char *file;
+    int line;
+    int thread;
+#ifdef PS3_LW_PRIMITIVES
+    uint64_t lock_var;
+#endif
+  } log[16];
+} hts_mutex_t;
+
+extern void hts_mutex_initx(hts_mutex_t *m, const char *file, int line, int dbg);
+extern void hts_mutex_initx_recursive(hts_mutex_t *m, const char *file, int line);
+
 extern void hts_mutex_lockx(hts_mutex_t *m, const char *file, int line);
 extern void hts_mutex_unlockx(hts_mutex_t *m, const char *file, int line);
 extern void hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line);
 
-#define hts_mutex_init(m) hts_mutex_initx(m, __FILE__, __LINE__)
+#define hts_mutex_init(m) hts_mutex_initx(m, __FILE__, __LINE__, 0)
+#define hts_mutex_init_recursive(m) hts_mutex_initx_recursive(m, __FILE__, __LINE__)
+#define hts_mutex_dbg(m) hts_mutex_initx(m, __FILE__, __LINE__, 1)
 #define hts_mutex_lock(m) hts_mutex_lockx(m, __FILE__, __LINE__)
 #define hts_mutex_unlock(m) hts_mutex_unlockx(m, __FILE__, __LINE__)
 #define hts_mutex_destroy(m) hts_mutex_destroyx(m, __FILE__, __LINE__)
+
+#ifdef PS3_LW_PRIMITIVES
+#define hts_mutex_assert(m) assert((m)->mtx.lock_var != 0xffffffff00000000LL);
+#else
+#define hts_mutex_assert(m)
+#endif
 
 #endif
 
@@ -188,16 +232,19 @@ extern void hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line);
  * Condition variables
  */
 // #define PS3_DEBUG_COND
+#ifdef PS3_LW_PRIMITIVES
 typedef sys_lwcond_t hts_cond_t;
-
+#else
+typedef sys_cond_t hts_cond_t;
+#endif
 
 #ifndef PS3_DEBUG_COND
 
 extern void hts_cond_init(hts_cond_t *c, hts_mutex_t *m);
-#define hts_cond_destroy(c) sys_lwcond_destroy(c)
-#define hts_cond_signal(c) sys_lwcond_signal(c)
-#define hts_cond_broadcast(c) sys_lwcond_signal_all(c)
-#define hts_cond_wait(c,m ) sys_lwcond_wait(c, 0)
+extern void hts_cond_destroy(hts_cond_t *c);
+extern void hts_cond_signal(hts_cond_t *c);
+extern void hts_cond_broadcast(hts_cond_t *c);
+#define hts_cond_wait(c, m) hts_cond_wait_timeout(c, m, 0)
 extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay);
 
 
@@ -236,7 +283,7 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 				       void *(*)(void *), void *,
 				       int prio);
 
-#define hts_thread_join(t)   sys_ppu_thread_join(*(t), NULL)
+extern void hts_thread_join(hts_thread_t *id);
 
 #define hts_thread_detach(t) sys_ppu_thread_detach(*(t))
 

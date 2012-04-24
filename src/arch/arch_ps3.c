@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <malloc.h>
 #include <dirent.h>
+#include <assert.h>
 
 #include <netinet/in.h>
 #include <net/net.h>
@@ -48,7 +49,12 @@
 #include "video/ps3_vdec.h"
 #endif
 
+// #define EMERGENCY_EXIT_THREAD
+
+
 static void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
+
+static void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
 static uint64_t ticks_per_us;
 
@@ -151,23 +157,72 @@ arch_exit(int retcode)
 
 
 
-typedef struct {
+LIST_HEAD(thread_info_list, thread_info);
+
+static struct thread_info_list threads;
+static hts_mutex_t thread_info_mutex;
+
+typedef struct thread_info {
+  LIST_ENTRY(thread_info) link;
   void *aux;
   void *(*fn)(void *);
+  sys_ppu_thread_t id;
+  char name[64];
+} thread_info_t;
 
-} thread_aux_t;
+extern hts_mutex_t gpool_mutex;
+
+/**
+ *
+ */
+static void
+thread_reaper(void *aux)
+{
+  thread_info_t *ti;
+  sys_ppu_thread_icontext_t ctx;
+
+  while(1) {
+    sleep(1);
+
+    hts_mutex_lock(&thread_info_mutex);
+
+    LIST_FOREACH(ti, &threads, link) {
+      int r = sys_ppu_thread_get_page_fault_context(ti->id, &ctx);
+      if(r != -2147418110)
+	panic("Thread %s (0x%lx) crashed", ti->name, ti->id);
+    }
+    hts_mutex_unlock(&thread_info_mutex);
+  }
+}
 
 
+static __thread int my_thread_id;
 
+/**
+ *
+ */
 static void *
 thread_trampoline(void *aux)
 {
-  thread_aux_t *ta = aux;
-  void *r = ta->fn(ta->aux);
+  thread_info_t *ti = aux;
+
+  sys_ppu_thread_get_id(&ti->id);
+  my_thread_id = ti->id;
+  hts_mutex_lock(&thread_info_mutex);
+  LIST_INSERT_HEAD(&threads, ti, link);
+  hts_mutex_unlock(&thread_info_mutex);
+
+
+  void *r = ti->fn(ti->aux);
+
+  hts_mutex_lock(&thread_info_mutex);
+  LIST_REMOVE(ti, link);
+  hts_mutex_unlock(&thread_info_mutex);
+  
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
-  free(ta);
+  free(ti);
 
   extern int netFreethreadContext(long long, int);
 
@@ -183,15 +238,19 @@ start_thread(const char *name, hts_thread_t *p,
 	     void *(*fn)(void *), void *aux,
 	     int prio, int flags)
 {
-  thread_aux_t *ta = malloc(sizeof(thread_aux_t));
-  ta->fn = fn;
-  ta->aux = aux;
-  s32 r = sys_ppu_thread_create(p, (void *)thread_trampoline, (intptr_t)ta,
+  thread_info_t *ti = malloc(sizeof(thread_info_t));
+  snprintf(ti->name, sizeof(ti->name), "%s", name);
+  ti->fn = fn;
+  ti->aux = aux;
+
+  s32 r = sys_ppu_thread_create(p, (void *)thread_trampoline, (intptr_t)ti,
 				prio, 65536, flags, (char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
     exit(0);
   }
+  
+  TRACE(TRACE_DEBUG, "THREADS", "Created thread %s (0x%x)", name, *p);
 
 }
 
@@ -212,6 +271,15 @@ hts_thread_create_joinable(const char *name, hts_thread_t *p,
 			   void *(*fn)(void *), void *aux, int prio)
 {
   start_thread(name, p, fn, aux, prio, THREAD_JOINABLE);
+}
+
+
+void
+hts_thread_join(hts_thread_t *id)
+{
+  TRACE(TRACE_DEBUG, "THREADS", "Waiting for thread 0x%x", *id);
+  sys_ppu_thread_join(*id, NULL);
+  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x joined", *id);
 }
 
 
@@ -399,6 +467,7 @@ trace_arch(int level, const char *prefix, const char *str)
   const char *sgr, *sgroff;
 
   switch(level) {
+  case TRACE_EMERG: sgr = "\033[31m"; break;
   case TRACE_ERROR: sgr = "\033[31m"; break;
   case TRACE_INFO:  sgr = "\033[33m"; break;
   case TRACE_DEBUG: sgr = "\033[32m"; break;
@@ -415,6 +484,43 @@ trace_arch(int level, const char *prefix, const char *str)
   my_trace("%s%s %s%s\n", sgr, prefix, str, sgroff);
 }
 
+
+#ifdef EMERGENCY_EXIT_THREAD
+/**
+ *
+ */
+static void *
+emergency_thread(void *aux)
+{
+  struct sockaddr_in si = {0};
+  int s;
+  int one = 1, r;
+  struct pollfd fds;
+
+  s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+  setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+  si.sin_family = AF_INET;
+  si.sin_port = htons(31337);
+
+  if(bind(s, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
+    TRACE(TRACE_ERROR, "ER", "Unable to bind");
+    return NULL;
+  }
+
+  fds.fd = s;
+  fds.events = POLLIN;
+
+  while(1) {
+    r = poll(&fds, 1 , 1000);
+    if(r > 0 && fds.revents & POLLIN)
+      exit(0);
+  }
+  return NULL;
+}
+#endif
+
+
 /**
  *
  */
@@ -422,6 +528,9 @@ void
 arch_set_default_paths(int argc, char **argv)
 {
   char buf[PATH_MAX], *x;
+
+  hts_mutex_init(&thread_info_mutex);
+
 
   netInitialize();
   netCtlInit();
@@ -448,6 +557,30 @@ arch_set_default_paths(int argc, char **argv)
   strcpy(x, "cache");
   showtime_cache_path = strdup(buf);
   SysLoadModule(SYSMODULE_RTC);
+
+  thread_info_t *ti = malloc(sizeof(thread_info_t));
+  snprintf(ti->name, sizeof(ti->name), "main");
+  sys_ppu_thread_get_id(&ti->id);
+  hts_mutex_lock(&thread_info_mutex);
+  LIST_INSERT_HEAD(&threads, ti, link);
+  hts_mutex_unlock(&thread_info_mutex);
+
+  sys_ppu_thread_t tid;
+  s32 r = sys_ppu_thread_create(&tid, (void *)thread_reaper, 0,
+				2, 16384, 0, (char *)"reaper");
+  if(r) {
+    my_trace("Failed to create reaper thread: %x", r);
+    exit(0);
+  }
+
+#ifdef EMERGENCY_EXIT_THREAD
+  r = sys_ppu_thread_create(&tid, (void *)emergency_thread, 0,
+				2, 16384, 0, (char *)"emergency");
+  if(r) {
+    my_trace("Failed to create emergency thread: %x", r);
+    exit(0);
+  }
+#endif
 }
 
 
@@ -463,18 +596,29 @@ arch_cache_avail_bytes(void)
 void
 hts_mutex_init(hts_mutex_t *m)
 {
-  sys_lwmutex_attribute_t attr;
   s32 r;
+
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwmutex_attribute_t attr;
   memset(&attr, 0, sizeof(attr));
   attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
   attr.attr_recursive = MUTEX_NOT_RECURSIVE;
-
   strcpy(attr.name, "mutex");
+  assert(((intptr_t)m & 7) == 0);
+  r = sys_lwmutex_create(m, &attr);
+#else
+  sys_mutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_NOT_RECURSIVE;
+  attr.attr_pshared  = 0x00200;
+  attr.attr_adaptive = 0x02000;
+  strcpy(attr.name, "mutex");
+  r = sys_mutex_create(m, &attr);
+#endif
 
-  if((r = sys_lwmutex_create(m, &attr)) != 0) {
-    my_trace("Failed to create mutex: error: 0x%x", r);
-    exit(0);
-  }
+  if(r)
+    panic("Failed to create mutex: error: 0x%x", r);
 }
 
 
@@ -482,38 +626,140 @@ hts_mutex_init(hts_mutex_t *m)
 void
 hts_mutex_init_recursive(hts_mutex_t *m)
 {
-  sys_lwmutex_attribute_t attr;
   s32 r;
+
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwmutex_attribute_t attr;
   memset(&attr, 0, sizeof(attr));
   attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
   attr.attr_recursive = MUTEX_RECURSIVE;
-
   strcpy(attr.name, "mutex");
+  assert(((intptr_t)m & 7) == 0);
+  r = sys_lwmutex_create(m, &attr);
+#else
+  sys_mutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  attr.attr_pshared  = 0x00200;
+  attr.attr_adaptive = 0x02000;
+  strcpy(attr.name, "mutex");
+  r = sys_mutex_create(m, &attr);
+#endif
 
-  if((r = sys_lwmutex_create(m, &attr)) != 0) {
-    my_trace("Failed to create mutex: error: 0x%x", r);
-    exit(0);
+  if(r)
+    panic("Failed to create recursive mutex: error: 0x%x", r);
+
+}
+
+
+void
+hts_mutex_lock(hts_mutex_t *m)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_lock(m, 0);
+#else
+  int r = sys_mutex_lock(*m, 0);
+#endif
+  if(r)
+    panic("mutex_lock(%p) failed 0x%x", m, r);
+}
+
+
+void
+hts_mutex_unlock(hts_mutex_t *m)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_unlock(m);
+#else
+  int r = sys_mutex_unlock(*m);
+#endif
+  if(r)
+    panic("mutex_unlock(%p) failed 0x%x", m, r);
+}
+
+
+void
+hts_mutex_destroy(hts_mutex_t *m)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_destroy(m);
+#else
+  int r = sys_mutex_destroy(*m);
+#endif
+  if(r)
+    panic("mutex_destroy(%p) failed 0x%x", m, r);
+}
+
+#else
+
+static void
+mtxdolog(hts_mutex_t *mtx, int op, const char *file, int line)
+{
+  int i = atomic_add(&mtx->logptr, 1);
+  i &= 15;
+  mtx->log[i].op = op;
+  mtx->log[i].file = file;
+  mtx->log[i].line = line;
+  mtx->log[i].thread = my_thread_id;
+#ifdef PS3_LW_PRIMITIVES
+  mtx->log[i].lock_var = mtx->mtx.lock_var;
+#endif
+}
+
+
+static void
+dumplog(hts_mutex_t *mtx)
+{
+  int i;
+  unsigned int p;
+  for(i = 0; i < 16;i++) {
+    p = (mtx->logptr - 1 - i) & 0xf;
+    TRACE(TRACE_EMERG, "ASSERT", "op %d by %s:%d (%x) 0x%016llx",
+	  mtx->log[p].op,
+	  mtx->log[p].file,
+	  mtx->log[p].line,
+	  mtx->log[p].thread,
+#ifdef PS3_LW_PRIMITIVES
+	  mtx->log[p].lock_var
+#else
+	  0
+#endif
+	  );
   }
 }
 
 
-#else
 
 void
-hts_mutex_initx(hts_mutex_t *m, const char *file, int line)
+hts_mutex_initx(hts_mutex_t *m, const char *file, int line, int dbg)
 {
-  my_trace("%s:%d: Init Mutex @ %p by %ld", file, line, m, hts_thread_current());
+  if(dbg)
+    my_trace("%s:%d: Init Mutex @ %p by 0x%lx", file, line, m, hts_thread_current());
   s32 r;
+  memset(m, 0, sizeof(hts_mutex_t));
+  m->dbg = dbg;
+  mtxdolog(m, MTX_CREATE, file, line);
+
+
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwmutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_NOT_RECURSIVE;
+  strcpy(attr.name, "mutex");
+  r = sys_lwmutex_create(&m->mtx, &attr);
+#else
   sys_mutex_attribute_t attr;
   memset(&attr, 0, sizeof(attr));
-  attr.attr_protocol = MUTEX_PROTOCOL_FIFO;
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
   attr.attr_recursive = MUTEX_NOT_RECURSIVE;
   attr.attr_pshared  = 0x00200;
   attr.attr_adaptive = 0x02000;
-
   strcpy(attr.name, "mutex");
+  r = sys_mutex_create(&m->mtx, &attr);
+#endif
 
-  r = sys_mutex_create(m, &attr);
   if(r) {
     my_trace("%s:%d: Failed to create mutex: error: 0x%x", file, line, r);
     exit(0);
@@ -521,53 +767,214 @@ hts_mutex_initx(hts_mutex_t *m, const char *file, int line)
 }
 
 
-void
-hts_mutex_lockx(hts_mutex_t *m, const char *file, int line)
-{
-  my_trace("%s:%d: Lock Mutex @ %p by %ld", file, line, m, hts_thread_current());
-  sys_mutex_lock(*m, 0);
-  my_trace("%s:%d: Lock Mutex @ %p by %ld done", file, line, m, hts_thread_current());
-
-}
 
 void
-hts_mutex_unlockx(hts_mutex_t *m, const char *file, int line)
+hts_mutex_initx_recursive(hts_mutex_t *m, const char *file, int line)
 {
-  my_trace("%s:%d: Unlock Mutex @ %p by %ld", file, line, m, hts_thread_current());
-  sys_mutex_unlock(*m);
-}
+  s32 r;
+  memset(m, 0, sizeof(hts_mutex_t));
+  m->dbg = 0;
+  mtxdolog(m, MTX_CREATE, file, line);
 
-void
-hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line)
-{
-  my_trace("%s:%d: Destroy Mutex @ %p by %ld", file, line, m, hts_thread_current());
-  sys_mutex_destroy(*m);
-}
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwmutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  strcpy(attr.name, "mutex");
+#else
+  sys_mutex_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  attr.attr_protocol = MUTEX_PROTOCOL_PRIORITY;
+  attr.attr_recursive = MUTEX_RECURSIVE;
+  attr.attr_pshared  = 0x00200;
+  attr.attr_adaptive = 0x02000;
+  strcpy(attr.name, "mutex");
+  r = sys_mutex_create(&m->mtx, &attr);
 #endif
 
-
-
-#ifndef PS3_DEBUG_COND
-
-void
-hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
-{
-  sys_lwcond_attribute_t attr;
-  s32 r;
-  memset(&attr, 0, sizeof(attr));
-  strcpy(attr.name, "cond");
-  if((r = sys_lwcond_create(c, m, &attr) != 0)) {
-    my_trace("Failed to create cond: error: 0x%x", r);
+  if(r) {
+    my_trace("%s:%d: Failed to create mutex: error: 0x%x", file, line, r);
     exit(0);
   }
 }
 
 
 
+void
+hts_mutex_lockx(hts_mutex_t *m, const char *file, int line)
+{
+
+  if(m->dbg)
+    my_trace("%s:%d: Lock Mutex @ %p by 0x%lx", file, line, m, hts_thread_current());
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_lock(&m->mtx, 10000000);
+#else
+  int r = sys_mutex_lock(m->mtx, 10000000);
+#endif
+  if(m->dbg)
+    my_trace("%s:%d: Lock Mutex @ %p by 0x%lx done", file, line, m, hts_thread_current());
+
+  mtxdolog(m, MTX_LOCK, file, line);
+
+  if(r) {
+    TRACE(TRACE_EMERG, "MUTEX",
+	  "Mtx %p failed 0x%x lock_var: 0x%016llx", m, r,
+#ifdef PS3_LW_PRIMITIVES
+	  m->mtx.lock_var
+#else
+	  0
+#endif
+	  );
+    dumplog(m);
+    panic("mutex lock failed");
+  }
+}
+
+void
+hts_mutex_unlockx(hts_mutex_t *m, const char *file, int line)
+{
+  mtxdolog(m, MTX_UNLOCK, file, line);
+
+  if(m->dbg)
+    my_trace("%s:%d: Unlock Mutex @ %p by 0x%lx", file, line, m, hts_thread_current());
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_unlock(&m->mtx);
+#else
+  int r = sys_mutex_unlock(m->mtx);
+#endif
+  if(r) {
+    TRACE(TRACE_EMERG, "MUTEX",
+	  "mutex_unlock(%p) failed 0x%x lock_var: 0x%016llx",
+	  m, r,
+#ifdef PS3_LW_PRIMITIVES
+ m->mtx.lock_var
+#else
+	  0
+#endif
+	  );
+    dumplog(m);
+    panic("mutex unlock failed");
+  }
+}
+
+void
+hts_mutex_destroyx(hts_mutex_t *m, const char *file, int line)
+{
+  mtxdolog(m, MTX_DESTROY, file, line);
+
+  if(m->dbg)
+    my_trace("%s:%d: Destroy Mutex @ %p by 0x%lx", file, line, m, hts_thread_current());
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_destroy(&m->mtx);
+#else
+  int r = sys_mutex_destroy(m->mtx);
+#endif
+  if(r) {
+    TRACE(TRACE_EMERG, "MUTEX",
+	  "mutex_destroy(%p) failed 0x%x lock_var: 0x%016llx", 
+	  m, r,
+#ifdef PS3_LW_PRIMITIVES
+ m->mtx.lock_var
+#else
+    0
+#endif
+	  );
+    dumplog(m);
+    panic("mutex destroy failed: 0x%x", r);
+  }
+}
+
+#endif
+
+#ifndef PS3_DEBUG_COND
+
+void
+hts_cond_init(hts_cond_t *c, hts_mutex_t *m)
+{
+  s32 r;
+#ifdef PS3_LW_PRIMITIVES
+  sys_lwcond_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  strcpy(attr.name, "cond");
+#ifdef PS3_DEBUG_MUTEX
+  r = sys_lwcond_create(c, &m->mtx, &attr);
+#else
+  r = sys_lwcond_create(c, m, &attr);
+#endif
+
+#else
+
+  sys_cond_attribute_t attr;
+  memset(&attr, 0, sizeof(attr));
+  strcpy(attr.name, "cond");
+  attr.attr_pshared = 0x00200;
+#ifdef PS3_DEBUG_MUTEX
+  r = sys_cond_create(c, m->mtx, &attr);
+#else
+  r = sys_cond_create(c, *m, &attr);
+#endif
+ 
+#endif
+  if(r) {
+    my_trace("Failed to create cond: error: 0x%x", r);
+    exit(0);
+  }
+}
+
+
+void hts_cond_destroy(hts_cond_t *c)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwcond_destroy(c);
+#else
+  int r = sys_cond_destroy(*c);
+#endif
+  if(r == 0)
+    return;
+  panic("cond_destroy(%p) failed 0x%x", c, r);
+}
+
+
+void hts_cond_signal(hts_cond_t *c)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwcond_signal(c);
+#else
+  int r = sys_cond_signal(*c);
+#endif
+  if(r == 0)
+    return;
+  panic("cond_signal(%p) failed 0x%x", c, r);
+}
+
+
+
+void hts_cond_broadcast(hts_cond_t *c)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwcond_signal_all(c);
+#else
+  int r = sys_cond_signal_all(*c);
+#endif
+  if(r == 0)
+    return;
+  panic("cond_signal_all(%p) failed 0x%x", c, r);
+}
+
 int
 hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay)
 {
-  return !!sys_lwcond_wait(c, delay * 1000LL);
+#ifdef PS3_LW_PRIMITIVES
+  unsigned int r = sys_lwcond_wait(c, delay * 1000LL);
+#else
+  unsigned int r = sys_cond_wait(*c, delay * 1000LL);
+#endif
+  if(r == 0x8001000B)
+    return 1;
+  if(r == 0)
+    return 0;
+  panic("cond_wait_timeout(%p, %d) failed 0x%x", c, delay, r);
 }
 
 
@@ -577,7 +984,7 @@ hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delay)
 void
 hts_cond_initx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 {
-  my_trace("%s:%d: Init cond @ %p,%p by %ld", file, line, c, m, hts_thread_current());
+  my_trace("%s:%d: Init cond @ %p,%p by 0x%lx", file, line, c, m, hts_thread_current());
   sys_lwcond_attribute_t attr;
   memset(&attr, 0, sizeof(attr));
   strcpy(attr.name, "cond");
@@ -591,34 +998,34 @@ hts_cond_initx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 
 void hts_cond_destroyx(hts_cond_t *c, const char *file, int line)
 {
-  my_trace("%s:%d: Destroy cond @ %p by %ld", file, line, c, hts_thread_current());
+  my_trace("%s:%d: Destroy cond @ %p by 0x%lx", file, line, c, hts_thread_current());
   sys_lwcond_destroy(c);
 }
 
 void hts_cond_signalx(hts_cond_t *c, const char *file, int line)
 {
-  my_trace("%s:%d: Signal cond @ %p by %ld", file, line, c, hts_thread_current());
+  my_trace("%s:%d: Signal cond @ %p by 0x%lx", file, line, c, hts_thread_current());
   sys_lwcond_signal(c);
 }
 
 void hts_cond_broadcastx(hts_cond_t *c, const char *file, int line)
 {
-  my_trace("%s:%d: Broadcast cond @ %p by %ld", file, line, c, hts_thread_current());
+  my_trace("%s:%d: Broadcast cond @ %p by 0x%lx", file, line, c, hts_thread_current());
   sys_lwcond_signal_all(c);
 }
 
 void hts_cond_waitx(hts_cond_t *c, hts_mutex_t *m, const char *file, int line)
 {
-  my_trace("%s:%d: Wait cond @ %p %p by %ld", file, line, c, m, hts_thread_current());
+  my_trace("%s:%d: Wait cond @ %p %p by 0x%lx", file, line, c, m, hts_thread_current());
   sys_lwcond_wait(c, 0);
-  my_trace("%s:%d: Wait cond @ %p %p by %ld => done", file, line, c, m, hts_thread_current());
+  my_trace("%s:%d: Wait cond @ %p %p by 0x%lx => done", file, line, c, m, hts_thread_current());
 }
 
 int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, const char *file, int line)
 {
-  my_trace("%s:%d: Wait cond @ %p %p %dms by %ld", file, line, c, m, delay, hts_thread_current());
+  my_trace("%s:%d: Wait cond @ %p %p %dms by 0x%lx", file, line, c, m, delay, hts_thread_current());
   s32 v = sys_lwcond_wait(c, delay * 1000LL);
-  my_trace("%s:%d: Wait cond @ %p %p %dms by %ld => %d", file, line, c, m, delay, hts_thread_current(), v);
+  my_trace("%s:%d: Wait cond @ %p %p %dms by 0x%lx => %d", file, line, c, m, delay, hts_thread_current(), v);
   return !!v;
 }
 
@@ -670,7 +1077,7 @@ halloc(size_t size)
   u32 taddr;
 
   if(Lv2Syscall3(348, allocsize, 0x200, (u64)&taddr))
-    return NULL;
+    panic("halloc(%d) failed", (int)size);
 
   return (void *)(uint64_t)taddr;
 }
@@ -723,7 +1130,7 @@ backtrace(void)
     if (p == NULL || (intptr_t)p < 0x11000)				\
       return;								\
     if (i >= BT_IGNORE) {						\
-      trace(TRACE_NO_PROP, TRACE_ERROR, "BT", "%p", p);			\
+      TRACE(TRACE_EMERG, "BACKTRACE", "%p", p);				\
     }									\
   } else								\
     return;
@@ -810,8 +1217,26 @@ void
 __assert_func(const char *file, int line,
 	      const char *func, const char *failedexpr)
 {
-  trace(TRACE_NO_PROP, TRACE_ERROR, "ASSERT",
-	"%s:%d %s %s", file, line, func, failedexpr);
+  panic("Assertion failed %s:%d in %s (%s)", file, line, func, failedexpr);
+}
+
+
+static void
+panic(const char *fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
+  va_end(ap);
+
   backtrace();
+
+  hts_thread_t tid = hts_thread_current();
+
+  TRACE(TRACE_EMERG, "PANIC", "Thread list (self=0x%lx)", tid);
+
+  thread_info_t *ti;
+  LIST_FOREACH(ti, &threads, link) 
+    TRACE(TRACE_EMERG, "PANIC", "0x%lx: %s", ti->id, ti->name);
   exit(1);
 }
