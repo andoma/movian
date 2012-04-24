@@ -440,29 +440,6 @@ http_cookie_append(const char *req_host, const char *req_path,
 }
 
 
-/**
- *
- */
-static void
-http_init(void)
-{
-  uint64_t v = arch_get_seed();
-
-  sha1_decl(ctx);
-  sha1_init(ctx);
-  sha1_update(ctx, (void *)&v, sizeof(v));
-  sha1_final(ctx, nonce);
-
-  TAILQ_INIT(&http_connections);
-  hts_mutex_init(&http_connections_mutex);
-
-  LIST_INIT(&http_redirects);
-  hts_mutex_init(&http_redirects_mutex);
-
-  LIST_INIT(&http_cookies);
-  hts_mutex_init(&http_cookies_mutex);
-}
-
 
 /**
  *
@@ -2186,6 +2163,27 @@ http_get_last_component(struct fa_protocol *fap, const char *url,
 }
 
 
+
+/**
+ *
+ */
+static void
+http_init(void)
+{
+  uint64_t v = arch_get_seed();
+
+  sha1_decl(ctx);
+  sha1_init(ctx);
+  sha1_update(ctx, (void *)&v, sizeof(v));
+  sha1_final(ctx, nonce);
+
+  TAILQ_INIT(&http_connections);
+  hts_mutex_init(&http_connections_mutex);
+  hts_mutex_init(&http_redirects_mutex);
+  hts_mutex_init(&http_cookies_mutex);
+  hts_mutex_init(&http_server_quirk_mutex);
+  hts_mutex_init(&http_auth_caches_mutex);
+}
 
 /**
  *
