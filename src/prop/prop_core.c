@@ -1698,6 +1698,8 @@ prop_destroy(prop_t *p)
 void
 prop_destroy_childs(prop_t *p)
 {
+  if(p == NULL)
+    return;
   hts_mutex_lock(&prop_mutex);
   if(p->hp_type == PROP_DIR) {
     prop_t *c, *next;
