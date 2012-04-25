@@ -63,6 +63,11 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   int isxml;
   const charset_t *cs = NULL;
 
+  if(r == NULL) {
+    *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
+    return JS_TRUE;
+  }
+
   if(jhr->contenttype != NULL) {
     const char *charset = strstr(jhr->contenttype, "charset=");
 
@@ -188,12 +193,13 @@ js_http_request(JSContext *cx, jsval *rval,
   char **httpargs = NULL;
   int i;
   char errbuf[256];
-  char *result;
-  size_t resultsize;
+  char *result = NULL;
+  size_t resultsize = 0;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
   struct http_header_list in_headers;
   int flags = 0;
+  int headreq = 0;
 
   LIST_INIT(&in_headers);
 
@@ -202,6 +208,8 @@ js_http_request(JSContext *cx, jsval *rval,
       flags |= HTTP_REQUEST_DEBUG;
     if(js_is_prop_true(cx, ctrlobj, "noFollow"))
       flags |= HTTP_NOFOLLOW;
+    if(js_is_prop_true(cx, ctrlobj, "headRequest"))
+      headreq = 1;
   }
 
   if(argobj != NULL)
@@ -288,7 +296,9 @@ js_http_request(JSContext *cx, jsval *rval,
 
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
-		       &result, &resultsize, errbuf, sizeof(errbuf),
+		       headreq ? NULL : &result,
+		       headreq ? NULL : &resultsize,
+		       errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
 		       &response_headers, &in_headers, NULL);
@@ -307,8 +317,10 @@ js_http_request(JSContext *cx, jsval *rval,
 
   js_http_response_t *jhr = calloc(1, sizeof(js_http_response_t));
 
-  jhr->data = result;
-  jhr->datalen = resultsize;
+  if(result) {
+    jhr->data = result;
+    jhr->datalen = resultsize;
+  }
 
   mystrset(&jhr->contenttype,
 	   http_header_get(&response_headers, "content-type"));
