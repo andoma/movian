@@ -54,7 +54,6 @@
 
 static void my_trace(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
-static void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
 static uint64_t ticks_per_us;
 
@@ -1221,7 +1220,7 @@ __assert_func(const char *file, int line,
 }
 
 
-static void
+void
 panic(const char *fmt, ...)
 {
   va_list ap;

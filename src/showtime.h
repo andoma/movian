@@ -27,6 +27,8 @@
 #include "arch/threads.h"
 #include "misc/rstr.h"
 
+extern void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
+
 extern const char *showtime_dataroot(void);
 
 #define HTS_GLUE(a, b) a ## b

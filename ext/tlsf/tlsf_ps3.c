@@ -40,7 +40,8 @@ void *malloc(size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_malloc(gpool, bytes);
   hts_mutex_unlock(&mutex);
-  assert(r != NULL);
+  if(r == NULL)
+    panic("OOM: malloc(%d)", (int)bytes);
   return r;
 }
 
@@ -58,6 +59,8 @@ void *realloc(void *ptr, size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_realloc(gpool, ptr, bytes);
   hts_mutex_unlock(&mutex);
+  if(r == NULL)
+    panic("OOM: realloc(%p, %d)", ptr, (int)bytes);
   return r;
 }
 
@@ -68,6 +71,8 @@ void *memalign(size_t align, size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
+  if(r == NULL)
+    panic("OOM: memalign(%d, %d)", (int)align, (int)bytes);
   return r;
 }
 
@@ -75,7 +80,6 @@ void *memalign(size_t align, size_t bytes)
 void *calloc(size_t nmemb, size_t bytes)
 {
   void *r = malloc(bytes * nmemb);
-  assert(r != NULL);
   memset(r, 0, bytes * nmemb);
   return r;
 }
