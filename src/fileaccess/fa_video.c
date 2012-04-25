@@ -630,7 +630,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
    */
   metadata_t *md = fa_metadata_from_fctx(fctx, url);
   if(md != NULL) {
-    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0, 0);
     metadata_destroy(md);
   }
 

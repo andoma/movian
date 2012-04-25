@@ -184,7 +184,7 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
  */
 void
 metadata_to_proptree(const metadata_t *md, prop_t *proproot,
-		     int overwrite_title)
+		     int overwrite_title, int cleanup_streams)
 {
   metadata_stream_t *ms;
   int ac = 0, vc = 0, sc = 0, *pc;
@@ -228,7 +228,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
     default:
       continue;
     }
-    if(*pc == 0) {
+    if(cleanup_streams && *pc == 0) {
       prop_destroy_childs(p);
       *pc = 1;
     }
