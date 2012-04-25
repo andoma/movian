@@ -32,10 +32,11 @@ extern const char *showtime_dataroot(void);
 #define HTS_GLUE(a, b) a ## b
 #define HTS_JOIN(a, b) HTS_GLUE(a, b)
 
-#define DISABLE_CACHE ((int *)-1)
-#define NOT_MODIFIED  ((void *)-1)
+#define BYPASS_CACHE  ((int *)-1)
+#define DISABLE_CACHE ((int *)-2)
+#define NOT_MODIFIED ((void *)-1)
 
-#define ONLY_CACHED(p) ((p) != DISABLE_CACHE && (p) != NULL)
+#define ONLY_CACHED(p) ((p) != BYPASS_CACHE && (p) != NULL)
 
 // NLS
 

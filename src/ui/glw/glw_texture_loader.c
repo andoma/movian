@@ -140,7 +140,7 @@ loader_thread(void *aux)
 	
       } else if(glt->glt_q == &gr->gr_tex_load_queue[LQ_OTHER] ||
 		glt->glt_q == &gr->gr_tex_load_queue[LQ_REFRESH]) {
-	ccptr = DISABLE_CACHE;
+	ccptr = BYPASS_CACHE;
       } else {
 	ccptr = NULL;
       }

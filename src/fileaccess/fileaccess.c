@@ -565,8 +565,8 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     char *data2;
     size_t size2;
     int max_age = 0;
-    
-    if(cache_control != DISABLE_CACHE) {
+
+    if(cache_control != BYPASS_CACHE && cache_control != DISABLE_CACHE) {
       data = blobcache_get(url, "fa_load", sizep, 1,
 			   &is_expired, &etag, &mtime);
 
@@ -593,7 +593,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
       }
     }
 
-    if(cache_control == DISABLE_CACHE)
+    if(cache_control == BYPASS_CACHE)
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
@@ -601,7 +601,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     
     free(filename);
     if(data2 == NOT_MODIFIED) {
-      if(cache_control == DISABLE_CACHE)
+      if(cache_control == BYPASS_CACHE)
 	return NOT_MODIFIED;
 
       free(etag);
@@ -611,14 +611,15 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     free(data);
 
     int d;
-    if(data2 && (cache_control || max_age || etag || mtime)) {
+    if(data2 && cache_control != DISABLE_CACHE &&
+       (cache_control || max_age || etag || mtime)) {
       d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
     } else {
       d = 0;
     }
     free(etag);
 
-    if(cache_control == DISABLE_CACHE && d) {
+    if(cache_control == BYPASS_CACHE && d) {
       free(data2);
       return NOT_MODIFIED;
     }

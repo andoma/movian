@@ -514,7 +514,7 @@ subtitles_load(const char *url)
   char errbuf[256];
   size_t size;
   int datalen;
-  char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL);
+  char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE);
 
   if(data == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
