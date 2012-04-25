@@ -1,4 +1,4 @@
-language: Traditional Chinese
+﻿language: Traditional Chinese
 native: 正體中文
 maintainer: Chinghan Yu<cassine.bbs@ptt.cc>
 #
@@ -26,22 +26,22 @@ id: Added by: %s
 msg: 添加人： %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: 已播放 %d 次
+msg[1]: 已播放 %d 次
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d 個項目
+msg[1]: %d 個項目
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d 條音軌
+msg[1]: %d 條音軌
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -199,6 +199,9 @@ msg: 處理器速度過慢，無法正常解碼視訊信號
 #
 # ./glwthemes/mono/popups/auth.view
 #
+id: Domain
+msg: 登入網域
+
 id: Password
 msg: 密碼
 
@@ -248,8 +251,7 @@ id: Master volume: %d dB
 msg: 主音量： %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: 未載入任何媒體
 
 id: Top bar navigation buttons
 msg: 頂部導覽列
@@ -369,8 +371,7 @@ id: Offline
 msg: 離線
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: 以 96kbps 取樣率進行離線同步
 
 id: Playlists
 msg: 播放列表
@@ -657,6 +658,15 @@ msg: 無法查詢 Cell 解碼套件。錯誤 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+msg: 1080
+
+id: 576
+msg: 576
+
+id: 720
+msg: 720
+
 id: Always try to select a subtitle
 msg: 自動選擇字幕
 
@@ -685,20 +695,28 @@ id: Ignore embedded styling
 msg: 忽略字幕既有樣式
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: 自動匯入影片目錄中的字幕檔
 
 id: Left
 msg: 左側
 
+id: Maximum resolution for deinterlacer
+msg: 去交錯器支援的最大解析度
+
 id: No
 msg: 否
+
+id: No limit
+msg: 無限制
 
 id: Outline color
 msg: 外框色彩
 
 id: Outline size
 msg: 外框大小
+
+id: Preferred VDPAU deinterlacer method
+msg: 偏好的 VDPAU 去交錯器演算法
 
 id: Resume video playback
 msg: 自中斷處繼續播放影片
@@ -725,14 +743,19 @@ id: Subtitle size
 msg: 字幕大小
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: 字幕大小及位置
 
 id: Subtitle styling
 msg: 字幕樣式
 
 id: Subtitles
 msg: 字幕
+
+id: Temporal
+msg: 時間優先
+
+id: Temporal/Spatial
+msg: 時間／空間並用
 
 id: Video acceleration and display behaviour
 msg: 視訊加速與顯示模式
