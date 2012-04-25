@@ -345,7 +345,7 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
 void
 tcp_huge_buffer(tcpcon_t *tc)
 {
-  int v = 512 * 1024;
+  int v = 128 * 1024;
   int r = netSetSockOpt(tc->fd, SOL_SOCKET, SO_RCVBUF, &v, sizeof(v));
   if(r < 0)
     TRACE(TRACE_ERROR, "TCP", "Unable to increase RCVBUF");
