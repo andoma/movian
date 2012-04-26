@@ -696,6 +696,12 @@ JSON encodes the Object and return the encoded JSON string.
 
 JSON decodes the String and return a JSON Object.
 
+#### entityDecode(String s)
+
+Decode HTML ententies in string s and return the new string
+*Available from 3.5.174*
+
+
 #### time()
 
 Return current time in seconds since 1970

@@ -498,6 +498,26 @@ js_textDialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval
   return JS_TRUE;
 }
 
+
+/**
+ *
+ */
+static JSBool 
+js_decodeEntety(JSContext *cx, JSObject *obj,
+		    uintN argc, jsval *argv, jsval *rval)
+{
+  const char *in;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &in))
+    return JS_FALSE;
+
+  char *out = strdup(in);
+  html_entities_decode(out);
+  *rval = STRING_TO_JSVAL(JS_NewString(cx, out, strlen(out)));
+  return JS_TRUE;
+}
+
+
 /**
  *
  */
@@ -521,6 +541,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("durationToString", js_durationtostring, 0, 0, 0),
     JS_FS("probe",            js_probe, 1, 0, 0),
     JS_FS("textDialog",       js_textDialog, 3, 0, 0),
+    JS_FS("entityDecode",     js_decodeEntety, 1, 0, 0),
     JS_FS_END
 };
 
