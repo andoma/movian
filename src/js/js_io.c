@@ -205,9 +205,9 @@ js_http_request(JSContext *cx, jsval *rval,
 
   if(ctrlobj) {
     if(js_is_prop_true(cx, ctrlobj, "debug"))
-      flags |= HTTP_REQUEST_DEBUG;
+      flags |= FA_DEBUG;
     if(js_is_prop_true(cx, ctrlobj, "noFollow"))
-      flags |= HTTP_NOFOLLOW;
+      flags |= FA_NOFOLLOW;
     if(js_is_prop_true(cx, ctrlobj, "headRequest"))
       headreq = 1;
   }
