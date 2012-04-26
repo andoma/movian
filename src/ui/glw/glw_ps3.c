@@ -135,9 +135,8 @@ rsx_free(int pos, int size)
 
   if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Free %d + %d = %d", pos, size, r);
 
-  if(r != 0) {
-    TRACE(TRACE_ERROR, "GLX", "RSX memory corrupted, error %d", r);
-  }
+  if(r != 0)
+    panic("RSX memory corrupted, error %d", r);
 
   hts_mutex_unlock(&rsx_mempool_lock);
 }
