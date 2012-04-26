@@ -1,0 +1,4 @@
+Write logfiles to disk (in cachedir).
+
+These logfiles can be obtained from
+http://ip.address.of.showtimebox:42000/showtime/diag
