@@ -374,6 +374,7 @@ main(int argc, char **argv)
   htsmsg_store_init();
 
   /* Metadata init */
+  metadata_init();
   metadb_init();
 
   /* Metadata decoration init */
