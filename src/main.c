@@ -544,6 +544,7 @@ finalize(void)
   shutdown_hook_run(0);
   blobcache_fini();
   metadb_fini();
+  TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
 }
 
 

@@ -461,6 +461,12 @@ html_entity_lookup(const char *name)
 {
   struct html_entity *e;
 
+  if(*name == '#') {
+    if(name[1] == 'x')
+      return strtol(name + 2, NULL, 16);
+    return strtol(name + 1, NULL, 10);
+  }
+
   for(e = &html_entities[0]; e->name != NULL; e++)
     if(strcmp(e->name, name) == 0)
       return e->code;
