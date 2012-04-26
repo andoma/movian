@@ -92,8 +92,8 @@ typedef struct glw_video_surface {
 
 #if CONFIG_GLW_BACKEND_RSX
   realityTexture gvs_tex[3];
-  int gvs_size[3];
-  int gvs_offset[3];   // Position in RSX memory
+  int gvs_size;
+  int gvs_offset;
 #endif
 
 #if ENABLE_VDPAU
@@ -266,6 +266,9 @@ void glw_video_input_yuvp(glw_video_t *gv,
 void glw_video_input_vdpau(glw_video_t *gv,
 			   uint8_t * const data[], const int pitch[],
 			   const frame_info_t *fi);
+
+void glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
+			     const frame_info_t *fi);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

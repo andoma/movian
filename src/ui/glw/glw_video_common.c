@@ -659,6 +659,12 @@ glw_video_input(frame_buffer_type_t type, void *frame,
   }
   
   switch(type) {
+#if CONFIG_GLW_BACKEND_RSX
+  case FRAME_BUFFER_TYPE_RSX_MEMORY:
+    glw_video_input_rsx_mem(gv, frame, fi);
+    break;
+#endif
+
   case FRAME_BUFFER_TYPE_LIBAV_FRAME:
     avframe = frame;
 

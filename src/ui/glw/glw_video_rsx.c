@@ -33,15 +33,9 @@
 #include "rsx/nv40.h"
 #include "rsx/reality.h"
 
-#define GVF_TEX_L   0
-#define GVF_TEX_Cr  1
-#define GVF_TEX_Cb  2
-
-
-
-
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
+#include "video/ps3_vdec.h"
 
 
 /**
@@ -50,14 +44,8 @@
 static void
 surface_reset(glw_video_t *gv, glw_video_surface_t *gvs)
 {
-  int i;
-
-  for(i = 0; i < 3; i++) {
-    if(gvs->gvs_offset[i]) {
-      rsx_free(gvs->gvs_offset[i], gvs->gvs_size[i]);
-      gvs->gvs_offset[i] = 0;
-    }
-  }
+  if(gvs->gvs_offset)
+    rsx_free(gvs->gvs_offset, gvs->gvs_size);
 }
 
 
@@ -113,6 +101,7 @@ init_tex(realityTexture *tex, uint32_t offset,
   tex->stride = stride;
 }
 
+#define ROUND_UP(p, round) (((p) + (round) - 1) & ~((round) - 1))
 
 
 /**
@@ -123,14 +112,23 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 	     const glw_video_config_t *gvc)
 {
   int i;
+  int siz[3];
 
+  for(i = 0; i < 3; i++)
+    siz[i] = ROUND_UP(gvc->gvc_width[i] * gvc->gvc_height[i], 16);
+
+  gvs->gvs_size = siz[0] + siz[1] + siz[2];
+  gvs->gvs_offset = rsx_alloc(gvs->gvs_size, 16);
+
+  gvs->gvs_data[0] = rsx_to_ppu(gvs->gvs_offset);
+  gvs->gvs_data[1] = rsx_to_ppu(gvs->gvs_offset + siz[0]);
+  gvs->gvs_data[2] = rsx_to_ppu(gvs->gvs_offset + siz[0] + siz[1]);
+
+  int offset = gvs->gvs_offset;
   for(i = 0; i < 3; i++) {
-    gvs->gvs_size[i] = gvc->gvc_width[i] * gvc->gvc_height[i];
-    gvs->gvs_offset[i]  = rsx_alloc(gvs->gvs_size[i], 16);
-    gvs->gvs_data[i] = rsx_to_ppu(gvs->gvs_offset[i]);
 
     init_tex(&gvs->gvs_tex[i],
-	     gvs->gvs_offset[i],
+	     offset,
 	     gvc->gvc_width[i],
 	     gvc->gvc_height[i],
 	     gvc->gvc_width[i],
@@ -140,6 +138,7 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 	     NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	     NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	     );
+    offset += siz[i];
   }
   TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
 }
@@ -644,4 +643,73 @@ glw_video_input_yuvp(glw_video_t *gv,
     
     glw_video_put_surface(gv, s, fi->pts + duration, fi->epoch, duration, tff);
   }
+}
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_rsxmem = {
+  .gve_name = "RSX GPU MEM fragment shader",
+  .gve_newframe = yuvp_newframe,
+  .gve_render = yuvp_render,
+  .gve_reset = yuvp_reset,
+  .gve_init = yuvp_init,
+};
+
+/**
+ *
+ */
+void
+glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
+			const frame_info_t *fi)
+{
+  rsx_video_frame_t *rvf = frame;
+  int hvec[3], wvec[3];
+  int i;
+  int hshift, vshift;
+  glw_video_surface_t *gvs;
+
+  avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
+
+  wvec[0] = fi->width;
+  wvec[1] = fi->width >> hshift;
+  wvec[2] = fi->width >> hshift;
+  hvec[0] = fi->height >> fi->interlaced;
+  hvec[1] = fi->height >> (vshift + fi->interlaced);
+  hvec[2] = fi->height >> (vshift + fi->interlaced);
+
+  if(glw_video_configure(gv, &glw_video_rsxmem, wvec, hvec, 3,
+			 fi->interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
+    return;
+  
+  gv_color_matrix_set(gv, fi);
+
+  if((gvs = glw_video_get_surface(gv)) == NULL)
+    return;
+  
+  if(gvs->gvs_offset)
+    rsx_free(gvs->gvs_offset, gvs->gvs_size);
+
+  gvs->gvs_size = rvf->rvf_size;
+  gvs->gvs_offset = rvf->rvf_offset;
+
+  int offset = gvs->gvs_offset;
+  for(i = 0; i < 3; i++) {
+    int w = wvec[i];
+    int h = hvec[i];
+
+    init_tex(&gvs->gvs_tex[i],
+	     offset,
+	     w,h,w,
+	     NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
+	     NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
+	     NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
+	     NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
+	     NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
+	     );
+    offset += w * h;
+  }
+  
+  glw_video_put_surface(gv, gvs, fi->pts, fi->epoch, fi->duration, 0);
 }
