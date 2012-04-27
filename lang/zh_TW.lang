@@ -673,6 +673,10 @@ msg: 自動選擇字幕
 id: Auto
 msg: 自動
 
+id: Automatically play next video in list
+# Missing translation
+msg: 
+
 id: Center
 msg: 置中
 

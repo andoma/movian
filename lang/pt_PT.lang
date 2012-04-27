@@ -199,6 +199,10 @@ msg: O CPU é muito lento para descodificar este vídeo
 #
 # ./glwthemes/mono/popups/auth.view
 #
+id: Domain
+# Missing translation
+msg: 
+
 id: Password
 msg: Palavra-passe
 
@@ -657,11 +661,27 @@ msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+# Missing translation
+msg: 
+
+id: 576
+# Missing translation
+msg: 
+
+id: 720
+# Missing translation
+msg: 
+
 id: Always try to select a subtitle
 msg: Tentar sempre selecionar as legendas
 
 id: Auto
 msg: Automático
+
+id: Automatically play next video in list
+# Missing translation
+msg: 
 
 id: Center
 msg: Centrado
@@ -691,14 +711,26 @@ msg:
 id: Left
 msg: Esquerda
 
+id: Maximum resolution for deinterlacer
+# Missing translation
+msg: 
+
 id: No
 msg: Não
+
+id: No limit
+# Missing translation
+msg: 
 
 id: Outline color
 msg: Cor do contorno
 
 id: Outline size
 msg: Tamanho do contorno
+
+id: Preferred VDPAU deinterlacer method
+# Missing translation
+msg: 
 
 id: Resume video playback
 msg: Retomar a reprodução de vídeo
@@ -734,6 +766,14 @@ msg: Estilo das legendas
 
 id: Subtitles
 msg: Legendas
+
+id: Temporal
+# Missing translation
+msg: 
+
+id: Temporal/Spatial
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: Acelaração de vídeo e comportamento da visualização

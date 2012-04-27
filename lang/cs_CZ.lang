@@ -658,11 +658,27 @@ msg: Unable to query Cell codec. Error 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+# Missing translation
+msg: 
+
+id: 576
+# Missing translation
+msg: 
+
+id: 720
+# Missing translation
+msg: 
+
 id: Always try to select a subtitle
 msg: Vždy zkusit vybrat titulky
 
 id: Auto
 msg: Auto
+
+id: Automatically play next video in list
+# Missing translation
+msg: 
 
 id: Center
 msg: Střed
@@ -691,14 +707,26 @@ msg: Načíst všecny titulky z adresáře s filmem
 id: Left
 msg: Levý
 
+id: Maximum resolution for deinterlacer
+# Missing translation
+msg: 
+
 id: No
 msg: Ne
+
+id: No limit
+# Missing translation
+msg: 
 
 id: Outline color
 msg: Barva obrysu
 
 id: Outline size
 msg: Velikost obrysu
+
+id: Preferred VDPAU deinterlacer method
+# Missing translation
+msg: 
 
 id: Resume video playback
 msg: Obnovit přehrávání
@@ -732,6 +760,14 @@ msg: Styl titulků
 
 id: Subtitles
 msg: Titulky
+
+id: Temporal
+# Missing translation
+msg: 
+
+id: Temporal/Spatial
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: Video akcelerace a nastavení displeje

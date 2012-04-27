@@ -673,6 +673,10 @@ msg: Prova sempre a selezionare un file di sottotitoli
 id: Auto
 msg: Auto
 
+id: Automatically play next video in list
+# Missing translation
+msg: 
+
 id: Center
 msg: Al centro
 

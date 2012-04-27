@@ -207,6 +207,10 @@ msg: CPU on liiga aeglane video dekodeerimiseks
 #
 # ./glwthemes/mono/popups/auth.view
 #
+id: Domain
+# Missing translation
+msg: 
+
 id: Password
 msg: Salasõna
 
@@ -678,11 +682,27 @@ msg: Ei suuda esitada Cell koodeki päringut. Viga 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+# Missing translation
+msg: 
+
+id: 576
+# Missing translation
+msg: 
+
+id: 720
+# Missing translation
+msg: 
+
 id: Always try to select a subtitle
 msg: Proovi alati valida subtiitreid
 
 id: Auto
 msg: Auto
+
+id: Automatically play next video in list
+# Missing translation
+msg: 
 
 id: Center
 msg: Keskel
@@ -713,14 +733,26 @@ msg:
 id: Left
 msg: Vasakul
 
+id: Maximum resolution for deinterlacer
+# Missing translation
+msg: 
+
 id: No
 msg: Ei
+
+id: No limit
+# Missing translation
+msg: 
 
 id: Outline color
 msg: Kontuuri värv
 
 id: Outline size
 msg: Kontuuri suurus
+
+id: Preferred VDPAU deinterlacer method
+# Missing translation
+msg: 
 
 id: Resume video playback
 msg: Jätka video esitamist
@@ -756,6 +788,14 @@ msg: Subtiitrite kujundus
 
 id: Subtitles
 msg: Subtiitrid
+
+id: Temporal
+# Missing translation
+msg: 
+
+id: Temporal/Spatial
+# Missing translation
+msg: 
 
 id: Video acceleration and display behaviour
 msg: Video kiirendamine ja ekraani toimimine
