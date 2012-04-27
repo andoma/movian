@@ -1,0 +1,8 @@
+Add support for continuous playback of all video items in a directory
+
+This needs to be enabled in the video playback settings (default off)
+
+Fixes #501
+Fixed #530
+Fixes #864
+Fixes #875
