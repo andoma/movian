@@ -37,6 +37,9 @@ static void __attribute__((constructor)) mallocsetup(void)
 void *malloc(size_t bytes)
 {
   void *r;
+  if(bytes == 0)
+    return NULL;
+
   hts_mutex_lock(&mutex);
   r = tlsf_malloc(gpool, bytes);
   hts_mutex_unlock(&mutex);
@@ -48,6 +51,8 @@ void *malloc(size_t bytes)
 
 void free(void *ptr)
 {
+  if(ptr == NULL)
+    return;
   hts_mutex_lock(&mutex);
   tlsf_free(gpool, ptr);
   hts_mutex_unlock(&mutex);
@@ -59,7 +64,7 @@ void *realloc(void *ptr, size_t bytes)
   hts_mutex_lock(&mutex);
   r = tlsf_realloc(gpool, ptr, bytes);
   hts_mutex_unlock(&mutex);
-  if(r == NULL)
+  if(r == NULL && bytes > 0)
     panic("OOM: realloc(%p, %d)", ptr, (int)bytes);
   return r;
 }
@@ -68,6 +73,9 @@ void *realloc(void *ptr, size_t bytes)
 void *memalign(size_t align, size_t bytes)
 {
   void *r;
+  if(bytes == 0)
+    return NULL;
+
   hts_mutex_lock(&mutex);
   r = tlsf_memalign(gpool, align, bytes);
   hts_mutex_unlock(&mutex);
