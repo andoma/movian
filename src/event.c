@@ -199,7 +199,9 @@ event_create_str(event_type_t et, const char *str)
 static void
 event_playurl_dtor(event_t *e)
 {
-  event_playurl_t *ep = (void *)e;
+  event_playurl_t *ep = (event_playurl_t *)e;
+  if(ep->model != NULL)
+    prop_destroy(ep->model);
   free(ep->url);
   free(ep);
 }
@@ -208,10 +210,12 @@ event_playurl_dtor(event_t *e)
  *
  */
 event_t *
-event_create_playurl(const char *url, int primary, int priority, int no_audio)
+event_create_playurl(const char *url, int primary, int priority, int no_audio,
+		     prop_t *model)
 {
-  event_playurl_t *ep =  event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
+  event_playurl_t *ep = event_create(EVENT_PLAY_URL, sizeof(event_playurl_t));
   ep->url = strdup(url);
+  ep->model = prop_xref_addref(model);
   ep->primary = primary;
   ep->priority = priority;
   ep->no_audio = no_audio;
@@ -227,8 +231,8 @@ static void
 event_openurl_dtor(event_t *e)
 {
   event_openurl_t *ou = (void *)e;
-  if(ou->origin != NULL)
-    prop_ref_dec(ou->origin);
+  prop_ref_dec(ou->origin);
+  prop_ref_dec(ou->model);
   free(ou->url);
   free(ou->view);
   free(ou);
@@ -239,13 +243,15 @@ event_openurl_dtor(event_t *e)
  *
  */
 event_t *
-event_create_openurl(const char *url, const char *view, prop_t *origin)
+event_create_openurl(const char *url, const char *view, prop_t *origin,
+		     prop_t *model)
 {
   event_openurl_t *e = event_create(EVENT_OPENURL, sizeof(event_openurl_t));
 
   e->url      = url    ? strdup(url)          : NULL;
   e->view     = view   ? strdup(view)         : NULL;
   e->origin   = prop_ref_inc(origin);
+  e->model    = prop_ref_inc(model);
 
   e->h.e_dtor = event_openurl_dtor;
   return &e->h;

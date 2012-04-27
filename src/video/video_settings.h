@@ -33,6 +33,7 @@ struct video_settings {
   int played_threshold;
   int vdpau_deinterlace;
   int vdpau_deinterlace_resolution_limit;
+  int continuous_playback;
 };
 
 extern struct video_settings video_settings;

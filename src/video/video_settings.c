@@ -174,6 +174,13 @@ set_played_threshold(void *opaque, int v)
   video_settings.played_threshold = v;
 }
 
+static void
+set_continuous_playback(void *opaque, int v)
+{
+  video_settings.continuous_playback = v;
+}
+
+
 void
 video_settings_init(void)
 {
@@ -257,6 +264,12 @@ video_settings_init(void)
 		      settings_generic_save_settings, 
 		      (void *)"videoplayback");
 
+  settings_create_bool(s, "continuous_playback",
+		       _p("Automatically play next video in list"), 0,
+		       store, set_continuous_playback, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
 
 
   //----------------------------------------------------------

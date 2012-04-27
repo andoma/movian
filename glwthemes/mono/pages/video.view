@@ -10,6 +10,7 @@ $view.statsAlpha = iir($self.media.stats, 8);
 
 widget(container_z, {
   widget(video, {
+    .model = $self.openedFrom;
     .primary = true;
     .source = $self.source;
   });

@@ -549,7 +549,6 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  if(e == NULL)
 	    goto again;
 	}
-	mp_set_playstatus_stop(mp);
 
 	if(e == NULL)
 	  e = event_create_type(EVENT_EOF);

@@ -184,14 +184,13 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
  */
 void
 metadata_to_proptree(const metadata_t *md, prop_t *proproot,
-		     int overwrite_title, int cleanup_streams)
+		     int cleanup_streams)
 {
   metadata_stream_t *ms;
   int ac = 0, vc = 0, sc = 0, *pc;
 
-  if(md->md_title != NULL)
-    prop_set_rstring_ex(prop_create(proproot, "title"),
-			NULL, md->md_title, !overwrite_title);
+  if(md->md_title != NULL && md->md_contenttype != CONTENT_VIDEO)
+    prop_set_rstring(prop_create(proproot, "title"), md->md_title);
 
   if(md->md_artist) {
     prop_set_rstring(prop_create(proproot, "artist"), md->md_artist);

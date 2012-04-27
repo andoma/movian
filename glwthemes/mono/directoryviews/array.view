@@ -66,8 +66,8 @@ widget(container_y, {
 	    .padding = $view.sizer * -1.5 * iir(isHovered() || isFocused(), 3) + $view.sizer * iir(isPressed(), 3);
 
 	    onEvent(activate, select($ui.fancyAnimations,
-				     navOpen($self.url, void, $self),
-				     navOpen($self.url)));
+				     navOpen($self.url, void, $self, $parent.model),
+				     navOpen($self.url, void, void, $parent.model)));
 	    widget(container_y, {
 	      .spacing = 5;
 	      widget(detachable, {

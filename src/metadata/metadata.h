@@ -103,7 +103,7 @@ void metadata_add_stream(metadata_t *md, const char *codec,
 			 int disposition, int tracknum);
 
 void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
-			  int overwrite_title, int cleanup_streams);
+			  int cleanup_streams);
 
 
 

@@ -99,6 +99,7 @@ typedef enum {
   GLW_ATTRIB_VALUE,
   GLW_ATTRIB_ARGS,
   GLW_ATTRIB_PROP_PARENT,
+  GLW_ATTRIB_PROP_MODEL,
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_TIME,
@@ -1048,6 +1049,7 @@ do {						\
     (void)va_arg(ap, void *);			\
   case GLW_ATTRIB_ARGS:				\
   case GLW_ATTRIB_PROP_PARENT:			\
+  case GLW_ATTRIB_PROP_MODEL:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
     (void)va_arg(ap, void *);			\
     break;					\

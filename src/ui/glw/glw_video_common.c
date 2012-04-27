@@ -239,7 +239,8 @@ glw_video_play(glw_video_t *gv)
   e = event_create_playurl(gv->gv_current_url, 
 			   !!(gv->gv_flags & GLW_VIDEO_PRIMARY),
 			   gv->gv_priority,
-			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO));
+			   !!(gv->gv_flags & GLW_VIDEO_NO_AUDIO),
+			   gv->gv_model);
   mp_enqueue_event(gv->gv_mp, e);
   event_release(e);
 }
@@ -255,6 +256,7 @@ glw_video_dtor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   video_decoder_t *vd = gv->gv_vd;
 
+  prop_ref_dec(gv->gv_model);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
@@ -490,6 +492,13 @@ glw_video_set(glw_t *w, va_list ap)
       e = event_create_int(EVENT_PLAYBACK_PRIORITY, gv->gv_priority);
       mp_enqueue_event(gv->gv_mp, e);
       event_release(e);
+      break;
+
+    case GLW_ATTRIB_PROP_MODEL:
+      if(gv->gv_model)
+	prop_ref_dec(gv->gv_model);
+
+      gv->gv_model = prop_ref_inc(va_arg(ap, prop_t *));
       break;
 
     default:

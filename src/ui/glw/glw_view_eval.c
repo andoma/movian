@@ -735,7 +735,8 @@ resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
   case TOKEN_PROPERTY_REF:
     break;
   default:
-    glw_view_seterr(ec->ei, t, "Argument is not a property");
+    glw_view_seterr(ec->ei, t,
+		    "Argument '%s' is not a property", token2name(t));
     return NULL;
   }
   return t;
@@ -2360,12 +2361,13 @@ static int
 glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *c, *r;
+  token_t *a, *b, *c, *d, *r;
   const char *url;
   const char *view = NULL;
   prop_t *origin = NULL;
+  prop_t *model = NULL;
 
-  if(argc < 1 || argc > 3)
+  if(argc < 1 || argc > 4)
     return glw_view_seterr(ec->ei, self, "navOpen(): Invalid number of args");
 
   if((a = token_resolve(ec, argv[0])) == NULL)
@@ -2396,7 +2398,7 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 			     "Second argument is not a string or (void)");
   }
 
-  if(argc > 2) {
+  if(argc > 2 && argv[2]->type != TOKEN_VOID) {
     if((c = resolve_property_name2(ec, argv[2])) == NULL)
       return -1;
     
@@ -2406,8 +2408,18 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
     origin = c->t_prop;
   }
 
+  if(argc > 3  && argv[3]->type != TOKEN_VOID) {
+    if((d = resolve_property_name2(ec, argv[3])) == NULL)
+      return -1;
+    
+    if(d->type != TOKEN_PROPERTY_REF)
+      return glw_view_seterr(ec->ei, d, "navOpen(): "
+			     "Fourth argument is not a property");
+    model = d->t_prop;
+  }
+
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_navOpen_create(url, view, origin);
+  r->t_gem = glw_event_map_navOpen_create(url, view, origin, model);
   eval_push(ec, r);
   return 0;
 }

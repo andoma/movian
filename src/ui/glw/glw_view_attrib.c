@@ -782,6 +782,10 @@ static int
 set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
+  if(t->type == TOKEN_VOID) {
+    glw_set(ec->w, a->attrib, NULL, NULL);
+    return 0;
+  }
   if(t->type != TOKEN_PROPERTY_REF)
     return glw_view_seterr(ec->ei, t,
 			   "Attribute '%s' expects a property ref, got %s",
@@ -893,6 +897,7 @@ static const token_attrib_t attribtab[] = {
 
   {"args",            set_args,  0},
   {"parent",          set_propref, GLW_ATTRIB_PROP_PARENT},
+  {"model",           set_propref, GLW_ATTRIB_PROP_MODEL},
 };
 
 

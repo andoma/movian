@@ -89,7 +89,8 @@ widget(keyintercept, {
 	    .focusOnClick = true;
 	    
 	    onEvent(activate,
-		    translate($self.type, navOpen($self.url),
+		    translate($self.type,
+			      navOpen($self.url, void, void, $parent.model),
 			      "audio", playTrackFromSource($self, $parent.model)
 			     ));
 	    

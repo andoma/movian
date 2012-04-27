@@ -467,7 +467,7 @@ gu_tab_send_event(gu_tab_t *gt, event_t *e)
 void
 gu_tab_open(gu_tab_t *gt, const char *url)
 {
-  gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL));
+  gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL, NULL));
 }
 
 
@@ -478,7 +478,8 @@ void
 gu_nav_open_newwin(gtk_ui_t *gu, const char *url)
 {
   gu_window_t *gw = gu_win_create(gu, NULL, 0);
-  gu_tab_send_event(gw->gw_current_tab, event_create_openurl(url, NULL, NULL));
+  gu_tab_send_event(gw->gw_current_tab,
+		    event_create_openurl(url, NULL, NULL, NULL));
 }
 
 
@@ -489,7 +490,7 @@ void
 gu_nav_open_newtab(gu_window_t *gw, const char *url)
 {
   gu_tab_t *gt = gu_tab_create(gw, NULL, 0);
-  gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL));
+  gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL, NULL));
 }
 
 
