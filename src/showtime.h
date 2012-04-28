@@ -90,6 +90,8 @@ enum {
 
 void trace_init(void);
 
+void trace_fini(void);
+
 void trace(int flags, int level, const char *subsys, const char *fmt, ...);
 
 void tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap);

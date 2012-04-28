@@ -43,6 +43,7 @@ extern int trace_level;
 
 static int trace_initialized;
 static int log_fd;
+static int64_t log_start_ts;
 
 /**
  *
@@ -83,6 +84,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 {
   static char buf[1024];
   char buf2[64];
+  char buf3[64];
   char *s, *p;
   const char *leveltxt;
   int l;
@@ -113,7 +115,15 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG)
       trace_prop(level, buf2, s, leveltxt);
     if(log_fd != -1) {
-      if(write(log_fd, buf2, strlen(buf2)) != strlen(buf2) ||
+      int ts = (showtime_get_ts() - log_start_ts) / 1000LL;
+      snprintf(buf3, sizeof(buf3), "%02d:%02d:%02d.%03d: ",
+	       ts / 3600000,
+	       (ts / 60000) % 60,
+	       (ts / 1000) % 60,
+	       ts % 1000);
+
+      if(write(log_fd, buf3, strlen(buf3)) != strlen(buf3) ||
+	 write(log_fd, buf2, strlen(buf2)) != strlen(buf2) ||
 	 write(log_fd, s, strlen(s)) != strlen(s) ||
 	 write(log_fd, "\n", 1) != 1) {
 	close(log_fd);
@@ -172,6 +182,19 @@ hexdump(const char *pfx, const void *data_, int len)
 }
 
 
+/**
+ *
+ */
+void
+trace_fini(void)
+{
+  hts_mutex_lock(&trace_mutex);
+  static const char logmark[] = "--MARK-- END\n";
+  if(write(log_fd, logmark, strlen(logmark))) {}
+  close(log_fd);
+  log_fd = -1;
+  hts_mutex_unlock(&trace_mutex);
+}
 
 /**
  *
@@ -198,7 +221,13 @@ trace_init(void)
   
   snprintf(p1, sizeof(p1), "%s/log/showtime.log.0", showtime_cache_path);
   log_fd = open(p1, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-
+  static const char logstartmark[] = "--MARK-- START\n";
+  if(write(log_fd, logstartmark, strlen(logstartmark)) !=
+     strlen(logstartmark)) {
+    close(log_fd);
+    log_fd = -1;
+  }
+  log_start_ts = showtime_get_ts();
   TAILQ_INIT(&traces);
   log_root = prop_create(prop_get_global(), "logbuffer");
   hts_mutex_init(&trace_mutex);

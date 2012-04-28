@@ -545,6 +545,7 @@ finalize(void)
   blobcache_fini();
   metadb_fini();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
+  trace_fini();
 }
 
 
