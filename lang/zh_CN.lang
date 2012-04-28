@@ -200,8 +200,7 @@ msg: 当前视频CPU解码过慢
 # ./glwthemes/mono/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: 域
 
 id: Password
 msg: 密码
@@ -660,16 +659,13 @@ msg: 无法查询Cell解码器，错误码0x%x
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: 总是显示字幕
@@ -678,8 +674,7 @@ id: Auto
 msg: 自动
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: 文件播放结束时自动播放列表中的下一个文件
 
 id: Center
 msg: 居中
@@ -703,22 +698,19 @@ id: Ignore embedded styling
 msg: 忽略嵌入样式
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: 载入视频目录下所有字幕文件
 
 id: Left
 msg: 靠左
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: 去隔行化使用最大可能的分辨率
 
 id: No
 msg: 否
 
 id: No limit
-# Missing translation
-msg: 
+msg: 无限制
 
 id: Outline color
 msg: 边框颜色
@@ -727,8 +719,7 @@ id: Outline size
 msg: 边框大小
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: 优先使用VDPAU去隔行化方式
 
 id: Resume video playback
 msg: 继续播放
@@ -755,8 +746,7 @@ id: Subtitle size
 msg: 字幕大小
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: 字幕大小和位置
 
 id: Subtitle styling
 msg: 字幕样式
@@ -765,12 +755,10 @@ id: Subtitles
 msg: 字幕
 
 id: Temporal
-# Missing translation
-msg: 
+msg: 临时的
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: 临时的/固定的
 
 id: Video acceleration and display behaviour
 msg: 视频加速及显示方式
