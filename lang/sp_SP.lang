@@ -8,7 +8,7 @@ id: Audio settings
 msg: Ajustes de Audio
 
 id: Languages
-msg: Lenguaje
+msg: Idiomas
 
 id: Settings
 msg: Ajustes
@@ -50,25 +50,22 @@ id: Delete
 msg: Borrar
 
 id: Queue
-# Missing translation
-msg: 
+msg: Cola
 
 id: Star
-# Missing translation
-msg: 
+msg: Favorito
 
 id: Unstar
-# Missing translation
-msg: 
+msg: No favorito
 
 #
 # ./glwthemes/mono/include/buttons.view
 #
 id: Off
-msg: Apagado
+msg: Inactivo
 
 id: On
-msg: Encendido
+msg: Activo
 
 #
 # ./glwthemes/mono/include/infobox.view
@@ -89,12 +86,10 @@ msg: OK
 # ./glwthemes/mono/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Asignado por la aplicación: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Asignado por malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: RAM disponible en sistema: %d kB
@@ -109,8 +104,7 @@ id: Framerate: %.2f Hz
 msg: Cuadros por segundo %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Bloques libres: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -119,8 +113,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Estatus de memoria
 
 id: Renderer: %s
 msg: Renderizado: %s
@@ -132,8 +125,7 @@ id: Total system RAM: %d kB
 msg: RAM total del sistema: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Memoria disponible: %d kB
 
 id: Version: %s
 msg: Versión: %s
@@ -166,24 +158,22 @@ msg: Incapaz de abrir recursos
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Error en la carga de pagina
+msg: Error en la carga de página
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
 #
 id: Playqueue
-msg: Cola de reproduccion
+msg: Cola de reproducción
 
 #
 # ./glwthemes/mono/pages/video.view
 #
 id: Playback status
-# Missing translation
-msg: 
+msg: Estatus de reproducción
 
 id: Unable to start video playback
-# Missing translation
-msg: 
+msg: Incapaz de iniciar reproducción de video
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -210,8 +200,7 @@ msg: CPU demasiado lento para decodificar video
 # ./glwthemes/mono/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Dominio
 
 id: Password
 msg: Contraseña
@@ -247,24 +236,22 @@ msg: GPU Temperatura de núcleo: %d / %d °
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Ajustar fondo de pantalla basado en hora del dia
+msg: Ajustar fondo de pantalla basado en hora del día
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Posición de lista alterna
 
 id: Audio muted
 msg: Audio apagado
 
 id: Fancy UI animations
-msg: Animación elegante de Interfaz
+msg: Animación de Interfaz
 
 id: Master volume: %d dB
 msg: Volumen principal: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: Multilenguaje 'Ningún medio cargado'
 
 id: Top bar navigation buttons
 msg: Botones de navegación barra superior
@@ -282,14 +269,13 @@ msg: Usar opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Sistema con baja memoria (%d kB RAM disponible)
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Audio/Video sincronización de delay
+msg: Sincronización de Audio/Video
 
 id: Current output device
 msg: Dispositivo de salida actual
@@ -310,20 +296,19 @@ id: Small front speakers
 msg: Parlantes frontales pequeños
 
 id: Swap LFE+center with surround
-msg: cambiar a LFE+centro con surround
+msg: Cambiar a LFE+centro con surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Cambiando salida de audio a %s
 
 #
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: URL de CD no valida
+msg: URL de CD no válida
 
 id: Invalid CD track
-msg: Pista de CD no valida
+msg: Pista de CD no válida
 
 id: Unable to open CD
 msg: Incapaz de abrir CD
@@ -332,28 +317,25 @@ msg: Incapaz de abrir CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: Error de lectura DVD, reiniciando disco
 
 #
 # ./src/backend/htsp/htsp.c
 #
 id: Invalid HTSP URL
-msg: URL de HTSP no valida
+msg: URL de HTSP no válida
 
 #
 # ./src/backend/search.c
 #
 id: Search
-msg: Busqueda
+msg: Búsqueda
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Resultados de búsqueda para: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -362,21 +344,19 @@ id: Automatic login when Showtime starts
 msg: Ingreso automático al comienzo de Showtime
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Colaborativo
 
 id: Enable Spotify
 msg: Habilitar Spotify
 
 id: Forget me
-# Missing translation
-msg: 
+msg: Olvidar
 
 id: Friends
 msg: Amigos
 
 id: High bitrate
-msg: Taza de bits alta
+msg: Tasa de bits alta
 
 id: Inbox
 msg: Buzón de entrada
@@ -388,12 +368,10 @@ id: New releases
 msg: Nuevos lanzamientos
 
 id: Offline
-# Missing translation
-msg: 
+msg: Desconectado
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Sync offline en 96kbps
 
 id: Playlists
 msg: Listas de reproducción
@@ -411,14 +389,13 @@ id: Spotify music service
 msg: Servicio de musica Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify te ofrece acceso libre y legal a una enorme librería de música. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara mas información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier característica de Spotify en showtime deberá ingresar su nombre de usuario y contraseña.
+msg: Spotify ofrece acceso libre y legal a una enorme librería de música. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara más información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier característica de Spotify en Showtime deberá ingresar su nombre de usuario y contraseña.
 
 id: Spotify playlists
 msg: Lista de reproducción de Spotyfy
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: Error de conexión: %s
 
 id: Starred
 msg: Favoritos
@@ -433,12 +410,10 @@ msg: Marcadores
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: Incapaz de manejar contenido tipo %s
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Incapaz de abrir archivo: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -456,41 +431,40 @@ msg: Buscar usando spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Archivo externo
 
 #
 # ./src/i18n.c
 #
 id: Language
-msg: Lenguaje
+msg: Idioma
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Los códigos de lenguaje deben ser configurados como códigos de caracateres ISO, por ejemplo: eng, swe, fra
+msg: Los códigos de idiomas deben ser configurados como códigos ISO de 3 caracteres, por ejemplo: eng, spa, fra
 
 id: Preferred languages
-msg: Lenguajes preferidos
+msg: Idiomas preferidos
 
 id: Primary audio language code
-msg: Código primario de lenguaje de audio
+msg: Código idioma de audio primario
 
 id: Primary subtitle language code
-msg: Código primario de lenguaje de subtítulos
+msg: Código de idioma de subtítulo primario
 
 id: SRT character set
 msg: Juego de caracteres SRT
 
 id: Secondary audio language code
-msg: Código secundario de lenguaje de audio
+msg: Código idioma de audio secundario
 
 id: Secondary subtitle language code
-msg: Código secundario de lenguaje de subtítulos
+msg: Código idioma de subtítulo secundario
 
 id: Tertiary audio language code
-msg: Código terciario de lenguaje de audio
+msg: Código idioma de audio terciario
 
 id: Tertiary subtitle language code
-msg: Código terciario de lenguaje de subtítulos
+msg: Código idioma subtítulo terciario
 
 #
 # ./src/ipc/serdev/lgtv.c
@@ -520,10 +494,10 @@ id: Align subtitles on video frame
 msg: Alinear subtítulos en cuadro de video
 
 id: Audio delay
-msg: Delay de audio
+msg: Retraso de audio
 
 id: Subtitle delay
-msg: Delay de subtítulos
+msg: Retraso de subtítulos
 
 id: Subtitle scaling
 msg: Escala de subtítulos
@@ -535,12 +509,10 @@ msg: Zoom de Video
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Incluido en archivo
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Pista %d
 
 #
 # ./src/navigator.c
@@ -552,28 +524,22 @@ msg: Sin soporte para URL
 # ./src/plugins.c
 #
 id: Invalud URI
-# Missing translation
-msg: 
+msg: URI no válido
 
 id: Plugin ID %s does not exist
-# Missing translation
-msg: 
+msg: Plugin ID %s no existe
 
 id: Plugin ID %s have no download URL
-# Missing translation
-msg: 
+msg: Plugin ID %s no tiene URL de descarga
 
 id: Unable to load plugin.json: %s
-# Missing translation
-msg: 
+msg: Incapaz de cargar plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-# Missing translation
-msg: 
+msg: Incapaz de cargar plugin.json: JSON Malformado
 
 id: Unable to request plugin repository: %s
-# Missing translation
-msg: 
+msg: Incapaz de acceder al repositorio del plugin: %s
 
 #
 # ./src/runcontrol.c
@@ -639,20 +605,16 @@ msg: Mapear rueda de mouse arriba/abajo
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Auto-cambiar a este modo
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: Rango de color DVI-Video
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Cambiar a este modo ahora
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Modos de video
 
 #
 # ./src/upnp/upnp.c
@@ -679,39 +641,31 @@ msg: Servicio no encontrado
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede no reproducir el video.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: Incapaz de acelerar %s, catálogo no cargado.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Incapaz de abrir Cell codec. Error 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: Incapaz de abrir Cell codec. No se pudo asignar %d bytes de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: Incapaz de consultar Cell codec. Error 0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: Siempre tratar de seleccionar subtítulo
@@ -720,8 +674,7 @@ id: Auto
 msg: Automático
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Reproducir automáticamente siguiente video en la lista
 
 id: Center
 msg: Centrado
@@ -730,8 +683,7 @@ id: Color
 msg: Color
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Contar video como reproducido cuando alcance
 
 id: Enable VDPAU
 msg: Activar VDPAU
@@ -746,23 +698,19 @@ id: Ignore embedded styling
 msg: Ignorar estilo integrado
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: Incluir todos los subtítulos en el directorio
 
 id: Left
 msg: Izquierda
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: Resolución máxima del deinterlacer
 
 id: No
-# Missing translation
-msg: 
+msg: No
 
 id: No limit
-# Missing translation
-msg: 
+msg: Sin límite
 
 id: Outline color
 msg: Color Contorno
@@ -771,12 +719,10 @@ id: Outline size
 msg: Tamaño Contorno
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Método preferido para VDPAU deinterlacer
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Continuar reproducción de video
 
 id: Right
 msg: Derecha
@@ -788,8 +734,7 @@ id: Shadow offset
 msg: offset de sombra
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Estirar video a pantalla completa
 
 id: Stretch video to widescreen
 msg: Estirar video para panorámica
@@ -801,8 +746,7 @@ id: Subtitle size
 msg: Tamaño de subtítulos
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Posición y tamaño de subtítulos
 
 id: Subtitle styling
 msg: Estilo de subtítulos
@@ -811,12 +755,10 @@ id: Subtitles
 msg: Subtítulos
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Temporal
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Temporal/Espacial
 
 id: Video acceleration and display behaviour
 msg: Aceleración de video y comportamiento de pantalla
@@ -825,6 +767,5 @@ id: Video playback
 msg: Reproducción de video
 
 id: Yes
-# Missing translation
-msg: 
+msg: Sí
 
