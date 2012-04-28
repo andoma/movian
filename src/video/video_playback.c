@@ -82,8 +82,8 @@ play_video(const char *url, struct media_pipe *mp,
   vsource_t *vsvec, *vs;
 
   if(strncmp(url, "videoparams:", strlen("videoparams:"))) 
-    return backend_play_video(url, mp, flags, priority,
-			      errbuf, errlen, NULL, url);
+    return backend_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
+			      priority, errbuf, errlen, NULL, url);
 
   url += strlen("videoparams:");
   htsmsg_t *m = htsmsg_json_deserialize(url);
@@ -138,6 +138,8 @@ play_video(const char *url, struct media_pipe *mp,
 
   if((str = htsmsg_get_str(m, "title")) != NULL)
     prop_set_string(prop_create(mp->mp_prop_metadata, "title"), str);
+  else
+    flags |= BACKEND_VIDEO_SET_TITLE;
 
   // Subtitles
 

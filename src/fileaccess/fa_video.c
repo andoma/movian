@@ -583,13 +583,15 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-
-  char tmp[1024];
-  fa_url_get_last_component(tmp, sizeof(tmp), canonical_url);
-  char *x = strrchr(tmp, '.');
-  if(x)
-    *x = 0;
-  prop_set_string(prop_create(mp->mp_prop_metadata, "title"), tmp);
+  
+  if(flags & BACKEND_VIDEO_SET_TITLE) {
+    char tmp[1024];
+    fa_url_get_last_component(tmp, sizeof(tmp), canonical_url);
+    char *x = strrchr(tmp, '.');
+    if(x)
+      *x = 0;
+    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), tmp);
+  }
 
   int seek_is_fast = fa_seek_is_fast(fh);
 
