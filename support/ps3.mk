@@ -1,6 +1,5 @@
 TITLE := Showtime
 VERSION := $(shell support/getver.sh)
-SELF := $(PSL1GHT)/host/bin/fself.py
 SFO := $(PSL1GHT)/host/bin/sfo.py
 PKG := $(PSL1GHT)/host/bin/pkg.py
 ICON0 := $(TOPDIR)/support/ps3icon.png
@@ -9,27 +8,32 @@ CONTENTID	:=	UP0001-$(APPID)_00-0000000000000000
 
 SFOXML          := $(TOPDIR)/support/sfo.xml
 
-BIN=${BUILDDIR}/showtime.elf
+EBOOT=${BUILDDIR}/EBOOT.BIN
 
+ELF=${BUILDDIR}/showtime.elf
+SELF=${BUILDDIR}/showtime.self
 
-${BIN}.bundle: ${BUILDDIR}/showtime.bundle
+${EBOOT}: support/ps3/eboot.c
+	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)  -o $@ $< ${LDFLAGS_EBOOT}
+	${STRIP} $@
+	sprxlinker $@
+
+${ELF}: ${BUILDDIR}/showtime.bundle
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-${BIN}.zipbundle: ${BUILDDIR}/showtime.zipbundle
-	${STRIP} -o $@ $<
-	sprxlinker $@
+${SELF}: ${ELF}
+	make_self $< $@
 
-$(BUILDDIR)/showtime.self: ${BIN}.bundle
-	$(SELF) $< $@
+$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}
+	cp $< $@
 
-$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${BIN}.zipbundle
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
 	make_self_npdrm $< $@ $(CONTENTID)
 
-$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN
+$(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDIR/showtime.self
 	cp $(ICON0) $(BUILDDIR)/pkg/ICON0.PNG
-	cp ${BUILDDIR}/zipbundles/*.zip $(BUILDDIR)/pkg/USRDIR/
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
@@ -38,13 +42,13 @@ $(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg
 	package_finalize $@
 
 pkg: $(BUILDDIR)/showtime.pkg $(BUILDDIR)/showtime_geohot.pkg
-self: $(BUILDDIR)/showtime.self
+self: ${SELF}
 
 install: $(BUILDDIR)/showtime.pkg
 	cp $< $(PS3INSTALL)/showtime.pkg
 	sync
 
-$(BUILDDIR)/dist/showtime-$(VERSION).self: $(BUILDDIR)/showtime.self
+$(BUILDDIR)/dist/showtime-$(VERSION).self: ${SELF}
 	@mkdir -p $(dir $@)
 	cp $< $@
 
@@ -58,9 +62,5 @@ $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg: $(BUILDDIR)/showtime_geohot.pkg
 
 dist:  $(BUILDDIR)/dist/showtime-$(VERSION).self $(BUILDDIR)/dist/showtime-$(VERSION).pkg $(BUILDDIR)/dist/showtime_geohot-$(VERSION).pkg
 
-$(BUILDDIR)/devupgrade/EBOOT.BIN: ${BIN}.bundle
-	@mkdir -p $(dir $@)
-	make_self_npdrm $< $@ $(CONTENTID)
-
-upgrade: $(BUILDDIR)/devupgrade/EBOOT.BIN
+upgrade: ${SELF}
 	curl --data-binary @$< http://$(PS3HOST):42000/showtime/replace

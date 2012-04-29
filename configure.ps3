@@ -89,6 +89,8 @@ LDFLAGS_cfg  += -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib
 LDFLAGS_cfg  += -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lnetctl -lsysmodule
 LDFLAGS_cfg  += -lfreetype
 LDFLAGS_cfg  += ${PS3DEV}/host/ppu/ppu/lib/lv2-psl1ght.o -lpsl1ght -llv2
+
+LDFLAGS_EBOOT += -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -lgcm_sys -laudio -lreality -lsysutil -lio -lnet -lnetctl -lsysmodule /home/andoma/ps3dev/host/ppu/ppu/lib/lv2-psl1ght.o -lpsl1ght -llv2
 EOF
 
 finalize

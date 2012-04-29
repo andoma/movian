@@ -264,8 +264,8 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
     TRACE(TRACE_ERROR, "BINREPLACE", "Unable to write to file");
   
   close(fd);
-  TRACE(TRACE_INFO, "BINREPLACE", "All done, exiting");
-  showtime_shutdown(12);
+  TRACE(TRACE_INFO, "BINREPLACE", "All done, restarting");
+  showtime_shutdown(13);
   return HTTP_STATUS_OK;
 }
 #endif

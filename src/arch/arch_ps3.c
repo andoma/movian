@@ -34,6 +34,8 @@
 #include <sysmodule/sysmodule.h>
 #include <psl1ght/lv2.h>
 #include <psl1ght/lv2/spu.h>
+#include <lv2/process.h>
+
 #include <rtc.h>
 
 #include "threads.h"
@@ -151,6 +153,13 @@ arch_init(void)
 void
 arch_exit(int retcode)
 {
+#if ENABLE_BINREPLACE
+  extern char *binary_to_replace;
+
+  if(retcode == 13)
+    sysProcessExitSpawn2(binary_to_replace, 0, 0, 0, 0, 1200, 0x70);
+#endif
+
   exit(retcode);
 }
 
@@ -545,9 +554,11 @@ arch_set_default_paths(int argc, char **argv)
   }
   my_trace("Showtime starting from %s\n", argv[0]);
   snprintf(buf, sizeof(buf), "%s", argv[0]);
-  x = strstr(buf, "/EBOOT.BIN");
-  if(x == NULL)
-    return;
+  x = strrchr(buf, '/');
+  if(x == NULL) {
+    my_trace("Showtime starting but argv[0] seems invalid");
+    exit(0);
+  }
   x++;
   *x = 0;
   showtime_path = strdup(buf);
