@@ -13,22 +13,23 @@ EBOOT=${BUILDDIR}/EBOOT.BIN
 ELF=${BUILDDIR}/showtime.elf
 SELF=${BUILDDIR}/showtime.self
 
-${EBOOT}: support/ps3/eboot.c
+${EBOOT}: support/ps3/eboot.c support/ps3.mk
 	$(CC) $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)  -o $@ $< ${LDFLAGS_EBOOT}
 	${STRIP} $@
 	sprxlinker $@
 
-${ELF}: ${BUILDDIR}/showtime.bundle
+${ELF}: ${BUILDDIR}/showtime.ziptail support/ps3.mk
 	${STRIP} -o $@ $<
 	sprxlinker $@
 
-${SELF}: ${ELF}
+${SELF}: ${ELF} ${BUILDDIR}/zipbundles/bundle.zip support/ps3.mk 
 	make_self $< $@
+	cat ${BUILDDIR}/zipbundles/bundle.zip >>$@
 
-$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}
+$(BUILDDIR)/pkg/USRDIR/showtime.self: ${SELF}  support/ps3.mk
 	cp $< $@
 
-$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}
+$(BUILDDIR)/pkg/USRDIR/EBOOT.BIN: ${EBOOT}  support/ps3.mk
 	@mkdir -p $(BUILDDIR)/pkg/USRDIR
 	make_self_npdrm $< $@ $(CONTENTID)
 
@@ -37,7 +38,7 @@ $(BUILDDIR)/showtime.pkg: $(BUILDDIR)/pkg/USRDIR/EBOOT.BIN $(BUILDDIR)/pkg/USRDI
 	$(SFO) --title "$(TITLE)" --appid "$(APPID)" -f $(SFOXML) $(BUILDDIR)/pkg/PARAM.SFO
 	$(PKG) --contentid $(CONTENTID) $(BUILDDIR)/pkg/ $@
 
-$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg
+$(BUILDDIR)/showtime_geohot.pkg: $(BUILDDIR)/showtime.pkg  support/ps3.mk
 	cp $< $@
 	package_finalize $@
 
