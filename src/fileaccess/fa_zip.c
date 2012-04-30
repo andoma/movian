@@ -304,13 +304,35 @@ zip_archive_load(zip_archive_t *za)
     return -1;
   }
 
-  fa_seek(fh, cds_off, SEEK_SET);
+  if(fa_seek(fh, cds_off, SEEK_SET) != cds_off ||
+     fa_read(fh, buf, cds_size) != cds_size)
+    memset(buf, 0, cds_off);
 
-  if(fa_read(fh, buf, cds_size) != cds_size) {
-    free(buf);
-    fa_close(fh);
-    return -1;
+  off_t displacement = 0;
+
+  ptr = buf;
+  fhdr = (zip_hdr_file_header_t *)ptr;
+  if(fhdr->magic[0] != 'P' || fhdr->magic[1] != 'K' ||
+     fhdr->magic[2] != 1   || fhdr->magic[3] != 2) {
+
+    off_t o2 = fs.fs_size - (cds_size + (TRAILER_SCAN_SIZE - i));
+    
+    fa_seek(fh, o2, SEEK_SET);
+    if(fa_read(fh, buf, cds_size) != cds_size) {
+      free(buf);
+      fa_close(fh);
+      return -1;
+    }
+    
+    if(fhdr->magic[0] != 'P' || fhdr->magic[1] != 'K' ||
+       fhdr->magic[2] != 1   || fhdr->magic[3] != 2) {
+      free(buf);
+      fa_close(fh);
+      return -1;
+    }
+    displacement = o2 - cds_off;
   }
+
 
   za->za_root = calloc(1, sizeof(zip_file_t));
   za->za_root->zf_type = CONTENT_DIR;
@@ -341,7 +363,7 @@ zip_archive_load(zip_archive_t *za)
       if((zf = zip_archive_find_file(za, za->za_root, fname, 1)) != NULL) {
 	zf->zf_uncompressed_size = ZIPHDR_GET32(fhdr, uncompressed_size);
 	zf->zf_compressed_size   = ZIPHDR_GET32(fhdr, compressed_size);
-	zf->zf_lhpos             = ZIPHDR_GET32(fhdr, lfh_offset);
+	zf->zf_lhpos             = ZIPHDR_GET32(fhdr, lfh_offset) + displacement;
 	zf->zf_method            = ZIPHDR_GET16(fhdr, method);
 	
       }
