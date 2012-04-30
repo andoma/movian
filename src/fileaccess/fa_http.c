@@ -455,8 +455,6 @@ typedef struct http_file {
   char *hf_auth_realm;
 
 
-  char hf_line[1024];
-
   char hf_authurl[128];
   char hf_path[URL_MAX];
 
@@ -512,6 +510,7 @@ typedef struct http_file {
   int hf_stats[STAT_VEC_SIZE];
   int hf_stats_ptr;
   int hf_num_stats;
+  char hf_line[4096];
 
 } http_file_t;
 
