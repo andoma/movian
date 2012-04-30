@@ -216,6 +216,12 @@ lgtv_shutdown(void *opaque, int exitcode)
 }
 
 
+static void
+set_lg_input(void *opaque, const char *str)
+{
+}
+
+
 /**
  *
  */
@@ -277,7 +283,7 @@ lgtv_init(serdev_t *sd, int curpower)
     settings_multiopt_add_opt_cstr(x, "vga1",      "VGA-1",       input == 0x60);
     settings_multiopt_add_opt_cstr(x, "component1","Component-1", input == 0x40);
 
-    settings_multiopt_initiate(x, NULL, NULL, NULL,
+    settings_multiopt_initiate(x, set_lg_input, NULL, NULL,
 			       lg->store, lgtv_save_settings, lg);
 
     if(!curpower) {
