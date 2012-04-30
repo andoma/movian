@@ -90,6 +90,7 @@ const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
 char *showtime_cache_path;
 char *showtime_persistent_path;
 char *showtime_path;
+char *showtime_bin;
 
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
@@ -183,15 +184,12 @@ main(int argc, char **argv)
 #endif
   int do_sd = 1;
 
+  showtime_bin = argv[0];
+
   trace_level = TRACE_INFO;
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
-
-#if ENABLE_BINREPLACE
-  extern char *binary_to_replace;
-  binary_to_replace = argv[0];
-#endif
 
   arch_set_default_paths(argc, argv);
 

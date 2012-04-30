@@ -152,13 +152,8 @@ ${BUILDDIR}/zipbundles/bundle.zip:
 	mkdir -p ${BUILDDIR}/zipbundles
 	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
 
-${BUILDDIR}/zipbundles/zipbundle.o: ${BUILDDIR}/zipbundles/bundle.zip support/dataroot/zipbundle.c
-	$(eval SUM:=$(shell sha1sum ${BUILDDIR}/zipbundles/bundle.zip | cut -d' ' -f1))
-	mv ${BUILDDIR}/zipbundles/bundle.zip ${BUILDDIR}/zipbundles/${SUM}.zip
-	$(CC) -c -o ${BUILDDIR}/zipbundles/zipbundle.o -DZIPBUNDLE=\"${SUM}\" support/dataroot/zipbundle.c $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg)
-
-${PROG}.zipbundle: $(OBJS) $(ALLDEPS)  ${BUILDDIR}/zipbundles/zipbundle.o
-	$(CC) -o $@ $(OBJS) ${BUILDDIR}/zipbundles/zipbundle.o $(LDFLAGS) ${LDFLAGS_cfg}
+${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
+	$(CC) -o $@ $(OBJS) $(BUILDDIR)/support/dataroot/ziptail.o $(LDFLAGS) ${LDFLAGS_cfg}
 
 
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)

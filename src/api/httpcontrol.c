@@ -233,8 +233,6 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
 #include <fcntl.h>
 #include <unistd.h>
 
-char *binary_to_replace;
-
 /**
  *
  */
@@ -242,7 +240,9 @@ static int
 hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 	      http_cmd_t method)
 {
-  if(binary_to_replace == NULL)
+  extern char *showtime_bin;
+
+  if(showtime_bin == NULL)
     return HTTP_STATUS_PRECONDITION_FAILED;
 
   size_t len;
@@ -252,9 +252,9 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
     return 405;
   
   TRACE(TRACE_INFO, "BINREPLACE", "Replacing %s with %d bytes received",
-	binary_to_replace, (int)len);
+	showtime_bin, (int)len);
 
-  int fd = open(binary_to_replace, O_TRUNC | O_RDWR, 0777);
+  int fd = open(showtime_bin, O_TRUNC | O_RDWR, 0777);
   if(fd == -1) {
     TRACE(TRACE_ERROR, "BINREPLACE", "Unable to open file");
     return HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;

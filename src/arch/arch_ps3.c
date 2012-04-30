@@ -154,10 +154,10 @@ void
 arch_exit(int retcode)
 {
 #if ENABLE_BINREPLACE
-  extern char *binary_to_replace;
+  extern char *showtime_bin;
 
   if(retcode == 13)
-    sysProcessExitSpawn2(binary_to_replace, 0, 0, 0, 0, 1200, 0x70);
+    sysProcessExitSpawn2(showtime_bin, 0, 0, 0, 0, 1200, 0x70);
 #endif
 
   exit(retcode);
