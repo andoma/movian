@@ -28,8 +28,6 @@ const char *showtime_dataroot(void)
     initialized = 1;
     pthread_mutex_unlock(&mtx);
   }
-  printf("buf=%s\n", buf);
   return buf;
-
 }
 
