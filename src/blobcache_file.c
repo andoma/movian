@@ -38,7 +38,7 @@
 #include "arch/threads.h"
 #include "arch/atomic.h"
 
-#define BC2_MAGIC 0x62630200
+#define BC2_MAGIC 0x62630201
 
 typedef struct blobcache_item {
   struct blobcache_item *bi_link;
@@ -328,7 +328,7 @@ blobcache_put(const char *key, const char *stash,
   int64_t expiry = (int64_t)maxage + now;
 
   p->bi_modtime = mtime;
-  p->bi_expiry = MAX(INT32_MAX, expiry);
+  p->bi_expiry = MIN(INT32_MAX, expiry);
   p->bi_lastaccess = now;
   p->bi_content_hash = dc;
   current_cache_size -= p->bi_size;
