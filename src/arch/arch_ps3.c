@@ -46,6 +46,8 @@
 #include "misc/callout.h"
 #include "text/text.h"
 #include "notifications.h"
+#include "fileaccess/fileaccess.h"
+#include "halloc.h"
 
 #if ENABLE_PS3_VDEC
 #include "video/ps3_vdec.h"
@@ -127,6 +129,40 @@ get_system_concurrency(void)
   return 2;
 }
 
+static char *symbuf;
+
+static void
+load_syms(void)
+{
+  char sympath[256];
+  char errbuf[256];
+
+  snprintf(sympath, sizeof(sympath), "%s/showtime.syms", showtime_dataroot());
+
+  fa_handle_t *fh = fa_open(sympath, errbuf, sizeof(errbuf));
+
+  if(fh == NULL) {
+    TRACE(TRACE_DEBUG, "SYMS", "Unable to open symbol file %s -- %s",
+	  sympath, errbuf);
+    return;
+  }
+
+  int size = fa_fsize(fh);
+  char *buf = halloc(size + 1);
+
+  int r = fa_read(fh, buf, size);
+  if(r != size) {
+    TRACE(TRACE_DEBUG, "SYMS", "Unable to read %d bytes", size);
+    hfree(buf, size+1);
+  } else {
+    buf[size] = 0;
+    TRACE(TRACE_DEBUG, "SYMS", "Loaded symbol table %d bytes to %p",
+	  size, buf);
+    symbuf = buf;
+  }
+  fa_close(fh);
+}
+
 void
 arch_init(void)
 {
@@ -146,7 +182,9 @@ arch_init(void)
   lv2SpuInitialize(6, 0);
   video_ps3_vdec_init();
 #endif
+  
 
+  load_syms();
 }
 
 
@@ -1073,7 +1111,6 @@ showtime_get_system_type(void)
 
 
 
-#include "halloc.h"
 
 /**
  *
@@ -1127,23 +1164,24 @@ my_localtime(const time_t *now, struct tm *tm)
 
 #define BT_MAX    64
 #define BT_IGNORE 1
-static void
-backtrace(void)
+
+static int
+backtrace(void **vec)
 {
 
 #define	BT_FRAME(i)							\
   if ((i) < BT_IGNORE + BT_MAX) {					\
     void *p;								\
     if (__builtin_frame_address(i) == 0)				\
-      return;								\
+      return i - BT_IGNORE;						\
     p = __builtin_return_address(i);					\
     if (p == NULL || (intptr_t)p < 0x11000)				\
-      return;								\
+      return i - BT_IGNORE;						\
     if (i >= BT_IGNORE) {						\
-      TRACE(TRACE_EMERG, "BACKTRACE", "%p", p);				\
+      vec[i - BT_IGNORE] = p-4;						\
     }									\
   } else								\
-    return;
+    return i - BT_IGNORE;
 
 	BT_FRAME(0)
 	BT_FRAME(1)
@@ -1216,6 +1254,7 @@ backtrace(void)
 	BT_FRAME(62)
 	BT_FRAME(63)
 	BT_FRAME(64)
+	  return 64;
 }
 
 
@@ -1231,15 +1270,59 @@ __assert_func(const char *file, int line,
 }
 
 
+static void
+resolve_syms(void **ptr, const char **symvec, int *symoffset, int frames)
+{
+  char *s = symbuf;
+
+  int i;
+  for(i = 0; i < frames; i++) {
+    symvec[i] = NULL;
+    symoffset[i] = 0;
+  }
+
+  if(s == NULL)
+    return;
+  
+  while(s) {
+    int64_t addr = strtol(s, NULL, 16);
+    if(addr > 0x10000) {
+      for(i = 0; i < frames; i++) {
+	int64_t a0 = (intptr_t)ptr[i];
+	if(a0 >= addr) {
+	  symvec[i] = s + 17;
+	  symoffset[i] = a0 - addr;
+	}
+      }
+    }
+
+    s = strchr(s, '\n');
+    if(s == NULL)
+      return;
+    *s++ = 0;
+  }
+}
+
 void
 panic(const char *fmt, ...)
 {
   va_list ap;
+  void *vec[64];
+  const char *sym[64];
+  int symoffset[64];
+
   va_start(ap, fmt);
   tracev(0, TRACE_EMERG, "PANIC", fmt, ap);
   va_end(ap);
 
-  backtrace();
+  int frames = backtrace(vec);
+  int i;
+  resolve_syms(vec, sym, symoffset, frames);
+  for(i = 0; i < frames; i++) 
+    if(sym[i])
+      TRACE(TRACE_EMERG, "BACKTRACE", "%p: %s+0x%x", vec[i], sym[i], symoffset[i]);
+    else
+      TRACE(TRACE_EMERG, "BACKTRACE", "%p", vec[i]);
 
   hts_thread_t tid = hts_thread_current();
 
