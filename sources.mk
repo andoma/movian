@@ -515,31 +515,6 @@ SRCS-$(CONFIG_POLARSSL) += \
 	ext/polarssl-0.14.0/library/xtea.c \
 
 #
-# jemalloc
-#
-
-SRCS-${CONFIG_JEMALLOC} += \
-	ext/jemalloc/src/arena.c \
-	ext/jemalloc/src/base.c \
-	ext/jemalloc/src/chunk.c \
-	ext/jemalloc/src/ckh.c \
-	ext/jemalloc/src/extent.c \
-	ext/jemalloc/src/huge.c \
-	ext/jemalloc/src/mb.c \
-	ext/jemalloc/src/prof.c \
-	ext/jemalloc/src/stats.c \
-	ext/jemalloc/src/atomic.c \
-	ext/jemalloc/src/bitmap.c \
-	ext/jemalloc/src/ctl.c \
-	ext/jemalloc/src/hash.c \
-	ext/jemalloc/src/jemalloc.c \
-	ext/jemalloc/src/mutex.c \
-	ext/jemalloc/src/rtree.c \
-	ext/jemalloc/src/tcache.c \
-	ext/jemalloc/src/chunk_lv2.c \
-
-
-#
 # TLSF (Two Level Segregated Fit) memory allocator
 #
 
