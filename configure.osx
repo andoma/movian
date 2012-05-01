@@ -171,6 +171,22 @@ if enabled appleremote; then
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Carbon"
 fi
 
+
+#
+# libspotify
+#
+ 
+if [ "$SPOTIFY_FRAMEWORK" == "" ] ; then
+    download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal.zip zipfile
+    unzip -oq "$zipfile" -d "${BUILDDIR}"
+    SPOTIFY_FRAMEWORK="${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal/libspotify.framework"
+fi
+
+echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
+
+
+
 libav_setup
 #enable vda Does not work 100% yet
 
@@ -199,10 +215,6 @@ cat >> ${CONFIG_H} << EOF
 
 EOF
 
-if [ "$SPOTIFY_FRAMEWORK" != "" ] ; then
-    echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
-fi
 
 #
 # Finalize

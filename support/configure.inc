@@ -17,6 +17,7 @@ TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_THEME="mono"
 DEFAULT_LOGTARGET=""
 JARGS=""
+LIBSPOTIFY_VERSION="11.1.60"
 
 CONFIG_LIST="
  libasound
@@ -161,6 +162,19 @@ print_config(){
 cp_if_changed(){
     cmp -s "$1" "$2" || cp -f "$1" "$2"
 }
+
+download_file() {
+    local __resultvar=$2
+    local URL_HASH=`echo "$1" | shasum  | awk '{print $1}'`
+    mkdir -p ${TOPDIR}/downloadcache
+    local DLPATH=${TOPDIR}/downloadcache/${URL_HASH}
+    if [ ! -f "${DLPATH}" ]; then
+	curl -L -o "${DLPATH}" "$1"
+    fi
+    eval $__resultvar="$DLPATH"
+}
+
+
 
 common_help(){
   echo "Usage: configure [options]"
