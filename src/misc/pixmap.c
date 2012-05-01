@@ -92,6 +92,10 @@ pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
   pm->pm_height = -1;
 
   pm->pm_data = malloc(size + pad);
+  if(pm->pm_data == NULL) {
+    free(pm);
+    return NULL;
+  }
   if(data != NULL)
     memcpy(pm->pm_data, data, size);
 
@@ -113,7 +117,6 @@ pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
     return NULL;
 
   rowalign--;
-  
 
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
@@ -122,6 +125,11 @@ pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
   pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height);
+  if(pm->pm_data == NULL) {
+    free(pm);
+    return NULL;
+  }
+
   memset(pm->pm_data, 0, pm->pm_linesize * pm->pm_height);
   pm->pm_aspect = (float)width / (float)height;
   return pm;
@@ -755,6 +763,8 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
   const int z = bytes_per_pixel(pm->pm_type);
 
   tmp = malloc(ls * h * sizeof(unsigned int));
+  if(tmp == NULL)
+    return;
 
   s = pm->pm_data;
   t = tmp;
@@ -880,6 +890,11 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     break;
   }
 
+  if(pm == NULL) {
+    sws_freeContext(sws);
+    return pm;
+  }
+
   pic.data[0] = pm->pm_data;
   pic.linesize[0] = pm->pm_linesize;
   
@@ -930,6 +945,8 @@ pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h)
 
   int y;
   pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, 1);
+  if(pm == NULL)
+    return NULL;
 
   for(y = 0; y < h; y++) {
     fn((uint32_t *)(pm->pm_data + y * pm->pm_linesize),
@@ -1072,6 +1089,8 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
   }
 
   pm = pixmap_create(src_w, src_h, fmt, 1);
+  if(pm == NULL)
+    return NULL;
 
   uint8_t *dst = pm->pm_data;
   uint8_t *src = pict->data[0];
@@ -1206,6 +1225,8 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     } else {
       pm->pm_aspect = (float)h / (float)w;
     }
+  } else {
+    snprintf(errbuf, errlen, "Out of memory");
   }
   av_free(frame);
 

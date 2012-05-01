@@ -187,3 +187,37 @@ verify_heap(void)
     trace(TRACE_NO_PROP, TRACE_DEBUG, "HEAPCHECK", "Heap OK");
   hts_mutex_unlock(&mutex);
 }
+
+
+void *
+mymalloc(size_t size)
+{
+  if(bytes == 0)
+    return NULL;
+
+  hts_mutex_lock(&mutex);
+  void *r = tlsf_malloc(gpool, bytes);
+  hts_mutex_unlock(&mutex);
+  return r;
+}
+
+void *
+myrealloc(void *ptr, size_t size)
+{
+  hts_mutex_lock(&mutex);
+  void *r = tlsf_realloc(gpool, ptr, bytes);
+
+  if(r == NULL && size > 0)
+    tlsf_free(gpool, ptr);
+
+  hts_mutex_unlock(&mutex);
+  return r;
+}
+
+void *
+mycalloc(size_t count, size_t size)
+{
+  void *r = mymalloc(bytes * nmemb);
+  memset(r, 0, bytes * nmemb);
+  return r;
+}

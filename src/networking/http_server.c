@@ -700,7 +700,12 @@ http_cmd_post(http_connection_t *hc)
   /* Allocate space for data, we add a terminating null char to ease
      string processing on the content */
 
-  hc->hc_post_data = calloc(1, hc->hc_post_len + 1);
+  hc->hc_post_data = malloc(hc->hc_post_len + 1);
+  if(hc->hc_post_data == NULL) {
+    hc->hc_keep_alive = 0;
+    return 1;
+  }
+
   hc->hc_post_data[hc->hc_post_len] = 0;
   hc->hc_post_offset = 0;
 

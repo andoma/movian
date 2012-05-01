@@ -136,6 +136,29 @@ static inline const char *mystrbegins(const char *s1, const char *s2)
   return s1;
 }
 
+/*
+ * Memory allocation wrappers
+ * These are used whenever the caller can deal with failure 
+ * Some platform may have the standard libc ones to assert() on
+ * OOM conditions
+ */
+
+#if ENABLE_TLSF
+
+void *mymalloc(size_t size);
+
+void *myrealloc(void *ptr, size_t size);
+
+void *mycalloc(size_t count, size_t size);
+
+#else
+
+#define mymalloc(size) malloc(size)
+#define myrealloc(ptr, size) realloc(ptr, size)
+#define mycalloc(count, size) calloc(count, size)
+
+#endif
+
 
 void runcontrol_activity(void);
 

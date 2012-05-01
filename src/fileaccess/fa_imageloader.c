@@ -155,10 +155,13 @@ fa_imageloader2(const char *url, const char **vpaths,
   }
 
   pixmap_t *pm = pixmap_alloc_coded(p, size, fmt);
-  pm->pm_width = width;
-  pm->pm_height = height;
-  pm->pm_orientation = orientation;
-
+  if(pm != NULL) {
+    pm->pm_width = width;
+    pm->pm_height = height;
+    pm->pm_orientation = orientation;
+  } else {
+    snprintf(errbuf, errlen, "Out of memory");
+  }
   free(p);
   return pm;
 }
@@ -447,6 +450,14 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 		       1
 #endif
 		       );
+
+
+
+    if(pm == NULL) {
+      ifv_close();
+      snprintf(errbuf, errlen, "Out of memory");
+      return NULL;
+    }
 
     struct SwsContext *sws;
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,

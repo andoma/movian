@@ -1248,43 +1248,42 @@ text_render0(const uint32_t *uc, const int len,
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
 		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, 1);
-
-  pm->pm_lines = lines;
-  pm->pm_flags = pmflags;
-  pm->pm_margin = margin;
+  if(pm != NULL) {
+    pm->pm_lines = lines;
+    pm->pm_flags = pmflags;
+    pm->pm_margin = margin;
   
-  if(flags & TR_RENDER_DEBUG) {
-    uint8_t *data = pm->pm_pixels;
-    for(i = 0; i < pm->pm_height; i+=3)
-      memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
+    if(flags & TR_RENDER_DEBUG) {
+      uint8_t *data = pm->pm_pixels;
+      for(i = 0; i < pm->pm_height; i+=3)
+	memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
 
-    int y;
-    int l = color_output ? 4 : 2;
-    for(i = 0; i < pm->pm_width; i+=3)
-      for(y = 0; y < pm->pm_height; y++)
-	memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
-  }
+      int y;
+      int l = color_output ? 4 : 2;
+      for(i = 0; i < pm->pm_width; i+=3)
+	for(y = 0; y < pm->pm_height; y++)
+	  memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
+    }
 
-  if(flags & TR_RENDER_CHARACTER_POS) {
-    pm->pm_charposlen = len;
-    pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
-  }
+    if(flags & TR_RENDER_CHARACTER_POS) {
+      pm->pm_charposlen = len;
+      pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
+    }
+
+    if(need_shadow_pass) {
+      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		  origin_y, margin, 0);
+      pixmap_box_blur(pm, 4, 4);
+    }
+
+    if(need_outline_pass)
+      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		  origin_y, margin, 1);
 
 
-  if(need_shadow_pass) {
     draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		origin_y, margin, 0);
-    pixmap_box_blur(pm, 4, 4);
+		origin_y, margin, 2);
   }
-
-  if(need_outline_pass)
-    draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		origin_y, margin, 1);
-
-
-  draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-	     origin_y, margin, 2);
-
   free(items);
 
   if(stroker != NULL)

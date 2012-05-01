@@ -166,7 +166,12 @@ save_index(void)
   int tot = pool_num(item_pool);
 
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
-  out = malloc(siz);
+  out = mymalloc(siz);
+  if(out == NULL) {
+    hts_mutex_unlock(&cache_lock);
+    close(fd);
+    return;
+  }
   *(uint32_t *)out = BC2_MAGIC;
   j = 0;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
@@ -224,7 +229,12 @@ load_index(void)
 
   int items = (st.st_size - 24) / sizeof(blobcache_diskitem_t);
 
-  in = malloc(st.st_size);
+  in = mymalloc(st.st_size);
+  if(in == NULL) {
+    close(fd);
+    return;
+  }
+
   size_t r = read(fd, in, st.st_size);
   close(fd);
   if(r != st.st_size) {
@@ -397,7 +407,12 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   if(ignore_expiry != NULL)
     *ignore_expiry = expired;
 
-  uint8_t *r = malloc(st.st_size + pad);
+  uint8_t *r = mymalloc(st.st_size + pad);
+  if(r == NULL) {
+    close(fd);
+    return NULL;
+  }
+
   if(read(fd, r, st.st_size) != st.st_size) {
     free(r);
     close(fd);

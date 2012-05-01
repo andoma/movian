@@ -891,6 +891,11 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
   state.need_color = NULL;
 
   state.pm = pixmap_create(w, h, need_color ? PIXMAP_BGR32 : PIXMAP_IA, 1);
+  if(state.pm == NULL) {
+    snprintf(errbuf, errlen, "Out of memory");
+    return NULL;
+  }
+
   state.scaling = (float)w / orig_width;
   svg_mtx_identity(state.ctm);
   svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);

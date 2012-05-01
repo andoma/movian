@@ -348,6 +348,8 @@ fab_read(fa_handle_t *handle, void *buf, size_t size)
 
   if(bf->bf_mem == NULL) {
     bf->bf_mem = halloc(bf->bf_mem_size);
+    if(bf->bf_mem == NULL)
+      return -1;
   }
 
   if(bf->bf_size != -1 && bf->bf_fpos + size > bf->bf_size)

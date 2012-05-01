@@ -23,6 +23,7 @@
 #include <zlib.h>
 
 #include "gz.h"
+#include "showtime.h"
 
 /**
  *
@@ -70,7 +71,12 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
   }
 
   outlen = inlen * 2;
-  out = malloc(outlen+1);
+  out = mymalloc(outlen + 1);
+  if(out == NULL) {
+    snprintf(errbuf, errlen, "Out of memory");
+    inflateEnd(&z);
+    return NULL;
+  }
 
   while(1) {
     

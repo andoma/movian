@@ -78,6 +78,11 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 
       vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 1);
 
+      if(vo->vo_pixmap == NULL) {
+	free(vo);
+	return;
+      }
+
       const uint8_t *src = r->pict.data[0];
       const uint32_t *clut = (uint32_t *)r->pict.data[1];
       uint32_t *dst = (uint32_t *)vo->vo_pixmap->pm_pixels;

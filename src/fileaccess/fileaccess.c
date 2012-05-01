@@ -645,8 +645,12 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     return NULL;
   }
 
-  data = malloc(size + 1);
-
+  data = mymalloc(size + 1);
+  if(data == NULL) {
+    snprintf(errbuf, errlen, "Out of memory");
+    fa_close(fh);
+    return NULL;
+  }
   r = fa_read(fh, data, size);
 
   fa_close(fh);
@@ -801,7 +805,9 @@ fa_load_and_close(fa_handle_t *fh, size_t *sizep)
   if(size == -1)
     return NULL;
 
-  uint8_t *mem = malloc(size+1);
+  uint8_t *mem = mymalloc(size+1);
+  if(mem == NULL)
+    return NULL;
 
   fa_seek(fh, 0, SEEK_SET);
   r = fa_read(fh, mem, size);

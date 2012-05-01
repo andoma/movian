@@ -3392,7 +3392,7 @@ spotify_got_image(sp_image *image, void *userdata)
   si->si_pixmap = pixmap_alloc_coded(pixels, size, PIXMAP_JPEG);
 
   hts_mutex_lock(&spotify_mutex);
-  si->si_errcode = 0;
+  si->si_errcode = !si->si_pixmap;
   hts_cond_broadcast(&spotify_cond_image);
   hts_mutex_unlock(&spotify_mutex);
   f_sp_image_release(image);
