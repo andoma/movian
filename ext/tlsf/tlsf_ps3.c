@@ -190,7 +190,7 @@ verify_heap(void)
 
 
 void *
-mymalloc(size_t size)
+mymalloc(size_t bytes)
 {
   if(bytes == 0)
     return NULL;
@@ -202,12 +202,12 @@ mymalloc(size_t size)
 }
 
 void *
-myrealloc(void *ptr, size_t size)
+myrealloc(void *ptr, size_t bytes)
 {
   hts_mutex_lock(&mutex);
   void *r = tlsf_realloc(gpool, ptr, bytes);
 
-  if(r == NULL && size > 0)
+  if(r == NULL && bytes > 0 && ptr != NULL)
     tlsf_free(gpool, ptr);
 
   hts_mutex_unlock(&mutex);
@@ -215,7 +215,7 @@ myrealloc(void *ptr, size_t size)
 }
 
 void *
-mycalloc(size_t count, size_t size)
+mycalloc(size_t nmemb, size_t bytes)
 {
   void *r = mymalloc(bytes * nmemb);
   memset(r, 0, bytes * nmemb);
