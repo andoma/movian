@@ -263,6 +263,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_stats;
   prop_t *mp_prop_url;
   prop_t *mp_prop_avdiff;
+  prop_t *mp_prop_avdiff_error;
   prop_t *mp_prop_shuffle;
   prop_t *mp_prop_repeat;
 

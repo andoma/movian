@@ -160,6 +160,8 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     /* Not the same clock epoch, can not sync */
     vd->vd_avdiff_x = 0;
     kalman_init(&vd->vd_avfilter);
+    if(mp->mp_stats)
+      prop_set_int(mp->mp_prop_avdiff_error, 3);
     return;
   }
 
@@ -167,6 +169,8 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     vd->vd_compensate_thres--;
     vd->vd_avdiff_x = 0;
     kalman_init(&vd->vd_avfilter);
+    if(mp->mp_stats)
+      prop_set_int(mp->mp_prop_avdiff_error, 2);
     return;
   }
   
@@ -191,6 +195,13 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     
     if(vd->vd_avdiff_x < -10.0f)
       vd->vd_avdiff_x = -10.0f;
+    if(mp->mp_stats)
+      prop_set_int(mp->mp_prop_avdiff_error, 0);
+    status = "lock";
+  } else {
+    status = "nolock";
+    if(mp->mp_stats)
+      prop_set_int(mp->mp_prop_avdiff_error, 1);
   }
 
   if(mp->mp_stats) {
@@ -200,9 +211,6 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
     } else {
       vd->vd_may_update_avdiff--;
     }
-    status = "lock";
-  } else {
-    status = "nolock";
   }
 
   if(0) {

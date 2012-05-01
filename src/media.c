@@ -368,6 +368,7 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
   mp->mp_prop_avdiff      = prop_create(mp->mp_prop_root, "avdiff");
+  mp->mp_prop_avdiff_error= prop_create(mp->mp_prop_root, "avdiffError");
 
   mp->mp_prop_audio_channels_root = prop_create(mp->mp_prop_audio, "channels");
 

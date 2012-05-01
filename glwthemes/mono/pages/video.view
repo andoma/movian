@@ -160,7 +160,11 @@ widget(container_z, {
 	      });
 	      
 	      widget(label, {
-		.caption = fmt("%d ms", $self.media.avdiff * 1000);
+		.caption = translate($self.media.avdiffError,
+				     fmt("%d ms %s", $self.media.avdiff * 1000),
+				     1, "Huge diff",
+				     2, "Holdoff",
+				     3, "Epoch mismatch");
 	      });
 
 	      widget(label, {
