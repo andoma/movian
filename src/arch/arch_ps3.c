@@ -235,7 +235,7 @@ thread_reaper(void *aux)
     LIST_FOREACH(ti, &threads, link) {
       int r = sys_ppu_thread_get_page_fault_context(ti->id, &ctx);
       if(r != -2147418110)
-	panic("Thread %s (0x%lx) crashed", ti->name, ti->id);
+	panic("Thread %s (0x%lx) crashed (r=0x%x)", ti->name, ti->id, r);
     }
     hts_mutex_unlock(&thread_info_mutex);
   }
@@ -260,6 +260,8 @@ thread_trampoline(void *aux)
 
 
   void *r = ti->fn(ti->aux);
+
+  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x exiting", my_thread_id);
 
   hts_mutex_lock(&thread_info_mutex);
   LIST_REMOVE(ti, link);
