@@ -701,6 +701,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
 
 
+    if(ctx->codec_type == AVMEDIA_TYPE_VIDEO && mp->mp_video.mq_stream != -1)
+      continue;
+
     cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
 
     if(cwvec[i] != NULL) {
