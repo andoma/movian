@@ -163,7 +163,7 @@ init_screen(glw_ps3_t *gp)
   gcmConfiguration config;
   gcmGetConfiguration(&config);
 
-  TRACE(TRACE_INFO, "RSX", "memory @ 0x%x size = %d\n",
+  TRACE(TRACE_DEBUG, "RSX", "memory @ 0x%x size = %d\n",
 	config.localAddress, config.localSize);
 
   hts_mutex_init(&rsx_mempool_lock);
@@ -191,7 +191,7 @@ init_screen(glw_ps3_t *gp)
 
   gp->scale = (float)(num * gp->res.height) / (float)(den * gp->res.width);
 
-  TRACE(TRACE_INFO, "RSX",
+  TRACE(TRACE_DEBUG, "RSX",
 	"Video resolution %d x %d  aspect=%d, pixel wscale=%f",
 	gp->res.width, gp->res.height, state.displayMode.aspect, gp->scale);
 
@@ -211,7 +211,7 @@ init_screen(glw_ps3_t *gp)
   
   const s32 buffer_size = gp->framebuffer_pitch * gp->res.height; 
   const s32 depth_buffer_size = gp->depthbuffer_pitch * gp->res.height;
-  TRACE(TRACE_INFO, "RSX", "Buffer will be %d bytes", buffer_size);
+  TRACE(TRACE_DEBUG, "RSX", "Buffer will be %d bytes", buffer_size);
   
   gcmSetFlipMode(GCM_FLIP_VSYNC); // Wait for VSYNC to flip
   
@@ -219,7 +219,7 @@ init_screen(glw_ps3_t *gp)
   gp->framebuffer[0] = rsx_alloc(buffer_size, 16);
   gp->framebuffer[1] = rsx_alloc(buffer_size, 16);
 
-  TRACE(TRACE_INFO, "RSX", "Buffers at 0x%x 0x%x\n",
+  TRACE(TRACE_DEBUG, "RSX", "Buffers at 0x%x 0x%x\n",
 	gp->framebuffer[0], gp->framebuffer[1]);
 
   gp->depthbuffer = rsx_alloc(depth_buffer_size * 4, 16);
@@ -859,7 +859,7 @@ static void
 glw_ps3_mainloop(glw_ps3_t *gp)
 {
   int currentBuffer = 0;
-  TRACE(TRACE_INFO, "GLW", "Entering mainloop");
+  TRACE(TRACE_DEBUG, "GLW", "Entering mainloop");
 #if 0
   int r = ioPadSetPortSetting(6, 0xffffffff);
   TRACE(TRACE_ERROR, "PS3PAD", "portsetting=0x%x", r);
@@ -939,7 +939,7 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
     return 1;
 
-  TRACE(TRACE_INFO, "GLW", "loading universe");
+  TRACE(TRACE_DEBUG, "GLW", "loading universe");
 
   glw_load_universe(gr);
   glw_ps3_mainloop(gp);

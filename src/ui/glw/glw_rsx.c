@@ -66,10 +66,10 @@ load_vp(const char *filename)
     return NULL;
   }
 
-  TRACE(TRACE_INFO, "glw", "Loaded Vertex program %s", url);
-  TRACE(TRACE_INFO, "glw", "    input mask: %x", 
+  TRACE(TRACE_DEBUG, "glw", "Loaded Vertex program %s", url);
+  TRACE(TRACE_DEBUG, "glw", "    input mask: %x", 
 	realityVertexProgramGetInputMask(vp));
-  TRACE(TRACE_INFO, "glw", "   output mask: %x", 
+  TRACE(TRACE_DEBUG, "glw", "   output mask: %x", 
 	realityVertexProgramGetOutputMask(vp));
 
   realityProgramConst *constants;
@@ -80,7 +80,7 @@ load_vp(const char *filename)
     else
       name = "<anon>";
 
-    TRACE(TRACE_INFO, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f]",
+    TRACE(TRACE_DEBUG, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f]",
 	  name,
 	  constants[i].index,
 	  constants[i].values[0].f,
@@ -97,7 +97,7 @@ load_vp(const char *filename)
     else
       name = "<anon>";
 
-    TRACE(TRACE_INFO, "glw", "  Attribute %s @ 0x%x",
+    TRACE(TRACE_DEBUG, "glw", "  Attribute %s @ 0x%x",
 	  name, attributes[i].index);
   }
 
@@ -108,12 +108,12 @@ load_vp(const char *filename)
   rvp->rvp_u_color     = vp_get_vector_const(vp, "u_color");
   rvp->rvp_u_color_offset = vp_get_vector_const(vp, "u_color_offset");
   rvp->rvp_u_blur_amount = vp_get_vector_const(vp, "u_blur_amount");
-  TRACE(TRACE_INFO, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
+  TRACE(TRACE_DEBUG, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
 
   rvp->rvp_a_position = realityVertexProgramGetAttribute(vp, "a_position");
   rvp->rvp_a_color    = realityVertexProgramGetAttribute(vp, "a_color");
   rvp->rvp_a_texcoord = realityVertexProgramGetAttribute(vp, "a_texcoord");
-  TRACE(TRACE_INFO, "glw", "%d %d %d",
+  TRACE(TRACE_DEBUG, "glw", "%d %d %d",
 	rvp->rvp_a_position, rvp->rvp_a_color, rvp->rvp_a_texcoord);
 
   return rvp;
@@ -140,8 +140,8 @@ load_fp(glw_root_t *gr, const char *filename)
     return NULL;
   }
 
-  TRACE(TRACE_INFO, "glw", "Loaded fragment program %s", url);
-  TRACE(TRACE_INFO, "glw", "  num regs: %d", fp->num_regs);
+  TRACE(TRACE_DEBUG, "glw", "Loaded fragment program %s", url);
+  TRACE(TRACE_DEBUG, "glw", "  num regs: %d", fp->num_regs);
 
   realityProgramConst *constants;
   constants = realityFragmentProgramGetConsts(fp);
@@ -151,7 +151,7 @@ load_fp(glw_root_t *gr, const char *filename)
     else
       name = "<anon>";
 
-    TRACE(TRACE_INFO, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f] type=%d",
+    TRACE(TRACE_DEBUG, "glw", "  Constant %s @ 0x%x [%f, %f, %f, %f] type=%d",
 	  name,
 	  constants[i].index,
 	  constants[i].values[0].f,
@@ -169,18 +169,18 @@ load_fp(glw_root_t *gr, const char *filename)
     else
       name = "<anon>";
 
-    TRACE(TRACE_INFO, "glw", "  Attribute %s @ 0x%x",
+    TRACE(TRACE_DEBUG, "glw", "  Attribute %s @ 0x%x",
 	  name, attributes[i].index);
   }
 
   int offset = rsx_alloc(fp->num_insn * 16, 256);
   uint32_t *buf = rsx_to_ppu(offset);
-  TRACE(TRACE_INFO, "glw", "  PPU location: 0x%08x  %d bytes",
+  TRACE(TRACE_DEBUG, "glw", "  PPU location: 0x%08x  %d bytes",
 	buf, fp->num_insn * 16);
   const uint32_t *src = (uint32_t *)((char*)fp + fp->ucode_off);
 
   memcpy(buf, src, fp->num_insn * 16);
-  TRACE(TRACE_INFO, "glw", "  RSX location: 0x%08x", offset);
+  TRACE(TRACE_DEBUG, "glw", "  RSX location: 0x%08x", offset);
 
   rsx_fp_t *rfp = calloc(1, sizeof(rsx_fp_t));
   rfp->rfp_binary = fp;
@@ -201,7 +201,7 @@ load_fp(glw_root_t *gr, const char *filename)
     rfp->rfp_texunit[i] = 
       realityFragmentProgramGetAttrib(fp, name);
     if(rfp->rfp_texunit[i] != -1)
-      TRACE(TRACE_INFO, "glw", "    Texture %d via unit %d",
+      TRACE(TRACE_DEBUG, "glw", "    Texture %d via unit %d",
 	    i, rfp->rfp_texunit[i]);
   }
 
