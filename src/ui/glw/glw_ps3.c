@@ -118,7 +118,7 @@ rsx_alloc(int size, int alignment)
   if(0)TRACE(TRACE_DEBUG, "RSXMEM", "Alloc %d bytes (%d align) -> 0x%x",
 	size, alignment, pos << 4);
   hts_mutex_unlock(&rsx_mempool_lock);
-  return pos << 4;
+  return pos == -1 ? -1 : pos << 4;
 }
 
 

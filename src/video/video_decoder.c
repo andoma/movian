@@ -378,11 +378,8 @@ vd_thread(void *aux)
       break;
 
     case MB_BLACKOUT:
-      if(vd->vd_accelerator_blackout)
-	vd->vd_accelerator_blackout(vd->vd_accelerator_opaque);
-      else
-	vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
-			     vd->vd_opaque);
+      vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
+			   vd->vd_opaque);
       break;
 
     case MB_FLUSH_SUBTITLES:
@@ -408,9 +405,6 @@ vd_thread(void *aux)
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
-
-  // Stop any video accelerator helper threads 
-  video_decoder_set_accelerator(vd, NULL, NULL, NULL);
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_destroy(vd->vd_ext_subtitles);
@@ -481,24 +475,6 @@ video_decoder_destroy(video_decoder_t *vd)
 
   hts_mutex_destroy(&vd->vd_overlay_mutex);
   free(vd);
-}
-
-
-/**
- *
- */
-void
-video_decoder_set_accelerator(video_decoder_t *vd,
-			      void (*stopfn)(void *opaque),
-			      void (*blackoutfn)(void *opaque),
-			      void *opaque)
-{
-  if(vd->vd_accelerator_opaque != NULL)
-    vd->vd_accelerator_stop(vd->vd_accelerator_opaque);
-  
-  vd->vd_accelerator_stop = stopfn;
-  vd->vd_accelerator_blackout = blackoutfn;
-  vd->vd_accelerator_opaque = opaque;
 }
 
 

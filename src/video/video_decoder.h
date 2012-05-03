@@ -163,14 +163,6 @@ typedef struct video_decoder {
   int vd_frame_size_ptr;
 
   /**
-   * Acceleration helpers
-   */
-  void *vd_accelerator_opaque;
-  void (*vd_accelerator_blackout)(void *opaque);
-  void (*vd_accelerator_stop)(void *opaque);
-
-
-  /**
    * Reordering 
    */
 
