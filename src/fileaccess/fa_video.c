@@ -84,10 +84,14 @@ fs_sub_match(const char *video, const char *sub)
     return 0;
 
   fname++;
-  char *dot = strrchr(fname, '.');
-  if(dot)
-    *dot = 0;
-  return !strcmp(fname, video);
+  int vl = strlen(video);
+  if(strlen(fname) < vl)
+    return 0;
+
+  if(fname[vl] != '.')
+    return 0;
+  
+  return !memcmp(fname, video, vl);
 }
 
 
@@ -101,6 +105,8 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   char errbuf[256];
+
+  TRACE(TRACE_DEBUG, "Video", "Scanning for subs in %s for %s", url, video);
 
   if((fd = fa_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
@@ -126,6 +132,7 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
       }
 
       int score = fs_sub_match(video, fde->fde_url);
+      TRACE(TRACE_DEBUG, "Video", "SRT %s score=%d", fde->fde_url, score); 
       if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
 
