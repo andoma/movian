@@ -20,6 +20,7 @@ typedef struct vda_frame {
   int64_t vf_pts;
   int vf_duration;
   uint8_t vf_epoch;
+  uint8_t vf_send_pts;
 } vda_frame_t;
 
 
@@ -87,18 +88,10 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
 
   video_decoder_t *vd = vdad->vdad_vd;
 
-  if(fi.pts != AV_NOPTS_VALUE) {
-    event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->ts = fi.pts;
-    mp_enqueue_event(vd->vd_mp, &ets->h);
-    event_release(&ets->h);
-  }
-
   printf("         >>> Frame deliver %p\n", hts_thread_current());
-  vd->vd_frame_deliver(data, linesize, &fi, vd->vd_opaque);
+  video_deliver_frame(vd);
   printf("         <<< Frame deliver\n");
   CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
-  video_decoder_scan_ext_sub(vd, fi.pts);
 }
 
 /**
@@ -155,6 +148,9 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
   ref = CFDictionaryGetValue(frame_info, CFSTR("epoch"));
   CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_epoch);
 
+  ref = CFDictionaryGetValue(frame_info, CFSTR("send_pts"));
+  CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_sendpts);
+
   vf->vf_buf = buf;
   CFRetain(buf);
 
@@ -198,10 +194,11 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   vda_decoder_t *vdad = mc->opaque;
   CFDictionaryRef user_info;
   CFDataRef coded_frame;
-  const int num_kvs = 4;
+  const int num_kvs = 5;
   CFStringRef keys[num_kvs];
   CFNumberRef values[num_kvs];
   const int keyframe = mb->mb_keyframe;
+  const int send_pts = mb->mb_send_pts;
   int i;
 
   printf("enter decode..\n");
@@ -223,11 +220,13 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   keys[1] = CFSTR("duration");
   keys[2] = CFSTR("keyframe");
   keys[3] = CFSTR("epoch");
+  keys[4] = CFSTR("send_pts");
 
   values[0] = CFNumberCreate(NULL, kCFNumberSInt64Type, &mb->mb_pts);
   values[1] = CFNumberCreate(NULL, kCFNumberSInt32Type, &mb->mb_duration);
   values[2] = CFNumberCreate(NULL, kCFNumberSInt32Type, &keyframe);
   values[3] = CFNumberCreate(NULL, kCFNumberSInt8Type, &mb->mb_epoch);
+  values[4] = CFNumberCreate(NULL, kCFNumberSInt8Type, &send_pts);
 
   user_info = CFDictionaryCreate(kCFAllocatorDefault,
 				 (const void **)keys,

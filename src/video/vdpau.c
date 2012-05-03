@@ -390,8 +390,6 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
   }
 
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
-  if(mb->mb_skip == 2)
-    vd->vd_skip = 1;
 
   vc->vc_mb = mb;
 
@@ -410,7 +408,7 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 
   vd->vd_skip = 0;
   vvs = frame->opaque;
-  video_deliver_frame(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
+  video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
   return;
 }
 

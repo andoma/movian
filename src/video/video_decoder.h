@@ -186,10 +186,15 @@ void video_decoder_stop(video_decoder_t *gv);
 
 void video_decoder_destroy(video_decoder_t *gv);
 
+void video_deliver_frame_avctx(video_decoder_t *vd,
+			       media_pipe_t *mp, media_queue_t *mq,
+			       AVCodecContext *ctx, AVFrame *frame,
+			       const media_buf_t *mb, int decode_time);
+
 void video_deliver_frame(video_decoder_t *vd,
-			 media_pipe_t *mp, media_queue_t *mq,
-			 AVCodecContext *ctx, AVFrame *frame,
-			 const media_buf_t *mb, int decode_time);
+			 frame_buffer_type_t type, void *frame,
+			 const frame_info_t *info,
+			 int send_pts);
 
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),

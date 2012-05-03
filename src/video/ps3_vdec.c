@@ -42,10 +42,11 @@ union vdec_userdata {
   uint64_t u64;
   struct {
     int epoch;
-    char skip;
-    char flush;
-    char nopts;
-    char nodts;
+    char skip : 1;
+    char flush : 1; 
+    char nopts : 1;
+    char nodts : 1;
+    char send_pts : 1;
   } s;
 };
 
@@ -62,6 +63,7 @@ typedef struct vdec_pic {
   frame_info_t fi;
   rsx_video_frame_t rvf;
   int64_t order;
+  int send_pts;
 } vdec_pic_t;
 
 
@@ -275,18 +277,15 @@ emit_frame(vdec_decoder_t *vdd, vdec_pic_t *vp)
   TRACE(TRACE_DEBUG, "VDEC DPY", "Displaying 0x%llx (%lld)", vp->order,
 	vp->fi.pts);
 #endif
-  if(vp->fi.pts != AV_NOPTS_VALUE) {
-    event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->ts = vp->fi.pts;
-    mp_enqueue_event(vd->vd_mp, &ets->h);
-    event_release(&ets->h);
-  }
+  if(vd == NULL)
+    return;
 
-  if(vd) {
-    vd->vd_frame_deliver(FRAME_BUFFER_TYPE_RSX_MEMORY, &vp->rvf,
-			 &vp->fi, vd->vd_opaque);
-    video_decoder_scan_ext_sub(vd, vp->fi.pts);
-  }
+  video_deliver_frame(vd, FRAME_BUFFER_TYPE_RSX_MEMORY, &vp->rvf,
+		      &vp->fi, vp->send_pts);
+
+#if VDEC_DETAILED_DEBUG
+  TRACE(TRACE_DEBUG, "VDEC DPY", "Frame delivered");
+#endif
 }
 
 
@@ -452,6 +451,7 @@ picture_out(vdec_decoder_t *vdd)
   vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->rvf.rvf_offset));
 
   vp->order = order;
+  vp->send_pts = ud.s.send_pts;
 
   LIST_INSERT_SORTED(&vdd->pictures, vp, link, vp_cmp);
 
@@ -637,6 +637,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 
   ud.s.nopts = pts == AV_NOPTS_VALUE;
   ud.s.nodts = dts == AV_NOPTS_VALUE;
+  ud.s.send_pts = mb->mb_send_pts;
 
   if(dts < 0)
     dts = 0;
