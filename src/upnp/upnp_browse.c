@@ -456,7 +456,7 @@ browse_items(upnp_browse_t *ub)
   TRACE(TRACE_DEBUG, "UPNP", "Browsed %d of %d items",
 	ub->ub_loaded_entries, ub->ub_total_entries);
 
-  if(ub->ub_images * 4 > ub->ub_loaded_entries)
+  if(ub->ub_images * 4 > ub->ub_loaded_entries * 3)
     prop_set_string(ub->ub_contents, "images");
 
   htsmsg_destroy(meta);
