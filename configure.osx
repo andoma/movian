@@ -84,6 +84,7 @@ enable zlib
 enable posix_networking
 enable dvd
 enable spotify
+enable vda
 
 #
 # c compiler
@@ -180,7 +181,6 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -
 
 
 libav_setup
-#enable vda Does not work 100% yet
 
 
 #

@@ -144,6 +144,15 @@ set_vdpau_deinterlace_resolution_limit(void *opaque, const char *str)
 #endif
 
 
+#if ENABLE_VDA
+static void
+set_vda(void *opaque, int on)
+{
+  video_settings.vda = on;
+}
+#endif
+
+
 static void
 set_stretch_horizontal(void *opaque, int on)
 {
@@ -220,6 +229,14 @@ video_settings_init(void)
 			     store, settings_generic_save_settings,
                              (void *)"videoplayback");
 
+#endif
+
+#if ENABLE_VDA
+  settings_create_bool(s, "vda", _p("Enable VDA"), 1,
+		       store, set_vda, NULL, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"videoplayback");
 #endif
 
   settings_create_bool(s, "stretch_horizontal",
