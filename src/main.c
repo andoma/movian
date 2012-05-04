@@ -110,6 +110,7 @@ fflockmgr(void **_mtx, enum AVLockOp op)
     break;
   case AV_LOCK_DESTROY:
     hts_mutex_destroy(*mtx);
+    free(*mtx);
     break;
   }
   return 0;
