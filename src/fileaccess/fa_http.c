@@ -2746,7 +2746,7 @@ http_request(const char *url, const char **arguments,
 	capacity *= 2;
 	mem = myrealloc(mem, capacity + 1);
 	if(mem == NULL) {
-	  snprintf(errbuf, errlen, "Out of memory");
+	  snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
 	  goto error;
 	}
       }
@@ -2776,7 +2776,7 @@ http_request(const char *url, const char **arguments,
 	  capacity *= 2;
 	  mem = myrealloc(mem, capacity + 1);
 	  if(mem == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory");
+	    snprintf(errbuf, errlen, "Out of memory (%d)", capacity + 1);
 	    goto error;
 	  }
 	}
@@ -2822,7 +2822,7 @@ http_request(const char *url, const char **arguments,
 	if(csize > 0) {
 	  buf = myrealloc(buf, size + csize + 1);
 	  if(buf == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory");
+	    snprintf(errbuf, errlen, "Out of memory (%zd)", size + csize + 1);
 	    goto error;
 	  }
 	  if(tcp_read_data(hc->hc_tc, buf + size, csize))
@@ -2845,7 +2845,7 @@ http_request(const char *url, const char **arguments,
       size = hf->hf_filesize;
       buf = mymalloc(hf->hf_filesize + 1);
       if(buf == NULL) {
-	snprintf(errbuf, errlen, "Out of memory");
+	snprintf(errbuf, errlen, "Out of memory (%zd)", hf->hf_filesize + 1);
 	goto error;
       }
       r = tcp_read_data(hc->hc_tc, buf, hf->hf_filesize);
@@ -2881,7 +2881,8 @@ http_request(const char *url, const char **arguments,
 	if(z.avail_out == 0) {
 	  buf2 = myrealloc(buf2, z.total_out * 2 + 1);
 	  if(buf2 == NULL) {
-	    snprintf(errbuf, errlen, "Out of memory");
+	    snprintf(errbuf, errlen, "Out of memory (%zd)",
+		     z.total_out * 2 + 1);
 	    goto error;
 	  }
 	  z.next_out = buf2 + z.total_out;
