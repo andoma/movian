@@ -289,12 +289,17 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
 
   do {
 
-    if(mb == NULL || (e = mb_enqueue_with_events(r->mp, mq, mb)) == NULL)
+    if(mb == NULL || (e = mb_enqueue_with_events(r->mp, mq, mb)) == NULL) {
+      mb = NULL;
       break;
-    
+    }
+
     e = rtmp_process_event(r, e, &mb);
 
   } while(e == NULL);
+
+  if(mb != NULL)
+    media_buf_free_unlocked(r->mp, mb);
 
   return e;
 }
