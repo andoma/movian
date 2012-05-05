@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Dodane przez: %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Odtworzono %d razy
+msg[1]: Odtworzono %d raz
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d plików
+msg[1]: %d plik(i)
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d ścieżki
+msg[1]: ścieżka
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -201,7 +201,7 @@ msg: Procesor jest zbyt wolny by dekodować te wideo
 #
 id: Domain
 # Missing translation
-msg: 
+msg: Domena
 
 id: Password
 msg: Hasło
@@ -253,7 +253,7 @@ msg: Regulacja głośności: %d dB
 
 id: Multilingual 'No media loaded'
 # Missing translation
-msg: 
+msg: Wielojęzyczne 'Nie załadowano mediów'
 
 id: Top bar navigation buttons
 msg: Przyciski na pasku nawigacyjnym
@@ -662,15 +662,15 @@ msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 #
 id: 1080
 # Missing translation
-msg: 
+msg: 1080
 
 id: 576
 # Missing translation
-msg: 
+msg: 576
 
 id: 720
 # Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: Staraj się wybierać napisy
@@ -680,7 +680,7 @@ msg: Automatycznie
 
 id: Automatically play next video in list
 # Missing translation
-msg: 
+msg: Automatycznie odtwarzaj kolejny plik z listy
 
 id: Center
 msg: Środek
@@ -705,21 +705,21 @@ msg: Ignoruj wbudowany styl
 
 id: Include all subtitle files from movie directory
 # Missing translation
-msg: 
+msg: Dołącz wszystkie napisy z folderu z filmem
 
 id: Left
 msg: Lewy
 
 id: Maximum resolution for deinterlacer
 # Missing translation
-msg: 
+msg: Maks. rozdzielczość przy usuwaniu przeplotu
 
 id: No
 msg: Nie
 
 id: No limit
 # Missing translation
-msg: 
+msg: Bez limitu
 
 id: Outline color
 msg: Kolor obrysu
@@ -729,7 +729,7 @@ msg: Rozmiar obrysu
 
 id: Preferred VDPAU deinterlacer method
 # Missing translation
-msg: 
+msg: Preferowana metoda usuwania przeplotu dla VDPAU
 
 id: Resume video playback
 msg: Wznów odtwarzanie wideo
@@ -745,7 +745,7 @@ msg: Offset cienia
 
 id: Stretch video to fullscreen
 # Missing translation
-msg: 
+msg: Rozciągnij obraz do pełnego ekranu
 
 id: Stretch video to widescreen
 msg: Rozciągnij do panoramicznego
@@ -758,7 +758,7 @@ msg: Rozmiar napisów
 
 id: Subtitle size and positioning
 # Missing translation
-msg: 
+msg: Rozmiar i pozycja napisów
 
 id: Subtitle styling
 msg: Styl napisów
@@ -768,11 +768,11 @@ msg: Napisy
 
 id: Temporal
 # Missing translation
-msg: 
+msg: Czasowy
 
 id: Temporal/Spatial
 # Missing translation
-msg: 
+msg: Czasowy/przestrzenny
 
 id: Video acceleration and display behaviour
 msg: Akceleracja wideo i zachowanie wyświetlacza
