@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Добавил: %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Воспроизведено раз: %d
+msg[1]: Воспроизведено раз: %d
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: объектов: %d
+msg[1]: объектов: %d
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: треков: %d
+msg[1]: треков: %d
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -199,10 +199,6 @@ msg: CPU является слишком медленным для декоди�
 #
 # ./glwthemes/mono/popups/auth.view
 #
-id: Domain
-# Missing translation
-msg: 
-
 id: Password
 msg: Пароль
 
@@ -216,7 +212,7 @@ msg: Имя пользователя
 # ./glwthemes/mono/screensaver.view
 #
 id: No media loaded
-msg: Медиа отсутствует
+msg: Медиа-файл не загружен
 
 #
 # ./glwthemes/mono/sysinfo.view
@@ -238,13 +234,13 @@ msg:
 # ./glwthemes/mono/universe.view
 #
 id: Adjust background tint based on daytime
-msg: Настройка оттенка фона в зависимости от яркости
+msg: Настройка оттенка фона в зависимости от времени суток
 
 id: Alternate list layout
-msg: Альтернативный список раскладки
+msg: Альтернативный вид списка
 
 id: Audio muted
-msg: Приглушение аудио
+msg: Звук выключен
 
 id: Fancy UI animations
 msg: Анимация интерфейса
@@ -253,8 +249,7 @@ id: Master volume: %d dB
 msg: Общая громкость: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: Отображать "Медиа-файл не загружен" на разных языках
 
 id: Top bar navigation buttons
 msg: Верхняя панель кнопок навигации
@@ -272,8 +267,7 @@ msg: Использовать opensubtitles.org
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Мало памяти (доступно %d Кб RAM)
 
 #
 # ./src/audio/audio.c
@@ -393,7 +387,7 @@ id: Spotify music service
 msg: Музыкальный сервис Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify предлагает вам легальный и свободный доступ к огромной библиотеке музыки. Для использования Spotify в Showtime вам нужен Spotify премиум аккаунт.\nДля получения информации посетите http://www.spotify.com/\n\nВы должны будетеввести логин и пароль Spotify при первом использовании функций Spotify в Showtime.
+msg: Spotify предлагает вам легальный и свободный доступ к огромной библиотеке музыки. Для использования Spotify в Showtime вам нужен Spotify премиум аккаунт.\nДля получения информации посетите http://www.spotify.com/\n\nВы должны будете ввести логин и пароль Spotify при первом использовании функций Spotify в Showtime.
 
 id: Spotify playlists
 msg: Плейлисты Spotify
@@ -507,7 +501,7 @@ id: Subtitle scaling
 msg: Масштаб субтитров
 
 id: Video zoom
-msg: Видеозум
+msg: Масштаб видео
 
 #
 # ./src/metadata/metadata.c
@@ -662,18 +656,6 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 #
 # ./src/video/video_settings.c
 #
-id: 1080
-# Missing translation
-msg: 
-
-id: 576
-# Missing translation
-msg: 
-
-id: 720
-# Missing translation
-msg: 
-
 id: Always try to select a subtitle
 msg: Всегда пытаться выбрать субтитры
 
@@ -681,8 +663,7 @@ id: Auto
 msg: Авто
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Автоматически проигрывать следующее видео в списке
 
 id: Center
 msg: Центр
@@ -706,32 +687,19 @@ id: Ignore embedded styling
 msg: Игнорировать встроенный стиль
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: "Подхватывать" все файлы субтитров в папке
 
 id: Left
 msg: Слева
 
-id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
-
 id: No
 msg: Нет
-
-id: No limit
-# Missing translation
-msg: 
 
 id: Outline color
 msg: Цвет контура
 
 id: Outline size
 msg: Размер контура
-
-id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
 
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
@@ -758,22 +726,13 @@ id: Subtitle size
 msg: Размер субтитров
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Размер и позиция субтитров
 
 id: Subtitle styling
 msg: Стиль субтитров
 
 id: Subtitles
 msg: Субтитры
-
-id: Temporal
-# Missing translation
-msg: 
-
-id: Temporal/Spatial
-# Missing translation
-msg: 
 
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
