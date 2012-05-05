@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Toegevoegd door: %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: %d keer afgespeeld
+msg[1]: %d keer afgespeeld
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d item
+msg[1]: %d items
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d nummers
+msg[1]: %d nummer
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -50,16 +50,13 @@ id: Delete
 msg: Verwijderen
 
 id: Queue
-# Missing translation
-msg: 
+msg: In de wachtrij zetten
 
 id: Star
-# Missing translation
-msg: 
+msg: Ster toevoegen
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Ster verwijderen
 
 #
 # ./glwthemes/mono/include/buttons.view
@@ -88,13 +85,11 @@ msg: Oké
 #
 # ./glwthemes/mono/pages/about.view
 #
-id: Allocated by application: %d kB
-# Missing translation
-msg: 
+id: Allocated by applicatie: %d kB
+msg: Toegewezen door applicatie: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Toegewezen door malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: RAM-geheugen over: %d kB
@@ -109,8 +104,7 @@ id: Framerate: %.2f Hz
 msg: Beeldfrequentie: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Aantal vrije chunks: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -119,8 +113,7 @@ id: Height: %d px
 msg: Hoogte: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Geheugenstatus
 
 id: Renderer: %s
 msg: Renderer: %s
@@ -132,8 +125,7 @@ id: Total system RAM: %d kB
 msg: Totale RAM-geheugen: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Niet-gebruikte geheugen: %d kB
 
 id: Version: %s
 msg: Versie: %s
@@ -202,14 +194,13 @@ msg: Nummer %d / %d
 # ./glwthemes/mono/playdecks/video.view
 #
 id: CPU is too slow to decode this video
-msg: CPU is te langzaam om deze video te decoderen
+msg: De CPU is te langzaam om deze video te decoderen
 
 #
 # ./glwthemes/mono/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Domein
 
 id: Password
 msg: Wachtwoord
@@ -248,24 +239,22 @@ id: Adjust background tint based on daytime
 msg: Achtergrondtint op tijd gebasseerd aanpassen
 
 id: Alternate list layout
-# Missing translation
-msg: 
+msg: Alternatieve lijstopmaak
 
 id: Audio muted
 msg: Geluid gedempt
 
 id: Fancy UI animations
-msg: Mooie UI-effecten
+msg: Mooie UI-animaties
 
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: Meertalige 'Geen media geladen'
 
 id: Top bar navigation buttons
-msg: Navigatieknoppen bovenste balk
+msg: Navigatieknoppen op de bovenste balk
 
 #
 # ./src/api/opensubtitles.c
@@ -280,14 +269,13 @@ msg: Opensubtitles.org gebruiken
 # ./src/arch/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
-# Missing translation
-msg: 
+msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
 
 #
 # ./src/audio/audio.c
 #
 id: Audio/Video sync delay
-msg: Vertraging audio/video-synchronisatie
+msg: Vertraging audio-/videosynchronisatie
 
 id: Current output device
 msg: Huidige uitvoerapparaat
@@ -302,17 +290,16 @@ id: Phantom center
 msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Geluidsuitvoerapparaat en gerelateerde configuraties kiezen
+msg: 'Selecteer het geluidsuitvoerapparaat en gerelateerde configuraties
 
 id: Small front speakers
 msg: Kleine voorluidsprekers
 
 id: Swap LFE+center with surround
-msg: LFE+center wisselen met surround
+msg: LFE+center omwisselen met surround
 
 id: Switching audio output to %s
-# Missing translation
-msg: 
+msg: Geluidsuitvoer overschakelen naar %s
 
 #
 # ./src/backend/dvd/cdda.c
@@ -330,12 +317,10 @@ msg: De CD kon niet worden geopend
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
-# Missing translation
-msg: 
+msg: DVD-leesfout, schijf herstarten
 
 #
 # ./src/backend/htsp/htsp.c
@@ -350,8 +335,7 @@ id: Search
 msg: Zoeken
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Zoekresultaat voor: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -360,8 +344,7 @@ id: Automatic login when Showtime starts
 msg: Automatisch inloggen als Showtime opstart
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Gezamenlijk
 
 id: Enable Spotify
 msg: Spotify inschakelen
@@ -385,18 +368,16 @@ id: New releases
 msg: Nieuwe uitgaves
 
 id: Offline
-# Missing translation
-msg: 
+msg: Offline
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Offline synchroniseren in 96kbps
 
 id: Playlists
 msg: Afspeellijsten
 
 id: Relogin (switch user)
-msg: Opnieuw inloggen (gebruiker wisselen)
+msg: Opnieuw inloggen (gebruiker omwisselen)
 
 id: Search result
 msg: Zoekresultaat
@@ -414,8 +395,7 @@ id: Spotify playlists
 msg: Spotify-afspeellijsten
 
 id: Spotify: Connection error: %s
-# Missing translation
-msg: 
+msg: Spotify: Verbindingsfout: %s
 
 id: Starred
 msg: Favorieten
@@ -430,12 +410,10 @@ msg: Bladwijzers
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-# Missing translation
-msg: 
+msg: De inhoudstype %d wordt niet ondersteund
 
 id: Unable to open file: %s
-# Missing translation
-msg: 
+msg: Het bestand kon niet worden geopend: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -453,8 +431,7 @@ msg: Zoeken via Spotlight
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Extern bestand
 
 #
 # ./src/i18n.c
@@ -493,19 +470,19 @@ msg: Tertiaire audiotaal
 # ./src/ipc/serdev/lgtv.c
 #
 id: Automatic TV power on/off
-msg: TV automatisch aan- en uitzetten
+msg: Tv automatisch aan- en uitzetten
 
 id: Input source
 msg: Invoerbron
 
 id: LG Television set
-msg: LG TV-apparaat
+msg: LG-televisietoestel
 
 #
 # ./src/keymapper.c
 #
 id: Configure mapping of keyboard and remote controller keys
-msg: Toetsenbordindeling en afstandbedieningstoetsen configureren
+msg: Configureer de toetsenbordindeling en afstandbedieningstoetsen
 
 id: Keymapper
 msg: Toetsindeling
@@ -526,18 +503,16 @@ id: Subtitle scaling
 msg: Ondertitelingsgrootte
 
 id: Video zoom
-msg: Video-vergroting
+msg: Videovergroting
 
 #
 # ./src/metadata/metadata.c
 #
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Ingesloten in bestand
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Nummer %d
 
 #
 # ./src/navigator.c
@@ -549,7 +524,7 @@ msg: Geen handler voor URL
 # ./src/plugins.c
 #
 id: Invalud URI
-msg: Ongeldige URL 
+msg: Ongeldige URI 
 
 id: Plugin ID %s does not exist
 msg: Plugin-ID %s bestaat niet
@@ -630,20 +605,16 @@ msg: Muiswiel naar boven/onder indelen
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-# Missing translation
-msg: 
+msg: Automatisch naar deze modus omschakelen
 
 id: DVI-Video color range
-# Missing translation
-msg: 
+msg: Kleurbereik voor DVI-video
 
 id: Switch to this mode now
-# Missing translation
-msg: 
+msg: Nu naar deze modus omschakelen
 
 id: Video modes
-# Missing translation
-msg: 
+msg: Videomodi
 
 #
 # ./src/upnp/upnp.c
@@ -670,49 +641,40 @@ msg: Service niet gevonden
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-# Missing translation
-msg: 
+msg: Cell-h264: Niveau 4.2 voor inhoud in niveau %d.%d forceren. De video wordt mogelijk niet goed afgespeeld.
 
 id: Unable to accelerate %s, library not loaded.
-# Missing translation
-msg: 
+msg: %s kon niet worden versneld, bibliotheek niet geladen.
 
 id: Unable to open Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: De Cell-codec kon niet worden geopend. Fout 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-# Missing translation
-msg: 
+msg: De Cell-codec kon niet worden geopend. %d bytes aan RAM toewijzen niet mogelijk
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
+msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
 
 #
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
-msg: Altijd proberen om een ondertiteling te selecteren
+msg: Altijd proberen een ondertiteling te selecteren
 
 id: Auto
 msg: Automatisch
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: De volgende video in de lijst automatisch afspelen
 
 id: Center
 msg: Centreren
@@ -721,8 +683,7 @@ id: Color
 msg: Kleur
 
 id: Count video as played when reaching
-# Missing translation
-msg: 
+msg: Video als afgespeeld rekenen bij nadering einde
 
 id: Enable VDPAU
 msg: VDPAU inschakelen
@@ -737,23 +698,19 @@ id: Ignore embedded styling
 msg: Geïntegreerde stijl nergeren
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: Alle ondertitelingsbestanden van de filmmap toevoegen
 
 id: Left
 msg: Links
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: Maximale resolutie voor deinterlacer
 
 id: No
-# Missing translation
-msg: 
+msg: Nee
 
 id: No limit
-# Missing translation
-msg: 
+msg: Geen limiet
 
 id: Outline color
 msg: Omtrekkleur
@@ -762,12 +719,10 @@ id: Outline size
 msg: Omtrekgrootte
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Voorkeursmethode voor VDPAU-deinterlacer
 
 id: Resume video playback
-# Missing translation
-msg: 
+msg: Videoweergave hervatten
 
 id: Right
 msg: Rechts
@@ -779,11 +734,10 @@ id: Shadow offset
 msg: Schaduwafstand
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Video uitrekken naar volledig scherm
 
 id: Stretch video to widescreen
-msg: Video op breedbeeld uitrekken
+msg: Video uitrekken naar breedbeeld
 
 id: Subtitle position
 msg: Ondertitelingspositie
@@ -792,8 +746,7 @@ id: Subtitle size
 msg: Ondertitelingsgrootte
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Ondertitelingsgrootte en -positionering
 
 id: Subtitle styling
 msg: Ondertitelingsstijl
@@ -802,12 +755,10 @@ id: Subtitles
 msg: Ondertiteling
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Tijdelijk
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Tijdelijk/ruimtelijk
 
 id: Video acceleration and display behaviour
 msg: Videoversnelling en weergavegedrag
@@ -816,6 +767,5 @@ id: Video playback
 msg: Videoweergave
 
 id: Yes
-# Missing translation
-msg: 
+msg: Ja
 
