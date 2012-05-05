@@ -487,7 +487,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       oframe->data[0] = pm->pm_pixels;
       oframe->linesize[0] = pm->pm_linesize;
       
-      size_t outputsize = pm->pm_linesize * h;
+      size_t outputsize = MAX(pm->pm_linesize * h, FF_MIN_BUFFER_SIZE);
       void *output = malloc(outputsize);
       pngencoder->width = w;
       pngencoder->height = h;
