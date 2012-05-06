@@ -26,22 +26,22 @@ id: Added by: %s
 msg: Adicionado por: %s
 
 id: Played %d times
-msg[0]: 
-msg[1]: 
+msg[0]: Reproduzido %d vezes
+msg[1]: Reproduzidos %d vezes
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: 
-msg[1]: 
+msg[0]: %d entrada
+msg[1]: %d entradas
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
 #
 id: %d tracks
-msg[0]: 
-msg[1]: 
+msg[0]: %d faixa
+msg[1]: %d faixas
 
 #
 # ./glwthemes/mono/directoryviews/list2/options_audio.view
@@ -200,8 +200,7 @@ msg: O CPU é muito lento para descodificar este vídeo
 # ./glwthemes/mono/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Domínio
 
 id: Password
 msg: Palavra-passe
@@ -252,8 +251,7 @@ id: Master volume: %d dB
 msg: Volume principal: %d dB
 
 id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
+msg: 'Nenhum media carregado' multilíngue
 
 id: Top bar navigation buttons
 msg: Botões de navegação na barra superior
@@ -514,8 +512,7 @@ id: Embedded in file
 msg: Embebido no ficheiro
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Faixa %d
 
 #
 # ./src/navigator.c
@@ -662,16 +659,13 @@ msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: Tentar sempre selecionar as legendas
@@ -680,8 +674,7 @@ id: Auto
 msg: Automático
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Reproduzir automaticamente o próximo vídeo da lista
 
 id: Center
 msg: Centrado
@@ -705,22 +698,19 @@ id: Ignore embedded styling
 msg: Ignorar estilos embutidos
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: Incluir todos os ficheiros de legendas do directório do filme
 
 id: Left
 msg: Esquerda
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: Resolução máxima para o deinterlacer
 
 id: No
 msg: Não
 
 id: No limit
-# Missing translation
-msg: 
+msg: Sem limite
 
 id: Outline color
 msg: Cor do contorno
@@ -729,8 +719,7 @@ id: Outline size
 msg: Tamanho do contorno
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Método preferido de VDPAU deinterlacer
 
 id: Resume video playback
 msg: Retomar a reprodução de vídeo
@@ -745,8 +734,7 @@ id: Shadow offset
 msg: Deslocamento da sombra
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Esticar vídeo para fullscreen
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen
@@ -758,8 +746,7 @@ id: Subtitle size
 msg: Tamanho das legendas
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Tamanho e posição das legendas
 
 id: Subtitle styling
 msg: Estilo das legendas
@@ -768,12 +755,10 @@ id: Subtitles
 msg: Legendas
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Temporal
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Temporal/Espacial
 
 id: Video acceleration and display behaviour
 msg: Acelaração de vídeo e comportamento da visualização
