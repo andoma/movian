@@ -642,8 +642,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
    * Update property metadata
    */
   metadata_t *md = fa_metadata_from_fctx(fctx, url);
+  prop_vec_t *streams = NULL;
   if(md != NULL) {
-    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
+    streams = metadata_to_proptree(md, mp->mp_prop_metadata, 0,
+				   prop_vec_create(10));
     metadata_destroy(md);
   }
 
@@ -752,6 +754,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   prop_destroy(seek_index);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
+
+  if(streams != NULL) {
+    prop_vec_destroy_entries(streams);
+    prop_vec_release(streams);
+  }
 
   mp_flush(mp, 0);
   mp_shutdown(mp);

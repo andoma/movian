@@ -22,7 +22,7 @@
 #pragma once
 
 struct prop;
-
+struct prop_vec;
 /**
  * Content types
  */
@@ -102,8 +102,10 @@ void metadata_add_stream(metadata_t *md, const char *codec,
 			 const char *info, const char *isolang,
 			 int disposition, int tracknum);
 
-void metadata_to_proptree(const metadata_t *md, struct prop *proproot,
-			  int cleanup_streams);
+struct prop_vec *metadata_to_proptree(const metadata_t *md,
+				      struct prop *proproot,
+				      int cleanup_streams,
+				      struct prop_vec *streams);
 
 
 
