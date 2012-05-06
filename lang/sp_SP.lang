@@ -152,7 +152,7 @@ msg: Inicio
 # ./glwthemes/mono/pages/openerror.view
 #
 id: Unable to open resource
-msg: Incapaz de abrir recursos
+msg: No se puede abrir recursos
 
 #
 # ./glwthemes/mono/pages/openerror_top.view
@@ -173,7 +173,7 @@ id: Playback status
 msg: Estatus de reproducción
 
 id: Unable to start video playback
-msg: Incapaz de iniciar reproducción de video
+msg: No se puede iniciar reproducción de video
 
 #
 # ./glwthemes/mono/playdecks/dvd.view
@@ -239,19 +239,19 @@ id: Adjust background tint based on daytime
 msg: Ajustar fondo de pantalla basado en hora del día
 
 id: Alternate list layout
-msg: Posición de lista alterna
+msg: Formato de lista alterna
 
 id: Audio muted
 msg: Audio apagado
 
 id: Fancy UI animations
-msg: Animación de Interfaz
+msg: Animación del Interfaz
 
 id: Master volume: %d dB
 msg: Volumen principal: %d dB
 
 id: Multilingual 'No media loaded'
-msg: Multilenguaje 'Ningún medio cargado'
+msg: Multilenguaje para 'Ningún medio cargado'
 
 id: Top bar navigation buttons
 msg: Botones de navegación barra superior
@@ -311,7 +311,7 @@ id: Invalid CD track
 msg: Pista de CD no válida
 
 id: Unable to open CD
-msg: Incapaz de abrir CD
+msg: No se puede abrir CD
 
 #
 # ./src/backend/dvd/dvd.c
@@ -362,7 +362,7 @@ id: Inbox
 msg: Buzón de entrada
 
 id: New albums on Spotify
-msg: Nuevos albumes en Spotify
+msg: Nuevos álbumes en Spotify
 
 id: New releases
 msg: Nuevos lanzamientos
@@ -380,13 +380,13 @@ id: Relogin (switch user)
 msg: Re-Ingreso (cambiar usuario)
 
 id: Search result
-msg: Resultado de busqueda
+msg: Resultado de búsqueda
 
 id: Spotify friends
 msg: Amigos de Spotify
 
 id: Spotify music service
-msg: Servicio de musica Spotify
+msg: Servicio de música Spotify
 
 id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
 msg: Spotify ofrece acceso libre y legal a una enorme librería de música. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara más información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier característica de Spotify en Showtime deberá ingresar su nombre de usuario y contraseña.
@@ -410,10 +410,10 @@ msg: Marcadores
 # ./src/fileaccess/fa_backend.c
 #
 id: Can't handle content type %d
-msg: Incapaz de manejar contenido tipo %s
+msg: No se puede manejar contenido tipo %s
 
 id: Unable to open file: %s
-msg: Incapaz de abrir archivo: %s
+msg: No se puede abrir archivo: %s
 
 #
 # ./src/fileaccess/fa_locatedb.c
@@ -440,31 +440,31 @@ id: Language
 msg: Idioma
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Los códigos de idiomas deben ser configurados como códigos ISO de 3 caracteres, por ejemplo: eng, spa, fra
+msg: Los códigos de idiomas deben configurarse como códigos ISO de 3 caracteres, por ejemplo: eng, spa, fra
 
 id: Preferred languages
 msg: Idiomas preferidos
 
 id: Primary audio language code
-msg: Código idioma de audio primario
+msg: Código de idioma del audio primario
 
 id: Primary subtitle language code
-msg: Código de idioma de subtítulo primario
+msg: Código de idioma del subtítulo primario
 
 id: SRT character set
 msg: Juego de caracteres SRT
 
 id: Secondary audio language code
-msg: Código idioma de audio secundario
+msg: Código de idioma del audio secundario
 
 id: Secondary subtitle language code
-msg: Código idioma de subtítulo secundario
+msg: Código de idioma del subtítulo secundario
 
 id: Tertiary audio language code
-msg: Código idioma de audio terciario
+msg: Código de idioma del audio terciario
 
 id: Tertiary subtitle language code
-msg: Código idioma subtítulo terciario
+msg: Código de idioma del subtítulo terciario
 
 #
 # ./src/ipc/serdev/lgtv.c
@@ -533,13 +533,13 @@ id: Plugin ID %s have no download URL
 msg: Plugin ID %s no tiene URL de descarga
 
 id: Unable to load plugin.json: %s
-msg: Incapaz de cargar plugin.json: %s
+msg: No se puede cargar plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
-msg: Incapaz de cargar plugin.json: JSON Malformado
+msg: No se puede cargar plugin.json: JSON Malformado
 
 id: Unable to request plugin repository: %s
-msg: Incapaz de acceder al repositorio del plugin: %s
+msg: No se puede acceder al repositorio del plugin: %s
 
 #
 # ./src/runcontrol.c
@@ -584,7 +584,7 @@ id: Horizontal underscan
 msg: Underscan Horizontal
 
 id: Screensaver delay
-msg: Espera protector de pantalla
+msg: Espera del protector de pantalla
 
 id: Userinterface size
 msg: Tamaño de interfaz de usuario
@@ -644,16 +644,16 @@ id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break vide
 msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede no reproducir el video.
 
 id: Unable to accelerate %s, library not loaded.
-msg: Incapaz de acelerar %s, catálogo no cargado.
+msg: No se pudo acelerar %s, catálogo no fue cargado.
 
 id: Unable to open Cell codec. Error 0x%x
-msg: Incapaz de abrir Cell codec. Error 0x%x
+msg: No se puede abrir Cell codec. Error 0x%x
 
 id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
-msg: Incapaz de abrir Cell codec. No se pudo asignar %d bytes de RAM
+msg: No se puede abrir Cell codec. No se puede asignar %d bytes de RAM
 
 id: Unable to query Cell codec. Error 0x%x
-msg: Incapaz de consultar Cell codec. Error 0x%x
+msg: No se puede consultar Cell codec. Error 0x%x
 
 #
 # ./src/video/video_settings.c
@@ -674,7 +674,7 @@ id: Auto
 msg: Automático
 
 id: Automatically play next video in list
-msg: Reproducir automáticamente siguiente video en la lista
+msg: Reproducir siguiente video en la lista
 
 id: Center
 msg: Centrado
@@ -713,10 +713,10 @@ id: No limit
 msg: Sin límite
 
 id: Outline color
-msg: Color Contorno
+msg: Color del Contorno
 
 id: Outline size
-msg: Tamaño Contorno
+msg: Tamaño del Contorno
 
 id: Preferred VDPAU deinterlacer method
 msg: Método preferido para VDPAU deinterlacer
@@ -731,7 +731,7 @@ id: Shadow color
 msg: Color de sombra
 
 id: Shadow offset
-msg: offset de sombra
+msg: Offset de sombra
 
 id: Stretch video to fullscreen
 msg: Estirar video a pantalla completa
