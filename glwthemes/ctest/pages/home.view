@@ -83,11 +83,11 @@
 }
 
 widget(container_x, {
-
+/*
   $page.backdrop = $view.focused.backdrop ??
     translate($view.focused.type, void,
 	      "music", "/Users/andoma/Downloads/music.jpg");
-
+*/
   widget(clist, {
     .filterConstraintX = true;
     .center = 0.2;

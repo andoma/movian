@@ -45,10 +45,6 @@ widget(container_z, {
   widget(backdrop, {
 
     .source = $global.nav.currentpage.backdrop ?? "theme://showtime.png";
-//    .source = "theme://showtime.png";
-//    .source = "http://cf.scdn.co/i/press/backgrounds/spotify-wallpaper-green-1-6.jpg";
-//    .source = "http://fc05.deviantart.net/fs28/f/2008/159/e/e/YouTube_Wallpaper_by_Jonathan3333.jpg";
-//    .source = "http://forums.plexapp.com/uploads/monthly_03_2009/post-2371-1236089450.png";
     .color = 0.66;
   });
 /*
