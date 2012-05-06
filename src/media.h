@@ -458,15 +458,16 @@ void mp_add_track(prop_t *parent,
 		  prop_t *sourcep,
 		  int score);
 
-void mp_add_trackr(prop_t *parent,
-		   rstr_t *title,
-		   const char *url,
-		   rstr_t *format,
-		   rstr_t *longformat,
-		   rstr_t *isolang,
-		   rstr_t *source,
-		   prop_t *sourcep,
-		   int score);
+prop_vec_t *mp_add_trackr(prop_t *parent,
+			  rstr_t *title,
+			  const char *url,
+			  rstr_t *format,
+			  rstr_t *longformat,
+			  rstr_t *isolang,
+			  rstr_t *source,
+			  prop_t *sourcep,
+			  int score,
+			  prop_vec_t *vec);
 
 void mp_add_track_off(prop_t *tracks, const char *title);
 

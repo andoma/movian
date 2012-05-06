@@ -249,7 +249,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
     if(fde->fde_md != NULL) {
       fde->fde_type = fde->fde_md->md_contenttype;
       fde->fde_ignore_cache = 0;
-      metadata_to_proptree(fde->fde_md, meta, 1);
+      metadata_to_proptree(fde->fde_md, meta, 1, NULL);
       
       if(fde->fde_md->md_cached == 0) {
 	metadb_metadata_write(getdb(s), fde->fde_url,
