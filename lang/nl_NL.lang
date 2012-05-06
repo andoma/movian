@@ -33,8 +33,8 @@ msg[1]: %d keer afgespeeld
 # ./glwthemes/mono/directoryviews/list2/center_directory.view
 #
 id: %d entries
-msg[0]: %d item
-msg[1]: %d items
+msg[0]: %d items
+msg[1]: %d item
 
 #
 # ./glwthemes/mono/directoryviews/list2/center_playlist.view
@@ -85,7 +85,7 @@ msg: Oké
 #
 # ./glwthemes/mono/pages/about.view
 #
-id: Allocated by applicatie: %d kB
+id: Allocated by application: %d kB
 msg: Toegewezen door applicatie: %d kB
 
 id: Allocated by malloc: %d kB
@@ -158,7 +158,7 @@ msg: De bron kon niet worden geopend
 # ./glwthemes/mono/pages/openerror_top.view
 #
 id: Page load error
-msg: Pagina-laadfout
+msg: Laadfout pagina
 
 #
 # ./glwthemes/mono/pages/playqueue_top.view
@@ -281,16 +281,16 @@ id: Current output device
 msg: Huidige uitvoerapparaat
 
 id: Force stereo downmix
-msg: Stereo-downmix forceren
+msg: Stereo downmix forceren
 
 id: Phantom LFE
-msg: Phantom-LFE
+msg: Virtueel LFE
 
 id: Phantom center
-msg: Phantom-center
+msg: Virtueel midden
 
 id: Select audio output device and related configurations
-msg: 'Selecteer het geluidsuitvoerapparaat en gerelateerde configuraties
+msg: Selecteer het geluidsuitvoerapparaat en gerelateerde configuraties
 
 id: Small front speakers
 msg: Kleine voorluidsprekers
@@ -527,10 +527,10 @@ id: Invalud URI
 msg: Ongeldige URI 
 
 id: Plugin ID %s does not exist
-msg: Plugin-ID %s bestaat niet
+msg: Het plugin-ID %s bestaat niet
 
 id: Plugin ID %s have no download URL
-msg: Plugin-ID %s heeft geen download-URL
+msg: Het plugin-ID %s heeft geen download-URL
 
 id: Unable to load plugin.json: %s
 msg: De plugin.json kon niet worden geladen: %s
@@ -539,7 +539,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: De plugin.json kon niet worden geladen: Misvormde JSON
 
 id: Unable to request plugin repository: %s
-msg: De plugin-opslagplaats kon niet worden aangevraagd
+msg: De opslagplaats voor de plugin kon niet worden aangevraagd
 
 #
 # ./src/runcontrol.c
@@ -683,13 +683,13 @@ id: Color
 msg: Kleur
 
 id: Count video as played when reaching
-msg: Video als afgespeeld rekenen bij nadering einde
+msg: Video als afgespeeld rekenen bij nadering
 
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
 id: Force subtitles to reside on video frame
-msg: Ondertitels forceren om op de videoframe te blijven
+msg: Ondertitels forceren om op videoframe te blijven
 
 id: Generic settings for video subtitles
 msg: Algemene instellingen voor video-ondertitels
@@ -698,7 +698,7 @@ id: Ignore embedded styling
 msg: Geïntegreerde stijl nergeren
 
 id: Include all subtitle files from movie directory
-msg: Alle ondertitelingsbestanden van de filmmap toevoegen
+msg: Alle ondertitels van de filmmap toevoegen
 
 id: Left
 msg: Links
