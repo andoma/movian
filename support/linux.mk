@@ -18,10 +18,15 @@ install: ${PROG}.datadir ${MAN} ${DESKTOP} ${ICON}
 		cp -r $$bundle/*  ${datadir}/$$bundle ;\
 	done
 
+ifdef LIBSPOTIFY_PATH
+	mkdir -p ${libdir}
+	cp -d ${LIBSPOTIFY_PATH}/lib/libspotify.* ${libdir}
+endif
 
 uninstall:
-	rm -f ${bindir)/showtime
-	rm -f ${mandir)/showtime.1
+	rm -f ${libdir}/libspotify.*
+	rm -f ${bindir}/showtime
+	rm -f ${mandir}/showtime.1
 	rm -f ${INSTDESKTOP}/showtime.desktop
 	rm -f ${INSTICON}/showtime.svg
 

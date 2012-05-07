@@ -25,6 +25,7 @@ prefix=/usr/local
 bindir="\${prefix}/bin"
 mandir="\${prefix}/share/man"
 datadir="\${prefix}/share/showtime"
+libdir="\${prefix}/lib/showtime"
 CC=cc
 CXX=c++
 
@@ -35,6 +36,7 @@ show_help(){
   echo "  --bindir=DIR             Install binaries in DIR [$bindir]"
   echo "  --mandir=DIR             Install man pages in DIR [$mandir]"
   echo "  --datadir=DIR            Install data files in DIR [$datadir]"
+  echo "  --libdir=DIR             Install libraries in DIR [$libdir]"
   echo "  --arch=ARCH              Build for this architecture [$ARCH]"
   echo "  --cpu=CPU                Build and optimize for specific CPU"
   echo "  --cc=CC                  Build using compiler CC [$CC]"
@@ -138,6 +140,9 @@ for opt do
   ;;
   --datadir=*)
   datadir="$optval"
+  ;;
+  --libdir=*)
+  libdir="$optval"
   ;;
   --includedir=*)
   ;;
@@ -593,6 +598,28 @@ if enabled libsidplay2; then
 fi
 
 
+
+#
+# libspotify
+#
+LIBSPOTIFY_ARCH=""
+case "$ARCH" in
+    x86_64)
+	LIBSPOTIFY_ARCH="Linux-x86_64"
+	;;
+    i686)
+	LIBSPOTIFY_ARCH="Linux-i686"
+	;;
+esac
+
+if [ "x$LIBSPOTIFY_ARCH" != "x" ] ; then
+    download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-${LIBSPOTIFY_ARCH}-release.tar.gz libspotifytarball
+    tar -x -C "${BUILDDIR}" -f "$libspotifytarball"
+    P=${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-${LIBSPOTIFY_ARCH}-release
+    echo >>${CONFIG_H} "#define LIBSPOTIFY_PATH \"${P}\""
+    echo >>${CONFIG_MAK} "LIBSPOTIFY_PATH=${P}"
+fi
+
 libav_setup
 
 #
@@ -604,13 +631,18 @@ echo "  Prefix:        ${prefix}"
 echo "  Binaries:      ${bindir}"
 echo "  Man pages:     ${mandir}"
 echo "  Data files:    ${datadir}"
+echo "  Libraries:     ${libdir}"
 echo
 echo >>${CONFIG_MAK} "prefix=$prefix"
 echo >>${CONFIG_MAK} "bindir=\${DESTDIR}$bindir"
 echo >>${CONFIG_MAK} "mandir=\${DESTDIR}$mandir"
 echo >>${CONFIG_MAK} "datadir=\${DESTDIR}$datadir"
+echo >>${CONFIG_MAK} "libdir=\${DESTDIR}$libdir"
 echo >>${CONFIG_MAK} LDFLAGS_cfg += -lpthread -lrt -ldl
 eval datadirpath=${datadir}
 echo >>${CONFIG_H} "#define SHOWTIME_DATADIR \"${datadirpath}\""
+
+eval libdirpath=${libdir}
+echo >>${CONFIG_H} "#define SHOWTIME_LIBDIR \"${libdirpath}\""
 
 finalize

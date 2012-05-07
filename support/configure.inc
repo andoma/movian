@@ -103,6 +103,11 @@ die_invalid_opt() {
     die
 }
 
+die_cause() {
+    echo "$1"
+    die
+}
+
 set_all(){
     value=$1
     shift
@@ -168,7 +173,10 @@ download_file() {
     mkdir -p ${TOPDIR}/downloadcache
     local DLPATH=${TOPDIR}/downloadcache/${URL_HASH}
     if [ ! -f "${DLPATH}" ]; then
-	curl -L -o "${DLPATH}" "$1"
+	echo "Downloading $1"
+	curl -f -L -o "${DLPATH}" "$1" || die_cause "Unable to download file" 
+    else
+	echo "Found in cache: $1"
     fi
     eval $__resultvar="$DLPATH"
 }

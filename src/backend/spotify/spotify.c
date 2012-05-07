@@ -4279,14 +4279,29 @@ be_spotify_dlopen(void)
 {
   void *h;
   const char *sym;
-  char libname[64];
+  char libname[PATH_MAX];
 
   snprintf(libname, sizeof(libname), "libspotify.so.%d", SPOTIFY_API_VERSION);
-
   h = dlopen(libname, RTLD_NOW);
+
   if(h == NULL) {
-    TRACE(TRACE_INFO, "spotify", "Unable to load %s: %s", libname, dlerror());
+    snprintf(libname, sizeof(libname), "%s/libspotify.so.%d", 
+	     SHOWTIME_LIBDIR, SPOTIFY_API_VERSION);
+    h = dlopen(libname, RTLD_NOW);
+  }
+
+  if(h == NULL) {
+    snprintf(libname, sizeof(libname), "%s/lib/libspotify.so.%d", 
+	     LIBSPOTIFY_PATH, SPOTIFY_API_VERSION);
+    h = dlopen(libname, RTLD_NOW);
+  }
+
+  if(h == NULL) {
+    TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so.%d: %s",
+	  SPOTIFY_API_VERSION, dlerror());
     return 1;
+  } else {
+    TRACE(TRACE_DEBUG, "spotify", "Loaded from %s", libname);
   }
   if((sym = resolvesym(h)) != NULL) {
     TRACE(TRACE_ERROR, "spotify", "Unable to resolve symbol \"%s\"", sym);
