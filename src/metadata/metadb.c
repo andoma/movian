@@ -451,6 +451,36 @@ metadb_insert_videoart(void *db, int64_t videoitem_id, const char *url,
 /**
  *
  */
+void
+metadb_insert_videogenre(void *db, int64_t videoitem_id, const char *title)
+{
+  sqlite3_stmt *ins;
+  int rc;
+
+  rc = db_prepare(db, 
+		  "INSERT OR REPLACE INTO videogenre "
+		  "(videoitem_id, title) "
+		  "VALUES "
+		  "(?1, ?2)",
+		  -1, &ins, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return;
+  }
+  
+  sqlite3_bind_int64(ins, 1, videoitem_id);
+  sqlite3_bind_text(ins, 2, title, -1, SQLITE_STATIC);
+  db_step(ins);
+  sqlite3_finalize(ins);
+}
+
+
+
+/**
+ *
+ */
 static int
 metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md,
 			int ds_id)
@@ -620,6 +650,44 @@ metadb_get_video_art(void *db, int64_t videoitem_id, int type)
   sqlite3_finalize(sel);
   return r;
 }
+
+
+
+/**
+ *
+ */
+static rstr_t *
+metadb_get_video_genre(sqlite3 *db, int64_t videoitem_id)
+{
+  int rc;
+  sqlite3_stmt *sel;
+  char buf[512];
+
+  rc = db_prepare(db,
+		  "SELECT title "
+		  "FROM videogenre "
+		  "WHERE videoitem_id = ?1",
+		  -1, &sel, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  sqlite3_bind_int64(sel, 1, videoitem_id);
+  buf[0] = 0;
+  int cnt = 0;
+  while((rc = db_step(sel)) == SQLITE_ROW) {
+    const char *str = (const char *)sqlite3_column_text(sel, 0);
+    if(str == NULL)
+      continue;
+    cnt += snprintf(buf + cnt, sizeof(buf) - cnt, "%s%s", cnt ? ", ": "", str);
+  }
+  sqlite3_finalize(sel);
+  return rstr_alloc(buf);
+}
+
+
 		     
 
 /**
@@ -1287,6 +1355,7 @@ metadb_get_videoinfo(void *db, const char *url)
 
   md->md_icon = metadb_get_video_art(db, vid, METADATA_IMAGE_POSTER);
   md->md_backdrop = metadb_get_video_art(db, vid, METADATA_IMAGE_BACKDROP);
+  md->md_genre = metadb_get_video_genre(db, vid);
 
   sqlite3_finalize(sel);
   return md;

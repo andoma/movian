@@ -117,6 +117,7 @@ typedef struct metadata {
   rstr_t *md_album;
   rstr_t *md_artist;
   rstr_t *md_format;
+  rstr_t *md_genre;
 
   struct metadata_stream_queue md_streams;
 
@@ -205,6 +206,9 @@ void metadb_insert_artistpic(void *db, int64_t artist_id, const char *url,
 void metadb_insert_videoart(void *db, int64_t videoitem_id, const char *url,
 			    metadata_image_type_t type,
 			    int width, int height);
+
+void metadb_insert_videogenre(void *db, int64_t videoitem_id,
+			      const char *title);
 
 int metadb_insert_videoitem(void *db, const char *url, int ds_id,
 			    const char *ext_id, const metadata_t *md);

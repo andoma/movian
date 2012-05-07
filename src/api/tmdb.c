@@ -242,6 +242,20 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
       insert_images(db, itemid, METADATA_IMAGE_POSTER, s, poster_sizes);
     if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL)
       insert_images(db, itemid, METADATA_IMAGE_BACKDROP, s, backdrop_sizes);
+
+    htsmsg_t *genres = htsmsg_get_list(doc, "genres");
+    if(genres != NULL) {
+      htsmsg_field_t *f;
+      HTSMSG_FOREACH(f, genres) {
+	htsmsg_t *g = htsmsg_get_map_by_field(f);
+	if(g == NULL)
+	  continue;
+
+	const char *title = htsmsg_get_str(g, "name");
+	if(title != NULL)
+	  metadb_insert_videogenre(db, itemid, title);
+      }
+    }
   }
   htsmsg_destroy(doc);
   metadata_destroy(md);

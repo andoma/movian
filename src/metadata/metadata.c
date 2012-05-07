@@ -66,6 +66,7 @@ metadata_destroy(metadata_t *md)
   rstr_release(md->md_album);
   rstr_release(md->md_artist);
   rstr_release(md->md_format);
+  rstr_release(md->md_genre);
   rstr_release(md->md_description);
   rstr_release(md->md_tagline);
   rstr_release(md->md_imdb_id);
@@ -525,6 +526,7 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
     if(md->md_icon)
       icon = md->md_icon;
     prop_set_rstring(mlp->mlp_props[7].p, md->md_backdrop);
+    prop_set_rstring(mlp->mlp_props[8].p, md->md_genre);
   }
 
 
@@ -563,8 +565,8 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 	rstr_get(imdb_id) ?: "<no IMDB tag>");
 	
 
-  *mlpp = mlp = mlp_alloc(8);
-  prop_t *props[8];
+  *mlpp = mlp = mlp_alloc(9);
+  prop_t *props[9];
 
   props[0] = prop_create(prop, "title");
   props[1] = prop_create(prop, "tagline");
@@ -574,6 +576,7 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   props[5] = prop_create(prop, "rating_count");
   props[6] = prop_create(prop, "icon");
   props[7] = prop_create(prop, "backdrop");
+  props[8] = prop_create(prop, "genre");
 
   mlp->mlp_refcount = 1;
   mlp->mlp_title = rstr_spn(title, "[]()");
