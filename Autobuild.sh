@@ -62,7 +62,7 @@ artifact() {
 }
 
 versioned_artifact() {
-    echo "doozer-versioned_artifact:$PWD/$1:$2:$3:$4"
+    echo "doozer-versioned-artifact:$PWD/$1:$2:$3:$4"
 }
 
 if [ -f Autobuild/${TARGET}.sh ]; then
