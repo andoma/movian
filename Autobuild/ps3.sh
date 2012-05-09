@@ -68,15 +68,3 @@ deps()
 
 
 eval $OP
-
-case $OP in 
-    build)
-	build
-	;;
-    deps)
-	deps
-	;;
-    *)
-	echo "Don't know how to handle op: ${OP}"
-	;;
-esac
