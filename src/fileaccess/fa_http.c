@@ -2882,7 +2882,7 @@ http_request(const char *url, const char **arguments,
 	  buf2 = myrealloc(buf2, z.total_out * 2 + 1);
 	  if(buf2 == NULL) {
 	    snprintf(errbuf, errlen, "Out of memory (%"PRId64")",
-		     z.total_out * 2 + 1);
+		     (int64_t)(z.total_out * 2 + 1));
 	    goto error;
 	  }
 	  z.next_out = buf2 + z.total_out;
