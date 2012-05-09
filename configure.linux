@@ -120,6 +120,8 @@ for opt do
   ;;
   --cc=*) CC="$optval"
   ;;
+  --arch=*) ARCH="$optval"
+  ;;
   --enable-all)
 	  enable libgme
 	  enable libsidplay2
