@@ -18,11 +18,11 @@ build()
     dpkg-buildpackage -b -us -uc
 
     for a in ../showtime*${VER}*.deb; do
-	artifact "$a" deb application/x-deb `basename $a`
+	versioned_artifact "$a" deb application/x-deb `basename $a`
     done
 
     for a in ../showtime*${VER}*.changes; do
-	artifact "$a" changes text/plain `basename $a`
+	versioned_artifact "$a" changes text/plain `basename $a`
     done
 }
 
