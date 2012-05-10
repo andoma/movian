@@ -524,6 +524,7 @@ js_decodeEntety(JSContext *cx, JSObject *obj,
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
+    JS_FS("checkRtmp",        js_checkRtmp, 1, 0, 0),
     JS_FS("httpGet",          js_httpGet, 2, 0, 0),
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
 #if ENABLE_RELEASE == 0

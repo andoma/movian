@@ -58,6 +58,9 @@ void js_load(const char *url);
 
 JSContext *js_newctx(JSErrorReporter er);
 
+JSBool js_checkRtmp(JSContext *cx, JSObject *obj, uintN argc,
+	          jsval *argv, jsval *rval);
+
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 		  jsval *argv, jsval *rval);
 
