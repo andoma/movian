@@ -271,7 +271,6 @@ load_srt(const char *url, const char *buf, size_t len, int force_utf8)
   }
 
   if(txt != NULL && pstart != -1 && pstop != -1) {
-    txt[txtoff] = 0;
     ese_insert(es, txt, pstart, pstop);
     txt = NULL;
   }
