@@ -267,6 +267,8 @@ glw_video_dtor(glw_t *w)
   prop_ref_dec(gv->gv_model);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
+  prop_unsubscribe(gv->gv_vstretchh_sub);
+  prop_unsubscribe(gv->gv_vstretchw_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
 
   free(gv->gv_current_url);
@@ -405,6 +407,22 @@ glw_video_ctor(glw_t *w)
 		   settings_get_value(gv->gv_mp->mp_setting_vzoom),
 		   NULL);
 
+  gv->gv_vstretchh_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vstretchh,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_vstretchh),
+		   NULL);
+
+  gv->gv_vstretchw_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vstretchw,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_vstretchw),
+		   NULL);
+
   gv->gv_vo_on_video_sub =
     prop_subscribe(0,
 		   PROP_TAG_SET_INT, &gv->gv_vo_on_video,
@@ -541,6 +559,24 @@ glw_video_render(glw_t *w, glw_rctx_t *rc)
   if(gv->gv_vzoom != 100) {
     float zoom = gv->gv_vzoom / 100.0f;
     glw_Scalef(&rc1, zoom, zoom, 1.0);
+  } else {
+
+  if(gv->gv_vstretchh != 0 && gv->gv_vstretchw != 0) {
+      float stretchh = gv->gv_vstretchh / 100.0f;
+      float stretchw = gv->gv_vstretchw / 100.0f;
+      glw_Scalef(&rc1, stretchw, stretchh, 1.0);
+  } else {
+
+      if(gv->gv_vstretchh != 0) {
+        float stretchh = gv->gv_vstretchh / 100.0f;
+        glw_Scalef(&rc1, 1.0, stretchh, 1.0);
+      }
+
+      if(gv->gv_vstretchw != 0) {
+        float stretchw = gv->gv_vstretchw / 100.0f;
+        glw_Scalef(&rc1, stretchw, 1.0, 1.0);
+      }
+    }
   }
 
   gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc1);

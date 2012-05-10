@@ -421,6 +421,18 @@ mp_create(const char *name, int flags, const char *type)
 			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
 			"%", mp->mp_pc, NULL, NULL);
 
+  mp->mp_setting_vstretchh = 
+    settings_create_int(mp->mp_setting_video_root, "vstretchh",
+			_p("Video stretch height"), video_settings.vstretchh, NULL, 0, 240,
+			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
+			"%", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_vstretchw = 
+    settings_create_int(mp->mp_setting_video_root, "vstretchw",
+			_p("Video stretch width"), video_settings.vstretchw, NULL, 0, 240,
+			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
+			"%", mp->mp_pc, NULL, NULL);
+
   mp->mp_setting_av_delta = 
     settings_create_int(mp->mp_setting_audio_root, "avdelta",
 			_p("Audio delay"), 0, NULL, -5000, 5000,
@@ -493,6 +505,8 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_sub_scale);
   setting_destroy(mp->mp_setting_sub_on_video);
   setting_destroy(mp->mp_setting_vzoom);
+  setting_destroy(mp->mp_setting_vstretchh);
+  setting_destroy(mp->mp_setting_vstretchw);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);

@@ -24,6 +24,8 @@ struct video_settings {
   int stretch_horizontal;
   int stretch_fullscreen;
   int vzoom;
+  int vstretchh;
+  int vstretchw;
 
   enum {
     VIDEO_RESUME_NO = 0,

@@ -196,6 +196,12 @@ typedef struct glw_video {
   prop_sub_t *gv_vzoom_sub;
   int gv_vzoom;
 
+  prop_sub_t *gv_vstretchh_sub;
+  int gv_vstretchh;
+  
+  prop_sub_t *gv_vstretchw_sub;
+  int gv_vstretchw;
+
 } glw_video_t;
 
 
