@@ -406,6 +406,12 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   p = glCreateProgram();
   glAttachShader(p, vs);
   glAttachShader(p, fs);
+
+  glBindAttribLocation(p, 0, "a_position");
+  glBindAttribLocation(p, 1, "a_color");
+  glBindAttribLocation(p, 2, "a_texcoord");
+
+
   glLinkProgram(p);
 
   glGetProgramInfoLog(p, sizeof(log), &len, log); 
@@ -421,10 +427,6 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
 
   gp->gp_title = strdup(title);
   gp->gp_program = p;
-
-  glBindAttribLocation(p, 0, "a_position");
-  glBindAttribLocation(p, 1, "a_color");
-  glBindAttribLocation(p, 2, "a_texcoord");
 
   glUseProgram(p);
   gbr->gbr_current = gp;
