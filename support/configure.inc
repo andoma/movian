@@ -170,8 +170,8 @@ cp_if_changed(){
 download_file() {
     local __resultvar=$2
     local URL_HASH=`echo "$1" | shasum  | awk '{print $1}'`
-    mkdir -p ${TOPDIR}/downloadcache
-    local DLPATH=${TOPDIR}/downloadcache/${URL_HASH}
+    mkdir -p ${TOPDIR}/.downloadcache
+    local DLPATH=${TOPDIR}/.downloadcache/${URL_HASH}
     if [ ! -f "${DLPATH}" ]; then
 	echo "Downloading $1"
 	curl -f -L -o "${DLPATH}" "$1" || die_cause "Unable to download file" 

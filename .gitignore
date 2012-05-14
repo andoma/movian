@@ -11,3 +11,4 @@ ext/sqlite/sqlite3
 ._*
 .DS_Store
 debian/changelog
+.downloadcache
