@@ -1341,7 +1341,7 @@ bh_create(spotify_page_t *sp, const char *playme)
   prop_set_string(sp->sp_type, "directory");
   
   bh->sp = sp;
-  pnf = prop_nf_create(sp->sp_nodes, sp->sp_items, sp->sp_filter, NULL,
+  pnf = prop_nf_create(sp->sp_nodes, sp->sp_items, sp->sp_filter,
 		       PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
@@ -1582,7 +1582,7 @@ spotify_open_rootlist(spotify_page_t *sp, int flat)
   pnf = prop_nf_create(sp->sp_nodes,
 		       flat ? current_user_rootlist->plc_root_flat :
 		       current_user_rootlist->plc_root_tree,
-		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
+		       sp->sp_filter, PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 }
@@ -2911,8 +2911,10 @@ pl_create(sp_playlist *plist, const char *name,
     struct prop_nf *pnf;
 
     pnf = prop_nf_create(nodes, pl->pl_prop_tracks, filter,
-			 pl->pl_flags & PL_SORT_ON_TIME ? "node.metadata.timestamp" : NULL,
-			 PROP_NF_AUTODESTROY | PROP_NF_SORT_DESC);
+			 PROP_NF_AUTODESTROY);
+
+    if(pl->pl_flags & PL_SORT_ON_TIME)
+      prop_nf_sort(pnf, "node.metadata.timestamp", 1);
 
     prop_nf_pred_int_add(pnf, "node.metadata.available",
 			 PROP_NF_CMP_EQ, 0, NULL, 
@@ -3480,7 +3482,7 @@ plc_for_user(sp_session *sess, spotify_page_t *sp, const char *username)
   prop_link(_p("Spotify playlists"), sp->sp_title);
 
   pnf = prop_nf_create(sp->sp_nodes, sp->sp_items,
-		       sp->sp_filter, NULL, PROP_NF_AUTODESTROY);
+		       sp->sp_filter, PROP_NF_AUTODESTROY);
   prop_set_int(sp->sp_canFilter, 1);
   prop_nf_release(pnf);
 }

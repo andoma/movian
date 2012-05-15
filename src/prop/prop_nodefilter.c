@@ -37,13 +37,15 @@ TAILQ_HEAD(nfnode_queue, nfnode);
 LIST_HEAD(nfn_pred_list, nfn_pred);
 LIST_HEAD(prop_nf_pred_list, prop_nf_pred);
 
+/**
+ *
+ */
 typedef struct nfn_pred {
   LIST_ENTRY(nfn_pred) nfnp_link;
   prop_sub_t *nfnp_sub;
   struct prop_nf_pred *nfnp_conf;
   struct nfnode *nfnp_nfn;
   char nfnp_set;
-
 } nfn_pred_t;
 
 
@@ -123,7 +125,7 @@ typedef struct prop_nf {
 
   int pos_valid;
 
-  char **defsortpath;
+  char *sortkey;
 
   struct prop_nf_pred_list preds;
 
@@ -287,6 +289,9 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
   if(nfn->sortkey_type == SORTKEY_NONE) {
 
     b = TAILQ_NEXT(nfn, in_link);
+    
+    while(b != NULL && b->inserted == 0)
+      b = TAILQ_NEXT(b, in_link);
 
     if(b != NULL) {
       TAILQ_INSERT_BEFORE(b, nfn, out_link);
@@ -323,7 +328,7 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
   int en = 1;
 
   // If sorting is enabled but this node don't have a key, hide it
-  if(nf->defsortpath != NULL && nfn->sortkey_type == SORTKEY_NONE)
+  if(nf->sortkey != NULL && nfn->sortkey_type == SORTKEY_NONE)
     en = 0;
 
   // Check filtering
@@ -537,14 +542,12 @@ nf_set_sortkey(void *opaque, prop_event_t event, ...)
 static void
 nf_update_order(prop_nf_t *nf, nfnode_t *nfn)
 {
-  char **p = nf->defsortpath;
-
   if(nfn->sortsub) {
     prop_unsubscribe0(nfn->sortsub);
     nfn->sortsub = NULL;
   }
 
-  if(p == NULL) {
+  if(nf->sortkey == NULL) {
 
     if(nfn->sortkey_type == SORTKEY_RSTR)
       rstr_release(nfn->sortkey_rstr);
@@ -558,7 +561,7 @@ nf_update_order(prop_nf_t *nf, nfnode_t *nfn)
 		     PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_CALLBACK, nf_set_sortkey, nfn,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
-		     PROP_TAG_NAME_VECTOR, p,
+		     PROP_TAG_NAMESTR, nf->sortkey,
 		     NULL);
   }
 }
@@ -769,8 +772,8 @@ prop_nf_release0(struct prop_nf *pnf)
   if(pnf->filtersub != NULL)
     prop_unsubscribe0(pnf->filtersub);
 
-  if(pnf->defsortpath)
-    strvec_free(pnf->defsortpath);
+  if(pnf->sortkey)
+    free(pnf->sortkey);
 
   free(pnf->filter);
 
@@ -943,8 +946,7 @@ nf_set_filter(void *opaque, const char *str)
  *
  */
 struct prop_nf *
-prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, 
-	       const char *defsortpath, int flags)
+prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
 {
   
   prop_nf_t *nf = calloc(1, sizeof(prop_nf_t));
@@ -954,9 +956,6 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter,
 
   nf->dst = flags & PROP_NF_TAKE_DST_OWNERSHIP ? dst : prop_xref_addref(dst);
   nf->src = src;
-
-  nf->defsortpath = defsortpath ? strvec_split(defsortpath, '.') : NULL;
-  nf->sortorder = flags & PROP_NF_SORT_DESC ? -1 : 1;
 
   hts_mutex_lock(&prop_mutex);
 
@@ -1084,5 +1083,39 @@ prop_nf_pred_int_add(struct prop_nf *nf,
   pnp->pnp_int = value;
   hts_mutex_lock(&prop_mutex);
   prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_nf_sort(struct prop_nf *nf, const char *path, int desc)
+{
+  nfnode_t *nfn;
+
+  hts_mutex_lock(&prop_mutex);
+  
+  if(nf->sortkey) {
+    if(path && !strcmp(path, nf->sortkey))
+      goto done;
+    free(nf->sortkey);
+  } else {
+    if(path == NULL)
+      goto done;
+  }
+
+  if(path) {
+    nf->sortkey = strdup(path);
+    nf->sortorder = desc ? -1 : 1;
+  } else {
+    nf->sortkey = NULL;
+    nf->sortorder = 0;
+  }
+
+  TAILQ_FOREACH(nfn, &nf->in, in_link)
+    nf_update_order(nf, nfn);
+ done:
   hts_mutex_unlock(&prop_mutex);
 }

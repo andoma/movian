@@ -66,7 +66,7 @@ service_init(void)
   all_services = prop_create_root(NULL);
 
   pnf = prop_nf_create(prop_create(prop_get_global(), "sources"), all_services,
-		       NULL, NULL, 0);
+		       NULL, 0);
   
   prop_nf_pred_int_add(pnf, "node.enabled",
 		       PROP_NF_CMP_EQ, 0, NULL, 

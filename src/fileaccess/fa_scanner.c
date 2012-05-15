@@ -599,8 +599,10 @@ fa_scanner(const char *url, time_t url_mtime,
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       source,
 		       prop_create(model, "filter"),
-		       "node.metadata.title", PROP_NF_AUTODESTROY);
+		       PROP_NF_AUTODESTROY);
   
+  prop_nf_sort(pnf, "node.metadata.title", 0);
+
   prop_nf_pred_str_add(pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
 		       PROP_NF_MODE_EXCLUDE);
@@ -609,11 +611,9 @@ fa_scanner(const char *url, time_t url_mtime,
 		       PROP_NF_CMP_EQ, 1, NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 
-  prop_nf_release(pnf);
-
   prop_set_int(prop_create(model, "canFilter"), 1);
 
-  decorated_browse_create(model);
+  decorated_browse_create(model, pnf);
 
   s->s_url = strdup(url);
   s->s_mtime = url_mtime;

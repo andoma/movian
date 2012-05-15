@@ -23,6 +23,7 @@
 
 struct prop;
 struct prop_vec;
+struct prop_nf;
 typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 
 /**
@@ -218,7 +219,7 @@ metadata_t *metadb_get_videoinfo(void *db, const char *url);
 
 void decoration_init(void);
 
-void decorated_browse_create(struct prop *model);
+void decorated_browse_create(struct prop *model, struct prop_nf *pnf);
 
 void metadata_init(void);
 

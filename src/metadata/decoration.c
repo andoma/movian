@@ -60,6 +60,8 @@ typedef struct deco_browse {
   int db_pending_flags;
 #define DB_PENDING_ALBUM_ANALYSIS 0x1
 
+  struct prop_nf *db_pnf;
+
 } deco_browse_t;
 
 
@@ -187,6 +189,7 @@ type_analysis(deco_browse_t *db)
 {
   if(db->db_types[CONTENT_IMAGE] * 4 > db->db_total * 3) {
     prop_set_string(db->db_prop_contents, "images");
+    prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0);
     return;
   }
 }
@@ -617,6 +620,7 @@ deco_browse_clear(deco_browse_t *db)
 static void
 deco_browse_destroy(deco_browse_t *db)
 {
+  prop_nf_release(db->db_pnf);
   deco_browse_clear(db);
   prop_unsubscribe(db->db_sub);
   prop_ref_dec(db->db_prop_contents);
@@ -690,7 +694,7 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
-decorated_browse_create(prop_t *model)
+decorated_browse_create(prop_t *model, struct prop_nf *pnf)
 {
   prop_t *src = prop_create(model, "source");
 
@@ -705,9 +709,10 @@ decorated_browse_create(prop_t *model)
 			      NULL);
 
   if(db->db_sub == NULL) {
+    prop_nf_release(pnf);
     free(db);
   } else {
-
+    db->db_pnf = pnf;
     LIST_INSERT_HEAD(&deco_browses, db, db_link);
     db->db_prop_model = prop_ref_inc(model);
     db->db_prop_contents = prop_ref_inc(prop_create(model, "contents"));

@@ -604,7 +604,7 @@ browse_directory(upnp_browse_t *ub)
 
   prop_set_string(ub->ub_type, "directory");
 
-  pnf = prop_nf_create(ub->ub_nodes, ub->ub_items, ub->ub_filter, NULL,
+  pnf = prop_nf_create(ub->ub_nodes, ub->ub_items, ub->ub_filter,
 		       PROP_NF_AUTODESTROY);
   prop_set_int(ub->ub_canFilter, 1);
   prop_nf_release(pnf);

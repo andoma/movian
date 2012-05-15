@@ -619,10 +619,10 @@ settings_init(void)
   settings_nodes = prop_create_root(NULL);
   s1 = prop_create_root(NULL);
 
-  prop_nf_create(s1,
-		 settings_nodes, NULL, "node.metadata.title",
-		 PROP_NF_AUTODESTROY);
+  struct prop_nf *pnf;
 
+  pnf = prop_nf_create(s1, settings_nodes, NULL, PROP_NF_AUTODESTROY);
+  prop_nf_sort(pnf, "node.metadata.title", 0);
 
   settings_apps = prop_create_root(NULL);
   settings_sd = prop_create_root(NULL);
