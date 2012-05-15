@@ -262,6 +262,8 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_DESTROYED:
     if(gc->scroll_to_me == extra)
       gc->scroll_to_me = NULL;
+    if(gc->rstart == extra)
+      gc->rstart = NULL;
     update_focus_distance(gc, extra);
     break;
   }
