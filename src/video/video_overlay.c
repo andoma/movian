@@ -98,7 +98,8 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 
     case SUBTITLE_ASS:
       sub_ass_render(vd, r->ass,
-		     ctx->subtitle_header, ctx->subtitle_header_size);
+		     ctx->subtitle_header, ctx->subtitle_header_size,
+		     mb->mb_font_context);
       break;
 
     default:
@@ -114,7 +115,8 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
  */
 void
 video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
-			       int64_t start, int64_t stop, int tags)
+			       int64_t start, int64_t stop, int tags,
+			       int context)
 {
   uint32_t *uc;
   int len, txt_len;
@@ -136,7 +138,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 
     uc = text_parse(txt, &len, 
 		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
-		    pfx, 5);
+		    pfx, 5, context);
     if(uc == NULL)
       return;
 
@@ -195,7 +197,8 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
     video_overlay_render_cleartext(vd, str, mb->mb_pts,
 				   mb->mb_duration ?
 				   mb->mb_pts + mb->mb_duration :
-				   AV_NOPTS_VALUE, 1);
+				   AV_NOPTS_VALUE, 1,
+				   mb->mb_font_context);
   } else {
     video_subtitles_lavc(vd, mb, cw->codec_ctx);
   }

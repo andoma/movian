@@ -212,7 +212,7 @@ ext_srt_decode(struct video_decoder *vd, struct ext_subtitles *es,
 {
   video_overlay_render_cleartext(vd, ese->ese_text,
 				 ese->ese_start, ese->ese_stop,
-				 1);
+				 1, 0);
 }
 
 
@@ -330,7 +330,7 @@ ext_ttlm_decode(struct video_decoder *vd, struct ext_subtitles *es,
 {
   video_overlay_render_cleartext(vd, ese->ese_text,
 				 ese->ese_start, ese->ese_stop,
-				 0);
+				 0, 0);
 }
 
 

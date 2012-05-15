@@ -46,7 +46,7 @@
 static FT_Library text_library;
 static FT_Stroker text_stroker;
 static hts_mutex_t text_mutex;
-
+static int context_tally;
 
 #define GLYPH_HASH_SIZE 128
 #define GLYPH_HASH_MASK (GLYPH_HASH_SIZE-1)
@@ -60,6 +60,7 @@ LIST_HEAD(family_list, family);
 typedef struct family {
   LIST_ENTRY(family) link;
   char *name;
+  int context;
   int id;
 } family_t;
 
@@ -118,7 +119,7 @@ static int num_glyphs;
  *
  */
 static int
-family_get(const char *name)
+family_get(const char *name, int context)
 {
   family_t *f;
 
@@ -137,13 +138,14 @@ family_get(const char *name)
   }
 
   LIST_FOREACH(f, &families, link)
-    if(!strcasecmp(n2, f->name))
+    if(!strcasecmp(n2, f->name) && f->context == context)
       break;
   
   if(f == NULL) {
     f = malloc(sizeof(family_t));
     f->id = ++family_id_tally;
     f->name = strdup(n2);
+    f->context = context;
   } else {
     LIST_REMOVE(f, link);
   }
@@ -273,7 +275,7 @@ remove_face_alias(int family_id)
  *
  */
 static face_t *
-face_create_epilogue(face_t *face, const char *source)
+face_create_epilogue(face_t *face, const char *source, int context)
 {
   const char *family = face->face->family_name;
   const char *style = face->face->style_name;
@@ -293,11 +295,11 @@ face_create_epilogue(face_t *face, const char *source)
   }
 
   face->family_id_vec = calloc(2, sizeof(int));
-  face->family_id_vec[0] = family_get(family);
+  face->family_id_vec[0] = family_get(family, context);
 
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
-  remove_face_alias(family_get(family));
+  remove_face_alias(family_get(family, context));
 
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
@@ -308,7 +310,7 @@ face_create_epilogue(face_t *face, const char *source)
  *
  */
 static face_t *
-face_create_from_uri(const char *path)
+face_create_from_uri(const char *path, int context)
 {
   char errbuf[256];
   FT_Open_Args oa = {0};
@@ -351,7 +353,7 @@ face_create_from_uri(const char *path)
   }
   face->url = strdup(path);
 
-  return face_create_epilogue(face, path);
+  return face_create_epilogue(face, path, context);
 }
 
 
@@ -360,7 +362,7 @@ face_create_from_uri(const char *path)
  *
  */
 static face_t *
-face_create_from_memory(const void *ptr, size_t len)
+face_create_from_memory(const void *ptr, size_t len, int context)
 {
   face_t *face = calloc(1, sizeof(face_t));
 
@@ -368,7 +370,7 @@ face_create_from_memory(const void *ptr, size_t len)
     free(face);
     return NULL;
   }
-  return face_create_epilogue(face, "memory");
+  return face_create_epilogue(face, "memory", context);
 }
 
 
@@ -438,7 +440,7 @@ face_set_family(face_t *f, int family_id)
  *
  */
 static face_t *
-face_find(int uc, uint8_t style, int family_id)
+face_find2(int uc, uint8_t style, int family_id)
 {
   face_t *f;
   char url[URL_MAX];
@@ -471,7 +473,7 @@ face_find(int uc, uint8_t style, int family_id)
       return f;
     }
 
-    f = face_create_from_uri(url);
+    f = face_create_from_uri(url, 0);
   }
 
   if(f == NULL) {
@@ -491,6 +493,21 @@ face_find(int uc, uint8_t style, int family_id)
   return f;
 }
 
+
+/**
+ *
+ */
+static face_t *
+face_find(int uc, uint8_t style, int family_id)
+{
+  face_t *f = face_find2(uc, style, family_id);
+#if 0
+  printf("Resolv %C (%d %s) -> %s\n",
+	 uc, style, family_get_by_id(family_id),
+	 f ? f->url ? f->url : "<memory>" : "<none>");
+#endif
+  return f;
+}
 
 /**
  *
@@ -842,9 +859,9 @@ static struct pixmap *
 text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
-	     const char *family)
+	     const char *family, int context)
 {
-  const int default_family_id = family_get(family ?: "Arial");
+  const int default_family_id = family_get(family ?: "Arial", context);
   int family_id = default_family_id;
   pixmap_t *pm;
   FT_UInt prev = 0;
@@ -1299,14 +1316,14 @@ text_render0(const uint32_t *uc, const int len,
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
-	    const char *family)
+	    const char *family, int context)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
   pm = text_render0(uc, len, flags, default_size, scale, alignment, 
-		    max_width, max_lines, family);
+		    max_width, max_lines, family, context);
   while(num_glyphs > 512)
     glyph_flush_one();
 
@@ -1344,12 +1361,12 @@ freetype_init(void)
  *
  */
 void
-freetype_load_font(const char *url)
+freetype_load_font(const char *url, int context)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_uri(url);
+  f = face_create_from_uri(url, context);
   if(f != NULL)
     f->persistent = 1;  // Make sure it never is auto unloaded
 
@@ -1361,12 +1378,12 @@ freetype_load_font(const char *url)
  *
  */
 void *
-freetype_load_font_from_memory(const void *ptr, size_t len)
+freetype_load_font_from_memory(const void *ptr, size_t len, int context)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_memory(ptr, len);
+  f = face_create_from_memory(ptr, len, context);
   if(f != NULL)
     f->persistent = 1;  // Make sure it never is auto unloaded
 
@@ -1392,10 +1409,24 @@ freetype_unload_font(void *ref)
  *
  */
 int
-freetype_family_id(const char *str)
+freetype_family_id(const char *str, int context)
 {
   hts_mutex_lock(&text_mutex);
-  int id = family_get(str);
+  int id = family_get(str, context);
+  hts_mutex_unlock(&text_mutex);
+  return id;
+}
+
+
+/**
+ *
+ */
+int
+freetype_get_context(void)
+{
+  int id;
+  hts_mutex_lock(&text_mutex);
+  id = ++context_tally;
   hts_mutex_unlock(&text_mutex);
   return id;
 }

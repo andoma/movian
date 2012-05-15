@@ -125,6 +125,7 @@ typedef struct media_buf {
     int32_t mb_data32;
     int mb_rate;
     int mb_codecid;
+    int mb_font_context;
   };
 
 

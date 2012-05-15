@@ -73,19 +73,23 @@ struct pixmap;
 struct pixmap *
 text_render(const uint32_t *uc, int len, int flags, int default_size,
 	    float scale, int alignment,
-	    int max_width, int max_lines, const char *font_family);
+	    int max_width, int max_lines, const char *font_family,
+	    int context);
 
 
 #if ENABLE_LIBFREETYPE
 int freetype_init(void);
 
-void freetype_load_font(const char *url);
+void freetype_load_font(const char *url, int context);
 
-void *freetype_load_font_from_memory(const void *ptr, size_t len);
+void *freetype_load_font_from_memory(const void *ptr, size_t len,
+				     int context);
 
 void freetype_unload_font(void *ref);
 
-int freetype_family_id(const char *str);
+int freetype_family_id(const char *str, int context);
+
+int freetype_get_context(void);
 
 #endif
 
@@ -99,5 +103,6 @@ int fontconfig_resolve(int uc, uint8_t style, const char *family,
 
 
 uint32_t *text_parse(const char *str, int *lenp, int flags,
-		     const uint32_t *prefix, int prefixlen);
+		     const uint32_t *prefix, int prefixlen,
+		     int context);
 

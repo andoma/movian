@@ -632,7 +632,7 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
 
   free(gtb->gtb_uc_buffer);
   gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags,
-				  NULL, 0);
+				  NULL, 0, 0);
   gtb->gtb_uc_len = gtb->gtb_uc_size = len;
 
   if(gtb->w.glw_class == &glw_text) {
@@ -1000,7 +1000,7 @@ font_render_thread(void *aux)
 
     if(uc != NULL && uc[0] != 0) {
       pm = text_render(uc, len, flags, default_size, scale,
-		       tr_align, max_width, max_lines, NULL);
+		       tr_align, max_width, max_lines, NULL, 0);
     } else {
       pm = NULL;
     }

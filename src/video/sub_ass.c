@@ -425,7 +425,8 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
  *
  */
 static void
-ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
+ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd,
+		   int context)
 {
   char *tokens[10], *s;
   int i, layer;
@@ -460,7 +461,7 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
     ad_txt_append(ad, TR_CODE_ITALIC_ON);
   if(as->as_fontname)
     ad_txt_append(ad, TR_CODE_FONT_FAMILY |
-		  freetype_family_id(as->as_fontname));
+		  freetype_family_id(as->as_fontname, context));
 
   ad_txt_append(ad, TR_CODE_SIZE_PX | as->as_fontsize);
 
@@ -554,7 +555,8 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd)
  */
 void
 sub_ass_render(video_decoder_t *vd, const char *src,
-	       const uint8_t *header, int header_len)
+	       const uint8_t *header, int header_len,
+	       int context)
 {
   ass_dialoge_t ad;
 
@@ -576,7 +578,7 @@ sub_ass_render(video_decoder_t *vd, const char *src,
 
   // Dialogue
 
-  ad_dialogue_decode(&ad, vd);
+  ad_dialogue_decode(&ad, vd, context);
   adc_release_styles(&ad.ad_adc);
   free(ad.ad_text);
   free(ad.ad_buf);

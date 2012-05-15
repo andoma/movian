@@ -50,7 +50,8 @@ is_ws(char c)
 static int
 attrib_parser(char *v, uint32_t *output, int olen,
 	      int (*fn)(uint32_t *output, int olen, const char *attrib, 
-			const char *value))
+			const char *value, int context),
+	      int context)
 {
   const char *attrib, *value;
   char quote;
@@ -90,7 +91,7 @@ attrib_parser(char *v, uint32_t *output, int olen,
       v++;
     }
     *v++ = 0;
-    olen = fn(output, olen, attrib, value);
+    olen = fn(output, olen, attrib, value, context);
   }
   return olen;
 }
@@ -100,14 +101,15 @@ attrib_parser(char *v, uint32_t *output, int olen,
  *
  */
 static int
-font_tag(uint32_t *output, int olen, const char *attrib, const char *value)
+font_tag(uint32_t *output, int olen, const char *attrib, const char *value,
+	 int context)
 {
   if(!strcasecmp(attrib, "size"))
     return add_one_code(TR_CODE_FONT_SIZE |
 			MAX(MIN(atoi(value), 7), 1), output, olen);
   if(!strcasecmp(attrib, "face"))
     return add_one_code(TR_CODE_FONT_FAMILY |
-			freetype_family_id(value), output, olen);
+			freetype_family_id(value, context), output, olen);
   if(!strcasecmp(attrib, "color"))
     return add_one_code(TR_CODE_COLOR |
 			html_makecolor(value), output, olen);
@@ -119,7 +121,8 @@ font_tag(uint32_t *output, int olen, const char *attrib, const char *value)
  *
  */
 static int
-outline_tag(uint32_t *output, int olen, const char *attrib, const char *value)
+outline_tag(uint32_t *output, int olen, const char *attrib, const char *value,
+	    int context)
 {
   if(!strcasecmp(attrib, "size"))
     return add_one_code(TR_CODE_OUTLINE |
@@ -135,7 +138,8 @@ outline_tag(uint32_t *output, int olen, const char *attrib, const char *value)
  *
  */
 static int
-shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value)
+shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value,
+	   int context)
 {
   if(!strcasecmp(attrib, "displacement"))
     return add_one_code(TR_CODE_SHADOW |
@@ -152,7 +156,7 @@ shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value)
  *
  */
 static int
-tag_to_code(char *s, uint32_t *output, int olen)
+tag_to_code(char *s, uint32_t *output, int olen, int context)
 {
   char *tag;
   int endtag = 0;
@@ -190,17 +194,17 @@ tag_to_code(char *s, uint32_t *output, int olen)
     if(endtag)
       c = TR_CODE_FONT_RESET;
     else
-      return attrib_parser(tag+4, output, olen, font_tag);
+      return attrib_parser(tag+4, output, olen, font_tag, context);
   } else if(!strncasecmp(tag, "outline", 7)) {
     if(endtag)
       c = TR_CODE_OUTLINE;
     else
-      return attrib_parser(tag+7, output, olen, outline_tag);
+      return attrib_parser(tag+7, output, olen, outline_tag, context);
   } else if(!strncasecmp(tag, "shadow", 6))
     if(endtag)
       c = TR_CODE_SHADOW;
     else
-      return attrib_parser(tag+6, output, olen, shadow_tag);
+      return attrib_parser(tag+6, output, olen, shadow_tag, context);
   else
     return olen;
 
@@ -212,7 +216,7 @@ tag_to_code(char *s, uint32_t *output, int olen)
  *
  */
 static int
-parse_str(uint32_t *output, const char *str, int flags)
+parse_str(uint32_t *output, const char *str, int flags, int context)
 {
   int olen = 0, c, p = -1, d;
   int l = strlen(str);
@@ -242,7 +246,7 @@ parse_str(uint32_t *output, const char *str, int flags)
       }
       tmp[lp] = 0;
 
-      olen = tag_to_code(tmp, output, olen);
+      olen = tag_to_code(tmp, output, olen, context);
       continue;
     }
 
@@ -297,17 +301,17 @@ parse_str(uint32_t *output, const char *str, int flags)
  */
 uint32_t *
 text_parse(const char *str, int *lenp, int flags,
-	   const uint32_t *prefix, int prefixlen)
+	   const uint32_t *prefix, int prefixlen, int context)
 {
   uint32_t *buf;
 
-  *lenp = parse_str(NULL, str, flags);
+  *lenp = parse_str(NULL, str, flags, context);
   if(*lenp == 0)
     return NULL;
   *lenp += prefixlen;
   buf = malloc(*lenp * sizeof(int));
   memcpy(buf, prefix, prefixlen * sizeof(int));
-  parse_str(buf+prefixlen, str, flags);
+  parse_str(buf+prefixlen, str, flags, context);
   return buf;
   
 }

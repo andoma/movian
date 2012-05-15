@@ -53,7 +53,8 @@ typedef struct attachment {
 } attachment_t;
 
 static void attachment_load(struct attachment_list *alist,
-			    const uint8_t *ptr, size_t len);
+			    const uint8_t *ptr, size_t len,
+			    int context);
 
 static void attachment_unload_all(struct attachment_list *alist);
 
@@ -246,7 +247,8 @@ static event_t *
 video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  media_pipe_t *mp, int flags,
 		  char *errbuf, size_t errlen,
-		  const char *canonical_url)
+		  const char *canonical_url,
+		  int freetype_context)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -314,6 +316,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
 	mb = media_buf_from_avpkt_unlocked(mp, &pkt);
 	mb->mb_codecid = fctx->streams[si]->codec->codec_id;
+	mb->mb_font_context = freetype_context;
 	mb->mb_data_type = MB_SUBTITLE;
 	mq = &mp->mp_video;
 
@@ -554,6 +557,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   int64_t fsize;
   int opensub_hash_rval;
 
+  int freetype_context = freetype_get_context();
+
   struct attachment_list alist;
   LIST_INIT(&alist);
 
@@ -704,7 +709,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
       break;
 
     case AVMEDIA_TYPE_ATTACHMENT:
-      attachment_load(&alist, ctx->extradata, ctx->extradata_size);
+      attachment_load(&alist, ctx->extradata, ctx->extradata_size,
+		      freetype_context);
       break;
 
     default:
@@ -752,7 +758,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
-  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url);
+  e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
+			freetype_context);
 
   prop_destroy(seek_index);
 
@@ -862,7 +869,8 @@ attachment_add_dtor(struct attachment_list *alist,
  *
  */
 static void
-attachment_load(struct attachment_list *alist, const uint8_t *ptr, size_t len)
+attachment_load(struct attachment_list *alist, const uint8_t *ptr, size_t len,
+		int context)
 {
   if(len < 20)
     return;
@@ -871,7 +879,7 @@ attachment_load(struct attachment_list *alist, const uint8_t *ptr, size_t len)
   if(!memcmp(ptr, (const uint8_t []){0,1,0,0,0}, 5) ||
      !memcmp(ptr, "OTTO", 4)) {
 
-    void *h = freetype_load_font_from_memory(ptr, len);
+    void *h = freetype_load_font_from_memory(ptr, len, context);
     if(h != NULL)
       attachment_add_dtor(alist, freetype_unload_font, h);
     return;
