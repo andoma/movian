@@ -39,141 +39,6 @@
 #include <gme/gme.h>
 #endif
 
-#if CONFIG_LIBOPENSPC
-#include <openspc.h>
-
-/**
- *
- */
-static event_t *
-openspc_play(media_pipe_t *mp, AVIOContext *avio, char *errbuf, size_t errlen)
-{
-  media_queue_t *mq = &mp->mp_audio;
-#error fa_fsize can return -1 .. deal with it
-  size_t r, siz = fa_fsize(fh);
-  uint8_t *buf = malloc(siz);
-  media_buf_t *mb = NULL;
-  event_t *e;
-  int hold = 0;
-  int sample = 0;
-  unsigned int duration = INT32_MAX;
-
-  mp_set_playstatus_by_hold(mp, hold, NULL);
-
-  mp->mp_audio.mq_stream = 0;
-
-  fa_seek(fh, 0, SEEK_SET);
-  r = fa_read(fh, buf, siz);
-  fa_close(fh);
-  
-  if(r != siz) {
-    free(buf);
-    snprintf(errbuf, errlen, "openspc: Unable to read file");
-    return NULL;
-  }
-
-  if(OSPC_Init(buf, siz)) {
-    free(buf);
-    snprintf(errbuf, errlen, "openspc: Unable to initialize file");
-    return NULL;
-  }
-
-  if(!memcmp("v0.30", buf + 0x1c, 4) && buf[0x23] == 0x1a) {
-    char str[4];
-    memcpy(str, buf + 0xa9, 3);
-    str[3] = 0;
-    duration = atoi(str) * 32000;
-  }
-
-  mp_set_play_caps(mp, MP_PLAY_CAPS_PAUSE);
-
-  mp_become_primary(mp);
-
-  while(1) {
-
-    if(mb == NULL) {
-
-      if(sample > duration) {
-	while((e = mp_wait_for_empty_queues(mp, 0)) != NULL) {
-	  if(event_is_type(e, EVENT_PLAYQUEUE_JUMP) ||
-	     event_is_action(e, ACTION_PREV_TRACK) ||
-	     event_is_action(e, ACTION_NEXT_TRACK) ||
-	     event_is_action(e, ACTION_STOP)) {
-	    mp_flush(mp, 0);
-	    break;
-	  }
-	  event_release(e);
-	}
-	if(e == NULL)
-	  e = event_create_type(EVENT_EOF);
-	break;
-       }
-
-      mb = media_buf_alloc();
-      mb->mb_data_type = MB_AUDIO;
-      mb->mb_size = sizeof(int16_t) * 2048 * 2;
-      mb->mb_data = malloc(mb->mb_size);
-      mb->mb_size = OSPC_Run(-1, mb->mb_data, mb->mb_size);
-
-      mb->mb_channels = 2;
-      mb->mb_rate = 32000;
-
-      mb->mb_time = sample * 1000000LL / mb->mb_rate;
-      sample += 2048;
-    }
-
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
-      mb = NULL; /* Enqueue succeeded */
-      continue;
-    }
-
-    if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
-      mp_flush(mp, 0);
-      break;
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_MP_NO_LONGER_PRIMARY)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_MP_IS_PRIMARY)) {
-
-      if(lost_focus) {
-	hold = 0;
-	lost_focus = 0;
-	mp_send_cmd_head(mp, mq, MB_CTRL_PLAY);
-	mp_set_playstatus_by_hold(mp, hold, NULL);
-      }
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      lost_focus = 0;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_action(e, ACTION_PREV_TRACK) ||
-	      event_is_action(e, ACTION_NEXT_TRACK) ||
-	      event_is_action(e, ACTION_STOP)) {
-      mp_flush(mp, 0);
-      break;
-    }
-    event_release(e);
-  }
-
-  free(buf);
-  return e;
-}
-
-#endif
 
 
 /**
@@ -231,7 +96,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     return NULL;
 
   // First we need to check for a few other formats
-#if ENABLE_LIBOPENSPC || ENABLE_LIBGME
+#if ENABLE_LIBGME
 
   uint8_t pb[128];
   size_t psiz;
@@ -246,11 +111,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 #if ENABLE_LIBGME
   if(*gme_identify_header(pb))
     return fa_gme_playfile(mp, fh, errbuf, errlen, hold, url);
-#endif
-
-#if ENABLE_LIBOPENSPC
-  if(!memcmp(pb, "SNES-SPC700 Sound File Data", 27))
-    return openspc_play(mp, fh, errbuf, errlen);
 #endif
 
 #endif

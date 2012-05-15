@@ -565,16 +565,6 @@ if enabled nvctrl; then
 fi
 
 
-#
-# libopenspc
-#
-if enabled libopenspc; then
-    
-    check_header "openspc.h" || fatal "openspc" "Missing include file openspc.h"
-    check_lib    "openspc"   || fatal "openspc" "Unable to link with libopenspc"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lopenspc"
-fi
-
 
 #
 # libgme

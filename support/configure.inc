@@ -52,7 +52,6 @@ CONFIG_LIST="
  appleremote
  bonjour
  nvctrl
- libopenspc
  libgme
  libxss
  libxv
