@@ -415,7 +415,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
 
   while(len > 0) {
     rlen = av_parser_parse2(cw->parser_ctx, ctx, &outbuf, &outlen, buf, len, 
-			    pts, dts, AV_NOPTS_VALUE);
+			    pts, dts, 0);
     if(outlen) {
       e = dvd_media_enqueue(dp, mq, cw, data_type, outbuf, outlen, rate,
 			    cw->parser_ctx->dts, cw->parser_ctx->pts);
