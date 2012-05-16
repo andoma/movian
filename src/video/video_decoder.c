@@ -359,13 +359,34 @@ vd_thread(void *aux)
       reinit = 1;
       break;
 
-#ifdef CONFIG_DVD
-    case MB_DVD_HILITE:
+#if ENABLE_DVD
     case MB_DVD_RESET_SPU:
+      vd->vd_spu_curbut = 1;
+      dvdspu_flush(vd);
+      break;
+
     case MB_DVD_CLUT:
-    case MB_DVD_PCI:
+      printf("CLUT updated\n");
+      dvdspu_decode_clut(vd->vd_dvd_clut, mb->mb_data);
+      break;
+      
     case MB_DVD_SPU:
-      dvdspu_decoder_dispatch(vd, mb, mp);
+      printf("SPU updated\n");
+      dvdspu_enqueue(vd, mb, vd->vd_dvd_clut, 0, 0);
+      break;
+      
+    case MB_DVD_HILITE:
+      vd->vd_spu_curbut = mb->mb_data32;
+      vd->vd_spu_repaint = 1;
+      break;
+
+    case MB_DVD_PCI:
+      memcpy(&vd->vd_pci, mb->mb_data, sizeof(pci_t));
+      vd->vd_spu_repaint = 1;
+      event_t *e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
+      memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
+      mp_enqueue_event(mp, e);
+      event_release(e);
       break;
 #endif
 
@@ -431,9 +452,8 @@ video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
 
   vd_init_timings(vd);
 
-#ifdef CONFIG_DVD
-  dvdspu_decoder_init(vd);
-#endif
+  TAILQ_INIT(&vd->vd_spu_queue);
+  hts_mutex_init(&vd->vd_spu_mutex);
 
   TAILQ_INIT(&vd->vd_overlay_queue);
   hts_mutex_init(&vd->vd_overlay_mutex);
@@ -468,9 +488,13 @@ video_decoder_stop(video_decoder_t *vd)
 void
 video_decoder_destroy(video_decoder_t *vd)
 {
-#ifdef CONFIG_DVD
-  dvdspu_decoder_deinit(vd);
-#endif
+  dvdspu_t *d;
+
+  while((d = TAILQ_FIRST(&vd->vd_spu_queue)) != NULL)
+    dvdspu_destroy(vd, d);
+
+  hts_mutex_destroy(&vd->vd_spu_mutex);
+
   video_overlay_flush(vd, 0);
 
   hts_mutex_destroy(&vd->vd_overlay_mutex);

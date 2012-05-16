@@ -26,10 +26,10 @@
 #include "misc/kalman.h"
 
 #if ENABLE_DVD
-TAILQ_HEAD(dvdspu_queue, dvdspu);
 #include <dvdnav/dvdnav.h>
 #endif
 
+TAILQ_HEAD(dvdspu_queue, dvdspu);
 TAILQ_HEAD(video_overlay_queue, video_overlay);
 
 #define VIDEO_DECODER_REORDER_SIZE 16
@@ -130,19 +130,18 @@ typedef struct video_decoder {
   /**
    * DVD / SPU related members
    */
-#ifdef CONFIG_DVD
   struct dvdspu_queue vd_spu_queue;
 
-  uint32_t *vd_spu_clut;
   
   hts_mutex_t vd_spu_mutex;
 
+#ifdef CONFIG_DVD
+  uint32_t vd_dvd_clut[16];
   pci_t vd_pci;
+#endif
 
   int vd_spu_curbut;
   int vd_spu_repaint;
-
-#endif
   int vd_spu_in_menu;
 
   /**
@@ -201,7 +200,6 @@ void video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts);
  *
  * This include both subtitling and menus on DVDs
  */
-#if ENABLE_DVD
 
 typedef struct dvdspu {
 
@@ -223,6 +221,11 @@ typedef struct dvdspu {
 
   int d_destroyme;
 
+  uint32_t d_clut[16];
+
+  int d_canvas_width;
+  int d_canvas_height;
+
 } dvdspu_t;
 
 void dvdspu_decoder_init(video_decoder_t *vd);
@@ -236,7 +239,16 @@ void dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb,
 
 int dvdspu_decode(dvdspu_t *d, int64_t pts);
 
-#endif
+void dvdspu_decode_clut(uint32_t *dst, const uint32_t *src);
+
+void dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb, const uint32_t *clut,
+		    int w, int h);
+
+void dvdspu_flush(video_decoder_t *vd);
+
+int dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
+			AVCodecContext *ctx, media_pipe_t *mp);
+
 
 #endif /* VIDEO_DECODER_H */
 

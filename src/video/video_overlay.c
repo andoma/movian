@@ -177,9 +177,9 @@ calculate_subtitle_duration(int txt_len)
 void 
 video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
 {
-  media_codec_t *cw = mb->mb_cw;
+  media_codec_t *mc = mb->mb_cw;
   
-  if(cw == NULL) {
+  if(mc == NULL) {
 
     int offset = 0;
     char *str;
@@ -200,7 +200,11 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
 				   AV_NOPTS_VALUE, 1,
 				   mb->mb_font_context);
   } else {
-    video_subtitles_lavc(vd, mb, cw->codec_ctx);
+      
+    if(mc->decode) 
+      mc->decode(mc, vd, NULL, mb, 0);
+    else
+      video_subtitles_lavc(vd, mb, mc->codec_ctx);
   }
 }
 
@@ -237,3 +241,20 @@ video_overlay_flush(video_decoder_t *vd, int send)
   vo->vo_type = VO_FLUSH;
   video_overlay_enqueue(vd, vo);
 }
+
+
+/**
+ *
+ */
+int
+video_overlay_codec_create(media_codec_t *mc, enum CodecID id,
+			   AVCodecContext *ctx, media_pipe_t *mp)
+{
+  switch(id) {
+  case CODEC_ID_DVD_SUBTITLE:
+    return dvdspu_codec_create(mc, id, ctx, mp);
+  default:
+    return 1;
+  }
+}
+

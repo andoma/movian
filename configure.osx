@@ -51,6 +51,10 @@ enable realpath
 enable polarssl
 enable librtmp
 enable font_liberation
+enable dvd
+enable spotify
+enable vda
+enable fsevents
 
 for opt do
   optval="${opt#*=}"
@@ -82,10 +86,6 @@ setup_env "$@"
 enable libpthread
 enable zlib
 enable posix_networking
-enable dvd
-enable spotify
-enable vda
-enable fsevents
 
 #
 # c compiler

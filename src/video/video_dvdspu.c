@@ -244,53 +244,51 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
 /**
  *
  */
-static void
-dvdspu_new_clut(video_decoder_t *vd, media_buf_t *mb)
+static uint32_t 
+yuv_to_rgb(uint32_t u32)
 {
-  int i;
   int C, D, E, Y, U, V, R, G, B;
-  uint32_t u32;
 
-  if(vd->vd_spu_clut != NULL)
-    free(vd->vd_spu_clut);
+  Y = (u32 >> 16) & 0xff;
+  V = (u32 >> 8) & 0xff;
+  U = (u32 >> 0) & 0xff;
 
-  vd->vd_spu_clut = mb->mb_data;
+  C = Y - 16;
+  D = U - 128;
+  E = V - 128;
 
-  for(i = 0; i < 16; i++) {
-
-    u32 = vd->vd_spu_clut[i];
-
-    Y = (u32 >> 16) & 0xff;
-    V = (u32 >> 8) & 0xff;
-    U = (u32 >> 0) & 0xff;
-
-    C = Y - 16;
-    D = U - 128;
-    E = V - 128;
-
-    R = ( 298 * C           + 409 * E + 128) >> 8;
-    G = ( 298 * C - 100 * D - 208 * E + 128) >> 8;
-    B = ( 298 * C + 516 * D           + 128) >> 8;
+  R = ( 298 * C           + 409 * E + 128) >> 8;
+  G = ( 298 * C - 100 * D - 208 * E + 128) >> 8;
+  B = ( 298 * C + 516 * D           + 128) >> 8;
 
 #define clip256(x) ((x) < 0 ? 0 : ((x) > 255 ? 255 : (x)))
 
-    R = clip256(R);
-    G = clip256(G);
-    B = clip256(B);
+  R = clip256(R);
+  G = clip256(G);
+  B = clip256(B);
 
-    u32 = R << 0 | G << 8 | B << 16;
+  return R << 0 | G << 8 | B << 16;
+}
 
-    vd->vd_spu_clut[i] = u32;
-  }
-  mb->mb_data = NULL;
+/**
+ *
+ */
+void
+dvdspu_decode_clut(uint32_t *dst, const uint32_t *src)
+{
+  int i;
+
+  for(i = 0; i < 16; i++)
+    dst[i] = yuv_to_rgb(src[i]);
 }
 
 
 /**
  *
  */
-static void
-dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb)
+void
+dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb, const uint32_t *clut,
+	       int w, int h)
 {
   dvdspu_t *d;
 
@@ -298,10 +296,13 @@ dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb)
     return;
 
   d = calloc(1, sizeof(dvdspu_t));
+  memcpy(d->d_clut, clut, 16 * sizeof(uint32_t));
   d->d_data = mb->mb_data;
   d->d_size = mb->mb_size;
   d->d_cmdpos = getbe16(d->d_data + 2);
   d->d_pts = mb->mb_pts;
+  d->d_canvas_width  = w;
+  d->d_canvas_height = h;
 
   hts_mutex_lock(&vd->vd_spu_mutex);
   TAILQ_INSERT_TAIL(&vd->vd_spu_queue, d, d_link);
@@ -324,7 +325,7 @@ dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d)
 /**
  *
  */
-static void
+void
 dvdspu_flush(video_decoder_t *vd)
 {
   dvdspu_t *d;
@@ -337,73 +338,107 @@ dvdspu_flush(video_decoder_t *vd)
   hts_mutex_unlock(&vd->vd_spu_mutex);
 }
 
+
 /**
  *
  */
-void
-dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb, media_pipe_t *mp)
-{
-  event_t *e;
+typedef struct {
+  uint32_t clut[16];
+  int w, h;
+} dvdspu_codec_t;
 
-  if(mb->mb_data_type == MB_DVD_RESET_SPU) {
-    vd->vd_spu_curbut = 1;
-    dvdspu_flush(vd);
+
+
+/**
+ *
+ */
+static void
+dvdspu_codec_decode(struct media_codec *mc, struct video_decoder *vd,
+		    struct media_queue *mq, struct media_buf *mb, int reqsize)
+{
+  dvdspu_codec_t *dc = mc->opaque;
+  dvdspu_enqueue(vd, mb, dc->clut, dc->w, dc->h);
+}
+
+
+/**
+ *
+ */
+static void
+dvdspu_codec_close(struct media_codec *mc)
+{
+  dvdspu_codec_t *dc = mc->opaque;
+  free(dc);
+}
+
+
+/**
+ *
+ */
+static void
+decode_palette(dvdspu_codec_t *dc, const char *str)
+{
+  char *end;
+  int i = 0;
+  while(*str && i < 16) {
+    int v = strtol(str, &end, 16);
+    dc->clut[i++] = v;
+    str = end;
+    while(*str == ' ')
+      str++;
+    if(*str == ',')
+      str++;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+decode_size(dvdspu_codec_t *dc, const char *str)
+{
+  int w = atoi(str);
+  if((str = strchr(str, 'x')) == NULL)
     return;
-  }
-
-  switch(mb->mb_data_type) {
-  case MB_DVD_SPU:
-    dvdspu_enqueue(vd, mb);
-    break;
-    
-  case MB_DVD_CLUT:
-    dvdspu_new_clut(vd, mb);
-    break;
-    
-  case MB_DVD_PCI:
-    memcpy(&vd->vd_pci, mb->mb_data, sizeof(pci_t));
-    vd->vd_spu_repaint = 1;
-    
-    e = event_create(EVENT_DVD_PCI, sizeof(event_t) + sizeof(pci_t));
-    memcpy(e->e_payload, mb->mb_data, sizeof(pci_t));
-    mp_enqueue_event(mp, e);
-    event_release(e);
-    break;
-      
-  case MB_DVD_HILITE:
-    vd->vd_spu_curbut = mb->mb_data32;
-    vd->vd_spu_repaint = 1;
-    break;
-
-  default:
-    printf("MB type %d not supported by dvdspu decoder\n", mb->mb_data_type);
-    abort();
+  str++;
+  int h = atoi(str);
+  if(w > 0 && h > 0) {
+    dc->w = w;
+    dc->h = h;
   }
 }
-
-
 
 /**
  *
  */
-void
-dvdspu_decoder_init(video_decoder_t *vd)
+int
+dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
+		    AVCodecContext *ctx, media_pipe_t *mp)
 {
-  TAILQ_INIT(&vd->vd_spu_queue);
-  hts_mutex_init(&vd->vd_spu_mutex);
-}
+  if(ctx == NULL || ctx->extradata_size == 0)
+    return 1;
+  
+  dvdspu_codec_t *dc = calloc(1, sizeof(dvdspu_codec_t));
 
+  char *s = strdup((const char *)ctx->extradata);
+  char *sf = s;
+  int l;
 
-/**
- *
- */
-void
-dvdspu_decoder_deinit(video_decoder_t *vd)
-{
-  dvdspu_t *d;
+  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+    const char *p;
+    s[l] = 0;
+    if((p = mystrbegins(s, "palette:")) != NULL)
+      decode_palette(dc, p);
+    if((p = mystrbegins(s, "size:")) != NULL)
+      decode_size(dc, p);
+  }
 
-  while((d = TAILQ_FIRST(&vd->vd_spu_queue)) != NULL)
-    dvdspu_destroy(vd, d);
+  mc->opaque = dc;
+  mc->decode = dvdspu_codec_decode;
+  mc->close = dvdspu_codec_close;
 
-  hts_mutex_destroy(&vd->vd_spu_mutex);
+  free(sf);
+
+  return 0;
 }

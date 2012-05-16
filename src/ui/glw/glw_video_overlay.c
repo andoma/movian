@@ -262,7 +262,7 @@ glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
 {
   glw_video_overlay_t *gvo;
   glw_root_t *gr = gv->w.glw_root;
-  int show_dvd_overlays = 0;
+  int show_dvd_overlays = 1;
   glw_rctx_t rc0;
 
 #if ENABLE_DVD
@@ -271,7 +271,7 @@ glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
      (glw_is_focused(&gv->w) || !vd->vd_pci.hli.hl_gi.hli_ss))
     show_dvd_overlays = 1;
 #endif
-  
+
   LIST_FOREACH(gvo, &gv->gv_overlays, gvo_link) {
 
     if(gv->gv_vo_on_video || gvo->gvo_videoframe_align)
@@ -358,16 +358,19 @@ glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
 	glw_renderer_vtx_pos(&gvo->gvo_renderer, 3, x1, y2, 0.0);
 
       } else {
-	float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
-	glw_Scalef(&rc0, 
-		   2.0f / gv->gv_cfg_cur.gvc_width[0], 
-		   -2.0f / (ys * gv->gv_cfg_cur.gvc_height[0]), 
-		   0.0f);
+	float w,h;
+
+	if(gvo->gvo_canvas_width && gvo->gvo_canvas_height) {
+	  w = gvo->gvo_canvas_width;
+	  h = gvo->gvo_canvas_height;
+	} else {
+	  float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
+	  w = gv->gv_cfg_cur.gvc_width[0];
+	  h = gv->gv_cfg_cur.gvc_height[0] * ys;
+	}
       
-	glw_Translatef(&rc0, 
-		       -gv->gv_cfg_cur.gvc_width[0]  / 2,
-		       (ys * -gv->gv_cfg_cur.gvc_height[0]) / 2, 
-		       0.0f);
+	glw_Scalef(&rc0, 2 / w, -2 / h, 1.0f);
+	glw_Translatef(&rc0, -w  / 2, -h / 2, 0.0f);
       }
 
       glw_renderer_draw(&gvo->gvo_renderer, gr, &rc0,
@@ -454,28 +457,25 @@ glw_video_overlay_pointer_event(video_decoder_t *vd, int width, int height,
 }
 
 
-#if ENABLE_DVD
 /**
  *
  */
 static void
 spu_repaint(glw_video_t *gv, dvdspu_t *d)
 {
-  video_decoder_t *vd = gv->gv_vd;
   int width  = d->d_x2 - d->d_x1;
   int height = d->d_y2 - d->d_y1;
   int outsize = width * height * 4;
   uint32_t *tmp, *t0; 
   int x, y, i;
   uint8_t *buf = d->d_bitmap;
-  pci_t *pci = &vd->vd_pci;
-  dvdnav_highlight_area_t ha;
+
+#if ENABLE_DVD  
+  video_decoder_t *vd = gv->gv_vd;
   int hi_palette[4];
   int hi_alpha[4];
-
-  if(vd->vd_spu_clut == NULL)
-    return;
-  
+  dvdnav_highlight_area_t ha;
+  pci_t *pci = &vd->vd_pci;
   vd->vd_spu_in_menu = pci->hli.hl_gi.hli_ss;
 
   if(pci->hli.hl_gi.hli_ss &&
@@ -493,14 +493,13 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
     hi_palette[3] = (ha.palette >> 28) & 0xf;
   }
 
-  t0 = tmp = malloc(outsize);
-
-
   ha.sx -= d->d_x1;
   ha.ex -= d->d_x1;
-
   ha.sy -= d->d_y1;
   ha.ey -= d->d_y1;
+#endif
+
+  t0 = tmp = malloc(outsize);
 
   /* XXX: this can be optimized in many ways */
 
@@ -508,17 +507,20 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
     for(x = 0; x < width; x++) {
       i = buf[0];
 
+#if ENABLE_DVD
       if(pci->hli.hl_gi.hli_ss &&
 	 x >= ha.sx && y >= ha.sy && x <= ha.ex && y <= ha.ey) {
 
 	if(hi_alpha[i] == 0) {
 	  *tmp = 0;
 	} else {
-	  *tmp = vd->vd_spu_clut[hi_palette[i] & 0xf] | 
+	  *tmp = d->d_clut[hi_palette[i] & 0xf] |
 	    ((hi_alpha[i] * 0x11) << 24);
 	}
 
-      } else {
+      } else
+#endif
+	{
 
 	if(d->d_alpha[i] == 0) {
 	  
@@ -527,7 +529,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 	  
 	  *tmp = 0;
 	} else {
-	  *tmp = vd->vd_spu_clut[d->d_palette[i] & 0xf] | 
+	  *tmp = d->d_clut[d->d_palette[i] & 0xf] | 
 	    ((d->d_alpha[i] * 0x11) << 24);
 	}
       }
@@ -541,6 +543,10 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 
   
   glw_video_overlay_t *gvo = gvo_create(AV_NOPTS_VALUE, GVO_DVDSPU);
+
+  gvo->gvo_canvas_width   = d->d_canvas_width;
+  gvo->gvo_canvas_height  = d->d_canvas_height;
+
   LIST_INSERT_HEAD(&gv->gv_overlays, gvo, gvo_link);
   glw_root_t *gr = gv->w.glw_root;
   gvo->gvo_videoframe_align = 1;
@@ -616,7 +622,6 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
   }
   hts_mutex_unlock(&vd->vd_spu_mutex);
 }
-#endif
 
 
 /**
@@ -638,6 +643,8 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_stop = vo->vo_stop;
   gvo->gvo_fadein = vo->vo_fadein;
   gvo->gvo_fadeout = vo->vo_fadeout;
+  gvo->gvo_canvas_width   = vo->vo_canvas_width;
+  gvo->gvo_canvas_height  = vo->vo_canvas_height;
 
   glw_renderer_init_quad(&gvo->gvo_renderer);
 
@@ -816,10 +823,8 @@ glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
 {
   const video_decoder_t *vd = gv->gv_vd;
   int want_focus = 0;
-
-#if ENABLE_DVD
+  printf("Video overlay PTS = %lld\n", pts);
   glw_video_overlay_spu_layout(gv, pts);
-#endif
   pts -= vd->vd_mp->mp_svdelta;
   pts -= vd->vd_mp->mp_pts_delta_for_subs;
 
@@ -830,6 +835,7 @@ glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
   if(vd->vd_pci.hli.hl_gi.hli_ss)
     want_focus = 1;
 #endif
+
   glw_set_focus_weight(&gv->w, want_focus ? 1.0 : 0.0);
 }
 

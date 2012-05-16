@@ -37,6 +37,7 @@
 #include "i18n.h"
 #include "video/ext_subtitles.h"
 #include "video/video_settings.h"
+#include "video/video_overlay.h"
 #include "settings.h"
 
 // -- Video accelerators ---------
@@ -1162,6 +1163,10 @@ media_codec_create(int codec_id, int parser,
 
   } else
 #endif
+  if(!video_overlay_codec_create(mc, codec_id, ctx, mp)) {
+
+  } else
+
   if(media_codec_create_lavc(mc, codec_id, ctx, mcp)) {
     free(mc);
     return NULL;
