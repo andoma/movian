@@ -373,6 +373,8 @@ media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pk
 
 media_pipe_t *mp_create(const char *name, int flags, const char *type);
 
+void mp_reinit_streams(media_pipe_t *mp);
+
 #define mp_ref_inc(mp) atomic_add(&(mp)->mp_refcount, 1)
 void mp_ref_dec(media_pipe_t *mp);
 
@@ -460,16 +462,15 @@ void mp_add_track(prop_t *parent,
 		  prop_t *sourcep,
 		  int score);
 
-prop_vec_t *mp_add_trackr(prop_t *parent,
-			  rstr_t *title,
-			  const char *url,
-			  rstr_t *format,
-			  rstr_t *longformat,
-			  rstr_t *isolang,
-			  rstr_t *source,
-			  prop_t *sourcep,
-			  int score,
-			  prop_vec_t *vec);
+void mp_add_trackr(prop_t *parent,
+		   rstr_t *title,
+		   const char *url,
+		   rstr_t *format,
+		   rstr_t *longformat,
+		   rstr_t *isolang,
+		   rstr_t *source,
+		   prop_t *sourcep,
+		   int score);
 
 void mp_add_track_off(prop_t *tracks, const char *title);
 

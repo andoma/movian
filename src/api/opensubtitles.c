@@ -297,7 +297,7 @@ async_query_thread(void *aux)
  *
  */
 void
-opensub_add_subtitles(prop_t *node, htsmsg_t *query)
+opensub_add_subtitles(prop_t *node, htsmsg_t *query, hts_thread_t *tid)
 {
   opensub_async_query_t *oaq;
 
@@ -311,7 +311,7 @@ opensub_add_subtitles(prop_t *node, htsmsg_t *query)
   oaq->node = prop_ref_inc(node);
   oaq->query = query;
 
-  hts_thread_create_detached("opensub query", async_query_thread, oaq,
+  hts_thread_create_joinable("opensub query", tid, async_query_thread, oaq,
 			     THREAD_PRIO_LOW);
 }
 

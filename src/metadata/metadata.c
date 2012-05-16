@@ -152,9 +152,8 @@ type2content(const char *str)
 /**
  *
  */
-static prop_vec_t *
-metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
-			  prop_vec_t *vec)
+static void
+metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 {
   char url[16];
   int score = 0;
@@ -175,29 +174,27 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
     title = rstr_alloc(buf);
     rstr_release(fmt);
   }
-
-  vec = mp_add_trackr(parent,
-		      title,
-		      url,
-		      ms->ms_codec,
-		      ms->ms_info,
-		      ms->ms_isolang,
-		      NULL,
-		      _p("Embedded in file"),
-		      score,
-		      vec);
-
+  
+  mp_add_trackr(parent,
+		title,
+		url,
+		ms->ms_codec,
+		ms->ms_info,
+		ms->ms_isolang,
+		NULL,
+		_p("Embedded in file"),
+		score);
+  
   rstr_release(title);
-  return vec;
 }
 
 
 /**
  *
  */
-prop_vec_t *
-metadata_to_proptree(const metadata_t *md, prop_t *proproot,
-		     int cleanup_streams, prop_vec_t *streams)
+void
+metadata_to_proptree(const metadata_t *md, prop_t *proproot, 
+		     int cleanup_streams)
 {
   metadata_stream_t *ms;
   int ac = 0, vc = 0, sc = 0, *pc;
@@ -244,7 +241,7 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
       prop_destroy_childs(p);
       *pc = 1;
     }
-    metadata_stream_make_prop(ms, p, streams);
+    metadata_stream_make_prop(ms, p);
   }
 
   if(md->md_format != NULL)
@@ -258,8 +255,6 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
-
-  return streams;
 }
 
 

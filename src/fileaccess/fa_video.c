@@ -69,7 +69,8 @@ static event_t *playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
  */
 typedef struct fs_sub_scanner {
   prop_t *p;
-  char *url;
+  const char *url;
+  int stop;
 } fs_sub_scanner_t;
 
 
@@ -100,7 +101,8 @@ fs_sub_match(const char *video, const char *sub)
  *
  */
 static void
-fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
+fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
+		int *stop)
 {
   char *postfix;
   fa_dir_t *fd;
@@ -116,10 +118,12 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video)
   }
 
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(*stop)
+      break;
 
     if(fde->fde_type == CONTENT_DIR &&
        !strcasecmp(rstr_get(fde->fde_filename), "subs")) {
-      fs_sub_scan_dir(prop, rstr_get(fde->fde_url), video);
+      fs_sub_scan_dir(prop, rstr_get(fde->fde_url), video, stop);
       continue;
     }
     const char *filename = rstr_get(fde->fde_filename);
@@ -165,29 +169,10 @@ fs_sub_scan_thread(void *aux)
 
   fa_parent(parent, sizeof(parent), fss->url);
 
-  fs_sub_scan_dir(fss->p, parent, fname);
+  fs_sub_scan_dir(fss->p, parent, fname, &fss->stop);
 
-  prop_ref_dec(fss->p);
-  free(fss->url);
-  free(fss);
   return NULL;
 }
-
-/**
- *
- */
-static void
-fs_sub_scan(prop_t *prop, const char *url)
-{
-  fs_sub_scanner_t *fss = malloc(sizeof(fs_sub_scanner_t));
-  fss->p = prop_ref_inc(prop);
-  fss->url = strdup(url);
-
-  hts_thread_create_detached("fs sub scan", fs_sub_scan_thread, fss,
-			     THREAD_PRIO_LOW);
-}
-
-
 
 
 /**
@@ -645,29 +630,40 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 
+  mp_reinit_streams(mp);
+
   /**
    * Update property metadata
    */
   metadata_t *md = fa_metadata_from_fctx(fctx, url);
-  prop_vec_t *streams = NULL;
   if(md != NULL) {
-    streams = metadata_to_proptree(md, mp->mp_prop_metadata, 0,
-				   prop_vec_create(10));
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
     metadata_destroy(md);
   }
 
   /**
    * Subtitles from filesystem
    */
-  if(!(flags & BACKEND_VIDEO_NO_FS_SCAN))
-    fs_sub_scan(mp->mp_prop_subtitle_tracks, url);
+  hts_thread_t fss_tid = 0;
+  fs_sub_scanner_t fss;
+
+  if(!(flags & BACKEND_VIDEO_NO_FS_SCAN)) {
+    fss.p = mp->mp_prop_subtitle_tracks;
+    fss.url = url;
+    fss.stop = 0;
+
+    hts_thread_create_joinable("fs sub scan", &fss_tid,
+			       fs_sub_scan_thread, &fss, THREAD_PRIO_LOW);
+  }
 
   /**
    * Query opensubtitles.org
    */
+  hts_thread_t opensub_tid = 0;
   if(!opensub_hash_rval && fsize != -1)
     opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
-			  opensub_build_query(NULL, hash, fsize, NULL, NULL));
+			  opensub_build_query(NULL, hash, fsize, NULL, NULL),
+			  &opensub_tid);
 
   /**
    * Init codec contexts
@@ -765,10 +761,14 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
-  if(streams != NULL) {
-    prop_vec_destroy_entries(streams);
-    prop_vec_release(streams);
-  }
+  fss.stop = 1;
+  if(fss_tid)
+    hts_thread_join(&fss_tid);
+  TRACE(TRACE_DEBUG, "Video", "Subtitle scanner joined");
+
+  if(opensub_tid)
+    hts_thread_join(&opensub_tid);
+  TRACE(TRACE_DEBUG, "Video", "Opensubtitle scanner joined");
 
   mp->mp_pts_delta_for_subs = 0;
   mp_flush(mp, 0);
