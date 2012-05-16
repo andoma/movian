@@ -242,12 +242,17 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 
   do {
 
-    if((e = mb_enqueue_with_events(dp->dp_mp, mq, mb)) == NULL)
+    if((e = mb_enqueue_with_events(dp->dp_mp, mq, mb)) == NULL) {
+      mb = NULL;
       break;
-    
+    }
+
     e = dvd_process_event(dp, e);
 
   } while(e == NULL);
+
+  if(mb != NULL)
+    media_buf_free_unlocked(dp->dp_mp, mb);
 
   return e;
 }
