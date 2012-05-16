@@ -23,4 +23,5 @@ ${APPDIR}/Contents/%: support/Showtime.app/Contents/%
 
 $(SPOTIFY_INST_PATH)/%: ${SPOTIFY_FRAMEWORK}/%
 	@mkdir -p $(dir $@)
+	@rm -f $@
 	@cp -a $< $@
