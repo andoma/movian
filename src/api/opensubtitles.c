@@ -218,63 +218,90 @@ async_query_do(prop_t *node, htsmsg_t *query)
   htsmsg_field_t *f;
   uint32_t v;
 
-  if(opensub_login(0, errbuf, sizeof(errbuf))) {
-    TRACE(TRACE_ERROR, "opensubtitles", "Unable to login: %s", errbuf);
+  int r; // Retry counter
+
+  for(r = 0; r < 2; r++) {
+    
+    TRACE(TRACE_DEBUG, "opensubtitles", "Doing query #%d", r);
+
+    if(opensub_login(r, errbuf, sizeof(errbuf))) {
+      TRACE(TRACE_ERROR, "opensubtitles", "Unable to login: %s", errbuf);
+      break;
+    }
+
+    queries = htsmsg_create_list();
+    htsmsg_add_msg(queries, NULL, htsmsg_copy(query));
+
+    in = htsmsg_create_list();
+    htsmsg_add_str(in, NULL, opensub_token);
+    htsmsg_add_msg(in, NULL, queries);
+
+    out = xmlrpc_request(OPENSUB_URL,
+			 "SearchSubtitles", in, errbuf, sizeof(errbuf));
+
+    if(out == NULL) {
+      TRACE(TRACE_ERROR, "opensubtitles", "Unable to query: %s", errbuf);
+      continue;
+    }
+
+    if((m = htsmsg_get_map_in_list(out, 1)) == NULL) {
+      TRACE(TRACE_ERROR, "opensubtitles", "No parameter in response");
+      htsmsg_destroy(out);
+      continue;
+    }
+    
+    const char *status = htsmsg_get_str(m, "status");
+
+    if(status == NULL) {
+      TRACE(TRACE_ERROR, "opensubtitles", "No 'status' field in response");
+      htsmsg_destroy(out);
+      continue;
+    }
+
+    TRACE(TRACE_DEBUG, "opensubtitles", "Response: %s", status);
+
+    int code = atoi(status);
+
+    if(code != 200) {
+      TRACE(TRACE_DEBUG, "opensubtitles", "Request error, retrying...");
+      htsmsg_destroy(out);
+      continue;
+    }
+
+    if(!htsmsg_get_u32(m, "data", &v)) {
+      TRACE(TRACE_DEBUG, "opensubtitles", "No subtitles available");
+      htsmsg_destroy(out);
+      break;
+    }
+
+    if((data = htsmsg_get_list(m, "data")) == NULL) {
+      TRACE(TRACE_ERROR, "opensubtitles", "No 'data' field in response");
+      htsmsg_destroy(out);
+      continue;
+    }
+    int added = 0;
+    HTSMSG_FOREACH(f, data) {
+      if((entry = htsmsg_get_map_by_field(f)) == NULL)
+	continue;
+      
+      const char *url = htsmsg_get_str(entry, "SubDownloadLink");
+
+      if(url == NULL)
+	continue;
+      added++;
+      mp_add_track(node, NULL, url,
+		   htsmsg_get_str(entry, "SubFormat"),
+		   NULL,
+		   htsmsg_get_str(entry, "SubLanguageID"),
+		   "opensubtitles.org", NULL, 0);
+    }
+    TRACE(TRACE_DEBUG, "opensubtitles", "Got %d subtitles", added);
+    
+    htsmsg_destroy(out);
     htsmsg_destroy(query);
     return;
   }
-
-  queries = htsmsg_create_list();
-  htsmsg_add_msg(queries, NULL, query);
-
-  in = htsmsg_create_list();
-  htsmsg_add_str(in, NULL, opensub_token);
-  htsmsg_add_msg(in, NULL, queries);
-
-  out = xmlrpc_request(OPENSUB_URL,
-		       "SearchSubtitles", in, errbuf, sizeof(errbuf));
-  if(out == NULL) {
-    TRACE(TRACE_ERROR, "opensubtitles", "Unable to query: %s", errbuf);
-    return;
-  }
-
-  if((m = htsmsg_get_map_in_list(out, 1)) == NULL) {
-    TRACE(TRACE_ERROR, "opensubtitles", "No parameter in response");
-    htsmsg_destroy(out);
-    return;
-  }
-  
-  if(!htsmsg_get_u32(m, "data", &v)) {
-    TRACE(TRACE_DEBUG, "opensubtitles", "No subtitles available");
-    htsmsg_destroy(out);
-    return;
-  }
-
-  if((data = htsmsg_get_list(m, "data")) == NULL) {
-    TRACE(TRACE_ERROR, "opensubtitles", "No 'data' field in response");
-    htsmsg_destroy(out);
-    return;
-  }
-
-  TRACE(TRACE_DEBUG, "opensubtitles", "Got response");
-
-  HTSMSG_FOREACH(f, data) {
-    if((entry = htsmsg_get_map_by_field(f)) == NULL)
-      continue;
-
-    const char *url = htsmsg_get_str(entry, "SubDownloadLink");
-
-    if(url == NULL)
-      continue;
-
-    mp_add_track(node, NULL, url,
-		 htsmsg_get_str(entry, "SubFormat"),
-		 NULL,
-		 htsmsg_get_str(entry, "SubLanguageID"),
-		 "opensubtitles.org", NULL, 0);
-  }
-
-  htsmsg_destroy(out);
+  htsmsg_destroy(query);
 }
 
 /**
