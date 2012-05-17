@@ -366,12 +366,10 @@ vd_thread(void *aux)
       break;
 
     case MB_DVD_CLUT:
-      printf("CLUT updated\n");
       dvdspu_decode_clut(vd->vd_dvd_clut, mb->mb_data);
       break;
       
     case MB_DVD_SPU:
-      printf("SPU updated\n");
       dvdspu_enqueue(vd, mb, vd->vd_dvd_clut, 0, 0);
       break;
       
