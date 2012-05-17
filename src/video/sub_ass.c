@@ -101,8 +101,8 @@ typedef struct ass_style {
 } ass_style_t;
 
 static const ass_style_t ass_style_default = {
-  .as_primary_color = 0xffffffff,
-  .as_outline_color = 0xff000000,
+  .as_primary_color = 0xffffff,
+  .as_outline_color = 0x000000,
   .as_shadow = 1,
   .as_outline = 1,
   .as_bold = 1,
@@ -208,8 +208,6 @@ ass_parse_color(const char *str)
   case 2: rgba |= hexnibble(str[l-2]) << 4;
   case 1: rgba |= hexnibble(str[l-1]);
   }
-  if((rgba & 0xff000000) == 0)
-    rgba |= 0xff000000;
 
   return rgba;
 }
@@ -230,8 +228,8 @@ ass_parse_v4style(ass_decoder_ctx_t *adc, const char *str)
     return;
 
   as = calloc(1, sizeof(ass_style_t));
-  as->as_primary_color = 0xffffffff;
-  as->as_outline_color = 0xff000000;
+  as->as_primary_color = 0x00ffffff;
+  as->as_outline_color = 0x00000000;
 
   while(*fmt && *str) {
     gettoken(key, sizeof(key), &fmt);
@@ -503,7 +501,9 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
   } else {
 
     ad_txt_append(&ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
-    ad_txt_append(&ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
+
+    int alpha = 255 - (as->as_primary_color >> 24);
+    ad_txt_append(&ad, TR_CODE_ALPHA | alpha);
     ad_txt_append(&ad, TR_CODE_OUTLINE_COLOR|(as->as_outline_color & 0xffffff));
     ad_txt_append(&ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
     ad_txt_append(&ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
