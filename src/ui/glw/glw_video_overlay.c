@@ -787,7 +787,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
       // FALLTHRU
     case VO_FLUSH:
       gvo_flush_all(gv);
-      video_overlay_destroy(vd, vo);
+      video_overlay_dequeue_destroy(vd, vo);
       continue;
 
     case VO_BITMAP:
@@ -796,7 +796,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
       gvo_flush_infinite(gv);
       if(vo->vo_pixmap != NULL)
         gvo_create_from_vo_bitmap(gv, vo);
-      video_overlay_destroy(vd, vo);
+      video_overlay_dequeue_destroy(vd, vo);
       continue;
 
     case VO_TEXT:
@@ -804,7 +804,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
         break;
       gvo_flush_infinite(gv);
       gvo_create_from_vo_text(gv, vo);
-      video_overlay_destroy(vd, vo);
+      video_overlay_dequeue_destroy(vd, vo);
       continue;
 
     }
@@ -823,7 +823,7 @@ glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
 {
   const video_decoder_t *vd = gv->gv_vd;
   int want_focus = 0;
-  printf("Video overlay PTS = %lld\n", pts);
+
   glw_video_overlay_spu_layout(gv, pts);
   pts -= vd->vd_mp->mp_svdelta;
   pts -= vd->vd_mp->mp_pts_delta_for_subs;

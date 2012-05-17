@@ -128,7 +128,10 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
     }
     const char *filename = rstr_get(fde->fde_filename);
     postfix = strrchr(filename, '.');
-    if(postfix != NULL && !strcasecmp(postfix, ".srt")) {
+    if(postfix == NULL)
+      continue;
+
+    if(!strcasecmp(postfix, ".srt")) {
       const char *lang = NULL;
       if(postfix - filename > 4 && postfix[-4] == '.') {
 	char b[4];
@@ -145,6 +148,26 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
 
       mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
 		   "SRT", NULL, lang, NULL, _p("External file"), score);
+    }
+
+    
+    if(!strcasecmp(postfix, ".ass") || !strcasecmp(postfix, ".ssa")) {
+      const char *lang = NULL;
+      if(postfix - filename > 4 && postfix[-4] == '.') {
+	char b[4];
+	memcpy(b, postfix - 3, 3);
+	b[3] = 0;
+	lang = isolang_iso2lang(b);
+      }
+
+      int score = fs_sub_match(video, rstr_get(fde->fde_url));
+      TRACE(TRACE_DEBUG, "Video", "SSA/ASS %s score=%d", fde->fde_url, score); 
+
+      if(score == 0 && !subtitle_settings.include_all_subs)
+	continue;
+
+      mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
+		   "ASS / SSA", NULL, lang, NULL, _p("External file"), score);
     }
   }
   fa_dir_free(fd);

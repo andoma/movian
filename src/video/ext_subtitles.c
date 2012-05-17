@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "showtime.h"
 #include "ext_subtitles.h"
@@ -48,17 +49,32 @@ ese_cmp(const ext_subtitle_entry_t *a, const ext_subtitle_entry_t *b)
 /**
  *
  */
-static void
-ese_insert(ext_subtitles_t *es, char *txt, int64_t start, int64_t stop)
+void
+ese_insert(ext_subtitles_t *es, void *data, int64_t start, int64_t stop)
 {
-  ext_subtitle_entry_t *ese = malloc(sizeof(ext_subtitle_entry_t));
+  ext_subtitle_entry_t *d, *ese = malloc(sizeof(ext_subtitle_entry_t));
   ese->ese_start = start;
   ese->ese_stop = stop;
-  ese->ese_text = txt;
-  if(RB_INSERT_SORTED(&es->es_entries, ese, ese_link, ese_cmp)) {
-    // Collision
+  printf("Insert %lld - %lld\n", start, stop);
+  if((d = RB_INSERT_SORTED(&es->es_entries, ese, ese_link, ese_cmp)) != NULL) {
     free(ese);
-    free(txt);
+    ese = d;
+    printf("Collision, items = %d\n", ese->ese_items);
+    assert(ese->ese_items > 0);
+    if(ese->ese_items == 1) {
+      void **esd = malloc(sizeof(void *) * 2);
+      esd[0] = ese->ese_data;
+      esd[1] = data;
+      ese->ese_items = 2;
+      ese->ese_vec = esd;
+    } else {
+      ese->ese_vec = realloc(ese->ese_vec, sizeof(void) * (ese->ese_items + 1));
+      ese->ese_vec[ese->ese_items] = data;
+      ese->ese_items++;
+    }
+  } else {
+    ese->ese_items = 1;
+    ese->ese_data = data;
   }
 }
 
@@ -206,13 +222,31 @@ is_srt(const char *buf, size_t len)
 /**
  *
  */
+static int
+is_ass(const char *buf, size_t len)
+{
+  if(strstr(buf, "[Script Info]") == NULL)
+    return 0;
+  if(strstr(buf, "[Events]") == NULL)
+    return 0;
+  return 1;
+}
+
+
+
+/**
+ *
+ */
 static void
 ext_srt_decode(struct video_decoder *vd, struct ext_subtitles *es,
 	       ext_subtitle_entry_t *ese)
 {
-  video_overlay_render_cleartext(vd, ese->ese_text,
-				 ese->ese_start, ese->ese_stop,
-				 1, 0);
+  int i;
+  void * const *esd = ese_get_data(ese);
+  for(i = 0; i < ese->ese_items; i++)
+    video_overlay_render_cleartext(vd, esd[i],
+				   ese->ese_start, ese->ese_stop,
+				   1, 0);
 }
 
 
@@ -328,9 +362,12 @@ static void
 ext_ttlm_decode(struct video_decoder *vd, struct ext_subtitles *es,
 		ext_subtitle_entry_t *ese)
 {
-  video_overlay_render_cleartext(vd, ese->ese_text,
-				 ese->ese_start, ese->ese_stop,
-				 0, 0);
+  int i;
+  void **items = ese_get_data(ese);
+  for(i = 0; i < ese->ese_items; i++)
+    video_overlay_render_cleartext(vd, items[i],
+				   ese->ese_start, ese->ese_stop,
+				   0, 0);
 }
 
 
@@ -399,50 +436,38 @@ load_ttml(const char *url, char **buf, size_t len)
 /**
  *
  */
-static void __attribute__((unused))
-dump_subtitles(ext_subtitles_t *es)
-{
-  ext_subtitle_entry_t *se;
-
-  RB_FOREACH(se, &es->es_entries, ese_link) {
-    printf("PAGE: %"PRId64" -> %"PRId64"\n--\n%s\n--\n",
-	   se->ese_start, se->ese_stop, se->ese_text);
-  }
-}
-
-/**
- *
- */
 static ext_subtitles_t *
-subtitles_create(const char *path, char **bufp, size_t len)
+subtitles_create(const char *path, char *buf, size_t len)
 {
   ext_subtitles_t *s = NULL;
-
-  if(is_ttml(*bufp, len)) {
-    s = load_ttml(path, bufp, len);
+  
+  if(is_ttml(buf, len)) {
+    s = load_ttml(path, &buf, len);
   } else {
 
     int force_utf8 = 0;
-    const char *buf = *bufp;
-
+    char *b0 = buf;
     if(len > 2 && ((buf[0] == 0xff && buf[1] == 0xfe) ||
 		   (buf[0] == 0xfe && buf[1] == 0xff))) {
       // UTF-16 BOM
-      utf16_to_utf8(bufp, &len);
-      buf = *bufp;
+      utf16_to_utf8(&buf, &len);
       force_utf8 = 1;
+      b0 = buf;
     } else if(len > 3 && buf[0] == 0xef && buf[1] == 0xbb && buf[2] == 0xbf) {
       // UTF-8 BOM
       force_utf8 = 1;
-      buf += 3;
+      b0 += 3;
       len -= 3;
     }
 
     if(is_srt(buf, len))
-      s = load_srt(path, buf, len, force_utf8);
+      s = load_srt(path, b0, len, force_utf8);
+    if(is_ass(buf, len))
+      s = load_ssa(path, b0, len);
   }
 
   //  if(s)dump_subtitles(s);
+  free(buf);
   return s;
 }
 
@@ -451,13 +476,29 @@ subtitles_create(const char *path, char **bufp, size_t len)
  *
  */
 static void
-subtitle_entry_destroy(ext_subtitle_entry_t *ese)
+subtitle_entry_destroy(ext_subtitles_t *es, ext_subtitle_entry_t *ese)
 {
   if(ese->ese_link.left != NULL)
-    subtitle_entry_destroy(ese->ese_link.left);
+    subtitle_entry_destroy(es, ese->ese_link.left);
   if(ese->ese_link.right != NULL)
-    subtitle_entry_destroy(ese->ese_link.right);
-  free(ese->ese_text);
+    subtitle_entry_destroy(es, ese->ese_link.right);
+  if(ese->ese_items == 1) {
+    if(es->es_free_entry_data)
+      es->es_free_entry_data(ese->ese_data);
+    else
+      free(ese->ese_data);
+  }
+  else {
+    int i;
+    for(i = 0; i < ese->ese_items; i++) {
+      if(es->es_free_entry_data)
+	es->es_free_entry_data(ese->ese_vec[i]);
+      else
+	free(ese->ese_vec[i]);
+    }
+    free(ese->ese_vec);
+  }
+
   free(ese);
 }
 
@@ -470,7 +511,7 @@ void
 subtitles_destroy(ext_subtitles_t *es)
 {
   if(es->es_entries.root != NULL)
-    subtitle_entry_destroy(es->es_entries.root);
+    subtitle_entry_destroy(es, es->es_entries.root);
 
   free(es);
 }
@@ -544,9 +585,7 @@ subtitles_load(const char *url)
     datalen = size;
   }
 
-  sub = subtitles_create(url, &data, datalen);
-
-  free(data);
+  sub = subtitles_create(url, data, datalen);
 
   if(sub == NULL)
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- Unknown format", 

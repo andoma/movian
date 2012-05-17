@@ -213,13 +213,42 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
  *
  */
 void
-video_overlay_destroy(video_decoder_t *vd, video_overlay_t *vo)
+video_overlay_destroy(video_overlay_t *vo)
 {
-  TAILQ_REMOVE(&vd->vd_overlay_queue, vo, vo_link);
   if(vo->vo_pixmap != NULL)
     pixmap_release(vo->vo_pixmap);
   free(vo->vo_text);
   free(vo);
+}
+
+
+/**
+ *
+ */
+video_overlay_t *
+video_overlay_dup(video_overlay_t *src)
+{
+  video_overlay_t *dst = malloc(sizeof(video_overlay_t));
+  memcpy(dst, src, sizeof(video_overlay_t));
+  
+  if(src->vo_pixmap)
+    dst->vo_pixmap = pixmap_dup(src->vo_pixmap);
+
+  if(src->vo_text) {
+    dst->vo_text = malloc(src->vo_text_length * sizeof(uint32_t));
+    memcpy(dst->vo_text, src->vo_text, src->vo_text_length * sizeof(uint32_t));
+  }
+  return dst;
+}
+
+/**
+ *
+ */
+void
+video_overlay_dequeue_destroy(video_decoder_t *vd, video_overlay_t *vo)
+{
+  TAILQ_REMOVE(&vd->vd_overlay_queue, vo, vo_link);
+  video_overlay_destroy(vo);
 }
 
 
@@ -232,7 +261,7 @@ video_overlay_flush(video_decoder_t *vd, int send)
   video_overlay_t *vo;
 
   while((vo = TAILQ_FIRST(&vd->vd_overlay_queue)) != NULL)
-    video_overlay_destroy(vd, vo);
+    video_overlay_dequeue_destroy(vd, vo);
 
   if(!send)
     return;

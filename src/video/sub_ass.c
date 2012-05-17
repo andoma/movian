@@ -15,6 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
 #include "showtime.h"
 #include "video_decoder.h"
 #include "video_overlay.h"
@@ -23,6 +24,7 @@
 #include "misc/string.h"
 #include "sub.h"
 #include "video_settings.h"
+#include "ext_subtitles.h"
 
 /**
  *
@@ -121,10 +123,13 @@ typedef struct ass_decoder_ctx {
 
   LIST_HEAD(, ass_style) adc_styles;
   const char *adc_style_format;
-  const char *adc_event_format;
-
+  char *adc_event_format;
+  
   int adc_canvas_width;
   int adc_canvas_height;
+
+  void *adc_opaque;
+  void (*adc_dialogue_handler)(struct ass_decoder_ctx *adc, const char *s);
 
 } ass_decoder_ctx_t;
 
@@ -133,7 +138,7 @@ typedef struct ass_decoder_ctx {
  *
  */
 static void
-adc_release_styles(ass_decoder_ctx_t *adc)
+adc_cleanup(ass_decoder_ctx_t *adc)
 {
   ass_style_t *as;
   while((as = LIST_FIRST(&adc->adc_styles)) != NULL) {
@@ -141,6 +146,7 @@ adc_release_styles(ass_decoder_ctx_t *adc)
     free(as->as_name);
     free(as);
   }
+  free(adc->adc_event_format);
 }
 
 
@@ -269,29 +275,29 @@ ass_parse_v4style(ass_decoder_ctx_t *adc, const char *str)
 /**
  *
  */
-static void
+static int
 ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
 {
   const char *s;
   if(!strcmp(str, "[Script Info]")) {
     adc->adc_section = ADC_SECTION_SCRIPT_INFO;
-    return;
+    return 0;
   }
 
   if(!strcmp(str, "[V4+ Styles]")) {
     adc->adc_section = ADC_SECTION_V4_STYLES;
-    return;
+    return 0;
   }
 
   if(!strcmp(str, "[Events]")) {
     adc->adc_section = ADC_SECTION_EVENTS;
-    return;
+    return 0;
   }
 
   if(*str == '[') {
     // Unknown section, better stay out of it
     adc->adc_section = ADC_SECTION_NONE;
-    return;
+    return 0;
   }
 
   switch(adc->adc_section) {
@@ -327,11 +333,22 @@ ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
 
   case ADC_SECTION_EVENTS:
     s = mystrbegins(str, "Format:");
-    if(s != NULL)
-      adc->adc_event_format = s;
+    if(s != NULL) {
+      adc->adc_event_format = strdup(s);
+      break;
+    }
 
+    s = mystrbegins(str, "Dialogue:");
+    if(s != NULL) {
+      if(adc->adc_dialogue_handler == NULL) 
+	return 1;
+      adc->adc_dialogue_handler(adc, s);
+      break;
+    }
     break;
   }
+
+  return 0;
 }
 
 
@@ -339,13 +356,15 @@ ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
  *
  */
 static void
-ass_decode_header(ass_decoder_ctx_t *adc, char *s)
+ass_decode_lines(ass_decoder_ctx_t *adc, char *s)
 {
   int l;
-  //  printf("%s\n", s);
+
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
-    ass_decode_line(adc, s);
+    printf("%s\n", s);
+    if(ass_decode_line(adc, s))
+      break;
   }
 }
 
@@ -354,7 +373,7 @@ ass_decode_header(ass_decoder_ctx_t *adc, char *s)
  *
  */
 static const ass_style_t *
-adc_find_style(ass_decoder_ctx_t *adc, const char *name)
+adc_find_style(const ass_decoder_ctx_t *adc, const char *name)
 {
   ass_style_t *as;
   if(*name == '*')
@@ -370,14 +389,8 @@ adc_find_style(ass_decoder_ctx_t *adc, const char *name)
  * Context to decode a dialogue line
  */
 typedef struct ass_dialogue {
-  
-  ass_decoder_ctx_t ad_adc;
-
   uint32_t *ad_text;
   int ad_textlen;
-
-  char *ad_hdr;
-  char *ad_buf;
 
   int ad_fadein;
   int ad_fadeout;
@@ -421,80 +434,88 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
   }
 }
 
+
 /**
  *
  */
-static void
-ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd,
-		   int context)
+static video_overlay_t *
+ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
+		   int fontdomain)
 {
-  char *tokens[10], *s;
-  int i, layer;
-  int64_t start, end;
-  const char *str;
-  int c;
-  const ass_style_t *as;
+  char key[128];
+  char val[1000];
+  const char *fmt = adc->adc_event_format;
+  const ass_style_t *as = &ass_style_default;
+  int layer = 0;
+  int64_t start = AV_NOPTS_VALUE;
+  int64_t end = AV_NOPTS_VALUE;
+  const char *str = NULL;
+  ass_dialoge_t ad;
 
-  ad->ad_buf[strcspn(ad->ad_buf, "\n\r")] = 0;
-  tokens[0] = ad->ad_buf;
-  for(i = 1; i < 10; i++) {
-    s = strchr(tokens[i-1], ',');
-    if(s == NULL)
-      return;
-    *s++ = 0;
-    tokens[i] = s;
+  memset(&ad, 0, sizeof(ad));
+
+  if(fmt == NULL)
+    return NULL;
+
+  while(*fmt && *line && *line != '\n' && *line != '\r') {
+    gettoken(key, sizeof(key), &fmt);
+    gettoken(val, sizeof(val), &line);
+
+    if(!strcasecmp(key, "layer"))
+      layer = atoi(val);
+    else if(!strcasecmp(key, "start"))
+      start = ass_get_ts(val);
+    else if(!strcasecmp(key, "end"))
+      end = ass_get_ts(val);
+    else if(!strcasecmp(key, "style"))
+      as = adc_find_style(adc, val);
+    else if(!strcasecmp(key, "text"))
+      str = mystrdupa(val);
   }
 
-  layer = atoi(tokens[0]);
-  start = ass_get_ts(tokens[1]);
-  end   = ass_get_ts(tokens[2]);
-
-
-  if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE)
-    return;
-
-  as = adc_find_style(&ad->ad_adc, tokens[3]);
+  if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE || str == NULL)
+    return NULL;
 
   if(as->as_bold)
-    ad_txt_append(ad, TR_CODE_BOLD_ON);
+    ad_txt_append(&ad, TR_CODE_BOLD_ON);
   if(as->as_italic)
-    ad_txt_append(ad, TR_CODE_ITALIC_ON);
+    ad_txt_append(&ad, TR_CODE_ITALIC_ON);
   if(as->as_fontname)
-    ad_txt_append(ad, TR_CODE_FONT_FAMILY |
-		  freetype_family_id(as->as_fontname, context));
+    ad_txt_append(&ad, TR_CODE_FONT_FAMILY |
+		  freetype_family_id(as->as_fontname, fontdomain));
 
-  ad_txt_append(ad, TR_CODE_SIZE_PX | as->as_fontsize);
+  ad_txt_append(&ad, TR_CODE_SIZE_PX | as->as_fontsize);
 
   if(as == &ass_style_default || subtitle_settings.style_override) {
 
-    ad_txt_append(ad, TR_CODE_COLOR | subtitle_settings.color);
-    ad_txt_append(ad, TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color);
-    ad_txt_append(ad, TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color);
+    ad_txt_append(&ad, TR_CODE_COLOR | subtitle_settings.color);
+    ad_txt_append(&ad, TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color);
+    ad_txt_append(&ad, TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color);
 
-    ad_txt_append(ad, TR_CODE_SHADOW | subtitle_settings.shadow_displacement);
-    ad_txt_append(ad, TR_CODE_OUTLINE | subtitle_settings.outline_size);
+    ad_txt_append(&ad, TR_CODE_SHADOW | subtitle_settings.shadow_displacement);
+    ad_txt_append(&ad, TR_CODE_OUTLINE | subtitle_settings.outline_size);
 
   } else {
 
-    ad_txt_append(ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
-    ad_txt_append(ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
-    ad_txt_append(ad, TR_CODE_OUTLINE_COLOR |(as->as_outline_color & 0xffffff));
-    ad_txt_append(ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
-    ad_txt_append(ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
-    ad_txt_append(ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
+    ad_txt_append(&ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
+    ad_txt_append(&ad, TR_CODE_ALPHA | (as->as_primary_color >> 24));
+    ad_txt_append(&ad, TR_CODE_OUTLINE_COLOR|(as->as_outline_color & 0xffffff));
+    ad_txt_append(&ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
+    ad_txt_append(&ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
+    ad_txt_append(&ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
 
     if(as->as_shadow)
-      ad_txt_append(ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
+      ad_txt_append(&ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
 
     if(as->as_outline)
-      ad_txt_append(ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
+      ad_txt_append(&ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
   }
 
-  str = tokens[9];
+  int c;
   while((c = utf8_get(&str)) != 0) {
     if(c == '\\' && (*str == 'n' || *str == 'N')) {
       str++;
-      ad_txt_append(ad, '\n');
+      ad_txt_append(&ad, '\n');
       continue;
     }
 
@@ -503,26 +524,29 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd,
       if(end == NULL)
 	break;
 
-      ass_handle_override(ad, str, end - str);
+      ass_handle_override(&ad, str, end - str);
 
       str = end + 1;
       continue;
     }
 
-    ad_txt_append(ad, c);
+    ad_txt_append(&ad, c);
   }
+
 
   video_overlay_t *vo = calloc(1, sizeof(video_overlay_t));
   vo->vo_type = VO_TEXT;
 
-  vo->vo_text = malloc(ad->ad_textlen * sizeof(uint32_t));
-  vo->vo_text_length = ad->ad_textlen;
-  memcpy(vo->vo_text, ad->ad_text, ad->ad_textlen * sizeof(uint32_t));
+  vo->vo_text = malloc(ad.ad_textlen * sizeof(uint32_t));
+  vo->vo_text_length = ad.ad_textlen;
+  memcpy(vo->vo_text, ad.ad_text, ad.ad_textlen * sizeof(uint32_t));
+
+  free(ad.ad_text);
 
   vo->vo_start = start;
   vo->vo_stop = end;
-  vo->vo_fadein = ad->ad_fadein;
-  vo->vo_fadeout = ad->ad_fadeout;
+  vo->vo_fadein = ad.ad_fadein;
+  vo->vo_fadeout = ad.ad_fadeout;
   vo->vo_alignment = as->as_alignment;
 
   vo->vo_padding_left  =  as->as_margin_left;
@@ -542,11 +566,11 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd,
     break;
   }
 
-  vo->vo_canvas_width  = ad->ad_adc.adc_canvas_width ?: -1;
-  vo->vo_canvas_height = ad->ad_adc.adc_canvas_height ?: -1;
+  vo->vo_canvas_width  = adc->adc_canvas_width ?: -1;
+  vo->vo_canvas_height = adc->adc_canvas_height ?: -1;
 
   vo->vo_layer = layer;
-  video_overlay_enqueue(vd, vo);
+  return vo;
 }
 
 
@@ -556,31 +580,112 @@ ad_dialogue_decode(ass_dialoge_t *ad, video_decoder_t *vd,
 void
 sub_ass_render(video_decoder_t *vd, const char *src,
 	       const uint8_t *header, int header_len,
-	       int context)
+	       int fontdomain)
 {
-  ass_dialoge_t ad;
+  ass_decoder_ctx_t adc;
 
   if(strncmp(src, "Dialogue:", strlen("Dialogue:")))
     return;
   src += strlen("Dialogue:");
   
-  memset(&ad, 0, sizeof(ad));
+  memset(&adc, 0, sizeof(adc));
 
   // Headers
 
-  ad.ad_hdr = malloc(header_len + 1);
-  memcpy(ad.ad_hdr, header, header_len);
-  ad.ad_hdr[header_len] = 0;
-  
-  ad.ad_buf = strdup(src);
-
-  ass_decode_header(&ad.ad_adc, ad.ad_hdr);
+  char *hdr;
+  hdr = malloc(header_len + 1);
+  memcpy(hdr, header, header_len);
+  hdr[header_len] = 0;
+  ass_decode_lines(&adc, hdr);
+  free(hdr);
 
   // Dialogue
+  video_overlay_t *vo = ad_dialogue_decode(&adc, src, fontdomain);
 
-  ad_dialogue_decode(&ad, vd, context);
-  adc_release_styles(&ad.ad_adc);
-  free(ad.ad_text);
-  free(ad.ad_buf);
-  free(ad.ad_hdr);
+  if(vo != NULL)
+    video_overlay_enqueue(vd, vo);
+
+  adc_cleanup(&adc);
+}
+
+
+typedef struct {
+  ext_subtitles_t ssa_es;
+  ass_decoder_ctx_t ssa_adc;
+
+} ext_ssa_t;
+
+
+/**
+ *
+ */
+static void
+ssa_dtor(ext_subtitles_t *es)
+{
+  ext_ssa_t *ssa = (ext_ssa_t *)es;
+
+  adc_cleanup(&ssa->ssa_adc);
+}
+
+
+/**
+ *
+ */
+static void
+ssa_free_entry_data(void *data)
+{
+  video_overlay_destroy(data);
+}
+
+/**
+ *
+ */
+static void
+load_ssa_dialogue(ass_decoder_ctx_t *adc, const char *str)
+{
+  video_overlay_t *vo = ad_dialogue_decode(adc, str, 0);
+  if(vo == NULL)
+    return;
+  ext_ssa_t *ssa = adc->adc_opaque;
+  ese_insert(&ssa->ssa_es, vo, vo->vo_start, vo->vo_stop);
+}
+
+
+
+/**
+ *
+ */
+static void
+ssa_decode(struct video_decoder *vd, struct ext_subtitles *es,
+	   ext_subtitle_entry_t *ese)
+{
+  int i;
+  void **esd = ese_get_data(ese);
+
+  printf("Decoding one\n");
+
+  for(i = 0; i < ese->ese_items; i++)
+    video_overlay_enqueue(vd, video_overlay_dup(esd[i]));
+}
+
+
+/**
+ *
+ */
+ext_subtitles_t *
+load_ssa(const char *url, char *buf, size_t len)
+{
+  ext_ssa_t *ssa = calloc(1, sizeof(ext_ssa_t));
+  RB_INIT(&ssa->ssa_es.es_entries);
+  ssa->ssa_es.es_dtor = ssa_dtor;
+  ssa->ssa_es.es_free_entry_data = ssa_free_entry_data;
+  ssa->ssa_es.es_decode = ssa_decode;
+
+
+  ssa->ssa_adc.adc_dialogue_handler = load_ssa_dialogue;
+  ssa->ssa_adc.adc_opaque = ssa;
+
+  ass_decode_lines(&ssa->ssa_adc, buf);
+  printf("All lines decoded\n");
+  return &ssa->ssa_es;
 }
