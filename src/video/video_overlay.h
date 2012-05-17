@@ -3,7 +3,6 @@
 #include "video_decoder.h"
 
 struct ext_subtitles;
-struct ext_subtitle_entry;
 
 /**
  * Video overlay
@@ -63,11 +62,11 @@ video_overlay_t *video_overlay_dup(video_overlay_t *vo);
 
 void video_overlay_decode_ext_subtitle(video_decoder_t *vd, 
 				       struct ext_subtitles *es,
-				       struct ext_subtitle_entry *ese);
+				       video_overlay_t *vo);
 
-void video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
-				    int64_t start, int64_t stop, int tags,
-				    int context);
+video_overlay_t *video_overlay_render_cleartext(const char *txt, int64_t start,
+						int64_t stop, int tags,
+						int fontdomain);
 
 int calculate_subtitle_duration(int txt_len);
 

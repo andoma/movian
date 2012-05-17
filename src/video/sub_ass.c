@@ -443,7 +443,7 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
 		   int fontdomain)
 {
   char key[128];
-  char val[1000];
+  char val[128];
   const char *fmt = adc->adc_event_format;
   const ass_style_t *as = &ass_style_default;
   int layer = 0;
@@ -459,6 +459,13 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
 
   while(*fmt && *line && *line != '\n' && *line != '\r') {
     gettoken(key, sizeof(key), &fmt);
+    if(!strcasecmp(key, "text")) {
+      char *d = mystrdupa(line);
+      d[strcspn(d, "\n\r")] = 0;
+      str = d;
+      break;
+    }
+
     gettoken(val, sizeof(val), &line);
 
     if(!strcasecmp(key, "layer"))
@@ -469,8 +476,6 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
       end = ass_get_ts(val);
     else if(!strcasecmp(key, "style"))
       as = adc_find_style(adc, val);
-    else if(!strcasecmp(key, "text"))
-      str = mystrdupa(val);
   }
 
   if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE || str == NULL)
@@ -609,34 +614,6 @@ sub_ass_render(video_decoder_t *vd, const char *src,
 }
 
 
-typedef struct {
-  ext_subtitles_t ssa_es;
-  ass_decoder_ctx_t ssa_adc;
-
-} ext_ssa_t;
-
-
-/**
- *
- */
-static void
-ssa_dtor(ext_subtitles_t *es)
-{
-  ext_ssa_t *ssa = (ext_ssa_t *)es;
-
-  adc_cleanup(&ssa->ssa_adc);
-}
-
-
-/**
- *
- */
-static void
-ssa_free_entry_data(void *data)
-{
-  video_overlay_destroy(data);
-}
-
 /**
  *
  */
@@ -646,26 +623,8 @@ load_ssa_dialogue(ass_decoder_ctx_t *adc, const char *str)
   video_overlay_t *vo = ad_dialogue_decode(adc, str, 0);
   if(vo == NULL)
     return;
-  ext_ssa_t *ssa = adc->adc_opaque;
-  ese_insert(&ssa->ssa_es, vo, vo->vo_start, vo->vo_stop);
-}
-
-
-
-/**
- *
- */
-static void
-ssa_decode(struct video_decoder *vd, struct ext_subtitles *es,
-	   ext_subtitle_entry_t *ese)
-{
-  int i;
-  void **esd = ese_get_data(ese);
-
-  printf("Decoding one\n");
-
-  for(i = 0; i < ese->ese_items; i++)
-    video_overlay_enqueue(vd, video_overlay_dup(esd[i]));
+  ext_subtitles_t *es = adc->adc_opaque;
+  TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
 }
 
 
@@ -675,17 +634,16 @@ ssa_decode(struct video_decoder *vd, struct ext_subtitles *es,
 ext_subtitles_t *
 load_ssa(const char *url, char *buf, size_t len)
 {
-  ext_ssa_t *ssa = calloc(1, sizeof(ext_ssa_t));
-  RB_INIT(&ssa->ssa_es.es_entries);
-  ssa->ssa_es.es_dtor = ssa_dtor;
-  ssa->ssa_es.es_free_entry_data = ssa_free_entry_data;
-  ssa->ssa_es.es_decode = ssa_decode;
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
+  ass_decoder_ctx_t adc;
+  memset(&adc, 0, sizeof(adc));
 
+  TAILQ_INIT(&es->es_entries);
 
-  ssa->ssa_adc.adc_dialogue_handler = load_ssa_dialogue;
-  ssa->ssa_adc.adc_opaque = ssa;
+  adc.adc_dialogue_handler = load_ssa_dialogue;
+  adc.adc_opaque = es;
 
-  ass_decode_lines(&ssa->ssa_adc, buf);
-  printf("All lines decoded\n");
-  return &ssa->ssa_es;
+  ass_decode_lines(&adc, buf);
+  adc_cleanup(&adc);
+  return es;
 }

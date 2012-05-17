@@ -113,10 +113,9 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 /**
  *
  */
-void
-video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
-			       int64_t start, int64_t stop, int tags,
-			       int context)
+video_overlay_t *
+video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
+			       int tags, int fontdomain)
 {
   uint32_t *uc;
   int len, txt_len;
@@ -138,9 +137,9 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
 
     uc = text_parse(txt, &len, 
 		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
-		    pfx, 5, context);
+		    pfx, 5, fontdomain);
     if(uc == NULL)
-      return;
+      return NULL;
 
     vo = calloc(1, sizeof(video_overlay_t));
     vo->vo_type = VO_TEXT;
@@ -156,8 +155,7 @@ video_overlay_render_cleartext(video_decoder_t *vd, const char *txt,
   
   vo->vo_start = start;
   vo->vo_stop = stop;
-  
-  video_overlay_enqueue(vd, vo);
+  return vo;
 }
 
 /**
@@ -194,11 +192,16 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
     memcpy(str, mb->mb_data + offset, mb->mb_size - offset);
     str[mb->mb_size - offset] = 0;
 
-    video_overlay_render_cleartext(vd, str, mb->mb_pts,
-				   mb->mb_duration ?
-				   mb->mb_pts + mb->mb_duration :
-				   AV_NOPTS_VALUE, 1,
-				   mb->mb_font_context);
+    video_overlay_t *vo;
+    vo = video_overlay_render_cleartext(str, mb->mb_pts,
+					mb->mb_duration ?
+					mb->mb_pts + mb->mb_duration :
+					AV_NOPTS_VALUE, 1,
+					mb->mb_font_context);
+
+    if(vo != NULL)
+      video_overlay_enqueue(vd, vo);
+    
   } else {
       
     if(mc->decode) 
