@@ -89,7 +89,7 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
   fi.width = siz.width;
   fi.height = siz.height;
 
-  fi.duration = vf->vf_duration ?: vdad->vdad_estimated_duration;
+  fi.duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
 
   siz = CVImageBufferGetDisplaySize(vf->vf_buf);
   fi.dar.num = siz.width;
