@@ -124,6 +124,23 @@ htsmsg_json_serialize_to_str(htsmsg_t *msg, int pretty)
 /**
  *
  */
+struct rstr *
+htsmsg_json_serialize_to_rstr(htsmsg_t *msg, const char *prefix)
+{
+  htsbuf_queue_t hq;
+  if(msg == NULL || TAILQ_FIRST(&msg->hm_fields) == NULL)
+    return NULL;
+  htsbuf_queue_init(&hq, 0);
+  htsmsg_json_serialize(msg, &hq, 0);
+  struct rstr *rstr = htsbuf_to_rstr(&hq, prefix);
+  htsbuf_queue_flush(&hq);
+  return rstr;
+}
+
+
+/**
+ *
+ */
 
 static void *
 create_map(void *opaque)

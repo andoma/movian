@@ -577,15 +577,7 @@ metadb_construct_imageset(sqlite3_stmt *sel, int urlcol, int wcol, int hcol)
     htsmsg_add_msg(m, NULL, img);
   }
 
-  rstr_t *rstr = NULL;
-  if(TAILQ_FIRST(&m->hm_fields) != NULL) {
-    htsbuf_queue_t hq;
-    htsbuf_queue_init(&hq, 0);
-    htsbuf_qprintf(&hq, "imageset:");
-    htsmsg_json_serialize(m, &hq, 0);
-    rstr = htsbuf_to_rstr(&hq);
-    htsbuf_queue_flush(&hq);
-  }
+  rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
   htsmsg_destroy(m);
   return rstr;
 }

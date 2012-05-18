@@ -413,9 +413,11 @@ htsbuf_to_string(htsbuf_queue_t *hq)
  *
  */
 rstr_t *
-htsbuf_to_rstr(htsbuf_queue_t *hq)
+htsbuf_to_rstr(htsbuf_queue_t *hq, const char *prefix)
 {
-  rstr_t *r = rstr_allocl(NULL, hq->hq_size);
-  htsbuf_read(hq, rstr_data(r), hq->hq_size);
+  size_t pfxlen = prefix ? strlen(prefix) : 0;
+  rstr_t *r = rstr_allocl(NULL, hq->hq_size + pfxlen);
+  memcpy(rstr_data(r), prefix, pfxlen);
+  htsbuf_read(hq, rstr_data(r) + pfxlen, hq->hq_size);
   return r;
 }

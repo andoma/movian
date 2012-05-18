@@ -76,6 +76,6 @@ void htsbuf_dump_raw_stderr(htsbuf_queue_t *hq);
 char *htsbuf_to_string(htsbuf_queue_t *hq);
 
 struct rstr;
-struct rstr *htsbuf_to_rstr(htsbuf_queue_t *hq);
+struct rstr *htsbuf_to_rstr(htsbuf_queue_t *hq, const char *prefix);
 
 #endif /* HTSBUF_H__ */
