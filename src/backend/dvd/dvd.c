@@ -25,7 +25,7 @@
 #include "notifications.h"
 #include "showtime.h"
 #include "metadata/metadata.h"
-
+#include "misc/string.h"
 #include <libavcodec/avcodec.h>
 #include <libavutil/mathematics.h>
 
@@ -33,8 +33,6 @@
 #include "dvdnav/dvdnav.h"
 
 static char *make_nice_title(const char *t);
-
-static const char *dvd_langcode_to_string(uint16_t langcode);
 
 
 #define PACK_START_CODE             ((unsigned int)0x000001ba)
@@ -968,171 +966,3 @@ make_nice_title(const char *t)
 }
 
 
-/**
- * DVD language codes
- */
-const struct {
-  const char *langcode;
-  const char *displayname;
-} langtbl[] = {
-  {"AB", "Abkhazian"},
-  {"LT", "Lithuanian"},
-  {"AA", "Afar"},
-  {"MK", "Macedonian"},
-  {"AF", "Afrikaans"},
-  {"MG", "Malagasy"},
-  {"SQ", "Albanian"},
-  {"MS", "Malay"},
-  {"AM", "Amharic"},
-  {"ML", "Malayalam"},
-  {"AR", "Arabic"},
-  {"MT", "Maltese"},
-  {"HY", "Armenian"},
-  {"MI", "Maori"},
-  {"AS", "Assamese"},
-  {"MR", "Marathi"},
-  {"AY", "Aymara"},
-  {"MO", "Moldavian"},
-  {"AZ", "Azerbaijani"},
-  {"MN", "Mongolian"},
-  {"BA", "Bashkir"},
-  {"NA", "Nauru"},
-  {"EU", "Basque"},
-  {"NE", "Nepali"},
-  {"BN", "Bengali"},
-  {"NO", "Norwegian"},
-  {"DZ", "Bhutani"},
-  {"OC", "Occitan"},
-  {"BH", "Bihari"},
-  {"OR", "Oriya"},
-  {"BI", "Bislama"},
-  {"OM", "Afan"},
-  {"BR", "Breton"},
-  {"PA", "Panjabi"},
-  {"BG", "Bulgarian"},
-  {"PS", "Pashto"},
-  {"MY", "Burmese"},
-  {"FA", "Persian"},
-  {"BE", "Byelorussian"},
-  {"PL", "Polish"},
-  {"KM", "Cambodian"},
-  {"PT", "Portuguese"},
-  {"CA", "Catalan"},
-  {"QU", "Quechua"},
-  {"ZH", "Chinese"},
-  {"RM", "Rhaeto-Romance"},
-  {"CO", "Corsican"},
-  {"RO", "Romanian"},
-  {"HR", "Croatian"},
-  {"RU", "Russian"},
-  {"CS", "Czech"},
-  {"SM", "Samoan"},
-  {"DA", "Danish"},
-  {"SG", "Sangho"},
-  {"NL", "Dutch"},
-  {"SA", "Sanskrit"},
-  {"EN", "English"},
-  {"GD", "Gaelic"},
-  {"EO", "Esperanto"},
-  {"SH", "Serbo-Crotain"},
-  {"ET", "Estonian"},
-  {"ST", "Sesotho"},
-  {"FO", "Faroese"},
-  {"SR", "Serbian"},
-  {"FJ", "Fiji"},
-  {"TN", "Setswana"},
-  {"FI", "Finnish"},
-  {"SN", "Shona"},
-  {"FR", "French"},
-  {"SD", "Sindhi"},
-  {"FY", "Frisian"},
-  {"SI", "Singhalese"},
-  {"GL", "Galician"},
-  {"SS", "Siswati"},
-  {"KA", "Georgian"},
-  {"SK", "Slovak"},
-  {"DE", "German"},
-  {"SL", "Slovenian"},
-  {"EL", "Greek"},
-  {"SO", "Somali"},
-  {"KL", "Greenlandic"},
-  {"ES", "Spanish"},
-  {"GN", "Guarani"},
-  {"SU", "Sundanese"},
-  {"GU", "Gujarati"},
-  {"SW", "Swahili"},
-  {"HA", "Hausa"},
-  {"SV", "Swedish"},
-  {"IW", "Hebrew"},
-  {"TL", "Tagalog"},
-  {"HI", "Hindi"},
-  {"TG", "Tajik"},
-  {"HU", "Hungarian"},
-  {"TT", "Tatar"},
-  {"IS", "Icelandic"},
-  {"TA", "Tamil"},
-  {"IN", "Indonesian"},
-  {"TE", "Telugu"},
-  {"IA", "Interlingua"},
-  {"TH", "Thai"},
-  {"IE", "Interlingue"},
-  {"BO", "Tibetian"},
-  {"IK", "Inupiak"},
-  {"TI", "Tigrinya"},
-  {"GA", "Irish"},
-  {"TO", "Tonga"},
-  {"IT", "Italian"},
-  {"TS", "Tsonga"},
-  {"JA", "Japanese"},
-  {"TR", "Turkish"},
-  {"JW", "Javanese"},
-  {"TK", "Turkmen"},
-  {"KN", "Kannada"},
-  {"TW", "Twi"},
-  {"KS", "Kashmiri"},
-  {"UK", "Ukranian"},
-  {"KK", "Kazakh"},
-  {"UR", "Urdu"},
-  {"RW", "Kinyarwanda"},
-  {"UZ", "Uzbek"},
-  {"KY", "Kirghiz"},
-  {"VI", "Vietnamese"},
-  {"RN", "Kirundi"},
-  {"VO", "Volapuk"},
-  {"KO", "Korean"},
-  {"CY", "Welsh"},
-  {"KU", "Kurdish"},
-  {"WO", "Wolof"},
-  {"LO", "Laothian"},
-  {"JI", "Yiddish"},
-  {"LA", "Latin"},
-  {"YO", "Yoruba"},
-  {"LV", "Lettish"},
-  {"XH", "Xhosa"},
-  {"LN", "Lingala"},
-  {"ZU", "Zulu"},
-  {NULL, NULL}
-};
-
-/**
- *
- */
-static const char *
-dvd_langcode_to_string(uint16_t langcode)
-{
-  char str[3];
-  int i;
-
-  str[0] = langcode >> 8;
-  str[1] = langcode & 0xff;
-  str[2] = 0;
-
-  i = 0;
-  
-  while(langtbl[i].langcode != NULL) {
-    if(!strcasecmp(langtbl[i].langcode, str))
-      return langtbl[i].displayname;
-    i++;
-  }
-  return "Other";
-}

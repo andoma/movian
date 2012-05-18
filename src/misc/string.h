@@ -83,4 +83,6 @@ const charset_t *charset_get_idx(unsigned int i);
 
 const char *charset_get_name(const void *ptr);
 
+const char *dvd_langcode_to_string(uint16_t langcode);
+
 #endif
