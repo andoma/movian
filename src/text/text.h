@@ -47,6 +47,8 @@ struct pixmap;
 #define TR_CODE_FONT_SIZE  0x7f040000  /* HTML kinda legacy size 
 					  1: smallest, 7: biggest
 				       */
+#define TR_CODE_SHADOW_US  0x7f050000  // Unscaled version
+#define TR_CODE_OUTLINE_US 0x7f060000  // Unscaled version
 
 
 #define TR_CODE_COLOR      0x7e000000  // Low 24 bit is BGR

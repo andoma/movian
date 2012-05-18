@@ -1050,6 +1050,14 @@ text_render0(const uint32_t *uc, const int len,
       current_outline = 64 * (uc[i] & 0xffff) * scale;
       break;
 
+    case TR_CODE_SHADOW_US ... TR_CODE_SHADOW_US + 0xffff:
+      current_shadow = (uc[i] & 0xffff);
+      break;
+
+    case TR_CODE_OUTLINE_US ... TR_CODE_OUTLINE_US + 0xffff:
+      current_outline = 64 * (uc[i] & 0xffff);
+      break;
+
     case TR_CODE_FONT_SIZE + 1 ... TR_CODE_FONT_SIZE + 7:
       current_size = legacy_size_mult[uc[i] & 0xf] * default_size * scale;
       break;

@@ -125,13 +125,30 @@ typedef struct ass_decoder_ctx {
   const char *adc_style_format;
   char *adc_event_format;
   
-  int adc_canvas_width;
-  int adc_canvas_height;
+  int adc_resx;
+  int adc_resy;
 
   void *adc_opaque;
   void (*adc_dialogue_handler)(struct ass_decoder_ctx *adc, const char *s);
 
+  int adc_shadow;
+  int adc_outline;
+
 } ass_decoder_ctx_t;
+
+
+/**
+ *
+ */
+static void
+adc_init(ass_decoder_ctx_t *adc)
+{
+  memset(adc, 0, sizeof(ass_decoder_ctx_t));
+  adc->adc_shadow = TR_CODE_SHADOW_US;
+  adc->adc_outline = TR_CODE_OUTLINE_US;
+}
+
+
 
 
 /**
@@ -304,15 +321,25 @@ ass_decode_line(ass_decoder_ctx_t *adc, const char *str)
   case ADC_SECTION_SCRIPT_INFO:
     s = mystrbegins(str, "PlayResX:");
     if(s != NULL) {
-      adc->adc_canvas_width = atoi(s);
+      adc->adc_resx = atoi(s);
       break;
     }
 
     s = mystrbegins(str, "PlayResY:");
     if(s != NULL) {
-      adc->adc_canvas_height = atoi(s);
+      adc->adc_resy = atoi(s);
       break;
     }
+
+    s = mystrbegins(str, "ScaledBorderAndShadow:");
+    if(s != NULL) {
+      if(atoi(s) > 0 || !strcasecmp(s, "yes")) {
+	adc->adc_shadow = TR_CODE_SHADOW_US;
+	adc->adc_shadow = TR_CODE_SHADOW_US;
+      }
+      break;
+    }
+
     break;
 
   case ADC_SECTION_V4_STYLES:
@@ -495,25 +522,29 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
     ad_txt_append(&ad, TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color);
     ad_txt_append(&ad, TR_CODE_SHADOW_COLOR | subtitle_settings.shadow_color);
 
-    ad_txt_append(&ad, TR_CODE_SHADOW | subtitle_settings.shadow_displacement);
-    ad_txt_append(&ad, TR_CODE_OUTLINE | subtitle_settings.outline_size);
+    ad_txt_append(&ad, adc->adc_shadow | subtitle_settings.shadow_displacement);
+    ad_txt_append(&ad, adc->adc_outline | subtitle_settings.outline_size);
 
   } else {
+    int alpha;
+    alpha = 255 - (as->as_primary_color >> 24);
 
     ad_txt_append(&ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
-
-    int alpha = 255 - (as->as_primary_color >> 24);
     ad_txt_append(&ad, TR_CODE_ALPHA | alpha);
+
+    alpha = 255 - (as->as_outline_color >> 24);
     ad_txt_append(&ad, TR_CODE_OUTLINE_COLOR|(as->as_outline_color & 0xffffff));
-    ad_txt_append(&ad, TR_CODE_OUTLINE_ALPHA | (as->as_outline_color >> 24));
+    ad_txt_append(&ad, TR_CODE_OUTLINE_ALPHA | alpha);
+
+    alpha = 255 - (as->as_back_color >> 24);
     ad_txt_append(&ad, TR_CODE_SHADOW_COLOR | (as->as_back_color & 0xffffff));
-    ad_txt_append(&ad, TR_CODE_SHADOW_ALPHA | (as->as_back_color >> 24));
+    ad_txt_append(&ad, TR_CODE_SHADOW_ALPHA | alpha);
 
     if(as->as_shadow)
-      ad_txt_append(&ad, TR_CODE_SHADOW | (as->as_shadow & 0xff));
+      ad_txt_append(&ad, adc->adc_shadow | (as->as_shadow & 0xff));
 
     if(as->as_outline)
-      ad_txt_append(&ad, TR_CODE_OUTLINE | (as->as_outline & 0xff));
+      ad_txt_append(&ad, adc->adc_outline | (as->as_outline & 0xff));
   }
 
   int c;
@@ -571,8 +602,23 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
     break;
   }
 
-  vo->vo_canvas_width  = adc->adc_canvas_width ?: -1;
-  vo->vo_canvas_height = adc->adc_canvas_height ?: -1;
+  if(adc->adc_resx == 0 && adc->adc_resy == 0) {
+    vo->vo_canvas_width  = 384;
+    vo->vo_canvas_height = 288;
+  } else if((adc->adc_resx == 1280 && adc->adc_resy == 0) ||
+	    (adc->adc_resx == 0 && adc->adc_resy == 1024)) {
+    vo->vo_canvas_width  = 1280;
+    vo->vo_canvas_height = 1024;
+  } else if(adc->adc_resx && adc->adc_resy) {
+    vo->vo_canvas_width  = adc->adc_resx;
+    vo->vo_canvas_height = adc->adc_resy;
+  } else if(adc->adc_resx) {
+    vo->vo_canvas_width  = adc->adc_resx;
+    vo->vo_canvas_height = adc->adc_resx * 3 / 4;
+  } else if(adc->adc_resy) {
+    vo->vo_canvas_width  = adc->adc_resy * 4 / 3;
+    vo->vo_canvas_height = adc->adc_resy;
+  }
 
   vo->vo_layer = layer;
   return vo;
@@ -592,8 +638,7 @@ sub_ass_render(video_decoder_t *vd, const char *src,
   if(strncmp(src, "Dialogue:", strlen("Dialogue:")))
     return;
   src += strlen("Dialogue:");
-  
-  memset(&adc, 0, sizeof(adc));
+  adc_init(&adc);
 
   // Headers
 
@@ -636,7 +681,7 @@ load_ssa(const char *url, char *buf, size_t len)
 {
   ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
   ass_decoder_ctx_t adc;
-  memset(&adc, 0, sizeof(adc));
+  adc_init(&adc);
 
   TAILQ_INIT(&es->es_entries);
 
