@@ -27,6 +27,11 @@ struct video_decoder;
 typedef struct ext_subtitles {
   struct video_overlay_queue es_entries;
   video_overlay_t *es_cur;
+
+  void (*es_dtor)(struct ext_subtitles *es);
+  void (*es_picker)(struct ext_subtitles *es, int64_t pts,
+		    struct video_decoder *vd);
+
 } ext_subtitles_t;
 
 void subtitles_destroy(ext_subtitles_t *sub);

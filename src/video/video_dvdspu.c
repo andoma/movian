@@ -20,6 +20,7 @@
 
 #include "showtime.h"
 #include "video_decoder.h"
+#include "vobsub.h"
 
 /**
  *
@@ -287,28 +288,28 @@ dvdspu_decode_clut(uint32_t *dst, const uint32_t *src)
  *
  */
 void
-dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb, const uint32_t *clut,
-	       int w, int h)
+dvdspu_enqueue(video_decoder_t *vd, void *data, int size, const uint32_t *clut,
+	       int w, int h, int64_t pts)
 {
   dvdspu_t *d;
 
-  if(mb->mb_size < 4)
+  if(size < 4) {
+    free(data);
     return;
+  }
 
   d = calloc(1, sizeof(dvdspu_t));
   memcpy(d->d_clut, clut, 16 * sizeof(uint32_t));
-  d->d_data = mb->mb_data;
-  d->d_size = mb->mb_size;
+  d->d_data = data;
+  d->d_size = size;
   d->d_cmdpos = getbe16(d->d_data + 2);
-  d->d_pts = mb->mb_pts;
+  d->d_pts = pts;
   d->d_canvas_width  = w;
   d->d_canvas_height = h;
 
   hts_mutex_lock(&vd->vd_spu_mutex);
   TAILQ_INSERT_TAIL(&vd->vd_spu_queue, d, d_link);
   hts_mutex_unlock(&vd->vd_spu_mutex);
-
-  mb->mb_data = NULL;
 }
 
 /**
@@ -357,7 +358,9 @@ dvdspu_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 		    struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
   dvdspu_codec_t *dc = mc->opaque;
-  dvdspu_enqueue(vd, mb, dc->clut, dc->w, dc->h);
+  dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
+		 mb->mb_pts);
+  mb->mb_data = NULL;
 }
 
 
@@ -372,42 +375,6 @@ dvdspu_codec_close(struct media_codec *mc)
 }
 
 
-/**
- *
- */
-static void
-decode_palette(dvdspu_codec_t *dc, const char *str)
-{
-  char *end;
-  int i = 0;
-  while(*str && i < 16) {
-    int v = strtol(str, &end, 16);
-    dc->clut[i++] = v;
-    str = end;
-    while(*str == ' ')
-      str++;
-    if(*str == ',')
-      str++;
-  }
-}
-
-
-/**
- *
- */
-static void
-decode_size(dvdspu_codec_t *dc, const char *str)
-{
-  int w = atoi(str);
-  if((str = strchr(str, 'x')) == NULL)
-    return;
-  str++;
-  int h = atoi(str);
-  if(w > 0 && h > 0) {
-    dc->w = w;
-    dc->h = h;
-  }
-}
 
 /**
  *
@@ -429,9 +396,9 @@ dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
     const char *p;
     s[l] = 0;
     if((p = mystrbegins(s, "palette:")) != NULL)
-      decode_palette(dc, p);
+      vobsub_decode_palette(dc->clut, p);
     if((p = mystrbegins(s, "size:")) != NULL)
-      decode_size(dc, p);
+      vobsub_decode_size(&dc->w, &dc->h, p);
   }
 
   mc->opaque = dc;

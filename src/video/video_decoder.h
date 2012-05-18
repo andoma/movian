@@ -241,8 +241,9 @@ int dvdspu_decode(dvdspu_t *d, int64_t pts);
 
 void dvdspu_decode_clut(uint32_t *dst, const uint32_t *src);
 
-void dvdspu_enqueue(video_decoder_t *vd, media_buf_t *mb, const uint32_t *clut,
-		    int w, int h);
+void dvdspu_enqueue(video_decoder_t *vd, void *data, int size,
+		    const uint32_t *clut, int w, int h,
+		    int64_t pts);
 
 void dvdspu_flush(video_decoder_t *vd);
 

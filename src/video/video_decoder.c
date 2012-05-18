@@ -370,7 +370,9 @@ vd_thread(void *aux)
       break;
       
     case MB_DVD_SPU:
-      dvdspu_enqueue(vd, mb, vd->vd_dvd_clut, 0, 0);
+      dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, vd->vd_dvd_clut, 0, 0,
+		     mb->mb_pts);
+      mb->mb_data = NULL; // Steal buffer
       break;
       
     case MB_DVD_HILITE:

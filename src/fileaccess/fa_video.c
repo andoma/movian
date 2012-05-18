@@ -43,6 +43,7 @@
 #include "misc/isolang.h"
 #include "text/text.h"
 #include "video/video_settings.h"
+#include "video/vobsub.h"
 
 LIST_HEAD(attachment_list, attachment);
 
@@ -80,20 +81,27 @@ typedef struct fs_sub_scanner {
 static int
 fs_sub_match(const char *video, const char *sub)
 {
-  char *fname = mystrdupa(sub);
-  fname = strrchr(fname, '/');
-  if(fname == NULL)
+  sub = strrchr(sub, '/');
+  if(sub == NULL)
     return 0;
+  sub++;
 
-  fname++;
   int vl = strlen(video);
-  if(strlen(fname) < vl)
-    return 0;
+  int sl = strlen(sub);
 
-  if(fname[vl] != '.')
-    return 0;
-  
-  return !memcmp(fname, video, vl);
+  if(sl >= vl && sub[vl] == '.' && !strncasecmp(sub, video, vl))
+    return 1;
+
+  char *x = strrchr(sub, '.');
+  if(x != NULL) {
+    size_t off = x - sub;
+    if(vl > off) {
+      if((video[off] == '.' || video[off] == ' ') && 
+	 !strncasecmp(sub, video, off))
+	return 1;
+    }
+  }
+  return 0;
 }
 
 
@@ -141,7 +149,8 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
       }
 
       int score = fs_sub_match(video, rstr_get(fde->fde_url));
-      TRACE(TRACE_DEBUG, "Video", "SRT %s score=%d", fde->fde_url, score); 
+      TRACE(TRACE_DEBUG, "Video", "SRT %s score=%d", 
+	    rstr_get(fde->fde_url), score); 
 
       if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
@@ -161,13 +170,26 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
       }
 
       int score = fs_sub_match(video, rstr_get(fde->fde_url));
-      TRACE(TRACE_DEBUG, "Video", "SSA/ASS %s score=%d", fde->fde_url, score); 
+      TRACE(TRACE_DEBUG, "Video", "SSA/ASS %s score=%d",
+	    rstr_get(fde->fde_url), score); 
 
       if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
 
       mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
 		   "ASS / SSA", NULL, lang, NULL, _p("External file"), score);
+    }
+
+    if(!strcasecmp(postfix, ".idx")) {
+      int score = fs_sub_match(video, rstr_get(fde->fde_url));
+      TRACE(TRACE_DEBUG, "Video", "VOBSUB %s score=%d", 
+	    rstr_get(fde->fde_url), score); 
+
+      if(score == 0 && !subtitle_settings.include_all_subs)
+	continue;
+
+      vobsub_probe(rstr_get(fde->fde_url), rstr_get(fde->fde_filename),
+		   score, prop, NULL);
     }
   }
   fa_dir_free(fd);

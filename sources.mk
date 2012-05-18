@@ -189,6 +189,7 @@ SRCS += src/video/video_playback.c \
 	src/video/ext_subtitles.c \
 	src/video/video_settings.c \
 	src/video/video_dvdspu.c \
+	src/video/vobsub.c \
 
 SRCS-$(CONFIG_VDPAU) += src/video/vdpau.c
 

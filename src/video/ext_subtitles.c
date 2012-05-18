@@ -31,7 +31,7 @@
 #include "misc/string.h"
 #include "i18n.h"
 #include "video_overlay.h"
-
+#include "vobsub.h"
 
 /**
  *
@@ -458,6 +458,8 @@ subtitles_destroy(ext_subtitles_t *es)
     TAILQ_REMOVE(&es->es_entries, vo, vo_link);
     video_overlay_destroy(vo);
   }
+  if(es->es_dtor)
+    es->es_dtor(es);
   free(es);
 }
 
@@ -486,6 +488,10 @@ void
 subtitles_pick(ext_subtitles_t *es, int64_t pts, video_decoder_t *vd)
 {
   video_overlay_t *vo = es->es_cur;
+
+  if(es->es_picker)
+    return es->es_picker(es, pts, vd);
+
   if(vo != NULL && vo->vo_start <= pts && vo->vo_stop > pts)
     return; // Already sent
   
@@ -517,6 +523,15 @@ subtitles_load(const char *url)
   char errbuf[256];
   size_t size;
   int datalen;
+  const char *s;
+  if((s = mystrbegins(url, "vobsub:")) != NULL) {
+    sub = vobsub_load(s, errbuf, sizeof(errbuf));
+    if(sub == NULL) 
+      TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
+	    s, errbuf);
+    return sub;
+  }
+
   char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf),
 		       DISABLE_CACHE, 0, NULL, NULL);
 
