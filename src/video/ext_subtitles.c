@@ -497,10 +497,6 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, video_decoder_t *vd)
     }
   }
 
-  vo = TAILQ_FIRST(&es->es_entries);
-  if(vo != NULL)
-    printf("%lld %lld\n", vo->vo_start, pts);
-
   TAILQ_FOREACH(vo, &es->es_entries, vo_link) {
     if(vo->vo_start <= pts && vo->vo_stop > pts) {
       vo_deliver(es, vo, vd, pts);
