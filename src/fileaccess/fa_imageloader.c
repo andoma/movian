@@ -323,7 +323,7 @@ ifv_close(void)
 static pixmap_t *
 fa_image_from_video2(const char *url, const image_meta_t *im, 
 		     const char *cacheid, char *errbuf, size_t errlen,
-		     int sec, time_t mtime)
+		     int sec, time_t mtime, fa_load_cb_t *cb, void *opaque)
 {
   pixmap_t *pm = NULL;
 
@@ -411,6 +411,13 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     if(r == AVERROR_EOF) {
       break;
     }
+    
+    if(cb != NULL && cb(opaque, 0, 1)) {
+      snprintf(errbuf, errlen, "Aborted");
+      ifv_close();
+      break;
+    }
+
     if(r != 0) {
       ifv_close();
       break;
@@ -570,7 +577,7 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
 
   hts_mutex_lock(&image_from_video_mutex);
   pm = fa_image_from_video2(url, im, cacheid, errbuf, errlen,
-			    secs, stattime);
+			    secs, stattime, cb, opaque);
   hts_mutex_unlock(&image_from_video_mutex);
   return pm;
 }
