@@ -197,21 +197,13 @@ opensub_login(int force, char *errbuf, size_t errlen)
   return 0;
 }
 
-/**
- *
- */
-typedef struct opensub_async_query {
-  prop_t *node;
-  htsmsg_t *query;
-} opensub_async_query_t;
-
 
 
 /**
  *
  */
 static void
-async_query_do(prop_t *node, htsmsg_t *query)
+query_do(prop_t *node, htsmsg_t *query)
 {
   char errbuf[256];
   htsmsg_t *queries, *in, *out, *m, *data, *entry;
@@ -298,48 +290,20 @@ async_query_do(prop_t *node, htsmsg_t *query)
     TRACE(TRACE_DEBUG, "opensubtitles", "Got %d subtitles", added);
     
     htsmsg_destroy(out);
-    htsmsg_destroy(query);
     return;
   }
-  htsmsg_destroy(query);
 }
 
-/**
- *
- */
-static void *
-async_query_thread(void *aux)
-{
-  opensub_async_query_t *oaq = aux;
-
-  // query is consumed by this func
-  async_query_do(oaq->node, oaq->query);
-
-  prop_ref_dec(oaq->node);
-  free(oaq);
-  return NULL;
-}
 
 /**
  *
  */
 void
-opensub_add_subtitles(prop_t *node, htsmsg_t *query, hts_thread_t *tid)
+opensub_load_subtitles(prop_t *node, htsmsg_t *query)
 {
-  opensub_async_query_t *oaq;
-
-  if(opensub_enable == 0) {
-    htsmsg_destroy(query);
-    return;
-  }
-
-  oaq = malloc(sizeof(opensub_async_query_t));
-
-  oaq->node = prop_ref_inc(node);
-  oaq->query = query;
-
-  hts_thread_create_joinable("opensub query", tid, async_query_thread, oaq,
-			     THREAD_PRIO_LOW);
+  if(opensub_enable)
+    query_do(node, query);
+  htsmsg_destroy(query);
 }
 
 

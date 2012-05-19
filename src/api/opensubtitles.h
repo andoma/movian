@@ -31,8 +31,7 @@ int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
 htsmsg_t *opensub_build_query(const char *lang, int64_t hash, int64_t movsize,
 			      const char *imdb, const char *title);
 
-void opensub_add_subtitles(struct prop *node, htsmsg_t *query,
-			   hts_thread_t *tid);
+void opensub_load_subtitles(struct prop *node, htsmsg_t *query);
 
 #endif // OPENSUBTITLES_H__
 

@@ -68,11 +68,16 @@ static event_t *playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
 /**
  *
  */
-typedef struct fs_sub_scanner {
-  prop_t *p;
-  const char *url;
-  int stop;
-} fs_sub_scanner_t;
+typedef struct sub_load {
+  int sl_beflags;
+  prop_t *sl_p;
+  const char *sl_url;
+  int sl_stop;
+  int sl_opensub_hash_valid;
+  uint64_t sl_opensub_hash;
+  uint64_t sl_fsize;
+
+} sub_load_t;
 
 
 /**
@@ -200,21 +205,31 @@ fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
  *
  */
 static void *
-fs_sub_scan_thread(void *aux)
+sub_loader(void *aux)
 {
-  fs_sub_scanner_t *fss = aux;
-  char parent[URL_MAX];
-  char *fname = mystrdupa(fss->url);
+  sub_load_t *sl = aux;
 
-  fname = strrchr(fname, '/') ?: fname;
-  fname++;
-  char *dot = strrchr(fname, '.');
-  if(dot)
-    *dot = 0;
+  if(!(sl->sl_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
+    char parent[URL_MAX];
+    char *fname = mystrdupa(sl->sl_url);
 
-  fa_parent(parent, sizeof(parent), fss->url);
+    fname = strrchr(fname, '/') ?: fname;
+    fname++;
+    char *dot = strrchr(fname, '.');
+    if(dot)
+      *dot = 0;
 
-  fs_sub_scan_dir(fss->p, parent, fname, &fss->stop);
+    fa_parent(parent, sizeof(parent), sl->sl_url);
+    fs_sub_scan_dir(sl->sl_p, parent, fname, &sl->sl_stop);
+  }
+
+  if(sl->sl_stop)
+    return NULL;
+
+  if(sl->sl_opensub_hash_valid && sl->sl_fsize != -1)
+    opensub_load_subtitles(sl->sl_p,
+			   opensub_build_query(NULL, sl->sl_opensub_hash,
+					       sl->sl_fsize, NULL, NULL));
 
   return NULL;
 }
@@ -585,7 +600,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   uint64_t hash;
   int64_t fsize;
-  int opensub_hash_rval;
+
+  hts_thread_t sub_tid = 0;
+  sub_load_t sl;
 
   int freetype_context = freetype_get_context();
 
@@ -653,11 +670,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
   if(seek_is_fast)
-    opensub_hash_rval = opensub_compute_hash(fh, &hash);
+    sl.sl_opensub_hash_valid = !opensub_compute_hash(fh, &hash);
   else
-    opensub_hash_rval = 1;
+    sl.sl_opensub_hash_valid = 0;
 
-  if(opensub_hash_rval == -1)
+  if(!sl.sl_opensub_hash_valid)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
   AVIOContext *avio = fa_libav_reopen(fh);
@@ -687,28 +704,23 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   }
 
   /**
-   * Subtitles from filesystem
+   * Subtitles fr
    */
-  hts_thread_t fss_tid = 0;
-  fs_sub_scanner_t fss;
 
-  if(!(flags & BACKEND_VIDEO_NO_FS_SCAN)) {
-    fss.p = mp->mp_prop_subtitle_tracks;
-    fss.url = url;
-    fss.stop = 0;
+  sl.sl_beflags = flags;
+  sl.sl_p = mp->mp_prop_subtitle_tracks;
+  sl.sl_url = url;
+  sl.sl_stop = 0;
+  sl.sl_opensub_hash = hash;
+  sl.sl_fsize = fsize;
 
-    hts_thread_create_joinable("fs sub scan", &fss_tid,
-			       fs_sub_scan_thread, &fss, THREAD_PRIO_LOW);
-  }
+  hts_thread_create_joinable("subloader", &sub_tid,
+			     sub_loader, &sl, THREAD_PRIO_LOW);
+
 
   /**
    * Query opensubtitles.org
    */
-  hts_thread_t opensub_tid = 0;
-  if(!opensub_hash_rval && fsize != -1)
-    opensub_add_subtitles(mp->mp_prop_subtitle_tracks,
-			  opensub_build_query(NULL, hash, fsize, NULL, NULL),
-			  &opensub_tid);
 
   /**
    * Init codec contexts
@@ -806,16 +818,13 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
-  fss.stop = 1;
-  if(fss_tid)
-    hts_thread_join(&fss_tid);
+  sl.sl_stop = 1;
+  if(sub_tid)
+    hts_thread_join(&sub_tid);
   TRACE(TRACE_DEBUG, "Video", "Subtitle scanner joined");
 
-  if(opensub_tid)
-    hts_thread_join(&opensub_tid);
-  TRACE(TRACE_DEBUG, "Video", "Opensubtitle scanner joined");
-
   mp->mp_pts_delta_for_subs = 0;
+
   mp_flush(mp, 0);
   mp_shutdown(mp);
 
