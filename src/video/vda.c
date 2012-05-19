@@ -102,6 +102,8 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
 
   video_decoder_t *vd = vdad->vdad_vd;
 
+  vd->vd_estimated_duration = fi.duration; // For bitrate calculations
+
   if(fi.duration > 0)
     video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame,
 			&fi, vf->vf_send_pts);
