@@ -145,8 +145,14 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
   vda_decoder_t *vdad = aux;
   CFNumberRef ref;
   vda_frame_t *vf;
-
+  uint8_t skip;
   if(buf == NULL)
+    return;
+
+  ref = CFDictionaryGetValue(frame_info, CFSTR("skip"));
+  CFNumberGetValue(ref, kCFNumberSInt8Type, &skip);
+
+  if(skip)
     return;
 
   vf = malloc(sizeof(vda_frame_t));
@@ -161,6 +167,7 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
 
   ref = CFDictionaryGetValue(frame_info, CFSTR("send_pts"));
   CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_send_pts);
+
 
   vf->vf_buf = buf;
   CFRetain(buf);
@@ -191,13 +198,14 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   vda_decoder_t *vdad = mc->opaque;
   CFDictionaryRef user_info;
   CFDataRef coded_frame;
-  const int num_kvs = 5;
+  const int num_kvs = 6;
   CFStringRef keys[num_kvs];
   CFNumberRef values[num_kvs];
   const int keyframe = mb->mb_keyframe;
   const int send_pts = mb->mb_send_pts;
   vda_frame_t *vf;
   int i;
+  uint8_t skip = mb->mb_skip;
 
   if(vd->vd_do_flush) {
     VDADecoderFlush(vdad->vdad_decoder, 1);
@@ -220,12 +228,14 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   keys[2] = CFSTR("keyframe");
   keys[3] = CFSTR("epoch");
   keys[4] = CFSTR("send_pts");
+  keys[5] = CFSTR("skip");
 
   values[0] = CFNumberCreate(NULL, kCFNumberSInt64Type, &mb->mb_pts);
   values[1] = CFNumberCreate(NULL, kCFNumberSInt32Type, &mb->mb_duration);
   values[2] = CFNumberCreate(NULL, kCFNumberSInt32Type, &keyframe);
   values[3] = CFNumberCreate(NULL, kCFNumberSInt8Type, &mb->mb_epoch);
   values[4] = CFNumberCreate(NULL, kCFNumberSInt8Type, &send_pts);
+  values[5] = CFNumberCreate(NULL, kCFNumberSInt8Type, &skip);
 
   user_info = CFDictionaryCreate(kCFAllocatorDefault,
 				 (const void **)keys,
@@ -236,9 +246,6 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   for(i = 0; i < num_kvs; i++)
     CFRelease(values[i]);
   uint32_t flags = 0;
-
-  if(mb->mb_skip)
-    flags |= kVDADecoderDecodeFlags_DontEmitFrame;
 
   VDADecoderDecode(vdad->vdad_decoder, flags, coded_frame, user_info);
   CFRelease(user_info);
