@@ -376,6 +376,8 @@ prop_notify_free(prop_notify_t *n)
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
+  case PROP_DESTROYED:
+  case PROP_SUGGEST_FOCUS:
     prop_ref_dec(n->hpn_prop);
     break;
 
@@ -384,10 +386,6 @@ prop_notify_free(prop_notify_t *n)
   case PROP_SELECT_CHILD:
     prop_ref_dec(n->hpn_prop);
     prop_ref_dec(n->hpn_prop2);
-    break;
-
-  case PROP_DESTROYED:
-    prop_ref_dec(n->hpn_prop);
     break;
 
   case PROP_EXT_EVENT:
@@ -666,6 +664,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     case PROP_DEL_CHILD:
     case PROP_REQ_NEW_CHILD:
+    case PROP_SUGGEST_FOCUS:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_prop);
       else
@@ -3241,6 +3240,32 @@ prop_unselect_ex(prop_t *parent, prop_sub_t *skipme)
   if(parent->hp_type == PROP_DIR) {
     prop_notify_child(NULL, parent, PROP_SELECT_CHILD, skipme, 0);
     parent->hp_selected = NULL;
+  }
+
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_suggest_focus(prop_t *p)
+{
+  prop_t *parent;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE) {
+    hts_mutex_unlock(&prop_mutex);
+    return;
+  }
+
+  parent = p->hp_parent;
+
+  if(parent != NULL) {
+    assert(parent->hp_type == PROP_DIR);
+    prop_notify_child(p, parent, PROP_SUGGEST_FOCUS, NULL, 0);
   }
 
   hts_mutex_unlock(&prop_mutex);

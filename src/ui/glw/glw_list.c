@@ -500,6 +500,10 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
     break;
 
+  case GLW_SIGNAL_FHP_PATH_CHANGED:
+    if(!glw_is_focused(w)) 
+      l->suggest_cnt = 1;
+    break;
   }
   return 0;
 }
@@ -566,6 +570,7 @@ glw_list_y_ctor(glw_t *w)
   glw_list_t *l = (void *)w;
   
   l->child_aspect = 20;
+  l->suggest_cnt = 1;
   w->glw_flags2 |= GLW2_FLOATING_FOCUS;
 }
 
@@ -579,6 +584,7 @@ glw_list_x_ctor(glw_t *w)
   glw_list_t *l = (void *)w;
   
   l->child_aspect = 1;
+  l->suggest_cnt = 1;
   w->glw_flags2 |= GLW2_FLOATING_FOCUS;
 }
 

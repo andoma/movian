@@ -73,6 +73,7 @@ typedef enum {
   PROP_SUBSCRIPTION_MONITOR_ACTIVE,
   PROP_HAVE_MORE_CHILDS,
   PROP_WANT_MORE_CHILDS,
+  PROP_SUGGEST_FOCUS,
 } prop_event_t;
 
 
@@ -300,6 +301,8 @@ void prop_select_ex(prop_t *p, prop_t *extra, prop_sub_t *skipme);
 void prop_unselect_ex(prop_t *parent, prop_sub_t *skipme);
 
 #define prop_unselect(parent) prop_unselect_ex(parent, NULL)
+
+void prop_suggest_focus(prop_t *p);
 
 void prop_destroy_childs(prop_t *parent);
 

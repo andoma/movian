@@ -1337,6 +1337,21 @@ cloner_select_child(sub_cloner_t *sc, prop_t *p, glw_t *parent, prop_t *extra)
 /**
  *
  */
+static void
+cloner_suggest_focus(sub_cloner_t *sc, prop_t *p, glw_t *parent)
+{
+  glw_clone_t *c;
+  
+  if((c = prop_tag_get(p, sc)) != NULL) {
+    if(parent->glw_class->gc_suggest_focus != NULL)
+      parent->glw_class->gc_suggest_focus(parent, c->c_w);
+  }
+}
+
+
+/**
+ *
+ */
 static token_t *
 prop_callback_alloc_token(glw_root_t *gr, glw_prop_sub_t *gps,
 			  token_type_t type)
@@ -1428,6 +1443,11 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     cloner_select_child(sc, p, gps->gps_widget, p2);
     break;
 
+  case PROP_SUGGEST_FOCUS:
+    p = va_arg(ap, prop_t *);
+    cloner_suggest_focus(sc, p, gps->gps_widget);
+    break;
+
   case PROP_SET_RLINK:
     t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
     t->propsubr = gps;
@@ -1440,6 +1460,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
     sc->sc_have_more = 1;
     cloner_pagination_check(sc);
     break;
+
 
   case PROP_REQ_NEW_CHILD:
   case PROP_REQ_DELETE_VECTOR:
@@ -1545,6 +1566,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_HAVE_MORE_CHILDS:
   case PROP_WANT_MORE_CHILDS:
+  case PROP_SUGGEST_FOCUS:
     break;
   }
 
@@ -1612,6 +1634,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_HAVE_MORE_CHILDS:
   case PROP_WANT_MORE_CHILDS:
+  case PROP_SUGGEST_FOCUS:
     break;
   }
 

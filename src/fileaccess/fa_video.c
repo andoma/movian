@@ -45,6 +45,21 @@
 #include "video/video_settings.h"
 #include "video/vobsub.h"
 
+
+typedef struct seek_item {
+  prop_t *si_prop;
+  float si_start; // in seconds
+} seek_item_t;
+
+typedef struct seek_index {
+  prop_t *si_root;
+  int si_nitems;
+  seek_item_t *si_current;
+  seek_item_t si_items[0];
+} seek_index_t;
+
+
+
 LIST_HEAD(attachment_list, attachment);
 
 typedef struct attachment {
@@ -293,7 +308,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  media_pipe_t *mp, int flags,
 		  char *errbuf, size_t errlen,
 		  const char *canonical_url,
-		  int freetype_context)
+		  int freetype_context,
+		  seek_index_t *sidx)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -444,7 +460,19 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       if(sec != restartpos_last) {
 	restartpos_last = sec;
 	metadb_set_video_restartpos(canonical_url, seekbase / 1000);
+
+	printf("%d:%02d\n", sec / 60, sec % 60);
+	int i, j = 0;
+	for(i = 0; i < sidx->si_nitems; j = i, i++)
+	  if(sidx->si_items[i].si_start > sec)
+	    break;
+
+	if(sidx->si_current != &sidx->si_items[j]) {
+	  sidx->si_current = &sidx->si_items[j];
+	  prop_suggest_focus(sidx->si_current->si_prop);
+	}
       }
+
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
@@ -558,7 +586,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 /**
  *
  */
-static prop_t *
+static seek_index_t *
 build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
 {
   int i;
@@ -566,19 +594,47 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
   prop_t *parent = prop_create(root, "positions");
   char buf[URL_MAX];
 
+  int items = fctx->duration / 60000000;
+
+  seek_index_t *si = malloc(sizeof(seek_index_t) +
+			    sizeof(seek_item_t) * items);
+
+  si->si_current = NULL;
+  si->si_nitems = items;
+  si->si_root = root;
+
   prop_set_int(prop_create(root, "available"), 1);
 
-  for(i = 0; i < fctx->duration / 1000000; i+=60) {
-    prop_t *p = prop_create_root(NULL);
-    snprintf(buf, sizeof(buf), "%s#%d", url, i);
-    prop_set_string(prop_create(p, "image"), buf);
-    prop_set_float(prop_create(p, "timestamp"), i);
-    if(prop_set_parent(p, parent))
-      prop_destroy(p);
-  }
+  for(i = 0; i < items; i++) {
+    seek_item_t *item = &si->si_items[i];
 
-  return root;
+    prop_t *p = prop_create_root(NULL);
+
+    snprintf(buf, sizeof(buf), "%s#%d", url, i * 60);
+    prop_set_string(prop_create(p, "image"), buf);
+    prop_set_float(prop_create(p, "timestamp"), i * 60);
+
+    item->si_prop = p;
+    item->si_start = i * 60;
+
+    if(prop_set_parent(p, parent))
+      abort();
+  }
+  return si;
 }
+
+/**
+ *
+ */
+static void
+seek_index_destroy(seek_index_t *si)
+{
+  prop_destroy(si->si_root);
+  free(si);
+}
+
+
+
 
 /**
  *
@@ -807,14 +863,14 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   prop_set_string(mp->mp_prop_type, "video");
 
-  prop_t *seek_index = build_index(mp, fctx, url);
+  seek_index_t *si = build_index(mp, fctx, url);
 
   metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
-			freetype_context);
+			freetype_context, si);
 
-  prop_destroy(seek_index);
+  seek_index_destroy(si);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
