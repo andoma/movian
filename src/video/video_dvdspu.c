@@ -128,7 +128,6 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
 
     while(!stop && pos < d->d_size) {
       cmd = buf[pos++];
-
       switch(cmd) {
       case 0x00:
 	break;

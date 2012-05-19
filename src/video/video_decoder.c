@@ -328,6 +328,7 @@ vd_thread(void *aux)
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
       video_overlay_flush(vd, 1);
+      dvdspu_flush(vd);
       break;
 
     case MB_VIDEO:

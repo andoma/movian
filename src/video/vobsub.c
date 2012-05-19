@@ -267,11 +267,8 @@ demux_pes(vobsub_t *vs, video_decoder_t *vd,
     if(outlen) {
       void *buf = malloc(outlen);
       memcpy(buf, outbuf, outlen);
-
       dvdspu_enqueue(vd, buf, outlen, vs->vs_clut, vs->vs_width,
 		     vs->vs_height, pts);
-      printf("outlen=%d (%d x %d) pts=%lld\n", outlen,
-	     vs->vs_width, vs->vs_height, pts);
     }
     pts = AV_NOPTS_VALUE;
     dts = AV_NOPTS_VALUE;
@@ -354,7 +351,6 @@ ve_deliver(vobsub_t *vs, vobsub_entry_t *ve, video_decoder_t *vd)
   int fstart = ve->ve_fpos;
   int fend = nxt ? nxt->ve_fpos : vs->vs_stop;
   int size = fend - fstart;
-
 
   if(fa_seek(vs->vs_sub, fstart, SEEK_SET) != fstart)
     return;
