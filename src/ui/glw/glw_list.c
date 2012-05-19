@@ -475,6 +475,11 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(l->suggested == extra)
       l->suggested = NULL;
 
+    if(extra == TAILQ_FIRST(&w->glw_childs) && glw_next_widget(extra) == NULL) {
+      // Last item went away, make sure to reset
+      l->current_pos = 0;
+      l->filtered_pos = 0;
+    }
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
