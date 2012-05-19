@@ -34,6 +34,7 @@
 #include "ext_subtitles.h"
 #include "video_overlay.h"
 #include "misc/sha.h"
+#include "dvdspu.h"
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -366,16 +367,6 @@ vd_thread(void *aux)
       dvdspu_flush(vd);
       break;
 
-    case MB_DVD_CLUT:
-      dvdspu_decode_clut(vd->vd_dvd_clut, mb->mb_data);
-      break;
-      
-    case MB_DVD_SPU:
-      dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, vd->vd_dvd_clut, 0, 0,
-		     mb->mb_pts);
-      mb->mb_data = NULL; // Steal buffer
-      break;
-      
     case MB_DVD_HILITE:
       vd->vd_spu_curbut = mb->mb_data32;
       vd->vd_spu_repaint = 1;
@@ -389,7 +380,26 @@ vd_thread(void *aux)
       mp_enqueue_event(mp, e);
       event_release(e);
       break;
+
+    case MB_DVD_CLUT:
+      memcpy(vd->vd_dvd_clut, mb->mb_data, 16 * sizeof(uint32_t));
+      break;
+
+    case MB_DVD_SPU:
+      dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, 
+		     vd->vd_dvd_clut, 0, 0, mb->mb_pts);
+      break;
 #endif
+
+    case MB_DVD_SPU2:
+      dvdspu_enqueue(vd, mb->mb_data+72, mb->mb_size-72,
+		     mb->mb_data,
+		     ((const uint32_t *)mb->mb_data)[16],
+		     ((const uint32_t *)mb->mb_data)[17],
+		     mb->mb_pts);
+      break;
+      
+
 
     case MB_SUBTITLE:
       if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)

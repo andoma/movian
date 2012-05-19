@@ -517,7 +517,7 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, video_decoder_t *vd)
  *
  */
 ext_subtitles_t *
-subtitles_load(const char *url)
+subtitles_load(media_pipe_t *mp, const char *url)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
@@ -525,7 +525,7 @@ subtitles_load(const char *url)
   int datalen;
   const char *s;
   if((s = mystrbegins(url, "vobsub:")) != NULL) {
-    sub = vobsub_load(s, errbuf, sizeof(errbuf));
+    sub = vobsub_load(s, errbuf, sizeof(errbuf), mp);
     if(sub == NULL) 
       TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
 	    s, errbuf);

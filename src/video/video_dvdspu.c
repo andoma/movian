@@ -21,6 +21,7 @@
 #include "showtime.h"
 #include "video_decoder.h"
 #include "vobsub.h"
+#include "dvdspu.h"
 
 /**
  *
@@ -287,24 +288,23 @@ dvdspu_decode_clut(uint32_t *dst, const uint32_t *src)
  *
  */
 void
-dvdspu_enqueue(video_decoder_t *vd, void *data, int size, const uint32_t *clut,
-	       int w, int h, int64_t pts)
+dvdspu_enqueue(video_decoder_t *vd, const void *data, int size, 
+	       const uint32_t *clut, int width, int height, int64_t pts)
 {
   dvdspu_t *d;
 
-  if(size < 4) {
-    free(data);
+  if(size < 4)
     return;
-  }
 
-  d = calloc(1, sizeof(dvdspu_t));
+  d = calloc(1, sizeof(dvdspu_t) + size);
   memcpy(d->d_clut, clut, 16 * sizeof(uint32_t));
-  d->d_data = data;
+  memcpy(d->d_data, data, size);
+
   d->d_size = size;
   d->d_cmdpos = getbe16(d->d_data + 2);
   d->d_pts = pts;
-  d->d_canvas_width  = w;
-  d->d_canvas_height = h;
+  d->d_canvas_width  = width;
+  d->d_canvas_height = height;
 
   hts_mutex_lock(&vd->vd_spu_mutex);
   TAILQ_INSERT_TAIL(&vd->vd_spu_queue, d, d_link);
@@ -318,7 +318,6 @@ void
 dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d)
 {
   TAILQ_REMOVE(&vd->vd_spu_queue, d, d_link);
-  free(d->d_data);
   free(d);
 }
 

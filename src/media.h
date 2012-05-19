@@ -100,6 +100,7 @@ typedef struct media_buf {
     MB_DVD_CLUT,
     MB_DVD_RESET_SPU,
     MB_DVD_SPU,
+    MB_DVD_SPU2,
     MB_DVD_PCI,
     MB_DVD_HILITE,
 
@@ -383,6 +384,9 @@ int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 struct event *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
 				media_buf_t *mb);
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+
+void mb_enqueue_always_head(media_pipe_t *mp, media_queue_t *mq,
+			    media_buf_t *mb);
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
 struct event *mp_dequeue_event(media_pipe_t *mp);

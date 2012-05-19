@@ -23,6 +23,7 @@
 #include "misc/string.h"
 #include "video_overlay.h"
 #include "video_settings.h"
+#include "dvdspu.h"
 #include "sub.h"
 
 void

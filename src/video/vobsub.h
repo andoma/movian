@@ -19,12 +19,14 @@
 
 struct prop;
 struct ext_subtitles;
+struct media_pipe;
+
 void vobsub_probe(const char *url, const char *filename,
 		  int score, struct prop *prop,
 		  const char *subfile);
 
 struct ext_subtitles *vobsub_load(const char *json, char *errbuf,
-				  size_t errlen);
+				  size_t errlen, struct media_pipe *mp);
 
 
 void vobsub_decode_palette(uint32_t *clut, const char *str);

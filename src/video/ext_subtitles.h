@@ -38,7 +38,7 @@ void subtitles_destroy(ext_subtitles_t *sub);
 
 ext_subtitles_t *subtitles_test(const char *fname);
 
-ext_subtitles_t *subtitles_load(const char *url);
+ext_subtitles_t *subtitles_load(struct media_pipe *mp, const char *url);
 
 ext_subtitles_t *load_ssa(const char *url, char *buf, size_t len);
 

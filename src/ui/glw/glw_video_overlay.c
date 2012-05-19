@@ -23,6 +23,7 @@
 #include "glw_texture.h"
 #include "video/video_playback.h"
 #include "video/video_overlay.h"
+#include "video/dvdspu.h"
 
 /**
  *

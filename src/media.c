@@ -820,6 +820,18 @@ mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 /**
  *
  */
+void
+mb_enqueue_always_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mb_enq_head(mp, mq, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
 int
 mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 {
@@ -2116,7 +2128,7 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url)
   mb->mb_data_type = MB_EXT_SUBTITLE;
   
   if(url != NULL)
-    mb->mb_data = subtitles_load(url);
+    mb->mb_data = subtitles_load(mp, url);
   
   mb->mb_dtor = ext_sub_dtor;
   mb_enq_head(mp, &mp->mp_video, mb);

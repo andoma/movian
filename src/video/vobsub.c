@@ -138,10 +138,22 @@ TAILQ_HEAD(vobsub_entry_queue, vobsub_entry);
  */
 typedef struct vobsub_entry {
   TAILQ_ENTRY(vobsub_entry) ve_link;
-  int64_t ve_start;
+  int64_t ve_pts;
   int ve_fpos;
 } vobsub_entry_t;
 
+
+TAILQ_HEAD(vobsub_cmd_queue, vobsub_cmd);
+/**
+ *
+ */
+typedef struct vobsub_cmd {
+  TAILQ_ENTRY(vobsub_cmd) vc_link;
+  int vc_start;
+  int vc_size;
+  int64_t vc_pts;
+
+} vobsub_cmd_t;
 
 /**
  *
@@ -157,6 +169,14 @@ typedef struct vobsub {
   uint32_t vs_clut[16];
   int vs_width;
   int vs_height;
+
+  hts_mutex_t vs_mutex;
+  hts_cond_t vs_cond;
+  struct vobsub_cmd_queue vs_cmds;
+
+  media_pipe_t *vs_mp;
+  hts_thread_t vs_tid;
+
 } vobsub_t;
 
 
@@ -168,7 +188,7 @@ static int64_t
 ve_stop(const vobsub_entry_t *ve)
 {
   ve = TAILQ_NEXT(ve, ve_link);
-  return ve != NULL ? ve->ve_start : INT64_MAX;
+  return ve != NULL ? ve->ve_pts : INT64_MAX;
 }
 
 
@@ -210,7 +230,7 @@ ve_stop(const vobsub_entry_t *ve)
  *
  */
 static void
-demux_pes(vobsub_t *vs, video_decoder_t *vd,
+demux_pes(const vobsub_t *vs, media_pipe_t *mp,
 	  uint32_t sc, const uint8_t *buf, int len, int64_t pts)
 {
   uint8_t flags, hlen, x;
@@ -265,10 +285,16 @@ demux_pes(vobsub_t *vs, video_decoder_t *vd,
 				&outbuf, &outlen, buf, len, 
 				pts, dts, 0);
     if(outlen) {
-      void *buf = malloc(outlen);
-      memcpy(buf, outbuf, outlen);
-      dvdspu_enqueue(vd, buf, outlen, vs->vs_clut, vs->vs_width,
-		     vs->vs_height, pts);
+      media_buf_t *mb = media_buf_alloc_unlocked(mp, outlen + 18*4);
+      mb->mb_data_type = MB_DVD_SPU2;
+      mb->mb_dts = dts;
+      mb->mb_pts = pts;
+      uint32_t *d = mb->mb_data;
+      d[16] = vs->vs_width;
+      d[17] = vs->vs_height;
+      memcpy(mb->mb_data, vs->vs_clut, 16 * 4);
+      memcpy(mb->mb_data + 18*4, outbuf, outlen);
+      mb_enqueue_always_head(mp, &mp->mp_video, mb);
     }
     pts = AV_NOPTS_VALUE;
     dts = AV_NOPTS_VALUE;
@@ -285,8 +311,8 @@ demux_pes(vobsub_t *vs, video_decoder_t *vd,
  *
  */
 static void
-demux_block(vobsub_t *vs, const uint8_t *buf, int len, video_decoder_t *vd,
-	    int64_t pts)
+demux_block(const vobsub_t *vs, const uint8_t *buf, int len,
+	    media_pipe_t *mp, int64_t pts)
 { 
   uint32_t startcode, pes_len;
 
@@ -312,7 +338,7 @@ demux_block(vobsub_t *vs, const uint8_t *buf, int len, video_decoder_t *vd,
     case 0x1bf:
     case 0x1c0 ... 0x1df:
     case 0x1e0 ... 0x1ef:
-      demux_pes(vs, vd, startcode, buf, pes_len, pts);
+      demux_pes(vs, mp, startcode, buf, pes_len, pts);
       len -= pes_len;
       buf += pes_len;
       break;
@@ -328,11 +354,11 @@ demux_block(vobsub_t *vs, const uint8_t *buf, int len, video_decoder_t *vd,
  *
  */
 static void
-demux_blocks(vobsub_t *vs, const uint8_t *buf, int size, video_decoder_t *vd,
-	     int64_t pts)
+demux_blocks(const vobsub_t *vs, const uint8_t *buf, int size,
+	     media_pipe_t *mp, int64_t pts)
 {
   while(size >= 2048) {
-    demux_block(vs, buf, 2048, vd, pts);
+    demux_block(vs, buf, 2048, mp, pts);
     buf += 2048;
     size -= 2048;
   }
@@ -343,16 +369,9 @@ demux_blocks(vobsub_t *vs, const uint8_t *buf, int size, video_decoder_t *vd,
  *
  */
 static void
-ve_deliver(vobsub_t *vs, vobsub_entry_t *ve, video_decoder_t *vd)
+ve_load(vobsub_t *vs, int start, int size, int64_t pts)
 {
-  vs->vs_cur = ve;
-
-  const vobsub_entry_t *nxt = TAILQ_NEXT(ve, ve_link);
-  int fstart = ve->ve_fpos;
-  int fend = nxt ? nxt->ve_fpos : vs->vs_stop;
-  int size = fend - fstart;
-
-  if(fa_seek(vs->vs_sub, fstart, SEEK_SET) != fstart)
+  if(fa_seek(vs->vs_sub, start, SEEK_SET) != start)
     return;
 
   void *buf = mymalloc(size);
@@ -360,9 +379,74 @@ ve_deliver(vobsub_t *vs, vobsub_entry_t *ve, video_decoder_t *vd)
     return;
 
   if(fa_read(vs->vs_sub, buf, size) == size)
-    demux_blocks(vs, buf, size, vd, ve->ve_start);
+    demux_blocks(vs, buf, size, vs->vs_mp, pts);
 
   free(buf);
+}
+
+/**
+ *
+ */
+static void *
+vobsub_thread(void *aux)
+{
+  vobsub_t *vs = aux;
+  vobsub_cmd_t *vc;
+  int run = 1;
+  hts_mutex_lock(&vs->vs_mutex);
+
+  while(run) {
+    while((vc = TAILQ_FIRST(&vs->vs_cmds)) == NULL)
+      hts_cond_wait(&vs->vs_cond, &vs->vs_mutex);
+    TAILQ_REMOVE(&vs->vs_cmds, vc, vc_link);
+    hts_mutex_unlock(&vs->vs_mutex);
+
+    if(vc->vc_size == 0) {
+      run = 0;
+    } else {
+      ve_load(vs, vc->vc_start, vc->vc_size, vc->vc_pts);
+    }
+
+    free(vc);
+    hts_mutex_lock(&vs->vs_mutex);
+
+  }
+  hts_mutex_unlock(&vs->vs_mutex);
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+static void
+vs_send_cmd(vobsub_t *vs, int start, int size, int64_t pts)
+{
+  vobsub_cmd_t *vc = malloc(sizeof(vobsub_cmd_t));
+  vc->vc_start = start;
+  vc->vc_size  = size;
+  vc->vc_pts   = pts;
+  hts_mutex_lock(&vs->vs_mutex);
+  TAILQ_INSERT_TAIL(&vs->vs_cmds, vc, vc_link);
+  hts_cond_signal(&vs->vs_cond);
+  hts_mutex_unlock(&vs->vs_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+ve_deliver(vobsub_t *vs, vobsub_entry_t *ve)
+{
+  vs->vs_cur = ve;
+
+  const vobsub_entry_t *nxt = TAILQ_NEXT(ve, ve_link);
+  int fend = nxt ? nxt->ve_fpos : vs->vs_stop;
+  int size = fend - ve->ve_fpos;
+  if(size > 0)
+    vs_send_cmd(vs, ve->ve_fpos, size, ve->ve_pts);
 }
 
 
@@ -376,20 +460,20 @@ vobsub_picker(struct ext_subtitles *es, int64_t pts,
   vobsub_t *vs = (vobsub_t *)es;
   vobsub_entry_t *ve = vs->vs_cur;
 
-  if(ve != NULL && ve->ve_start <= pts && ve_stop(ve) > pts)
+  if(ve != NULL && ve->ve_pts <= pts && ve_stop(ve) > pts)
     return; // Already sent
   
   if(ve != NULL) {
     ve = TAILQ_NEXT(ve, ve_link);
-    if(ve != NULL && ve->ve_start <= pts && ve_stop(ve) > pts) {
-      ve_deliver(vs, ve, vd);
+    if(ve != NULL && ve->ve_pts <= pts && ve_stop(ve) > pts) {
+      ve_deliver(vs, ve);
       return;
     }
   }
 
   TAILQ_FOREACH(ve, &vs->vs_entries, ve_link) {
-    if(ve->ve_start <= pts && ve_stop(ve) > pts) {
-      ve_deliver(vs, ve, vd);
+    if(ve->ve_pts <= pts && ve_stop(ve) > pts) {
+      ve_deliver(vs, ve);
       return;
     }
   }
@@ -429,9 +513,21 @@ static void
 vobsub_dtor(ext_subtitles_t *es)
 {
   vobsub_t *vs = (vobsub_t *)es;
+
+  vs_send_cmd(vs, 0, 0, 0); // Tell worker to terminate
+  hts_thread_join(&vs->vs_tid); // And collect it
+
+  hts_cond_destroy(&vs->vs_cond);
+  hts_mutex_destroy(&vs->vs_mutex);
+
+  mp_ref_dec(vs->vs_mp);
+
   av_parser_close(vs->vs_parser);
   av_free(vs->vs_ctx);
   fa_close(vs->vs_sub);
+
+  
+
 }
 
 
@@ -439,7 +535,8 @@ vobsub_dtor(ext_subtitles_t *es)
  *
  */
 struct ext_subtitles *
-vobsub_load(const char *json, char *errbuf, size_t errlen)
+vobsub_load(const char *json, char *errbuf, size_t errlen,
+	    media_pipe_t *mp)
 {
   htsmsg_t *m = htsmsg_json_deserialize(json);
   int idx;
@@ -516,8 +613,8 @@ vobsub_load(const char *json, char *errbuf, size_t errlen)
       if(parse_ts) {
 
 	vobsub_entry_t *ve = malloc(sizeof(vobsub_entry_t));
-	ve->ve_start = ts;
-	ve->ve_fpos  = fpos;
+	ve->ve_pts  = ts;
+	ve->ve_fpos = fpos;
 	TAILQ_INSERT_TAIL(&vs->vs_entries, ve, ve_link);
       } else {
 	if(write_stop)
@@ -534,5 +631,16 @@ vobsub_load(const char *json, char *errbuf, size_t errlen)
 
   vs->vs_es.es_dtor = vobsub_dtor;
   vs->vs_es.es_picker = vobsub_picker;
+
+  vs->vs_mp = mp;
+  mp_ref_inc(mp);
+
+  TAILQ_INIT(&vs->vs_cmds);
+
+  hts_mutex_init(&vs->vs_mutex);
+  hts_cond_init(&vs->vs_cond, &vs->vs_mutex);
+  
+  hts_thread_create_joinable("vobsub loader", &vs->vs_tid,
+			     vobsub_thread, vs, THREAD_PRIO_LOW);
   return &vs->vs_es;
 }
