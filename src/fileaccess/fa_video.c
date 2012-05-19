@@ -818,10 +818,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
-  sl.sl_stop = 1;
-  if(sub_tid)
-    hts_thread_join(&sub_tid);
-  TRACE(TRACE_DEBUG, "Video", "Subtitle scanner joined");
 
   mp->mp_pts_delta_for_subs = 0;
 
@@ -835,6 +831,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   attachment_unload_all(&alist);
 
   media_format_deref(fw);
+
+  sl.sl_stop = 1;
+  if(sub_tid)
+    hts_thread_join(&sub_tid);
+  TRACE(TRACE_DEBUG, "Video", "Subtitle scanner joined");
   
   return e;
 }
