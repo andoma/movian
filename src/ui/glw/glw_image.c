@@ -1036,7 +1036,9 @@ get_identity(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_loadable_texture_t *glt = gi->gi_current;
-  return glt ? rstr_get(glt->glt_url) : "unloaded";
+  if(glt)
+    return rstr_get(glt->glt_url);
+  return rstr_get(gi->gi_pending_url);
 }
 
 /**
@@ -1057,6 +1059,7 @@ static glw_class_t glw_image = {
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1080,6 +1083,7 @@ static glw_class_t glw_icon = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1128,6 +1132,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

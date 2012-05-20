@@ -2006,23 +2006,34 @@ glw_register_class(glw_class_t *gc)
   LIST_INSERT_HEAD(&glw_classes, gc, gc_link);
 }
 
+
+#define GET_A_NAME_BUF 1024
 /**
  *
  */
-static const char *
-glw_get_a_name_r(glw_t *w)
+static void
+glw_get_a_name_r(glw_t *w, char *buf)
 {
   glw_t *c;
-  const char *r;
+  const char *r = NULL;
 
   if(w->glw_class->gc_get_text != NULL)
-    return w->glw_class->gc_get_text(w);
+    r = w->glw_class->gc_get_text(w);
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
-    if((r = glw_get_a_name_r(c)) != NULL)
-      return r;
-  }
-  return NULL;
+  if(r != NULL)
+    snprintf(buf + strlen(buf), GET_A_NAME_BUF - strlen(buf),
+	     "%s%s", buf[0] ? ", " : "", r);
+
+  r = NULL;
+  if(w->glw_class->gc_get_identity != NULL)
+    r = w->glw_class->gc_get_identity(w);
+
+  if(r != NULL)
+    snprintf(buf + strlen(buf), GET_A_NAME_BUF - strlen(buf),
+	     "%s%s", buf[0] ? ", " : "", r);
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_get_a_name_r(c, buf);
 }
 
 
@@ -2032,10 +2043,18 @@ glw_get_a_name_r(glw_t *w)
 const char *
 glw_get_a_name(glw_t *w)
 {
+  if(w == NULL)
+    return "<null>";
+
   if(w->glw_id != NULL)
     return w->glw_id;
 
-  return glw_get_a_name_r(w);
+  static char buf[1024];
+  buf[0] = 0;
+  glw_get_a_name_r(w, buf);
+  if(buf[0] == 0)
+    return "<no name>";
+  return buf;
 }
 
 
