@@ -224,12 +224,12 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
   if(event_is_action(e, ACTION_FOCUS_PREV)) {
 
-    glw_focus_crawl(w, 0);
+    glw_focus_crawl(w, 0, 1);
     return 1;
 
   } else if(event_is_action(e, ACTION_FOCUS_NEXT)) {
 
-    glw_focus_crawl(w, 1);
+    glw_focus_crawl(w, 1, 1);
     return 1;
 
   } else if(event_is_action(e, ACTION_UP)) {

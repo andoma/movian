@@ -1014,7 +1014,7 @@ void glw_focus_open_path_close_all_other(glw_t *w);
 
 void glw_focus_close_path(glw_t *w);
 
-void glw_focus_crawl(glw_t *w, int forward);
+void glw_focus_crawl(glw_t *w, int forward, int interactive);
 
 int glw_focus_step(glw_t *w, int forward);
 

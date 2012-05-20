@@ -666,6 +666,33 @@ mod_flag(glw_view_eval_context_t *ec, const token_attrib_t *a,
 /**
  *
  */
+static int
+mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+	   struct token *t)
+{
+  int v = 0;
+
+  if(t->type == TOKEN_INT)
+    v = t->t_int;
+  else if(t->type == TOKEN_FLOAT)
+    v = t->t_float > 0.5;
+  else if(t->type == TOKEN_VOID)
+    v = 0;
+  else
+    return glw_view_seterr(ec->ei, t, "Invalid assignment for attribute %s",
+			    a->name);
+
+  if(v)
+    glw_hide(ec->w);
+  else
+    glw_unhide(ec->w);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static void
 mod_flags1(glw_t *w, int set, int clr)
 {
@@ -820,7 +847,7 @@ static const token_attrib_t attribtab[] = {
   {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
   {"filterConstraintY",       mod_flag, GLW_CONSTRAINT_IGNORE_Y, mod_flags1},
   {"filterConstraintWeight",  mod_flag, GLW_CONSTRAINT_IGNORE_W, mod_flags1},
-  {"hidden",                  mod_flag, GLW_HIDDEN, mod_flags1},
+  {"hidden",                  mod_hidden},
   {"noInitialTransform",      mod_flag, GLW_NO_INITIAL_TRANS, mod_flags1},
   {"focusOnClick",            mod_flag, GLW_FOCUS_ON_CLICK, mod_flags1},
   {"autoRefocusable",         mod_flag, GLW_AUTOREFOCUSABLE, mod_flags1},

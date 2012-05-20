@@ -1299,7 +1299,7 @@ glw_focus_crawl1(glw_t *w, int forward)
  * Used to focus next (or previous) focusable widget.
  */
 void
-glw_focus_crawl(glw_t *w, int forward)
+glw_focus_crawl(glw_t *w, int forward, int interactive)
 {
   glw_t *r = NULL;
 
@@ -1313,7 +1313,9 @@ glw_focus_crawl(glw_t *w, int forward)
     r = glw_focus_crawl1(w, forward);
 
   if(r != NULL)
-    glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_INTERACTIVE);
+    glw_focus_set(w->glw_root, r,
+		  interactive ? GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE : 
+		  GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC);
 }
 
 
@@ -1334,8 +1336,14 @@ glw_focus_open_path_close_all_other(glw_t *w)
 
   if(c != NULL)
     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
-  else
-    TRACE(TRACE_DEBUG, "GLW", "Nothing can be (re-)focused");
+  else {
+    c = glw_focus_crawl1(w, 1);
+
+    if(c != NULL)
+      glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+    else
+      TRACE(TRACE_DEBUG, "GLW", "Nothing can be (re-)focused");
+  }
 }
 
 
@@ -2165,6 +2173,9 @@ glw_hide(glw_t *w)
     return;
   w->glw_flags |= GLW_HIDDEN;
   glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
+
+  if(glw_is_focused(w))
+    glw_focus_crawl(w, 1, 0);
 }
 
 
