@@ -1013,7 +1013,8 @@ glw_t *
 glw_focus_by_path(glw_t *w)
 {
   while(w->glw_focused != NULL) {
-    if(w->glw_focused->glw_flags & (GLW_FOCUS_BLOCKED | GLW_DESTROYING))
+    if(w->glw_focused->glw_flags & 
+       (GLW_FOCUS_BLOCKED | GLW_DESTROYING | GLW_HIDDEN))
       return NULL;
     w = w->glw_focused;
   }
@@ -1282,7 +1283,7 @@ glw_focus_crawl1(glw_t *w, int forward)
   for(; c != NULL; c = forward ? TAILQ_NEXT(c, glw_parent_link) : 
 	TAILQ_PREV(c, glw_queue, glw_parent_link)) {
 
-    if(!(c->glw_flags & GLW_FOCUS_BLOCKED)) {
+    if(!(c->glw_flags & (GLW_FOCUS_BLOCKED | GLW_HIDDEN))) {
       if(glw_is_focusable(c))
 	return c;
       if(TAILQ_FIRST(&c->glw_childs))
