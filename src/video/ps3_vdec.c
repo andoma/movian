@@ -360,9 +360,6 @@ picture_out(vdec_decoder_t *vdd)
       break;
     }
 
-    // No reordering
-    reset_active_pictures(vdd, "mpeg2", 0);
-
     snprintf(metainfo, sizeof(metainfo),
 	     "MPEG2 %dx%d%c (Cell)",
 	     mpeg2->width, mpeg2->height, vp->fi.interlaced ? 'i' : 'p');
