@@ -3,17 +3,17 @@ precision highp float;
 #endif
 
 uniform sampler2D u_t0;
-uniform vec2 u_texture_blur_scale;
 
 varying vec4 f_col_mul;
 varying vec4 f_col_mul2;
 varying vec4 f_col_off;
 varying vec2 f_tex;
-varying float f_blur_amount;
+varying vec3 f_blur;
 
 void main()
 {
-  vec2 t = clamp(f_blur_amount, 0.0, 1.0) * u_texture_blur_scale;
+  
+  vec2 t = clamp(f_blur.x, 0.0, 1.0) * f_blur.yz;
   
   vec4 col = 
     texture2D(u_t0, f_tex + vec2(t.x, 0)) +

@@ -108,7 +108,8 @@ load_vp(const char *filename)
   rvp->rvp_u_modelview = realityVertexProgramGetConstant(vp, "u_modelview");
   rvp->rvp_u_color     = vp_get_vector_const(vp, "u_color");
   rvp->rvp_u_color_offset = vp_get_vector_const(vp, "u_color_offset");
-  rvp->rvp_u_blur_amount = vp_get_vector_const(vp, "u_blur_amount");
+  rvp->rvp_u_blur = vp_get_vector_const(vp, "u_blur");
+
   TRACE(TRACE_DEBUG, "glw", "%d %d", rvp->rvp_u_modelview, rvp->rvp_u_color);
 
   rvp->rvp_a_position = realityVertexProgramGetAttribute(vp, "a_position");
@@ -335,14 +336,13 @@ rsx_render(struct glw_root *gr,
     realitySetVertexProgramConstant4f(ctx, rvp->rvp_u_color_offset, rgba);
   }
 
-  if(blur > 0.05 && tex != NULL) {
+  if(rfp == gr->gr_be.be_fp_tex_blur) {
     float v[4];
-    v[0] = 1.5 * blur / tex->tex.width;
-    v[1] = 1.5 * blur / tex->tex.height;
-    v[2] = 0;
+    v[0] = blur;
+    v[1] = 1.5 / tex->tex.width;
+    v[2] = 1.5 / tex->tex.height;
     v[3] = 0;
-
-    realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur_amount, v);
+    realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur, v);
   }
 
   rsx_set_fp(gr, rfp, 0);
@@ -357,14 +357,14 @@ rsx_render(struct glw_root *gr,
       const float *v = &vertices[indices[i] * VERTEX_SIZE];
       realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
-      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+      realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
     }
   } else {
     for(i = 0; i < num_vertices; i++) {
       const float *v = &vertices[i * VERTEX_SIZE];
       realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
-      realityVertex4f(ctx, v[0], v[1], v[2], 1);
+      realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
     }
   }
   realityVertexEnd(ctx);

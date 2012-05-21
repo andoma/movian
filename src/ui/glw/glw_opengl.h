@@ -75,8 +75,7 @@ typedef struct glw_program {
   GLint  gp_uniform_colormtx;
   GLint  gp_uniform_blend;
   GLint  gp_uniform_color_offset;
-  GLint  gp_uniform_texture_blur_scale;
-  GLint  gp_uniform_blur_amount_2;
+  GLint  gp_uniform_blur;
 
   GLint  gp_uniform_t[6];
 

@@ -38,7 +38,7 @@ typedef struct rsx_vp {
   int rvp_u_modelview;
   int rvp_u_color;
   int rvp_u_color_offset;
-  int rvp_u_blur_amount;
+  int rvp_u_blur;
 
   int rvp_a_position;
   int rvp_a_color;
