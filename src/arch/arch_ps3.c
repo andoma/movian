@@ -168,9 +168,11 @@ arch_init(void)
 {
   extern int trace_level;
   extern int concurrency;
+  extern int showtime_can_standby;
 
   concurrency = 2;
 
+  showtime_can_standby = 1;
 
   trace_level = TRACE_DEBUG;
   sysprop = prop_create(prop_get_global(), "system");
@@ -191,6 +193,9 @@ arch_init(void)
 void
 arch_exit(int retcode)
 {
+  if(retcode == 10)
+    Lv2Syscall3(379, 0x100, 0, 0 );
+
 #if ENABLE_BINREPLACE
   extern char *showtime_bin;
 

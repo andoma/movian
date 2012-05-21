@@ -31,6 +31,11 @@ static int64_t last_activity;
 static int active_media;
 static callout_t autostandby_timer;
 
+extern int showtime_can_standby;
+extern int showtime_can_poweroff;
+extern int showtime_can_open_shell;
+extern int showtime_can_logout;
+
 /**
  * Called from various places to indicate that user is active
  *
@@ -146,12 +151,14 @@ do_open_shell(void *opaque, prop_event_t event, ...)
  *
  */
 void
-runcontrol_init(int can_standby, int can_poweroff,
-		int can_logout, int can_open_shell)
+runcontrol_init(void)
 {
   prop_t *rc;
   
-  if(!(can_standby || can_poweroff || can_logout || can_open_shell))
+  if(!(showtime_can_standby ||
+       showtime_can_poweroff ||
+       showtime_can_logout ||
+       showtime_can_open_shell))
     return;
 
   settings_create_divider(settings_general, 
@@ -159,23 +166,23 @@ runcontrol_init(int can_standby, int can_poweroff,
 
   rc = prop_create(prop_get_global(), "runcontrol");
 
-  prop_set_int(prop_create(rc, "canStandby"), !!can_standby);
-  prop_set_int(prop_create(rc, "canPowerOff"), !!can_poweroff);
-  prop_set_int(prop_create(rc, "canLogout"), !!can_logout);
-  prop_set_int(prop_create(rc, "canOpenShell"), !!can_open_shell);
+  prop_set_int(prop_create(rc, "canStandby"),   !!showtime_can_standby);
+  prop_set_int(prop_create(rc, "canPowerOff"),  !!showtime_can_poweroff);
+  prop_set_int(prop_create(rc, "canLogout"),    !!showtime_can_logout);
+  prop_set_int(prop_create(rc, "canOpenShell"), !!showtime_can_open_shell);
 
-  if(can_standby)
+  if(showtime_can_standby)
     init_autostandby();
 
-  if(can_poweroff)
+  if(showtime_can_poweroff)
     settings_create_action(settings_general, _p("Power off system"),
 			   do_power_off, NULL, NULL);
 
-  if(can_logout)
+  if(showtime_can_logout)
     settings_create_action(settings_general, _p("Logout"),
 			   do_logout, NULL, NULL);
 
-  if(can_open_shell)
+  if(showtime_can_open_shell)
     settings_create_action(settings_general, _p("Open shell"),
 			   do_open_shell, NULL, NULL);
 }

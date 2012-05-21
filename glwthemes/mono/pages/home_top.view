@@ -5,6 +5,5 @@ widget(container_x, {
   skinNavButton("about", navOpen("page:about"), true);
   skinNavButton("settings", navOpen("settings:"), true);
   skinNavButton("power", event(Standby), true, !$global.runcontrol.canStandby);
-  skinNavButton("exit", event(Quit), true,
-		$global.runcontrol.canStandby || !$ui.fullscreen);
+  skinNavButton("exit", event(Quit), true, !$ui.fullscreen);
 });
