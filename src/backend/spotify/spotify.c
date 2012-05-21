@@ -3717,8 +3717,6 @@ spotify_search_done(sp_search *result, void *userdata)
   ss_fill_albums(result,  &ss->ss_reqs[SS_ALBUMS]);
   ss_fill_artists(result, &ss->ss_reqs[SS_ARTISTS]);
   ss_fill_playlists(result, &ss->ss_reqs[SS_PLAYLISTS]);
-
-  search_release(ss);
 }
 
 #define SEARCH_LIMIT 250
