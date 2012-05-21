@@ -1084,6 +1084,8 @@ extern const uint16_t ISO_8859_15[];
 extern const uint16_t ISO_8859_16[];
 extern const uint16_t CP1250[];
 extern const uint16_t CP1251[];
+extern const uint16_t CP1252[];
+extern const uint16_t CP1253[];
 
 
 const static charset_t charsets[] = {
@@ -1104,6 +1106,8 @@ const static charset_t charsets[] = {
   {"ISO-8859-16", "ISO-8859-16 (Latin-10)", ISO_8859_16},
   {"CP1250", "Windows 1250", CP1250},
   {"CP1251", "Windows 1251", CP1251},
+  {"CP1252", "Windows 1252", CP1252},
+  {"CP1253", "Windows 1253", CP1253},
 };
 
 const charset_t *
