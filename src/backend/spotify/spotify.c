@@ -1789,7 +1789,6 @@ startpage(spotify_page_t *sp)
   prop_t *metadata = prop_create(model, "metadata");
 
   prop_set_string(prop_create(model, "type"), "directory");
-  prop_set_string(prop_create(model, "contents"), "items");
   prop_set_rstring(prop_create(metadata, "logo"), spotify_icon_url);
   prop_set_string(prop_create(metadata, "title"), "Spotify");
 
