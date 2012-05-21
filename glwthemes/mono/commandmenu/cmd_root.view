@@ -385,6 +385,11 @@ widget(container_y, {
 	     $ui.menu = false;
 	    fireEvent(navOpen("settings:"));
 	  }, "Settings", true);
+
+	  commandToggle($global.nav.currentpage.bookmarked,
+			"Bookmark",
+			true);
+
 	});
 	
 	commandSeekSlider(

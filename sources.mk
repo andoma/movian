@@ -31,7 +31,6 @@ SRCS += src/main.c \
 	src/event.c \
 	src/keyring.c \
 	src/settings.c \
-	src/bookmarks.c \
 	src/service.c \
 	src/notifications.c \
 	src/playqueue.c \

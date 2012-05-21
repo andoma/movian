@@ -190,9 +190,9 @@ service_get_statustxt_prop(service_t *s)
  *
  */
 void 
-service_set_type(service_t *s, const char *type)
+service_set_type(service_t *s, rstr_t *type)
 {
-  prop_set_string(s->s_prop_type, type);
+  prop_set_rstring(s->s_prop_type, type);
 }
 
 
@@ -200,9 +200,9 @@ service_set_type(service_t *s, const char *type)
  *
  */
 void
-service_set_title(service_t *s, const char *title)
+service_set_title(service_t *s, rstr_t *title)
 {
-  prop_set_string(prop_create(s->s_root, "title"), title);
+  prop_set_rstring(prop_create(s->s_root, "title"), title);
 }
 
 
@@ -210,9 +210,9 @@ service_set_title(service_t *s, const char *title)
  *
  */
 void
-service_set_icon(service_t *s, const char *icon)
+service_set_icon(service_t *s, rstr_t *icon)
 {
-  prop_set_string(prop_create(s->s_root, "icon"), icon);
+  prop_set_rstring(prop_create(s->s_root, "icon"), icon);
 }
 
 
@@ -230,12 +230,12 @@ service_set_enabled(service_t *s, int v)
  *
  */
 void
-service_set_url(service_t *s, const char *url)
+service_set_url(service_t *s, rstr_t *url)
 {
-  prop_set_string(prop_create(s->s_root, "url"), url);
+  prop_set_rstring(prop_create(s->s_root, "url"), url);
 
   hts_mutex_lock(&service_mutex);
-  seturl(s, url);
+  seturl(s, rstr_get(url));
   service_reprobe(s);
   hts_mutex_unlock(&service_mutex);
 }

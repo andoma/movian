@@ -40,7 +40,6 @@
 #include "settings.h"
 #include "ui/ui.h"
 #include "keyring.h"
-#include "bookmarks.h"
 #include "notifications.h"
 #include "sd/sd.h"
 #include "ipc/ipc.h"
@@ -424,9 +423,6 @@ main(int argc, char **argv)
 
   /* Initialize audio subsystem */
   audio_init();
-
-  /* Initialize bookmarks */
-  bookmarks_init();
 
   /* Initialize plugin manager and load plugins */
   plugins_init(devplugin, plugin_repo);

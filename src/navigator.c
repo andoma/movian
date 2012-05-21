@@ -28,9 +28,44 @@
 #include "backend/backend.h"
 #include "event.h"
 #include "plugins.h"
+#include "service.h"
+#include "settings.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
+LIST_HEAD(bookmark_list, bookmark);
+LIST_HEAD(navigator_list, navigator);
 
+static prop_courier_t *nav_courier;
+static prop_t *bookmark_root;
+static prop_t *bookmark_nodes;
+
+static void bookmarks_init(void);
+static void bookmark_add(const char *title, const char *url, const char *type,
+			 const char *icon);
+static void bookmarks_save(void);
+
+static struct bookmark_list bookmarks;
+static struct navigator_list navigators;
+
+/**
+ *
+ */
+typedef struct bookmark {
+  LIST_ENTRY(bookmark) bm_link;
+  prop_t *bm_root;
+  prop_sub_t *bm_title_sub;
+  prop_sub_t *bm_url_sub;
+  prop_sub_t *bm_type_sub;
+  prop_sub_t *bm_icon_sub;
+
+  rstr_t *bm_title;
+  rstr_t *bm_url;
+  rstr_t *bm_type;
+  rstr_t *bm_icon;
+
+  service_t *bm_service;
+
+} bookmark_t;
 
 /**
  *
@@ -54,6 +89,17 @@ typedef struct nav_page {
 
   prop_t *np_opened_from;
 
+  // For bookmarking
+
+  prop_sub_t *np_bookmarked_sub;
+  prop_t *np_bookmarked;
+
+  prop_sub_t *np_title_sub;
+  rstr_t *np_title;
+
+  prop_sub_t *np_icon_sub;
+  rstr_t *np_icon;
+
 } nav_page_t;
 
 
@@ -62,6 +108,8 @@ typedef struct nav_page {
  */
 typedef struct navigator {
 
+  LIST_ENTRY(navigator) nav_link;
+  
   struct nav_page_queue nav_pages;
   struct nav_page_queue nav_history;
 
@@ -74,8 +122,6 @@ typedef struct navigator {
   prop_t *nav_prop_can_go_fwd;
   prop_t *nav_prop_can_go_home;
 
-  prop_courier_t *nav_pc;
-
   prop_sub_t *nav_eventsink;
   prop_sub_t *nav_dtor_tracker;
 
@@ -85,6 +131,41 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
+
+/**
+ *
+ */
+static int
+nav_page_is_bookmarked(nav_page_t *np)
+{
+  bookmark_t *bm;
+  LIST_FOREACH(bm, &bookmarks, bm_link)
+    if(bm->bm_url != NULL && !strcmp(np->np_url, rstr_get(bm->bm_url)))
+      return 1;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+nav_update_bookmarked(void)
+{
+  navigator_t *nav;
+
+  LIST_FOREACH(nav, &navigators, nav_link) {
+    nav_page_t *np;
+    TAILQ_FOREACH(np, &nav->nav_pages, np_global_link) {
+      prop_set_int_ex(np->np_bookmarked, 
+		      np->np_bookmarked_sub, nav_page_is_bookmarked(np));
+    }
+  }
+}
+
+
+
+
 /**
  *
  */
@@ -92,6 +173,9 @@ static navigator_t *
 nav_create(prop_t *prop)
 {
   navigator_t *nav = calloc(1, sizeof(navigator_t));
+
+  LIST_INSERT_HEAD(&navigators, nav, nav_link);
+
   nav->nav_prop_root = prop;
 
   TAILQ_INIT(&nav->nav_pages);
@@ -104,20 +188,18 @@ nav_create(prop_t *prop)
   nav->nav_prop_can_go_home = prop_create(nav->nav_prop_root, "canGoHome");
   prop_set_int(nav->nav_prop_can_go_home, 1);
 
-  nav->nav_pc = prop_courier_create_thread(NULL, "navigator");
-
   nav->nav_eventsink = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("nav", "eventsink"),
 		   PROP_TAG_CALLBACK, nav_eventsink, nav,
-		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_COURIER, nav_courier,
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
 
   nav->nav_dtor_tracker =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, nav_dtor_tracker, nav,
-		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_COURIER, nav_courier,
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
 
@@ -141,6 +223,8 @@ nav_spawn(void)
 void
 nav_init(void)
 {
+  nav_courier = prop_courier_create_thread(NULL, "navigator");
+  bookmarks_init();
   nav_create(prop_create(prop_get_global(), "nav"));
 }
 
@@ -191,6 +275,9 @@ nav_close(nav_page_t *np, int with_prop)
   prop_ref_dec(np->np_opened_from);
   prop_unsubscribe(np->np_close_sub);
   prop_unsubscribe(np->np_direct_close_sub);
+  prop_unsubscribe(np->np_bookmarked_sub);
+  prop_unsubscribe(np->np_title_sub);
+  prop_unsubscribe(np->np_icon_sub);
 
   if(nav->nav_page_current == np)
     nav->nav_page_current = NULL;
@@ -304,6 +391,54 @@ nav_page_direct_close_set(void *opaque, int v)
  *
  */
 static void
+nav_page_bookmarked_set(void *opaque, int v)
+{
+  nav_page_t *np = opaque;
+
+  if(v) {
+    if(nav_page_is_bookmarked(np))
+      return;
+
+    bookmark_add(rstr_get(np->np_title) ?: "<no title>",
+		 np->np_url, "other", rstr_get(np->np_icon));
+
+  } else {
+    bookmark_t *bm;
+    LIST_FOREACH(bm, &bookmarks, bm_link) {
+      if(!strcmp(rstr_get(bm->bm_url), np->np_url))
+	prop_destroy(bm->bm_root);
+    }
+  }
+  bookmarks_save();
+}
+
+
+/**
+ *
+ */
+static void
+nav_page_title_set(void *opaque, rstr_t *str)
+{
+  nav_page_t *np = opaque;
+  rstr_set(&np->np_title, str);
+}
+
+
+/**
+ *
+ */
+static void
+nav_page_icon_set(void *opaque, rstr_t *str)
+{
+  nav_page_t *np = opaque;
+  rstr_set(&np->np_icon, str);
+}
+
+
+/**
+ *
+ */
+static void
 nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
 {
   np->np_prop_root = prop_create_root("page");
@@ -321,7 +456,7 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
     prop_subscribe(0,
 		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "close"),
 		   PROP_TAG_CALLBACK_INT, nav_page_close_set, np,
-		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_COURIER, nav_courier,
 		   NULL);
 
   prop_set_string(prop_create(np->np_prop_root, "url"), np->np_url);
@@ -330,9 +465,36 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
     prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 		   PROP_TAG_ROOT, prop_create(np->np_prop_root, "directClose"),
 		   PROP_TAG_CALLBACK_INT, nav_page_direct_close_set, np,
-		   PROP_TAG_COURIER, nav->nav_pc,
+		   PROP_TAG_COURIER, nav_courier,
 		   NULL);
 
+
+  np->np_bookmarked = prop_create(np->np_prop_root, "bookmarked");
+
+  prop_set_int(np->np_bookmarked, nav_page_is_bookmarked(np));
+
+  np->np_bookmarked_sub = 
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_ROOT, np->np_bookmarked,
+		   PROP_TAG_CALLBACK_INT, nav_page_bookmarked_set, np,
+		   PROP_TAG_COURIER, nav_courier,
+		   NULL);
+
+  np->np_title_sub =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("page", "model", "metadata", "title"),
+		   PROP_TAG_ROOT, np->np_prop_root,
+		   PROP_TAG_CALLBACK_RSTR, nav_page_title_set, np,
+		   PROP_TAG_COURIER, nav_courier,
+		   NULL);
+
+  np->np_icon_sub =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("page", "model", "metadata", "logo"),
+		   PROP_TAG_ROOT, np->np_prop_root,
+		   PROP_TAG_CALLBACK_RSTR, nav_page_icon_set, np,
+		   PROP_TAG_COURIER, nav_courier,
+		   NULL);
 }
 
 
@@ -491,8 +653,7 @@ nav_dtor_tracker(void *opaque, prop_event_t event, ...)
   prop_unsubscribe(nav->nav_dtor_tracker);
 
   nav_close_all(nav, 0);
-
-  prop_courier_stop(nav->nav_pc);
+  LIST_REMOVE(nav, nav_link);
   free(nav);
 }
 
@@ -525,4 +686,281 @@ nav_open_errorf(prop_t *root, rstr_t *fmt, ...)
   va_end(ap);
   rstr_release(fmt);
   return nav_open_error(root, buf);
+}
+
+
+
+/**
+ *
+ */
+static void
+bookmarks_save(void)
+{
+  htsmsg_t *m = htsmsg_create_list();
+  bookmark_t *bm;
+
+  LIST_FOREACH(bm, &bookmarks, bm_link) {
+    if(bm->bm_title == NULL || bm->bm_url == NULL || bm->bm_type == NULL)
+      continue;
+    htsmsg_t *b = htsmsg_create_map();
+    htsmsg_add_str(b, "title", rstr_get(bm->bm_title));
+    htsmsg_add_str(b, "svctype", rstr_get(bm->bm_type));
+    htsmsg_add_str(b, "url", rstr_get(bm->bm_url));
+    if(bm->bm_icon)
+      htsmsg_add_str(b, "icon", rstr_get(bm->bm_icon));
+    htsmsg_add_msg(m, NULL, b);
+  }
+
+  htsmsg_store_save(m, "bookmarks2");
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_destroyed(void *opaque, prop_event_t event, ...)
+{
+  bookmark_t *bm = opaque;
+  prop_sub_t *s;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event != PROP_DESTROYED)
+    return;
+
+  (void)va_arg(ap, prop_t *);
+  s = va_arg(ap, prop_sub_t *);
+
+  prop_unsubscribe(bm->bm_title_sub);
+  prop_unsubscribe(bm->bm_url_sub);
+  prop_unsubscribe(bm->bm_type_sub);
+  prop_unsubscribe(bm->bm_icon_sub);
+
+  rstr_release(bm->bm_title);
+  rstr_release(bm->bm_url);
+  rstr_release(bm->bm_type);
+  rstr_release(bm->bm_icon);
+
+  service_destroy(bm->bm_service);
+
+  LIST_REMOVE(bm, bm_link);
+  prop_ref_dec(bm->bm_root);
+  free(bm);
+
+  bookmarks_save();
+  prop_unsubscribe(s);
+  nav_update_bookmarked();
+}
+
+
+/**
+ *
+ */
+static void
+bm_set_title(void *opaque, rstr_t *str)
+{
+  bookmark_t *bm = opaque;
+
+  rstr_set(&bm->bm_title, str);
+  service_set_title(bm->bm_service, str);
+  bookmarks_save();
+}
+
+
+/**
+ *
+ */
+static void
+bm_set_url(void *opaque, rstr_t *str)
+{
+  bookmark_t *bm = opaque;
+
+  rstr_set(&bm->bm_url, str);
+  service_set_url(bm->bm_service, str);
+  bookmarks_save();
+  nav_update_bookmarked();
+}
+
+
+
+
+/**
+ *
+ */
+static void
+bm_set_type(void *opaque, rstr_t *str)
+{
+  bookmark_t *bm = opaque;
+
+  rstr_set(&bm->bm_type, str);
+  service_set_type(bm->bm_service, str);
+  bookmarks_save();
+}
+
+
+/**
+ *
+ */
+static void
+bm_set_icon(void *opaque, rstr_t *str)
+{
+  bookmark_t *bm = opaque;
+
+  rstr_set(&bm->bm_icon, str);
+  service_set_icon(bm->bm_service, str);
+  bookmarks_save();
+}
+
+
+/**
+ *
+ */
+static prop_sub_t *
+add_prop(prop_t *parent, const char *name, rstr_t *value,
+		  bookmark_t *bm, prop_callback_rstr_t *cb)
+{
+  prop_t *p = prop_create(parent, name);
+  prop_set_rstring(p, value);
+
+  return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+			PROP_TAG_CALLBACK_RSTR, cb, bm,
+			PROP_TAG_ROOT, p, 
+			PROP_TAG_COURIER, nav_courier,
+			NULL);
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_add(const char *title, const char *url, const char *type,
+	     const char *icon)
+{
+  bookmark_t *bm = calloc(1, sizeof(bookmark_t));
+
+  LIST_INSERT_HEAD(&bookmarks, bm, bm_link);
+
+  prop_t *p = prop_create_root(NULL);
+  bm->bm_root = prop_ref_inc(p);
+
+  prop_set_string(prop_create(p, "type"), "bookmark");
+
+
+  bm->bm_title = rstr_alloc(title);
+  bm->bm_url   = rstr_alloc(url);
+  bm->bm_type  = rstr_alloc(type);
+  bm->bm_icon  = rstr_alloc(icon);
+
+  bm->bm_title_sub = add_prop(p, "title",   bm->bm_title, bm, bm_set_title);
+  bm->bm_url_sub   = add_prop(p, "url",     bm->bm_url,   bm, bm_set_url);
+  bm->bm_type_sub  = add_prop(p, "svctype", bm->bm_type,  bm, bm_set_type);
+  bm->bm_icon_sub  = add_prop(p, "icon",    bm->bm_icon,  bm, bm_set_icon);
+
+  bm->bm_service = service_create(title, url, type, icon, 1, 1);
+
+  prop_link(service_get_status_prop(bm->bm_service),
+	    prop_create(p, "status"));
+
+  prop_link(service_get_statustxt_prop(bm->bm_service),
+	    prop_create(p, "statustxt"));
+
+
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
+		 PROP_TAG_CALLBACK, bookmark_destroyed, bm,
+		 PROP_TAG_ROOT, p,
+		 PROP_TAG_COURIER, nav_courier,
+		 NULL);
+  if(prop_set_parent(p, bookmark_nodes))
+    abort();
+  nav_update_bookmarked();
+}
+
+
+/**
+ * Control function for bookmark parent. Here we create / destroy
+ * entries.
+ */
+static void
+bookmarks_callback(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  default:
+    break;
+
+  case PROP_REQ_NEW_CHILD:
+    bookmark_add("New bookmark", "none:", "other", NULL);
+    break;
+
+  case PROP_REQ_DELETE_VECTOR:
+    prop_vec_destroy_entries(va_arg(ap, prop_vec_t *));
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+bookmark_load(htsmsg_t *o)
+{
+  bookmark_add(htsmsg_get_str(o, "title"),
+	       htsmsg_get_str(o, "url"),
+	       htsmsg_get_str(o, "svctype"),
+	       htsmsg_get_str(o, "icon"));
+}
+
+/**
+ *
+ */
+static void
+bookmarks_init(void)
+{
+  htsmsg_field_t *f;
+  htsmsg_t *m;
+
+  bookmark_root = settings_add_dir(NULL, _p("Bookmarks"),
+				   "bookmark", NULL, NULL,
+				   "settings:bookmarks");
+
+  bookmark_nodes = prop_create(bookmark_root, "nodes");
+  prop_set_int(prop_create(bookmark_root, "mayadd"), 1);
+
+  prop_subscribe(0,
+		 PROP_TAG_CALLBACK, bookmarks_callback, NULL,
+		 PROP_TAG_ROOT, bookmark_nodes,
+		 PROP_TAG_COURIER, nav_courier,
+		 NULL);
+  
+  if((m = htsmsg_store_load("bookmarks")) != NULL) {
+
+    htsmsg_t *n = htsmsg_get_map(m, "nodes");
+    HTSMSG_FOREACH(f, n) {
+      htsmsg_t *o;
+      if((o = htsmsg_get_map_by_field(f)) == NULL)
+	continue;
+      htsmsg_t *p;
+      if((p = htsmsg_get_map(m, "model")) != NULL)
+	o = p;
+
+      bookmark_load(o);
+    }
+    htsmsg_destroy(m);
+    bookmarks_save();
+    htsmsg_store_remove("bookmarks");
+  } else if((m = htsmsg_store_load("bookmarks2")) != NULL) {
+    HTSMSG_FOREACH(f, m) {
+      htsmsg_t *o;
+      if((o = htsmsg_get_map_by_field(f)) == NULL)
+	continue;
+      bookmark_load(o);
+    }
+  }
 }
