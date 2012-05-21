@@ -46,7 +46,8 @@
  *
  */
 static int
-polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all)
+polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
+	      net_read_cb_t *cb, void *opaque)
 {
   int ret, tot = 0;
   if(!all) {
@@ -94,7 +95,8 @@ tcp_write(tcpcon_t *tc, const void *data, size_t len)
  *
  */
 static int
-tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
+tcp_read(tcpcon_t *tc, void *buf, size_t len, int all,
+	 net_read_cb_t *cb, void *opaque)
 {
   int x;
   size_t off = 0;
@@ -109,6 +111,10 @@ tcp_read(tcpcon_t *tc, void *buf, size_t len, int all)
       off += x;
       if(off == len)
 	return len;
+
+      if(cb != NULL)
+	if(cb(opaque, off))
+	  return -1;
 
     } else {
       return x;
