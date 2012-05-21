@@ -30,6 +30,7 @@
 #include "plugins.h"
 #include "service.h"
 #include "settings.h"
+#include "notifications.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
@@ -399,14 +400,20 @@ nav_page_bookmarked_set(void *opaque, int v)
     if(nav_page_is_bookmarked(np))
       return;
 
-    bookmark_add(rstr_get(np->np_title) ?: "<no title>",
-		 np->np_url, "other", rstr_get(np->np_icon));
+    const char *title = rstr_get(np->np_title) ?: "<no title>";
+
+    notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Added new bookmark: %s"), title);
+
+    bookmark_add(title, np->np_url, "other", rstr_get(np->np_icon));
 
   } else {
     bookmark_t *bm;
     LIST_FOREACH(bm, &bookmarks, bm_link) {
-      if(!strcmp(rstr_get(bm->bm_url), np->np_url))
+      if(!strcmp(rstr_get(bm->bm_url), np->np_url)) {
+	notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Removed bookmark: %s"),
+		   rstr_get(bm->bm_title));
 	prop_destroy(bm->bm_root);
+      }
     }
   }
   bookmarks_save();
