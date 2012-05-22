@@ -189,7 +189,7 @@ type_analysis(deco_browse_t *db)
 {
   if(db->db_types[CONTENT_IMAGE] * 4 > db->db_total * 3) {
     prop_set_string(db->db_prop_contents, "images");
-    prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0);
+    prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0, 1, NULL);
     return;
   }
 }

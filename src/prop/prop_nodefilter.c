@@ -32,10 +32,20 @@
 #include "misc/pixmap.h"
 #include "misc/string.h"
 
+#define MAX_SORT_KEYS 3
 
 TAILQ_HEAD(nfnode_queue, nfnode);
 LIST_HEAD(nfn_pred_list, nfn_pred);
 LIST_HEAD(prop_nf_pred_list, prop_nf_pred);
+
+
+/**
+ *
+ */
+typedef struct sortmap {
+  char *str;
+  int val;
+} sortmap_t;
 
 /**
  *
@@ -60,26 +70,28 @@ typedef struct nfnode {
   prop_t *out;
 
   prop_sub_t *multisub;
-  prop_sub_t *sortsub;
 
   struct nfn_pred_list preds;
 
   struct prop_nf *nf;
   int pos;
   char inserted;
-  char sortkey_type;
+
+  char sortkey_type[MAX_SORT_KEYS];
 #define SORTKEY_NONE  0
 #define SORTKEY_RSTR  1
 #define SORTKEY_INT   2
 #define SORTKEY_FLOAT 3
 #define SORTKEY_CSTR  4
 
+  prop_sub_t *sortsub[MAX_SORT_KEYS];
+
   union {
-    rstr_t *sortkey_rstr;
-    const char *sortkey_cstr;
-    int sortkey_int;
-    float sortkey_float;
-  };
+    rstr_t *rstr;
+    const char *cstr;
+    int i;
+    float f;
+  } sk[MAX_SORT_KEYS];
 } nfnode_t;
 
 
@@ -125,15 +137,54 @@ typedef struct prop_nf {
 
   int pos_valid;
 
-  char *sortkey;
+  char *sortkey[MAX_SORT_KEYS];
+  sortmap_t *sortmap[MAX_SORT_KEYS];
 
   struct prop_nf_pred_list preds;
 
   char pending_have_more;
 
-  int sortorder;
+  int sortorder[MAX_SORT_KEYS];
 
 } prop_nf_t;
+
+
+/**
+ *
+ */
+static void
+sortmap_free(sortmap_t *map)
+{
+  sortmap_t *m = map;
+  if(m == NULL)
+    return;
+  for(;m->str != NULL; m++)
+    free(m->str);
+  free(map);
+}
+
+
+/**
+ *
+ */
+static sortmap_t *
+sortmap_create(const prop_nf_sort_strmap_t *src)
+{
+  const prop_nf_sort_strmap_t *s = src;
+  int cnt = 0;
+  for(;s->str != NULL; s++)
+    cnt++;
+
+  sortmap_t *m, *map = malloc((1 + cnt) * sizeof(sortmap_t));
+  for(m = map, s = src; s->str != NULL; s++, m++) {
+    m->str = strdup(s->str);
+    m->val = s->val;
+  }
+  m->str = NULL;
+  m->val = s->val;
+  return map;
+}
+
 
 /**
  *
@@ -241,34 +292,44 @@ nf_filtercheck(prop_t *p, const char *q)
 static int
 nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
 {
-  int r = 0;
+  int i;
+  int r;
+  for(i = 0; i < MAX_SORT_KEYS; i++) {
+    if(a->nf->sortkey[i] == NULL)
+      continue;
 
-  if(a->sortkey_type != b->sortkey_type)
-    return a->sortkey_type - b->sortkey_type;
+    if(a->sortkey_type[i] != b->sortkey_type[i])
+      return a->sortkey_type[i] - b->sortkey_type[i];
+    
+    switch(a->sortkey_type[i]) {
+    case SORTKEY_RSTR:
+      r = dictcmp(rstr_get(a->sk[i].rstr), rstr_get(b->sk[i].rstr));
+      break;
+      
+    case SORTKEY_CSTR:
+      r = dictcmp(a->sk[i].cstr, b->sk[i].cstr);
+      break;
 
-  switch(a->sortkey_type) {
-  case SORTKEY_RSTR:
-    r = dictcmp(rstr_get(a->sortkey_rstr), rstr_get(b->sortkey_rstr));
-    break;
+    case SORTKEY_INT:
+      r = a->sk[i].i - b->sk[i].i;
+      break;
 
-  case SORTKEY_CSTR:
-    r = dictcmp(a->sortkey_cstr, b->sortkey_cstr);
-    break;
-
-  case SORTKEY_INT:
-    r = a->sortkey_int - b->sortkey_int;
-    break;
-
-  case SORTKEY_FLOAT:
-    if(a->sortkey_float < b->sortkey_float)
-      r = -1;
-    else if(a->sortkey_float > b->sortkey_float)
-      r = 1;
-    else
+    case SORTKEY_FLOAT:
+      if(a->sk[i].f < b->sk[i].f)
+	r = -1;
+      else if(a->sk[i].f > b->sk[i].f)
+	r = 1;
+      else
+	r = 0;
+      break;
+    default:
       r = 0;
-    break;
+      break;
+    }
+    if(r)
+      return r * a->nf->sortorder[i];
   }
-  return a->nf->sortorder * (r ? r : a->pos - b->pos);
+  return a->pos - b->pos;
 }
 
 
@@ -286,7 +347,9 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
 
   nfn->inserted = 1;
 
-  if(nfn->sortkey_type == SORTKEY_NONE) {
+  if(nfn->sortkey_type[0] == SORTKEY_NONE &&
+     nfn->sortkey_type[1] == SORTKEY_NONE &&
+     nfn->sortkey_type[2] == SORTKEY_NONE) {
 
     b = TAILQ_NEXT(nfn, in_link);
     
@@ -326,10 +389,12 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
 {
   nfnode_t *b;
   int en = 1;
+  int i;
 
   // If sorting is enabled but this node don't have a key, hide it
-  if(nf->sortkey != NULL && nfn->sortkey_type == SORTKEY_NONE)
-    en = 0;
+  for(i = 0; i < MAX_SORT_KEYS; i++)
+    if(nf->sortkey[i] != NULL && nfn->sortkey_type[i] == SORTKEY_NONE)
+      en = 0;
 
   // Check filtering
   if(en && nf->filter != NULL && !nf_filtercheck(nfn->in, nf->filter))
@@ -497,42 +562,84 @@ nfn_insert_preds(prop_nf_t *nf, nfnode_t *nfn)
 }
 
 
-/**
- *
- */
 static void
-nf_set_sortkey(void *opaque, prop_event_t event, ...)
+nf_set_sortkey_x(int x, nfnode_t *nfn, prop_event_t event, va_list ap)
 {
-  nfnode_t *nfn = opaque;
-  va_list ap;
-
-  va_start(ap, event);
-  if(nfn->sortkey_type == SORTKEY_RSTR)
-    rstr_release(nfn->sortkey_rstr);
+  rstr_t *r;
+  if(nfn->sortkey_type[x] == SORTKEY_RSTR)
+    rstr_release(nfn->sk[x].rstr);
 
   switch(event) {
   case PROP_SET_RSTRING:
   case PROP_SET_RLINK:
-    nfn->sortkey_rstr = rstr_dup(va_arg(ap, rstr_t *));
-    nfn->sortkey_type = SORTKEY_RSTR;
+    r = va_arg(ap, rstr_t *);
+    const sortmap_t *map = nfn->nf->sortmap[x];
+    if(map != NULL) {
+      for(; map->str != NULL; map++) {
+	if(!strcmp(map->str, rstr_get(r)))
+	  break;
+      }
+      nfn->sk[x].i = map->val;
+      nfn->sortkey_type[x] = SORTKEY_INT;
+    } else {
+      nfn->sk[x].rstr = rstr_dup(r);
+      nfn->sortkey_type[x] = SORTKEY_RSTR;
+    }
     break;
 
   case PROP_SET_INT:
-    nfn->sortkey_int = va_arg(ap, int);
-    nfn->sortkey_type = SORTKEY_INT;
+    nfn->sk[x].i = va_arg(ap, int);
+    nfn->sortkey_type[x] = SORTKEY_INT;
     break;
 
   case PROP_SET_FLOAT:
-    nfn->sortkey_float = va_arg(ap, double);
-    nfn->sortkey_type = SORTKEY_FLOAT;
+    nfn->sk[x].f = va_arg(ap, double);
+    nfn->sortkey_type[x] = SORTKEY_FLOAT;
     break;
 
   default:
-    nfn->sortkey_type = SORTKEY_NONE;
+    nfn->sortkey_type[x] = SORTKEY_NONE;
     break;
   }
   nf_insert_node(nfn->nf, nfn);
   nf_update_egress(nfn->nf, nfn);
+}
+
+/**
+ *
+ */
+static void
+nf_set_sortkey_0(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+
+  va_start(ap, event);
+  nf_set_sortkey_x(0, opaque, event, ap);
+  va_end(ap);
+}
+/**
+ *
+ */
+static void
+nf_set_sortkey_1(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+
+  va_start(ap, event);
+  nf_set_sortkey_x(1, opaque, event, ap);
+  va_end(ap);
+}
+/**
+ *
+ */
+static void
+nf_set_sortkey_2(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+
+  va_start(ap, event);
+  nf_set_sortkey_x(2, opaque, event, ap);
+  va_end(ap);
 }
 
 
@@ -540,30 +647,42 @@ nf_set_sortkey(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-nf_update_order(prop_nf_t *nf, nfnode_t *nfn)
+nf_update_order_x(prop_nf_t *nf, nfnode_t *nfn, int x)
 {
-  if(nfn->sortsub) {
-    prop_unsubscribe0(nfn->sortsub);
-    nfn->sortsub = NULL;
+  if(nfn->sortsub[x]) {
+    prop_unsubscribe0(nfn->sortsub[x]);
+    nfn->sortsub[x] = NULL;
   }
 
-  if(nf->sortkey == NULL) {
+  if(nf->sortkey[x] == NULL) {
 
-    if(nfn->sortkey_type == SORTKEY_RSTR)
-      rstr_release(nfn->sortkey_rstr);
-    nfn->sortkey_type = SORTKEY_NONE;
+    if(nfn->sortkey_type[x] == SORTKEY_RSTR)
+      rstr_release(nfn->sk[x].rstr);
+    nfn->sortkey_type[x] = SORTKEY_NONE;
 
     nf_insert_node(nf, nfn);      
 
   } else {
-    nfn->sortsub =
+    nfn->sortsub[x] =
       prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK |
 		     PROP_SUB_DIRECT_UPDATE,
-		     PROP_TAG_CALLBACK, nf_set_sortkey, nfn,
+		     PROP_TAG_CALLBACK, 
+		     x == 0 ? nf_set_sortkey_0 :
+		     x == 1 ? nf_set_sortkey_1 :
+		     nf_set_sortkey_2, nfn,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
-		     PROP_TAG_NAMESTR, nf->sortkey,
+		     PROP_TAG_NAMESTR, nf->sortkey[x],
 		     NULL);
   }
+}
+
+
+static void
+nf_update_order_all(prop_nf_t *nf, nfnode_t *nfn)
+{
+  int i;
+  for(i = 0; i < MAX_SORT_KEYS; i++)
+    nf_update_order_x(nf, nfn, i);
 }
 
 
@@ -597,7 +716,7 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
   nf_update_multisub(nf, nfn);
   nfn_insert_preds(nf, nfn);
 
-  nf_update_order(nf, nfn);
+  nf_update_order_all(nf, nfn);
 
   nf_update_egress(nf, nfn);
 }
@@ -638,7 +757,7 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
     nf_update_multisub(nf, nfn);
     nfn_insert_preds(nf, nfn);
 
-    nf_update_order(nf, nfn);
+    nf_update_order_all(nf, nfn);
   }
 
   TAILQ_FOREACH(nfn, &nf->out, out_link)
@@ -652,6 +771,7 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
 static void
 nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
 {
+  int i;
   nfn_pred_t *nfnp;
 
   nf->pos_valid = 0;
@@ -664,14 +784,18 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
   if(nfn->multisub != NULL)
     prop_unsubscribe0(nfn->multisub);
 
-  if(nfn->sortsub != NULL)
-    prop_unsubscribe0(nfn->sortsub);
+  for(i = 0; i < MAX_SORT_KEYS; i++) {
+    if(nfn->sortsub[i] != NULL)
+      prop_unsubscribe0(nfn->sortsub[i]);
+  }
 
   while((nfnp = LIST_FIRST(&nfn->preds)) != NULL)
     nfnp_destroy(nfnp);
   
-  if(nfn->sortkey_type == SORTKEY_RSTR)
-    rstr_release(nfn->sortkey_rstr);
+  for(i = 0; i < MAX_SORT_KEYS; i++)
+    if(nfn->sortkey_type[i] == SORTKEY_RSTR)
+      rstr_release(nfn->sk[i].rstr);
+
   free(nfn);
 }
 
@@ -753,6 +877,8 @@ nf_clear(prop_nf_t *nf)
 static void
 prop_nf_release0(struct prop_nf *pnf)
 {
+  int i;
+
   pnf->pnf_refcount--;
   if(pnf->pnf_refcount > 0)
     return;
@@ -772,8 +898,10 @@ prop_nf_release0(struct prop_nf *pnf)
   if(pnf->filtersub != NULL)
     prop_unsubscribe0(pnf->filtersub);
 
-  if(pnf->sortkey)
-    free(pnf->sortkey);
+  for(i = 0; i < MAX_SORT_KEYS; i++) {
+    free(pnf->sortkey[i]);
+    sortmap_free(pnf->sortmap[i]);
+  }
 
   free(pnf->filter);
 
@@ -1091,31 +1219,38 @@ prop_nf_pred_int_add(struct prop_nf *nf,
  *
  */
 void
-prop_nf_sort(struct prop_nf *nf, const char *path, int desc)
+prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
+	     const prop_nf_sort_strmap_t *map)
 {
   nfnode_t *nfn;
 
   hts_mutex_lock(&prop_mutex);
   
-  if(nf->sortkey) {
-    if(path && !strcmp(path, nf->sortkey))
+  assert(idx < MAX_SORT_KEYS);
+
+  if(nf->sortkey[idx]) {
+    if(path && !strcmp(path, nf->sortkey[idx]))
       goto done;
-    free(nf->sortkey);
+    free(nf->sortkey[idx]);
   } else {
     if(path == NULL)
       goto done;
   }
 
+  sortmap_free(nf->sortmap[idx]);
+
+  nf->sortmap[idx] = map ? sortmap_create(map) : NULL;
+
   if(path) {
-    nf->sortkey = strdup(path);
-    nf->sortorder = desc ? -1 : 1;
+    nf->sortkey[idx] = strdup(path);
+    nf->sortorder[idx] = desc ? -1 : 1;
   } else {
-    nf->sortkey = NULL;
-    nf->sortorder = 0;
+    nf->sortkey[idx] = NULL;
+    nf->sortorder[idx] = 0;
   }
 
   TAILQ_FOREACH(nfn, &nf->in, in_link)
-    nf_update_order(nf, nfn);
+    nf_update_order_x(nf, nfn, idx);
  done:
   hts_mutex_unlock(&prop_mutex);
 }

@@ -24,6 +24,11 @@
 struct prop_nf_pred;
 struct prop_nf;
 
+typedef struct {
+  const char *str;
+  int val;
+} prop_nf_sort_strmap_t;
+
 typedef enum {
   PROP_NF_CMP_EQ,
   PROP_NF_CMP_NEQ,
@@ -52,6 +57,7 @@ struct prop_nf *prop_nf_create(prop_t *dst, prop_t *src,
 
 void prop_nf_release(struct prop_nf *nf);
 
-void prop_nf_sort(struct prop_nf *nf, const char *path, int desc);
+void prop_nf_sort(struct prop_nf *nf, const char *path, int desc,
+		  unsigned int idx, const prop_nf_sort_strmap_t *map);
 
 #endif // PROP_NODEFILTER_H__

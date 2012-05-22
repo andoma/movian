@@ -583,6 +583,12 @@ scanner_stop(void *opaque, prop_event_t event, ...)
 }
 
 
+static const prop_nf_sort_strmap_t typemap[] = {
+  { "directory", 0},
+  { NULL, 1}
+};
+
+
 /**
  *
  */
@@ -601,7 +607,9 @@ fa_scanner(const char *url, time_t url_mtime,
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
   
-  prop_nf_sort(pnf, "node.metadata.title", 0);
+  prop_nf_sort(pnf, "node.type", 0, 0, typemap);
+
+  prop_nf_sort(pnf, "node.metadata.title", 0, 2, NULL);
 
   prop_nf_pred_str_add(pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", NULL, 

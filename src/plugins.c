@@ -404,7 +404,7 @@ get_nodes_for_plugins(prop_t *page, const char *title, int only_installed)
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
 
-  prop_nf_sort(pnf, "node.metadata.title", 0);
+  prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL);
 
   if(only_installed) {
     prop_nf_pred_int_add(pnf, "node.metadata.installed",

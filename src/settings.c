@@ -622,7 +622,7 @@ settings_init(void)
   struct prop_nf *pnf;
 
   pnf = prop_nf_create(s1, settings_nodes, NULL, PROP_NF_AUTODESTROY);
-  prop_nf_sort(pnf, "node.metadata.title", 0);
+  prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL);
 
   settings_apps = prop_create_root(NULL);
   settings_sd = prop_create_root(NULL);
