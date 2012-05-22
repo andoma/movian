@@ -121,6 +121,23 @@ ffmpeg_metadata_rstr(AVMetadata *m, const char *key)
   return ret;
 }
 
+
+/**
+ *
+ */
+static int
+ffmpeg_metadata_int(AVMetadata *m, const char *key, int def)
+{
+  AVMetadataTag *tag;
+
+  if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
+    return def;
+
+  return tag->value && tag->value[0] >= '0' && tag->value[0] <= '9' ?
+    atoi(tag->value) : def;
+}
+
+
 #if 0
 /**
  * Obtain details from playlist
@@ -500,7 +517,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url)
     md->md_contenttype = CONTENT_AUDIO;
 
     md->md_title = ffmpeg_metadata_rstr(fctx->metadata, "title");
-  
+    md->md_track = ffmpeg_metadata_int(fctx->metadata, "track", 0);
   } else {
 
     int atrack = 0;

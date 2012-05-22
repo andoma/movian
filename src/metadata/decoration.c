@@ -278,7 +278,9 @@ album_analysis(deco_browse_t *db)
   }
 
   prop_set_string(db->db_prop_contents, "album");
-  
+
+  prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL);
+
   prop_t *m = prop_create(db->db_prop_model, "metadata");
   prop_set_rstring(prop_create(m, "album_name"), v);
   

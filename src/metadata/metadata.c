@@ -253,6 +253,9 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   if(md->md_tracks)
     prop_set_int(prop_create(proproot, "tracks"), md->md_tracks);
 
+  if(md->md_track )
+    prop_set_int(prop_create(proproot, "track"), md->md_track );
+
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
 }

@@ -112,6 +112,7 @@ typedef struct metadata {
   contenttype_t md_contenttype;
   float md_duration;
   int md_tracks;
+  int md_track;
   time_t md_time;
 
   rstr_t *md_title;

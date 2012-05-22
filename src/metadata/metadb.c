@@ -511,9 +511,9 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md,
     rc = db_prepare(db, 
 		    i == 0 ? 
 		    "INSERT OR FAIL INTO audioitem "
-		    "(item_id, title, album_id, artist_id, duration, ds_id) "
+		    "(item_id, title, album_id, artist_id, duration, ds_id, track) "
 		    "VALUES "
-		    "(?1, ?2, ?3, ?4, ?5, 1)"
+		    "(?1, ?2, ?3, ?4, ?5, 1, ?6)"
 		    :
 		    "UPDATE audioitem SET "
 		    "title = ?2, "
@@ -542,6 +542,8 @@ metadb_insert_audioitem(sqlite3 *db, int64_t item_id, const metadata_t *md,
       sqlite3_bind_int64(stmt, 4, artist_id);
 
     sqlite3_bind_int(stmt, 5, md->md_duration * 1000);
+
+    sqlite3_bind_int(stmt, 6, md->md_track);
 
     rc = db_step(stmt);
     sqlite3_finalize(stmt);
@@ -1220,7 +1222,7 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
   sqlite3_stmt *sel;
 
   rc = db_prepare(db,
-		  "SELECT title, album_id, artist_id, duration "
+		  "SELECT title, album_id, artist_id, duration, track "
 		  "FROM audioitem "
 		  "WHERE item_id = ?1 AND ds_id = 1",
 		  -1, &sel, NULL);
@@ -1248,6 +1250,7 @@ metadb_metadata_get_audio(sqlite3 *db, metadata_t *md, int64_t item_id,
     md->md_artist = rstr_dup(gc->gc_artist_title);
 
   md->md_duration = sqlite3_column_int(sel, 3) / 1000.0f;
+  md->md_track = sqlite3_column_int(sel, 4);
 
   sqlite3_finalize(sel);
   return 0;
