@@ -281,9 +281,61 @@ typedef struct {
 
 typedef struct {
   SMB_t hdr;
-
-
 } __attribute__((packed)) SMB_TREE_CONNECT_ANDX_reply_t;
+
+typedef struct {
+  NBT_t nbt;
+  SMB_t hdr;
+  uint8_t wordcount;
+
+  uint16_t total_param_count;
+  uint16_t total_data_count;
+  uint16_t max_param_count;
+  uint16_t max_data_count;
+
+  uint8_t max_setup_cnt;
+  uint8_t reserved1;
+
+  uint16_t flags;
+  uint32_t timeout;
+  uint16_t reserved2;
+
+  uint16_t  param_count;
+  uint16_t param_offset;
+  uint16_t data_count;
+  uint16_t data_offset;
+  uint8_t setup_count;
+
+  uint8_t reserved3;
+
+  uint16_t byte_count;
+
+  char payload[0];
+
+} __attribute__((packed)) TRANS_req_t;
+
+
+
+typedef struct {
+  SMB_t hdr;
+  uint8_t wordcount;
+
+  uint16_t total_param_count;
+  uint16_t total_data_count;
+  uint16_t reserved1;
+  uint16_t param_count;
+  uint16_t param_offset;
+  uint16_t param_displacement;
+  uint16_t data_count;
+  uint16_t data_offset;
+  uint16_t data_displacement;
+  uint8_t setup_count;
+  uint8_t reserved2;
+  uint16_t byte_count;
+} __attribute__((packed)) TRANS_reply_t;
+
+
+
 
 
 
@@ -319,7 +371,6 @@ typedef struct {
 
 
 
-
 typedef struct {
   SMB_t hdr;
   uint8_t wordcount;
@@ -337,7 +388,6 @@ typedef struct {
   uint8_t reserved2;
   uint16_t byte_count;
 } __attribute__((packed)) TRANS2_reply_t;
-
 
 
 
@@ -509,9 +559,6 @@ typedef struct {
 } __attribute__((packed)) SMB_READ_ANDX_resp_t;
 
 
-
-
-
 typedef struct {
   TRANS2_req_t t2;
   uint8_t pad[3];
@@ -565,6 +612,7 @@ typedef struct {
 #define SMB_PROTO 0x424d53ff
 
 #define SMB_CLOSE          0x04
+#define SMB_TRANSACTION    0x25
 #define SMB_ECHO           0x2b
 #define SMB_READ_ANDX      0x2e
 #define SMB_NEG_PROTOCOL   0x72
@@ -616,6 +664,9 @@ smberr_write(char *errbuf, size_t errlen, int code)
   switch(code) {
   case 0xc00000cc:
     r = _("Bad network share name");
+    break;
+  case 0xc0000022:
+    r = _("Access denied");
     break;
   default:
     snprintf(errbuf, errlen, "NTStatus: 0x%08x", code);
@@ -748,7 +799,7 @@ lmresponse(uint8_t *out, const uint8_t *hash, const uint8_t *challenge)
  */
 static void
 smb_init_header(const cifs_connection_t *cc, SMB_t *h, int cmd, int flags, 
-		int flags2, uint16_t tid)
+		int flags2, uint16_t tid, int uc)
 {
   h->proto = htole_32(SMB_PROTO);
   h->cmd = cmd;
@@ -756,7 +807,7 @@ smb_init_header(const cifs_connection_t *cc, SMB_t *h, int cmd, int flags,
 
   flags2 |= SMB_FLAGS2_KNOWS_LONG_NAMES;
 
-  if(cc->cc_unicode)
+  if(cc->cc_unicode && uc)
     flags2 |= SMB_FLAGS2_UNICODE_STRING;
 
   h->flags2 = htole_16(flags2);
@@ -775,7 +826,7 @@ smb_init_t2_header(cifs_connection_t *cc, TRANS2_req_t *t2, int cmd,
 		   int param_count, int data_count, int tid)
 {
   smb_init_header(cc, &t2->hdr, SMB_TRANS2, SMB_FLAGS_CASELESS_PATHNAMES, 0,
-		  tid);
+		  tid, 1);
 
   t2->wordcount = 15;
   t2->max_param_count = htole_16(256);
@@ -926,7 +977,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
 
   smb_init_header(cc, &req->hdr, SMB_NEG_PROTOCOL,
 		  SMB_FLAGS_CASELESS_PATHNAMES, SMB_FLAGS2_32BIT_STATUS,
-		  0);
+		  0, 1);
 
   req->wordcount = 0;
   req->bytecount = htole_16(len + 1);
@@ -1084,7 +1135,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   smb_init_header(cc, &req->hdr, SMB_SETUP_ANDX,
 		  SMB_FLAGS_CASELESS_PATHNAMES, SMB_FLAGS2_32BIT_STATUS,
-		  0);
+		  0, 1);
 
   req->wordcount = 13;
   req->andx_command = 0xff;
@@ -1555,7 +1606,8 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
     memset(req, 0, tlen);
 
     smb_init_header(cc, &req->hdr, SMB_TREEC_ANDX,
-		    SMB_FLAGS_CASELESS_PATHNAMES, SMB_FLAGS2_32BIT_STATUS, 0);
+		    SMB_FLAGS_CASELESS_PATHNAMES, SMB_FLAGS2_32BIT_STATUS,
+		    0, 1);
 
     req->wordcount = 4;
     req->andx_command = 0xff;
@@ -1589,7 +1641,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
       reply = rbuf;
 
       uint32_t err = letoh_32(reply->hdr.errorcode);
-      SMBTRACE("Tree connect errorcode:0x%08x", err);
+      SMBTRACE("Tree connect errorcode:0x%08x (%s)", err, share);
       if(err != 0) {
 
 	if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) &&
@@ -1623,12 +1675,18 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
 }
 
 
+#define CIFS_RESOLVE_NEED_AUTH -1
+#define CIFS_RESOLVE_ERROR 0
+#define CIFS_RESOLVE_TREE 1
+#define CIFS_RESOLVE_CONNECTION 2
+
 /**
  *
  */
-static cifs_tree_t *
-cifs_get_tree(const char *url, char *filename, size_t filenamesize,
-	      char *errbuf, size_t errlen, int non_interactive)
+static int
+cifs_resolve(const char *url, char *filename, size_t filenamesize,
+	     char *errbuf, size_t errlen, int non_interactive,
+	     cifs_tree_t **p_ct, cifs_connection_t **p_cc)
 {
   char hostname[128];
   int port;
@@ -1636,6 +1694,8 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
   cifs_connection_t *cc;
   cifs_tree_t *ct;
   char *fn = NULL, *p;
+
+  assert(p_ct != NULL);
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
 	    path, sizeof(path), url);
@@ -1647,17 +1707,46 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
     if(fn != NULL)
       *fn++ = 0;
     
-    if(port < 0)
-      port = 445;
+  }
+  if(port < 0)
+    port = 445;
+
+  if(*p == 0) {
+    
+    if(p_cc == NULL) {
+      // Resolved into a host but caller won't deal with it, error out
+      snprintf(errbuf, errlen, "Invalid URL for operation");
+      return CIFS_RESOLVE_ERROR;
+    }
+
+    if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
+				 non_interactive, 1)) != NULL) {
+      assert(cc != SAMBA_NEED_AUTH);
+      *p_cc = cc;
+      return CIFS_RESOLVE_CONNECTION;
+    }
+
+    cc = cifs_get_connection(hostname, port, errbuf, errlen,
+			     non_interactive, 0);
+
+    if(cc == SAMBA_NEED_AUTH)
+      return CIFS_RESOLVE_NEED_AUTH;
+
+    if(cc != NULL) {
+      *p_cc = cc;
+      return CIFS_RESOLVE_CONNECTION;
+    }
+    return CIFS_RESOLVE_ERROR;
   }
 
   snprintf(filename, filenamesize, "%s", fn ?: "");
 
-
   ct = get_tree_no_create(hostname, port, p);
 
-  if(ct != NULL)
-    return ct;
+  if(ct != NULL) {
+    *p_ct = ct;
+    return CIFS_RESOLVE_TREE;
+  }
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
 			       non_interactive, 1)) != NULL) {
@@ -1665,16 +1754,26 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
 				      login as guest */
 
     ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
-    if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) || ct != NULL)
-      return ct;
+    if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) || ct != NULL) {
+      *p_ct = ct;
+      return CIFS_RESOLVE_TREE;
+    }
   }
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
-			       non_interactive, 0)) == NULL)
-    return NULL;
+			       non_interactive, 0)) == NULL) {
+    return CIFS_RESOLVE_ERROR;
+  }
+
   if(cc == SAMBA_NEED_AUTH)
-    return SAMBA_NEED_AUTH;
-  return smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
+    return CIFS_RESOLVE_NEED_AUTH;
+
+  ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
+  if(ct == NULL)
+    return CIFS_RESOLVE_ERROR;
+  
+  *p_ct = ct;
+  return CIFS_RESOLVE_TREE;
 }
 
 
@@ -1687,6 +1786,19 @@ static int
 release_tree_io_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 {
   snprintf(errbuf, errlen, "I/O error");
+  cifs_release_tree(ct);
+  return -1;
+}
+
+
+
+/**
+ *
+ */
+static int
+release_tree_protocol_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
+{
+  snprintf(errbuf, errlen, "Protocol error");
   cifs_release_tree(ct);
   return -1;
 }
@@ -1728,6 +1840,97 @@ backslashify(char *str)
     str++;
   }
 }
+
+
+/**
+ *
+ */
+static int
+cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd, 
+		 char *errbuf, size_t errlen)
+{
+  fa_dir_entry_t *fde;
+  TRANS_req_t *req;
+  const TRANS_reply_t *resp;
+  cifs_tree_t *ct;
+  void *rbuf;
+  int rlen;
+  char url[512];
+  int tlen = sizeof(TRANS_req_t) + 32;
+
+  req = alloca(tlen);
+
+  memset(req, 0, tlen);
+
+  ct = smb_tree_connect_andX(cc, "IPC$", errbuf, errlen, 0);
+  if(ct == NULL)
+    return -1;
+
+  smb_init_header(ct->ct_cc, &req->hdr, SMB_TRANSACTION,
+		  SMB_FLAGS_CASELESS_PATHNAMES, 0, ct->ct_tid, 0);
+
+  req->wordcount = htole_16(14);
+  req->total_param_count = htole_16(19);
+  req->param_count = htole_16(19);
+  req->max_param_count = htole_16(1024);
+  req->max_data_count = htole_16(8096);
+  req->param_offset = htole_16(76);
+  req->data_offset = htole_16(95);
+  req->byte_count = htole_16(32);
+
+  memcpy(&req->payload[0], "\\PIPE\\LANMAN\0\0\0WrLeh\0B13BWz\0\x01\0\xa0\x1f", 32);
+
+  if(nbt_async_req_reply(ct->ct_cc, req, tlen, &rbuf, &rlen))
+    return release_tree_io_error(ct, errbuf, errlen);
+  
+  if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS_reply_t), errbuf, errlen))
+    return -1;
+
+  resp = rbuf;
+  
+  int poff = letoh_16(resp->param_offset);
+  int doff = letoh_16(resp->data_offset);
+  
+  if(poff + 8 > rlen) {
+    free(rbuf);
+    return release_tree_protocol_error(ct, errbuf, errlen);
+  }
+
+
+  const uint16_t *params = rbuf + poff;
+  if(letoh_16(params[0]) != 0) {
+    free(rbuf);
+    cifs_release_tree(ct);
+    snprintf(errbuf, errlen, "RPC status %d", letoh_16(params[0]));
+    return -1;
+  }
+  
+  snprintf(url, sizeof(url), "smb://%s", ct->ct_cc->cc_hostname);
+  if(ct->ct_cc->cc_port != 445)
+    snprintf(url + strlen(url), sizeof(url) - strlen(url), ":%d",
+	     ct->ct_cc->cc_port);
+  int ul = strlen(url);
+
+  const char *p = rbuf + doff;
+  int i, entries = letoh_16(params[2]);
+  for(i = 0; i < entries; i++) {
+    int padding = (strlen(p)+1+2) % 16 ? 16-((strlen(p)+1) % 16) : 0;
+    if (*((uint16_t *)&p[strlen(p)+1+padding-2]) == 0) {
+      snprintf(url + ul, sizeof(url) - ul, "/%s", p);
+
+      fde = fa_dir_add(fd, url, p, CONTENT_DIR);
+      if(fde != NULL)
+	fde->fde_statdone = 1;
+    }
+    p += strlen(p)+1+padding+4;
+  }
+  cifs_release_tree(ct);
+
+  free(rbuf);
+  return 0;  
+
+}
+
 
 
 /**
@@ -1814,7 +2017,6 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
 
   int plen = utf8_to_smb(ct->ct_cc, NULL, (char *)fname);
   int tlen = sizeof(SMB_TRANS2_FIND_req_t) + plen;
-
 
   req = alloca(tlen);
 
@@ -1920,17 +2122,24 @@ smb_scandir(fa_dir_t *fa, const char *url, char *errbuf, size_t errlen)
 {
   char filename[512];
   cifs_tree_t *ct;
-
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen, 0);
-  if(ct == NULL)
+  cifs_connection_t *cc;
+  int r;
+  r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen, 0, 
+		   &ct, &cc);
+  switch(r) {
+  default:
     return -1;
 
-  int r = cifs_scandir(ct, filename, fa, errbuf, errlen);
-  if(r != 0)
-    return -1;
+  case CIFS_RESOLVE_TREE:
+    if(cifs_scandir(ct, filename, fa, errbuf, errlen))
+      return -1;
 
-  cifs_release_tree(ct);
-  return 0;
+    cifs_release_tree(ct);
+    return 0;
+
+  case CIFS_RESOLVE_CONNECTION:
+    return cifs_enum_shares(cc, fa, errbuf, errlen);
+  }
 }
 
 /**
@@ -1959,9 +2168,11 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   const SMB_NTCREATE_ANDX_resp_t *resp;
   smb_file_t *sf;
 
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen, 0);
-  if(ct == NULL)
+  int r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen, 0,
+		       &ct, NULL);
+  if(r != CIFS_RESOLVE_TREE)
     return NULL;
+
   cifs_connection_t *cc = ct->ct_cc;
 
   backslashify(filename);
@@ -1976,7 +2187,7 @@ smb_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   memset(req, 0, tlen);
 
   smb_init_header(cc, &req->hdr, SMB_NT_CREATE_ANDX,
-		  SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
+		  SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
   
   req->wordcount=24;
   req->andx_command = 0xff;
@@ -2031,7 +2242,7 @@ smb_close(fa_handle_t *fh)
   memset(req, 0, sizeof(SMB_CLOSE_req_t));
 
   smb_init_header(ct->ct_cc, &req->hdr, SMB_CLOSE,
-		  SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
+		  SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
   
   req->fid = sf->sf_fid;
   req->wordcount = 3;
@@ -2073,7 +2284,7 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   while(size > 0) {
     cnt = MIN(size, 57344); // 14 * 4096 is max according to spec
     smb_init_header(ct->ct_cc, &req->hdr, SMB_READ_ANDX,
-		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid);
+		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
     
     req->fid = sf->sf_fid;
     int64_t pos = sf->sf_pos + total;
@@ -2202,21 +2413,34 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	 char *errbuf, size_t errlen, int non_interactive)
 {
   char filename[512];
+  int r;
   cifs_tree_t *ct;
+  cifs_connection_t *cc;
+  r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen,
+		   non_interactive, &ct, &cc);
+  
+  switch(r) {
+  default:
+    return FAP_STAT_ERR;
 
-  ct = cifs_get_tree(url, filename, sizeof(filename), errbuf, errlen,
-		     non_interactive);
-  if(ct == SAMBA_NEED_AUTH)
+  case CIFS_RESOLVE_NEED_AUTH:
     return FAP_STAT_NEED_AUTH;
-  if(ct == NULL)
-    return FAP_STAT_ERR;
 
-  int r = cifs_stat(ct, filename, fs, errbuf, errlen);
-  if(r != 0)
-    return FAP_STAT_ERR;
+  case CIFS_RESOLVE_TREE:
+    if(cifs_stat(ct, filename, fs, errbuf, errlen))
+      return FAP_STAT_ERR;
+    cifs_release_tree(ct);
+    return FAP_STAT_OK;
 
-  cifs_release_tree(ct);
-  return FAP_STAT_OK;
+  case CIFS_RESOLVE_CONNECTION:
+    memset(fs, 0, sizeof(struct fa_stat));
+    fs->fs_size = 0;
+    fs->fs_mtime = 0;
+    fs->fs_type = CONTENT_DIR;
+    cc->cc_refcount--;
+    hts_mutex_unlock(&smb_global_mutex);
+    return FAP_STAT_OK;
+  }
 }
 
 
@@ -2235,7 +2459,7 @@ cifs_periodic(struct callout *c, void *opaque)
 
   hts_mutex_lock(&smb_global_mutex);
 
-  smb_init_header(cc, &req->hdr, SMB_ECHO, 0, 0, 0);
+  smb_init_header(cc, &req->hdr, SMB_ECHO, 0, 0, 0, 1);
   req->wordcount = 1;
   req->echo_count = htole_16(1);
   req->byte_count = htole_16(2);
