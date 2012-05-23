@@ -42,10 +42,7 @@
 
 #define SMB_ECHO_INTERVAL 30
 
-#define SMB_ERROR_IO    -1
-#define SMB_ERROR_OTHER -2
-
-#define SMBTRACE(x...) // trace(0, TRACE_DEBUG, "SMB", x)
+#define SMBTRACE(x...) // trace(0, TRACE_INFO, "SMB", x)
 
 LIST_HEAD(cifs_connection_list, cifs_connection);
 LIST_HEAD(nbt_req_list, nbt_req);
@@ -82,6 +79,7 @@ typedef struct cifs_connection {
 
   char *cc_hostname;
   int cc_port;
+  int cc_as_guest;
 
   uint16_t cc_mid_generator;
 
@@ -99,7 +97,6 @@ typedef struct cifs_connection {
   struct nbt_req_list cc_pending_nbt_requests;
 
   char cc_broken;
-  char cc_guest;
   uint16_t cc_uid;
   uint16_t cc_max_buffer_size;
   uint16_t cc_max_mpx_count;
@@ -970,7 +967,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
  */
 static int
 smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
-	       int non_interactive)
+	       int non_interactive, int as_guest)
 {
   SMB_SETUP_ANDX_req_t *req;
   SMB_SETUP_ANDX_reply_t *reply;
@@ -1001,13 +998,13 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   free(domain);
   domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
 
-  if(cc->cc_security_mode & SECURITY_USER_LEVEL) {
+  if(cc->cc_security_mode & SECURITY_USER_LEVEL && !as_guest) {
     char id[256];
     char name[256];
     char *password_cleartext = NULL;
 
     if(retry_reason && non_interactive)
-      return FAP_STAT_NEED_AUTH;
+      return -2;
 
     snprintf(id, sizeof(id), "smb:connection:%s:%d",
 	     cc->cc_hostname, cc->cc_port);
@@ -1031,6 +1028,10 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
       return -1;
     }
 
+    // Reset domain if it was cleared by the keyring handler
+    if(domain == NULL)
+      domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
+
     if(r == 0) {
       ulen = utf8_to_smb(cc, NULL, username);
       uint8_t pwdigest[16];
@@ -1038,12 +1039,14 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
       lmresponse(password, pwdigest, cc->cc_challenge_key);
       password_len = 24;
       free(password_cleartext);
-    }
-  }
 
-  // Reset domain if it was cleared by the keyring handler
-  if(domain == NULL)
-    domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
+      SMBTRACE("SMB_SETUP user-level %s:%s:%s", username ?: "<unset>",
+	       password_cleartext ?: "<unset>", domain); 
+    }
+  } else {
+    SMBTRACE("SMB_SETUP no-user-auth %s:%s", username ?: "<unset>",
+	     domain); 
+  }
 
   size_t dlen = utf8_to_smb(cc, NULL, domain);
   int password_pad = cc->cc_unicode && (password_len & 1) == 0;
@@ -1083,6 +1086,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     ptr += 1;
   }
   free(username);
+  username = NULL;
   ptr += utf8_to_smb(cc, ptr, domain);
   ptr += utf8_to_smb(cc, ptr, os);
   ptr += utf8_to_smb(cc, ptr, lanmgr);
@@ -1119,17 +1123,14 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     return -1;
   }
 
-  cc->cc_guest = letoh_16(reply->action) & 1;
-
-  if(cc->cc_security_mode & SECURITY_USER_LEVEL && cc->cc_guest &&
-     username != NULL && strcasecmp(username, "guest")) {
-    retry_reason = "Login failed";
-    free(rbuf);
-    goto again;
-  }
-
+  int guest = letoh_16(reply->action) & 1;
   cc->cc_uid = letoh_16(reply->hdr.uid);
   free(rbuf);
+
+  SMBTRACE("Logged in as UID:%d guest=%s", cc->cc_uid, guest ? "yes" : "no");
+
+  if(guest && !as_guest)
+    return -1;
 
   return 0;
 }
@@ -1211,7 +1212,7 @@ static void cifs_periodic(struct callout *c, void *opaque);
  */
 static cifs_connection_t *
 cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
-		    int non_interactive)
+		    int non_interactive, int as_guest)
 {
   cifs_connection_t *cc;
 
@@ -1220,6 +1221,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
   if(!non_interactive) {
     LIST_FOREACH(cc, &cifs_connections, cc_link)
       if(!strcmp(cc->cc_hostname, hostname) && cc->cc_port == port &&
+	 cc->cc_as_guest == as_guest && 
 	 !cc->cc_broken && cc->cc_status < CC_ERROR)
 	break;
   } else {
@@ -1233,6 +1235,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
     cc->cc_status = CC_CONNECTING;
     cc->cc_port = port;
     cc->cc_hostname = strdup(hostname);
+    cc->cc_as_guest = as_guest;
 
     hts_cond_init(&cc->cc_cond, &smb_global_mutex);
 
@@ -1258,7 +1261,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
 
 	int r;
 	r = smb_setup_andX(cc, cc->cc_errbuf, sizeof(cc->cc_errbuf),
-			   non_interactive);
+			   non_interactive, as_guest);
 
 	if(r) {
 	  if(r == -2) {
@@ -1571,6 +1574,7 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
   int port;
   char path[512];
   cifs_connection_t *cc;
+  cifs_tree_t *ct;
   char *fn = NULL, *p;
 
   url_split(NULL, 0, NULL, 0, hostname, sizeof(hostname), &port,
@@ -1590,7 +1594,17 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
   snprintf(filename, filenamesize, "%s", fn ?: "");
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
-			       non_interactive)) == NULL)
+			       non_interactive, 1)) != NULL) {
+    assert(cc != SAMBA_NEED_AUTH); /* Should not happen if we just try to
+				      login as guest */
+
+    ct = smb_tree_connect_andX(cc, p, errbuf, errlen, non_interactive);
+    if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) || ct != NULL)
+      return ct;
+  }
+
+  if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
+			       non_interactive, 0)) == NULL)
     return NULL;
   if(cc == SAMBA_NEED_AUTH)
     return SAMBA_NEED_AUTH;
@@ -1608,7 +1622,7 @@ release_tree_io_error(cifs_tree_t *ct, char *errbuf, size_t errlen)
 {
   snprintf(errbuf, errlen, "I/O error");
   cifs_release_tree(ct);
-  return SMB_ERROR_IO;
+  return -1;
 }
 
 
@@ -1624,7 +1638,7 @@ check_smb_error(cifs_tree_t *ct, void *rbuf, size_t rlen, size_t runt_lim,
   bad:
     free(rbuf);
     cifs_release_tree(ct);
-    return SMB_ERROR_OTHER;
+    return -1;
   }
   
   if(rlen < runt_lim) {
@@ -1679,7 +1693,7 @@ cifs_stat(cifs_tree_t *ct, const char *filename, fa_stat_t *fs,
       return release_tree_io_error(ct, errbuf, errlen);
 
     if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS2_reply_t), errbuf, errlen))
-      return SMB_ERROR_OTHER;
+      return -1;
 
     t2resp = rbuf;
 
@@ -1784,7 +1798,7 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
       return release_tree_io_error(ct, errbuf, errlen);
 
     if(check_smb_error(ct, rbuf, rlen, sizeof(TRANS2_reply_t), errbuf, errlen))
-      return SMB_ERROR_OTHER;
+      return -1;
 
     t2resp = (const TRANS2_reply_t *)rbuf;
     int poff = letoh_16(t2resp->param_offset);
