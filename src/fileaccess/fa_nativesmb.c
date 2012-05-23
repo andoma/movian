@@ -20,14 +20,7 @@
 #include <arpa/inet.h>
 #include <assert.h>
 
-#include "showtime.h"
-#include "fileaccess.h"
-#include "fa_proto.h"
-#include "keyring.h"
-#include "networking/net.h"
-#include "misc/string.h"
-#include "misc/callout.h"
-
+#include "config.h"
 #if ENABLE_OPENSSL
 #include <openssl/md4.h>
 #include <openssl/des.h>
@@ -38,11 +31,19 @@
 #error No crypto
 #endif
 
+#include "showtime.h"
+#include "fileaccess.h"
+#include "fa_proto.h"
+#include "keyring.h"
+#include "networking/net.h"
+#include "misc/string.h"
+#include "misc/callout.h"
+
 #define SAMBA_NEED_AUTH ((void *)-1)
 
 #define SMB_ECHO_INTERVAL 30
 
-#define SMBTRACE(x...) // trace(0, TRACE_INFO, "SMB", x)
+#define SMBTRACE(x...) trace(0, TRACE_DEBUG, "SMB", x)
 
 LIST_HEAD(cifs_connection_list, cifs_connection);
 LIST_HEAD(nbt_req_list, nbt_req);
@@ -604,6 +605,30 @@ typedef struct {
 #endif
 
 
+
+/**
+ *
+ */
+static void
+smberr_write(char *errbuf, size_t errlen, int code)
+{
+  rstr_t *r = NULL;
+  switch(code) {
+  case 0xc00000cc:
+    r = _("Bad network share name");
+    break;
+  default:
+    snprintf(errbuf, errlen, "NTStatus: 0x%08x", code);
+    return;
+  }
+
+  snprintf(errbuf, errlen, "%s", rstr_get(r));
+  rstr_release(r);
+}
+
+
+
+
 /**
  *
  */
@@ -1038,14 +1063,14 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
       NTLM_hash(password_cleartext, pwdigest);
       lmresponse(password, pwdigest, cc->cc_challenge_key);
       password_len = 24;
-      free(password_cleartext);
 
-      SMBTRACE("SMB_SETUP user-level %s:%s:%s", username ?: "<unset>",
-	       password_cleartext ?: "<unset>", domain); 
+      SMBTRACE("SETUP user-level %s:%s:%s", username ?: "<unset>",
+	       *password_cleartext ? "<hidden>" : "<unset>", domain); 
+
+      free(password_cleartext);
     }
   } else {
-    SMBTRACE("SMB_SETUP no-user-auth %s:%s", username ?: "<unset>",
-	     domain); 
+    SMBTRACE("SETUP no-user-auth %s:%s", username ?: "<unset>", domain); 
   }
 
   size_t dlen = utf8_to_smb(cc, NULL, domain);
@@ -1104,16 +1129,16 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   reply = rbuf;
 
+  SMBTRACE("SETUP errorcode=0x%08x", (int)letoh_32(reply->hdr.errorcode));
+
   if(reply->hdr.errorcode) {
-    if(retry_reason == NULL) {
-      retry_reason = "Login failed";
-      free(rbuf);
-      goto again;
-    }
-    snprintf(errbuf, errlen, "Login failed (0x%x)",
-	     (int)letoh_32(reply->hdr.errorcode));
+    retry_reason = "Login attempt failed";
     free(rbuf);
-    return -1;
+    if(as_guest) {
+      snprintf(errbuf, errlen, "Guest login failed");
+      return -1;
+    }
+    goto again;
   }
 
   if(rlen < sizeof(SMB_SETUP_ANDX_reply_t)) {
@@ -1129,8 +1154,10 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
 
   SMBTRACE("Logged in as UID:%d guest=%s", cc->cc_uid, guest ? "yes" : "no");
 
-  if(guest && !as_guest)
-    return -1;
+  if(guest && !as_guest && cc->cc_security_mode & SECURITY_USER_LEVEL) {
+    retry_reason = "Login attempt failed";
+    goto again;
+  }
 
   return 0;
 }
@@ -1206,6 +1233,40 @@ smb_dispatch(void *aux)
 
 
 static void cifs_periodic(struct callout *c, void *opaque);
+
+
+/**
+ *
+ */
+static cifs_tree_t *
+get_tree_no_create(const char *hostname, int port, const char *share)
+{
+  cifs_connection_t *cc;
+  cifs_tree_t *ct;
+
+  hts_mutex_lock(&smb_global_mutex);
+
+  LIST_FOREACH(cc, &cifs_connections, cc_link)
+    if(!strcmp(cc->cc_hostname, hostname) && cc->cc_port == port &&
+       !cc->cc_broken && cc->cc_status < CC_ERROR)
+      break;
+  
+  if(cc == NULL) {
+    hts_mutex_unlock(&smb_global_mutex);
+    return NULL;
+  }
+
+  LIST_FOREACH(ct, &cc->cc_trees, ct_link)
+    if(!strcmp(ct->ct_share, share))
+      break;
+  
+  if(ct != NULL)
+    ct->ct_refcount++;
+
+  hts_mutex_unlock(&smb_global_mutex);
+  return ct;
+}
+
 
 /**
  *
@@ -1528,7 +1589,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
       reply = rbuf;
 
       uint32_t err = letoh_32(reply->hdr.errorcode);
-
+      SMBTRACE("Tree connect errorcode:0x%08x", err);
       if(err != 0) {
 
 	if(!(cc->cc_security_mode & SECURITY_USER_LEVEL) &&
@@ -1539,8 +1600,7 @@ smb_tree_connect_andX(cifs_connection_t *cc, const char *share,
 	}
 	
 	ct->ct_status = CT_ERROR;
-	snprintf(ct->ct_errbuf, sizeof(ct->ct_errbuf), 
-		 "Authentication failed");
+	smberr_write(ct->ct_errbuf, sizeof(ct->ct_errbuf), err);
 
       } else {
 	ct->ct_tid = htole_16(reply->hdr.tid);
@@ -1592,6 +1652,12 @@ cifs_get_tree(const char *url, char *filename, size_t filenamesize,
   }
 
   snprintf(filename, filenamesize, "%s", fn ?: "");
+
+
+  ct = get_tree_no_create(hostname, port, p);
+
+  if(ct != NULL)
+    return ct;
 
   if((cc = cifs_get_connection(hostname, port, errbuf, errlen,
 			       non_interactive, 1)) != NULL) {
