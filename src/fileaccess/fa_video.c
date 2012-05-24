@@ -735,6 +735,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
+  mp->mp_pts_delta_for_subs = fctx->start_time;
 
   // Start it
   mp_configure(mp, (seek_is_fast ? MP_PLAY_CAPS_SEEK : 0) | MP_PLAY_CAPS_PAUSE,
@@ -760,6 +761,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     prop_vec_release(streams);
   }
 
+  mp->mp_pts_delta_for_subs = 0;
   mp_flush(mp, 0);
   mp_shutdown(mp);
 

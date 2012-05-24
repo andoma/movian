@@ -241,6 +241,7 @@ typedef struct media_pipe {
   int mp_avdelta;           // Audio vs video delta (µs)
   int mp_svdelta;           // Subtitle vs video delta (µs)
   int mp_stats;
+  int64_t mp_pts_delta_for_subs;
 
   struct audio_decoder *mp_audio_decoder;
 
