@@ -665,6 +665,12 @@ smberr_write(char *errbuf, size_t errlen, int code)
   case 0xc00000cc:
     r = _("Bad network share name");
     break;
+  case 0xc000006d:
+    r = _("Logon failure");
+    break;
+  case 0xc000006e:
+    r = _("Account restricted");
+    break;
   case 0xc0000022:
     r = _("Access denied");
     break;
@@ -1063,6 +1069,7 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   int rlen;
 
   const char *retry_reason = NULL;
+  char reason[256];
 
   uint8_t password[24];
   int password_len;
@@ -1070,14 +1077,13 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
  again:
   password[0] = 0;
   password_len = 1;
-  ulen = 2;
   free(domain);
   domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
+  char *password_cleartext;
 
   if(cc->cc_security_mode & SECURITY_USER_LEVEL && !as_guest) {
     char id[256];
     char name[256];
-    char *password_cleartext = NULL;
 
     if(retry_reason && non_interactive)
       return -2;
@@ -1108,22 +1114,24 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
     if(domain == NULL)
       domain = strdup(cc->cc_domain[0] ? (char *)cc->cc_domain : "WORKGROUP");
 
-    if(r == 0) {
-      ulen = utf8_to_smb(cc, NULL, username);
-      uint8_t pwdigest[16];
-      NTLM_hash(password_cleartext, pwdigest);
-      lmresponse(password, pwdigest, cc->cc_challenge_key);
-      password_len = 24;
+    assert(r == 0);
 
-      SMBTRACE("SETUP user-level %s:%s:%s", username ?: "<unset>",
-	       *password_cleartext ? "<hidden>" : "<unset>", domain); 
-
-      free(password_cleartext);
-    }
   } else {
-    SMBTRACE("SETUP no-user-auth %s:%s", username ?: "<unset>", domain); 
+    username = strdup("guest");
+    password_cleartext = strdup("");
   }
 
+  uint8_t pwdigest[16];
+  NTLM_hash(password_cleartext, pwdigest);
+  lmresponse(password, pwdigest, cc->cc_challenge_key);
+  password_len = 24;
+
+  SMBTRACE("SETUP %s:%s:%s", username ?: "<unset>",
+	   *password_cleartext ? "<hidden>" : "<unset>", domain); 
+  
+  free(password_cleartext);
+
+  ulen = utf8_to_smb(cc, NULL, username);
   size_t dlen = utf8_to_smb(cc, NULL, domain);
   int password_pad = cc->cc_unicode && (password_len & 1) == 0;
   int bytecount = password_len + password_pad + ulen + dlen + olen + llen;
@@ -1179,11 +1187,14 @@ smb_setup_andX(cifs_connection_t *cc, char *errbuf, size_t errlen,
   }
 
   reply = rbuf;
+  int errcode = letoh_32(reply->hdr.errorcode);
 
-  SMBTRACE("SETUP errorcode=0x%08x", (int)letoh_32(reply->hdr.errorcode));
+  SMBTRACE("SETUP errorcode=0x%08x", errcode);
 
   if(reply->hdr.errorcode) {
-    retry_reason = "Login attempt failed";
+    
+    smberr_write(reason, sizeof(reason), errcode);
+    retry_reason = reason;
     free(rbuf);
     if(as_guest) {
       snprintf(errbuf, errlen, "Guest login failed");
