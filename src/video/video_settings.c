@@ -69,7 +69,7 @@ set_subtitle_always_select(void *opaque, int v)
 static void
 set_subtitle_style_override(void *opaque, int v)
 {
-  subtitle_settings.outline_size = v;
+  subtitle_settings.style_override = v;
 }
 
 static void
