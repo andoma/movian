@@ -1324,8 +1324,8 @@ get_tree_no_create(const char *hostname, int port, const char *share)
   
   if(ct != NULL)
     ct->ct_refcount++;
-
-  hts_mutex_unlock(&smb_global_mutex);
+  else
+    hts_mutex_unlock(&smb_global_mutex);
   return ct;
 }
 
