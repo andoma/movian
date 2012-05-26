@@ -98,8 +98,7 @@ prop_t *settings_get_value(setting_t *s);
 
 prop_t *settings_get_node(setting_t *s);
 
-setting_t *settings_create_action(prop_t *parent, const char *id,
-				  prop_t *title,
+setting_t *settings_create_action(prop_t *parent, prop_t *title,
 				  prop_callback_t *cb, void *opaque,
 				  prop_courier_t *pc);
 

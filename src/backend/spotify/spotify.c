@@ -4503,10 +4503,10 @@ be_spotify_init(void)
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, (void *)"spotify");
 
-  settings_create_action(s, "relogin", _p("Relogin (switch user)"),
+  settings_create_action(s, _p("Relogin (switch user)"),
 			 spotify_relogin, NULL, spotify_courier);
 
-  settings_create_action(s, "forgetme", _p("Forget me"),
+  settings_create_action(s, _p("Forget me"),
 			 spotify_forget_me, NULL, spotify_courier);
 
   prop_link(settings_get_value(ena),

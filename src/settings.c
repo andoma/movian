@@ -539,7 +539,7 @@ settings_create_divider(prop_t *parent, prop_t *caption)
  *
  */
 setting_t *
-settings_create_action(prop_t *parent, const char *id, prop_t *title,
+settings_create_action(prop_t *parent, prop_t *title,
 		       prop_callback_t *cb, void *opaque,
 		       prop_courier_t *pc)
 {
