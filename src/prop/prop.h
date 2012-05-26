@@ -24,7 +24,6 @@
 #include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
-#include "htsmsg/htsmsg.h"
 #include "misc/rstr.h"
 
 // #define PROP_DEBUG
@@ -346,8 +345,6 @@ void prop_notify_dispatch(struct prop_notify_queue *q);
 void prop_courier_stop(prop_courier_t *pc);
 
 prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
-
-htsmsg_t *prop_tree_to_htsmsg(prop_t *p);
 
 void prop_send_ext_event(prop_t *p, event_t *e);
 
