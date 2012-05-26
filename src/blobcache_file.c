@@ -37,6 +37,8 @@
 #include "arch/arch.h"
 #include "arch/threads.h"
 #include "arch/atomic.h"
+#include "settings.h"
+#include "notifications.h"
 
 #define BC2_MAGIC 0x62630201
 
@@ -641,6 +643,26 @@ blobcache_prune_old(void)
   unlink(path);
 }  
 
+static void
+cache_clear(void *opaque, prop_event_t event, ...)
+{
+  int i;
+  blobcache_item_t *p, *n;
+
+  hts_mutex_lock(&cache_lock);
+
+  for(i = 0; i < ITEM_HASH_SIZE; i++) {
+    for(p = hashvector[i]; p != NULL; p = n) {
+      n = p->bi_link;
+      prune_item(p);
+    }
+    hashvector[i] = NULL;
+  }
+  current_cache_size = 0;
+  hts_mutex_unlock(&cache_lock);
+  save_index();
+  notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Cache cleared"));
+}
 
 /**
  *
@@ -665,6 +687,9 @@ blobcache_init(void)
   TRACE(TRACE_INFO, "blobcache",
 	"Initialized: %d items consuming %"PRId64" bytes on disk in %s",
 	pool_num(item_pool), current_cache_size, buf);
+
+  settings_create_action(settings_general, _p("Clear cached files"),
+			 cache_clear, NULL, NULL);
 }
 
 
