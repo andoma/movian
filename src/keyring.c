@@ -27,9 +27,26 @@
 #include "keyring.h"
 #include "prop/prop.h"
 #include "notifications.h"
+#include "settings.h"
 
 static htsmsg_t *persistent_keyring, *temporary_keyring;
 static hts_mutex_t keyring_mutex;
+
+static void
+keyring_clear(void *opaque, prop_event_t event, ...)
+{
+  hts_mutex_lock(&keyring_mutex);
+  htsmsg_destroy(persistent_keyring);
+  htsmsg_destroy(temporary_keyring);
+
+  persistent_keyring = htsmsg_create_map();
+  temporary_keyring = htsmsg_create_map();
+
+  htsmsg_store_save(persistent_keyring, "keyring");
+  hts_mutex_unlock(&keyring_mutex);
+
+  notify_add(NULL, NOTIFY_WARNING, NULL, 3, _("Rembered passwords erased"));
+}
 
 
 /**
@@ -42,6 +59,9 @@ keyring_init(void)
   if((persistent_keyring = htsmsg_store_load("keyring")) == NULL)
     persistent_keyring = htsmsg_create_map();
   temporary_keyring = htsmsg_create_map();
+
+  settings_create_action(settings_general, _p("Forget remembered passwords"),
+			 keyring_clear, NULL, NULL);
 }
 
 
