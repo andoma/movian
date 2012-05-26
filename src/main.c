@@ -341,6 +341,9 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  /* Initialize settings */
+  settings_init();
+
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot());
 
   /* Try to create cache path */
@@ -381,9 +384,6 @@ main(int argc, char **argv)
 
   /* Initialize keyring */
   keyring_init();
-
-  /* Initialize settings */
-  settings_init();
 
   /* Initialize libavcodec & libavformat */
   av_lockmgr_register(fflockmgr);

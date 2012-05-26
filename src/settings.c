@@ -33,11 +33,10 @@
 #include "prop/prop_concat.h"
 
 #define SETTINGS_URL "settings:"
-
 static prop_t *settings_root;
 static prop_t *settings_nodes;
 
-prop_t *settings_apps, *settings_sd;
+prop_t *settings_apps, *settings_sd, *settings_general;
 
 /**
  *
@@ -650,6 +649,12 @@ settings_init(void)
 
   n = prop_create(prop_create(settings_sd, "model"), "nodes");
   prop_concat_add_source(pc, n, d);
+
+  // General settings
+
+  settings_general = settings_add_dir(NULL, _p("General"), NULL, NULL,
+				      _p("System related settings"),
+				      "settings:general");
 }
 
 

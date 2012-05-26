@@ -118,5 +118,6 @@ void settings_create_info(prop_t *parent, const char *image,
 
 extern prop_t *settings_apps;
 extern prop_t *settings_sd;
+extern prop_t *settings_general;
 
 #endif /* SETTINGS_H__ */
