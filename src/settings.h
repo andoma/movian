@@ -115,6 +115,10 @@ void settings_generic_set_bool(void *opaque, int value);
 void settings_create_info(prop_t *parent, const char *image,
 			  prop_t *description);
 
+
+prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
+				     prop_t *value);
+
 extern prop_t *settings_apps;
 extern prop_t *settings_sd;
 extern prop_t *settings_general;

@@ -418,7 +418,7 @@ settings_multiopt_initiate(setting_t *s,
 			   prop_courier_t *pc, htsmsg_t *store,
 			   settings_saver_t *saver, void *saver_opaque)
 {
-  const char *str = htsmsg_get_str(store, s->s_id);
+  const char *str = store ? htsmsg_get_str(store, s->s_id) : NULL;
   prop_t *o = str ? prop_find(s->s_val, str, NULL) : NULL;
 
   if(o == NULL && s->s_initial_value != NULL)
@@ -555,6 +555,19 @@ settings_create_action(prop_t *parent, prop_t *title,
 			    PROP_TAG_COURIER, pc,
 			    NULL);
   return s;
+}
+
+
+
+/**
+ *
+ */
+prop_t *
+settings_create_bound_string(prop_t *parent, prop_t *title, prop_t *value)
+{
+  prop_t *p = setting_add(parent, title, "string");
+  prop_link(value, prop_create(p, "value"));
+  return p;
 }
 
 

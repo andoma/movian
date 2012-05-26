@@ -26,6 +26,7 @@
 #include "showtime.h"
 #include "navigator.h"
 #include "backend/backend.h"
+#include "backend/backend_prop.h"
 #include "event.h"
 #include "plugins.h"
 #include "service.h"
@@ -65,6 +66,11 @@ typedef struct bookmark {
   rstr_t *bm_icon;
 
   service_t *bm_service;
+
+  setting_t *bm_type_setting;
+  setting_t *bm_delete;
+
+  prop_t *bm_info;
 
 } bookmark_t;
 
@@ -752,9 +758,13 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   rstr_release(bm->bm_icon);
 
   service_destroy(bm->bm_service);
+  setting_destroy(bm->bm_type_setting);
+  setting_destroy(bm->bm_delete);
 
   LIST_REMOVE(bm, bm_link);
   prop_ref_dec(bm->bm_root);
+
+  prop_destroy(bm->bm_info);
   free(bm);
 
   bookmarks_save();
@@ -825,11 +835,23 @@ bm_set_icon(void *opaque, rstr_t *str)
 /**
  *
  */
+static void
+change_type(void *opaque, const char *string)
+{
+  bookmark_t *bm = opaque;
+  prop_set_string(prop_create(prop_create(bm->bm_root, "metadata"),
+			      "svctype"), string);
+}
+
+
+/**
+ *
+ */
 static prop_sub_t *
 add_prop(prop_t *parent, const char *name, rstr_t *value,
-		  bookmark_t *bm, prop_callback_rstr_t *cb)
+	 bookmark_t *bm, prop_callback_rstr_t *cb)
 {
-  prop_t *p = prop_create(parent, name);
+  prop_t *p = prop_create(prop_create(parent, "metadata"), name);
   prop_set_rstring(p, value);
 
   return prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
@@ -838,6 +860,18 @@ add_prop(prop_t *parent, const char *name, rstr_t *value,
 			PROP_TAG_COURIER, nav_courier,
 			NULL);
 }
+
+
+/**
+ *
+ */
+static void
+bm_delete(void *opaque, prop_event_t event, ...)
+{
+  bookmark_t *bm = opaque;
+  prop_destroy(bm->bm_root);
+}
+
 
 
 /**
@@ -854,8 +888,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   prop_t *p = prop_create_root(NULL);
   bm->bm_root = prop_ref_inc(p);
 
-  prop_set_string(prop_create(p, "type"), "bookmark");
-
+  prop_set_string(prop_create(p, "type"), "settings");
 
   bm->bm_title = rstr_alloc(title);
   bm->bm_url   = rstr_alloc(url);
@@ -881,6 +914,50 @@ bookmark_add(const char *title, const char *url, const char *type,
 		 PROP_TAG_ROOT, p,
 		 PROP_TAG_COURIER, nav_courier,
 		 NULL);
+
+  // Construct the edit page
+
+  prop_t *m = prop_create(p, "model");
+  prop_t *md = prop_create(p, "metadata");
+  rstr_t *r = backend_prop_make(m, NULL);
+  prop_set_rstring(prop_create(p, "url"), r);
+  rstr_release(r);
+
+  prop_set_string(prop_create(m, "type"), "settings");
+  prop_set_string(prop_create(m, "subtype"), "bookmark");
+
+  prop_link(prop_create(md, "title"),
+	    prop_create(prop_create(m, "metadata"), "title"));
+
+  settings_create_bound_string(m, _p("Title"), prop_create(md, "title"));
+  settings_create_bound_string(m, _p("URL"), prop_create(md, "url"));
+
+  bm->bm_type_setting = 
+    settings_create_multiopt(m, "type", _p("Type"));
+
+  settings_multiopt_add_opt(bm->bm_type_setting, "other",  _p("Other"),
+			    !strcmp(type, "other"));
+  settings_multiopt_add_opt(bm->bm_type_setting, "music",  _p("Music"),
+			    !strcmp(type, "music"));
+  settings_multiopt_add_opt(bm->bm_type_setting, "video",  _p("Video"),
+			    !strcmp(type, "video"));
+  settings_multiopt_add_opt(bm->bm_type_setting, "tv",     _p("TV"),
+			    !strcmp(type, "tv"));
+  settings_multiopt_add_opt(bm->bm_type_setting, "photos", _p("Photos"),
+			    !strcmp(type, "photos"));
+  
+  settings_multiopt_initiate(bm->bm_type_setting, change_type, bm,
+			     nav_courier, NULL, NULL, NULL);
+
+  prop_link(prop_create(md, "url"), prop_create(md, "shortdesc"));
+
+  bm->bm_info = prop_create_root(NULL);
+  settings_create_info(m, NULL,
+		       service_get_statustxt_prop(bm->bm_service));
+
+  bm->bm_delete = 
+    settings_create_action(m, _p("Delete"), bm_delete, bm, nav_courier);
+
   if(prop_set_parent(p, bookmark_nodes))
     abort();
   nav_update_bookmarked();
