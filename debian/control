@@ -7,7 +7,7 @@ Build-Depends: debhelper  (>= 7.0.50), pkg-config, libfreetype6-dev, libfontconf
 Package: showtime
 Section: main
 Architecture: any
-Depends: ${shlibs:Depends}
+Depends: ${shlibs:Depends}, hal
 Description: OpenGL based Mediaplayer
  An OpenGL based media player focused for use as a home-entertainment-system.
  Based on ffmpeg 'http://www.ffmpeg.org'.
