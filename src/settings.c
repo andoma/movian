@@ -653,8 +653,7 @@ settings_init(void)
   // General settings
 
   settings_general = settings_add_dir(NULL, _p("General"), NULL, NULL,
-				      _p("System related settings"),
-				      "settings:general");
+				      _p("System related settings"));
 }
 
 
