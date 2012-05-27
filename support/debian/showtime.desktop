@@ -1,0 +1,5 @@
+[Desktop Entry]
+Name=Showtime Mediacenter
+Comment=Starts Showtime in fullscreen mode
+Exec=showtime-session
+Type=Application

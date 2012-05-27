@@ -1,0 +1,54 @@
+#!/bin/bash
+
+startenv() 
+{
+    if [ -x /etc/showtime/startenv ] ; then
+	/etc/showtime/startenv
+    fi
+}
+
+
+stopenv() 
+{
+    if [ -x /etc/showtime/stopenv ] ; then
+	/etc/showtime/stopenv
+    fi
+}
+
+
+dosuspend()
+{
+    stopenv
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Suspend int32:0
+    startenv
+}
+
+dopoweroff()
+{
+    stopenv
+    dbus-send --system --print-reply --dest=org.freedesktop.Hal /org/freedesktop/Hal/devices/computer org.freedesktop.Hal.Device.SystemPowerManagement.Shutdown
+    sleep 1
+    exit 0
+}
+
+startenv
+
+
+while true; do
+      showtime --serdev --with-standby --syslog --with-poweroff --with-logout --with-openshell
+      case "$?" in
+      10)
+	      dosuspend
+	      ;;
+      11)
+	      dopoweroff
+	      ;;
+      12)
+	      stopenv
+    	      exit 0
+	      ;;
+      14)
+	      xterm
+	      ;;
+      esac
+done
