@@ -168,6 +168,9 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 #define SHOWTIME_EXIT_OK       0
 #define SHOWTIME_EXIT_STANDBY  10
 #define SHOWTIME_EXIT_POWEROFF 11
+#define SHOWTIME_EXIT_LOGOUT   12
+#define SHOWTIME_EXIT_RESTART  13
+#define SHOWTIME_EXIT_SHELL    14
 
 extern char *showtime_cache_path;
 extern char *showtime_persistent_path;

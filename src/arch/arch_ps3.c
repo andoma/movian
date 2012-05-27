@@ -194,7 +194,7 @@ arch_exit(int retcode)
 #if ENABLE_BINREPLACE
   extern char *showtime_bin;
 
-  if(retcode == 13)
+  if(retcode == SHOWTIME_EXIT_RESTART)
     sysProcessExitSpawn2(showtime_bin, 0, 0, 0, 0, 1200, 0x70);
 #endif
 
