@@ -77,7 +77,7 @@ check_autostandby(callout_t *c, void *aux)
   if(standby_delay && idle >= standby_delay && !active_media) {
     TRACE(TRACE_INFO, "runcontrol", "Automatic standby after %d minutes idle",
 	  standby_delay);
-    showtime_shutdown(10);
+    showtime_shutdown(SHOWTIME_EXIT_STANDBY);
     return;
   }
   callout_arm(&autostandby_timer, check_autostandby, NULL, 1);
@@ -124,19 +124,58 @@ init_autostandby(void)
 }
 
 
+static void
+do_power_off(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(SHOWTIME_EXIT_POWEROFF);
+}
+
+static void
+do_logout(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(SHOWTIME_EXIT_LOGOUT);
+}
+
+static void
+do_open_shell(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(SHOWTIME_EXIT_SHELL);
+}
+
 /**
  *
  */
 void
-runcontrol_init(int can_standby, int can_poweroff)
+runcontrol_init(int can_standby, int can_poweroff,
+		int can_logout, int can_open_shell)
 {
   prop_t *rc;
   
+  if(!(can_standby || can_poweroff || can_logout || can_open_shell))
+    return;
+
+  settings_create_divider(settings_general, 
+			  _p("Starting and stopping Showtime"));
+
   rc = prop_create(prop_get_global(), "runcontrol");
 
   prop_set_int(prop_create(rc, "canStandby"), !!can_standby);
   prop_set_int(prop_create(rc, "canPowerOff"), !!can_poweroff);
+  prop_set_int(prop_create(rc, "canLogout"), !!can_logout);
+  prop_set_int(prop_create(rc, "canOpenShell"), !!can_open_shell);
 
   if(can_standby)
     init_autostandby();
+
+  if(can_poweroff)
+    settings_create_action(settings_general, _p("Power off system"),
+			   do_power_off, NULL, NULL);
+
+  if(can_logout)
+    settings_create_action(settings_general, _p("Logout"),
+			   do_logout, NULL, NULL);
+
+  if(can_open_shell)
+    settings_create_action(settings_general, _p("Open shell"),
+			   do_open_shell, NULL, NULL);
 }

@@ -19,6 +19,7 @@
 #ifndef RUNCONTROL_H__
 #define RUNCONTROL_H__
 
-void runcontrol_init(int can_standby, int can_poweroff);
+void runcontrol_init(int can_standby, int can_poweroff,
+		     int can_logout, int can_open_shell);
 
 #endif // RUNCONTROL_H__
