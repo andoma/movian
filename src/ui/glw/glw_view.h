@@ -63,6 +63,7 @@ typedef enum {
   TOKEN_NULL_COALESCE,         // ??
   TOKEN_LT,                    // <
   TOKEN_GT,                    // >
+  TOKEN_COLON,                 // :
   TOKEN_RSTRING,               // A ref allocated string
   TOKEN_CSTRING,               // A compile time constant string
   TOKEN_FLOAT,

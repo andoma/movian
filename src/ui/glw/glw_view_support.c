@@ -107,6 +107,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_RPN:
   case TOKEN_BLOCK:
   case TOKEN_NOP:
+  case TOKEN_COLON:
     break;
 
   case TOKEN_RSTRING:
@@ -230,6 +231,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_VOID:
+  case TOKEN_COLON:
     break;
 
   case TOKEN_LINK:
