@@ -354,9 +354,7 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	return glw_view_seterr(ei, t, "Unknown attribute: %s",
 				rstr_get(t->t_rstring));
 
-      t->next = t1->next;
-      t = t1->next;
-      glw_view_token_free(gr, t1);
+      t1->type = TOKEN_ASSIGNMENT;
       continue;
     }
 
