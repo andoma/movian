@@ -794,8 +794,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   int r = 0;
 
-  /* Catch some special rvalues here */
-
+  /* Catch some special cases here */
   if(b->type == TOKEN_PROPERTY_VALUE_NAME && 
      !strcmp(rstr_get(b->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
@@ -825,6 +824,14 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
 
     b = eval_alloc(b, ec, TOKEN_PROPERTY_OWNER);
     b->t_prop = n.tgtprop;
+
+  } else if(b->type == TOKEN_PROPERTY_REF &&
+	    a->type == TOKEN_PROPERTY_REF) {
+
+    if(b->t_prop != a->t_prop)
+      prop_link(b->t_prop, a->t_prop);
+    eval_push(ec, b);
+    return 0;
 
   } else if((b = token_resolve(ec, b)) == NULL) {
     return -1;
