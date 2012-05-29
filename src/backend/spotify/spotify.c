@@ -75,7 +75,6 @@ rstr_t *spotify_icon_url;
 
 static int is_thread_running;
 static int is_logged_in;
-static int login_rejected_by_user;
 static int pending_login;
 static const char *pending_relogin;
 
@@ -610,7 +609,6 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
     char ruser[256];
 
     if(f_sp_session_remembered_user(s, ruser, sizeof(ruser)) != -1) {
-
       if(f_sp_session_relogin(s) == SP_ERROR_OK) {
 	pending_login = 1;
 	TRACE(TRACE_INFO, "Spotify", "Automatic login attempt as user %s",
@@ -633,7 +631,6 @@ spotify_try_login(sp_session *s, int retry, const char *reason, int silent)
 		     KEYRING_REMEMBER_ME_SET | KEYRING_ONE_SHOT);
   
   if(r) {
-    login_rejected_by_user = 1;
     // Login canceled by user
     fail_pending_messages("Login canceled by user");
     return;
@@ -3903,6 +3900,7 @@ spotify_thread(void *aux)
   char cache[PATH_MAX];
   int high_bitrate = 0;
   int offline_bitrate_96 = 0;
+  int do_login = 0;
 
   memset(&sesconf, 0, sizeof(sesconf));
 
@@ -3944,10 +3942,10 @@ spotify_thread(void *aux)
 
     while(!spotify_pending_events) {
 
-      if((sm = TAILQ_FIRST(&spotify_msgs)) != NULL) {
+      if(!pending_login && (sm = TAILQ_FIRST(&spotify_msgs)) != NULL) {
 	if(!is_logged_in) {
+	  do_login = 1;
 	  sm = NULL;
-	  login_rejected_by_user = 0;
 	}
 	break;
       }
@@ -3966,9 +3964,11 @@ spotify_thread(void *aux)
 
     hts_mutex_unlock(&spotify_mutex);
 
-    if(sm != NULL && !is_logged_in && !login_rejected_by_user) {
+    if(do_login) {
       spotify_try_login(s, 0, NULL, 0);
+      do_login = 0;
     }
+
     if(high_bitrate != spotify_high_bitrate) {
       high_bitrate = spotify_high_bitrate;
       f_sp_session_preferred_bitrate(s, 
@@ -4612,8 +4612,6 @@ be_spotify_canhandle(const char *url)
 static void
 spotify_shutdown_early(void *opaque, int exitcode)
 {
-  pending_login = 1;
-
   hts_mutex_lock(&spotify_mutex);
 
   if(is_logged_in)
