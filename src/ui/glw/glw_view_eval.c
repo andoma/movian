@@ -33,6 +33,7 @@
 #include "prop/prop_nodefilter.h"
 #include "arch/arch.h"
 #include "text/text.h"
+#include "fileaccess/fileaccess.h"
 
 LIST_HEAD(clone_list, glw_clone);
 
@@ -4807,9 +4808,9 @@ glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
   if(path->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, path, "URL is not a string");
 
-  font = freetype_load_font(rstr_get(path->t_rstring),
-			    gr->gr_font_domain);
-
+  rstr_t *p = fa_absolute_path(path->t_rstring, self->file);
+  font = freetype_load_font(rstr_get(p), gr->gr_font_domain, gr->gr_vpaths);
+  rstr_release(p);
 
   token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
   if(font)

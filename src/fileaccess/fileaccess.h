@@ -188,6 +188,8 @@ struct backend;
 
 int fa_normalize(const char *url, char *dst, size_t dstlen);
 
+rstr_t *fa_absolute_path(rstr_t *filename, rstr_t *at);
+
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;

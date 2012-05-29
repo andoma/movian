@@ -24,6 +24,7 @@
 #include "misc/strtab.h"
 #include "glw_view.h"
 #include "glw.h"
+#include "fileaccess/fileaccess.h" // for relative path resolving
 
 /**
  *
@@ -786,6 +787,7 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
   glw_t *w = ec->w;
+
   rstr_t *r;
   if(w->glw_class->gc_set_source == NULL)
     return 0;
@@ -793,17 +795,11 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
   switch(t->type) {
   case TOKEN_VOID:
     w->glw_class->gc_set_source(w, NULL);
-    break;
-
-  case TOKEN_CSTRING:
-    r = rstr_alloc(t->t_cstring);
-    w->glw_class->gc_set_source(w, r);
-    rstr_release(r);
-    break;
+    return 0;
 
   case TOKEN_RSTRING:
   case TOKEN_LINK:
-    w->glw_class->gc_set_source(w, t->t_rstring);
+    r = t->t_rstring;
     break;
 
   default:
@@ -811,6 +807,10 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 			    "Attribute '%s' expects a string or scalar not %s",
 			   a->name, token2name(t));
   }
+
+  r = fa_absolute_path(r, t->file);
+  w->glw_class->gc_set_source(w, r);
+  rstr_release(r);
   return 0;
 }
 

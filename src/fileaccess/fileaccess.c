@@ -125,6 +125,24 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
 /**
  *
  */
+rstr_t *
+fa_absolute_path(rstr_t *filename, rstr_t *at)
+{
+  char *b = strrchr(rstr_get(at), '/');
+  const char *f = rstr_get(filename);
+  char buf[PATH_MAX];
+  if(strchr(f, ':') || *f == 0 || *f == '/' || b == NULL || !memcmp(f, "./", 2))
+    return rstr_dup(filename);
+
+  snprintf(buf, sizeof(buf), "%.*s%s", (int)(b - rstr_get(at)) + 1,
+	   rstr_get(at), rstr_get(filename));
+  return rstr_alloc(buf);
+}
+
+
+/**
+ *
+ */
 int
 fa_normalize(const char *url, char *dst, size_t dstlen)
 {

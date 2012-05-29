@@ -311,7 +311,7 @@ face_create_epilogue(face_t *face, const char *source, int font_domain)
  *
  */
 static face_t *
-face_create_from_uri(const char *path, int font_domain)
+face_create_from_uri(const char *path, int font_domain, const char **vpaths)
 {
   char errbuf[256];
   FT_Open_Args oa = {0};
@@ -323,7 +323,7 @@ face_create_from_uri(const char *path, int font_domain)
     if(face->url != NULL && !strcmp(face->url, path) &&
        face->font_domain == font_domain)
       return face;
-  fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
+  fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0);
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
 	  path, errbuf);
@@ -479,7 +479,7 @@ face_find2(int uc, uint8_t style, int family_id)
       return f;
     }
 
-    f = face_create_from_uri(url, 0);
+    f = face_create_from_uri(url, 0, NULL);
   }
 
   if(f == NULL) {
@@ -1375,12 +1375,12 @@ freetype_init(void)
  *
  */
 void *
-freetype_load_font(const char *url, int context)
+freetype_load_font(const char *url, int context, const char **vpaths)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_uri(url, context);
+  f = face_create_from_uri(url, context, vpaths);
   if(f != NULL)
     f->persistent++;
 

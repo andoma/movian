@@ -83,7 +83,7 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 #if ENABLE_LIBFREETYPE
 int freetype_init(void);
 
-void *freetype_load_font(const char *url, int font_domain);
+void *freetype_load_font(const char *url, int font_domain, const char **vpaths);
 
 void *freetype_load_font_from_memory(const void *ptr, size_t len,
 				     int font_domain);
