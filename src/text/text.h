@@ -22,6 +22,7 @@
 #pragma once
 
 struct pixmap;
+struct rstr;
 
 #define TR_STYLE_BOLD   0x1
 #define TR_STYLE_ITALIC 0x2
@@ -82,7 +83,7 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 #if ENABLE_LIBFREETYPE
 int freetype_init(void);
 
-void *freetype_load_font(const char *url, int font_domain, const char *family);
+void *freetype_load_font(const char *url, int font_domain);
 
 void *freetype_load_font_from_memory(const void *ptr, size_t len,
 				     int font_domain);
@@ -92,6 +93,8 @@ void freetype_unload_font(void *ref);
 int freetype_family_id(const char *str, int context);
 
 int freetype_get_context(void);   // rename context -> font_domain
+
+struct rstr *freetype_get_family(void *handle);
 
 #endif
 

@@ -158,7 +158,7 @@ family_get(const char *name, int font_domain)
 /**
  *
  */
-__attribute__((unused)) static const char *
+static const char *
 family_get_by_id(int id)
 {
   family_t *f;
@@ -276,10 +276,9 @@ remove_face_alias(int family_id)
  *
  */
 static face_t *
-face_create_epilogue(face_t *face, const char *source, int font_domain,
-		     const char *family_override)
+face_create_epilogue(face_t *face, const char *source, int font_domain)
 {
-  const char *family = family_override ?: face->face->family_name;
+  const char *family = face->face->family_name;
   const char *style = face->face->style_name;
   TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] from %s",
 	family, style, source);
@@ -312,8 +311,7 @@ face_create_epilogue(face_t *face, const char *source, int font_domain,
  *
  */
 static face_t *
-face_create_from_uri(const char *path, int font_domain, 
-		     const char *family_override)
+face_create_from_uri(const char *path, int font_domain)
 {
   char errbuf[256];
   FT_Open_Args oa = {0};
@@ -323,10 +321,8 @@ face_create_from_uri(const char *path, int font_domain,
 
   TAILQ_FOREACH(face, &faces, link)
     if(face->url != NULL && !strcmp(face->url, path) &&
-       face->font_domain == font_domain) {
-      face_set_family(face, family_get(family_override, font_domain));
+       face->font_domain == font_domain)
       return face;
-    }
   fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
@@ -363,7 +359,7 @@ face_create_from_uri(const char *path, int font_domain,
   }
   face->url = strdup(path);
 
-  return face_create_epilogue(face, path, font_domain, family_override);
+  return face_create_epilogue(face, path, font_domain);
 }
 
 
@@ -380,7 +376,7 @@ face_create_from_memory(const void *ptr, size_t len, int context)
     free(face);
     return NULL;
   }
-  return face_create_epilogue(face, "memory", context, NULL);
+  return face_create_epilogue(face, "memory", context);
 }
 
 
@@ -483,7 +479,7 @@ face_find2(int uc, uint8_t style, int family_id)
       return f;
     }
 
-    f = face_create_from_uri(url, 0, NULL);
+    f = face_create_from_uri(url, 0);
   }
 
   if(f == NULL) {
@@ -1379,18 +1375,34 @@ freetype_init(void)
  *
  */
 void *
-freetype_load_font(const char *url, int context, const char *family)
+freetype_load_font(const char *url, int context)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_uri(url, context, family);
+  f = face_create_from_uri(url, context);
   if(f != NULL)
     f->persistent++;
 
   hts_mutex_unlock(&text_mutex);
   return f;
 }
+
+
+
+/**
+ *
+ */
+rstr_t *
+freetype_get_family(void *handle)
+{
+  face_t *f = handle;
+  hts_mutex_lock(&text_mutex);
+  rstr_t *r = rstr_alloc(family_get_by_id(f->family_id_vec[0]));
+  hts_mutex_unlock(&text_mutex);
+  return r;
+}
+
 
 
 /**

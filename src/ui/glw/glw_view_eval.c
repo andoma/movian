@@ -4801,12 +4801,9 @@ static int
 glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
 	     token_t **argv, unsigned int argc)
 {
-  token_t *path, *family;
+  token_t *path;
   glw_root_t *gr = ec->w->glw_root;
-
-  if(argc < 1 || argc > 2)
-    return glw_view_seterr(ec->ei, self, 
-			    "loadfont(): Invalid number of arguments");
+  void *font;
 
   if((path = token_resolve(ec, argv[0])) == NULL)
     return -1;
@@ -4814,25 +4811,18 @@ glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
   if(path->type != TOKEN_RSTRING)
     return glw_view_seterr(ec->ei, path, "URL is not a string");
 
-  if(argc == 2) {
-    if((family = token_resolve(ec, argv[1])) == NULL)
-      return -1;
-    
-    if(family->type != TOKEN_RSTRING)
-      return glw_view_seterr(ec->ei, family, "Family is not a string");
-    
-  } else {
-    family = NULL;
-  }
+  font = freetype_load_font(rstr_get(path->t_rstring),
+			    gr->gr_font_domain);
 
+
+  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
+  r->t_rstring  = freetype_get_family(font);
+  eval_push(ec, r);
+
+  // unload later to avoid churn
   if(self->t_extra != NULL)
     freetype_unload_font(self->t_extra);
-
-  self->t_extra = freetype_load_font(rstr_get(path->t_rstring),
-				     gr->gr_font_domain,
-				     family ? rstr_get(family->t_rstring) :
-				     NULL);
-
+  self->t_extra = font;
 
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
   return 0;
@@ -4901,7 +4891,7 @@ static const token_func_t funcvec[] = {
   {"join", -1, glwf_join},
   {"fmt", -1, glwf_fmt},
   {"_pl", 3, glwf_pluralise},
-  {"loadFont", -1, glw_loadFont, glwf_null_ctor, glwf_loadfont_dtor},
+  {"loadFont", 1, glw_loadFont, glwf_null_ctor, glwf_loadfont_dtor},
 };
 
 
