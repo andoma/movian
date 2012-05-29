@@ -1103,11 +1103,16 @@ arch_get_seed(void)
 void
 arch_preload_fonts(void)
 {
-  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-VR-R-LATIN2.TTF", 0);
-  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-NR-R-JPN.TTF", 0);
-  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-YG-R-KOR.TTF", 0);
-  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-DH-R-CGB.TTF", 0);
-  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-CP-R-KANA.TTF", 0);
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-VR-R-LATIN2.TTF", 0,
+		     NULL);
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-NR-R-JPN.TTF", 0,
+		     NULL);
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-YG-R-KOR.TTF", 0,
+		     NULL);
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-DH-R-CGB.TTF", 0,
+		     NULL);
+  freetype_load_font("file:///dev_flash/data/font/SCE-PS3-CP-R-KANA.TTF", 0,
+		     NULL);
 }
 
 const char *
