@@ -89,7 +89,8 @@ typedef struct glw_image {
 
 } glw_image_t;
 
-static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage;
+static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage,
+  glw_frontdrop;
 
 static int8_t tex_transform[9][4] = {
   { 1, 0, 0, 1},  // No transform
@@ -244,6 +245,9 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
     if(glw_is_focusable(w))
       glw_store_matrix(w, rc);
 
+    if(w->glw_class == &glw_frontdrop)
+      render_child_autocentered(gi, rc);
+
     if(glt && glw_is_tex_inited(&glt->glt_texture) && alpha_self > 0.01f) {
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
@@ -256,7 +260,8 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
     }
 
-    render_child_autocentered(gi, rc);
+    if(w->glw_class != &glw_frontdrop)
+      render_child_autocentered(gi, rc);
   }
 }
 
@@ -456,7 +461,8 @@ glw_image_update_constraints(glw_image_t *gi)
 			0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
 
-  } else if(gi->w.glw_class == &glw_backdrop) {
+  } else if(gi->w.glw_class == &glw_backdrop || 
+	    gi->w.glw_class == &glw_frontdrop) {
 
     c = TAILQ_FIRST(&gi->w.glw_childs);
 
@@ -1112,6 +1118,32 @@ static glw_class_t glw_backdrop = {
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
+
+
+
+/**
+ *
+ */
+static glw_class_t glw_frontdrop = {
+  .gc_name = "frontdrop",
+  .gc_instance_size = sizeof(glw_image_t),
+  .gc_render = glw_image_render,
+  .gc_ctor = glw_image_ctor,
+  .gc_dtor = glw_image_dtor,
+  .gc_set = glw_image_set,
+  .gc_signal_handler = glw_image_callback,
+  .gc_default_alignment = LAYOUT_ALIGN_CENTER,
+  .gc_set_rgb = glw_image_set_rgb,
+  .gc_set_padding = set_padding,
+  .gc_set_border = set_border,
+  .gc_set_margin = set_margin,
+  .gc_mod_image_flags = mod_image_flags,
+  .gc_set_source = set_source,
+  .gc_set_alpha_self = set_alpha_self,
+  .gc_get_identity = get_identity,
+};
+
+GLW_REGISTER_CLASS(glw_frontdrop);
 
 
 
