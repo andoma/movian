@@ -4812,7 +4812,11 @@ glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
 
 
   token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
-  r->t_rstring  = freetype_get_family(font);
+  if(font)
+    r->t_rstring  = freetype_get_family(font);
+  else
+    r->type = TOKEN_VOID;
+
   eval_push(ec, r);
 
   // unload later to avoid churn
