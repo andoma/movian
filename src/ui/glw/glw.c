@@ -25,6 +25,7 @@
 #include "keymapper.h"
 
 #include "arch/threads.h"
+#include "text/text.h"
 
 #include "glw.h"
 #include "glw_text_bitmap.h"
@@ -293,6 +294,8 @@ glw_init(glw_root_t *gr, const char *theme,
   gr->gr_vpaths[2] = NULL;
 
   gr->gr_uii.uii_ui = ui;
+
+  gr->gr_font_domain = freetype_get_context();
 
   glw_text_bitmap_init(gr);
   glw_init_settings(gr, instance, instance_title);

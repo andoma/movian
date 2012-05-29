@@ -513,6 +513,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_font)(struct glw *w, rstr_t *str);
+
+  /**
+   *
+   */
   void (*gc_bind_to_property)(struct glw *w,
 			      prop_t *p,
 			      const char **pname,
@@ -639,6 +644,7 @@ typedef struct glw_root {
   hts_cond_t gr_gtb_render_cond;
 
   int gr_fontsize;
+  int gr_font_domain;
 
   /**
    * Image/Texture loader

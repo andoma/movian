@@ -60,7 +60,7 @@ LIST_HEAD(family_list, family);
 typedef struct family {
   LIST_ENTRY(family) link;
   char *name;
-  int context;
+  int font_domain;
   int id;
 } family_t;
 
@@ -77,8 +77,8 @@ typedef struct face {
  
   int *family_id_vec;
   uint8_t style;
-  uint8_t persistent;
-
+  int persistent;
+  int font_domain;
   struct glyph_list glyphs;
 
 } face_t;
@@ -114,12 +114,13 @@ static struct glyph_list glyph_hash[GLYPH_HASH_SIZE];
 static struct glyph_queue allglyphs;
 static int num_glyphs;
 
+static void face_set_family(face_t *f, int family_id);
 
 /**
  *
  */
 static int
-family_get(const char *name, int context)
+family_get(const char *name, int font_domain)
 {
   family_t *f;
 
@@ -138,14 +139,14 @@ family_get(const char *name, int context)
   }
 
   LIST_FOREACH(f, &families, link)
-    if(!strcasecmp(n2, f->name) && f->context == context)
+    if(!strcasecmp(n2, f->name) && f->font_domain == font_domain)
       break;
   
   if(f == NULL) {
     f = malloc(sizeof(family_t));
     f->id = ++family_id_tally;
     f->name = strdup(n2);
-    f->context = context;
+    f->font_domain = font_domain;
   } else {
     LIST_REMOVE(f, link);
   }
@@ -275,9 +276,10 @@ remove_face_alias(int family_id)
  *
  */
 static face_t *
-face_create_epilogue(face_t *face, const char *source, int context)
+face_create_epilogue(face_t *face, const char *source, int font_domain,
+		     const char *family_override)
 {
-  const char *family = face->face->family_name;
+  const char *family = family_override ?: face->face->family_name;
   const char *style = face->face->style_name;
   TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] from %s",
 	family, style, source);
@@ -293,13 +295,13 @@ face_create_epilogue(face_t *face, const char *source, int context)
 	face->style = TR_STYLE_ITALIC;
     }
   }
-
+  face->font_domain = font_domain;
   face->family_id_vec = calloc(2, sizeof(int));
-  face->family_id_vec[0] = family_get(family, context);
+  face->family_id_vec[0] = family_get(family, font_domain);
 
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
-  remove_face_alias(family_get(family, context));
+  remove_face_alias(family_get(family, font_domain));
 
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
@@ -310,13 +312,21 @@ face_create_epilogue(face_t *face, const char *source, int context)
  *
  */
 static face_t *
-face_create_from_uri(const char *path, int context)
+face_create_from_uri(const char *path, int font_domain, 
+		     const char *family_override)
 {
   char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
   int64_t s;
+  face_t *face;
 
+  TAILQ_FOREACH(face, &faces, link)
+    if(face->url != NULL && !strcmp(face->url, path) &&
+       face->font_domain == font_domain) {
+      face_set_family(face, family_get(family_override, font_domain));
+      return face;
+    }
   fa_handle_t *fh = fa_open(path, errbuf, sizeof(errbuf));
   if(fh == NULL) {
     TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
@@ -333,7 +343,7 @@ face_create_from_uri(const char *path, int context)
     return NULL;
   }
 
-  face_t *face = calloc(1, sizeof(face_t));
+  face = calloc(1, sizeof(face_t));
 
   FT_Stream srec = calloc(1, sizeof(FT_StreamRec));
   srec->size = fa_fsize(fh);
@@ -353,7 +363,7 @@ face_create_from_uri(const char *path, int context)
   }
   face->url = strdup(path);
 
-  return face_create_epilogue(face, path, context);
+  return face_create_epilogue(face, path, font_domain, family_override);
 }
 
 
@@ -370,7 +380,7 @@ face_create_from_memory(const void *ptr, size_t len, int context)
     free(face);
     return NULL;
   }
-  return face_create_epilogue(face, "memory", context);
+  return face_create_epilogue(face, "memory", context, NULL);
 }
 
 
@@ -473,7 +483,7 @@ face_find2(int uc, uint8_t style, int family_id)
       return f;
     }
 
-    f = face_create_from_uri(url, 0);
+    f = face_create_from_uri(url, 0, NULL);
   }
 
   if(f == NULL) {
@@ -1368,17 +1378,18 @@ freetype_init(void)
 /**
  *
  */
-void
-freetype_load_font(const char *url, int context)
+void *
+freetype_load_font(const char *url, int context, const char *family)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_uri(url, context);
+  f = face_create_from_uri(url, context, family);
   if(f != NULL)
-    f->persistent = 1;  // Make sure it never is auto unloaded
+    f->persistent++;
 
   hts_mutex_unlock(&text_mutex);
+  return f;
 }
 
 
@@ -1393,7 +1404,7 @@ freetype_load_font_from_memory(const void *ptr, size_t len, int context)
 
   f = face_create_from_memory(ptr, len, context);
   if(f != NULL)
-    f->persistent = 1;  // Make sure it never is auto unloaded
+    f->persistent++;
 
   hts_mutex_unlock(&text_mutex);
   return f;
@@ -1408,7 +1419,8 @@ freetype_unload_font(void *ref)
 {
   face_t *f = ref;
   hts_mutex_lock(&text_mutex);
-  face_destroy(f);
+  if(--f->persistent == 0)
+    face_destroy(f);
   hts_mutex_unlock(&text_mutex);
 }
 

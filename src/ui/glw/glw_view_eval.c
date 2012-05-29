@@ -32,6 +32,7 @@
 #include "prop/prop_grouper.h"
 #include "prop/prop_nodefilter.h"
 #include "arch/arch.h"
+#include "text/text.h"
 
 LIST_HEAD(clone_list, glw_clone);
 
@@ -4781,6 +4782,63 @@ glwf_pluralise(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
+/**
+ *
+ */
+static void
+glwf_loadfont_dtor(glw_root_t *gr, struct token *self)
+{
+  if(self->t_extra != NULL)
+    freetype_unload_font(self->t_extra);
+}
+
+
+/**
+ *
+ */
+static int
+glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
+	     token_t **argv, unsigned int argc)
+{
+  token_t *path, *family;
+  glw_root_t *gr = ec->w->glw_root;
+
+  if(argc < 1 || argc > 2)
+    return glw_view_seterr(ec->ei, self, 
+			    "loadfont(): Invalid number of arguments");
+
+  if((path = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+
+  if(path->type != TOKEN_RSTRING)
+    return glw_view_seterr(ec->ei, path, "URL is not a string");
+
+  if(argc == 2) {
+    if((family = token_resolve(ec, argv[1])) == NULL)
+      return -1;
+    
+    if(family->type != TOKEN_RSTRING)
+      return glw_view_seterr(ec->ei, family, "Family is not a string");
+    
+  } else {
+    family = NULL;
+  }
+
+  if(self->t_extra != NULL)
+    freetype_unload_font(self->t_extra);
+
+  self->t_extra = freetype_load_font(rstr_get(path->t_rstring),
+				     gr->gr_font_domain,
+				     family ? rstr_get(family->t_rstring) :
+				     NULL);
+
+
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
+  return 0;
+}
+
+
 /**
  *
  */
@@ -4843,6 +4901,7 @@ static const token_func_t funcvec[] = {
   {"join", -1, glwf_join},
   {"fmt", -1, glwf_fmt},
   {"_pl", 3, glwf_pluralise},
+  {"loadFont", -1, glw_loadFont, glwf_null_ctor, glwf_loadfont_dtor},
 };
 
 

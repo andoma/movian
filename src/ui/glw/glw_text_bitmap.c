@@ -48,6 +48,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_saved_horizontal_avail;
 
   char *gtb_caption;
+  rstr_t *gtb_font;
   prop_str_type_t gtb_type;
 
   glw_backend_texture_t gtb_texture;
@@ -392,6 +393,7 @@ glw_text_bitmap_dtor(glw_t *w)
 
   free(gtb->gtb_caption);
   free(gtb->gtb_uc_buffer);
+  rstr_release(gtb->gtb_font);
 
   if(gtb->gtb_pixmap != NULL)
     pixmap_release(gtb->gtb_pixmap);
@@ -797,6 +799,19 @@ set_caption(glw_t *w, const char *caption, int type)
 }
 
 
+
+/**
+ *
+ */
+static void
+set_font(glw_t *w, rstr_t *font)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  rstr_set(&gtb->gtb_font, font);
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+}
+
+
 /**
  *
  */
@@ -910,6 +925,7 @@ font_render_thread(void *aux)
   pixmap_t *pm;
   int max_width, max_lines, flags, default_size, tr_align;
   float scale;
+  rstr_t *font;
 
   glw_lock(gr);
 
@@ -990,6 +1006,8 @@ font_render_thread(void *aux)
       break;
     }
 
+    font = rstr_dup(gtb->gtb_font);
+
 
     /* gtb (i.e the widget) may be destroyed directly after we unlock,
        so we can't access it after this point. We can hold a reference
@@ -1000,13 +1018,16 @@ font_render_thread(void *aux)
 
     if(uc != NULL && uc[0] != 0) {
       pm = text_render(uc, len, flags, default_size, scale,
-		       tr_align, max_width, max_lines, NULL, 0);
+		       tr_align, max_width, max_lines, rstr_get(font),
+		       gr->gr_font_domain);
     } else {
       pm = NULL;
     }
-
+    
+    rstr_release(font);
     free(uc);
     glw_lock(gr);
+    
 
     if(gtb->w.glw_flags & GLW_DESTROYING) {
       /* widget got destroyed while we were away, throw away the results */
@@ -1164,6 +1185,7 @@ static glw_class_t glw_label = {
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
+  .gc_set_font = set_font,
   .gc_bind_to_property = bind_to_property,
   .gc_mod_flags2 = mod_flags2,
   .gc_freeze = freeze,
@@ -1192,6 +1214,7 @@ static glw_class_t glw_text = {
   .gc_set_padding = set_padding,
   .gc_mod_text_flags = mod_text_flags,
   .gc_set_caption = set_caption,
+  .gc_set_font = set_font,
   .gc_bind_to_property = bind_to_property,
   .gc_freeze = freeze,
   .gc_thaw = thaw,

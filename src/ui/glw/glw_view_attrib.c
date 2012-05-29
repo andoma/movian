@@ -131,6 +131,26 @@ set_caption(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static int
+set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	    struct token *t)
+{
+  rstr_t *str;
+
+  if(t->type == TOKEN_RSTRING)
+    str = t->t_rstring;
+  else
+    str = NULL;
+
+  if(ec->w->glw_class->gc_set_font != NULL)
+    ec->w->glw_class->gc_set_font(ec->w, str);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 set_float(glw_view_eval_context_t *ec, const token_attrib_t *a, 
 	  struct token *t)
 {
@@ -841,6 +861,7 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
   {"caption",         set_caption, 0},
+  {"font",            set_font, 0},
   {"source",          set_source, 0},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
