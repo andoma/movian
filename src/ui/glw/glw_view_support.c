@@ -45,9 +45,7 @@ glw_view_token_alloc(glw_root_t *gr)
 void
 glw_view_token_free(glw_root_t *gr, token_t *t)
 {
-#ifdef GLW_VIEW_ERRORINFO
   rstr_release(t->file);
-#endif
 
   switch(t->type) {
   case TOKEN_FUNCTION:
@@ -143,10 +141,8 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 {
   token_t *dst = pool_get(gr->gr_token_pool);
 
-#ifdef GLW_VIEW_ERRORINFO
   dst->file = rstr_dup(src->file);
   dst->line = src->line;
-#endif
 
   dst->type = src->type;
 
@@ -430,11 +426,7 @@ glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   assert(b != NULL);
 
   if(ei == NULL) {
-#ifdef GLW_VIEW_ERRORINFO
     snprintf(buf, sizeof(buf), "GLW: %s:%d", rstr_get(b->file), b->line);
-#else
-    snprintf(buf, sizeof(buf), "GLW: file?:##");
-#endif
     tracev(TRACE_NO_PROP, TRACE_ERROR, buf, fmt, ap);
     return -1;
   }
@@ -442,11 +434,7 @@ glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...)
   vsnprintf(ei->error, sizeof(ei->error), fmt, ap);
   va_end(ap);
 
-#ifdef GLW_VIEW_ERRORINFO
   snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(b->file));
   ei->line = b->line;
-#else
-  snprintf(ei->file,  sizeof(ei->file),  "file?");
-#endif
   return -1;
 }

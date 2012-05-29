@@ -149,9 +149,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
   if(gcv == NULL) {
     token_t *sof = glw_view_token_alloc(gr);
     sof->type = TOKEN_START;
-#ifdef GLW_VIEW_ERRORINFO
     sof->file = rstr_dup(url);
-#endif
 
     if((l = glw_view_load1(gr, url, &ei, sof)) == NULL) {
       glw_view_free_chain(gr, sof);
@@ -159,9 +157,7 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
     }
     eof = glw_view_token_alloc(gr);
     eof->type = TOKEN_END;
-#ifdef GLW_VIEW_ERRORINFO
     eof->file = rstr_dup(url);
-#endif
     l->next = eof;
   
     if(glw_view_preproc(gr, sof, &ei) || glw_view_parse(sof, &ei, gr)) {

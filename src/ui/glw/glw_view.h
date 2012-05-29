@@ -27,8 +27,6 @@
 
 #include "glw.h"
 
-#define GLW_VIEW_ERRORINFO
-
 /**
  * 
  */
@@ -102,10 +100,8 @@ typedef struct token {
   struct token *child;  /* Childs */
   void *tmp;            /* Temporary link, used for various things */
 
-#ifdef GLW_VIEW_ERRORINFO
   rstr_t *file;
   int line;
-#endif
 
   token_type_t type;
   int t_num_args;

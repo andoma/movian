@@ -69,11 +69,8 @@ typedef struct glw_prop_sub {
 
   token_t *gps_token;
 
-
-#ifdef GLW_VIEW_ERRORINFO
   rstr_t *gps_file;
   uint16_t gps_line;
-#endif
   uint16_t gps_type;
 
 } glw_prop_sub_t;
@@ -186,9 +183,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
 	prop_ref_dec(sc->sc_view_args);
       break;
     }
-#ifdef GLW_VIEW_ERRORINFO
     rstr_release(gps->gps_file);
-#endif
     prop_ref_dec(gps->gps_prop_view);
     free(gps);
   }
@@ -249,11 +244,9 @@ eval_alloc(token_t *src, glw_view_eval_context_t *ec, token_type_t type)
 {
   token_t *r = glw_view_token_alloc(ec->gr);
 
-#ifdef GLW_VIEW_ERRORINFO
   if(src->file != NULL)
     r->file = rstr_dup(src->file);
   r->line = src->line;
-#endif
 
   r->type = type;
   r->next = ec->alloc;
@@ -1367,10 +1360,8 @@ prop_callback_alloc_token(glw_root_t *gr, glw_prop_sub_t *gps,
   token_t *t = glw_view_token_alloc(gr);
   t->type = type;
 
-#ifdef GLW_VIEW_ERRORINFO
   t->file = rstr_dup(gps->gps_file);
   t->line = gps->gps_line;
-#endif    
   return t;
 }
 
@@ -1732,10 +1723,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   gps->gps_type = type;
   gps->gps_prop_view = prop_ref_inc(ec->prop_viewx);
 
-#ifdef GLW_VIEW_ERRORINFO
   gps->gps_file = rstr_dup(self->file);
   gps->gps_line = self->line;
-#endif
 
   gps->gps_widget = w;
 

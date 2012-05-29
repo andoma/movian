@@ -30,10 +30,8 @@ lexer_link_token(token_t *prev, rstr_t *f, int line, token_t *t,
   t->type = type;
   prev->next = t;
 
-#ifdef GLW_VIEW_ERRORINFO
   t->file = rstr_dup(f);
   t->line = line;
-#endif
 }
 
 
