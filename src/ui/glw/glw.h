@@ -463,6 +463,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_stencil_border)(struct glw *w, const int16_t *v);
+
+  /**
+   *
+   */
   void (*gc_set_padding)(struct glw *w, const int16_t *v);
 
   /**
@@ -529,6 +534,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_source)(struct glw *w, rstr_t *url);
+
+  /**
+   *
+   */
+  void (*gc_set_stencil)(struct glw *w, rstr_t *url);
 
   /**
    *
@@ -740,7 +750,8 @@ typedef struct glw_root {
   void (*gr_clr_hw_clipper)(struct glw_rctx *rc, int which);
   void (*gr_render)(struct glw_root *gr,
 		    Mtx m,
-		    struct glw_backend_texture *tex,
+		    const struct glw_backend_texture *t0,
+		    const struct glw_backend_texture *t1,
 		    const struct glw_rgb *rgb_mul,
 		    const struct glw_rgb *rgb_off,
 		    float alpha, float blur,

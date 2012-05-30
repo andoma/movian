@@ -118,15 +118,18 @@ glw_bloom_render(glw_t *w, glw_rctx_t *rc)
 
   glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
   glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
-		    &glw_rtt_texture(&b->b_rtt[0]), NULL, NULL, a * 0.50, 0);
+		    &glw_rtt_texture(&b->b_rtt[0]), 
+		    NULL, NULL, NULL, a * 0.50, 0);
 
 
   glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
-		    &glw_rtt_texture(&b->b_rtt[1]), NULL, NULL, a * 0.44, 0);
+		    &glw_rtt_texture(&b->b_rtt[1]),
+		    NULL, NULL, NULL, a * 0.44, 0);
 
 
   glw_renderer_draw(&b->b_render, w->glw_root, &rc0, 
-		    &glw_rtt_texture(&b->b_rtt[2]), NULL, NULL, a * 0.33, 0);
+		    &glw_rtt_texture(&b->b_rtt[2]),
+		    NULL, NULL, NULL, a * 0.33, 0);
  
   glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
 }

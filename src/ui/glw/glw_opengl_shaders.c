@@ -33,7 +33,8 @@
  */
 typedef struct render_job {
   Mtx m;
-  struct glw_backend_texture *tex;
+  const struct glw_backend_texture *t0;
+  const struct glw_backend_texture *t1;
   struct glw_rgb rgb_mul;
   struct glw_rgb rgb_off;
   float alpha;
@@ -84,24 +85,25 @@ render_unlocked(glw_root_t *gr)
   glVertexAttribPointer(1, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices + 4);
       
-  glVertexAttribPointer(2, 2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+  glVertexAttribPointer(2, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices + 8);
 
   for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
 
-    struct glw_backend_texture *tex = rj->tex;
+    const struct glw_backend_texture *t0 = rj->t0;
     glw_program_t *gp;
     
-    if(tex == NULL) {
+    abort(); // Fix stencil 
+
+    if(t0 == NULL) {
       gp = gbr->gbr_renderer_flat;
     } else {
-      
       if(rj->blur > 0.05 || rj->flags & GLW_RENDER_BLUR_ATTRIBUTE) {
 	gp = gbr->gbr_renderer_tex_blur;
       } else {
 	gp = gbr->gbr_renderer_tex;
       }
-      glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
+      glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
     }
 
     if(gp == NULL)
@@ -120,8 +122,8 @@ render_unlocked(glw_root_t *gr)
     if(gp == gbr->gbr_renderer_tex_blur) {
       glUniform3f(gp->gp_uniform_blur, 
 		  rj->blur,
-		  1.5 / tex->width,
-		  1.5 / tex->height);
+		  1.5 / t0->width,
+		  1.5 / t0->height);
     }
 
     if(rj->eyespace) {
@@ -171,7 +173,8 @@ render_unlocked(glw_root_t *gr)
 static void
 shader_render_delayed(struct glw_root *root, 
 		      Mtx m,
-		      struct glw_backend_texture *tex,
+		      const struct glw_backend_texture *t0,
+		      const struct glw_backend_texture *t1,
 		      const struct glw_rgb *rgb_mul,
 		      const struct glw_rgb *rgb_off,
 		      float alpha, float blur,
@@ -182,6 +185,8 @@ shader_render_delayed(struct glw_root *root,
 		      int flags)
 {
   glw_backend_root_t *gbr = &root->gr_be;
+
+  abort(); // fix t0 & t1
 
   if(gbr->gbr_num_render_jobs >= gbr->gbr_render_jobs_capacity) {
     // Need more space
@@ -200,7 +205,8 @@ shader_render_delayed(struct glw_root *root,
     glw_mtx_copy(rj->m, m);
   }
 
-  rj->tex = tex;
+  rj->t0 = t0;
+  rj->t1 = t1;
 
   switch(gbr->gbr_blendmode) {
   case GLW_BLEND_NORMAL:
@@ -267,7 +273,8 @@ shader_render_delayed(struct glw_root *root,
 static void
 shader_render(struct glw_root *root, 
 	      Mtx m,
-	      struct glw_backend_texture *tex,
+	      const struct glw_backend_texture *t0,
+	      const struct glw_backend_texture *t1,
 	      const struct glw_rgb *rgb_mul,
 	      const struct glw_rgb *rgb_off,
 	      float alpha, float blur,
@@ -279,17 +286,27 @@ shader_render(struct glw_root *root,
 {
   glw_backend_root_t *gbr = &root->gr_be;
   glw_program_t *gp;
-
-  if(tex == NULL) {
+  int doblur = 0;
+  if(t0 == NULL) {
     gp = gbr->gbr_renderer_flat;
   } else {
-    
-    if(blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE) {
-      gp = gbr->gbr_renderer_tex_blur;
+
+    doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
+
+    if(t1 != NULL) {
+
+      gp = doblur ? gbr->gbr_renderer_tex_stencil_blur :
+	gbr->gbr_renderer_tex_stencil;
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
+      glActiveTexture(GL_TEXTURE0);
+
     } else {
-      gp = gbr->gbr_renderer_tex;
+      gp = doblur ? gbr->gbr_renderer_tex_blur : gbr->gbr_renderer_tex;
     }
-    glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
+
+    glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
   }
 
   if(gp == NULL)
@@ -317,11 +334,8 @@ shader_render(struct glw_root *root,
     break;
   }
 
-  if(gp == gbr->gbr_renderer_tex_blur)
-    glUniform3f(gp->gp_uniform_blur, 
-		blur,
-		1.5 / tex->width,
-		1.5 / tex->height);
+  if(doblur)
+    glUniform3f(gp->gp_uniform_blur, blur, 1.5 / t0->width, 1.5 / t0->height);
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
 		     glw_mtx_get(m) ?: glw_identitymtx);
@@ -336,7 +350,7 @@ shader_render(struct glw_root *root,
 
   if(gp->gp_attribute_texcoord != -1)
     glVertexAttribPointer(gp->gp_attribute_texcoord,
-			  2, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
+			  4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			  vertices + 8);
 
   if(indices != NULL)
@@ -528,8 +542,18 @@ glw_opengl_shaders_init(glw_root_t *gr)
   gbr->gbr_renderer_tex = glw_make_program(gbr, "Texture", vs, fs);
   glDeleteShader(fs);
 
+  fs = glw_compile_shader("f_tex_stencil.glsl", GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_tex_stencil = 
+    glw_make_program(gbr, "TextureStencil", vs, fs);
+  glDeleteShader(fs);
+
   fs = glw_compile_shader("f_tex_blur.glsl", GL_FRAGMENT_SHADER);
-  gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "Texture", vs, fs);
+  gbr->gbr_renderer_tex_blur = glw_make_program(gbr, "TextureBlur", vs, fs);
+  glDeleteShader(fs);
+
+  fs = glw_compile_shader("f_tex_stencil_blur.glsl", GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_tex_stencil_blur =
+    glw_make_program(gbr, "TextureStencilBlur", vs, fs);
   glDeleteShader(fs);
 
   fs = glw_compile_shader("f_flat.glsl", GL_FRAGMENT_SHADER);

@@ -64,7 +64,8 @@ hw_clr_clip_conf(struct glw_rctx *rc, int which)
 static void
 ff_render(struct glw_root *gr,
 	  Mtx m,
-	  struct glw_backend_texture *tex,
+	  const struct glw_backend_texture *t0,
+	  const struct glw_backend_texture *t1,
 	  const struct glw_rgb *rgb_mul,
 	  const struct glw_rgb *rgb_off,
 	  float alpha, float blur,
@@ -120,11 +121,11 @@ ff_render(struct glw_root *gr,
     glSecondaryColor3f(rgb_off->r, rgb_off->g, rgb_off->b);
   }
 
-  if(tex == NULL) {
+  if(t0 == NULL) {
     glBindTexture(gbr->gbr_primary_texture_mode, 0);
     glDisableClientState(GL_TEXTURE_COORD_ARRAY);
   } else {
-    glBindTexture(gbr->gbr_primary_texture_mode, tex->tex);
+    glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
     glTexCoordPointer(2, GL_FLOAT, sizeof(float) * VERTEX_SIZE,
 		      vertices + 8);
   }
@@ -141,7 +142,7 @@ ff_render(struct glw_root *gr,
   if(flags & GLW_RENDER_COLOR_ATTRIBUTES)
     glDisableClientState(GL_COLOR_ARRAY);
 
-  if(tex == NULL)
+  if(t0 == NULL)
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 }
 

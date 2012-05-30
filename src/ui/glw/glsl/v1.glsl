@@ -1,6 +1,6 @@
 attribute vec4 a_position;
 attribute vec4 a_color;
-attribute vec2 a_texcoord;
+attribute vec4 a_texcoord;
 
 uniform vec4 u_color;
 uniform vec4 u_color_offset;
@@ -18,7 +18,7 @@ const mat4 projection = mat4(2.414213,0.000000,0.000000,0.000000,
 varying vec4 f_col_mul;
 varying vec4 f_col_mul2;
 varying vec4 f_col_off;
-varying vec2 f_tex;
+varying vec4 f_tex;
 varying vec3 f_blur;
 
 void main()

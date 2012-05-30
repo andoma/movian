@@ -43,8 +43,9 @@ glw_quad_render(glw_t *w, glw_rctx_t *rc)
     glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
   }
 
-  glw_renderer_draw(&q->r, w->glw_root, rc, NULL, &q->color, NULL, 
-		    rc->rc_alpha * w->glw_alpha, 0);
+  glw_renderer_draw(&q->r, w->glw_root, rc,
+		    NULL, NULL,
+		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
 }
 
 
@@ -163,7 +164,7 @@ glw_raster_render(glw_t *w, glw_rctx_t *rc)
   glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
   glw_renderer_vtx_st (&q->r, 3, 0, 0);
 
-  glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex,
+  glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex, NULL, 
 		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
 }
 

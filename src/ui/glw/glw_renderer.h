@@ -18,7 +18,7 @@
 
 #pragma once
 
-#define VERTEX_SIZE 10 // Number of floats per vertex
+#define VERTEX_SIZE 12 // Number of floats per vertex
 
 /**
  * Vertex layout
@@ -31,8 +31,10 @@
  * [5] = g
  * [6] = b
  * [7] = a
- * [8] = s0
+ * [8] = s0  Texture0
  * [9] = t0
+ * [10] = s1 Texture1
+ * [11] = t1
  */
 
 
@@ -102,11 +104,16 @@ void glw_renderer_vtx_pos(glw_renderer_t *gr, int vertex,
 void glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
 			 float s, float t);
 
+void glw_renderer_vtx_st2(glw_renderer_t *gr, int vertex,
+			  float s, float t);
+
 void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 			  float r, float g, float b, float a);
 
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
-		       glw_rctx_t *rc, struct glw_backend_texture *be_tex,
+		       glw_rctx_t *rc,
+		       const struct glw_backend_texture *t0,
+		       const struct glw_backend_texture *t1,
 		       const struct glw_rgb *rgb_mul,
 		       const struct glw_rgb *rgb_off,
 		       float alpha, float blur);

@@ -3,6 +3,7 @@ precision highp float;
 #endif
 
 uniform sampler2D u_t0;
+uniform sampler2D u_t1;
 
 varying vec4 f_col_mul;
 varying vec4 f_col_mul2;
@@ -27,5 +28,5 @@ void main()
   
   col = col * 0.125;
 
-  gl_FragColor = clamp(f_col_mul, 0.0, 1.0) * f_col_mul2 * col + f_col_off;
+  gl_FragColor = (clamp(f_col_mul, 0.0, 1.0) * f_col_mul2 * col + f_col_off) * texture2D(u_t1, f_tex.zw);
 }

@@ -157,6 +157,20 @@ glw_renderer_vtx_st(glw_renderer_t *gr, int vertex,
   gr->gr_dirty = 1;
 }
 
+
+/**
+ * 
+ */
+void
+glw_renderer_vtx_st2(glw_renderer_t *gr, int vertex,
+		     float s, float t)
+{
+  gr->gr_vertices[vertex * VERTEX_SIZE + 10] = s;
+  gr->gr_vertices[vertex * VERTEX_SIZE + 11] = t;
+  gr->gr_dirty = 1;
+}
+
+
 /**
  * 
  */
@@ -183,7 +197,7 @@ static void
 emit_triangle(glw_root_t *gr,
 	      const Vec4 V1, const Vec4 V2, const Vec4 V3,
 	      const Vec4 C1, const Vec4 C2, const Vec4 C3,
-	      const Vec2 T1, const Vec2 T2, const Vec2 T3)
+	      const Vec4 T1, const Vec4 T2, const Vec4 T3)
 {
   glw_vtmp_resize(gr, (gr->gr_vtmp_cur + 3) * VERTEX_SIZE + 4);
 
@@ -191,15 +205,15 @@ emit_triangle(glw_root_t *gr,
 
   glw_vec4_store(f,   V1);
   glw_vec4_store(f+4, C1);
-  glw_vec2_store(f+8, T1);
+  glw_vec4_store(f+8, T1);
 
   glw_vec4_store(f+VERTEX_SIZE,   V2);
   glw_vec4_store(f+VERTEX_SIZE+4, C2);
-  glw_vec2_store(f+VERTEX_SIZE+8, T2);
+  glw_vec4_store(f+VERTEX_SIZE+8, T2);
 
   glw_vec4_store(f+VERTEX_SIZE*2,   V3);
   glw_vec4_store(f+VERTEX_SIZE*2+4, C3);
-  glw_vec2_store(f+VERTEX_SIZE*2+8, T3);
+  glw_vec4_store(f+VERTEX_SIZE*2+8, T3);
 
   gr->gr_vtmp_cur += 3;
 }
@@ -213,7 +227,7 @@ static void
 fader(glw_root_t *gr, glw_renderer_cache_t *grc,
       const Vec4 V1, const Vec4 V2, const Vec4 V3,
       const Vec4 C1, const Vec4 C2, const Vec4 C3,
-      const Vec2 T1, const Vec2 T2, const Vec2 T3,
+      const Vec4 T1, const Vec4 T2, const Vec4 T3,
       int plane)
 {
   int i;
@@ -273,7 +287,7 @@ static void
 clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	const Vec4 V1, const Vec4 V2, const Vec4 V3,
 	const Vec4 C1, const Vec4 C2, const Vec4 C3,
-	const Vec2 T1, const Vec2 T2, const Vec2 T3,
+	const Vec4 T1, const Vec4 T2, const Vec4 T3,
 	int plane)
 {
   while(1) {
@@ -298,7 +312,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 
   Vec4 V12, V13, V23;
   Vec4 C12, C13, C23;
-  Vec2 T12, T13, T23;
+  Vec4 T12, T13, T23;
 
   if(D1 >= 0) {
     if(D2 >= 0) {
@@ -314,8 +328,8 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec4_lerp(C23, s23, C2, C3);
 
-	glw_vec2_lerp(T13, s13, T1, T3);
-	glw_vec2_lerp(T23, s23, T2, T3);
+	glw_vec4_lerp(T13, s13, T1, T3);
+	glw_vec4_lerp(T23, s23, T2, T3);
 	
 	clipper(gr, grc, V1,  V2, V23, C1,  C2, C23, T1, T2, T23, plane);
 	clipper(gr, grc, V1, V23, V13, C1, C23, C13, T1, T23, T13, plane);
@@ -325,13 +339,13 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
       s12 = D1 / (D1 - D2);
       glw_vec4_lerp(V12, s12, V1, V2);
       glw_vec4_lerp(C12, s12, C1, C2);
-      glw_vec2_lerp(T12, s12, T1, T2);
+      glw_vec4_lerp(T12, s12, T1, T2);
 
       if(D3 >= 0) {
 	s23 = D2 / (D2 - D3);
 	glw_vec4_lerp(V23, s23, V2, V3);
 	glw_vec4_lerp(C23, s23, C2, C3);
-	glw_vec2_lerp(T23, s23, T2, T3);
+	glw_vec4_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V1, V12, V23, C1, C12, C23, T1, T12, T23, plane);
 	clipper(gr, grc, V1, V23, V3,  C1, C23, C3,  T1, T23, T3, plane);
@@ -340,7 +354,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	s13 = D1 / (D1 - D3);
 	glw_vec4_lerp(V13, s13, V1, V3);
 	glw_vec4_lerp(C13, s13, C1, C3);
-	glw_vec2_lerp(T13, s13, T1, T3);
+	glw_vec4_lerp(T13, s13, T1, T3);
 
 	clipper(gr, grc, V1, V12, V13, C1, C12, C13, T1, T12, T13, plane);
       }
@@ -351,13 +365,13 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
       s12 = D1 / (D1 - D2);
       glw_vec4_lerp(V12, s12, V1, V2);
       glw_vec4_lerp(C12, s12, C1, C2);
-      glw_vec2_lerp(T12, s12, T1, T2);
+      glw_vec4_lerp(T12, s12, T1, T2);
       
       if(D3 >= 0) {
 	s13 = D1 / (D1 - D3);
 	glw_vec4_lerp(V13, s13, V1, V3);
 	glw_vec4_lerp(C13, s13, C1, C3);
-	glw_vec2_lerp(T13, s13, T1, T3);
+	glw_vec4_lerp(T13, s13, T1, T3);
 
 	clipper(gr, grc, V12, V2, V3,  C12, C2, C3,  T12, T2, T3, plane);
 	clipper(gr, grc, V12, V3, V13, C12, C3, C13, T12, T3, T13, plane);
@@ -366,7 +380,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	s23 = D2 / (D2 - D3);
 	glw_vec4_lerp(V23, s23, V2, V3);
 	glw_vec4_lerp(C23, s23, C2, C3);
-	glw_vec2_lerp(T23, s23, T2, T3);
+	glw_vec4_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V12, V2, V23, C12, C2, C23, T12, T2, T23, plane);
 
@@ -382,8 +396,8 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
 	glw_vec4_lerp(C13, s13, C1, C3);
 	glw_vec4_lerp(C23, s23, C2, C3);
 
-	glw_vec2_lerp(T13, s13, T1, T3);
-	glw_vec2_lerp(T23, s23, T2, T3);
+	glw_vec4_lerp(T13, s13, T1, T3);
+	glw_vec4_lerp(T23, s23, T2, T3);
 
 	clipper(gr, grc, V13, V23, V3, C13, C23, C3, T13, T23, T3, plane);
       }
@@ -441,9 +455,9 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
 	    glw_vec4_get(a + v1 * VERTEX_SIZE + 4),
 	    glw_vec4_get(a + v2 * VERTEX_SIZE + 4),
 	    glw_vec4_get(a + v3 * VERTEX_SIZE + 4),
-	    glw_vec2_get(a + v1 * VERTEX_SIZE + 8),
-	    glw_vec2_get(a + v2 * VERTEX_SIZE + 8),
-	    glw_vec2_get(a + v3 * VERTEX_SIZE + 8),
+	    glw_vec4_get(a + v1 * VERTEX_SIZE + 8),
+	    glw_vec4_get(a + v2 * VERTEX_SIZE + 8),
+	    glw_vec4_get(a + v3 * VERTEX_SIZE + 8),
 	    0);
   }
 
@@ -525,7 +539,9 @@ glw_renderer_get_cache(glw_root_t *root, glw_renderer_t *gr)
  */
 void
 glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
-		  glw_rctx_t *rc, struct glw_backend_texture *tex,
+		  glw_rctx_t *rc,
+		  const struct glw_backend_texture *t0,
+		  const struct glw_backend_texture *t1,
 		  const struct glw_rgb *rgb_mul,
 		  const struct glw_rgb *rgb_off,
 		  float alpha, float blur)
@@ -547,11 +563,11 @@ glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
     if(grc->grc_blurred)
       flags |= GLW_RENDER_BLUR_ATTRIBUTE;
 
-    root->gr_render(root, NULL, tex, rgb_mul, rgb_off, alpha, blur,
+    root->gr_render(root, NULL, t0, t1, rgb_mul, rgb_off, alpha, blur,
 		    grc->grc_vertices, grc->grc_num_vertices,
 		    NULL, 0, flags);
   } else {
-    root->gr_render(root, rc->rc_mtx, tex, rgb_mul, rgb_off, alpha, blur,
+    root->gr_render(root, rc->rc_mtx, t0, t1, rgb_mul, rgb_off, alpha, blur,
 		    gr->gr_vertices, gr->gr_num_vertices,
 		    gr->gr_indices,  gr->gr_num_triangles,
 		    flags);
