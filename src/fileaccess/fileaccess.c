@@ -31,6 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <dirent.h>
+#include <limits.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
