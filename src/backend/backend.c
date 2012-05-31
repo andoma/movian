@@ -251,6 +251,7 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
     }
     if(best == NULL) {
       snprintf(errbuf, errlen, "No image in set");
+      htsmsg_destroy(m);
       return NULL;
     }
     url = best;
@@ -266,6 +267,8 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
     if(pm != NULL && pm != NOT_MODIFIED)
       pm = pixmap_decode(pm, im, errbuf, errlen);
   }
+  if(m)
+    htsmsg_destroy(m);
   return pm;
 }
 
