@@ -60,6 +60,42 @@ prepare_delayed(glw_root_t *gr)
   gbr->gbr_vertex_offset = 0;
 }
 
+
+/**
+ *
+ */
+static glw_program_t *
+get_program(const glw_backend_root_t *gbr,
+	    const struct glw_backend_texture *t0,
+	    const struct glw_backend_texture *t1,
+	    float blur, int flags)
+{
+  glw_program_t *gp;
+
+  if(t0 == NULL) {
+    gp = gbr->gbr_renderer_flat;
+  } else {
+
+    const int doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
+
+    if(t1 != NULL) {
+
+      gp = doblur ? gbr->gbr_renderer_tex_stencil_blur :
+	gbr->gbr_renderer_tex_stencil;
+
+      glActiveTexture(GL_TEXTURE1);
+      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
+      glActiveTexture(GL_TEXTURE0);
+
+    } else {
+      gp = doblur ? gbr->gbr_renderer_tex_blur : gbr->gbr_renderer_tex;
+    }
+
+    glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
+  }
+  return gp;
+}
+
 /**
  *
  */
@@ -91,20 +127,7 @@ render_unlocked(glw_root_t *gr)
   for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
 
     const struct glw_backend_texture *t0 = rj->t0;
-    glw_program_t *gp;
-    
-    abort(); // Fix stencil 
-
-    if(t0 == NULL) {
-      gp = gbr->gbr_renderer_flat;
-    } else {
-      if(rj->blur > 0.05 || rj->flags & GLW_RENDER_BLUR_ATTRIBUTE) {
-	gp = gbr->gbr_renderer_tex_blur;
-      } else {
-	gp = gbr->gbr_renderer_tex;
-      }
-      glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
-    }
+    glw_program_t *gp = get_program(gbr, t0, rj->t1, rj->blur, rj->flags);
 
     if(gp == NULL)
       continue;
@@ -119,12 +142,9 @@ render_unlocked(glw_root_t *gr)
     glw_program_set_uniform_color(gbr, rj->rgb_mul.r, rj->rgb_mul.g,
 				  rj->rgb_mul.b, rj->alpha);
 
-    if(gp == gbr->gbr_renderer_tex_blur) {
-      glUniform3f(gp->gp_uniform_blur, 
-		  rj->blur,
-		  1.5 / t0->width,
-		  1.5 / t0->height);
-    }
+    if(gp->gp_uniform_blur != -1)
+      glUniform3f(gp->gp_uniform_blur, rj->blur,
+		  1.5 / t0->width, 1.5 / t0->height);
 
     if(rj->eyespace) {
       glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0, glw_identitymtx);
@@ -185,8 +205,6 @@ shader_render_delayed(struct glw_root *root,
 		      int flags)
 {
   glw_backend_root_t *gbr = &root->gr_be;
-
-  abort(); // fix t0 & t1
 
   if(gbr->gbr_num_render_jobs >= gbr->gbr_render_jobs_capacity) {
     // Need more space
@@ -285,29 +303,7 @@ shader_render(struct glw_root *root,
 	      int flags)
 {
   glw_backend_root_t *gbr = &root->gr_be;
-  glw_program_t *gp;
-  int doblur = 0;
-  if(t0 == NULL) {
-    gp = gbr->gbr_renderer_flat;
-  } else {
-
-    doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
-
-    if(t1 != NULL) {
-
-      gp = doblur ? gbr->gbr_renderer_tex_stencil_blur :
-	gbr->gbr_renderer_tex_stencil;
-
-      glActiveTexture(GL_TEXTURE1);
-      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
-      glActiveTexture(GL_TEXTURE0);
-
-    } else {
-      gp = doblur ? gbr->gbr_renderer_tex_blur : gbr->gbr_renderer_tex;
-    }
-
-    glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
-  }
+  glw_program_t *gp = get_program(gbr, t0, t1, blur, flags);
 
   if(gp == NULL)
     return;
@@ -334,7 +330,7 @@ shader_render(struct glw_root *root,
     break;
   }
 
-  if(doblur)
+  if(gp->gp_uniform_blur != -1)
     glUniform3f(gp->gp_uniform_blur, blur, 1.5 / t0->width, 1.5 / t0->height);
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
@@ -464,6 +460,7 @@ glw_make_program(glw_backend_root_t *gbr, const char *title,
   printf("  u_colormtx  = %d\n", gp->gp_uniform_colormtx);
   printf("  u_blend     = %d\n", gp->gp_uniform_blend);
   printf("  u_color_offset = %d\n", gp->gp_uniform_color_offset);
+  printf("  u_blur         = %d\n", gp->gp_uniform_blur);
 #endif
 
   for(i = 0; i < 6; i++) {
