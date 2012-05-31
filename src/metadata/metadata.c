@@ -67,6 +67,8 @@ metadata_destroy(metadata_t *md)
   rstr_release(md->md_artist);
   rstr_release(md->md_format);
   rstr_release(md->md_genre);
+  rstr_release(md->md_director);
+  rstr_release(md->md_producer);
   rstr_release(md->md_description);
   rstr_release(md->md_tagline);
   rstr_release(md->md_imdb_id);
@@ -481,7 +483,20 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
   mlp_setup(mlp, &prop, mlp_get_album);
 }
 
-
+enum {
+  MOVIE_PROP_TITLE = 0,
+  MOVIE_PROP_TAGLINE,
+  MOVIE_PROP_DESCRIPTION,
+  MOVIE_PROP_YEAR,
+  MOVIE_PROP_RATING,
+  MOVIE_PROP_RATING_COUNT,
+  MOVIE_PROP_ICON,
+  MOVIE_PROP_BACKDROP,
+  MOVIE_PROP_GENRE,
+  MOVIE_PROP_DIRECTOR,
+  MOVIE_PROP_PRODUCER,
+  MOVIE_PROP_num
+};
 
 /**
  *
@@ -512,24 +527,31 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
 
     if(md->md_title)
       title = md->md_title;
-    prop_set_rstring(mlp->mlp_props[1].p, md->md_tagline);
-    prop_set_rstring(mlp->mlp_props[2].p, md->md_description);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TAGLINE].p,
+		     md->md_tagline);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_DESCRIPTION].p,
+		     md->md_description);
     if(md->md_year)
-      prop_set_int(mlp->mlp_props[3].p, md->md_year);
+      prop_set_int(mlp->mlp_props[MOVIE_PROP_YEAR].p,
+		   md->md_year);
     if(md->md_rating != -1)
-      prop_set_int(mlp->mlp_props[4].p, md->md_rating);
+      prop_set_int(mlp->mlp_props[MOVIE_PROP_RATING].p,
+		   md->md_rating);
     if(md->md_rate_count != -1)
-      prop_set_int(mlp->mlp_props[5].p, md->md_rate_count);
+      prop_set_int(mlp->mlp_props[MOVIE_PROP_RATING_COUNT].p,
+		   md->md_rate_count);
 
     if(md->md_icon)
       icon = md->md_icon;
-    prop_set_rstring(mlp->mlp_props[7].p, md->md_backdrop);
-    prop_set_rstring(mlp->mlp_props[8].p, md->md_genre);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_BACKDROP].p, md->md_backdrop);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_GENRE].p, md->md_genre);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_DIRECTOR].p, md->md_director);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_PRODUCER].p, md->md_producer);
   }
 
 
   if(title != NULL)
-    prop_set_rstring(mlp->mlp_props[0].p, title);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, title);
   if(icon != NULL)
     prop_set_rstring(mlp->mlp_props[6].p, icon);
   db_commit(db);
@@ -563,18 +585,20 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 	rstr_get(imdb_id) ?: "<no IMDB tag>");
 	
 
-  *mlpp = mlp = mlp_alloc(9);
-  prop_t *props[9];
+  *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
+  prop_t *props[MOVIE_PROP_num];
 
-  props[0] = prop_create(prop, "title");
-  props[1] = prop_create(prop, "tagline");
-  props[2] = prop_create(prop, "description");
-  props[3] = prop_create(prop, "year");
-  props[4] = prop_create(prop, "rating");
-  props[5] = prop_create(prop, "rating_count");
-  props[6] = prop_create(prop, "icon");
-  props[7] = prop_create(prop, "backdrop");
-  props[8] = prop_create(prop, "genre");
+  props[MOVIE_PROP_TITLE]        = prop_create(prop, "title");
+  props[MOVIE_PROP_TAGLINE]      = prop_create(prop, "tagline");
+  props[MOVIE_PROP_DESCRIPTION]  = prop_create(prop, "description");
+  props[MOVIE_PROP_YEAR]         = prop_create(prop, "year");
+  props[MOVIE_PROP_RATING]       = prop_create(prop, "rating");
+  props[MOVIE_PROP_RATING_COUNT] = prop_create(prop, "rating_count");
+  props[MOVIE_PROP_ICON]         = prop_create(prop, "icon");
+  props[MOVIE_PROP_BACKDROP]     = prop_create(prop, "backdrop");
+  props[MOVIE_PROP_GENRE]        = prop_create(prop, "genre");
+  props[MOVIE_PROP_DIRECTOR]     = prop_create(prop, "director");
+  props[MOVIE_PROP_PRODUCER]     = prop_create(prop, "producer");
 
   mlp->mlp_refcount = 1;
   mlp->mlp_title = rstr_spn(title, "[]()");

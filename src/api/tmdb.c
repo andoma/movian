@@ -22,6 +22,8 @@
 #include "showtime.h"
 #include "htsmsg/htsmsg_json.h"
 #include "fileaccess/fileaccess.h"
+#include "misc/pixmap.h"
+#include "backend/backend.h"
 #include "db/db_support.h"
 #include "tmdb.h"
 
@@ -92,15 +94,12 @@ addsizes(tmdb_image_size_t **p, htsmsg_t *img, const char *field, float aspect)
  *
  */
 static void
-insert_images(void *db, int64_t itemid, metadata_image_type_t type,
-	      const char *path, tmdb_image_size_t *p)
+insert_videoart(void *db, int64_t itemid, metadata_image_type_t type,
+		const char *path, const char *pfx)
 {
   char url[256];
-  for(;p != NULL; p = p->next) {
-    snprintf(url, sizeof(url), "%s%s%s", tmdb_image_base_url,
-	     p->prefix, path);
-    metadb_insert_videoart(db, itemid, url, type, p->width, p->height);
-  }
+  snprintf(url, sizeof(url), "tmdb:image:%s:%s", pfx, path);
+  metadb_insert_videoart(db, itemid, url, type, 0, 0);
 }
 
 
@@ -171,17 +170,92 @@ tmdb_configure(void)
       }
       metadb_close(db);
     }
-
-    
-    
-
-
   }
  bad:
   hts_mutex_unlock(&tmdb_mutex);
   return !tmdb_datasource;
 }
 
+
+
+/**
+ *
+ */
+static void
+tmdb_load_movie_cast(void *db, int64_t itemid, const char *lookup_id)
+{
+  char url[300];
+  char id[64];
+  char errbuf[256];
+  char *result;
+  htsmsg_field_t *f;
+  const char *s;
+
+  snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s/casts",
+	   lookup_id);
+
+  result = fa_load_query(url, NULL, errbuf, sizeof(errbuf),
+			 NULL,
+			 (const char *[]){
+			   "api_key", TMDB_APIKEY,
+			     NULL, NULL},
+			 FA_COMPRESSION);
+  if(result == NULL) {
+    TRACE(TRACE_INFO, "TMDB", "Load error %s", errbuf);
+    return;
+  }
+
+  htsmsg_t *doc = htsmsg_json_deserialize(result);
+  free(result);
+  if(doc == NULL)
+    return;
+
+  htsmsg_t *cast = htsmsg_get_list(doc, "cast");
+  HTSMSG_FOREACH(f, cast) {
+    htsmsg_t *p = htsmsg_get_map_by_field(f);
+    if(p == NULL)
+      continue;
+
+    s = htsmsg_get_str(p, "profile_path");
+    snprintf(url, sizeof(url), s ? "tmdb:image:profile:%s" : "", s);
+
+    snprintf(id, sizeof(id), "%d", htsmsg_get_u32_or_default(p, "id", 0));
+
+    metadb_insert_videocast(db, itemid,
+			    htsmsg_get_str(p, "name"),
+			    htsmsg_get_str(p, "character"),
+			    "Cast",
+			    "Actor",
+			    htsmsg_get_u32_or_default(p, "order", 0),
+			    url[0] ? url : NULL, 0, 0,
+			    id);
+  }
+
+
+
+  htsmsg_t *crew = htsmsg_get_list(doc, "crew");
+  HTSMSG_FOREACH(f, crew) {
+    htsmsg_t *p = htsmsg_get_map_by_field(f);
+    if(p == NULL)
+      continue;
+
+    s = htsmsg_get_str(p, "profile_path");
+    snprintf(url, sizeof(url), s ? "tmdb:image:profile:%s" : "", s);
+    snprintf(id, sizeof(id), "%d", htsmsg_get_u32_or_default(p, "id", 0));
+
+    metadb_insert_videocast(db, itemid,
+			    htsmsg_get_str(p, "name"),
+			    NULL,
+			    htsmsg_get_str(p, "department"),
+			    htsmsg_get_str(p, "job"),
+			    0,
+			    url[0] ? url : NULL, 0, 0,
+			    id);
+  }
+
+  htsmsg_destroy(doc);
+
+}
 
 /**
  *
@@ -192,6 +266,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
   char url[300];
   char errbuf[256];
   char *result;
+  int64_t itemid;
   
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
 
@@ -210,9 +285,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
   free(result);
   if(doc == NULL)
     return;
-  
-  metadata_t *md = metadata_create();
 
+  metadata_t *md = metadata_create();
   
   md->md_description = rstr_alloc(htsmsg_get_str(doc, "overview"));
   md->md_tagline = rstr_alloc(htsmsg_get_str(doc, "tagline"));
@@ -232,16 +306,15 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
   if(id) {
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
-    int64_t itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource,
-					     tmdb_id, md);
+    itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource, 
+				      tmdb_id, md);
 
     const char *s;
-  
-  
+
     if((s = htsmsg_get_str(doc, "poster_path")) != NULL)
-      insert_images(db, itemid, METADATA_IMAGE_POSTER, s, poster_sizes);
+      insert_videoart(db, itemid, METADATA_IMAGE_POSTER, s, "poster");
     if((s = htsmsg_get_str(doc, "backdrop_path")) != NULL)
-      insert_images(db, itemid, METADATA_IMAGE_BACKDROP, s, backdrop_sizes);
+      insert_videoart(db, itemid, METADATA_IMAGE_BACKDROP, s, "backdrop");
 
     htsmsg_t *genres = htsmsg_get_list(doc, "genres");
     if(genres != NULL) {
@@ -256,6 +329,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
 	  metadb_insert_videogenre(db, itemid, title);
       }
     }
+
+    tmdb_load_movie_cast(db, itemid, lookup_id);
   }
   htsmsg_destroy(doc);
   metadata_destroy(md);
@@ -361,3 +436,73 @@ tmdb_init(void)
 {
   hts_mutex_init(&tmdb_mutex);
 }
+
+
+
+/**
+ *
+ */
+static int
+be_tmdb_canhandle(const char *url)
+{
+  if(!strncmp(url, "tmdb:", strlen("tmdb:")))
+    return 1;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static pixmap_t *
+be_tmdb_imageloader(const char *url, const image_meta_t *im,
+		    const char **vpaths, char *errbuf, size_t errlen,
+		    int *cache_control, be_load_cb_t *cb, void *opaque)
+{
+  tmdb_image_size_t *s;
+  const char *p;
+  if((p = mystrbegins(url, "tmdb:image:poster:")) != NULL)
+    s = poster_sizes;
+  else if((p = mystrbegins(url, "tmdb:image:backdrop:")) != NULL)
+    s = backdrop_sizes;
+  else if((p = mystrbegins(url, "tmdb:image:profile:")) != NULL)
+    s = profile_sizes;
+  else {
+    snprintf(errbuf, errlen, "Invalid TMDB url");
+    return NULL;
+  }
+  
+  htsmsg_t *m = htsmsg_create_list();
+  
+  for(;s != NULL; s = s->next) {
+    htsmsg_t *img = htsmsg_create_map();
+    char u[256];
+
+    snprintf(u, sizeof(u), "%s%s%s", tmdb_image_base_url, s->prefix, p);
+    htsmsg_add_str(img, "url", u);
+    if(s->width)
+      htsmsg_add_u32(img, "width", s->width);
+    if(s->height)
+    htsmsg_add_u32(img, "height", s->height);
+    htsmsg_add_msg(m, NULL, img);
+  }
+
+  rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
+  htsmsg_destroy(m);
+  pixmap_t *pm = backend_imageloader(rstr, im, vpaths, errbuf, errlen,
+				     cache_control, cb, opaque);
+  rstr_release(rstr);
+  return pm;
+  
+
+}
+
+/**
+ *
+ */
+static backend_t be_tmdb = {
+  .be_canhandle = be_tmdb_canhandle,
+  .be_imageloader = be_tmdb_imageloader,
+};
+
+BE_REGISTER(tmdb);

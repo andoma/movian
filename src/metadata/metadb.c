@@ -452,6 +452,54 @@ metadb_insert_videoart(void *db, int64_t videoitem_id, const char *url,
  *
  */
 void
+metadb_insert_videocast(void *db, int64_t videoitem_id,
+			const char *name,
+			const char *character,
+			const char *department,
+			const char *job,
+			int order,
+			const char *image,
+			int width,
+			int height,
+			const char *ext_id)
+{
+   sqlite3_stmt *ins;
+  int rc;
+
+  rc = db_prepare(db, 
+		  "INSERT OR REPLACE INTO videocast "
+		  "(videoitem_id, name, character, department, job, "
+		  "\"order\", image, width, height, ext_id) "
+		  "VALUES "
+		  "(?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+		  -1, &ins, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return;
+  }
+  
+  sqlite3_bind_int64(ins, 1, videoitem_id);
+  sqlite3_bind_text(ins, 2, name, -1, SQLITE_STATIC);
+  sqlite3_bind_text(ins, 3, character, -1, SQLITE_STATIC);
+  sqlite3_bind_text(ins, 4, department, -1, SQLITE_STATIC);
+  sqlite3_bind_text(ins, 5, job, -1, SQLITE_STATIC);
+  sqlite3_bind_int(ins, 6, order);
+  sqlite3_bind_text(ins, 7, image, -1, SQLITE_STATIC);
+  if(width) sqlite3_bind_int(ins, 8, width);
+  if(height) sqlite3_bind_int(ins, 9, height);
+  sqlite3_bind_text(ins, 10, ext_id, -1, SQLITE_STATIC);
+  db_step(ins);
+  sqlite3_finalize(ins);
+}
+
+
+
+/**
+ *
+ */
+void
 metadb_insert_videogenre(void *db, int64_t videoitem_id, const char *title)
 {
   sqlite3_stmt *ins;
@@ -646,6 +694,26 @@ metadb_get_video_art(void *db, int64_t videoitem_id, int type)
 }
 
 
+/**
+ *
+ */
+static rstr_t *
+metadb_construct_list(sqlite3_stmt *sel, int col)
+{
+  char buf[512];
+  int rc;
+  int cnt = 0;
+
+  buf[0] = 0;
+  while((rc = db_step(sel)) == SQLITE_ROW) {
+    const char *str = (const char *)sqlite3_column_text(sel, col);
+    if(str == NULL)
+      continue;
+    cnt += snprintf(buf + cnt, sizeof(buf) - cnt, "%s%s", cnt ? ", ": "", str);
+  }
+  return rstr_alloc(buf);
+}
+
 
 /**
  *
@@ -655,7 +723,6 @@ metadb_get_video_genre(sqlite3 *db, int64_t videoitem_id)
 {
   int rc;
   sqlite3_stmt *sel;
-  char buf[512];
 
   rc = db_prepare(db,
 		  "SELECT title "
@@ -669,16 +736,38 @@ metadb_get_video_genre(sqlite3 *db, int64_t videoitem_id)
   }
 
   sqlite3_bind_int64(sel, 1, videoitem_id);
-  buf[0] = 0;
-  int cnt = 0;
-  while((rc = db_step(sel)) == SQLITE_ROW) {
-    const char *str = (const char *)sqlite3_column_text(sel, 0);
-    if(str == NULL)
-      continue;
-    cnt += snprintf(buf + cnt, sizeof(buf) - cnt, "%s%s", cnt ? ", ": "", str);
-  }
+  rstr_t *r = metadb_construct_list(sel, 0);
   sqlite3_finalize(sel);
-  return rstr_alloc(buf);
+  return r;
+}
+
+
+
+/**
+ *
+ */
+static rstr_t *
+metadb_get_video_cast(sqlite3 *db, int64_t videoitem_id, const char *job)
+{
+  int rc;
+  sqlite3_stmt *sel;
+
+  rc = db_prepare(db,
+		  "SELECT name "
+		  "FROM videocast "
+		  "WHERE videoitem_id = ?1 AND job = ?2 ORDER BY \"order\"",
+		  -1, &sel, NULL);
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return NULL;
+  }
+
+  sqlite3_bind_int64(sel, 1, videoitem_id);
+  sqlite3_bind_text(sel, 2, job, -1, SQLITE_STATIC);
+  rstr_t *r = metadb_construct_list(sel, 0);
+  sqlite3_finalize(sel);
+  return r;
 }
 
 
@@ -1351,6 +1440,8 @@ metadb_get_videoinfo(void *db, const char *url)
   md->md_icon = metadb_get_video_art(db, vid, METADATA_IMAGE_POSTER);
   md->md_backdrop = metadb_get_video_art(db, vid, METADATA_IMAGE_BACKDROP);
   md->md_genre = metadb_get_video_genre(db, vid);
+  md->md_director = metadb_get_video_cast(db, vid, "Director");
+  md->md_producer = metadb_get_video_cast(db, vid, "Producer");
 
   sqlite3_finalize(sel);
   return md;
