@@ -265,7 +265,8 @@ rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
 static void
 rsx_render(struct glw_root *gr,
 	   Mtx m,
-	   struct glw_backend_texture *tex,
+	   const struct glw_backend_texture *t0,
+	   const struct glw_backend_texture *t1,
 	   const struct glw_rgb *rgb_mul,
 	   const struct glw_rgb *rgb_off,
 	   float alpha, float blur,
@@ -280,16 +281,16 @@ rsx_render(struct glw_root *gr,
   rsx_fp_t *rfp;
   float rgba[4];
 
-  if(tex == NULL) {
+  if(t0 == NULL) {
 
     rfp = gr->gr_be.be_fp_flat;
 
   } else {
 
-    if(tex->tex.offset == 0 || tex->size == 0)
+    if(t0->tex.offset == 0 || t0->size == 0)
       return;
 
-    realitySetTexture(ctx, 0, &tex->tex);
+    realitySetTexture(ctx, 0, &t0->tex);
     if(blur > 0.05) {
       rfp = gr->gr_be.be_fp_tex_blur;
     } else {
@@ -339,8 +340,8 @@ rsx_render(struct glw_root *gr,
   if(rfp == gr->gr_be.be_fp_tex_blur) {
     float v[4];
     v[0] = blur;
-    v[1] = 1.5 / tex->tex.width;
-    v[2] = 1.5 / tex->tex.height;
+    v[1] = 1.5 / t0->tex.width;
+    v[2] = 1.5 / t0->tex.height;
     v[3] = 0;
     realitySetVertexProgramConstant4f(ctx,  rvp->rvp_u_blur, v);
   }
