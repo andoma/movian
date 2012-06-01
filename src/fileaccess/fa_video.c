@@ -461,14 +461,16 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	restartpos_last = sec;
 	metadb_set_video_restartpos(canonical_url, seekbase / 1000);
 
-	int i, j = 0;
-	for(i = 0; i < sidx->si_nitems; j = i, i++)
-	  if(sidx->si_items[i].si_start > sec)
-	    break;
+	if(sidx->si_nitems) {
+	  int i, j = 0;
+	  for(i = 0; i < sidx->si_nitems; j = i, i++)
+	    if(sidx->si_items[i].si_start > sec)
+	      break;
 
-	if(sidx->si_current != &sidx->si_items[j]) {
-	  sidx->si_current = &sidx->si_items[j];
-	  prop_suggest_focus(sidx->si_current->si_prop);
+	  if(sidx->si_current != &sidx->si_items[j]) {
+	    sidx->si_current = &sidx->si_items[j];
+	    prop_suggest_focus(sidx->si_current->si_prop);
+	  }
 	}
       }
 
