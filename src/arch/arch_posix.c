@@ -411,6 +411,10 @@ arch_get_seed(void)
 void
 arch_preload_fonts(void)
 {
+#ifdef __APPLE__
+  freetype_load_font("file:///Library/Fonts/Arial Unicode.ttf",
+		     FONT_DOMAIN_FALLBACK, NULL);
+#endif
 }
 
 

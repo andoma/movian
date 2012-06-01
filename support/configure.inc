@@ -77,7 +77,6 @@ CONFIG_LIST="
  trex
  emu_thread_specifics
  ps3_vdec
- font_liberation
  libfontconfig
  binreplace
  readahead_cache
@@ -353,9 +352,7 @@ finalize() {
     fi
 
     # Fonts
-    if enabled font_liberation; then
-	echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts/liberation"
-    fi
+    echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts"
 
     # Languages
     echo >>${CONFIG_MAK} "BUNDLES+=lang"

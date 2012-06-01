@@ -108,7 +108,6 @@ enable httpserver
 enable timegm
 enable inotify
 enable realpath
-enable font_liberation
 #enable libxrandr  -- code does not really work yet
 
 for opt do

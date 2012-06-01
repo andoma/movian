@@ -24,6 +24,9 @@
 struct pixmap;
 struct rstr;
 
+#define FONT_DOMAIN_FALLBACK 0
+#define FONT_DOMAIN_DEFAULT  1
+
 #define TR_STYLE_BOLD   0x1
 #define TR_STYLE_ITALIC 0x2
 

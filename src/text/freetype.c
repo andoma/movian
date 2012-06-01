@@ -46,7 +46,7 @@
 static FT_Library text_library;
 static FT_Stroker text_stroker;
 static hts_mutex_t text_mutex;
-static int context_tally;
+static int font_domain_tally = 10;
 
 #define GLYPH_HASH_SIZE 128
 #define GLYPH_HASH_MASK (GLYPH_HASH_SIZE-1)
@@ -84,6 +84,7 @@ typedef struct face {
 } face_t;
 
 static struct face_queue faces;
+static face_t *default_font;
 
 
 //------------------------- Glyph cache -----------------------
@@ -380,30 +381,6 @@ face_create_from_memory(const void *ptr, size_t len, int context)
 }
 
 
-
-/**
- *
- */
-static int
-face_resolve(int uc, uint8_t style, int family_id,
-	     char *urlbuf, size_t urllen)
-{
-#if ENABLE_LIBFONTCONFIG
-  if(!fontconfig_resolve(uc, style, family_get_by_id(family_id),
-			 urlbuf, urllen))
-    return 0;
-#endif
-
-#if ENABLE_FONT_LIBERATION
-  snprintf(urlbuf, urllen,
-	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
-	   showtime_dataroot());
-  return 0;
-#endif
-  return -1;
-}
-
-
 /**
  *
  */
@@ -429,7 +406,10 @@ face_set_family(face_t *f, int family_id)
 
   if(f->family_id_vec != NULL)
     while(f->family_id_vec[len] != 0)
-      len++;
+      if(f->family_id_vec[len] == family_id)
+	return;
+      else
+	len++;
 #if 0
   printf("Font %s alias to %s\n",
 	 f->family_id_vec ? family_get_by_id(f->family_id_vec[0]) : "<yet unnamed>",
@@ -464,34 +444,30 @@ face_find2(int uc, uint8_t style, int family_id)
        FT_Get_Char_Index(f->face, uc))
       return f;
 
-  if(!face_resolve(uc, style, family_id, url, sizeof(url))) {
+  // Try default font
+  if(default_font != NULL)
+    if(FT_Get_Char_Index(default_font->face, uc))
+      f = default_font;
+
+  if(f == NULL)
     TAILQ_FOREACH(f, &faces, link)
-      if(f->url != NULL && !strcmp(f->url, url))
+      if(f->font_domain == FONT_DOMAIN_FALLBACK &&
+	 FT_Get_Char_Index(f->face, uc))
 	break;
 
+#if ENABLE_LIBFONTCONFIG
+  if(f == NULL)
+    if(!fontconfig_resolve(uc, style, family_get_by_id(family_id),
+			   url, sizeof(url)))
+      f = face_create_from_uri(url, FONT_DOMAIN_FALLBACK, NULL);
+#endif
 
-    if(f != NULL) {
-      // Same family, just return
-      if(face_is_family(f, family_id))
-	return f;
-    
-      face_set_family(f, family_id);
-      return f;
-    }
-
-    f = face_create_from_uri(url, 0, NULL);
-  }
-
-  if(f == NULL) {
+  
+  // Last resort, anything that has the glyph
+  if(f == NULL)
     TAILQ_FOREACH(f, &faces, link)
-      if(f->style == style && FT_Get_Char_Index(f->face, uc))
+      if(FT_Get_Char_Index(f->face, uc))
 	break;
-  }
-  if(f == NULL) {
-    TAILQ_FOREACH(f, &faces, link)
-      if(f->style == 0 && FT_Get_Char_Index(f->face, uc))
-	break;
-  }
 
   if(f != NULL)
     face_set_family(f, family_id);
@@ -867,7 +843,7 @@ text_render0(const uint32_t *uc, const int len,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *family, int context)
 {
-  const int default_family_id = family_get(family ?: "Arial", context);
+  const int default_family_id = family_get(family ?: "Sans", context);
   int family_id = default_family_id;
   pixmap_t *pm;
   FT_UInt prev = 0;
@@ -1352,10 +1328,34 @@ text_render(const uint32_t *uc, const int len, int flags, int default_size,
 /**
  *
  */
+static void
+freetype_set_default_font(const char *url)
+{
+  hts_mutex_lock(&text_mutex);
+
+  if(default_font) {
+    if(--default_font->persistent == 0)
+      face_destroy(default_font);
+    default_font = NULL;
+  }
+
+  if(url) {
+    default_font =  face_create_from_uri(url, FONT_DOMAIN_DEFAULT, NULL);
+    if(default_font != NULL)
+      default_font->persistent++;
+  }
+  hts_mutex_unlock(&text_mutex);
+}
+
+
+/**
+ *
+ */
 int
 freetype_init(void)
 {
   int error;
+  char url[512];
 
   error = FT_Init_FreeType(&text_library);
   if(error) {
@@ -1367,6 +1367,13 @@ freetype_init(void)
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
   arch_preload_fonts();
+
+  snprintf(url, sizeof(url),
+	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
+	   showtime_dataroot());
+
+  freetype_set_default_font(url);
+
   return 0;
 }
 
@@ -1458,7 +1465,7 @@ freetype_get_context(void)
 {
   int id;
   hts_mutex_lock(&text_mutex);
-  id = ++context_tally;
+  id = ++font_domain_tally;
   hts_mutex_unlock(&text_mutex);
   return id;
 }

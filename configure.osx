@@ -50,7 +50,6 @@ enable timegm
 enable realpath
 enable polarssl
 enable librtmp
-enable font_liberation
 enable dvd
 enable spotify
 enable vda
