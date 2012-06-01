@@ -217,7 +217,10 @@ tmdb_load_movie_cast(void *db, int64_t itemid, const char *lookup_id)
       continue;
 
     s = htsmsg_get_str(p, "profile_path");
-    snprintf(url, sizeof(url), s ? "tmdb:image:profile:%s" : "", s);
+    if(s)
+      snprintf(url, sizeof(url), "tmdb:image:profile:%s", s);
+    else
+      url[0] = 0;
 
     snprintf(id, sizeof(id), "%d", htsmsg_get_u32_or_default(p, "id", 0));
 
@@ -240,7 +243,11 @@ tmdb_load_movie_cast(void *db, int64_t itemid, const char *lookup_id)
       continue;
 
     s = htsmsg_get_str(p, "profile_path");
-    snprintf(url, sizeof(url), s ? "tmdb:image:profile:%s" : "", s);
+    if(s)
+      snprintf(url, sizeof(url), "tmdb:image:profile:%s", s);
+    else
+      url[0] = 0;
+
     snprintf(id, sizeof(id), "%d", htsmsg_get_u32_or_default(p, "id", 0));
 
     metadb_insert_videocast(db, itemid,

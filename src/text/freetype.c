@@ -429,7 +429,6 @@ static face_t *
 face_find2(int uc, uint8_t style, int family_id)
 {
   face_t *f;
-  char url[URL_MAX];
 
   // Try already loaded faces
   TAILQ_FOREACH(f, &faces, link)
@@ -456,10 +455,12 @@ face_find2(int uc, uint8_t style, int family_id)
 	break;
 
 #if ENABLE_LIBFONTCONFIG
-  if(f == NULL)
+  if(f == NULL) {
+    char url[URL_MAX];
     if(!fontconfig_resolve(uc, style, family_get_by_id(family_id),
 			   url, sizeof(url)))
       f = face_create_from_uri(url, FONT_DOMAIN_FALLBACK, NULL);
+  }
 #endif
 
   
