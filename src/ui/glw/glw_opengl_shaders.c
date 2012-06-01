@@ -142,7 +142,7 @@ render_unlocked(glw_root_t *gr)
     glw_program_set_uniform_color(gbr, rj->rgb_mul.r, rj->rgb_mul.g,
 				  rj->rgb_mul.b, rj->alpha);
 
-    if(gp->gp_uniform_blur != -1)
+    if(gp->gp_uniform_blur != -1 && t0 != NULL)
       glUniform3f(gp->gp_uniform_blur, rj->blur,
 		  1.5 / t0->width, 1.5 / t0->height);
 
@@ -330,7 +330,7 @@ shader_render(struct glw_root *root,
     break;
   }
 
-  if(gp->gp_uniform_blur != -1)
+  if(gp->gp_uniform_blur != -1 && t0 != NULL)
     glUniform3f(gp->gp_uniform_blur, blur, 1.5 / t0->width, 1.5 / t0->height);
 
   glUniformMatrix4fv(gp->gp_uniform_modelview, 1, 0,
