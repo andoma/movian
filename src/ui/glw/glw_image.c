@@ -1231,9 +1231,9 @@ static glw_class_t glw_image = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
-  .gc_set_stencil = set_stencil,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
+  .gc_set_stencil = set_stencil,
   .gc_set_stencil_border = set_stencil_border,
 };
 
@@ -1259,6 +1259,8 @@ static glw_class_t glw_icon = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
   .gc_get_identity = get_identity,
+  .gc_set_stencil = set_stencil,
+  .gc_set_stencil_border = set_stencil_border,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
