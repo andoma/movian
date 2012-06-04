@@ -1279,7 +1279,7 @@ track_create(sp_track *track, prop_t **metadatap,
     *metadatap = metadata;
 
   if(tracknum)
-    prop_set_int(prop_create(metadata, "tracknum"), tracknum);
+    prop_set_int(prop_create(metadata, "track"), tracknum);
 
   spotify_metadata_create(metadata, track, list, with_status);
 
