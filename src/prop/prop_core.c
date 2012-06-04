@@ -1665,8 +1665,6 @@ prop_destroy0(prop_t *p)
 
     if(s->hps_flags & (PROP_SUB_TRACK_DESTROY | PROP_SUB_TRACK_DESTROY_EXP))
       prop_notify_destroyed(s, p);
-    if(s->hps_flags & PROP_SUB_AUTO_DESTROY)
-      prop_unsubscribe0(s);
   }
 
   while((s = LIST_FIRST(&p->hp_value_subscriptions)) != NULL) {
