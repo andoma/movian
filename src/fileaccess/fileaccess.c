@@ -80,6 +80,13 @@ fa_resolve_proto(const char *url, fa_protocol_t **p,
 
   url += 3;
 
+  if(!strcmp("dataroot", buf)) {
+    const char *pfx = showtime_dataroot();
+    snprintf(buf, sizeof(buf), "%s%s%s", 
+	     pfx, pfx[strlen(pfx) - 1] == '/' ? "" : "/", url);
+    return fa_resolve_proto(buf, p, NULL, errbuf, errsize);
+  }
+
   if(vpaths != NULL) {
     
     while(*vpaths != NULL) {
