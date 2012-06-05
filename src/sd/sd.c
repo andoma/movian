@@ -146,7 +146,7 @@ sd_add_service(service_instance_t *si, const char *title,
     si->si_settings_store = htsmsg_store_load(tmp) ?: htsmsg_create_map();
 
     si->si_settings = settings_add_dir_cstr(settings_sd, title, NULL, NULL,
-					    description);
+					    description, NULL);
     
     si->si_setting_enabled = 
       settings_create_bool(si->si_settings, "enabled", _p("Enabled"), 1,

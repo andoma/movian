@@ -417,7 +417,7 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
   snprintf(buf, sizeof(buf), "%s (%s) on %s:%d",
 	   title, ud->ud_modelNumber ?: "Unknown version", hostname, port);
   us->us_settings = settings_add_dir_cstr(settings_sd, title, NULL, 
-					  us->us_icon_url, buf);
+					  us->us_icon_url, buf, NULL);
 
   us->us_setting_enabled = 
     settings_create_bool(us->us_settings, "enabled",

@@ -42,7 +42,7 @@ prop_t *settings_add_dir(prop_t *parent, prop_t *title,
 
 prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
 			      const char *subtype, const char *icon,
-			      const char *shortdesc);
+			      const char *shortdesc, const char *url);
 
 prop_t *settings_create_divider(prop_t *parent, prop_t *caption);
 

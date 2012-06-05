@@ -330,7 +330,7 @@ audio_mode_register(audio_mode_t *am)
   m = htsmsg_store_load("audio/devices/%s", am->am_id);
 
   r = settings_add_dir_cstr(audio_settings_root, am->am_title, "sound", NULL,
-			    am->am_description);
+			    am->am_description, NULL);
 
   settings_create_int(r, "delay", _p("Audio/Video sync delay"),
 		      0, m, -1000, 1000, 10, am_set_av_sync, am,

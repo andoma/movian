@@ -146,9 +146,9 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
  */
 prop_t *
 settings_add_dir_cstr(prop_t *parent, const char *title, const char *subtype,
-		 const char *icon, const char *shortdesc)
+		      const char *icon, const char *shortdesc,
+		      const char *url)
 {
-  char url[100];
   prop_t *p = setting_add_cstr(parent, title, "settings");
   prop_t *metadata = prop_create(p, "metadata");
 

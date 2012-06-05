@@ -212,7 +212,7 @@ glw_init_settings(glw_root_t *gr, const char *instance,
 	     instance_title);
 
     gr->gr_settings = settings_add_dir_cstr(NULL, title,
-					    "display", NULL, NULL);
+					    "display", NULL, NULL, NULL);
 
   } else {
     gr->gr_settings = settings_add_dir(NULL, 
