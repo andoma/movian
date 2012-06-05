@@ -387,7 +387,7 @@ ass_decode_lines(ass_decoder_ctx_t *adc, char *s)
 
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
-    printf("%s\n", s);
+    //    printf("%s\n", s);
     if(ass_decode_line(adc, s))
       break;
   }
