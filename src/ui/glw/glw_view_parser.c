@@ -155,8 +155,8 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	  glw_view_seterr(ei, t, "Unexpected separator '',''");
  	  goto err;
 	}
+	curfunc->t_num_args++;
       }
-      curfunc->t_num_args++;
       break;
 
     case TOKEN_ADD:
