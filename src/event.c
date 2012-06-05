@@ -99,6 +99,7 @@ static struct strtab actionnames[] = {
   { "Ok",                    ACTION_OK },
   { "Cancel",                ACTION_CANCEL },
   { "Backspace",             ACTION_BS },
+  { "Delete",                ACTION_DELETE },
 
   { "Forward",               ACTION_NAV_FWD },
   { "Back",                  ACTION_NAV_BACK },

@@ -42,6 +42,7 @@ typedef enum {
   ACTION_OK,
   ACTION_CANCEL,
   ACTION_BS,
+  ACTION_DELETE,
 
   ACTION_FOCUS_NEXT,  /* TAB */
   ACTION_FOCUS_PREV,  /* Shift + TAB */

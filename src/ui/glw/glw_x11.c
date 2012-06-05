@@ -792,6 +792,8 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     case 27:         e = event_create_action(ACTION_CANCEL);
       break;
+    case 127:        e = event_create_action(ACTION_DELETE);
+      break;
 
       /* Always send 1 char ASCII */
     default:
