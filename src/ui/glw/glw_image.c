@@ -685,13 +685,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       int flags = 0;
       gi->gi_loading_new_url = 1;
 
-      if(gi->gi_pending_x[i] != NULL)
+      if(gi->gi_pending_x[i] != NULL) {
 	glw_tex_deref(w->glw_root, gi->gi_pending_x[i]);
-    
+	gi->gi_pending_x[i] = NULL;
+      }
+
       if(rstr_get(gi->gi_pending_url_x[i])[0] == 0) {
 	// Empty string, unload all
-
-	gi->gi_pending_x[i] = NULL;
 
 	if(gi->gi_current_x[i] != NULL) {
 	  glw_tex_deref(w->glw_root, gi->gi_current_x[i]);
@@ -721,8 +721,6 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	  
 	  rstr_release(gi->gi_pending_url_x[i]);
 	  gi->gi_pending_url_x[i] = NULL;
-	} else {
-	  gi->gi_pending_x[i] = NULL;
 	}
       }
     }
