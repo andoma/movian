@@ -194,12 +194,13 @@ static int
 glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
-  int xpos = 0;
+  int bd = 0;
+  int xpos = bd;
   glw_rctx_t rc0 = *rc;
 
   glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
 		 rc->rc_width  - l->padding_right, l->padding_bottom);
-  int width = rc0.rc_width;
+  int width0 = rc0.rc_width - bd * 2;
 
   float IW = 1.0f / rc0.rc_width;
 
@@ -216,7 +217,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
 				      l->total_size - l->page_size));
   l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
-  
+
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
@@ -234,18 +235,18 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
     c->glw_norm_weight = rc0.rc_width * IW;
     
 
-    if(xpos - l->filtered_pos > -width &&
-       xpos - l->filtered_pos <  width * 2)
+    if(xpos - l->filtered_pos > -width0 &&
+       xpos - l->filtered_pos <  width0 * 2) {
       glw_layout0(c, &rc0);
+    }
 
     if(c == l->scroll_to_me) {
       l->scroll_to_me = NULL;
-     
-      if(xpos - l->filtered_pos < 0) {
-	l->current_pos = xpos;
+      if(xpos - l->filtered_pos < bd) {
+	l->current_pos = xpos - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(xpos - l->filtered_pos + rc0.rc_width > width) {
-	l->current_pos = xpos + rc0.rc_width - width;
+      } else if(xpos - l->filtered_pos + rc0.rc_width > width0) {
+	l->current_pos = xpos + rc0.rc_width - width0;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
@@ -253,6 +254,8 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
     xpos += rc0.rc_width;
     xpos += l->spacing;
   }
+
+  xpos += bd;
 
   if(l->total_size != xpos) {
     l->total_size = xpos;
