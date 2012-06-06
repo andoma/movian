@@ -39,10 +39,15 @@ glw_tex_autoflush(glw_root_t *gr)
     LIST_REMOVE(glt, glt_flush_link);
     glw_tex_backend_free_render_resources(gr, glt);
 
-    if(glt->glt_state == GLT_STATE_QUEUED)
-      TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
+    int is_queued = glt->glt_state == GLT_STATE_QUEUED;
+
 
     glt->glt_state = GLT_STATE_INACTIVE;
+
+    if(is_queued) {
+      TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
+      glw_tex_deref(gr, glt);
+    }
   }
 
   LIST_MOVE(&gr->gr_tex_flush_list, &gr->gr_tex_active_list, glt_flush_link);
