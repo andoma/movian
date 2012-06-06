@@ -1046,5 +1046,6 @@ bookmarks_init(void)
 	continue;
       bookmark_load(o);
     }
+    htsmsg_destroy(m);
   }
 }
