@@ -198,7 +198,7 @@ set_float(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_weight(glw_t *w, float v)
 {
-  glw_set_constraints(w, 0, 0, v, GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_W);
+  glw_conf_constraints(w, 0, 0, v, GLW_CONSTRAINT_CONF_W);
 }
 
 static void
@@ -298,7 +298,7 @@ set_int(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static void
 set_width(glw_t *w, int v)
 {
-  glw_set_constraints(w, v, 0, 0, GLW_CONSTRAINT_X, GLW_CONSTRAINT_CONF_X);
+  glw_conf_constraints(w, v, 0, 0, GLW_CONSTRAINT_CONF_X);
 }
 
 
@@ -308,7 +308,7 @@ set_width(glw_t *w, int v)
 static void
 set_height(glw_t *w, int v)
 {
-  glw_set_constraints(w, 0, v, 0, GLW_CONSTRAINT_Y, GLW_CONSTRAINT_CONF_Y);
+  glw_conf_constraints(w, 0, v, 0, GLW_CONSTRAINT_CONF_Y);
 }
 
 

@@ -45,7 +45,7 @@ typedef struct {
 static void
 clear_constraints(glw_t *w)
 {
-  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 }
 
 

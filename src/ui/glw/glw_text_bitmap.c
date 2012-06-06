@@ -436,7 +436,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb)
 	   flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
 	   xs, ys);
 
-  glw_set_constraints(&gtb->w, xs, ys, 0, flags, 0);
+  glw_set_constraints(&gtb->w, xs, ys, 0, flags);
 }
 
 

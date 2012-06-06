@@ -584,7 +584,7 @@ glw_image_update_constraints(glw_image_t *gi)
 			glt->glt_xs,
 			glt->glt_ys,
 			0,
-			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
   } else if(gi->w.glw_class == &glw_backdrop || 
 	    gi->w.glw_class == &glw_frontdrop) {
@@ -598,13 +598,13 @@ glw_image_update_constraints(glw_image_t *gi)
 			  c->glw_req_size_y + 
 			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
-			  c->glw_flags & GLW_CONSTRAINT_FLAGS, 0);
+			  c->glw_flags & GLW_CONSTRAINT_FLAGS);
 
     } else if(glt != NULL) {
       glw_set_constraints(&gi->w, 
 			  glt->glt_xs,
 			  glt->glt_ys,
-			  0, 0, 0);
+			  0, 0);
     }
 
   } else if(gi->w.glw_class == &glw_icon) {
@@ -612,13 +612,13 @@ glw_image_update_constraints(glw_image_t *gi)
     float siz = gi->gi_size_scale * gr->gr_fontsize;
 
     glw_set_constraints(&gi->w, siz, siz, 0,
-			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
   } else if(gi->w.glw_class == &glw_image && glt != NULL &&
 	    gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
     float aspect = (float)glt->glt_xs / glt->glt_ys;
     glw_set_constraints(&gi->w, 0, 0, -aspect,
-			GLW_CONSTRAINT_W, 0);
+			GLW_CONSTRAINT_W);
   }
 }
 
@@ -919,7 +919,7 @@ glw_image_callback(glw_t *w, void *opaque, glw_signal_t signal,
     glw_image_update_constraints((glw_image_t *)w);
     return 1;
   case GLW_SIGNAL_CHILD_DESTROYED:
-    glw_set_constraints(w, 0, 0, 0, 0, 0);
+    glw_set_constraints(w, 0, 0, 0, 0);
     return 1;
 
   }
@@ -1162,7 +1162,7 @@ set_size_scale(glw_t *w, float f)
   gi->gi_size_scale = f;
 
   float siz = gi->gi_size_scale * w->glw_root->gr_fontsize;
-  glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y, 0);
+  glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 }
 
 /**

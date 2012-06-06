@@ -414,7 +414,7 @@ glw_video_ctor(glw_t *w)
 		   NULL);
 
   // We like fullwindow mode if possible (should be confiurable perhaps)
-  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F, 0);
+  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F);
 }
 
 

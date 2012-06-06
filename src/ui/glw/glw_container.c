@@ -102,7 +102,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 
   height += co->co_padding_bottom + co->co_padding_top;
 
-  glw_set_constraints(&co->w, width, height, 0, cflags, 0);
+  glw_set_constraints(&co->w, width, height, 0, cflags);
   return 1;
 }
 
@@ -254,7 +254,7 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     cflags &= ~GLW_CONSTRAINT_Y;
 
   width += co->co_padding_left + co->co_padding_right;
-  glw_set_constraints(&co->w, width, height, 0, cflags, 0);
+  glw_set_constraints(&co->w, width, height, 0, cflags);
   return 1;
 }
 

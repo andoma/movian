@@ -2206,8 +2206,7 @@ glwf_space(glw_view_eval_context_t *ec, struct token *self,
     dummy = glw_class_find_by_name("dummy");
 
   glw_t *w = glw_create(ec->gr, dummy, ec->w, NULL, NULL);
-  glw_set_constraints(w, 0, 0, token2float(a),
-		      GLW_CONSTRAINT_W, GLW_CONSTRAINT_CONF_W);
+  glw_conf_constraints(w, 0, 0, token2float(a), GLW_CONSTRAINT_CONF_W);
   return 0;
 }
 
