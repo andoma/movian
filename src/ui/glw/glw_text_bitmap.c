@@ -506,8 +506,7 @@ insert_char(glw_text_bitmap_t *gtb, int ch)
 static void
 gtb_unbind(glw_text_bitmap_t *gtb)
 {
-  if(gtb->gtb_sub != NULL)
-    prop_unsubscribe(gtb->gtb_sub);
+  prop_unsubscribe(gtb->gtb_sub);
 
   if(gtb->gtb_p != NULL) {
     prop_ref_dec(gtb->gtb_p);

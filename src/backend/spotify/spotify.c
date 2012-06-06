@@ -2723,11 +2723,8 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
   
   spotify_metadata_list_clear(&pl->pl_pending_metadata);
   
-  if(pl->pl_offline_sub != NULL)
-    prop_unsubscribe(pl->pl_offline_sub);
-
-  if(pl->pl_collab_sub != NULL)
-    prop_unsubscribe(pl->pl_collab_sub);
+  prop_unsubscribe(pl->pl_offline_sub);
+  prop_unsubscribe(pl->pl_collab_sub);
 
   if(pl->pl_node_sub) {
     f_sp_playlist_remove_callbacks(pl->pl_playlist,

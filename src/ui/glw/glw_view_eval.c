@@ -158,8 +158,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
-    if(gps->gps_sub != NULL)
-      prop_unsubscribe(gps->gps_sub);
+    prop_unsubscribe(gps->gps_sub);
 
     if(gps->gps_token != NULL)
       glw_view_token_free(gr, gps->gps_token);

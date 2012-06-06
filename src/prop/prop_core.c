@@ -2327,6 +2327,9 @@ prop_unsubscribe0(prop_sub_t *s)
 void
 prop_unsubscribe(prop_sub_t *s)
 {
+  if(s == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
   prop_unsubscribe0(s);
   hts_mutex_unlock(&prop_mutex);

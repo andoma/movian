@@ -137,9 +137,7 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_args)
     strvec_free(jm->jm_args);
 
-
-  if(jm->jm_eventsub != NULL)
-    prop_unsubscribe(jm->jm_eventsub);
+  prop_unsubscribe(jm->jm_eventsub);
 
   if(jm->jm_root)      prop_ref_dec(jm->jm_root);
   if(jm->jm_loading)   prop_ref_dec(jm->jm_loading);

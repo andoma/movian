@@ -59,8 +59,7 @@ fa_search_destroy (fa_search_t *fas)
   if (fas->fas_pc)
     prop_courier_destroy(fas->fas_pc);
 
-  if (fas->fas_sub)
-    prop_unsubscribe(fas->fas_sub);
+  prop_unsubscribe(fas->fas_sub);
 
   if (fas->fas_nodes)
     prop_ref_dec(fas->fas_nodes);

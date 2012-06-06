@@ -637,8 +637,7 @@ gds_row_delete0(GuDirStore *gds, gds_row_t *gr, int notify)
 
   for(i = 0; i < GDS_COL_num; i++) {
     gds_cell_t *c = &gr->gr_cells[i];
-    if(c->s != NULL)
-      prop_unsubscribe(c->s);
+    prop_unsubscribe(c->s);
     gds_cell_free_payload(c);
   }
 
