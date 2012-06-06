@@ -505,21 +505,39 @@ static void
 mlp_get_video_info(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
+  metadata_t *md;
 
   if(db_begin(db)) {
     metadb_close(db);
     return;
   }
+
+  // This is so lame....
+
+  md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+			    metadb_get_datasource(db, "tmdb_imdb"));
+
+  if(md == NULL) 
+    md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+			      metadb_get_datasource(db, "tmdb"));
+
+  if(md == NULL) {
+    if(mlp->mlp_imdb_id != NULL)
+      tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
+			    rstr_get(mlp->mlp_imdb_id));
+    else
+      tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+				   rstr_get(mlp->mlp_title), mlp->mlp_year);
+  }
+
+  if(md == NULL)
+    md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+			      metadb_get_datasource(db, "tmdb_imdb"));
   
+  if(md == NULL) 
+    md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+			      metadb_get_datasource(db, "tmdb"));
 
-  if(mlp->mlp_imdb_id != NULL)
-    tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
-			  rstr_get(mlp->mlp_imdb_id));
-  else
-    tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
-				 rstr_get(mlp->mlp_title), mlp->mlp_year);
-
-  metadata_t *md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url));
   rstr_t *icon = NULL;
   rstr_t *title = NULL;
 
@@ -579,7 +597,8 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
     metadata_unbind(mlp);
   }
 
-  TRACE(TRACE_DEBUG, "METADATA", "Lookup movie %s (%d) %s",
+  TRACE(TRACE_DEBUG, "METADATA",
+	"Lookup movie %s (%d) %s",
 	rstr_get(title) ?: "<no title>",
 	year,
 	rstr_get(imdb_id) ?: "<no IMDB tag>");

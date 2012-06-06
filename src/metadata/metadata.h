@@ -139,6 +139,8 @@ typedef struct metadata {
   rstr_t *md_backdrop;
   rstr_t *md_icon;
 
+  int md_dsid;
+
 } metadata_t;
 
 metadata_t *metadata_create(void);
@@ -228,7 +230,7 @@ void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 int metadb_insert_videoitem(void *db, const char *url, int ds_id,
 			    const char *ext_id, const metadata_t *md);
 
-metadata_t *metadb_get_videoinfo(void *db, const char *url);
+metadata_t *metadb_get_videoinfo(void *db, const char *url, int ds_id);
 
 
 void decoration_init(void);

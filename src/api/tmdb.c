@@ -34,7 +34,8 @@
 
 
 static hts_mutex_t tmdb_mutex;
-static int tmdb_datasource;
+static int tmdb_datasource_search;
+static int tmdb_datasource_imdb;
 static char *tmdb_image_base_url;
 
 typedef struct tmdb_image_size {
@@ -133,7 +134,7 @@ tmdb_configure(void)
 {
   hts_mutex_lock(&tmdb_mutex);
 
-  if(!tmdb_datasource) {
+  if(!tmdb_datasource_search) {
 
     char *result;
     char errbuf[256];
@@ -165,7 +166,8 @@ tmdb_configure(void)
     void *db = metadb_get();
     if(db != NULL) {
       if(!db_begin(db)) {
-	tmdb_datasource = metadb_get_datasource(db, "tmdb");
+	tmdb_datasource_search = metadb_get_datasource(db, "tmdb");
+	tmdb_datasource_imdb = metadb_get_datasource(db, "tmdb_imdb");
 	db_commit(db);
       }
       metadb_close(db);
@@ -173,7 +175,7 @@ tmdb_configure(void)
   }
  bad:
   hts_mutex_unlock(&tmdb_mutex);
-  return !tmdb_datasource;
+  return !tmdb_datasource_search;
 }
 
 
@@ -268,7 +270,8 @@ tmdb_load_movie_cast(void *db, int64_t itemid, const char *lookup_id)
  *
  */
 static void
-tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
+tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
+		     int dsid)
 {
   char url[300];
   char errbuf[256];
@@ -313,8 +316,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id)
   if(id) {
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
-    itemid = metadb_insert_videoitem(db, item_url, tmdb_datasource, 
-				      tmdb_id, md);
+    itemid = metadb_insert_videoitem(db, item_url, dsid, tmdb_id, md);
 
     const char *s;
 
@@ -410,7 +412,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     if(!htsmsg_get_s32(best, "id", &id)) {
       char idtxt[20];
       snprintf(idtxt, sizeof(idtxt), "%d", id);
-      tmdb_load_movie_info(db, item_url, idtxt);
+      tmdb_load_movie_info(db, item_url, idtxt,
+			   tmdb_datasource_search);
     }
   }
 
@@ -429,7 +432,7 @@ tmdb_query_by_imdb_id(void *db, const char *item_url,
   if(tmdb_configure())
     return;
 
-  tmdb_load_movie_info(db, item_url, imdb_id);
+  tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_imdb);
 }
 
 

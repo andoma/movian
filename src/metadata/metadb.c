@@ -1394,7 +1394,7 @@ metadb_metadata_get_video(sqlite3 *db, metadata_t *md, int64_t item_id,
  *
  */
 metadata_t *
-metadb_get_videoinfo(void *db, const char *url)
+metadb_get_videoinfo(void *db, const char *url, int dsid)
 {
   int64_t id = db_item_get(db, url, NULL);
   if(id == -1)
@@ -1405,10 +1405,11 @@ metadb_get_videoinfo(void *db, const char *url)
 
   rc = db_prepare(db,
 		  "SELECT v.id, v.title, v.tagline, v.description, v.year, "
-		  "v.rating, v.rate_count, v.imdb_id "
+		  "v.rating, v.rate_count, v.imdb_id, v.ds_id "
 		  "FROM videoitem AS v, item "
-		  "WHERE item.url = ?1 AND v.item_id = item.id "
-		  "ORDER BY v.ds_id DESC", // <- lame
+		  "WHERE item.url = ?1 "
+		  "AND v.item_id = item.id "
+		  "AND v.ds_id = ?2",
 		  -1, &sel, NULL);
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
@@ -1417,6 +1418,7 @@ metadb_get_videoinfo(void *db, const char *url)
   }
 
   sqlite3_bind_text(sel, 1, url, -1, SQLITE_STATIC);
+  sqlite3_bind_int(sel, 2, dsid);
 
   rc = db_step(sel);
 
@@ -1435,7 +1437,8 @@ metadb_get_videoinfo(void *db, const char *url)
   md->md_rating = sqlite3_column_int(sel, 5);
   md->md_rate_count = sqlite3_column_int(sel, 6);
   md->md_imdb_id = db_rstr(sel, 7);
-
+  md->md_dsid = sqlite3_column_int(sel, 8);
+  sqlite3_finalize(sel);
 
   md->md_icon = metadb_get_video_art(db, vid, METADATA_IMAGE_POSTER);
   md->md_backdrop = metadb_get_video_art(db, vid, METADATA_IMAGE_BACKDROP);
@@ -1443,7 +1446,6 @@ metadb_get_videoinfo(void *db, const char *url)
   md->md_director = metadb_get_video_cast(db, vid, "Director");
   md->md_producer = metadb_get_video_cast(db, vid, "Producer");
 
-  sqlite3_finalize(sel);
   return md;
 }
 
