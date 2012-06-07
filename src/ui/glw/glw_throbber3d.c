@@ -64,7 +64,7 @@ static uint16_t surfaces[] = {
  *
  */
 static int
-glw_throbber_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+glw_throbber3d_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
 
@@ -78,7 +78,7 @@ glw_throbber_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_throbber_render(glw_t *w, glw_rctx_t *rc)
+glw_throbber3d_render(glw_t *w, glw_rctx_t *rc)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
   glw_rctx_t rc0, rc1;
@@ -123,7 +123,7 @@ glw_throbber_render(glw_t *w, glw_rctx_t *rc)
 
 
 static void
-glw_throbber_dtor(glw_t *w)
+glw_throbber3d_dtor(glw_t *w)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
   glw_renderer_free(&gt->renderer);
@@ -136,9 +136,134 @@ glw_throbber_dtor(glw_t *w)
 static glw_class_t glw_throbber3d = {
   .gc_name = "throbber3d",
   .gc_instance_size = sizeof(glw_throbber3d_t),
-  .gc_render = glw_throbber_render,
-  .gc_signal_handler = glw_throbber_callback,
-  .gc_dtor = glw_throbber_dtor,
+  .gc_render = glw_throbber3d_render,
+  .gc_signal_handler = glw_throbber3d_callback,
+  .gc_dtor = glw_throbber3d_dtor,
 };
 
 GLW_REGISTER_CLASS(glw_throbber3d);
+
+
+
+
+
+typedef struct glw_throbber {
+  glw_t w;
+
+  float angle;
+  
+  glw_renderer_t renderer;
+  int o;
+  glw_rgb_t color;
+} glw_throbber_t;
+
+
+/**
+ *
+ */
+static int
+glw_throbber_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
+{
+  glw_throbber_t *gt = (glw_throbber_t *)w;
+
+  if(signal == GLW_SIGNAL_LAYOUT) {
+    gt->angle += 0.5;
+    gt->o++;
+  }
+
+  return 0;
+}
+
+/**
+ *
+ */
+static void
+glw_throbber_render(glw_t *w, glw_rctx_t *rc)
+{
+  glw_throbber_t *gt = (glw_throbber_t *)w;
+  glw_rctx_t rc0, rc1;
+  int i;
+  glw_root_t *gr = w->glw_root;
+  float a0 = w->glw_alpha * rc->rc_alpha;
+  int spokes = 16;
+
+  if(a0 < 0.01)
+    return;
+
+  if(!glw_renderer_initialized(&gt->renderer)) {
+    glw_renderer_init_quad(&gt->renderer);
+
+    glw_renderer_vtx_pos(&gt->renderer, 0, -0.05, 0.4, 0);
+    glw_renderer_vtx_pos(&gt->renderer, 1,  0.05, 0.4, 0);
+    glw_renderer_vtx_pos(&gt->renderer, 2,  0.05, 1, 0);
+    glw_renderer_vtx_pos(&gt->renderer, 3, -0.05, 1, 0);
+  }
+
+  rc0 = *rc;
+  glw_scale_to_aspect(&rc0, 1.0);
+
+
+  for(i = 0; i < spokes; i++) {
+    
+    float a = i * 360.0 / 16;
+    float alpha = 1 - (((i + (gt->o / 6)) % spokes) / 16.0);
+    alpha = MAX(alpha, 0.1);
+
+    rc1 = rc0;
+    glw_Rotatef(&rc1, -gt->angle - a, 0, 0, -1);
+
+    glw_renderer_draw(&gt->renderer, gr, &rc1, 
+		      NULL, NULL,
+		      &gt->color, NULL, a0 * alpha, 0);
+  }
+}
+
+
+static void
+glw_throbber_dtor(glw_t *w)
+{
+  glw_throbber_t *gt = (glw_throbber_t *)w;
+  glw_renderer_free(&gt->renderer);
+
+}
+
+
+
+
+static void
+glw_throbber_ctor(glw_t *w)
+{
+  glw_throbber_t *gt = (glw_throbber_t *)w;
+  gt->color.r = 1.0;
+  gt->color.g = 1.0;
+  gt->color.b = 1.0;
+}
+
+
+/**
+ *
+ */
+static void 
+glw_throbber_set_rgb(glw_t *w, const float *rgb)
+{
+  glw_throbber_t *gt = (void *)w;
+  gt->color.r = rgb[0];
+  gt->color.g = rgb[1];
+  gt->color.b = rgb[2];
+}
+
+
+/**
+ *
+ */
+static glw_class_t glw_throbber = {
+  .gc_name = "throbber",
+  .gc_instance_size = sizeof(glw_throbber_t),
+  .gc_render = glw_throbber_render,
+  .gc_signal_handler = glw_throbber_callback,
+  .gc_ctor = glw_throbber_ctor,
+  .gc_dtor = glw_throbber_dtor,
+  .gc_set_rgb = glw_throbber_set_rgb,
+};
+
+GLW_REGISTER_CLASS(glw_throbber);
