@@ -38,6 +38,7 @@ typedef struct glw_loadable_texture {
     GLT_STATE_LOADING,
     GLT_STATE_VALID,
     GLT_STATE_ERROR,
+    GLT_STATE_LOAD_ABORT,
   } glt_state;
 
   unsigned int glt_refcnt;
