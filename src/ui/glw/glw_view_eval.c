@@ -948,10 +948,12 @@ static int
 eval_dynamic_widget_meta_sig(glw_t *w, void *opaque, 
 			     glw_signal_t signal, void *extra)
 {
-  if(signal == GLW_SIGNAL_ACTIVE || signal == GLW_SIGNAL_INACTIVE ||
+  if(signal == GLW_SIGNAL_ACTIVE ||
+     signal == GLW_SIGNAL_INACTIVE ||
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
-     signal == GLW_SIGNAL_READY || signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED)
+     signal == GLW_SIGNAL_READINESS ||
+     signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED)
     eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
   return 0;
 }
@@ -4291,8 +4293,8 @@ glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
     r->t_int = 1;
   } else {
     r->t_int = 0;
-    ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
   }
+  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
   eval_push(ec, r);
   return 0;
 }

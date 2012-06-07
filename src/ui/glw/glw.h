@@ -258,10 +258,11 @@ typedef enum {
   GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED,
 
   /**
-   * Emitted when gc_ready will start returning 1.
+   * Emitted when gc_ready will return something else than it just did.
+   * (Ie, when the output of it changes)
    * Only done by widget classes that actually implements gc_ready
    */
-  GLW_SIGNAL_READY,
+  GLW_SIGNAL_READINESS,
 
   /**
    * Emitted by certain widget to tell its children how far

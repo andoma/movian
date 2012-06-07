@@ -217,9 +217,10 @@ glw_image_render(glw_t *w, glw_rctx_t *rc)
       if(glw_is_focusable(w))
 	glw_store_matrix(w, &rc0);
 
-      glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
-			&glt->glt_texture, &ste->glt_texture, 
-			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur);
+      if(alpha_self > 0.01f)
+	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
+			  &glt->glt_texture, &ste->glt_texture, 
+			  &gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur);
     }
     
 
@@ -778,16 +779,16 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
   if(glt->glt_state == GLT_STATE_ERROR) {
     if(!gi->gi_is_ready) {
-      glw_signal0(w, GLW_SIGNAL_READY, NULL);
       gi->gi_is_ready = 1;
+      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
     }
   } else if(glw_is_tex_inited(&glt->glt_texture) &&
 	    (!stencil ||
 	     glw_is_tex_inited(&gi->gi_current_x[1]->glt_texture))) {
 
     if(!gi->gi_is_ready) {
-      glw_signal0(w, GLW_SIGNAL_READY, NULL);
       gi->gi_is_ready = 1;
+      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
     }
 
     if(gi->gi_update) {
@@ -878,6 +879,12 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 					     flags, xs, ys);
       }
     }
+  } else {
+    if(gi->gi_is_ready) {
+      gi->gi_is_ready = 0;
+      glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
+    }
+
   }
 
   glw_image_update_constraints(gi);
@@ -1209,10 +1216,7 @@ static int
 glw_image_ready(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  glw_loadable_texture_t *glt = gi->gi_current_x[0];
- 
-  return glt != NULL && (glw_is_tex_inited(&glt->glt_texture) ||
-			 glt->glt_state == GLT_STATE_ERROR);
+  return gi->gi_is_ready;
 }
 
 
