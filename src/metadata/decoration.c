@@ -104,6 +104,9 @@ typedef struct deco_item {
   prop_sub_t *di_sub_artist;
   rstr_t *di_artist;
 
+  prop_sub_t *di_sub_duration;
+  int di_duration;
+
   metadata_lazy_prop_t *di_mlp;
 
 } deco_item_t;
@@ -118,7 +121,7 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_url == NULL)
+  if(di->di_url == NULL || di->di_duration == 0)
     return;
   
   deco_browse_t *db = di->di_db;
@@ -131,7 +134,8 @@ analyze_video(deco_item_t *di)
 
   metadata_bind_movie_info(&di->di_mlp, metadata,
 			   di->di_url, title, year,
-			   di->di_ds->ds_imdb_id ?: db->db_imdb_id);
+			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
+			   di->di_duration);
   
   rstr_release(title);
 }
@@ -439,6 +443,17 @@ di_set_filename(deco_item_t *di, rstr_t *str)
  *
  */
 static void
+di_set_duration(deco_item_t *di, int duration)
+{
+  di->di_duration = duration;
+  analyze_item(di);
+}
+
+
+/**
+ *
+ */
+static void
 di_set_type(deco_item_t *di, const char *str)
 {
   deco_browse_t *db = di->di_db;
@@ -455,6 +470,12 @@ di_set_type(deco_item_t *di, const char *str)
     di->di_sub_artist = NULL;
   }
 
+  if(di->di_sub_duration != NULL) {
+    prop_unsubscribe(di->di_sub_duration);
+    di->di_duration = 0;
+    di->di_sub_duration = NULL;
+  }
+
   db->db_types[di->di_type]--;
   di->di_type = str ? type2content(str) : CONTENT_UNKNOWN;
   db->db_types[di->di_type]++;
@@ -464,7 +485,7 @@ di_set_type(deco_item_t *di, const char *str)
 
   case CONTENT_AUDIO:
     di->di_sub_album = 
-      prop_subscribe(0,
+      prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_NAME("node", "metadata", "album"),
 		     PROP_TAG_CALLBACK_RSTR, di_set_album, di,
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
@@ -472,13 +493,23 @@ di_set_type(deco_item_t *di, const char *str)
 		     NULL);
 
     di->di_sub_artist = 
-      prop_subscribe(0,
+      prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		     PROP_TAG_NAME("node", "metadata", "artist"),
 		     PROP_TAG_CALLBACK_RSTR, di_set_artist, di,
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
     break;
+
+  case CONTENT_VIDEO:
+    di->di_sub_duration = 
+      prop_subscribe(0,
+		     PROP_TAG_NAME("node", "metadata", "duration"),
+		     PROP_TAG_CALLBACK_INT, di_set_duration, di,
+		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
+		     PROP_TAG_COURIER, deco_courier,
+		     NULL);
+
   default:
     break;
   }
@@ -575,6 +606,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   prop_unsubscribe(di->di_sub_type);
   prop_unsubscribe(di->di_sub_album);
   prop_unsubscribe(di->di_sub_artist);
+  prop_unsubscribe(di->di_sub_duration);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);

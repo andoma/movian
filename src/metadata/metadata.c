@@ -273,9 +273,9 @@ struct metadata_lazy_prop {
   rstr_t *mlp_url;
   rstr_t *mlp_imdb_id;
 
+  int mlp_duration;
   int16_t mlp_year;
   int16_t mlp_refcount;
-
 
   int16_t mlp_num_props;
 
@@ -527,7 +527,8 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
 			    rstr_get(mlp->mlp_imdb_id));
     else
       tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
-				   rstr_get(mlp->mlp_title), mlp->mlp_year);
+				   rstr_get(mlp->mlp_title), mlp->mlp_year,
+				   mlp->mlp_duration);
   }
 
   if(md == NULL)
@@ -584,7 +585,7 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
 void
 metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 			 prop_t *prop, rstr_t *url, rstr_t *title, int year,
-			 rstr_t *imdb_id)
+			 rstr_t *imdb_id, int duration)
 {
   metadata_lazy_prop_t *mlp = *mlpp;
 
@@ -592,16 +593,20 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
     if(rstr_eq(url, mlp->mlp_url) &&
        rstr_eq(title, mlp->mlp_title) &&
        rstr_eq(imdb_id, mlp->mlp_imdb_id) &&
-          year == mlp->mlp_year)
+       year == mlp->mlp_year && 
+       duration == mlp->mlp_duration)
       return;
     metadata_unbind(mlp);
   }
 
   TRACE(TRACE_DEBUG, "METADATA",
-	"Lookup movie %s (%d) %s",
+	"Lookup movie %s (%d) %s, duration: %d:%02d:%02d",
 	rstr_get(title) ?: "<no title>",
 	year,
-	rstr_get(imdb_id) ?: "<no IMDB tag>");
+	rstr_get(imdb_id) ?: "<no IMDB tag>",
+	duration / 3600,
+	(duration / 60) % 60,
+	duration % 60);
 	
 
   *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
@@ -623,6 +628,7 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   mlp->mlp_title = rstr_spn(title, "[]()");
   mlp->mlp_url = rstr_dup(url);
   mlp->mlp_year = year;
+  mlp->mlp_duration = duration;
   mlp->mlp_imdb_id = rstr_dup(imdb_id);
   mlp_setup(mlp, props, mlp_get_video_info);
 }

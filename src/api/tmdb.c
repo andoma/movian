@@ -350,7 +350,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
  */
 void
 tmdb_query_by_title_and_year(void *db, const char *item_url,
-			     const char *title, int year)
+			     const char *title, int year, int duration)
 {
   char buf[300];
   char errbuf[256];
