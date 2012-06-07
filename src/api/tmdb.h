@@ -22,7 +22,8 @@ void tmdb_query_by_title_and_year(void *db, const char *item_url,
 				  int duration);
 
 void tmdb_query_by_imdb_id(void *db, const char *item_url, 
-			   const char *imdb_id);
+			   const char *imdb_id,
+			   int duration);
 
 void tmdb_init(void);
 

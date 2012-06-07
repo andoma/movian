@@ -130,7 +130,7 @@ tmdb_parse_config(htsmsg_t *doc)
  *
  */
 static int
-tmdb_configure(void)
+tmdb_configure(void *db)
 {
   hts_mutex_lock(&tmdb_mutex);
 
@@ -162,16 +162,8 @@ tmdb_configure(void)
 
 
     // Get our datasource ID
-
-    void *db = metadb_get();
-    if(db != NULL) {
-      if(!db_begin(db)) {
-	tmdb_datasource_search = metadb_get_datasource(db, "tmdb");
-	tmdb_datasource_imdb = metadb_get_datasource(db, "tmdb_imdb");
-	db_commit(db);
-      }
-      metadb_close(db);
-    }
+    tmdb_datasource_search = metadb_get_datasource(db, "tmdb");
+    tmdb_datasource_imdb = metadb_get_datasource(db, "tmdb_imdb");
   }
  bad:
   hts_mutex_unlock(&tmdb_mutex);
@@ -357,7 +349,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   const char *q;
   char *result;
 
-  if(tmdb_configure())
+  if(tmdb_configure(db))
     return;
 
   if(year > 0) {
@@ -427,9 +419,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
  */
 void
 tmdb_query_by_imdb_id(void *db, const char *item_url,
-		      const char *imdb_id)
+		      const char *imdb_id, int duration)
 {
-  if(tmdb_configure())
+  if(tmdb_configure(db))
     return;
 
   tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_imdb);
@@ -472,10 +464,19 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
   tmdb_image_size_t *s;
   const char *p;
 
-  if(tmdb_configure()) {
+  void *db = metadb_get();
+  if(db_begin(db)) {
+    snprintf(errbuf, errlen, "Failed to load begin DB transaction");
+    return NULL;
+  }
+
+  if(tmdb_configure(db)) {
     snprintf(errbuf, errlen, "Failed to load TMDB configuration");
     return NULL;
   }
+  db_commit(db);
+  metadb_close(db);
+
 
   if((p = mystrbegins(url, "tmdb:image:poster:")) != NULL)
     s = poster_sizes;

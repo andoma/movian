@@ -522,22 +522,21 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
 			      metadb_get_datasource(db, "tmdb"));
 
   if(md == NULL) {
-    if(mlp->mlp_imdb_id != NULL)
+    if(mlp->mlp_imdb_id != NULL) {
       tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
-			    rstr_get(mlp->mlp_imdb_id));
-    else
+			    rstr_get(mlp->mlp_imdb_id),
+			    mlp->mlp_duration);
+      md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+				metadb_get_datasource(db, "tmdb_imdb"));
+    } else {
       tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
 				   rstr_get(mlp->mlp_title), mlp->mlp_year,
 				   mlp->mlp_duration);
-  }
 
-  if(md == NULL)
-    md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
-			      metadb_get_datasource(db, "tmdb_imdb"));
-  
-  if(md == NULL) 
-    md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
-			      metadb_get_datasource(db, "tmdb"));
+      md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
+				metadb_get_datasource(db, "tmdb"));
+    }
+  }
 
   rstr_t *icon = NULL;
   rstr_t *title = NULL;
@@ -599,15 +598,20 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
     metadata_unbind(mlp);
   }
 
+  const int too_short = duration > 0 && duration < 300;
+  
   TRACE(TRACE_DEBUG, "METADATA",
-	"Lookup movie %s (%d) %s, duration: %d:%02d:%02d",
+	"Lookup movie %s (%d) %s, duration: %d:%02d:%02d%s",
 	rstr_get(title) ?: "<no title>",
 	year,
 	rstr_get(imdb_id) ?: "<no IMDB tag>",
 	duration / 3600,
 	(duration / 60) % 60,
-	duration % 60);
-	
+	duration % 60,
+	too_short ? " (too short for lookup, skipping)" : "");
+
+  if(too_short)
+    return;
 
   *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
   prop_t *props[MOVIE_PROP_num];
