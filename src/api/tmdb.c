@@ -471,6 +471,12 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
 {
   tmdb_image_size_t *s;
   const char *p;
+
+  if(tmdb_configure()) {
+    snprintf(errbuf, errlen, "Failed to load TMDB configuration");
+    return NULL;
+  }
+
   if((p = mystrbegins(url, "tmdb:image:poster:")) != NULL)
     s = poster_sizes;
   else if((p = mystrbegins(url, "tmdb:image:backdrop:")) != NULL)
