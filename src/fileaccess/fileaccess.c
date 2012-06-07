@@ -623,7 +623,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
     data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
-			  &etag, &mtime, &max_age, 0, cb, opaque);
+			  &etag, &mtime, &max_age, flags, cb, opaque);
     
     free(filename);
     if(data2 == NOT_MODIFIED) {
