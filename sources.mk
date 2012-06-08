@@ -271,7 +271,7 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_slider.c \
 			src/ui/glw/glw_rotator.c  \
 			src/ui/glw/glw_detachable.c  \
-			src/ui/glw/glw_throbber3d.c  \
+			src/ui/glw/glw_throbber.c  \
 			src/ui/glw/glw_slideshow.c \
 			src/ui/glw/glw_freefloat.c \
 			src/ui/glw/glw_multitile.c \
