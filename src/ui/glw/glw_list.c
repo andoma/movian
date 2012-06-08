@@ -134,7 +134,12 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 
     l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
 					l->total_size - l->page_size));
-    l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+
+    if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_height * 2) {
+      l->filtered_pos = l->current_pos;
+    } else {
+      l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+    }
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -216,7 +221,12 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   
   l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
 				      l->total_size - l->page_size));
-  l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+
+  if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_width * 2) {
+    l->filtered_pos = l->current_pos;
+  } else {
+    l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+  }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
