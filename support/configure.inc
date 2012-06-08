@@ -324,6 +324,44 @@ libav_setup() {
     LIBAV_PATH=${LIBAV_INSTALL_DIR}
 }
 
+
+
+#
+#
+#
+freetype_setup()
+{
+    FREETYPE_VER="2.4.9"
+
+    download_file http://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VER}.tar.gz freetypetarball
+
+    FREETYPE_SRC_DIR=${BUILDDIR}/freetype-${FREETYPE_VER}
+
+    FREETYPE_BUILD_DIR=${BUILDDIR}/freetype/build
+    FREETYPE_INSTALL_DIR=${BUILDDIR}/freetype/install
+
+    tar -x -C "${BUILDDIR}" -f "${freetypetarball}"
+
+    mkdir -p "${FREETYPE_BUILD_DIR}"
+    mkdir -p "${FREETYPE_INSTALL_DIR}"
+
+    (cd ${FREETYPE_BUILD_DIR} && ${FREETYPE_SRC_DIR}/configure \
+	--prefix=${FREETYPE_INSTALL_DIR} \
+	--enable-static=yes \
+	--enable-shared=no)
+
+    (cd ${FREETYPE_BUILD_DIR} && make ${JARGS}) || die
+    (cd ${FREETYPE_BUILD_DIR} && make ${JARGS} install) || die
+
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${FREETYPE_INSTALL_DIR}/include -I${FREETYPE_INSTALL_DIR}/include/freetype2"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${FREETYPE_INSTALL_DIR}/lib -lfreetype -lbz2"
+}
+
+
+
+
+
+
 #
 # Do final common stuff
 #

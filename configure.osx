@@ -180,14 +180,8 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -
 
 
 
+freetype_setup
 libav_setup
-
-
-#
-# Freetype
-# 
-echo >>${CONFIG_MAK} "CFLAGS_cfg += -I/usr/X11/include -I/usr/X11/include/freetype2"
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L/usr/X11/lib -lfreetype"
 
 
 #
