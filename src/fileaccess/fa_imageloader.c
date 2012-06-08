@@ -414,7 +414,6 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     
     if(cb != NULL && cb(opaque, 0, 1)) {
       snprintf(errbuf, errlen, "Aborted");
-      ifv_close();
       break;
     }
 
