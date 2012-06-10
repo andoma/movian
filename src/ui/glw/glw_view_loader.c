@@ -124,7 +124,7 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
  *
  */
 static void
-glw_view_loader_render(glw_t *w, glw_rctx_t *rc)
+glw_view_loader_render(glw_t *w, const glw_rctx_t *rc)
 {
   float alpha = rc->rc_alpha * w->glw_alpha;
   float sharpness  = rc->rc_sharpness  * w->glw_sharpness;

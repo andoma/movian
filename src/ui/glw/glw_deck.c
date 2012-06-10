@@ -195,7 +195,7 @@ glw_deck_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
+deck_render(const glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
 {
   if(gd->efx_conf != GLW_TRANS_NONE) {
     glw_rctx_t rc0 = *rc;
@@ -214,7 +214,7 @@ deck_render(glw_rctx_t *rc, glw_deck_t *gd, glw_t *w, float v)
  *
  */
 static void 
-glw_deck_render(glw_t *w, glw_rctx_t *rc)
+glw_deck_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_deck_t *gd = (glw_deck_t *)w;
 

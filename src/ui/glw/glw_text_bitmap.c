@@ -330,7 +330,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_text_bitmap_render(glw_t *w, glw_rctx_t *rc)
+glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   pixmap_t *pm = gtb->gtb_pixmap;

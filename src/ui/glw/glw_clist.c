@@ -129,7 +129,7 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
  *
  */
 static void
-render(glw_t *w, glw_rctx_t *rc)
+render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0, rc1;

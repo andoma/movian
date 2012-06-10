@@ -147,7 +147,7 @@ render_child_simple(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void 
-render_child_autocentered(glw_image_t *gi, glw_rctx_t *rc)
+render_child_autocentered(glw_image_t *gi, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0;
@@ -184,7 +184,7 @@ glw_scale_to_pixels(glw_rctx_t *rc, int w, int h)
  *
  */
 static void 
-glw_image_render(glw_t *w, glw_rctx_t *rc)
+glw_image_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
   const glw_loadable_texture_t *glt = gi->gi_current_x[0];

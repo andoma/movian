@@ -47,7 +47,7 @@ glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
 }
 
 
-typedef float *PMtx;
+typedef const float *PMtx;
 
 #define glw_pmtx_mul_prepare(dst, src) dst = &src[0]
 

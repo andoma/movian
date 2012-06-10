@@ -42,7 +42,7 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_mirror_render(glw_t *w, glw_rctx_t *rc)
+glw_mirror_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_rctx_t rc0;

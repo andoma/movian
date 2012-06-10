@@ -22,7 +22,7 @@
  *
  */
 static void
-glw_dummy_render(glw_t *w, glw_rctx_t *rc)
+glw_dummy_render(glw_t *w, const glw_rctx_t *rc)
 {
 }
 

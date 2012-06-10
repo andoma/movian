@@ -111,7 +111,7 @@ void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 			  float r, float g, float b, float a);
 
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
-		       glw_rctx_t *rc,
+		       const glw_rctx_t *rc,
 		       const struct glw_backend_texture *t0,
 		       const struct glw_backend_texture *t1,
 		       const struct glw_rgb *rgb_mul,

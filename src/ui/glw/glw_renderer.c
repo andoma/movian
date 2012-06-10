@@ -411,7 +411,7 @@ clipper(glw_root_t *gr, glw_renderer_cache_t *grc,
  */
 static void
 glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
-		       glw_rctx_t *rc, glw_renderer_cache_t *grc)
+		       const glw_rctx_t *rc, glw_renderer_cache_t *grc)
 {
   int i;
   uint16_t *ip = gr->gr_indices;
@@ -539,7 +539,7 @@ glw_renderer_get_cache(glw_root_t *root, glw_renderer_t *gr)
  */
 void
 glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
-		  glw_rctx_t *rc,
+		  const glw_rctx_t *rc,
 		  const struct glw_backend_texture *t0,
 		  const struct glw_backend_texture *t1,
 		  const struct glw_rgb *rgb_mul,
@@ -593,7 +593,7 @@ static const float clip_planes[4][3] = {
  *
  */
 int
-glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
+glw_clip_enable(glw_root_t *gr, const glw_rctx_t *rc, glw_clip_boundary_t how,
 		float distance)
 {
   int i;
@@ -633,7 +633,7 @@ glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t how,
  *
  */
 void
-glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
+glw_clip_disable(glw_root_t *gr, const glw_rctx_t *rc, int which)
 {
   if(which == -1)
     return;
@@ -651,7 +651,7 @@ glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
  *
  */
 int
-glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, const float *plane,
+glw_fader_enable(glw_root_t *gr, const glw_rctx_t *rc, const float *plane,
 		 float a, float b)
 {
   int i;
@@ -686,7 +686,7 @@ glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, const float *plane,
  *
  */
 void
-glw_fader_disable(glw_root_t *gr, glw_rctx_t *rc, int which)
+glw_fader_disable(glw_root_t *gr, const glw_rctx_t *rc, int which)
 {
   if(which == -1)
     return;

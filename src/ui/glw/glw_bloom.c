@@ -79,7 +79,7 @@ glw_bloom_dtor(glw_t *w)
  *
  */
 static void 
-glw_bloom_render(glw_t *w, glw_rctx_t *rc)
+glw_bloom_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_bloom_t *b = (void *)w;
   float a = rc->rc_alpha * w->glw_alpha;

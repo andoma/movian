@@ -296,7 +296,7 @@ static glw_tile_transformer_t rollercoaster  __attribute__((unused)) = {
  *
  */
 static void
-glw_multitile_render(glw_t *w, glw_rctx_t *rc)
+glw_multitile_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_multitile_t *sf = (glw_multitile_t *)w;
   glw_t *c;

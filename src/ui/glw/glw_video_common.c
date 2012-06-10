@@ -523,7 +523,7 @@ glw_video_set(glw_t *w, va_list ap)
  *
  */
 void 
-glw_video_render(glw_t *w, glw_rctx_t *rc)
+glw_video_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;

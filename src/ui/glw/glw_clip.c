@@ -59,7 +59,7 @@ glw_clip_layout(glw_t *w, glw_rctx_t *rc)
 
 
 static void
-glw_clip_render(glw_t *w, glw_rctx_t *rc)
+glw_clip_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_clip_t *gc = (glw_clip_t *)w;
@@ -172,7 +172,7 @@ glw_fade_layout(glw_t *w, glw_rctx_t *rc)
 
 
 static void
-glw_fade_render(glw_t *w, glw_rctx_t *rc)
+glw_fade_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_fade_t *gf = (glw_fade_t *)w;

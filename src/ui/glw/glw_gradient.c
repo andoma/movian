@@ -63,7 +63,7 @@ glw_gradient_dtor(glw_t *w)
  *
  */
 static void 
-glw_gradient_render(glw_t *w, glw_rctx_t *rc)
+glw_gradient_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_gradient_t *gg = (void *)w;
   float a = rc->rc_alpha * w->glw_alpha * gg->gg_alpha_self;

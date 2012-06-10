@@ -259,7 +259,8 @@ glw_video_overlay_layout(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
  * 
  */
 void
-glw_video_overlay_render(glw_video_t *gv, glw_rctx_t *frc, glw_rctx_t *vrc)
+glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
+			 const glw_rctx_t *vrc)
 {
   glw_video_overlay_t *gvo;
   glw_root_t *gr = gv->w.glw_root;

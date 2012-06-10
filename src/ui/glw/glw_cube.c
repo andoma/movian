@@ -51,7 +51,7 @@ glw_cube_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_cube_render(glw_t *w, glw_rctx_t *rc)
+glw_cube_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_cube_t *gc = (glw_cube_t *)w;
   glw_rctx_t rc0, rc1;

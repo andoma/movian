@@ -45,7 +45,7 @@ glw_flicker_dtor(glw_t *w)
  *
  */
 static void 
-glw_flicker_render(glw_t *w, glw_rctx_t *rc)
+glw_flicker_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_flicker_t *gf = (void *)w;
   float a = rc->rc_alpha * w->glw_alpha;

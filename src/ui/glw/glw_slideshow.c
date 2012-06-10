@@ -40,7 +40,7 @@ typedef struct glw_slideshow {
  *
  */
 static void
-glw_slideshow_render(glw_t *w, glw_rctx_t *rc)
+glw_slideshow_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c, *p, *n;
   glw_rctx_t rc0;

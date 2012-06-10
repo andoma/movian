@@ -75,7 +75,7 @@ glw_view_dtor(glw_t *w)
  *
  */
 static void
-glw_view_render(glw_t *w, glw_rctx_t *rc)
+glw_view_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c = TAILQ_FIRST(&w->glw_childs);
   if(c != NULL)

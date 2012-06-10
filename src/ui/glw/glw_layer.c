@@ -134,7 +134,7 @@ glw_layer_retire_child(glw_t *w, glw_t *c)
  *
  */
 static void
-glw_layer_render(glw_t *w, glw_rctx_t *rc)
+glw_layer_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_rctx_t rc0;
   glw_t *c;

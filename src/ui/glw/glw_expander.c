@@ -114,7 +114,7 @@ glw_expander_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_expander_render(glw_t *w, glw_rctx_t *rc)
+glw_expander_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_rctx_t rc0;
   glw_t *c = TAILQ_FIRST(&w->glw_childs);

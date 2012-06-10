@@ -2197,7 +2197,7 @@ glw_unhide(glw_t *w)
  *
  */
 void
-glw_store_matrix(glw_t *w, glw_rctx_t *rc)
+glw_store_matrix(glw_t *w, const glw_rctx_t *rc)
 {
   if(rc->rc_inhibit_matrix_store)
     return;

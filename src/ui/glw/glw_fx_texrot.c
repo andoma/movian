@@ -77,7 +77,7 @@ glw_fx_texrot_dtor(glw_t *w)
  *
  */
 static void 
-glw_fx_texrot_render(glw_t *w, glw_rctx_t *rc)
+glw_fx_texrot_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_fx_texrot_t *fx = (void *)w;
   glw_loadable_texture_t *glt = fx->fx_tex;

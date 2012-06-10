@@ -89,7 +89,7 @@ glw_displacement_callback(glw_t *w, void *opaque,
  *
  */
 static void
-glw_displacement_render(glw_t *w, glw_rctx_t *rc)
+glw_displacement_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_displacement_t *gd = (glw_displacement_t *)w;
   glw_t *c;

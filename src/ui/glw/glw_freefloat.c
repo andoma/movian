@@ -55,7 +55,7 @@ is_visible(glw_freefloat_t *ff, glw_t *c)
  *
  */
 static void
-glw_freefloat_render(glw_t *w, glw_rctx_t *rc)
+glw_freefloat_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_freefloat_t *ff = (glw_freefloat_t *)w;
   glw_t *c;

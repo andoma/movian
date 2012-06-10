@@ -31,7 +31,7 @@ typedef struct glw_quad {
 
 
 static void
-glw_quad_render(glw_t *w, glw_rctx_t *rc)
+glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_quad_t *q = (void *)w;
 
@@ -132,7 +132,7 @@ static const uint8_t rastermap[] = {
 #define RASTER_TILE_SIZE 4 
 
 static void
-glw_raster_render(glw_t *w, glw_rctx_t *rc)
+glw_raster_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_raster_t *q = (void *)w;
 

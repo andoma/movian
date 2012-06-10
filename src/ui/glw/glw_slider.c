@@ -150,7 +150,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_slider_render_x(glw_t *w, glw_rctx_t *rc)
+glw_slider_render_x(glw_t *w, const glw_rctx_t *rc)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_t *c;
@@ -179,7 +179,7 @@ glw_slider_render_x(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_slider_render_y(glw_t *w, glw_rctx_t *rc)
+glw_slider_render_y(glw_t *w, const glw_rctx_t *rc)
 {
   glw_slider_t *s = (glw_slider_t *)w;
   glw_t *c;

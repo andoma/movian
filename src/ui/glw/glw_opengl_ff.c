@@ -34,7 +34,7 @@ const static float projection[16] = {
  *
  */
 static void
-hw_set_clip_conf(struct glw_rctx *rc, int which, const Vec4 v)
+hw_set_clip_conf(const struct glw_rctx *rc, int which, const Vec4 v)
 {
   double plane[4];
     
@@ -53,7 +53,7 @@ hw_set_clip_conf(struct glw_rctx *rc, int which, const Vec4 v)
  *
  */
 static void
-hw_clr_clip_conf(struct glw_rctx *rc, int which)
+hw_clr_clip_conf(const struct glw_rctx *rc, int which)
 {
   glDisable(GL_CLIP_PLANE0 + which);
 }
@@ -63,7 +63,7 @@ hw_clr_clip_conf(struct glw_rctx *rc, int which)
 
 static void
 ff_render(struct glw_root *gr,
-	  Mtx m,
+	  const Mtx m,
 	  const struct glw_backend_texture *t0,
 	  const struct glw_backend_texture *t1,
 	  const struct glw_rgb *rgb_mul,

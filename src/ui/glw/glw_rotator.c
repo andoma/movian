@@ -51,7 +51,7 @@ glw_rotator_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_rotator_render(glw_t *w, glw_rctx_t *rc)
+glw_rotator_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_rotator_t *gr = (glw_rotator_t *)w;
   glw_t *c;

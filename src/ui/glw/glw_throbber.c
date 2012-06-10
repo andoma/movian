@@ -78,7 +78,7 @@ glw_throbber3d_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra
  *
  */
 static void
-glw_throbber3d_render(glw_t *w, glw_rctx_t *rc)
+glw_throbber3d_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber3d_t *gt = (glw_throbber3d_t *)w;
   glw_rctx_t rc0, rc1;
@@ -178,7 +178,7 @@ glw_throbber_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void
-glw_throbber_render(glw_t *w, glw_rctx_t *rc)
+glw_throbber_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_throbber_t *gt = (glw_throbber_t *)w;
   glw_rctx_t rc0, rc1;

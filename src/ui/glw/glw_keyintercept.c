@@ -139,7 +139,7 @@ glw_keyintercept_callback(glw_t *w, void *opaque,
  *
  */
 static void
-glw_keyintercept_render(glw_t *w, glw_rctx_t *rc)
+glw_keyintercept_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
 

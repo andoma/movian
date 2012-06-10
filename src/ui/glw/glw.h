@@ -351,7 +351,7 @@ typedef struct glw_class {
   /**
    * Ask widget to render itself in the current render context
    */
-  void (*gc_render)(struct glw *w, struct glw_rctx *rc);
+  void (*gc_render)(struct glw *w, const struct glw_rctx *rc);
 
   /**
    * Ask widget to retire the given child
@@ -747,10 +747,11 @@ typedef struct glw_root {
 				    at the moment */
 
 
-  void (*gr_set_hw_clipper)(struct glw_rctx *rc, int which, const Vec4 vec);
-  void (*gr_clr_hw_clipper)(struct glw_rctx *rc, int which);
+  void (*gr_set_hw_clipper)(const struct glw_rctx *rc, int which,
+			    const Vec4 vec);
+  void (*gr_clr_hw_clipper)(const struct glw_rctx *rc, int which);
   void (*gr_render)(struct glw_root *gr,
-		    Mtx m,
+		    const Mtx m,
 		    const struct glw_backend_texture *t0,
 		    const struct glw_backend_texture *t1,
 		    const struct glw_rgb *rgb_mul,
@@ -1017,7 +1018,7 @@ void glw_dispatch_event(uii_t *uii, struct event *e);
 
 #define glw_is_pressed(w) (!!((w)->glw_flags & GLW_IN_PRESSED_PATH))
 
-void glw_store_matrix(glw_t *w, glw_rctx_t *rc);
+void glw_store_matrix(glw_t *w, const glw_rctx_t *rc);
 
 #define GLW_FOCUS_SET_AUTOMATIC   0
 #define GLW_FOCUS_SET_INTERACTIVE 1
@@ -1052,15 +1053,15 @@ typedef enum {
   GLW_CLIP_RIGHT,
 } glw_clip_boundary_t;
 
-int glw_clip_enable(glw_root_t *gr, glw_rctx_t *rc, glw_clip_boundary_t gcb,
-		    float distance);
+int glw_clip_enable(glw_root_t *gr, const glw_rctx_t *rc,
+		    glw_clip_boundary_t gcb, float distance);
 
-void glw_clip_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
+void glw_clip_disable(glw_root_t *gr, const glw_rctx_t *rc, int which);
 
-int glw_fader_enable(glw_root_t *gr, glw_rctx_t *rc, const float *plane,
+int glw_fader_enable(glw_root_t *gr, const glw_rctx_t *rc, const float *plane,
 		     float alphafo, float blurfo);
 
-void glw_fader_disable(glw_root_t *gr, glw_rctx_t *rc, int which);
+void glw_fader_disable(glw_root_t *gr, const glw_rctx_t *rc, int which);
 
 
 /**
@@ -1201,10 +1202,6 @@ void glw_rctx_init(glw_rctx_t *rc, int width, int height, int overscan);
 
 int glw_check_system_features(glw_root_t *gr);
 
-void glw_render_T(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
-
-void glw_render_TS(glw_t *c, glw_rctx_t *rc, glw_rctx_t *prevrc);
-
 void glw_scale_to_aspect(glw_rctx_t *rc, float t_aspect);
 
 void glw_reposition(glw_rctx_t *rc, int left, int top, int right, int bottom);
@@ -1216,9 +1213,9 @@ void glw_align_1(glw_rctx_t *rc, int a);
 
 void glw_align_2(glw_rctx_t *rc, int a);
 
-void glw_wirebox(glw_root_t *gr, glw_rctx_t *rc);
+void glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc);
 
-void glw_wirecube(glw_root_t *gr, glw_rctx_t *rc);
+void glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc);
 
 /**
  * Global flush interface 

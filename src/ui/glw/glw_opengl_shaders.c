@@ -192,7 +192,7 @@ render_unlocked(glw_root_t *gr)
  */
 static void
 shader_render_delayed(struct glw_root *root, 
-		      Mtx m,
+		      const Mtx m,
 		      const struct glw_backend_texture *t0,
 		      const struct glw_backend_texture *t1,
 		      const struct glw_rgb *rgb_mul,
@@ -290,7 +290,7 @@ shader_render_delayed(struct glw_root *root,
  */
 static void
 shader_render(struct glw_root *root, 
-	      Mtx m,
+	      const Mtx m,
 	      const struct glw_backend_texture *t0,
 	      const struct glw_backend_texture *t1,
 	      const struct glw_rgb *rgb_mul,
@@ -505,7 +505,7 @@ glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp)
  *
  */
 void
-glw_program_set_modelview(glw_backend_root_t *gbr, glw_rctx_t *rc)
+glw_program_set_modelview(glw_backend_root_t *gbr, const glw_rctx_t *rc)
 {
   const float *m = rc ? glw_mtx_get(rc->rc_mtx) : glw_identitymtx;
   glUniformMatrix4fv(gbr->gbr_current->gp_uniform_modelview, 1, 0, m);

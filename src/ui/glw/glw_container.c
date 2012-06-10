@@ -392,7 +392,7 @@ glw_container_z_layout(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_container_y_render(glw_t *w, glw_rctx_t *rc)
+glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
@@ -438,7 +438,7 @@ glw_container_y_render(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_container_x_render(glw_t *w, glw_rctx_t *rc)
+glw_container_x_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
@@ -484,7 +484,7 @@ glw_container_x_render(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_container_z_render(glw_t *w, glw_rctx_t *rc)
+glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;

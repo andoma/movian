@@ -221,7 +221,7 @@ int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 void glw_video_compute_avdiff(glw_root_t *gr,
 			      video_decoder_t *vd, media_pipe_t *mp, 
 			      int64_t pts, int epoch);
-void glw_video_render(glw_t *w, glw_rctx_t *rc);
+void glw_video_render(glw_t *w, const glw_rctx_t *rc);
 
 void glw_video_reset(glw_root_t *gr);
 

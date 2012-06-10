@@ -43,7 +43,7 @@ check_gl_ext(const uint8_t *s, const char *func)
  *
  */
 void
-glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   if(gbr->gbr_delayed_rendering)
@@ -68,7 +68,7 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
  *
  */
 void
-glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   if(gbr->gbr_delayed_rendering)

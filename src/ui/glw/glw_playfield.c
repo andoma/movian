@@ -250,7 +250,7 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
  *
  */
 static void 
-glw_playfield_render(glw_t *w, glw_rctx_t *rc)
+glw_playfield_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c, *d;
   glw_rctx_t rc0, rc1;

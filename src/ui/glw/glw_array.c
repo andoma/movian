@@ -289,7 +289,7 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
  *
  */
 static void
-glw_array_render(glw_t *w, glw_rctx_t *rc)
+glw_array_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;

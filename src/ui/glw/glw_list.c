@@ -294,7 +294,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
  *
  */
 static void
-glw_list_render_y(glw_t *w, glw_rctx_t *rc)
+glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_list_t *l = (glw_list_t *)w;
@@ -381,7 +381,7 @@ glw_list_render_y(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-glw_list_render_x(glw_t *w, glw_rctx_t *rc)
+glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_list_t *l = (glw_list_t *)w;

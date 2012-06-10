@@ -216,7 +216,7 @@ load_fp(glw_root_t *gr, const char *filename)
  *
  */
 void
-glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
 {
 
 }
@@ -226,7 +226,7 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
  *
  */
 void
-glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
 {
 
 }
@@ -264,7 +264,7 @@ rsx_set_fp(glw_root_t *root, rsx_fp_t *rfp, int force)
  */
 static void
 rsx_render(struct glw_root *gr,
-	   Mtx m,
+	   const Mtx m,
 	   const struct glw_backend_texture *t0,
 	   const struct glw_backend_texture *t1,
 	   const struct glw_rgb *rgb_mul,

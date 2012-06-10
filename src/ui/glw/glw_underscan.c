@@ -48,7 +48,7 @@ layout(glw_t *w, glw_rctx_t *rc)
  *
  */
 static void
-render(glw_t *w, glw_rctx_t *rc)
+render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;

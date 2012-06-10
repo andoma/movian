@@ -140,7 +140,7 @@ reposition(glw_rctx_t *rc, int left, int top, int right, int bottom)
  *
  */
 static void
-glw_coverflow_render(glw_t *w, glw_rctx_t *rc)
+glw_coverflow_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c, *p, *n;
   struct glw_queue rqueue;
