@@ -349,21 +349,6 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
     glw_wirebox(w->glw_root, rc);
 
   if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
-#if 0
-    if(w->glw_flags & GLW_SHADOW && !rc->rc_inhibit_shadows) {
-      float xd =  2.5f / rc->rc_width;
-      float yd = -2.5f / rc->rc_height;
-      glw_rctx_t rc0 = *rc;
-
-      glw_Translatef(&rc0, xd, yd, 0.0);
-      
-      const static glw_rgb_t black = {0,0,0};
-      
-      glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, &rc0, 
-			&gtb->gtb_texture, &black, NULL, alpha,
-			blur);
-    }
-#endif
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
 		      &gtb->gtb_texture, NULL,
 		      &gtb->gtb_color, NULL, alpha, blur);
