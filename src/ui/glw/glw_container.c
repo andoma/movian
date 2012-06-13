@@ -57,6 +57,9 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   co->co_biggest = 0;
   co->co_using_aspect = 0;
 
+  if(co->w.glw_flags & GLW_DEBUG)
+    printf("Constraint round\n");
+
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
@@ -64,6 +67,15 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     f = glw_filter_constraints(c->glw_flags);
 
     cflags |= f & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+
+    if(co->w.glw_flags & GLW_DEBUG)
+      printf("%c%c%c %d %d %f\n",
+	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
+	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
+	     f & GLW_CONSTRAINT_W ? 'W' : ' ',
+	     c->glw_req_size_x,
+	     c->glw_req_size_y,
+	     c->glw_req_weight);
 
     if(f & GLW_CONSTRAINT_Y)
       height = GLW_MAX(height, c->glw_req_size_y);
