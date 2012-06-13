@@ -1098,6 +1098,9 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     if(pm != NULL) {
       gtb_set_constraints(gr, gtb, pm);
       pixmap_release(pm);
+    } else {
+      int lh = (gtb->gtb_default_size ?: gr->gr_fontsize) * gtb->gtb_size_scale;
+      glw_set_constraints(&gtb->w, 0, lh, 0, GLW_CONSTRAINT_Y);
     }
   }
 }
