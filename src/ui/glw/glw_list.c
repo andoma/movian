@@ -44,7 +44,7 @@ typedef struct glw_list {
   int16_t saved_height;
   int16_t saved_width;
   int16_t spacing;
-
+  int16_t scroll_threshold;
   int16_t padding_left;
   int16_t padding_right;
   int16_t padding_top;
@@ -209,7 +209,7 @@ static int
 glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
-  int bd = 0;
+  const int bd = l->scroll_threshold;
   int xpos = bd;
   glw_rctx_t rc0 = *rc;
 
@@ -265,8 +265,8 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
       if(xpos - l->filtered_pos < bd) {
 	l->current_pos = xpos - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(xpos - l->filtered_pos + rc0.rc_width > width0) {
-	l->current_pos = xpos + rc0.rc_width - width0;
+      } else if(xpos - l->filtered_pos + rc0.rc_width > width0 - bd) {
+	l->current_pos = xpos + rc0.rc_width - width0 - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
@@ -620,6 +620,10 @@ glw_list_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_BLUR_FALLOFF:
       l->blur_falloff = va_arg(ap, double);
       l->noclip = 1;
+      break;
+
+    case GLW_ATTRIB_SCROLL_THRESHOLD:
+      l->scroll_threshold = va_arg(ap, int);
       break;
 
     default:

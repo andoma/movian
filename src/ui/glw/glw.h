@@ -123,6 +123,7 @@ typedef enum {
   GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_FILL,
   GLW_ATTRIB_SPACING,
+  GLW_ATTRIB_SCROLL_THRESHOLD,
   GLW_ATTRIB_X_SPACING,
   GLW_ATTRIB_Y_SPACING,
   GLW_ATTRIB_SATURATION,
@@ -1118,6 +1119,7 @@ do {						\
   case GLW_ATTRIB_SPACING:                      \
   case GLW_ATTRIB_X_SPACING:                    \
   case GLW_ATTRIB_Y_SPACING:                    \
+  case GLW_ATTRIB_SCROLL_THRESHOLD:             \
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_ANGLE:			\
