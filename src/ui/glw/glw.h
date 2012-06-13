@@ -652,7 +652,8 @@ typedef struct glw_root {
    */
   LIST_HEAD(,  glw_text_bitmap) gr_gtbs;
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
-  hts_cond_t gr_gtb_render_cond;
+  TAILQ_HEAD(, glw_text_bitmap) gr_gtb_dim_queue;
+  hts_cond_t gr_gtb_work_cond;
 
   int gr_fontsize;
   int gr_font_domain;

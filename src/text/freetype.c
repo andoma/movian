@@ -74,7 +74,7 @@ typedef struct face {
 
   FT_Face face;
   char *url;
- 
+  int current_size;
   int *family_id_vec;
   uint8_t style;
   int persistent;
@@ -492,6 +492,27 @@ face_find(int uc, uint8_t style, int family_id)
   return f;
 }
 
+
+/**
+ *
+ */
+static void
+face_set_size(face_t *f, int size)
+{
+  if(f->current_size == size)
+    return;
+
+  FT_Size_RequestRec  req;
+  req.type = FT_SIZE_REQUEST_TYPE_REAL_DIM;
+  req.width = size << 6;
+  req.height = size << 6;
+  req.horiResolution = 0;
+  req.vertResolution = 0;
+  FT_Request_Size(f->face, &req);
+  f->current_size = size;
+}
+
+
 /**
  *
  */
@@ -523,15 +544,7 @@ glyph_get(int uc, int size, uint8_t style, int family_id)
 
     gi = FT_Get_Char_Index(f->face, uc);
 
-    FT_Size_RequestRec  req;
-    req.type = FT_SIZE_REQUEST_TYPE_REAL_DIM;
-    req.width = size << 6;
-    req.height = size << 6;
-    req.horiResolution = 0;
-    req.vertResolution = 0;
-    
-    FT_Request_Size(f->face, &req);
-
+    face_set_size(f, size);
 
     if((err = FT_Load_Glyph(f->face, gi, FT_LOAD_FORCE_AUTOHINT)) != 0)
       return NULL;
@@ -1059,7 +1072,8 @@ text_render0(const uint32_t *uc, const int len,
       continue;
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
-      FT_Get_Kerning(g->face->face, prev, g->gi, FT_KERNING_DEFAULT, &delta); 
+      face_set_size(g->face, current_size);
+      FT_Get_Kerning(g->face->face, prev, g->gi, FT_KERNING_DEFAULT, &delta);
       items[out].kerning = delta.x;
     } else {
       items[out].kerning = 0;
@@ -1147,8 +1161,8 @@ text_render0(const uint32_t *uc, const int len,
 	
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
-			 g->face->family_id_vec[0]);
-	  if(w >= max_width - eg->adv_x) {
+				  g->face->family_id_vec[0]);
+	  if(w > max_width) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
 	      j--;
@@ -1166,7 +1180,7 @@ text_render0(const uint32_t *uc, const int len,
 	  }
 	} else {
 
-	  if(w >= max_width) {
+	  if(w > max_width) {
 	    pmflags |= PIXMAP_TEXT_TRUNCATED;
 	    li->count = j;
 	    break;
@@ -1188,7 +1202,7 @@ text_render0(const uint32_t *uc, const int len,
     return NULL;
   }
 
-  int target_width  = siz_x / 64 + 3; /// +3 ???
+  int target_width  = siz_x / 64;
   int target_height = 0;
   int margin = 0;
 
@@ -1255,42 +1269,47 @@ text_render0(const uint32_t *uc, const int len,
   // --- allocate and init pixmap
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
+		     flags & TR_RENDER_NO_OUTPUT ? PIXMAP_NULL :
 		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, 1);
+
   if(pm != NULL) {
     pm->pm_lines = lines;
     pm->pm_flags = pmflags;
     pm->pm_margin = margin;
+
+    if(pm->pm_data != NULL) {
   
-    if(flags & TR_RENDER_DEBUG) {
-      uint8_t *data = pm->pm_pixels;
-      for(i = 0; i < pm->pm_height; i+=3)
-	memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
+      if(flags & TR_RENDER_DEBUG) {
+	uint8_t *data = pm->pm_pixels;
+	for(i = 0; i < pm->pm_height; i+=3)
+	  memset(data + i * pm->pm_linesize, 0xc0, pm->pm_linesize);
 
-      int y;
-      int l = color_output ? 4 : 2;
-      for(i = 0; i < pm->pm_width; i+=3)
-	for(y = 0; y < pm->pm_height; y++)
-	  memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
-    }
+	int y;
+	int l = color_output ? 4 : 2;
+	for(i = 0; i < pm->pm_width; i+=3)
+	  for(y = 0; y < pm->pm_height; y++)
+	    memset(data + y * pm->pm_linesize + i * l, 0xc0, l);
+      }
 
-    if(flags & TR_RENDER_CHARACTER_POS) {
-      pm->pm_charposlen = len;
-      pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
-    }
+      if(flags & TR_RENDER_CHARACTER_POS) {
+	pm->pm_charposlen = len;
+	pm->pm_charpos = malloc(2 * pm->pm_charposlen * sizeof(int));
+      }
 
-    if(need_shadow_pass) {
+      if(need_shadow_pass) {
+	draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		    origin_y, margin, 0);
+	pixmap_box_blur(pm, 4, 4);
+      }
+
+      if(need_outline_pass)
+	draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
+		    origin_y, margin, 1);
+
+
       draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		  origin_y, margin, 0);
-      pixmap_box_blur(pm, 4, 4);
+		  origin_y, margin, 2);
     }
-
-    if(need_outline_pass)
-      draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		  origin_y, margin, 1);
-
-
-    draw_glyphs(pm, &lq, target_height, siz_x, items, start_x, start_y,
-		origin_y, margin, 2);
   }
   free(items);
 
