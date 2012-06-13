@@ -113,7 +113,7 @@ pixmap_t *
 pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
 {
   int bpp = bytes_per_pixel(type);
-  if(bpp == 0 || rowalign < 1)
+  if(rowalign < 1)
     return NULL;
 
   rowalign--;
@@ -124,13 +124,16 @@ pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
   pm->pm_height = height;
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
-  pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height);
-  if(pm->pm_data == NULL) {
-    free(pm);
-    return NULL;
+
+  if(pm->pm_linesize > 0) {
+    pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height);
+    if(pm->pm_data == NULL) {
+      free(pm);
+      return NULL;
+    }
+    memset(pm->pm_data, 0, pm->pm_linesize * pm->pm_height);
   }
 
-  memset(pm->pm_data, 0, pm->pm_linesize * pm->pm_height);
   pm->pm_aspect = (float)width / (float)height;
   return pm;
 }

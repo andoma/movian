@@ -30,6 +30,7 @@ typedef enum {
   PIXMAP_GIF,
   PIXMAP_SVG,
   PIXMAP_coded,
+  PIXMAP_NULL,
   PIXMAP_BGR32,
   PIXMAP_RGB24,
   PIXMAP_IA,
