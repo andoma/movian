@@ -38,6 +38,8 @@ extern const char *showtime_dataroot(void);
 #define DISABLE_CACHE ((int *)-2)
 #define NOT_MODIFIED ((void *)-1)
 
+#define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
+
 #define ONLY_CACHED(p) ((p) != BYPASS_CACHE && (p) != NULL)
 
 // NLS
