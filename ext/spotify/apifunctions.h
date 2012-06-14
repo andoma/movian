@@ -2,34 +2,41 @@
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 static const char*(*f_sp_error_message)(sp_error error);
 static sp_error(*f_sp_session_create)(const sp_session_config *config, sp_session **sess);
-static void(*f_sp_session_release)(sp_session *sess);
-static void(*f_sp_session_login)(sp_session *session, const char *username, const char *password, bool remember_me, const char *blob);
+static sp_error(*f_sp_session_release)(sp_session *sess);
+static sp_error(*f_sp_session_login)(sp_session *session, const char *username, const char *password, bool remember_me, const char *blob);
 static sp_error(*f_sp_session_relogin)(sp_session *session);
 static int(*f_sp_session_remembered_user)(sp_session *session, char *buffer, size_t buffer_size);
-static void(*f_sp_session_forget_me)(sp_session *session);
+static const char *(*f_sp_session_user_name)(sp_session *session);
+static sp_error(*f_sp_session_forget_me)(sp_session *session);
 static sp_user *(*f_sp_session_user)(sp_session *session);
-static void(*f_sp_session_logout)(sp_session *session);
-static void(*f_sp_session_flush_caches)(sp_session *session);
+static sp_error(*f_sp_session_logout)(sp_session *session);
+static sp_error(*f_sp_session_flush_caches)(sp_session *session);
 static sp_connectionstate(*f_sp_session_connectionstate)(sp_session *session);
 static void *(*f_sp_session_userdata)(sp_session *session);
-static void(*f_sp_session_set_cache_size)(sp_session *session, size_t size);
-static void(*f_sp_session_process_events)(sp_session *session, int *next_timeout);
+static sp_error(*f_sp_session_set_cache_size)(sp_session *session, size_t size);
+static sp_error(*f_sp_session_process_events)(sp_session *session, int *next_timeout);
 static sp_error(*f_sp_session_player_load)(sp_session *session, sp_track *track);
-static void(*f_sp_session_player_seek)(sp_session *session, int offset);
-static void(*f_sp_session_player_play)(sp_session *session, bool play);
-static void(*f_sp_session_player_unload)(sp_session *session);
+static sp_error(*f_sp_session_player_seek)(sp_session *session, int offset);
+static sp_error(*f_sp_session_player_play)(sp_session *session, bool play);
+static sp_error(*f_sp_session_player_unload)(sp_session *session);
 static sp_error(*f_sp_session_player_prefetch)(sp_session *session, sp_track *track);
 static sp_playlistcontainer *(*f_sp_session_playlistcontainer)(sp_session *session);
 static sp_playlist *(*f_sp_session_inbox_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_create)(sp_session *session);
 static sp_playlist *(*f_sp_session_starred_for_user_create)(sp_session *session, const char *canonical_username);
 static sp_playlistcontainer *(*f_sp_session_publishedcontainer_for_user_create)(sp_session *session, const char *canonical_username);
-static void(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
-static void(*f_sp_session_preferred_offline_bitrate)(sp_session *session, sp_bitrate bitrate, bool allow_resync);
+static sp_error(*f_sp_session_preferred_bitrate)(sp_session *session, sp_bitrate bitrate);
+static sp_error(*f_sp_session_preferred_offline_bitrate)(sp_session *session, sp_bitrate bitrate, bool allow_resync);
 static bool(*f_sp_session_get_volume_normalization)(sp_session *session);
-static void(*f_sp_session_set_volume_normalization)(sp_session *session, bool on);
-static void(*f_sp_session_set_connection_type)(sp_session *session, sp_connection_type type);
-static void(*f_sp_session_set_connection_rules)(sp_session *session, sp_connection_rules rules);
+static sp_error(*f_sp_session_set_volume_normalization)(sp_session *session, bool on);
+static sp_error(*f_sp_session_set_private_session)(sp_session *session, bool enabled);
+static bool(*f_sp_session_is_private_session)(sp_session *session);
+static sp_error(*f_sp_session_set_scrobbling)(sp_session *session, sp_social_provider provider, sp_scrobbling_state state);
+static sp_error(*f_sp_session_is_scrobbling)(sp_session *session, sp_social_provider provider, sp_scrobbling_state* state);
+  SP_LIBEXPORT(sp_error) sp_session_is_scrobbling_possible(sp_session *session, sp_social_provider provider, bool* out);
+static sp_error(*f_sp_session_set_social_credentials)(sp_session *session, sp_social_provider provider, const char* username, const char* password);
+static sp_error(*f_sp_session_set_connection_type)(sp_session *session, sp_connection_type type);
+static sp_error(*f_sp_session_set_connection_rules)(sp_session *session, sp_connection_rules rules);
 static int(*f_sp_offline_tracks_to_sync)(sp_session *session);
 static int(*f_sp_offline_num_playlists)(sp_session *session);
 static bool(*f_sp_offline_sync_get_status)(sp_session *session, sp_offline_sync_status *status);
@@ -38,9 +45,9 @@ static int(*f_sp_session_user_country)(sp_session *session);
 static sp_link *(*f_sp_link_create_from_string)(const char *link);
 static sp_link *(*f_sp_link_create_from_track)(sp_track *track, int offset);
 static sp_link *(*f_sp_link_create_from_album)(sp_album *album);
-static sp_link *(*f_sp_link_create_from_album_cover)(sp_album *album);
+static sp_link *(*f_sp_link_create_from_album_cover)(sp_album *album, sp_image_size size);
 static sp_link *(*f_sp_link_create_from_artist)(sp_artist *artist);
-static sp_link *(*f_sp_link_create_from_artist_portrait)(sp_artist *artist);
+static sp_link *(*f_sp_link_create_from_artist_portrait)(sp_artist *artist, sp_image_size size);
 static sp_link *(*f_sp_link_create_from_artistbrowse_portrait)(sp_artistbrowse *arb, int index);
 static sp_link *(*f_sp_link_create_from_search)(sp_search *search);
 static sp_link *(*f_sp_link_create_from_playlist)(sp_playlist *playlist);
@@ -53,8 +60,8 @@ static sp_track *(*f_sp_link_as_track_and_offset)(sp_link *link, int *offset);
 static sp_album *(*f_sp_link_as_album)(sp_link *link);
 static sp_artist *(*f_sp_link_as_artist)(sp_link *link);
 static sp_user *(*f_sp_link_as_user)(sp_link *link);
-static void(*f_sp_link_add_ref)(sp_link *link);
-static void(*f_sp_link_release)(sp_link *link);
+static sp_error(*f_sp_link_add_ref)(sp_link *link);
+static sp_error(*f_sp_link_release)(sp_link *link);
 static bool(*f_sp_track_is_loaded)(sp_track *track);
 static sp_error(*f_sp_track_error)(sp_track *track);
 static sp_track_offline_status(*f_sp_track_offline_get_status)(sp_track *track);
@@ -64,7 +71,7 @@ static bool(*f_sp_track_is_autolinked)(sp_session *session, sp_track *track);
 static sp_track *(*f_sp_track_get_playable)(sp_session *session, sp_track *track);
 static bool(*f_sp_track_is_placeholder)(sp_track *track);
 static bool(*f_sp_track_is_starred)(sp_session *session, sp_track *track);
-static void(*f_sp_track_set_starred)(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
+static sp_error(*f_sp_track_set_starred)(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
 static int(*f_sp_track_num_artists)(sp_track *track);
 static sp_artist *(*f_sp_track_artist)(sp_track *track, int index);
 static sp_album *(*f_sp_track_album)(sp_track *track);
@@ -74,22 +81,22 @@ static int(*f_sp_track_popularity)(sp_track *track);
 static int(*f_sp_track_disc)(sp_track *track);
 static int(*f_sp_track_index)(sp_track *track);
 static sp_track *(*f_sp_localtrack_create)(const char *artist, const char *title, const char *album, int length);
-static void(*f_sp_track_add_ref)(sp_track *track);
-static void(*f_sp_track_release)(sp_track *track);
+static sp_error(*f_sp_track_add_ref)(sp_track *track);
+static sp_error(*f_sp_track_release)(sp_track *track);
 static bool(*f_sp_album_is_loaded)(sp_album *album);
 static bool(*f_sp_album_is_available)(sp_album *album);
 static sp_artist *(*f_sp_album_artist)(sp_album *album);
-static const byte *(*f_sp_album_cover)(sp_album *album);
+static const byte *(*f_sp_album_cover)(sp_album *album, sp_image_size size);
 static const char *(*f_sp_album_name)(sp_album *album);
 static int(*f_sp_album_year)(sp_album *album);
 static sp_albumtype(*f_sp_album_type)(sp_album *album);
-static void(*f_sp_album_add_ref)(sp_album *album);
-static void(*f_sp_album_release)(sp_album *album);
+static sp_error(*f_sp_album_add_ref)(sp_album *album);
+static sp_error(*f_sp_album_release)(sp_album *album);
 static const char *(*f_sp_artist_name)(sp_artist *artist);
 static bool(*f_sp_artist_is_loaded)(sp_artist *artist);
-static const byte *(*f_sp_artist_portrait)(sp_artist *artist);
-static void(*f_sp_artist_add_ref)(sp_artist *artist);
-static void(*f_sp_artist_release)(sp_artist *artist);
+static const byte *(*f_sp_artist_portrait)(sp_artist *artist, sp_image_size size);
+static sp_error(*f_sp_artist_add_ref)(sp_artist *artist);
+static sp_error(*f_sp_artist_release)(sp_artist *artist);
 static sp_albumbrowse *(*f_sp_albumbrowse_create)(sp_session *session, sp_album *album, albumbrowse_complete_cb *callback, void *userdata);
 static bool(*f_sp_albumbrowse_is_loaded)(sp_albumbrowse *alb);
 static sp_error(*f_sp_albumbrowse_error)(sp_albumbrowse *alb);
@@ -101,8 +108,8 @@ static int(*f_sp_albumbrowse_num_tracks)(sp_albumbrowse *alb);
 static sp_track *(*f_sp_albumbrowse_track)(sp_albumbrowse *alb, int index);
 static const char *(*f_sp_albumbrowse_review)(sp_albumbrowse *alb);
 static int(*f_sp_albumbrowse_backend_request_duration)(sp_albumbrowse *alb);
-static void(*f_sp_albumbrowse_add_ref)(sp_albumbrowse *alb);
-static void(*f_sp_albumbrowse_release)(sp_albumbrowse *alb);
+static sp_error(*f_sp_albumbrowse_add_ref)(sp_albumbrowse *alb);
+static sp_error(*f_sp_albumbrowse_release)(sp_albumbrowse *alb);
 static sp_artistbrowse *(*f_sp_artistbrowse_create)(sp_session *session, sp_artist *artist, sp_artistbrowse_type type, artistbrowse_complete_cb *callback, void *userdata);
 static bool(*f_sp_artistbrowse_is_loaded)(sp_artistbrowse *arb);
 static sp_error(*f_sp_artistbrowse_error)(sp_artistbrowse *arb);
@@ -119,19 +126,19 @@ static int(*f_sp_artistbrowse_num_similar_artists)(sp_artistbrowse *arb);
 static sp_artist *(*f_sp_artistbrowse_similar_artist)(sp_artistbrowse *arb, int index);
 static const char *(*f_sp_artistbrowse_biography)(sp_artistbrowse *arb);
 static int(*f_sp_artistbrowse_backend_request_duration)(sp_artistbrowse *arb);
-static void(*f_sp_artistbrowse_add_ref)(sp_artistbrowse *arb);
-static void(*f_sp_artistbrowse_release)(sp_artistbrowse *arb);
+static sp_error(*f_sp_artistbrowse_add_ref)(sp_artistbrowse *arb);
+static sp_error(*f_sp_artistbrowse_release)(sp_artistbrowse *arb);
 static sp_image *(*f_sp_image_create)(sp_session *session, const byte image_id[20]);
 static sp_image *(*f_sp_image_create_from_link)(sp_session *session, sp_link *l);
-static void(*f_sp_image_add_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
-static void(*f_sp_image_remove_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
+static sp_error(*f_sp_image_add_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
+static sp_error(*f_sp_image_remove_load_callback)(sp_image *image, image_loaded_cb *callback, void *userdata);
 static bool(*f_sp_image_is_loaded)(sp_image *image);
 static sp_error(*f_sp_image_error)(sp_image *image);
 static sp_imageformat(*f_sp_image_format)(sp_image *image);
 static const void *(*f_sp_image_data)(sp_image *image, size_t *data_size);
 static const byte *(*f_sp_image_image_id)(sp_image *image);
-static void(*f_sp_image_add_ref)(sp_image *image);
-static void(*f_sp_image_release)(sp_image *image);
+static sp_error(*f_sp_image_add_ref)(sp_image *image);
+static sp_error(*f_sp_image_release)(sp_image *image);
 static sp_search *(*f_sp_search_create)(sp_session *session, const char *query, int track_offset, int track_count, int album_offset, int album_count, int artist_offset, int artist_count, int playlist_offset, int playlist_count, sp_search_type search_type, search_complete_cb *callback, void *userdata);
 static bool(*f_sp_search_is_loaded)(sp_search *search);
 static sp_error(*f_sp_search_error)(sp_search *search);
@@ -150,11 +157,12 @@ static const char *(*f_sp_search_did_you_mean)(sp_search *search);
 static int(*f_sp_search_total_tracks)(sp_search *search);
 static int(*f_sp_search_total_albums)(sp_search *search);
 static int(*f_sp_search_total_artists)(sp_search *search);
-static void(*f_sp_search_add_ref)(sp_search *search);
-static void(*f_sp_search_release)(sp_search *search);
+static int(*f_sp_search_total_playlists)(sp_search *search);
+static sp_error(*f_sp_search_add_ref)(sp_search *search);
+static sp_error(*f_sp_search_release)(sp_search *search);
 static bool(*f_sp_playlist_is_loaded)(sp_playlist *playlist);
-static void(*f_sp_playlist_add_callbacks)(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
-static void(*f_sp_playlist_remove_callbacks)(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
+static sp_error(*f_sp_playlist_add_callbacks)(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
+static sp_error(*f_sp_playlist_remove_callbacks)(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
 static int(*f_sp_playlist_num_tracks)(sp_playlist *playlist);
 static sp_track *(*f_sp_playlist_track)(sp_playlist *playlist, int index);
 static int(*f_sp_playlist_track_create_time)(sp_playlist *playlist, int index);
@@ -166,8 +174,8 @@ static const char *(*f_sp_playlist_name)(sp_playlist *playlist);
 static sp_error(*f_sp_playlist_rename)(sp_playlist *playlist, const char *new_name);
 static sp_user *(*f_sp_playlist_owner)(sp_playlist *playlist);
 static bool(*f_sp_playlist_is_collaborative)(sp_playlist *playlist);
-static void(*f_sp_playlist_set_collaborative)(sp_playlist *playlist, bool collaborative);
-static void(*f_sp_playlist_set_autolink_tracks)(sp_playlist *playlist, bool link);
+static sp_error(*f_sp_playlist_set_collaborative)(sp_playlist *playlist, bool collaborative);
+static sp_error(*f_sp_playlist_set_autolink_tracks)(sp_playlist *playlist, bool link);
 static const char *(*f_sp_playlist_get_description)(sp_playlist *playlist);
 static bool(*f_sp_playlist_get_image)(sp_playlist *playlist, byte image[20]);
 static bool(*f_sp_playlist_has_pending_changes)(sp_playlist *playlist);
@@ -176,18 +184,18 @@ static sp_error(*f_sp_playlist_remove_tracks)(sp_playlist *playlist, const int *
 static sp_error(*f_sp_playlist_reorder_tracks)(sp_playlist *playlist, const int *tracks, int num_tracks, int new_position);
 static unsigned int(*f_sp_playlist_num_subscribers)(sp_playlist *playlist);
 static sp_subscribers *(*f_sp_playlist_subscribers)(sp_playlist *playlist);
-static void(*f_sp_playlist_subscribers_free)(sp_subscribers *subscribers);
-static void(*f_sp_playlist_update_subscribers)(sp_session *session, sp_playlist *playlist);
+static sp_error(*f_sp_playlist_subscribers_free)(sp_subscribers *subscribers);
+static sp_error(*f_sp_playlist_update_subscribers)(sp_session *session, sp_playlist *playlist);
 static bool(*f_sp_playlist_is_in_ram)(sp_session *session, sp_playlist *playlist);
-static void(*f_sp_playlist_set_in_ram)(sp_session *session, sp_playlist *playlist, bool in_ram);
+static sp_error(*f_sp_playlist_set_in_ram)(sp_session *session, sp_playlist *playlist, bool in_ram);
 static sp_playlist *(*f_sp_playlist_create)(sp_session *session, sp_link *link);
-static void(*f_sp_playlist_set_offline_mode)(sp_session *session, sp_playlist *playlist, bool offline);
+static sp_error(*f_sp_playlist_set_offline_mode)(sp_session *session, sp_playlist *playlist, bool offline);
 static sp_playlist_offline_status(*f_sp_playlist_get_offline_status)(sp_session *session, sp_playlist *playlist);
 static int(*f_sp_playlist_get_offline_download_completed)(sp_session *session, sp_playlist *playlist);
-static void(*f_sp_playlist_add_ref)(sp_playlist *playlist);
-static void(*f_sp_playlist_release)(sp_playlist *playlist);
-static void(*f_sp_playlistcontainer_add_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
-static void(*f_sp_playlistcontainer_remove_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
+static sp_error(*f_sp_playlist_add_ref)(sp_playlist *playlist);
+static sp_error(*f_sp_playlist_release)(sp_playlist *playlist);
+static sp_error(*f_sp_playlistcontainer_add_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
+static sp_error(*f_sp_playlistcontainer_remove_callbacks)(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 static int(*f_sp_playlistcontainer_num_playlists)(sp_playlistcontainer *pc);
 static bool(*f_sp_playlistcontainer_is_loaded)(sp_playlistcontainer *pc);
 static sp_playlist *(*f_sp_playlistcontainer_playlist)(sp_playlistcontainer *pc, int index);
@@ -200,20 +208,20 @@ static sp_error(*f_sp_playlistcontainer_remove_playlist)(sp_playlistcontainer *p
 static sp_error(*f_sp_playlistcontainer_move_playlist)(sp_playlistcontainer *pc, int index, int new_position, bool dry_run);
 static sp_error(*f_sp_playlistcontainer_add_folder)(sp_playlistcontainer *pc, int index, const char *name);
 static sp_user *(*f_sp_playlistcontainer_owner)(sp_playlistcontainer *pc);
-static void(*f_sp_playlistcontainer_add_ref)(sp_playlistcontainer *pc);
-static void(*f_sp_playlistcontainer_release)(sp_playlistcontainer *pc);
+static sp_error(*f_sp_playlistcontainer_add_ref)(sp_playlistcontainer *pc);
+static sp_error(*f_sp_playlistcontainer_release)(sp_playlistcontainer *pc);
 static int(*f_sp_playlistcontainer_get_unseen_tracks)(sp_playlistcontainer *pc, sp_playlist *playlist, sp_track **tracks, int num_tracks);
 static int(*f_sp_playlistcontainer_clear_unseen_tracks)(sp_playlistcontainer *pc, sp_playlist *playlist);
 static const char *(*f_sp_user_canonical_name)(sp_user *user);
 static const char *(*f_sp_user_display_name)(sp_user *user);
 static bool(*f_sp_user_is_loaded)(sp_user *user);
-static void(*f_sp_user_add_ref)(sp_user *user);
-static void(*f_sp_user_release)(sp_user *user);
+static sp_error(*f_sp_user_add_ref)(sp_user *user);
+static sp_error(*f_sp_user_release)(sp_user *user);
 static sp_toplistbrowse *(*f_sp_toplistbrowse_create)(sp_session *session, sp_toplisttype type, sp_toplistregion region, const char *username, toplistbrowse_complete_cb *callback, void *userdata);
 static bool(*f_sp_toplistbrowse_is_loaded)(sp_toplistbrowse *tlb);
 static sp_error(*f_sp_toplistbrowse_error)(sp_toplistbrowse *tlb);
-static void(*f_sp_toplistbrowse_add_ref)(sp_toplistbrowse *tlb);
-static void(*f_sp_toplistbrowse_release)(sp_toplistbrowse *tlb);
+static sp_error(*f_sp_toplistbrowse_add_ref)(sp_toplistbrowse *tlb);
+static sp_error(*f_sp_toplistbrowse_release)(sp_toplistbrowse *tlb);
 static int(*f_sp_toplistbrowse_num_artists)(sp_toplistbrowse *tlb);
 static sp_artist *(*f_sp_toplistbrowse_artist)(sp_toplistbrowse *tlb, int index);
 static int(*f_sp_toplistbrowse_num_albums)(sp_toplistbrowse *tlb);
@@ -223,8 +231,8 @@ static sp_track *(*f_sp_toplistbrowse_track)(sp_toplistbrowse *tlb, int index);
 static int(*f_sp_toplistbrowse_backend_request_duration)(sp_toplistbrowse *tlb);
 static sp_inbox *(*f_sp_inbox_post_tracks)(sp_session *session, const char *user, sp_track * const *tracks, int num_tracks, const char *message, inboxpost_complete_cb *callback, void *userdata);
 static sp_error(*f_sp_inbox_error)(sp_inbox *inbox);
-static void(*f_sp_inbox_add_ref)(sp_inbox *inbox);
-static void(*f_sp_inbox_release)(sp_inbox *inbox);
+static sp_error(*f_sp_inbox_add_ref)(sp_inbox *inbox);
+static sp_error(*f_sp_inbox_release)(sp_inbox *inbox);
 static const char *(*f_sp_build_id)(void);
 static const char *resolvesym(void *handle) {
 if((f_sp_error_message=dlsym(handle,"sp_error_message"))==NULL) return "sp_error_message";
@@ -233,6 +241,7 @@ if((f_sp_session_release=dlsym(handle,"sp_session_release"))==NULL) return "sp_s
 if((f_sp_session_login=dlsym(handle,"sp_session_login"))==NULL) return "sp_session_login";
 if((f_sp_session_relogin=dlsym(handle,"sp_session_relogin"))==NULL) return "sp_session_relogin";
 if((f_sp_session_remembered_user=dlsym(handle,"sp_session_remembered_user"))==NULL) return "sp_session_remembered_user";
+if((f_sp_session_user_name=dlsym(handle,"sp_session_user_name"))==NULL) return "sp_session_user_name";
 if((f_sp_session_forget_me=dlsym(handle,"sp_session_forget_me"))==NULL) return "sp_session_forget_me";
 if((f_sp_session_user=dlsym(handle,"sp_session_user"))==NULL) return "sp_session_user";
 if((f_sp_session_logout=dlsym(handle,"sp_session_logout"))==NULL) return "sp_session_logout";
@@ -255,6 +264,12 @@ if((f_sp_session_preferred_bitrate=dlsym(handle,"sp_session_preferred_bitrate"))
 if((f_sp_session_preferred_offline_bitrate=dlsym(handle,"sp_session_preferred_offline_bitrate"))==NULL) return "sp_session_preferred_offline_bitrate";
 if((f_sp_session_get_volume_normalization=dlsym(handle,"sp_session_get_volume_normalization"))==NULL) return "sp_session_get_volume_normalization";
 if((f_sp_session_set_volume_normalization=dlsym(handle,"sp_session_set_volume_normalization"))==NULL) return "sp_session_set_volume_normalization";
+if((f_sp_session_set_private_session=dlsym(handle,"sp_session_set_private_session"))==NULL) return "sp_session_set_private_session";
+if((f_sp_session_is_private_session=dlsym(handle,"sp_session_is_private_session"))==NULL) return "sp_session_is_private_session";
+if((f_sp_session_set_scrobbling=dlsym(handle,"sp_session_set_scrobbling"))==NULL) return "sp_session_set_scrobbling";
+if((f_sp_session_is_scrobbling=dlsym(handle,"sp_session_is_scrobbling"))==NULL) return "sp_session_is_scrobbling";
+  SP_LIBEXPORT(sp_error) sp_session_is_scrobbling_possible(sp_session *session, sp_social_provider provider, bool* out);
+if((f_sp_session_set_social_credentials=dlsym(handle,"sp_session_set_social_credentials"))==NULL) return "sp_session_set_social_credentials";
 if((f_sp_session_set_connection_type=dlsym(handle,"sp_session_set_connection_type"))==NULL) return "sp_session_set_connection_type";
 if((f_sp_session_set_connection_rules=dlsym(handle,"sp_session_set_connection_rules"))==NULL) return "sp_session_set_connection_rules";
 if((f_sp_offline_tracks_to_sync=dlsym(handle,"sp_offline_tracks_to_sync"))==NULL) return "sp_offline_tracks_to_sync";
@@ -377,6 +392,7 @@ if((f_sp_search_did_you_mean=dlsym(handle,"sp_search_did_you_mean"))==NULL) retu
 if((f_sp_search_total_tracks=dlsym(handle,"sp_search_total_tracks"))==NULL) return "sp_search_total_tracks";
 if((f_sp_search_total_albums=dlsym(handle,"sp_search_total_albums"))==NULL) return "sp_search_total_albums";
 if((f_sp_search_total_artists=dlsym(handle,"sp_search_total_artists"))==NULL) return "sp_search_total_artists";
+if((f_sp_search_total_playlists=dlsym(handle,"sp_search_total_playlists"))==NULL) return "sp_search_total_playlists";
 if((f_sp_search_add_ref=dlsym(handle,"sp_search_add_ref"))==NULL) return "sp_search_add_ref";
 if((f_sp_search_release=dlsym(handle,"sp_search_release"))==NULL) return "sp_search_release";
 if((f_sp_playlist_is_loaded=dlsym(handle,"sp_playlist_is_loaded"))==NULL) return "sp_playlist_is_loaded";
@@ -461,6 +477,7 @@ return NULL;}
 #define f_sp_session_login sp_session_login
 #define f_sp_session_relogin sp_session_relogin
 #define f_sp_session_remembered_user sp_session_remembered_user
+#define f_sp_session_user_name sp_session_user_name
 #define f_sp_session_forget_me sp_session_forget_me
 #define f_sp_session_user sp_session_user
 #define f_sp_session_logout sp_session_logout
@@ -483,6 +500,12 @@ return NULL;}
 #define f_sp_session_preferred_offline_bitrate sp_session_preferred_offline_bitrate
 #define f_sp_session_get_volume_normalization sp_session_get_volume_normalization
 #define f_sp_session_set_volume_normalization sp_session_set_volume_normalization
+#define f_sp_session_set_private_session sp_session_set_private_session
+#define f_sp_session_is_private_session sp_session_is_private_session
+#define f_sp_session_set_scrobbling sp_session_set_scrobbling
+#define f_sp_session_is_scrobbling sp_session_is_scrobbling
+  SP_LIBEXPORT(sp_error) sp_session_is_scrobbling_possible(sp_session *session, sp_social_provider provider, bool* out);
+#define f_sp_session_set_social_credentials sp_session_set_social_credentials
 #define f_sp_session_set_connection_type sp_session_set_connection_type
 #define f_sp_session_set_connection_rules sp_session_set_connection_rules
 #define f_sp_offline_tracks_to_sync sp_offline_tracks_to_sync
@@ -605,6 +628,7 @@ return NULL;}
 #define f_sp_search_total_tracks sp_search_total_tracks
 #define f_sp_search_total_albums sp_search_total_albums
 #define f_sp_search_total_artists sp_search_total_artists
+#define f_sp_search_total_playlists sp_search_total_playlists
 #define f_sp_search_add_ref sp_search_add_ref
 #define f_sp_search_release sp_search_release
 #define f_sp_playlist_is_loaded sp_playlist_is_loaded

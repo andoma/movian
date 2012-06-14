@@ -43,7 +43,6 @@ extern "C" {
 /* Includes */
 #include <stddef.h>
 
-
 #ifdef _WIN32
 typedef unsigned __int64 sp_uint64;
 #else
@@ -127,6 +126,9 @@ typedef enum sp_error {
 	SP_ERROR_OFFLINE_NOT_ALLOWED       = 34, ///< This user is not allowed to use offline mode
 	SP_ERROR_OFFLINE_LICENSE_LOST      = 35, ///< The license for this device has been lost. Most likely because the user used offline on three other device
 	SP_ERROR_OFFLINE_LICENSE_ERROR     = 36, ///< The Spotify license server does not respond correctly
+	SP_ERROR_LASTFM_AUTH_ERROR         = 39, ///< A LastFM scrobble authentication error has occurred
+	SP_ERROR_INVALID_ARGUMENT          = 40, ///< An invalid argument was specified
+	SP_ERROR_SYSTEM_FAILURE            = 41, ///< An operating system error
 } sp_error;
 
 /**
@@ -160,7 +162,7 @@ SP_LIBEXPORT(const char*) sp_error_message(sp_error error);
  * returned from sp_session_create(). Future versions of the library will provide you with some kind of mechanism
  * to request an updated version of the library.
  */
-#define SPOTIFY_API_VERSION 11
+#define SPOTIFY_API_VERSION 12
 
 /**
  * Describes the current state of the connection
@@ -254,6 +256,15 @@ typedef enum sp_track_offline_status {
 } sp_track_offline_status;
 
 /**
+ * Image size
+ */
+typedef enum sp_image_size {
+	SP_IMAGE_SIZE_NORMAL                  = 0, ///< Normal image size
+	SP_IMAGE_SIZE_SMALL                   = 1, ///< Small image size
+	SP_IMAGE_SIZE_LARGE                   = 2, ///< Large image size
+} sp_image_size;
+
+/**
  * Buffer stats used by get_audio_buffer_stats callback
  */
 typedef struct sp_audio_buffer_stats {
@@ -312,6 +323,20 @@ typedef enum sp_artistbrowse_type {
 					   will both return 0
 				      */
 } sp_artistbrowse_type;
+
+typedef enum sp_social_provider {
+  SP_SOCIAL_PROVIDER_SPOTIFY,
+  SP_SOCIAL_PROVIDER_FACEBOOK,
+  SP_SOCIAL_PROVIDER_LASTFM,
+} sp_social_provider;
+
+typedef enum sp_scrobbling_state {
+  SP_SCROBBLING_STATE_USE_GLOBAL_SETTING    = 0,
+  SP_SCROBBLING_STATE_LOCAL_ENABLED         = 1,
+  SP_SCROBBLING_STATE_LOCAL_DISABLED        = 2,
+  SP_SCROBBLING_STATE_GLOBAL_ENABLED        = 3,
+  SP_SCROBBLING_STATE_GLOBAL_DISABLED       = 4,
+} sp_scrobbling_state;
 
 
 /**
@@ -588,6 +613,28 @@ typedef struct sp_session_callbacks {
 	 */
 	void (SP_CALLCONV *credentials_blob_updated)(sp_session *session, const char *blob);
 
+	/**
+	 * Called when the connection state has updated - such as when logging in, going offline, etc. 
+	 *
+	 * @param[in]  session	  Session
+	 */
+	void (SP_CALLCONV *connectionstate_updated)(sp_session *session);
+
+   /**
+	* Called when there is a scrobble error event
+	*
+	* @param[in]  session    Session
+	* @param[in]  error      Scrobble error. Currently SP_ERROR_LASTFM_AUTH_ERROR.
+	*/
+	void (SP_CALLCONV *scrobble_error)(sp_session *session, sp_error error);
+
+   /**
+	* Called when there is a change in the private session mode
+	*
+	* @param[in]  session    Session
+	* @param[in]  isPrivate  True if in private session, false otherwhise
+	*/
+	void (SP_CALLCONV *private_session_mode_changed)(sp_session *session, bool is_private);
 } sp_session_callbacks;
 
 /**
@@ -639,6 +686,20 @@ typedef struct sp_session_config {
 	 */
 	const char *device_id;
 
+	/**
+	 * Url to the proxy server that should be used.
+	 * The format is protocol://<host>:port (where protocal is http/https/socks4/socks5)
+	 */
+	const char *proxy;
+	/**
+	 * Username to authenticate with proxy server
+	 */
+	const char *proxy_username;
+	/**
+	 * Password to authenticate with proxy server
+	 */
+	const char *proxy_password;
+
 
 	/**
 	 * Path to API trace file
@@ -674,8 +735,10 @@ SP_LIBEXPORT(sp_error) sp_session_create(const sp_session_config *config, sp_ses
  * Release the session. This will clean up all data and connections associated with the session
  *
  * @param[in]   sess      Session object returned from sp_session_create()
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_release(sp_session *sess);
+SP_LIBEXPORT(sp_error) sp_session_release(sp_session *sess);
 
 
 /**
@@ -696,8 +759,10 @@ SP_LIBEXPORT(void) sp_session_release(sp_session *sess);
  * @param[in]   remember_me         If set, the username / password will be remembered by libspotify
  * @param[in]   blob	            If you have received a blob in the #credentials_blob_updated
  *                                  you can pas this here instead of password
+ * @return                          One of the following errors, from ::sp_error
+ *                                  SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_login(sp_session *session, const char *username, const char *password, bool remember_me, const char *blob);
+SP_LIBEXPORT(sp_error) sp_session_login(sp_session *session, const char *username, const char *password, bool remember_me, const char *blob);
 
 
 /**
@@ -730,12 +795,23 @@ SP_LIBEXPORT(int) sp_session_remembered_user(sp_session *session, char *buffer, 
 
 
 /**
+ * Get a pointer to a string representing the user's login username.
+ *
+ * @param[in]   session         Your session object
+ *
+ * @return                   A string representing the login username.
+ */
+SP_LIBEXPORT(const char *) sp_session_user_name(sp_session *session);
+
+
+/**
  * Remove stored credentials in libspotify. If no credentials are currently stored, nothing will happen.
  *
  * @param[in]   session      Your session object
- *
+ * @return                   One of the following errors, from ::sp_error
+ *                           SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_forget_me(sp_session *session);
+SP_LIBEXPORT(sp_error) sp_session_forget_me(sp_session *session);
 
 
 /**
@@ -754,8 +830,10 @@ SP_LIBEXPORT(sp_user *) sp_session_user(sp_session *session);
  * logged in. Otherwise, the settings and cache may be lost.
  *
  * @param[in]   session    Your session object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_logout(sp_session *session);
+SP_LIBEXPORT(sp_error) sp_session_logout(sp_session *session);
 
 
 /**
@@ -767,8 +845,10 @@ SP_LIBEXPORT(void) sp_session_logout(sp_session *session);
  * should never need to be used.
  *
  * @param[in]   session    Your session object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_flush_caches(sp_session *session);
+SP_LIBEXPORT(sp_error) sp_session_flush_caches(sp_session *session);
 
 /**
  * The connection state of the specified session.
@@ -795,16 +875,20 @@ SP_LIBEXPORT(void *) sp_session_userdata(sp_session *session);
  * @param[in]   size       Maximum cache size in megabytes.
  *                         Setting it to 0 (the default) will let libspotify automatically
  *                         resize the cache (10% of disk free space)
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_set_cache_size(sp_session *session, size_t size);
+SP_LIBEXPORT(sp_error) sp_session_set_cache_size(sp_session *session, size_t size);
 
 /**
  * Make the specified session process any pending events
  *
  * @param[in]   session         Your session object
  * @param[out]  next_timeout    Stores the time (in milliseconds) until you should call this function again
+ * @return                      One of the following errors, from ::sp_error
+ *                              SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_process_events(sp_session *session, int *next_timeout);
+SP_LIBEXPORT(sp_error) sp_session_process_events(sp_session *session, int *next_timeout);
 
 /**
  * Loads the specified track
@@ -819,7 +903,6 @@ SP_LIBEXPORT(void) sp_session_process_events(sp_session *session, int *next_time
  * @return                 One of the following errors, from ::sp_error
  *                         SP_ERROR_OK
  *                         SP_ERROR_MISSING_CALLBACK
- *                         SP_ERROR_RESOURCE_NOT_LOADED
  *                         SP_ERROR_TRACK_NOT_PLAYABLE
  * 
  */
@@ -830,18 +913,20 @@ SP_LIBEXPORT(sp_error) sp_session_player_load(sp_session *session, sp_track *tra
  *
  * @param[in]   session    Your session object
  * @param[in]   offset     Track position, in milliseconds.
- *
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_player_seek(sp_session *session, int offset);
+SP_LIBEXPORT(sp_error) sp_session_player_seek(sp_session *session, int offset);
 
 /**
  * Play or pause the currently loaded track
  *
  * @param[in]   session    Your session object
  * @param[in]   play       If set to true, playback will occur. If set to false, the playback will be paused.
- *
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_player_play(sp_session *session, bool play);
+SP_LIBEXPORT(sp_error) sp_session_player_play(sp_session *session, bool play);
 
 /**
  * Stops the currently playing track
@@ -850,9 +935,10 @@ SP_LIBEXPORT(void) sp_session_player_play(sp_session *session, bool play);
  * playing track.
  *
  * @param[in]   session    Your session object
- *
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_player_unload(sp_session *session);
+SP_LIBEXPORT(sp_error) sp_session_player_unload(sp_session *session);
 
 /**
  * Prefetch a track
@@ -935,9 +1021,11 @@ SP_LIBEXPORT(sp_playlistcontainer *) sp_session_publishedcontainer_for_user_crea
  *
  * @param[in]  session        Session object
  * @param[in]  bitrate        Preferred bitrate, see ::sp_bitrate for possible values
- *
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
+ *                            SP_ERROR_INVALID_ARGUMENT
  */
-SP_LIBEXPORT(void) sp_session_preferred_bitrate(sp_session *session, sp_bitrate bitrate);
+SP_LIBEXPORT(sp_error) sp_session_preferred_bitrate(sp_session *session, sp_bitrate bitrate);
 
 
 /**
@@ -946,9 +1034,11 @@ SP_LIBEXPORT(void) sp_session_preferred_bitrate(sp_session *session, sp_bitrate 
  * @param[in]  session        Session object
  * @param[in]  bitrate        Preferred bitrate, see ::sp_bitrate for possible values
  * @param[in]  allow_resync   Set to true if libspotify should resynchronize already synchronized tracks. Usually you should set this to false.
- *
+ * @return                   One of the following errors, from ::sp_error
+ *                           SP_ERROR_OK
+ *                           SP_ERROR_INVALID_ARGUMENT
  */
-SP_LIBEXPORT(void) sp_session_preferred_offline_bitrate(sp_session *session, sp_bitrate bitrate, bool allow_resync);
+SP_LIBEXPORT(sp_error) sp_session_preferred_offline_bitrate(sp_session *session, sp_bitrate bitrate, bool allow_resync);
 
 
 /**
@@ -967,10 +1057,95 @@ SP_LIBEXPORT(bool) sp_session_get_volume_normalization(sp_session *session);
  *
  * @param[in]  session        Session object
  * @param[in]  on             True iff volume normalization should be enabled
- *
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_set_volume_normalization(sp_session *session, bool on);
+SP_LIBEXPORT(sp_error) sp_session_set_volume_normalization(sp_session *session, bool on);
 
+
+/**
+ * Set if private session is enabled. This disables sharing what the user is listening to
+ * to services such as Spotify Social, Facebook and LastFM. The private session will
+ * last for a time, and then libspotify will revert to the normal state. The private
+ * session is prolonged by user activity.
+ *
+ * @param[in]  session         Session object
+ * @param[in]  enabled         True iff private session should be enabled
+ * @return                     One of the following errors, from ::sp_error
+ *                             SP_ERROR_OK
+ */
+SP_LIBEXPORT(sp_error) sp_session_set_private_session(sp_session *session, bool enabled);
+
+/**
+ * Return True if private session is enabled
+ *
+ * @param[in]  session         Session object
+ *
+ * @return     True if private session is enabled
+ */
+SP_LIBEXPORT(bool) sp_session_is_private_session(sp_session *session);
+
+/**
+ * Set if scrobbling is enabled. This api allows setting local overrides of the global scrobbling settings.
+ * Changing the global settings are currently not supported.
+ *
+ * @param[in]  session         Session object
+ * @param[in]  provider        The scrobbling provider referred to
+ * @param[in]  state           The state to set the provider to
+ *
+ * @return     error code
+ *
+ * @see sp_social_provider
+ * @see sp_scrobbling_state
+ */
+SP_LIBEXPORT(sp_error) sp_session_set_scrobbling(sp_session *session, sp_social_provider provider, sp_scrobbling_state state);
+
+/**
+ * Return the scrobbling state. This makes it possible to find out if scrobbling is locally overrided or
+ * if the global setting is used.
+ *
+ * @param[in]  session         Session object
+ * @param[in]  provider        The scrobbling provider referred to
+ * @param[out] state           The output variable receiving the sp_scrobbling_state state
+ *
+ * @return     error code
+ */
+SP_LIBEXPORT(sp_error) sp_session_is_scrobbling(sp_session *session, sp_social_provider provider, sp_scrobbling_state* state);
+
+/**
+ * Return True if scrobbling settings should be shown to the user. Currently this setting is relevant
+ * only to the facebook provider.
+ * The returned value may be false if the user is not connected to facebook,
+ * or if the user has opted out from facebook social graph.
+ *
+ * @param[in]  session         Session object
+ * @param[in]  provider        The scrobbling provider referred to
+ * @param[out] out             True iff scrobbling is possible
+ *
+ * @return     error code
+ */
+  SP_LIBEXPORT(sp_error) sp_session_is_scrobbling_possible(sp_session *session, sp_social_provider provider, bool* out);
+
+/**
+ * Set the user's credentials with a social provider.
+ * Currently this is only relevant for LastFm
+ * Call sp_session_set_scrobbling to force an authentication attempt
+ * with the LastFm server. If authentication fails a scrobble_error callback will be
+ * sent.
+ *
+ * @param[in]  session         Session object
+ * @param[in]  provider        The scrobbling provider referred to
+ * @param[in]  username        The user name
+ * @param[in]  password        The password
+ *
+ * @return     error code
+
+ * @see sp_session_set_scrobbling
+ * @see sp_session_callbacks#scrobble_error
+ * @return                     One of the following errors, from ::sp_error
+ *                             SP_ERROR_OK
+ */
+SP_LIBEXPORT(sp_error) sp_session_set_social_credentials(sp_session *session, sp_social_provider provider, const char* username, const char* password);
 
 /**
  * Set to true if the connection is currently routed over a roamed connectivity
@@ -982,8 +1157,10 @@ SP_LIBEXPORT(void) sp_session_set_volume_normalization(sp_session *session, bool
  *             how libspotify should behave in respect to network activity and offline
  *             synchronization.
  * @see        sp_connection_type
+ * @return     One of the following errors, from ::sp_error
+ *             SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_set_connection_type(sp_session *session, sp_connection_type type);
+SP_LIBEXPORT(sp_error) sp_session_set_connection_type(sp_session *session, sp_connection_type type);
 
 
 /**
@@ -996,8 +1173,10 @@ SP_LIBEXPORT(void) sp_session_set_connection_type(sp_session *session, sp_connec
  *             how libspotify should behave in respect to network activity and offline
  *             synchronization.
  * @see        sp_connection_rules
+ * @return     One of the following errors, from ::sp_error
+ *             SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_session_set_connection_rules(sp_session *session, sp_connection_rules rules);
+SP_LIBEXPORT(sp_error) sp_session_set_connection_rules(sp_session *session, sp_connection_rules rules);
 
 
 
@@ -1124,13 +1303,14 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_album(sp_album *album);
  * Create an image link object from an album
  *
  * @param[in]   album      An album object
+ * @param[in]   size       The desired size of the image
  *
  * @return                 A link representing the album cover. Type is set to SP_LINKTYPE_IMAGE
  *
  * @note You need to release the link when you are done with it.
  * @see sp_link_release()
  */
-SP_LIBEXPORT(sp_link *) sp_link_create_from_album_cover(sp_album *album);
+SP_LIBEXPORT(sp_link *) sp_link_create_from_album_cover(sp_album *album, sp_image_size size);
 
 /**
  * Creates a link object from an artist
@@ -1148,6 +1328,7 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
  * Creates a link object pointing to an artist portrait
  *
  * @param[in]   artist     Artist browse object
+ * @param[in]   size       The desired size of the image
  *
  * @return                 A link object representing an image
  *
@@ -1155,7 +1336,7 @@ SP_LIBEXPORT(sp_link *) sp_link_create_from_artist(sp_artist *artist);
  * @see sp_link_release()
  * @see sp_artistbrowse_num_portraits()
  */
-SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artist *artist);
+SP_LIBEXPORT(sp_link *) sp_link_create_from_artist_portrait(sp_artist *artist, sp_image_size size);
 
 
 /**
@@ -1311,15 +1492,19 @@ SP_LIBEXPORT(sp_user *) sp_link_as_user(sp_link *link);
  * Increase the reference count of a link
  *
  * @param[in]   link       The link object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_link_add_ref(sp_link *link);
+SP_LIBEXPORT(sp_error) sp_link_add_ref(sp_link *link);
 
 /**
  * Decrease the reference count of a link
  *
  * @param[in]   link       The link object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_link_release(sp_link *link);
+SP_LIBEXPORT(sp_error) sp_link_release(sp_link *link);
 
 /** @} */
 
@@ -1458,7 +1643,7 @@ SP_LIBEXPORT(bool) sp_track_is_starred(sp_session *session, sp_track *track);
  * @note This will fail silently if playlists are disabled.
  * @see sp_set_playlists_enabled()
  */
-SP_LIBEXPORT(void) sp_track_set_starred(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
+SP_LIBEXPORT(sp_error) sp_track_set_starred(sp_session *session, sp_track *const*tracks, int num_tracks, bool star);
 
 /**
  * The number of artists performing on the specified track
@@ -1561,15 +1746,19 @@ SP_LIBEXPORT(sp_track *) sp_localtrack_create(const char *artist, const char *ti
  * Increase the reference count of a track
  *
  * @param[in]   track       The track object
+ * @return                  One of the following errors, from ::sp_error
+ *                          SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_track_add_ref(sp_track *track);
+SP_LIBEXPORT(sp_error) sp_track_add_ref(sp_track *track);
 
 /**
  * Decrease the reference count of a track
  *
  * @param[in]   track       The track object
+ * @return                  One of the following errors, from ::sp_error
+ *                          SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_track_release(sp_track *track);
+SP_LIBEXPORT(sp_error) sp_track_release(sp_track *track);
 
 /** @} */
 
@@ -1623,6 +1812,7 @@ SP_LIBEXPORT(sp_artist *) sp_album_artist(sp_album *album);
  * Return image ID representing the album's coverart.
  *
  * @param[in]   album      Album object
+ * @param[in]   size       The desired size of the image
  *
  * @return                 ID byte sequence that can be passed to sp_image_create()
  *                         If the album has no image or the metadata for the album is not
@@ -1630,7 +1820,7 @@ SP_LIBEXPORT(sp_artist *) sp_album_artist(sp_album *album);
  *
  * @see sp_image_create
  */
-SP_LIBEXPORT(const byte *) sp_album_cover(sp_album *album);
+SP_LIBEXPORT(const byte *) sp_album_cover(sp_album *album, sp_image_size size);
 
 /**
  * Return name of album
@@ -1667,15 +1857,19 @@ SP_LIBEXPORT(sp_albumtype) sp_album_type(sp_album *album);
  * Increase the reference count of an album
  *
  * @param[in]   album       The album object
+ * @return                  One of the following errors, from ::sp_error
+ *                          SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_album_add_ref(sp_album *album);
+SP_LIBEXPORT(sp_error) sp_album_add_ref(sp_album *album);
 
 /**
  * Decrease the reference count of an album
  *
  * @param[in]   album       The album object
+ * @return                  One of the following errors, from ::sp_error
+ *                          SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_album_release(sp_album *album);
+SP_LIBEXPORT(sp_error) sp_album_release(sp_album *album);
 
 /** @} */
 
@@ -1710,28 +1904,33 @@ SP_LIBEXPORT(bool) sp_artist_is_loaded(sp_artist *artist);
 /**
  * Return portrait for artist
  *
- * @param[in]   artist       The artist object
+ * @param[in]   artist     The artist object
+ * @param[in]   size       The desired size of the image
  *
  * @return                 ID byte sequence that can be passed to sp_image_create()
  *                         If the artist has no image or the metadata for the album is not
  *                         loaded yet, this function returns NULL.
  *
  */
-SP_LIBEXPORT(const byte *) sp_artist_portrait(sp_artist *artist);
+SP_LIBEXPORT(const byte *) sp_artist_portrait(sp_artist *artist, sp_image_size size);
 
 /**
  * Increase the reference count of a artist
  *
  * @param[in]   artist       The artist object
+ * @return                   One of the following errors, from ::sp_error
+ *                           SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_artist_add_ref(sp_artist *artist);
+SP_LIBEXPORT(sp_error) sp_artist_add_ref(sp_artist *artist);
 
 /**
  * Decrease the reference count of a artist
  *
  * @param[in]   artist       The artist object
+ * @return                   One of the following errors, from ::sp_error
+ *                           SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_artist_release(sp_artist *artist);
+SP_LIBEXPORT(sp_error) sp_artist_release(sp_artist *artist);
 
 /** @} */
 
@@ -1882,15 +2081,19 @@ SP_LIBEXPORT(int) sp_albumbrowse_backend_request_duration(sp_albumbrowse *alb);
  * Increase the reference count of an album browse result
  *
  * @param[in]   alb       The album browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_albumbrowse_add_ref(sp_albumbrowse *alb);
+SP_LIBEXPORT(sp_error) sp_albumbrowse_add_ref(sp_albumbrowse *alb);
 
 /**
  * Decrease the reference count of an album browse result
  *
  * @param[in]   alb       The album browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_albumbrowse_release(sp_albumbrowse *alb);
+SP_LIBEXPORT(sp_error) sp_albumbrowse_release(sp_albumbrowse *alb);
 
 /** @} */
 
@@ -2102,15 +2305,19 @@ SP_LIBEXPORT(int) sp_artistbrowse_backend_request_duration(sp_artistbrowse *arb)
  * Increase the reference count of an artist browse result
  *
  * @param[in]   arb       The artist browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_artistbrowse_add_ref(sp_artistbrowse *arb);
+SP_LIBEXPORT(sp_error) sp_artistbrowse_add_ref(sp_artistbrowse *arb);
 
 /**
  * Decrease the reference count of an artist browse result
  *
  * @param[in]   arb       The artist browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_artistbrowse_release(sp_artistbrowse *arb);
+SP_LIBEXPORT(sp_error) sp_artistbrowse_release(sp_artistbrowse *arb);
 
 /** @} */
 
@@ -2174,7 +2381,7 @@ SP_LIBEXPORT(sp_image *) sp_image_create_from_link(sp_session *session, sp_link 
  * @param[in]  userdata   Opaque pointer passed to \p callback
  *
  */
-SP_LIBEXPORT(void) sp_image_add_load_callback(sp_image *image, image_loaded_cb *callback, void *userdata);
+SP_LIBEXPORT(sp_error) sp_image_add_load_callback(sp_image *image, image_loaded_cb *callback, void *userdata);
 
 /**
  * Remove an image load callback previously added with sp_image_add_load_callback()
@@ -2183,9 +2390,10 @@ SP_LIBEXPORT(void) sp_image_add_load_callback(sp_image *image, image_loaded_cb *
  * @param[in]  callback   Callback that will not be called when image has been
  *                        fetched.
  * @param[in]  userdata   Opaque pointer passed to \p callback
- *
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_image_remove_load_callback(sp_image *image, image_loaded_cb *callback, void *userdata);
+SP_LIBEXPORT(sp_error) sp_image_remove_load_callback(sp_image *image, image_loaded_cb *callback, void *userdata);
 
 /**
  * Check if an image is loaded. Before the image is loaded, the rest of the
@@ -2244,15 +2452,19 @@ SP_LIBEXPORT(const byte *) sp_image_image_id(sp_image *image);
  * Increase the reference count of an image
  *
  * @param[in]   image     The image object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_image_add_ref(sp_image *image);
+SP_LIBEXPORT(sp_error) sp_image_add_ref(sp_image *image);
 
 /**
  * Decrease the reference count of an image
  *
  * @param[in]   image     The image object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_image_release(sp_image *image);
+SP_LIBEXPORT(sp_error) sp_image_release(sp_image *image);
 
 /** @} */
 
@@ -2466,18 +2678,33 @@ SP_LIBEXPORT(int) sp_search_total_albums(sp_search *search);
 SP_LIBEXPORT(int) sp_search_total_artists(sp_search *search);
 
 /**
+ * Return the total number of playlists for the search query - regardless of the interval requested at creation.
+ * If this value is larger than the interval specified at creation of the search object, more search results are available.
+ * To fetch these, create a new search object with a new interval.
+ *
+ * @param[in]  search     Search object
+ *
+ * @return                The total number of playlists matching the original query
+ */
+SP_LIBEXPORT(int) sp_search_total_playlists(sp_search *search);
+
+/**
  * Increase the reference count of a search result
  *
  * @param[in]   search    The search result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_search_add_ref(sp_search *search);
+SP_LIBEXPORT(sp_error) sp_search_add_ref(sp_search *search);
 
 /**
  * Decrease the reference count of a search result
  *
  * @param[in]   search    The search result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_search_release(sp_search *search);
+SP_LIBEXPORT(sp_error) sp_search_release(sp_search *search);
 
 /** @} */
 
@@ -2667,7 +2894,7 @@ SP_LIBEXPORT(bool) sp_playlist_is_loaded(sp_playlist *playlist);
  * @sa sp_playlist_remove_callbacks
  *
  */
-SP_LIBEXPORT(void) sp_playlist_add_callbacks(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
+SP_LIBEXPORT(sp_error) sp_playlist_add_callbacks(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
 
 /**
  * Unregister interest in the given playlist
@@ -2682,9 +2909,11 @@ SP_LIBEXPORT(void) sp_playlist_add_callbacks(sp_playlist *playlist, sp_playlist_
  * @param[in]  callbacks  Callbacks, see #sp_playlist_callbacks
  * @param[in]  userdata   Userdata to be passed to callbacks
  * @sa sp_playlist_add_callbacks
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  *
  */
-SP_LIBEXPORT(void) sp_playlist_remove_callbacks(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
+SP_LIBEXPORT(sp_error) sp_playlist_remove_callbacks(sp_playlist *playlist, sp_playlist_callbacks *callbacks, void *userdata);
 
 /**
  * Return number of tracks in the given playlist
@@ -2808,9 +3037,10 @@ SP_LIBEXPORT(bool) sp_playlist_is_collaborative(sp_playlist *playlist);
  *
  * @param[in]  playlist       Playlist object
  * @param[in]  collaborative  True or false
- *
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_set_collaborative(sp_playlist *playlist, bool collaborative);
+SP_LIBEXPORT(sp_error) sp_playlist_set_collaborative(sp_playlist *playlist, bool collaborative);
 
 /**
  * Set autolinking state for a playlist.
@@ -2820,9 +3050,10 @@ SP_LIBEXPORT(void) sp_playlist_set_collaborative(sp_playlist *playlist, bool col
  *
  * @param[in]  playlist       Playlist object
  * @param[in]  link           True or false
- *
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_set_autolink_tracks(sp_playlist *playlist, bool link);
+SP_LIBEXPORT(sp_error) sp_playlist_set_autolink_tracks(sp_playlist *playlist, bool link);
 
 
 /**
@@ -2937,8 +3168,10 @@ SP_LIBEXPORT(sp_subscribers *) sp_playlist_subscribers(sp_playlist *playlist);
  * Free object returned from sp_playlist_subscribers()
  *
  * @param[in] subscribers   Subscribers object
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_subscribers_free(sp_subscribers *subscribers);
+SP_LIBEXPORT(sp_error) sp_playlist_subscribers_free(sp_subscribers *subscribers);
 
 /**
  * Ask library to update the subscription count for a playlist
@@ -2952,8 +3185,10 @@ SP_LIBEXPORT(void) sp_playlist_subscribers_free(sp_subscribers *subscribers);
  *
  * @param[in]  session        Session object
  * @param[in]  playlist       Playlist object
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_update_subscribers(sp_session *session, sp_playlist *playlist);
+SP_LIBEXPORT(sp_error) sp_playlist_update_subscribers(sp_session *session, sp_playlist *playlist);
 
 /**
  * Return whether a playlist is loaded in RAM (as opposed to only
@@ -2993,8 +3228,10 @@ SP_LIBEXPORT(bool) sp_playlist_is_in_ram(sp_session *session, sp_playlist *playl
  * @param[in]  session        Session object
  * @param[in]  playlist       Playlist object
  * @param[in]  in_ram         Controls whether or not to keep the list in RAM
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_set_in_ram(sp_session *session, sp_playlist *playlist, bool in_ram);
+SP_LIBEXPORT(sp_error) sp_playlist_set_in_ram(sp_session *session, sp_playlist *playlist, bool in_ram);
 
 /**
  * Load an already existing playlist without adding it to a playlistcontainer.
@@ -3014,8 +3251,10 @@ SP_LIBEXPORT(sp_playlist *) sp_playlist_create(sp_session *session, sp_link *lin
  * @param[in]  session        Session object
  * @param[in]  playlist       Playlist object
  * @param[in]  offline        True iff playlist should be offline, false otherwise
+ * @return                    One of the following errors, from ::sp_error
+ *                            SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_set_offline_mode(sp_session *session, sp_playlist *playlist, bool offline);
+SP_LIBEXPORT(sp_error) sp_playlist_set_offline_mode(sp_session *session, sp_playlist *playlist, bool offline);
 
 /**
  * Get offline status for a playlist
@@ -3048,15 +3287,19 @@ SP_LIBEXPORT(int) sp_playlist_get_offline_download_completed(sp_session *session
  * Increase the reference count of a playlist
  *
  * @param[in]   playlist       The playlist object
+ * @return                     One of the following errors, from ::sp_error
+ *                             SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_add_ref(sp_playlist *playlist);
+SP_LIBEXPORT(sp_error) sp_playlist_add_ref(sp_playlist *playlist);
 
 /**
  * Decrease the reference count of a playlist
  *
  * @param[in]   playlist       The playlist object
+ * @return                     One of the following errors, from ::sp_error
+ *                             SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlist_release(sp_playlist *playlist);
+SP_LIBEXPORT(sp_error) sp_playlist_release(sp_playlist *playlist);
 
 
 /**
@@ -3124,8 +3367,10 @@ typedef struct sp_playlistcontainer_callbacks {
  *
  * @sa sp_session_playlistcontainer()
  * @sa sp_playlistcontainer_remove_callbacks
+ * @return              One of the following errors, from ::sp_error
+ *                      SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlistcontainer_add_callbacks(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
+SP_LIBEXPORT(sp_error) sp_playlistcontainer_add_callbacks(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 
 
 /**
@@ -3137,8 +3382,10 @@ SP_LIBEXPORT(void) sp_playlistcontainer_add_callbacks(sp_playlistcontainer *pc, 
  *
  * @sa sp_session_playlistcontainer()
  * @sa sp_playlistcontainer_add_callbacks
+ * @return              One of the following errors, from ::sp_error
+ *                      SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlistcontainer_remove_callbacks(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
+SP_LIBEXPORT(sp_error) sp_playlistcontainer_remove_callbacks(sp_playlistcontainer *pc, sp_playlistcontainer_callbacks *callbacks, void *userdata);
 
 /**
  * Return the number of playlists in the given playlist container
@@ -3301,15 +3548,19 @@ SP_LIBEXPORT(sp_user *) sp_playlistcontainer_owner(sp_playlistcontainer *pc);
  * Increase reference count on playlistconatiner object
  *
  * @param[in]  pc   Playlist container.
+ * @return          One of the following errors, from ::sp_error
+ *                  SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlistcontainer_add_ref(sp_playlistcontainer *pc);
+SP_LIBEXPORT(sp_error) sp_playlistcontainer_add_ref(sp_playlistcontainer *pc);
 
 /**
  * Release reference count on playlistconatiner object
  *
  * @param[in]  pc   Playlist container.
+ * @return          One of the following errors, from ::sp_error
+ *                  SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_playlistcontainer_release(sp_playlistcontainer *pc);
+SP_LIBEXPORT(sp_error) sp_playlistcontainer_release(sp_playlistcontainer *pc);
 
 /**
  * Get the number of new tracks in a playlist since the corresponding
@@ -3392,15 +3643,19 @@ SP_LIBEXPORT(bool) sp_user_is_loaded(sp_user *user);
  * Increase the reference count of an user
  *
  * @param[in]   user       The user object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_user_add_ref(sp_user *user);
+SP_LIBEXPORT(sp_error) sp_user_add_ref(sp_user *user);
 
 /**
  * Decrease the reference count of an user
  *
  * @param[in]   user       The user object
+ * @return                 One of the following errors, from ::sp_error
+ *                         SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_user_release(sp_user *user);
+SP_LIBEXPORT(sp_error) sp_user_release(sp_user *user);
 
 /** @} */
 
@@ -3498,15 +3753,19 @@ SP_LIBEXPORT(sp_error) sp_toplistbrowse_error(sp_toplistbrowse *tlb);
  * Increase the reference count of an toplist browse result
  *
  * @param[in]   tlb       The toplist browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_toplistbrowse_add_ref(sp_toplistbrowse *tlb);
+SP_LIBEXPORT(sp_error) sp_toplistbrowse_add_ref(sp_toplistbrowse *tlb);
 
 /**
  * Decrease the reference count of an toplist browse result
  *
  * @param[in]   tlb       The toplist browse result object
+ * @return                One of the following errors, from ::sp_error
+ *                        SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_toplistbrowse_release(sp_toplistbrowse *tlb);
+SP_LIBEXPORT(sp_error) sp_toplistbrowse_release(sp_toplistbrowse *tlb);
 
 /**
  * Given an toplist browse object, return number of artists
@@ -3635,15 +3894,19 @@ SP_LIBEXPORT(sp_error) sp_inbox_error(sp_inbox *inbox);
  * Increase the reference count of a inbox result
  *
  * @param[in]   inbox    The inbox result object
+ * @return               One of the following errors, from ::sp_error
+ *                       SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_inbox_add_ref(sp_inbox *inbox);
+SP_LIBEXPORT(sp_error) sp_inbox_add_ref(sp_inbox *inbox);
 
 /**
  * Decrease the reference count of a inbox result
  *
  * @param[in]   inbox    The inbox result object
+ * @return               One of the following errors, from ::sp_error
+ *                       SP_ERROR_OK
  */
-SP_LIBEXPORT(void) sp_inbox_release(sp_inbox *inbox);
+SP_LIBEXPORT(sp_error) sp_inbox_release(sp_inbox *inbox);
 
 /** @} */
 
