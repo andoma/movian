@@ -7,9 +7,8 @@
 * Context menu
 * Item view
 * Now playing
-* Fix add items in bookmarks view
 * Fix zoom thing when stenciled images are reloaded
-* Load directly on startup
+* Load plugins directly on startup
 
 Plugin
 

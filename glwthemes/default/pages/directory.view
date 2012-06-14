@@ -43,6 +43,12 @@ widget(keyintercept, {
 		       )
 	      + ".view";
 	  });
+
+
+	  widget(loader, {
+	    noInitialTransform: true;
+	    source: select($page.model.mayadd, "listitems/add.view", "");
+	  });
 	});
 	widget(slider_y, {
 	  bind("list");
