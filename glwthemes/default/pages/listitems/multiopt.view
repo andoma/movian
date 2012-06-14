@@ -1,0 +1,51 @@
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(dummy, { width: $ui.size;});
+
+    widget(label, {
+      font: $ui.font;
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+      
+      caption: $self.metadata.title + ":";
+      ellipsize: true;
+    });
+
+    space(1);
+    widget(deck, {
+      id: "choiceDeck";
+      effect: blend;
+      time: 0.1;
+      cloner($self.options, label, {
+	align: right;
+	font: $ui.font;
+	shadow: true;
+	outline: true;
+	caption: $self.title;
+      });
+    });
+
+      
+    widget(container_x, {
+      widget(icon, {
+	focusable: true;
+	source: select(isFocused() || isHovered(), "options-down-highlighted.png", "options-down.png");
+	onEvent(activate, targetedEvent("choiceDeck", Increase));
+      });
+
+      widget(icon, {
+	focusable: true;
+	source: select(isFocused() || isHovered(), "options-up-highlighted.png", "options-up.png");
+	onEvent(activate, targetedEvent("choiceDeck", Decrease));
+      });
+    });
+  });
+});

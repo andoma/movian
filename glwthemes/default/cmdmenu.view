@@ -1,0 +1,288 @@
+#import "theme://common.view"
+
+$view.sizer = $ui.size / 5;
+
+#define SquareButtonDisplacement() {
+  padding: $view.sizer * -1.5 * iir(isHovered() || isFocused(), 3) + $view.sizer * iir(isPressed(), 3);
+}
+
+#define BUTTON(ICON, EVENT, ENABLED, WEIGHT = 0.5) {
+  widget(displacement, {
+    SquareButtonDisplacement();
+
+    widget(backdrop, {
+      focusable: select(ENABLED, WEIGHT, false);
+      onEvent(activate, EVENT);
+      alpha: iir(select(ENABLED, 1, 0.2), 4);
+
+      color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+      SquareButtonBack();
+
+      widget(frontdrop, {
+	SquareButtonFront();
+
+	widget(icon, {
+	  color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+	  source: "dataroot://resources/svg/" + ICON + ".svg";
+	  shadow: true;
+	  sizeScale: 1.5;
+	});
+      });
+    });
+  });
+}
+
+
+
+#define BUTTONTXT(ICON, CAPTION, EVENT, ENABLED, ID) {
+  widget(container_x, {
+    spacing: 6;
+
+    widget(displacement, {
+      SquareButtonDisplacement();
+
+      widget(backdrop, {
+	focusable: select(ENABLED, 0.5, false);a
+	onEvent(activate, EVENT);
+
+	($view.ID) = isFocused() || isPressed() || isHovered();
+
+	alpha: iir(select(ENABLED, 1, 0.2), 4);
+
+	color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+
+	SquareButtonBack();
+
+	widget(frontdrop, {
+	  SquareButtonFront();
+	  widget(icon, {
+	    color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+	    source: "dataroot://resources/svg/" + ICON + ".svg";
+	    shadow: true;
+	    sizeScale: 1.5;
+	  });
+	});
+      });
+    });
+
+    widget(label, {
+      caption: CAPTION;
+      font: $ui.font;
+      shadow: true;
+      outline: true;
+      alpha: iir($view.ID, 6);
+    });
+  });
+}
+
+
+
+
+
+#define BUTTONTOGGLE(ICON, STATE, ENABLED) {
+  widget(displacement, {
+    SquareButtonDisplacement();
+    
+    widget(backdrop, {
+      
+      focusable: select(ENABLED, 0.5, false);
+      onEvent(activate, { (STATE) = !STATE; });
+      alpha: iir(select(ENABLED, 1, 0.2), 4);
+      color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+      SquareButtonBack();
+      
+      widget(frontdrop, {
+	SquareButtonFront();
+	widget(icon, {
+	  color: iir(select(STATE, 1, 0.2), 4);
+	  source: "dataroot://resources/svg/" + ICON + ".svg";
+	  shadow: true;
+	  sizeScale: 1.5;
+	});
+      });
+    });
+  });
+}
+
+
+
+
+
+#define BUTTONTXTTOGGLE(ICON, CAPTION1, CAPTION2, STATE, ENABLED, ID) {
+  widget(container_x, {
+    spacing: 10;
+
+    widget(displacement, {
+      SquareButtonDisplacement();
+
+      widget(backdrop, {
+	focusable: select(ENABLED, 0.5, false);
+	onEvent(activate, { (STATE) = !STATE; });
+	alpha: iir(select(ENABLED, 1, 0.2), 4);
+	color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+	($view.ID) = isFocused() || isPressed() || isHovered();
+
+	SquareButtonBack();
+
+	widget(frontdrop, {
+	  SquareButtonFront();
+
+	  widget(icon, {
+	    color: iir(select(STATE, 1, 0.2), 4);
+	    source: "dataroot://resources/svg/" + ICON + ".svg";
+	    shadow: true;
+	    sizeScale: 1.5;
+	  });
+	});
+      });
+    });
+
+    widget(label, {
+      caption: select(STATE, CAPTION2, CAPTION1);
+      font: $ui.font;
+      shadow: true;
+      outline: true;
+      alpha: iir($view.ID, 6);
+    });
+  });
+}
+
+
+
+
+widget(list_y, {
+  padding: 40;
+  widget(container_x, {
+    BUTTON("SeekBack", event(SeekReverse), $global.media.current.canSeek);
+    widget(deck, {
+      effect: flipHorizontal;
+      noInitialTransform: true;
+      time: 0.2;
+      
+      BUTTON("Play", event(Play), true);
+      BUTTON("Pause", event(Pause), true);
+      page: $global.media.current.playstatus == "play";
+    });
+    
+    BUTTON("SeekFwd", event(SeekForward), $global.media.current.canSeek);
+  });
+
+  widget(container_x, {
+    BUTTON("SkipBack", event(PreviousTrack),
+	   $global.media.current.canSkipBackward);
+    BUTTON("Stop", event(Stop), true);
+    BUTTON("SkipNext", event(NextTrack),
+	   $global.media.current.canSkipForward);
+  });
+
+
+
+  widget(container_x, {
+    hidden: !$global.media.current.canShuffle &&
+      !$global.media.current.canRepeat;
+      
+    widget(dummy, {
+      width: SquareButtonSize();
+    });
+
+    BUTTONTOGGLE("Repeat",
+		 $global.media.current.repeat,
+		 $global.media.current.canRepeat);
+
+    BUTTONTOGGLE("Shuffle",
+		 $global.media.current.shuffle,
+		 $global.media.current.canShuffle);
+  });
+
+  widget(container_x, {
+    padding: [SquareButtonSize(), 0];
+    BUTTONTXTTOGGLE("Bookmark",
+		    _("Add current page to bookmarks"),
+		    _("Remove current page from bookmarks"),
+		    $global.nav.currentpage.bookmarked, true,
+		    bookmarks);
+  });
+
+
+  widget(container_x, {
+    padding: [SquareButtonSize(), 0];
+
+    BUTTONTXT("Settings", _("Open settings"), {
+      $ui.menu = false;
+      fireEvent(navOpen("settings:"));
+    }, true, settings);
+  });
+
+
+
+
+  widget(fader, {
+    height: $ui.size * 8;
+    weight: 1;
+    plane: [0,1,0,1];
+    alphaFallOff: 1;
+    blurFallOff: 0.2;
+    widget(mirror, {
+      alpha: 0.4;
+      widget(list_x, {
+	spacing: 5;
+	
+	  &self.focused = focusedChild();
+	
+	cloner($global.media.current.seekindex.positions, container_z, {
+	  width: $ui.size * 14.2222;
+
+	  focusable: true;
+	  onEvent(activate, {
+	    $global.media.current.currenttime = $self.timestamp;
+	  });
+
+	  widget(backdrop, {
+	    alpha: select($clone.ready, 0, 1);
+	    align: bottom;
+	  
+	    source: "theme://graphics/white.png";
+	    stencil: "theme://graphics/stencil.png";
+	    stencilBorder: 16;
+	    color: 0;
+	  });
+
+	  widget(image, {
+	    align: bottom;
+
+	    $clone.ready = isReady();
+	    source: $self.image;
+	    stencil: "theme://graphics/stencil.png";
+	    stencilBorder: 16;
+	    color: isFocused() + 0.6;
+	  });
+
+
+	  widget(label, {
+	    align: bottom;
+	    font: $ui.font;
+	    shadow: true;
+	    outline: true;
+	    caption: value2duration($self.timestamp);
+	    color: isFocused() + 0.6;
+	  });
+
+	  widget(backdrop, {
+	    source: "theme://graphics/border16o.png";
+	    border: 8;
+	    borderOnly: true;
+	    color: isFocused();
+	  });
+
+	  widget(container_y, {
+	    space(1);
+	    widget(throbber, {
+	      alpha: iir(!$clone.ready, 8);
+	    });
+	    space(1);
+	  });
+	});
+      });
+    });
+  });
+});

@@ -1,0 +1,11 @@
+widget(container_y, {
+  padding: [0,10,0,0];
+
+  widget(label, {
+    sizeScale: 1.5;
+    font: $ui.font;
+    shadow: true;
+    outline: true;
+    caption: $self.metadata.title;
+  });
+});

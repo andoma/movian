@@ -1,0 +1,52 @@
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+  onEvent(activate, navOpen($self.url));
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: $self.metadata.icon ?? 
+	translate($self.subtype,
+		  "dataroot://resources/svg/Settings.svg",
+		  "sound", "dataroot://resources/svg/Sound.svg",
+		  "audio", "dataroot://resources/svgs/Music.svg",
+		  "video", "dataroot://resources/svg/Movie.svg",
+		  "bookmark", "dataroot://resources/svg/Bookmark.svg",
+		  "display", "dataroot://resources/svg/Display.svg",
+		  "search", "dataroot://resources/svg/Search.svg",
+		  "keymap", "dataroot://resources/svg/Keyboard.svg",
+		  "subtitle", "dataroot://resources/svg/Script.svg"
+		 );
+    });
+      
+    widget(container_y, {
+      widget(label, {
+	font: $ui.font;
+	shadow: true;
+	outline: true;
+	color: select(isFocused(), 1.0, 0.6);
+	
+	caption: $self.metadata.title;
+	sizeScale: 1.2;
+      });
+
+      widget(label, {
+	font: $ui.font;
+	shadow: true;
+	outline: true;
+	color: select(isFocused(), 1.0, 0.6);
+	caption: $self.metadata.shortdesc;
+	sizeScale: 0.8;
+      });
+    });
+  });
+});

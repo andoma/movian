@@ -1,0 +1,57 @@
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(dummy, { width: $ui.size;});
+
+    widget(label, {
+      font: $ui.font;
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+      
+      caption: $self.metadata.title + ":";
+      ellipsize: true;
+    });
+
+    widget(slider_x, {
+      focusable: true;
+      min: $self.min;
+      max: $self.max;
+      step: $self.step;
+      bind($self.value);
+      
+      widget(backdrop, {
+	source: "theme://graphics/plate8.png";
+	margin: 3;
+	border: 4;
+	padding: -4;
+	alphaSelf: 0.3;
+	color: 0;
+	
+	widget(backdrop, {
+	  source: "theme://graphics/border-tiny.png";
+	  border: 4;
+	  padding: [8, -4];
+	  alphaSelf: 0.5;
+	  borderOnly: true;
+	  
+	  widget(label, {
+	    padding: [10,0];
+	    sizeScale: 0.8;
+	    align: center;
+	    caption: fmt("%d %s", $self.value, $self.unit);
+	    font: $ui.font;
+	    shadow: true;
+	    outline: true;
+	  });
+	});
+      });
+    });
+  });
+});

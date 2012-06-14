@@ -1,0 +1,118 @@
+$ui.monofont = loadFont("dataroot://resources/fonts/UbuntuMono-Regular.ttf");
+$ui.font = loadFont("fonts/bankgthd.ttf");
+
+onEvent(menu, {
+  $ui.menu = !$ui.menu;
+});
+
+onEvent(logwindow, {
+  $ui.logwindow = !$ui.logwindow;
+});
+
+onEvent(back, {
+  $ui.menu = false;
+}, $ui.menu);
+
+onEvent(back, {
+  $ui.logwindow = false;
+}, $ui.logwindow);
+
+widget(container_z, {
+
+  widget(backdrop, {
+    source: "graphics/background.jpg";
+    color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+  });
+
+  widget(underscan, {
+    widget(container_z, {
+      widget(layer, {
+	alpha: iir(1 - $ui.screensaverActive, 8);
+
+	widget(playfield, {
+	  time: 0.1;
+	  effect: blend;
+	  noInitialTransform: true;
+    
+	  delta($ui.fullwindow, wantFullWindow());
+    
+	  cloner($global.nav.pages, loader, {
+	    time: 0.2;
+	    noInitialTransform: true;
+	    source: translate($page.model.contents, 
+			      "pages/" + $page.model.type + ".view",
+			      "album", "pages/album.view",
+			      "images", "pages/images.view");
+	  });
+	});
+
+	widget(loader, {
+	  hidden: !$ui.menu;
+	  noInitialTransform: true;
+	  source: "cmdmenu.view";
+	});
+
+	cloner($global.popups, loader, {
+	  source: "popups/" + $self.type + ".view";
+	});
+
+        #import "log.view"
+      });
+
+      // Now playing info
+      widget(container_y, {
+	.align = bottom;
+	widget(expander_y, {
+
+	  $ui.playdeckheight = getHeight();
+	  .expansion = scurve($ui.showplaydeck && $global.media.current.type, 0.3);
+	  widget(loader, {
+	    .time = 0.3;
+	    .effect = blend;
+	    .noInitialTransform = true;
+	    .source = "theme://playdecks/" + $global.media.current.type + ".view";
+	  });
+	});
+      });
+    });
+  });
+
+
+  // Overlay that always should be visible even if screen saver is active
+
+  widget(container_y, {
+    padding: 30;
+    align: top;
+    cloner($global.notifications.nodes, container_x, {
+      space(1);
+      widget(backdrop, {
+	source: "theme://graphics/blackdrop16.png";
+	border: 7;
+	alphaSelf: 0.5;
+
+	widget(container_x, {
+	  spacing: 10;
+	  widget(icon, {
+	    sizeScale: 1.5;
+	    source: "dataroot://resources/svg/Alert.svg";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+
+	  widget(label, {
+	    caption: $self.text;
+	    font: $ui.font;
+	    shadow: true;
+	    sizeScale: 1.5;
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+	});
+      });
+    });
+  });
+});

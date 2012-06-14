@@ -1,0 +1,53 @@
+
+widget(container_y, {
+  hidden: !$ui.logwindow;
+
+  spacing: 2;
+
+  widget(label, {
+    caption: _("System log");
+    font: $ui.monofont;
+    sizeScale: 1.5;
+    align: center;
+    outline: true;
+    shadow: true;
+  });
+
+  widget(quad, {
+    height: 1;
+  });
+
+  widget(container_x, {
+    padding: [4,0];
+    widget(list_y, {
+      id: "list";
+      cloner($global.logbuffer, label, {
+	caption: $self.prefix + $self.message;
+	ellipsize: true;
+	font: $ui.monofont;
+	outline: true;
+	shadow: true;
+	sizeScale: 0.8;
+
+	color: translate($self.severity, [1,1,1],
+			 "DEBUG", [0.5, 1, 0.5],
+			 "INFO",  [1, 1, 0.5],
+			 "ERROR", [1, 0.5, 0.5]);
+	
+	
+      });
+    });
+
+    widget(slider_y, {
+      bind("list");
+      width: 4;
+      focusable: canScroll();
+      navFocusable: true;
+      alpha: iir(canScroll(), 16);
+
+      widget(quad, {
+	alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+      });
+    });
+  });
+});

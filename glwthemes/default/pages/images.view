@@ -1,0 +1,60 @@
+widget(container_y, {
+
+  widget(dummy, {
+    height: $ui.size * 2;
+  });
+
+  widget(container_x, {
+    weight: 3;
+    filterConstraintY: true;
+    space(1);
+    widget(frontdrop, {
+      source: "theme://graphics/image-overlay3.png";
+      border: [16, 32, 16, 16];
+      padding: [-16, -32, -16, -16];
+	debug: true;
+
+      widget(image, {
+	source: $self.focused.url;
+	stencil: "theme://graphics/stencil2.png";
+	stencilBorder: 16;
+	aspectConstraint: true;
+	debug: true;
+      });
+    });
+    space(1);
+  });
+
+  widget(dummy, {
+    height: $ui.size * 2;
+  });
+
+  widget(fader, {
+    filterConstraintY: true;
+    weight: 1;
+    plane: [0,1,0,1];
+    alphaFallOff: 1;
+    blurFallOff: 0.2;
+    widget(mirror, {
+      alpha: 0.4;
+      widget(list_x, {
+	spacing: 5;
+	
+	  &self.focused = focusedChild();
+	
+	cloner($page.model.nodes, image, {
+	  align: bottom;
+	  focusable: true;
+	  source: "thumb://" + $self.url;
+	  stencil: "theme://graphics/stencil2.png";
+	  stencilBorder: 16;
+	  color: isFocused() + 0.3;
+	});
+      });
+    });
+  });
+
+  widget(dummy, {
+    height: $ui.size * 4;
+  });
+});

@@ -1,0 +1,135 @@
+#import "theme://common.view"
+
+#define STAR_FULL() {
+  widget(icon, {
+    color: [1, 1, 0.2];
+    source: "dataroot://resources/svg/Star.svg";
+  });
+}
+
+#define STAR_DIMMED() {
+  widget(icon, {
+    color: [0.33, 0.33, 0];
+    shadow: true;
+    source: "dataroot://resources/svg/Star.svg";
+  });
+}
+
+
+
+widget(container_y, {
+  spacing: 5;
+
+  widget(container_x, {
+    spacing: 10;
+
+    widget(frontdrop, {
+      source: "theme://graphics/boxart-overlay.png";
+      border: 9;
+
+      widget(image, {
+	height: $ui.size * 16;
+	width: $ui.size * 16 * 0.675;
+	source: $args.metadata.icon;
+	hidden: select($args.metadata.icon, false, true);
+      });
+    });
+
+    widget(container_y, {
+      filterConstraintX: true;
+      spacing: 5;
+      widget(label, {
+	TextStyleItem();
+	caption: $args.metadata.title;
+	sizeScale: 1.5;
+      });
+      widget(label, {
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Year: ") + '</font>' + 
+	  fmt("%d", $args.metadata.year);
+      });
+
+      space(1);
+
+      widget(label, {
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Duration: ") + '</font>' + 
+	  value2duration($args.metadata.duration);
+      });
+
+      widget(label, {
+	TextStyleItem();
+	maxlines: 3;
+	caption: '<font color="#888">' + _("Genre: ") + '</font>' + 
+	  $args.metadata.genre;
+      });
+
+
+      widget(container_x, {
+	filterConstraintX: true;
+	widget(label, {
+	  font: $view.font;
+	  shadow: true;
+	  outline: true;
+
+	  caption: '<font color="#888">' + _("Rating: ") + '</font>' + 
+	    fmt("(%1.1f / 10):", $args.metadata.rating / 10);
+	});
+
+	widget(container_z, {
+	  widget(container_x, {
+	    STAR_DIMMED();
+	    STAR_DIMMED();
+	    STAR_DIMMED();
+	    STAR_DIMMED();
+	    STAR_DIMMED();
+	  });
+      
+
+	  widget(clip, {
+	    clipping: [0, 0, 1 - $args.metadata.rating / 100, 0];
+	    
+	    widget(container_x, {
+	      STAR_FULL();
+	      STAR_FULL();
+	      STAR_FULL();
+	      STAR_FULL();
+	      STAR_FULL();
+	    });
+	  });
+	});
+      });
+
+      widget(label, {
+	TextStyleItem();
+	maxlines: 3;
+	caption: '<font color="#888">' + _("Director: ") + '</font>' + 
+	  $args.metadata.director;
+      });
+      widget(label, {
+	TextStyleItem();
+	maxlines: 3;
+	caption: '<font color="#888">' + _("Producer: ") + '</font>' + 
+	  $args.metadata.producer;
+      });
+
+
+    });
+  });
+  
+
+  widget(backdrop, {
+    filterConstraintY: true;
+    source: "theme://graphics/indent.png";
+    border: 16;
+//    padding: -8;
+
+    widget(label, {
+      TextStyleItem();
+      sizeScale: 0.8;
+      align: topLeft;
+      maxlines: 20;
+      caption: $args.metadata.description;
+    });
+  });
+});
