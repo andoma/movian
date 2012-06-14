@@ -500,6 +500,7 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   float alpha = rc->rc_alpha * w->glw_alpha;
+  float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
 
   glw_rctx_t rc0;
 
@@ -511,6 +512,7 @@ glw_container_z_render(glw_t *w, const glw_rctx_t *rc)
 
   rc0 = *rc;
   rc0.rc_alpha = alpha;
+  rc0.rc_sharpness = sharpness;
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
