@@ -1021,6 +1021,9 @@ glw_focus_by_path(glw_t *w)
       return NULL;
     w = w->glw_focused;
   }
+
+  if(w->glw_focus_weight == 0)
+    return NULL;
   return w;
 }
 
