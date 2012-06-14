@@ -45,6 +45,7 @@
 #include "misc/pixmap.h"
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
+#include "htsmsg/htsmsg_json.h"
 #include "metadata/metadata.h"
 
 #include "api/lastfm.h"
@@ -912,22 +913,54 @@ spotify_play_track(spotify_uri_t *su)
 }
 
 
+typedef sp_link *(link_fn_t)(sp_album *, sp_image_size);
 /**
  *
  */
 static void
-set_image_uri(prop_t *p, sp_link *link)
+set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
 {
   char url[100];
+  const int size[] = { 64, 300, 640 };
+  const sp_image_size size_enum[] =
+      { SP_IMAGE_SIZE_SMALL, SP_IMAGE_SIZE_NORMAL, SP_IMAGE_SIZE_LARGE };
+  htsmsg_t *m = NULL;
+  int i;
 
-  if(link == NULL)
+  for (i = 0; i < ARRAYSIZE(size); i++) {
+
+    htsmsg_t *img = htsmsg_create_map();
+    sp_link *link = link_fn(entity, size_enum[i]);
+    if (!link)
+      continue;
+    if (!f_sp_link_as_string(link, url, sizeof (url))) {
+      f_sp_link_release(link);
+      continue;
+    }
+    f_sp_link_release(link);
+
+    htsmsg_add_str(img, "url", url);
+    htsmsg_add_u32(img, "width", size[i]);
+    htsmsg_add_u32(img, "height", size[i]);
+    if (!m)
+      m = htsmsg_create_list();
+    htsmsg_add_msg(m, NULL, img);
+  }
+  if (!m) {
+    prop_set_void(p);
     return;
+  }
 
-  if(f_sp_link_as_string(link, url, sizeof(url)))
-    prop_set_string(p, url);
-  f_sp_link_release(link);
+  htsbuf_queue_t hq;
+  htsbuf_queue_init(&hq, 0);
+  htsbuf_qprintf(&hq, "imageset:");
+  htsmsg_json_serialize(m, &hq, 0);
+
+  rstr_t *rstr = htsbuf_to_rstr(&hq);
+  htsbuf_queue_flush(&hq);
+  prop_set_rstring(p, rstr);
+  htsmsg_destroy(m);
 }
-
 
 /**
  *
@@ -1028,7 +1061,7 @@ spotify_metadata_update_track(spotify_metadata_t *m)
     if(album != NULL) {
       spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
       prop_set_link(m->m_album, f_sp_album_name(album), url);
-      set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover(album));
+      set_image_uri(m->m_album_art, f_sp_link_create_from_album_cover, album);
       prop_set_int(m->m_album_year, f_sp_album_year(album));
     }
 
@@ -1339,8 +1372,8 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
     if(y)
       prop_set_int(bh->sp->sp_album_year, y);
 
-    set_image_uri(bh->sp->sp_icon, f_sp_link_create_from_album_cover(alb));
-    set_image_uri(bh->sp->sp_album_art, f_sp_link_create_from_album_cover(alb));
+    set_image_uri(bh->sp->sp_icon, f_sp_link_create_from_album_cover, alb);
+    set_image_uri(bh->sp->sp_album_art, f_sp_link_create_from_album_cover, alb);
 
     prop_set_string(bh->sp->sp_artist_name,
 		    f_sp_artist_name(f_sp_album_artist(alb)));
@@ -1448,7 +1481,7 @@ spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
 		f_sp_artist_name(artist), link);
   
   set_image_uri(prop_create(metadata, "album_art"),
-		f_sp_link_create_from_album_cover(album));
+                f_sp_link_create_from_album_cover, album);
   
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -1698,7 +1731,7 @@ try_resolve_track_item(spotify_page_t *sp)
   if(album != NULL) {
     spotify_make_link(f_sp_link_create_from_album(album), url, sizeof(url));
     prop_set_link(sp->sp_album_name, f_sp_album_name(album), url);
-    set_image_uri(sp->sp_album_art, f_sp_link_create_from_album_cover(album));
+    set_image_uri(sp->sp_album_art, f_sp_link_create_from_album_cover, album);
     prop_set_int(sp->sp_album_year, f_sp_album_year(album));
   }
 
@@ -3487,7 +3520,7 @@ ss_fill_albums(sp_search *result, spotify_search_request_t *ssr)
 		  f_sp_artist_name(artist), link);
 
     set_image_uri(prop_create(metadata, "icon"),
-		  f_sp_link_create_from_album_cover(album));
+                  f_sp_link_create_from_album_cover, album);
 
     pv = prop_vec_append(pv, p);
     album_prev = album;
@@ -3530,11 +3563,8 @@ ss_fill_artists(sp_search *result, spotify_search_request_t *ssr)
     metadata = prop_create(p, "metadata");
     prop_set_string(prop_create(metadata, "title"), f_sp_artist_name(artist));
 
-    sp_link *l = f_sp_link_create_from_artist_portrait(artist);
-    if(l != NULL) {
-      spotify_make_link(l, link, sizeof(link));
-      prop_set_string(prop_create(metadata, "icon"), link);
-    }
+    set_image_uri(prop_create(metadata, "icon"),
+                  (link_fn_t *)f_sp_link_create_from_artist_portrait, artist);
 
     pv = prop_vec_append(pv, p);
     inc++;
