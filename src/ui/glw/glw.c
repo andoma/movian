@@ -1368,10 +1368,8 @@ glw_focus_open_path(glw_t *w)
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
 
   c = glw_focus_by_path(w);
-
-  assert(c != NULL);
-
-  glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+  if(c != NULL)
+    glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
 }
 
 
