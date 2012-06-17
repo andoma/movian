@@ -948,15 +948,10 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
     return;
   }
 
-  htsbuf_queue_t hq;
-  htsbuf_queue_init(&hq, 0);
-  htsbuf_qprintf(&hq, "imageset:");
-  htsmsg_json_serialize(m, &hq, 0);
-
-  rstr_t *rstr = htsbuf_to_rstr(&hq);
-  htsbuf_queue_flush(&hq);
-  prop_set_rstring(p, rstr);
+  rstr_t *rstr = htsmsg_json_serialize_to_rstr(m, "imageset:");
   htsmsg_destroy(m);
+  prop_set_rstring(p, rstr);
+  rstr_release(rstr);
 }
 
 /**
