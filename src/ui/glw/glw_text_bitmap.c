@@ -443,7 +443,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
   int xs = pm->pm_width - pm->pm_margin*2 + gtb->gtb_padding_left + gtb->gtb_padding_right;
   int ys = pm->pm_height - pm->pm_margin*2 + gtb->gtb_padding_top + gtb->gtb_padding_bottom;
 
-  if(gtb->gtb_maxlines == 1)
+  if(gtb->gtb_maxlines == 1 && !(gtb->gtb_flags & GTB_ELLIPSIZE))
     flags |= GLW_CONSTRAINT_X;
 
 #endif
