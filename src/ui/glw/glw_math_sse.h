@@ -51,18 +51,6 @@ glw_LerpMatrix(Mtx out, float v, const Mtx a, const Mtx b)
 
 
 static inline void
-glw_vec2_store(float *p, const Vec2 v)
-{
-  _mm_storeu_ps(p, v);
-}
-
-static inline void
-glw_vec3_store(float *p, const Vec3 v)
-{
-  _mm_storeu_ps(p, v);
-}
-
-static inline void
 glw_vec4_store(float *p, const Vec4 v)
 {
   _mm_storeu_ps(p, v);
@@ -178,28 +166,10 @@ glw_mtx_get(const Mtx src)
   return (const float *)&src[0];
 }
 
-static inline Vec2 glw_vec2_get(const float *p)
-{
-  return _mm_loadu_ps(p);
-}
-
-static inline Vec2 glw_vec3_get(const float *p)
-{
-  return _mm_loadu_ps(p);
-}
-
 static inline Vec2 glw_vec4_get(const float *p)
 {
   return _mm_loadu_ps(p);
 }
-
-#define glw_vec2_lerp(dst, s, a, b) do { \
-    dst = _mm_add_ps((a), _mm_mul_ps(_mm_set1_ps(s), _mm_sub_ps(b, a))); } \
-  while(0)
-
-#define glw_vec3_lerp(dst, s, a, b) do { \
-    dst = _mm_add_ps((a), _mm_mul_ps(_mm_set1_ps(s), _mm_sub_ps(b, a))); } \
-  while(0)
 
 #define glw_vec4_lerp(dst, s, a, b) do { \
     dst = _mm_add_ps((a), _mm_mul_ps(_mm_set1_ps(s), _mm_sub_ps(b, a))); } \

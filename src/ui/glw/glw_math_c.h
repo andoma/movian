@@ -101,21 +101,6 @@ glw_vec4_lerp(Vec4 dst, float s, const Vec4 a, const Vec4 b)
 }
 
 static inline void
-glw_vec2_store(float *p, const Vec2 v)
-{
-  p[0] = v[0];
-  p[1] = v[1];
-}
-
-static inline void
-glw_vec3_store(float *p, const Vec3 v)
-{
-  p[0] = v[0];
-  p[1] = v[1];
-  p[2] = v[2];
-}
-
-static inline void
 glw_vec4_store(float *p, const Vec4 v)
 {
   p[0] = v[0];
@@ -124,8 +109,6 @@ glw_vec4_store(float *p, const Vec4 v)
   p[3] = v[3];
 }
 
-#define glw_vec2_get(p) (p)
-#define glw_vec3_get(p) (p)
 #define glw_vec4_get(p) (p)
 
 
