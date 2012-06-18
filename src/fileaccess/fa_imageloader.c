@@ -55,15 +55,6 @@ static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 /**
  *
  */
-typedef struct meminfo {
-  const uint8_t *data;
-  size_t size;
-} meminfo_t;
-
-
-/**
- *
- */
 void
 fa_imageloader_init(void)
 {
@@ -80,21 +71,6 @@ fa_imageloader_init(void)
 
 
 /**
- *
- */
-static int
-jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
-{
-  meminfo_t *mi = handle;
-
-  if(size + offset > mi->size)
-    return -1;
-
-  memcpy(buf, mi->data + offset, size);
-  return size;
-}
-
-/**
  * Load entire image into memory using fileaccess load method.
  * Faster than open+read+close.
  */
@@ -105,7 +81,7 @@ fa_imageloader2(const char *url, const char **vpaths,
 {
   uint8_t *p;
   size_t size;
-  meminfo_t mi;
+  jpeg_meminfo_t mi;
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 

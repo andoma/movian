@@ -41,4 +41,15 @@ int jpeg_info(jpeginfo_t *ji, jpegreader_t *reader, void *handle, int flags,
 
 void jpeg_info_clear(jpeginfo_t *ji);
 
+/**
+ *
+ */
+typedef struct jpeg_meminfo {
+  const uint8_t *data;
+  size_t size;
+} jpeg_meminfo_t;
+
+
+int jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size);
+
 #endif /* JPEG_H__ */

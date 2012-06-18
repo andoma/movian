@@ -27,6 +27,7 @@
 #include "showtime.h"
 #include "arch/atomic.h"
 #include "pixmap.h"
+#include "misc/jpeg.h"
 
 /**
  *
@@ -1124,7 +1125,9 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   AVFrame *frame;
   int got_pic, w, h;
   int orientation = pm->pm_orientation;
-
+  jpeg_meminfo_t mi;
+  int lowres = 0;
+  jpeginfo_t ji = {0};
 
   if(!pixmap_is_coded(pm)) {
     pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
@@ -1138,6 +1141,29 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     codec = avcodec_find_decoder(CODEC_ID_PNG);
     break;
   case PIXMAP_JPEG:
+
+    mi.data = pm->pm_data;
+    mi.size = pm->pm_size;
+    
+    if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
+		 JPEG_INFO_DIMENSIONS,
+		 pm->pm_data, pm->pm_size, errbuf, errlen)) {
+      pixmap_release(pm);
+      return NULL;
+    }
+
+    if((im->im_req_width > 0  && ji.ji_width  > im->im_req_width * 16) ||
+       (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 16))
+      lowres = 3;
+    else if((im->im_req_width  > 0 && ji.ji_width  > im->im_req_width * 8) ||
+	    (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 8))
+      lowres = 2;
+    else if((im->im_req_width  > 0 && ji.ji_width  > im->im_req_width * 4) ||
+	    (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 4))
+      lowres = 1;
+    else if(ji.ji_width > 4096 || ji.ji_height > 4096)
+      lowres = 1; // swscale have problems with dimensions > 4096
+
     codec = avcodec_find_decoder(CODEC_ID_MJPEG);
     break;
   case PIXMAP_GIF:
@@ -1156,6 +1182,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   ctx = avcodec_alloc_context();
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
+  ctx->lowres = lowres;
 
   if(avcodec_open(ctx, codec) < 0) {
     av_free(ctx);
@@ -1181,7 +1208,12 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     snprintf(errbuf, errlen, "Invalid picture dimensions");
     return NULL;
   }
-
+#if 0
+  printf("%d x %d => %d x %d (lowres=%d) req = %d x %d\n",
+	 ji.ji_width, ji.ji_height,
+	 ctx->width, ctx->height, lowres,
+	 im->im_req_width, im->im_req_height);
+#endif
   if(im->im_want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
     w = 160;
     h = 160 * ctx->height / ctx->width;

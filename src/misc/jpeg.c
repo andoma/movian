@@ -372,6 +372,22 @@ jpeg_info_clear(jpeginfo_t *ji)
 
 
 
+/**
+ *
+ */
+int
+jpeginfo_mem_reader(void *handle, void *buf, off_t offset, size_t size)
+{
+  jpeg_meminfo_t *mi = handle;
+
+  if(size + offset > mi->size)
+    return -1;
+
+  memcpy(buf, mi->data + offset, size);
+  return size;
+}
+
+
 
 
 
