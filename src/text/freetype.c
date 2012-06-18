@@ -1162,7 +1162,7 @@ text_render0(const uint32_t *uc, const int len,
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
 				  g->face->family_id_vec[0]);
-	  if(w > max_width) {
+	  if(w + d > max_width - eg->adv_x ) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
 	      j--;
