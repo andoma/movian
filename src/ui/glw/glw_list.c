@@ -265,7 +265,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
       if(xpos - l->filtered_pos < bd) {
 	l->current_pos = xpos - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(xpos - l->filtered_pos + rc0.rc_width > width0 - bd) {
+      } else if(xpos - l->filtered_pos + rc0.rc_width > width0) {
 	l->current_pos = xpos + rc0.rc_width - width0 - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
