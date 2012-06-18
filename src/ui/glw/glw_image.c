@@ -615,11 +615,25 @@ glw_image_update_constraints(glw_image_t *gi)
     glw_set_constraints(&gi->w, siz, siz, 0,
 			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
-  } else if(gi->w.glw_class == &glw_image && glt != NULL &&
-	    gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
+  } else if(gi->w.glw_class == &glw_image && glt != NULL) {
     float aspect = (float)glt->glt_xs / glt->glt_ys;
-    glw_set_constraints(&gi->w, 0, 0, -aspect,
-			GLW_CONSTRAINT_W);
+
+    if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
+      // This is unstable and should be removed
+      glw_set_constraints(&gi->w, 0, 0, -aspect,
+			  GLW_CONSTRAINT_W);
+    } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_X) {
+
+      int ys = gi->w.glw_req_size_x / aspect;
+      glw_set_constraints(&gi->w, 0, ys, 0,
+			  GLW_CONSTRAINT_Y);
+    } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
+
+      int xs = gi->w.glw_req_size_y * aspect;
+      printf("xs=%d\n", xs);
+      glw_set_constraints(&gi->w, xs, 0, 0,
+			  GLW_CONSTRAINT_X);
+    }
   }
 }
 
