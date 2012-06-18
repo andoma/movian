@@ -1154,12 +1154,9 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 
     if((im->im_req_width > 0  && ji.ji_width  > im->im_req_width * 16) ||
        (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 16))
-      lowres = 3;
+      lowres = 2;
     else if((im->im_req_width  > 0 && ji.ji_width  > im->im_req_width * 8) ||
 	    (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 8))
-      lowres = 2;
-    else if((im->im_req_width  > 0 && ji.ji_width  > im->im_req_width * 4) ||
-	    (im->im_req_height > 0 && ji.ji_height > im->im_req_height * 4))
       lowres = 1;
     else if(ji.ji_width > 4096 || ji.ji_height > 4096)
       lowres = 1; // swscale have problems with dimensions > 4096
