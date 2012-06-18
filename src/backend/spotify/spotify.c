@@ -4534,6 +4534,8 @@ be_spotify_init(void)
   spotify_service = service_create("Spotify", "spotify:start",
 				   "music", iconurl, 0, 0);
 
+  settings_create_divider(s, NULL);
+
   ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
 			     store, spotify_set_enable, NULL,
 			     SETTINGS_INITIAL_UPDATE, NULL,
