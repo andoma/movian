@@ -2796,7 +2796,7 @@ http_request(const char *url, const char **arguments,
 
 	  int zr = inflate(&z, r < 0 ? Z_FINISH : Z_NO_FLUSH);
 	  if(zr < 0) {
-	    snprintf(errbuf, errlen, "zlib error %d", zr);
+	    snprintf(errbuf, errlen, "zlib error %d (connection: close)", zr);
 	    free(mem);
 	    goto error;
 	  }
@@ -2904,7 +2904,8 @@ http_request(const char *url, const char **arguments,
       while(1) {
 	int zr = inflate(&z, 0);
 	if(zr < 0) {
-	  snprintf(errbuf, errlen, "zlib error %d", zr);
+	  snprintf(errbuf, errlen, "zlib error %d (%d %d)", zr,
+		   z.avail_in, z.avail_out);
 	  free(buf);
 	  free(buf2);
 	  goto error;
