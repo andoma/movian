@@ -178,7 +178,12 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
 #define glw_vec3_extract(v, i) v[i]
 #define glw_vec4_extract(v, i) v[i]
 
-#define glw_vec4_mul_c3(v, s) v[3] *= s
+#define glw_vec4_mul_c0(v, s) v[0] *= (s)
+#define glw_vec4_mul_c1(v, s) v[1] *= (s)
+#define glw_vec4_mul_c2(v, s) v[2] *= (s)
+#define glw_vec4_mul_c3(v, s) v[3] *= (s)
+
+#define glw_vec4_set(v, i, s) v[i] = (s)
 
 #define glw_mtx_get(m) (m)
 

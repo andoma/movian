@@ -116,7 +116,7 @@ glw_throbber3d_render(glw_t *w, const glw_rctx_t *rc)
     glw_Rotatef(&rc1,       gt->angle - i *  (360 / NUMPINS),      0, 0, 1);
 
     glw_renderer_draw(&gt->renderer, gr, &rc1, 
-		      NULL, NULL, NULL, NULL, alpha, 0);
+		      NULL, NULL, NULL, alpha, 0);
   }
   glw_blendmode(gr, GLW_BLEND_NORMAL);
 }
@@ -213,7 +213,7 @@ glw_throbber_render(glw_t *w, const glw_rctx_t *rc)
     glw_Rotatef(&rc1, -gt->angle - a, 0, 0, -1);
 
     glw_renderer_draw(&gt->renderer, gr, &rc1, 
-		      NULL, NULL,
+		      NULL,
 		      &gt->color, NULL, a0 * alpha, 0);
   }
 }

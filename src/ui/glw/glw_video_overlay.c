@@ -376,7 +376,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
       }
 
       glw_renderer_draw(&gvo->gvo_renderer, gr, &rc0,
-			&gvo->gvo_texture, NULL, NULL, NULL, 
+			&gvo->gvo_texture, NULL, NULL,
 			gvo->gvo_alpha * rc0.rc_alpha, 0);
       break;
 

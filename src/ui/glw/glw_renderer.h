@@ -47,6 +47,12 @@ typedef struct glw_renderer_cache {
   uint16_t grc_active_faders;
   Vec4 grc_clip[NUM_CLIPPLANES];
 
+  Vec4 grc_stencil[2];
+  int16_t grc_stencil_width;
+  int16_t grc_stencil_height;
+  int16_t grc_stencil_border[4];
+  float grc_stencil_edge[4];
+
   Vec4 grc_fader[NUM_FADERS];
   float grc_fader_alpha[NUM_FADERS];
   float grc_fader_blur[NUM_FADERS];
@@ -112,8 +118,7 @@ void glw_renderer_vtx_col(glw_renderer_t *gr, int vertex,
 
 void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       const glw_rctx_t *rc,
-		       const struct glw_backend_texture *t0,
-		       const struct glw_backend_texture *t1,
+		       const struct glw_backend_texture *tex,
 		       const struct glw_rgb *rgb_mul,
 		       const struct glw_rgb *rgb_off,
 		       float alpha, float blur);

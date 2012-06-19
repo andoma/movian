@@ -131,6 +131,7 @@ static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
 
 static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
 {
+    abort(); // broken
   __v4sf n = _mm_mul_ps(a,b);
   return 
     __builtin_ia32_vec_ext_v4sf(n, 0) + 

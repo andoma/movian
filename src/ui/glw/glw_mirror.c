@@ -53,7 +53,7 @@ glw_mirror_render(glw_t *w, const glw_rctx_t *rc)
 
   b = glw_clip_enable(w->glw_root, rc, GLW_CLIP_BOTTOM, 0);
   glw_render0(c, rc);
-  glw_clip_disable(w->glw_root, rc, b);
+  glw_clip_disable(w->glw_root, b);
 
   rc0 = *rc;
 
@@ -68,7 +68,7 @@ glw_mirror_render(glw_t *w, const glw_rctx_t *rc)
 
   b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM, 0);
   glw_render0(c, &rc0);
-  glw_clip_disable(w->glw_root, &rc0, b);
+  glw_clip_disable(w->glw_root, b);
 
   glw_frontface(w->glw_root, GLW_CCW);
 }

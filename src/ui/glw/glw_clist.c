@@ -180,9 +180,9 @@ render(glw_t *w, const glw_rctx_t *rc)
     glw_render0(c, &rc1);
 
     if(t != -1)
-      glw_clip_disable(w->glw_root, rc, t);
+      glw_clip_disable(w->glw_root, t);
     if(b != -1)
-      glw_clip_disable(w->glw_root, rc, b);
+      glw_clip_disable(w->glw_root, b);
   }
 }
 

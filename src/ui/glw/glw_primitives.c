@@ -44,7 +44,7 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
   }
 
   glw_renderer_draw(&q->r, w->glw_root, rc,
-		    NULL, NULL,
+		    NULL,
 		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
 }
 
@@ -118,6 +118,8 @@ typedef struct glw_raster {
   glw_rgb_t color;
   glw_renderer_t r;
   glw_backend_texture_t tex;
+  int width, height;
+
 } glw_raster_t;
 
 
@@ -152,19 +154,24 @@ glw_raster_render(glw_t *w, const glw_rctx_t *rc)
   if(!glw_renderer_initialized(&q->r))
     glw_renderer_init_quad(&q->r);
 
-  glw_renderer_vtx_pos(&q->r, 0, -1, -1, 0);
-  glw_renderer_vtx_st (&q->r, 0, 0, rc->rc_height / (float)RASTER_TILE_SIZE);
+  if(q->width != rc->rc_width || q->height != rc->rc_height) {
+    q->width  = rc->rc_width;
+    q->height = rc->rc_height;
 
-  glw_renderer_vtx_pos(&q->r, 1,  1, -1, 0);
-  glw_renderer_vtx_st (&q->r, 1, rc->rc_width / (float)RASTER_TILE_SIZE, rc->rc_height / (float)RASTER_TILE_SIZE);
+    glw_renderer_vtx_pos(&q->r, 0, -1, -1, 0);
+    glw_renderer_vtx_st (&q->r, 0, 0, rc->rc_height / (float)RASTER_TILE_SIZE);
 
-  glw_renderer_vtx_pos(&q->r, 2,  1,  1, 0);
-  glw_renderer_vtx_st (&q->r, 2, rc->rc_width / (float)RASTER_TILE_SIZE, 0);
+    glw_renderer_vtx_pos(&q->r, 1,  1, -1, 0);
+    glw_renderer_vtx_st (&q->r, 1, rc->rc_width / (float)RASTER_TILE_SIZE, rc->rc_height / (float)RASTER_TILE_SIZE);
 
-  glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
-  glw_renderer_vtx_st (&q->r, 3, 0, 0);
+    glw_renderer_vtx_pos(&q->r, 2,  1,  1, 0);
+    glw_renderer_vtx_st (&q->r, 2, rc->rc_width / (float)RASTER_TILE_SIZE, 0);
 
-  glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex, NULL, 
+    glw_renderer_vtx_pos(&q->r, 3, -1,  1, 0);
+    glw_renderer_vtx_st (&q->r, 3, 0, 0);
+  }
+
+  glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex,
 		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
 }
 

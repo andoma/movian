@@ -53,7 +53,7 @@ hw_set_clip_conf(const struct glw_rctx *rc, int which, const Vec4 v)
  *
  */
 static void
-hw_clr_clip_conf(const struct glw_rctx *rc, int which)
+hw_clr_clip_conf(int which)
 {
   glDisable(GL_CLIP_PLANE0 + which);
 }

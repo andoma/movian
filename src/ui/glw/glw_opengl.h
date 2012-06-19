@@ -117,6 +117,7 @@ typedef struct glw_backend_root {
   struct glw_program *gbr_renderer_tex_blur;
   struct glw_program *gbr_renderer_tex_stencil_blur;
   struct glw_program *gbr_renderer_flat;
+  struct glw_program *gbr_renderer_flat_stencil;
 
   int gbr_blendmode;
   int gbr_frontface;

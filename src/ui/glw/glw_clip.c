@@ -17,6 +17,7 @@
  */
 
 #include "glw.h"
+#include "glw_texture.h"
  
 typedef struct glw_clip {
   glw_t w;
@@ -79,10 +80,10 @@ glw_clip_render(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_render0(c, rc);
 
-  glw_clip_disable(w->glw_root, rc, l);
-  glw_clip_disable(w->glw_root, rc, r);
-  glw_clip_disable(w->glw_root, rc, t);
-  glw_clip_disable(w->glw_root, rc, b);
+  glw_clip_disable(w->glw_root, l);
+  glw_clip_disable(w->glw_root, r);
+  glw_clip_disable(w->glw_root, t);
+  glw_clip_disable(w->glw_root, b);
 
 }
 
@@ -187,7 +188,7 @@ glw_fade_render(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
     glw_render0(c, rc);
 
-  glw_fader_disable(w->glw_root, rc, fader);
+  glw_fader_disable(w->glw_root, fader);
 
 }
 
@@ -255,6 +256,197 @@ GLW_REGISTER_CLASS(glw_fader);
 
 
 
+  
+typedef struct glw_stencil {
+  glw_t w;
+
+  glw_loadable_texture_t *gs_tex;
+  int16_t gs_border[4];
+
+  float gs_rotate_a;
+  float gs_rotate_x;
+  float gs_rotate_y;
+  float gs_rotate_z;
+
+  float gs_scale_x;
+  float gs_scale_y;
+  float gs_scale_z;
+
+} glw_stencil_t;
 
 
+/**
+ *
+ */
+static int
+glw_stencil_layout(glw_t *w, glw_rctx_t *rc)
+{
+  glw_t *c;
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+  glw_loadable_texture_t *glt = gs->gs_tex;
+
+  if(w->glw_alpha < 0.01)
+    return 0;
+
+  if(glt == NULL)
+    return 0;
+
+  glw_tex_layout(w->glw_root, glt);
+  
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(c->glw_flags & GLW_HIDDEN)
+      continue;
+    glw_layout0(c, rc);
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+glw_stencil_render(glw_t *w, const glw_rctx_t *rc)
+{
+  glw_t *c;
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+  glw_loadable_texture_t *glt = gs->gs_tex;
+  glw_rctx_t rc0 = *rc;
+
+  glw_Scalef(&rc0, 
+	     gs->gs_scale_x,
+	     gs->gs_scale_y,
+	     gs->gs_scale_z);
+
+  if(gs->gs_rotate_a)
+    glw_Rotatef(&rc0, 
+		gs->gs_rotate_a,
+		gs->gs_rotate_x,
+		gs->gs_rotate_y,
+		gs->gs_rotate_z);
+  
+
+  if(glt == NULL)
+    return;
+
+  if(glt->glt_state != GLT_STATE_VALID)
+    return;
+  
+  glw_stencil_enable(w->glw_root, &rc0, &glt->glt_texture, gs->gs_border);
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    glw_render0(c, rc);
+
+  glw_stencil_disable(w->glw_root);
+  if(w->glw_flags & GLW_DEBUG)
+    glw_wirebox(w->glw_root, &rc0);
+}
+
+
+/**
+ *
+ */
+static int
+glw_stencil_callback(glw_t *w, void *opaque, glw_signal_t signal,
+		  void *extra)
+{
+  switch(signal) {
+  case GLW_SIGNAL_LAYOUT:
+    return glw_stencil_layout(w, extra);
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+  case GLW_SIGNAL_CHILD_CREATED:
+    glw_copy_constraints(w, extra);
+    return 1;
+  default:
+    return 0;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+stencil_set_source(glw_t *w, rstr_t *filename)
+{
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+  
+  if(gs->gs_tex != NULL)
+    glw_tex_deref(w->glw_root, gs->gs_tex);
+
+  gs->gs_tex = glw_tex_create(w->glw_root, filename, 0, -1, -1);
+}
+
+
+
+/**
+ *
+ */
+static void
+set_border(glw_t *w, const int16_t *v)
+{
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+
+  memcpy(gs->gs_border, v, sizeof(int16_t) * 4);
+}
+
+
+/**
+ *
+ */
+static void
+set_rotation(glw_t *w, const float *v)
+{
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+  
+  gs->gs_rotate_a = v[0];
+  gs->gs_rotate_x = v[1];
+  gs->gs_rotate_y = v[2];
+  gs->gs_rotate_z = v[3];
+}
+
+
+/**
+ *
+ */
+static void
+set_scaling(glw_t *w, const float *xyz)
+{
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+
+  gs->gs_scale_x = xyz[0];
+  gs->gs_scale_y = xyz[1];
+  gs->gs_scale_z = xyz[2];
+}
+
+
+/**
+ *
+ */
+static void 
+glw_stencil_ctor(glw_t *w)
+{
+  glw_stencil_t *gs = (glw_stencil_t *)w;
+
+  gs->gs_scale_x = 1;
+  gs->gs_scale_y = 1;
+  gs->gs_scale_z = 1;
+}
+
+
+
+
+static glw_class_t glw_stencil = {
+  .gc_name = "stencil",
+  .gc_instance_size = sizeof(glw_stencil_t),
+  .gc_render = glw_stencil_render,
+  .gc_signal_handler = glw_stencil_callback,
+  .gc_ctor = glw_stencil_ctor,
+  .gc_set_source = stencil_set_source,
+  .gc_set_border = set_border,
+  .gc_set_rotation = set_rotation,
+  .gc_set_scaling = set_scaling,
+};
+
+GLW_REGISTER_CLASS(glw_stencil);
  

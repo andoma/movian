@@ -363,13 +363,13 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
     glw_render0(c, &rc2);
 
     if(ct != -1)
-      glw_clip_disable(w->glw_root, &rc0, ct);
+      glw_clip_disable(w->glw_root, ct);
     if(cb != -1)
-      glw_clip_disable(w->glw_root, &rc0, cb);
+      glw_clip_disable(w->glw_root, cb);
     if(ft != -1)
-      glw_fader_disable(w->glw_root, &rc0, ft);
+      glw_fader_disable(w->glw_root, ft);
     if(fb != -1)
-      glw_fader_disable(w->glw_root, &rc0, fb);
+      glw_fader_disable(w->glw_root, fb);
   }
 }
 
@@ -448,13 +448,13 @@ glw_list_render_x(glw_t *w, const glw_rctx_t *rc)
     glw_render0(c, &rc2);
 
     if(lc != -1)
-      glw_clip_disable(w->glw_root, &rc0, lc);
+      glw_clip_disable(w->glw_root, lc);
     if(rclip != -1)
-      glw_clip_disable(w->glw_root, &rc0, rclip);
+      glw_clip_disable(w->glw_root, rclip);
     if(lf != -1)
-      glw_fader_disable(w->glw_root, &rc0, lf);
+      glw_fader_disable(w->glw_root, lf);
     if(rf != -1)
-      glw_fader_disable(w->glw_root, &rc0, rf);
+      glw_fader_disable(w->glw_root, rf);
   }
 }
 

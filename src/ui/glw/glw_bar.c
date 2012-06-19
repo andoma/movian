@@ -63,7 +63,7 @@ glw_bar_render(glw_t *w, const glw_rctx_t *rc)
   }
   if(a > 0.01) {
     glw_renderer_draw(&gb->gb_gr, w->glw_root, rc,
-		      NULL, NULL, NULL, NULL, a, 0);
+		      NULL, NULL, NULL, a, 0);
   }
 }
 

@@ -746,6 +746,12 @@ typedef struct glw_root {
   Vec4 gr_clip[NUM_CLIPPLANES];
   int gr_active_clippers;
 
+  int16_t gr_stencil_border[4];
+  float gr_stencil_edge[4];
+  int16_t gr_stencil_width;
+  int16_t gr_stencil_height;
+  Vec4 gr_stencil[2];
+  const struct glw_backend_texture *gr_stencil_texture;
 
   Vec4 gr_fader[NUM_FADERS];
   float gr_fader_alpha[NUM_FADERS];
@@ -760,7 +766,7 @@ typedef struct glw_root {
 
   void (*gr_set_hw_clipper)(const struct glw_rctx *rc, int which,
 			    const Vec4 vec);
-  void (*gr_clr_hw_clipper)(const struct glw_rctx *rc, int which);
+  void (*gr_clr_hw_clipper)(int which);
   void (*gr_render)(struct glw_root *gr,
 		    const Mtx m,
 		    const struct glw_backend_texture *t0,
@@ -1071,12 +1077,18 @@ typedef enum {
 int glw_clip_enable(glw_root_t *gr, const glw_rctx_t *rc,
 		    glw_clip_boundary_t gcb, float distance);
 
-void glw_clip_disable(glw_root_t *gr, const glw_rctx_t *rc, int which);
+void glw_clip_disable(glw_root_t *gr, int which);
 
 int glw_fader_enable(glw_root_t *gr, const glw_rctx_t *rc, const float *plane,
 		     float alphafo, float blurfo);
 
-void glw_fader_disable(glw_root_t *gr, const glw_rctx_t *rc, int which);
+void glw_fader_disable(glw_root_t *gr, int which);
+
+void glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
+			const struct glw_backend_texture *tex,
+			const int16_t *border);
+
+void glw_stencil_disable(glw_root_t *gr);
 
 
 /**

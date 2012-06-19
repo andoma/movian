@@ -73,7 +73,16 @@ get_program(const glw_backend_root_t *gbr,
   glw_program_t *gp;
 
   if(t0 == NULL) {
-    gp = gbr->gbr_renderer_flat;
+
+    if(t1 != NULL) {
+      gp = gbr->gbr_renderer_flat_stencil;
+      glBindTexture(gbr->gbr_primary_texture_mode, t1->tex);
+
+    } else {
+      gp = gbr->gbr_renderer_flat;
+    }
+    
+
   } else {
 
     const int doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
@@ -555,6 +564,10 @@ glw_opengl_shaders_init(glw_root_t *gr)
 
   fs = glw_compile_shader("f_flat.glsl", GL_FRAGMENT_SHADER);
   gbr->gbr_renderer_flat = glw_make_program(gbr, "Flat", vs, fs);
+  glDeleteShader(fs);
+
+  fs = glw_compile_shader("f_flat_stencil.glsl", GL_FRAGMENT_SHADER);
+  gbr->gbr_renderer_flat_stencil = glw_make_program(gbr, "FlatStencil", vs, fs);
   glDeleteShader(fs);
 
   glDeleteShader(vs);
