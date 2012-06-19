@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -78,6 +79,8 @@ db_step(sqlite3_stmt *pStmt)
     if( rc!=SQLITE_OK ) break;
     sqlite3_reset(pStmt);
   }
+  if(rc == SQLITE_LOCKED)
+    TRACE(TRACE_DEBUG, "DB", "Deadlock detected");
   return rc;
 }
 
@@ -181,6 +184,15 @@ int
 db_rollback0(sqlite3 *db, const char *src)
 {
   return  db == NULL || db_one_statement(db, "ROLLBACK;", src);
+}
+
+int
+db_rollback_deadlock0(sqlite3 *db, const char *src)
+{
+  int r = db == NULL || db_one_statement(db, "ROLLBACK;", src);
+  TRACE(TRACE_DEBUG, "DB", "Rollback due to deadlock, and retrying");
+  usleep(100000);
+  return r;
 }
 
 

@@ -141,6 +141,11 @@ lastfm_load_artistinfo(void *db, const char *artist,
   }
 
   int src = metadb_get_datasource(db, "lastfm");
+  if(src < 0) {
+    TRACE(TRACE_DEBUG, "lastfm", "Unable to get datasource: %d", src);
+    htsmsg_destroy(info);
+    return;
+  }
 
   const char *mbid = htsmsg_get_str_multi(info,
 					  "tags", "lfm",
@@ -150,7 +155,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
   
   int64_t artist_id = metadb_artist_get_by_title(db, artist, src, mbid);
 
-  if(artist_id == -1) {
+  if(artist_id < 0) {
     htsmsg_destroy(info);
     return;
   }
@@ -248,15 +253,22 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
   }
 
   int src = metadb_get_datasource(db, "lastfm");
-  int64_t artist_id = metadb_artist_get_by_title(db, artist,
-						 src, artist_mbid);
-
-  if(artist_id == -1) {
+  if(src < 0) {
+    TRACE(TRACE_DEBUG, "lastfm", "Unable to get datasource: %d", src);
     return;
   }
 
+  int64_t artist_id = metadb_artist_get_by_title(db, artist,
+						 src, artist_mbid);
+
+  if(artist_id < 0)
+    return;
+
   int64_t album_id = metadb_album_get_by_title(db, album, artist_id,
 					       src, album_mbid);
+
+  if(album_id < 0)
+    return;
 
   HTSMSG_FOREACH(f, tags) {
     htsmsg_t *image;

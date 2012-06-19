@@ -508,11 +508,7 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
   metadata_t *md;
-
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
+  int64_t rval;
 
   // This is so lame....
 
@@ -523,17 +519,35 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp)
     md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
 			      metadb_get_datasource(db, "tmdb"));
 
+ again:
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
   if(md == NULL) {
     if(mlp->mlp_imdb_id != NULL) {
-      tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
-			    rstr_get(mlp->mlp_imdb_id),
-			    mlp->mlp_duration);
+      rval = tmdb_query_by_imdb_id(db, rstr_get(mlp->mlp_url), 
+				   rstr_get(mlp->mlp_imdb_id),
+				   mlp->mlp_duration);
+
+      if(rval == METADATA_DEADLOCK) {
+	db_rollback_deadlock(db);
+	goto again;
+      }
+
       md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
 				metadb_get_datasource(db, "tmdb_imdb"));
     } else {
-      tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
-				   rstr_get(mlp->mlp_title), mlp->mlp_year,
-				   mlp->mlp_duration);
+      rval = tmdb_query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+					  rstr_get(mlp->mlp_title),
+					  mlp->mlp_year,
+					  mlp->mlp_duration);
+
+      if(rval == METADATA_DEADLOCK) {
+	db_rollback_deadlock(db);
+	goto again;
+      }
 
       md = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url),
 				metadb_get_datasource(db, "tmdb"));

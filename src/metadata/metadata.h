@@ -26,6 +26,9 @@ struct prop_vec;
 struct prop_nf;
 typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 
+#define METADATA_ERROR    -1
+#define METADATA_DEADLOCK -2
+
 /**
  * Content types.
  * These are stored directly in the sqlite metadata database so they
@@ -227,8 +230,8 @@ void metadb_insert_videocast(void *db, int64_t videoitem_id,
 void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 			      const char *title);
 
-int metadb_insert_videoitem(void *db, const char *url, int ds_id,
-			    const char *ext_id, const metadata_t *md);
+int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
+				const char *ext_id, const metadata_t *md);
 
 metadata_t *metadb_get_videoinfo(void *db, const char *url, int ds_id);
 
