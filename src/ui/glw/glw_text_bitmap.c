@@ -203,6 +203,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       text_width = right - left;
     } else { 
       switch(w->glw_alignment) {
+      case LAYOUT_ALIGN_JUSTIFIED:
       case LAYOUT_ALIGN_CENTER:
       case LAYOUT_ALIGN_BOTTOM:
       case LAYOUT_ALIGN_TOP:
@@ -240,6 +241,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       case LAYOUT_ALIGN_TOP_LEFT:
       case LAYOUT_ALIGN_TOP_RIGHT:
       case LAYOUT_ALIGN_TOP:
+      case LAYOUT_ALIGN_JUSTIFIED:
 	bottom = top - pm->pm_height;
 	break;
 

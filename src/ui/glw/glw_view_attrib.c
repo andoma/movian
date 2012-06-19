@@ -619,6 +619,7 @@ static struct strtab aligntab[] = {
   { "topRight",      LAYOUT_ALIGN_TOP_RIGHT},
   { "bottomLeft",    LAYOUT_ALIGN_BOTTOM_LEFT},
   { "bottomRight",   LAYOUT_ALIGN_BOTTOM_RIGHT},
+  { "justified",     LAYOUT_ALIGN_JUSTIFIED},
 
 };
 

@@ -26,4 +26,5 @@
 #define LAYOUT_ALIGN_TOP_LEFT      7
 #define LAYOUT_ALIGN_TOP           8
 #define LAYOUT_ALIGN_TOP_RIGHT     9
+#define LAYOUT_ALIGN_JUSTIFIED     10 // special
 
