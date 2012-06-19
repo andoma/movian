@@ -152,11 +152,14 @@ prop_sub_t *prop_subscribe(int flags, ...) __attribute__((__sentinel__(0)));
 void prop_unsubscribe(prop_sub_t *s);
 
 prop_t *prop_create_ex(prop_t *parent, const char *name,
-		       prop_sub_t *skipme, int noalloc)
+		       prop_sub_t *skipme, int noalloc, int incref)
      __attribute__ ((malloc)) __attribute__((nonnull (1)));
 
 #define prop_create(parent, name) \
-  prop_create_ex(parent, name, NULL, __builtin_constant_p(name))
+  prop_create_ex(parent, name, NULL, __builtin_constant_p(name), 0)
+
+#define prop_create_r(parent, name) \
+  prop_create_ex(parent, name, NULL, __builtin_constant_p(name), 1)
 
 prop_t *prop_create_root_ex(const char *name, int noalloc)
   __attribute__ ((malloc));

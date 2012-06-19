@@ -87,6 +87,7 @@ typedef struct deco_item {
   deco_stem_t *di_ds;
 
   prop_t *di_root;
+  prop_t *di_metadata;
 
   prop_sub_t *di_sub_type;
   contenttype_t di_type;
@@ -127,12 +128,11 @@ analyze_video(deco_item_t *di)
   deco_browse_t *db = di->di_db;
   rstr_t *title = NULL;
   int year = 0;
-  prop_t *metadata = prop_create(di->di_root, "metadata");
 
   if(di->di_filename != NULL)
     title = metadata_filename_to_title(rstr_get(di->di_filename), &year);
 
-  metadata_bind_movie_info(&di->di_mlp, metadata,
+  metadata_bind_movie_info(&di->di_mlp, di->di_metadata,
 			   di->di_url, title, year,
 			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
 			   di->di_duration);
@@ -177,9 +177,15 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
 
 
   if(video && image) {
-    prop_t *m = prop_create(video->di_root, "metadata");
-    prop_set_rstring(prop_create(m, "fallbackicon"), image->di_url);
-    prop_set_int(prop_create(image->di_root, "hidden"), 1);
+    prop_t *p;
+
+    p = prop_create_r(video->di_metadata, "fallbackicon");
+    prop_set_rstring(p, image->di_url);
+    prop_ref_dec(p);
+
+    p = prop_create_r(image->di_root, "hidden");
+    prop_set_int(p, 1);
+    prop_ref_dec(p);
   }
 }
 
@@ -284,9 +290,13 @@ album_analysis(deco_browse_t *db)
 
   prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL);
 
-  prop_t *m = prop_create(db->db_prop_model, "metadata");
-  prop_set_rstring(prop_create(m, "album_name"), v);
-  
+  prop_t *m = prop_create_r(db->db_prop_model, "metadata");
+  prop_t *p;
+
+  p = prop_create_r(m, "album_name");
+  prop_set_rstring(p, v);
+  prop_ref_dec(p);
+
   if(artist_count > 0) {
     deco_artist_t **vec = malloc(artist_count * sizeof(deco_artist_t *));
     int i;
@@ -300,10 +310,17 @@ album_analysis(deco_browse_t *db)
     free(vec);
 
     if(da->da_count * 2 >= item_count) {
-      prop_set_rstring(prop_create(m, "artist_name"), da->da_artist);
-      metadata_bind_albumart(prop_create(m, "album_art"), da->da_artist, v);
+      p = prop_create_r(m, "artist_name");
+      prop_set_rstring(p, da->da_artist);
+      prop_ref_dec(p);
+      
+      p = prop_create_r(m, "album_art");
+      metadata_bind_albumart(p, da->da_artist, v);
+      prop_ref_dec(p);
     }
   }
+
+  prop_ref_dec(m);
 
  cleanup:
   while((da = LIST_FIRST(&artists)) != NULL) {
@@ -532,6 +549,7 @@ deco_browse_add_node(deco_browse_t *db, prop_t *p, deco_item_t *before)
 
   di->di_db = db;
   di->di_root = prop_ref_inc(p);
+  di->di_metadata = prop_create_r(p, "metadata");
 
   db->db_total++;
   di->di_type = CONTENT_UNKNOWN;
@@ -601,6 +619,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   db->db_types[di->di_type]--;
   db->db_total--;
   prop_ref_dec(di->di_root);
+  prop_ref_dec(di->di_metadata);
   prop_unsubscribe(di->di_sub_url);
   prop_unsubscribe(di->di_sub_filename);
   prop_unsubscribe(di->di_sub_type);

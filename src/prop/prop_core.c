@@ -1427,7 +1427,7 @@ prop_create0(prop_t *parent, const char *name, prop_sub_t *skipme, int noalloc)
  */
 prop_t *
 prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme,
-	       int noalloc)
+	       int noalloc, int incref)
 {
   prop_t *p;
   hts_mutex_lock(&prop_mutex);
@@ -1436,6 +1436,8 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme,
   } else {
     p = NULL;
   }
+  if(incref)
+    p = prop_ref_inc(p);
   hts_mutex_unlock(&prop_mutex);
   return p;
 }

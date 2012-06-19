@@ -442,7 +442,7 @@ mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
   hts_mutex_lock(&metadata_mutex);
 
   for(i = 0; i < mlp->mlp_num_props; i++) {
-    mlp->mlp_props[i].p = prop_ref_inc(p[i]);
+    mlp->mlp_props[i].p = p[i];
     mlp->mlp_props[i].s = 
       prop_subscribe(PROP_SUB_TRACK_DESTROY_EXP | PROP_SUB_SUBSCRIPTION_MONITOR,
 		     PROP_TAG_CALLBACK, mlp_sub_cb, mlp,
@@ -466,8 +466,9 @@ void
 metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 {
   metadata_lazy_prop_t *mlp = mlp_alloc(1);
+  prop_t *p = prop_ref_inc(prop);
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
-  mlp_setup(mlp, &prop, mlp_get_artist);
+  mlp_setup(mlp, &p, mlp_get_artist);
 }
 
 
@@ -478,9 +479,10 @@ void
 metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
 {
   metadata_lazy_prop_t *mlp = mlp_alloc(1);
+  prop_t *p = prop_ref_inc(prop);
   mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
   mlp->mlp_album  = rstr_spn(album, "[]()");
-  mlp_setup(mlp, &prop, mlp_get_album);
+  mlp_setup(mlp, &p, mlp_get_album);
 }
 
 enum {
@@ -616,17 +618,17 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
   prop_t *props[MOVIE_PROP_num];
 
-  props[MOVIE_PROP_TITLE]        = prop_create(prop, "title");
-  props[MOVIE_PROP_TAGLINE]      = prop_create(prop, "tagline");
-  props[MOVIE_PROP_DESCRIPTION]  = prop_create(prop, "description");
-  props[MOVIE_PROP_YEAR]         = prop_create(prop, "year");
-  props[MOVIE_PROP_RATING]       = prop_create(prop, "rating");
-  props[MOVIE_PROP_RATING_COUNT] = prop_create(prop, "rating_count");
-  props[MOVIE_PROP_ICON]         = prop_create(prop, "icon");
-  props[MOVIE_PROP_BACKDROP]     = prop_create(prop, "backdrop");
-  props[MOVIE_PROP_GENRE]        = prop_create(prop, "genre");
-  props[MOVIE_PROP_DIRECTOR]     = prop_create(prop, "director");
-  props[MOVIE_PROP_PRODUCER]     = prop_create(prop, "producer");
+  props[MOVIE_PROP_TITLE]        = prop_create_r(prop, "title");
+  props[MOVIE_PROP_TAGLINE]      = prop_create_r(prop, "tagline");
+  props[MOVIE_PROP_DESCRIPTION]  = prop_create_r(prop, "description");
+  props[MOVIE_PROP_YEAR]         = prop_create_r(prop, "year");
+  props[MOVIE_PROP_RATING]       = prop_create_r(prop, "rating");
+  props[MOVIE_PROP_RATING_COUNT] = prop_create_r(prop, "rating_count");
+  props[MOVIE_PROP_ICON]         = prop_create_r(prop, "icon");
+  props[MOVIE_PROP_BACKDROP]     = prop_create_r(prop, "backdrop");
+  props[MOVIE_PROP_GENRE]        = prop_create_r(prop, "genre");
+  props[MOVIE_PROP_DIRECTOR]     = prop_create_r(prop, "director");
+  props[MOVIE_PROP_PRODUCER]     = prop_create_r(prop, "producer");
 
   mlp->mlp_refcount = 1;
   mlp->mlp_title = rstr_spn(title, "[]()");
