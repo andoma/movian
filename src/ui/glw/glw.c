@@ -1347,8 +1347,6 @@ glw_focus_open_path_close_all_other(glw_t *w)
 
     if(c != NULL)
       glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
-    else
-      TRACE(TRACE_DEBUG, "GLW", "Nothing can be (re-)focused");
   }
 }
 
