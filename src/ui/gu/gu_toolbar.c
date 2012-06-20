@@ -146,7 +146,7 @@ toolbar_dtor(GtkObject *object, gpointer user_data)
 
 typedef enum {
   DMI_NONE,
-  DMI_TOGGLE,
+  DMI_BOOL,
   DMI_SEPARATOR,
 } dmi_type_t;
 
@@ -204,7 +204,7 @@ dmi_toggle_cb(GtkCheckMenuItem *menuitem, gpointer aux)
  *
  */
 static void
-dmi_create_toggle(dyn_menu_item_t *dmi)
+dmi_create_bool(dyn_menu_item_t *dmi)
 {
   GtkWidget *w;
 
@@ -248,8 +248,8 @@ dmi_create(dyn_menu_item_t *dmi)
   switch(dmi->dmi_type) {
   case DMI_NONE:
     return;
-  case DMI_TOGGLE:
-    return dmi_create_toggle(dmi);
+  case DMI_BOOL:
+    return dmi_create_bool(dmi);
   case DMI_SEPARATOR:
     return dmi_create_separator(dmi);
   }
@@ -266,8 +266,8 @@ dmi_set_type(void *opaque, const char *str)
 
   if(str == NULL)
     nt = DMI_NONE;
-  else if(!strcmp(str, "toggle"))
-    nt = DMI_TOGGLE;
+  else if(!strcmp(str, "bool"))
+    nt = DMI_BOOL;
   else if(!strcmp(str, "separator"))
     nt = DMI_SEPARATOR;
   else
@@ -332,7 +332,7 @@ dmi_set_value(void *opaque, int v)
   switch(dmi->dmi_type) {
   case DMI_NONE:
     return;
-  case DMI_TOGGLE:
+  case DMI_BOOL:
     gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(dmi->dmi_widget),
 				   dmi->dmi_value);
     return;
@@ -364,7 +364,7 @@ dyn_menu_item_add(gtk_ui_t *gu, dyn_menu_t *dm,
 
   dmi->dmi_title_sub =
     prop_subscribe(0,
-		   PROP_TAG_NAME("node", "title"),
+		   PROP_TAG_NAME("node", "metadata", "title"),
 		   PROP_TAG_CALLBACK_STRING, dmi_set_title, dmi,
 		   PROP_TAG_NAMED_ROOT, p, "node",
 		   PROP_TAG_COURIER, gu->gu_pc,

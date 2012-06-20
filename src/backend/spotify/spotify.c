@@ -2753,11 +2753,12 @@ item_opt_add_toggle(prop_t *parent, prop_t *title,
 {
   prop_sub_t *s;
   prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
   prop_t *v = prop_create(n, "value");
-  prop_set_string(prop_create(n, "type"), "toggle");
+  prop_set_string(prop_create(n, "type"), "bool");
   prop_set_int(prop_create(n, "enabled"), 1);
   prop_set_int(v, on);
-  prop_link(title, prop_create(n, "title"));
+  prop_link(title, prop_create(m, "title"));
   
   s = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		     PROP_TAG_CALLBACK_INT, cb, opaque,
