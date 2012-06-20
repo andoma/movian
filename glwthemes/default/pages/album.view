@@ -15,7 +15,7 @@ widget(keyintercept, {
 
       widget(frontdrop, {
 	source: "theme://graphics/boxart-overlay.png";
-	border: 9;
+	border: 8;
 
 	widget(icon, {
 	  source: $page.model.metadata.album_art;
@@ -25,6 +25,7 @@ widget(keyintercept, {
       
       
       widget(container_y, {
+	filterConstraintX: true;
 	PageTitle($page.model.metadata.title);
 	widget(label, {
 	  caption: $page.model.metadata.artist_name;

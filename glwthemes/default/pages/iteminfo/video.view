@@ -21,17 +21,20 @@ widget(container_y, {
   spacing: 5;
 
   widget(container_x, {
+    height: $ui.height / 2;
     spacing: 10;
 
-    widget(frontdrop, {
-      source: "theme://graphics/boxart-overlay.png";
-      border: 9;
+    widget(container_y, {
+      align: top;
+      widget(frontdrop, {
+	source: "theme://graphics/boxart-overlay.png";
+	border: 8;
 
-      widget(image, {
-	height: $ui.size * 16;
-	width: $ui.size * 16 * 0.675;
-	source: $args.metadata.icon;
-	hidden: select($args.metadata.icon, false, true);
+	widget(image, {
+	  width: $ui.width / 6;
+	  source: $args.metadata.icon;
+	  hidden: select($args.metadata.icon, false, true);
+	});
       });
     });
 
@@ -44,6 +47,7 @@ widget(container_y, {
 	sizeScale: 1.5;
       });
       widget(label, {
+	hidden: !$args.metadata.year;
 	TextStyleItem();
 	caption: '<font color="#888">' + _("Year: ") + '</font>' + 
 	  fmt("%d", $args.metadata.year);
@@ -68,7 +72,7 @@ widget(container_y, {
       widget(container_x, {
 	filterConstraintX: true;
 	widget(label, {
-	  font: $view.font;
+	  font: $ui.font;
 	  shadow: true;
 	  outline: true;
 
@@ -127,7 +131,7 @@ widget(container_y, {
     widget(label, {
       TextStyleItem();
       sizeScale: 0.8;
-      align: topLeft;
+      align: justified;
       maxlines: 20;
       caption: $args.metadata.description;
     });

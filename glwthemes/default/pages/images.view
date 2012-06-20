@@ -8,19 +8,9 @@ widget(container_y, {
     weight: 3;
     filterConstraintY: true;
     space(1);
-    widget(frontdrop, {
-      source: "theme://graphics/image-overlay3.png";
-      border: [16, 32, 16, 16];
-      padding: [-16, -32, -16, -16];
-	debug: true;
-
-      widget(image, {
-	source: $self.focused.url;
-	stencil: "theme://graphics/stencil2.png";
-	stencilBorder: 16;
-	aspectConstraint: true;
-	debug: true;
-      });
+    widget(image, {
+      source: $self.focused.url;
+      aspectConstraint: true;
     });
     space(1);
   });
@@ -37,18 +27,21 @@ widget(container_y, {
     blurFallOff: 0.2;
     widget(mirror, {
       alpha: 0.4;
+
       widget(list_x, {
 	spacing: 5;
+
+	scrollThreshold: $ui.width / 10;
+
 	
-	  &self.focused = focusedChild();
+	&self.focused = focusedChild();
 	
-	cloner($page.model.nodes, image, {
-	  align: bottom;
-	  focusable: true;
-	  source: "thumb://" + $self.url;
-	  stencil: "theme://graphics/stencil2.png";
-	  stencilBorder: 16;
-	  color: isFocused() + 0.3;
+	cloner($page.model.nodes, loader, {
+	  noInitialTransform: true;
+	  source: "smallitems/" + 
+	    translate($self.type, "default",
+		      "image", "image")
+	    + ".view";
 	});
       });
     });

@@ -63,6 +63,7 @@ $view.sizer = $ui.size / 3;
       shadow: true;
       sizeScale: 1.5;
       color: iir(0.5 + (isFocused() || isPressed() || isHovered()), 4);
+      ellipsize: true;
     });
   });
 }
