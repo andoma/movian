@@ -49,7 +49,7 @@ widget(container_z, {
 	widget(loader, {
 	  hidden: !$ui.menu;
 	  noInitialTransform: true;
-	  source: "cmdmenu.view";
+	  source: "cmdmenu2.view";
 	});
 
 	cloner($global.popups, loader, {

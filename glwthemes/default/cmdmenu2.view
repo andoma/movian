@@ -1,0 +1,129 @@
+#import "theme://common.view"
+
+#define SEP(CAPTION) {
+  widget(label, {
+    padding: [0,$ui.size,0,0];
+    TextStyleItem();
+    sizeScale: 1.5;
+    caption: CAPTION;
+    color: [0.431, 0.811, 1];
+  });
+  VerticalSeparator();
+}
+
+
+#define ITEM(CAPTION, EVENT) {
+  widget(backdrop, {
+    source: "pages/listitems/highlight.png";
+    alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+    widget(container_x, {
+      ListItemOpts();
+      widget(dummy, {width: $ui.size;});
+
+      widget(label, {
+	TextStyleItem();
+	caption: CAPTION;
+	ellipsize: true;
+	color: select(isFocused(), 1.0, 0.6);
+	focusable: true;
+	onEvent(activate, EVENT);
+      });
+    });
+  });
+}
+
+
+
+#define ITEMTOGGLE(CAPTION1, CAPTION2, STATE) {
+  widget(backdrop, {
+    source: "pages/listitems/highlight.png";
+    alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+    widget(container_x, {
+      ListItemOpts();
+      widget(dummy, {width: $ui.size;});
+      widget(label, {
+	TextStyleItem();
+	caption: select(STATE, CAPTION2, CAPTION1);
+	ellipsize: true;
+	color: select(isFocused(), 1.0, 0.6);
+	focusable: true;
+	onEvent(activate, { (STATE) = !STATE; });
+      });
+    });
+  });
+}
+
+
+widget(container_z, {
+  widget(backdrop, {
+    source: "graphics/popupmenu.png";
+    border: 56;
+    borderOnly: true;
+  });
+
+  widget(backdrop, {
+    alphaSelf: 0.85;
+    source: "graphics/popupmenu2.png";
+    border: 56;
+    color: 0;
+
+    widget(container_x, {
+      filterConstraintX: true;
+      
+      widget(list_y, {
+	id: "list";
+	spacing: 3;
+
+	SEP($global.nav.currentpage.model.metadata.title);
+
+	ITEMTOGGLE(fmt(_("Add '%s' to bookmarks"), $global.nav.currentpage.model.metadata.title),
+		   fmt(_("Remove '%s' from bookmarks"), $global.nav.currentpage.model.metadata.title),
+		   $global.nav.currentpage.bookmarked);
+
+
+
+	cloner($global.nav.currentpage.model.options, loader, {
+	  time: 0.1;
+	  noInitialTransform: true;
+	  effect: blend;
+	  source: "pages/listitems/" + $self.type + ".view";
+	  hidden: !$self.enabled;
+	});
+
+	SEP(_("Navigation"));
+
+
+	ITEM(_("Go to Home screen"), {
+	  $ui.menu = false;
+	  fireEvent(navOpen("page:home"));
+	});
+
+	ITEM(_("Open Settings"), {
+	  $ui.menu = false;
+	  fireEvent(navOpen("settings:"));
+	});
+
+	ITEM(_("Reload current page"), {
+	  $ui.menu = false;
+	  fireEvent(event(ReloadData));
+	});
+
+
+      });
+      widget(slider_y, {
+	bind("list");
+	width: 4;
+	focusable: canScroll();
+	navFocusable: true;
+	alpha: iir(canScroll(), 16);
+	
+	widget(quad, {
+	  alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+	});
+      });
+    });
+
+  });
+
+
+});

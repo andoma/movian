@@ -1,4 +1,8 @@
 
+#define ListItemOpts() {
+  spacing: 13;
+}
+
 #define VerticalSeparator() {
   widget(backdrop, {
     height: 10;
