@@ -1,11 +1,12 @@
 
 * Image view mode fixes
-* Slideshow
+* View switcher
 * Page options menu
+* Now playing
+* Slideshow
 * Context menu
 * Item view
-* Now playing
-* Fix zoom thing when stenciled images are reloaded
+* Fix stenciling
 * Load plugins directly on startup
 
 Plugin
