@@ -386,7 +386,13 @@ token2name(token_t *t)
 
   case TOKEN_LEFT_BRACKET:  return "[";
   case TOKEN_RIGHT_BRACKET:  return "]";
+  case TOKEN_DIRECTORY:  return "<directory>";
 
+  case TOKEN_LINK:
+    snprintf(buf, sizeof(buf), "Link<%s, %s>",
+	     rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
+    return buf;
+    
   default:
     snprintf(buf, sizeof(buf), "Tokentype<%d>", t->type);
     return buf;
