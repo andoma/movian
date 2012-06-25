@@ -562,6 +562,8 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     s = n->hpn_sub;
 
+    assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
+
     if(s->hps_lock != NULL)
       s->hps_lockmgr(s->hps_lock, 1);
     
@@ -827,6 +829,7 @@ get_notify(prop_sub_t *s)
   prop_notify_t *n = malloc(sizeof(prop_notify_t));
   atomic_add(&s->hps_refcount, 1);
   n->hpn_sub = s;
+  assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
   return n;
 }
 
@@ -1009,6 +1012,17 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 static void
 prop_notify_void(prop_sub_t *s)
 {
+  if(s->hps_flags & PROP_SUB_INTERNAL) {
+    prop_callback_t *cb = s->hps_callback;
+    prop_trampoline_t *pt = s->hps_trampoline;
+
+    if(pt != NULL)
+      pt(s, PROP_SET_VOID, s->hps_value_prop);
+    else
+      cb(s->hps_opaque, PROP_SET_VOID, s->hps_value_prop);
+    return;
+  }
+
   prop_notify_t *n = get_notify(s);
 
   n->hpn_event = PROP_SET_VOID;
@@ -1176,6 +1190,18 @@ static void
 prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event,
 			 prop_t *p2)
 {
+  if(s->hps_flags & PROP_SUB_INTERNAL) {
+    prop_callback_t *cb = s->hps_callback;
+    prop_trampoline_t *pt = s->hps_trampoline;
+
+    if(pt != NULL)
+      pt(s, event, pv, p2);
+    else
+      cb(s->hps_opaque, event, pv, p2);
+    return;
+  }
+
+
   prop_notify_t *n = get_notify(s);
   n->hpn_propv = prop_vec_addref(pv);
   n->hpn_flags = 0;
