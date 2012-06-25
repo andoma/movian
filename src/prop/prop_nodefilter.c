@@ -240,7 +240,7 @@ nf_renumber(prop_nf_t *nf)
   nf->pos_valid = 1;
   pos = 0;
   TAILQ_FOREACH(nfn, &nf->in, in_link)
-    nf->pos_valid = pos++;
+    nfn->pos = pos++;
 }
 
 
