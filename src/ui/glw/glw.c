@@ -574,6 +574,12 @@ glw_prepare_frame(glw_root_t *gr, int flags)
     gpe.type = GLW_POINTER_MOTION_REFRESH;
     glw_pointer_event(gr, &gpe);
   }
+
+  if(gr->gr_delayed_focus_leave) {
+    if(--gr->gr_delayed_focus_leave == 0 && gr->gr_current_focus) {
+      glw_focus_leave(gr->gr_current_focus);
+    }
+  }
 }
 
 
@@ -990,9 +996,10 @@ glw_set_focus_weight(glw_t *w, float f)
   if(f == w->glw_focus_weight)
     return;
 
-  if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w)
-    glw_focus_leave(w);
-  
+  if(w->glw_focus_weight > 0 && w->glw_root->gr_current_focus == w) {
+    w->glw_root->gr_delayed_focus_leave = 2;
+  }
+
   if(f > 0)
     glw_focus_init_widget(w, f);
   else
@@ -1116,6 +1123,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
     glw_path_modify(ww, 0, GLW_IN_FOCUS_PATH, com);
 
   gr->gr_current_focus = w;
+  gr->gr_delayed_focus_leave = 0;
 
 #if 0
   glw_t *h = w;
