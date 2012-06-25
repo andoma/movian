@@ -145,6 +145,7 @@ typedef struct prop_nf {
   char pending_have_more;
 
   int sortorder[MAX_SORT_KEYS];
+  int sort_hide_on_missing[MAX_SORT_KEYS];
 
 } prop_nf_t;
 
@@ -393,7 +394,8 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
 
   // If sorting is enabled but this node don't have a key, hide it
   for(i = 0; i < MAX_SORT_KEYS; i++)
-    if(nf->sortkey[i] != NULL && nfn->sortkey_type[i] == SORTKEY_NONE)
+    if(nf->sortkey[i] != NULL && nfn->sortkey_type[i] == SORTKEY_NONE &&
+       nf->sort_hide_on_missing[i])
       en = 0;
 
   // Check filtering
@@ -1220,7 +1222,7 @@ prop_nf_pred_int_add(struct prop_nf *nf,
  */
 void
 prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
-	     const prop_nf_sort_strmap_t *map)
+	     const prop_nf_sort_strmap_t *map, int hide_on_missing)
 {
   nfnode_t *nfn;
 
@@ -1244,9 +1246,11 @@ prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
   if(path) {
     nf->sortkey[idx] = strdup(path);
     nf->sortorder[idx] = desc ? -1 : 1;
+    nf->sort_hide_on_missing[idx] = hide_on_missing;
   } else {
     nf->sortkey[idx] = NULL;
     nf->sortorder[idx] = 0;
+    nf->sort_hide_on_missing[idx] = 0;
   }
 
   TAILQ_FOREACH(nfn, &nf->in, in_link)

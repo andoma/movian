@@ -4438,7 +4438,7 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 PROP_NF_TAKE_DST_OWNERSHIP);
 
-  prop_nf_sort(self->t_extra, rstr_get(b->t_rstring), 0, 0, NULL);
+  prop_nf_sort(self->t_extra, rstr_get(b->t_rstring), 0, 0, NULL, 1);
 
   argc -= 2;
   argv += 2;

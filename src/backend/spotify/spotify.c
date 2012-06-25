@@ -2903,7 +2903,7 @@ pl_create(sp_playlist *plist, const char *name,
 			 PROP_NF_AUTODESTROY);
 
     if(pl->pl_flags & PL_SORT_ON_TIME)
-      prop_nf_sort(pnf, "node.metadata.timestamp", 1, 0, NULL);
+      prop_nf_sort(pnf, "node.metadata.timestamp", 1, 0, NULL, 0);
 
     prop_nf_pred_int_add(pnf, "node.metadata.available",
 			 PROP_NF_CMP_EQ, 0, NULL, 

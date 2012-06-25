@@ -126,7 +126,7 @@ search_open(prop_t *page, const char *url0)
 		       prop_create(source, "nodes"),
 		       NULL, PROP_NF_AUTODESTROY);
 
-  prop_nf_sort(pnf, "node.metadata.title", 0, 2, NULL);
+  prop_nf_sort(pnf, "node.metadata.title", 0, 2, NULL, 1);
 
   prop_nf_pred_int_add(pnf, "node.entries",
 		       PROP_NF_CMP_EQ, 0, NULL, 
