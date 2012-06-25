@@ -75,6 +75,15 @@ trace_prop(int l, const char *pfx, const char *msg, const char *sev)
   }
 }
 
+SIMPLEQ_HEAD(tracetmp_queue, tracetmp);
+
+typedef struct tracetmp {
+  SIMPLEQ_ENTRY(tracetmp) link;
+  const char *s1;
+  const char *s2;
+} tracetmp_t;
+
+
 
 /**
  *
@@ -88,6 +97,10 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   char *s, *p;
   const char *leveltxt;
   int l;
+  struct tracetmp_queue q;
+  tracetmp_t *tt;
+
+  SIMPLEQ_INIT(&q);
 
   if(!trace_initialized)
     return;
@@ -112,8 +125,12 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   while((s = strsep(&p, "\n")) != NULL) {
     if(level <= trace_level)
       trace_arch(level, buf2, s);
-    if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG)
-      trace_prop(level, buf2, s, leveltxt);
+    if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
+      tt = alloca(sizeof(tracetmp_t));
+      tt->s1 = mystrdupa(buf2);
+      tt->s2 = mystrdupa(s);
+      SIMPLEQ_INSERT_TAIL(&q, tt, link);
+    }
     if(log_fd != -1) {
       int ts = (showtime_get_ts() - log_start_ts) / 1000LL;
       snprintf(buf3, sizeof(buf3), "%02d:%02d:%02d.%03d: ",
@@ -135,6 +152,8 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
 
 
   hts_mutex_unlock(&trace_mutex);
+  SIMPLEQ_FOREACH(tt, &q, link)
+    trace_prop(level, tt->s1, tt->s2, leveltxt);
 }
 
 
