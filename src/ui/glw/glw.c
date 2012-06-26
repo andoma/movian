@@ -908,6 +908,7 @@ glw_move(glw_t *w, glw_t *b)
   } else {
     TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
   }
+  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_MOVED, w);
 }
 
 
