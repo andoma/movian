@@ -272,6 +272,12 @@ typedef enum {
    */
   GLW_SIGNAL_FOCUS_DISTANCE_CHANGED,
 
+  /**
+   * Emitted when gc_can_select_child maybe will return a different value
+   * than it previously did
+   */
+  GLW_SIGNAL_RESELECT_CHANGED,
+
 } glw_signal_t;
 
 
@@ -427,6 +433,10 @@ typedef struct glw_class {
    */
   void (*gc_detach_control)(struct glw *w, int on);
 
+  /**
+   * Return true if next/prev child can be selected
+   */
+  int (*gc_can_select_child)(struct glw *w, int next);
 
   /**
    *

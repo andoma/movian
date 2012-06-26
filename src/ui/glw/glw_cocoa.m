@@ -137,6 +137,7 @@ static const struct {
   { NSF2FunctionKey,         0,   ACTION_SHOW_MEDIA_STATS },
   { NSF3FunctionKey,         0,   ACTION_SYSINFO },
   { NSF4FunctionKey,         0,   ACTION_ENABLE_SCREENSAVER },
+  { NSF9FunctionKey,         0,   ACTION_SWITCH_VIEW },
   
   { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
   { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
