@@ -100,10 +100,12 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
     return;
 
   if(s->timer >= s->displaytime) {
-    c = s->w.glw_focused = glw_next_widget(c);
+    c = glw_next_widget(c);
     if(c == NULL)
-      c = s->w.glw_focused = glw_first_widget(&s->w);
+      c = glw_first_widget(&s->w);
     s->timer = 0;
+    if(c != NULL)
+      glw_focus_set(s->w.glw_root, c, GLW_FOCUS_SET_INTERACTIVE);
   }
   
   if(!s->hold)
