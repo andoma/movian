@@ -637,6 +637,7 @@ set_padding(glw_t *w, const int16_t *v)
   co->co_padding_top    = v[1];
   co->co_padding_right  = v[2];
   co->co_padding_bottom = v[3];
+  glw_signal0(w, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, NULL);
 }
 
 
