@@ -509,6 +509,32 @@ handle_pointer_event(glw_list_t *l, glw_pointer_event_t *gpe)
   }
 }
 
+/**
+ * This is a helper to make sure we can show items in list that are not
+ * focusable even if they are at the top
+ */
+static void
+scroll_to_me(glw_list_t *l, glw_t *c)
+{
+  glw_t *d = c;
+  if(c == NULL)
+    return;
+
+  while(1) {
+    d = TAILQ_PREV(d, glw_queue, glw_parent_link);
+    if(d == NULL)
+      break;
+
+    if(d->glw_flags & GLW_HIDDEN)
+      continue;
+    if(glw_is_child_focusable(d))
+      break;
+    c = d;
+  }
+  l->scroll_to_me = c;
+}
+
+
 
 /**
  *
@@ -523,7 +549,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
-    l->scroll_to_me = extra;
+    scroll_to_me(l, extra);
     l->suggest_cnt = 0;
     return 0;
 
@@ -533,8 +559,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     if(l->suggested == extra)
       l->suggested = NULL;
 
-    if(w->glw_focused != NULL)
-      l->scroll_to_me = w->glw_focused;
+    scroll_to_me(l, w->glw_focused);
 
     if(extra == TAILQ_FIRST(&w->glw_childs) && glw_next_widget(extra) == NULL) {
       // Last item went away, make sure to reset
@@ -553,13 +578,12 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_MOVED:
-    if(w->glw_focused != NULL)
-      l->scroll_to_me = w->glw_focused;
+    scroll_to_me(l, w->glw_focused);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
     if(w->glw_focused == extra) {
-      l->scroll_to_me = extra;
+      scroll_to_me(l, extra);
     }
     break;
 

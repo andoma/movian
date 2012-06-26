@@ -1057,6 +1057,8 @@ glw_t *glw_focus_by_path(glw_t *w);
 
 void glw_set_focus_weight(glw_t *w, float f);
 
+int glw_is_child_focusable(glw_t *w);
+
 
 /**
  * Clipping

@@ -1438,6 +1438,22 @@ glw_focus_suggest(glw_t *w)
 }
 
 
+/**
+ *
+ */
+int
+glw_is_child_focusable(glw_t *w)
+{
+  glw_t *c;
+  if(glw_is_focusable(w))
+    return 1;
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+    if(glw_is_child_focusable(c))
+      return 1;
+  }
+  return 0;
+}
+
 
 
 /**
