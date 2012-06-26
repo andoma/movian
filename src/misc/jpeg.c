@@ -86,6 +86,7 @@ jpeg_time(const char *d)
 	    &tm.tm_hour, &tm.tm_min, &tm.tm_sec) != 8)
     return 0;
 
+  tm.tm_mon--;
   tm.tm_year -= 1900;
   tm.tm_isdst = -1;
   
