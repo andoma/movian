@@ -838,7 +838,7 @@ glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
     want_focus = 1;
 #endif
 
-  glw_set_focus_weight(&gv->w, want_focus ? 1.0 : 0.0);
+  //  glw_set_focus_weight(&gv->w, want_focus ? 1.0 : 0.0);
 }
 
 
