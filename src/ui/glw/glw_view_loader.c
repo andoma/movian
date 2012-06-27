@@ -237,6 +237,7 @@ glw_view_loader_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_TIME:
       a->time = va_arg(ap, double);
+      a->time = GLW_MAX(a->time, 0.00001);
       break;
 
     case GLW_ATTRIB_PROPROOTS3:
