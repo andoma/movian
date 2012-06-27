@@ -13,7 +13,6 @@
 #include "media.h"
 #include "metadata.h"
 #include "db/db_support.h"
-#include "video/video_settings.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
 
@@ -1965,10 +1964,6 @@ video_get_restartpos(const char *url)
   void *db;
   sqlite3_stmt *stmt;
   int64_t rval = 0;
-
-  if(video_settings.resume_mode == VIDEO_RESUME_NO)
-    return 0;
-
 
   if((db = metadb_get()) == NULL)
     return 0;

@@ -466,6 +466,13 @@ video_player_idle(void *aux)
       rstr_release(play_url);
       play_url = rstr_alloc(ep->url);
 
+      if(ep->how) {
+	if(!strcmp(ep->how, "beginning"))
+	  play_flags |= BACKEND_VIDEO_START_FROM_BEGINNING;
+	if(!strcmp(ep->how, "continue"))
+	  play_flags |= BACKEND_VIDEO_CONTINUE;
+      }
+
     } else if(event_is_type(e, EVENT_EXIT)) {
       event_release(e);
       break;
