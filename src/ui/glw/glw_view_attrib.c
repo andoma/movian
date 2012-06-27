@@ -78,6 +78,13 @@ set_id(glw_t *w, const char *str)
   mystrset(&w->glw_id, str);
 }
 
+static void
+set_how(glw_t *w, const char *str)
+{
+  if(w->glw_class->gc_set_how != NULL)
+    w->glw_class->gc_set_how(w, str);
+}
+
 
 /**
  *
@@ -895,6 +902,7 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
  */
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
+  {"how",             set_string, 0, set_how},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
   {"source",          set_path, 0, set_source},

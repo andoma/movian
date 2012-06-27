@@ -86,7 +86,6 @@ typedef struct nav_page {
 
   prop_t *np_prop_root;
   char *np_url;
-  char *np_view;
 
   int np_direct_close;
 
@@ -299,7 +298,6 @@ nav_close(nav_page_t *np, int with_prop)
     nav_update_cango(nav);
   }
   free(np->np_url);
-  free(np->np_view);
   free(np);
 }
 
@@ -452,17 +450,19 @@ nav_page_icon_set(void *opaque, rstr_t *str)
  *
  */
 static void
-nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
+nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view,
+		    const char *how)
 {
   np->np_prop_root = prop_create_root("page");
 
   if(np->np_opened_from)
     prop_link(np->np_opened_from, prop_create(np->np_prop_root, "openedFrom"));
 
-  if(view != NULL) {
-    np->np_view = strdup(view);
+  if(view != NULL)
     prop_set_string(prop_create(np->np_prop_root, "requestedView"), view);
-  }
+
+  if(how != NULL)
+    prop_set_string(prop_create(np->np_prop_root, "how"), how);
 
   // XXX Change this into event-style subscription
   np->np_close_sub = 
@@ -516,7 +516,7 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view)
  */
 static void
 nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
-	  prop_t *model)
+	  prop_t *model, const char *how)
 {
   nav_page_t *np = calloc(1, sizeof(nav_page_t));
 
@@ -527,7 +527,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   np->np_direct_close = 0;
   TAILQ_INSERT_TAIL(&nav->nav_pages, np, np_global_link);
 
-  nav_page_setup_prop(nav, np, view);
+  nav_page_setup_prop(nav, np, view, how);
 
   nav_insert_page(nav, np, origin);
   if(backend_open(np->np_prop_root, url))
@@ -541,7 +541,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
 void
 nav_open(const char *url, const char *view)
 {
-  event_dispatch(event_create_openurl(url, view, NULL, NULL));
+  event_dispatch(event_create_openurl(url, view, NULL, NULL, NULL));
 }
 
 
@@ -597,7 +597,7 @@ nav_reload_current(navigator_t *nav)
   prop_unsubscribe(np->np_close_sub);
   prop_unsubscribe(np->np_direct_close_sub);
   prop_destroy(np->np_prop_root);
-  nav_page_setup_prop(nav, np, NULL);
+  nav_page_setup_prop(nav, np, NULL, "continue");
 
   if(prop_set_parent(np->np_prop_root, nav->nav_prop_pages)) {
     /* nav->nav_prop_pages is a zombie, this is an error */
@@ -636,7 +636,7 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
     nav_fwd(nav);
 
   } else if(event_is_action(e, ACTION_HOME)) {
-    nav_open0(nav, NAV_HOME, NULL, NULL, NULL);
+    nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
 
   } else if(event_is_action(e, ACTION_RELOAD_DATA)) {
     nav_reload_current(nav);
@@ -644,7 +644,7 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
   } else if(event_is_type(e, EVENT_OPENURL)) {
     ou = (event_openurl_t *)e;
     if(ou->url != NULL)
-      nav_open0(nav, ou->url, ou->view, ou->origin, ou->model);
+      nav_open0(nav, ou->url, ou->view, ou->origin, ou->model, ou->how);
     else
       TRACE(TRACE_INFO, "Navigator", "Tried to open NULL URL");
   }

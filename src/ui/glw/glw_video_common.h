@@ -124,6 +124,8 @@ typedef struct glw_video {
   char *gv_current_url;
   char *gv_pending_url;
 
+  char *gv_how;
+
   int gv_flags;
   int gv_priority;
   prop_t *gv_model;

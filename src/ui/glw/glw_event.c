@@ -46,6 +46,7 @@ typedef struct glw_event_navOpen {
   char *view;
   prop_t *origin;
   prop_t *model;
+  char *how;
 } glw_event_navOpen_t;
 
 
@@ -62,6 +63,7 @@ glw_event_map_navOpen_dtor(glw_root_t *gr, glw_event_map_t *gem)
 
   free(no->url);
   free(no->view);
+  free(no->how);
   free(no);
 }
 
@@ -77,7 +79,7 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     return; // Must have an URL to fire
 
   event_t *e = event_create_openurl(no->url, no->view, no->origin,
-				    no->model);
+				    no->model, no->how);
   
   e->e_mapped = 1;
   event_bubble(w, e);
@@ -90,7 +92,7 @@ glw_event_map_navOpen_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
  */
 glw_event_map_t *
 glw_event_map_navOpen_create(const char *url, const char *view, prop_t *origin,
-			     prop_t *model)
+			     prop_t *model, const char *how)
 {
   glw_event_navOpen_t *no = malloc(sizeof(glw_event_navOpen_t));
   
@@ -98,6 +100,7 @@ glw_event_map_navOpen_create(const char *url, const char *view, prop_t *origin,
   no->view     = view   ? strdup(view)   : NULL;
   no->origin   = prop_ref_inc(origin);
   no->model    = prop_ref_inc(model);
+  no->how      = how    ? strdup(how)   : NULL;
   
   no->map.gem_dtor = glw_event_map_navOpen_dtor;
   no->map.gem_fire = glw_event_map_navOpen_fire;
