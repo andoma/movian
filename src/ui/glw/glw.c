@@ -138,7 +138,8 @@ glw_update_size(glw_root_t *gr)
   gr->gr_current_size = v;
 
   prop_set_int(gr->gr_prop_size, v);
-  glw_font_change_size(gr, v);
+  glw_text_flush(gr);
+  glw_icon_flush(gr);
   TRACE(TRACE_DEBUG, "GLW", "UI size scale changed to %d", v);
 }
 

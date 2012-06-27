@@ -989,7 +989,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   }
 
 
-  default_size = gtb->gtb_default_size ?: gr->gr_fontsize;
+  default_size = gtb->gtb_default_size ?: gr->gr_current_size;
   scale = gtb->gtb_size_scale;
 
   flags = 0;
@@ -1101,7 +1101,8 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
       gtb_set_constraints(gr, gtb, pm);
       pixmap_release(pm);
     } else {
-      int lh = (gtb->gtb_default_size ?: gr->gr_fontsize) * gtb->gtb_size_scale;
+      int lh = (gtb->gtb_default_size ?: gr->gr_current_size) *
+	gtb->gtb_size_scale;
       glw_set_constraints(&gtb->w, 0, lh, 0, GLW_CONSTRAINT_Y);
     }
   }
@@ -1206,28 +1207,11 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   hts_cond_init(&gr->gr_gtb_work_cond, &gr->gr_mutex);
 
-  glw_font_change_size(gr, 20);
-
   hts_thread_create_detached("GLW font renderer", font_render_thread, gr,
 			     THREAD_PRIO_NORMAL);
 }
 
 
-
-
-/**
- * Change font scaling
- */
-void
-glw_font_change_size(void *opaque, int fontsize)
-{
-  glw_root_t *gr = opaque;
-  if(gr->gr_fontsize == fontsize || fontsize == 0)
-    return;
-
-  gr->gr_fontsize = fontsize;
-  glw_text_flush(gr);
-}
 
 
 /**

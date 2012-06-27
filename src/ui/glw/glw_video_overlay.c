@@ -744,10 +744,10 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
   w->glw_alignment = vo->vo_alignment ?: LAYOUT_ALIGN_BOTTOM;
   gvo->gvo_alignment = w->glw_alignment;
 
-  gc->gc_set_default_size(w, gv->w.glw_root->gr_fontsize * 1.5);
+  gc->gc_set_default_size(w, gv->w.glw_root->gr_current_size * 1.5);
 
   if(vo->vo_padding_left == -1) {
-    int default_pad = gv->w.glw_root->gr_fontsize;
+    int default_pad = gv->w.glw_root->gr_current_size;
     gvo->gvo_padding_left     = default_pad;
     gvo->gvo_padding_top      = default_pad;
     gvo->gvo_padding_right    = default_pad;

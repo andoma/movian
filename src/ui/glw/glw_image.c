@@ -89,6 +89,8 @@ typedef struct glw_image {
 
   float gi_autofade;
 
+  LIST_ENTRY(glw_image) gi_link;
+
 } glw_image_t;
 
 static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage,
@@ -111,10 +113,13 @@ static int8_t tex_transform[9][4] = {
 
 
 
+/**
+ *
+ */
 static void
 glw_image_dtor(glw_t *w)
 {
-  glw_image_t *gi = (void *)w;
+  glw_image_t *gi = (glw_image_t *)w;
   int i;
   for(i = 0; i < 2; i++) {
     rstr_release(gi->gi_pending_url_x[i]);
@@ -127,6 +132,18 @@ glw_image_dtor(glw_t *w)
   }
   glw_renderer_free(&gi->gi_gr);
 }
+
+/**
+ *
+ */
+static void
+glw_icon_dtor(glw_t *w)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  LIST_REMOVE(gi, gi_link);
+  glw_image_dtor(w);
+}
+
 
 /**
  *
@@ -577,7 +594,6 @@ glw_image_update_constraints(glw_image_t *gi)
 {
   glw_loadable_texture_t *glt = gi->gi_current_x[0];
   glw_t *c;
-  glw_root_t *gr = gi->w.glw_root;
 
   if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE) {
 
@@ -607,13 +623,6 @@ glw_image_update_constraints(glw_image_t *gi)
 			  glt->glt_ys,
 			  0, 0);
     }
-
-  } else if(gi->w.glw_class == &glw_icon) {
-
-    float siz = gi->gi_size_scale * gr->gr_fontsize;
-
-    glw_set_constraints(&gi->w, siz, siz, 0,
-			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
   } else if(gi->w.glw_class == &glw_image && glt != NULL) {
     float aspect = (float)glt->glt_xs / glt->glt_ys;
@@ -990,6 +999,21 @@ glw_image_ctor(glw_t *w)
 /**
  *
  */
+static void 
+glw_icon_ctor(glw_t *w)
+{
+  glw_image_ctor(w);
+  glw_image_t *gi = (glw_image_t *)w;
+  glw_root_t *gr = w->glw_root;
+  float siz = w->glw_root->gr_current_size;
+  glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+
+  LIST_INSERT_HEAD(&gr->gr_icons, gi, gi_link);
+}
+
+/**
+ *
+ */
 static void
 glw_image_set_rgb(glw_t *w, const float *rgb)
 {
@@ -1182,7 +1206,7 @@ set_size_scale(glw_t *w, float f)
   glw_image_t *gi = (glw_image_t *)w;
   gi->gi_size_scale = f;
 
-  float siz = gi->gi_size_scale * w->glw_root->gr_fontsize;
+  float siz = gi->gi_size_scale * w->glw_root->gr_current_size;
   glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 }
 
@@ -1247,6 +1271,19 @@ get_identity(glw_t *w)
   return rstr_get(gi->gi_pending_url_x[0]);
 }
 
+
+void
+glw_icon_flush(glw_root_t *gr)
+{
+  glw_image_t *gi;
+  LIST_FOREACH(gi, &gr->gr_icons, gi_link) {
+    float siz = gi->gi_size_scale * gr->gr_current_size;
+    
+    glw_set_constraints(&gi->w, siz, siz, 0,
+			GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+  }
+}
+
 /**
  *
  */
@@ -1280,8 +1317,8 @@ static glw_class_t glw_icon = {
   .gc_name = "icon",
   .gc_instance_size = sizeof(glw_image_t),
   .gc_render = glw_image_render,
-  .gc_ctor = glw_image_ctor,
-  .gc_dtor = glw_image_dtor,
+  .gc_ctor = glw_icon_ctor,
+  .gc_dtor = glw_icon_dtor,
   .gc_set = glw_image_set,
   .gc_signal_handler = glw_image_callback,
   .gc_default_alignment = LAYOUT_ALIGN_CENTER,
