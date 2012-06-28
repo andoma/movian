@@ -198,6 +198,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
    case GLW_SIGNAL_LAYOUT:
+     w->glw_root->gr_screensaver_counter = 0;
     glw_slideshow_layout(s, extra);
     return 0;
 
