@@ -884,8 +884,6 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
   }
   if(direct || s->hps_flags & PROP_SUB_INTERNAL) {
 
-    assert(pnq == NULL); // Delayed updates are not compatile with direct mode
-
     /* Direct mode can be requested during subscribe to get
        the current values updated directly without dispatch
        via the courier */
@@ -3126,8 +3124,10 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
   LIST_INSERT_HEAD(&src->hp_targets, dst, hp_originator_link);
 
   /* Follow any aditional symlinks source may point at */
-  while(src->hp_originator != NULL)
+  while(src->hp_originator != NULL) {
+    assert(src != dst);
     src = src->hp_originator;
+  }
 
   relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds", NULL, NULL);
 
