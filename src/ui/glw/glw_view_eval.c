@@ -631,13 +631,10 @@ eval_lt(glw_view_eval_context_t *ec, struct token *self, int gt)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-  if((a->type == TOKEN_INT || a->type == TOKEN_FLOAT) &&
-     (b->type == TOKEN_INT || b->type == TOKEN_FLOAT)) {
-
-    rr = (token2float(a) < token2float(b)) ^ gt;
-  } else {
-    rr = 0;
-  }
+  if(gt)
+    rr = token2float(a) > token2float(b);
+  else
+    rr = token2float(a) < token2float(b);
 
   r = eval_alloc(self, ec, TOKEN_INT);
   r->t_int = rr;
