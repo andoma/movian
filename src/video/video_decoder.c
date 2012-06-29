@@ -382,7 +382,7 @@ vd_thread(void *aux)
       break;
 
     case MB_DVD_CLUT:
-      memcpy(vd->vd_dvd_clut, mb->mb_data, 16 * sizeof(uint32_t));
+      dvdspu_decode_clut(vd->vd_dvd_clut, mb->mb_data);
       break;
 
     case MB_DVD_SPU:
