@@ -115,8 +115,21 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
       mp_enqueue_event(mp, e);
       return 1;
     }
-  }
 
+    if(event_is_action(e, ACTION_LEFT)) {
+      e = event_create_action(ACTION_SEEK_BACKWARD);
+      mp_enqueue_event(mp, e);
+      event_release(e);
+      return 1;
+    }
+
+    if(event_is_action(e, ACTION_RIGHT)) {
+      e = event_create_action(ACTION_SEEK_FORWARD);
+      mp_enqueue_event(mp, e);
+      event_release(e);
+      return 1;
+    }
+  }
   return 0;
 }
 
