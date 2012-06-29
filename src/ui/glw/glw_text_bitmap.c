@@ -901,6 +901,13 @@ thaw(glw_t *w)
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   gtb->gtb_frozen = 0;
 
+  if(!(gtb->w.glw_flags & GLW_CONSTRAINT_Y)) {
+    int lh = (gtb->gtb_default_size ?: w->glw_root->gr_current_size) *
+      gtb->gtb_size_scale;
+    int ys = gtb->gtb_padding_top + gtb->gtb_padding_bottom + lh;
+    glw_set_constraints(&gtb->w, 0, ys, 0, GLW_CONSTRAINT_Y);
+  }
+
   if(gtb->gtb_pending_updates & GTB_UPDATE_REALIZE)
     gtb_realize(gtb);
 
