@@ -169,6 +169,7 @@ glw_view_loader_ctor(glw_t *w)
   glw_view_loader_t *a = (void *)w;
   a->time = 1.0;
   a->args = prop_create_root("args");
+  w->glw_flags2 |= GLW2_EXPEDITE_SUBSCRIPTIONS;
 }
 
 
@@ -277,7 +278,6 @@ glw_view_loader_set(glw_t *w, va_list ap)
  */
 static glw_class_t glw_view_loader = {
   .gc_name = "loader",
-  .gc_flags = GLW_EXPEDITE_SUBSCRIPTIONS,
   .gc_instance_size = sizeof(glw_view_loader_t),
   .gc_ctor = glw_view_loader_ctor,
   .gc_dtor = glw_view_loader_dtor,

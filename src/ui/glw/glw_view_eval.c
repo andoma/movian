@@ -1732,7 +1732,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   int f = PROP_SUB_DIRECT_UPDATE;
 
-  if(ec->w->glw_class->gc_flags & GLW_EXPEDITE_SUBSCRIPTIONS)
+  if(ec->w->glw_flags2 & GLW2_EXPEDITE_SUBSCRIPTIONS)
     f |= PROP_SUB_EXPEDITE;
 
   if(ec->debug || ec->w->glw_flags & GLW_DEBUG)

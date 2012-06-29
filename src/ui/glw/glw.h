@@ -315,7 +315,6 @@ typedef struct glw_class {
   int gc_flags;
 #define GLW_NAVIGATION_SEARCH_BOUNDARY 0x1
 #define GLW_CAN_HIDE_CHILDS            0x2
-#define GLW_EXPEDITE_SUBSCRIPTIONS     0x4
 #define GLW_TRANSFORM_LR_TO_UD         0x8
 #define GLW_UNCONSTRAINED              0x10
 
@@ -946,6 +945,8 @@ typedef struct glw {
 #define GLW2_ALWAYS_GRAB_KNOB 0x8
 #define GLW2_AUTOHIDE        0x10
 #define GLW2_SHADOW          0x20
+#define GLW2_AUTOFADE        0x40
+#define GLW2_EXPEDITE_SUBSCRIPTIONS     0x80
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
