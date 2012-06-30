@@ -928,9 +928,9 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
   int i;
 
   for (i = 0; i < ARRAYSIZE(size); i++) {
-
-    htsmsg_t *img = htsmsg_create_map();
+    htsmsg_t *img;
     sp_link *link = link_fn(entity, size_enum[i]);
+
     if (!link)
       continue;
     if (!f_sp_link_as_string(link, url, sizeof (url))) {
@@ -939,6 +939,7 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
     }
     f_sp_link_release(link);
 
+    img = htsmsg_create_map();
     htsmsg_add_str(img, "url", url);
     htsmsg_add_u32(img, "width", size[i]);
     htsmsg_add_u32(img, "height", size[i]);
