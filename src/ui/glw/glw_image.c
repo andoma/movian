@@ -1356,8 +1356,6 @@ static glw_class_t glw_backdrop = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
-  .gc_set_stencil = set_stencil,
-  .gc_set_stencil_border = set_stencil_border,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1384,8 +1382,6 @@ static glw_class_t glw_frontdrop = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
-  .gc_set_stencil = set_stencil,
-  .gc_set_stencil_border = set_stencil_border,
 };
 
 GLW_REGISTER_CLASS(glw_frontdrop);
