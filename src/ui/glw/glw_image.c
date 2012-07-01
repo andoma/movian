@@ -27,9 +27,9 @@ typedef struct glw_image {
 
   float gi_angle;
 
-  rstr_t *gi_pending_url_x[2];
-  glw_loadable_texture_t *gi_current_x[2];
-  glw_loadable_texture_t *gi_pending_x[2];
+  rstr_t *gi_pending_url;
+  glw_loadable_texture_t *gi_current;
+  glw_loadable_texture_t *gi_pending;
 
   int16_t gi_border_left;
   int16_t gi_border_right;
@@ -61,7 +61,6 @@ typedef struct glw_image {
 #define GI_MODE_REPEATED_TEXTURE 2
 #define GI_MODE_ALPHA_EDGES      3
 #define GI_MODE_BORDER_ONLY_SCALING  4
-#define GI_MODE_STENCIL          5
 
   uint8_t gi_update;
 
@@ -120,16 +119,14 @@ static void
 glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  int i;
-  for(i = 0; i < 2; i++) {
-    rstr_release(gi->gi_pending_url_x[i]);
-    
-    if(gi->gi_current_x[i] != NULL)
-      glw_tex_deref(w->glw_root, gi->gi_current_x[i]);
 
-    if(gi->gi_pending_x[i] != NULL)
-      glw_tex_deref(w->glw_root, gi->gi_pending_x[i]);
-  }
+  rstr_release(gi->gi_pending_url);
+    
+  if(gi->gi_current != NULL)
+    glw_tex_deref(w->glw_root, gi->gi_current);
+
+  if(gi->gi_pending != NULL)
+    glw_tex_deref(w->glw_root, gi->gi_pending);
   glw_renderer_free(&gi->gi_gr);
 }
 
@@ -204,45 +201,14 @@ static void
 glw_image_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_image_t *gi = (void *)w;
-  const glw_loadable_texture_t *glt = gi->gi_current_x[0];
-  const glw_loadable_texture_t *ste = gi->gi_current_x[1];
+  const glw_loadable_texture_t *glt = gi->gi_current;
   float alpha_self;
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
   glw_rctx_t rc0;
   
   alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self * gi->gi_autofade;
 
-  if(gi->gi_mode == GI_MODE_STENCIL) {
-
-    if(glt && glw_is_tex_inited(&glt->glt_texture) &&
-       ste && glw_is_tex_inited(&ste->glt_texture)) {
-    
-      rc0 = *rc;
-
-      glw_align_1(&rc0, w->glw_alignment);
-      
-      if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
-	glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
-      else if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
-	glw_scale_to_aspect(&rc0, glt->glt_aspect);
-
-      if(gi->gi_angle != 0)
-	glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
-
-      glw_align_2(&rc0, w->glw_alignment);
-
-      if(glw_is_focusable(w))
-	glw_store_matrix(w, &rc0);
-
-      if(alpha_self > 0.01f)
-	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
-			  &glt->glt_texture, &ste->glt_texture, 
-			  &gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur);
-    }
-    
-
-  } else if(gi->gi_mode == GI_MODE_NORMAL ||
-	    gi->gi_mode == GI_MODE_ALPHA_EDGES) {
+  if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
 
     if(glt == NULL || !glw_is_tex_inited(&glt->glt_texture))
       return;
@@ -379,91 +345,6 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 }
 
 
-/**
- *
- */
-static void
-glw_image_layout_stencil(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
-			 glw_loadable_texture_t *img,
-			 glw_loadable_texture_t *glt)
-{
-  float src[4][2];
-  float tex[4][2];
-  float vex[4][2];
-
-  int x, y, i = 0;
-
-  if(gr->gr_normalized_texture_coords) {
-    tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
-    tex[2][0] = glt->glt_s - (float)gi->gi_border_right / glt->glt_xs;
-    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
-    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_s : tex[2][0];
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = 0.0f + (float)gi->gi_border_top    / glt->glt_ys;
-    tex[2][1] = glt->glt_t - (float)gi->gi_border_bottom / glt->glt_ys;
-    tex[3][1] = glt->glt_t;
-
-  } else {
-
-    tex[1][0] = gi->gi_border_left;
-    tex[2][0] = glt->glt_xs - gi->gi_border_right;
-    tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT  ? 0.0f : tex[1][0];
-    tex[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? glt->glt_xs : tex[2][0];
-
-    tex[0][1] = 0.0f;
-    tex[1][1] = gi->gi_border_top;
-    tex[2][1] = glt->glt_ys - gi->gi_border_bottom;
-    tex[3][1] = glt->glt_ys;
-  }
-
-
-  if(gr->gr_normalized_texture_coords) {
-    src[1][0] = 0.0f + (float)gi->gi_border_left  / img->glt_xs;
-    src[2][0] = img->glt_s - (float)gi->gi_border_right / img->glt_xs;
-    src[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : src[1][0];
-    src[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? img->glt_s : src[2][0];
-
-    src[0][1] = 0.0f;
-    src[1][1] = 0.0f + (float)gi->gi_border_top    / img->glt_ys;
-    src[2][1] = img->glt_t - (float)gi->gi_border_bottom / img->glt_ys;
-    src[3][1] = img->glt_t;
-
-  } else {
-
-    src[1][0] = gi->gi_border_left;
-    src[2][0] = img->glt_xs - gi->gi_border_right;
-    src[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT  ? 0.0f : src[1][0];
-    src[3][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_RIGHT ? img->glt_xs : src[2][0];
-
-    src[0][1] = 0.0f;
-    src[1][1] = gi->gi_border_top;
-    src[2][1] = img->glt_ys - gi->gi_border_bottom;
-    src[3][1] = img->glt_ys;
-  }
-
-
-
-  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_left + gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_right + gi->gi_margin_right) / rc->rc_width, 0.0f);
-  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right) / rc->rc_width, 0.0f);
-    
-  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top)  / rc->rc_height, 0.0f);
-  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_top + gi->gi_margin_top)  / rc->rc_height, 0.0f);
-  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_bottom + gi->gi_margin_bottom) / rc->rc_height, 0.0f);
-  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_bottom) / rc->rc_height, 0.0f);
-
-  for(y = 0; y < 4; y++) {
-    for(x = 0; x < 4; x++) {
-      glw_renderer_vtx_pos(&gi->gi_gr, i, vex[x][0], vex[y][1], 0.0f);
-      glw_renderer_vtx_st(&gi->gi_gr,  i, src[x][0], src[y][1]);
-      glw_renderer_vtx_st2(&gi->gi_gr, i, tex[x][0], tex[y][1]);
-      i++;
-    }
-  }
-}
-
 static const float alphaborder[4][4] = {
   {0,0,0,0},
   {0,1,1,0},
@@ -592,7 +473,7 @@ glw_image_layout_repeated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 static void
 glw_image_update_constraints(glw_image_t *gi)
 {
-  glw_loadable_texture_t *glt = gi->gi_current_x[0];
+  glw_loadable_texture_t *glt = gi->gi_current;
   glw_t *c;
 
   if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE) {
@@ -716,78 +597,71 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0;
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
-  int i;
 
-  const int stencil = gi->gi_mode == GI_MODE_STENCIL;
-  for(i = 0; i < stencil + 1; i++) {
-    if(gi->gi_pending_url_x[i] != NULL) {
-      // Request to load
-      int xs = -1, ys = -1;
-      int flags = 0;
-      gi->gi_loading_new_url = 1;
+  if(gi->gi_pending_url != NULL) {
+    // Request to load
+    int xs = -1, ys = -1;
+    int flags = 0;
+    gi->gi_loading_new_url = 1;
 
-      if(gi->gi_pending_x[i] != NULL) {
-	glw_tex_deref(w->glw_root, gi->gi_pending_x[i]);
-	gi->gi_pending_x[i] = NULL;
-      }
-
-      if(rstr_get(gi->gi_pending_url_x[i])[0] == 0) {
-	// Empty string, unload all
-
-	if(gi->gi_current_x[i] != NULL) {
-	  glw_tex_deref(w->glw_root, gi->gi_current_x[i]);
-	  gi->gi_current_x[i] = NULL;
-	}
-	
-	gi->gi_update = 1;
-
-      } else {
-    
-	if(w->glw_class == &glw_repeatedimage)
-	  flags |= GLW_TEX_REPEAT;
-	
-	if(i == 0 && hq) {
-	  if(rc->rc_width < rc->rc_height) {
-	    xs = rc->rc_width;
-	} else {
-	    ys = rc->rc_height;
-	  }
-	}
-
-	if(xs && ys) {
-
-	  gi->gi_pending_x[i] = glw_tex_create(w->glw_root,
-					       gi->gi_pending_url_x[i],
-					       flags, xs, ys);
-	  
-	  rstr_release(gi->gi_pending_url_x[i]);
-	  gi->gi_pending_url_x[i] = NULL;
-	}
-      }
+    if(gi->gi_pending != NULL) {
+      glw_tex_deref(w->glw_root, gi->gi_pending);
+      gi->gi_pending = NULL;
     }
-  
-    if((glt = gi->gi_pending_x[i]) != NULL) {
-      glw_tex_layout(gr, glt);
 
-      if(glw_is_tex_inited(&glt->glt_texture) ||
-	 glt->glt_state == GLT_STATE_ERROR) {
-	// Pending texture completed, ok or error: transfer to current
+    if(rstr_get(gi->gi_pending_url)[0] == 0) {
+      // Empty string, unload all
 
-	if(gi->gi_current_x[i] != NULL)
-	  glw_tex_deref(w->glw_root, gi->gi_current_x[i]);
+      if(gi->gi_current != NULL) {
+	glw_tex_deref(w->glw_root, gi->gi_current);
+	gi->gi_current = NULL;
+      }
+	
+      gi->gi_update = 1;
 
-	gi->gi_current_x[i] = gi->gi_pending_x[i];
-	gi->gi_pending_x[i] = NULL;
-	gi->gi_update = 1;
-	gi->gi_loading_new_url = 0;
+    } else {
+    
+      if(w->glw_class == &glw_repeatedimage)
+	flags |= GLW_TEX_REPEAT;
+	
+      if(hq) {
+	if(rc->rc_width < rc->rc_height) {
+	  xs = rc->rc_width;
+	} else {
+	  ys = rc->rc_height;
+	}
+      }
+
+      if(xs && ys) {
+
+	gi->gi_pending = glw_tex_create(w->glw_root,
+					gi->gi_pending_url,
+					flags, xs, ys);
+	  
+	rstr_release(gi->gi_pending_url);
+	gi->gi_pending_url = NULL;
       }
     }
   }
+  
+  if((glt = gi->gi_pending) != NULL) {
+    glw_tex_layout(gr, glt);
 
-  if(stencil && gi->gi_current_x[1] == NULL)
-    return;
+    if(glw_is_tex_inited(&glt->glt_texture) ||
+       glt->glt_state == GLT_STATE_ERROR) {
+      // Pending texture completed, ok or error: transfer to current
 
-  if((glt = gi->gi_current_x[0]) == NULL)
+      if(gi->gi_current != NULL)
+	glw_tex_deref(w->glw_root, gi->gi_current);
+
+      gi->gi_current = gi->gi_pending;
+      gi->gi_pending = NULL;
+      gi->gi_update = 1;
+      gi->gi_loading_new_url = 0;
+    }
+  }
+
+  if((glt = gi->gi_current) == NULL)
     return;
 
   if(gi->gi_loading_new_url) {
@@ -797,17 +671,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   }
 
   glw_tex_layout(gr, glt);
-  if(stencil && gi->gi_current_x[1])
-    glw_tex_layout(gr, gi->gi_current_x[1]);
 
   if(glt->glt_state == GLT_STATE_ERROR) {
     if(!gi->gi_is_ready) {
       gi->gi_is_ready = 1;
       glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
     }
-  } else if(glw_is_tex_inited(&glt->glt_texture) &&
-	    (!stencil ||
-	     glw_is_tex_inited(&gi->gi_current_x[1]->glt_texture))) {
+  } else if(glw_is_tex_inited(&glt->glt_texture)) {
 
     if(!gi->gi_is_ready) {
       gi->gi_is_ready = 1;
@@ -841,10 +711,6 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	glw_renderer_init(&gi->gi_gr, 16, 16, borderonlyobject);
 	glw_image_layout_tesselated(gr, rc, gi, glt);
 	break;
-      case GI_MODE_STENCIL:
-	glw_renderer_init(&gi->gi_gr, 16, 18, borderobject);
-	glw_image_layout_stencil(gr, rc, gi, glt, gi->gi_current_x[1]);
-	break;
       default:
 	abort();
       }
@@ -870,16 +736,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       case GI_MODE_ALPHA_EDGES:
 	glw_image_layout_alpha_edges(gr, rc, gi, glt);
 	break;
-      case GI_MODE_STENCIL:
-	glw_image_layout_stencil(gr, rc, gi, glt, gi->gi_current_x[1]);
-	break;
       }
       gi->gi_need_reload = hq;
     }
 
 
-    if(gi->gi_need_reload && gi->gi_pending_x[0] == NULL &&
-       gi->gi_pending_url_x[0] == NULL && rc->rc_width && rc->rc_height) {
+    if(gi->gi_need_reload && gi->gi_pending == NULL &&
+       gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
 
       gi->gi_need_reload = 0;
 	
@@ -898,8 +761,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	if(w->glw_class == &glw_repeatedimage)
 	  flags |= GLW_TEX_REPEAT;
 	
-	gi->gi_pending_x[0] = glw_tex_create(w->glw_root, glt->glt_url,
-					     flags, xs, ys);
+	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
+					flags, xs, ys);
       }
     }
   } else {
@@ -1065,24 +928,6 @@ set_border(glw_t *w, const int16_t *v)
  *
  */
 static void
-set_stencil_border(glw_t *w, const int16_t *v)
-{
-  glw_image_t *gi = (void *)w;
-
-  gi->gi_border_left   = v[0];
-  gi->gi_border_top    = v[1];
-  gi->gi_border_right  = v[2];
-  gi->gi_border_bottom = v[3];
-  update_box(gi);
-  gi->gi_update = 1;
-  glw_image_update_constraints(gi);
-}
-
-
-/**
- *
- */
-static void
 set_padding(glw_t *w, const int16_t *v)
 {
   glw_image_t *gi = (void *)w;
@@ -1137,17 +982,17 @@ mod_image_flags(glw_t *w, int set, int clr)
  *
  */
 static void
-set_path(glw_image_t *gi, rstr_t *filename, int i)
+set_path(glw_image_t *gi, rstr_t *filename)
 {
  
   const rstr_t *curname;
 
-  if(gi->gi_pending_url_x[i] != NULL)
-    curname = gi->gi_pending_url_x[i];
-  else if(gi->gi_pending_x[i] != NULL) 
-    curname = gi->gi_pending_x[i]->glt_url;
-  else if(gi->gi_current_x[i] != NULL) 
-    curname = gi->gi_current_x[i]->glt_url;
+  if(gi->gi_pending_url != NULL)
+    curname = gi->gi_pending_url;
+  else if(gi->gi_pending != NULL) 
+    curname = gi->gi_pending->glt_url;
+  else if(gi->gi_current != NULL) 
+    curname = gi->gi_current->glt_url;
   else 
     curname = NULL;
   
@@ -1155,10 +1000,10 @@ set_path(glw_image_t *gi, rstr_t *filename, int i)
 						    rstr_get(curname)))
     return;
   
-  if(gi->gi_pending_url_x[i] != NULL)
-    rstr_release(gi->gi_pending_url_x[i]);
+  if(gi->gi_pending_url != NULL)
+    rstr_release(gi->gi_pending_url);
   
-  gi->gi_pending_url_x[i] = filename ? rstr_dup(filename) : rstr_alloc("");
+  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
 }
 
 
@@ -1169,20 +1014,7 @@ static void
 set_source(glw_t *w, rstr_t *filename)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  set_path(gi, filename, 0);
-}
-
-
-
-/**
- *
- */
-static void
-set_stencil(glw_t *w, rstr_t *filename)
-{
-  glw_image_t *gi = (glw_image_t *)w;
-  set_path(gi, filename, 1);
-  gi->gi_mode = GI_MODE_STENCIL;
+  set_path(gi, filename);
 }
 
 
@@ -1242,8 +1074,6 @@ glw_image_set(glw_t *w, va_list ap)
     }
   } while(attrib);
 
-  if(w->glw_class == &glw_icon) {
-  }
 }
 
 
@@ -1265,10 +1095,10 @@ static const char *
 get_identity(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
-  glw_loadable_texture_t *glt = gi->gi_current_x[0];
+  glw_loadable_texture_t *glt = gi->gi_current;
   if(glt)
     return rstr_get(glt->glt_url);
-  return rstr_get(gi->gi_pending_url_x[0]);
+  return rstr_get(gi->gi_pending_url);
 }
 
 
@@ -1303,8 +1133,6 @@ static glw_class_t glw_image = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
-  .gc_set_stencil = set_stencil,
-  .gc_set_stencil_border = set_stencil_border,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1329,8 +1157,6 @@ static glw_class_t glw_icon = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
   .gc_get_identity = get_identity,
-  .gc_set_stencil = set_stencil,
-  .gc_set_stencil_border = set_stencil_border,
 };
 
 GLW_REGISTER_CLASS(glw_icon);

@@ -565,17 +565,6 @@ set_border(glw_t *w, const int16_t *vec4)
  *
  */
 static void
-set_stencil_border(glw_t *w, const int16_t *vec4)
-{
-  if(w->glw_class->gc_set_stencil_border != NULL)
-    w->glw_class->gc_set_stencil_border(w, vec4);
-}
-
-
-/**
- *
- */
-static void
 set_margin(glw_t *w, const int16_t *vec4)
 {
   if(w->glw_class->gc_set_margin != NULL)
@@ -810,16 +799,6 @@ set_source(glw_t *w, rstr_t *p)
     w->glw_class->gc_set_source(w, p);
 }
 
-/**
- *
- */
-static void
-set_stencil(glw_t *w, rstr_t *p)
-{
-  if(w->glw_class->gc_set_stencil != NULL)
-    w->glw_class->gc_set_stencil(w, p);
-}
-
 
 /**
  *
@@ -906,7 +885,6 @@ static const token_attrib_t attribtab[] = {
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
   {"source",          set_path, 0, set_source},
-  {"stencil",         set_path, 0, set_stencil},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
   {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
@@ -994,7 +972,6 @@ static const token_attrib_t attribtab[] = {
 
   {"padding",         set_int16_4, 0, set_padding},
   {"border",          set_int16_4, 0, set_border},
-  {"stencilBorder",   set_int16_4, 0, set_stencil_border},
   {"margin",          set_int16_4, 0, set_margin},
   {"rotation",        set_float4, 0, set_rotation},
   {"clipping",        set_float4, 0, set_clipping},

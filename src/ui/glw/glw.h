@@ -473,10 +473,6 @@ typedef struct glw_class {
    */
   void (*gc_set_border)(struct glw *w, const int16_t *v);
 
-  /**
-   *
-   */
-  void (*gc_set_stencil_border)(struct glw *w, const int16_t *v);
 
   /**
    *
@@ -552,11 +548,6 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_how)(struct glw *w, const char *how);
-
-  /**
-   *
-   */
-  void (*gc_set_stencil)(struct glw *w, rstr_t *url);
 
   /**
    *
