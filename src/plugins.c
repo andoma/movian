@@ -360,11 +360,25 @@ plugin_prop_from_htsmsg(htsmsg_t *pm)
 
   prop_set_string(prop_create(metadata, "title"), title);
 
+  prop_set_string_ex(prop_create(metadata, "description"),
+		     NULL,
+		     htsmsg_get_str(pm, "description"),
+		     PROP_STR_RICH);
+
+  prop_set_string(prop_create(metadata, "synopsis"),
+		  htsmsg_get_str(pm, "synopsis"));
+
+  prop_set_string(prop_create(metadata, "author"),
+		  htsmsg_get_str(pm, "author"));
+
 
   prop_t *pp = prop_create(plugin_root, id);
 
   prop_link(prop_create(pp, "installed"),
 	    prop_create(metadata, "installed"));
+
+  prop_link(prop_create(pp, "version"),
+	    prop_create(metadata, "installed_version"));
 
   if(basepath != NULL) {
     snprintf(url, sizeof(url), "%s/%s", basepath, icon);
@@ -430,7 +444,7 @@ plugin_open_installed(prop_t *page)
   htsmsg_field_t *f;
   prop_t *nodes, *p;
   
-  nodes = get_nodes_for_plugins(page, "Plugins installed", 1);
+  nodes = get_nodes_for_plugins(page, "Installed plugins", 1);
 
   // Then loop over plugins from repository
 
