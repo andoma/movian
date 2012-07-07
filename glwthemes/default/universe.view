@@ -1,21 +1,15 @@
 $ui.monofont = loadFont("dataroot://resources/fonts/UbuntuMono-Regular.ttf");
 $ui.font = loadFont("fonts/bankgthd.ttf");
 
-onEvent(menu, {
-  $ui.menu = !$ui.menu;
-});
-
 onEvent(logwindow, {
   $ui.logwindow = !$ui.logwindow;
 });
 
 onEvent(back, {
-  $ui.menu = false;
-}, $ui.menu);
-
-onEvent(back, {
   $ui.logwindow = false;
 }, $ui.logwindow);
+
+
 
 widget(container_z, {
 
@@ -34,22 +28,11 @@ widget(container_z, {
 	  effect: blend;
 	  noInitialTransform: true;
     
-	  delta($ui.fullwindow, wantFullWindow());
-    
 	  cloner($global.nav.pages, loader, {
 	    time: 0.2;
 	    noInitialTransform: true;
-	    source: translate($page.model.contents, 
-			      "pages/" + $page.model.type + ".view",
-			      "album", "pages/album.view",
-			      "images", "pages/images.view");
+	    source: "pages/" + $page.model.type + ".view";
 	  });
-	});
-
-	widget(loader, {
-	  hidden: !$ui.menu;
-	  noInitialTransform: true;
-	  source: "cmdmenu2.view";
 	});
 
 	cloner($global.popups, loader, {
@@ -61,16 +44,16 @@ widget(container_z, {
 
       // Now playing info
       widget(container_y, {
-	.align = bottom;
+	align: bottom;
 	widget(expander_y, {
 
 	  $ui.playdeckheight = getHeight();
-	  .expansion = scurve($ui.showplaydeck && $global.media.current.type, 0.3);
+	  expansion: scurve($ui.showplaydeck && $global.media.current.type, 0.3);
 	  widget(loader, {
-	    .time = 0.3;
-	    .effect = blend;
-	    .noInitialTransform = true;
-	    .source = "theme://playdecks/" + $global.media.current.type + ".view";
+	    time: 0.3;
+	    effect: blend;
+	    noInitialTransform: true;
+	    source: "theme://playdecks/" + $global.media.current.type + ".view";
 	  });
 	});
       });
@@ -81,6 +64,8 @@ widget(container_z, {
   // Overlay that always should be visible even if screen saver is active
 
   widget(container_y, {
+    autofade: true;
+    expediteSubscriptions: true;
     padding: 30;
     align: top;
     cloner($global.notifications.nodes, container_x, {

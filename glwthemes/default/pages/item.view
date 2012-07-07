@@ -1,0 +1,72 @@
+#import "theme://common.view"
+//#import "theme://include/buttons.view"
+
+/*
+#define itemActionButton(ENABLED, EVENT, ICONCLASS, CAPTION) {
+  _glossybuttonTextRight(ICON=translate(ICONCLASS, "theme://svg/Command.svg"),
+			 CAPTION=CAPTION,
+			 EVENT=EVENT,
+			 ENABLED=true,
+			 HIDDEN=!ENABLED);
+}
+
+
+#define actionGroup(BODY) {
+  widget(backdrop, {
+    .source = "theme://graphics/border.png";
+    .border = [12,12,12,12];
+    .borderOnly = true;
+    .color = 0.5;
+    BODY;
+  });
+}
+*/
+
+widget(container_y, {
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur: iir(clamp(getLayer(), 0, 1), 7);
+  
+  padding: [40, 20];
+  
+  widget(container_x, {
+    spacing: 20;
+    widget(image, {
+      source: $page.model.metadata.icon;
+      width: 160;
+      align: topLeft;
+      aspectConstraint: true;
+    });
+    
+    
+    widget(container_y, {
+      filterConstraintY: true;
+      filterConstraintX: true;
+      spacing: 2;
+      cloner($page.model.nodes, loader, {
+	source: "theme://itemviews/" + $self.type + ".view";
+      });	  
+      
+      VerticalSeparator();
+
+      widget(list_x, {
+	spacing: $ui.size * 2;
+	
+	cloner($page.model.actions, container_z, {
+	  hidden: !$self.enabled;
+	  widget(label, {
+	    focusable: true;
+	    caption: $self.metadata.title;
+	    TextStyleItem();
+	    color: select(isFocused(), 1, 0.5);
+	    onEvent(activate,
+		    translate($self.type, void,
+			      "pageevent", deliverEvent($page.eventSink, $self.data),
+			      "navopen", navOpen($self.data)
+			     ));
+	  });	
+	});
+      });
+    });
+  });
+});
+

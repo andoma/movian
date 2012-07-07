@@ -1,3 +1,28 @@
+#import "theme://common.view"
+
+#define InfoLabel() {
+  font: $ui.font;
+  shadow: true;
+  outline: true;
+  color: 0.6;
+}
+
+#define OSD() {
+  font: $ui.font;
+  shadow: true;
+  outline: true;
+  ellipsize: true;
+}
+
+
+$ui.showplaydeck = $view.menu || changed($self.media.seektime, 5);
+
+onEvent(menu, { $view.menu = !$view.menu; });
+
+onEvent(back,   { $view.menu = false; }, $view.menu);
+onEvent(cancel, { $view.menu = false; }, $view.menu);
+
+
 $self.directClose = 1;
 
 // If playstatus is set to stop, close the page
@@ -5,10 +30,349 @@ $self.close = $self.media.playstatus == "stop";
 
 $view.statsAlpha = iir($self.media.stats, 8);
 
+delta($ui.fullwindow, isVisible());
+
 widget(container_z, {
-  widget(video, {
-    .model = $self.openedFrom;
-    .primary = true;
-    .source = $self.source;
+  widget(layer, {
+
+    widget(container_z, {
+      widget(video, {
+	how: $self.how;
+	model: $self.openedFrom;
+	primary: true;
+	source: $self.source;
+	focusable: true;
+      });
+
+/*
+      widget(container_y, {
+	alpha: iir(changed($self.media.seektime, 5) ||
+		   $view.menu, 8);
+	space(1);
+
+	widget(backdrop, {
+	  source: "/Users/andoma/themes/opium/mod/playback-bar.png";
+
+	  widget(container_z, {
+	    height: $ui.size + 11*2;
+	    widget(clip, {
+	      clipping: [0, 0, 1 - ($self.media.currenttime / $self.media.metadata.duration), 0];
+
+	      widget(backdrop, {
+		source: "/Users/andoma/themes/opium/mod/playback-bar-overlay.png";
+	      });
+	    });
+	    
+	    widget(container_x, {
+	      padding: [0,5];
+	      widget(backdrop, {
+		width: $ui.width / 6;
+		source: "/Users/andoma/themes/opium/mod/bar-overlay-left.png";
+		border: [6,6,32,0];
+		padding: [0,-6,0,0];
+		leftBorder: false;
+
+		widget(label, {
+		  padding: [$ui.size/2, 0,0,0];
+		  font: $ui.font;
+		  shadow: true;
+		  outline: true;
+		  caption: value2duration($self.media.currenttime);
+		});	    
+	      });
+	      space(1);
+
+
+	      widget(backdrop, {
+		width: $ui.width / 6;
+		source: "/Users/andoma/themes/opium/mod/bar-overlay-right.png";
+		border: [32,6,0,0];
+		padding: [0,-6,0,0];
+		widget(label, {
+		  align: right;
+		  padding: [0,0,$ui.size/2,0];
+		  font: $ui.font;
+		  shadow: true;
+		  outline: true;
+		  caption: value2duration($self.media.metadata.duration);
+		});	    
+	      });
+
+	    });
+	  });
+	});
+      });
+*/
+
+      widget(container_y, {
+	autofade: true;
+	expediteSubscriptions: true;
+	spacing: 4;
+	padding: 20;
+	align: top;
+	  
+	widget(label, {
+	  OSD();
+	  hidden: !changed($self.media.metadata.title, 5);
+	  sizeScale: 1.5;
+	  caption: $self.media.metadata.title;
+	});
+
+	widget(container_x, {
+	  hidden: select($self.media.error, false, true);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	  });
+	  widget(label, {
+	    OSD();
+	    caption: $self.media.error;
+	  });
+	});
+
+	widget(container_x, {
+	  hidden: select($self.media.video.too_slow, false, true);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	  });
+	  widget(label, {
+	    OSD();
+	    caption: _("CPU is too slow to decode this video");
+	  });
+	});
+
+
+	cloner($self.media.notifications, container_x, {
+	  spacing: 10;
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	    shadow: true;
+	  });
+	  
+	  widget(label, {
+	    OSD();
+	    caption: $self.text;
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+	});
+
+	widget(container_x, {
+	  spacing: 10;
+	  hidden: !changed($self.media.audio.current, 5);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Sound.svg";
+	  });
+	  widget(deck, {
+	    effect: flipHorizontal;
+	    time: 0.1;
+	    cloner($self.media.metadata.audiostreams, label, {
+	      OSD();
+	      caption: join(" - ", $self.title, $self.language, $self.source, $self.longformat ?? $self.format);
+	    });
+	  });
+	});
+
+	widget(container_x, {
+	  spacing: 10;
+	  hidden: !changed($self.media.subtitle.current, 5);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Script.svg";
+	  });
+	  widget(deck, {
+	    effect: flipHorizontal;
+	    time: 0.1;
+	    cloner($self.media.metadata.subtitlestreams, label, {
+	      OSD();
+	      caption: join(" - ", $self.title, $self.language, $self.source, $self.format);
+	    });
+	  });
+	});
+      });
+
+    });
+    widget(loader, {
+      hidden: !$view.menu;
+      noInitialTransform: true;
+      source: "theme://cmdmenu/cmdmenu_video.view";
+    });
+  });
+
+  widget(container_y, {
+    alpha: $view.statsAlpha;
+    widget(container_x, {
+      space(1);
+      widget(backdrop, {
+	source: "theme://graphics/popupmenu.png";
+	margin: -30;
+	border: 56;
+	borderOnly: true;
+	padding: -56;
+	
+	widget(backdrop, {
+	  alphaSelf: 0.85;
+	  source: "theme://graphics/popupmenu2.png";
+	  border: 56;
+	  color: 0;
+
+	  widget(container_y, {
+	  
+	    widget(label, {
+	      TextStyleItem();
+	      caption: _("Playback status");
+	      align: center;
+	    });
+
+	    VerticalSeparator();
+	    
+	    widget(container_x, {
+
+	      spacing: 10;
+	      
+	      widget(container_y, {
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Source:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video codec:";
+		});
+	      
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video bitrate:";
+		});
+
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Audio codec:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video decode time:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "A/V diff:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  hidden: !$self.media.isRemote;
+		  align: right;
+		  caption: "Remote queue len:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  hidden: !$self.media.isRemote;
+		  align: right;
+		  caption: "Remote queue drops:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Packet buffer:";
+		});
+
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video queue len:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Audio queue len:";
+		});
+	      });
+	      
+
+	      widget(container_y, {
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.metadata.format;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.video.codec;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: fmt("%d kb/s", $self.media.video.bitrate);
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.audio.codec;
+		});
+	      
+		widget(label, {
+		  TextStyleItem();
+		  caption: fmt("%d ms", $self.media.video.decodetime_avg);
+		});
+	      
+		widget(label, {
+		  TextStyleItem();
+		  caption: translate($self.media.avdiffError,
+				     fmt("%d ms %s", $self.media.avdiff * 1000),
+				     1, "Huge diff",
+				     2, "Holdoff",
+				     3, "Epoch mismatch");
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  hidden: !$self.media.isRemote;
+		  caption: $self.media.remote.qlen;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  hidden: !$self.media.isRemote;
+		  caption: $self.media.remote.drops;
+		});
+		
+		widget(bar, {
+		  height: $ui.size;
+		  color1: 1;
+		  color2: 1;
+		  fill: $self.media.buffer.current / $self.media.buffer.limit;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.video.dqlen;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.audio.dqlen;
+		});
+	      });
+	    });
+	  });
+	});
+      });
+    });
   });
 });

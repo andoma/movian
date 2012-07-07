@@ -1,7 +1,11 @@
 widget(container_z, {
+  autoRefocusable: true;
   focusable: true;
   width: $ui.size * 8;
 
+  widget(quad, {
+    alpha: isFocused();
+  });
 
   widget(backdrop, {
     alpha: select($clone.ready, 0, 1);

@@ -1,5 +1,6 @@
 widget(container_z, {
   focusable: true;
+  autoRefocusable: true;
   width: $ui.size * 8;
 
 

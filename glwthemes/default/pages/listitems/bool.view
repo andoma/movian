@@ -26,7 +26,6 @@ widget(backdrop, {
       caption: $self.metadata.title + ":";
       ellipsize: true;
     });
-    space(1);
     widget(icon, {
       align: right;
       source: select($self.value, "options-on.png", "options-off.png");

@@ -21,8 +21,6 @@ widget(container_x, {
 	  .caption = $self.message;
 	});
 
-	HORIZONTAL_SEPARATOR();
-
 	widget(container_x, {
 	  .align = center;
 	  .spacing = 20;

@@ -6,7 +6,7 @@ widget(keyintercept, {
     alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
     blur:      iir(clamp(getLayer(), 0, 1), 7);
 
-    padding: 5;
+    padding: [5,5,5,$ui.playdeckheight];
     
     widget(container_x, {
       padding: 5;
@@ -45,8 +45,8 @@ widget(keyintercept, {
       filterConstraintX: true;
       widget(list_y, {
 	id: "list";
-	$view.focused = focusedChild();
-	
+	  &clone.focused = focusedChild();
+
 	cloner($page.model.nodes, loader, {
 	  time: 0.1;
 	  effect: blend;

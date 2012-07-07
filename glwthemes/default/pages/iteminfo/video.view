@@ -19,17 +19,23 @@
 
 widget(container_y, {
   spacing: 5;
+  widget(label, {
+    TextStyleItem();
+    caption: $args.metadata.title;
+    sizeScale: 1.5;
+    ellipsize: true;
+  });
 
   widget(container_x, {
     height: $ui.height / 2;
     spacing: 10;
 
     widget(container_y, {
-      align: top;
+      align: bottom;
       widget(frontdrop, {
 	source: "theme://graphics/boxart-overlay.png";
 	border: 8;
-
+	margin: -4;
 	widget(image, {
 	  width: $ui.width / 6;
 	  source: $args.metadata.icon;
@@ -40,12 +46,10 @@ widget(container_y, {
 
     widget(container_y, {
       filterConstraintX: true;
-      spacing: 5;
-      widget(label, {
-	TextStyleItem();
-	caption: $args.metadata.title;
-	sizeScale: 1.5;
-      });
+      spacing: 2;
+
+      space(1);
+
       widget(label, {
 	hidden: !$args.metadata.year;
 	TextStyleItem();
@@ -53,7 +57,6 @@ widget(container_y, {
 	  fmt("%d", $args.metadata.year);
       });
 
-      space(1);
 
       widget(label, {
 	TextStyleItem();
@@ -71,6 +74,7 @@ widget(container_y, {
 
       widget(container_x, {
 	filterConstraintX: true;
+	spacing: 5;
 	widget(label, {
 	  font: $ui.font;
 	  shadow: true;
@@ -105,12 +109,14 @@ widget(container_y, {
       });
 
       widget(label, {
+	hidden: !$args.metadata.director;
 	TextStyleItem();
 	maxlines: 3;
 	caption: '<font color="#888">' + _("Director: ") + '</font>' + 
 	  $args.metadata.director;
       });
       widget(label, {
+	hidden: !$args.metadata.producer;
 	TextStyleItem();
 	maxlines: 3;
 	caption: '<font color="#888">' + _("Producer: ") + '</font>' + 

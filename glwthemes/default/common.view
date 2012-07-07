@@ -12,6 +12,7 @@
 
 #define PageTitle(CAPTION) {
   widget(label, {
+    height: $ui.size * 2;
     font: $ui.font;
     shadow: true;
     outline: true;

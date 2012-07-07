@@ -1,0 +1,69 @@
+#import "cmdmenu_common.view"
+
+$clone.itemMenu ?= select(isVoid($args.type), 0, void);
+
+commandMenuChrome(
+
+  SEPICON($args.metadata.title,
+	  "dataroot://resources/svg/" + 
+	  translate($args.type,  "File",
+		    "archive",   "Archive",
+		    "artist",    "User",
+		    "audio",     "Music",
+		    "directory", "Folder",
+		    "dvd",       "Disc",
+		    "playlist",  "List",
+		    "video",     "Movie",
+		    "album",     "Disc",
+		    "plugin",    "Plugin",
+		  "image",     "Pictures"
+		   ) + ".svg");
+
+
+  ITEM($args.metadata.artist, {
+    fireEvent(navOpen($args.metadata.artist));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/User.svg",
+       isLink($args.metadata.artist));
+
+  ITEM($args.metadata.album, {
+    fireEvent(navOpen($args.metadata.album));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Disc.svg",
+       isLink($args.metadata.album));
+
+
+  ITEM(_("Queue"),  {
+    fireEvent(enqueuetrack($args));
+  }, "dataroot://resources/svg/Enqueue.svg",
+       $args.type == "audio");
+
+  ITEM(_("Play from beginning"),  {
+    fireEvent(navOpen($args.url, void, void, void, "beginning"));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Play.svg",
+       $args.type == "video");
+
+  ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
+    fireEvent(navOpen($args.url, void, void, void, "continue"));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Play.svg",
+       $args.type == "video" && $args.restartpos > 0);
+
+  ITEMTOGGLE(_("Star"), _("Unstar"), 
+	     $args.metadata.starred,
+	     deliverEvent($args, "starToggle"),
+	     !isVoid($args.metadata.starred),
+	     "dataroot://resources/svg/Star.svg",
+	     "dataroot://resources/svg/Nostar.svg",
+	     [1,1,0]);
+
+  ITEM(_("Delete"), { 
+    delete($args);
+  }, "dataroot://resources/svg/Delete.svg",
+       $self.model.canDelete,
+       [1,0.8,0.8]);
+
+
+)
+

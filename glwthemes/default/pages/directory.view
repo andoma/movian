@@ -1,86 +1,53 @@
-#import "theme://common.view"
 
 
-widget(container_y, {
-  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
-  blur:      iir(clamp(getLayer(), 0, 1), 7);
-
-  PageTitle($page.model.metadata.title);
-  VerticalSeparator();
-
-widget(keyintercept, {
-
-  widget(container_x, {
-
-    filterConstraintY: true;
-    padding: [5, 5, 5, 0];
-    spacing: 10;
-
-    // ------ The list --------------------------------------
-
-      widget(container_x, {
-	filterConstraintX: true;
-	widget(list_y, {
-	  id: "list";
-	  $view.focused = focusedChild();
-	  spacing: 3;
-
-	  cloner($page.model.nodes, loader, {
-	    time: 0.1;
-	    effect: blend;
-	    source: "listitems/" + 
-	      translate($self.type, "default",
-			"divider", "separator", // argh wtf!
-			"separator", "separator",
-			"settings", "settings",
-			"bool", "bool",
-			"integer", "integer",
-			"string", "string",
-			"multiopt", "multiopt",
-			"action", "action",
-			"info", "info",
-			"keymapentry", "keymapentry"
-		       )
-	      + ".view";
-	  });
+// Page menu event routing
+onEvent(menu,   { $clone.pageMenu = !$clone.pageMenu; }, !$clone.itemMenu);
+onEvent(back,   { $clone.pageMenu = false; }, $clone.pageMenu);
+onEvent(cancel, { $clone.pageMenu = false; }, $clone.pageMenu);
 
 
-	  widget(loader, {
-	    noInitialTransform: true;
-	    source: select($page.model.mayadd, "listitems/add.view", "");
-	  });
-	});
-	widget(slider_y, {
-	  bind("list");
-	  width: 4;
-	  focusable: canScroll();
-	  navFocusable: true;
-	  alpha: iir(canScroll(), 16);
-	  
-	  widget(quad, {
-	    alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
-	  });
-	});
-    });
+// Item menu event routing
+onEvent(itemMenu, { $clone.itemMenu = !$clone.itemMenu; }, !$clone.pageMenu);
+onEvent(back,     { $clone.itemMenu = false; }, $clone.itemMenu);
+onEvent(cancel,   { $clone.itemMenu = false; }, $clone.itemMenu);
 
-    widget(expander_x, {
 
-      expansion: scurve($view.showRightPane, 0.3);
-      alpha    : scurve($view.showRightPane, 0.3);
+onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
-      widget(loader, {
-	width: $ui.width / 2;
-	time: 0.1;
-	effect: blend;
-	source: translate($view.focused.type, "",
-			  "video", "iteminfo/video.view");
-	  .args ?= $view.focused;
-      });
+multiopt($view.path,
+	 $clone.settings,
 
-      $view.showRightPane = translate($view.focused.type, 0,
-				      "video", 1);
+	 // List of view follows
+	 $page.model.glw.view,
+	 translate($page.model.contents, void,
+		   "album", link("Album", "album.view"),
+		   "images", link("Images", "images.view")
+		    ),
+	 select($page.model.contents == "images", 
+		link("Slideshow", "slideshow.view"), void),
+	 link("List", "list.view"));
 
-    });
+widget(layer, {
+
+  widget(loader, {
+    noInitialTransform: true;
+    effect: blend;
+    time: 0.2;
+    source: $view.path;
+  });
+
+  widget(loader, {
+    hidden: !$clone.pageMenu;
+    noInitialTransform: true;
+    source: "theme://cmdmenu/cmdmenu_dir.view";
+  });
+
+  widget(loader, {
+    hidden: !$clone.itemMenu;
+    time: 0;
+    noInitialTransform: true;
+    source: select($clone.itemMenu, "theme://cmdmenu/cmdmenu_item.view", "");
+    .args ?= $clone.focused;
   });
 });
-});
+

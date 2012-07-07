@@ -1,15 +1,16 @@
-
-* Image view mode fixes
-* View switcher
-* Page options menu
 * Now playing
-* Slideshow
-* Context menu
-* Item view
-* Fix stenciling
 * Load plugins directly on startup
+* Metadata loading throbber
+* Metadata switching
+* Metadata priority order
+* Fix stenciling
+* Make image iteminfo look nice
+* Persist view switching 
+* Fix list focus when destroying item via context menu
+* GLW .view plugins
 
-Plugin
+
+---- view plugins ------------------
 
  - class -> path mapping
 
@@ -30,28 +31,6 @@ Plugin
   $ui.viewpath.screensaver -> URL
 
                
-
-
-View manager for "directories"
-
- - Switchable by user between
-
-   1 Load direct URL from page model
-   2 Detect based on content  <- Each content type can have plugins
-   3 Default list (directory) <- Can also be replaced
-
-  url = selectview(
-	   $page.model.glw.view,
-           translate($page.contents, void, 
-	             "album", $ui.viewpath.album ?? "theme://thedefault",
-	             "albums", $ui.viewpath.albums ?? "theme://thedefault"),
-           $ui.viewpath.directory ?? "theme://thedefault");
-
-
-
-
-
-Persist selected view
 
 
 21:45 <@an0nym0us> 13:50:33 <andoma> eussNL: how do I access it?

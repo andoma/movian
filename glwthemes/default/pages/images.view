@@ -1,4 +1,12 @@
+#import "theme://common.view"
+
 widget(container_y, {
+
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+  PageTitle($page.model.metadata.title);
+  VerticalSeparator();
 
   widget(dummy, {
     height: $ui.size * 2;

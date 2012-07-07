@@ -1,0 +1,27 @@
+#import "theme://common.view"
+
+
+widget(container_y, {
+  spacing: 5;
+
+  widget(image, {
+    filterConstraintY: true;
+    align: top;
+    source: $args.url;
+  });
+
+  widget(backdrop, {
+    weight: 0.3;
+    filterConstraintY: true;
+    source: "theme://graphics/indent.png";
+    border: 16;
+
+    widget(container_y, {
+      widget(label, {
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Date: ") + '</font>' + 
+	  strftime($args.metadata.timestamp, "%F");
+      });
+    });
+  });
+});

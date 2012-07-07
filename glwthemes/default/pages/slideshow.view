@@ -1,0 +1,16 @@
+// If playstatus is set to stop, close the page
+$self.close = $self.slideshow.playstatus == "stop";
+
+widget(container_z, {
+
+  widget(slideshow, {
+    
+    delta($ui.fullwindow, isVisible());
+
+    cloner($self.model.nodes, image, {
+      autoRefocusable: true;
+      focusable: true;
+      source: $self.url;
+    });
+  });
+});

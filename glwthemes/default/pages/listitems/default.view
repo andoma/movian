@@ -6,15 +6,9 @@ widget(backdrop, {
   autoRefocusable: true;
   focusable: true;
   focusOnClick: true;
-  onEvent(activate,
-	  translate($self.type,
-		    navOpen($self.url, void, void, $parent.model),
-		    "audio", playTrackFromSource($self, $parent.model)
-		   ));
+  onEvent(activate, navOpen($self.url, void, void, $parent.model));
   
   alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
-
-  suggestFocus($self.playing);
 
   widget(container_x, {
     spacing: 13;
@@ -32,7 +26,8 @@ widget(backdrop, {
 		  "playlist",  "List",
 		  "video",     "Movie",
 		  "album",     "Disc",
-		  "plugin",    "Plugin"
+		  "plugin",    "Plugin",
+		  "image",     "Pictures"
 		 ) + ".svg";
 	.shadow = true;
     });
