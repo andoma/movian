@@ -36,6 +36,9 @@ typedef struct glw_image {
   int16_t gi_border_top;
   int16_t gi_border_bottom;
 
+  int16_t gi_border_left_afix;
+  int16_t gi_border_right_afix;
+
   int16_t gi_padding_left;
   int16_t gi_padding_right;
   int16_t gi_padding_top;
@@ -106,6 +109,8 @@ static int8_t tex_transform[9][4] = {
   { 0,1,1,0},     // Transverse ???
   { 0,-1,1,0},    // 270° rotate
 };
+
+static void update_box(glw_image_t *gi);
 
 
 
@@ -298,9 +303,10 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   float tex[4][2];
   float vex[4][2];
 
-  int x, y, i = 0;
+  int x, y, i = 0, BL, BR;
 
   if(gr->gr_normalized_texture_coords) {
+
     tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
     tex[2][0] = glt->glt_s - (float)gi->gi_border_right / glt->glt_xs;
     tex[0][0] = gi->gi_bitmap_flags & GLW_IMAGE_BORDER_LEFT ? 0.0f : tex[1][0];
@@ -324,10 +330,21 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
     tex[3][1] = glt->glt_ys;
   }
 
+  if(gi->gi_bitmap_flags & GLW_IMAGE_ASPECT_FIXED_BORDERS) {
+    BL = rc->rc_height * gi->gi_border_left / glt->glt_ys;
+    BR = rc->rc_height * gi->gi_border_right / glt->glt_ys;
+    gi->gi_border_left_afix = BL;
+    gi->gi_border_right_afix = BR;
+    update_box(gi);
+  } else {
+    BL = gi->gi_border_left;
+    BR = gi->gi_border_right;
+  }
+
 
   vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_left + gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_right + gi->gi_margin_right) / rc->rc_width, 0.0f);
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (BL + gi->gi_margin_left)  / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (BR + gi->gi_margin_right) / rc->rc_width, 0.0f);
   vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right) / rc->rc_width, 0.0f);
     
   vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top)  / rc->rc_height, 0.0f);
@@ -895,11 +912,11 @@ static void
 update_box(glw_image_t *gi)
 {
   gi->gi_box_left =
-    gi->gi_margin_left + gi->gi_border_left + gi->gi_padding_left;
+    gi->gi_margin_left + (gi->gi_border_left_afix ?: gi->gi_border_left) + gi->gi_padding_left;
   gi->gi_box_top =
     gi->gi_margin_top + gi->gi_border_top + gi->gi_padding_top;
   gi->gi_box_right =
-    gi->gi_margin_right + gi->gi_border_right + gi->gi_padding_right;
+    gi->gi_margin_right + (gi->gi_border_left_afix ?: gi->gi_border_right) + gi->gi_padding_right;
   gi->gi_box_bottom =
     gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
 }

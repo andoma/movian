@@ -164,6 +164,7 @@ typedef struct glw_rgb {
 #define GLW_IMAGE_BORDER_ONLY   0x200
 #define GLW_IMAGE_BORDER_LEFT   0x400
 #define GLW_IMAGE_BORDER_RIGHT  0x800
+#define GLW_IMAGE_ASPECT_FIXED_BORDERS  0x1000
 
 /**
  * Video flags
