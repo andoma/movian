@@ -862,7 +862,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 	    s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "");
       break;
     case PROP_FLOAT:
-      PROPTRACE("float(%f) by %s %s%s <%d>", p->hp_float, origin,
+      PROPTRACE("float(%f) by %s %s <%d>", p->hp_float, origin,
 		s->hps_flags & PROP_SUB_EXPEDITE ? " (exp)" : "",
 		how);
       break;
