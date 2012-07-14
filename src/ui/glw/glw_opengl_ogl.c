@@ -18,6 +18,12 @@
 
 #include "glw.h"
 
+const static float projection[16] = {
+  2.414213,0.000000,0.000000,0.000000,
+  0.000000,2.414213,0.000000,0.000000,
+  0.000000,0.000000,1.033898,-1.000000,
+  0.000000,0.000000,2.033898,0.000000
+};
 
 /**
  * return 1 if the extension is found, otherwise 0
@@ -49,9 +55,14 @@ glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
   if(gbr->gbr_delayed_rendering)
     return;
 
-  glw_load_program(gbr, gbr->gbr_renderer_flat);
-  glw_program_set_modelview(gbr, rc);
-  glw_program_set_uniform_color(gbr, 1,1,1,1);
+  glw_load_program(gbr, NULL);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadMatrixf(projection);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadMatrixf(glw_mtx_get(rc->rc_mtx));
+
+
   glDisable(GL_TEXTURE_2D);
   glBegin(GL_LINE_LOOP);
   glColor4f(1,1,1,1);
