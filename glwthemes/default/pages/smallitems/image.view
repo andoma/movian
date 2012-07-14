@@ -5,7 +5,7 @@ widget(container_z, {
 
 
   widget(stencil, {
-    source: "/Users/andoma/themes/opium/mod/stencil.png";
+    source: "theme://graphics/stencil.png";
     widget(container_z, {
       widget(quad, {
 	color: 0;
@@ -32,6 +32,7 @@ widget(container_z, {
   widget(backdrop, {
     source: "theme://graphics/border32.png";
     border: 16;
+    color: 0.7;
     alpha: iir(isFocused(), 8) + 0.1;
   });
 });
