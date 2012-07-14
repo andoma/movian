@@ -144,6 +144,10 @@ typedef struct metadata {
 
   int md_dsid;
 
+
+  rstr_t *md_manufacturer;
+  rstr_t *md_equipment;
+
 } metadata_t;
 
 metadata_t *metadata_create(void);

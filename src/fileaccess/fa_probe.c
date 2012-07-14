@@ -239,11 +239,15 @@ fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
   jpeginfo_t ji;
 
   if(jpeg_info(&ji, jpeginfo_reader, fh, 
-	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
+	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION |
+	       JPEG_INFO_METADATA,
 	       pb, 256, NULL, 0))
     return;
   
   md->md_time = ji.ji_time;
+  md->md_manufacturer = rstr_dup(ji.ji_manufacturer);
+  md->md_equipment    = rstr_dup(ji.ji_equipment);
+  jpeg_info_clear(&ji);
 }
 
 

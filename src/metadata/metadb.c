@@ -1099,12 +1099,14 @@ metadb_insert_imageitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
     rc = db_prepare(db, 
 		    i == 0 ? 
 		    "INSERT OR FAIL INTO imageitem "
-		    "(item_id, original_time) "
+		    "(item_id, original_time, manufacturer, equipment) "
 		    "VALUES "
-		    "(?1, ?2)"
+		    "(?1, ?2, ?3, ?4)"
 		    :
 		    "UPDATE imageitem SET "
-		    "original_time = ?2 "
+		    "original_time = ?2, "
+		    "manufacturer = ?3, "
+		    "equipment = ?4 "
 		    "WHERE item_id = ?1"
 		    ,
 		    -1, &stmt, NULL);
@@ -1119,6 +1121,12 @@ metadb_insert_imageitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
     if(md->md_time)
       sqlite3_bind_int(stmt, 2, md->md_time);
 
+    sqlite3_bind_text(stmt, 3, rstr_get(md->md_manufacturer),
+		      -1, SQLITE_STATIC);
+
+    sqlite3_bind_text(stmt, 4, rstr_get(md->md_equipment),
+		      -1, SQLITE_STATIC);
+    
     rc = db_step(stmt);
     sqlite3_finalize(stmt);
     if(rc == SQLITE_CONSTRAINT && i == 0)
@@ -1587,7 +1595,7 @@ metadb_metadata_get_image(sqlite3 *db, metadata_t *md, int64_t item_id)
   sqlite3_stmt *sel;
 
   rc = db_prepare(db,
-		  "SELECT original_time "
+		  "SELECT original_time, manufacturer, equipment "
 		  "FROM imageitem "
 		  "WHERE item_id = ?1",
 		  -1, &sel, NULL);
@@ -1607,7 +1615,8 @@ metadb_metadata_get_image(sqlite3 *db, metadata_t *md, int64_t item_id)
   }
 
   md->md_time = sqlite3_column_int(sel, 0);
-
+  md->md_manufacturer = rstr_alloc((void *)sqlite3_column_text(sel, 1));
+  md->md_equipment = rstr_alloc((void *)sqlite3_column_text(sel, 2));
   sqlite3_finalize(sel);
   return 0;
 }

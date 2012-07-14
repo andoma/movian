@@ -74,6 +74,8 @@ metadata_destroy(metadata_t *md)
   rstr_release(md->md_imdb_id);
   rstr_release(md->md_icon);
   rstr_release(md->md_backdrop);
+  rstr_release(md->md_manufacturer);
+  rstr_release(md->md_equipment);
 
   free(md->md_redirect);
 
@@ -260,6 +262,12 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
   if(md->md_time)
     prop_set_int(prop_create(proproot, "timestamp"), md->md_time);
+
+  if(md->md_manufacturer != NULL)
+    prop_set_rstring(prop_create(proproot, "manufacturer"), md->md_manufacturer);
+
+  if(md->md_equipment != NULL)
+    prop_set_rstring(prop_create(proproot, "equipment"), md->md_equipment);
 }
 
 
