@@ -692,7 +692,6 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     unichar uc = [s characterAtIndex:i];
     NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
     event_t *e = NULL;
-    
     e = event_create_int(EVENT_UNICODE, uc);
     glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
     [su release];
@@ -725,30 +724,28 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   event_t *e = NULL;
   action_type_t av[3];
   int i;
-  
-  if((mod & ~NSShiftKeyMask) == 0 && (c == _NSSpaceKey || isgraph(c))) {
-    e = event_create_int(EVENT_UNICODE, c);
-  } else {
-    for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
-      if(keysym2action[i].key == cim &&
-         keysym2action[i].mod == (mod & ~NSFunctionKeyMask)) {
-        av[0] = keysym2action[i].action1;
-        av[1] = keysym2action[i].action2;
-        av[2] = keysym2action[i].action3;
-        
-        if(keysym2action[i].action3 != ACTION_NONE)
-          e = event_create_action_multi(av, 3);
-        if(keysym2action[i].action2 != ACTION_NONE)
-          e = event_create_action_multi(av, 2);
-        else
+
+  for(i = 0; i < sizeof(keysym2action) / sizeof(keysym2action[0]); i++) {
+    if(keysym2action[i].key == cim &&
+       keysym2action[i].mod == (mod & ~NSFunctionKeyMask)) {
+      av[0] = keysym2action[i].action1;
+      av[1] = keysym2action[i].action2;
+      av[2] = keysym2action[i].action3;
+      
+      if(keysym2action[i].action3 != ACTION_NONE)
+	e = event_create_action_multi(av, 3);
+      if(keysym2action[i].action2 != ACTION_NONE)
+	e = event_create_action_multi(av, 2);
+      else
           e = event_create_action_multi(av, 1);
-        break;
-      }
+      break;
     }
   }
-  
-  if(e != NULL)
-    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
+
+  if(e == NULL) 
+    e = event_create_int(EVENT_UNICODE, c);
+
+  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
 }
 
 - (void)reshape {
