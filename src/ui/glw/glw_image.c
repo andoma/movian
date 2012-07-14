@@ -696,8 +696,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
     }
   } else if(glw_is_tex_inited(&glt->glt_texture)) {
 
-    if(!gi->gi_is_ready) {
-      gi->gi_is_ready = 1;
+    int r = !gi->gi_loading_new_url;
+
+    if(gi->gi_is_ready != r) {
+      gi->gi_is_ready = r;
       glw_signal0(w, GLW_SIGNAL_READINESS, NULL);
     }
 
