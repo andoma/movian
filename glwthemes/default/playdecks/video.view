@@ -1,6 +1,6 @@
 
 widget(backdrop, {
-  source: "/Users/andoma/themes/opium/mod/playback-bar.png";
+  source: "playback-bar.png";
 
   widget(container_z, {
     height: $ui.size + 11*2;
@@ -8,7 +8,7 @@ widget(backdrop, {
       clipping: [0, 0, 1 - ($global.media.current.currenttime / $global.media.current.metadata.duration), 0];
       
       widget(backdrop, {
-	source: "/Users/andoma/themes/opium/mod/playback-bar-overlay.png";
+	source: "playback-bar-overlay.png";
       });
     });
     
@@ -16,7 +16,7 @@ widget(backdrop, {
       padding: [0,5];
       widget(backdrop, {
 	width: $ui.width / 6;
-	source: "/Users/andoma/themes/opium/mod/bar-overlay-left.png";
+	source: "bar-overlay-left.png";
 	border: [6,6,32,0];
 	padding: [0,-6,0,0];
 	leftBorder: false;
@@ -29,23 +29,12 @@ widget(backdrop, {
 	  caption: value2duration($global.media.current.currenttime);
 	});	    
       });
-/*
-      space(1);
 
-      widget(label, {
-	align: center;
-	caption: "Mission Impossible";
-	shadow: true;
-	outline: true;
-	size: $ui.size + 11;
-      });
-*/
       space(1);
-      
       
       widget(backdrop, {
 	width: $ui.width / 6;
-	source: "/Users/andoma/themes/opium/mod/bar-overlay-right.png";
+	source: "bar-overlay-right.png";
 	border: [32,6,0,0];
 	padding: [0,-6,0,0];
 	widget(label, {
