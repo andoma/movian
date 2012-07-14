@@ -1,10 +1,9 @@
 * Now playing
+* Search
 * Load plugins directly on startup
 * Metadata loading throbber
 * Metadata switching
 * Metadata priority order
-* Fix stenciling
-* Make image iteminfo look nice
 * Persist view switching 
 * Fix list focus when destroying item via context menu
 * GLW .view plugins

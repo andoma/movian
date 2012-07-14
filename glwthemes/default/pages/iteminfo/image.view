@@ -43,6 +43,12 @@ widget(container_y, {
 	caption: '<font color="#888">' + _("Date: ") + '</font>' + 
 	  strftime($args.metadata.timestamp, "%F");
       });
+
+      widget(label, {
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Camera: ") + '</font>' + 
+	  $args.metadata.equipment;
+      });
     });
   });
 });
