@@ -75,10 +75,24 @@ set_title2(prop_t *root, prop_t *title)
  *
  */
 static prop_t *
-setting_add(prop_t *parent, prop_t *title, const char *type)
+setting_get(prop_t *parent, int flags)
 {
   prop_t *p;
-  p = prop_create(parent ? prop_create(parent, "nodes") : settings_nodes, NULL);
+  if(flags & SETTINGS_RAW_NODES)
+    p = prop_create(parent, NULL);
+  else
+    p = prop_create(parent ? prop_create(parent, "nodes") : settings_nodes,
+		    NULL);
+  return p;
+}
+
+/**
+ *
+ */
+static prop_t *
+setting_add(prop_t *parent, prop_t *title, const char *type, int flags)
+{
+  prop_t *p = setting_get(parent, flags);
   if(title != NULL)
     set_title2(p, title);
   prop_set_string(prop_create(p, "type"), type);
@@ -90,10 +104,9 @@ setting_add(prop_t *parent, prop_t *title, const char *type)
  *
  */
 static prop_t *
-setting_add_cstr(prop_t *parent, const char *title, const char *type)
+setting_add_cstr(prop_t *parent, const char *title, const char *type, int flags)
 {
-  prop_t *p;
-  p = prop_create(parent ? prop_create(parent, "nodes") : settings_nodes, NULL);
+  prop_t *p = setting_get(parent, flags);
   prop_set_string(prop_create(prop_create(p, "metadata"), "title"), title);
   prop_set_string(prop_create(p, "type"), type);
   return p;
@@ -130,7 +143,7 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
 		 const char *icon, prop_t *shortdesc,
 		 const char *url)
 {
-  prop_t *p = setting_add(parent, title, "settings");
+  prop_t *p = setting_add(parent, title, "settings", 0);
   prop_t *metadata = prop_create(p, "metadata");
 
   if(shortdesc != NULL)
@@ -149,7 +162,7 @@ settings_add_dir_cstr(prop_t *parent, const char *title, const char *subtype,
 		      const char *icon, const char *shortdesc,
 		      const char *url)
 {
-  prop_t *p = setting_add_cstr(parent, title, "settings");
+  prop_t *p = setting_add_cstr(parent, title, "settings", 0);
   prop_t *metadata = prop_create(p, "metadata");
 
   prop_set_string(prop_create(metadata, "shortdesc"), shortdesc);
@@ -164,10 +177,10 @@ settings_add_dir_cstr(prop_t *parent, const char *title, const char *subtype,
  */
 static setting_t *
 setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
-		    const char *valuename)
+		    const char *valuename, int flags)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
-  s->s_root = setting_add(parent, title, type);
+  s->s_root = setting_add(parent, title, type, flags);
   s->s_val = prop_ref_inc(prop_create(s->s_root, valuename));
   return s;
 }
@@ -201,7 +214,7 @@ settings_create_bool(prop_t *parent, const char *id, prop_t *title,
 		     int flags, prop_courier_t *pc,
 		     settings_saver_t *saver, void *saver_opaque)
 {
-  setting_t *s = setting_create_leaf(parent, title, "bool", "value");
+  setting_t *s = setting_create_leaf(parent, title, "bool", "value", flags);
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -261,7 +274,7 @@ settings_create_int(prop_t *parent, const char *id, prop_t *title,
 		    prop_courier_t *pc,
 		    settings_saver_t *saver, void *saver_opaque)
 {
-  setting_t *s = setting_create_leaf(parent, title, "integer", "value");
+  setting_t *s = setting_create_leaf(parent, title, "integer", "value", flags);
   prop_sub_t *sub;
 
   s->s_id = strdup(id);
@@ -362,7 +375,7 @@ callback_opt(void *opaque, prop_event_t event, ...)
 setting_t *
 settings_create_multiopt(prop_t *parent, const char *id, prop_t *title)
 {
-  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options");
+  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options", 0);
   s->s_id = strdup(id);
   return s;
 }
@@ -484,7 +497,7 @@ settings_create_string(prop_t *parent, const char *id, prop_t *title,
 		       int flags, prop_courier_t *pc,
 		       settings_saver_t *saver, void *saver_opaque)
 {
-  setting_t *s = setting_create_leaf(parent, title, "string", "value");
+  setting_t *s = setting_create_leaf(parent, title, "string", "value", flags);
 
   s->s_id = strdup(id);
   s->s_callback = cb;
@@ -523,7 +536,7 @@ void
 settings_create_info(prop_t *parent, const char *image,
 		     prop_t *description)
 {
-  prop_t *r = setting_add(parent, NULL, "info");
+  prop_t *r = setting_add(parent, NULL, "info", 0);
   prop_link(description, prop_create(r, "description"));
   if(image != NULL)
     prop_set_string(prop_create(r, "image"), image);
@@ -536,7 +549,7 @@ settings_create_info(prop_t *parent, const char *image,
 prop_t *
 settings_create_divider(prop_t *parent, prop_t *caption)
 {
-  return setting_add(parent, caption, "divider");
+  return setting_add(parent, caption, "divider", 0);
 }
 
 
@@ -548,7 +561,7 @@ settings_create_action(prop_t *parent, prop_t *title,
 		       prop_callback_t *cb, void *opaque,
 		       prop_courier_t *pc)
 {
-  setting_t *s = setting_create_leaf(parent, title, "action", "action");
+  setting_t *s = setting_create_leaf(parent, title, "action", "action", 0);
   s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			    PROP_TAG_CALLBACK, cb, opaque,
 			    PROP_TAG_ROOT, s->s_val,
@@ -565,7 +578,7 @@ settings_create_action(prop_t *parent, prop_t *title,
 prop_t *
 settings_create_bound_string(prop_t *parent, prop_t *title, prop_t *value)
 {
-  prop_t *p = setting_add(parent, title, "string");
+  prop_t *p = setting_add(parent, title, "string", 0);
   prop_link(value, prop_create(p, "value"));
   return p;
 }
