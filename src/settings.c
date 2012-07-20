@@ -445,6 +445,7 @@ settings_multiopt_initiate(setting_t *s,
     rstr_t *name = prop_get_name(o);
     cb(opaque, rstr_get(name));
     rstr_release(name);
+    prop_ref_dec(o);
   }
   
 
