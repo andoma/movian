@@ -251,7 +251,7 @@ text_dialog(const char *message, char** answer, int flags)
   if(event_is_action(e, ACTION_OK)) {
     m = htsmsg_create_map();  
       
-    r = prop_get_string(string);
+    r = prop_get_string(string, NULL);
     htsmsg_add_str(m, "input", r ? rstr_get(r) : "");
     rstr_release(r);
       

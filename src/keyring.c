@@ -169,20 +169,20 @@ keyring_lookup(const char *id, char **username, char **password,
       m = htsmsg_create_map();
 
       if(username != NULL) {
-	r = prop_get_string(user);
+	r = prop_get_string(user, NULL);
 	htsmsg_add_str(m, "username", r ? rstr_get(r) : "");
 	*username = strdup(r ? rstr_get(r) : "");
 	rstr_release(r);
       }
 
       if(domain != NULL) {
-	r = prop_get_string(dom);
+	r = prop_get_string(dom, NULL);
 	htsmsg_add_str(m, "domain", r ? rstr_get(r) : "");
 	*domain = strdup(r ? rstr_get(r) : "");
 	rstr_release(r);
       }
 
-      r = prop_get_string(pass);
+      r = prop_get_string(pass, NULL);
       htsmsg_add_str(m, "password", r ? rstr_get(r) : "");
       *password = strdup(r ? rstr_get(r) : "");
       rstr_release(r);

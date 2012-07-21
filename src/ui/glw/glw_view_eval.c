@@ -1464,6 +1464,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_EXT_EVENT:
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_WANT_MORE_CHILDS:
+  case PROP_SET_STRING:
     break;
 
   }
@@ -1564,6 +1565,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_HAVE_MORE_CHILDS:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
+  case PROP_SET_STRING:
     break;
   }
 
@@ -1633,6 +1635,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_HAVE_MORE_CHILDS:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
+  case PROP_SET_STRING:
     break;
   }
 

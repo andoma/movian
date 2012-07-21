@@ -664,16 +664,10 @@ static void
 playqueue_enqueue(prop_t *track)
 {
   playqueue_entry_t *pqe, *before;
-  prop_t *p;
   rstr_t *url;
   int doplay = 0;
 
-  p = prop_get_by_name(PNVEC("self", "url"), 1,
-		       PROP_TAG_NAMED_ROOT, track, "self",
-		       NULL);
-  
-  url = prop_get_string(p);
-  prop_ref_dec(p);
+  url = prop_get_string(track, "url", NULL);
 
   if(url == NULL)
     return;

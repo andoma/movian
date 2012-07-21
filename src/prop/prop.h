@@ -51,6 +51,7 @@ typedef struct prop_vec {
 
 typedef enum {
   PROP_SET_VOID,
+  PROP_SET_STRING,
   PROP_SET_RSTRING,
   PROP_SET_CSTRING,
   PROP_SET_INT,
@@ -177,6 +178,10 @@ int prop_compare(const prop_t *a, const prop_t *b);
 
 void prop_move(prop_t *p, prop_t *before);
 
+void prop_set_ex(prop_sub_t *skipme, prop_t *p, ...);
+
+#define prop_set(p...) prop_set_ex(NULL, p)
+
 void prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 			prop_str_type_t type);
 
@@ -236,7 +241,7 @@ void prop_set_link_ex(prop_t *p, prop_sub_t *skipme, const char *title,
 
 #define prop_set_cstring(p, cstr) prop_set_cstring_ex(p, NULL, cstr)
 
-rstr_t *prop_get_string(prop_t *p);
+rstr_t *prop_get_string(prop_t *p, ...) __attribute__((__sentinel__(0)));
 
 char **prop_get_name_of_childs(prop_t *p);
 

@@ -156,7 +156,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
       break;
     }
 
-    r = prop_get_string(p);
+    r = prop_get_string(p, NULL);
 
     if(r == NULL) {
 

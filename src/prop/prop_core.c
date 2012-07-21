@@ -404,6 +404,8 @@ prop_notify_free(prop_notify_t *n)
   case PROP_ADD_CHILD_VECTOR:
     prop_vec_release(n->hpn_propv);
     break;
+  case PROP_SET_STRING:
+    break;
   }
   prop_sub_ref_dec(n->hpn_sub);
   free(n); 
@@ -718,6 +720,8 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
       prop_vec_release(n->hpn_propv);
       prop_ref_dec(n->hpn_prop2);
+      break;
+    case PROP_SET_STRING:
       break;
     }
 
@@ -2759,32 +2763,23 @@ prop_set_float_clipping_range(prop_t *p, float min, float max)
 /**
  *
  */
-void
-prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
+static void
+prop_set_int_exl(prop_t *p, prop_sub_t *skipme, int v)
 {
-  if(p == NULL)
+  if(p->hp_type == PROP_ZOMBIE)
     return;
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
 
   if(p->hp_type != PROP_INT) {
 
     if(p->hp_type == PROP_FLOAT) {
       prop_float_to_int(p);
     } else if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
       return;
     } else {
       p->hp_type = PROP_INT;
     }
 
   } else if(p->hp_int == v) {
-    hts_mutex_unlock(&prop_mutex);
     return;
   } else if(p->hp_flags & PROP_CLIPPED_VALUE) {
     if(v > p->u.i.max)
@@ -2795,7 +2790,22 @@ prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
 
   p->hp_int = v;
 
-  prop_set_epilogue(skipme, p, "prop_set_int()");
+  prop_notify_value(p, skipme, "prop_set_int_exl()", 0);
+}
+
+
+/**
+ *
+ */
+void
+prop_set_int_ex(prop_t *p, prop_sub_t *skipme, int v)
+{
+  if(p == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+  prop_set_int_exl(p, skipme, v);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
@@ -3098,7 +3108,7 @@ prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 void
 prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
 {
-  prop_t *t, *no_descend = NULL;
+  prop_t *no_descend = NULL;
   prop_notify_t *n;
   prop_sub_t *s;
   struct prop_notify_queue pnq;
@@ -3132,6 +3142,7 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
   relink_subscriptions(src, dst, skipme, "prop_link()/linkchilds", NULL, NULL);
 
   while((dst = dst->hp_parent) != NULL) {
+    prop_t *t;
     LIST_FOREACH(t, &dst->hp_targets, hp_originator_link)
       relink_subscriptions(dst, t, skipme, "prop_link()/linkparents", NULL,
 			   no_descend);
@@ -3300,19 +3311,14 @@ prop_suggest_focus(prop_t *p)
   hts_mutex_unlock(&prop_mutex);
 }
 
-
 /**
  *
  */
-prop_t *
-prop_find(prop_t *p, ...)
+static prop_t *
+prop_find0(prop_t *p, va_list ap)
 {
   prop_t *c = NULL;
   const char *n;
-  va_list ap;
-  va_start(ap, p);
-
-  hts_mutex_lock(&prop_mutex);
 
   while((n = va_arg(ap, const char *)) != NULL) {
 
@@ -3325,12 +3331,26 @@ prop_find(prop_t *p, ...)
       if(c->hp_name != NULL && !strcmp(c->hp_name, n))
 	break;
     if(c == NULL)
-      break;
+	return NULL;
     p = c;
   }
-  
-  c = prop_ref_inc(c);
+  return c;
+}
+
+
+/**
+ *
+ */
+prop_t *
+prop_find(prop_t *p, ...)
+{
+  va_list ap;
+  va_start(ap, p);
+
+  hts_mutex_lock(&prop_mutex);
+  prop_t *c = prop_ref_inc(prop_find0(p, ap));
   hts_mutex_unlock(&prop_mutex);
+  va_end(ap);
   return c;
 }
 
@@ -3585,13 +3605,18 @@ prop_courier_poll(prop_courier_t *pc)
  *
  */
 rstr_t *
-prop_get_string(prop_t *p)
+prop_get_string(prop_t *p, ...)
 {
   rstr_t *r;
   char buf[64];
+  va_list ap;
+
+  va_start(ap, p);
 
   hts_mutex_lock(&prop_mutex);
 
+  p = prop_find0(p, ap);
+ 
   switch(p->hp_type) {
   case PROP_RSTRING:
     r = rstr_dup(p->hp_rstring);
@@ -3615,7 +3640,55 @@ prop_get_string(prop_t *p)
    break;
   }
   hts_mutex_unlock(&prop_mutex);
+  va_end(ap);
   return r;
+}
+
+
+/**
+ *
+ */
+void
+prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
+{
+  va_list ap;
+  prop_t *c = p;
+  const char *n;
+
+  if(p == NULL)
+    return;
+
+  va_start(ap, p);
+
+  hts_mutex_lock(&prop_mutex);
+
+  while((n = va_arg(ap, const char *)) != NULL) {
+    if(p->hp_type == PROP_DIR) {
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+	if(c->hp_name != NULL && !strcmp(c->hp_name, n))
+	  break;
+    } else 
+      c = NULL;
+    if(c == NULL)
+      c = prop_create0(p, n, skipme, 0);
+    p = c;
+  }
+
+  int ev = va_arg(ap, prop_event_t);
+  switch(ev) {
+  case PROP_SET_STRING:
+    prop_set_string_exl(p, skipme, va_arg(ap, const char *), PROP_STR_UTF8);
+    break;
+  case PROP_SET_INT:
+    prop_set_int_exl(p, skipme, va_arg(ap, int));
+    break;
+ default:
+   fprintf(stderr, "Unable to handle event: %d\n", ev);
+   assert(0);
+   break;
+  }
+  hts_mutex_unlock(&prop_mutex);
+  va_end(ap);
 }
 
 
