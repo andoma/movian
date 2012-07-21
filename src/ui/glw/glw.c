@@ -304,7 +304,8 @@ glw_init(glw_root_t *gr, const char *theme,
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_tex_init(gr);
 
-  gr->gr_frameduration = 1000000 / 60;
+  gr->gr_framerate = 60;
+  gr->gr_frameduration = 1000000 / gr->gr_framerate;
   uii_register(&gr->gr_uii, primary);
 
   return 0;
