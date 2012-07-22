@@ -23,7 +23,8 @@ widget(backdrop, {
       color: select(isFocused(), 1.0, 0.6) * 
 	select($self.value, [0.8, 1, 0.8], [1,0.8,0.8]);
       
-      caption: $self.metadata.title + ":";
+      caption: $self.metadata.title + ": " + 
+	select($self.value, _("Yes"), _("No"));
       ellipsize: true;
     });
     widget(icon, {
