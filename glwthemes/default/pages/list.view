@@ -40,6 +40,7 @@ widget(keyintercept, {
 			"multiopt", "multiopt",
 			"action", "action",
 			"info", "info",
+			"plugin", "plugin",
 			"keymapentry", "keymapentry"
 		       )
 	      + ".view";

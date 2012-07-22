@@ -25,4 +25,6 @@ void plugin_open_file(prop_t *page, const char *url);
 
 void plugins_reload_dev_plugin(void);
 
+void plugin_props_from_file(prop_t *prop, const char *zipfile);
+
 #endif // PLUGINS_H__

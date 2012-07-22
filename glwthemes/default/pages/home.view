@@ -125,7 +125,8 @@ widget(container_z, {
 	HOMEITEM("Settings", "dataroot://resources/svg/Settings.svg",
 		 navOpen("settings:"), false, 0.5);
 	HOMEITEM("Plugins", "dataroot://resources/svg/Plugin.svg",
-		 navOpen("plugin:start"), "3", 0.5);
+		 navOpen("plugin:start"), 
+		 $global.plugins.status.upgradeable, 0.5);
 	HOMEITEM("Showtime", "dataroot://resources/showtime/showtime.png",
 		 navOpen("page:about"), false, 0.5);
       });

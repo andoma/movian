@@ -304,15 +304,17 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh)
       htsmsg_t *json = htsmsg_json_deserialize(buf);
       free(buf);
 
-      const char *title = htsmsg_get_str(json, "title");
-      if(title != NULL && htsmsg_get_str(json, "id") != NULL &&
-	 htsmsg_get_str(json, "type") != NULL) {
-	md->md_title = rstr_alloc(title);
-	md->md_contenttype = CONTENT_PLUGIN;
+      if(json != NULL) {
+	const char *title = htsmsg_get_str(json, "title");
+	if(title != NULL && htsmsg_get_str(json, "id") != NULL &&
+	   htsmsg_get_str(json, "type") != NULL) {
+	  md->md_title = rstr_alloc(title);
+	  md->md_contenttype = CONTENT_PLUGIN;
+	  htsmsg_destroy(json);
+	  return 1;
+	}
 	htsmsg_destroy(json);
-	return 1;
       }
-      htsmsg_destroy(json);
     }
     metdata_set_redirect(md, "zip://%s", url);
     md->md_contenttype = CONTENT_ARCHIVE;

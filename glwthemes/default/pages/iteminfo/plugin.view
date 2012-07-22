@@ -45,6 +45,20 @@ widget(container_y, {
       space(1);
 
       widget(label, {
+	hidden: !$args.metadata.installed_version;
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Installed version: ") + '</font>' + 
+	  $args.metadata.installed_version;
+      });
+
+      widget(label, {
+	hidden: !$args.metadata.available_version;
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Available version: ") + '</font>' + 
+	  $args.metadata.available_version;
+      });
+
+      widget(label, {
 	hidden: !$args.metadata.author;
 	TextStyleItem();
 	caption: '<font color="#888">' + _("Author: ") + '</font>' + 
@@ -58,7 +72,6 @@ widget(container_y, {
     filterConstraintY: true;
     source: "theme://graphics/indent.png";
     border: 16;
-//    padding: -8;
 
     widget(label, {
       TextStyleItem();
@@ -66,6 +79,27 @@ widget(container_y, {
       align: justified;
       maxlines: 20;
       caption: $args.metadata.description;
+    });
+  });
+
+
+  trace("status", $args.status.statustxt);
+
+  widget(backdrop, {
+    source: "theme://graphics/indent.png";
+    border: 16;
+
+    widget(container_y, {
+      widget(label, {
+	TextStyleItem();
+	caption: $args.status.statustxt;
+      });
+      widget(label, {
+	TextStyleItem();
+	caption: select($args.status.minver,
+			fmt(_("Showtime %s or newer is required"),
+			    $args.status.minver), "");
+      });
     });
   });
 });

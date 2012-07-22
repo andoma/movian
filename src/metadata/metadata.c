@@ -125,6 +125,7 @@ static const char *types[] = {
   [CONTENT_DVD]      = "dvd",
   [CONTENT_IMAGE]    = "image",
   [CONTENT_ALBUM]    = "album",
+  [CONTENT_PLUGIN]   = "plugin",
 };
 
 
