@@ -19,6 +19,15 @@ commandMenuChrome(
 		  "image",     "Pictures"
 		   ) + ".svg");
 
+  cloner($args.options, loader, {
+    time: 0.1;
+    noInitialTransform: true;
+    effect: blend;
+    source: "theme://pages/listitems/" + $self.type + ".view";
+    hidden: !$self.enabled;
+  });
+
+  // Goto artist
 
   ITEM($args.metadata.artist, {
     fireEvent(navOpen($args.metadata.artist));
@@ -26,17 +35,22 @@ commandMenuChrome(
   }, "dataroot://resources/svg/User.svg",
        isLink($args.metadata.artist));
 
+  // Goto album
+
   ITEM($args.metadata.album, {
     fireEvent(navOpen($args.metadata.album));
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Disc.svg",
        isLink($args.metadata.album));
 
+  // Enqueue track
 
   ITEM(_("Queue"),  {
     fireEvent(enqueuetrack($args));
   }, "dataroot://resources/svg/Enqueue.svg",
        $args.type == "audio");
+
+  // Play (video) from beginning
 
   ITEM(_("Play from beginning"),  {
     fireEvent(navOpen($args.url, void, void, void, "beginning"));
@@ -44,11 +58,15 @@ commandMenuChrome(
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video");
 
+  // Continue (video) playback
+
   ITEM(fmt(_("Continue from %s"), value2duration($args.restartpos)),  {
     fireEvent(navOpen($args.url, void, void, void, "continue"));
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video" && $args.restartpos > 0);
+
+  // Star / Unstar feature
 
   ITEMTOGGLE(_("Star"), _("Unstar"), 
 	     $args.metadata.starred,
@@ -57,6 +75,8 @@ commandMenuChrome(
 	     "dataroot://resources/svg/Star.svg",
 	     "dataroot://resources/svg/Nostar.svg",
 	     [1,1,0]);
+
+  // Delete item
 
   ITEM(_("Delete"), { 
     delete($args);
