@@ -2231,6 +2231,15 @@ prop_subscribe(int flags, ...)
     }
   }
 
+  if(flags & PROP_SUB_SINGLETON) {
+    LIST_FOREACH(s, &value->hp_value_subscriptions, hps_value_prop_link) {
+      if(s->hps_callback == cb && s->hps_opaque == opaque) {
+	hts_mutex_unlock(&prop_mutex);
+	return NULL;
+      }
+    }
+  }
+
   s = malloc(sizeof(prop_sub_t));
 
   s->hps_zombie = 0;

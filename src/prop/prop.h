@@ -124,6 +124,7 @@ void prop_init(void);
 #define PROP_SUB_DONTLOCK             0x100
 #define PROP_SUB_IGNORE_VOID          0x200
 #define PROP_SUB_TRACK_DESTROY_EXP    0x400
+#define PROP_SUB_SINGLETON            0x800
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
 
 
