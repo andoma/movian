@@ -20,13 +20,11 @@ widget(backdrop, {
 	translate($self.type,  "File",
 		  "archive",   "Archive",
 		  "artist",    "User",
-		  "audio",     "Music",
 		  "directory", "Folder",
 		  "dvd",       "Disc",
 		  "playlist",  "List",
 		  "video",     "Movie",
 		  "album",     "Disc",
-		  "plugin",    "Plugin",
 		  "image",     "Pictures"
 		 ) + ".svg";
 	.shadow = true;
