@@ -92,14 +92,28 @@ $view.sizer = $ui.size / 3;
 
 }
 
-widget(container_z, {
+widget(container_y, {
   alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
   blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+  widget(container_z, {
+    widget(text, {
+      bind($view.searchQuery);
+      sizeScale: 2;
+      focusable: 0.7;
+      $view.searchAlpha = 0.3 + iir(isFocused() * 0.7, 8) + isHovered() * 0.1;
+
+      onEvent(enter, navOpen("search:" + $view.searchQuery));
+    });
+  });
+  VerticalSeparator();
+
+widget(container_z, {
 
   widget(list_x, {
     padding: [$ui.width / 6, 0];
     scrollThreshold: $ui.width / 6;
-    alphaFallOff: 0.7;
+    alphaFallOff: 1.5;
     blurFallOff: 0.7;
 
     widget(container_z, {
@@ -151,3 +165,4 @@ widget(container_z, {
 });
 
 
+});
