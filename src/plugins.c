@@ -587,11 +587,11 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
  *
  */
 static void
-plugins_load(const char *repo)
+plugins_load(void)
 {
   char errbuf[512];
+  const char *repo = plugin_repo_url;
 
-  hts_mutex_lock(&plugin_mutex);
   plugin_load_installed();
   
   htsmsg_t *r = repo_get(repo, errbuf, sizeof(errbuf));
@@ -629,7 +629,6 @@ plugins_load(const char *repo)
   }
   update_global_state();
   plugin_autoupgrade();
-  hts_mutex_unlock(&plugin_mutex);
 }
 
 
@@ -718,6 +717,18 @@ plugins_setup_root_props(void)
 /**
  *
  */
+static void *
+plugin_thread(void *aux)
+{
+  hts_mutex_lock(&plugin_mutex);
+  plugins_load();
+  hts_mutex_unlock(&plugin_mutex);
+  return NULL;
+}
+
+/**
+ *
+ */
 void
 plugins_init(const char *loadme, const char *repo)
 {
@@ -740,10 +751,13 @@ plugins_init(const char *loadme, const char *repo)
     } else {
       TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
+    plugins_load();
+  } else {
+    hts_thread_create_detached("pluginsinit", plugin_thread, NULL,
+			       THREAD_PRIO_LOW);
   }
 
   hts_mutex_unlock(&plugin_mutex);
-  plugins_load(plugin_repo_url);
 }
 
 
