@@ -56,9 +56,6 @@ widget(backdrop, {
 	  $self.keycode1 = void;
 	}, !$clone.sens1);
 
-	onEvent(Backspace, {
-	  $self.keycode1 = void;
-	}, !$clone.sens1);
 	
 	onEvent(Cancel, {
 	  $clone.sens1 = false;
@@ -113,10 +110,6 @@ widget(backdrop, {
 	}, $clone.sens2);
 
 	onEvent(Delete, {
-	  $self.keycode2 = void;
-	}, !$clone.sens2);
-
-	onEvent(Backspace, {
 	  $self.keycode2 = void;
 	}, !$clone.sens2);
 
