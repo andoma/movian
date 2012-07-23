@@ -41,7 +41,6 @@ widget(backdrop, {
 	caption: $global.media.current.metadata.title;
 	shadow: true;
 	outline: true;
-//	size: $ui.size + 11;a
 	font: $ui.font;
       });
 
