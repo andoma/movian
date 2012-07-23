@@ -625,10 +625,8 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int paused)
 
   hts_mutex_lock(&playqueue_mutex);
 
-  track = prop_follow(track);
-
   TAILQ_FOREACH(pqe, &playqueue_entries, pqe_linear_link) {
-    if(pqe->pqe_originator == track) {
+    if(prop_compare(track, pqe->pqe_originator)) {
       pqe_play(pqe, EVENT_PLAYQUEUE_JUMP);
       hts_mutex_unlock(&playqueue_mutex);
       return;
