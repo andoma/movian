@@ -521,6 +521,27 @@ js_decodeEntety(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_notify(JSContext *cx, JSObject *obj,
+		uintN argc, jsval *argv, jsval *rval)
+{
+  const char *text;
+  int delay;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "si",
+			  &text, &delay)){
+    return JS_FALSE;
+  }
+
+  notify_add(NULL, NOTIFY_INFO, NULL, delay, _(text)); 
+
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -542,6 +563,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("probe",            js_probe, 1, 0, 0),
     JS_FS("textDialog",       js_textDialog, 3, 0, 0),
     JS_FS("entityDecode",     js_decodeEntety, 1, 0, 0),
+    JS_FS("notify",           js_notify, 2, 0, 0),
     JS_FS_END
 };
 
