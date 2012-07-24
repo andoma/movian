@@ -547,6 +547,17 @@ Shows a multioption field (combobox style)
   option is default.
 * Function - Function that handles the current value saving it (e.g. function(v){somevalue = v})
 
+
+#### createAction(String ID, String Title, Function Func)
+
+*Available from 3.9.45*
+
+Shows an Action Button that executes a given function when clicked.
+
+* ID - String that identifies the setting. (e.g. boolean)
+* Title - Synopsis of the setting. (e.g. Boolean test)
+* Function - Function that is executed when button is clicked (e.g. function(){ showtime.trace("Button clicked!"); })
+
    
 
 ## The service object

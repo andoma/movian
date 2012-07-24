@@ -239,6 +239,21 @@ js_store_update_int(void *opaque, int value)
 /**
  *
  */
+static void
+js_action_function(void *opaque, prop_event_t event, ...)
+{
+  js_setting_t *jss = opaque;
+
+  jsval cb, result;
+  JSContext *cx = settings_get_cx(jss);
+  JS_GetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "callback", &cb);
+  JS_CallFunctionValue(cx, NULL, cb, 0, NULL, &result);
+}
+
+
+/**
+ *
+ */
 static js_setting_t *
 jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
 	   JSObject *func, js_setting_group_t *jsg)
@@ -491,6 +506,36 @@ js_createInt(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_createAction(JSContext *cx, JSObject *obj, uintN argc, 
+		jsval *argv, jsval *rval)
+{
+  js_setting_group_t *jsg = JS_GetPrivate(cx, obj);
+  const char *id;  
+  const char *title;
+  JSObject *func;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sso",
+			  &id, &title, &func)){
+    return JS_FALSE;
+  }
+
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  if(jss == NULL)
+    return JS_FALSE;
+
+  jss->jss_s = settings_create_action(jsg->jsg_root, _p(title), 
+                                   js_action_function, jss, 
+                                   js_global_pc);
+
+  jss->jss_cx = NULL;
+
+  return JS_TRUE;
+}
+
 
 /**
  *
@@ -543,6 +588,7 @@ static JSFunctionSpec setting_functions[] = {
     JS_FS("createInfo", js_createInfo, 3, 0, 0),
     JS_FS("createDivider", js_createDivider, 1, 0, 0),
     JS_FS("createInt", js_createInt, 8, 0, 0),
+    JS_FS("createAction", js_createAction, 2, 0, 0),
     JS_FS("destroy", js_destroy, 0, 0, 0),
     JS_FS_END
 };
