@@ -25,7 +25,8 @@ commandMenuChrome(
     source: "theme://pages/listitems/" + $self.type + ".view";
     hidden: !$self.enabled;
   });
-  
+
+/*  
   SEP(_("Playback"));
       
   widget(container_x, {
@@ -52,21 +53,27 @@ commandMenuChrome(
 	      $global.media.current.shuffle,
 	      $global.media.current.canShuffle);
   
+*/
 
   SEP(_("Navigation"));
 
+  ITEM(_("Playqueue"), {
+    $clone.pageMenu = false;
+    fireEvent(navOpen("playqueue:"));
+  });
+
   ITEM(_("Go to Home screen"), {
-    $ui.menu = false;
+    $clone.pageMenu = false;
     fireEvent(navOpen("page:home"));
   });
 
   ITEM(_("Open Settings"), {
-    $ui.menu = false;
+    $clone.pageMenu = false;
     fireEvent(navOpen("settings:"));
   });
   
   ITEM(_("Reload current page"), {
-    $ui.menu = false;
+    $clone.pageMenu = false;
     fireEvent(event(ReloadData));
   });
 )
