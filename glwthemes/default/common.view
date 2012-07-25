@@ -18,7 +18,7 @@
     outline: true;
     sizeScale: 2;
     padding: [5,0];
-    caption: $page.model.metadata.title;
+    caption: CAPTION;
     ellipsize: true;
   });
 }
