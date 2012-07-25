@@ -550,7 +550,7 @@ Shows a multioption field (combobox style)
 
 #### createAction(String ID, String Title, Function Func)
 
-*Available from 3.9.45*
+*Available from 3.99.47*
 
 Shows an Action Button that executes a given function when clicked.
 
@@ -712,10 +712,11 @@ JSON decodes the String and return a JSON Object.
 Decode HTML ententies in string s and return the new string
 *Available from 3.5.174*
 
-#### notify(String s, Int i)
+#### notify(String s, Int i, String icon)
 
-Create a Popup in top left that shows the string s during i seconds.
-*Available from 3.9.45*
+Create a Popup thar shows the string s during i seconds.
+Optionally with the icon being displaced next to the notification
+*Available from 3.99.48*
 
 
 #### time()
