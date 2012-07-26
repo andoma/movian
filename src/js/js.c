@@ -527,7 +527,7 @@ js_notify(JSContext *cx, JSObject *obj,
 {
   const char *text;
   int delay;
-  const char *icon;
+  const char *icon = NULL;
 
   if(!JS_ConvertArguments(cx, argc, argv, "si/s", &text, &delay, &icon))
     return JS_FALSE;
