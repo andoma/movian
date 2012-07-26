@@ -1,10 +1,20 @@
-* Audio play control page
+-- Beta
+
+* Additional work on playqueue: (shuffle, repeat -controls etc)
 * New home page
+* Revive the playcount, last seen, etc for videos in views
+* Focus problems when using prev/next button in playqueue
+* PS3 controller
+
+-- Optional work
+
 * Metadata loading throbber
 * Metadata switching
 * Metadata priority order
 * Persist view switching 
 * Fix list focus when destroying item via context menu
+* Standardize view elements so .view plugins have something to lean on
+* Add glwview property to pages
 * GLW .view plugins
 
 
