@@ -1,0 +1,127 @@
+#import "theme://common.view"
+
+#define INFO(caption, hidden=false) {
+  widget(label, {
+    TextStyleItem();
+    .caption = caption;
+    .color = 0.7;
+  });
+}
+
+
+
+widget(container_y, {
+
+  .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  .blur  = iir(clamp(getLayer(), 0, 1), 7);
+
+  space(1);
+  .spacing = 10;
+
+  widget(label, {
+    TextStyleItem();
+    .align = center;
+    .shadow = true;
+    .caption = "Showtime Mediacenter";
+    .sizeScale = 3;
+  });
+
+  widget(label, {
+    TextStyleItem();
+    .align = center;
+    .shadow = true;
+    .caption = $global.showtime.copyright;
+    .sizeScale = 1.5;
+  });
+
+  widget(label, {
+    TextStyleItem();
+    .align = center;
+    .shadow = true;
+    .caption = fmt(_("Version: %s"), $global.showtime.version);
+    .color = 0.5;
+    .sizeScale = 1.5;
+  });
+
+
+  space(2);
+
+  widget(container_x, {
+    .padding = 20;
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+
+      widget(label, {
+    TextStyleItem();
+	.caption = _("Display info");
+	.sizeScale = 1.5;
+	.color = 0.7;
+	.shadow = true;
+      });
+
+      INFO(fmt(_("Width: %d px"), $ui.width));
+      INFO(fmt(_("Height: %d px"), $ui.height));
+      INFO(fmt(_("Framerate: %.2f Hz"), $ui.framerate));
+      INFO(fmt(_("GPU: %s"), $ui.gpu.name), !$ui.gpu.name);
+      INFO(fmt(_("Renderer: %s"), $ui.rendermode), !$ui.rendermode);
+      INFO(fmt(_("Windowmanager: %s"), $ui.windowmanager), !$ui.windowmanager);
+    });
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+      widget(label, {
+	TextStyleItem();
+	.caption = _("System info");
+	.color = 0.7;
+	.sizeScale = 1.5;
+	.shadow = true;
+      });
+
+      INFO(fmt(_("Detected CPUs: %d"),
+	       count($global.system.cpuinfo.cpus)),
+	   !$global.system.cpuinfo.available);
+
+    });
+
+
+    widget(container_y, {
+      .filterConstraintX = true;
+      .align = top;
+      widget(label, {
+	TextStyleItem();
+	.caption = _("Memory status");
+	.color = 0.7;
+	.sizeScale = 1.5;
+	.shadow = true;
+      });
+
+
+      INFO(fmt(_("Total system RAM: %d kB"),
+	       $global.system.mem.systotal),
+	   !$global.system.mem.systotal);
+
+      INFO(fmt(_("Avail system RAM: %d kB"),
+	       $global.system.mem.sysfree),
+	   !$global.system.mem.sysfree);
+
+      INFO(fmt(_("Allocated by malloc: %d kB"),
+	       $global.system.mem.arena),
+	   !$global.system.mem.arena);
+
+      INFO(fmt(_("Allocated by application: %d kB"),
+	       $global.system.mem.activeMem),
+	   !$global.system.mem.activeMem);
+
+      INFO(fmt(_("Unused memory: %d kB"),
+	       $global.system.mem.inactiveMem),
+	   !$global.system.mem.inactiveMem);
+
+      INFO(fmt(_("Free chunks: %d"),
+	       $global.system.mem.unusedChunks),
+	   !$global.system.mem.unusedChunks);
+    });
+  });
+});
