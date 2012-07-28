@@ -391,6 +391,9 @@ finalize() {
 
     # Fonts
     echo >>${CONFIG_MAK} "BUNDLES+=resources/fonts"
+    
+    # SVG icons
+    echo >>${CONFIG_MAK} "BUNDLES+=resources/svg"
 
     # Languages
     echo >>${CONFIG_MAK} "BUNDLES+=lang"

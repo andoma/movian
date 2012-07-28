@@ -17,7 +17,6 @@ DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="ps3"
 
 source support/configure.inc
-GLW_DEFAULT_THEME="mono"
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
 CC=${TOOLCHAIN}gcc
 enable psl1ght
