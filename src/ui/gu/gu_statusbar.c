@@ -52,7 +52,7 @@ static void
 notifications_update(void *opaque, prop_event_t event, ...)
 {
   statusbar_t *sb = opaque;
-  prop_t *p, *txt;
+  prop_t *p;
   statusbar_entry_t *sbe;
   char *buf;
   rstr_t *msg;
@@ -64,26 +64,18 @@ notifications_update(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
 
-    txt = prop_get_by_name(PNVEC("self", "text"), 1,
-			   PROP_TAG_NAMED_ROOT, p, "self",
-			   NULL);
-    if(txt != NULL) {
-      msg = prop_get_string(txt);
-
-      if(msg != NULL) {
-	buf = mystrdupa(rstr_get(msg));
-	l = strlen(buf);
-	for(i = 0; i < l; i++)
-	  if(buf[i] < ' ')
-	    buf[i] = ' ';
-
-	sbe = calloc(1, sizeof(statusbar_entry_t));
-	sbe->p = prop_ref_inc(p);
-	sbe->id = gtk_statusbar_push(GTK_STATUSBAR(sb->bar), sb->ctxid, buf);
-	LIST_INSERT_HEAD(&sb->entries, sbe, link);
-	rstr_release(msg);
-      }
-      prop_ref_dec(txt);
+    if((msg = prop_get_string(p, "text", NULL)) != NULL) {
+      buf = mystrdupa(rstr_get(msg));
+      l = strlen(buf);
+      for(i = 0; i < l; i++)
+	if(buf[i] < ' ')
+	  buf[i] = ' ';
+      
+      sbe = calloc(1, sizeof(statusbar_entry_t));
+      sbe->p = prop_ref_inc(p);
+      sbe->id = gtk_statusbar_push(GTK_STATUSBAR(sb->bar), sb->ctxid, buf);
+      LIST_INSERT_HEAD(&sb->entries, sbe, link);
+      rstr_release(msg);
     }
     break;
 

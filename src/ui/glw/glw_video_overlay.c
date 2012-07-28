@@ -824,21 +824,12 @@ void
 glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
 {
   const video_decoder_t *vd = gv->gv_vd;
-  int want_focus = 0;
 
   glw_video_overlay_spu_layout(gv, pts);
   pts -= vd->vd_mp->mp_svdelta;
   pts -= vd->vd_mp->mp_pts_delta_for_subs;
 
   glw_video_overlay_sub_set_pts(gv, pts);
-
-
-#if ENABLE_DVD
-  if(vd->vd_pci.hli.hl_gi.hli_ss)
-    want_focus = 1;
-#endif
-
-  //  glw_set_focus_weight(&gv->w, want_focus ? 1.0 : 0.0);
 }
 
 

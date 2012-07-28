@@ -225,7 +225,7 @@ static void
 popups_update(void *opaque, prop_event_t event, ...)
 {
   gtk_ui_t *gu = opaque;
-  prop_t *p, *txt;
+  prop_t *p;
   rstr_t *str;
   popup_t *pop;
   va_list ap;
@@ -235,19 +235,11 @@ popups_update(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
 
-    txt = prop_get_by_name(PNVEC("self", "type"), 1,
-			   PROP_TAG_NAMED_ROOT, p, "self",
-			   NULL);
-    if(txt == NULL)
-      break;
-    
-    if((str = prop_get_string(txt)) != NULL) {
-
+    if((str = prop_get_string(p, "type", NULL)) != NULL) {
       if(!strcmp(rstr_get(str), "auth"))
 	popup_create_auth(gu, p);
       rstr_release(str);
     }
-    prop_ref_dec(txt);
     break;
 
   case PROP_DEL_CHILD:

@@ -131,7 +131,6 @@ static inline float glw_vec3_dot(const Vec3 a, const Vec3 b)
 
 static inline float glw_vec34_dot(const Vec3 a, const Vec4 b)
 {
-    abort(); // broken
   __v4sf n = _mm_mul_ps(a,b);
   return 
     __builtin_ia32_vec_ext_v4sf(n, 0) + 
@@ -159,7 +158,6 @@ extern int glw_mtx_invert(Mtx dst, const Mtx src);
     a = _mm_mul_ps(a, _mm_set_ps(v, 1, 1, 1));	\
   } while(0)
 
-#define glw_vec4_insert3(a, v)  _mm_load_ss(a, v);
 
 const static inline float *
 glw_mtx_get(const Mtx src)
@@ -185,3 +183,46 @@ static inline Vec2 glw_vec4_get(const float *p)
   _MM_TRANSPOSE4_PS(a0, a1, a2, a3); \
   dst = _mm_add_ps(_mm_add_ps(a0, a1), _mm_add_ps(a2, a3)); \
   } while(0)
+
+
+
+#define X_DX (0)
+#define X_DY (1)
+#define X_DZ (2)
+#define X_DW (3)
+#define Y_DX (0 << 2)
+#define Y_DY (1 << 2)
+#define Y_DZ (2 << 2)
+#define Y_DW (3 << 2)
+#define Z_SX (0 << 4)
+#define Z_SY (1 << 4)
+#define Z_SZ (2 << 4)
+#define Z_SW (3 << 4)
+#define W_SX (0 << 6)
+#define W_SY (1 << 6)
+#define W_SZ (2 << 6)
+#define W_SW (3 << 6)
+
+
+#define glw_vec4_set(v, i, s) do {			\
+	__v4sf tmp = _mm_set_ss(s);			\
+	switch(i) {					\
+	case 0:						       \
+	    v = _mm_move_ss(v, tmp);			       \
+	    break;					       \
+        case 1:								\
+	    tmp = _mm_unpacklo_ps(v, tmp);				\
+	    v = _mm_shuffle_ps(tmp, v, X_DX | Y_DY | Z_SZ | W_SW);	\
+	    break;							\
+        case 2:								\
+	    v = _mm_shuffle_ps(v, v, X_DZ | Y_DY | Z_SX | W_SW );	\
+	    tmp = _mm_move_ss(v, tmp);					\
+	    v = _mm_shuffle_ps(tmp, tmp, X_DZ | Y_DY | Z_SX | W_SW);	\
+	    break;							\
+        case 3:								\
+	    v = _mm_shuffle_ps(v, v, X_DW | Y_DY | Z_SZ | W_SX);	\
+	    tmp = _mm_move_ss(v, tmp);					\
+	    v = _mm_shuffle_ps(tmp, tmp, X_DW | Y_DY | Z_SZ | W_SX);	\
+	    break;							\
+	}								\
+    } while(0);

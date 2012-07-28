@@ -592,6 +592,8 @@ stenciler(glw_root_t *gr, glw_renderer_cache_t *grc,
       glw_vec4_set(To3, 3, 0.5 - D3 * a);
     
     break;
+  default:
+    abort();
   }
 
   plane++;
@@ -750,7 +752,7 @@ glw_renderer_tesselate(glw_renderer_t *gr, glw_root_t *root,
     grc->grc_stencil_height = root->gr_stencil_height;
 
     for(i = 0; i < 2; i++)
-      memcpy(&grc->grc_stencil[i], root->gr_stencil[i], sizeof(Vec4));
+      memcpy(&grc->grc_stencil[i], &root->gr_stencil[i], sizeof(Vec4));
 
     for(i = 0; i < 4; i++)
       grc->grc_stencil_border[i] = root->gr_stencil_border[i];
