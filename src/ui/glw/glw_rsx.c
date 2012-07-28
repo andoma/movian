@@ -283,18 +283,38 @@ rsx_render(struct glw_root *gr,
 
   if(t0 == NULL) {
 
-    rfp = gr->gr_be.be_fp_flat;
+    if(t1 != NULL) {
+      rfp = gr->gr_be.be_fp_flat_stencil;
+
+      if(t1->tex.offset == 0 || t1->size == 0)
+	return;
+
+      realitySetTexture(ctx, 0, &t1->tex);
+    } else {
+      rfp = gr->gr_be.be_fp_flat;
+
+    }
 
   } else {
 
     if(t0->tex.offset == 0 || t0->size == 0)
       return;
 
+    const int doblur = blur > 0.05 || flags & GLW_RENDER_BLUR_ATTRIBUTE;
+
     realitySetTexture(ctx, 0, &t0->tex);
-    if(blur > 0.05) {
-      rfp = gr->gr_be.be_fp_tex_blur;
+
+    if(t1 != NULL) {
+      rfp = doblur ? gr->gr_be.be_fp_tex_stencil_blur :
+	gr->gr_be.be_fp_tex_stencil;
+
+      if(t1->tex.offset == 0 || t1->size == 0)
+	 return;
+
+     realitySetTexture(ctx, 1, &t1->tex);
+
     } else {
-      rfp = gr->gr_be.be_fp_tex;
+      rfp = doblur ? gr->gr_be.be_fp_tex_blur : gr->gr_be.be_fp_tex;
     }
   }
 
@@ -356,14 +376,14 @@ rsx_render(struct glw_root *gr,
   if(indices != NULL) {
     for(i = 0; i < num_triangles * 3; i++) {
       const float *v = &vertices[indices[i] * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
+      realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
       realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
     }
   } else {
     for(i = 0; i < num_vertices; i++) {
       const float *v = &vertices[i * VERTEX_SIZE];
-      realityAttr2f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9]);
+      realityAttr4f(ctx,  rvp->rvp_a_texcoord,  v[8], v[9], v[10], v[11]);
       realityAttr4f(ctx, rvp->rvp_a_color, v[4], v[5], v[6], v[7]);
       realityVertex4f(ctx, v[0], v[1], v[2], v[3]);
     }
@@ -388,6 +408,9 @@ glw_rsx_init_context(glw_root_t *gr)
   be->be_fp_tex        = load_fp(gr, "f_tex.fp");
   be->be_fp_flat       = load_fp(gr, "f_flat.fp");
   be->be_fp_tex_blur   = load_fp(gr, "f_tex_blur.fp");
+  be->be_fp_tex_stencil  = load_fp(gr, "f_tex_stencil.fp");
+  be->be_fp_flat_stencil = load_fp(gr, "f_flat_stencil.fp");
+  be->be_fp_tex_stencil_blur = load_fp(gr, "f_tex_stencil_blur.fp");
   
   be->be_vp_yuv2rgb    = load_vp("yuv2rgb_v.vp");
   be->be_fp_yuv2rgb_1f = load_fp(gr, "yuv2rgb_1f_norm.fp");

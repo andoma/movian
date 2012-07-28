@@ -84,6 +84,10 @@ typedef struct glw_backend_root {
   struct rsx_fp *be_fp_yuv2rgb_1f;
   struct rsx_fp *be_fp_yuv2rgb_2f;
 
+  struct rsx_fp *be_fp_tex_stencil;
+  struct rsx_fp *be_fp_flat_stencil;
+  struct rsx_fp *be_fp_tex_stencil_blur;
+
   int be_blendmode;
   
 } glw_backend_root_t;
