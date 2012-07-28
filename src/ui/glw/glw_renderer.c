@@ -1030,15 +1030,15 @@ glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
   gr->gr_stencil_edge[2] = 2.0 * border[2] / rc->rc_width;
   gr->gr_stencil_edge[3] = 2.0 * border[3] / rc->rc_height;
 #else
-  gr->gr_stencil_edge[0] = (float)tex->width / rc->rc_width;
-  gr->gr_stencil_edge[1] = (float)tex->height / rc->rc_height;
-  gr->gr_stencil_edge[2] = (float)tex->width / rc->rc_width;
-  gr->gr_stencil_edge[3] = (float)tex->height / rc->rc_height;
+  gr->gr_stencil_edge[0] = (float)glw_tex_width(tex)  / rc->rc_width;
+  gr->gr_stencil_edge[1] = (float)glw_tex_height(tex) / rc->rc_height;
+  gr->gr_stencil_edge[2] = (float)glw_tex_width(tex)  / rc->rc_width;
+  gr->gr_stencil_edge[3] = (float)glw_tex_height(tex) / rc->rc_height;
 #endif
 
   memcpy(gr->gr_stencil_border, border, sizeof(int16_t) * 4);
-  gr->gr_stencil_width  = tex->width;
-  gr->gr_stencil_height = tex->height;
+  gr->gr_stencil_width  = glw_tex_width(tex);
+  gr->gr_stencil_height = glw_tex_height(tex);
 
   glw_vec4_copy(v4, glw_vec4_make(1, 0, 0, 0));
   glw_mtx_trans_mul_vec4(gr->gr_stencil[0], inv, v4);

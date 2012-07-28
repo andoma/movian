@@ -149,7 +149,8 @@ typedef struct glw_backend_texture {
 #define GLW_TEXTURE_TYPE_NO_ALPHA 1
 } glw_backend_texture_t;
 
-
+#define glw_tex_width(gbt) ((gbt)->width)
+#define glw_tex_height(gbt) ((gbt)->height)
 
 #define glw_can_tnpo2(gr) (gr->gr_be.gbr_texmode != GLW_OPENGL_TEXTURE_SIMPLE)
 
