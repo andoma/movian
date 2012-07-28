@@ -16,7 +16,7 @@ widget(container_z, {
 	width: $ui.size * 8;
 	$clone.ready = isReady();
 	source: "thumb://" + $self.url;
-//	color: isFocused() + 0.3;
+	color: isFocused() + 0.5;
       });
 
       widget(container_y, {
@@ -32,7 +32,6 @@ widget(container_z, {
   widget(backdrop, {
     source: "theme://graphics/border32.png";
     border: 16;
-    color: 0.7;
     alpha: iir(isFocused(), 8) + 0.1;
   });
 });
