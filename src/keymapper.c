@@ -95,6 +95,7 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_RELOAD_UI,              "F5"},
   { ACTION_RELOAD_DATA,            "Shift+F5"},
   { ACTION_FULLSCREEN_TOGGLE,      "F11"},
+  { ACTION_SWITCH_VIEW,            "F9"},
 
   { ACTION_PLAYPAUSE,              "MediaPlayPause"},
   { ACTION_PLAY,                   "MediaPlay"},
