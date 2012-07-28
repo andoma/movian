@@ -196,7 +196,7 @@ hexdump(const char *pfx, const void *data_, int len)
     for(j = 0; j + i < len && j < 16; j++)
       buf[p++] = data[i+j] < 32 || data[i+j] > 126 ? '.' : data[i+j];
     buf[p] = 0;
-    TRACE(TRACE_DEBUG, pfx, buf);
+    TRACE(TRACE_DEBUG, pfx, "%s", buf);
   }
 }
 
