@@ -294,6 +294,7 @@ src_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_REQ_DELETE_VECTOR:
+  case PROP_WANT_MORE_CHILDS:
     break;
 
   default:
