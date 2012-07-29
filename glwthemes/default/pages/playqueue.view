@@ -17,8 +17,35 @@
       widget(frontdrop, {
 	SquareButtonFront();
 	widget(icon, {
-	source: ICON;
-	  sizeScale: 3;
+	  source: ICON;
+	  sizeScale: 2;
+	});
+      });
+    });
+  });
+}
+
+
+#define toggleBtn(ICON, STATE, ENABLED) {
+
+  widget(container_y, {
+    
+    focusable: ENABLED;
+    alpha: select(ENABLED, 1, 0.3);
+    onEvent(activate, { (STATE) = !STATE; });
+
+    widget(backdrop, {
+      alpha: isFocused() + 0.6;
+      
+      color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+      SquareButtonBack();
+      
+      widget(frontdrop, {
+	SquareButtonFront();
+	widget(icon, {
+	  source: ICON;
+	  sizeScale: 2;
+	  color: select(STATE, 1, 0.4*[0.431, 0.811, 1]);
 	});
       });
     });
@@ -83,12 +110,28 @@ widget(container_y, {
     
     spacing: $ui.size;
 
-    actionBtn("dataroot://resources/svg/SkipBack.svg", event(PreviousTrack),
-	      $global.media.current.canSkipBackward);
-    actionBtn("dataroot://resources/svg/Play.svg", event(PlayPause), true);
-    actionBtn("dataroot://resources/svg/SkipNext.svg", event(NextTrack),
-	      $global.media.current.canSkipForward);
+    widget(container_y, {
+      
+      widget(container_x, {
+	align: center;
+	actionBtn("dataroot://resources/svg/SkipBack.svg", event(PreviousTrack),
+		  $global.media.current.canSkipBackward);
+	actionBtn("dataroot://resources/svg/Play.svg", event(PlayPause), true);
+	actionBtn("dataroot://resources/svg/SkipNext.svg", event(NextTrack),
+		  $global.media.current.canSkipForward);
+      });
 
+      widget(container_x, {
+	align: center;
+	toggleBtn("dataroot://resources/svg/Repeat.svg",
+		  $global.media.current.repeat,
+		  $global.media.current.canRepeat);
+
+	toggleBtn("dataroot://resources/svg/Shuffle.svg",
+		  $global.media.current.shuffle,
+		  $global.media.current.canShuffle);
+      });
+    });
 
     widget(backdrop, {
       filterConstraintX: true;
