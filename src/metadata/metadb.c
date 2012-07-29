@@ -2010,6 +2010,7 @@ typedef struct metadb_item_prop {
   char *mip_url;
   
   prop_sub_t *mip_destroy_sub;
+  prop_sub_t *mip_playcount_sub;
 
 } metadb_item_prop_t;
 
@@ -2066,7 +2067,8 @@ mip_get(sqlite3 *db, const char *url, metadb_item_info_t *mii)
 static void
 mip_set(metadb_item_prop_t *mip, const metadb_item_info_t *mii)
 {
-  prop_set_int(mip->mip_playcount,  mii->mii_playcount);
+  prop_set_int_ex(mip->mip_playcount, mip->mip_playcount_sub,
+		  mii->mii_playcount);
   prop_set_int(mip->mip_lastplayed, mii->mii_lastplayed);
   prop_set_float(mip->mip_restartpos, mii->mii_restartpos / 1000.0);
 }
@@ -2115,12 +2117,61 @@ metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
   hts_mutex_unlock(&mip_mutex);
 
   prop_unsubscribe(mip->mip_destroy_sub);
+  prop_unsubscribe(mip->mip_playcount_sub);
   prop_ref_dec(mip->mip_playcount);
   prop_ref_dec(mip->mip_lastplayed);
   prop_ref_dec(mip->mip_restartpos);
   free(mip->mip_url);
   free(mip);
 }
+
+/**
+ *
+ */
+static void
+metadb_set_playcount(void *opaque, int v)
+{
+  const metadb_item_prop_t *mip = opaque;
+  int rc;
+  void *db;
+
+  if((db = metadb_get()) == NULL)
+    return;
+ again:
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  sqlite3_stmt *stmt;
+
+  rc = db_prepare(db, 
+		  "UPDATE item "
+		  "SET playcount = ?2 "
+		  "WHERE url=?1",
+		  -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    db_rollback(db);
+    metadb_close(db);
+    return;
+    }
+
+  sqlite3_bind_text(stmt, 1, mip->mip_url, -1, SQLITE_STATIC);
+  sqlite3_bind_int64(stmt, 2, v);
+  rc = db_step(stmt);
+  sqlite3_finalize(stmt);
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+  db_commit(db);
+  mip_update_by_url(db, mip->mip_url);
+  metadb_close(db);
+}
+
 
 
 /**
@@ -2142,10 +2193,16 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
 
   } else {
 
-    mip->mip_playcount  = prop_ref_inc(prop_create(parent, "playcount"));
-    mip->mip_lastplayed = prop_ref_inc(prop_create(parent, "lastplayed"));
-    mip->mip_restartpos = prop_ref_inc(prop_create(parent, "restartpos"));
+    mip->mip_playcount  = prop_create_r(parent, "playcount");
+    mip->mip_lastplayed = prop_create_r(parent, "lastplayed");
+    mip->mip_restartpos = prop_create_r(parent, "restartpos");
   
+    mip->mip_playcount_sub =
+      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		     PROP_TAG_CALLBACK_INT, metadb_set_playcount, mip,
+		     PROP_TAG_ROOT, mip->mip_playcount,
+		     NULL);
+
     mip->mip_url = strdup(url);
 
     unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
