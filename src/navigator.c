@@ -596,6 +596,10 @@ nav_reload_current(navigator_t *nav)
 
   prop_unsubscribe(np->np_close_sub);
   prop_unsubscribe(np->np_direct_close_sub);
+  prop_unsubscribe(np->np_bookmarked_sub);
+  prop_unsubscribe(np->np_title_sub);
+  prop_unsubscribe(np->np_icon_sub);
+
   prop_destroy(np->np_prop_root);
   nav_page_setup_prop(nav, np, NULL, "continue");
 
