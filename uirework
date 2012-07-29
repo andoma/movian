@@ -5,7 +5,6 @@
 * Focus problems when using prev/next button in playqueue
 * Make sure HTSP is decent
 * Fix screensaver
-* Loading throbber
 * Reload datamodel seems to crash sometimes and will unbookmark items
 
 -- Optional work
