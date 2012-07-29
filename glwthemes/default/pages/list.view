@@ -31,6 +31,7 @@ widget(keyintercept, {
 	    source: "listitems/" + 
 	      translate($self.type, "default",
 			"audio", "audio",
+			"video", "video",
 			"divider", "separator", // argh wtf!
 			"separator", "separator",
 			"settings", "settings",

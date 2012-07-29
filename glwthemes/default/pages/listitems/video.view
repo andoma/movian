@@ -1,0 +1,35 @@
+#import "theme://common.view"
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+  onEvent(activate, navOpen($self.url, void, void, $parent.model));
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: "dataroot://resources/svg/Movie.svg";
+      shadow: true;
+    });
+    
+    widget(label, {
+      TextStyleItem();
+      color: select(isFocused(), 1.0, 0.6);
+      caption: $self.metadata.title;
+      ellipsize: true;
+    });
+
+    widget(icon, {
+      alpha: $self.playcount > 0;
+      color: [0.431, 0.811, 1];
+      source: "dataroot://resources/svg/Check.svg";
+    });
+  });
+});

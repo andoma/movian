@@ -19,19 +19,13 @@
 
 widget(container_y, {
   spacing: 5;
-  widget(label, {
-    TextStyleItem();
-    caption: $args.metadata.title;
-    sizeScale: 1.5;
-    ellipsize: true;
-  });
 
   widget(container_x, {
     height: $ui.height / 2;
     spacing: 10;
 
     widget(container_y, {
-      align: bottom;
+      align: top;
       widget(frontdrop, {
 	source: "theme://graphics/boxart-overlay.png";
 	border: 8;
@@ -48,7 +42,6 @@ widget(container_y, {
       filterConstraintX: true;
       spacing: 2;
 
-      space(1);
 
       widget(label, {
 	hidden: !$args.metadata.year;
@@ -123,16 +116,23 @@ widget(container_y, {
 	  $args.metadata.producer;
       });
 
+      space(1);
 
     });
   });
   
-
+  widget(label, {
+    TextStyleItem();
+    sizeScale: 0.8;
+    padding: [12,0,0,0];
+    caption: fmt(_pl("Played %d times", "Played %d time", $args.playcount), $args.playcount);
+  });
+  
   widget(backdrop, {
     filterConstraintY: true;
     source: "theme://graphics/indent.png";
     border: 16;
-//    padding: -8;
+    padding: -4;
 
     widget(label, {
       TextStyleItem();
@@ -142,4 +142,5 @@ widget(container_y, {
       caption: $args.metadata.description;
     });
   });
+
 });

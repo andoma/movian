@@ -66,6 +66,22 @@ commandMenuChrome(
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video" && $args.restartpos > 0);
 
+  // Mark as unseen (video)
+
+  ITEM(_("Mark as unseen"), {
+    $args.playcount = 0; 
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Check.svg",
+       $args.type == "video" && $args.playcount > 0);
+
+  // Mark as seen (video)
+
+  ITEM(_("Mark as seen"), {
+    $args.playcount = 1; 
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Check.svg",
+       $args.type == "video" && $args.playcount < 1);
+
   // Star / Unstar feature
 
   ITEMTOGGLE(_("Star"), _("Unstar"), 
@@ -75,6 +91,7 @@ commandMenuChrome(
 	     "dataroot://resources/svg/Star.svg",
 	     "dataroot://resources/svg/Nostar.svg",
 	     [1,1,0]);
+
 
   // Delete item
 

@@ -1,10 +1,8 @@
--- Beta
-
-* Revive the playcount, last seen, etc for videos in views
-* Make sure HTSP is decent
 
 -- Optional work
 
+* Replace ellipsis with fading
+* Fix horizontal aligning of fonts with multiple sizes
 * Improve PS3 controller buttons
 * Auto-upgrade of Showtime
 * Metadata loading throbber
@@ -36,25 +34,3 @@
 
   $ui.viewpath.home -> URL
   $ui.viewpath.screensaver -> URL
-
-               
-
-
-21:45 <@an0nym0us> 13:50:33 <andoma> eussNL: how do I access it?
-21:45 <@an0nym0us> 13:51:39 <eussNL> dunno, I havent even seen sample code in ps3 sdks either
-21:46 <@an0nym0us> EXPORT(sysUtilGetSystemParamInt, 0x40e895d3); /* cellSysutil */
-21:46 <@an0nym0us> 0 = circle
-21:46 <@an0nym0us> 1 = cross
-21:47 <@an0nym0us> s32 button_assign = 0 ; sysUtilGetSystemParamInt ( 0x112, &button_assign ) ;
-21:49 <@an0nym0us> 0x111 = language
-21:49 <@an0nym0us> 0x113 = nickname
-21:49 <@an0nym0us> 0x114 = date format
-21:49 <@an0nym0us> 0x115 = time format
-21:49 <@an0nym0us> 0x116 = timezone
-21:49 <@an0nym0us> 0x117 = daylight savings
-21:50 <@andoma> oh
-21:50 <@eussNL> :o  oh ^
-21:51 <@an0nym0us> the nickname / username use:
-21:51 <@an0nym0us> EXPORT(sysUtilGetSystemParamString, 0x938013a0); /* cellSysutil */
-21:52 <@an0nym0us> 0x131 = username
-
