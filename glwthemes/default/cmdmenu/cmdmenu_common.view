@@ -1,5 +1,29 @@
 #import "theme://common.view"
 
+#define CommandMenuCommon() {
+  SEP(_("Navigation"));
+
+  ITEM(_("Playqueue"), {
+    $clone.pageMenu = false;
+    fireEvent(navOpen("playqueue:"));
+  });
+
+  ITEM(_("Go to Home screen"), {
+    $clone.pageMenu = false;
+    fireEvent(navOpen("page:home"));
+  });
+
+  ITEM(_("Open Settings"), {
+    $clone.pageMenu = false;
+    fireEvent(navOpen("settings:"));
+  });
+  
+  ITEM(_("Reload current page"), {
+    $clone.pageMenu = false;
+    fireEvent(event(ReloadData));
+  });
+}
+
 #define BUTTON(ICON, EVENT, ENABLED, WEIGHT = 0.5) {
   
   widget(icon, {

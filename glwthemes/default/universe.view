@@ -42,10 +42,25 @@ widget(container_z, {
 	  effect: blend;
 	  noInitialTransform: true;
     
-	  cloner($global.nav.pages, loader, {
-	    time: 0.2;
-	    noInitialTransform: true;
-	    source: "pages/" + $page.model.type + ".view";
+	  cloner($global.nav.pages, layer, {
+
+	    $clone.pageMenu = 0;
+	    // Page menu event routing
+	    onEvent(menu,   { $clone.pageMenu = !$clone.pageMenu; }, !$clone.itemMenu);
+	    onEvent(back,   { $clone.pageMenu = false; }, $clone.pageMenu);
+	    onEvent(cancel, { $clone.pageMenu = false; }, $clone.pageMenu);
+
+	    widget(loader, {
+	      time: 0.2;
+	      noInitialTransform: true;
+	      source: "pages/" + $page.model.type + ".view";
+	    });
+
+	    widget(loader, {
+	      hidden: !$clone.pageMenu;
+	      noInitialTransform: true;
+	      source: $clone.menu ?? "theme://cmdmenu/cmdmenu_dir.view";
+	    });
 	  });
 	});
 

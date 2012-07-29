@@ -15,13 +15,10 @@
 }
 
 
-$ui.showplaydeck = $view.menu || changed($self.media.seektime, 5);
 
-onEvent(menu, { $view.menu = !$view.menu; });
+$ui.showplaydeck = $clone.pageMenu || changed($self.media.seektime, 5);
 
-onEvent(back,   { $view.menu = false; }, $view.menu);
-onEvent(cancel, { $view.menu = false; }, $view.menu);
-
+$clone.menu = "theme://cmdmenu/cmdmenu_video.view";
 
 $self.directClose = 1;
 
@@ -134,12 +131,6 @@ widget(container_z, {
 	  });
 	});
       });
-
-    });
-    widget(loader, {
-      hidden: !$view.menu;
-      noInitialTransform: true;
-      source: "theme://cmdmenu/cmdmenu_video.view";
     });
   });
 

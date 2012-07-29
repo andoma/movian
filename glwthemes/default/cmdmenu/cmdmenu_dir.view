@@ -26,55 +26,6 @@ commandMenuChrome(
     hidden: !$self.enabled;
   });
 
-/*  
-  SEP(_("Playback"));
-      
-  widget(container_x, {
-    spacing: $ui.size / 2;
-    BUTTON("SeekBack", event(SeekReverse), $global.media.current.canSeek);
-    widget(deck, {
-      effect: flipHorizontal;
-      noInitialTransform: true;
-      time: 0.2;
-      
-      BUTTON("Play", event(Play), true);
-      BUTTON("Pause", event(Pause), true);
-      page: $global.media.current.playstatus == "play";
-    });
-    
-    BUTTON("SeekFwd", event(SeekForward), $global.media.current.canSeek);
-  });
-  
-  ITEMTOGGLE2(_("Repeat"),
-	      $global.media.current.repeat,
-	      $global.media.current.canRepeat);
-  
-  ITEMTOGGLE2(_("Shuffle"),
-	      $global.media.current.shuffle,
-	      $global.media.current.canShuffle);
-  
-*/
-
-  SEP(_("Navigation"));
-
-  ITEM(_("Playqueue"), {
-    $clone.pageMenu = false;
-    fireEvent(navOpen("playqueue:"));
-  });
-
-  ITEM(_("Go to Home screen"), {
-    $clone.pageMenu = false;
-    fireEvent(navOpen("page:home"));
-  });
-
-  ITEM(_("Open Settings"), {
-    $clone.pageMenu = false;
-    fireEvent(navOpen("settings:"));
-  });
-  
-  ITEM(_("Reload current page"), {
-    $clone.pageMenu = false;
-    fireEvent(event(ReloadData));
-  });
+  CommandMenuCommon();
 )
 

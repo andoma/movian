@@ -1,11 +1,5 @@
 
 
-// Page menu event routing
-onEvent(menu,   { $clone.pageMenu = !$clone.pageMenu; }, !$clone.itemMenu);
-onEvent(back,   { $clone.pageMenu = false; }, $clone.pageMenu);
-onEvent(cancel, { $clone.pageMenu = false; }, $clone.pageMenu);
-
-
 // Item menu event routing
 onEvent(itemMenu, { $clone.itemMenu = !$clone.itemMenu; }, !$clone.pageMenu);
 onEvent(back,     { $clone.itemMenu = false; }, $clone.itemMenu);
@@ -34,12 +28,6 @@ widget(layer, {
     effect: blend;
     time: 0.2;
     source: $view.path;
-  });
-
-  widget(loader, {
-    hidden: !$clone.pageMenu;
-    noInitialTransform: true;
-    source: "theme://cmdmenu/cmdmenu_dir.view";
   });
 
   widget(loader, {
