@@ -1100,7 +1100,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	  x == TAILQ_FIRST(&p->glw_childs) && 
 	  TAILQ_NEXT(x, glw_parent_link) == p->glw_focused;
 
-	if(y == NULL || how != GLW_FOCUS_SET_AUTOMATIC ||
+	if(y == NULL || how == GLW_FOCUS_SET_INTERACTIVE ||
 	   weight > y->glw_focus_weight || 
 	   (ff && weight == y->glw_focus_weight)) {
 	  x->glw_parent->glw_focused = x;
