@@ -112,7 +112,8 @@ static const keymap_defmap_t default_keymap[] = {
   { ACTION_SHOW_MEDIA_STATS,       "F2"},
   { ACTION_SYSINFO,                "F3"},
   { ACTION_LOGWINDOW,              "F4"},
-
+  { ACTION_ENABLE_SCREENSAVER,     "Shift+F4"},
+  
   { ACTION_QUIT,                   "Alt+F4"},
 
   { ACTION_STANDBY,                "Sleep"},

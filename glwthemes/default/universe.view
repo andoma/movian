@@ -26,6 +26,12 @@ widget(container_z, {
     space(1);
   });
 
+  widget(loader, {
+    time: 0.3;
+    effect: blend;
+    source: select($ui.screensaverActive, "theme://screensaver.view", "");
+  });
+
   widget(underscan, {
     widget(container_z, {
       widget(layer, {

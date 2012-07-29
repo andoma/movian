@@ -1,0 +1,22 @@
+widget(container_z, {
+  widget(freefloat, {
+    cloner($global.media.current.metadata.artist_images, image, {
+      source: $self.url;
+      alphaEdges: 3;
+    });
+  });
+  
+  
+  widget(displacement, {
+    translation: [0, sinewave(10) * 0.3, 0];
+    widget(label, {
+      hidden: select($global.media.current.type, true, false);
+      caption: _("No media loaded");
+      align: center;
+      sizeScale: 3;
+      font: $ui.font;
+      shadow: true;
+      outline: true;
+    });
+  });
+});
