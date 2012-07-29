@@ -180,7 +180,7 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
 		    const char *valuename, int flags)
 {
   setting_t *s = calloc(1, sizeof(setting_t));
-  s->s_root = setting_add(parent, title, type, flags);
+  s->s_root = prop_ref_inc(setting_add(parent, title, type, flags));
   s->s_val = prop_ref_inc(prop_create(s->s_root, valuename));
   return s;
 }
@@ -607,6 +607,7 @@ setting_destroy(setting_t *s)
   prop_unsubscribe(s->s_sub);
   prop_destroy(s->s_root);
   prop_ref_dec(s->s_val);
+  prop_ref_dec(s->s_root);
   free(s);
 }
 
