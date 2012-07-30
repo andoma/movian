@@ -390,6 +390,7 @@ prop_notify_free(prop_notify_t *n)
 
   case PROP_EXT_EVENT:
     event_release(n->hpn_ext_event);
+    prop_ref_dec(n->hpn_prop2);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -687,10 +688,11 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     case PROP_EXT_EVENT:
       if(pt != NULL)
-	pt(s, n->hpn_event, n->hpn_ext_event);
+	pt(s, n->hpn_event, n->hpn_ext_event, n->hpn_prop2);
       else
-	cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event);
+	cb(s->hps_opaque, n->hpn_event, n->hpn_ext_event, n->hpn_prop2);
       event_release(n->hpn_ext_event);
+      prop_ref_dec(n->hpn_prop2);
       break;
 
     case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -1244,6 +1246,7 @@ prop_send_ext_event0(prop_t *p, event_t *e)
     n = get_notify(s);
 
     n->hpn_event = PROP_EXT_EVENT;
+    n->hpn_prop2 = prop_ref_inc(p);
     atomic_add(&e->e_refcount, 1);
     n->hpn_ext_event = e;
     courier_enqueue(s, n);

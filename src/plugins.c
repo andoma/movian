@@ -225,6 +225,7 @@ plugin_event(void *opaque, prop_event_t event, ...)
   va_list ap;
   prop_sub_t *s;
   event_t *e;
+  prop_t *p;
 
   va_start(ap, event);
 
@@ -240,10 +241,14 @@ plugin_event(void *opaque, prop_event_t event, ...)
 
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
+    p = va_arg(ap, prop_t *);
 
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
-      if(!strcmp(e->e_payload, "install"))
-	plugin_install(pl, NULL);
+      if(!strcmp(e->e_payload, "install")) {
+	rstr_t *package = prop_get_string(p, "package", NULL);
+	plugin_install(pl, rstr_get(package));
+	rstr_release(package);
+      }
       else if(!strcmp(e->e_payload, "upgrade"))
 	plugin_install(pl, NULL);
       else if(!strcmp(e->e_payload, "uninstall"))
@@ -357,9 +362,11 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
     hts_mutex_lock(&plugin_mutex);
     plugin_t *pl = plugin_find(id);
 
-    snprintf(path, sizeof(path), "zip://%s", zipfile);
 
+    snprintf(path, sizeof(path), "zip://%s", zipfile);
     plugin_fill_prop0(pm, prop, path, 0, pl);
+    prop_set(prop, "package", NULL, PROP_SET_STRING, zipfile);
+    update_state(pl);
     hts_mutex_unlock(&plugin_mutex);
   }
   htsmsg_destroy(pm);
