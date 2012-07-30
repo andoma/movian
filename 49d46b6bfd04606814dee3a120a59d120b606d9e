@@ -1,0 +1,2 @@
+Decode embedded vobsub (dvbsub) using Showtime's own DVDSPU decoder
+Fixes #972
