@@ -1,0 +1,2 @@
+Make the goto frame popup be focused at current segment when opened
+Fixes #635
