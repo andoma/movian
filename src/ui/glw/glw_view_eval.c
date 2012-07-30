@@ -4921,6 +4921,7 @@ typedef struct glwf_multiopt_extra {
 
   prop_t *settings;
   prop_t *opts;
+  prop_t *title;
 
   prop_t *value;
   multiopt_item_t *cur;
@@ -5033,6 +5034,7 @@ glwf_multiopt_dtor(glw_root_t *gr, struct token *self)
 
   prop_ref_dec(x->settings);
   prop_ref_dec(x->opts);
+  prop_ref_dec(x->title);
   prop_destroy(x->value);
   prop_unsubscribe(x->sub);
   free(x);
@@ -5046,18 +5048,21 @@ static int
 glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
-  token_t *dst, *setting;
+  token_t *dst, *setting, *title;
   glwf_multiopt_extra_t *x = self->t_extra;
   int i;
   multiopt_item_t *mi, *n;
   prop_t *p;
 
-  if(argc < 2)
+  if(argc < 3)
     return glw_view_seterr(ec->ei, self, 
 			   "multiopt(): Invalid number of args");
   if((dst     = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
   if((setting = resolve_property_name2(ec, argv[1])) == NULL)
+    return -1;
+
+  if((title = token_resolve(ec, argv[2])) == NULL)
     return -1;
 
   p = setting->t_prop;
@@ -5075,8 +5080,10 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       prop_destroy_childs(x->settings);
       prop_ref_dec(x->settings);
       prop_ref_dec(x->opts);
+      prop_ref_dec(x->title);
       x->settings = NULL;
       x->opts = NULL;
+      x->title = NULL;
     }
 
     prop_unsubscribe(x->sub);
@@ -5086,8 +5093,8 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 
     if(p != NULL) {
 
-      prop_set_string(prop_create(prop_create(p, "metadata"), "title"), "view");
-      prop_set_string(prop_create(p, "type"), "multiopt");
+      x->title = prop_create_r(prop_create(p, "metadata"), "title");
+      prop_set(p, "type", NULL, PROP_SET_STRING, "multiopt");
       
       x->opts = prop_create_r(p, "options");
 
@@ -5099,11 +5106,14 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
     }
   }
 
+  if(title->type == TOKEN_RSTRING)
+    prop_set_rstring(x->title, title->t_rstring);
+
   TAILQ_FOREACH(mi, &x->q, mi_link)
     mi->mi_mark = 1;
 
-  argv += 2;
-  argc -= 2;
+  argv += 3;
+  argc -= 3;
 
 
   for(i = 0; i < argc; i++) {

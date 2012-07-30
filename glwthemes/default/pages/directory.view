@@ -10,16 +10,18 @@ onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 
 multiopt($view.path,
 	 $clone.settings,
+	 _("View"),
 
 	 // List of view follows
-	 $page.model.glw.view,
+	 link(_("Custom"), $page.model.metadata.glwview),
+
 	 translate($page.model.contents, void,
-		   "album", link("Album", "album.view"),
-		   "images", link("Images", "images.view")
+		   "album", link(_("Album"), "album.view"),
+		   "images", link(_("Images"), "images.view")
 		    ),
 	 select($page.model.contents == "images", 
-		link("Slideshow", "slideshow.view"), void),
-	 link("List", "list.view"));
+		link(_("Slideshow"), "slideshow.view"), void),
+	 link(_("List"), "list.view"));
 
 widget(layer, {
 
