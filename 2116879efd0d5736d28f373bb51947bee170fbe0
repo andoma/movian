@@ -1,0 +1,2 @@
+Retry login if opensubtitles query fails with a server side error
+Fixes #970
