@@ -1,6 +1,0 @@
-#import "theme://directoryviews/list3/common.view"
-
-ITEM($self.metadata.icon ?? "theme://svg/List.svg",
-     $self.metadata.title,
-     navOpen($self.url),
-     fmt(_("%d tracks"), $self.metadata.tracks));

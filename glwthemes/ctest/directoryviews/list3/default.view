@@ -1,9 +1,0 @@
-#import "theme://directoryviews/list3/common.view"
-
-ITEM($self.metadata.icon ?? "theme://svg/Folder.svg",
-     select($self.metadata.year,
-	    $self.metadata.title + ' <font size="2">' + 
-	    fmt("(%d)", $self.metadata.year),
-	    $self.metadata.title),
-     navOpen($self.url),
-    $self.type);

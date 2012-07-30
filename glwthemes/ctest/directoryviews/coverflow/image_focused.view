@@ -1,4 +1,0 @@
-widget(image, {
-  .source = $self.focused.url;
-  .alpha = iir(isReady(), 6);
-});
