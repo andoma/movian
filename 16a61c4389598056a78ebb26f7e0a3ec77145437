@@ -1,0 +1,2 @@
+Fix duplicate entries of external subs when in continuous playback mode
+Fixes #999
