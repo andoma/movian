@@ -3619,7 +3619,7 @@ prop_courier_poll(prop_courier_t *pc)
 rstr_t *
 prop_get_string(prop_t *p, ...)
 {
-  rstr_t *r;
+  rstr_t *r = NULL;
   char buf[64];
   va_list ap;
 
@@ -3628,28 +3628,29 @@ prop_get_string(prop_t *p, ...)
   hts_mutex_lock(&prop_mutex);
 
   p = prop_find0(p, ap);
- 
-  switch(p->hp_type) {
-  case PROP_RSTRING:
-    r = rstr_dup(p->hp_rstring);
-    break;
-  case PROP_CSTRING:
-    r = rstr_alloc(p->hp_cstring);
-    break;
-  case PROP_LINK:
-    r = rstr_dup(p->hp_link_rtitle);
-    break;
-  case PROP_FLOAT:
-    snprintf(buf, sizeof(buf), "%f", p->hp_float);
-    r = rstr_alloc(buf);
-    break;
-  case PROP_INT:
-    snprintf(buf, sizeof(buf), "%d", p->hp_int);
-    r = rstr_alloc(buf);
-    break;
- default:
-   r = NULL;
-   break;
+
+  if(p != NULL) {
+    switch(p->hp_type) {
+    case PROP_RSTRING:
+      r = rstr_dup(p->hp_rstring);
+      break;
+    case PROP_CSTRING:
+      r = rstr_alloc(p->hp_cstring);
+      break;
+    case PROP_LINK:
+      r = rstr_dup(p->hp_link_rtitle);
+      break;
+    case PROP_FLOAT:
+      snprintf(buf, sizeof(buf), "%f", p->hp_float);
+      r = rstr_alloc(buf);
+      break;
+    case PROP_INT:
+      snprintf(buf, sizeof(buf), "%d", p->hp_int);
+      r = rstr_alloc(buf);
+      break;
+    default:
+      break;
+    }
   }
   hts_mutex_unlock(&prop_mutex);
   va_end(ap);
