@@ -1130,10 +1130,10 @@ player_thread(void *aux)
       continue;
     }
 
-    if(event_is_action(e, ACTION_PREV_TRACK)) {
+    if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
       pqe = playqueue_advance(pqe, 1);
 
-    } else if(event_is_action(e, ACTION_NEXT_TRACK) ||
+    } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_type  (e, EVENT_EOF)) {
       mp_end(mp);
 

@@ -4216,14 +4216,14 @@ be_spotify_play(const char *url, media_pipe_t *mp,
     }
 
 
-    if(event_is_action(e, ACTION_PREV_TRACK)) {
+    if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       if(mp->mp_current_time < 1500000)
 	goto skip;
 
       spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, 0));
 
-    } else if(event_is_action(e, ACTION_NEXT_TRACK) ||
+    } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
        event_is_action(e, ACTION_STOP) ||
        event_is_type  (e, EVENT_PLAYQUEUE_JUMP)) {
     skip:      

@@ -67,10 +67,12 @@ typedef enum {
   ACTION_EJECT,
   ACTION_RECORD,
 
-  ACTION_PREV_TRACK,
-  ACTION_NEXT_TRACK,
+  ACTION_SKIP_FORWARD,
+  ACTION_SKIP_BACKWARD,
+
   ACTION_SEEK_FORWARD,
   ACTION_SEEK_BACKWARD,
+
   ACTION_SEEK_FAST_FORWARD,
   ACTION_SEEK_FAST_BACKWARD,
 
@@ -80,7 +82,6 @@ typedef enum {
 
   ACTION_MENU,
   ACTION_ITEMMENU,
-  ACTION_SYSINFO,
   ACTION_LOGWINDOW,
   ACTION_SELECT,
   ACTION_SHOW_MEDIA_STATS,
@@ -302,5 +303,7 @@ int action_update_hold_by_event(int hold, event_t *e);
 int event_is_action(event_t *e, action_type_t at);
 
 void event_dispatch(event_t *e);
+
+event_t *event_from_Fkey(unsigned int keynum, unsigned int mod);
 
 #endif /* EVENT_H */

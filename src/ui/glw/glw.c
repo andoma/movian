@@ -1788,8 +1788,8 @@ glw_dispatch_event(uii_t *uii, event_t *e)
        event_is_action(e, ACTION_PAUSE) ||
        event_is_action(e, ACTION_STOP) ||
        event_is_action(e, ACTION_EJECT) ||
-       event_is_action(e, ACTION_PREV_TRACK) ||
-       event_is_action(e, ACTION_NEXT_TRACK) ||
+       event_is_action(e, ACTION_SKIP_BACKWARD) ||
+       event_is_action(e, ACTION_SKIP_FORWARD) ||
        event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
        event_is_action(e, ACTION_SHUFFLE) ||
        event_is_action(e, ACTION_REPEAT) ||

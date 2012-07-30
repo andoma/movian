@@ -709,7 +709,7 @@ window_change_fullscreen(glw_x11_t *gx11)
 
 
 /**
- *
+ * The defs are found in /usr/include/X11/keysymdef.h
  */
 static const struct {
   int XK;
@@ -725,6 +725,41 @@ static const struct {
   { XK_Down,         0,           ACTION_DOWN },
 
   { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
+
+  { XK_Left,         Mod1Mask,    ACTION_NAV_BACK},
+  { XK_Right,        Mod1Mask,    ACTION_NAV_FWD},
+
+  { XK_Left,         ShiftMask,   ACTION_SEEK_BACKWARD},
+  { XK_Right,        ShiftMask,   ACTION_SEEK_FORWARD},
+
+  { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
+  { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
+  
+  { XK_Prior,        0,            ACTION_PAGE_UP},
+  { XK_Next,         0,            ACTION_PAGE_DOWN},
+
+  { XK_Home,         0,           ACTION_TOP},
+  { XK_End,          0,           ACTION_BOTTOM},
+
+  { XK_plus,         ControlMask, ACTION_ZOOM_UI_INCR},
+  { XK_minus,        ControlMask, ACTION_ZOOM_UI_DECR},
+
+  { XK_F4,           Mod1Mask,    ACTION_QUIT},
+
+  { XF86XK_AudioPause,    0,    ACTION_PLAYPAUSE},
+  { XF86XK_AudioPlay,     0,    ACTION_PLAY},
+  { XF86XK_AudioStop,     0,    ACTION_STOP},
+  { XF86XK_Eject,         0,    ACTION_EJECT},
+  { XF86XK_AudioRecord,   0,    ACTION_RECORD},
+
+  { XF86XK_AudioNext,     0,    ACTION_SKIP_FORWARD},
+  { XF86XK_AudioPrev,     0,    ACTION_SKIP_BACKWARD},
+
+  { XF86XK_AudioLowerVolume, 0, ACTION_VOLUME_DOWN },
+  { XF86XK_AudioRaiseVolume, 0, ACTION_VOLUME_UP },
+  { XF86XK_AudioMute,        0, ACTION_VOLUME_MUTE_TOGGLE },
+
+  { XF86XK_Standby,          0, ACTION_STANDBY},
 };
 
 
@@ -827,6 +862,10 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     }
   }
 
+  if(e == NULL && keysym >= XK_F1 && keysym <= XK_F12)
+    e = event_from_Fkey(keysym - XK_F1 + 1,
+			event->xkey.state & ShiftMask ? 1 : 0);
+
   if(e == NULL
      && keysym != XK_Shift_L   && keysym != XK_Shift_R
      && keysym != XK_Control_L && keysym != XK_Control_R 
@@ -837,16 +876,9 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     /* Construct a string representing the key */
     if(keysym != NoSymbol) {
       const char *sym = XKeysymToString(keysym);
-      const char *prefix = "";
-      if(!strncmp(sym, "XF86Audio", 9)) {
-	sym += 9;
-	prefix = "Media";
-      } else if(!strncmp(sym, "XF86", 4))
-	sym += 4;
 
       snprintf(buf, sizeof(buf),
-	       "%s%s%s%s%s",
-	       prefix,
+	       "%s%s%s%s",
 	       event->xkey.state & ShiftMask   ? "Shift+" : "",
 	       event->xkey.state & Mod1Mask    ? "Alt+"   : "",
 	       event->xkey.state & ControlMask ? "Ctrl+"  : "",

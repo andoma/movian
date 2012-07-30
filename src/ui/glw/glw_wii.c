@@ -94,9 +94,9 @@ static const struct {
 
   { KS_f1,                   0,   ACTION_MENU },
 
-  { KS_F1,                   MOD_ANYSHIFT,   ACTION_PREV_TRACK },
+  { KS_F1,                   MOD_ANYSHIFT,   ACTION_SKIP_BACKWARD },
   { KS_F2,                   MOD_ANYSHIFT,   ACTION_PLAYPAUSE },
-  { KS_F3,                   MOD_ANYSHIFT,   ACTION_NEXT_TRACK },
+  { KS_F3,                   MOD_ANYSHIFT,   ACTION_SKIP_FORWARD },
   { KS_F4,                   MOD_ANYSHIFT,   ACTION_STOP },
 
   { KS_F5,                   MOD_ANYSHIFT,   ACTION_VOLUME_DOWN },

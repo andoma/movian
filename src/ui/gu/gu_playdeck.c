@@ -68,7 +68,7 @@ typedef struct playdeck {
 static void
 prev_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  event_dispatch(event_create_action(ACTION_PREV_TRACK));
+  event_dispatch(event_create_action(ACTION_SKIP_BACKWARD));
 }
 
 
@@ -78,7 +78,7 @@ prev_clicked(GtkToolButton *toolbutton, gpointer user_data)
 static void
 next_clicked(GtkToolButton *toolbutton, gpointer user_data)
 {
-  event_dispatch(event_create_action(ACTION_NEXT_TRACK));
+  event_dispatch(event_create_action(ACTION_SKIP_FORWARD));
 }
 
 

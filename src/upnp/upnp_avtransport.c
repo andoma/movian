@@ -144,7 +144,7 @@ static htsmsg_t *
 avt_Next(http_connection_t *hc, htsmsg_t *args,
 	 const char *myhost, int myport)
 {
-  event_dispatch(event_create_action(ACTION_NEXT_TRACK));
+  event_dispatch(event_create_action(ACTION_SKIP_FORWARD));
   return NULL;
 }
 
@@ -155,7 +155,7 @@ static htsmsg_t *
 avt_Previous(http_connection_t *hc, htsmsg_t *args,
 	     const char *myhost, int myport)
 {
-  event_dispatch(event_create_action(ACTION_PREV_TRACK));
+  event_dispatch(event_create_action(ACTION_SKIP_BACKWARD));
   return NULL;
 }
 

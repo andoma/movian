@@ -123,8 +123,8 @@ static struct strtab actionnames[] = {
   { "Eject",                 ACTION_EJECT },
   { "Record",                ACTION_RECORD },
 
-  { "PreviousTrack",         ACTION_PREV_TRACK },
-  { "NextTrack",             ACTION_NEXT_TRACK },
+  { "PreviousTrack",         ACTION_SKIP_BACKWARD },
+  { "NextTrack",             ACTION_SKIP_FORWARD },
   { "SeekForward",           ACTION_SEEK_FORWARD },
   { "SeekReverse",           ACTION_SEEK_BACKWARD },
   { "SeekFastForward",       ACTION_SEEK_FAST_FORWARD },
@@ -136,7 +136,6 @@ static struct strtab actionnames[] = {
 
   { "Menu",                  ACTION_MENU },
   { "ItemMenu",              ACTION_ITEMMENU },
-  { "Sysinfo",               ACTION_SYSINFO },
   { "LogWindow",             ACTION_LOGWINDOW },
   { "Select",                ACTION_SELECT },
   { "MediaStats",            ACTION_SHOW_MEDIA_STATS },
@@ -495,8 +494,8 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PAUSE) ||
 	    event_is_action(e, ACTION_STOP) ||
 	    event_is_action(e, ACTION_EJECT) ||
-	    event_is_action(e, ACTION_PREV_TRACK) ||
-	    event_is_action(e, ACTION_NEXT_TRACK) ||
+	    event_is_action(e, ACTION_SKIP_BACKWARD) ||
+	    event_is_action(e, ACTION_SKIP_FORWARD) ||
 	    event_is_action(e, ACTION_SHOW_MEDIA_STATS) ||
 	    event_is_action(e, ACTION_SHUFFLE) ||
 	    event_is_action(e, ACTION_REPEAT) ||
@@ -519,3 +518,36 @@ event_dispatch(event_t *e)
   event_release(e);
 }
 
+
+/**
+ *
+ */
+const static int action_from_fkey[13][2] = {
+  { 0, 0 },
+  { ACTION_MENU,             0 },
+  { ACTION_SHOW_MEDIA_STATS, 0 },
+  { ACTION_ITEMMENU,         0 },
+  { ACTION_LOGWINDOW,        ACTION_ENABLE_SCREENSAVER },
+
+  { ACTION_RELOAD_UI,        ACTION_RELOAD_DATA },
+  { 0, 0 },
+  { 0, 0 },
+  { 0, 0 },
+
+  { ACTION_SWITCH_VIEW,      0 },
+  { 0, 0 },
+  { ACTION_FULLSCREEN_TOGGLE,      0 },
+  { 0, 0 },
+};
+
+
+event_t *
+event_from_Fkey(unsigned int keynum, unsigned int mod)
+{
+  if(keynum < 1 || keynum > 12 || mod > 1)
+    return NULL;
+  int a = action_from_fkey[keynum][mod];
+  if(a == 0)
+    return NULL;
+  return event_create_action(a);
+}

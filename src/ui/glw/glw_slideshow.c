@@ -153,7 +153,7 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
 {
   glw_t *c;
 
-  if(event_is_action(e, ACTION_NEXT_TRACK)) {
+  if(event_is_action(e, ACTION_SKIP_FORWARD)) {
 
     c = s->w.glw_focused ? glw_next_widget(s->w.glw_focused) : NULL;
     if(c == NULL)
@@ -161,7 +161,7 @@ glw_slideshow_event(glw_slideshow_t *s, event_t *e)
     s->w.glw_focused = c;
     s->timer = 0;
 
-  } else if(event_is_action(e, ACTION_PREV_TRACK)) {
+  } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
     c = s->w.glw_focused ? glw_prev_widget(s->w.glw_focused) : NULL;
     if(c == NULL)

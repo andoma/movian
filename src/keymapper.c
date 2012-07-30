@@ -71,56 +71,6 @@ typedef struct keymap {
 static keymap_t *global_km;
 
 
-static const keymap_defmap_t default_keymap[] = { 
-
-
-  { ACTION_PAGE_UP,                "Prior"},
-  { ACTION_PAGE_DOWN,              "Next"},
-
-  { ACTION_TOP,                    "Home"},
-  { ACTION_BOTTOM,                 "End"},
-
-  { ACTION_NAV_BACK,               "Alt+Left"},
-  { ACTION_NAV_FWD,                "Alt+Right"},
-
-  { ACTION_SEEK_BACKWARD,          "Ctrl+Left"},
-  { ACTION_SEEK_FORWARD,           "Ctrl+Right"},
-
-  { ACTION_PREV_TRACK,             "Shift+Ctrl+Left"},
-  { ACTION_NEXT_TRACK,             "Shift+Ctrl+Right"},
-
-  { ACTION_ZOOM_UI_INCR,           "Ctrl+plus"},
-  { ACTION_ZOOM_UI_DECR,           "Ctrl+minus"},
-
-  { ACTION_RELOAD_UI,              "F5"},
-  { ACTION_RELOAD_DATA,            "Shift+F5"},
-  { ACTION_FULLSCREEN_TOGGLE,      "F11"},
-  { ACTION_SWITCH_VIEW,            "F9"},
-
-  { ACTION_PLAYPAUSE,              "MediaPlayPause"},
-  { ACTION_PLAY,                   "MediaPlay"},
-  { ACTION_PAUSE,                  "MediaPause"},
-  { ACTION_STOP,                   "MediaStop"},
-  { ACTION_EJECT,                  "MediaEject"},
-  { ACTION_RECORD,                 "MediaRecord"},
-
-  { ACTION_VOLUME_DOWN,            "MediaLowerVolume"},
-  { ACTION_VOLUME_UP,              "MediaRaiseVolume"},
-  { ACTION_VOLUME_MUTE_TOGGLE,     "MediaMute"},
-
-  { ACTION_MENU,                   "F1"},
-  { ACTION_SHOW_MEDIA_STATS,       "F2"},
-  { ACTION_SYSINFO,                "F3"},
-  { ACTION_LOGWINDOW,              "F4"},
-  { ACTION_ENABLE_SCREENSAVER,     "Shift+F4"},
-  
-  { ACTION_QUIT,                   "Alt+F4"},
-
-  { ACTION_STANDBY,                "Sleep"},
-
-  { ACTION_NONE, NULL}, 
-}; 
-
 static hts_mutex_t km_mutex;
 
 
@@ -150,7 +100,7 @@ km_save(keymap_t *km)
     htsmsg_add_msg(m, e, l);
   }
 
-  htsmsg_store_save(m, "keymaps/%s", km->km_name);
+  htsmsg_store_save(m, "keymaps2/%s", km->km_name);
   htsmsg_destroy(m);
 }
 
@@ -265,15 +215,14 @@ keymapper_entry_add(keymap_t *km, const char *kc1, const char *kc2,
  *
  */
 static void
-keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
+keymapper_create_entries(keymap_t *km)
 {
   action_type_t e;
   htsmsg_t *m;
   const char *eventname;
   const char *kc1, *kc2;
-  int i;
 
-  m = htsmsg_store_load("keymaps/%s", km->km_name);
+  m = htsmsg_store_load("keymaps2/%s", km->km_name);
   for(e = ACTION_mappable_begin + 1; e < ACTION_mappable_end; e++) {
     if((eventname = action_code2str(e)) == NULL) {
       fprintf(stderr, "Action %d (0x%x) lacks string representation\n",
@@ -297,12 +246,6 @@ keymapper_create_entries(keymap_t *km, const keymap_defmap_t *def)
 	if(f && f->hmf_type == HMF_STR)
 	  kc2 = f->hmf_str;
       }
-    } else if(def != NULL) {
-      for(i = 0; def[i].kd_keycode != NULL; i++)
-	if(def[i].kd_action == e) {
-	  kc1 = def[i].kd_keycode;
-	  break;
-	}
     }
     keymapper_entry_add(km, kc1, kc2, eventname, e);
   }
@@ -357,8 +300,7 @@ keymapper_resolve(const char *str)
  *
  */
 static keymap_t *
-keymapper_create(prop_t *settingsparent, const char *name, prop_t *title,
-		 const keymap_defmap_t *def)
+keymapper_create(prop_t *settingsparent, const char *name, prop_t *title)
 {
   keymap_t *km;
   prop_t *desc = _p("Configure mapping of keyboard and remote controller keys");
@@ -371,7 +313,7 @@ keymapper_create(prop_t *settingsparent, const char *name, prop_t *title,
     settings_add_dir(settingsparent, title,
 		     "keymap", NULL, desc, "settings:keymapper");
 
-  keymapper_create_entries(km, def);
+  keymapper_create_entries(km);
   return km;
 }
 
@@ -383,5 +325,5 @@ void
 keymapper_init(void)
 {
   hts_mutex_init(&km_mutex);
-  global_km = keymapper_create(NULL, "global", _p("Keymapper"), default_keymap);
+  global_km = keymapper_create(NULL, "global", _p("Keymapper"));
 }

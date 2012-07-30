@@ -104,8 +104,8 @@ static const struct {
   { NSLeftArrowFunctionKey,   NSCommandKeyMask, ACTION_SEEK_BACKWARD }, 
   { NSRightArrowFunctionKey,  NSCommandKeyMask, ACTION_SEEK_FORWARD }, 
   
-  { NSLeftArrowFunctionKey,   NSShiftKeyMask|NSCommandKeyMask, ACTION_PREV_TRACK }, 
-  { NSRightArrowFunctionKey,  NSShiftKeyMask|NSCommandKeyMask, ACTION_NEXT_TRACK }, 
+  { NSLeftArrowFunctionKey,   NSShiftKeyMask|NSCommandKeyMask, ACTION_SKIP_BACKWARD }, 
+  { NSRightArrowFunctionKey,  NSShiftKeyMask|NSCommandKeyMask, ACTION_SKIP_FORWARD }, 
   
   /* only used for fullscreen, in windowed mode we dont get events with
    * NSCommandKeyMask set */
@@ -126,8 +126,8 @@ static const struct {
    { XF86XK_Forward,          0,   ACTION_NAV_FWD },
    { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
    { XF86XK_AudioStop,        0,   ACTION_STOP },
-   { XF86XK_AudioPrev,        0,   ACTION_PREV_TRACK },
-   { XF86XK_AudioNext,        0,   ACTION_NEXT_TRACK },
+   { XF86XK_AudioPrev,        0,   ACTION_SKIP_BACKWARD },
+   { XF86XK_AudioNext,        0,   ACTION_SKIP_FORWARD },
    { XF86XK_Eject,            0,   ACTION_EJECT },
    { XF86XK_AudioMedia,       0,   ACTION_HOME },
    { XK_Menu,                 0,   ACTION_HOME },
@@ -139,9 +139,9 @@ static const struct {
   { NSF4FunctionKey,         0,   ACTION_ENABLE_SCREENSAVER },
   { NSF9FunctionKey,         0,   ACTION_SWITCH_VIEW },
   
-  { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_PREV_TRACK },
+  { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_SKIP_BACKWARD },
   { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
-  { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_NEXT_TRACK },
+  { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_SKIP_FORWARD },
   { NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
   
   { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },

@@ -1534,12 +1534,12 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
       htsmsg_destroy(m);
 
     } else if(event_is_action(e, ACTION_PREV_CHANNEL) ||
-	      event_is_action(e, ACTION_PREV_TRACK)) {
+	      event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, -1, &name);
 
     } else if(event_is_action(e, ACTION_NEXT_CHANNEL) ||
-	      event_is_action(e, ACTION_NEXT_TRACK)) {
+	      event_is_action(e, ACTION_SKIP_FORWARD)) {
 
       chid = zap_channel(hc, hs, chid, errbuf, errlen, tag, 1, &name);
 

@@ -913,12 +913,12 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
 
     dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, e->e_payload[0]);
 
-  } else if(event_is_action(e, ACTION_PREV_TRACK)) {
+  } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
     dvdnav_prev_pg_search(dp->dp_dvdnav);
     mp_flush(mp, 1);
 
-  } else if(event_is_action(e, ACTION_NEXT_TRACK)) {
+  } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
 
     dvdnav_next_pg_search(dp->dp_dvdnav);
     mp_flush(mp, 1);
