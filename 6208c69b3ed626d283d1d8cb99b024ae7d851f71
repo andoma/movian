@@ -1,0 +1,2 @@
+Fix incorrect handling of alpha values in SSA
+Fixes #983
