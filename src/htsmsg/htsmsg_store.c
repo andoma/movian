@@ -201,6 +201,10 @@ htsmsg_store_init(void)
 
   showtime_settings_path = strdup(p1);
 
+  // This file should not exist (it should be a directory)
+  snprintf(p2, sizeof(p2), "%s/%s", showtime_settings_path, "plugins");
+  unlink(p2);
+
   if(!mkdir(p1, 0700)) {
     DIR *dir;
     struct dirent *d;

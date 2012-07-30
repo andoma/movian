@@ -666,7 +666,7 @@ plugins_setup_root_props(void)
   prop_t *d, *p;
   htsmsg_t *store;
 
-  if((store = htsmsg_store_load("plugins")) == NULL)
+  if((store = htsmsg_store_load("pluginconf")) == NULL)
     store = htsmsg_create_map();
 
   plugin_root_installed = prop_create_root(NULL);
@@ -694,7 +694,7 @@ plugins_setup_root_props(void)
 		       1, store, set_autoupgrade, NULL,
 		       SETTINGS_RAW_NODES | SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
-		       (void *)"plugins");
+		       (void *)"pluginconf");
 
 
   prop_concat_add_source(pc, sta, NULL);
