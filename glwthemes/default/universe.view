@@ -14,7 +14,9 @@ onEvent(back, {
 widget(container_z, {
 
   widget(backdrop, {
-    source: "graphics/background.jpg";
+    source: $global.nav.currentpage.model.metadata.background ?? 
+	  $global.nav.currentpage.glw.background ??
+	  "graphics/background.jpg";
     color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
   });
 
