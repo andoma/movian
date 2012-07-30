@@ -189,15 +189,18 @@ update_state(plugin_t *pl)
     canUninstall = 1;
   } else {
     canUninstall = 1;
-    pl->pl_new_version_avail = 1;
 
-    if(!version_dep_ok) {
-      status = _("Not upgradable");
-      prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
-      cantUpgrade = 1;
-    } else {
-      status = _("Upgradable");
-      canUpgrade = 1;
+    if(pl->pl_repo_ver != NULL) {
+      pl->pl_new_version_avail = 1;
+
+      if(!version_dep_ok) {
+	status = _("Not upgradable");
+	prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
+	cantUpgrade = 1;
+      } else {
+	status = _("Upgradable");
+	canUpgrade = 1;
+      }
     }
   }
 
@@ -834,6 +837,11 @@ plugin_install(plugin_t *pl, const char *package)
 
   if(package == NULL)
     package = pl->pl_package;
+
+  if(package == NULL) {
+    prop_set_string(pl->pl_statustxt, "No package file specified");
+    return -1;
+  }
 
   TRACE(TRACE_INFO, "plugins", "Downloading plugin %s from %s",
 	pl->pl_id, package);
