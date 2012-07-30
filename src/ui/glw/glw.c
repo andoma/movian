@@ -1331,8 +1331,8 @@ glw_focus_crawl(glw_t *w, int forward, int interactive)
 
   if(r != NULL)
     glw_focus_set(w->glw_root, r,
-		  interactive ? GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE : 
-		  GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC);
+		  interactive ? GLW_FOCUS_SET_INTERACTIVE : 
+		  GLW_FOCUS_SET_AUTOMATIC);
 }
 
 
