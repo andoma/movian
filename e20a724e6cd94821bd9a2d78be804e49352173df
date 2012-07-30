@@ -1,0 +1,2 @@
+Avoid having the UI accedentally use fonts from MKV files
+Fixes #841
