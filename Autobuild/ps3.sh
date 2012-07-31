@@ -41,8 +41,9 @@ build()
 	set -e
     fi
 
+    echo "ccache dir: ${CCACHE_DIR}"
     ./configure.ps3 ${JOBSARGS} --build=${TARGET} ${RELEASE} --cleanbuild ${AUTOBUILD_CONFIGURE_EXTRA}
-    make ${JARGS} BUILD=${TARGET} pkg self
+    make ${JARGS} BUILD=${TARGET} V=1 pkg self
     artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
     artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg
     artifact build.${TARGET}/showtime_geohot.pkg pkg application/octect-stream showtime-gh.pkg
