@@ -45,8 +45,6 @@ build()
 	echo "Using ccache"
 	ccache -s
 	USE_CCACHE="--ccache"
-	CCACHE_LOGFILE="/var/tmp/ccache.log"
-	export CCACHE_LOGFILE
     else
 	USE_CCACHE=""
     fi
