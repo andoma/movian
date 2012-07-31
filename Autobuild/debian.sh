@@ -14,6 +14,7 @@ build()
     
     export JOBSARGS
     export JARGS
+    export ARCH
 
     which ccache >/dev/null
     if [ $? -eq 0 ]; then
