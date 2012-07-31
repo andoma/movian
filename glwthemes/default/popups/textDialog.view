@@ -1,7 +1,4 @@
-#import "theme://include/defs.view"
-#import "theme://include/buttons.view"
-#import "theme://include/separators.view"
-#import "theme://include/popup.view"
+#import "common.view"
 
 widget(container_x, {
   space(0.2);
