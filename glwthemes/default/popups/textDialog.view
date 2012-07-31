@@ -32,7 +32,6 @@ widget(container_x, {
 	  });
 	);
 
-	HORIZONTAL_SEPARATOR();
 
 	widget(container_x, {
 	  .align = center;
