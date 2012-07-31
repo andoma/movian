@@ -137,9 +137,6 @@ js_model_create(jsval openfunc)
 static void
 js_model_destroy(js_model_t *jm)
 {
-  if(jm->jm_item_proto)
-    JS_RemoveRoot(jm->jm_cx, &jm->jm_item_proto);
-
   if(jm->jm_args)
     strvec_free(jm->jm_args);
 
@@ -516,16 +513,6 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     prop_destroy(item);
     prop_ref_dec(p);
   } else {
-    if(!model->jm_item_proto) {
-
-      JSObject *item_proto = JS_NewObject(cx, NULL, NULL, NULL);
-      
-      model->jm_item_proto = OBJECT_TO_JSVAL(item_proto);
-      JS_AddNamedRoot(cx, &model->jm_item_proto, "itemproto");
-      
-      JS_DefineFunctions(cx, item_proto, item_proto_functions);
-    }
-
     JSObject *robj =
       JS_NewObjectWithGivenProto(cx, &item_class,
 				 JSVAL_TO_OBJECT(model->jm_item_proto), NULL);
@@ -1075,6 +1062,11 @@ js_open_trampoline(void *arg)
 
   JS_BeginRequest(cx);
 
+  jm->jm_item_proto = OBJECT_TO_JSVAL(JS_NewObject(cx, NULL, NULL, NULL));
+  JS_AddNamedRoot(cx, &jm->jm_item_proto, "itemproto");
+  JS_DefineFunctions(cx, JSVAL_TO_OBJECT(jm->jm_item_proto),
+		     item_proto_functions);
+
   js_open_invoke(cx, jm);
 
   jm->jm_cx = cx;
@@ -1088,6 +1080,9 @@ js_open_trampoline(void *arg)
     prop_notify_dispatch(&nor);
 
   }
+
+  JS_RemoveRoot(cx, &jm->jm_item_proto);
+
   js_model_release(jm);
 
   JS_DestroyContext(cx);
