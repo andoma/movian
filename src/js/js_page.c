@@ -37,6 +37,7 @@ LIST_HEAD(js_item_list, js_item);
 
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
+static JSFunctionSpec item_proto_functions[];
 
 /**
  *
@@ -108,6 +109,8 @@ typedef struct js_model {
 
   int jm_subs;
 
+  jsval jm_item_proto;
+
 } js_model_t;
 
 
@@ -134,6 +137,9 @@ js_model_create(jsval openfunc)
 static void
 js_model_destroy(js_model_t *jm)
 {
+  if(jm->jm_item_proto)
+    JS_RemoveRoot(jm->jm_cx, &jm->jm_item_proto);
+
   if(jm->jm_args)
     strvec_free(jm->jm_args);
 
@@ -261,7 +267,7 @@ item_finalize(JSContext *cx, JSObject *obj)
   free(ji);
 }
 
-
+#if 0
 /**
  *
  */
@@ -281,14 +287,14 @@ item_set_property(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 
   return JS_TRUE;
 }
-
+#endif
 
 /**
  *
  */
 static JSClass item_class = {
   "item", JSCLASS_HAS_PRIVATE,
-  item_set_property,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
   JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, item_finalize,
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
@@ -382,6 +388,21 @@ js_item_destroy(JSContext *cx, JSObject *obj,
  *
  */
 static JSBool 
+js_item_dump(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  prop_print_tree(ji->ji_root, 1);
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSBool 
 js_item_addOptURL(JSContext *cx, JSObject *obj,
 	      uintN argc, jsval *argv, jsval *rval)
 {
@@ -441,11 +462,12 @@ js_item_addOptAction(JSContext *cx, JSObject *obj,
 /**
  *
  */
-static JSFunctionSpec item_functions[] = {
+static JSFunctionSpec item_proto_functions[] = {
   JS_FS("onEvent",            js_item_onEvent,      2, 0, 0),
   JS_FS("destroy",            js_item_destroy,      0, 0, 0),
   JS_FS("addOptURL",          js_item_addOptURL,    2, 0, 0),
   JS_FS("addOptAction",       js_item_addOptAction, 2, 0, 0),
+  JS_FS("dump",               js_item_dump,         0, 0, 0),
   JS_FS_END
 };
 
@@ -494,7 +516,20 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     prop_destroy(item);
     prop_ref_dec(p);
   } else {
-    JSObject *robj = JS_NewObjectWithGivenProto(cx, &item_class, NULL, NULL);
+    if(!model->jm_item_proto) {
+
+      JSObject *item_proto = JS_NewObject(cx, NULL, NULL, NULL);
+      
+      model->jm_item_proto = OBJECT_TO_JSVAL(item_proto);
+      JS_AddNamedRoot(cx, &model->jm_item_proto, "itemproto");
+      
+      JS_DefineFunctions(cx, item_proto, item_proto_functions);
+    }
+
+    JSObject *robj =
+      JS_NewObjectWithGivenProto(cx, &item_class,
+				 JSVAL_TO_OBJECT(model->jm_item_proto), NULL);
+
     *rval =  OBJECT_TO_JSVAL(robj);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
     ji->ji_model = model;
@@ -502,7 +537,6 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
     JS_SetPrivate(cx, robj, ji);
     ji->ji_enable_set_property = 1; 
-    JS_DefineFunctions(cx, robj, item_functions);
   }
   return JS_TRUE;
 }
