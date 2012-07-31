@@ -17,7 +17,6 @@ build()
     export PATH=$PATH:$PSL1GHT/host/bin
     
     echo "Toolchain from: '${TOOLCHAIN_URL}' Local install in: ${TOOLCHAIN}"
-    
     if [ -d $TOOLCHAIN ]; then
 	echo "Toolchain seems to exist"
     else
@@ -41,8 +40,17 @@ build()
 	set -e
     fi
 
-    echo "ccache dir: ${CCACHE_DIR}"
-    ./configure.ps3 ${JOBSARGS} --build=${TARGET} ${RELEASE} --cleanbuild ${AUTOBUILD_CONFIGURE_EXTRA}
+    which ccache >/dev/null
+    if [ $? -eq 0 ]; then
+	echo "Using ccache"
+	ccache -s
+	USE_CCACHE="--ccache"
+    else
+	USE_CCACHE=""
+    fi
+
+    ./configure.ps3 ${JOBSARGS} --build=${TARGET} ${RELEASE} --cleanbuild ${USE_CCACHE}
+
     make ${JARGS} BUILD=${TARGET} V=1 pkg self
     artifact build.${TARGET}/showtime.self self application/octect-stream showtime.self
     artifact build.${TARGET}/showtime.pkg pkg application/octect-stream showtime.pkg

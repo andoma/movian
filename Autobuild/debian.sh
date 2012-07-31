@@ -14,7 +14,17 @@ build()
     
     export JOBSARGS
     export JARGS
-    export AUTOBUILD_CONFIGURE_EXTRA
+
+    which ccache >/dev/null
+    if [ $? -eq 0 ]; then
+	echo "Using ccache"
+	ccache -s
+	USE_CCACHE="--ccache"
+    else
+	USE_CCACHE=""
+    fi
+    export USE_CCACHE
+
     dpkg-buildpackage -b -us -uc
 
     for a in ../showtime*${VER}*.deb; do
