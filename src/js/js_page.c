@@ -353,7 +353,9 @@ js_item_onEvent(JSContext *cx, JSObject *obj,
   }
 
   js_event_handler_create(cx, &ji->ji_event_handlers,
-			  JS_GetStringBytes(JS_ValueToString(cx, argv[0])),
+			  JSVAL_IS_STRING(argv[0]) ?
+			  JS_GetStringBytes(JS_ValueToString(cx, argv[0])) :
+			  NULL,
 			  argv[1]);
   
   *rval = JSVAL_VOID;
@@ -374,12 +376,76 @@ js_item_destroy(JSContext *cx, JSObject *obj,
   return JS_TRUE;
 }
 
+
+
+/**
+ *
+ */
+static JSBool 
+js_item_addOptURL(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  const char *title;
+  const char *url;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ss", &title, &url))
+    return JS_FALSE;
+  
+  prop_t *p = prop_create_root(NULL);
+  prop_set_string(prop_create(p, "type"), "location");
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(prop_create(p, "metadata"), "title"), title);
+  prop_set_int(prop_create(p, "enabled"), 1);
+
+  prop_t *opts = prop_create_r(ji->ji_root, "options");
+  if(prop_set_parent(p, opts))
+    prop_destroy(p);
+  prop_ref_dec(opts);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_item_addOptAction(JSContext *cx, JSObject *obj,
+		     uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  const char *title;
+  const char *action;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ss", &title, &action))
+    return JS_FALSE;
+  
+  prop_t *p = prop_create_root(NULL);
+  prop_set_string(prop_create(p, "type"), "action");
+  prop_set_string(prop_create(prop_create(p, "metadata"), "title"), title);
+  prop_set_int(prop_create(p, "enabled"), 1);
+  prop_set_string(prop_create(p, "action"), action);
+
+  prop_t *opts = prop_create_r(ji->ji_root, "options");
+  if(prop_set_parent(p, opts))
+    prop_destroy(p);
+  prop_ref_dec(opts);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
 /**
  *
  */
 static JSFunctionSpec item_functions[] = {
   JS_FS("onEvent",            js_item_onEvent,      2, 0, 0),
   JS_FS("destroy",            js_item_destroy,      0, 0, 0),
+  JS_FS("addOptURL",          js_item_addOptURL,    2, 0, 0),
+  JS_FS("addOptAction",       js_item_addOptAction, 2, 0, 0),
   JS_FS_END
 };
 

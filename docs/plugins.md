@@ -290,6 +290,7 @@ page.type == 'directory'
 
 * metadata - Additional information about the item
 
+Return an item object
 
 #### appendPassiveItem(String type, [Variable data], [Object metadata])
 
@@ -316,6 +317,38 @@ page to the console.
 
 
 
+## The item object
+
+### Functions
+
+#### onEvent(String event, Function handler)
+
+Install an event handler for the specific item.
+If event is 'null' all events will be passed to the handler.
+The first argument to the handler is a string with the event name
+
+*Available from 3.99.357*
+
+#### destroy()
+
+Remove the item from the page
+
+*Available from 3.99.357*
+
+#### addOptURL(String title, String URL)
+
+Add an additional URL for the item. This URL can be reached from the
+item's context-menu.
+
+*Available from 3.99.357*
+
+#### addOptAction(String title, String event)
+
+Add an additional event for the item.
+When trigged by the user it can be intercepted using an event handler
+registered using the item's onEvent() method.
+
+*Available from 3.99.357*
 
 
 ## The plugin object

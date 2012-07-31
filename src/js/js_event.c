@@ -44,7 +44,7 @@ js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
 {
   js_event_handler_t *jeh;
   jeh = malloc(sizeof(js_event_handler_t));
-  jeh->jeh_filter = strdup(filter);
+  jeh->jeh_filter = filter ? strdup(filter) : NULL;
   jeh->jeh_function = fun;
   JS_AddNamedRoot(cx, &jeh->jeh_function, "eventhandler");
   LIST_INSERT_HEAD(list, jeh, jeh_link);
@@ -64,8 +64,13 @@ js_event_dispatch_action(JSContext *cx, struct js_event_handler_list *list,
     return;
 
   LIST_FOREACH(jeh, list, jeh_link) {
-    if(!strcmp(jeh->jeh_filter, action)) {
-      JS_CallFunctionValue(cx, this, jeh->jeh_function, 0, NULL, &result);
+    if(jeh->jeh_filter == NULL || !strcasecmp(jeh->jeh_filter, action)) {
+
+      void *mark;
+      jsval *argv;
+      argv = JS_PushArguments(cx, &mark, "s", action);
+      JS_CallFunctionValue(cx, this, jeh->jeh_function, 1, argv, &result);
+      JS_PopArguments(cx, mark);
       return;
     }
   }
@@ -106,9 +111,10 @@ js_onEvent(JSContext *cx, JSObject *obj,
   }
 
   js_event_handler_create(cx, &jsp->jsp_event_handlers,
+			  JSVAL_IS_STRING(argv[0]) ? 
 			  JS_GetStringBytes(JS_ValueToString(cx,
-							     argv[0])),
-			  argv[1]);
+							     argv[0])) : 
+			  NULL, argv[1]);
 
   *rval = JSVAL_VOID;
   return JS_TRUE;

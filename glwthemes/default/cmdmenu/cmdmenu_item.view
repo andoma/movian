@@ -1,6 +1,12 @@
 #import "cmdmenu_common.view"
 
+// If the item that this menu represents disapperas (type becomes (void))
+// close the menu
 $clone.itemMenu ?= select(isVoid($args.type), 0, void);
+
+$clone.itemMenu ?= select($view.close, false, void);
+
+$view.item = $args;
 
 commandMenuChrome(
 
@@ -16,15 +22,16 @@ commandMenuChrome(
 		    "video",     "Movie",
 		    "album",     "Disc",
 		    "plugin",    "Plugin",
-		  "image",     "Pictures"
+		    "image",     "Pictures"
 		   ) + ".svg");
 
   cloner($args.options, loader, {
     time: 0.1;
     noInitialTransform: true;
     effect: blend;
-    source: "theme://pages/listitems/" + $self.type + ".view";
+    source: "cmditems/" + $self.type + ".view";
     hidden: !$self.enabled;
+    args: $view;
   });
 
   // Goto artist
