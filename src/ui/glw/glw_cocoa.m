@@ -113,57 +113,11 @@ static const struct {
   { '-',                      NSCommandKeyMask, ACTION_ZOOM_UI_DECR },
   { 'f',                      NSCommandKeyMask, ACTION_FULLSCREEN_TOGGLE },
   
-  { NSF11FunctionKey,         0,                ACTION_FULLSCREEN_TOGGLE },
-  
-  /*
-   { XF86XK_AudioLowerVolume, 0,   ACTION_VOLUME_DOWN },
-   { XF86XK_AudioRaiseVolume, 0,   ACTION_VOLUME_UP },
-   { XF86XK_AudioMute,        0,   ACTION_VOLUME_MUTE_TOGGLE },
-   */
-  
-  /*
-   { XF86XK_Back,             0,   ACTION_NAV_BACK },
-   { XF86XK_Forward,          0,   ACTION_NAV_FWD },
-   { XF86XK_AudioPlay,        0,   ACTION_PLAYPAUSE },
-   { XF86XK_AudioStop,        0,   ACTION_STOP },
-   { XF86XK_AudioPrev,        0,   ACTION_SKIP_BACKWARD },
-   { XF86XK_AudioNext,        0,   ACTION_SKIP_FORWARD },
-   { XF86XK_Eject,            0,   ACTION_EJECT },
-   { XF86XK_AudioMedia,       0,   ACTION_HOME },
-   { XK_Menu,                 0,   ACTION_HOME },
-   */
-  
-  { NSF1FunctionKey,         0,   ACTION_MENU },
-  { NSF2FunctionKey,         0,   ACTION_SHOW_MEDIA_STATS },
-  { NSF3FunctionKey,         0,   ACTION_SYSINFO },
-  { NSF4FunctionKey,         0,   ACTION_ENABLE_SCREENSAVER },
-  { NSF9FunctionKey,         0,   ACTION_SWITCH_VIEW },
-  
-  { NSF1FunctionKey,          NSShiftKeyMask,   ACTION_SKIP_BACKWARD },
-  { NSF2FunctionKey,          NSShiftKeyMask,   ACTION_PLAYPAUSE },
-  { NSF3FunctionKey,          NSShiftKeyMask,   ACTION_SKIP_FORWARD },
-  { NSF4FunctionKey,          NSShiftKeyMask,   ACTION_STOP },
-  
-  { NSF6FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_DOWN },
-  { NSF7FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_MUTE_TOGGLE },
-  { NSF8FunctionKey,          NSShiftKeyMask,   ACTION_VOLUME_UP },
-  
-  { NSF1FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_BACKWARD },
-  { NSF3FunctionKey,          NSCommandKeyMask,   ACTION_SEEK_FORWARD },
-  
-  
-  /*
-   { XF86XK_Sleep,            0,           ACTION_SLEEP },
-   */
-  
   { _NSBackspaceKey,          0,                ACTION_BS, ACTION_NAV_BACK },
   { _NSEnterKey,              0,                ACTION_ENTER, ACTION_ACTIVATE},
   { _NSEnterKey,              NSShiftKeyMask,   ACTION_ITEMMENU },
   { _NSEscapeKey,             0,                ACTION_CANCEL },
   { _NSTabKey,                0,                ACTION_FOCUS_NEXT },
-  
-  { NSF5FunctionKey,	    0,	ACTION_RELOAD_UI },
-  { NSF5FunctionKey,	    NSShiftKeyMask,	ACTION_RELOAD_DATA },
 };
 
 
@@ -741,6 +695,10 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
       break;
     }
   }
+
+  if(e == NULL && cim >= NSF1FunctionKey && cim <= NSF35FunctionKey)
+    e = event_from_Fkey(cim - NSF1FunctionKey + 1,
+			mod & NSShiftKeyMask ? 1 : 0);
 
   if(e == NULL) 
     e = event_create_int(EVENT_UNICODE, c);
