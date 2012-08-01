@@ -13,12 +13,19 @@ widget(backdrop, {
   suggestFocus($self.playing);
 
   widget(container_x, {
-    spacing: 13;
     widget(icon, {
       align: left;
       color: select(isFocused(), 1.0, 0.6);
       source: "dataroot://resources/svg/Music.svg";
       shadow: true;
+    });
+
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: translate($self.media.playstatus, void,
+			"play", "dataroot://resources/svg/Play.svg",
+			"pause", "dataroot://resources/svg/Pause.svg");
     });
     
     widget(label, {
