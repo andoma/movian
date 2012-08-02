@@ -53,8 +53,11 @@ static JSBool
 pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   const char *name = name_by_id(id);
-  if(name != NULL)
-    js_prop_set_from_jsval(cx, prop_create(JS_GetPrivate(cx, obj), name), *vp);
+  if(name != NULL)  {
+    prop_t *p = JS_GetPrivate(cx, obj);
+    prop_destroy_by_name(p, name);
+    js_prop_set_from_jsval(cx, prop_create(p, name), *vp);
+  }
   return JS_TRUE;
 }
 
