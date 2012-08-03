@@ -401,10 +401,13 @@ id: Starred
 msg: Speciali
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Segnalibri
+id: Cache cleared
+msg: Cache pulita
+
+id: Clear cached files
+msg: Pulisci cache
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -420,6 +423,21 @@ msg: Impossibile aprire il file: %s
 #
 id: Search using Unix locatedb
 msg: Cerca usando il locatedb Unix
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: Accesso negato
+
+id: Account restricted
+msg: Account con restrizioni
+
+id: Bad network share name
+msg: Nome del network di condivisione non valido
+
+id: Logon failure
+msg: Accesso fallito
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -488,6 +506,15 @@ id: Keymapper
 msg: Mappatura tasti
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Dimentica password salvate
+
+id: Rembered passwords erased
+msg: Password salvate eliminate.
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -517,20 +544,86 @@ msg: Traccia %d
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+msg: Aggiunto nuovo segnalibro: %s
+
+id: Bookmarks
+msg: Segnalibri
+
+id: Music
+msg: Musica
+
 id: No handler for URL
 msg: Nessun handler per URL
+
+id: Other
+msg: Altro
+
+id: Photos
+msg: Foto
+
+id: Removed bookmark: %s
+msg: Segnalibro rimosso: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Titolo
+
+id: Type
+msg: Tipo
+
+id: URL
+msg: URL
+
+id: Video
+msg: Video
 
 #
 # ./src/plugins.c
 #
+id: Automatically upgrade plugins
+msg: Aggiorna automaticamente i plugin
+
+id: Available plugins
+msg: Plugin disponibili
+
+id: Browse available plugins
+msg: Sfoglia i plugin disponibili
+
+id: Corrupt plugin bundle
+msg: Bundle di plugin corrotto
+
+id: Disk write error
+msg: Errore di scrittura su disco
+
+id: Downloading
+msg: Scaricamento
+
+id: File open error
+msg: Errore d'apertura del file
+
+id: Installed plugins
+msg: Plugin installati
+
+id: Installing
+msg: Installazione
+
 id: Invalud URI
 msg: URI non valido
 
-id: Plugin ID %s does not exist
-msg: Il Plugin ID %s non esiste
+id: Not installable
+msg: Non installabile
 
-id: Plugin ID %s have no download URL
-msg: Il Plugin ID %s non ha un URL
+id: Not installed
+msg: Non installato
+
+id: Not upgradable
+msg: Non aggiornabile
+
+id: Plugins
+msg: Plugins
 
 id: Unable to load plugin.json: %s
 msg: Impossibile caricare plugin.json: %s
@@ -538,8 +631,14 @@ msg: Impossibile caricare plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Impossibile caricare plugin.json: JSON non valido
 
-id: Unable to request plugin repository: %s
-msg: Impossibile ottenere il repository del plugin: %s
+id: Up to date
+msg: Aggiornato
+
+id: Upgradable
+msg: Aggiornabile
+
+id: Upgraded plugin %s to version %s
+msg: Aggiornato plugin %s alla versione %s
 
 #
 # ./src/runcontrol.c
@@ -547,8 +646,17 @@ msg: Impossibile ottenere il repository del plugin: %s
 id: Automatic standby
 msg: Standby automatico
 
-id: Run control
-msg: Controllo d'avvio
+id: Logout
+msg: Uscita
+
+id: Open shell
+msg: Apri shell
+
+id: Power off system
+msg: Spegni sistema
+
+id: Starting and stopping Showtime
+msg: Avvio e chiusura Showtime
 
 #
 # ./src/sd/sd.c
@@ -559,9 +667,6 @@ msg: Attivo
 id: Name
 msg: Nome
 
-id: Type
-msg: Tipo
-
 #
 # ./src/settings.c
 #
@@ -571,8 +676,14 @@ msg: Applicazioni e plugin installati
 id: Discovered media sources
 msg: Sorgenti media trovate
 
+id: General
+msg: Generale
+
 id: Global settings
 msg: Impostazioni globali
+
+id: System related settings
+msg: Impostazioni relative al sistema
 
 #
 # ./src/ui/glw/glw.c
@@ -674,8 +785,7 @@ id: Auto
 msg: Auto
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Riproduci automaticamente il successivo video nella lista
 
 id: Center
 msg: Al centro
@@ -685,6 +795,9 @@ msg: Colore
 
 id: Count video as played when reaching
 msg: Conteggia il video come riprodotto quando raggiunge
+
+id: Enable VDA
+msg: Attiva VDA
 
 id: Enable VDPAU
 msg: Attiva VDPAU
