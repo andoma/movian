@@ -327,7 +327,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
 
-  if(flags & BACKEND_VIDEO_CONTINUE ||
+  if(flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
@@ -564,6 +564,15 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	}
       }
 
+    } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
+      // TODO: chapter support
+      break;
+    } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
+
+      // TODO: chapter support
+      if(seekbase < MP_SKIP_LIMIT)
+	break;
+      seekbase = video_seek(fctx, mp, &mb, 0, "skip back");
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;

@@ -158,7 +158,7 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
  */
 static int64_t
 video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
-	   int64_t pos, int backward, const char *txt)
+	   int64_t pos, const char *txt)
 {
   if(pos < 0)
     pos = 0;
@@ -192,9 +192,18 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   media_pipe_t *mp = r->mp;
 
   if(event_is_type(e, EVENT_EXIT) ||
-     event_is_type(e, EVENT_PLAY_URL))
+     event_is_type(e, EVENT_PLAY_URL) ||
+     event_is_action(e, ACTION_SKIP_FORWARD))
     return e;
-
+  
+  if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
+    if(r->seekbase < MP_SKIP_LIMIT) {
+      return e;
+    }
+    r->epoch++;
+    r->seekbase = video_seek(r, mp, mbp, 0, "direct");
+  }
+  
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
      event_is_action(e, ACTION_PLAY) ||
      event_is_action(e, ACTION_PAUSE)) {
@@ -228,24 +237,23 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     event_ts_t *ets = (event_ts_t *)e;
 
     r->epoch++;
-      
-    r->seekbase = video_seek(r, mp, mbp, ets->ts, 1, "direct");
+    r->seekbase = video_seek(r, mp, mbp, ets->ts, "direct");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
 
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, 1, "-60s");
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, "-60s");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_BACKWARD)) {
 
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, 1, "-15s");
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, "-15s");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FORWARD)) {
 
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, 1, "+15s");
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, "+15s");
 
   } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
 
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, 1, "+60s");
+    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, "+60s");
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);

@@ -31,6 +31,9 @@ struct media_queue;
 struct media_pipe;
 struct video_decoder;
 
+#define MP_SKIP_LIMIT 2000000 /* µs that must before a skip back is
+				 actually considered a restart */
+
 typedef struct event_ts {
   event_t h;
   int64_t ts;
