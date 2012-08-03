@@ -269,6 +269,7 @@ js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
   JSIdArray *ida;
   int i, r = 0;
   const char *n;
+  int array_zapped = 0;
 
   if((ida = JS_Enumerate(cx, obj)) == NULL)
     return -1;
@@ -287,6 +288,10 @@ js_prop_from_object(JSContext *cx, JSObject *obj, prop_t *p)
       if(!JS_GetElement(cx, obj, JSVAL_TO_INT(name), &value) ||
 	 JSVAL_IS_VOID(value))
 	continue;
+      if(!array_zapped) {
+	array_zapped = 1;
+	prop_destroy_by_name(p, NULL);
+      }
       n = NULL;
     } else {
       continue;

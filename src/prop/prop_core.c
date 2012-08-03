@@ -1779,10 +1779,19 @@ prop_destroy_by_name(prop_t *p, const char *name)
   hts_mutex_lock(&prop_mutex);
   if(p->hp_type == PROP_DIR) {
     prop_t *c;
-    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
-      if(c->hp_name != NULL && !strcmp(c->hp_name, name)) {
-	prop_destroy_child(p, c);
-	break;
+    if(name == NULL) {
+      prop_t *n;
+      for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = n) {
+	n = TAILQ_NEXT(c, hp_parent_link);
+	if(c->hp_name == NULL)
+	  prop_destroy_child(p, c);
+      }
+    } else {
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+	if(c->hp_name != NULL && !strcmp(c->hp_name, name)) {
+	  prop_destroy_child(p, c);
+	  break;
+	}
       }
     }
   }
