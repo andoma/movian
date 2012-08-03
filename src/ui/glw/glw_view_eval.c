@@ -2505,15 +2505,21 @@ static int
 glwf_playTrackFromSource(glw_view_eval_context_t *ec, struct token *self,
 			 token_t **argv, unsigned int argc)
 {
-  token_t *a, *b, *r;
+  token_t *a, *b, *c, *r;
+  int dontskip = 0;
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
   if((b = resolve_property_name2(ec, argv[1])) == NULL)
     return -1;
+  if(argc > 2) {
+    if((c = token_resolve(ec, argv[2])) == NULL)
+      return -1;
+    dontskip = token2bool(c);
+  }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, 0);
+  r->t_gem = glw_event_map_playTrack_create(a->t_prop, b->t_prop, dontskip);
   eval_push(ec, r);
   return 0;
 }
@@ -5223,7 +5229,7 @@ static const token_func_t funcvec[] = {
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
   {"navOpen", -1, glwf_navOpen},
-  {"playTrackFromSource", 2, glwf_playTrackFromSource},
+  {"playTrackFromSource", -1, glwf_playTrackFromSource},
   {"enqueuetrack", 1, glwf_enqueueTrack},
   {"selectAudioTrack", 1, glwf_selectAudioTrack},
   {"selectSubtitleTrack", 1, glwf_selectSubtitleTrack},

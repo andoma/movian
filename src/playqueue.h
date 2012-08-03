@@ -26,7 +26,10 @@ void playqueue_play(const char *url, prop_t *meta, int paused);
 
 void playqueue_event_handler(struct event *e);
 
-void playqueue_load_with_source(prop_t *track, prop_t *source, int paused);
+#define PQ_PAUSED 0x1
+#define PQ_NO_SKIP 0x2
+
+void playqueue_load_with_source(prop_t *track, prop_t *source, int flags);
 
 struct backend;
 

@@ -81,6 +81,14 @@ commandMenuChrome(
   }, "dataroot://resources/svg/Play.svg",
        $args.type == "video");
 
+  // Continue here after track ends
+
+  ITEM(_("Continue playback here"), {
+    fireEvent(playTrackFromSource($args, $self.model, true));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Enqueue.svg",
+       $args.type == "audio");
+
   // Mark as unseen (video)
 
   ITEM(_("Mark as unseen"), {

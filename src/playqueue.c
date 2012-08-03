@@ -619,7 +619,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
  *
  */
 void
-playqueue_load_with_source(prop_t *track, prop_t *source, int paused)
+playqueue_load_with_source(prop_t *track, prop_t *source, int flags)
 {
   playqueue_entry_t *pqe;
 
@@ -635,8 +635,10 @@ playqueue_load_with_source(prop_t *track, prop_t *source, int paused)
 
   playqueue_clear();
 
-  playqueue_startme = track;
-  playqueue_start_paused = paused;
+  if(!(flags & PQ_NO_SKIP)) {
+    playqueue_startme = prop_ref_inc(track);
+    playqueue_start_paused = flags & PQ_PAUSED ? 1 : 0;
+  }
 
   playqueue_source_sub = 
     prop_subscribe(0,
@@ -817,7 +819,8 @@ pq_eventsink(void *opaque, prop_event_t event, ...)
   if(ep->source == NULL)
     playqueue_enqueue(ep->track);
   else
-    playqueue_load_with_source(ep->track, ep->source, 0);
+    playqueue_load_with_source(ep->track, ep->source,
+			       ep->mode ? PQ_NO_SKIP : 0);
 }
 
 
@@ -961,7 +964,7 @@ playqueue_advance0(playqueue_entry_t *pqe, int reverse)
       }
 
     } else {
-      pqe = NULL;
+      pqe = TAILQ_FIRST(&playqueue_entries);
     }
   } while(pqe != NULL && pqe != cur && pqe->pqe_playable == 0);
   return pqe;

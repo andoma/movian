@@ -215,7 +215,7 @@ play_with_context(const char *uri, htsmsg_t *meta)
       prop_destroy(model);
 
     } else {
-      playqueue_load_with_source(t, model, 1);
+      playqueue_load_with_source(t, model, PQ_PAUSED);
       hts_mutex_unlock(&upnp_lock);
       return 0;
     }
