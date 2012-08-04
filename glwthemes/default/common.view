@@ -45,7 +45,7 @@
 #define SquareButtonFront() {
   source: "graphics/button-glenz.png";
   border: [28, 22];
-  padding: [-18, -8];
+  padding: [-10, -6];
   alphaSelf: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
 }
 
