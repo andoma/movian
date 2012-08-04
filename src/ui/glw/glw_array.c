@@ -66,6 +66,11 @@ typedef struct glw_array {
 #define glw_parent_pos_x glw_parent_val[0].i32
 #define glw_parent_pos_y glw_parent_val[1].i32
 
+#define glw_parent_pos_fx glw_parent_val[2].f
+#define glw_parent_pos_fy glw_parent_val[3].f
+
+#define glw_parent_inst   glw_parent_val[4].i32
+
 /**
  *
  */
@@ -214,6 +219,17 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     c->glw_parent_pos_y = ypos;
     c->glw_parent_pos_x = column * (xspacing + a->child_width_px) + xpos;
 
+    if(c->glw_parent_inst) {
+      c->glw_parent_pos_fy = c->glw_parent_pos_y;
+      c->glw_parent_pos_fx = c->glw_parent_pos_x;
+      c->glw_parent_inst = 0;
+    } else {
+      c->glw_parent_pos_fy =
+	GLW_LP(4, c->glw_parent_pos_fy, c->glw_parent_pos_y);
+      c->glw_parent_pos_fx =
+	GLW_LP(4, c->glw_parent_pos_fx, c->glw_parent_pos_x);
+    }
+
     if(ypos - a->filtered_pos > -height &&
        ypos - a->filtered_pos <  height * 2)
       glw_layout0(c, &rc0);
@@ -288,13 +304,56 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
  *
  */
 static void
+glw_array_render_one(glw_array_t *a, glw_t *c, int height,
+		     const glw_rctx_t *rc0, const glw_rctx_t *rc2)
+{
+  glw_rctx_t rc3;
+  const float y = c->glw_parent_pos_fy - a->filtered_pos;
+  int t, b;
+  glw_root_t *gr = a->w.glw_root;
+
+  if(y + a->child_height_px < 0 || y > height) {
+    c->glw_flags |= GLW_CLIPPED;
+    return;
+  } else {
+    c->glw_flags &= ~GLW_CLIPPED;
+  }
+
+  if(y < 0)
+    t = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+  else
+    t = -1;
+
+  if(y + a->child_height_px > height)
+    b = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
+  else
+    b = -1;
+
+  rc3 = *rc2;
+  glw_reposition(&rc3,
+		 c->glw_parent_pos_fx,
+		 height - c->glw_parent_pos_fy,
+		 c->glw_parent_pos_fx + a->child_width_px,
+		 height - c->glw_parent_pos_fy - a->child_height_px);
+
+  glw_render0(c, &rc3);
+
+  if(t != -1)
+    glw_clip_disable(gr, t);
+  if(b != -1)
+    glw_clip_disable(gr, b);
+}
+
+/**
+ *
+ */
+static void
 glw_array_render(glw_t *w, const glw_rctx_t *rc)
 {
   glw_array_t *a = (glw_array_t *)w;
   glw_t *c;
-  glw_rctx_t rc0, rc1, rc2, rc3;
-  int t, b, height;
-  float y;
+  glw_rctx_t rc0, rc1, rc2;
+  int height;
 
   if(rc->rc_alpha < 0.01f)
     return;
@@ -319,41 +378,14 @@ glw_array_render(glw_t *w, const glw_rctx_t *rc)
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-
-    y = c->glw_parent_pos_y - a->filtered_pos;
-
-    if(y + a->child_height_px < 0 || y > height) {
-      c->glw_flags |= GLW_CLIPPED;
-      continue;
-    } else {
-      c->glw_flags &= ~GLW_CLIPPED;
-    }
-
-    if(y < 0)
-      t = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP, 0);
-    else
-      t = -1;
-
-    if(y + a->child_height_px > height)
-      b = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM, 0);
-    else
-      b = -1;
-
-    rc3 = rc2;
-    glw_reposition(&rc3,
-		   c->glw_parent_pos_x,
-		   height - c->glw_parent_pos_y,
-		   c->glw_parent_pos_x + a->child_width_px,
-		   height - c->glw_parent_pos_y - a->child_height_px);
-
-    glw_render0(c, &rc3);
-
-    if(t != -1)
-      glw_clip_disable(w->glw_root, t);
-    if(b != -1)
-      glw_clip_disable(w->glw_root, b);
-
+    if(w->glw_focused != c)
+      glw_array_render_one(a, c, height, &rc0, &rc2);
   }
+  
+  // Render the focused widget last so it stays on top
+  // until we have decent Z ordering
+  if(w->glw_focused)
+    glw_array_render_one(a, w->glw_focused, height, &rc0, &rc2);
 }
 
 
@@ -376,6 +408,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   glw_rctx_t *rc = extra;
   glw_array_t *a = (glw_array_t *)w;
   glw_pointer_event_t *gpe;
+  glw_t *c;
 
   switch(signal) {
   default:
@@ -390,7 +423,9 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_UNHIDDEN:
+    c = extra;
     a->num_visible_childs++;
+    c->glw_parent_inst = 1;
     break;
 
 
