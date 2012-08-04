@@ -383,6 +383,7 @@ prop_notify_free(prop_notify_t *n)
 
   case PROP_ADD_CHILD_BEFORE:
   case PROP_MOVE_CHILD:
+  case PROP_REQ_MOVE_CHILD:
   case PROP_SELECT_CHILD:
     prop_ref_dec(n->hpn_prop);
     prop_ref_dec(n->hpn_prop2);
@@ -656,6 +657,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
     case PROP_ADD_CHILD_BEFORE:
     case PROP_MOVE_CHILD:
     case PROP_SELECT_CHILD:
+    case PROP_REQ_MOVE_CHILD:
       if(pt != NULL)
 	cb(s, n->hpn_event, n->hpn_prop, n->hpn_prop2, n->hpn_flags);
       else
@@ -1889,6 +1891,37 @@ prop_move(prop_t *p, prop_t *before)
 {
   hts_mutex_lock(&prop_mutex);
   prop_move0(p, before, NULL);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
+{
+  prop_t *parent;
+
+  assert(p != before);
+
+  if(TAILQ_NEXT(p, hp_parent_link) != before) {
+    parent = p->hp_parent;
+    prop_notify_child2(p, parent, before, PROP_REQ_MOVE_CHILD, skipme, 0);
+  }
+}
+
+
+/**
+ *
+ */
+void
+prop_req_move(prop_t *p, prop_t *before)
+{
+  if(p == before)
+    return;
+  hts_mutex_lock(&prop_mutex);
+  prop_req_move0(p, before, NULL);
   hts_mutex_unlock(&prop_mutex);
 }
 

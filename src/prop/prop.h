@@ -74,6 +74,7 @@ typedef enum {
   PROP_HAVE_MORE_CHILDS,
   PROP_WANT_MORE_CHILDS,
   PROP_SUGGEST_FOCUS,
+  PROP_REQ_MOVE_CHILD,
 } prop_event_t;
 
 
@@ -178,6 +179,8 @@ prop_t *prop_follow(prop_t *p);
 int prop_compare(const prop_t *a, const prop_t *b);
 
 void prop_move(prop_t *p, prop_t *before);
+
+void prop_req_move(prop_t *p, prop_t *before);
 
 void prop_set_ex(prop_sub_t *skipme, prop_t *p, ...);
 
