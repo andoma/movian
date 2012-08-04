@@ -59,7 +59,12 @@ typedef struct glw_array {
   int16_t border_top;
   int16_t border_bottom;
 
+  char noclip;
+
   int num_visible_childs;
+
+  float alpha_falloff;
+  float blur_falloff;
 
 } glw_array_t;
 
@@ -300,6 +305,9 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 }
 
 
+const static float top_plane[4] = {0,-1,0,1};
+const static float bottom_plane[4] = {0,1,0,1};
+
 /**
  *
  */
@@ -309,7 +317,7 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int height,
 {
   glw_rctx_t rc3;
   const float y = c->glw_parent_pos_fy - a->filtered_pos;
-  int t, b;
+  int ct, cb, ft, fb;
   glw_root_t *gr = a->w.glw_root;
 
   if(y + a->child_height_px < 0 || y > height) {
@@ -319,15 +327,25 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int height,
     c->glw_flags &= ~GLW_CLIPPED;
   }
 
-  if(y < 0)
-    t = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
-  else
-    t = -1;
+  ct = cb = ft = fb = -1;
+  
+  if(a->noclip) {
+    if(y < 0) 
+      ft = glw_fader_enable(gr, rc0, top_plane,
+			    a->alpha_falloff, a->blur_falloff);
+    
+    if(y + a->child_height_px > height)
+      ft = glw_fader_enable(gr, rc0, bottom_plane,
+			    a->alpha_falloff, a->blur_falloff);
+    
+  } else {
+    if(y < 0)
+      ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+    
+    if(y + a->child_height_px > height)
+      cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
+  }
 
-  if(y + a->child_height_px > height)
-    b = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
-  else
-    b = -1;
 
   rc3 = *rc2;
   glw_reposition(&rc3,
@@ -338,10 +356,14 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int height,
 
   glw_render0(c, &rc3);
 
-  if(t != -1)
-    glw_clip_disable(gr, t);
-  if(b != -1)
-    glw_clip_disable(gr, b);
+  if(ct != -1)
+    glw_clip_disable(gr, ct);
+  if(cb != -1)
+    glw_clip_disable(gr, cb);
+  if(ft != -1)
+    glw_fader_disable(gr, ft);
+  if(fb != -1)
+    glw_fader_disable(gr, fb);
 }
 
 /**
@@ -496,6 +518,15 @@ glw_array_set(glw_t *w, va_list ap)
       break;
     case GLW_ATTRIB_Y_SPACING:
       a->yspacing = va_arg(ap, int);
+      break;
+    case GLW_ATTRIB_ALPHA_FALLOFF:
+      a->alpha_falloff = va_arg(ap, double);
+      a->noclip = 1;
+      break;
+
+    case GLW_ATTRIB_BLUR_FALLOFF:
+      a->blur_falloff = va_arg(ap, double);
+      a->noclip = 1;
       break;
 
     default:
