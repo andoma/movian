@@ -23,7 +23,8 @@
 #include "service.h"
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
-#include "prop/prop_grouper.h"
+#include "prop/prop_concat.h"
+#include "prop/prop_reorder.h"
 #include "backend/backend.h"
 
 LIST_HEAD(service_type_list, service_type);
@@ -45,17 +46,46 @@ static struct strtab status_tab[] = {
   {"scanning",  SVC_STATUS_SCANNING},
 };
 
+/**
+ *
+ */
+static struct strtab origin_tab[] = {
+
+  { "system",     SVC_ORIGIN_SYSTEM },
+  { "bookmark",   SVC_ORIGIN_BOOKMARK }, 
+  { "discovered", SVC_ORIGIN_DISCOVERED },
+  { "app",        SVC_ORIGIN_APP },
+};
+
+static service_t *service_create0(const char *id,
+				  const char *title,
+				  prop_t *ptitle,
+				  const char *url,
+				  const char *type,
+				  const char *icon,
+				  int probe,
+				  int enabled,
+				  service_origin_t origin);
 
 static void *service_probe_loop(void *aux);
 
 
 /**
+ * 
+ *  $global.services. ..
+ *
+ *     all - All services
+ *     enabled - All enabled services
+ *     stable - All services that are not auto-discovered
+ *     discovered - All auto-discovered services
  *
  */
+
 void
 service_init(void)
 {
   struct prop_nf *pnf;
+  prop_t *gs = prop_create(prop_get_global(), "services");
 
   hts_mutex_init(&service_mutex);
   hts_cond_init(&service_cond, &service_mutex);
@@ -63,13 +93,56 @@ service_init(void)
   hts_thread_create_detached("service probe", service_probe_loop, NULL,
 			     THREAD_PRIO_LOW);
 
-  all_services = prop_create_root(NULL);
+  // $global.service.all
 
-  pnf = prop_nf_create(prop_create(prop_get_global(), "sources"), all_services,
-		       NULL, 0);
-  
+  all_services = prop_create(gs, "all");
+
+  service_create0("showtime:plugin",
+		  NULL, _p("Plugins"), "plugin:start",
+		  "plugin", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+  service_create0("showtime:discovered",
+		  NULL, _p("Local network"), "page:discovered",
+		  "network", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+  service_create0("showtime:settings",
+		  NULL, _p("Settings"), "settings:",
+		  "setting", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
+
+
+  // $global.service.enabled
+
+  prop_t *enabled = prop_create(gs, "enabled");
+
+  pnf = prop_nf_create(enabled, all_services, NULL, 0);
   prop_nf_pred_int_add(pnf, "node.enabled",
 		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  // $global.service.stable
+
+  prop_t *tmp = prop_create_root(NULL);
+
+  pnf = prop_nf_create(tmp, all_services, NULL, 0);
+  prop_nf_pred_int_add(pnf, "node.enabled",
+		       PROP_NF_CMP_EQ, 0, NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  prop_nf_pred_str_add(pnf, "node.origin",
+		       PROP_NF_CMP_EQ, "discovered", NULL, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  prop_t *stable = prop_create(gs, "stable");
+  prop_reorder_create(stable, tmp, 0, "allSourcesOrder");
+
+  // $global.service.discovered
+
+  prop_t *discovered = prop_create(gs, "discovered");
+
+  pnf = prop_nf_create(discovered, all_services, NULL, 0);
+
+  prop_nf_pred_str_add(pnf, "node.origin",
+		       PROP_NF_CMP_NEQ, "discovered", NULL, 
 		       PROP_NF_MODE_EXCLUDE);
 }
 
@@ -126,22 +199,30 @@ seturl(service_t *s, const char *url)
 /**
  *
  */
-service_t *
-service_create(const char *title,
-	       const char *url,
-	       const char *type,
-	       const char *icon,
-	       int probe,
-	       int enabled)
+static service_t *
+service_create0(const char *id,
+		const char *title,
+		prop_t *ptitle,
+		const char *url,
+		const char *type,
+		const char *icon,
+		int probe,
+		int enabled,
+		service_origin_t origin)
 {
   service_t *s = calloc(1, sizeof(service_t));
   prop_t *p;
   s->s_ref = 1;
 
-  p = s->s_root = prop_create_root(NULL);
+  p = s->s_root = prop_create_root(id);
   seturl(s, url);
 
-  prop_set_string(prop_create(p, "title"), title);
+  prop_t *t = prop_create(p, "title");
+  if(ptitle)
+    prop_link(ptitle, t);
+  else
+    prop_set_string(t, title);
+
   prop_set_string(prop_create(p, "icon"), icon);
   prop_set_string(prop_create(p, "url"), url);
   prop_set_int(prop_create(p, "enabled"), enabled);
@@ -154,6 +235,8 @@ service_create(const char *title,
 
   s->s_prop_status_txt = prop_create(p, "statustxt");
 
+  prop_set_string(prop_create(p, "origin"), val2str(origin, origin_tab));
+
   if(prop_set_parent(s->s_root, all_services))
     abort();
   
@@ -163,6 +246,23 @@ service_create(const char *title,
   hts_cond_signal(&service_cond);
   hts_mutex_unlock(&service_mutex);
   return s;
+}
+
+/**
+ *
+ */
+service_t *
+service_create(const char *id,
+	       const char *title,
+	       const char *url,
+	       const char *type,
+	       const char *icon,
+	       int probe,
+	       int enabled,
+	       service_origin_t origin)
+{
+  return service_create0(id, title, NULL, url, type,
+			 icon, probe, enabled, origin);
 }
 
 

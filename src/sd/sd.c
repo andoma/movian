@@ -88,8 +88,9 @@ update_service(service_instance_t *si)
      si->si_setting_title &&
      si->si_setting_type) {
 
-    si->si_service = service_create(NULL, si->si_url, NULL, NULL,
-				    si->si_probe, 0);
+    si->si_service = service_create(si->si_id, NULL, si->si_url, NULL, NULL,
+				    si->si_probe, 0,
+				    SVC_ORIGIN_DISCOVERED);
     prop_link(settings_get_value(si->si_setting_title), 
 	      prop_create(si->si_service->s_root, "title"));
     prop_link(settings_get_value(si->si_setting_type), 

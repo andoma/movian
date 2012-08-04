@@ -113,6 +113,7 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
   const char *icon = NULL;
   JSObject *robj;
   JSBool enabled;
+  char svcid[256];
 
   if (!JS_ConvertArguments(cx, argc, argv, "sssb/s",
 			   &title, &url, &type, &enabled, &icon))
@@ -122,7 +123,10 @@ js_createService(JSContext *cx, JSObject *obj, uintN argc,
 
   js_service_t *jss = malloc(sizeof(js_service_t));
   jss->jss_ref = 2;
-  jss->jss_s = service_create(title, url, type, icon, 0, enabled);
+  snprintf(svcid, sizeof(svcid), "plugin:%s", jsp->jsp_id);
+  jss->jss_s = service_create(svcid, 
+			      title, url, type, icon, 0, enabled,
+			      SVC_ORIGIN_APP);
   LIST_INSERT_HEAD(&jsp->jsp_services, jss, jss_link);
 
   robj = JS_NewObjectWithGivenProto(cx, &service_class, NULL, NULL);

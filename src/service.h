@@ -45,18 +45,30 @@ typedef enum {
   SVC_STATUS_SCANNING,
 } service_status_t;
 
+/**
+ *
+ */
+typedef enum {
+  SVC_ORIGIN_SYSTEM,
+  SVC_ORIGIN_BOOKMARK,
+  SVC_ORIGIN_DISCOVERED,
+  SVC_ORIGIN_APP,
+} service_origin_t;
+
 
 /**
  *
  */
 void service_destroy(service_t *s);
 
-service_t *service_create(const char *title,
+service_t *service_create(const char *id,
+			  const char *title,
 			  const char *url,
 			  const char *type,
 			  const char *icon,
 			  int probe,
-			  int enabled);
+			  int enabled,
+			  service_origin_t origin);
 
 void service_set_type(service_t *svc, rstr_t *type);
 

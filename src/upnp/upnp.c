@@ -440,8 +440,9 @@ add_content_directory(upnp_service_t *us, const char *hostname, int port)
 			   SETTINGS_INITIAL_UPDATE, NULL,
 			   upnp_settings_saver, us);
 
-  us->us_service = service_create(NULL, us->us_local_url, NULL,
-				  us->us_icon_url, 1, 0);
+  us->us_service = service_create(svcid, NULL, us->us_local_url, NULL,
+				  us->us_icon_url, 1, 0,
+				  SVC_ORIGIN_DISCOVERED);
 
   prop_link(settings_get_value(us->us_setting_title), 
 	    prop_create(us->us_service->s_root, "title"));
