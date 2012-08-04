@@ -24,6 +24,7 @@
 
 #include "misc/string.h"
 #include "showtime.h"
+#include "sha.h"
 
 #include "unicode_casefolding.h"
 
@@ -1456,4 +1457,30 @@ dvd_langcode_to_string(uint16_t langcode)
   }
   return "Other";
 
+}
+
+
+/**
+ *
+ */
+rstr_t *
+get_random_string(void)
+{
+  sha1_decl(shactx);
+  uint8_t d[20];
+  char buf[4];
+  static uint64_t seed;
+  int i;
+  seed ^= showtime_get_ts();
+
+  sha1_init(shactx);
+  sha1_update(shactx, (void *)&seed, sizeof(uint64_t));
+  sha1_final(shactx, d);
+  memcpy(&seed, d, sizeof(uint64_t));
+
+  for(i = 0; i < 20; i++) {
+    buf[i * 2 + 0] = "0123456789abcdef"[d[i] & 0xf];
+    buf[i * 2 + 1] = "0123456789abcdef"[d[i] >> 4];
+  }
+  return rstr_allocl(buf, 40);
 }

@@ -85,4 +85,6 @@ const char *charset_get_name(const void *ptr);
 
 const char *dvd_langcode_to_string(uint16_t langcode);
 
+struct rstr *get_random_string(void);
+
 #endif
