@@ -91,6 +91,13 @@ static const struct {
   { NSRightArrowFunctionKey,  0,                ACTION_RIGHT },
   { NSUpArrowFunctionKey,     0,                ACTION_UP },
   { NSDownArrowFunctionKey,   0,                ACTION_DOWN },
+
+
+  { NSLeftArrowFunctionKey,   NSShiftKeyMask,   ACTION_MOVE_LEFT },
+  { NSRightArrowFunctionKey,  NSShiftKeyMask,   ACTION_MOVE_RIGHT },
+  { NSUpArrowFunctionKey,     NSShiftKeyMask,   ACTION_MOVE_UP },
+  { NSDownArrowFunctionKey,   NSShiftKeyMask,   ACTION_MOVE_DOWN },
+
   { NSPageUpFunctionKey,      0,                ACTION_PAGE_UP, ACTION_NEXT_CHANNEL },
   { NSPageDownFunctionKey,    0,                ACTION_PAGE_DOWN, ACTION_PREV_CHANNEL },
   { NSHomeFunctionKey,        0,                ACTION_TOP },

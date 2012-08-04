@@ -47,6 +47,10 @@ typedef enum {
   ACTION_FOCUS_NEXT,  /* TAB */
   ACTION_FOCUS_PREV,  /* Shift + TAB */
 
+  ACTION_MOVE_UP,       // Move item
+  ACTION_MOVE_DOWN,
+  ACTION_MOVE_LEFT,
+  ACTION_MOVE_RIGHT,
 
   ACTION_NAV_FWD,
   ACTION_NAV_BACK,
