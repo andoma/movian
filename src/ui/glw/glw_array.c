@@ -169,9 +169,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
     rows = (a->num_visible_childs - 1) / a->child_tiles_x + 1;
 
-    if(rows < a->child_tiles_y)
-      ypos = (a->child_tiles_y - rows) * 
-	(yspacing + a->child_height_px) / 2;
+    if(w->glw_alignment == LAYOUT_ALIGN_CENTER && rows < a->child_tiles_y)
+      ypos = (a->child_tiles_y - rows) * (yspacing + a->child_height_px) / 2;
 
   } else {
 
