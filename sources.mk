@@ -46,6 +46,7 @@ SRCS += src/main.c \
 	src/prop/prop_vector.c \
 	src/prop/prop_grouper.c \
 	src/prop/prop_concat.c \
+	src/prop/prop_reorder.c \
 	src/metadata/metadata.c \
 	src/metadata/metadb.c \
 	src/metadata/decoration.c \
