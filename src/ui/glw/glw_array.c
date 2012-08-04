@@ -475,6 +475,11 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
     break;
 
+  case GLW_SIGNAL_CHILD_MOVED:
+    if(w->glw_focused == extra)
+      a->scroll_to_me = extra;
+    break;
+
   }
   return 0;
 }
