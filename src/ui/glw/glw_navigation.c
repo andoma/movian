@@ -200,6 +200,60 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   }
 }
 
+
+/**
+ *
+ */
+static int
+glw_move_item(glw_t *w, action_type_t how) 
+{
+  glw_move_op_t mop;
+
+  mop.steps = 0;
+
+  for(;w->glw_parent != NULL; w = w->glw_parent) {
+
+    glw_t *p = w->glw_parent;
+
+    if(p->glw_class->gc_nav_search_mode == GLW_NAV_SEARCH_ARRAY) {
+
+      int xentries = p->glw_class->gc_get_num_children_x(p);
+      switch(how) {
+      case ACTION_MOVE_UP:
+	mop.steps = -xentries;
+	break;
+      case ACTION_MOVE_DOWN:
+	mop.steps = xentries;
+	break;
+      case ACTION_MOVE_LEFT:
+	mop.steps = -1;
+	break;
+      case ACTION_MOVE_RIGHT:
+	mop.steps = 1;
+	break;
+      default:
+	continue;
+      }
+
+    } else {
+
+      switch(how) {
+      case ACTION_MOVE_UP:
+	mop.steps = -1;
+	break;
+      case ACTION_MOVE_DOWN:
+	mop.steps = 1;
+	break;
+      default:
+	continue;
+      }
+    }
+    if(mop.steps && glw_signal0(w, GLW_SIGNAL_MOVE, &mop))
+      return 1;
+  }
+  return 0;
+}
+
 /**
  *
  */
@@ -231,6 +285,18 @@ glw_navigate(glw_t *w, event_t *e, int local)
 
     glw_focus_crawl(w, 1, 1);
     return 1;
+
+  } else if(event_is_action(e, ACTION_MOVE_UP)) {
+    return glw_move_item(w, ACTION_MOVE_UP);
+
+  } else if(event_is_action(e, ACTION_MOVE_DOWN)) {
+    return glw_move_item(w, ACTION_MOVE_DOWN);
+
+  } else if(event_is_action(e, ACTION_MOVE_LEFT)) {
+    return glw_move_item(w, ACTION_MOVE_LEFT);
+
+  } else if(event_is_action(e, ACTION_MOVE_RIGHT)) {
+    return glw_move_item(w, ACTION_MOVE_RIGHT);
 
   } else if(event_is_action(e, ACTION_UP)) {
     query.orientation = GLW_ORIENTATION_VERTICAL;

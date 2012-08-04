@@ -280,6 +280,13 @@ typedef enum {
    */
   GLW_SIGNAL_RESELECT_CHANGED,
 
+
+  /**
+   * Emitted to a widget when it's requested to move itself
+   * extra is 'glw_move_op_t'
+   */
+  GLW_SIGNAL_MOVE,
+
 } glw_signal_t;
 
 
@@ -292,7 +299,9 @@ typedef struct {
   float value;
 } glw_scroll_t;
 
-
+typedef struct {
+  int steps;
+} glw_move_op_t;
 
 
 typedef int (glw_callback_t)(struct glw *w, void *opaque, 

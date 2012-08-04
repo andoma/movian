@@ -1050,6 +1050,39 @@ cloner_pagination_check(sub_cloner_t *sc)
 }
 
 
+/**
+ *
+ */
+static void
+clone_req_move(sub_cloner_t *sc, glw_t *w, const glw_move_op_t *mop)
+{
+  glw_t *b;
+  int steps = mop->steps;
+
+  if(steps == 0)
+    return;
+
+  if(steps < 0) {
+    glw_t *x;
+    b = x = w;
+    while(steps < 0 && x != NULL) {
+      x = TAILQ_PREV(x, glw_queue, glw_parent_link);
+      if(x != NULL)
+	b = x;
+      steps++;
+    }
+  } else {
+    b = TAILQ_NEXT(w, glw_parent_link);
+    while(steps > 0 && b != NULL) {
+      b = TAILQ_NEXT(b, glw_parent_link);
+      steps--;
+    }
+  }
+
+  glw_clone_t *d = b ? b->glw_clone : NULL;
+  prop_req_move(w->glw_clone->c_prop, d ? d->c_prop : NULL);
+}
+
 
 /**
  *
@@ -1086,6 +1119,10 @@ clone_sig_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
     cloner_pagination_check(sc);
     break;
+
+  case GLW_SIGNAL_MOVE:
+    clone_req_move(sc, w, extra);
+    return 1;
 
   case GLW_SIGNAL_DESTROY:
     gr = w->glw_root;
@@ -1465,6 +1502,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
   case PROP_WANT_MORE_CHILDS:
   case PROP_SET_STRING:
+  case PROP_REQ_MOVE_CHILD:
     break;
 
   }
@@ -1566,6 +1604,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
+  case PROP_REQ_MOVE_CHILD:
     break;
   }
 
@@ -1636,6 +1675,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
+  case PROP_REQ_MOVE_CHILD:
     break;
   }
 
