@@ -724,6 +724,11 @@ static const struct {
   { XK_Up,           0,           ACTION_UP },
   { XK_Down,         0,           ACTION_DOWN },
 
+  { XK_Left,         ShiftMask,   ACTION_MOVE_LEFT },
+  { XK_Right,        ShiftMask,   ACTION_MOVE_RIGHT },
+  { XK_Up,           ShiftMask,   ACTION_MOVE_UP },
+  { XK_Down,         ShiftMask,   ACTION_MOVE_DOWN },
+
   { XK_ISO_Left_Tab, ShiftMask,   ACTION_FOCUS_PREV },
 
   { XK_Left,         Mod1Mask,    ACTION_NAV_BACK},
