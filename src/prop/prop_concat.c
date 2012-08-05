@@ -90,29 +90,40 @@ pcs_destroy(prop_concat_source_t *pcs)
  *
  */
 static void
+add_child(prop_concat_source_t *pcs, prop_concat_t *pc, prop_t *p)
+{
+  prop_t *out = prop_create_root(NULL);
+  prop_tag_set(p, pcs, out);
+  prop_link0(p, out, NULL, 0);
+  
+  prop_set_parent0(out, pc->pc_dst, find_next_out(pcs), NULL);
+  
+  if(pcs->pcs_count == 0) {
+    pcs->pcs_first = out;
+    if(pcs->pcs_header != NULL)
+      prop_set_parent0(pcs->pcs_header, pc->pc_dst, out, NULL);
+  }
+  pcs->pcs_count++;
+}
+	  
+
+/**
+ *
+ */
+static void
 src_cb(void *opaque, prop_event_t event, ...)
 {
   prop_concat_source_t *pcs = opaque;
   prop_concat_t *pc = pcs->pcs_pc;
   prop_t *p, *q, *out, *before;
+  prop_vec_t *pv;
+  int i;
   va_list ap;
   va_start(ap, event);
 
   switch(event) {
   case PROP_ADD_CHILD:
-    p = va_arg(ap, prop_t *);
-    out = prop_create_root(NULL);
-    prop_tag_set(p, pcs, out);
-    prop_link0(p, out, NULL, 0);
-
-    prop_set_parent0(out, pc->pc_dst, find_next_out(pcs), NULL);
-
-    if(pcs->pcs_count == 0) {
-      pcs->pcs_first = out;
-      if(pcs->pcs_header != NULL)
-	prop_set_parent0(pcs->pcs_header, pc->pc_dst, out, NULL);
-    }
-    pcs->pcs_count++;
+    add_child(pcs, pc, va_arg(ap, prop_t *));
     break;
 
   case PROP_ADD_CHILD_BEFORE:
@@ -127,6 +138,13 @@ src_cb(void *opaque, prop_event_t event, ...)
     prop_set_parent0(out, pc->pc_dst, before, NULL);
     
     pcs->pcs_count++;
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
+    pv = va_arg(ap, prop_vec_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      add_child(pcs, pc, prop_vec_get(pv, i));
     break;
 
   case PROP_DEL_CHILD:

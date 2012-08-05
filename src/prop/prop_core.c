@@ -404,6 +404,7 @@ prop_notify_free(prop_notify_t *n)
     // FALLTHRU
   case PROP_REQ_DELETE_VECTOR:
   case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
     prop_vec_release(n->hpn_propv);
     break;
   case PROP_SET_STRING:
@@ -708,6 +709,7 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     case PROP_REQ_DELETE_VECTOR:
     case PROP_ADD_CHILD_VECTOR:
+    case PROP_ADD_CHILD_VECTOR_DIRECT:
       if(pt != NULL)
 	pt(s, n->hpn_event, n->hpn_propv);
       else
@@ -1194,9 +1196,9 @@ prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
  */
 static void
 prop_build_notify_childv(prop_sub_t *s, prop_vec_t *pv, prop_event_t event,
-			 prop_t *p2)
+			 prop_t *p2, int direct)
 {
-  if(s->hps_flags & PROP_SUB_INTERNAL) {
+  if(direct || s->hps_flags & PROP_SUB_INTERNAL) {
     prop_callback_t *cb = s->hps_callback;
     prop_trampoline_t *pt = s->hps_trampoline;
 
@@ -1228,7 +1230,7 @@ prop_notify_childv(prop_vec_t *pv, prop_t *parent, prop_event_t event,
 
   LIST_FOREACH(s, &parent->hp_value_subscriptions, hps_value_prop_link)
     if(s != skipme)
-      prop_build_notify_childv(s, pv, event, p2);
+      prop_build_notify_childv(s, pv, event, p2, 0);
 }
 
 
@@ -2335,9 +2337,24 @@ prop_subscribe(int flags, ...)
 			    s->hps_value_prop, NULL, 0);
 
     if(value->hp_type == PROP_DIR && !(s->hps_flags & PROP_SUB_MULTI)) {
-      TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
-	prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
-				gen_add_flags(c, value));
+
+      if(value->hp_selected == NULL && direct) {
+
+	int cnt = 0;
+	TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+	  cnt++;
+	
+	prop_vec_t *pv = prop_vec_create(cnt);
+	TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+	  pv = prop_vec_append(pv, c);
+
+	prop_build_notify_childv(s, pv, PROP_ADD_CHILD_VECTOR_DIRECT, NULL, 1);
+
+      } else {
+	TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
+	  prop_build_notify_child(s, c, PROP_ADD_CHILD, direct,
+				  gen_add_flags(c, value));
+      }
     }
   }
 

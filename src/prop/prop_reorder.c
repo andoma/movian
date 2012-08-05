@@ -101,22 +101,40 @@ get_before(prop_reorder_t *pr, const char *id)
  *
  */
 static void
+add_child(prop_reorder_t *pr, prop_t *p)
+{
+  prop_t *out = prop_create_root(NULL);
+  prop_tag_set(p, pr, out);
+  prop_link0(p, out, NULL, 0);
+  prop_set_parent0(out, pr->pr_dst, get_before(pr, get_id(p)), NULL);
+}
+
+
+/**
+ *
+ */
+static void
 src_cb(void *opaque, prop_event_t event, ...)
 {
   prop_reorder_t *pr = opaque;
   va_list ap;
-  prop_t *p, *out, *before;
+  prop_t *p, *out;
+  prop_vec_t *pv;
+  int i;
+
   va_start(ap, event);
 
   switch(event) {
   case PROP_ADD_CHILD:
   case PROP_ADD_CHILD_BEFORE:
-    p = va_arg(ap, prop_t *);
-    out = prop_create_root(NULL);
-    prop_tag_set(p, pr, out);
-    prop_link0(p, out, NULL, 0);
-    before = get_before(pr, get_id(p));
-    prop_set_parent0(out, pr->pr_dst, before, NULL);
+    add_child(pr, va_arg(ap, prop_t *));
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
+    pv = va_arg(ap, prop_vec_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      add_child(pr, prop_vec_get(pv, i));
     break;
 
   case PROP_DEL_CHILD:

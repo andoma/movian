@@ -940,6 +940,7 @@ prop_nf_src_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
     nf_add_nodes(nf, va_arg(ap, prop_vec_t *), NULL);
     break;
 
