@@ -17,7 +17,10 @@ widget(container_z, {
     source: $global.nav.currentpage.model.metadata.background ?? 
 	  $global.nav.currentpage.glw.background ??
 	  "graphics/background.jpg";
-    color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+    color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
+      ($global.nav.currentpage.model.metadata.backgroundAlpha ??
+       $global.nav.currentpage.glw.backgroundAlpha ??
+       1);
   });
 
   widget(container_y, {
