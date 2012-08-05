@@ -273,7 +273,7 @@ gu_home_create(gu_nav_page_t *gnp)
 
   h->h_src_sub =
     prop_subscribe(0,
-		   PROP_TAG_NAME("global", "sources"),
+		   PROP_TAG_NAME("global", "services", "enabled"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &h->h_sources,
 		   PROP_TAG_COURIER, gu->gu_pc,
 		   NULL);

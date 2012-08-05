@@ -55,6 +55,7 @@ static struct strtab origin_tab[] = {
   { "bookmark",   SVC_ORIGIN_BOOKMARK }, 
   { "discovered", SVC_ORIGIN_DISCOVERED },
   { "app",        SVC_ORIGIN_APP },
+  { "media",      SVC_ORIGIN_MEDIA },
 };
 
 static service_t *service_create0(const char *id,

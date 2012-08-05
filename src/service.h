@@ -53,6 +53,7 @@ typedef enum {
   SVC_ORIGIN_BOOKMARK,
   SVC_ORIGIN_DISCOVERED,
   SVC_ORIGIN_APP,
+  SVC_ORIGIN_MEDIA,
 } service_origin_t;
 
 
