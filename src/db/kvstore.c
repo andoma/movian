@@ -202,7 +202,6 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
       rc = db_prepare(db,
 		      "DELETE FROM page_kv WHERE url_id = ?1 AND key = ?2",
 		      -1, &stmt, NULL);
-      printf("Deleteing a prop is good\n");
     } else {
 
       rc = db_prepare(db,
