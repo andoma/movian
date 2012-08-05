@@ -18,6 +18,7 @@ widget(container_z, {
 	  $global.nav.currentpage.glw.background ??
 	  "graphics/background.jpg";
     color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16);
+    alpha: $global.nav.currentpage.model.metadata.backgroundAlpha ?? 1.0;
   });
 
   widget(container_y, {
