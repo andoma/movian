@@ -41,3 +41,9 @@ void db_pool_put(db_pool_t *p, sqlite3 *db);
 void db_pool_close(db_pool_t *dp);
 
 rstr_t *db_rstr(sqlite3_stmt *stmt, int col);
+
+static inline void db_bind_rstr(sqlite3_stmt *stmt, int col, rstr_t *rstr)
+{
+  sqlite3_bind_text(stmt, col, (void *)rstr_get(rstr), -1, SQLITE_STATIC);
+
+}
