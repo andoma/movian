@@ -5,7 +5,6 @@
 * Metadata loading throbber
 * Metadata switching
 * Metadata priority order
-* Persist view switching 
 * Fix list focus when destroying item via context menu
 * Standardize view elements so .view plugins have something to lean on
 * GLW .view plugins

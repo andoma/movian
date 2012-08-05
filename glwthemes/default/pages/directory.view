@@ -11,7 +11,7 @@ onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
 multiopt($view.path,
 	 $clone.settings,
 	 _("View"),
-
+	 $page.persistent.glwUserView,
 	 // List of view follows
 	 link(_("Custom"), $page.model.metadata.glwview),
 

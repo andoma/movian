@@ -4975,7 +4975,12 @@ typedef struct glwf_multiopt_extra {
   prop_t *value;
   multiopt_item_t *cur;
 
-  prop_sub_t *sub;
+  prop_sub_t *setting_sub;
+
+  prop_t *storage;
+  prop_sub_t *storage_sub;
+
+  rstr_t *userval;
 
 } glwf_multiopt_extra_t;
 
@@ -4992,8 +4997,10 @@ multiopt_item_cycle(glwf_multiopt_extra_t *x)
   x->cur = TAILQ_NEXT(x->cur, mi_link);
   if(x->cur == NULL)
     x->cur = TAILQ_FIRST(&x->q);
-  if(x->cur->mi_item)
+  if(x->cur->mi_item) {
     prop_select(x->cur->mi_item);
+    prop_set_rstring(x->storage, x->cur->mi_value);
+  }
 }
 
 /**
@@ -5015,6 +5022,7 @@ multiopt_item_cb(void *opaque, prop_event_t event, ...)
     c = va_arg(ap, prop_t *);
     name = c ? prop_get_name(c) : NULL;
     prop_set_rstring(x->value, name);
+    prop_set_rstring(x->storage, name);
     rstr_release(name);
     break;
 
@@ -5085,8 +5093,23 @@ glwf_multiopt_dtor(glw_root_t *gr, struct token *self)
   prop_ref_dec(x->opts);
   prop_ref_dec(x->title);
   prop_destroy(x->value);
-  prop_unsubscribe(x->sub);
+  prop_unsubscribe(x->setting_sub);
+
+  prop_ref_dec(x->storage);
+  prop_unsubscribe(x->storage_sub);
+  rstr_release(x->userval);
   free(x);
+}
+
+/**
+ *
+ */
+static void
+multiopt_storage_cb(void *opaque, rstr_t *rstr)
+{
+  glwf_multiopt_extra_t *x = opaque;
+
+  rstr_set(&x->userval, rstr);
 }
 
 
@@ -5097,26 +5120,26 @@ static int
 glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
-  token_t *dst, *setting, *title;
+  token_t *dst, *setting, *title, *storage;
   glwf_multiopt_extra_t *x = self->t_extra;
   int i;
   multiopt_item_t *mi, *n;
-  prop_t *p;
 
-  if(argc < 3)
+
+  if(argc < 4)
     return glw_view_seterr(ec->ei, self, 
 			   "multiopt(): Invalid number of args");
   if((dst     = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
   if((setting = resolve_property_name2(ec, argv[1])) == NULL)
     return -1;
-
   if((title = token_resolve(ec, argv[2])) == NULL)
     return -1;
+  if((storage = resolve_property_name2(ec, argv[3])) == NULL)
+    return -1;
 
-  p = setting->t_prop;
 
-  if(p != x->settings) {
+  if(setting->t_prop != x->settings) {
 
     TAILQ_FOREACH(mi, &x->q, mi_link) {
       if(mi->mi_item != NULL) {
@@ -5130,30 +5153,52 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       prop_ref_dec(x->settings);
       prop_ref_dec(x->opts);
       prop_ref_dec(x->title);
-      x->settings = NULL;
       x->opts = NULL;
       x->title = NULL;
     }
 
-    prop_unsubscribe(x->sub);
-    x->sub = NULL;
+    prop_unsubscribe(x->setting_sub);
+    x->setting_sub = NULL;
 
-    x->settings = prop_ref_inc(p);
+    x->settings = prop_ref_inc(setting->t_prop);
 
-    if(p != NULL) {
+    if(x->settings != NULL) {
 
-      x->title = prop_create_r(prop_create(p, "metadata"), "title");
-      prop_set(p, "type", NULL, PROP_SET_STRING, "multiopt");
+      x->title = prop_create_r(prop_create(x->settings, "metadata"), "title");
+      prop_set(x->settings, "type", NULL, PROP_SET_STRING, "multiopt");
       
-      x->opts = prop_create_r(p, "options");
+      x->opts = prop_create_r(x->settings, "options");
 
-      x->sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-			      PROP_TAG_CALLBACK, multiopt_item_cb, x, 
-			      PROP_TAG_ROOT, x->opts, 
-			      PROP_TAG_COURIER, ec->w->glw_root->gr_courier,
-			      NULL);
+      x->setting_sub =
+	prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		       PROP_TAG_CALLBACK, multiopt_item_cb, x, 
+		       PROP_TAG_ROOT, x->opts, 
+		       PROP_TAG_COURIER, ec->w->glw_root->gr_courier,
+		       NULL);
     }
   }
+
+
+  if(storage->t_prop != x->storage) {
+
+    if(x->storage != NULL)
+      prop_ref_dec(x->storage);
+
+    prop_unsubscribe(x->storage_sub);
+    x->storage_sub = NULL;
+
+    x->storage = prop_ref_inc(storage->t_prop);
+
+    if(x->storage != NULL) {
+      x->storage_sub =
+	prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		       PROP_TAG_CALLBACK_RSTR, multiopt_storage_cb, x, 
+		       PROP_TAG_ROOT, x->storage, 
+		       PROP_TAG_COURIER, ec->w->glw_root->gr_courier,
+		       NULL);
+    }
+  }
+
 
   if(title->type == TOKEN_RSTRING)
     prop_set_rstring(x->title, title->t_rstring);
@@ -5161,9 +5206,10 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
   TAILQ_FOREACH(mi, &x->q, mi_link)
     mi->mi_mark = 1;
 
-  argv += 3;
-  argc -= 3;
+  argv += 4;
+  argc -= 4;
 
+  multiopt_item_t *u = NULL; // user preferred
 
   for(i = 0; i < argc; i++) {
     token_t *d;
@@ -5185,6 +5231,10 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       TAILQ_REMOVE(&x->q, mi, mi_link);
       mi->mi_mark = 0;
     }
+
+    if(x->userval != NULL && !strcmp(rstr_get(x->userval), 
+				     rstr_get(mi->mi_value)))
+      u = mi;
     rstr_set(&mi->mi_title, d->t_link_rtitle);
     TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
   }
@@ -5217,9 +5267,11 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
     }
   }
 
-  x->cur = TAILQ_FIRST(&x->q);
-  if(x->cur != NULL)
-    prop_select(x->cur->mi_item);
+  x->cur = u ?: TAILQ_FIRST(&x->q);
+  if(x->cur != NULL) {
+    prop_set_rstring(x->value, x->cur->mi_value);
+    prop_select_ex(x->cur->mi_item, NULL, x->setting_sub);
+  }
 
   prop_link(x->value, dst->t_prop);
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
