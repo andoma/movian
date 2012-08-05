@@ -1468,7 +1468,7 @@ get_random_string(void)
 {
   sha1_decl(shactx);
   uint8_t d[20];
-  char buf[4];
+  char buf[40];
   static uint64_t seed;
   int i;
   seed ^= showtime_get_ts();
