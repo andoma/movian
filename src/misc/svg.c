@@ -203,21 +203,16 @@ toVector(FT_Vector *v, const float *f)
 }
 
 static void
-cmd_move(svg_state_t *state, int seq)
+cmd_move(svg_state_t *state)
 {
   float pt[2];
   FT_Vector v;
   svg_mtx_vec_mul(pt, state->ctm, state->cur);
-
   toVector(&v, pt);
-  if(seq) {
-    if(state->inpath)
-      FT_Stroker_LineTo(state->stroker, &v);
+
+  if(state->inpath) {
+    FT_Stroker_LineTo(state->stroker, &v);
   } else {
-
-    if(state->inpath)
-      FT_Stroker_EndSubPath(state->stroker);
-
     FT_Stroker_BeginSubPath(state->stroker, &v, 0);
     state->inpath = 1;
   }
@@ -225,19 +220,19 @@ cmd_move(svg_state_t *state, int seq)
 
 
 static void
-cmd_move_abs(svg_state_t *state, const float *p, int seq)
+cmd_move_abs(svg_state_t *state, const float *p)
 {
   state->cur[0] = p[0];
   state->cur[1] = p[1];
-  cmd_move(state, seq);
+  cmd_move(state);
 }
 
 static void
-cmd_move_rel(svg_state_t *state, const float *p, int seq)
+cmd_move_rel(svg_state_t *state, const float *p)
 {
   state->cur[0] += p[0];
   state->cur[1] += p[1];
-  cmd_move(state, seq);
+  cmd_move(state);
 }
 
 
@@ -255,7 +250,7 @@ cmd_curve(svg_state_t *state, const float *c, const float *d, const float *e)
 }
 
 static void
-cmd_curveto_rel(svg_state_t *state, const float *p, int seq)
+cmd_curveto_rel(svg_state_t *state, const float *p)
 {
   float s[2], c[2], d[3], e[2];
 
@@ -287,7 +282,7 @@ cmd_curveto_rel(svg_state_t *state, const float *p, int seq)
 
 
 static void
-cmd_curveto_abs(svg_state_t *state, const float *p, int seq)
+cmd_curveto_abs(svg_state_t *state, const float *p)
 {
   float s[2], c[2], d[3], e[2];
 
@@ -331,7 +326,7 @@ cmd_lineto(svg_state_t *state)
 
 
 static void
-cmd_lineto_rel(svg_state_t *state, const float *p, int seq)
+cmd_lineto_rel(svg_state_t *state, const float *p)
 {
   state->cur[0] += p[0];
   state->cur[1] += p[1];
@@ -343,7 +338,7 @@ cmd_lineto_rel(svg_state_t *state, const float *p, int seq)
 
 
 static void
-cmd_lineto_abs(svg_state_t *state, const float *p, int seq)
+cmd_lineto_abs(svg_state_t *state, const float *p)
 {
   state->cur[0] = p[0];
   state->cur[1] = p[1];
@@ -372,8 +367,7 @@ stroke_path(svg_state_t *state, const char *str)
   float values[6];
   int num_params = 0;
   int cur_param = 0;
-  void (*cur_cmd)(svg_state_t *state, const float *params, int seq) = NULL; 
-  int seq = 0;
+  void (*cur_cmd)(svg_state_t *state, const float *params) = NULL; 
 
   while(*str) {
     if(*str < 33) {
@@ -390,9 +384,8 @@ stroke_path(svg_state_t *state, const char *str)
 	values[cur_param] = d;
 	cur_param++;
 	if(cur_param == num_params) {
-	  cur_cmd(state, values, seq);
+	  cur_cmd(state, values);
 	  cur_param = 0;
-	  seq++;
 	}
 
 	str = endptr;
@@ -450,7 +443,6 @@ stroke_path(svg_state_t *state, const char *str)
       printf("Cant handle mode %c\n", mode);
       return;
     }
-    seq = 0;
   }
 }
 
@@ -650,13 +642,13 @@ stroke_rect_element(svg_state_t *s, htsmsg_t *attribs)
 
   v[0] = x;
   v[1] = y;
-  cmd_move_abs(s, v, 0);
+  cmd_move_abs(s, v);
   v[0] += width;
-  cmd_lineto_abs(s, v, 0);
+  cmd_lineto_abs(s, v);
   v[1] += height;
-  cmd_lineto_abs(s, v, 0);
+  cmd_lineto_abs(s, v);
   v[0] = x;
-  cmd_lineto_abs(s, v, 0);
+  cmd_lineto_abs(s, v);
   cmd_close(s);
   return 0;
 }
