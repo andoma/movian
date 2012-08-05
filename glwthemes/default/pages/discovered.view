@@ -64,6 +64,10 @@ $view.sizer = $ui.size / 2;
 }
 
 widget(container_y, {
+
+  PageTitle(_("Discovered resources on local network"));
+  VerticalSeparator();
+
 widget(array, {
   border: $ui.size;
   Yspacing: $ui.size;
