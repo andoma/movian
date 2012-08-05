@@ -276,6 +276,7 @@ src_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_ADD_CHILD_VECTOR:
   case PROP_ADD_CHILD_VECTOR_BEFORE:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
     pg_add_nodes(pg, va_arg(ap, prop_vec_t *));
     break;
 
