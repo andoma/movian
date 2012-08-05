@@ -134,7 +134,7 @@ widget(container_z, {
       XITEM_TITLE("System");
     });
 
-    cloner(propSorter(propGrouper($global.sources, "node.type"), "node.name"), container_z, {
+    cloner(propSorter(propGrouper($global.services.enabled, "node.type"), "node.name"), container_z, {
       XITEM_PROPS();
 
       widget(list_y, {
