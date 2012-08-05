@@ -3,8 +3,8 @@
 commandMenuChrome(
   SEP($global.nav.currentpage.model.metadata.title);
       
-  ITEMTOGGLE(fmt(_("Add '%s' to bookmarks"), $global.nav.currentpage.model.metadata.title),
-	     fmt(_("Remove '%s' from bookmarks"), $global.nav.currentpage.model.metadata.title),
+  ITEMTOGGLE(fmt(_("Add '%s' to home screen"), $global.nav.currentpage.model.metadata.title),
+	     fmt(_("Remove '%s' from home screen"), $global.nav.currentpage.model.metadata.title),
 	     $global.nav.currentpage.bookmarked,
 	     { $global.nav.currentpage.bookmarked = !$global.nav.currentpage.bookmarked;},
 	     true
