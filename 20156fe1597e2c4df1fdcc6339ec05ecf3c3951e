@@ -1,0 +1,10 @@
+ps3: Rework button handling a bit on the six axis controller
+
+* Select + Directional buttons will move items (when possible)
+  Currently this can be done on the home screen
+
+* Select + Triangle will switch view (if possible)
+  Not many pages comes with multiple views at the moment
+
+* Pressing harder on the buttons will increase the repeat rate, thus
+  Pressing harder -> Scrolling faster (our work is never over)
