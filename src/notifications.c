@@ -31,23 +31,6 @@ static prop_t *notify_prop_entries;
 /**
  *
  */
-static void
-setstr(char **p, htsmsg_t *m, const char *fname)
-{
-  const char *s;
-
-  if(p == NULL)
-    return;
-
-  if((s = htsmsg_get_str(m, fname)) != NULL)
-    *p = strdup(s);
-  else
-    *p = NULL;
-}
-
-/**
- *
- */
 void
 notifications_init(void)
 {
@@ -231,7 +214,6 @@ message_popup(const char *message, int flags)
 int
 text_dialog(const char *message, char** answer, int flags)
 {
-  htsmsg_t *m;
   rstr_t *r;
 
   prop_t *p = prop_create_root(NULL);
@@ -249,22 +231,20 @@ text_dialog(const char *message, char** answer, int flags)
   event_t *e = popup_display(p);
   
   if(event_is_action(e, ACTION_OK)) {
-    m = htsmsg_create_map();  
-      
     r = prop_get_string(string, NULL);
-    htsmsg_add_str(m, "input", r ? rstr_get(r) : "");
+
+    if(r)
+      *answer = strdup(rstr_get(r));
+    else
+      *answer = NULL;
     rstr_release(r);
-      
-    htsmsg_get_str(m, "input");
-    
-    setstr(answer, m, "input");
   }
   
   prop_destroy(p);
   
   if(event_is_action(e, ACTION_CANCEL)){
-      event_release(e);
-      return -1;
+    event_release(e);
+    return -1;
   } 
 
   event_release(e);
