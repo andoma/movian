@@ -3388,7 +3388,7 @@ prop_suggest_focus(prop_t *p)
 static prop_t *
 prop_find0(prop_t *p, va_list ap)
 {
-  prop_t *c = NULL;
+  prop_t *c = p;
   const char *n;
 
   while((n = va_arg(ap, const char *)) != NULL) {
