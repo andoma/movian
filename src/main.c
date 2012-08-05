@@ -58,6 +58,7 @@
 #include "metadata/metadata.h"
 #include "ext/sqlite/sqlite3.h"
 #include "js/js.h"
+#include "db/kvstore.h"
 
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
@@ -388,6 +389,7 @@ main(int argc, char **argv)
   /* Metadata init */
   metadata_init();
   metadb_init();
+  kvstore_init();
 
   /* Metadata decoration init */
   decoration_init();
@@ -549,6 +551,7 @@ finalize(void)
   shutdown_hook_run(0);
   blobcache_fini();
   metadb_fini();
+  kvstore_fini();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
   trace_fini();
 }

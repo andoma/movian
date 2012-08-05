@@ -33,6 +33,7 @@
 #include "settings.h"
 #include "notifications.h"
 #include "misc/string.h"
+#include "db/kvstore.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);
@@ -457,6 +458,9 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view,
 		    const char *how)
 {
   np->np_prop_root = prop_create_root("page");
+
+  kv_prop_bind_create(prop_create(np->np_prop_root, "persistent"),
+		      np->np_url);
 
   if(np->np_opened_from)
     prop_link(np->np_opened_from, prop_create(np->np_prop_root, "openedFrom"));
