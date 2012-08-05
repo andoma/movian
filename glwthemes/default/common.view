@@ -19,7 +19,6 @@
     sizeScale: 2;
     padding: [5,0];
     caption: CAPTION;
-    ellipsize: true;
   });
 }
 

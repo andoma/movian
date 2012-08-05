@@ -201,7 +201,19 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     if(text_width > right - left) {
       // Oversized, must cut
       text_width = right - left;
+
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,0);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,0);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1+text_width/20);
+
     } else { 
+
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,1);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,1);
+      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1);
+
       switch(w->glw_alignment) {
       case LAYOUT_ALIGN_JUSTIFIED:
       case LAYOUT_ALIGN_CENTER:

@@ -32,10 +32,10 @@ widget(backdrop, {
     
     
     widget(label, {
+      filterConstraintX: true;
       TextStyleItem();
       color: select(isFocused(), 1.0, 0.6);
       caption: $self.metadata.title;
-      ellipsize: true;
     });
   });
 });
