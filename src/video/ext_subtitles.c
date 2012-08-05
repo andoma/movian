@@ -148,7 +148,7 @@ get_srt_timestamp2(const char *buf)
 static int
 get_srt_timestamp(linereader_t *lr, int64_t *start, int64_t *stop)
 {
-  if(lr->ll != 29 || memcmp(lr->buf + 12, " --> ", 5))
+  if(lr->ll < 29 || memcmp(lr->buf + 12, " --> ", 5))
     return -1;
 
   *start = get_srt_timestamp2(lr->buf);

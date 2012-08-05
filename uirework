@@ -1,6 +1,5 @@
 
 * Fix all the playdecks!
-* Improve PS3 controller buttons
 * Auto-upgrade of Showtime
 * Metadata loading throbber
 * Metadata switching
@@ -8,7 +7,7 @@
 * Fix list focus when destroying item via context menu
 * Standardize view elements so .view plugins have something to lean on
 * GLW .view plugins
-
+* Swap X and O on PS3 in Japan
 
 ---- view plugins ------------------
 
