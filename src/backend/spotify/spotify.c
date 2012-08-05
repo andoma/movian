@@ -4535,7 +4535,7 @@ be_spotify_init(void)
   spotify_service = service_create("showtime:spotify",
 				   "Spotify", "spotify:start",
 				   "music", iconurl, 0, 0,
-				   SVC_ORIGIN_DISCOVERED);
+				   SVC_ORIGIN_APP);
 
   settings_create_divider(s, NULL);
 
