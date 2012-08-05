@@ -249,6 +249,11 @@ glw_ps3_init(glw_ps3_t *gp)
 
   ioPadInit(7);
   ioKbInit(MAX_KB_PORT_NUM);
+
+  int i;
+  for(i = 0; i < 7; i++)
+    ioPadSetPortSetting(i, 0x2);
+
   return 0;
 }
 
@@ -380,7 +385,6 @@ typedef enum {
   BTN_R2,
   BTN_R3,
   BTN_START,
-  BTN_SELECT,
   BTN_KEY_1,
   BTN_KEY_2,
   BTN_KEY_3,
@@ -434,7 +438,6 @@ const static action_type_t *btn_to_action[BTN_max] = {
 
   [BTN_R3]         = AVEC(ACTION_LOGWINDOW),
   [BTN_START]      = AVEC(ACTION_PLAYPAUSE),
-  [BTN_SELECT]     = AVEC(ACTION_HOME),
   [BTN_ENTER]      = AVEC(ACTION_ACTIVATE, ACTION_ENTER),
   [BTN_RETURN]     = AVEC(ACTION_NAV_BACK),
   [BTN_EJECT]      = AVEC(ACTION_EJECT),
@@ -449,19 +452,15 @@ const static action_type_t *btn_to_action[BTN_max] = {
   [BTN_POPUP_MENU] = AVEC(ACTION_MENU),
   [BTN_SUBTITLE]   = AVEC(ACTION_CYCLE_SUBTITLE),
   [BTN_AUDIO]      = AVEC(ACTION_CYCLE_AUDIO),
+};
 
-  //  [BTN_L2] = ACTION_L2,
-  //  [BTN_R2] = ACTION_R2,
-  //  [BTN_CLEAR] = ACTION_CLEAR,
-  //  [BTN_TIME] = ACTION_TIME,
-  //  [BTN_SLOW_REV] = ACTION_SLOW_REV,
-  //  [BTN_SLOW_FWD] = ACTION_SLOW_FWD,
-  //  [BTN_ANGLE] = ACTION_ANGLE,
-  //  [BTN_DISPLAY] = ACTION_DISPLAY,
-  //  [BTN_BLUE] = ACTION_BLUE,
-  //  [BTN_RED] = ACTION_RED,
-  //  [BTN_GREEN] = ACTION_GREEN,
-  //  [BTN_YELLOW] = ACTION_YELLOW,
+
+const static action_type_t *btn_to_action_sel[BTN_max] = {
+  [BTN_LEFT]       = AVEC(ACTION_MOVE_LEFT),
+  [BTN_UP]         = AVEC(ACTION_MOVE_UP),
+  [BTN_RIGHT]      = AVEC(ACTION_MOVE_RIGHT),
+  [BTN_DOWN]       = AVEC(ACTION_MOVE_DOWN),
+  [BTN_TRIANGLE]   = AVEC(ACTION_SWITCH_VIEW),
 };
 
 
@@ -475,16 +474,22 @@ static PadData paddata[MAX_PADS];
 #define KEY_REPEAT_RATE  3  // in frames
 
 static void
-handle_btn(glw_ps3_t *gp, int pad, int code, int pressed)
+handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
 {
   int16_t *store = &button_counter[pad][code];
+  int rate = KEY_REPEAT_RATE;
   if(code == 0)
     return;
-
+  
   if(pressed) {
 
+    if(pre > 200)
+      rate = 1;
+    else if(pre > 100)
+      rate = 2;
+
     if(*store == 0 ||
-       (*store > KEY_REPEAT_DELAY && (*store % KEY_REPEAT_RATE == 0))) {
+       (*store > KEY_REPEAT_DELAY && (*store % rate == 0))) {
       int uc = 0;
       event_t *e = NULL;
 
@@ -498,7 +503,8 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed)
 	e = event_create_int(EVENT_UNICODE, uc);
 
       if(e == NULL) {
-	const action_type_t *avec = btn_to_action[code];
+	const action_type_t *avec =
+	  sel ? btn_to_action_sel[code] : btn_to_action[code];
 	if(avec) {
 	  int i = 0;
 	  while(avec[i] != 0)
@@ -609,7 +615,6 @@ static const uint8_t bd_to_local_map[256] = {
   [BTN_BD_STOP] = BTN_STOP,
   [BTN_BD_PAUSE] = BTN_PAUSE,
   [BTN_BD_POPUP_MENU] = BTN_POPUP_MENU,
-  [BTN_BD_SELECT] = BTN_SELECT,
   [BTN_BD_L3] = BTN_L3,
   [BTN_BD_R3] = BTN_R3,
   [BTN_BD_START] = BTN_START,
@@ -664,12 +669,12 @@ handle_pads(glw_ps3_t *gp)
 	int btn = paddata[i].button[25];
 	if(btn != remote_last_btn[i]) {
 	  if(remote_last_btn[i] < 0xff)
-	    handle_btn(gp, i, bd_to_local_map[remote_last_btn[i]], 0);
+	    handle_btn(gp, i, bd_to_local_map[remote_last_btn[i]], 0, 0, 0);
 	  remote_last_btn[i] = btn;
 	}
 
 	if(btn != 0xff)
-	  handle_btn(gp, i, bd_to_local_map[btn], 1);
+	  handle_btn(gp, i, bd_to_local_map[btn], 1, 0, 0);
       }
       continue;
     }
@@ -677,22 +682,22 @@ handle_pads(glw_ps3_t *gp)
 
     ioPadGetData(i, &paddata[i]);
     PadData *pd = &paddata[i];
-    handle_btn(gp, i, BTN_LEFT,     pd->BTN_LEFT);
-    handle_btn(gp, i, BTN_UP,       pd->BTN_UP);
-    handle_btn(gp, i, BTN_RIGHT,    pd->BTN_RIGHT);
-    handle_btn(gp, i, BTN_DOWN,     pd->BTN_DOWN);
-    handle_btn(gp, i, BTN_CROSS,    pd->BTN_CROSS);
-    handle_btn(gp, i, BTN_CIRCLE,   pd->BTN_CIRCLE);
-    handle_btn(gp, i, BTN_TRIANGLE, pd->BTN_TRIANGLE);
-    handle_btn(gp, i, BTN_SQUARE,   pd->BTN_SQUARE);
-    handle_btn(gp, i, BTN_START,    pd->BTN_START);
-    handle_btn(gp, i, BTN_SELECT,   pd->BTN_SELECT);
-    handle_btn(gp, i, BTN_R1,       pd->BTN_R1);
-    handle_btn(gp, i, BTN_L1,       pd->BTN_L1);
-    handle_btn(gp, i, BTN_R2,       pd->BTN_R2);
-    handle_btn(gp, i, BTN_L2,       pd->BTN_L2);
-    handle_btn(gp, i, BTN_R3,       pd->BTN_R3);
-    handle_btn(gp, i, BTN_L3,       pd->BTN_L3);
+    int sel = !!pd->BTN_SELECT;
+    handle_btn(gp, i, BTN_LEFT,     pd->BTN_LEFT,     sel, pd->PRE_LEFT);
+    handle_btn(gp, i, BTN_UP,       pd->BTN_UP,       sel, pd->PRE_UP);
+    handle_btn(gp, i, BTN_RIGHT,    pd->BTN_RIGHT,    sel, pd->PRE_RIGHT);
+    handle_btn(gp, i, BTN_DOWN,     pd->BTN_DOWN,     sel, pd->PRE_DOWN);
+    handle_btn(gp, i, BTN_CROSS,    pd->BTN_CROSS,    sel, pd->PRE_CROSS);
+    handle_btn(gp, i, BTN_CIRCLE,   pd->BTN_CIRCLE,   sel, pd->PRE_CIRCLE);
+    handle_btn(gp, i, BTN_TRIANGLE, pd->BTN_TRIANGLE, sel, pd->PRE_TRIANGLE);
+    handle_btn(gp, i, BTN_SQUARE,   pd->BTN_SQUARE,   sel, pd->PRE_SQUARE);
+    handle_btn(gp, i, BTN_START,    pd->BTN_START,    sel, 0);
+    handle_btn(gp, i, BTN_R1,       pd->BTN_R1,       sel, pd->PRE_R1);
+    handle_btn(gp, i, BTN_L1,       pd->BTN_L1,       sel, pd->PRE_L1);
+    handle_btn(gp, i, BTN_R2,       pd->BTN_R2,       sel, pd->PRE_R2);
+    handle_btn(gp, i, BTN_L2,       pd->BTN_L2,       sel, pd->PRE_L2);
+    handle_btn(gp, i, BTN_R3,       pd->BTN_R3,       sel, 0);
+    handle_btn(gp, i, BTN_L3,       pd->BTN_L3,       sel, 0);
   }
 }
 
@@ -862,17 +867,14 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 {
   int currentBuffer = 0;
   TRACE(TRACE_DEBUG, "GLW", "Entering mainloop");
-#if 0
-  int r = ioPadSetPortSetting(6, 0xffffffff);
-  TRACE(TRACE_ERROR, "PS3PAD", "portsetting=0x%x", r);
-#endif
+
+
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
   while(!gp->stop) {
 
     handle_pads(gp);
     handle_kb(gp);
-
 
     waitFlip();
     drawFrame(gp, currentBuffer, 1);
