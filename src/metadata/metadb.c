@@ -2129,11 +2129,19 @@ metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-metadb_set_playcount(void *opaque, int v)
+metadb_set_playcount(void *opaque, prop_event_t event, ...)
 {
   const metadb_item_prop_t *mip = opaque;
   int rc;
   void *db;
+  va_list ap;
+
+  if(event != PROP_SET_INT) 
+    return;
+
+  va_start(ap, event);
+  int v = va_arg(ap, int);
+  va_end(ap);
 
   if((db = metadb_get()) == NULL)
     return;
@@ -2144,7 +2152,6 @@ metadb_set_playcount(void *opaque, int v)
   }
 
   sqlite3_stmt *stmt;
-
   rc = db_prepare(db, 
 		  "UPDATE item "
 		  "SET playcount = ?2 "
@@ -2199,7 +2206,7 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
   
     mip->mip_playcount_sub =
       prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		     PROP_TAG_CALLBACK_INT, metadb_set_playcount, mip,
+		     PROP_TAG_CALLBACK, metadb_set_playcount, mip,
 		     PROP_TAG_ROOT, mip->mip_playcount,
 		     NULL);
 

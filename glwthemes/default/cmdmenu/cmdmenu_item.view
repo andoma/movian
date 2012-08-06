@@ -92,7 +92,7 @@ commandMenuChrome(
   // Mark as unseen (video)
 
   ITEM(_("Mark as unseen"), {
-    $args.playcount = 0; 
+    $args.playcount = false; 
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Check.svg",
        $args.type == "video" && $args.playcount > 0);
@@ -100,7 +100,7 @@ commandMenuChrome(
   // Mark as seen (video)
 
   ITEM(_("Mark as seen"), {
-    $args.playcount = 1; 
+    $args.playcount = true;
     $clone.itemMenu = false;
   }, "dataroot://resources/svg/Check.svg",
        $args.type == "video" && $args.playcount < 1);
