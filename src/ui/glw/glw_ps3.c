@@ -69,6 +69,7 @@ typedef struct glw_ps3 {
   KbConfig kb_config[MAX_KEYBOARDS];
 
   float scale;
+  int button_assign;
 
 } glw_ps3_t;
 
@@ -237,6 +238,7 @@ init_screen(glw_ps3_t *gp)
 
 
 
+extern int sysUtilGetSystemParamInt(int, int *);
 
 /**
  *
@@ -253,6 +255,9 @@ glw_ps3_init(glw_ps3_t *gp)
   int i;
   for(i = 0; i < 7; i++)
     ioPadSetPortSetting(i, 0x2);
+
+  if(sysUtilGetSystemParamInt(0x112, &gp->button_assign))
+    gp->button_assign = 1;
 
   return 0;
 }
@@ -476,6 +481,14 @@ static PadData paddata[MAX_PADS];
 static void
 handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
 {
+  if(gp->button_assign == 0) {
+    // Swap X and O
+    if(code == BTN_CROSS)
+      code = BTN_CIRCLE;
+    else if(code == BTN_CIRCLE)
+      code = BTN_CROSS;
+  }
+
   int16_t *store = &button_counter[pad][code];
   int rate = KEY_REPEAT_RATE;
   if(code == 0)
