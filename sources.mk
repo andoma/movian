@@ -63,7 +63,7 @@ endif
 SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 
 BUNDLES += resources/metadb
-BUNDLES += resources/cachedb
+BUNDLES += resources/kvstore
 
 #
 # Misc support
