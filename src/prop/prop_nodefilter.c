@@ -75,8 +75,8 @@ typedef struct nfnode {
 
   struct prop_nf *nf;
   int pos;
-  char inserted;
-
+  char inserted:1;
+  char frozen:1;
   char sortkey_type[MAX_SORT_KEYS];
 #define SORTKEY_NONE  0
 #define SORTKEY_RSTR  1
@@ -123,6 +123,7 @@ typedef struct prop_nf {
   int pnf_refcount;
   int flags;
 
+  int nodecount;
   prop_t *src;
   prop_t *dst;
   prop_sub_t *srcsub;
@@ -331,6 +332,39 @@ nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
       return r * a->nf->sortorder[i];
   }
   return a->pos - b->pos;
+}
+
+
+/**
+ *
+ */
+static int
+nf_sort_cmp(const void *A, const void *B)
+{
+  const nfnode_t *a = *(const nfnode_t **)A;
+  const nfnode_t *b = *(const nfnode_t **)B;
+  return nf_egress_cmp(a, b);
+}
+
+/**
+ * Resort the entire list
+ */
+static void
+nf_sort(prop_nf_t *nf)
+{
+  int i = 0;
+  nfnode_t *nfn, **v = malloc(nf->nodecount * sizeof(nfnode_t *));
+
+  TAILQ_FOREACH(nfn, &nf->out, out_link)
+    v[i++] = nfn;
+
+  assert(i == nf->nodecount);
+  qsort(v, i, sizeof(nfnode_t *), nf_sort_cmp);
+
+  TAILQ_INIT(&nf->out);
+  for(i = 0; i < nf->nodecount; i++)
+    TAILQ_INSERT_TAIL(&nf->out, v[i], out_link);
+  free(v);
 }
 
 
@@ -603,6 +637,9 @@ nf_set_sortkey_x(int x, nfnode_t *nfn, prop_event_t event, va_list ap)
     nfn->sortkey_type[x] = SORTKEY_NONE;
     break;
   }
+  if(nfn->frozen) {
+    return;
+  }
   nf_insert_node(nfn->nf, nfn);
   nf_update_egress(nfn->nf, nfn);
 }
@@ -698,6 +735,8 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
 
   prop_tag_set(node, nf, nfn);
 
+  nf->nodecount++;
+
   if(b != NULL) {
     TAILQ_INSERT_BEFORE(b, nfn, in_link);
     nf->pos_valid = 0;
@@ -736,7 +775,9 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
   if(b != NULL)
     nf->pos_valid = 0;
 
-  for(i = 0; i < prop_vec_len(pv); i++) {
+  const int len = prop_vec_len(pv);
+  nf->nodecount += len;
+  for(i = 0; i < len; i++) {
     prop_t *p = prop_vec_get(pv, i);
     nfn = calloc(1, sizeof(nfnode_t));
 
@@ -756,14 +797,20 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
     nfn->nf = nf;
     nfn->in = p;
 
+    nfn->frozen = 1;
+
     nf_update_multisub(nf, nfn);
     nfn_insert_preds(nf, nfn);
 
     nf_update_order_all(nf, nfn);
   }
 
-  TAILQ_FOREACH(nfn, &nf->out, out_link)
+  nf_sort(nf);
+
+  TAILQ_FOREACH(nfn, &nf->out, out_link) {
+    nfn->frozen = 0;
     nf_update_egress(nf, nfn);
+  }
 }
 
 
@@ -777,6 +824,7 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
   nfn_pred_t *nfnp;
 
   nf->pos_valid = 0;
+  nf->nodecount--;
   TAILQ_REMOVE(&nf->in, nfn, in_link);
   TAILQ_REMOVE(&nf->out, nfn, out_link);
 
