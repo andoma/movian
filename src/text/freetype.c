@@ -159,15 +159,27 @@ family_get(const char *name, int font_domain)
 /**
  *
  */
-static const char *
+static const family_t *
 family_get_by_id(int id)
 {
-  family_t *f;
+  const family_t *f;
 
   LIST_FOREACH(f, &families, link)
     if(f->id == id)
-      return f->name;
+      return f;
   return NULL;
+}
+
+
+
+/**
+ *
+ */
+static const char *
+family_get_name_by_id(int id)
+{
+  const family_t *f = family_get_by_id(id);
+  return f ? f->name : NULL;
 }
 
 
@@ -410,12 +422,12 @@ face_set_family(face_t *f, int family_id)
 	return;
       else
 	len++;
-#if 0
-  printf("Font %s alias to %s\n",
-	 f->family_id_vec ? family_get_by_id(f->family_id_vec[0]) : "<yet unnamed>",
-	 family_get_by_id(family_id));
-#endif
 
+#if 0
+  TRACE(TRACE_DEBUG, "FT", "Font %s alias to %s\n",
+	f->family_id_vec ? family_get_name_by_id(f->family_id_vec[0]) : "<yet unnamed>",
+	family_get_by_id(family_id));
+#endif
   f->family_id_vec = realloc(f->family_id_vec, sizeof(int) * (len + 2));
   f->family_id_vec[len] = family_id;
   f->family_id_vec[len+1] = 0;
@@ -457,7 +469,7 @@ face_find2(int uc, uint8_t style, int family_id)
 #if ENABLE_LIBFONTCONFIG
   if(f == NULL) {
     char url[URL_MAX];
-    if(!fontconfig_resolve(uc, style, family_get_by_id(family_id),
+    if(!fontconfig_resolve(uc, style, family_get_name_by_id(family_id),
 			   url, sizeof(url)))
       f = face_create_from_uri(url, FONT_DOMAIN_FALLBACK, NULL);
   }
@@ -470,7 +482,7 @@ face_find2(int uc, uint8_t style, int family_id)
       if(FT_Get_Char_Index(f->face, uc))
 	break;
 
-  if(f != NULL)
+  if(f != NULL && f->font_domain != FONT_DOMAIN_FALLBACK)
     face_set_family(f, family_id);
 
   return f;
@@ -484,10 +496,11 @@ static face_t *
 face_find(int uc, uint8_t style, int family_id)
 {
   face_t *f = face_find2(uc, style, family_id);
+
 #if 0
-  printf("Resolv %C (%d %s) -> %s\n",
-	 uc, style, family_get_by_id(family_id),
-	 f ? f->url ? f->url : "<memory>" : "<none>");
+  TRACE(TRACE_DEBUG, "FT", "Resolv %c (0x%x) (%d %s) -> %s\n",
+	uc, uc, style, family_get_by_id(family_id),
+	f ? f->url ? f->url : "<memory>" : "<none>");
 #endif
   return f;
 }
@@ -1425,7 +1438,7 @@ freetype_get_family(void *handle)
 {
   face_t *f = handle;
   hts_mutex_lock(&text_mutex);
-  rstr_t *r = rstr_alloc(family_get_by_id(f->family_id_vec[0]));
+  rstr_t *r = rstr_alloc(family_get_name_by_id(f->family_id_vec[0]));
   hts_mutex_unlock(&text_mutex);
   return r;
 }
