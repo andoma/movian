@@ -39,6 +39,10 @@
 #include "ui/linux/nvidia.h"
 #include "settings.h"
 
+#if WITH_VALGRIND
+#include <valgrind/callgrind.h>
+#endif
+
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
 #endif
@@ -844,6 +848,18 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     }
   }
+#if WITH_VALGRIND
+  if(keysym == XK_F5 && state == Mod1Mask) {
+    CALLGRIND_START_INSTRUMENTATION;
+    printf("Callgrind started\n");
+    return 0;
+  }
+  if(keysym == XK_F6 && state == Mod1Mask) {
+    CALLGRIND_STOP_INSTRUMENTATION;
+    printf("Callgrind stopped\n");
+    return 0;
+  }
+#endif
 
   if(e == NULL) {
 
