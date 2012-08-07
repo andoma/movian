@@ -603,22 +603,27 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 static seek_index_t *
 build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
 {
-  int i;
-  prop_t *root = prop_create(mp->mp_prop_root, "seekindex");
-  prop_t *parent = prop_create(root, "positions");
+  if(fctx->duration == AV_NOPTS_VALUE)
+    return NULL;
+
   char buf[URL_MAX];
 
   int items = fctx->duration / 60000000;
 
-  seek_index_t *si = malloc(sizeof(seek_index_t) +
-			    sizeof(seek_item_t) * items);
+  seek_index_t *si = mymalloc(sizeof(seek_index_t) +
+			      sizeof(seek_item_t) * items);
+  if(si == NULL) 
+    return NULL;
+
+  si->si_root = prop_create(mp->mp_prop_root, "seekindex");
+  prop_t *parent = prop_create(si->si_root, "positions");
 
   si->si_current = NULL;
   si->si_nitems = items;
-  si->si_root = root;
 
-  prop_set_int(prop_create(root, "available"), 1);
+  prop_set_int(prop_create(si->si_root, "available"), 1);
 
+  int i;
   for(i = 0; i < items; i++) {
     seek_item_t *item = &si->si_items[i];
 
@@ -643,6 +648,8 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
 static void
 seek_index_destroy(seek_index_t *si)
 {
+  if(si == NULL)
+    return;
   prop_destroy(si->si_root);
   free(si);
 }
