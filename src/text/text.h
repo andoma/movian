@@ -40,6 +40,7 @@ struct rstr;
 #define TR_CODE_ITALIC_OFF 0x7f000008
 #define TR_CODE_HR         0x7f000009
 #define TR_CODE_FONT_RESET 0x7f00000a
+#define TR_CODE_SET_MARGIN 0x7f000010
 
 #define TR_CODE_ALPHA         0x7f000100  // Low 8 bit is alpha
 #define TR_CODE_SHADOW_ALPHA  0x7f000200  // Low 8 bit is alpha

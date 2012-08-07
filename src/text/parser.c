@@ -184,6 +184,8 @@ tag_to_code(char *s, uint32_t *output, int olen, int context)
     c = TR_CODE_NEWLINE;
   else if(!endtag && !strcasecmp(tag, "hr"))
     c = TR_CODE_HR;
+  else if(!endtag && !strcasecmp(tag, "margin"))
+    c = TR_CODE_SET_MARGIN;
   else if(!strcasecmp(tag, "center"))
     c = endtag ? TR_CODE_CENTER_OFF : TR_CODE_CENTER_ON;
   else if(!strcasecmp(tag, "i"))

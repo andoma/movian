@@ -60,7 +60,7 @@ widget(container_y, {
       widget(label, {
 	TextStyleItem();
 	maxlines: 3;
-	caption: '<font color="#888">' + _("Genre: ") + '</font>' + 
+	caption: '<font color="#888">' + _("Genre: ") + '</font><margin>' + 
 	  $args.metadata.genre;
       });
 
@@ -105,14 +105,14 @@ widget(container_y, {
 	hidden: !$args.metadata.director;
 	TextStyleItem();
 	maxlines: 3;
-	caption: '<font color="#888">' + _("Director: ") + '</font>' + 
+	caption: '<font color="#888">' + _("Director: ") + '</font><margin>' + 
 	  $args.metadata.director;
       });
       widget(label, {
 	hidden: !$args.metadata.producer;
 	TextStyleItem();
 	maxlines: 3;
-	caption: '<font color="#888">' + _("Producer: ") + '</font>' + 
+	caption: '<font color="#888">' + _("Producer: ") + '</font><margin>' + 
 	  $args.metadata.producer;
       });
 

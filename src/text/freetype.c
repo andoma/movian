@@ -648,6 +648,7 @@ typedef struct line {
   int outline;
   int default_height;
   uint32_t color;
+  int xoffset;
   enum {
     LINE_TYPE_TEXT = 0,
     LINE_TYPE_HR,
@@ -666,6 +667,7 @@ typedef struct item {
   int16_t adv_x;
   uint16_t outline;
   uint16_t shadow;
+  char set_margin;
 } item_t;
 
 
@@ -760,7 +762,7 @@ draw_glyphs(pixmap_t *pm, struct line_queue *lq, int target_height,
       continue;
     }
 
-    pen_x = 0;
+    pen_x = li->xoffset;
     
     switch(li->alignment) {
     case TR_ALIGN_LEFT:
@@ -937,6 +939,7 @@ text_render0(const uint32_t *uc, const int len,
 
   int out = 0;
   int alignment = global_alignment;
+  int set_margin = 0;
 
   for(i = 0; i < len; i++) {
 
@@ -947,6 +950,7 @@ text_render0(const uint32_t *uc, const int len,
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
+      li->xoffset = 0;
       li->alignment = alignment;
       TAILQ_INSERT_TAIL(&lq, li, link);
       prev = 0;
@@ -970,6 +974,7 @@ text_render0(const uint32_t *uc, const int len,
       li->start = -1;
       li->count = 0;
       li->xspace = 0;
+      li->xoffset = 0;
       li->alignment = 0;
       li->height = 4;
       li->color = current_color | current_alpha;
@@ -1071,6 +1076,10 @@ text_render0(const uint32_t *uc, const int len,
       current_size = legacy_size_mult[uc[i] & 0xf] * default_size * scale;
       break;
 
+    case TR_CODE_SET_MARGIN:
+      set_margin = 1;
+      break;
+
     default:
       break;
     }
@@ -1106,6 +1115,9 @@ text_render0(const uint32_t *uc, const int len,
     else
       items[out].shadow = current_shadow;
 
+    items[out].set_margin = set_margin;
+    set_margin = 0;
+
     need_shadow_pass |= items[out].shadow;
 
     items[out].shadow_color = current_shadow_color | current_shadow_alpha;
@@ -1117,10 +1129,11 @@ text_render0(const uint32_t *uc, const int len,
 
   lines = 0;
   siz_x = 0;
+  int wrap_margin = 0;
 
   TAILQ_FOREACH(li, &lq, link) {
 
-    int w = 0;
+    int w = li->xoffset;
 
     if(li->type == LINE_TYPE_HR)
       continue;
@@ -1131,6 +1144,9 @@ text_render0(const uint32_t *uc, const int len,
 	w += g->bbox.xMin;
 	bbox.xMin = MIN(g->bbox.xMin, bbox.xMin);
       }
+
+      if(items[li->start + j].set_margin)
+	wrap_margin = w;
 
       if(j == li->count - 1 && (g = items[li->start + j].g) != NULL)
 	w += g->bbox.xMax;
@@ -1155,6 +1171,7 @@ text_render0(const uint32_t *uc, const int len,
 	  lix->start = li->start + k;
 	  lix->count = li->count - k;
 	  lix->xspace = 0;
+	  lix->xoffset = wrap_margin;
 	  lix->alignment = global_alignment;
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
 
