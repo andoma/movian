@@ -173,14 +173,17 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
 	value = (uint8_t)  EXIF8(po);
 	break;
       case 2:
-	if(c <= 4) {
-	  str = (const char *)buf + po;
-	} else {
-	  value = (uint32_t) EXIF32(po);
-	  if(value >= len)
-	    str = NULL;
-	  else
-	    str = (const char *)buf + value;
+	if(c > 0) {
+	  c--;
+	  if(c < 4) {
+	    str = (const char *)buf + po;
+	  } else {
+	    value = (uint32_t) EXIF32(po);
+	    if(value + c > len)
+	      str = NULL;
+	    else
+	      str = (const char *)buf + value;
+	  }
 	}
 	break;
       case 3:
@@ -214,11 +217,11 @@ parse_app1(jpeginfo_t *ji, const uint8_t *buf, size_t len, int flags)
 	break;
       case IFDTAG(0, 0x10f):  // Manufacturer
 	rstr_release(ji->ji_manufacturer);
-	ji->ji_manufacturer = rstr_alloc(str);
+	ji->ji_manufacturer = str ? rstr_allocl(str, c) : NULL;
 	break;
       case IFDTAG(0, 0x110):  // Equipment
 	rstr_release(ji->ji_equipment);
-	ji->ji_equipment = rstr_alloc(str);
+	ji->ji_equipment = str ? rstr_allocl(str, c) : NULL;
 	break;
 
       default:
