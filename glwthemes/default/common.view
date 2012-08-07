@@ -45,6 +45,6 @@
   source: "graphics/button-glenz.png";
   border: [28, 22];
   padding: [-10, -6];
-  alphaSelf: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+  alphaSelf: 0.5*iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
 }
 
