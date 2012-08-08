@@ -360,7 +360,7 @@ static const char *SEARCHREQ =
   "HOST: 239.255.255.250:1900\r\n"
   "MAN: \"ssdp:discover\"\r\n"
   "MX: 1\r\n"
-  "ST: ssdp:all\r\n\r\n";
+  "ST: urn:schemas-upnp-org:service:ContentDirectory:1\r\n\r\n";
 
 
 /**
