@@ -459,12 +459,41 @@ js_item_addOptAction(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_item_addOptSeparator(JSContext *cx, JSObject *obj,
+		     uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  const char *title;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &title))
+    return JS_FALSE;
+  
+  prop_t *p = prop_create_root(NULL);
+  prop_set_string(prop_create(prop_create(p, "metadata"), "title"), title);
+  prop_set_string(prop_create(p, "type"), "separator");
+  prop_set_int(prop_create(p, "enabled"), 1);
+
+  prop_t *opts = prop_create_r(ji->ji_root, "options");
+  if(prop_set_parent(p, opts))
+    prop_destroy(p);
+  prop_ref_dec(opts);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static JSFunctionSpec item_proto_functions[] = {
-  JS_FS("onEvent",            js_item_onEvent,      2, 0, 0),
-  JS_FS("destroy",            js_item_destroy,      0, 0, 0),
-  JS_FS("addOptURL",          js_item_addOptURL,    2, 0, 0),
-  JS_FS("addOptAction",       js_item_addOptAction, 2, 0, 0),
-  JS_FS("dump",               js_item_dump,         0, 0, 0),
+  JS_FS("onEvent",            js_item_onEvent,         2, 0, 0),
+  JS_FS("destroy",            js_item_destroy,         0, 0, 0),
+  JS_FS("addOptURL",          js_item_addOptURL,       2, 0, 0),
+  JS_FS("addOptAction",       js_item_addOptAction,    2, 0, 0),
+  JS_FS("addOptSeparator",    js_item_addOptSeparator, 1, 0, 0),
+  JS_FS("dump",               js_item_dump,            0, 0, 0),
   JS_FS_END
 };
 
