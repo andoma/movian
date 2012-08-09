@@ -2738,6 +2738,8 @@ playlist_destroy_sub(void *opaque, prop_event_t event, ...)
 
   free(pl->pl_tracks.vec);
   LIST_REMOVE(pl, pl_link);
+  prop_ref_dec(pl->pl_prop_offline);
+  prop_ref_dec(pl->pl_prop_collab);
   free(pl);
 }
 
