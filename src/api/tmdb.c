@@ -174,7 +174,7 @@ tmdb_configure(void)
  *
  */
 static htsmsg_t *
-tmdb_load_movie_cast(void *db, int64_t itemid, const char *lookup_id)
+tmdb_load_movie_cast(const char *lookup_id)
 {
   char url[300];
   char errbuf[256];
@@ -313,7 +313,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 
   uint32_t id = htsmsg_get_u32_or_default(doc, "id", 0);
   if(id) {
-    htsmsg_t *cast = tmdb_load_movie_cast(db, itemid, lookup_id);
+    htsmsg_t *cast = tmdb_load_movie_cast(lookup_id);
     double pop;
     if(htsmsg_get_dbl(doc, "popularity", &pop))
       pop = 0;
