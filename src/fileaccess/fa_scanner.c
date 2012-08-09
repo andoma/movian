@@ -32,6 +32,7 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 #include "plugins.h"
+#include "db/kvstore.h"
 
 extern int media_buffer_hungry;
 
@@ -54,6 +55,8 @@ typedef struct scanner {
   void *s_ref;
 
   void *s_metadb;
+
+  struct prop_nf *s_pnf;
 
 } scanner_t;
 
@@ -137,6 +140,9 @@ make_prop(fa_dir_entry_t *fde)
     rstr_release(title);
   }
 
+  if(fde->fde_statdone)
+    prop_set(metadata, "timestamp", NULL, PROP_SET_INT, fde->fde_stat.fs_mtime);
+
   assert(fde->fde_prop == NULL);
   fde->fde_prop = prop_ref_inc(p);
 }
@@ -217,7 +223,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
 
-    prop_t *meta = prop_ref_inc(prop_create(fde->fde_prop, "metadata"));
+    prop_t *meta = prop_create_r(fde->fde_prop, "metadata");
     
 
     if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) {
@@ -226,6 +232,10 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       fde->fde_md = metadb_metadata_get(getdb(s), rstr_get(fde->fde_url),
 					fde->fde_stat.fs_mtime);
     }
+
+    if(fde->fde_statdone)
+      prop_set(meta, "timestamp", NULL, PROP_SET_INT,
+	       fde->fde_stat.fs_mtime);
 
     if(fde->fde_md == NULL) {
 
@@ -332,6 +342,8 @@ scanner_unref(scanner_t *s)
     return;
 
   fa_unreference(s->s_ref);
+  prop_nf_release(s->s_pnf);
+  free(s->s_url);
   free(s);
 }
 
@@ -556,7 +568,6 @@ scanner(void *aux)
 
   prop_set_int(s->s_loading, 0);
 
-  free(s->s_url);
   free(s->s_playme);
 
   prop_ref_dec(s->s_root);
@@ -590,6 +601,97 @@ scanner_stop(void *opaque, prop_event_t event, ...)
 }
 
 
+static void
+set_sort_order(void *opaque, prop_event_t event, ...)
+{
+  scanner_t *s = opaque;
+  va_list ap;
+  prop_t *p;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    (void)va_arg(ap, prop_t *);
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    scanner_unref(s);
+    break;
+
+  case PROP_SELECT_CHILD:
+    p = va_arg(ap, prop_t *);
+    rstr_t *r = prop_get_name(p);
+    const char *val = rstr_get(r);
+    if(val != NULL) {
+      if(!strcmp(val, "title"))
+	prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 2, NULL, 1);
+      if(!strcmp(val, "date"))
+	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
+    }
+    kv_url_opt_set_str(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "sortorder", val);
+    rstr_release(r);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
+add_sort_option(scanner_t *s, prop_t *model)
+{
+  prop_t *parent = prop_create(model, "options");
+  prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
+  prop_t *options = prop_create(n, "options");
+
+  prop_set_string(prop_create(n, "type"), "multiopt");
+  prop_set_int(prop_create(n, "enabled"), 1);
+  prop_link(_p("Sort on"), prop_create(m, "title"));
+  
+
+  prop_t *on_title = prop_create_root("title");
+  prop_link(_p("Filename"), prop_create(on_title, "title"));
+  if(prop_set_parent(on_title, options))
+    abort();
+
+  prop_t *on_date = prop_create_root("date");
+  prop_link(_p("Date"), prop_create(on_date, "title"));
+  if(prop_set_parent(on_date, options))
+    abort();
+
+  rstr_t *cur = kv_url_opt_get_rstr(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, 
+				    "sortorder");
+
+  if(cur != NULL && !strcmp(rstr_get(cur), "date")) {
+    prop_select(on_date);
+    prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
+  } else {
+    prop_select(on_title);
+    prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 2, NULL, 0);
+  }
+
+  s->s_refcount++;
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, set_sort_order, s,
+		 PROP_TAG_ROOT, options,
+		 NULL);
+
+  if(prop_set_parent(n, parent)) {
+    prop_destroy(n);
+    return;
+  }
+
+}
+
+
+/**
+ *
+ */
 static const prop_nf_sort_strmap_t typemap[] = {
   { "directory", 0},
   { NULL, 1}
@@ -605,6 +707,8 @@ fa_scanner(const char *url, time_t url_mtime,
 	   prop_t *direct_close)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
+  s->s_url = strdup(url);
+
   prop_t *source = prop_create(model, "source");
 
   struct prop_nf *pnf;
@@ -614,9 +718,8 @@ fa_scanner(const char *url, time_t url_mtime,
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
   
-  prop_nf_sort(pnf, "node.type", 0, 0, typemap, 1);
 
-  prop_nf_sort(pnf, "node.metadata.title", 0, 2, NULL, 1);
+  prop_nf_sort(pnf, "node.type", 0, 0, typemap, 1);
 
   prop_nf_pred_str_add(pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
@@ -628,9 +731,11 @@ fa_scanner(const char *url, time_t url_mtime,
 
   prop_set_int(prop_create(model, "canFilter"), 1);
 
+  s->s_pnf = prop_nf_retain(pnf);
+
+  add_sort_option(s, model);
   decorated_browse_create(model, pnf);
 
-  s->s_url = strdup(url);
   s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
 
@@ -641,7 +746,7 @@ fa_scanner(const char *url, time_t url_mtime,
   s->s_loading = prop_ref_inc(prop_create(model, "loading"));
   s->s_direct_close = prop_ref_inc(direct_close);
 
-  s->s_refcount = 2; // One held by scanner thread, one by the subscription
+  s->s_refcount += 2; // One held by scanner thread, one by the subscription
 
   s->s_ref = fa_reference(s->s_url);
 
