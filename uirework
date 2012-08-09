@@ -1,8 +1,6 @@
 
 * Fix all the playdecks!
 * Auto-upgrade of Showtime
-* Metadata loading throbber
-* Metadata switching
 * Metadata priority order
 * Fix list focus when destroying item via context menu
 * Standardize view elements so .view plugins have something to lean on

@@ -155,7 +155,7 @@
 #define commandMenuChrome(BODY) {
 
   widget(container_y, {
-    padding: [$ui.width / 4, $ui.height / 8];
+    padding: [$ui.width / 6, $ui.height / 8];
     widget(container_z, {
       filterConstraintY: true;
       widget(backdrop, {

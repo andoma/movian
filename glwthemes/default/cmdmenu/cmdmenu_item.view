@@ -25,30 +25,6 @@ commandMenuChrome(
 		    "image",     "Pictures"
 		   ) + ".svg");
 
-  cloner($args.options, loader, {
-    time: 0.1;
-    noInitialTransform: true;
-    effect: blend;
-    source: "cmditems/" + $self.type + ".view";
-    hidden: !$self.enabled;
-    args: $view;
-  });
-
-  // Goto artist
-
-  ITEM($args.metadata.artist, {
-    fireEvent(navOpen($args.metadata.artist));
-    $clone.itemMenu = false;
-  }, "dataroot://resources/svg/User.svg",
-       isLink($args.metadata.artist));
-
-  // Goto album
-
-  ITEM($args.metadata.album, {
-    fireEvent(navOpen($args.metadata.album));
-    $clone.itemMenu = false;
-  }, "dataroot://resources/svg/Disc.svg",
-       isLink($args.metadata.album));
 
   // Enqueue track
 
@@ -116,6 +92,22 @@ commandMenuChrome(
 	     [1,1,0]);
 
 
+  // Goto artist
+
+  ITEM($args.metadata.artist, {
+    fireEvent(navOpen($args.metadata.artist));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/User.svg",
+       isLink($args.metadata.artist));
+
+  // Goto album
+
+  ITEM($args.metadata.album, {
+    fireEvent(navOpen($args.metadata.album));
+    $clone.itemMenu = false;
+  }, "dataroot://resources/svg/Disc.svg",
+       isLink($args.metadata.album));
+
   // Delete item
 
   ITEM(_("Delete"), { 
@@ -123,6 +115,16 @@ commandMenuChrome(
   }, "dataroot://resources/svg/Delete.svg",
        $self.model.canDelete,
        [1,0.8,0.8]);
+
+
+  cloner($args.options, loader, {
+    time: 0.1;
+    noInitialTransform: true;
+    effect: blend;
+    source: "cmditems/" + $self.type + ".view";
+    hidden: !$self.enabled;
+    args: $view;
+  });
 
 
 )

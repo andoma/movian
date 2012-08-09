@@ -27,9 +27,11 @@
 #include "lastfm.h"
 #include "fileaccess/fileaccess.h"
 #include "blobcache.h"
+#include "db/db_support.h"
 
 #define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 
+static int lastfm_datasource;
 
 /**
  *
@@ -119,6 +121,9 @@ lastfm_load_artistinfo(void *db, const char *artist,
   char str[20];
   int totalpages;
 
+  if(lastfm_datasource == METADATA_ERROR)
+    return;
+
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
 
   n = http_request("http://ws.audioscrobbler.com/2.0/",
@@ -140,20 +145,14 @@ lastfm_load_artistinfo(void *db, const char *artist,
     return;
   }
 
-  int src = metadb_get_datasource(db, "lastfm");
-  if(src < 0) {
-    TRACE(TRACE_DEBUG, "lastfm", "Unable to get datasource: %d", src);
-    htsmsg_destroy(info);
-    return;
-  }
-
   const char *mbid = htsmsg_get_str_multi(info,
 					  "tags", "lfm",
 					  "tags", "artist",
 					  "tags", "mbid", 
 					  "cdata", NULL);
   
-  int64_t artist_id = metadb_artist_get_by_title(db, artist, src, mbid);
+  int64_t artist_id =
+    metadb_artist_get_by_title(db, artist, lastfm_datasource, mbid);
 
   if(artist_id < 0) {
     htsmsg_destroy(info);
@@ -252,20 +251,15 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
     }
   }
 
-  int src = metadb_get_datasource(db, "lastfm");
-  if(src < 0) {
-    TRACE(TRACE_DEBUG, "lastfm", "Unable to get datasource: %d", src);
-    return;
-  }
-
-  int64_t artist_id = metadb_artist_get_by_title(db, artist,
-						 src, artist_mbid);
+  int64_t artist_id =
+    metadb_artist_get_by_title(db, artist, lastfm_datasource, artist_mbid);
 
   if(artist_id < 0)
     return;
 
-  int64_t album_id = metadb_album_get_by_title(db, album, artist_id,
-					       src, album_mbid);
+  int64_t album_id =
+    metadb_album_get_by_title(db, album, artist_id,
+			      lastfm_datasource, album_mbid);
 
   if(album_id < 0)
     return;
@@ -310,6 +304,9 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
   int n;
   htsmsg_t *xml;
 
+  if(lastfm_datasource == METADATA_ERROR)
+    return;
+
   TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
 
   n = http_request("http://ws.audioscrobbler.com/2.0/",
@@ -338,3 +335,10 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 }
 
 
+void
+lastfm_init(void)
+{
+  lastfm_datasource = metadata_add_source("lastfm", "last.fm",
+					  100000, METADATA_TYPE_MUSIC,
+					  NULL);
+}

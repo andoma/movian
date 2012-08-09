@@ -1749,6 +1749,8 @@ prop_destroy0(prop_t *p)
 void
 prop_destroy(prop_t *p)
 {
+  if(p == NULL)
+    return;
   hts_mutex_lock(&prop_mutex);
   prop_destroy0(p);
   hts_mutex_unlock(&prop_mutex);

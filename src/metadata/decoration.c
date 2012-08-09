@@ -88,6 +88,7 @@ typedef struct deco_item {
 
   prop_t *di_root;
   prop_t *di_metadata;
+  prop_t *di_options;
 
   prop_sub_t *di_sub_type;
   contenttype_t di_type;
@@ -135,7 +136,8 @@ analyze_video(deco_item_t *di)
   metadata_bind_movie_info(&di->di_mlp, di->di_metadata,
 			   di->di_url, title, year,
 			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
-			   di->di_duration);
+			   di->di_duration,
+			   di->di_options);
   
   rstr_release(title);
 }
@@ -550,6 +552,7 @@ deco_browse_add_node(deco_browse_t *db, prop_t *p, deco_item_t *before)
   di->di_db = db;
   di->di_root = prop_ref_inc(p);
   di->di_metadata = prop_create_r(p, "metadata");
+  di->di_options = prop_create_r(p, "options");
 
   db->db_total++;
   di->di_type = CONTENT_UNKNOWN;
@@ -620,6 +623,7 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   db->db_total--;
   prop_ref_dec(di->di_root);
   prop_ref_dec(di->di_metadata);
+  prop_ref_dec(di->di_options);
   prop_unsubscribe(di->di_sub_url);
   prop_unsubscribe(di->di_sub_filename);
   prop_unsubscribe(di->di_sub_type);

@@ -38,6 +38,7 @@ static hts_mutex_t tmdb_mutex;
 static int tmdb_datasource_search;
 static int tmdb_datasource_imdb;
 static char *tmdb_image_base_url;
+static int tmdb_configured;
 
 typedef struct tmdb_image_size {
   struct tmdb_image_size *next;
@@ -131,13 +132,12 @@ tmdb_parse_config(htsmsg_t *doc)
  *
  */
 static int
-tmdb_configure(void *db)
+tmdb_configure(void)
 {
-  int rval = 0;
   hts_mutex_lock(&tmdb_mutex);
 
-  if(!tmdb_datasource_search) {
-    rval = METADATA_ERROR;
+  if(!tmdb_configured) {
+
     char *result;
     char errbuf[256];
     result = fa_load_query("http://api.themoviedb.org/3/configuration",
@@ -161,28 +161,11 @@ tmdb_configure(void *db)
     
     tmdb_parse_config(doc);
     htsmsg_destroy(doc);
-
-    // Get our datasource ID
-    int ds1 = metadb_get_datasource(db, "tmdb");
-    int ds2 = metadb_get_datasource(db, "tmdb_imdb");
-
-    if(ds1 < 0) {
-      rval = ds1;
-      goto done;
-    }
-
-    if(ds2 < 0) {
-      rval = ds2;
-      goto done;
-    }
-
-    tmdb_datasource_search = ds1;
-    tmdb_datasource_imdb = ds2;
-    rval = 0;
+    tmdb_configured = 1;
   }
  done:
   hts_mutex_unlock(&tmdb_mutex);
-  return rval;
+  return !tmdb_configured;
 }
 
 
@@ -312,7 +295,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   }
 
   metadata_t *md = metadata_create();
-  
+  md->md_video_type = METADATA_TYPE_MOVIE;
+
   md->md_description = rstr_alloc(htsmsg_get_str(doc, "overview"));
   md->md_tagline = rstr_alloc(htsmsg_get_str(doc, "tagline"));
   md->md_imdb_id = rstr_alloc(htsmsg_get_str(doc, "imdb_id"));
@@ -330,12 +314,15 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   uint32_t id = htsmsg_get_u32_or_default(doc, "id", 0);
   if(id) {
     htsmsg_t *cast = tmdb_load_movie_cast(db, itemid, lookup_id);
+    double pop;
+    if(htsmsg_get_dbl(doc, "popularity", &pop))
+      pop = 0;
     
-
-
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
-    itemid = metadb_insert_videoitem(db, item_url, dsid, tmdb_id, md);
+    itemid = metadb_insert_videoitem(db, item_url, dsid, tmdb_id, md,
+				     METAITEM_STATUS_COMPLETE, pop * 1000);
+
     if(itemid >= 0) {
 
       const char *s;
@@ -372,7 +359,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 /**
  *
  */
-int64_t
+static int64_t
 tmdb_query_by_title_and_year(void *db, const char *item_url,
 			     const char *title, int year, int duration)
 {
@@ -380,11 +367,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   char errbuf[256];
   const char *q;
   char *result;
-  int64_t rval = -1;
-  int r;
 
-  if((r = tmdb_configure(db)) < 0)
-    return r;
+  if(tmdb_datasource_search < 0)
+    return -1;
 
   if(year > 0) {
     snprintf(buf, sizeof(buf), "%s %d", title, year);
@@ -395,9 +380,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 
   result = fa_load_query("http://api.themoviedb.org/3/search/movie",
 			 NULL, errbuf, sizeof(errbuf), NULL,
-		       (const char *[]){"query", q,
-			   "api_key", TMDB_APIKEY,
-			   NULL, NULL},
+			 (const char *[]){"query", q,
+			     "api_key", TMDB_APIKEY,
+			     NULL, NULL},
 			 FA_COMPRESSION);
 
   if(result == NULL)
@@ -407,63 +392,93 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   free(result);
   if(doc == NULL)
     return -1;
-
+  int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
   TRACE(TRACE_DEBUG, "TMDB", "Query '%s' -> %d pages %d results",
 	q,
 	htsmsg_get_s32_or_default(doc, "total_pages", -1),
-	htsmsg_get_s32_or_default(doc, "total_results", -1));
+	results);
   
   htsmsg_t *resultlist = htsmsg_get_list(doc, "results");
-  if(resultlist == NULL)
-    goto done1;
-  htsmsg_field_t *f;
-  htsmsg_t *best = NULL;
-  float best_pop = 0;
 
+  if(resultlist == NULL || results == 0) {
+    int64_t r;
+    r = metadb_insert_videoitem(db, item_url, tmdb_datasource_search,
+				NULL, NULL, METAITEM_STATUS_ABSENT, 0);
+    htsmsg_destroy(doc);
+    return r;
+  }
+
+  htsmsg_field_t *f;
   HTSMSG_FOREACH(f, resultlist) {
     htsmsg_t *res = htsmsg_get_map_by_field(f);
-    double pop;
-    if(res == NULL)
+    
+    uint32_t id = htsmsg_get_u32_or_default(res, "id", 0);
+    if(id == 0)
       continue;
+
+    metadata_t *md = metadata_create();
+    md->md_video_type = METADATA_TYPE_MOVIE;
+    md->md_title = rstr_alloc(htsmsg_get_str(res, "original_title"));
+    md->md_year = atoi(htsmsg_get_str(res, "release_date") ?: "");
+    double pop;
     if(htsmsg_get_dbl(res, "popularity", &pop))
       pop = 0;
-    if(best == NULL || pop > best_pop) {
-      best = res;
-      best_pop = pop;
-    }
-  }
 
-  if(best != NULL)  {
-    int32_t id;
-    if(!htsmsg_get_s32(best, "id", &id)) {
-      char idtxt[20];
-      snprintf(idtxt, sizeof(idtxt), "%d", id);
-      rval = tmdb_load_movie_info(db, item_url, idtxt,
-				  tmdb_datasource_search);
+    char tmdb_id[16];
+    snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
+    int64_t itemid =
+      metadb_insert_videoitem(db, item_url, tmdb_datasource_search,
+			      tmdb_id, md, METAITEM_STATUS_PARTIAL,
+			      pop * 1000);
+    if(itemid < 0) {
+      htsmsg_destroy(doc);
+      return itemid;
     }
-  }
 
- done1:
+    const char *s;
+    if((s = htsmsg_get_str(res, "poster_path")) != NULL)
+      insert_videoart(db, itemid, METADATA_IMAGE_POSTER, s, "poster");
+    if((s = htsmsg_get_str(res, "backdrop_path")) != NULL)
+      insert_videoart(db, itemid, METADATA_IMAGE_BACKDROP, s, "backdrop");
+  }
   htsmsg_destroy(doc);
-  return rval;
+  return 0;
 }
 
 
 /**
  *
  */
-int64_t
-tmdb_query_by_imdb_id(void *db, const char *item_url,
-		      const char *imdb_id, int duration)
+static int64_t
+tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id)
 {
-  int r;
-
-  if((r = tmdb_configure(db)) < 0)
-    return r;
+  if(tmdb_datasource_imdb < 0)
+    return -1;
 
   return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_imdb);
 }
 
+/**
+ *
+ */
+static int64_t
+tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
+{
+  if(tmdb_datasource_search < 0)
+    return -1;
+
+  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_search);
+}
+
+
+static const metadata_source_funcs_t search_fns = {
+  .query_by_title_and_year = tmdb_query_by_title_and_year,
+  .query_by_id = tmdb_query_by_id,
+};
+
+static const metadata_source_funcs_t imdb_fns = {
+  .query_by_imdb_id = tmdb_query_by_imdb_id,
+};
 
 
 
@@ -474,6 +489,14 @@ void
 tmdb_init(void)
 {
   hts_mutex_init(&tmdb_mutex);
+
+  tmdb_datasource_search =
+    metadata_add_source("tmdb", "themoviedb.org", 100001,
+			METADATA_TYPE_MOVIE, &search_fns);
+
+  tmdb_datasource_imdb =
+    metadata_add_source("tmdb_imdb", "themoviedb.org (IMDb Id)", 100000,
+			METADATA_TYPE_MOVIE, &imdb_fns);
 }
 
 
@@ -500,30 +523,11 @@ be_tmdb_imageloader(const char *url, const image_meta_t *im,
 {
   tmdb_image_size_t *s;
   const char *p;
-  int r;
 
-  void *db = metadb_get();
- again:
-  if(db_begin(db)) {
-    snprintf(errbuf, errlen, "Failed to load begin DB transaction");
-    return NULL;
-  }
-
-  r = tmdb_configure(db);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback(db);
-    sleep(1);
-    goto again;
-  }
-
-  db_commit(db);
-  metadb_close(db);
-
-  if(r) {
+  if(tmdb_configure()) {
     snprintf(errbuf, errlen, "Failed to load TMDB configuration");
     return NULL;
   }
-
 
   if((p = mystrbegins(url, "tmdb:image:poster:")) != NULL)
     s = poster_sizes;

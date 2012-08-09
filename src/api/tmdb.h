@@ -17,13 +17,5 @@
  */
 #pragma once
 
-int64_t tmdb_query_by_title_and_year(void *db, const char *item_url, 
-				     const char *title, int year,
-				     int duration);
-
-int64_t tmdb_query_by_imdb_id(void *db, const char *item_url, 
-			      const char *imdb_id,
-			      int duration);
-
 void tmdb_init(void);
 

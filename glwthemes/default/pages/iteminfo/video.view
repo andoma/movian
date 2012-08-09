@@ -38,109 +38,120 @@ widget(container_y, {
       });
     });
 
-    widget(container_y, {
+    widget(container_z, {
       filterConstraintX: true;
-      spacing: 2;
-
-
-      widget(label, {
-	hidden: !$args.metadata.year;
-	TextStyleItem();
-	caption: '<font color="#888">' + _("Year: ") + '</font>' + 
-	  fmt("%d", $args.metadata.year);
+      widget(container_y, {
+	space(2);
+	widget(throbber, {
+	  alpha: $args.metadata.loading;
+	});
+	space(2);
       });
+      widget(container_y, {
+	spacing: $ui.size / 2;
 
 
-      widget(label, {
-	TextStyleItem();
-	caption: '<font color="#888">' + _("Duration: ") + '</font>' + 
-	  value2duration($args.metadata.duration);
-      });
-
-      widget(label, {
-	TextStyleItem();
-	maxlines: 3;
-	caption: '<font color="#888">' + _("Genre: ") + '</font><margin>' + 
-	  $args.metadata.genre;
-      });
-
-
-      widget(container_x, {
-	filterConstraintX: true;
-	spacing: 5;
 	widget(label, {
-	  font: $ui.font;
-	  shadow: true;
-	  outline: true;
-
-	  caption: '<font color="#888">' + _("Rating: ") + '</font>' + 
-	    fmt("(%1.1f / 10):", $args.metadata.rating / 10);
+	  hidden: !$args.metadata.year;
+	  TextStyleItem();
+	  caption: '<font color="#888">' + _("Year:") + ' </font>' + 
+	    fmt("%d", $args.metadata.year);
 	});
 
-	widget(container_z, {
-	  widget(container_x, {
-	    STAR_DIMMED();
-	    STAR_DIMMED();
-	    STAR_DIMMED();
-	    STAR_DIMMED();
-	    STAR_DIMMED();
-	  });
-      
 
-	  widget(clip, {
-	    clipping: [0, 0, 1 - $args.metadata.rating / 100, 0];
-	    
+	widget(label, {
+	  TextStyleItem();
+	  caption: '<font color="#888">' + _("Duration:") + ' </font>' + 
+	    value2duration($args.metadata.duration);
+	});
+
+	widget(label, {
+	  hidden: !$args.metadata.genre;
+	  TextStyleItem();
+	  maxlines: 3;
+	  caption: '<font color="#888">' + _("Genre:") + ' </font><margin>' + 
+	    $args.metadata.genre;
+	});
+
+
+	widget(container_x, {
+	  hidden: isVoid($args.metadata.rating);
+	  filterConstraintX: true;
+	  spacing: 5;
+	  widget(label, {
+	    font: $ui.font;
+	    shadow: true;
+	    outline: true;
+
+	    caption: '<font color="#888">' + _("Rating:") + ' </font>' + 
+	      fmt("(%1.1f / 10):", $args.metadata.rating / 10);
+	  });
+
+	  widget(container_z, {
 	    widget(container_x, {
-	      STAR_FULL();
-	      STAR_FULL();
-	      STAR_FULL();
-	      STAR_FULL();
-	      STAR_FULL();
+	      STAR_DIMMED();
+	      STAR_DIMMED();
+	      STAR_DIMMED();
+	      STAR_DIMMED();
+	      STAR_DIMMED();
+	    });
+	    
+
+	    widget(clip, {
+	      clipping: [0, 0, 1 - $args.metadata.rating / 100, 0];
+	      
+	      widget(container_x, {
+		STAR_FULL();
+		STAR_FULL();
+		STAR_FULL();
+		STAR_FULL();
+		STAR_FULL();
+	      });
 	    });
 	  });
 	});
-      });
 
-      widget(label, {
-	hidden: !$args.metadata.director;
-	TextStyleItem();
-	maxlines: 3;
-	caption: '<font color="#888">' + _("Director: ") + '</font><margin>' + 
-	  $args.metadata.director;
-      });
-      widget(label, {
-	hidden: !$args.metadata.producer;
-	TextStyleItem();
-	maxlines: 3;
-	caption: '<font color="#888">' + _("Producer: ") + '</font><margin>' + 
-	  $args.metadata.producer;
-      });
+	widget(label, {
+	  hidden: !$args.metadata.director;
+	  TextStyleItem();
+	  maxlines: 4;
+	  caption: '<font color="#888">' + _("Director:") + ' </font><margin>' + 
+	    $args.metadata.director;
+	});
+	widget(label, {
+	  hidden: !$args.metadata.producer;
+	  TextStyleItem();
+	  maxlines: 4;
+	  caption: '<font color="#888">' + _("Producer:") + ' </font><margin>' + 
+	    $args.metadata.producer;
+	});
 
-      space(1);
+	space(1);
+	
+	
 
+      });
     });
   });
+  
   
   widget(label, {
     TextStyleItem();
     sizeScale: 0.8;
-    padding: [12,0,0,0];
-    caption: fmt(_pl("Played %d times", "Played %d time", $args.playcount), $args.playcount);
+    align: justified;
+    maxlines: 20;
+    caption: $args.metadata.description;
   });
-  
-  widget(backdrop, {
-    filterConstraintY: true;
-    source: "theme://graphics/indent.png";
-    border: 16;
-    padding: -4;
 
-    widget(label, {
-      TextStyleItem();
-      sizeScale: 0.8;
-      align: justified;
-      maxlines: 20;
-      caption: $args.metadata.description;
-    });
+  space(1);
+
+  widget(label, {
+    TextStyleItem();
+    hidden: !$args.metadata.source;
+    align: right;
+    sizeScale: 0.8;
+    caption: _("Metadata from") + " " + $args.metadata.source;
+    color: 0.5;
   });
 
 });
