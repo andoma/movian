@@ -104,6 +104,63 @@ typedef struct kv_prop_bind {
   char *kpb_url;
 } kv_prop_bind_t;
 
+
+/**
+ *
+ */
+static int
+get_url(void *db, const char *url, uint64_t *id)
+{
+  int rc;
+  sqlite3_stmt *stmt;
+
+  rc = db_prepare(db,
+		  "SELECT id FROM url WHERE url=?1",
+		  -1, &stmt, NULL);
+  
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    return rc;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+      
+  rc = sqlite3_step(stmt);
+  if(rc == SQLITE_LOCKED) {
+    sqlite3_finalize(stmt);
+    return SQLITE_LOCKED;
+  }
+  if(rc == SQLITE_ROW) {
+    *id = sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    return SQLITE_OK;
+
+  } else if(rc == SQLITE_DONE) {
+    sqlite3_finalize(stmt);
+
+    rc = db_prepare(db,
+		    "INSERT INTO url ('url') VALUES (?1)",
+		    -1, &stmt, NULL);
+    
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      return rc;
+    }
+    sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+
+    rc = db_step(stmt);
+    if(rc == SQLITE_DONE) {
+      *id = sqlite3_last_insert_rowid(db);
+      rc = SQLITE_OK;
+    }
+  }
+  sqlite3_finalize(stmt);
+  return rc;
+}
+
+
 /**
  *
  */
@@ -141,74 +198,32 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
       break;
     
     if(kpb->kpb_id == -1) {
-      rc = db_prepare(db,
-		      "SELECT id FROM url WHERE url=?1",
-		    -1, &stmt, NULL);
+
+      rc = get_url(db, kpb->kpb_url, &kpb->kpb_id);
+      if(rc == SQLITE_LOCKED)
+	goto again;
 
       if(rc != SQLITE_OK) {
-	TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	      __FUNCTION__, __LINE__);
 	db_rollback(db);
 	kvstore_close(db);
 	return;
-      }
-
-      sqlite3_bind_text(stmt, 1, kpb->kpb_url, -1, SQLITE_STATIC);
-      
-      rc = sqlite3_step(stmt);
-      if(rc == SQLITE_LOCKED) {
-	sqlite3_finalize(stmt);
-	db_rollback_deadlock(db);
-	goto again;
-      }
-      if(rc == SQLITE_ROW) {
-	kpb->kpb_id = sqlite3_column_int64(stmt, 0);
-	sqlite3_finalize(stmt);
-      } else {
-	sqlite3_finalize(stmt);
-
-	rc = db_prepare(db,
-			"INSERT INTO url ('url') VALUES (?1)",
-			-1, &stmt, NULL);
-	
-	if(rc != SQLITE_OK) {
-	  TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-		__FUNCTION__, __LINE__);
-	  db_rollback(db);
-	  kvstore_close(db);
-	  return;
-	}
-	
-	sqlite3_bind_text(stmt, 1, kpb->kpb_url, -1, SQLITE_STATIC);
-
-	rc = db_step(stmt);
-	sqlite3_finalize(stmt);
-	if(rc == SQLITE_LOCKED) {
-	  db_rollback_deadlock(db);
-	  goto again;
-	}
-	
-	if(rc == SQLITE_DONE) {
-	  kpb->kpb_id = sqlite3_last_insert_rowid(db);
-	} else {
-	  db_rollback(db);
-	  kvstore_close(db);
-	  return;
-	}
       }
     }
     
     if(event == PROP_SET_VOID) {
       rc = db_prepare(db,
-		      "DELETE FROM page_kv WHERE url_id = ?1 AND key = ?2",
-		      -1, &stmt, NULL);
+		      "DELETE FROM url_kv "
+		      "WHERE url_id = ?1 "
+		      "AND domain = ?4 "
+		      "AND key = ?2"
+		      , -1, &stmt, NULL);
     } else {
 
       rc = db_prepare(db,
-		      "INSERT OR REPLACE INTO page_kv "
-		      "(url_id, key, value) "
+		      "INSERT OR REPLACE INTO url_kv "
+		      "(url_id, domain, key, value) "
 		      "VALUES "
-		      "(?1, ?2, ?3)",
+		      "(?1, ?4, ?2, ?3)",
 		      -1, &stmt, NULL);
     }
 
@@ -221,6 +236,7 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
     }
 
     sqlite3_bind_int64(stmt, 1, kpb->kpb_id);
+    sqlite3_bind_int(stmt, 4, KVSTORE_PAGE_DOMAIN_PROP);
 
     va_copy(apx, ap);
 
@@ -351,9 +367,10 @@ kv_prop_bind_create(prop_t *p, const char *url)
   rc = db_prepare(db, 
 		  "SELECT id,key,value "
 		  "FROM url "
-		  "LEFT OUTER JOIN page_kv ON id = url_id "
-		  "WHERE url=?1",
-		  -1, &stmt, NULL);
+		  "LEFT OUTER JOIN url_kv ON id = url_id "
+		  "WHERE url=?1 "
+		  "AND domain=?2 "
+		  , -1, &stmt, NULL);
 
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
@@ -362,7 +379,7 @@ kv_prop_bind_create(prop_t *p, const char *url)
     return;
   }
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-
+  sqlite3_bind_int(stmt, 2, KVSTORE_PAGE_DOMAIN_PROP);
 
   while(db_step(stmt) == SQLITE_ROW) {
     if(id == -1)
@@ -400,4 +417,114 @@ kv_prop_bind_create(prop_t *p, const char *url)
 		   PROP_TAG_CALLBACK, kv_cb, kpb,
 		   PROP_TAG_ROOT, p,
 		   NULL);
+}
+
+
+
+
+/**
+ *
+ */
+rstr_t *
+kv_url_opt_get_rstr(const char *url, int domain, const char *key)
+{
+  void *db;
+  sqlite3_stmt *stmt;
+  int rc;
+  rstr_t *ret = NULL;
+
+  db = kvstore_get();
+  if(db == NULL)
+    return NULL;
+
+  rc = db_prepare(db, 
+		  "SELECT value "
+		  "FROM url, url_kv "
+		  "WHERE url=?1 "
+		  "AND key = ?2 "
+		  "AND domain = ?3 "
+		  "AND url.id = url_id"
+		  , -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    kvstore_close(db);
+    return NULL;
+  }
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  sqlite3_bind_text(stmt, 2, key, -1, SQLITE_STATIC);
+  sqlite3_bind_int(stmt,  3, domain);
+
+  if(db_step(stmt) == SQLITE_ROW)
+    ret = db_rstr(stmt, 0);
+  sqlite3_finalize(stmt);
+  kvstore_close(db);
+  return ret;
+}
+
+
+
+
+/**
+ *
+ */
+void
+kv_url_opt_set_str(const char *url, int domain, const char *key,
+		   const char *value)
+{
+  void *db;
+  sqlite3_stmt *stmt;
+  int rc;
+  uint64_t id;
+
+  db = kvstore_get();
+  if(db == NULL)
+    return;
+  
+ again:
+  if(db_begin(db)) {
+    kvstore_close(db);
+    return;
+  }
+
+  rc = get_url(db, url, &id);
+  if(rc == SQLITE_LOCKED)
+    goto again;
+
+  if(rc != SQLITE_OK) {
+    db_rollback(db);
+    kvstore_close(db);
+    return;
+  }
+
+  rc = db_prepare(db,
+		  "INSERT OR REPLACE INTO url_kv "
+		  "(url_id, key, value, domain) "
+		  "VALUES "
+		  "(?1, ?2, ?3, ?4)",
+		  -1, &stmt, NULL);
+
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    db_rollback(db);
+    kvstore_close(db);
+    return;
+  }
+
+  sqlite3_bind_int64(stmt, 1, id);
+  sqlite3_bind_text(stmt, 2, key, -1, SQLITE_STATIC);
+  sqlite3_bind_text(stmt, 3, value, -1, SQLITE_STATIC);
+  sqlite3_bind_int(stmt, 4, domain);
+  
+  rc = sqlite3_step(stmt);
+  sqlite3_finalize(stmt);
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+  db_commit(db);
+  kvstore_close(db);
 }
