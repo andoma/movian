@@ -1179,6 +1179,19 @@ prop_nf_release(struct prop_nf *pnf)
 /**
  *
  */
+struct prop_nf *
+prop_nf_retain(struct prop_nf *pnf)
+{
+  hts_mutex_lock(&prop_mutex);
+  pnf->pnf_refcount++;
+  hts_mutex_unlock(&prop_mutex);
+  return pnf;
+}
+
+
+/**
+ *
+ */
 static void
 pnp_set_enable(void *opaque, int v)
 {

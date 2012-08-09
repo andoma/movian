@@ -57,6 +57,9 @@ struct prop_nf *prop_nf_create(prop_t *dst, prop_t *src,
 
 void prop_nf_release(struct prop_nf *nf);
 
+struct prop_nf *prop_nf_retain(struct prop_nf *nf)
+  __attribute__ ((warn_unused_result));
+
 void prop_nf_sort(struct prop_nf *nf, const char *path, int desc,
 		  unsigned int idx, const prop_nf_sort_strmap_t *map,
 		  int hide_on_missing);
