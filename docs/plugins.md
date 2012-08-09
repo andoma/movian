@@ -350,6 +350,12 @@ registered using the item's onEvent() method.
 
 *Available from 3.99.357*
 
+#### addOptSeparator(String title)
+
+Add a separator that separates content by sections.
+
+*Available from 3.99.428*
+
 
 ## The plugin object
 
