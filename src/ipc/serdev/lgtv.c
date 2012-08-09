@@ -275,7 +275,7 @@ lgtv_init(serdev_t *sd, int curpower)
   if(lg->prior_input != -1) {
     int input = lg->prior_input;
 
-    x = settings_create_multiopt(s, "inputsource", _p("Input source"));
+    x = settings_create_multiopt(s, "inputsource", _p("Input source"), 0);
 
 
     settings_multiopt_add_opt_cstr(x, "none",      "None",        1);

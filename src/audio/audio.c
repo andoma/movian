@@ -134,7 +134,7 @@ audio_init(void)
   
   audio_settings_current_device = 
     settings_create_multiopt(audio_settings_root, "currentdevice", 
-			     _p("Current output device"));
+			     _p("Current output device"), 0);
   
   TAILQ_INIT(&audio_modes);
 

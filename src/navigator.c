@@ -953,7 +953,7 @@ bookmark_add(const char *title, const char *url, const char *type,
   settings_create_bound_string(m, _p("URL"), prop_create(md, "url"));
 
   bm->bm_type_setting = 
-    settings_create_multiopt(m, "type", _p("Type"));
+    settings_create_multiopt(m, "type", _p("Type"), 0);
 
   settings_multiopt_add_opt(bm->bm_type_setting, "other",  _p("Other"),
 			    !strcmp(type, "other"));

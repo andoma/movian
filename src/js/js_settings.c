@@ -21,7 +21,7 @@
 
 #include "js.h"
 #include "htsmsg/htsmsg.h"
-
+#include "db/kvstore.h"
 #include "settings.h"
 
 LIST_HEAD(js_setting_list, js_setting);
@@ -34,16 +34,19 @@ typedef struct js_setting_group {
   setting_t *jsg_s;
 
   prop_t *jsg_root;
-
   htsmsg_t *jsg_store;
   char *jsg_spath;
-  int jsg_frozen;
+  char jsg_frozen;
+  char jsg_root_owner;
+  int jsg_settings_flags;
 
   jsval jsg_val;
   int jsg_refcount;
   LIST_ENTRY(js_setting_group) jsg_link;
 
   struct js_setting_list jsg_settings;
+
+  char *jsg_kv_url;  // URL for storage in kvstore
 
 } js_setting_group_t;
 
@@ -63,6 +66,8 @@ typedef struct js_setting {
 
   LIST_ENTRY(js_setting) jss_link;
 
+  char *jss_key;
+
 } js_setting_t;
 
 
@@ -80,6 +85,7 @@ jss_release(js_setting_t *jss)
     return;
   jsg_release(jss->jss_jsg);
   setting_destroy(jss->jss_s);
+  free(jss->jss_key);
   free(jss);
 }
 
@@ -127,13 +133,15 @@ jsg_release(js_setting_group_t *jsg)
   if(atomic_add(&jsg->jsg_refcount, -1) > 1)
     return;
 
-  if(jsg->jsg_root != NULL)
-    prop_destroy(jsg->jsg_root);
+  if(jsg->jsg_root_owner)
+    if(jsg->jsg_root != NULL)
+      prop_destroy(jsg->jsg_root);
 
   if(jsg->jsg_store != NULL)
     htsmsg_destroy(jsg->jsg_store);
   
   free(jsg->jsg_spath);
+  prop_ref_dec(jsg->jsg_root);
   free(jsg);
 }
 
@@ -170,7 +178,8 @@ static void
 js_setting_group_save(void *opaque, htsmsg_t *msg)
 {
   js_setting_group_t *jsg = opaque;
-  htsmsg_store_save(msg, jsg->jsg_spath);
+  if(jsg->jsg_spath != NULL)
+    htsmsg_store_save(msg, jsg->jsg_spath);
 }
 
 
@@ -209,6 +218,9 @@ js_store_update_bool(void *opaque, int value)
 {
   js_setting_t *jss = opaque;
   settings_update(settings_get_cx(jss), jss, BOOLEAN_TO_JSVAL(!!value));
+  if(jss->jss_key != NULL)
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+		   jss->jss_key, KVSTORE_SET_INT, !!value);
 }
 
 /**
@@ -222,6 +234,9 @@ js_store_update_string(void *opaque, const char *str)
   settings_update(cx, jss,
 		  str ? STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str))
 		  : JSVAL_NULL);
+  if(jss->jss_key != NULL)
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+		   jss->jss_key, KVSTORE_SET_STRING, str);
 }
 
 
@@ -233,6 +248,9 @@ js_store_update_int(void *opaque, int value)
 {
   js_setting_t *jss = opaque;
   settings_update(settings_get_cx(jss), jss, INT_TO_JSVAL(value));
+  if(jss->jss_key != NULL)
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+		   jss->jss_key, KVSTORE_SET_INT, value);
 }
 
 
@@ -256,7 +274,7 @@ js_action_function(void *opaque, prop_event_t event, ...)
  */
 static js_setting_t *
 jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
-	   JSObject *func, js_setting_group_t *jsg)
+	   JSObject *func, js_setting_group_t *jsg, int persistent)
 {
   if(jsg->jsg_root == NULL) {
     JS_ReportError(cx, "Settings group has been destroyed");
@@ -272,6 +290,7 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
   jss->jss_cx = cx;
   jss->jss_refcount = 1;
   jss->jss_jsg = jsg;
+  jss->jss_key = persistent && jsg->jsg_kv_url ? strdup(id) : NULL;
   LIST_INSERT_HEAD(&jsg->jsg_settings, jss, jss_link);
   atomic_add(&jsg->jsg_refcount, 1);
   JS_AddNamedRoot(cx, &jss->jss_obj, "jss");
@@ -282,8 +301,6 @@ jss_create(JSContext *cx, JSObject *obj, const char *id, jsval *rval,
 
   jsval v = OBJECT_TO_JSVAL(func);
   JS_SetProperty(cx, JSVAL_TO_OBJECT(jss->jss_obj), "callback", &v);
-
-
   return jss;
 }
 
@@ -298,21 +315,28 @@ js_createBool(JSContext *cx, JSObject *obj, uintN argc,
   const char *id;
   const char *title;
   JSBool def;
+  JSBool persistent = JS_FALSE;
   JSObject *func;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "ssbo",
-			  &id, &title, &def, &func))
+  if(!JS_ConvertArguments(cx, argc, argv, "ssbo/b",
+			  &id, &title, &def, &func, &persistent))
     return JS_FALSE;
 
-  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg, persistent);
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_bool(jsg->jsg_root, id, _p(title),
-				    def, jsg->jsg_store,
-				    js_store_update_bool, jss,
-				    SETTINGS_INITIAL_UPDATE, js_global_pc,
-				    js_setting_group_save, jsg);
+  if(persistent && jsg->jsg_kv_url)
+    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, 
+			     id, def);
+
+  jss->jss_s =
+    settings_create_bool(jsg->jsg_root, id, _p(title),
+			 def, jsg->jsg_store,
+			 js_store_update_bool, jss,
+			 SETTINGS_INITIAL_UPDATE | jsg->jsg_settings_flags,
+			 js_global_pc,
+			 js_setting_group_save, jsg);
   jss->jss_cx = NULL;
 
   return JS_TRUE;
@@ -331,22 +355,32 @@ js_createString(JSContext *cx, JSObject *obj, uintN argc,
   const char *title;
   const char *def;
   JSObject *func;
+  JSBool persistent = JS_FALSE;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "ssso",
-			  &id, &title, &def, &func))
+  if(!JS_ConvertArguments(cx, argc, argv, "ssso/b",
+			  &id, &title, &def, &func, &persistent))
     return JS_FALSE;
 
-  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg, persistent);
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_string(jsg->jsg_root, id, _p(title),
-				      def, jsg->jsg_store,
-				      js_store_update_string, jss,
-				      SETTINGS_INITIAL_UPDATE, js_global_pc,
-				      js_setting_group_save, jsg);
-  jss->jss_cx = NULL;
+  rstr_t *r = NULL;
+  if(persistent && jsg->jsg_kv_url) {
+    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, id);
+    if(r != NULL)
+      def = rstr_get(r);
+  }
 
+  jss->jss_s =
+    settings_create_string(jsg->jsg_root, id, _p(title),
+			   def, jsg->jsg_store,
+			   js_store_update_string, jss,
+			   SETTINGS_INITIAL_UPDATE | jsg->jsg_settings_flags,
+			   js_global_pc,
+			   js_setting_group_save, jsg);
+  jss->jss_cx = NULL;
+  rstr_release(r);
   return JS_TRUE;
 }
 
@@ -355,7 +389,8 @@ js_createString(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static void
-add_multiopt(JSContext *cx, js_setting_t *jss, JSObject *optlist)
+add_multiopt(JSContext *cx, js_setting_t *jss, JSObject *optlist,
+	     const char *vdef)
 {
   JSIdArray *opts, *opt;
   int i;
@@ -382,11 +417,13 @@ add_multiopt(JSContext *cx, js_setting_t *jss, JSObject *optlist)
 	if(opt->length < 3 ||
 	   !JS_GetElement(cx, JSVAL_TO_OBJECT(value), 2, &def))
 	  def = JSVAL_FALSE;
+	const char *k = JS_GetStringBytes(JS_ValueToString(cx, id));
+	if(vdef)
+	  def = !strcmp(k, vdef) ? JSVAL_TRUE : JSVAL_FALSE;
 	
-	settings_multiopt_add_opt_cstr(jss->jss_s,
-				       JS_GetStringBytes(JS_ValueToString(cx, id)),
-				       
-				       JS_GetStringBytes(JS_ValueToString(cx, title)), def == JSVAL_TRUE);
+	settings_multiopt_add_opt_cstr(jss->jss_s, k,
+				       JS_GetStringBytes(JS_ValueToString(cx, title)),
+				       def == JSVAL_TRUE);
 	
       }
     }
@@ -407,19 +444,26 @@ js_createMultiOpt(JSContext *cx, JSObject *obj, uintN argc,
   const char *title;
   JSObject *func;
   JSObject *options;
+  JSBool persistent = JS_FALSE;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "ssoo",
-			  &id, &title, &options, &func))
+  if(!JS_ConvertArguments(cx, argc, argv, "ssoo/b",
+			  &id, &title, &options, &func, &persistent))
     return JS_FALSE;
 
-  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg, persistent);
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_multiopt(jsg->jsg_root, id, _p(title));
+  jss->jss_s = settings_create_multiopt(jsg->jsg_root, id, _p(title),
+					jsg->jsg_settings_flags);
 
-  add_multiopt(cx, jss, options);
+  rstr_t *r = NULL;
+  if(persistent && jsg->jsg_kv_url)
+    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, id);
 
+  add_multiopt(cx, jss, options, rstr_get(r));
+
+  rstr_release(r);
   settings_multiopt_initiate(jss->jss_s,
 			     js_store_update_string, jss, 
 			     js_global_pc,
@@ -483,23 +527,30 @@ js_createInt(JSContext *cx, JSObject *obj, uintN argc,
   int step;
   const char* unit;
   JSObject *func;
+  JSBool persistent = JS_FALSE;
 
-  if(!JS_ConvertArguments(cx, argc, argv, "ssiiiiso",
-			  &id, &title, &def, &min, &max, &step, &unit, &func)){
+  if(!JS_ConvertArguments(cx, argc, argv, "ssiiiiso/b",
+			  &id, &title, &def, &min, &max, &step, &unit, &func,
+			  &persistent)){
     return JS_FALSE;
   }
 
 
-  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg, persistent);
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_int(jsg->jsg_root, id, _p(title),
-				   def, jsg->jsg_store,
-				   min, max, step,
-				   js_store_update_int, jss,
-				   SETTINGS_INITIAL_UPDATE, unit, js_global_pc,
-				   js_setting_group_save, jsg);
+  if(persistent && jsg->jsg_kv_url)
+    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, 
+			     id, def);
+
+  jss->jss_s =
+    settings_create_int(jsg->jsg_root, id, _p(title),
+			def, jsg->jsg_store,
+			min, max, step,
+			js_store_update_int, jss,
+			SETTINGS_INITIAL_UPDATE | jsg->jsg_settings_flags,
+			unit, js_global_pc, js_setting_group_save, jsg);
   jss->jss_cx = NULL;
 
   return JS_TRUE;
@@ -523,13 +574,14 @@ js_createAction(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg);
+  js_setting_t *jss = jss_create(cx, obj, id, rval, func, jsg, 0);
   if(jss == NULL)
     return JS_FALSE;
 
-  jss->jss_s = settings_create_action(jsg->jsg_root, _p(title), 
-                                   js_action_function, jss, 
-                                   js_global_pc);
+  jss->jss_s =
+    settings_create_action(jsg->jsg_root, _p(title), 
+			   js_action_function, jss, 
+			   js_global_pc);
 
   jss->jss_cx = NULL;
 
@@ -738,8 +790,10 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jsg->jsg_frozen = 1;
   jsg->jsg_spath = strdup(spath);
   jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
-  jsg->jsg_root = settings_add_dir(settings_apps, _p(title), NULL, icon,
-				   desc ? _p(desc) : NULL, NULL);
+  jsg->jsg_root_owner = 1;
+  jsg->jsg_root =
+    prop_ref_inc(settings_add_dir_cstr(settings_apps, title,
+				  NULL, icon, desc, NULL));
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   jsg->jsg_val = *rval = OBJECT_TO_JSVAL(robj);
   JS_AddNamedRoot(cx, &jsg->jsg_val, "jsg");
@@ -780,6 +834,41 @@ js_createStore(JSContext *cx, JSObject *obj, uintN argc,
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   *rval = OBJECT_TO_JSVAL(robj);
   JS_SetPrivate(cx, robj, jsg);
+  jsg->jsg_frozen = 0;
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSClass page_options_class = {
+  "pageOptions", JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub, JS_ResolveStub ,JS_ConvertStub, setting_group_finalize,
+  JSCLASS_NO_OPTIONAL_MEMBERS
+};
+
+/**
+ *
+ */
+JSBool
+js_createPageOptions(JSContext *cx, JSObject *page, const char *url,
+		     prop_t *options)
+{
+  js_setting_group_t *jsg = calloc(1, sizeof(js_setting_group_t));
+  JSObject *robj;
+  jsg->jsg_refcount = 1;
+  jsg->jsg_frozen = 1;
+  jsg->jsg_kv_url = strdup(url);
+  jsg->jsg_root = prop_ref_inc(options);
+  jsg->jsg_root_owner = 0;
+  jsg->jsg_settings_flags = SETTINGS_RAW_NODES;
+  robj = JS_DefineObject(cx, page, "options", &page_options_class, NULL, 0);
+  JS_SetPrivate(cx, robj, jsg);
+
+  JS_DefineFunctions(cx, robj, setting_functions);
   jsg->jsg_frozen = 0;
   return JS_TRUE;
 }

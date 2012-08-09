@@ -96,6 +96,7 @@ setting_add(prop_t *parent, prop_t *title, const char *type, int flags)
   if(title != NULL)
     set_title2(p, title);
   prop_set_string(prop_create(p, "type"), type);
+  prop_set_int(prop_create(p, "enabled"), 1);
   return p;
 }
 
@@ -181,7 +182,8 @@ setting_create_leaf(prop_t *parent, prop_t *title, const char *type,
 {
   setting_t *s = calloc(1, sizeof(setting_t));
   s->s_root = prop_ref_inc(setting_add(parent, title, type, flags));
-  s->s_val = prop_ref_inc(prop_create(s->s_root, valuename));
+  s->s_val = prop_create_r(s->s_root, valuename);
+  
   return s;
 }
 
@@ -373,9 +375,11 @@ callback_opt(void *opaque, prop_event_t event, ...)
  *
  */
 setting_t *
-settings_create_multiopt(prop_t *parent, const char *id, prop_t *title)
+settings_create_multiopt(prop_t *parent, const char *id, prop_t *title,
+			 int flags)
 {
-  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options", 0);
+  setting_t *s = setting_create_leaf(parent, title, "multiopt", "options", 
+				     flags);
   s->s_id = strdup(id);
   return s;
 }

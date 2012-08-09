@@ -60,7 +60,7 @@ void settings_set_bool(setting_t *s, int v);
 void settings_toggle_bool(setting_t *s);
 
 setting_t *settings_create_multiopt(prop_t *parent, const char *id,
-				    prop_t *title);
+				    prop_t *title, int flags);
 
 void settings_multiopt_add_opt(setting_t *parent, const char *id,
 			       prop_t *title, int selected);

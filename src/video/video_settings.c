@@ -210,7 +210,8 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"videoplayback");
 
-  x = settings_create_multiopt(s, "vdpau_deinterlace", _p("Preferred VDPAU deinterlacer method"));
+  x = settings_create_multiopt(s, "vdpau_deinterlace",
+			       _p("Preferred VDPAU deinterlacer method"), 0);
 
   settings_multiopt_add_opt(x, "2", _p("Temporal/Spatial"), 1);
   settings_multiopt_add_opt(x, "1", _p("Temporal"), 0);
@@ -220,7 +221,8 @@ video_settings_init(void)
 			     store, settings_generic_save_settings,
                              (void *)"videoplayback");
 
-  x = settings_create_multiopt(s, "vdpau_deinterlace_resolution_limit", _p("Maximum resolution for deinterlacer"));
+  x = settings_create_multiopt(s, "vdpau_deinterlace_resolution_limit",
+			       _p("Maximum resolution for deinterlacer"), 0);
   settings_multiopt_add_opt(x, "576", _p("576"), 0);
   settings_multiopt_add_opt(x, "720", _p("720"), 0);
   settings_multiopt_add_opt(x, "1080", _p("1080"), 0);
@@ -264,7 +266,7 @@ video_settings_init(void)
   
   video_settings.resume_mode = 1;
   x = settings_create_multiopt(s, "resumemode",
-			       _p("Resume video playback"));
+			       _p("Resume video playback"), 0);
 
   settings_multiopt_add_opt(x, "1", _p("Yes"), 1);
   settings_multiopt_add_opt(x, "0", _p("No"), 0);
@@ -329,7 +331,7 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
 
-  x = settings_create_multiopt(s, "align", _p("Subtitle position"));
+  x = settings_create_multiopt(s, "align", _p("Subtitle position"), 0);
 			       
 
   settings_multiopt_add_opt(x, "2", _p("Center"), 1);

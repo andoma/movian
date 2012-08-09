@@ -91,6 +91,7 @@ typedef struct js_model {
   prop_t *jm_entries;
   prop_t *jm_source;
   prop_t *jm_metadata;
+  prop_t *jm_options;
 
   prop_t *jm_eventsink;
 
@@ -110,6 +111,8 @@ typedef struct js_model {
   int jm_subs;
 
   jsval jm_item_proto;
+
+  char *jm_url;
 
 } js_model_t;
 
@@ -152,11 +155,12 @@ js_model_destroy(js_model_t *jm)
   if(jm->jm_entries)   prop_ref_dec(jm->jm_entries);
   if(jm->jm_source)    prop_ref_dec(jm->jm_source);
   if(jm->jm_metadata)  prop_ref_dec(jm->jm_metadata);
+  if(jm->jm_options)   prop_ref_dec(jm->jm_options);
   if(jm->jm_eventsink) prop_ref_dec(jm->jm_eventsink);
 
   if(jm->jm_pc != NULL)
     prop_courier_destroy(jm->jm_pc);
-
+  free(jm->jm_url);
   free(jm);
 }
 
@@ -661,6 +665,7 @@ init_model_props(js_model_t *jm, prop_t *model)
   jm->jm_contents= prop_ref_inc(prop_create(model, "contents"));
   jm->jm_entries = prop_ref_inc(prop_create(model, "entries"));
   jm->jm_metadata= prop_ref_inc(prop_create(model, "metadata"));
+  jm->jm_options = prop_ref_inc(prop_create(model, "options"));
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       jm->jm_nodes,
@@ -1024,6 +1029,7 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   JSObject *obj = make_model_object(cx, jm, &pageobj);
 
   JS_DefineFunctions(cx, obj, page_functions);
+  js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
 
   if(jm->jm_args != NULL) {
     argfmt[0] = 'o';
@@ -1166,7 +1172,7 @@ js_backend_open(prop_t *page, const char *url)
   jm->jm_eventsink = prop_ref_inc(prop_create(page, "eventSink"));
   jm->jm_loading   = prop_ref_inc(prop_create(model, "loading"));
   jm->jm_root      = prop_ref_inc(page);
-  
+  jm->jm_url       = strdup(url);
   model_launch(jm);
   return 0;
 }
