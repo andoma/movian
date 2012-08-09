@@ -425,15 +425,12 @@ kv_prop_bind_create(prop_t *p, const char *url)
 /**
  *
  */
-rstr_t *
-kv_url_opt_get_rstr(const char *url, int domain, const char *key)
+static sqlite3_stmt *
+kv_url_opt_get(void *db, const char *url, int domain, const char *key)
 {
-  void *db;
   sqlite3_stmt *stmt;
   int rc;
-  rstr_t *ret = NULL;
 
-  db = kvstore_get();
   if(db == NULL)
     return NULL;
 
@@ -449,7 +446,6 @@ kv_url_opt_get_rstr(const char *url, int domain, const char *key)
   if(rc != SQLITE_OK) {
     TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
 	  __FUNCTION__, __LINE__);
-    kvstore_close(db);
     return NULL;
   }
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
@@ -457,10 +453,44 @@ kv_url_opt_get_rstr(const char *url, int domain, const char *key)
   sqlite3_bind_int(stmt,  3, domain);
 
   if(db_step(stmt) == SQLITE_ROW)
-    ret = db_rstr(stmt, 0);
+    return stmt;
   sqlite3_finalize(stmt);
+  return NULL;
+}
+
+/**
+ *
+ */
+rstr_t *
+kv_url_opt_get_rstr(const char *url, int domain, const char *key)
+{
+  void *db = kvstore_get();
+  sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
+  rstr_t *r = NULL;
+  if(stmt) {
+    r = db_rstr(stmt, 0);
+    sqlite3_finalize(stmt);
+  }
   kvstore_close(db);
-  return ret;
+  return r;
+}
+
+
+/**
+ *
+ */
+int
+kv_url_opt_get_int(const char *url, int domain, const char *key, int def)
+{
+  void *db = kvstore_get();
+  sqlite3_stmt *stmt = kv_url_opt_get(db, url, domain, key);
+  int v = def;
+  if(stmt) {
+    v = sqlite3_column_int(stmt, 0);
+    sqlite3_finalize(stmt);
+  }
+  kvstore_close(db);
+  return v;
 }
 
 
@@ -470,13 +500,15 @@ kv_url_opt_get_rstr(const char *url, int domain, const char *key)
  *
  */
 void
-kv_url_opt_set_str(const char *url, int domain, const char *key,
-		   const char *value)
+kv_url_opt_set(const char *url, int domain, const char *key,
+	       int type, ...)
 {
   void *db;
   sqlite3_stmt *stmt;
   int rc;
   uint64_t id;
+  va_list ap, apx;
+  va_start(ap, type);
 
   db = kvstore_get();
   if(db == NULL)
@@ -516,9 +548,21 @@ kv_url_opt_set_str(const char *url, int domain, const char *key,
 
   sqlite3_bind_int64(stmt, 1, id);
   sqlite3_bind_text(stmt, 2, key, -1, SQLITE_STATIC);
-  sqlite3_bind_text(stmt, 3, value, -1, SQLITE_STATIC);
   sqlite3_bind_int(stmt, 4, domain);
-  
+
+  va_copy(apx, ap);
+
+  switch(type) {
+  case KVSTORE_SET_INT:
+    sqlite3_bind_int(stmt, 3, va_arg(apx, int));
+    break;
+
+  case KVSTORE_SET_STRING:
+    sqlite3_bind_text(stmt, 3, va_arg(apx, const char *), -1, SQLITE_STATIC);
+    break;
+  default:
+    break;
+  }
   rc = sqlite3_step(stmt);
   sqlite3_finalize(stmt);
   if(rc == SQLITE_LOCKED) {

@@ -627,7 +627,8 @@ set_sort_order(void *opaque, prop_event_t event, ...)
       if(!strcmp(val, "date"))
 	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
     }
-    kv_url_opt_set_str(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "sortorder", val);
+    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "sortorder", 
+		   KVSTORE_SET_STRING, val);
     rstr_release(r);
     break;
 
@@ -642,7 +643,7 @@ set_sort_order(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-add_sort_option(scanner_t *s, prop_t *model)
+add_sort_option_type(scanner_t *s, prop_t *model)
 {
   prop_t *parent = prop_create(model, "options");
   prop_t *n = prop_create_root(NULL);
@@ -681,11 +682,8 @@ add_sort_option(scanner_t *s, prop_t *model)
 		 PROP_TAG_ROOT, options,
 		 NULL);
 
-  if(prop_set_parent(n, parent)) {
+  if(prop_set_parent(n, parent))
     prop_destroy(n);
-    return;
-  }
-
 }
 
 
@@ -696,6 +694,67 @@ static const prop_nf_sort_strmap_t typemap[] = {
   { "directory", 0},
   { NULL, 1}
 };
+
+
+
+static void
+set_sort_dirs(void *opaque, prop_event_t event, ...)
+{
+  scanner_t *s = opaque;
+  va_list ap;
+  int val;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    (void)va_arg(ap, prop_t *);
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    scanner_unref(s);
+    break;
+    
+  case PROP_SET_INT:
+    val = va_arg(ap, int);
+    prop_nf_sort(s->s_pnf, val ? "node.type" : NULL, 0, 0, typemap, 1);
+    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "dirsfirst",
+		   KVSTORE_SET_INT, val);
+     break;
+
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+add_sort_option_dirfirst(scanner_t *s, prop_t *model)
+{
+  prop_t *parent = prop_create(model, "options");
+  prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
+  prop_t *value = prop_create(n, "value");
+  int v = kv_url_opt_get_int(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "dirsfirst", 1);
+
+  prop_set_string(prop_create(n, "type"), "bool");
+  prop_set_int(prop_create(n, "enabled"), 1);
+  prop_set_int(value, v);
+
+  prop_link(_p("Sort folders first"), prop_create(m, "title"));
+
+  prop_nf_sort(s->s_pnf, v ? "node.type" : NULL, 0, 0, typemap, 1);
+
+  s->s_refcount++;
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, set_sort_dirs, s,
+		 PROP_TAG_ROOT, value,
+		 NULL);
+
+  if(prop_set_parent(n, parent))
+    prop_destroy(n);
+}
 
 
 /**
@@ -719,7 +778,6 @@ fa_scanner(const char *url, time_t url_mtime,
 		       PROP_NF_AUTODESTROY);
   
 
-  prop_nf_sort(pnf, "node.type", 0, 0, typemap, 1);
 
   prop_nf_pred_str_add(pnf, "node.type",
 		       PROP_NF_CMP_EQ, "unknown", NULL, 
@@ -733,7 +791,8 @@ fa_scanner(const char *url, time_t url_mtime,
 
   s->s_pnf = prop_nf_retain(pnf);
 
-  add_sort_option(s, model);
+  add_sort_option_type(s, model);
+  add_sort_option_dirfirst(s, model);
   decorated_browse_create(model, pnf);
 
   s->s_mtime = url_mtime;

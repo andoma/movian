@@ -5,6 +5,7 @@
 * Fix list focus when destroying item via context menu
 * Standardize view elements so .view plugins have something to lean on
 * GLW .view plugins
+* filtering in ui
 
 ---- view plugins ------------------
 
