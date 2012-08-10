@@ -150,9 +150,9 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     a->yentries = a->child_tiles_y;
 
     if(a->yentries == 0) {
-      a->yentries = a->xentries * height / width;
+      a->yentries = a->xentries * height / (width ?: 1);
     } else if(a->xentries == 0) {
-      a->xentries = a->yentries * width / height;
+      a->xentries = a->yentries * width / (height ?: 1);
     }
 
     a->child_width_px  = (rc0.rc_width - (a->xentries - 1) * xspacing) /
