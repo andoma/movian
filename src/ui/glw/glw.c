@@ -2099,6 +2099,46 @@ glw_get_a_name(glw_t *w)
 /**
  *
  */
+static void
+glw_get_path_r(char *buf, size_t buflen, glw_t *w)
+{
+  if(w->glw_parent)
+    glw_get_path_r(buf, buflen, w->glw_parent);
+  const char *ident = w->glw_class->gc_get_identity ? 
+    w->glw_class->gc_get_identity(w) : NULL;
+
+  snprintf(buf + strlen(buf), buflen - strlen(buf), "%s%s%s%s%s%s%s%s",
+	   strlen(buf) ? "." : "", w->glw_class->gc_name,
+	   w->glw_flags & GLW_FOCUS_BLOCKED ? "<B>" : "",
+	   w->glw_flags & GLW_DESTROYING    ? "<D>" : "",
+	   w->glw_flags & GLW_HIDDEN        ? "<H>" : "",
+	   ident ? "(" : "",
+	   ident ?: "",
+	   ident ? ")" : "");
+}
+
+/**
+ *
+ */
+const char *
+glw_get_path(glw_t *w)
+{
+  if(w == NULL)
+    return "<null>";
+
+  if(w->glw_id != NULL)
+    return w->glw_id;
+
+  static char buf[1024];
+  buf[0] = 0;
+  glw_get_path_r(buf, sizeof(buf), w);
+  return buf;
+}
+
+
+/**
+ *
+ */
 void
 glw_set_fullscreen(glw_root_t *gr, int fullscreen)
 {

@@ -272,6 +272,17 @@ glw_view_loader_set(glw_t *w, va_list ap)
   } while(attrib);
 }
 
+/**
+ *
+ */
+static const char *
+get_identity(glw_t *w)
+{
+  glw_view_loader_t *l = (glw_view_loader_t *)w;
+  return rstr_get(l->url) ?: "NULL";
+}
+
+
 
 /**
  *
@@ -286,6 +297,7 @@ static glw_class_t glw_view_loader = {
   .gc_retire_child = glw_view_loader_retire_child,
   .gc_signal_handler = glw_view_loader_callback,
   .gc_set_source = set_source,
+  .gc_get_identity = get_identity,
 };
 
 GLW_REGISTER_CLASS(glw_view_loader);

@@ -1029,7 +1029,8 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
   JSObject *obj = make_model_object(cx, jm, &pageobj);
 
   JS_DefineFunctions(cx, obj, page_functions);
-  js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
+  if(jm->jm_url != NULL)
+    js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
 
   if(jm->jm_args != NULL) {
     argfmt[0] = 'o';
@@ -1173,6 +1174,7 @@ js_backend_open(prop_t *page, const char *url)
   jm->jm_loading   = prop_ref_inc(prop_create(model, "loading"));
   jm->jm_root      = prop_ref_inc(page);
   jm->jm_url       = strdup(url);
+
   model_launch(jm);
   return 0;
 }
