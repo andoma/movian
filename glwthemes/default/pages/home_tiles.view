@@ -153,7 +153,7 @@ widget(array, {
 		       "dvd",      "Disc",
 		       "cd",       "Disc",
 		       "bluray",   "Disc",
-		       "network",  "Globe",
+		       "network",  "Home",
 		       "setting",  "Settings",
 		       "plugin",   "Plugin",
 		       "photos",   "Pictures") + ".svg",
