@@ -1077,7 +1077,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
     for(x = w; x->glw_parent != NULL; x = x->glw_parent) {
 
       if(how != GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE &&
-	 x->glw_flags & GLW_FOCUS_BLOCKED) {
+	 (x->glw_flags & GLW_FOCUS_BLOCKED || 
+	  x->glw_flags & GLW_HIDDEN)) {
 	gr->gr_focus_work = 0;
 	return;
       }
@@ -1345,20 +1346,20 @@ glw_focus_open_path_close_all_other(glw_t *w)
 {
   glw_t *c;
 
-  TAILQ_FOREACH(c, &w->glw_parent->glw_childs, glw_parent_link)
+  TAILQ_FOREACH(c, &w->glw_parent->glw_childs, glw_parent_link) {
+    if(c == w)
+      continue;
     c->glw_flags |= GLW_FOCUS_BLOCKED;
-  
+    if(c->glw_flags & GLW_IN_FOCUS_PATH) {
+      glw_focus_set(w->glw_root, NULL, GLW_FOCUS_SET_AUTOMATIC);
+    }
+  }
+
   w->glw_flags &= ~GLW_FOCUS_BLOCKED;
   c = glw_focus_by_path(w);
 
   if(c != NULL)
     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
-  else {
-    c = glw_focus_crawl1(w, 1);
-
-    if(c != NULL)
-      glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
-  }
 }
 
 
