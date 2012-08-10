@@ -156,10 +156,10 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     }
 
     a->child_width_px  = (rc0.rc_width - (a->xentries - 1) * xspacing) /
-      a->xentries;
+      (a->xentries ?: 1);
 
     a->child_height_px = (rc0.rc_height - (a->yentries - 1) * yspacing) /
-      a->yentries;
+      (a->yentries ?: 1);
 
     if(a->child_width_fixed && a->child_width_px > a->child_width_fixed) {
       int e = a->child_width_px - a->child_width_fixed;
