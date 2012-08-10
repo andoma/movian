@@ -231,7 +231,7 @@ settings_create_bool(prop_t *parent, const char *id, prop_t *title,
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, !!initial);
   
-  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
@@ -302,7 +302,7 @@ settings_create_int(prop_t *parent, const char *id, prop_t *title,
   if(flags & SETTINGS_INITIAL_UPDATE)
     settings_int_callback(s, initial);
 
-  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+  sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		       PROP_TAG_CALLBACK_INT, settings_int_callback, s,
 		       PROP_TAG_ROOT, s->s_val,
 		       PROP_TAG_COURIER, pc,
@@ -521,7 +521,7 @@ settings_create_string(prop_t *parent, const char *id, prop_t *title,
     settings_string_callback(s, initial);
 
   s->s_sub =
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		   PROP_TAG_CALLBACK_STRING, settings_string_callback, s,
 		   PROP_TAG_ROOT, s->s_val,
 		   PROP_TAG_COURIER, pc,
