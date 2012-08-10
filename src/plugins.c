@@ -234,7 +234,6 @@ plugin_event(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    (void)va_arg(ap, prop_t *);
     s = va_arg(ap, prop_sub_t *);
     prop_unsubscribe(s);
     break;

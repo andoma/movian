@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -2233,6 +2234,8 @@ typedef struct metadb_item_prop {
   prop_sub_t *mip_destroy_sub;
   prop_sub_t *mip_playcount_sub;
 
+  int mip_refcount;
+
 } metadb_item_prop_t;
 
 #define MIP_HASHWIDTH 311
@@ -2328,14 +2331,13 @@ mip_update_by_url(sqlite3 *db, const char *url)
  *
  */
 static void
-metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
+mip_release(metadb_item_prop_t *mip)
 {
-  metadb_item_prop_t *mip = opaque;
-  if(event != PROP_DESTROYED)
+  mip->mip_refcount--;
+  if(mip->mip_refcount > 0)
     return;
-  hts_mutex_lock(&mip_mutex);
+
   LIST_REMOVE(mip, mip_link);
-  hts_mutex_unlock(&mip_mutex);
 
   prop_unsubscribe(mip->mip_destroy_sub);
   prop_unsubscribe(mip->mip_playcount_sub);
@@ -2344,6 +2346,18 @@ metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
   prop_ref_dec(mip->mip_restartpos);
   free(mip->mip_url);
   free(mip);
+
+}
+
+/**
+ *
+ */
+static void
+metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
+{
+  metadb_item_prop_t *mip = opaque;
+  if(event == PROP_DESTROYED)
+    mip_release(mip);
 }
 
 /**
@@ -2352,11 +2366,15 @@ metadb_item_prop_destroyed(void *opaque, prop_event_t event, ...)
 static void
 metadb_set_playcount(void *opaque, prop_event_t event, ...)
 {
-  const metadb_item_prop_t *mip = opaque;
+  metadb_item_prop_t *mip = opaque;
   int rc;
   void *db;
   va_list ap;
 
+  if(event == PROP_DESTROYED) {
+    mip_release(mip);
+    return;
+  }
   if(event != PROP_SET_INT) 
     return;
 
@@ -2385,7 +2403,7 @@ metadb_set_playcount(void *opaque, prop_event_t event, ...)
     db_rollback(db);
     metadb_close(db);
     return;
-    }
+  }
 
   sqlite3_bind_text(stmt, 1, mip->mip_url, -1, SQLITE_STATIC);
   sqlite3_bind_int64(stmt, 2, v);
@@ -2410,39 +2428,42 @@ metadb_bind_url_to_prop0(void *db, const char *url, prop_t *parent)
 {
   metadb_item_prop_t *mip = malloc(sizeof(metadb_item_prop_t));
 
+  hts_mutex_lock(&mip_mutex);
+  mip->mip_refcount = 2;
+
   mip->mip_destroy_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, metadb_item_prop_destroyed, mip,
 		   PROP_TAG_ROOT, parent,
+		   PROP_TAG_MUTEX, &mip_mutex,
 		   NULL);
 
-  if(mip->mip_destroy_sub == NULL) {
-    free(mip);
+  assert(mip->mip_destroy_sub != NULL);
 
-  } else {
 
-    mip->mip_playcount  = prop_create_r(parent, "playcount");
-    mip->mip_lastplayed = prop_create_r(parent, "lastplayed");
-    mip->mip_restartpos = prop_create_r(parent, "restartpos");
+  mip->mip_playcount  = prop_create_r(parent, "playcount");
+  mip->mip_lastplayed = prop_create_r(parent, "lastplayed");
+  mip->mip_restartpos = prop_create_r(parent, "restartpos");
   
-    mip->mip_playcount_sub =
-      prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
-		     PROP_TAG_CALLBACK, metadb_set_playcount, mip,
-		     PROP_TAG_ROOT, mip->mip_playcount,
-		     NULL);
+  mip->mip_playcount_sub =
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, metadb_set_playcount, mip,
+		   PROP_TAG_ROOT, mip->mip_playcount,
+		   PROP_TAG_MUTEX, &mip_mutex,
+		   NULL);
+  
+  assert(mip->mip_playcount_sub != NULL);
 
-    mip->mip_url = strdup(url);
-
-    unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
-
-    hts_mutex_lock(&mip_mutex);
-    LIST_INSERT_HEAD(&mip_hash[hash], mip, mip_link);
-    hts_mutex_unlock(&mip_mutex);
-
-    metadb_item_info_t mii;
-    if(!mip_get(db, url, &mii))
-      mip_set(mip, &mii);
-  }
+  mip->mip_url = strdup(url);
+  
+  unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
+  
+  LIST_INSERT_HEAD(&mip_hash[hash], mip, mip_link);
+  
+  metadb_item_info_t mii;
+  if(!mip_get(db, url, &mii))
+    mip_set(mip, &mii);
+  hts_mutex_unlock(&mip_mutex);
 }
 
 

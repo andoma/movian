@@ -593,7 +593,6 @@ scanner_stop(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED) 
     return;
 
-  (void)va_arg(ap, prop_t *);
   prop_unsubscribe(va_arg(ap, prop_sub_t *));
 
   s->s_stop = 1;
@@ -612,7 +611,6 @@ set_sort_order(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    (void)va_arg(ap, prop_t *);
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     scanner_unref(s);
     break;
@@ -708,7 +706,6 @@ set_sort_dirs(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    (void)va_arg(ap, prop_t *);
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     scanner_unref(s);
     break;

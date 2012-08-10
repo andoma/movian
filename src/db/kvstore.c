@@ -179,7 +179,6 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    (void)va_arg(ap, prop_t *);
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     break;
 

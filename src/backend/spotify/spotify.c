@@ -2695,7 +2695,6 @@ playlist_container_delete_callback(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    (void)va_arg(ap, prop_t *);
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
     break;
 

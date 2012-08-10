@@ -319,40 +319,15 @@ struct metadata_lazy_prop {
  *
  */
 static void
-mlp_unsub_partials(metadata_lazy_prop_t *mlp)
-{
-  int i;
-  for(i = 0; i < mlp->mlp_partials; i++) {
-    prop_unsubscribe(mlp->mlp_props[i].s);
-    mlp->mlp_props[i].s = NULL;
-  }
-}
-
-/**
- *
- */
-static void
-mlp_unsub_complete(metadata_lazy_prop_t *mlp)
-{
-  int i;
-  for(i = mlp->mlp_partials; i < mlp->mlp_num_props; i++) {
-    prop_unsubscribe(mlp->mlp_props[i].s);
-    mlp->mlp_props[i].s = NULL;
-  }
-}
-
-
-/**
- *
- */
-static void
 mlp_release(metadata_lazy_prop_t *mlp)
 {
   int i;
 
   mlp->mlp_refcount--;
+
   if(mlp->mlp_refcount > 0)
     return;
+
   for(i = 0; i < mlp->mlp_num_props; i++)
     prop_ref_dec(mlp->mlp_props[i].p);
 
@@ -376,6 +351,60 @@ mlp_release(metadata_lazy_prop_t *mlp)
   prop_ref_dec(mlp->mlp_source);
   free(mlp);
 }
+
+
+/**
+ *
+ */
+static void
+mlp_unsub_one(metadata_lazy_prop_t *mlp, prop_sub_t *s)
+{
+  int i;
+  for(i = 0; i < mlp->mlp_num_props; i++) {
+    if(mlp->mlp_props[i].s == s) {
+      prop_unsubscribe(mlp->mlp_props[i].s);
+      mlp->mlp_props[i].s = NULL;
+      mlp->mlp_refcount--;
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
+mlp_unsub_partials(metadata_lazy_prop_t *mlp)
+{
+  int i;
+  mlp->mlp_refcount++;
+  for(i = 0; i < mlp->mlp_partials; i++) {
+    if(mlp->mlp_props[i].s) {
+      prop_unsubscribe(mlp->mlp_props[i].s);
+      mlp->mlp_props[i].s = NULL;
+      mlp->mlp_refcount--;
+    }
+  }
+  mlp_release(mlp);
+}
+
+/**
+ *
+ */
+static void
+mlp_unsub_complete(metadata_lazy_prop_t *mlp)
+{
+  int i;
+  mlp->mlp_refcount++;
+  for(i = mlp->mlp_partials; i < mlp->mlp_num_props; i++) {
+    if(mlp->mlp_props[i].s) {
+      prop_unsubscribe(mlp->mlp_props[i].s);
+      mlp->mlp_props[i].s = NULL;
+      mlp->mlp_refcount--;
+    }
+  }
+  mlp_release(mlp);
+}
+
 
 
 /**
@@ -483,16 +512,20 @@ static void
 mlp_sub_partial_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_lazy_prop_t *mlp = opaque;
-
+  va_list ap;
+  va_start(ap, event);
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     mlp->mlp_cb(mlp, 0);
     mlp_unsub_partials(mlp);
+    break;
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_unsub_one(mlp, va_arg(ap, prop_sub_t *));
+    break;
   default:
     break;
   }
+  va_end(ap);
 }
 
 
@@ -503,16 +536,20 @@ static void
 mlp_sub_complete_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_lazy_prop_t *mlp = opaque;
-
+  va_list ap;
+  va_start(ap, event);
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     mlp->mlp_cb(mlp, 1);
     mlp_unsub_complete(mlp);
+    break;
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_unsub_one(mlp, va_arg(ap, prop_sub_t *));
+    break;
   default:
     break;
   }
+  va_end(ap);
 }
 
 /**
@@ -537,7 +574,6 @@ mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
 	  int partials)
 {
   int i;
-  mlp->mlp_refcount += partials ? 2 : 1;
   mlp->mlp_cb = cb;
   mlp->mlp_partials = partials;
   hts_mutex_lock(&metadata_mutex);
@@ -551,14 +587,7 @@ mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
 		     PROP_TAG_COURIER, metadata_courier,
 		     PROP_TAG_ROOT, mlp->mlp_props[i].p,
 		     NULL);
-    if(mlp->mlp_props[i].s == NULL) {
-      mlp_unsub_partials(mlp);
-      mlp_unsub_complete(mlp);
-      mlp_release(mlp);
-      if(partials)
-	mlp_release(mlp);
-      break;
-    }
+    mlp->mlp_refcount++;
   }
   hts_mutex_unlock(&metadata_mutex);
 }
@@ -840,6 +869,10 @@ mlp_sub_alternative(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
 
   switch(event) {
+  case PROP_DESTROYED:
+    mlp_release(mlp);
+    break;
+
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     load_alternatives(mlp);
     break;
@@ -896,7 +929,6 @@ load_sources(metadata_lazy_prop_t *mlp)
 
   prop_ref_dec(active);
   prop_vec_release(pv);
-  prop_print_tree(mlp->mlp_source_opt, 1);
   prop_ref_dec(p);
 }
 
@@ -952,6 +984,10 @@ mlp_sub_source(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
 
   switch(event) {
+  case PROP_DESTROYED:
+    mlp_release(mlp);
+    break;
+
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
     load_sources(mlp);
     break;
@@ -1052,11 +1088,12 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   prop_link(_p("Metadata source"), prop_create(m, "title"));
 
   mlp->mlp_source_opt_sub = 
-    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR,
+    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlp_sub_source, mlp,
 		   PROP_TAG_COURIER, metadata_courier,
 		   PROP_TAG_ROOT, prop_create(mlp->mlp_source_opt, "options"),
 		   NULL);
+  mlp->mlp_refcount++;
 
   pv = prop_vec_append(pv, mlp->mlp_source_opt);
 
@@ -1069,11 +1106,12 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   prop_link(_p("Movie"), prop_create(m, "title"));
 
   mlp->mlp_alt_opt_sub = 
-    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR,
+    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlp_sub_alternative, mlp,
 		   PROP_TAG_COURIER, metadata_courier,
 		   PROP_TAG_ROOT, prop_create(mlp->mlp_alt_opt, "options"),
 		   NULL);
+  mlp->mlp_refcount++;
 
   pv = prop_vec_append(pv, mlp->mlp_alt_opt);
   
