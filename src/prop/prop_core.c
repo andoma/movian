@@ -524,7 +524,7 @@ trampoline_string(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, va_arg(ap, const char *));
   } else if(event == PROP_SET_RLINK) {
     cb(s->hps_opaque, rstr_get(va_arg(ap, const rstr_t *)));
-  } else {
+  } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, NULL);
   }
 }
@@ -545,7 +545,7 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
   } else if(event == PROP_SET_RLINK) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
-  } else {
+  } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
     cb(s->hps_opaque, NULL);
   }
 }
