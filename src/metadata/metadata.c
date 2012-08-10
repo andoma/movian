@@ -1356,8 +1356,7 @@ metadata_add_source(const char *name, const char *description,
 		       ms->ms_enabled, NULL, ms_set_enable, ms,
 		       0, metadata_courier, NULL, NULL);
 
-  prop_set(ms->ms_settings, "metadata", "enabled", NULL, PROP_SET_INT,
-	   ms->ms_enabled);
+  ms_set_enable(ms, enabled);
 
   hts_mutex_lock(&metadata_mutex);
   LIST_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp);

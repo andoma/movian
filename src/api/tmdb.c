@@ -403,7 +403,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(resultlist == NULL || results == 0) {
     int64_t r;
     r = metadb_insert_videoitem(db, item_url, tmdb_datasource_search,
-				NULL, NULL, METAITEM_STATUS_ABSENT, 0);
+				"0", NULL, METAITEM_STATUS_ABSENT, 0);
     htsmsg_destroy(doc);
     return r;
   }
