@@ -212,10 +212,10 @@ message_popup(const char *message, int flags)
  *
  */
 int
-text_dialog(const char *message, char** answer, int flags)
+text_dialog(const char *message, char **answer, int flags)
 {
   rstr_t *r;
-
+  *answer = NULL;
   prop_t *p = prop_create_root(NULL);
 
   prop_set_string(prop_create(p, "type"), "textDialog");
@@ -235,14 +235,12 @@ text_dialog(const char *message, char** answer, int flags)
 
     if(r)
       *answer = strdup(rstr_get(r));
-    else
-      *answer = NULL;
     rstr_release(r);
   }
   
   prop_destroy(p);
   
-  if(event_is_action(e, ACTION_CANCEL)){
+  if(event_is_action(e, ACTION_CANCEL)) {
     event_release(e);
     return -1;
   } 

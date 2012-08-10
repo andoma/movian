@@ -491,7 +491,7 @@ js_textDialog(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval
   obj = JS_NewObject(cx, NULL, NULL, NULL);
   *rval = OBJECT_TO_JSVAL(obj);
 
-  if(r == -1) {
+  if(r == -1 || input == NULL) {
     val = BOOLEAN_TO_JSVAL(1);
     JS_SetProperty(cx, obj, "rejected", &val);
   } else {
