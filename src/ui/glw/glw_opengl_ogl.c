@@ -192,9 +192,6 @@ glw_opengl_init_context(glw_root_t *gr)
 
   int use_shaders = 1;
 
-  if(strstr(renderer, "Mesa"))
-    use_shaders = 0;
-
   if(use_shaders) {
     return glw_opengl_shaders_init(gr);
   } else {
