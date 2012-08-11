@@ -49,6 +49,7 @@ widget(keyintercept, {
 
 
 	  widget(loader, {
+	    hidden: !$page.model.mayadd;
 	    noInitialTransform: true;
 	    source: select($page.model.mayadd, "listitems/add.view", "");
 	  });
