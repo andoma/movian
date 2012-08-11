@@ -218,6 +218,7 @@ face_destroy(face_t *f)
 	f->face->family_name, f->face->style_name, f->url ?: "memory");
   TAILQ_REMOVE(&faces, f, link);
   free(f->url);
+  free(f->family_id_vec);
   FT_Done_Face(f->face);
   free(f);
 }
