@@ -217,6 +217,8 @@ vq_add_node(video_queue_t *vq, prop_t *p, video_queue_entry_t *before)
 {
   video_queue_entry_t *vqe = calloc(1, sizeof(video_queue_entry_t));
 
+  prop_tag_set(p, vq, vqe);
+
   vqe->vqe_root = prop_ref_inc(p);
 
   vqe->vqe_url_sub = 
