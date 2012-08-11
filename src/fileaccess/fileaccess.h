@@ -29,6 +29,7 @@
 #include "navigator.h"
 
 typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
+typedef int (fa_data_cb_t)(void *opaque, void *data, size_t size);
 
 struct prop;
 
@@ -200,7 +201,7 @@ int http_request(const char *url, const char **arguments,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,
 		 const struct http_header_list *headers_in, const char *method,
-		 fa_load_cb_t *cb, void *opaque);
+		 fa_load_cb_t *lcb, fa_data_cb_t *dcb, void *opaque);
 
 struct http_auth_req;
 int http_client_oauth(struct http_auth_req *har,

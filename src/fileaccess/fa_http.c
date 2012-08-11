@@ -2081,7 +2081,7 @@ http_load(struct fa_protocol *fap, const char *url,
   err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
 		     flags,
 		     &headers_out, &headers_in, NULL,
-		     cb, opaque);
+		     cb, NULL, opaque);
   if(err == -1) {
     res = NULL;
     goto done;
@@ -2195,7 +2195,7 @@ http_init(void)
 /**
  *
  */
-static fa_protocol_t fa_protocol_http = {
+fa_protocol_t fa_protocol_http = {
   .fap_init  = http_init,
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "http",
@@ -2616,7 +2616,7 @@ http_request(const char *url, const char **arguments,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
 	     int flags, struct http_header_list *headers_out,
 	     const struct http_header_list *headers_in, const char *method,
-	     fa_load_cb_t *cb, void *opaque)
+	     fa_load_cb_t *lcb, fa_data_cb_t *dcb, void *opaque)
 {
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   htsbuf_queue_t q;
@@ -2625,7 +2625,7 @@ http_request(const char *url, const char **arguments,
   struct http_header_list headers;
   http_read_aux_t hra;
 
-  hra.cb = cb;
+  hra.cb = lcb;
   hra.opaque = opaque;
 
   if(headers_out != NULL)
@@ -2766,7 +2766,19 @@ http_request(const char *url, const char **arguments,
     inflateInit2(&z, 16+MAX_WBITS);
   }
 
-  if(hf->hf_chunked_transfer == 0 && 
+  // TODO: Put this into right place!
+  if(dcb) {
+    int eos = 0;
+    int chunksize = 16384;
+    char *chunk = malloc(chunksize);
+    do {
+      if(tcp_read_data(hc->hc_tc, chunk, chunksize,
+		       http_request_partial, &hra))
+	eos = 1;
+    } while(eos == 0 && dcb(opaque, chunk, chunksize) == 0);
+    free(chunk);
+  }
+  else if(hf->hf_chunked_transfer == 0 && 
      hf->hf_connection_mode == CONNECTION_MODE_CLOSE) {
     int capacity = 16384;
     int size = 0;

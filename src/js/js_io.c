@@ -301,7 +301,7 @@ js_http_request(JSContext *cx, jsval *rval,
 		       errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
-		       &response_headers, &in_headers, NULL, NULL, NULL);
+		       &response_headers, &in_headers, NULL, NULL, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(httpargs != NULL)

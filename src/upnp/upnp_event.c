@@ -95,7 +95,7 @@ upnp_event_send_and_free(send_event_t *set)
 {
   http_request(set->url, NULL, NULL, NULL, NULL, 0, &set->out,
 	       "text/xml; charset=\"utf-8\"", 0, NULL, &set->hdrs, "NOTIFY",
-	       NULL, NULL);
+	       NULL, NULL, NULL);
   http_headers_free(&set->hdrs);
   htsbuf_queue_flush(&set->out);
   free(set->url);

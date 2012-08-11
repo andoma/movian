@@ -133,7 +133,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
 		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		   NULL, NULL);
+		   NULL, NULL, NULL);
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
     return;
@@ -171,7 +171,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 			 NULL, NULL},
 		     &result, &resultsize, errbuf, sizeof(errbuf),
 		     NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		     NULL, NULL);
+		     NULL, NULL, NULL);
 
     if(n) {
       TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
@@ -317,7 +317,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 		       NULL, NULL},
 		   &result, &resultsize, errbuf, sizeof(errbuf),
 		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
-		   NULL, NULL);
+		   NULL, NULL, NULL);
 
   if(n) {
     TRACE(TRACE_DEBUG, "lastfm", "HTTP query to lastfm failed: %s",  errbuf);
