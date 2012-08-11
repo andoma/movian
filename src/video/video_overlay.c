@@ -43,7 +43,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 		     AVCodecContext *ctx)
 {
   AVSubtitle sub;
-  int size = 0, i, x, y;
+  int got_sub = 0, i, x, y;
   video_overlay_t *vo;
 
   AVPacket avpkt;
@@ -51,7 +51,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
   avpkt.data = mb->mb_data;
   avpkt.size = mb->mb_size;
 
-  if(avcodec_decode_subtitle2(ctx, &sub, &size, &avpkt) < 1 || size < 1) 
+  if(avcodec_decode_subtitle2(ctx, &sub, &got_sub, &avpkt) < 1 || !got_sub) 
     return;
 
   if(sub.num_rects == 0) {
@@ -60,8 +60,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
     vo->vo_type = VO_TIMED_FLUSH;
     vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
     video_overlay_enqueue(vd, vo);
-    return;
-  }
+  } else {
 
   for(i = 0; i < sub.num_rects; i++) {
     AVSubtitleRect *r = sub.rects[i];
@@ -81,7 +80,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 
       if(vo->vo_pixmap == NULL) {
 	free(vo);
-	return;
+	break;
       }
 
       const uint8_t *src = r->pict.data[0];
@@ -107,6 +106,8 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
       break;
     }
   }
+  }
+  avsubtitle_free(&sub);
 }
 
 

@@ -161,6 +161,7 @@ adc_cleanup(ass_decoder_ctx_t *adc)
   while((as = LIST_FIRST(&adc->adc_styles)) != NULL) {
     LIST_REMOVE(as, as_link);
     free(as->as_name);
+    free(as->as_fontname);
     free(as);
   }
   free(adc->adc_event_format);
