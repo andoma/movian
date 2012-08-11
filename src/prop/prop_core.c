@@ -3746,7 +3746,7 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
   prop_t *c = p;
   const char *n;
 
-  if(p == NULL)
+  if(p == NULL || p->hp_type == PROP_ZOMBIE)
     return;
 
   va_start(ap, p);
@@ -3754,6 +3754,8 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
   hts_mutex_lock(&prop_mutex);
 
   while((n = va_arg(ap, const char *)) != NULL) {
+    if(p->hp_type == PROP_ZOMBIE)
+      goto bad;
     if(p->hp_type == PROP_DIR) {
       TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
 	if(c->hp_name != NULL && !strcmp(c->hp_name, n))
@@ -3778,6 +3780,7 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
    assert(0);
    break;
   }
+ bad:
   hts_mutex_unlock(&prop_mutex);
   va_end(ap);
 }
