@@ -1090,7 +1090,7 @@ media_codec_deref(media_codec_t *cw)
   if(cw->close != NULL)
     cw->close(cw);
 
-  if(fw == NULL)
+  if(cw->codec_ctx_alloced)
     free(cw->codec_ctx);
 
   if(cw->parser_ctx != NULL)
@@ -1116,7 +1116,12 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
   if(cw->codec == NULL)
     return -1;
   
-  cw->codec_ctx = ctx ?: avcodec_alloc_context();
+  if(ctx == NULL || id == CODEC_ID_AC3) {
+    cw->codec_ctx = avcodec_alloc_context();
+    cw->codec_ctx_alloced = 1;
+  } else {
+    cw->codec_ctx = ctx;
+  }
 
   //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
 

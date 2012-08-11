@@ -62,6 +62,9 @@ typedef struct media_codec {
   int refcount;
   media_format_t *fw;
   int codec_id;
+  int codec_ctx_alloced; /* Set if this struct owns the allocation
+			    of codec_ctx */
+
   struct AVCodec *codec; // This may be NULL for HW accelerated decoders
   struct AVCodecContext *codec_ctx;
   struct AVCodecParserContext *parser_ctx;

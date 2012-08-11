@@ -368,7 +368,9 @@ ps3_audio_start(audio_mode_t *am, audio_fifo_t *af)
 	
 	ret = audioPortOpen(&params, &port_num);
 
-	TRACE(TRACE_DEBUG, "AUDIO", "PS3 audio port %d opened", port_num);
+	TRACE(TRACE_DEBUG, "AUDIO", 
+	      "PS3 audio port %d opened (%d channels)",
+	      port_num, achannels);
 	
 	audioGetPortConfig(port_num, &config);
 	audioCreateNotifyEventQueue(&snd_queue, &snd_queue_key);
