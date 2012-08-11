@@ -56,8 +56,9 @@ save_order(prop_reorder_t *pr)
   htsmsg_t *out = htsmsg_create_list();
   prop_t *p;
 
-  TAILQ_FOREACH(p, &pr->pr_dst->hp_childs, hp_parent_link)
-    htsmsg_add_str(out, NULL, get_id(p));
+  if(pr->pr_dst->hp_type == PROP_DIR)
+    TAILQ_FOREACH(p, &pr->pr_dst->hp_childs, hp_parent_link)
+      htsmsg_add_str(out, NULL, get_id(p));
 
   htsmsg_store_save(out, pr->pr_store);
 
@@ -83,6 +84,8 @@ get_before(prop_reorder_t *pr, const char *id)
   if(f == NULL)
     return NULL;
 
+  if(pr->pr_dst->hp_type != PROP_DIR)
+    return NULL;
 
   for(f = TAILQ_NEXT(f, hmf_link); f != NULL; f = TAILQ_NEXT(f, hmf_link)) {
     if(f->hmf_type != HMF_STR)
