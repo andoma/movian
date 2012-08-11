@@ -516,20 +516,22 @@ handle_pointer_event(glw_list_t *l, glw_pointer_event_t *gpe)
 static void
 scroll_to_me(glw_list_t *l, glw_t *c)
 {
-  glw_t *d = c;
+  glw_t *d = c, *e = c;
   if(c == NULL)
     return;
 
   while(1) {
     d = TAILQ_PREV(d, glw_queue, glw_parent_link);
-    if(d == NULL)
+    if(d == NULL) {
+      c = e;
       break;
+    }
 
     if(d->glw_flags & GLW_HIDDEN)
       continue;
     if(glw_is_child_focusable(d))
       break;
-    c = d;
+    e = d;
   }
   l->scroll_to_me = c;
 }
