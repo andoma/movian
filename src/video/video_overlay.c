@@ -62,50 +62,50 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
     video_overlay_enqueue(vd, vo);
   } else {
 
-  for(i = 0; i < sub.num_rects; i++) {
-    AVSubtitleRect *r = sub.rects[i];
+    for(i = 0; i < sub.num_rects; i++) {
+      AVSubtitleRect *r = sub.rects[i];
 
-    switch(r->type) {
+      switch(r->type) {
 
-    case SUBTITLE_BITMAP:
-      vo = calloc(1, sizeof(video_overlay_t));
+      case SUBTITLE_BITMAP:
+	vo = calloc(1, sizeof(video_overlay_t));
 
-      vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
-      vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
+	vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
+	vo->vo_stop  = mb->mb_pts + sub.end_display_time * 1000;
 		  
-      vo->vo_x = r->x;
-      vo->vo_y = r->y;
+	vo->vo_x = r->x;
+	vo->vo_y = r->y;
 
-      vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 1);
+	vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 1);
 
-      if(vo->vo_pixmap == NULL) {
-	free(vo);
+	if(vo->vo_pixmap == NULL) {
+	  free(vo);
+	  break;
+	}
+
+	const uint8_t *src = r->pict.data[0];
+	const uint32_t *clut = (uint32_t *)r->pict.data[1];
+	uint32_t *dst = (uint32_t *)vo->vo_pixmap->pm_pixels;
+      
+	for(y = 0; y < r->h; y++) {
+	  for(x = 0; x < r->w; x++) {
+	    *dst++ = clut[src[x]];
+	  }
+	  src += r->pict.linesize[0];
+	}
+	video_overlay_enqueue(vd, vo);
+	break;
+
+      case SUBTITLE_ASS:
+	sub_ass_render(vd, r->ass,
+		       ctx->subtitle_header, ctx->subtitle_header_size,
+		       mb->mb_font_context);
+	break;
+
+      default:
 	break;
       }
-
-      const uint8_t *src = r->pict.data[0];
-      const uint32_t *clut = (uint32_t *)r->pict.data[1];
-      uint32_t *dst = (uint32_t *)vo->vo_pixmap->pm_pixels;
-      
-      for(y = 0; y < r->h; y++) {
-	for(x = 0; x < r->w; x++) {
-	  *dst++ = clut[src[x]];
-	}
-	src += r->pict.linesize[0];
-      }
-      video_overlay_enqueue(vd, vo);
-      break;
-
-    case SUBTITLE_ASS:
-      sub_ass_render(vd, r->ass,
-		     ctx->subtitle_header, ctx->subtitle_header_size,
-		     mb->mb_font_context);
-      break;
-
-    default:
-      break;
     }
-  }
   }
   avsubtitle_free(&sub);
 }
