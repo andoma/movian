@@ -85,6 +85,14 @@ glw_quad_set_rgb(glw_t *w, const float *rgb)
   q->color.b = rgb[2];
 }
 
+static void
+glw_quad_dtor(glw_t *w)
+{
+  glw_quad_t *q = (void *)w;
+  glw_renderer_free(&q->r);
+
+}
+
 
 static glw_class_t glw_quad = {
   .gc_name = "quad",
@@ -93,6 +101,7 @@ static glw_class_t glw_quad = {
   .gc_render = glw_quad_render,
   .gc_signal_handler = glw_quad_callback,
   .gc_set_rgb = glw_quad_set_rgb,
+  .gc_dtor = glw_quad_dtor,
 };
 
 

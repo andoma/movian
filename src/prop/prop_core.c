@@ -2350,6 +2350,7 @@ prop_subscribe(int flags, ...)
 
 	  prop_build_notify_childv(s, pv, PROP_ADD_CHILD_VECTOR_DIRECT,
 				   NULL, 1);
+	  prop_vec_release(pv);
 
 	} else {
 	  TAILQ_FOREACH(c, &value->hp_childs, hp_parent_link)
