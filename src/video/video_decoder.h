@@ -48,22 +48,22 @@ typedef enum {
 
 
 typedef struct frame_info {
-  int width;
-  int height;
-  int pix_fmt;
-  int64_t pts;
-  int epoch;
-  int duration;
+  int fi_width;
+  int fi_height;
+  int fi_pix_fmt;
+  int64_t fi_pts;
+  int64_t fi_time;
+  int fi_epoch;
+  int fi_duration;
 
-  AVRational dar;
+  AVRational fi_dar;
 
-  char interlaced;     // Frame delivered is interlaced 
-  char tff;            // For interlaced frame, top-field-first
-  char prescaled;      // Output frame is prescaled to requested size
+  char fi_interlaced;     // Frame delivered is interlaced 
+  char fi_tff;            // For interlaced frame, top-field-first
+  char fi_prescaled;      // Output frame is prescaled to requested size
   
-  enum AVColorSpace color_space;
-  enum AVColorRange color_range;
-
+  enum AVColorSpace fi_color_space;
+  enum AVColorRange fi_color_range;
 
 } frame_info_t;
 
@@ -184,8 +184,7 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 
 void video_deliver_frame(video_decoder_t *vd,
 			 frame_buffer_type_t type, void *frame,
-			 const frame_info_t *info,
-			 int send_pts);
+			 const frame_info_t *info);
 
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),

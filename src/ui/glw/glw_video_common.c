@@ -694,8 +694,8 @@ glw_video_input(frame_buffer_type_t type, void *frame,
   const AVFrame *avframe;
 
   if(fi) {
-    gv->gv_dar = fi->dar;
-    gv->gv_vheight = fi->height;
+    gv->gv_dar = fi->fi_dar;
+    gv->gv_vheight = fi->fi_height;
   }
   hts_mutex_lock(&gv->gv_surface_mutex);
 
@@ -716,7 +716,7 @@ glw_video_input(frame_buffer_type_t type, void *frame,
   case FRAME_BUFFER_TYPE_LIBAV_FRAME:
     avframe = frame;
 
-    switch(fi->pix_fmt) {
+    switch(fi->fi_pix_fmt) {
     case PIX_FMT_YUV420P:
     case PIX_FMT_YUV422P:
     case PIX_FMT_YUV444P:
@@ -745,7 +745,7 @@ glw_video_input(frame_buffer_type_t type, void *frame,
     default:
       TRACE(TRACE_ERROR, "GLW", 
 	  "PIX_FMT %s (0x%x) does not have a video engine",
-	   av_pix_fmt_descriptors[fi->pix_fmt].name, fi->pix_fmt);
+	   av_pix_fmt_descriptors[fi->fi_pix_fmt].name, fi->fi_pix_fmt);
       break;
     }
     break;

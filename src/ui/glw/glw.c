@@ -1780,9 +1780,7 @@ glw_dispatch_event(uii_t *uii, event_t *e)
     return;
   }
 
-  if(!(event_is_action(e, ACTION_SEEK_FAST_BACKWARD) ||
-       event_is_action(e, ACTION_SEEK_BACKWARD) ||
-       event_is_action(e, ACTION_SEEK_FAST_FORWARD) ||
+  if(!(event_is_action(e, ACTION_SEEK_BACKWARD) ||
        event_is_action(e, ACTION_SEEK_FORWARD) ||
        event_is_action(e, ACTION_PLAYPAUSE) ||
        event_is_action(e, ACTION_PLAY) ||

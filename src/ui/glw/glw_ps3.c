@@ -450,8 +450,8 @@ const static action_type_t *btn_to_action[BTN_max] = {
   [BTN_PREV]       = AVEC(ACTION_SKIP_BACKWARD),
   [BTN_NEXT]       = AVEC(ACTION_SKIP_FORWARD),
   [BTN_PLAY]       = AVEC(ACTION_PLAY),
-  [BTN_SCAN_REV]   = AVEC(ACTION_SEEK_BACKWARD),
-  [BTN_SCAN_FWD]   = AVEC(ACTION_SEEK_FORWARD),
+  [BTN_SCAN_REV]   = AVEC(ACTION_SEEK_BACKWARDx),
+  [BTN_SCAN_FWD]   = AVEC(ACTION_SEEK_FORWARDx),
   [BTN_STOP]       = AVEC(ACTION_STOP),
   [BTN_PAUSE]      = AVEC(ACTION_PAUSE),
   [BTN_POPUP_MENU] = AVEC(ACTION_MENU),
@@ -475,7 +475,7 @@ static int16_t button_counter[MAX_PADS][BTN_max];
 static PadData paddata[MAX_PADS];
 
 
-#define KEY_REPEAT_DELAY 30 // in frames
+#define KEY_REPEAT_DELAY 20 // in frames
 #define KEY_REPEAT_RATE  3  // in frames
 
 static void
@@ -491,12 +491,15 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
 
   int16_t *store = &button_counter[pad][code];
   int rate = KEY_REPEAT_RATE;
+  int xrep = 0;
   if(code == 0)
     return;
   
   if(pressed) {
 
     if(pre > 200)
+      xrep = 1;
+    if(pre > 150)
       rate = 1;
     else if(pre > 100)
       rate = 2;
@@ -528,6 +531,9 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
 
       if(e != NULL) {
 	glw_dispatch_event(&gp->gr.gr_uii, e);
+	if(xrep)
+	  glw_dispatch_event(&gp->gr.gr_uii, e);
+
 	event_release(e);
       }
     }

@@ -867,7 +867,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       
       if(keysym2action[i].XK == keysym &&
 	 keysym2action[i].modifier == state) {
-	
+
 	av[0] = keysym2action[i].action1;
 	av[1] = keysym2action[i].action2;
 	av[2] = keysym2action[i].action3;

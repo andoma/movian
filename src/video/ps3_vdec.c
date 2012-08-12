@@ -38,19 +38,17 @@ static int vdec_h264_loaded;
 #define VDEC_SPU_PRIO 100
 #define VDEC_PPU_PRIO 1000
 
-union vdec_userdata {
-  uint64_t u64;
-  struct {
-    int epoch;
-    char skip : 1;
-    char flush : 1; 
-    char nopts : 1;
-    char nodts : 1;
-    char send_pts : 1;
-  } s;
-};
-
 LIST_HEAD(vdec_pic_list, vdec_pic);
+
+
+typedef struct pktmeta {
+  int64_t time;
+  int epoch;
+  char skip : 1;
+  char flush : 1; 
+  char nopts : 1;
+  char nodts : 1;
+} pktmeta_t;
 
 
 /**
@@ -114,6 +112,9 @@ typedef struct vdec_decoder {
   int64_t max_order;
   int64_t order_base;
   int64_t flush_to;
+  
+  pktmeta_t pktmeta[64];
+  int pktmeta_cur;
 
 } vdec_decoder_t;
 
@@ -260,13 +261,13 @@ const static uint8_t h264_sar[][2] = {
 static void
 emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 {
-  vd->vd_estimated_duration = vp->fi.duration; // For bitrate calculations
+  vd->vd_estimated_duration = vp->fi.fi_duration; // For bitrate calculations
 
-  if(vp->fi.pts == AV_NOPTS_VALUE && vd->vd_nextpts != AV_NOPTS_VALUE)
-    vp->fi.pts = vd->vd_nextpts;
+  if(vp->fi.fi_pts == AV_NOPTS_VALUE && vd->vd_nextpts != AV_NOPTS_VALUE)
+    vp->fi.fi_pts = vd->vd_nextpts;
 
-  if(vp->fi.pts != AV_NOPTS_VALUE)
-    vd->vd_nextpts = vp->fi.pts + vp->fi.duration;
+  if(vp->fi.fi_pts != AV_NOPTS_VALUE)
+    vd->vd_nextpts = vp->fi.fi_pts + vp->fi.fi_duration;
 
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DPY", "Displaying 0x%llx (%lld)", vp->order,
@@ -274,7 +275,7 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
 #endif
 
   video_deliver_frame(vd, FRAME_BUFFER_TYPE_RSX_MEMORY, &vp->rvf,
-		      &vp->fi, vp->send_pts);
+		      &vp->fi);
 
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DPY", "Frame delivered");
@@ -293,7 +294,7 @@ picture_out(vdec_decoder_t *vdd)
   vdec_picture_format picfmt;
   vdec_pic_t *vp;
   char metainfo[64];
-  union vdec_userdata ud;
+  pktmeta_t *pm;
 
   picfmt.alpha = 0;
   picfmt.format_type = VDEC_PICFMT_YUV420P;
@@ -306,10 +307,11 @@ picture_out(vdec_decoder_t *vdd)
 
   vdec_picture *pi = (void *)(intptr_t)addr;
 
-  ud.u64 = pi->userdata[0];
-  vdd->pending_flush |= ud.s.flush;
+  pm = &vdd->pktmeta[pi->userdata[0]];
 
-  if(/* pi->status != 0 ||*/ pi->attr != 0 || ud.s.skip) {
+  vdd->pending_flush |= pm->flush;
+
+  if(/* pi->status != 0 ||*/ pi->attr != 0 || pm->skip) {
     vdec_get_picture(vdd->handle, &picfmt, NULL);
     reset_active_pictures(vdd, "pic err", 0);
     return;
@@ -321,10 +323,10 @@ picture_out(vdec_decoder_t *vdd)
     vdd->max_order = -1;
   }
 
-  int64_t pts = ud.s.nopts ? AV_NOPTS_VALUE : 
+  int64_t pts = pm->nopts ? AV_NOPTS_VALUE : 
     pi->pts[0].low + ((uint64_t)pi->pts[0].hi << 32);
 
-  int64_t dts = ud.s.nodts ? AV_NOPTS_VALUE : 
+  int64_t dts = pm->nodts ? AV_NOPTS_VALUE : 
     pi->dts[0].low + ((uint64_t)pi->dts[0].hi << 32);
   int64_t order;
 
@@ -334,35 +336,35 @@ picture_out(vdec_decoder_t *vdd)
     lumasize = mpeg2->width * mpeg2->height;
     vp = alloc_picture(vdd, lumasize);
 
-    vp->fi.width = mpeg2->width;
-    vp->fi.height = mpeg2->height;
-    vp->fi.duration = mpeg2->frame_rate <= 8 ? 
+    vp->fi.fi_width = mpeg2->width;
+    vp->fi.fi_height = mpeg2->height;
+    vp->fi.fi_duration = mpeg2->frame_rate <= 8 ? 
       mpeg_durations[mpeg2->frame_rate] : 40000;
-    vp->fi.interlaced = !mpeg2->progressive_frame;
-    vp->fi.tff = mpeg2->top_field_first;
+    vp->fi.fi_interlaced = !mpeg2->progressive_frame;
+    vp->fi.fi_tff = mpeg2->top_field_first;
     
     if(mpeg2->color_description)
-      vp->fi.color_space = mpeg2->matrix_coefficients;
+      vp->fi.fi_color_space = mpeg2->matrix_coefficients;
 
     switch(mpeg2->aspect_ratio) {
     case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.dar.num = mpeg2->width;
-      vp->fi.dar.den = mpeg2->height;
+      vp->fi.fi_dar.num = mpeg2->width;
+      vp->fi.fi_dar.den = mpeg2->height;
       break;
     case VDEC_MPEG2_ARI_DAR_4_3:
-      vp->fi.dar = (AVRational){4,3};
+      vp->fi.fi_dar = (AVRational){4,3};
       break;
     case VDEC_MPEG2_ARI_DAR_16_9:
-      vp->fi.dar = (AVRational){16,9};
+      vp->fi.fi_dar = (AVRational){16,9};
       break;
     case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.dar = (AVRational){221,100};
+      vp->fi.fi_dar = (AVRational){221,100};
       break;
     }
 
     snprintf(metainfo, sizeof(metainfo),
 	     "MPEG2 %dx%d%c (Cell)",
-	     mpeg2->width, mpeg2->height, vp->fi.interlaced ? 'i' : 'p');
+	     mpeg2->width, mpeg2->height, vp->fi.fi_interlaced ? 'i' : 'p');
 
     order = vdd->order_base;
     vdd->order_base++;
@@ -374,17 +376,17 @@ picture_out(vdec_decoder_t *vdd)
     lumasize = h264->width * h264->height;
     vp = alloc_picture(vdd, lumasize);
 
-    vp->fi.width = h264->width;
-    vp->fi.height = h264->height;
-    vp->fi.duration = h264->frame_rate <= 7 ? 
+    vp->fi.fi_width = h264->width;
+    vp->fi.fi_height = h264->height;
+    vp->fi.fi_duration = h264->frame_rate <= 7 ? 
       mpeg_durations[h264->frame_rate + 1] : 40000;
-    vp->fi.interlaced = 0;
-    vp->fi.tff = 0;
+    vp->fi.fi_interlaced = 0;
+    vp->fi.fi_tff = 0;
     if(h264->color_description_present_flag)
-      vp->fi.color_space = h264->matrix_coefficients;
+      vp->fi.fi_color_space = h264->matrix_coefficients;
 
-    vp->fi.dar.num = h264->width;
-    vp->fi.dar.den = h264->height;
+    vp->fi.fi_dar.num = h264->width;
+    vp->fi.fi_dar.den = h264->height;
 
     if(h264->aspect_ratio_idc == 0xff) {
       sar.num = h264->sar_width;
@@ -395,7 +397,7 @@ picture_out(vdec_decoder_t *vdd)
       sar.num = p[0];
       sar.den = p[1];
     }
-    vp->fi.dar = av_mul_q(vp->fi.dar, sar);
+    vp->fi.fi_dar = av_mul_q(vp->fi.fi_dar, sar);
 
     if(h264->idr_picture_flag)
       vdd->order_base += 0x100000000LL;
@@ -421,23 +423,23 @@ picture_out(vdec_decoder_t *vdd)
     snprintf(metainfo, sizeof(metainfo),
 	     "h264 (Level %d.%d) %dx%d%c (Cell)",
 	     vdd->level_major, vdd->level_minor,
-	     h264->width, h264->height, vp->fi.interlaced ? 'i' : 'p');
+	     h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
   }
 
   prop_set_string(vdd->metainfo, metainfo);
 
-  vp->fi.pix_fmt = PIX_FMT_YUV420P;
-  vp->fi.pts = pts;
+  vp->fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  vp->fi.fi_pts = pts;
   
-  vp->fi.epoch = ud.s.epoch;
-  vp->fi.prescaled = 0;
-  vp->fi.color_space = -1;
-  vp->fi.color_range = 0;
+  vp->fi.fi_epoch = pm->epoch;
+  vp->fi.fi_prescaled = 0;
+  vp->fi.fi_color_space = -1;
+  vp->fi.fi_color_range = 0;
+  vp->fi.fi_time = pm->time;
 
   vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->rvf.rvf_offset));
 
   vp->order = order;
-  vp->send_pts = ud.s.send_pts;
 
   hts_mutex_lock(&vdd->mtx);
 
@@ -574,16 +576,20 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
     vdd->flush_to = -1;
   }
 
-  union vdec_userdata ud;
-  ud.s.epoch = mb->mb_epoch;
-  ud.s.skip = mb->mb_skip == 1;
-  ud.s.flush = vd->vd_do_flush;
+  pktmeta_t *pm = &vdd->pktmeta[vdd->pktmeta_cur];
+  au.userdata = vdd->pktmeta_cur;
+
+  vdd->pktmeta_cur = (vdd->pktmeta_cur + 1) & 63;
+  
+  pm->epoch = mb->mb_epoch;
+  pm->skip = mb->mb_skip == 1;
+  pm->flush = vd->vd_do_flush;
+  pm->time = mb->mb_time;
 
   int64_t pts = mb->mb_pts, dts = mb->mb_dts;
 
-  ud.s.nopts = pts == AV_NOPTS_VALUE;
-  ud.s.nodts = dts == AV_NOPTS_VALUE;
-  ud.s.send_pts = mb->mb_send_pts;
+  pm->nopts = pts == AV_NOPTS_VALUE;
+  pm->nodts = dts == AV_NOPTS_VALUE;
 
   if(dts < 0)
     dts = 0;
@@ -605,8 +611,6 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   au.pts.hi  = pts >> 32;
   au.dts.low = dts;
   au.dts.hi  = dts >> 32;
-
-  au.userdata = ud.u64;
 
   if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
     submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0, vd);

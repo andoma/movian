@@ -271,11 +271,11 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 /**
  *
  */
-static int64_t
+static void
 video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 	   int64_t pos, const char *txt)
 {
-  pos = FFMAX(fctx->start_time, FFMIN(fctx->start_time + fctx->duration, pos));
+  pos = FFMAX(0, FFMIN(fctx->duration, pos)) + fctx->start_time;
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
 	(pos - fctx->start_time) / 1000000.0);
@@ -293,10 +293,9 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
     *mbp = NULL;
   }
 
-  prop_set_float(prop_create(mp->mp_prop_root, "seektime"), 
-		 (pos - fctx->start_time) / 1000000.0);
+  pos -= fctx->start_time;
 
-  return pos;
+  prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
 }
 
 
@@ -318,11 +317,11 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_t *e;
   event_ts_t *ets;
   int64_t ts;
-  int64_t seekbase = 0;
 
   int hold = 0, epoch = 1;
   int restartpos_last = -1;
 
+  mp->mp_seek_base = 0;
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
   mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
   mp_set_playstatus_by_hold(mp, 0, NULL);
@@ -331,8 +330,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
       !(flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
     int64_t start = video_get_restartpos(canonical_url) * 1000;
-    if(start)
-      seekbase = video_seek(fctx, mp, &mb, start, "restart position");
+    if(start) {
+      mp->mp_seek_base = start;
+      video_seek(fctx, mp, &mb, start, "restart position");
+    }
   }
 
   while(1) {
@@ -367,7 +368,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	} else {
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
-	mb->mb_send_pts = 1;
+	//	mb->mb_send_pts = 1;
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 
@@ -412,7 +413,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mb->mb_stream = pkt.stream_index;
 
-      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_AUDIO)
+      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO)
 	mb->mb_time = mb->mb_pts - fctx->start_time;
       else
 	mb->mb_time = AV_NOPTS_VALUE;
@@ -454,16 +455,14 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
       mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
-    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+    } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
 
       ets = (event_ts_t *)e;
-      seekbase = ets->ts;
-
-      int sec = seekbase / 1000000;
+      int sec = ets->ts / 1000000;
 
       if(sec != restartpos_last) {
 	restartpos_last = sec;
-	metadb_set_video_restartpos(canonical_url, seekbase / 1000);
+	metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
 
 	if(sidx != NULL && sidx->si_nitems) {
 	  int i, j = 0;
@@ -489,23 +488,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       if(ts < fctx->start_time)
 	ts = fctx->start_time;
 
-      seekbase = video_seek(fctx, mp, &mb, ts, "direct");
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
-
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 60000000, "-60s");
-
-    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-      seekbase = video_seek(fctx, mp, &mb, seekbase - 15000000, "-15s");
-
-    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 15000000, "+15s");
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-      seekbase = video_seek(fctx, mp, &mb, seekbase + 60000000, "+60s");
+      video_seek(fctx, mp, &mb, ts, "direct");
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
@@ -570,9 +553,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       // TODO: chapter support
-      if(seekbase < MP_SKIP_LIMIT)
+      if(mp->mp_seek_base < MP_SKIP_LIMIT)
 	break;
-      seekbase = video_seek(fctx, mp, &mb, 0, "skip back");
+      video_seek(fctx, mp, &mb, 0, "skip back");
     } else if(event_is_type(e, EVENT_EXIT) ||
 	      event_is_type(e, EVENT_PLAY_URL)) {
       break;
@@ -585,7 +568,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
   // Compute stop position (in percentage of video length)
 
-  int spp = (seekbase - fctx->start_time) * 100 / fctx->duration;
+  int spp = mp->mp_seek_base * 100 / fctx->duration;
 
   if(spp >= video_settings.played_threshold) {
     metadb_set_video_restartpos(canonical_url, -1);

@@ -84,11 +84,12 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_buf_t *mb = NULL;
   media_queue_t *mq;
   event_ts_t *ets;
-  int64_t ts, seekbase = 0;
+  int64_t ts;
   media_codec_t *cw;
   event_t *e;
   int registered_play = 0;
 
+  mp->mp_seek_base = 0;
   mp_set_playstatus_by_hold(mp, hold, NULL);
 
   fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_SMALL, NULL);
@@ -223,14 +224,11 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
-	if(fctx->start_time == AV_NOPTS_VALUE)
-	  mb->mb_time = mb->mb_pts;
-	else
-	  mb->mb_time = mb->mb_pts - fctx->start_time;
-      } else
+	mb->mb_time = mb->mb_pts - fctx->start_time;
+      } else {
 	mb->mb_time = AV_NOPTS_VALUE;
-
-      mb->mb_send_pts = 1;
+      }
+      //      mb->mb_send_pts = 1;
 
       av_free_packet(&pkt);
     }
@@ -260,13 +258,13 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       mp_flush(mp, 0);
       break;
 
-    } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+    } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
 
       ets = (event_ts_t *)e;
-      seekbase = ets->ts;
+      //      mp->mp_seek_base = ets->ts;
 
       if(registered_play == 0) {
-	if(ets->ts - fctx->start_time > METADB_AUDIO_PLAY_THRESHOLD) {
+	if(ets->ts > METADB_AUDIO_PLAY_THRESHOLD) {
 	  registered_play = 1;
 	  metadb_register_play(url, 1, CONTENT_AUDIO);
 	}
@@ -281,26 +279,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
       
-    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
-
-      av_seek_frame(fctx, -1, seekbase - 60000000, AVSEEK_FLAG_BACKWARD);
-      seekflush(mp, &mb);
-
-    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-      av_seek_frame(fctx, -1, seekbase - 15000000, AVSEEK_FLAG_BACKWARD);
-      seekflush(mp, &mb);
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-      av_seek_frame(fctx, -1, seekbase + 60000000, 0);
-      seekflush(mp, &mb);
-
-    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-      av_seek_frame(fctx, -1, seekbase + 15000000, 0);
-      seekflush(mp, &mb);
-
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
 	      event_is_action(e, ACTION_PAUSE)) {
@@ -317,7 +295,7 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
-      if(seekbase < 1500000)
+      if(mp->mp_seek_base < 1500000)
 	goto skip;
 
       av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);

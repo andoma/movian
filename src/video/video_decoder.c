@@ -117,30 +117,30 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 			  const media_buf_t *mb, int decode_time)
 {
   frame_info_t fi;
-
+#if 0
   if(mb->mb_time != AV_NOPTS_VALUE)
     mp_set_current_time(mp, mb->mb_time);
-
+#endif
   /* Compute aspect ratio */
   switch(mb->mb_aspect_override) {
   case 0:
 
     if(frame->pan_scan != NULL && frame->pan_scan->width != 0) {
-      fi.dar.num = frame->pan_scan->width;
-      fi.dar.den = frame->pan_scan->height;
+      fi.fi_dar.num = frame->pan_scan->width;
+      fi.fi_dar.den = frame->pan_scan->height;
     } else {
-      fi.dar.num = ctx->width;
-      fi.dar.den = ctx->height;
+      fi.fi_dar.num = ctx->width;
+      fi.fi_dar.den = ctx->height;
     }
 
     if(ctx->sample_aspect_ratio.num)
-      fi.dar = av_mul_q(fi.dar, ctx->sample_aspect_ratio);
+      fi.fi_dar = av_mul_q(fi.fi_dar, ctx->sample_aspect_ratio);
     break;
   case 1:
-    fi.dar = (AVRational){4,3};
+    fi.fi_dar = (AVRational){4,3};
     break;
   case 2:
-    fi.dar = (AVRational){16,9};
+    fi.fi_dar = (AVRational){16,9};
     break;
   }
 
@@ -202,22 +202,22 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  fi.width = ctx->width;
-  fi.height = ctx->height;
-  fi.pix_fmt = ctx->pix_fmt;
-  fi.pts = pts;
-  fi.epoch = mb->mb_epoch;
-  fi.duration = duration;
+  fi.fi_width = ctx->width;
+  fi.fi_height = ctx->height;
+  fi.fi_pix_fmt = ctx->pix_fmt;
+  fi.fi_pts = pts;
+  fi.fi_epoch = mb->mb_epoch;
+  fi.fi_time = mb->mb_time;
+  fi.fi_duration = duration;
 
-  fi.interlaced = !!vd->vd_interlaced;
-  fi.tff = !!frame->top_field_first;
-  fi.prescaled = 0;
+  fi.fi_interlaced = !!vd->vd_interlaced;
+  fi.fi_tff = !!frame->top_field_first;
+  fi.fi_prescaled = 0;
 
-  fi.color_space = ctx->colorspace;
-  fi.color_range = ctx->color_range;
+  fi.fi_color_space = ctx->colorspace;
+  fi.fi_color_range = ctx->color_range;
 
-  video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, frame, &fi,
-		      mb->mb_send_pts);
+  video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, frame, &fi);
 }
 
 
@@ -226,22 +226,14 @@ video_deliver_frame_avctx(video_decoder_t *vd,
  */
 void
 video_deliver_frame(video_decoder_t *vd, frame_buffer_type_t type, void *frame,
-		    const frame_info_t *info, int send_pts)
+		    const frame_info_t *info)
 {
-  event_ts_t *ets;
-  
   vd->vd_skip = 0;
-
-  if(info->pts != AV_NOPTS_VALUE && send_pts) {
-    ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-    ets->ts = info->pts;
-    mp_enqueue_event(vd->vd_mp, &ets->h);
-    event_release(&ets->h);
-  }
+  mp_set_current_time(vd->vd_mp, info->fi_time);
 
   vd->vd_frame_deliver(type, frame, info, vd->vd_opaque);
   
-  video_decoder_scan_ext_sub(vd, info->pts);
+  video_decoder_scan_ext_sub(vd, info->fi_time);
 }
 
 

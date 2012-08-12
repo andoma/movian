@@ -219,7 +219,7 @@ gv_color_matrix_set(glw_video_t *gv, const struct frame_info *fi)
 {
   const float *f;
 
-  switch(fi->color_space) {
+  switch(fi->fi_color_space) {
   case AVCOL_SPC_BT709:
     f = cmatrix_ITUR_BT_709;
     break;
@@ -234,7 +234,7 @@ gv_color_matrix_set(glw_video_t *gv, const struct frame_info *fi)
     break;
 
   default:
-    f = fi->height < 720 ? cmatrix_ITUR_BT_601 : cmatrix_ITUR_BT_709;
+    f = fi->fi_height < 720 ? cmatrix_ITUR_BT_601 : cmatrix_ITUR_BT_709;
     break;
   }
 
@@ -577,17 +577,17 @@ glw_video_input_yuvp(glw_video_t *gv,
   glw_video_surface_t *s;
   const int parity = 0;
 
-  avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
-  wvec[0] = fi->width;
-  wvec[1] = fi->width >> hshift;
-  wvec[2] = fi->width >> hshift;
-  hvec[0] = fi->height >> fi->interlaced;
-  hvec[1] = fi->height >> (vshift + fi->interlaced);
-  hvec[2] = fi->height >> (vshift + fi->interlaced);
+  wvec[0] = fi->fi_width;
+  wvec[1] = fi->fi_width >> hshift;
+  wvec[2] = fi->fi_width >> hshift;
+  hvec[0] = fi->fi_height >> fi->fi_interlaced;
+  hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
+  hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
   if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 3,
-			 fi->interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
+			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
     return;
   
   gv_color_matrix_set(gv, fi);
@@ -595,7 +595,7 @@ glw_video_input_yuvp(glw_video_t *gv,
   if((s = glw_video_get_surface(gv)) == NULL)
     return;
 
-  if(!fi->interlaced) {
+  if(!fi->fi_interlaced) {
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -610,13 +610,13 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
 
-    glw_video_put_surface(gv, s, fi->pts, fi->epoch, fi->duration, 0);
+    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration, 0);
 
   } else {
 
-    int duration = fi->duration >> 1;
+    int duration = fi->fi_duration >> 1;
 
-    tff = fi->tff ^ parity;
+    tff = fi->fi_tff ^ parity;
 
     for(i = 0; i < 3; i++) {
       w = wvec[i];
@@ -632,7 +632,7 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, fi->pts, fi->epoch, duration, !tff);
+    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, duration, !tff);
 
     if((s = glw_video_get_surface(gv)) == NULL)
       return;
@@ -651,7 +651,8 @@ glw_video_input_yuvp(glw_video_t *gv,
       }
     }
     
-    glw_video_put_surface(gv, s, fi->pts + duration, fi->epoch, duration, tff);
+    glw_video_put_surface(gv, s, fi->fi_pts + duration,
+			  fi->fi_epoch, duration, tff);
   }
 }
 
@@ -680,18 +681,18 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
   int hshift, vshift;
   glw_video_surface_t *gvs;
 
-  avcodec_get_chroma_sub_sample(fi->pix_fmt, &hshift, &vshift);
+  avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
-  wvec[0] = fi->width;
-  wvec[1] = fi->width >> hshift;
-  wvec[2] = fi->width >> hshift;
-  hvec[0] = fi->height >> fi->interlaced;
-  hvec[1] = fi->height >> (vshift + fi->interlaced);
-  hvec[2] = fi->height >> (vshift + fi->interlaced);
+  wvec[0] = fi->fi_width;
+  wvec[1] = fi->fi_width >> hshift;
+  wvec[2] = fi->fi_width >> hshift;
+  hvec[0] = fi->fi_height >> fi->fi_interlaced;
+  hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
+  hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
 
   if(glw_video_configure(gv, &glw_video_rsxmem, wvec, hvec, 3,
-			 fi->interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
+			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0))
     return;
   
   gv_color_matrix_set(gv, fi);
@@ -706,7 +707,7 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
 
   int offset = gvs->gvs_offset;
 
-  if(fi->interlaced) {
+  if(fi->fi_interlaced) {
     // Interlaced
 
     for(i = 0; i < 3; i++) {
@@ -714,7 +715,7 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
       int h = hvec[i];
 
       init_tex(&gvs->gvs_tex[i],
-	       offset + !fi->tff * wvec[i],
+	       offset + !fi->fi_tff * wvec[i],
 	       w, h, w*2,
 	       NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	       NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
@@ -722,9 +723,10 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
 	       NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	       NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	       );
-      offset += w * (fi->height >> (i ? vshift : 0));
+      offset += w * (fi->fi_height >> (i ? vshift : 0));
     }
-    glw_video_put_surface(gv, gvs, fi->pts, fi->epoch, fi->duration/2, 0);
+    glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
+			  fi->fi_duration/2, 0);
 
     if((gvs = glw_video_get_surface(gv)) == NULL)
       return;
@@ -741,7 +743,7 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
       int h = hvec[i];
 
       init_tex(&gvs->gvs_tex[i],
-	       offset + !!fi->tff * wvec[i],
+	       offset + !!fi->fi_tff * wvec[i],
 	       w, h, w*2,
 	       NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	       NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
@@ -749,11 +751,11 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
 	       NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
 	       NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
 	       );
-      offset += w * (fi->height >> (i ? vshift : 0));
+      offset += w * (fi->fi_height >> (i ? vshift : 0));
     }
 
-    glw_video_put_surface(gv, gvs, fi->pts + fi->duration, fi->epoch,
-			  fi->duration/2, 0);
+    glw_video_put_surface(gv, gvs, fi->fi_pts + fi->fi_duration, fi->fi_epoch,
+			  fi->fi_duration/2, 0);
 
   } else {
     // Progressive
@@ -773,7 +775,8 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
 	       );
       offset += w * h;
     }
-    glw_video_put_surface(gv, gvs, fi->pts, fi->epoch, fi->duration, 0);
+    glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
+			  fi->fi_duration, 0);
   }
 }
 

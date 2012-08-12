@@ -234,7 +234,6 @@ ad_thread(void *aux)
       break;
 
     case MB_END:
-      mp_set_current_time(mp, AV_NOPTS_VALUE);
       break;
 
     default:
@@ -305,15 +304,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       ad->ad_do_flush = 0;
       if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-    } else if(mb->mb_time != AV_NOPTS_VALUE)
+    } else
       mp_set_current_time(mp, mb->mb_time);
-
-    if(mb->mb_send_pts && mb->mb_pts != AV_NOPTS_VALUE) {
-      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-      ets->ts = mb->mb_pts;
-      mp_enqueue_event(mp, &ets->h);
-      event_release(&ets->h);
-    }
 
     frames = mb->mb_size / sizeof(int16_t) / mb->mb_channels;
 
@@ -379,15 +371,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       ad->ad_do_flush = 0;
       if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-    } else if(mb->mb_time != AV_NOPTS_VALUE)
+    } else
       mp_set_current_time(mp, mb->mb_time);
-
-    if(mb->mb_send_pts && mb->mb_pts != AV_NOPTS_VALUE) {
-      event_ts_t *ets = event_create(EVENT_CURRENT_PTS, sizeof(event_ts_t));
-      ets->ts = pts;
-      mp_enqueue_event(mp, &ets->h);
-      event_release(&ets->h);
-    }
 
     if(audio_mode_stereo_only(am) &&
        cw->codec_id != CODEC_ID_TRUEHD &&

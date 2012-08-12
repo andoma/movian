@@ -448,26 +448,6 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       lsn = cdseek(mp, &mb, track_first, track_last,
 		   track_first + ets->ts * CDIO_CD_FRAMES_PER_SEC /1000000LL);
       
-    } else if(event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
-
-      lsn = cdseek(mp, &mb, track_first, track_last,
-		   lsn - CDIO_CD_FRAMES_PER_SEC * 60);
-
-    } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-      lsn = cdseek(mp, &mb, track_first, track_last,
-		   lsn - CDIO_CD_FRAMES_PER_SEC * 15);
-
-    } else if(event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-      lsn = cdseek(mp, &mb, track_first, track_last,
-		   lsn + CDIO_CD_FRAMES_PER_SEC * 60);
-
-    } else if(event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-      lsn = cdseek(mp, &mb, track_first, track_last,
-		   lsn + CDIO_CD_FRAMES_PER_SEC * 15);
-
     } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	      event_is_action(e, ACTION_PLAY) ||
 	      event_is_action(e, ACTION_PAUSE)) {

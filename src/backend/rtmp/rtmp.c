@@ -52,8 +52,6 @@ typedef struct {
 
   int hold;
 
-  int64_t seekbase;
-  int epoch;
   int64_t seekpos;
 
   int can_seek;
@@ -197,11 +195,11 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     return e;
   
   if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
-    if(r->seekbase < MP_SKIP_LIMIT) {
+    if(mp->mp_seek_base < MP_SKIP_LIMIT) {
       return e;
     }
-    r->epoch++;
-    r->seekbase = video_seek(r, mp, mbp, 0, "direct");
+    mp->mp_seek_epoch++;
+    mp->mp_seek_base = video_seek(r, mp, mbp, 0, "direct");
   }
   
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
@@ -221,39 +219,23 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
     mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
 
-  } else if(event_is_type(e, EVENT_CURRENT_PTS)) {
+  } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
     event_ts_t *ets = (event_ts_t *)e;
     
-    r->seekbase = ets->ts;
+    //    mp->mp_seek_base = ets->ts;
     
-    int sec = r->seekbase / 1000000;
+    int sec = ets->ts / 1000000;
 
     if(sec != r->restartpos_last && r->can_seek) {
       r->restartpos_last = sec;
-      metadb_set_video_restartpos(r->canonical_url, r->seekbase / 1000);
+      metadb_set_video_restartpos(r->canonical_url, mp->mp_seek_base / 1000);
     }
 
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
-    r->epoch++;
-    r->seekbase = video_seek(r, mp, mbp, ets->ts, "direct");
-
-  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_BACKWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 60000000, "-60s");
-
-  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_BACKWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase - 15000000, "-15s");
-
-  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FORWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 15000000, "+15s");
-
-  } else if(r->can_seek && event_is_action(e, ACTION_SEEK_FAST_FORWARD)) {
-
-    r->seekbase = video_seek(r, mp, mbp, r->seekbase + 60000000, "+60s");
+    mp->mp_seek_epoch++;
+    mp->mp_seek_base = video_seek(r, mp, mbp, ets->ts, "direct");
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
@@ -286,14 +268,14 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
   mb->mb_cw = media_codec_ref(mc);
-  mb->mb_time = time;
+  mb->mb_time = dt == MB_VIDEO ? time : AV_NOPTS_VALUE;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
-  mb->mb_send_pts = dt == MB_VIDEO;
+  //  mb->mb_send_pts = dt == MB_VIDEO;
 	
   memcpy(mb->mb_data, data, size);
-  mb->mb_epoch = r->epoch;
+  mb->mb_epoch = r->mp->mp_seek_epoch;
 
   do {
 
@@ -576,7 +558,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	memset(&p, 0, sizeof(p));
 
 	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %d", 
-	      r->seekbase);
+	      mp->mp_seek_base);
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
@@ -590,15 +572,15 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  break;
 	}
 
-	if(!RTMP_ConnectStream(r->r, r->can_seek ? r->seekbase / 1000 : 0)) {
+	if(!RTMP_ConnectStream(r->r, r->can_seek ? mp->mp_seek_base / 1000 : 0)) {
 	  snprintf(errbuf, errlen, "Unable to stream RTMP session");
 	  return NULL;
 	}
-	r->epoch++;
+	mp->mp_seek_epoch++;
 
 
 	r->lastdts = 0;
-	r->seekbase = AV_NOPTS_VALUE;
+	mp->mp_seek_base = AV_NOPTS_VALUE;
 	mp_flush(mp, 0);
 	continue;
       }
@@ -732,20 +714,19 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   r.seek_origin = start;
   r.mp = mp;
   r.hold = 0;
-  r.epoch = 1;
   
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
 
   if(start > 0) {
     r.seekpos = start * 1000;
-    r.seekbase = r.seekpos;
+    mp->mp_seek_base = r.seekpos;
     mp->mp_video.mq_seektarget = r.seekpos;
     mp->mp_audio.mq_seektarget = r.seekpos;
   } else {
     mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
     mp->mp_audio.mq_seektarget = AV_NOPTS_VALUE;
-    r.seekbase = AV_NOPTS_VALUE;
+    mp->mp_seek_base = 0;
     r.seekpos = AV_NOPTS_VALUE;
   }
 
@@ -762,7 +743,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
 
   if(r.total_duration) {
-    int p = r.seekbase / (r.total_duration * 10);
+    int p = mp->mp_seek_base / (r.total_duration * 10);
     if(p >= video_settings.played_threshold) {
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);

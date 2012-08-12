@@ -790,7 +790,7 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
   VdpCSCMatrix matrix;
   VdpVideoMixerAttribute attributes[] = {VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX};
 
-  switch(fi->color_space) {
+  switch(fi->fi_color_space) {
   case AVCOL_SPC_BT709:
     cs = VDP_COLOR_STANDARD_ITUR_BT_709;
     break;
@@ -805,7 +805,8 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
     break;
 
   default:
-    cs = fi->height < 720 ? VDP_COLOR_STANDARD_ITUR_BT_601 : VDP_COLOR_STANDARD_ITUR_BT_709;
+    cs = fi->fi_height < 720 ? VDP_COLOR_STANDARD_ITUR_BT_601 :
+    VDP_COLOR_STANDARD_ITUR_BT_709;
     break;
   }
 
