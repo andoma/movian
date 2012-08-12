@@ -78,6 +78,7 @@ typedef struct glw_text_bitmap {
   uint8_t gtb_paint_cursor;
   uint8_t gtb_update_cursor;
   uint8_t gtb_need_layout;
+  uint8_t gtb_deferred_realize;
 
   int16_t gtb_edit_ptr;
 
@@ -107,6 +108,7 @@ typedef struct glw_text_bitmap {
 } glw_text_bitmap_t;
 
 static void gtb_notify(glw_text_bitmap_t *gtb);
+static void gtb_realize(glw_text_bitmap_t *gtb);
 
 static glw_class_t glw_text, glw_label;
 
@@ -133,7 +135,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
 
   // Upload texture
 
-  if(pm != NULL && pm->pm_pixels != NULL && gtb->gtb_state == GTB_VALID) {
+  if(pm != NULL && pm->pm_pixels != NULL) {
     int fmt;
 
     fmt = pm->pm_type == PIXMAP_IA ? GLW_TEXTURE_FORMAT_I8A8 : GLW_TEXTURE_FORMAT_BGR32;
@@ -335,6 +337,10 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   gtb->gtb_paint_cursor = w->glw_class == &glw_text && glw_is_focused(w);
   gtb->gtb_need_layout = 0;
 
+  if(gtb->gtb_state == GTB_VALID && gtb->gtb_deferred_realize) {
+    gtb->gtb_deferred_realize = 0;
+    gtb_realize(gtb);
+  }
 
   if(gtb->gtb_state != GTB_NEED_RENDER)
     return;
@@ -624,6 +630,10 @@ gtb_realize(glw_text_bitmap_t *gtb)
   glw_root_t *gr = gtb->w.glw_root;
   int direct = gtb->gtb_maxlines > 1;
 
+
+#if 0
+
+
   switch(gtb->gtb_state) {
   case GTB_QUEUED_FOR_RENDERING:
     if(direct)
@@ -644,9 +654,14 @@ gtb_realize(glw_text_bitmap_t *gtb)
   case GTB_VALID:
     break;
   }
+#endif
+
+  if(gtb->gtb_state != GTB_IDLE && gtb->gtb_state != GTB_VALID) {
+    gtb->gtb_deferred_realize = 1;
+    return;
+  }
 
   if(direct) {
-    
     gtb->gtb_state = GTB_NEED_RENDER;
   } else {
     TAILQ_INSERT_TAIL(&gr->gr_gtb_dim_queue, gtb, gtb_workq_link);
