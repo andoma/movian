@@ -580,7 +580,7 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
     ets->ts = ts;
     return;
   }
-  printf("Direct seek to %ld\n", ts);
+
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
   ets->ts = ts;
   mp->mp_seek_base = ts;
