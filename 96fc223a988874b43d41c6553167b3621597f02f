@@ -1,0 +1,6 @@
+Improve metadata lookup for movies.
+
+- Allow the user to select which of the metadata providers to use for
+  a certain movie
+
+- Allow the user to select between all results for a given movie
