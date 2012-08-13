@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+
+case $1 in
+    add)
+	git notes --ref changelog add $2
+	;;
+    list)
+	git log --notes=changelog $2
+	;;
+    push)
+	git push origin refs/notes/changelog
+	;;
+esac
+
