@@ -369,7 +369,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   char *result;
 
   if(tmdb_datasource_search < 0)
-    return -1;
+    return METADATA_ERROR;
 
   if(year > 0) {
     snprintf(buf, sizeof(buf), "%s %d", title, year);
@@ -383,15 +383,15 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			 (const char *[]){"query", q,
 			     "api_key", TMDB_APIKEY,
 			     NULL, NULL},
-			 FA_COMPRESSION);
+			 FA_COMPRESSION | FA_DEBUG);
 
   if(result == NULL)
-    return -1;
+    return METADATA_ERROR;
 
   htsmsg_t *doc = htsmsg_json_deserialize(result);
   free(result);
   if(doc == NULL)
-    return -1;
+    return METADATA_ERROR;
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
   TRACE(TRACE_DEBUG, "TMDB", "Query '%s' -> %d pages %d results",
 	q,
@@ -401,11 +401,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   htsmsg_t *resultlist = htsmsg_get_list(doc, "results");
 
   if(resultlist == NULL || results == 0) {
-    int64_t r;
-    r = metadb_insert_videoitem(db, item_url, tmdb_datasource_search,
-				"0", NULL, METAITEM_STATUS_ABSENT, 0);
     htsmsg_destroy(doc);
-    return r;
+    return METADATA_ERROR;
   }
 
   htsmsg_field_t *f;
@@ -453,7 +450,7 @@ static int64_t
 tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id)
 {
   if(tmdb_datasource_imdb < 0)
-    return -1;
+    return METADATA_ERROR;
 
   return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_imdb);
 }
@@ -465,7 +462,7 @@ static int64_t
 tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
 {
   if(tmdb_datasource_search < 0)
-    return -1;
+    return METADATA_ERROR;
 
   return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_search);
 }

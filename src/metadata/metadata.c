@@ -704,7 +704,11 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
 
       if(rval == METADATA_DEADLOCK)
 	return METADATA_DEADLOCK;
-
+      if(rval == METADATA_ERROR)
+	rval = metadb_insert_videoitem(db, rstr_get(mlp->mlp_url), ms->ms_id,
+				       "0", NULL, METAITEM_STATUS_ABSENT, 0);
+      if(rval == METADATA_ERROR)
+	return rval;
       goto redo;
     }
   }
