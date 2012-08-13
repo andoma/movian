@@ -27,6 +27,7 @@ SRCS += src/main.c \
 	src/backend/backend.c \
 	src/backend/backend_prop.c \
 	src/backend/search.c \
+	src/backend/shoutcast/shoutcast.c \
 	src/media.c \
 	src/event.c \
 	src/keyring.c \
