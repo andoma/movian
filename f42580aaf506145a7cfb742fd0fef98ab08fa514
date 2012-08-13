@@ -1,0 +1,6 @@
+Fix some issues related to uPnP / DLNA discovery.
+
+This should make Showtime find PS3 Media Server and
+Universal Media Server immediately on start.
+Previously it had to wait for the periodic notification
+before adding them
