@@ -1,0 +1,5 @@
+Fix a bug causing issues with audio if a file contains an audio track
+that switches from one mode to another.
+
+Typically TV shows where the recap is in stereo and the main episode
+in 5.1 suffered from this bug
