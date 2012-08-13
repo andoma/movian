@@ -35,8 +35,11 @@
 
 LIST_HEAD(js_item_list, js_item);
 
+static hts_mutex_t js_page_mutex; // protects global lists
+
 static struct js_route_list js_routes;
 static struct js_searcher_list js_searchers;
+
 static JSFunctionSpec item_proto_functions[];
 
 /**
@@ -120,16 +123,25 @@ typedef struct js_model {
 static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
 				   jsval *root);
 
+/**
+ *
+ */
+void
+js_page_init(void)
+{
+  hts_mutex_init(&js_page_mutex);
+}
 
 /**
  *
  */
 static js_model_t *
-js_model_create(jsval openfunc)
+js_model_create(JSContext *cx, jsval openfunc)
 {
   js_model_t *jm = calloc(1, sizeof(js_model_t));
   jm->jm_refcount = 1;
   jm->jm_openfunc = openfunc;
+  JS_AddNamedRoot(cx, &jm->jm_openfunc, "openfunc");
   return jm;
 }
 
@@ -707,7 +719,7 @@ js_appendModel(JSContext *cx, JSObject *obj, uintN argc,
   prop_set_rstring(prop_create(item, "url"), url);
   rstr_release(url);
 
-  jm = js_model_create(JSVAL_VOID);
+  jm = js_model_create(cx, JSVAL_VOID);
 
   init_model_props(jm, item);
   prop_set_string(jm->jm_type, type);
@@ -1104,6 +1116,8 @@ js_open_trampoline(void *arg)
 		     item_proto_functions);
 
   js_open_invoke(cx, jm);
+  jm->jm_openfunc = JSVAL_VOID;
+  JS_RemoveRoot(cx, &jm->jm_openfunc);
 
   jm->jm_cx = cx;
 
@@ -1150,15 +1164,23 @@ js_backend_open(prop_t *page, const char *url)
   js_model_t *jm;
   prop_t *model;
 
+  hts_mutex_lock(&js_page_mutex);
+
   LIST_FOREACH(jsr, &js_routes, jsr_global_link)
     if(jsr->jsr_jsp->jsp_enable_uri_routing &&
        !hts_regexec(&jsr->jsr_regex, url, 8, matches, 0))
       break;
 
-  if(jsr == NULL)
+  if(jsr == NULL) {
+    hts_mutex_unlock(&js_page_mutex);
     return 1;
- 
-  jm = js_model_create(jsr->jsr_openfunc);
+  }
+
+  JSContext *cx = js_newctx(NULL);
+  JS_BeginRequest(cx);
+  jm = js_model_create(cx, jsr->jsr_openfunc);
+  JS_EndRequest(cx);
+  JS_DestroyContext(cx);
 
   for(i = 1; i < 8; i++)
     if(matches[i].rm_so != -1)
@@ -1176,6 +1198,7 @@ js_backend_open(prop_t *page, const char *url)
   jm->jm_url       = strdup(url);
 
   model_launch(jm);
+  hts_mutex_unlock(&js_page_mutex);
   return 0;
 }
 
@@ -1190,11 +1213,16 @@ js_backend_search(struct prop *model, const char *query)
   prop_t *parent = prop_create(model, "nodes");
   js_model_t *jm;
 
+  JSContext *cx = js_newctx(NULL);
+  JS_BeginRequest(cx);
+
+  hts_mutex_lock(&js_page_mutex);
+
   LIST_FOREACH(jss, &js_searchers, jss_global_link) {
     if(!jss->jss_jsp->jsp_enable_search)
       continue;
 
-    jm = js_model_create(jss->jss_openfunc);
+    jm = js_model_create(cx, jss->jss_openfunc);
     strvec_addp(&jm->jm_args, query);
 
     search_class_create(parent, &jm->jm_nodes, &jm->jm_entries, 
@@ -1202,6 +1230,9 @@ js_backend_search(struct prop *model, const char *query)
 
     model_launch(jm);
   }
+  hts_mutex_unlock(&js_page_mutex);
+  JS_EndRequest(cx);
+  JS_DestroyContext(cx);
 }
 
 
@@ -1254,17 +1285,19 @@ js_addURI(JSContext *cx, JSObject *obj, uintN argc,
     JS_ReportError(cx, "Invalid regular expression");
     return JS_FALSE;
   }
+
+  TRACE(TRACE_DEBUG, "JS", "Add route for %s", str);
   
   jsr->jsr_pattern = strdup(str);
   jsr->jsr_prio = strcspn(str, "()[].*?+$") ?: INT32_MAX;
-  
+
+
+  hts_mutex_lock(&js_page_mutex);
   LIST_INSERT_SORTED(&js_routes, jsr, jsr_global_link, jsr_cmp);
   LIST_INSERT_HEAD(&jsp->jsp_routes, jsr, jsr_plugin_link);
-
-  TRACE(TRACE_DEBUG, "JS", "Add route for %s", str);
-
   jsr->jsr_openfunc = argv[1];
   JS_AddNamedRoot(cx, &jsr->jsr_openfunc, "routeduri");
+  hts_mutex_unlock(&js_page_mutex);
 
   *rval = JSVAL_VOID;
   return JS_TRUE;
@@ -1289,6 +1322,7 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
   jss = calloc(1, sizeof(js_searcher_t));
   jss->jss_jsp = jsp;
 
+  hts_mutex_lock(&js_page_mutex);
   LIST_INSERT_HEAD(&js_searchers, jss, jss_global_link);
   LIST_INSERT_HEAD(&jsp->jsp_searchers, jss, jss_plugin_link);
 
@@ -1298,6 +1332,7 @@ js_addSearcher(JSContext *cx, JSObject *obj, uintN argc,
 
   jss->jss_openfunc = argv[2];
   JS_AddNamedRoot(cx, &jss->jss_openfunc, "searcher");
+  hts_mutex_unlock(&js_page_mutex);
 
   *rval = JSVAL_VOID;
   return JS_TRUE;

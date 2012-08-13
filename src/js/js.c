@@ -910,6 +910,8 @@ js_init(void)
   JSContext *cx;
   jsval val;
 
+  js_page_init();
+
   JS_SetCStringsAreUTF8();
 
   runtime = JS_NewRuntime(0x1000000);

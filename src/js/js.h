@@ -140,4 +140,6 @@ void js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
 void js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
 			     const char *filter, jsval fun);
 
+void js_page_init(void);
+
 #endif // JS_H__ 
