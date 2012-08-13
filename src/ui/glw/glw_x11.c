@@ -426,7 +426,9 @@ window_shutdown(glw_x11_t *gx11)
     XUngrabPointer(gx11->display, CurrentTime);
     XUngrabKeyboard(gx11->display, CurrentTime);
   }
+  glw_lock(&gx11->gr);
   glw_flush(&gx11->gr);
+  glw_unlock(&gx11->gr);
   window_close(gx11);
 }
 
@@ -1070,8 +1072,10 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	w = event.xconfigure.width;
 	h = event.xconfigure.height;
 	glViewport(0, 0, w, h);
+	glw_lock(&gx11->gr);
 	gx11->gr.gr_width  = w;
 	gx11->gr.gr_height = h;
+	glw_unlock(&gx11->gr);
 	break;
 
 
@@ -1332,9 +1336,13 @@ glw_x11_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   gx11->want_fullscreen |= force_fs;
 
   update_gpu_info(gx11);
+  glw_lock(gr);
   glw_load_universe(gr);
+  glw_unlock(gr);
   glw_x11_mainloop(gx11);
+  glw_lock(gr);
   glw_unload_universe(gr);
+  glw_unlock(gr);
   glw_reap(gr);
   glw_reap(gr);
   glw_fini(gr);
