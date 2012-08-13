@@ -2120,7 +2120,9 @@ metadb_register_play(const char *url, int inc, int content_type)
       break;
   }
   db_commit(db);
+  hts_mutex_lock(&mip_mutex);
   mip_update_by_url(db, url);
+  hts_mutex_unlock(&mip_mutex);
   metadb_close(db);
 }
 
@@ -2310,8 +2312,6 @@ mip_update_by_url(sqlite3 *db, const char *url)
 
   unsigned int hash = mystrhash(url) % MIP_HASHWIDTH;
 
-  hts_mutex_lock(&mip_mutex);
-
   LIST_FOREACH(mip, &mip_hash[hash], mip_link) {
     if(strcmp(mip->mip_url, url))
       continue;
@@ -2323,7 +2323,6 @@ mip_update_by_url(sqlite3 *db, const char *url)
     }
     mip_set(mip, &mii);
   }
-  hts_mutex_unlock(&mip_mutex);
 }
 
 
