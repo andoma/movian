@@ -175,6 +175,8 @@ void prop_destroy(prop_t *p);
 
 void prop_destroy_by_name(prop_t *parent, const char *name);
 
+void prop_destroy_first(prop_t *p);
+
 prop_t *prop_follow(prop_t *p);
 
 int prop_compare(const prop_t *a, const prop_t *b);

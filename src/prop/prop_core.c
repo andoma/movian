@@ -1805,6 +1805,23 @@ prop_destroy_by_name(prop_t *p, const char *name)
 /**
  *
  */
+void
+prop_destroy_first(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c = TAILQ_FIRST(&p->hp_childs);
+    if(c != NULL)
+      prop_destroy_child(p, c);
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+
+/**
+ *
+ */
 static void
 prop_flood_flag(prop_t *p, int set, int clr)
 {
