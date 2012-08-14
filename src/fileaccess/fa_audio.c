@@ -261,7 +261,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
 
       ets = (event_ts_t *)e;
-      //      mp->mp_seek_base = ets->ts;
 
       if(registered_play == 0) {
 	if(ets->ts > METADB_AUDIO_PLAY_THRESHOLD) {

@@ -70,6 +70,8 @@ static prop_t *media_prop_current;
 static struct media_pipe_list media_pipe_stack;
 media_pipe_t *media_primary;
 
+static int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
+
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
 
 static void update_av_delta(void *opaque, int value);
@@ -265,6 +267,7 @@ mp_create(const char *name, int flags, const char *type)
   mp = calloc(1, sizeof(media_pipe_t));
 
   mp->mp_satisfied = -1;
+  mp->mp_epoch = 1;
 
   mp->mp_mb_pool = pool_create("packet headers", 
 			       sizeof(media_buf_t),
@@ -571,6 +574,14 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
 		    ts / 1000000.0, 0);
 
+  mp->mp_seek_base = ts;
+
+
+  if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
+    prop_set_float(prop_create(mp->mp_prop_root, "seektime"), ts / 1000000.0);
+    return;
+  }
+
   /* If there already is a seek event enqueued, update it */
   TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
     if(!event_is_type(e, EVENT_SEEK))
@@ -583,11 +594,22 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
   ets->ts = ts;
-  mp->mp_seek_base = ts;
+  mp->mp_epoch++;
 
   e = &ets->h;
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+}
+
+/**
+ *
+ */
+void
+mp_bump_epoch(media_pipe_t *mp)
+{
+  hts_mutex_lock(&mp->mp_mutex);
+  mp->mp_epoch++;
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
@@ -736,6 +758,7 @@ mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
   mq->mq_packets_current++;
+  mb->mb_epoch = mp->mp_epoch;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
@@ -749,6 +772,7 @@ mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
   mq->mq_packets_current++;
+  mb->mb_epoch = mp->mp_epoch;
   mp->mp_buffer_current += mb->mb_size;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
@@ -843,6 +867,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   mq->mq_packets_current++;
   mp->mp_buffer_current += mb->mb_size;
+  mb->mb_epoch = mp->mp_epoch;
   mq_update_stats(mp, mq);
   hts_cond_signal(&mq->mq_avail);
 
@@ -878,12 +903,11 @@ mb_enqueue_always_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 /**
  *
  */
-int
+static int
 mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 {
   media_buf_t *abuf, *vbuf, *vk, *mb;
   int rval = 1;
-  hts_mutex_lock(&mp->mp_mutex);
 
   TAILQ_FOREACH(abuf, &mp->mp_audio.mq_q, mb_link)
     if(abuf->mb_pts != AV_NOPTS_VALUE && abuf->mb_pts >= pos)
@@ -950,7 +974,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       TRACE(TRACE_DEBUG, "Media", "Seeking by dropping %d audio packets and %d+%d video packets from queue", adrop, vdrop, vskip);
     }
   }
-  hts_mutex_unlock(&mp->mp_mutex);
   return rval;
 }
 
@@ -1518,18 +1541,25 @@ update_sv_delta(void *opaque, int v)
  *
  */
 void
-mp_set_current_time(media_pipe_t *mp, int64_t ts)
+mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch)
 {
   if(ts == AV_NOPTS_VALUE)
     return;
 
-  prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
-		    ts / 1000000.0, 0);
+  hts_mutex_lock(&mp->mp_mutex);
 
-  event_ts_t *ets = event_create(EVENT_CURRENT_TIME, sizeof(event_ts_t));
-  ets->ts = ts;
-  mp_enqueue_event(mp, &ets->h);
-  event_release(&ets->h);
+  if(epoch == mp->mp_epoch) {
+
+    prop_set_float_ex(mp->mp_prop_currenttime, mp->mp_sub_currenttime,
+		      ts / 1000000.0, 0);
+    
+    event_ts_t *ets = event_create(EVENT_CURRENT_TIME, sizeof(event_ts_t));
+    ets->ts = ts;
+    mp->mp_seek_base = ts;
+    mp_enqueue_event_locked(mp, &ets->h);
+    event_release(&ets->h);
+  }
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 

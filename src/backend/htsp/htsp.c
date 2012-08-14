@@ -1722,8 +1722,6 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_s64(m, "pts", &mb->mb_pts))
 	mb->mb_pts = AV_NOPTS_VALUE;
 
-      mb->mb_epoch = 1;
-
       if(hss->hss_cw != NULL)
 	mb->mb_cw = media_codec_ref(hss->hss_cw);
 

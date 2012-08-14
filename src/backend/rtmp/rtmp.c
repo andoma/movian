@@ -154,7 +154,7 @@ handle_metadata(rtmp_t *r, char *body, unsigned int len,
 /**
  *
  */
-static int64_t
+static void
 video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 	   int64_t pos, const char *txt)
 {
@@ -178,7 +178,6 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   }
 
   prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
-  return pos;
 }
 
 /**
@@ -198,8 +197,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     if(mp->mp_seek_base < MP_SKIP_LIMIT) {
       return e;
     }
-    mp->mp_seek_epoch++;
-    mp->mp_seek_base = video_seek(r, mp, mbp, 0, "direct");
+    video_seek(r, mp, mbp, 0, "direct");
   }
   
   if(event_is_action(e, ACTION_PLAYPAUSE) ||
@@ -234,8 +232,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   } else if(r->can_seek && event_is_type(e, EVENT_SEEK)) {
     event_ts_t *ets = (event_ts_t *)e;
 
-    mp->mp_seek_epoch++;
-    mp->mp_seek_base = video_seek(r, mp, mbp, ets->ts, "direct");
+    video_seek(r, mp, mbp, ets->ts, "direct");
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
@@ -275,7 +272,6 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   //  mb->mb_send_pts = dt == MB_VIDEO;
 	
   memcpy(mb->mb_data, data, size);
-  mb->mb_epoch = r->mp->mp_seek_epoch;
 
   do {
 
@@ -576,8 +572,7 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  snprintf(errbuf, errlen, "Unable to stream RTMP session");
 	  return NULL;
 	}
-	mp->mp_seek_epoch++;
-
+	mp_bump_epoch(mp);
 
 	r->lastdts = 0;
 	mp->mp_seek_base = AV_NOPTS_VALUE;

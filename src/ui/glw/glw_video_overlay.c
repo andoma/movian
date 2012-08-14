@@ -827,7 +827,7 @@ glw_video_overlay_set_pts(glw_video_t *gv, int64_t pts)
 
   glw_video_overlay_spu_layout(gv, pts);
   pts -= vd->vd_mp->mp_svdelta;
-  pts -= vd->vd_mp->mp_pts_delta_for_subs;
+  pts -= vd->vd_mp->mp_start_time;
 
   glw_video_overlay_sub_set_pts(gv, pts);
 }

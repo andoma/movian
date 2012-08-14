@@ -229,7 +229,7 @@ video_deliver_frame(video_decoder_t *vd, frame_buffer_type_t type, void *frame,
 		    const frame_info_t *info)
 {
   vd->vd_skip = 0;
-  mp_set_current_time(vd->vd_mp, info->fi_time);
+  mp_set_current_time(vd->vd_mp, info->fi_time, info->fi_epoch);
 
   vd->vd_frame_deliver(type, frame, info, vd->vd_opaque);
   
@@ -512,7 +512,7 @@ void
 video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
 {
   pts -= vd->vd_mp->mp_svdelta;
-  pts -= vd->vd_mp->mp_pts_delta_for_subs;
+  pts -= vd->vd_mp->mp_start_time;
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_pick(vd->vd_ext_subtitles, pts, vd);
