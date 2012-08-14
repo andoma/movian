@@ -191,6 +191,7 @@ static struct strtab postfixtab[] = {
   { "sub",             CONTENT_UNKNOWN },
   { "exe",             CONTENT_UNKNOWN },
   { "tmp",             CONTENT_UNKNOWN },
+  { "db",              CONTENT_UNKNOWN },
 };
 
 
@@ -755,6 +756,64 @@ add_sort_option_dirfirst(scanner_t *s, prop_t *model)
 }
 
 
+
+static void
+set_only_supported_files(void *opaque, prop_event_t event, ...)
+{
+  scanner_t *s = opaque;
+  va_list ap;
+  int val;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    scanner_unref(s);
+    break;
+    
+  case PROP_SET_INT:
+    val = va_arg(ap, int);
+    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "supportedfiles",
+		   KVSTORE_SET_INT, val);
+     break;
+
+  default:
+    break;
+  }
+}
+
+/**
+ *
+ */
+static void
+add_only_supported_files(scanner_t *s, prop_t *model,
+			 prop_t **valp)
+{
+  prop_t *parent = prop_create(model, "options");
+  prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
+  prop_t *value = *valp = prop_create(n, "value");
+  int v = kv_url_opt_get_int(s->s_url, KVSTORE_PAGE_DOMAIN_SYS,
+			     "supportedfiles", 1);
+
+  prop_set_string(prop_create(n, "type"), "bool");
+  prop_set_int(prop_create(n, "enabled"), 1);
+  prop_set_int(value, v);
+
+  prop_link(_p("Show only supported files"), prop_create(m, "title"));
+
+  s->s_refcount++;
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
+		 PROP_TAG_CALLBACK, set_only_supported_files, s,
+		 PROP_TAG_ROOT, value,
+		 NULL);
+
+  if(prop_set_parent(n, parent))
+    prop_destroy(n);
+}
+
+
 /**
  *
  */
@@ -767,19 +826,13 @@ fa_scanner(const char *url, time_t url_mtime,
   s->s_url = strdup(url);
 
   prop_t *source = prop_create(model, "source");
-
+  prop_t *onlysupported;
   struct prop_nf *pnf;
 
   pnf = prop_nf_create(prop_create(model, "nodes"),
 		       source,
 		       prop_create(model, "filter"),
 		       PROP_NF_AUTODESTROY);
-  
-
-
-  prop_nf_pred_str_add(pnf, "node.type",
-		       PROP_NF_CMP_EQ, "unknown", NULL, 
-		       PROP_NF_MODE_EXCLUDE);
 
   prop_nf_pred_int_add(pnf, "node.hidden",
 		       PROP_NF_CMP_EQ, 1, NULL, 
@@ -791,6 +844,17 @@ fa_scanner(const char *url, time_t url_mtime,
 
   add_sort_option_type(s, model);
   add_sort_option_dirfirst(s, model);
+  add_only_supported_files(s, model, &onlysupported);
+  prop_nf_pred_str_add(pnf, "node.type",
+		       PROP_NF_CMP_EQ, "unknown", onlysupported, 
+		       PROP_NF_MODE_EXCLUDE);
+
+  prop_nf_pred_str_add(pnf, "node.type",
+		       PROP_NF_CMP_EQ, "file", onlysupported, 
+		       PROP_NF_MODE_EXCLUDE);
+
+
+
   decorated_browse_create(model, pnf, source);
 
   s->s_mtime = url_mtime;
