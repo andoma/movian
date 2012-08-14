@@ -475,7 +475,7 @@ static int16_t button_counter[MAX_PADS][BTN_max];
 static PadData paddata[MAX_PADS];
 
 
-#define KEY_REPEAT_DELAY 20 // in frames
+#define KEY_REPEAT_DELAY 30 // in frames
 #define KEY_REPEAT_RATE  3  // in frames
 
 static void
