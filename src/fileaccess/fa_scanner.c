@@ -791,7 +791,7 @@ fa_scanner(const char *url, time_t url_mtime,
 
   add_sort_option_type(s, model);
   add_sort_option_dirfirst(s, model);
-  decorated_browse_create(model, pnf);
+  decorated_browse_create(model, pnf, source);
 
   s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;

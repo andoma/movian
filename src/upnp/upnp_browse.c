@@ -30,7 +30,6 @@
 #include "fileaccess/fileaccess.h"
 
 
-
 /**
  * UPNP browse request
  */
@@ -47,6 +46,7 @@ typedef struct upnp_browse {
   char *ub_event_url;
 
   prop_t *ub_page;
+  prop_t *ub_model;
   prop_t *ub_nodes;
   prop_t *ub_items;
   prop_t *ub_loading;
@@ -89,7 +89,7 @@ static const char *
 item_set_str(prop_t *c, htsmsg_t *item, const char *propname, const char *id)
 {
   const char *s = htsmsg_get_str_multi(item, id, "cdata", NULL);
-  prop_set_string(prop_create(c, propname), s);
+  prop_set(c, propname, NULL, PROP_SET_STRING, s);
   return s;
 }
 
@@ -165,6 +165,11 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
 
   prop_set_string(prop_create(c, "type"), "video");
 
+  const char *title = 
+    htsmsg_get_str_multi(item,
+			 "http://purl.org/dc/elements/1.1/title",
+			 "cdata", NULL);
+
   item_set_str(m, item, "title", "http://purl.org/dc/elements/1.1/title");
 
   item_set_str(m, item, "icon",
@@ -173,6 +178,8 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
   snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
   prop_set_string(prop_create(c, "url"), url);
+
+  prop_set_string(prop_create(c, "filename"), title);
 }
 
 
@@ -479,6 +486,7 @@ ub_destroy(upnp_browse_t *ub)
   free(ub->ub_event_url);
 
   prop_ref_dec(ub->ub_page);
+  prop_ref_dec(ub->ub_model);
   prop_ref_dec(ub->ub_nodes);
   prop_ref_dec(ub->ub_items);
   prop_ref_dec(ub->ub_loading);
@@ -607,7 +615,8 @@ browse_directory(upnp_browse_t *ub)
   pnf = prop_nf_create(ub->ub_nodes, ub->ub_items, ub->ub_filter,
 		       PROP_NF_AUTODESTROY);
   prop_set_int(ub->ub_canFilter, 1);
-  prop_nf_release(pnf);
+
+  decorated_browse_create(ub->ub_model, pnf, ub->ub_items);
 
   pc = prop_courier_create_waitable();
   ub->ub_run = 1;
@@ -927,27 +936,27 @@ be_upnp_browse(prop_t *page, const char *url)
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
   ub->ub_url = strdup(url);
   ub->ub_page = prop_ref_inc(page);
+  ub->ub_source = prop_create_r(ub->ub_page, "source");
 
-  ub->ub_source = prop_ref_inc(prop_create(page, "source"));
-  ub->ub_direct_close = prop_ref_inc(prop_create(page, "directClose"));
+  ub->ub_direct_close = prop_create_r(page, "directClose");
 
-  prop_t *model = prop_create(page, "model");
+  ub->ub_model = prop_create_r(page, "model");
 
-  ub->ub_type = prop_ref_inc(prop_create(model, "type"));
+  ub->ub_type = prop_create_r(ub->ub_model, "type");
   
-  ub->ub_contents = prop_ref_inc(prop_create(model, "contents"));
-  ub->ub_error = prop_ref_inc(prop_create(model, "error"));
-  ub->ub_nodes = prop_ref_inc(prop_create(model, "nodes"));
-  ub->ub_items = prop_ref_inc(prop_create(model, "items"));
-  ub->ub_loading = prop_ref_inc(prop_create(model, "loading"));
+  ub->ub_contents = prop_create_r(ub->ub_model, "contents");
+  ub->ub_error = prop_create_r(ub->ub_model, "error");
+  ub->ub_nodes = prop_create_r(ub->ub_model, "nodes");
+  ub->ub_items = prop_create_r(ub->ub_model, "source");
+  ub->ub_loading = prop_create_r(ub->ub_model, "loading");
   prop_set_int(ub->ub_loading, 1);
 
-  ub->ub_filter = prop_ref_inc(prop_create(model, "filter"));
-  ub->ub_canFilter = prop_ref_inc(prop_create(model, "canFilter"));
+  ub->ub_filter = prop_create_r(ub->ub_model, "filter");
+  ub->ub_canFilter = prop_create_r(ub->ub_model, "canFilter");
 
-  prop_t *metadata = prop_create(model, "metadata");
+  prop_t *metadata = prop_create(ub->ub_model, "metadata");
 
-  ub->ub_title = prop_ref_inc(prop_create(metadata, "title"));
+  ub->ub_title = prop_create_r(metadata, "title");
   hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
 			     THREAD_PRIO_LOW);
   return 0;

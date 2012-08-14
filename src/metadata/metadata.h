@@ -301,7 +301,8 @@ int metadb_videoitem_set_preferred(void *db, const char *url, int64_t vid);
 
 void decoration_init(void);
 
-void decorated_browse_create(struct prop *model, struct prop_nf *pnf);
+void decorated_browse_create(struct prop *model, struct prop_nf *pnf,
+			     struct prop *items);
 
 void metadata_init(void);
 
