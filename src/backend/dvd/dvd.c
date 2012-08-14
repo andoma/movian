@@ -146,8 +146,6 @@ typedef struct dvd_player {
 
   pci_t dp_pci;
 
-  int dp_epoch;
-
   uint32_t dp_end_ptm;  /* end ptm from last nav packet */
 
   int dp_hold;
@@ -207,7 +205,6 @@ dvd_video_push(dvd_player_t *dp)
     1000000LL * av_q2d(cw->codec_ctx->time_base);
   mb->mb_pts = AV_NOPTS_VALUE;
   mb->mb_dts = AV_NOPTS_VALUE;
-  mb->mb_epoch = dp->dp_epoch;
 
   mb_enqueue_always(mp, &mp->mp_video, mb);
 }
@@ -234,7 +231,6 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   //  mb->mb_time = (dvdnav_get_current_time(dp->dp_dvdnav) * 1000000) / 90000;
-  mb->mb_epoch = dp->dp_epoch;
   
   memcpy(mb->mb_data, data, datalen);
 
@@ -673,7 +669,6 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
 
-  dp->dp_epoch = 1;
 
   dp->dp_mp = mp;
   
@@ -770,7 +765,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dvd_set_spu_stream(dp, "auto");
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
       dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
-      dp->dp_epoch++;
+      mp_bump_epoch(mp);
       dvd_update_streams(dp);
       break;
 
@@ -778,7 +773,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       pci = malloc(sizeof(pci_t));
       memcpy(pci, dvdnav_get_current_nav_pci(dp->dp_dvdnav), sizeof(pci_t));
       if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm)
-	dp->dp_epoch++; // Discontinuity
+	mp_bump_epoch(mp);
       dp->dp_end_ptm = pci->pci_gi.vobu_e_ptm;
 
       update_chapter(dp, mp);
