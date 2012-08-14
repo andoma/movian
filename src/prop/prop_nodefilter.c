@@ -1203,7 +1203,6 @@ pnp_set_enable(void *opaque, int v)
     return;
 
   pnp->pnp_enabled = !!v;
-
   if(nf == NULL)
     return;
 
@@ -1227,7 +1226,7 @@ prop_nf_pred_add(struct prop_nf *nf,
   pnp->pnp_path = strvec_split(path, '.');
   pnp->pnp_cf = cf;
   pnp->pnp_mode = mode;
-
+  pnp->pnp_nf = nf;
   LIST_INSERT_HEAD(&nf->preds, pnp, pnp_link);
 
   if(enable != NULL) {
