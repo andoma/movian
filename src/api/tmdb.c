@@ -383,7 +383,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			 (const char *[]){"query", q,
 			     "api_key", TMDB_APIKEY,
 			     NULL, NULL},
-			 FA_COMPRESSION | FA_DEBUG);
+			 FA_COMPRESSION);
 
   if(result == NULL)
     return METADATA_ERROR;
