@@ -12,7 +12,6 @@ widget(keyintercept, {
       padding: 5;
       spacing: 5;
 
-
       widget(frontdrop, {
 	source: "theme://graphics/boxart-overlay.png";
 	border: 8;
@@ -45,8 +44,6 @@ widget(keyintercept, {
       filterConstraintX: true;
       widget(list_y, {
 	id: "list";
-	  &clone.focused = focusedChild();
-
 	cloner($page.model.nodes, loader, {
 	  time: 0.1;
 	  effect: blend;
