@@ -123,16 +123,14 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_url == NULL || di->di_duration == 0)
+  if(di->di_url == NULL || di->di_duration == 0 || di->di_filename == NULL)
     return;
   
   deco_browse_t *db = di->di_db;
-  rstr_t *title = NULL;
+  rstr_t *title;
   int year = 0;
 
-  if(di->di_filename != NULL)
-    title = metadata_filename_to_title(rstr_get(di->di_filename), &year);
-
+  title = metadata_filename_to_title(rstr_get(di->di_filename), &year);
   metadata_bind_movie_info(&di->di_mlp, di->di_metadata,
 			   di->di_url, title, year,
 			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
@@ -548,7 +546,6 @@ static void
 deco_browse_add_node(deco_browse_t *db, prop_t *p, deco_item_t *before)
 {
   deco_item_t *di = calloc(1, sizeof(deco_item_t));
-
   di->di_db = db;
   di->di_root = prop_ref_inc(p);
   di->di_metadata = prop_create_r(p, "metadata");
@@ -726,6 +723,7 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
     
   case PROP_SET_DIR:
   case PROP_WANT_MORE_CHILDS:
+  case PROP_HAVE_MORE_CHILDS:
     break;
 
   case PROP_SET_VOID:
@@ -748,29 +746,22 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
-decorated_browse_create(prop_t *model, struct prop_nf *pnf)
+decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items)
 {
-  prop_t *src = prop_create(model, "source");
-
   hts_mutex_lock(&deco_mutex);
 
   deco_browse_t *db = calloc(1, sizeof(deco_browse_t));
   TAILQ_INIT(&db->db_items);
   db->db_sub = prop_subscribe(PROP_SUB_TRACK_DESTROY,
 			      PROP_TAG_CALLBACK, deco_browse_node_cb, db,
-			      PROP_TAG_ROOT, src,
+			      PROP_TAG_ROOT, items,
 			      PROP_TAG_COURIER, deco_courier,
 			      NULL);
 
-  if(db->db_sub == NULL) {
-    prop_nf_release(pnf);
-    free(db);
-  } else {
-    db->db_pnf = pnf;
-    LIST_INSERT_HEAD(&deco_browses, db, db_link);
-    db->db_prop_model = prop_ref_inc(model);
-    db->db_prop_contents = prop_ref_inc(prop_create(model, "contents"));
-  }
+  db->db_pnf = pnf;
+  LIST_INSERT_HEAD(&deco_browses, db, db_link);
+  db->db_prop_model = prop_ref_inc(model);
+  db->db_prop_contents = prop_create_r(model, "contents");
 
   hts_mutex_unlock(&deco_mutex);
 }
