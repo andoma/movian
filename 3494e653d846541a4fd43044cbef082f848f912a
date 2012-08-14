@@ -1,0 +1,3 @@
+Some people reported a regression in Showtime's
+key repeat delay on PS3. The shortened key repeat
+delay has now been reverted to the previous value
