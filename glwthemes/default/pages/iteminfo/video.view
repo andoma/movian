@@ -32,8 +32,8 @@ widget(container_y, {
 	margin: -4;
 	widget(image, {
 	  width: $ui.width / 6;
-	  source: $args.metadata.icon;
-	  hidden: select($args.metadata.icon, false, true);
+	  source: $args.metadata.icon ?? 
+	    "dataroot://resources/svg/Movie.svg";
 	});
       });
     });
@@ -62,6 +62,9 @@ widget(container_y, {
 	widget(label, {
 	  TextStyleItem();
 	  caption: '<font color="#888">' + _("Duration:") + ' </font>' + 
+	    select($args.restartpos > 0,
+		   value2duration($args.restartpos) + '  /  ',
+		   '') +
 	    value2duration($args.metadata.duration);
 	});
 
@@ -126,7 +129,23 @@ widget(container_y, {
 	    $args.metadata.producer;
 	});
 
+
+	widget(label, {
+	  align: left;
+	  caption: '<font color="#888">' + _("File date:") + ' </font>' + 
+	    strftime($args.metadata.timestamp, "%F");
+	  TextStyleItem();
+	});
+
+	widget(label, {
+	  caption: fmt(_pl('Seen %d times', "Seen %d time", $args.playcount), $args.playcount);
+	  TextStyleItem();
+	});
+
+
 	space(1);
+
+
 	
 	
 
@@ -142,6 +161,8 @@ widget(container_y, {
     maxlines: 20;
     caption: $args.metadata.description;
   });
+
+
 
   space(1);
 
