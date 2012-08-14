@@ -965,6 +965,7 @@ prop_build_notify_value(prop_sub_t *s, int direct, const char *origin,
 
   switch(p->hp_type) {
   case PROP_RSTRING:
+    assert(p->hp_rstring != NULL);
     n->hpn_rstring = rstr_dup(p->hp_rstring);
     n->hpn_rstrtype = p->hp_rstrtype;
     n->hpn_event = PROP_SET_RSTRING;
@@ -3053,6 +3054,26 @@ prop_set_int_clipping_range(prop_t *p, int min, int max)
 /**
  *
  */
+static void
+prop_set_void_exl(prop_t *p, prop_sub_t *skipme)
+{
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+
+  if(p->hp_type != PROP_VOID) {
+
+    if(prop_clean(p))
+      return;
+    
+    p->hp_type = PROP_VOID;
+    prop_notify_value(p, skipme, "prop_set_void()", 0);
+  }
+}
+
+
+/**
+ *
+ */
 void
 prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
 {
@@ -3060,26 +3081,8 @@ prop_set_void_ex(prop_t *p, prop_sub_t *skipme)
     return;
 
   hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_type != PROP_VOID) {
-
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
-      return;
-    }
- 
-  } else {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  p->hp_type = PROP_VOID;
-  prop_set_epilogue(skipme, p, "prop_set_void()");
+  prop_set_void_exl(p, skipme);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
@@ -3761,7 +3764,7 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
 {
   va_list ap;
   prop_t *c = p;
-  const char *n;
+  const char *n, *str;
 
   if(p == NULL || p->hp_type == PROP_ZOMBIE)
     return;
@@ -3787,7 +3790,11 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
   int ev = va_arg(ap, prop_event_t);
   switch(ev) {
   case PROP_SET_STRING:
-    prop_set_string_exl(p, skipme, va_arg(ap, const char *), PROP_STR_UTF8);
+    str = va_arg(ap, const char *);
+    if(str == NULL)
+      prop_set_void_exl(p, skipme);
+    else
+      prop_set_string_exl(p, skipme, str, PROP_STR_UTF8);
     break;
   case PROP_SET_INT:
     prop_set_int_exl(p, skipme, va_arg(ap, int));
