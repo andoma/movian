@@ -290,7 +290,7 @@ album_analysis(deco_browse_t *db)
 
   prop_set_string(db->db_prop_contents, "album");
 
-  prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 1);
+  prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 0);
 
   prop_t *m = prop_create_r(db->db_prop_model, "metadata");
   prop_t *p;

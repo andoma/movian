@@ -173,7 +173,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
   metadb_close(db);
 
   if(md == NULL)
-    md = fa_probe_metadata(url, errbuf, sizeof(errbuf));
+    md = fa_probe_metadata(url, errbuf, sizeof(errbuf), NULL);
 
   if(md == NULL) {
     nav_open_errorf(page, _("Unable to open file: %s"), errbuf);

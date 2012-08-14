@@ -27,9 +27,11 @@ widget(backdrop, {
       shadow: true;
       color: select(isFocused(), 1.0, 0.6);
       
-      caption: fmt("%02d", $self.metadata.track);
+      caption: select($self.metadata.track > 0,
+		      fmt("%02d", $self.metadata.track),
+		      "");
     });
-    
+
     widget(label, {
       filterConstraintX: true;
       font: $ui.font;
