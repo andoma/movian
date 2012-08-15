@@ -537,6 +537,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_update_text)(struct glw *w, const char *str);
+
+  /**
+   *
+   */
   void (*gc_set_font)(struct glw *w, rstr_t *str);
 
   /**
@@ -800,6 +805,10 @@ typedef struct glw_root {
   float *gr_vtmp_buffer;  // temporary buffer for emitting vertices
   int gr_vtmp_cur;
   int gr_vtmp_capacity;
+
+  void (*gr_open_osk)(struct glw_root *gr, 
+		      const char *title, const char *str, struct glw *w,
+		      int password);
 
 } glw_root_t;
 
