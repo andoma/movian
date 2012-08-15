@@ -499,7 +499,7 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
   
   if(pressed) {
 
-    if(pre > 200)
+    if(pre > 200 && *store > KEY_REPEAT_DELAY)
       xrep = 1;
     if(pre > 150)
       rate = 1;
