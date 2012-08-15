@@ -113,6 +113,8 @@ typedef enum {
 
   ACTION_RELOAD_DATA,
 
+  ACTION_PLAYQUEUE,
+
   ACTION_mappable_end,
 } action_type_t;
 
