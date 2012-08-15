@@ -167,6 +167,7 @@ static struct strtab actionnames[] = {
   { "SubtitleTrack",         ACTION_CYCLE_SUBTITLE },
 
   { "ReloadData",            ACTION_RELOAD_DATA },
+  { "Playqueue",             ACTION_PLAYQUEUE },
 
 };
 
@@ -469,9 +470,9 @@ event_dispatch(event_t *e)
   } else if(event_is_action(e, ACTION_NAV_BACK) ||
 	    event_is_action(e, ACTION_NAV_FWD) ||
 	    event_is_action(e, ACTION_HOME) ||
+	    event_is_action(e, ACTION_PLAYQUEUE) ||
 	    event_is_action(e, ACTION_RELOAD_DATA) ||
 	    event_is_type(e, EVENT_OPENURL)) {
-
     event_to_prop(prop_get_by_name(PNVEC("global", "nav", "eventsink"),
 				   1, NULL), e);
 
@@ -524,7 +525,7 @@ event_dispatch(event_t *e)
  */
 const static int action_from_fkey[13][2] = {
   { 0, 0 },
-  { ACTION_MENU,             0 },
+  { ACTION_MENU,             ACTION_PLAYQUEUE },
   { ACTION_SHOW_MEDIA_STATS, 0 },
   { ACTION_ITEMMENU,         0 },
   { ACTION_LOGWINDOW,        ACTION_ENABLE_SCREENSAVER },

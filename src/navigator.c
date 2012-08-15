@@ -649,6 +649,9 @@ nav_eventsink(void *opaque, prop_event_t event, ...)
   } else if(event_is_action(e, ACTION_HOME)) {
     nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
 
+  } else if(event_is_action(e, ACTION_PLAYQUEUE)) {
+    nav_open0(nav, "playqueue:", NULL, NULL, NULL, NULL);
+
   } else if(event_is_action(e, ACTION_RELOAD_DATA)) {
     nav_reload_current(nav);
 
