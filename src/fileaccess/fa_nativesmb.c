@@ -910,7 +910,7 @@ utf8_to_smb(const cifs_connection_t *cc, uint8_t *dst, const char *src)
 {
   size_t r;
   if(cc->cc_unicode)
-    r = utf8_to_ucs2(dst, src);
+    r = utf8_to_ucs2(dst, src, 1);
   else
     r = utf8_to_ascii(dst, src);
   return r;
@@ -1038,7 +1038,7 @@ smb_neg_proto(cifs_connection_t *cc, char *errbuf, size_t errlen)
   memcpy(cc->cc_challenge_key, reply->data, 8);
   len -= 8;
 
-  ucs2_to_utf8(cc->cc_domain, sizeof(cc->cc_domain), reply->data + 8, len);
+  ucs2_to_utf8(cc->cc_domain, sizeof(cc->cc_domain), reply->data + 8, len, 1);
   free(rbuf);
   return 0;
 }
@@ -2100,7 +2100,7 @@ cifs_scandir(cifs_tree_t *ct, const char *path, fa_dir_t *fd,
       data = rbuf + off;
 
       ucs2_to_utf8(fname, sizeof(fname),
-		   data->filename, htole_32(data->file_name_len));
+		   data->filename, htole_32(data->file_name_len), 1);
 
       snprintf(urlbase, urlspace, "%s", fname);
 

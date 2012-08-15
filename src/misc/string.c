@@ -1150,11 +1150,12 @@ charset_get_name(const void *p)
  *
  */
 void
-ucs2_to_utf8(uint8_t *dst, size_t dstlen, const uint8_t *src, size_t srclen)
+ucs2_to_utf8(uint8_t *dst, size_t dstlen, const uint8_t *src, size_t srclen,
+	     int le)
 {
   int c, r;
   while(dstlen > 3 && srclen >= 2) {
-    c = src[0] | src[1] << 8;
+    c = le ? (src[0] | src[1] << 8) : (src[1] | src[0] << 8);
     if(c == 0)
       break;
     src += 2;
@@ -1171,7 +1172,7 @@ ucs2_to_utf8(uint8_t *dst, size_t dstlen, const uint8_t *src, size_t srclen)
  *
  */
 size_t
-utf8_to_ucs2(uint8_t *dst, const char *src)
+utf8_to_ucs2(uint8_t *dst, const char *src, int le)
 {
   int c;
   size_t o = 0;
@@ -1180,8 +1181,13 @@ utf8_to_ucs2(uint8_t *dst, const char *src)
       return -1;
     
     if(dst != NULL) {
-      dst[o] = c;
-      dst[o+1] = c >> 8;
+      if(le) {
+	dst[o] = c;
+	dst[o+1] = c >> 8;
+      } else {
+	dst[o] = c >> 8;
+	dst[o+1] = c;
+      }
     }
     o+=2;
   }
