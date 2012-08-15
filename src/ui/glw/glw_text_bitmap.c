@@ -614,6 +614,20 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 	gtb->gtb_update_cursor = 1;
       }
       return 1;
+
+    } else if(event_is_action(e, ACTION_ACTIVATE)) {
+      if(w->glw_root->gr_open_osk != NULL) {
+	char buf[512];
+	char *q = buf;
+	int i;
+	for(i = 0; i < gtb->gtb_uc_len; i++)
+	  q += utf8_put(q, gtb->gtb_uc_buffer[i]);
+	*q = 0;
+
+	w->glw_root->gr_open_osk(w->glw_root, NULL, buf, w,
+				 gtb->gtb_flags & GTB_PASSWORD);
+	return 1;
+      }
     }
     return 0;
   }
@@ -1282,6 +1296,21 @@ mod_flags2(glw_t *w, int set, int clr)
 /**
  *
  */
+static void
+update_text(glw_t *w, const char *str)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  if(gtb->gtb_p != NULL) {
+    prop_set_string(gtb->gtb_p, str);
+  } else {
+    set_caption(w, str, 0);
+  }
+}
+
+
+/**
+ *
+ */
 static glw_class_t glw_label = {
   .gc_name = "label",
   .gc_instance_size = sizeof(glw_text_bitmap_t),
@@ -1331,6 +1360,8 @@ static glw_class_t glw_text = {
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
   .gc_set_max_lines = set_maxlines,
+  .gc_update_text = update_text,
+
 };
 
 GLW_REGISTER_CLASS(glw_text);

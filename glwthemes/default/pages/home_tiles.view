@@ -103,7 +103,8 @@ widget(container_y, {
 		$view.searchFocused = isFocused();
 		bind($view.searchQuery);
 		sizeScale: 1.5;
-		onEvent(enter, navOpen("search:" + $view.searchQuery));
+		onEvent(enter, navOpen("search:" + $view.searchQuery),
+			$view.searchQuery);
               });
 /*
 	      widget(label, {
