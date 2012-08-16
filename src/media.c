@@ -226,7 +226,6 @@ mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex, media_pipe_t *mp)
   TAILQ_INIT(&mq->mq_q);
 
   mq->mq_packets_current = 0;
-  mq->mq_packets_threshold = 5;
   mq->mq_stream = -1;
   hts_cond_init(&mq->mq_avail, mutex);
   mq->mq_prop_qlen_cur = prop_create(p, "dqlen");
@@ -807,7 +806,7 @@ event_t *
 mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   event_t *e = NULL;
-
+  
   hts_mutex_lock(&mp->mp_mutex);
 #if 0
   printf("ENQ %s %d/%d %d/%d\n", mq == &mp->mp_video ? "video" : "audio",
@@ -816,7 +815,8 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 #endif
 	 
   while((e = TAILQ_FIRST(&mp->mp_eq)) == NULL &&
-	mq->mq_packets_current > mq->mq_packets_threshold &&
+	mp->mp_video.mq_packets_current >= (mp->mp_video.mq_stream != -1 ? 5 : 0) &&
+	mp->mp_audio.mq_packets_current >= (mp->mp_audio.mq_stream != -1 ? 5 : 0) &&
 	(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit ||
 	 (mp->mp_max_realtime_delay != 0 && 
 	  mq_realtime_delay(mq) > mp->mp_max_realtime_delay)))
@@ -844,7 +844,7 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
   hts_mutex_lock(&mp->mp_mutex);
   
   if(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit &&
-     mq->mq_packets_current < mq->mq_packets_threshold) {
+     mq->mq_packets_current < 5) {
       hts_mutex_unlock(&mp->mp_mutex);
     return -1;
   }
