@@ -89,7 +89,7 @@ static inline void rstr_set(rstr_t **p, rstr_t *r)
   *p = r ? rstr_dup(r) : NULL;
 }
 
-rstr_t *rstr_spn(rstr_t *s, const char *set);
+rstr_t *rstr_spn(rstr_t *s, const char *set, int offset);
 
 static inline int rstr_eq(const rstr_t *a, const rstr_t *b)
 {
