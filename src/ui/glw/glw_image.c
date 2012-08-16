@@ -74,7 +74,7 @@ typedef struct glw_image {
   uint8_t gi_need_reload;
 
   uint8_t gi_loading_new_url;
-
+  int16_t gi_fixed_size;
 
   glw_renderer_t gi_gr;
 
@@ -1061,6 +1061,18 @@ set_size_scale(glw_t *w, float f)
   glw_set_constraints(w, siz, siz, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 }
 
+
+/**
+ * Only for icon class
+ */
+static void
+set_default_size(glw_t *w, int px)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  gi->gi_fixed_size = px;
+  glw_set_constraints(w, px, px, 0, GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
+}
+
 /**
  *
  */
@@ -1126,6 +1138,8 @@ glw_icon_flush(glw_root_t *gr)
 {
   glw_image_t *gi;
   LIST_FOREACH(gi, &gr->gr_icons, gi_link) {
+    if(gi->gi_fixed_size)
+      continue;
     float siz = gi->gi_size_scale * gr->gr_current_size;
     
     glw_set_constraints(&gi->w, siz, siz, 0,
@@ -1175,6 +1189,7 @@ static glw_class_t glw_icon = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
+  .gc_set_default_size = set_default_size,
   .gc_get_identity = get_identity,
 };
 
