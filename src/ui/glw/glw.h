@@ -592,6 +592,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_min_size)(struct glw *w, int px);
+
+  /**
+   *
+   */
   void (*gc_set_max_lines)(struct glw *w, int lines);
 
   /**
