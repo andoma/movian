@@ -42,15 +42,17 @@ typedef enum {
 #define PROP_NF_TAKE_DST_OWNERSHIP 0x1
 #define PROP_NF_AUTODESTROY        0x2
 
-void prop_nf_pred_str_add(struct prop_nf *nf,
-			  const char *path, prop_nf_cmp_t cf,
-			  const char *str, prop_t *enable,
-			  prop_nf_mode_t mode);
+int prop_nf_pred_str_add(struct prop_nf *nf,
+			 const char *path, prop_nf_cmp_t cf,
+			 const char *str, prop_t *enable,
+			 prop_nf_mode_t mode);
 
-void prop_nf_pred_int_add(struct prop_nf *nf,
-			  const char *path, prop_nf_cmp_t cf,
-			  int value, prop_t *enable,
-			  prop_nf_mode_t mode);
+int prop_nf_pred_int_add(struct prop_nf *nf,
+			 const char *path, prop_nf_cmp_t cf,
+			 int value, prop_t *enable,
+			 prop_nf_mode_t mode);
+
+void prop_nf_pred_remove(struct prop_nf *nf, int id);
 
 struct prop_nf *prop_nf_create(prop_t *dst, prop_t *src,
 			       prop_t *filter, int flags);
@@ -63,5 +65,6 @@ struct prop_nf *prop_nf_retain(struct prop_nf *nf)
 void prop_nf_sort(struct prop_nf *nf, const char *path, int desc,
 		  unsigned int idx, const prop_nf_sort_strmap_t *map,
 		  int hide_on_missing);
+
 
 #endif // PROP_NODEFILTER_H__
