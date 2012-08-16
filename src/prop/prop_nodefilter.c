@@ -105,9 +105,10 @@ typedef struct prop_nf_pred {
   prop_nf_cmp_t pnp_cf;
   prop_nf_mode_t pnp_mode;
   prop_sub_t *pnp_enable_sub;
+  int pnp_id;
 
   char pnp_enabled;
-
+  
   char *pnp_str;
   int pnp_int;
 
@@ -122,6 +123,8 @@ typedef struct prop_nf {
 
   int pnf_refcount;
   int flags;
+
+  int pred_tally;
 
   int nodecount;
   prop_t *src;
@@ -888,19 +891,26 @@ nf_find_node(prop_nf_t *nf, prop_t *node)
  *
  */
 static void
+nf_destroy_pred(struct prop_nf_pred *pnp)
+{
+  LIST_REMOVE(pnp, pnp_link);
+  strvec_free(pnp->pnp_path);
+  if(pnp->pnp_enable_sub != NULL)
+    prop_unsubscribe0(pnp->pnp_enable_sub);
+  free(pnp->pnp_str);
+  free(pnp);
+}
+
+/**
+ *
+ */
+static void
 nf_destroy_preds(prop_nf_t *nf)
 {
   struct prop_nf_pred *pnp;
 
-  while((pnp = LIST_FIRST(&nf->preds)) != NULL) {
-    LIST_REMOVE(pnp, pnp_link);
-
-    strvec_free(pnp->pnp_path);
-    if(pnp->pnp_enable_sub != NULL)
-      prop_unsubscribe0(pnp->pnp_enable_sub);
-    free(pnp->pnp_str);
-    free(pnp);
-  }
+  while((pnp = LIST_FIRST(&nf->preds)) != NULL)
+    nf_destroy_pred(pnp);
 }
 
 
@@ -1214,7 +1224,7 @@ pnp_set_enable(void *opaque, int v)
 /**
  *
  */
-static void
+static int
 prop_nf_pred_add(struct prop_nf *nf,
 		 const char *path, prop_nf_cmp_t cf,
 		 prop_t *enable,
@@ -1223,6 +1233,7 @@ prop_nf_pred_add(struct prop_nf *nf,
 {
   nfnode_t *nfn;
 
+  pnp->pnp_id = ++nf->pred_tally;
   pnp->pnp_path = strvec_split(path, '.');
   pnp->pnp_cf = cf;
   pnp->pnp_mode = mode;
@@ -1241,13 +1252,14 @@ prop_nf_pred_add(struct prop_nf *nf,
 
   TAILQ_FOREACH(nfn, &nf->in, in_link)
     nfn_insert_pred(nf, nfn, pnp);
+  return pnp->pnp_id;
 }
 
 
 /**
  *
  */
-void
+int
 prop_nf_pred_str_add(struct prop_nf *nf,
 		     const char *path, prop_nf_cmp_t cf,
 		     const char *str, prop_t *enable,
@@ -1256,15 +1268,16 @@ prop_nf_pred_str_add(struct prop_nf *nf,
   struct prop_nf_pred *pnp = calloc(1, sizeof(struct prop_nf_pred));
   pnp->pnp_str = strdup(str);
   hts_mutex_lock(&prop_mutex);
-  prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
+  int id = prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
   hts_mutex_unlock(&prop_mutex);
+  return id;
 }
 
 
 /**
  *
  */
-void
+int
 prop_nf_pred_int_add(struct prop_nf *nf,
 		     const char *path, prop_nf_cmp_t cf,
 		     int value, prop_t *enable,
@@ -1273,7 +1286,44 @@ prop_nf_pred_int_add(struct prop_nf *nf,
   struct prop_nf_pred *pnp = calloc(1, sizeof(struct prop_nf_pred));
   pnp->pnp_int = value;
   hts_mutex_lock(&prop_mutex);
-  prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
+  int id = prop_nf_pred_add(nf, path, cf, enable, mode, pnp);
+  hts_mutex_unlock(&prop_mutex);
+  return id;
+}
+
+
+/**
+ *
+ */
+void
+prop_nf_pred_remove(struct prop_nf *nf, int id)
+{
+  nfnode_t *nfn;
+  prop_nf_pred_t *pnp;
+  nfn_pred_t *nfnp;
+
+  if(id == 0)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+  LIST_FOREACH(pnp, &nf->preds, pnp_link)
+    if(pnp->pnp_id == id)
+      break;
+
+  if(pnp != NULL) {
+    TAILQ_FOREACH(nfn, &nf->in, in_link) {
+
+      LIST_FOREACH(nfnp, &nfn->preds, nfnp_link)
+	if(nfnp->nfnp_conf == pnp)
+	  break;
+
+      assert(nfnp != NULL);
+      nfnp_destroy(nfnp);
+      nf_update_egress(nf, nfn);
+    }
+    nf_destroy_pred(pnp);
+  }
+
   hts_mutex_unlock(&prop_mutex);
 }
 
