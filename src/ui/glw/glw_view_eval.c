@@ -4858,11 +4858,12 @@ glwf_join(glw_view_eval_context_t *ec, struct token *self,
   for(i = 1; i < argc; i++)  {
     if((t = token_resolve(ec, argv[i])) == NULL)
       continue;
-    if(t->type != TOKEN_RSTRING)
+    const char *x = token_as_string(t);
+    if(x == NULL)
       continue;
     if(s != NULL)
       strappend(&ret, s);
-    strappend(&ret, rstr_get(t->t_rstring));
+    strappend(&ret, x);
     if(s == NULL)
       s = rstr_get(sep->t_rstring);
   }
