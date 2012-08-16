@@ -5068,7 +5068,7 @@ multiopt_item_destroy(glwf_multiopt_extra_t *x, multiopt_item_t *mi)
     if(x->cur == NULL)
       x->cur = TAILQ_FIRST(&x->q);
     if(x->cur != NULL && x->cur->mi_item)
-      prop_select(x->cur->mi_item);
+      prop_select_ex(x->cur->mi_item, NULL, x->setting_sub);
   }
 
   TAILQ_REMOVE(&x->q, mi, mi_link);
