@@ -82,6 +82,8 @@ static char *make_nice_title(const char *t);
 })
 
 
+const static AVRational mpeg_tc = {1, 90000};
+
 
 static void *
 dvd_fa_open(const char *url)
@@ -155,6 +157,8 @@ typedef struct dvd_player {
 
   int dp_vwidth;
   int dp_vheight;
+
+  int64_t dp_time_pts_delta;
 
 } dvd_player_t;
 
@@ -230,8 +234,19 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
   mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
-  //  mb->mb_time = (dvdnav_get_current_time(dp->dp_dvdnav) * 1000000) / 90000;
+
   
+  if(pts != AV_NOPTS_VALUE && data_type == MB_VIDEO) {
+    if(dp->dp_time_pts_delta == AV_NOPTS_VALUE) {
+      int64_t t = av_rescale_q(dvdnav_get_current_time(dp->dp_dvdnav),
+			       mpeg_tc, AV_TIME_BASE_Q);
+      dp->dp_time_pts_delta = pts - t;
+    }
+    mb->mb_time = pts - dp->dp_time_pts_delta;
+  } else {
+    mb->mb_time = AV_NOPTS_VALUE;
+  }
+
   memcpy(mb->mb_data, data, datalen);
 
   do {
@@ -268,7 +283,6 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   media_codec_t *cw, **cwp;
   AVCodecContext *ctx;
   enum CodecID codec_id;
-  AVRational mpeg_tc = {1, 90000};
   event_t *e;
   media_codec_params_t mcp = {0};
 
@@ -634,11 +648,32 @@ update_chapter(dvd_player_t *dp, media_pipe_t *mp)
   dvdnav_current_title_info(dp->dp_dvdnav, &title, &part);
   dvdnav_get_number_of_parts(dp->dp_dvdnav, title, &parts);
 
-  prop_set_int(prop_create(mp->mp_prop_root, "currenttitle"), title);
-  prop_set_int(prop_create(mp->mp_prop_metadata, "titles"), titles);
+  prop_set(mp->mp_prop_root, "currenttitle", NULL, PROP_SET_INT, title);
+  prop_set(mp->mp_prop_metadata, "titles", NULL, PROP_SET_INT, titles);
 
-  prop_set_int(prop_create(mp->mp_prop_root, "currentchapter"), part);
-  prop_set_int(prop_create(mp->mp_prop_metadata, "chapters"), parts);
+  prop_set(mp->mp_prop_root, "currentchapter", NULL, PROP_SET_INT, part);
+  prop_set(mp->mp_prop_metadata, "chapters", NULL, PROP_SET_INT, parts);
+}
+
+/**
+ *
+ */
+static void
+update_duration(dvd_player_t *dp, media_pipe_t *mp)
+{
+  uint64_t totdur;
+  uint64_t *times;
+  int title = 0, part = 0;
+  dvdnav_current_title_info(dp->dp_dvdnav, &title, &part);
+
+  if(dvdnav_describe_title_chapters(dp->dp_dvdnav, title, &times, &totdur)) {
+    totdur = av_rescale_q(totdur, mpeg_tc, AV_TIME_BASE_Q);
+    prop_set(mp->mp_prop_metadata, "duration", NULL, PROP_SET_INT,
+	     totdur / 1000000LL);
+    free(times);
+  } else {
+    prop_set_void(prop_create(mp->mp_prop_metadata, "duration"));
+  }
 }
 
 
@@ -669,9 +704,9 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
  restart:
   dp = calloc(1, sizeof(dvd_player_t));
 
-
   dp->dp_mp = mp;
-  
+  dp->dp_time_pts_delta = AV_NOPTS_VALUE;
+
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 0;
 
@@ -766,14 +801,18 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       dp->dp_aspect_override = dvdnav_get_video_aspect(dp->dp_dvdnav) ? 2 : 1;
       dvdnav_get_video_res(dp->dp_dvdnav, &dp->dp_vwidth, &dp->dp_vheight);
       mp_bump_epoch(mp);
+      dp->dp_time_pts_delta = AV_NOPTS_VALUE;
       dvd_update_streams(dp);
+      update_duration(dp, mp);
       break;
 
     case DVDNAV_NAV_PACKET:
       pci = malloc(sizeof(pci_t));
       memcpy(pci, dvdnav_get_current_nav_pci(dp->dp_dvdnav), sizeof(pci_t));
-      if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm)
+      if(dp->dp_end_ptm != pci->pci_gi.vobu_s_ptm) {
+	dp->dp_time_pts_delta = AV_NOPTS_VALUE;
 	mp_bump_epoch(mp);
+      }
       dp->dp_end_ptm = pci->pci_gi.vobu_e_ptm;
 
       update_chapter(dp, mp);
@@ -909,14 +948,13 @@ dvd_process_event(dvd_player_t *dp, event_t *e)
     dvdnav_button_select_and_activate(dp->dp_dvdnav, pci, e->e_payload[0]);
 
   } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
-
-    dvdnav_prev_pg_search(dp->dp_dvdnav);
+    
     mp_flush(mp, 1);
+    dvdnav_prev_pg_search(dp->dp_dvdnav);
 
   } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
-
-    dvdnav_next_pg_search(dp->dp_dvdnav);
     mp_flush(mp, 1);
+    dvdnav_next_pg_search(dp->dp_dvdnav);
 
   } else if(event_is_action(e, ACTION_STOP)) {
     mp_set_playstatus_stop(mp);
