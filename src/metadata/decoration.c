@@ -57,9 +57,17 @@ typedef struct deco_browse {
   rstr_t *db_imdb_id;
 
   int db_pending_flags;
-#define DB_PENDING_ALBUM_ANALYSIS 0x1
+#define DB_PENDING_DEFERRED_ANALYSIS 0x1
 
   struct prop_nf *db_pnf;
+
+  int db_audio_filter;
+
+  int db_contents_mask;
+#define DB_CONTENTS_IMAGES 0x1
+#define DB_CONTENTS_ALBUM  0x2
+
+  int db_current_contents;
 
 } deco_browse_t;
 
@@ -194,13 +202,58 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
  *
  */
 static void
-type_analysis(deco_browse_t *db)
+update_contents(deco_browse_t *db)
 {
-  if(db->db_types[CONTENT_IMAGE] * 4 > db->db_total * 3) {
+  if(!(db->db_contents_mask & DB_CONTENTS_ALBUM)) {
+    prop_nf_pred_remove(db->db_pnf, db->db_audio_filter);
+    db->db_audio_filter = 0;
+  }
+
+
+  if(db->db_contents_mask & DB_CONTENTS_IMAGES) {
+    if(db->db_current_contents == DB_CONTENTS_IMAGES)
+      return;
+    db->db_current_contents = DB_CONTENTS_IMAGES;
     prop_set_string(db->db_prop_contents, "images");
     prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0, 1, NULL, 0);
     return;
   }
+
+  if(db->db_contents_mask & DB_CONTENTS_ALBUM) {
+    if(db->db_current_contents == DB_CONTENTS_ALBUM)
+      return;
+    db->db_current_contents = DB_CONTENTS_ALBUM;
+
+    prop_set_string(db->db_prop_contents, "album");
+    prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 0);
+
+    if(!db->db_audio_filter)
+      db->db_audio_filter = 
+	prop_nf_pred_str_add(db->db_pnf, "node.type", 
+			     PROP_NF_CMP_NEQ, "audio", NULL,
+			     PROP_NF_MODE_EXCLUDE);
+    return;
+  }
+
+  db->db_current_contents = 0;
+  prop_set_void(db->db_prop_contents);
+  prop_nf_sort(db->db_pnf, NULL, 0, 0, NULL, 0);
+}
+
+
+/**
+ *
+ */
+static void
+type_analysis(deco_browse_t *db)
+{
+  if(db->db_types[CONTENT_IMAGE] * 4 > db->db_total * 3) {
+    db->db_contents_mask |= DB_CONTENTS_IMAGES;
+  } else {
+    db->db_contents_mask &= ~DB_CONTENTS_IMAGES;
+  }
+
+  update_contents(db);
 }
 
 
@@ -240,16 +293,16 @@ album_analysis(deco_browse_t *db)
   int artist_count = 0;
   int item_count = 0;
 
-  db->db_pending_flags &= ~DB_PENDING_ALBUM_ANALYSIS;
 
   LIST_INIT(&artists);
+  db->db_contents_mask &= ~DB_CONTENTS_ALBUM;
 
   if(!(db->db_types[CONTENT_AUDIO] > 1 && 
        db->db_types[CONTENT_VIDEO] == 0 &&
        db->db_types[CONTENT_ARCHIVE] == 0 &&
        db->db_types[CONTENT_DIR] == 0 &&
        db->db_types[CONTENT_ALBUM] == 0 &&
-       db->db_types[CONTENT_PLUGIN] == 0)) 
+       db->db_types[CONTENT_PLUGIN] == 0))
     return;
 
   TAILQ_FOREACH(di, &db->db_items, di_link) {
@@ -286,9 +339,7 @@ album_analysis(deco_browse_t *db)
     LIST_INSERT_HEAD(&artists, da, da_link);
   }
 
-  prop_set_string(db->db_prop_contents, "album");
-
-  prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 0);
+  db->db_contents_mask |= DB_CONTENTS_ALBUM;
 
   prop_t *m = prop_create_r(db->db_prop_model, "metadata");
   prop_t *p;
@@ -428,7 +479,7 @@ static void
 di_set_album(deco_item_t *di, rstr_t *str)
 {
   rstr_set(&di->di_album, str);
-  di->di_db->db_pending_flags |= DB_PENDING_ALBUM_ANALYSIS;
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_ANALYSIS;
   deco_pendings = 1;
 }
 
@@ -440,7 +491,7 @@ static void
 di_set_artist(deco_item_t *di, rstr_t *str)
 {
   rstr_set(&di->di_artist, str);
-  di->di_db->db_pending_flags |= DB_PENDING_ALBUM_ANALYSIS;
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_ANALYSIS;
   deco_pendings = 1;
 }
 
@@ -647,6 +698,8 @@ static void
 deco_browse_del_node(deco_browse_t *db, deco_item_t *di)
 {
   deco_item_destroy(db, di);
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_ANALYSIS;
+  deco_pendings = 1;
 }
 
 
@@ -795,8 +848,10 @@ deco_thread(void *aux)
       deco_browse_t *db;
 
       LIST_FOREACH(db, &deco_browses, db_link) {
-	if(db->db_pending_flags & DB_PENDING_ALBUM_ANALYSIS)
+	if(db->db_pending_flags & DB_PENDING_DEFERRED_ANALYSIS) {
 	  album_analysis(db);
+	  update_contents(db);
+	}
 	db->db_pending_flags = 0;
       }
     }
