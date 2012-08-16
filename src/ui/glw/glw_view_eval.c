@@ -4633,7 +4633,7 @@ glwf_getWidth(glw_view_eval_context_t *ec, struct token *self,
 
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
 
-  if(w->glw_flags & GLW_CONSTRAINT_X) {
+  if(w->glw_flags & GLW_CONSTRAINT_CONF_X) {
     r = eval_alloc(self, ec, TOKEN_INT);
     r->t_int = w->glw_req_size_x;
   } else if(ec->rc == NULL) {
@@ -4659,7 +4659,7 @@ glwf_getHeight(glw_view_eval_context_t *ec, struct token *self,
 
   ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_EVERY_FRAME;
 
-  if(w->glw_flags & GLW_CONSTRAINT_X) {
+  if(w->glw_flags & GLW_CONSTRAINT_CONF_Y) {
     r = eval_alloc(self, ec, TOKEN_INT);
     r->t_int = w->glw_req_size_y;
   } else if(ec->rc == NULL) {
