@@ -778,6 +778,9 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
   token_t *b = eval_pop(ec), *a = eval_pop(ec);
   int r = 0;
 
+  if(a == NULL || b == NULL)
+    return glw_view_seterr(ec->ei, self, "Invalid assignment");
+
   /* Catch some special cases here */
   if(b->type == TOKEN_PROPERTY_VALUE_NAME && 
      !strcmp(rstr_get(b->t_rstring), "event")) {
