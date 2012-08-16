@@ -602,7 +602,7 @@ metadata_bind_artistpics(prop_t *prop, rstr_t *artist)
 {
   metadata_lazy_prop_t *mlp = mlp_alloc(1);
   prop_t *p = prop_ref_inc(prop);
-  mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
+  mlp->mlp_artist = rstr_spn(artist, ";:,-[", 1);
   mlp_setup(mlp, &p, mlp_get_artist, 0);
 }
 
@@ -615,8 +615,8 @@ metadata_bind_albumart(prop_t *prop, rstr_t *artist, rstr_t *album)
 {
   metadata_lazy_prop_t *mlp = mlp_alloc(1);
   prop_t *p = prop_ref_inc(prop);
-  mlp->mlp_artist = rstr_spn(artist, ";:,-[]");
-  mlp->mlp_album  = rstr_spn(album, "[]()");
+  mlp->mlp_artist = rstr_spn(artist, ";:,-[", 1);
+  mlp->mlp_album  = rstr_spn(album, "[(", 1);
   mlp_setup(mlp, &p, mlp_get_album, 0);
 }
 
@@ -751,6 +751,9 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
     if(md->md_year)
       prop_set_int(mlp->mlp_props[MOVIE_PROP_YEAR].p,
 		   md->md_year);
+    else
+      prop_set_void(mlp->mlp_props[MOVIE_PROP_YEAR].p);
+      
     if(md->md_rating != -1)
       prop_set_int(mlp->mlp_props[MOVIE_PROP_RATING].p,
 		   md->md_rating);
@@ -772,10 +775,15 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
 
     int i;
     for(i = 0; i < mlp->mlp_num_props; i++)
-      if(i != MOVIE_PROP_TITLE)
+      if(i != MOVIE_PROP_TITLE && i != MOVIE_PROP_YEAR)
 	prop_set_void(mlp->mlp_props[i].p);
 
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, mlp->mlp_title);
+
+    if(mlp->mlp_year)
+      prop_set_int(mlp->mlp_props[MOVIE_PROP_YEAR].p, mlp->mlp_year);
+    else
+      prop_set_void(mlp->mlp_props[MOVIE_PROP_YEAR].p);
 
     prop_set_void(mlp->mlp_source);
     mlp->mlp_dsid = 0;
@@ -1062,7 +1070,7 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   props[MOVIE_PROP_PRODUCER]     = prop_create_r(prop, "producer");
 
   mlp->mlp_refcount = 1;
-  mlp->mlp_title = rstr_spn(title, "[]()");
+  mlp->mlp_title = rstr_spn(title, "[(", 1);
   mlp->mlp_url = rstr_dup(url);
   mlp->mlp_year = year;
   mlp->mlp_duration = duration;
@@ -1199,6 +1207,9 @@ metadata_filename_to_title(const char *filename, int *yearp)
     i++;
   }
  
+  if(*yearp < 1900)
+    *yearp = 0;
+
   return rstr_alloc(s);
 }
 

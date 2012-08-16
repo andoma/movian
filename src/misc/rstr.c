@@ -60,10 +60,12 @@ rstr_allocl(const char *in, size_t len)
 }
 
 rstr_t *
-rstr_spn(rstr_t *s, const char *set)
+rstr_spn(rstr_t *s, const char *set, int offset)
 {
   size_t len = strlen(rstr_get(s));
-  size_t l = strcspn(rstr_get(s), set);
+  if(len >= offset)
+    return rstr_dup(s);
+  size_t l = strcspn(rstr_get(s) + offset, set) + offset;
   if(l == len)
     return rstr_dup(s);
   return rstr_allocl(rstr_get(s), l);
