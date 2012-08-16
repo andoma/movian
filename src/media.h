@@ -157,8 +157,6 @@ typedef struct media_queue {
   struct media_buf_queue mq_q;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
-  unsigned int mq_packets_threshold;  /* If we are below this threshold
-					 the queue is always granted enqueues */
 
   int mq_stream;             /* Stream id, or -1 if queue is inactive */
   int mq_stream2;            /* Complementary stream */
