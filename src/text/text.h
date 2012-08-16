@@ -82,7 +82,7 @@ struct pixmap *
 text_render(const uint32_t *uc, int len, int flags, int default_size,
 	    float scale, int alignment,
 	    int max_width, int max_lines, const char *font_family,
-	    int font_domain);
+	    int font_domain, int min_size);
 
 
 #if ENABLE_LIBFREETYPE

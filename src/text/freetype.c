@@ -871,7 +871,7 @@ static struct pixmap *
 text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
-	     const char *family, int context)
+	     const char *family, int context, int min_size)
 {
   const int default_family_id = family_get(family ?: "Sans", context);
   int family_id = default_family_id;
@@ -907,6 +907,11 @@ text_render0(const uint32_t *uc, const int len,
 
   int need_shadow_pass = 0;
   int need_outline_pass = 0;
+
+  if(min_size > 0 && current_size < min_size) {
+    scale = (float)min_size / current_size;
+    current_size = default_size * scale;
+  }
 
   if(current_size < 3 || scale < 0.001)
     return NULL;
@@ -1357,14 +1362,14 @@ text_render0(const uint32_t *uc, const int len,
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
-	    const char *family, int context)
+	    const char *family, int context, int min_size)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
   pm = text_render0(uc, len, flags, default_size, scale, alignment, 
-		    max_width, max_lines, family, context);
+		    max_width, max_lines, family, context, min_size);
   while(num_glyphs > 512)
     glyph_flush_one();
 

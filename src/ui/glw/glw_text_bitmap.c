@@ -91,6 +91,7 @@ typedef struct glw_text_bitmap {
   int16_t gtb_uc_size;
   int16_t gtb_maxlines;
   int16_t gtb_default_size;
+  int16_t gtb_min_size;
 
   uint32_t *gtb_uc_buffer; /* unicode buffer */
   float gtb_cursor_alpha;
@@ -992,6 +993,22 @@ set_default_size(glw_t *w, int px)
  *
  */
 static void
+set_min_size(glw_t *w, int px)
+{
+  glw_text_bitmap_t *gtb = (void *)w;
+
+  if(gtb->gtb_min_size == px)
+    return;
+
+  gtb->gtb_min_size = px;
+  gtb_update_epilogue(gtb, GTB_UPDATE_REALIZE);
+}
+
+
+/**
+ *
+ */
+static void
 set_maxlines(glw_t *w, int v)
 {
   glw_text_bitmap_t *gtb = (void *)w;
@@ -1009,7 +1026,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 {
   uint32_t *uc, len, i;
   pixmap_t *pm;
-  int max_width, max_lines, flags, default_size, tr_align;
+  int max_width, max_lines, flags, default_size, tr_align, min_size;
   float scale;
   rstr_t *font;
 
@@ -1039,6 +1056,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   default_size = gtb->gtb_default_size ?: gr->gr_current_size;
   scale = gtb->gtb_size_scale;
+  min_size = gtb->gtb_min_size;
 
   flags = 0;
 
@@ -1110,7 +1128,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   if(uc != NULL && uc[0] != 0) {
     pm = text_render(uc, len, flags, default_size, scale,
 		     tr_align, max_width, max_lines, rstr_get(font),
-		     gr->gr_font_domain);
+		     gr->gr_font_domain, min_size);
   } else {
     pm = NULL;
   }
@@ -1331,6 +1349,7 @@ static glw_class_t glw_label = {
   .gc_thaw = thaw,
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
+  .gc_set_min_size = set_min_size,
   .gc_set_max_lines = set_maxlines,
 };
 
@@ -1359,6 +1378,7 @@ static glw_class_t glw_text = {
   .gc_thaw = thaw,
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
+  .gc_set_min_size = set_min_size,
   .gc_set_max_lines = set_maxlines,
   .gc_update_text = update_text,
 

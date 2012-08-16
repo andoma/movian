@@ -254,6 +254,17 @@ set_size(glw_t *w, float v)
 }
 
 
+/**
+ *
+ */
+static void
+set_min_size(glw_t *w, float v)
+{
+  if(w->glw_class->gc_set_min_size != NULL)
+    w->glw_class->gc_set_min_size(w, v);
+}
+
+
 
 /**
  *
@@ -940,6 +951,7 @@ static const token_attrib_t attribtab[] = {
   {"value",           set_float,  GLW_ATTRIB_VALUE},
   {"sizeScale",       set_float,  0, set_size_scale},
   {"size",            set_float,  0, set_size},
+  {"minSize",         set_float,  0, set_min_size},
   {"focusable",       set_float,  0, glw_set_focus_weight},
   {"childAspect",     set_float,  GLW_ATTRIB_CHILD_ASPECT},
   {"center",          set_float,  GLW_ATTRIB_CENTER},
