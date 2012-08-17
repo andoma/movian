@@ -525,7 +525,7 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
   current_stream_idx = playlist_stream_cnt = 0;
   n = http_request(url0, NULL, 
 		  &result, &ressize, errbuf, errlen, 
-		   NULL, NULL, 0, &sc->sc_headers, NULL, NULL,
+		   NULL, NULL, FA_DONOTREUSE, &sc->sc_headers, NULL, NULL,
 		  NULL, NULL, NULL);
 
   if(n) {
