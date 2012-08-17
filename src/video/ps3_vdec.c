@@ -270,8 +270,10 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
     vd->vd_nextpts = vp->fi.fi_pts + vp->fi.fi_duration;
 
 #if VDEC_DETAILED_DEBUG
-  TRACE(TRACE_DEBUG, "VDEC DPY", "Displaying 0x%llx (%lld)", vp->order,
-	vp->fi.pts);
+  static int64_t lastpts;
+  TRACE(TRACE_DEBUG, "VDEC DPY", "Displaying 0x%llx (%lld) d:%lld dur=%d", vp->order,
+	vp->fi.fi_pts, vp->fi.fi_pts - lastpts, vp->fi.fi_duration);
+  lastpts = vp->fi.fi_pts;
 #endif
 
   video_deliver_frame(vd, FRAME_BUFFER_TYPE_RSX_MEMORY, &vp->rvf,
@@ -365,6 +367,16 @@ picture_out(vdec_decoder_t *vdd)
     snprintf(metainfo, sizeof(metainfo),
 	     "MPEG2 %dx%d%c (Cell)",
 	     mpeg2->width, mpeg2->height, vp->fi.fi_interlaced ? 'i' : 'p');
+
+    if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
+       mpeg2->picture_coding_type[0] == 3)
+      pts = dts;
+
+#if VDEC_DETAILED_DEBUG
+    TRACE(TRACE_DEBUG, "VDEC DEC", "%ld %d",
+	  pts,
+	  mpeg2->picture_coding_type[0]);
+#endif
 
     order = vdd->order_base;
     vdd->order_base++;
