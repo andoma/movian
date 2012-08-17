@@ -16,7 +16,7 @@
 
 
 
-$ui.showplaydeck = $clone.pageMenu || changed($self.media.seektime, 5);
+$ui.showplaydeck = $self.media.stats || changed($self.media.seektime, 5);
 
 $clone.menu = "theme://cmdmenu/cmdmenu_video.view";
 

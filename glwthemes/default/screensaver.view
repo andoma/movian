@@ -9,8 +9,8 @@ widget(container_z, {
   
   widget(displacement, {
     translation: [0, sinewave(10) * 0.3, 0];
+    hidden: select($global.media.current.type, true, false);
     widget(label, {
-      hidden: select($global.media.current.type, true, false);
       caption: _("No media loaded");
       align: center;
       sizeScale: 3;

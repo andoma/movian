@@ -1,52 +1,36 @@
 
-widget(backdrop, {
-  source: "playback-bar.png";
+widget(container_z, {
+  height: $ui.size * 2;
+  widget(quad, {
+    color: 0;
+    alpha: 0.95;
+  });
+  widget(frontdrop, {
+    source: "thickbar.png";
+    additive: true;
+    alpha: 0.8;
+    border: [1,2,1,1];
 
-  widget(container_z, {
-    height: $ui.size + 11*2;
-    widget(clip, {
-      clipping: [0, 0, 1 - ($global.media.current.currenttime / $global.media.current.metadata.duration), 0];
-      
-      widget(backdrop, {
-	source: "playback-bar-overlay.png";
-      });
-    });
-    
     widget(container_x, {
-      padding: [0,5];
-      widget(backdrop, {
-	width: $ui.width / 6;
-	source: "bar-overlay-left.png";
-	border: [6,6,32,0];
-	padding: [0,-6,0,0];
-	leftBorder: false;
-	
+
+      padding: [$ui.size,0,0,0];
+      spacing: $ui.size / 2;
+
+      widget(container_y, {
+	filterConstraintX: true;
+	align: center;
 	widget(label, {
-	  padding: [$ui.size/2, 0,0,0];
-	  font: $ui.font;
+	  caption: $global.media.current.metadata.title;
+
+	  sizeScale: 0.8;
+	  minSize: 14;
 	  shadow: true;
 	  outline: true;
-	  caption: value2duration($global.media.current.currenttime);
-	});	    
+	});
       });
 
-      space(1);
-      
-      widget(backdrop, {
-	width: $ui.width / 6;
-	source: "bar-overlay-right.png";
-	border: [32,6,0,0];
-	padding: [0,-6,0,0];
-	widget(label, {
-	  align: right;
-	  padding: [0,0,$ui.size/2,0];
-	  font: $ui.font;
-	  shadow: true;
-	  outline: true;
-	  caption: value2duration($global.media.current.metadata.duration);
-	});	    
-      });
-      
+      #import "bar.view"
     });
   });
 });
+

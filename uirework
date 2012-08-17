@@ -1,5 +1,6 @@
 
 * Fix all the playdecks and OSD during video playback
+* Log memory usage
 * Auto-upgrade of Showtime
 * Metadata priority order
 * Fix list focus when destroying item via context menu
