@@ -1,0 +1,48 @@
+
+widget(container_z, {
+  height: $ui.size * 2;
+  widget(quad, {
+    color: 0;
+    alpha: 0.95;
+  });
+  widget(frontdrop, {
+    source: "thickbar.png";
+    additive: true;
+    alpha: 0.8;
+    border: [1,2,1,1];
+
+    widget(container_x, {
+
+      padding: [$ui.size,0,0,0];
+      spacing: $ui.size / 2;
+
+      widget(label, {
+	filterConstraintX: true;
+	caption: $global.media.current.metadata.title;
+	sizeScale: 0.8;
+	minSize: 14;
+	shadow: true;
+	outline: true;
+      });
+
+      widget(label, {
+	hidden: !$global.media.current.currenttitle;
+	size: 14;
+	caption: fmt(_("Title: %d"), $global.media.current.currenttitle);
+	shadow: true;
+	outline: true;
+      });
+
+      widget(label, {
+	hidden: !$global.media.current.currentchapter;
+	size: 14;
+	caption: fmt(_("Chapter: %d"), $global.media.current.currentchapter);
+	shadow: true;
+	outline: true;
+      });
+
+      #import "bar.view"
+    });
+  });
+});
+

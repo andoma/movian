@@ -1,67 +1,48 @@
 $ui.showplaydeck = true;
 
 
+widget(container_z, {
+  height: $ui.size * 2;
+  widget(quad, {
+    color: 0;
+    alpha: 0.5;
+  });
+  widget(frontdrop, {
+    source: "thickbar.png";
+    additive: true;
+    alpha: 0.8;
+    border: [1,2,1,1];
 
-
-widget(backdrop, {
-  source: "playback-bar.png";
-
-  widget(container_z, {
-    height: $ui.size + 6 + 3*2;
-    widget(clip, {
-      clipping: [0, 0, 1 - ($global.media.current.currenttime / $global.media.current.metadata.duration), 0];
-      
-      widget(backdrop, {
-	source: "playback-bar-overlay.png";
-      });
-    });
-    
     widget(container_x, {
-      padding: [0,3];
-      widget(backdrop, {
-	width: $ui.width / 6;
-	source: "bar-overlay-left.png";
-	border: [6,6,32,0];
-	padding: [0,-6,0,0];
-	leftBorder: false;
-	
-	widget(label, {
-	  padding: [$ui.size/2, 0,0,0];
-	  font: $ui.font;
-	  shadow: true;
-	  outline: true;
-	  caption: value2duration($global.media.current.currenttime);
-	});	    
-      });
 
-      space(1);
+      padding: [$ui.size,0,0,0];
+      spacing: $ui.size / 2;
 
-      widget(label, {
+      widget(container_y, {
 	align: center;
-	caption: $global.media.current.metadata.title;
-	shadow: true;
-	outline: true;
-	font: $ui.font;
+	widget(icon, {
+	  size: $ui.size * 2 - 10;
+	  aspectConstraint: true;
+	  source: $global.media.current.metadata.album_art ??
+	    "dataroot://resources/svg/Disc.svg";
+	});
       });
-
-      space(1);
-      
-      
-      widget(backdrop, {
-	width: $ui.width / 6;
-	source: "bar-overlay-right.png";
-	border: [32,6,0,0];
-	padding: [0,-6,0,0];
+      widget(container_y, {
+	filterConstraintX: true;
+	align: center;
 	widget(label, {
-	  align: right;
-	  padding: [0,0,$ui.size/2,0];
-	  font: $ui.font;
+	  caption: join(" • ",
+			$global.media.current.metadata.artist,
+			$global.media.current.metadata.title);
+
+	  sizeScale: 0.8;
+	  minSize: 14;
 	  shadow: true;
 	  outline: true;
-	  caption: value2duration($global.media.current.metadata.duration);
-	});	    
+	});
       });
-      
+
+      #import "bar.view"
     });
   });
 });

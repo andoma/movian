@@ -82,9 +82,9 @@ widget(container_z, {
 	widget(expander_y, {
 
 	  $ui.playdeckheight = getHeight();
-	  expansion: scurve($ui.showplaydeck && $global.media.current.type, 0.3);
+	  expansion: scurve($ui.showplaydeck && $global.media.current.type, 0.1);
 	  widget(loader, {
-	    time: 0.3;
+	    time: 0;
 	    effect: blend;
 	    noInitialTransform: true;
 	    source: "theme://playdecks/" + $global.media.current.type + ".view";

@@ -1,0 +1,59 @@
+widget(container_x, {
+  hidden: select($global.media.current.metadata.duration, false, true);
+  
+  filterConstraintX: true;
+  spacing: 10;
+  widget(label, {
+    size: 14;
+    width: 50;
+    align: right;
+    caption: value2duration($global.media.current.currenttime);
+    shadow: true;
+    outline: true;
+  });
+  
+  widget(container_y, {
+    align: center;
+    widget(container_z, {
+      widget(backdrop, {
+	border: 4;
+	height: 8;
+	source: "duration-bar-bg.png";
+      });
+      
+/*
+      widget(container_x, {
+	$view.barwidth = getWidth();
+	widget(backdrop, {
+	  filterConstraintX: true;
+	  margin: [-8, -3, -8, -5];
+	  border: [16, 8];
+	  source: "duration-bar-gray.png";
+	  color: [0.7, 0.96, 1];
+	});
+	widget(dummy, {
+	  width: (1 - ($global.media.current.currenttime
+		       / $global.media.current.metadata.duration))
+	    * ($view.barwidth - 4);
+	});
+      });
+      */
+      widget(clip, {
+	clipping: [-1, 0, 1 - ($global.media.current.currenttime
+			      / $global.media.current.metadata.duration), 0];
+	widget(backdrop, {
+	  margin: [-8, -3, -8, -5];
+	  border: [16, 8];
+	  source: "duration-bar-colorized.png";
+	});
+      });
+    });
+  });
+  widget(label, {
+    size: 14;
+    width: 50;
+    caption: value2duration($global.media.current.metadata.duration);
+    shadow: true;
+    outline: true;
+  });
+});
