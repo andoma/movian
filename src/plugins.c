@@ -739,7 +739,7 @@ plugin_thread(void *aux)
  *
  */
 void
-plugins_init(const char *loadme, const char *repo)
+plugins_init(const char *loadme, const char *repo, int sync_init)
 {
   if(repo)
      plugin_repo_url = repo;
@@ -760,6 +760,10 @@ plugins_init(const char *loadme, const char *repo)
     } else {
       TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
+    sync_init = 1;
+  }
+
+  if(sync_init) {
     plugins_load();
   } else {
     hts_thread_create_detached("pluginsinit", plugin_thread, NULL,
