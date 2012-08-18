@@ -535,10 +535,10 @@ const static int action_from_fkey[13][2] = {
   { 0, 0 },
   { 0, 0 },
 
-  { ACTION_SWITCH_VIEW,      0 },
-  { 0, 0 },
-  { ACTION_FULLSCREEN_TOGGLE,      0 },
-  { 0, 0 },
+  { ACTION_SWITCH_VIEW,       0 },
+  { 0,                        ACTION_VOLUME_MUTE_TOGGLE },
+  { ACTION_FULLSCREEN_TOGGLE, ACTION_VOLUME_DOWN },
+  { 0,                        ACTION_VOLUME_UP },
 };
 
 
