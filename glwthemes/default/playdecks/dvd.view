@@ -13,21 +13,18 @@ widget(container_z, {
 
     widget(container_x, {
 
-      padding: [$ui.size,0,0,0];
+      padding: [$ui.size,0];
       spacing: $ui.size / 2;
 
       widget(label, {
 	filterConstraintX: true;
 	caption: $global.media.current.metadata.title;
-	sizeScale: 0.8;
-	minSize: 14;
 	shadow: true;
 	outline: true;
       });
 
       widget(label, {
 	hidden: !$global.media.current.currenttitle;
-	size: 14;
 	caption: fmt(_("Title: %d"), $global.media.current.currenttitle);
 	shadow: true;
 	outline: true;
@@ -35,7 +32,6 @@ widget(container_z, {
 
       widget(label, {
 	hidden: !$global.media.current.currentchapter;
-	size: 14;
 	caption: fmt(_("Chapter: %d"), $global.media.current.currentchapter);
 	shadow: true;
 	outline: true;
