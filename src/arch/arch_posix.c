@@ -115,12 +115,7 @@ get_system_concurrency(void)
 #include <sys/statvfs.h>
 #include <signal.h>
 #include "text/text.h"
-
-#ifdef XBMC_PLUGIN
-#include "xbmc-plugin.h"
-#else
 #include "showtime.h"
-#endif
 
 #include "networking/net.h"
 
