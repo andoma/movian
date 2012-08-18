@@ -134,4 +134,31 @@ widget(container_z, {
       });
     });
   });
+
+
+  widget(container_x, {
+    space(1);
+    widget(container_y, {
+      align: center;
+      widget(label, {
+	alpha: iir(changed($global.audio.mastervolume, 2, true), 7);
+	caption: fmt(_("Master volume: %d dB"), $global.audio.mastervolume);
+	align: center;
+	outline: true;
+	shadow: true;
+	sizeScale: 2;
+      });
+      
+
+      widget(label, {
+	alpha: iir($global.audio.mastermute, 7);
+	caption: _("Audio muted");
+	align: center;
+	outline: true;
+	shadow: true;
+	sizeScale: 2;
+      });
+    });
+    space(1);
+  });
 });
