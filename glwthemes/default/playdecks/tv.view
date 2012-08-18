@@ -13,17 +13,30 @@ widget(container_z, {
 
     widget(container_x, {
 
-      padding: [$ui.size,0,0,0];
+      padding: [$ui.size,0];
       spacing: $ui.size / 2;
+
+      widget(image, {
+	size: $ui.size * 2 - 10;
+	aspectConstraint: true;
+	source: $global.media.current.metadata.icon ??
+	  "dataroot://resources/svg/Display.svg";
+      });
 
       widget(label, {
 	filterConstraintX: true;
 	caption: $global.media.current.metadata.title;
-	sizeScale: 0.8;
-	minSize: 14;
 	shadow: true;
 	outline: true;
       });
+
+      widget(label, {
+	filterConstraintX: true;
+	caption: $global.media.current.metadata.events.current.title;
+	shadow: true;
+	outline: true;
+      });
+
 
       #import "bar.view"
     });

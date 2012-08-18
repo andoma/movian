@@ -13,7 +13,7 @@ widget(container_z, {
 
     widget(container_x, {
 
-      padding: [$ui.size,0,0,0];
+      padding: [$ui.size,0];
       spacing: $ui.size / 2;
 
       widget(container_y, {
@@ -22,8 +22,6 @@ widget(container_z, {
 	widget(label, {
 	  caption: $global.media.current.metadata.title;
 
-	  sizeScale: 0.8;
-	  minSize: 14;
 	  shadow: true;
 	  outline: true;
 	});
