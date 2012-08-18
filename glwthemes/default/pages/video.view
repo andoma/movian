@@ -48,13 +48,6 @@ widget(container_z, {
 	padding: 20;
 	align: top;
 	  
-	widget(label, {
-	  OSD();
-	  hidden: !changed($self.media.metadata.title, 5);
-	  sizeScale: 1.5;
-	  caption: $self.media.metadata.title;
-	});
-
 	widget(container_x, {
 	  hidden: select($self.media.error, false, true);
 	  widget(icon, {
