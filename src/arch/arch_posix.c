@@ -113,6 +113,7 @@ get_system_concurrency(void)
 #include <limits.h>
 #include <syslog.h>
 #include <sys/statvfs.h>
+#include <signal.h>
 #include "text/text.h"
 
 #ifdef XBMC_PLUGIN
@@ -137,6 +138,8 @@ arch_init(void)
   concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
 
+  signal(SIGPIPE, SIG_IGN);
+  
   TRACE(TRACE_INFO, "core", "Using %d CPU(s)", concurrency);
 
 #ifdef RLIMIT_AS
