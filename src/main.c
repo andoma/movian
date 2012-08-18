@@ -428,7 +428,7 @@ main(int argc, char **argv)
   audio_init();
 
   /* Initialize plugin manager and load plugins */
-  plugins_init(devplugin, plugin_repo);
+  plugins_init(devplugin, plugin_repo, argc > 0);
 
   /* Internationalization */
   i18n_init();
