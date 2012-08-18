@@ -43,7 +43,7 @@ typedef struct {
 
   RTMP *r;
 
-  int lastdts;
+  int last_video_dts; // in ms
 
   int in_seek_skip;
 
@@ -60,7 +60,6 @@ typedef struct {
 
   const char *canonical_url;
 
-  int seek_origin;
   int total_duration;
 } rtmp_t;
 
@@ -163,7 +162,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
 
   TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, pos / 1000000.0);
  
-  RTMP_SendSeek(r->r, (pos / 1000) - r->seek_origin);
+  RTMP_SendSeek(r->r, pos / 1000);
 
   r->seekpos = pos;
 
@@ -171,7 +170,7 @@ video_seek(rtmp_t *r, media_pipe_t *mp, media_buf_t **mbp,
   mp->mp_audio.mq_seektarget = pos;
 
   mp_flush(mp, 0);
-  
+
   if(mbp != NULL && *mbp != NULL) {
     media_buf_free_unlocked(mp, *mbp);
     *mbp = NULL;
@@ -220,8 +219,6 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
   } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
     event_ts_t *ets = (event_ts_t *)e;
     
-    //    mp->mp_seek_base = ets->ts;
-    
     int sec = ets->ts / 1000000;
 
     if(sec != r->restartpos_last && r->can_seek) {
@@ -265,11 +262,10 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
   mb->mb_cw = media_codec_ref(mc);
-  mb->mb_time = dt == MB_VIDEO ? time : AV_NOPTS_VALUE;
+  mb->mb_time = time;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
-  //  mb->mb_send_pts = dt == MB_VIDEO;
 	
   memcpy(mb->mb_data, data, size);
 
@@ -374,10 +370,12 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 
   int skip = 0;
 
+  r->last_video_dts = dts;
+
   int64_t pts = 1000LL * (dts + d);
   dts = 1000LL * dts;
 
-  if(d < 0 || dts < r->seekpos) {
+  if(d < 0 || dts <= r->seekpos) {
     skip = 1;
     r->in_seek_skip = 1;
   } else if(r->in_seek_skip) {
@@ -385,9 +383,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     r->in_seek_skip = 0;
   }
 
-  r->lastdts = dts;
-
-  e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, AV_NOPTS_VALUE,
+  e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, pts,
 	      data, size, skip, MB_VIDEO, r->vframeduration);
   return e;
 }
@@ -475,13 +471,13 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 
   dts *= 1000;
 
-  if(dts < r->seekpos)
+  if(dts <= r->seekpos)
     return NULL;
 
 
   if(mc->parser_ctx == NULL)
     return sendpkt(r, &mp->mp_audio, mc, 
-		   dts, dts, dts, data, size, 0, MB_AUDIO, 0);
+		   dts, dts, AV_NOPTS_VALUE, data, size, 0, MB_AUDIO, 0);
 
   while(size > 0) {
     int outlen;
@@ -548,13 +544,15 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 
       if(ret == 0) {
 	RTMP_Close(r->r);
-	  
+	
 	RTMP_Init(r->r);
 
 	memset(&p, 0, sizeof(p));
 
+	int restartpos = r->last_video_dts;
+
 	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %d", 
-	      mp->mp_seek_base);
+	      restartpos);
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
@@ -568,15 +566,15 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
 	  break;
 	}
 
-	if(!RTMP_ConnectStream(r->r, r->can_seek ? mp->mp_seek_base / 1000 : 0)) {
+	if(!RTMP_ConnectStream(r->r, r->can_seek ? restartpos / 1000 : 0)) {
 	  snprintf(errbuf, errlen, "Unable to stream RTMP session");
 	  return NULL;
 	}
-	mp_bump_epoch(mp);
 
-	r->lastdts = 0;
-	mp->mp_seek_base = AV_NOPTS_VALUE;
-	mp_flush(mp, 0);
+	if(r->can_seek) {
+	  RTMP_SendSeek(r->r, restartpos);
+	  r->seekpos = restartpos * 1000;
+	}
 	continue;
       }
 
@@ -665,6 +663,7 @@ rtmp_free(rtmp_t *r)
   RTMP_Free(r->r);
 }
 
+static int rtmp_log_level;
 
 /**
  *
@@ -682,12 +681,18 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   prop_set_string(mp->mp_prop_type, "video");
 
-  RTMP_LogSetLevel(RTMP_LOGINFO);
+  rtmp_log_level = RTMP_LOGINFO;
+  RTMP_LogSetLevel(rtmp_log_level);
 
   r.r = RTMP_Alloc();
   RTMP_Init(r.r);
 
-  int64_t start = video_get_restartpos(canonical_url);
+  int64_t start = 0;
+
+  if(flags & BACKEND_VIDEO_RESUME ||
+     (video_settings.resume_mode == VIDEO_RESUME_YES &&
+      !(flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
+    start = video_get_restartpos(canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -695,18 +700,23 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     return NULL;
   }
 
+  r.r->Link.lFlags |= RTMP_LF_SWFV;
+
   if(!RTMP_Connect(r.r, NULL)) {
     snprintf(errbuf, errlen, "Unable to connect RTMP-session");
     rtmp_free(&r);
     return NULL;
   }
 
-  if(!RTMP_ConnectStream(r.r, start)) {
+  if(!RTMP_ConnectStream(r.r, 0)) {
     snprintf(errbuf, errlen, "Unable to connect RTMP-stream");
     rtmp_free(&r);
     return NULL;
   }
-  r.seek_origin = start;
+
+  if(start)
+    RTMP_SendSeek(r.r, start);
+    
   r.mp = mp;
   r.hold = 0;
   
@@ -760,9 +770,10 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 static void
 rtmp_log(int level, const char *format, va_list vl)
 {
-  return;
-
   int mylevel = 0;
+  if(level >= rtmp_log_level)
+    return;
+
   switch(level) {
   case RTMP_LOGCRIT:
   case RTMP_LOGERROR:
