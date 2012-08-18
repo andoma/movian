@@ -46,7 +46,7 @@ vd_init_timings(video_decoder_t *vd)
 }
 
 
-#define vd_valid_duration(t) ((t) > 1000ULL && (t) < 10000000ULL)
+#define vd_valid_duration(t) ((t) > 10000ULL && (t) < 1000000ULL)
 
 static void 
 vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
@@ -172,9 +172,6 @@ video_deliver_frame_avctx(video_decoder_t *vd,
       if(duration == 0)
 	duration = t;
 
-    } else if(t < 0 || t > 10000000LL) {
-      /* PTS discontinuity, use estimated PTS from last output instead */
-      pts = vd->vd_nextpts;
     }
   }
   
