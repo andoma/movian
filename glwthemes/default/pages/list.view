@@ -13,13 +13,14 @@ widget(keyintercept, {
   widget(container_x, {
 
     filterConstraintY: true;
-    padding: [5, 5, 5, 0];
+    padding: [5, 5, 5, $ui.playdeckheight];
     spacing: 10;
 
     // ------ The list --------------------------------------
 
       widget(container_x, {
 	filterConstraintX: true;
+	spacing: 5;
 	widget(list_y, {
 	  id: "list";
 	  &clone.focused = focusedChild();

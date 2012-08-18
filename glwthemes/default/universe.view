@@ -139,6 +139,7 @@ widget(container_z, {
   widget(container_x, {
     space(1);
     widget(container_y, {
+      filterConstraintX: true;
       align: center;
       widget(label, {
 	alpha: iir(changed($global.audio.mastervolume, 2, true), 7);
