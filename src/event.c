@@ -505,6 +505,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PREV_CHANNEL) ||
 	    event_is_action(e, ACTION_CYCLE_AUDIO) ||
 	    event_is_action(e, ACTION_CYCLE_SUBTITLE) ||
+	    event_is_type(e, EVENT_DELTA_SEEK) || 
 	    event_is_type(e, EVENT_SELECT_AUDIO_TRACK) || 
 	    event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 	    ) {

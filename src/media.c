@@ -619,6 +619,7 @@ static void
 mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 {
   event_select_track_t *est = (event_select_track_t *)e;
+  event_int_t *ei;
 
   switch(e->e_type_x) {
   case EVENT_SELECT_AUDIO_TRACK:
@@ -627,6 +628,10 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
   case EVENT_SELECT_SUBTITLE_TRACK:
     mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
     break;
+  case EVENT_DELTA_SEEK:
+    ei = (event_int_t *)e;
+    mp_direct_seek(mp, mp->mp_seek_base += ei->val);
+    return;
   default:
     break;
   }
