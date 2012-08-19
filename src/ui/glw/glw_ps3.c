@@ -312,7 +312,7 @@ osk_destroyed(glw_ps3_t *gp)
   assert(w != NULL);
 
   if(!(w->glw_flags & GLW_DESTROYING)) {
-    event_t *e = event_create_action(ACTION_ENTER);
+    event_t *e = event_create_action(ACTION_SUBMIT);
     glw_event_to_widget(w, e, 0);
     event_release(e);
   }

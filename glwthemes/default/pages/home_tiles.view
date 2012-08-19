@@ -105,6 +105,8 @@ widget(container_y, {
 		sizeScale: 1.5;
 		onEvent(enter, navOpen("search:" + $view.searchQuery),
 			$view.searchQuery);
+		onEvent(submit, navOpen("search:" + $view.searchQuery),
+			$view.searchQuery);
               });
 /*
 	      widget(label, {
