@@ -237,7 +237,7 @@ update_contents(deco_browse_t *db)
 
   db->db_current_contents = 0;
   prop_set_void(db->db_prop_contents);
-  prop_nf_sort(db->db_pnf, NULL, 0, 0, NULL, 0);
+  prop_nf_sort(db->db_pnf, NULL, 0, 1, NULL, 0);
 }
 
 
