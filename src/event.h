@@ -131,6 +131,7 @@ typedef enum {
   EVENT_PLAYQUEUE_JUMP_AND_PAUSE,
   EVENT_TV,            /* TV specific events, see tv.h */
   EVENT_SEEK,
+  EVENT_DELTA_SEEK,
   EVENT_EOF,           /* End of file */
   EVENT_PLAY_URL,
   EVENT_EXIT,

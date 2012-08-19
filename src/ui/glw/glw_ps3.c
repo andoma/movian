@@ -622,6 +622,21 @@ clear_btns(void)
 #define KEY_REPEAT_DELAY 30 // in frames
 #define KEY_REPEAT_RATE  3  // in frames
 
+
+static void
+handle_seek(glw_ps3_t *gp, int pad, int sign, int pressed, int pre)
+{
+  if(pressed) {
+    int64_t x = pre;
+    event_t *e = event_create_int(EVENT_DELTA_SEEK,
+				  sign * x * x * x * x / 100LL);
+    glw_dispatch_event(&gp->gr.gr_uii, e);
+    event_release(e);
+  }
+}
+
+
+
 static void
 handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
 {
@@ -862,10 +877,12 @@ handle_pads(glw_ps3_t *gp)
     handle_btn(gp, i, BTN_START,    pd->BTN_START,    sel, 0);
     handle_btn(gp, i, BTN_R1,       pd->BTN_R1,       sel, pd->PRE_R1);
     handle_btn(gp, i, BTN_L1,       pd->BTN_L1,       sel, pd->PRE_L1);
-    handle_btn(gp, i, BTN_R2,       pd->BTN_R2,       sel, pd->PRE_R2);
-    handle_btn(gp, i, BTN_L2,       pd->BTN_L2,       sel, pd->PRE_L2);
     handle_btn(gp, i, BTN_R3,       pd->BTN_R3,       sel, 0);
     handle_btn(gp, i, BTN_L3,       pd->BTN_L3,       sel, 0);
+
+
+    handle_seek(gp, i, 1,        pd->BTN_R2,       pd->PRE_R2);
+    handle_seek(gp, i, -1,       pd->BTN_L2,       pd->PRE_L2);
   }
 }
 
