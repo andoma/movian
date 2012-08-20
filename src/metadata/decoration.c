@@ -697,8 +697,8 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
 static void
 deco_browse_del_node(deco_browse_t *db, deco_item_t *di)
 {
+  db->db_pending_flags |= DB_PENDING_DEFERRED_ANALYSIS;
   deco_item_destroy(db, di);
-  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_ANALYSIS;
   deco_pendings = 1;
 }
 
