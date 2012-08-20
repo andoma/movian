@@ -1,0 +1,12 @@
+Improve metadata lookup
+
+User is now able to enter a custom query in the
+item popup menu. It's also possible to enter a
+IMDb ID directly there.
+
+Showtime will also automatically use the folder name
+of the video if it seems more appropriate. An internal
+scoring system is used to choose if it should try
+to search using file name or folder name.
+
+Score results can be seen as debug in logfile
