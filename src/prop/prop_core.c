@@ -2557,6 +2557,35 @@ prop_set_string_ex(prop_t *p, prop_sub_t *skipme, const char *str,
 }
 
 
+
+/**
+ *
+ */
+static void
+prop_set_rstring_exl(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
+{
+  if(p->hp_type == PROP_ZOMBIE)
+    return;
+
+  if(p->hp_type != PROP_RSTRING) {
+
+    if(prop_clean(p))
+      return;
+
+  } else if(!strcmp(rstr_get(p->hp_rstring), rstr_get(rstr))) {
+    return;
+  } else {
+    rstr_release(p->hp_rstring);
+  }
+  p->hp_rstring = rstr_dup(rstr);
+  p->hp_type = PROP_RSTRING;
+  p->hp_rstrtype = 0;
+
+  prop_notify_value(p, skipme, "prop_set_rstring()", 0);
+}
+
+
+
 /**
  *
  */
@@ -2572,30 +2601,8 @@ prop_set_rstring_ex(prop_t *p, prop_sub_t *skipme, rstr_t *rstr)
   }
 
   hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_type != PROP_RSTRING) {
-
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
-      return;
-    }
-
-  } else if(!strcmp(rstr_get(p->hp_rstring), rstr_get(rstr))) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  } else {
-    rstr_release(p->hp_rstring);
-  }
-  p->hp_rstring = rstr_dup(rstr);
-  p->hp_type = PROP_RSTRING;
-  p->hp_rstrtype = 0;
-
-  prop_set_epilogue(skipme, p, "prop_set_rstring()");
+  prop_set_rstring_exl(p, skipme, rstr);
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
@@ -3764,6 +3771,7 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
 {
   va_list ap;
   prop_t *c = p;
+  rstr_t *rstr;
   const char *n, *str;
 
   if(p == NULL || p->hp_type == PROP_ZOMBIE)
@@ -3795,6 +3803,13 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
       prop_set_void_exl(p, skipme);
     else
       prop_set_string_exl(p, skipme, str, PROP_STR_UTF8);
+    break;
+  case PROP_SET_RSTRING:
+    rstr = va_arg(ap, rstr_t *);
+    if(rstr == NULL)
+      prop_set_void_exl(p, skipme);
+    else
+      prop_set_rstring_exl(p, skipme, rstr);
     break;
   case PROP_SET_INT:
     prop_set_int_exl(p, skipme, va_arg(ap, int));

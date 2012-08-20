@@ -27,9 +27,14 @@ struct prop_vec;
 struct prop_nf;
 typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 
-#define METAITEM_STATUS_ABSENT    1
-#define METAITEM_STATUS_PARTIAL   2
-#define METAITEM_STATUS_COMPLETE  3
+#define METAITEM_STATUS_ABSENT     1
+#define METAITEM_STATUS_PARTIAL    2
+#define METAITEM_STATUS_COMPLETE   3
+
+#define METADATA_QTYPE_FILENAME   1
+#define METADATA_QTYPE_IMDB       2
+#define METADATA_QTYPE_DIRECTORY  3
+#define METADATA_QTYPE_CUSTOM     4
 
 
 #define METADATA_ERROR    -1
@@ -144,7 +149,8 @@ typedef struct metadata {
   rstr_t *md_tagline;
 
   rstr_t *md_imdb_id;
-  int md_rating;  // 0 - 100
+  int16_t md_qtype;
+  int16_t md_rating;  // 0 - 100
   int md_rate_count;
   
   metadata_type_t md_video_type;
@@ -153,7 +159,6 @@ typedef struct metadata {
   rstr_t *md_icon;
 
   int md_dsid;
-
 
   rstr_t *md_manufacturer;
   rstr_t *md_equipment;
@@ -170,7 +175,7 @@ LIST_HEAD(metadata_source_list, metadata_source);
 typedef struct metadata_source_funcs {
   int64_t (*query_by_title_and_year)(void *db, const char *item_url, 
 				     const char *title, int year,
-				     int duration);
+				     int duration, int qtype);
 
   int64_t (*query_by_imdb_id)(void *db, const char *item_url, 
 			      const char *imdb_id);
@@ -190,6 +195,7 @@ typedef struct metadata_source {
   int ms_prio;
   int ms_id;
   int ms_mark;
+  int ms_qtype;
   int ms_enabled;
   const metadata_source_funcs_t *ms_funcs;
   struct prop *ms_settings;
@@ -288,7 +294,7 @@ void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 
 int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				const char *ext_id, const metadata_t *md,
-				int status, int64_t weight);
+				int status, int64_t weight, int qtype);
 
 int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_list *sources,
@@ -299,10 +305,12 @@ void metadb_videoitem_alternatives(struct prop *p, const char *url, int dsid,
 
 int metadb_videoitem_set_preferred(void *db, const char *url, int64_t vid);
 
+int metadb_videoitem_delete_from_ds(void *db, const char *url, int ds);
+
 void decoration_init(void);
 
 void decorated_browse_create(struct prop *model, struct prop_nf *pnf,
-			     struct prop *items);
+			     struct prop *items, rstr_t *title);
 
 void metadata_init(void);
 
@@ -311,12 +319,11 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
 void metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
-			      struct prop *prop, rstr_t *url, rstr_t *title,
-			      int year, rstr_t *imdb_id, int duration,
-			      struct prop *options);
+			      struct prop *prop, rstr_t *url, rstr_t *filename,
+			      rstr_t *imdb_id, int duration,
+			      struct prop *options, struct prop *root,
+			      rstr_t *parent);
 
 void metadata_unbind(metadata_lazy_prop_t *mlp);
-
-rstr_t *metadata_filename_to_title(const char *filename, int *yearp);
 
 rstr_t *metadata_remove_postfix(const char *filename, char c);

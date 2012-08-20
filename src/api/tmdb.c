@@ -35,8 +35,7 @@
 
 
 static hts_mutex_t tmdb_mutex;
-static int tmdb_datasource_search;
-static int tmdb_datasource_imdb;
+static int tmdb_datasource;
 static char *tmdb_image_base_url;
 static int tmdb_configured;
 
@@ -267,7 +266,7 @@ tmdb_insert_movie_cast(void *db, int64_t itemid, htsmsg_t *doc)
  */
 static int64_t
 tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
-		     int dsid)
+		     int dsid, int qtype)
 {
   char url[300];
   char errbuf[256];
@@ -321,7 +320,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
     itemid = metadb_insert_videoitem(db, item_url, dsid, tmdb_id, md,
-				     METAITEM_STATUS_COMPLETE, pop * 1000);
+				     METAITEM_STATUS_COMPLETE, pop * 1000,
+				     qtype);
 
     if(itemid >= 0) {
 
@@ -361,14 +361,15 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
  */
 static int64_t
 tmdb_query_by_title_and_year(void *db, const char *item_url,
-			     const char *title, int year, int duration)
+			     const char *title, int year, int duration,
+			     int qtype)
 {
   char buf[300];
   char errbuf[256];
   const char *q;
   char *result;
 
-  if(tmdb_datasource_search < 0)
+  if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
   if(year > 0) {
@@ -424,9 +425,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
     int64_t itemid =
-      metadb_insert_videoitem(db, item_url, tmdb_datasource_search,
+      metadb_insert_videoitem(db, item_url, tmdb_datasource,
 			      tmdb_id, md, METAITEM_STATUS_PARTIAL,
-			      pop * 1000);
+			      pop * 1000, qtype);
     if(itemid < 0) {
       htsmsg_destroy(doc);
       return itemid;
@@ -449,10 +450,11 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 static int64_t
 tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id)
 {
-  if(tmdb_datasource_imdb < 0)
+  if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_imdb);
+  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource,
+			      METADATA_QTYPE_IMDB);
 }
 
 /**
@@ -461,22 +463,19 @@ tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id)
 static int64_t
 tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
 {
-  if(tmdb_datasource_search < 0)
+  if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource_search);
+  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource,
+			      0);
 }
 
 
 static const metadata_source_funcs_t search_fns = {
   .query_by_title_and_year = tmdb_query_by_title_and_year,
   .query_by_id = tmdb_query_by_id,
-};
-
-static const metadata_source_funcs_t imdb_fns = {
   .query_by_imdb_id = tmdb_query_by_imdb_id,
 };
-
 
 
 /**
@@ -487,13 +486,9 @@ tmdb_init(void)
 {
   hts_mutex_init(&tmdb_mutex);
 
-  tmdb_datasource_search =
+  tmdb_datasource =
     metadata_add_source("tmdb", "themoviedb.org", 100001,
 			METADATA_TYPE_MOVIE, &search_fns);
-
-  tmdb_datasource_imdb =
-    metadata_add_source("tmdb_imdb", "themoviedb.org (IMDb Id)", 100000,
-			METADATA_TYPE_MOVIE, &imdb_fns);
 }
 
 

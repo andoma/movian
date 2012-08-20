@@ -69,6 +69,8 @@ typedef struct deco_browse {
 
   int db_current_contents;
 
+  rstr_t *db_title;
+
 } deco_browse_t;
 
 
@@ -135,17 +137,12 @@ analyze_video(deco_item_t *di)
     return;
   
   deco_browse_t *db = di->di_db;
-  rstr_t *title;
-  int year = 0;
 
-  title = metadata_filename_to_title(rstr_get(di->di_filename), &year);
   metadata_bind_movie_info(&di->di_mlp, di->di_metadata,
-			   di->di_url, title, year,
+			   di->di_url, di->di_filename,
 			   di->di_ds->ds_imdb_id ?: db->db_imdb_id,
-			   di->di_duration,
-			   di->di_options);
-  
-  rstr_release(title);
+			   di->di_duration, di->di_options, di->di_root,
+			   db->db_title);
 }
 
 
@@ -187,13 +184,14 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
   if(video && image) {
     prop_t *p;
 
-    p = prop_create_r(video->di_metadata, "fallbackicon");
+    p = prop_create_r(video->di_metadata, "usericon");
     prop_set_rstring(p, image->di_url);
     prop_ref_dec(p);
 
-    p = prop_create_r(image->di_root, "hidden");
-    prop_set_int(p, 1);
-    prop_ref_dec(p);
+    prop_set(video->di_metadata, "usericon", NULL,
+	     PROP_SET_RSTRING, image->di_url);
+    
+    prop_set(image->di_root, "hidden", NULL, PROP_SET_INT, 1);
   }
 }
 
@@ -731,6 +729,7 @@ deco_browse_destroy(deco_browse_t *db)
   prop_ref_dec(db->db_prop_model);
   rstr_release(db->db_imdb_id);
   LIST_REMOVE(db, db_link);
+  rstr_release(db->db_title);
   free(db);
 }
 
@@ -799,7 +798,8 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
-decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items)
+decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
+			rstr_t *title)
 {
   hts_mutex_lock(&deco_mutex);
 
@@ -815,7 +815,7 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items)
   LIST_INSERT_HEAD(&deco_browses, db, db_link);
   db->db_prop_model = prop_ref_inc(model);
   db->db_prop_contents = prop_create_r(model, "contents");
-
+  db->db_title = rstr_dup(title);
   hts_mutex_unlock(&deco_mutex);
 }
 

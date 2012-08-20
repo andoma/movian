@@ -820,7 +820,7 @@ add_only_supported_files(scanner_t *s, prop_t *model,
 void
 fa_scanner(const char *url, time_t url_mtime, 
 	   prop_t *model, const char *playme,
-	   prop_t *direct_close)
+	   prop_t *direct_close, rstr_t *title)
 {
   scanner_t *s = calloc(1, sizeof(scanner_t));
   s->s_url = strdup(url);
@@ -855,7 +855,7 @@ fa_scanner(const char *url, time_t url_mtime,
 
 
 
-  decorated_browse_create(model, pnf, source);
+  decorated_browse_create(model, pnf, source, title);
 
   s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;
