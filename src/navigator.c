@@ -760,7 +760,6 @@ bookmark_destroyed(void *opaque, prop_event_t event, ...)
   if(event != PROP_DESTROYED)
     return;
 
-  (void)va_arg(ap, prop_t *);
   s = va_arg(ap, prop_sub_t *);
 
   prop_unsubscribe(bm->bm_title_sub);
