@@ -903,14 +903,24 @@ glw_retire_child(glw_t *w)
 void
 glw_move(glw_t *w, glw_t *b)
 {
-  TAILQ_REMOVE(&w->glw_parent->glw_childs, w, glw_parent_link);
+  glw_t *p = w->glw_parent;
+  TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
 
   if(b == NULL) {
-    TAILQ_INSERT_TAIL(&w->glw_parent->glw_childs, w, glw_parent_link);
+    TAILQ_INSERT_TAIL(&p->glw_childs, w, glw_parent_link);
   } else {
     TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
   }
-  glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_MOVED, w);
+  glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
+  if(p->glw_flags2 & GLW2_FLOATING_FOCUS) {
+    if(w == TAILQ_FIRST(&p->glw_childs)) {
+      glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
+      if(w2 != NULL && p->glw_focused == w2) {
+	glw_t *c = glw_focus_by_path(w);
+	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+      }
+    }
+  }
 }
 
 

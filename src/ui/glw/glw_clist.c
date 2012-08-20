@@ -198,6 +198,7 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
