@@ -127,5 +127,10 @@ commandMenuChrome(
   });
 
 
+  widget(dummy, {
+    navFocusable: false;
+    focusable: 0.0001;
+  });
+
 )
 
