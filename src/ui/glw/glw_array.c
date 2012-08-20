@@ -441,6 +441,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     a->scroll_to_me = extra;
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
