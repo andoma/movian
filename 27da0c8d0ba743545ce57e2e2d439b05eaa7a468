@@ -1,0 +1,4 @@
+Improve RTMP robustness
+
+Reconnecting an RTMP stream during playback is now
+completly invisible to the user.
