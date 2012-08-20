@@ -29,6 +29,8 @@
 #include "backend/backend.h"
 #include "notifications.h"
 #include "htsmsg/htsmsg_json.h"
+#include "fileaccess/fileaccess.h"
+#include "misc/string.h"
 
 static hts_mutex_t video_queue_mutex;
 
@@ -58,14 +60,112 @@ typedef struct video_queue_entry {
 } video_queue_entry_t;
 
 
+LIST_HEAD(vsource_list, vsource);
+
 /**
  *
  */
 typedef struct vsource {
-  const char *vs_url;
-  const char *vs_mimetype;
+  LIST_ENTRY(vsource) vs_link;
+  char *vs_url;
+  char *vs_mimetype;
   int vs_bitrate;
 } vsource_t;
+
+
+/**
+ *
+ */
+static int
+vs_cmp(const vsource_t *a, const vsource_t *b)
+{
+  return b->vs_bitrate - a->vs_bitrate;
+}
+
+
+/**
+ *
+ */
+static void
+vsource_insert(struct vsource_list *list, 
+	       const char *url, const char *mimetype, int bitrate)
+{
+  if(backend_canhandle(url) == NULL)
+    return;
+
+  vsource_t *vs = malloc(sizeof(vsource_t));
+  vs->vs_bitrate = bitrate;
+  vs->vs_url = strdup(url);
+  vs->vs_mimetype = mimetype ? strdup(mimetype) : NULL;
+  LIST_INSERT_SORTED(list, vs, vs_link, vs_cmp);
+}
+
+
+/**
+ *
+ */
+static void
+vsource_cleanup(struct vsource_list *list)
+{
+  vsource_t *vs;
+  while((vs = LIST_FIRST(list)) != NULL) {
+    LIST_REMOVE(vs, vs_link);
+    free(vs->vs_url);
+    free(vs->vs_mimetype);
+    free(vs);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+vsource_load_hls(struct vsource_list *list, const char *url,
+		 const char *mimetype)
+{
+  int l;
+  char *buf, *s;
+  char errbuf[256];
+  int flags = 0;
+
+  s = buf = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf), NULL, flags,
+		    NULL, NULL);
+
+  if(s == NULL) {
+    TRACE(TRACE_INFO, "HLS", "Unable to open %s -- %s", url, errbuf);
+    return;
+  }
+
+  if(mystrbegins(s, "#EXTM3U")) {
+
+    int bandwidth = -1;
+
+    for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+      s[l] = 0;
+      if(l == 0)
+	continue;
+
+      const char *s2, *s3;
+      if((s2 = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL) {
+	s3 = strstr(s2, "BANDWIDTH=");
+	if(s3 != NULL)
+	  bandwidth = atoi(s3 + strlen("BANDWIDTH="));
+      } else if(*s == '#') {
+	continue;
+      } else if(bandwidth != -1) {
+	char *playlist = url_resolve_relative_from_base(url, s);
+	vsource_insert(list, playlist, mimetype, bandwidth);
+	free(playlist);
+	bandwidth = -1;
+      }
+    }
+  } else {
+    TRACE(TRACE_INFO, "HLS", "%s is not an EXTM3U file", url);
+  }
+  free(buf);
+}
+
 
 /**
  *
@@ -78,8 +178,8 @@ play_video(const char *url, struct media_pipe *mp,
   htsmsg_t *subs, *sources;
   const char *str;
   htsmsg_field_t *f;
-  int nsources = 0, i;
-  vsource_t *vsvec, *vs;
+  vsource_t *vs;
+  struct vsource_list vsources;
 
   if(strncmp(url, "videoparams:", strlen("videoparams:"))) 
     return backend_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
@@ -93,6 +193,8 @@ play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
+  LIST_INIT(&vsources);
+
   const char *canonical_url = htsmsg_get_str(m, "canonicalUrl");
 
   // Sources
@@ -102,35 +204,28 @@ play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
   
-  HTSMSG_FOREACH(f, sources)
-    nsources++;
-  
-  if(nsources == 0) {
-    snprintf(errbuf, errlen, "No sources in JSON list");
-    return NULL;
-  }
-
-  vsvec = alloca(nsources * sizeof(vsource_t));
-
-  i = 0;
   HTSMSG_FOREACH(f, sources) {
     htsmsg_t *src = &f->hmf_msg;
-    vsvec[i].vs_url = htsmsg_get_str(src, "url");
-    if(vsvec[i].vs_url == NULL)
+    const char *url      = htsmsg_get_str(src, "url");
+    const char *mimetype = htsmsg_get_str(src, "mimetype");
+    int bitrate          = htsmsg_get_u32_or_default(src, "bitrate", -1);
+
+    if(url == NULL)
       continue;
 
-    if(backend_canhandle(vsvec[i].vs_url) == NULL)
+    if(mimetype != NULL && 
+       (!strcmp(mimetype, "application/vnd.apple.mpegurl") ||
+	!strcmp(mimetype, "audio/mpegurl"))) {
+      if(0)vsource_load_hls(&vsources, url, mimetype);
       continue;
+    }
 
-    vsvec[i].vs_bitrate = htsmsg_get_u32_or_default(src, "bitrate", -1);
-    vsvec[i].vs_mimetype = htsmsg_get_str(src, "mimetype");
-    i++;
+    vsource_insert(&vsources, url, mimetype, bitrate);
   }
 
-  nsources = i;
-
-  if(nsources == 0) {
+  if(LIST_FIRST(&vsources) == NULL) {
     snprintf(errbuf, errlen, "No players found for sources");
+    vsource_cleanup(&vsources);
     return NULL;
   }
   
@@ -160,14 +255,29 @@ play_video(const char *url, struct media_pipe *mp,
   if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
     flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
-  vs = vsvec;
+
+  LIST_FOREACH(vs, &vsources, vs_link) {
+    printf("%10d: %s: %s\n",
+	   vs->vs_bitrate, 
+	   vs->vs_mimetype,
+	   vs->vs_url);
+  }
+
+
+  vs = LIST_FIRST(&vsources);
   
   if(canonical_url == NULL)
     canonical_url = vs->vs_url;
 
-  return backend_play_video(vs->vs_url, mp, flags, priority, 
-			    errbuf, errlen, vs->vs_mimetype,
-			    canonical_url);
+  event_t *e;
+
+  e = backend_play_video(vs->vs_url, mp, flags, priority, 
+			 errbuf, errlen, vs->vs_mimetype,
+			 canonical_url);
+
+  vsource_cleanup(&vsources);
+
+  return e;
 }
 
 
