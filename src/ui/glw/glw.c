@@ -904,6 +904,9 @@ void
 glw_move(glw_t *w, glw_t *b)
 {
   glw_t *p = w->glw_parent;
+
+  int was_first = TAILQ_FIRST(&p->glw_childs) == w && w == p->glw_focused;
+
   TAILQ_REMOVE(&p->glw_childs, w, glw_parent_link);
 
   if(b == NULL) {
@@ -919,6 +922,10 @@ glw_move(glw_t *w, glw_t *b)
 	glw_t *c = glw_focus_by_path(w);
 	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
       }
+    } else if(was_first) {
+      glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
+      glw_t *c = glw_focus_by_path(w2);
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
     }
   }
 }
@@ -1108,8 +1115,7 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	 * insert entries in random order
 	 */
 	int ff = p->glw_flags2 & GLW2_FLOATING_FOCUS && 
-	  x == TAILQ_FIRST(&p->glw_childs) && 
-	  TAILQ_NEXT(x, glw_parent_link) == p->glw_focused;
+	  x == TAILQ_FIRST(&p->glw_childs);
 
 	if(y == NULL || how == GLW_FOCUS_SET_INTERACTIVE ||
 	   weight > y->glw_focus_weight || 
@@ -1138,7 +1144,6 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 
   gr->gr_current_focus = w;
   gr->gr_delayed_focus_leave = 0;
-
 #if 0
   glw_t *h = w;
   while(h->glw_parent != NULL) {
@@ -1355,8 +1360,9 @@ void
 glw_focus_open_path_close_all_other(glw_t *w)
 {
   glw_t *c;
+  glw_t *p = w->glw_parent;
 
-  TAILQ_FOREACH(c, &w->glw_parent->glw_childs, glw_parent_link) {
+  TAILQ_FOREACH(c, &p->glw_childs, glw_parent_link) {
     if(c == w)
       continue;
     c->glw_flags |= GLW_FOCUS_BLOCKED;
@@ -1370,6 +1376,12 @@ glw_focus_open_path_close_all_other(glw_t *w)
 
   if(c != NULL)
     glw_focus_set(w->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+  else if(p->glw_parent->glw_focused == p && 
+	  w->glw_root->gr_current_focus == NULL) {
+    glw_t *r = glw_focus_crawl1(w, 1);
+    if(r != NULL)
+      glw_focus_set(w->glw_root, r, GLW_FOCUS_SET_AUTOMATIC);
+  }
 }
 
 
