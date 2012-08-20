@@ -2534,12 +2534,23 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     if((b = token_resolve(ec, argv[1])) == NULL)
       return -1;
 
-    action = b->type == TOKEN_RSTRING ? b->t_rstring : NULL;
+    switch(b->type) {
+    case TOKEN_RSTRING:
+    case TOKEN_LINK:
+      action = rstr_dup(b->t_rstring);
+      break;
+    case TOKEN_CSTRING:
+      action = rstr_alloc(b->t_cstring);
+      break;
+    default:
+      action = NULL;
+    }
   }
 
   r = eval_alloc(self, ec, TOKEN_EVENT);
   r->t_gem = glw_event_map_deliverEvent_create(a->t_prop, action);
   eval_push(ec, r);
+  rstr_release(action);
   return 0;
 }
 

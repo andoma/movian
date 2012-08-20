@@ -651,6 +651,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(xs && ys) {
 
+	if(w->glw_flags & GLW_DEBUG)
+	  TRACE(TRACE_DEBUG, "IMG", "Loading texture: %s",
+		rstr_get(gi->gi_pending_url));
+
 	gi->gi_pending = glw_tex_create(w->glw_root,
 					gi->gi_pending_url,
 					flags, xs, ys);

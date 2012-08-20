@@ -1,0 +1,10 @@
+widget(container_x, {
+  spacing: 13;
+  widget(dummy, {width: $ui.size;});
+  widget(label, {
+    font: $ui.font;
+    shadow: true;
+    outline: true;
+    caption: $self.metadata.title;
+  });
+});

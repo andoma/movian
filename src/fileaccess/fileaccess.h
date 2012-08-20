@@ -170,7 +170,7 @@ void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
 void fa_scanner(const char *url, time_t mtime, 
 		prop_t *model, const char *playme,
-		prop_t *direct_close);
+		prop_t *direct_close, rstr_t *title);
 
 void *fa_load(const char *url, size_t *sizep, const char **vpaths,
 	      char *errbuf, size_t errlen, int *cache_control, int flags,

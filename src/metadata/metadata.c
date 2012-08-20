@@ -47,6 +47,9 @@ static prop_courier_t *metadata_courier;
 static struct metadata_source_list metadata_sources[METADATA_TYPE_num];
 prop_t *metadata_sources_settings[METADATA_TYPE_num];
 
+static int metadata_filename_to_title(const char *filename,
+				      int *yearp, rstr_t **titlep);
+
 /**
  *
  */
@@ -284,8 +287,9 @@ struct metadata_lazy_prop {
 	    
   rstr_t *mlp_album;
   rstr_t *mlp_artist;
-  rstr_t *mlp_title;
+  rstr_t *mlp_query;
   rstr_t *mlp_url;
+  rstr_t *mlp_filename;
   rstr_t *mlp_imdb_id;
 
   int mlp_duration;
@@ -294,6 +298,7 @@ struct metadata_lazy_prop {
   char mlp_partials;
   char mlp_num_props;
   unsigned char mlp_type;
+  unsigned char mlp_title_querytype;
 
   int mlp_dsid;
   prop_t *mlp_loading;
@@ -301,12 +306,23 @@ struct metadata_lazy_prop {
 
 
   prop_t *mlp_title_opt;
+  prop_t *mlp_info;
+  prop_t *mlp_info_text;
 
   prop_t *mlp_source_opt;
   prop_sub_t *mlp_source_opt_sub;
 
   prop_t *mlp_alt_opt;
   prop_sub_t *mlp_alt_opt_sub;
+
+  prop_t *mlp_sq;
+  prop_sub_t *mlp_sq_sub;
+
+  prop_t *mlp_refresh;
+  prop_sub_t *mlp_refresh_sub;
+
+
+  rstr_t *mlp_custom_query;
 
   struct {
     prop_t *p;
@@ -333,6 +349,9 @@ mlp_release(metadata_lazy_prop_t *mlp)
 
   prop_destroy(mlp->mlp_title_opt);
   prop_ref_dec(mlp->mlp_title_opt);
+  prop_destroy(mlp->mlp_info);
+  prop_ref_dec(mlp->mlp_info);
+  prop_ref_dec(mlp->mlp_info_text);
 
   prop_unsubscribe(mlp->mlp_source_opt_sub);
   prop_destroy(mlp->mlp_source_opt);
@@ -342,13 +361,23 @@ mlp_release(metadata_lazy_prop_t *mlp)
   prop_destroy(mlp->mlp_alt_opt);
   prop_ref_dec(mlp->mlp_alt_opt);
 
+  prop_unsubscribe(mlp->mlp_sq_sub);
+  prop_destroy(mlp->mlp_sq);
+  prop_ref_dec(mlp->mlp_sq);
+
+  prop_unsubscribe(mlp->mlp_refresh_sub);
+  prop_destroy(mlp->mlp_refresh);
+  prop_ref_dec(mlp->mlp_refresh);
+
   rstr_release(mlp->mlp_artist);
   rstr_release(mlp->mlp_album);
-  rstr_release(mlp->mlp_title);
+  rstr_release(mlp->mlp_query);
+  rstr_release(mlp->mlp_filename);
   rstr_release(mlp->mlp_url);
   rstr_release(mlp->mlp_imdb_id);
   prop_ref_dec(mlp->mlp_loading);
   prop_ref_dec(mlp->mlp_source);
+  rstr_release(mlp->mlp_custom_query);
   free(mlp);
 }
 
@@ -419,6 +448,12 @@ metadata_unbind(metadata_lazy_prop_t *mlp)
   prop_ref_dec(mlp->mlp_title_opt);
   mlp->mlp_title_opt = NULL;
 
+  prop_destroy(mlp->mlp_info);
+  prop_ref_dec(mlp->mlp_info);
+  mlp->mlp_info = NULL;
+  prop_ref_dec(mlp->mlp_info_text);
+  mlp->mlp_info_text = NULL;
+
   prop_destroy(mlp->mlp_source_opt);
   prop_ref_dec(mlp->mlp_source_opt);
   mlp->mlp_source_opt = NULL;
@@ -426,6 +461,14 @@ metadata_unbind(metadata_lazy_prop_t *mlp)
   prop_destroy(mlp->mlp_alt_opt);
   prop_ref_dec(mlp->mlp_alt_opt);
   mlp->mlp_alt_opt = NULL;
+
+  prop_destroy(mlp->mlp_sq);
+  prop_ref_dec(mlp->mlp_sq);
+  mlp->mlp_sq = NULL;
+
+  prop_destroy(mlp->mlp_refresh);
+  prop_ref_dec(mlp->mlp_refresh);
+  mlp->mlp_refresh = NULL;
 
   mlp_unsub_partials(mlp);
   mlp_unsub_complete(mlp);
@@ -648,11 +691,63 @@ get_ms(metadata_type_t type, int id)
   return ms;
 }
 
+
 /**
- * Must be in an transaction
+ *
+ */
+static void 
+build_info_text(metadata_lazy_prop_t *mlp, const metadata_t *md)
+{
+  rstr_t *txt;
+  
+  if(md == NULL) {
+    txt = _("No data found");
+  } else {
+    char tmp[512];
+
+    rstr_t *qtype = NULL;
+
+    switch(md->md_qtype) {
+    case METADATA_QTYPE_FILENAME:
+      qtype = _("filename");
+      break;
+    case METADATA_QTYPE_IMDB:
+      qtype = _("IMDb ID");
+      break;
+    case METADATA_QTYPE_DIRECTORY:
+      qtype = _("folder name");
+      break;
+    case METADATA_QTYPE_CUSTOM:
+      qtype = _("custom query");
+      break;
+    }
+
+    rstr_t *fmt = _("Metadata loaded from '%s' using %s");
+
+    metadata_source_t *ms = get_ms(mlp->mlp_type, md->md_dsid);
+
+    snprintf(tmp, sizeof(tmp), rstr_get(fmt), 
+	     ms ? ms->ms_description : "???",
+	     rstr_get(qtype) ?: "???");
+
+    txt = rstr_alloc(tmp);
+
+    rstr_release(fmt);
+    rstr_release(qtype);
+  }
+
+  prop_set_rstring(mlp->mlp_info_text, txt);
+  rstr_release(txt);
+
+}
+
+
+/**
+ * Must be in a transaction
  */
 static int
-mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
+mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
+		    int refresh)
 {
   metadata_t *md = NULL;
   int64_t rval;
@@ -660,20 +755,32 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
   struct metadata_source_list *msl = &metadata_sources[mlp->mlp_type];
   int r;
   int fixed_ds;
+  const char *q;
+  const char *sq = rstr_get(mlp->mlp_custom_query);
+  int sq_is_imdb_id = sq && sq[0] == 't' && sq[1] == 't' &&
+    sq[2] >= '0' && sq[2] <= '9';
+
+  if(sq && !*sq)
+    sq = NULL;
 
   LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link)
     ms->ms_mark = 0;
 
  redo:
-  if(md != NULL)
+  if(md != NULL) {
     metadata_destroy(md);
+    md = NULL;
+  }
 
-  r = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url), msl, &fixed_ds, &md);
-  if(r)
-    return r;
+  if(!refresh) {
+    r = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url), msl, &fixed_ds, &md);
+    if(r)
+      return r;
+  } else {
+    refresh = 0;
+  }
 
   prop_set_int(mlp->mlp_loading, 1);
-
   if(md == NULL || !md->md_preferred) {
 
     LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link) {
@@ -685,27 +792,72 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
       if(fixed_ds && fixed_ds != ms->ms_id)
 	continue;
 
-      if(md && md->md_dsid == ms->ms_id)
+      /* Figure out what query to run (or what we would like to run) */
+      int qtype;
+
+      if(msf->query_by_imdb_id != NULL &&
+	 ((sq == NULL && mlp->mlp_imdb_id != NULL) || sq_is_imdb_id)) {
+	qtype = METADATA_QTYPE_IMDB;
+      } else {
+	if(sq)
+	  qtype = METADATA_QTYPE_CUSTOM;
+	else
+	  qtype = mlp->mlp_title_querytype;
+      }
+
+
+      if(md && md->md_dsid == ms->ms_id && md->md_qtype == qtype)
 	break;
 
-      if(ms->ms_mark)
+
+      /**
+       * If current metadata source is seen (marked by metadb_get_videoinfo())
+       * and the query type corresponds we should be fully up to date,
+       * thus continue
+       */
+       
+      if(ms->ms_mark && ms->ms_qtype == qtype)
 	continue;
 
-      if(msf->query_by_imdb_id != NULL && mlp->mlp_imdb_id != NULL) {
-	rval = msf->query_by_imdb_id(db, rstr_get(mlp->mlp_url),
-				     rstr_get(mlp->mlp_imdb_id));
-      } else if(msf->query_by_title_and_year != NULL) {
-	rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
-					    rstr_get(mlp->mlp_title),
-					    mlp->mlp_year, mlp->mlp_duration);
-      } else {
-	continue;
+      rval = metadb_videoitem_delete_from_ds(db, rstr_get(mlp->mlp_url),
+					     ms->ms_id);
+
+      if(rval == 0) {
+
+	switch(qtype) {
+	case METADATA_QTYPE_IMDB:
+	  q = sq_is_imdb_id ? sq : rstr_get(mlp->mlp_imdb_id);
+
+	  TRACE(TRACE_DEBUG, "METADATA",
+		"Performing IMDB lookup for %s using %s", q, ms->ms_name);
+
+	  rval = msf->query_by_imdb_id(db, rstr_get(mlp->mlp_url), q);
+	  break;
+
+	case METADATA_QTYPE_FILENAME:
+	case METADATA_QTYPE_DIRECTORY:
+	case METADATA_QTYPE_CUSTOM:
+	  q = sq ?: rstr_get(mlp->mlp_query);
+
+	  TRACE(TRACE_DEBUG, "METADATA",
+		"Performing search lookup for %s (year:%d) using %s",
+		q, sq ? 0 : mlp->mlp_year, ms->ms_name);
+
+	  rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+					      q, sq ? 0 : mlp->mlp_year,
+					      mlp->mlp_duration, qtype);
+	  break;
+
+	default:
+	  continue;
+	}
       }
       if(rval == METADATA_DEADLOCK)
 	return METADATA_DEADLOCK;
       if(rval == METADATA_ERROR)
 	rval = metadb_insert_videoitem(db, rstr_get(mlp->mlp_url), ms->ms_id,
-				       "0", NULL, METAITEM_STATUS_ABSENT, 0);
+				       "0", NULL, METAITEM_STATUS_ABSENT, 0,
+				       qtype);
       if(rval < 0)
 	return rval;
       goto redo;
@@ -771,6 +923,10 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_GENRE].p, md->md_genre);
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_DIRECTOR].p, md->md_director);
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_PRODUCER].p, md->md_producer);
+
+
+    build_info_text(mlp, md);
+
   } else {
 
     int i;
@@ -778,7 +934,7 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
       if(i != MOVIE_PROP_TITLE && i != MOVIE_PROP_YEAR)
 	prop_set_void(mlp->mlp_props[i].p);
 
-    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, mlp->mlp_title);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, mlp->mlp_filename);
 
     if(mlp->mlp_year)
       prop_set_int(mlp->mlp_props[MOVIE_PROP_YEAR].p, mlp->mlp_year);
@@ -787,6 +943,9 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete)
 
     prop_set_void(mlp->mlp_source);
     mlp->mlp_dsid = 0;
+
+    build_info_text(mlp, NULL);
+
   }
 
   prop_set_int(mlp->mlp_loading, 0);
@@ -812,7 +971,7 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp, int complete)
     return;
   }
 
-  int r = mlp_get_video_info0(db, mlp, complete);
+  int r = mlp_get_video_info0(db, mlp, complete, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -857,7 +1016,7 @@ mlp_set_preferred(metadata_lazy_prop_t *mlp, int64_t vid)
     goto again;
   }
 
-  r = mlp_get_video_info0(db, mlp, 1);
+  r = mlp_get_video_info0(db, mlp, 1, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -971,7 +1130,7 @@ mlp_set_source(metadata_lazy_prop_t *mlp, const char *name)
     goto again;
   }
 
-  r = mlp_get_video_info0(db, mlp, 1);
+  r = mlp_get_video_info0(db, mlp, 1, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -1016,32 +1175,164 @@ mlp_sub_source(void *opaque, prop_event_t event, ...)
   va_end(ap);
 }
 
+
+/**
+ *
+ */
+static void
+mlp_refresh_video_info(metadata_lazy_prop_t *mlp)
+{
+  void *db = metadb_get();
+  int r;
+
+ again:
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  r = metadb_item_set_preferred_ds(db, rstr_get(mlp->mlp_url), 0);
+  if(r == METADATA_DEADLOCK) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  r = metadb_videoitem_set_preferred(db, rstr_get(mlp->mlp_url), 0);
+  if(r == METADATA_DEADLOCK) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  r = mlp_get_video_info0(db, mlp, 1, 1);
+  if(r == METADATA_DEADLOCK) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  db_commit(db);
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+static void
+mlp_sub_actions(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_prop_t *mlp = opaque;
+  va_list ap;
+  event_t *e;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    mlp_release(mlp);
+    break;
+
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+      if(!strcmp(e->e_payload, "refreshMetadata")) {
+	mlp_refresh_video_info(mlp);
+	load_alternatives(mlp);
+      }
+    }
+      
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+
+
+/**
+ *
+ */
+static void
+mlp_sub_query(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_prop_t *mlp = opaque;
+  va_list ap;
+  rstr_t *r;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    mlp_release(mlp);
+    break;
+
+  case PROP_SET_RSTRING:
+    r = va_arg(ap, rstr_t *);
+    rstr_set(&mlp->mlp_custom_query, r);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+
 /**
  *
  */
 void
 metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
-			 prop_t *prop, rstr_t *url, rstr_t *title, int year,
+			 prop_t *prop, rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, int duration,
-			 prop_t *options)
+			 prop_t *options, prop_t *root,
+			 rstr_t *dir_name)
 {
   metadata_lazy_prop_t *mlp = *mlpp;
 
   if(mlp != NULL) {
     if(rstr_eq(url, mlp->mlp_url) &&
-       rstr_eq(title, mlp->mlp_title) &&
+       rstr_eq(filename, mlp->mlp_filename) &&
        rstr_eq(imdb_id, mlp->mlp_imdb_id) &&
-       year == mlp->mlp_year && 
        duration == mlp->mlp_duration)
       return;
     metadata_unbind(mlp);
   }
 
   const int too_short = duration > 0 && duration < 300;
+  int querytype;
   
+  rstr_t *filename_title;
+  int filename_year;
+  
+  int filename_score =
+    metadata_filename_to_title(rstr_get(filename),
+			       &filename_year, &filename_title);
+
+  rstr_t *dir_title;
+  int dir_year;
+  int dir_score =
+    metadata_filename_to_title(rstr_get(dir_name),
+			       &dir_year, &dir_title);
+
+  rstr_t *title;
+  int year;
+  if(filename_score >= dir_score) {
+    title = rstr_dup(filename_title);
+    year = filename_year;
+    querytype = METADATA_QTYPE_FILENAME;
+  } else {
+    title = rstr_dup(dir_title);
+    year = dir_year;
+    querytype = METADATA_QTYPE_DIRECTORY;
+  }
+
   TRACE(TRACE_DEBUG, "METADATA",
-	"Lookup movie %s (%d) %s, duration: %d:%02d:%02d%s",
-	rstr_get(title) ?: "<no title>",
+	"Binding metadata for '%s'<score=%d> in '%s'<score=%d> [title:%s] [year: %d] %s, duration: %d:%02d:%02d%s",
+	rstr_get(filename),
+	filename_score,
+	rstr_get(dir_name),
+	dir_score,
+	rstr_get(title),
 	year,
 	rstr_get(imdb_id) ?: "<no IMDB tag>",
 	duration / 3600,
@@ -1049,8 +1340,9 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 	duration % 60,
 	too_short ? " (too short for lookup, skipping)" : "");
 
-  if(too_short)
-    return;
+  if(too_short) {
+    goto done;
+  }
 
   *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
   prop_t *props[MOVIE_PROP_num];
@@ -1070,7 +1362,8 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   props[MOVIE_PROP_PRODUCER]     = prop_create_r(prop, "producer");
 
   mlp->mlp_refcount = 1;
-  mlp->mlp_title = rstr_spn(title, "[(", 1);
+  mlp->mlp_query = rstr_spn(title, "[(", 1);
+  mlp->mlp_filename = rstr_dup(filename);
   mlp->mlp_url = rstr_dup(url);
   mlp->mlp_year = year;
   mlp->mlp_duration = duration;
@@ -1078,17 +1371,31 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   mlp->mlp_loading = prop_create_r(prop, "loading");
   mlp->mlp_source = prop_create_r(prop, "source");
   mlp->mlp_type = METADATA_TYPE_MOVIE;
+  mlp->mlp_title_querytype = querytype;
 
   prop_t *m;
-  prop_vec_t *pv = prop_vec_create(3);
+  prop_vec_t *pv = prop_vec_create(10);
+
+  // Separator
 
   mlp->mlp_title_opt = prop_ref_inc(prop_create_root(NULL));
   prop_set_string(prop_create(mlp->mlp_title_opt, "type"), "separator");
   prop_set_int(prop_create(mlp->mlp_title_opt, "enabled"), 1);
   m = prop_create(mlp->mlp_title_opt, "metadata");
-  prop_link(_p("Metadata"), prop_create(m, "title"));
+  prop_link(_p("Metadata search"), prop_create(m, "title"));
 
   pv = prop_vec_append(pv, mlp->mlp_title_opt);
+
+  // Info
+
+  mlp->mlp_info = prop_ref_inc(prop_create_root(NULL));
+  prop_set_string(prop_create(mlp->mlp_info, "type"), "info");
+  prop_set_int(prop_create(mlp->mlp_info, "enabled"), 1);
+  mlp->mlp_info_text = prop_create_r(prop_create(mlp->mlp_info, "metadata"),
+				     "title");
+
+  pv = prop_vec_append(pv, mlp->mlp_info);
+
 
   // Metadata source selection
 
@@ -1125,27 +1432,73 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   mlp->mlp_refcount++;
 
   pv = prop_vec_append(pv, mlp->mlp_alt_opt);
-  
 
+
+
+  // Metadata search query
+
+  mlp->mlp_sq = prop_ref_inc(prop_create_root(NULL));
+  prop_set_string(prop_create(mlp->mlp_sq, "type"), "string");
+  prop_set_int(prop_create(mlp->mlp_sq, "enabled"), 1);
+  m = prop_create(mlp->mlp_sq, "metadata");
+  prop_set_string(prop_create(mlp->mlp_sq, "action"), "refreshMetadata");
+  prop_link(_p("Custom search query"), prop_create(m, "title"));
+
+  mlp->mlp_sq_sub = 
+    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, mlp_sub_query, mlp,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_ROOT, prop_create(mlp->mlp_sq, "value"),
+		   NULL);
+  mlp->mlp_refcount++;
+
+  pv = prop_vec_append(pv, mlp->mlp_sq);
+    
+
+  // Metadata refresh
+
+  mlp->mlp_refresh = prop_ref_inc(prop_create_root(NULL));
+  prop_set_string(prop_create(mlp->mlp_refresh, "type"), "action");
+  prop_set_string(prop_create(mlp->mlp_refresh, "action"), "refreshMetadata");
+  prop_set_int(prop_create(mlp->mlp_refresh, "enabled"), 1);
+  m = prop_create(mlp->mlp_refresh, "metadata");
+  prop_link(_p("Refresh metadata"), prop_create(m, "title"));
+
+  mlp->mlp_refresh_sub = 
+    prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, mlp_sub_actions, mlp,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_ROOT, root,
+		   NULL);
+  mlp->mlp_refcount++;
+
+  pv = prop_vec_append(pv, mlp->mlp_refresh);
+
+  // Add all options
 
   prop_set_parent_vector(pv, options, NULL, NULL);
   prop_vec_release(pv);
 
   // final setup
   mlp_setup(mlp, props, mlp_get_video_info, 3);
+
+ done:
+  rstr_release(title);
+  rstr_release(filename_title);
+  rstr_release(dir_title);
 }
 
 
 #define isnum(a) ((a) >= '0' && (a) <= '9')
 
 /**
- *
+ * Return a score how likely the string contains a movie title
  */
-rstr_t *
-metadata_filename_to_title(const char *filename, int *yearp)
+static int
+metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 {
-  if(yearp != NULL)
-    *yearp = 0;
+  int score = 0;
+  int year = 0;
 
   char *s = mystrdupa(filename);
 
@@ -1156,14 +1509,14 @@ metadata_filename_to_title(const char *filename, int *yearp)
   if(i > 4 && s[i - 4] == '.') {
     i -= 4;
     s[i] = 0;
+    score++;
   }
 
   while(i > 0) {
     
     if(i > 5 && s[i-5] == '.' &&
        isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) && isnum(s[i-1])) {
-      if(yearp)
-	*yearp = atoi(s + i - 4);
+      year = atoi(s + i - 4);
       i -= 5;
       s[i] = 0;
       continue;
@@ -1172,21 +1525,20 @@ metadata_filename_to_title(const char *filename, int *yearp)
     if(i > 7 && s[i-7] == ' ' && s[i-6] == '(' && 
        isnum(s[i-5]) && isnum(s[i-4]) && isnum(s[i-3]) && isnum(s[i-2]) &&
        s[i-1] == ')') {
-      if(yearp)
-	*yearp = atoi(s + i - 5);
+      year = atoi(s + i - 5);
       i -= 7;
       s[i] = 0;
       continue;
     }
 
-    if(i > 5 && !strncmp(s+i-5, ".720p", 5)) {
-      i -= 5;
+    if(i > 4 && (!strncmp(s+i-4, ".720", 4) || !strncmp(s+i-4, " 720", 4))) {
+      i -= 4;
       s[i] = 0;
       continue;
     }
-    
-    if(i > 6 && !strncmp(s+i-6, ".1080p", 6)) {
-      i -= 6;
+
+    if(i > 5 && (!strncmp(s+i-5, ".1080", 5) || !strncmp(s+i-5, " 1080", 5))) {
+      i -= 5;
       s[i] = 0;
       continue;
     }
@@ -1200,17 +1552,30 @@ metadata_filename_to_title(const char *filename, int *yearp)
     i--;
   }
 
-  i = 0;
-  while(s[i]) {
-    if(s[i] == '.')
+  for(i = 0; s[i]; i++) {
+    if(s[i] == '.') {
       s[i] = ' ';
-    i++;
+      score++;
+    } else if(s[i] == ' ') {
+      score++;
+    }
   }
  
-  if(*yearp < 1900)
-    *yearp = 0;
+  if(year > 1900 && year < 2050)
+    score += 10;
+  else
+    year = 0;
 
-  return rstr_alloc(s);
+  if(s[0] >= 'a' && s[0] <= 'z')
+    score -= 5;
+
+  if(yearp != NULL)
+    *yearp = year;
+
+  if(titlep != NULL)
+    *titlep = rstr_alloc(s);
+
+  return score;
 }
 
 

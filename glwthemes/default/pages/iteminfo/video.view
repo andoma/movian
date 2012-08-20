@@ -32,7 +32,8 @@ widget(container_y, {
 	margin: -4;
 	widget(image, {
 	  width: $ui.width / 6;
-	  source: $args.metadata.icon ?? 
+	  source: $args.metadata.usericon ?? 
+	    $args.metadata.icon ?? 
 	    "dataroot://resources/svg/Movie.svg";
 	});
       });
@@ -131,6 +132,7 @@ widget(container_y, {
 
 
 	widget(label, {
+	  hidden: !$args.metadata.timestamp;
 	  align: left;
 	  caption: '<font color="#888">' + _("File date:") + ' </font>' + 
 	    strftime($args.metadata.timestamp, "%F");

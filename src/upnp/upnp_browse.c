@@ -605,7 +605,7 @@ upnp_browse_resolve(upnp_browse_t *ub)
  *
  */
 static void
-browse_directory(upnp_browse_t *ub)
+browse_directory(upnp_browse_t *ub, const char *title)
 {
   prop_courier_t *pc;
   struct prop_nf *pnf;
@@ -616,7 +616,9 @@ browse_directory(upnp_browse_t *ub)
 		       PROP_NF_AUTODESTROY);
   prop_set_int(ub->ub_canFilter, 1);
 
-  decorated_browse_create(ub->ub_model, pnf, ub->ub_items);
+  rstr_t *t = rstr_alloc(title);
+  decorated_browse_create(ub->ub_model, pnf, ub->ub_items, t);
+  rstr_release(t);
 
   pc = prop_courier_create_waitable();
   ub->ub_run = 1;
@@ -841,7 +843,7 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
   if(!strcmp(cls, "object.container.album.musicAlbum"))
     prop_set_string(ub->ub_contents, "albumTracks");
 
-  browse_directory(ub);
+  browse_directory(ub, name);
 }
 
 

@@ -260,9 +260,12 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
 {
   glw_event_deliverEvent_t *de = (glw_event_deliverEvent_t *)gem;
 
-  if(de->action == NULL)
-    return prop_send_ext_event(de->target, src);
-  
+  if(de->action == NULL) {
+    if(src != NULL)
+      prop_send_ext_event(de->target, src);
+    return;
+  }
+
   src = event_create_action_str(rstr_get(de->action));
   prop_send_ext_event(de->target, src);
   event_release(src);
