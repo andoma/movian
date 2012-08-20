@@ -364,6 +364,8 @@ osk_open(glw_root_t *gr, const char *title, const char *input, glw_t *w,
   if(lv2MemContinerCreate(&gp->osk_container, 2 * 1024 * 1024))
     gp->osk_container = 0xFFFFFFFFU;
 
+  oskSetKeyLayoutOption(3);
+
   int ret = oskLoadAsync(gp->osk_container, &param, &ifi);
 
   if(!ret) {
