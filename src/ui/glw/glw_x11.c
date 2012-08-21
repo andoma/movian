@@ -758,7 +758,7 @@ static const struct {
   { XK_F4,           Mod1Mask,    ACTION_QUIT},
 
   { XF86XK_AudioPause,    0,    ACTION_PLAYPAUSE},
-  { XF86XK_AudioPlay,     0,    ACTION_PLAY},
+  { XF86XK_AudioPlay,     0,    ACTION_PLAYPAUSE},
   { XF86XK_AudioStop,     0,    ACTION_STOP},
   { XF86XK_Eject,         0,    ACTION_EJECT},
   { XF86XK_AudioRecord,   0,    ACTION_RECORD},
