@@ -323,7 +323,7 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   char stash[256];
   const char *key,*lstash;
   char *value;
-  uint32_t maxage;
+  uint32_t len, maxage;
   JSObject *o;
   htsbuf_queue_t out;
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
@@ -344,14 +344,15 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
     return JS_FALSE;
   }
 
-  value = malloc(out.hq_size);
-  value[out.hq_size] = '\0';
-  htsbuf_read(&out, value, out.hq_size);
+  len = out.hq_size;
+  value = malloc(len + 1);
+  value[len] = '\0';
+  htsbuf_read(&out, value, len);
 
   // put json encoded object onto cache
   snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
   TRACE(TRACE_DEBUG,"Storing %s into stash %s", value, stash);
-  blobcache_put(key, stash, value, strlen(value)+1, maxage, NULL, 0);
+  blobcache_put(key, stash, value, len, maxage, NULL, 0);
 
   free(value);
   return JS_TRUE;
