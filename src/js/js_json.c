@@ -351,7 +351,6 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 
   // put json encoded object onto cache
   snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
-  TRACE(TRACE_DEBUG,"Storing %s into stash %s", value, stash);
   blobcache_put(key, stash, value, len, maxage, NULL, 0);
 
   free(value);
