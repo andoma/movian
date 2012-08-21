@@ -37,6 +37,7 @@
 #include "fileaccess/fileaccess.h"
 
 #include "db/db_support.h"
+#include "db/kvstore.h"
 
 #include "video/video_settings.h"
 
@@ -299,6 +300,7 @@ struct metadata_lazy_prop {
   char mlp_num_props;
   unsigned char mlp_type;
   unsigned char mlp_title_querytype;
+  unsigned char mlp_zombie;
 
   int mlp_dsid;
   prop_t *mlp_loading;
@@ -373,10 +375,19 @@ mlp_release(metadata_lazy_prop_t *mlp)
   rstr_release(mlp->mlp_album);
   rstr_release(mlp->mlp_query);
   rstr_release(mlp->mlp_filename);
-  rstr_release(mlp->mlp_url);
   rstr_release(mlp->mlp_imdb_id);
   prop_ref_dec(mlp->mlp_loading);
   prop_ref_dec(mlp->mlp_source);
+
+
+  const char *s = rstr_get(mlp->mlp_custom_query);
+
+  if(s && *s) {
+    kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
+		   "metacustomquery", KVSTORE_SET_STRING, s);
+  }
+
+  rstr_release(mlp->mlp_url);
   rstr_release(mlp->mlp_custom_query);
   free(mlp);
 }
@@ -443,6 +454,7 @@ void
 metadata_unbind(metadata_lazy_prop_t *mlp)
 {
   hts_mutex_lock(&metadata_mutex);
+  mlp->mlp_zombie = 1;
 
   prop_destroy(mlp->mlp_title_opt);
   prop_ref_dec(mlp->mlp_title_opt);
@@ -778,6 +790,7 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
       return r;
   } else {
     refresh = 0;
+    fixed_ds = 0;
   }
 
   prop_set_int(mlp->mlp_loading, 1);
@@ -840,8 +853,9 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
 	  q = sq ?: rstr_get(mlp->mlp_query);
 
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing search lookup for %s (year:%d) using %s",
-		q, sq ? 0 : mlp->mlp_year, ms->ms_name);
+		"Performing search lookup for %s (year:%d) using %s%s",
+		q, sq ? 0 : mlp->mlp_year, ms->ms_name,
+		sq ? ", (custom query string)" : "");
 
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
 					      q, sq ? 0 : mlp->mlp_year,
@@ -926,6 +940,8 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
 
 
     build_info_text(mlp, md);
+
+    metadata_destroy(md);
 
   } else {
 
@@ -1211,6 +1227,7 @@ mlp_refresh_video_info(metadata_lazy_prop_t *mlp)
 
   db_commit(db);
   metadb_close(db);
+  load_alternatives(mlp);
 }
 
 
@@ -1231,6 +1248,9 @@ mlp_sub_actions(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_EXT_EVENT:
+    if(mlp->mlp_zombie)
+      break;
+
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       if(!strcmp(e->e_payload, "refreshMetadata")) {
@@ -1443,12 +1463,21 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   m = prop_create(mlp->mlp_sq, "metadata");
   prop_set_string(prop_create(mlp->mlp_sq, "action"), "refreshMetadata");
   prop_link(_p("Custom search query"), prop_create(m, "title"));
+  prop_t *v = prop_create(mlp->mlp_sq, "value");
+
+  rstr_t *cur = kv_url_opt_get_rstr(rstr_get(url), KVSTORE_DOMAIN_SYS, 
+				    "metacustomquery");
+
+  if(cur != NULL) {
+    prop_set_rstring(v, cur);
+    rstr_release(cur);
+  }
 
   mlp->mlp_sq_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlp_sub_query, mlp,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, prop_create(mlp->mlp_sq, "value"),
+		   PROP_TAG_ROOT, v,
 		   NULL);
   mlp->mlp_refcount++;
 

@@ -219,7 +219,7 @@ js_store_update_bool(void *opaque, int value)
   js_setting_t *jss = opaque;
   settings_update(settings_get_cx(jss), jss, BOOLEAN_TO_JSVAL(!!value));
   if(jss->jss_key != NULL)
-    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN,
 		   jss->jss_key, KVSTORE_SET_INT, !!value);
 }
 
@@ -235,7 +235,7 @@ js_store_update_string(void *opaque, const char *str)
 		  str ? STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str))
 		  : JSVAL_NULL);
   if(jss->jss_key != NULL)
-    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN,
 		   jss->jss_key, KVSTORE_SET_STRING, str);
 }
 
@@ -249,7 +249,7 @@ js_store_update_int(void *opaque, int value)
   js_setting_t *jss = opaque;
   settings_update(settings_get_cx(jss), jss, INT_TO_JSVAL(value));
   if(jss->jss_key != NULL)
-    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN,
+    kv_url_opt_set(jss->jss_jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN,
 		   jss->jss_key, KVSTORE_SET_INT, value);
 }
 
@@ -327,7 +327,7 @@ js_createBool(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   if(persistent && jsg->jsg_kv_url)
-    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, 
+    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN, 
 			     id, def);
 
   jss->jss_s =
@@ -367,7 +367,7 @@ js_createString(JSContext *cx, JSObject *obj, uintN argc,
 
   rstr_t *r = NULL;
   if(persistent && jsg->jsg_kv_url) {
-    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, id);
+    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN, id);
     if(r != NULL)
       def = rstr_get(r);
   }
@@ -459,7 +459,7 @@ js_createMultiOpt(JSContext *cx, JSObject *obj, uintN argc,
 
   rstr_t *r = NULL;
   if(persistent && jsg->jsg_kv_url)
-    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, id);
+    r = kv_url_opt_get_rstr(jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN, id);
 
   add_multiopt(cx, jss, options, rstr_get(r));
 
@@ -541,7 +541,7 @@ js_createInt(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
 
   if(persistent && jsg->jsg_kv_url)
-    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_PAGE_DOMAIN_PLUGIN, 
+    def = kv_url_opt_get_int(jsg->jsg_kv_url, KVSTORE_DOMAIN_PLUGIN, 
 			     id, def);
 
   jss->jss_s =

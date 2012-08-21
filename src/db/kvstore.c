@@ -235,7 +235,7 @@ kv_value_cb(void *opaque, prop_event_t event, ...)
     }
 
     sqlite3_bind_int64(stmt, 1, kpb->kpb_id);
-    sqlite3_bind_int(stmt, 4, KVSTORE_PAGE_DOMAIN_PROP);
+    sqlite3_bind_int(stmt, 4, KVSTORE_DOMAIN_PROP);
 
     va_copy(apx, ap);
 
@@ -378,7 +378,7 @@ kv_prop_bind_create(prop_t *p, const char *url)
     return;
   }
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-  sqlite3_bind_int(stmt, 2, KVSTORE_PAGE_DOMAIN_PROP);
+  sqlite3_bind_int(stmt, 2, KVSTORE_DOMAIN_PROP);
 
   while(db_step(stmt) == SQLITE_ROW) {
     if(id == -1)

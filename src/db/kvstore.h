@@ -12,9 +12,9 @@ void kv_prop_bind_create(prop_t *p, const char *url);
 
 // Direct access
 
-#define KVSTORE_PAGE_DOMAIN_SYS    1
-#define KVSTORE_PAGE_DOMAIN_PROP   2
-#define KVSTORE_PAGE_DOMAIN_PLUGIN 3
+#define KVSTORE_DOMAIN_SYS    1
+#define KVSTORE_DOMAIN_PROP   2
+#define KVSTORE_DOMAIN_PLUGIN 3
 
 rstr_t *kv_url_opt_get_rstr(const char *url, int domain, const char *key);
 
