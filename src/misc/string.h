@@ -49,6 +49,8 @@ void strappend(char **strp, const char *src);
 
 int hex2bin(uint8_t *buf, size_t buflen, const char *str);
 
+void bin2hex(char *dst, size_t dstlen, const uint8_t *src, size_t srclen);
+
 void unicode_init(void);
 
 char *url_resolve_relative(const char *proto, const char *hostname, int port,
