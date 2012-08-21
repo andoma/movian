@@ -128,6 +128,12 @@ JSBool js_json_encode(JSContext *cx, JSObject *obj,
 JSBool  js_json_decode(JSContext *cx, JSObject *obj,
 		       uintN argc, jsval *argv, jsval *rval);
 
+JSBool js_cache_put(JSContext *cx, JSObject *obj, uintN argc,
+		    jsval *argv, jsval *rval);
+
+JSBool js_cache_get(JSContext *cx, JSObject *obj, uintN argc,
+		    jsval *argv, jsval *rval);
+
 struct http_auth_req;
 int js_http_auth_try(const char *url, struct http_auth_req *har);
 
