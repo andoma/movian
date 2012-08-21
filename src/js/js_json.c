@@ -1,6 +1,7 @@
 /*
  *  Fast JSPAI JSON encoder / decoder
  *  Copyright (C) 2011 Andreas Öman
+ *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,7 +23,7 @@
 #include "misc/dbl.h"
 #include "misc/json.h"
 #include "js.h"
-
+#include "blobcache.h"
 
 static int json_encode_from_object(JSContext *cx, JSObject *obj,
 				   htsbuf_queue_t *out);
@@ -310,5 +311,93 @@ js_json_decode(JSContext *cx, JSObject *obj,
     JS_ReportError(cx, "Invalid JSON -- %s", errbuf);
     return JS_FALSE;
   }
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+JSBool
+js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+  char stash[256];
+  const char *key,*lstash;
+  char *value;
+  uint32_t maxage;
+  JSObject *o;
+  htsbuf_queue_t out;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ssou",
+			   &lstash, &key, &o, &maxage))
+    return JS_FALSE;
+
+  if (o == NULL) {
+    JS_ReportError(cx, "Not an object");
+    return JS_FALSE;
+  }
+
+  // json encode object
+  htsbuf_queue_init(&out, 0);
+  if (json_encode_from_object(cx, o, &out) != 0) {
+    JS_ReportError(cx, "Not an JSON object");
+    return JS_FALSE;
+  }
+
+  value = malloc(out.hq_size);
+  value[out.hq_size] = '\0';
+  htsbuf_read(&out, value, out.hq_size);
+
+  // put json encoded object onto cache
+  snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
+  TRACE(TRACE_DEBUG,"Storing %s into stash %s", value, stash);
+  blobcache_put(key, stash, value, strlen(value)+1, maxage, NULL, 0);
+
+  free(value);
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+JSBool
+js_cache_get(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
+{
+  void *value;
+  size_t vsize;
+  char stash[256];
+  char errbuf[256];
+  const char *key,*lstash;
+  JSObject *o;
+
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ss", &lstash, &key))
+    return JS_FALSE;
+
+  // fetch json from cache
+  snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
+  value = blobcache_get(key, stash, &vsize, 0, NULL, NULL, NULL);
+
+  if(value == NULL) {
+    *rval = OBJECT_TO_JSVAL(NULL);
+    return JS_TRUE;
+  }
+
+  // deserialize into json object
+  if(!JS_EnterLocalRootScope(cx))
+    return JS_FALSE;
+
+  o = json_deserialize(value, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
+
+  *rval = OBJECT_TO_JSVAL(o);
+
+  JS_LeaveLocalRootScope(cx);
+
+  if(o == NULL) {
+    JS_ReportError(cx, "Invalid JSON stored in cache -- %s", errbuf);
+    return JS_FALSE;
+  }
+
   return JS_TRUE;
 }
