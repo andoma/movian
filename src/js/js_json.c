@@ -345,7 +345,7 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   }
 
   len = out.hq_size;
-  value = malloc(len + 1);
+  value = JS_malloc(cx,len + 1);
   value[len] = '\0';
   htsbuf_read(&out, value, len);
 
@@ -353,7 +353,6 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
   blobcache_put(key, stash, value, len, maxage, NULL, 0);
 
-  free(value);
   return JS_TRUE;
 }
 
