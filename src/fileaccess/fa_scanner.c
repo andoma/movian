@@ -855,7 +855,8 @@ fa_scanner(const char *url, time_t url_mtime,
 
 
 
-  decorated_browse_create(model, pnf, source, title);
+  decorated_browse_create(model, pnf, source, title,
+			  DECO_FLAGS_DURATION_PRESENT);
 
   s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;

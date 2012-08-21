@@ -71,6 +71,8 @@ typedef struct deco_browse {
 
   rstr_t *db_title;
 
+  int db_flags;
+
 } deco_browse_t;
 
 
@@ -137,6 +139,9 @@ analyze_video(deco_item_t *di)
     return;
   
   deco_browse_t *db = di->di_db;
+
+  if((db->db_flags & DECO_FLAGS_DURATION_PRESENT) && di->di_duration == 0)
+    return;
 
   metadata_bind_movie_info(&di->di_mlp, di->di_metadata,
 			   di->di_url, di->di_filename,
@@ -799,7 +804,7 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
  */
 void
 decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
-			rstr_t *title)
+			rstr_t *title, int flags)
 {
   hts_mutex_lock(&deco_mutex);
 
@@ -816,6 +821,7 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
   db->db_prop_model = prop_ref_inc(model);
   db->db_prop_contents = prop_create_r(model, "contents");
   db->db_title = rstr_dup(title);
+  db->db_flags = flags;
   hts_mutex_unlock(&deco_mutex);
 }
 

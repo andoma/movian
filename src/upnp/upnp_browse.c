@@ -617,7 +617,7 @@ browse_directory(upnp_browse_t *ub, const char *title)
   prop_set_int(ub->ub_canFilter, 1);
 
   rstr_t *t = rstr_alloc(title);
-  decorated_browse_create(ub->ub_model, pnf, ub->ub_items, t);
+  decorated_browse_create(ub->ub_model, pnf, ub->ub_items, t, 0);
   rstr_release(t);
 
   pc = prop_courier_create_waitable();
