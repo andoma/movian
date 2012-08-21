@@ -515,8 +515,6 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
     ad_txt_append(&ad, TR_CODE_FONT_FAMILY |
 		  freetype_family_id(as->as_fontname, fontdomain));
 
-  ad_txt_append(&ad, TR_CODE_SIZE_PX | as->as_fontsize);
-
   if(as == &ass_style_default || subtitle_settings.style_override) {
 
     ad_txt_append(&ad, TR_CODE_COLOR | subtitle_settings.color);
@@ -529,6 +527,8 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
   } else {
     int alpha;
     alpha = 255 - (as->as_primary_color >> 24);
+
+    ad_txt_append(&ad, TR_CODE_SIZE_PX | as->as_fontsize);
 
     ad_txt_append(&ad, TR_CODE_COLOR | (as->as_primary_color & 0xffffff));
     ad_txt_append(&ad, TR_CODE_ALPHA | alpha);
