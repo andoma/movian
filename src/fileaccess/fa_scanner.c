@@ -627,7 +627,7 @@ set_sort_order(void *opaque, prop_event_t event, ...)
       if(!strcmp(val, "date"))
 	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
     }
-    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "sortorder", 
+    kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "sortorder", 
 		   KVSTORE_SET_STRING, val);
     rstr_release(r);
     break;
@@ -665,7 +665,7 @@ add_sort_option_type(scanner_t *s, prop_t *model)
   if(prop_set_parent(on_date, options))
     abort();
 
-  rstr_t *cur = kv_url_opt_get_rstr(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, 
+  rstr_t *cur = kv_url_opt_get_rstr(s->s_url, KVSTORE_DOMAIN_SYS, 
 				    "sortorder");
 
   if(cur != NULL && !strcmp(rstr_get(cur), "date")) {
@@ -715,7 +715,7 @@ set_sort_dirs(void *opaque, prop_event_t event, ...)
   case PROP_SET_INT:
     val = va_arg(ap, int);
     prop_nf_sort(s->s_pnf, val ? "node.type" : NULL, 0, 0, typemap, 1);
-    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "dirsfirst",
+    kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "dirsfirst",
 		   KVSTORE_SET_INT, val);
      break;
 
@@ -735,7 +735,7 @@ add_sort_option_dirfirst(scanner_t *s, prop_t *model)
   prop_t *n = prop_create_root(NULL);
   prop_t *m = prop_create(n, "metadata");
   prop_t *value = prop_create(n, "value");
-  int v = kv_url_opt_get_int(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "dirsfirst", 1);
+  int v = kv_url_opt_get_int(s->s_url, KVSTORE_DOMAIN_SYS, "dirsfirst", 1);
 
   prop_set_string(prop_create(n, "type"), "bool");
   prop_set_int(prop_create(n, "enabled"), 1);
@@ -774,7 +774,7 @@ set_only_supported_files(void *opaque, prop_event_t event, ...)
     
   case PROP_SET_INT:
     val = va_arg(ap, int);
-    kv_url_opt_set(s->s_url, KVSTORE_PAGE_DOMAIN_SYS, "supportedfiles",
+    kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "supportedfiles",
 		   KVSTORE_SET_INT, val);
      break;
 
@@ -794,7 +794,7 @@ add_only_supported_files(scanner_t *s, prop_t *model,
   prop_t *n = prop_create_root(NULL);
   prop_t *m = prop_create(n, "metadata");
   prop_t *value = *valp = prop_create(n, "value");
-  int v = kv_url_opt_get_int(s->s_url, KVSTORE_PAGE_DOMAIN_SYS,
+  int v = kv_url_opt_get_int(s->s_url, KVSTORE_DOMAIN_SYS,
 			     "supportedfiles", 1);
 
   prop_set_string(prop_create(n, "type"), "bool");
