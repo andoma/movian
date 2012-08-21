@@ -133,7 +133,7 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_url == NULL || di->di_duration == 0 || di->di_filename == NULL)
+  if(di->di_url == NULL || di->di_filename == NULL)
     return;
   
   deco_browse_t *db = di->di_db;
