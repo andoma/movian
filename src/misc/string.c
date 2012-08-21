@@ -990,6 +990,23 @@ hex2bin(uint8_t *buf, size_t buflen, const char *str)
 
 
 /**
+ *
+ */
+void
+bin2hex(char *dst, size_t dstlen, const uint8_t *src, size_t srclen)
+{
+  while(dstlen > 2 && srclen > 0) {
+    *dst++ = "0123456789abcdef"[*src >> 4];
+    *dst++ = "0123456789abcdef"[*src & 0xf];
+    src++;
+    srclen--;
+    dstlen -= 2;
+  }
+  *dst = 0;
+}
+
+
+/**
  * Create URL using ref referred from base
  */
 char *
