@@ -352,6 +352,10 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  /* Initialize htsmsg_store() */
+  htsmsg_store_init();
+
+
   /* Initialize settings */
   settings_init();
 
@@ -382,9 +386,6 @@ main(int argc, char **argv)
 	  showtime_persistent_path, strerror(r));
     showtime_persistent_path = NULL;
   }
-
-  /* Initialize htsmsg_store() */
-  htsmsg_store_init();
 
   /* Metadata init */
   metadata_init();

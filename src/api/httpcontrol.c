@@ -227,7 +227,6 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
   return HTTP_STATUS_OK;
 }
 
-#if ENABLE_BINREPLACE
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -242,9 +241,12 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 	      http_cmd_t method)
 {
   extern char *showtime_bin;
-
+  extern int enable_bin_replace;
   if(showtime_bin == NULL)
     return HTTP_STATUS_PRECONDITION_FAILED;
+
+  if(!enable_bin_replace)
+    return 403;
 
   size_t len;
   void *data = http_get_post_data(hc, &len, 0);
@@ -269,8 +271,6 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
   showtime_shutdown(13);
   return HTTP_STATUS_OK;
 }
-#endif
-
 
 
 /**
@@ -482,8 +482,6 @@ httpcontrol_init(void)
   http_path_add("/showtime/notifyuser", NULL, hc_notify_user, 1);
   http_path_add("/showtime/diag", NULL, hc_diagnostics, 1);
   http_path_add("/showtime/logfile", NULL, hc_logfile, 0);
-#if ENABLE_BINREPLACE
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
-#endif
 }
 

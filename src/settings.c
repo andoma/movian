@@ -36,7 +36,7 @@
 static prop_t *settings_root;
 static prop_t *settings_nodes;
 
-prop_t *settings_apps, *settings_sd, *settings_general;
+prop_t *settings_apps, *settings_sd, *settings_general, *settings_dev;
 
 /**
  *
@@ -59,6 +59,8 @@ struct setting {
   char *s_initial_value;
   char *s_first;
 };
+
+static void init_dev_settings(void);
 
 
 /**
@@ -686,7 +688,12 @@ settings_init(void)
   settings_general = settings_add_dir(NULL, _p("General"), NULL, NULL,
 				      _p("System related settings"),
 				      "settings:general");
+
+  // Developer settings, only available via its URI
+
+  init_dev_settings();
 }
+
 
 
 /**
@@ -741,4 +748,55 @@ settings_generic_set_bool(void *opaque, int value)
 {
   int *p = opaque;
   *p = value;
+}
+
+
+
+/**
+ *
+ */
+
+int enable_bin_replace;
+int enable_omnigrade;
+
+
+static void
+init_dev_settings(void)
+{
+  htsmsg_t *store;
+
+  if((store = htsmsg_store_load("dev")) == NULL)
+    store = htsmsg_create_map();
+
+  settings_dev = settings_add_dir(prop_create_root(NULL),
+				  _p("Developer settings"), NULL, NULL,
+				  _p("Settings useful for developers"),
+				  "settings:dev");
+
+  prop_t *r = setting_add(settings_dev, NULL, "info", 0);
+  prop_set_string(prop_create(r, "description"),
+		  "Settings for developers. If you don't know what this is, don't touch it");
+
+
+  prop_t *t;
+  
+  t = prop_create_root(NULL);
+  prop_set_string(t, "Enable binrelpace");
+
+  settings_create_bool(settings_dev, "binreplace", t, 0,
+		       store, settings_generic_set_bool, &enable_bin_replace, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+
+  t = prop_create_root(NULL);
+  prop_set_string(t, "Enable omnigrade");
+
+  settings_create_bool(settings_dev, "omnigrade", t, 0,
+		       store, settings_generic_set_bool, &enable_omnigrade, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+
+
 }
