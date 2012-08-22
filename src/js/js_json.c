@@ -421,18 +421,16 @@ js_get_descriptor(JSContext *cx, JSObject *obj,
   if (pe == NULL)
     return JS_FALSE;
 
-  TRACE(TRACE_DEBUG, "JS", "%s", pdesc);
-
   snprintf(pe + 1, sizeof(pdesc) - (pe - pdesc), "plugin.json");
 
   desc = fa_load(pdesc, NULL, NULL, errbuf, sizeof(errbuf), 
 		NULL, 0, NULL, NULL);
-  if(desc == NULL) {
+  if (desc == NULL) {
     TRACE(TRACE_ERROR, "JS", "Unable to read %s -- %s", pdesc, errbuf);
     return JS_FALSE;
   }
 
-  if(!JS_EnterLocalRootScope(cx))
+  if (!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
 
   o = json_deserialize(desc, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
