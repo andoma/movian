@@ -196,12 +196,10 @@ arch_exit(int retcode)
   if(retcode == 10)
     Lv2Syscall3(379, 0x100, 0, 0 );
 
-#if ENABLE_BINREPLACE
   extern char *showtime_bin;
 
   if(retcode == SHOWTIME_EXIT_RESTART)
     sysProcessExitSpawn2(showtime_bin, 0, 0, 0, 0, 1200, 0x70);
-#endif
 
   exit(retcode);
 }
