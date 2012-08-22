@@ -301,6 +301,70 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 
 
 /**
+ *
+ */
+static void
+select_audio_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
+{
+  TRACE(TRACE_DEBUG, "Video", "Selecting audio track %s", id);
+
+  if(!strcmp(id, "audio:off")) {
+    prop_set_string(mp->mp_prop_audio_track_current, id);
+    mp->mp_audio.mq_stream = -1;
+    
+  } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+    unsigned int idx = atoi(id + strlen("libav:"));
+    if(idx < fctx->nb_streams) {
+      AVCodecContext *ctx = fctx->streams[idx]->codec;
+      if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
+	mp->mp_audio.mq_stream = idx;
+	    prop_set_string(mp->mp_prop_audio_track_current, id);
+      }
+    }
+  }
+
+}
+
+
+/**
+ *
+ */
+static void
+select_subtitle_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
+{
+  TRACE(TRACE_DEBUG, "Video", "Selecting subtitle track %s",
+	id);
+
+  mp_send_cmd_head(mp, &mp->mp_video, MB_FLUSH_SUBTITLES);
+
+  if(!strcmp(id, "sub:off")) {
+    prop_set_string(mp->mp_prop_subtitle_track_current, id);
+    mp->mp_video.mq_stream2 = -1;
+
+    mp_load_ext_sub(mp, NULL);
+
+  } else if(!strncmp(id, "libav:", strlen("libav:"))) {
+    unsigned int idx = atoi(id + strlen("libav:"));
+    if(idx < fctx->nb_streams) {
+      AVCodecContext *ctx = fctx->streams[idx]->codec;
+      if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
+	mp_load_ext_sub(mp, NULL);
+	mp->mp_video.mq_stream2 = idx;
+	prop_set_string(mp->mp_prop_subtitle_track_current, id);
+      }
+    }
+  } else  {
+
+    mp->mp_video.mq_stream2 = -1;
+    prop_set_string(mp->mp_prop_subtitle_track_current, id);
+
+    mp_load_ext_sub(mp, id);
+  }
+}
+
+
+
+/**
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
@@ -495,57 +559,11 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
     } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
-
-      TRACE(TRACE_DEBUG, "Video", "Selecting subtitle track %s",
-	    est->id);
-
-      mp_send_cmd_head(mp, &mp->mp_video, MB_FLUSH_SUBTITLES);
-
-      if(!strcmp(est->id, "sub:off")) {
-	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
-	mp->mp_video.mq_stream2 = -1;
-
-	mp_load_ext_sub(mp, NULL);
-
-      } else if(!strncmp(est->id, "libav:", strlen("libav:"))) {
-	unsigned int idx = atoi(est->id + strlen("libav:"));
-	if(idx < fctx->nb_streams) {
-	  AVCodecContext *ctx = fctx->streams[idx]->codec;
-	  if(ctx->codec_type == AVMEDIA_TYPE_SUBTITLE) {
-	    mp_load_ext_sub(mp, NULL);
-	    mp->mp_video.mq_stream2 = idx;
-	    prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
-	  }
-	}
-      } else  {
-
-	mp->mp_video.mq_stream2 = -1;
-	prop_set_string(mp->mp_prop_subtitle_track_current, est->id);
-
-	mp_load_ext_sub(mp, est->id);
-      }
-
+      select_subtitle_track(mp, fctx, est->id);
 
     } else if(event_is_type(e, EVENT_SELECT_AUDIO_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
-
-      TRACE(TRACE_DEBUG, "Video", "Selecting audio track %s",
-	    est->id);
-
-      if(!strcmp(est->id, "audio:off")) {
-	prop_set_string(mp->mp_prop_audio_track_current, est->id);
-	mp->mp_audio.mq_stream = -1;
-
-      } else if(!strncmp(est->id, "libav:", strlen("libav:"))) {
-	unsigned int idx = atoi(est->id + strlen("libav:"));
-	if(idx < fctx->nb_streams) {
-	  AVCodecContext *ctx = fctx->streams[idx]->codec;
-	  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-	    mp->mp_audio.mq_stream = idx;
-	    prop_set_string(mp->mp_prop_audio_track_current, est->id);
-	  }
-	}
-      }
+      select_audio_track(mp, fctx, est->id);
 
     } else if(event_is_action(e, ACTION_SKIP_FORWARD)) {
       // TODO: chapter support

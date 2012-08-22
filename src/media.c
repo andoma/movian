@@ -39,6 +39,7 @@
 #include "video/video_settings.h"
 #include "video/video_overlay.h"
 #include "settings.h"
+#include "db/kvstore.h"
 
 // -- Video accelerators ---------
 
@@ -86,6 +87,8 @@ static void track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm,
 static void track_mgr_destroy(media_track_mgr_t *mtm);
 
 static void track_mgr_next_track(media_track_mgr_t *mtm);
+
+static void mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est);
 
 uint8_t HTS_JOIN(sp, k0)[321];
 
@@ -297,6 +300,8 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_prop_io = prop_create(mp->mp_prop_root, "io");
   mp->mp_prop_notifications = prop_create(mp->mp_prop_root, "notifications");
+  mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
+
 
   //--------------------------------------------------
   // Video
@@ -367,8 +372,6 @@ mp_create(const char *name, int flags, const char *type)
   prop_set_int(mp->mp_prop_shuffle, 0);
   mp->mp_prop_repeat      = prop_create(mp->mp_prop_root, "repeat");
   prop_set_int(mp->mp_prop_repeat, 0);
-
-  mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
   mp->mp_prop_avdiff      = prop_create(mp->mp_prop_root, "avdiff");
   mp->mp_prop_avdiff_error= prop_create(mp->mp_prop_root, "avdiffError");
@@ -623,10 +626,14 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
   switch(e->e_type_x) {
   case EVENT_SELECT_AUDIO_TRACK:
-    mp->mp_audio_track_mgr.mtm_user_set |= est->manual;
+    mtm_select_track(&mp->mp_audio_track_mgr, est);
+
+    //    mp->mp_audio_track_mgr.mtm_user_set |= est->manual;
     break;
   case EVENT_SELECT_SUBTITLE_TRACK:
-    mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
+    mtm_select_track(&mp->mp_subtitle_track_mgr, est);
+
+    //    mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
     break;
   case EVENT_DELTA_SEEK:
     ei = (event_int_t *)e;
@@ -1900,6 +1907,17 @@ mtm_rethink(media_track_mgr_t *mtm)
        mt->mt_isolang_score == -1)
       continue;
 
+    if(mtm->mtm_user_pref != NULL && !strcmp(rstr_get(mtm->mtm_user_pref),
+					     mt->mt_url)) {
+
+      mtm->mtm_user_set = 1;
+      event_t *e = event_create_select_track(mt->mt_url,
+					     mtm_event_type(mtm), 0);
+      mp_enqueue_event_locked(mtm->mtm_mp, e);
+      event_release(e);
+      return;
+    }
+
     if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
       continue;
 
@@ -2115,6 +2133,24 @@ mtm_set_current(void *opaque, const char *str)
   mtm_rethink(mtm);
 }
 
+
+/**
+ *
+ */
+static void
+mtm_set_url(void *opaque, const char *str)
+{
+  rstr_t *r;
+  media_track_mgr_t *mtm = opaque;
+
+  mystrset(&mtm->mtm_canonical_url, str);
+  r = kv_url_opt_get_rstr(str, KVSTORE_DOMAIN_SYS, 
+			  mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ?
+			  "audioTrack" : "subtitleTrack");
+  rstr_set(&mtm->mtm_user_pref, r);
+  rstr_release(r);
+}
+
 /**
  *
  */
@@ -2139,6 +2175,13 @@ track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm, prop_t *root,
 		   PROP_TAG_COURIER, mp->mp_pc,
 		   PROP_TAG_ROOT, current,
 		   NULL);
+
+  mtm->mtm_url_sub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_STRING, mtm_set_url, mtm,
+		   PROP_TAG_COURIER, mp->mp_pc,
+		   PROP_TAG_ROOT, mp->mp_prop_url,
+		   NULL);
 }
 
 
@@ -2150,8 +2193,11 @@ track_mgr_destroy(media_track_mgr_t *mtm)
 {
   prop_unsubscribe(mtm->mtm_node_sub);
   prop_unsubscribe(mtm->mtm_current_sub);
+  prop_unsubscribe(mtm->mtm_url_sub);
   mtm_clear(mtm);
   free(mtm->mtm_current_url);
+  free(mtm->mtm_canonical_url);
+  rstr_release(mtm->mtm_user_pref);
 }
 
 
@@ -2180,6 +2226,27 @@ track_mgr_next_track(media_track_mgr_t *mtm)
 
   hts_mutex_unlock(&mp->mp_mutex);
 }
+
+
+/**
+ *
+ */
+static void
+mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
+{
+  if(!est->manual)
+    return;
+
+  mtm->mtm_user_set = 1;
+  if(!mtm->mtm_canonical_url)
+    return;
+
+  kv_url_opt_set(mtm->mtm_canonical_url, KVSTORE_DOMAIN_SYS,
+		 mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ?
+		 "audioTrack" : "subtitleTrack",
+		 KVSTORE_SET_STRING, est->id);
+}
+
 
 
 /**

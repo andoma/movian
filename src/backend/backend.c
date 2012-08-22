@@ -31,6 +31,7 @@
 #include "notifications.h"
 #include "misc/pixmap.h"
 #include "htsmsg/htsmsg_json.h"
+#include "media.h"
 
 prop_t *global_sources; // Move someplace else
 
@@ -93,6 +94,8 @@ backend_play_video(const char *url, struct media_pipe *mp,
     snprintf(errbuf, errlen, "No backend for URL");
     return NULL;
   }
+
+  mp_set_url(mp, canonical_url);
 
   return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
 			   canonical_url);
