@@ -247,7 +247,7 @@ install(void)
 
   int r = http_request(download_url, NULL, &result, &result_size,
 		       errbuf, sizeof(errbuf), NULL, NULL, FA_DEBUG,
-		       NULL, NULL, NULL, download_callback, NULL);
+		       NULL, NULL, NULL, download_callback, NULL, NULL);
   
   if(r) {
     install_error(errbuf);
