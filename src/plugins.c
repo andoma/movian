@@ -39,7 +39,8 @@
 #endif
 
 
-const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
+const char *plugin_repo_original_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
+static char *plugin_repo_url;
 extern char *showtime_persistent_path;
 static hts_mutex_t plugin_mutex;
 static char *devplugin;
@@ -93,6 +94,18 @@ static void plugin_remove(plugin_t *pl);
 static void plugin_autoupgrade(void);
 
 static int autoupgrade;
+
+/**
+ *
+ */
+static void
+set_plugin_repo_url(void *opaque, const char *value) 
+{
+  hts_mutex_lock(&plugin_mutex);
+  mystrset(&plugin_repo_url, value);
+
+  hts_mutex_unlock(&plugin_mutex);
+}
 
 /**
  *
@@ -700,6 +713,12 @@ plugins_setup_root_props(void)
 	    prop_create(prop_create(p, "metadata"), "title"));
   prop_set_string(prop_create(p, "url"), "plugin:repo");
 
+  settings_create_string(sta, "plugin_repo_url", _p("Plugin Repository URL"),
+		       plugin_repo_original_url, store, set_plugin_repo_url, NULL,
+		       SETTINGS_RAW_NODES | SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"pluginconf");
+
   settings_create_bool(sta, "autoupgrade", _p("Automatically upgrade plugins"),
 		       1, store, set_autoupgrade, NULL,
 		       SETTINGS_RAW_NODES | SETTINGS_INITIAL_UPDATE, NULL,
@@ -744,8 +763,7 @@ plugin_thread(void *aux)
 void
 plugins_init(const char *loadme, const char *repo, int sync_init)
 {
-  if(repo)
-     plugin_repo_url = repo;
+  plugin_repo_url = strdup(repo ?: plugin_repo_original_url);
   hts_mutex_init(&plugin_mutex);
   plugin_courier = prop_courier_create_waitable();
 
