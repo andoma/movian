@@ -68,7 +68,7 @@ static blobcache_item_t *hashvector[ITEM_HASH_SIZE];
 
 static pool_t *item_pool;
 static hts_mutex_t cache_lock;
-
+static int zombie;
 
 
 
@@ -164,13 +164,11 @@ save_index(void)
   if(fd == -1)
     return;
 
-  hts_mutex_lock(&cache_lock);
   int tot = pool_num(item_pool);
 
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
   if(out == NULL) {
-    hts_mutex_unlock(&cache_lock);
     close(fd);
     return;
   }
@@ -187,7 +185,6 @@ save_index(void)
       di->di_size         = p->bi_size;
     }
   }
-  hts_mutex_unlock(&cache_lock);
 
   sha1_decl(shactx);
   sha1_init(shactx);
@@ -295,6 +292,11 @@ blobcache_put(const char *key, const char *stash,
   blobcache_item_t *p;
 
   hts_mutex_lock(&cache_lock);
+  if(zombie) {
+    hts_mutex_unlock(&cache_lock);
+    return 0;
+  }
+
   for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
     if(p->bi_key_hash == dk)
       break;
@@ -363,10 +365,15 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   uint32_t now;
 
   hts_mutex_lock(&cache_lock);
-  for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
-    if(p->bi_key_hash == dk)
-      break;
-  
+
+  if(zombie) {
+    p = NULL;
+  } else {
+    for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
+      if(p->bi_key_hash == dk)
+	break;
+  }
+
   if(p == NULL) {
     hts_mutex_unlock(&cache_lock);
     return NULL;
@@ -442,10 +449,14 @@ blobcache_get_meta(const char *key, const char *stash,
   blobcache_item_t *p;
   int r;
   hts_mutex_lock(&cache_lock);
-  for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
-    if(p->bi_key_hash == dk)
-      break;
-  
+  if(zombie) {
+    p = NULL;
+  } else {
+    for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
+      if(p->bi_key_hash == dk)
+	break;
+  }
+
   if(p != NULL) {
     r = 0;
 
@@ -555,10 +566,13 @@ static void
 prune_to_size(void)
 {
   int i, tot, j = 0;
-  uint64_t maxsize = blobcache_compute_maxsize();
   blobcache_item_t *p, **sv;
 
   hts_mutex_lock(&cache_lock);
+  if(zombie)
+    goto out;
+
+  uint64_t maxsize = blobcache_compute_maxsize();
   tot = pool_num(item_pool);
 
   sv = malloc(sizeof(blobcache_item_t *) * tot);
@@ -589,8 +603,9 @@ prune_to_size(void)
   }
 
   free(sv);
-  hts_mutex_unlock(&cache_lock);
   save_index();
+ out:
+  hts_mutex_unlock(&cache_lock);
 }
 
 
@@ -659,8 +674,8 @@ cache_clear(void *opaque, prop_event_t event, ...)
     hashvector[i] = NULL;
   }
   current_cache_size = 0;
-  hts_mutex_unlock(&cache_lock);
   save_index();
+  hts_mutex_unlock(&cache_lock);
   notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Cache cleared"));
 }
 
@@ -696,7 +711,10 @@ blobcache_init(void)
 void
 blobcache_fini(void)
 {
+  hts_mutex_lock(&cache_lock);
+  zombie = 1;
   save_index();
+  hts_mutex_unlock(&cache_lock);
 }
 
 /**
