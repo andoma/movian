@@ -277,10 +277,13 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 {
   pos = FFMAX(0, FFMIN(fctx->duration, pos)) + fctx->start_time;
 
-  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f", txt, 
-	(pos - fctx->start_time) / 1000000.0);
+  TRACE(TRACE_DEBUG, "Video", "seek %s to %.2f (%"PRId64" - %"PRId64")", txt, 
+	(pos - fctx->start_time) / 1000000.0,
+	pos, fctx->start_time);
 
-  av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD);
+  if(av_seek_frame(fctx, -1, pos, AVSEEK_FLAG_BACKWARD)) {
+    TRACE(TRACE_ERROR, "Video", "Seek failed");
+  }
 
   mp->mp_video.mq_seektarget = pos;
   mp->mp_audio.mq_seektarget = pos;
@@ -485,13 +488,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      
-      ts = ets->ts + fctx->start_time;
-
-      if(ts < fctx->start_time)
-	ts = fctx->start_time;
-
-      video_seek(fctx, mp, &mb, ts, "direct");
+      video_seek(fctx, mp, &mb, ets->ts, "direct");
 
     } else if(event_is_action(e, ACTION_STOP)) {
       mp_set_playstatus_stop(mp);
