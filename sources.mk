@@ -38,6 +38,7 @@ SRCS += src/main.c \
 	src/ui/ui.c \
 	src/keymapper.c \
 	src/plugins.c \
+	src/upgrade.c \
 	src/blobcache_file.c \
 	src/i18n.c \
 	src/prop/prop_core.c \
