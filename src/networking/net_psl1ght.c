@@ -60,6 +60,9 @@ polarssl_read(tcpcon_t *tc, void *buf, size_t len, int all,
     if(ret < 0) 
       return -1;
     tot += ret;
+    if(cb != NULL)
+      if(cb(opaque, tot))
+	return -1;
   }
   return tot;
 }
