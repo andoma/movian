@@ -162,7 +162,8 @@ check_upgrade(void)
 
   prop_set(upgrade_root, "size", NULL, PROP_SET_INT, dlsize);
 
-  int canUpgrade = 0;
+  extern int enable_omnigrade; // dev feature
+  int canUpgrade = enable_omnigrade;
   
   if(s != NULL) {
     int current_ver = showtime_get_version_int();

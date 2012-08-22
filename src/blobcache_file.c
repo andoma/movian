@@ -166,6 +166,8 @@ save_index(void)
 
   int tot = pool_num(item_pool);
 
+  TRACE(TRACE_DEBUG, "bc", "Saving index for %d items", tot);
+
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
   if(out == NULL) {
@@ -195,7 +197,10 @@ save_index(void)
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
   free(out);
+  TRACE(TRACE_DEBUG, "bc", "Saving index for %d items done", tot);
+
   close(fd);
+
 }
 
 
