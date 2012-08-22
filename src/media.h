@@ -190,6 +190,7 @@ typedef struct media_track_mgr {
 
   prop_sub_t *mtm_node_sub;
   prop_sub_t *mtm_current_sub;
+  prop_sub_t *mtm_url_sub;
   struct media_track_queue mtm_tracks;
   struct media_track *mtm_suggested_track;
   struct media_track *mtm_current;
@@ -204,6 +205,8 @@ typedef struct media_track_mgr {
 		       anything */
 
   char *mtm_current_url;
+  char *mtm_canonical_url;
+  rstr_t *mtm_user_pref;  // Configured by user
 
 } media_track_mgr_t;
 
