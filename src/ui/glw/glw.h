@@ -120,6 +120,7 @@ typedef enum {
   GLW_ATTRIB_CHILD_TILES_X,
   GLW_ATTRIB_CHILD_TILES_Y,
   GLW_ATTRIB_PAGE,
+  GLW_ATTRIB_PAGE_BY_ID,
   GLW_ATTRIB_ALPHA_EDGES,
   GLW_ATTRIB_PRIORITY,
   GLW_ATTRIB_FILL,
@@ -1154,6 +1155,7 @@ do {						\
   case GLW_ATTRIB_PROP_SELF:			\
   case GLW_ATTRIB_PROP_MODEL:			\
   case GLW_ATTRIB_BIND_TO_ID: 			\
+  case GLW_ATTRIB_PAGE_BY_ID:			\
     (void)va_arg(ap, void *);			\
     break;					\
   case GLW_ATTRIB_MODE:                         \
