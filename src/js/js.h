@@ -134,6 +134,9 @@ JSBool js_cache_put(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_cache_get(JSContext *cx, JSObject *obj, uintN argc,
 		    jsval *argv, jsval *rval);
 
+JSBool js_get_descriptor(JSContext *cx, JSObject *obj, uintN argc,
+			 jsval *argv, jsval *rval);
+
 struct http_auth_req;
 int js_http_auth_try(const char *url, struct http_auth_req *har);
 

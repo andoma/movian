@@ -18,7 +18,9 @@
  */
 
 #include <string.h>
+#include <limits.h>
 
+#include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
 #include "misc/dbl.h"
 #include "misc/json.h"
@@ -397,6 +399,47 @@ js_cache_get(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
     JS_ReportError(cx, "Invalid JSON stored in cache -- %s", errbuf);
     return JS_FALSE;
   }
+
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+JSBool 
+js_get_descriptor(JSContext *cx, JSObject *obj,
+		    uintN argc, jsval *argv, jsval *rval)
+{
+  char pdesc[PATH_MAX];
+  char *pe, *desc;
+  char errbuf[128];
+  JSObject *o;
+  js_plugin_t *jsp = JS_GetPrivate(cx, obj);
+
+  snprintf(pdesc, sizeof(pdesc),"%s", jsp->jsp_url);
+  pe = strrchr(pdesc, '/');
+  if (pe == NULL)
+    return JS_FALSE;
+
+  TRACE(TRACE_DEBUG, "JS", "%s", pdesc);
+
+  snprintf(pe + 1, sizeof(pdesc) - (pe - pdesc), "plugin.json");
+
+  desc = fa_load(pdesc, NULL, NULL, errbuf, sizeof(errbuf), 
+		NULL, 0, NULL, NULL);
+  if(desc == NULL) {
+    TRACE(TRACE_ERROR, "JS", "Unable to read %s -- %s", pdesc, errbuf);
+    return JS_FALSE;
+  }
+
+  if(!JS_EnterLocalRootScope(cx))
+    return JS_FALSE;
+
+  o = json_deserialize(desc, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
+  free(desc);
+  *rval = OBJECT_TO_JSVAL(o);
+
+  JS_LeaveLocalRootScope(cx);
 
   return JS_TRUE;
 }
