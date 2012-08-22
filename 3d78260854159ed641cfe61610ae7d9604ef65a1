@@ -1,0 +1,3 @@
+Fix broken seeking in files that does not start at PTS 0
+
+Fixes #1124
