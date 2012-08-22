@@ -1336,14 +1336,17 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 
   rstr_t *title;
   int year;
+  int chosen_score;
   if(filename_score >= dir_score) {
     title = rstr_dup(filename_title);
     year = filename_year;
+    chosen_score = filename_score;
     querytype = METADATA_QTYPE_FILENAME;
   } else {
     title = rstr_dup(dir_title);
     year = dir_year;
     querytype = METADATA_QTYPE_DIRECTORY;
+    chosen_score = dir_score;
   }
 
   TRACE(TRACE_DEBUG, "METADATA",
@@ -1360,7 +1363,7 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
 	duration % 60,
 	too_short ? " (too short for lookup, skipping)" : "");
 
-  if(too_short) {
+  if(too_short || chosen_score <= 0) {
     goto done;
   }
 
