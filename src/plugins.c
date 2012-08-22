@@ -32,6 +32,7 @@
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "notifications.h"
+#include "upgrade.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -732,8 +733,10 @@ plugin_thread(void *aux)
   hts_mutex_lock(&plugin_mutex);
   plugins_load();
   hts_mutex_unlock(&plugin_mutex);
+  upgrade_init();
   return NULL;
 }
+
 
 /**
  *
@@ -765,6 +768,7 @@ plugins_init(const char *loadme, const char *repo, int sync_init)
 
   if(sync_init) {
     plugins_load();
+    upgrade_init();
   } else {
     hts_thread_create_detached("pluginsinit", plugin_thread, NULL,
 			       THREAD_PRIO_LOW);

@@ -428,6 +428,7 @@ main(int argc, char **argv)
   audio_init();
 
   /* Initialize plugin manager and load plugins */
+  /* Once plugins are initialized it will also start the auto-upgrade system */
   plugins_init(devplugin, plugin_repo, argc > 0);
 
   /* Internationalization */
