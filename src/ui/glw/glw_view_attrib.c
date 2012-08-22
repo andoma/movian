@@ -886,6 +886,41 @@ set_propref(glw_view_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
+/**
+ *
+ */
+static int
+set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	   struct token *t)
+{
+  const char *str;
+
+  switch(t->type) {
+  default:
+    glw_set(ec->w, GLW_ATTRIB_PAGE_BY_ID, NULL, NULL);
+    break;
+
+  case TOKEN_CSTRING:
+    glw_set(ec->w, GLW_ATTRIB_PAGE_BY_ID, t->t_cstring, NULL);
+    break;
+
+  case TOKEN_RSTRING:
+  case TOKEN_LINK:
+    str = rstr_get(t->t_rstring);
+    glw_set(ec->w, GLW_ATTRIB_PAGE_BY_ID, str, NULL);
+    break;
+
+  case TOKEN_INT:
+    glw_set(ec->w, GLW_ATTRIB_PAGE, t->t_int, NULL);
+    break;
+
+  case TOKEN_FLOAT:
+    glw_set(ec->w, GLW_ATTRIB_PAGE, (int)t->t_float, NULL);
+    break;
+  }
+  return 0;
+}
+
 
 /**
  *
@@ -967,7 +1002,7 @@ static const token_attrib_t attribtab[] = {
   {"childTilesX",     set_int,    GLW_ATTRIB_CHILD_TILES_X},
   {"childTilesY",     set_int ,   GLW_ATTRIB_CHILD_TILES_Y},
 
-  {"page",            set_int ,   GLW_ATTRIB_PAGE},
+  {"page",            set_page,   0},
 
   {"alphaEdges",      set_int,    GLW_ATTRIB_ALPHA_EDGES},
   {"priority",        set_int,    GLW_ATTRIB_PRIORITY},

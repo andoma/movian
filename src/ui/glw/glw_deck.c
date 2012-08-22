@@ -245,6 +245,21 @@ set_page(glw_deck_t *gd, int n)
   deck_select_child(&gd->w, c, NULL);
 }
 
+/**
+ *
+ */
+static void
+set_page_by_id(glw_deck_t *gd, const char *str)
+{
+  glw_t *c;
+  if(str == NULL)
+    return;
+  TAILQ_FOREACH(c, &gd->w.glw_childs, glw_parent_link)
+    if(c->glw_id != NULL && !strcmp(c->glw_id, str))
+      break;
+  deck_select_child(&gd->w, c, NULL);
+}
+
 
 /**
  *
@@ -290,6 +305,9 @@ glw_deck_set(glw_t *w, va_list ap)
       break;
     case GLW_ATTRIB_PAGE:
       set_page(gd, va_arg(ap, int));
+      break;
+    case GLW_ATTRIB_PAGE_BY_ID:
+      set_page_by_id(gd, va_arg(ap, char *));
       break;
     default:
       GLW_ATTRIB_CHEW(attrib, ap);
