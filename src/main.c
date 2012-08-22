@@ -549,9 +549,13 @@ finalize(void)
 {
   audio_fini();
   backend_fini();
+  TRACE(TRACE_DEBUG, "core", "Backend finished");
   shutdown_hook_run(0);
+  TRACE(TRACE_DEBUG, "core", "Slow shutdown hooks finished");
   blobcache_fini();
+  TRACE(TRACE_DEBUG, "core", "Blobcache finished");
   metadb_fini();
+  TRACE(TRACE_DEBUG, "core", "Metadb finished");
   kvstore_fini();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
   trace_fini();
