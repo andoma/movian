@@ -41,10 +41,10 @@ TAILQ_HEAD(video_queue_entry_queue, video_queue_entry);
 /**
  *
  */
-typedef struct video_queue {
+struct video_queue {
   prop_sub_t *vq_node_sub;
   struct video_queue_entry_queue vq_entries;
-} video_queue_t;
+};
 
 
 /**
@@ -173,7 +173,8 @@ vsource_load_hls(struct vsource_list *list, const char *url,
 static event_t *
 play_video(const char *url, struct media_pipe *mp,
 	   int flags, int priority,
-	   char *errbuf, size_t errlen)
+	   char *errbuf, size_t errlen,
+	   video_queue_t *vq)
 {
   htsmsg_t *subs, *sources;
   const char *str;
@@ -185,7 +186,7 @@ play_video(const char *url, struct media_pipe *mp,
 
   if(strncmp(url, "videoparams:", strlen("videoparams:"))) 
     return backend_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
-			      priority, errbuf, errlen, NULL, url);
+			      priority, errbuf, errlen, NULL, url, vq);
 
   url += strlen("videoparams:");
   htsmsg_t *m = htsmsg_json_deserialize(url);
@@ -258,15 +259,6 @@ play_video(const char *url, struct media_pipe *mp,
   if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
     flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
-
-  LIST_FOREACH(vs, &vsources, vs_link) {
-    printf("%10d: %s: %s\n",
-	   vs->vs_bitrate, 
-	   vs->vs_mimetype,
-	   vs->vs_url);
-  }
-
-
   vs = LIST_FIRST(&vsources);
   
   if(canonical_url == NULL)
@@ -276,7 +268,7 @@ play_video(const char *url, struct media_pipe *mp,
 
   e = backend_play_video(vs->vs_url, mp, flags, priority, 
 			 errbuf, errlen, vs->vs_mimetype,
-			 canonical_url);
+			 canonical_url, vq);
 
   vsource_cleanup(&vsources);
 
@@ -510,8 +502,9 @@ video_queue_destroy(video_queue_t *vq)
 /**
  *
  */
-static rstr_t *
-video_queue_find_next(video_queue_t *vq, const char *url, int reverse)
+rstr_t *
+video_queue_find_next(video_queue_t *vq, const char *url, int reverse,
+		      int wrap)
 {
   rstr_t *r = NULL;
   video_queue_entry_t *vqe;
@@ -520,13 +513,25 @@ video_queue_find_next(video_queue_t *vq, const char *url, int reverse)
   hts_mutex_lock(&video_queue_mutex);
   TAILQ_FOREACH(vqe, &vq->vq_entries, vqe_link) {
     if(vqe->vqe_url != NULL && !strcmp(url, rstr_get(vqe->vqe_url)) &&
-       vqe->vqe_type != NULL && !strcmp("video", rstr_get(vqe->vqe_type)))
+       vqe->vqe_type != NULL && 
+       (!strcmp("video", rstr_get(vqe->vqe_type)) || 
+	!strcmp("tvchannel", rstr_get(vqe->vqe_type))))
       break;
   }
 
-  if(vqe != NULL)
-    vqe = reverse ? TAILQ_PREV(vqe, video_queue_entry_queue, vqe_link) : 
-      TAILQ_NEXT(vqe, vqe_link);
+  if(vqe != NULL) {
+
+    if(reverse) {
+      vqe = TAILQ_PREV(vqe, video_queue_entry_queue, vqe_link);
+      if(vqe == NULL)
+	vqe = TAILQ_LAST(&vq->vq_entries, video_queue_entry_queue);
+    } else {
+      vqe = TAILQ_NEXT(vqe, vqe_link);
+      if(vqe == NULL)
+	vqe = TAILQ_FIRST(&vq->vq_entries);
+    }
+  }
+
   if(vqe != NULL)
     r = rstr_dup(vqe->vqe_url);
   hts_mutex_unlock(&video_queue_mutex);
@@ -556,7 +561,7 @@ video_player_idle(void *aux)
     if(play_url != NULL) {
       e = play_video(rstr_get(play_url), mp, 
 		     play_flags, play_priority, 
-		     errbuf, sizeof(errbuf));
+		     errbuf, sizeof(errbuf), vq);
       if(e == NULL)
 	prop_set_string(errprop, errbuf);
     }
@@ -605,7 +610,8 @@ video_player_idle(void *aux)
 	event_is_action(e, ACTION_SKIP_BACKWARD);
       if(vq && (video_settings.continuous_playback || force_continuous || skp))
 	next = video_queue_find_next(vq, rstr_get(play_url),
-				     event_is_action(e, ACTION_SKIP_BACKWARD));
+				     event_is_action(e, ACTION_SKIP_BACKWARD), 
+				     0);
       
       if(skp)
 	play_flags |= BACKEND_VIDEO_START_FROM_BEGINNING;

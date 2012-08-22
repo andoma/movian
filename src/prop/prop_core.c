@@ -543,6 +543,11 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
 
   if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
+  } else if(event == PROP_SET_CSTRING) {
+    const char *str = va_arg(ap, const char *);
+    rstr_t *t = rstr_alloc(str);
+    cb(s->hps_opaque, t);
+    rstr_release(t);
   } else if(event == PROP_SET_RLINK) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
   } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {

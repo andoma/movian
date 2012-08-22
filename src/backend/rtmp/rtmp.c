@@ -673,7 +673,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
 	       char *errbuf, size_t errlen,
 	       const char *mimetype,
-	       const char *canonical_url)
+	       const char *canonical_url,
+	       video_queue_t *vq)
 {
   rtmp_t r = {0};
   event_t *e;

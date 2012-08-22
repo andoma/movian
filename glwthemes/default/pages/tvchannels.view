@@ -1,0 +1,88 @@
+#import "theme://common.view"
+
+widget(container_y, {
+
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+  PageTitle($page.model.metadata.title);
+  VerticalSeparator();
+
+  widget(dummy, {
+    height: $ui.size * 2;
+  });
+
+  widget(container_x, {
+    weight: 2;
+  });
+
+  widget(dummy, {
+    height: $ui.size * 2;
+  });
+
+  widget(fader, {
+    filterConstraintY: true;
+    weight: 1;
+    plane: [0,1,0,1];
+    alphaFallOff: 1;
+    blurFallOff: 0.2;
+    widget(mirror, {
+      alpha: 0.4;
+
+      widget(list_x, {
+	spacing: 5;
+
+	scrollThreshold: $ui.width / 10;
+
+	
+	&self.focused = focusedChild();
+	
+	cloner($page.model.nodes, container_z, {
+	  autoRefocusable: true;
+	  focusable: true;
+	  width: $ui.size * 12;
+	  $clone.fd = focusDistance();
+
+	  widget(stencil, {
+	    source: "theme://graphics/stencil.png";
+	    widget(container_z, {
+	      widget(quad, {
+		color: 0;
+		alpha: 0.5;
+	      });
+	      
+	      widget(image, {
+		align: bottom;
+		width: $ui.size * 8;
+		$clone.ready = isReady();
+		source: $self.metadata.icon;
+		color: isFocused() + 0.5;
+	      });
+
+
+	      widget(label, {
+		padding: [0,0,0,$ui.size*0.5];
+		align: bottom;
+		caption: $self.metadata.title;
+		shadow: true;
+		outline: true;
+	      });
+
+	    });
+	  });
+	  
+	  widget(backdrop, {
+	    source: "theme://graphics/border32.png";
+	    border: 16;
+	    alpha: iir(isFocused(), 8) + 0.1;
+	  });
+	});
+      });
+    });
+  });
+
+  widget(dummy, {
+    height: $ui.size * 4;
+  });
+});
+

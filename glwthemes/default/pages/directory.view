@@ -17,6 +17,7 @@ multiopt($view.path,
 
 	 translate($page.model.contents, void,
 		   "album", link(_("Album"), "album.view"),
+		   "tvchannels", link(_("Tvchannels"), "tvchannels.view"),
 		   "images", link(_("Images"), "images.view")
 		    ),
 	 select($page.model.contents == "images", 

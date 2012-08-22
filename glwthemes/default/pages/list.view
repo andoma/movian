@@ -43,6 +43,7 @@ widget(keyintercept, {
 			"action", "action",
 			"info", "info",
 			"plugin", "plugin",
+			"tvchannel", "tvchannel",
 			"keymapentry", "keymapentry"
 		       )
 	      + ".view";
@@ -81,6 +82,7 @@ widget(keyintercept, {
 	source: translate($clone.focused.type, "",
 			  "video", "iteminfo/video.view",
 			  "image", "iteminfo/image.view",
+			  "tvchannel", "iteminfo/tvchannel.view",
 			  "plugin", "iteminfo/plugin.view");
 	  .args ?= $clone.focused;
       });
@@ -88,6 +90,7 @@ widget(keyintercept, {
       $view.showRightPane = translate($clone.focused.type, 0,
 				      "video", 1,
 				      "plugin", 1,
+				      "tvchannel", 1,
 				      "image", 1
 				     );
       });

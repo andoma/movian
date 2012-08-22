@@ -74,12 +74,6 @@ static void attachment_load(struct attachment_list *alist,
 
 static void attachment_unload_all(struct attachment_list *alist);
 
-
-
-static event_t *playlist_play(fa_handle_t *fh, media_pipe_t *mp, int primary,
-			      int flags, char *errbuf, size_t errlen);
-
-
 /**
  *
  */
@@ -666,7 +660,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  int flags, int priority,
 		  char *errbuf, size_t errlen,
 		  const char *mimetype,
-		  const char *canonical_url)
+		  const char *canonical_url,
+		  video_queue_t *vq)
 {
   AVFormatContext *fctx;
   AVCodecContext *ctx;
@@ -674,7 +669,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   int i;
   media_codec_t **cwvec;
   event_t *e;
-  uint8_t buf[64];
 
   uint64_t hash;
   int64_t fsize;
@@ -716,13 +710,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   if(fh == NULL)
     return NULL;
 
-  if(fa_read(fh, buf, sizeof(buf)) == sizeof(buf)) {
-    if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
-      return playlist_play(fh, mp, flags, priority, errbuf, errlen);
-    }
-  }
-
-  
   if(flags & BACKEND_VIDEO_SET_TITLE) {
     char tmp[1024];
     fa_url_get_last_component(tmp, sizeof(tmp), canonical_url);
@@ -913,69 +900,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   return e;
 }
 
-
-/**
- *
- */
-static event_t *
-playlist_play(fa_handle_t *fh, media_pipe_t *mp, int flags,
-	      int priority, char *errbuf, size_t errlen)
-{
-  void *mem;
-  htsmsg_t *xml, *urls, *c;
-  event_t *e;
-  const char *s, *url;
-  int loop;
-  htsmsg_field_t *f;
-  int played_something;
-
-  mem = fa_load_and_close(fh, NULL);
-
-  if((xml = htsmsg_xml_deserialize(mem, errbuf, errlen)) == NULL)
-    return NULL;
-
-  s = htsmsg_get_str_multi(xml, "tags", "showtimeplaylist",
-			   "attrib", "loop", NULL);
-  loop = s != NULL && atoi(s);
-
-  urls = htsmsg_get_map_multi(xml, "tags", "showtimeplaylist", "tags", NULL);
-
-  if(urls == NULL) {
-    htsmsg_destroy(xml);
-    snprintf(errbuf, errlen, "No <url> tags in playlist");
-    return NULL;
-  }
-
-  do {
-    played_something = 0;
-
-    HTSMSG_FOREACH(f, urls) {
-      if(strcmp(f->hmf_name, "url") ||
-	 (c = htsmsg_get_map_by_field(f)) == NULL)
-	continue;
-      int flags2 = flags;
-
-      s = htsmsg_get_str_multi(c, "attrib", "noaudio", NULL);
-
-      if(s && atoi(s))
-	flags2 |= BACKEND_VIDEO_NO_AUDIO;
-
-      url = htsmsg_get_str(c, "cdata");
-      if(url == NULL)
-	continue;
-      e = backend_play_video(url, mp, flags2, priority, errbuf, errlen, NULL,
-			     url);
-      if(!event_is_type(e, EVENT_EOF)) {
-	htsmsg_destroy(xml);
-	return e;
-      }
-      played_something = 1;
-    }
-  } while(played_something && loop);
-  
-  htsmsg_destroy(xml);
-  return event_create_type(EVENT_EOF);
-}
 
 
 /**

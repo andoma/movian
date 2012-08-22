@@ -746,8 +746,8 @@ static const struct {
   { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
   { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
   
-  { XK_Prior,        0,            ACTION_PAGE_UP},
-  { XK_Next,         0,            ACTION_PAGE_DOWN},
+  { XK_Prior,        0,            ACTION_PAGE_UP, ACTION_PREV_CHANNEL},
+  { XK_Next,         0,            ACTION_PAGE_DOWN, ACTION_NEXT_CHANNEL},
 
   { XK_Home,         0,           ACTION_TOP},
   { XK_End,          0,           ACTION_BOTTOM},
