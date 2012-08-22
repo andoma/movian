@@ -2840,7 +2840,7 @@ http_request(const char *url, const char **arguments,
     char *buf = NULL;
     size_t size = 0;
 
-    hra.total = 0;
+    hra.total = hf->hf_filesize;
 
     if(hf->hf_chunked_transfer) {
       char chunkheader[100];
