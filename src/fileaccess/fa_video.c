@@ -306,7 +306,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  char *errbuf, size_t errlen,
 		  const char *canonical_url,
 		  int freetype_context,
-		  seek_index_t *sidx)
+		  seek_index_t *sidx, int cwvec_size)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -347,12 +347,18 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	continue;
 
       if(r) {
+	char buf[512];
+	if(av_strerror(r, buf, sizeof(buf)))
+	  snprintf(buf, sizeof(buf), "Error %d", r);
+	TRACE(TRACE_DEBUG, "Video", "Playback reached EOF: %s", buf);
 	mb = MB_SPECIAL_EOF;
 	mp->mp_eof = 1;
 	continue;
       }
 
       si = pkt.stream_index;
+      if(si >= cwvec_size)
+	goto bad;
 
       if(si == mp->mp_video.mq_stream) {
 	/* Current video stream */
@@ -388,6 +394,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       } else {
 	/* Check event queue ? */
+      bad:
 	av_free_packet(&pkt);
 	continue;
       }
@@ -784,6 +791,8 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   cwvec = alloca(fctx->nb_streams * sizeof(void *));
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
   
+  int cwvec_size = fctx->nb_streams;
+
   mp->mp_audio.mq_stream = -1;
   mp->mp_video.mq_stream = -1;
   mp->mp_video.mq_stream2 = -1;
@@ -868,7 +877,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
-			freetype_context, si);
+			freetype_context, si, cwvec_size);
 
   seek_index_destroy(si);
 
@@ -879,7 +888,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   mp_flush(mp, 0);
   mp_shutdown(mp);
 
-  for(i = 0; i < fctx->nb_streams; i++)
+  for(i = 0; i < cwvec_size; i++)
     if(cwvec[i] != NULL)
       media_codec_deref(cwvec[i]);
 
