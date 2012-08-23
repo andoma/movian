@@ -2879,8 +2879,6 @@ http_request(const char *url, const char **arguments,
 
       size = hf->hf_filesize;
       buf = mymalloc(hf->hf_filesize + 1);
-      TRACE(TRACE_DEBUG, "HTTP", "buf=%p size=%d",
-	    buf, (int)size);
       if(buf == NULL) {
 	snprintf(errbuf, errlen, "Out of memory (%"PRId64")", hf->hf_filesize + 1);
 	goto error;

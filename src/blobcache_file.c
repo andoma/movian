@@ -82,6 +82,7 @@ static void blobcache_do_prune(struct callout *c, void *opaque);
 
 static uint64_t current_cache_size;
 
+
 /**
  *
  */
@@ -146,8 +147,6 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
 }
 
 
-void verify_heap(void);
-
 /**
  *
  */
@@ -171,7 +170,6 @@ save_index(void)
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
   TRACE(TRACE_DEBUG, "blobcache", "out = %p", out);
-  verify_heap();
   if(out == NULL) {
     close(fd);
     return;
@@ -180,6 +178,8 @@ save_index(void)
   j = 0;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
+      TRACE(TRACE_DEBUG, "blobcache", "%p=p i=%d, j=%d", p, i, j);
+      assert(j < tot);
       di = &((blobcache_diskitem_t *)(out + 4))[j++];
       di->di_key_hash     = p->bi_key_hash;
       di->di_content_hash = p->bi_content_hash;
@@ -190,23 +190,17 @@ save_index(void)
     }
   }
 
-  verify_heap();
-
   sha1_decl(shactx);
   sha1_init(shactx);
   sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
-  TRACE(TRACE_DEBUG, "blobcache", "sha1 % %p",
+  TRACE(TRACE_DEBUG, "blobcache", "sha1 %p",
 	out + 4 + tot * sizeof(blobcache_diskitem_t));
   sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
 
-  verify_heap();
-  
   if(write(fd, out, siz) != siz)
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
-  verify_heap();
   free(out);
-  verify_heap();
   close(fd);
 }
 
@@ -339,6 +333,8 @@ blobcache_put(const char *key, const char *stash,
     p = pool_get(item_pool);
     p->bi_key_hash = dk;
     p->bi_size = 0;
+    p->bi_link = hashvector[dk & ITEM_HASH_MASK];
+    hashvector[dk & ITEM_HASH_MASK] = p;
   }
 
   int64_t expiry = (int64_t)maxage + now;
@@ -350,9 +346,6 @@ blobcache_put(const char *key, const char *stash,
   current_cache_size -= p->bi_size;
   p->bi_size = size;
   current_cache_size += p->bi_size;
-
-  p->bi_link = hashvector[dk & ITEM_HASH_MASK];
-  hashvector[dk & ITEM_HASH_MASK] = p;
 
   if(blobcache_compute_maxsize() < current_cache_size &&
      !callout_isarmed(&blobcache_callout))

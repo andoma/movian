@@ -48,6 +48,7 @@ static char *download_url;
 static uint8_t download_digest[20];
 static int download_size;
 //static int autocheck;
+static int inhibit_checks = 1;
 
 
 /**
@@ -85,6 +86,9 @@ check_upgrade(void)
   char *result;
   htsmsg_t *json;
   char errbuf[1024];
+
+  if(inhibit_checks)
+    return;
 
   if(upgrade_track == NULL) {
     prop_set_string(upgrade_error, "No release track specified");
@@ -230,8 +234,6 @@ install_error(const char *str)
 
 }
 
-void verify_heap(void);
-
 /**
  *
  */
@@ -248,8 +250,6 @@ install_thread(void *aux)
   char *result;
   size_t result_size;
 
-  verify_heap();
-
   int r = http_request(download_url, NULL, &result, &result_size,
 		       errbuf, sizeof(errbuf), NULL, NULL, 0,
 		       NULL, NULL, NULL, download_callback, NULL);
@@ -258,8 +258,6 @@ install_thread(void *aux)
     install_error(errbuf);
     return NULL;
   }
-
-  verify_heap();
 
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
 	(int)result_size);
@@ -277,8 +275,6 @@ install_thread(void *aux)
 
 
   match = !memcmp(digest, download_digest, 20);
-
-  verify_heap();
 
   bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
   TRACE(TRACE_DEBUG, "upgrade", "SHA-1 of downloaded file: %s (%s)", digeststr,
@@ -311,62 +307,12 @@ install_thread(void *aux)
   }
 
   int fail = write(fd, result, result_size) != result_size || close(fd);
-  verify_heap();
   free(result);
-  verify_heap();
 
   if(fail) {
     install_error("Unable to write to file");
     return NULL;
   }
-
-
-  fd = open(fname, O_RDONLY);
-  if(fd == -1) {
-    install_error("Unable to reopen file");
-    return NULL;
-  }
-  struct stat st;
-  if(fstat(fd, &st)) {
-    install_error("Unable stat binary");
-    return NULL;
-  }
-
-  void *mem = mymalloc(st.st_size);
-  if(mem == NULL) {
-    install_error("Unable to alloc memory");
-    return NULL;
-  }
-  r = read(fd, mem, st.st_size);
-  if(r != st.st_size) {
-    char buf[256];
-    
-    snprintf(buf, sizeof(buf),
-	     "Re-read of executable failed: %d (expected %d)",
-	     r, (int)st.st_size);
-    install_error(buf);
-    return NULL;
-  }
-  close(fd);
-
-  sha1_init(shactx);
-  sha1_update(shactx, (void *)mem, st.st_size);
-  sha1_final(shactx, digest);
-  free(mem);
-
-  match = !memcmp(digest, download_digest, 20);
-
-  bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
-  TRACE(TRACE_DEBUG, "upgrade", "SHA-1 of written file: %s (%s)", digeststr,
-	match ? "match" : "no match");
-
-  if(!match) {
-    install_error("SHA-1 sum mismatch of file on disk");
-    return NULL;
-  }
-
-  verify_heap();
-
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
   prop_set_string(upgrade_status, "countdown");
@@ -376,7 +322,6 @@ install_thread(void *aux)
     prop_set_int(cnt, i);
     sleep(1);
   }
-  verify_heap();
   showtime_shutdown(13);
   return NULL;
 }
@@ -502,6 +447,7 @@ upgrade_init(void)
   if(prop_set_parent(p, prop_create(settings_general, "nodes")))
      abort();
 
+  inhibit_checks = 0;
   check_upgrade();
 
   prop_subscribe(0,
