@@ -233,8 +233,8 @@ install_error(const char *str)
 /**
  *
  */
-static void
-install(void)
+static void *
+install_thread(void *aux)
 {
   char errbuf[1024];
 
@@ -252,7 +252,7 @@ install(void)
   
   if(r) {
     install_error(errbuf);
-    return;
+    return NULL;
   }
 
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
@@ -277,7 +277,7 @@ install(void)
   if(!match) {
     install_error("SHA-1 sum mismatch");
     free(result);
-    return;
+    return NULL;
   }
 
   const char *fname = showtime_bin;
@@ -289,7 +289,7 @@ install(void)
   if(fd == -1) {
     install_error("Unable to open file");
     free(result);
-    return;
+    return NULL;
   }
 
   int fail = write(fd, result, result_size) != result_size || close(fd);
@@ -297,11 +297,10 @@ install(void)
 
   if(fail) {
     install_error("Unable to write to file");
-    return;
+    return NULL;
   }
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
-#if 0
   prop_set_string(upgrade_status, "countdown");
   prop_t *cnt = prop_create(upgrade_root, "countdown");
   int i;
@@ -309,8 +308,16 @@ install(void)
     prop_set_int(cnt, i);
     sleep(1);
   }
-#endif
   showtime_shutdown(13);
+  return NULL;
+}
+
+
+static void
+install(void)
+{
+  hts_thread_create_detached("upgrade", install_thread, NULL,
+			     THREAD_PRIO_LOW);
 }
 
 
