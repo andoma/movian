@@ -166,10 +166,8 @@ save_index(void)
     return;
 
   int tot = pool_num(item_pool);
-  TRACE(TRACE_DEBUG, "blobcache", "%d items", tot);
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
-  TRACE(TRACE_DEBUG, "blobcache", "out = %p", out);
   if(out == NULL) {
     close(fd);
     return;
@@ -178,7 +176,6 @@ save_index(void)
   j = 0;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
-      TRACE(TRACE_DEBUG, "blobcache", "%p=p i=%d, j=%d", p, i, j);
       assert(j < tot);
       di = &((blobcache_diskitem_t *)(out + 4))[j++];
       di->di_key_hash     = p->bi_key_hash;
@@ -193,8 +190,6 @@ save_index(void)
   sha1_decl(shactx);
   sha1_init(shactx);
   sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
-  TRACE(TRACE_DEBUG, "blobcache", "sha1 %p",
-	out + 4 + tot * sizeof(blobcache_diskitem_t));
   sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
 
   if(write(fd, out, siz) != siz)
