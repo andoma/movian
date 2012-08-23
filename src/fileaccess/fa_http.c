@@ -1063,11 +1063,11 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       code = atoi(q);
       continue;
     }
-    
-    if(http_tokenize(hf->hf_line, argv, 2, -1) != 2)
+
+    if((c = strchr(hf->hf_line, ':')) == NULL)
       continue;
 
-    if((c = strrchr(argv[0], ':')) == NULL)
+    if(http_tokenize(hf->hf_line, argv, 2, ':') != 2)
       continue;
     *c = 0;
 
