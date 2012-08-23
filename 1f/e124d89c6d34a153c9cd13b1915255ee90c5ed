@@ -1,0 +1,6 @@
+Fix a bug causing the in-RAM index of cached content to be corrupted
+
+This bug could result in randomg hangs of some parts of showtime
+(Notifications that didn't go away, images not loaded)
+
+Also it could crash showtime during shutdown
