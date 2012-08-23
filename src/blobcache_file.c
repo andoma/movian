@@ -146,6 +146,8 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
 }
 
 
+void verify_heap(void);
+
 /**
  *
  */
@@ -165,9 +167,11 @@ save_index(void)
     return;
 
   int tot = pool_num(item_pool);
-
+  TRACE(TRACE_DEBUG, "blobcache", "%d items", tot);
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
+  TRACE(TRACE_DEBUG, "blobcache", "out = %p", out);
+  verify_heap();
   if(out == NULL) {
     close(fd);
     return;
@@ -186,15 +190,23 @@ save_index(void)
     }
   }
 
+  verify_heap();
+
   sha1_decl(shactx);
   sha1_init(shactx);
   sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
+  TRACE(TRACE_DEBUG, "blobcache", "sha1 % %p",
+	out + 4 + tot * sizeof(blobcache_diskitem_t));
   sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
+
+  verify_heap();
   
   if(write(fd, out, siz) != siz)
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
+  verify_heap();
   free(out);
+  verify_heap();
   close(fd);
 }
 
