@@ -231,7 +231,7 @@ thread_reaper(void *aux)
   sys_ppu_thread_icontext_t ctx;
 
   while(1) {
-    sleep(1);
+    usleep(10000);
 
     hts_mutex_lock(&thread_info_mutex);
 

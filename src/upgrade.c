@@ -230,6 +230,8 @@ install_error(const char *str)
 
 }
 
+void verify_heap(void);
+
 /**
  *
  */
@@ -246,6 +248,8 @@ install_thread(void *aux)
   char *result;
   size_t result_size;
 
+  verify_heap();
+
   int r = http_request(download_url, NULL, &result, &result_size,
 		       errbuf, sizeof(errbuf), NULL, NULL, 0,
 		       NULL, NULL, NULL, download_callback, NULL);
@@ -254,6 +258,8 @@ install_thread(void *aux)
     install_error(errbuf);
     return NULL;
   }
+
+  verify_heap();
 
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
 	(int)result_size);
@@ -271,6 +277,8 @@ install_thread(void *aux)
 
 
   match = !memcmp(digest, download_digest, 20);
+
+  verify_heap();
 
   bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
   TRACE(TRACE_DEBUG, "upgrade", "SHA-1 of downloaded file: %s (%s)", digeststr,
@@ -303,13 +311,14 @@ install_thread(void *aux)
   }
 
   int fail = write(fd, result, result_size) != result_size || close(fd);
+  verify_heap();
   free(result);
+  verify_heap();
 
   if(fail) {
     install_error("Unable to write to file");
     return NULL;
   }
-
 
 
   fd = open(fname, O_RDONLY);
@@ -356,6 +365,8 @@ install_thread(void *aux)
     return NULL;
   }
 
+  verify_heap();
+
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
   prop_set_string(upgrade_status, "countdown");
@@ -365,6 +376,7 @@ install_thread(void *aux)
     prop_set_int(cnt, i);
     sleep(1);
   }
+  verify_heap();
   showtime_shutdown(13);
   return NULL;
 }
