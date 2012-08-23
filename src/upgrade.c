@@ -301,7 +301,7 @@ install(void)
   }
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
-
+#if 0
   prop_set_string(upgrade_status, "countdown");
   prop_t *cnt = prop_create(upgrade_root, "countdown");
   int i;
@@ -309,6 +309,7 @@ install(void)
     prop_set_int(cnt, i);
     sleep(1);
   }
+#endif
   showtime_shutdown(13);
 }
 
