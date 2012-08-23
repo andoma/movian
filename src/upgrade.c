@@ -247,7 +247,7 @@ install_thread(void *aux)
   size_t result_size;
 
   int r = http_request(download_url, NULL, &result, &result_size,
-		       errbuf, sizeof(errbuf), NULL, NULL, FA_DEBUG,
+		       errbuf, sizeof(errbuf), NULL, NULL, 0,
 		       NULL, NULL, NULL, download_callback, NULL);
   
   if(r) {
@@ -262,15 +262,17 @@ install_thread(void *aux)
 
   sha1_decl(shactx);
   uint8_t digest[20];
+  char digeststr[41];
+  int match;
+
   sha1_init(shactx);
   sha1_update(shactx, (void *)result, result_size);
   sha1_final(shactx, digest);
 
-  char digeststr[41];
-  bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
-  
-  int match = !memcmp(digest, download_digest, 20);
 
+  match = !memcmp(digest, download_digest, 20);
+
+  bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
   TRACE(TRACE_DEBUG, "upgrade", "SHA-1 of downloaded file: %s (%s)", digeststr,
 	match ? "match" : "no match");
 
@@ -307,6 +309,53 @@ install_thread(void *aux)
     install_error("Unable to write to file");
     return NULL;
   }
+
+
+
+  fd = open(fname, O_RDONLY);
+  if(fd == -1) {
+    install_error("Unable to reopen file");
+    return NULL;
+  }
+  struct stat st;
+  if(fstat(fd, &st)) {
+    install_error("Unable stat binary");
+    return NULL;
+  }
+
+  void *mem = mymalloc(st.st_size);
+  if(mem == NULL) {
+    install_error("Unable to alloc memory");
+    return NULL;
+  }
+  r = read(fd, mem, st.st_size);
+  if(r != st.st_size) {
+    char buf[256];
+    
+    snprintf(buf, sizeof(buf),
+	     "Re-read of executable failed: %d (expected %d)",
+	     r, (int)st.st_size);
+    install_error(buf);
+    return NULL;
+  }
+  close(fd);
+
+  sha1_init(shactx);
+  sha1_update(shactx, (void *)mem, st.st_size);
+  sha1_final(shactx, digest);
+  free(mem);
+
+  match = !memcmp(digest, download_digest, 20);
+
+  bin2hex(digeststr, sizeof(digeststr), digest, sizeof(digest));
+  TRACE(TRACE_DEBUG, "upgrade", "SHA-1 of written file: %s (%s)", digeststr,
+	match ? "match" : "no match");
+
+  if(!match) {
+    install_error("SHA-1 sum mismatch of file on disk");
+    return NULL;
+  }
+
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
   prop_set_string(upgrade_status, "countdown");
