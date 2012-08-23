@@ -169,6 +169,7 @@ static struct strtab actionnames[] = {
 
   { "ReloadData",            ACTION_RELOAD_DATA },
   { "Playqueue",             ACTION_PLAYQUEUE },
+  { "Sysinfo",               ACTION_SYSINFO },
 
 };
 
@@ -533,7 +534,7 @@ const static int action_from_fkey[13][2] = {
   { ACTION_LOGWINDOW,        ACTION_ENABLE_SCREENSAVER },
 
   { ACTION_RELOAD_UI,        ACTION_RELOAD_DATA },
-  { 0, 0 },
+  { ACTION_SYSINFO, 0 },
   { 0, 0 },
   { 0, 0 },
 

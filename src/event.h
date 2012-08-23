@@ -116,6 +116,8 @@ typedef enum {
 
   ACTION_PLAYQUEUE,
 
+  ACTION_SYSINFO,
+
   ACTION_mappable_end,
 } action_type_t;
 

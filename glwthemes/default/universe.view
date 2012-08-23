@@ -10,6 +10,10 @@ onEvent(back, {
 }, $ui.logwindow);
 
 
+onEvent(sysinfo, {
+  $ui.sysinfo = !$ui.sysinfo;
+});
+
 
 widget(container_z, {
 
@@ -162,4 +166,6 @@ widget(container_z, {
     });
     space(1);
   });
+
+#import "sysinfo.view"
 });

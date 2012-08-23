@@ -579,6 +579,7 @@ const static action_type_t *btn_to_action[BTN_max] = {
   [BTN_L1]         = AVEC(ACTION_SKIP_BACKWARD, ACTION_NAV_BACK),
   [BTN_R1]         = AVEC(ACTION_SKIP_FORWARD, ACTION_NAV_FWD),
 
+  [BTN_L3]         = AVEC(ACTION_SYSINFO),
   [BTN_R3]         = AVEC(ACTION_LOGWINDOW),
   [BTN_START]      = AVEC(ACTION_PLAYPAUSE),
   [BTN_ENTER]      = AVEC(ACTION_ACTIVATE, ACTION_ENTER),
