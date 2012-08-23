@@ -1,6 +1,7 @@
 /*
  *  Showtime mediacenter
  *  Copyright (C) 2007-2009 Andreas Öman
+ *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -727,6 +728,9 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("createService",    js_createService, 4, 0, 0),
     JS_FS("getAuthCredentials",  js_getAuthCredentials, 3, 0, 0),
     JS_FS("onEvent",             js_onEvent, 2, 0, 0),
+    JS_FS("cacheGet",         js_cache_get, 2, 0, 0),
+    JS_FS("cachePut",         js_cache_put, 4, 0, 0),
+    JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
     JS_FS_END
 };
 

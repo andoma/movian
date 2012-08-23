@@ -78,7 +78,6 @@ CONFIG_LIST="
  emu_thread_specifics
  ps3_vdec
  libfontconfig
- binreplace
  readahead_cache
  sqlite_vfs
  sqlite_locking

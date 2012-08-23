@@ -182,11 +182,13 @@ void
 verify_heap(void)
 {
   hts_mutex_lock(&mutex);
-  if(tlsf_check_heap(gpool))
+  int r = tlsf_check_heap(gpool);
+  hts_mutex_unlock(&mutex);
+
+  if(r)
     trace(TRACE_NO_PROP, TRACE_ERROR, "HEAPCHECK", "Heap check verify failed");
   else
     trace(TRACE_NO_PROP, TRACE_DEBUG, "HEAPCHECK", "Heap OK");
-  hts_mutex_unlock(&mutex);
 }
 
 

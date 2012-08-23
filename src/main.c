@@ -352,6 +352,10 @@ main(int argc, char **argv)
   /* Architecture specific init */
   arch_init();
 
+  /* Initialize htsmsg_store() */
+  htsmsg_store_init();
+
+
   /* Initialize settings */
   settings_init();
 
@@ -382,9 +386,6 @@ main(int argc, char **argv)
 	  showtime_persistent_path, strerror(r));
     showtime_persistent_path = NULL;
   }
-
-  /* Initialize htsmsg_store() */
-  htsmsg_store_init();
 
   /* Metadata init */
   metadata_init();
@@ -549,9 +550,13 @@ finalize(void)
 {
   audio_fini();
   backend_fini();
+  TRACE(TRACE_DEBUG, "core", "Backend finished");
   shutdown_hook_run(0);
+  TRACE(TRACE_DEBUG, "core", "Slow shutdown hooks finished");
   blobcache_fini();
+  TRACE(TRACE_DEBUG, "core", "Blobcache finished");
   metadb_fini();
+  TRACE(TRACE_DEBUG, "core", "Metadb finished");
   kvstore_fini();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
   trace_fini();

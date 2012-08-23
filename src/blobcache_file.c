@@ -68,7 +68,7 @@ static blobcache_item_t *hashvector[ITEM_HASH_SIZE];
 
 static pool_t *item_pool;
 static hts_mutex_t cache_lock;
-
+static int zombie;
 
 
 
@@ -81,6 +81,7 @@ static void blobcache_do_prune(struct callout *c, void *opaque);
 #define BLOB_CACHE_MAXSIZE (500 * 1000 * 1000)
 
 static uint64_t current_cache_size;
+
 
 /**
  *
@@ -164,13 +165,10 @@ save_index(void)
   if(fd == -1)
     return;
 
-  hts_mutex_lock(&cache_lock);
   int tot = pool_num(item_pool);
-
   siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
   out = mymalloc(siz);
   if(out == NULL) {
-    hts_mutex_unlock(&cache_lock);
     close(fd);
     return;
   }
@@ -178,6 +176,7 @@ save_index(void)
   j = 0;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
+      assert(j < tot);
       di = &((blobcache_diskitem_t *)(out + 4))[j++];
       di->di_key_hash     = p->bi_key_hash;
       di->di_content_hash = p->bi_content_hash;
@@ -187,13 +186,12 @@ save_index(void)
       di->di_size         = p->bi_size;
     }
   }
-  hts_mutex_unlock(&cache_lock);
 
   sha1_decl(shactx);
   sha1_init(shactx);
   sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
   sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
-  
+
   if(write(fd, out, siz) != siz)
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
@@ -295,6 +293,11 @@ blobcache_put(const char *key, const char *stash,
   blobcache_item_t *p;
 
   hts_mutex_lock(&cache_lock);
+  if(zombie) {
+    hts_mutex_unlock(&cache_lock);
+    return 0;
+  }
+
   for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
     if(p->bi_key_hash == dk)
       break;
@@ -325,6 +328,8 @@ blobcache_put(const char *key, const char *stash,
     p = pool_get(item_pool);
     p->bi_key_hash = dk;
     p->bi_size = 0;
+    p->bi_link = hashvector[dk & ITEM_HASH_MASK];
+    hashvector[dk & ITEM_HASH_MASK] = p;
   }
 
   int64_t expiry = (int64_t)maxage + now;
@@ -336,9 +341,6 @@ blobcache_put(const char *key, const char *stash,
   current_cache_size -= p->bi_size;
   p->bi_size = size;
   current_cache_size += p->bi_size;
-
-  p->bi_link = hashvector[dk & ITEM_HASH_MASK];
-  hashvector[dk & ITEM_HASH_MASK] = p;
 
   if(blobcache_compute_maxsize() < current_cache_size &&
      !callout_isarmed(&blobcache_callout))
@@ -363,10 +365,15 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   uint32_t now;
 
   hts_mutex_lock(&cache_lock);
-  for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
-    if(p->bi_key_hash == dk)
-      break;
-  
+
+  if(zombie) {
+    p = NULL;
+  } else {
+    for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
+      if(p->bi_key_hash == dk)
+	break;
+  }
+
   if(p == NULL) {
     hts_mutex_unlock(&cache_lock);
     return NULL;
@@ -442,10 +449,14 @@ blobcache_get_meta(const char *key, const char *stash,
   blobcache_item_t *p;
   int r;
   hts_mutex_lock(&cache_lock);
-  for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
-    if(p->bi_key_hash == dk)
-      break;
-  
+  if(zombie) {
+    p = NULL;
+  } else {
+    for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
+      if(p->bi_key_hash == dk)
+	break;
+  }
+
   if(p != NULL) {
     r = 0;
 
@@ -555,10 +566,13 @@ static void
 prune_to_size(void)
 {
   int i, tot, j = 0;
-  uint64_t maxsize = blobcache_compute_maxsize();
   blobcache_item_t *p, **sv;
 
   hts_mutex_lock(&cache_lock);
+  if(zombie)
+    goto out;
+
+  uint64_t maxsize = blobcache_compute_maxsize();
   tot = pool_num(item_pool);
 
   sv = malloc(sizeof(blobcache_item_t *) * tot);
@@ -589,8 +603,9 @@ prune_to_size(void)
   }
 
   free(sv);
-  hts_mutex_unlock(&cache_lock);
   save_index();
+ out:
+  hts_mutex_unlock(&cache_lock);
 }
 
 
@@ -659,8 +674,8 @@ cache_clear(void *opaque, prop_event_t event, ...)
     hashvector[i] = NULL;
   }
   current_cache_size = 0;
-  hts_mutex_unlock(&cache_lock);
   save_index();
+  hts_mutex_unlock(&cache_lock);
   notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Cache cleared"));
 }
 
@@ -696,7 +711,10 @@ blobcache_init(void)
 void
 blobcache_fini(void)
 {
+  hts_mutex_lock(&cache_lock);
+  zombie = 1;
   save_index();
+  hts_mutex_unlock(&cache_lock);
 }
 
 /**
