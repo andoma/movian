@@ -2,6 +2,7 @@
 #include "media.h"
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
+#include "htsmsg/htsbuf.h"
 
 #include <libavformat/avio.h>
 #include <libavformat/avformat.h>
@@ -40,11 +41,7 @@ typedef struct sc_shoutcast {
   char *sc_stream_url;
   char *sc_playlist_streams[20];
 
-  struct {
-    void *data;
-    int size;
-    int fillsize;
-  } sc_stream_buffer;
+  htsbuf_queue_t *sc_stream_buffer;
 
   struct http_header_list sc_headers;
 } sc_shoutcast_t;
@@ -124,22 +121,15 @@ sc_parse_playlist_m3u(sc_shoutcast_t *sc, char *content)
  */
 static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
+  size_t rs = buf_size;
   sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
-  int s = buf_size;
 
   hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
 
-  if(s > sc->sc_stream_buffer.fillsize)
-    s = sc->sc_stream_buffer.fillsize;
-  
-  void *data = sc->sc_stream_buffer.data; 
-  memcpy(buf, sc->sc_stream_buffer.data, s);
+  if(rs > sc->sc_stream_buffer->hq_size)
+    rs = sc->sc_stream_buffer->hq_size;
 
-  // drain data from buffer
-  sc->sc_stream_buffer.fillsize -= s;
-  sc->sc_stream_buffer.data += s;
-  memmove(data, sc->sc_stream_buffer.data, sc->sc_stream_buffer.fillsize);
-  sc->sc_stream_buffer.data = data;
+  rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
 
   // signal that data has been drained from buffer
   hts_cond_signal(&sc->sc_stream_buffer_drained_cond);
@@ -148,7 +138,7 @@ static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
 
   // TRACE(TRACE_DEBUG, "shoutcast", "sc_read_packet(%x, %d)", buf, s);
 
-  return s;
+  return rs;
 }
 
 /**
@@ -376,7 +366,7 @@ static int sc_initialize(sc_shoutcast_t *sc)
     // Probe a copy of stream buffer
     probe_buffer = av_malloc(SC_AVIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
     memset(probe_buffer, 0, SC_AVIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(probe_buffer, sc->sc_stream_buffer.data, SC_AVIO_BUFFER_SIZE);
+    htsbuf_peek(sc->sc_stream_buffer, probe_buffer, SC_AVIO_BUFFER_SIZE);
     probe = avio_alloc_context(probe_buffer, SC_AVIO_BUFFER_SIZE, 
 			       0, NULL, NULL, NULL, NULL);
     res = av_probe_input_buffer(probe, &sc->sc_fctx->iformat, NULL, NULL, 0,0);
@@ -455,13 +445,12 @@ static int sc_stream_data(void *opaque, void *data, size_t size)
     return -1;
 
   // Fill up the stream buffer
-  if (sc->sc_stream_buffer.fillsize < SC_STREAM_BUFFER_SIZE - size)
+  if (sc->sc_stream_buffer->hq_size < SC_STREAM_BUFFER_SIZE - size)
   {
     hts_mutex_lock(&sc->sc_stream_buffer_mutex);
-    memcpy(sc->sc_stream_buffer.data + sc->sc_stream_buffer.fillsize, data, size);
-    sc->sc_stream_buffer.fillsize += size;
-    TRACE(TRACE_DEBUG,"shoutcast", "Buffering  %.2f%%", 
-	  100.0f * (sc->sc_stream_buffer.fillsize / (float)sc->sc_stream_buffer.size));
+    htsbuf_append(sc->sc_stream_buffer, data, size);
+    TRACE(TRACE_DEBUG,"shoutcast", "Buffering %.2f%%",
+	  100.0f * (sc->sc_stream_buffer->hq_size / (float)sc->sc_stream_buffer->hq_maxsize));
     hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
     return 0;
   }
@@ -476,7 +465,7 @@ static int sc_stream_data(void *opaque, void *data, size_t size)
 
   // wait for signal that we can add data to stream buffer
   hts_mutex_lock(&sc->sc_stream_buffer_mutex);
-  while ( sc->sc_stop_playback || (SC_STREAM_BUFFER_SIZE - sc->sc_stream_buffer.fillsize) < size)
+  while ( sc->sc_stop_playback || (SC_STREAM_BUFFER_SIZE - sc->sc_stream_buffer->hq_size) < size)
     hts_cond_wait(&sc->sc_stream_buffer_drained_cond, &sc->sc_stream_buffer_mutex);
 
   // If playback has stopped, exit..
@@ -484,8 +473,7 @@ static int sc_stream_data(void *opaque, void *data, size_t size)
     return -1;
 
   // Add stream chunk to end of buffer
-  memcpy(sc->sc_stream_buffer.data + sc->sc_stream_buffer.fillsize, data, size);
-  sc->sc_stream_buffer.fillsize += size;
+  htsbuf_append(sc->sc_stream_buffer, data, size);
 
   return 0;
 }
@@ -511,8 +499,8 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
   sc->sc_mq = &sc->sc_mp->mp_audio;
   sc->sc_hold = hold;
 
-  sc->sc_stream_buffer.data = malloc(SC_STREAM_BUFFER_SIZE);
-  sc->sc_stream_buffer.size = SC_STREAM_BUFFER_SIZE;
+  sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_t));
+  htsbuf_queue_init(sc->sc_stream_buffer, SC_STREAM_BUFFER_SIZE);
 
   sc->sc_samples = malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
@@ -588,7 +576,8 @@ retry_next_stream:
       av_free(sc->sc_ioctx);
   }
 
-  free(sc->sc_stream_buffer.data);
+  htsbuf_queue_flush(sc->sc_stream_buffer);
+  free(sc->sc_stream_buffer);
   free(sc->sc_samples);
   free(sc);
 
