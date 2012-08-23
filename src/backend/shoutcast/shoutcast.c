@@ -21,6 +21,7 @@
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
+#include "networking/net.h"
 
 #include <libavformat/avio.h>
 #include <libavformat/avformat.h>
@@ -28,13 +29,13 @@
 
 #define SC_MAX_PLAYLIST_STREAMS   20
 
-#define SC_STREAM_BUFFER_SIZE     256*1024
 #define SC_CHUNK_SIZE             8192*2
-#define SC_AVIO_BUFFER_SIZE       8192*2
 
 typedef struct sc_shoutcast { 
   int sc_initialized;
   int sc_hold;
+
+  tcpcon_t *sc_tc;
 
   event_t *sc_event;
   media_pipe_t *sc_mp;
@@ -58,6 +59,10 @@ typedef struct sc_shoutcast {
 
   char *sc_stream_url;
   char *sc_playlist_streams[20];
+
+  int sc_stream_bitrate;
+  int sc_stream_metaint;
+  int sc_stream_chunk_size;
 
   htsbuf_queue_t *sc_stream_buffer;
 
@@ -373,19 +378,13 @@ static int sc_initialize(sc_shoutcast_t *sc)
     void *probe_buffer;
     AVIOContext *probe;
 
-    //http_header_t *hh;
-    // debug output of stream headers
-    // LIST_FOREACH(hh, &sc->sc_headers, hh_link) {
-    //  TRACE(TRACE_DEBUG,"shoutcast", "%s: %s", hh->hh_key, hh->hh_value);
-    // }
-
     sc->sc_fctx = avformat_alloc_context();
 
     // Probe a copy of stream buffer
-    probe_buffer = av_malloc(SC_AVIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-    memset(probe_buffer, 0, SC_AVIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-    htsbuf_peek(sc->sc_stream_buffer, probe_buffer, SC_AVIO_BUFFER_SIZE);
-    probe = avio_alloc_context(probe_buffer, SC_AVIO_BUFFER_SIZE, 
+    probe_buffer = av_malloc(sc->sc_stream_chunk_size + FF_INPUT_BUFFER_PADDING_SIZE);
+    memset(probe_buffer, 0, sc->sc_stream_chunk_size + FF_INPUT_BUFFER_PADDING_SIZE);
+    htsbuf_peek(sc->sc_stream_buffer, probe_buffer, sc->sc_stream_chunk_size);
+    probe = avio_alloc_context(probe_buffer, sc->sc_stream_chunk_size, 
 			       0, NULL, NULL, NULL, NULL);
     res = av_probe_input_buffer(probe, &sc->sc_fctx->iformat, NULL, NULL, 0,0);
     av_free(probe);
@@ -396,8 +395,8 @@ static int sc_initialize(sc_shoutcast_t *sc)
 
 
     // Initialize av stram io and decoder
-    void *buffer = av_malloc(SC_AVIO_BUFFER_SIZE + FF_INPUT_BUFFER_PADDING_SIZE);
-    sc->sc_ioctx = avio_alloc_context(buffer, SC_AVIO_BUFFER_SIZE, 
+    void *buffer = av_malloc(sc->sc_stream_chunk_size + FF_INPUT_BUFFER_PADDING_SIZE);
+    sc->sc_ioctx = avio_alloc_context(buffer, sc->sc_stream_chunk_size, 
 				   0, sc, sc_avio_read_packet, NULL, NULL);
     sc->sc_fctx->pb = sc->sc_ioctx;
 
@@ -454,19 +453,26 @@ static int sc_initialize(sc_shoutcast_t *sc)
     return 0;
 }
 
-static int sc_stream_data(void *opaque, void *data, size_t size)
+static int sc_stream_data(sc_shoutcast_t *sc, char *buf, int bufsize)
 {
-  sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
-
   // If playback has stopped, end reading stream..
   if (sc->sc_stop_playback == 1)
     return -1;
 
+  if (bufsize == 0)
+    return 0;
+  
+  // Initialize stream buffer if not done
+  if (sc->sc_stream_buffer == NULL) {
+    sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_init));
+    htsbuf_queue_init(sc->sc_stream_buffer, ((sc->sc_stream_bitrate*1024)/8) * 10);
+  }
+
   // Fill up the stream buffer
-  if (sc->sc_stream_buffer->hq_size < SC_STREAM_BUFFER_SIZE - size)
+  if (sc->sc_stream_buffer->hq_size < sc->sc_stream_buffer->hq_maxsize - bufsize)
   {
     hts_mutex_lock(&sc->sc_stream_buffer_mutex);
-    htsbuf_append(sc->sc_stream_buffer, data, size);
+    htsbuf_append(sc->sc_stream_buffer, buf, bufsize);
     TRACE(TRACE_DEBUG,"shoutcast", "Buffering %.2f%%",
 	  100.0f * (sc->sc_stream_buffer->hq_size / (float)sc->sc_stream_buffer->hq_maxsize));
     hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
@@ -483,7 +489,8 @@ static int sc_stream_data(void *opaque, void *data, size_t size)
 
   // wait for signal that we can add data to stream buffer
   hts_mutex_lock(&sc->sc_stream_buffer_mutex);
-  while ( sc->sc_stop_playback || (SC_STREAM_BUFFER_SIZE - sc->sc_stream_buffer->hq_size) < size)
+  while ( sc->sc_stop_playback || 
+	  (sc->sc_stream_buffer->hq_maxsize - sc->sc_stream_buffer->hq_size) < bufsize)
     hts_cond_wait(&sc->sc_stream_buffer_drained_cond, &sc->sc_stream_buffer_mutex);
 
   // If playback has stopped, exit..
@@ -491,7 +498,178 @@ static int sc_stream_data(void *opaque, void *data, size_t size)
     return -1;
 
   // Add stream chunk to end of buffer
-  htsbuf_append(sc->sc_stream_buffer, data, size);
+  htsbuf_append(sc->sc_stream_buffer, buf, bufsize);
+
+  return 0;
+}
+
+static int sc_stream_read_headers(sc_shoutcast_t *sc, char *errbuf, size_t errlen)
+{
+  int li;
+  int code = 200;
+  char line[256], tmp[256], *ps;
+  
+  for (li = 0; ;li++) {
+    if (tcp_read_line(sc->sc_tc, line, sizeof(line)) < 0) {
+      snprintf(errbuf,errlen,"tcp read < 0");
+      return -1;
+    }
+
+    if(!line[0])
+      break;
+
+    TRACE(TRACE_DEBUG,"shoutcast", "Header line: '%s'", line);
+
+    // get metaint
+    if ( !strncmp(line, "icy-br", 6) && ((ps = strchr(line,':')) != NULL)) {
+      while(*ps == ' ' || *ps == ':') ps++;
+      sc->sc_stream_bitrate = atoi(ps);
+    }
+
+    // get bitrate
+    if ( !strncmp(line, "icy-metaint", 11) && ((ps = strchr(line,':')) != NULL)) {
+      while(*ps == ' ' || *ps == ':') ps++;
+      sc->sc_stream_metaint = atoi(ps);
+    }
+
+    if (li == 0 && sscanf(line, "%s %d", tmp, &code) != 2)
+      return -1;
+    else continue;
+
+  }
+
+  return code;
+}
+
+/**
+ *
+ */
+static void sc_parse_metadata(sc_shoutcast_t *sc, char *md, int mdlen)
+{
+  char *ps, *pe;
+  TRACE(TRACE_DEBUG,"shoutcast","metadata: '%s'", md);
+  
+  if((ps = strstr(md,"StreamTitle='")) != NULL)
+  {
+    ps += strlen("StreamTitle='");
+    if ((pe = strstr(ps,"';")) == NULL)
+      return;
+    *pe = '\0';
+
+    if (strlen(ps) == 0)
+      return;
+
+    prop_t *tp = prop_get_by_name(PNVEC("global", "media", "current", "metadata","title"), 1, NULL);
+    prop_set_string(tp, ps);
+  }
+}
+
+/**
+ *
+ */
+static int sc_stream_start(sc_shoutcast_t *sc, char *errbuf, size_t errlen)
+{
+  char *url, *tmp;
+  char *ps,*pe;
+  char *doc;
+  char *hostname;
+  int ssl = 0;
+  int port = 80;
+  htsbuf_queue_t q;
+
+  if (!strncmp(sc->sc_stream_url,"https://", 5))
+    ssl = 1, port = 443;
+
+  if (strlen(sc->sc_stream_url) < strlen(ssl ? "https://" : "http://"))
+    return -1;
+
+  url = strdup(sc->sc_stream_url + strlen((ssl ? "https://" : "http://")));
+
+  // Get doc from url
+  if ((ps = strchr(url, '/')) != NULL)
+    doc = strdup(ps);
+  else
+    doc = strdup("/");
+
+  // Get port from url
+  if ((ps = strchr(url, ':')) != NULL) {
+    pe = strchr(ps, '/');
+    if (!pe)
+      pe = ps + strlen(ps);
+    
+    if (pe) {
+      tmp = strndup(ps+1, pe-ps-1);
+      port = atoi(tmp);
+      free(tmp);
+    }
+  }
+
+  // Get host from url
+  if ((pe = strchr(url, ':')) == NULL)
+    pe = strchr(url, '/');
+  if (!pe)
+    return -1;
+  hostname = strndup(url, pe-url);
+
+  free(url);
+
+  // Connect
+  if((sc->sc_tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) == NULL) {
+    return -1;
+  }
+  tcp_huge_buffer(sc->sc_tc);
+
+  // Send http request with ICY metatdata header
+  htsbuf_queue_init(&q,0);
+  htsbuf_qprintf(&q, "GET %s HTTP/1.1\r\n", doc);
+  htsbuf_qprintf(&q, "Icy-MetaData: 1\r\n");
+  htsbuf_qprintf(&q, "\r\n");
+
+  free(hostname);
+  free(doc);
+
+  htsbuf_dump_raw_stderr(&q);
+
+  tcp_write_queue(sc->sc_tc, &q);
+
+  // Read and parse headers
+  if(sc_stream_read_headers(sc, errbuf, errlen) != 200)
+    return -1;
+
+  TRACE(TRACE_DEBUG,"shoutcast", "bitrate %d, metaint %d",sc->sc_stream_bitrate, sc->sc_stream_metaint);
+
+  // start reading stream
+  char md[4097];
+  char md_len;
+  sc->sc_stream_chunk_size = sc->sc_stream_metaint > 0 ? sc->sc_stream_metaint : (((sc->sc_stream_bitrate * 1024) / 8) / 4);
+  char *buf = malloc(sc->sc_stream_chunk_size);
+  
+  while(1) {
+    // read stream buf
+    if (tcp_read_data(sc->sc_tc, buf, sc->sc_stream_chunk_size, NULL, NULL) < 0)
+      break;
+
+    // push chunk to stream buffer handler
+    if (sc_stream_data(sc, buf, sc->sc_stream_chunk_size) != 0)
+      break;
+    
+    // if icy inline meta data read it.
+    if (sc->sc_stream_metaint) {
+      md_len = 0;
+      if (tcp_read_data(sc->sc_tc, &md_len, 1, NULL, NULL) < 0)
+	break;
+      
+      if (md_len) {
+	if (tcp_read_data(sc->sc_tc, md, md_len*16, NULL, NULL) < 0)
+	  break;
+
+	sc_parse_metadata(sc, md, md_len*16);
+      } 
+
+    }
+  }
+
+  free(buf);
 
   return 0;
 }
@@ -516,9 +694,6 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
   sc->sc_mp = mp;
   sc->sc_mq = &sc->sc_mp->mp_audio;
   sc->sc_hold = hold;
-
-  sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_t));
-  htsbuf_queue_init(sc->sc_stream_buffer, SC_STREAM_BUFFER_SIZE);
 
   sc->sc_samples = malloc(AVCODEC_MAX_AUDIO_FRAME_SIZE);
 
@@ -569,14 +744,11 @@ retry_next_stream:
 
   TRACE(TRACE_DEBUG, "shoutcast", "Starting stream playback of url '%s'", sc->sc_stream_url);
 
-  // http connect and request stream
-  n = http_request(sc->sc_stream_url, NULL, 
-		  &result, &ressize, errbuf, errlen, 
-		   NULL, NULL, 0, &sc->sc_headers, NULL, NULL,
-		  NULL, sc_stream_data, sc);
+  // connect, write and read headers then start read stream
+  n = sc_stream_start(sc, errbuf, errlen);
 
   if(n) {
-    TRACE(TRACE_DEBUG, "shoutcast", "Failed to open stream %s", errbuf);
+    TRACE(TRACE_DEBUG, "shoutcast", "Failed to open stream -- %s", errbuf);
     if (current_stream_idx < playlist_stream_cnt)
       goto retry_next_stream;
 
