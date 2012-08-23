@@ -285,7 +285,15 @@ install_thread(void *aux)
   TRACE(TRACE_INFO, "upgrade", "Replacing %s with %d bytes received",
 	fname, (int)result_size);
 
-  int fd = open(fname, O_TRUNC | O_RDWR, 0777);
+  if(unlink(fname)) {
+    install_error("Unlink failed");
+    free(result);
+    return NULL;
+  }
+
+  TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
+
+  int fd = open(fname, O_CREAT | O_RDWR, 0777);
   if(fd == -1) {
     install_error("Unable to open file");
     free(result);
