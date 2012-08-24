@@ -1,0 +1,3 @@
+Fix problem with SRT files that start with UTF-8/16 BOM markers
+
+Fixes #1136
