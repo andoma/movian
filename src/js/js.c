@@ -1,6 +1,7 @@
 /*
  *  Showtime mediacenter
  *  Copyright (C) 2007-2009 Andreas Öman
+ *  Copyright (C) 2011-2012 Fábio Ferreira
  *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify

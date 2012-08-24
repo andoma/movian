@@ -391,6 +391,35 @@ requests. IE. the handlers registered via plugin.addSearcher() will be
 invoked on search requests. The default value is 'true'. This value
 can be modified by the plugin itself (Usually via a setting)
 
+#### getDescriptor()
+
+Parses each element of plugin.json to plugin object.
+
+Example:
+
+    var plugin_info = plugin.getDescriptor();
+    var PREFIX = plugin_info.id;
+
+#### cachePut(String Name, String Key, Object Values, Int Expire)
+
+Stores a json object in Cache, expiring seconds after the colocation in cache (value given by Expire).
+
+Example:
+
+    // store json object in cache for 24 hours
+    plugin.cachePut("ItemStash", "ItemKey1", {
+	title: 'Item title',
+	thumb: 'http://localhost/thumb.jpg'
+	}, 86400);
+
+#### cacheGet(String Name, String Key)
+
+Parses the json object in Cache with key equal to Key and name of Cache equal to Name.
+
+Example:
+
+    var o = plugin.cacheGet("ItemStash", "ItemKey1");
+
 
 ### Functions
 
