@@ -770,8 +770,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 
-  mp_reinit_streams(mp);
-
   /**
    * Update property metadata
    */
@@ -795,10 +793,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   hts_thread_create_joinable("subloader", &sub_tid,
 			     sub_loader, &sl, THREAD_PRIO_LOW);
 
-
-  /**
-   * Query opensubtitles.org
-   */
 
   /**
    * Init codec contexts

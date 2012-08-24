@@ -236,16 +236,20 @@ play_video(const char *url, struct media_pipe *mp,
   else
     flags |= BACKEND_VIDEO_SET_TITLE;
 
+  mp_reinit_streams(mp);
+
+
   // Subtitles
 
   if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
     HTSMSG_FOREACH(f, subs) {
       htsmsg_t *sub = &f->hmf_msg;
+      const char *title = htsmsg_get_str(sub, "title");
       const char *url = htsmsg_get_str(sub, "url");
       const char *lang = htsmsg_get_str(sub, "language");
       const char *source = htsmsg_get_str(sub, "source");
 
-      mp_add_track(mp->mp_prop_subtitle_tracks, NULL, url, 
+      mp_add_track(mp->mp_prop_subtitle_tracks, title, url, 
 		   NULL, NULL, lang, source, NULL, 0);
     }
   }

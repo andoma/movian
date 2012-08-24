@@ -668,6 +668,8 @@ minidlna_get_srt(const char *url, htsmsg_t *sublist)
       htsmsg_t *sub = htsmsg_create_map();
       htsmsg_add_str(sub, "url", s);
       htsmsg_add_str(sub, "source", "MiniDLNA");
+      htsmsg_add_str(sub, "title", "SRT file");
+      htsmsg_add_str(sub, "format", "SRT");
       htsmsg_add_msg(sublist, NULL, sub);
     }
   }
@@ -701,6 +703,8 @@ blind_srt_check(const char *url, htsmsg_t *sublist)
 	htsmsg_t *sub = htsmsg_create_map();
 	htsmsg_add_str(sub, "url", srt);
 	htsmsg_add_str(sub, "source", "HTTP probe");
+	htsmsg_add_str(sub, "title", "SRT file");
+	htsmsg_add_str(sub, "format", "SRT");
 	htsmsg_add_msg(sublist, NULL, sub);
       }
     }
