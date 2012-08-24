@@ -298,7 +298,7 @@ static void *sc_playback_thread(void *aux)
 	sc->sc_fctx->streams[sc->sc_audio_stream_idx]->codec->sample_rate,
 	sc->sc_fctx->streams[sc->sc_audio_stream_idx]->codec->channels);
 
-  // start playback loop if intiialized
+  // start playback loop if initialized
   while(sc->sc_initialized && !sc->sc_stop_playback) {
 
     if (sc->sc_mb == NULL) {
@@ -358,6 +358,7 @@ static void *sc_playback_thread(void *aux)
 
 exit_playback_thread:
   // notify http stream reader about stop_playing
+  sc->sc_playback_thread_id = 0;
   sc->sc_stop_playback = 1;
 
   hts_mutex_lock(&sc->sc_stream_buffer_mutex);
@@ -485,21 +486,23 @@ static int sc_stream_data(sc_shoutcast_t *sc, char *buf, int bufsize)
     return res;
   }
  
-  // TRACE(TRACE_DEBUG,"shoutcast", "Got chunk of stream %d bytes",size);
-
   // wait for signal that we can add data to stream buffer
   hts_mutex_lock(&sc->sc_stream_buffer_mutex);
-  while ( sc->sc_stop_playback || 
-	  (sc->sc_stream_buffer->hq_maxsize - sc->sc_stream_buffer->hq_size) < bufsize)
-    hts_cond_wait(&sc->sc_stream_buffer_drained_cond, &sc->sc_stream_buffer_mutex);
+  while(1)
+  {
+    if (sc->sc_stop_playback)
+      return -1;
 
-  // If playback has stopped, exit..
-  if (sc->sc_stop_playback == 1)
-    return -1;
+    if ((sc->sc_stream_buffer->hq_maxsize - sc->sc_stream_buffer->hq_size) > bufsize)
+      break;
+
+    hts_cond_wait(&sc->sc_stream_buffer_drained_cond, &sc->sc_stream_buffer_mutex);
+  }
 
   // Add stream chunk to end of buffer
   htsbuf_append(sc->sc_stream_buffer, buf, bufsize);
 
+  hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
   return 0;
 }
 
@@ -644,7 +647,7 @@ static int sc_stream_start(sc_shoutcast_t *sc, char *errbuf, size_t errlen)
   sc->sc_stream_chunk_size = sc->sc_stream_metaint > 0 ? sc->sc_stream_metaint : (((sc->sc_stream_bitrate * 1024) / 8) / 4);
   char *buf = malloc(sc->sc_stream_chunk_size);
   
-  while(1) {
+  while(!sc->sc_stop_playback) {
     // read stream buf
     if (tcp_read_data(sc->sc_tc, buf, sc->sc_stream_chunk_size, NULL, NULL) < 0)
       break;
