@@ -509,7 +509,6 @@ void
 video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
 {
   pts -= vd->vd_mp->mp_svdelta;
-  pts -= vd->vd_mp->mp_start_time;
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_pick(vd->vd_ext_subtitles, pts, vd);
