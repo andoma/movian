@@ -466,7 +466,7 @@ static int sc_stream_data(sc_shoutcast_t *sc, char *buf, int bufsize)
   // Initialize stream buffer if not done
   if (sc->sc_stream_buffer == NULL) {
     sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_init));
-    htsbuf_queue_init(sc->sc_stream_buffer, ((sc->sc_stream_bitrate*1024)/8) * 10);
+    htsbuf_queue_init(sc->sc_stream_buffer, sc->sc_stream_chunk_size * 4 * 4);
   }
 
   // Fill up the stream buffer
@@ -644,7 +644,16 @@ static int sc_stream_start(sc_shoutcast_t *sc, char *errbuf, size_t errlen)
   // start reading stream
   char md[4097];
   char md_len;
-  sc->sc_stream_chunk_size = sc->sc_stream_metaint > 0 ? sc->sc_stream_metaint : (((sc->sc_stream_bitrate * 1024) / 8) / 4);
+
+  // use hints to set chunk size
+  sc->sc_stream_chunk_size = sc->sc_stream_metaint;
+
+  if (sc->sc_stream_chunk_size == 0 && sc->sc_stream_bitrate == 0)
+    sc->sc_stream_chunk_size = 8192;
+
+  if (sc->sc_stream_chunk_size == 0)
+    sc->sc_stream_chunk_size = (((sc->sc_stream_bitrate * 1024) / 8) / 4);
+
   char *buf = malloc(sc->sc_stream_chunk_size);
   
   while(!sc->sc_stop_playback) {
