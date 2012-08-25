@@ -575,8 +575,6 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
   char *result;
   htsmsg_t *json;
 
-  printf("Loading from %s\n", repo);
-
   result = fa_load(repo, NULL, NULL, errbuf, errlen, NULL, 0, NULL, NULL);
   if(result == NULL)
     return NULL;
