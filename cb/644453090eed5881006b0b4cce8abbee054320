@@ -1,0 +1,13 @@
+Work on metadata lookup for movies.
+
+Allow the user to select the 'none' datasource that will just not try to
+lookup anything for a given file
+
+Improve logic that use foldername to search for movie metadata. Showtime
+will now use the folder name if there is no match when using title to search
+and only if there is only one video file longer than 5 minutes in the folder.
+
+Get rid of various crashes related to metadata probing
+
+Fixes #1159
+Fixes #1160
