@@ -167,5 +167,7 @@ widget(container_z, {
     space(1);
   });
 
+  widget(underscan, {
 #import "sysinfo.view"
+  });
 });
