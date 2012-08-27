@@ -31,10 +31,12 @@ typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 #define METAITEM_STATUS_PARTIAL    2
 #define METAITEM_STATUS_COMPLETE   3
 
-#define METADATA_QTYPE_FILENAME   1
-#define METADATA_QTYPE_IMDB       2
-#define METADATA_QTYPE_DIRECTORY  3
-#define METADATA_QTYPE_CUSTOM     4
+#define METADATA_QTYPE_FILENAME    1
+#define METADATA_QTYPE_IMDB        2
+#define METADATA_QTYPE_DIRECTORY   3
+#define METADATA_QTYPE_CUSTOM      4
+#define METADATA_QTYPE_CUSTOM_IMDB 5
+#define METADATA_QTYPE_FILENAME_OR_DIRECTORY 6
 
 
 #define METADATA_ERROR    -1
@@ -178,7 +180,7 @@ typedef struct metadata_source_funcs {
 				     int duration, int qtype);
 
   int64_t (*query_by_imdb_id)(void *db, const char *item_url, 
-			      const char *imdb_id);
+			      const char *imdb_id, int qtype);
 
   int64_t (*query_by_id)(void *db, const char *item_url, const char *id);
 
@@ -320,12 +322,20 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-void metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
-			      struct prop *prop, rstr_t *url, rstr_t *filename,
-			      rstr_t *imdb_id, int duration,
-			      struct prop *options, struct prop *root,
-			      rstr_t *parent);
+metadata_lazy_prop_t *metadata_bind_movie_info(struct prop *prop,
+					       rstr_t *url, rstr_t *filename,
+					       rstr_t *imdb_id, int duration,
+					       struct prop *options,
+					       struct prop *root,
+					       rstr_t *parent, int lonely);
 
 void metadata_unbind(metadata_lazy_prop_t *mlp);
 
+void mlp_set_imdb_id(metadata_lazy_prop_t *mlp, rstr_t *imdb_id);
+
+void mlp_set_duration(metadata_lazy_prop_t *mlp, int duration);
+
+void mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely);
+
 rstr_t *metadata_remove_postfix(const char *filename, char c);
+

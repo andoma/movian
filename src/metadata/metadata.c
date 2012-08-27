@@ -48,8 +48,8 @@ static prop_courier_t *metadata_courier;
 static struct metadata_source_list metadata_sources[METADATA_TYPE_num];
 prop_t *metadata_sources_settings[METADATA_TYPE_num];
 
-static int metadata_filename_to_title(const char *filename,
-				      int *yearp, rstr_t **titlep);
+static void metadata_filename_to_title(const char *filename,
+				       int *yearp, rstr_t **titlep);
 
 /**
  *
@@ -283,24 +283,35 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
 
 
 
+TAILQ_HEAD(metadata_lazy_prop_queue, metadata_lazy_prop);
+static struct metadata_lazy_prop_queue mlpqueue;
+
+/**
+ *
+ */
 struct metadata_lazy_prop {
-  void (*mlp_cb)(struct metadata_lazy_prop *mlp, int complete);
+  TAILQ_ENTRY(metadata_lazy_prop) mlp_link;
+
+  void (*mlp_cb)(struct metadata_lazy_prop *mlp);
 	    
   rstr_t *mlp_album;
   rstr_t *mlp_artist;
-  rstr_t *mlp_query;
   rstr_t *mlp_url;
   rstr_t *mlp_filename;
+  rstr_t *mlp_folder;
   rstr_t *mlp_imdb_id;
 
   int mlp_duration;
-  int16_t mlp_year;
   int16_t mlp_refcount;
   char mlp_partials;
   char mlp_num_props;
   unsigned char mlp_type;
-  unsigned char mlp_title_querytype;
-  unsigned char mlp_zombie;
+
+  unsigned char mlp_zombie : 1;
+  unsigned char mlp_queued : 1;
+  unsigned char mlp_want_complete : 1;
+  unsigned char mlp_want_partial : 1;
+  unsigned char mlp_lonely : 1;
 
   int mlp_dsid;
   prop_t *mlp_loading;
@@ -332,117 +343,55 @@ struct metadata_lazy_prop {
   } mlp_props[0];
 };
 
-
 /**
  *
  */
 static void
-mlp_release(metadata_lazy_prop_t *mlp)
+mlp_destroy(metadata_lazy_prop_t *mlp)
 {
   int i;
 
-  mlp->mlp_refcount--;
+  if(!mlp->mlp_zombie) {
+    mlp->mlp_zombie = 1;
+    prop_destroy(mlp->mlp_title_opt);
+    prop_destroy(mlp->mlp_info);
+    prop_destroy(mlp->mlp_source_opt);
+    prop_destroy(mlp->mlp_alt_opt);
+    prop_destroy(mlp->mlp_sq);
+    prop_destroy(mlp->mlp_refresh);
+  }
 
+  mlp->mlp_refcount--;
   if(mlp->mlp_refcount > 0)
     return;
 
-  for(i = 0; i < mlp->mlp_num_props; i++)
+  for(i = 0; i < mlp->mlp_num_props; i++) {
     prop_ref_dec(mlp->mlp_props[i].p);
+    prop_unsubscribe(mlp->mlp_props[i].s);
+  }
+  
+  prop_unsubscribe(mlp->mlp_source_opt_sub);
+  prop_unsubscribe(mlp->mlp_alt_opt_sub);
+  prop_unsubscribe(mlp->mlp_sq_sub);
+  prop_unsubscribe(mlp->mlp_refresh_sub);
 
-  prop_destroy(mlp->mlp_title_opt);
   prop_ref_dec(mlp->mlp_title_opt);
-  prop_destroy(mlp->mlp_info);
   prop_ref_dec(mlp->mlp_info);
   prop_ref_dec(mlp->mlp_info_text);
-
-  prop_unsubscribe(mlp->mlp_source_opt_sub);
-  prop_destroy(mlp->mlp_source_opt);
   prop_ref_dec(mlp->mlp_source_opt);
-
-  prop_unsubscribe(mlp->mlp_alt_opt_sub);
-  prop_destroy(mlp->mlp_alt_opt);
   prop_ref_dec(mlp->mlp_alt_opt);
-
-  prop_unsubscribe(mlp->mlp_sq_sub);
-  prop_destroy(mlp->mlp_sq);
-  prop_ref_dec(mlp->mlp_sq);
-
-  prop_unsubscribe(mlp->mlp_refresh_sub);
-  prop_destroy(mlp->mlp_refresh);
   prop_ref_dec(mlp->mlp_refresh);
 
   rstr_release(mlp->mlp_artist);
   rstr_release(mlp->mlp_album);
-  rstr_release(mlp->mlp_query);
   rstr_release(mlp->mlp_filename);
   rstr_release(mlp->mlp_imdb_id);
   prop_ref_dec(mlp->mlp_loading);
   prop_ref_dec(mlp->mlp_source);
-
-
-  const char *s = rstr_get(mlp->mlp_custom_query);
-
-  if(s && *s) {
-    kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
-		   "metacustomquery", KVSTORE_SET_STRING, s);
-  }
-
-  rstr_release(mlp->mlp_url);
+  prop_ref_dec(mlp->mlp_sq);
   rstr_release(mlp->mlp_custom_query);
+  rstr_release(mlp->mlp_url);
   free(mlp);
-}
-
-
-/**
- *
- */
-static void
-mlp_unsub_one(metadata_lazy_prop_t *mlp, prop_sub_t *s)
-{
-  int i;
-  for(i = 0; i < mlp->mlp_num_props; i++) {
-    if(mlp->mlp_props[i].s == s) {
-      prop_unsubscribe(mlp->mlp_props[i].s);
-      mlp->mlp_props[i].s = NULL;
-      mlp->mlp_refcount--;
-    }
-  }
-}
-
-/**
- *
- */
-static void
-mlp_unsub_partials(metadata_lazy_prop_t *mlp)
-{
-  int i;
-  mlp->mlp_refcount++;
-  for(i = 0; i < mlp->mlp_partials; i++) {
-    if(mlp->mlp_props[i].s) {
-      prop_unsubscribe(mlp->mlp_props[i].s);
-      mlp->mlp_props[i].s = NULL;
-      mlp->mlp_refcount--;
-    }
-  }
-  mlp_release(mlp);
-}
-
-/**
- *
- */
-static void
-mlp_unsub_complete(metadata_lazy_prop_t *mlp)
-{
-  int i;
-  mlp->mlp_refcount++;
-  for(i = mlp->mlp_partials; i < mlp->mlp_num_props; i++) {
-    if(mlp->mlp_props[i].s) {
-      prop_unsubscribe(mlp->mlp_props[i].s);
-      mlp->mlp_props[i].s = NULL;
-      mlp->mlp_refcount--;
-    }
-  }
-  mlp_release(mlp);
 }
 
 
@@ -454,37 +403,7 @@ void
 metadata_unbind(metadata_lazy_prop_t *mlp)
 {
   hts_mutex_lock(&metadata_mutex);
-  mlp->mlp_zombie = 1;
-
-  prop_destroy(mlp->mlp_title_opt);
-  prop_ref_dec(mlp->mlp_title_opt);
-  mlp->mlp_title_opt = NULL;
-
-  prop_destroy(mlp->mlp_info);
-  prop_ref_dec(mlp->mlp_info);
-  mlp->mlp_info = NULL;
-  prop_ref_dec(mlp->mlp_info_text);
-  mlp->mlp_info_text = NULL;
-
-  prop_destroy(mlp->mlp_source_opt);
-  prop_ref_dec(mlp->mlp_source_opt);
-  mlp->mlp_source_opt = NULL;
-
-  prop_destroy(mlp->mlp_alt_opt);
-  prop_ref_dec(mlp->mlp_alt_opt);
-  mlp->mlp_alt_opt = NULL;
-
-  prop_destroy(mlp->mlp_sq);
-  prop_ref_dec(mlp->mlp_sq);
-  mlp->mlp_sq = NULL;
-
-  prop_destroy(mlp->mlp_refresh);
-  prop_ref_dec(mlp->mlp_refresh);
-  mlp->mlp_refresh = NULL;
-
-  mlp_unsub_partials(mlp);
-  mlp_unsub_complete(mlp);
-  mlp_release(mlp);
+  mlp_destroy(mlp);
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -509,7 +428,7 @@ mlp_add_artist_to_prop(void *opaque, const char *url, int width, int height)
  *
  */
 static void
-mlp_get_artist(metadata_lazy_prop_t *mlp, int complete)
+mlp_get_artist(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
   int r;
@@ -532,7 +451,7 @@ mlp_get_artist(metadata_lazy_prop_t *mlp, int complete)
  *
  */
 static void
-mlp_get_album(metadata_lazy_prop_t *mlp, int complete)
+mlp_get_album(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
   rstr_t *r;
@@ -559,6 +478,33 @@ mlp_get_album(metadata_lazy_prop_t *mlp, int complete)
 }
 
 
+/**
+ *
+ */
+static void
+mlp_enqueue(metadata_lazy_prop_t *mlp)
+{
+  if(mlp->mlp_zombie || mlp->mlp_queued)
+    return;
+
+  TAILQ_INSERT_TAIL(&mlpqueue, mlp, mlp_link);
+  mlp->mlp_queued = 1;
+}
+
+
+/**
+ *
+ */
+static void
+mlp_dequeue(metadata_lazy_prop_t *mlp)
+{
+  if(!mlp->mlp_queued)
+    return;
+
+  TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
+  mlp->mlp_queued = 0;
+}
+
 
 /**
  *
@@ -571,11 +517,13 @@ mlp_sub_partial_cb(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    mlp->mlp_cb(mlp, 0);
-    mlp_unsub_partials(mlp);
+    if(mlp->mlp_want_partial == 0) {
+      mlp->mlp_want_partial = 1;
+      mlp_enqueue(mlp);
+    }
     break;
   case PROP_DESTROYED:
-    mlp_unsub_one(mlp, va_arg(ap, prop_sub_t *));
+    mlp_destroy(mlp);
     break;
   default:
     break;
@@ -595,11 +543,13 @@ mlp_sub_complete_cb(void *opaque, prop_event_t event, ...)
   va_start(ap, event);
   switch(event) {
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    mlp->mlp_cb(mlp, 1);
-    mlp_unsub_complete(mlp);
+    if(mlp->mlp_want_complete == 0) {
+      mlp->mlp_want_complete = 1;
+      mlp_enqueue(mlp);
+    }
     break;
   case PROP_DESTROYED:
-    mlp_unsub_one(mlp, va_arg(ap, prop_sub_t *));
+    mlp_destroy(mlp);
     break;
   default:
     break;
@@ -625,13 +575,12 @@ mlp_alloc(int props)
  */
 static void
 mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
-	  void (*cb)(metadata_lazy_prop_t *mlp, int complete),
+	  void (*cb)(metadata_lazy_prop_t *mlp),
 	  int partials)
 {
   int i;
   mlp->mlp_cb = cb;
   mlp->mlp_partials = partials;
-  hts_mutex_lock(&metadata_mutex);
 
   for(i = 0; i < mlp->mlp_num_props; i++) {
     mlp->mlp_props[i].p = p[i];
@@ -644,7 +593,6 @@ mlp_setup(metadata_lazy_prop_t *mlp, prop_t **p,
 		     NULL);
     mlp->mlp_refcount++;
   }
-  hts_mutex_unlock(&metadata_mutex);
 }
 
 
@@ -726,6 +674,9 @@ build_info_text(metadata_lazy_prop_t *mlp, const metadata_t *md)
     case METADATA_QTYPE_IMDB:
       qtype = _("IMDb ID");
       break;
+    case METADATA_QTYPE_CUSTOM_IMDB:
+      qtype = _("custom IMDb ID");
+      break;
     case METADATA_QTYPE_DIRECTORY:
       qtype = _("folder name");
       break;
@@ -750,30 +701,94 @@ build_info_text(metadata_lazy_prop_t *mlp, const metadata_t *md)
 
   prop_set_rstring(mlp->mlp_info_text, txt);
   rstr_release(txt);
-
 }
+
+
+/**
+ *
+ */
+static int
+is_qtype_compat(int qa, int qb)
+{
+  if(qa == qb)
+    return 1;
+
+  if(qa == METADATA_QTYPE_FILENAME_OR_DIRECTORY &&
+     (qb == METADATA_QTYPE_FILENAME || qb == METADATA_QTYPE_DIRECTORY))
+    return 1;
+
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int64_t
+query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
+			     const metadata_source_funcs_t *msf)
+{
+  int year;
+  rstr_t *title;
+  int64_t rval;
+
+  metadata_filename_to_title(rstr_get(mlp->mlp_filename), &year, &title);
+  
+  TRACE(TRACE_DEBUG, "METADATA",
+	"Performing search lookup for %s year:%d, based on filename",
+	rstr_get(title), year);
+
+  rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+				      rstr_get(title), year,
+				      mlp->mlp_duration,
+				      METADATA_QTYPE_FILENAME);
+  rstr_release(title);
+  if(rval == METADATA_DEADLOCK)
+    return rval;
+
+  if(rval == METADATA_ERROR && mlp->mlp_lonely) {
+
+    metadata_filename_to_title(rstr_get(mlp->mlp_folder), &year, &title);
+  
+    TRACE(TRACE_DEBUG, "METADATA",
+	  "Performing search lookup for %s year:%d, based on folder name",
+	  rstr_get(title), year);
+
+    rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+					rstr_get(title), year,
+					mlp->mlp_duration,
+					METADATA_QTYPE_DIRECTORY);
+    rstr_release(title);
+  }
+
+  return rval;
+}
+
 
 
 /**
  * Must be in a transaction
  */
 static int
-mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
-		    int refresh)
+mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
 {
+  rstr_t *title = NULL;
   metadata_t *md = NULL;
   int64_t rval;
   metadata_source_t *ms;
   struct metadata_source_list *msl = &metadata_sources[mlp->mlp_type];
   int r;
   int fixed_ds;
-  const char *q;
   const char *sq = rstr_get(mlp->mlp_custom_query);
   int sq_is_imdb_id = sq && sq[0] == 't' && sq[1] == 't' &&
     sq[2] >= '0' && sq[2] <= '9';
 
   if(sq && !*sq)
     sq = NULL;
+
+  if(mlp->mlp_duration && mlp->mlp_duration < 300) {
+    goto bad;
+  }
 
   LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link)
     ms->ms_mark = 0;
@@ -786,8 +801,10 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
 
   if(!refresh) {
     r = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url), msl, &fixed_ds, &md);
-    if(r)
+    if(r) {
+      rstr_release(title);
       return r;
+    }
   } else {
     refresh = 0;
     fixed_ds = 0;
@@ -807,21 +824,24 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
 
       /* Figure out what query to run (or what we would like to run) */
       int qtype;
+      const char *q;
 
-      if(msf->query_by_imdb_id != NULL &&
-	 ((sq == NULL && mlp->mlp_imdb_id != NULL) || sq_is_imdb_id)) {
+      if(msf->query_by_imdb_id != NULL && sq_is_imdb_id) {
+	qtype = METADATA_QTYPE_CUSTOM_IMDB;
+	q = sq;
+      } else if(sq != NULL) {
+	qtype = METADATA_QTYPE_CUSTOM;
+	q = NULL;
+      } else if(msf->query_by_imdb_id != NULL && mlp->mlp_imdb_id != NULL) {
 	qtype = METADATA_QTYPE_IMDB;
+	q = rstr_get(mlp->mlp_imdb_id);
       } else {
-	if(sq)
-	  qtype = METADATA_QTYPE_CUSTOM;
-	else
-	  qtype = mlp->mlp_title_querytype;
+	qtype = METADATA_QTYPE_FILENAME_OR_DIRECTORY;
+	q = NULL;
       }
 
-
-      if(md && md->md_dsid == ms->ms_id && md->md_qtype == qtype)
+      if(md && md->md_dsid == ms->ms_id && is_qtype_compat(qtype, md->md_qtype))
 	break;
-
 
       /**
        * If current metadata source is seen (marked by metadb_get_videoinfo())
@@ -829,7 +849,7 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
        * thus continue
        */
        
-      if(ms->ms_mark && ms->ms_qtype == qtype)
+      if(ms->ms_mark && is_qtype_compat(qtype, ms->ms_qtype))
 	continue;
 
       rval = metadb_videoitem_delete_from_ds(db, rstr_get(mlp->mlp_url),
@@ -839,46 +859,46 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
 
 	switch(qtype) {
 	case METADATA_QTYPE_IMDB:
-	  q = sq_is_imdb_id ? sq : rstr_get(mlp->mlp_imdb_id);
+	case METADATA_QTYPE_CUSTOM_IMDB:
 
 	  TRACE(TRACE_DEBUG, "METADATA",
 		"Performing IMDB lookup for %s using %s", q, ms->ms_name);
 
-	  rval = msf->query_by_imdb_id(db, rstr_get(mlp->mlp_url), q);
+	  rval = msf->query_by_imdb_id(db, rstr_get(mlp->mlp_url), q, qtype);
 	  break;
 
-	case METADATA_QTYPE_FILENAME:
-	case METADATA_QTYPE_DIRECTORY:
+	case METADATA_QTYPE_FILENAME_OR_DIRECTORY:
+	  rval = query_by_filename_or_dirname(db, mlp, msf);
+	  break;
+
 	case METADATA_QTYPE_CUSTOM:
-	  q = sq ?: rstr_get(mlp->mlp_query);
-
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing search lookup for %s (year:%d) using %s%s",
-		q, sq ? 0 : mlp->mlp_year, ms->ms_name,
-		sq ? ", (custom query string)" : "");
-
+		"Performing custom search lookup for %s", sq);
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
-					      q, sq ? 0 : mlp->mlp_year,
-					      mlp->mlp_duration, qtype);
+					      sq, 0, mlp->mlp_duration, qtype);
 	  break;
 
 	default:
 	  continue;
 	}
       }
-      if(rval == METADATA_DEADLOCK)
+      if(rval == METADATA_DEADLOCK) {
+	rstr_release(title);
 	return METADATA_DEADLOCK;
+      }
       if(rval == METADATA_ERROR)
 	rval = metadb_insert_videoitem(db, rstr_get(mlp->mlp_url), ms->ms_id,
 				       "0", NULL, METAITEM_STATUS_ABSENT, 0,
 				       qtype);
-      if(rval < 0)
+      if(rval < 0) {
+	rstr_release(title);
 	return rval;
+      }
       goto redo;
     }
   }
 
-  if(md != NULL && complete &&
+  if(md != NULL && mlp->mlp_want_complete &&
      md->md_metaitem_status == METAITEM_STATUS_PARTIAL &&
      md->md_ext_id != NULL) {
 
@@ -889,13 +909,16 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
       rval = ms->ms_funcs->query_by_id(db, rstr_get(mlp->mlp_url),
 				       rstr_get(md->md_ext_id));
 
-      if(rval == METADATA_DEADLOCK)
+      if(rval == METADATA_DEADLOCK) {
+	rstr_release(title);
 	return METADATA_DEADLOCK;
+      }
     }
     metadata_destroy(md);
     r = metadb_get_videoinfo(db, rstr_get(mlp->mlp_url), msl, &fixed_ds, &md);
     if(r) {
       prop_set_int(mlp->mlp_loading, 0);
+      rstr_release(title);
       return r;
     }
   }
@@ -946,22 +969,18 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
   } else {
 
     int i;
+  bad:
     for(i = 0; i < mlp->mlp_num_props; i++)
       if(i != MOVIE_PROP_TITLE && i != MOVIE_PROP_YEAR)
 	prop_set_void(mlp->mlp_props[i].p);
 
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, mlp->mlp_filename);
-
-    if(mlp->mlp_year)
-      prop_set_int(mlp->mlp_props[MOVIE_PROP_YEAR].p, mlp->mlp_year);
-    else
-      prop_set_void(mlp->mlp_props[MOVIE_PROP_YEAR].p);
+    prop_set_void(mlp->mlp_props[MOVIE_PROP_YEAR].p);
 
     prop_set_void(mlp->mlp_source);
     mlp->mlp_dsid = 0;
 
     build_info_text(mlp, NULL);
-
   }
 
   prop_set_int(mlp->mlp_loading, 0);
@@ -969,6 +988,7 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
   LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link)
     ms->ms_mark = 0;
 
+  rstr_release(title);
   return 0;
 }
 
@@ -977,8 +997,11 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int complete,
  *
  */
 static void
-mlp_get_video_info(metadata_lazy_prop_t *mlp, int complete)
+mlp_get_video_info(metadata_lazy_prop_t *mlp)
 {
+  if(mlp->mlp_zombie)
+    return;
+
   void *db = metadb_get();
 
  again:
@@ -987,7 +1010,7 @@ mlp_get_video_info(metadata_lazy_prop_t *mlp, int complete)
     return;
   }
 
-  int r = mlp_get_video_info0(db, mlp, complete, 0);
+  int r = mlp_get_video_info0(db, mlp, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -1032,7 +1055,7 @@ mlp_set_preferred(metadata_lazy_prop_t *mlp, int64_t vid)
     goto again;
   }
 
-  r = mlp_get_video_info0(db, mlp, 1, 0);
+  r = mlp_get_video_info0(db, mlp, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -1056,7 +1079,7 @@ mlp_sub_alternative(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_destroy(mlp);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -1105,6 +1128,12 @@ load_sources(metadata_lazy_prop_t *mlp)
       active = prop_ref_inc(c);
   }
 
+  c = prop_create_root("1");
+  prop_link(_p("None"), prop_create(c, "title"));
+  pv = prop_vec_append(pv, c);
+  if(cur == 1)
+    active = prop_ref_inc(c);
+
   prop_destroy_childs(p);
   prop_set_parent_vector(pv, p, NULL, NULL);
 
@@ -1124,13 +1153,23 @@ load_sources(metadata_lazy_prop_t *mlp)
 static void
 mlp_set_source(metadata_lazy_prop_t *mlp, const char *name)
 {
-  metadata_source_t *ms = NULL;
+  int id = 0;
 
-  if(name != NULL)
-    LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link)
-      if(ms->ms_enabled && !strcmp(ms->ms_name, name))
-	break;
-  
+  if(name != NULL) {
+
+    if(!strcmp(name, "1")) {
+      // dsid 1 is reserved for local file
+      id = 1;
+    } else {
+      metadata_source_t *ms = NULL;
+      LIST_FOREACH(ms, &metadata_sources[mlp->mlp_type], ms_link) {
+	if(ms->ms_enabled && !strcmp(ms->ms_name, name)) {
+	  id = ms->ms_id;
+	  break;
+	}
+      }
+    }
+  } 
 
   void *db = metadb_get();
   int r;
@@ -1139,14 +1178,14 @@ mlp_set_source(metadata_lazy_prop_t *mlp, const char *name)
     metadb_close(db);
     return;
   }
-  r = metadb_item_set_preferred_ds(db, rstr_get(mlp->mlp_url),
-				   ms ? ms->ms_id : 0);
+
+  r = metadb_item_set_preferred_ds(db, rstr_get(mlp->mlp_url), id);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
   }
 
-  r = mlp_get_video_info0(db, mlp, 1, 0);
+  r = mlp_get_video_info0(db, mlp, 0);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -1171,7 +1210,7 @@ mlp_sub_source(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_destroy(mlp);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -1219,7 +1258,7 @@ mlp_refresh_video_info(metadata_lazy_prop_t *mlp)
     goto again;
   }
 
-  r = mlp_get_video_info0(db, mlp, 1, 1);
+  r = mlp_get_video_info0(db, mlp, 1);
   if(r == METADATA_DEADLOCK) {
     db_rollback_deadlock(db);
     goto again;
@@ -1244,7 +1283,7 @@ mlp_sub_actions(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_destroy(mlp);
     break;
 
   case PROP_EXT_EVENT:
@@ -1256,6 +1295,12 @@ mlp_sub_actions(void *opaque, prop_event_t event, ...)
       if(!strcmp(e->e_payload, "refreshMetadata")) {
 	mlp_refresh_video_info(mlp);
 	load_alternatives(mlp);
+	const char *s = rstr_get(mlp->mlp_custom_query);
+
+	if(s && *s) {
+	  kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
+			 "metacustomquery", KVSTORE_SET_STRING, s);
+	}
       }
     }
       
@@ -1282,7 +1327,7 @@ mlp_sub_query(void *opaque, prop_event_t event, ...)
 
   switch(event) {
   case PROP_DESTROYED:
-    mlp_release(mlp);
+    mlp_destroy(mlp);
     break;
 
   case PROP_SET_RSTRING:
@@ -1300,24 +1345,13 @@ mlp_sub_query(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-void
-metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
-			 prop_t *prop, rstr_t *url, rstr_t *filename,
+metadata_lazy_prop_t *
+metadata_bind_movie_info(prop_t *prop, rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, int duration,
 			 prop_t *options, prop_t *root,
-			 rstr_t *dir_name)
+			 rstr_t *folder, int lonely)
 {
-  metadata_lazy_prop_t *mlp = *mlpp;
-
-  if(mlp != NULL) {
-    if(rstr_eq(url, mlp->mlp_url) &&
-       rstr_eq(filename, mlp->mlp_filename) &&
-       rstr_eq(imdb_id, mlp->mlp_imdb_id) &&
-       duration == mlp->mlp_duration)
-      return;
-    metadata_unbind(mlp);
-  }
-
+#if 0
   const int too_short = duration > 0 && duration < 300;
   int querytype;
   
@@ -1366,8 +1400,9 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   if(too_short || chosen_score <= 0) {
     goto done;
   }
+#endif
 
-  *mlpp = mlp = mlp_alloc(MOVIE_PROP_num);
+  metadata_lazy_prop_t *mlp = mlp_alloc(MOVIE_PROP_num);
   prop_t *props[MOVIE_PROP_num];
 
   
@@ -1384,17 +1419,16 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   props[MOVIE_PROP_DIRECTOR]     = prop_create_r(prop, "director");
   props[MOVIE_PROP_PRODUCER]     = prop_create_r(prop, "producer");
 
-  mlp->mlp_refcount = 1;
-  mlp->mlp_query = rstr_spn(title, "[(", 1);
+  mlp->mlp_refcount = 1;  // one reference for caller
   mlp->mlp_filename = rstr_dup(filename);
+  mlp->mlp_folder = rstr_dup(folder);
   mlp->mlp_url = rstr_dup(url);
-  mlp->mlp_year = year;
   mlp->mlp_duration = duration;
   mlp->mlp_imdb_id = rstr_dup(imdb_id);
   mlp->mlp_loading = prop_create_r(prop, "loading");
   mlp->mlp_source = prop_create_r(prop, "source");
   mlp->mlp_type = METADATA_TYPE_MOVIE;
-  mlp->mlp_title_querytype = querytype;
+  mlp->mlp_lonely = lonely;
 
   prop_t *m;
   prop_vec_t *pv = prop_vec_create(10);
@@ -1514,22 +1548,59 @@ metadata_bind_movie_info(metadata_lazy_prop_t **mlpp,
   // final setup
   mlp_setup(mlp, props, mlp_get_video_info, 3);
 
- done:
-  rstr_release(title);
-  rstr_release(filename_title);
-  rstr_release(dir_title);
+  return mlp;
+}
+
+
+/**
+ *
+ */
+void
+mlp_set_imdb_id(metadata_lazy_prop_t *mlp, rstr_t *imdb_id)
+{
+  hts_mutex_lock(&metadata_mutex);
+  rstr_set(&mlp->mlp_imdb_id, imdb_id);
+  mlp_dequeue(mlp);
+  mlp->mlp_cb(mlp);
+  hts_mutex_unlock(&metadata_mutex);
+}
+
+/**
+ *
+ */
+void
+mlp_set_duration(metadata_lazy_prop_t *mlp, int duration)
+{
+  hts_mutex_lock(&metadata_mutex);
+  mlp->mlp_duration = duration;
+  mlp_dequeue(mlp);
+  mlp->mlp_cb(mlp);
+  hts_mutex_unlock(&metadata_mutex);
+}
+
+
+/**
+ *
+ */
+void
+mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely)
+{
+  hts_mutex_lock(&metadata_mutex);
+  mlp->mlp_lonely = lonely;
+  mlp_dequeue(mlp);
+  mlp->mlp_cb(mlp);
+  hts_mutex_unlock(&metadata_mutex);
 }
 
 
 #define isnum(a) ((a) >= '0' && (a) <= '9')
 
 /**
- * Return a score how likely the string contains a movie title
+ *
  */
-static int
+static void
 metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 {
-  int score = 0;
   int year = 0;
 
   char *s = mystrdupa(filename);
@@ -1541,7 +1612,6 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
   if(i > 4 && s[i - 4] == '.') {
     i -= 4;
     s[i] = 0;
-    score++;
   }
 
   while(i > 0) {
@@ -1587,27 +1657,15 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
   for(i = 0; s[i]; i++) {
     if(s[i] == '.') {
       s[i] = ' ';
-      score++;
-    } else if(s[i] == ' ') {
-      score++;
     }
   }
  
-  if(year > 1900 && year < 2050)
-    score += 10;
-  else
-    year = 0;
-
-  if(s[0] >= 'a' && s[0] <= 'z')
-    score -= 5;
-
   if(yearp != NULL)
     *yearp = year;
 
   if(titlep != NULL)
     *titlep = rstr_alloc(s);
 
-  return score;
 }
 
 
@@ -1801,6 +1859,48 @@ add_provider_class(prop_concat_t *pc,
   prop_concat_add_source(pc, prop_create(c, "nodes"), d);
 }
 
+
+/**
+ *
+ */
+static void
+mlp_dispatch(void)
+{
+  metadata_lazy_prop_t *mlp;
+  while((mlp = TAILQ_FIRST(&mlpqueue)) != NULL) {
+    TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
+    mlp->mlp_queued = 0;
+    mlp->mlp_cb(mlp);
+  }
+}
+
+
+
+/**
+ *
+ */
+static void *
+metadata_thread(void *aux)
+{
+  hts_mutex_lock(&metadata_mutex);
+  while(1) {
+    struct prop_notify_queue exp, nor;
+
+    int timo = TAILQ_FIRST(&mlpqueue) != NULL ? 50 : 0;
+    hts_mutex_unlock(&metadata_mutex);
+    int r = prop_courier_wait(metadata_courier, &nor, &exp, timo);
+    hts_mutex_lock(&metadata_mutex);
+
+    prop_notify_dispatch(&exp);
+    prop_notify_dispatch(&nor);
+
+    if(r)
+      mlp_dispatch();
+  }
+  return NULL;
+}
+
+
 /**
  *
  */
@@ -1811,8 +1911,13 @@ metadata_init(void)
   prop_concat_t *pc;
 
   hts_mutex_init(&metadata_mutex);
-  metadata_courier = prop_courier_create_thread(&metadata_mutex, "metadata");
 
+  metadata_courier = prop_courier_create_waitable();
+  TAILQ_INIT(&mlpqueue);
+
+  hts_thread_create_detached("metadata", metadata_thread, NULL, 
+			     THREAD_PRIO_LOW);
+  
   s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
 		       _p("Metadata configuration and provider settings"),
 		       NULL);

@@ -2904,8 +2904,8 @@ http_request(const char *url, const char **arguments,
       while(1) {
 	int zr = inflate(&z, 0);
 	if(zr < 0) {
-	  snprintf(errbuf, errlen, "zlib error %d (%d %d)", zr,
-		   z.avail_in, z.avail_out);
+	  snprintf(errbuf, errlen, "zlib error %d (%d %d %"PRId64")", zr,
+		   z.avail_in, z.avail_out, hf->hf_filesize);
 	  free(buf);
 	  free(buf2);
 	  goto error;
