@@ -2,52 +2,82 @@ language: Bulgarian
 native: Български 
 maintainer: Yuliyan <july_d_2004@yahoo.com>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Аудио настройки
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: Езици
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: Настройки
-
-id: Subtitle settings
-msg: Настройки на субтитрите
-
-id: Video settings
-msg: Видео настройки
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Добавено от: %s
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: Възпроизведено %d път
-msg[1]: Възпроизведено %d пъти
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: %d запис
-msg[1]: %d записа
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: %d трак
-msg[1]: %d тракове
+id: Playqueue
+msg: Опашка за възпроизвеждане
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: Изтрий
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 msg: Опашка за възпроизвеждане
@@ -59,31 +89,56 @@ id: Unstar
 msg: Отмаркирай
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Изкл.
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: Вкл.
+id: Audio settings
+msg: Аудио настройки
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: Настройки
+
+id: Subtitle settings
+msg: Настройки на субтитрите
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: Субтитри
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: Видео настройки
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Добави към опашката за възпроизвеждане
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Отмени
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Заета РАМ памет от апликацията: %d kB
@@ -137,67 +192,258 @@ id: Windowmanager: %s
 msg: Мениджър на прозорците: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: Относно програмата
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Главна страница
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Не
+
+id: Yes
+msg: Да 
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Невъзможно отварянето на ресурса
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Грешка при зареждането на страницата
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Опашка за възпроизвеждане
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Статус на възпроизвеждане
-
-id: Unable to start video playback
-msg: Невъзможно стартиране на видео възпроизвеждането
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Глава %d / %d
-
-id: Title %d / %d
-msg: Заглавие %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Трак %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU е твърде бавно, за да декодира това видео
 
+id: Playback status
+msg: Статус на възпроизвеждане
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -213,50 +459,35 @@ id: Username
 msg: Потребителско име
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Отмени
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Няма заредени медийни файлове
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Аудио изход
-
-id: CPUs
-msg: CPU
-
-id: GPU & Display
-msg: GPU и изображение
-
-id: GPU Core temperature: %d / %d °
-msg: Температура на ядрото на GPU: %d / %d °
-
-#
-# ./glwthemes/mono/universe.view
-#
-id: Adjust background tint based on daytime
-msg: Настройка нюанса на фона в зависимост от яркостта
-
-id: Alternate list layout
-msg: Алтернативен изглед на списъка
-
-id: Audio muted
-msg: Заглушаване на аудиото
-
-id: Fancy UI animations
-msg: Анимация на интерфейса
-
-id: Master volume: %d dB
-msg: Сила на звука: %d dB
-
-id: Multilingual 'No media loaded'
+id: Memory usage:
 # Missing translation
 msg: 
 
-id: Top bar navigation buttons
-msg: Бутони за навигация в горния панел
+#
+# ./glwthemes/default/universe.view
+#
+id: Audio muted
+msg: Заглушаване на аудиото
+
+id: Master volume: %d dB
+msg: Сила на звука: %d dB
 
 #
 # ./src/api/opensubtitles.c
@@ -276,6 +507,9 @@ msg: Недостатъчна памет в системата (%d кБ RAM до
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Аудио изход
+
 id: Audio/Video sync delay
 msg: Синхронизация на Audio/Video закъснението
 
@@ -491,6 +725,9 @@ msg: Език
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Кодът на езиците трябва да бъде настроен като три-символен ISO код, например: eng, swe, fra
 
+id: Languages
+msg: Езици
+
 id: Preferred languages
 msg: Предпочитани езици
 
@@ -693,10 +930,6 @@ id: URL
 # Missing translation
 msg: 
 
-id: Video
-# Missing translation
-msg: 
-
 #
 # ./src/plugins.c
 #
@@ -753,10 +986,6 @@ id: Not installed
 msg: 
 
 id: Not upgradable
-# Missing translation
-msg: 
-
-id: Plugins
 # Missing translation
 msg: 
 
@@ -886,10 +1115,6 @@ msg: Видео режими
 #
 # ./src/upgrade.c
 #
-id: Check for updates now
-# Missing translation
-msg: 
-
 id: Notify about upgrades
 # Missing translation
 msg: 
@@ -903,14 +1128,6 @@ id: Showtime version %s is available
 msg: 
 
 id: Software upgrade
-# Missing translation
-msg: 
-
-id: Stable
-# Missing translation
-msg: 
-
-id: Testing
 # Missing translation
 msg: 
 
@@ -1018,12 +1235,12 @@ id: Maximum resolution for deinterlacer
 # Missing translation
 msg: 
 
-id: No
-msg: Не
-
 id: No limit
 # Missing translation
 msg: 
+
+id: Off
+msg: Изкл.
 
 id: Outline color
 msg: Цвят на контура
@@ -1066,9 +1283,6 @@ msg:
 id: Subtitle styling
 msg: Стил на субтитрите
 
-id: Subtitles
-msg: Субтитри
-
 id: Temporal
 # Missing translation
 msg: 
@@ -1082,7 +1296,4 @@ msg: Видео ускорение и поведение на екрана
 
 id: Video playback
 msg: Видео възпроизвеждане
-
-id: Yes
-msg: Да 
 

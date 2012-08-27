@@ -2,52 +2,82 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: 音频设置
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: 语言
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: 设置
-
-id: Subtitle settings
-msg: 字幕设置
-
-id: Video settings
-msg: 视频设置
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: 由%s添加
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: 已播放%d次
-msg[1]: 已播放%d次
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 总数：%d
-msg[1]: 总数：%d
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 轨道数：%d
-msg[1]: 轨道数：%d
+id: Playqueue
+msg: 播放队列
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: 删除
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 msg: 队列
@@ -59,31 +89,56 @@ id: Unstar
 msg: 去星
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: 关闭
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: 开启
+id: Audio settings
+msg: 音频设置
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: 设置
+
+id: Subtitle settings
+msg: 字幕设置
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: 字幕
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: 视频设置
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: 加入队列
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 确定
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: 程序已分配：%d kB
@@ -137,67 +192,258 @@ id: Windowmanager: %s
 msg: 窗口管理器: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: 关于
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: 首页
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: 否
+
+id: Yes
+msg: 是
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: 不能打开资源
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: 载入页面出错
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: 播放队列
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: 播放信息
-
-id: Unable to start video playback
-msg: 无法播放
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: 章节 %d / %d
-
-id: Title %d / %d
-msg: 标题 %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: 轨道 %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
 
+id: Playback status
+msg: 播放信息
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 msg: 域
@@ -212,49 +458,35 @@ id: Username
 msg: 用户名
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 确定
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: 未载入媒体
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: 音频输出
-
-id: CPUs
-msg: CPU
-
-id: GPU & Display
-msg: GPU及显示
-
-id: GPU Core temperature: %d / %d °
-msg: GPU核心温度: %d / %d °
+id: Memory usage:
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: 根据时间调整背景颜色
-
-id: Alternate list layout
-msg: 更改列表布局
-
 id: Audio muted
 msg: 已静音
 
-id: Fancy UI animations
-msg: Fancy界面动画
-
 id: Master volume: %d dB
 msg: 主音量: %d dB
-
-id: Multilingual 'No media loaded'
-msg: 多语言'未载入媒体'
-
-id: Top bar navigation buttons
-msg: 工具栏导航按钮
 
 #
 # ./src/api/opensubtitles.c
@@ -274,6 +506,9 @@ msg: 系统内存偏少(%d kB RAM可用)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: 音频输出
+
 id: Audio/Video sync delay
 msg: 音频/视频同步延迟
 
@@ -489,6 +724,9 @@ msg: 语言
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: 请使用三个字母的ISO代码设置语言代码，例如: eng, swe, fra
 
+id: Languages
+msg: 语言
+
 id: Preferred languages
 msg: 语言偏好
 
@@ -691,10 +929,6 @@ id: URL
 # Missing translation
 msg: 
 
-id: Video
-# Missing translation
-msg: 
-
 #
 # ./src/plugins.c
 #
@@ -750,10 +984,6 @@ id: Not installed
 msg: 
 
 id: Not upgradable
-# Missing translation
-msg: 
-
-id: Plugins
 # Missing translation
 msg: 
 
@@ -883,10 +1113,6 @@ msg: 视频模式
 #
 # ./src/upgrade.c
 #
-id: Check for updates now
-# Missing translation
-msg: 
-
 id: Notify about upgrades
 # Missing translation
 msg: 
@@ -900,14 +1126,6 @@ id: Showtime version %s is available
 msg: 
 
 id: Software upgrade
-# Missing translation
-msg: 
-
-id: Stable
-# Missing translation
-msg: 
-
-id: Testing
 # Missing translation
 msg: 
 
@@ -1009,11 +1227,11 @@ msg: 靠左
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
-id: No
-msg: 否
-
 id: No limit
 msg: 无限制
+
+id: Off
+msg: 关闭
 
 id: Outline color
 msg: 边框颜色
@@ -1054,9 +1272,6 @@ msg: 字幕大小和位置
 id: Subtitle styling
 msg: 字幕样式
 
-id: Subtitles
-msg: 字幕
-
 id: Temporal
 msg: 临时的
 
@@ -1068,7 +1283,4 @@ msg: 视频加速及显示方式
 
 id: Video playback
 msg: 视频播放
-
-id: Yes
-msg: 是
 

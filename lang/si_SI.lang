@@ -2,52 +2,82 @@ language: Slovenian
 native: Slovenski
 maintainer: Drago Kraner <djkidy@gmail.com>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Nastavitve zvoka
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: Jezik
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: Nastavitve
-
-id: Subtitle settings
-msg: Nastavitve podnapisov
-
-id: Video settings
-msg: Nastavitve videa
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Dodal: %s
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: 
-msg[1]: 
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 
-msg[1]: 
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 
-msg[1]: 
+id: Playqueue
+msg: Lista ponovitev
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: Izbriši
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 msg: Vrsta
@@ -59,31 +89,56 @@ id: Unstar
 msg: Unstar
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Izklop
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: Vklop
+id: Audio settings
+msg: Nastavitve zvoka
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: Nastavitve
+
+id: Subtitle settings
+msg: Nastavitve podnapisov
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: Podnapisi
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: Nastavitve videa
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Dodaj
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Prekliči
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Dodeljeno iz aplikacije: %d kB
@@ -137,67 +192,258 @@ id: Windowmanager: %s
 msg: Upravljalec oken: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: O
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Domov
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Ne
+
+id: Yes
+msg: Da 
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Nemorem odpreti izvora
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Napaka pri nalaganju strani
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Lista ponovitev
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Status predvajanja
-
-id: Unable to start video playback
-msg: Predvajanje videa ni uspelo
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Odstavek %d / %d
-
-id: Title %d / %d
-msg: Naslov %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Skladba %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU je prepočasen za dekodiranje videa
 
+id: Playback status
+msg: Status predvajanja
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -213,50 +459,35 @@ id: Username
 msg: Uporabniško ime
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Prekliči
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Medij ni naložen
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Izhod zvoka
-
-id: CPUs
-msg: CPUs
-
-id: GPU & Display
-msg: GPU in Zaslon
-
-id: GPU Core temperature: %d / %d °
-msg: GPU Temperatura jedra: %d / %d °
-
-#
-# ./glwthemes/mono/universe.view
-#
-id: Adjust background tint based on daytime
-msg: Nastavitev barve ozadja glede na čas
-
-id: Alternate list layout
-msg: Alternativna postavitev liste
-
-id: Audio muted
-msg: Izklop zvoka
-
-id: Fancy UI animations
-msg: Animacije UI vmesnika
-
-id: Master volume: %d dB
-msg: Glasnost: %d dB
-
-id: Multilingual 'No media loaded'
+id: Memory usage:
 # Missing translation
 msg: 
 
-id: Top bar navigation buttons
-msg: Navigacijske tipke v zgornji vrstici
+#
+# ./glwthemes/default/universe.view
+#
+id: Audio muted
+msg: Izklop zvoka
+
+id: Master volume: %d dB
+msg: Glasnost: %d dB
 
 #
 # ./src/api/opensubtitles.c
@@ -276,6 +507,9 @@ msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Izhod zvoka
+
 id: Audio/Video sync delay
 msg: Audio/Video sinhronizacija upočasnjena
 
@@ -491,6 +725,9 @@ msg: Jezik
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Koda jezika mora biti konfigurirana s tremi znaki ISO kode, primer (eng, swe, slo)
 
+id: Languages
+msg: Jezik
+
 id: Preferred languages
 msg: Prednostni jezik
 
@@ -693,10 +930,6 @@ id: URL
 # Missing translation
 msg: 
 
-id: Video
-# Missing translation
-msg: 
-
 #
 # ./src/plugins.c
 #
@@ -752,10 +985,6 @@ id: Not installed
 msg: 
 
 id: Not upgradable
-# Missing translation
-msg: 
-
-id: Plugins
 # Missing translation
 msg: 
 
@@ -885,10 +1114,6 @@ msg: Video Možnost
 #
 # ./src/upgrade.c
 #
-id: Check for updates now
-# Missing translation
-msg: 
-
 id: Notify about upgrades
 # Missing translation
 msg: 
@@ -902,14 +1127,6 @@ id: Showtime version %s is available
 msg: 
 
 id: Software upgrade
-# Missing translation
-msg: 
-
-id: Stable
-# Missing translation
-msg: 
-
-id: Testing
 # Missing translation
 msg: 
 
@@ -1017,12 +1234,12 @@ id: Maximum resolution for deinterlacer
 # Missing translation
 msg: 
 
-id: No
-msg: Ne
-
 id: No limit
 # Missing translation
 msg: 
+
+id: Off
+msg: Izklop
 
 id: Outline color
 msg: Okvirne barve
@@ -1066,9 +1283,6 @@ msg:
 id: Subtitle styling
 msg: Stil podnapisov
 
-id: Subtitles
-msg: Podnapisi
-
 id: Temporal
 # Missing translation
 msg: 
@@ -1082,7 +1296,4 @@ msg: Video pospeševanje in prikaz obnašanja
 
 id: Video playback
 msg: Predvajanje videa
-
-id: Yes
-msg: Da 
 

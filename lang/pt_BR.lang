@@ -2,52 +2,82 @@ language: Brazilian Portuguese
 native: Português Brasileiro
 maintainer: Alexandre Zia <alexandre@zia.com.br>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Configurações de áudio
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: Idiomas
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: Configurações
-
-id: Subtitle settings
-msg: Configurações de legendas
-
-id: Video settings
-msg: Configurações de vídeo
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Adicionado por: %s
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: 
-msg[1]: 
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 
-msg[1]: 
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 
-msg[1]: 
+id: Playqueue
+msg: Lista de reprodução
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: Apagar
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 # Missing translation
@@ -62,31 +92,56 @@ id: Unstar
 msg: 
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Deslig.
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: Ligado
+id: Audio settings
+msg: Configurações de áudio
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: Configurações
+
+id: Subtitle settings
+msg: Configurações de legendas
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: Legendas
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: Configurações de vídeo
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Adicionar à lista
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Cancelar
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 # Missing translation
@@ -145,67 +200,258 @@ id: Windowmanager: %s
 msg: Gerenciador de janelas: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: Sobre
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Início
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Não
+
+id: Yes
+msg: Sim
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Não foi possível abrir o recurso
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Erro ao carregar a página
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Lista de reprodução
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Estado da reprodução
-
-id: Unable to start video playback
-msg: Não foi possível iniciar a reprodução do vídeo
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Capítulo %d / %d
-
-id: Title %d / %d
-msg: Título %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Faixa %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: A CPU está muita lenta para decodificar este vídeo
 
+id: Playback status
+msg: Estado da reprodução
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -221,51 +467,35 @@ id: Username
 msg: Nome do usuário
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Cancelar
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Nenhuma media carregada
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Saída de áudio
-
-id: CPUs
-msg: CPUs
-
-id: GPU & Display
-msg: GPU & Visualização
-
-id: GPU Core temperature: %d / %d °
-msg: Temperatura da GPU: %d / %d °
-
-#
-# ./glwthemes/mono/universe.view
-#
-id: Adjust background tint based on daytime
-msg: Ajustar a cor do fundo dependendo do horário do dia
-
-id: Alternate list layout
+id: Memory usage:
 # Missing translation
 msg: 
 
+#
+# ./glwthemes/default/universe.view
+#
 id: Audio muted
 msg: Sem áudio
 
-id: Fancy UI animations
-msg: Animações
-
 id: Master volume: %d dB
 msg: Volume principal: %d dB
-
-id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
-
-id: Top bar navigation buttons
-msg: Botões de navegação na barra superior
 
 #
 # ./src/api/opensubtitles.c
@@ -285,6 +515,9 @@ msg: Memória do sistema baixa (%d kb disponíveis)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Saída de áudio
+
 id: Audio/Video sync delay
 msg: Atraso de sincronização de áudio/vídeo
 
@@ -506,6 +739,9 @@ msg: Idioma
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Os códigos de idioma devem ser configurados com códigos ISO de 3 caracteres (ex: eng, fra, por)
 
+id: Languages
+msg: Idiomas
+
 id: Preferred languages
 msg: Idiomas preferidos
 
@@ -710,10 +946,6 @@ id: URL
 # Missing translation
 msg: 
 
-id: Video
-# Missing translation
-msg: 
-
 #
 # ./src/plugins.c
 #
@@ -769,10 +1001,6 @@ id: Not installed
 msg: 
 
 id: Not upgradable
-# Missing translation
-msg: 
-
-id: Plugins
 # Missing translation
 msg: 
 
@@ -902,10 +1130,6 @@ msg: Modos de video
 #
 # ./src/upgrade.c
 #
-id: Check for updates now
-# Missing translation
-msg: 
-
 id: Notify about upgrades
 # Missing translation
 msg: 
@@ -919,14 +1143,6 @@ id: Showtime version %s is available
 msg: 
 
 id: Software upgrade
-# Missing translation
-msg: 
-
-id: Stable
-# Missing translation
-msg: 
-
-id: Testing
 # Missing translation
 msg: 
 
@@ -1034,12 +1250,12 @@ id: Maximum resolution for deinterlacer
 # Missing translation
 msg: 
 
-id: No
-msg: Não
-
 id: No limit
 # Missing translation
 msg: 
+
+id: Off
+msg: Deslig.
 
 id: Outline color
 msg: Cor do contorno
@@ -1083,9 +1299,6 @@ msg:
 id: Subtitle styling
 msg: Estilo das legendas
 
-id: Subtitles
-msg: Legendas
-
 id: Temporal
 # Missing translation
 msg: 
@@ -1099,7 +1312,4 @@ msg: Acelaração de vídeo e comportamento da visualização
 
 id: Video playback
 msg: Reprodução de vídeo
-
-id: Yes
-msg: Sim
 
