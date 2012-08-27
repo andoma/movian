@@ -1,0 +1,5 @@
+Plug three different memory leaks related to subtitles.
+These caused out of memory and thus crash of Showtime.
+Mostly related to vobsub and DVD subtitles
+
+Fixes #1165
