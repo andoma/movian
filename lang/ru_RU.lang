@@ -5,79 +5,65 @@ maintainer: pvc1 <pvc1@yandex.ru>
 # ./glwthemes/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: Добавить текущую страницу в закладки
 
 id: Open settings
-# Missing translation
-msg: 
+msg: Открыть настройки
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: Удалить текущую страницу из закладок
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: Перейти на главный экран
 
 id: Navigation
-# Missing translation
-msg: 
+msg: Навигация
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: Открыть настройки
 
 id: Playqueue
 msg: Очередь воспроизведения
 
 id: Reload current page
-# Missing translation
-msg: 
+msg: Перезагрузка текущей страницы
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: Добавить '%s' на главный экран
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: Удалить '%s' с главного экрана
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: Продолжить с %s
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: Продолжить воспроизведение здесь
 
 id: Delete
 msg: Удалить
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: Пометить как просмотренное
 
 id: Mark as unseen
 # Missing translation
-msg: 
+msg: Пометить как непросмотренное
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: Играть с начала
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: Играть до конца списка
 
 id: Queue
 msg: Очередь
@@ -92,19 +78,16 @@ msg: Снять метку
 # ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: Аудио
 
 id: Audio settings
 msg: Настройки аудио
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: Аудио дорожки
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: Поиск по времени
 
 id: Settings
 msg: Настройки
@@ -113,19 +96,16 @@ id: Subtitle settings
 msg: Настройки субтитров
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: Дорожки субтитров
 
 id: Subtitles
 msg: Субтитры
 
 id: Video
-# Missing translation
-msg: 
+msg: Видео
 
 id: Video menu
-# Missing translation
-msg: 
+msg: Меню видео
 
 id: Video settings
 msg: Настройки видео
@@ -134,8 +114,7 @@ msg: Настройки видео
 # ./glwthemes/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: Системный лог
 
 #
 # ./glwthemes/default/pages/about.view
@@ -195,125 +174,100 @@ msg: Оконный менеджер: %s
 # ./glwthemes/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: Альбом
 
 id: Custom
-# Missing translation
-msg: 
+msg: Пользовательский
 
 id: Images
-# Missing translation
-msg: 
+msg: Изображения
 
 id: List
-# Missing translation
-msg: 
+msg: Список
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: Слайдшоу
 
 id: View
-# Missing translation
-msg: 
+msg: Просмотр
 
 #
 # ./glwthemes/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: Обнаруженные ресурсы в локальной сети
 
 #
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: О программе
 
 id: Plugins
-# Missing translation
-msg: 
+msg: Плагины
 
 #
 # ./glwthemes/default/pages/home_tiles.view
 #
 id: Dismiss
-# Missing translation
-msg: 
+msg: Отклонить
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Камера:
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Дата:
 
 #
 # ./glwthemes/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Автор:
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Доступная версия:
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Установленная версия:
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: Требуется Showtime %s или новее
 
 #
 # ./glwthemes/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: Режиссер:
 
 id: Duration:
-# Missing translation
-msg: 
+msg: Продолжительность:
 
 id: File date:
-# Missing translation
-msg: 
+msg: Дата файла:
 
 id: Genre:
-# Missing translation
-msg: 
+msg: Жанр:
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: Метаданные от
 
 id: Producer:
-# Missing translation
-msg: 
+msg: Продюсер:
 
 id: Rating:
-# Missing translation
-msg: 
+msg: Рейтинг:
 
 id: Year:
-# Missing translation
-msg: 
+msg: Год:
 
 #
 # ./glwthemes/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: Добавить новую запись
 
 #
 # ./glwthemes/default/pages/listitems/bool.view
@@ -328,16 +282,13 @@ msg: Дa
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: Установка
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: Удаление
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: Обновление
 
 #
 # ./glwthemes/default/pages/openerror.view
@@ -355,72 +306,56 @@ msg: Трек %d / %d
 # ./glwthemes/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: Произошла ошибка во время загрузки
 
 id: Available version:
-# Missing translation
-msg: 
+msg: Доступные версии:
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: Лог изменений для релиза %s
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: Проверить обновления сейчас
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: Проверка обновлений...
 
 id: Current version:
-# Missing translation
-msg: 
+msg: Текущая версия:
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: Загрузить и установить...
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: Загрузка...
 
 id: Installing...
-# Missing translation
-msg: 
+msg: Установка...
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: Новая версия %s доступна для загрузки
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: Нет обнолвлений
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: Перезапуск Showtime через %d секунд...
 
 id: Retry...
-# Missing translation
-msg: 
+msg: Повторить ...
 
 id: Showtime is up to date
 # Missing translation
-msg: 
+msg: Showtime на текущий момент
 
 id: Stable
-# Missing translation
-msg: 
+msg: Стабильный
 
 id: Testing
-# Missing translation
-msg: 
+msg: Тестирование
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: Невозможно проверить новую версию
 
 #
 # ./glwthemes/default/pages/video.view
@@ -435,19 +370,16 @@ msg: Статус воспроизведения
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: Глава: %d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: Название: %d
 
 #
 # ./glwthemes/default/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Домен
 
 id: Password
 msg: Пароль
@@ -477,8 +409,7 @@ msg: Медиа-файл не загружен
 # ./glwthemes/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: Использование памяти:
 
 #
 # ./glwthemes/default/universe.view
@@ -640,12 +571,10 @@ msg: Starred
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: Кэш очищен
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: Очистить кэшированные файлы
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -666,43 +595,34 @@ msg: Поиск с использованием Unix locatedb
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: Доступ запрещен
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: Аккаунт ограничен
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: Неверное сетевое имя
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: Ошибка входа
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: Дата
 
 id: Filename
-# Missing translation
-msg: 
+msg: Имя файла
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: Показывать только поддерживаемые файлы
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: Сортировка сперва папок
 
 id: Sort on
-# Missing translation
-msg: 
+msg: Сортировать по
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -777,12 +697,10 @@ msg: Настройка
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: Забыть запомненные пароли
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: Вспомнить стертые пароли
 
 #
 # ./src/media.c
@@ -806,12 +724,10 @@ msg: Масштаб видео
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: Автоматический
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: Пользовательский поисковый запрос
 
 id: Embedded in file
 msg: Встроен в файл
@@ -820,173 +736,136 @@ id: Enabled
 msg: Включено
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: Метаданные
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg:  Конфигурация метаданных и настройки поставщика
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: Метаданные загружаются из '%s' с использованием %s
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: Поиск метаданных
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: Источник метаданных
 
 id: Movie
-# Missing translation
-msg: 
+msg: Фильмы
 
 id: No data found
-# Missing translation
-msg: 
+msg: Данные не найдены
 
 id: None
-# Missing translation
-msg: 
+msg: Нет
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: Поставщиков для фильмов
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: Поставщики для музыки
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: Обновить метаданные
 
 id: Track %d
 msg: Трек %d
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: пользовательские IMDb ID
 
 id: custom query
-# Missing translation
-msg: 
+msg: пользовательский запрос
 
 id: filename
-# Missing translation
-msg: 
+msg: имя файла
 
 id: folder name
-# Missing translation
-msg: 
+msg: имя папки
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: Добавлены новые закладки: %s
 
 id: Bookmarks
 msg: Закладки
 
 id: Music
-# Missing translation
-msg: 
+msg: Музыка
 
 id: No handler for URL
 msg: Нет обработчика для URL
 
 id: Other
-# Missing translation
-msg: 
+msg: Прочее
 
 id: Photos
-# Missing translation
-msg: 
+msg: Фото
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: Удалить закладки: %s
 
 id: TV
-# Missing translation
-msg: 
+msg: ТВ
 
 id: Title
-# Missing translation
-msg: 
+msg: Название
 
 id: Type
 msg: Тип
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: Альтернативный URL репозитория плагинов
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: Автоматическое обновление плагинов
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Доступные плагины
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Просмотр доступных плагинов
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: Поврежденный пакет плагина
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: Ошибка записи диска
 
 id: Downloading
-# Missing translation
-msg: 
+msg: Загрузка
 
 id: File open error
-# Missing translation
-msg: 
+msg: Ошибка при открытии файла
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Установленные плагины
 
 id: Installing
-# Missing translation
-msg: 
+msg: Установка
 
 id: Invalud URI
 msg: Недопустимый URL 
 
 id: Not installable
-# Missing translation
-msg: 
+msg: Не может быть установлен
 
 id: Not installed
-# Missing translation
-msg: 
+msg: Не установлен
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: Не обновляемый
 
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
@@ -995,12 +874,10 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Не удается загрузить plugin.json: Неправильный JSON
 
 id: Up to date
-# Missing translation
-msg: 
+msg: До даты
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: Обновляемый
 
 id: Upgraded plugin %s to version %s
 # Missing translation
@@ -1013,20 +890,16 @@ id: Automatic standby
 msg: Автоматический режим ожидания
 
 id: Logout
-# Missing translation
-msg: 
+msg: Выход из системы
 
 id: Open shell
-# Missing translation
-msg: 
+msg: Открыть оболочку
 
 id: Power off system
-# Missing translation
-msg: 
+msg: Отключение системы
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: Запуск и остановка Showtime
 
 #
 # ./src/sd/sd.c
@@ -1038,8 +911,7 @@ msg: Имя
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: Локальная сеть
 
 #
 # ./src/settings.c
@@ -1048,26 +920,22 @@ id: Applications and installed plugins
 msg: Приложения и установленные плагины
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: Настройки для разработчиков
 
 id: Discovered media sources
 msg: Обнаруженные медиа источники
 
 id: General
-# Missing translation
-msg: 
+msg: Общее
 
 id: Global settings
 msg: Главные настройки
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: Настройки полезные для разработчиков
 
 id: System related settings
-# Missing translation
-msg: 
+msg: Настройки связанные с системой
 
 #
 # ./src/ui/glw/glw.c
@@ -1115,24 +983,19 @@ msg: Видеорежимы
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: Уведомлять об обновлениях
 
 id: Open download page
-# Missing translation
-msg: 
+msg: Открыть страницу загрузки
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Доступна версия Showtime %s
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: Обновление ПО
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: Обновление до релиза с
 
 #
 # ./src/upnp/upnp.c
@@ -1177,16 +1040,13 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: Всегда пытаться выбрать субтитры
@@ -1207,8 +1067,7 @@ id: Count video as played when reaching
 msg: Считать видео проигранным при достижении
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: Включить VDA
 
 id: Enable VDPAU
 msg: Включить VDPAU
@@ -1229,12 +1088,10 @@ id: Left
 msg: Слева
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: Максимальное разрешение для деинтерлейсинга
 
 id: No limit
-# Missing translation
-msg: 
+msg: Без ограничений
 
 id: Off
 msg: Выкл
@@ -1246,8 +1103,7 @@ id: Outline size
 msg: Размер контура
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Предпочтительный метод VPDAU деинтерлейсинга 
 
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
@@ -1280,12 +1136,10 @@ id: Subtitle styling
 msg: Стиль субтитров
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Временный
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Временный/Пространственный
 
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
