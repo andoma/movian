@@ -424,10 +424,15 @@ id: Starred
 msg: Csillagos
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Könyvjelzők
+id: Cache cleared
+# Missing translation
+msg: 
+
+id: Clear cached files
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -445,6 +450,48 @@ msg:
 #
 id: Search using Unix locatedb
 msg: Keresés Unix locatedb által
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+# Missing translation
+msg: 
+
+id: Account restricted
+# Missing translation
+msg: 
+
+id: Bad network share name
+# Missing translation
+msg: 
+
+id: Logon failure
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -514,6 +561,17 @@ id: Keymapper
 msg: Billentyűzetkiosztás
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+# Missing translation
+msg: 
+
+id: Rembered passwords erased
+# Missing translation
+msg: 
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -534,7 +592,66 @@ msg: Zoomolás
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
+# Missing translation
+msg: 
+
+id: Enabled
+msg: Engedélyezve
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
 # Missing translation
 msg: 
 
@@ -542,23 +659,131 @@ id: Track %d
 # Missing translation
 msg: 
 
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+# Missing translation
+msg: 
+
+id: Bookmarks
+msg: Könyvjelzők
+
+id: Music
+# Missing translation
+msg: 
+
 id: No handler for URL
 msg: Nincs kezelő az URL-hez
+
+id: Other
+# Missing translation
+msg: 
+
+id: Photos
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+# Missing translation
+msg: 
+
+id: TV
+# Missing translation
+msg: 
+
+id: Title
+# Missing translation
+msg: 
+
+id: Type
+msg: Tipus
+
+id: URL
+# Missing translation
+msg: 
+
+id: Video
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+# Missing translation
+msg: 
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Disk write error
+# Missing translation
+msg: 
+
+id: Downloading
+# Missing translation
+msg: 
+
+id: File open error
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installing
+# Missing translation
+msg: 
+
 id: Invalud URI
 msg: Érvénytelen URI 
 
-id: Plugin ID %s does not exist
-msg: A plugin ID %s nem létezik
+id: Not installable
+# Missing translation
+msg: 
 
-id: Plugin ID %s have no download URL
-msg: A plugin ID %s nem rendelkezik letöltési URL-el
+id: Not installed
+# Missing translation
+msg: 
+
+id: Not upgradable
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: Nem lehet betölteni a plugin.json: %s
@@ -566,8 +791,17 @@ msg: Nem lehet betölteni a plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Nem lehet betölteni plugin.json: Hibas JSON 
 
-id: Unable to request plugin repository: %s
-msg: Nem lehet a plugin tárolót lekérni: %s
+id: Up to date
+# Missing translation
+msg: 
+
+id: Upgradable
+# Missing translation
+msg: 
+
+id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -575,20 +809,34 @@ msg: Nem lehet a plugin tárolót lekérni: %s
 id: Automatic standby
 msg: Automatikus készenlét
 
-id: Run control
-msg: Ellenőrzés
+id: Logout
+# Missing translation
+msg: 
+
+id: Open shell
+# Missing translation
+msg: 
+
+id: Power off system
+# Missing translation
+msg: 
+
+id: Starting and stopping Showtime
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Engedélyezve
-
 id: Name
 msg: Név
 
-id: Type
-msg: Tipus
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -596,11 +844,27 @@ msg: Tipus
 id: Applications and installed plugins
 msg: Alkalmazások es beépülő modulok
 
+id: Developer settings
+# Missing translation
+msg: 
+
 id: Discovered media sources
 msg: Talált média források
 
+id: General
+# Missing translation
+msg: 
+
 id: Global settings
 msg: Globális beállítások
+
+id: Settings useful for developers
+# Missing translation
+msg: 
+
+id: System related settings
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw.c
@@ -645,6 +909,37 @@ id: Switch to this mode now
 msg: 
 
 id: Video modes
+# Missing translation
+msg: 
+
+#
+# ./src/upgrade.c
+#
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Showtime version %s is available
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
 # Missing translation
 msg: 
 
@@ -724,6 +1019,10 @@ id: Color
 msg: Szin
 
 id: Count video as played when reaching
+# Missing translation
+msg: 
+
+id: Enable VDA
 # Missing translation
 msg: 
 

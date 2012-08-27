@@ -188,7 +188,7 @@ check_upgrade(int set_news)
   prop_ref_dec(news_ref);
 
   if(set_news && canUpgrade) {
-    rstr_t *r = _("Showtime version %s is available.");
+    rstr_t *r = _("Showtime version %s is available");
     char buf[128];
     snprintf(buf, sizeof(buf), rstr_get(r), ver);
     news_ref = add_news(buf, "page:upgrade");

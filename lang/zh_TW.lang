@@ -401,10 +401,15 @@ id: Starred
 msg: 評價
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: 書籤
+id: Cache cleared
+# Missing translation
+msg: 
+
+id: Clear cached files
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -420,6 +425,48 @@ msg: 無法開啟檔案： %s
 #
 id: Search using Unix locatedb
 msg: 使用 Unix locatedb 進行搜尋
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+# Missing translation
+msg: 
+
+id: Account restricted
+# Missing translation
+msg: 
+
+id: Bad network share name
+# Missing translation
+msg: 
+
+id: Logon failure
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -488,6 +535,17 @@ id: Keymapper
 msg: 按鍵設置
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+# Missing translation
+msg: 
+
+id: Rembered passwords erased
+# Missing translation
+msg: 
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -508,29 +566,196 @@ msg: 視訊縮放
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: 檔案內容(Embedded in file)
+
+id: Enabled
+msg: 啟用
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
+# Missing translation
+msg: 
 
 id: Track %d
 msg: 第 %d 軌
 
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+# Missing translation
+msg: 
+
+id: Bookmarks
+msg: 書籤
+
+id: Music
+# Missing translation
+msg: 
+
 id: No handler for URL
 msg: URL 位址沒有對應的處理規則
+
+id: Other
+# Missing translation
+msg: 
+
+id: Photos
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+# Missing translation
+msg: 
+
+id: TV
+# Missing translation
+msg: 
+
+id: Title
+# Missing translation
+msg: 
+
+id: Type
+msg: 類型
+
+id: URL
+# Missing translation
+msg: 
+
+id: Video
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+# Missing translation
+msg: 
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Disk write error
+# Missing translation
+msg: 
+
+id: Downloading
+# Missing translation
+msg: 
+
+id: File open error
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installing
+# Missing translation
+msg: 
+
 id: Invalud URI
 msg: 不正確的 URI 位址
 
-id: Plugin ID %s does not exist
-msg: 外掛 ID %s 不存在
+id: Not installable
+# Missing translation
+msg: 
 
-id: Plugin ID %s have no download URL
-msg: 外掛 ID %s 未指定下載位址
+id: Not installed
+# Missing translation
+msg: 
+
+id: Not upgradable
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: 無法載入 plugin.json ： %s
@@ -538,8 +763,17 @@ msg: 無法載入 plugin.json ： %s
 id: Unable to load plugin.json: Malformed JSON
 msg: 無法載入 plugin.json ： JSON 檔案格式不正確
 
-id: Unable to request plugin repository: %s
-msg: 無法取得外掛程式資料庫： %s
+id: Up to date
+# Missing translation
+msg: 
+
+id: Upgradable
+# Missing translation
+msg: 
+
+id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -547,20 +781,34 @@ msg: 無法取得外掛程式資料庫： %s
 id: Automatic standby
 msg: 自動待機
 
-id: Run control
-msg: 待機設定
+id: Logout
+# Missing translation
+msg: 
+
+id: Open shell
+# Missing translation
+msg: 
+
+id: Power off system
+# Missing translation
+msg: 
+
+id: Starting and stopping Showtime
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: 啟用
-
 id: Name
 msg: 名稱
 
-id: Type
-msg: 類型
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -568,11 +816,27 @@ msg: 類型
 id: Applications and installed plugins
 msg: 應用程式與擴充功能
 
+id: Developer settings
+# Missing translation
+msg: 
+
 id: Discovered media sources
 msg: 搜尋到的媒體來源
 
+id: General
+# Missing translation
+msg: 
+
 id: Global settings
 msg: 設定
+
+id: Settings useful for developers
+# Missing translation
+msg: 
+
+id: System related settings
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw.c
@@ -615,6 +879,37 @@ msg: 立即套用此一模式
 
 id: Video modes
 msg: 視訊模式
+
+#
+# ./src/upgrade.c
+#
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Showtime version %s is available
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
+# Missing translation
+msg: 
 
 #
 # ./src/upnp/upnp.c
@@ -685,6 +980,10 @@ msg: 字幕色彩
 
 id: Count video as played when reaching
 msg: 觀賞影片達到若干比例時增加已播放次數紀錄
+
+id: Enable VDA
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: 啟用 VDPAU

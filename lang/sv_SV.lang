@@ -401,10 +401,15 @@ id: Starred
 msg: Stjärnor
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Bokmärken
+id: Cache cleared
+# Missing translation
+msg: 
+
+id: Clear cached files
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -420,6 +425,48 @@ msg: Kan ej öppna fil: %s
 #
 id: Search using Unix locatedb
 msg: Sök mha. Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+# Missing translation
+msg: 
+
+id: Account restricted
+# Missing translation
+msg: 
+
+id: Bad network share name
+# Missing translation
+msg: 
+
+id: Logon failure
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -488,6 +535,17 @@ id: Keymapper
 msg: Tangent- och knapp-hanterare
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+# Missing translation
+msg: 
+
+id: Rembered passwords erased
+# Missing translation
+msg: 
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -508,29 +566,196 @@ msg: Video zoom
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Inbäddad i fil
+
+id: Enabled
+msg: Påslagen
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Spår %d
 
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+# Missing translation
+msg: 
+
+id: Bookmarks
+msg: Bokmärken
+
+id: Music
+# Missing translation
+msg: 
+
 id: No handler for URL
 msg: Ingen hanterare för URLen
+
+id: Other
+# Missing translation
+msg: 
+
+id: Photos
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+# Missing translation
+msg: 
+
+id: TV
+# Missing translation
+msg: 
+
+id: Title
+# Missing translation
+msg: 
+
+id: Type
+msg: Typ
+
+id: URL
+# Missing translation
+msg: 
+
+id: Video
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+# Missing translation
+msg: 
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Disk write error
+# Missing translation
+msg: 
+
+id: Downloading
+# Missing translation
+msg: 
+
+id: File open error
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installing
+# Missing translation
+msg: 
+
 id: Invalud URI
 msg: Felaktig URI
 
-id: Plugin ID %s does not exist
-msg: Plugin ID %s finns ej
+id: Not installable
+# Missing translation
+msg: 
 
-id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen nerladdningsURL
+id: Not installed
+# Missing translation
+msg: 
+
+id: Not upgradable
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: Kan ej ladda plugin.json: %s
@@ -538,8 +763,17 @@ msg: Kan ej ladda plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
 
-id: Unable to request plugin repository: %s
-msg: Kan ej begära plugin katalogen: %s
+id: Up to date
+# Missing translation
+msg: 
+
+id: Upgradable
+# Missing translation
+msg: 
+
+id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -547,20 +781,34 @@ msg: Kan ej begära plugin katalogen: %s
 id: Automatic standby
 msg: Automatisk standby
 
-id: Run control
-msg: Körkontroll
+id: Logout
+# Missing translation
+msg: 
+
+id: Open shell
+# Missing translation
+msg: 
+
+id: Power off system
+# Missing translation
+msg: 
+
+id: Starting and stopping Showtime
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Påslagen
-
 id: Name
 msg: Namn
 
-id: Type
-msg: Typ
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -568,11 +816,27 @@ msg: Typ
 id: Applications and installed plugins
 msg: Applikationer och installerade plugins
 
+id: Developer settings
+# Missing translation
+msg: 
+
 id: Discovered media sources
 msg: Upptäckta mediakällor
 
+id: General
+# Missing translation
+msg: 
+
 id: Global settings
 msg: Globala inställningar
+
+id: Settings useful for developers
+# Missing translation
+msg: 
+
+id: System related settings
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw.c
@@ -615,6 +879,37 @@ msg: Byt till detta läge nu
 
 id: Video modes
 msg: Videolägen
+
+#
+# ./src/upgrade.c
+#
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Showtime version %s is available.
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
+# Missing translation
+msg: 
 
 #
 # ./src/upnp/upnp.c
@@ -684,6 +979,10 @@ msg: Färg
 
 id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
+
+id: Enable VDA
+# Missing translation
+msg: 
 
 id: Enable VDPAU
 msg: Aktivera VDPAU

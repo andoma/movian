@@ -440,6 +440,29 @@ id: Logon failure
 msg: Accesso fallito
 
 #
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
+
+#
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
@@ -535,11 +558,86 @@ msg: Zoom video
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Incorporato nel file
 
+id: Enabled
+msg: Attivo
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
+# Missing translation
+msg: 
+
 id: Track %d
 msg: Traccia %d
+
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
 
 #
 # ./src/navigator.c
@@ -583,6 +681,10 @@ msg: Video
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
 id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
@@ -661,17 +763,25 @@ msg: Avvio e chiusura Showtime
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Attivo
-
 id: Name
 msg: Nome
+
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
 #
 id: Applications and installed plugins
 msg: Applicazioni e plugin installati
+
+id: Developer settings
+# Missing translation
+msg: 
 
 id: Discovered media sources
 msg: Sorgenti media trovate
@@ -681,6 +791,10 @@ msg: Generale
 
 id: Global settings
 msg: Impostazioni globali
+
+id: Settings useful for developers
+# Missing translation
+msg: 
 
 id: System related settings
 msg: Impostazioni relative al sistema
@@ -726,6 +840,37 @@ msg: Passa a questa modalità ora
 
 id: Video modes
 msg: Modalità video
+
+#
+# ./src/upgrade.c
+#
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Showtime version %s is available
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
+# Missing translation
+msg: 
 
 #
 # ./src/upnp/upnp.c
