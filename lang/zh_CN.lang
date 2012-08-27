@@ -5,79 +5,64 @@ maintainer: Rural Hunter<ruralhunter@gmail.com>
 # ./glwthemes/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: 将当前页面加入书签
 
 id: Open settings
-# Missing translation
-msg: 
+msg: 打开设置
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: 将当前页从书签删除
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: 转至首页
 
 id: Navigation
-# Missing translation
-msg: 
+msg: 导航
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: 打开设置
 
 id: Playqueue
 msg: 播放队列
 
 id: Reload current page
-# Missing translation
-msg: 
+msg: 刷新
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: 将'%s'加进首页
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: 将'%s'从首页移除
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: 从'%s'继续
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: 从当前位置继续
 
 id: Delete
 msg: 删除
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: 标记为已播放
 
 id: Mark as unseen
-# Missing translation
-msg: 
+msg: 标记为未播放
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: 从头播放
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: 播放至列表末尾
 
 id: Queue
 msg: 队列
@@ -92,19 +77,16 @@ msg: 去星
 # ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: 音频
 
 id: Audio settings
 msg: 音频设置
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: 音轨
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: 按时间跳转
 
 id: Settings
 msg: 设置
@@ -113,19 +95,16 @@ id: Subtitle settings
 msg: 字幕设置
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: 字幕
 
 id: Subtitles
 msg: 字幕
 
 id: Video
-# Missing translation
-msg: 
+msg: 视频
 
 id: Video menu
-# Missing translation
-msg: 
+msg: 视频菜单
 
 id: Video settings
 msg: 视频设置
@@ -134,8 +113,7 @@ msg: 视频设置
 # ./glwthemes/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: 系统日志
 
 #
 # ./glwthemes/default/pages/about.view
@@ -195,125 +173,100 @@ msg: 窗口管理器: %s
 # ./glwthemes/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: 专辑
 
 id: Custom
-# Missing translation
-msg: 
+msg: 定制
 
 id: Images
-# Missing translation
-msg: 
+msg: 图像
 
 id: List
-# Missing translation
-msg: 
+msg: 列表
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: 幻灯片演示
 
 id: View
-# Missing translation
-msg: 
+msg: 视图
 
 #
 # ./glwthemes/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: 从本地网络检索资源
 
 #
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: 关于Showtime
 
 id: Plugins
-# Missing translation
-msg: 
+msg: 插件
 
 #
 # ./glwthemes/default/pages/home_tiles.view
 #
 id: Dismiss
-# Missing translation
-msg: 
+msg: 删除
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: 相机
 
 id: Date: 
-# Missing translation
-msg: 
+msg: 日期
 
 #
 # ./glwthemes/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: 作者
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: 可用版本
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: 已安装版本
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: 需要%s或更新版本的Showtime
 
 #
 # ./glwthemes/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: 导演
 
 id: Duration:
-# Missing translation
-msg: 
+msg: 时长
 
 id: File date:
-# Missing translation
-msg: 
+msg: 文件日期
 
 id: Genre:
-# Missing translation
-msg: 
+msg: 类型
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: 元信息源自
 
 id: Producer:
-# Missing translation
-msg: 
+msg: 制片
 
 id: Rating:
-# Missing translation
-msg: 
+msg: 评分
 
 id: Year:
-# Missing translation
-msg: 
+msg: 年份
 
 #
 # ./glwthemes/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: 新增
 
 #
 # ./glwthemes/default/pages/listitems/bool.view
@@ -328,16 +281,13 @@ msg: 是
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: 安装
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: 卸载
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: 升级
 
 #
 # ./glwthemes/default/pages/openerror.view
@@ -355,72 +305,55 @@ msg: 轨道 %d / %d
 # ./glwthemes/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: 下载失败
 
 id: Available version:
-# Missing translation
-msg: 
+msg: 可用版本
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: 版本%s更新记录
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: 立刻检查更新
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: 正在检查更新...
 
 id: Current version:
-# Missing translation
-msg: 
+msg: 当前版本：
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: 正在下载并安装...
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: 正在下载...
 
 id: Installing...
-# Missing translation
-msg: 
+msg: 正在安装...
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: 新版本%s可用
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: 无可用更新
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: %d秒后重启Showtime...
 
 id: Retry...
-# Missing translation
-msg: 
+msg: 重试...
 
 id: Showtime is up to date
-# Missing translation
-msg: 
+msg: Showtime已是最新版
 
 id: Stable
-# Missing translation
-msg: 
+msg: 稳定版
 
 id: Testing
-# Missing translation
-msg: 
+msg: 测试版
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: 无法检查最新版
 
 #
 # ./glwthemes/default/pages/video.view
@@ -435,12 +368,10 @@ msg: 播放信息
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: 章节：%d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: 标题：%d
 
 #
 # ./glwthemes/default/popups/auth.view
@@ -476,8 +407,7 @@ msg: 未载入媒体
 # ./glwthemes/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: 内存使用率：
 
 #
 # ./glwthemes/default/universe.view
@@ -639,12 +569,10 @@ msg: 已加星
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: 缓存已清空
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: 清空缓存文件
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -665,43 +593,34 @@ msg: 使用Unix locatedb搜索
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: 访问被拒绝
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: 帐号受限
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: 网络共享名不正确
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: 登录失败
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: 日期
 
 id: Filename
-# Missing translation
-msg: 
+msg: 文件名
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: 只显示支持的文件
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: 排序时文件夹优先
 
 id: Sort on
-# Missing translation
-msg: 
+msg: 排序
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -776,12 +695,10 @@ msg: 按键映射
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: 清除已保存密码
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: 记住已删除密码
 
 #
 # ./src/media.c
@@ -805,12 +722,10 @@ msg: 视频缩放
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: 自动
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: 设置搜索条件
 
 id: Embedded in file
 msg: 文件内置
@@ -819,173 +734,136 @@ id: Enabled
 msg: 启用
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: 元信息
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: 元信息设置及提供方设置
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: 已从'%s'使用%s下载元信息
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: 元信息搜索
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: 元信息源
 
 id: Movie
-# Missing translation
-msg: 
+msg: 影片
 
 id: No data found
-# Missing translation
-msg: 
+msg: 未找到数据
 
 id: None
-# Missing translation
-msg: 
+msg: 无
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: 影片提供方
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: 音乐提供方
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: 更新元信息
 
 id: Track %d
 msg: 轨道%d
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: 设置IMDb ID
 
 id: custom query
-# Missing translation
-msg: 
+msg: 高级查询
 
 id: filename
-# Missing translation
-msg: 
+msg: 文件名
 
 id: folder name
-# Missing translation
-msg: 
+msg: 目录名
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: 添加新书签：%s
 
 id: Bookmarks
 msg: 收藏夹
 
 id: Music
-# Missing translation
-msg: 
+msg: 音乐
 
 id: No handler for URL
 msg: 无法处理URL
 
 id: Other
-# Missing translation
-msg: 
+msg: 其它
 
 id: Photos
-# Missing translation
-msg: 
+msg: 照片
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: 删除书签: %s
 
 id: TV
-# Missing translation
-msg: 
+msg: 电视
 
 id: Title
-# Missing translation
-msg: 
+msg: 标题
 
 id: Type
 msg: 类型
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: 更改插件库URL
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: 自动更新插件
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: 可用插件
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: 浏览可用插件
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: 损坏的插件包
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: 磁盘写入错误
 
 id: Downloading
-# Missing translation
-msg: 
+msg: 正在下载
 
 id: File open error
-# Missing translation
-msg: 
+msg: 打开文件错误
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: 已安装插件
 
 id: Installing
-# Missing translation
-msg: 
+msg: 正在安装
 
 id: Invalud URI
 msg: 非法的URI
 
 id: Not installable
-# Missing translation
-msg: 
+msg: 不可安装
 
 id: Not installed
-# Missing translation
-msg: 
+msg: 未安装
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: 不可升级
 
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
@@ -994,16 +872,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: 无法载入plugin.json: JSON格式不正确
 
 id: Up to date
-# Missing translation
-msg: 
+msg: 最新
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: 可更新
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: 插件%s已更新到版本%s
 
 #
 # ./src/runcontrol.c
@@ -1012,20 +887,16 @@ id: Automatic standby
 msg: 自动待机
 
 id: Logout
-# Missing translation
-msg: 
+msg: 注销
 
 id: Open shell
-# Missing translation
-msg: 
+msg: 打开Shell
 
 id: Power off system
-# Missing translation
-msg: 
+msg: 关机
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: 启动和关闭Showtime
 
 #
 # ./src/sd/sd.c
@@ -1037,8 +908,7 @@ msg: 名称
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: 本地网络
 
 #
 # ./src/settings.c
@@ -1047,26 +917,22 @@ id: Applications and installed plugins
 msg: 程序和已安装的插件
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: 开发者设置
 
 id: Discovered media sources
 msg: 已检测到的媒体资源
 
 id: General
-# Missing translation
-msg: 
+msg: 常规
 
 id: Global settings
 msg: 全局设置
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: 供开发者使用的设置
 
 id: System related settings
-# Missing translation
-msg: 
+msg: 系统相关设置
 
 #
 # ./src/ui/glw/glw.c
@@ -1114,24 +980,19 @@ msg: 视频模式
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: 通知版本更新
 
 id: Open download page
-# Missing translation
-msg: 
+msg: 打开下载页面
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Showtime %s 可用
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: 软件更新
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: 更新选择
 
 #
 # ./src/upnp/upnp.c
@@ -1203,8 +1064,7 @@ id: Count video as played when reaching
 msg: 将视频视为已播放当播放进度达到
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: 启用VDA
 
 id: Enable VDPAU
 msg: 启用VDPAU
@@ -1243,7 +1103,7 @@ id: Preferred VDPAU deinterlacer method
 msg: 优先使用VDPAU去隔行化方式
 
 id: Resume video playback
-msg: 继续播放
+msg: 从上次结束位置开始播放
 
 id: Right
 msg: 靠右
