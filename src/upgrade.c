@@ -31,6 +31,7 @@
 #include "misc/sha.h"
 #include "misc/string.h"
 #include "settings.h"
+#include "notifications.h"
 
 
 extern char *showtime_bin;
@@ -47,9 +48,9 @@ static char *upgrade_track;
 static char *download_url;
 static uint8_t download_digest[20];
 static int download_size;
-//static int autocheck;
+static int notify_upgrades;
 static int inhibit_checks = 1;
-
+static prop_t *news_ref;
 
 /**
  *
@@ -80,7 +81,7 @@ static int inhibit_checks = 1;
 
 
 static void
-check_upgrade(void)
+check_upgrade(int set_news)
 {
   char url[1024];
   char *result;
@@ -125,7 +126,7 @@ check_upgrade(void)
   const char *dlurl = NULL;
   const char *sha1 = NULL;
   int dlsize = 0;
-  
+  const char *ver;
 
   htsmsg_t *artifacts = htsmsg_get_list(json, "artifacts");
   if(artifacts != NULL) {
@@ -147,7 +148,9 @@ check_upgrade(void)
     }
   }
 
-  if(dlurl == NULL || dlsize == 0 || sha1 == NULL) {
+  ver = htsmsg_get_str(json, "version");
+
+  if(dlurl == NULL || dlsize == 0 || sha1 == NULL || ver == NULL) {
     prop_set_string(upgrade_error, "No URL or size present");
     goto err;
   }
@@ -158,9 +161,7 @@ check_upgrade(void)
 
   prop_set(upgrade_root, "track", NULL, PROP_SET_STRING, upgrade_track);
 
-  const char *s;
-  s = htsmsg_get_str(json, "version");
-  prop_set(upgrade_root, "availableVersion", NULL, PROP_SET_STRING, s);
+  prop_set(upgrade_root, "availableVersion", NULL, PROP_SET_STRING, ver);
 
   download_size = dlsize;
 
@@ -169,19 +170,29 @@ check_upgrade(void)
   extern int enable_omnigrade; // dev feature
   int canUpgrade = enable_omnigrade;
   
-  if(s != NULL) {
+  if(ver != NULL) {
     int current_ver = showtime_get_version_int();
-    int available_ver = showtime_parse_version_int(s);
+    int available_ver = showtime_parse_version_int(ver);
     if(available_ver > current_ver) {
       canUpgrade = 1;
     }
   }
 
-  printf("canUpgrade=%d\n", canUpgrade);
   if(canUpgrade) {
     prop_set_string(upgrade_status, "canUpgrade");
   } else {
     prop_set_string(upgrade_status, "upToDate");
+  }
+
+  prop_destroy(news_ref);
+  prop_ref_dec(news_ref);
+
+  if(set_news && canUpgrade) {
+    rstr_t *r = _("Showtime version %s is available.");
+    char buf[128];
+    snprintf(buf, sizeof(buf), rstr_get(r), ver);
+    news_ref = add_news(buf, "page:upgrade");
+    rstr_release(r);
   }
 
   // Update changelog
@@ -350,7 +361,7 @@ upgrade_cb(void *opaque, prop_event_t event, ...)
     e = va_arg(ap, event_t *);
     if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
       if(!strcmp(e->e_payload, "checkUpdates")) 
-	check_upgrade();
+	check_upgrade(0);
       if(!strcmp(e->e_payload, "install")) 
 	install();
     }
@@ -370,7 +381,7 @@ static void
 set_upgrade_track(void *opaque, const char *str)
 {
   mystrset(&upgrade_track, str);
-  check_upgrade();
+  check_upgrade(0);
 }
 
 
@@ -378,13 +389,11 @@ set_upgrade_track(void *opaque, const char *str)
 /**
  *
  */
-/*
 static void
-set_check_for_upgrades(void *opaque, int v)
+set_notify_upgrades(void *opaque, int v)
 {
-  autocheck = v;
+  notify_upgrades = v;
 }
-*/
 
 /**
  *
@@ -429,14 +438,13 @@ upgrade_init(void)
   settings_multiopt_initiate(x, set_upgrade_track, NULL, NULL, 
 			     store, settings_generic_save_settings,
                              (void *)"upgrade");
-  /*
+
   settings_create_bool(settings_general, "check",
-		       _p("Automatically check for upgrades"), 0,
-		       store, set_check_for_upgrades, NULL, 
+		       _p("Notify about upgrades"), 1,
+		       store, set_notify_upgrades, NULL, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"upgrade");
-  */
 
   prop_t *p = prop_create_root(NULL);
   prop_link(_p("Check for updates now"),
@@ -448,7 +456,7 @@ upgrade_init(void)
      abort();
 
   inhibit_checks = 0;
-  check_upgrade();
+  check_upgrade(notify_upgrades);
 
   prop_subscribe(0,
 		 PROP_TAG_CALLBACK, upgrade_cb, NULL,
