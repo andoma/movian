@@ -923,6 +923,10 @@ id: Notify about upgrades
 # Missing translation
 msg: 
 
+id: Open download page
+# Missing translation
+msg: 
+
 id: Showtime version %s is available
 # Missing translation
 msg: 
