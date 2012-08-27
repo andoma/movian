@@ -27,6 +27,9 @@
 #include "keyring.h"
 
 static prop_t *notify_prop_entries;
+static hts_mutex_t news_mutex;
+static htsmsg_t *dismissed_news_in;
+static htsmsg_t *dismissed_news_out;
 
 /**
  *
@@ -34,11 +37,29 @@ static prop_t *notify_prop_entries;
 void
 notifications_init(void)
 {
+  hts_mutex_init(&news_mutex);
   prop_t *root = prop_create(prop_get_global(), "notifications");
-  
-  notify_prop_entries = prop_create(root, "nodes");
 
+  if((dismissed_news_in = htsmsg_store_load("dismissed_news")) == NULL)
+    dismissed_news_in = htsmsg_create_map();
+  dismissed_news_out = htsmsg_create_map();
+
+  notify_prop_entries = prop_create(root, "nodes");
 }
+
+
+/**
+ *
+ */
+void
+notifications_fini(void)
+{
+  hts_mutex_lock(&news_mutex);
+  htsmsg_store_save(dismissed_news_out, "dismissed_news");
+  dismissed_news_out = NULL;
+  hts_mutex_unlock(&news_mutex);
+}
+
 
 /**
  *
@@ -248,4 +269,91 @@ text_dialog(const char *message, char **answer, int flags)
   event_release(e);
   
   return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+dismis_news(const char *message)
+{
+  TRACE(TRACE_DEBUG, "news", "Dismissed news: %s", message);
+  htsmsg_add_u32(dismissed_news_out, message, 1);
+  htsmsg_store_save(dismissed_news_out, "dismissed_news");
+}
+
+
+/**
+ *
+ */
+static void
+news_sink(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p = opaque;
+  event_t *e;
+  va_list ap;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    break;
+
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
+      if(!strcmp(e->e_payload, "dismiss")) {
+	rstr_t *message = prop_get_string(p, "message", NULL);
+	dismis_news(rstr_get(message));
+	rstr_release(message);
+	prop_destroy(opaque);
+      }
+    }
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);  
+
+}
+
+
+/**
+ *
+ */
+prop_t *
+add_news(const char *message, const char *location)
+{
+  prop_t *p, *ret = NULL;
+
+  prop_t *root = prop_create(prop_get_global(), "news");
+
+  hts_mutex_lock(&news_mutex);
+
+  if(dismissed_news_out != NULL) {
+
+    if(htsmsg_get_u32_or_default(dismissed_news_in, message, 0)) {
+      dismis_news(message);
+    } else {
+      
+      p = prop_create_root(NULL);
+      prop_set_string(prop_create(p, "message"), message);
+      prop_set_string(prop_create(p, "location"), location);
+		       
+      prop_subscribe(PROP_SUB_TRACK_DESTROY,
+		     PROP_TAG_CALLBACK, news_sink, prop_ref_inc(p),
+		     PROP_TAG_ROOT, prop_create(p, "eventSink"),
+		     PROP_TAG_MUTEX, &news_mutex,
+		     NULL);
+      ret = prop_ref_inc(p);
+      if(prop_set_parent(p, root))
+	prop_destroy(p);
+    }
+  }
+  hts_mutex_unlock(&news_mutex);
+  return ret;
 }

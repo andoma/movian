@@ -346,15 +346,14 @@ main(int argc, char **argv)
   /* Callout framework */
   callout_init();
 
-  /* Notification framework */
-  notifications_init();
-
   /* Architecture specific init */
   arch_init();
 
   /* Initialize htsmsg_store() */
   htsmsg_store_init();
 
+  /* Notification framework */
+  notifications_init();
 
   /* Initialize settings */
   settings_init();
@@ -558,6 +557,7 @@ finalize(void)
   metadb_fini();
   TRACE(TRACE_DEBUG, "core", "Metadb finished");
   kvstore_fini();
+  notifications_fini();
   TRACE(TRACE_DEBUG, "core", "Showtime terminated normally");
   trace_fini();
 }

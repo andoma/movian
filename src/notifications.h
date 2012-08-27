@@ -34,6 +34,8 @@ void notify_destroy(void *);
 
 void notifications_init(void);
 
+void notifications_fini(void);
+
 // Displays popup defined by proptree 'p' and return event
 struct event;
 struct event *popup_display(prop_t *p);
@@ -45,5 +47,7 @@ struct event *popup_display(prop_t *p);
 int message_popup(const char *message, int flags);
 
 int text_dialog(const char *message, char** string, int flags);
+
+prop_t *add_news(const char *message, const char *location);
  
 #endif // NOTIFICATIONS_H__
