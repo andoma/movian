@@ -343,6 +343,37 @@ struct metadata_lazy_prop {
   } mlp_props[0];
 };
 
+
+
+
+/**
+ *
+ */
+static void
+mlp_enqueue(metadata_lazy_prop_t *mlp)
+{
+  if(mlp->mlp_zombie || mlp->mlp_queued)
+    return;
+
+  TAILQ_INSERT_TAIL(&mlpqueue, mlp, mlp_link);
+  mlp->mlp_queued = 1;
+}
+
+
+/**
+ *
+ */
+static void
+mlp_dequeue(metadata_lazy_prop_t *mlp)
+{
+  if(!mlp->mlp_queued)
+    return;
+
+  TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
+  mlp->mlp_queued = 0;
+}
+
+
 /**
  *
  */
@@ -364,6 +395,8 @@ mlp_destroy(metadata_lazy_prop_t *mlp)
   mlp->mlp_refcount--;
   if(mlp->mlp_refcount > 0)
     return;
+
+  mlp_dequeue(mlp);
 
   for(i = 0; i < mlp->mlp_num_props; i++) {
     prop_ref_dec(mlp->mlp_props[i].p);
@@ -476,35 +509,6 @@ mlp_get_album(metadata_lazy_prop_t *mlp)
   }
   metadb_close(db);
 }
-
-
-/**
- *
- */
-static void
-mlp_enqueue(metadata_lazy_prop_t *mlp)
-{
-  if(mlp->mlp_zombie || mlp->mlp_queued)
-    return;
-
-  TAILQ_INSERT_TAIL(&mlpqueue, mlp, mlp_link);
-  mlp->mlp_queued = 1;
-}
-
-
-/**
- *
- */
-static void
-mlp_dequeue(metadata_lazy_prop_t *mlp)
-{
-  if(!mlp->mlp_queued)
-    return;
-
-  TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
-  mlp->mlp_queued = 0;
-}
-
 
 /**
  *
