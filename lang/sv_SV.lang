@@ -404,12 +404,10 @@ msg: Stjärnor
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: Cachen är tömd
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: Töm cachen
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -430,43 +428,34 @@ msg: Sök mha. Unix locatedb
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: Tillträde nekat
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: Kontot är begränsat
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: Felaktigt delningsnamn
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: Login misslyckades
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: Datum
 
 id: Filename
-# Missing translation
-msg: 
+msg: Filnamn
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: Visa bara spelbara filer
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: Sortera kataloger först
 
 id: Sort on
-# Missing translation
-msg: 
+msg: Sortera på
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -538,12 +527,10 @@ msg: Tangent- och knapp-hanterare
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: Glöm ihågkommna lösenord
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: Ihågkommna lösenord bortglömda
 
 #
 # ./src/media.c
@@ -567,12 +554,10 @@ msg: Video zoom
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: Automatisk
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: Speciell sökfråga
 
 id: Embedded in file
 msg: Inbäddad i fil
@@ -581,181 +566,142 @@ id: Enabled
 msg: Påslagen
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: Metadata
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: Metadata konfiguration och leverantörsinställningar
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: Metadata laddat från '%s', använde %s
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: Metadatasök
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: Metadatakälla
 
 id: Movie
-# Missing translation
-msg: 
+msg: Film
 
 id: No data found
-# Missing translation
-msg: 
+msg: Ingen data funnet
 
 id: None
-# Missing translation
-msg: 
+msg: Inget
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: Leverantörer för filmer
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: Leverantörer för music
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: Ladda om metadata
 
 id: Track %d
 msg: Spår %d
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: special IMDb ID
 
 id: custom query
-# Missing translation
-msg: 
+msg: speciell query
 
 id: filename
-# Missing translation
-msg: 
+msg: filnamn
 
 id: folder name
-# Missing translation
-msg: 
+msg: katalognamn
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: La till nytt bokmärke: %s
 
 id: Bookmarks
 msg: Bokmärken
 
 id: Music
-# Missing translation
-msg: 
+msg: Musik
 
 id: No handler for URL
 msg: Ingen hanterare för URLen
 
 id: Other
-# Missing translation
-msg: 
+msg: Annat
 
 id: Photos
-# Missing translation
-msg: 
+msg: Foton
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: Tog bort bokmärke: %s
 
 id: TV
-# Missing translation
-msg: 
+msg: TV
 
 id: Title
-# Missing translation
-msg: 
+msg: Titel
 
 id: Type
 msg: Typ
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 id: Video
-# Missing translation
-msg: 
+msg: Video
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: Alternativ URL för pluginmagasin
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: Updatera plugin automatiskt
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Tillgängliga plugin
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Lista tillgängliga plugin
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: Pluginfilen är korrupt
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: Kunde ej skriva till disk
 
 id: Downloading
-# Missing translation
-msg: 
+msg: Laddar ner
 
 id: File open error
-# Missing translation
-msg: 
+msg: Kunde ej öppna fil
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Installerade plugin
 
 id: Installing
-# Missing translation
-msg: 
+msg: Installerar
 
 id: Invalud URI
 msg: Felaktig URI
 
 id: Not installable
-# Missing translation
-msg: 
+msg: Ej installerbar
 
 id: Not installed
-# Missing translation
-msg: 
+msg: Inte installerad
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: Inte uppgraderingsbar
 
 id: Plugins
-# Missing translation
-msg: 
+msg: Plugin
 
 id: Unable to load plugin.json: %s
 msg: Kan ej ladda plugin.json: %s
@@ -764,16 +710,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
 
 id: Up to date
-# Missing translation
-msg: 
+msg: Senaste version
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: Uppgraderingsbar
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: Upgraderade plugin %s till version %s
 
 #
 # ./src/runcontrol.c
@@ -782,20 +725,16 @@ id: Automatic standby
 msg: Automatisk standby
 
 id: Logout
-# Missing translation
-msg: 
+msg: Logout
 
 id: Open shell
-# Missing translation
-msg: 
+msg: Öppna skal
 
 id: Power off system
-# Missing translation
-msg: 
+msg: Stäng av systemet
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: Starta och stanna Showtime
 
 #
 # ./src/sd/sd.c
@@ -807,8 +746,7 @@ msg: Namn
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: Lokala nätverket
 
 #
 # ./src/settings.c
@@ -817,26 +755,22 @@ id: Applications and installed plugins
 msg: Applikationer och installerade plugins
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: Utvecklarinställningar
 
 id: Discovered media sources
 msg: Upptäckta mediakällor
 
 id: General
-# Missing translation
-msg: 
+msg: Generella inställningar
 
 id: Global settings
 msg: Globala inställningar
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: Inställningar användbara för utvecklare
 
 id: System related settings
-# Missing translation
-msg: 
+msg: Systemrelaterade inställningar
 
 #
 # ./src/ui/glw/glw.c
@@ -884,32 +818,25 @@ msg: Videolägen
 # ./src/upgrade.c
 #
 id: Check for updates now
-# Missing translation
-msg: 
+msg: Leta efter uppgraderingar nu
 
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: Avisera uppgraderingar
 
-id: Showtime version %s is available.
-# Missing translation
-msg: 
+id: Showtime version %s is available
+msg: Version %s av Showtime är tillgängligt
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: Uppgradera mjukvara
 
 id: Stable
-# Missing translation
-msg: 
+msg: Stabil
 
 id: Testing
-# Missing translation
-msg: 
+msg: Test
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: Uppgradera till släppta mjukvaror från
 
 #
 # ./src/upnp/upnp.c
@@ -981,8 +908,7 @@ id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: Slå på VDA
 
 id: Enable VDPAU
 msg: Aktivera VDPAU
