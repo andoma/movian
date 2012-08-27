@@ -203,7 +203,9 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
 
     if(vo != NULL)
       video_overlay_enqueue(vd, vo);
-    
+
+    free(str);
+
   } else {
       
     if(mc->decode) 
