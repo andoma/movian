@@ -326,7 +326,7 @@ news_sink(void *opaque, prop_event_t event, ...)
  *
  */
 prop_t *
-add_news(const char *message, const char *location)
+add_news(const char *message, const char *location, const char *caption)
 {
   prop_t *p, *ret = NULL;
 
@@ -343,6 +343,7 @@ add_news(const char *message, const char *location)
       p = prop_create_root(NULL);
       prop_set_string(prop_create(p, "message"), message);
       prop_set_string(prop_create(p, "location"), location);
+      prop_set_string(prop_create(p, "caption"), caption);
 		       
       prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		     PROP_TAG_CALLBACK, news_sink, prop_ref_inc(p),

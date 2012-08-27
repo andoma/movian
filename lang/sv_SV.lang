@@ -824,8 +824,7 @@ id: Notify about upgrades
 msg: Avisera uppgraderingar
 
 id: Open download page
-# Missing translation
-msg: 
+msg: Öppna sida för nerladdning
 
 id: Showtime version %s is available
 msg: Version %s av Showtime är tillgängligt

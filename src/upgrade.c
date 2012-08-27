@@ -189,10 +189,12 @@ check_upgrade(int set_news)
 
   if(set_news && canUpgrade) {
     rstr_t *r = _("Showtime version %s is available");
+    rstr_t *s = _("Open download page");
     char buf[128];
     snprintf(buf, sizeof(buf), rstr_get(r), ver);
-    news_ref = add_news(buf, "page:upgrade");
+    news_ref = add_news(buf, "page:upgrade", rstr_get(s));
     rstr_release(r);
+    rstr_release(s);
   }
 
   // Update changelog

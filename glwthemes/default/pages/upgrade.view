@@ -164,7 +164,7 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: "Downloading...";
+	caption: _("Downloading...");
 	shadow: true;
 	outline: true;
 	align: center;
@@ -213,7 +213,7 @@ widget(container_y, {
       align: center;
 
       widget(label, {
-	caption: "Installing...";
+	caption: _("Installing...");
 	shadow: true;
 	outline: true;
 	align: center;
