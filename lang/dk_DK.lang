@@ -2,52 +2,82 @@ language: Danish
 native: Dansk
 maintainer: Klaus Rauteberg <showtime@rautenberg.dk>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Lydindstillinger
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: Sprog
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: Indstillinger
-
-id: Subtitle settings
-msg: Indstillinger for undertekster
-
-id: Video settings
-msg: Videoindstillinger
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Tilføjet af: %s
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: Afspillet %d gange
-msg[1]: Afspillet %d gang
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: %d indhold
-msg[1]: %d indhold
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: %d spor
-msg[1]: %d spor
+id: Playqueue
+msg: Afspilningskø
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: Slet
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 msg: Kø
@@ -59,31 +89,56 @@ id: Unstar
 msg: Fjern stjerne
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Slukket
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: Tændt
+id: Audio settings
+msg: Lydindstillinger
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: Indstillinger
+
+id: Subtitle settings
+msg: Indstillinger for undertekster
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: Undertekster
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: Videoindstillinger
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Tilføj
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Afbryd
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Tildelt af applikationen: %d Kb
@@ -137,67 +192,258 @@ id: Windowmanager: %s
 msg: vindue håndtering: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: Om
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Hjem
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Nej
+
+id: Yes
+msg: Ja
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Kan ikke åbne resource
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Siden kunne ikke hentes
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Afspilningskø
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Afspilningsstatus
-
-id: Unable to start video playback
-msg: Kan ikke start videoafspilning
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Kapitel %d / %d
-
-id: Title %d / %d
-msg: Titel %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Spor %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU'en er for langsom til at afkode denne video
 
+id: Playback status
+msg: Afspilningsstatus
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -213,49 +459,35 @@ id: Username
 msg: Brugernavn
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Intet medie hentet
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Audio udgang
-
-id: CPUs
-msg: CPU'er
-
-id: GPU & Display
-msg: GPU og skærm
-
-id: GPU Core temperature: %d / %d °
-msg: GPU Core temperatur: %d / %d °
+id: Memory usage:
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: Juster baggrundsfarven afhængig af tid på dagen
-
-id: Alternate list layout
-msg: Alternativ listelayout
-
 id: Audio muted
 msg: Audio mute
 
-id: Fancy UI animations
-msg: Fancy UI animationer
-
 id: Master volume: %d dB
 msg: Master volume: %d dB
-
-id: Multilingual 'No media loaded'
-msg: Flersprogede 'Intet medie hentet"
-
-id: Top bar navigation buttons
-msg: Navigationsknapper i toppen af skærmen
 
 #
 # ./src/api/opensubtitles.c
@@ -275,6 +507,9 @@ msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Audio udgang
+
 id: Audio/Video sync delay
 msg: Audio/Video sync delay
 
@@ -402,10 +637,15 @@ id: Starred
 msg: Medvirkende
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Bogmærker
+id: Cache cleared
+# Missing translation
+msg: 
+
+id: Clear cached files
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -421,6 +661,48 @@ msg: Kan ikke åbne filen: %s
 #
 id: Search using Unix locatedb
 msg: Søg via Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+# Missing translation
+msg: 
+
+id: Account restricted
+# Missing translation
+msg: 
+
+id: Bad network share name
+# Missing translation
+msg: 
+
+id: Logon failure
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -442,6 +724,9 @@ msg: Sprog
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, dnk
+
+id: Languages
+msg: Sprog
 
 id: Preferred languages
 msg: Fortrukne sprog
@@ -489,6 +774,17 @@ id: Keymapper
 msg: Tastatur mapning
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+# Missing translation
+msg: 
+
+id: Rembered passwords erased
+# Missing translation
+msg: 
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -509,29 +805,188 @@ msg: Video zoom
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Indlejret i fil
+
+id: Enabled
+msg: Aktiveret
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Spor %d
 
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+# Missing translation
+msg: 
+
+id: Bookmarks
+msg: Bogmærker
+
+id: Music
+# Missing translation
+msg: 
+
 id: No handler for URL
 msg: Ingen håndtering af URL-adressen
+
+id: Other
+# Missing translation
+msg: 
+
+id: Photos
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+# Missing translation
+msg: 
+
+id: TV
+# Missing translation
+msg: 
+
+id: Title
+# Missing translation
+msg: 
+
+id: Type
+msg: Type
+
+id: URL
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+# Missing translation
+msg: 
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Disk write error
+# Missing translation
+msg: 
+
+id: Downloading
+# Missing translation
+msg: 
+
+id: File open error
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installing
+# Missing translation
+msg: 
+
 id: Invalud URI
 msg: Forkert URI
 
-id: Plugin ID %s does not exist
-msg: Plugin ID %s findes ikke
+id: Not installable
+# Missing translation
+msg: 
 
-id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen download URL-adresse
+id: Not installed
+# Missing translation
+msg: 
+
+id: Not upgradable
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: Kan ikke hente plugin.json: %s
@@ -539,8 +994,17 @@ msg: Kan ikke hente plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Kan ikke hente plugin.json: Forkert formateret JSON
 
-id: Unable to request plugin repository: %s
-msg: Kan ikke anmode om plugin mappen: %s
+id: Up to date
+# Missing translation
+msg: 
+
+id: Upgradable
+# Missing translation
+msg: 
+
+id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -548,20 +1012,34 @@ msg: Kan ikke anmode om plugin mappen: %s
 id: Automatic standby
 msg: Automatisk standby
 
-id: Run control
-msg: Kør kontrol
+id: Logout
+# Missing translation
+msg: 
+
+id: Open shell
+# Missing translation
+msg: 
+
+id: Power off system
+# Missing translation
+msg: 
+
+id: Starting and stopping Showtime
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Aktiveret
-
 id: Name
 msg: Navn
 
-id: Type
-msg: Type
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -569,11 +1047,27 @@ msg: Type
 id: Applications and installed plugins
 msg: Aplikationer og installerede plugins
 
+id: Developer settings
+# Missing translation
+msg: 
+
 id: Discovered media sources
 msg: Mediekilder fundet
 
+id: General
+# Missing translation
+msg: 
+
 id: Global settings
 msg: Globale indstillinger
+
+id: Settings useful for developers
+# Missing translation
+msg: 
+
+id: System related settings
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw.c
@@ -616,6 +1110,29 @@ msg: Skift til denne tilstand nu
 
 id: Video modes
 msg: Videotilstande
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Open download page
+# Missing translation
+msg: 
+
+id: Showtime version %s is available
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
+# Missing translation
+msg: 
 
 #
 # ./src/upnp/upnp.c
@@ -690,6 +1207,10 @@ msg: Farve
 id: Count video as played when reaching
 msg: Marker video som vist når den når
 
+id: Enable VDA
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
@@ -712,12 +1233,12 @@ id: Maximum resolution for deinterlacer
 # Missing translation
 msg: 
 
-id: No
-msg: Nej
-
 id: No limit
 # Missing translation
 msg: 
+
+id: Off
+msg: Slukket
 
 id: Outline color
 msg: Farve på kontur
@@ -759,9 +1280,6 @@ msg: Størrelse på undertekster og position
 id: Subtitle styling
 msg: Stil på undertekster
 
-id: Subtitles
-msg: Undertekster
-
 id: Temporal
 # Missing translation
 msg: 
@@ -775,7 +1293,4 @@ msg: Videoacceleration og skærmpræsentation
 
 id: Video playback
 msg: Videoafspilning
-
-id: Yes
-msg: Ja
 

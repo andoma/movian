@@ -2,52 +2,68 @@ language: Russian
 native: Русский 
 maintainer: pvc1 <pvc1@yandex.ru>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Настройки аудио
+id: Add current page to bookmarks
+msg: Добавить текущую страницу в закладки
 
-id: Languages
-msg: Языки
+id: Open settings
+msg: Открыть настройки
 
-id: Settings
-msg: Настройки
-
-id: Subtitle settings
-msg: Настройки субтитров
-
-id: Video settings
-msg: Настройки видео
+id: Remove current page from bookmarks
+msg: Удалить текущую страницу из закладок
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Добавил: %s
+id: Go to Home screen
+msg: Перейти на главный экран
 
-id: Played %d times
-msg[0]: Воспроизведено раз: %d
-msg[1]: Воспроизведено раз: %d
+id: Navigation
+msg: Навигация
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: объектов: %d
-msg[1]: объектов: %d
+id: Open Settings
+msg: Открыть настройки
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: треков: %d
-msg[1]: треков: %d
+id: Playqueue
+msg: Очередь воспроизведения
+
+id: Reload current page
+msg: Перезагрузка текущей страницы
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+msg: Добавить '%s' на главный экран
+
+id: Remove '%s' from home screen
+msg: Удалить '%s' с главного экрана
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Продолжить с %s
+
+id: Continue playback here
+msg: Продолжить воспроизведение здесь
+
 id: Delete
 msg: Удалить
+
+id: Mark as seen
+msg: Пометить как просмотренное
+
+id: Mark as unseen
+# Missing translation
+msg: Пометить как непросмотренное
+
+id: Play from beginning
+msg: Играть с начала
+
+id: Play until end of list
+msg: Играть до конца списка
 
 id: Queue
 msg: Очередь
@@ -59,31 +75,49 @@ id: Unstar
 msg: Снять метку
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Выкл
+id: Audio
+msg: Аудио
 
-id: On
-msg: Вкл
+id: Audio settings
+msg: Настройки аудио
+
+id: Audio tracks
+msg: Аудио дорожки
+
+id: Seek by time
+msg: Поиск по времени
+
+id: Settings
+msg: Настройки
+
+id: Subtitle settings
+msg: Настройки субтитров
+
+id: Subtitle tracks
+msg: Дорожки субтитров
+
+id: Subtitles
+msg: Субтитры
+
+id: Video
+msg: Видео
+
+id: Video menu
+msg: Меню видео
+
+id: Video settings
+msg: Настройки видео
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Ставить в очередь
+id: System log
+msg: Системный лог
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Отмена
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Выделено приложению: %d КБ
@@ -137,68 +171,216 @@ id: Windowmanager: %s
 msg: Оконный менеджер: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
+id: Album
+msg: Альбом
+
+id: Custom
+msg: Пользовательский
+
+id: Images
+msg: Изображения
+
+id: List
+msg: Список
+
+id: Slideshow
+msg: Слайдшоу
+
+id: View
+msg: Просмотр
+
+#
+# ./glwthemes/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Обнаруженные ресурсы в локальной сети
+
+#
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
 msg: О программе
 
-#
-# ./glwthemes/mono/pages/home_top.view
-#
-id: Home
-msg: Главная
+id: Plugins
+msg: Плагины
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+msg: Отклонить
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Камера:
+
+id: Date: 
+msg: Дата:
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: Автор:
+
+id: Available version: 
+msg: Доступная версия:
+
+id: Installed version: 
+msg: Установленная версия:
+
+id: Showtime %s or newer is required
+msg: Требуется Showtime %s или новее
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+msg: Режиссер:
+
+id: Duration:
+msg: Продолжительность:
+
+id: File date:
+msg: Дата файла:
+
+id: Genre:
+msg: Жанр:
+
+id: Metadata from
+msg: Метаданные от
+
+id: Producer:
+msg: Продюсер:
+
+id: Rating:
+msg: Рейтинг:
+
+id: Year:
+msg: Год:
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Добавить новую запись
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Нет
+
+id: Yes
+msg: Дa
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Установка
+
+id: Uninstall
+msg: Удаление
+
+id: Upgrade
+msg: Обновление
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Невозможно открыть ресурс
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Ошибка загрузки страницы
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Очередь воспроизведения
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Статус воспроизведения
-
-id: Unable to start video playback
-msg: Невозможно запустить воспроизведение видео
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Раздел %d / %d
-
-id: Title %d / %d
-msg: Глава %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Трек %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+msg: Произошла ошибка во время загрузки
+
+id: Available version:
+msg: Доступные версии:
+
+id: Changelog for %s releases
+msg: Лог изменений для релиза %s
+
+id: Check for updates now
+msg: Проверить обновления сейчас
+
+id: Checking for updates...
+msg: Проверка обновлений...
+
+id: Current version:
+msg: Текущая версия:
+
+id: Download and install...
+msg: Загрузить и установить...
+
+id: Downloading...
+msg: Загрузка...
+
+id: Installing...
+msg: Установка...
+
+id: New version %s is available for download
+msg: Новая версия %s доступна для загрузки
+
+id: No upgrade available
+msg: Нет обнолвлений
+
+id: Restarting Showtime in %d seconds...
+msg: Перезапуск Showtime через %d секунд...
+
+id: Retry...
+msg: Повторить ...
+
+id: Showtime is up to date
+# Missing translation
+msg: Showtime на текущий момент
+
+id: Stable
+msg: Стабильный
+
+id: Testing
+msg: Тестирование
+
+id: Unable to query for new version
+msg: Невозможно проверить новую версию
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU является слишком медленным для декодирования видео
 
+id: Playback status
+msg: Статус воспроизведения
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
 #
+id: Chapter: %d
+msg: Глава: %d
+
+id: Title: %d
+msg: Название: %d
+
+#
+# ./glwthemes/default/popups/auth.view
+#
+id: Domain
+msg: Домен
+
 id: Password
 msg: Пароль
 
@@ -209,50 +391,34 @@ id: Username
 msg: Имя пользователя
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Отмена
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Медиа-файл не загружен
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Аудио выход
-
-id: CPUs
-msg: CPU
-
-id: GPU & Display
-msg: GPU и изображение
-
-id: GPU Core temperature: %d / %d °
-# Missing translation
-msg: 
+id: Memory usage:
+msg: Использование памяти:
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: Настройка оттенка фона в зависимости от времени суток
-
-id: Alternate list layout
-msg: Альтернативный вид списка
-
 id: Audio muted
 msg: Звук выключен
 
-id: Fancy UI animations
-msg: Анимация интерфейса
-
 id: Master volume: %d dB
 msg: Общая громкость: %d dB
-
-id: Multilingual 'No media loaded'
-msg: Отображать "Медиа-файл не загружен" на разных языках
-
-id: Top bar navigation buttons
-msg: Верхняя панель кнопок навигации
 
 #
 # ./src/api/opensubtitles.c
@@ -272,6 +438,9 @@ msg: Мало памяти (доступно %d Кб RAM)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Аудио выход
+
 id: Audio/Video sync delay
 msg: Задержка Audio/Video синхронизации
 
@@ -399,10 +568,13 @@ id: Starred
 msg: Starred
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Закладки
+id: Cache cleared
+msg: Кэш очищен
+
+id: Clear cached files
+msg: Очистить кэшированные файлы
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -418,6 +590,39 @@ msg: He удaлocь oткpыть фaйл: %s
 #
 id: Search using Unix locatedb
 msg: Поиск с использованием Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: Доступ запрещен
+
+id: Account restricted
+msg: Аккаунт ограничен
+
+id: Bad network share name
+msg: Неверное сетевое имя
+
+id: Logon failure
+msg: Ошибка входа
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+msg: Дата
+
+id: Filename
+msg: Имя файла
+
+id: Show only supported files
+msg: Показывать только поддерживаемые файлы
+
+id: Sort folders first
+msg: Сортировка сперва папок
+
+id: Sort on
+msg: Сортировать по
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -439,6 +644,9 @@ msg: Язык
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Коды языков должны быть настроены в виде трех символов ISO кодировки, например: eng, swe, fra
+
+id: Languages
+msg: Языки
 
 id: Preferred languages
 msg: Предпочтительные языки
@@ -486,6 +694,15 @@ id: Keymapper
 msg: Настройка
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Забыть запомненные пароли
+
+id: Rembered passwords erased
+msg: Вспомнить стертые пароли
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -506,29 +723,149 @@ msg: Масштаб видео
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+msg: Автоматический
+
+id: Custom search query
+msg: Пользовательский поисковый запрос
+
 id: Embedded in file
 msg: Встроен в файл
+
+id: Enabled
+msg: Включено
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata
+msg: Метаданные
+
+id: Metadata configuration and provider settings
+msg:  Конфигурация метаданных и настройки поставщика
+
+id: Metadata loaded from '%s' using %s
+msg: Метаданные загружаются из '%s' с использованием %s
+
+id: Metadata search
+msg: Поиск метаданных
+
+id: Metadata source
+msg: Источник метаданных
+
+id: Movie
+msg: Фильмы
+
+id: No data found
+msg: Данные не найдены
+
+id: None
+msg: Нет
+
+id: Providers for Movies
+msg: Поставщиков для фильмов
+
+id: Providers for Music
+msg: Поставщики для музыки
+
+id: Refresh metadata
+msg: Обновить метаданные
 
 id: Track %d
 msg: Трек %d
 
+id: custom IMDb ID
+msg: пользовательские IMDb ID
+
+id: custom query
+msg: пользовательский запрос
+
+id: filename
+msg: имя файла
+
+id: folder name
+msg: имя папки
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+msg: Добавлены новые закладки: %s
+
+id: Bookmarks
+msg: Закладки
+
+id: Music
+msg: Музыка
+
 id: No handler for URL
 msg: Нет обработчика для URL
+
+id: Other
+msg: Прочее
+
+id: Photos
+msg: Фото
+
+id: Removed bookmark: %s
+msg: Удалить закладки: %s
+
+id: TV
+msg: ТВ
+
+id: Title
+msg: Название
+
+id: Type
+msg: Тип
+
+id: URL
+msg: URL
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+msg: Альтернативный URL репозитория плагинов
+
+id: Automatically upgrade plugins
+msg: Автоматическое обновление плагинов
+
+id: Available plugins
+msg: Доступные плагины
+
+id: Browse available plugins
+msg: Просмотр доступных плагинов
+
+id: Corrupt plugin bundle
+msg: Поврежденный пакет плагина
+
+id: Disk write error
+msg: Ошибка записи диска
+
+id: Downloading
+msg: Загрузка
+
+id: File open error
+msg: Ошибка при открытии файла
+
+id: Installed plugins
+msg: Установленные плагины
+
+id: Installing
+msg: Установка
+
 id: Invalud URI
 msg: Недопустимый URL 
 
-id: Plugin ID %s does not exist
-msg: Плагин-ID %s не существует
+id: Not installable
+msg: Не может быть установлен
 
-id: Plugin ID %s have no download URL
-msg: Плагин-ID %s не имеет URL для скачивания
+id: Not installed
+msg: Не установлен
+
+id: Not upgradable
+msg: Не обновляемый
 
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
@@ -536,8 +873,15 @@ msg: Не удается загрузить plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Не удается загрузить plugin.json: Неправильный JSON
 
-id: Unable to request plugin repository: %s
-msg: Не удалось связаться с сервером плагинов
+id: Up to date
+msg: До даты
+
+id: Upgradable
+msg: Обновляемый
+
+id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -545,20 +889,29 @@ msg: Не удалось связаться с сервером плагинов
 id: Automatic standby
 msg: Автоматический режим ожидания
 
-id: Run control
-msg: Управление запуском
+id: Logout
+msg: Выход из системы
+
+id: Open shell
+msg: Открыть оболочку
+
+id: Power off system
+msg: Отключение системы
+
+id: Starting and stopping Showtime
+msg: Запуск и остановка Showtime
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Включено
-
 id: Name
 msg: Имя
 
-id: Type
-msg: Тип
+#
+# ./src/service.c
+#
+id: Local network
+msg: Локальная сеть
 
 #
 # ./src/settings.c
@@ -566,11 +919,23 @@ msg: Тип
 id: Applications and installed plugins
 msg: Приложения и установленные плагины
 
+id: Developer settings
+msg: Настройки для разработчиков
+
 id: Discovered media sources
 msg: Обнаруженные медиа источники
 
+id: General
+msg: Общее
+
 id: Global settings
 msg: Главные настройки
+
+id: Settings useful for developers
+msg: Настройки полезные для разработчиков
+
+id: System related settings
+msg: Настройки связанные с системой
 
 #
 # ./src/ui/glw/glw.c
@@ -615,6 +980,24 @@ id: Video modes
 msg: Видеорежимы
 
 #
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: Уведомлять об обновлениях
+
+id: Open download page
+msg: Открыть страницу загрузки
+
+id: Showtime version %s is available
+msg: Доступна версия Showtime %s
+
+id: Software upgrade
+msg: Обновление ПО
+
+id: Upgrade to releases from
+msg: Обновление до релиза с
+
+#
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
@@ -656,6 +1039,15 @@ msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 #
 # ./src/video/video_settings.c
 #
+id: 1080
+msg: 1080
+
+id: 576
+msg: 576
+
+id: 720
+msg: 720
+
 id: Always try to select a subtitle
 msg: Всегда пытаться выбрать субтитры
 
@@ -673,6 +1065,9 @@ msg: Цвет
 
 id: Count video as played when reaching
 msg: Считать видео проигранным при достижении
+
+id: Enable VDA
+msg: Включить VDA
 
 id: Enable VDPAU
 msg: Включить VDPAU
@@ -692,14 +1087,23 @@ msg: "Подхватывать" все файлы субтитров в папк
 id: Left
 msg: Слева
 
-id: No
-msg: Нет
+id: Maximum resolution for deinterlacer
+msg: Максимальное разрешение для деинтерлейсинга
+
+id: No limit
+msg: Без ограничений
+
+id: Off
+msg: Выкл
 
 id: Outline color
 msg: Цвет контура
 
 id: Outline size
 msg: Размер контура
+
+id: Preferred VDPAU deinterlacer method
+msg: Предпочтительный метод VPDAU деинтерлейсинга 
 
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
@@ -731,15 +1135,15 @@ msg: Размер и позиция субтитров
 id: Subtitle styling
 msg: Стиль субтитров
 
-id: Subtitles
-msg: Субтитры
+id: Temporal
+msg: Временный
+
+id: Temporal/Spatial
+msg: Временный/Пространственный
 
 id: Video acceleration and display behaviour
 msg: Ускорение видео и поведение изображения
 
 id: Video playback
 msg: Воспроизведение видео
-
-id: Yes
-msg: Дa
 

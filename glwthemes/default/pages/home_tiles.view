@@ -65,7 +65,64 @@ $view.sizer = $ui.size / 2;
 
 widget(container_y, {
 
-  padding: $ui.size;
+  padding: $ui.size / 2;
+
+  cloner($global.news, container_x, {
+    spacing: $ui.size;
+    padding: [$ui.size*2, 0];
+
+    widget(icon, {
+      source: "dataroot://resources/svg/Alert.svg";
+      shadow: true;
+      sizeScale: 1;
+    });
+
+    widget(label, {
+      caption: $self.message;
+      font: $ui.font;
+      outline: true;
+      shadow: true;
+    });
+
+    space(1);
+
+    widget(backdrop, {
+      onEvent(activate, navOpen($self.location));
+      focusable: 0.1;
+      alpha: isFocused() + 0.5;
+      source: "theme://graphics/border-tiny.png";
+      border: 4;
+      margin: [0,-3];
+      padding: [10, -1];
+      widget(label, {
+	font: $ui.font;
+	outline: true;
+	shadow: true;
+	caption: $self.caption;
+      });
+    });
+
+    widget(backdrop, {
+      onEvent(activate, deliverEvent($self.eventSink, "dismiss"));
+      focusable: 0.1;
+      alpha: isFocused() + 0.5;
+      source: "theme://graphics/border-tiny.png";
+      border: 4;
+      margin: [0,-3];
+      padding: [10, -1];
+      widget(label, {
+	font: $ui.font;
+	outline: true;
+	shadow: true;
+	caption: _("Dismiss");
+      });
+    });
+  });
+
+  widget(dummy, {
+    height: $ui.size / 2;
+  });
+
 
     // Search
 
@@ -126,7 +183,7 @@ widget(container_y, {
     });
 
   widget(dummy, {
-    height: $ui.size;
+    height: $ui.size / 2;
   });
   VerticalSeparator();
   widget(dummy, {

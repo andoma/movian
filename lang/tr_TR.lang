@@ -2,52 +2,82 @@ language: Turkish
 native: Türkçe
 maintainer: CoDeR_WOLCER
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Ses Ayarları
+id: Add current page to bookmarks
+# Missing translation
+msg: 
 
-id: Languages
-msg: Dil
+id: Open settings
+# Missing translation
+msg: 
 
-id: Settings
-msg: Ayarlar
-
-id: Subtitle settings
-msg: Altyazı Ayarları
-
-id: Video settings
-msg: Video Ayarları
+id: Remove current page from bookmarks
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Added by: %s
+id: Go to Home screen
+# Missing translation
+msg: 
 
-id: Played %d times
-msg[0]: 
-msg[1]: 
+id: Navigation
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 
-msg[1]: 
+id: Open Settings
+# Missing translation
+msg: 
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 
-msg[1]: 
+id: Playqueue
+msg: Playqueue
+
+id: Reload current page
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+# Missing translation
+msg: 
+
+id: Remove '%s' from home screen
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+# Missing translation
+msg: 
+
+id: Continue playback here
+# Missing translation
+msg: 
+
 id: Delete
 msg: Sil
+
+id: Mark as seen
+# Missing translation
+msg: 
+
+id: Mark as unseen
+# Missing translation
+msg: 
+
+id: Play from beginning
+# Missing translation
+msg: 
+
+id: Play until end of list
+# Missing translation
+msg: 
 
 id: Queue
 # Missing translation
@@ -62,31 +92,56 @@ id: Unstar
 msg: 
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Kapalı
+id: Audio
+# Missing translation
+msg: 
 
-id: On
-msg: Açık
+id: Audio settings
+msg: Ses Ayarları
+
+id: Audio tracks
+# Missing translation
+msg: 
+
+id: Seek by time
+# Missing translation
+msg: 
+
+id: Settings
+msg: Ayarlar
+
+id: Subtitle settings
+msg: Altyazı Ayarları
+
+id: Subtitle tracks
+# Missing translation
+msg: 
+
+id: Subtitles
+msg: Altyazılar
+
+id: Video
+# Missing translation
+msg: 
+
+id: Video menu
+# Missing translation
+msg: 
+
+id: Video settings
+msg: Video Ayarları
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Enqueue
+id: System log
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: İptal
-
-id: OK
-msg: Tammam
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 # Missing translation
@@ -145,69 +200,261 @@ id: Windowmanager: %s
 msg: Window manager: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: hakkında
+id: Album
+# Missing translation
+msg: 
+
+id: Custom
+# Missing translation
+msg: 
+
+id: Images
+# Missing translation
+msg: 
+
+id: List
+# Missing translation
+msg: 
+
+id: Slideshow
+# Missing translation
+msg: 
+
+id: View
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Ev
+id: Discovered resources on local network
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+# Missing translation
+msg: 
+
+id: Plugins
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+# Missing translation
+msg: 
+
+id: Available version: 
+# Missing translation
+msg: 
+
+id: Installed version: 
+# Missing translation
+msg: 
+
+id: Showtime %s or newer is required
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+# Missing translation
+msg: 
+
+id: Duration:
+# Missing translation
+msg: 
+
+id: File date:
+# Missing translation
+msg: 
+
+id: Genre:
+# Missing translation
+msg: 
+
+id: Metadata from
+# Missing translation
+msg: 
+
+id: Producer:
+# Missing translation
+msg: 
+
+id: Rating:
+# Missing translation
+msg: 
+
+id: Year:
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+# Missing translation
+msg: 
+
+id: Yes
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+# Missing translation
+msg: 
+
+id: Uninstall
+# Missing translation
+msg: 
+
+id: Upgrade
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Unable to open resource
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Sayfa açılamadı
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Playqueue
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-# Missing translation
-msg: 
-
-id: Unable to start video playback
-# Missing translation
-msg: 
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Bölüm %d / %d
-
-id: Title %d / %d
-msg: Başlık %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Başlık %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+# Missing translation
+msg: 
+
+id: Available version:
+# Missing translation
+msg: 
+
+id: Changelog for %s releases
+# Missing translation
+msg: 
+
+id: Check for updates now
+# Missing translation
+msg: 
+
+id: Checking for updates...
+# Missing translation
+msg: 
+
+id: Current version:
+# Missing translation
+msg: 
+
+id: Download and install...
+# Missing translation
+msg: 
+
+id: Downloading...
+# Missing translation
+msg: 
+
+id: Installing...
+# Missing translation
+msg: 
+
+id: New version %s is available for download
+# Missing translation
+msg: 
+
+id: No upgrade available
+# Missing translation
+msg: 
+
+id: Restarting Showtime in %d seconds...
+# Missing translation
+msg: 
+
+id: Retry...
+# Missing translation
+msg: 
+
+id: Showtime is up to date
+# Missing translation
+msg: 
+
+id: Stable
+# Missing translation
+msg: 
+
+id: Testing
+# Missing translation
+msg: 
+
+id: Unable to query for new version
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU yavaş kalıyor bu video'da
 
+id: Playback status
+# Missing translation
+msg: 
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+# Missing translation
+msg: 
+
+id: Title: %d
+# Missing translation
+msg: 
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -223,51 +470,35 @@ id: Username
 msg: Kulanıcı Adı
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: İptal
+
+id: OK
+msg: Tammam
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Açılamadı
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Ses Çıkışı
-
-id: CPUs
-msg: CPUs
-
-id: GPU & Display
-msg: GPU & Display
-
-id: GPU Core temperature: %d / %d °
-msg: GPU çekirdek ısısı: %d / %d °
-
-#
-# ./glwthemes/mono/universe.view
-#
-id: Adjust background tint based on daytime
-msg: Hintergrundfarbe abhängig von der Tageszeit einstellen
-
-id: Alternate list layout
+id: Memory usage:
 # Missing translation
 msg: 
 
+#
+# ./glwthemes/default/universe.view
+#
 id: Audio muted
 msg: Sessiz
 
-id: Fancy UI animations
-msg: Fancy UI animations
-
 id: Master volume: %d dB
 msg: Ses seviyesi: %d dB
-
-id: Multilingual 'No media loaded'
-# Missing translation
-msg: 
-
-id: Top bar navigation buttons
-msg: Top Bar navigasyon düğmeleri
 
 #
 # ./src/api/opensubtitles.c
@@ -288,6 +519,9 @@ msg:
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Ses Çıkışı
+
 id: Audio/Video sync delay
 msg: Audio/Video sync geçikme
 
@@ -424,10 +658,15 @@ id: Starred
 msg: Starred
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Bookmarks
+id: Cache cleared
+# Missing translation
+msg: 
+
+id: Clear cached files
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -445,6 +684,48 @@ msg:
 #
 id: Search using Unix locatedb
 msg: Search using Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+# Missing translation
+msg: 
+
+id: Account restricted
+# Missing translation
+msg: 
+
+id: Bad network share name
+# Missing translation
+msg: 
+
+id: Logon failure
+# Missing translation
+msg: 
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+# Missing translation
+msg: 
+
+id: Filename
+# Missing translation
+msg: 
+
+id: Show only supported files
+# Missing translation
+msg: 
+
+id: Sort folders first
+# Missing translation
+msg: 
+
+id: Sort on
+# Missing translation
+msg: 
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -468,6 +749,9 @@ msg: Dil
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 # Missing translation
 msg: 
+
+id: Languages
+msg: Dil
 
 id: Preferred languages
 msg: tercih edilen dil
@@ -515,6 +799,17 @@ id: Keymapper
 msg: Keymapper
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+# Missing translation
+msg: 
+
+id: Rembered passwords erased
+# Missing translation
+msg: 
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -535,7 +830,66 @@ msg: Video zoom
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+# Missing translation
+msg: 
+
+id: Custom search query
+# Missing translation
+msg: 
+
 id: Embedded in file
+# Missing translation
+msg: 
+
+id: Enabled
+msg: Etkin
+
+id: IMDb ID
+# Missing translation
+msg: 
+
+id: Metadata
+# Missing translation
+msg: 
+
+id: Metadata configuration and provider settings
+# Missing translation
+msg: 
+
+id: Metadata loaded from '%s' using %s
+# Missing translation
+msg: 
+
+id: Metadata search
+# Missing translation
+msg: 
+
+id: Metadata source
+# Missing translation
+msg: 
+
+id: Movie
+# Missing translation
+msg: 
+
+id: No data found
+# Missing translation
+msg: 
+
+id: None
+# Missing translation
+msg: 
+
+id: Providers for Movies
+# Missing translation
+msg: 
+
+id: Providers for Music
+# Missing translation
+msg: 
+
+id: Refresh metadata
 # Missing translation
 msg: 
 
@@ -543,24 +897,122 @@ id: Track %d
 # Missing translation
 msg: 
 
+id: custom IMDb ID
+# Missing translation
+msg: 
+
+id: custom query
+# Missing translation
+msg: 
+
+id: filename
+# Missing translation
+msg: 
+
+id: folder name
+# Missing translation
+msg: 
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+# Missing translation
+msg: 
+
+id: Bookmarks
+msg: Bookmarks
+
+id: Music
+# Missing translation
+msg: 
+
 id: No handler for URL
 msg: URL'si yok işleyici
+
+id: Other
+# Missing translation
+msg: 
+
+id: Photos
+# Missing translation
+msg: 
+
+id: Removed bookmark: %s
+# Missing translation
+msg: 
+
+id: TV
+# Missing translation
+msg: 
+
+id: Title
+# Missing translation
+msg: 
+
+id: Type
+msg: Type
+
+id: URL
+# Missing translation
+msg: 
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+# Missing translation
+msg: 
+
+id: Automatically upgrade plugins
+# Missing translation
+msg: 
+
+id: Available plugins
+# Missing translation
+msg: 
+
+id: Browse available plugins
+# Missing translation
+msg: 
+
+id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Disk write error
+# Missing translation
+msg: 
+
+id: Downloading
+# Missing translation
+msg: 
+
+id: File open error
+# Missing translation
+msg: 
+
+id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installing
+# Missing translation
+msg: 
+
 id: Invalud URI
 # Missing translation
 msg: 
 
-id: Plugin ID %s does not exist
+id: Not installable
 # Missing translation
 msg: 
 
-id: Plugin ID %s have no download URL
+id: Not installed
+# Missing translation
+msg: 
+
+id: Not upgradable
 # Missing translation
 msg: 
 
@@ -572,7 +1024,15 @@ id: Unable to load plugin.json: Malformed JSON
 # Missing translation
 msg: 
 
-id: Unable to request plugin repository: %s
+id: Up to date
+# Missing translation
+msg: 
+
+id: Upgradable
+# Missing translation
+msg: 
+
+id: Upgraded plugin %s to version %s
 # Missing translation
 msg: 
 
@@ -582,20 +1042,34 @@ msg:
 id: Automatic standby
 msg: Automatic standby
 
-id: Run control
-msg: Run control
+id: Logout
+# Missing translation
+msg: 
+
+id: Open shell
+# Missing translation
+msg: 
+
+id: Power off system
+# Missing translation
+msg: 
+
+id: Starting and stopping Showtime
+# Missing translation
+msg: 
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Etkin
-
 id: Name
 msg: isim
 
-id: Type
-msg: Type
+#
+# ./src/service.c
+#
+id: Local network
+# Missing translation
+msg: 
 
 #
 # ./src/settings.c
@@ -603,11 +1077,27 @@ msg: Type
 id: Applications and installed plugins
 msg: Uygulamalar ve yüklü eklentiler
 
+id: Developer settings
+# Missing translation
+msg: 
+
 id: Discovered media sources
 msg: Bulundu medya kaynakları
 
+id: General
+# Missing translation
+msg: 
+
 id: Global settings
 msg: Global ayarları
+
+id: Settings useful for developers
+# Missing translation
+msg: 
+
+id: System related settings
+# Missing translation
+msg: 
 
 #
 # ./src/ui/glw/glw.c
@@ -652,6 +1142,29 @@ id: Switch to this mode now
 msg: 
 
 id: Video modes
+# Missing translation
+msg: 
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+# Missing translation
+msg: 
+
+id: Open download page
+# Missing translation
+msg: 
+
+id: Showtime version %s is available
+# Missing translation
+msg: 
+
+id: Software upgrade
+# Missing translation
+msg: 
+
+id: Upgrade to releases from
 # Missing translation
 msg: 
 
@@ -734,6 +1247,10 @@ id: Count video as played when reaching
 # Missing translation
 msg: 
 
+id: Enable VDA
+# Missing translation
+msg: 
+
 id: Enable VDPAU
 msg: VDPAU etkin
 
@@ -757,13 +1274,12 @@ id: Maximum resolution for deinterlacer
 # Missing translation
 msg: 
 
-id: No
-# Missing translation
-msg: 
-
 id: No limit
 # Missing translation
 msg: 
+
+id: Off
+msg: Kapalı
 
 id: Outline color
 msg: Outline Rengi
@@ -808,9 +1324,6 @@ msg:
 id: Subtitle styling
 msg: Altyazı modeli
 
-id: Subtitles
-msg: Altyazılar
-
 id: Temporal
 # Missing translation
 msg: 
@@ -824,8 +1337,4 @@ msg: Video hızlandırma ve görüntü davranışı
 
 id: Video playback
 msg: Video oynatma listesi
-
-id: Yes
-# Missing translation
-msg: 
 

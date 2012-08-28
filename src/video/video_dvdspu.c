@@ -318,6 +318,7 @@ void
 dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d)
 {
   TAILQ_REMOVE(&vd->vd_spu_queue, d, d_link);
+  free(d->d_bitmap);
   free(d);
 }
 
@@ -358,7 +359,6 @@ dvdspu_codec_decode(struct media_codec *mc, struct video_decoder *vd,
   dvdspu_codec_t *dc = mc->opaque;
   dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
 		 mb->mb_pts);
-  mb->mb_data = NULL;
 }
 
 

@@ -364,24 +364,22 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			     const char *title, int year, int duration,
 			     int qtype)
 {
-  char buf[300];
   char errbuf[256];
-  const char *q;
   char *result;
+  char yeartxt[20];
 
   if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
-  if(year > 0) {
-    snprintf(buf, sizeof(buf), "%s %d", title, year);
-    q = buf;
-  } else {
-    q = title;
-  }
+  if(year)
+    snprintf(yeartxt, sizeof(yeartxt), "%d", year);
+  else
+    yeartxt[0] = 0;
 
   result = fa_load_query("http://api.themoviedb.org/3/search/movie",
 			 NULL, errbuf, sizeof(errbuf), NULL,
-			 (const char *[]){"query", q,
+			 (const char *[]){"query", title,
+			     "year", *yeartxt ? yeartxt : NULL,
 			     "api_key", TMDB_APIKEY,
 			     NULL, NULL},
 			 FA_COMPRESSION);
@@ -394,8 +392,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(doc == NULL)
     return METADATA_ERROR;
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
-  TRACE(TRACE_DEBUG, "TMDB", "Query '%s' -> %d pages %d results",
-	q,
+  TRACE(TRACE_DEBUG, "TMDB", "Query '%s' year:%d -> %d pages %d results",
+	title,
+	year,
 	htsmsg_get_s32_or_default(doc, "total_pages", -1),
 	results);
   
@@ -428,6 +427,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
       metadb_insert_videoitem(db, item_url, tmdb_datasource,
 			      tmdb_id, md, METAITEM_STATUS_PARTIAL,
 			      pop * 1000, qtype);
+    metadata_destroy(md);
     if(itemid < 0) {
       htsmsg_destroy(doc);
       return itemid;
@@ -448,13 +448,13 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
  *
  */
 static int64_t
-tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id)
+tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
+		      int qtype)
 {
   if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource,
-			      METADATA_QTYPE_IMDB);
+  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource, qtype);
 }
 
 /**
@@ -466,8 +466,7 @@ tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
   if(tmdb_datasource < 0)
     return METADATA_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource,
-			      0);
+  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource, 0);
 }
 
 

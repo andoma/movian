@@ -2,52 +2,67 @@ language: Italian
 native: Italiano
 maintainer: Red Squirrel <iam@redsquirrel.tk>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Impostazioni Audio
+id: Add current page to bookmarks
+msg: Aggiungi la pagina attuale ai preferiti
 
-id: Languages
-msg: Linguaggio
+id: Open settings
+msg: Impostazioni d'apertura
 
-id: Settings
-msg: Impostazioni
-
-id: Subtitle settings
-msg: Impostazioni dei sottotitoli
-
-id: Video settings
-msg: Impostazioni video
+id: Remove current page from bookmarks
+msg: Rimuovi la pagina attuale dai preferiti
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Aggiunto da: %s
+id: Go to Home screen
+msg: Vai alla Home
 
-id: Played %d times
-msg[0]: 
-msg[1]: 
+id: Navigation
+msg: Navigazione
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 
-msg[1]: 
+id: Open Settings
+msg: Impostazioni d'apertura
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 
-msg[1]: 
+id: Playqueue
+msg: Coda di riproduzione
+
+id: Reload current page
+msg: Ricarica pagina attuale
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+msg: Aggiungi '%s' alla Home
+
+id: Remove '%s' from home screen
+msg: Rimuovi  '%s' dalla Home
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Continua da %s
+
+id: Continue playback here
+msg: Continua la riproduzione da qui
+
 id: Delete
 msg: Cancella
+
+id: Mark as seen
+msg: Segna come visto
+
+id: Mark as unseen
+msg: Segna come non visto
+
+id: Play from beginning
+msg: Riproduci dall'inizio
+
+id: Play until end of list
+msg: Riproduci fino alla fine della lista
 
 id: Queue
 msg: In coda
@@ -59,31 +74,49 @@ id: Unstar
 msg: Non segnare
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Disattiva
+id: Audio
+msg: Audio
 
-id: On
-msg: Attiva
+id: Audio settings
+msg: Impostazioni Audio
+
+id: Audio tracks
+msg: Tracce audio
+
+id: Seek by time
+msg: Salta per tempo
+
+id: Settings
+msg: Impostazioni
+
+id: Subtitle settings
+msg: Impostazioni dei sottotitoli
+
+id: Subtitle tracks
+msg: Tracce sottotitoli
+
+id: Subtitles
+msg: Sottotitoli
+
+id: Video
+msg: Video
+
+id: Video menu
+msg: Menu video
+
+id: Video settings
+msg: Impostazioni video
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Metti in coda
+id: System log
+msg: Log di sistema
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Annulla
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Allocati dall'applicazione: %d kB
@@ -137,67 +170,211 @@ id: Windowmanager: %s
 msg: Gestore finestre: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: Informazioni
+id: Album
+msg: Album
+
+id: Custom
+msg: Personalizzate
+
+id: Images
+msg: Immagini
+
+id: List
+msg: Lista
+
+id: Slideshow
+msg: Slideshow
+
+id: View
+msg: Visualizza
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Home
+id: Discovered resources on local network
+msg: Risorse trovate nella rete locale
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+msg: Riguardo Showtime
+
+id: Plugins
+msg: Plugins
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+msg: Rimuovi
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Camera:
+
+id: Date: 
+msg: Data:
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: Autore:
+
+id: Available version: 
+msg: Versione disponibile:
+
+id: Installed version: 
+msg: Versione installata:
+
+id: Showtime %s or newer is required
+msg: Richiesto Showtime %s o maggiore
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+msg: Regista:
+
+id: Duration:
+msg: Durata:
+
+id: File date:
+msg: Data di creazione:
+
+id: Genre:
+msg: Genere:
+
+id: Metadata from
+msg: Metadata da
+
+id: Producer:
+msg: Produttore:
+
+id: Rating:
+msg: Classificazione:
+
+id: Year:
+msg: Anno:
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Aggiungi nuovo valore
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: No
+
+id: Yes
+msg: Si
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Installa
+
+id: Uninstall
+msg: Disinstalla
+
+id: Upgrade
+msg: Aggiorna
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Impossibile aprire la risorsa
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Errore di caricamento pagina
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Coda di riproduzione
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Stato di riproduzione
-
-id: Unable to start video playback
-msg: Impossibile avviare la riproduzione del video
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Capitolo %d / %d
-
-id: Title %d / %d
-msg: Titolo %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Traccia %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+msg: Errore durante il download
+
+id: Available version:
+msg: Versione disponibile:
+
+id: Changelog for %s releases
+msg: Changelog per i rilasci %s
+
+id: Check for updates now
+msg: Cerca aggiornamenti ora
+
+id: Checking for updates...
+msg: Ricerca di aggiornamenti...
+
+id: Current version:
+msg: Versione attuale:
+
+id: Download and install...
+msg: Scarica e installa...
+
+id: Downloading...
+msg: Scaricamento...
+
+id: Installing...
+msg: Installazione...
+
+id: New version %s is available for download
+msg: Disponibile la nuova versione %s
+
+id: No upgrade available
+msg: Nessun aggiornamento disponibile
+
+id: Restarting Showtime in %d seconds...
+msg: Riavvio di Showtime in %d secondi...
+
+id: Retry...
+msg: Riprovo...
+
+id: Showtime is up to date
+msg: Showtime e' aggiornato
+
+id: Stable
+msg: Stabile
+
+id: Testing
+msg: Da testare
+
+id: Unable to query for new version
+msg: Impossibile cercare nuove versioni
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
 
+id: Playback status
+msg: Stato di riproduzione
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Capitolo: %d
+
+id: Title: %d
+msg: Titolo: %d
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 msg: Dominio
@@ -212,49 +389,34 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Annulla
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Uscita audio
-
-id: CPUs
-msg: CPU
-
-id: GPU & Display
-msg: GPU e visualizzazione
-
-id: GPU Core temperature: %d / %d °
-msg: Temperatura GPU: %d / %d °
+id: Memory usage:
+msg: Utilizzo memoria:
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: Modifica lo sfondo a seconda dell'ora 
-
-id: Alternate list layout
-msg: Alterna il layout della lista
-
 id: Audio muted
 msg: Audio silenziato
 
-id: Fancy UI animations
-msg: Animazioni dell'interfaccia
-
 id: Master volume: %d dB
 msg: Volume principale: %d dB
-
-id: Multilingual 'No media loaded'
-msg: 'Nessun media caricato' plurilingue
-
-id: Top bar navigation buttons
-msg: Pulsanti nella barra di navigazione in alto
 
 #
 # ./src/api/opensubtitles.c
@@ -274,6 +436,9 @@ msg: Memoria in esaurimento (%d kB di RAM disponibile)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Uscita audio
+
 id: Audio/Video sync delay
 msg: Ritardo di sincronizzazione Audio/Video
 
@@ -440,6 +605,24 @@ id: Logon failure
 msg: Accesso fallito
 
 #
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+msg: Data
+
+id: Filename
+msg: Nome file
+
+id: Show only supported files
+msg: Mostra solo file supportati
+
+id: Sort folders first
+msg: Ordina prima le cartelle
+
+id: Sort on
+msg: Ordina
+
+#
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
@@ -459,6 +642,9 @@ msg: Linguaggio
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: I codici di linguaggio vanno impostati usando i corrispondenti 3 caratteri ISO.\nAd esempio ENG, SWE, FRA, ITA...
+
+id: Languages
+msg: Linguaggio
 
 id: Preferred languages
 msg: Imposta i linguaggi preferiti
@@ -535,11 +721,68 @@ msg: Zoom video
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+msg: Automatico
+
+id: Custom search query
+msg: Ricerca personalizzata
+
 id: Embedded in file
 msg: Incorporato nel file
 
+id: Enabled
+msg: Attivo
+
+id: IMDb ID
+msg: ID IMDb
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Configurazione metadata e impostazioni provider
+
+id: Metadata loaded from '%s' using %s
+msg: Metadata caricato da '%s' usando %s
+
+id: Metadata search
+msg: Ricerca metadata
+
+id: Metadata source
+msg: Sorgente metadata
+
+id: Movie
+msg: Film
+
+id: No data found
+msg: Nessun dato trovato
+
+id: None
+msg: Nessuno
+
+id: Providers for Movies
+msg: Provider per Film
+
+id: Providers for Music
+msg: Provider per Musica
+
+id: Refresh metadata
+msg: Aggiorna metadata
+
 id: Track %d
 msg: Traccia %d
+
+id: custom IMDb ID
+msg: ID IMDb personalizzato
+
+id: custom query
+msg: Richiesta personalizzata
+
+id: filename
+msg: nome file
+
+id: folder name
+msg: nome cartella
 
 #
 # ./src/navigator.c
@@ -577,12 +820,12 @@ msg: Tipo
 id: URL
 msg: URL
 
-id: Video
-msg: Video
-
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+msg: URL Repository alternativo del plugin
+
 id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
@@ -622,9 +865,6 @@ msg: Non installato
 id: Not upgradable
 msg: Non aggiornabile
 
-id: Plugins
-msg: Plugins
-
 id: Unable to load plugin.json: %s
 msg: Impossibile caricare plugin.json: %s
 
@@ -661,17 +901,23 @@ msg: Avvio e chiusura Showtime
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Attivo
-
 id: Name
 msg: Nome
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Rete locale
 
 #
 # ./src/settings.c
 #
 id: Applications and installed plugins
 msg: Applicazioni e plugin installati
+
+id: Developer settings
+msg: Impostazioni sviluppatore
 
 id: Discovered media sources
 msg: Sorgenti media trovate
@@ -681,6 +927,9 @@ msg: Generale
 
 id: Global settings
 msg: Impostazioni globali
+
+id: Settings useful for developers
+msg: Impostazioni utili per sviluppatori
 
 id: System related settings
 msg: Impostazioni relative al sistema
@@ -726,6 +975,24 @@ msg: Passa a questa modalità ora
 
 id: Video modes
 msg: Modalità video
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: Notifica riguardo gli aggiornamenti
+
+id: Open download page
+msg: Apri pagina di download
+
+id: Showtime version %s is available
+msg: Disponibile la versione %s di Showtime
+
+id: Software upgrade
+msg: Aggiornamento software
+
+id: Upgrade to releases from
+msg: Aggiorna ai rilasci da
 
 #
 # ./src/upnp/upnp.c
@@ -820,11 +1087,11 @@ msg: Sinistra
 id: Maximum resolution for deinterlacer
 msg: Risoluzione massima per il deinterlacciatore
 
-id: No
-msg: No
-
 id: No limit
 msg: Nessun limite
+
+id: Off
+msg: Disattiva
 
 id: Outline color
 msg: Colore contorni
@@ -865,9 +1132,6 @@ msg: Dimensione e posizione dei sottotitoli
 id: Subtitle styling
 msg: Stile sottotitoli
 
-id: Subtitles
-msg: Sottotitoli
-
 id: Temporal
 msg: Temporale
 
@@ -879,7 +1143,4 @@ msg: Accelerazione video e comportamento schermo
 
 id: Video playback
 msg: Riproduzione video
-
-id: Yes
-msg: Si
 

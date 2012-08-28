@@ -2,52 +2,67 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: 音频设置
+id: Add current page to bookmarks
+msg: 将当前页面加入书签
 
-id: Languages
-msg: 语言
+id: Open settings
+msg: 打开设置
 
-id: Settings
-msg: 设置
-
-id: Subtitle settings
-msg: 字幕设置
-
-id: Video settings
-msg: 视频设置
+id: Remove current page from bookmarks
+msg: 将当前页从书签删除
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: 由%s添加
+id: Go to Home screen
+msg: 转至首页
 
-id: Played %d times
-msg[0]: 已播放%d次
-msg[1]: 已播放%d次
+id: Navigation
+msg: 导航
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: 总数：%d
-msg[1]: 总数：%d
+id: Open Settings
+msg: 打开设置
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: 轨道数：%d
-msg[1]: 轨道数：%d
+id: Playqueue
+msg: 播放队列
+
+id: Reload current page
+msg: 刷新
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+msg: 将'%s'加进首页
+
+id: Remove '%s' from home screen
+msg: 将'%s'从首页移除
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: 从'%s'继续
+
+id: Continue playback here
+msg: 从当前位置继续
+
 id: Delete
 msg: 删除
+
+id: Mark as seen
+msg: 标记为已播放
+
+id: Mark as unseen
+msg: 标记为未播放
+
+id: Play from beginning
+msg: 从头播放
+
+id: Play until end of list
+msg: 播放至列表末尾
 
 id: Queue
 msg: 队列
@@ -59,31 +74,49 @@ id: Unstar
 msg: 去星
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: 关闭
+id: Audio
+msg: 音频
 
-id: On
-msg: 开启
+id: Audio settings
+msg: 音频设置
+
+id: Audio tracks
+msg: 音轨
+
+id: Seek by time
+msg: 按时间跳转
+
+id: Settings
+msg: 设置
+
+id: Subtitle settings
+msg: 字幕设置
+
+id: Subtitle tracks
+msg: 字幕
+
+id: Subtitles
+msg: 字幕
+
+id: Video
+msg: 视频
+
+id: Video menu
+msg: 视频菜单
+
+id: Video settings
+msg: 视频设置
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: 加入队列
+id: System log
+msg: 系统日志
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: 取消
-
-id: OK
-msg: 确定
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: 程序已分配：%d kB
@@ -137,67 +170,211 @@ id: Windowmanager: %s
 msg: 窗口管理器: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: 关于
+id: Album
+msg: 专辑
+
+id: Custom
+msg: 定制
+
+id: Images
+msg: 图像
+
+id: List
+msg: 列表
+
+id: Slideshow
+msg: 幻灯片演示
+
+id: View
+msg: 视图
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: 首页
+id: Discovered resources on local network
+msg: 从本地网络检索资源
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+msg: 关于Showtime
+
+id: Plugins
+msg: 插件
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+msg: 删除
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: 相机
+
+id: Date: 
+msg: 日期
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: 作者
+
+id: Available version: 
+msg: 可用版本
+
+id: Installed version: 
+msg: 已安装版本
+
+id: Showtime %s or newer is required
+msg: 需要%s或更新版本的Showtime
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+msg: 导演
+
+id: Duration:
+msg: 时长
+
+id: File date:
+msg: 文件日期
+
+id: Genre:
+msg: 类型
+
+id: Metadata from
+msg: 元信息源自
+
+id: Producer:
+msg: 制片
+
+id: Rating:
+msg: 评分
+
+id: Year:
+msg: 年份
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: 新增
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: 否
+
+id: Yes
+msg: 是
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+msg: 安装
+
+id: Uninstall
+msg: 卸载
+
+id: Upgrade
+msg: 升级
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: 不能打开资源
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: 载入页面出错
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: 播放队列
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: 播放信息
-
-id: Unable to start video playback
-msg: 无法播放
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: 章节 %d / %d
-
-id: Title %d / %d
-msg: 标题 %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: 轨道 %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+msg: 下载失败
+
+id: Available version:
+msg: 可用版本
+
+id: Changelog for %s releases
+msg: 版本%s更新记录
+
+id: Check for updates now
+msg: 立刻检查更新
+
+id: Checking for updates...
+msg: 正在检查更新...
+
+id: Current version:
+msg: 当前版本：
+
+id: Download and install...
+msg: 正在下载并安装...
+
+id: Downloading...
+msg: 正在下载...
+
+id: Installing...
+msg: 正在安装...
+
+id: New version %s is available for download
+msg: 新版本%s可用
+
+id: No upgrade available
+msg: 无可用更新
+
+id: Restarting Showtime in %d seconds...
+msg: %d秒后重启Showtime...
+
+id: Retry...
+msg: 重试...
+
+id: Showtime is up to date
+msg: Showtime已是最新版
+
+id: Stable
+msg: 稳定版
+
+id: Testing
+msg: 测试版
+
+id: Unable to query for new version
+msg: 无法检查最新版
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
 
+id: Playback status
+msg: 播放信息
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: 章节：%d
+
+id: Title: %d
+msg: 标题：%d
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 msg: 域
@@ -212,49 +389,34 @@ id: Username
 msg: 用户名
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: 取消
+
+id: OK
+msg: 确定
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: 未载入媒体
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: 音频输出
-
-id: CPUs
-msg: CPU
-
-id: GPU & Display
-msg: GPU及显示
-
-id: GPU Core temperature: %d / %d °
-msg: GPU核心温度: %d / %d °
+id: Memory usage:
+msg: 内存使用率：
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: 根据时间调整背景颜色
-
-id: Alternate list layout
-msg: 更改列表布局
-
 id: Audio muted
 msg: 已静音
 
-id: Fancy UI animations
-msg: Fancy界面动画
-
 id: Master volume: %d dB
 msg: 主音量: %d dB
-
-id: Multilingual 'No media loaded'
-msg: 多语言'未载入媒体'
-
-id: Top bar navigation buttons
-msg: 工具栏导航按钮
 
 #
 # ./src/api/opensubtitles.c
@@ -274,6 +436,9 @@ msg: 系统内存偏少(%d kB RAM可用)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: 音频输出
+
 id: Audio/Video sync delay
 msg: 音频/视频同步延迟
 
@@ -401,10 +566,13 @@ id: Starred
 msg: 已加星
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: 收藏夹
+id: Cache cleared
+msg: 缓存已清空
+
+id: Clear cached files
+msg: 清空缓存文件
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -420,6 +588,39 @@ msg: 无法打开文件%s
 #
 id: Search using Unix locatedb
 msg: 使用Unix locatedb搜索
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: 访问被拒绝
+
+id: Account restricted
+msg: 帐号受限
+
+id: Bad network share name
+msg: 网络共享名不正确
+
+id: Logon failure
+msg: 登录失败
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+msg: 日期
+
+id: Filename
+msg: 文件名
+
+id: Show only supported files
+msg: 只显示支持的文件
+
+id: Sort folders first
+msg: 排序时文件夹优先
+
+id: Sort on
+msg: 排序
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -441,6 +642,9 @@ msg: 语言
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: 请使用三个字母的ISO代码设置语言代码，例如: eng, swe, fra
+
+id: Languages
+msg: 语言
 
 id: Preferred languages
 msg: 语言偏好
@@ -488,6 +692,15 @@ id: Keymapper
 msg: 按键映射
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: 清除已保存密码
+
+id: Rembered passwords erased
+msg: 记住已删除密码
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -508,29 +721,149 @@ msg: 视频缩放
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+msg: 自动
+
+id: Custom search query
+msg: 设置搜索条件
+
 id: Embedded in file
 msg: 文件内置
+
+id: Enabled
+msg: 启用
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata
+msg: 元信息
+
+id: Metadata configuration and provider settings
+msg: 元信息设置及提供方设置
+
+id: Metadata loaded from '%s' using %s
+msg: 已从'%s'使用%s下载元信息
+
+id: Metadata search
+msg: 元信息搜索
+
+id: Metadata source
+msg: 元信息源
+
+id: Movie
+msg: 影片
+
+id: No data found
+msg: 未找到数据
+
+id: None
+msg: 无
+
+id: Providers for Movies
+msg: 影片提供方
+
+id: Providers for Music
+msg: 音乐提供方
+
+id: Refresh metadata
+msg: 更新元信息
 
 id: Track %d
 msg: 轨道%d
 
+id: custom IMDb ID
+msg: 设置IMDb ID
+
+id: custom query
+msg: 高级查询
+
+id: filename
+msg: 文件名
+
+id: folder name
+msg: 目录名
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+msg: 添加新书签：%s
+
+id: Bookmarks
+msg: 收藏夹
+
+id: Music
+msg: 音乐
+
 id: No handler for URL
 msg: 无法处理URL
+
+id: Other
+msg: 其它
+
+id: Photos
+msg: 照片
+
+id: Removed bookmark: %s
+msg: 删除书签: %s
+
+id: TV
+msg: 电视
+
+id: Title
+msg: 标题
+
+id: Type
+msg: 类型
+
+id: URL
+msg: URL
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+msg: 更改插件库URL
+
+id: Automatically upgrade plugins
+msg: 自动更新插件
+
+id: Available plugins
+msg: 可用插件
+
+id: Browse available plugins
+msg: 浏览可用插件
+
+id: Corrupt plugin bundle
+msg: 损坏的插件包
+
+id: Disk write error
+msg: 磁盘写入错误
+
+id: Downloading
+msg: 正在下载
+
+id: File open error
+msg: 打开文件错误
+
+id: Installed plugins
+msg: 已安装插件
+
+id: Installing
+msg: 正在安装
+
 id: Invalud URI
 msg: 非法的URI
 
-id: Plugin ID %s does not exist
-msg: 插件(ID %s)不存在
+id: Not installable
+msg: 不可安装
 
-id: Plugin ID %s have no download URL
-msg: 插件(ID %s)没有下载链接
+id: Not installed
+msg: 未安装
+
+id: Not upgradable
+msg: 不可升级
 
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
@@ -538,8 +871,14 @@ msg: 无法载入plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: 无法载入plugin.json: JSON格式不正确
 
-id: Unable to request plugin repository: %s
-msg: 无法向插件库发送请求: %s
+id: Up to date
+msg: 最新
+
+id: Upgradable
+msg: 可更新
+
+id: Upgraded plugin %s to version %s
+msg: 插件%s已更新到版本%s
 
 #
 # ./src/runcontrol.c
@@ -547,20 +886,29 @@ msg: 无法向插件库发送请求: %s
 id: Automatic standby
 msg: 自动待机
 
-id: Run control
-msg: 运行控制
+id: Logout
+msg: 注销
+
+id: Open shell
+msg: 打开Shell
+
+id: Power off system
+msg: 关机
+
+id: Starting and stopping Showtime
+msg: 启动和关闭Showtime
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: 启用
-
 id: Name
 msg: 名称
 
-id: Type
-msg: 类型
+#
+# ./src/service.c
+#
+id: Local network
+msg: 本地网络
 
 #
 # ./src/settings.c
@@ -568,11 +916,23 @@ msg: 类型
 id: Applications and installed plugins
 msg: 程序和已安装的插件
 
+id: Developer settings
+msg: 开发者设置
+
 id: Discovered media sources
 msg: 已检测到的媒体资源
 
+id: General
+msg: 常规
+
 id: Global settings
 msg: 全局设置
+
+id: Settings useful for developers
+msg: 供开发者使用的设置
+
+id: System related settings
+msg: 系统相关设置
 
 #
 # ./src/ui/glw/glw.c
@@ -615,6 +975,24 @@ msg: 立刻切换到当前模式
 
 id: Video modes
 msg: 视频模式
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: 通知版本更新
+
+id: Open download page
+msg: 打开下载页面
+
+id: Showtime version %s is available
+msg: Showtime %s 可用
+
+id: Software upgrade
+msg: 软件更新
+
+id: Upgrade to releases from
+msg: 更新选择
 
 #
 # ./src/upnp/upnp.c
@@ -685,6 +1063,9 @@ msg: 颜色
 id: Count video as played when reaching
 msg: 将视频视为已播放当播放进度达到
 
+id: Enable VDA
+msg: 启用VDA
+
 id: Enable VDPAU
 msg: 启用VDPAU
 
@@ -706,11 +1087,11 @@ msg: 靠左
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
-id: No
-msg: 否
-
 id: No limit
 msg: 无限制
+
+id: Off
+msg: 关闭
 
 id: Outline color
 msg: 边框颜色
@@ -722,7 +1103,7 @@ id: Preferred VDPAU deinterlacer method
 msg: 优先使用VDPAU去隔行化方式
 
 id: Resume video playback
-msg: 继续播放
+msg: 从上次结束位置开始播放
 
 id: Right
 msg: 靠右
@@ -751,9 +1132,6 @@ msg: 字幕大小和位置
 id: Subtitle styling
 msg: 字幕样式
 
-id: Subtitles
-msg: 字幕
-
 id: Temporal
 msg: 临时的
 
@@ -765,7 +1143,4 @@ msg: 视频加速及显示方式
 
 id: Video playback
 msg: 视频播放
-
-id: Yes
-msg: 是
 

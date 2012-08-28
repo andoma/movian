@@ -2,52 +2,67 @@ language: Swedish
 native: Svenska
 maintainer: Andreas Öman <andreas@lonelycoder.com>
 #
-# ./glwthemes/mono/commandmenu/cmd_root.view
+# ./glwthemes/default/cmdmenu.view
 #
-id: Audio settings
-msg: Ljudinställningar
+id: Add current page to bookmarks
+msg: Lägg till denna sida till bokmärken
 
-id: Languages
-msg: Språk
+id: Open settings
+msg: Öppna inställningar
 
-id: Settings
-msg: Inställningar
-
-id: Subtitle settings
-msg: Inställningar för undertexter
-
-id: Video settings
-msg: Videoinställningar
+id: Remove current page from bookmarks
+msg: Ta bort denna sida från bokmärken
 
 #
-# ./glwthemes/mono/directoryviews/infobox/audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
-id: Added by: %s
-msg: Tillagd av: %s
+id: Go to Home screen
+msg: Gå till hemsidan
 
-id: Played %d times
-msg[0]: Spelad %d gånger
-msg[1]: Spelad %d gång
+id: Navigation
+msg: Navigering
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_directory.view
-#
-id: %d entries
-msg[0]: %d poster
-msg[1]: %d post
+id: Open Settings
+msg: Öppna inställningar
 
-#
-# ./glwthemes/mono/directoryviews/list2/center_playlist.view
-#
-id: %d tracks
-msg[0]: %d spår
-msg[1]: %d spår
+id: Playqueue
+msg: Spelkö
+
+id: Reload current page
+msg: Ladda om nuvarande sida
 
 #
-# ./glwthemes/mono/directoryviews/list2/options_audio.view
+# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
+id: Add '%s' to home screen
+msg: Lägg till '%s' till hemsidan
+
+id: Remove '%s' from home screen
+msg: Ta bort '%s' från hemsidan
+
+#
+# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Fortsätt från %s
+
+id: Continue playback here
+msg: Fortsätt uppspelning här
+
 id: Delete
 msg: Radera
+
+id: Mark as seen
+msg: Markera som seed
+
+id: Mark as unseen
+msg: Markera som ej sedd
+
+id: Play from beginning
+msg: Spela från början
+
+id: Play until end of list
+msg: Spela till slutet av listan
 
 id: Queue
 msg: Köa
@@ -59,31 +74,49 @@ id: Unstar
 msg: Icke favorit
 
 #
-# ./glwthemes/mono/include/buttons.view
+# ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
-id: Off
-msg: Av
+id: Audio
+msg: Ljud
 
-id: On
-msg: På
+id: Audio settings
+msg: Ljudinställningar
+
+id: Audio tracks
+msg: Ljudspår
+
+id: Seek by time
+msg: Sök per minut
+
+id: Settings
+msg: Inställningar
+
+id: Subtitle settings
+msg: Inställningar för undertexter
+
+id: Subtitle tracks
+msg: Undertextspår
+
+id: Subtitles
+msg: Undertexter
+
+id: Video
+msg: Video
+
+id: Video menu
+msg: Videomeny
+
+id: Video settings
+msg: Videoinställningar
 
 #
-# ./glwthemes/mono/include/infobox.view
+# ./glwthemes/default/log.view
 #
-id: Enqueue
-msg: Köa
+id: System log
+msg: Systemlog
 
 #
-# ./glwthemes/mono/include/popup.view
-#
-id: Cancel
-msg: Avbryt
-
-id: OK
-msg: OK
-
-#
-# ./glwthemes/mono/pages/about.view
+# ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Allokerat av applikationen: %d kB
@@ -137,67 +170,211 @@ id: Windowmanager: %s
 msg: Fönsterhanterare: %s
 
 #
-# ./glwthemes/mono/pages/about_top.view
+# ./glwthemes/default/pages/directory.view
 #
-id: About
-msg: Om
+id: Album
+msg: Album
+
+id: Custom
+msg: Speciell
+
+id: Images
+msg: Bilder
+
+id: List
+msg: Lista
+
+id: Slideshow
+msg: Bildspel
+
+id: View
+msg: Vy
 
 #
-# ./glwthemes/mono/pages/home_top.view
+# ./glwthemes/default/pages/discovered.view
 #
-id: Home
-msg: Hem
+id: Discovered resources on local network
+msg: Hittade källor på lokala nätverket
 
 #
-# ./glwthemes/mono/pages/openerror.view
+# ./glwthemes/default/pages/home_clist.view
+#
+id: About Showtime
+msg: Om Showtime
+
+id: Plugins
+msg: Plugin
+
+#
+# ./glwthemes/default/pages/home_tiles.view
+#
+id: Dismiss
+msg: Ta bort
+
+#
+# ./glwthemes/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Kamera:
+
+id: Date: 
+msg: Datum:
+
+#
+# ./glwthemes/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: Upphovsman:
+
+id: Available version: 
+msg: Tillgänglig version:
+
+id: Installed version: 
+msg: Installerad version:
+
+id: Showtime %s or newer is required
+msg: Showtime %s eller nyare behövs
+
+#
+# ./glwthemes/default/pages/iteminfo/video.view
+#
+id: Director:
+msg: Regisör:
+
+id: Duration:
+msg: Längd:
+
+id: File date:
+msg: Fildatum:
+
+id: Genre:
+msg: Genre:
+
+id: Metadata from
+msg: Metadata från
+
+id: Producer:
+msg: Producent:
+
+id: Rating:
+msg: Värdering:
+
+id: Year:
+msg: År:
+
+#
+# ./glwthemes/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Lägg till ny
+
+#
+# ./glwthemes/default/pages/listitems/bool.view
+#
+id: No
+msg: Nej
+
+id: Yes
+msg: Ja
+
+#
+# ./glwthemes/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Installera
+
+id: Uninstall
+msg: Avinstallera
+
+id: Upgrade
+msg: Uppgradera
+
+#
+# ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Kan ej öppna resurs
 
 #
-# ./glwthemes/mono/pages/openerror_top.view
-#
-id: Page load error
-msg: Sidladdningsfel
-
-#
-# ./glwthemes/mono/pages/playqueue_top.view
-#
-id: Playqueue
-msg: Spelkö
-
-#
-# ./glwthemes/mono/pages/video.view
-#
-id: Playback status
-msg: Uppspelningsstatus
-
-id: Unable to start video playback
-msg: Kan ej starta uppspelning av video
-
-#
-# ./glwthemes/mono/playdecks/dvd.view
-#
-id: Chapter %d / %d
-msg: Kapitel %d / %d
-
-id: Title %d / %d
-msg: Titel %d / %d
-
-#
-# ./glwthemes/mono/playdecks/tracks.view
+# ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Spår %d / %d
 
 #
-# ./glwthemes/mono/playdecks/video.view
+# ./glwthemes/default/pages/upgrade.view
+#
+id: An error occured during download
+msg: Ett fel inträffade under nerladdning
+
+id: Available version:
+msg: Tillgänglig version:
+
+id: Changelog for %s releases
+msg: Ändringar för %s
+
+id: Check for updates now
+msg: Leta efter uppgraderingar nu
+
+id: Checking for updates...
+msg: Letar efter uppdateringar
+
+id: Current version:
+msg: Nuvarande version:
+
+id: Download and install...
+msg: Ladda ner och installera..
+
+id: Downloading...
+msg: Laddar ner...
+
+id: Installing...
+msg: Installerar...
+
+id: New version %s is available for download
+msg: Ny version %s är tillgänglig för nerladdning
+
+id: No upgrade available
+msg: Ingen uppgradering tillgänglig
+
+id: Restarting Showtime in %d seconds...
+msg: Startar om Showtime om %d sekunder...
+
+id: Retry...
+msg: Försök igen...
+
+id: Showtime is up to date
+msg: Showtime är uppdaterat
+
+id: Stable
+msg: Stabil
+
+id: Testing
+msg: Test
+
+id: Unable to query for new version
+msg: Kan ej fråga efter ny version
+
+#
+# ./glwthemes/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
 
+id: Playback status
+msg: Uppspelningsstatus
+
 #
-# ./glwthemes/mono/popups/auth.view
+# ./glwthemes/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Kapitel: %d
+
+id: Title: %d
+msg: Titel: %d
+
+#
+# ./glwthemes/default/popups/auth.view
 #
 id: Domain
 msg: Domän
@@ -212,49 +389,34 @@ id: Username
 msg: Användarnamn
 
 #
-# ./glwthemes/mono/screensaver.view
+# ./glwthemes/default/popups/common.view
+#
+id: Cancel
+msg: Avbryt
+
+id: OK
+msg: OK
+
+#
+# ./glwthemes/default/screensaver.view
 #
 id: No media loaded
 msg: Ingen media laddad
 
 #
-# ./glwthemes/mono/sysinfo.view
+# ./glwthemes/default/sysinfo.view
 #
-id: Audio output
-msg: Ljudutgång
-
-id: CPUs
-msg: CPUer
-
-id: GPU & Display
-msg: GPU och bildskärm
-
-id: GPU Core temperature: %d / %d °
-msg: GPU kärntemperatur: %d / %d °
+id: Memory usage:
+msg: Minnesanvändande:
 
 #
-# ./glwthemes/mono/universe.view
+# ./glwthemes/default/universe.view
 #
-id: Adjust background tint based on daytime
-msg: Justera bakgrundsfärgen beroende på tid på dygnet
-
-id: Alternate list layout
-msg: Alternativ layout av listor
-
 id: Audio muted
 msg: Ljud tyst
 
-id: Fancy UI animations
-msg: Häftiga anomationer i gränsnittet
-
 id: Master volume: %d dB
 msg: Huvudvolym: %d dB
-
-id: Multilingual 'No media loaded'
-msg: Flerspråkig 'No media loaded'
-
-id: Top bar navigation buttons
-msg: Knappar för navigation i toppen av skärmen
 
 #
 # ./src/api/opensubtitles.c
@@ -274,6 +436,9 @@ msg: System har lite ledigt minne (%d kB RAM tillgängligt)
 #
 # ./src/audio/audio.c
 #
+id: Audio output
+msg: Ljudutgång
+
 id: Audio/Video sync delay
 msg: Audio/Video synk delay
 
@@ -401,10 +566,13 @@ id: Starred
 msg: Stjärnor
 
 #
-# ./src/bookmarks.c
+# ./src/blobcache_file.c
 #
-id: Bookmarks
-msg: Bokmärken
+id: Cache cleared
+msg: Cachen är tömd
+
+id: Clear cached files
+msg: Töm cachen
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -420,6 +588,39 @@ msg: Kan ej öppna fil: %s
 #
 id: Search using Unix locatedb
 msg: Sök mha. Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: Tillträde nekat
+
+id: Account restricted
+msg: Kontot är begränsat
+
+id: Bad network share name
+msg: Felaktigt delningsnamn
+
+id: Logon failure
+msg: Login misslyckades
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Date
+msg: Datum
+
+id: Filename
+msg: Filnamn
+
+id: Show only supported files
+msg: Visa bara spelbara filer
+
+id: Sort folders first
+msg: Sortera kataloger först
+
+id: Sort on
+msg: Sortera på
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -441,6 +642,9 @@ msg: Språk
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
 msg: Språkkoder konfigureras som tre teckens ISO koder, till exempel: eng, swe, fra
+
+id: Languages
+msg: Språk
 
 id: Preferred languages
 msg: Föredragna språk
@@ -488,6 +692,15 @@ id: Keymapper
 msg: Tangent- och knapp-hanterare
 
 #
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Glöm ihågkommna lösenord
+
+id: Rembered passwords erased
+msg: Ihågkommna lösenord bortglömda
+
+#
 # ./src/media.c
 #
 id: Align subtitles on video frame
@@ -508,29 +721,149 @@ msg: Video zoom
 #
 # ./src/metadata/metadata.c
 #
+id: Automatic
+msg: Automatisk
+
+id: Custom search query
+msg: Speciell sökfråga
+
 id: Embedded in file
 msg: Inbäddad i fil
+
+id: Enabled
+msg: Påslagen
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadata konfiguration och leverantörsinställningar
+
+id: Metadata loaded from '%s' using %s
+msg: Metadata laddat från '%s', använde %s
+
+id: Metadata search
+msg: Metadatasök
+
+id: Metadata source
+msg: Metadatakälla
+
+id: Movie
+msg: Film
+
+id: No data found
+msg: Ingen data funnet
+
+id: None
+msg: Inget
+
+id: Providers for Movies
+msg: Leverantörer för filmer
+
+id: Providers for Music
+msg: Leverantörer för music
+
+id: Refresh metadata
+msg: Ladda om metadata
 
 id: Track %d
 msg: Spår %d
 
+id: custom IMDb ID
+msg: special IMDb ID
+
+id: custom query
+msg: speciell query
+
+id: filename
+msg: filnamn
+
+id: folder name
+msg: katalognamn
+
 #
 # ./src/navigator.c
 #
+id: Added new bookmark: %s
+msg: La till nytt bokmärke: %s
+
+id: Bookmarks
+msg: Bokmärken
+
+id: Music
+msg: Musik
+
 id: No handler for URL
 msg: Ingen hanterare för URLen
+
+id: Other
+msg: Annat
+
+id: Photos
+msg: Foton
+
+id: Removed bookmark: %s
+msg: Tog bort bokmärke: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Titel
+
+id: Type
+msg: Typ
+
+id: URL
+msg: URL
 
 #
 # ./src/plugins.c
 #
+id: Alternate plugin Repository URL
+msg: Alternativ URL för pluginmagasin
+
+id: Automatically upgrade plugins
+msg: Updatera plugin automatiskt
+
+id: Available plugins
+msg: Tillgängliga plugin
+
+id: Browse available plugins
+msg: Lista tillgängliga plugin
+
+id: Corrupt plugin bundle
+msg: Pluginfilen är korrupt
+
+id: Disk write error
+msg: Kunde ej skriva till disk
+
+id: Downloading
+msg: Laddar ner
+
+id: File open error
+msg: Kunde ej öppna fil
+
+id: Installed plugins
+msg: Installerade plugin
+
+id: Installing
+msg: Installerar
+
 id: Invalud URI
 msg: Felaktig URI
 
-id: Plugin ID %s does not exist
-msg: Plugin ID %s finns ej
+id: Not installable
+msg: Ej installerbar
 
-id: Plugin ID %s have no download URL
-msg: Plugin ID %s har ingen nerladdningsURL
+id: Not installed
+msg: Inte installerad
+
+id: Not upgradable
+msg: Inte uppgraderingsbar
 
 id: Unable to load plugin.json: %s
 msg: Kan ej ladda plugin.json: %s
@@ -538,8 +871,14 @@ msg: Kan ej ladda plugin.json: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
 
-id: Unable to request plugin repository: %s
-msg: Kan ej begära plugin katalogen: %s
+id: Up to date
+msg: Senaste version
+
+id: Upgradable
+msg: Uppgraderingsbar
+
+id: Upgraded plugin %s to version %s
+msg: Upgraderade plugin %s till version %s
 
 #
 # ./src/runcontrol.c
@@ -547,20 +886,29 @@ msg: Kan ej begära plugin katalogen: %s
 id: Automatic standby
 msg: Automatisk standby
 
-id: Run control
-msg: Körkontroll
+id: Logout
+msg: Logout
+
+id: Open shell
+msg: Öppna skal
+
+id: Power off system
+msg: Stäng av systemet
+
+id: Starting and stopping Showtime
+msg: Starta och stanna Showtime
 
 #
 # ./src/sd/sd.c
 #
-id: Enabled
-msg: Påslagen
-
 id: Name
 msg: Namn
 
-id: Type
-msg: Typ
+#
+# ./src/service.c
+#
+id: Local network
+msg: Lokala nätverket
 
 #
 # ./src/settings.c
@@ -568,11 +916,23 @@ msg: Typ
 id: Applications and installed plugins
 msg: Applikationer och installerade plugins
 
+id: Developer settings
+msg: Utvecklarinställningar
+
 id: Discovered media sources
 msg: Upptäckta mediakällor
 
+id: General
+msg: Generella inställningar
+
 id: Global settings
 msg: Globala inställningar
+
+id: Settings useful for developers
+msg: Inställningar användbara för utvecklare
+
+id: System related settings
+msg: Systemrelaterade inställningar
 
 #
 # ./src/ui/glw/glw.c
@@ -615,6 +975,24 @@ msg: Byt till detta läge nu
 
 id: Video modes
 msg: Videolägen
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: Avisera uppgraderingar
+
+id: Open download page
+msg: Öppna sida för nerladdning
+
+id: Showtime version %s is available
+msg: Version %s av Showtime är tillgängligt
+
+id: Software upgrade
+msg: Uppgradera mjukvara
+
+id: Upgrade to releases from
+msg: Uppgradera till släppta mjukvaror från
 
 #
 # ./src/upnp/upnp.c
@@ -685,6 +1063,9 @@ msg: Färg
 id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
 
+id: Enable VDA
+msg: Slå på VDA
+
 id: Enable VDPAU
 msg: Aktivera VDPAU
 
@@ -706,11 +1087,11 @@ msg: Vänster
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
 
-id: No
-msg: Nej
-
 id: No limit
 msg: Ingen begränsning
+
+id: Off
+msg: Av
 
 id: Outline color
 msg: Färg på konturer
@@ -751,9 +1132,6 @@ msg: Storlek och position för undertexter
 id: Subtitle styling
 msg: Stil på undertexter
 
-id: Subtitles
-msg: Undertexter
-
 id: Temporal
 msg: Temporär
 
@@ -765,7 +1143,4 @@ msg: Videoacceleration och inställningar för videopresentation
 
 id: Video playback
 msg: Videouppspelning
-
-id: Yes
-msg: Ja
 

@@ -85,7 +85,7 @@ static const struct {
   {"bua","Buriat"},
   {"bur","Burmese"},
   {"cad","Caddo"},
-  {"spa","Castilian"},
+  {"spa","Spanish"},
   {"cat","Catalan"},
   {"cau","Caucasian languages"},
   {"ceb","Cebuano"},
