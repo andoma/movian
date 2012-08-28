@@ -1610,6 +1610,24 @@ mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely)
 /**
  *
  */
+static const char *stopstrings[] = {
+  "720",
+  "1080",
+  "x264",
+  "X264",
+  "DVDRip",
+  "XviD",
+  "TS",
+  "HDRip",
+  "BRRip",
+  "BluRay",
+  "GERMAN",
+  NULL
+};
+
+/**
+ *
+ */
 static void
 metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 {
@@ -1645,23 +1663,19 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
       continue;
     }
 
-    if(i > 4 && (!strncmp(s+i-4, ".720", 4) || !strncmp(s+i-4, " 720", 4))) {
-      i -= 4;
-      s[i] = 0;
-      continue;
+    int j;
+    for(j = 0; stopstrings[j] != NULL; j++) {
+      int len = strlen(stopstrings[j]);
+      if(i > len+1 && (s[i-len-1] == '.' || s[i-len-1] == ' ') &&
+	 !strncmp(s+i-len, stopstrings[j], len)) {
+	i -= len+1;
+	s[i] = 0;
+	break;
+      }
     }
-
-    if(i > 5 && (!strncmp(s+i-5, ".1080", 5) || !strncmp(s+i-5, " 1080", 5))) {
-      i -= 5;
-      s[i] = 0;
+    
+    if(stopstrings[j] != NULL)
       continue;
-    }
-
-    if(i > 4 && !strncmp(s+i-4, "x264", 4)) {
-      i -= 4;
-      s[i] = 0;
-      continue;
-    }
 
     i--;
   }
