@@ -746,9 +746,17 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
 				      rstr_get(title), year,
 				      mlp->mlp_duration,
 				      METADATA_QTYPE_FILENAME);
+
+  if(rval == METADATA_ERROR && year != 0) {
+    // Try without year
+
+    rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
+					rstr_get(title), 0,
+					mlp->mlp_duration,
+					METADATA_QTYPE_FILENAME);
+  }
+
   rstr_release(title);
-  if(rval == METADATA_DEADLOCK)
-    return rval;
 
   if(rval == METADATA_ERROR && mlp->mlp_lonely) {
 
