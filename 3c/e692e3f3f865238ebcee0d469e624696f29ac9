@@ -1,0 +1,3 @@
+Fix problem with bad clock from AVI files.
+This caused subtitles to appear multiple times.
+Fixes #1170
