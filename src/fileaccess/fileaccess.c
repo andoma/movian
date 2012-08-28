@@ -869,12 +869,14 @@ fa_load_query(const char *url0, size_t *sizep,
     char prefix = '?';
     
     while(args[0] != NULL) {
-      htsbuf_append(&q, &prefix, 1);
-      htsbuf_append_and_escape_url(&q, args[0]);
-      htsbuf_append(&q, "=", 1);
-      htsbuf_append_and_escape_url(&q, args[1]);
+      if(args[1] != NULL) {
+	htsbuf_append(&q, &prefix, 1);
+	htsbuf_append_and_escape_url(&q, args[0]);
+	htsbuf_append(&q, "=", 1);
+	htsbuf_append_and_escape_url(&q, args[1]);
+	prefix = '&';
+      }
       args += 2;
-      prefix = '&';
     }
   }
   
