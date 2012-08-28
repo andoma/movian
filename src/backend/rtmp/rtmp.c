@@ -253,8 +253,8 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
  */
 static event_t *
 sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
-	int64_t dts, int64_t pts, int64_t time, const void *data, 
-	size_t size, int skip, int dt, int duration)
+	int64_t dts, int64_t pts, const void *data, 
+	size_t size, int skip, int dt, int duration, int drive_clock)
 {
   event_t *e = NULL;
   media_buf_t *mb = media_buf_alloc_unlocked(r->mp, size);
@@ -262,7 +262,7 @@ sendpkt(rtmp_t *r, media_queue_t *mq, media_codec_t *mc,
   mb->mb_data_type = dt;
   mb->mb_duration = duration;
   mb->mb_cw = media_codec_ref(mc);
-  mb->mb_time = time;
+  mb->mb_drive_clock = drive_clock;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
   mb->mb_skip = skip;
@@ -385,8 +385,8 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     r->seekpos_video = dts;
   }
 
-  e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts, pts,
-	      data, size, skip, MB_VIDEO, r->vframeduration);
+  e = sendpkt(r, &r->mp->mp_video, r->vcodec, dts, pts,
+	      data, size, skip, MB_VIDEO, r->vframeduration, 1);
   return e;
 }
 
@@ -479,7 +479,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   r->seekpos_audio = dts;
   if(mc->parser_ctx == NULL)
     return sendpkt(r, &mp->mp_audio, mc, 
-		   dts, dts, AV_NOPTS_VALUE, data, size, 0, MB_AUDIO, 0);
+		   dts, dts, data, size, 0, MB_AUDIO, 0, 0);
 
   while(size > 0) {
     int outlen;
@@ -490,9 +490,9 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     if(outlen) {
       event_t *e = sendpkt(r, &mp->mp_audio, mc,
 			   mc->parser_ctx->dts,
-			   mc->parser_ctx->pts, mc->parser_ctx->dts,
+			   mc->parser_ctx->pts,
 			   outbuf, outlen, 0,
-			   MB_AUDIO, 0);
+			   MB_AUDIO, 0, 0);
       if(e != NULL)
 	return e;
     }

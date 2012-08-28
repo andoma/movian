@@ -132,7 +132,6 @@ media_buf_alloc_locked(media_pipe_t *mp, size_t size)
 {
   hts_mutex_assert(&mp->mp_mutex);
   media_buf_t *mb = pool_get(mp->mp_mb_pool);
-  mb->mb_time = AV_NOPTS_VALUE;
   mb->mb_dtor = media_buf_dtor_freedata;
   mb->mb_size = size;
   if(size > 0) {
@@ -167,7 +166,6 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
   mb = pool_get(mp->mp_mb_pool);
   hts_mutex_unlock(&mp->mp_mutex);
 
-  mb->mb_time = AV_NOPTS_VALUE;
   mb->mb_dtor = media_buf_dtor_freedata;
 
   if(pkt->destruct == av_destruct_packet) {
@@ -1553,10 +1551,12 @@ update_sv_delta(void *opaque, int v)
  *
  */
 void
-mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch)
+mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 {
   if(ts == AV_NOPTS_VALUE)
     return;
+
+  ts -= delta;
 
   hts_mutex_lock(&mp->mp_mutex);
 

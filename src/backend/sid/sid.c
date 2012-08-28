@@ -83,9 +83,10 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
       mb->mb_channels = 2;
       mb->mb_rate = 44100;
 
-      mb->mb_time = sample * 1000000LL / mb->mb_rate;
+      mb->mb_pts = sample * 1000000LL / mb->mb_rate;
+      mb->mb_drive_clock = 1;
 
-      if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
+      if(!registered_play && mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
 	metadb_register_play(url0, 1, CONTENT_AUDIO);
       }

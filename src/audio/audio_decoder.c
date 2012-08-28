@@ -304,8 +304,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       ad->ad_do_flush = 0;
       if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-    } else
-      mp_set_current_time(mp, mb->mb_time, mb->mb_epoch);
+    } else if(mb->mb_drive_clock)
+      mp_set_current_time(mp, mb->mb_pts, mb->mb_epoch, mb->mb_delta);
 
     frames = mb->mb_size / sizeof(int16_t) / mb->mb_channels;
 
@@ -371,8 +371,8 @@ ad_decode_buf(audio_decoder_t *ad, media_pipe_t *mp, media_queue_t *mq,
       ad->ad_do_flush = 0;
       if(mp_is_primary(mp))
 	ad->ad_send_flush = 1;
-    } else
-      mp_set_current_time(mp, mb->mb_time, mb->mb_epoch);
+    } else if(mb->mb_drive_clock)
+      mp_set_current_time(mp, mb->mb_pts, mb->mb_epoch, mb->mb_delta);
 
     if(audio_mode_stereo_only(am) &&
        cw->codec_id != CODEC_ID_TRUEHD &&

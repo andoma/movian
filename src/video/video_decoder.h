@@ -52,7 +52,7 @@ typedef struct frame_info {
   int fi_height;
   int fi_pix_fmt;
   int64_t fi_pts;
-  int64_t fi_time;
+  int64_t fi_delta;
   int fi_epoch;
   int fi_duration;
 
@@ -61,7 +61,8 @@ typedef struct frame_info {
   char fi_interlaced;     // Frame delivered is interlaced 
   char fi_tff;            // For interlaced frame, top-field-first
   char fi_prescaled;      // Output frame is prescaled to requested size
-  
+  char fi_drive_clock;
+
   enum AVColorSpace fi_color_space;
   enum AVColorRange fi_color_range;
 
@@ -190,8 +191,6 @@ void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),
 				   void (*blackoutfn)(void *opaque),
 				   void *opaque);
-
-void video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts);
 
 #endif /* VIDEO_DECODER_H */
 
