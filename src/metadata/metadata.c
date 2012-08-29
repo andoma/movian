@@ -1878,7 +1878,7 @@ metadata_filename_to_episode(const char *s,
  *
  */
 rstr_t *
-metadata_remove_postfix(rstr_t *name)
+metadata_remove_postfix_rstr(rstr_t *name)
 {
   const char *str = rstr_get(name);
   int len = strlen(str);
@@ -1886,6 +1886,20 @@ metadata_remove_postfix(rstr_t *name)
     return rstr_allocl(str, len - 4);
   }
   return rstr_dup(name);
+}
+
+
+/**
+ *
+ */
+rstr_t *
+metadata_remove_postfix(const char *str)
+{
+  int len = strlen(str);
+  if(len > 4 && str[len - 4] == '.') {
+    return rstr_allocl(str, len - 4);
+  }
+  return rstr_allocl(str, len);
 }
 
 

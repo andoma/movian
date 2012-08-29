@@ -51,6 +51,7 @@ SRCS += src/main.c \
 	src/metadata/metadata.c \
 	src/metadata/metadb.c \
 	src/metadata/decoration.c \
+	src/metadata/browsemdb.c \
 
 ifeq ($(PLATFORM), linux)
 SRCS += src/arch/linux.c

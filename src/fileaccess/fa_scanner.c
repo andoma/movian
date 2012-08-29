@@ -132,13 +132,14 @@ make_prop(fa_dir_entry_t *fde)
     if(fde->fde_type == CONTENT_DIR) {
       title = rstr_dup(fde->fde_filename);
     } else {
-      title = metadata_remove_postfix(fde->fde_filename);
+      title = metadata_remove_postfix_rstr(fde->fde_filename);
     }
     
     metadata = prop_create(p, "metadata");
     prop_set_rstring(prop_create(metadata, "title"), title);
     rstr_release(title);
   }
+
 
   if(fde->fde_statdone)
     prop_set(metadata, "timestamp", NULL, PROP_SET_INT, fde->fde_stat.fs_mtime);

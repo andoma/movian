@@ -208,6 +208,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
   char buf[256];
 
   db_one_statement(db, "pragma journal_mode=wal;", NULL);
+  db_one_statement(db, "pragma case_sensitive_like=1;", NULL);
 
   if(db_get_int_from_query(db, "pragma user_version", &ver)) {
     TRACE(TRACE_ERROR, "DB", "%s: Unable to query db version", dbname);

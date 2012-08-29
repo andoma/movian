@@ -341,5 +341,7 @@ void mlp_set_duration(metadata_lazy_prop_t *mlp, int duration);
 
 void mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely);
 
-rstr_t *metadata_remove_postfix(rstr_t *in);
+rstr_t *metadata_remove_postfix_rstr(rstr_t *in);
+
+rstr_t *metadata_remove_postfix(const char *in);
 
