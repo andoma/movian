@@ -157,7 +157,7 @@ bmdb_files(prop_t *page, const char *url)
   escape_like_query(q, sizeof(q), url);
 
   void *db = metadb_get();
-  printf("q=%s\n", q);
+
   rc = db_prepare(db, 
 		  "SELECT i.url, p.url, i.contenttype "
 		  "FROM item AS i, item AS p "
