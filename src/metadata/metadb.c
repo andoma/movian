@@ -42,12 +42,11 @@ void
 metadb_init(void)
 {
   sqlite3 *db;
-  extern char *showtime_persistent_path;
   char buf[256];
 
-  snprintf(buf, sizeof(buf), "%s/metadb", showtime_persistent_path);
+  snprintf(buf, sizeof(buf), "%s/metadb", gconf.persistent_path);
   mkdir(buf, 0770);
-  snprintf(buf, sizeof(buf), "%s/metadb/meta.db", showtime_persistent_path);
+  snprintf(buf, sizeof(buf), "%s/metadb/meta.db", gconf.persistent_path);
 
   //  unlink(buf);
 

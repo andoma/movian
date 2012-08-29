@@ -1188,8 +1188,6 @@ static int
 media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
 			AVCodecContext *ctx, media_codec_params_t *mcp)
 {
-  extern int concurrency;
-
   cw->codec = avcodec_find_decoder(id);
 
   if(cw->codec == NULL)
@@ -1215,8 +1213,8 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     cw->codec_ctx->extradata_size = mcp->extradata_size;
   }
 
-  if(id == CODEC_ID_H264 && concurrency > 1) {
-    cw->codec_ctx->thread_count = concurrency;
+  if(id == CODEC_ID_H264 && gconf.concurrency > 1) {
+    cw->codec_ctx->thread_count = gconf.concurrency;
     if(mcp && mcp->cheat_for_speed)
       cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
   }

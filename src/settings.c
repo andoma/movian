@@ -755,11 +755,6 @@ settings_generic_set_bool(void *opaque, int value)
 /**
  *
  */
-
-int enable_bin_replace;
-int enable_omnigrade;
-
-
 static void
 init_dev_settings(void)
 {
@@ -784,7 +779,8 @@ init_dev_settings(void)
   prop_set_string(t, "Enable binrelpace");
 
   settings_create_bool(settings_dev, "binreplace", t, 0,
-		       store, settings_generic_set_bool, &enable_bin_replace, 
+		       store, settings_generic_set_bool,
+		       &gconf.enable_bin_replace, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"dev");
@@ -793,7 +789,8 @@ init_dev_settings(void)
   prop_set_string(t, "Enable omnigrade");
 
   settings_create_bool(settings_dev, "omnigrade", t, 0,
-		       store, settings_generic_set_bool, &enable_omnigrade, 
+		       store, settings_generic_set_bool,
+		       &gconf.enable_omnigrade, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"dev");

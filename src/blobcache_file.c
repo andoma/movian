@@ -140,10 +140,10 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
 {
   uint8_t dir = hash;
   if(for_write) {
-    snprintf(buf, len, "%s/bc2/%02x", showtime_cache_path, dir);
+    snprintf(buf, len, "%s/bc2/%02x", gconf.cache_path, dir);
     mkdir(buf, 0777);
   }
-  snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, showtime_cache_path, dir, hash);
+  snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, gconf.cache_path, dir, hash);
 }
 
 
@@ -159,7 +159,7 @@ save_index(void)
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
   size_t siz;
-  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", showtime_cache_path);
+  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
   
   int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
   if(fd == -1)
@@ -215,7 +215,7 @@ load_index(void)
   struct stat st;
   uint8_t digest[20];
 
-  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", showtime_cache_path);
+  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
   
   int fd = open(filename, O_RDONLY, 0);
   if(fd == -1)
@@ -498,7 +498,7 @@ prune_stale(void)
   char path3[PATH_MAX];
   uint64_t k;
 
-  snprintf(path, sizeof(path), "%s/bc2", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/bc2", gconf.cache_path);
 
   if((d1 = opendir(path)) == NULL)
     return;
@@ -506,14 +506,14 @@ prune_stale(void)
   while((de1 = readdir(d1)) != NULL) {
     if(de1->d_name[0] != '.') {
       snprintf(path2, sizeof(path2), "%s/bc2/%s",
-	       showtime_cache_path, de1->d_name);
+	       gconf.cache_path, de1->d_name);
 
       if((d2 = opendir(path2)) != NULL) {
 	while((de2 = readdir(d2)) != NULL) {
           if(de2->d_name[0] != '.') {
 
 	    snprintf(path3, sizeof(path3), "%s/bc2/%s/%s",
-		     showtime_cache_path, de1->d_name,
+		     gconf.cache_path, de1->d_name,
 		     de2->d_name);
 
 	    if(sscanf(de2->d_name, "%016"PRIx64, &k) != 1 ||
@@ -622,21 +622,21 @@ blobcache_prune_old(void)
   char path2[PATH_MAX];
   char path3[PATH_MAX];
 
-  snprintf(path, sizeof(path), "%s/blobcache", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/blobcache", gconf.cache_path);
 
   if((d1 = opendir(path)) != NULL) {
 
     while((de1 = readdir(d1)) != NULL) {
       if(de1->d_name[0] != '.') {
 	snprintf(path2, sizeof(path2), "%s/blobcache/%s",
-		 showtime_cache_path, de1->d_name);
+		 gconf.cache_path, de1->d_name);
 
 	if((d2 = opendir(path2)) != NULL) {
 	  while((de2 = readdir(d2)) != NULL) {
 	    if(de2->d_name[0] != '.') {
 
 	      snprintf(path3, sizeof(path3), "%s/blobcache/%s/%s",
-		       showtime_cache_path, de1->d_name,
+		       gconf.cache_path, de1->d_name,
 		       de2->d_name);
 	      unlink(path3);
 	    }
@@ -650,11 +650,11 @@ blobcache_prune_old(void)
     rmdir(path);
   }
 
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db", gconf.cache_path);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db-shm", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db-shm", gconf.cache_path);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db-wal", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db-wal", gconf.cache_path);
   unlink(path);
 }  
 
@@ -688,7 +688,7 @@ blobcache_init(void)
   char buf[256];
 
   blobcache_prune_old();
-  snprintf(buf, sizeof(buf), "%s/bc2", showtime_cache_path);
+  snprintf(buf, sizeof(buf), "%s/bc2", gconf.cache_path);
   if(mkdir(buf, 0777) && errno != EEXIST)
     TRACE(TRACE_ERROR, "blobcache", "Unable to create cache dir %s -- %s",
 	  buf, strerror(errno));

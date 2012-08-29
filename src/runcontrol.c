@@ -155,10 +155,10 @@ runcontrol_init(void)
 {
   prop_t *rc;
   
-  if(!(showtime_can_standby ||
-       showtime_can_poweroff ||
-       showtime_can_logout ||
-       showtime_can_open_shell))
+  if(!(gconf.can_standby ||
+       gconf.can_poweroff ||
+       gconf.can_logout ||
+       gconf.can_open_shell))
     return;
 
   settings_create_divider(settings_general, 
@@ -166,23 +166,23 @@ runcontrol_init(void)
 
   rc = prop_create(prop_get_global(), "runcontrol");
 
-  prop_set_int(prop_create(rc, "canStandby"),   !!showtime_can_standby);
-  prop_set_int(prop_create(rc, "canPowerOff"),  !!showtime_can_poweroff);
-  prop_set_int(prop_create(rc, "canLogout"),    !!showtime_can_logout);
-  prop_set_int(prop_create(rc, "canOpenShell"), !!showtime_can_open_shell);
+  prop_set_int(prop_create(rc, "canStandby"),   !!gconf.can_standby);
+  prop_set_int(prop_create(rc, "canPowerOff"),  !!gconf.can_poweroff);
+  prop_set_int(prop_create(rc, "canLogout"),    !!gconf.can_logout);
+  prop_set_int(prop_create(rc, "canOpenShell"), !!gconf.can_open_shell);
 
-  if(showtime_can_standby)
+  if(gconf.can_standby)
     init_autostandby();
 
-  if(showtime_can_poweroff)
+  if(gconf.can_poweroff)
     settings_create_action(settings_general, _p("Power off system"),
 			   do_power_off, NULL, NULL);
 
-  if(showtime_can_logout)
+  if(gconf.can_logout)
     settings_create_action(settings_general, _p("Logout"),
 			   do_logout, NULL, NULL);
 
-  if(showtime_can_open_shell)
+  if(gconf.can_open_shell)
     settings_create_action(settings_general, _p("Open shell"),
 			   do_open_shell, NULL, NULL);
 }

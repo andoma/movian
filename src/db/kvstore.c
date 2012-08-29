@@ -71,12 +71,11 @@ void
 kvstore_init(void)
 {
   sqlite3 *db;
-  extern char *showtime_persistent_path;
   char buf[256];
 
-  snprintf(buf, sizeof(buf), "%s/kvstore", showtime_persistent_path);
+  snprintf(buf, sizeof(buf), "%s/kvstore", gconf.persistent_path);
   mkdir(buf, 0770);
-  snprintf(buf, sizeof(buf), "%s/kvstore/kvstore.db", showtime_persistent_path);
+  snprintf(buf, sizeof(buf), "%s/kvstore/kvstore.db", gconf.persistent_path);
 
   //  unlink(buf);
 

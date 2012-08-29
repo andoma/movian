@@ -74,24 +74,10 @@ static void finalize(void);
 /**
  *
  */
-int concurrency;
-int trace_level;
-int trace_to_syslog;
-int listen_on_stdin;
-#if ENABLE_SERDEV
-int enable_serdev;
-#endif
 static int ffmpeglog;
 static int showtime_retcode = 1;
-const char *showtime_logtarget = SHOWTIME_DEFAULT_LOGTARGET;
-char *showtime_cache_path;
-char *showtime_persistent_path;
-char *showtime_path;
-char *showtime_bin;
-int showtime_can_standby = 0;
-int showtime_can_poweroff = 0;
-int showtime_can_open_shell = 0;
-int showtime_can_logout = 0;
+
+gconf_t gconf;
 
 
 static int
@@ -185,9 +171,9 @@ main(int argc, char **argv)
 #endif
   int do_sd = 1;
 
-  showtime_bin = argv[0];
+  gconf.binary = argv[0];
 
-  trace_level = TRACE_INFO;
+  gconf.trace_level = TRACE_INFO;
 
   gettimeofday(&tv, NULL);
   srand(tv.tv_usec);
@@ -240,13 +226,13 @@ main(int argc, char **argv)
 	     "\n",
 	     htsversion_full,
 	     argv0,
-	     showtime_cache_path);
+	     gconf.cache_path);
       exit(0);
       argc--;
       argv++;
 
     } else if(!strcmp(argv[0], "-d")) {
-      trace_level++;
+      gconf.trace_level++;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
@@ -254,16 +240,16 @@ main(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--syslog")) {
-      trace_to_syslog = 1;
+      gconf.trace_to_syslog = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--stdin")) {
-      listen_on_stdin = 1;
+      gconf.listen_on_stdin = 1;
       argc -= 1; argv += 1;
       continue;
 #if ENABLE_SERDEV
     } else if(!strcmp(argv[0], "--serdev")) {
-      enable_serdev = 1;
+      gconf.enable_serdev = 1;
       argc -= 1; argv += 1;
       continue;
 #endif
@@ -278,28 +264,24 @@ main(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--with-standby")) {
-      showtime_can_standby = 1;
+      gconf.can_standby = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--with-poweroff")) {
-      showtime_can_poweroff = 1;
+      gconf.can_poweroff = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--with-logout")) {
-      showtime_can_logout = 1;
+      gconf.can_logout = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--with-openshell")) {
-      showtime_can_open_shell = 1;
+      gconf.can_open_shell = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--ui") && argc > 1) {
       if(nuiargs < 16)
 	uiargs[nuiargs++] = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "-L") && argc > 1) {
-      showtime_logtarget = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else if(!strcmp(argv[0], "-p") && argc > 1) {
@@ -318,7 +300,7 @@ main(int argc, char **argv)
       forceview = argv[1];
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--cache") && argc > 1) {
-      mystrset(&showtime_cache_path, argv[1]);
+      mystrset(&gconf.cache_path, argv[1]);
       argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
@@ -358,11 +340,11 @@ main(int argc, char **argv)
   TRACE(TRACE_DEBUG, "core", "Loading resources from %s", showtime_dataroot());
 
   /* Try to create cache path */
-  if(showtime_cache_path != NULL &&
-     (r = makedirs(showtime_cache_path)) != 0) {
+  if(gconf.cache_path != NULL &&
+     (r = makedirs(gconf.cache_path)) != 0) {
     TRACE(TRACE_ERROR, "cache", "Unable to create cache path %s -- %s",
-	  showtime_cache_path, strerror(r));
-    showtime_cache_path = NULL;
+	  gconf.cache_path, strerror(r));
+    gconf.cache_path = NULL;
   }
 
   /* Initialize sqlite3 */
@@ -372,12 +354,12 @@ main(int argc, char **argv)
   blobcache_init();
 
   /* Try to create settings path */
-  if(showtime_persistent_path != NULL &&
-     (r = makedirs(showtime_persistent_path)) != 0) {
+  if(gconf.persistent_path != NULL &&
+     (r = makedirs(gconf.persistent_path)) != 0) {
     TRACE(TRACE_ERROR, "settings",
 	  "Unable to create path for persistent storage %s -- %s",
-	  showtime_persistent_path, strerror(r));
-    showtime_persistent_path = NULL;
+	  gconf.persistent_path, strerror(r));
+    gconf.persistent_path = NULL;
   }
 
   /* Metadata init */

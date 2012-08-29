@@ -1,4 +1,4 @@
-#include "config.h"
+#include "showtime.h"
 #include "ipc.h"
 
 void
@@ -9,14 +9,12 @@ ipc_init(void)
 #endif
 
 #if ENABLE_SERDEV
-  extern int enable_serdev;
-  if(enable_serdev)
+  if(gconf.enable_serdev)
     serdev_start();
 #endif
 
 #ifdef CONFIG_STDIN
-  extern int listen_on_stdin;
-  if(listen_on_stdin)
+  if(gconf.listen_on_stdin)
     stdin_start();
 #endif
 }

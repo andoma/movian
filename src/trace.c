@@ -88,7 +88,7 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   l = strlen(buf2);
 
   while((s = strsep(&p, "\n")) != NULL) {
-    if(level <= trace_level)
+    if(level <= gconf.trace_level)
       trace_arch(level, buf2, s);
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
       tt = alloca(sizeof(tracetmp_t));
@@ -214,21 +214,21 @@ trace_init(void)
   char p1[PATH_MAX], p2[PATH_MAX];
   int i;
 
-  snprintf(p1, sizeof(p1), "%s/log", showtime_cache_path);
+  snprintf(p1, sizeof(p1), "%s/log", gconf.cache_path);
   mkdir(p1, 0777);
 
   // Rotate logfiles
 
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.5", showtime_cache_path);
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.5", gconf.cache_path);
   unlink(p1);
 
   for(i = 4; i >= 0; i--) {
-    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path,i);
-    snprintf(p2, sizeof(p2), "%s/log/showtime.log.%d", showtime_cache_path,i+1);
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
+    snprintf(p2, sizeof(p2), "%s/log/showtime.log.%d", gconf.cache_path,i+1);
     rename(p1, p2);
   }
   
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.0", showtime_cache_path);
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.0", gconf.cache_path);
   log_fd = open(p1, O_CREAT | O_TRUNC | O_WRONLY, 0644);
   static const char logstartmark[] = "--MARK-- START\n";
   if(write(log_fd, logstartmark, strlen(logstartmark)) !=

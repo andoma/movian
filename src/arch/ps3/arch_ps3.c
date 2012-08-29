@@ -122,8 +122,6 @@ memlogger_fn(callout_t *co, void *aux)
 
 }
 
-
-
 static char *symbuf;
 
 static void
@@ -161,15 +159,10 @@ load_syms(void)
 void
 arch_init(void)
 {
-  extern int trace_level;
-  extern int concurrency;
-  extern int showtime_can_standby;
+  gconf.concurrency = 2;
+  gconf.can_standby = 1;
+  gconf.trace_level = TRACE_DEBUG;
 
-  concurrency = 2;
-
-  showtime_can_standby = 1;
-
-  trace_level = TRACE_DEBUG;
   sysprop = prop_create(prop_get_global(), "system");
   memprop = prop_create(sysprop, "mem");
   callout_arm(&memlogger, memlogger_fn, NULL, 1);
@@ -191,10 +184,8 @@ arch_exit(int retcode)
   if(retcode == 10)
     Lv2Syscall3(379, 0x100, 0, 0 );
 
-  extern char *showtime_bin;
-
   if(retcode == SHOWTIME_EXIT_RESTART)
-    sysProcessExitSpawn2(showtime_bin, 0, 0, 0, 0, 1200, 0x70);
+    sysProcessExitSpawn2(gconf.binary, 0, 0, 0, 0, 1200, 0x70);
 
   exit(retcode);
 }
@@ -459,7 +450,6 @@ arch_sd_init(void)
 
 static int trace_fd = -1;
 static struct sockaddr_in log_server;
-extern const char *showtime_logtarget;
 
 void
 my_trace(const char *fmt, ...)
@@ -477,7 +467,7 @@ my_trace(const char *fmt, ...)
     log_server.sin_len = sizeof(log_server);
     log_server.sin_family = AF_INET;
     
-    snprintf(msg, sizeof(msg), "%s", showtime_logtarget);
+    snprintf(msg, sizeof(msg), "%s", SHOWTIME_DEFAULT_LOGTARGET);
     p = strchr(msg, ':');
     if(p != NULL) {
       *p++ = 0;
@@ -600,11 +590,11 @@ arch_set_default_paths(int argc, char **argv)
   }
   x++;
   *x = 0;
-  showtime_path = strdup(buf);
+  gconf.dirname = strdup(buf);
   strcpy(x, "settings");
-  showtime_persistent_path = strdup(buf);
+  gconf.persistent_path = strdup(buf);
   strcpy(x, "cache");
-  showtime_cache_path = strdup(buf);
+  gconf.cache_path = strdup(buf);
   SysLoadModule(SYSMODULE_RTC);
 
   thread_info_t *ti = malloc(sizeof(thread_info_t));

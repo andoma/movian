@@ -3831,7 +3831,7 @@ find_cachedir(char *path, size_t pathlen)
   int i, fd;
   char buf[PATH_MAX];
 
-  snprintf(buf, sizeof(buf), "%s/libspotify", showtime_cache_path);
+  snprintf(buf, sizeof(buf), "%s/libspotify", gconf.cache_path);
   if(mkdir(buf, 0770)) {
     if(errno != EEXIST)
       return -1;
@@ -3839,7 +3839,7 @@ find_cachedir(char *path, size_t pathlen)
 
   i = 0;
   for(i = 0; i < 64; i++) {
-    snprintf(buf, sizeof(buf), "%s/libspotify/%d.lock", showtime_cache_path, i);
+    snprintf(buf, sizeof(buf), "%s/libspotify/%d.lock", gconf.cache_path, i);
     
     fd = open(buf, O_CREAT | O_RDWR, 0770);
     if(fd == -1)
@@ -3850,12 +3850,12 @@ find_cachedir(char *path, size_t pathlen)
       continue;
     }
 
-    snprintf(path, pathlen, "%s/libspotify/%d.cache", showtime_cache_path, i);
+    snprintf(path, pathlen, "%s/libspotify/%d.cache", gconf.cache_path, i);
     return 0;
   }
 #endif
 
-  snprintf(path, pathlen, "%s/libspotify", showtime_cache_path);
+  snprintf(path, pathlen, "%s/libspotify", gconf.cache_path);
   if(mkdir(path, 0770)) {
     if(errno != EEXIST)
       return 1;

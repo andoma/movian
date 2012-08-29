@@ -100,7 +100,7 @@ posix_init(void)
 
   signal(SIGPIPE, SIG_IGN);
   
-  TRACE(TRACE_INFO, "core", "Using %d CPU(s)", concurrency);
+  TRACE(TRACE_INFO, "core", "Using %d CPU(s)", gconf.concurrency);
 
 #ifdef RLIMIT_AS
   do {
@@ -122,7 +122,7 @@ posix_init(void)
 
   net_initialize();
 
-  if(trace_to_syslog)
+  if(gconf.trace_to_syslog)
     openlog("showtime", 0, LOG_USER);
 }
 
@@ -164,7 +164,7 @@ trace_arch(int level, const char *prefix, const char *str)
 
   fprintf(stderr, "%s%s %s%s\n", sgr, prefix, str, sgroff);
 
-  if(trace_to_syslog)
+  if(gconf.trace_to_syslog)
     syslog(prio, "%s %s", prefix, str);
 }
 
@@ -194,11 +194,11 @@ arch_set_default_paths(int argc, char **argv)
     return;
 
   snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
-  showtime_cache_path = strdup(buf);
+  gconf.cache_path = strdup(buf);
 
 
   snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
-  showtime_persistent_path = strdup(buf);
+  gconf.persistent_path = strdup(buf);
 }
 
 int64_t
@@ -206,7 +206,7 @@ arch_cache_avail_bytes(void)
 {
   struct statvfs buf;
 
-  if(showtime_cache_path == NULL || statvfs(showtime_cache_path, &buf))
+  if(gconf.cache_path == NULL || statvfs(gconf.cache_path, &buf))
     return 0;
 
   return buf.f_bfree * buf.f_bsize;

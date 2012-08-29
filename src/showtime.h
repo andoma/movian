@@ -175,9 +175,42 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 #define SHOWTIME_EXIT_RESTART  13
 #define SHOWTIME_EXIT_SHELL    14
 
-extern char *showtime_cache_path;
-extern char *showtime_persistent_path;
-extern char *showtime_path;
+
+
+typedef struct gconf {
+  char *dirname;   // Directory where executable resides
+  char *binary;    // Executable itself
+
+  char *cache_path;
+  char *persistent_path;
+
+  int concurrency;
+  int trace_level;
+  int trace_to_syslog;
+  int listen_on_stdin;
+
+#if ENABLE_SERDEV
+  int enable_serdev;
+#endif
+
+  int can_standby;
+  int can_poweroff;
+  int can_open_shell;
+  int can_logout;
+
+  int enable_bin_replace;
+  int enable_omnigrade;
+
+} gconf_t;
+
+extern gconf_t gconf;
+
+
+
+
+
+
+
 
 
 /* From version.c */

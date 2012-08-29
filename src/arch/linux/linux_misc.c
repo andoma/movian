@@ -227,8 +227,7 @@ linux_init_monitors(void)
 void
 arch_init(void)
 {
-  extern int concurrency;
-  concurrency = get_system_concurrency();
+  gconf.concurrency = get_system_concurrency();
   posix_init();
 }
 

@@ -36,9 +36,6 @@
 
 #define SETTINGS_STORE_DELAY 2 // seconds
 
-extern char *showtime_persistent_path;
-static char *showtime_settings_path;
-
 LIST_HEAD(pending_store_list, pending_store);
 
 
@@ -53,6 +50,7 @@ static int rename_cant_overwrite;
 static struct pending_store_list pending_stores;
 static callout_t pending_store_callout;
 static hts_mutex_t pending_store_mutex;
+static char *showtime_settings_path;
 
 /**
  *
@@ -193,11 +191,11 @@ htsmsg_store_init(void)
 
   hts_mutex_init(&pending_store_mutex);
 
-  if(showtime_persistent_path == NULL)
+  if(gconf.persistent_path == NULL)
     return;
 
   snprintf(p1, sizeof(p1), "%s/settings",
-	   showtime_persistent_path);
+	   gconf.persistent_path);
 
   showtime_settings_path = strdup(p1);
 
@@ -209,16 +207,16 @@ htsmsg_store_init(void)
     DIR *dir;
     struct dirent *d;
 
-    if((dir = opendir(showtime_persistent_path)) != NULL) {
+    if((dir = opendir(gconf.persistent_path)) != NULL) {
       while((d = readdir(dir)) != NULL) {
 	if(d->d_name[0] == '.')
 	  continue;
 
 	snprintf(p1, sizeof(p1), "%s/%s",
-		 showtime_persistent_path, d->d_name);
+		 gconf.persistent_path, d->d_name);
 
 	snprintf(p2, sizeof(p2), "%s/settings/%s",
-		 showtime_persistent_path, d->d_name);
+		 gconf.persistent_path, d->d_name);
 
 	rename(p1, p2);
       }

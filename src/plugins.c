@@ -42,7 +42,6 @@
 
 static const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
 static char *plugin_alt_repo_url;
-extern char *showtime_persistent_path;
 static hts_mutex_t plugin_mutex;
 static char *devplugin;
 
@@ -549,7 +548,7 @@ plugin_load_installed(void)
   fa_dir_entry_t *fde;
 
   snprintf(path, sizeof(path), "file://%s/installedplugins",
-	   showtime_persistent_path);
+	   gconf.persistent_path);
 
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
@@ -855,7 +854,7 @@ plugin_remove(plugin_t *pl)
   TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
-	   showtime_persistent_path, pl->pl_id);
+	   gconf.persistent_path, pl->pl_id);
   unlink(path);
 
 #if ENABLE_SPIDERMONKEY
@@ -922,11 +921,11 @@ plugin_install(plugin_t *pl, const char *package)
   prop_set_rstring(pl->pl_statustxt, s);
   rstr_release(s);
 
-  snprintf(path, sizeof(path), "%s/installedplugins", showtime_persistent_path);
+  snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
   mkdir(path, 0770);
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
-	   showtime_persistent_path, pl->pl_id);
+	   gconf.persistent_path, pl->pl_id);
 
   unlink(path);
 
@@ -958,7 +957,7 @@ plugin_install(plugin_t *pl, const char *package)
   }
 
   snprintf(path, sizeof(path),
-	   "zip://file://%s/installedplugins/%s.zip", showtime_persistent_path,
+	   "zip://file://%s/installedplugins/%s.zip", gconf.persistent_path,
 	   pl->pl_id);
 
   if(plugin_load(path, errbuf, sizeof(errbuf), 1, 1)) {
