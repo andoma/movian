@@ -26,6 +26,7 @@ struct rstr;
 
 #define FONT_DOMAIN_FALLBACK 0
 #define FONT_DOMAIN_DEFAULT  1
+#define FONT_DOMAIN_FACEID   2
 
 #define TR_STYLE_BOLD   0x1
 #define TR_STYLE_ITALIC 0x2
@@ -100,6 +101,8 @@ int freetype_family_id(const char *str, int context);
 int freetype_get_context(void);   // rename context -> font_domain
 
 struct rstr *freetype_get_family(void *handle);
+
+struct rstr *freetype_get_identifier(void *handle);
 
 #endif
 

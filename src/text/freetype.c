@@ -79,12 +79,13 @@ typedef struct face {
   uint8_t style;
   int persistent;
   int font_domain;
+  int id;
   struct glyph_list glyphs;
-
 } face_t;
 
 static struct face_queue faces;
 static face_t *default_font;
+static int face_id_tally;
 
 
 //------------------------- Glyph cache -----------------------
@@ -128,15 +129,21 @@ family_get(const char *name, int font_domain)
   if(name == NULL)
     return 0;
 
-  char *n2 = mystrdupa(name), *e;
-  e = strrchr(n2, ' ');
-  if(e != NULL) {
-    e++;
-    if(!strcasecmp(e, "thin") ||
-       !strcasecmp(e, "light") ||
-       !strcasecmp(e, "bold") ||
-       !strcasecmp(e, "heavy"))
-      e[-1] = 0;
+  char *n2 = mystrdupa(name);
+
+  if(mystrbegins(name, "faceid:") == NULL) {
+    char *e;
+    e = strrchr(n2, ' ');
+    if(e != NULL) {
+      e++;
+      if(!strcasecmp(e, "thin") ||
+	 !strcasecmp(e, "light") ||
+	 !strcasecmp(e, "bold") ||
+	 !strcasecmp(e, "heavy"))
+	e[-1] = 0;
+    }
+  } else {
+    font_domain = FONT_DOMAIN_FACEID;
   }
 
   LIST_FOREACH(f, &families, link)
@@ -315,6 +322,7 @@ face_create_epilogue(face_t *face, const char *source, int font_domain)
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
 
   remove_face_alias(family_get(family, font_domain));
+  face->id = ++face_id_tally;
 
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
@@ -1462,6 +1470,26 @@ freetype_get_family(void *handle)
   face_t *f = handle;
   hts_mutex_lock(&text_mutex);
   rstr_t *r = rstr_alloc(family_get_name_by_id(f->family_id_vec[0]));
+  hts_mutex_unlock(&text_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+freetype_get_identifier(void *handle)
+{
+  face_t *f = handle;
+  char buf[40];
+  hts_mutex_lock(&text_mutex);
+  snprintf(buf, sizeof(buf), "faceid:%d", f->id);
+
+  int family_id = family_get(buf, FONT_DOMAIN_FACEID);
+  face_set_family(f, family_id);
+
+  rstr_t *r = rstr_alloc(buf);
   hts_mutex_unlock(&text_mutex);
   return r;
 }

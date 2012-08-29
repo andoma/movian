@@ -4986,23 +4986,26 @@ glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
 {
   token_t *path;
   glw_root_t *gr = ec->w->glw_root;
-  void *font;
+  void *font = NULL;
 
   if((path = token_resolve(ec, argv[0])) == NULL)
     return -1;
 
-  if(path->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, path, "URL is not a string");
-
-  rstr_t *p = fa_absolute_path(path->t_rstring, self->file);
-  font = freetype_load_font(rstr_get(p), gr->gr_font_domain, gr->gr_vpaths);
-  rstr_release(p);
-
   token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
-  if(font)
-    r->t_rstring  = freetype_get_family(font);
-  else
+
+  if(path->type == TOKEN_RSTRING) {
+
+    rstr_t *p = fa_absolute_path(path->t_rstring, self->file);
+    font = freetype_load_font(rstr_get(p), gr->gr_font_domain, gr->gr_vpaths);
+    rstr_release(p);
+
+    if(font)
+      r->t_rstring  = freetype_get_identifier(font);
+    else
+      r->type = TOKEN_VOID;
+  } else {
     r->type = TOKEN_VOID;
+  }
 
   eval_push(ec, r);
 
