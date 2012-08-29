@@ -20,8 +20,6 @@
 
 #include "config.h"
 
-extern int get_system_concurrency(void);
-
 #ifdef linux
 #include "posix/posix_threads.h"
 #elif PS3

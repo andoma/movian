@@ -123,11 +123,6 @@ memlogger_fn(callout_t *co, void *aux)
 }
 
 
-int
-get_system_concurrency(void)
-{
-  return 2;
-}
 
 static char *symbuf;
 

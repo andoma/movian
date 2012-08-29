@@ -16,10 +16,5 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef LINUX_H__
-#define LINUX_H__
-
-void linux_init_cpu_monitor(void);
-
-#endif // LINUX_H__
+#pragma once
 

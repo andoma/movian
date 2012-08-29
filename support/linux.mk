@@ -4,7 +4,7 @@
 #
 # OS specific sources and flags
 #
-SRCS += src/arch/linux/linux.c \
+SRCS += src/arch/linux/linux_misc.c \
 	src/arch/linux/trap_linux.c \
 	src/arch/posix/arch_posix.c \
 	src/arch/posix/posix_threads.c \

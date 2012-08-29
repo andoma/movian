@@ -30,42 +30,6 @@ const char *showtime_get_system_type(void);
 
 #ifdef linux
 
-#define _GNU_SOURCE
-#include <sched.h>
-#include <pthread.h>
-#include <string.h>
-#include <sys/prctl.h>
-#include "arch/linux/linux.h"
-
-
-const char *
-showtime_get_system_type(void)
-{
-#if defined(__i386__)
-  return "Linux/i386";
-#elif defined(__x86_64__)
-  return "Linux/x86_64";
-#elif defined(__arm__)
-  return "Linux/arm";
-#else
-  return "Linux/other";
-#endif
-}
-
-static int
-get_system_concurrency(void)
-{
-  cpu_set_t mask;
-  int i, r = 0;
-
-  memset(&mask, 0, sizeof(mask));
-  sched_getaffinity(0, sizeof(mask), &mask);
-  for(i = 0; i < CPU_SETSIZE; i++)
-    if(CPU_ISSET(i, &mask))
-      r++;
-  return r?:1;
-}
-
 #elif defined(__APPLE__)
 
 const char *
@@ -119,6 +83,8 @@ get_system_concurrency(void)
 
 #include "networking/net.h"
 
+#include "posix.h"
+
 extern int concurrency;
 extern int trace_to_syslog;
 static int decorate_trace;
@@ -127,10 +93,9 @@ static int decorate_trace;
  *
  */
 void
-arch_init(void)
+posix_init(void)
 {
   setlocale(LC_ALL, "");
-  concurrency = get_system_concurrency();
   decorate_trace = isatty(2);
 
   signal(SIGPIPE, SIG_IGN);
@@ -201,21 +166,6 @@ trace_arch(int level, const char *prefix, const char *str)
 
   if(trace_to_syslog)
     syslog(prio, "%s %s", prefix, str);
-}
-
-
-/**
- *
- */
-void
-arch_sd_init(void)
-{
-#ifdef linux
-  linux_init_cpu_monitor();
-  trap_init();
-#elif defined(__APPLE__)
-  darwin_init_cpu_monitor();
-#endif
 }
 
 
