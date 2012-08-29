@@ -151,7 +151,7 @@ extern void hts_thread_create_joinable(const char *, hts_thread_t *p,
 
 #define hts_thread_current()     LWP_GetSelf()
 
-#elif CONFIG_PSL1GHT
+#elif PS3
 
 // #define PS3_LW_PRIMITIVES
 

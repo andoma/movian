@@ -19,7 +19,7 @@
 SUFFIXES=
 
 # All targets deps on Makefile, but we can comment that out during dev:ing
-ALLDEPS=${BUILDDIR}/config.mak Makefile
+ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
 
 include ${CURDIR}/config.default
 
@@ -54,7 +54,6 @@ SRCS += src/main.c \
 	src/service.c \
 	src/notifications.c \
 	src/playqueue.c \
-	src/arch/arch_${OSENV}.c \
 	src/ui/ui.c \
 	src/keymapper.c \
 	src/plugins.c \
@@ -73,14 +72,6 @@ SRCS += src/main.c \
 	src/metadata/decoration.c \
 	src/metadata/browsemdb.c \
 
-ifeq ($(PLATFORM), linux)
-SRCS += src/arch/linux.c
-SRCS += src/arch/trap_linux.c
-endif
-
-ifeq ($(PLATFORM), osx)
-SRCS += src/arch/darwin.c
-endif
 
 SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 
@@ -205,10 +196,6 @@ SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c \
 ##############################################################
 SRCS += src/networking/net_common.c \
 	src/networking/http.c \
-
-SRCS-$(CONFIG_POSIX_NETWORKING) += src/networking/net_posix.c
-SRCS-$(CONFIG_LIBOGC) += src/networking/net_libogc.c
-SRCS-$(CONFIG_PSL1GHT) += src/networking/net_psl1ght.c
 
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/http_server.c
 SRCS-$(CONFIG_HTTPSERVER) += src/networking/ssdp.c
@@ -469,16 +456,6 @@ SRCS-$(CONFIG_DVD) += 	ext/dvd/dvdcss/css.c \
 			ext/dvd/dvdnav/vm/vmcmd.c \
 			ext/dvd/dvdnav/searching.c
 
-
-ifeq ($(PLATFORM), osx)
-DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-else
-ifeq ($(PLATFORM), linux)
-DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
-endif
-endif
-
-
 ${BUILDDIR}/ext/dvd/dvdcss/%.o : CFLAGS = ${OPTFLAGS} \
  -DHAVE_LIMITS_H -DHAVE_UNISTD_H -DHAVE_ERRNO_H -DVERSION="0" $(DVDCSS_CFLAGS)
 
@@ -694,7 +671,7 @@ FORCE:
 -include $(DEPS) $(BUNDLE_DEPS)
 
 # Include Platform specific targets
-include support/${PLATFORM}.mk
+include support/${OS}.mk
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)

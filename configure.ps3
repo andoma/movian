@@ -11,15 +11,13 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-PLATFORM="ps3"
-OSENV="ps3"
+OS="ps3"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="ps3"
 
 source support/configure.inc
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
 CC=${TOOLCHAIN}gcc
-enable psl1ght
 
 LIBAV_CFLAGS="-mminimal-toc -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 

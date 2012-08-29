@@ -1,3 +1,15 @@
+#
+# Source modification and extra flags
+#
+SRCS += src/arch/darwin.c \
+	src/arch/arch_posix.c \
+	src/networking/net_posix.c \
+
+DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+
+#
+# Install
+#
 .DEFAULT_GOAL := ${BUILDDIR}/Showtime.app/Contents/MacOS/showtime
 
 APPDIR        := ${BUILDDIR}/Showtime.app

@@ -1,3 +1,13 @@
+#
+# Source modification and extra flags
+#
+SRCS += src/arch/arch_ps3.c \
+	src/networking/net_psl1ght.c \
+
+#
+# Install
+# 
+
 TITLE := Showtime
 VERSION := $(shell support/getver.sh)
 SFO := $(PSL1GHT)/host/bin/sfo.py
