@@ -897,6 +897,9 @@ static void
 bookmark_add(const char *title, const char *url, const char *type,
 	     const char *icon, const char *id)
 {
+  if(title == NULL || url == NULL)
+    return;
+
   bookmark_t *bm = calloc(1, sizeof(bookmark_t));
 
   LIST_INSERT_HEAD(&bookmarks, bm, bm_link);
@@ -1048,17 +1051,18 @@ bookmarks_init(void)
 		 NULL);
   
   if((m = htsmsg_store_load("bookmarks")) != NULL) {
-
     htsmsg_t *n = htsmsg_get_map(m, "nodes");
-    HTSMSG_FOREACH(f, n) {
-      htsmsg_t *o;
-      if((o = htsmsg_get_map_by_field(f)) == NULL)
-	continue;
-      htsmsg_t *p;
-      if((p = htsmsg_get_map(m, "model")) != NULL)
-	o = p;
+    if(n != NULL) {
+      HTSMSG_FOREACH(f, n) {
+	htsmsg_t *o;
+	if((o = htsmsg_get_map_by_field(f)) == NULL)
+	  continue;
+	htsmsg_t *p;
+	if((p = htsmsg_get_map(o, "model")) != NULL)
+	  o = p;
 
-      bookmark_load(o);
+	bookmark_load(o);
+      }
     }
     htsmsg_destroy(m);
     bookmarks_save();
