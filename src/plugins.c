@@ -1016,7 +1016,7 @@ plugin_open_url(prop_t *page, const char *url)
     return 0;
   }
 
-  nav_open_errorf(page, _("Invalud URI"));
+  nav_open_error(page, "Invalid URI");
   return 0;
 }
 
