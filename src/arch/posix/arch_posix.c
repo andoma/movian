@@ -35,7 +35,7 @@ const char *showtime_get_system_type(void);
 #include <pthread.h>
 #include <string.h>
 #include <sys/prctl.h>
-#include "linux.h"
+#include "arch/linux/linux.h"
 
 
 const char *
@@ -109,7 +109,7 @@ get_system_concurrency(void)
 #include <unistd.h>
 #include <string.h>
 #include <locale.h>
-#include "arch.h"
+#include "arch/arch.h"
 #include <limits.h>
 #include <syslog.h>
 #include <sys/statvfs.h>
@@ -418,7 +418,7 @@ arch_preload_fonts(void)
 
 
 #include <sys/mman.h>
-#include "halloc.h"
+#include "arch/halloc.h"
 
 /**
  *

@@ -1,9 +1,12 @@
+.DEFAULT_GOAL := ${PROG}
+
+
 #
 # OS specific sources and flags
 #
-SRCS += src/arch/linux.c \
-	src/arch/trap_linux.c \
-	src/arch/arch_posix.c \
+SRCS += src/arch/linux/linux.c \
+	src/arch/linux/trap_linux.c \
+	src/arch/posix/arch_posix.c \
 	src/networking/net_posix.c \
 
 

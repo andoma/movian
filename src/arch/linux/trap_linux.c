@@ -36,7 +36,7 @@
 #include <fcntl.h>
 
 #include "showtime.h"
-#include "arch.h"
+#include "arch/arch.h"
 
 #define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
 

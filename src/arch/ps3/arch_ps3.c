@@ -38,16 +38,16 @@
 
 #include <rtc.h>
 
-#include "threads.h"
-#include "atomic.h"
-#include "arch.h"
+#include "arch/threads.h"
+#include "arch/atomic.h"
+#include "arch/arch.h"
 #include "showtime.h"
 #include "service.h"
 #include "misc/callout.h"
 #include "text/text.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
-#include "halloc.h"
+#include "arch/halloc.h"
 
 #if ENABLE_PS3_VDEC
 #include "video/ps3_vdec.h"

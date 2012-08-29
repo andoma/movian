@@ -16,8 +16,9 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHOWTIME_H
-#define SHOWTIME_H
+#pragma once
+
+#include "config.h"
 
 #include <inttypes.h>
 #include <stdarg.h>
@@ -183,5 +184,3 @@ extern char *showtime_path;
 extern const char *htsversion;
 extern const char *htsversion_full;
 
-
-#endif /* SHOWTIME_H */

@@ -19,7 +19,7 @@
 SUFFIXES=
 
 # All targets deps on Makefile, but we can comment that out during dev:ing
-ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
+#ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
 
 include ${CURDIR}/config.default
 
@@ -565,6 +565,8 @@ endif
 SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c ext/tlsf/tlsf_ps3.c
 
 
+include support/${OS}.mk
+
 ##############################################################
 ##############################################################
 ##############################################################
@@ -670,8 +672,6 @@ FORCE:
 # Include dependency files if they exist.
 -include $(DEPS) $(BUNDLE_DEPS)
 
-# Include Platform specific targets
-include support/${OS}.mk
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)

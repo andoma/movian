@@ -1,7 +1,9 @@
+.DEFAULT_GOAL := ${PROG}
+
 #
 # Source modification and extra flags
 #
-SRCS += src/arch/arch_ps3.c \
+SRCS += src/arch/ps3/arch_ps3.c \
 	src/networking/net_psl1ght.c \
 
 #
