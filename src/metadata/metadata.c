@@ -1637,12 +1637,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 
   url_deescape(s);
 
-  // Strip .xxx ending in filenames
   int i = strlen(s);
-  if(i > 4 && s[i - 4] == '.') {
-    i -= 4;
-    s[i] = 0;
-  }
 
   while(i > 0) {
     
@@ -1700,12 +1695,14 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
  *
  */
 rstr_t *
-metadata_remove_postfix(const char *in, char c)
+metadata_remove_postfix(rstr_t *name)
 {
-  char *x = strrchr(in, c);
-  if(x == NULL)
-    return rstr_alloc(in);
-  return rstr_allocl(in, x - in);
+  const char *str = rstr_get(name);
+  int len = strlen(str);
+  if(len > 4 && str[len - 4] == '.') {
+    return rstr_allocl(str, len - 4);
+  }
+  return rstr_dup(name);
 }
 
 

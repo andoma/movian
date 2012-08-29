@@ -155,12 +155,21 @@ analyze_video(deco_item_t *di)
   if((db->db_flags & DECO_FLAGS_DURATION_PRESENT) && di->di_duration == 0)
     return;
 
+  rstr_t *fname;
+
+  if(db->db_flags & DECO_FLAGS_RAW_FILENAMES) {
+    fname = metadata_remove_postfix(di->di_filename);
+  } else {
+    fname = rstr_dup(di->di_filename);
+  }
+
   di->di_mlp = metadata_bind_movie_info(di->di_metadata,
-					di->di_url, di->di_filename,
+					di->di_url, fname,
 					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
 					di->di_duration, di->di_options,
 					di->di_root, db->db_title,
 					db->db_lonely_video_item);
+  rstr_release(fname);
 }
 
 
