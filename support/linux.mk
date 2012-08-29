@@ -7,6 +7,7 @@
 SRCS += src/arch/linux/linux.c \
 	src/arch/linux/trap_linux.c \
 	src/arch/posix/arch_posix.c \
+	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \
 
 
