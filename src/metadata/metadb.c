@@ -971,7 +971,7 @@ metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
 
       sqlite3_bind_text(stmt, 7, rstr_get(md->md_format), -1, SQLITE_STATIC);
 
-      sqlite3_bind_int(stmt, 8, md->md_video_type);
+      sqlite3_bind_int(stmt, 8, md->md_type);
 
       sqlite3_bind_text(stmt, 9, rstr_get(md->md_tagline), -1, SQLITE_STATIC);
       sqlite3_bind_text(stmt, 10, rstr_get(md->md_description),-1, SQLITE_STATIC);

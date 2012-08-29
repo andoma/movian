@@ -51,6 +51,10 @@ prop_t *metadata_sources_settings[METADATA_TYPE_num];
 static void metadata_filename_to_title(const char *filename,
 				       int *yearp, rstr_t **titlep);
 
+static int metadata_filename_to_episode(const char *filename,
+					int *season, int *episode,
+					rstr_t **titlep);
+
 /**
  *
  */
@@ -687,6 +691,9 @@ build_info_text(metadata_lazy_prop_t *mlp, const metadata_t *md)
     case METADATA_QTYPE_CUSTOM:
       qtype = _("custom query");
       break;
+    case METADATA_QTYPE_EPISODE:
+      qtype = _("filename as TV episode");
+      break;
     }
 
     rstr_t *fmt = _("Metadata loaded from '%s' using %s");
@@ -718,7 +725,8 @@ is_qtype_compat(int qa, int qb)
     return 1;
 
   if(qa == METADATA_QTYPE_FILENAME_OR_DIRECTORY &&
-     (qb == METADATA_QTYPE_FILENAME || qb == METADATA_QTYPE_DIRECTORY))
+     (qb == METADATA_QTYPE_FILENAME || qb == METADATA_QTYPE_DIRECTORY ||
+      qb == METADATA_QTYPE_EPISODE))
     return 1;
 
   return 0;
@@ -735,6 +743,32 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
   int year;
   rstr_t *title;
   int64_t rval;
+  
+  int season, episode;
+
+  if(!metadata_filename_to_episode(rstr_get(mlp->mlp_filename), 
+				   &season, &episode, &title)) {
+
+    if(msf->query_by_episode == NULL)
+      return METADATA_ERROR;
+
+    TRACE(TRACE_DEBUG, "METADATA",
+	  "Performing search lookup for %s season:%d episode:%d, "
+	  "based on filename",
+	  rstr_get(title), season, episode);
+
+    rval = msf->query_by_episode(db, rstr_get(mlp->mlp_url),
+				 rstr_get(title), season, episode,
+				 METADATA_QTYPE_EPISODE);
+    
+    rstr_release(title);
+    return rval;
+  }
+
+  if(msf->query_by_title_and_year == NULL)
+    return METADATA_ERROR;
+
+
 
   metadata_filename_to_title(rstr_get(mlp->mlp_filename), &year, &title);
   
@@ -1439,7 +1473,7 @@ metadata_bind_movie_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   mlp->mlp_imdb_id = rstr_dup(imdb_id);
   mlp->mlp_loading = prop_create_r(prop, "loading");
   mlp->mlp_source = prop_create_r(prop, "source");
-  mlp->mlp_type = METADATA_TYPE_MOVIE;
+  mlp->mlp_type = METADATA_TYPE_VIDEO;
   mlp->mlp_lonely = lonely;
 
   prop_t *m;
@@ -1788,8 +1822,55 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 
   if(titlep != NULL)
     *titlep = rstr_alloc(s);
-
 }
+
+
+static int
+metadata_filename_to_episode(const char *s,
+			     int *seasonp, int *episodep,
+			     rstr_t **titlep)
+{
+  int i, j;
+  int len = strlen(s);
+  int season = -1;
+  int episode = -1;
+  for(i = 0; i < len; i++) {
+    if((s[i] == 's' || s[i] == 'S') && isnum(s[i+1]) && isnum(s[i+2])) {
+      int o = 3+i;
+      if(s[o] == '.')
+	o++;
+  
+      if((s[o] == 'e' || s[o] == 'E') && isnum(s[o+1]) && isnum(s[o+2])) {
+	season = atoi(s+i+1);
+	episode = atoi(s+o+1);
+	break;
+      }
+    }
+  }
+  
+
+  if(season == -1 || episode == -1)
+    return -1;
+
+  *seasonp = season;
+  *episodep = episode;
+
+  char *t = mystrdupa(s);
+  url_deescape(t);
+
+  for(j= 0; j < i; j++) {
+    if(t[j] == '.') {
+      t[j] = ' ';
+    }
+  }
+  t[j] = 0;
+
+  if(titlep != NULL)
+    *titlep = rstr_alloc(t);
+  return 0;
+}
+
+
 
 
 
@@ -2049,7 +2130,7 @@ metadata_init(void)
 
   pc = prop_concat_create(prop_create(s, "nodes"), 0);
 
-  add_provider_class(pc, METADATA_TYPE_MOVIE, _p("Providers for Movies"));
+  add_provider_class(pc, METADATA_TYPE_VIDEO, _p("Providers for Video"));
   add_provider_class(pc, METADATA_TYPE_MUSIC, _p("Providers for Music"));
 
 }

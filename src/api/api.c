@@ -4,6 +4,7 @@
 #include "httpcontrol.h"
 #include "api.h"
 #include "tmdb.h"
+#include "tvdb.h"
 #include "lastfm.h"
 
 void
@@ -15,4 +16,5 @@ api_init(void)
 #endif
   tmdb_init();
   lastfm_init();
+  tvdb_init();
 }

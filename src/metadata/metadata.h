@@ -37,6 +37,7 @@ typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 #define METADATA_QTYPE_CUSTOM      4
 #define METADATA_QTYPE_CUSTOM_IMDB 5
 #define METADATA_QTYPE_FILENAME_OR_DIRECTORY 6
+#define METADATA_QTYPE_EPISODE     7
 
 
 #define METADATA_ERROR    -1
@@ -69,9 +70,7 @@ typedef enum {
  * must never be changed
  */
 typedef enum {
-  METADATA_TYPE_MOVIE = 1,
-  METADATA_TYPE_TVSHOW = 2,
-  METADATA_TYPE_MUSICVIDEO = 3,
+  METADATA_TYPE_VIDEO = 1,
   METADATA_TYPE_MUSIC = 4,
   METADATA_TYPE_num
 } metadata_type_t;
@@ -155,7 +154,7 @@ typedef struct metadata {
   int16_t md_rating;  // 0 - 100
   int md_rate_count;
   
-  metadata_type_t md_video_type;
+  metadata_type_t md_type;
 
   rstr_t *md_backdrop;
   rstr_t *md_icon;
@@ -183,6 +182,10 @@ typedef struct metadata_source_funcs {
 			      const char *imdb_id, int qtype);
 
   int64_t (*query_by_id)(void *db, const char *item_url, const char *id);
+
+  int64_t (*query_by_episode)(void *db, const char *item_url, 
+			      const char *title, int season, int episode,
+			      int qtype);
 
 } metadata_source_funcs_t;
 

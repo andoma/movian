@@ -294,7 +294,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   }
 
   metadata_t *md = metadata_create();
-  md->md_video_type = METADATA_TYPE_MOVIE;
+  md->md_type = METADATA_TYPE_VIDEO;
 
   md->md_description = rstr_alloc(htsmsg_get_str(doc, "overview"));
   md->md_tagline = rstr_alloc(htsmsg_get_str(doc, "tagline"));
@@ -414,7 +414,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
       continue;
 
     metadata_t *md = metadata_create();
-    md->md_video_type = METADATA_TYPE_MOVIE;
+    md->md_type = METADATA_TYPE_VIDEO;
     md->md_title = rstr_alloc(htsmsg_get_str(res, "original_title"));
     md->md_year = atoi(htsmsg_get_str(res, "release_date") ?: "");
     double pop;
@@ -487,7 +487,7 @@ tmdb_init(void)
 
   tmdb_datasource =
     metadata_add_source("tmdb", "themoviedb.org", 100001,
-			METADATA_TYPE_MOVIE, &search_fns);
+			METADATA_TYPE_VIDEO, &search_fns);
 }
 
 
