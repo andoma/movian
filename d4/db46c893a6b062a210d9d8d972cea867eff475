@@ -1,0 +1,2 @@
+Pass filename without file ending to metadata lookup functions
+Avoids the file ending reappearing if lookup failes or is disabled
