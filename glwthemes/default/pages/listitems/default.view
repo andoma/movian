@@ -26,6 +26,7 @@ widget(backdrop, {
 		  "video",     "Movie",
 		  "album",     "Disc",
 		  "load",      "Load",
+		  "font",      "Font",
 		  "image",     "Pictures"
 		 ) + ".svg";
 	.shadow = true;

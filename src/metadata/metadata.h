@@ -60,6 +60,7 @@ typedef enum {
   CONTENT_IMAGE       = 8,
   CONTENT_ALBUM       = 9,
   CONTENT_PLUGIN      = 10,
+  CONTENT_FONT        = 11,
   CONTENT_num
 } contenttype_t;
 

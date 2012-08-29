@@ -140,6 +140,7 @@ static const char *types[] = {
   [CONTENT_IMAGE]    = "image",
   [CONTENT_ALBUM]    = "album",
   [CONTENT_PLUGIN]   = "plugin",
+  [CONTENT_FONT]     = "font",
 };
 
 

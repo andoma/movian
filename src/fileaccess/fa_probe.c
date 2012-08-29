@@ -82,6 +82,8 @@ codecname(enum CodecID id)
 static const uint8_t pngsig[8] = {137, 80, 78, 71, 13, 10, 26, 10};
 static const uint8_t isosig[8] = {0x1, 0x43, 0x44, 0x30, 0x30, 0x31, 0x1, 0x0};
 static const uint8_t gifsig[6] = {'G', 'I', 'F', '8', '9', 'a'};
+static const uint8_t ttfsig[5] = {0,1,0,0,0};
+static const uint8_t otfsig[4] = {'O', 'T', 'T', 'O'};
 
 
 /**
@@ -362,6 +364,14 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     md->md_contenttype = CONTENT_UNKNOWN;
     return 1;
   }
+
+  if(!memcmp(buf, ttfsig, sizeof(ttfsig)) ||
+     !memcmp(buf, otfsig, sizeof(otfsig))) {
+    /* TTF or OTF */
+    md->md_contenttype = CONTENT_FONT;
+    return 1;
+  }
+
 
   return 0;
 }

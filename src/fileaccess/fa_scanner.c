@@ -180,6 +180,9 @@ static struct strtab postfixtab[] = {
 
   { "sid",             CONTENT_ALBUM },
 
+  { "ttf",             CONTENT_FONT },
+  { "otf",             CONTENT_FONT },
+
   { "pdf",             CONTENT_UNKNOWN },
   { "nfo",             CONTENT_UNKNOWN },
   { "gz",              CONTENT_UNKNOWN },

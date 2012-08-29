@@ -83,6 +83,7 @@ widget(keyintercept, {
 			  "video", "iteminfo/video.view",
 			  "image", "iteminfo/image.view",
 			  "tvchannel", "iteminfo/tvchannel.view",
+			  "font", "iteminfo/font.view",
 			  "plugin", "iteminfo/plugin.view");
 	  .args ?= $clone.focused;
       });
@@ -91,6 +92,7 @@ widget(keyintercept, {
 				      "video", 1,
 				      "plugin", 1,
 				      "tvchannel", 1,
+				      "font", 1,
 				      "image", 1
 				     );
       });
