@@ -1611,18 +1611,119 @@ mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely)
  *
  */
 static const char *stopstrings[] = {
-  "720",
   "1080",
-  "x264",
-  "X264",
-  "DVDRip",
-  "XviD",
+  "1080P",
+  "3D",
+  "720",
+  "720P",
+  "AC3",
+  "AE",
+  "AHDTV",
+  "ANALOG",
+  "AUDIO",
+  "BDRIP",
+  "CAM",
+  "CD",
+  "CD1",
+  "CD2",
+  "CD3",
+  "CHRONO",
+  "COLORIZED",
+  "COMPLETE",
+  "CONVERT",
+  "CUSTOM",
+  "DC",
+  "DDC",
+  "DIRFIX",
+  "DISC",
+  "DISC1",
+  "DISC2",
+  "DISC3",
+  "DIVX",
+  "DOLBY",
+  "DSR",
+  "DTS",
+  "DTV",
+  "DUAL",
+  "DUBBED",
+  "DVBRIP",
+  "DVDRIP",
+  "DVDSCR",
+  "DVDSCREENER",
+  "EXTENDED",
+  "FINAL",
+  "FS",
+  "HARDCODED",
+  "HARDSUB",
+  "HARDSUBBED",
+  "HD",
+  "HDDVDRIP",
+  "HDRIP",
+  "HDTV",
+  "HR",
+  "INT",
+  "INTERNAL",
+  "LASERDISC",
+  "LIMITED",
+  "LINE",
+  "LIVE.AUDIO",
+  "MP3",
+  "MULTI",
+  "NATIVE",
+  "NFOFIX",
+  "NTSC",
+  "OAR",
+  "P2P",
+  "PAL",
+  "PDTV",
+  "PPV",
+  "PREAIR",
+  "PROOFFIX",
+  "PROPER",
+  "PT",
+  "R1",
+  "R2",
+  "R3",
+  "R4",
+  "R5",
+  "R6",
+  "RATED",
+  "RC",
+  "READ.NFO",
+  "READNFO",
+  "REMASTERED",
+  "REPACK",
+  "RERIP",
+  "RETAIL",
+  "SAMPLEFIX",
+  "SATRIP",
+  "SCR",
+  "SCREENER",
+  "SE",
+  "STV",
+  "SUBBED",
+  "SUBFORCED",
+  "SUBS",
+  "SVCD",
+  "SYNCFIX",
+  "TC",
+  "TELECINE",
+  "TELESYNC",
+  "THEATRICAL",
   "TS",
-  "HDRip",
-  "BRRip",
-  "BluRay",
-  "GERMAN",
-  NULL
+  "TVRIP",
+  "UNCUT",
+  "UNRATED",
+  "UNSUBBED",
+  "VCDRIP",
+  "VHSRIP",
+  "WATERMARKED",
+  "WORKPRINT",
+  "WP",
+  "WS",
+  "X264",
+  "XVID",
+  NULL,
 };
 
 /**
@@ -1637,12 +1738,7 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
 
   url_deescape(s);
 
-  // Strip .xxx ending in filenames
   int i = strlen(s);
-  if(i > 4 && s[i - 4] == '.') {
-    i -= 4;
-    s[i] = 0;
-  }
 
   while(i > 0) {
     
@@ -1667,7 +1763,8 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
     for(j = 0; stopstrings[j] != NULL; j++) {
       int len = strlen(stopstrings[j]);
       if(i > len+1 && (s[i-len-1] == '.' || s[i-len-1] == ' ') &&
-	 !strncmp(s+i-len, stopstrings[j], len)) {
+	 !strncasecmp(s+i-len, stopstrings[j], len) &&
+	 (s[i] == '.' || s[i] == ' ' || s[i] == '-' || s[i] == 0)) {
 	i -= len+1;
 	s[i] = 0;
 	break;
@@ -1700,12 +1797,14 @@ metadata_filename_to_title(const char *filename, int *yearp, rstr_t **titlep)
  *
  */
 rstr_t *
-metadata_remove_postfix(const char *in, char c)
+metadata_remove_postfix(rstr_t *name)
 {
-  char *x = strrchr(in, c);
-  if(x == NULL)
-    return rstr_alloc(in);
-  return rstr_allocl(in, x - in);
+  const char *str = rstr_get(name);
+  int len = strlen(str);
+  if(len > 4 && str[len - 4] == '.') {
+    return rstr_allocl(str, len - 4);
+  }
+  return rstr_dup(name);
 }
 
 

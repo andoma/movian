@@ -242,9 +242,8 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 			       mpeg_tc, AV_TIME_BASE_Q);
       dp->dp_time_pts_delta = pts - t;
     }
-    mb->mb_time = pts - dp->dp_time_pts_delta;
-  } else {
-    mb->mb_time = AV_NOPTS_VALUE;
+    mb->mb_drive_clock = 1;
+    mb->mb_delta = dp->dp_time_pts_delta;
   }
 
   memcpy(mb->mb_data, data, datalen);

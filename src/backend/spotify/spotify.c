@@ -821,7 +821,8 @@ spotify_music_delivery(sp_session *sess, const sp_audioformat *format,
   mb->mb_channels = format->channels;
   mb->mb_rate = format->sample_rate;
 
-  mb->mb_pts = mb->mb_time = play_position * 1000000LL / format->sample_rate;
+  mb->mb_pts = play_position * 1000000LL / format->sample_rate;
+  mb->mb_drive_clock = 1;
   play_position += num_frames;
 
   memcpy(mb->mb_data, frames, mb->mb_size);

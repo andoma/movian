@@ -312,6 +312,7 @@ int metadb_videoitem_delete_from_ds(void *db, const char *url, int ds);
 void decoration_init(void);
 
 #define DECO_FLAGS_DURATION_PRESENT 0x1
+#define DECO_FLAGS_RAW_FILENAMES    0x2
 
 void decorated_browse_create(struct prop *model, struct prop_nf *pnf,
 			     struct prop *items, rstr_t *title, int flags);
@@ -337,5 +338,5 @@ void mlp_set_duration(metadata_lazy_prop_t *mlp, int duration);
 
 void mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely);
 
-rstr_t *metadata_remove_postfix(const char *filename, char c);
+rstr_t *metadata_remove_postfix(rstr_t *in);
 

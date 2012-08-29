@@ -132,7 +132,7 @@ make_prop(fa_dir_entry_t *fde)
     if(fde->fde_type == CONTENT_DIR) {
       title = rstr_dup(fde->fde_filename);
     } else {
-      title = metadata_remove_postfix(rstr_get(fde->fde_filename), '.');
+      title = metadata_remove_postfix(fde->fde_filename);
     }
     
     metadata = prop_create(p, "metadata");
@@ -856,7 +856,8 @@ fa_scanner(const char *url, time_t url_mtime,
 
 
   decorated_browse_create(model, pnf, source, title,
-			  DECO_FLAGS_DURATION_PRESENT);
+			  DECO_FLAGS_DURATION_PRESENT |
+			  DECO_FLAGS_RAW_FILENAMES);
 
   s->s_mtime = url_mtime;
   s->s_playme = playme != NULL ? strdup(playme) : NULL;

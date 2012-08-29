@@ -195,6 +195,12 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   } else {
     vd->vd_nextpts = AV_NOPTS_VALUE;
   }
+#if 0
+  static int64_t lastpts;
+  printf("%20ld : %-20ld %d %ld %d\n", pts, pts - lastpts, mb->mb_drive_clock,
+	 mb->mb_delta, duration);
+  lastpts = pts;
+#endif
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
@@ -204,8 +210,9 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   fi.fi_pix_fmt = ctx->pix_fmt;
   fi.fi_pts = pts;
   fi.fi_epoch = mb->mb_epoch;
-  fi.fi_time = mb->mb_time;
+  fi.fi_delta = mb->mb_delta;
   fi.fi_duration = duration;
+  fi.fi_drive_clock = mb->mb_drive_clock;
 
   fi.fi_interlaced = !!vd->vd_interlaced;
   fi.fi_tff = !!frame->top_field_first;
@@ -226,11 +233,19 @@ video_deliver_frame(video_decoder_t *vd, frame_buffer_type_t type, void *frame,
 		    const frame_info_t *info)
 {
   vd->vd_skip = 0;
-  mp_set_current_time(vd->vd_mp, info->fi_time, info->fi_epoch);
-
   vd->vd_frame_deliver(type, frame, info, vd->vd_opaque);
+
+  if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
+    return;
+
+  mp_set_current_time(vd->vd_mp, info->fi_pts, info->fi_epoch, info->fi_delta);
   
-  video_decoder_scan_ext_sub(vd, info->fi_time);
+  int64_t pts = info->fi_pts;
+  pts -= vd->vd_mp->mp_svdelta;
+  pts -= info->fi_delta;
+
+  if(vd->vd_ext_subtitles != NULL)
+    subtitles_pick(vd->vd_ext_subtitles, pts, vd);
 }
 
 
@@ -499,17 +514,4 @@ video_decoder_destroy(video_decoder_t *vd)
 
   hts_mutex_destroy(&vd->vd_overlay_mutex);
   free(vd);
-}
-
-
-/**
- *
- */
-void
-video_decoder_scan_ext_sub(video_decoder_t *vd, int64_t pts)
-{
-  pts -= vd->vd_mp->mp_svdelta;
-
-  if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, pts, vd);
 }

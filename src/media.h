@@ -87,7 +87,7 @@ typedef struct media_codec {
 typedef struct media_buf {
   int64_t mb_dts;
   int64_t mb_pts;
-  int64_t mb_time;
+  int64_t mb_delta;
 
   TAILQ_ENTRY(media_buf) mb_link;
 
@@ -142,6 +142,7 @@ typedef struct media_buf {
   uint8_t mb_disable_deinterlacer : 1;
   uint8_t mb_skip : 2;
   uint8_t mb_keyframe : 1;
+  uint8_t mb_drive_clock : 1;
 
   uint8_t mb_stream;
 
@@ -430,7 +431,8 @@ void media_set_metatree(media_pipe_t *mp, prop_t *src);
 
 void media_clear_metatree(media_pipe_t *mp);
 
-void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch);
+void mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch,
+			 int64_t delta);
 
 extern media_pipe_t *media_primary;
 

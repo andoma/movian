@@ -434,8 +434,8 @@ upgrade_init(void)
   x = settings_create_multiopt(settings_general, "track",
 			       _p("Upgrade to releases from"), 0);
 
-  //  settings_multiopt_add_opt(x, "stable", _p("Stable"), 1); // not yet
-  settings_multiopt_add_opt(x, "testing", _p("Testing"), 1);
+  settings_multiopt_add_opt(x, "stable", _p("Stable"), 1);
+  settings_multiopt_add_opt(x, "testing", _p("Testing"), 0);
 
   settings_multiopt_initiate(x, set_upgrade_track, NULL, NULL, 
 			     store, settings_generic_save_settings,

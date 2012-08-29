@@ -426,7 +426,8 @@ playaudio(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
       
       mb->mb_channels = 2;
       mb->mb_rate = 44100;
-      mb->mb_time = (lsn - track_first) * 1000000LL / CDIO_CD_FRAMES_PER_SEC;
+      mb->mb_pts = (lsn - track_first) * 1000000LL / CDIO_CD_FRAMES_PER_SEC;
+      mb->mb_drive_clock = 1;
 
       if(cdio_cddap_read(cdda, mb->mb_data, lsn, 2) != 2)
 	memset(mb->mb_data, 0, mb->mb_size);

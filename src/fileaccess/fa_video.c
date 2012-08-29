@@ -484,10 +484,10 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       mb->mb_stream = pkt.stream_index;
 
-      if(mb->mb_pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO)
-	mb->mb_time = mb->mb_pts - fctx->start_time;
-      else
-	mb->mb_time = AV_NOPTS_VALUE;
+      if(mb->mb_data_type == MB_VIDEO) {
+	mb->mb_drive_clock = 1;
+	mb->mb_delta = fctx->start_time;
+      }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
     }
@@ -763,10 +763,10 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     fa_libav_close(avio);
     return NULL;
   }
-
+#if 0
   if(!strcmp(fctx->iformat->name, "avi"))
     fctx->flags |= AVFMT_FLAG_GENPTS;
-
+#endif
   TRACE(TRACE_DEBUG, "Video", "Starting playback of %s (%s)",
 	url, fctx->iformat->name);
 

@@ -42,12 +42,13 @@ LIST_HEAD(vdec_pic_list, vdec_pic);
 
 
 typedef struct pktmeta {
-  int64_t time;
+  int64_t delta;
   int epoch;
   char skip : 1;
   char flush : 1; 
   char nopts : 1;
   char nodts : 1;
+  char drive_clock : 1;
 } pktmeta_t;
 
 
@@ -447,7 +448,8 @@ picture_out(vdec_decoder_t *vdd)
   vp->fi.fi_prescaled = 0;
   vp->fi.fi_color_space = -1;
   vp->fi.fi_color_range = 0;
-  vp->fi.fi_time = pm->time;
+  vp->fi.fi_delta = pm->delta;
+  vp->fi.fi_drive_clock = pm->drive_clock;
 
   vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->rvf.rvf_offset));
 
@@ -596,7 +598,8 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   pm->epoch = mb->mb_epoch;
   pm->skip = mb->mb_skip == 1;
   pm->flush = vd->vd_do_flush;
-  pm->time = mb->mb_time;
+  pm->delta = mb->mb_delta;
+  pm->drive_clock = mb->mb_drive_clock;
 
   int64_t pts = mb->mb_pts, dts = mb->mb_dts;
 

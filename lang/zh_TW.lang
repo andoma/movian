@@ -5,79 +5,64 @@ maintainer: Chinghan Yu<cassine.bbs@ptt.cc>
 # ./glwthemes/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: 將本頁加入書籤
 
 id: Open settings
-# Missing translation
-msg: 
+msg: 開啟設定
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: 將本頁自書籤中移除
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: 前往首頁
 
 id: Navigation
-# Missing translation
-msg: 
+msg: 導覽
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: 開啟設定
 
 id: Playqueue
 msg: 播放佇列
 
 id: Reload current page
-# Missing translation
-msg: 
+msg: 重新載入頁面
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: 將 %s 加入首頁
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: 將 %s 自首頁移除
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: 自 %s 繼續
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: 繼續播放
 
 id: Delete
 msg: 刪除
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: 設為已播放
 
 id: Mark as unseen
-# Missing translation
-msg: 
+msg: 設為未播放
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: 自起始處播放
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: 繼續播映
 
 id: Queue
 msg: 佇列
@@ -92,19 +77,16 @@ msg: 取消評價
 # ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: 音訊
 
 id: Audio settings
 msg: 音訊設定
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: 音軌
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: 按時間軸搜尋
 
 id: Settings
 msg: 設定
@@ -113,19 +95,16 @@ id: Subtitle settings
 msg: 字幕設定
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: 字幕軌
 
 id: Subtitles
 msg: 字幕
 
 id: Video
-# Missing translation
-msg: 
+msg: 視訊
 
 id: Video menu
-# Missing translation
-msg: 
+msg: 視訊選單
 
 id: Video settings
 msg: 視訊設定
@@ -134,8 +113,7 @@ msg: 視訊設定
 # ./glwthemes/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: 系統紀錄
 
 #
 # ./glwthemes/default/pages/about.view
@@ -195,125 +173,100 @@ msg: 視窗管理員： %s
 # ./glwthemes/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: 專輯
 
 id: Custom
-# Missing translation
-msg: 
+msg: 自訂
 
 id: Images
-# Missing translation
-msg: 
+msg: 圖片
 
 id: List
-# Missing translation
-msg: 
+msg: 列表
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: 投影片播映
 
 id: View
-# Missing translation
-msg: 
+msg: 檢視
 
 #
 # ./glwthemes/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: 搜尋本地網路上的資源
 
 #
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: 關於 Showtime
 
 id: Plugins
-# Missing translation
-msg: 
+msg: 外掛程式
 
 #
 # ./glwthemes/default/pages/home_tiles.view
 #
 id: Dismiss
-# Missing translation
-msg: 
+msg: 解散
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: 相機：
 
 id: Date: 
-# Missing translation
-msg: 
+msg: 日期：
 
 #
 # ./glwthemes/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: 作者：
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: 最新版本：
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: 安裝版本：
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: 僅支援 Showtime %s 以上版本
 
 #
 # ./glwthemes/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: 導演：
 
 id: Duration:
-# Missing translation
-msg: 
+msg: 長度：
 
 id: File date:
-# Missing translation
-msg: 
+msg: 檔案日期：
 
 id: Genre:
-# Missing translation
-msg: 
+msg: 風格：
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: 標記資料來源
 
 id: Producer:
-# Missing translation
-msg: 
+msg: 製作人
 
 id: Rating:
-# Missing translation
-msg: 
+msg: 評價
 
 id: Year:
-# Missing translation
-msg: 
+msg: 年份
 
 #
 # ./glwthemes/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: 新增項目
 
 #
 # ./glwthemes/default/pages/listitems/bool.view
@@ -328,16 +281,13 @@ msg: 是
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: 安裝
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: 移除
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: 更新
 
 #
 # ./glwthemes/default/pages/openerror.view
@@ -355,72 +305,55 @@ msg: 音軌 %d / %d
 # ./glwthemes/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: 下載過程發生錯誤
 
 id: Available version:
-# Missing translation
-msg: 
+msg: 最新版本：
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: %s 版本的更新紀錄
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: 立即檢查更新
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: 正在檢查更新…
 
 id: Current version:
-# Missing translation
-msg: 
+msg: 目前版本
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: 下載並安裝
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: 正在下載…
 
 id: Installing...
-# Missing translation
-msg: 
+msg: 正在安裝…
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: 已有 %s 版更新可供下載
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: 尚未有任何更新
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: 將於 %s 秒後重新載入 Showtime
 
 id: Retry...
-# Missing translation
-msg: 
+msg: 正在重試…
 
 id: Showtime is up to date
-# Missing translation
-msg: 
+msg: Showtime 已是最新版本
 
 id: Stable
-# Missing translation
-msg: 
+msg: 穩定版本
 
 id: Testing
-# Missing translation
-msg: 
+msg: 測試版本
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: 無法查詢最新版本
 
 #
 # ./glwthemes/default/pages/video.view
@@ -435,12 +368,10 @@ msg: 影片資訊
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: 章節： %d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: 標題： %d
 
 #
 # ./glwthemes/default/popups/auth.view
@@ -476,8 +407,7 @@ msg: 未載入任何媒體
 # ./glwthemes/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: 記憶體使用量：
 
 #
 # ./glwthemes/default/universe.view
@@ -639,12 +569,10 @@ msg: 評價
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: 快取已清除
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: 清除快取
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -665,43 +593,34 @@ msg: 使用 Unix locatedb 進行搜尋
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: 拒絕存取
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: 受限制的帳號
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: 錯誤的分享名稱
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: 登入失敗
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: 日期
 
 id: Filename
-# Missing translation
-msg: 
+msg: 檔案名稱
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: 只顯示支援的檔案
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: 優先顯示目錄
 
 id: Sort on
-# Missing translation
-msg: 
+msg: 排序項目
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -776,12 +695,10 @@ msg: 按鍵設置
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: 清除已儲存的密碼
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: 密碼已清除
 
 #
 # ./src/media.c
@@ -805,12 +722,10 @@ msg: 視訊縮放
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: 自動
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: 自訂搜尋
 
 id: Embedded in file
 msg: 檔案內容(Embedded in file)
@@ -819,173 +734,136 @@ id: Enabled
 msg: 啟用
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: 標記資訊
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: 標記資訊與提供商設定
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: 自 %s 透過 %s 載入標記資訊
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: 標記資料搜尋
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: 標記資訊來源
 
 id: Movie
-# Missing translation
-msg: 
+msg: 電影
 
 id: No data found
-# Missing translation
-msg: 
+msg: 查無資料
 
 id: None
-# Missing translation
-msg: 
+msg: 無資料
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: 電影提供商
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: 音樂提供商
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: 更新標記資料
 
 id: Track %d
 msg: 第 %d 軌
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: 自訂 IMDb ID
 
 id: custom query
-# Missing translation
-msg: 
+msg: 自訂查詢
 
 id: filename
-# Missing translation
-msg: 
+msg: 檔案名稱
 
 id: folder name
-# Missing translation
-msg: 
+msg: 目錄名稱
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: 書籤 %s 已經加入
 
 id: Bookmarks
 msg: 書籤
 
 id: Music
-# Missing translation
-msg: 
+msg: 音樂
 
 id: No handler for URL
 msg: URL 位址沒有對應的處理規則
 
 id: Other
-# Missing translation
-msg: 
+msg: 其他
 
 id: Photos
-# Missing translation
-msg: 
+msg: 相片
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: 書籤 %s 已經移除
 
 id: TV
-# Missing translation
-msg: 
+msg: 電視
 
 id: Title
-# Missing translation
-msg: 
+msg: 標題
 
 id: Type
 msg: 類型
 
 id: URL
-# Missing translation
-msg: 
+msg: 網址
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: 變更外掛程式來源伺服器
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: 自動更新外掛程式
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: 可用的外掛程式
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: 瀏覽可用的外掛程式
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: 外掛封裝損壞
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: 無法寫入磁碟
 
 id: Downloading
-# Missing translation
-msg: 
+msg: 正在下載
 
 id: File open error
-# Missing translation
-msg: 
+msg: 無法開啟檔案
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: 已安裝的外掛程式
 
 id: Installing
-# Missing translation
-msg: 
+msg: 正在安裝
 
 id: Invalud URI
 msg: 不正確的 URI 位址
 
 id: Not installable
-# Missing translation
-msg: 
+msg: 無法安裝
 
 id: Not installed
-# Missing translation
-msg: 
+msg: 未安裝
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: 無法更新
 
 id: Unable to load plugin.json: %s
 msg: 無法載入 plugin.json ： %s
@@ -994,16 +872,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: 無法載入 plugin.json ： JSON 檔案格式不正確
 
 id: Up to date
-# Missing translation
-msg: 
+msg: 已經是最新版本
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: 已有新的更新
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: 外掛程式 %s 已更新至 %s 版
 
 #
 # ./src/runcontrol.c
@@ -1012,20 +887,16 @@ id: Automatic standby
 msg: 自動待機
 
 id: Logout
-# Missing translation
-msg: 
+msg: 登出
 
 id: Open shell
-# Missing translation
-msg: 
+msg: 開啟 Shell 介面
 
 id: Power off system
-# Missing translation
-msg: 
+msg: 關閉主機
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: 啟動與結束 Showtime
 
 #
 # ./src/sd/sd.c
@@ -1037,8 +908,7 @@ msg: 名稱
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: 區域網路
 
 #
 # ./src/settings.c
@@ -1047,26 +917,22 @@ id: Applications and installed plugins
 msg: 應用程式與擴充功能
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: 開發者設定
 
 id: Discovered media sources
 msg: 搜尋到的媒體來源
 
 id: General
-# Missing translation
-msg: 
+msg: 通用設定
 
 id: Global settings
 msg: 設定
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: 開發者相關設定
 
 id: System related settings
-# Missing translation
-msg: 
+msg: 系統設定
 
 #
 # ./src/ui/glw/glw.c
@@ -1114,24 +980,19 @@ msg: 視訊模式
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: 有更新時通知我
 
 id: Open download page
-# Missing translation
-msg: 
+msg: 開啟下載頁面
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Showtime 版本 %s 已經可以下載了
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: 軟體更新
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: 更新自
 
 #
 # ./src/upnp/upnp.c
@@ -1191,8 +1052,7 @@ id: Auto
 msg: 自動
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: 自動接續播放列表中的媒體檔案
 
 id: Center
 msg: 置中
@@ -1204,8 +1064,7 @@ id: Count video as played when reaching
 msg: 觀賞影片達到若干比例時增加已播放次數紀錄
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: 啟用 VDA
 
 id: Enable VDPAU
 msg: 啟用 VDPAU

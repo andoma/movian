@@ -208,9 +208,10 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
       mb->mb_data_type = MB_AUDIO;
       mb->mb_channels = 2;
       mb->mb_rate = sample_rate;
-      mb->mb_time = gme_tell(emu) * 1000;
+      mb->mb_pts = gme_tell(emu) * 1000;
+      mb->mb_drive_clock = 1;
 
-      if(!registered_play && mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
+      if(!registered_play && mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
 	metadb_register_play(url, 1, CONTENT_AUDIO);
       }
