@@ -69,7 +69,7 @@
 #include "misc/fs.h"
 
 
-static void finalize(void);
+static void showtime_fini(void);
 
 /**
  *
@@ -152,166 +152,12 @@ init_global_info(void)
 
 
 /**
- * Showtime main
+ *
  */
-int
-main(int argc, char **argv)
+static void
+showtime_init(const char *initial_url, const char *initial_view)
 {
-  struct timeval tv;
-  const char *uiargs[16];
-  const char *argv0 = argc > 0 ? argv[0] : "showtime";
-  const char *forceview = NULL;
-  const char *devplugin = NULL;
-  const char *plugin_repo = NULL;
-  const char *jsfile = NULL;
-  int nuiargs = 0;
   int r;
-#if ENABLE_HTTPSERVER
-  int do_upnp = 1;
-#endif
-  int do_sd = 1;
-
-  gconf.binary = argv[0];
-
-  gconf.trace_level = TRACE_INFO;
-
-  gettimeofday(&tv, NULL);
-  srand(tv.tv_usec);
-
-  arch_set_default_paths(argc, argv);
-
-  /* We read options ourselfs since getopt() is broken on some (nintento wii)
-     targets */
-
-  argv++;
-  argc--;
-
-  while(argc > 0) {
-    if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
-      printf("HTS Showtime %s\n"
-	     "Copyright (C) 2007-2010 Andreas Öman\n"
-	     "\n"
-	     "Usage: %s [options] [<url>]\n"
-	     "\n"
-	     "  Options:\n"
-	     "   -h, --help        - This help text.\n"
-	     "   -d                - Enable debug output.\n"
-	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
-	     "   --with-standby    - Enable system standby.\n"
-	     "   --with-poweroff   - Enable system power-off.\n"
-	     "   -s <path>         - Non-default Showtime settings path.\n"
-	     "   --ui <ui>         - Use specified user interface.\n"
-	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
-	     "   --syslog          - Send log messages to syslog.\n"
-#if ENABLE_STDIN
-	     "   --stdin           - Listen on stdin for events.\n"
-#endif
-	     "   -v <view>         - Use specific view for <url>.\n"
-	     "   --cache <path>    - Set path for cache [%s].\n"
-#if ENABLE_SERDEV
-	     "   --serdev          - Probe service ports for devices.\n"
-#endif
-#if ENABLE_HTTPSERVER
-	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
-#endif
-	     "   --disable-sd      - Disable service discovery (mDNS, etc).\n"
-	     "   -p                - Path to plugin directory to load\n"
-	     "                       Intended for plugin development\n"
-	     "   --plugin-repo     - URL to plugin repository\n"
-	     "                       Intended for plugin development\n"
-	     "   -j <path>           Load javascript file\n"
-	     "\n"
-	     "  URL is any URL-type supported by Showtime, "
-	     "e.g., \"file:///...\"\n"
-	     "\n",
-	     htsversion_full,
-	     argv0,
-	     gconf.cache_path);
-      exit(0);
-      argc--;
-      argv++;
-
-    } else if(!strcmp(argv[0], "-d")) {
-      gconf.trace_level++;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--ffmpeglog")) {
-      ffmpeglog = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--syslog")) {
-      gconf.trace_to_syslog = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--stdin")) {
-      gconf.listen_on_stdin = 1;
-      argc -= 1; argv += 1;
-      continue;
-#if ENABLE_SERDEV
-    } else if(!strcmp(argv[0], "--serdev")) {
-      gconf.enable_serdev = 1;
-      argc -= 1; argv += 1;
-      continue;
-#endif
-#if ENABLE_HTTPSERVER
-    } else if(!strcmp(argv[0], "--disable-upnp")) {
-      do_upnp = 0;
-      argc -= 1; argv += 1;
-      continue;
-#endif
-    } else if(!strcmp(argv[0], "--disable-sd")) {
-      do_sd = 0;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--with-standby")) {
-      gconf.can_standby = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--with-poweroff")) {
-      gconf.can_poweroff = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--with-logout")) {
-      gconf.can_logout = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--with-openshell")) {
-      gconf.can_open_shell = 1;
-      argc -= 1; argv += 1;
-      continue;
-    } else if(!strcmp(argv[0], "--ui") && argc > 1) {
-      if(nuiargs < 16)
-	uiargs[nuiargs++] = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "-p") && argc > 1) {
-      devplugin = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "--plugin-repo") && argc > 1) {
-      plugin_repo = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if(!strcmp(argv[0], "-j") && argc > 1) {
-      jsfile = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else if (!strcmp(argv[0], "-v") && argc > 1) {
-      forceview = argv[1];
-      argc -= 2; argv += 2;
-    } else if (!strcmp(argv[0], "--cache") && argc > 1) {
-      mystrset(&gconf.cache_path, argv[1]);
-      argc -= 2; argv += 2;
-#ifdef __APPLE__
-    /* ignore -psn argument, process serial number */
-    } else if(!strncmp(argv[0], "-psn", 4)) {
-      argc -= 1; argv += 1;
-      continue;
-#endif
-    } else
-      break;
-  }
-
 
   unicode_init();
 
@@ -405,7 +251,7 @@ main(int argc, char **argv)
 
   /* Initialize plugin manager and load plugins */
   /* Once plugins are initialized it will also start the auto-upgrade system */
-  plugins_init(devplugin, plugin_repo, argc > 0);
+  plugins_init(gconf.devplugin, gconf.plugin_repo, initial_url != NULL);
 
   /* Internationalization */
   i18n_init();
@@ -413,14 +259,14 @@ main(int argc, char **argv)
   /* Video settings */
   video_settings_init();
 
-  if(jsfile)
-    js_load(jsfile);
+  if(gconf.load_jsfile)
+    js_load(gconf.load_jsfile);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
   ipc_init();
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
-  if(do_sd)
+  if(!gconf.disable_sd)
     sd_init();
 
   /* Initialize various external APIs */
@@ -428,26 +274,184 @@ main(int argc, char **argv)
 
   /* Open initial page(s) */
   nav_open(NAV_HOME, NULL);
-  if(argc > 0)
-    nav_open(argv[0], forceview);
+  if(initial_url != NULL)
+    nav_open(initial_url, initial_view);
 
 
   /* HTTP server and UPNP */
 #if ENABLE_HTTPSERVER
   http_server_init();
-  if(do_upnp)
+  if(!gconf.disable_upnp)
     upnp_init();
 #endif
 
 
   runcontrol_init();
+  
+}
+
+
+/**
+ * Showtime main
+ */
+int
+main(int argc, char **argv)
+{
+  struct timeval tv;
+  const char *uiargs[16];
+  const char *argv0 = argc > 0 ? argv[0] : "showtime";
+  const char *forceview = NULL;
+  int nuiargs = 0;
+
+  gconf.binary = argv[0];
+
+  gconf.trace_level = TRACE_INFO;
+
+  gettimeofday(&tv, NULL);
+  srand(tv.tv_usec);
+
+  arch_set_default_paths(argc, argv);
+
+  /* We read options ourselfs since getopt() is broken on some (nintento wii)
+     targets */
+
+  argv++;
+  argc--;
+
+  while(argc > 0) {
+    if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
+      printf("HTS Showtime %s\n"
+	     "Copyright (C) 2007-2010 Andreas Öman\n"
+	     "\n"
+	     "Usage: %s [options] [<url>]\n"
+	     "\n"
+	     "  Options:\n"
+	     "   -h, --help        - This help text.\n"
+	     "   -d                - Enable debug output.\n"
+	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
+	     "   --with-standby    - Enable system standby.\n"
+	     "   --with-poweroff   - Enable system power-off.\n"
+	     "   -s <path>         - Non-default Showtime settings path.\n"
+	     "   --ui <ui>         - Use specified user interface.\n"
+	     "   -L <ip:host>      - Send log messages to remote <ip:host>.\n"
+	     "   --syslog          - Send log messages to syslog.\n"
+#if ENABLE_STDIN
+	     "   --stdin           - Listen on stdin for events.\n"
+#endif
+	     "   -v <view>         - Use specific view for <url>.\n"
+	     "   --cache <path>    - Set path for cache [%s].\n"
+#if ENABLE_SERDEV
+	     "   --serdev          - Probe service ports for devices.\n"
+#endif
+#if ENABLE_HTTPSERVER
+	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
+#endif
+	     "   --disable-sd      - Disable service discovery (mDNS, etc).\n"
+	     "   -p                - Path to plugin directory to load\n"
+	     "                       Intended for plugin development\n"
+	     "   --plugin-repo     - URL to plugin repository\n"
+	     "                       Intended for plugin development\n"
+	     "   -j <path>           Load javascript file\n"
+	     "\n"
+	     "  URL is any URL-type supported by Showtime, "
+	     "e.g., \"file:///...\"\n"
+	     "\n",
+	     htsversion_full,
+	     argv0,
+	     gconf.cache_path);
+      exit(0);
+      argc--;
+      argv++;
+
+    } else if(!strcmp(argv[0], "-d")) {
+      gconf.trace_level++;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--ffmpeglog")) {
+      ffmpeglog = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--syslog")) {
+      gconf.trace_to_syslog = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--stdin")) {
+      gconf.listen_on_stdin = 1;
+      argc -= 1; argv += 1;
+      continue;
+#if ENABLE_SERDEV
+    } else if(!strcmp(argv[0], "--serdev")) {
+      gconf.enable_serdev = 1;
+      argc -= 1; argv += 1;
+      continue;
+#endif
+#if ENABLE_HTTPSERVER
+    } else if(!strcmp(argv[0], "--disable-upnp")) {
+      gconf.disable_upnp = 1;
+      argc -= 1; argv += 1;
+      continue;
+#endif
+    } else if(!strcmp(argv[0], "--disable-sd")) {
+      gconf.disable_sd = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-standby")) {
+      gconf.can_standby = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-poweroff")) {
+      gconf.can_poweroff = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-logout")) {
+      gconf.can_logout = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-openshell")) {
+      gconf.can_open_shell = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--ui") && argc > 1) {
+      if(nuiargs < 16)
+	uiargs[nuiargs++] = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "-p") && argc > 1) {
+      gconf.devplugin = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "--plugin-repo") && argc > 1) {
+      gconf.plugin_repo = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if(!strcmp(argv[0], "-j") && argc > 1) {
+      gconf.load_jsfile = argv[1];
+      argc -= 2; argv += 2;
+      continue;
+    } else if (!strcmp(argv[0], "-v") && argc > 1) {
+      forceview = argv[1];
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--cache") && argc > 1) {
+      mystrset(&gconf.cache_path, argv[1]);
+      argc -= 2; argv += 2;
+#ifdef __APPLE__
+    /* ignore -psn argument, process serial number */
+    } else if(!strncmp(argv[0], "-psn", 4)) {
+      argc -= 1; argv += 1;
+      continue;
+#endif
+    } else
+      break;
+  }
+
+  showtime_init(argc > 0 ? argv[0] : NULL, forceview);
 
   TRACE(TRACE_DEBUG, "core", "Starting UI");
 
   /* Initialize user interfaces */
   ui_start(nuiargs, uiargs, argv0);
 
-  finalize();
+  showtime_fini();
 
   arch_exit(showtime_retcode);
 }
@@ -513,7 +517,7 @@ showtime_shutdown(int retcode)
   htsmsg_store_flush();
 
   if(ui_shutdown() == -1)
-    finalize();
+    showtime_fini();
 }
 
 
@@ -521,7 +525,7 @@ showtime_shutdown(int retcode)
  * The end of all things
  */
 static void
-finalize(void)
+showtime_fini(void)
 {
   audio_fini();
   backend_fini();

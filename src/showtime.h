@@ -198,8 +198,16 @@ typedef struct gconf {
   int can_open_shell;
   int can_logout;
 
+  int disable_upnp;
+  int disable_sd;
+
+
   int enable_bin_replace;
   int enable_omnigrade;
+
+  const char *devplugin;
+  const char *plugin_repo;
+  const char *load_jsfile;
 
 } gconf_t;
 
