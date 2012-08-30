@@ -482,6 +482,7 @@ typedef struct http_file {
 
   char hf_auth_failed;
   
+  char hf_dont_reuse;
 
   char hf_debug;
 
@@ -1173,7 +1174,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
   if(hf->hf_connection == NULL)
     return;
 
-  if(reusable) {
+  if(reusable && hf->hf_dont_reuse == 0) {
     http_connection_park(hf->hf_connection, hf->hf_debug);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
@@ -2633,6 +2634,7 @@ http_request(const char *url, const char **arguments,
   hf->hf_version = 1;
   hf->hf_debug = !!(flags & FA_DEBUG);
   hf->hf_req_compression = !!(flags & FA_COMPRESSION);
+  hf->hf_dont_reuse = !!(flags & FA_DONOTREUSE);
   hf->hf_url = strdup(url);
 
  retry:
