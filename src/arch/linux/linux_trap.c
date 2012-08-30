@@ -36,7 +36,7 @@
 #include <fcntl.h>
 
 #include "showtime.h"
-#include "arch/arch.h"
+#include "linux.h"
 
 #define TRAPMSG(fmt...) TRACE(TRACE_EMERG, "CRASH", fmt)
 
@@ -214,6 +214,9 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
 }
 
 
+/**
+ *
+ */
 void
 trap_init(void)
 {

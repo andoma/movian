@@ -22,18 +22,6 @@
 #include <stdint.h>
 #include <time.h>
 
-void arch_init(void);
-
-void arch_sd_init(void); // Arch specific service discovery
-
-void arch_exit(int code) __attribute__((noreturn));
-
-void arch_set_default_paths(int argc, char **argv);
+void arch_exit(void) __attribute__((noreturn));
 
 int64_t arch_cache_avail_bytes(void);
-
-void trap_init(void);
-
-void arch_preload_fonts(void);
-
-void my_localtime(const time_t *timep, struct tm *tm);

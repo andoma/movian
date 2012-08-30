@@ -24,9 +24,18 @@
 #include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
+
 #include "htsmsg/htsmsg_store.h"
 #include "arch/threads.h"
 #include "misc/rstr.h"
+
+
+void parse_opts(int argc, char **argv);
+
+void showtime_init(void);
+
+void showtime_fini(void);
 
 extern void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
@@ -139,6 +148,8 @@ static inline const char *mystrbegins(const char *s1, const char *s2)
   return s1;
 }
 
+void my_localtime(const time_t *timep, struct tm *tm);
+
 /*
  * Memory allocation wrappers
  * These are used whenever the caller can deal with failure 
@@ -178,6 +189,9 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 
 
 typedef struct gconf {
+  int exit_code;
+
+
   char *dirname;   // Directory where executable resides
   char *binary;    // Executable itself
 

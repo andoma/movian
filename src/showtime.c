@@ -1,6 +1,6 @@
 /*
  *  Showtime mediacenter
- *  Copyright (C) 2007-2009 Andreas Öman
+ *  Copyright (C) 2007-2012 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -68,12 +68,9 @@
 #include "misc/fs.h"
 
 
-static void showtime_fini(void);
-
 /**
  *
  */
-static int showtime_retcode = 1;
 
 gconf_t gconf;
 
@@ -152,10 +149,12 @@ init_global_info(void)
 /**
  *
  */
-static void
+void
 showtime_init(void)
 {
   int r;
+
+  gconf.exit_code = 1;
 
   unicode_init();
 
@@ -168,9 +167,6 @@ showtime_init(void)
 
   /* Callout framework */
   callout_init();
-
-  /* Architecture specific init */
-  arch_init();
 
   /* Initialize htsmsg_store() */
   htsmsg_store_init();
@@ -291,21 +287,18 @@ showtime_init(void)
 /**
  *
  */
-static void
+void
 parse_opts(int argc, char **argv)
 {
-  const char *argv0 = argc > 0 ? argv[0] : "showtime";
-
-  /* We read options ourselfs since getopt() is broken on some (nintento wii)
-     targets */
+  const char *argv0 = argv[0];
 
   argv++;
   argc--;
 
   while(argc > 0) {
     if(!strcmp(argv[0], "-h") || !strcmp(argv[0], "--help")) {
-      printf("HTS Showtime %s\n"
-	     "Copyright (C) 2007-2010 Andreas Öman\n"
+      printf("Showtime %s\n"
+	     "Copyright (C) 2007-2012 Andreas Öman\n"
 	     "\n"
 	     "Usage: %s [options] [<url>]\n"
 	     "\n"
@@ -348,7 +341,7 @@ parse_opts(int argc, char **argv)
       argv++;
 
     } else if(!strcmp(argv[0], "-d")) {
-      gconf.trace_level++;
+      gconf.trace_level = TRACE_DEBUG;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
@@ -427,42 +420,6 @@ parse_opts(int argc, char **argv)
     gconf.initial_url = argv[0];
 }
 
-
-/**
- * Showtime main
- */
-int
-main(int argc, char **argv)
-{
-  struct timeval tv;
-
-  gconf.binary = argv[0];
-
-  gconf.trace_level = TRACE_INFO;
-
-  gettimeofday(&tv, NULL);
-  srand(tv.tv_usec);
-
-  arch_set_default_paths(argc, argv);
-
-  parse_opts(argc, argv);
-
-  showtime_init();
-
-  TRACE(TRACE_DEBUG, "core", "Starting UI");
-
-#if PS3
-  extern void glw_ps3_start(void);
-  glw_ps3_start();
-#else
-  extern void glw_x11_start(void);
-  glw_x11_start();
-#endif
-  showtime_fini();
-
-  arch_exit(showtime_retcode);
-}
-
 /**
  *
  */
@@ -500,7 +457,7 @@ shutdown_hook_run(int early)
   shutdown_hook_t *sh;
   LIST_FOREACH(sh, &shutdown_hooks, link)
     if(sh->early == early)
-      sh->fn(sh->opaque, showtime_retcode);
+      sh->fn(sh->opaque, gconf.exit_code);
 }
 
 /**
@@ -511,12 +468,13 @@ showtime_shutdown(int retcode)
 {
   TRACE(TRACE_DEBUG, "core", "Shutdown requested, returncode = %d", retcode);
 
-  if(showtime_retcode != 1) {
+  if(gconf.exit_code != 1) {
     // Force exit
-    arch_exit(retcode);
+    gconf.exit_code = retcode;
+    arch_exit();
   }
 
-  showtime_retcode = retcode;
+  gconf.exit_code = retcode;
 
   // run early shutdown hooks (those must be fast)
   shutdown_hook_run(1);
@@ -530,7 +488,7 @@ showtime_shutdown(int retcode)
 /**
  * The end of all things
  */
-static void
+void
 showtime_fini(void)
 {
   audio_fini();

@@ -19,7 +19,7 @@
 SUFFIXES=
 
 # All targets deps on Makefile, but we can comment that out during dev:ing
-#ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
+ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
 
 include ${CURDIR}/config.default
 
@@ -39,7 +39,7 @@ CFLAGS += -Wmissing-prototypes -Iext/dvd ${OPTFLAGS}
 ##############################################################
 # Core
 ##############################################################
-SRCS += src/main.c \
+SRCS += src/showtime.c \
 	src/trace.c \
 	src/runcontrol.c \
 	src/version.c \
@@ -626,6 +626,8 @@ ${BUILDDIR}/zipbundles/bundle.zip:
 	rm -rf  ${BUILDDIR}/zipbundles
 	mkdir -p ${BUILDDIR}/zipbundles
 	zip -0r ${BUILDDIR}/zipbundles/bundle.zip ${BUNDLES}
+
+$(BUILDDIR)/support/dataroot/ziptail.o: src/showtime.h
 
 ${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
 	$(CC) -o $@ $(OBJS) $(BUILDDIR)/support/dataroot/ziptail.o $(LDFLAGS) ${LDFLAGS_cfg}

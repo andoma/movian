@@ -37,9 +37,11 @@
 #include "showtime.h"
 #include "misc/callout.h"
 #include "prop/prop.h"
-#include "linux_misc.h"
+
 #include "arch/posix/posix.h"
 #include "arch/arch.h"
+
+#include "linux.h"
 
 /**
  *
@@ -62,7 +64,7 @@ showtime_get_system_type(void)
 /**
  *
  */
-static int
+int
 get_system_concurrency(void)
 {
   cpu_set_t mask;
@@ -212,7 +214,7 @@ timercb(callout_t *c, void *aux)
 /**
  *
  */
-static void
+void
 linux_init_monitors(void)
 {
   p_sys = prop_create(prop_get_global(), "system");
@@ -220,25 +222,3 @@ linux_init_monitors(void)
   timercb(NULL, NULL);
 }
 
-
-/**
- *
- */
-void
-arch_init(void)
-{
-  gconf.concurrency = get_system_concurrency();
-  posix_init();
-}
-
-
-/**
- *
- */
-void
-arch_sd_init(void)
-{
-  linux_init_monitors();
-  trap_init();
-
-}

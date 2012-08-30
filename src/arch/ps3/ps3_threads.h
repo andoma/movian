@@ -1,3 +1,6 @@
+#pragma once
+
+#include <sys/queue.h>
 
 // #define PS3_LW_PRIMITIVES
 
@@ -135,3 +138,17 @@ extern void hts_thread_join(hts_thread_t *id);
 
 extern hts_thread_t hts_thread_current(void);
 
+
+
+LIST_HEAD(thread_info_list, thread_info);
+typedef struct thread_info {
+  LIST_ENTRY(thread_info) link;
+  void *aux;
+  void *(*fn)(void *);
+  sys_ppu_thread_t id;
+  char name[64];
+} thread_info_t;
+
+
+extern struct thread_info_list threads;
+extern hts_mutex_t thread_info_mutex;

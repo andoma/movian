@@ -142,7 +142,7 @@ audio_init(void)
   audio_wii_init();
 #endif
 
-#ifdef CONFIG_PSL1GHT
+#if PS3
   audio_ps3_init();
 #endif
 

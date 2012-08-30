@@ -1430,7 +1430,7 @@ freetype_init(void)
   TAILQ_INIT(&faces);
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
-  arch_preload_fonts();
+  //  arch_preload_fonts();
 
   snprintf(url, sizeof(url),
 	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",

@@ -85,8 +85,6 @@ get_system_concurrency(void)
 
 #include "posix.h"
 
-extern int concurrency;
-extern int trace_to_syslog;
 static int decorate_trace;
 
 /**
@@ -95,6 +93,22 @@ static int decorate_trace;
 void
 posix_init(void)
 {
+  struct timeval tv;
+  gettimeofday(&tv, NULL);
+  srand(tv.tv_usec);
+
+  const char *homedir = getenv("HOME");
+  char buf[PATH_MAX];
+
+  if(homedir != NULL) {
+
+    snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
+    gconf.cache_path = strdup(buf);
+
+    snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
+    gconf.persistent_path = strdup(buf);
+  }
+
   setlocale(LC_ALL, "");
   decorate_trace = isatty(2);
 
@@ -125,17 +139,6 @@ posix_init(void)
   if(gconf.trace_to_syslog)
     openlog("showtime", 0, LOG_USER);
 }
-
-/**
- *
- */
-void
-arch_exit(int retcode)
-{
-  exit(retcode);
-}
-
-
 
 
 /**
@@ -180,27 +183,9 @@ showtime_get_ts(void)
   return (int64_t)tv.tv_sec * 1000000LL + tv.tv_usec;
 }
 
-
 /**
  *
  */
-void
-arch_set_default_paths(int argc, char **argv)
-{
-  const char *homedir = getenv("HOME");
-  char buf[PATH_MAX];
-
-  if(homedir == NULL)
-    return;
-
-  snprintf(buf, sizeof(buf), "%s/.cache/showtime", homedir);
-  gconf.cache_path = strdup(buf);
-
-
-  snprintf(buf, sizeof(buf), "%s/.hts/showtime", homedir);
-  gconf.persistent_path = strdup(buf);
-}
-
 int64_t
 arch_cache_avail_bytes(void)
 {
@@ -225,6 +210,7 @@ arch_get_seed(void)
 }
 
 
+#if 0
 /**
  *
  */
@@ -236,6 +222,7 @@ arch_preload_fonts(void)
 		     FONT_DOMAIN_FALLBACK, NULL);
 #endif
 }
+#endif
 
 
 #include <sys/mman.h>

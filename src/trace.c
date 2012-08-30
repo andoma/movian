@@ -214,6 +214,9 @@ trace_init(void)
   char p1[PATH_MAX], p2[PATH_MAX];
   int i;
 
+  if(!gconf.trace_level)
+    gconf.trace_level = TRACE_INFO;
+
   snprintf(p1, sizeof(p1), "%s/log", gconf.cache_path);
   mkdir(p1, 0777);
 
