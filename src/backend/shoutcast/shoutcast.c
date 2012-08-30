@@ -719,7 +719,7 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
   n = http_request(url0, NULL, 
 		  &result, &ressize, errbuf, errlen, 
 		   NULL, NULL, FA_DONOTREUSE, &sc->sc_headers, NULL, NULL,
-		  NULL, NULL, NULL);
+		  NULL, NULL);
 
   if(n) {
     TRACE(TRACE_ERROR, "shoutcast", "Failed top open url %d: %s",n, errbuf);
