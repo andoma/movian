@@ -26,7 +26,6 @@
 #include "misc/pixmap.h"
 #include "misc/string.h"
 #include "backend/backend.h"
-#include "ui/ui.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
 
@@ -194,7 +193,7 @@ hc_action(http_connection_t *hc, const char *remain, void *opaque,
   if(remain == NULL)
     return 404;
 
-  ui_primary_event(event_create_action_str(remain));
+  event_to_ui(event_create_action_str(remain));
   return HTTP_STATUS_OK;
 }
 
@@ -222,7 +221,7 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
       e = event_create_int(EVENT_UNICODE, c);
       break;
     }
-    ui_primary_event(e);
+    event_to_ui(e);
   }
   return HTTP_STATUS_OK;
 }

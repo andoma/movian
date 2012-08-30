@@ -38,7 +38,6 @@
 #include "backend/backend.h"
 #include "navigator.h"
 #include "settings.h"
-#include "ui/ui.h"
 #include "keyring.h"
 #include "notifications.h"
 #include "sd/sd.h"
@@ -74,7 +73,6 @@ static void showtime_fini(void);
 /**
  *
  */
-static int ffmpeglog;
 static int showtime_retcode = 1;
 
 gconf_t gconf;
@@ -113,7 +111,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
 {
   static char line[1024];
   AVClass *avc = ptr ? *(AVClass**)ptr : NULL;
-  if(!ffmpeglog)
+  if(!gconf.ffmpeglog)
     return;
 
   if(level < AV_LOG_WARNING)
@@ -155,7 +153,7 @@ init_global_info(void)
  *
  */
 static void
-showtime_init(const char *initial_url, const char *initial_view)
+showtime_init(void)
 {
   int r;
 
@@ -251,7 +249,7 @@ showtime_init(const char *initial_url, const char *initial_view)
 
   /* Initialize plugin manager and load plugins */
   /* Once plugins are initialized it will also start the auto-upgrade system */
-  plugins_init(gconf.devplugin, gconf.plugin_repo, initial_url != NULL);
+  plugins_init(gconf.devplugin, gconf.plugin_repo, gconf.initial_url != NULL);
 
   /* Internationalization */
   i18n_init();
@@ -274,8 +272,8 @@ showtime_init(const char *initial_url, const char *initial_view)
 
   /* Open initial page(s) */
   nav_open(NAV_HOME, NULL);
-  if(initial_url != NULL)
-    nav_open(initial_url, initial_view);
+  if(gconf.initial_url != NULL)
+    nav_open(gconf.initial_url, gconf.initial_view);
 
 
   /* HTTP server and UPNP */
@@ -287,30 +285,16 @@ showtime_init(const char *initial_url, const char *initial_view)
 
 
   runcontrol_init();
-  
 }
 
 
 /**
- * Showtime main
+ *
  */
-int
-main(int argc, char **argv)
+static void
+parse_opts(int argc, char **argv)
 {
-  struct timeval tv;
-  const char *uiargs[16];
   const char *argv0 = argc > 0 ? argv[0] : "showtime";
-  const char *forceview = NULL;
-  int nuiargs = 0;
-
-  gconf.binary = argv[0];
-
-  gconf.trace_level = TRACE_INFO;
-
-  gettimeofday(&tv, NULL);
-  srand(tv.tv_usec);
-
-  arch_set_default_paths(argc, argv);
 
   /* We read options ourselfs since getopt() is broken on some (nintento wii)
      targets */
@@ -368,7 +352,7 @@ main(int argc, char **argv)
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
-      ffmpeglog = 1;
+      gconf.ffmpeglog = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--syslog")) {
@@ -411,11 +395,6 @@ main(int argc, char **argv)
       gconf.can_open_shell = 1;
       argc -= 1; argv += 1;
       continue;
-    } else if(!strcmp(argv[0], "--ui") && argc > 1) {
-      if(nuiargs < 16)
-	uiargs[nuiargs++] = argv[1];
-      argc -= 2; argv += 2;
-      continue;
     } else if(!strcmp(argv[0], "-p") && argc > 1) {
       gconf.devplugin = argv[1];
       argc -= 2; argv += 2;
@@ -429,7 +408,7 @@ main(int argc, char **argv)
       argc -= 2; argv += 2;
       continue;
     } else if (!strcmp(argv[0], "-v") && argc > 1) {
-      forceview = argv[1];
+      gconf.initial_view = argv[1];
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--cache") && argc > 1) {
       mystrset(&gconf.cache_path, argv[1]);
@@ -444,13 +423,41 @@ main(int argc, char **argv)
       break;
   }
 
-  showtime_init(argc > 0 ? argv[0] : NULL, forceview);
+  if(argc > 0)
+    gconf.initial_url = argv[0];
+}
+
+
+/**
+ * Showtime main
+ */
+int
+main(int argc, char **argv)
+{
+  struct timeval tv;
+
+  gconf.binary = argv[0];
+
+  gconf.trace_level = TRACE_INFO;
+
+  gettimeofday(&tv, NULL);
+  srand(tv.tv_usec);
+
+  arch_set_default_paths(argc, argv);
+
+  parse_opts(argc, argv);
+
+  showtime_init();
 
   TRACE(TRACE_DEBUG, "core", "Starting UI");
 
-  /* Initialize user interfaces */
-  ui_start(nuiargs, uiargs, argv0);
-
+#if PS3
+  extern void glw_ps3_start(void);
+  glw_ps3_start();
+#else
+  extern void glw_x11_start(void);
+  glw_x11_start();
+#endif
   showtime_fini();
 
   arch_exit(showtime_retcode);
@@ -516,8 +523,7 @@ showtime_shutdown(int retcode)
 
   htsmsg_store_flush();
 
-  if(ui_shutdown() == -1)
-    showtime_fini();
+  event_to_ui(event_create_type(EVENT_STOP_UI));
 }
 
 

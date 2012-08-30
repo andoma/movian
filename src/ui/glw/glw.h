@@ -31,7 +31,6 @@
 #include "misc/layout.h"
 #include "misc/pool.h"
 #include "prop/prop.h"
-#include "ui/ui.h"
 #include "showtime.h"
 #include "settings.h"
 
@@ -625,7 +624,10 @@ const glw_class_t *glw_class_find_by_name(const char *name);
  * GLW root context
  */
 typedef struct glw_root {
-  uii_t gr_uii;
+  prop_t *gr_prop;
+
+  int gr_stop;
+  prop_sub_t *gr_evsub;
 
   pool_t *gr_token_pool;
   pool_t *gr_clone_pool;
@@ -1013,9 +1015,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *theme,
-	     ui_t *ui, int primary,
-	     const char *instance, const char *instance_title );
+int glw_init(glw_root_t *gr, const char *theme, const char *instance);
 
 void glw_fini(glw_root_t *gr);
 
@@ -1046,8 +1046,6 @@ void glw_remove_from_parent(glw_t *w, glw_t *p);
 void glw_lock(glw_root_t *gr);
 
 void glw_unlock(glw_root_t *gr);
-
-void glw_dispatch_event(uii_t *uii, struct event *e);
 
 
 /**

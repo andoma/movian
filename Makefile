@@ -54,7 +54,6 @@ SRCS += src/main.c \
 	src/service.c \
 	src/notifications.c \
 	src/playqueue.c \
-	src/ui/ui.c \
 	src/keymapper.c \
 	src/plugins.c \
 	src/upgrade.c \

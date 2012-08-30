@@ -681,7 +681,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
     pname[i++]  = rstr_get(t->t_rstring);
   pname[i] = NULL;
   
-  ui = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
+  ui = ec->w ? ec->w->glw_root->gr_prop : NULL;
   p = prop_get_by_name(pname, follow_links,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
@@ -1809,7 +1809,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
-		       PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		       PROP_TAG_ROOT, w->glw_root->gr_prop,
 		       NULL);
   }
 
@@ -3599,7 +3599,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
     propname[i++]  = rstr_get(t->t_rstring);
   propname[i] = NULL;
   
-  r = ec->w ? ec->w->glw_root->gr_uii.uii_prop : NULL;
+  r = ec->w ? ec->w->glw_root->gr_prop : NULL;
 
   p = prop_get_by_name(propname, 1, 
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",

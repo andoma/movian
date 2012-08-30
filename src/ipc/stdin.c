@@ -24,7 +24,6 @@
 
 #include "arch/threads.h"
 #include "event.h"
-#include "ui/ui.h"
 
 #include "ipc.h"
 
@@ -158,7 +157,7 @@ stdin_thread(void *aux)
 
     if(e == NULL)
       continue;
-    ui_primary_event(e);
+    event_to_ui(e);
   }
   return NULL;
 }

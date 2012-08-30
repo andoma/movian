@@ -165,7 +165,7 @@ glw_opengl_ff_init(glw_root_t *gr)
   glLoadMatrixf(projection);
   glMatrixMode(GL_MODELVIEW);
   
-  prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+  prop_set_string(prop_create(gr->gr_prop, "rendermode"),
 		  "OpenGL fixed function");
   return 0;
 }

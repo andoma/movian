@@ -22,7 +22,6 @@
 #include <gtk/gtk.h>
 
 #include "prop/prop.h"
-#include "ui/ui.h"
 
 struct event;
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
@@ -33,7 +32,7 @@ LIST_HEAD(gu_tab_list, gu_tab);
  *
  */
 typedef struct gtk_ui {
-  uii_t gu_uii;
+  prop_t *gu_root;
   
   hts_thread_t gu_thread;
 

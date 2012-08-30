@@ -188,6 +188,7 @@ typedef struct gconf {
   int trace_level;
   int trace_to_syslog;
   int listen_on_stdin;
+  int ffmpeglog;
 
 #if ENABLE_SERDEV
   int enable_serdev;
@@ -208,6 +209,9 @@ typedef struct gconf {
   const char *devplugin;
   const char *plugin_repo;
   const char *load_jsfile;
+
+  const char *initial_url;
+  const char *initial_view;
 
 } gconf_t;
 

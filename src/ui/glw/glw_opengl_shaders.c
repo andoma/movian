@@ -604,7 +604,7 @@ glw_opengl_shaders_init(glw_root_t *gr)
   glEnableVertexAttribArray(1);
   glEnableVertexAttribArray(2);
 
-  prop_set_string(prop_create(gr->gr_uii.uii_prop, "rendermode"),
+  prop_set_string(prop_create(gr->gr_prop, "rendermode"),
 		  "OpenGL VP/FP shaders");
   return 0;
 }

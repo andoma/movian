@@ -58,8 +58,6 @@ typedef struct glw_ps3 {
 
   glw_root_t gr;
 
-  int stop;
-  
   VideoResolution res;
 
   u32 framebuffer[2];
@@ -387,7 +385,7 @@ eventHandle(u64 status, u64 param, void *userdata)
   glw_ps3_t *gp = userdata;
   switch(status) {
   case EVENT_REQUEST_EXITAPP:
-    gp->stop = 1;
+    gp->gr.gr_stop = 1;
     break;
   case EVENT_MENU_OPEN:
     TRACE(TRACE_INFO, "XMB", "Opened");
@@ -633,8 +631,8 @@ handle_seek(glw_ps3_t *gp, int pad, int sign, int pressed, int pre)
     int64_t x = pre;
     event_t *e = event_create_int(EVENT_DELTA_SEEK,
 				  sign * x * x * x * x / 100LL);
-    glw_dispatch_event(&gp->gr.gr_uii, e);
-    event_release(e);
+    event_dispatch(e);
+
   }
 }
 
@@ -692,9 +690,13 @@ handle_btn(glw_ps3_t *gp, int pad, int code, int pressed, int sel, int pre)
       }
 
       if(e != NULL) {
-	glw_dispatch_event(&gp->gr.gr_uii, e);
-	if(xrep)
-	  glw_dispatch_event(&gp->gr.gr_uii, e);
+	event_addref(e);
+	event_to_ui(e);
+
+	if(xrep) {
+	  event_addref(e);
+	  event_to_ui(e);
+	}
 
 	event_release(e);
       }
@@ -1026,8 +1028,7 @@ handle_kb(glw_ps3_t *gp)
 	      }
 
 	      if(e != NULL) {
-		glw_dispatch_event(&gp->gr.gr_uii, e);
-		event_release(e);
+		event_to_ui(e);
 		break;
 	      }
 	    }
@@ -1035,8 +1036,7 @@ handle_kb(glw_ps3_t *gp)
 
 	  if(i == sizeof(kb2action) / sizeof(*kb2action) && uc < 0x8000 && uc) {
 	    e = event_create_int(EVENT_UNICODE, uc);
-	    glw_dispatch_event(&gp->gr.gr_uii, e);
-	    event_release(e);
+	    event_to_ui(e);
 	  }
 	}
       }
@@ -1059,7 +1059,7 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
-  while(!gp->stop) {
+  while(!gp->gr.gr_stop) {
 
     handle_pads(gp);
     handle_kb(gp);
@@ -1078,38 +1078,22 @@ glw_ps3_mainloop(glw_ps3_t *gp)
   sysUnregisterCallback(EVENT_SLOT0);
 }
 
+int glw_ps3_start(void);
 
 /**
  *
  */
-static int
-glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
+int
+glw_ps3_start(void)
 {
   glw_ps3_t *gp = calloc(1, sizeof(glw_ps3_t));
   char confname[PATH_MAX];
-  const char *theme_path = NULL;
-  const char *displayname_title  = NULL;
 
-  gp->gr.gr_uii.uii_prop = root;
+  prop_t *root = gp->gr.gr_prop = prop_create(prop_get_global(), "ui");
 
   prop_set_int(prop_create(root, "fullscreen"), 1);
 
   snprintf(confname, sizeof(confname), "glw/ps3");
-
-  /* Parse options */
-
-  argv++;
-  argc--;
-
-  while(argc > 0) {
-    if(!strcmp(argv[0], "--theme") && argc > 1) {
-      theme_path = argv[1];
-      argc -= 2; argv += 2;
-      continue;
-    } else {
-      break;
-    }
-  }
 
 
   if(glw_ps3_init(gp))
@@ -1130,7 +1114,7 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
 
   gr->gr_open_osk = osk_open;
 
-  if(glw_init(gr, theme_path, ui, primary, confname, displayname_title))
+  if(glw_init(gr, NULL, confname))
     return 1;
 
   TRACE(TRACE_DEBUG, "GLW", "loading universe");
@@ -1142,38 +1126,3 @@ glw_ps3_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   glw_reap(gr);
   return 0;
 }
-
-
-/**
- *
- */
-static void
-glw_ps3_dispatch_event(uii_t *uii, event_t *e)
-{
-  /* Pass it on to GLW */
-  glw_dispatch_event(uii, e);
-  event_release(e);
-}
-
-
-/**
- *
- */
-static void
-glw_ps3_stop(uii_t *uii)
-{
-  glw_ps3_t *gp = (glw_ps3_t *)uii;
-  gp->stop = 1;
-}
-
-
-/**
- *
- */
-ui_t glw_ui = {
-  .ui_title = "glw",
-  .ui_start = glw_ps3_start,
-  .ui_dispatch_event = glw_ps3_dispatch_event,
-  .ui_stop = glw_ps3_stop,
-};
-

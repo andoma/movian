@@ -355,8 +355,10 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
 /**
  *
  */
-static int
-gu_start(ui_t *ui, prop_t *root, int argc, char **argv, int primary)
+int gu_start(void);
+
+int
+gu_start(void)
 {
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
@@ -371,7 +373,7 @@ gu_start(ui_t *ui, prop_t *root, int argc, char **argv, int primary)
   gdk_threads_init();
   gdk_threads_enter();
 
-  gtk_init(&argc, &argv);
+  gtk_init(NULL, NULL);
 
   gu_pixbuf_init();
 
@@ -492,25 +494,3 @@ gu_nav_open_newtab(gu_window_t *gw, const char *url)
   gu_tab_t *gt = gu_tab_create(gw, NULL, 0);
   gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL, NULL, NULL));
 }
-
-
-/**
- *
- */
-static void
-gu_dispatch_event(uii_t *uii, event_t *e)
-{
-  return;
-}
-
-
-
-/**
- *
- */
-ui_t gu_ui = {
-  .ui_title = "gu",
-  .ui_start = gu_start,
-  .ui_dispatch_event = gu_dispatch_event,
-  .ui_flags = UI_SINGLETON,
-};
