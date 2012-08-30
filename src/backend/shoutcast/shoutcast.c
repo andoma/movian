@@ -307,9 +307,10 @@ static void *sc_playback_thread(void *aux)
       sc->sc_mb->mb_channels = sc->sc_fctx->streams[sc->sc_audio_stream_idx]->codec->channels;
       sc->sc_mb->mb_rate = sc->sc_fctx->streams[sc->sc_audio_stream_idx]->codec->sample_rate;
 
-      sc->sc_mb->mb_time = sample * 1000000LL / sc->sc_mb->mb_rate;
+      sc->sc_mb->mb_pts = sample * 1000000LL / sc->sc_mb->mb_rate;
+      sc->sc_mb->mb_drive_clock = 1;
     
-      if(registered_play && sc->sc_mb->mb_time > METADB_AUDIO_PLAY_THRESHOLD) {
+      if(registered_play && sc->sc_mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
 	registered_play = 1;
 	metadb_register_play(sc->sc_stream_url, 1, CONTENT_AUDIO);
       }
@@ -630,8 +631,6 @@ static int sc_stream_start(sc_shoutcast_t *sc, char *errbuf, size_t errlen)
 
   free(hostname);
   free(doc);
-
-  htsbuf_dump_raw_stderr(&q);
 
   tcp_write_queue(sc->sc_tc, &q);
 
