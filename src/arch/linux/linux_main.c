@@ -23,6 +23,8 @@
 
 #include "linux.h"
 
+
+
 /**
  * Linux main
  */
@@ -32,6 +34,11 @@ main(int argc, char **argv)
   gconf.binary = argv[0];
 
   posix_init();
+
+#if ENABLE_GU
+  extern void gu_init(int *argc, char ***argv);
+  gu_init(&argc, &argv);
+#endif
 
   parse_opts(argc, argv);
 
@@ -43,8 +50,16 @@ main(int argc, char **argv)
 
   linux_init_monitors();
 
+#if ENABLE_GU
+  if(gconf.ui && !strcmp(gconf.ui, "gu")) {
+    extern void gu_start(void);
+    gu_start();
+  } else
+#endif
+ {
   extern void glw_x11_start(void);
   glw_x11_start();
+ }
 
   showtime_fini();
 

@@ -227,6 +227,9 @@ typedef struct gconf {
   const char *initial_url;
   const char *initial_view;
 
+  char *ui;
+  char *theme;
+
 } gconf_t;
 
 extern gconf_t gconf;

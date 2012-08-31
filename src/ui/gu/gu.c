@@ -51,6 +51,31 @@ gu_leave(void)
 /**
  *
  */
+void gu_init(int *argc, char ***argv);
+
+void
+gu_init(int *argc, char ***argv)
+{
+  XInitThreads();
+
+  hts_mutex_init(&gu_mutex);
+
+  g_thread_init(NULL);
+
+  gdk_threads_set_lock_functions(gu_enter, gu_leave);
+
+  gdk_threads_init();
+  gdk_threads_enter();
+
+  gtk_init(argc, argv);
+
+  gu_pixbuf_init();
+
+}
+
+/**
+ *
+ */
 static gboolean
 window_key_pressed(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -361,21 +386,6 @@ int
 gu_start(void)
 {
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
-
-  XInitThreads();
-
-  hts_mutex_init(&gu_mutex);
-
-  g_thread_init(NULL);
-
-  gdk_threads_set_lock_functions(gu_enter, gu_leave);
-
-  gdk_threads_init();
-  gdk_threads_enter();
-
-  gtk_init(NULL, NULL);
-
-  gu_pixbuf_init();
 
   gu->gu_pc = prop_courier_create_thread(&gu_mutex, "GU");
 

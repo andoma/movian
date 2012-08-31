@@ -329,6 +329,8 @@ parse_opts(int argc, char **argv)
 	     "   --plugin-repo     - URL to plugin repository\n"
 	     "                       Intended for plugin development\n"
 	     "   -j <path>           Load javascript file\n"
+	     "   --ui <ui>           Select user interface\n"
+	     "   --theme <theme>     Select theme (for GLW ui)\n"
 	     "\n"
 	     "  URL is any URL-type supported by Showtime, "
 	     "e.g., \"file:///...\"\n"
@@ -405,6 +407,12 @@ parse_opts(int argc, char **argv)
       argc -= 2; argv += 2;
     } else if (!strcmp(argv[0], "--cache") && argc > 1) {
       mystrset(&gconf.cache_path, argv[1]);
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--ui") && argc > 1) {
+      mystrset(&gconf.ui, argv[1]);
+      argc -= 2; argv += 2;
+    } else if (!strcmp(argv[0], "--theme") && argc > 1) {
+      mystrset(&gconf.theme, argv[1]);
       argc -= 2; argv += 2;
 #ifdef __APPLE__
     /* ignore -psn argument, process serial number */
