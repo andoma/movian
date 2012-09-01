@@ -377,7 +377,6 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_ts_t *ets;
   int64_t ts;
 
-  int hold = 0;
   int restartpos_last = -1;
 
   mp->mp_seek_base = 0;
@@ -505,22 +504,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
       continue;
     }
 
-    if(event_is_action(e, ACTION_PLAYPAUSE) ||
-       event_is_action(e, ACTION_PLAY) ||
-       event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, &mp->mp_video, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_send_cmd_head(mp, &mp->mp_audio, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-      
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
-    } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
+    if(event_is_type(e, EVENT_CURRENT_TIME)) {
 
       ets = (event_ts_t *)e;
       int sec = ets->ts / 1000000;

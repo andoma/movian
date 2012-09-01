@@ -227,6 +227,7 @@ typedef struct media_pipe {
 #define MP_VIDEO         0x4
 
   int mp_eof;   // End of file: We don't expect to need to read more data
+  int mp_hold;  // Paused
 
   pool_t *mp_mb_pool;
 

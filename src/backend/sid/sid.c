@@ -134,19 +134,6 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
       mp_flush(mp, 0);
       break;
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
 
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	      event_is_action(e, ACTION_SKIP_FORWARD) ||

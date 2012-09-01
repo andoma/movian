@@ -4224,21 +4224,9 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       ets = (event_ts_t *)e;
       spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->ts / 1000));
 
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
+    } else if(event_is_type(e, EVENT_HOLD)) {
+      event_int_t *ei = (event_int_t *)e;
+      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, ei->val));
     }
     event_release(e);
   }

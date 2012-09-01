@@ -601,6 +601,38 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   hts_cond_signal(&mp->mp_backpressure);
 }
 
+
+
+
+/**
+ *
+ */
+static void
+mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
+  mq->mq_packets_current++;
+  mb->mb_epoch = mp->mp_epoch;
+  mp->mp_buffer_current += mb->mb_size;
+  mq_update_stats(mp, mq);
+  hts_cond_signal(&mq->mq_avail);
+}
+
+/**
+ *
+ */
+static void
+mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+{
+  TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
+  mq->mq_packets_current++;
+  mb->mb_epoch = mp->mp_epoch;
+  mp->mp_buffer_current += mb->mb_size;
+  mq_update_stats(mp, mq);
+  hts_cond_signal(&mq->mq_avail);
+}
+
+
 /**
  *
  */
@@ -610,6 +642,30 @@ mp_bump_epoch(media_pipe_t *mp)
   hts_mutex_lock(&mp->mp_mutex);
   mp->mp_epoch++;
   hts_mutex_unlock(&mp->mp_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+mp_send_cmd_head_locked(media_pipe_t *mp, media_queue_t *mq, int cmd)
+{
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = cmd;
+  mb_enq_head(mp, mq, mb);
+}
+
+
+/**
+ *
+ */
+static void
+send_hold(media_pipe_t *mp)
+{
+  event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
+  TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
+  hts_cond_signal(&mp->mp_backpressure);
 }
 
 
@@ -641,7 +697,30 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
     break;
   }
 
-  if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
+  if(event_is_action(e, ACTION_PLAYPAUSE ) ||
+     event_is_action(e, ACTION_PLAY ) ||
+     event_is_action(e, ACTION_PAUSE)) {
+    
+    mp->mp_hold = action_update_hold_by_event(mp->mp_hold, e);
+    if(mp->mp_flags & MP_VIDEO)
+      mp_send_cmd_head_locked(mp, &mp->mp_video, mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_send_cmd_head_locked(mp, &mp->mp_audio, mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, mp->mp_hold, NULL);
+    send_hold(mp);
+    return;
+      
+  } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
+
+    mp->mp_hold = 1;
+
+    if(mp->mp_flags & MP_VIDEO)
+      mp_send_cmd_head_locked(mp, &mp->mp_video, mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_send_cmd_head_locked(mp, &mp->mp_audio, mp->mp_hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
+    mp_set_playstatus_by_hold(mp, mp->mp_hold, e->e_payload);
+    send_hold(mp);
+    return;
+
+  } else if(event_is_action(e, ACTION_SEEK_BACKWARD)) {
     mp_direct_seek(mp, mp->mp_seek_base -= 15000000);
     return;
   }
@@ -757,36 +836,6 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
     prop_set_int(mp->mp_prop_buffer_current, mp->mp_buffer_current);
   }
 }
-
-
-/**
- *
- */
-static void
-mb_enq_tail(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
-{
-  TAILQ_INSERT_TAIL(&mq->mq_q, mb, mb_link);
-  mq->mq_packets_current++;
-  mb->mb_epoch = mp->mp_epoch;
-  mp->mp_buffer_current += mb->mb_size;
-  mq_update_stats(mp, mq);
-  hts_cond_signal(&mq->mq_avail);
-}
-
-/**
- *
- */
-static void
-mb_enq_head(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
-{
-  TAILQ_INSERT_HEAD(&mq->mq_q, mb, mb_link);
-  mq->mq_packets_current++;
-  mb->mb_epoch = mp->mp_epoch;
-  mp->mp_buffer_current += mb->mb_size;
-  mq_update_stats(mp, mq);
-  hts_cond_signal(&mq->mq_avail);
-}
-
 
 /**
  *
@@ -1071,19 +1120,16 @@ mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd)
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
-/*
+
+
+/**
  *
  */
 void
 mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd)
 {
-  media_buf_t *mb;
-
   hts_mutex_lock(&mp->mp_mutex);
-
-  mb = media_buf_alloc_locked(mp, 0);
-  mb->mb_data_type = cmd;
-  mb_enq_head(mp, mq, mb);
+  mp_send_cmd_head_locked(mp, mq, cmd);
   hts_mutex_unlock(&mp->mp_mutex);
 }
 

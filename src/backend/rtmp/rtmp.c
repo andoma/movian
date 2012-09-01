@@ -48,8 +48,6 @@ typedef struct {
   int width;
   int height;
 
-  int hold;
-
   int64_t seekpos_video;
   int64_t seekpos_audio;
 
@@ -199,24 +197,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     video_seek(r, mp, mbp, 0, "direct");
   }
   
-  if(event_is_action(e, ACTION_PLAYPAUSE) ||
-     event_is_action(e, ACTION_PLAY) ||
-     event_is_action(e, ACTION_PAUSE)) {
-    
-    r->hold = action_update_hold_by_event(r->hold, e);
-    mp_send_cmd_head(mp, &mp->mp_video, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-    mp_send_cmd_head(mp, &mp->mp_audio, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, r->hold, NULL);
-    
-
-  } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-    
-    r->hold = 1;
-    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-    mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
-
-  } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
+  if(event_is_type(e, EVENT_CURRENT_TIME)) {
     event_ts_t *ets = (event_ts_t *)e;
     
     int sec = ets->ts / 1000000;
@@ -719,7 +700,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     RTMP_SendSeek(r.r, start);
     
   r.mp = mp;
-  r.hold = 0;
   
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
