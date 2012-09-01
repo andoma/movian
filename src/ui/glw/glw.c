@@ -1776,6 +1776,11 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
 
   runcontrol_activity();
 
+  if(e->e_type_x == EVENT_STOP_UI) {
+    gr->gr_stop = 1;
+    return;
+  }
+    
   if(e->e_type_x == EVENT_KEYDESC) {
     event_t *e2;
     
