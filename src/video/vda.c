@@ -86,27 +86,26 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
   memset(&fi, 0, sizeof(fi));
 
   siz = CVImageBufferGetEncodedSize(vf->vf_buf);
-  fi.width = siz.width;
-  fi.height = siz.height;
+  fi.fi_width = siz.width;
+  fi.fi_height = siz.height;
 
-  fi.duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
+  fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
 
   siz = CVImageBufferGetDisplaySize(vf->vf_buf);
-  fi.dar.num = siz.width;
-  fi.dar.den = siz.height;
+  fi.fi_dar.num = siz.width;
+  fi.fi_dar.den = siz.height;
 
-  fi.pix_fmt = PIX_FMT_YUV420P;
-  fi.pts = vf->vf_pts;
-  fi.color_space = -1;
-  fi.epoch = vf->vf_epoch;
+  fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  fi.fi_pts = vf->vf_pts;
+  fi.fi_color_space = -1;
+  fi.fi_epoch = vf->vf_epoch;
 
   video_decoder_t *vd = vdad->vdad_vd;
 
-  vd->vd_estimated_duration = fi.duration; // For bitrate calculations
+  vd->vd_estimated_duration = fi.fi_duration; // For bitrate calculations
 
-  if(fi.duration > 0)
-    video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame,
-			&fi, vf->vf_send_pts);
+  if(fi.fi_duration > 0)
+    video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame, &fi);
 
   CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
   vdad->vdad_last_pts = vf->vf_pts;
@@ -202,7 +201,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   CFStringRef keys[num_kvs];
   CFNumberRef values[num_kvs];
   const int keyframe = mb->mb_keyframe;
-  const int send_pts = mb->mb_send_pts;
+  const int send_pts = mb->mb_pts;
   vda_frame_t *vf;
   int i;
   uint8_t skip = mb->mb_skip;
