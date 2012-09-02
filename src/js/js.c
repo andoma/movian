@@ -396,10 +396,19 @@ js_message(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   r = message_popup(message, 
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
-		    MESSAGE_POPUP_RICH_TEXT);
+		    MESSAGE_POPUP_RICH_TEXT, NULL);
 
-
-  *rval = BOOLEAN_TO_JSVAL(r == MESSAGE_POPUP_OK);
+  switch(r) {
+  case MESSAGE_POPUP_OK:
+    *rval = BOOLEAN_TO_JSVAL(JS_TRUE);
+    break;
+  case MESSAGE_POPUP_CANCEL:
+    *rval = BOOLEAN_TO_JSVAL(JS_FALSE);
+    break;
+  default:
+    *rval = INT_TO_JSVAL(r);
+    break;
+  }
   return JS_TRUE;
 }
 

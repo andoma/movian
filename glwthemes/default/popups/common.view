@@ -18,12 +18,35 @@
   });
 }
 
+
+
+#define popupButton(EVENT, ENABLED, HIDDEN, CAPTION) {
+
+  widget(backdrop, {
+    source: "theme://graphics/border-tiny.png";
+    borderOnly: true;
+    border: 4;
+    padding: [$ui.size,0];
+    hidden: HIDDEN;
+    focusable: ENABLED;
+    onEvent(activate, EVENT);
+
+    alpha: select(isHovered() || isFocused(), 1, 0.5);
+
+    widget(label, {
+      align: center;
+      caption: CAPTION;
+    });
+  });
+}
+
 #define popupButtonOK(EVENT, ENABLED, HIDDEN) {
 
   widget(backdrop, {
     source: "theme://graphics/border-tiny.png";
     borderOnly: true;
     border: 4;
+    padding: [0,0,$ui.size,0];
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
@@ -31,6 +54,7 @@
     alpha: select(isHovered() || isFocused(), 1, 0.5);
 
     widget(container_x, {
+      align: center;
       widget(icon, {
 	source: "dataroot://resources/svg/Check.svg";
       });
@@ -48,6 +72,7 @@
     source: "theme://graphics/border-tiny.png";
     borderOnly: true;
     border: 4;
+    padding: [0,0,$ui.size,0];
     hidden: HIDDEN;
     focusable: ENABLED;
     onEvent(activate, EVENT);
@@ -55,6 +80,7 @@
     alpha: select(isHovered() || isFocused(), 1, 0.5);
 
     widget(container_x, {
+      align: center;
       widget(icon, {
 	source: "dataroot://resources/svg/Delete.svg";
       });

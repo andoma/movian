@@ -23,10 +23,10 @@
 
 struct pixmap;
 struct rstr;
+struct prop;
 
 #define FONT_DOMAIN_FALLBACK 0
 #define FONT_DOMAIN_DEFAULT  1
-#define FONT_DOMAIN_FACEID   2
 
 #define TR_STYLE_BOLD   0x1
 #define TR_STYLE_ITALIC 0x2
@@ -72,6 +72,7 @@ struct rstr;
 #define TR_RENDER_SHADOW        0x20
 #define TR_RENDER_OUTLINE       0x40
 #define TR_RENDER_NO_OUTPUT     0x80
+#define TR_RENDER_SUBS          0x100  // Render for subtitles
 
 #define TR_ALIGN_AUTO      0
 #define TR_ALIGN_LEFT      1
@@ -104,7 +105,16 @@ struct rstr *freetype_get_family(void *handle);
 
 struct rstr *freetype_get_identifier(void *handle);
 
+void freetype_set_default_ui_font(const char *url);
+
+void freetype_set_default_subs_font(const char *url);
+
 #endif
+
+void fontstash_init(void);
+
+void fontstash_props_from_title(struct prop *p, const char *url,
+				const char *title);
 
 #if ENABLE_LIBFONTCONFIG
 int fontconfig_resolve(int uc, uint8_t style, const char *family,

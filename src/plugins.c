@@ -101,7 +101,8 @@ static int autoupgrade;
 static const char *
 get_repo(void)
 {
-  return plugin_alt_repo_url ?: plugin_repo_url;
+  return plugin_alt_repo_url && *plugin_alt_repo_url ?
+    plugin_alt_repo_url : plugin_repo_url;
 }
 
 /**

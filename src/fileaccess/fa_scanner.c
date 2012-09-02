@@ -32,6 +32,7 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 #include "plugins.h"
+#include "text/text.h"
 #include "db/kvstore.h"
 
 extern int media_buffer_hungry;
@@ -255,12 +256,22 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       fde->fde_type = fde->fde_md->md_contenttype;
       fde->fde_ignore_cache = 0;
 
+      switch(fde->fde_type) {
 
-      if(fde->fde_type == CONTENT_PLUGIN) {
+      case CONTENT_PLUGIN:
 	plugin_props_from_file(fde->fde_prop, rstr_get(fde->fde_url));
-      } else {
+	break;
+	  
+      case CONTENT_FONT:
+	fontstash_props_from_title(fde->fde_prop, rstr_get(fde->fde_url),
+				   rstr_get(fde->fde_filename));
+	break;
+
+      default:
 	metadata_to_proptree(fde->fde_md, meta, 1);
+	break;
       }
+
       
       if(fde->fde_md->md_cached == 0) {
 	metadb_metadata_write(getdb(s), rstr_get(fde->fde_url),

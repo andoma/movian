@@ -229,6 +229,7 @@ SRCS-$(CONFIG_VDA)      += src/video/vda.c
 SRCS-$(CONFIG_LIBFREETYPE) += src/text/freetype.c
 SRCS-$(CONFIG_LIBFONTCONFIG) += src/text/fontconfig.c
 SRCS += src/text/parser.c
+SRCS += src/text/fontstash.c
 
 ##############################################################
 # Audio subsys

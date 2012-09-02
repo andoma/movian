@@ -4965,60 +4965,6 @@ glwf_pluralise(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
-
-/**
- *
- */
-static void
-glwf_loadfont_dtor(glw_root_t *gr, struct token *self)
-{
-  if(self->t_extra != NULL)
-    freetype_unload_font(self->t_extra);
-}
-
-
-/**
- *
- */
-static int
-glw_loadFont(glw_view_eval_context_t *ec, struct token *self,
-	     token_t **argv, unsigned int argc)
-{
-  token_t *path;
-  glw_root_t *gr = ec->w->glw_root;
-  void *font = NULL;
-
-  if((path = token_resolve(ec, argv[0])) == NULL)
-    return -1;
-
-  token_t *r = eval_alloc(self, ec, TOKEN_RSTRING);
-
-  if(path->type == TOKEN_RSTRING) {
-
-    rstr_t *p = fa_absolute_path(path->t_rstring, self->file);
-    font = freetype_load_font(rstr_get(p), gr->gr_font_domain, gr->gr_vpaths);
-    rstr_release(p);
-
-    if(font)
-      r->t_rstring  = freetype_get_identifier(font);
-    else
-      r->type = TOKEN_VOID;
-  } else {
-    r->type = TOKEN_VOID;
-  }
-
-  eval_push(ec, r);
-
-  // unload later to avoid churn
-  if(self->t_extra != NULL)
-    freetype_unload_font(self->t_extra);
-  self->t_extra = font;
-
-  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_KEEP;
-  return 0;
-}
-
-
 /**
  *
  */
@@ -5450,7 +5396,6 @@ static const token_func_t funcvec[] = {
   {"join", -1, glwf_join},
   {"fmt", -1, glwf_fmt},
   {"_pl", 3, glwf_pluralise},
-  {"loadFont", 1, glw_loadFont, glwf_null_ctor, glwf_loadfont_dtor},
   {"multiopt", -1, glwf_multiopt, glwf_multiopt_ctor, glwf_multiopt_dtor},
   {"link", 2, glwf_link},
   {"canSelectNext", 0, glwf_canSelectNext},

@@ -157,6 +157,8 @@ typedef enum {
 
   EVENT_HOLD,
 
+  EVENT_REPAINT_UI,
+
   EVENT_DYNAMIC_ACTION,
 
 } event_type_t;

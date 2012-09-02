@@ -1,5 +1,4 @@
-$ui.monofont = loadFont("dataroot://resources/fonts/UbuntuMono-Regular.ttf");
-//$ui.font = loadFont("fonts/bankgthd.ttf");
+$ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
 
 onEvent(logwindow, {
   $ui.logwindow = !$ui.logwindow;

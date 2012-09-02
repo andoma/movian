@@ -219,11 +219,13 @@ showtime_init(void)
   av_register_all();
 
   TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT);
-  /* Freetype keymapper */
+
+  /* Freetype */
 #if ENABLE_LIBFREETYPE
   freetype_init();
   svg_init();
 #endif
+  fontstash_init();
 
   /* Global keymapper */
   keymapper_init();

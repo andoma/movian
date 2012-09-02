@@ -43,6 +43,7 @@ widget(keyintercept, {
 			"action", "action",
 			"info", "info",
 			"plugin", "plugin",
+			"font", "font",
 			"tvchannel", "tvchannel",
 			"keymapentry", "keymapentry"
 		       )
