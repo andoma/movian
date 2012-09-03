@@ -2192,7 +2192,7 @@ metadb_set_video_restartpos(const char *url, int64_t pos_ms)
     rc = db_prepare(db, 
 		    i == 0 ? 
 		    "UPDATE item "
-		    "SET restartposition = ?2 "
+		    "SET restartposition = ?2, contenttype = ?3 "
 		    "WHERE url=?1"
 		    :
 		    "INSERT INTO item "
@@ -2406,7 +2406,7 @@ static void
 metadb_set_playcount(void *opaque, prop_event_t event, ...)
 {
   metadb_item_prop_t *mip = opaque;
-  int rc;
+  int rc, i;
   void *db;
   va_list ap;
 
@@ -2429,29 +2429,43 @@ metadb_set_playcount(void *opaque, prop_event_t event, ...)
     return;
   }
 
-  sqlite3_stmt *stmt;
-  rc = db_prepare(db, 
-		  "UPDATE item "
-		  "SET playcount = ?2 "
-		  "WHERE url=?1",
-		  -1, &stmt, NULL);
+  for(i = 0; i < 2; i++) {
+    sqlite3_stmt *stmt;
+    rc = db_prepare(db, 
+		    i == 0 ? 
+		    "UPDATE item "
+		    "SET playcount = ?2 "
+		    "WHERE url=?1"
+		    :
+		    "INSERT INTO item "
+		    "(url, playcount, metadataversion) "
+		    "VALUES "
+		    "(?1, ?2, " METADATA_VERSION_STR ")"
+		    , -1, &stmt, NULL);
+    
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+      db_rollback(db);
+      metadb_close(db);
+      return;
+    }
 
-  if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
-    db_rollback(db);
-    metadb_close(db);
-    return;
+    sqlite3_bind_text(stmt, 1, mip->mip_url, -1, SQLITE_STATIC);
+    sqlite3_bind_int64(stmt, 2, v);
+    rc = db_step(stmt);
+    sqlite3_finalize(stmt);
+    if(rc == SQLITE_LOCKED) {
+      db_rollback_deadlock(db);
+      goto again;
+    }
+
+    if(rc == SQLITE_DONE && sqlite3_changes(db) == 0) {
+      continue;
+    }
+    break;
   }
 
-  sqlite3_bind_text(stmt, 1, mip->mip_url, -1, SQLITE_STATIC);
-  sqlite3_bind_int64(stmt, 2, v);
-  rc = db_step(stmt);
-  sqlite3_finalize(stmt);
-  if(rc == SQLITE_LOCKED) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
   db_commit(db);
   mip_update_by_url(db, mip->mip_url);
   metadb_close(db);
