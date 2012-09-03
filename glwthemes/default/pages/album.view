@@ -44,6 +44,7 @@ widget(keyintercept, {
       filterConstraintX: true;
       widget(list_y, {
 	id: "list";
+	&clone.focused = focusedChild();
 	cloner($page.model.nodes, loader, {
 	  time: 0.1;
 	  effect: blend;
