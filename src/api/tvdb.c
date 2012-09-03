@@ -46,20 +46,20 @@ tvdb_query_by_episode(void *db, const char *item_url,
 
   if(result == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to query for %s -- %s", title, errbuf);
-    return METADATA_ERROR;
+    return METADATA_TEMPORARY_ERROR;
   }
   
   htsmsg_t *msg = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf));
   if(msg == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML -- %s", errbuf);
-    return METADATA_ERROR;
+    return METADATA_TEMPORARY_ERROR;
   }
 
   htsmsg_print(msg);
 
   htsmsg_destroy(msg);
 
-  return METADATA_ERROR;
+  return METADATA_PERMANENT_ERROR;
 }
 
 

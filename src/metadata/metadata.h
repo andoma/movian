@@ -40,8 +40,9 @@ typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 #define METADATA_QTYPE_EPISODE     7
 
 
-#define METADATA_ERROR    -1
-#define METADATA_DEADLOCK -2
+#define METADATA_PERMANENT_ERROR -1
+#define METADATA_TEMPORARY_ERROR -2
+#define METADATA_DEADLOCK        -3
 
 /**
  * Content types.

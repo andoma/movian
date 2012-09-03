@@ -751,7 +751,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
 				   &season, &episode, &title)) {
 
     if(msf->query_by_episode == NULL)
-      return METADATA_ERROR;
+      return METADATA_PERMANENT_ERROR;
 
     TRACE(TRACE_DEBUG, "METADATA",
 	  "Performing search lookup for %s season:%d episode:%d, "
@@ -767,7 +767,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
   }
 
   if(msf->query_by_title_and_year == NULL)
-    return METADATA_ERROR;
+    return METADATA_PERMANENT_ERROR;
 
 
 
@@ -782,7 +782,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
 				      mlp->mlp_duration,
 				      METADATA_QTYPE_FILENAME);
 
-  if(rval == METADATA_ERROR && year != 0) {
+  if(rval == METADATA_PERMANENT_ERROR && year != 0) {
     // Try without year
 
     rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
@@ -793,7 +793,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_prop_t *mlp,
 
   rstr_release(title);
 
-  if(rval == METADATA_ERROR && mlp->mlp_lonely) {
+  if(rval == METADATA_PERMANENT_ERROR && mlp->mlp_lonely) {
 
     metadata_filename_to_title(rstr_get(mlp->mlp_folder), &year, &title);
   
@@ -929,11 +929,18 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
 	  continue;
 	}
       }
-      if(rval == METADATA_DEADLOCK) {
+
+      if(rval == METADATA_DEADLOCK || rval == METADATA_TEMPORARY_ERROR) {
+	if(rval == METADATA_TEMPORARY_ERROR)
+	  TRACE(TRACE_DEBUG, "METADATA", "Temporary error for %s",
+		rstr_get(mlp->mlp_url));
+
+	prop_set_int(mlp->mlp_loading, 0);
 	rstr_release(title);
-	return METADATA_DEADLOCK;
+	return rval;
       }
-      if(rval == METADATA_ERROR)
+
+      if(rval == METADATA_PERMANENT_ERROR)
 	rval = metadb_insert_videoitem(db, rstr_get(mlp->mlp_url), ms->ms_id,
 				       "0", NULL, METAITEM_STATUS_ABSENT, 0,
 				       qtype);
@@ -1962,7 +1969,7 @@ metadata_add_source(const char *name, const char *description,
 
   void *db = metadb_get();
   int rc;
-  int id = METADATA_ERROR;
+  int id = METADATA_PERMANENT_ERROR;
   int enabled = 1;
   sqlite3_stmt *stmt;
 
@@ -2056,7 +2063,7 @@ metadata_add_source(const char *name, const char *description,
 
  err:
   metadb_close(db);
-  return METADATA_ERROR;
+  return METADATA_PERMANENT_ERROR;
 }
 
 

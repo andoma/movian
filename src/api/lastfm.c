@@ -121,7 +121,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
   char str[20];
   int totalpages;
 
-  if(lastfm_datasource == METADATA_ERROR)
+  if(lastfm_datasource < 0)
     return;
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
@@ -304,7 +304,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
   int n;
   htsmsg_t *xml;
 
-  if(lastfm_datasource == METADATA_ERROR)
+  if(lastfm_datasource < 0)
     return;
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
