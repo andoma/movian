@@ -2898,7 +2898,7 @@ http_request(const char *url, const char **arguments,
       z.next_in = (void *)buf;
       z.avail_in = size;
       
-      z.avail_out = 3 * hf->hf_filesize;
+      z.avail_out = 3 * size;
       uint8_t *buf2 = z.next_out = malloc(z.avail_out + 1);
 
       while(1) {
