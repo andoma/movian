@@ -41,7 +41,6 @@ typedef struct glw_array {
   int child_height_px;
 
   int xentries;
-  int yentries;
 
   int16_t saved_height;
   int16_t saved_width;
@@ -58,6 +57,7 @@ typedef struct glw_array {
   int16_t border_right;
   int16_t border_top;
   int16_t border_bottom;
+  int16_t scroll_threshold;
 
   char noclip;
 
@@ -128,7 +128,7 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   glw_rctx_t rc0 = *rc;
   int column = 0;
   int topedge = 1;
-  int xspacing = 0, yspacing = 0;
+  float xspacing = 0, yspacing = 0;
   int height, width, rows;
   int xpos = 0, ypos = 0;
 
@@ -141,25 +141,25 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
   height = rc0.rc_height;
   width = rc0.rc_width;
 
-  if(a->child_tiles_x || a->child_tiles_y) {
+  if(a->child_tiles_x && a->child_tiles_y) {
 
     xspacing = a->xspacing;
     yspacing = a->yspacing;
 
     a->xentries = a->child_tiles_x;
-    a->yentries = a->child_tiles_y;
+    int yentries = a->child_tiles_y;
 
-    if(a->yentries == 0) {
-      a->yentries = a->xentries * height / (width ?: 1);
+    if(yentries == 0) {
+      yentries = a->xentries * height / (width ?: 1);
     } else if(a->xentries == 0) {
-      a->xentries = a->yentries * width / (height ?: 1);
+      a->xentries = yentries * width / (height ?: 1);
     }
 
     a->child_width_px  = (rc0.rc_width - (a->xentries - 1) * xspacing) /
       (a->xentries ?: 1);
 
-    a->child_height_px = (rc0.rc_height - (a->yentries - 1) * yspacing) /
-      (a->yentries ?: 1);
+    a->child_height_px = (rc0.rc_height - (yentries - 1) * yspacing) /
+      (yentries ?: 1);
 
     if(a->child_width_fixed && a->child_width_px > a->child_width_fixed) {
       int e = a->child_width_px - a->child_width_fixed;
@@ -169,7 +169,7 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
     if(a->child_height_fixed && a->child_height_px > a->child_height_fixed) {
       int e = a->child_height_px - a->child_height_fixed;
-      yspacing += (e * a->yentries) / (a->yentries - 1);
+      yspacing += (e * yentries) / (yentries - 1);
       a->child_height_px = a->child_height_fixed;
     }
       
@@ -182,22 +182,34 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
     if(w->glw_alignment == LAYOUT_ALIGN_CENTER && rows < a->child_tiles_y)
       ypos = (a->child_tiles_y - rows) * (yspacing + a->child_height_px) / 2;
 
+  } else if(a->child_tiles_x) {
+
+    xspacing = a->xspacing;
+    yspacing = a->yspacing;
+
+    a->xentries = a->child_tiles_x;
+
+    a->child_width_px  = (rc0.rc_width - (a->xentries - 1) * xspacing) /
+      (a->xentries ?: 1);
+
+    a->child_height_px = a->child_width_px;
+
   } else {
 
     int width  = a->child_width_fixed  ?: 100;
     int height = a->child_height_fixed ?: 100;
 
     a->xentries = GLW_MAX(1, rc0.rc_width  / width);
-    a->yentries = GLW_MAX(1, rc0.rc_height / height);
+    int yentries = GLW_MAX(1, rc0.rc_height / height);
 
     a->child_width_px  = width;
     a->child_height_px = height;
 
     int xspill = rc0.rc_width  - (a->xentries * width);
-    int yspill = rc0.rc_height - (a->yentries * height);
+    int yspill = rc0.rc_height - (yentries * height);
 
     xspacing = xspill / (a->xentries + 1);
-    yspacing = yspill / (a->yentries + 1);
+    yspacing = yspill / (yentries + 1);
   }
 
   if(a->saved_height != rc0.rc_height) {
@@ -320,7 +332,7 @@ glw_array_render_one(glw_array_t *a, glw_t *c, int height,
   int ct, cb, ft, fb;
   glw_root_t *gr = a->w.glw_root;
 
-  if(y + a->child_height_px < 0 || y > height) {
+  if(y + a->child_height_px * 2 < 0 || y - a->child_height_px > height) {
     c->glw_flags |= GLW_CLIPPED;
     return;
   } else {
@@ -533,6 +545,10 @@ glw_array_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_BLUR_FALLOFF:
       a->blur_falloff = va_arg(ap, double);
       a->noclip = 1;
+      break;
+
+    case GLW_ATTRIB_SCROLL_THRESHOLD:
+      a->scroll_threshold = va_arg(ap, int);
       break;
 
     default:
