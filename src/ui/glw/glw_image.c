@@ -537,7 +537,6 @@ glw_image_update_constraints(glw_image_t *gi)
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
 
       int xs = gi->w.glw_req_size_y * aspect;
-      printf("xs=%d\n", xs);
       glw_set_constraints(&gi->w, xs, 0, 0,
 			  GLW_CONSTRAINT_X);
     }
