@@ -1128,7 +1128,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   if(uc != NULL && uc[0] != 0) {
     pm = text_render(uc, len, flags, default_size, scale,
 		     tr_align, max_width, max_lines, rstr_get(font),
-		     gr->gr_font_domain, min_size);
+		     gr->gr_font_domain, min_size, gr->gr_vpaths);
   } else {
     pm = NULL;
   }

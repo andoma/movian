@@ -385,7 +385,7 @@ face_is_family(face_t *f, const char *family, int domain, int fuzzyness)
  */
 static face_t *
 face_resolve(int uc, uint8_t style, const char *font, int font_domain,
-	     int subs)
+	     int subs, const char **vpaths)
 {
   face_t *f = NULL;
   if(font != NULL) {
@@ -408,8 +408,8 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
     }
 
     if(fa_can_handle(font, NULL, 0)) {
-      f = face_create_from_uri(font, font_domain, NULL);
-      if(!FT_Get_Char_Index(f->face, uc))
+      f = face_create_from_uri(font, font_domain, vpaths);
+      if(f == NULL || !FT_Get_Char_Index(f->face, uc))
 	f = NULL;
     }
   }
@@ -457,9 +457,9 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
  */
 static face_t *
 face_find(int uc, uint8_t style, const char *family, int font_domain,
-	  int subs)
+	  int subs, const char **vpaths)
 {
-  face_t *f = face_resolve(uc, style, family, font_domain, subs);
+  face_t *f = face_resolve(uc, style, family, font_domain, subs, vpaths);
 
 #if 0
   printf("Resolv %c (0x%x) [style=0x%x, font: %s] -> %s\n",
@@ -495,7 +495,7 @@ face_set_size(face_t *f, int size)
  */
 static glyph_t *
 glyph_get(int uc, int size, uint8_t style, const char *font,
-	  int font_domain, int subs)
+	  int font_domain, int subs, const char **vpaths)
 {
   int err, hash = (uc ^ size ^ style) & GLYPH_HASH_MASK;
   glyph_t *g;
@@ -523,10 +523,10 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
     face_t *f;
     FT_UInt gi = 0;
 
-    f = face_find(uc, style, font, font_domain, subs);
+    f = face_find(uc, style, font, font_domain, subs, vpaths);
 
     if(f == NULL) {
-      f = face_find(uc, 0, font, font_domain, subs);
+      f = face_find(uc, 0, font, font_domain, subs, vpaths);
       if(f == NULL)
 	return NULL;
     }
@@ -860,7 +860,7 @@ text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
 	     const char *default_font, int default_domain,
-	     int min_size)
+	     int min_size, const char **vpaths)
 {
   pixmap_t *pm;
   FT_UInt prev = 0;
@@ -1095,7 +1095,7 @@ text_render0(const uint32_t *uc, const int len,
       li->start = out;
 
     if((g = glyph_get(uc[i], current_size, style, current_font, current_domain,
-		      flags & TR_RENDER_SUBS)) == NULL)
+		      flags & TR_RENDER_SUBS, vpaths)) == NULL)
       continue;
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
@@ -1197,7 +1197,7 @@ text_render0(const uint32_t *uc, const int len,
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
 				  g->face->url, g->face->font_domain,
-				  flags & TR_RENDER_SUBS);
+				  flags & TR_RENDER_SUBS, vpaths);
 	  if(w + d > max_width - eg->adv_x ) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
@@ -1362,14 +1362,16 @@ text_render0(const uint32_t *uc, const int len,
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
-	    const char *family, int context, int min_size)
+	    const char *family, int context, int min_size,
+	    const char **vpaths)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
   pm = text_render0(uc, len, flags, default_size, scale, alignment, 
-		    max_width, max_lines, family, context, min_size);
+		    max_width, max_lines, family, context, min_size,
+		    vpaths);
   while(num_glyphs > 512)
     glyph_flush_one();
 
@@ -1465,24 +1467,6 @@ freetype_init(void)
   freetype_set_default_font(url);
 
   return 0;
-}
-
-
-/**
- *
- */
-void *
-freetype_load_font(const char *url, int context, const char **vpaths)
-{
-  face_t *f;
-  hts_mutex_lock(&text_mutex);
-
-  f = face_create_from_uri(url, context, vpaths);
-  if(f != NULL)
-    f->persistent++;
-
-  hts_mutex_unlock(&text_mutex);
-  return f;
 }
 
 
