@@ -25,7 +25,12 @@ widget(keyintercept, {
       
       widget(container_y, {
 	filterConstraintX: true;
-	PageTitle($page.model.metadata.title);
+	padding: 8;
+	widget(label, {
+	  caption: $page.model.metadata.title;
+	  sizeScale: 2;
+	  TextStyleItem();
+	});
 	widget(label, {
 	  caption: $page.model.metadata.artist_name;
 	  TextStyleItem();

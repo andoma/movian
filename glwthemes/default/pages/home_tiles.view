@@ -5,7 +5,7 @@ $view.sizer = $ui.size / 2;
 #define HOMEITEM(CAPTION, ICON, ACTION, BADGE, WEIGHT=1) {
   widget(container_y, {
     align: center;
-    spacing: $ui.size / 3;
+    spacing: $ui.size / 2;
     focusable: WEIGHT;
     onEvent(activate, ACTION);
     
@@ -195,11 +195,10 @@ widget(array, {
   alphaFallOff: 0.1;
   blurFallOff: 0.1;
 
-  Yspacing: $ui.size;
-  Xspacing: $ui.size;
+  Yspacing: $ui.size / 2;
+  Xspacing: $ui.size / 2;
 
-  childWidth: $ui.size * 8;
-  childHeight: $ui.size * 8;
+  childTilesX: 7;
 
   cloner($global.services.stable, container_z, {
     HOMEITEM($self.title,

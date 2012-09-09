@@ -22,7 +22,10 @@ multiopt($view.path,
 		    ),
 	 select($page.model.contents == "images", 
 		link(_("Slideshow"), "slideshow.view"), void),
-	 link(_("List"), "list.view"));
+	 link(_("List"), "list.view"),
+	 link(_("Big list"), "biglist.view"),
+	 link(_("Movies"), "movies.view"),
+	 link(_("Array"), "array.view"));
 
 widget(layer, {
 
