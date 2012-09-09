@@ -559,6 +559,7 @@ video_player_idle(void *aux)
   while(run) {
     
     if(play_url != NULL) {
+      prop_set_void(errprop);
       e = play_video(rstr_get(play_url), mp, 
 		     play_flags, play_priority, 
 		     errbuf, sizeof(errbuf), vq);
@@ -566,9 +567,11 @@ video_player_idle(void *aux)
 	prop_set_string(errprop, errbuf);
     }
 
-    if(e == NULL)
+    if(e == NULL) {
+      TRACE(TRACE_DEBUG, "vp", "Waiting for event");
+      rstr_set(&play_url, NULL);
       e = mp_dequeue_event(mp);
-
+    }
     if(event_is_type(e, EVENT_PLAY_URL)) {
       force_continuous = 0;
       prop_set_void(errprop);
@@ -579,6 +582,9 @@ video_player_idle(void *aux)
       if(ep->no_audio)
 	play_flags |= BACKEND_VIDEO_NO_AUDIO;
       play_priority = ep->priority;
+
+      TRACE(TRACE_DEBUG, "vp", "Playing %s flags:0x%x", ep->url,
+	    play_flags);
 
       if(vq != NULL)
 	video_queue_destroy(vq);
