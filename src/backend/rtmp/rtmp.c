@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <string.h>
+#include <unistd.h>
 
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
@@ -526,27 +527,35 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       }
 
       if(ret == 0) {
+	int64_t restartpos = r->seekpos_video;
+
+	TRACE(TRACE_ERROR, "RTMP", "Disconnected");
+	sleep(1);
+
+	if(restartpos == AV_NOPTS_VALUE) {
+	  snprintf(errbuf, errlen,
+		   "Giving up restart since nothing was decoded");
+	  return NULL;
+	}
+
+
 	RTMP_Close(r->r);
 	
 	RTMP_Init(r->r);
 
 	memset(&p, 0, sizeof(p));
 
-	int64_t restartpos = r->seekpos_video;
-
 	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %ld", 
 	      restartpos);
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
-	  e = NULL;
-	  break;
+	  return NULL;
 	}
 
 	if(!RTMP_Connect(r->r, NULL)) {
 	  snprintf(errbuf, errlen, "Unable to connect RTMP session");
-	  e = NULL;
-	  break;
+	  return NULL;
 	}
 
 	if(!RTMP_ConnectStream(r->r, 0)) {
@@ -754,7 +763,8 @@ static void
 rtmp_log(int level, const char *format, va_list vl)
 {
   int mylevel = 0;
-  if(level >= rtmp_log_level)
+
+  if(level > rtmp_log_level)
     return;
 
   switch(level) {
