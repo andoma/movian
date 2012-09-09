@@ -15,6 +15,11 @@ widget(deck, {
 
     SEP(_("Video menu"));
 
+    ITEM(_("Seek by time"), {
+      $view.page = 6;
+    }, "dataroot://resources/svg/SeekByFrame.svg",
+   $global.media.current.seekindex.available);
+
     ITEM(_("Audio tracks"), {
       $view.page = 1;
     }, "dataroot://resources/svg/Music.svg");
@@ -22,11 +27,6 @@ widget(deck, {
     ITEM(_("Subtitle tracks"), {
       $view.page = 2;
     }, "dataroot://resources/svg/Script.svg");
-
-    ITEM(_("Seek by time"), {
-      $view.page = 6;
-    }, "dataroot://resources/svg/SeekByFrame.svg",
-	 $global.media.current.seekindex.available);
 
     SEP(_("Settings"));
 
