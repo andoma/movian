@@ -211,7 +211,7 @@ fa_open_vpaths(const char *url, const char **vpaths,
   char *filename;
   fa_handle_t *fh;
 
-  if((filename = fa_resolve_proto(url, &fap, vpaths, NULL, 0)) == NULL)
+  if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errsize)) == NULL)
     return NULL;
   
   if(flags & (FA_BUFFERED_SMALL | FA_BUFFERED_BIG))
