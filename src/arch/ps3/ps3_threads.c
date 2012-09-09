@@ -74,7 +74,8 @@ thread_trampoline(void *aux)
 
   void *r = ti->fn(ti->aux);
 
-  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x exiting", my_thread_id);
+  TRACE(TRACE_DEBUG, "THREADS", "Thread 0x%x (%s) exiting",
+	my_thread_id, ti->name);
 
   hts_mutex_lock(&thread_info_mutex);
   LIST_REMOVE(ti, link);
