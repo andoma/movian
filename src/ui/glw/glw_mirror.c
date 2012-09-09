@@ -29,6 +29,10 @@ glw_mirror_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   switch(signal) {
   default:
     break;
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+  case GLW_SIGNAL_CHILD_CREATED:
+    glw_copy_constraints(w, extra);
+    return 1;
   case GLW_SIGNAL_LAYOUT:
     c = TAILQ_FIRST(&w->glw_childs);
     if(c != NULL)
