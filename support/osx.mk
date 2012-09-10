@@ -1,8 +1,10 @@
 #
 # Source modification and extra flags
 #
-SRCS += src/arch/darwin.c \
-	src/arch/arch_posix.c \
+SRCS += src/arch/osx/osx_main.c \
+	src/arch/darwin.c \
+	src/arch/posix/posix.c \
+	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \
 
 DVDCSS_CFLAGS = -DDARWIN_DVD_IOCTL -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE

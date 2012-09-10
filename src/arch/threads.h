@@ -20,7 +20,7 @@
 
 #include "config.h"
 
-#ifdef linux
+#if defined(linux) || defined(__APPLE__)
 #include "posix/posix_threads.h"
 #elif PS3
 #include "ps3/ps3_threads.h"

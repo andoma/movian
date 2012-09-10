@@ -39,7 +39,7 @@ enable glw
 enable glw_frontend_cocoa
 enable glw_backend_opengl
 enable coreaudio
-enable appleremote
+#enable appleremote
 enable bonjour
 enable spotlight
 enable spidermonkey

@@ -32,31 +32,6 @@ const char *showtime_get_system_type(void);
 
 #elif defined(__APPLE__)
 
-const char *
-showtime_get_system_type(void)
-{
-  return "Apple";
-}
-
-#include <sys/types.h>
-#include <sys/sysctl.h>
-#include "darwin.h"
-
-static int
-get_system_concurrency(void)
-{
-  int mib[2];
-  int ncpu;
-  size_t len;
-
-  mib[0] = CTL_HW;
-  mib[1] = HW_NCPU;
-  len = sizeof(ncpu);
-  sysctl(mib, 2, &ncpu, &len, NULL, 0);
-
-  return ncpu;
-
-}
 
 #else
 
