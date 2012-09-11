@@ -949,6 +949,7 @@ static const token_attrib_t attribtab[] = {
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
   {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
   {"autofade",                mod_flag, GLW2_AUTOFADE, mod_flags2},
+  {"automargin",              mod_flag, GLW2_AUTOMARGIN, mod_flags2},
   {"expediteSubscriptions",   mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
