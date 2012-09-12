@@ -647,7 +647,7 @@ typedef struct glw_root {
   struct glw_queue gr_destroyer_queue;
 
   int gr_frameduration;
-  int gr_framerate;
+  float gr_framerate;
 
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;
@@ -1029,6 +1029,7 @@ void glw_flush(glw_root_t *gr);
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 #define GLW_REINITIALIZE_VDPAU 0x1
+#define GLW_NO_FRAMERATE_UPDATE 0x2
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
 

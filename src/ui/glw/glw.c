@@ -523,19 +523,21 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   gr->gr_frame_start = showtime_get_ts();
 
-  if((gr->gr_frames & 0x7f) == 0) {
+  if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
 
-    if(gr->gr_hz_sample) {
-      int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
+    if((gr->gr_frames & 0x7f) == 0) {
 
-      double hz = 128000000.0 / d;
+      if(gr->gr_hz_sample) {
+	int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
 
-      prop_set_float(prop_create(gr->gr_prop, "framerate"), hz);
-      gr->gr_framerate = hz;
+	double hz = 128000000.0 / d;
+
+	prop_set_float(prop_create(gr->gr_prop, "framerate"), hz);
+	gr->gr_framerate = hz;
+      }
+      gr->gr_hz_sample = gr->gr_frame_start;
     }
-    gr->gr_hz_sample = gr->gr_frame_start;
   }
-
   gr->gr_frames++;
 
   gr->gr_screensaver_counter++;
