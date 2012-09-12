@@ -1261,7 +1261,6 @@ glw_x11_start(void)
 {
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
   char confname[PATH_MAX];
-  const char *theme_path = gconf.theme;
   int force_fs = 0;
 
   gx11->gr.gr_prop = prop_create(prop_get_global(), "ui");
@@ -1279,7 +1278,7 @@ glw_x11_start(void)
 
   glw_root_t *gr = &gx11->gr;
   
-  if(glw_init(gr, theme_path, confname))
+  if(glw_init(gr, confname))
     return 1;
 
 #ifdef CONFIG_NVCTRL

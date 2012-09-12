@@ -1114,7 +1114,7 @@ glw_ps3_start(void)
 
   gr->gr_open_osk = osk_open;
 
-  if(glw_init(gr, NULL, confname))
+  if(glw_init(gr, confname))
     return 1;
 
   TRACE(TRACE_DEBUG, "GLW", "loading universe");

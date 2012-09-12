@@ -1016,7 +1016,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *theme, const char *instance);
+int glw_init(glw_root_t *gr, const char *instance);
 
 void glw_fini(glw_root_t *gr);
 

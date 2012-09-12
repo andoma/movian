@@ -273,9 +273,10 @@ glw_init_settings(glw_root_t *gr, const char *instance)
  *
  */
 int
-glw_init(glw_root_t *gr, const char *theme, const char *instance)
+glw_init(glw_root_t *gr, const char *instance)
 {
   char themebuf[PATH_MAX];
+  const char *theme = gconf.theme;
   if(theme == NULL) {
     snprintf(themebuf, sizeof(themebuf),
 	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot());
