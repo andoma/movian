@@ -919,8 +919,12 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
 	  break;
 
 	case METADATA_QTYPE_CUSTOM:
+	  if(msf->query_by_title_and_year == NULL)
+	    continue;
+
 	  TRACE(TRACE_DEBUG, "METADATA",
-		"Performing custom search lookup for %s", sq);
+		"Performing custom search lookup for %s using %s", sq,
+		ms->ms_name);
 	  rval = msf->query_by_title_and_year(db, rstr_get(mlp->mlp_url),
 					      sq, 0, mlp->mlp_duration, qtype);
 	  break;
@@ -1293,6 +1297,8 @@ mlp_refresh_video_info(metadata_lazy_prop_t *mlp)
 {
   void *db = metadb_get();
   int r;
+
+  assert(mlp != NULL);
 
  again:
   if(db_begin(db)) {
