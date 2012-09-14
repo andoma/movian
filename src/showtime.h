@@ -203,6 +203,7 @@ typedef struct gconf {
   int trace_to_syslog;
   int listen_on_stdin;
   int ffmpeglog;
+  int noui;
 
 #if ENABLE_SERDEV
   int enable_serdev;

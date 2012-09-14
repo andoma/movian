@@ -1,0 +1,64 @@
+/*
+ *  Showtime mediacenter
+ *  Copyright (C) 2007-2012 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#pragma once
+
+
+#import <Cocoa/Cocoa.h>
+#import <QuartzCore/QuartzCore.h>
+
+#include "prop/prop.h"
+
+extern prop_courier_t *mainloop_courier;
+
+/**
+ *
+ */
+@interface GLWView : NSOpenGLView
+{
+  struct glw_root *gr;
+  struct prop *eventSink;
+  bool minimized;
+  bool compositeKey;
+  bool stopped;
+  CVDisplayLinkRef m_displayLink;
+}
+- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)gr;
+- (void)stop;
+
+@end
+
+
+/**
+ *
+ */
+@interface GLWUI : NSObject <NSWindowDelegate>
+{
+  struct glw_root *gr;
+  NSWindow *window;
+  GLWView *view;
+  bool fullscreen;
+
+  CFRunLoopTimerRef timer;
+
+  prop_sub_t *evsub;  // Even sink
+
+  bool fullwindow;
+  prop_sub_t *fwsub;  // Full window
+
+}
+@end

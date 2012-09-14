@@ -1,7 +1,9 @@
 #
 # Source modification and extra flags
 #
-SRCS += src/arch/osx/osx_main.c \
+SRCS += src/arch/osx/osx_app.m \
+	src/arch/osx/GLWUI.m \
+	src/arch/osx/GLWView.m \
 	src/arch/darwin.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \

@@ -307,6 +307,7 @@ parse_opts(int argc, char **argv)
 	     "  Options:\n"
 	     "   -h, --help        - This help text.\n"
 	     "   -d                - Enable debug output.\n"
+	     "   --no-ui           - Start without UI.\n"
 	     "   --ffmpeglog       - Print ffmpeg log messages.\n"
 	     "   --with-standby    - Enable system standby.\n"
 	     "   --with-poweroff   - Enable system power-off.\n"
@@ -350,6 +351,10 @@ parse_opts(int argc, char **argv)
       continue;
     } else if(!strcmp(argv[0], "--ffmpeglog")) {
       gconf.ffmpeglog = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--no-ui")) {
+      gconf.noui = 1;
       argc -= 1; argv += 1;
       continue;
     } else if(!strcmp(argv[0], "--syslog")) {
