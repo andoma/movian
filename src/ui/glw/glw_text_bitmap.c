@@ -1187,7 +1187,7 @@ font_render_thread(void *aux)
 
   glw_lock(gr);
 
-  while(1) {
+  while(gr->gr_font_thread_running) {
     
     if((gtb = TAILQ_FIRST(&gr->gr_gtb_dim_queue)) != NULL) {
 
@@ -1209,6 +1209,8 @@ font_render_thread(void *aux)
     }
     glw_cond_wait(gr, &gr->gr_gtb_work_cond);
   }
+  
+  glw_unlock(gr);
   return NULL;
 }
 
@@ -1219,8 +1221,10 @@ void
 glw_text_flush(glw_root_t *gr)
 {
   glw_text_bitmap_t *gtb;
-  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link)
+  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link) {
+    gtb_inactive(gtb);
     gtb_realize(gtb);
+  }
 }
 
 
@@ -1273,8 +1277,24 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   hts_cond_init(&gr->gr_gtb_work_cond, &gr->gr_mutex);
 
-  hts_thread_create_detached("GLW font renderer", font_render_thread, gr,
-			     THREAD_PRIO_NORMAL);
+  gr->gr_font_thread_running = 1;
+  hts_thread_create_joinable("GLW font renderer", &gr->gr_font_thread,
+			     font_render_thread, gr, THREAD_PRIO_NORMAL);
+}
+
+
+/**
+ *
+ */
+void
+glw_text_bitmap_fini(glw_root_t *gr)
+{
+  hts_mutex_lock(&gr->gr_mutex);
+  gr->gr_font_thread_running = 0;
+  hts_cond_signal(&gr->gr_gtb_work_cond);
+  hts_mutex_unlock(&gr->gr_mutex);
+  hts_thread_join(&gr->gr_font_thread);
+  hts_cond_destroy(&gr->gr_gtb_work_cond);
 }
 
 

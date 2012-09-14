@@ -639,6 +639,7 @@ typedef struct glw_root {
   LIST_HEAD(, glw_cached_view) gr_views;
 
   const char *gr_vpaths[5];
+  char *gr_theme;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
@@ -685,12 +686,18 @@ typedef struct glw_root {
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_dim_queue;
   hts_cond_t gr_gtb_work_cond;
+  hts_thread_t gr_font_thread;
+  int gr_font_thread_running;
 
   int gr_font_domain;
 
   /**
    * Image/Texture loader
    */
+  int gr_tex_threads_running;
+#define GLW_TEXTURE_THREADS 6
+  hts_thread_t gr_tex_threads[GLW_TEXTURE_THREADS];
+
   LIST_HEAD(,  glw_image) gr_icons;
   hts_cond_t gr_tex_load_cond;
 

@@ -21,6 +21,8 @@
 
 void glw_text_bitmap_init(glw_root_t *gr);
 
+void glw_text_bitmap_fini(glw_root_t *gr);
+
 void glw_text_flush(glw_root_t *gr);
 
 #endif /* GLW_TEXT_BITMAP_H */

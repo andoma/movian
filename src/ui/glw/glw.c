@@ -266,8 +266,25 @@ glw_init_settings(glw_root_t *gr, const char *instance)
 		   PROP_TAG_ROOT, r,
 		   PROP_TAG_COURIER, gr->gr_courier,
 		   NULL);
-
 }
+
+
+/**
+ *
+ */
+static void
+glw_fini_settings(glw_root_t *gr)
+{
+  prop_unsubscribe(gr->gr_evsub);
+  setting_destroy(gr->gr_setting_screensaver);
+  setting_destroy(gr->gr_setting_underscan_v);
+  setting_destroy(gr->gr_setting_underscan_h);
+  setting_destroy(gr->gr_setting_size);
+  prop_destroy(gr->gr_settings);
+  htsmsg_destroy(gr->gr_settings_store);
+  free(gr->gr_settings_instance);
+}
+
 
 /**
  *
@@ -288,8 +305,10 @@ glw_init(glw_root_t *gr, const char *instance)
   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
 				  POOL_ZERO_MEM);
 
+  gr->gr_theme = strdup(theme);
+
   gr->gr_vpaths[0] = "theme";
-  gr->gr_vpaths[1] = strdup(theme);
+  gr->gr_vpaths[1] = gr->gr_theme;
   gr->gr_vpaths[2] = NULL;
 
   gr->gr_font_domain = freetype_get_context();
@@ -313,8 +332,14 @@ glw_init(glw_root_t *gr, const char *instance)
 void
 glw_fini(glw_root_t *gr)
 {
+  glw_text_bitmap_fini(gr);
+  glw_tex_fini(gr);
+  free(gr->gr_theme);
+  glw_fini_settings(gr);
   pool_destroy(gr->gr_token_pool);
   pool_destroy(gr->gr_clone_pool);
+  prop_courier_destroy(gr->gr_courier);
+  hts_mutex_destroy(&gr->gr_mutex);
 }
 
 
