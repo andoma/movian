@@ -81,11 +81,8 @@ typedef struct {
 static trampoline_t *
 make_trampoline(const char *title, void *(*func)(void *), void *aux)
 {
-  char buf[64];
   trampoline_t *t = malloc(sizeof(trampoline_t));
-  snprintf(buf, sizeof(buf), "ST:%s", title);
-  
-  t->title = strdup(buf);
+  t->title = strdup(title);
   t->func = func;
   t->aux = aux;
   return t;
@@ -100,16 +97,19 @@ thread_trampoline(void *aux)
   trampoline_t *t = aux;
   void *r;
 
-#ifdef linux
+#if defined(linux)
   prctl(PR_SET_NAME, t->title, 0, 0, 0);
+#elif defined(APPLE)
+  pthread_setname_np(t->title);
 #endif
-  free(t->title);
 
   r = t->func(t->aux);
 #if ENABLE_EMU_THREAD_SPECIFICS
   hts_thread_exit_specific();
 #endif
+  TRACE(TRACE_DEBUG, "thread", "Thread %s exited", t->title);
 
+  free(t->title);
   free(t);
   return r;
 }
