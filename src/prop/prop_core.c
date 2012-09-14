@@ -2323,6 +2323,7 @@ prop_subscribe(int flags, ...)
     s->hps_lock = lock;
     s->hps_lockmgr = lockmgr;
   }
+  s->hps_courier->pc_refcount++;
 
   s->hps_canonical_prop = canonical;
   if(canonical != NULL) {
@@ -2422,7 +2423,8 @@ void
 prop_unsubscribe0(prop_sub_t *s)
 {
   s->hps_zombie = 1;
-  
+  s->hps_courier->pc_refcount--;
+
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
@@ -3677,6 +3679,8 @@ prop_courier_wait_and_dispatch(prop_courier_t *pc)
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
+  assert(pc->pc_refcount == 0);
+
   if(pc->pc_run) {
     hts_mutex_lock(&prop_mutex);
     pc->pc_run = 0;

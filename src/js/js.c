@@ -977,7 +977,7 @@ js_fini(void)
   js_plugin_t *jsp, *n;
   JSContext *cx = js_global_cx;
 
-  //  prop_unsubscribe(js_event_sub);
+  prop_unsubscribe(js_event_sub);
 
   prop_courier_destroy(js_global_pc);
 
