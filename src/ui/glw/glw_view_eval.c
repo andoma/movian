@@ -3935,25 +3935,6 @@ glwf_canScroll(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return 1 if the current widget wants full screen
- */
-static int 
-glwf_wantFullWindow(glw_view_eval_context_t *ec, struct token *self,
-		    token_t **argv, unsigned int argc)
-{
-  token_t *r;
-
-  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
-
-  r = eval_alloc(self, ec, TOKEN_INT);
-
-  r->t_int = ec->w->glw_flags & GLW_CONSTRAINT_F ? 1 : 0;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  * Evals the first arg, if true, the second arg is returned. 
  * Otherwise the third arg is returned.
  * Equivivalent to the C ?: operator
@@ -5368,7 +5349,6 @@ static const token_func_t funcvec[] = {
   {"delta", 2, glwf_delta, glwf_delta_ctor, glwf_delta_dtor},
   {"isVisible", 0, glwf_isVisible},
   {"canScroll", 0, glwf_canScroll},
-  {"wantFullWindow", 0, glwf_wantFullWindow},
   {"select", 3, glwf_select},
   {"trace", 2, glwf_trace},
   {"browse", 1, glwf_browse, glwf_browse_ctor, glwf_browse_dtor},

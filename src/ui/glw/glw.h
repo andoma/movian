@@ -429,9 +429,9 @@ typedef struct glw_class {
   int gc_default_alignment;
 
   /**
-   * Return number of childern currently packed per row
+   * Given child c, return how many items to steps in order to move one column
    */
-  int (*gc_get_num_children_x)(struct glw *w);
+  int (*gc_get_next_row)(struct glw *w, struct glw *c, int rev);
 
   /**
    * Select a child
@@ -903,12 +903,14 @@ typedef struct glw {
    * All the glw_parent stuff is operated by this widgets
    * parents. That is, a widget should never touch these themselfs
    * TODO: Allocate these dynamically based on parent class
+   *
+   * glw_array current has the most items here now
    */
   union { 
     int i32;
     float f;
     void *ptr;
-  } glw_parent_val[6];
+  } glw_parent_val[7];
 
 
   /**
@@ -945,17 +947,17 @@ typedef struct glw {
 #define GLW_CONSTRAINT_X         0x10000
 #define GLW_CONSTRAINT_Y         0x20000
 #define GLW_CONSTRAINT_W         0x40000
-#define GLW_CONSTRAINT_F         0x80000
+#define GLW_CONSTRAINT_D         0x80000
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
 #define GLW_CONSTRAINT_IGNORE_X  0x100000
 #define GLW_CONSTRAINT_IGNORE_Y  0x200000
 #define GLW_CONSTRAINT_IGNORE_W  0x400000
-#define GLW_CONSTRAINT_IGNORE_F  0x800000
+#define GLW_CONSTRAINT_IGNORE_D  0x800000
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
-                              GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
+                              GLW_CONSTRAINT_W | GLW_CONSTRAINT_D )
 
 #define GLW_CLIPPED              0x1000000 
 
@@ -967,6 +969,7 @@ typedef struct glw {
 #define GLW_CONSTRAINT_CONF_W    0x10000000
 #define GLW_CONSTRAINT_CONF_X    0x20000000
 #define GLW_CONSTRAINT_CONF_Y    0x40000000
+#define GLW_CONSTRAINT_CONF_D    0x80000000
 
 
   int glw_flags2;

@@ -1962,6 +1962,11 @@ glw_conf_constraints(glw_t *w, int x, int y, float weight, int conf)
     w->glw_req_weight = weight;
     w->glw_flags |= GLW_CONSTRAINT_W;
     break;
+
+  case GLW_CONSTRAINT_CONF_D:
+    w->glw_flags |= GLW_CONSTRAINT_D;
+    break;
+
   default:
     abort();
   }
@@ -2015,12 +2020,13 @@ glw_set_constraints(glw_t *w, int x, int y, float weight, int flags)
     }
   }
     
-  if(fc & GLW_CONSTRAINT_F) {
-    ch = 1;
-    w->glw_flags = 
-      (w->glw_flags & ~GLW_CONSTRAINT_F) | (flags & GLW_CONSTRAINT_F);
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_D)) {
+    if(fc & GLW_CONSTRAINT_D) {
+      ch = 1;
+      w->glw_flags = 
+	(w->glw_flags & ~GLW_CONSTRAINT_D) | (flags & GLW_CONSTRAINT_D);
+    }
   }
-  
   if(ch && w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
@@ -2058,11 +2064,14 @@ glw_clear_constraints(glw_t *w)
     }
   }
 
-  if(w->glw_flags & GLW_CONSTRAINT_F) {
-    w->glw_flags &= ~GLW_CONSTRAINT_F;
-    ch = 1;
+
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_D)) {
+    if(w->glw_flags & GLW_CONSTRAINT_D) {
+      w->glw_flags &= ~GLW_CONSTRAINT_D;
+      ch = 1;
+    }
   }
-  
+
   if(!ch)
     return;
 

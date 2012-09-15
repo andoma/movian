@@ -427,9 +427,6 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_sub_on_video),
 		   NULL);
-
-  // We like fullwindow mode if possible (should be confiurable perhaps)
-  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F);
 }
 
 

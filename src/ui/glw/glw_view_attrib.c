@@ -334,6 +334,16 @@ set_height(glw_t *w, int v)
  *
  */
 static void
+set_divider(glw_t *w, int v)
+{
+  glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
+}
+
+
+/**
+ *
+ */
+static void
 set_maxlines(glw_t *w, int v)
 {
   if(w->glw_class->gc_set_max_lines != NULL)
@@ -1012,6 +1022,7 @@ static const token_attrib_t attribtab[] = {
   {"Xspacing",        set_int,    GLW_ATTRIB_X_SPACING},
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
   {"scrollThreshold", set_int,    GLW_ATTRIB_SCROLL_THRESHOLD},
+  {"divider",         set_int,    0, set_divider},
 
   {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, 0, set_translation},
