@@ -935,8 +935,10 @@ http_drain_content(http_file_t *hf)
 {
   char *buf;
 
-  if(hf->hf_chunked_transfer == 0 && hf->hf_rsize < 0)
+  if(hf->hf_chunked_transfer == 0 && hf->hf_rsize < 0) {
+    hf->hf_rsize = 0;
     return 0;
+  }
 
   if((buf = http_read_content(hf)) == NULL)
     return -1;
