@@ -33,6 +33,8 @@ widget(container_y, {
 	effect: blend;
 	source: "squareitems/" + 
 	  translate($self.type, "default",
+		    "separator", "separator",
+		    "artistalbum", "artistalbum",
 		    "album", "album")
 	  + ".view";
       });
