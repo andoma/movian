@@ -236,6 +236,16 @@ update_focus_distance(glw_coverflow_t *gc, glw_t *ign)
 /**
  *
  */
+static void
+glw_coverflow_ctor(glw_t *w)
+{
+  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+}
+
+
+/**
+ *
+ */
 static int
 glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
@@ -249,9 +259,13 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     glw_coverflow_layout(gc, rc);
     return 0;
 
+  case GLW_SIGNAL_EVENT_BUBBLE:
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     gc->scroll_to_me = extra;
+    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
     update_focus_distance(gc, NULL);
     return 0;
 
@@ -325,6 +339,7 @@ glw_coverflow_get_child_pos(glw_t *p, glw_t *c)
 static glw_class_t glw_coverflow = {
   .gc_name = "coverflow",
   .gc_instance_size = sizeof(glw_coverflow_t),
+  .gc_ctor = glw_coverflow_ctor,
   .gc_flags = GLW_NAVIGATION_SEARCH_BOUNDARY | GLW_CAN_HIDE_CHILDS,
   .gc_child_orientation = GLW_ORIENTATION_HORIZONTAL,
   .gc_nav_descend_mode = GLW_NAV_DESCEND_FOCUSED,
