@@ -947,7 +947,7 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
       if(rval == METADATA_PERMANENT_ERROR)
 	rval = metadb_insert_videoitem(db, rstr_get(mlp->mlp_url), ms->ms_id,
 				       "0", NULL, METAITEM_STATUS_ABSENT, 0,
-				       qtype);
+				       qtype, 0);
       if(rval < 0) {
 	rstr_release(title);
 	return rval;
@@ -1966,7 +1966,7 @@ ms_set_enable(void *opaque, int value)
 /**
  *
  */
-int
+metadata_source_t *
 metadata_add_source(const char *name, const char *description,
 		    int prio,  metadata_type_t type,
 		    const metadata_source_funcs_t *funcs)
@@ -2065,11 +2065,11 @@ metadata_add_source(const char *name, const char *description,
   LIST_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp);
   hts_mutex_unlock(&metadata_mutex);
 
-  return id;
+  return ms;
 
  err:
   metadb_close(db);
-  return METADATA_PERMANENT_ERROR;
+  return NULL;
 }
 
 

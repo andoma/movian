@@ -201,17 +201,21 @@ typedef struct metadata_source {
   char *ms_description;
   int ms_prio;
   int ms_id;
-  int ms_mark;
-  int ms_qtype;
   int ms_enabled;
+
   const metadata_source_funcs_t *ms_funcs;
   struct prop *ms_settings;
+
+  int ms_mark;
+  int ms_qtype;
+  int64_t ms_cfgid;
 } metadata_source_t;
 
 
-int metadata_add_source(const char *name, const char *description,
-			int default_prio, metadata_type_t type,
-			const metadata_source_funcs_t *funcs);
+metadata_source_t *metadata_add_source(const char *name,
+				       const char *description,
+				       int default_prio, metadata_type_t type,
+				       const metadata_source_funcs_t *funcs);
 
 metadata_t *metadata_create(void);
 
@@ -301,7 +305,8 @@ void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 
 int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				const char *ext_id, const metadata_t *md,
-				int status, int64_t weight, int qtype);
+				int status, int64_t weight, int qtype,
+				int64_t cfgid);
 
 int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_list *sources,

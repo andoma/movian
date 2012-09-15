@@ -22,7 +22,7 @@
 #include "fileaccess/fileaccess.h"
 #include "tvdb.h"
 
-static int tvdb_datasource;
+static metadata_source_t *tvdb;
 
 #define TVDB_APIKEY "0ADF8BA762FED295"
 
@@ -76,8 +76,7 @@ static const metadata_source_funcs_t fns = {
 void
 tvdb_init(void)
 {
-  tvdb_datasource =
-    metadata_add_source("tvdb", "thetvdb.com", 100000,
-			METADATA_TYPE_VIDEO, &fns);
+  tvdb = metadata_add_source("tvdb", "thetvdb.com", 100000,
+			     METADATA_TYPE_VIDEO, &fns);
 }
 

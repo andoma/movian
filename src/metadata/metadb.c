@@ -877,7 +877,8 @@ metadb_set_streams(sqlite3 *db, int64_t videoitem_id, const metadata_t *md)
 static int64_t
 metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
 			 const char *ext_id, const metadata_t *md,
-			 int status, int64_t weight, int qtype)
+			 int status, int64_t weight, int qtype,
+			 int64_t cfgid)
 {
   int i;
   int rc = 0;
@@ -926,11 +927,11 @@ metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
 		    "(item_id, ds_id, ext_id, "
 		    "title, duration, format, type, tagline, description, "
 		    "year, rating, rate_count, imdb_id, status, weight, "
-		    "querytype) "
+		    "querytype, cfgid) "
 		    "VALUES "
 		    "(?1, ?2, ?4, "
 		    "?5, ?6, ?7, ?8, ?9, ?10, "
-		    "?11, ?12, ?13, ?14, ?15, ?16, ?17)"
+		    "?11, ?12, ?13, ?14, ?15, ?16, ?17, ?18)"
 		    :
 		    "UPDATE videoitem SET "
 		    "title = ?5, "
@@ -943,7 +944,8 @@ metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
 		    "rating = ?12, "
 		    "rate_count = ?13, "
 		    "imdb_id = ?14, "
-		    "status = ?15 "
+		    "status = ?15, "
+		    "cfgid = ?18 "
 		    "WHERE id = ?3 "
 		    ,
 		    -1, &stmt, NULL);
@@ -989,6 +991,7 @@ metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
     sqlite3_bind_int(stmt, 15, status);
     sqlite3_bind_int64(stmt, 16, weight);
     sqlite3_bind_int(stmt, 17, qtype);
+    sqlite3_bind_int64(stmt, 18, cfgid);
 
 
     rc = db_step(stmt);
@@ -1024,7 +1027,8 @@ metadb_insert_videoitem0(sqlite3 *db, int64_t item_id, int ds_id,
 int64_t
 metadb_insert_videoitem(void *db, const char *url, int ds_id,
 			const char *ext_id, const metadata_t *md,
-			int status, int64_t weight, int qtype)
+			int status, int64_t weight, int qtype,
+			int64_t cfgid)
 {
   int64_t item_id = db_item_get(db, url, NULL);
 
@@ -1038,7 +1042,7 @@ metadb_insert_videoitem(void *db, const char *url, int ds_id,
   }
   
   return metadb_insert_videoitem0(db, item_id, ds_id, ext_id, md, status,
-				  weight, qtype);
+				  weight, qtype, cfgid);
 }
 
 /**
@@ -1198,7 +1202,7 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     break;
 
   case CONTENT_VIDEO:
-    r = metadb_insert_videoitem0(db, item_id, 1, NULL, md, 3, 0, 0) < 0;
+    r = metadb_insert_videoitem0(db, item_id, 1, NULL, md, 3, 0, 0, 0) < 0;
     break;
 
   case CONTENT_IMAGE:
@@ -1703,7 +1707,8 @@ metadb_get_videoinfo(void *db, const char *url,
   rc = db_prepare(db,
 		  "SELECT v.id, v.title, v.tagline, v.description, v.year, "
 		  "v.rating, v.rate_count, v.imdb_id, v.ds_id, v.status, "
-		  "v.preferred, v.ext_id, ds.id, ds.enabled, v.querytype "
+		  "v.preferred, v.ext_id, ds.id, ds.enabled, v.querytype, "
+		  "v.cfgid " // 15
 		  "FROM datasource AS ds, videoitem AS v "
 		  "WHERE v.item_id = ?1 "
 		  "AND ds.id = v.ds_id "
@@ -1728,14 +1733,14 @@ metadb_get_videoinfo(void *db, const char *url,
     int dsenabled = sqlite3_column_int(sel, 13);
     int preferred = sqlite3_column_int(sel, 10);
     int qtype = sqlite3_column_int(sel, 14);
-
+    int64_t cfgid = sqlite3_column_int64(sel, 15);
     if(!dsenabled)
       continue;
 
     metadata_source_t *ms;
 
     LIST_FOREACH(ms, sources, ms_link)
-      if(ms->ms_id == dsid) {
+      if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
 	ms->ms_mark = 1;
 	ms->ms_qtype = qtype;
 	break;
