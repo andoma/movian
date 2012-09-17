@@ -562,6 +562,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_sources)(struct glw *w, rstr_t **urls);
+
+  /**
+   *
+   */
   void (*gc_set_how)(struct glw *w, const char *how);
 
   /**

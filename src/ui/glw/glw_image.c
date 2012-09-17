@@ -100,6 +100,11 @@ typedef struct glw_image {
 
   LIST_ENTRY(glw_image) gi_link;
 
+  rstr_t **gi_sources;
+
+  int gi_switch_cnt;
+  int gi_switch_tgt;
+
 } glw_image_t;
 
 static glw_class_t glw_image, glw_icon, glw_backdrop, glw_repeatedimage,
@@ -118,9 +123,23 @@ static int8_t tex_transform[9][4] = {
 };
 
 static void update_box(glw_image_t *gi);
+static void pick_source(glw_image_t *gi, int next);
 
 
 
+/**
+ *
+ */
+static void
+sources_free(rstr_t **v)
+{
+  int i;
+  if(v == NULL)
+    return;
+  for(i = 0; v[i] != NULL; i++)
+    rstr_release(v[i]);
+  free(v);
+}
 
 
 
@@ -131,6 +150,8 @@ static void
 glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
+
+  sources_free(gi->gi_sources);
 
   rstr_release(gi->gi_pending_url);
     
@@ -681,6 +702,17 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
 
+  gi->gi_switch_tgt = 180;
+
+  if(gi->gi_sources && gi->gi_switch_tgt) {
+    gi->gi_switch_cnt++;
+    if(gi->gi_switch_cnt == gi->gi_switch_tgt) {
+      pick_source(gi, 1);
+      gi->gi_switch_cnt = 0;
+    }
+  }
+
+
   if(gi->gi_pending_url != NULL) {
     // Request to load
     int xs = -1, ys = -1;
@@ -1086,14 +1118,12 @@ mod_image_flags(glw_t *w, int set, int clr)
 }
 
 
-
 /**
  *
  */
-static void
-set_path(glw_image_t *gi, rstr_t *filename)
+static const rstr_t *
+get_curname(glw_image_t *gi)
 {
- 
   const rstr_t *curname;
 
   if(gi->gi_pending_url != NULL)
@@ -1104,15 +1134,35 @@ set_path(glw_image_t *gi, rstr_t *filename)
     curname = gi->gi_current->glt_url;
   else 
     curname = NULL;
+  return curname;
+}
+
+
+/**
+ *
+ */
+static void
+set_pending(glw_image_t *gi, rstr_t *filename)
+{
+  if(gi->gi_pending_url != NULL)
+    rstr_release(gi->gi_pending_url);
+  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
+
+}
+
+/**
+ *
+ */
+static void
+set_path(glw_image_t *gi, rstr_t *filename)
+{
+  const rstr_t *curname = get_curname(gi);
   
   if(curname != NULL && filename != NULL && !strcmp(rstr_get(filename),
 						    rstr_get(curname)))
     return;
-  
-  if(gi->gi_pending_url != NULL)
-    rstr_release(gi->gi_pending_url);
-  
-  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
+
+  set_pending(gi, filename);
 }
 
 
@@ -1124,6 +1174,50 @@ set_source(glw_t *w, rstr_t *filename)
 {
   glw_image_t *gi = (glw_image_t *)w;
   set_path(gi, filename);
+}
+
+
+/**
+ *
+ */
+static void
+pick_source(glw_image_t *gi, int next)
+{
+  const rstr_t *curname = get_curname(gi);
+  if(curname == NULL) {
+    set_pending(gi, gi->gi_sources[0]);
+  } else {
+
+    int i;
+    int found = -1;
+    for(i = 0; gi->gi_sources[i] != NULL && found == -1; i++) {
+      if(!strcmp(rstr_get(gi->gi_sources[i]), rstr_get(curname)))
+	found = i;
+    }
+    if(found == -1) {
+      set_pending(gi, gi->gi_sources[0]);
+    } else if(next) {
+      if(gi->gi_sources[found+1] == NULL) {
+	set_pending(gi, gi->gi_sources[0]);
+      } else {
+	set_pending(gi, gi->gi_sources[found+1]);
+      }
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+set_sources(glw_t *w, rstr_t **filenames)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  sources_free(gi->gi_sources);
+  gi->gi_sources = filenames;
+
+  pick_source(gi, 0);
 }
 
 
@@ -1258,6 +1352,7 @@ static glw_class_t glw_image = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };
@@ -1281,6 +1376,7 @@ static glw_class_t glw_icon = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
@@ -1308,6 +1404,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };
@@ -1334,6 +1431,7 @@ static glw_class_t glw_frontdrop = {
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };

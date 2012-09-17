@@ -36,6 +36,7 @@
 #include "fileaccess/fileaccess.h"
 
 LIST_HEAD(clone_list, glw_clone);
+TAILQ_HEAD(vectorizer_element_queue, vectorizer_element);
 
 static token_t t_zero = {
   .type = TOKEN_INT,
@@ -55,6 +56,7 @@ TAILQ_HEAD(glw_prop_sub_pending_queue, glw_prop_sub_pending);
 #define GPS_VALUE   2
 #define GPS_CLONER  3
 #define GPS_COUNTER 4
+#define GPS_VECTORIZER 5
 
 /**
  *
@@ -122,6 +124,26 @@ typedef struct sub_counter {
 } sub_counter_t;
 
 
+/**
+ *
+ */
+typedef struct vectorizer_element {
+  TAILQ_ENTRY(vectorizer_element) ve_link;
+  prop_sub_t *ve_sub;
+  token_t *ve_token;
+  struct sub_vectorizer *ve_sv;
+  prop_t *ve_prop;
+} vectorizer_element_t;
+
+/**
+ *
+ */
+typedef struct sub_vectorizer {
+  glw_prop_sub_t sv_sub;
+  struct vectorizer_element_queue sv_elements;
+} sub_vectorizer_t;
+
+
 
 
 static int subscribe_prop(glw_view_eval_context_t *ec, struct token *self,
@@ -147,6 +169,25 @@ cloner_cleanup(glw_root_t *gr, sub_cloner_t *sc)
     glw_view_free_chain(gr, sc->sc_cloner_body);
 }
 
+
+/**
+ *
+ */
+static void
+vectorizer_clean(glw_root_t *gr, sub_vectorizer_t *sv)
+{
+  vectorizer_element_t *ve;
+  while((ve = TAILQ_FIRST(&sv->sv_elements)) != NULL) {
+    prop_unsubscribe(ve->ve_sub);
+    glw_view_token_free(gr, ve->ve_token);
+    prop_tag_clear(ve->ve_prop, sv);
+    prop_ref_dec(ve->ve_prop);
+    TAILQ_REMOVE(&sv->sv_elements, ve, ve_link);
+    free(ve);
+  }
+}
+
+
 /**
  *
  */
@@ -155,6 +196,7 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
 {
   glw_prop_sub_t *gps;
   sub_cloner_t *sc;
+  sub_vectorizer_t *sv;
 
   while((gps = LIST_FIRST(l)) != NULL) {
 
@@ -184,6 +226,12 @@ glw_prop_subscription_destroy_list(glw_root_t *gr, struct glw_prop_sub_list *l)
       if(sc->sc_view_args)
 	prop_ref_dec(sc->sc_view_args);
       break;
+
+    case GPS_VECTORIZER:
+      sv = (sub_vectorizer_t *)gps;
+      vectorizer_clean(gr, sv);
+      break;
+
     }
     rstr_release(gps->gps_file);
     prop_ref_dec(gps->gps_prop);
@@ -1702,6 +1750,371 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
 }
 
 
+/**
+ *
+ */
+static void
+ve_cb(void *opaque, prop_event_t event, ...)
+{
+  vectorizer_element_t *ve = opaque;
+  glw_prop_sub_t *gps = &ve->ve_sv->sv_sub;
+  glw_root_t *gr = gps->gps_widget->glw_root;
+  token_t *rpn = NULL, *t = NULL;
+  va_list ap;
+  va_start(ap, event);
+
+  
+  switch(event) {
+  case PROP_SET_VOID:
+  case PROP_SET_DIR:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RSTRING:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
+    t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
+    (void)va_arg(ap, prop_t *);
+    t->t_rstrtype = va_arg(ap, prop_str_type_t);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_CSTRING:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_CSTRING);
+    t->t_cstring = va_arg(ap, const char *);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_INT:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_INT);
+    t->t_int = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_FLOAT:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
+    t->t_float = va_arg(ap, double);
+    (void)va_arg(ap, prop_t *);
+    t->t_float_how = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RLINK:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
+    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_ADD_CHILD:
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_BEFORE:
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
+  case PROP_MOVE_CHILD:
+  case PROP_DEL_CHILD:
+  case PROP_SELECT_CHILD:
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE_VECTOR:
+  case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_HAVE_MORE_CHILDS:
+  case PROP_WANT_MORE_CHILDS:
+  case PROP_SUGGEST_FOCUS:
+  case PROP_SET_STRING:
+  case PROP_REQ_MOVE_CHILD:
+    break;
+  }
+
+  if(t != NULL) {
+    assert(ve->ve_token != NULL);
+    vectorizer_element_t *prev = TAILQ_PREV(ve, vectorizer_element_queue,
+					    ve_link);
+
+    t->next = ve->ve_token->next;
+
+    if(prev == NULL) {
+      // First element, let TOKEN element's child pointer point to us
+      ve->ve_sv->sv_sub.gps_token->child = t;
+    } else {
+      prev->ve_token->next = t;
+    }
+
+    glw_view_token_free(gr, ve->ve_token);
+    ve->ve_token = t;
+  }
+
+  if(rpn != NULL) 
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
+		 gps->gps_prop_clone);
+}
+
+
+/**
+ *
+ */
+static void
+vectorizer_add_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
+		       glw_root_t *gr)
+{
+  vectorizer_element_t *ve = malloc(sizeof(vectorizer_element_t));
+  glw_prop_sub_t *gps = &sv->sv_sub;
+  ve->ve_sv = sv;
+  ve->ve_prop = prop_ref_inc(p);
+
+  ve->ve_token = prop_callback_alloc_token(gr, &sv->sv_sub, TOKEN_VOID);
+
+  if(before != NULL) {
+    vectorizer_element_t *b = prop_tag_get(before, sv);
+    TAILQ_INSERT_BEFORE(b, ve, ve_link);
+    ve->ve_token->next = b->ve_token;
+  } else {
+    TAILQ_INSERT_TAIL(&sv->sv_elements, ve, ve_link);
+  }
+
+
+  vectorizer_element_t *prev = TAILQ_PREV(ve, vectorizer_element_queue,
+					  ve_link);
+
+  if(prev == NULL) {
+    gps->gps_token->child = ve->ve_token;
+  } else {
+    prev->ve_token->next = ve->ve_token;
+  }
+
+  prop_tag_set(p, sv, ve);
+
+  ve->ve_sub = prop_subscribe(0,
+			      PROP_TAG_CALLBACK, ve_cb, ve,
+			      PROP_TAG_COURIER, gr->gr_courier,
+			      PROP_TAG_ROOT, p,
+			      NULL);
+}
+
+
+/**
+ *
+ */
+static void
+vectorizer_move_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
+			glw_root_t *gr)
+{
+  glw_prop_sub_t *gps = &sv->sv_sub;
+  vectorizer_element_t *ve = prop_tag_get(p, sv);
+  assert(ve != NULL);
+
+  vectorizer_element_t *prev = TAILQ_PREV(ve, vectorizer_element_queue,
+					  ve_link);
+
+  if(prev == NULL) {
+    gps->gps_token->child = ve->ve_token->next;
+  } else {
+    prev->ve_token->next = ve->ve_token->next;
+  }
+
+
+  if(before != NULL) {
+    vectorizer_element_t *b = prop_tag_get(before, sv);
+    TAILQ_INSERT_BEFORE(b, ve, ve_link);
+    ve->ve_token->next = b->ve_token;
+  } else {
+    TAILQ_INSERT_TAIL(&sv->sv_elements, ve, ve_link);
+  }
+
+  prev = TAILQ_PREV(ve, vectorizer_element_queue, ve_link);
+
+  if(prev == NULL) {
+    gps->gps_token->child = ve->ve_token;
+  } else {
+    prev->ve_token->next = ve->ve_token;
+  }
+
+  token_t *rpn = gps->gps_rpn;
+  if(rpn != NULL)
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
+		 gps->gps_prop_clone);
+}
+
+
+/**
+ *
+ */
+static void
+vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
+{
+  vectorizer_element_t *ve = prop_tag_clear(p, sv);
+  glw_prop_sub_t *gps = &sv->sv_sub;
+
+  assert(ve != NULL);
+
+  vectorizer_element_t *prev = TAILQ_PREV(ve, vectorizer_element_queue,
+					  ve_link);
+
+  if(prev == NULL) {
+    gps->gps_token->child = ve->ve_token->next;
+  } else {
+    prev->ve_token->next = ve->ve_token->next;
+  }
+  
+  prop_unsubscribe(ve->ve_sub);
+  glw_view_token_free(gr, ve->ve_token);
+  prop_ref_dec(ve->ve_prop);
+  TAILQ_REMOVE(&sv->sv_elements, ve, ve_link);
+  free(ve);
+  
+  token_t *rpn = gps->gps_rpn;
+  if(rpn != NULL)
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
+		 gps->gps_prop_clone);
+}
+
+
+/**
+ * Special prop callback that works like normal value subscription
+ * unless it's a PROP_SET_DIR, then it converts all childs into a vector
+ */
+static void
+prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
+{
+  sub_vectorizer_t *sv = opaque;
+  glw_prop_sub_t *gps = &sv->sv_sub;
+  prop_t *p, *p2;
+  prop_vec_t *pv;
+  token_t *rpn = NULL, *t = NULL;
+  int flags, i;
+  va_list ap;
+  glw_root_t *gr = gps->gps_widget->glw_root;
+  va_start(ap, event);
+
+  switch(event) {
+
+  case PROP_SET_VOID:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_VOID);
+    t->propsubr = gps;
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RSTRING:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_RSTRING);
+    t->propsubr = gps;
+    t->t_rstring =rstr_dup(va_arg(ap, rstr_t *));
+    (void)va_arg(ap, prop_t *);
+    t->t_rstrtype = va_arg(ap, prop_str_type_t);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_CSTRING:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_CSTRING);
+    t->propsubr = gps;
+    t->t_cstring = va_arg(ap, const char *);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_INT:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_INT);
+    t->propsubr = gps;
+    t->t_int = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_FLOAT:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_FLOAT);
+    t->propsubr = gps;
+    t->t_float = va_arg(ap, double);
+    (void)va_arg(ap, prop_t *);
+    t->t_float_how = va_arg(ap, int);
+    rpn = gps->gps_rpn;
+    break;
+
+  case PROP_SET_RLINK:
+    vectorizer_clean(gr, sv);
+    t = prop_callback_alloc_token(gr, gps, TOKEN_LINK);
+    t->propsubr = gps;
+    t->t_link_rtitle = rstr_dup(va_arg(ap, rstr_t *));
+    t->t_link_rurl   = rstr_dup(va_arg(ap, rstr_t *));
+    rpn = gps->gps_rpn;
+    break;
+
+
+  case PROP_SET_DIR:
+    t = prop_callback_alloc_token(gr, gps, TOKEN_VECTOR);
+    t->propsubr = gps;
+    break;
+
+  case PROP_ADD_CHILD:
+    p = va_arg(ap, prop_t *);
+    flags = va_arg(ap, int);
+    vectorizer_add_element(sv, p, NULL, gr);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR:
+  case PROP_ADD_CHILD_VECTOR_DIRECT:
+    pv = va_arg(ap, prop_vec_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      vectorizer_add_element(sv, prop_vec_get(pv, i), NULL, gr);
+    break;
+
+  case PROP_ADD_CHILD_BEFORE:
+    p = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    flags = va_arg(ap, int);
+    vectorizer_add_element(sv, p, p2, gr);
+    break;
+
+  case PROP_ADD_CHILD_VECTOR_BEFORE:
+    pv = va_arg(ap, prop_vec_t *);
+    p2 = va_arg(ap, prop_t *);
+    for(i = 0; i < prop_vec_len(pv); i++)
+      vectorizer_add_element(sv, prop_vec_get(pv, i), p2, gr);
+    break;
+
+  case PROP_MOVE_CHILD:
+    p = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    vectorizer_move_element(sv, p, p2, gr);
+    break;
+
+  case PROP_DEL_CHILD:
+    p = va_arg(ap, prop_t *);
+    vectorizer_del_element(sv, p, gr);
+    break;
+
+  case PROP_SELECT_CHILD:
+  case PROP_SUGGEST_FOCUS:
+  case PROP_HAVE_MORE_CHILDS:
+  case PROP_REQ_NEW_CHILD:
+  case PROP_REQ_DELETE_VECTOR:
+  case PROP_DESTROYED:
+  case PROP_EXT_EVENT:
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+  case PROP_WANT_MORE_CHILDS:
+  case PROP_SET_STRING:
+  case PROP_REQ_MOVE_CHILD:
+    break;
+
+  }
+
+  if(t != NULL) {
+      
+    if(gps->gps_token != NULL) {
+      glw_view_token_free(gr, gps->gps_token);
+      gps->gps_token = NULL;
+    }
+    gps->gps_token = t;
+  }
+
+  if(rpn != NULL) 
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
+		 gps->gps_prop_clone);
+}
+
+
 
 /**
  * Transform a property reference (a chain of names) into
@@ -1738,11 +2151,15 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
     abort();
   }
 
+  int f = 0; 
+
+
 
   switch(type) {
   case GPS_VALUE:
     gps = calloc(1, sizeof(glw_prop_sub_t));
     cb = prop_callback_value;
+    f |= PROP_SUB_DIRECT_UPDATE;
     break;
 
   case GPS_CLONER: do {
@@ -1758,11 +2175,20 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
       TAILQ_INIT(&sc->sc_pending);
     } while(0);
     cb = prop_callback_cloner;
+    f |= PROP_SUB_DIRECT_UPDATE;
     break;
 
   case GPS_COUNTER:
     gps = calloc(1, sizeof(sub_counter_t));
     cb = prop_callback_counter;
+    f |= PROP_SUB_DIRECT_UPDATE;
+    break;
+
+  case GPS_VECTORIZER:
+    gps = calloc(1, sizeof(sub_vectorizer_t));
+    sub_vectorizer_t *sv = (sub_vectorizer_t *)gps;
+    TAILQ_INIT(&sv->sv_elements);
+    cb = prop_callback_vectorizer;
     break;
 
   default:
@@ -1779,7 +2205,6 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   gps->gps_widget = w;
 
-  int f = PROP_SUB_DIRECT_UPDATE;
 
   if(ec->w->glw_flags2 & GLW2_EXPEDITE_SUBSCRIPTIONS)
     f |= PROP_SUB_EXPEDITE;
@@ -4487,6 +4912,7 @@ glwf_suggestFocus(glw_view_eval_context_t *ec, struct token *self,
   return 0;
 }
 
+
 /**
  *
  */
@@ -4497,6 +4923,22 @@ glwf_count(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
 
   if((a = token_resolve_ex(ec, a, GPS_COUNTER)) == NULL)
+    return -1;
+  eval_push(ec, a);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+glwf_vectorize(glw_view_eval_context_t *ec, struct token *self,
+	       token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+
+  if((a = token_resolve_ex(ec, a, GPS_VECTORIZER)) == NULL)
     return -1;
   eval_push(ec, a);
   return 0;
@@ -5363,6 +5805,7 @@ static const token_func_t funcvec[] = {
   {"suggestFocus", 1, glwf_suggestFocus},
   {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
+  {"vectorize", 1, glwf_vectorize},
   {"deliverEvent", -1, glwf_deliverEvent},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},

@@ -813,11 +813,25 @@ mod_video_flags(glw_t *w, int set, int clr)
 /**
  *
  */
-static void
-set_source(glw_t *w, rstr_t *p)
+static rstr_t **
+build_rstr_vector(struct token *t0)
 {
-  if(w->glw_class->gc_set_source != NULL)
-    w->glw_class->gc_set_source(w, p);
+  int cnt = 1;
+  token_t *t;
+  rstr_t **rv;
+
+  for(t = t0->child; t != NULL; t = t->next)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+      cnt++;
+  
+  rv = malloc(sizeof(rstr_t *) * cnt);
+  cnt = 0;
+
+  for(t = t0->child; t != NULL; t = t->next)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+      rv[cnt++] = rstr_dup(t->t_rstring);
+  rv[cnt++] = NULL;
+  return rv;
 }
 
 
@@ -825,33 +839,35 @@ set_source(glw_t *w, rstr_t *p)
  *
  */
 static int
-set_path(glw_view_eval_context_t *ec, const token_attrib_t *a,
-	 struct token *t)
+set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	   struct token *t)
 {
   glw_t *w = ec->w;
 
   rstr_t *r;
 
-  void (*fn)(glw_t *w, rstr_t *r) = a->fn;
-
   switch(t->type) {
-  case TOKEN_VOID:
-    fn(w, NULL);
+  default:
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, NULL);
+    return 0;
+
+  case TOKEN_VECTOR:
+    glw_view_print_tree(t, 0);
+    if(w->glw_class->gc_set_sources != NULL)
+      w->glw_class->gc_set_sources(w, build_rstr_vector(t));
     return 0;
 
   case TOKEN_RSTRING:
   case TOKEN_LINK:
     r = t->t_rstring;
     break;
-
-  default:
-    return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar not %s",
-			   a->name, token2name(t));
   }
 
   r = fa_absolute_path(r, t->file);
-  fn(w, r);
+
+  if(w->glw_class->gc_set_source != NULL)
+    w->glw_class->gc_set_source(w, r);
   rstr_release(r);
   return 0;
 }
@@ -940,7 +956,7 @@ static const token_attrib_t attribtab[] = {
   {"how",             set_string, 0, set_how},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
-  {"source",          set_path, 0, set_source},
+  {"source",          set_source},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
   {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
