@@ -94,8 +94,11 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   }
 
     
-  if((c = s->w.glw_focused) == NULL)
+  if((c = s->w.glw_focused) == NULL) {
     c = s->w.glw_focused = glw_first_widget(&s->w);
+    if(c)
+      glw_copy_constraints(&s->w, c);
+  }
   if(c == NULL)
     return;
 
@@ -104,8 +107,10 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
     if(c == NULL)
       c = glw_first_widget(&s->w);
     s->timer = 0;
-    if(c != NULL)
-      glw_focus_set(s->w.glw_root, c, GLW_FOCUS_SET_INTERACTIVE);
+    if(c != NULL) {
+      glw_focus_set(s->w.glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+      glw_copy_constraints(&s->w, c);
+    }
   }
   
   if(!s->hold)
@@ -204,6 +209,11 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   case GLW_SIGNAL_EVENT:
     return glw_slideshow_event(s, extra);
+
+  case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
+    if(w->glw_focused == extra)
+      glw_copy_constraints(w, extra);
+    return 1;
 
   default:
     break;
