@@ -273,6 +273,8 @@ typedef struct spotify_page {
   prop_t *sp_album_year;
   prop_t *sp_album_art;
   prop_t *sp_artist_name;
+  prop_t *sp_artist_portrait;
+  prop_t *sp_artist_bio;
   prop_t *sp_numtracks;
   prop_t *sp_user;
 
@@ -479,6 +481,8 @@ spotify_page_destroy(spotify_page_t *sp)
   prop_ref_dec(sp->sp_album_year);
   prop_ref_dec(sp->sp_album_art);
   prop_ref_dec(sp->sp_artist_name);
+  prop_ref_dec(sp->sp_artist_portrait);
+  prop_ref_dec(sp->sp_artist_bio);
   prop_ref_dec(sp->sp_urlprop);
 
   prop_ref_dec(sp->sp_nodes);
@@ -973,6 +977,23 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
   prop_set_rstring(p, rstr);
   rstr_release(rstr);
 }
+
+
+/**
+ *
+ */
+static void
+set_image_uri2(prop_t *p, sp_link *link)
+{
+  char url[512];
+  if(link == NULL)
+    return;
+
+  if(f_sp_link_as_string(link, url, sizeof(url)))
+    prop_set_string(p, url);
+  f_sp_link_release(link);
+}
+
 
 /**
  *
@@ -1497,9 +1518,23 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
     bh_error(bh, "Artist not found");
   } else {
 
+
     nalbums = f_sp_artistbrowse_num_albums(result);
     artist = f_sp_artistbrowse_artist(result);
+
+
+    int np = sp_artistbrowse_num_portraits(result);
+    for(i = 0; i < np; i++) {
+      prop_t *p = prop_create_r(bh->sp->sp_artist_portrait, NULL);
+      set_image_uri2(p, 
+		     f_sp_link_create_from_artistbrowse_portrait(result, i));
+      prop_ref_dec(p);
+    }
+
     prop_set_string(bh->sp->sp_title, f_sp_artist_name(artist));
+
+    prop_set_string_ex(bh->sp->sp_artist_bio, NULL,
+		       f_sp_artistbrowse_biography(result), PROP_STR_RICH);
 
     for(i = 0; i < nalbums; i++) {
       album = f_sp_artistbrowse_album(result, i);
@@ -1555,7 +1590,7 @@ static void
 spotify_open_artist(sp_link *l, spotify_page_t *sp)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
-  prop_set_string(sp->sp_contents, "items");
+  prop_set_string(sp->sp_contents, "artist");
 
   f_sp_artistbrowse_create(spotify_session, artist,
 			   SP_ARTISTBROWSE_NO_TRACKS,
@@ -4073,7 +4108,9 @@ add_metadata_props(spotify_page_t *sp)
 
   sp->sp_album_art  = prop_ref_inc(prop_create(m, "album_art"));
 
-  sp->sp_artist_name = prop_ref_inc(prop_create(m, "artist_name"));
+  sp->sp_artist_name     = prop_ref_inc(prop_create(m, "artist_name"));
+  sp->sp_artist_portrait = prop_ref_inc(prop_create(m, "artist_portrait"));
+  sp->sp_artist_bio      = prop_ref_inc(prop_create(m, "artist_bio"));
 
   sp->sp_numtracks = prop_ref_inc(prop_create(m, "tracks"));
 
