@@ -313,18 +313,23 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 /**
  *
  */
-- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)root
+- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)root:(bool)fs
 {
   NSOpenGLPixelFormat *wpf;
-  NSOpenGLPixelFormatAttribute attribs[] = {
-    //    NSOpenGLPFAWindow,
-    //    NSOpenGLPFAColorSize, 32,
-    //    NSOpenGLPFAAccelerated,
+  NSOpenGLPixelFormatAttribute attribs_windowed[] = {
+    NSOpenGLPFAWindow,
+    NSOpenGLPFAColorSize, 32,
+    NSOpenGLPFAAccelerated,
     NSOpenGLPFADoubleBuffer,
-    //    NSOpenGLPFASingleRenderer,
+    NSOpenGLPFASingleRenderer,
+    0 };
+
+  NSOpenGLPixelFormatAttribute attribs_fs[] = {
+    NSOpenGLPFADoubleBuffer,
     0 };
   
-  wpf = [[NSOpenGLPixelFormat alloc] initWithAttributes:attribs];
+  wpf = [[NSOpenGLPixelFormat alloc]
+	  initWithAttributes: fs ? attribs_fs : attribs_windowed];
 
   if(wpf == nil) {
     NSLog(@"Unable to create windowed pixel format.");

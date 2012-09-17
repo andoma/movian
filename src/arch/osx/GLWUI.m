@@ -97,7 +97,7 @@
     [window setTitle:@"Showtime"];
   }
   
-  view = [[GLWView alloc] initWithFrame:frame:gr];
+  view = [[GLWView alloc] initWithFrame:frame:gr:fullscreen];
   [window setContentView:view];
   [window setDelegate:self];
   [window makeKeyAndOrderFront:nil];

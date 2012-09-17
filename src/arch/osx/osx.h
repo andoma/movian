@@ -37,7 +37,7 @@ extern prop_courier_t *mainloop_courier;
   bool stopped;
   CVDisplayLinkRef m_displayLink;
 }
-- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)gr;
+- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)gr:(bool)fs;
 - (void)stop;
 
 @end
