@@ -39,6 +39,7 @@ prop_sub_t *js_event_sub;
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
 static JSObject *RichText;
+static JSObject *Link;
 struct js_plugin_list js_plugins;
 
 static JSClass global_class = {
@@ -245,6 +246,27 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
 
     prop_set_string_ex(p, NULL, JS_GetStringBytes(JS_ValueToString(cx, v2)),
 		       PROP_STR_RICH);
+    JS_LeaveLocalRootScope(cx);
+  } else if(JS_HasInstance(cx, Link, value, &b) && b) {
+    JSObject *o = JSVAL_TO_OBJECT(value);
+    jsval v1;
+    jsval v2;
+
+    if(!JS_EnterLocalRootScope(cx))
+      return;
+
+    if(!JS_GetProperty(cx, o, "title", &v1)) {
+      JS_LeaveLocalRootScope(cx);
+      return;
+    }
+    if(!JS_GetProperty(cx, o, "url", &v2)) {
+      JS_LeaveLocalRootScope(cx);
+      return;
+    }
+
+    prop_set_link(p,
+		  JS_GetStringBytes(JS_ValueToString(cx, v1)),
+		  JS_GetStringBytes(JS_ValueToString(cx, v2)));
     JS_LeaveLocalRootScope(cx);
   } else if(JSVAL_IS_STRING(value)) {
     js_prop_from_str(cx, p, value);
@@ -616,6 +638,28 @@ js_RichText(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_Link(JSContext *cx, JSObject *obj,
+	uintN argc, jsval *argv, jsval *rval)
+{
+  const char *title, *url;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ss", &title, &url))
+    return JS_FALSE;
+  jsval v1 = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, title));
+  jsval v2 = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
+
+  JS_SetProperty(cx, obj, "title", &v1);
+  JS_SetProperty(cx, obj, "url", &v2);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static void
 plugin_finalize(JSContext *cx, JSObject *obj)
 {
@@ -923,6 +967,7 @@ js_init(void)
 {
   JSContext *cx;
   jsval val;
+  JSFunction *fn;
 
   js_page_init();
 
@@ -944,9 +989,11 @@ js_init(void)
   JS_SetProperty(cx, showtimeobj, "currentVersionString", &val);
 
 
-  JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
-				     js_RichText, 1, 0);
+  fn = JS_DefineFunction(cx, showtimeobj, "RichText", js_RichText, 1, 0);
   RichText = JS_GetFunctionObject(fn);
+
+  fn = JS_DefineFunction(cx, showtimeobj, "Link", js_Link, 2, 0);
+  Link = JS_GetFunctionObject(fn);
 	     
   JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
