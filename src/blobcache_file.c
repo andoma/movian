@@ -298,7 +298,7 @@ load_index(void)
 
     in += sizeof(blobcache_diskitem_t);
     if(etaglen) {
-      p->bi_etag = malloc(etaglen);
+      p->bi_etag = malloc(etaglen+1);
       memcpy(p->bi_etag, in, etaglen);
       p->bi_etag[etaglen] = 0;
       in += etaglen;
