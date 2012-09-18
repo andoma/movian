@@ -853,7 +853,6 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
 
   case TOKEN_VECTOR:
-    glw_view_print_tree(t, 0);
     if(w->glw_class->gc_set_sources != NULL)
       w->glw_class->gc_set_sources(w, build_rstr_vector(t));
     return 0;
