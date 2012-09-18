@@ -5554,6 +5554,47 @@ multiopt_storage_cb(void *opaque, rstr_t *rstr)
 
 
 /**
+ *
+ */
+static void
+multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
+		  multiopt_item_t **up)
+{
+  multiopt_item_t *mi;
+  TAILQ_FOREACH(mi, &x->q, mi_link)
+    if(!strcmp(rstr_get(d->t_link_rurl), rstr_get(mi->mi_value)))
+      break;
+    
+  if(mi == NULL) {
+    mi = calloc(1, sizeof(multiopt_item_t));
+    mi->mi_value = rstr_dup(d->t_link_rurl);
+  } else {
+    TAILQ_REMOVE(&x->q, mi, mi_link);
+    mi->mi_mark = 0;
+  }
+
+  if(x->userval != NULL && !strcmp(rstr_get(x->userval), 
+				   rstr_get(mi->mi_value)))
+    *up = mi;
+  rstr_set(&mi->mi_title, d->t_link_rtitle);
+  TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
+}
+
+
+/**
+ *
+ */
+static void
+multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
+		    multiopt_item_t **up)
+{
+  token_t *t;
+  for(t = t0->child; t != NULL; t = t->next)
+    if(t->type == TOKEN_LINK)
+      multiopt_add_link(x, t, up);
+}
+
+/**
  * 
  */
 static int 
@@ -5657,26 +5698,17 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
     if((d = token_resolve(ec, argv[i])) == NULL)
       return -1;
 
-    if(d->type != TOKEN_LINK)
-      continue;
+    switch(d->type) {
+    case TOKEN_LINK:
+      multiopt_add_link(x, d, &u);
+      break;
+    case TOKEN_VECTOR:
+      multiopt_add_vector(x, d, &u);
+      break;
 
-    TAILQ_FOREACH(mi, &x->q, mi_link)
-      if(!strcmp(rstr_get(d->t_link_rurl), rstr_get(mi->mi_value)))
-	break;
-    
-    if(mi == NULL) {
-      mi = calloc(1, sizeof(multiopt_item_t));
-      mi->mi_value = rstr_dup(d->t_link_rurl);
-    } else {
-      TAILQ_REMOVE(&x->q, mi, mi_link);
-      mi->mi_mark = 0;
-    }
-
-    if(x->userval != NULL && !strcmp(rstr_get(x->userval), 
-				     rstr_get(mi->mi_value)))
-      u = mi;
-    rstr_set(&mi->mi_title, d->t_link_rtitle);
-    TAILQ_INSERT_TAIL(&x->q, mi, mi_link);
+    default:
+      break;
+    } 
   }
 
   for(mi = TAILQ_FIRST(&x->q); mi != NULL; mi = n) {
