@@ -326,7 +326,7 @@ blobcache_put(const char *key, const char *stash,
   char filename[PATH_MAX];
   blobcache_item_t *p;
 
-  if(strlen(etag) > 255)
+  if(etag != NULL && strlen(etag) > 255)
     etag = NULL;
 
   hts_mutex_lock(&cache_lock);
