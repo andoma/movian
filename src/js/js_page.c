@@ -118,6 +118,8 @@ typedef struct js_model {
 
   char *jm_url;
 
+  struct js_subscription_list jm_subscriptions;
+
 } js_model_t;
 
 
@@ -906,11 +908,25 @@ static JSFunctionSpec model_functions[] = {
 /**
  *
  */
+static JSBool 
+js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc, 
+		  jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  return js_subscribe(cx, argc, argv, rval, jm->jm_root, "page",
+		      &jm->jm_subscriptions, jm->jm_pc,
+		      &jm->jm_subs);
+}
+
+/**
+ *
+ */
 static JSFunctionSpec page_functions[] = {
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
     JS_FS("dump",               js_page_dump,    0, 0, 0),
     JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
+    JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),
     JS_FS_END
 };
 

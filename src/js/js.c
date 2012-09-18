@@ -690,6 +690,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_service_flush_from_plugin(cx, jsp);
   js_setting_group_flush_from_plugin(cx, jsp);
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
+  js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
 }
 
 /**
@@ -785,6 +786,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("cacheGet",         js_cache_get, 2, 0, 0),
     JS_FS("cachePut",         js_cache_put, 4, 0, 0),
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
+    JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS_END
 };
 
@@ -1022,13 +1024,9 @@ static void
 js_fini(void)
 {
   js_plugin_t *jsp, *n;
-  JSContext *cx = js_global_cx;
+  JSContext *cx;
 
-  prop_unsubscribe(js_event_sub);
-
-  prop_courier_destroy(js_global_pc);
-
-  JS_SetContextThread(cx);
+  cx = js_newctx(NULL);
   JS_BeginRequest(cx);
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
@@ -1040,6 +1038,15 @@ js_fini(void)
 
   JS_EndRequest(cx);
   JS_GC(cx);
+  JS_DestroyContext(cx);
+
+
+  prop_unsubscribe(js_event_sub);
+
+  prop_courier_destroy(js_global_pc);
+
+  cx = js_global_cx;
+  JS_SetContextThread(cx);
   JS_DestroyContext(cx);
 
   JS_DestroyRuntime(runtime);
