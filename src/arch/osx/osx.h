@@ -28,7 +28,7 @@ extern prop_courier_t *mainloop_courier;
 /**
  *
  */
-@interface GLWView : NSOpenGLView
+@interface GLWView : NSOpenGLView  <NSWindowDelegate>
 {
   struct glw_root *gr;
   struct prop *eventSink;
@@ -52,6 +52,7 @@ extern prop_courier_t *mainloop_courier;
   NSWindow *window;
   GLWView *view;
   bool fullscreen;
+  bool minimized;
 
   CFRunLoopTimerRef timer;
 

@@ -344,7 +344,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   [wpf release];
   
   gr = root;
-
+  minimized = NO;
   eventSink = prop_create(gr->gr_prop, "eventSink");
 
   GLint one = 1;

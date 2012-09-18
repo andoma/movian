@@ -63,6 +63,20 @@
 }
 
 
+- (void)windowDidMiniaturize:(NSNotification *)notification
+{
+  [view windowDidMiniaturize:notification];
+  minimized = YES;
+}
+
+- (void)windowDidDeminiaturize:(NSNotification *)notification
+{
+  [view windowDidDeminiaturize:notification];
+  minimized = NO;
+}
+
+
+
 /**
  *
  */
