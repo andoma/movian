@@ -181,6 +181,19 @@ mainloop_courier_init(void)
 /**
  *
  */
+- (BOOL)applicationShouldHandleReopen:(NSApplication *)theApplication hasVisibleWindows:(BOOL)flag
+{
+  if(!flag) {
+    [[GLWUI alloc] init];
+    return NO;
+  }
+  return YES;
+}
+
+
+/**
+ *
+ */
 - (void)initAppleMenu
 {
   NSMenuItem *menuitem;
