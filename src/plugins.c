@@ -34,10 +34,29 @@
 #include "prop/prop_concat.h"
 #include "notifications.h"
 #include "upgrade.h"
+#include "misc/strtab.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
 #endif
+
+typedef enum {
+  PLUGIN_CAT_TV,
+  PLUGIN_CAT_VIDEO,
+  PLUGIN_CAT_MUSIC,
+  PLUGIN_CAT_CLOUD,
+  PLUGIN_CAT_OTHER,
+  PLUGIN_CAT_num,
+} plugin_type_t;
+
+static struct strtab catnames[] = {
+  { "tv",          PLUGIN_CAT_TV }, 
+  { "video",       PLUGIN_CAT_VIDEO },
+  { "music",       PLUGIN_CAT_MUSIC },
+  { "cloud",       PLUGIN_CAT_CLOUD },
+  { "other",       PLUGIN_CAT_OTHER },
+};
+
 
 
 static const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
@@ -291,7 +310,10 @@ plugin_fill_prop0(struct htsmsg *pm, struct prop *p,
 {
   const char *title = htsmsg_get_str(pm, "title") ?: pl->pl_id;
   const char *icon  = htsmsg_get_str(pm, "icon");
+  const char *cat   = htsmsg_get_str(pm, "category");
 
+  if(cat != NULL)
+    cat = val2str(str2val(cat, catnames), catnames);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SINGLETON,
 		 PROP_TAG_CALLBACK, plugin_event, pl,
@@ -304,6 +326,7 @@ plugin_fill_prop0(struct htsmsg *pm, struct prop *p,
   prop_link(pl->pl_status, prop_create(p, "status"));
 
   prop_set_string(prop_create(metadata, "title"), title);
+  prop_set_string(prop_create(metadata, "category"), cat ?: "other");
 
   prop_set_string_ex(prop_create(metadata, "description"),
 		     NULL,
@@ -575,6 +598,8 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
   char *result;
   htsmsg_t *json;
 
+  TRACE(TRACE_DEBUG, "plugins", "Loading repo from %s", repo);
+
   result = fa_load(repo, NULL, NULL, errbuf, errlen, NULL, 0, NULL, NULL);
   if(result == NULL)
     return NULL;
@@ -780,11 +805,12 @@ plugin_thread(void *aux)
 void
 plugins_init(const char *loadme, const char *repo, int sync_init)
 {
+  if(repo)
+    plugin_repo_url = repo;
   hts_mutex_init(&plugin_mutex);
   plugin_courier = prop_courier_create_waitable();
 
   plugins_setup_root_props();
-
 
   hts_mutex_lock(&plugin_mutex);
 
@@ -986,17 +1012,60 @@ plugin_open_start(prop_t *page)
 static void
 plugin_open_repo(prop_t *page)
 {
+  int i;
   struct prop_nf *pnf;
+  prop_concat_t *pc;
   prop_t *model = prop_create(page, "model");
   prop_set_string(prop_create(model, "type"), "directory");
-
+  
   prop_link(_p("Available plugins"),
 	    prop_create(prop_create(model, "metadata"), "title"));
 
-  pnf = prop_nf_create(prop_create(model, "nodes"),
-		       plugin_root_repo, NULL, PROP_NF_AUTODESTROY);
-  prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
-  prop_nf_release(pnf);
+  pc = prop_concat_create(prop_create(model, "nodes"), 0); // XXX leak
+
+  // Create filters per category
+
+  for(i = 0; i < PLUGIN_CAT_num; i++) {
+    prop_t *cat = prop_create(model, catnames[i].str);
+    pnf = prop_nf_create(cat, plugin_root_repo, NULL, PROP_NF_AUTODESTROY);
+    
+    prop_nf_pred_str_add(pnf, "node.metadata.category", 
+			 PROP_NF_CMP_NEQ, catnames[i].str, NULL,
+			 PROP_NF_MODE_EXCLUDE);
+    prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
+    prop_nf_release(pnf);
+
+
+    prop_t *header = prop_create_root(NULL);
+    
+    prop_set_string(prop_create(header, "type"), "separator");
+
+    prop_t *gn = NULL;
+    switch(i) {
+    case PLUGIN_CAT_TV:
+      gn = _p("Online TV");
+      break;
+
+    case PLUGIN_CAT_VIDEO:
+      gn = _p("Video streaming");
+      break;
+
+    case PLUGIN_CAT_MUSIC:
+      gn = _p("Music streaming");
+      break;
+
+    case PLUGIN_CAT_CLOUD:
+      gn = _p("Cloud services");
+      break;
+
+    default:
+      gn = _p("Uncategorized");
+      break;
+    }
+
+    prop_link(gn, prop_create(prop_create(header, "metadata"), "title"));
+    prop_concat_add_source(pc, cat, header);
+  }
 }
 
 
