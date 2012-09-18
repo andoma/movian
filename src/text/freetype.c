@@ -84,7 +84,7 @@ typedef struct face {
 } face_t;
 
 static struct face_queue faces;
-static face_t *default_font, *default_font_ui, *default_font_subs;
+static face_t *default_font;
 
 
 //------------------------- Glyph cache -----------------------
@@ -385,7 +385,7 @@ face_is_family(face_t *f, const char *family, int domain, int fuzzyness)
  */
 static face_t *
 face_resolve(int uc, uint8_t style, const char *font, int font_domain,
-	     int subs, const char **vpaths)
+	     const char **vpaths)
 {
   face_t *f = NULL;
   if(font != NULL) {
@@ -413,15 +413,6 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
 	f = NULL;
     }
   }
-
-  if(subs && default_font_subs != NULL &&
-     FT_Get_Char_Index(default_font_subs->face, uc))
-    f = default_font_subs;
-
-  if(!subs && default_font_ui != NULL &&
-     FT_Get_Char_Index(default_font_ui->face, uc))
-    f = default_font_ui;
-
 
   // Try default font
   if(f == NULL && default_font != NULL)
@@ -457,9 +448,9 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
  */
 static face_t *
 face_find(int uc, uint8_t style, const char *family, int font_domain,
-	  int subs, const char **vpaths)
+	  const char **vpaths)
 {
-  face_t *f = face_resolve(uc, style, family, font_domain, subs, vpaths);
+  face_t *f = face_resolve(uc, style, family, font_domain, vpaths);
 
 #if 0
   printf("Resolv %c (0x%x) [style=0x%x, font: %s] -> %s\n",
@@ -495,7 +486,7 @@ face_set_size(face_t *f, int size)
  */
 static glyph_t *
 glyph_get(int uc, int size, uint8_t style, const char *font,
-	  int font_domain, int subs, const char **vpaths)
+	  int font_domain, const char **vpaths)
 {
   int err, hash = (uc ^ size ^ style) & GLYPH_HASH_MASK;
   glyph_t *g;
@@ -523,10 +514,10 @@ glyph_get(int uc, int size, uint8_t style, const char *font,
     face_t *f;
     FT_UInt gi = 0;
 
-    f = face_find(uc, style, font, font_domain, subs, vpaths);
+    f = face_find(uc, style, font, font_domain, vpaths);
 
     if(f == NULL) {
-      f = face_find(uc, 0, font, font_domain, subs, vpaths);
+      f = face_find(uc, 0, font, font_domain, vpaths);
       if(f == NULL)
 	return NULL;
     }
@@ -587,19 +578,6 @@ glyph_flush_one(void)
   glyph_t *g = TAILQ_FIRST(&allglyphs);
   assert(g != NULL);
   glyph_destroy(g);
-}
-
-
-/**
- *
- */
-static void
-glyph_flush_all(void)
-{
-  glyph_t *g;
-
-  while((g = TAILQ_FIRST(&allglyphs)) != NULL)
-    glyph_destroy(g);
 }
 
 
@@ -1095,7 +1073,7 @@ text_render0(const uint32_t *uc, const int len,
       li->start = out;
 
     if((g = glyph_get(uc[i], current_size, style, current_font, current_domain,
-		      flags & TR_RENDER_SUBS, vpaths)) == NULL)
+		      vpaths)) == NULL)
       continue;
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
@@ -1197,7 +1175,7 @@ text_render0(const uint32_t *uc, const int len,
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
 				  g->face->url, g->face->font_domain,
-				  flags & TR_RENDER_SUBS, vpaths);
+				  vpaths);
 	  if(w + d > max_width - eg->adv_x ) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
@@ -1399,8 +1377,6 @@ freetype_set_fontptr(face_t **ptr, const char *url)
     if(*ptr != NULL)
       (*ptr)->persistent++;
   }
-  glyph_flush_all();
-  event_to_ui(event_create_type(EVENT_REPAINT_UI));
 }
 
 
@@ -1412,30 +1388,6 @@ freetype_set_default_font(const char *url)
 {
   hts_mutex_lock(&text_mutex);
   freetype_set_fontptr(&default_font, url);
-  hts_mutex_unlock(&text_mutex);
-}
-
-
-/**
- *
- */
-void
-freetype_set_default_ui_font(const char *url)
-{
-  hts_mutex_lock(&text_mutex);
-  freetype_set_fontptr(&default_font_ui, url);
-  hts_mutex_unlock(&text_mutex);
-}
-
-
-/**
- *
- */
-void
-freetype_set_default_subs_font(const char *url)
-{
-  hts_mutex_lock(&text_mutex);
-  freetype_set_fontptr(&default_font_subs, url);
   hts_mutex_unlock(&text_mutex);
 }
 

@@ -6,7 +6,6 @@ widget(container_y, {
   widget(label, {
     hidden: !$self.metadata.title;
     sizeScale: 1.5;
-    font: $ui.font;
     shadow: true;
     outline: true;
     caption: $self.metadata.title;

@@ -1,4 +1,7 @@
+setDefaultFont($global.fonts.main);
 $ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
+$ui.condensedfont = $global.fonts.condensed ?? 
+  "theme://fonts/OpenSans-CondBold.ttf";
 
 onEvent(logwindow, {
   $ui.logwindow = !$ui.logwindow;
@@ -125,7 +128,6 @@ widget(container_z, {
 
 	  widget(label, {
 	    caption: $self.text;
-	    font: $ui.font;
 	    shadow: true;
 	    sizeScale: 1.5;
 	    color: translate($self.type, [1,1,1],

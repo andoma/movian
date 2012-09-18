@@ -23,7 +23,6 @@ widget(backdrop, {
     widget(label, {
       weight: 0.1;
       filterConstraintX: true;
-      font: $ui.font;
       shadow: true;
       color: select(isFocused(), 1.0, 0.6);
       
@@ -34,7 +33,6 @@ widget(backdrop, {
 
     widget(label, {
       filterConstraintX: true;
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6);
@@ -45,7 +43,6 @@ widget(backdrop, {
 
     widget(label, {
       filterConstraintX: true;
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6);
@@ -58,7 +55,6 @@ widget(backdrop, {
       align: right;
       weight: 0.2;
       filterConstraintX: true;
-      font: $ui.font;
       shadow: true;
       color: select(isFocused(), 1.0, 0.6);
       

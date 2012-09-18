@@ -40,7 +40,6 @@ $view.sizer = $ui.size / 2;
 	      border: 16;
 	      padding: [-4, -12];
 	      widget(label, {
-		font: $ui.font;
 		outline: true;
 		shadow: true;
 		caption: BADGE;
@@ -54,7 +53,6 @@ $view.sizer = $ui.size / 2;
     
     widget(label, {
       caption: CAPTION;
-      font: $ui.font;
       outline: true;
       shadow: true;
       align: center;

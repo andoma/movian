@@ -694,6 +694,7 @@ typedef struct glw_root {
   hts_thread_t gr_font_thread;
   int gr_font_thread_running;
 
+  rstr_t *gr_default_font;
   int gr_font_domain;
 
   /**

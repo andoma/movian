@@ -58,7 +58,7 @@ widget(container_y, {
 		      align: center;
 		      shadow: true;
 		      outline: true;
-		      font: "theme://fonts/OpenSans-CondBold.ttf";
+		      font: $ui.condensedfont;
 		    });
 		  });
 		});

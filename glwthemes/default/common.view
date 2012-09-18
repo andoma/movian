@@ -13,7 +13,6 @@
 #define PageTitle(CAPTION) {
   widget(label, {
     height: $ui.size * 2;
-    font: $ui.font;
     shadow: true;
     outline: true;
     sizeScale: 2;
@@ -24,7 +23,6 @@
 
 
 #define TextStyleItem() {
-  font: $ui.font;
   shadow: true;
   outline: true;
 }

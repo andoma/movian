@@ -17,7 +17,6 @@ widget(backdrop, {
     widget(dummy, {width: $ui.size;});
 
     widget(label, {
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6) * 

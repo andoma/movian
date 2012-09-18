@@ -37,7 +37,8 @@ typedef struct font {
   prop_t *f_status;
   prop_t *f_prop_installed;
 
-  prop_t *f_prop_uifont;
+  prop_t *f_prop_mainfont;
+  prop_t *f_prop_condfont;
   prop_t *f_prop_subfont;
 
   rstr_t *f_installed_path;
@@ -47,6 +48,7 @@ typedef struct font {
 static htsmsg_t *store;
 static hts_mutex_t font_mutex;
 static struct font_list fonts;
+static prop_t *font_prop_main, *font_prop_cond, *font_prop_subs;
 
 /**
  *
@@ -64,7 +66,8 @@ font_find(const char *title)
   f->f_title = strdup(title);
   f->f_status = prop_create_root(NULL);
   f->f_prop_installed = prop_create(f->f_status, "installed");
-  f->f_prop_uifont    = prop_create(f->f_status, "uifont");
+  f->f_prop_mainfont    = prop_create(f->f_status, "mainfont");
+  f->f_prop_condfont  = prop_create(f->f_status, "condfont");
   f->f_prop_subfont   = prop_create(f->f_status, "subfont");
   LIST_INSERT_HEAD(&fonts, f, f_link);
   return f;
@@ -78,9 +81,19 @@ static void
 clear_font_prop(int which)
 {
   font_t *f;
-  LIST_FOREACH(f, &fonts, f_link)
-    prop_set_int(which ? f->f_prop_subfont : f->f_prop_uifont, 0);
-
+  LIST_FOREACH(f, &fonts, f_link) {
+    switch(which) {
+    case 0:
+      prop_set_int(f->f_prop_mainfont, 0);
+      break;
+    case 1:
+      prop_set_int(f->f_prop_condfont, 0);
+      break;
+    case 2:
+      prop_set_int(f->f_prop_subfont, 0);
+      break;
+    }
+  }
 }
 
 
@@ -141,34 +154,54 @@ static void
 use_font(font_t *f, const char *url)
 {
   char tmp[256];
-  const char *msgs[3];
+  const char *msgs[4];
   rstr_t *fmt = _("Use font %s for");
   rstr_t *ui = _("User interface");
+  rstr_t *cond = _("Narrow text");
   rstr_t *subs = _("Subtitles");
 
   snprintf(tmp, sizeof(tmp), rstr_get(fmt), f->f_title);
   
   msgs[0] = rstr_get(ui);
-  msgs[1] = rstr_get(subs);
-  msgs[2] = NULL;
+  msgs[1] = rstr_get(cond);
+  msgs[2] = rstr_get(subs);
+  msgs[3] = NULL;
 
   int r = message_popup(tmp, MESSAGE_POPUP_CANCEL, msgs);
   rstr_release(fmt);
   rstr_release(ui);
+  rstr_release(cond);
   rstr_release(subs);
 
   if(r == MESSAGE_POPUP_CANCEL)
     return;
 
   font_install(f, url);
-
-  if(r == 1) {
+  
+  switch(r) {
+  case 1:
     clear_font_prop(0);
-    htsmsg_delete_field(store, "uifont");
-    htsmsg_add_str(store, "uifont", f->f_title);
-    freetype_set_default_ui_font(rstr_get(f->f_installed_path));
-    prop_set_int(f->f_prop_uifont, 1);
+    htsmsg_delete_field(store, "mainfont");
+    htsmsg_add_str(store, "mainfont", f->f_title);
+    prop_set_rstring(font_prop_main, f->f_installed_path);
+    prop_set_int(f->f_prop_mainfont, 1);
+    break;
+  case 2:
+    clear_font_prop(1);
+    htsmsg_delete_field(store, "condfont");
+    htsmsg_add_str(store, "condfont", f->f_title);
+    prop_set_rstring(font_prop_cond, f->f_installed_path);
+    prop_set_int(f->f_prop_condfont, 1);
+    break;
+  case 3:
+    clear_font_prop(2);
+    htsmsg_delete_field(store, "subfont");
+    htsmsg_add_str(store, "subfont", f->f_title);
+    prop_set_rstring(font_prop_subs, f->f_installed_path);
+    prop_set_int(f->f_prop_subfont, 1);
+    break;
   }
+
   htsmsg_store_save(store, "fontstash");
 }
 
@@ -237,6 +270,12 @@ fontstash_props_from_title(struct prop *prop, const char *url,
 void
 fontstash_init(void)
 {
+  prop_t *fonts = prop_create(prop_get_global(), "fonts");
+
+  font_prop_main = prop_create(fonts, "main");
+  font_prop_cond = prop_create(fonts, "condensed");
+  font_prop_subs = prop_create(fonts, "subs");
+
   if((store = htsmsg_store_load("fontstash")) == NULL)
     store = htsmsg_create_map();
 
@@ -252,8 +291,9 @@ fontstash_init(void)
   if(fd == NULL)
     return;
 
-  const char *uifont  = htsmsg_get_str(store, "uifont");
-  const char *subfont = htsmsg_get_str(store, "subfont");
+  const char *mainfont = htsmsg_get_str(store, "mainfont");
+  const char *condfont = htsmsg_get_str(store, "condfont");
+  const char *subfont  = htsmsg_get_str(store, "subfont");
 
   fa_dir_entry_t *fde;
   TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
@@ -261,13 +301,18 @@ fontstash_init(void)
     f->f_installed_path = rstr_dup(fde->fde_url);
     prop_set_int(f->f_prop_installed, 1);
 
-    if(uifont && !strcmp(f->f_title, uifont)) {
-      freetype_set_default_ui_font(rstr_get(f->f_installed_path));
-      prop_set_int(f->f_prop_uifont, 1);
+    if(mainfont && !strcmp(f->f_title, mainfont)) {
+      prop_set_rstring(font_prop_main, f->f_installed_path);
+      prop_set_int(f->f_prop_mainfont, 1);
+    }
+
+    if(condfont && !strcmp(f->f_title, condfont)) {
+      prop_set_rstring(font_prop_cond, f->f_installed_path);
+      prop_set_int(f->f_prop_condfont, 1);
     }
 
     if(subfont && !strcmp(f->f_title, subfont)) {
-      freetype_set_default_ui_font(rstr_get(f->f_installed_path));
+      prop_set_rstring(font_prop_subs, f->f_installed_path);
       prop_set_int(f->f_prop_subfont, 1);
     }
   }

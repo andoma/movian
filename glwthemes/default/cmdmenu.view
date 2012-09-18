@@ -67,7 +67,6 @@ $view.sizer = $ui.size / 5;
 
     widget(label, {
       caption: CAPTION;
-      font: $ui.font;
       shadow: true;
       outline: true;
       alpha: iir($view.ID, 6);
@@ -139,7 +138,6 @@ $view.sizer = $ui.size / 5;
 
     widget(label, {
       caption: select(STATE, CAPTION2, CAPTION1);
-      font: $ui.font;
       shadow: true;
       outline: true;
       alpha: iir($view.ID, 6);
@@ -260,7 +258,6 @@ widget(list_y, {
 
 	  widget(label, {
 	    align: bottom;
-	    font: $ui.font;
 	    shadow: true;
 	    outline: true;
 	    caption: value2duration($self.timestamp);

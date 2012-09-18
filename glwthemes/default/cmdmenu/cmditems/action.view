@@ -14,7 +14,6 @@ widget(backdrop, {
 	$args.close = true;
       });
 
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6);

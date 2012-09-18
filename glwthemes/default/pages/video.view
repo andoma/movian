@@ -1,14 +1,12 @@
 #import "theme://common.view"
 
 #define InfoLabel() {
-  font: $ui.font;
   shadow: true;
   outline: true;
   color: 0.6;
 }
 
 #define OSD() {
-  font: $ui.font;
   shadow: true;
   outline: true;
   ellipsize: true;

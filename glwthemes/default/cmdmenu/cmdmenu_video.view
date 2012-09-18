@@ -219,7 +219,6 @@ widget(deck, {
 	    
 	    widget(label, {
 	      align: bottom;
-	      font: $ui.font;
 	      shadow: true;
 	      outline: true;
 	      caption: value2duration($self.timestamp);

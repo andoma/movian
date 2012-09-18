@@ -333,6 +333,7 @@ void
 glw_fini(glw_root_t *gr)
 {
   glw_text_bitmap_fini(gr);
+  free(gr->gr_default_font);
   glw_tex_fini(gr);
   free(gr->gr_theme);
   glw_fini_settings(gr);

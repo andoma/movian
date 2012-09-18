@@ -3,7 +3,6 @@ widget(container_x, {
   widget(dummy, { width: $ui.size;});
 
   widget(label, {
-    font: $ui.font;
     shadow: true;
     outline: true;
     

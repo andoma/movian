@@ -33,7 +33,6 @@ widget(backdrop, {
     widget(container_y, {
       align: center;
       widget(label, {
-	font: $ui.font;
 	shadow: true;
 	outline: true;
 	color: select(isFocused(), 1.0, 0.6);
@@ -44,7 +43,6 @@ widget(backdrop, {
 
       widget(label, {
 	hidden: !$self.metadata.shortdesc;
-	font: $ui.font;
 	shadow: true;
 	outline: true;
 	color: select(isFocused(), 1.0, 0.6);

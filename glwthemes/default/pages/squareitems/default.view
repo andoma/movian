@@ -30,14 +30,14 @@ widget(frontdrop, {
 	    caption: $self.metadata.title;
 	    shadow: true;
 	    outline: true;
-	    font: "theme://fonts/OpenSans-CondBold.ttf";
+	    font: $ui.condensedfont;
 	  });
 	  widget(label, {
 	    color: iir(isFocused(), 4) + 0.3;
 	    caption: $self.metadata.artist;
 	    shadow: true;
 	    outline: true;
-	    font: "theme://fonts/OpenSans-CondBold.ttf";
+	    font: $ui.condensedfont;
 	  });
 	});
       });

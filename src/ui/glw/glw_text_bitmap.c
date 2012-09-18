@@ -1117,8 +1117,13 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     break;
   }
 
-  font = rstr_dup(gtb->gtb_font);
+  if(gtb->gtb_font != NULL)
+    font = rstr_dup(gtb->gtb_font);
+  else
+    font = rstr_dup(gr->gr_default_font);
 
+  if(gtb->w.glw_flags & GLW_DEBUG)
+    printf("Font is %s\n", rstr_get(font));
 
   /* gtb (i.e the widget) may be destroyed directly after we unlock,
      so we can't access it after this point. We can hold a reference

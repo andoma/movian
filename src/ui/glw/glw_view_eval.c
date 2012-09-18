@@ -32,8 +32,8 @@
 #include "prop/prop_grouper.h"
 #include "prop/prop_nodefilter.h"
 #include "arch/arch.h"
-#include "text/text.h"
 #include "fileaccess/fileaccess.h"
+#include "glw_text_bitmap.h"
 
 LIST_HEAD(clone_list, glw_clone);
 TAILQ_HEAD(vectorizer_element_queue, vectorizer_element);
@@ -561,6 +561,22 @@ token2bool(token_t *t)
     return 1;
   }
 }
+
+
+/**
+ *
+ */
+static rstr_t *
+token2rstr(token_t *t)
+{
+  if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+    return rstr_dup(t->t_rstring);
+  if(t->type == TOKEN_CSTRING)
+    return rstr_alloc(t->t_cstring);
+  return NULL;
+}
+
+
 
 static int eval_op_xor(int a, int b) { return a ^ b; }
 static int eval_op_or (int a, int b) { return a | b; }
@@ -5788,6 +5804,26 @@ glwf_canSelectPrev(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Set default font
+ */
+static int 
+glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
+		    token_t **argv, unsigned int argc)
+{
+  token_t *a = argv[0];
+  
+  if((a = token_resolve(ec, a)) == NULL)
+    return -1;
+  
+  rstr_t *r = token2rstr(a);
+  rstr_set(&ec->w->glw_root->gr_default_font, r);
+  rstr_release(r);
+  glw_text_flush(ec->w->glw_root);
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -5855,6 +5891,7 @@ static const token_func_t funcvec[] = {
   {"link", 2, glwf_link},
   {"canSelectNext", 0, glwf_canSelectNext},
   {"canSelectPrevious", 0, glwf_canSelectPrev},
+  {"setDefaultFont", 1, glwf_setDefaultFont},
 };
 
 

@@ -10,7 +10,6 @@ widget(backdrop, {
     widget(dummy, { width: $ui.size;});
 
     widget(label, {
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6);
@@ -41,7 +40,6 @@ widget(backdrop, {
 	  filterConstraintX: true;
 	  focusable: true;
 	  sizeScale: 0.8;
-	  font: $ui.font;
 	  shadow: true;
 	  outline: true;
 	  password: $self.password;

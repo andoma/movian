@@ -103,10 +103,6 @@ struct rstr *freetype_get_family(void *handle);
 
 struct rstr *freetype_get_identifier(void *handle);
 
-void freetype_set_default_ui_font(const char *url);
-
-void freetype_set_default_subs_font(const char *url);
-
 #endif
 
 void fontstash_init(void);

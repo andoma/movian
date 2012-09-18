@@ -9,7 +9,6 @@ widget(backdrop, {
     widget(label, {
       focusable: true;
       onEvent(activate, deliverEvent($self.action));
-      font: $ui.font;
       shadow: true;
       outline: true;
       color: select(isFocused(), 1.0, 0.6);
