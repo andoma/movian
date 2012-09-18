@@ -566,9 +566,9 @@ settings_create_divider(prop_t *parent, prop_t *caption)
 setting_t *
 settings_create_action(prop_t *parent, prop_t *title,
 		       prop_callback_t *cb, void *opaque,
-		       prop_courier_t *pc)
+		       int flags, prop_courier_t *pc)
 {
-  setting_t *s = setting_create_leaf(parent, title, "action", "action", 0);
+  setting_t *s = setting_create_leaf(parent, title, "action", "action", flags);
   s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			    PROP_TAG_CALLBACK, cb, opaque,
 			    PROP_TAG_ROOT, s->s_val,

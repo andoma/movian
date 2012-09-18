@@ -4547,10 +4547,10 @@ be_spotify_init(void)
 		       settings_generic_save_settings, (void *)"spotify");
 
   settings_create_action(s, _p("Relogin (switch user)"),
-			 spotify_relogin, NULL, spotify_courier);
+			 spotify_relogin, NULL, 0, spotify_courier);
 
   settings_create_action(s, _p("Forget me"),
-			 spotify_forget_me, NULL, spotify_courier);
+			 spotify_forget_me, NULL, 0, spotify_courier);
 
   prop_link(settings_get_value(ena),
 	    prop_create(spotify_service->s_root, "enabled"));

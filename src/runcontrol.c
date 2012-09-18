@@ -176,13 +176,13 @@ runcontrol_init(void)
 
   if(gconf.can_poweroff)
     settings_create_action(settings_general, _p("Power off system"),
-			   do_power_off, NULL, NULL);
+			   do_power_off, NULL, 0, NULL);
 
   if(gconf.can_logout)
     settings_create_action(settings_general, _p("Logout"),
-			   do_logout, NULL, NULL);
+			   do_logout, NULL, 0, NULL);
 
   if(gconf.can_open_shell)
     settings_create_action(settings_general, _p("Open shell"),
-			   do_open_shell, NULL, NULL);
+			   do_open_shell, NULL, 0, NULL);
 }

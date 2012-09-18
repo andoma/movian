@@ -61,7 +61,7 @@ keyring_init(void)
   temporary_keyring = htsmsg_create_map();
 
   settings_create_action(settings_general, _p("Forget remembered passwords"),
-			 keyring_clear, NULL, NULL);
+			 keyring_clear, NULL, 0, NULL);
 }
 
 

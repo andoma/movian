@@ -749,7 +749,7 @@ blobcache_init(void)
 	pool_num(item_pool), current_cache_size, buf);
 
   settings_create_action(settings_general, _p("Clear cached files"),
-			 cache_clear, NULL, NULL);
+			 cache_clear, NULL, 0, NULL);
 }
 
 

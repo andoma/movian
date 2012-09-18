@@ -982,7 +982,7 @@ bookmark_add(const char *title, const char *url, const char *type,
 		       service_get_statustxt_prop(bm->bm_service));
 
   bm->bm_delete = 
-    settings_create_action(m, _p("Delete"), bm_delete, bm, nav_courier);
+    settings_create_action(m, _p("Delete"), bm_delete, bm, 0, nav_courier);
 
   if(prop_set_parent(p, bookmark_nodes))
     abort();
