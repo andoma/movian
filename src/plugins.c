@@ -644,12 +644,9 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
  *
  */
 static void
-plugins_load(void)
+plugin_load_repo(void)
 {
   char errbuf[512];
-
-  plugin_load_installed();
-  
   htsmsg_t *r = repo_get(get_repo(), errbuf, sizeof(errbuf));
   
   if(r != NULL) {
@@ -683,6 +680,17 @@ plugins_load(void)
     TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
 	  get_repo(), errbuf);
   }
+}
+
+
+/**
+ *
+ */
+static void
+plugins_load(void)
+{
+  plugin_load_installed();
+  plugin_load_repo();
   update_global_state();
   plugin_autoupgrade();
 }
