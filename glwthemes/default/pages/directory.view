@@ -15,6 +15,8 @@ multiopt($view.path,
 	 // List of view follows
 	 link(_("Custom"), $page.model.metadata.glwview),
 
+	 vectorize($page.model.metadata.glwviews),
+
 	 translate($page.model.contents, void,
 		   "album", link(_("Album"), "album.view"),
 		   "artist", link(_("Artist"), "artist.view"),
