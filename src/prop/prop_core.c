@@ -2161,11 +2161,12 @@ prop_subscribe(int flags, ...)
 
 	for(s = s0; *s != 0; s++) {
 	  if(*s == '.') {
-	    assert(s != s0);
 	    len = s - s0;
-	    nv[ptr] = alloca(len + 1);
-	    memcpy(nv[ptr], s0, len);
-	    nv[ptr++][len] = 0;
+	    if(len > 0) {
+	      nv[ptr] = alloca(len + 1);
+	      memcpy(nv[ptr], s0, len);
+	      nv[ptr++][len] = 0;
+	    }
 	    s0 = s + 1;
 	  }
 	}
@@ -2174,8 +2175,7 @@ prop_subscribe(int flags, ...)
 	nv[ptr] = alloca(len + 1);
 	memcpy(nv[ptr], s0, len);
 	nv[ptr++][len] = 0;
-	assert(ptr == segments);
-	nv[segments] = NULL;
+	nv[ptr] = NULL;
       } while(0);
       break;
 
