@@ -1,0 +1,19 @@
+widget(container_x, {
+  spacing: 13;
+  widget(dummy, { width: $ui.size;});
+
+  widget(label, {
+    shadow: true;
+    outline: true;
+    
+    caption: $self.description;
+    maxlines: 10;
+  });
+
+  widget(icon, {
+    hidden: !$self.image;
+    sizeScale: 4;
+    source: $self.image;
+    align: top;
+  });
+});

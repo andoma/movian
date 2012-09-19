@@ -273,6 +273,8 @@ typedef struct spotify_page {
   prop_t *sp_album_year;
   prop_t *sp_album_art;
   prop_t *sp_artist_name;
+  prop_t *sp_artist_portrait;
+  prop_t *sp_artist_bio;
   prop_t *sp_numtracks;
   prop_t *sp_user;
 
@@ -370,6 +372,25 @@ static void spotify_shutdown_late(void *opaque, int retcode);
 
 static void spotify_try_pending(void);
 
+
+/**
+ *
+ */
+static void
+add_sep(prop_t *parent, prop_t *title)
+{
+  prop_t *p = prop_create_root(NULL);
+  prop_t *metadata = prop_create(p, "metadata");
+
+  prop_set_string(prop_create(p, "type"), "separator");
+
+  prop_link(title, prop_create(metadata, "title"));
+  if(prop_set_parent(p, parent))
+    prop_destroy(p);
+}
+
+
+
 /**
  *
  */
@@ -460,6 +481,8 @@ spotify_page_destroy(spotify_page_t *sp)
   prop_ref_dec(sp->sp_album_year);
   prop_ref_dec(sp->sp_album_art);
   prop_ref_dec(sp->sp_artist_name);
+  prop_ref_dec(sp->sp_artist_portrait);
+  prop_ref_dec(sp->sp_artist_bio);
   prop_ref_dec(sp->sp_urlprop);
 
   prop_ref_dec(sp->sp_nodes);
@@ -955,6 +978,23 @@ set_image_uri(prop_t *p, link_fn_t *link_fn, void *entity)
   rstr_release(rstr);
 }
 
+
+/**
+ *
+ */
+static void
+set_image_uri2(prop_t *p, sp_link *link)
+{
+  char url[512];
+  if(link == NULL)
+    return;
+
+  if(f_sp_link_as_string(link, url, sizeof(url)))
+    prop_set_string(p, url);
+  f_sp_link_release(link);
+}
+
+
 /**
  *
  */
@@ -1416,39 +1456,6 @@ spotify_browse_album_callback(sp_albumbrowse *result, void *userdata)
 
 
 /**
- * Helper struct for artist browse
- */
-typedef struct album {
-  sp_album *album;
-  sp_albumtype type;
-} album_t;
-
-
-/**
- *
- */
-static int
-album_cmp(const void *A, const void *B)
-{
-  const album_t *a = A;
-  const album_t *b = B;
-
-  if(a->type < b->type)
-    return -1;
-  if(a->type > b->type)
-    return 1;
-  
-  if(f_sp_album_year(a->album) > f_sp_album_year(b->album))
-    return -1;
-  if(f_sp_album_year(a->album) < f_sp_album_year(b->album))
-    return 1;
-
-  return strcasecmp(f_sp_album_name(a->album), f_sp_album_name(b->album));
-}
-
-
-
-/**
  *
  */
 static sp_albumtype
@@ -1460,7 +1467,8 @@ my_album_type(sp_album *alb, sp_artist *a0)
 
 
 static void
-spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
+spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent,
+		  int artistalbum)
 {
   prop_t *metadata;
   prop_t *p = prop_create_root(NULL);
@@ -1468,10 +1476,19 @@ spotify_add_album(sp_album *album, sp_artist *artist, prop_t *parent)
 
   spotify_make_link(f_sp_link_create_from_album(album), link, sizeof(link));
   prop_set_string(prop_create(p, "url"), link);
-  prop_set_string(prop_create(p, "type"), "album");
+
+  prop_t *type = prop_create(p, "type");
+  if(artistalbum)
+    prop_set_string(type, "artistalbum");
+  else
+    prop_set_string(type, "album");
   
   metadata = prop_create(p, "metadata");
   prop_set_string(prop_create(metadata, "title"), f_sp_album_name(album));
+
+  int year = f_sp_album_year(album);
+  if(year)
+    prop_set_int(prop_create(metadata, "album_year"), year);
   
   spotify_make_link(f_sp_link_create_from_artist(artist), link, sizeof(link));
   prop_set_link(prop_create(metadata, "artist"),
@@ -1492,25 +1509,32 @@ static void
 spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
 {
   browse_helper_t *bh = userdata;
-  int nalbums = 0, i, j;
-  sp_album *album;
+  int nalbums = 0, i;
+  sp_album *album, *prev = NULL;
   sp_artist *artist;
-  album_t *av;
-  album_t *last = NULL;
+  int current_type = -1;
 
   if(f_sp_artistbrowse_error(result)) {
     bh_error(bh, "Artist not found");
   } else {
 
-    // libspotify does not return the albums in any particular order.
-    // thus, we need to do some sorting and filtering
 
     nalbums = f_sp_artistbrowse_num_albums(result);
     artist = f_sp_artistbrowse_artist(result);
+
+
+    int np = f_sp_artistbrowse_num_portraits(result);
+    for(i = 0; i < np; i++) {
+      prop_t *p = prop_create_r(bh->sp->sp_artist_portrait, NULL);
+      set_image_uri2(p, 
+		     f_sp_link_create_from_artistbrowse_portrait(result, i));
+      prop_ref_dec(p);
+    }
+
     prop_set_string(bh->sp->sp_title, f_sp_artist_name(artist));
 
-    av = malloc(nalbums * sizeof(album_t));
-    j = 0;
+    prop_set_string_ex(bh->sp->sp_artist_bio, NULL,
+		       f_sp_artistbrowse_biography(result), PROP_STR_RICH);
 
     for(i = 0; i < nalbums; i++) {
       album = f_sp_artistbrowse_album(result, i);
@@ -1518,23 +1542,38 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
       if(!f_sp_album_is_available(album))
 	continue;
 
-      av[j].type = my_album_type(album, artist);
-      av[j++].album = album;
+      sp_albumtype t = my_album_type(album, artist);
+
+      if(t < SP_ALBUMTYPE_COMPILATION && prev != NULL) {
+	if(!strcmp(f_sp_album_name(album), f_sp_album_name(prev)))
+	  continue;
+      }
+
+      if(t != current_type) {
+	current_type = t;
+	prop_t *title;
+	switch(current_type) {
+	case SP_ALBUMTYPE_ALBUM:
+	  title = _p("Albums");
+	  break;
+	case SP_ALBUMTYPE_SINGLE:
+	  title = _p("Singles");
+	  break;
+	case SP_ALBUMTYPE_COMPILATION:
+	  title = _p("Compilations");
+	  break;
+	default:
+	  title = NULL;
+	  break;
+	}
+	if(title)
+	  add_sep(bh->sp->sp_items, title);
+      }
+
+      spotify_add_album(album, artist, bh->sp->sp_items,
+			t < SP_ALBUMTYPE_COMPILATION);
+      prev = album;
     }
-
-    qsort(av, j, sizeof(album_t), album_cmp);
-
-    for(i = 0; i < j; i++) {
-      album_t *a = av + i;
-
-      if(last != NULL && !strcmp(f_sp_album_name(a->album),
-				 f_sp_album_name(last->album)))
-	continue;
-      spotify_add_album(a->album, artist, bh->sp->sp_items);
-      last = a;
-    }
-    free(av);
-
     spotify_metadata_updated(spotify_session);
   }
 
@@ -1551,7 +1590,7 @@ static void
 spotify_open_artist(sp_link *l, spotify_page_t *sp)
 {
   sp_artist *artist = f_sp_link_as_artist(l);
-  prop_set_string(sp->sp_contents, "items");
+  prop_set_string(sp->sp_contents, "artist");
 
   f_sp_artistbrowse_create(spotify_session, artist,
 			   SP_ARTISTBROWSE_NO_TRACKS,
@@ -1759,23 +1798,6 @@ add_dir(prop_t *parent, const char *url, prop_t *title, const char *subtype)
  *
  */
 static void
-add_sep(prop_t *parent, prop_t *title)
-{
-  prop_t *p = prop_create_root(NULL);
-  prop_t *metadata = prop_create(p, "metadata");
-
-  prop_set_string(prop_create(p, "type"), "separator");
-
-  prop_link(title, prop_create(metadata, "title"));
-  if(prop_set_parent(p, parent))
-    prop_destroy(p);
-}
-
-
-/**
- *
- */
-static void
 startpage(spotify_page_t *sp)
 {
   prop_t *model = sp->sp_model;
@@ -1950,7 +1972,7 @@ parse_search_reply(sp_search *result, prop_t *nodes, prop_t *contents)
 	continue; 
     }
 
-    spotify_add_album(album, artist, nodes);
+    spotify_add_album(album, artist, nodes, 0);
     album_prev = album;
   }
 
@@ -3831,7 +3853,7 @@ find_cachedir(char *path, size_t pathlen)
   int i, fd;
   char buf[PATH_MAX];
 
-  snprintf(buf, sizeof(buf), "%s/libspotify", showtime_cache_path);
+  snprintf(buf, sizeof(buf), "%s/libspotify", gconf.cache_path);
   if(mkdir(buf, 0770)) {
     if(errno != EEXIST)
       return -1;
@@ -3839,7 +3861,7 @@ find_cachedir(char *path, size_t pathlen)
 
   i = 0;
   for(i = 0; i < 64; i++) {
-    snprintf(buf, sizeof(buf), "%s/libspotify/%d.lock", showtime_cache_path, i);
+    snprintf(buf, sizeof(buf), "%s/libspotify/%d.lock", gconf.cache_path, i);
     
     fd = open(buf, O_CREAT | O_RDWR, 0770);
     if(fd == -1)
@@ -3850,12 +3872,12 @@ find_cachedir(char *path, size_t pathlen)
       continue;
     }
 
-    snprintf(path, pathlen, "%s/libspotify/%d.cache", showtime_cache_path, i);
+    snprintf(path, pathlen, "%s/libspotify/%d.cache", gconf.cache_path, i);
     return 0;
   }
 #endif
 
-  snprintf(path, pathlen, "%s/libspotify", showtime_cache_path);
+  snprintf(path, pathlen, "%s/libspotify", gconf.cache_path);
   if(mkdir(path, 0770)) {
     if(errno != EEXIST)
       return 1;
@@ -4086,7 +4108,9 @@ add_metadata_props(spotify_page_t *sp)
 
   sp->sp_album_art  = prop_ref_inc(prop_create(m, "album_art"));
 
-  sp->sp_artist_name = prop_ref_inc(prop_create(m, "artist_name"));
+  sp->sp_artist_name     = prop_ref_inc(prop_create(m, "artist_name"));
+  sp->sp_artist_portrait = prop_ref_inc(prop_create(m, "artist_portrait"));
+  sp->sp_artist_bio      = prop_ref_inc(prop_create(m, "artist_bio"));
 
   sp->sp_numtracks = prop_ref_inc(prop_create(m, "tracks"));
 
@@ -4224,21 +4248,9 @@ be_spotify_play(const char *url, media_pipe_t *mp,
       ets = (event_ts_t *)e;
       spotify_msg_enq_one(spotify_msg_build_int(SPOTIFY_SEEK, ets->ts / 1000));
 
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, hold));
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
+    } else if(event_is_type(e, EVENT_HOLD)) {
+      event_int_t *ei = (event_int_t *)e;
+      spotify_msg_enq(spotify_msg_build_int(SPOTIFY_PAUSE, ei->val));
     }
     event_release(e);
   }
@@ -4511,7 +4523,7 @@ be_spotify_init(void)
 				   "music", iconurl, 0, 0,
 				   SVC_ORIGIN_APP);
 
-  settings_create_divider(s, NULL);
+  settings_create_separator(s, NULL);
 
   ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
 			     store, spotify_set_enable, NULL,
@@ -4535,10 +4547,10 @@ be_spotify_init(void)
 		       settings_generic_save_settings, (void *)"spotify");
 
   settings_create_action(s, _p("Relogin (switch user)"),
-			 spotify_relogin, NULL, spotify_courier);
+			 spotify_relogin, NULL, 0, spotify_courier);
 
   settings_create_action(s, _p("Forget me"),
-			 spotify_forget_me, NULL, spotify_courier);
+			 spotify_forget_me, NULL, 0, spotify_courier);
 
   prop_link(settings_get_value(ena),
 	    prop_create(spotify_service->s_root, "enabled"));

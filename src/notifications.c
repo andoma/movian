@@ -197,7 +197,7 @@ popup_display(prop_t *p)
  *
  */
 int
-message_popup(const char *message, int flags)
+message_popup(const char *message, int flags, const char **extra)
 {
   prop_t *p;
   int rval;
@@ -208,6 +208,23 @@ message_popup(const char *message, int flags)
   prop_set_string_ex(prop_create(p, "message"), NULL, message,
 		     flags & MESSAGE_POPUP_RICH_TEXT ?
 		     PROP_STR_RICH : PROP_STR_UTF8);
+
+  if(extra) {
+    int cnt = 1;
+    prop_t *btns = prop_create(p, "buttons");
+    while(*extra) {
+      prop_t *b = prop_create_root(NULL);
+      prop_set_string(prop_create(b, "title"), *extra);
+      char action[10];
+      snprintf(action, sizeof(action), "btn%d", cnt);
+      prop_set_string(prop_create(b, "action"), action);
+      if(prop_set_parent(b, btns))
+	abort();
+      cnt++;
+      extra++;
+    }
+  }
+
   if(flags & MESSAGE_POPUP_CANCEL)
     prop_set_int(prop_create(p, "cancel"), 1);
   if(flags & MESSAGE_POPUP_OK)
@@ -220,13 +237,15 @@ message_popup(const char *message, int flags)
     rval = MESSAGE_POPUP_OK;
   else if(event_is_action(e, ACTION_CANCEL))
     rval = MESSAGE_POPUP_CANCEL;
+  else if(event_is_type(e, EVENT_DYNAMIC_ACTION) &&
+	  !strncmp(e->e_payload, "btn", 3))
+    rval = atoi(e->e_payload + 3);
   else
     rval = 0;
 
   event_release(e);
   return rval;
 }
-
 
 
 /**

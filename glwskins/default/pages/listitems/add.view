@@ -1,0 +1,32 @@
+#import "skin://common.view"
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+  onEvent(activate, { createChild($page.model.nodes); });
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  suggestFocus($self.playing);
+
+  widget(container_x, {
+    spacing: 13;
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: "dataroot://resources/svg/Add.svg";
+      shadow: true;
+    });
+    
+    
+    widget(label, {
+      TextStyleItem();
+      color: select(isFocused(), 1.0, 0.6);
+      caption: _("Add new entry");
+      ellipsize: true;
+    });
+  });
+});

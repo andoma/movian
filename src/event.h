@@ -153,6 +153,12 @@ typedef enum {
 
   EVENT_PLAYBACK_PRIORITY,   // 0 = best, higher value == less important 
 
+  EVENT_STOP_UI,
+
+  EVENT_HOLD,
+
+  EVENT_REPAINT_UI,
+
   EVENT_DYNAMIC_ACTION,
 
 } event_type_t;
@@ -312,5 +318,7 @@ int event_is_action(event_t *e, action_type_t at);
 void event_dispatch(event_t *e);
 
 event_t *event_from_Fkey(unsigned int keynum, unsigned int mod);
+
+void event_to_ui(event_t *e);
 
 #endif /* EVENT_H */

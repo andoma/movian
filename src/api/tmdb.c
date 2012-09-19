@@ -27,6 +27,7 @@
 #include "backend/backend.h"
 #include "db/db_support.h"
 #include "tmdb.h"
+#include "settings.h"
 
 // http://help.themoviedb.org/kb/api/about-3
 
@@ -35,9 +36,11 @@
 
 
 static hts_mutex_t tmdb_mutex;
-static int tmdb_datasource;
+static metadata_source_t *tmdb;
 static char *tmdb_image_base_url;
 static int tmdb_configured;
+static char tmdb_language[3];
+static int tmdb_use_orig_title;
 
 typedef struct tmdb_image_size {
   struct tmdb_image_size *next;
@@ -48,6 +51,29 @@ typedef struct tmdb_image_size {
 
 
 static tmdb_image_size_t *poster_sizes, *backdrop_sizes, *profile_sizes;
+
+
+/**
+ *
+ */
+static const char *
+getlang(void)
+{
+  if(!*tmdb_language)
+    return NULL;
+  return tmdb_language;
+}
+
+
+/**
+ *
+ */
+static void
+update_cfgid(void)
+{
+  tmdb->ms_cfgid = 
+    tmdb_language[0] | (tmdb_language[1] << 8) | (tmdb_use_orig_title << 16);
+}
 
 
 /**
@@ -143,6 +169,7 @@ tmdb_configure(void)
 			   NULL, errbuf, sizeof(errbuf), NULL,
 			   (const char *[]){
 			     "api_key", TMDB_APIKEY,
+			       "language", getlang(),
 			       NULL, NULL},
 			   FA_COMPRESSION);
 
@@ -186,6 +213,7 @@ tmdb_load_movie_cast(const char *lookup_id)
 			 NULL,
 			 (const char *[]){
 			   "api_key", TMDB_APIKEY,
+			     "language", getlang(),
 			     NULL, NULL},
 			 FA_COMPRESSION);
   if(result == NULL) {
@@ -266,12 +294,11 @@ tmdb_insert_movie_cast(void *db, int64_t itemid, htsmsg_t *doc)
  */
 static int64_t
 tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
-		     int dsid, int qtype)
+		     int qtype)
 {
   char url[300];
   char errbuf[256];
   char *result;
-  int64_t itemid = -1;
 
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
 
@@ -279,27 +306,30 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 			 NULL,
 			 (const char *[]){
 			   "api_key", TMDB_APIKEY,
+			     "language", getlang(),
 			     NULL, NULL},
 			 FA_COMPRESSION);
   if(result == NULL) {
     TRACE(TRACE_INFO, "TMDB", "Load error %s", errbuf);
-    return itemid;
+    return METADATA_TEMPORARY_ERROR;
   }
 
   htsmsg_t *doc = htsmsg_json_deserialize(result);
   free(result);
   if(doc == NULL) {
     TRACE(TRACE_INFO, "TMDB", "Invalid JSON", errbuf);
-    return itemid;
+    return METADATA_TEMPORARY_ERROR;
   }
 
   metadata_t *md = metadata_create();
-  md->md_video_type = METADATA_TYPE_MOVIE;
+  md->md_type = METADATA_TYPE_VIDEO;
 
   md->md_description = rstr_alloc(htsmsg_get_str(doc, "overview"));
   md->md_tagline = rstr_alloc(htsmsg_get_str(doc, "tagline"));
   md->md_imdb_id = rstr_alloc(htsmsg_get_str(doc, "imdb_id"));
-  md->md_title = rstr_alloc(htsmsg_get_str(doc, "original_title"));
+  md->md_title = rstr_alloc(htsmsg_get_str(doc,
+					   tmdb_use_orig_title ?
+					   "original_title" : "title"));
 
   double vote_average;
 
@@ -310,6 +340,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   md->md_duration = htsmsg_get_s32_or_default(doc, "runtime", 0) * 60;
   md->md_year = atoi(htsmsg_get_str(doc, "release_date") ?: "");
 
+  int64_t itemid = METADATA_TEMPORARY_ERROR;
+
   uint32_t id = htsmsg_get_u32_or_default(doc, "id", 0);
   if(id) {
     htsmsg_t *cast = tmdb_load_movie_cast(lookup_id);
@@ -319,9 +351,9 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
-    itemid = metadb_insert_videoitem(db, item_url, dsid, tmdb_id, md,
+    itemid = metadb_insert_videoitem(db, item_url, tmdb->ms_id, tmdb_id, md,
 				     METAITEM_STATUS_COMPLETE, pop * 1000,
-				     qtype);
+				     qtype, tmdb->ms_cfgid);
 
     if(itemid >= 0) {
 
@@ -368,8 +400,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   char *result;
   char yeartxt[20];
 
-  if(tmdb_datasource < 0)
-    return METADATA_ERROR;
+  if(tmdb == NULL)
+    return METADATA_TEMPORARY_ERROR;
 
   if(year)
     snprintf(yeartxt, sizeof(yeartxt), "%d", year);
@@ -381,16 +413,17 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			 (const char *[]){"query", title,
 			     "year", *yeartxt ? yeartxt : NULL,
 			     "api_key", TMDB_APIKEY,
+			     "language", getlang(),
 			     NULL, NULL},
 			 FA_COMPRESSION);
 
   if(result == NULL)
-    return METADATA_ERROR;
+    return METADATA_TEMPORARY_ERROR;
 
   htsmsg_t *doc = htsmsg_json_deserialize(result);
   free(result);
   if(doc == NULL)
-    return METADATA_ERROR;
+    return METADATA_TEMPORARY_ERROR;
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);
   TRACE(TRACE_DEBUG, "TMDB", "Query '%s' year:%d -> %d pages %d results",
 	title,
@@ -402,7 +435,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 
   if(resultlist == NULL || results == 0) {
     htsmsg_destroy(doc);
-    return METADATA_ERROR;
+    return METADATA_PERMANENT_ERROR;
   }
 
   htsmsg_field_t *f;
@@ -414,8 +447,10 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
       continue;
 
     metadata_t *md = metadata_create();
-    md->md_video_type = METADATA_TYPE_MOVIE;
-    md->md_title = rstr_alloc(htsmsg_get_str(res, "original_title"));
+    md->md_type = METADATA_TYPE_VIDEO;
+    md->md_title = rstr_alloc(htsmsg_get_str(res, tmdb_use_orig_title ?
+					     "original_title" : "title"));
+
     md->md_year = atoi(htsmsg_get_str(res, "release_date") ?: "");
     double pop;
     if(htsmsg_get_dbl(res, "popularity", &pop))
@@ -424,9 +459,9 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     char tmdb_id[16];
     snprintf(tmdb_id, sizeof(tmdb_id), "%d", id);
     int64_t itemid =
-      metadb_insert_videoitem(db, item_url, tmdb_datasource,
+      metadb_insert_videoitem(db, item_url, tmdb->ms_id,
 			      tmdb_id, md, METAITEM_STATUS_PARTIAL,
-			      pop * 1000, qtype);
+			      pop * 1000, qtype, tmdb->ms_cfgid);
     metadata_destroy(md);
     if(itemid < 0) {
       htsmsg_destroy(doc);
@@ -451,10 +486,10 @@ static int64_t
 tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
 		      int qtype)
 {
-  if(tmdb_datasource < 0)
-    return METADATA_ERROR;
+  if(tmdb == NULL)
+    return METADATA_TEMPORARY_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource, qtype);
+  return tmdb_load_movie_info(db, item_url, imdb_id, qtype);
 }
 
 /**
@@ -463,10 +498,10 @@ tmdb_query_by_imdb_id(void *db, const char *item_url, const char *imdb_id,
 static int64_t
 tmdb_query_by_id(void *db, const char *item_url, const char *imdb_id)
 {
-  if(tmdb_datasource < 0)
-    return METADATA_ERROR;
+  if(tmdb == NULL)
+    return METADATA_TEMPORARY_ERROR;
 
-  return tmdb_load_movie_info(db, item_url, imdb_id, tmdb_datasource, 0);
+  return tmdb_load_movie_info(db, item_url, imdb_id, 0);
 }
 
 
@@ -480,17 +515,58 @@ static const metadata_source_funcs_t search_fns = {
 /**
  *
  */
+static void
+use_orig_title(void *opaque, int value)
+{
+  tmdb_use_orig_title = value;
+  update_cfgid();
+}
+
+
+/**
+ *
+ */
+static void
+set_lang(void *opaque, const char *str)
+{
+  if(str)
+    snprintf(tmdb_language, sizeof(tmdb_language), "%s", str);
+  else
+    memset(tmdb_language, 0, sizeof(tmdb_language));
+  update_cfgid();
+}
+
+/**
+ *
+ */
 void
 tmdb_init(void)
 {
   hts_mutex_init(&tmdb_mutex);
 
-  tmdb_datasource =
-    metadata_add_source("tmdb", "themoviedb.org", 100001,
-			METADATA_TYPE_MOVIE, &search_fns);
+  tmdb = metadata_add_source("tmdb", "themoviedb.org", 100001,
+			     METADATA_TYPE_VIDEO, &search_fns);
+  if(tmdb == NULL)
+    return;
+
+  htsmsg_t *store = htsmsg_store_load("tmdb");
+  if(store == NULL)
+    store = htsmsg_create_map();
+
+  settings_create_string(tmdb->ms_settings, "language",
+			 _p("Language (ISO 639-1 code)"),
+			 NULL, store, set_lang, NULL,
+			 SETTINGS_INITIAL_UPDATE, NULL,
+			 settings_generic_save_settings, 
+			 (void *)"tmdb");
+
+  settings_create_bool(tmdb->ms_settings, "enabled", _p("Use original title"),
+		       0, NULL, use_orig_title, NULL,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"tmdb");
+
 }
-
-
 
 /**
  *

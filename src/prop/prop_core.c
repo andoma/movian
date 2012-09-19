@@ -543,6 +543,11 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
 
   if(event == PROP_SET_RSTRING) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
+  } else if(event == PROP_SET_CSTRING) {
+    const char *str = va_arg(ap, const char *);
+    rstr_t *t = rstr_alloc(str);
+    cb(s->hps_opaque, t);
+    rstr_release(t);
   } else if(event == PROP_SET_RLINK) {
     cb(s->hps_opaque, va_arg(ap, rstr_t *));
   } else if(!(s->hps_flags & PROP_SUB_IGNORE_VOID)) {
@@ -2156,11 +2161,12 @@ prop_subscribe(int flags, ...)
 
 	for(s = s0; *s != 0; s++) {
 	  if(*s == '.') {
-	    assert(s != s0);
 	    len = s - s0;
-	    nv[ptr] = alloca(len + 1);
-	    memcpy(nv[ptr], s0, len);
-	    nv[ptr++][len] = 0;
+	    if(len > 0) {
+	      nv[ptr] = alloca(len + 1);
+	      memcpy(nv[ptr], s0, len);
+	      nv[ptr++][len] = 0;
+	    }
 	    s0 = s + 1;
 	  }
 	}
@@ -2169,8 +2175,7 @@ prop_subscribe(int flags, ...)
 	nv[ptr] = alloca(len + 1);
 	memcpy(nv[ptr], s0, len);
 	nv[ptr++][len] = 0;
-	assert(ptr == segments);
-	nv[segments] = NULL;
+	nv[ptr] = NULL;
       } while(0);
       break;
 
@@ -2318,6 +2323,7 @@ prop_subscribe(int flags, ...)
     s->hps_lock = lock;
     s->hps_lockmgr = lockmgr;
   }
+  s->hps_courier->pc_refcount++;
 
   s->hps_canonical_prop = canonical;
   if(canonical != NULL) {
@@ -2417,7 +2423,8 @@ void
 prop_unsubscribe0(prop_sub_t *s)
 {
   s->hps_zombie = 1;
-  
+  s->hps_courier->pc_refcount--;
+
   if(s->hps_value_prop != NULL) {
     LIST_REMOVE(s, hps_value_prop_link);
     s->hps_value_prop = NULL;
@@ -3672,6 +3679,8 @@ prop_courier_wait_and_dispatch(prop_courier_t *pc)
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
+  assert(pc->pc_refcount == 0);
+
   if(pc->pc_run) {
     hts_mutex_lock(&prop_mutex);
     pc->pc_run = 0;

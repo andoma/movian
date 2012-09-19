@@ -32,6 +32,7 @@
 #include "misc/strtab.h"
 #include "prop/prop_nodefilter.h"
 #include "plugins.h"
+#include "text/text.h"
 #include "db/kvstore.h"
 
 extern int media_buffer_hungry;
@@ -132,13 +133,14 @@ make_prop(fa_dir_entry_t *fde)
     if(fde->fde_type == CONTENT_DIR) {
       title = rstr_dup(fde->fde_filename);
     } else {
-      title = metadata_remove_postfix(fde->fde_filename);
+      title = metadata_remove_postfix_rstr(fde->fde_filename);
     }
     
     metadata = prop_create(p, "metadata");
     prop_set_rstring(prop_create(metadata, "title"), title);
     rstr_release(title);
   }
+
 
   if(fde->fde_statdone)
     prop_set(metadata, "timestamp", NULL, PROP_SET_INT, fde->fde_stat.fs_mtime);
@@ -178,6 +180,9 @@ static struct strtab postfixtab[] = {
   { "mts",             CONTENT_VIDEO },
 
   { "sid",             CONTENT_ALBUM },
+
+  { "ttf",             CONTENT_FONT },
+  { "otf",             CONTENT_FONT },
 
   { "pdf",             CONTENT_UNKNOWN },
   { "nfo",             CONTENT_UNKNOWN },
@@ -251,12 +256,22 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
       fde->fde_type = fde->fde_md->md_contenttype;
       fde->fde_ignore_cache = 0;
 
+      switch(fde->fde_type) {
 
-      if(fde->fde_type == CONTENT_PLUGIN) {
+      case CONTENT_PLUGIN:
 	plugin_props_from_file(fde->fde_prop, rstr_get(fde->fde_url));
-      } else {
+	break;
+	  
+      case CONTENT_FONT:
+	fontstash_props_from_title(fde->fde_prop, rstr_get(fde->fde_url),
+				   rstr_get(fde->fde_filename));
+	break;
+
+      default:
 	metadata_to_proptree(fde->fde_md, meta, 1);
+	break;
       }
+
       
       if(fde->fde_md->md_cached == 0) {
 	metadb_metadata_write(getdb(s), rstr_get(fde->fde_url),

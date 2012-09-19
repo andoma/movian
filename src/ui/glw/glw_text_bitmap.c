@@ -205,10 +205,12 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
       // Oversized, must cut
       text_width = right - left;
 
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,0);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,0);
-      glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1+text_width/20);
+      if(!(gtb->gtb_flags & GTB_ELLIPSIZE)) {
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 0, 1,1,1,1+text_width/20);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 1, 1,1,1,0);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 2, 1,1,1,0);
+	glw_renderer_vtx_col(&gtb->gtb_text_renderer, 3, 1,1,1,1+text_width/20);
+      }
 
     } else { 
 
@@ -915,7 +917,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 		   PROP_TAG_NAMED_ROOT, view, "view",
 		   PROP_TAG_NAMED_ROOT, args, "args",
 		   PROP_TAG_NAMED_ROOT, clone, "clone",
-		   PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+		   PROP_TAG_ROOT, w->glw_root->gr_prop,
 		   NULL);
 
   if(w->glw_flags2 & GLW2_AUTOHIDE)
@@ -1115,8 +1117,13 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     break;
   }
 
-  font = rstr_dup(gtb->gtb_font);
+  if(gtb->gtb_font != NULL)
+    font = rstr_dup(gtb->gtb_font);
+  else
+    font = rstr_dup(gr->gr_default_font);
 
+  if(gtb->w.glw_flags & GLW_DEBUG)
+    printf("Font is %s\n", rstr_get(font));
 
   /* gtb (i.e the widget) may be destroyed directly after we unlock,
      so we can't access it after this point. We can hold a reference
@@ -1128,7 +1135,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   if(uc != NULL && uc[0] != 0) {
     pm = text_render(uc, len, flags, default_size, scale,
 		     tr_align, max_width, max_lines, rstr_get(font),
-		     gr->gr_font_domain, min_size);
+		     gr->gr_font_domain, min_size, gr->gr_vpaths);
   } else {
     pm = NULL;
   }
@@ -1187,7 +1194,7 @@ font_render_thread(void *aux)
 
   glw_lock(gr);
 
-  while(1) {
+  while(gr->gr_font_thread_running) {
     
     if((gtb = TAILQ_FIRST(&gr->gr_gtb_dim_queue)) != NULL) {
 
@@ -1209,6 +1216,8 @@ font_render_thread(void *aux)
     }
     glw_cond_wait(gr, &gr->gr_gtb_work_cond);
   }
+  
+  glw_unlock(gr);
   return NULL;
 }
 
@@ -1219,8 +1228,10 @@ void
 glw_text_flush(glw_root_t *gr)
 {
   glw_text_bitmap_t *gtb;
-  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link)
+  LIST_FOREACH(gtb, &gr->gr_gtbs, gtb_global_link) {
+    gtb_inactive(gtb);
     gtb_realize(gtb);
+  }
 }
 
 
@@ -1273,8 +1284,24 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   hts_cond_init(&gr->gr_gtb_work_cond, &gr->gr_mutex);
 
-  hts_thread_create_detached("GLW font renderer", font_render_thread, gr,
-			     THREAD_PRIO_NORMAL);
+  gr->gr_font_thread_running = 1;
+  hts_thread_create_joinable("GLW font renderer", &gr->gr_font_thread,
+			     font_render_thread, gr, THREAD_PRIO_NORMAL);
+}
+
+
+/**
+ *
+ */
+void
+glw_text_bitmap_fini(glw_root_t *gr)
+{
+  hts_mutex_lock(&gr->gr_mutex);
+  gr->gr_font_thread_running = 0;
+  hts_cond_signal(&gr->gr_gtb_work_cond);
+  hts_mutex_unlock(&gr->gr_mutex);
+  hts_thread_join(&gr->gr_font_thread);
+  hts_cond_destroy(&gr->gr_gtb_work_cond);
 }
 
 

@@ -85,7 +85,7 @@ opensub_init(void)
 
   s = subtitle_settings_dir;
 
-  settings_create_divider(s, _p("Settings for opensubtitles.org"));
+  settings_create_separator(s, _p("Settings for opensubtitles.org"));
 
   htsmsg_t *store = htsmsg_store_load("opensubtitles");
   if(store == NULL)

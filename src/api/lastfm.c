@@ -31,7 +31,7 @@
 
 #define LASTFM_APIKEY "e8fb67200bce49da092a9de1eb1c649c"
 
-static int lastfm_datasource;
+static metadata_source_t *lastfm;
 
 /**
  *
@@ -121,7 +121,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
   char str[20];
   int totalpages;
 
-  if(lastfm_datasource == METADATA_ERROR)
+  if(lastfm == NULL)
     return;
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading images for artist %s", artist);
@@ -152,7 +152,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 					  "cdata", NULL);
   
   int64_t artist_id =
-    metadb_artist_get_by_title(db, artist, lastfm_datasource, mbid);
+    metadb_artist_get_by_title(db, artist, lastfm->ms_id, mbid);
 
   if(artist_id < 0) {
     htsmsg_destroy(info);
@@ -252,14 +252,14 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
   }
 
   int64_t artist_id =
-    metadb_artist_get_by_title(db, artist, lastfm_datasource, artist_mbid);
+    metadb_artist_get_by_title(db, artist, lastfm->ms_id, artist_mbid);
 
   if(artist_id < 0)
     return;
 
   int64_t album_id =
     metadb_album_get_by_title(db, album, artist_id,
-			      lastfm_datasource, album_mbid);
+			      lastfm->ms_id, album_mbid);
 
   if(album_id < 0)
     return;
@@ -304,7 +304,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
   int n;
   htsmsg_t *xml;
 
-  if(lastfm_datasource == METADATA_ERROR)
+  if(lastfm == NULL)
     return;
 
   TRACE(TRACE_DEBUG, "lastfm", "Loading coverart for album %s", album);
@@ -338,7 +338,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 void
 lastfm_init(void)
 {
-  lastfm_datasource = metadata_add_source("lastfm", "last.fm",
-					  100000, METADATA_TYPE_MUSIC,
-					  NULL);
+  lastfm = metadata_add_source("lastfm", "last.fm",
+			       100000, METADATA_TYPE_MUSIC,
+			       NULL);
 }

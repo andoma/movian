@@ -1,0 +1,15 @@
+#import "skin://common.view"
+
+widget(container_y, {
+  padding: [0,10,0,0];
+
+  widget(label, {
+    hidden: !$self.metadata.title;
+    sizeScale: 1.5;
+    shadow: true;
+    outline: true;
+    caption: $self.metadata.title;
+    color: [0.431, 0.811, 1];
+  });
+  VerticalSeparator();
+});

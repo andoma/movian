@@ -1,0 +1,6 @@
+widget(loader, {
+  noInitialTransform: true;
+  effect: blend;
+  time: 0.2;
+  source: $page.model.metadata.glwview;
+});

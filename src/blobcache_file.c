@@ -40,7 +40,7 @@
 #include "settings.h"
 #include "notifications.h"
 
-#define BC2_MAGIC 0x62630201
+#define BC2_MAGIC 0x62630203
 
 typedef struct blobcache_item {
   struct blobcache_item *bi_link;
@@ -50,6 +50,7 @@ typedef struct blobcache_item {
   uint32_t bi_expiry;
   uint32_t bi_modtime;
   uint32_t bi_size;
+  char *bi_etag;
 } blobcache_item_t;
 
 typedef struct blobcache_diskitem {
@@ -59,6 +60,8 @@ typedef struct blobcache_diskitem {
   uint32_t di_expiry;
   uint32_t di_modtime;
   uint32_t di_size;
+  uint8_t di_etaglen;
+  uint8_t di_etag[0];
 } __attribute__((packed)) blobcache_diskitem_t;
 
 #define ITEM_HASH_SIZE 256
@@ -140,10 +143,10 @@ make_filename(char *buf, size_t len, uint64_t hash, int for_write)
 {
   uint8_t dir = hash;
   if(for_write) {
-    snprintf(buf, len, "%s/bc2/%02x", showtime_cache_path, dir);
+    snprintf(buf, len, "%s/bc2/%02x", gconf.cache_path, dir);
     mkdir(buf, 0777);
   }
-  snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, showtime_cache_path, dir, hash);
+  snprintf(buf, len, "%s/bc2/%02x/%016"PRIx64, gconf.cache_path, dir, hash);
 }
 
 
@@ -154,48 +157,67 @@ static void
 save_index(void)
 {
   char filename[PATH_MAX];
-  uint8_t *out;
-  int i, j;
+  uint8_t *out, *base;
+  int i;
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
   size_t siz;
-  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", showtime_cache_path);
+  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
   
   int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
   if(fd == -1)
     return;
+  
+  int items = 0;
+  siz = 8 + 20;
 
-  int tot = pool_num(item_pool);
-  siz = 4 + tot * sizeof(blobcache_diskitem_t) + 20;
-  out = mymalloc(siz);
+  for(i = 0; i < ITEM_HASH_SIZE; i++) {
+    for(p = hashvector[i]; p != NULL; p = p->bi_link) {
+      siz += sizeof(blobcache_diskitem_t);
+      siz += p->bi_etag ? strlen(p->bi_etag) : 0;
+      items++;
+    }
+  }
+
+  base = out = mymalloc(siz);
   if(out == NULL) {
     close(fd);
     return;
   }
   *(uint32_t *)out = BC2_MAGIC;
-  j = 0;
+  out += 4;
+  *(uint32_t *)out = items;
+  out += 4;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
-      assert(j < tot);
-      di = &((blobcache_diskitem_t *)(out + 4))[j++];
+      const int etaglen = p->bi_etag ? strlen(p->bi_etag) : 0;
+      di = (blobcache_diskitem_t *)out;
       di->di_key_hash     = p->bi_key_hash;
       di->di_content_hash = p->bi_content_hash;
       di->di_lastaccess   = p->bi_lastaccess;
       di->di_expiry       = p->bi_expiry;
       di->di_modtime      = p->bi_modtime;
       di->di_size         = p->bi_size;
+      di->di_etaglen      = etaglen;
+      
+      out += sizeof(blobcache_diskitem_t);
+      if(etaglen) {
+	memcpy(out, p->bi_etag, etaglen);
+	out += etaglen;
+      }
+
     }
   }
 
   sha1_decl(shactx);
   sha1_init(shactx);
-  sha1_update(shactx, out, 4 + tot * sizeof(blobcache_diskitem_t));
-  sha1_final(shactx, out + 4 + tot * sizeof(blobcache_diskitem_t));
+  sha1_update(shactx, base, siz - 20);
+  sha1_final(shactx, out);
 
-  if(write(fd, out, siz) != siz)
+  if(write(fd, base, siz) != siz)
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
-  free(out);
+  free(base);
   close(fd);
 }
 
@@ -208,28 +230,25 @@ static void
 load_index(void)
 {
   char filename[PATH_MAX];
-  uint8_t *in;
+  uint8_t *in, *base;
   int i;
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
   struct stat st;
   uint8_t digest[20];
 
-  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", showtime_cache_path);
+  snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
   
   int fd = open(filename, O_RDONLY, 0);
   if(fd == -1)
     return;
 
-  if(fstat(fd, &st) || st.st_size < 24 ||
-     ((st.st_size - 24) % sizeof(blobcache_diskitem_t)) != 0) {
+  if(fstat(fd, &st) || st.st_size < 28) {
     close(fd);
     return;
   }
 
-  int items = (st.st_size - 24) / sizeof(blobcache_diskitem_t);
-
-  in = mymalloc(st.st_size);
+  base = in = mymalloc(st.st_size);
   if(in == NULL) {
     close(fd);
     return;
@@ -247,7 +266,6 @@ load_index(void)
     free(in);
     return;
   }
-       
 
   sha1_decl(shactx);
   sha1_init(shactx);
@@ -256,11 +274,18 @@ load_index(void)
 
   if(memcmp(digest, in + st.st_size - 20, 20)) {
     free(in);
+    TRACE(TRACE_INFO, "blobcache", "Index file corrupt, throwing away cache");
     return;
   }
 
+  in += 4;
+
+  int items = *(uint32_t *)in;
+
+  in += 4;
+
   for(i = 0; i < items; i++) {
-    di = &((blobcache_diskitem_t *)(in + 4))[i];
+    di = (blobcache_diskitem_t *)in;
     p = pool_get(item_pool);
 
     p->bi_key_hash     = di->di_key_hash;
@@ -269,11 +294,20 @@ load_index(void)
     p->bi_expiry       = di->di_expiry;
     p->bi_modtime      = di->di_modtime;
     p->bi_size         = di->di_size;
+    int etaglen        = di->di_etaglen;
+
+    in += sizeof(blobcache_diskitem_t);
+    if(etaglen) {
+      p->bi_etag = malloc(etaglen+1);
+      memcpy(p->bi_etag, in, etaglen);
+      p->bi_etag[etaglen] = 0;
+      in += etaglen;
+    }
     p->bi_link = hashvector[p->bi_key_hash & ITEM_HASH_MASK];
     hashvector[p->bi_key_hash & ITEM_HASH_MASK] = p;
     current_cache_size += p->bi_size;
   }
-  free(in);
+  free(base);
 }
 
 
@@ -292,6 +326,9 @@ blobcache_put(const char *key, const char *stash,
   char filename[PATH_MAX];
   blobcache_item_t *p;
 
+  if(etag != NULL && strlen(etag) > 255)
+    etag = NULL;
+
   hts_mutex_lock(&cache_lock);
   if(zombie) {
     hts_mutex_unlock(&cache_lock);
@@ -306,6 +343,7 @@ blobcache_put(const char *key, const char *stash,
     p->bi_modtime = mtime;
     p->bi_expiry = now + maxage;
     p->bi_lastaccess = now;
+    mystrset(&p->bi_etag, etag);
     hts_mutex_unlock(&cache_lock);
     return 1;
   }
@@ -335,6 +373,7 @@ blobcache_put(const char *key, const char *stash,
   int64_t expiry = (int64_t)maxage + now;
 
   p->bi_modtime = mtime;
+  mystrset(&p->bi_etag, etag);
   p->bi_expiry = MIN(INT32_MAX, expiry);
   p->bi_lastaccess = now;
   p->bi_content_hash = dc;
@@ -409,6 +448,9 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   if(mtimep)
     *mtimep = p->bi_modtime;
 
+  if(etagp != NULL)
+    *etagp = p->bi_etag ? strdup(p->bi_etag) : NULL;
+
   p->bi_lastaccess = now;
 
   hts_mutex_unlock(&cache_lock);
@@ -463,6 +505,9 @@ blobcache_get_meta(const char *key, const char *stash,
     if(mtimep != NULL)
       *mtimep = p->bi_modtime;
 
+    if(etagp != NULL)
+      *etagp = p->bi_etag ? strdup(p->bi_etag) : NULL;
+
   } else {
     r = -1;
   }
@@ -498,7 +543,7 @@ prune_stale(void)
   char path3[PATH_MAX];
   uint64_t k;
 
-  snprintf(path, sizeof(path), "%s/bc2", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/bc2", gconf.cache_path);
 
   if((d1 = opendir(path)) == NULL)
     return;
@@ -506,14 +551,14 @@ prune_stale(void)
   while((de1 = readdir(d1)) != NULL) {
     if(de1->d_name[0] != '.') {
       snprintf(path2, sizeof(path2), "%s/bc2/%s",
-	       showtime_cache_path, de1->d_name);
+	       gconf.cache_path, de1->d_name);
 
       if((d2 = opendir(path2)) != NULL) {
 	while((de2 = readdir(d2)) != NULL) {
           if(de2->d_name[0] != '.') {
 
 	    snprintf(path3, sizeof(path3), "%s/bc2/%s/%s",
-		     showtime_cache_path, de1->d_name,
+		     gconf.cache_path, de1->d_name,
 		     de2->d_name);
 
 	    if(sscanf(de2->d_name, "%016"PRIx64, &k) != 1 ||
@@ -622,21 +667,21 @@ blobcache_prune_old(void)
   char path2[PATH_MAX];
   char path3[PATH_MAX];
 
-  snprintf(path, sizeof(path), "%s/blobcache", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/blobcache", gconf.cache_path);
 
   if((d1 = opendir(path)) != NULL) {
 
     while((de1 = readdir(d1)) != NULL) {
       if(de1->d_name[0] != '.') {
 	snprintf(path2, sizeof(path2), "%s/blobcache/%s",
-		 showtime_cache_path, de1->d_name);
+		 gconf.cache_path, de1->d_name);
 
 	if((d2 = opendir(path2)) != NULL) {
 	  while((de2 = readdir(d2)) != NULL) {
 	    if(de2->d_name[0] != '.') {
 
 	      snprintf(path3, sizeof(path3), "%s/blobcache/%s/%s",
-		       showtime_cache_path, de1->d_name,
+		       gconf.cache_path, de1->d_name,
 		       de2->d_name);
 	      unlink(path3);
 	    }
@@ -650,11 +695,11 @@ blobcache_prune_old(void)
     rmdir(path);
   }
 
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db", gconf.cache_path);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db-shm", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db-shm", gconf.cache_path);
   unlink(path);
-  snprintf(path, sizeof(path), "%s/cachedb/cache.db-wal", showtime_cache_path);
+  snprintf(path, sizeof(path), "%s/cachedb/cache.db-wal", gconf.cache_path);
   unlink(path);
 }  
 
@@ -688,7 +733,7 @@ blobcache_init(void)
   char buf[256];
 
   blobcache_prune_old();
-  snprintf(buf, sizeof(buf), "%s/bc2", showtime_cache_path);
+  snprintf(buf, sizeof(buf), "%s/bc2", gconf.cache_path);
   if(mkdir(buf, 0777) && errno != EEXIST)
     TRACE(TRACE_ERROR, "blobcache", "Unable to create cache dir %s -- %s",
 	  buf, strerror(errno));
@@ -704,7 +749,7 @@ blobcache_init(void)
 	pool_num(item_pool), current_cache_size, buf);
 
   settings_create_action(settings_general, _p("Clear cached files"),
-			 cache_clear, NULL, NULL);
+			 cache_clear, NULL, 0, NULL);
 }
 
 

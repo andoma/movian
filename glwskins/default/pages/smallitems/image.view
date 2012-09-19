@@ -1,0 +1,37 @@
+widget(container_z, {
+  autoRefocusable: true;
+  focusable: true;
+  width: $ui.size * 8;
+
+
+  widget(stencil, {
+    source: "skin://graphics/stencil.png";
+    widget(container_z, {
+      widget(quad, {
+	color: 0;
+      });
+
+      widget(image, {
+	align: bottom;
+	width: $ui.size * 8;
+	$clone.ready = isReady();
+	source: "thumb://" + $self.url;
+	color: isFocused() + 0.5;
+      });
+
+      widget(container_y, {
+	space(1);
+	widget(throbber, {
+	  alpha: iir(!$clone.ready, 8);
+	});
+	space(1);
+      });
+    });
+  });
+
+  widget(backdrop, {
+    source: "skin://graphics/border32.png";
+    border: 16;
+    alpha: iir(isFocused(), 8) + 0.1;
+  });
+});

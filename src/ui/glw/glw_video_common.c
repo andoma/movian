@@ -337,8 +337,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   switch(signal) {
   case GLW_SIGNAL_LAYOUT:
-    // Reset screensaver counter if we are displaying video
-    w->glw_root->gr_screensaver_counter = 0;
 
     rc = extra;
     rc0 = *rc;
@@ -427,9 +425,6 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_sub_on_video),
 		   NULL);
-
-  // We like fullwindow mode if possible (should be confiurable perhaps)
-  glw_set_constraints(w, 0, 0, 0, GLW_CONSTRAINT_F);
 }
 
 
@@ -642,6 +637,8 @@ glw_video_configure(glw_video_t *gv,
     }
   }
 
+  // Reset screen saver every time we get a new frame
+  gv->w.glw_root->gr_screensaver_counter = 0;
   return 0;
 }
 	       

@@ -1,0 +1,17 @@
+onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
+
+multiopt($view.path,
+	 $clone.settings,
+	 _("View"),
+	 $page.persistent.glwUserView,
+
+	 vectorize($global.glw.views.standard.home),
+	 link(_("Tiled"), "home_tiles.view"),
+	 link(_("List"), "home_clist.view"));
+
+widget(loader, {
+  noInitialTransform: true;
+  effect: blend;
+  time: 0.2;
+  source: $view.path;
+});

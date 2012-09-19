@@ -90,7 +90,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   int registered_play = 0;
 
   mp->mp_seek_base = 0;
-  mp_set_playstatus_by_hold(mp, hold, NULL);
 
   fa_handle_t *fh = fa_open_ex(url, errbuf, errlen, FA_BUFFERED_SMALL, NULL);
   if(fh == NULL)
@@ -276,20 +275,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
       
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
 
       if(mp->mp_seek_base < 1500000)
@@ -312,12 +297,6 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
   media_codec_deref(cw);
   media_format_deref(fw);
-
-  if(hold) { 
-    // If we were paused, release playback again.
-    mp_send_cmd(mp, mq, MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, 0, NULL);
-  }
 
   return e;
 }

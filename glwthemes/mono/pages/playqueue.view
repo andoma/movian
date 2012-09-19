@@ -1,8 +1,0 @@
-widget(loader, {
-  .alpha = 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
-  .blur  = iir(clamp(getLayer(), 0, 1), 7);
-
-  .noInitialTransform = true;
-  .time = 0.1;
-  .source = "theme://directoryviews/list.view";
-});

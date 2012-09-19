@@ -1,0 +1,13 @@
+filterConstraintY: true;
+
+widget(container_y, {
+  padding: 20;
+  widget(label, {
+    font: $args.url;
+    caption: "The quick brown fox jumped over the lazy dog";
+    maxlines: 3;
+    sizeScale: 2;
+  });
+  space(1);
+});
+  

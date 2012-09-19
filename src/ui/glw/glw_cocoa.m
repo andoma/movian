@@ -46,11 +46,6 @@
 typedef struct glw_cocoa {  
   glw_root_t gr;
   
-  /* used to pass args from glw_cocoa_start to prepareOpenGL */
-  ui_t *start_ui;
-  int start_primary;
-  const char *theme_path;
-  
   int glready; /* prepareOpenGL has been run */
   
   int is_fullscreen;
@@ -130,7 +125,6 @@ static const struct {
 
 static void glw_cocoa_set_fullscreen(void *opaque, int value);
 static void glw_cocoa_in_fullwindow(void *opaque, int v);
-static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 @implementation GLWGLView
 
@@ -147,18 +141,16 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
 
 - (IBAction)clickIncreaseZoom:(id)sender {
-  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
-                           event_create_action(ACTION_ZOOM_UI_INCR));
+  event_to_ui(event_create_action(ACTION_ZOOM_UI_INCR));
+                          
 }
 
 - (IBAction)clickDecreaseZoom:(id)sender {
-  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
-                           event_create_action(ACTION_ZOOM_UI_DECR));
+  event_to_ui(event_create_action(ACTION_ZOOM_UI_DECR));
 }
 
 - (IBAction)clickFullscreen:(id)sender {
-  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii,
-                           event_create_action(ACTION_FULLSCREEN_TOGGLE));
+  event_to_ui(event_create_action(ACTION_FULLSCREEN_TOGGLE));
 }
 
 - (IBAction)clickAbout:(id)sender {
@@ -523,7 +515,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
   if([event type] == NSOtherMouseUp) {
     event_t *e = event_create_action(ACTION_MENU);
-    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
+    event_to_ui(e);
   }
 }
 
@@ -654,7 +646,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
     NSString *su = [[NSString alloc] initWithCharacters:&uc length:1];
     event_t *e = NULL;
     e = event_create_int(EVENT_UNICODE, uc);
-    glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
+    event_to_ui(e);
     [su release];
   }
 }
@@ -709,8 +701,8 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
 
   if(e == NULL) 
     e = event_create_int(EVENT_UNICODE, c);
-
-  glw_cocoa_dispatch_event(&gcocoa.gr.gr_uii, e);
+  
+  event_to_ui(e);
 }
 
 - (void)reshape {
@@ -723,10 +715,10 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   
   timer_cursor = nil;
   
+  gcocoa.gr.gr_prop = prop_create(prop_get_global(), "ui");
+
   /* must be called after GL is ready, calls GL functions */
-  if(glw_init(&gcocoa.gr, gcocoa.theme_path,
-              gcocoa.start_ui, gcocoa.start_primary,
-              "glw/cocoa/default", NULL))
+  if(glw_init(&gcocoa.gr, gconf.theme, "glw/cocoa/default"))
     return;
   
   gcocoa.fullscreen_setting = 
@@ -739,7 +731,7 @@ static void glw_cocoa_dispatch_event(uii_t *uii, event_t *e);
   prop_subscribe(0,
                  PROP_TAG_NAME("ui","fullwindow"),
                  PROP_TAG_CALLBACK_INT, glw_cocoa_in_fullwindow, self,
-                 PROP_TAG_ROOT, gcocoa.gr.gr_uii.uii_prop,
+                 PROP_TAG_ROOT, gcocoa.gr.gr_prop,
                  NULL);
   
   glw_load_universe(&gcocoa.gr);
@@ -816,30 +808,12 @@ glw_cocoa_screensaver_inhibit(CFRunLoopTimerRef timer, void *info)
   UpdateSystemActivity(OverallAct);
 }
 
-static int
-glw_cocoa_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
+
+void glw_cocoa_start(void);
+
+void
+glw_cocoa_start(void)
 {
-  gcocoa.start_ui = ui;
-  gcocoa.start_primary = primary;
-  gcocoa.gr.gr_uii.uii_prop = root;
-
-
-  /* Parse options */
-
-  argv++;
-  argc--;
-
-  while(argc > 0) {
-    if(!strcmp(argv[0], "--theme") && argc > 1) {
-      gcocoa.theme_path = argv[1];
-      argc -= 2; argv += 2;
-
-      continue;
-    } else {
-      break;
-    }
-  }
-
 
   CFRunLoopTimerRef timer;
   CFRunLoopTimerContext context = { 0, NULL, NULL, NULL, NULL };
@@ -848,27 +822,4 @@ glw_cocoa_start(ui_t *ui, prop_t *root, int argc, char *argv[], int primary)
   CFRunLoopAddTimer(CFRunLoopGetCurrent(), timer, kCFRunLoopCommonModes);
   
   NSApplicationMain(0, NULL);
-  
-  return 0;
 }
-
-static void
-glw_cocoa_dispatch_event(uii_t *uii, event_t *e)
-{
-  glw_cocoa_t *gc = (glw_cocoa_t *)uii;
-  
-  if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE)) {
-    settings_toggle_bool(gc->fullscreen_setting);
-  } else {
-    glw_dispatch_event(uii, e);
-  }
-  event_release(e);
-}
-
-ui_t glw_ui = {
-  .ui_title = "glw",
-  .ui_start = glw_cocoa_start,
-  .ui_dispatch_event = glw_cocoa_dispatch_event,
-  /* NSApplicationMain must run in main thread */
-  .ui_flags = UI_MAINTHREAD,
-};

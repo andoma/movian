@@ -39,6 +39,7 @@ prop_sub_t *js_event_sub;
 static JSRuntime *runtime;
 static JSObject *showtimeobj;
 static JSObject *RichText;
+static JSObject *Link;
 struct js_plugin_list js_plugins;
 
 static JSClass global_class = {
@@ -246,6 +247,27 @@ js_prop_set_from_jsval(JSContext *cx, prop_t *p, jsval value)
     prop_set_string_ex(p, NULL, JS_GetStringBytes(JS_ValueToString(cx, v2)),
 		       PROP_STR_RICH);
     JS_LeaveLocalRootScope(cx);
+  } else if(JS_HasInstance(cx, Link, value, &b) && b) {
+    JSObject *o = JSVAL_TO_OBJECT(value);
+    jsval v1;
+    jsval v2;
+
+    if(!JS_EnterLocalRootScope(cx))
+      return;
+
+    if(!JS_GetProperty(cx, o, "title", &v1)) {
+      JS_LeaveLocalRootScope(cx);
+      return;
+    }
+    if(!JS_GetProperty(cx, o, "url", &v2)) {
+      JS_LeaveLocalRootScope(cx);
+      return;
+    }
+
+    prop_set_link(p,
+		  JS_GetStringBytes(JS_ValueToString(cx, v1)),
+		  JS_GetStringBytes(JS_ValueToString(cx, v2)));
+    JS_LeaveLocalRootScope(cx);
   } else if(JSVAL_IS_STRING(value)) {
     js_prop_from_str(cx, p, value);
   } else if(JSVAL_IS_OBJECT(value)) {
@@ -396,10 +418,19 @@ js_message(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   r = message_popup(message, 
 		    (ok     ? MESSAGE_POPUP_OK : 0) |
 		    (cancel ? MESSAGE_POPUP_CANCEL : 0) | 
-		    MESSAGE_POPUP_RICH_TEXT);
+		    MESSAGE_POPUP_RICH_TEXT, NULL);
 
-
-  *rval = BOOLEAN_TO_JSVAL(r == MESSAGE_POPUP_OK);
+  switch(r) {
+  case MESSAGE_POPUP_OK:
+    *rval = BOOLEAN_TO_JSVAL(JS_TRUE);
+    break;
+  case MESSAGE_POPUP_CANCEL:
+    *rval = BOOLEAN_TO_JSVAL(JS_FALSE);
+    break;
+  default:
+    *rval = INT_TO_JSVAL(r);
+    break;
+  }
   return JS_TRUE;
 }
 
@@ -607,6 +638,28 @@ js_RichText(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_Link(JSContext *cx, JSObject *obj,
+	uintN argc, jsval *argv, jsval *rval)
+{
+  const char *title, *url;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "ss", &title, &url))
+    return JS_FALSE;
+  jsval v1 = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, title));
+  jsval v2 = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, url));
+
+  JS_SetProperty(cx, obj, "title", &v1);
+  JS_SetProperty(cx, obj, "url", &v2);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
 static void
 plugin_finalize(JSContext *cx, JSObject *obj)
 {
@@ -637,6 +690,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_service_flush_from_plugin(cx, jsp);
   js_setting_group_flush_from_plugin(cx, jsp);
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
+  js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
 }
 
 /**
@@ -732,6 +786,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("cacheGet",         js_cache_get, 2, 0, 0),
     JS_FS("cachePut",         js_cache_put, 4, 0, 0),
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
+    JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS_END
 };
 
@@ -914,6 +969,7 @@ js_init(void)
 {
   JSContext *cx;
   jsval val;
+  JSFunction *fn;
 
   js_page_init();
 
@@ -935,9 +991,11 @@ js_init(void)
   JS_SetProperty(cx, showtimeobj, "currentVersionString", &val);
 
 
-  JSFunction *fn = JS_DefineFunction(cx, showtimeobj, "RichText",
-				     js_RichText, 1, 0);
+  fn = JS_DefineFunction(cx, showtimeobj, "RichText", js_RichText, 1, 0);
   RichText = JS_GetFunctionObject(fn);
+
+  fn = JS_DefineFunction(cx, showtimeobj, "Link", js_Link, 2, 0);
+  Link = JS_GetFunctionObject(fn);
 	     
   JS_AddNamedRoot(cx, &showtimeobj, "showtime");
 
@@ -966,13 +1024,9 @@ static void
 js_fini(void)
 {
   js_plugin_t *jsp, *n;
-  JSContext *cx = js_global_cx;
+  JSContext *cx;
 
-  //  prop_unsubscribe(js_event_sub);
-
-  prop_courier_destroy(js_global_pc);
-
-  JS_SetContextThread(cx);
+  cx = js_newctx(NULL);
   JS_BeginRequest(cx);
 
   for(jsp = LIST_FIRST(&js_plugins); jsp != NULL; jsp = n) {
@@ -984,6 +1038,15 @@ js_fini(void)
 
   JS_EndRequest(cx);
   JS_GC(cx);
+  JS_DestroyContext(cx);
+
+
+  prop_unsubscribe(js_event_sub);
+
+  prop_courier_destroy(js_global_pc);
+
+  cx = js_global_cx;
+  JS_SetContextThread(cx);
   JS_DestroyContext(cx);
 
   JS_DestroyRuntime(runtime);

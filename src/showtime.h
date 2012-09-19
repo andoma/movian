@@ -16,16 +16,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef SHOWTIME_H
-#define SHOWTIME_H
+#pragma once
+
+#include "config.h"
 
 #include <inttypes.h>
 #include <stdarg.h>
 #include <string.h>
 #include <sys/time.h>
+#include <time.h>
+
 #include "htsmsg/htsmsg_store.h"
 #include "arch/threads.h"
 #include "misc/rstr.h"
+
+
+void parse_opts(int argc, char **argv);
+
+void showtime_init(void);
+
+void showtime_fini(void);
 
 extern void panic(const char *fmt, ...) __attribute__((noreturn, format(printf, 1, 2)));
 
@@ -138,6 +148,8 @@ static inline const char *mystrbegins(const char *s1, const char *s2)
   return s1;
 }
 
+void my_localtime(const time_t *timep, struct tm *tm);
+
 /*
  * Memory allocation wrappers
  * These are used whenever the caller can deal with failure 
@@ -174,14 +186,64 @@ void *shutdown_hook_add(void (*fn)(void *opaque, int exitcode), void *opaque,
 #define SHOWTIME_EXIT_RESTART  13
 #define SHOWTIME_EXIT_SHELL    14
 
-extern char *showtime_cache_path;
-extern char *showtime_persistent_path;
-extern char *showtime_path;
+
+
+typedef struct gconf {
+  int exit_code;
+
+
+  char *dirname;   // Directory where executable resides
+  char *binary;    // Executable itself
+
+  char *cache_path;
+  char *persistent_path;
+
+  int concurrency;
+  int trace_level;
+  int trace_to_syslog;
+  int listen_on_stdin;
+  int ffmpeglog;
+  int noui;
+
+#if ENABLE_SERDEV
+  int enable_serdev;
+#endif
+
+  int can_standby;
+  int can_poweroff;
+  int can_open_shell;
+  int can_logout;
+
+  int disable_upnp;
+  int disable_sd;
+
+
+  int enable_bin_replace;
+  int enable_omnigrade;
+
+  const char *devplugin;
+  const char *plugin_repo;
+  const char *load_jsfile;
+
+  const char *initial_url;
+  const char *initial_view;
+
+  char *ui;
+  char *skin;
+
+} gconf_t;
+
+extern gconf_t gconf;
+
+
+
+
+
+
+
 
 
 /* From version.c */
 extern const char *htsversion;
 extern const char *htsversion_full;
 
-
-#endif /* SHOWTIME_H */

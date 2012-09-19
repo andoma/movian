@@ -11,8 +11,7 @@
 # Copyright (c) 2005-2008 Mans Rullgard
 #
 
-PLATFORM="osx"
-OSENV="posix"
+OS="osx"
 DEFAULT_UI="glw"
 CONFIGURE_POSTFIX="osx"
 
@@ -40,7 +39,7 @@ enable glw
 enable glw_frontend_cocoa
 enable glw_backend_opengl
 enable coreaudio
-enable appleremote
+#enable appleremote
 enable bonjour
 enable spotlight
 enable spidermonkey
@@ -84,7 +83,6 @@ setup_env "$@"
 
 enable libpthread
 enable zlib
-enable posix_networking
 
 #
 # c compiler

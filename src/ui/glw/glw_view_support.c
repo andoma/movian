@@ -106,6 +106,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_BLOCK:
   case TOKEN_NOP:
   case TOKEN_COLON:
+  case TOKEN_VECTOR:
     break;
 
   case TOKEN_RSTRING:
@@ -236,8 +237,9 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
     break;
 
   case TOKEN_VECTOR_FLOAT:
-  case TOKEN_num:
   case TOKEN_EVENT:
+  case TOKEN_VECTOR:
+  case TOKEN_num:
     abort();
   }
   return dst;
@@ -391,6 +393,9 @@ token2name(token_t *t)
     snprintf(buf, sizeof(buf), "Link<%s, %s>",
 	     rstr_get(t->t_link_rtitle), rstr_get(t->t_link_rurl));
     return buf;
+
+  case TOKEN_VECTOR:
+    return "[]";
     
   default:
     snprintf(buf, sizeof(buf), "Tokentype<%d>", t->type);

@@ -36,6 +36,7 @@
 static void glw_focus_init_widget(glw_t *w, float weight);
 static void glw_focus_leave(glw_t *w);
 static void glw_root_set_hover(glw_root_t *gr, glw_t *w);
+static void glw_eventsink(void *opaque, prop_event_t event, ...);
 
 const float glw_identitymtx[16] = {
   1,0,0,0,
@@ -192,10 +193,9 @@ glw_change_underscan_v(void *opaque, int v)
  *
  */
 static void
-glw_init_settings(glw_root_t *gr, const char *instance,
-		  const char *instance_title)
+glw_init_settings(glw_root_t *gr, const char *instance)
 {
-  prop_t *r = gr->gr_uii.uii_prop;
+  prop_t *r = gr->gr_prop;
 
   if(gr->gr_base_size == 0)
     gr->gr_base_size = 20;
@@ -207,20 +207,10 @@ glw_init_settings(glw_root_t *gr, const char *instance,
   if(gr->gr_settings_store == NULL)
     gr->gr_settings_store = htsmsg_create_map();
 
-  if(instance_title) {
-    char title[256];
-    snprintf(title, sizeof(title), "Display and user interface on screen %s",
-	     instance_title);
+  gr->gr_settings = settings_add_dir(NULL, 
+				     _p("Display and user interface"),
+				     "display", NULL, NULL, NULL);
 
-    gr->gr_settings = settings_add_dir_cstr(NULL, title,
-					    "display", NULL, NULL, NULL);
-
-  } else {
-    gr->gr_settings = settings_add_dir(NULL, 
-				       _p("Display and user interface"),
-				       "display", NULL, NULL, NULL);
-
-  }
 
   gr->gr_prop_size = prop_create(r, "size");
   gr->gr_prop_underscan_h = prop_create(r, "underscan_h");
@@ -268,21 +258,46 @@ glw_init_settings(glw_root_t *gr, const char *instance,
   gr->gr_prop_height        = prop_create(r, "height");
 
   prop_set_int(gr->gr_screensaver_active, 0);
+
+  gr->gr_evsub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK, glw_eventsink, gr,
+		   PROP_TAG_NAME("ui", "eventSink"),
+		   PROP_TAG_ROOT, r,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   NULL);
 }
+
+
+/**
+ *
+ */
+static void
+glw_fini_settings(glw_root_t *gr)
+{
+  prop_unsubscribe(gr->gr_evsub);
+  setting_destroy(gr->gr_setting_screensaver);
+  setting_destroy(gr->gr_setting_underscan_v);
+  setting_destroy(gr->gr_setting_underscan_h);
+  setting_destroy(gr->gr_setting_size);
+  prop_destroy(gr->gr_settings);
+  htsmsg_destroy(gr->gr_settings_store);
+  free(gr->gr_settings_instance);
+}
+
 
 /**
  *
  */
 int
-glw_init(glw_root_t *gr, const char *theme,
-	 ui_t *ui, int primary, 
-	 const char *instance, const char *instance_title)
+glw_init(glw_root_t *gr, const char *instance)
 {
-  char themebuf[PATH_MAX];
-  if(theme == NULL) {
-    snprintf(themebuf, sizeof(themebuf),
-	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot());
-    theme = themebuf;
+  char skinbuf[PATH_MAX];
+  const char *skin = gconf.skin;
+  if(skin == NULL) {
+    snprintf(skinbuf, sizeof(skinbuf),
+	     "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, showtime_dataroot());
+    skin = skinbuf;
   }
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
@@ -290,23 +305,22 @@ glw_init(glw_root_t *gr, const char *theme,
   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
 				  POOL_ZERO_MEM);
 
-  gr->gr_vpaths[0] = "theme";
-  gr->gr_vpaths[1] = strdup(theme);
-  gr->gr_vpaths[2] = NULL;
+  gr->gr_skin = strdup(skin);
 
-  gr->gr_uii.uii_ui = ui;
+  gr->gr_vpaths[0] = "skin";
+  gr->gr_vpaths[1] = gr->gr_skin;
+  gr->gr_vpaths[2] = NULL;
 
   gr->gr_font_domain = freetype_get_context();
 
   glw_text_bitmap_init(gr);
-  glw_init_settings(gr, instance, instance_title);
+  glw_init_settings(gr, instance);
 
   TAILQ_INIT(&gr->gr_destroyer_queue);
   glw_tex_init(gr);
 
   gr->gr_framerate = 60;
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
-  uii_register(&gr->gr_uii, primary);
 
   return 0;
 }
@@ -318,8 +332,15 @@ glw_init(glw_root_t *gr, const char *theme,
 void
 glw_fini(glw_root_t *gr)
 {
+  glw_text_bitmap_fini(gr);
+  free(gr->gr_default_font);
+  glw_tex_fini(gr);
+  free(gr->gr_skin);
+  glw_fini_settings(gr);
   pool_destroy(gr->gr_token_pool);
   pool_destroy(gr->gr_clone_pool);
+  prop_courier_destroy(gr->gr_courier);
+  hts_mutex_destroy(&gr->gr_mutex);
 }
 
 
@@ -343,10 +364,10 @@ glw_unload_universe(glw_root_t *gr)
 void
 glw_load_universe(glw_root_t *gr)
 {
-  prop_t *page = prop_create(gr->gr_uii.uii_prop, "root");
+  prop_t *page = prop_create(gr->gr_prop, "root");
   glw_unload_universe(gr);
 
-  rstr_t *universe = rstr_alloc("theme://universe.view");
+  rstr_t *universe = rstr_alloc("skin://universe.view");
 
   gr->gr_universe = glw_view_create(gr,
 				    universe, NULL, page,
@@ -528,19 +549,21 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
   gr->gr_frame_start = showtime_get_ts();
 
-  if((gr->gr_frames & 0x7f) == 0) {
+  if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
 
-    if(gr->gr_hz_sample) {
-      int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
+    if((gr->gr_frames & 0x7f) == 0) {
 
-      double hz = 128000000.0 / d;
+      if(gr->gr_hz_sample) {
+	int64_t d = gr->gr_frame_start - gr->gr_hz_sample;
 
-      prop_set_float(prop_create(gr->gr_uii.uii_prop, "framerate"), hz);
-      gr->gr_framerate = hz;
+	double hz = 128000000.0 / d;
+
+	prop_set_float(prop_create(gr->gr_prop, "framerate"), hz);
+	gr->gr_framerate = hz;
+      }
+      gr->gr_hz_sample = gr->gr_frame_start;
     }
-    gr->gr_hz_sample = gr->gr_frame_start;
   }
-
   gr->gr_frames++;
 
   gr->gr_screensaver_counter++;
@@ -1775,30 +1798,33 @@ glw_kill_screensaver(glw_root_t *gr)
 /**
  *
  */
-void
-glw_dispatch_event(uii_t *uii, event_t *e)
+static void
+glw_dispatch_event(glw_root_t *gr, event_t *e)
 {
-  glw_root_t *gr = (glw_root_t *)uii;
   int r;
 
   runcontrol_activity();
 
-  glw_lock(gr);
- 
+  if(e->e_type_x == EVENT_STOP_UI) {
+    gr->gr_stop = 1;
+    return;
+  }
+
+  if(e->e_type_x == EVENT_REPAINT_UI) {
+    glw_text_flush(gr);
+    return;
+  }
+    
   if(e->e_type_x == EVENT_KEYDESC) {
     event_t *e2;
     
-    if(glw_event(gr, e)) {
-      glw_unlock(gr);
+    if(glw_event(gr, e))
       return; // Was consumed
-    }
 
     e2 = keymapper_resolve(e->e_payload);
 
-    glw_unlock(gr);
-
     if(e2 != NULL)
-      uii->uii_ui->ui_dispatch_event(uii, e2);
+      event_to_ui(e2);
     return;
   }
 
@@ -1827,38 +1853,58 @@ glw_dispatch_event(uii_t *uii, event_t *e)
      )) {
     
     if(glw_kill_screensaver(gr)) {
-      glw_unlock(gr);
       return;
     }
   }
 
   if(event_is_action(e, ACTION_RELOAD_UI)) {
     glw_load_universe(gr);
-    glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_INCR)) {
 
     settings_add_int(gr->gr_setting_size, 1);
-    glw_unlock(gr);
     return;
 
   } else if(event_is_action(e, ACTION_ZOOM_UI_DECR)) {
 
     settings_add_int(gr->gr_setting_size, -1);
-    glw_unlock(gr);
     return;
 
   }
 
   r = glw_event(gr, e);
-  glw_unlock(gr);
 
   if(!r) {
     event_addref(e);
     event_dispatch(e);
   }
 }
+
+/**
+ *
+ */
+static void
+glw_eventsink(void *opaque, prop_event_t event, ...)
+{
+  glw_root_t *gr = opaque;
+  va_list ap;
+  event_t *e;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_EXT_EVENT:
+    e = va_arg(ap, event_t *);
+    glw_dispatch_event(gr, e);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+
 
 const glw_vertex_t align_vertices[] = 
   {
@@ -1917,6 +1963,11 @@ glw_conf_constraints(glw_t *w, int x, int y, float weight, int conf)
     w->glw_req_weight = weight;
     w->glw_flags |= GLW_CONSTRAINT_W;
     break;
+
+  case GLW_CONSTRAINT_CONF_D:
+    w->glw_flags |= GLW_CONSTRAINT_D;
+    break;
+
   default:
     abort();
   }
@@ -1970,12 +2021,13 @@ glw_set_constraints(glw_t *w, int x, int y, float weight, int flags)
     }
   }
     
-  if(fc & GLW_CONSTRAINT_F) {
-    ch = 1;
-    w->glw_flags = 
-      (w->glw_flags & ~GLW_CONSTRAINT_F) | (flags & GLW_CONSTRAINT_F);
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_D)) {
+    if(fc & GLW_CONSTRAINT_D) {
+      ch = 1;
+      w->glw_flags = 
+	(w->glw_flags & ~GLW_CONSTRAINT_D) | (flags & GLW_CONSTRAINT_D);
+    }
   }
-  
   if(ch && w->glw_parent != NULL)
     glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED, w);
 }
@@ -2013,11 +2065,14 @@ glw_clear_constraints(glw_t *w)
     }
   }
 
-  if(w->glw_flags & GLW_CONSTRAINT_F) {
-    w->glw_flags &= ~GLW_CONSTRAINT_F;
-    ch = 1;
+
+  if(!(w->glw_flags & GLW_CONSTRAINT_CONF_D)) {
+    if(w->glw_flags & GLW_CONSTRAINT_D) {
+      w->glw_flags &= ~GLW_CONSTRAINT_D;
+      ch = 1;
+    }
   }
-  
+
   if(!ch)
     return;
 

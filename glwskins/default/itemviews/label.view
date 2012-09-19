@@ -1,0 +1,19 @@
+#import "skin://common.view"
+
+widget(container_x, {
+  widget(label, {
+    TextStyleItem();
+    width: 200;
+    autohide: true;
+    caption: $self.metadata.title + ":";
+    align: topRight;
+    color: 0.7;
+  });
+
+  widget(label, {
+    TextStyleItem();
+    caption: $self.data;
+    align: left;
+    maxlines: 5;
+  });
+});

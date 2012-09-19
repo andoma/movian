@@ -316,7 +316,7 @@ video_settings_init(void)
 		       settings_generic_save_settings, 
 		       (void *)"subtitles");
 
-  settings_create_divider(s, _p("Subtitle size and positioning"));
+  settings_create_separator(s, _p("Subtitle size and positioning"));
 
   settings_create_int(s, "scale", _p("Subtitle size"),
 		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
@@ -343,7 +343,7 @@ video_settings_init(void)
 			     store, settings_generic_save_settings, 
 			     (void *)"subtitles");
 
-  settings_create_divider(s, _p("Subtitle styling"));
+  settings_create_separator(s, _p("Subtitle styling"));
 
   settings_create_string(s, "color", _p("Color"), "FFFFFF", 
 			 store, set_subtitle_color, NULL,

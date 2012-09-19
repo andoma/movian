@@ -49,6 +49,11 @@ typedef struct glw_image {
   int16_t gi_margin_top;
   int16_t gi_margin_bottom;
 
+  int16_t gi_automargin_left;
+  int16_t gi_automargin_right;
+  int16_t gi_automargin_top;
+  int16_t gi_automargin_bottom;
+
   // gi_box_ is (gi_border_ + gi_padding_ + gi_margin_)
   int16_t gi_box_left;
   int16_t gi_box_right;
@@ -91,7 +96,14 @@ typedef struct glw_image {
 
   float gi_autofade;
 
+  float gi_child_aspect;
+
   LIST_ENTRY(glw_image) gi_link;
+
+  rstr_t **gi_sources;
+
+  int gi_switch_cnt;
+  int gi_switch_tgt;
 
 } glw_image_t;
 
@@ -111,9 +123,23 @@ static int8_t tex_transform[9][4] = {
 };
 
 static void update_box(glw_image_t *gi);
+static void pick_source(glw_image_t *gi, int next);
 
 
 
+/**
+ *
+ */
+static void
+sources_free(rstr_t **v)
+{
+  int i;
+  if(v == NULL)
+    return;
+  for(i = 0; v[i] != NULL; i++)
+    rstr_release(v[i]);
+  free(v);
+}
 
 
 
@@ -124,6 +150,8 @@ static void
 glw_image_dtor(glw_t *w)
 {
   glw_image_t *gi = (glw_image_t *)w;
+
+  sources_free(gi->gi_sources);
 
   rstr_release(gi->gi_pending_url);
     
@@ -176,8 +204,11 @@ render_child_autocentered(glw_image_t *gi, const glw_rctx_t *rc)
 
   rc0 = *rc;
   
-  glw_reposition(&rc0, gi->gi_box_left, rc->rc_height - gi->gi_box_top,
-		 rc->rc_width  - gi->gi_box_right, gi->gi_box_bottom);
+  glw_reposition(&rc0,
+		 gi->gi_box_left + gi->gi_automargin_left,
+		 rc->rc_height - gi->gi_box_top - gi->gi_automargin_top,
+		 rc->rc_width  - gi->gi_box_right - gi->gi_automargin_right,
+		 gi->gi_box_bottom + gi->gi_automargin_bottom);
 
   rc0.rc_alpha *= gi->w.glw_alpha;
   glw_render0(c, &rc0);
@@ -305,6 +336,56 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 
   int x, y, i = 0, BL, BR;
 
+  if(gi->w.glw_flags2 & GLW2_AUTOMARGIN) {
+
+    gi->gi_automargin_left = 0;
+    gi->gi_automargin_top = 0;
+    gi->gi_automargin_right = 0;
+    gi->gi_automargin_bottom = 0;
+    
+    glw_t *c = TAILQ_FIRST(&gi->w.glw_childs);
+
+    if(c != NULL && (c->glw_flags & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) ==
+		     (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y)) {
+
+      int hspill = rc->rc_width - c->glw_req_size_x - 
+	gi->gi_box_left - gi->gi_box_right;
+
+      if(hspill > 0) {
+	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
+	gi->gi_automargin_right = hspill / 2;
+      }
+      
+      int vspill = rc->rc_height - c->glw_req_size_y -
+	gi->gi_box_top - gi->gi_box_bottom;
+
+      if(vspill > 0) {
+	gi->gi_automargin_top = vspill / 2 + (vspill & 1);
+	gi->gi_automargin_bottom = vspill / 2;
+      }
+
+    } else if(gi->gi_child_aspect > 0) {
+      
+      int px = rc->rc_height * gi->gi_child_aspect;
+      int hspill = rc->rc_width - px - gi->gi_box_left - gi->gi_box_right;
+      
+      if(hspill > 0) {
+	gi->gi_automargin_left = hspill / 2 + (hspill & 1);
+	gi->gi_automargin_right = hspill / 2;
+      }
+
+    }
+    if(gi->w.glw_flags & GLW_DEBUG)
+      printf("Automargin %d,%d,%d,%d\n",
+	     gi->gi_automargin_left,
+	     gi->gi_automargin_top,
+	     gi->gi_automargin_right,
+	     gi->gi_automargin_bottom);
+
+
+    update_box(gi);
+  }
+
   if(gr->gr_normalized_texture_coords) {
 
     tex[1][0] = 0.0f + (float)gi->gi_border_left  / glt->glt_xs;
@@ -342,15 +423,15 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
   }
 
 
-  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (BL + gi->gi_margin_left)  / rc->rc_width, 0.0f);
-  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (BR + gi->gi_margin_right) / rc->rc_width, 0.0f);
-  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right) / rc->rc_width, 0.0f);
+  vex[0][0] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_left + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
+  vex[1][0] = GLW_MIN(-1.0f + 2.0f * (BL + gi->gi_margin_left + gi->gi_automargin_left)  / rc->rc_width, 0.0f);
+  vex[2][0] = GLW_MAX( 1.0f - 2.0f * (BR + gi->gi_margin_right + gi->gi_automargin_right) / rc->rc_width, 0.0f);
+  vex[3][0] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_right + gi->gi_automargin_right) / rc->rc_width, 0.0f);
     
-  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top)  / rc->rc_height, 0.0f);
-  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_top + gi->gi_margin_top)  / rc->rc_height, 0.0f);
-  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_bottom + gi->gi_margin_bottom) / rc->rc_height, 0.0f);
-  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_bottom) / rc->rc_height, 0.0f);
+  vex[0][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_margin_top + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
+  vex[1][1] = GLW_MAX( 1.0f - 2.0f * (gi->gi_border_top + gi->gi_margin_top + gi->gi_automargin_top)  / rc->rc_height, 0.0f);
+  vex[2][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_border_bottom + gi->gi_margin_bottom + gi->gi_automargin_bottom) / rc->rc_height, 0.0f);
+  vex[3][1] = GLW_MIN(-1.0f + 2.0f * (gi->gi_margin_bottom + gi->gi_automargin_bottom) / rc->rc_height, 0.0f);
 
   for(y = 0; y < 4; y++) {
     for(x = 0; x < 4; x++) {
@@ -514,6 +595,13 @@ glw_image_update_constraints(glw_image_t *gi)
 			  gi->gi_box_top + gi->gi_box_bottom,
 			  c->glw_req_weight,
 			  c->glw_flags & GLW_CONSTRAINT_FLAGS);
+      
+      if(gi->w.glw_flags2 & GLW2_AUTOMARGIN)
+	gi->gi_update = 1;
+
+      if(gi->w.glw_flags & GLW_DEBUG)
+	printf("Req size: %d,%d\n", c->glw_req_size_x, c->glw_req_size_y);
+
 
     } else if(glt != NULL) {
       glw_set_constraints(&gi->w, 
@@ -537,7 +625,6 @@ glw_image_update_constraints(glw_image_t *gi)
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
 
       int xs = gi->w.glw_req_size_y * aspect;
-      printf("xs=%d\n", xs);
       glw_set_constraints(&gi->w, xs, 0, 0,
 			  GLW_CONSTRAINT_X);
     }
@@ -614,6 +701,17 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0;
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
+
+  gi->gi_switch_tgt = 180;
+
+  if(gi->gi_sources && gi->gi_switch_tgt) {
+    gi->gi_switch_cnt++;
+    if(gi->gi_switch_cnt == gi->gi_switch_tgt) {
+      pick_source(gi, 1);
+      gi->gi_switch_cnt = 0;
+    }
+  }
+
 
   if(gi->gi_pending_url != NULL) {
     // Request to load
@@ -801,8 +899,19 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
     
-    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right;
-    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom;
+    if(gi->w.glw_flags & GLW_DEBUG)
+      printf("Output width = %d-%d=%d   Output height=%d-%d=%d\n",
+	     rc0.rc_width, (gi->gi_box_left + gi->gi_box_right),
+	     rc0.rc_width - (gi->gi_box_left + gi->gi_box_right),
+
+	     rc0.rc_height, (gi->gi_box_top + gi->gi_box_bottom),
+	     rc0.rc_height - (gi->gi_box_top + gi->gi_box_bottom));
+
+    rc0.rc_width  -= gi->gi_box_left + gi->gi_box_right +
+      gi->gi_automargin_left + gi->gi_automargin_right;
+    rc0.rc_height -= gi->gi_box_top  + gi->gi_box_bottom + 
+      gi->gi_automargin_top + gi->gi_automargin_bottom;
+
 
     if(rc0.rc_height >= 0 && rc0.rc_width >= 0)
       glw_layout0(c, &rc0);
@@ -925,6 +1034,15 @@ update_box(glw_image_t *gi)
     gi->gi_margin_right + (gi->gi_border_left_afix ?: gi->gi_border_right) + gi->gi_padding_right;
   gi->gi_box_bottom =
     gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
+
+  if(gi->w.glw_flags & GLW_DEBUG)
+    printf("Box: %d,%d,%d,%d == %d,%d\n",
+	   gi->gi_box_left,
+	   gi->gi_box_top,
+	   gi->gi_box_right,
+	   gi->gi_box_bottom,
+	   gi->gi_box_left + gi->gi_box_right,
+	   gi->gi_box_top + gi->gi_box_bottom);
 }
 
 /**
@@ -1000,14 +1118,12 @@ mod_image_flags(glw_t *w, int set, int clr)
 }
 
 
-
 /**
  *
  */
-static void
-set_path(glw_image_t *gi, rstr_t *filename)
+static const rstr_t *
+get_curname(glw_image_t *gi)
 {
- 
   const rstr_t *curname;
 
   if(gi->gi_pending_url != NULL)
@@ -1018,15 +1134,35 @@ set_path(glw_image_t *gi, rstr_t *filename)
     curname = gi->gi_current->glt_url;
   else 
     curname = NULL;
+  return curname;
+}
+
+
+/**
+ *
+ */
+static void
+set_pending(glw_image_t *gi, rstr_t *filename)
+{
+  if(gi->gi_pending_url != NULL)
+    rstr_release(gi->gi_pending_url);
+  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
+
+}
+
+/**
+ *
+ */
+static void
+set_path(glw_image_t *gi, rstr_t *filename)
+{
+  const rstr_t *curname = get_curname(gi);
   
   if(curname != NULL && filename != NULL && !strcmp(rstr_get(filename),
 						    rstr_get(curname)))
     return;
-  
-  if(gi->gi_pending_url != NULL)
-    rstr_release(gi->gi_pending_url);
-  
-  gi->gi_pending_url = filename ? rstr_dup(filename) : rstr_alloc("");
+
+  set_pending(gi, filename);
 }
 
 
@@ -1038,6 +1174,50 @@ set_source(glw_t *w, rstr_t *filename)
 {
   glw_image_t *gi = (glw_image_t *)w;
   set_path(gi, filename);
+}
+
+
+/**
+ *
+ */
+static void
+pick_source(glw_image_t *gi, int next)
+{
+  const rstr_t *curname = get_curname(gi);
+  if(curname == NULL) {
+    set_pending(gi, gi->gi_sources[0]);
+  } else {
+
+    int i;
+    int found = -1;
+    for(i = 0; gi->gi_sources[i] != NULL && found == -1; i++) {
+      if(!strcmp(rstr_get(gi->gi_sources[i]), rstr_get(curname)))
+	found = i;
+    }
+    if(found == -1) {
+      set_pending(gi, gi->gi_sources[0]);
+    } else if(next) {
+      if(gi->gi_sources[found+1] == NULL) {
+	set_pending(gi, gi->gi_sources[0]);
+      } else {
+	set_pending(gi, gi->gi_sources[found+1]);
+      }
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+set_sources(glw_t *w, rstr_t **filenames)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  sources_free(gi->gi_sources);
+  gi->gi_sources = filenames;
+
+  pick_source(gi, 0);
 }
 
 
@@ -1101,6 +1281,10 @@ glw_image_set(glw_t *w, va_list ap)
     case GLW_ATTRIB_ALPHA_EDGES:
       gi->gi_alpha_edge = va_arg(ap, int);
       gi->gi_mode = GI_MODE_ALPHA_EDGES;
+      break;
+
+    case GLW_ATTRIB_CHILD_ASPECT:
+      gi->gi_child_aspect = va_arg(ap, double);
       break;
 
     default:
@@ -1168,6 +1352,7 @@ static glw_class_t glw_image = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };
@@ -1191,6 +1376,7 @@ static glw_class_t glw_icon = {
   .gc_set_padding = set_padding,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
@@ -1218,6 +1404,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };
@@ -1244,6 +1431,7 @@ static glw_class_t glw_frontdrop = {
   .gc_set_margin = set_margin,
   .gc_mod_image_flags = mod_image_flags,
   .gc_set_source = set_source,
+  .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
 };

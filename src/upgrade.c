@@ -167,8 +167,7 @@ check_upgrade(int set_news)
 
   prop_set(upgrade_root, "size", NULL, PROP_SET_INT, dlsize);
 
-  extern int enable_omnigrade; // dev feature
-  int canUpgrade = enable_omnigrade;
+  int canUpgrade = gconf.enable_omnigrade;
   
   if(ver != NULL) {
     int current_ver = showtime_get_version_int();
@@ -299,7 +298,7 @@ install_thread(void *aux)
     return NULL;
   }
 
-  const char *fname = showtime_bin;
+  const char *fname = gconf.binary;
 
   TRACE(TRACE_INFO, "upgrade", "Replacing %s with %d bytes received",
 	fname, (int)result_size);
@@ -404,7 +403,7 @@ void
 upgrade_init(void)
 {
   
-  if(showtime_bin == NULL)
+  if(gconf.binary == NULL)
     return;
 
 #if PS3
@@ -428,7 +427,7 @@ upgrade_init(void)
 
   setting_t *x;
 
-  settings_create_divider(settings_general,
+  settings_create_separator(settings_general,
 			  _p("Software upgrade"));
 
   x = settings_create_multiopt(settings_general, "track",

@@ -31,7 +31,6 @@
 #include "misc/layout.h"
 #include "misc/pool.h"
 #include "prop/prop.h"
-#include "ui/ui.h"
 #include "showtime.h"
 #include "settings.h"
 
@@ -430,9 +429,9 @@ typedef struct glw_class {
   int gc_default_alignment;
 
   /**
-   * Return number of childern currently packed per row
+   * Given child c, return how many items to steps in order to move one column
    */
-  int (*gc_get_num_children_x)(struct glw *w);
+  int (*gc_get_next_row)(struct glw *w, struct glw *c, int rev);
 
   /**
    * Select a child
@@ -563,6 +562,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_sources)(struct glw *w, rstr_t **urls);
+
+  /**
+   *
+   */
   void (*gc_set_how)(struct glw *w, const char *how);
 
   /**
@@ -625,7 +629,10 @@ const glw_class_t *glw_class_find_by_name(const char *name);
  * GLW root context
  */
 typedef struct glw_root {
-  uii_t gr_uii;
+  prop_t *gr_prop;
+
+  int gr_stop;
+  prop_sub_t *gr_evsub;
 
   pool_t *gr_token_pool;
   pool_t *gr_clone_pool;
@@ -637,6 +644,7 @@ typedef struct glw_root {
   LIST_HEAD(, glw_cached_view) gr_views;
 
   const char *gr_vpaths[5];
+  char *gr_skin;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
@@ -645,7 +653,7 @@ typedef struct glw_root {
   struct glw_queue gr_destroyer_queue;
 
   int gr_frameduration;
-  int gr_framerate;
+  float gr_framerate;
 
   struct glw_head gr_active_list;
   struct glw_head gr_active_flush_list;
@@ -683,16 +691,23 @@ typedef struct glw_root {
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_render_queue;
   TAILQ_HEAD(, glw_text_bitmap) gr_gtb_dim_queue;
   hts_cond_t gr_gtb_work_cond;
+  hts_thread_t gr_font_thread;
+  int gr_font_thread_running;
 
+  rstr_t *gr_default_font;
   int gr_font_domain;
 
   /**
    * Image/Texture loader
    */
+  int gr_tex_threads_running;
+#define GLW_TEXTURE_THREADS 6
+  hts_thread_t gr_tex_threads[GLW_TEXTURE_THREADS];
+
   LIST_HEAD(,  glw_image) gr_icons;
   hts_cond_t gr_tex_load_cond;
 
-#define LQ_THEME      0
+#define LQ_SKIN      0
 #define LQ_TENTATIVE  1
 #define LQ_THUMBS     2
 #define LQ_OTHER      3
@@ -894,12 +909,14 @@ typedef struct glw {
    * All the glw_parent stuff is operated by this widgets
    * parents. That is, a widget should never touch these themselfs
    * TODO: Allocate these dynamically based on parent class
+   *
+   * glw_array current has the most items here now
    */
   union { 
     int i32;
     float f;
     void *ptr;
-  } glw_parent_val[6];
+  } glw_parent_val[7];
 
 
   /**
@@ -936,17 +953,17 @@ typedef struct glw {
 #define GLW_CONSTRAINT_X         0x10000
 #define GLW_CONSTRAINT_Y         0x20000
 #define GLW_CONSTRAINT_W         0x40000
-#define GLW_CONSTRAINT_F         0x80000
+#define GLW_CONSTRAINT_D         0x80000
 
   // We rely on shifts to filter these against each other so they
   // must be consecutive, see glw_filter_constraints()
 #define GLW_CONSTRAINT_IGNORE_X  0x100000
 #define GLW_CONSTRAINT_IGNORE_Y  0x200000
 #define GLW_CONSTRAINT_IGNORE_W  0x400000
-#define GLW_CONSTRAINT_IGNORE_F  0x800000
+#define GLW_CONSTRAINT_IGNORE_D  0x800000
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
-                              GLW_CONSTRAINT_W | GLW_CONSTRAINT_F )
+                              GLW_CONSTRAINT_W | GLW_CONSTRAINT_D )
 
 #define GLW_CLIPPED              0x1000000 
 
@@ -958,6 +975,7 @@ typedef struct glw {
 #define GLW_CONSTRAINT_CONF_W    0x10000000
 #define GLW_CONSTRAINT_CONF_X    0x20000000
 #define GLW_CONSTRAINT_CONF_Y    0x40000000
+#define GLW_CONSTRAINT_CONF_D    0x80000000
 
 
   int glw_flags2;
@@ -969,6 +987,7 @@ typedef struct glw {
 #define GLW2_SHADOW          0x20
 #define GLW2_AUTOFADE        0x40
 #define GLW2_EXPEDITE_SUBSCRIPTIONS     0x80
+#define GLW2_AUTOMARGIN                 0x100
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
@@ -1013,9 +1032,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *theme,
-	     ui_t *ui, int primary,
-	     const char *instance, const char *instance_title );
+int glw_init(glw_root_t *gr, const char *instance);
 
 void glw_fini(glw_root_t *gr);
 
@@ -1028,6 +1045,7 @@ void glw_flush(glw_root_t *gr);
 void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 #define GLW_REINITIALIZE_VDPAU 0x1
+#define GLW_NO_FRAMERATE_UPDATE 0x2
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
 
@@ -1046,8 +1064,6 @@ void glw_remove_from_parent(glw_t *w, glw_t *p);
 void glw_lock(glw_root_t *gr);
 
 void glw_unlock(glw_root_t *gr);
-
-void glw_dispatch_event(uii_t *uii, struct event *e);
 
 
 /**

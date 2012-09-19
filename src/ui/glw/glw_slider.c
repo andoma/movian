@@ -525,7 +525,7 @@ bind_to_property(glw_t *w, prop_t *p, const char **pname,
 			  PROP_TAG_NAMED_ROOT, view, "view",
 			  PROP_TAG_NAMED_ROOT, args, "args",
 			  PROP_TAG_NAMED_ROOT, clone, "clone",
-			  PROP_TAG_ROOT, w->glw_root->gr_uii.uii_prop,
+			  PROP_TAG_ROOT, w->glw_root->gr_prop,
 			  NULL);
 }
 

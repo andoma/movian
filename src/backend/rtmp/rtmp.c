@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 #include <string.h>
+#include <unistd.h>
 
 #include <librtmp/rtmp.h>
 #include <librtmp/log.h>
@@ -47,8 +48,6 @@ typedef struct {
 
   int width;
   int height;
-
-  int hold;
 
   int64_t seekpos_video;
   int64_t seekpos_audio;
@@ -199,24 +198,7 @@ rtmp_process_event(rtmp_t *r, event_t *e, media_buf_t **mbp)
     video_seek(r, mp, mbp, 0, "direct");
   }
   
-  if(event_is_action(e, ACTION_PLAYPAUSE) ||
-     event_is_action(e, ACTION_PLAY) ||
-     event_is_action(e, ACTION_PAUSE)) {
-    
-    r->hold = action_update_hold_by_event(r->hold, e);
-    mp_send_cmd_head(mp, &mp->mp_video, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-    mp_send_cmd_head(mp, &mp->mp_audio, r->hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, r->hold, NULL);
-    
-
-  } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-    
-    r->hold = 1;
-    mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_PAUSE);
-    mp_send_cmd_head(mp, &mp->mp_audio, MB_CTRL_PAUSE);
-    mp_set_playstatus_by_hold(mp, r->hold, e->e_payload);
-
-  } else if(event_is_type(e, EVENT_CURRENT_TIME)) {
+  if(event_is_type(e, EVENT_CURRENT_TIME)) {
     event_ts_t *ets = (event_ts_t *)e;
     
     int sec = ets->ts / 1000000;
@@ -545,27 +527,35 @@ rtmp_loop(rtmp_t *r, media_pipe_t *mp, char *url, char *errbuf, size_t errlen)
       }
 
       if(ret == 0) {
+	int64_t restartpos = r->seekpos_video;
+
+	TRACE(TRACE_ERROR, "RTMP", "Disconnected");
+	sleep(1);
+
+	if(restartpos == AV_NOPTS_VALUE) {
+	  snprintf(errbuf, errlen,
+		   "Giving up restart since nothing was decoded");
+	  return NULL;
+	}
+
+
 	RTMP_Close(r->r);
 	
 	RTMP_Init(r->r);
 
 	memset(&p, 0, sizeof(p));
 
-	int64_t restartpos = r->seekpos_video;
-
 	TRACE(TRACE_DEBUG, "RTMP", "Reconnecting stream at pos %ld", 
 	      restartpos);
 
 	if(!RTMP_SetupURL(r->r, url)) {
 	  snprintf(errbuf, errlen, "Unable to setup RTMP session");
-	  e = NULL;
-	  break;
+	  return NULL;
 	}
 
 	if(!RTMP_Connect(r->r, NULL)) {
 	  snprintf(errbuf, errlen, "Unable to connect RTMP session");
-	  e = NULL;
-	  break;
+	  return NULL;
 	}
 
 	if(!RTMP_ConnectStream(r->r, 0)) {
@@ -673,7 +663,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       int flags, int priority,
 	       char *errbuf, size_t errlen,
 	       const char *mimetype,
-	       const char *canonical_url)
+	       const char *canonical_url,
+	       video_queue_t *vq)
 {
   rtmp_t r = {0};
   event_t *e;
@@ -718,7 +709,6 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     RTMP_SendSeek(r.r, start);
     
   r.mp = mp;
-  r.hold = 0;
   
   mp->mp_audio.mq_stream = 0;
   mp->mp_video.mq_stream = 0;
@@ -773,7 +763,8 @@ static void
 rtmp_log(int level, const char *format, va_list vl)
 {
   int mylevel = 0;
-  if(level >= rtmp_log_level)
+
+  if(level > rtmp_log_level)
     return;
 
   switch(level) {

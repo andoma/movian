@@ -16,6 +16,7 @@ LIST_HEAD(js_plugin_list, js_plugin);
 LIST_HEAD(js_service_list, js_service);
 LIST_HEAD(js_setting_group_list, js_setting_group);
 LIST_HEAD(js_event_handler_list, js_event_handler);
+LIST_HEAD(js_subscription_list, js_subscription);
 
 /**
  *
@@ -35,6 +36,7 @@ typedef struct js_plugin {
   struct js_service_list jsp_services;
   struct js_setting_group_list jsp_setting_groups;
   struct js_event_handler_list jsp_event_handlers;
+  struct js_subscription_list jsp_subscriptions;
 
   struct fa_handle *jsp_ref;
 
@@ -117,6 +119,9 @@ void js_setting_group_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
 void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 
+void js_subscription_flush_from_list(JSContext *cx,
+				     struct js_subscription_list *l);
+
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 
 JSBool js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
@@ -137,6 +142,9 @@ JSBool js_cache_get(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_get_descriptor(JSContext *cx, JSObject *obj, uintN argc,
 			 jsval *argv, jsval *rval);
 
+JSBool js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc,
+			   jsval *argv, jsval *rval);
+
 struct http_auth_req;
 int js_http_auth_try(const char *url, struct http_auth_req *har);
 
@@ -150,5 +158,10 @@ void js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
 			     const char *filter, jsval fun);
 
 void js_page_init(void);
+
+JSBool js_subscribe(JSContext *cx, uintN argc, 
+		    jsval *argv, jsval *rval, prop_t *root, const char *pname,
+		    struct js_subscription_list *list, prop_courier_t *pc,
+		    int *subsptr);
 
 #endif // JS_H__ 

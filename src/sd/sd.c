@@ -209,8 +209,6 @@ sd_add_service_webdav(service_instance_t *si, const char *name,
 void
 sd_init(void)
 {
-  arch_sd_init();
-
 #ifdef CONFIG_AVAHI
   avahi_init();
 #endif

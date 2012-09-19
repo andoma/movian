@@ -53,19 +53,19 @@ static int font_domain_tally = 10;
 TAILQ_HEAD(glyph_queue, glyph);
 LIST_HEAD(glyph_list, glyph);
 TAILQ_HEAD(face_queue, face);
-LIST_HEAD(family_list, family);
+LIST_HEAD(idmap_list, idmap);
 
-//----------------- Family name <-> id map --------------
+//----------------- generica name <-> id map --------------
 
-typedef struct family {
-  LIST_ENTRY(family) link;
+typedef struct idmap {
+  LIST_ENTRY(idmap) link;
   char *name;
-  int font_domain;
   int id;
-} family_t;
+  int domain;
+} idmap_t;
 
-static int family_id_tally;
-static struct family_list families;
+static int idmap_id_tally;
+static struct  idmap_list idmaps;
 
 //------------------------- Faces -----------------------
 
@@ -75,12 +75,12 @@ typedef struct face {
   FT_Face face;
   char *url;
   int current_size;
-  int *family_id_vec;
+  char *family;
+  char *fullname;
   uint8_t style;
   int persistent;
   int font_domain;
   struct glyph_list glyphs;
-
 } face_t;
 
 static struct face_queue faces;
@@ -115,71 +115,36 @@ static struct glyph_list glyph_hash[GLYPH_HASH_SIZE];
 static struct glyph_queue allglyphs;
 static int num_glyphs;
 
-static void face_set_family(face_t *f, int family_id);
-
 /**
  *
  */
 static int
-family_get(const char *name, int font_domain)
+id_from_str(const char *str, int domain)
 {
-  family_t *f;
-
-  if(name == NULL)
-    return 0;
-
-  char *n2 = mystrdupa(name), *e;
-  e = strrchr(n2, ' ');
-  if(e != NULL) {
-    e++;
-    if(!strcasecmp(e, "thin") ||
-       !strcasecmp(e, "light") ||
-       !strcasecmp(e, "bold") ||
-       !strcasecmp(e, "heavy"))
-      e[-1] = 0;
-  }
-
-  LIST_FOREACH(f, &families, link)
-    if(!strcasecmp(n2, f->name) && f->font_domain == font_domain)
-      break;
-  
-  if(f == NULL) {
-    f = malloc(sizeof(family_t));
-    f->id = ++family_id_tally;
-    f->name = strdup(n2);
-    f->font_domain = font_domain;
-  } else {
-    LIST_REMOVE(f, link);
-  }
-  LIST_INSERT_HEAD(&families, f, link);
-  return f->id;
+  idmap_t *im;
+  LIST_FOREACH(im, &idmaps, link)
+    if(!strcmp(str, im->name) && im->domain == domain)
+      return im->id;
+  im = malloc(sizeof(idmap_t));
+  im->name = strdup(str);
+  im->domain = domain;
+  im->id = ++idmap_id_tally;
+  LIST_INSERT_HEAD(&idmaps, im, link);
+  return im->id;
 }
 
 
 /**
  *
  */
-static const family_t *
-family_get_by_id(int id)
+static idmap_t *
+idmap_find(int id)
 {
-  const family_t *f;
-
-  LIST_FOREACH(f, &families, link)
-    if(f->id == id)
-      return f;
+  idmap_t *im;
+  LIST_FOREACH(im, &idmaps, link)
+    if(id == im->id)
+      return im;
   return NULL;
-}
-
-
-
-/**
- *
- */
-static const char *
-family_get_name_by_id(int id)
-{
-  const family_t *f = family_get_by_id(id);
-  return f ? f->name : NULL;
 }
 
 
@@ -218,7 +183,8 @@ face_destroy(face_t *f)
 	f->face->family_name, f->face->style_name, f->url ?: "memory");
   TAILQ_REMOVE(&faces, f, link);
   free(f->url);
-  free(f->family_id_vec);
+  free(f->family);
+  free(f->fullname);
   FT_Done_Face(f->face);
   free(f);
 }
@@ -266,34 +232,12 @@ face_close(FT_Stream stream)
 /**
  *
  */
-static void
-remove_face_alias(int family_id)
-{
-  int i;
-  face_t *f;
-  TAILQ_FOREACH(f, &faces, link) {
-    for(i = 1; f->family_id_vec[i] != 0; i++) {
-      if(f->family_id_vec[i] == family_id) {
-	while(1) {
-	  f->family_id_vec[i] = f->family_id_vec[i+1];
-	  if(f->family_id_vec[i] == 0)
-	    break;
-	  i++;
-	}
-      }
-    }
-  }
-}
-
-
-/**
- *
- */
 static face_t *
 face_create_epilogue(face_t *face, const char *source, int font_domain)
 {
   const char *family = face->face->family_name;
   const char *style = face->face->style_name;
+  char buf[256];
   TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] from %s",
 	family, style, source);
 
@@ -309,12 +253,11 @@ face_create_epilogue(face_t *face, const char *source, int font_domain)
     }
   }
   face->font_domain = font_domain;
-  face->family_id_vec = calloc(2, sizeof(int));
-  face->family_id_vec[0] = family_get(family, font_domain);
+  face->family = strdup(family);
+  snprintf(buf, sizeof(buf), "%s %s", family, style);
+  face->fullname = strdup(buf);
 
   FT_Select_Charmap(face->face, FT_ENCODING_UNICODE);
-
-  remove_face_alias(family_get(family, font_domain));
 
   TAILQ_INSERT_TAIL(&faces, face, link);
   return face;
@@ -397,67 +340,82 @@ face_create_from_memory(const void *ptr, size_t len, int context)
 /**
  *
  */
-static int
-face_is_family(face_t *f, int family_id)
+static void
+striptrail(char *x2)
 {
-  int i = 0;
-  while(f->family_id_vec[i] != 0)
-    if(f->family_id_vec[i++] == family_id)
-      return 1;
-  return 0;
+  char *x = strrchr(x2, ' ');
+  if(!x || x == x2)
+    return;
+  x++;
+  if(!strcasecmp(x, "thin") ||
+     !strcasecmp(x, "light") ||
+     !strcasecmp(x, "bold") ||
+     !strcasecmp(x, "heavy"))
+    x[-1] = 0;
 }
-
-
 
 /**
  *
  */
-static void
-face_set_family(face_t *f, int family_id)
+static int
+face_is_family(face_t *f, const char *family, int domain, int fuzzyness)
 {
-  int len = 0;
+  char *a, *b;
+  if(domain != f->font_domain)
+    return 0;
 
-  if(f->family_id_vec != NULL)
-    while(f->family_id_vec[len] != 0)
-      if(f->family_id_vec[len] == family_id)
-	return;
-      else
-	len++;
-
-#if 0
-  TRACE(TRACE_DEBUG, "FT", "Font %s alias to %s\n",
-	f->family_id_vec ? family_get_name_by_id(f->family_id_vec[0]) : "<yet unnamed>",
-	family_get_by_id(family_id));
-#endif
-  f->family_id_vec = realloc(f->family_id_vec, sizeof(int) * (len + 2));
-  f->family_id_vec[len] = family_id;
-  f->family_id_vec[len+1] = 0;
+  switch(fuzzyness) {
+  case 0:
+    return !strcasecmp(family, f->fullname);
+  case 1:
+    return !strcasecmp(family, f->family);
+  case 2:
+    a = mystrdupa(family);
+    b = mystrdupa(f->family);
+    striptrail(a);
+    striptrail(b);
+    return !strcasecmp(a, b);
+  default:
+    return 0;
+  }
 }
-
 
 /**
  *
  */
 static face_t *
-face_find2(int uc, uint8_t style, int family_id)
+face_resolve(int uc, uint8_t style, const char *font, int font_domain,
+	     const char **vpaths)
 {
-  face_t *f;
+  face_t *f = NULL;
+  if(font != NULL) {
+    int i;
+    // Try already loaded faces
+    for(i = 0; i < 3; i++) {
+      TAILQ_FOREACH(f, &faces, link)
+	if(face_is_family(f, font, font_domain, i) &&
+	   f->style == style &&
+	   FT_Get_Char_Index(f->face, uc))
+	  return f;
+    }
 
-  // Try already loaded faces
-  TAILQ_FOREACH(f, &faces, link)
-    if(face_is_family(f, family_id) &&
-       f->style == style &&
-       FT_Get_Char_Index(f->face, uc))
-      return f;
+    for(i = 0; i < 3; i++) {
+      TAILQ_FOREACH(f, &faces, link)
+	if(face_is_family(f, font, font_domain, i) &&
+	   f->style == 0 &&
+	   FT_Get_Char_Index(f->face, uc))
+	  return f;
+    }
 
-  TAILQ_FOREACH(f, &faces, link)
-    if(face_is_family(f, family_id) &&
-       f->style == 0 &&
-       FT_Get_Char_Index(f->face, uc))
-      return f;
+    if(fa_can_handle(font, NULL, 0)) {
+      f = face_create_from_uri(font, font_domain, vpaths);
+      if(f == NULL || !FT_Get_Char_Index(f->face, uc))
+	f = NULL;
+    }
+  }
 
   // Try default font
-  if(default_font != NULL)
+  if(f == NULL && default_font != NULL)
     if(FT_Get_Char_Index(default_font->face, uc))
       f = default_font;
 
@@ -470,8 +428,7 @@ face_find2(int uc, uint8_t style, int family_id)
 #if ENABLE_LIBFONTCONFIG
   if(f == NULL) {
     char url[URL_MAX];
-    if(!fontconfig_resolve(uc, style, family_get_name_by_id(family_id),
-			   url, sizeof(url)))
+    if(!fontconfig_resolve(uc, style, font, url, sizeof(url)))
       f = face_create_from_uri(url, FONT_DOMAIN_FALLBACK, NULL);
   }
 #endif
@@ -482,10 +439,6 @@ face_find2(int uc, uint8_t style, int family_id)
     TAILQ_FOREACH(f, &faces, link)
       if(FT_Get_Char_Index(f->face, uc))
 	break;
-
-  if(f != NULL && f->font_domain != FONT_DOMAIN_FALLBACK)
-    face_set_family(f, family_id);
-
   return f;
 }
 
@@ -494,14 +447,15 @@ face_find2(int uc, uint8_t style, int family_id)
  *
  */
 static face_t *
-face_find(int uc, uint8_t style, int family_id)
+face_find(int uc, uint8_t style, const char *family, int font_domain,
+	  const char **vpaths)
 {
-  face_t *f = face_find2(uc, style, family_id);
+  face_t *f = face_resolve(uc, style, family, font_domain, vpaths);
 
 #if 0
-  TRACE(TRACE_DEBUG, "FT", "Resolv %c (0x%x) (%d %s) -> %s\n",
-	uc, uc, style, family_get_by_id(family_id),
-	f ? f->url ? f->url : "<memory>" : "<none>");
+  printf("Resolv %c (0x%x) [style=0x%x, font: %s] -> %s\n",
+	 uc, uc, style, family ?: "<unset>",
+	 f ? (f->url ? f->url : "<memory>") : "<none>");
 #endif
   return f;
 }
@@ -531,27 +485,39 @@ face_set_size(face_t *f, int size)
  *
  */
 static glyph_t *
-glyph_get(int uc, int size, uint8_t style, int family_id)
+glyph_get(int uc, int size, uint8_t style, const char *font,
+	  int font_domain, const char **vpaths)
 {
   int err, hash = (uc ^ size ^ style) & GLYPH_HASH_MASK;
   glyph_t *g;
   FT_GlyphSlot gs;
 
-  LIST_FOREACH(g, &glyph_hash[hash], hash_link)
-    if(g->uc == uc &&
-       g->size == size &&
-       g->style == style && 
-       face_is_family(g->face, family_id))
+  LIST_FOREACH(g, &glyph_hash[hash], hash_link) {
+    if(g->uc != uc || g->size != size || g->style != style)
+      continue;
+    
+    if(font == NULL) {
+      if(g->face->font_domain <= FONT_DOMAIN_DEFAULT)
+	break;
+      else
+	continue;
+    }
+
+    if(!strcmp(g->face->family, font) && g->face->font_domain == font_domain)
       break;
+
+    if(g->face->url && !strcmp(g->face->url, font))
+      break;
+  }
 
   if(g == NULL) {
     face_t *f;
     FT_UInt gi = 0;
 
-    f = face_find(uc, style, family_id);
+    f = face_find(uc, style, font, font_domain, vpaths);
 
     if(f == NULL) {
-      f = face_find(uc, 0, family_id);
+      f = face_find(uc, 0, font, font_domain, vpaths);
       if(f == NULL)
 	return NULL;
     }
@@ -871,10 +837,9 @@ static struct pixmap *
 text_render0(const uint32_t *uc, const int len,
 	     int flags, int default_size, float scale,
 	     int global_alignment, int max_width, int max_lines,
-	     const char *family, int context, int min_size)
+	     const char *default_font, int default_domain,
+	     int min_size, const char **vpaths)
 {
-  const int default_family_id = family_get(family ?: "Sans", context);
-  int family_id = default_family_id;
   pixmap_t *pm;
   FT_UInt prev = 0;
   FT_BBox bbox;
@@ -907,6 +872,10 @@ text_render0(const uint32_t *uc, const int len,
 
   int need_shadow_pass = 0;
   int need_outline_pass = 0;
+
+  const char *current_font = default_font;
+  int current_domain = default_domain;
+  idmap_t *im;
 
   if(min_size > 0 && current_size < min_size) {
     scale = (float)min_size / current_size;
@@ -1024,7 +993,9 @@ text_render0(const uint32_t *uc, const int len,
       current_size = default_size * scale;
       current_color = 0xffffff;
       current_alpha = 0xff000000;
-      family_id = default_family_id;
+
+      current_font   = default_font;
+      current_domain = default_domain;
       break;
 
     case TR_CODE_SIZE_PX ... TR_CODE_SIZE_PX + 0xffff:
@@ -1047,7 +1018,12 @@ text_render0(const uint32_t *uc, const int len,
       break;
 
     case  TR_CODE_FONT_FAMILY ...  TR_CODE_FONT_FAMILY + 0xffffff:
-      family_id = uc[i] & 0xffffff;
+      im = idmap_find(uc[i] & 0xffffff);
+      if(im != NULL) {
+	current_font   = im->name;
+	current_domain = im->domain;
+      }
+
       break;
 
     case TR_CODE_ALPHA ... TR_CODE_ALPHA + 0xff:
@@ -1096,7 +1072,8 @@ text_render0(const uint32_t *uc, const int len,
     if(li->start == -1)
       li->start = out;
 
-    if((g = glyph_get(uc[i], current_size, style, family_id)) == NULL)
+    if((g = glyph_get(uc[i], current_size, style, current_font, current_domain,
+		      vpaths)) == NULL)
       continue;
 
     if(FT_HAS_KERNING(g->face->face) && g->gi && prev) {
@@ -1197,7 +1174,8 @@ text_render0(const uint32_t *uc, const int len,
 	
 	if(flags & TR_RENDER_ELLIPSIZE) {
 	  glyph_t *eg = glyph_get(HORIZONTAL_ELLIPSIS_UNICODE, g->size, 0,
-				  g->face->family_id_vec[0]);
+				  g->face->url, g->face->font_domain,
+				  vpaths);
 	  if(w + d > max_width - eg->adv_x ) {
 
 	    while(j > 0 && items[li->start + j - 1].code == ' ') {
@@ -1240,7 +1218,7 @@ text_render0(const uint32_t *uc, const int len,
 
   int target_width  = siz_x / 64;
   int target_height = 0;
-  int margin = 0;
+  int margin = 128;
 
   TAILQ_FOREACH(li, &lq, link) {
 
@@ -1362,14 +1340,16 @@ text_render0(const uint32_t *uc, const int len,
 struct pixmap *
 text_render(const uint32_t *uc, const int len, int flags, int default_size,
 	    float scale, int alignment, int max_width, int max_lines,
-	    const char *family, int context, int min_size)
+	    const char *family, int context, int min_size,
+	    const char **vpaths)
 {
   struct pixmap *pm;
 
   hts_mutex_lock(&text_mutex);
 
   pm = text_render0(uc, len, flags, default_size, scale, alignment, 
-		    max_width, max_lines, family, context, min_size);
+		    max_width, max_lines, family, context, min_size,
+		    vpaths);
   while(num_glyphs > 512)
     glyph_flush_one();
 
@@ -1380,6 +1360,25 @@ text_render(const uint32_t *uc, const int len, int flags, int default_size,
   return pm;
 }
 
+/**
+ *
+ */
+static void
+freetype_set_fontptr(face_t **ptr, const char *url)
+{
+  if(*ptr) {
+    if(--(*ptr)->persistent == 0)
+      face_destroy(*ptr);
+    *ptr = NULL;
+  }
+
+  if(url) {
+    *ptr = face_create_from_uri(url, FONT_DOMAIN_DEFAULT, NULL);
+    if(*ptr != NULL)
+      (*ptr)->persistent++;
+  }
+}
+
 
 /**
  *
@@ -1388,18 +1387,7 @@ static void
 freetype_set_default_font(const char *url)
 {
   hts_mutex_lock(&text_mutex);
-
-  if(default_font) {
-    if(--default_font->persistent == 0)
-      face_destroy(default_font);
-    default_font = NULL;
-  }
-
-  if(url) {
-    default_font =  face_create_from_uri(url, FONT_DOMAIN_DEFAULT, NULL);
-    if(default_font != NULL)
-      default_font->persistent++;
-  }
+  freetype_set_fontptr(&default_font, url);
   hts_mutex_unlock(&text_mutex);
 }
 
@@ -1422,7 +1410,7 @@ freetype_init(void)
   TAILQ_INIT(&faces);
   TAILQ_INIT(&allglyphs);
   hts_mutex_init(&text_mutex);
-  arch_preload_fonts();
+  //  arch_preload_fonts();
 
   snprintf(url, sizeof(url),
 	   "%s/resources/fonts/liberation/LiberationSans-Regular.ttf",
@@ -1442,30 +1430,14 @@ freetype_load_font(const char *url, int context, const char **vpaths)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
-
+  
   f = face_create_from_uri(url, context, vpaths);
   if(f != NULL)
     f->persistent++;
-
+  
   hts_mutex_unlock(&text_mutex);
   return f;
 }
-
-
-
-/**
- *
- */
-rstr_t *
-freetype_get_family(void *handle)
-{
-  face_t *f = handle;
-  hts_mutex_lock(&text_mutex);
-  rstr_t *r = rstr_alloc(family_get_name_by_id(f->family_id_vec[0]));
-  hts_mutex_unlock(&text_mutex);
-  return r;
-}
-
 
 
 /**
@@ -1504,10 +1476,10 @@ freetype_unload_font(void *ref)
  *
  */
 int
-freetype_family_id(const char *str, int context)
+freetype_family_id(const char *str, int font_domain)
 {
   hts_mutex_lock(&text_mutex);
-  int id = family_get(str, context);
+  int id = id_from_str(str, font_domain);
   hts_mutex_unlock(&text_mutex);
   return id;
 }

@@ -779,11 +779,34 @@ unicode_casefold(unsigned int i)
 /**
  *
  */
+static const char *
+no_the(const char *a)
+{
+  if(a[0] != 't' && a[0] != 'T')
+    return a;
+  if(a[1] != 'h' && a[1] != 'H')
+    return a;
+  if(a[2] != 'e' && a[2] != 'E')
+    return a;
+
+  int i = 3;
+  while(a[i] == ' ' || a[i] == '.')
+    i++;
+  return a + i;
+}
+
+/**
+ *
+ */
 int
 dictcmp(const char *a, const char *b)
 {
   long int da, db;
   int ua, ub;
+
+  a = no_the(a);
+  b = no_the(b);
+
 
   while(1) {
 

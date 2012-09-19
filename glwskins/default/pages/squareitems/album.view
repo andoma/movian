@@ -1,0 +1,47 @@
+
+widget(frontdrop, {
+  source: "skin://graphics/boxart-overlay.png";
+  border: 8;
+  focusable: true;
+  onEvent(activate, navOpen($self.url));
+  color: iir(isFocused(), 4);
+
+  widget(container_z, {
+
+    widget(image, {
+      source: $self.metadata.album_art;
+      color: iir(isFocused(), 4) + 0.4;
+    });
+    widget(container_y, {
+      filterConstraintX: true;
+      space(2);
+      
+      widget(container_z, {
+	widget(quad, {
+	  color: 0;
+	  alpha: 0.75;
+	});
+	
+	widget(container_y, {
+	  align: center;
+	  padding: [$ui.size/2, 0];
+	  widget(label, {
+	    color: iir(isFocused(), 4) + 0.3;
+	    caption: $self.metadata.title;
+	    shadow: true;
+	    outline: true;
+	    font: $ui.condensedfont;
+	  });
+	  widget(label, {
+	    color: iir(isFocused(), 4) + 0.3;
+	    caption: $self.metadata.artist;
+	    shadow: true;
+	    outline: true;
+	    font: $ui.condensedfont;
+	  });
+	});
+      });
+    });
+  });
+});
+

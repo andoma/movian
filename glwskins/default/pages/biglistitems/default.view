@@ -1,0 +1,57 @@
+widget(container_x, {
+  focusable: true;
+  height: $ui.size * 6;
+  spacing: 3;
+
+  widget(container_z, {
+    weight: 0.3;
+    widget(quad, {
+      color: 0;
+      alpha: 0;
+    });
+
+/*
+    widget(image, {
+      color: select(isFocused(), 1.0, 0.6);
+      source: 
+      "dataroot://resources/svg/" + 
+	translate($self.type,  "File",
+		  "archive",   "Archive",
+		  "artist",    "User",
+		  "directory", "Folder",
+		  "dvd",       "Disc",
+		  "playlist",  "List",
+		  "video",     "Movie",
+		  "album",     "Disc",
+		  "load",      "Load",
+		  "font",      "Font",
+		  "image",     "Pictures"
+		 ) + ".svg";
+	.shadow = true;
+    });
+*/
+    
+    widget(image, {
+      source: $self.metadata.icon;
+      align: right;
+    });
+    
+  });
+
+
+
+  widget(container_z, {
+    filterConstraintX: true;
+    widget(quad, {
+      color: 0;
+      alpha: 0.5;
+    });
+
+    widget(container_y, {
+      widget(label, {
+	caption: $self.metadata.title;
+	sizeScale: 2;
+      });
+    });
+  });
+});

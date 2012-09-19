@@ -1,0 +1,66 @@
+
+
+// Item menu event routing
+onEvent(itemMenu, { $clone.itemMenu = !$clone.itemMenu; }, !$clone.pageMenu);
+onEvent(back,     { $clone.itemMenu = false; }, $clone.itemMenu);
+onEvent(cancel,   { $clone.itemMenu = false; }, $clone.itemMenu);
+
+
+onEvent(ChangeView, deliverEvent($clone.settings.options, "Cycle"));
+
+multiopt($view.path,
+	 $clone.settings,
+	 _("View"),
+	 $page.persistent.glwUserView,
+	 // List of view follows
+	 // First custom view set by model
+	 link(_("Custom"), $page.model.metadata.glwview),
+
+	 // Optionally a list of custom views set by model
+	 vectorize($page.model.metadata.glwviews),
+
+	 // Then comes external views selected based on content
+	 translate($page.model.contents, void,
+		   "tracks",     vectorize($global.glw.views.standard.tracks),
+		   "album",      vectorize($global.glw.views.standard.album),
+		   "albums",     vectorize($global.glw.views.standard.albums),
+		   "artist",     vectorize($global.glw.views.standard.artist),
+		   "tvchannels", vectorize($global.glw.views.standard.tvchannels),
+		   "images",     vectorize($global.glw.views.standard.images),
+		   "movies",     vectorize($global.glw.views.standard.movies)
+		    ),
+
+	 // Then comes internal views selected based on content
+	 translate($page.model.contents, void,
+		   "album",      link(_("Album"),      "album.view"),
+		   "artist",     link(_("Artist"),     "artist.view"),
+		   "tvchannels", link(_("Tvchannels"), "tvchannels.view"),
+		   "images",     link(_("Images"),     "images.view")
+		    ),
+
+	 select($page.model.contents == "images", 
+		link(_("Slideshow"), "slideshow.view"), void),
+
+	 select($page.model.safeui, void,
+		vectorize($global.glw.views.standard.directory)),
+	 link(_("List"), "list.view")
+	);
+
+widget(layer, {
+
+  widget(loader, {
+    noInitialTransform: true;
+    effect: blend;
+    time: 0.2;
+    source: $view.path;
+  });
+
+  widget(loader, {
+    hidden: !$clone.itemMenu;
+    time: 0;
+    noInitialTransform: true;
+    source: select($clone.itemMenu, "skin://cmdmenu/cmdmenu_item.view", "");
+    .args ?= $clone.focused;
+  });
+});
+

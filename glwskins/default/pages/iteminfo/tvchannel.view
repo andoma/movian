@@ -1,0 +1,41 @@
+
+widget(container_y, {
+  .spacing = 4;
+  widget(label, {
+    .caption = $args.metadata.title;
+    .ellipsize = true;
+    .sizeScale = 1.5;
+    .filterConstraintX = true;
+    shadow: true;
+    outline: true;
+  });
+
+
+  widget(list_y, {
+    &view.focused = focusedChild();
+
+    cloner($args.metadata.events.list, container_x, {
+
+      widget(label, {
+	.filterConstraintX = true;
+	.weight = 0.3;
+	.caption = strftime($self.start, "%H:%M");
+	shadow: true;
+	outline: true;
+      });
+
+      widget(label, {
+	.caption = $self.title;
+	.ellipsize = true;
+	.focusable = true;
+	.focusOnClick = true;
+        .color = select(isFocused(), 1.0, 0.6);
+	shadow: true;
+	outline: true;
+      });
+
+    });
+  });
+});
+
+

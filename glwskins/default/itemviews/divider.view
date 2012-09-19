@@ -1,0 +1,3 @@
+#import "skin://common.view"
+
+VerticalSeparator();

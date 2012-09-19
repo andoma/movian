@@ -57,6 +57,8 @@ struct prop_courier {
   void (*pc_prologue)(void);
   void (*pc_epilogue)(void);
 
+  int pc_refcount;
+
 };
 
 

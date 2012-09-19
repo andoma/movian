@@ -1,0 +1,43 @@
+#import "skin://common.view"
+
+widget(container_x, {
+  focusable: true;
+  height: $ui.size * 6;
+  spacing: 3;
+
+
+  widget(container_x, {
+    filterConstraintX: true;
+    weight: 0.33;
+    space(1);
+    widget(frontdrop, {
+      source: "skin://graphics/boxart-overlay.png";
+      border: 8;
+      margin: -8;
+      widget(image, {
+	height: $ui.size * 6;
+	source: $self.metadata.icon;
+      });
+    });
+  });
+
+  widget(container_z, {
+    filterConstraintX: true;
+    widget(quad, {
+      color: 0;
+      alpha: 0.5;
+    });
+
+    widget(container_y, {
+      padding: [$ui.size, $ui.size / 2];
+      widget(label, {
+	caption: $self.metadata.title + '<font color="#888" size="1">' +
+	  fmt(" (%d)", $self.metadata.year);
+	sizeScale: 1.5;
+	TextStyleItem();
+      });
+    });
+  });
+
+  space(0.33);
+});

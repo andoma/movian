@@ -1,7 +1,0 @@
-#import "theme://include/defs.view"
-#import "theme://include/listitems.view"
-
-LIST_ITEM_SIMPLE($self.metadata.title,
-		 "theme://svg/User.svg",
-		 navOpen($self.url),
-		 PLATE_COLOR_DIR());

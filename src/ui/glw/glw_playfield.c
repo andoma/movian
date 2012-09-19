@@ -56,17 +56,7 @@ static void
 glw_playfield_update_constraints(glw_playfield_t *p)
 {
   glw_t *c = p->w.glw_selected;
-
-  int was_fullscreen = !!(p->w.glw_flags & GLW_CONSTRAINT_F);
-
   glw_copy_constraints(&p->w, c);
-
-  p->fsmode = !!(p->w.glw_flags & GLW_CONSTRAINT_F);
-    
-  if(p->fsmode == was_fullscreen)
-    return;
-
-  glw_signal0(&p->w, GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED, NULL);
 }
 
 

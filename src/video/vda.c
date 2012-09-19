@@ -21,7 +21,7 @@ typedef struct vda_frame {
   int64_t vf_pts;
   int vf_duration;
   uint8_t vf_epoch;
-  uint8_t vf_send_pts;
+  uint8_t vf_drive_clock;
 } vda_frame_t;
 
 
@@ -86,27 +86,27 @@ emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
   memset(&fi, 0, sizeof(fi));
 
   siz = CVImageBufferGetEncodedSize(vf->vf_buf);
-  fi.width = siz.width;
-  fi.height = siz.height;
+  fi.fi_width = siz.width;
+  fi.fi_height = siz.height;
 
-  fi.duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
+  fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
 
   siz = CVImageBufferGetDisplaySize(vf->vf_buf);
-  fi.dar.num = siz.width;
-  fi.dar.den = siz.height;
+  fi.fi_dar.num = siz.width;
+  fi.fi_dar.den = siz.height;
 
-  fi.pix_fmt = PIX_FMT_YUV420P;
-  fi.pts = vf->vf_pts;
-  fi.color_space = -1;
-  fi.epoch = vf->vf_epoch;
+  fi.fi_pix_fmt = PIX_FMT_YUV420P;
+  fi.fi_pts = vf->vf_pts;
+  fi.fi_color_space = -1;
+  fi.fi_epoch = vf->vf_epoch;
+  fi.fi_drive_clock = 1;
 
   video_decoder_t *vd = vdad->vdad_vd;
 
-  vd->vd_estimated_duration = fi.duration; // For bitrate calculations
+  vd->vd_estimated_duration = fi.fi_duration; // For bitrate calculations
 
-  if(fi.duration > 0)
-    video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame,
-			&fi, vf->vf_send_pts);
+  if(fi.fi_duration > 0)
+    video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame, &fi);
 
   CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
   vdad->vdad_last_pts = vf->vf_pts;
@@ -165,8 +165,8 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
   ref = CFDictionaryGetValue(frame_info, CFSTR("epoch"));
   CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_epoch);
 
-  ref = CFDictionaryGetValue(frame_info, CFSTR("send_pts"));
-  CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_send_pts);
+  ref = CFDictionaryGetValue(frame_info, CFSTR("drive_clock"));
+  CFNumberGetValue(ref, kCFNumberSInt8Type, &vf->vf_drive_clock);
 
 
   vf->vf_buf = buf;
@@ -202,7 +202,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   CFStringRef keys[num_kvs];
   CFNumberRef values[num_kvs];
   const int keyframe = mb->mb_keyframe;
-  const int send_pts = mb->mb_send_pts;
+  const int drive_clock = mb->mb_drive_clock;
   vda_frame_t *vf;
   int i;
   uint8_t skip = mb->mb_skip;
@@ -227,14 +227,14 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   keys[1] = CFSTR("duration");
   keys[2] = CFSTR("keyframe");
   keys[3] = CFSTR("epoch");
-  keys[4] = CFSTR("send_pts");
+  keys[4] = CFSTR("drive_clock");
   keys[5] = CFSTR("skip");
 
   values[0] = CFNumberCreate(NULL, kCFNumberSInt64Type, &mb->mb_pts);
   values[1] = CFNumberCreate(NULL, kCFNumberSInt32Type, &mb->mb_duration);
   values[2] = CFNumberCreate(NULL, kCFNumberSInt32Type, &keyframe);
   values[3] = CFNumberCreate(NULL, kCFNumberSInt8Type, &mb->mb_epoch);
-  values[4] = CFNumberCreate(NULL, kCFNumberSInt8Type, &send_pts);
+  values[4] = CFNumberCreate(NULL, kCFNumberSInt8Type, &drive_clock);
   values[5] = CFNumberCreate(NULL, kCFNumberSInt8Type, &skip);
 
   user_info = CFDictionaryCreate(kCFAllocatorDefault,

@@ -183,7 +183,8 @@ be_dvd_play(const char *url, media_pipe_t *mp,
 	    int flags, int priority,
 	    char *errstr, size_t errlen,
 	    const char *mimetype,
-	    const char *canonical_url)
+	    const char *canonical_url,
+	    struct video_queue *vq)
 {
   event_t *e;
   if(strncmp(url, "dvd:", strlen("dvd:"))) {

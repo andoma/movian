@@ -45,7 +45,7 @@ prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
 			      const char *subtype, const char *icon,
 			      const char *shortdesc, const char *url);
 
-prop_t *settings_create_divider(prop_t *parent, prop_t *caption);
+prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 
 
 
@@ -101,7 +101,7 @@ prop_t *settings_get_node(setting_t *s);
 
 setting_t *settings_create_action(prop_t *parent, prop_t *title,
 				  prop_callback_t *cb, void *opaque,
-				  prop_courier_t *pc);
+				  int flags, prop_courier_t *pc);
 
 void setting_destroy(setting_t *s);
 

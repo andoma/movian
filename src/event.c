@@ -446,6 +446,18 @@ event_to_prop(prop_t *p, event_t *e)
  *
  */
 void
+event_to_ui(event_t *e)
+{
+  event_to_prop(prop_get_by_name(PNVEC("global", "ui", "eventSink"),
+				 1, NULL), e);
+  event_release(e);
+}
+
+
+/**
+ *
+ */
+void
 event_dispatch(event_t *e)
 {
   prop_t *p;

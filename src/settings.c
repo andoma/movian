@@ -554,9 +554,9 @@ settings_create_info(prop_t *parent, const char *image,
  *
  */
 prop_t *
-settings_create_divider(prop_t *parent, prop_t *caption)
+settings_create_separator(prop_t *parent, prop_t *caption)
 {
-  return setting_add(parent, caption, "divider", 0);
+  return setting_add(parent, caption, "separator", 0);
 }
 
 
@@ -566,9 +566,9 @@ settings_create_divider(prop_t *parent, prop_t *caption)
 setting_t *
 settings_create_action(prop_t *parent, prop_t *title,
 		       prop_callback_t *cb, void *opaque,
-		       prop_courier_t *pc)
+		       int flags, prop_courier_t *pc)
 {
-  setting_t *s = setting_create_leaf(parent, title, "action", "action", 0);
+  setting_t *s = setting_create_leaf(parent, title, "action", "action", flags);
   s->s_sub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
 			    PROP_TAG_CALLBACK, cb, opaque,
 			    PROP_TAG_ROOT, s->s_val,
@@ -673,12 +673,12 @@ settings_init(void)
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Applications and installed plugins"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, n, d);
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Discovered media sources"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
 
   n = prop_create(settings_sd, "nodes");
   prop_concat_add_source(pc, n, d);
@@ -755,11 +755,6 @@ settings_generic_set_bool(void *opaque, int value)
 /**
  *
  */
-
-int enable_bin_replace;
-int enable_omnigrade;
-
-
 static void
 init_dev_settings(void)
 {
@@ -784,7 +779,8 @@ init_dev_settings(void)
   prop_set_string(t, "Enable binrelpace");
 
   settings_create_bool(settings_dev, "binreplace", t, 0,
-		       store, settings_generic_set_bool, &enable_bin_replace, 
+		       store, settings_generic_set_bool,
+		       &gconf.enable_bin_replace, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"dev");
@@ -793,7 +789,8 @@ init_dev_settings(void)
   prop_set_string(t, "Enable omnigrade");
 
   settings_create_bool(settings_dev, "omnigrade", t, 0,
-		       store, settings_generic_set_bool, &enable_omnigrade, 
+		       store, settings_generic_set_bool,
+		       &gconf.enable_omnigrade, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"dev");

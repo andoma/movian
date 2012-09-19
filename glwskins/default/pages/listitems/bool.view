@@ -1,0 +1,35 @@
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+
+  onEvent(activate, {
+    $self.value = !$self.value;
+  });
+
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(dummy, {width: $ui.size;});
+
+    widget(label, {
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6) * 
+	select($self.value, [0.8, 1, 0.8], [1,0.8,0.8]);
+      
+      caption: $self.metadata.title + ": " + 
+	select($self.value, _("Yes"), _("No"));
+      ellipsize: true;
+    });
+    widget(icon, {
+      align: right;
+      source: select($self.value, "options-on.png", "options-off.png");
+    });
+    
+  });
+});

@@ -44,8 +44,6 @@ struct glw_rec {
 glw_rec_t *
 glw_rec_init(const char *filename, int width, int height, int fps)
 {
-  extern int concurrency;
-
   AVCodec *c;
   struct glw_rec *gr = calloc(1, sizeof(glw_rec_t));
 
@@ -96,7 +94,7 @@ glw_rec_init(const char *filename, int width, int height, int fps)
     return NULL;
   }
 
-  gr->v_ctx->thread_count = concurrency;
+  gr->v_ctx->thread_count = gconf.concurrency;
 
   if(url_fopen(&gr->oc->pb, filename, URL_WRONLY) < 0) {
     TRACE(TRACE_ERROR, "GLWREC",

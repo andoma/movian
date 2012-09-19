@@ -1116,6 +1116,8 @@ player_thread(void *aux)
 
     prop_set_int(p, 1);
 
+    mp_set_playstatus_by_hold(mp, startpaused, NULL);
+
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);
     startpaused = 0;

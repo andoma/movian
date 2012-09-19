@@ -1,5 +1,0 @@
-#import "theme://include/nav.view"
-
-widget(container_x, {
-  skinNavLocation($page.model.metadata.title, void);
-});

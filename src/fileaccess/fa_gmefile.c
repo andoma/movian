@@ -189,7 +189,6 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
 
   gme_start_track(emu, track);
 
-  mp_set_playstatus_by_hold(mp, hold, NULL);
   mp->mp_audio.mq_stream = 0;
   mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_SEEK,
 	       MP_BUFFER_SHALLOW);
@@ -234,20 +233,6 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
       gme_seek(emu, ets->ts / 1000);
       seekflush(mp, &mb);
       
-    } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
-	      event_is_action(e, ACTION_PLAY) ||
-	      event_is_action(e, ACTION_PAUSE)) {
-
-      hold = action_update_hold_by_event(hold, e);
-      mp_send_cmd_head(mp, mq, hold ? MB_CTRL_PAUSE : MB_CTRL_PLAY);
-      mp_set_playstatus_by_hold(mp, hold, NULL);
-
-    } else if(event_is_type(e, EVENT_INTERNAL_PAUSE)) {
-
-      hold = 1;
-      mp_send_cmd_head(mp, mq, MB_CTRL_PAUSE);
-      mp_set_playstatus_by_hold(mp, hold, e->e_payload);
-
     } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
 	      event_is_action(e, ACTION_SKIP_FORWARD) ||
 	      event_is_action(e, ACTION_STOP)) {
@@ -262,11 +247,6 @@ fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
   if(mb != NULL)
     media_buf_free_unlocked(mp, mb);
 
-  if(hold) { 
-    // If we were paused, release playback again.
-    mp_send_cmd(mp, mq, MB_CTRL_PLAY);
-    mp_set_playstatus_by_hold(mp, 0, NULL);
-  }
   return e;
 }
 

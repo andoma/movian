@@ -51,6 +51,31 @@ gu_leave(void)
 /**
  *
  */
+void gu_init(int *argc, char ***argv);
+
+void
+gu_init(int *argc, char ***argv)
+{
+  XInitThreads();
+
+  hts_mutex_init(&gu_mutex);
+
+  g_thread_init(NULL);
+
+  gdk_threads_set_lock_functions(gu_enter, gu_leave);
+
+  gdk_threads_init();
+  gdk_threads_enter();
+
+  gtk_init(argc, argv);
+
+  gu_pixbuf_init();
+
+}
+
+/**
+ *
+ */
 static gboolean
 window_key_pressed(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
@@ -355,25 +380,12 @@ gu_tab_create(gu_window_t *gw, prop_t *nav, int select)
 /**
  *
  */
-static int
-gu_start(ui_t *ui, prop_t *root, int argc, char **argv, int primary)
+int gu_start(void);
+
+int
+gu_start(void)
 {
   gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
-
-  XInitThreads();
-
-  hts_mutex_init(&gu_mutex);
-
-  g_thread_init(NULL);
-
-  gdk_threads_set_lock_functions(gu_enter, gu_leave);
-
-  gdk_threads_init();
-  gdk_threads_enter();
-
-  gtk_init(&argc, &argv);
-
-  gu_pixbuf_init();
 
   gu->gu_pc = prop_courier_create_thread(&gu_mutex, "GU");
 
@@ -492,25 +504,3 @@ gu_nav_open_newtab(gu_window_t *gw, const char *url)
   gu_tab_t *gt = gu_tab_create(gw, NULL, 0);
   gu_tab_send_event(gt, event_create_openurl(url, NULL, NULL, NULL, NULL));
 }
-
-
-/**
- *
- */
-static void
-gu_dispatch_event(uii_t *uii, event_t *e)
-{
-  return;
-}
-
-
-
-/**
- *
- */
-ui_t gu_ui = {
-  .ui_title = "gu",
-  .ui_start = gu_start,
-  .ui_dispatch_event = gu_dispatch_event,
-  .ui_flags = UI_SINGLETON,
-};

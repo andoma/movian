@@ -334,6 +334,16 @@ set_height(glw_t *w, int v)
  *
  */
 static void
+set_divider(glw_t *w, int v)
+{
+  glw_conf_constraints(w, 0, 0, 0, GLW_CONSTRAINT_CONF_D);
+}
+
+
+/**
+ *
+ */
+static void
 set_maxlines(glw_t *w, int v)
 {
   if(w->glw_class->gc_set_max_lines != NULL)
@@ -803,11 +813,25 @@ mod_video_flags(glw_t *w, int set, int clr)
 /**
  *
  */
-static void
-set_source(glw_t *w, rstr_t *p)
+static rstr_t **
+build_rstr_vector(struct token *t0)
 {
-  if(w->glw_class->gc_set_source != NULL)
-    w->glw_class->gc_set_source(w, p);
+  int cnt = 1;
+  token_t *t;
+  rstr_t **rv;
+
+  for(t = t0->child; t != NULL; t = t->next)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+      cnt++;
+  
+  rv = malloc(sizeof(rstr_t *) * cnt);
+  cnt = 0;
+
+  for(t = t0->child; t != NULL; t = t->next)
+    if(t->type == TOKEN_RSTRING || t->type == TOKEN_LINK)
+      rv[cnt++] = rstr_dup(t->t_rstring);
+  rv[cnt++] = NULL;
+  return rv;
 }
 
 
@@ -815,33 +839,34 @@ set_source(glw_t *w, rstr_t *p)
  *
  */
 static int
-set_path(glw_view_eval_context_t *ec, const token_attrib_t *a,
-	 struct token *t)
+set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	   struct token *t)
 {
   glw_t *w = ec->w;
 
   rstr_t *r;
 
-  void (*fn)(glw_t *w, rstr_t *r) = a->fn;
-
   switch(t->type) {
-  case TOKEN_VOID:
-    fn(w, NULL);
+  default:
+    if(w->glw_class->gc_set_source != NULL)
+      w->glw_class->gc_set_source(w, NULL);
+    return 0;
+
+  case TOKEN_VECTOR:
+    if(w->glw_class->gc_set_sources != NULL)
+      w->glw_class->gc_set_sources(w, build_rstr_vector(t));
     return 0;
 
   case TOKEN_RSTRING:
   case TOKEN_LINK:
     r = t->t_rstring;
     break;
-
-  default:
-    return glw_view_seterr(ec->ei, t, 
-			    "Attribute '%s' expects a string or scalar not %s",
-			   a->name, token2name(t));
   }
 
   r = fa_absolute_path(r, t->file);
-  fn(w, r);
+
+  if(w->glw_class->gc_set_source != NULL)
+    w->glw_class->gc_set_source(w, r);
   rstr_release(r);
   return 0;
 }
@@ -930,7 +955,7 @@ static const token_attrib_t attribtab[] = {
   {"how",             set_string, 0, set_how},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
-  {"source",          set_path, 0, set_source},
+  {"source",          set_source},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
   {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
@@ -949,6 +974,7 @@ static const token_attrib_t attribtab[] = {
   {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
   {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
   {"autofade",                mod_flag, GLW2_AUTOFADE, mod_flags2},
+  {"automargin",              mod_flag, GLW2_AUTOMARGIN, mod_flags2},
   {"expediteSubscriptions",   mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
 
   {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
@@ -1011,6 +1037,7 @@ static const token_attrib_t attribtab[] = {
   {"Xspacing",        set_int,    GLW_ATTRIB_X_SPACING},
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
   {"scrollThreshold", set_int,    GLW_ATTRIB_SCROLL_THRESHOLD},
+  {"divider",         set_int,    0, set_divider},
 
   {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, 0, set_translation},

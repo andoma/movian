@@ -19,7 +19,7 @@ def scanfile(path, p):
 def buildphrases():
     p = {}
 
-    for r in ('./src', './glwthemes/default'):
+    for r in ('./src', './glwskins/default'):
         for a in os.walk(r):
             for f in a[2]:
                 if f.endswith(('.c', '.view')):

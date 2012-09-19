@@ -1,0 +1,53 @@
+
+widget(backdrop, {
+  
+  source: "skin://pages/listitems/highlight.png";
+
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(dummy, { width: $ui.size;});
+
+    widget(label, {
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+      
+      caption: $self.metadata.title + ":";
+    });
+
+    space(1);
+    widget(deck, {
+      id: "choiceDeck";
+      effect: blend;
+      time: 0.1;
+      $view.canPrev = canSelectPrevious();
+      $view.canNext = canSelectNext();
+
+      cloner($self.options, label, {
+	align: right;
+	shadow: true;
+	outline: true;
+	caption: $self.title;
+      });
+    });
+
+      
+    widget(container_x, {
+      widget(icon, {
+	alpha: select($view.canNext, 1, 0.4);
+	focusable: $view.canNext;
+	source: select(isFocused() || isHovered(), "skin://pages/listitems/options-down-highlighted.png", "skin://pages/listitems/options-down.png");
+	onEvent(activate, targetedEvent("choiceDeck", Increase));
+      });
+
+      widget(icon, {
+	alpha: select($view.canPrev, 1, 0.4);
+	focusable: $view.canPrev;
+	source: select(isFocused() || isHovered(), "skin://pages/listitems/options-up-highlighted.png", "skin://pages/listitems/options-up.png");
+	onEvent(activate, targetedEvent("choiceDeck", Decrease));
+      });
+    });
+  });
+});

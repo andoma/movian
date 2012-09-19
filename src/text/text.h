@@ -23,6 +23,7 @@
 
 struct pixmap;
 struct rstr;
+struct prop;
 
 #define FONT_DOMAIN_FALLBACK 0
 #define FONT_DOMAIN_DEFAULT  1
@@ -71,6 +72,7 @@ struct rstr;
 #define TR_RENDER_SHADOW        0x20
 #define TR_RENDER_OUTLINE       0x40
 #define TR_RENDER_NO_OUTPUT     0x80
+#define TR_RENDER_SUBS          0x100  // Render for subtitles
 
 #define TR_ALIGN_AUTO      0
 #define TR_ALIGN_LEFT      1
@@ -82,16 +84,16 @@ struct pixmap *
 text_render(const uint32_t *uc, int len, int flags, int default_size,
 	    float scale, int alignment,
 	    int max_width, int max_lines, const char *font_family,
-	    int font_domain, int min_size);
+	    int font_domain, int min_size, const char **vpaths);
 
 
 #if ENABLE_LIBFREETYPE
 int freetype_init(void);
 
-void *freetype_load_font(const char *url, int font_domain, const char **vpaths);
-
 void *freetype_load_font_from_memory(const void *ptr, size_t len,
 				     int font_domain);
+
+void *freetype_load_font(const char *url, int context, const char **vpaths);
 
 void freetype_unload_font(void *ref);
 
@@ -101,7 +103,14 @@ int freetype_get_context(void);   // rename context -> font_domain
 
 struct rstr *freetype_get_family(void *handle);
 
+struct rstr *freetype_get_identifier(void *handle);
+
 #endif
+
+void fontstash_init(void);
+
+void fontstash_props_from_title(struct prop *p, const char *url,
+				const char *title);
 
 #if ENABLE_LIBFONTCONFIG
 int fontconfig_resolve(int uc, uint8_t style, const char *family,

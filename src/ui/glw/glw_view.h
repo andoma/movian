@@ -85,6 +85,7 @@ typedef enum {
   TOKEN_VECTOR_FLOAT,
   TOKEN_EVENT,
   TOKEN_LINK,                  // A link with title and url
+  TOKEN_VECTOR,                // List of tokens
   TOKEN_num,
 
 } token_type_t;

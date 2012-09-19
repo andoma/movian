@@ -37,10 +37,12 @@ typedef struct metadata_lazy_prop metadata_lazy_prop_t;
 #define METADATA_QTYPE_CUSTOM      4
 #define METADATA_QTYPE_CUSTOM_IMDB 5
 #define METADATA_QTYPE_FILENAME_OR_DIRECTORY 6
+#define METADATA_QTYPE_EPISODE     7
 
 
-#define METADATA_ERROR    -1
-#define METADATA_DEADLOCK -2
+#define METADATA_PERMANENT_ERROR -1
+#define METADATA_TEMPORARY_ERROR -2
+#define METADATA_DEADLOCK        -3
 
 /**
  * Content types.
@@ -59,6 +61,7 @@ typedef enum {
   CONTENT_IMAGE       = 8,
   CONTENT_ALBUM       = 9,
   CONTENT_PLUGIN      = 10,
+  CONTENT_FONT        = 11,
   CONTENT_num
 } contenttype_t;
 
@@ -69,9 +72,7 @@ typedef enum {
  * must never be changed
  */
 typedef enum {
-  METADATA_TYPE_MOVIE = 1,
-  METADATA_TYPE_TVSHOW = 2,
-  METADATA_TYPE_MUSICVIDEO = 3,
+  METADATA_TYPE_VIDEO = 1,
   METADATA_TYPE_MUSIC = 4,
   METADATA_TYPE_num
 } metadata_type_t;
@@ -155,7 +156,7 @@ typedef struct metadata {
   int16_t md_rating;  // 0 - 100
   int md_rate_count;
   
-  metadata_type_t md_video_type;
+  metadata_type_t md_type;
 
   rstr_t *md_backdrop;
   rstr_t *md_icon;
@@ -184,6 +185,10 @@ typedef struct metadata_source_funcs {
 
   int64_t (*query_by_id)(void *db, const char *item_url, const char *id);
 
+  int64_t (*query_by_episode)(void *db, const char *item_url, 
+			      const char *title, int season, int episode,
+			      int qtype);
+
 } metadata_source_funcs_t;
 
 
@@ -196,17 +201,21 @@ typedef struct metadata_source {
   char *ms_description;
   int ms_prio;
   int ms_id;
-  int ms_mark;
-  int ms_qtype;
   int ms_enabled;
+
   const metadata_source_funcs_t *ms_funcs;
   struct prop *ms_settings;
+
+  int ms_mark;
+  int ms_qtype;
+  int64_t ms_cfgid;
 } metadata_source_t;
 
 
-int metadata_add_source(const char *name, const char *description,
-			int default_prio, metadata_type_t type,
-			const metadata_source_funcs_t *funcs);
+metadata_source_t *metadata_add_source(const char *name,
+				       const char *description,
+				       int default_prio, metadata_type_t type,
+				       const metadata_source_funcs_t *funcs);
 
 metadata_t *metadata_create(void);
 
@@ -296,7 +305,8 @@ void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 
 int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				const char *ext_id, const metadata_t *md,
-				int status, int64_t weight, int qtype);
+				int status, int64_t weight, int qtype,
+				int64_t cfgid);
 
 int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_list *sources,
@@ -338,5 +348,7 @@ void mlp_set_duration(metadata_lazy_prop_t *mlp, int duration);
 
 void mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely);
 
-rstr_t *metadata_remove_postfix(rstr_t *in);
+rstr_t *metadata_remove_postfix_rstr(rstr_t *in);
+
+rstr_t *metadata_remove_postfix(const char *in);
 

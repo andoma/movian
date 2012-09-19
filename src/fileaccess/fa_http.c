@@ -178,7 +178,7 @@ http_connection_get(const char *hostname, int port, int ssl,
   id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 5000, ssl)) == NULL) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, 30000, ssl)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -935,8 +935,10 @@ http_drain_content(http_file_t *hf)
 {
   char *buf;
 
-  if(hf->hf_chunked_transfer == 0 && hf->hf_rsize < 0)
+  if(hf->hf_chunked_transfer == 0 && hf->hf_rsize < 0) {
+    hf->hf_rsize = 0;
     return 0;
+  }
 
   if((buf = http_read_content(hf)) == NULL)
     return -1;
@@ -2898,7 +2900,7 @@ http_request(const char *url, const char **arguments,
       z.next_in = (void *)buf;
       z.avail_in = size;
       
-      z.avail_out = 3 * hf->hf_filesize;
+      z.avail_out = 3 * size;
       uint8_t *buf2 = z.next_out = malloc(z.avail_out + 1);
 
       while(1) {

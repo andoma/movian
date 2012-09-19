@@ -26,7 +26,6 @@
 #include "misc/pixmap.h"
 #include "misc/string.h"
 #include "backend/backend.h"
-#include "ui/ui.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
 
@@ -194,7 +193,7 @@ hc_action(http_connection_t *hc, const char *remain, void *opaque,
   if(remain == NULL)
     return 404;
 
-  ui_primary_event(event_create_action_str(remain));
+  event_to_ui(event_create_action_str(remain));
   return HTTP_STATUS_OK;
 }
 
@@ -222,7 +221,7 @@ hc_utf8(http_connection_t *hc, const char *remain, void *opaque,
       e = event_create_int(EVENT_UNICODE, c);
       break;
     }
-    ui_primary_event(e);
+    event_to_ui(e);
   }
   return HTTP_STATUS_OK;
 }
@@ -240,12 +239,10 @@ static int
 hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
 	      http_cmd_t method)
 {
-  extern char *showtime_bin;
-  extern int enable_bin_replace;
-  if(showtime_bin == NULL)
+  if(gconf.binary == NULL)
     return HTTP_STATUS_PRECONDITION_FAILED;
 
-  if(!enable_bin_replace)
+  if(!gconf.enable_bin_replace)
     return 403;
 
   size_t len;
@@ -255,9 +252,9 @@ hc_binreplace(http_connection_t *hc, const char *remain, void *opaque,
     return 405;
   
   TRACE(TRACE_INFO, "BINREPLACE", "Replacing %s with %d bytes received",
-	showtime_bin, (int)len);
+	gconf.binary, (int)len);
 
-  int fd = open(showtime_bin, O_TRUNC | O_RDWR, 0777);
+  int fd = open(gconf.binary, O_TRUNC | O_RDWR, 0777);
   if(fd == -1) {
     TRACE(TRACE_ERROR, "BINREPLACE", "Unable to open file");
     return HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
@@ -323,7 +320,7 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
 
   for(i = 0; i <= 5; i++) {
     struct stat st;
-    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path,i);
+    snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path,i);
     if(stat(p1, &st)) 
       continue;
     char timestr[32];
@@ -362,7 +359,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
   size_t size;
 
   char p1[500];
-  snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", showtime_cache_path, n);
+  snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path, n);
   char *buf = fa_load(p1, &size, NULL, NULL, 0, NULL, 0, NULL, NULL);
   
   if(buf == NULL)

@@ -158,7 +158,7 @@ analyze_video(deco_item_t *di)
   rstr_t *fname;
 
   if(db->db_flags & DECO_FLAGS_RAW_FILENAMES) {
-    fname = metadata_remove_postfix(di->di_filename);
+    fname = metadata_remove_postfix_rstr(di->di_filename);
   } else {
     fname = rstr_dup(di->di_filename);
   }

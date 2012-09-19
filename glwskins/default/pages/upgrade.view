@@ -1,0 +1,299 @@
+#include "skin://common.view"
+
+
+#define BTN(TITLE, EVENT) {
+  widget(container_x, {
+    align: center;
+    widget(backdrop, {
+      alpha: isFocused() + 0.5;
+      source: "skin://graphics/border-tiny.png";
+      border: 4;
+      padding: [10, -1];
+      widget(label, {
+	focusable: true;
+	caption: TITLE;
+	shadow: true;
+	outline: true;
+	onEvent(activate, deliverEvent($global.upgrade.eventSink, EVENT));
+      });
+    });
+  });
+}
+
+
+
+
+
+widget(container_y, {
+  
+  padding: [$ui.size/2,$ui.size,$ui.size/2,0];
+
+
+  widget(container_x, {
+    spacing: $ui.size;
+    widget(label, {
+      filterConstraintX: true;
+      caption: _("Current version:");
+      color: 0.8;
+      sizeScale: 1.5;
+      align: right;
+      shadow: true;
+      outline: true;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      caption: $global.showtime.version;
+      sizeScale: 1.5;
+      shadow: true;
+      outline: true;
+    });
+  });
+    
+  widget(container_x, {
+    spacing: $ui.size;
+    widget(label, {
+      filterConstraintX: true;
+      caption: _("Available version:");
+      color: 0.8;
+      sizeScale: 1.5;
+      align: right;
+      shadow: true;
+      outline: true;
+    });
+
+    widget(label, {
+      filterConstraintX: true;
+      caption: select($global.upgrade.availableVersion,
+		      $global.upgrade.availableVersion,
+		      _("No upgrade available"));
+      sizeScale: 1.5;
+      shadow: true;
+      outline: true;
+    });
+  });
+
+
+  widget(deck, {
+    filterConstraintY: true;
+
+    widget(label, {
+      id: "checking";
+      caption: _("Checking for updates...");
+      shadow: true;
+      outline: true;
+      align: center;
+    });
+
+    widget(container_y, {
+      id: "canUpgrade";
+      spacing: $ui.size;
+      align: center;
+      widget(label, {
+	caption: fmt(_("New version %s is available for download"),
+		     $global.upgrade.availableVersion);
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      BTN(_("Download and install..."), "install");
+    });
+
+
+    widget(container_y, {
+      id: "upgradeError";
+      spacing: $ui.size;
+      align: center;
+      widget(label, {
+	caption: fmt(_("An error occured during download"));
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      widget(label, {
+	caption: $global.upgrade.error;
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      BTN(_("Retry..."), "install");
+    });
+
+
+    widget(container_y, {
+      id: "checkError";
+      spacing: $ui.size;
+      align: center;
+      widget(label, {
+	caption: fmt(_("Unable to query for new version"));
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      widget(label, {
+	caption: $global.upgrade.error;
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      BTN(_("Retry..."), "checkUpdates");
+    });
+
+
+    widget(container_y, {
+      id: "upToDate";
+      spacing: $ui.size;
+      align: center;
+      widget(label, {
+	caption: _("Showtime is up to date");
+	shadow: true;
+	outline: true;
+	align: center;
+	sizeScale: 1.5;
+      });
+      BTN(_("Check for updates now"), "checkUpdates");
+    });
+
+    widget(container_y, {
+      id: "download";
+      align: center;
+
+      widget(label, {
+	caption: _("Downloading...");
+	shadow: true;
+	outline: true;
+	align: center;
+      });
+      
+      widget(container_x, {
+	
+	space(1);
+	spacing: 10;
+	widget(label, {
+	  caption: fmt("%2d%%", $global.upgrade.progress * 100);
+	  shadow: true;
+	  outline: true;
+	});
+    
+	widget(container_y, {
+	  align: center;
+	  widget(container_z, {
+	    widget(backdrop, {
+	      border: 4;
+	      height: 8;
+	      source: "skin://playdecks/duration-bar-bg.png";
+	    });
+      
+	    widget(clip, {
+	      clipping: [-1, 0, 1 - $global.upgrade.progress, 0];
+	      widget(backdrop, {
+		margin: [-8, -3, -8, -5];
+		border: [16, 8];
+		source: "skin://playdecks/duration-bar-colorized.png";
+	      });
+	    });
+	  });
+	});
+	widget(label, {
+	  caption: value2size($global.upgrade.size);
+	  shadow: true;
+	  outline: true;
+	});
+	space(1);
+      });
+    });
+
+    widget(container_y, {
+      id: "install";
+      align: center;
+
+      widget(label, {
+	caption: _("Installing...");
+	shadow: true;
+	outline: true;
+	align: center;
+      });
+    });
+
+
+    widget(container_y, {
+      id: "countdown";
+      align: center;
+
+      widget(label, {
+	caption: fmt(_("Restarting Showtime in %d seconds..."),
+		     $global.upgrade.countdown);
+	shadow: true;
+	outline: true;
+	align: center;
+      });
+    });
+
+
+    page: $global.upgrade.status;
+  });
+
+
+  widget(label, {
+    caption: fmt(_("Changelog for %s releases"),
+		 translate($global.upgrade.track, $global.upgrade.track,
+			   "testing", _("Testing"),
+			   "stable", _("Stable")));
+			   
+    shadow: true;
+    outline: true;
+    align: center;
+    
+  });
+
+  VerticalSeparator();
+
+  widget(container_x, {
+    weight: 2;
+    widget(list_y, {
+      id: "list";
+      spacing: $ui.size;
+
+      cloner($global.upgrade.changelog, container_x, {
+	spacing: $ui.size;
+	focusable: 0.1;
+	alpha: isFocused() + 0.6;
+
+	widget(label, {
+	  weight: 0.4;
+	  filterConstraintX: true;
+	  align: topRight;
+	  caption: $self.version;
+	  sizeScale: 1.5;
+	  shadow: true;
+	  outline: true;
+	});
+
+	widget(label, {
+	  filterConstraintX: true;
+	  maxlines: 10;
+//	  align: topLeft;
+	  caption: $self.text;
+	  shadow: true;
+	  outline: true;
+	});
+      });
+    });
+
+    widget(slider_y, {
+      bind("list");
+      width: 4;
+      focusable: canScroll();
+      alpha: iir(canScroll(), 16);
+      
+      widget(quad, {
+	alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+      });
+    });
+  });
+});

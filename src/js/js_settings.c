@@ -507,7 +507,7 @@ js_createDivider(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s", &title))
     return JS_FALSE;
 
-  settings_create_divider(jsg->jsg_root, _p(title));
+  settings_create_separator(jsg->jsg_root, _p(title));
   return JS_TRUE;
 }
 
@@ -582,7 +582,7 @@ js_createAction(JSContext *cx, JSObject *obj, uintN argc,
   jss->jss_s =
     settings_create_action(jsg->jsg_root, _p(title), 
 			   js_action_function, jss, 
-			   js_global_pc);
+			   jsg->jsg_settings_flags, js_global_pc);
 
   jss->jss_cx = NULL;
 

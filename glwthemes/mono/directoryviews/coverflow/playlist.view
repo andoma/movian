@@ -1,7 +1,0 @@
-#import "theme://include/defs.view"
-#import "theme://include/squareitems.view"
-
-SQUARE_ITEM_SIMPLE($self.metadata.title,
-		   "theme://svg/List.svg",
-		   navOpen($self.url),
-		   PLATE_COLOR_DIR());
