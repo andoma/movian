@@ -1,0 +1,3 @@
+Let 'mark as seen' create entry in item table if it does not exist
+
+Fixes #1175
