@@ -5,109 +5,88 @@ maintainer: Alexandre Zia <alexandre@zia.com.br>
 # ./glwthemes/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: Adicionar pagina atual aos favoritos
 
 id: Open settings
-# Missing translation
-msg: 
+msg: Configurações
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: Remover página atual dos favoritos
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: Ir para página inicial
 
 id: Navigation
-# Missing translation
-msg: 
+msg: Navegação
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: Configurações
 
 id: Playqueue
 msg: Lista de reprodução
 
 id: Reload current page
-# Missing translation
-msg: 
+msg: Recarregar página atual
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: Adicionar '%s' à página inicial
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: Remover '%s' da página inicial
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: Continuar de %s
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: Continuar reprodução
 
 id: Delete
 msg: Apagar
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: Marcar como reproduzido
 
 id: Mark as unseen
-# Missing translation
-msg: 
+msg: Marcar como não reproduzido
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: Reproduzir do início
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: Reproduzir até final da lista
 
 id: Queue
-# Missing translation
-msg: 
+msg: Fila
 
 id: Star
-# Missing translation
-msg: 
+msg: Destacar
 
 id: Unstar
-# Missing translation
-msg: 
+msg: Remover destaque
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: Audio
 
 id: Audio settings
-msg: Configurações de áudio
+msg: Configurações de audio
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: Opções de audio
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: Buscar por tempo
 
 id: Settings
 msg: Configurações
@@ -116,19 +95,16 @@ id: Subtitle settings
 msg: Configurações de legendas
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: Opções de legendas
 
 id: Subtitles
 msg: Legendas
 
 id: Video
-# Missing translation
-msg: 
+msg: Video
 
 id: Video menu
-# Missing translation
-msg: 
+msg: Menu de video
 
 id: Video settings
 msg: Configurações de vídeo
@@ -137,19 +113,16 @@ msg: Configurações de vídeo
 # ./glwthemes/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: Log do sistema
 
 #
 # ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
-# Missing translation
-msg: 
+msg: Alocado pelo aplicativo: %d kB
 
 id: Allocated by malloc: %d kB
-# Missing translation
-msg: 
+msg: Alocado por chamada de função malloc: %d kB
 
 id: Avail system RAM: %d kB
 msg: Memória RAM disponível: %d kB
@@ -164,8 +137,7 @@ id: Framerate: %.2f Hz
 msg: Taxa de quadros: %.2f Hz
 
 id: Free chunks: %d
-# Missing translation
-msg: 
+msg: Pedaços livres: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -174,8 +146,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Memory status
-# Missing translation
-msg: 
+msg: Status da memória
 
 id: Renderer: %s
 msg: Renderizador: %s
@@ -187,8 +158,7 @@ id: Total system RAM: %d kB
 msg: Memória RAM total: %d kB
 
 id: Unused memory: %d kB
-# Missing translation
-msg: 
+msg: Memória usada: %d kB
 
 id: Version: %s
 msg: Versão: %s
@@ -203,125 +173,100 @@ msg: Gerenciador de janelas: %s
 # ./glwthemes/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: Álbum
 
 id: Custom
-# Missing translation
-msg: 
+msg: Personalidado
 
 id: Images
-# Missing translation
-msg: 
+msg: Imagens
 
 id: List
-# Missing translation
-msg: 
+msg: Lista
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: Apresentação de slides
 
 id: View
-# Missing translation
-msg: 
+msg: Ver
 
 #
 # ./glwthemes/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: Dispositivos encontrados na rede local
 
 #
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: Sobre o Showtime
 
 id: Plugins
-# Missing translation
-msg: 
+msg: Plugins
 
 #
 # ./glwthemes/default/pages/home_tiles.view
 #
 id: Dismiss
-# Missing translation
-msg: 
+msg: Desfazer
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Camera: 
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Data: 
 
 #
 # ./glwthemes/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Autor
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Versão disponível: 
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Versão instalada: 
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: Necessário Showtime %s ou mais novo
 
 #
 # ./glwthemes/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: Diretor:
 
 id: Duration:
-# Missing translation
-msg: 
+msg: Duração:
 
 id: File date:
-# Missing translation
-msg: 
+msg: Data do arquivo:
 
 id: Genre:
-# Missing translation
-msg: 
+msg: Gênero:
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: Metadados de
 
 id: Producer:
-# Missing translation
-msg: 
+msg: Produtor:
 
 id: Rating:
-# Missing translation
-msg: 
+msg: Classificação:
 
 id: Year:
-# Missing translation
-msg: 
+msg: Ano:
 
 #
 # ./glwthemes/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: Adicionar entrada
 
 #
 # ./glwthemes/default/pages/listitems/bool.view
@@ -336,16 +281,13 @@ msg: Sim
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: Instalar
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: Desinstalar
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: Atualizar
 
 #
 # ./glwthemes/default/pages/openerror.view
@@ -363,72 +305,55 @@ msg: Faixa %d / %d
 # ./glwthemes/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: Occoreu um erro durante o download
 
 id: Available version:
-# Missing translation
-msg: 
+msg: Versão disponível:
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: Lista de alterações para %s lançamentos
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: Buscar atualizações
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: Buscando atualizações...
 
 id: Current version:
-# Missing translation
-msg: 
+msg: Versão atual:
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: Baixar e instalar...
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: Baixando...
 
 id: Installing...
-# Missing translation
-msg: 
+msg: Instalando...
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: Nova versão %s disponível
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: Não existem atualizações disponíveis
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: Reiniciando Showtime em %d segundos...
 
 id: Retry...
-# Missing translation
-msg: 
+msg: Tentar novamente...
 
 id: Showtime is up to date
-# Missing translation
-msg: 
+msg: Showtime está atualizado
 
 id: Stable
-# Missing translation
-msg: 
+msg: Estável
 
 id: Testing
-# Missing translation
-msg: 
+msg: Versão de testes
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: Incapaz de verificar existência de nova versão
 
 #
 # ./glwthemes/default/pages/video.view
@@ -443,19 +368,16 @@ msg: Estado da reprodução
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: Capítulo: %d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: Título: %d
 
 #
 # ./glwthemes/default/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Domínio
 
 id: Password
 msg: Senha
@@ -485,8 +407,7 @@ msg: Nenhuma media carregada
 # ./glwthemes/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: Uso de memória:
 
 #
 # ./glwthemes/default/universe.view
@@ -561,8 +482,7 @@ msg: Não foi possível abrir o CD
 # ./src/backend/dvd/dvd.c
 #
 id: DVD
-# Missing translation
-msg: 
+msg: DVD
 
 id: DVD read error, restarting disc
 msg: Erro no DVD, reiniciando disco
@@ -580,8 +500,7 @@ id: Search
 msg: Busca
 
 id: Search result for: %s
-# Missing translation
-msg: 
+msg: Buscar resultados para: %s
 
 #
 # ./src/backend/spotify/spotify.c
@@ -590,8 +509,7 @@ id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
 
 id: Collaborative
-# Missing translation
-msg: 
+msg: Colaborativo
 
 id: Enable Spotify
 msg: Ativar Spotify
@@ -615,12 +533,10 @@ id: New releases
 msg: Novos lançamentos
 
 id: Offline
-# Missing translation
-msg: 
+msg: Offline
 
 id: Offline sync in 96kbps
-# Missing translation
-msg: 
+msg: Sincronização offline em 96kbps
 
 id: Playlists
 msg: Listas de reprodução
@@ -653,12 +569,10 @@ msg: Favorito
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: Cache limpo
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: Excluir arquivos cacheados
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -673,62 +587,52 @@ msg: Não foi possível abrir arquivo: %s
 # ./src/fileaccess/fa_locatedb.c
 #
 id: Search using Unix locatedb
-msg: Procurar utilizando o locatedb do Unix
+msg: Buscar utilizando o locatedb do Unix
 
 #
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: Acesso negado
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: Conta restrita
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: Nome de compartilhamento inválido
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: Falha de logon
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: Data
 
 id: Filename
-# Missing translation
-msg: 
+msg: Nome de arquivo
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: Exibir apenas tipos de arquivos conhecidos
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: Ordenar pastas primeiro
 
 id: Sort on
-# Missing translation
-msg: 
+msg: Ordenação ativada
 
 #
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Procurar utilizando o spotlight
+msg: Buscar utilizando o spotlight
 
 #
 # ./src/fileaccess/fa_video.c
 #
 id: External file
-# Missing translation
-msg: 
+msg: Arquivo externo
 
 #
 # ./src/i18n.c
@@ -791,12 +695,10 @@ msg: Mapeamento do teclado
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: Esquecer senhas
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: Senhas apagadas
 
 #
 # ./src/media.c
@@ -820,189 +722,148 @@ msg: Zoom de vídeo
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: automático
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: Busca personalizada
 
 id: Embedded in file
-# Missing translation
-msg: 
+msg: Embutido no arquivo
 
 id: Enabled
 msg: Ativo
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: Identificação IMDb
 
 id: Metadata
-# Missing translation
-msg: 
+msg: Metadados
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: Definições de configuração e provedor de metadados
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: Metadados carregados de '%s' usando %s
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: Busca de metadados
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: Origem de metadados
 
 id: Movie
-# Missing translation
-msg: 
+msg: Filme
 
 id: No data found
-# Missing translation
-msg: 
+msg: Dados não encontrados
 
 id: None
-# Missing translation
-msg: 
+msg: Nada
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: Provedores para Filmes
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: Provedores para Música
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: Atualizar metadados
 
 id: Track %d
-# Missing translation
-msg: 
+msg: Trilha %d
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: Identificação personalizada para IMDb
 
 id: custom query
-# Missing translation
-msg: 
+msg: Consulta personalizada
 
 id: filename
-# Missing translation
-msg: 
+msg: nome do arquivo
 
 id: folder name
-# Missing translation
-msg: 
+msg: nome da pasta
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: Novo favorito adicionado: %s
 
 id: Bookmarks
-msg: Marcadores
+msg: Favoritos
 
 id: Music
-# Missing translation
-msg: 
+msg: Música
 
 id: No handler for URL
 msg: Nenhum interpretador para a URL
 
 id: Other
-# Missing translation
-msg: 
+msg: Outro
 
 id: Photos
-# Missing translation
-msg: 
+msg: Fotos
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: Favorito removido: %s
 
 id: TV
-# Missing translation
-msg: 
+msg: TV
 
 id: Title
-# Missing translation
-msg: 
+msg: Título
 
 id: Type
 msg: Tipo
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: Repositório alternativo de plugins
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: Atualizar plugins automaticamente
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Plugins disponíveis
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Visualizar plugins disponíveis
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: Plugin defeituoso
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: Erro ao gravar no disco
 
 id: Downloading
-# Missing translation
-msg: 
+msg: Baixando
 
 id: File open error
-# Missing translation
-msg: 
+msg: Erro abrindo arquivo
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Plugins instalados
 
 id: Installing
-# Missing translation
-msg: 
+msg: Instalando
 
 id: Invalud URI
 msg: URI inválido
 
 id: Not installable
-# Missing translation
-msg: 
+msg: Não é instalavel
 
 id: Not installed
-# Missing translation
-msg: 
+msg: Não foi instalado
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: Não é atualizável
 
 id: Unable to load plugin.json: %s
 msg: Não foi possível carregar o plugin.json: %s
@@ -1011,16 +872,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
 
 id: Up to date
-# Missing translation
-msg: 
+msg: Está atualizado
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: Atualizável
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: Plugin %s atualizado para a versão %s
 
 #
 # ./src/runcontrol.c
@@ -1029,20 +887,16 @@ id: Automatic standby
 msg: Modo de espera automático
 
 id: Logout
-# Missing translation
-msg: 
+msg: Sair
 
 id: Open shell
-# Missing translation
-msg: 
+msg: Abrir terminal
 
 id: Power off system
-# Missing translation
-msg: 
+msg: Desligar
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: Inicializando e desligando o Showtime
 
 #
 # ./src/sd/sd.c
@@ -1054,8 +908,7 @@ msg: Nome
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: Rede Local
 
 #
 # ./src/settings.c
@@ -1064,26 +917,22 @@ id: Applications and installed plugins
 msg: Aplicações e plugins instalados
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: Definições do desenvolvedor
 
 id: Discovered media sources
 msg: Fontes de media descobertos
 
 id: General
-# Missing translation
-msg: 
+msg: Geral
 
 id: Global settings
 msg: Definições globais
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: Definições úties para desenvolvedores
 
 id: System related settings
-# Missing translation
-msg: 
+msg: Definições relacionadas ao sistema
 
 #
 # ./src/ui/glw/glw.c
@@ -1131,24 +980,19 @@ msg: Modos de video
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: Notificar sobre atualizações
 
 id: Open download page
-# Missing translation
-msg: 
+msg: Abrir página de download
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Versão %s do showtime disponível
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: Atualização de software
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: Atualização para lançamentos de
 
 #
 # ./src/upnp/upnp.c
@@ -1193,16 +1037,13 @@ msg: Incapaz de obter informações do codec Cell. Erro 0x%x
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
 msg: Tentar sempre selecionar as legendas
@@ -1211,8 +1052,7 @@ id: Auto
 msg: Automático
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Reproduzir próximo vídeo da lista automaticamente
 
 id: Center
 msg: Centralizado
@@ -1224,8 +1064,7 @@ id: Count video as played when reaching
 msg: Marcar video como executado ao alcançar
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: Ativar VDA
 
 id: Enable VDPAU
 msg: Ativar VDPAU
@@ -1240,22 +1079,19 @@ id: Ignore embedded styling
 msg: Ignorar estilos embutidos
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg: Incluir todas as legendas disponíveis na pasta
 
 id: Left
 msg: Esquerda
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: Resolução máxima para desentrelaçamento de imagem
 
 id: No limit
-# Missing translation
-msg: 
+msg: Sem limite
 
 id: Off
-msg: Deslig.
+msg: Desativado
 
 id: Outline color
 msg: Cor do contorno
@@ -1264,8 +1100,7 @@ id: Outline size
 msg: Tamanho do contorno
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Método de desentrelaçamento de imagem VDPAU preferido
 
 id: Resume video playback
 msg: Resumir execução de vídeo
@@ -1280,8 +1115,7 @@ id: Shadow offset
 msg: Deslocamento da sombra
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Esticar vídeo para tela cheia
 
 id: Stretch video to widescreen
 msg: Esticar vídeo para widescreen
@@ -1293,19 +1127,16 @@ id: Subtitle size
 msg: Tamanho das legendas
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Tamanho e posição das legendas
 
 id: Subtitle styling
 msg: Estilo das legendas
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Temporal
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Temporal/Espacial
 
 id: Video acceleration and display behaviour
 msg: Acelaração de vídeo e comportamento da visualização
