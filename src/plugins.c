@@ -22,6 +22,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
+#include <assert.h>
 
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
@@ -45,6 +47,7 @@ typedef enum {
   PLUGIN_CAT_VIDEO,
   PLUGIN_CAT_MUSIC,
   PLUGIN_CAT_CLOUD,
+  PLUGIN_CAT_GLWVIEW,
   PLUGIN_CAT_OTHER,
   PLUGIN_CAT_num,
 } plugin_type_t;
@@ -55,6 +58,7 @@ static struct strtab catnames[] = {
   { "music",       PLUGIN_CAT_MUSIC },
   { "cloud",       PLUGIN_CAT_CLOUD },
   { "other",       PLUGIN_CAT_OTHER },
+  { "glwview",     PLUGIN_CAT_GLWVIEW },
 };
 
 
@@ -106,6 +110,10 @@ typedef struct plugin {
 
   int pl_new_version_avail;
 
+  void (*pl_unload)(struct plugin *pl);
+
+  prop_vec_t *pl_unload_props;
+  
 } plugin_t;
 
 static int plugin_install(plugin_t *pl, const char *package);
@@ -447,21 +455,16 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath,
 }
 
 
-
+#if ENABLE_SPIDERMONKEY
 /**
  *
  */
-static int
-plugin_load_js(const char *id, const char *url,
-	       char *errbuf, size_t errlen)
+static void
+js_unload(plugin_t *pl)
 {
-#if ENABLE_SPIDERMONKEY
-  return js_plugin_load(id, url, errbuf, errlen);
-#else
-  snprintf(errbuf, errlen, "Unable to load %s -- Javscript not enabled", url);
-  return -1;
-#endif
+  js_plugin_unload(pl->pl_id);
 }
+#endif
 
 
 /**
@@ -486,19 +489,11 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
   if(ctrl != NULL) {
 
     const char *type = htsmsg_get_str(ctrl, "type");
-    const char *file = htsmsg_get_str(ctrl, "file");
     const char *id   = htsmsg_get_str(ctrl, "id");
 
     if(type == NULL) {
       snprintf(errbuf, errlen, "Missing \"type\" element in control file %s",
 	    ctrlfile);
-      htsmsg_destroy(ctrl);
-      return -1;
-    }
-
-    if(file == NULL) {
-      snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
-	       ctrlfile);
       htsmsg_destroy(ctrl);
       return -1;
     }
@@ -520,17 +515,78 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       return -1;
     }
 
-    char fullpath[URL_MAX];
-    int r;
+    pl->pl_unload = NULL;
 
-    snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
-    
+    int r;
+    char fullpath[URL_MAX];
+
     if(!strcmp(type, "javascript")) {
-      r = plugin_load_js(id, fullpath, errbuf, errlen);
+
+      const char *file = htsmsg_get_str(ctrl, "file");
+      if(file == NULL) {
+	snprintf(errbuf, errlen, "Missing \"file\" element in control file %s",
+		 ctrlfile);
+	htsmsg_destroy(ctrl);
+	return -1;
+      }
+      snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+
+#if ENABLE_SPIDERMONKEY
+      r = js_plugin_load(id, fullpath, errbuf, errlen);
+      if(!r)
+	pl->pl_unload = js_unload;
+#else
+      snprintf(errbuf, errlen,
+	       "Unable to load %s -- Javscript not enabled", fullpath);
+      r = -1;
+#endif
+
+    } else if(!strcmp(type, "views")) {
+      // No special tricks here, we always loads 'glwviews' from all plugins
     } else {
       snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);
       r = -1;
+    }
+
+
+    // Load bundled views
+
+    if(!r) {
+      assert(pl->pl_unload_props == NULL);
+
+      htsmsg_t *list = htsmsg_get_list(ctrl, "glwviews");
+
+      pl->pl_unload_props = prop_vec_create(10);
+
+      if(list != NULL) {
+	htsmsg_field_t *f;
+	HTSMSG_FOREACH(f, list) {
+	  htsmsg_t *o;
+	  if((o = htsmsg_get_map_by_field(f)) == NULL)
+	    continue;
+	  const char *uit   = htsmsg_get_str(o, "uitype") ?: "standard";
+	  const char *class = htsmsg_get_str(o, "class");
+	  const char *title = htsmsg_get_str(o, "title");
+	  const char *file  = htsmsg_get_str(o, "file");
+
+	  if(class == NULL || title == NULL || file == NULL)
+	    continue;
+	  snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
+	  prop_t *r;
+	  r = prop_create(prop_create(prop_get_global(), "glw"), "views");
+	  r = prop_create(prop_create(r, uit), class);
+	  prop_t *l = prop_create_r(r, fullpath);
+	  prop_set_link(l, title, fullpath);
+
+	  TRACE(TRACE_DEBUG, "plugins", 
+		"Added view uitype:%s class:%s title:%s from %s",
+		uit, class, title, fullpath);
+
+	  pl->pl_unload_props = prop_vec_append(pl->pl_unload_props, l);
+	  prop_ref_dec(l);
+	}
+      }
     }
 
     if(!r) {
@@ -737,6 +793,9 @@ plugins_setup_root_props(void)
   plugin_root_repo = prop_create_root(NULL);
   plugin_root_model = prop_create_root(NULL);
 
+
+  prop_set_int(prop_create(plugin_root_model, "safeui"), 1);
+  prop_set_string(prop_create(plugin_root_model, "contents"), "plugins");
   prop_set_string(prop_create(plugin_root_model, "type"), "directory");
 
   prop_link(_p("Plugins"),
@@ -813,8 +872,11 @@ plugin_thread(void *aux)
 void
 plugins_init(const char *loadme, const char *repo, int sync_init)
 {
-  if(repo)
-    plugin_repo_url = repo;
+  char url[PATH_MAX];
+  if(repo) {
+    fa_normalize(repo, url, sizeof(url));
+    plugin_repo_url = strdup(url);
+  }
   hts_mutex_init(&plugin_mutex);
   plugin_courier = prop_courier_create_waitable();
 
@@ -824,8 +886,9 @@ plugins_init(const char *loadme, const char *repo, int sync_init)
 
   if(loadme != NULL) {
     char errbuf[200];
-    devplugin = strdup(loadme);
-    if(plugin_load(loadme, errbuf, sizeof(errbuf), 1, 0)) {
+    fa_normalize(loadme, url, sizeof(url));
+    devplugin = strdup(url);
+    if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0)) {
       TRACE(TRACE_ERROR, "plugins",
 	    "Unable to load development plugin: %s\n%s", loadme, errbuf);
     } else {
@@ -882,21 +945,35 @@ plugin_canhandle(const char *url)
  *
  */
 static void
-plugin_remove(plugin_t *pl)
+plugin_unload(plugin_t *pl)
 {
-  char path[200];
-
-  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
+  char path[PATH_MAX];
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
   unlink(path);
 
-#if ENABLE_SPIDERMONKEY
-  js_plugin_unload(pl->pl_id);
-#endif
+  if(pl->pl_unload)
+    pl->pl_unload(pl);
 
+  if(pl->pl_unload_props != NULL) {
+    prop_vec_destroy_entries(pl->pl_unload_props);
+    prop_vec_release(pl->pl_unload_props);
+    pl->pl_unload_props = NULL;
+  }
+
+}
+
+/**
+ *
+ */
+static void
+plugin_remove(plugin_t *pl)
+{
+  TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
   htsmsg_store_remove("plugins/%s", pl->pl_id);
+
+  plugin_unload(pl);
 
   prop_destroy(pl->pl_inst_prop);
   pl->pl_inst_prop = NULL;
@@ -959,14 +1036,10 @@ plugin_install(plugin_t *pl, const char *package)
   snprintf(path, sizeof(path), "%s/installedplugins", gconf.persistent_path);
   mkdir(path, 0770);
 
+  plugin_unload(pl);
+
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
-
-  unlink(path);
-
-#if ENABLE_SPIDERMONKEY
-  js_plugin_unload(pl->pl_id);
-#endif
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
@@ -1025,7 +1098,9 @@ plugin_open_repo(prop_t *page)
   prop_concat_t *pc;
   prop_t *model = prop_create(page, "model");
   prop_set_string(prop_create(model, "type"), "directory");
-  
+  prop_set_int(prop_create(model, "safeui"), 1);
+  prop_set_string(prop_create(model, "contents"), "plugins");
+
   prop_link(_p("Available plugins"),
 	    prop_create(prop_create(model, "metadata"), "title"));
 
@@ -1034,11 +1109,12 @@ plugin_open_repo(prop_t *page)
   // Create filters per category
 
   for(i = 0; i < PLUGIN_CAT_num; i++) {
-    prop_t *cat = prop_create(model, catnames[i].str);
+    const char *catname = val2str(i, catnames);
+    prop_t *cat = prop_create(model, catname);
     pnf = prop_nf_create(cat, plugin_root_repo, NULL, PROP_NF_AUTODESTROY);
     
     prop_nf_pred_str_add(pnf, "node.metadata.category", 
-			 PROP_NF_CMP_NEQ, catnames[i].str, NULL,
+			 PROP_NF_CMP_NEQ, catname, NULL,
 			 PROP_NF_MODE_EXCLUDE);
     prop_nf_sort(pnf, "node.metadata.title", 0, 0, NULL, 1);
     prop_nf_release(pnf);
@@ -1064,6 +1140,10 @@ plugin_open_repo(prop_t *page)
 
     case PLUGIN_CAT_CLOUD:
       gn = _p("Cloud services");
+      break;
+
+    case PLUGIN_CAT_GLWVIEW:
+      gn = _p("User interface extensions");
       break;
 
     default:
