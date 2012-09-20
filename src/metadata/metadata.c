@@ -341,6 +341,7 @@ struct metadata_lazy_prop {
 
 
   rstr_t *mlp_custom_query;
+  rstr_t *mlp_custom_title;
 
   struct {
     prop_t *p;
@@ -428,6 +429,7 @@ mlp_destroy(metadata_lazy_prop_t *mlp)
   prop_ref_dec(mlp->mlp_source);
   prop_ref_dec(mlp->mlp_sq);
   rstr_release(mlp->mlp_custom_query);
+  rstr_release(mlp->mlp_custom_title);
   rstr_release(mlp->mlp_url);
   free(mlp);
 }
@@ -827,11 +829,16 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
   int r;
   int fixed_ds;
   const char *sq = rstr_get(mlp->mlp_custom_query);
+  rstr_t *custom_title = mlp->mlp_custom_title;
+
   int sq_is_imdb_id = sq && sq[0] == 't' && sq[1] == 't' &&
     sq[2] >= '0' && sq[2] <= '9';
 
   if(sq && !*sq)
     sq = NULL;
+
+  if(custom_title && !*rstr_get(custom_title))
+    custom_title = NULL;
 
   if(mlp->mlp_duration && mlp->mlp_duration < 300) {
     goto bad;
@@ -988,7 +995,8 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
     if(ms != NULL)
       prop_set_string(mlp->mlp_source, ms->ms_description);
 
-    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, md->md_title);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p,
+		     custom_title ?: md->md_title);
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_ICON].p, md->md_icon);
 
     prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TAGLINE].p,
@@ -1032,7 +1040,8 @@ mlp_get_video_info0(void *db, metadata_lazy_prop_t *mlp, int refresh)
       if(i != MOVIE_PROP_TITLE && i != MOVIE_PROP_YEAR)
 	prop_set_void(mlp->mlp_props[i].p);
 
-    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p, mlp->mlp_filename);
+    prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p,
+		     custom_title ?: mlp->mlp_filename);
     prop_set_void(mlp->mlp_props[MOVIE_PROP_YEAR].p);
 
     prop_set_void(mlp->mlp_source);
@@ -1355,12 +1364,12 @@ mlp_sub_actions(void *opaque, prop_event_t event, ...)
       if(!strcmp(e->e_payload, "refreshMetadata")) {
 	mlp_refresh_video_info(mlp);
 	load_alternatives(mlp);
-	const char *s = rstr_get(mlp->mlp_custom_query);
+	const char *s;
 
-	if(s && *s) {
+	s = rstr_get(mlp->mlp_custom_query);
+	if(s && *s)
 	  kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
 			 "metacustomquery", KVSTORE_SET_STRING, s);
-	}
       }
     }
       
@@ -1393,6 +1402,49 @@ mlp_sub_query(void *opaque, prop_event_t event, ...)
   case PROP_SET_RSTRING:
     r = va_arg(ap, rstr_t *);
     rstr_set(&mlp->mlp_custom_query, r);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+
+
+/**
+ *
+ */
+static void
+mlp_sub_custom_title(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_prop_t *mlp = opaque;
+  va_list ap;
+  rstr_t *r;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    mlp_destroy(mlp);
+    break;
+
+  case PROP_SET_RSTRING:
+    r = va_arg(ap, rstr_t *);
+    rstr_set(&mlp->mlp_custom_title, r);
+
+    rstr_t *custom_title = r;
+
+    const char *s = rstr_get(mlp->mlp_custom_title);
+    kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
+		   "metacustomtitle", KVSTORE_SET_STRING, s);
+
+    if(custom_title && !*rstr_get(custom_title)) {
+      mlp_refresh_video_info(mlp);
+    } else {
+      prop_set_rstring(mlp->mlp_props[MOVIE_PROP_TITLE].p,
+		       custom_title ?: mlp->mlp_filename);
+    }
+
     break;
 
   default:
@@ -1599,6 +1651,34 @@ metadata_bind_movie_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   mlp->mlp_refcount++;
 
   pv = prop_vec_append(pv, mlp->mlp_refresh);
+
+  // Custom movie title
+
+  mlp->mlp_sq = prop_ref_inc(prop_create_root(NULL));
+  prop_set_string(prop_create(mlp->mlp_sq, "type"), "string");
+  prop_set_int(prop_create(mlp->mlp_sq, "enabled"), 1);
+  m = prop_create(mlp->mlp_sq, "metadata");
+  prop_set_string(prop_create(mlp->mlp_sq, "action"), "refreshMetadata");
+  prop_link(_p("Custom title"), prop_create(m, "title"));
+  v = prop_create(mlp->mlp_sq, "value");
+
+  cur = kv_url_opt_get_rstr(rstr_get(url), KVSTORE_DOMAIN_SYS, 
+			    "metacustomtitle");
+
+  if(cur != NULL) {
+    prop_set_rstring(v, cur);
+    rstr_release(cur);
+  }
+
+  mlp->mlp_sq_sub = 
+    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_CALLBACK, mlp_sub_custom_title, mlp,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_ROOT, v,
+		   NULL);
+  mlp->mlp_refcount++;
+
+  pv = prop_vec_append(pv, mlp->mlp_sq);
 
   // Add all options
 
