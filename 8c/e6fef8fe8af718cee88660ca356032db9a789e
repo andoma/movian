@@ -1,0 +1,4 @@
+Only reset screensaver timer if movie is actually playing
+
+Fixes #1022
+Fixes #1115
