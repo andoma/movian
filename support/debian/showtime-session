@@ -35,7 +35,7 @@ startenv
 
 
 while true; do
-      showtime --serdev --with-standby --syslog --with-poweroff --with-logout --with-openshell
+      showtime --serdev --with-standby --syslog --with-poweroff --with-logout --with-openshell --without-exit
       case "$?" in
       10)
 	      dosuspend

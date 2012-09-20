@@ -69,6 +69,7 @@ typedef struct glw_x11 {
   int want_fullscreen;
   setting_t *fullscreen_setting;
 
+  setting_t *settings_mouse_btn;
   int map_mouse_wheel_to_keys;
 
   Colormap colormap;
@@ -1288,12 +1289,13 @@ glw_x11_start(void)
 			     gr->gr_courier);
 #endif
 
-  settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
-		       _p("Map mouse wheel to up/down"),
-		       0, gr->gr_settings_store,
-		       gx11_set_wheel_mapping, gx11, 
-		       SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-		       glw_settings_save, gr);
+  gx11->settings_mouse_btn =
+    settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
+			 _p("Map mouse wheel to up/down"),
+			 0, gr->gr_settings_store,
+			 gx11_set_wheel_mapping, gx11, 
+			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
+			 glw_settings_save, gr);
 
   if(gx11->wm_flags) {
     gx11->fullscreen_setting = 
@@ -1327,6 +1329,9 @@ glw_x11_start(void)
   glw_unlock(gr);
   glw_reap(gr);
   glw_reap(gr);
+
+  setting_destroy(gx11->fullscreen_setting);
+  setting_destroy(gx11->settings_mouse_btn);
 
   prop_unsubscribe(evsub);
 
