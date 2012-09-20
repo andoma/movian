@@ -1,7 +1,6 @@
 
 * Log memory usage
 * Standardize view elements so .view plugins have something to lean on
-* GLW .view plugins
 
 ---- view plugins ------------------
 
