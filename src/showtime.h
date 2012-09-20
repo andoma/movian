@@ -213,6 +213,8 @@ typedef struct gconf {
   int can_poweroff;
   int can_open_shell;
   int can_logout;
+  int can_restart;
+  int can_not_exit;
 
   int disable_upnp;
   int disable_sd;

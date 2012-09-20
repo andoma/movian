@@ -22,6 +22,18 @@
     $clone.pageMenu = false;
     fireEvent(event(ReloadData));
   });
+
+  SEP(_("System"));
+
+  ITEM(_("Exit Showtime"), event(Quit),
+       "dataroot://resources/svg/Exit.svg", $global.runcontrol.canExit);
+
+  ITEM(_("Suspend"), event(Standby),
+       "dataroot://resources/svg/Power.svg", $global.runcontrol.canStandby);
+
+  ITEM(_("Power off"), event(PowerOff),
+       "dataroot://resources/svg/Power.svg", $global.runcontrol.canPowerOff);
+
 }
 
 #define BUTTON(ICON, EVENT, ENABLED, WEIGHT = 0.5) {
