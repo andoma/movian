@@ -1,0 +1,4 @@
+ps3: When seeking using L2/R2, rescale seek delta based on duration of feature
+
+In principle this make it so that the user can always seek from begining
+to end in ~2 seconds regardless of how long the currently playing media is.
