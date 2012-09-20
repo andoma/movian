@@ -1,0 +1,5 @@
+Add an action in settings->general to clear the entire metadb item table.
+
+Safeguarded with a popup as it is a non-revocable action.
+
+Fixes #1218
