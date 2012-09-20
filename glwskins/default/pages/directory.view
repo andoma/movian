@@ -43,8 +43,7 @@ multiopt($view.path,
 
 	 select($page.model.safeui, void,
 		vectorize($global.glw.views.standard.directory)),
-	 link(_("List"), "list.view"),
-	 link(_("Array"), "array.view")
+	 link(_("List"), "list.view")
 	);
 
 widget(layer, {
