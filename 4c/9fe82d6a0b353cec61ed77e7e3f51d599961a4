@@ -1,0 +1,4 @@
+Don't set resume time for videos if current position < one minute
+
+This makes sure the user does not accidentally lose the resume
+position if restarting the video from beginning by mistake
