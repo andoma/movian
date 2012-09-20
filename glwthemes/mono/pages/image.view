@@ -1,3 +1,0 @@
-widget(image, {
-    .source = $page.url;
-});

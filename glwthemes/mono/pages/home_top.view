@@ -1,9 +1,0 @@
-#import "theme://include/nav.view"
-widget(container_x, {
-  skinNavLocation(_("Home"));
-  skinNavButton("plugin", navOpen("plugin:start"), true);
-  skinNavButton("about", navOpen("page:about"), true);
-  skinNavButton("settings", navOpen("settings:"), true);
-  skinNavButton("power", event(Standby), true, !$global.runcontrol.canStandby);
-  skinNavButton("exit", event(Quit), true, !$ui.fullscreen);
-});

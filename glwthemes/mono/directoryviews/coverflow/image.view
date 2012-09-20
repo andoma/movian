@@ -1,6 +1,0 @@
-widget(image, {
-  .align = bottom;
-  .focusable = true;
-  .alphaEdges = 2;
-  .source = "thumb://" + $self.url;
-});

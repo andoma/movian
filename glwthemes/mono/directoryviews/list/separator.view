@@ -1,5 +1,0 @@
-#import "theme://include/separators.view"
-
-widget(container_y, {
-  HORIZONTAL_SEPARATOR();
-});

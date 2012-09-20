@@ -1,9 +1,0 @@
-widget(container_y, {
-  .spacing = 2;
-  widget(label, {
-    .hidden = !$self.entries;
-    .caption = fmt(_pl("%d entries", "%d entry", $self.entries), $self.entries);
-    .shadow = true;
-    .color = 0.5 + (isHovered() || isFocused()) * 0.5;
-  });
-});

@@ -1,9 +1,0 @@
-widget(container_y, {
-  space(1);
-  widget(label, {
-    .align = center;
-    .caption = "No contents";
-    .sizeScale = 2;
-  });
-  space(1);
-});
