@@ -93,6 +93,8 @@ int freetype_init(void);
 void *freetype_load_font_from_memory(const void *ptr, size_t len,
 				     int font_domain);
 
+void *freetype_load_font(const char *url, int context, const char **vpaths);
+
 void freetype_unload_font(void *ref);
 
 int freetype_family_id(const char *str, int context);

@@ -1426,6 +1426,24 @@ freetype_init(void)
  *
  */
 void *
+freetype_load_font(const char *url, int context, const char **vpaths)
+{
+  face_t *f;
+  hts_mutex_lock(&text_mutex);
+  
+  f = face_create_from_uri(url, context, vpaths);
+  if(f != NULL)
+    f->persistent++;
+  
+  hts_mutex_unlock(&text_mutex);
+  return f;
+}
+
+
+/**
+ *
+ */
+void *
 freetype_load_font_from_memory(const void *ptr, size_t len, int context)
 {
   face_t *f;
