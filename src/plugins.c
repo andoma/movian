@@ -543,6 +543,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 
     } else if(!strcmp(type, "views")) {
       // No special tricks here, we always loads 'glwviews' from all plugins
+      r = 0;
     } else {
       snprintf(errbuf, errlen, "Unknown type \"%s\" in control file %s",
 	       type, ctrlfile);

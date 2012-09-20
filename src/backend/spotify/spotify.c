@@ -1523,7 +1523,7 @@ spotify_browse_artist_callback(sp_artistbrowse *result, void *userdata)
     artist = f_sp_artistbrowse_artist(result);
 
 
-    int np = sp_artistbrowse_num_portraits(result);
+    int np = f_sp_artistbrowse_num_portraits(result);
     for(i = 0; i < np; i++) {
       prop_t *p = prop_create_r(bh->sp->sp_artist_portrait, NULL);
       set_image_uri2(p, 

@@ -1998,7 +1998,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   prop_t *p, *p2;
   prop_vec_t *pv;
   token_t *rpn = NULL, *t = NULL;
-  int flags, i;
+  int i;
   va_list ap;
   glw_root_t *gr = gps->gps_widget->glw_root;
   va_start(ap, event);
@@ -2065,7 +2065,6 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
 
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
-    flags = va_arg(ap, int);
     vectorizer_add_element(sv, p, NULL, gr);
     break;
 
@@ -2079,7 +2078,6 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
-    flags = va_arg(ap, int);
     vectorizer_add_element(sv, p, p2, gr);
     break;
 
