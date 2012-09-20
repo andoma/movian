@@ -443,7 +443,7 @@ setupRenderTarget(glw_ps3_t *gp, u32 currentBuffer)
 }
 
 static void 
-drawFrame(glw_ps3_t *gp, int buffer, int with_universe) 
+drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
 {
   gcmContextData *ctx = gp->gr.gr_be.be_ctx;
 
@@ -501,6 +501,7 @@ drawFrame(glw_ps3_t *gp, int buffer, int with_universe)
 
   glw_rctx_t rc;
   glw_rctx_init(&rc, gp->gr.gr_width * gp->scale, gp->gr.gr_height, 1);
+  rc.rc_alpha = 1 - gp->gr.gr_stop * 0.1;
   glw_layout0(gp->gr.gr_universe, &rc);
   glw_render0(gp->gr.gr_universe, &rc);
   glw_unlock(&gp->gr);
@@ -1059,7 +1060,10 @@ glw_ps3_mainloop(glw_ps3_t *gp)
 
 
   sysRegisterCallback(EVENT_SLOT0, eventHandle, gp);
-  while(!gp->gr.gr_stop) {
+  while(gp->gr.gr_stop != 10) {
+
+    if(gp->gr.gr_stop)
+      gp->gr.gr_stop++;
 
     handle_pads(gp);
     handle_kb(gp);
