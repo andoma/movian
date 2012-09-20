@@ -507,7 +507,7 @@ js_createDivider(JSContext *cx, JSObject *obj, uintN argc,
   if(!JS_ConvertArguments(cx, argc, argv, "s", &title))
     return JS_FALSE;
 
-  settings_create_divider(jsg->jsg_root, _p(title));
+  settings_create_separator(jsg->jsg_root, _p(title));
   return JS_TRUE;
 }
 

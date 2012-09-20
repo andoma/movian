@@ -2088,7 +2088,7 @@ add_provider_class(prop_concat_t *pc,
   prop_t *d = prop_create_root(NULL);
 
   prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
   
   prop_concat_add_source(pc, prop_create(c, "nodes"), d);
 }

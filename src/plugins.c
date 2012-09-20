@@ -825,13 +825,13 @@ plugins_setup_root_props(void)
   d = prop_create_root(NULL);
   prop_link(_p("Installed plugins"),
 	    prop_create(prop_create(d, "metadata"), "title"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, inst, d);
 
 
   // Settings
 
-  settings_create_divider(settings_general,
+  settings_create_separator(settings_general,
 			  _p("Plugins"));
 
   settings_create_string(settings_general, "alt_repo",

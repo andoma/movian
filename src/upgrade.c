@@ -427,7 +427,7 @@ upgrade_init(void)
 
   setting_t *x;
 
-  settings_create_divider(settings_general,
+  settings_create_separator(settings_general,
 			  _p("Software upgrade"));
 
   x = settings_create_multiopt(settings_general, "track",

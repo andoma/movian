@@ -4523,7 +4523,7 @@ be_spotify_init(void)
 				   "music", iconurl, 0, 0,
 				   SVC_ORIGIN_APP);
 
-  settings_create_divider(s, NULL);
+  settings_create_separator(s, NULL);
 
   ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
 			     store, spotify_set_enable, NULL,

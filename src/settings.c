@@ -554,9 +554,9 @@ settings_create_info(prop_t *parent, const char *image,
  *
  */
 prop_t *
-settings_create_divider(prop_t *parent, prop_t *caption)
+settings_create_separator(prop_t *parent, prop_t *caption)
 {
-  return setting_add(parent, caption, "divider", 0);
+  return setting_add(parent, caption, "separator", 0);
 }
 
 
@@ -673,12 +673,12 @@ settings_init(void)
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Applications and installed plugins"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, n, d);
 
   d = prop_create_root(NULL);
   set_title2(d, _p("Discovered media sources"));
-  prop_set_string(prop_create(d, "type"), "divider");
+  prop_set_string(prop_create(d, "type"), "separator");
 
   n = prop_create(settings_sd, "nodes");
   prop_concat_add_source(pc, n, d);

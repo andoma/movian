@@ -161,7 +161,7 @@ runcontrol_init(void)
        gconf.can_open_shell))
     return;
 
-  settings_create_divider(settings_general, 
+  settings_create_separator(settings_general, 
 			  _p("Starting and stopping Showtime"));
 
   rc = prop_create(prop_get_global(), "runcontrol");
