@@ -467,6 +467,26 @@ js_unload(plugin_t *pl)
 #endif
 
 
+
+/**
+ *
+ */
+static void
+plugin_unload(plugin_t *pl)
+{
+  if(pl->pl_unload) {
+    pl->pl_unload(pl);
+    pl->pl_unload = NULL;
+  }
+
+  if(pl->pl_unload_props != NULL) {
+    prop_vec_destroy_entries(pl->pl_unload_props);
+    prop_vec_release(pl->pl_unload_props);
+    pl->pl_unload_props = NULL;
+  }
+}
+
+
 /**
  *
  */
@@ -515,7 +535,7 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
       return -1;
     }
 
-    pl->pl_unload = NULL;
+    plugin_unload(pl);
 
     int r;
     char fullpath[URL_MAX];
@@ -946,7 +966,7 @@ plugin_canhandle(const char *url)
  *
  */
 static void
-plugin_unload(plugin_t *pl)
+plugin_remove(plugin_t *pl)
 {
   char path[PATH_MAX];
 
@@ -954,23 +974,6 @@ plugin_unload(plugin_t *pl)
 	   gconf.persistent_path, pl->pl_id);
   unlink(path);
 
-  if(pl->pl_unload)
-    pl->pl_unload(pl);
-
-  if(pl->pl_unload_props != NULL) {
-    prop_vec_destroy_entries(pl->pl_unload_props);
-    prop_vec_release(pl->pl_unload_props);
-    pl->pl_unload_props = NULL;
-  }
-
-}
-
-/**
- *
- */
-static void
-plugin_remove(plugin_t *pl)
-{
   TRACE(TRACE_DEBUG, "plugin", "Uninstalling %s", pl->pl_id);
   htsmsg_store_remove("plugins/%s", pl->pl_id);
 
@@ -1041,6 +1044,7 @@ plugin_install(plugin_t *pl, const char *package)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
+  unlink(path);
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
