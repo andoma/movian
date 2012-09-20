@@ -13,22 +13,39 @@ multiopt($view.path,
 	 _("View"),
 	 $page.persistent.glwUserView,
 	 // List of view follows
+	 // First custom view set by model
 	 link(_("Custom"), $page.model.metadata.glwview),
 
+	 // Optionally a list of custom views set by model
 	 vectorize($page.model.metadata.glwviews),
 
+	 // Then comes external views selected based on content
 	 translate($page.model.contents, void,
-		   "album", link(_("Album"), "album.view"),
-		   "artist", link(_("Artist"), "artist.view"),
-		   "tvchannels", link(_("Tvchannels"), "tvchannels.view"),
-		   "images", link(_("Images"), "images.view")
+		   "tracks",     vectorize($global.glw.views.standard.tracks),
+		   "album",      vectorize($global.glw.views.standard.album),
+		   "albums",     vectorize($global.glw.views.standard.albums),
+		   "artist",     vectorize($global.glw.views.standard.artist),
+		   "tvchannels", vectorize($global.glw.views.standard.tvchannels),
+		   "images",     vectorize($global.glw.views.standard.images),
+		   "movies",     vectorize($global.glw.views.standard.movies)
 		    ),
+
+	 // Then comes internal views selected based on content
+	 translate($page.model.contents, void,
+		   "album",      link(_("Album"),      "album.view"),
+		   "artist",     link(_("Artist"),     "artist.view"),
+		   "tvchannels", link(_("Tvchannels"), "tvchannels.view"),
+		   "images",     link(_("Images"),     "images.view")
+		    ),
+
 	 select($page.model.contents == "images", 
 		link(_("Slideshow"), "slideshow.view"), void),
+
+	 select($page.model.safeui, void,
+		vectorize($global.glw.views.standard.directory)),
 	 link(_("List"), "list.view"),
-	 link(_("Big list"), "biglist.view"),
-	 link(_("Movies"), "movies.view"),
-	 link(_("Array"), "array.view"));
+	 link(_("Array"), "array.view")
+	);
 
 widget(layer, {
 

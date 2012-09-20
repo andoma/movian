@@ -87,11 +87,6 @@ widget(container_x, {
   alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
   blur:      iir(clamp(getLayer(), 0, 1), 7);
 
-/*
-  $page.backdrop = $view.focused.backdrop ??
-    translate($view.focused.type, void,
-	      "music", "/Users/andoma/Downloads/music.jpg");
-*/
   widget(clist, {
     .filterConstraintX = true;
     .center = 0.2;
@@ -100,6 +95,59 @@ widget(container_x, {
     $view.focused = focusedChild();
 
     $view.change = changed($view.focused, 1);
+
+    // News
+
+    cloner($global.news, container_x, {
+      spacing: $ui.size;
+      padding: [$ui.size*2, 0];
+
+      widget(icon, {
+	source: "dataroot://resources/svg/Alert.svg";
+	shadow: true;
+	sizeScale: 1;
+      });
+
+      widget(label, {
+	caption: $self.message;
+	outline: true;
+	shadow: true;
+      });
+
+      space(1);
+
+      widget(backdrop, {
+	onEvent(activate, navOpen($self.location));
+	focusable: 0.1;
+	alpha: isFocused() + 0.5;
+	source: "theme://graphics/border-tiny.png";
+	border: 4;
+	margin: [0,-3];
+	padding: [10, -1];
+	widget(label, {
+	  outline: true;
+	  shadow: true;
+	  caption: $self.caption;
+	});
+      });
+
+      widget(backdrop, {
+	onEvent(activate, deliverEvent($self.eventSink, "dismiss"));
+	focusable: 0.1;
+	alpha: isFocused() + 0.5;
+	source: "theme://graphics/border-tiny.png";
+	border: 4;
+	margin: [0,-3];
+	padding: [10, -1];
+	widget(label, {
+	  outline: true;
+	  shadow: true;
+	  caption: _("Dismiss");
+	});
+      });
+    });
+
+
 
 
     // Search
