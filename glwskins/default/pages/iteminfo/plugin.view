@@ -1,0 +1,105 @@
+#import "skin://common.view"
+
+
+
+
+widget(container_y, {
+  spacing: 5;
+  widget(container_x, {
+    spacing: 10;
+
+    widget(container_y, {
+      align: top;
+      widget(frontdrop, {
+	width: $ui.width / 6;
+	height: $ui.width / 6;
+	source: "skin://graphics/boxart-overlay.png";
+	border: 8;
+	padding: 4;
+	widget(image, {
+	  source: $args.metadata.icon;
+	  hidden: select($args.metadata.icon, false, true);
+	});
+      });
+    });
+
+    widget(container_y, {
+      padding: [0,12];
+      filterConstraintX: true;
+      spacing: 2;
+
+      widget(label, {
+	TextStyleItem();
+	caption: $args.metadata.title;
+	sizeScale: 1.5;
+	ellipsize: true;
+      });
+
+
+      widget(label, {
+	TextStyleItem();
+	caption: $args.metadata.synopsis;
+	maxlines: 3;
+      });
+
+      space(1);
+
+      widget(label, {
+	hidden: !$args.metadata.installed_version;
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Installed version: ") + '</font>' + 
+	  $args.metadata.installed_version;
+      });
+
+      widget(label, {
+	hidden: !$args.metadata.available_version;
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Available version: ") + '</font>' + 
+	  $args.metadata.available_version;
+      });
+
+      widget(label, {
+	hidden: !$args.metadata.author;
+	TextStyleItem();
+	caption: '<font color="#888">' + _("Author: ") + '</font>' + 
+	  $args.metadata.author;
+      });
+    });
+  });
+  
+
+  widget(backdrop, {
+    filterConstraintY: true;
+    source: "skin://graphics/indent.png";
+    border: 16;
+
+    widget(label, {
+      TextStyleItem();
+      sizeScale: 0.8;
+      align: justified;
+      maxlines: 20;
+      caption: $args.metadata.description;
+    });
+  });
+
+
+  trace("status", $args.status.statustxt);
+
+  widget(backdrop, {
+    source: "skin://graphics/indent.png";
+    border: 16;
+
+    widget(container_y, {
+      widget(label, {
+	TextStyleItem();
+	caption: $args.status.statustxt;
+      });
+      widget(label, {
+	TextStyleItem();
+	caption: select($args.status.minver,
+			fmt(_("Showtime %s or newer is required"),
+			    $args.status.minver), "");
+      });
+    });
+  });
+});

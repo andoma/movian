@@ -1,9 +1,0 @@
-#import "theme://common.view"
-
-widget(label, {
-  TextStyleItem();
-  sizeScale: 0.8;
-  caption: $self.data;
-  maxlines: 10;
-  align:justified;
-});

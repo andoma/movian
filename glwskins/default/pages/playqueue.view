@@ -1,0 +1,168 @@
+#import "skin://common.view"
+
+#define actionBtn(ICON, EVENT, ENABLED) {
+
+  widget(container_y, {
+    
+    focusable: ENABLED;
+    alpha: select(ENABLED, 1, 0.3);
+    onEvent(activate, EVENT);
+
+    widget(backdrop, {
+      alpha: isFocused() + 0.6;
+      
+      color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+      SquareButtonBack();
+      
+      widget(frontdrop, {
+	SquareButtonFront();
+	widget(icon, {
+	  source: ICON;
+	  sizeScale: 2;
+	});
+      });
+    });
+  });
+}
+
+
+#define toggleBtn(ICON, STATE, ENABLED) {
+
+  widget(container_y, {
+    
+    focusable: ENABLED;
+    alpha: select(ENABLED, 1, 0.3);
+    onEvent(activate, { (STATE) = !STATE; });
+
+    widget(backdrop, {
+      alpha: isFocused() + 0.6;
+      
+      color: iir(0.6 + (isFocused() || isPressed() || isHovered()), 4);
+      SquareButtonBack();
+      
+      widget(frontdrop, {
+	SquareButtonFront();
+	widget(icon, {
+	  source: ICON;
+	  sizeScale: 2;
+	  color: select(STATE, 1, 0.4*[0.431, 0.811, 1]);
+	});
+      });
+    });
+  });
+}
+
+widget(container_y, {
+  padding: [$ui.size, $ui.size, $ui.size, $ui.size + $ui.playdeckheight];
+  filterConstraintX: true;
+  filterConstraintY: true;
+  
+
+  widget(container_x, {
+    spacing: $ui.size;
+
+    widget(frontdrop, {
+      source: "skin://graphics/boxart-overlay.png";
+      border: 8;
+      
+      widget(icon, {
+	source: $global.media.current.metadata.album_art;
+	sizeScale: 8;
+      });
+    });
+
+    widget(container_y, {
+      filterConstraintX: true;
+      widget(label, {
+	caption: $global.media.current.metadata.title;
+	TextStyleItem();
+	sizeScale: 2;
+      });
+      widget(label, {
+	caption: $global.media.current.metadata.artist;
+	TextStyleItem();
+      });
+      widget(label, {
+	caption: $global.media.current.metadata.album;
+	TextStyleItem();
+      });
+      widget(label, {
+	caption: $global.media.current.metadata.year;
+	TextStyleItem();
+      });
+
+      widget(label, {
+	TextStyleItem();
+	caption: fmt(_("Track %d / %d"),
+		     $global.media.current.currentTrack,
+		     $global.media.current.totalTracks);
+      });
+
+    });
+  });
+
+  VerticalSeparator();
+
+
+
+  widget(container_x, {
+    filterConstraintY: true;
+    
+    spacing: $ui.size;
+
+    widget(container_y, {
+      
+      widget(container_x, {
+	align: center;
+	actionBtn("dataroot://resources/svg/SkipBack.svg", event(PreviousTrack),
+		  $global.media.current.canSkipBackward);
+	actionBtn("dataroot://resources/svg/Play.svg", event(PlayPause), true);
+	actionBtn("dataroot://resources/svg/SkipNext.svg", event(NextTrack),
+		  $global.media.current.canSkipForward);
+      });
+
+      widget(container_x, {
+	align: center;
+	toggleBtn("dataroot://resources/svg/Repeat.svg",
+		  $global.media.current.repeat,
+		  $global.media.current.canRepeat);
+
+	toggleBtn("dataroot://resources/svg/Shuffle.svg",
+		  $global.media.current.shuffle,
+		  $global.media.current.canShuffle);
+      });
+    });
+
+    widget(backdrop, {
+      filterConstraintX: true;
+      source: "skin://graphics/indent.png";
+      border: 16;
+      
+      widget(container_x, {
+	widget(list_y, {
+	  
+	  id: "list";
+	  spacing: 3;
+	  
+	  cloner($global.playqueue.nodes, loader, {
+	    time: 0.1;
+	    effect: blend;
+	    source: "listitems/audio.view";
+	  });
+	});
+	
+	widget(slider_y, {
+	  bind("list");
+	  width: 4;
+	  focusable: canScroll();
+	  navFocusable: true;
+	  alpha: iir(canScroll(), 16);
+	  
+	  widget(quad, {
+	    alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+	  });
+	});
+      });
+    });
+  });
+});

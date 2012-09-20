@@ -1,0 +1,124 @@
+
+#define popupGroup(BODY) {
+  widget(backdrop, {
+    .source = "skin://graphics/blackdrop16.png";
+    .border = 7;
+    .alphaSelf = 0.8;
+    BODY;
+  });
+}
+
+#define popupInputField(BODY) {
+  widget(backdrop, {
+    .source = "skin://graphics/border-tiny.png";
+    .borderOnly = true;
+    .border = 4;
+    .color = 0.5;
+    BODY;
+  });
+}
+
+
+
+#define popupButton(EVENT, ENABLED, HIDDEN, CAPTION) {
+
+  widget(backdrop, {
+    source: "skin://graphics/border-tiny.png";
+    borderOnly: true;
+    border: 4;
+    padding: [$ui.size,0];
+    hidden: HIDDEN;
+    focusable: ENABLED;
+    onEvent(activate, EVENT);
+
+    alpha: select(isHovered() || isFocused(), 1, 0.5);
+
+    widget(label, {
+      align: center;
+      caption: CAPTION;
+    });
+  });
+}
+
+#define popupButtonOK(EVENT, ENABLED, HIDDEN) {
+
+  widget(backdrop, {
+    source: "skin://graphics/border-tiny.png";
+    borderOnly: true;
+    border: 4;
+    padding: [0,0,$ui.size,0];
+    hidden: HIDDEN;
+    focusable: ENABLED;
+    onEvent(activate, EVENT);
+
+    alpha: select(isHovered() || isFocused(), 1, 0.5);
+
+    widget(container_x, {
+      align: center;
+      widget(icon, {
+	source: "dataroot://resources/svg/Check.svg";
+      });
+      widget(label, {
+	caption: _("OK");
+      });
+    });
+  });
+
+}
+
+#define popupButtonCancel(EVENT, ENABLED, HIDDEN) {
+
+  widget(backdrop, {
+    source: "skin://graphics/border-tiny.png";
+    borderOnly: true;
+    border: 4;
+    padding: [0,0,$ui.size,0];
+    hidden: HIDDEN;
+    focusable: ENABLED;
+    onEvent(activate, EVENT);
+
+    alpha: select(isHovered() || isFocused(), 1, 0.5);
+
+    widget(container_x, {
+      align: center;
+      widget(icon, {
+	source: "dataroot://resources/svg/Delete.svg";
+      });
+      widget(label, {
+	caption: _("Cancel");
+      });
+    });
+  });
+}
+
+#define popupCheckbox(STATE, CAPTION, ENABLED, HIDDEN) {
+
+  widget(container_x, {
+    .align = center;
+    .spacing = 5;
+    .hidden = HIDDEN;
+    .focusable = ENABLED;
+    .alpha = select(isHovered() || isFocused(), 1, 0.5);
+    onEvent(activate, {
+      (STATE) = !STATE;
+    });
+      
+
+    widget(backdrop, {
+      .width = $ui.size + 2;
+      .source = "skin://graphics/border-tiny.png";
+      .borderOnly = true;
+      .border = 4;
+      .padding = -3;
+      .color = 0.5;
+      widget(image, {
+	.source = "dataroot://resources/svg/Check.svg";
+	.alpha = select(STATE, 1, 0);
+      });
+    });
+
+    widget(label, {
+      .caption = CAPTION;
+    });
+  });
+}

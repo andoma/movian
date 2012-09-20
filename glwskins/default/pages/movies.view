@@ -1,0 +1,72 @@
+#import "skin://common.view"
+
+
+widget(container_y, {
+  padding: $ui.size * 4;
+
+  widget(fader, {
+    weight: 1;
+    plane: [0,1,0,1];
+    alphaFallOff: 1;
+    blurFallOff: 0.2;
+    widget(mirror, {
+      alpha: 0.2;
+
+
+      widget(coverflow, {
+	//    alphaFallOff: 0.2;
+	height: $ui.size * 16;
+	spacing: 10;
+
+	cloner($page.model.nodes, displacement, {
+	  widget(frontdrop, {
+	    source: "skin://graphics/boxart-overlay.png";
+	    automargin: true;
+	    childAspect: 0.7;
+	    border: 8;
+	    margin: -6;
+	    focusable: true;
+	    onEvent(activate, navOpen($self.url));
+	    color: iir(isFocused(), 4);
+	    
+	    widget(container_z, {
+	      
+	      widget(image, {
+		height: $ui.size * 16;
+		source: $self.metadata.icon;
+		color: iir(isFocused(), 4) + 0.4;
+		saturation: 1 - iir(isReady(), 10);
+
+	      });
+	      widget(container_y, {
+		filterConstraintX: true;
+		space(6);
+		
+		widget(container_z, {
+		  widget(quad, {
+		    color: 0;
+		    alpha: 0.75;
+		  });
+		  
+		  widget(container_y, {
+		    align: center;
+		    padding: [$ui.size/2, 0];
+		    widget(label, {
+		      color: iir(isFocused(), 4) + 0.3;
+		      caption: $self.metadata.title;
+		      align: center;
+		      shadow: true;
+		      outline: true;
+		      font: $ui.condensedfont;
+		    });
+		  });
+		});
+	      });
+	    });
+	  });
+	});
+      });
+    });
+  });
+  space(0.5);
+});

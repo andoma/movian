@@ -1,0 +1,61 @@
+#import "skin://common.view"
+
+#define InfoLabel() {
+  shadow: true;
+  outline: true;
+  color: 0.6;
+}
+
+
+widget(container_y, {
+  alpha: iir($ui.sysinfo, 6);
+  widget(container_x, {
+    widget(backdrop, {
+      filterConstraintX: true;
+      source: "skin://graphics/popupmenu.png";
+      margin: -30;
+      border: 56;
+      borderOnly: true;
+      padding: -56;
+      
+      widget(backdrop, {
+	alphaSelf: 0.85;
+	source: "skin://graphics/popupmenu2.png";
+	border: 56;
+	color: 0;
+	
+	widget(container_y, {
+	  
+	  widget(label, {
+	    TextStyleItem();
+	    caption: fmt("Showtime %s", $global.showtime.version);
+	    align: center;
+	  });
+
+	  VerticalSeparator();
+	  
+	  widget(container_x, {
+	    
+	    spacing: 10;
+	    
+	    widget(container_y, {
+	      widget(label, {
+		InfoLabel();
+		align: right;
+		caption: _("Memory usage:");
+	      });
+	    });
+	    widget(container_y, {
+	      widget(label, {
+		TextStyleItem();
+		caption: fmt("%d kB", $global.system.mem.activeMem);
+	      });
+	    });
+	  });
+	});
+      });
+    });
+    space(2);
+  });
+  space(1);
+});

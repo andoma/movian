@@ -644,7 +644,7 @@ typedef struct glw_root {
   LIST_HEAD(, glw_cached_view) gr_views;
 
   const char *gr_vpaths[5];
-  char *gr_theme;
+  char *gr_skin;
 
   hts_thread_t gr_thread;
   hts_mutex_t gr_mutex;
@@ -707,7 +707,7 @@ typedef struct glw_root {
   LIST_HEAD(,  glw_image) gr_icons;
   hts_cond_t gr_tex_load_cond;
 
-#define LQ_THEME      0
+#define LQ_SKIN      0
 #define LQ_TENTATIVE  1
 #define LQ_THUMBS     2
 #define LQ_OTHER      3

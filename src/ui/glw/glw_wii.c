@@ -468,13 +468,13 @@ glw_wii_loop(glw_wii_t *gwii)
 
 
   gwii->cursors[0] =
-    glw_tex_create(&gwii->gr, "theme://wii/shadow_point.png", 0, -1, -1);
+    glw_tex_create(&gwii->gr, "skin://wii/shadow_point.png", 0, -1, -1);
   gwii->cursors[1] =
-    glw_tex_create(&gwii->gr, "theme://wii/generic_point.png", 0, -1, -1);
+    glw_tex_create(&gwii->gr, "skin://wii/generic_point.png", 0, -1, -1);
   gwii->cursors[2] =
-    glw_tex_create(&gwii->gr, "theme://wii/shadow_grab.png", 0, -1, -1);
+    glw_tex_create(&gwii->gr, "skin://wii/shadow_grab.png", 0, -1, -1);
   gwii->cursors[3] =
-    glw_tex_create(&gwii->gr, "theme://wii/generic_grab.png", 0, -1, -1);
+    glw_tex_create(&gwii->gr, "skin://wii/generic_grab.png", 0, -1, -1);
 
   gwii->running = 1;
 
@@ -554,7 +554,7 @@ gwii_set_widescreen(void *opaque, int value)
 static int
 glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 {
-  const char *theme_path = SHOWTIME_GLW_DEFAULT_THEME_URL;
+  const char *skin_path = SHOWTIME_GLW_DEFAULT_SKIN_URL;
   glw_wii_t *gwii = calloc(1, sizeof(glw_wii_t));
  
   /* Parse options */
@@ -562,8 +562,8 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
   argc--;
 
   while(argc > 0) {
-    if(!strcmp(argv[0], "--theme") && argc > 1) {
-      theme_path = argv[1];
+    if(!strcmp(argv[0], "--skin") && argc > 1) {
+      skin_path = argv[1];
       argc -= 2; argv += 2;
       continue;
     } else
@@ -574,7 +574,7 @@ glw_wii_start(ui_t *ui, int argc, char *argv[], int primary)
 
   glw_root_t *gr = &gwii->gr;
 
-  if(glw_init(gr, theme_path, ui, primary, "wii", NULL)) {
+  if(glw_init(gr, skin_path, ui, primary, "wii", NULL)) {
     printf("GLW failed to init\n");
     sleep(3);
     exit(0);

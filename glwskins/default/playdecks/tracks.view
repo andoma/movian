@@ -1,0 +1,47 @@
+$ui.showplaydeck = true;
+
+
+widget(container_z, {
+  height: $ui.size * 2;
+  widget(quad, {
+    color: 0;
+    alpha: 0.5;
+  });
+  widget(frontdrop, {
+    source: "thickbar.png";
+    additive: true;
+    alphaSelf: 0.8;
+    border: [1,2,1,1];
+
+    widget(container_x, {
+
+      padding: [$ui.size,0];
+      spacing: $ui.size / 2;
+
+      widget(frontdrop, {
+	width: $ui.size * 4;
+	margin: [-8,$ui.size * -2 - 8, -8, -8];
+	source: "skin://graphics/boxart-overlay.png";
+	border: 8;
+	widget(image, {
+	  source: $global.media.current.metadata.album_art ??
+	    "dataroot://resources/svg/Disc.svg";
+	});
+      });
+      widget(container_y, {
+	filterConstraintX: true;
+	align: center;
+	widget(label, {
+	  caption: join(" • ",
+			$global.media.current.metadata.artist,
+			$global.media.current.metadata.title);
+
+	  shadow: true;
+	  outline: true;
+	});
+      });
+
+      #import "bar.view"
+    });
+  });
+});

@@ -1,0 +1,43 @@
+#import "skin://common.view"
+
+widget(backdrop, {
+  
+  source: "highlight.png";
+  autoRefocusable: true;
+  focusable: true;
+  focusOnClick: true;
+  onEvent(activate, navOpen($self.url, void, void, $parent.model));
+  
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(icon, {
+      align: left;
+      color: select(isFocused(), 1.0, 0.6);
+      source: 
+      "dataroot://resources/svg/" + 
+	translate($self.type,  "File",
+		  "archive",   "Archive",
+		  "artist",    "User",
+		  "directory", "Folder",
+		  "dvd",       "Disc",
+		  "playlist",  "List",
+		  "video",     "Movie",
+		  "album",     "Disc",
+		  "load",      "Load",
+		  "font",      "Font",
+		  "image",     "Pictures"
+		 ) + ".svg";
+	.shadow = true;
+    });
+    
+    
+    widget(label, {
+      filterConstraintX: true;
+      TextStyleItem();
+      color: select(isFocused(), 1.0, 0.6);
+      caption: $self.metadata.title;
+    });
+  });
+});

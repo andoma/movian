@@ -1,0 +1,18 @@
+widget(container_z, {
+  focusable: true;
+  autoRefocusable: true;
+  width: $ui.size * 8;
+
+
+  widget(backdrop, {
+    align: bottom;
+    source: "skin://graphics/white.png";
+    color: 0;
+  });
+
+  widget(label, {
+    caption: $self.metadata.title;
+    sizeScale: 0.75;
+  });
+
+});

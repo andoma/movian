@@ -229,7 +229,7 @@ typedef struct gconf {
   const char *initial_view;
 
   char *ui;
-  char *theme;
+  char *skin;
 
 } gconf_t;
 

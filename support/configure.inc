@@ -14,7 +14,7 @@
 TOPDIR=`pwd`
 BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
-GLW_DEFAULT_THEME="default"
+GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
 JARGS=""
 LIBSPOTIFY_VERSION="12.1.51"
@@ -375,10 +375,10 @@ finalize() {
     fi
 
 
-    # Generate default theme path for GLW
+    # Generate default skin path for GLW
     if enabled glw; then
-	echo >>${CONFIG_MAK} "BUNDLES+=glwthemes/${GLW_DEFAULT_THEME}"
-	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_THEME \""${GLW_DEFAULT_THEME}"\""
+	echo >>${CONFIG_MAK} "BUNDLES+=glwskins/${GLW_DEFAULT_SKIN}"
+	echo >>${CONFIG_H} "#define SHOWTIME_GLW_DEFAULT_SKIN \""${GLW_DEFAULT_SKIN}"\""
     fi
 
     # Generate resource path for GU

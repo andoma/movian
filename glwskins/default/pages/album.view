@@ -1,0 +1,72 @@
+#import "skin://common.view"
+
+widget(keyintercept, {
+
+  widget(container_y, {
+    alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+    blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+    padding: [5,5,5,$ui.playdeckheight];
+    
+    widget(container_x, {
+      padding: 5;
+      spacing: 5;
+
+      widget(frontdrop, {
+	source: "skin://graphics/boxart-overlay.png";
+	border: 8;
+
+	widget(icon, {
+	  source: $page.model.metadata.album_art;
+	  sizeScale: 8;
+	});
+      });
+      
+      
+      widget(container_y, {
+	filterConstraintX: true;
+	padding: 8;
+	widget(label, {
+	  caption: $page.model.metadata.title;
+	  sizeScale: 2;
+	  TextStyleItem();
+	});
+	widget(label, {
+	  caption: $page.model.metadata.artist_name;
+	  TextStyleItem();
+	});
+	widget(label, {
+	  caption: $page.model.metadata.album_year;
+	  TextStyleItem();
+	});
+      });
+    });
+
+    VerticalSeparator();
+
+    widget(container_x, {
+      filterConstraintY: true;
+      filterConstraintX: true;
+      widget(list_y, {
+	id: "list";
+	&clone.focused = focusedChild();
+	cloner($page.model.nodes, loader, {
+	  time: 0.1;
+	  effect: blend;
+	  source: "listitems/albumtrack.view";
+	});
+      });
+      widget(slider_y, {
+	bind("list");
+	width: 4;
+	focusable: canScroll();
+	navFocusable: true;
+	alpha: iir(canScroll(), 16);
+	
+	widget(quad, {
+	  alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+	});
+      });
+    });
+  });
+});

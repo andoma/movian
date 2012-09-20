@@ -1,0 +1,98 @@
+#import "skin://common.view"
+
+widget(keyintercept, {
+  
+  widget(container_y, {
+
+    padding: [5,5,5,$ui.playdeckheight];
+
+    alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+    blur:      iir(clamp(getLayer(), 0, 1), 7);
+    
+    widget(container_x, {
+      height: $ui.size * 9;
+
+      widget(deck, {
+
+	widget(icon, {
+	  align: top;
+	  source: $page.model.metadata.artist_portrait;
+	  sizeScale: 8;
+	});
+
+	widget(container_y, {
+	  padding: 8;
+	  widget(slideshow, {
+	    cloner($page.model.metadata.artist_portrait, icon, {
+	      source: $self;
+	      align: top;
+	      sizeScale: 8;
+	    });
+	  });
+	});
+
+	page: select(count($page.model.metadata.artist_portrait), 1, 0);
+      });
+      
+      widget(container_y, {
+	filterConstraintX: true;
+	padding: 8;
+	spacing: 4;
+	widget(label, {
+	  caption: $page.model.metadata.title;
+	  sizeScale: 2;
+	  TextStyleItem();
+	});
+
+	widget(label, {
+	  maxlines: 6;
+	  TextStyleItem();
+	  caption: $page.model.metadata.artist_bio;
+	  align: justified;
+	  ellipsize: true;
+	});
+      });
+    });
+    
+    widget(container_x, {
+
+      widget(array, {
+	id: "array";
+	  &clone.focused = focusedChild();
+
+	scrollThreshold: 100;
+
+	alphaFallOff: 0.1;
+	blurFallOff: 0.1;
+	
+	Yspacing: $ui.size / 2;
+	Xspacing: $ui.size / 2;
+
+	childTilesX: 6;
+	
+	cloner($page.model.nodes, loader, {
+	  time: 0.1;
+	  effect: blend;
+	  source: "squareitems/" + 
+	    translate($self.type, "default",
+		      "separator", "separator",
+		      "artistalbum", "artistalbum",
+		      "album", "album")
+	    + ".view";
+	});
+      });
+
+      widget(slider_y, {
+	bind("array");
+	width: 4;
+	focusable: canScroll();
+	navFocusable: true;
+	alpha: iir(canScroll(), 16);
+	
+	widget(quad, {
+	  alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+	});
+      });
+    });
+  });
+});

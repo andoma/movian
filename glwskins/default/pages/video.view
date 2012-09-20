@@ -1,0 +1,300 @@
+#import "skin://common.view"
+
+#define InfoLabel() {
+  shadow: true;
+  outline: true;
+  color: 0.6;
+}
+
+#define OSD() {
+  shadow: true;
+  outline: true;
+  ellipsize: true;
+}
+
+
+
+$ui.showplaydeck = $self.media.stats || changed($self.media.seektime, 5, true);
+
+$clone.menu = "skin://cmdmenu/cmdmenu_video.view";
+
+$self.directClose = 1;
+
+// If playstatus is set to stop, close the page
+$self.close = $self.media.playstatus == "stop";
+
+$view.statsAlpha = iir($self.media.stats, 8);
+
+delta($ui.fullwindow, isVisible());
+
+widget(container_z, {
+  widget(layer, {
+
+    widget(container_z, {
+      widget(video, {
+	how: $self.how;
+	model: $self.openedFrom;
+	primary: true;
+	source: $self.source;
+	focusable: true;
+      });
+
+      widget(container_y, {
+	autofade: true;
+	expediteSubscriptions: true;
+	spacing: 4;
+	padding: 20;
+	align: top;
+	  
+	widget(container_x, {
+	  hidden: select($self.media.error, false, true);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	  });
+	  widget(label, {
+	    OSD();
+	    caption: $self.media.error;
+	  });
+	});
+
+	widget(container_x, {
+	  hidden: select($self.media.video.too_slow, false, true);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	  });
+	  widget(label, {
+	    OSD();
+	    caption: _("CPU is too slow to decode this video");
+	  });
+	});
+
+
+	cloner($self.media.notifications, container_x, {
+	  spacing: 10;
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Alert.svg";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	    shadow: true;
+	  });
+	  
+	  widget(label, {
+	    OSD();
+	    caption: $self.text;
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+	});
+
+	widget(container_x, {
+	  spacing: 10;
+	  hidden: !changed($self.media.audio.current, 5);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Sound.svg";
+	  });
+	  widget(deck, {
+	    effect: flipHorizontal;
+	    time: 0.1;
+	    cloner($self.media.metadata.audiostreams, label, {
+	      OSD();
+	      caption: join(" - ", $self.title, $self.language, $self.source, $self.longformat ?? $self.format);
+	    });
+	  });
+	});
+
+	widget(container_x, {
+	  spacing: 10;
+	  hidden: !changed($self.media.subtitle.current, 5);
+	  widget(icon, {
+	    source: "dataroot://resources/svg/Script.svg";
+	  });
+	  widget(deck, {
+	    effect: flipHorizontal;
+	    time: 0.1;
+	    cloner($self.media.metadata.subtitlestreams, label, {
+	      OSD();
+	      caption: join(" - ", $self.title, $self.language, $self.source, $self.format);
+	    });
+	  });
+	});
+      });
+    });
+  });
+
+  widget(container_y, {
+    alpha: $view.statsAlpha;
+    widget(container_x, {
+      space(1);
+      widget(backdrop, {
+	source: "skin://graphics/popupmenu.png";
+	margin: -30;
+	border: 56;
+	borderOnly: true;
+	padding: -56;
+	
+	widget(backdrop, {
+	  alphaSelf: 0.85;
+	  source: "skin://graphics/popupmenu2.png";
+	  border: 56;
+	  color: 0;
+
+	  widget(container_y, {
+	  
+	    widget(label, {
+	      TextStyleItem();
+	      caption: _("Playback status");
+	      align: center;
+	    });
+
+	    VerticalSeparator();
+	    
+	    widget(container_x, {
+
+	      spacing: 10;
+	      
+	      widget(container_y, {
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Source:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video codec:";
+		});
+	      
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video bitrate:";
+		});
+
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Audio codec:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video decode time:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "A/V diff:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  hidden: !$self.media.isRemote;
+		  align: right;
+		  caption: "Remote queue len:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  hidden: !$self.media.isRemote;
+		  align: right;
+		  caption: "Remote queue drops:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Packet buffer:";
+		});
+
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Video queue len:";
+		});
+		
+		widget(label, {
+		  InfoLabel();
+		  align: right;
+		  caption: "Audio queue len:";
+		});
+	      });
+	      
+
+	      widget(container_y, {
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.metadata.format;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.video.codec;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: fmt("%d kb/s", $self.media.video.bitrate);
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.audio.codec;
+		});
+	      
+		widget(label, {
+		  TextStyleItem();
+		  caption: fmt("%d ms", $self.media.video.decodetime_avg);
+		});
+	      
+		widget(label, {
+		  TextStyleItem();
+		  caption: translate($self.media.avdiffError,
+				     fmt("%d ms %s", $self.media.avdiff * 1000),
+				     1, "Huge diff",
+				     2, "Holdoff",
+				     3, "Epoch mismatch");
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  hidden: !$self.media.isRemote;
+		  caption: $self.media.remote.qlen;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  hidden: !$self.media.isRemote;
+		  caption: $self.media.remote.drops;
+		});
+		
+		widget(bar, {
+		  height: $ui.size;
+		  color1: 1;
+		  color2: 1;
+		  fill: $self.media.buffer.current / $self.media.buffer.limit;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.video.dqlen;
+		});
+		
+		widget(label, {
+		  TextStyleItem();
+		  caption: $self.media.audio.dqlen;
+		});
+	      });
+	    });
+	  });
+	});
+      });
+    });
+  });
+});

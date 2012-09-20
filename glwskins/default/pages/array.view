@@ -1,0 +1,57 @@
+#import "skin://common.view"
+
+widget(container_y, {
+
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+  PageTitle($page.model.metadata.title);
+
+//  VerticalSeparator();
+  widget(dummy, {
+    height: $ui.size;
+  });
+
+  widget(container_x, {
+    padding: [$ui.size + 8, 0, $ui.size, 0];
+    spacing: 4;
+    widget(array, {
+      id: "array";
+      &clone.focused = focusedChild();
+
+      scrollThreshold: 100;
+
+      alphaFallOff: 0.1;
+      blurFallOff: 0.1;
+      
+      Yspacing: $ui.size / 2;
+      Xspacing: $ui.size / 2;
+
+      childTilesX: 6;
+      
+      cloner($page.model.nodes, loader, {
+	time: 0.1;
+	effect: blend;
+	source: "squareitems/" + 
+	  translate($self.type, "default",
+		    "separator", "separator",
+		    "artistalbum", "artistalbum",
+		    "album", "album")
+	  + ".view";
+      });
+    });
+
+    widget(slider_y, {
+      bind("array");
+      width: 4;
+      focusable: canScroll();
+      navFocusable: true;
+      alpha: iir(canScroll(), 16);
+      
+      widget(quad, {
+	alpha: iir(0.3 + 0.3 * (isFocused() || isPressed()), 4) + isHovered();
+      });
+    });
+
+  });
+});

@@ -1,0 +1,174 @@
+setDefaultFont($global.fonts.main);
+$ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
+$ui.condensedfont = $global.fonts.condensed ?? 
+  "skin://fonts/OpenSans-CondBold.ttf";
+
+onEvent(logwindow, {
+  $ui.logwindow = !$ui.logwindow;
+});
+
+onEvent(back, {
+  $ui.logwindow = false;
+}, $ui.logwindow);
+
+
+onEvent(sysinfo, {
+  $ui.sysinfo = !$ui.sysinfo;
+});
+
+
+widget(container_z, {
+
+  widget(backdrop, {
+    source: $global.nav.currentpage.model.metadata.background ?? 
+	  $global.nav.currentpage.glw.background ??
+	  "graphics/background.jpg";
+    color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
+      ($global.nav.currentpage.model.metadata.backgroundAlpha ??
+       $global.nav.currentpage.glw.backgroundAlpha ??
+       1);
+  });
+
+  widget(container_y, {
+    space(1);
+    widget(throbber, {
+      alpha: iir($global.nav.currentpage.model.loading, 4);
+    });
+    space(1);
+  });
+
+  widget(loader, {
+    time: 0.3;
+    effect: blend;
+    source: select($ui.screensaverActive, "skin://screensaver.view", "");
+  });
+
+  widget(underscan, {
+    widget(container_z, {
+      widget(layer, {
+	alpha: iir(1 - $ui.screensaverActive, 8);
+
+	widget(playfield, {
+	  time: 0.1;
+	  effect: blend;
+	  noInitialTransform: true;
+    
+	  cloner($global.nav.pages, layer, {
+
+	    $clone.pageMenu = 0;
+	    // Page menu event routing
+	    onEvent(menu,   { $clone.pageMenu = !$clone.pageMenu; }, !$clone.itemMenu);
+	    onEvent(back,   { $clone.pageMenu = false; }, $clone.pageMenu);
+	    onEvent(cancel, { $clone.pageMenu = false; }, $clone.pageMenu);
+
+	    widget(loader, {
+	      time: 0.2;
+	      noInitialTransform: true;
+	      source: "pages/" + $page.model.type + ".view";
+	    });
+
+	    widget(loader, {
+	      hidden: !$clone.pageMenu;
+	      noInitialTransform: true;
+	      source: $clone.menu ?? "skin://cmdmenu/cmdmenu_dir.view";
+	    });
+	  });
+	});
+
+	cloner($global.popups, loader, {
+	  source: "popups/" + $self.type + ".view";
+	});
+
+        #import "log.view"
+      });
+
+      // Now playing info
+      widget(container_y, {
+	align: bottom;
+	widget(expander_y, {
+
+	  $ui.playdeckheight = getHeight();
+	  expansion: scurve($ui.showplaydeck && $global.media.current.type, 0.1);
+	  widget(loader, {
+	    time: 0;
+	    effect: blend;
+	    noInitialTransform: true;
+	    source: "skin://playdecks/" + $global.media.current.type + ".view";
+	  });
+	});
+      });
+    });
+  });
+
+
+  // Overlay that always should be visible even if screen saver is active
+
+  widget(container_y, {
+    autofade: true;
+    expediteSubscriptions: true;
+    padding: 30;
+    align: top;
+    cloner($global.notifications.nodes, container_x, {
+      space(1);
+      widget(backdrop, {
+	source: "skin://graphics/blackdrop16.png";
+	border: 7;
+	alphaSelf: 0.5;
+
+	widget(container_x, {
+	  spacing: 10;
+	  widget(icon, {
+	    sizeScale: 1.5;
+	    source: "dataroot://resources/svg/Alert.svg";
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+
+	  widget(label, {
+	    caption: $self.text;
+	    shadow: true;
+	    sizeScale: 1.5;
+	    color: translate($self.type, [1,1,1],
+			     "info", [0.5, 1, 0.5],
+			     "warning",  [1, 1, 0.5],
+			     "error", [1, 0.5, 0.5]);
+	  });
+	});
+      });
+    });
+  });
+
+
+  widget(container_x, {
+    space(1);
+    widget(container_y, {
+      filterConstraintX: true;
+      align: center;
+      widget(label, {
+	alpha: iir(changed($global.audio.mastervolume, 2, true), 7);
+	caption: fmt(_("Master volume: %d dB"), $global.audio.mastervolume);
+	align: center;
+	outline: true;
+	shadow: true;
+	sizeScale: 2;
+      });
+      
+
+      widget(label, {
+	alpha: iir($global.audio.mastermute, 7);
+	caption: _("Audio muted");
+	align: center;
+	outline: true;
+	shadow: true;
+	sizeScale: 2;
+      });
+    });
+    space(1);
+  });
+
+  widget(underscan, {
+#import "sysinfo.view"
+  });
+});

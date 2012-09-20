@@ -423,8 +423,8 @@ gl_tex_req_load(glw_root_t *gr, glw_loadable_texture_t *glt)
 {
   int q;
 
-  if(!strncmp(rstr_get(glt->glt_url), "theme://", 8)) {
-    q = LQ_THEME;
+  if(!strncmp(rstr_get(glt->glt_url), "skin://", 8)) {
+    q = LQ_SKIN;
   } else {
     q = LQ_TENTATIVE;
   }

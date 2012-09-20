@@ -120,7 +120,7 @@ fa_can_handle(const char *url, char *errbuf, size_t errsize)
   char *filename;
 
   // XXX: Not good, should send vpaths in here instead
-  if(!strncmp(url, "theme://", strlen("theme://")))
+  if(!strncmp(url, "skin://", strlen("skin://")))
     return 1;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)

@@ -292,12 +292,12 @@ glw_fini_settings(glw_root_t *gr)
 int
 glw_init(glw_root_t *gr, const char *instance)
 {
-  char themebuf[PATH_MAX];
-  const char *theme = gconf.theme;
-  if(theme == NULL) {
-    snprintf(themebuf, sizeof(themebuf),
-	     "%s/glwthemes/"SHOWTIME_GLW_DEFAULT_THEME, showtime_dataroot());
-    theme = themebuf;
+  char skinbuf[PATH_MAX];
+  const char *skin = gconf.skin;
+  if(skin == NULL) {
+    snprintf(skinbuf, sizeof(skinbuf),
+	     "%s/glwskins/"SHOWTIME_GLW_DEFAULT_SKIN, showtime_dataroot());
+    skin = skinbuf;
   }
   hts_mutex_init(&gr->gr_mutex);
   gr->gr_courier = prop_courier_create_passive();
@@ -305,10 +305,10 @@ glw_init(glw_root_t *gr, const char *instance)
   gr->gr_clone_pool = pool_create("glwclone", sizeof(glw_clone_t),
 				  POOL_ZERO_MEM);
 
-  gr->gr_theme = strdup(theme);
+  gr->gr_skin = strdup(skin);
 
-  gr->gr_vpaths[0] = "theme";
-  gr->gr_vpaths[1] = gr->gr_theme;
+  gr->gr_vpaths[0] = "skin";
+  gr->gr_vpaths[1] = gr->gr_skin;
   gr->gr_vpaths[2] = NULL;
 
   gr->gr_font_domain = freetype_get_context();
@@ -335,7 +335,7 @@ glw_fini(glw_root_t *gr)
   glw_text_bitmap_fini(gr);
   free(gr->gr_default_font);
   glw_tex_fini(gr);
-  free(gr->gr_theme);
+  free(gr->gr_skin);
   glw_fini_settings(gr);
   pool_destroy(gr->gr_token_pool);
   pool_destroy(gr->gr_clone_pool);
@@ -367,7 +367,7 @@ glw_load_universe(glw_root_t *gr)
   prop_t *page = prop_create(gr->gr_prop, "root");
   glw_unload_universe(gr);
 
-  rstr_t *universe = rstr_alloc("theme://universe.view");
+  rstr_t *universe = rstr_alloc("skin://universe.view");
 
   gr->gr_universe = glw_view_create(gr,
 				    universe, NULL, page,
