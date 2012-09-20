@@ -147,6 +147,13 @@ do_open_shell(void *opaque, prop_event_t event, ...)
   showtime_shutdown(SHOWTIME_EXIT_SHELL);
 }
 
+
+static void
+do_exit(void *opaque, prop_event_t event, ...)
+{
+  showtime_shutdown(0);
+}
+
 /**
  *
  */
@@ -155,21 +162,25 @@ runcontrol_init(void)
 {
   prop_t *rc;
   
-  if(!(gconf.can_standby ||
-       gconf.can_poweroff ||
-       gconf.can_logout ||
-       gconf.can_open_shell))
-    return;
-
-  settings_create_separator(settings_general, 
-			  _p("Starting and stopping Showtime"));
-
   rc = prop_create(prop_get_global(), "runcontrol");
 
   prop_set_int(prop_create(rc, "canStandby"),   !!gconf.can_standby);
   prop_set_int(prop_create(rc, "canPowerOff"),  !!gconf.can_poweroff);
   prop_set_int(prop_create(rc, "canLogout"),    !!gconf.can_logout);
   prop_set_int(prop_create(rc, "canOpenShell"), !!gconf.can_open_shell);
+  prop_set_int(prop_create(rc, "canRestart"),   !!gconf.can_restart);
+  prop_set_int(prop_create(rc, "canExit"),       !gconf.can_not_exit);
+
+  if(!(gconf.can_standby ||
+       gconf.can_poweroff ||
+       gconf.can_logout ||
+       gconf.can_open_shell ||
+       gconf.can_restart ||
+       !gconf.can_not_exit))
+    return;
+
+  settings_create_separator(settings_general, 
+			  _p("Starting and stopping Showtime"));
 
   if(gconf.can_standby)
     init_autostandby();
@@ -185,4 +196,8 @@ runcontrol_init(void)
   if(gconf.can_open_shell)
     settings_create_action(settings_general, _p("Open shell"),
 			   do_open_shell, NULL, 0, NULL);
+
+  if(!gconf.can_not_exit)
+    settings_create_action(settings_general, _p("Exit Showtime"),
+			   do_exit, NULL, 0, NULL);
 }

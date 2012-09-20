@@ -149,8 +149,11 @@ set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
   else
     str = NULL;
 
+  str = str ? fa_absolute_path(str, t->file) : NULL;
+
   if(ec->w->glw_class->gc_set_font != NULL)
     ec->w->glw_class->gc_set_font(ec->w, str);
+  rstr_release(str);
   return 0;
 }
 

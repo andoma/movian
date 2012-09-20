@@ -397,6 +397,14 @@ parse_opts(int argc, char **argv)
       gconf.can_open_shell = 1;
       argc -= 1; argv += 1;
       continue;
+    } else if(!strcmp(argv[0], "--without-exit")) {
+      gconf.can_not_exit = 1;
+      argc -= 1; argv += 1;
+      continue;
+    } else if(!strcmp(argv[0], "--with-restart")) {
+      gconf.can_restart = 1;
+      argc -= 1; argv += 1;
+      continue;
     } else if(!strcmp(argv[0], "-p") && argc > 1) {
       gconf.devplugin = argv[1];
       argc -= 2; argv += 2;
