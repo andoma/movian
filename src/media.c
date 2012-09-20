@@ -676,7 +676,8 @@ static void
 mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 {
   event_select_track_t *est = (event_select_track_t *)e;
-  event_int_t *ei;
+  event_int3_t *ei3;
+  int64_t d;
 
   switch(e->e_type_x) {
   case EVENT_SELECT_AUDIO_TRACK:
@@ -689,9 +690,21 @@ mp_enqueue_event_locked(media_pipe_t *mp, event_t *e)
 
     //    mp->mp_subtitle_track_mgr.mtm_user_set |= est->manual;
     break;
-  case EVENT_DELTA_SEEK:
-    ei = (event_int_t *)e;
-    mp_direct_seek(mp, mp->mp_seek_base += ei->val);
+  case EVENT_DELTA_SEEK_REL:
+    // We want to seek thru the entire feature in 3 seconds
+
+#define TOTAL_SEEK_TIME_IN_SECONDS 2
+
+    ei3 = (event_int3_t *)e;
+
+    int pre  = ei3->val1;
+    int sign = ei3->val2;
+    int rate = ei3->val3;
+
+    d = pre * pre * mp->mp_duration /
+      (rate*TOTAL_SEEK_TIME_IN_SECONDS*255*255);
+
+    mp_direct_seek(mp, mp->mp_seek_base += d*sign);
     return;
   default:
     break;
@@ -1691,7 +1704,7 @@ mp_set_url(media_pipe_t *mp, const char *url)
  *
  */
 void
-mp_configure(media_pipe_t *mp, int caps, int buffer_size)
+mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
 {
   mp->mp_max_realtime_delay = 0;
 
@@ -1713,6 +1726,7 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size)
     break;
   }
 
+  mp->mp_duration = duration;
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
 }
 

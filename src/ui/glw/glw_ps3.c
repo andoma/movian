@@ -628,12 +628,10 @@ clear_btns(void)
 static void
 handle_seek(glw_ps3_t *gp, int pad, int sign, int pressed, int pre)
 {
-  if(pressed) {
-    int64_t x = pre;
-    event_t *e = event_create_int(EVENT_DELTA_SEEK,
-				  sign * x * x * x * x / 100LL);
+  if(pressed && pre > 10) {
+    event_t *e = event_create_int3(EVENT_DELTA_SEEK_REL, pre, sign, 
+				   gp->gr.gr_framerate);
     event_dispatch(e);
-
   }
 }
 

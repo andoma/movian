@@ -134,7 +134,7 @@ typedef enum {
   EVENT_PLAYQUEUE_JUMP_AND_PAUSE,
   EVENT_TV,            /* TV specific events, see tv.h */
   EVENT_SEEK,
-  EVENT_DELTA_SEEK,
+  EVENT_DELTA_SEEK_REL,
   EVENT_EOF,           /* End of file */
   EVENT_PLAY_URL,
   EVENT_EXIT,
@@ -198,6 +198,16 @@ typedef struct event_int {
   int val;
 } event_int_t;
 
+
+/**
+ *
+ */
+typedef struct event_int3 {
+  event_t h;
+  int val1;
+  int val2;
+  int val3;
+} event_int3_t;
 
 
 /**
@@ -281,6 +291,8 @@ event_t *event_create_action_str(const char *str);
 #define event_create_type(type) event_create(type, sizeof(event_t))
 
 void *event_create_int(event_type_t type, int val);
+
+void *event_create_int3(event_type_t type, int val1, int val2, int val3);
 
 void event_release(event_t *e);
 
