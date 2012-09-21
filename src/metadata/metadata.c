@@ -1434,9 +1434,8 @@ mlp_sub_custom_title(void *opaque, prop_event_t event, ...)
 
     rstr_t *custom_title = r;
 
-    const char *s = rstr_get(mlp->mlp_custom_title);
-    kv_url_opt_set(rstr_get(mlp->mlp_url), KVSTORE_DOMAIN_SYS,
-		   "metacustomtitle", KVSTORE_SET_STRING, s);
+    metadb_item_set_user_title(rstr_get(mlp->mlp_url),
+			       rstr_get(mlp->mlp_custom_title));
 
     if(custom_title && !*rstr_get(custom_title)) {
       mlp_refresh_video_info(mlp);
@@ -1662,8 +1661,7 @@ metadata_bind_movie_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   prop_link(_p("Custom title"), prop_create(m, "title"));
   v = prop_create(mlp->mlp_sq, "value");
 
-  cur = kv_url_opt_get_rstr(rstr_get(url), KVSTORE_DOMAIN_SYS, 
-			    "metacustomtitle");
+  cur = metadb_item_get_user_title(rstr_get(url));
 
   if(cur != NULL) {
     prop_set_rstring(v, cur);

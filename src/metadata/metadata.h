@@ -257,6 +257,10 @@ int metadb_item_set_preferred_ds(void *opaque, const char *url, int ds_id);
 
 int metadb_item_get_preferred_ds(const char *url);
 
+rstr_t *metadb_item_get_user_title(const char *url);
+
+void metadb_item_set_user_title(const char *url, const char *title);
+
 #define METADB_AUDIO_PLAY_THRESHOLD (10 * 1000000)
 
 void metadb_bind_url_to_prop(void *db, const char *url, struct prop *parent);

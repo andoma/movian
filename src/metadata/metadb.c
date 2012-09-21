@@ -1712,6 +1712,83 @@ metadb_item_get_preferred_ds(const char *url)
 }
 
 
+/**
+ *
+ */
+rstr_t *
+metadb_item_get_user_title(const char *url)
+{
+  void *db;
+  int rc;
+  sqlite3_stmt *stmt;
+  rstr_t *ret = NULL;
+
+  if((db = metadb_get()) == NULL)
+    return NULL;
+
+  rc = db_prepare(db, 
+		  "SELECT usertitle "
+		  "FROM item "
+		  "WHERE url=?1"
+		  , -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    metadb_close(db);
+    return NULL;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+
+  rc = db_step(stmt);
+  if(rc == SQLITE_ROW)
+    ret = db_rstr(stmt, 0);
+
+  sqlite3_finalize(stmt);
+  metadb_close(db);
+  return ret;
+}
+
+
+
+/**
+ *
+ */
+void
+metadb_item_set_user_title(const char *url, const char *str)
+{
+  void *db;
+  int rc;
+  sqlite3_stmt *stmt;
+
+  if((db = metadb_get()) == NULL)
+    return;
+
+  rc = db_prepare(db, 
+		  "UPDATE item "
+		  "SET usertitle=?2 "
+		  "WHERE url=?1"
+		  , -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    metadb_close(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  if(str && !*str)
+    str = NULL;
+  sqlite3_bind_text(stmt, 2, str, -1, SQLITE_STATIC);
+
+  db_step(stmt);
+  sqlite3_finalize(stmt);
+  metadb_close(db);
+}
+
+
 
 /**
  *
