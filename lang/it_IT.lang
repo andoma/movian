@@ -2,7 +2,7 @@ language: Italian
 native: Italiano
 maintainer: Red Squirrel <iam@redsquirrel.tk>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: Aggiungi la pagina attuale ai preferiti
@@ -14,8 +14,11 @@ id: Remove current page from bookmarks
 msg: Rimuovi la pagina attuale dai preferiti
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+msg: Esci da Showtime
+
 id: Go to Home screen
 msg: Vai alla Home
 
@@ -23,16 +26,25 @@ id: Navigation
 msg: Navigazione
 
 id: Open Settings
-msg: Impostazioni d'apertura
+msg: Apri Impostazioni
 
 id: Playqueue
 msg: Coda di riproduzione
 
+id: Power off
+msg: Spegni
+
 id: Reload current page
 msg: Ricarica pagina attuale
 
+id: Suspend
+msg: Sospendi
+
+id: System
+msg: Sistema
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: Aggiungi '%s' alla Home
@@ -41,7 +53,7 @@ id: Remove '%s' from home screen
 msg: Rimuovi  '%s' dalla Home
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: Continua da %s
@@ -74,7 +86,7 @@ id: Unstar
 msg: Non segnare
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: Audio
@@ -110,13 +122,13 @@ id: Video settings
 msg: Impostazioni video
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: Log di sistema
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Allocati dall'applicazione: %d kB
@@ -170,10 +182,13 @@ id: Windowmanager: %s
 msg: Gestore finestre: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: Album
+
+id: Artist
+msg: Artista
 
 id: Custom
 msg: Personalizzate
@@ -187,32 +202,38 @@ msg: Lista
 id: Slideshow
 msg: Slideshow
 
+id: Tvchannels
+msg: Canali TV
+
 id: View
 msg: Visualizza
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: Risorse trovate nella rete locale
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Tiled
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: Riguardo Showtime
+
+id: Dismiss
+msg: Rimuovi
 
 id: Plugins
 msg: Plugins
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-msg: Rimuovi
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 msg: Camera:
@@ -221,7 +242,7 @@ id: Date:
 msg: Data:
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 msg: Autore:
@@ -236,7 +257,7 @@ id: Showtime %s or newer is required
 msg: Richiesto Showtime %s o maggiore
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
 id: Director:
 msg: Regista:
@@ -263,13 +284,13 @@ id: Year:
 msg: Anno:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: Aggiungi nuovo valore
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: No
@@ -278,7 +299,19 @@ id: Yes
 msg: Si
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Condensed
+
+id: Main
+msg: Principale
+
+id: Subs
+msg: Sottotitoli
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: Installa
@@ -290,19 +323,19 @@ id: Upgrade
 msg: Aggiorna
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Impossibile aprire la risorsa
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Traccia %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: Errore durante il download
@@ -356,7 +389,7 @@ id: Unable to query for new version
 msg: Impossibile cercare nuove versioni
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU troppo lenta per poter decodificare questo video
@@ -365,7 +398,7 @@ id: Playback status
 msg: Stato di riproduzione
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: Capitolo: %d
@@ -374,7 +407,7 @@ id: Title: %d
 msg: Titolo: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Dominio
@@ -389,7 +422,7 @@ id: Username
 msg: Nome Utente
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Annulla
@@ -398,19 +431,19 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Nessun media caricato
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: Utilizzo memoria:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Audio silenziato
@@ -428,7 +461,16 @@ id: Use opensubtitles.org
 msg: Utilizza opensubtitles.org
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Linguaggio (codice ISO 639-1)
+
+id: Use original title
+msg: Usa titolo originale
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Memoria in esaurimento (%d kB di RAM disponibile)
@@ -505,11 +547,17 @@ msg: Risultati della ricerca per: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+msg: Album
+
 id: Automatic login when Showtime starts
 msg: Login automatico all'avvio di Showtime
 
 id: Collaborative
 msg: Collaborativo
+
+id: Compilations
+msg: Compilation
 
 id: Enable Spotify
 msg: Attiva Spotify
@@ -546,6 +594,9 @@ msg: Ripeti login (cambia utente)
 
 id: Search result
 msg: Risultati della ricerca
+
+id: Singles
+msg: Singoli
 
 id: Spotify friends
 msg: Amici su Spotify
@@ -727,6 +778,9 @@ msg: Automatico
 id: Custom search query
 msg: Ricerca personalizzata
 
+id: Custom title
+msg: Titolo personalizzato
+
 id: Embedded in file
 msg: Incorporato nel file
 
@@ -760,11 +814,11 @@ msg: Nessun dato trovato
 id: None
 msg: Nessuno
 
-id: Providers for Movies
-msg: Provider per Film
-
 id: Providers for Music
 msg: Provider per Musica
+
+id: Providers for Video
+msg: Provider per Video
 
 id: Refresh metadata
 msg: Aggiorna metadata
@@ -781,8 +835,23 @@ msg: Richiesta personalizzata
 id: filename
 msg: nome file
 
+id: filename as TV episode
+msg: nome file come episodio TV
+
 id: folder name
 msg: nome cartella
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d oggetti eliminati
+
+id: Clear all metadata
+msg: Pulisci tutti i metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Pulire tutti i metadata significa perdere <b>tutte</b> le informazioni riguardo:\n\nSe una traccia/film e' stata visionata\nIl numero di volte che una traccia/film e' stata riprodotta\nLa posizione di ripresa della riproduzione\n\nVerranno cancellati anche i metadata nella cache di sorgenti esterne come themoviedb.org, ecc...\n\nSei sicuro di voler procedere?
 
 #
 # ./src/navigator.c
@@ -835,6 +904,9 @@ msg: Plugin disponibili
 id: Browse available plugins
 msg: Sfoglia i plugin disponibili
 
+id: Cloud services
+msg: Servizi Cloud
+
 id: Corrupt plugin bundle
 msg: Bundle di plugin corrotto
 
@@ -853,8 +925,8 @@ msg: Plugin installati
 id: Installing
 msg: Installazione
 
-id: Invalud URI
-msg: URI non valido
+id: Music streaming
+msg: Streaming di musica
 
 id: Not installable
 msg: Non installabile
@@ -865,11 +937,17 @@ msg: Non installato
 id: Not upgradable
 msg: Non aggiornabile
 
+id: Online TV
+msg: TV online
+
 id: Unable to load plugin.json: %s
 msg: Impossibile caricare plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: Impossibile caricare plugin.json: JSON non valido
+
+id: Uncategorized
+msg: Senza categoria
 
 id: Up to date
 msg: Aggiornato
@@ -879,6 +957,12 @@ msg: Aggiornabile
 
 id: Upgraded plugin %s to version %s
 msg: Aggiornato plugin %s alla versione %s
+
+id: User interface extensions
+msg: Estensioni per l'interfaccia utente
+
+id: Video streaming
+msg: Streaming video
 
 #
 # ./src/runcontrol.c
@@ -933,6 +1017,27 @@ msg: Impostazioni utili per sviluppatori
 
 id: System related settings
 msg: Impostazioni relative al sistema
+
+#
+# ./src/text/fontstash.c
+#
+id: Narrow text
+msg: Narrow text
+
+id: Unable to load %s -- %s
+msg: Impossibile caricare %s -- %s
+
+id: Unable to open %s for writing
+msg: Impossibile aprire %s per la scrittura
+
+id: Unable to write to %s
+msg: Impossibile scrivere su %s
+
+id: Use font %s for
+msg: Usa il font %s per
+
+id: User interface
+msg: Interfaccia utente
 
 #
 # ./src/ui/glw/glw.c
