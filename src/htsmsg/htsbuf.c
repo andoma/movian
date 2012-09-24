@@ -226,7 +226,7 @@ htsbuf_drop(htsbuf_queue_t *hq, size_t len)
 void
 htsbuf_vqprintf(htsbuf_queue_t *hq, const char *fmt, va_list ap)
 {
-  char buf[1000];
+  char buf[10000];
   htsbuf_append(hq, buf, vsnprintf(buf, sizeof(buf), fmt, ap));
 }
 

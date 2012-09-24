@@ -210,7 +210,8 @@ widget(array, {
 		       "network",  "Home",
 		       "setting",  "Settings",
 		       "plugin",   "Plugin",
-		       "photos",   "Pictures") + ".svg",
+		       "photos",   "Pictures",
+                       "about",    "Info") + ".svg",
 	     navOpen($self.url), $self.badge);
   });
 });
