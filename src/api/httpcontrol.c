@@ -334,7 +334,7 @@ hc_diagnostics(http_connection_t *hc, const char *remain, void *opaque,
 
 
     htsbuf_qprintf(&out,
-		   "<a href=\"/showtime/logfile/%d\">showtime.log.%d</a> Last modified %s ago<br>", i, i, timestr);
+		   "showtime.log.%d (Last modified %s ago): <a href=\"/showtime/logfile/%d\">View</a> | <a href=\"/showtime/logfile/%d?mode=download\">Download</a><br>", i, timestr, i, i);
   }
   htsbuf_qprintf(&out, 
 		 "</body></html>");
@@ -357,6 +357,7 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
     return 400;
   const int n = atoi(remain);
   size_t size;
+  const char *mode = http_arg_get_req(hc, "mode");
 
   char p1[500];
   snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path, n);
@@ -365,9 +366,11 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
   if(buf == NULL)
     return 404;
   htsbuf_append_prealloc(&out, buf, size);
-  snprintf(p1, sizeof(p1), "attachment; filename=\"showtime.log.%d\"", n);
-  http_set_response_hdr(hc, "Content-Disposition", p1);
-  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+  if (mode != NULL && !strcmp(mode, "download")) {
+    snprintf(p1, sizeof(p1), "attachment; filename=\"showtime.log.%d\"", n);
+    http_set_response_hdr(hc, "Content-Disposition", p1);
+  }
+  return http_send_reply(hc, 0, "text/plain", NULL, NULL, 0, &out);
 }
 
 
