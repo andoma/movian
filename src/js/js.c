@@ -95,11 +95,12 @@ static JSBool
 js_trace(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
   const char *str;
+  const char *id = "JS";
 
-  if (!JS_ConvertArguments(cx, argc, argv, "s", &str))
+  if (!JS_ConvertArguments(cx, argc, argv, "s/s", &str, &id))
     return JS_FALSE;
 
-  TRACE(TRACE_DEBUG, "JS", "%s", str);
+  TRACE(TRACE_DEBUG, id, "%s", str);
   *rval = JSVAL_VOID;  /* return undefined */
   return JS_TRUE;
 }
