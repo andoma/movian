@@ -1114,7 +1114,14 @@ text_render0(const uint32_t *uc, const int len,
   siz_x = 0;
   int wrap_margin = 0;
 
-  TAILQ_FOREACH(li, &lq, link) {
+  line_t *next;
+  for(li = TAILQ_FIRST(&lq); li != NULL ; li = next) {
+    next = TAILQ_NEXT(li, link);
+
+    if(lines == max_lines) {
+      TAILQ_REMOVE(&lq, li, link);
+      continue;
+    }
 
     int w = li->xoffset;
 
@@ -1157,7 +1164,7 @@ text_render0(const uint32_t *uc, const int len,
 	  lix->xoffset = wrap_margin;
 	  lix->alignment = global_alignment;
 	  TAILQ_INSERT_AFTER(&lq, li, lix, link);
-
+	  next= lix;
 	  pmflags |= PIXMAP_TEXT_WRAPPED;
 	  k--;
 	  w2 -= items[li->start + k].adv_x + 
@@ -1216,6 +1223,10 @@ text_render0(const uint32_t *uc, const int len,
     return NULL;
   }
 
+  if(max_width && siz_x > max_width) {
+    siz_x = max_width;
+  }
+  
   int target_width  = siz_x / 64;
   int target_height = 0;
   int margin = 128;
