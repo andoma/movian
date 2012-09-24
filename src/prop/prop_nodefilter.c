@@ -32,7 +32,7 @@
 #include "misc/pixmap.h"
 #include "misc/string.h"
 
-#define MAX_SORT_KEYS 3
+#define MAX_SORT_KEYS 4
 
 TAILQ_HEAD(nfnode_queue, nfnode);
 LIST_HEAD(nfn_pred_list, nfn_pred);
@@ -74,7 +74,7 @@ typedef struct nfnode {
   struct nfn_pred_list preds;
 
   struct prop_nf *nf;
-  int pos;
+  int16_t pos;
   char inserted:1;
   char frozen:1;
   char sortkey_type[MAX_SORT_KEYS];
@@ -659,6 +659,8 @@ nf_set_sortkey_0(void *opaque, prop_event_t event, ...)
   nf_set_sortkey_x(0, opaque, event, ap);
   va_end(ap);
 }
+
+
 /**
  *
  */
@@ -671,6 +673,8 @@ nf_set_sortkey_1(void *opaque, prop_event_t event, ...)
   nf_set_sortkey_x(1, opaque, event, ap);
   va_end(ap);
 }
+
+
 /**
  *
  */
@@ -681,6 +685,20 @@ nf_set_sortkey_2(void *opaque, prop_event_t event, ...)
 
   va_start(ap, event);
   nf_set_sortkey_x(2, opaque, event, ap);
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void
+nf_set_sortkey_3(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+
+  va_start(ap, event);
+  nf_set_sortkey_x(3, opaque, event, ap);
   va_end(ap);
 }
 
@@ -711,7 +729,8 @@ nf_update_order_x(prop_nf_t *nf, nfnode_t *nfn, int x)
 		     PROP_TAG_CALLBACK, 
 		     x == 0 ? nf_set_sortkey_0 :
 		     x == 1 ? nf_set_sortkey_1 :
-		     nf_set_sortkey_2, nfn,
+		     x == 2 ? nf_set_sortkey_2 :
+		     nf_set_sortkey_3, nfn,
 		     PROP_TAG_NAMED_ROOT, nfn->in, "node",
 		     PROP_TAG_NAMESTR, nf->sortkey[x],
 		     NULL);
