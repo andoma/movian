@@ -891,6 +891,7 @@ spotify_play_track_try(void)
 
   mp_become_primary(spotify_mp);
   spotify_mp->mp_audio.mq_stream = 0; // Must be set to somthing != -1
+  spotify_mp->mp_duration = f_sp_track_duration(su->su_track) * 1000LL;
   play_position = 0;
 
   f_sp_session_player_play(spotify_session, 1);
@@ -4203,7 +4204,7 @@ be_spotify_play(const char *url, media_pipe_t *mp,
   hts_mutex_unlock(&spotify_mutex);
 
   mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
-	       MP_BUFFER_NONE);
+	       MP_BUFFER_NONE, 0);
 
   mp_set_playstatus_by_hold(mp, hold, NULL);
 

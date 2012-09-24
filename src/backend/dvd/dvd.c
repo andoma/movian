@@ -727,9 +727,9 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
   mp_become_primary(mp);
 
   mp_configure(mp, MP_PLAY_CAPS_PAUSE | MP_PLAY_CAPS_EJECT,
-	       MP_BUFFER_SHALLOW); /* Might wanna use deep buffering
-				      but it requires some modification
-				      to buffer draining code */
+	       MP_BUFFER_SHALLOW, 0); /* Might wanna use deep buffering
+					 but it requires some modification
+					 to buffer draining code */
 
   mp_set_playstatus_by_hold(mp, dp->dp_hold, NULL);
 

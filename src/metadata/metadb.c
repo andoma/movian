@@ -16,6 +16,8 @@
 #include "db/db_support.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
+#include "settings.h"
+#include "notifications.h"
 
 #define METADATA_VERSION_STR "1"
 
@@ -34,6 +36,53 @@ rc2metadatacode(int rc)
     return 0;
   return METADATA_PERMANENT_ERROR;
 }
+
+
+
+static void
+items_clear(void *opaque, prop_event_t event, ...)
+{
+  rstr_t *r = _("Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?");
+
+  int x = message_popup(rstr_get(r), MESSAGE_POPUP_RICH_TEXT |
+			MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
+
+  rstr_release(r);
+
+  if(x != MESSAGE_POPUP_OK)
+    return;
+
+  void *db = metadb_get();
+ again:
+  if(db_begin(db)) {
+    metadb_close(db);
+    return;
+  }
+
+  int rc;
+  sqlite3_stmt *stmt;
+  rc = db_prepare(db, 
+		  "DELETE FROM item",
+		  -1, &stmt, NULL);
+
+  if(rc == SQLITE_OK) {
+    rc = db_step(stmt);
+    sqlite3_finalize(stmt);
+  }
+
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  int deleted = sqlite3_changes(db);
+
+  db_commit(db);
+  metadb_close(db);
+
+  notify_add(NULL, NOTIFY_INFO, NULL, 3, _("%d items deleted"), deleted);
+}
+
 
 /**
  *
@@ -65,6 +114,10 @@ metadb_init(void)
 
   if(r)
     metadb_pool = NULL; // Disable
+  else
+    settings_create_action(settings_general, _p("Clear all metadata"),
+			   items_clear, NULL, 0, NULL);
+
 }
 
 
@@ -1656,6 +1709,83 @@ metadb_item_get_preferred_ds(const char *url)
   sqlite3_finalize(stmt);
   metadb_close(db);
   return id;
+}
+
+
+/**
+ *
+ */
+rstr_t *
+metadb_item_get_user_title(const char *url)
+{
+  void *db;
+  int rc;
+  sqlite3_stmt *stmt;
+  rstr_t *ret = NULL;
+
+  if((db = metadb_get()) == NULL)
+    return NULL;
+
+  rc = db_prepare(db, 
+		  "SELECT usertitle "
+		  "FROM item "
+		  "WHERE url=?1"
+		  , -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    metadb_close(db);
+    return NULL;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+
+  rc = db_step(stmt);
+  if(rc == SQLITE_ROW)
+    ret = db_rstr(stmt, 0);
+
+  sqlite3_finalize(stmt);
+  metadb_close(db);
+  return ret;
+}
+
+
+
+/**
+ *
+ */
+void
+metadb_item_set_user_title(const char *url, const char *str)
+{
+  void *db;
+  int rc;
+  sqlite3_stmt *stmt;
+
+  if((db = metadb_get()) == NULL)
+    return;
+
+  rc = db_prepare(db, 
+		  "UPDATE item "
+		  "SET usertitle=?2 "
+		  "WHERE url=?1"
+		  , -1, &stmt, NULL);
+
+  if(rc != SQLITE_OK) {
+    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	  __FUNCTION__, __LINE__);
+    metadb_close(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  if(str && !*str)
+    str = NULL;
+  sqlite3_bind_text(stmt, 2, str, -1, SQLITE_STATIC);
+
+  db_step(stmt);
+  sqlite3_finalize(stmt);
+  metadb_close(db);
 }
 
 

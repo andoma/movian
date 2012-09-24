@@ -103,9 +103,11 @@ handle_metadata0(rtmp_t *r, AMFObject *obj,
      prop.p_type == AMF_NUMBER && prop.p_vu.p_number > 0) {
     prop_set_float(prop_create(m, "duration"), prop.p_vu.p_number);
     r->total_duration = prop.p_vu.p_number * 1000;
+    mp->mp_duration = r->total_duration;
     r->can_seek = 1;
   } else {
     r->can_seek = 0;
+    mp->mp_duration = 0;
     r->total_duration = 0;
   }
   prop_set_int(mp->mp_prop_canSeek, r->can_seek);
@@ -727,7 +729,7 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     r.seekpos_video = AV_NOPTS_VALUE;
   }
 
-  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP);
+  mp_configure(mp, MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0);
   mp->mp_max_realtime_delay = (r.r->Link.timeout - 1) * 1000000;
 
   mp_become_primary(mp);

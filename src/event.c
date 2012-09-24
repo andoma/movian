@@ -68,6 +68,20 @@ event_create_int(event_type_t type, int sym)
 /**
  *
  */
+void *
+event_create_int3(event_type_t type, int v1, int v2, int v3)
+{
+  event_int3_t *e = event_create(type, sizeof(event_int3_t));
+  e->val1 = v1;
+  e->val2 = v2;
+  e->val3 = v3;
+  return e;
+}
+
+
+/**
+ *
+ */
 void
 event_addref(event_t *e)
 {
@@ -519,7 +533,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PREV_CHANNEL) ||
 	    event_is_action(e, ACTION_CYCLE_AUDIO) ||
 	    event_is_action(e, ACTION_CYCLE_SUBTITLE) ||
-	    event_is_type(e, EVENT_DELTA_SEEK) || 
+	    event_is_type(e, EVENT_DELTA_SEEK_REL) || 
 	    event_is_type(e, EVENT_SELECT_AUDIO_TRACK) || 
 	    event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)
 	    ) {

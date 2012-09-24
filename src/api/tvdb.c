@@ -76,6 +76,9 @@ static const metadata_source_funcs_t fns = {
 void
 tvdb_init(void)
 {
+  if(1)
+    return;
+
   tvdb = metadata_add_source("tvdb", "thetvdb.com", 100000,
 			     METADATA_TYPE_VIDEO, &fns);
 }
