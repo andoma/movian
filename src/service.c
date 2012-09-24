@@ -110,10 +110,6 @@ service_init(void)
 		  NULL, _p("Settings"), "settings:",
 		  "setting", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
-  service_create0("showtime:about",
-		  NULL, _p("About Showtime"), "page:about",
-		  "about", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
-
 
   // $global.service.enabled
 
