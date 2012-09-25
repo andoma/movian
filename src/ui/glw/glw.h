@@ -106,6 +106,7 @@ typedef enum {
   GLW_ATTRIB_ANGLE,
   GLW_ATTRIB_MODE,
   GLW_ATTRIB_TIME,
+  GLW_ATTRIB_TRANSITION_TIME,
   GLW_ATTRIB_INT_STEP,
   GLW_ATTRIB_INT_MIN,
   GLW_ATTRIB_INT_MAX,
@@ -1191,6 +1192,7 @@ do {						\
     break;					\
   case GLW_ATTRIB_ANGLE:			\
   case GLW_ATTRIB_TIME:                         \
+  case GLW_ATTRIB_TRANSITION_TIME:              \
   case GLW_ATTRIB_EXPANSION:                    \
   case GLW_ATTRIB_VALUE:                        \
   case GLW_ATTRIB_INT_STEP:                     \

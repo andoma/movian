@@ -28,6 +28,8 @@ typedef struct glw_slideshow {
   int timer;
 
   float time;
+  float transition_time;
+
   int displaytime;
 
   prop_t *playstatus;
@@ -85,8 +87,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
   glw_t *c, *p, *n;
   float delta;
 
-  delta = 0.1f;
-
+  delta = s->w.glw_root->gr_frameduration / (1000000.0 * s->transition_time);
   if(s->time == 0) {
     s->displaytime = INT32_MAX;
   } else {
@@ -230,6 +231,7 @@ glw_slideshow_ctor(glw_t *w)
 {
   glw_slideshow_t *s = (glw_slideshow_t *)w;
   s->time = 5.0;
+  s->transition_time = 0.5;
 }
 
 
@@ -249,6 +251,10 @@ glw_slideshow_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_TIME:
       s->time = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_TRANSITION_TIME:
+      s->transition_time = va_arg(ap, double);
       break;
 
     case GLW_ATTRIB_PROPROOTS3:
