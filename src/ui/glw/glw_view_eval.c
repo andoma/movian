@@ -4798,6 +4798,29 @@ glwf_monotime(glw_view_eval_context_t *ec, struct token *self,
 }
 
 
+
+/**
+ * 
+ */
+static int 
+glwf_rand(glw_view_eval_context_t *ec, struct token *self,
+	  token_t **argv, unsigned int argc)
+{
+  token_t *r;
+  glw_root_t *gr = ec->w->glw_root;
+
+  if(self->t_extra_int == 0) {
+    gr->gr_random = (showtime_get_ts() ^ gr->gr_random) * 1664525 + 1013904223;
+    self->t_extra_int = 0x10000 | (gr->gr_random & 0xffff);
+  }
+
+  r = eval_alloc(self, ec, TOKEN_FLOAT);
+  r->t_float = (self->t_extra_int & 0xffff) / 65535.0;
+  eval_push(ec, r);
+  return 0;
+}
+
+
 typedef struct glwf_delay_extra {
 
   float oldval;
@@ -5890,6 +5913,7 @@ static const token_func_t funcvec[] = {
   {"canSelectNext", 0, glwf_canSelectNext},
   {"canSelectPrevious", 0, glwf_canSelectPrev},
   {"setDefaultFont", 1, glwf_setDefaultFont},
+  {"rand", 0, glwf_rand},
 };
 
 

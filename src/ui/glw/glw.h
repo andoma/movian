@@ -832,6 +832,8 @@ typedef struct glw_root {
 		      const char *title, const char *str, struct glw *w,
 		      int password);
 
+  int gr_random;
+
 } glw_root_t;
 
 
