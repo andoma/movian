@@ -364,6 +364,34 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 	gi->gi_automargin_bottom = vspill / 2;
       }
 
+    } else if(c != NULL && c->glw_flags & GLW_CONSTRAINT_W &&
+	      c->glw_req_weight < 0) {
+      float aspect = -c->glw_req_weight;
+
+      float cw = rc->rc_width - gi->gi_box_left - gi->gi_box_right;
+      float ch = rc->rc_height - gi->gi_box_top - gi->gi_box_bottom;
+
+      float myaspect = cw / ch;
+
+      if(myaspect > aspect) {
+	// We are wider than our child wants
+	
+	int cwidth = ch * aspect;
+	int hspill = cw - cwidth;
+      
+	if(hspill > 0) {
+	  gi->gi_automargin_left = hspill / 2 + (hspill & 1);
+	  gi->gi_automargin_right = hspill / 2;
+	}
+      } else {
+	int cheight = cw / aspect;
+	int vspill = ch - cheight;
+
+	if(vspill > 0) {
+	  gi->gi_automargin_top = vspill / 2 + (vspill & 1);
+	  gi->gi_automargin_bottom = vspill / 2;
+	}
+      }
     } else if(gi->gi_child_aspect > 0) {
       
       int px = rc->rc_height * gi->gi_child_aspect;
@@ -614,19 +642,15 @@ glw_image_update_constraints(glw_image_t *gi)
     float aspect = (float)glt->glt_xs / glt->glt_ys;
 
     if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
-      // This is unstable and should be removed
-      glw_set_constraints(&gi->w, 0, 0, -aspect,
-			  GLW_CONSTRAINT_W);
+      glw_set_constraints(&gi->w, 0, 0, -aspect, GLW_CONSTRAINT_W);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_X) {
 
       int ys = gi->w.glw_req_size_x / aspect;
-      glw_set_constraints(&gi->w, 0, ys, 0,
-			  GLW_CONSTRAINT_Y);
+      glw_set_constraints(&gi->w, 0, ys, 0, GLW_CONSTRAINT_Y);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
 
       int xs = gi->w.glw_req_size_y * aspect;
-      glw_set_constraints(&gi->w, xs, 0, 0,
-			  GLW_CONSTRAINT_X);
+      glw_set_constraints(&gi->w, xs, 0, 0, GLW_CONSTRAINT_X);
     }
   }
 }
@@ -870,13 +894,20 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       int xs = -1, ys = -1, rescale;
 	
       if(rc->rc_width < rc->rc_height) {
-	rescale = rc->rc_width != glt->glt_xs;
+	rescale = abs(rc->rc_width - glt->glt_xs);
 	xs = rc->rc_width;
       } else {
-	rescale = rc->rc_height != glt->glt_ys;
+	rescale = abs(rc->rc_height - glt->glt_ys);
 	ys = rc->rc_height;
       }
-      
+
+
+      // Requesting aspect cause a lot of rounding errors
+      // so to avoid ending up in infinite reload loops,
+      // consider 1px off as nothing
+      if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT && rescale == 1)
+	rescale = 0;
+
       if(rescale) {
 	int flags = 0;
 	if(w->glw_class == &glw_repeatedimage)
