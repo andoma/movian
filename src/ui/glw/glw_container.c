@@ -467,6 +467,7 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
   float sharpness  = rc->rc_sharpness  * w->glw_sharpness;
   glw_container_t *co = (glw_container_t *)w;
   glw_rctx_t rc0;
+  const int rr = w->glw_flags2 & GLW2_REVERSE_RENDER;
 
   if(alpha < 0.01f)
     return;
@@ -484,7 +485,12 @@ glw_container_y_render(glw_t *w, const glw_rctx_t *rc)
     rc = &rc1;
   }
 
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
+  for(c = rr ? TAILQ_LAST(&w->glw_childs, glw_queue) :
+	TAILQ_FIRST(&w->glw_childs);
+      c;
+      c = rr ? TAILQ_PREV(c, glw_queue, glw_parent_link) : 
+	TAILQ_NEXT(c, glw_parent_link)) {
+
     if(c->glw_parent_fade < 0.01)
       continue;
 

@@ -991,6 +991,7 @@ typedef struct glw {
 #define GLW2_AUTOFADE        0x40
 #define GLW2_EXPEDITE_SUBSCRIPTIONS     0x80
 #define GLW2_AUTOMARGIN                 0x100
+#define GLW2_REVERSE_RENDER             0x200
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
