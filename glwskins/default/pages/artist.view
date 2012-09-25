@@ -3,6 +3,7 @@
 widget(keyintercept, {
   
   widget(container_y, {
+    reverseRender: true;
 
     padding: [5,5,5,$ui.playdeckheight];
 
@@ -11,22 +12,39 @@ widget(keyintercept, {
     
     widget(container_x, {
       height: $ui.size * 9;
-
+      spacing: $ui.size * 2;
       widget(deck, {
+	width: $ui.size * 9;
 
-	widget(icon, {
-	  align: top;
-	  source: $page.model.metadata.artist_portrait;
-	  sizeScale: 8;
+	widget(frontdrop, {
+	  automargin: true;
+	  border: 30;
+	  margin: -30;
+	  padding: -2;
+	  borderOnly: true;
+	  source: "/home/andoma/themes/frame.png";
+	  widget(image, {
+	    source: $page.model.metadata.artist_portrait;
+	    aspectConstraint: true;
+	  });
 	});
 
-	widget(container_y, {
-	  padding: 8;
-	  widget(slideshow, {
-	    cloner($page.model.metadata.artist_portrait, icon, {
-	      source: $self;
-	      align: top;
-	      sizeScale: 8;
+	widget(slideshow, {
+	  transitionTime: 1;
+	  cloner($page.model.metadata.artist_portrait, displacement, {
+	    rotation: [-10 + rand() * 20,0,0,1];
+	    translation: [0.25,-0.1,0];
+	    widget(frontdrop, {
+	      automargin: true;
+	      border: 30;
+	      margin: -30;
+	      padding: -2;
+	      borderOnly: true;
+	      source: "/home/andoma/themes/frame.png";
+	      widget(image, {
+		source: $self;
+		aspectConstraint: true;
+	      });
 	    });
 	  });
 	});
@@ -36,8 +54,6 @@ widget(keyintercept, {
       
       widget(container_y, {
 	filterConstraintX: true;
-	padding: 8;
-	spacing: 4;
 	widget(label, {
 	  caption: $page.model.metadata.title;
 	  sizeScale: 2;
@@ -45,7 +61,7 @@ widget(keyintercept, {
 	});
 
 	widget(label, {
-	  maxlines: 6;
+	  maxlines: 7;
 	  TextStyleItem();
 	  caption: $page.model.metadata.artist_bio;
 	  align: justified;
@@ -62,7 +78,7 @@ widget(keyintercept, {
 
 	scrollThreshold: 100;
 
-	alphaFallOff: 0.1;
+	alphaFallOff: 0.3;
 	blurFallOff: 0.1;
 	
 	Yspacing: $ui.size / 2;
