@@ -309,7 +309,7 @@ video_vda_codec_create(media_codec_t *mc, enum CodecID id,
   const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
 
-  if(id != CODEC_ID_H264)
+  if(id != CODEC_ID_H264 || ctx->extradata == NULL || ctx->extradata_size == 0)
     return 1;
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,

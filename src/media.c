@@ -1312,7 +1312,7 @@ media_codec_create(int codec_id, int parser,
   } else
 #endif
 #if ENABLE_VDA
-  if(mcp && !video_vda_codec_create(mc, codec_id, ctx, mcp, mp)) {
+  if(mcp && ctx && !video_vda_codec_create(mc, codec_id, ctx, mcp, mp)) {
 
   } else
 #endif
