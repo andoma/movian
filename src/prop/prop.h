@@ -87,6 +87,8 @@ typedef enum {
 
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
+typedef void (prop_callback_ui_t)(void *opaque, int user_int, 
+				  prop_event_t event, ...);
 typedef void (prop_callback_string_t)(void *opaque, const char *str);
 typedef void (prop_callback_rstr_t)(void *opaque, rstr_t *rstr);
 typedef void (prop_callback_int_t)(void *opaque, int value);
@@ -127,6 +129,7 @@ void prop_init(void);
 #define PROP_SUB_IGNORE_VOID          0x200
 #define PROP_SUB_TRACK_DESTROY_EXP    0x400
 #define PROP_SUB_SINGLETON            0x800
+#define PROP_SUB_USER_INT             0x1000
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
 
 
@@ -134,6 +137,7 @@ enum {
   PROP_TAG_END = 0,
   PROP_TAG_NAME_VECTOR,
   PROP_TAG_CALLBACK,
+  PROP_TAG_CALLBACK_USER_INT,
   PROP_TAG_CALLBACK_STRING,
   PROP_TAG_CALLBACK_RSTR,
   PROP_TAG_CALLBACK_INT,

@@ -240,12 +240,6 @@ struct prop {
 struct prop_sub {
 
   /**
-   * Refcount. Not protected by mutex. Modification needs to be issued
-   * using atomic ops.
-   */
-  int hps_refcount;
-
-  /**
    * Callback. May never be changed. Not protected by mutex
    */
   void *hps_callback;
@@ -279,6 +273,13 @@ struct prop_sub {
   prop_lockmgr_t *hps_lockmgr;
 
   /**
+   * Refcount. Not protected by mutex. Modification needs to be issued
+   * using atomic ops.
+   */
+  int hps_refcount;
+
+
+  /**
    * Set when a subscription is destroyed. Protected by hps_lock.
    * In other words. It's impossible to destroy a subscription
    * if no lock is specified.
@@ -295,6 +296,11 @@ struct prop_sub {
    * Flags as passed to prop_subscribe(). May never be changed
    */
   uint16_t hps_flags;
+
+  /**
+   * Extra value for use by caller
+   */
+  int hps_user_int;
 
   /**
    * Linkage to property. Protected by global mutex
