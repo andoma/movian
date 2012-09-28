@@ -647,11 +647,10 @@ update_chapter(dvd_player_t *dp, media_pipe_t *mp)
   dvdnav_current_title_info(dp->dp_dvdnav, &title, &part);
   dvdnav_get_number_of_parts(dp->dp_dvdnav, title, &parts);
 
-  prop_set(mp->mp_prop_root, "currenttitle", NULL, PROP_SET_INT, title);
-  prop_set(mp->mp_prop_metadata, "titles", NULL, PROP_SET_INT, titles);
-
-  prop_set(mp->mp_prop_root, "currentchapter", NULL, PROP_SET_INT, part);
-  prop_set(mp->mp_prop_metadata, "chapters", NULL, PROP_SET_INT, parts);
+  prop_set(mp->mp_prop_root, "currenttitle", PROP_SET_INT, title);
+  prop_set(mp->mp_prop_metadata, "titles", PROP_SET_INT, titles);
+  prop_set(mp->mp_prop_root, "currentchapter", PROP_SET_INT, part);
+  prop_set(mp->mp_prop_metadata, "chapters", PROP_SET_INT, parts);
 }
 
 /**
@@ -667,7 +666,7 @@ update_duration(dvd_player_t *dp, media_pipe_t *mp)
 
   if(dvdnav_describe_title_chapters(dp->dp_dvdnav, title, &times, &totdur)) {
     totdur = av_rescale_q(totdur, mpeg_tc, AV_TIME_BASE_Q);
-    prop_set(mp->mp_prop_metadata, "duration", NULL, PROP_SET_INT,
+    prop_set(mp->mp_prop_metadata, "duration", PROP_SET_INT,
 	     totdur / 1000000LL);
     free(times);
   } else {

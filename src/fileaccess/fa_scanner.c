@@ -143,7 +143,7 @@ make_prop(fa_dir_entry_t *fde)
 
 
   if(fde->fde_statdone)
-    prop_set(metadata, "timestamp", NULL, PROP_SET_INT, fde->fde_stat.fs_mtime);
+    prop_set(metadata, "timestamp", PROP_SET_INT, fde->fde_stat.fs_mtime);
 
   assert(fde->fde_prop == NULL);
   fde->fde_prop = prop_ref_inc(p);
@@ -240,8 +240,7 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
     }
 
     if(fde->fde_statdone)
-      prop_set(meta, "timestamp", NULL, PROP_SET_INT,
-	       fde->fde_stat.fs_mtime);
+      prop_set(meta, "timestamp", PROP_SET_INT, fde->fde_stat.fs_mtime);
 
     if(fde->fde_md == NULL) {
 

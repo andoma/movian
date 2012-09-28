@@ -3771,40 +3771,16 @@ prop_get_string(prop_t *p, ...)
   return r;
 }
 
-
 /**
  *
  */
-void
-prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
+static void
+prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
 {
-  va_list ap;
-  prop_t *c = p;
   rstr_t *rstr;
-  const char *n, *str;
-
-  if(p == NULL || p->hp_type == PROP_ZOMBIE)
-    return;
-
-  va_start(ap, p);
-
-  hts_mutex_lock(&prop_mutex);
-
-  while((n = va_arg(ap, const char *)) != NULL) {
-    if(p->hp_type == PROP_ZOMBIE)
-      goto bad;
-    if(p->hp_type == PROP_DIR) {
-      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
-	if(c->hp_name != NULL && !strcmp(c->hp_name, n))
-	  break;
-    } else 
-      c = NULL;
-    if(c == NULL)
-      c = prop_create0(p, n, skipme, 0);
-    p = c;
-  }
-
+  const char *str;
   int ev = va_arg(ap, prop_event_t);
+
   switch(ev) {
   case PROP_SET_STRING:
     str = va_arg(ap, const char *);
@@ -3823,14 +3799,80 @@ prop_set_ex(prop_sub_t *skipme, prop_t *p, ...)
   case PROP_SET_INT:
     prop_set_int_exl(p, skipme, va_arg(ap, int));
     break;
+  case PROP_SET_VOID:
+    prop_set_void_exl(p, skipme);
+    break;
  default:
    fprintf(stderr, "Unable to handle event: %d\n", ev);
    assert(0);
    break;
   }
+}
+
+
+/**
+ *
+ */
+void
+prop_setv_ex(prop_sub_t *skipme, prop_t *p, ...)
+{
+  va_list ap;
+  prop_t *c = p;
+  const char *n;
+
+  if(p == NULL)
+    return;
+
+  va_start(ap, p);
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type == PROP_ZOMBIE)
+    goto bad;
+
+  while((n = va_arg(ap, const char *)) != NULL) {
+    if(p->hp_type == PROP_ZOMBIE)
+      goto bad;
+    if(p->hp_type == PROP_DIR) {
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+	if(c->hp_name != NULL && !strcmp(c->hp_name, n))
+	  break;
+    } else 
+      c = NULL;
+    if(c == NULL)
+      c = prop_create0(p, n, skipme, 0);
+    p = c;
+  }
+
+  prop_seti(skipme, p, ap);
+
  bad:
   hts_mutex_unlock(&prop_mutex);
   va_end(ap);
+}
+
+
+
+/**
+ *
+ */
+void
+prop_set_ex(prop_t *p, const char *name, int noalloc, ...)
+{
+  va_list ap;
+
+  if(p == NULL)
+    return;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(p->hp_type != PROP_ZOMBIE) {
+    p = prop_create0(p, name, NULL, noalloc);
+    va_start(ap, noalloc);
+    prop_seti(NULL, p, ap);
+    va_end(ap);
+  }
+  hts_mutex_unlock(&prop_mutex);
 }
 
 

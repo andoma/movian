@@ -422,7 +422,7 @@ js_item_enable(JSContext *cx, JSObject *obj,
 	       uintN argc, jsval *argv, jsval *rval)
 {
   js_item_t *ji = JS_GetPrivate(cx, obj);
-  prop_set(ji->ji_root, "enabled", NULL, PROP_SET_INT, 1);
+  prop_set(ji->ji_root, "enabled", PROP_SET_INT, 1);
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }
@@ -436,7 +436,7 @@ js_item_disable(JSContext *cx, JSObject *obj,
 		uintN argc, jsval *argv, jsval *rval)
 {
   js_item_t *ji = JS_GetPrivate(cx, obj);
-  prop_set(ji->ji_root, "enabled", NULL, PROP_SET_INT, 0);
+  prop_set(ji->ji_root, "enabled", PROP_SET_INT, 0);
   *rval = JSVAL_VOID;
   return JS_TRUE;
 }

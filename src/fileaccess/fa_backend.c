@@ -76,7 +76,7 @@ file_open_browse(prop_t *page, const char *url, time_t mtime)
 
   rstr_t *title = title_from_url(url);
 
-  prop_set(model, "metadata", "title", NULL, PROP_SET_RSTRING, title);
+  prop_setv(model, "metadata", "title", NULL, PROP_SET_RSTRING, title);
   
   // Set parent
   if(!fa_parent(parent, sizeof(parent), url))
@@ -154,7 +154,7 @@ file_open_audio(prop_t *page, const char *url)
 
   /* Find a meaningful page title (last component of URL) */
   rstr_t *title = title_from_url(parent);
-  prop_set(model, "metadata", "title", NULL, PROP_SET_RSTRING, title);
+  prop_setv(model, "metadata", "title", NULL, PROP_SET_RSTRING, title);
 
   // Set parent
   if(!fa_parent(parent2, sizeof(parent2), parent))

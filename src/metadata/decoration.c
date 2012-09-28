@@ -215,10 +215,8 @@ stem_analysis(deco_browse_t *db, deco_stem_t *ds)
     prop_set_rstring(p, image->di_url);
     prop_ref_dec(p);
 
-    prop_set(video->di_metadata, "usericon", NULL,
-	     PROP_SET_RSTRING, image->di_url);
-    
-    prop_set(image->di_root, "hidden", NULL, PROP_SET_INT, 1);
+    prop_set(video->di_metadata, "usericon", PROP_SET_RSTRING, image->di_url);
+    prop_set(image->di_root, "hidden", PROP_SET_INT, 1);
   }
 }
 

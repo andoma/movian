@@ -89,7 +89,7 @@ static const char *
 item_set_str(prop_t *c, htsmsg_t *item, const char *propname, const char *id)
 {
   const char *s = htsmsg_get_str_multi(item, id, "cdata", NULL);
-  prop_set(c, propname, NULL, PROP_SET_STRING, s);
+  prop_set(c, propname, PROP_SET_STRING, s);
   return s;
 }
 

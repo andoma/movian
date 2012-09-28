@@ -197,8 +197,8 @@ update_global_state(void)
     if(pl->pl_new_version_avail)
       num_upgradable++;
 
-  prop_set(prop_get_global(), "plugins", "status", "upgradeable", NULL,
-	   PROP_SET_INT, num_upgradable);
+  prop_setv(prop_get_global(), "plugins", "status", "upgradeable", NULL,
+	    PROP_SET_INT, num_upgradable);
 }
 
 
@@ -418,7 +418,7 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
 
     snprintf(path, sizeof(path), "zip://%s", zipfile);
     plugin_fill_prop0(pm, prop, path, 0, pl);
-    prop_set(prop, "package", NULL, PROP_SET_STRING, zipfile);
+    prop_set(prop, "package", PROP_SET_STRING, zipfile);
     update_state(pl);
     hts_mutex_unlock(&plugin_mutex);
   }
@@ -449,7 +449,7 @@ plugin_prop_setup(htsmsg_t *pm, plugin_t *pl, const char *basepath,
     p = prop_create(plugin_root_repo, pl->pl_id);
   }
 
-  prop_set(p, "type", NULL, PROP_SET_STRING, "plugin");
+  prop_set(p, "type", PROP_SET_STRING, "plugin");
 
   plugin_fill_prop0(pm, p, basepath, as_installed, pl);
 }

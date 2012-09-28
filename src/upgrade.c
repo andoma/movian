@@ -159,13 +159,12 @@ check_upgrade(int set_news)
 
   mystrset(&download_url, dlurl);
 
-  prop_set(upgrade_root, "track", NULL, PROP_SET_STRING, upgrade_track);
-
-  prop_set(upgrade_root, "availableVersion", NULL, PROP_SET_STRING, ver);
+  prop_set(upgrade_root, "track", PROP_SET_STRING, upgrade_track);
+  prop_set(upgrade_root, "availableVersion", PROP_SET_STRING, ver);
 
   download_size = dlsize;
 
-  prop_set(upgrade_root, "size", NULL, PROP_SET_INT, dlsize);
+  prop_set(upgrade_root, "size", PROP_SET_INT, dlsize);
 
   int canUpgrade = gconf.enable_omnigrade;
   
@@ -230,7 +229,7 @@ download_callback(void *opaque, int loaded, int total)
   if(!total)
     total = download_size;
 
-  prop_set(upgrade_root, "size", NULL, PROP_SET_INT, total);
+  prop_set(upgrade_root, "size", PROP_SET_INT, total);
   prop_set_float(upgrade_progress, (float)loaded / (float)total);
   return 0;
 }

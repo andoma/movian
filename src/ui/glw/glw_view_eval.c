@@ -5683,7 +5683,7 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
     if(x->settings != NULL) {
 
       x->title = prop_create_r(prop_create(x->settings, "metadata"), "title");
-      prop_set(x->settings, "type", NULL, PROP_SET_STRING, "multiopt");
+      prop_set(x->settings, "type", PROP_SET_STRING, "multiopt");
       
       x->opts = prop_create_r(x->settings, "options");
 
