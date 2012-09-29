@@ -260,6 +260,11 @@ SRCS-$(CONFIG_CDDA)      += src/backend/dvd/cdda.c
 SRCS  += src/backend/htsp/htsp.c \
 
 ##############################################################
+# Shoutcast
+##############################################################
+SRCS  += src/backend/shoutcast/shoutcast.c \
+
+##############################################################
 # Spotify
 ##############################################################
 SRCS-${CONFIG_SPOTIFY} += src/backend/spotify/spotify.c
