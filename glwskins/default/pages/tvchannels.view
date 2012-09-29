@@ -43,6 +43,8 @@ widget(container_y, {
 	  width: $ui.size * 12;
 	  $clone.fd = focusDistance();
 
+	  onEvent(activate, navOpen($self.url, void, void, $parent.model));
+
 	  widget(stencil, {
 	    source: "skin://graphics/stencil.png";
 	    widget(container_z, {
