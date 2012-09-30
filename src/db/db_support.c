@@ -442,6 +442,18 @@ db_rstr(sqlite3_stmt *stmt, int col)
 }
 
 
+/**
+ *
+ */
+int
+db_posint(sqlite3_stmt *stmt, int col)
+{
+  if(sqlite3_column_type(stmt, col) == SQLITE_INTEGER)
+    return sqlite3_column_int(stmt, col);
+  return -1;
+}
+
+
 
 
 #if ENABLE_SQLITE_LOCKING
