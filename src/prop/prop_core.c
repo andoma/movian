@@ -1181,7 +1181,7 @@ prop_build_notify_child2(prop_sub_t *s, prop_t *p, prop_t *extra,
 /**
  *
  */
-static void
+void
 prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
 		   prop_event_t event, prop_sub_t *skipme, int flags)
 {
@@ -1891,6 +1891,9 @@ prop_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
   prop_t *parent;
 
   assert(p != before);
+
+  if(before && p->hp_parent != before->hp_parent)
+    return;
 
   if(TAILQ_NEXT(p, hp_parent_link) != before) {
 
