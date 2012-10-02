@@ -1415,7 +1415,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     if(nohead) {
       // Server did not honour our GET request with 1 byte range
       // This is bad, bail out
-      snprintf(errbuf, errlen, "Unexpected 200 response on open GET");
+      snprintf(errbuf, errlen, "Unexpected 200 response on range request");
       return -1;
     }
 
@@ -1494,7 +1494,23 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       nohead = 1;
       goto again;
     }
-    // FALLTHRU
+    snprintf(errbuf, errlen, "Unsupported method");
+    return -1;
+
+  case -1:
+    if(!hf->hf_streaming && !nohead) {
+      // Server might choke on HEAD request
+
+      http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
+				HTTP_SERVER_QUIRK_NO_HEAD);
+
+      http_detach(hf, 0, "Disconnect during HEAD request");
+      nohead = 1;
+      goto reconnect;
+    }
+    snprintf(errbuf, errlen, "Server reset connection");
+    return -1;
+
   default:
     snprintf(errbuf, errlen, "Unhandled HTTP response %d", code);
     return -1;
