@@ -1129,6 +1129,8 @@ clone_req_move(sub_cloner_t *sc, glw_t *w, const glw_move_op_t *mop)
   if(steps == 0)
     return;
 
+  w->glw_parent->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+
   if(steps < 0) {
     glw_t *x;
     b = x = w;
