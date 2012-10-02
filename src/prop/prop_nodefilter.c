@@ -387,7 +387,8 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
 
   if(nfn->sortkey_type[0] == SORTKEY_NONE &&
      nfn->sortkey_type[1] == SORTKEY_NONE &&
-     nfn->sortkey_type[2] == SORTKEY_NONE) {
+     nfn->sortkey_type[2] == SORTKEY_NONE &&
+     nfn->sortkey_type[3] == SORTKEY_NONE) {
 
     b = TAILQ_NEXT(nfn, in_link);
     
