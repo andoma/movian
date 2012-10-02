@@ -153,7 +153,7 @@ static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
   size_t rs = 0;
   sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
 
-  hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
+  hts_mutex_lock(&sc->sc_stream_buffer_mutex);
 
   rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
 
