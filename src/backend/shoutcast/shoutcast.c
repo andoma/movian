@@ -147,13 +147,10 @@ sc_parse_playlist_m3u(sc_shoutcast_t *sc, char *content)
  */
 static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
-  size_t rs = buf_size;
+  size_t rs = 0;
   sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
 
   hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
-
-  if(rs > sc->sc_stream_buffer->hq_size)
-    rs = sc->sc_stream_buffer->hq_size;
 
   rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
 
