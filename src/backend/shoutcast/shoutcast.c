@@ -60,6 +60,9 @@ typedef struct sc_shoutcast {
   char *sc_stream_url;
   char *sc_playlist_streams[20];
 
+  char *sc_stream_title;
+  int sc_stream_title_byte_offset;
+
   int sc_stream_bitrate;
   int sc_stream_metaint;
   int sc_stream_chunk_size;
@@ -144,15 +147,25 @@ sc_parse_playlist_m3u(sc_shoutcast_t *sc, char *content)
  */
 static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
-  size_t rs = buf_size;
+  size_t rs = 0;
   sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
 
   hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
 
-  if(rs > sc->sc_stream_buffer->hq_size)
-    rs = sc->sc_stream_buffer->hq_size;
-
   rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
+
+  // update streamtitle if reached the point in buffer
+  if (sc->sc_stream_title_byte_offset > 0)
+    sc->sc_stream_title_byte_offset -= rs;
+
+  if (sc->sc_stream_title_byte_offset <= 0 && sc->sc_stream_title)
+  {
+    prop_t *tp = prop_get_by_name(PNVEC("global", "media", "current", "metadata","title"), 1, NULL);
+    prop_set_string(tp, sc->sc_stream_title);
+    free(sc->sc_stream_title);
+    sc->sc_stream_title = NULL;
+  }
+
 
   // signal that data has been drained from buffer
   hts_cond_signal(&sc->sc_stream_buffer_drained_cond);
@@ -544,8 +557,11 @@ static void sc_parse_metadata(sc_shoutcast_t *sc, char *md, int mdlen)
     if (strlen(ps) == 0)
       return;
 
-    prop_t *tp = prop_get_by_name(PNVEC("global", "media", "current", "metadata","title"), 1, NULL);
-    prop_set_string(tp, ps);
+    if (sc->sc_stream_title)
+      free(sc->sc_stream_title);
+
+    sc->sc_stream_title = strdup(ps);
+    sc->sc_stream_title_byte_offset = sc->sc_stream_buffer->hq_size;
   }
 }
 
