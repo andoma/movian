@@ -34,7 +34,7 @@
 #include "metadata/metadata.h"
 #include "htsmsg/htsmsg_json.h"
 
-LIST_HEAD(js_item_list, js_item);
+TAILQ_HEAD(js_item_queue, js_item);
 
 static hts_mutex_t js_page_mutex; // protects global lists
 
@@ -111,7 +111,7 @@ typedef struct js_model {
 
   struct js_event_handler_list jm_event_handlers;
 
-  struct js_item_list jm_items;
+  struct js_item_queue jm_items;
 
   int jm_subs;
 
@@ -146,6 +146,7 @@ js_model_create(JSContext *cx, jsval openfunc)
   jm->jm_refcount = 1;
   jm->jm_openfunc = openfunc;
   JS_AddNamedRoot(cx, &jm->jm_openfunc, "openfunc");
+  TAILQ_INIT(&jm->jm_items);
   return jm;
 }
 
@@ -262,7 +263,7 @@ js_setLoading(JSContext *cx, JSObject *obj, jsval idval, jsval *vp)
  */
 typedef struct js_item {
   js_model_t *ji_model;
-  LIST_ENTRY(js_item) ji_link;
+  TAILQ_ENTRY(js_item) ji_link;
   prop_t *ji_root;
   struct js_event_handler_list ji_event_handlers;
   prop_sub_t *ji_eventsub;
@@ -279,7 +280,7 @@ item_finalize(JSContext *cx, JSObject *obj)
 {
   js_item_t *ji = JS_GetPrivate(cx, obj);
   assert(LIST_FIRST(&ji->ji_event_handlers) == NULL);
-  LIST_REMOVE(ji, ji_link);
+  TAILQ_REMOVE(&ji->ji_model->jm_items, ji, ji_link);
   prop_ref_dec(ji->ji_root);
   free(ji);
 }
@@ -406,6 +407,12 @@ js_item_moveBefore(JSContext *cx, JSObject *obj,
   } else {
     before = NULL;
   }
+
+  TAILQ_REMOVE(&ji->ji_model->jm_items, ji, ji_link);
+  if(before)
+    TAILQ_INSERT_BEFORE(before, ji, ji_link);
+  else
+    TAILQ_INSERT_TAIL(&ji->ji_model->jm_items, ji, ji_link);
 
   prop_move(ji->ji_root, before ? before->ji_root : NULL);
   *rval = JSVAL_VOID;
@@ -614,7 +621,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     js_item_t *ji = calloc(1, sizeof(js_item_t));
     ji->ji_model = model;
     ji->ji_root =  p;
-    LIST_INSERT_HEAD(&model->jm_items, ji, ji_link);
+    TAILQ_INSERT_TAIL(&model->jm_items, ji, ji_link);
     JS_SetPrivate(cx, robj, ji);
     ji->ji_enable_set_property = 1; 
 
@@ -904,6 +911,31 @@ js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSBool 
+js_page_items(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  js_item_t *ji;
+
+  int pos = 0;
+  TAILQ_FOREACH(ji, &jm->jm_items, ji_link)
+    pos++;
+
+  JSObject *robj = JS_NewArrayObject(cx, pos, NULL);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+  pos = 0;
+  TAILQ_FOREACH(ji, &jm->jm_items, ji_link)
+    JS_SetElement(cx, robj, pos++, &ji->ji_this);
+
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_page_wfv(JSContext *cx, JSObject *obj, uintN argc,
 	    jsval *argv, jsval *rval)
 {
@@ -953,6 +985,7 @@ static JSFunctionSpec page_functions[] = {
     JS_FS("dump",               js_page_dump,    0, 0, 0),
     JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
     JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),
+    JS_FS("getItems",           js_page_items,   0, 0, 0),
     JS_FS_END
 };
 
