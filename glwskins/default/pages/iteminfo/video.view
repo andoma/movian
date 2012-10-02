@@ -114,20 +114,6 @@ widget(container_y, {
 	  });
 	});
 
-	widget(label, {
-	  hidden: !$args.metadata.director;
-	  TextStyleItem();
-	  maxlines: 4;
-	  caption: '<font color="#888">' + _("Director:") + ' </font><margin>' + 
-	    $args.metadata.director;
-	});
-	widget(label, {
-	  hidden: !$args.metadata.producer;
-	  TextStyleItem();
-	  maxlines: 4;
-	  caption: '<font color="#888">' + _("Producer:") + ' </font><margin>' + 
-	    $args.metadata.producer;
-	});
 
 
 	widget(label, {
