@@ -186,6 +186,7 @@ htsbuf_peek(htsbuf_queue_t *hq, void *buf, size_t len)
     c = MIN(hd->hd_data_len - hd->hd_data_off, len);
     memcpy(buf, hd->hd_data + hd->hd_data_off, c);
 
+    r += c;
     buf += c;
     len -= c;
 
