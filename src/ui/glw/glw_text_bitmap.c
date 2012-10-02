@@ -607,16 +607,18 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(gtb->gtb_edit_ptr > 0) {
 	gtb->gtb_edit_ptr--;
 	gtb->gtb_update_cursor = 1;
+	return 1;
       }
-      return 1;
+      return 0;
 
     } else if(event_is_action(e, ACTION_RIGHT)) {
 
       if(gtb->gtb_edit_ptr < gtb->gtb_uc_len) {
 	gtb->gtb_edit_ptr++;
 	gtb->gtb_update_cursor = 1;
+	return 1;
       }
-      return 1;
+      return 0;
 
     } else if(event_is_action(e, ACTION_ACTIVATE)) {
       if(w->glw_root->gr_open_osk != NULL) {
