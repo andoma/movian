@@ -399,6 +399,29 @@ js_item_destroy(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_item_moveBefore(JSContext *cx, JSObject *obj,
+		   uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  js_item_t *before;
+
+  if(argc >= 1 && JSVAL_IS_OBJECT(argv[0]) && 
+     JS_GetClass(cx, JSVAL_TO_OBJECT(argv[0])) == &item_class) {
+    before = JS_GetPrivate(cx, JSVAL_TO_OBJECT(argv[0]));
+  } else {
+    before = NULL;
+  }
+
+  prop_move(ji->ji_root, before ? before->ji_root : NULL);
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
 
 /**
  *
@@ -543,6 +566,7 @@ static JSFunctionSpec item_proto_functions[] = {
   JS_FS("dump",               js_item_dump,            0, 0, 0),
   JS_FS("enable",             js_item_enable,          0, 0, 0),
   JS_FS("disable",            js_item_disable,         0, 0, 0),
+  JS_FS("moveBefore",         js_item_moveBefore,      1, 0, 0),
   JS_FS_END
 };
 
