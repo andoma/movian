@@ -340,5 +340,5 @@ lastfm_init(void)
 {
   lastfm = metadata_add_source("lastfm", "last.fm",
 			       100000, METADATA_TYPE_MUSIC,
-			       NULL);
+			       NULL, 0, 0);
 }

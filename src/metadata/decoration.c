@@ -15,7 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -69,8 +69,10 @@ typedef struct deco_browse {
   int db_audio_filter;
 
   int db_contents_mask;
-#define DB_CONTENTS_IMAGES 0x1
-#define DB_CONTENTS_ALBUM  0x2
+#define DB_CONTENTS_IMAGES     0x1
+#define DB_CONTENTS_ALBUM      0x2
+#define DB_CONTENTS_TV_SEASON  0x4
+#define DB_CONTENTS_TV_SERIES  0x8
 
   int db_current_contents;
 
@@ -130,7 +132,13 @@ typedef struct deco_item {
   prop_sub_t *di_sub_duration;
   int di_duration;
 
-  metadata_lazy_prop_t *di_mlp;
+  prop_sub_t *di_sub_series;
+  rstr_t *di_series;
+
+  prop_sub_t *di_sub_season;
+  int di_season;
+
+  metadata_lazy_video_t *di_mlv;
 
 } deco_item_t;
 
@@ -144,16 +152,13 @@ static void load_nfo(deco_item_t *di);
 static void
 analyze_video(deco_item_t *di)
 {
-  if(di->di_mlp != NULL)
+  if(di->di_mlv != NULL)
     return;
 
   if(di->di_url == NULL || di->di_filename == NULL)
     return;
   
   deco_browse_t *db = di->di_db;
-
-  if((db->db_flags & DECO_FLAGS_DURATION_PRESENT) && di->di_duration == 0)
-    return;
 
   rstr_t *fname;
 
@@ -163,7 +168,7 @@ analyze_video(deco_item_t *di)
     fname = rstr_dup(di->di_filename);
   }
 
-  di->di_mlp = metadata_bind_movie_info(di->di_metadata,
+  di->di_mlv = metadata_bind_video_info(di->di_metadata,
 					di->di_url, fname,
 					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
 					di->di_duration, di->di_options,
@@ -239,6 +244,7 @@ update_contents(deco_browse_t *db)
     db->db_current_contents = DB_CONTENTS_IMAGES;
     prop_set_string(db->db_prop_contents, "images");
     prop_nf_sort(db->db_pnf, "node.metadata.timestamp", 0, 1, NULL, 0);
+    prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
     return;
   }
 
@@ -249,6 +255,7 @@ update_contents(deco_browse_t *db)
 
     prop_set_string(db->db_prop_contents, "album");
     prop_nf_sort(db->db_pnf, "node.metadata.track", 0, 1, NULL, 0);
+    prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
 
     if(!db->db_audio_filter)
       db->db_audio_filter = 
@@ -258,9 +265,21 @@ update_contents(deco_browse_t *db)
     return;
   }
 
+  if(db->db_contents_mask & DB_CONTENTS_TV_SEASON) {
+    if(db->db_current_contents == DB_CONTENTS_TV_SEASON)
+      return;
+    db->db_current_contents = DB_CONTENTS_TV_SEASON;
+
+    prop_set_string(db->db_prop_contents, "tvseason");
+    prop_nf_sort(db->db_pnf, "node.metadata.episode", 0, 1, NULL, 0);
+    prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
+    return;
+  }
+
   db->db_current_contents = 0;
   prop_set_void(db->db_prop_contents);
   prop_nf_sort(db->db_pnf, NULL, 0, 1, NULL, 0);
+  prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
 }
 
 
@@ -363,11 +382,8 @@ album_analysis(deco_browse_t *db)
   db->db_contents_mask |= DB_CONTENTS_ALBUM;
 
   prop_t *m = prop_create_r(db->db_prop_model, "metadata");
-  prop_t *p;
 
-  p = prop_create_r(m, "album_name");
-  prop_set_rstring(p, v);
-  prop_ref_dec(p);
+  prop_set(m, "album_name", PROP_SET_RSTRING, v);
 
   if(artist_count > 0) {
     deco_artist_t **vec = malloc(artist_count * sizeof(deco_artist_t *));
@@ -382,11 +398,9 @@ album_analysis(deco_browse_t *db)
     free(vec);
 
     if(da->da_count * 2 >= item_count) {
-      p = prop_create_r(m, "artist_name");
-      prop_set_rstring(p, da->da_artist);
-      prop_ref_dec(p);
+      prop_set(m, "album_name", PROP_SET_RSTRING, da->da_artist);
       
-      p = prop_create_r(m, "album_art");
+      prop_t *p = prop_create_r(m, "album_art");
       metadata_bind_albumart(p, da->da_artist, v);
       prop_ref_dec(p);
     }
@@ -411,21 +425,84 @@ video_analysis(deco_browse_t *db)
   deco_item_t *di;
   int reasonable_video_items = 0;
   int i;
+
   for(i = 0; i < 2; i++) {
     LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
-
-      if((db->db_flags & DECO_FLAGS_DURATION_PRESENT) && di->di_duration == 0)
-	continue;
 
       if(di->di_duration > 300) {
 	if(i == 0)
 	  reasonable_video_items++;
-	else if(i == 1 && di->di_mlp)
-	  mlp_set_lonely(di->di_mlp, reasonable_video_items < 2);
+	else if(i == 1 && di->di_mlv)
+	  mlv_set_lonely(di->di_mlv, reasonable_video_items < 2);
       }
     }
   }
   db->db_lonely_video_item = reasonable_video_items < 1;
+
+  
+  const char *series = NULL;
+  int season = -1;
+
+  LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+    if(di->di_series == NULL) {
+      series = NULL;
+      break;
+    }
+
+    if(series == NULL)
+      series = rstr_get(di->di_series);
+    else if(strcmp(series, rstr_get(di->di_series))) {
+      series = NULL;
+      break;
+    }
+  }
+
+
+  if(series != NULL) {
+
+    LIST_FOREACH(di, &db->db_items_per_ct[CONTENT_VIDEO], di_type_link) {
+      if(di->di_season == 0) {
+	season = -1;
+	break;
+      }
+
+      if(season == -1)
+	season = di->di_season;
+      else if(season != di->di_season) {
+	season = -1;
+	break;
+      }
+    }
+  }
+  
+  di = LIST_FIRST(&db->db_items_per_ct[CONTENT_VIDEO]);
+  assert(di != NULL);
+
+  prop_t *x = prop_create_r(db->db_prop_model, "season");
+  if(season != -1 && series) {
+    db->db_contents_mask |= DB_CONTENTS_TV_SEASON;
+    prop_t *y = prop_create_r(di->di_metadata, "season");
+    prop_link(y, x);
+    prop_ref_dec(y);
+  } else {
+    prop_unlink(x);
+    db->db_contents_mask &= ~DB_CONTENTS_TV_SEASON;
+  }
+  prop_ref_dec(x);
+
+
+  x = prop_create_r(db->db_prop_model, "series");
+  if(series) {
+    db->db_contents_mask |= DB_CONTENTS_TV_SERIES;
+    prop_t *y = prop_create_r(di->di_metadata, "series");
+    prop_link(y, x);
+    prop_ref_dec(y);
+  } else {
+    prop_unlink(x);
+    db->db_contents_mask &= ~DB_CONTENTS_TV_SERIES;
+  }
+  prop_ref_dec(x);
+
 }
 
 
@@ -510,8 +587,8 @@ di_set_url(deco_item_t *di, rstr_t *str)
       load_nfo(di);
 
       TAILQ_FOREACH(di, &db->db_items, di_link) {
-	if(di->di_type == CONTENT_VIDEO && di->di_mlp != NULL)
-	  mlp_set_imdb_id(di->di_mlp, di->di_ds->ds_imdb_id ?: db->db_imdb_id);
+	if(di->di_type == CONTENT_VIDEO && di->di_mlv != NULL)
+	  mlv_set_imdb_id(di->di_mlv, di->di_ds->ds_imdb_id ?: db->db_imdb_id);
       }
       return;
     }
@@ -564,14 +641,40 @@ di_set_duration(deco_item_t *di, int duration)
 {
   di->di_duration = duration;
   if(di->di_type == CONTENT_VIDEO) {
-    if(di->di_mlp == NULL)
+    if(di->di_mlv == NULL)
       analyze_video(di);
     else
-      mlp_set_duration(di->di_mlp, di->di_duration);
+      mlv_set_duration(di->di_mlv, di->di_duration);
 
     di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
     deco_pendings = 1;
   }
+}
+
+
+
+/**
+ *
+ */
+static void
+di_set_series(deco_item_t *di, rstr_t *str)
+{
+  rstr_set(&di->di_series, str);
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
+  deco_pendings = 1;
+}
+
+
+
+/**
+ *
+ */
+static void
+di_set_season(deco_item_t *di, int v)
+{
+  di->di_season = v;
+  di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
+  deco_pendings = 1;
 }
 
 
@@ -599,6 +702,18 @@ di_set_type(deco_item_t *di, const char *str)
     prop_unsubscribe(di->di_sub_duration);
     di->di_duration = 0;
     di->di_sub_duration = NULL;
+  }
+
+  if(di->di_sub_series != NULL) {
+    prop_unsubscribe(di->di_sub_series);
+    rstr_set(&di->di_series, NULL);
+    di->di_sub_series = NULL;
+  }
+
+  if(di->di_sub_season != NULL) {
+    prop_unsubscribe(di->di_sub_season);
+    di->di_season = 0;
+    di->di_sub_season = NULL;
   }
 
   db->db_types[di->di_type]--;
@@ -637,6 +752,23 @@ di_set_type(deco_item_t *di, const char *str)
 		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
 		     PROP_TAG_COURIER, deco_courier,
 		     NULL);
+
+    di->di_sub_series = 
+      prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_NAME("node", "metadata", "series", "title"),
+		     PROP_TAG_CALLBACK_RSTR, di_set_series, di,
+		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
+		     PROP_TAG_COURIER, deco_courier,
+		     NULL);
+
+    di->di_sub_season = 
+      prop_subscribe(PROP_SUB_DIRECT_UPDATE,
+		     PROP_TAG_NAME("node", "metadata", "season", "number"),
+		     PROP_TAG_CALLBACK_INT, di_set_season, di,
+		     PROP_TAG_NAMED_ROOT, di->di_root, "node",
+		     PROP_TAG_COURIER, deco_courier,
+		     NULL);
+
     di->di_db->db_pending_flags |= DB_PENDING_DEFERRED_VIDEO_ANALYSIS;
     deco_pendings = 1;
     break;
@@ -751,8 +883,8 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   rstr_release(di->di_url);
   rstr_release(di->di_filename);
   
-  if(di->di_mlp != NULL)
-    metadata_unbind(di->di_mlp);
+  if(di->di_mlv != NULL)
+    mlv_unbind(di->di_mlv);
 
   free(di);
 }

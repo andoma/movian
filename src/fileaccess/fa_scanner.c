@@ -637,9 +637,9 @@ set_sort_order(void *opaque, prop_event_t event, ...)
     const char *val = rstr_get(r);
     if(val != NULL) {
       if(!strcmp(val, "title"))
-	prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 2, NULL, 1);
+	prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 1);
       if(!strcmp(val, "date"))
-	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
+	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 3, NULL, 0);
     }
     kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "sortorder", 
 		   KVSTORE_SET_STRING, val);
@@ -684,10 +684,10 @@ add_sort_option_type(scanner_t *s, prop_t *model)
 
   if(cur != NULL && !strcmp(rstr_get(cur), "date")) {
     prop_select(on_date);
-    prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 2, NULL, 0);
+    prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 3, NULL, 0);
   } else {
     prop_select(on_title);
-    prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 2, NULL, 0);
+    prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 0);
   }
 
   s->s_refcount++;
@@ -870,7 +870,6 @@ fa_scanner(const char *url, time_t url_mtime,
 
 
   decorated_browse_create(model, pnf, source, title,
-			  DECO_FLAGS_DURATION_PRESENT |
 			  DECO_FLAGS_RAW_FILENAMES);
 
   s->s_mtime = url_mtime;

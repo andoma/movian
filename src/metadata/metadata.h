@@ -25,7 +25,7 @@ struct prop;
 struct prop_sub;
 struct prop_vec;
 struct prop_nf;
-typedef struct metadata_lazy_prop metadata_lazy_prop_t;
+typedef struct metadata_lazy_video metadata_lazy_video_t;
 
 #define METAITEM_STATUS_ABSENT     1
 #define METAITEM_STATUS_PARTIAL    2
@@ -72,8 +72,10 @@ typedef enum {
  * must never be changed
  */
 typedef enum {
-  METADATA_TYPE_VIDEO = 1,
-  METADATA_TYPE_MUSIC = 4,
+  METADATA_TYPE_VIDEO  = 1,
+  METADATA_TYPE_SEASON = 2,
+  METADATA_TYPE_SERIES = 3,
+  METADATA_TYPE_MUSIC  = 4,
   METADATA_TYPE_num
 } metadata_type_t;
 
@@ -86,7 +88,8 @@ typedef enum {
 typedef enum {
   METADATA_IMAGE_POSTER = 1,
   METADATA_IMAGE_BACKDROP = 2,
-  METADATA_IMAGE_PROFILE = 3,
+  METADATA_IMAGE_PORTRAIT = 3,
+  METADATA_IMAGE_BANNER_WIDE = 4,
 } metadata_image_type_t;
 
 
@@ -118,20 +121,36 @@ typedef struct metadata_stream {
 } metadata_stream_t;
 
 
+TAILQ_HEAD(metadata_person_queue, metadata_person);
+
+/**
+ *
+ */
+typedef struct metadata_person {
+  TAILQ_ENTRY(metadata_person) mp_link;
+  rstr_t *mp_name;
+  rstr_t *mp_character;
+  rstr_t *mp_department;
+  rstr_t *mp_job;
+  rstr_t *mp_portrait;
+} metadata_person_t;
+
 
 /**
  *
  */
 typedef struct metadata {
-  int md_cached;  // Set if data is from a cached lookup
 
   char *md_redirect;
 
-  contenttype_t md_contenttype;
-  float md_duration;
-  int md_tracks;
-  int md_track;
-  time_t md_time;
+  rstr_t *md_manufacturer;
+  rstr_t *md_equipment;
+
+  rstr_t *md_backdrop;
+  rstr_t *md_icon;
+  rstr_t *md_banner_wide;
+
+  rstr_t *md_ext_id;
 
   rstr_t *md_title;
   rstr_t *md_album;
@@ -139,34 +158,45 @@ typedef struct metadata {
   rstr_t *md_format;
   rstr_t *md_genre;
 
-  rstr_t *md_director;
-  rstr_t *md_producer;
-
   struct metadata_stream_queue md_streams;
+  struct metadata_person_queue md_cast;
+  struct metadata_person_queue md_crew;
 
-  int16_t md_year;
-  char md_metaitem_status;  // METAITEM_STATUS_* -defines
-  char md_preferred;        // Preferred by the user (set in database)
-
+  struct metadata *md_parent;
   rstr_t *md_description;
   rstr_t *md_tagline;
 
   rstr_t *md_imdb_id;
-  int16_t md_qtype;
-  int16_t md_rating;  // 0 - 100
-  int md_rate_count;
-  
+
+  int64_t md_id;
+  int64_t md_parent_id;
+
+  time_t md_time;
+  contenttype_t md_contenttype;
+  float md_duration;
+
   metadata_type_t md_type;
 
-  rstr_t *md_backdrop;
-  rstr_t *md_icon;
+  int md_rating_count;
 
-  int md_dsid;
 
-  rstr_t *md_manufacturer;
-  rstr_t *md_equipment;
+  int16_t md_dsid;
+  int16_t md_tracks;
+  int16_t md_track;
 
-  rstr_t *md_ext_id;
+  int16_t md_rating;  // 0 - 100
+  int16_t md_year;
+  int16_t md_idx;  // -1 == unset (episode, season, etc. Depends on md_type)
+  
+  char md_metaitem_status;  // METAITEM_STATUS_* -defines
+  char md_qtype;
+
+  char md_preferred:1;        // Preferred by the user (set in database)
+  char md_cached:1;           // Set if data is from a cached lookup
+
+
+
+
 } metadata_t;
 
 
@@ -193,6 +223,31 @@ typedef struct metadata_source_funcs {
 
 
 /**
+ * Used to tell what properties a metadata_source can provide
+ *
+ *
+ */
+
+typedef enum {
+  METADATA_PROP_TITLE,
+  METADATA_PROP_POSTER,
+  METADATA_PROP_YEAR,
+  METADATA_PROP_VTYPE,
+  METADATA_PROP_TAGLINE,
+  METADATA_PROP_DESCRIPTION,
+  METADATA_PROP_RATING,
+  METADATA_PROP_RATING_COUNT,
+  METADATA_PROP_BACKDROP,
+  METADATA_PROP_GENRE,
+  METADATA_PROP_CAST,
+  METADATA_PROP_CREW,
+  METADATA_PROP_EPISODE_NAME,
+  METADATA_PROP_SEASON_NAME,
+  METADATA_PROP_ARTIST_PICTURES,
+  METADATA_PROP_ALBUM_ART,
+} metadata_prop_t;
+
+/**
  *
  */
 typedef struct metadata_source {
@@ -209,13 +264,18 @@ typedef struct metadata_source {
   int ms_mark;
   int ms_qtype;
   int64_t ms_cfgid;
+
+  uint64_t ms_partial_props;
+  uint64_t ms_complete_props;
 } metadata_source_t;
 
 
 metadata_source_t *metadata_add_source(const char *name,
 				       const char *description,
 				       int default_prio, metadata_type_t type,
-				       const metadata_source_funcs_t *funcs);
+				       const metadata_source_funcs_t *funcs,
+				       uint64_t partials,
+				       uint64_t complete);
 
 metadata_t *metadata_create(void);
 
@@ -290,8 +350,10 @@ void metadb_insert_artistpic(void *db, int64_t artist_id, const char *url,
 			     int width, int height);
 
 void metadb_insert_videoart(void *db, int64_t videoitem_id, const char *url,
-			    metadata_image_type_t type,
-			    int width, int height);
+			    metadata_image_type_t type, int width, int height,
+			    int weight, const char *group, int titled);
+
+void metadb_delete_videoart(void *db, int64_t videoitem_id);
 
 void metadb_insert_videocast(void *db, int64_t videoitem_id,
 			     const char *name,
@@ -303,6 +365,8 @@ void metadb_insert_videocast(void *db, int64_t videoitem_id,
 			     int width,
 			     int height,
 			     const char *ext_id);
+
+void metadb_delete_videocast(void *db, int64_t videoitem_id);
 
 void metadb_insert_videogenre(void *db, int64_t videoitem_id,
 			      const char *title);
@@ -316,6 +380,8 @@ int metadb_get_videoinfo(void *db, const char *url,
 			 struct metadata_source_list *sources,
 			 int *fixed_ds, metadata_t **mdp);
 
+int64_t metadb_get_videoitem(void *db, const char *url);
+
 void metadb_videoitem_alternatives(struct prop *p, const char *url, int dsid,
 				   struct prop_sub *skipme);
 
@@ -325,7 +391,6 @@ int metadb_videoitem_delete_from_ds(void *db, const char *url, int ds);
 
 void decoration_init(void);
 
-#define DECO_FLAGS_DURATION_PRESENT 0x1
 #define DECO_FLAGS_RAW_FILENAMES    0x2
 
 void decorated_browse_create(struct prop *model, struct prop_nf *pnf,
@@ -337,20 +402,20 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-metadata_lazy_prop_t *metadata_bind_movie_info(struct prop *prop,
-					       rstr_t *url, rstr_t *filename,
-					       rstr_t *imdb_id, int duration,
-					       struct prop *options,
-					       struct prop *root,
-					       rstr_t *parent, int lonely);
+metadata_lazy_video_t *metadata_bind_video_info(struct prop *prop,
+						rstr_t *url, rstr_t *filename,
+						rstr_t *imdb_id, int duration,
+						struct prop *options,
+						struct prop *root,
+						rstr_t *parent, int lonely);
 
-void metadata_unbind(metadata_lazy_prop_t *mlp);
+void mlv_unbind(metadata_lazy_video_t *mlv);
 
-void mlp_set_imdb_id(metadata_lazy_prop_t *mlp, rstr_t *imdb_id);
+void mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id);
 
-void mlp_set_duration(metadata_lazy_prop_t *mlp, int duration);
+void mlv_set_duration(metadata_lazy_video_t *mlv, int duration);
 
-void mlp_set_lonely(metadata_lazy_prop_t *mlp, int lonely);
+void mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely);
 
 rstr_t *metadata_remove_postfix_rstr(rstr_t *in);
 

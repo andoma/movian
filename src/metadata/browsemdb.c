@@ -120,7 +120,7 @@ add_item(bmdb_t *b, const char *url, const char *parent, int contenttype)
   rstr_t *rurl = rstr_alloc(url);
   rstr_t *rfolder = rstr_alloc(folder);
 
-  metadata_bind_movie_info(metadata,
+  metadata_bind_video_info(metadata,
 			   rurl, title,
 			   NULL,
 			   5000, options,

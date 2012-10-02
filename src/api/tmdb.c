@@ -127,7 +127,7 @@ insert_videoart(void *db, int64_t itemid, metadata_image_type_t type,
 {
   char url[256];
   snprintf(url, sizeof(url), "tmdb:image:%s:%s", pfx, path);
-  metadb_insert_videoart(db, itemid, url, type, 0, 0);
+  metadb_insert_videoart(db, itemid, url, type, 0, 0, 0, NULL, 0);
 }
 
 
@@ -265,6 +265,7 @@ tmdb_insert_movie_cast(void *db, int64_t itemid, htsmsg_t *doc)
 
 
   htsmsg_t *crew = htsmsg_get_list(doc, "crew");
+  int o = 0;
   HTSMSG_FOREACH(f, crew) {
     htsmsg_t *p = htsmsg_get_map_by_field(f);
     if(p == NULL)
@@ -283,7 +284,7 @@ tmdb_insert_movie_cast(void *db, int64_t itemid, htsmsg_t *doc)
 			    NULL,
 			    htsmsg_get_str(p, "department"),
 			    htsmsg_get_str(p, "job"),
-			    0,
+			    o++,
 			    url[0] ? url : NULL, 0, 0,
 			    id);
   }
@@ -336,7 +337,7 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
   if(!htsmsg_get_dbl(doc, "vote_average", &vote_average))
     md->md_rating = vote_average * 10;
 
-  md->md_rate_count = htsmsg_get_s32_or_default(doc, "vote_count", -1);
+  md->md_rating_count = htsmsg_get_s32_or_default(doc, "vote_count", -1);
   md->md_duration = htsmsg_get_s32_or_default(doc, "runtime", 0) * 60;
   md->md_year = atoi(htsmsg_get_str(doc, "release_date") ?: "");
 
@@ -545,7 +546,24 @@ tmdb_init(void)
   hts_mutex_init(&tmdb_mutex);
 
   tmdb = metadata_add_source("tmdb", "themoviedb.org", 100001,
-			     METADATA_TYPE_VIDEO, &search_fns);
+			     METADATA_TYPE_VIDEO, &search_fns,
+
+			     // Properties we resolve for a partial lookup
+			     1 << METADATA_PROP_TITLE |
+			     1 << METADATA_PROP_POSTER |
+			     1 << METADATA_PROP_YEAR,
+			     // Properties we resolve for a complete lookup
+			     1 << METADATA_PROP_TAGLINE |
+			     1 << METADATA_PROP_DESCRIPTION |
+			     1 << METADATA_PROP_RATING |
+			     1 << METADATA_PROP_RATING_COUNT |
+			     1 << METADATA_PROP_GENRE |
+			     1 << METADATA_PROP_CAST |
+			     1 << METADATA_PROP_CREW |
+			     1 << METADATA_PROP_BACKDROP
+			     );
+
+
   if(tmdb == NULL)
     return;
 
