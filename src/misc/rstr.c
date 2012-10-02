@@ -94,6 +94,34 @@ static void __attribute__((constructor)) rstr_setup(void)
 #endif
 
 
+void 
+rstr_vec_append(rstr_vec_t **rvp, rstr_t *str)
+{
+  rstr_vec_t *rv = *rvp;
+
+  if(rv == NULL) {
+    rv = malloc(sizeof(rstr_vec_t) + sizeof(rstr_t *) * 16);
+    rv->capacity = 16;
+    rv->size = 0;
+    *rvp = rv;
+  } else if(rv->size == rv->capacity) {
+    rv->capacity = rv->capacity * 2;
+    rv = realloc(rv, sizeof(rstr_vec_t) + sizeof(rstr_t *) * rv->capacity);
+    *rvp = rv;
+  }
+  rv->v[rv->size++] = rstr_dup(str);
+}
+
+
+void
+rstr_vec_free(rstr_vec_t *rv)
+{
+  int i;
+  for(i = 0; i < rv->size; i++)
+    rstr_release(rv->v[i]);
+  free(rv);
+}
+
 
 #else
 

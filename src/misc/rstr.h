@@ -100,7 +100,16 @@ static inline int rstr_eq(const rstr_t *a, const rstr_t *b)
   return !strcmp(rstr_get(a), rstr_get(b));
 }
 
+typedef struct rstr_vec {
+  int size;
+  int capacity;
+  rstr_t *v[0];
+} rstr_vec_t;
 
+
+void rstr_vec_append(rstr_vec_t **rvp, rstr_t *str);
+
+void rstr_vec_free(rstr_vec_t *rv);
 
 #else
 
