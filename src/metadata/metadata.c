@@ -2191,15 +2191,12 @@ ms_set_enable(void *opaque, int value)
 
   void *db = metadb_get();
 
-  int rc = db_prepare(db, 
+  int rc = db_prepare(db, &stmt, 
 		      "UPDATE datasource "
 		      "SET enabled = ?2 "
-		      "WHERE id = ?1"
-		      , -1, &stmt, NULL);
+		      "WHERE id = ?1");
 
   if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
     metadb_close(db);
     return;
   }
@@ -2233,13 +2230,10 @@ metadata_add_source(const char *name, const char *description,
   if(db_begin(db))
     goto err;
 
-  rc = db_prepare(db, 
-		  "SELECT id,prio,enabled FROM datasource WHERE name=?1",
-		  -1, &stmt, NULL);
+  rc = db_prepare(db, &stmt,
+		  "SELECT id,prio,enabled FROM datasource WHERE name=?1");
   
   if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
     goto err;
   }
   
@@ -2265,12 +2259,11 @@ metadata_add_source(const char *name, const char *description,
 
     sqlite3_finalize(stmt);
 
-    rc = db_prepare(db, 
+    rc = db_prepare(db, &stmt,
 		    "INSERT INTO datasource "
 		    "(name, prio, type, enabled) "
 		    "VALUES "
-		    "(?1, ?2, ?3, ?4)"
-		    , -1, &stmt, NULL);
+		    "(?1, ?2, ?3, ?4)");
 
     if(rc != SQLITE_OK) {
       TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
