@@ -60,6 +60,10 @@ typedef struct sc_shoutcast {
   char *sc_stream_url;
   char *sc_playlist_streams[20];
 
+  htsbuf_queue_t *sc_stream_titles;
+  int sc_stream_title_byte_offset;
+  int sc_stream_title_last_byte_offset;
+
   int sc_stream_bitrate;
   int sc_stream_metaint;
   int sc_stream_chunk_size;
@@ -144,15 +148,47 @@ sc_parse_playlist_m3u(sc_shoutcast_t *sc, char *content)
  */
 static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
 {
-  size_t rs = buf_size;
+  char title[512];
+  uint32_t offs, len;
+  size_t rs = 0;
   sc_shoutcast_t *sc = (sc_shoutcast_t*)opaque;
 
   hts_mutex_unlock(&sc->sc_stream_buffer_mutex);
 
-  if(rs > sc->sc_stream_buffer->hq_size)
-    rs = sc->sc_stream_buffer->hq_size;
-
   rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
+
+  // update stream title if reached the point in buffer
+  if (htsbuf_peek(sc->sc_stream_titles, &offs, sizeof(uint32_t)) != 0)
+  {
+    // TRACE(TRACE_DEBUG,"shoutcast", "We have stream titles on queue.");
+    if (sc->sc_stream_title_byte_offset == -1)
+    {
+      // TRACE(TRACE_DEBUG,"shoutcast", "New stream title lets count down bytes processed.");
+      htsbuf_drop(sc->sc_stream_titles, sizeof(uint32_t));
+      sc->sc_stream_title_byte_offset = offs;
+    }
+    else
+      sc->sc_stream_title_byte_offset -= rs;
+
+    if (sc->sc_stream_title_byte_offset <= 0)
+    {
+      // TRACE(TRACE_DEBUG,"shoutcast", "Time to show streamtitle.");
+
+      // read stream title from buf
+      htsbuf_read(sc->sc_stream_titles, &len, sizeof(uint32_t));
+      len = MIN(512, len);
+      htsbuf_read(sc->sc_stream_titles, &title, len);
+      title[511] = '\0';
+      prop_t *tp = prop_get_by_name(PNVEC("global", "media", "current", "metadata","title"), 1, NULL);
+      prop_set_string(tp, title);
+      sc->sc_stream_title_byte_offset = -1;
+
+      // if no more streamtitles on queue reset last offset
+      if (htsbuf_peek(sc->sc_stream_titles, &offs, sizeof(uint32_t)) == 0)
+	sc->sc_stream_title_last_byte_offset = 0;
+    }
+  }
+
 
   // signal that data has been drained from buffer
   hts_cond_signal(&sc->sc_stream_buffer_drained_cond);
@@ -361,6 +397,8 @@ static int sc_initialize(sc_shoutcast_t *sc)
     void *probe_buffer;
     AVIOContext *probe;
 
+    sc->sc_stream_title_byte_offset = -1;
+
     sc->sc_fctx = avformat_alloc_context();
 
     // Probe a copy of stream buffer
@@ -532,6 +570,7 @@ static int sc_stream_read_headers(sc_shoutcast_t *sc, char *errbuf, size_t errle
 static void sc_parse_metadata(sc_shoutcast_t *sc, char *md, int mdlen)
 {
   char *ps, *pe;
+  uint32_t offs,size;
   TRACE(TRACE_DEBUG,"shoutcast","metadata: '%s'", md);
   
   if((ps = strstr(md,"StreamTitle='")) != NULL)
@@ -544,8 +583,19 @@ static void sc_parse_metadata(sc_shoutcast_t *sc, char *md, int mdlen)
     if (strlen(ps) == 0)
       return;
 
-    prop_t *tp = prop_get_by_name(PNVEC("global", "media", "current", "metadata","title"), 1, NULL);
-    prop_set_string(tp, ps);
+    if (sc->sc_stream_titles == NULL) {
+      sc->sc_stream_titles = malloc(sizeof(htsbuf_queue_init));
+      htsbuf_queue_init(sc->sc_stream_titles, 0);
+    }
+
+    // stream title with byte offset to queue
+    offs = sc->sc_stream_buffer->hq_size - sc->sc_stream_title_last_byte_offset;
+    sc->sc_stream_title_last_byte_offset = offs;
+    size = strlen(ps)+1;
+    htsbuf_append(sc->sc_stream_titles, &offs, sizeof(uint32_t));
+    htsbuf_append(sc->sc_stream_titles, &size, sizeof(uint32_t));
+    htsbuf_append(sc->sc_stream_titles, ps, strlen(ps)+1);
+    // TRACE(TRACE_DEBUG,"shoutcast", "Wrote new stream title to queue %d bytes.", sc->sc_stream_titles->hq_size);
   }
 }
 
