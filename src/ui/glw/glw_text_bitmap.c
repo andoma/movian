@@ -380,14 +380,14 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
     glw_renderer_draw(&gtb->gtb_text_renderer, w->glw_root, rc, 
 		      &gtb->gtb_texture,
-		      &gtb->gtb_color, NULL, alpha, blur);
+		      &gtb->gtb_color, NULL, alpha, blur, NULL);
   }
 
   if(gtb->gtb_paint_cursor) {
     glw_root_t *gr = w->glw_root;
     float a = cos((gr->gr_frames & 2047) * (360.0f / 2048.0f)) * 0.5f + 0.5f;
     glw_renderer_draw(&gtb->gtb_cursor_renderer, w->glw_root, rc,
-		      NULL, NULL, NULL, alpha * a, blur);
+		      NULL, NULL, NULL, alpha * a, blur, NULL);
   }
 }
 

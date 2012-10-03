@@ -548,6 +548,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_fs)(struct glw *w, rstr_t *str);
+
+  /**
+   *
+   */
   void (*gc_bind_to_property)(struct glw *w,
 			      prop_t *p,
 			      const char **pname,
@@ -625,6 +630,7 @@ static void  __attribute__((constructor)) widgetclassinit ## n(void) \
 
 const glw_class_t *glw_class_find_by_name(const char *name);
 
+typedef struct glw_program glw_program_t;
 
 /**
  * GLW root context
@@ -672,9 +678,12 @@ typedef struct glw_root {
   int gr_mouse_valid;
 
   struct glw_video_list gr_video_decoders;
+  int64_t gr_ui_start;        // Timestamp UI was initialized
   int64_t gr_frame_start;     // Timestamp when we started rendering frame
   int64_t gr_hz_sample;
   prop_t *gr_is_fullscreen;   // Set if our window is in fullscreen
+
+  float gr_time;
 
   /**
    * Screensaver
@@ -814,7 +823,9 @@ typedef struct glw_root {
 		    int num_vertices,
 		    const uint16_t *indices,
 		    int num_triangles,
-		    int flags);
+		    int flags,
+		    glw_program_t *p,
+		    const struct glw_rctx *rc);
 
 #define GLW_RENDER_COLOR_ATTRIBUTES 0x1 /* set if the color attributes
 					   are != [1,1,1,1] */
@@ -1354,6 +1365,11 @@ void glw_blendmode(struct glw_root *gr, int mode);
 #define GLW_CCW 1
 void glw_frontface(struct glw_root *gr, int how);
 
+struct glw_program *glw_make_program(struct glw_root *gr, 
+				     const char *vertex_shader,
+				     const char *fragment_shader);
+
+void glw_destroy_program(struct glw_root *gr, struct glw_program *gp);
 
 
 // text bitmap semi-private stuff

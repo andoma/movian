@@ -60,8 +60,8 @@ struct glw_backend_texture;
 /**
  * OpenGL shader program
  */
-typedef struct glw_program {
-  const char *gp_title;
+struct glw_program {
+  char *gp_title;
   GLuint gp_program;
 
   // Attributes
@@ -76,10 +76,13 @@ typedef struct glw_program {
   GLint  gp_uniform_blend;
   GLint  gp_uniform_color_offset;
   GLint  gp_uniform_blur;
+  GLint  gp_uniform_time;
+  GLint  gp_uniform_resolution;
+
 
   GLint  gp_uniform_t[6];
 
-} glw_program_t;
+};
 
 
 
@@ -188,12 +191,7 @@ void glw_rtt_destroy(struct glw_root *gr, glw_rtt_t *grtt);
 /**
  *
  */
-GLuint glw_compile_shader(const char *url, int type);
-
-glw_program_t *glw_make_program(glw_backend_root_t *gbr,
-				const char *title, GLuint vs, GLuint fs);
-
-int glw_load_program(glw_backend_root_t *gbr, glw_program_t *gp);
+int glw_load_program(glw_backend_root_t *gbr, struct glw_program *gp);
 
 void glw_program_set_modelview(glw_backend_root_t *gbr,
 			       const struct glw_rctx *rc);

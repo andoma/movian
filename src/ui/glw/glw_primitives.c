@@ -25,6 +25,9 @@ typedef struct glw_quad {
   
   glw_rgb_t color;
   glw_renderer_t r;
+  rstr_t *fs;
+  int recompile;
+  glw_program_t *prog;
 } glw_quad_t;
 
 
@@ -33,7 +36,14 @@ typedef struct glw_quad {
 static void
 glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 {
-  glw_quad_t *q = (void *)w;
+  glw_quad_t *q = (glw_quad_t *)w;
+  
+  if(q->recompile) {
+    glw_destroy_program(w->glw_root, q->prog);
+    q->prog = glw_make_program(w->glw_root, NULL, rstr_get(q->fs));
+    q->recompile = 0;
+  }
+
 
   if(!glw_renderer_initialized(&q->r)) {
     glw_renderer_init_quad(&q->r);
@@ -45,7 +55,8 @@ glw_quad_render(glw_t *w, const glw_rctx_t *rc)
 
   glw_renderer_draw(&q->r, w->glw_root, rc,
 		    NULL,
-		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
+		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0,
+		    q->prog);
 }
 
 
@@ -85,12 +96,30 @@ glw_quad_set_rgb(glw_t *w, const float *rgb)
   q->color.b = rgb[2];
 }
 
+
+/**
+ *
+ */
+static void 
+glw_quad_set_fs(glw_t *w, rstr_t *vs)
+{
+  glw_quad_t *q = (glw_quad_t *)w;
+  rstr_set(&q->fs, vs);
+  q->recompile = 1;
+
+}
+
+
+/**
+ *
+ */
 static void
 glw_quad_dtor(glw_t *w)
 {
-  glw_quad_t *q = (void *)w;
+  glw_quad_t *q = (glw_quad_t *)w;
   glw_renderer_free(&q->r);
-
+  rstr_release(q->fs);
+  glw_destroy_program(w->glw_root, q->prog);
 }
 
 
@@ -102,6 +131,7 @@ static glw_class_t glw_quad = {
   .gc_signal_handler = glw_quad_callback,
   .gc_set_rgb = glw_quad_set_rgb,
   .gc_dtor = glw_quad_dtor,
+  .gc_set_fs = glw_quad_set_fs,
 };
 
 
@@ -181,7 +211,7 @@ glw_raster_render(glw_t *w, const glw_rctx_t *rc)
   }
 
   glw_renderer_draw(&q->r, w->glw_root, rc, &q->tex,
-		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0);
+		    &q->color, NULL, rc->rc_alpha * w->glw_alpha, 0, NULL);
 }
 
 
