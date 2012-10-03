@@ -831,6 +831,10 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
   if(rval == METADATA_PERMANENT_ERROR && year != 0) {
     // Try without year
 
+    TRACE(TRACE_DEBUG, "METADATA",
+	  "Performing search lookup for %s without year, based on filename",
+	  rstr_get(title), year);
+
     rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
 					rstr_get(title), 0,
 					mlv->mlv_duration,
@@ -1042,7 +1046,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       if(rval == METADATA_PERMANENT_ERROR)
 	rval = metadb_insert_videoitem(db, rstr_get(mlv->mlv_url), ms->ms_id,
 				       "0", NULL, METAITEM_STATUS_ABSENT, 0,
-				       qtype, 0);
+				       qtype, ms->ms_cfgid);
+
       if(rval < 0) {
 	prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
 	if(md != NULL)
