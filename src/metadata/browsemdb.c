@@ -158,17 +158,15 @@ bmdb_files(prop_t *page, const char *url)
 
   void *db = metadb_get();
 
-  rc = db_prepare(db, 
+  rc = db_prepare(db, &stmt, 
 		  "SELECT i.url, p.url, i.contenttype "
 		  "FROM item AS i, item AS p "
 		  "WHERE i.url LIKE ?1 "
 		  "AND (i.contenttype == 5 OR i.contenttype == 7) "
 		  "AND i.parent = p.id"
-		  , -1, &stmt, NULL);
+		  );
 
   if(rc != SQLITE_OK) {
-    TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
-	  __FUNCTION__, __LINE__);
     goto err;
   }
 

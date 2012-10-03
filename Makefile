@@ -188,7 +188,8 @@ SRCS += 		src/api/api.c \
 			src/api/tmdb.c \
 			src/api/tvdb.c \
 
-SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c \
+SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c
+SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 
 ##############################################################
 # Networking

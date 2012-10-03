@@ -82,6 +82,7 @@ CONFIG_LIST="
  libav
  vda
  tlsf
+ airplay
 "
 
 cleanup() {

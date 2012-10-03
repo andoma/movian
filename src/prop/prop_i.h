@@ -336,6 +336,9 @@ int prop_destroy0(prop_t *p);
 
 void prop_unsubscribe0(prop_sub_t *s);
 
+void prop_notify_child2(prop_t *child, prop_t *parent, prop_t *sibling,
+			prop_event_t event, prop_sub_t *skipme, int flags);
+
 void prop_notify_childv(prop_vec_t *childv, prop_t *parent, prop_event_t event,
 			prop_sub_t *skipme, prop_t *p2);
 

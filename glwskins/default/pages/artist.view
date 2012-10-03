@@ -22,7 +22,7 @@ widget(keyintercept, {
 	  margin: -30;
 	  padding: -2;
 	  borderOnly: true;
-	  source: "/home/andoma/themes/frame.png";
+	  source: "skin://graphics/frame.png";
 	  widget(image, {
 	    source: $page.model.metadata.artist_portrait;
 	    aspectConstraint: true;
@@ -40,7 +40,7 @@ widget(keyintercept, {
 	      margin: -30;
 	      padding: -2;
 	      borderOnly: true;
-	      source: "/home/andoma/themes/frame.png";
+	      source: "skin://graphics/frame.png";
 	      widget(image, {
 		source: $self;
 		aspectConstraint: true;

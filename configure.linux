@@ -107,6 +107,7 @@ enable httpserver
 enable timegm
 enable inotify
 enable realpath
+#enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
 
 for opt do
