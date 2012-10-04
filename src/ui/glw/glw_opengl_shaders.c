@@ -68,9 +68,16 @@ static glw_program_t *
 get_program(const glw_backend_root_t *gbr,
 	    const struct glw_backend_texture *t0,
 	    const struct glw_backend_texture *t1,
-	    float blur, int flags)
+	    float blur, int flags,
+	    glw_program_t *up)
 {
   glw_program_t *gp;
+
+  if(up != NULL) {
+    if(t0 != NULL)
+      glBindTexture(gbr->gbr_primary_texture_mode, t0->tex);
+    return up;
+  }
 
   if(t0 == NULL) {
 
@@ -136,8 +143,8 @@ render_unlocked(glw_root_t *gr)
   for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
 
     const struct glw_backend_texture *t0 = rj->t0;
-    glw_program_t *gp = get_program(gbr, t0, rj->t1, rj->blur, rj->flags);
-
+    glw_program_t *gp = get_program(gbr, t0, rj->t1, rj->blur, rj->flags, NULL);
+    abort(); // Fix user programs
     if(gp == NULL)
       continue;
     
@@ -311,11 +318,11 @@ shader_render(struct glw_root *root,
 	      const uint16_t *indices,
 	      int num_triangles,
 	      int flags,
-	      glw_program_t *p,
+	      glw_program_t *up,
 	      const glw_rctx_t *rc)
 {
   glw_backend_root_t *gbr = &root->gr_be;
-  glw_program_t *gp = p ?: get_program(gbr, t0, t1, blur, flags);
+  glw_program_t *gp = get_program(gbr, t0, t1, blur, flags, up);
 
   if(gp == NULL)
     return;

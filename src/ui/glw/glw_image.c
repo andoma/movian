@@ -70,15 +70,15 @@ typedef struct glw_image {
 #define GI_MODE_ALPHA_EDGES      3
 #define GI_MODE_BORDER_ONLY_SCALING  4
 
-  uint8_t gi_update;
 
   uint8_t gi_alpha_edge;
 
-  uint8_t gi_is_ready;
+  uint8_t gi_is_ready : 1;
+  uint8_t gi_update : 1;
+  uint8_t gi_need_reload : 1;
+  uint8_t gi_loading_new_url : 1;
+  uint8_t gi_recompile : 1;
 
-  uint8_t gi_need_reload;
-
-  uint8_t gi_loading_new_url;
   int16_t gi_fixed_size;
 
   glw_renderer_t gi_gr;
@@ -104,6 +104,9 @@ typedef struct glw_image {
 
   int gi_switch_cnt;
   int gi_switch_tgt;
+
+  glw_program_t *gi_prog;
+  rstr_t *gi_fs;
 
 } glw_image_t;
 
@@ -161,6 +164,21 @@ glw_image_dtor(glw_t *w)
   if(gi->gi_pending != NULL)
     glw_tex_deref(w->glw_root, gi->gi_pending);
   glw_renderer_free(&gi->gi_gr);
+  rstr_release(gi->gi_fs);
+  glw_destroy_program(w->glw_root, gi->gi_prog);
+}
+
+
+/**
+ *
+ */
+static void 
+glw_image_set_fs(glw_t *w, rstr_t *fs)
+{
+  glw_image_t *gi = (glw_image_t *)w;
+  rstr_set(&gi->gi_fs, fs);
+  gi->gi_recompile = 1;
+
 }
 
 /**
@@ -242,6 +260,12 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
   float blur = 1 - (rc->rc_sharpness * w->glw_sharpness);
   glw_rctx_t rc0;
   
+  if(gi->gi_recompile) {
+    glw_destroy_program(w->glw_root, gi->gi_prog);
+    gi->gi_prog = glw_make_program(w->glw_root, NULL, rstr_get(gi->gi_fs));
+    gi->gi_recompile = 0;
+  }
+
   alpha_self = rc->rc_alpha * w->glw_alpha * gi->gi_alpha_self * gi->gi_autofade;
 
   if(gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES) {
@@ -291,7 +315,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
 			&glt->glt_texture,
 			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur,
-			NULL);
+			gi->gi_prog);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -316,7 +340,7 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       glw_renderer_draw(&gi->gi_gr, w->glw_root, rc,
 			&glt->glt_texture,
 			&gi->gi_col_mul, &gi->gi_col_off, alpha_self, blur,
-			NULL);
+			gi->gi_prog);
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_NORMAL);
@@ -1388,6 +1412,7 @@ static glw_class_t glw_image = {
   .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
+  .gc_set_fs = glw_image_set_fs,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1414,6 +1439,7 @@ static glw_class_t glw_icon = {
   .gc_set_size_scale = set_size_scale,
   .gc_set_default_size = set_default_size,
   .gc_get_identity = get_identity,
+  .gc_set_fs = glw_image_set_fs,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1440,6 +1466,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
+  .gc_set_fs = glw_image_set_fs,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1467,6 +1494,7 @@ static glw_class_t glw_frontdrop = {
   .gc_set_sources = set_sources,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
+  .gc_set_fs = glw_image_set_fs,
 };
 
 GLW_REGISTER_CLASS(glw_frontdrop);
@@ -1491,6 +1519,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_source = set_source,
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
+  .gc_set_fs = glw_image_set_fs,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);
