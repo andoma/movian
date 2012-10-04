@@ -158,7 +158,7 @@ static int sc_avio_read_packet(void *opaque, uint8_t *buf, int buf_size)
   rs = htsbuf_read(sc->sc_stream_buffer, buf, buf_size);
 
   // update stream title if reached the point in buffer
-  if (htsbuf_peek(sc->sc_stream_titles, &offs, sizeof(uint32_t)) != 0)
+  if (sc->sc_stream_titles && htsbuf_peek(sc->sc_stream_titles, &offs, sizeof(uint32_t)) != 0)
   {
     // TRACE(TRACE_DEBUG,"shoutcast", "We have stream titles on queue.");
     if (sc->sc_stream_title_byte_offset == -1)
@@ -398,6 +398,7 @@ static int sc_initialize(sc_shoutcast_t *sc)
     AVIOContext *probe;
 
     sc->sc_stream_title_byte_offset = -1;
+    sc->sc_stream_titles = NULL;
 
     sc->sc_fctx = avformat_alloc_context();
 
