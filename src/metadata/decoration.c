@@ -476,10 +476,10 @@ video_analysis(deco_browse_t *db)
   }
   
   di = LIST_FIRST(&db->db_items_per_ct[CONTENT_VIDEO]);
-  assert(di != NULL);
 
   prop_t *x = prop_create_r(db->db_prop_model, "season");
   if(season != -1 && series) {
+    assert(di != NULL);
     db->db_contents_mask |= DB_CONTENTS_TV_SEASON;
     prop_t *y = prop_create_r(di->di_metadata, "season");
     prop_link(y, x);
@@ -493,6 +493,7 @@ video_analysis(deco_browse_t *db)
 
   x = prop_create_r(db->db_prop_model, "series");
   if(series) {
+    assert(di != NULL);
     db->db_contents_mask |= DB_CONTENTS_TV_SERIES;
     prop_t *y = prop_create_r(di->di_metadata, "series");
     prop_link(y, x);
