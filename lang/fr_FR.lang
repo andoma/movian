@@ -62,7 +62,7 @@ id: Play from beginning
 msg: Lire dépuis le début
 
 id: Play until end of list
-msg: Lire depuis la fin de la liste
+msg: Lire jusqu'à la fin de la liste
 
 id: Queue
 msg: File d'attente
@@ -743,7 +743,7 @@ id: Metadata configuration and provider settings
 msg: Paramétrage des fournisseurs de métadonnées
 
 id: Metadata loaded from '%s' using %s
-msg: Métadonnées téléchargées depuis '%s' en utilisant %s
+msg: Métadonnées chargées depuis '%s' en utilisant %s
 
 id: Metadata search
 msg: Recherche des métadonnées
@@ -1143,4 +1143,3 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
-
