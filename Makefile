@@ -665,11 +665,6 @@ reconfigure:
 showconfig:
 	@echo $(CONFIGURE_ARGS)
 
-${PROG}.stripped: ${PROG}
-	${STRIP} -o $@ $<
-
-strip: ${PROG}.stripped
-
 # Create buildversion.h
 src/version.c: $(BUILDDIR)/buildversion.h
 $(BUILDDIR)/buildversion.h: FORCE
