@@ -134,6 +134,89 @@ glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
 
 
 
+/**
+ *
+ */
+void
+glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
+	     int alpha)
+{
+  int m = gr->gr_be.gbr_primary_texture_mode;
+  int mode;
+
+  grtt->grtt_width  = width;
+  grtt->grtt_height = height;
+
+  glGenTextures(1, &grtt->grtt_texture.tex);
+    
+  glBindTexture(m, grtt->grtt_texture.tex);
+  glTexParameteri(m, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri(m, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+  glTexParameteri(m, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+  mode = alpha ? GL_RGBA : GL_RGB;
+
+  glTexImage2D(m, 0, mode, width, height, 0, mode, GL_UNSIGNED_BYTE, NULL);
+  glGenFramebuffersEXT(1, &grtt->grtt_framebuffer);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
+  glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
+			    GL_COLOR_ATTACHMENT0_EXT,
+			    m, grtt->grtt_texture.tex, 0);
+
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
+{
+  int m = gr->gr_be.gbr_primary_texture_mode;
+
+  /* Save viewport */
+  glGetIntegerv(GL_VIEWPORT, grtt->grtt_viewport);
+
+  glBindTexture(m, 0);
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
+  
+  glViewport(0, 0, grtt->grtt_width, grtt->grtt_height);
+
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  glw_rctx_init(rc, grtt->grtt_width, grtt->grtt_height, 0);
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
+{
+  glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
+
+  /* Restore viewport */
+  glViewport(grtt->grtt_viewport[0],
+	     grtt->grtt_viewport[1],
+	     grtt->grtt_viewport[2],
+	     grtt->grtt_viewport[3]);
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
+{
+  glDeleteTextures(1, &grtt->grtt_texture.tex);
+  glDeleteFramebuffersEXT(1, &grtt->grtt_framebuffer);
+}
+
+
 
 /**
  *
