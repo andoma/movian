@@ -23,6 +23,8 @@ ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
 
 include ${CURDIR}/config.default
 
+ALLDEPS += ${STAMPS}
+
 OPTFLAGS ?= -O2
 
 BUILDDIR = build.${BUILD}
@@ -686,3 +688,22 @@ $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
 $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
+
+#
+#
+#
+$(BUILDDIR)/libav.stamp:
+	${MAKE} -C ${LIBAV_BUILD_DIR}
+	${MAKE} -C ${LIBAV_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
+#
+#
+#
+$(BUILDDIR)/freetype.stamp:
+	${MAKE} -C ${LIBAV_BUILD_DIR}
+	${MAKE} -C ${LIBAV_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
