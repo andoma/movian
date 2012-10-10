@@ -35,12 +35,15 @@ typedef struct render_job {
   Mtx m;
   const struct glw_backend_texture *t0;
   const struct glw_backend_texture *t1;
+  struct glw_program *up;
   struct glw_rgb rgb_mul;
   struct glw_rgb rgb_off;
   float alpha;
   float blur;
   int vertex_offset;
   int16_t num_vertices;
+  int16_t width;
+  int16_t height;
   char blendmode;
   char frontface;
   char eyespace;
@@ -143,8 +146,9 @@ render_unlocked(glw_root_t *gr)
   for(i = 0; i < gbr->gbr_num_render_jobs; i++, rj++) {
 
     const struct glw_backend_texture *t0 = rj->t0;
-    glw_program_t *gp = get_program(gbr, t0, rj->t1, rj->blur, rj->flags, NULL);
-    abort(); // Fix user programs
+    glw_program_t *gp = get_program(gbr, t0, rj->t1, rj->blur, rj->flags,
+				    rj->up);
+
     if(gp == NULL)
       continue;
     
@@ -241,6 +245,10 @@ shader_render_delayed(struct glw_root *root,
     glw_mtx_copy(rj->m, m);
   }
 
+  rj->width  = rc->rc_width;
+  rj->height = rc->rc_height;
+
+  rj->up = p;
   rj->t0 = t0;
   rj->t1 = t1;
 
