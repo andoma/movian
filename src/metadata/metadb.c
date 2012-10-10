@@ -2371,7 +2371,7 @@ metadb_set_video_restartpos(const char *url, int64_t pos_ms)
   int i;
   void *db;
 
-  if(pos_ms > 0 && pos_ms < 60000)
+  if(pos_ms >= 0 && pos_ms < 60000)
     return;
 
   if((db = metadb_get()) == NULL)
