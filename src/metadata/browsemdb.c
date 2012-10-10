@@ -102,10 +102,10 @@ static void
 add_item(bmdb_t *b, const char *url, const char *parent, int contenttype)
 {
   char fname[512];
-  char folder[512];
+  char directory[512];
 
   fa_url_get_last_component(fname, sizeof(fname), url);
-  fa_url_get_last_component(folder, sizeof(folder), parent);
+  fa_url_get_last_component(directory, sizeof(directory), parent);
   
   rstr_t *title = metadata_remove_postfix(fname);
 
@@ -118,14 +118,13 @@ add_item(bmdb_t *b, const char *url, const char *parent, int contenttype)
 
 
   rstr_t *rurl = rstr_alloc(url);
-  rstr_t *rfolder = rstr_alloc(folder);
+  rstr_t *rdir = rstr_alloc(directory);
 
   metadata_bind_video_info(metadata,
 			   rurl, title,
-			   NULL,
-			   5000, options,
-			   item, rfolder,
-			   0);
+			   NULL, 0,
+			   options, item,
+			   rdir, 0, 1);
 
   if(prop_set_parent(item, b->b_nodes))
     prop_destroy(item);

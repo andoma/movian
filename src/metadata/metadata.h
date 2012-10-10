@@ -408,7 +408,8 @@ metadata_lazy_video_t *metadata_bind_video_info(struct prop *prop,
 						rstr_t *imdb_id, int duration,
 						struct prop *options,
 						struct prop *root,
-						rstr_t *parent, int lonely);
+						rstr_t *parent, int lonely,
+						int passive);
 
 void mlv_unbind(metadata_lazy_video_t *mlv);
 

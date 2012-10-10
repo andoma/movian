@@ -173,7 +173,7 @@ analyze_video(deco_item_t *di)
 					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
 					di->di_duration, di->di_options,
 					di->di_root, db->db_title,
-					db->db_lonely_video_item);
+					db->db_lonely_video_item, 0);
   rstr_release(fname);
 }
 
