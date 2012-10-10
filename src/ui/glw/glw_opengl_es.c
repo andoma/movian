@@ -24,7 +24,7 @@
  *
  */
 void
-glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirebox(glw_root_t *gr, const glw_rctx_t *rc)
 {
   // NOT IMPLEMENTED
 }
@@ -34,7 +34,7 @@ glw_wirebox(glw_root_t *gr, glw_rctx_t *rc)
  *
  */
 void
-glw_wirecube(glw_root_t *gr, glw_rctx_t *rc)
+glw_wirecube(glw_root_t *gr, const glw_rctx_t *rc)
 {
   // NOT IMPLEMENTED
 }
@@ -53,7 +53,7 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
-  gbr->gbr_culling = 1;
+  gbr->gbr_frontface = GLW_CCW;
 
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // We should try to fix this
 
@@ -69,3 +69,43 @@ glw_opengl_init_context(glw_root_t *gr)
 
   return glw_opengl_shaders_init(gr);
 }
+
+
+
+/**
+ *
+ */
+void
+glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
+	     int alpha)
+{
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_enter(glw_root_t *gr, glw_rtt_t *grtt, glw_rctx_t *rc)
+{
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_restore(glw_root_t *gr, glw_rtt_t *grtt)
+{
+
+}
+
+
+/**
+ *
+ */
+void
+glw_rtt_destroy(glw_root_t *gr, glw_rtt_t *grtt)
+{
+}
+
