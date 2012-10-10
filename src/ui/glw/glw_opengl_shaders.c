@@ -134,6 +134,12 @@ render_unlocked(glw_root_t *gr)
 
   const float *vertices = gbr->gbr_vertex_buffer;
 
+  glBindBuffer(GL_ARRAY_BUFFER, gbr->gbr_vbo);
+  glBufferData(GL_ARRAY_BUFFER,
+	       sizeof(float) * VERTEX_SIZE * gbr->gbr_vertex_offset,
+	       vertices, GL_STATIC_DRAW);
+
+  vertices = NULL;
   glVertexAttribPointer(0, 4, GL_FLOAT, 0, sizeof(float) * VERTEX_SIZE,
 			vertices);
       
@@ -679,7 +685,7 @@ glw_opengl_shaders_init(glw_root_t *gr)
     gr->gr_be_prepare = prepare_delayed;
     gr->gr_be_render_unlocked = render_unlocked;
     gbr->gbr_delayed_rendering = 1;
-    
+    glGenBuffers(1, &gbr->gbr_vbo);
   }
 
   glEnableVertexAttribArray(0);
