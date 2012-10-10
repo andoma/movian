@@ -319,6 +319,7 @@ libav_setup() {
     LIBAV_PATH=${LIBAV_INSTALL_DIR}
     echo >>${CONFIG_MAK} "LIBAV_BUILD_DIR=${LIBAV_BUILD_DIR}"
     echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/libav.stamp"
+    rm -f "build.${BUILD}/libav.stamp"
 }
 
 
@@ -349,6 +350,7 @@ freetype_setup()
 
     echo >>${CONFIG_MAK} "FREETYPE_BUILD_DIR=${FREETYPE_BUILD_DIR}"
     echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/freetype.stamp"
+    rm -f "build.${BUILD}/freetype.stamp"
 
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${FREETYPE_INSTALL_DIR}/include -I${FREETYPE_INSTALL_DIR}/include/freetype2"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${FREETYPE_INSTALL_DIR}/lib -lfreetype -lbz2"

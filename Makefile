@@ -702,8 +702,8 @@ $(BUILDDIR)/libav.stamp:
 #
 #
 $(BUILDDIR)/freetype.stamp:
-	${MAKE} -C ${LIBAV_BUILD_DIR}
-	${MAKE} -C ${LIBAV_BUILD_DIR} install
+	${MAKE} -C ${FREETYPE_BUILD_DIR}
+	${MAKE} -C ${FREETYPE_BUILD_DIR} install
 	@mkdir -p $(dir $@)
 	touch $@
 
