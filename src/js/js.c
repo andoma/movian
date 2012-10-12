@@ -31,6 +31,7 @@
 #include "fileaccess/fileaccess.h"
 #include "keyring.h"
 #include "notifications.h"
+#include "networking/net.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -580,6 +581,34 @@ js_notify(JSContext *cx, JSObject *obj,
 /**
  *
  */
+static JSBool 
+js_sysipaddr(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  netif_t *ni = net_get_interfaces();
+  if(ni) {
+    char buf[32];
+    uint32_t myaddr = ni[0].ipv4;
+    free(ni);
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d",
+	     (uint8_t)(myaddr >> 24),
+	     (uint8_t)(myaddr >> 16),
+	     (uint8_t)(myaddr >> 8),
+	     (uint8_t)(myaddr));
+
+    *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, buf));
+  } else {
+    *rval = JSVAL_VOID;
+  } 
+  return JS_TRUE;
+}
+
+
+
+
+/**
+ *
+ */
 static JSFunctionSpec showtime_functions[] = {
     JS_FS("trace",            js_trace,    1, 0, 0),
     JS_FS("print",            js_print,    1, 0, 0),
@@ -602,6 +631,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("textDialog",       js_textDialog, 3, 0, 0),
     JS_FS("entityDecode",     js_decodeEntety, 1, 0, 0),
     JS_FS("notify",           js_notify, 2, 0, 0),
+    JS_FS("systemIpAddress",  js_sysipaddr, 0, 0, 0),
     JS_FS_END
 };
 
