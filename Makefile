@@ -567,7 +567,7 @@ endif
 # TLSF (Two Level Segregated Fit) memory allocator
 ##############################################################
 
-SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c ext/tlsf/tlsf_ps3.c
+SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c
 
 
 include support/${OS}.mk

@@ -157,7 +157,7 @@ void my_localtime(const time_t *timep, struct tm *tm);
  * OOM conditions
  */
 
-#if ENABLE_TLSF
+#if defined(ENABLE_TLSF) && defined(PS3)
 
 void *mymalloc(size_t size);
 
