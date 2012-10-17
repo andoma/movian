@@ -70,6 +70,3 @@ video_overlay_t *video_overlay_render_cleartext(const char *txt, int64_t start,
 
 int calculate_subtitle_duration(int txt_len);
 
-int video_overlay_codec_create(media_codec_t *mc, enum CodecID id,
-			       AVCodecContext *ctx, media_pipe_t *mp);
-

@@ -41,19 +41,7 @@
 #include "settings.h"
 #include "db/kvstore.h"
 
-// -- Video accelerators ---------
-
-#if ENABLE_VDPAU
-#include "video/vdpau.h"
-#endif
-
-#if ENABLE_PS3_VDEC
-#include "video/ps3_vdec.h"
-#endif
-
-#if ENABLE_VDA
-#include "video/vda.h"
-#endif
+static LIST_HEAD(, codec_def) registeredcodecs;
 
 // -------------------------------
 
@@ -98,6 +86,11 @@ uint8_t HTS_JOIN(sp, k0)[321];
 void
 media_init(void)
 {
+  codec_def_t *cd;
+  LIST_FOREACH(cd, &registeredcodecs, link)
+    if(cd->init)
+      cd->init();
+
   hts_mutex_init(&media_mutex);
 
   LIST_INIT(&media_pipe_stack);
@@ -1300,29 +1293,17 @@ media_codec_create(int codec_id, int parser,
 		   media_codec_params_t *mcp, media_pipe_t *mp)
 {
   media_codec_t *mc = calloc(1, sizeof(media_codec_t));
+  codec_def_t *cd;
 
-#if ENABLE_VDPAU
-  if(mcp && !vdpau_codec_create(mc, codec_id, ctx, mcp, mp)) {
-    
-  } else
-#endif
-#if ENABLE_PS3_VDEC
-  if(mcp && !video_ps3_vdec_codec_create(mc, codec_id, ctx, mcp, mp)) {
+  LIST_FOREACH(cd, &registeredcodecs, link)
+    if(!cd->open(mc, codec_id, ctx, mcp, mp))
+      break;
 
-  } else
-#endif
-#if ENABLE_VDA
-  if(mcp && ctx && !video_vda_codec_create(mc, codec_id, ctx, mcp, mp)) {
-
-  } else
-#endif
-  if(!video_overlay_codec_create(mc, codec_id, ctx, mp)) {
-
-  } else
-
-  if(media_codec_create_lavc(mc, codec_id, ctx, mcp)) {
-    free(mc);
-    return NULL;
+  if(cd == NULL) {
+    if(media_codec_create_lavc(mc, codec_id, ctx, mcp)) {
+      free(mc);
+      return NULL;
+    }
   }
 
   mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
@@ -2332,4 +2313,14 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url)
   
   mb->mb_dtor = ext_sub_dtor;
   mb_enq_head(mp, &mp->mp_video, mb);
+}
+
+
+/**
+ *
+ */
+void
+media_register_codec(codec_def_t *cd)
+{
+  LIST_INSERT_HEAD(&registeredcodecs, cd, link);
 }
