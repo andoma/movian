@@ -585,7 +585,7 @@ static void sc_parse_metadata(sc_shoutcast_t *sc, char *md, int mdlen)
       return;
 
     if (sc->sc_stream_titles == NULL) {
-      sc->sc_stream_titles = malloc(sizeof(htsbuf_queue_init));
+      sc->sc_stream_titles = malloc(sizeof(htsbuf_queue_t *));
       htsbuf_queue_init(sc->sc_stream_titles, 0);
     }
 
