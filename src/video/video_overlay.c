@@ -282,9 +282,11 @@ video_overlay_flush(video_decoder_t *vd, int send)
 /**
  *
  */
-int
-video_overlay_codec_create(media_codec_t *mc, enum CodecID id,
-			   AVCodecContext *ctx, media_pipe_t *mp)
+static int
+video_overlay_codec_create(media_codec_t *mc, int id,
+			   AVCodecContext *ctx, 
+			   media_codec_params_t *mcp,
+			   media_pipe_t *mp)
 {
   switch(id) {
   case CODEC_ID_DVD_SUBTITLE:
@@ -294,3 +296,4 @@ video_overlay_codec_create(media_codec_t *mc, enum CodecID id,
   }
 }
 
+REGISTER_CODEC(NULL, video_overlay_codec_create);

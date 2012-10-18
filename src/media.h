@@ -341,6 +341,43 @@ typedef struct media_pipe {
 struct AVFormatContext;
 struct AVCodecContext;
 
+
+/**
+ *
+ */
+typedef struct media_codec_params {
+  unsigned int width;
+  unsigned int height;
+  unsigned int profile;
+  unsigned int level;
+  int cheat_for_speed;
+  const void *extradata;
+  size_t extradata_size;
+} media_codec_params_t;
+
+
+/**
+ *
+ */
+typedef struct codec_def {
+  LIST_ENTRY(codec_def) link;
+  void (*init)(void);
+  int (*open)(media_codec_t *mc, int id,
+	      struct AVCodecContext *ctx, media_codec_params_t *mcp,
+	      media_pipe_t *mp);
+} codec_def_t;
+
+void media_register_codec(codec_def_t *cd);
+
+#define REGISTER_CODEC(init_, open_)				   \
+  static codec_def_t HTS_JOIN(codecdef, __LINE__) = {		   \
+    .init = init_,						   \
+    .open = open_						   \
+  };								   \
+  static void  __attribute__((constructor))			   \
+  HTS_JOIN(registercodecdef, __LINE__)(void)			   \
+  { media_register_codec(&HTS_JOIN(codecdef, __LINE__)); }
+
 /**
  *
  */
@@ -354,18 +391,6 @@ void media_format_deref(media_format_t *fw);
 void media_codec_deref(media_codec_t *cw);
 
 media_codec_t *media_codec_ref(media_codec_t *cw);
-
-
-typedef struct media_codec_params {
-  unsigned int width;
-  unsigned int height;
-  unsigned int profile;
-  unsigned int level;
-  int cheat_for_speed;
-  const void *extradata;
-  size_t extradata_size;
-} media_codec_params_t;
-
 
 media_codec_t *media_codec_create(int codec_id, int parser,
 				  media_format_t *fw, 

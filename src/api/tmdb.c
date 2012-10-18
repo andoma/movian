@@ -434,15 +434,12 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   
   htsmsg_t *resultlist = htsmsg_get_list(doc, "results");
 
-  if(resultlist == NULL || results == 0) {
-    htsmsg_destroy(doc);
-    return METADATA_PERMANENT_ERROR;
-  }
+  int64_t rval = METADATA_PERMANENT_ERROR;
 
   htsmsg_field_t *f;
-  HTSMSG_FOREACH(f, resultlist) {
+  if(resultlist != NULL) HTSMSG_FOREACH(f, resultlist) {
     htsmsg_t *res = htsmsg_get_map_by_field(f);
-    
+
     uint32_t id = htsmsg_get_u32_or_default(res, "id", 0);
     if(id == 0)
       continue;
@@ -474,9 +471,10 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
       insert_videoart(db, itemid, METADATA_IMAGE_POSTER, s, "poster");
     if((s = htsmsg_get_str(res, "backdrop_path")) != NULL)
       insert_videoart(db, itemid, METADATA_IMAGE_BACKDROP, s, "backdrop");
+    rval = 0;
   }
   htsmsg_destroy(doc);
-  return 0;
+  return rval;
 }
 
 

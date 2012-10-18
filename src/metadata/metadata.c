@@ -674,9 +674,8 @@ struct metadata_lazy_video {
   int mlv_duration;
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
-
+  unsigned char mlv_passive : 1;
   int mlv_dsid;
-
 };
 
 
@@ -988,9 +987,16 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
       } else if(msf->query_by_imdb_id != NULL && mlv->mlv_imdb_id != NULL) {
 	qtype = METADATA_QTYPE_IMDB;
 	q = rstr_get(mlv->mlv_imdb_id);
+
+	if(mlv->mlv_passive)
+	  continue;
+
       } else {
 	qtype = METADATA_QTYPE_FILENAME_OR_DIRECTORY;
 	q = NULL;
+
+	if(mlv->mlv_passive)
+	  continue;
       }
 
       if(md && md->md_dsid == ms->ms_id && is_qtype_compat(qtype, md->md_qtype))
@@ -1718,7 +1724,7 @@ metadata_lazy_video_t *
 metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, int duration,
 			 prop_t *options, prop_t *root,
-			 rstr_t *folder, int lonely)
+			 rstr_t *folder, int lonely, int passive)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1729,6 +1735,7 @@ metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   mlv->mlv_imdb_id = rstr_dup(imdb_id);
   mlv->mlv_type = METADATA_TYPE_VIDEO;
   mlv->mlv_lonely = lonely;
+  mlv->mlv_passive = passive;
   mlv->mlv_m = prop_ref_inc(prop);
 
   mlv->mlv_trig_title =

@@ -3692,7 +3692,9 @@ prop_courier_wait_and_dispatch(prop_courier_t *pc)
 void
 prop_courier_destroy(prop_courier_t *pc)
 {
-  assert(pc->pc_refcount == 0);
+  if(pc->pc_refcount != 0)
+    trace(TRACE_NO_PROP, TRACE_ERROR, "prop",
+	  "Refcnt is %d on courier destroy", pc->pc_refcount);
 
   if(pc->pc_run) {
     hts_mutex_lock(&prop_mutex);

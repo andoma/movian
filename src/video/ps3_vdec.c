@@ -122,7 +122,7 @@ typedef struct vdec_decoder {
 /**
  *
  */
-void
+static void
 video_ps3_vdec_init(void)
 {
   vdec_mpeg2_loaded = !SysLoadModule(SYSMODULE_VDEC_MPEG2);
@@ -739,9 +739,10 @@ no_lib(media_pipe_t *mp, const char *codec)
 /**
  *
  */
-int
-video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
-			    AVCodecContext *ctx, media_codec_params_t *mcp,
+static int
+video_ps3_vdec_codec_create(media_codec_t *mc, int id,
+			    struct AVCodecContext *ctx,
+			    media_codec_params_t *mcp,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
@@ -750,7 +751,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
   int spu_threads;
   int r;
 
-  if(mcp->width == 0 || mcp->height == 0)
+  if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
     return 1;
 
   switch(id) {
@@ -771,6 +772,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
       return no_lib(mp, "h264");
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
+#if 0
     if(mcp->level != 0 && mcp->level <= 42) {
       dec_type.profile_level = mcp->level;
     } else {
@@ -778,6 +780,16 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
       notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
 		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
+#else
+
+    if(mcp->level > 42) {
+      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
+		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
+    }
+    dec_type.profile_level = 42;
+
+#endif
+
     spu_threads = 4;
     break;
 
@@ -859,3 +871,5 @@ video_ps3_vdec_codec_create(media_codec_t *mc, enum CodecID id,
 
   return 0;
 }
+
+REGISTER_CODEC(video_ps3_vdec_init, video_ps3_vdec_codec_create);

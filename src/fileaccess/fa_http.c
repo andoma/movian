@@ -788,7 +788,7 @@ http_headers_init(struct http_header_list *l, const http_file_t *hf)
 
   LIST_INIT(l);
 
-  if(hc->hc_port != 80) {
+  if(hc->hc_port != 80 && 0) {
     snprintf(str, sizeof(str), "%s:%d", hc->hc_hostname, hc->hc_port);
     http_header_add(l, "Host", str, 0);
   } else {

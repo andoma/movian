@@ -16,7 +16,6 @@ BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
-JARGS=""
 LIBSPOTIFY_VERSION="12.1.51"
 
 CONFIG_LIST="
@@ -224,7 +223,7 @@ common_opt(){
   fi
   ;;
 
-  --jobs=*) JARGS="-j$2"
+  --jobs=*)
   ;;
 
   --cleanbuild) enable cleanbuild
@@ -317,9 +316,10 @@ libav_setup() {
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
-    (cd ${LIBAV_BUILD_DIR} && make ${JARGS}) || die
-    (cd ${LIBAV_BUILD_DIR} && make ${JARGS} install) || die
     LIBAV_PATH=${LIBAV_INSTALL_DIR}
+    echo >>${CONFIG_MAK} "LIBAV_BUILD_DIR=${LIBAV_BUILD_DIR}"
+    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/libav.stamp"
+    rm -f "build.${BUILD}/libav.stamp"
 }
 
 
@@ -348,8 +348,9 @@ freetype_setup()
 	--enable-static=yes \
 	--enable-shared=no)
 
-    (cd ${FREETYPE_BUILD_DIR} && make ${JARGS}) || die
-    (cd ${FREETYPE_BUILD_DIR} && make ${JARGS} install) || die
+    echo >>${CONFIG_MAK} "FREETYPE_BUILD_DIR=${FREETYPE_BUILD_DIR}"
+    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/freetype.stamp"
+    rm -f "build.${BUILD}/freetype.stamp"
 
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${FREETYPE_INSTALL_DIR}/include -I${FREETYPE_INSTALL_DIR}/include/freetype2"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${FREETYPE_INSTALL_DIR}/lib -lfreetype -lbz2"

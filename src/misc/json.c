@@ -302,6 +302,8 @@ json_parse_integer(const char *s, long *lp)
   while(*s > 0 && *s < 33)
     s++;
   const char *s2 = s;
+  if(*s2 == '-')
+    s2++;
   while(*s2 >= '0' && *s2 <= '9')
     s2++;
 

@@ -2371,7 +2371,7 @@ metadb_set_video_restartpos(const char *url, int64_t pos_ms)
   int i;
   void *db;
 
-  if(pos_ms < 60000)
+  if(pos_ms >= 0 && pos_ms < 60000)
     return;
 
   if((db = metadb_get()) == NULL)
@@ -2403,7 +2403,8 @@ metadb_set_video_restartpos(const char *url, int64_t pos_ms)
     }
 
     sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
-    sqlite3_bind_int64(stmt, 2, pos_ms);
+    if(pos_ms > 0)
+      sqlite3_bind_int64(stmt, 2, pos_ms);
     sqlite3_bind_int(stmt, 3, CONTENT_VIDEO);
     rc = db_step(stmt);
     sqlite3_finalize(stmt);

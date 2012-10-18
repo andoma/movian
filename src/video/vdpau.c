@@ -506,8 +506,8 @@ vdpau_codec_reinit(media_codec_t *mc)
 /**
  *
  */
-int
-vdpau_codec_create(media_codec_t *mc, enum CodecID id,
+static int
+vdpau_codec_create(media_codec_t *mc, int id,
 		   AVCodecContext *ctx, media_codec_params_t *mcp,
 		   media_pipe_t *mp)
 {
@@ -519,7 +519,7 @@ vdpau_codec_create(media_codec_t *mc, enum CodecID id,
   if(vd == NULL)
     return 1;
 
-  if(mcp->width == 0 || mcp->height == 0)
+  if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
     return 1;
 
   switch(id) {
@@ -823,3 +823,5 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
   vm->vm_vd->vdp_video_mixer_set_attribute_values(vm->vm_mixer, 1, 
 						  attributes, values);
 }
+
+REGISTER_CODEC(NULL, vdpau_codec_create);

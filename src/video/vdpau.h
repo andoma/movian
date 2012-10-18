@@ -158,10 +158,6 @@ void vdpau_draw_horiz_band(struct AVCodecContext *context,
 			   const AVFrame *frame, 
 			   int offset[4], int y, int type, int h);
 
-int vdpau_codec_create(media_codec_t *cw, enum CodecID id,
-		       AVCodecContext *ctx, media_codec_params_t *mcp,
-		       media_pipe_t *mp);
-
 const char *vdpau_errstr(vdpau_dev_t *vd, VdpStatus st);
 
 int vdpau_mixer_feat(vdpau_dev_t *vd, VdpVideoMixerFeature f);

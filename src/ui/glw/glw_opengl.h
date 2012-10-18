@@ -137,6 +137,8 @@ typedef struct glw_backend_root {
   int gbr_vertex_buffer_capacity;
   int gbr_vertex_offset;
 
+  GLuint gbr_vbo;
+
 } glw_backend_root_t;
 
 

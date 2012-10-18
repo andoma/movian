@@ -539,7 +539,6 @@ main(int argc, char **argv)
 #if ENABLE_PS3_VDEC
   TRACE(TRACE_DEBUG, "SPU", "Initializing SPUs");
   lv2SpuInitialize(6, 0);
-  video_ps3_vdec_init();
 #endif
 
   preload_fonts();

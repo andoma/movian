@@ -23,6 +23,8 @@ ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
 
 include ${CURDIR}/config.default
 
+ALLDEPS += ${STAMPS}
+
 OPTFLAGS ?= -O2
 
 BUILDDIR = build.${BUILD}
@@ -339,7 +341,6 @@ SRCS-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glw_opengl_common.c \
                                      src/ui/glw/glw_opengl_shaders.c \
                                      src/ui/glw/glw_opengl_ff.c \
                                      src/ui/glw/glw_opengl_ogl.c \
-                                     src/ui/glw/glw_opengl_glx.c \
                                      src/ui/glw/glw_texture_opengl.c \
                                      src/ui/glw/glw_video_opengl.c \
                                      src/ui/glw/glw_video_vdpau.c \
@@ -566,7 +567,7 @@ endif
 # TLSF (Two Level Segregated Fit) memory allocator
 ##############################################################
 
-SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c ext/tlsf/tlsf_ps3.c
+SRCS-${CONFIG_TLSF} += ext/tlsf/tlsf.c
 
 
 include support/${OS}.mk
@@ -664,11 +665,6 @@ reconfigure:
 showconfig:
 	@echo $(CONFIGURE_ARGS)
 
-${PROG}.stripped: ${PROG}
-	${STRIP} -o $@ $<
-
-strip: ${PROG}.stripped
-
 # Create buildversion.h
 src/version.c: $(BUILDDIR)/buildversion.h
 $(BUILDDIR)/buildversion.h: FORCE
@@ -686,3 +682,22 @@ $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
 $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
+
+#
+#
+#
+$(BUILDDIR)/libav.stamp:
+	${MAKE} -C ${LIBAV_BUILD_DIR}
+	${MAKE} -C ${LIBAV_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
+#
+#
+#
+$(BUILDDIR)/freetype.stamp:
+	${MAKE} -C ${FREETYPE_BUILD_DIR}
+	${MAKE} -C ${FREETYPE_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
