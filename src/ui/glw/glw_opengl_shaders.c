@@ -168,6 +168,12 @@ render_unlocked(glw_root_t *gr)
     glw_program_set_uniform_color(gbr, rj->rgb_mul.r, rj->rgb_mul.g,
 				  rj->rgb_mul.b, rj->alpha);
 
+    if(gp->gp_uniform_time != -1)
+      glUniform1f(gp->gp_uniform_time, gr->gr_time);
+
+    if(gp->gp_uniform_resolution != -1)
+      glUniform2f(gp->gp_uniform_resolution, rj->width, rj->height);
+
     if(gp->gp_uniform_blur != -1 && t0 != NULL)
       glUniform3f(gp->gp_uniform_blur, rj->blur,
 		  1.5 / t0->width, 1.5 / t0->height);
