@@ -486,7 +486,7 @@ static int sc_stream_data(sc_shoutcast_t *sc, char *buf, int bufsize)
   
   // Initialize stream buffer if not done
   if (sc->sc_stream_buffer == NULL) {
-    sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_init));
+    sc->sc_stream_buffer = malloc(sizeof(htsbuf_queue_t *));
     htsbuf_queue_init(sc->sc_stream_buffer, sc->sc_stream_chunk_size * 4 * 4);
   }
 
