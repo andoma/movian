@@ -274,7 +274,9 @@ rsx_render(struct glw_root *gr,
 	   int num_vertices,
 	   const uint16_t *indices,
 	   int num_triangles,
-	   int flags)
+	   int flags,
+	   glw_program_t *p,
+	   const glw_rctx_t *rc)
 {
   gcmContextData *ctx = gr->gr_be.be_ctx;
   rsx_vp_t *rvp = gr->gr_be.be_vp_1;
@@ -492,3 +494,19 @@ void glw_frontface(struct glw_root *gr, int how)
 		   REALITY_FRONT_FACE_CCW);
 }
 
+/**
+ * Not implemented yet
+ */
+struct glw_program *
+glw_make_program(struct glw_root *gr, 
+		 const char *vertex_shader,
+		 const char *fragment_shader)
+{
+  return NULL;
+}
+
+void
+glw_destroy_program(struct glw_root *gr, struct glw_program *gp)
+{
+
+}

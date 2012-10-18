@@ -81,7 +81,7 @@ glw_gradient_render(glw_t *w, const glw_rctx_t *rc)
     int i;
     for(i = 0; i < gg->gg_gr_initialized ; i++) {
       glw_renderer_draw(&gg->gg_gr[i], w->glw_root, rc, 
-			&gg->gg_tex[i], NULL, NULL, a, 0);
+			&gg->gg_tex[i], NULL, NULL, a, 0, NULL);
     }
   }
 }

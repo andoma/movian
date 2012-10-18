@@ -121,6 +121,7 @@ void glw_renderer_draw(glw_renderer_t *gr, glw_root_t *root,
 		       const struct glw_backend_texture *tex,
 		       const struct glw_rgb *rgb_mul,
 		       const struct glw_rgb *rgb_off,
-		       float alpha, float blur);
+		       float alpha, float blur,
+		       glw_program_t *p);
 
 void glw_vtmp_resize(glw_root_t *gr, int num_float);

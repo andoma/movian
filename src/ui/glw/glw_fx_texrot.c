@@ -88,7 +88,7 @@ glw_fx_texrot_render(glw_t *w, const glw_rctx_t *rc)
   if(glt != NULL && glt->glt_state == GLT_STATE_VALID && a > 0.01) {
     glw_renderer_draw(&fx->fx_render, w->glw_root, rc, 
 		      &glw_rtt_texture(&fx->fx_rtt),
-		      NULL, NULL, a, 0);
+		      NULL, NULL, a, 0, NULL);
   }
 }
 
@@ -134,7 +134,7 @@ glw_fx_texrot_render_internal(glw_root_t *gr, glw_rctx_t *rc,
     glw_Rotatef(&rc0, fx->fx_plates[i].angle, 0.0, 0.0, 1.0);
 
     glw_renderer_draw(&fx->fx_source_render, gr, &rc0,
-		      &glt->glt_texture, NULL, NULL, 0.15, 0);
+		      &glt->glt_texture, NULL, NULL, 0.15, 0, NULL);
   }
   glw_blendmode(gr, GLW_BLEND_NORMAL);
 }

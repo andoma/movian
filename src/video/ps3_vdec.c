@@ -415,7 +415,7 @@ picture_out(vdec_decoder_t *vdd)
     if(h264->idr_picture_flag)
       vdd->order_base += 0x100000000LL;
 
-    order = vdd->order_base + h264->pic_order_count[0];
+    order = vdd->order_base + (uint16_t)h264->pic_order_count[0];
 
     if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
        h264->picture_type[0] == 2)
@@ -423,8 +423,8 @@ picture_out(vdec_decoder_t *vdd)
 
 #if VDEC_DETAILED_DEBUG
     TRACE(TRACE_DEBUG, "VDEC DEC", "POC=%3d:%-3d IDR=%d PS=%d LD=%d %x 0x%llx %ld %d",
-	  h264->pic_order_count[0],
-	  h264->pic_order_count[1],
+	  (uint16_t)h264->pic_order_count[0],
+	  (uint16_t)h264->pic_order_count[1],
 	  h264->idr_picture_flag,
 	  h264->pic_struct,
 	  h264->low_delay_hrd_flag,

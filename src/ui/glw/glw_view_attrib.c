@@ -158,6 +158,30 @@ set_font(glw_view_eval_context_t *ec, const token_attrib_t *a,
 }
 
 
+
+/**
+ *
+ */
+static int
+set_fs(glw_view_eval_context_t *ec, const token_attrib_t *a,
+       struct token *t)
+{
+  rstr_t *str;
+
+  if(t->type == TOKEN_RSTRING)
+    str = t->t_rstring;
+  else
+    str = NULL;
+
+  str = str ? fa_absolute_path(str, t->file) : NULL;
+
+  if(ec->w->glw_class->gc_set_fs != NULL)
+    ec->w->glw_class->gc_set_fs(ec->w, str);
+  rstr_release(str);
+  return 0;
+}
+
+
 /**
  *
  */
@@ -958,6 +982,7 @@ static const token_attrib_t attribtab[] = {
   {"how",             set_string, 0, set_how},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
+  {"fragmentShader",  set_fs, 0},
   {"source",          set_source},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},

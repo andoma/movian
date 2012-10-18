@@ -263,6 +263,7 @@ typedef struct metadata_source {
 
   int ms_mark;
   int ms_qtype;
+  int ms_status;
   int64_t ms_cfgid;
 
   uint64_t ms_partial_props;

@@ -785,7 +785,7 @@ is_qtype_compat(int qa, int qb)
  */
 static int64_t
 query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
-			     const metadata_source_funcs_t *msf)
+			     const metadata_source_funcs_t *msf, int *qtype)
 {
   int year;
   rstr_t *title;
@@ -807,7 +807,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
     rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
 				 rstr_get(title), season, episode,
 				 METADATA_QTYPE_EPISODE);
-    
+    *qtype = METADATA_QTYPE_EPISODE;
     rstr_release(title);
     return rval;
   }
@@ -827,6 +827,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
 				      rstr_get(title), year,
 				      mlv->mlv_duration,
 				      METADATA_QTYPE_FILENAME);
+  *qtype = METADATA_QTYPE_FILENAME;
 
   if(rval == METADATA_PERMANENT_ERROR && year != 0) {
     // Try without year
@@ -839,6 +840,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
 					rstr_get(title), 0,
 					mlv->mlv_duration,
 					METADATA_QTYPE_FILENAME);
+    *qtype = METADATA_QTYPE_FILENAME;
   }
 
   rstr_release(title);
@@ -855,6 +857,7 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
 					rstr_get(title), year,
 					mlv->mlv_duration,
 					METADATA_QTYPE_DIRECTORY);
+    *qtype = METADATA_QTYPE_DIRECTORY;
     rstr_release(title);
   }
 
@@ -959,15 +962,20 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   if(md == NULL || !md->md_preferred) {
 
     LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+
+      /* Skip disabled datasources */
       if(!ms->ms_enabled)
 	continue;
 
       const metadata_source_funcs_t *msf = ms->ms_funcs;
 
+      /* If we have a fixed datasource (requested by user)
+       * skip all other datasources 
+       */
       if(fixed_ds && fixed_ds != ms->ms_id)
 	continue;
 
-      /* Figure out what query to run (or what we would like to run) */
+      /* Figure out what query to run */
       int qtype;
       const char *q;
 
@@ -994,8 +1002,21 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
        * thus continue
        */
        
-      if(ms->ms_mark && is_qtype_compat(qtype, ms->ms_qtype))
-	continue;
+      if(ms->ms_mark && is_qtype_compat(qtype, ms->ms_qtype)) {
+
+	/**
+	 * This weirdness is to be able to requery if we discover
+	 * that a movie is lonely in its folder
+	 * (To query using directory name)
+	 */
+	if(ms->ms_status == METAITEM_STATUS_ABSENT &&
+	   ms->ms_qtype == METADATA_QTYPE_FILENAME &&
+	   mlv->mlv_lonely) {
+
+	} else {
+	  continue;
+	}
+      }
 
       rval = metadb_videoitem_delete_from_ds(db, rstr_get(mlv->mlv_url),
 					     ms->ms_id);
@@ -1013,7 +1034,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	  break;
 
 	case METADATA_QTYPE_FILENAME_OR_DIRECTORY:
-	  rval = query_by_filename_or_dirname(db, mlv, msf);
+	  rval = query_by_filename_or_dirname(db, mlv, msf, &qtype);
 	  break;
 
 	case METADATA_QTYPE_CUSTOM:

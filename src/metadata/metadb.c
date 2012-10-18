@@ -1929,6 +1929,7 @@ metadb_get_videoinfo(void *db, const char *url,
       if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
 	ms->ms_mark = 1;
 	ms->ms_qtype = qtype;
+	ms->ms_status = status;
 	break;
       }
 

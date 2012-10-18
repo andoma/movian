@@ -321,6 +321,7 @@ glw_init(glw_root_t *gr, const char *instance)
 
   gr->gr_framerate = 60;
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
+  gr->gr_ui_start = showtime_get_ts();
 
   return 0;
 }
@@ -548,6 +549,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   }
 
   gr->gr_frame_start = showtime_get_ts();
+  gr->gr_time = (gr->gr_frame_start - gr->gr_ui_start) / 1000000.0;
 
   if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {
 
