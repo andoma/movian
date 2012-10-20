@@ -17,7 +17,6 @@
  */
 
 #include <assert.h>
-#include <libavutil/pixdesc.h>
 
 #include "showtime.h"
 #include "media.h"
@@ -714,18 +713,8 @@ glw_video_input(frame_buffer_type_t type, void *frame,
     avframe = frame;
 
     switch(fi->fi_pix_fmt) {
-    case PIX_FMT_YUV420P:
-    case PIX_FMT_YUV422P:
-    case PIX_FMT_YUV444P:
-    case PIX_FMT_YUV410P:
-    case PIX_FMT_YUV411P:
-    case PIX_FMT_YUV440P:
-
-    case PIX_FMT_YUVJ420P:
-    case PIX_FMT_YUVJ422P:
-    case PIX_FMT_YUVJ444P:
-    case PIX_FMT_YUVJ440P:
-      glw_video_input_yuvp(gv, avframe->data, avframe->linesize, fi);
+    default:
+      glw_video_input_avframe(gv, avframe, fi);
       break;
       
 #if ENABLE_VDPAU
@@ -738,12 +727,6 @@ glw_video_input(frame_buffer_type_t type, void *frame,
       glw_video_input_vdpau(gv, avframe->data, avframe->linesize, fi);
       break;
 #endif
-      
-    default:
-      TRACE(TRACE_ERROR, "GLW", 
-	  "PIX_FMT %s (0x%x) does not have a video engine",
-	   av_pix_fmt_descriptors[fi->fi_pix_fmt].name, fi->fi_pix_fmt);
-      break;
     }
     break;
 

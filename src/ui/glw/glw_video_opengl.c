@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <math.h>
+#include <libavutil/pixdesc.h>
 
 #include "showtime.h"
 #include "glw_video_common.h"
@@ -608,7 +609,7 @@ static glw_video_engine_t glw_video_opengl = {
 /**
  *
  */
-void
+static void
 glw_video_input_yuvp(glw_video_t *gv,
 		     uint8_t * const data[], const int pitch[],
 		     const frame_info_t *fi)
@@ -622,6 +623,7 @@ glw_video_input_yuvp(glw_video_t *gv,
   glw_video_surface_t *s;
   const int parity = 0;
   int64_t pts = fi->fi_pts;
+
 
   avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
@@ -701,5 +703,35 @@ glw_video_input_yuvp(glw_video_t *gv,
       pts += duration;
 
     glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, tff);
+  }
+}
+
+
+void
+glw_video_input_avframe(glw_video_t *gv, const AVFrame *avframe,
+			const frame_info_t *fi)
+{
+
+  switch(fi->fi_pix_fmt) {
+    
+  case PIX_FMT_YUV420P:
+  case PIX_FMT_YUV422P:
+  case PIX_FMT_YUV444P:
+  case PIX_FMT_YUV410P:
+  case PIX_FMT_YUV411P:
+  case PIX_FMT_YUV440P:
+    
+  case PIX_FMT_YUVJ420P:
+  case PIX_FMT_YUVJ422P:
+  case PIX_FMT_YUVJ444P:
+  case PIX_FMT_YUVJ440P:
+    glw_video_input_yuvp(gv, avframe->data, avframe->linesize, fi);
+    break;
+      
+  default:
+    TRACE(TRACE_ERROR, "GLW", 
+	  "PIX_FMT %s (0x%x) does not have a video engine",
+	  av_pix_fmt_descriptors[fi->fi_pix_fmt].name, fi->fi_pix_fmt);
+    break;
   }
 }
