@@ -84,6 +84,12 @@ typedef struct glw_video_surface {
 #endif
 
 
+#if CONFIG_GLW_BACKEND_GX
+  GXTexObj gvs_obj[3];
+  void *gvs_mem[3];
+  int gvs_size[3];
+#endif
+
 #if CONFIG_GLW_BACKEND_RSX
   realityTexture gvs_tex[3];
   int gvs_size;
@@ -162,6 +168,8 @@ typedef struct glw_video {
    * Freshly decoded surfaces are enqueued here
    */
   struct glw_video_surface_queue gv_decoded_queue;
+
+
 
   /**
    * VDPAU specifics
@@ -253,9 +261,9 @@ int glw_video_configure(glw_video_t *gv,
 /**
  *
  */
-void glw_video_input_avframe(glw_video_t *gv,
-			     const AVFrame *avf,
-			     const frame_info_t *fi);
+void glw_video_input_yuvp(glw_video_t *gv,
+			  uint8_t * const data[], const int pitch[],
+			  const frame_info_t *fi);
 
 
 void glw_video_input_vdpau(glw_video_t *gv,
