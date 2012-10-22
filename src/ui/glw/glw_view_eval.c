@@ -1108,12 +1108,12 @@ cloner_pagination_check(sub_cloner_t *sc)
   if(!sc->sc_have_more)
     return;
 
-  if(sc->sc_highest_active <= sc->sc_entries * 0.95)
-    return;
-
-  sc->sc_have_more = 0;
-  if(sc->sc_sub.gps_sub != NULL)
-    prop_want_more_childs(sc->sc_sub.gps_sub);
+  if(sc->sc_highest_active >= sc->sc_entries * 0.95 ||
+     sc->sc_highest_active == sc->sc_entries - 1) {
+    sc->sc_have_more = 0;
+    if(sc->sc_sub.gps_sub != NULL)
+      prop_want_more_childs(sc->sc_sub.gps_sub);
+  }
 }
 
 
