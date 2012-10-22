@@ -121,11 +121,15 @@ typedef struct js_model {
 
   struct js_subscription_list jm_subscriptions;
 
+  int jm_pending_want_more;
+
 } js_model_t;
 
 
 static JSObject *make_model_object(JSContext *cx, js_model_t *jm,
 				   jsval *root);
+
+static void install_nodesub(js_model_t *jm);
 
 /**
  *
@@ -578,6 +582,8 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 	       jsval *data, jsval *rval, int enabled,
 	       const char *metabind)
 {
+  install_nodesub(model);
+
   prop_t *item = prop_create_root(NULL);
 
   if(url != NULL)
@@ -1017,9 +1023,6 @@ js_model_fill(JSContext *cx, js_model_t *jm)
 {
   jsval result;
 
-  if(!jm->jm_paginator)
-    return 0;
-
   JS_CallFunctionValue(cx, NULL, jm->jm_paginator, 0, NULL, &result);
 
   return JSVAL_IS_BOOLEAN(result) && JSVAL_TO_BOOLEAN(result);
@@ -1079,8 +1082,12 @@ js_model_nodesub(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_WANT_MORE_CHILDS:
-    if(js_model_fill(jm->jm_cx, jm))
-      prop_have_more_childs(jm->jm_nodes);
+    if(jm->jm_paginator) {
+      if(js_model_fill(jm->jm_cx, jm))
+	prop_have_more_childs(jm->jm_nodes);
+    } else {
+      jm->jm_pending_want_more = 1;
+    }
     break;
   }
   va_end(ap);
@@ -1304,6 +1311,11 @@ js_open_trampoline(void *arg)
     prop_notify_dispatch(&exp);
     prop_notify_dispatch(&nor);
 
+    if(jm->jm_pending_want_more && jm->jm_paginator) {
+      jm->jm_pending_want_more = 0;
+      if(js_model_fill(jm->jm_cx, jm))
+	prop_have_more_childs(jm->jm_nodes);
+    }
   }
 
   JS_RemoveRoot(cx, &jm->jm_item_proto);
