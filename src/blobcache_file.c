@@ -423,7 +423,6 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   int expired = now > p->bi_expiry;
 
   if(expired && ignore_expiry == NULL) {
-    hts_mutex_unlock(&cache_lock);
     goto bad;
   }
 
