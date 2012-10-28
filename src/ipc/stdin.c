@@ -161,7 +161,16 @@ stdin_thread(void *aux)
   return NULL;
 }
 
+static struct termios termio;
 
+/**
+ *
+ */
+static void
+stdin_shutdown_early(void *opaque, int exitcode)
+{
+  tcsetattr(0, TCSANOW, &termio);
+}
 
 static void
 stdin_start(void)
@@ -169,15 +178,19 @@ stdin_start(void)
   if(!gconf.listen_on_stdin)
     return;
 
-  struct termios termio;
+  struct termios termio2;
 
   if(!isatty(0))
     return;
   if(tcgetattr(0, &termio) == -1)
     return;
-  termio.c_lflag &= ~(ECHO | ICANON);
-  if(tcsetattr(0, TCSANOW, &termio) == -1)
+  termio2 = termio;
+  termio2.c_lflag &= ~(ECHO | ICANON);
+  if(tcsetattr(0, TCSANOW, &termio2) == -1)
     return;
+
+  shutdown_hook_add(stdin_shutdown_early, NULL, 0);
+
   hts_thread_create_detached("stdin", stdin_thread, NULL,
 			     THREAD_PRIO_NORMAL);
 }
