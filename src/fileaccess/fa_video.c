@@ -427,12 +427,11 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 	mq = &mp->mp_video;
 
 	if(fctx->streams[si]->avg_frame_rate.num) {
-	  mb->mb_duration = 1000000 * fctx->streams[si]->avg_frame_rate.den /
+	  mb->mb_duration = 1000000LL * fctx->streams[si]->avg_frame_rate.den /
 	    fctx->streams[si]->avg_frame_rate.num;
 	} else {
 	  mb->mb_duration = rescale(fctx, pkt.duration, si);
 	}
-	//	mb->mb_send_pts = 1;
 
       } else if(fctx->streams[si]->codec->codec_type == AVMEDIA_TYPE_AUDIO) {
 
