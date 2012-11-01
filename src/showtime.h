@@ -237,15 +237,31 @@ typedef struct gconf {
 
 extern gconf_t gconf;
 
-
-
-
-
-
-
-
-
 /* From version.c */
 extern const char *htsversion;
 extern const char *htsversion_full;
 
+
+typedef struct inithelper {
+  struct inithelper *next;
+  enum {
+    INIT_GROUP_API,
+    INIT_GROUP_IPC,
+  } group;
+  void (*fn)(void);
+} inithelper_t;
+
+extern inithelper_t *inithelpers;
+
+#define INITME(group_, func_)					   \
+  static inithelper_t HTS_JOIN(inithelper, __LINE__) = {	   \
+    .group = group_,						   \
+    .fn = func_							   \
+  };								   \
+  static void  __attribute__((constructor))			   \
+  HTS_JOIN(inithelperctor, __LINE__)(void)			   \
+  {								   \
+    inithelper_t *ih = &HTS_JOIN(inithelper, __LINE__);		   \
+    ih->next = inithelpers;					   \
+    inithelpers = ih;						   \
+  }

@@ -182,8 +182,7 @@ BUNDLES += resources/fileaccess
 ##############################################################
 # APIs
 ##############################################################
-SRCS += 		src/api/api.c \
-			src/api/xmlrpc.c \
+SRCS += 		src/api/xmlrpc.c \
 			src/api/soap.c \
 			src/api/opensubtitles.c \
 			src/api/lastfm.c \
@@ -398,7 +397,6 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} \
 ##############################################################
 # IPC
 ##############################################################
-SRCS                +=  src/ipc/ipc.c
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
 SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 

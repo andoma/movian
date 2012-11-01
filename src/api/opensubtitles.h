@@ -24,7 +24,6 @@
 
 struct prop;
 struct fa_handle;
-void opensub_init(void);
 
 int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
 

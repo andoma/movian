@@ -22,10 +22,9 @@
 #include <termios.h>
 #include <string.h>
 
+#include "showtime.h"
 #include "arch/threads.h"
 #include "event.h"
-
-#include "ipc.h"
 
 
 #define ESEQ(n...) (const uint8_t []){n}
@@ -164,9 +163,12 @@ stdin_thread(void *aux)
 
 
 
-void
+static void
 stdin_start(void)
 {
+  if(!gconf.listen_on_stdin)
+    return;
+
   struct termios termio;
 
   if(!isatty(0))
@@ -179,3 +181,6 @@ stdin_start(void)
   hts_thread_create_detached("stdin", stdin_thread, NULL,
 			     THREAD_PRIO_NORMAL);
 }
+
+
+INITME(INIT_GROUP_IPC, stdin_start);

@@ -26,7 +26,6 @@
 #include "misc/pixmap.h"
 #include "backend/backend.h"
 #include "db/db_support.h"
-#include "tmdb.h"
 #include "settings.h"
 
 // http://help.themoviedb.org/kb/api/about-3
@@ -538,7 +537,7 @@ set_lang(void *opaque, const char *str)
 /**
  *
  */
-void
+static void
 tmdb_init(void)
 {
   hts_mutex_init(&tmdb_mutex);
@@ -583,6 +582,8 @@ tmdb_init(void)
 		       (void *)"tmdb");
 
 }
+
+INITME(INIT_GROUP_API, tmdb_init);
 
 /**
  *

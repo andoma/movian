@@ -335,10 +335,12 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 }
 
 
-void
+static void
 lastfm_init(void)
 {
   lastfm = metadata_add_source("lastfm", "last.fm",
 			       100000, METADATA_TYPE_MUSIC,
 			       NULL, 0, 0);
 }
+
+INITME(INIT_GROUP_API, lastfm_init);
