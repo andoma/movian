@@ -4324,17 +4324,21 @@ be_spotify_dlopen(void)
   snprintf(libname, sizeof(libname), "libspotify.so.%d", SPOTIFY_API_VERSION);
   h = dlopen(libname, RTLD_NOW);
 
+#ifdef SHOWTIME_LIBDIR
   if(h == NULL) {
     snprintf(libname, sizeof(libname), "%s/libspotify.so.%d", 
 	     SHOWTIME_LIBDIR, SPOTIFY_API_VERSION);
     h = dlopen(libname, RTLD_NOW);
   }
+#endif
 
+#ifdef LIBSPOTIFY_PATH
   if(h == NULL) {
     snprintf(libname, sizeof(libname), "%s/lib/libspotify.so.%d", 
 	     LIBSPOTIFY_PATH, SPOTIFY_API_VERSION);
     h = dlopen(libname, RTLD_NOW);
   }
+#endif
 
   if(h == NULL) {
     TRACE(TRACE_INFO, "spotify", "Unable to load libspotify.so.%d: %s",
