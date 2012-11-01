@@ -191,6 +191,8 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
 
+void video_frame_meta(video_decoder_t *vd, const frame_info_t *info);
+
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),
 				   void (*blackoutfn)(void *opaque),
