@@ -223,7 +223,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
       memcpy(mb->mb_data, pkt.data, pkt.size);
 
       if(mb->mb_pts != AV_NOPTS_VALUE) {
-	mb->mb_delta =  fctx->start_time;
+        if(fctx->start_time != AV_NOPTS_VALUE)
+          mb->mb_delta =  fctx->start_time;
 	mb->mb_drive_clock = 1;
       }
 

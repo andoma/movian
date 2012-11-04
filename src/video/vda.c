@@ -288,7 +288,7 @@ vda_close(struct media_codec *mc)
  *
  */
 static int
-video_vda_codec_create(media_codec_t *mc, id,
+video_vda_codec_create(media_codec_t *mc, int id,
 		       AVCodecContext *ctx, media_codec_params_t *mcp,
 		       media_pipe_t *mp)
 {

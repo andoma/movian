@@ -25,5 +25,4 @@ void lastfm_load_artistinfo(void *db, const char *artist,
 
 void lastfm_load_albuminfo(void *db, const char *album, const char *artist);
 
-void lastfm_init(void);
 

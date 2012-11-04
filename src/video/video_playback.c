@@ -508,11 +508,24 @@ video_queue_find_next(video_queue_t *vq, const char *url, int reverse,
 {
   rstr_t *r = NULL;
   video_queue_entry_t *vqe;
+  const char *cu = NULL;
+
   if(url == NULL)
     return NULL;
+
+  if(!strncmp(url, "videoparams:", strlen("videoparams:"))) {
+    htsmsg_t *m = htsmsg_json_deserialize(url + strlen("videoparams:"));
+    cu = m ? htsmsg_get_str(m, "canonicalUrl") : NULL;
+    cu = cu ? mystrdupa(cu) : NULL;
+    htsmsg_destroy(m);
+  }
+
   hts_mutex_lock(&video_queue_mutex);
+
   TAILQ_FOREACH(vqe, &vq->vq_entries, vqe_link) {
-    if(vqe->vqe_url != NULL && !strcmp(url, rstr_get(vqe->vqe_url)) &&
+    if(vqe->vqe_url != NULL &&
+       (!strcmp(url, rstr_get(vqe->vqe_url)) ||
+	(cu && !strcmp(cu, rstr_get(vqe->vqe_url)))) &&
        vqe->vqe_type != NULL && 
        (!strcmp("video", rstr_get(vqe->vqe_type)) || 
 	!strcmp("tvchannel", rstr_get(vqe->vqe_type))))

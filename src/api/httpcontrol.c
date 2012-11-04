@@ -21,7 +21,6 @@
 #include <sys/stat.h>
 
 #include "networking/http_server.h"
-#include "httpcontrol.h"
 #include "event.h"
 #include "misc/pixmap.h"
 #include "misc/string.h"
@@ -471,7 +470,7 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
 /**
  *
  */
-void
+static void
 httpcontrol_init(void)
 {
   http_path_add("/showtime/image", NULL, hc_image, 0);
@@ -485,3 +484,4 @@ httpcontrol_init(void)
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
 }
 
+INITME(INIT_GROUP_API, httpcontrol_init);

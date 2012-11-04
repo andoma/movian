@@ -30,10 +30,9 @@
 #include <stdlib.h>
 
 #include "config.h"
+#include "showtime.h"
 #include "arch/threads.h"
-#include "ipc/ipc.h"
 #include "serdev.h"
-
 
 /**
  *
@@ -206,9 +205,14 @@ probepattern(const char *pat)
 /**
  *
  */
-void
+static void
 serdev_start(void)
 {
+  if(!gconf.enable_serdev)
+    return;
+
   probepattern("/dev/ttyS*");
   probepattern("/dev/ttyUSB*");
 }
+
+INITME(INIT_GROUP_IPC, serdev_start);

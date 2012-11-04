@@ -31,7 +31,6 @@
 
 #include "event.h"
 #include "showtime.h"
-#include "ipc/ipc.h"
 #include "event.h"
 
 
@@ -175,13 +174,4 @@ lirc_open(void)
 }
 
 
-
-
-/**
- *
- */
-void
-lirc_start(void)
-{
-  lirc_open();
-}
+INITME(INIT_GROUP_IPC, lirc_open);

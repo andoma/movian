@@ -23,7 +23,6 @@
 #include "metadata/metadata.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "fileaccess/fileaccess.h"
-#include "tvdb.h"
 #include "misc/dbl.h"
 
 static metadata_source_t *tvdb;
@@ -467,7 +466,7 @@ static const metadata_source_funcs_t fns = {
 /**
  *
  */
-void
+static void
 tvdb_init(void)
 {
   if(1)
@@ -492,4 +491,7 @@ tvdb_init(void)
 			     1 << METADATA_PROP_BACKDROP
 			     );
 }
+
+INITME(INIT_GROUP_API, tvdb_init);
+
 

@@ -16,6 +16,9 @@ msg: Удалить текущую страницу из закладок
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+msg: Выйти из Showtime
+
 id: Go to Home screen
 msg: Перейти на главный экран
 
@@ -28,8 +31,17 @@ msg: Открыть настройки
 id: Playqueue
 msg: Очередь воспроизведения
 
+id: Power off
+msg: Отключить систему
+
 id: Reload current page
 msg: Перезагрузка текущей страницы
+
+id: Suspend
+msg: Отключить систему
+
+id: System
+msg: Система
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
@@ -56,7 +68,6 @@ id: Mark as seen
 msg: Пометить как просмотренное
 
 id: Mark as unseen
-# Missing translation
 msg: Пометить как непросмотренное
 
 id: Play from beginning
@@ -120,13 +131,13 @@ msg: Системный лог
 # ./glwthemes/default/pages/about.view
 #
 id: Allocated by application: %d kB
-msg: Выделено приложению: %d КБ
+msg: Выделено приложению: %d Кб
 
 id: Allocated by malloc: %d kB
-msg: Выделено malloc: %d КБ
+msg: Выделено malloc: %d Кб
 
 id: Avail system RAM: %d kB
-msg: Доступная память RAM: %d КБ
+msg: Доступная память RAM: %d Кб
 
 id: Detected CPUs: %d
 msg: Обнаружен CPU: %d
@@ -156,10 +167,10 @@ id: System info
 msg: Системная информация
 
 id: Total system RAM: %d kB
-msg: Общая память RAM: %d КБ
+msg: Общая память RAM: %d Кб
 
 id: Unused memory: %d kB
-msg: Неиспользованная память: %d КБ
+msg: Неиспользованная память: %d Кб
 
 id: Version: %s
 msg: Версия: %s
@@ -176,6 +187,9 @@ msg: Оконный менеджер: %s
 id: Album
 msg: Альбом
 
+id: Artist
+msg: Исполнитель
+
 id: Custom
 msg: Пользовательский
 
@@ -186,7 +200,10 @@ id: List
 msg: Список
 
 id: Slideshow
-msg: Слайдшоу
+msg: Слайд-шоу
+
+id: Tvchannels
+msg: ТВ-каналы
 
 id: View
 msg: Просмотр
@@ -198,19 +215,22 @@ id: Discovered resources on local network
 msg: Обнаруженные ресурсы в локальной сети
 
 #
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Плитка
+
+#
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
 msg: О программе
+id: Dismiss
+msg: Отклонить
+
 
 id: Plugins
 msg: Плагины
-
-#
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-msg: Отклонить
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
@@ -279,6 +299,18 @@ id: Yes
 msg: Дa
 
 #
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Сжатый
+
+id: Main
+msg: Основной
+
+id: Subs
+msg: Субтитры
+
+#
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
@@ -336,7 +368,7 @@ id: New version %s is available for download
 msg: Новая версия %s доступна для загрузки
 
 id: No upgrade available
-msg: Нет обнолвлений
+msg: Нет обновлений
 
 id: Restarting Showtime in %d seconds...
 msg: Перезапуск Showtime через %d секунд...
@@ -345,8 +377,7 @@ id: Retry...
 msg: Повторить ...
 
 id: Showtime is up to date
-# Missing translation
-msg: Showtime на текущий момент
+msg: Текущая версия Showtime самая новая
 
 id: Stable
 msg: Стабильный
@@ -370,10 +401,10 @@ msg: Статус воспроизведения
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-msg: Глава: %d
+msg: Раздел: %d
 
 id: Title: %d
-msg: Название: %d
+msg: Глава: %d
 
 #
 # ./glwthemes/default/popups/auth.view
@@ -418,7 +449,7 @@ id: Audio muted
 msg: Звук выключен
 
 id: Master volume: %d dB
-msg: Общая громкость: %d dB
+msg: Общая громкость: %d дБ
 
 #
 # ./src/api/opensubtitles.c
@@ -428,6 +459,15 @@ msg: Настройки для opensubtitles.org
 
 id: Use opensubtitles.org
 msg: Использовать opensubtitles.org
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Язык (в кодировке ISO 639-1)
+
+id: Use original title
+msg: Использовать оригинальное название
 
 #
 # ./src/arch/arch_ps3.c
@@ -472,10 +512,10 @@ msg: Переключение звука на %s
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: Недопустимый CD URL
+msg: Недопустимый URL для CD
 
 id: Invalid CD track
-msg: Недопустимый CD трек
+msg: Недопустимый CD-трек
 
 id: Unable to open CD
 msg: Невозможно открыть CD
@@ -507,11 +547,17 @@ msg: Результаты поиска для: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+msg: Альбомы
+
 id: Automatic login when Showtime starts
-msg: Автоматический логин при запуске Showtime
+msg: Автоматически подключаться при запуске Showtime
 
 id: Collaborative
 msg: Совместный
+
+id: Compilations
+msg: Сборник
 
 id: Enable Spotify
 msg: Включить Spotify
@@ -549,6 +595,9 @@ msg: Перелогиниться (смена пользователя)
 id: Search result
 msg: Результат поиска
 
+id: Singles
+msg: Синглы
+
 id: Spotify friends
 msg: Друзья на Spotify
 
@@ -565,7 +614,7 @@ id: Spotify: Connection error: %s
 msg: Spotify: Ошибка подключения: %s
 
 id: Starred
-msg: Starred
+msg: С отметками
 
 #
 # ./src/blobcache_file.c
@@ -574,7 +623,7 @@ id: Cache cleared
 msg: Кэш очищен
 
 id: Clear cached files
-msg: Очистить кэшированные файлы
+msg: Удалить кэшированные файлы
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -643,7 +692,7 @@ id: Language
 msg: Язык
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Коды языков должны быть настроены в виде трех символов ISO кодировки, например: eng, swe, fra
+msg: Коды языков должны быть настроены в виде трех символов ISO-кодировки, например: rus, eng, fra
 
 id: Languages
 msg: Языки
@@ -682,7 +731,7 @@ id: Input source
 msg: Источник на входе
 
 id: LG Television set
-msg: Телевизор TV
+msg: Телевизор LG
 
 #
 # ./src/keymapper.c
@@ -691,16 +740,16 @@ id: Configure mapping of keyboard and remote controller keys
 msg: Настройка клавиатуры и кнопок ДУ
 
 id: Keymapper
-msg: Настройка
+msg: Настройка кнопок
 
 #
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-msg: Забыть запомненные пароли
+msg: Удалить сохранённые пароли
 
 id: Rembered passwords erased
-msg: Вспомнить стертые пароли
+msg: Сохранённые пароли удалены
 
 #
 # ./src/media.c
@@ -729,6 +778,9 @@ msg: Автоматический
 id: Custom search query
 msg: Пользовательский поисковый запрос
 
+id: Custom title
+msg: Ввести название 
+
 id: Embedded in file
 msg: Встроен в файл
 
@@ -742,7 +794,7 @@ id: Metadata
 msg: Метаданные
 
 id: Metadata configuration and provider settings
-msg:  Конфигурация метаданных и настройки поставщика
+msg: Конфигурация метаданных и настройки поставщика
 
 id: Metadata loaded from '%s' using %s
 msg: Метаданные загружаются из '%s' с использованием %s
@@ -762,11 +814,11 @@ msg: Данные не найдены
 id: None
 msg: Нет
 
-id: Providers for Movies
-msg: Поставщиков для фильмов
-
 id: Providers for Music
 msg: Поставщики для музыки
+
+id: Providers for Video
+msg: Поставщики для видео
 
 id: Refresh metadata
 msg: Обновить метаданные
@@ -783,8 +835,23 @@ msg: пользовательский запрос
 id: filename
 msg: имя файла
 
+id: filename as TV episode
+msg: имя файла как TV-эпизод
+
 id: folder name
 msg: имя папки
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: Удалено записей: %d
+
+id: Clear all metadata
+msg: Удалить все метаданные
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был просмотрен\nКол-во раз, которые Трек/видео/фильм был просмотрен\nПозиция для продолжения просмотра\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
 
 #
 # ./src/navigator.c
@@ -826,7 +893,7 @@ msg: URL
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-msg: Альтернативный URL репозитория плагинов
+msg: Альтернативный URL-репозитория плагинов
 
 id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
@@ -836,6 +903,9 @@ msg: Доступные плагины
 
 id: Browse available plugins
 msg: Просмотр доступных плагинов
+
+id: Cloud services
+msg: Облачные сервисы
 
 id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
@@ -867,11 +937,17 @@ msg: Не установлен
 id: Not upgradable
 msg: Не обновляемый
 
+id: Online TV
+msg: Онлайн-ТВ
+
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: Не удается загрузить plugin.json: Неправильный JSON
+
+id: Uncategorized
+msg: Без категории
 
 id: Up to date
 msg: До даты
@@ -880,8 +956,13 @@ id: Upgradable
 msg: Обновляемый
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: Плагин %s обновлен до версии %s
+
+id: User interface extensions
+msg: Расширения пользовательского интерфейса
+
+id: Video streaming
+msg: Потоковое видео
 
 #
 # ./src/runcontrol.c
@@ -938,6 +1019,27 @@ id: System related settings
 msg: Настройки связанные с системой
 
 #
+# ./src/text/fontstash.c
+#
+id: Narrow text
+msg: Узкий шрифт
+
+id: Unable to load %s -- %s
+msg: Невозможно загрузить: %s -- %s
+
+id: Unable to open %s for writing
+msg:Невозможно открыть для записи: %s
+
+id: Unable to write to %s
+msg: Невозможно записать в: %s
+
+id: Use font %s for
+msg: Использовать шрифт %s для
+
+id: User interface
+msg: Пользовательский интерфейс
+
+#
 # ./src/ui/glw/glw.c
 #
 id: Display and user interface
@@ -989,7 +1091,7 @@ id: Open download page
 msg: Открыть страницу загрузки
 
 id: Showtime version %s is available
-msg: Доступна версия Showtime %s
+msg: Доступна версия Showtime: %s
 
 id: Software upgrade
 msg: Обновление ПО

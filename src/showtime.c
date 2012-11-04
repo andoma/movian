@@ -41,9 +41,7 @@
 #include "keyring.h"
 #include "notifications.h"
 #include "sd/sd.h"
-#include "ipc/ipc.h"
 #include "misc/callout.h"
-#include "api/api.h"
 #include "runcontrol.h"
 #include "service.h"
 #include "keymapper.h"
@@ -67,6 +65,7 @@
 
 #include "misc/fs.h"
 
+inithelper_t *inithelpers;
 
 /**
  *
@@ -143,6 +142,19 @@ init_global_info(void)
   prop_set_string(prop_create(s, "fullversion"), htsversion_full);
   prop_set_string(prop_create(s, "copyright"), "© 2006 - 2012 Andreas Öman");
 
+}
+
+/**
+ *
+ */
+static void
+init_group(int group)
+{
+  const inithelper_t *ih;
+  for(ih = inithelpers; ih != NULL; ih = ih->next) {
+    if(ih->group == group)
+      ih->fn();
+  }
 }
 
 
@@ -259,14 +271,14 @@ showtime_init(void)
     js_load(gconf.load_jsfile);
 
   /* Various interprocess communication stuff (D-Bus on Linux, etc) */
-  ipc_init();
+  init_group(INIT_GROUP_IPC);
 
   /* Service discovery. Must be after ipc_init() (d-bus and threads, etc) */
   if(!gconf.disable_sd)
     sd_init();
 
   /* Initialize various external APIs */
-  api_init();
+  init_group(INIT_GROUP_API);
 
   /* Open initial page(s) */
   nav_open(NAV_HOME, NULL);

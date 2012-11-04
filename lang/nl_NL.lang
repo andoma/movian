@@ -2,82 +2,79 @@ language: Dutch
 native: Nederlands
 maintainer: GuardianSoul
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: Huidige pagina aan bladwijzers toevoegen
 
 id: Open settings
-# Missing translation
-msg: 
+msg: Instellingen openen
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: Huidige pagina van bladwijzers verwijderen
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+msg: Showtime afsluiten
+
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: Naar het thuisscherm gaan
 
 id: Navigation
-# Missing translation
-msg: 
+msg: Navigatie
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: Instellingen openen
 
 id: Playqueue
 msg: Afspeellijst
 
+id: Power off
+msg: Uitschakelen
+
 id: Reload current page
-# Missing translation
-msg: 
+msg: Huidige pagina herladen
+
+id: Suspend
+msg: Slaapstand
+
+id: System
+msg: Systeem
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: '%s' toevoegen aan thuisscherm
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: '%s' verwijderen van thuisscherm
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: Voortzetten vanaf %s
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: Afspelen hier voortzetten
 
 id: Delete
 msg: Verwijderen
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: Als bekeken markeren
 
 id: Mark as unseen
-# Missing translation
-msg: 
+msg: Als niet bekeken markeren
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: Afspelen vanaf het begin
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: Tot het einde van de lijst afspelen
 
 id: Queue
 msg: In de wachtrij zetten
@@ -89,22 +86,19 @@ id: Unstar
 msg: Ster verwijderen
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: Geluid
 
 id: Audio settings
 msg: Geluidsinstellingen
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: Geluidssporen
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: Zoeken op tijd
 
 id: Settings
 msg: Instellingen
@@ -113,32 +107,28 @@ id: Subtitle settings
 msg: Ondertitelingsinstellingen
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: Ondertitelingssporen
 
 id: Subtitles
 msg: Ondertiteling
 
 id: Video
-# Missing translation
-msg: 
+msg: Video
 
 id: Video menu
-# Missing translation
-msg: 
+msg: Videomenu
 
 id: Video settings
 msg: Video-instellingen
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: Systeemlogboek
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Toegewezen door applicatie: %d kB
@@ -192,131 +182,115 @@ id: Windowmanager: %s
 msg: Vensterbeheerder: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: Album
+
+id: Artist
+msg: Artiest
 
 id: Custom
-# Missing translation
-msg: 
+msg: Aangepast
 
 id: Images
-# Missing translation
-msg: 
+msg: Afbeeldingen
 
 id: List
-# Missing translation
-msg: 
+msg: Lijst
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: Diavoorstelling
+
+id: Tvchannels
+msg: Tv-kanalen
 
 id: View
-# Missing translation
-msg: 
+msg: Bekijken
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: Ontdekte bronnen op lokaal netwerk
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Betegeld
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: Over Showtime
+
+id: Dismiss
+msg: Sluiten
 
 id: Plugins
-# Missing translation
-msg: 
+msg: Plugins
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-# Missing translation
-msg: 
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Camera:
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Datum:
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Auteur: 
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Beschikbare versie: 
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Geïnstalleerde versie: 
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: Showtime %s of nieuwer is vereist
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: Regisseur:
 
 id: Duration:
-# Missing translation
-msg: 
+msg: Duur
 
 id: File date:
-# Missing translation
-msg: 
+msg: Bestandsdatum:
 
 id: Genre:
-# Missing translation
-msg: 
+msg: Genre:
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: Metadata van
 
 id: Producer:
-# Missing translation
-msg: 
+msg: Producent:
 
 id: Rating:
-# Missing translation
-msg: 
+msg: Beoordeling:
 
 id: Year:
-# Missing translation
-msg: 
+msg: Jaar:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: Nieuw item toevoegen
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: Nee
@@ -325,105 +299,97 @@ id: Yes
 msg: Ja
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Verkort
+
+id: Main
+msg: Hoofd
+
+id: Subs
+msg: Ondertiteling
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: Installeren
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: Verwijderen
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: Bijwerken
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: De bron kon niet worden geopend
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Nummer %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: Er is een fout opgetreden tijdens het downloaden
 
 id: Available version:
-# Missing translation
-msg: 
+msg: Beschikbare versie:
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: Veranderingen voor %s uitgaven
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: Nu op updates controleren
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: Controleren op updates...
 
 id: Current version:
-# Missing translation
-msg: 
+msg: Huidige versie:
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: Downloaden en installeren...
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: Downloaden...
 
 id: Installing...
-# Missing translation
-msg: 
+msg: Installeren
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: Nieuwe versie %s kan worden gedownload
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: Geen updates beschikbaar
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: Showtime herstarten in %d seconden...
 
 id: Retry...
-# Missing translation
-msg: 
+msg: Opnieuw proberen...
 
 id: Showtime is up to date
-# Missing translation
-msg: 
+msg: Showtime is bijgewerkt
 
 id: Stable
-# Missing translation
-msg: 
+msg: Stabiel
 
 id: Testing
-# Missing translation
-msg: 
+msg: Test
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: Kan niet zoeken naar een nieuwere versie
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: De CPU is te langzaam om deze video te decoderen
@@ -432,18 +398,16 @@ id: Playback status
 msg: Afspeelstatus
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: Hoofdstuk: %d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: Titel: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Domein
@@ -458,29 +422,28 @@ id: Username
 msg: Gebruikersnaam
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Annuleren
 
 id: OK
-msg: Oké
+msg: Oke
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Geen media geladen
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: Geheugenverbruik:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Geluid gedempt
@@ -498,7 +461,16 @@ id: Use opensubtitles.org
 msg: Opensubtitles.org gebruiken
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Taal (ISO 639-1-codering)
+
+id: Use original title
+msg: Originele titel gebruiken
+
+#
+# ./src/arch/ps3/arch_ps3.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
@@ -575,11 +547,17 @@ msg: Zoekresultaat voor: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+msg: Albums
+
 id: Automatic login when Showtime starts
 msg: Automatisch inloggen als Showtime opstart
 
 id: Collaborative
 msg: Gezamenlijk
+
+id: Compilations
+msg: Verzamelalbums
 
 id: Enable Spotify
 msg: Spotify inschakelen
@@ -612,10 +590,13 @@ id: Playlists
 msg: Afspeellijsten
 
 id: Relogin (switch user)
-msg: Opnieuw inloggen (gebruiker omwisselen)
+msg: Opnieuw inloggen (gebruiker verwisselen)
 
 id: Search result
 msg: Zoekresultaat
+
+id: Singles
+msg: Singles
 
 id: Spotify friends
 msg: Spotify-vrienden
@@ -639,12 +620,10 @@ msg: Favorieten
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: Cachegeheugen verwijderd
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: Cachebestanden verwijderen
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -665,43 +644,34 @@ msg: Zoeken via Unix-locatedb
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: Toegang geweigerd
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: Account beperkt
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: Onjuiste deelnaam voor netwerk
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: Inlogfout
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: Datum
 
 id: Filename
-# Missing translation
-msg: 
+msg: Bestandsnaam
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: Alleen ondersteunde bestanden weergeven
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: Mappen eerst sorteren
 
 id: Sort on
-# Missing translation
-msg: 
+msg: Sorteren op
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -776,12 +746,10 @@ msg: Toetsindeling
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: Onthouden wachtwoorden vergeten
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: Onthouden wachtwoorden verwijderd
 
 #
 # ./src/media.c
@@ -805,12 +773,13 @@ msg: Videovergroting
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: Automatisch
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: Aangepaste zoekopdracht
+
+id: Custom title
+msg: Aangepaste titel
 
 id: Embedded in file
 msg: Ingesloten in bestand
@@ -819,173 +788,157 @@ id: Enabled
 msg: Ingeschakeld
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb-ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: Metadata
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: Metadataconfiguratie en aanbiedersinstellingen
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
-msg: 
+msg: Metadata geladen van '%s' via %s
 
 id: Metadata search
-# Missing translation
-msg: 
+msg: Metadata zoeken
 
 id: Metadata source
-# Missing translation
-msg: 
+msg: Bron metadata
 
 id: Movie
-# Missing translation
-msg: 
+msg: Film
 
 id: No data found
-# Missing translation
-msg: 
+msg: Geen data gevonden
 
 id: None
-# Missing translation
-msg: 
+msg: Geen
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: Filmaanbieders
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: Muziekaanbieders
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: Metadata vernieuwen
 
 id: Track %d
 msg: Nummer %d
 
 id: custom IMDb ID
-# Missing translation
-msg: 
+msg: aangepaste IMDb-ID
 
 id: custom query
-# Missing translation
-msg: 
+msg: aangepaste zoekopdracht
 
 id: filename
-# Missing translation
-msg: 
+msg: bestandsnaam
+
+id: filename as TV episode
+msg: bestandsnaam als tv-aflevering
 
 id: folder name
-# Missing translation
-msg: 
+msg: mapnaam
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d items verwijderd
+
+id: Clear all metadata
+msg: Alle metadata legen
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n\nAls een nummer/film bekeken is\nHet aantal keer dat een nummer/film is afgespeeld\nDe hervatpositie voor het afspelen van bestanden\n\nDit zal ook het cachegeheugen van de metadata voor externe bronnen zoals themoviedb.org, etc. verwijderen\n\nWeet u zeker dat u door wilt gaan?
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: Nieuwe bladwijzer toevoegen: %s
 
 id: Bookmarks
 msg: Bladwijzers
 
 id: Music
-# Missing translation
-msg: 
+msg: Muziek
 
 id: No handler for URL
 msg: Geen handler voor URL
 
 id: Other
-# Missing translation
-msg: 
+msg: Overige
 
 id: Photos
-# Missing translation
-msg: 
+msg: Foto's
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: Bladwijzer verwijderd: %s
 
 id: TV
-# Missing translation
-msg: 
+msg: Tv
 
 id: Title
-# Missing translation
-msg: 
+msg: Titel
 
 id: Type
 msg: Type
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: Alternatieve repository-URL voor plugin
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: Plugins automatisch bijwerken
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Beschikbare plugins
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Bladeren door beschikbare plugins
+
+id: Cloud services
+msg: Cloudservices
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: Beschadigde pluginbundel
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: Schrijffout
 
 id: Downloading
-# Missing translation
-msg: 
+msg: Downloaden
 
 id: File open error
-# Missing translation
-msg: 
+msg: Fout bij openen bestand
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Geïnstalleerde plugins
 
 id: Installing
-# Missing translation
-msg: 
+msg: Installeren
 
 id: Invalud URI
 msg: Ongeldige URI 
 
 id: Not installable
-# Missing translation
-msg: 
+msg: Niet installeerbaar
 
 id: Not installed
-# Missing translation
-msg: 
+msg: Niet geïnstalleerd
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: Niet bij te werken
+
+id: Online TV
+msg: Online tv
 
 id: Unable to load plugin.json: %s
 msg: De plugin.json kon niet worden geladen: %s
@@ -993,17 +946,23 @@ msg: De plugin.json kon niet worden geladen: %s
 id: Unable to load plugin.json: Malformed JSON
 msg: De plugin.json kon niet worden geladen: Misvormde JSON
 
+id: Uncategorized
+msg: Ongecategoriseerd
+
 id: Up to date
-# Missing translation
-msg: 
+msg: Bijgewerkt
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: Kan worden bijgewerkt
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: Plugin %s is bijgewerkt naar versie %s
+
+id: User interface extensions
+msg: Gebruikersinterface-extensies
+
+id: Video streaming
+msg: Video's streamen
 
 #
 # ./src/runcontrol.c
@@ -1012,20 +971,16 @@ id: Automatic standby
 msg: Automatische slaapstand
 
 id: Logout
-# Missing translation
-msg: 
+msg: Uitloggen
 
 id: Open shell
-# Missing translation
-msg: 
+msg: Shell openen
 
 id: Power off system
-# Missing translation
-msg: 
+msg: Systeem uitschakelen
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: Showtime starten en stoppen
 
 #
 # ./src/sd/sd.c
@@ -1037,8 +992,7 @@ msg: Naam
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: Lokaal netwerk
 
 #
 # ./src/settings.c
@@ -1047,26 +1001,43 @@ id: Applications and installed plugins
 msg: Applicaties en geïnstalleerde plugins
 
 id: Developer settings
-# Missing translation
-msg: 
+msg: Ontwikkelaarsinstellingen
 
 id: Discovered media sources
 msg: Gevonden mediabronnen
 
 id: General
-# Missing translation
-msg: 
+msg: Algemeen
 
 id: Global settings
 msg: Algemene instellingen
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: Handige instellingen voor ontwikkelaars
 
 id: System related settings
-# Missing translation
-msg: 
+msg: Systeemgerelateerde instellingen
+
+#
+# ./src/text/fontstash.c
+#
+id: Narrow text
+msg: Smalle tekst
+
+id: Unable to load %s -- %s
+msg: Laden niet mogelijk: %s -- %s
+
+id: Unable to open %s for writing
+msg: Kan %s niet openen om te schrijven
+
+id: Unable to write to %s
+msg: Kan niet schrijven naar %s
+
+id: Use font %s for
+msg: Lettertype %s gebruiken voor
+
+id: User interface
+msg: Gebruikersinterface
 
 #
 # ./src/ui/glw/glw.c
@@ -1114,24 +1085,19 @@ msg: Videomodi
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: Informeren over updates
 
 id: Open download page
-# Missing translation
-msg: 
+msg: Downloadpagina openen
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Showtime-versie %s is beschikbaar
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: Softwareupdate
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: Type updates
 
 #
 # ./src/upnp/upnp.c
@@ -1203,8 +1169,7 @@ id: Count video as played when reaching
 msg: Video als afgespeeld rekenen bij nadering
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: VDA inschakelen
 
 id: Enable VDPAU
 msg: VDPAU inschakelen

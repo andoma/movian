@@ -77,7 +77,7 @@ extern struct prop *subtitle_settings_dir;
 /**
  *
  */
-void
+static void
 opensub_init(void)
 {
   prop_t *s;
@@ -111,7 +111,7 @@ opensub_init(void)
 }
 
 
-
+INITME(INIT_GROUP_API, opensub_init);
 
 
 
