@@ -1,6 +1,7 @@
 /*
  *  Run control - Support for standby, auto standby on idle, etc
  *  Copyright (C) 2010 Andreas Öman
+ *  Copyright (C) 2012 Henrik Andersson
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +31,7 @@ static int standby_delay;
 static int64_t last_activity;
 static int active_media;
 static callout_t autostandby_timer;
+static setting_t *autostandby;
 
 extern int showtime_can_standby;
 extern int showtime_can_poweroff;
@@ -48,6 +50,14 @@ runcontrol_activity(void)
     last_activity = showtime_get_ts();
 }
 
+/**
+ *
+ */
+static
+void shutdown_hook(void *opaque, int exitcode)
+{
+  settings_set_int(autostandby, 0);
+}
 
 /**
  *
@@ -113,10 +123,10 @@ init_autostandby(void)
   if(store == NULL)
     store = htsmsg_create_map();
 
-  settings_create_int(settings_general, "autostandby", _p("Automatic standby"), 
-		      0, store, 0, 60, 5, set_autostandby, NULL,
-		      SETTINGS_INITIAL_UPDATE, " min", NULL,
-		      runcontrol_save_settings, NULL);
+  autostandby = settings_create_int(settings_general, "autostandby", _p("Automatic standby"),
+				    0, store, 0, 60, 5, set_autostandby, NULL,
+				    SETTINGS_INITIAL_UPDATE, " min", NULL,
+				    runcontrol_save_settings, NULL);
 
   last_activity = showtime_get_ts();
 
@@ -200,4 +210,7 @@ runcontrol_init(void)
   if(!gconf.can_not_exit)
     settings_create_action(settings_general, _p("Exit Showtime"),
 			   do_exit, NULL, 0, NULL);
+
+  shutdown_hook_add(shutdown_hook, NULL, 1);
 }
+
