@@ -184,9 +184,38 @@ play_video(const char *url, struct media_pipe *mp,
 
   mp_reinit_streams(mp);
 
-  if(strncmp(url, "videoparams:", strlen("videoparams:"))) 
-    return backend_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
-			      priority, errbuf, errlen, NULL, url, vq);
+  if(strncmp(url, "videoparams:", strlen("videoparams:"))) {
+    backend_t *be = backend_canhandle(url);
+
+    if(be == NULL || be->be_play_video == NULL) {
+      prop_t *p = prop_create_root(NULL);
+      if(backend_open(p, url, 1)) {
+	prop_destroy(p);
+	snprintf(errbuf, errlen, "No backend for URL");
+	return NULL;
+      }
+      rstr_t *r = prop_get_string(p, "source", NULL);
+      prop_destroy(p);
+      if(r != NULL) {
+	TRACE(TRACE_DEBUG, "vp", "Page %s redirects to video source %s\n",
+	      url, rstr_get(r));
+	event_t *e = play_video(rstr_get(r), mp, flags, priority,
+				errbuf, errlen, vq);
+	rstr_release(r);
+	return e;
+      }
+      snprintf(errbuf, errlen,
+	       "Page model for '%s' does not provide a video source",
+	       url);
+      return NULL;
+
+    }
+    mp_set_url(mp, url);
+
+    return be->be_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
+			     priority, errbuf, errlen, NULL,
+			     url, vq);
+  }
 
   url += strlen("videoparams:");
   htsmsg_t *m = htsmsg_json_deserialize(url);
