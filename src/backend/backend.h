@@ -67,7 +67,7 @@ typedef struct backend {
 
   int (*be_canhandle)(const char *ur);
 
-  int (*be_open)(prop_t *page, const char *url);
+  int (*be_open)(prop_t *page, const char *url, int sync);
 
   struct event *(*be_play_video)(const char *url,
 				 struct media_pipe *mp,
@@ -106,7 +106,7 @@ void backend_init(void);
 
 void backend_fini(void);
 
-int backend_open(struct prop *page, const char *url)
+int backend_open(struct prop *page, const char *url, int sync)
      __attribute__ ((warn_unused_result));
 
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
@@ -141,7 +141,7 @@ backend_probe_result_t backend_probe(const char *url,
 
 void backend_register(backend_t *be);
 
-int backend_open_video(prop_t *page, const char *url);
+int backend_open_video(prop_t *page, const char *url, int sync);
 
 int backend_resolve_item(const char *url, prop_t *item)
      __attribute__ ((warn_unused_result));

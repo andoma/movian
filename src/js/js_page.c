@@ -1169,7 +1169,8 @@ make_model_object(JSContext *cx, js_model_t *jm, jsval *root)
   JS_SetPrivate(cx, obj, jm);
   atomic_add(&jm->jm_refcount, 1);
 
-  JS_DefineFunctions(cx, obj, model_functions);
+  if(jm->jm_pc != NULL)
+    JS_DefineFunctions(cx, obj, model_functions);
 
   if(jm->jm_entries != NULL)
     JS_DefineProperty(cx, obj, "entries", JSVAL_VOID,
@@ -1197,11 +1198,13 @@ make_model_object(JSContext *cx, js_model_t *jm, jsval *root)
 		      NULL, NULL, JSPROP_PERMANENT);
   }
 
-  JS_DefineProperty(cx, obj, "paginator", JSVAL_VOID,
-		    NULL, js_setPaginator, JSPROP_PERMANENT);
+  if(jm->jm_pc != NULL) {
+    JS_DefineProperty(cx, obj, "paginator", JSVAL_VOID,
+		      NULL, js_setPaginator, JSPROP_PERMANENT);
 
-  JS_DefineProperty(cx, obj, "reorderer", JSVAL_VOID,
-		    NULL, js_setReorderer, JSPROP_PERMANENT);
+    JS_DefineProperty(cx, obj, "reorderer", JSVAL_VOID,
+		      NULL, js_setReorderer, JSPROP_PERMANENT);
+  }
   return obj;
 }
 
@@ -1222,7 +1225,9 @@ js_open_invoke(JSContext *cx, js_model_t *jm)
 
   JSObject *obj = make_model_object(cx, jm, &pageobj);
 
-  JS_DefineFunctions(cx, obj, page_functions);
+  if(jm->jm_pc != NULL)
+    JS_DefineFunctions(cx, obj, page_functions);
+
   if(jm->jm_url != NULL)
     js_createPageOptions(cx, obj, jm->jm_url, jm->jm_options);
 
@@ -1282,11 +1287,9 @@ js_open_error(JSContext *cx, const char *msg, JSErrorReport *r)
 /**
  *
  */
-static void *
-js_open_trampoline(void *arg)
+static void
+js_open(js_model_t *jm)
 {
-  js_model_t *jm = arg;
-  
   JSContext *cx = js_newctx(js_open_error);
   JS_SetContextPrivate(cx, jm);
 
@@ -1323,6 +1326,17 @@ js_open_trampoline(void *arg)
   js_model_release(jm);
 
   JS_DestroyContext(cx);
+}
+
+
+/**
+ *
+ */
+static void *
+js_open_trampoline(void *arg)
+{
+  js_model_t *jm = arg;
+  js_open(jm);
   return NULL;
 }
 
@@ -1343,7 +1357,7 @@ model_launch(js_model_t *jm)
  *
  */
 int
-js_backend_open(prop_t *page, const char *url)
+js_backend_open(prop_t *page, const char *url, int sync)
 {
   js_route_t *jsr;
   hts_regmatch_t matches[8];
@@ -1384,8 +1398,12 @@ js_backend_open(prop_t *page, const char *url)
   jm->jm_root      = prop_ref_inc(page);
   jm->jm_url       = strdup(url);
 
-  model_launch(jm);
   hts_mutex_unlock(&js_page_mutex);
+  if(sync) {
+    js_open(jm);
+  } else {
+    model_launch(jm);
+  }
   return 0;
 }
 

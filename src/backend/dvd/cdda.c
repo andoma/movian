@@ -318,7 +318,7 @@ canhandle(const char *url)
  *
  */
 static int
-openpage(prop_t *page, const char *url)
+openpage(prop_t *page, const char *url, int sync)
 {
   int track;
   char device[32];

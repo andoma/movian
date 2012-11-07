@@ -713,7 +713,7 @@ be_settings_canhandle(const char *url)
  *
  */
 static int
-be_settings_open(prop_t *page, const char *url0)
+be_settings_open(prop_t *page, const char *url0, int sync)
 {
   prop_link(settings_root, prop_create(page, "model"));
   return 0;

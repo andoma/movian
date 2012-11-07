@@ -98,7 +98,7 @@ file_open_dir(prop_t *page, const char *url, time_t mtime)
 
   switch(md->md_contenttype) {
   case CONTENT_DVD:
-    backend_open_video(page, url);
+    backend_open_video(page, url, 0);
     break;
     
   case CONTENT_DIR:
@@ -213,7 +213,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
   case CONTENT_VIDEO:
   case CONTENT_DVD:
     prop_destroy(meta);
-    backend_open_video(page, url);
+    backend_open_video(page, url, 0);
     break;
 
   case CONTENT_IMAGE:
@@ -237,7 +237,7 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
  *
  */
 static int
-be_file_open(prop_t *page, const char *url)
+be_file_open(prop_t *page, const char *url, int sync)
 {
   struct fa_stat fs;
   char errbuf[200];

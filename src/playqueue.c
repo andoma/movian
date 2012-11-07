@@ -892,7 +892,7 @@ playqueue_open(prop_t *page)
  *
  */
 static int
-be_playqueue_open(prop_t *page, const char *url)
+be_playqueue_open(prop_t *page, const char *url, int sync)
 {
   return playqueue_open(page);
 }

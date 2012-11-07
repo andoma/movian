@@ -537,7 +537,7 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   nav_page_setup_prop(nav, np, view, how);
 
   nav_insert_page(nav, np, origin);
-  if(backend_open(np->np_prop_root, url))
+  if(backend_open(np->np_prop_root, url, 0))
     nav_open_errorf(np->np_prop_root, _("No handler for URL"));
 }
 
@@ -617,7 +617,7 @@ nav_reload_current(navigator_t *nav)
 
   nav_select(nav, np, NULL);
     
-  if(backend_open(np->np_prop_root, np->np_url))
+  if(backend_open(np->np_prop_root, np->np_url, 0))
     nav_open_errorf(np->np_prop_root, _("No handler for URL"));
 }
 

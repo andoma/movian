@@ -1188,7 +1188,7 @@ make_model2(prop_t *parent, prop_t *sourcemodel, const char *contents)
  *
  */
 static int
-be_htsp_open(prop_t *page, const char *url)
+be_htsp_open(prop_t *page, const char *url, int sync)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
@@ -1201,7 +1201,7 @@ be_htsp_open(prop_t *page, const char *url)
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
   if(!strncmp(path, "/channel/", strlen("/channel/")))
-    return backend_open_video(page, url);
+    return backend_open_video(page, url, sync);
 
   if(!strcmp(path, "/channels")) {
     

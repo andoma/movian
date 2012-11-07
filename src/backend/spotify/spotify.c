@@ -4124,7 +4124,7 @@ add_metadata_props(spotify_page_t *sp)
  *
  */
 static int
-be_spotify_open(prop_t *page, const char *url)
+be_spotify_open(prop_t *page, const char *url, int sync)
 {
   char errbuf[200];
 

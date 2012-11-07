@@ -148,7 +148,7 @@ op_cb(void *opaque, prop_event_t event, ...)
  *
  */
 static int
-be_prop_open(prop_t *page, const char *url)
+be_prop_open(prop_t *page, const char *url, int sync)
 {
   proppage_t *pp;
   openpage_t *op;

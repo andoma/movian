@@ -178,7 +178,7 @@ extern hts_mutex_t upnp_lock;
 extern hts_cond_t upnp_device_cond;
 extern struct upnp_device_list upnp_devices;
 
-int be_upnp_browse(struct prop *page, const char *url0);
+int be_upnp_browse(struct prop *page, const char *url0, int sync);
 
 void be_upnp_search(struct prop *source, const char *query);
 

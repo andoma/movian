@@ -135,7 +135,7 @@ be_page_canhandle(const char *url)
  *
  */
 static int
-be_page_open(prop_t *root, const char *url0)
+be_page_open(prop_t *root, const char *url0, int sync)
 {
   prop_t *src = prop_create(root, "model");
   prop_t *metadata = prop_create(src, "metadata");
@@ -322,7 +322,7 @@ backend_probe(const char *url, char *errbuf, size_t errlen)
  *
  */
 int
-backend_open_video(prop_t *page, const char *url)
+backend_open_video(prop_t *page, const char *url, int sync)
 {
   prop_set_int(prop_create(page, "directClose"), 1);
   prop_set_string(prop_create(page, "source"), url);
@@ -355,14 +355,14 @@ BE_REGISTER(videoparams);
  *
  */
 int
-backend_open(prop_t *page, const char *url)
+backend_open(prop_t *page, const char *url, int sync)
 {
   backend_t *be;
   char urlbuf[URL_MAX];
 
   LIST_FOREACH(be, &backends, be_global_link) {
     if(be->be_flags & BACKEND_OPEN_CHECKS_URI) {
-      if(be->be_open(page, url))
+      if(be->be_open(page, url, sync))
 	continue;
       return 0;
     }
@@ -377,7 +377,7 @@ backend_open(prop_t *page, const char *url)
      !be->be_normalize(url, urlbuf, sizeof(urlbuf)))
     url = urlbuf;
 
-  be->be_open(page, url);
+  be->be_open(page, url, sync);
   return 0;
 }
 

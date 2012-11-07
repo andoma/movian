@@ -196,7 +196,7 @@ bmdb_files(prop_t *page, const char *url)
  *
  */
 static int
-browsemdb_open(prop_t *page, const char *url)
+browsemdb_open(prop_t *page, const char *url, int sync)
 {
   const char *q;
 

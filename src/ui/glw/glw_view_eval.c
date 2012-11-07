@@ -4519,7 +4519,7 @@ glwf_browse(glw_view_eval_context_t *ec, struct token *self,
 
     be->p = prop_create_root(NULL);
 
-    if(backend_open(be->p, rstr_get(url))) {
+    if(backend_open(be->p, rstr_get(url), 0)) {
       prop_destroy(be->p);
       be->p = NULL;
       return glw_view_seterr(ec->ei, a, "browse(%s): %s", 

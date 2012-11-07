@@ -936,7 +936,7 @@ upnp_browse_thread(void *aux)
  *
  */
 int
-be_upnp_browse(prop_t *page, const char *url)
+be_upnp_browse(prop_t *page, const char *url, int sync)
 {
 
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));

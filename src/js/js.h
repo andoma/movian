@@ -98,7 +98,7 @@ JSBool js_onEvent(JSContext *cx, JSObject *obj,
 
 struct backend;
 
-int js_backend_open(prop_t *page, const char *url);
+int js_backend_open(prop_t *page, const char *url, int sync);
 
 void js_backend_search(struct prop *model, const char *query);
 

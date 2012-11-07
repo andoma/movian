@@ -96,7 +96,7 @@ search_canhandle(const char *url)
  *
  */
 static int
-search_open(prop_t *page, const char *url0)
+search_open(prop_t *page, const char *url0, int sync)
 {
   const char *url;
   prop_t *model, *meta, *source;
@@ -105,7 +105,7 @@ search_open(prop_t *page, const char *url0)
     abort();
   url++;
 
-  if(!backend_open(page, url))
+  if(!backend_open(page, url, sync))
     return 0;
   
   model = prop_create(page, "model");

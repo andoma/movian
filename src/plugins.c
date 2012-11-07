@@ -1166,7 +1166,7 @@ plugin_open_repo(prop_t *page)
  *
  */
 static int
-plugin_open_url(prop_t *page, const char *url)
+plugin_open_url(prop_t *page, const char *url, int sync)
 {
   if(!strcmp(url, "plugin:start")) {
     plugin_open_start(page);
