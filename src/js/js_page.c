@@ -161,6 +161,8 @@ js_model_create(JSContext *cx, jsval openfunc)
 static void
 js_model_destroy(js_model_t *jm)
 {
+  assert(TAILQ_FIRST(&jm->jm_items) == NULL);
+
   if(jm->jm_args)
     strvec_free(jm->jm_args);
 
@@ -285,6 +287,7 @@ item_finalize(JSContext *cx, JSObject *obj)
   js_item_t *ji = JS_GetPrivate(cx, obj);
   assert(LIST_FIRST(&ji->ji_event_handlers) == NULL);
   TAILQ_REMOVE(&ji->ji_model->jm_items, ji, ji_link);
+  js_model_release(ji->ji_model);
   prop_ref_dec(ji->ji_root);
   free(ji);
 }
@@ -625,6 +628,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 
     *rval =  OBJECT_TO_JSVAL(robj);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
+    atomic_add(&model->jm_refcount, 1);
     ji->ji_model = model;
     ji->ji_root =  p;
     TAILQ_INSERT_TAIL(&model->jm_items, ji, ji_link);
