@@ -485,6 +485,9 @@ vq_entries_callback(void *opaque, prop_event_t event, ...)
   case PROP_DESTROYED:
     break;
 
+  case PROP_HAVE_MORE_CHILDS:
+    break;
+
   default:
     printf("Cant handle event %d\n", event);
     abort();
