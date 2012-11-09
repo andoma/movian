@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include <libavformat/avformat.h>
+#include <libavutil/audioconvert.h>
 
 #include "media.h"
 #include "showtime.h"
@@ -1246,7 +1247,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     return -1;
   
   if(ctx == NULL || id == CODEC_ID_AC3) {
-    cw->codec_ctx = avcodec_alloc_context();
+    cw->codec_ctx = avcodec_alloc_context3(NULL);
     cw->codec_ctx_alloced = 1;
   } else {
     cw->codec_ctx = ctx;
@@ -1274,7 +1275,7 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
   if(audio_mode_prefer_float() && cw->codec->id != CODEC_ID_AAC)
     cw->codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_FLT;
 
-  if(avcodec_open(cw->codec_ctx, cw->codec) < 0) {
+  if(avcodec_open2(cw->codec_ctx, cw->codec, NULL) < 0) {
     if(ctx == NULL)
       free(cw->codec_ctx);
     cw->codec = NULL;
@@ -1712,9 +1713,6 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
 }
 
 
-extern void avcodec_get_channel_layout_string(char *buf, int buf_size,
-					      int nb_channels,
-					      int64_t channel_layout);
 /**
  * 
  */
@@ -1754,8 +1752,8 @@ metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec,
   if(avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
     char buf[64];
 
-    avcodec_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
-				      avctx->channel_layout);
+    av_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
+                                 avctx->channel_layout);
 					    
     off += snprintf(dst + off, dstlen - off, ", %d Hz, %s",
 		    avctx->sample_rate, buf);

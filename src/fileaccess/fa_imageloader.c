@@ -62,8 +62,8 @@ fa_imageloader_init(void)
 
   AVCodec *c = avcodec_find_encoder(CODEC_ID_PNG);
   if(c != NULL) {
-    AVCodecContext *ctx = avcodec_alloc_context();
-    if(avcodec_open(ctx, c))
+    AVCodecContext *ctx = avcodec_alloc_context3(NULL);
+    if(avcodec_open2(ctx, c, NULL))
       return;
     pngencoder = ctx;
   }
@@ -343,7 +343,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       return NULL;
     }
 
-    if(avcodec_open(ctx, codec) < 0) {
+    if(avcodec_open2(ctx, codec, NULL) < 0) {
       fa_libav_close_format(fctx);
       snprintf(errbuf, errlen, "Unable to open codec");
       return NULL;

@@ -17,6 +17,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 
 #include "event.h"
 #include "media.h"

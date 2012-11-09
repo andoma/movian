@@ -165,8 +165,8 @@ fa_libav_open_format(AVIOContext *avio, const char *url,
 			       "Unable to open file as input format", err);
   }
 
-  if(av_find_stream_info(fctx) < 0) {
-    av_close_input_stream(fctx);
+  if(avformat_find_stream_info(fctx, NULL) < 0) {
+    avformat_close_input(&fctx);
     if(mimetype != NULL)
       return fa_libav_open_format(avio, url, errbuf, errlen, NULL);
     return fa_libav_open_error(errbuf, errlen,
@@ -196,7 +196,7 @@ void
 fa_libav_close_format(AVFormatContext *fctx)
 {
   AVIOContext *avio = fctx->pb;
-  av_close_input_stream(fctx);
+  avformat_close_input(&fctx);
   fa_libav_close(avio);
 }
 

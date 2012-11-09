@@ -90,15 +90,15 @@ static const uint8_t otfsig[4] = {'O', 'T', 'T', 'O'};
  *
  */
 static rstr_t *
-ffmpeg_metadata_rstr(AVMetadata *m, const char *key)
+ffmpeg_metadata_rstr(AVDictionary *m, const char *key)
 {
-  AVMetadataTag *tag;
+  AVDictionaryEntry *tag;
   int len;
   rstr_t *ret;
   const char *str;
   char *d;
 
-  if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
+  if((tag = av_dict_get(m, key, NULL, AV_DICT_IGNORE_SUFFIX)) == NULL)
     return NULL;
 
   if(!utf8_verify(tag->value))
@@ -128,11 +128,11 @@ ffmpeg_metadata_rstr(AVMetadata *m, const char *key)
  *
  */
 static int
-ffmpeg_metadata_int(AVMetadata *m, const char *key, int def)
+ffmpeg_metadata_int(AVDictionary *m, const char *key, int def)
 {
-  AVMetadataTag *tag;
+  AVDictionaryEntry *tag;
 
-  if((tag = av_metadata_get(m, key, NULL, AV_METADATA_IGNORE_SUFFIX)) == NULL)
+  if((tag = av_dict_get(m, key, NULL, AV_DICT_IGNORE_SUFFIX)) == NULL)
     return def;
 
   return tag->value && tag->value[0] >= '0' && tag->value[0] <= '9' ?
@@ -550,7 +550,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url,
       AVStream *stream = fctx->streams[i];
       AVCodecContext *avctx = stream->codec;
       AVCodec *codec = avcodec_find_decoder(avctx->codec_id);
-      AVMetadataTag *lang, *title;
+      AVDictionaryEntry *lang, *title;
       int tn;
 
       switch(avctx->codec_type) {
@@ -576,11 +576,11 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url,
 	metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
       }
 
-      lang = av_metadata_get(stream->metadata, "language", NULL,
-			     AV_METADATA_IGNORE_SUFFIX);
+      lang = av_dict_get(stream->metadata, "language", NULL,
+                         AV_DICT_IGNORE_SUFFIX);
 
-      title = av_metadata_get(stream->metadata, "title", NULL,
-			      AV_METADATA_IGNORE_SUFFIX);
+      title = av_dict_get(stream->metadata, "title", NULL,
+                          AV_DICT_IGNORE_SUFFIX);
 
       metadata_add_stream(md, codecname(avctx->codec_id),
 			  avctx->codec_type, i,
