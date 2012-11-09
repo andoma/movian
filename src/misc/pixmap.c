@@ -23,6 +23,8 @@
 
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavutil/mem.h>
+#include <libavutil/common.h>
 
 #include "showtime.h"
 #include "arch/atomic.h"
@@ -1176,12 +1178,12 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     snprintf(errbuf, errlen, "No codec for image format");
     return NULL;
   }
-  ctx = avcodec_alloc_context();
+  ctx = avcodec_alloc_context3(NULL);
   ctx->codec_id   = codec->id;
   ctx->codec_type = codec->type;
   ctx->lowres = lowres;
 
-  if(avcodec_open(ctx, codec) < 0) {
+  if(avcodec_open2(ctx, codec, NULL) < 0) {
     av_free(ctx);
     pixmap_release(pm);
     snprintf(errbuf, errlen, "Unable to open codec");

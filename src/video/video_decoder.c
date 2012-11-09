@@ -27,6 +27,8 @@
 #include <stdio.h>
 #include <math.h>
 
+#include <libavutil/mem.h>
+
 #include "showtime.h"
 #include "video_decoder.h"
 #include "event.h"
@@ -148,7 +150,7 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 
   /* Compute duration and PTS of frame */
   if(pts == AV_NOPTS_VALUE && mb->mb_dts != AV_NOPTS_VALUE &&
-     (ctx->has_b_frames == 0 || frame->pict_type == FF_B_TYPE)) {
+     (ctx->has_b_frames == 0 || frame->pict_type == AV_PICTURE_TYPE_B)) {
     pts = mb->mb_dts;
   }
 

@@ -15,8 +15,9 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include <stdio.h>
 #include <limits.h>
+#include <libavutil/mem.h>
 
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
@@ -564,7 +565,7 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   vobsub_t *vs = calloc(1, sizeof(vobsub_t));
 
   vs->vs_parser = av_parser_init(CODEC_ID_DVD_SUBTITLE);
-  vs->vs_ctx = avcodec_alloc_context();
+  vs->vs_ctx = avcodec_alloc_context3(NULL);
 
   if((vs->vs_sub = fa_open(subfile, errbuf, errlen)) == NULL) {
     free(buf);

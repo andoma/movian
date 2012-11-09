@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <stdio.h>
 #include <codec/vdec.h>
 #include <assert.h>
 
@@ -859,7 +860,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
 
-  mc->codec_ctx = ctx ?: avcodec_alloc_context();
+  mc->codec_ctx = ctx ?: avcodec_alloc_context3(NULL);
   mc->codec_ctx->codec_id   = id;
   mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
 
