@@ -647,10 +647,10 @@ http_client_oauth(struct http_auth_req *har,
   snprintf(str, sizeof(str), "%lu", time(NULL));
   const char *oauth_timestamp = mystrdupa(str);
 
-  struct AVSHA *shactx = alloca(av_sha_size);
-  av_sha_init(shactx, 160);
-  av_sha_update(shactx, nonce, sizeof(nonce));
-  av_sha_final(shactx, nonce);
+  sha1_decl(shactx);
+  sha1_init(shactx);
+  sha1_update(shactx, nonce, sizeof(nonce));
+  sha1_final(shactx, nonce);
 
   snprintf(str, sizeof(str),
 	   "%02x%02x%02x%02x%02x%02x%02x%02x"
