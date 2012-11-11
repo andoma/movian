@@ -412,9 +412,6 @@ vd_thread(void *aux)
 	video_overlay_decode(vd, mb);
       break;
 
-    case MB_END:
-      break;
-
     case MB_BLACKOUT:
       vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
 			   vd->vd_opaque);

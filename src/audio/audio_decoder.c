@@ -234,9 +234,6 @@ ad_thread(void *aux)
       silence_start_pts = AV_NOPTS_VALUE;
       break;
 
-    case MB_END:
-      break;
-
     default:
       abort();
     }
