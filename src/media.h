@@ -97,7 +97,6 @@ typedef struct media_buf {
 
     MB_FLUSH,
     MB_FLUSH_SUBTITLES,
-    MB_END,
 
     MB_CTRL_PAUSE,
     MB_CTRL_PLAY,
@@ -439,8 +438,6 @@ void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd,
 void mp_flush(media_pipe_t *mp, int blackout);
 
 void mp_bump_epoch(media_pipe_t *mp);
-
-void mp_end(media_pipe_t *mp);
 
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, uint32_t u);
 

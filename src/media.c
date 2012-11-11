@@ -1084,32 +1084,6 @@ mp_flush(media_pipe_t *mp, int blank)
 
 }
 
-/**
- *
- */
-void
-mp_end(media_pipe_t *mp)
-{
-  media_queue_t *v = &mp->mp_video;
-  media_queue_t *a = &mp->mp_audio;
-  media_buf_t *mb;
-
-  hts_mutex_lock(&mp->mp_mutex);
-
-  if(v->mq_stream >= 0) {
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_END;
-    mb_enq_tail(mp, v, mb);
-  }
-
-  if(a->mq_stream >= 0) {
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_END;
-    mb_enq_tail(mp, a, mb);
-  }
-  hts_mutex_unlock(&mp->mp_mutex);
-}
-
 
 /**
  *
