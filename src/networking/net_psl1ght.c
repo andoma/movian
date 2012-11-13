@@ -322,10 +322,10 @@ tcp_connect(const char *hostname, int port, char *errbuf, size_t errbufsize,
       ssl_set_endpoint(tc->ssl, SSL_IS_CLIENT );
       ssl_set_authmode(tc->ssl, SSL_VERIFY_NONE );
 
-      ssl_set_rng(tc->ssl, havege_rand, tc->hs );
+      ssl_set_rng(tc->ssl, havege_random, tc->hs );
       ssl_set_bio(tc->ssl, net_recv, &tc->fd, net_send, &tc->fd);
-      ssl_set_ciphers(tc->ssl, ssl_default_ciphers );
-      ssl_set_session(tc->ssl, 1, 600, tc->ssn );
+      ssl_set_ciphersuites(tc->ssl, ssl_default_ciphersuites );
+      ssl_set_session(tc->ssl, tc->ssn );
       
       tc->read = polarssl_read;
       tc->write = polarssl_write;

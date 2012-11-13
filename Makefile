@@ -527,38 +527,44 @@ CFLAGS_com += -DXP_UNIX -DJS_HAS_XML_SUPPORT -DJS_THREADSAFE
 # polarssl
 ##############################################################
 SRCS-$(CONFIG_POLARSSL) += \
-	ext/polarssl-0.14.0/library/aes.c \
-	ext/polarssl-0.14.0/library/arc4.c \
-	ext/polarssl-0.14.0/library/base64.c \
-	ext/polarssl-0.14.0/library/bignum.c \
-	ext/polarssl-0.14.0/library/camellia.c \
-	ext/polarssl-0.14.0/library/certs.c \
-	ext/polarssl-0.14.0/library/debug.c \
-	ext/polarssl-0.14.0/library/des.c \
-	ext/polarssl-0.14.0/library/dhm.c \
-	ext/polarssl-0.14.0/library/havege.c \
-	ext/polarssl-0.14.0/library/md2.c \
-	ext/polarssl-0.14.0/library/md4.c \
-	ext/polarssl-0.14.0/library/md5.c \
-	ext/polarssl-0.14.0/library/net.c \
-	ext/polarssl-0.14.0/library/padlock.c \
-	ext/polarssl-0.14.0/library/rsa.c \
-	ext/polarssl-0.14.0/library/sha1.c \
-	ext/polarssl-0.14.0/library/sha2.c \
-	ext/polarssl-0.14.0/library/sha4.c \
-	ext/polarssl-0.14.0/library/ssl_cli.c \
-	ext/polarssl-0.14.0/library/ssl_srv.c \
-	ext/polarssl-0.14.0/library/ssl_tls.c \
-	ext/polarssl-0.14.0/library/timing.c \
-	ext/polarssl-0.14.0/library/version.c \
-	ext/polarssl-0.14.0/library/x509parse.c \
-	ext/polarssl-0.14.0/library/xtea.c \
+	ext/polarssl-1.2.0/library/aes.c \
+	ext/polarssl-1.2.0/library/arc4.c \
+	ext/polarssl-1.2.0/library/asn1parse.c \
+	ext/polarssl-1.2.0/library/asn1write.c \
+	ext/polarssl-1.2.0/library/base64.c \
+	ext/polarssl-1.2.0/library/bignum.c \
+	ext/polarssl-1.2.0/library/camellia.c \
+	ext/polarssl-1.2.0/library/certs.c \
+	ext/polarssl-1.2.0/library/debug.c \
+	ext/polarssl-1.2.0/library/des.c \
+	ext/polarssl-1.2.0/library/dhm.c \
+	ext/polarssl-1.2.0/library/gcm.c \
+	ext/polarssl-1.2.0/library/havege.c \
+	ext/polarssl-1.2.0/library/md.c \
+	ext/polarssl-1.2.0/library/md_wrap.c \
+	ext/polarssl-1.2.0/library/md2.c \
+	ext/polarssl-1.2.0/library/md4.c \
+	ext/polarssl-1.2.0/library/md5.c \
+	ext/polarssl-1.2.0/library/net.c \
+	ext/polarssl-1.2.0/library/padlock.c \
+	ext/polarssl-1.2.0/library/pem.c \
+	ext/polarssl-1.2.0/library/rsa.c \
+	ext/polarssl-1.2.0/library/sha1.c \
+	ext/polarssl-1.2.0/library/sha2.c \
+	ext/polarssl-1.2.0/library/sha4.c \
+	ext/polarssl-1.2.0/library/ssl_cli.c \
+	ext/polarssl-1.2.0/library/ssl_srv.c \
+	ext/polarssl-1.2.0/library/ssl_tls.c \
+	ext/polarssl-1.2.0/library/timing.c \
+	ext/polarssl-1.2.0/library/version.c \
+	ext/polarssl-1.2.0/library/x509parse.c \
+	ext/polarssl-1.2.0/library/xtea.c \
 
-${BUILDDIR}/ext/polarssl-0.14.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
+${BUILDDIR}/ext/polarssl-1.2.0/library/%.o : CFLAGS = -Wall ${OPTFLAGS}
 
 
 ifeq ($(CONFIG_POLARSSL), yes)
-CFLAGS_com += -Iext/polarssl-0.14.0/include
+CFLAGS_com += -Iext/polarssl-1.2.0/include
 endif
 
 ##############################################################

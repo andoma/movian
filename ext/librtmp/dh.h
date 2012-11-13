@@ -30,14 +30,14 @@
 #ifdef USE_POLARSSL
 #include <polarssl/dhm.h>
 typedef mpi * MP_t;
-#define MP_new(m)	m = malloc(sizeof(mpi)); mpi_init(m, NULL)
+#define MP_new(m)	m = malloc(sizeof(mpi)); mpi_init(m)
 #define MP_set_w(mpi, w)	mpi_lset(mpi, w)
 #define MP_cmp(u, v)	mpi_cmp_mpi(u, v)
 #define MP_set(u, v)	mpi_copy(u, v)
 #define MP_sub_w(mpi, w)	mpi_sub_int(mpi, mpi, w)
 #define MP_cmp_1(mpi)	mpi_cmp_int(mpi, 1)
 #define MP_modexp(r, y, q, p)	mpi_exp_mod(r, y, q, p, NULL)
-#define MP_free(mpi)	mpi_free(mpi, NULL); free(mpi)
+#define MP_free(mpi)	mpi_free(mpi); free(mpi)
 #define MP_gethex(u, hex, res)	MP_new(u); res = mpi_read_string(u, 16, hex) == 0
 #define MP_bytes(u)	mpi_size(u)
 #define MP_setbin(u,buf,len)	mpi_write_binary(u,buf,len)
@@ -61,7 +61,7 @@ static int MDH_generate_key(MDH *dh)
   MP_set(&dh->ctx.P, dh->p);
   MP_set(&dh->ctx.G, dh->g);
   dh->ctx.len = 128;
-  dhm_make_public(&dh->ctx, 1024, out, 1, havege_rand, &RTMP_TLS_ctx->hs);
+  dhm_make_public(&dh->ctx, 1024, out, 1, havege_random, &RTMP_TLS_ctx->hs);
   MP_new(dh->pub_key);
   MP_new(dh->priv_key);
   MP_set(dh->pub_key, &dh->ctx.GX);
@@ -71,7 +71,7 @@ static int MDH_generate_key(MDH *dh)
 
 static int MDH_compute_key(uint8_t *secret, size_t len, MP_t pub, MDH *dh)
 {
-  int n = len;
+  size_t n = len;
   MP_set(&dh->ctx.GY, pub);
   dhm_calc_secret(&dh->ctx, secret, &n);
   return 0;
