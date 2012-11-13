@@ -5,79 +5,64 @@ maintainer: Drago Kraner <djkidy@gmail.com>
 # ./glwthemes/default/cmdmenu.view
 #
 id: Add current page to bookmarks
-# Missing translation
-msg: 
+msg: Dodaj trenutno stran med priljubljene
 
 id: Open settings
-# Missing translation
-msg: 
+msg: Nastavitve
 
 id: Remove current page from bookmarks
-# Missing translation
-msg: 
+msg: Odstrani trenutno stran iz priljubljenih
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_common.view
 #
 id: Go to Home screen
-# Missing translation
-msg: 
+msg: Začetna stran
 
 id: Navigation
-# Missing translation
-msg: 
+msg: Navigiranje
 
 id: Open Settings
-# Missing translation
-msg: 
+msg: Nastavitve
 
 id: Playqueue
 msg: Lista ponovitev
 
 id: Reload current page
-# Missing translation
-msg: 
+msg: Osveži trenutno stran
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
-# Missing translation
-msg: 
+msg: Dodaj '%s' na Začetno stran
 
 id: Remove '%s' from home screen
-# Missing translation
-msg: 
+msg: Odstrani '%s' iz Začetne strani
 
 #
 # ./glwthemes/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-# Missing translation
-msg: 
+msg: Nadaljuj od %s
 
 id: Continue playback here
-# Missing translation
-msg: 
+msg: Nadaljuj predvajanje tukaj
 
 id: Delete
 msg: Izbriši
 
 id: Mark as seen
-# Missing translation
-msg: 
+msg: Označi kot gledano
 
 id: Mark as unseen
-# Missing translation
-msg: 
+msg: Označi kot še ne gledano
 
 id: Play from beginning
-# Missing translation
-msg: 
+msg: Predvajanje od začetka
 
 id: Play until end of list
-# Missing translation
-msg: 
+msg: Predvajanje do konca seznama
 
 id: Queue
 msg: Vrsta
@@ -92,19 +77,16 @@ msg: Unstar
 # ./glwthemes/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
-# Missing translation
-msg: 
+msg: Zvok
 
 id: Audio settings
 msg: Nastavitve zvoka
 
 id: Audio tracks
-# Missing translation
-msg: 
+msg: Zvočni zapisi
 
 id: Seek by time
-# Missing translation
-msg: 
+msg: Preskoči po času
 
 id: Settings
 msg: Nastavitve
@@ -113,29 +95,25 @@ id: Subtitle settings
 msg: Nastavitve podnapisov
 
 id: Subtitle tracks
-# Missing translation
-msg: 
+msg: Vrste podnapisov
 
 id: Subtitles
 msg: Podnapisi
 
 id: Video
-# Missing translation
-msg: 
+msg: Video
 
 id: Video menu
-# Missing translation
-msg: 
+msg: Meni Videa
 
 id: Video settings
-msg: Nastavitve videa
+msg: Nastavitve Videa
 
 #
 # ./glwthemes/default/log.view
 #
 id: System log
-# Missing translation
-msg: 
+msg: Sistemski dnevnik
 
 #
 # ./glwthemes/default/pages/about.view
@@ -159,7 +137,7 @@ id: Framerate: %.2f Hz
 msg: Hitrost slik %.2f Hz
 
 id: Free chunks: %d
-msg: Zastonj koščki: %d
+msg: Prosti koščki: %d
 
 id: GPU: %s
 msg: GPU: %s
@@ -195,125 +173,100 @@ msg: Upravljalec oken: %s
 # ./glwthemes/default/pages/directory.view
 #
 id: Album
-# Missing translation
-msg: 
+msg: Album
 
 id: Custom
-# Missing translation
-msg: 
+msg: Po Meri
 
 id: Images
-# Missing translation
-msg: 
+msg: Slike
 
 id: List
-# Missing translation
-msg: 
+msg: Lista
 
 id: Slideshow
-# Missing translation
-msg: 
+msg: Slideshow
 
 id: View
-# Missing translation
-msg: 
+msg: Pogled
 
 #
 # ./glwthemes/default/pages/discovered.view
 #
 id: Discovered resources on local network
-# Missing translation
-msg: 
+msg: Najdeni viri v lokalnem omrežju
 
 #
 # ./glwthemes/default/pages/home_clist.view
 #
 id: About Showtime
-# Missing translation
-msg: 
+msg: O Showtime-u
 
 id: Plugins
-# Missing translation
-msg: 
+msg: Vtičniki
 
 #
 # ./glwthemes/default/pages/home_tiles.view
 #
 id: Dismiss
-# Missing translation
-msg: 
+msg: Prenehaj
 
 #
 # ./glwthemes/default/pages/iteminfo/image.view
 #
-id: Camera: 
-# Missing translation
-msg: 
+id: Camera:
+msg: Kamera:
 
-id: Date: 
-# Missing translation
-msg: 
+id: Date:
+msg: Datum:
 
 #
 # ./glwthemes/default/pages/iteminfo/plugin.view
 #
-id: Author: 
-# Missing translation
-msg: 
+id: Author:
+msg: Autor:
 
-id: Available version: 
-# Missing translation
-msg: 
+id: Available version:
+msg: Dosegljiva verzija:
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Naložena verzija:
 
 id: Showtime %s or newer is required
-# Missing translation
-msg: 
+msg: Potrebujete Showtime %s ali novejši
 
 #
 # ./glwthemes/default/pages/iteminfo/video.view
 #
 id: Director:
-# Missing translation
-msg: 
+msg: Director:
 
 id: Duration:
-# Missing translation
-msg: 
+msg: Dolžina:
 
 id: File date:
-# Missing translation
-msg: 
+msg: Datum datoteke:
 
 id: Genre:
-# Missing translation
-msg: 
+msg: Žanr:
 
 id: Metadata from
-# Missing translation
-msg: 
+msg: Metadata od
 
 id: Producer:
-# Missing translation
-msg: 
+msg: Režiser:
 
 id: Rating:
-# Missing translation
-msg: 
+msg: Ocena:
 
 id: Year:
-# Missing translation
-msg: 
+msg: Leto:
 
 #
 # ./glwthemes/default/pages/listitems/add.view
 #
 id: Add new entry
-# Missing translation
-msg: 
+msg: Dodaj nov vnos
 
 #
 # ./glwthemes/default/pages/listitems/bool.view
@@ -328,99 +281,79 @@ msg: Da
 # ./glwthemes/default/pages/listitems/plugin.view
 #
 id: Install
-# Missing translation
-msg: 
+msg: Naloži
 
 id: Uninstall
-# Missing translation
-msg: 
+msg: Odstrani
 
 id: Upgrade
-# Missing translation
-msg: 
+msg: Posodobi
 
 #
 # ./glwthemes/default/pages/openerror.view
 #
 id: Unable to open resource
-msg: Nemorem odpreti izvora
+msg: Nemogoče odpreti izvor
 
 #
 # ./glwthemes/default/pages/playqueue.view
 #
 id: Track %d / %d
-msg: Skladba %d / %d
+msg: Vrsta %d / %d
 
 #
 # ./glwthemes/default/pages/upgrade.view
 #
 id: An error occured during download
-# Missing translation
-msg: 
+msg: Napaka pri prenosu
 
 id: Available version:
-# Missing translation
-msg: 
+msg: Dosegljiva verzija
 
 id: Changelog for %s releases
-# Missing translation
-msg: 
+msg: Spremembe %s izdaje
 
 id: Check for updates now
-# Missing translation
-msg: 
+msg: Preverite za posodobitve
 
 id: Checking for updates...
-# Missing translation
-msg: 
+msg: Preverjanje posodobitev...
 
 id: Current version:
-# Missing translation
-msg: 
+msg: Trenutna verzija:
 
 id: Download and install...
-# Missing translation
-msg: 
+msg: Prenos in nalaganje...
 
 id: Downloading...
-# Missing translation
-msg: 
+msg: Prenašanje...
 
 id: Installing...
-# Missing translation
-msg: 
+msg: Nalaganje...
 
 id: New version %s is available for download
-# Missing translation
-msg: 
+msg: Nova verzija %s je dosegljiva za prenos
 
 id: No upgrade available
-# Missing translation
-msg: 
+msg: Posodobitev ne obstaja
 
 id: Restarting Showtime in %d seconds...
-# Missing translation
-msg: 
+msg: Ponoven zagon Showtime-a v %d sekundah...
 
 id: Retry...
-# Missing translation
-msg: 
+msg: Ponoven poskus...
 
 id: Showtime is up to date
-# Missing translation
-msg: 
+msg: Showtime je posodobljen
 
 id: Stable
-# Missing translation
-msg: 
+msg: Stabilno
 
 id: Testing
-# Missing translation
-msg: 
+msg: Testno
 
 id: Unable to query for new version
-# Missing translation
-msg: 
+msg: Nemogoče preveriti za novo verzijo
 
 #
 # ./glwthemes/default/pages/video.view
@@ -435,19 +368,16 @@ msg: Status predvajanja
 # ./glwthemes/default/playdecks/dvd.view
 #
 id: Chapter: %d
-# Missing translation
-msg: 
+msg: Odstavek: %d
 
 id: Title: %d
-# Missing translation
-msg: 
+msg: Naslov: %d
 
 #
 # ./glwthemes/default/popups/auth.view
 #
 id: Domain
-# Missing translation
-msg: 
+msg: Domena
 
 id: Password
 msg: Geslo
@@ -477,8 +407,7 @@ msg: Medij ni naložen
 # ./glwthemes/default/sysinfo.view
 #
 id: Memory usage:
-# Missing translation
-msg: 
+msg: Velikost uporabljenega spomina:
 
 #
 # ./glwthemes/default/universe.view
@@ -526,7 +455,7 @@ id: Phantom center
 msg: Phantom-center
 
 id: Select audio output device and related configurations
-msg: Izbor avdio izhodnih naprav danih nastavitev
+msg: Izbor zvočnih izhodnih naprav in danih nastavitev
 
 id: Small front speakers
 msg: Majhen sprednji zvočnik
@@ -535,7 +464,7 @@ id: Swap LFE+center with surround
 msg: Zamenjati LFE+Center z Surround-om
 
 id: Switching audio output to %s
-msg: Preklop avdio izhoda na %s um
+msg: Preklop zvočni izhod na %s um
 
 #
 # ./src/backend/dvd/cdda.c
@@ -601,7 +530,7 @@ id: New albums on Spotify
 msg: Nov album na Spotify
 
 id: New releases
-msg: Nove objave
+msg: Nove izdaje
 
 id: Offline
 msg: Offline
@@ -640,12 +569,10 @@ msg: Zagnano
 # ./src/blobcache_file.c
 #
 id: Cache cleared
-# Missing translation
-msg: 
+msg: Predpomnilnik izbrisan
 
 id: Clear cached files
-# Missing translation
-msg: 
+msg: Zbrišite datoteke v predpomnilniku
 
 #
 # ./src/fileaccess/fa_backend.c
@@ -666,43 +593,34 @@ msg: Za iskanje uporabi Unix Locatedb
 # ./src/fileaccess/fa_nativesmb.c
 #
 id: Access denied
-# Missing translation
-msg: 
+msg: Dostop je zavrnjen
 
 id: Account restricted
-# Missing translation
-msg: 
+msg: Račun je blokiran
 
 id: Bad network share name
-# Missing translation
-msg: 
+msg: Napačno omrežno deljeno ime
 
 id: Logon failure
-# Missing translation
-msg: 
+msg: Napaka prijave
 
 #
 # ./src/fileaccess/fa_scanner.c
 #
 id: Date
-# Missing translation
-msg: 
+msg: Datum
 
 id: Filename
-# Missing translation
-msg: 
+msg: Ime datoteke
 
 id: Show only supported files
-# Missing translation
-msg: 
+msg: Prikaži samo podprte datoteke
 
 id: Sort folders first
-# Missing translation
-msg: 
+msg: Razvrsti prvo po mapah
 
 id: Sort on
-# Missing translation
-msg: 
+msg: Razvrsti
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -777,12 +695,10 @@ msg: Položaj tipk
 # ./src/keyring.c
 #
 id: Forget remembered passwords
-# Missing translation
-msg: 
+msg: Pozabi uporabniško ime
 
 id: Rembered passwords erased
-# Missing translation
-msg: 
+msg: Shrani izbrisano geslo
 
 #
 # ./src/media.c
@@ -806,12 +722,10 @@ msg: Video približevanje
 # ./src/metadata/metadata.c
 #
 id: Automatic
-# Missing translation
-msg: 
+msg: Avtomatsko
 
 id: Custom search query
-# Missing translation
-msg: 
+msg: Uporabniško iskanje
 
 id: Embedded in file
 msg: Vgrajeni v datotki
@@ -820,173 +734,142 @@ id: Enabled
 msg: Omogočeno
 
 id: IMDb ID
-# Missing translation
-msg: 
+msg: IMDb ID
 
 id: Metadata
-# Missing translation
-msg: 
+msg: Metadata
 
 id: Metadata configuration and provider settings
-# Missing translation
-msg: 
+msg: Metadata konfiguracija in nastavitve ponudnika
 
 id: Metadata loaded from '%s' using %s
 # Missing translation
-msg: 
+msg: Metadata naložen iz '%s' ki uporablja %s
 
 id: Metadata search
 # Missing translation
-msg: 
+msg: Metadata iskanje
 
 id: Metadata source
 # Missing translation
-msg: 
+msg: Metadata izvor
 
 id: Movie
-# Missing translation
-msg: 
+msg: Film
 
 id: No data found
-# Missing translation
-msg: 
+msg: Datotek ni na voljo
 
 id: None
-# Missing translation
-msg: 
+msg: Nič
 
 id: Providers for Movies
-# Missing translation
-msg: 
+msg: Ponudniki za Filme
 
 id: Providers for Music
-# Missing translation
-msg: 
+msg: Ponudniki za Glasbo
 
 id: Refresh metadata
-# Missing translation
-msg: 
+msg: Osveži metadata
 
 id: Track %d
 msg: Track %d
 
 id: custom IMDb ID
 # Missing translation
-msg: 
+msg: IMDb ID po meri
 
 id: custom query
 # Missing translation
-msg: 
+msg: poizvedbe po meri
 
 id: filename
-# Missing translation
-msg: 
+msg: Ime datoteke
 
 id: folder name
-# Missing translation
-msg: 
+msg: ime mape
 
 #
 # ./src/navigator.c
 #
 id: Added new bookmark: %s
-# Missing translation
-msg: 
+msg: Dodane nove priljubljene: %s
 
 id: Bookmarks
 msg: Priljubljene
 
 id: Music
-# Missing translation
-msg: 
+msg: Glasba
 
 id: No handler for URL
 msg: URL povezave ni mogoče obdelati
 
 id: Other
-# Missing translation
-msg: 
+msg: Ostalo
 
 id: Photos
-# Missing translation
-msg: 
+msg: Slike
 
 id: Removed bookmark: %s
-# Missing translation
-msg: 
+msg: Odstranjene priljubljene: %s
 
 id: TV
 # Missing translation
-msg: 
+msg: TV
 
 id: Title
-# Missing translation
-msg: 
+msg: Naslov
 
 id: Type
 msg: Tip
 
 id: URL
-# Missing translation
-msg: 
+msg: URL
 
 #
 # ./src/plugins.c
 #
 id: Alternate plugin Repository URL
-# Missing translation
-msg: 
+msg: Alternativna URL povezava do vtičnikov
 
 id: Automatically upgrade plugins
-# Missing translation
-msg: 
+msg: Avtomatska posodobitev vtičnikov
 
 id: Available plugins
-# Missing translation
-msg: 
+msg: Dosegljivi vtičniki
 
 id: Browse available plugins
-# Missing translation
-msg: 
+msg: Brskanje dosegljivih vtičnikov
 
 id: Corrupt plugin bundle
-# Missing translation
-msg: 
+msg: Napaka pri obdelavi vtičnika
 
 id: Disk write error
-# Missing translation
-msg: 
+msg: Napaka zapisa diska
 
 id: Downloading
-# Missing translation
-msg: 
+msg: Prenašanje
 
 id: File open error
-# Missing translation
-msg: 
+msg: Napaka pri odpiranju
 
 id: Installed plugins
-# Missing translation
-msg: 
+msg: Naloženi vtičniki
 
 id: Installing
-# Missing translation
-msg: 
+msg: Nalaganje
 
-id: Invalud URI
+id: Invalid URI
 msg: Nepravilen URI
 
 id: Not installable
-# Missing translation
-msg: 
+msg: Ni naložljivo
 
 id: Not installed
-# Missing translation
-msg: 
+msg: Ni naložen
 
 id: Not upgradable
-# Missing translation
-msg: 
+msg: Ni posodobljiv
 
 id: Unable to load plugin.json: %s
 msg: Dodatek.json nemorem naložit: %s
@@ -995,16 +878,13 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Dodatek.json nemorem naložit: Nepravilen JSON
 
 id: Up to date
-# Missing translation
-msg: 
+msg: Najnovejše
 
 id: Upgradable
-# Missing translation
-msg: 
+msg: Posodobljiv
 
 id: Upgraded plugin %s to version %s
-# Missing translation
-msg: 
+msg: Posodobitev vtičnika %s v verzijo %s
 
 #
 # ./src/runcontrol.c
@@ -1013,20 +893,16 @@ id: Automatic standby
 msg: Avtomatsko mirovanje
 
 id: Logout
-# Missing translation
-msg: 
+msg: Odjava
 
 id: Open shell
-# Missing translation
-msg: 
+msg: Odpri jedro
 
 id: Power off system
-# Missing translation
-msg: 
+msg: Izklop Sitema
 
 id: Starting and stopping Showtime
-# Missing translation
-msg: 
+msg: Zagon in Ustavitev Showtime-a
 
 #
 # ./src/sd/sd.c
@@ -1038,8 +914,7 @@ msg: Ime
 # ./src/service.c
 #
 id: Local network
-# Missing translation
-msg: 
+msg: Lokalno omrežje
 
 #
 # ./src/settings.c
@@ -1047,27 +922,23 @@ msg:
 id: Applications and installed plugins
 msg: Naložene aplikacije in vtičniki
 
-id: Developer settings
-# Missing translation
-msg: 
+id: Developer setting
+msg: Nastavitve ustvarjalca
 
 id: Discovered media sources
 msg: Najdeni medija viri
 
 id: General
-# Missing translation
-msg: 
+msg: Glavno
 
 id: Global settings
 msg: Glavne nastavitve
 
 id: Settings useful for developers
-# Missing translation
-msg: 
+msg: Nastavitve uporabne za ustvarjalce
 
 id: System related settings
-# Missing translation
-msg: 
+msg: Nastavitve primerne sistemu
 
 #
 # ./src/ui/glw/glw.c
@@ -1115,24 +986,19 @@ msg: Video Možnost
 # ./src/upgrade.c
 #
 id: Notify about upgrades
-# Missing translation
-msg: 
+msg: Opomni o posodobitvah
 
 id: Open download page
-# Missing translation
-msg: 
+msg: Odpre stran s prenosi
 
 id: Showtime version %s is available
-# Missing translation
-msg: 
+msg: Verzija %s Showtime-a dosegljiva
 
 id: Software upgrade
-# Missing translation
-msg: 
+msg: Posodobitev programa
 
 id: Upgrade to releases from
-# Missing translation
-msg: 
+msg: Posodobitev o izdaji
 
 #
 # ./src/upnp/upnp.c
@@ -1177,26 +1043,22 @@ msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x
 # ./src/video/video_settings.c
 #
 id: 1080
-# Missing translation
-msg: 
+msg: 1080
 
 id: 576
-# Missing translation
-msg: 
+msg: 576
 
 id: 720
-# Missing translation
-msg: 
+msg: 720
 
 id: Always try to select a subtitle
-msg: Vedno probajte izbrati podnapise
+msg: Vedno poskusite izbrati podnapise
 
 id: Auto
 msg: Avto
 
 id: Automatically play next video in list
-# Missing translation
-msg: 
+msg: Avtomatsko predvajajte naslednji video iz liste
 
 id: Center
 msg: Sredina
@@ -1208,8 +1070,7 @@ id: Count video as played when reaching
 msg: Štetje videa kadar predvajanje doseže
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: Omogočiti VDA
 
 id: Enable VDPAU
 msg: Omogočiti VDPAU
@@ -1224,19 +1085,16 @@ id: Ignore embedded styling
 msg: Ignoriraj vgrajeno oblikovanje
 
 id: Include all subtitle files from movie directory
-# Missing translation
-msg: 
+msg:Vključite vse podnapise iz mape filma
 
 id: Left
 msg: Levo
 
 id: Maximum resolution for deinterlacer
-# Missing translation
-msg: 
+msg: največja resolucija za deinterlacer
 
 id: No limit
-# Missing translation
-msg: 
+msg: Ni omejitev
 
 id: Off
 msg: Izklop
@@ -1248,8 +1106,7 @@ id: Outline size
 msg: Okvirna velikost
 
 id: Preferred VDPAU deinterlacer method
-# Missing translation
-msg: 
+msg: Priporočena VDPAU deinterlacer metoda
 
 id: Resume video playback
 msg: Nadaljevanje predvajanja
@@ -1264,8 +1121,7 @@ id: Shadow offset
 msg: Izravnava senčenja
 
 id: Stretch video to fullscreen
-# Missing translation
-msg: 
+msg: Rastegne video v cel zaslon
 
 id: Stretch video to widescreen
 msg: Raztegni video za Widescreen 
@@ -1277,19 +1133,16 @@ id: Subtitle size
 msg: Velikost podnapisov
 
 id: Subtitle size and positioning
-# Missing translation
-msg: 
+msg: Velikost in Položaj podnapisov
 
 id: Subtitle styling
-msg: Stil podnapisov
+msg: Oblikovanje podnapisov
 
 id: Temporal
-# Missing translation
-msg: 
+msg: Časovno
 
 id: Temporal/Spatial
-# Missing translation
-msg: 
+msg: Časovno/Prostorsko
 
 id: Video acceleration and display behaviour
 msg: Video pospeševanje in prikaz obnašanja
