@@ -776,6 +776,27 @@ http_client_set_header(struct http_auth_req *har, const char *key,
 }
 
 
+/**
+ *
+ */
+static void
+http_send_verb(htsbuf_queue_t *q, http_file_t *hf, const char *method)
+{
+  char *r, *path = hf->hf_path;
+  if(strchr(path, ' ')) {
+    path = strdup(hf->hf_path);
+    for(r = path; *r; r++) {
+      if(*r == ' ')
+	*r = '+';
+    }
+  }
+
+  htsbuf_qprintf(q, "%s %s HTTP/1.%d\r\n", method, 
+		 path, hf->hf_version);
+
+  if(path != hf->hf_path)
+    free(path);
+}
 
 /**
  *
@@ -1380,15 +1401,15 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
   http_headers_init(&headers, hf);
 
   if(hf->hf_streaming) {
-    htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_send_verb(&q, hf, "GET");
     http_headers_auth(&headers, hf, "GET", NULL);
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
-    htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_send_verb(&q, hf, "GET");
     htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
     http_headers_auth(&headers, hf, "GET", NULL);
   } else {
-    htsbuf_qprintf(&q, "HEAD %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+    http_send_verb(&q, hf, "HEAD");
     http_headers_auth(&headers, hf, "HEAD", NULL);
   }
 
@@ -1631,8 +1652,7 @@ reconnect:
   
 again:
 
-
-  htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+  http_send_verb(&q, hf, "GET");
 
   http_headers_init(&headers, hf);
   http_headers_auth(&headers, hf, "GET", NULL);
@@ -1800,7 +1820,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       htsbuf_queue_init(&q, 0);
 
-      htsbuf_qprintf(&q, "GET %s HTTP/1.%d\r\n", hf->hf_path, hf->hf_version);
+      http_send_verb(&q, hf, "GET");
 
       http_headers_init(&headers, hf);
       http_headers_auth(&headers, hf, "GET", NULL);
