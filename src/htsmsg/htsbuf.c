@@ -277,6 +277,16 @@ htsbuf_dump_raw_stderr(htsbuf_queue_t *hq)
 }
 
 
+void
+htsbuf_hexdump(htsbuf_queue_t *hq, const char *prefix)
+{
+  char *r = malloc(hq->hq_size);
+  htsbuf_peek(hq, r, hq->hq_size);
+  hexdump(prefix, r, hq->hq_size);
+  free(r);
+}
+
+
 /**
  *
  */
