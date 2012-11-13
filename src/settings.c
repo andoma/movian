@@ -796,4 +796,15 @@ init_dev_settings(void)
 		       (void *)"dev");
 
 
+  t = prop_create_root(NULL);
+  prop_set_string(t, "Debug all HTTP requests");
+
+  settings_create_bool(settings_dev, "httpdebug", t, 0,
+		       store, settings_generic_set_bool,
+		       &gconf.enable_http_debug, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+
+
 }

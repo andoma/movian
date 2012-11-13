@@ -1397,7 +1397,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
 
   if(hf->hf_debug)
-    htsbuf_dump_raw_stderr(&q);
+    htsbuf_hexdump(&q, "HTTP");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
@@ -1707,7 +1707,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   http_file_t *hf = calloc(1, sizeof(http_file_t));
   hf->hf_version = 1;
   hf->hf_url = strdup(url);
-  hf->hf_debug = !!(flags & FA_DEBUG);
+  hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
 
   if(stats != NULL) {
@@ -1833,7 +1833,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       http_cookie_append(hc->hc_hostname, hf->hf_path, &headers);
       http_headers_send(&q, &headers, NULL);
       if(hf->hf_debug)
-	htsbuf_dump_raw_stderr(&q);
+	htsbuf_hexdump(&q, "HTTP");
 
       tcp_write_queue(hc->hc_tc, &q);
 
@@ -2649,7 +2649,7 @@ http_request(const char *url, const char **arguments,
   if(headers_out != NULL)
     LIST_INIT(headers_out);
   hf->hf_version = 1;
-  hf->hf_debug = !!(flags & FA_DEBUG);
+  hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_req_compression = !!(flags & FA_COMPRESSION);
   hf->hf_url = strdup(url);
 
@@ -2707,13 +2707,13 @@ http_request(const char *url, const char **arguments,
   http_headers_send(&q, &headers, headers_in);
 
   if(hf->hf_debug)
-    htsbuf_dump_raw_stderr(&q);
+    htsbuf_hexdump(&q, "HTTP");
 
   tcp_write_queue(hf->hf_connection->hc_tc, &q);
 
   if(postdata != NULL) {
     if(hf->hf_debug)
-      htsbuf_dump_raw_stderr(postdata);
+      htsbuf_hexdump(&q, "HTTP-POSTDATA");
 
     tcp_write_queue_dontfree(hf->hf_connection->hc_tc, postdata);
   }
