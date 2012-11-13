@@ -11,11 +11,11 @@ For more information and latest versions, please visit:
 ## How to build for Linux
 
 First you need to satisfy some dependencies:
-in ubuntu nattyo (11.04)  
+For Ubuntu 12.04)  
 
 	sudo apt-get install libfreetype6-dev libfontconfig1-dev libxext-dev libgl1-mesa-dev 
 	libasound2-dev libasound2-dev libgtk2.0-dev libxss-dev libxxf86vm-dev libxv-dev libcdio-cdda-dev 
-	libcddb2-dev libvdpau-dev yasm
+	libcddb2-dev libvdpau-dev yasm libpulse-dev libssl-dev curl
 
 
 Then you need to configure:
