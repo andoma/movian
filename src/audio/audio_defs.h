@@ -82,8 +82,6 @@ extern prop_t *prop_mastervol, *prop_mastermute;
 
 #define CLIP16(a) ((a) > 32767 ? 32767 : ((a) < -32768 ? -32768 : a))
 
-int audio_mode_prefer_float(void);
-
 /**
  * Audio drivers
  */

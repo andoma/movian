@@ -236,17 +236,7 @@ SRCS += src/text/fontstash.c
 ##############################################################
 # Audio subsys
 ##############################################################
-SRCS += src/audio/audio.c \
-	src/audio/audio_decoder.c \
-	src/audio/audio_fifo.c \
-	src/audio/audio_iec958.c \
-
-SRCS-$(CONFIG_LIBASOUND)  += src/audio/alsa/alsa_audio.c
-SRCS-$(CONFIG_LIBPULSE)   += src/audio/pulseaudio/pulseaudio.c
-SRCS-$(CONFIG_LIBOGC)     += src/audio/wii/wii_audio.c
-SRCS-$(CONFIG_COREAUDIO)  += src/audio/coreaudio/coreaudio.c
-SRCS-$(CONFIG_PSL1GHT)    += src/audio/ps3/ps3_audio.c
-SRCS                      += src/audio/dummy/dummy_audio.c
+SRCS += src/audio2/audio.c
 
 ##############################################################
 # DVD

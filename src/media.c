@@ -28,8 +28,7 @@
 
 #include "media.h"
 #include "showtime.h"
-#include "audio/audio_decoder.h"
-#include "audio/audio_defs.h"
+#include "audio2/audio.h"
 #include "event.h"
 #include "playqueue.h"
 #include "fileaccess/fa_libav.h"
@@ -1245,9 +1244,6 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
     if(mcp && mcp->cheat_for_speed)
       cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
   }
-
-  if(audio_mode_prefer_float() && cw->codec->id != CODEC_ID_AAC)
-    cw->codec_ctx->request_sample_fmt = AV_SAMPLE_FMT_FLT;
 
   if(avcodec_open2(cw->codec_ctx, cw->codec, NULL) < 0) {
     if(ctx == NULL)

@@ -45,7 +45,6 @@ CONFIG_LIST="
  lirc
  stdin
  release
- coreaudio
  avahi
  appleremote
  bonjour
@@ -368,7 +367,7 @@ finalize() {
 
     if enabled libav; then
 	echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${LIBAV_PATH}/include"
-	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lswscale -lavformat -lavcodec -lavutil"
+	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${LIBAV_PATH}/lib -lavresample -lswscale -lavformat -lavcodec -lavutil"
     fi
 
     if enabled polarssl; then

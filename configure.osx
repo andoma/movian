@@ -152,10 +152,8 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreVideo"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -weak_framework VideoDecodeAcceleration"
 
-# CoreAudio
-if enabled coreaudio; then
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
-fi
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreAudio"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework AudioToolBox"
 
 # Carbon, Remote Control Wrapper uses it
 if enabled appleremote; then

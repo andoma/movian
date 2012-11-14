@@ -190,8 +190,8 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 
   hts_mutex_lock(&mp->mp_clock_mutex);
 
-  aclock = mp->mp_audio_clock + gr->gr_frame_start
-    - mp->mp_audio_clock_realtime;
+  aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
+    - mp->mp_audio_clock_avtime;
 
   hts_mutex_unlock(&mp->mp_clock_mutex);
 
