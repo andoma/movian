@@ -126,6 +126,7 @@ typedef struct media_buf {
   void (*mb_dtor)(struct media_buf *mb);
 
   int mb_size;
+  int mb_offset;
 
   union {
     int32_t mb_data32;
@@ -245,7 +246,7 @@ typedef struct media_pipe {
   
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
-  int64_t mp_audio_clock_realtime;
+  int64_t mp_audio_clock_avtime;
   int mp_audio_clock_epoch;
   int mp_avdelta;           // Audio vs video delta (µs)
   int mp_svdelta;           // Subtitle vs video delta (µs)

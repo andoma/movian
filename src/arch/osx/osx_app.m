@@ -17,6 +17,7 @@
  */
 
 #import <AppKit/AppKit.h>
+#import <CoreAudio/HostTime.h>
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -33,6 +34,15 @@ prop_courier_t *mainloop_courier;
 static int get_system_concurrency(void);
 static void mainloop_courier_init(void);
 
+
+/**
+ *
+ */
+int64_t
+showtime_get_avtime(void)
+{
+  return AudioConvertHostTimeToNanos(AudioGetCurrentHostTime()) / 1000LL;
+}
 
 /**
  *

@@ -549,6 +549,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   }
 
   gr->gr_frame_start = showtime_get_ts();
+  gr->gr_frame_start_avtime = showtime_get_avtime();
   gr->gr_time = (gr->gr_frame_start - gr->gr_ui_start) / 1000000.0;
 
   if(!(flags & GLW_NO_FRAMERATE_UPDATE)) {

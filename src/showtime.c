@@ -34,7 +34,8 @@
 #include "prop/prop.h"
 #include "arch/arch.h"
 
-#include "audio/audio_defs.h"
+#include "media.h"
+#include "audio2/audio.h"
 #include "backend/backend.h"
 #include "navigator.h"
 #include "settings.h"

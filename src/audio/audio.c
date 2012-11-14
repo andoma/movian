@@ -45,17 +45,6 @@ static int audio_run = 1;
 static hts_thread_t audio_thread_id;
 audio_fifo_t af0, *thefifo;
 
-
-/**
- *
- */
-int
-audio_mode_prefer_float(void)
-{
-  return audio_mode_current && audio_mode_current->am_float;
-}
-
-
 /**
  *
  */
