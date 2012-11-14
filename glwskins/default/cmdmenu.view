@@ -197,7 +197,7 @@ widget(list_y, {
     BUTTONTXTTOGGLE("Bookmark",
 		    _("Add current page to bookmarks"),
 		    _("Remove current page from bookmarks"),
-		    $global.nav.currentpage.bookmarked, true,
+		    $nav.currentpage.bookmarked, true,
 		    bookmarks);
   });
 

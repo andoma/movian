@@ -235,7 +235,6 @@ nav_init(void)
 {
   nav_courier = prop_courier_create_thread(NULL, "navigator");
   bookmarks_init();
-  nav_create(prop_create(prop_get_global(), "nav"));
 }
 
 

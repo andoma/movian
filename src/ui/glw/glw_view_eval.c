@@ -738,21 +738,21 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
 {
   token_t *t;
   const char *pname[16];
-  prop_t *p, *ui;
+  prop_t *p;
   int i;
   
   for(i = 0, t = a; t != NULL && i < 15; t = t->child)
     pname[i++]  = rstr_get(t->t_rstring);
   pname[i] = NULL;
   
-  ui = ec->w ? ec->w->glw_root->gr_prop : NULL;
   p = prop_get_by_name(pname, follow_links,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
-		       PROP_TAG_ROOT, ui,
+		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
+		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_nav,
 		       NULL);
 
   if(p == NULL)
@@ -2250,7 +2250,8 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
 		       PROP_TAG_NAMED_ROOT, ec->prop_args, "args",
 		       PROP_TAG_NAMED_ROOT, ec->prop_clone, "clone",
-		       PROP_TAG_ROOT, w->glw_root->gr_prop,
+		       PROP_TAG_ROOT, w->glw_root->gr_prop_ui,
+		       PROP_TAG_ROOT, w->glw_root->gr_prop_nav,
 		       NULL);
   }
 
@@ -4030,7 +4031,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *t;
   const char *propname[16];
-  prop_t *p, *r;
+  prop_t *p;
   int i;
 
   if(a->type != TOKEN_PROPERTY_VALUE_NAME)
@@ -4040,12 +4041,11 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
     propname[i++]  = rstr_get(t->t_rstring);
   propname[i] = NULL;
   
-  r = ec->w ? ec->w->glw_root->gr_prop : NULL;
-
   p = prop_get_by_name(propname, 1, 
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
-		       PROP_TAG_ROOT, r,
+		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
+		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_nav,
 		       NULL);
 
   if(p != NULL) {

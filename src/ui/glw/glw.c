@@ -90,6 +90,19 @@ top_event_handler(glw_t *w, void *opaque, glw_signal_t sig, void *extra)
 
   if(event_is_action(e, ACTION_ENABLE_SCREENSAVER)) {
     gr->gr_screensaver_force_enable = 1;
+
+  } else if(event_is_action(e, ACTION_NAV_BACK) ||
+	    event_is_action(e, ACTION_NAV_FWD) ||
+	    event_is_action(e, ACTION_HOME) ||
+	    event_is_action(e, ACTION_PLAYQUEUE) ||
+	    event_is_action(e, ACTION_RELOAD_DATA) ||
+	    event_is_type(e, EVENT_OPENURL)) {
+
+    prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
+                                 PROP_TAG_ROOT, gr->gr_prop_nav,
+                                 NULL);
+    prop_send_ext_event(p, e);
+    prop_ref_dec(p);
   } else {
     event_addref(e);
     event_dispatch(e);
@@ -195,7 +208,7 @@ glw_change_underscan_v(void *opaque, int v)
 static void
 glw_init_settings(glw_root_t *gr, const char *instance)
 {
-  prop_t *r = gr->gr_prop;
+  prop_t *r = gr->gr_prop_ui;
 
   if(gr->gr_base_size == 0)
     gr->gr_base_size = 20;
@@ -365,7 +378,7 @@ glw_unload_universe(glw_root_t *gr)
 void
 glw_load_universe(glw_root_t *gr)
 {
-  prop_t *page = prop_create(gr->gr_prop, "root");
+  prop_t *page = prop_create(gr->gr_prop_ui, "root");
   glw_unload_universe(gr);
 
   rstr_t *universe = rstr_alloc("skin://universe.view");
@@ -561,7 +574,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
 
 	double hz = 128000000.0 / d;
 
-	prop_set_float(prop_create(gr->gr_prop, "framerate"), hz);
+	prop_set_float(prop_create(gr->gr_prop_ui, "framerate"), hz);
 	gr->gr_framerate = hz;
       }
       gr->gr_hz_sample = gr->gr_frame_start;
