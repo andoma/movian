@@ -148,7 +148,7 @@ GLW_REGISTER_CLASS(glw_quad);
 
 
 
-
+#if 0
 
 
 typedef struct glw_raster {
@@ -255,3 +255,4 @@ static glw_class_t glw_raster = {
 
 
 GLW_REGISTER_CLASS(glw_raster);
+#endif

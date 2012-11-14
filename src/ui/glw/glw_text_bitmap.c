@@ -137,12 +137,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
   // Upload texture
 
   if(pm != NULL && pm->pm_pixels != NULL) {
-    int fmt;
-
-    fmt = pm->pm_type == PIXMAP_IA ? GLW_TEXTURE_FORMAT_I8A8 : GLW_TEXTURE_FORMAT_BGR32;
-
-    glw_tex_upload(gr, &gtb->gtb_texture, pm->pm_pixels,
-		   fmt, pm->pm_width, pm->pm_height, 0);
+    glw_tex_upload(gr, &gtb->gtb_texture, pm, 0);
 
     free(pm->pm_pixels);
     pm->pm_pixels = NULL;

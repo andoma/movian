@@ -1295,7 +1295,7 @@ text_render0(const uint32_t *uc, const int len,
 
   pm = pixmap_create(target_width + margin*2, target_height + margin*2,
 		     flags & TR_RENDER_NO_OUTPUT ? PIXMAP_NULL :
-		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, 1);
+		     color_output ? PIXMAP_BGR32 : PIXMAP_IA);
 
   if(pm != NULL) {
     pm->pm_lines = lines;

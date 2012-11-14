@@ -91,6 +91,8 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glTexParameteri(m, GL_TEXTURE_WRAP_S, wrapmode);
   glTexParameteri(m, GL_TEXTURE_WRAP_T, wrapmode);
 
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, glt->glt_pixmap->pm_width + 1);
+
   if(glt->glt_tex_width && glt->glt_tex_height) {
 
     glTexImage2D(m, 0, glt->glt_format, glt->glt_tex_width, glt->glt_tex_height,
@@ -172,7 +174,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
  */
 void
 glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
-	       const void *src, int fmt, int width, int height, int flags)
+	       const pixmap_t *pm, int flags)
 {
   int format;
   int m = gr->gr_be.gbr_primary_texture_mode;
@@ -190,18 +192,18 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     glBindTexture(m, tex->tex);
   }
   
-  switch(fmt) {
-  case GLW_TEXTURE_FORMAT_BGR32:
+  switch(pm->pm_type) {
+  case PIXMAP_BGR32:
     format     = GL_RGBA;
     tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
-  case GLW_TEXTURE_FORMAT_RGB:
+  case PIXMAP_RGB24:
     format     = GL_RGB;
     tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
-  case GLW_TEXTURE_FORMAT_I8A8:
+  case PIXMAP_IA:
     format     = GL_LUMINANCE_ALPHA;
     tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
@@ -210,10 +212,13 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
     return;
   }
 
-  tex->width = width;
-  tex->height = height;
+  tex->width  = pm->pm_width;
+  tex->height = pm->pm_height;
 
-  glTexImage2D(m, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, src);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, pm->pm_width+1);
+
+  glTexImage2D(m, 0, format, pm->pm_width, pm->pm_height,
+	       0, format, GL_UNSIGNED_BYTE, pm->pm_data);
 }
 
 

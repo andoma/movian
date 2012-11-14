@@ -19,6 +19,13 @@
 #ifndef PIXMAP_H__
 #define PIXMAP_H__
 
+#ifdef __PPC__
+#define PIXMAP_ROW_ALIGN 16
+#else
+#define PIXMAP_ROW_ALIGN 8
+#endif
+
+
 #include <inttypes.h>
 #include "layout.h"
 
@@ -124,8 +131,7 @@ pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 		      int xdisp, int ydisp, int rgba);
 
-pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
-			int rowalign);
+pixmap_t *pixmap_create(int width, int height, pixmap_type_t type);
 
 void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 

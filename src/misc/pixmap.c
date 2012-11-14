@@ -113,19 +113,16 @@ pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
  *
  */
 pixmap_t *
-pixmap_create(int width, int height, pixmap_type_t type, int rowalign)
+pixmap_create(int width, int height, pixmap_type_t type)
 {
   int bpp = bytes_per_pixel(type);
-  if(rowalign < 1)
-    return NULL;
-
-  rowalign--;
+  const int rowalign = PIXMAP_ROW_ALIGN - 1;
 
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
   pm->pm_width = width;
   pm->pm_height = height;
-  pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
+  pm->pm_linesize = (((1 + pm->pm_width) * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
 
   if(pm->pm_linesize > 0) {
@@ -880,19 +877,13 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-  int align = 1;
-#ifdef __PPC__
-  align = 16;
-#endif
-
-
   switch(dst_pix_fmt) {
   case PIX_FMT_RGB24:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, align);
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24);
     break;
 
   default:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, align);
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32);
     break;
   }
 
@@ -903,7 +894,9 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   pic.data[0] = pm->pm_data;
   pic.linesize[0] = pm->pm_linesize;
-  
+  pic.linesize[1] = 0;
+  pic.linesize[2] = 0;
+  pic.linesize[3] = 0;
   sws_scale(sws, ptr, strides, 0, src_h, pic.data, pic.linesize);
 #if 0  
   if(pm->pm_type == PIXMAP_BGR32) {
@@ -950,7 +943,7 @@ pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h)
   }
 
   int y;
-  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, 1);
+  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32);
   if(pm == NULL)
     return NULL;
 
@@ -1094,7 +1087,7 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     }
   }
 
-  pm = pixmap_create(src_w, src_h, fmt, 1);
+  pm = pixmap_create(src_w, src_h, fmt);
   if(pm == NULL)
     return NULL;
 

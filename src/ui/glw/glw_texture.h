@@ -100,13 +100,8 @@ void glw_tex_backend_free_loader_resources(glw_loadable_texture_t *glt);
 
 void glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt);
 
-#define GLW_TEXTURE_FORMAT_I8A8   1  // Intensity + Alpha
-#define GLW_TEXTURE_FORMAT_RGB    2
-#define GLW_TEXTURE_FORMAT_BGR32  3
-
 void glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
-		    const void *src, int format, int width, int height,
-		    int flags);
+		    const pixmap_t *pm, int flags);
 
 void glw_tex_destroy(glw_root_t *gr, glw_backend_texture_t *tex);
 

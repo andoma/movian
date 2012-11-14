@@ -467,8 +467,6 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 {
   int width  = d->d_x2 - d->d_x1;
   int height = d->d_y2 - d->d_y1;
-  int outsize = width * height * 4;
-  uint32_t *tmp, *t0; 
   int x, y, i;
   uint8_t *buf = d->d_bitmap;
 
@@ -501,11 +499,12 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   ha.ey -= d->d_y1;
 #endif
 
-  t0 = tmp = malloc(outsize);
+  pixmap_t *pm = pixmap_create(width, height, PIXMAP_BGR32);
 
   /* XXX: this can be optimized in many ways */
 
   for(y = 0; y < height; y++) {
+    uint32_t *tmp = pm->pm_data + y * pm->pm_linesize;
     for(x = 0; x < width; x++) {
       i = buf[0];
 
@@ -571,9 +570,8 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   glw_renderer_vtx_pos(r, 3, d->d_x1, d->d_y1, 0.0f);
   glw_renderer_vtx_st (r, 3, 0, 0);
 
-  glw_tex_upload(gr, &gvo->gvo_texture, t0, GLW_TEXTURE_FORMAT_BGR32,
-		 width, height, 0);
-  free(t0);
+  glw_tex_upload(gr, &gvo->gvo_texture, pm, 0);
+  pixmap_release(pm);
 }
 
 
@@ -634,7 +632,6 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
 {
   glw_video_overlay_t *gvo = gvo_create(vo->vo_start, GVO_BITMAP);
   glw_root_t *gr = gv->w.glw_root;
-  int fmt;
 
   pixmap_t *pm = vo->vo_pixmap;
   int W = pm->pm_width;
@@ -678,20 +675,8 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
     gvo->gvo_height = pm->pm_height;
   }
 
-  switch(pm->pm_type) {
-  case PIXMAP_IA:
-    fmt = GLW_TEXTURE_FORMAT_I8A8;
-    break;
 
-  case PIXMAP_BGR32:
-    fmt = GLW_TEXTURE_FORMAT_BGR32;
-    break;
-
-  default:
-    return;
-  }
-
-  glw_tex_upload(gr, &gvo->gvo_texture, pm->pm_pixels, fmt, W, H, 0);
+  glw_tex_upload(gr, &gvo->gvo_texture, pm, 0);
 }
 
 /**

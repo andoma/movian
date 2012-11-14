@@ -313,7 +313,6 @@ SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
 			src/ui/glw/glw_mirror.c \
 			src/ui/glw/glw_video_common.c \
 			src/ui/glw/glw_video_overlay.c \
-			src/ui/glw/glw_gradient.c \
 			src/ui/glw/glw_bar.c \
 			src/ui/glw/glw_flicker.c \
 			src/ui/glw/glw_keyintercept.c \

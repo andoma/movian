@@ -164,6 +164,9 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs,
 
   gvs->gvs_uploaded = 1;
 
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
   glBindBuffer(GL_PIXEL_UNPACK_BUFFER, gvs->gvs_pbo[0]);
   glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
   glBindTexture(textype, gv_tex_get(gvs, GVF_TEX_L));
@@ -190,6 +193,8 @@ gv_surface_pixmap_upload(glw_video_surface_t *gvs,
   gvs->gvs_pbo_ptr[0] = NULL;
   gvs->gvs_pbo_ptr[1] = NULL;
   gvs->gvs_pbo_ptr[2] = NULL;
+
+  glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 }
 
 
