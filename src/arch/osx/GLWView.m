@@ -117,7 +117,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   gr->gr_frameduration = 1000000.0 * ot->videoRefreshPeriod / 
     (ot->rateScalar * ot->videoTimeScale);
 
-  prop_set_float(prop_create(gr->gr_prop, "framerate"), gr->gr_framerate);
+  prop_set_float(prop_create(gr->gr_prop_ui, "framerate"), gr->gr_framerate);
 
   [self drawFrame];
   
@@ -345,7 +345,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   
   gr = root;
   minimized = NO;
-  eventSink = prop_create(gr->gr_prop, "eventSink");
+  eventSink = prop_create(gr->gr_prop_ui, "eventSink");
 
   GLint one = 1;
   [[self openGLContext] setValues:&one forParameter:NSOpenGLCPSwapInterval];

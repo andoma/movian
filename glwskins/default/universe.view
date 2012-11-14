@@ -20,19 +20,19 @@ onEvent(sysinfo, {
 widget(container_z, {
 
   widget(backdrop, {
-    source: $global.nav.currentpage.model.metadata.background ?? 
-	  $global.nav.currentpage.glw.background ??
+    source: $nav.currentpage.model.metadata.background ?? 
+	  $nav.currentpage.glw.background ??
 	  "graphics/background.jpg";
     color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
-      ($global.nav.currentpage.model.metadata.backgroundAlpha ??
-       $global.nav.currentpage.glw.backgroundAlpha ??
+      ($nav.currentpage.model.metadata.backgroundAlpha ??
+       $nav.currentpage.glw.backgroundAlpha ??
        1);
   });
 
   widget(container_y, {
     space(1);
     widget(throbber, {
-      alpha: iir($global.nav.currentpage.model.loading, 4);
+      alpha: iir($nav.currentpage.model.loading, 4);
     });
     space(1);
   });
@@ -53,7 +53,7 @@ widget(container_z, {
 	  effect: blend;
 	  noInitialTransform: true;
     
-	  cloner($global.nav.pages, layer, {
+	  cloner($nav.pages, layer, {
 
 	    $clone.pageMenu = 0;
 	    // Page menu event routing

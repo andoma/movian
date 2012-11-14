@@ -22,7 +22,7 @@
 #include "showtime.h"
 #include "osx.h"
 #include "src/ui/glw/glw.h"
-
+#include "navigator.h"
 
 
 @interface GLWWindow : NSWindow
@@ -211,10 +211,21 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
     return self;
 
   gr = calloc(1, sizeof(glw_root_t));
-  gr->gr_prop = prop_create_root("ui");
+  gr->gr_prop_ui = prop_create_root("ui");
+  gr->gr_prop_nav = nav_spawn();
+
+
+  event_t *e = event_create_openurl(NAV_HOME, NULL, NULL, NULL, NULL);
+  prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 1,
+			       PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
+			       NULL);
+  prop_send_ext_event(p, e);
+  prop_ref_dec(p);
+  event_release(e);
+
 
   if(glw_init(gr, "glw/cocoa/default")) {
-    prop_destroy(gr->gr_prop);
+    prop_destroy(gr->gr_prop_ui);
     free(gr);
     [self release];
     return nil;
@@ -225,7 +236,7 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
   evsub = prop_subscribe(0,
 			 PROP_TAG_CALLBACK, eventsink, self,
 			 PROP_TAG_NAME("ui", "eventSink"),
-			 PROP_TAG_ROOT, gr->gr_prop,
+			 PROP_TAG_ROOT, gr->gr_prop_ui,
 			 PROP_TAG_COURIER, mainloop_courier,
 			 NULL);
   
@@ -235,7 +246,7 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
   fwsub = prop_subscribe(0,
 			 PROP_TAG_CALLBACK_INT, set_fullwindow, self,
 			 PROP_TAG_NAME("ui", "fullwindow"),
-			 PROP_TAG_ROOT, gr->gr_prop,
+			 PROP_TAG_ROOT, gr->gr_prop_ui,
 			 PROP_TAG_COURIER, mainloop_courier,
 			 NULL);
 
@@ -261,7 +272,8 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
   prop_unsubscribe(fwsub);
 
   glw_fini(gr);
-  prop_destroy(gr->gr_prop);
+  prop_destroy(gr->gr_prop_ui);
+  prop_destroy(gr->gr_prop_nav);
   free(gr);
 
   [window close];

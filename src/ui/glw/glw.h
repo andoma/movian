@@ -636,7 +636,8 @@ typedef struct glw_program glw_program_t;
  * GLW root context
  */
 typedef struct glw_root {
-  prop_t *gr_prop;
+  prop_t *gr_prop_ui;
+  prop_t *gr_prop_nav;
 
   int gr_stop;
   prop_sub_t *gr_evsub;
