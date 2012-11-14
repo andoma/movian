@@ -157,7 +157,11 @@ glw_rtt_init(glw_root_t *gr, glw_rtt_t *grtt, int width, int height,
 
   mode = alpha ? GL_RGBA : GL_RGB;
 
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+
   glTexImage2D(m, 0, mode, width, height, 0, mode, GL_UNSIGNED_BYTE, NULL);
+  glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
   glGenFramebuffersEXT(1, &grtt->grtt_framebuffer);
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, grtt->grtt_framebuffer);
   glFramebufferTexture2DEXT(GL_FRAMEBUFFER_EXT,
@@ -237,7 +241,7 @@ glw_opengl_init_context(glw_root_t *gr)
 
   gbr->gbr_frontface = GLW_CCW;
 
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // We should try to fix this
+  glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
   if(check_gl_ext(s, "GL_ARB_texture_non_power_of_two")) {
     gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;

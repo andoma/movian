@@ -882,7 +882,7 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
   svg_parse_root(&state, tags);
   state.need_color = NULL;
 
-  state.pm = pixmap_create(w, h, need_color ? PIXMAP_BGR32 : PIXMAP_IA, 1);
+  state.pm = pixmap_create(w, h, need_color ? PIXMAP_BGR32 : PIXMAP_IA);
   if(state.pm == NULL) {
     snprintf(errbuf, errlen, "Out of memory");
     return NULL;

@@ -30,6 +30,7 @@
 #include "misc/queue.h"
 #include "misc/layout.h"
 #include "misc/pool.h"
+#include "misc/pixmap.h" // for PIXMAP_ROW_ALIGN
 #include "prop/prop.h"
 #include "showtime.h"
 #include "settings.h"
