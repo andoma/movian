@@ -85,12 +85,13 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 
 	const uint8_t *src = r->pict.data[0];
 	const uint32_t *clut = (uint32_t *)r->pict.data[1];
-	uint32_t *dst = (uint32_t *)vo->vo_pixmap->pm_pixels;
       
 	for(y = 0; y < r->h; y++) {
-	  for(x = 0; x < r->w; x++) {
+	  uint32_t *dst = (uint32_t *)(vo->vo_pixmap->pm_pixels + 
+				       y * vo->vo_pixmap->pm_linesize);
+	  for(x = 0; x < r->w; x++)
 	    *dst++ = clut[src[x]];
-	  }
+
 	  src += r->pict.linesize[0];
 	}
 	video_overlay_enqueue(vd, vo);
