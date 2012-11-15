@@ -647,24 +647,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  const char *canonical_url,
 		  video_queue_t *vq)
 {
-  AVFormatContext *fctx;
-  AVCodecContext *ctx;
-  media_format_t *fw;
-  int i;
-  media_codec_t **cwvec;
-  event_t *e;
-
-  uint64_t hash;
-  int64_t fsize;
-
-  hts_thread_t sub_tid = 0;
-  sub_load_t sl;
-
-  int freetype_context = freetype_get_context();
-
-  struct attachment_list alist;
-  LIST_INIT(&alist);
-
   if(mimetype == NULL) {
     struct fa_stat fs;
 
@@ -703,7 +685,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     prop_set_string(prop_create(mp->mp_prop_metadata, "title"), tmp);
   }
 
-  int seek_is_fast = fa_seek_is_fast(fh);
+  const int seek_is_fast = fa_seek_is_fast(fh);
 
   if(seek_is_fast && mimetype == NULL) {
     if(fa_probe_iso(NULL, fh) == 0) {
@@ -717,18 +699,40 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 #endif
     }
   }
+  
+  return be_file_playvideo_fh(url, mp, flags, priority,
+                              errbuf, errlen, mimetype,
+                              canonical_url, vq, fh);
+}
 
-  if(seek_is_fast)
+/**
+ *
+ */
+event_t *
+be_file_playvideo_fh(const char *url, media_pipe_t *mp,
+                     int flags, int priority,
+                     char *errbuf, size_t errlen,
+                     const char *mimetype,
+                     const char *canonical_url,
+                     video_queue_t *vq,
+                     fa_handle_t *fh)
+{
+  const int seek_is_fast = fa_seek_is_fast(fh);
+  
+  uint64_t hash;
+  hts_thread_t sub_tid = 0;
+  sub_load_t sl = {0};
+
+  if(seek_is_fast && !(flags & BACKEND_VIDEO_NO_OPENSUB_HASH))
     sl.sl_opensub_hash_valid = !opensub_compute_hash(fh, &hash);
-  else
-    sl.sl_opensub_hash_valid = 0;
 
   if(!sl.sl_opensub_hash_valid)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
   AVIOContext *avio = fa_libav_reopen(fh);
-  fsize = avio_size(avio);
+  int64_t fsize = avio_size(avio);
 
+  AVFormatContext *fctx;
   if((fctx = fa_libav_open_format(avio, url, errbuf, errlen,
 				  mimetype)) == NULL) {
     fa_libav_close(avio);
@@ -757,7 +761,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   sl.sl_beflags = flags;
   sl.sl_p = mp->mp_prop_subtitle_tracks;
   sl.sl_url = url;
-  sl.sl_stop = 0;
   sl.sl_opensub_hash = hash;
   sl.sl_fsize = fsize;
 
@@ -768,7 +771,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   /**
    * Init codec contexts
    */
-  cwvec = alloca(fctx->nb_streams * sizeof(void *));
+  media_codec_t **cwvec = alloca(fctx->nb_streams * sizeof(void *));
   memset(cwvec, 0, sizeof(void *) * fctx->nb_streams);
   
   int cwvec_size = fctx->nb_streams;
@@ -777,16 +780,21 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
   mp->mp_video.mq_stream = -1;
   mp->mp_video.mq_stream2 = -1;
 
-  fw = media_format_create(fctx);
+  media_format_t *fw = media_format_create(fctx);
 
 
   // Scan all streams and select defaults
+  int freetype_context = freetype_get_context();
+  struct attachment_list alist;
+  int i;
+  LIST_INIT(&alist);
+
 
   for(i = 0; i < fctx->nb_streams; i++) {
     char str[256];
     media_codec_params_t mcp = {0};
 
-    ctx = fctx->streams[i]->codec;
+    AVCodecContext *ctx = fctx->streams[i]->codec;
 
     avcodec_string(str, sizeof(str), ctx, 0);
     TRACE(TRACE_DEBUG, "Video", " Stream #%d: %s", i, str);
@@ -856,6 +864,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 
   metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
 
+  event_t *e;
   e = video_player_loop(fctx, cwvec, mp, flags, errbuf, errlen, canonical_url,
 			freetype_context, si, cwvec_size);
 

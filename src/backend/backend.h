@@ -50,6 +50,7 @@ typedef enum {
 #define BACKEND_VIDEO_SET_TITLE   0x8
 #define BACKEND_VIDEO_START_FROM_BEGINNING 0x10
 #define BACKEND_VIDEO_RESUME      0x20
+#define BACKEND_VIDEO_NO_OPENSUB_HASH     0x40
 
 /**
  *
