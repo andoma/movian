@@ -1948,7 +1948,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
 	media_type = AVMEDIA_TYPE_SUBTITLE;
-	nicename = "Subtitles";
+	nicename = "Bitmap";
 
 	uint32_t composition_id, ancillary_id;
 	
@@ -1975,7 +1975,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       } else if(!strcmp(type, "TEXTSUB")) {
 	codec_id = -1;
 	media_type = AVMEDIA_TYPE_SUBTITLE;
-	nicename = "Subtitles";
+	nicename = "Text";
       } else {
 	continue;
       }
