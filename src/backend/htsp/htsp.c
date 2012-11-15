@@ -38,6 +38,9 @@
 #include "misc/string.h"
 #include "misc/sha.h"
 #include "video/video_playback.h"
+#include "fileaccess/fileaccess.h"
+#include "fileaccess/fa_proto.h"
+#include "fileaccess/fa_video.h"
 
 #define EPG_TAIL 20          // How many EPG entries to keep per channel
 
@@ -1200,6 +1203,9 @@ be_htsp_open(prop_t *page, const char *url, int sync)
 
   TRACE(TRACE_DEBUG, "HTSP", "Open %s", url);
 
+  if(!strncmp(path, "/dvr/", strlen("/dvr/")))
+    return backend_open_video(page, url, sync);
+
   if(!strncmp(path, "/channel/", strlen("/channel/")))
     return backend_open_video(page, url, sync);
 
@@ -1523,6 +1529,185 @@ htsp_free_streams(htsp_subscription_t *hs)
 }
 
 
+
+typedef struct htsp_file {
+  fa_handle_t h;
+  htsp_connection_t *hf_hc;
+  int hf_id;
+  int64_t hf_pos;
+  int64_t hf_file_size;
+  int hf_mtime;
+} htsp_file_t;
+
+
+
+static void
+htsp_file_update_meta(htsp_file_t *hf)
+{
+  htsmsg_t *m = htsmsg_create_map();
+  htsmsg_add_str(m, "method", "fileStat");
+  htsmsg_add_u32(m, "id", hf->hf_id);
+
+  if((m = htsp_reqreply(hf->hf_hc, m)) == NULL)
+    return;
+
+  htsmsg_get_s64(m, "size", &hf->hf_file_size);
+  htsmsg_get_s32(m, "mtime", &hf->hf_mtime);
+
+  htsmsg_destroy(m);
+}
+
+
+
+/**
+ *
+ */
+static int64_t
+htsp_file_seek(fa_handle_t *fh, int64_t pos, int whence)
+{
+  htsp_file_t *hf = (htsp_file_t *)fh;
+  int64_t np;
+
+  switch(whence) {
+  case SEEK_SET:
+    np = pos;
+    break;
+
+  case SEEK_CUR:
+    np = hf->hf_pos + pos;
+    break;
+
+  case SEEK_END:
+    htsp_file_update_meta(hf);
+    np = hf->hf_file_size + pos;
+    break;
+
+  default:
+    return -1;
+  }
+
+  if(np < 0)
+    return -1;
+  hf->hf_pos = np;
+  return np;
+}
+
+
+/**
+ *
+ */
+static int64_t
+htsp_file_fsize(fa_handle_t *fh)
+{
+  htsp_file_t *hf = (htsp_file_t *)fh;
+  htsp_file_update_meta(hf);
+  return hf->hf_file_size;
+}
+
+
+/**
+ *
+ */
+static int
+htsp_file_read(fa_handle_t *handle, void *buf, size_t size)
+{
+  htsp_file_t *hf = (htsp_file_t *)handle;
+  htsmsg_t *m = htsmsg_create_map();
+
+  htsmsg_add_str(m, "method", "fileRead");
+  htsmsg_add_u32(m, "id", hf->hf_id);
+  htsmsg_add_s64(m, "offset", hf->hf_pos);
+  htsmsg_add_u32(m, "size", size);
+
+  if((m = htsp_reqreply(hf->hf_hc, m)) == NULL)
+    return -1;
+  
+  size_t datalen;
+  const void *data;
+
+  if(htsmsg_get_bin(m, "data", &data, &datalen))
+    return -1;
+  
+  int r = MIN(datalen, size); // Be sure
+  hf->hf_pos += r;
+  memcpy(buf, data, r);
+  htsmsg_destroy(m);
+  return r;
+}
+
+
+/**
+ *
+ */
+static void
+htsp_file_close(fa_handle_t *fh)
+{
+  htsp_file_t *hf = (htsp_file_t *)fh;
+
+  htsmsg_t *m = htsmsg_create_map();
+  htsmsg_add_str(m, "method", "fileClose");
+  htsmsg_add_u32(m, "id", hf->hf_id);
+
+  if((m = htsp_reqreply(hf->hf_hc, m)) == NULL)
+    return;
+
+  htsmsg_destroy(m);
+
+  // hf->hf_hc->refcount-- or something
+
+  free(hf);
+}
+
+
+/**
+ *
+ */
+static fa_protocol_t fa_protocol_htsp = {
+  .fap_name  = "htsp",
+  .fap_close = htsp_file_close,
+  .fap_read  = htsp_file_read,
+  .fap_seek  = htsp_file_seek,
+  .fap_fsize = htsp_file_fsize,
+};
+
+
+/**
+ *
+ */
+static event_t *
+be_htsp_playdvr(const char *url, media_pipe_t *mp,
+                int flags, int priority,
+                char *errbuf, size_t errlen,
+                video_queue_t *vq,
+                htsp_connection_t *hc,
+                const char *remain)
+{
+  char filename[64];
+
+  htsmsg_t *m = htsmsg_create_map();
+  htsmsg_add_str(m, "method", "fileOpen");
+  snprintf(filename, sizeof(filename), "dvr/%s", remain);
+  htsmsg_add_str(m, "file", filename);
+
+  if((m = htsp_reqreply(hc, m)) == NULL) {
+    snprintf(errbuf, errlen, "Unable to open file");
+    return NULL;
+  }
+
+  htsp_file_t *hf = calloc(1, sizeof(htsp_file_t));
+  hf->h.fh_proto = &fa_protocol_htsp;
+
+  htsmsg_get_s64(m, "size", &hf->hf_file_size);
+  htsmsg_get_s32(m, "mtime", &hf->hf_mtime);
+  htsmsg_get_s32(m, "id", &hf->hf_id);
+  hf->hf_hc = hc;
+
+  return be_file_playvideo_fh(url, mp, flags, priority, 
+                              errbuf, errlen, NULL, url,
+                              vq, &hf->h);
+}
+
+
 /**
  *
  */
@@ -1539,6 +1724,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   htsp_subscription_t *hs;
   event_t *e;
   int primary = !!(flags & BACKEND_VIDEO_PRIMARY);
+  const char *r;
 
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",
@@ -1548,6 +1734,11 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 				errbuf, errlen)) == NULL) {
     return NULL;
   }
+
+  if((r = mystrbegins(path, "/dvr/")) != NULL)
+    return be_htsp_playdvr(url, mp, flags, priority, errbuf, errlen, vq, hc, r);
+
+
 
   hs = calloc(1, sizeof(htsp_subscription_t));
 
