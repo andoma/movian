@@ -220,12 +220,9 @@ nav_create(prop_t *prop)
 
   static int initial_opened = 0;
 
-  if(initial_opened == 0) {
-    initial_opened = 1;
-    if(gconf.initial_url != NULL) {
-      nav_open0(nav, gconf.initial_url, gconf.initial_view, NULL, NULL, NULL);
-    }
-  }
+  if(atomic_add(&initial_opened, 1) == 0 && gconf.initial_url != NULL)
+    nav_open0(nav, gconf.initial_url, gconf.initial_view, NULL, NULL, NULL);
+
   return nav;
 }
 
