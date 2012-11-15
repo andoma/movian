@@ -281,12 +281,6 @@ showtime_init(void)
   /* Initialize various external APIs */
   init_group(INIT_GROUP_API);
 
-  /* Open initial page(s) */
-  nav_open(NAV_HOME, NULL);
-  if(gconf.initial_url != NULL)
-    nav_open(gconf.initial_url, gconf.initial_view);
-
-
   /* HTTP server and UPNP */
 #if ENABLE_HTTPSERVER
   http_server_init();

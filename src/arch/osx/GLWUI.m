@@ -214,16 +214,6 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
 
-
-  event_t *e = event_create_openurl(NAV_HOME, NULL, NULL, NULL, NULL);
-  prop_t *p = prop_get_by_name(PNVEC("nav", "eventsink"), 1,
-			       PROP_TAG_NAMED_ROOT, gr->gr_prop_nav, "nav",
-			       NULL);
-  prop_send_ext_event(p, e);
-  prop_ref_dec(p);
-  event_release(e);
-
-
   if(glw_init(gr, "glw/cocoa/default")) {
     prop_destroy(gr->gr_prop_ui);
     free(gr);

@@ -141,6 +141,9 @@ static void nav_eventsink(void *opaque, prop_event_t event, ...);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
+static void nav_open0(navigator_t *nav, const char *url, const char *view,
+		      prop_t *origin, prop_t *model, const char *how);
+
 
 /**
  *
@@ -213,6 +216,16 @@ nav_create(prop_t *prop)
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
 
+  nav_open0(nav, NAV_HOME, NULL, NULL, NULL, NULL);
+
+  static int initial_opened = 0;
+
+  if(initial_opened == 0) {
+    initial_opened = 1;
+    if(gconf.initial_url != NULL) {
+      nav_open0(nav, gconf.initial_url, gconf.initial_view, NULL, NULL, NULL);
+    }
+  }
   return nav;
 }
 
