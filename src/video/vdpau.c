@@ -286,7 +286,6 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
   pic->linesize[0] = pic->linesize[1] =  pic->linesize[2] = 0;
   pic->opaque = vvs;
   pic->type = FF_BUFFER_TYPE_USER;
-  pic->age = 256 * 256 * 256 * 64;
 
   memcpy(&vvs->vvs_mb, mb, sizeof(media_buf_t));
   return 0;
@@ -598,11 +597,11 @@ vdpau_codec_create(media_codec_t *mc, int id,
 
   TRACE(TRACE_DEBUG, "VDPAU", "Decoder initialized");
 	  
-  mc->codec_ctx = ctx ?: avcodec_alloc_context();
+  mc->codec_ctx = ctx ?: avcodec_alloc_context3(NULL);
   mc->codec_ctx->codec_id   = mc->codec->id;
   mc->codec_ctx->codec_type = mc->codec->type;
 
-  if(avcodec_open(mc->codec_ctx, mc->codec) < 0) {
+  if(avcodec_open2(mc->codec_ctx, mc->codec, NULL) < 0) {
     if(ctx == NULL)
       free(mc->codec_ctx);
     mc->codec = NULL;

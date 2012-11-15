@@ -1262,6 +1262,8 @@ int glw_event(glw_root_t *gr, struct event *e);
 
 int glw_event_to_widget(glw_t *w, struct event *e, int local);
 
+void glw_inject_event(glw_root_t *gr, event_t *e);
+
 void glw_pointer_event(glw_root_t *gr, glw_pointer_event_t *gpe);
 
 int glw_pointer_event0(glw_root_t *gr, glw_t *w, glw_pointer_event_t *gpe, 

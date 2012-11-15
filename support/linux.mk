@@ -10,6 +10,7 @@ SRCS += src/arch/linux/linux_main.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \
+	src/audio2/pulseaudio.c \
 
 
 DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE

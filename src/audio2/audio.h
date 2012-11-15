@@ -58,3 +58,6 @@ void audio_set_clock(struct media_pipe *mp, int64_t pts, int64_t delay,
 struct AVFrame;
 
 int audio_decoder_configure(audio_decoder_t *ad, const struct AVFrame *avf);
+
+audio_class_t *audio_driver_init(void);
+

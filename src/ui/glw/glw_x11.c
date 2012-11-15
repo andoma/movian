@@ -38,6 +38,7 @@
 #include "ui/linux/x11_common.h"
 #include "ui/linux/nvidia.h"
 #include "settings.h"
+#include "navigator.h"
 
 #if WITH_VALGRIND
 #include <valgrind/callgrind.h>
@@ -46,6 +47,8 @@
 #if ENABLE_VDPAU
 #include "video/vdpau.h"
 #endif
+
+//#define WITH_RECORDER
 
 #include "glw_rec.h"
 
@@ -109,8 +112,10 @@ typedef struct glw_x11 {
   int vmodes;
 
   // Recording support
+#ifdef WITH_RECORDER
   const char *record_file;
   glw_rec_t *recorder;
+#endif
 
 } glw_x11_t;
 
@@ -536,7 +541,7 @@ probe_wm(glw_x11_t *gx11)
 	wm_name,
 	gx11->wm_flags & GX11_WM_CAN_FULLSCREEN ? ", can fullscreen" : "");
 
-  prop_set_string(prop_create(gx11->gr.gr_prop, "windowmanager"),
+  prop_set_string(prop_create(gx11->gr.gr_prop_ui, "windowmanager"),
 		  wm_name);
 
   XFree(prop_return);
@@ -811,7 +816,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       buf[n] = '\0';
       e = event_create_int(EVENT_UNICODE, wc);
 
-      event_to_ui(e);
+      glw_inject_event(&gx11->gr, e);
       s += n;
       len -= n;
       something = 1;
@@ -911,7 +916,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
     e = event_create_str(EVENT_KEYDESC, buf);
   }
   if(e != NULL) {
-    event_to_ui(e);
+    glw_inject_event(&gx11->gr, e);
     return 1;
   }
   return 0;
@@ -923,7 +928,7 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
 static void
 update_gpu_info(glw_x11_t *gx11)
 {
-  prop_t *gpu = prop_create(gx11->gr.gr_prop, "gpu");
+  prop_t *gpu = prop_create(gx11->gr.gr_prop_ui, "gpu");
   prop_set_string(prop_create(gpu, "vendor"),
 		      (const char *)glGetString(GL_VENDOR));
 
@@ -977,15 +982,16 @@ glw_x11_mainloop(glw_x11_t *gx11)
   int frame = 0;
   int pending_screensaver_kill = 0;
   void *framecopy = NULL;
+#ifdef WITH_RECORDER
   int rec_do_frame = 0;
-
+#endif
   clock_gettime(CLOCK_MONOTONIC, &tp);
   start = (int64_t)tp.tv_sec * 1000000LL + tp.tv_nsec / 1000;
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("ui","fullwindow"),
 		 PROP_TAG_CALLBACK_INT, glw_x11_in_fullwindow, gx11,
-		 PROP_TAG_ROOT, gx11->gr.gr_prop,
+		 PROP_TAG_ROOT, gx11->gr.gr_prop_ui,
 		 NULL);
 
   if(!gx11->wm_flags || gx11->no_screensaver)
@@ -995,7 +1001,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
   glw_set_fullscreen(&gx11->gr, gx11->is_fullscreen);
 
 
-
+#ifdef WITH_RECORDER
   if(gx11->record_file) {
     gx11->recorder = glw_rec_init(gx11->record_file, 
 				  gx11->gr.gr_width,
@@ -1005,7 +1011,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 
     framecopy = malloc(gx11->gr.gr_width * gx11->gr.gr_height * 4);
   }
-
+#endif
 
   while(!gx11->gr.gr_stop) {
 
@@ -1125,7 +1131,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	  gpe.type = GLW_POINTER_LEFT_PRESS;
 	  break;
 	case 2:
-	  event_to_ui(event_create_action(ACTION_MENU));
+	  glw_inject_event(&gx11->gr, event_create_action(ACTION_MENU));
 	  continue;
 	case 3:
 	  /* Right click */
@@ -1134,7 +1140,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	case 4:
 	  /* Scroll up */
 	  if(gx11->map_mouse_wheel_to_keys) {
-	    event_to_ui(event_create_action(ACTION_UP));
+	    glw_inject_event(&gx11->gr, event_create_action(ACTION_UP));
 	    continue;
 	  } else {
 	    gpe.type = GLW_POINTER_SCROLL;
@@ -1144,7 +1150,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
 	case 5:
 	  /* Scroll down */
 	  if(gx11->map_mouse_wheel_to_keys) {
-	    event_to_ui(event_create_action(ACTION_DOWN));
+	    glw_inject_event(&gx11->gr, event_create_action(ACTION_DOWN));
 	    continue;
 	    
 	  } else {
@@ -1202,6 +1208,7 @@ glw_x11_mainloop(glw_x11_t *gx11)
       nvidia_frame(gx11->nvidia);
 #endif
 
+#ifdef WITH_RECORDER
     if(rec_do_frame == 0) {
       if(framecopy != NULL) {
 	glReadPixels(0, 0, gx11->gr.gr_width,  gx11->gr.gr_height,
@@ -1210,11 +1217,13 @@ glw_x11_mainloop(glw_x11_t *gx11)
       }
     }
     rec_do_frame = !rec_do_frame;
+#endif
   }
 
+#ifdef WITH_RECORDER
   if(gx11->recorder)
     glw_rec_stop(gx11->recorder);
-
+#endif
   free(framecopy);
 
   if(gx11->sss != NULL)
@@ -1264,7 +1273,11 @@ glw_x11_start(void)
   char confname[PATH_MAX];
   int force_fs = 0;
 
-  gx11->gr.gr_prop = prop_create(prop_get_global(), "ui");
+  gx11->gr.gr_prop_ui = prop_create_root("ui");
+  gx11->gr.gr_prop_nav = nav_spawn();
+
+  if(prop_set_parent(gx11->gr.gr_prop_ui, prop_get_global()))
+    abort();
 
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
@@ -1310,7 +1323,7 @@ glw_x11_start(void)
     prop_subscribe(0,
 		   PROP_TAG_CALLBACK, eventsink, gx11,
 		   PROP_TAG_NAME("ui", "eventSink"),
-		   PROP_TAG_ROOT, gr->gr_prop,
+		   PROP_TAG_ROOT, gr->gr_prop_ui,
 		   PROP_TAG_COURIER, gr->gr_courier,
 		   NULL);
 

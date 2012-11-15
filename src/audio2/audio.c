@@ -12,8 +12,6 @@
 static audio_class_t *audio_class;
 
 
-extern audio_class_t *mac_audio_init(void);
-
 static void *audio_decoder_thread(void *aux);
 
 /**
@@ -22,9 +20,7 @@ static void *audio_decoder_thread(void *aux);
 void 
 audio_init(void)
 {
-  audio_class = mac_audio_init();
-
-
+  audio_class = audio_driver_init();
 }
 
 

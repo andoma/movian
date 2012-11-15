@@ -158,6 +158,7 @@ update_mastervol(void *opaque, float value)
 static void
 read_mastervol(GtkScaleButton *button, gdouble value, gpointer user_data)
 {
+#if 0
   playdeck_t *pd = user_data;
   extern prop_t *prop_mastervol; /* A bit ugly.  We could use
 				    prop_get_by_name(), but this is
@@ -165,6 +166,7 @@ read_mastervol(GtkScaleButton *button, gdouble value, gpointer user_data)
   
   value = (value - 1) * 75;
   prop_set_float_ex(prop_mastervol, pd->sub_volume, value, 0);
+#endif
 }
 
 
