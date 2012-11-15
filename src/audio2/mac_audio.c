@@ -6,7 +6,7 @@
 #include "audio.h"
 #include "media.h"
 
-#define NUM_BUFS 1000
+#define NUM_BUFS 3
 
 typedef struct decoder {
   audio_decoder_t ad;
@@ -35,6 +35,13 @@ return_buf(void *aux, AudioQueueRef aq, AudioQueueBufferRef buf)
       d->buffers[i].avail = 1;
       hts_cond_signal(&mp->mp_audio.mq_avail);
       hts_mutex_unlock(&mp->mp_mutex);
+      int tavail = 0;
+      for(i = 0; i < NUM_BUFS; i++) {
+        if(d->buffers[i].avail)
+          tavail++;
+      }
+      if(tavail == NUM_BUFS)
+        printf("Underrun!\n");
       return;
     }
   }
