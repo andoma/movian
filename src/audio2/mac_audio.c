@@ -277,10 +277,8 @@ static audio_class_t mac_audio_class = {
   .ac_flush = mac_audio_flush,
 };
 
-audio_class_t *mac_audio_init(void);
-
 audio_class_t *
-mac_audio_init(void)
+audio_driver_init(void)
 {
   return &mac_audio_class;
 }

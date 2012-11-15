@@ -1840,7 +1840,7 @@ glw_dispatch_event(glw_root_t *gr, event_t *e)
     e2 = keymapper_resolve(e->e_payload);
 
     if(e2 != NULL)
-      event_to_ui(e2);
+      glw_inject_event(gr, e2);
     return;
   }
 
@@ -1920,6 +1920,22 @@ glw_eventsink(void *opaque, prop_event_t event, ...)
   va_end(ap);
 }
 
+
+/**
+ *
+ */
+void
+glw_inject_event(glw_root_t *gr, event_t *e)
+{
+  prop_t *p;
+
+  p = prop_get_by_name(PNVEC("ui", "eventSink"), 1,
+		       PROP_TAG_ROOT, gr->gr_prop_ui,
+		       NULL);
+  prop_send_ext_event(p, e);
+  event_release(e);
+  prop_ref_dec(p);
+}
 
 
 const glw_vertex_t align_vertices[] = 
