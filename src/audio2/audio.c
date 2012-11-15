@@ -174,6 +174,12 @@ audio_decoder_thread(void *aux)
                                   &got_frame, &avpkt);
         if(r < 0)
           break;
+
+        if(frame->sample_rate == 0)
+          frame->sample_rate = mb->mb_cw->codec_ctx->sample_rate;
+
+        if(frame->sample_rate == 0)
+          break;
       }
 
       if(mb->mb_offset == 0 && mb->mb_pts != AV_NOPTS_VALUE) {
