@@ -1,0 +1,4 @@
+Fix search lookup loops when changing TMDB configuration
+
+Fixes #1293
+Fixes #1292
