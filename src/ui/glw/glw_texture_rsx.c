@@ -270,28 +270,27 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
  */
 void
 glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex, 
-	       const void *src, int fmt, int width, int height, int flags)
+	       const pixmap_t *pm, int flags)
 {
-  switch(fmt) {
-  case GLW_TEXTURE_FORMAT_I8A8:
-    init_i8a8(gr, tex, src, width * 2, width, height, flags & GLW_TEX_REPEAT);
+  switch(pm->pm_type) {
+  case PIXMAP_IA:
+    init_i8a8(gr, tex, pm->pm_data, pm->pm_linesize,
+	      pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
     break;
 
-  case GLW_TEXTURE_FORMAT_RGB:
-    init_rgb(gr, tex, src, width * 3, width, height, flags & GLW_TEX_REPEAT);
+  case PIXMAP_RGB24:
+    init_rgb(gr, tex, pm->pm_data, pm->pm_linesize,
+	     pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
     break;
-#if 0
-  case GLW_TEXTURE_FORMAT_RGBA:
-    init_rgba(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
-    break;
-#endif
-  case GLW_TEXTURE_FORMAT_BGR32:
-    init_abgr(gr, tex, src, width * 4, width, height, flags & GLW_TEX_REPEAT);
+
+  case PIXMAP_BGR32:
+    init_abgr(gr, tex, pm->pm_data, pm->pm_linesize,
+	     pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
     break;
 
   default:
     TRACE(TRACE_ERROR, "GLW", "Unable to upload texture fmt %d, %d x %d",
-	  fmt, width, height);
+	  pm->pm_type, pm->pm_width, pm->pm_height);
     return;
   }
 }
