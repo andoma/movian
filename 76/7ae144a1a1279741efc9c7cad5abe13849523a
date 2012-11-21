@@ -1,0 +1,1 @@
+Fix a problem that caused playback time to stay at 0:00 for some audio files
