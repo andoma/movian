@@ -131,6 +131,16 @@ showtime_get_ts(void)
   return mftb() / ticks_per_us;
 }
 
+
+/**
+ *
+ */
+int64_t
+showtime_get_avtime(void)
+{
+  return mftb() / ticks_per_us;
+}
+
 /**
  *
  */
