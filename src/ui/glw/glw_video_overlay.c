@@ -470,6 +470,9 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   int x, y, i;
   uint8_t *buf = d->d_bitmap;
 
+  if(width < 1 || height < 1)
+    return;
+
 #if ENABLE_DVD  
   video_decoder_t *vd = gv->gv_vd;
   int hi_palette[4];
