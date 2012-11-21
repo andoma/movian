@@ -1,0 +1,7 @@
+Reworked audio pipeline. This should fix various issues.
+In particular various clicks and pops now and then on PS3 should be gone.
+
+Fixes #1408
+Fixes #1308
+Fixes #1005
+Fixes #964
