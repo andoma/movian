@@ -80,7 +80,7 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     
     gv->gv_cfg_cur.gvc_valid = 0;
     
-    mp_send_cmd_head(mp, &mp->mp_video, MB_REINITIALIZE);
+    mp_send_cmd(mp, &mp->mp_video, MB_CTRL_REINITIALIZE);
 
     drain(gv, &gv->gv_displaying_queue);
     drain(gv, &gv->gv_decoded_queue);

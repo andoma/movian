@@ -287,7 +287,7 @@ demux_pes(const vobsub_t *vs, media_pipe_t *mp,
 				pts, dts, 0);
     if(outlen) {
       media_buf_t *mb = media_buf_alloc_unlocked(mp, outlen + 18*4);
-      mb->mb_data_type = MB_DVD_SPU2;
+      mb->mb_data_type = MB_CTRL_DVD_SPU2;
       mb->mb_dts = dts;
       mb->mb_pts = pts;
       uint32_t *d = mb->mb_data;
@@ -295,7 +295,7 @@ demux_pes(const vobsub_t *vs, media_pipe_t *mp,
       d[17] = vs->vs_height;
       memcpy(mb->mb_data, vs->vs_clut, 16 * 4);
       memcpy(mb->mb_data + 18*4, outbuf, outlen);
-      mb_enqueue_always_head(mp, &mp->mp_video, mb);
+      mb_enqueue_always(mp, &mp->mp_video, mb);
     }
     pts = AV_NOPTS_VALUE;
     dts = AV_NOPTS_VALUE;

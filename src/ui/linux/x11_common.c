@@ -380,8 +380,8 @@ x11_vo_dimension(struct video_output *vo, int x, int y, int w, int h)
   vo->vo_h = h;
   vo->vo_repaint = 1;
 
-  mp_send_cmd_u32_head(vo->vo_mp, &vo->vo_mp->mp_video, MB_REQ_OUTPUT_SIZE,
-		       (w << 16) | h);
+  mp_send_cmd_u32(vo->vo_mp, &vo->vo_mp->mp_video, MB_CTRL_REQ_OUTPUT_SIZE,
+		  (w << 16) | h);
 }
 
 /**

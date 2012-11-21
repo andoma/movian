@@ -822,7 +822,7 @@ dvd_play(const char *url, media_pipe_t *mp, char *errstr, size_t errlen,
 
     case DVDNAV_HIGHLIGHT:
       hevent = (dvdnav_highlight_event_t *)block;
-      mp_send_cmd_u32_head(mp, &mp->mp_video, MB_DVD_HILITE, hevent->buttonN);
+      mp_send_cmd_u32(mp, &mp->mp_video, MB_CTRL_DVD_HILITE, hevent->buttonN);
       break;
       
     case DVDNAV_CELL_CHANGE:

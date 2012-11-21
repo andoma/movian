@@ -329,7 +329,7 @@ select_subtitle_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
   TRACE(TRACE_DEBUG, "Video", "Selecting subtitle track %s",
 	id);
 
-  mp_send_cmd_head(mp, &mp->mp_video, MB_FLUSH_SUBTITLES);
+  mp_send_cmd(mp, &mp->mp_video, MB_CTRL_FLUSH_SUBTITLES);
 
   if(!strcmp(id, "sub:off")) {
     prop_set_string(mp->mp_prop_subtitle_track_current, id);

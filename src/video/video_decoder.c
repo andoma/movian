@@ -296,18 +296,30 @@ vd_thread(void *aux)
 
   while(run) {
 
-    if((mb = TAILQ_FIRST(&mq->mq_q)) == NULL) {
+    media_buf_t *ctrl = TAILQ_FIRST(&mq->mq_q_ctrl);
+    media_buf_t *data = TAILQ_FIRST(&mq->mq_q_data);
+
+
+    if(ctrl != NULL) {
+      TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
+      mb = ctrl;
+
+    } else if(data != NULL) {
+
+      if(vd->vd_hold) {
+	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	continue;
+      }
+
+      TAILQ_REMOVE(&mq->mq_q_data, data, mb_link);
+      mb = data;
+
+    } else {
       hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
       continue;
     }
 
-    if(mb->mb_data_type == MB_VIDEO && vd->vd_hold && 
-       vd->vd_skip == 0 && mb->mb_skip == 0) {
-      hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
-      continue;
-    }
 
-    TAILQ_REMOVE(&mq->mq_q, mb, mb_link);
     mq->mq_packets_current--;
     mp->mp_buffer_current -= mb->mb_size;
     mq_update_stats(mp, mq);
@@ -330,7 +342,7 @@ vd_thread(void *aux)
       vd->vd_hold = 0;
       break;
 
-    case MB_FLUSH:
+    case MB_CTRL_FLUSH:
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
@@ -359,11 +371,11 @@ vd_thread(void *aux)
       reqsize = -1;
       break;
 
-    case MB_REQ_OUTPUT_SIZE:
+    case MB_CTRL_REQ_OUTPUT_SIZE:
       reqsize = mb->mb_data32;
       break;
 
-    case MB_REINITIALIZE:
+    case MB_CTRL_REINITIALIZE:
       reinit = 1;
       break;
 
@@ -373,7 +385,7 @@ vd_thread(void *aux)
       dvdspu_flush(vd);
       break;
 
-    case MB_DVD_HILITE:
+    case MB_CTRL_DVD_HILITE:
       vd->vd_spu_curbut = mb->mb_data32;
       vd->vd_spu_repaint = 1;
       break;
@@ -397,7 +409,7 @@ vd_thread(void *aux)
       break;
 #endif
 
-    case MB_DVD_SPU2:
+    case MB_CTRL_DVD_SPU2:
       dvdspu_enqueue(vd, mb->mb_data+72, mb->mb_size-72,
 		     mb->mb_data,
 		     ((const uint32_t *)mb->mb_data)[16],
@@ -412,16 +424,16 @@ vd_thread(void *aux)
 	video_overlay_decode(vd, mb);
       break;
 
-    case MB_BLACKOUT:
+    case MB_CTRL_BLACKOUT:
       vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
 			   vd->vd_opaque);
       break;
 
-    case MB_FLUSH_SUBTITLES:
+    case MB_CTRL_FLUSH_SUBTITLES:
       video_overlay_flush(vd, 1);
       break;
 
-    case MB_EXT_SUBTITLE:
+    case MB_CTRL_EXT_SUBTITLE:
       if(vd->vd_ext_subtitles != NULL)
          subtitles_destroy(vd->vd_ext_subtitles);
 
@@ -488,7 +500,7 @@ video_decoder_stop(video_decoder_t *vd)
 {
   media_pipe_t *mp = vd->vd_mp;
 
-  mp_send_cmd_head(mp, &mp->mp_video, MB_CTRL_EXIT);
+  mp_send_cmd(mp, &mp->mp_video, MB_CTRL_EXIT);
 
   hts_thread_join(&vd->vd_decoder_thread);
   mp_ref_dec(vd->vd_mp);

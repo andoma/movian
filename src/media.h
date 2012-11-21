@@ -95,30 +95,33 @@ typedef struct media_buf {
     MB_VIDEO,
     MB_AUDIO,
 
-    MB_FLUSH,
-    MB_FLUSH_SUBTITLES,
-
-    MB_CTRL_PAUSE,
-    MB_CTRL_PLAY,
-    MB_CTRL_EXIT,
 
     MB_DVD_CLUT,
     MB_DVD_RESET_SPU,
     MB_DVD_SPU,
-    MB_DVD_SPU2,
     MB_DVD_PCI,
-    MB_DVD_HILITE,
 
     MB_SUBTITLE,
 
-    MB_REQ_OUTPUT_SIZE,
+    MB_CTRL,
 
-    MB_BLACKOUT,
+    MB_CTRL_FLUSH,
+    MB_CTRL_PAUSE,
+    MB_CTRL_PLAY,
+    MB_CTRL_EXIT,
+    MB_CTRL_FLUSH_SUBTITLES,
+    MB_CTRL_BLACKOUT,
 
-    MB_REINITIALIZE,
+    MB_CTRL_DVD_HILITE,
+    MB_CTRL_EXT_SUBTITLE,
 
-    MB_EXT_SUBTITLE,
+    MB_CTRL_REINITIALIZE,
 
+    MB_CTRL_REQ_OUTPUT_SIZE,
+    MB_CTRL_DVD_SPU2,
+    
+    MB_CTRL_UNBLOCK,
+    
   } mb_data_type;
 
   void *mb_data;
@@ -126,7 +129,6 @@ typedef struct media_buf {
   void (*mb_dtor)(struct media_buf *mb);
 
   int mb_size;
-  int mb_offset;
 
   union {
     int32_t mb_data32;
@@ -155,7 +157,8 @@ typedef struct media_buf {
  * Media queue
  */
 typedef struct media_queue {
-  struct media_buf_queue mq_q;
+  struct media_buf_queue mq_q_data;
+  struct media_buf_queue mq_q_ctrl;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
 
@@ -420,9 +423,6 @@ struct event *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq,
 				media_buf_t *mb);
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
-void mb_enqueue_always_head(media_pipe_t *mp, media_queue_t *mq,
-			    media_buf_t *mb);
-
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
 struct event *mp_dequeue_event(media_pipe_t *mp);
 struct event *mp_dequeue_event_deadline(media_pipe_t *mp, int timeout);
@@ -431,10 +431,12 @@ struct event *mp_wait_for_empty_queues(media_pipe_t *mp);
 
 
 void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
-void mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd);
+//void mp_send_cmd_head(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
-void mp_send_cmd_u32_head(media_pipe_t *mp, media_queue_t *mq, int cmd, 
-			  uint32_t u);
+void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
+		     uint32_t u);
+
+media_buf_t *mp_deq(media_pipe_t *mp, media_queue_t *mq);
 
 void mp_flush(media_pipe_t *mp, int blackout);
 

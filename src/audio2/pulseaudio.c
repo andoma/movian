@@ -13,21 +13,11 @@ typedef struct decoder {
   audio_decoder_t ad;
   pa_stream *s;
   int framesize;
+  pa_sample_spec ss;
+
+  int blocked;
 } decoder_t;
 
-/**
- *
- */
-static void
-pulseaudio_audio_fini(audio_decoder_t *ad)
-{
-  decoder_t *d = (decoder_t *)ad;
-  
-  if(d->s) {
-    pa_stream_disconnect(d->s);
-    pa_stream_unref(d->s);
-  }
-}
 
 
 /**
@@ -36,11 +26,14 @@ pulseaudio_audio_fini(audio_decoder_t *ad)
 static void
 stream_write_callback(pa_stream *s, size_t length, void *userdata)
 {
-  audio_decoder_t *ad = userdata;
-  media_pipe_t *mp = ad->ad_mp;
-  hts_mutex_lock(&mp->mp_mutex);
-  hts_cond_signal(&mp->mp_audio.mq_avail);
-  hts_mutex_unlock(&mp->mp_mutex);
+  decoder_t *d = userdata;
+  media_pipe_t *mp = d->ad.ad_mp;
+  int writable = pa_stream_writable_size(d->s);
+
+  if(writable && d->blocked) {
+    d->blocked = 0;
+    mp_send_cmd(mp, &mp->mp_audio, MB_CTRL_UNBLOCK);
+  }
 }
 
 
@@ -51,6 +44,34 @@ stream_state_callback(pa_stream *s, void *userdata)
 }
 
 
+static const struct {
+  int64_t avmask;
+  enum pa_channel_position papos;
+} av2pa_map[] = {
+  { AV_CH_FRONT_LEFT,             PA_CHANNEL_POSITION_FRONT_LEFT },
+  { AV_CH_FRONT_RIGHT,            PA_CHANNEL_POSITION_FRONT_RIGHT },
+  { AV_CH_FRONT_CENTER,           PA_CHANNEL_POSITION_FRONT_CENTER },
+  { AV_CH_LOW_FREQUENCY,          PA_CHANNEL_POSITION_LFE },
+  { AV_CH_BACK_LEFT,              PA_CHANNEL_POSITION_REAR_LEFT },
+  { AV_CH_BACK_RIGHT,             PA_CHANNEL_POSITION_REAR_RIGHT },
+  { AV_CH_FRONT_LEFT_OF_CENTER,   PA_CHANNEL_POSITION_FRONT_LEFT_OF_CENTER },
+  { AV_CH_FRONT_RIGHT_OF_CENTER,  PA_CHANNEL_POSITION_FRONT_RIGHT_OF_CENTER },
+  { AV_CH_BACK_CENTER,            PA_CHANNEL_POSITION_REAR_CENTER },
+  { AV_CH_SIDE_LEFT,              PA_CHANNEL_POSITION_SIDE_LEFT },
+  { AV_CH_SIDE_RIGHT,             PA_CHANNEL_POSITION_SIDE_RIGHT },
+  { AV_CH_TOP_CENTER,             PA_CHANNEL_POSITION_TOP_CENTER },
+  { AV_CH_TOP_FRONT_LEFT,         PA_CHANNEL_POSITION_TOP_FRONT_LEFT },
+  { AV_CH_TOP_FRONT_CENTER,       PA_CHANNEL_POSITION_TOP_FRONT_CENTER },
+  { AV_CH_TOP_FRONT_RIGHT,        PA_CHANNEL_POSITION_TOP_FRONT_RIGHT },
+  { AV_CH_TOP_BACK_LEFT,          PA_CHANNEL_POSITION_TOP_REAR_LEFT },
+  { AV_CH_TOP_BACK_CENTER,        PA_CHANNEL_POSITION_TOP_REAR_CENTER },
+  { AV_CH_TOP_BACK_RIGHT,         PA_CHANNEL_POSITION_TOP_REAR_RIGHT },
+  { AV_CH_STEREO_LEFT,            PA_CHANNEL_POSITION_FRONT_LEFT },
+  { AV_CH_STEREO_RIGHT,           PA_CHANNEL_POSITION_FRONT_RIGHT },
+};
+
+
+
 /**
  *
  */
@@ -58,6 +79,7 @@ static int
 pulseaudio_audio_reconfig(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+  int i;
 
   pa_threaded_mainloop_lock(mainloop);
 
@@ -87,58 +109,70 @@ pulseaudio_audio_reconfig(audio_decoder_t *ad)
     pa_stream_unref(d->s);
   }
 
-  pa_sample_spec ss = {0};
   pa_channel_map map;
 
 
   ad->ad_out_sample_rate = ad->ad_in_sample_rate;
-  ss.rate = ad->ad_in_sample_rate;
+  d->ss.rate = ad->ad_in_sample_rate;
   
   switch(ad->ad_in_sample_format) {
   case AV_SAMPLE_FMT_S32:
   case AV_SAMPLE_FMT_S32P:
     ad->ad_out_sample_format = AV_SAMPLE_FMT_S32;
-    ss.format = PA_SAMPLE_S32NE;
+    d->ss.format = PA_SAMPLE_S32NE;
     d->framesize = sizeof(int32_t);
     break;
 
   case AV_SAMPLE_FMT_S16:
   case AV_SAMPLE_FMT_S16P:
     ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
-    ss.format = PA_SAMPLE_S16NE;
+    d->ss.format = PA_SAMPLE_S16NE;
     d->framesize = sizeof(int16_t);
     break;
 
   default:
     ad->ad_out_sample_format = AV_SAMPLE_FMT_FLT;
-    ss.format = PA_SAMPLE_FLOAT32NE;
+    d->ss.format = PA_SAMPLE_FLOAT32NE;
     d->framesize = sizeof(float);
     break;
   }
 
-
   switch(ad->ad_in_channel_layout) {
   case AV_CH_LAYOUT_MONO:
-    ss.channels = 1;
-    pa_channel_map_init_mono(&map);
+    d->ss.channels = 1;
     ad->ad_out_channel_layout = AV_CH_LAYOUT_MONO;
+    pa_channel_map_init_mono(&map);
     break;
 
-  default:
-    ss.channels = 2;
-    pa_channel_map_init_stereo(&map);
+
+  case AV_CH_LAYOUT_STEREO:
+    d->ss.channels = 2;
     ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
+    pa_channel_map_init_stereo(&map);
+
+    
+  default:
+    pa_channel_map_init(&map);
+    for(i = 0; i < sizeof(av2pa_map) / sizeof(av2pa_map[0]); i++) {
+      if(ad->ad_in_channel_layout & av2pa_map[i].avmask) {
+	ad->ad_out_channel_layout |= av2pa_map[i].avmask;
+	map.map[map.channels++] = av2pa_map[i].papos;
+      }
+    }
+    d->ss.channels = map.channels;
     break;
   }
 
-  d->framesize *= ss.channels;
+  d->framesize *= d->ss.channels;
 
-  ad->ad_num_samples = pa_context_get_tile_size(ctx, &ss) / d->framesize;
+  ad->ad_tile_size = pa_context_get_tile_size(ctx, &d->ss) / d->framesize;
 
   char buf[100];
-  TRACE(TRACE_DEBUG, "PA", "Created stream %s (tilesize=%d)",
-	pa_sample_spec_snprint(buf, sizeof(buf), &ss),
-	ad->ad_num_samples);
+  char buf2[PA_CHANNEL_MAP_SNPRINT_MAX];
+  TRACE(TRACE_DEBUG, "PA", "Created stream %s [%s] (tilesize=%d)",
+	pa_sample_spec_snprint(buf, sizeof(buf), &d->ss),
+	pa_channel_map_snprint(buf2, sizeof(buf2), &map),
+	ad->ad_tile_size);
 
 #if PA_API_VERSION >= 12
   pa_proplist *pl = pa_proplist_new();
@@ -149,7 +183,7 @@ pulseaudio_audio_reconfig(audio_decoder_t *ad)
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "music");
 
   d->s = pa_stream_new_with_proplist(ctx, "Showtime playback", 
-				     &ss, &map, pl);  
+				     &d->ss, &map, pl);
   pa_proplist_free(pl);
 
 #else
@@ -185,17 +219,22 @@ pulseaudio_audio_reconfig(audio_decoder_t *ad)
 }
 
 
+
+/**
+ *
+ */
 static void
 pulseaudio_audio_cork(audio_decoder_t *ad, int b)
 {
   decoder_t *d = (decoder_t *)ad;
   if(d->s == NULL)
     return;
+  pa_threaded_mainloop_lock(mainloop);
   pa_operation *o = pa_stream_cork(d->s, b, NULL, NULL);
   if(o != NULL)
     pa_operation_unref(o);
+  pa_threaded_mainloop_unlock(mainloop);
 }
-
 
 /**
  *
@@ -204,6 +243,7 @@ static void
 pulseaudio_audio_pause(audio_decoder_t *ad)
 {
   pulseaudio_audio_cork(ad, 1);
+
 }
 
 
@@ -216,7 +256,6 @@ pulseaudio_audio_play(audio_decoder_t *ad)
   pulseaudio_audio_cork(ad, 0);
 }
 
-
 /**
  *
  */
@@ -226,11 +265,12 @@ pulseaudio_audio_flush(audio_decoder_t *ad)
   decoder_t *d = (decoder_t *)ad;
   if(d->s == NULL)
     return;
+  pa_threaded_mainloop_lock(mainloop);
   pa_operation *o = pa_stream_flush(d->s, NULL, NULL);
   if(o != NULL)
     pa_operation_unref(o);
+  pa_threaded_mainloop_unlock(mainloop);
 }
-
 
 /**
  *
@@ -244,20 +284,17 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
   void *buf;
   assert(d->s != NULL);
   
-
   pa_threaded_mainloop_lock(mainloop);
 
   int writable = pa_stream_writable_size(d->s);
   if(writable == 0) {
+    d->blocked = 1;
     pa_threaded_mainloop_unlock(mainloop);
     return 1; 
   }
 
   pa_stream_begin_write(d->s, &buf, &bytes);
-  if(bytes == 0) {
-    pa_threaded_mainloop_unlock(mainloop);
-    return 1; 
-  }
+  assert(bytes > 0);
 
   int rsamples = bytes / d->framesize;
   uint8_t *data[8] = {0};
@@ -265,41 +302,63 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
   assert(rsamples <= samples);
   avresample_read(ad->ad_avr, data, rsamples);
 
-  pa_usec_t delay;
+  if(pts != AV_NOPTS_VALUE) {
 
-  if(!pa_stream_get_latency(d->s, &delay, NULL)) {
-    
-    ad->ad_delay = delay;
-    if(pts != AV_NOPTS_VALUE) {
-      media_pipe_t *mp = ad->ad_mp;
-      hts_mutex_lock(&mp->mp_clock_mutex);
+    media_pipe_t *mp = ad->ad_mp;
+    hts_mutex_lock(&mp->mp_clock_mutex);
+
+    const pa_timing_info *ti = pa_stream_get_timing_info(d->s);
+    if(ti != NULL) {
+      mp->mp_audio_clock_avtime = 
+	ti->timestamp.tv_sec * 1000000LL + ti->timestamp.tv_usec;
+
+      int64_t busec = pa_bytes_to_usec(ti->write_index - ti->read_index,
+				       &d->ss);
+
+      int64_t delay = ti->sink_usec + busec + ti->transport_usec;
       mp->mp_audio_clock = pts - delay;
-      mp->mp_audio_clock_avtime = showtime_get_avtime();
       mp->mp_audio_clock_epoch = epoch;
-      hts_mutex_unlock(&mp->mp_clock_mutex);
     }
+    hts_mutex_unlock(&mp->mp_clock_mutex);
   }
 
   pa_stream_write(d->s, buf, bytes, NULL, 0LL, PA_SEEK_RELATIVE);
+
   pa_threaded_mainloop_unlock(mainloop);
   return 0;
-
 }
 
 
 /**
  *
  */
-static audio_class_t pulseaudio_audio_class = {
-  .ac_alloc_size = sizeof(decoder_t),
-  
-  .ac_fini = pulseaudio_audio_fini,
-  .ac_reconfig = pulseaudio_audio_reconfig,
-  .ac_deliver = pulseaudio_audio_deliver,
+static void
+pulseaudio_fini(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+  pa_threaded_mainloop_lock(mainloop);
+  if(d->s) {
+    pa_stream_disconnect(d->s);
 
-  .ac_pause = pulseaudio_audio_pause,
-  .ac_play  = pulseaudio_audio_play,
-  .ac_flush = pulseaudio_audio_flush,
+    while(pa_stream_get_state(d->s) != PA_STREAM_TERMINATED &&
+	  pa_stream_get_state(d->s) != PA_STREAM_FAILED)
+      pa_threaded_mainloop_wait(mainloop);
+    pa_stream_unref(d->s);
+  }
+  pa_threaded_mainloop_unlock(mainloop);
+}
+
+/**
+ *
+ */
+static audio_class_t pulseaudio_audio_class = {
+  .ac_alloc_size   = sizeof(decoder_t),
+  .ac_fini         = pulseaudio_fini,
+  .ac_play         = pulseaudio_audio_play,
+  .ac_pause        = pulseaudio_audio_pause,
+  .ac_flush        = pulseaudio_audio_flush,
+  .ac_reconfig     = pulseaudio_audio_reconfig,
+  .ac_deliver_unlocked = pulseaudio_audio_deliver,
 };
 
 
@@ -384,7 +443,6 @@ audio_driver_init(void)
   }
 
   pa_threaded_mainloop_unlock(mainloop);
-
 
   return &pulseaudio_audio_class;
 }
