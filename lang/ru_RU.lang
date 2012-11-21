@@ -225,6 +225,7 @@ msg: Плитка
 #
 id: About Showtime
 msg: О программе
+
 id: Dismiss
 msg: Отклонить
 
@@ -383,7 +384,7 @@ id: Stable
 msg: Стабильный
 
 id: Testing
-msg: Тестирование
+msg: Тестовый
 
 id: Unable to query for new version
 msg: Невозможно проверить новую версию
@@ -1097,7 +1098,7 @@ id: Software upgrade
 msg: Обновление ПО
 
 id: Upgrade to releases from
-msg: Обновление до релиза с
+msg: Обновление до релиза
 
 #
 # ./src/upnp/upnp.c
