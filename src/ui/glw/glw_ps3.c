@@ -33,7 +33,7 @@
 #include "settings.h"
 #include "misc/extents.h"
 #include "misc/string.h"
-
+#include "navigator.h"
 
 #include <psl1ght/lv2.h>
 #include <rsx/commands.h>
@@ -1091,8 +1091,15 @@ glw_ps3_start(void)
   glw_ps3_t *gp = calloc(1, sizeof(glw_ps3_t));
   char confname[PATH_MAX];
 
-  prop_t *root = gp->gr.gr_prop = prop_create(prop_get_global(), "ui");
+  prop_t *root = gp->gr.gr_prop_ui = prop_create(prop_get_global(), "ui");
+  gp->gr.gr_prop_nav = nav_spawn();
 
+  if(prop_set_parent(gp->gr.gr_prop_ui, prop_get_global()))
+    abort();
+
+  if(prop_set_parent(gp->gr.gr_prop_nav, prop_get_global()))
+    abort();
+  
   prop_set_int(prop_create(root, "fullscreen"), 1);
 
   snprintf(confname, sizeof(confname), "glw/ps3");
