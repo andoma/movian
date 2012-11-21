@@ -2178,9 +2178,12 @@ metadata_remove_postfix_rstr(rstr_t *name)
 {
   const char *str = rstr_get(name);
   int len = strlen(str);
-  if(len > 4 && str[len - 4] == '.') {
+  if(len > 4 && str[len - 4] == '.')
     return rstr_allocl(str, len - 4);
-  }
+
+  if(len > 5 && !strcasecmp(str + len - 5, ".m2ts"))
+    return rstr_allocl(str, len - 5);
+
   return rstr_dup(name);
 }
 
