@@ -214,9 +214,6 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
 
-  if(prop_set_parent(gr->gr_prop_ui, prop_get_global()))
-    abort();
-
   if(glw_init(gr, "glw/cocoa/default")) {
     prop_destroy(gr->gr_prop_ui);
     free(gr);

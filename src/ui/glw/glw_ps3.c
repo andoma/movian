@@ -1094,12 +1094,6 @@ glw_ps3_start(void)
   prop_t *root = gp->gr.gr_prop_ui = prop_create(prop_get_global(), "ui");
   gp->gr.gr_prop_nav = nav_spawn();
 
-  if(prop_set_parent(gp->gr.gr_prop_ui, prop_get_global()))
-    abort();
-
-  if(prop_set_parent(gp->gr.gr_prop_nav, prop_get_global()))
-    abort();
-  
   prop_set_int(prop_create(root, "fullscreen"), 1);
 
   snprintf(confname, sizeof(confname), "glw/ps3");

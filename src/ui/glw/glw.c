@@ -210,6 +210,12 @@ glw_init_settings(glw_root_t *gr, const char *instance)
 {
   prop_t *r = gr->gr_prop_ui;
 
+  if(prop_set_parent(gr->gr_prop_ui, prop_get_global()))
+    abort();
+
+  if(prop_set_parent(gr->gr_prop_nav, prop_get_global()))
+    abort();
+
   if(gr->gr_base_size == 0)
     gr->gr_base_size = 20;
 

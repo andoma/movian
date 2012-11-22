@@ -1276,9 +1276,6 @@ glw_x11_start(void)
   gx11->gr.gr_prop_ui = prop_create_root("ui");
   gx11->gr.gr_prop_nav = nav_spawn();
 
-  if(prop_set_parent(gx11->gr.gr_prop_ui, prop_get_global()))
-    abort();
-
   gx11->displayname_real = getenv("DISPLAY");
   snprintf(confname, sizeof(confname), "glw/x11/default");
 
