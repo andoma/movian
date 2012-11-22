@@ -13,4 +13,13 @@ widget(container_z, {
       source: $self.url;
     });
   });
+
+  widget(label, {
+    align: center;
+    caption: _("Paused");
+    sizeScale: 3;
+    outline: true;
+    shadow: true;
+    alpha: iir($self.slideshow.playstatus == "pause", 4);
+  });
 });

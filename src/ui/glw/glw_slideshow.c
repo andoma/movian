@@ -109,7 +109,7 @@ glw_slideshow_layout(glw_slideshow_t *s, glw_rctx_t *rc)
       c = glw_first_widget(&s->w);
     s->timer = 0;
     if(c != NULL) {
-      glw_focus_set(s->w.glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+      glw_focus_open_path_close_all_other(c);
       glw_copy_constraints(&s->w, c);
     }
   }
@@ -158,22 +158,30 @@ static int
 glw_slideshow_event(glw_slideshow_t *s, event_t *e)
 {
   glw_t *c;
+  event_int_t *eu = (event_int_t *)e;
 
-  if(event_is_action(e, ACTION_SKIP_FORWARD)) {
-
+  if(event_is_action(e, ACTION_SKIP_FORWARD) ||
+     event_is_action(e, ACTION_RIGHT)) {
     c = s->w.glw_focused ? glw_next_widget(s->w.glw_focused) : NULL;
     if(c == NULL)
       c = glw_first_widget(&s->w);
     s->w.glw_focused = c;
     s->timer = 0;
 
-  } else if(event_is_action(e, ACTION_SKIP_BACKWARD)) {
+  } else if(event_is_action(e, ACTION_SKIP_BACKWARD) ||
+	    event_is_action(e, ACTION_LEFT)) {
 
     c = s->w.glw_focused ? glw_prev_widget(s->w.glw_focused) : NULL;
     if(c == NULL)
       c = glw_last_widget(&s->w);
     s->w.glw_focused = c;
     s->timer = 0;
+
+  } else if(event_is_type(e, EVENT_UNICODE) && eu->val == 32) {
+
+    s->hold = !s->hold;
+    glw_slideshow_update_playstatus(s);
+    
 
   } else if(event_is_action(e, ACTION_PLAYPAUSE) ||
 	    event_is_action(e, ACTION_PLAY) ||
@@ -208,7 +216,7 @@ glw_slideshow_callback(glw_t *w, void *opaque, glw_signal_t signal,
     glw_slideshow_layout(s, extra);
     return 0;
 
-  case GLW_SIGNAL_EVENT:
+  case GLW_SIGNAL_EVENT_BUBBLE:
     return glw_slideshow_event(s, extra);
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:
