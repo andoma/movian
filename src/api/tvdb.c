@@ -451,6 +451,19 @@ tvdb_query_by_episode(void *db, const char *item_url,
     itemid = metadb_insert_videoitem(db, item_url, tvdb->ms_id, extid, md,
 				     METAITEM_STATUS_COMPLETE, 0,
 				     qtype, tvdb->ms_cfgid);
+
+    if(itemid != -1) {
+      metadb_delete_videoart(db, itemid);
+
+      const char *thumb = htsmsg_get_cdata(tags, "filename");
+      if(thumb) {
+	char url[256];
+	snprintf(url, sizeof(url), "http://www.thetvdb.com/banners/%s", thumb);
+
+	metadb_insert_videoart(db, itemid, url, METADATA_IMAGE_POSTER, 0, 0,
+			       1, NULL, 0);
+      }
+    }
     metadata_destroy(md);
   }
 
