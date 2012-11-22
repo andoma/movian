@@ -1,0 +1,3 @@
+Don't wrap from end to beginning of list during continuous video playback
+
+Fixes #1250
