@@ -1,3 +1,3 @@
-Correctly recognize '.m2ts' as file type endings to ignore
+Correctly recognize '.m2ts' as a file type ending to ignore
 
 Fixes #1391
