@@ -1929,9 +1929,20 @@ glw_inject_event(glw_root_t *gr, event_t *e)
 {
   prop_t *p;
 
-  p = prop_get_by_name(PNVEC("ui", "eventSink"), 1,
-		       PROP_TAG_ROOT, gr->gr_prop_ui,
-		       NULL);
+  if(event_is_action(e, ACTION_NAV_BACK) ||
+     event_is_action(e, ACTION_NAV_FWD) ||
+     event_is_action(e, ACTION_HOME) ||
+     event_is_action(e, ACTION_PLAYQUEUE) ||
+     event_is_action(e, ACTION_RELOAD_DATA) ||
+     event_is_type(e, EVENT_OPENURL)) {
+    p = prop_get_by_name(PNVEC("nav", "eventsink"), 0,
+			 PROP_TAG_ROOT, gr->gr_prop_nav,
+			 NULL);
+  } else {
+    p = prop_get_by_name(PNVEC("ui", "eventSink"), 0,
+			 PROP_TAG_ROOT, gr->gr_prop_ui,
+			 NULL);
+  }
   prop_send_ext_event(p, e);
   event_release(e);
   prop_ref_dec(p);
