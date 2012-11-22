@@ -1,0 +1,6 @@
+Add support for adjusting volume during video playback using up/down keys
+
+Fixes #1241
+Fixes #1123
+Fixes #751
+Fixes #560
