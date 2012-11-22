@@ -30,7 +30,7 @@
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/string.h"
-
+#include "misc/regex.h"
 #include "api/lastfm.h"
 
 #include "metadata.h"
@@ -54,6 +54,9 @@ static void metadata_filename_to_title(const char *filename,
 static int metadata_filename_to_episode(const char *filename,
 					int *season, int *episode,
 					rstr_t **titlep);
+
+static int metadata_folder_to_season(const char *s,
+				     int *seasonp, rstr_t **titlep);
 
 /**
  *
@@ -798,10 +801,26 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
     if(msf->query_by_episode == NULL)
       return METADATA_PERMANENT_ERROR;
 
-    TRACE(TRACE_DEBUG, "METADATA",
-	  "Performing search lookup for %s season:%d episode:%d, "
-	  "based on filename",
-	  rstr_get(title), season, episode);
+    if(title == NULL) {
+      metadata_folder_to_season(rstr_get(mlv->mlv_folder),
+				NULL, &title);
+
+      if(title == NULL) {
+	TRACE(TRACE_DEBUG, "METADATA",
+	      "Unable to figure out name of series from %s", 
+	      rstr_get(mlv->mlv_filename));
+	return METADATA_PERMANENT_ERROR;
+      }
+      TRACE(TRACE_DEBUG, "METADATA",
+	    "Performing search lookup for %s season:%d episode:%d, "
+	    "based on filename and foldername",
+	    rstr_get(title), season, episode);
+    } else {
+      TRACE(TRACE_DEBUG, "METADATA",
+	    "Performing search lookup for %s season:%d episode:%d, "
+	    "based on filename",
+	    rstr_get(title), season, episode);
+    }
 
     rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
 				 rstr_get(title), season, episode,
@@ -2161,10 +2180,51 @@ metadata_filename_to_episode(const char *s,
   }
   t[j] = 0;
 
-  if(titlep != NULL)
-    *titlep = rstr_alloc(t);
+  if(titlep != NULL) {
+    if(j)
+      *titlep = rstr_alloc(t);
+    else
+      *titlep = NULL;
+  }
   return 0;
 }
+
+
+/**
+ *
+ */
+const char *folder_to_season[] = {
+  "(.*)[ .]Season[ .]([0-9]+)",
+  NULL
+};
+
+static int
+metadata_folder_to_season(const char *s,
+			  int *seasonp, rstr_t **titlep)
+{
+  int i;
+  for(i = 0; folder_to_season[i] != NULL; i++) {
+    hts_regex_t re;
+    if(!hts_regcomp(&re, folder_to_season[i])) {
+      hts_regmatch_t matches[8];
+      if(!hts_regexec(&re, s, 8, matches, 0)) {
+	hts_regfree(&re);
+	if(seasonp != NULL)
+	  *seasonp = atoi(s + matches[2].rm_so);
+	if(titlep != NULL) {
+	  int l = matches[1].rm_eo - matches[1].rm_so;
+	  if(l > 0)
+	    *titlep = rstr_allocl(s + matches[i].rm_so, l);
+	  else
+	    *titlep = NULL;
+	}
+	return 0;
+      }
+    }
+  }
+  return -1;
+}
+
 
 
 
