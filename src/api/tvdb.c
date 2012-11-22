@@ -376,6 +376,12 @@ tvdb_query_by_episode(void *db, const char *item_url,
 			 "cdata", NULL);
 
 
+  if(series_id == NULL) {
+    TRACE(TRACE_INFO, "TVDB", "No series id in response");
+    htsmsg_destroy(gs);
+    return METADATA_TEMPORARY_ERROR;
+  }
+
   series_id = mystrdupa(series_id); // Make a copy of the ID
   htsmsg_destroy(gs);               // .. cause we destroyed the XML doc
 
