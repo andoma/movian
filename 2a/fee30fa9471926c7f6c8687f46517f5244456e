@@ -1,0 +1,7 @@
+Fix slideshow view
+
+Slideshow now behaves as it should:
+- 5 seconds autoadvance
+- Responds to play/pause/next/prev actions from user
+
+Fixes #1345
