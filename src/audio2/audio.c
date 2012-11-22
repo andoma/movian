@@ -147,6 +147,10 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
     
       if(frame->sample_rate == 0)
 	return;
+
+      if(mp->mp_stats)
+	mp_set_mq_meta(mq, mb->mb_cw->codec, mb->mb_cw->codec_ctx);
+
     }
 
     if(offset == 0 && mb->mb_pts != AV_NOPTS_VALUE) {
