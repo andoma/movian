@@ -17,9 +17,55 @@ static void *audio_decode_thread(void *aux);
 /**
  *
  */
+static void
+save_matervol(void *opaque, float value)
+{
+  htsmsg_t *m = htsmsg_create_map();
+  TRACE(TRACE_DEBUG, "audio", "Master volume set to %f dB", value);
+
+  htsmsg_add_s32(m, "master-volume", value * 1000);
+  htsmsg_store_save(m, "audiomixer");
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+static void
+audio_mastervol_init(void)
+{
+  htsmsg_t *m = htsmsg_store_load("audiomixer");
+  int32_t i32;
+  prop_t *pa, *mv, *mm;
+
+  pa = prop_create(prop_get_global(), "audio");
+  mv = prop_create(pa, "mastervolume");
+  mm = prop_create(pa, "mastermute");
+
+  prop_set_float_clipping_range(mv, -75, 12);
+
+  if(m != NULL && !htsmsg_get_s32(m, "master-volume", &i32))
+    prop_set_float(mv, (float)i32 / 1000);
+
+  prop_set_int(mm, 0);
+  
+  htsmsg_destroy(m);
+
+  prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+		 PROP_TAG_CALLBACK_FLOAT, save_matervol, NULL,
+		 PROP_TAG_ROOT, mv,
+		 NULL);
+}
+
+
+/**
+ *
+ */
 void 
 audio_init(void)
 {
+  audio_mastervol_init();
   audio_class = audio_driver_init();
 }
 

@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <altivec.h>
 
 #include <audio/audio.h>
 #include <psl1ght/lv2/timer.h>
@@ -37,7 +38,7 @@
 static int max_pcm;
 static int max_dts;
 static int max_ac3;
-
+static float master_volume = 1.0;
 
 /**
  *
@@ -238,22 +239,43 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
     float *dst = buf + d->channels * AUDIO_BLOCK_SAMPLES * bi;
     uint8_t *planes[8] = {0};
 
+    vector float m = vec_splats(master_volume);
+    vector float z = vec_splats(0.0f);
+
     switch(ad->ad_out_channel_layout) {
     case AV_CH_LAYOUT_STEREO:
       planes[0] = (uint8_t *)dst;
       avresample_read(ad->ad_avr, planes, AUDIO_BLOCK_SAMPLES);
+
+      for(i = 0; i < AUDIO_BLOCK_SAMPLES / 2; i++) {
+	vec_st(vec_madd(vec_ld(0, dst), m, z), 0, dst);
+	dst += 4;
+      }
       break;
 
     case AV_CH_LAYOUT_7POINT1:
       planes[0] = (uint8_t *)dst;
       avresample_read(ad->ad_avr, planes, AUDIO_BLOCK_SAMPLES);
+
+      // Swap Side-channels with Rear-channels as the channel
+      // order differs between PS3 and libav
+
       for(i = 0; i < AUDIO_BLOCK_SAMPLES; i++) {
-	float x = dst[4];
-	float y = dst[5];
-	dst[4]  = dst[6];
-	dst[5]  = dst[7];
-	dst[6]  = x;
-	dst[7]  = y;
+
+	vector float v1 = vec_ld(0,  dst);
+	vector float v2 = vec_ld(16, dst);
+	
+	v2 = vec_perm(v2, v2, (const vector unsigned char) {
+	    0x8,0x9,0xa,0xb,
+	      0xc,0xd,0xe,0xf,
+	      0x0,0x1,0x2,0x3,
+	      0x4,0x5,0x6,0x7});
+			  
+	v1 = vec_madd(v1, m, z);
+	v2 = vec_madd(v2, m, z);
+
+	vec_st(v1, 0, dst);
+	vec_st(v2, 16, dst);
 	dst += 8;
       }
       break;
@@ -299,6 +321,15 @@ static audio_class_t ps3_audio_class = {
 /**
  *
  */
+static void
+set_mastervol(void *opaque, float value)
+{
+  master_volume = pow(10, (value / 20));
+}
+
+/**
+ *
+ */
 audio_class_t *
 audio_driver_init(void)
 {
@@ -321,6 +352,11 @@ audio_driver_init(void)
   audioInit();
 
   audioOutSetCopyControl(AUDIO_OUT_PRIMARY, AUDIO_OUT_COPY_CONTROL_FREE);
+
+  prop_subscribe(0,
+		 PROP_TAG_CALLBACK_FLOAT, set_mastervol, NULL,
+		 PROP_TAG_NAME("global", "audio", "mastervolume"),
+		 NULL);
 
   return &ps3_audio_class;
 }
