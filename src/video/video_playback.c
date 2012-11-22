@@ -568,12 +568,8 @@ video_queue_find_next(video_queue_t *vq, const char *url, int reverse,
 
     if(reverse) {
       vqe = TAILQ_PREV(vqe, video_queue_entry_queue, vqe_link);
-      if(vqe == NULL)
-	vqe = TAILQ_LAST(&vq->vq_entries, video_queue_entry_queue);
     } else {
       vqe = TAILQ_NEXT(vqe, vqe_link);
-      if(vqe == NULL)
-	vqe = TAILQ_FIRST(&vq->vq_entries);
     }
   }
 
