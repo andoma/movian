@@ -277,7 +277,7 @@ static audio_class_t mac_audio_class = {
   
   .ac_fini = mac_audio_fini,
   .ac_reconfig = mac_audio_reconfig,
-  .ac_deliver = mac_audio_deliver,
+  .ac_deliver_locked = mac_audio_deliver,
 
   .ac_pause = mac_audio_pause,
   .ac_play  = mac_audio_play,

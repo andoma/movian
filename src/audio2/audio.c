@@ -313,10 +313,21 @@ audio_decode_thread(void *aux)
       assert(ad->ad_avr != NULL);
 
       int samples = MIN(ad->ad_tile_size, avail);
-      
-      hts_mutex_unlock(&mp->mp_mutex);
-      int r = ac->ac_deliver_unlocked(ad, samples, ad->ad_pts, ad->ad_epoch);
-      hts_mutex_lock(&mp->mp_mutex);
+      int r;
+
+      if(ac->ac_deliver_locked != NULL) {
+        r = ac->ac_deliver_locked(ad, samples, ad->ad_pts, ad->ad_epoch);
+        if(r) {
+          hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+          continue;
+        }
+        ad->ad_pts = AV_NOPTS_VALUE;
+        continue;
+      } else {
+        hts_mutex_unlock(&mp->mp_mutex);
+        r = ac->ac_deliver_unlocked(ad, samples, ad->ad_pts, ad->ad_epoch);
+        hts_mutex_lock(&mp->mp_mutex);
+      }
 
       if(r) {
 	blocked = 1;
