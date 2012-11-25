@@ -2,7 +2,7 @@
 native: 简体中文
 maintainer: Rural Hunter<ruralhunter@gmail.com>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: 将当前页面加入书签
@@ -14,8 +14,11 @@ id: Remove current page from bookmarks
 msg: 将当前页从书签删除
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+msg: 退出Showtime
+
 id: Go to Home screen
 msg: 转至首页
 
@@ -28,11 +31,20 @@ msg: 打开设置
 id: Playqueue
 msg: 播放队列
 
+id: Power off
+msg: 关机
+
 id: Reload current page
 msg: 刷新
 
+id: Suspend
+msg: 挂起
+
+id: System
+msg: 系统
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: 将'%s'加进首页
@@ -41,7 +53,7 @@ id: Remove '%s' from home screen
 msg: 将'%s'从首页移除
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: 从'%s'继续
@@ -74,7 +86,7 @@ id: Unstar
 msg: 去星
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: 音频
@@ -110,13 +122,13 @@ id: Video settings
 msg: 视频设置
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: 系统日志
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: 程序已分配：%d kB
@@ -170,10 +182,13 @@ id: Windowmanager: %s
 msg: 窗口管理器: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: 专辑
+
+id: Artist
+msg: 艺术家
 
 id: Custom
 msg: 定制
@@ -187,32 +202,38 @@ msg: 列表
 id: Slideshow
 msg: 幻灯片演示
 
+id: Tvchannels
+msg: 电视频道
+
 id: View
 msg: 视图
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: 从本地网络检索资源
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: 平铺
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: 关于Showtime
+
+id: Dismiss
+msg: 删除
 
 id: Plugins
 msg: 插件
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-msg: 删除
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 msg: 相机
@@ -221,7 +242,7 @@ id: Date:
 msg: 日期
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 msg: 作者
@@ -236,11 +257,8 @@ id: Showtime %s or newer is required
 msg: 需要%s或更新版本的Showtime
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: 导演
-
 id: Duration:
 msg: 时长
 
@@ -253,9 +271,6 @@ msg: 类型
 id: Metadata from
 msg: 元信息源自
 
-id: Producer:
-msg: 制片
-
 id: Rating:
 msg: 评分
 
@@ -263,13 +278,13 @@ id: Year:
 msg: 年份
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: 新增
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: 否
@@ -278,7 +293,19 @@ id: Yes
 msg: 是
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: 紧凑
+
+id: Main
+msg: 全局
+
+id: Subs
+msg: 字幕
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: 安装
@@ -290,19 +317,25 @@ id: Upgrade
 msg: 升级
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: 不能打开资源
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: 轨道 %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+msg: 已暂停
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: 下载失败
@@ -356,7 +389,7 @@ id: Unable to query for new version
 msg: 无法检查最新版
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: 当前视频CPU解码过慢
@@ -365,7 +398,7 @@ id: Playback status
 msg: 播放信息
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: 章节：%d
@@ -374,7 +407,7 @@ id: Title: %d
 msg: 标题：%d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: 域
@@ -389,7 +422,7 @@ id: Username
 msg: 用户名
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: 取消
@@ -398,19 +431,19 @@ id: OK
 msg: 确定
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: 未载入媒体
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: 内存使用率：
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: 已静音
@@ -428,7 +461,16 @@ id: Use opensubtitles.org
 msg: 使用opensubtitles.org
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: 语言（ISO 639-1 代码）
+
+id: Use original title
+msg: 使用原标题
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: 系统内存偏少(%d kB RAM可用)
@@ -505,11 +547,17 @@ msg: "%s"的查询结果
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+msg: 专辑
+
 id: Automatic login when Showtime starts
 msg: Showtime启动时自动登录
 
 id: Collaborative
 msg: 协作
+
+id: Compilations
+msg: 选集
 
 id: Enable Spotify
 msg: 启用Spotify
@@ -546,6 +594,9 @@ msg: 重新登录(切换用户)
 
 id: Search result
 msg: 搜索结果
+
+id: Singles
+msg: 单曲
 
 id: Spotify friends
 msg: Spotify上的朋友
@@ -727,6 +778,9 @@ msg: 自动
 id: Custom search query
 msg: 设置搜索条件
 
+id: Custom title
+msg: 自定义标题
+
 id: Embedded in file
 msg: 文件内置
 
@@ -740,7 +794,7 @@ id: Metadata
 msg: 元信息
 
 id: Metadata configuration and provider settings
-msg: 元信息设置及提供方设置
+msg: 元信息及元信息源设置
 
 id: Metadata loaded from '%s' using %s
 msg: 已从'%s'使用%s下载元信息
@@ -760,11 +814,11 @@ msg: 未找到数据
 id: None
 msg: 无
 
-id: Providers for Movies
-msg: 影片提供方
-
 id: Providers for Music
-msg: 音乐提供方
+msg: 音乐源
+
+id: Providers for Video
+msg: 视频源
 
 id: Refresh metadata
 msg: 更新元信息
@@ -781,8 +835,23 @@ msg: 高级查询
 id: filename
 msg: 文件名
 
+id: filename as TV episode
+msg: 电视剧集文件名
+
 id: folder name
 msg: 目录名
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: 已删除%d条
+
+id: Clear all metadata
+msg: 清除所有元信息
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: 清除所有元信息意味着你将清除掉<b>所有</b>以下数据：\n\n音乐或视频是否已播放\n音乐或视频的播放次数\n播放位置记录\n从外部源（例如themoviedb.org等）缓存的元信息\n\n确认要继续吗？
 
 #
 # ./src/navigator.c
@@ -835,6 +904,9 @@ msg: 可用插件
 id: Browse available plugins
 msg: 浏览可用插件
 
+id: Cloud services
+msg: 云服务
+
 id: Corrupt plugin bundle
 msg: 损坏的插件包
 
@@ -853,8 +925,8 @@ msg: 已安装插件
 id: Installing
 msg: 正在安装
 
-id: Invalud URI
-msg: 非法的URI
+id: Music streaming
+msg: 音乐流
 
 id: Not installable
 msg: 不可安装
@@ -865,11 +937,17 @@ msg: 未安装
 id: Not upgradable
 msg: 不可升级
 
+id: Online TV
+msg: 在线电视
+
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: 无法载入plugin.json: JSON格式不正确
+
+id: Uncategorized
+msg: 未分类
 
 id: Up to date
 msg: 最新
@@ -879,6 +957,12 @@ msg: 可更新
 
 id: Upgraded plugin %s to version %s
 msg: 插件%s已更新到版本%s
+
+id: User interface extensions
+msg: 用户界面扩展
+
+id: Video streaming
+msg: 视频流
 
 #
 # ./src/runcontrol.c
@@ -933,6 +1017,27 @@ msg: 供开发者使用的设置
 
 id: System related settings
 msg: 系统相关设置
+
+#
+# ./src/text/fontstash.c
+#
+id: Narrow text
+msg: 缩窄文字
+
+id: Unable to load %s -- %s
+msg: 无法载入%s -- %s
+
+id: Unable to open %s for writing
+msg: 无法打开%s
+
+id: Unable to write to %s
+msg: 无法写入%s
+
+id: Use font %s for
+msg: 使用字体%s
+
+id: User interface
+msg: 用户界面
 
 #
 # ./src/ui/glw/glw.c
