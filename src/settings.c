@@ -744,7 +744,7 @@ settings_generic_save_settings(void *opaque, htsmsg_t *msg)
  *
  */
 void
-settings_generic_set_bool(void *opaque, int value)
+settings_generic_set_int(void *opaque, int value)
 {
   int *p = opaque;
   *p = value;

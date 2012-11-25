@@ -274,6 +274,7 @@ SRCS-${CONFIG_LIBSIDPLAY2} += \
 # GLW user interface
 ##############################################################
 SRCS-$(CONFIG_GLW)   += src/ui/glw/glw.c \
+			src/ui/glw/glw_settings.c \
 			src/ui/glw/glw_renderer.c \
 			src/ui/glw/glw_event.c \
 			src/ui/glw/glw_view.c \

@@ -206,6 +206,7 @@ typedef struct gconf {
   int listen_on_stdin;
   int ffmpeglog;
   int noui;
+  int fullscreen;
 
 #if ENABLE_SERDEV
   int enable_serdev;

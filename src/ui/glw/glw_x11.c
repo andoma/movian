@@ -40,6 +40,7 @@
 #include "settings.h"
 #include "navigator.h"
 
+#include "glw_settings.h"
 #if WITH_VALGRIND
 #include <valgrind/callgrind.h>
 #endif
@@ -70,7 +71,6 @@ typedef struct glw_x11 {
 
   int is_fullscreen;
   int want_fullscreen;
-  setting_t *fullscreen_setting;
 
   setting_t *settings_mouse_btn;
   int map_mouse_wheel_to_keys;
@@ -120,18 +120,6 @@ typedef struct glw_x11 {
 } glw_x11_t;
 
 #define AUTOHIDE_TIMEOUT 100 // XXX: in frames.. bad
-
-
-/**
- * Switch displaymode, we just set a variable and let mainloop switch
- * later on
- */
-static void
-gx11_set_fullscreen(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->want_fullscreen = value;
-}
 
 
 /**
@@ -1251,7 +1239,7 @@ eventsink(void *opaque, prop_event_t event, ...)
   case PROP_EXT_EVENT:
     e = va_arg(ap, event_t *);
     if(event_is_action(e, ACTION_FULLSCREEN_TOGGLE))
-      settings_toggle_bool(gx11->fullscreen_setting);
+      gx11->want_fullscreen = !gx11->want_fullscreen;
     break;
 
   default:
@@ -1269,15 +1257,14 @@ int glw_x11_start(void);
 int
 glw_x11_start(void)
 {
+  glw_settings_init();
+
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
-  char confname[PATH_MAX];
-  int force_fs = 0;
 
   gx11->gr.gr_prop_ui = prop_create_root("ui");
   gx11->gr.gr_prop_nav = nav_spawn();
 
   gx11->displayname_real = getenv("DISPLAY");
-  snprintf(confname, sizeof(confname), "glw/x11/default");
 
   // This may aid some vsync problems with nVidia drivers
   if(!gx11->force_no_vsync)
@@ -1289,7 +1276,7 @@ glw_x11_start(void)
 
   glw_root_t *gr = &gx11->gr;
   
-  if(glw_init(gr, confname))
+  if(glw_init(gr))
     return 1;
 
 #ifdef CONFIG_NVCTRL
@@ -1300,21 +1287,12 @@ glw_x11_start(void)
 #endif
 
   gx11->settings_mouse_btn =
-    settings_create_bool(gr->gr_settings, "map_mouse_wheel_to_keys",
+    settings_create_bool(glw_settings.gs_settings, "map_mouse_wheel_to_keys",
 			 _p("Map mouse wheel to up/down"),
-			 0, gr->gr_settings_store,
+			 0, glw_settings.gs_settings_store,
 			 gx11_set_wheel_mapping, gx11, 
 			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
 			 glw_settings_save, gr);
-
-  if(gx11->wm_flags) {
-    gx11->fullscreen_setting = 
-      settings_create_bool(gr->gr_settings, "fullscreen",
-			   _p("Fullscreen mode"), 0, gr->gr_settings_store,
-			   gx11_set_fullscreen, gx11, 
-			   SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-			   glw_settings_save, gr);
-  }
 
   prop_sub_t *evsub =
     prop_subscribe(0,
@@ -1325,7 +1303,7 @@ glw_x11_start(void)
 		   NULL);
 
 
-  gx11->want_fullscreen |= force_fs;
+  gx11->want_fullscreen |= !!gconf.fullscreen;
 
   update_gpu_info(gx11);
   glw_lock(gr);
@@ -1340,11 +1318,12 @@ glw_x11_start(void)
   glw_reap(gr);
   glw_reap(gr);
 
-  setting_destroy(gx11->fullscreen_setting);
   setting_destroy(gx11->settings_mouse_btn);
 
   prop_unsubscribe(evsub);
 
   glw_fini(gr);
+
+  glw_settings_fini();
   return 0;
 }

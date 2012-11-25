@@ -693,7 +693,6 @@ typedef struct glw_root {
    */
 
   int gr_screensaver_counter; // In frames
-  int gr_screensaver_delay;   // In minutes
   int gr_screensaver_force_enable;
   prop_t *gr_screensaver_active;
 
@@ -760,28 +759,11 @@ typedef struct glw_root {
   /**
    * Settings
    */
-  prop_t *gr_settings;        // Root prop
-
-  char *gr_settings_instance; // Name of configuration file
-
-  htsmsg_t *gr_settings_store;  // Loaded settings
-
-  setting_t *gr_setting_size;
-  setting_t *gr_setting_underscan_v;
-  setting_t *gr_setting_underscan_h;
-
-  prop_t *gr_prop_size;
-  prop_t *gr_prop_underscan_v;
-  prop_t *gr_prop_underscan_h;
-
   int gr_underscan_v;
   int gr_underscan_h;
-
-  // Base offsets, should be set by frontend
-  int gr_base_size;
-  int gr_user_size;
   int gr_current_size;
 
+  // Base offsets, should be set by frontend
   int gr_base_underscan_v;
   int gr_base_underscan_h;
 
@@ -849,9 +831,6 @@ typedef struct glw_root {
   int gr_random;
 
 } glw_root_t;
-
-
-void glw_settings_save(void *opaque, htsmsg_t *msg);
 
 
 /**
@@ -1050,7 +1029,7 @@ typedef struct glw {
  (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
 
 
-int glw_init(glw_root_t *gr, const char *instance);
+int glw_init(glw_root_t *gr);
 
 void glw_fini(glw_root_t *gr);
 

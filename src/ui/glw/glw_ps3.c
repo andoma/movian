@@ -27,6 +27,7 @@
 #include <malloc.h>
 
 #include "glw.h"
+#include "glw_settings.h"
 #include "glw_video_common.h"
 
 #include "showtime.h"
@@ -1088,16 +1089,14 @@ int glw_ps3_start(void);
 int
 glw_ps3_start(void)
 {
+  glw_settings_init();
+
   glw_ps3_t *gp = calloc(1, sizeof(glw_ps3_t));
-  char confname[PATH_MAX];
 
   prop_t *root = gp->gr.gr_prop_ui = prop_create(prop_get_global(), "ui");
   gp->gr.gr_prop_nav = nav_spawn();
 
   prop_set_int(prop_create(root, "fullscreen"), 1);
-
-  snprintf(confname, sizeof(confname), "glw/ps3");
-
 
   if(glw_ps3_init(gp))
      return 1;
@@ -1117,7 +1116,7 @@ glw_ps3_start(void)
 
   gr->gr_open_osk = osk_open;
 
-  if(glw_init(gr, confname))
+  if(glw_init(gr))
     return 1;
 
   TRACE(TRACE_DEBUG, "GLW", "loading universe");
