@@ -676,21 +676,30 @@ $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
 
-#
-#
-#
 $(BUILDDIR)/libav.stamp:
 	${MAKE} -C ${LIBAV_BUILD_DIR}
 	${MAKE} -C ${LIBAV_BUILD_DIR} install
 	@mkdir -p $(dir $@)
 	touch $@
 
-#
-#
-#
 $(BUILDDIR)/freetype.stamp:
 	${MAKE} -C ${FREETYPE_BUILD_DIR}
 	${MAKE} -C ${FREETYPE_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
+$(BUILDDIR)/zlib.stamp:
+	${MAKE} -C ${ZLIB_BUILD_DIR} install
+	@mkdir -p $(dir $@)
+	touch $@
+
+$(BUILDDIR)/bzip2.stamp:
+	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
+	@mkdir -p ${BZIP2_INSTALL_DIR}/lib ${BZIP2_INSTALL_DIR}/include
+
+	cp ${BZIP2_BUILD_DIR}/libbz2.a ${BZIP2_INSTALL_DIR}/lib
+	cp ${BZIP2_BUILD_DIR}/bzlib.h  ${BZIP2_INSTALL_DIR}/include
+
 	@mkdir -p $(dir $@)
 	touch $@
 

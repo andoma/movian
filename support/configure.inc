@@ -322,6 +322,62 @@ libav_setup() {
 }
 
 
+#
+#
+#
+zlib_setup()
+{
+    ZLIB_VER="1.2.3"
+    download_file http://commondatastorage.googleapis.com/nativeclient-mirror/nacl/zlib-${ZLIB_VER}.tar.gz zlibtarball
+
+    ZLIB_SRC_DIR=${BUILDDIR}/zlib-${ZLIB_VER}
+    ZLIB_INSTALL_DIR=${BUILDDIR}/zlib/install
+
+    tar -x -C "${BUILDDIR}" -f "${zlibtarball}"
+    mkdir -p "${ZLIB_INSTALL_DIR}"
+
+    (cd ${ZLIB_SRC_DIR} && \
+        CC=${TOOLCHAIN}gcc AR="${TOOLCHAIN}ar -r" RANLIB=${TOOLCHAIN}ranlib \
+        ./configure --static --prefix=${ZLIB_INSTALL_DIR})
+    
+    echo >>${CONFIG_MAK} "ZLIB_BUILD_DIR=${ZLIB_SRC_DIR}"
+    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/zlib.stamp"
+    rm -f "build.${BUILD}/zlib.stamp"
+
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${ZLIB_INSTALL_DIR}/include"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${ZLIB_INSTALL_DIR}/lib"
+}
+
+
+#
+#
+#
+bzip2_setup()
+{
+    BZIP2_VER="1.0.6"
+    download_file http://www.bzip.org/${BZIP2_VER}/bzip2-${BZIP2_VER}.tar.gz bzip2tarball
+
+    BZIP2_SRC_DIR=${BUILDDIR}/bzip2-${BZIP2_VER}
+    BZIP2_INSTALL_DIR=${BUILDDIR}/bzip2/install
+
+    tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
+    mkdir -p "${BZIP2_INSTALL_DIR}"
+
+    sed -i bak s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
+    sed -i bak s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
+    sed -i bak s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
+
+    echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
+    echo >>${CONFIG_MAK} "BZIP2_INSTALL_DIR=${BZIP2_INSTALL_DIR}"
+    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/bzip2.stamp"
+    rm -f "build.${BUILD}/bzip2.stamp"
+
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${BZIP2_INSTALL_DIR}/include"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${BZIP2_INSTALL_DIR}/lib"
+
+}
+
+
 
 #
 #
@@ -333,16 +389,18 @@ freetype_setup()
     download_file http://download.savannah.gnu.org/releases/freetype/freetype-${FREETYPE_VER}.tar.gz freetypetarball
 
     FREETYPE_SRC_DIR=${BUILDDIR}/freetype-${FREETYPE_VER}
-
     FREETYPE_BUILD_DIR=${BUILDDIR}/freetype/build
     FREETYPE_INSTALL_DIR=${BUILDDIR}/freetype/install
 
     tar -x -C "${BUILDDIR}" -f "${freetypetarball}"
-
     mkdir -p "${FREETYPE_BUILD_DIR}"
     mkdir -p "${FREETYPE_INSTALL_DIR}"
 
-    (cd ${FREETYPE_BUILD_DIR} && ${FREETYPE_SRC_DIR}/configure \
+    
+    (cd ${FREETYPE_BUILD_DIR} && \
+        CC=${TOOLCHAIN}gcc AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
+        ${FREETYPE_SRC_DIR}/configure \
+        $1 \
 	--prefix=${FREETYPE_INSTALL_DIR} \
 	--enable-static=yes \
 	--enable-shared=no)
