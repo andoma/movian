@@ -52,7 +52,7 @@
 
 #include "htsmsg_xml.h"
 #include "htsbuf.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 TAILQ_HEAD(cdata_content_queue, cdata_content);
 

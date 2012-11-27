@@ -22,7 +22,7 @@
 #include <string.h>
 #include <assert.h>
 
-#include "misc/string.h"
+#include "misc/str.h"
 #include "showtime.h"
 #include "sha.h"
 

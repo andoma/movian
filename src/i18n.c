@@ -22,7 +22,7 @@
 #include "showtime.h"
 #include "settings.h"
 #include "i18n.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "fileaccess/fileaccess.h"
 #include "networking/http_server.h"
 

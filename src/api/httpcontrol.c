@@ -23,7 +23,7 @@
 #include "networking/http_server.h"
 #include "event.h"
 #include "misc/pixmap.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "backend/backend.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"

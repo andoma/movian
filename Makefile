@@ -89,7 +89,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/svg.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
-	src/misc/string.c \
+	src/misc/str.c \
 	src/misc/codepages.c \
 	src/misc/fs.c \
 	src/misc/extents.c \

@@ -22,7 +22,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "event.h"
 #include "playqueue.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "api/lastfm.h"
 #include "api/soap.h"
 #include "prop/prop_nodefilter.h"

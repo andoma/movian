@@ -2,7 +2,7 @@
 // awk '/^0x.*0x/{print "["$1"]="$2","}'
 
 #include <inttypes.h>
-#include "misc/string.h"
+#include "misc/str.h"
 // 8859-2.TXT
 const uint16_t ISO_8859_2[256] = {
   [0] = 0,

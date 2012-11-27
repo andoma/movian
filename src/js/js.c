@@ -27,7 +27,7 @@
 #include "js.h"
 
 #include "backend/backend.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "fileaccess/fileaccess.h"
 #include "keyring.h"
 #include "notifications.h"

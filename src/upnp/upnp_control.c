@@ -20,7 +20,7 @@
 
 #include "networking/http_server.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "api/soap.h"
 
 #include "upnp.h"

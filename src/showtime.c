@@ -49,7 +49,7 @@
 #include "plugins.h"
 #include "blobcache.h"
 #include "i18n.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/pixmap.h"
 #include "text/text.h"
 #include "video/video_settings.h"

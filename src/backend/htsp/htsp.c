@@ -35,7 +35,7 @@
 #include "backend/backend.h"
 #include "keyring.h"
 #include "media.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/sha.h"
 #include "video/video_playback.h"
 #include "fileaccess/fileaccess.h"

@@ -32,7 +32,7 @@
 #include "service.h"
 #include "settings.h"
 #include "notifications.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "db/kvstore.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);

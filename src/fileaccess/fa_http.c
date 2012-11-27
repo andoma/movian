@@ -30,7 +30,7 @@
 #include "fa_proto.h"
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/sha.h"
 
 #if ENABLE_SPIDERMONKEY

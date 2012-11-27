@@ -40,7 +40,7 @@
 #include "fa_libav.h"
 #include "navigator.h"
 #include "media.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/isolang.h"
 #include "misc/jpeg.h"
 #include "htsmsg/htsmsg_json.h"

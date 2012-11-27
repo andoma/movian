@@ -27,7 +27,7 @@
 #include "backend/backend_prop.h"
 #include "backend/search.h"
 #include "navigator.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/regex.h"
 #include "prop/prop_nodefilter.h"
 #include "event.h"

@@ -21,7 +21,7 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"
 #include "playqueue.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 #include "upnp.h"
 

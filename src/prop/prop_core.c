@@ -28,7 +28,7 @@
 
 #include "showtime.h"
 #include "prop_i.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "event.h"
 
 #ifdef PROP_DEBUG

@@ -33,7 +33,7 @@
 #include "showtime.h"
 #include "settings.h"
 #include "misc/extents.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "navigator.h"
 
 #include <psl1ght/lv2.h>

@@ -28,7 +28,7 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "media.h"
 #include "misc/dbl.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "i18n.h"
 #include "video_overlay.h"
 #include "vobsub.h"

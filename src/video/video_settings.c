@@ -21,7 +21,7 @@
 #include "htsmsg/htsmsg_store.h"
 #include "settings.h"
 #include "video_settings.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 
 struct prop *subtitle_settings_dir;

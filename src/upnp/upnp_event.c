@@ -22,7 +22,7 @@
 #include "networking/http_server.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/sha.h"
 #include "api/soap.h"
 

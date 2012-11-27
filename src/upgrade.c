@@ -29,7 +29,7 @@
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
 #include "misc/sha.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "settings.h"
 #include "notifications.h"
 

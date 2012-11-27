@@ -27,7 +27,7 @@
 #include "notifications.h"
 #include "showtime.h"
 #include "metadata/metadata.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include <libavcodec/avcodec.h>
 #include <libavutil/mathematics.h>
 

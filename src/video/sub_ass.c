@@ -22,7 +22,7 @@
 #include "video_overlay.h"
 #include "text/text.h"
 #include "misc/pixmap.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "sub.h"
 #include "video_settings.h"
 #include "ext_subtitles.h"

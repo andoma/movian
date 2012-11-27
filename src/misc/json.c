@@ -21,7 +21,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include "json.h"
-#include "string.h"
+#include "str.h"
 #include "dbl.h"
 
 #define NOT_THIS_TYPE ((void *)-1)

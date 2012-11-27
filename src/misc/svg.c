@@ -25,7 +25,7 @@
 #include "pixmap.h"
 #include "dbl.h"
 #include "htsmsg/htsmsg_xml.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "showtime.h"
 
 

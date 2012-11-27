@@ -24,7 +24,7 @@
 
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsbuf.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/regex.h"
 #include "backend/backend.h"
 

@@ -29,7 +29,7 @@
 #include "showtime.h"
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/regex.h"
 #include "api/lastfm.h"
 

@@ -20,7 +20,7 @@
 #include <string.h>
 
 #include "showtime.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/unicode_composition.h"
 
 #include "text.h"

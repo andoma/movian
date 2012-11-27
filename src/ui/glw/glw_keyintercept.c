@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "misc/string.h"
+#include "misc/str.h"
 #include "event.h"
 #include "glw.h"
 

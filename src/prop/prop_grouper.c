@@ -29,7 +29,7 @@
 #include "showtime.h"
 #include "prop_i.h"
 #include "prop_grouper.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 LIST_HEAD(pg_node_list, pg_node);
 LIST_HEAD(pg_group_list, pg_group);

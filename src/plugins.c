@@ -31,7 +31,7 @@
 #include "settings.h"
 #include "htsmsg/htsmsg_json.h"
 #include "backend/backend.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "notifications.h"

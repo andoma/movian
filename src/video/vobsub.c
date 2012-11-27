@@ -22,7 +22,7 @@
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "vobsub.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "ext_subtitles.h"

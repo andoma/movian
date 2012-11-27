@@ -36,7 +36,7 @@
 #include "fa_proto.h"
 #include "keyring.h"
 #include "networking/net.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "misc/callout.h"
 
 #define SAMBA_NEED_AUTH ((void *)-1)

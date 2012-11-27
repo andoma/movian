@@ -32,7 +32,7 @@
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 /**
  *

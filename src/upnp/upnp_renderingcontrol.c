@@ -20,7 +20,7 @@
 #include "networking/http.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "event.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "api/lastfm.h"
 
 #include "upnp.h"

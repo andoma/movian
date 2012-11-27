@@ -32,7 +32,7 @@
 #include "glw_texture.h"
 #include "glw_renderer.h"
 #include "glw_text_bitmap.h"
-#include "misc/string.h"
+#include "misc/str.h"
 #include "text/text.h"
 #include "event.h"
 

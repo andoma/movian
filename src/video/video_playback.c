@@ -30,7 +30,7 @@
 #include "notifications.h"
 #include "htsmsg/htsmsg_json.h"
 #include "fileaccess/fileaccess.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 static hts_mutex_t video_queue_mutex;
 

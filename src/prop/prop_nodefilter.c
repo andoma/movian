@@ -30,7 +30,7 @@
 #include "prop_i.h"
 #include "prop_nodefilter.h"
 #include "misc/pixmap.h"
-#include "misc/string.h"
+#include "misc/str.h"
 
 #define MAX_SORT_KEYS 4
 
