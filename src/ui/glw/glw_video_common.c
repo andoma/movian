@@ -17,7 +17,6 @@
  */
 
 #include <assert.h>
-#include <libavutil/pixdesc.h>
 
 #include "showtime.h"
 #include "media.h"
@@ -33,8 +32,7 @@
 static glw_video_engine_t glw_video_blank;
 
 
-static void  glw_video_input(frame_buffer_type_t type, void *frame,
-			     const frame_info_t *info, void *opaque);
+static void  glw_video_input(const frame_info_t *info, void *opaque);
 
 
 /**
@@ -53,10 +51,10 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 		   -gr->gr_underscan_v);
   }
 
-  float t_aspect = av_q2d(gv->gv_dar);
+  float t_aspect = (float)gv->gv_dar_num / gv->gv_dar_den; 
 
-    if(video_settings.stretch_fullscreen)
-      return;
+  if(video_settings.stretch_fullscreen)
+    return;
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
@@ -331,7 +329,7 @@ glw_video_newframe(glw_t *w, int flags)
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 
-  if(pts != AV_NOPTS_VALUE)
+  if(pts != PTS_UNSET)
     glw_video_overlay_set_pts(gv, pts);
 }
 
@@ -692,29 +690,46 @@ glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
 }
 
 
+static LIST_HEAD(, glw_video_engine) engines;
+
+void
+glw_register_video_engine(glw_video_engine_t *gve)
+{
+  LIST_INSERT_HEAD(&engines, gve, gve_link);
+}
+
+
 /**
  * Frame delivery from video decoder
  */
 static void 
-glw_video_input(frame_buffer_type_t type, void *frame,
-		const frame_info_t *fi, void *opaque)
+glw_video_input(const frame_info_t *fi, void *opaque)
 {
   glw_video_t *gv = opaque;
-  const AVFrame *avframe;
+  glw_video_engine_t *gve;
 
   if(fi) {
-    gv->gv_dar = fi->fi_dar;
+    gv->gv_dar_num = fi->fi_dar_num;
+    gv->gv_dar_den = fi->fi_dar_den;
     gv->gv_vheight = fi->fi_height;
   }
   hts_mutex_lock(&gv->gv_surface_mutex);
 
-  if(frame == NULL) {
+  if(fi == NULL) {
     // Blackout
     glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0);
     hts_mutex_unlock(&gv->gv_surface_mutex);
     return;
   }
   
+  LIST_FOREACH(gve, &engines, gve_link) {
+    if(gve->gve_type == fi->fi_type) {
+      gve->gve_deliver(gv, fi);
+    }
+  }
+
+#if 0      
+
   switch(type) {
 #if CONFIG_GLW_BACKEND_RSX
   case FRAME_BUFFER_TYPE_RSX_MEMORY:
@@ -765,6 +780,8 @@ glw_video_input(frame_buffer_type_t type, void *frame,
 	    type);
       break;
   }
+
+#endif
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 }
@@ -829,7 +846,7 @@ glw_video_surface_reconfigure(glw_video_t *gv)
 static int64_t
 blank_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
-  return AV_NOPTS_VALUE;
+  return PTS_UNSET;
 }
 
 /**
@@ -862,7 +879,6 @@ blank_init(glw_video_t *gv)
  *
  */
 static glw_video_engine_t glw_video_blank = {
-  .gve_name = "No output",
   .gve_newframe = blank_newframe,
   .gve_render = blank_render,
   .gve_reset = blank_reset,

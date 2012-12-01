@@ -23,23 +23,20 @@
 #include <time.h>
 #include <string.h>
 
-#include <libavformat/avformat.h>
-#include <libavutil/audioconvert.h>
-
 #include "media.h"
 #include "showtime.h"
-#include "audio2/audio.h"
+#include "audio2/audio_ext.h"
 #include "event.h"
 #include "playqueue.h"
-#include "fileaccess/fa_libav.h"
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "i18n.h"
 #include "video/ext_subtitles.h"
 #include "video/video_settings.h"
-#include "video/video_overlay.h"
 #include "settings.h"
 #include "db/kvstore.h"
+
+struct AVCodecContext;
 
 static LIST_HEAD(, codec_def) registeredcodecs;
 
@@ -119,6 +116,7 @@ media_buf_dtor_freedata(media_buf_t *mb)
     free(mb->mb_data);
 }
 
+#define BUF_PAD 32
 
 media_buf_t *
 media_buf_alloc_locked(media_pipe_t *mp, size_t size)
@@ -128,8 +126,8 @@ media_buf_alloc_locked(media_pipe_t *mp, size_t size)
   mb->mb_dtor = media_buf_dtor_freedata;
   mb->mb_size = size;
   if(size > 0) {
-    mb->mb_data = malloc(size + FF_INPUT_BUFFER_PADDING_SIZE);
-    memset(mb->mb_data + size, 0, FF_INPUT_BUFFER_PADDING_SIZE);
+    mb->mb_data = malloc(size + BUF_PAD);
+    memset(mb->mb_data + size, 0, BUF_PAD);
   }
 
   return mb;
@@ -147,6 +145,7 @@ media_buf_alloc_unlocked(media_pipe_t *mp, size_t size)
 }
 
 
+#if ENABLE_LIBAV
 /**
  *
  */
@@ -180,6 +179,7 @@ media_buf_from_avpkt_unlocked(media_pipe_t *mp, AVPacket *pkt)
   av_free_packet(pkt);
   return mb;
 }
+#endif
 
 /**
  *
@@ -979,7 +979,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
   int rval = 1;
 
   TAILQ_FOREACH(abuf, &mp->mp_audio.mq_q_data, mb_link)
-    if(abuf->mb_pts != AV_NOPTS_VALUE && abuf->mb_pts >= pos)
+    if(abuf->mb_pts != PTS_UNSET && abuf->mb_pts >= pos)
       break;
 
   if(abuf != NULL) {
@@ -988,7 +988,7 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
     TAILQ_FOREACH(vbuf, &mp->mp_video.mq_q_data, mb_link) {
       if(vbuf->mb_keyframe)
 	vk = vbuf;
-      if(vbuf->mb_pts != AV_NOPTS_VALUE && vbuf->mb_pts >= pos)
+      if(vbuf->mb_pts != PTS_UNSET && vbuf->mb_pts >= pos)
 	break;
     }
     
@@ -1153,13 +1153,12 @@ media_codec_ref(media_codec_t *cw)
 void
 media_codec_deref(media_codec_t *cw)
 {
-  media_format_t *fw = cw->fw;
-
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
-
+#if ENABLE_LIBAV
   if(cw->codec_ctx != NULL && cw->codec_ctx->codec != NULL)
     avcodec_close(cw->codec_ctx);
+#endif
 
   if(cw->close != NULL)
     cw->close(cw);
@@ -1167,60 +1166,15 @@ media_codec_deref(media_codec_t *cw)
   if(cw->codec_ctx_alloced)
     free(cw->codec_ctx);
 
+#if ENABLE_LIBAV
   if(cw->parser_ctx != NULL)
     av_parser_close(cw->parser_ctx);
-  
-  if(fw != NULL)
-    media_format_deref(fw);
+
+  if(cw->fw != NULL)
+    media_format_deref(cw->fw);
+#endif
 
   free(cw);
-}
-
-/**
- *
- */
-static int
-media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
-			AVCodecContext *ctx, media_codec_params_t *mcp)
-{
-  cw->codec = avcodec_find_decoder(id);
-
-  if(cw->codec == NULL)
-    return -1;
-  
-  if(ctx == NULL || id == CODEC_ID_AC3) {
-    cw->codec_ctx = avcodec_alloc_context3(NULL);
-    cw->codec_ctx_alloced = 1;
-  } else {
-    cw->codec_ctx = ctx;
-  }
-
-  //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
-
-  cw->codec_ctx->codec_id   = cw->codec->id;
-  cw->codec_ctx->codec_type = cw->codec->type;
-  cw->codec_ctx->opaque = cw;
-
-  if(mcp != NULL && mcp->extradata != NULL) {
-    cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
-				      FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(cw->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
-    cw->codec_ctx->extradata_size = mcp->extradata_size;
-  }
-
-  if(id == CODEC_ID_H264 && gconf.concurrency > 1) {
-    cw->codec_ctx->thread_count = gconf.concurrency;
-    if(mcp && mcp->cheat_for_speed)
-      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
-  }
-
-  if(avcodec_open2(cw->codec_ctx, cw->codec, NULL) < 0) {
-    if(ctx == NULL)
-      free(cw->codec_ctx);
-    cw->codec = NULL;
-    return -1;
-  }
-  return 0;
 }
 
 
@@ -1229,24 +1183,29 @@ media_codec_create_lavc(media_codec_t *cw, enum CodecID id,
  */
 media_codec_t *
 media_codec_create(int codec_id, int parser,
-		   media_format_t *fw, AVCodecContext *ctx,
-		   media_codec_params_t *mcp, media_pipe_t *mp)
+		   struct media_format *fw, struct AVCodecContext *ctx,
+		   const media_codec_params_t *mcp, media_pipe_t *mp)
 {
   media_codec_t *mc = calloc(1, sizeof(media_codec_t));
   codec_def_t *cd;
 
+  mc->codec_ctx = ctx;
+  
+#if ENABLE_LIBAV
+  if(ctx != NULL) {
+    assert(ctx->extradata      == mcp->extradata);
+    assert(ctx->extradata_size == mcp->extradata_size);
+  }
+#endif
+
   LIST_FOREACH(cd, &registeredcodecs, link)
-    if(!cd->open(mc, codec_id, ctx, mcp, mp))
+    if(!cd->open(mc, codec_id, mcp, mp))
       break;
 
-  if(cd == NULL) {
-    if(media_codec_create_lavc(mc, codec_id, ctx, mcp)) {
-      free(mc);
-      return NULL;
-    }
-  }
-
+#if ENABLE_LIBAV
   mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
+#endif
+
   mc->refcount = 1;
   mc->fw = fw;
   mc->codec_id = codec_id;
@@ -1255,32 +1214,6 @@ media_codec_create(int codec_id, int parser,
     atomic_add(&fw->refcount, 1);
 
   return mc;
-}
-
-
-/**
- *
- */
-media_format_t *
-media_format_create(AVFormatContext *fctx)
-{
-  media_format_t *fw = malloc(sizeof(media_format_t));
-  fw->refcount = 1;
-  fw->fctx = fctx;
-  return fw;
-}
-
-
-/**
- *
- */
-void
-media_format_deref(media_format_t *fw)
-{
-  if(atomic_add(&fw->refcount, -1) > 1)
-    return;
-  fa_libav_close_format(fw->fctx);
-  free(fw);
 }
 
 
@@ -1388,88 +1321,6 @@ mp_shutdown(struct media_pipe *mp)
 }
 
 
-
-/**
- *
- */
-static void
-codec_details(AVCodecContext *ctx, char *buf, size_t size, const char *lead)
-{
-  const char *cfg;
-
-  if(ctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-
-    if(ctx->sample_rate % 1000 == 0) {
-      snprintf(buf, size, "%s%d kHz", lead, ctx->sample_rate / 1000);
-    } else {
-      snprintf(buf, size, "%s%.1f kHz", lead, (float)ctx->sample_rate / 1000);
-    }
-    lead = ", ";
-
-    switch(ctx->channels) {
-    case 1: 
-      cfg = "mono";
-      break;
-    case 2: 
-      cfg = "stereo";
-      break;
-    case 6: 
-      cfg = "5.1";
-      break;
-    default:
-      snprintf(buf + strlen(buf), size - strlen(buf), ", %d channels",
-	       ctx->channels);
-      cfg = NULL;
-      break;
-    }
-    if(cfg != NULL) {
-      snprintf(buf + strlen(buf), size - strlen(buf), ", %s", cfg);
-    }
-  }
-
-  if(ctx->width) {
-    snprintf(buf + strlen(buf), size - strlen(buf),
-	     "%s%dx%d", lead, ctx->width, ctx->height);
-    lead = ", ";
-  }
-
-  if(ctx->bit_rate > 2000000)
-    snprintf(buf + strlen(buf), size - strlen(buf),
-	     "%s%.1f Mb/s", lead, (float)ctx->bit_rate / 1000000);
-  else if(ctx->bit_rate)
-    snprintf(buf + strlen(buf), size - strlen(buf),
-	     "%s%d kb/s", lead, ctx->bit_rate / 1000);
-}
-
-/**
- * Update codec info in property
- */ 
-void
-media_update_codec_info_prop(prop_t *p, AVCodecContext *ctx)
-{
-  char tmp[100];
-
-  if(ctx == NULL) {
-    tmp[0] = 0;
-  } else {
-    snprintf(tmp, sizeof(tmp), "%s", ctx->codec->long_name);
-    codec_details(ctx, tmp + strlen(tmp), sizeof(tmp) - strlen(tmp), ", ");
-  }
-  prop_set_string(p, tmp);
-}
-
-
-/**
- * Update codec info in text widgets
- */ 
-void
-media_get_codec_info(AVCodecContext *ctx, char *buf, size_t size)
-{
-  snprintf(buf, size, "%s\n", ctx->codec->long_name);
-  codec_details(ctx, buf + strlen(buf), size - strlen(buf), "");
-}
-
-
 /**
  *
  */
@@ -1531,7 +1382,7 @@ update_sv_delta(void *opaque, int v)
 void
 mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
 {
-  if(ts == AV_NOPTS_VALUE)
+  if(ts == PTS_UNSET)
     return;
 
   ts -= delta;
@@ -1649,74 +1500,6 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
 
   mp->mp_duration = duration;
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
-}
-
-
-/**
- * 
- */
-void
-metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec, 
-		     AVCodecContext *avctx)
-{
-  char *n;
-  int off = snprintf(dst, dstlen, "%s", codec->name);
-
-  n = dst;
-  while(*n) {
-    *n = toupper((int)*n);
-    n++;
-  }
-
-  if(codec->id  == CODEC_ID_H264) {
-    const char *p;
-    switch(avctx->profile) {
-    case FF_PROFILE_H264_BASELINE:  p = "Baseline";  break;
-    case FF_PROFILE_H264_MAIN:      p = "Main";      break;
-    case FF_PROFILE_H264_EXTENDED:  p = "Extended";  break;
-    case FF_PROFILE_H264_HIGH:      p = "High";      break;
-    case FF_PROFILE_H264_HIGH_10:   p = "High 10";   break;
-    case FF_PROFILE_H264_HIGH_422:  p = "High 422";  break;
-    case FF_PROFILE_H264_HIGH_444:  p = "High 444";  break;
-    case FF_PROFILE_H264_CAVLC_444: p = "CAVLC 444"; break;
-    default:                        p = NULL;        break;
-    }
-
-    if(p != NULL && avctx->level != FF_LEVEL_UNKNOWN)
-      off += snprintf(dst + off, dstlen - off,
-		      ", %s (Level %d.%d)",
-		      p, avctx->level / 10, avctx->level % 10);
-  }
-    
-  if(avctx->codec_type == AVMEDIA_TYPE_AUDIO) {
-    char buf[64];
-
-    av_get_channel_layout_string(buf, sizeof(buf), avctx->channels,
-                                 avctx->channel_layout);
-					    
-    off += snprintf(dst + off, dstlen - off, ", %d Hz, %s",
-		    avctx->sample_rate, buf);
-  }
-
-  if(avctx->width)
-    off += snprintf(dst + off, dstlen - off,
-		    ", %dx%d", avctx->width, avctx->height);
-  
-  if(avctx->codec_type == AVMEDIA_TYPE_AUDIO && avctx->bit_rate)
-    off += snprintf(dst + off, dstlen - off,
-		    ", %d kb/s", avctx->bit_rate / 1000);
-
-}
-
-/**
- * 
- */
-void
-mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
-{
-  char buf[128];
-  metadata_from_ffmpeg(buf, sizeof(buf), codec, avctx);
-  prop_set_string(mq->mq_prop_codec, buf);
 }
 
 
@@ -2225,6 +2008,7 @@ mtm_select_track(media_track_mgr_t *mtm, event_select_track_t *est)
 
 
 
+
 /**
  *
  */
@@ -2253,11 +2037,21 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url)
 }
 
 
+
+/**
+ *
+ */
+static int
+codec_def_cmp(const codec_def_t *a, const codec_def_t *b)
+{
+  return a->prio - b->prio;
+}
+
 /**
  *
  */
 void
 media_register_codec(codec_def_t *cd)
 {
-  LIST_INSERT_HEAD(&registeredcodecs, cd, link);
+  LIST_INSERT_SORTED(&registeredcodecs, cd, link, codec_def_cmp);
 }

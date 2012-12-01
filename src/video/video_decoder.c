@@ -27,7 +27,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#include <libavutil/mem.h>
+//#include <libavutil/mem.h>
 
 #include "showtime.h"
 #include "video_decoder.h"
@@ -37,6 +37,17 @@
 #include "video_overlay.h"
 #include "misc/sha.h"
 #include "dvdspu.h"
+#include "libav.h"
+
+
+static const int libav_colorspace_tbl[] = {
+  [AVCOL_SPC_BT709]     = COLOR_SPACE_BT_709,
+  [AVCOL_SPC_BT470BG]   = COLOR_SPACE_BT_601,
+  [AVCOL_SPC_SMPTE170M] = COLOR_SPACE_BT_601,
+  [AVCOL_SPC_SMPTE240M] = COLOR_SPACE_SMPTE_240M,
+};
+
+
 
 static void
 vd_init_timings(video_decoder_t *vd)
@@ -128,21 +139,26 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   case 0:
 
     if(frame->pan_scan != NULL && frame->pan_scan->width != 0) {
-      fi.fi_dar.num = frame->pan_scan->width;
-      fi.fi_dar.den = frame->pan_scan->height;
+      fi.fi_dar_num = frame->pan_scan->width;
+      fi.fi_dar_den = frame->pan_scan->height;
     } else {
-      fi.fi_dar.num = ctx->width;
-      fi.fi_dar.den = ctx->height;
+      fi.fi_dar_num = ctx->width;
+      fi.fi_dar_den = ctx->height;
     }
 
-    if(ctx->sample_aspect_ratio.num)
-      fi.fi_dar = av_mul_q(fi.fi_dar, ctx->sample_aspect_ratio);
+    if(ctx->sample_aspect_ratio.num) {
+      fi.fi_dar_num *= ctx->sample_aspect_ratio.num;
+      fi.fi_dar_den *= ctx->sample_aspect_ratio.den;
+    }
+      
     break;
   case 1:
-    fi.fi_dar = (AVRational){4,3};
+    fi.fi_dar_num = 4;
+    fi.fi_dar_den = 3;
     break;
   case 2:
-    fi.fi_dar = (AVRational){16,9};
+    fi.fi_dar_num = 16;
+    fi.fi_dar_den = 9;
     break;
   }
 
@@ -209,7 +225,6 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 
   fi.fi_width = ctx->width;
   fi.fi_height = ctx->height;
-  fi.fi_pix_fmt = ctx->pix_fmt;
   fi.fi_pts = pts;
   fi.fi_epoch = mb->mb_epoch;
   fi.fi_delta = mb->mb_delta;
@@ -220,10 +235,24 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   fi.fi_tff = !!frame->top_field_first;
   fi.fi_prescaled = 0;
 
-  fi.fi_color_space = ctx->colorspace;
-  fi.fi_color_range = ctx->color_range;
+  fi.fi_color_space = 
+    ctx->colorspace < ARRAYSIZE(libav_colorspace_tbl) ? 
+    libav_colorspace_tbl[ctx->colorspace] : 0;
 
-  video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, frame, &fi);
+  fi.fi_data[0] = frame->data[0];
+  fi.fi_data[1] = frame->data[1];
+  fi.fi_data[2] = frame->data[2];
+
+  fi.fi_pitch[0] = frame->linesize[0];
+  fi.fi_pitch[1] = frame->linesize[1];
+  fi.fi_pitch[2] = frame->linesize[2];
+
+  fi.fi_type = 'YUVP';
+
+  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &fi.fi_hshift, &fi.fi_vshift);
+
+
+  video_deliver_frame(vd, &fi);
 }
 
 
@@ -231,11 +260,10 @@ video_deliver_frame_avctx(video_decoder_t *vd,
  *
  */
 void
-video_deliver_frame(video_decoder_t *vd, frame_buffer_type_t type, void *frame,
-		    const frame_info_t *info)
+video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
   vd->vd_skip = 0;
-  vd->vd_frame_deliver(type, frame, info, vd->vd_opaque);
+  vd->vd_frame_deliver(info, vd->vd_opaque);
 
   if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
     return;
@@ -425,8 +453,7 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_BLACKOUT:
-      vd->vd_frame_deliver(FRAME_BUFFER_TYPE_BLACKOUT, NULL, NULL,
-			   vd->vd_opaque);
+      vd->vd_frame_deliver(NULL, vd->vd_opaque);
       break;
 
     case MB_CTRL_FLUSH_SUBTITLES:
