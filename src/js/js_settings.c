@@ -793,7 +793,7 @@ js_createSettings(JSContext *cx, JSObject *obj, uintN argc,
   jsg->jsg_store = htsmsg_store_load(spath) ?: htsmsg_create_map();
   jsg->jsg_root_owner = 1;
   jsg->jsg_root =
-    prop_ref_inc(settings_add_dir_cstr(settings_apps, title,
+    prop_ref_inc(settings_add_dir_cstr(gconf.settings_apps, title,
 				  NULL, icon, desc, NULL));
   robj = JS_NewObjectWithGivenProto(cx, &setting_group_class, NULL, obj);
   jsg->jsg_val = *rval = OBJECT_TO_JSVAL(robj);

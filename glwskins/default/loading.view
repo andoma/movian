@@ -1,0 +1,7 @@
+widget(container_y, {
+  space(1);
+  widget(throbber, {
+    alpha: iir($nav.currentpage.model.loading, 4);
+  });
+  space(1);
+});

@@ -237,6 +237,13 @@ typedef struct gconf {
   char *ui;
   char *skin;
 
+
+  struct prop *settings_apps;
+  struct prop *settings_sd;
+  struct prop *settings_general;
+  struct prop *settings_dev;
+  struct prop_concat *settings_look_and_feel;
+
 } gconf_t;
 
 extern gconf_t gconf;

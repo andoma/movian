@@ -2,6 +2,7 @@ setDefaultFont($global.fonts.main);
 $ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
 $ui.condensedfont = $global.fonts.condensed ?? 
   "skin://fonts/OpenSans-CondBold.ttf";
+$ui.background = "graphics/background.jpg";
 
 onEvent(logwindow, {
   $ui.logwindow = !$ui.logwindow;
@@ -19,28 +20,25 @@ onEvent(sysinfo, {
 
 widget(container_z, {
 
-  widget(backdrop, {
-    source: $nav.currentpage.model.metadata.background ?? 
-	  $nav.currentpage.glw.background ??
-	  "graphics/background.jpg";
-    color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
-      ($nav.currentpage.model.metadata.backgroundAlpha ??
-       $nav.currentpage.glw.backgroundAlpha ??
-       1);
+  widget(loader, {
+    source: selectedElement(vectorize($global.glw.views.standard.background))
+      ?? "background.view";
+    effect: blend;
+    time: 0.3;
   });
 
-  widget(container_y, {
-    space(1);
-    widget(throbber, {
-      alpha: iir($nav.currentpage.model.loading, 4);
-    });
-    space(1);
+  widget(loader, {
+    source: selectedElement(vectorize($global.glw.views.standard.loading))
+      ?? "loading.view";
+    effect: blend;
+    time: 0.3;
   });
 
   widget(loader, {
     time: 0.3;
     effect: blend;
-    source: select($ui.screensaverActive, "skin://screensaver.view", "");
+    source: select($ui.screensaverActive,
+		   selectedElement(vectorize($global.glw.views.standard.screensaver)) ?? "skin://screensaver.view", "");
   });
 
   widget(underscan, {

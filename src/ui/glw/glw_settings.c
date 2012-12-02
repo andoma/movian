@@ -17,6 +17,7 @@
  */
 
 #include "showtime.h"
+#include "prop/prop_concat.h"
 #include "settings.h"
 #include "glw.h"
 #include "glw_settings.h"
@@ -54,10 +55,11 @@ glw_settings_init(void)
   if(glw_settings.gs_settings_store == NULL)
     glw_settings.gs_settings_store = htsmsg_create_map();
 
-  glw_settings.gs_settings = settings_add_dir(NULL, 
-				     _p("Display and user interface"),
-				     "display", NULL, NULL, NULL);
-
+  
+  glw_settings.gs_settings = prop_create_root(NULL);
+  prop_concat_add_source(gconf.settings_look_and_feel,
+			 prop_create(glw_settings.gs_settings, "nodes"),
+			 NULL);
 
   glw_settings.gs_setting_size =
     settings_create_int(glw_settings.gs_settings, "size",

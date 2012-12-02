@@ -141,6 +141,7 @@ typedef struct vectorizer_element {
 typedef struct sub_vectorizer {
   glw_prop_sub_t sv_sub;
   struct vectorizer_element_queue sv_elements;
+  vectorizer_element_t *sv_selected;
 } sub_vectorizer_t;
 
 
@@ -1861,6 +1862,12 @@ ve_cb(void *opaque, prop_event_t event, ...)
 
     glw_view_token_free(gr, ve->ve_token);
     ve->ve_token = t;
+
+    if(ve->ve_sv->sv_selected == ve)
+      t->t_flags |= TOKEN_F_SELECTED;
+    else
+      t->t_flags &= ~TOKEN_F_SELECTED;
+
   }
 
   if(rpn != NULL) 
@@ -1874,12 +1881,18 @@ ve_cb(void *opaque, prop_event_t event, ...)
  */
 static void
 vectorizer_add_element(sub_vectorizer_t *sv, prop_t *p, prop_t *before,
-		       glw_root_t *gr)
+		       glw_root_t *gr, int flags)
 {
   vectorizer_element_t *ve = malloc(sizeof(vectorizer_element_t));
   glw_prop_sub_t *gps = &sv->sv_sub;
   ve->ve_sv = sv;
   ve->ve_prop = prop_ref_inc(p);
+
+  if(flags & PROP_ADD_SELECTED) {
+    if(sv->sv_selected != NULL) 
+      sv->sv_selected->ve_token->t_flags &= ~TOKEN_F_SELECTED;
+    sv->sv_selected = ve;
+  }
 
   ve->ve_token = prop_callback_alloc_token(gr, &sv->sv_sub, TOKEN_VOID);
 
@@ -1974,6 +1987,9 @@ vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
   } else {
     prev->ve_token->next = ve->ve_token->next;
   }
+
+  if(sv->sv_selected == ve) 
+    sv->sv_selected = NULL;
   
   prop_unsubscribe(ve->ve_sub);
   glw_view_token_free(gr, ve->ve_token);
@@ -1981,6 +1997,31 @@ vectorizer_del_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
   TAILQ_REMOVE(&sv->sv_elements, ve, ve_link);
   free(ve);
   
+  token_t *rpn = gps->gps_rpn;
+  if(rpn != NULL)
+    eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
+		 gps->gps_prop_clone);
+}
+
+
+/**
+ *
+ */
+static void
+vectorizer_select_element(sub_vectorizer_t *sv, prop_t *p, glw_root_t *gr)
+{
+  glw_prop_sub_t *gps = &sv->sv_sub;
+  vectorizer_element_t *ve = prop_tag_get(p, sv);
+
+  if(sv->sv_selected == ve)
+    return;
+
+  if(sv->sv_selected != NULL) 
+    sv->sv_selected->ve_token->t_flags &= ~TOKEN_F_SELECTED;
+
+  sv->sv_selected = ve;
+  ve->ve_token->t_flags |= TOKEN_F_SELECTED;
+
   token_t *rpn = gps->gps_rpn;
   if(rpn != NULL)
     eval_dynamic(gps->gps_widget, rpn, NULL, gps->gps_prop, gps->gps_prop_view,
@@ -2067,27 +2108,27 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
 
   case PROP_ADD_CHILD:
     p = va_arg(ap, prop_t *);
-    vectorizer_add_element(sv, p, NULL, gr);
+    vectorizer_add_element(sv, p, NULL, gr, va_arg(ap, int));
     break;
 
   case PROP_ADD_CHILD_VECTOR:
   case PROP_ADD_CHILD_VECTOR_DIRECT:
     pv = va_arg(ap, prop_vec_t *);
     for(i = 0; i < prop_vec_len(pv); i++)
-      vectorizer_add_element(sv, prop_vec_get(pv, i), NULL, gr);
+      vectorizer_add_element(sv, prop_vec_get(pv, i), NULL, gr, 0);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
     p2 = va_arg(ap, prop_t *);
-    vectorizer_add_element(sv, p, p2, gr);
+    vectorizer_add_element(sv, p, p2, gr, va_arg(ap, int));
     break;
 
   case PROP_ADD_CHILD_VECTOR_BEFORE:
     pv = va_arg(ap, prop_vec_t *);
     p2 = va_arg(ap, prop_t *);
     for(i = 0; i < prop_vec_len(pv); i++)
-      vectorizer_add_element(sv, prop_vec_get(pv, i), p2, gr);
+      vectorizer_add_element(sv, prop_vec_get(pv, i), p2, gr, 0);
     break;
 
   case PROP_MOVE_CHILD:
@@ -2102,6 +2143,10 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SELECT_CHILD:
+    p = va_arg(ap, prop_t *);
+    vectorizer_select_element(sv, p, gr);
+    break;
+
   case PROP_SUGGEST_FOCUS:
   case PROP_HAVE_MORE_CHILDS:
   case PROP_REQ_NEW_CHILD:
@@ -5487,14 +5532,27 @@ multiopt_add_link(glwf_multiopt_extra_t *x, token_t *d,
 /**
  *
  */
-static void
+static int
 multiopt_add_vector(glwf_multiopt_extra_t *x, token_t *t0,
-		    multiopt_item_t **up)
+		    multiopt_item_t **up, int chk)
 {
   token_t *t;
+
+  if(chk) {
+    // If the selected item is not a link, skip entire vector
+    for(t = t0->child; t != NULL; t = t->next)
+      if(t->t_flags & TOKEN_F_SELECTED && t->type != TOKEN_LINK)
+	return 1;
+
+    for(t = t0->child; t != NULL; t = t->next)
+      if(t->t_flags & TOKEN_F_SELECTED && t->type == TOKEN_LINK)
+	multiopt_add_link(x, t, up);
+  }
+
   for(t = t0->child; t != NULL; t = t->next)
-    if(t->type == TOKEN_LINK)
+    if(t->type == TOKEN_LINK && !(t->t_flags & TOKEN_F_SELECTED))
       multiopt_add_link(x, t, up);
+  return 0;
 }
 
 /**
@@ -5594,6 +5652,8 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
   argc -= 4;
 
   multiopt_item_t *u = NULL; // user preferred
+  token_t *lp_vectors[16];
+  int lp_num = 0;
 
   for(i = 0; i < argc; i++) {
     token_t *d;
@@ -5606,13 +5666,17 @@ glwf_multiopt(glw_view_eval_context_t *ec, struct token *self,
       multiopt_add_link(x, d, &u);
       break;
     case TOKEN_VECTOR:
-      multiopt_add_vector(x, d, &u);
+      if(multiopt_add_vector(x, d, &u, 1) && lp_num < 16)
+	lp_vectors[lp_num++] = d;
       break;
 
     default:
       break;
     } 
   }
+
+  for(i = 0; i < lp_num; i++)
+    multiopt_add_vector(x, lp_vectors[i], &u, 0);
 
   for(mi = TAILQ_FIRST(&x->q); mi != NULL; mi = n) {
     n = TAILQ_NEXT(mi, mi_link);
@@ -5711,6 +5775,27 @@ glwf_setDefaultFont(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
+ * Return selected element from TOKEN_VECTOR
+ */
+static int 
+glwf_selectedElement(glw_view_eval_context_t *ec, struct token *self,
+		     token_t **argv, unsigned int argc)
+{
+  token_t *a, *r = NULL;
+  if((a = token_resolve(ec, argv[0])) == NULL)
+    return -1;
+  
+  if(a->type == TOKEN_VECTOR)
+    for(r = a->child; r != NULL; r = r->next)
+      if(r->t_flags & TOKEN_F_SELECTED)
+	break;
+  
+  eval_push(ec, r ?: eval_alloc(self, ec, TOKEN_VOID));
+  return 0;
+}
+
+
+/**
  *
  */
 static const token_func_t funcvec[] = {
@@ -5778,6 +5863,8 @@ static const token_func_t funcvec[] = {
   {"canSelectPrevious", 0, glwf_canSelectPrev},
   {"setDefaultFont", 1, glwf_setDefaultFont},
   {"rand", 0, glwf_rand},
+  {"selectedElement", 1, glwf_selectedElement},
+
 };
 
 

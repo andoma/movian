@@ -1089,8 +1089,6 @@ int glw_ps3_start(void);
 int
 glw_ps3_start(void)
 {
-  glw_settings_init();
-
   glw_ps3_t *gp = calloc(1, sizeof(glw_ps3_t));
 
   prop_t *root = gp->gr.gr_prop_ui = prop_create(prop_get_global(), "ui");

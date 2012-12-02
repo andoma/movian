@@ -4493,7 +4493,7 @@ be_spotify_init(void)
   prop_t *title = prop_create_root(NULL);
   prop_set_string(title, "Spotify");
 
-  s = settings_add_dir(settings_apps, title, NULL, iconurl,
+  s = settings_add_dir(gconf.settings_apps, title, NULL, iconurl,
 		       _p("Spotify music service"),
 		       "spotify:settings");
 

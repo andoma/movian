@@ -57,7 +57,9 @@
 #include "db/db_support.h"
 #include "js/js.h"
 #include "db/kvstore.h"
-
+#if ENABLE_GLW
+#include "src/ui/glw/glw_settings.h"
+#endif
 #if ENABLE_HTTPSERVER
 #include "networking/http_server.h"
 #include "networking/ssdp.h"
@@ -238,6 +240,11 @@ showtime_init(void)
   freetype_init();
   svg_init();
 #endif
+
+#if ENABLE_GLW
+  glw_settings_init();
+#endif
+
   fontstash_init();
 
   /* Global keymapper */

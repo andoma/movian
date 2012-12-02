@@ -113,7 +113,8 @@ init_autostandby(void)
   if(store == NULL)
     store = htsmsg_create_map();
 
-  settings_create_int(settings_general, "autostandby", _p("Automatic standby"), 
+  settings_create_int(gconf.settings_general,
+		      "autostandby", _p("Automatic standby"), 
 		      0, store, 0, 60, 5, set_autostandby, NULL,
 		      SETTINGS_INITIAL_UPDATE, " min", NULL,
 		      runcontrol_save_settings, NULL);
@@ -179,25 +180,25 @@ runcontrol_init(void)
        !gconf.can_not_exit))
     return;
 
-  settings_create_separator(settings_general, 
+  settings_create_separator(gconf.settings_general, 
 			  _p("Starting and stopping Showtime"));
 
   if(gconf.can_standby)
     init_autostandby();
 
   if(gconf.can_poweroff)
-    settings_create_action(settings_general, _p("Power off system"),
+    settings_create_action(gconf.settings_general, _p("Power off system"),
 			   do_power_off, NULL, 0, NULL);
 
   if(gconf.can_logout)
-    settings_create_action(settings_general, _p("Logout"),
+    settings_create_action(gconf.settings_general, _p("Logout"),
 			   do_logout, NULL, 0, NULL);
 
   if(gconf.can_open_shell)
-    settings_create_action(settings_general, _p("Open shell"),
+    settings_create_action(gconf.settings_general, _p("Open shell"),
 			   do_open_shell, NULL, 0, NULL);
 
   if(!gconf.can_not_exit)
-    settings_create_action(settings_general, _p("Exit Showtime"),
+    settings_create_action(gconf.settings_general, _p("Exit Showtime"),
 			   do_exit, NULL, 0, NULL);
 }

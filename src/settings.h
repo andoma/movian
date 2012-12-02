@@ -62,11 +62,11 @@ void settings_toggle_bool(setting_t *s);
 setting_t *settings_create_multiopt(prop_t *parent, const char *id,
 				    prop_t *title, int flags);
 
-void settings_multiopt_add_opt(setting_t *parent, const char *id,
-			       prop_t *title, int selected);
+prop_t *settings_multiopt_add_opt(setting_t *parent, const char *id,
+				  prop_t *title, int selected);
 
-void settings_multiopt_add_opt_cstr(setting_t *parent, const char *id,
-				    const char *title, int selected);
+prop_t *settings_multiopt_add_opt_cstr(setting_t *parent, const char *id,
+				       const char *title, int selected);
 
 void settings_multiopt_initiate(setting_t *s,
 				prop_callback_string_t *cb, void *opaque,
@@ -121,9 +121,5 @@ void settings_create_info(prop_t *parent, const char *image,
 
 prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
 				     prop_t *value);
-
-extern prop_t *settings_apps;
-extern prop_t *settings_sd;
-extern prop_t *settings_general;
 
 #endif /* SETTINGS_H__ */

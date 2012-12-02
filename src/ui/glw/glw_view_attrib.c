@@ -862,6 +862,7 @@ build_rstr_vector(struct token *t0)
 }
 
 
+
 /**
  *
  */
@@ -885,8 +886,10 @@ set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
     return 0;
 
   case TOKEN_RSTRING:
-  case TOKEN_LINK:
     r = t->t_rstring;
+    break;
+  case TOKEN_LINK:
+    r = t->t_link_rurl;
     break;
   }
 

@@ -1257,8 +1257,6 @@ int glw_x11_start(void);
 int
 glw_x11_start(void)
 {
-  glw_settings_init();
-
   glw_x11_t *gx11 = calloc(1, sizeof(glw_x11_t));
 
   gx11->gr.gr_prop_ui = prop_create_root("ui");
@@ -1323,7 +1321,5 @@ glw_x11_start(void)
   prop_unsubscribe(evsub);
 
   glw_fini(gr);
-
-  glw_settings_fini();
   return 0;
 }

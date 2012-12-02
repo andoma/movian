@@ -747,7 +747,7 @@ blobcache_init(void)
 	"Initialized: %d items consuming %"PRId64" bytes on disk in %s",
 	pool_num(item_pool), current_cache_size, buf);
 
-  settings_create_action(settings_general, _p("Clear cached files"),
+  settings_create_action(gconf.settings_general, _p("Clear cached files"),
 			 cache_clear, NULL, 0, NULL);
 }
 

@@ -105,7 +105,9 @@ typedef struct token {
   int line;
 
   token_type_t type;
-  int t_num_args;
+  int16_t t_num_args;
+  uint16_t t_flags;
+#define TOKEN_F_SELECTED 0x1 // The 'selected' in a vector
 
   union {
     int elements;

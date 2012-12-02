@@ -60,7 +60,8 @@ keyring_init(void)
     persistent_keyring = htsmsg_create_map();
   temporary_keyring = htsmsg_create_map();
 
-  settings_create_action(settings_general, _p("Forget remembered passwords"),
+  settings_create_action(gconf.settings_general,
+			 _p("Forget remembered passwords"),
 			 keyring_clear, NULL, 0, NULL);
 }
 

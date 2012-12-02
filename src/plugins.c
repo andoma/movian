@@ -75,8 +75,9 @@ static prop_t *plugin_root_model;
 static prop_courier_t *plugin_courier;
 
 
-
 LIST_HEAD(plugin_list, plugin);
+LIST_HEAD(plugin_view_list, plugin_view);
+LIST_HEAD(plugin_view_entry_list, plugin_view_entry);
 
 static struct plugin_list plugins;
 
@@ -112,13 +113,18 @@ typedef struct plugin {
 
   void (*pl_unload)(struct plugin *pl);
 
-  prop_vec_t *pl_unload_props;
+  struct plugin_view_entry_list pl_views;
   
 } plugin_t;
 
 static int plugin_install(plugin_t *pl, const char *package);
 static void plugin_remove(plugin_t *pl);
 static void plugin_autoupgrade(void);
+static void plugins_view_settings_init(void);
+static void plugins_view_settings_setup(void);
+static void plugins_view_add(plugin_t *pl, const char *uit, const char *class,
+			     const char *title, const char *fullpath);
+static void plugin_unload_views(plugin_t *pl);
 
 static int autoupgrade;
 
@@ -479,11 +485,7 @@ plugin_unload(plugin_t *pl)
     pl->pl_unload = NULL;
   }
 
-  if(pl->pl_unload_props != NULL) {
-    prop_vec_destroy_entries(pl->pl_unload_props);
-    prop_vec_release(pl->pl_unload_props);
-    pl->pl_unload_props = NULL;
-  }
+  plugin_unload_views(pl);
 }
 
 
@@ -574,11 +576,8 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
     // Load bundled views
 
     if(!r) {
-      assert(pl->pl_unload_props == NULL);
 
       htsmsg_t *list = htsmsg_get_list(ctrl, "glwviews");
-
-      pl->pl_unload_props = prop_vec_create(10);
 
       if(list != NULL) {
 	htsmsg_field_t *f;
@@ -594,18 +593,8 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	  if(class == NULL || title == NULL || file == NULL)
 	    continue;
 	  snprintf(fullpath, sizeof(fullpath), "%s/%s", url, file);
-	  prop_t *r;
-	  r = prop_create(prop_create(prop_get_global(), "glw"), "views");
-	  r = prop_create(prop_create(r, uit), class);
-	  prop_t *l = prop_create_r(r, fullpath);
-	  prop_set_link(l, title, fullpath);
 
-	  TRACE(TRACE_DEBUG, "plugins", 
-		"Added view uitype:%s class:%s title:%s from %s",
-		uit, class, title, fullpath);
-
-	  pl->pl_unload_props = prop_vec_append(pl->pl_unload_props, l);
-	  prop_ref_dec(l);
+	  plugins_view_add(pl, uit, class, title, fullpath);
 	}
       }
     }
@@ -852,17 +841,17 @@ plugins_setup_root_props(void)
 
   // Settings
 
-  settings_create_separator(settings_general,
+  settings_create_separator(gconf.settings_general,
 			  _p("Plugins"));
 
-  settings_create_string(settings_general, "alt_repo",
+  settings_create_string(gconf.settings_general, "alt_repo",
 			 _p("Alternate plugin Repository URL"),
 			 NULL, store, set_alt_repo_url, NULL,
 			 SETTINGS_INITIAL_UPDATE, NULL,
 			 settings_generic_save_settings, 
 			 (void *)"pluginconf");
 
-  settings_create_bool(settings_general,
+  settings_create_bool(gconf.settings_general,
 		       "autoupgrade", _p("Automatically upgrade plugins"),
 		       1, store, set_autoupgrade, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
@@ -882,6 +871,7 @@ plugin_thread(void *aux)
   hts_mutex_lock(&plugin_mutex);
   plugins_load();
   hts_mutex_unlock(&plugin_mutex);
+  plugins_view_settings_setup();
   upgrade_init();
   return NULL;
 }
@@ -894,6 +884,9 @@ void
 plugins_init(const char *loadme, const char *repo, int sync_init)
 {
   char url[PATH_MAX];
+
+  plugins_view_settings_init();
+
   if(repo) {
     fa_normalize(repo, url, sizeof(url));
     plugin_repo_url = strdup(url);
@@ -920,6 +913,7 @@ plugins_init(const char *loadme, const char *repo, int sync_init)
 
   if(sync_init) {
     plugins_load();
+    plugins_view_settings_setup();
     upgrade_init();
   } else {
     hts_thread_create_detached("pluginsinit", plugin_thread, NULL,
@@ -1233,5 +1227,187 @@ plugin_open_file(prop_t *page, const char *url)
   htsmsg_destroy(pm);
 }
 
+/**
+ *
+ */
+
+static struct plugin_view_list plugin_views;
+
+typedef struct plugin_view_entry {
+  LIST_ENTRY(plugin_view_entry) pve_plugin_link;
+  LIST_ENTRY(plugin_view_entry) pve_type_link;
+  char *pve_key;
+  prop_t *pve_type_prop;
+  prop_t *pve_setting_prop;
+} plugin_view_entry_t;
 
 
+typedef struct plugin_view {
+  LIST_ENTRY(plugin_view) pv_link;
+  const char *pv_type;
+  const char *pv_class;
+  setting_t *pv_s;
+  struct plugin_view_entry_list pv_entries;
+} plugin_view_t;
+
+
+/**
+ *
+ */
+static void
+add_view_type(prop_t *p, const char *type, const char *class, prop_t *title)
+{
+  char id[256];
+  plugin_view_t *pv = calloc(1, sizeof(plugin_view_t));
+  LIST_INSERT_HEAD(&plugin_views, pv, pv_link);
+  pv->pv_type  = type;
+  pv->pv_class = class;
+  snprintf(id, sizeof(id), "%s-%s", type, class);
+  pv->pv_s = settings_create_multiopt(p, id, title, 0);
+
+  plugin_view_entry_t *pve = calloc(1, sizeof(plugin_view_entry_t));
+  prop_t *r = prop_create(prop_create(prop_get_global(), "glw"), "views");
+  r = prop_create(prop_create(r, type), class);
+  pve->pve_type_prop = prop_create_r(r, NULL);
+  pve->pve_key = strdup("default");
+  pve->pve_setting_prop =
+    settings_multiopt_add_opt(pv->pv_s, "default", _p("Default"), 0);
+  LIST_INSERT_HEAD(&pv->pv_entries, pve, pve_type_link);
+}
+
+
+/**
+ *
+ */
+static prop_t *
+makesep(prop_t *title)
+{
+  prop_t *d = prop_create_root(NULL);
+  prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
+  prop_set_string(prop_create(d, "type"), "separator");
+  return d;
+
+}
+
+/**
+ *
+ */
+static void
+plugins_view_settings_init(void)
+{
+  prop_t *p = prop_create_root(NULL);
+
+  prop_concat_add_source(gconf.settings_look_and_feel,
+			 prop_create(p, "nodes"),
+			 makesep(_p("Preferred views from plugins")));
+
+  add_view_type(p, "standard", "background",  _p("Background"));
+  add_view_type(p, "standard", "loading",     _p("Loading screen"));
+  add_view_type(p, "standard", "screensaver", _p("Screen saver"));
+  add_view_type(p, "standard", "home",        _p("Home page"));
+
+  settings_create_separator(p, _p("Browsing"));
+
+  add_view_type(p, "standard", "tracks",     _p("Audio tracks"));
+  add_view_type(p, "standard", "album",      _p("Album"));
+  add_view_type(p, "standard", "albums",     _p("List of albums"));
+  add_view_type(p, "standard", "artist",     _p("Artist"));
+  add_view_type(p, "standard", "tvchannels", _p("TV channels"));
+  add_view_type(p, "standard", "images",     _p("Images"));
+  add_view_type(p, "standard", "movies",     _p("Movies"));
+}
+
+
+/**
+ *
+ */
+static void
+pvs_cb(void *opaque, const char *str)
+{
+  plugin_view_t *pv = opaque;
+  plugin_view_entry_t *pve;
+
+  LIST_FOREACH(pve, &pv->pv_entries, pve_type_link) {
+    if(!strcmp(pve->pve_key, str))
+      break;
+  }
+  if(pve != NULL)
+    prop_select(pve->pve_type_prop);
+}
+
+
+/**
+ *
+ */
+static void
+plugins_view_settings_setup(void)
+{
+  plugin_view_t *pv;
+  htsmsg_t *store;
+
+  if((store = htsmsg_store_load("selectedviews")) == NULL)
+    store = htsmsg_create_map();
+
+  LIST_FOREACH(pv, &plugin_views, pv_link) {
+    settings_multiopt_initiate(pv->pv_s, 
+			       pvs_cb, pv, NULL, store,
+			       settings_generic_save_settings, 
+			       (void *)"selectedviews");
+  }
+}
+
+
+/**
+ *
+ */
+static void
+plugins_view_add(plugin_t *pl,
+		 const char *type, const char *class,
+		 const char *title, const char *path)
+{
+  plugin_view_t *pv;
+  prop_t *r = prop_create(prop_create(prop_get_global(), "glw"), "views");
+  r = prop_create(prop_create(r, type), class);
+
+  TRACE(TRACE_INFO, "plugins", 
+	"Added view uitype:%s class:%s title:%s from %s",
+	type, class, title, path);
+
+  LIST_FOREACH(pv, &plugin_views, pv_link)
+    if(!strcmp(pv->pv_class, class) && !strcmp(pv->pv_type, type))
+      break;
+
+  plugin_view_entry_t *pve = calloc(1, sizeof(plugin_view_entry_t));
+  pve->pve_type_prop = prop_create_r(r, path);
+  prop_set_link(pve->pve_type_prop, title, path);
+
+  LIST_INSERT_HEAD(&pl->pl_views, pve, pve_plugin_link);
+  pve->pve_key = strdup(path);
+
+  if(pv != NULL) {
+    pve->pve_setting_prop =
+      settings_multiopt_add_opt_cstr(pv->pv_s, path, title, 1);
+    LIST_INSERT_HEAD(&pv->pv_entries, pve, pve_type_link);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+plugin_unload_views(plugin_t *pl)
+{
+  plugin_view_entry_t *pve;
+
+  while((pve = LIST_FIRST(&pl->pl_views)) != NULL) {
+    LIST_REMOVE(pve, pve_plugin_link);
+    if(pve->pve_setting_prop != NULL) {
+      prop_destroy(pve->pve_setting_prop);
+      LIST_REMOVE(pve, pve_type_link);
+    }
+    free(pve->pve_key);
+    prop_ref_dec(pve->pve_type_prop);
+    free(pve);
+  }
+}

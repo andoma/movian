@@ -1,0 +1,11 @@
+widget(backdrop, {
+
+  source: $nav.currentpage.model.metadata.background ?? 
+    $nav.currentpage.glw.background ??
+    $ui.background;
+
+  color: iir(1 - ($ui.fullwindow || $ui.screensaverActive), 16) * 
+    ($nav.currentpage.model.metadata.backgroundAlpha ??
+     $nav.currentpage.glw.backgroundAlpha ??
+     1);
+});

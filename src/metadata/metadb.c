@@ -113,7 +113,7 @@ metadb_init(void)
   if(r)
     metadb_pool = NULL; // Disable
   else
-    settings_create_action(settings_general, _p("Clear all metadata"),
+    settings_create_action(gconf.settings_general, _p("Clear all metadata"),
 			   items_clear, NULL, 0, NULL);
 
 }

@@ -1047,7 +1047,8 @@ bookmarks_init(void)
   htsmsg_t *m;
 
   bookmark_root = settings_add_dir(NULL, _p("Bookmarks"),
-				   "bookmark", NULL, NULL,
+				   "bookmark", NULL,
+				   _p("Add and remove items on homepage"),
 				   "settings:bookmarks");
 
   bookmark_nodes = prop_create(bookmark_root, "nodes");

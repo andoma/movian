@@ -426,10 +426,10 @@ upgrade_init(void)
 
   setting_t *x;
 
-  settings_create_separator(settings_general,
+  settings_create_separator(gconf.settings_general,
 			  _p("Software upgrade"));
 
-  x = settings_create_multiopt(settings_general, "track",
+  x = settings_create_multiopt(gconf.settings_general, "track",
 			       _p("Upgrade to releases from"), 0);
 
   settings_multiopt_add_opt(x, "stable", _p("Stable"), 1);
@@ -439,7 +439,7 @@ upgrade_init(void)
 			     store, settings_generic_save_settings,
                              (void *)"upgrade");
 
-  settings_create_bool(settings_general, "check",
+  settings_create_bool(gconf.settings_general, "check",
 		       _p("Notify about upgrades"), 1,
 		       store, set_notify_upgrades, NULL, 
 		       SETTINGS_INITIAL_UPDATE, NULL,
@@ -452,7 +452,7 @@ upgrade_init(void)
   prop_set_string(prop_create(p, "type"), "load");
   prop_set_string(prop_create(p, "url"), "page:upgrade");
 
-  if(prop_set_parent(p, prop_create(settings_general, "nodes")))
+  if(prop_set_parent(p, prop_create(gconf.settings_general, "nodes")))
      abort();
 
   inhibit_checks = 0;
