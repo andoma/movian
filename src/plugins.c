@@ -63,8 +63,9 @@ static struct strtab catnames[] = {
 
 
 
-static const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
+static const char *plugin_repo_url = "http://localhost:8080/plugins-v1.json";
 static char *plugin_alt_repo_url;
+static char *plugin_beta_passwords;
 static hts_mutex_t plugin_mutex;
 static char *devplugin;
 
@@ -146,6 +147,18 @@ set_alt_repo_url(void *opaque, const char *value)
 {
   hts_mutex_lock(&plugin_mutex);
   mystrset(&plugin_alt_repo_url, value);
+  hts_mutex_unlock(&plugin_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+set_beta_passwords(void *opaque, const char *value) 
+{
+  hts_mutex_lock(&plugin_mutex);
+  mystrset(&plugin_beta_passwords, value);
   hts_mutex_unlock(&plugin_mutex);
 }
 
@@ -663,10 +676,27 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 {
   char *result;
   htsmsg_t *json;
+  const char *qargs[32];
+  int qp = 0;
 
   TRACE(TRACE_DEBUG, "plugins", "Loading repo from %s", repo);
 
-  result = fa_load(repo, NULL, NULL, errbuf, errlen, NULL, 0, NULL, NULL);
+  if(plugin_beta_passwords != NULL) {
+    char *pws = mystrdupa(plugin_beta_passwords);
+    char *tmp = NULL;
+
+    while(qp < 30) {
+      const char *p = strtok_r(pws, " ", &tmp);
+      if(p == NULL)
+	break;
+      qargs[qp++] = "betapassword";
+      qargs[qp++] = p;
+      pws = NULL;
+    }
+  }
+  qargs[qp] = 0;
+  result = fa_load_query(repo, NULL, errbuf, errlen, NULL,
+			 qargs, FA_COMPRESSION);
   if(result == NULL)
     return NULL;
   
@@ -847,6 +877,13 @@ plugins_setup_root_props(void)
   settings_create_string(gconf.settings_general, "alt_repo",
 			 _p("Alternate plugin Repository URL"),
 			 NULL, store, set_alt_repo_url, NULL,
+			 SETTINGS_INITIAL_UPDATE, NULL,
+			 settings_generic_save_settings, 
+			 (void *)"pluginconf");
+
+  settings_create_string(gconf.settings_general, "betapasswords",
+			 _p("Beta testing passwords"),
+			 NULL, store, set_beta_passwords, NULL,
 			 SETTINGS_INITIAL_UPDATE, NULL,
 			 settings_generic_save_settings, 
 			 (void *)"pluginconf");
