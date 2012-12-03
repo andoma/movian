@@ -33,6 +33,7 @@
 #include "event.h"
 #include "prop/prop.h"
 #include "arch/arch.h"
+#include "arch/threads.h"
 
 #include "media.h"
 #include "audio2/audio.h"
@@ -57,6 +58,7 @@
 #include "db/db_support.h"
 #include "js/js.h"
 #include "db/kvstore.h"
+#include "upgrade.h"
 #if ENABLE_GLW
 #include "src/ui/glw/glw_settings.h"
 #endif
@@ -164,10 +166,32 @@ init_group(int group)
 /**
  *
  */
+static void *
+swthread(void *aux)
+{
+  plugins_init2();
+  
+  hts_mutex_lock(&gconf.state_mutex);
+  gconf.state_plugins_loaded = 1;
+  hts_cond_signal(&gconf.state_cond);
+  hts_mutex_unlock(&gconf.state_mutex);
+
+  plugins_upgrade_check();
+
+  upgrade_init();
+  return NULL;
+}
+
+/**
+ *
+ */
 void
 showtime_init(void)
 {
   int r;
+
+  hts_mutex_init(&gconf.state_mutex);
+  hts_cond_init(&gconf.state_cond, &gconf.state_mutex);
 
   gconf.exit_code = 1;
 
@@ -265,9 +289,11 @@ showtime_init(void)
   /* Initialize audio subsystem */
   audio_init();
 
-  /* Initialize plugin manager and load plugins */
-  /* Once plugins are initialized it will also start the auto-upgrade system */
-  plugins_init(gconf.devplugin, gconf.plugin_repo, gconf.initial_url != NULL);
+  /* Initialize plugin manager */
+  plugins_init(gconf.devplugin);
+
+  /* Start software installer thread (plugins, upgrade, etc) */
+  hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_LOW);
 
   /* Internationalization */
   i18n_init();
@@ -294,7 +320,6 @@ showtime_init(void)
   if(!gconf.disable_upnp)
     upnp_init();
 #endif
-
 
   runcontrol_init();
 }

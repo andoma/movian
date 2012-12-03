@@ -35,7 +35,6 @@
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
 #include "notifications.h"
-#include "upgrade.h"
 #include "misc/strtab.h"
 
 #if ENABLE_SPIDERMONKEY
@@ -63,7 +62,7 @@ static struct strtab catnames[] = {
 
 
 
-static const char *plugin_repo_url = "http://localhost:8080/plugins-v1.json";
+static const char *plugin_repo_url = "http://showtime.lonelycoder.com/plugins/plugins-v1.json";
 static char *plugin_alt_repo_url;
 static char *plugin_beta_passwords;
 static hts_mutex_t plugin_mutex;
@@ -116,6 +115,8 @@ typedef struct plugin {
 
   struct plugin_view_entry_list pl_views;
   
+  int pl_mark;
+
 } plugin_t;
 
 static int plugin_install(plugin_t *pl, const char *package);
@@ -725,13 +726,11 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
   
   htsmsg_field_t *f = htsmsg_field_find(json, "plugins");
   if(f == NULL) {
-    snprintf(errbuf, errlen, "Missing plugin list in repository");
     htsmsg_destroy(json);
-    return NULL;
+    return htsmsg_create_list();
   }
   htsmsg_t *r = htsmsg_detach_submsg(f);
   htsmsg_destroy(json);
-
   return r;
 }
 
@@ -742,11 +741,15 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
 static void
 plugin_load_repo(void)
 {
+  plugin_t *pl, *next;
   char errbuf[512];
   htsmsg_t *r = repo_get(get_repo(), errbuf, sizeof(errbuf));
   
   if(r != NULL) {
     htsmsg_field_t *f;
+
+    LIST_FOREACH(pl, &plugins, pl_link)
+      pl->pl_mark = 1;
 
     HTSMSG_FOREACH(f, r) {
       htsmsg_t *pm;
@@ -755,7 +758,8 @@ plugin_load_repo(void)
       const char *id = htsmsg_get_str(pm, "id");
       if(id == NULL)
 	continue;
-      plugin_t *pl = plugin_find(id);
+      pl = plugin_find(id);
+      pl->pl_mark = 0;
       plugin_prop_setup(pm, pl, NULL, 0);
       mystrset(&pl->pl_repo_ver, htsmsg_get_str(pm, "version"));
       mystrset(&pl->pl_showtime_min_version,
@@ -772,23 +776,17 @@ plugin_load_repo(void)
 
     htsmsg_destroy(r);
 
+    for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
+      next = LIST_NEXT(pl, pl_link);
+      if(pl->pl_mark) {
+	pl->pl_mark = 0;
+	prop_destroy_by_name(plugin_root_repo, pl->pl_id);
+      }
+    }
   } else {
     TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
 	  get_repo(), errbuf);
   }
-}
-
-
-/**
- *
- */
-static void
-plugins_load(void)
-{
-  plugin_load_installed();
-  plugin_load_repo();
-  update_global_state();
-  plugin_autoupgrade();
 }
 
 
@@ -899,18 +897,31 @@ plugins_setup_root_props(void)
 }
 
 
+
 /**
  *
  */
-static void *
-plugin_thread(void *aux)
+void
+plugins_init2(void)
 {
   hts_mutex_lock(&plugin_mutex);
-  plugins_load();
-  hts_mutex_unlock(&plugin_mutex);
+  plugin_load_installed();
   plugins_view_settings_setup();
-  upgrade_init();
-  return NULL;
+  hts_mutex_unlock(&plugin_mutex);
+
+}
+
+/**
+ *
+ */
+void
+plugins_upgrade_check(void)
+{
+  hts_mutex_lock(&plugin_mutex);
+  plugin_load_repo();
+  update_global_state();
+  plugin_autoupgrade();
+  hts_mutex_unlock(&plugin_mutex);
 }
 
 
@@ -918,16 +929,11 @@ plugin_thread(void *aux)
  *
  */
 void
-plugins_init(const char *loadme, const char *repo, int sync_init)
+plugins_init(const char *loadme)
 {
-  char url[PATH_MAX];
 
   plugins_view_settings_init();
 
-  if(repo) {
-    fa_normalize(repo, url, sizeof(url));
-    plugin_repo_url = strdup(url);
-  }
   hts_mutex_init(&plugin_mutex);
   plugin_courier = prop_courier_create_waitable();
 
@@ -937,6 +943,7 @@ plugins_init(const char *loadme, const char *repo, int sync_init)
 
   if(loadme != NULL) {
     char errbuf[200];
+    char url[PATH_MAX];
     fa_normalize(loadme, url, sizeof(url));
     devplugin = strdup(url);
     if(plugin_load(devplugin, errbuf, sizeof(errbuf), 1, 0)) {
@@ -945,18 +952,7 @@ plugins_init(const char *loadme, const char *repo, int sync_init)
     } else {
       TRACE(TRACE_INFO, "plugins", "Loaded dev plugin %s", devplugin);
     }
-    sync_init = 1;
   }
-
-  if(sync_init) {
-    plugins_load();
-    plugins_view_settings_setup();
-    upgrade_init();
-  } else {
-    hts_thread_create_detached("pluginsinit", plugin_thread, NULL,
-			       THREAD_PRIO_LOW);
-  }
-
   hts_mutex_unlock(&plugin_mutex);
 }
 
@@ -1190,6 +1186,7 @@ plugin_open_repo(prop_t *page)
     prop_link(gn, prop_create(prop_create(header, "metadata"), "title"));
     prop_concat_add_source(pc, cat, header);
   }
+  plugins_upgrade_check();
 }
 
 

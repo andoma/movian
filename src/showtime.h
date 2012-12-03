@@ -244,6 +244,11 @@ typedef struct gconf {
   struct prop *settings_dev;
   struct prop_concat *settings_look_and_feel;
 
+  hts_mutex_t state_mutex;
+  hts_cond_t state_cond;
+
+  int state_plugins_loaded;
+
 } gconf_t;
 
 extern gconf_t gconf;

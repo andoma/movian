@@ -546,6 +546,12 @@ nav_open0(navigator_t *nav, const char *url, const char *view, prop_t *origin,
   nav_page_setup_prop(nav, np, view, how);
 
   nav_insert_page(nav, np, origin);
+
+  hts_mutex_lock(&gconf.state_mutex);
+  while(gconf.state_plugins_loaded == 0)
+    hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
+  hts_mutex_unlock(&gconf.state_mutex);
+
   if(backend_open(np->np_prop_root, url, 0))
     nav_open_errorf(np->np_prop_root, _("No handler for URL"));
 }
