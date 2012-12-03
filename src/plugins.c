@@ -263,13 +263,20 @@ update_state(plugin_t *pl)
     if(pl->pl_repo_ver != NULL) {
       pl->pl_new_version_avail = 1;
 
-      if(!version_dep_ok) {
-	status = _("Not upgradable");
-	prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
-	cantUpgrade = 1;
+      int repo_ver = showtime_parse_version_int(pl->pl_repo_ver);
+      if(pl->pl_inst_ver != NULL &&
+	 repo_ver > showtime_parse_version_int(pl->pl_inst_ver)) {
+
+	if(!version_dep_ok) {
+	  status = _("Not upgradable");
+	  prop_set_string(pl->pl_minver, pl->pl_showtime_min_version);
+	  cantUpgrade = 1;
+	} else {
+	  status = _("Upgradable");
+	  canUpgrade = 1;
+	}
       } else {
-	status = _("Upgradable");
-	canUpgrade = 1;
+	status = _("Installed version higher than available");
       }
     }
   }
