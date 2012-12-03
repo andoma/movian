@@ -1,0 +1,5 @@
+For beta-testers of plugins there is now a setting under "General"
+where a user can specify a, list of space separated, passwords
+that will enable beta testing of plugins
+
+Passwords are administrated by the plugin developer
