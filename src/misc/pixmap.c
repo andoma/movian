@@ -122,11 +122,14 @@ pixmap_create(int width, int height, pixmap_type_t type)
   pm->pm_refcount = 1;
   pm->pm_width = width;
   pm->pm_height = height;
-  pm->pm_linesize = (((1 + pm->pm_width) * bpp) + rowalign) & ~rowalign;
+  pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
 
   if(pm->pm_linesize > 0) {
-    pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height);
+    /* swscale can write a bit after the buffer in its optimized algo
+       therefore we need to allocate a bit extra 
+    */
+    pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height + 8);
     if(pm->pm_data == NULL) {
       free(pm);
       return NULL;

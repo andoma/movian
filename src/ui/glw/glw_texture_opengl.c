@@ -91,8 +91,6 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glTexParameteri(m, GL_TEXTURE_WRAP_S, wrapmode);
   glTexParameteri(m, GL_TEXTURE_WRAP_T, wrapmode);
 
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, glt->glt_pixmap->pm_width + 1);
-
   if(glt->glt_tex_width && glt->glt_tex_height) {
 
     glTexImage2D(m, 0, glt->glt_format, glt->glt_tex_width, glt->glt_tex_height,
@@ -214,8 +212,6 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
 
   tex->width  = pm->pm_width;
   tex->height = pm->pm_height;
-
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, pm->pm_width+1);
 
   glTexImage2D(m, 0, format, pm->pm_width, pm->pm_height,
 	       0, format, GL_UNSIGNED_BYTE, pm->pm_data);
