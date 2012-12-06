@@ -163,14 +163,16 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
 	rval = HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
 	break;
       }
+      htsbuf_qprintf(&out, "dir");
       for(i = 0; childs[i] != NULL; i++) {
-	htsbuf_qprintf(&out, "\t%s\n", childs[i]);
+	htsbuf_qprintf(&out, "%c%s", i ? ',' : ':', childs[i]);
       }
     } else {
+      htsbuf_qprintf(&out, "value:");
       htsbuf_append(&out, rstr_get(r), strlen(rstr_get(r)));
-      htsbuf_append(&out, "\n", 1);
       rstr_release(r);
     }
+    htsbuf_append(&out, "\n", 1);
     rval = http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
     break;
 
