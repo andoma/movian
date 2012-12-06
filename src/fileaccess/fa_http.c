@@ -1196,7 +1196,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
   if(hf->hf_connection == NULL)
     return;
 
-  if(reusable) {
+  if(reusable && !gconf.disable_http_reuse) {
     http_connection_park(hf->hf_connection, hf->hf_debug);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);

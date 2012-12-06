@@ -822,5 +822,15 @@ init_dev_settings(void)
 		       settings_generic_save_settings, 
 		       (void *)"dev");
 
+  t = prop_create_root(NULL);
+  prop_set_string(t, "Disable HTTP connection reuse");
+
+  settings_create_bool(gconf.settings_dev, "nohttpreuse", t, 0,
+		       store, settings_generic_set_bool,
+		       &gconf.disable_http_reuse, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+
 
 }

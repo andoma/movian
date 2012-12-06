@@ -226,6 +226,7 @@ typedef struct gconf {
   int enable_bin_replace;
   int enable_omnigrade;
   int enable_http_debug;
+  int disable_http_reuse;
 
   const char *devplugin;
   const char *plugin_repo;
