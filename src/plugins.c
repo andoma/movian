@@ -834,8 +834,10 @@ plugins_setup_root_props(void)
   if((store = htsmsg_store_load("pluginconf")) == NULL)
     store = htsmsg_create_map();
 
-  plugin_root_installed = prop_create_root(NULL);
-  plugin_root_repo = prop_create_root(NULL);
+  prop_t *parent = prop_create(prop_get_global(), "plugins");
+
+  plugin_root_installed = prop_create(parent, "installed");
+  plugin_root_repo = prop_create(parent, "repo");
   plugin_root_model = prop_create_root(NULL);
 
 
