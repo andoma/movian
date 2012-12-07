@@ -345,6 +345,7 @@ fi
 # libasound (ALSA)
 #
 if enabled libasound; then
+    disable libpulse
     if pkg-config alsa; then
 	echo >>${CONFIG_MAK} "CFLAGS_cfg  += " `pkg-config --cflags alsa`
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += " `pkg-config --libs alsa`
