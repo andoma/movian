@@ -51,15 +51,7 @@
 #include "arch/halloc.h"
 #include "ps3.h"
 
-#if ENABLE_PS3_VDEC
-#include "video/ps3_vdec.h"
-#endif
-
 // #define EMERGENCY_EXIT_THREAD
-
-
-
-
 static uint64_t ticks_per_us;
 
 static callout_t memlogger;

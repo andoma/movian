@@ -22,6 +22,7 @@
 #include "media.h"
 #include "vdpau.h"
 #include "video/video_decoder.h"
+#include "libav.h"
 
 static VdpStatus mixer_setup(vdpau_dev_t *vd, vdpau_mixer_t *vm);
 
@@ -507,7 +508,7 @@ vdpau_codec_reinit(media_codec_t *mc)
  */
 static int
 vdpau_codec_create(media_codec_t *mc, int id,
-		   AVCodecContext *ctx, media_codec_params_t *mcp,
+		   const media_codec_params_t *mcp,
 		   media_pipe_t *mp)
 {
   VdpDecoderProfile profile;
@@ -597,12 +598,16 @@ vdpau_codec_create(media_codec_t *mc, int id,
 
   TRACE(TRACE_DEBUG, "VDPAU", "Decoder initialized");
 	  
-  mc->codec_ctx = ctx ?: avcodec_alloc_context3(NULL);
-  mc->codec_ctx->codec_id   = mc->codec->id;
-  mc->codec_ctx->codec_type = mc->codec->type;
+  int alloced = 0;
+  if(mc->codec_ctx == NULL) {
+    mc->codec_ctx = avcodec_alloc_context3(NULL);
+    mc->codec_ctx->codec_id   = mc->codec->id;
+    mc->codec_ctx->codec_type = mc->codec->type;
+    alloced = 1;
+  }
 
   if(avcodec_open2(mc->codec_ctx, mc->codec, NULL) < 0) {
-    if(ctx == NULL)
+    if(alloced)
       free(mc->codec_ctx);
     mc->codec = NULL;
     vc_destroy(vc);
@@ -790,16 +795,15 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
   VdpVideoMixerAttribute attributes[] = {VDP_VIDEO_MIXER_ATTRIBUTE_CSC_MATRIX};
 
   switch(fi->fi_color_space) {
-  case AVCOL_SPC_BT709:
+  case COLOR_SPACE_BT_709:
     cs = VDP_COLOR_STANDARD_ITUR_BT_709;
     break;
 
-  case AVCOL_SPC_BT470BG:
-  case AVCOL_SPC_SMPTE170M:
+  case COLOR_SPACE_BT_601:
     cs = VDP_COLOR_STANDARD_ITUR_BT_601;
     break;
 
-  case AVCOL_SPC_SMPTE240M:
+  case COLOR_SPACE_SMPTE_240M:
     cs = VDP_COLOR_STANDARD_SMPTE_240M;
     break;
 
@@ -823,4 +827,4 @@ vdpau_mixer_set_color_matrix(vdpau_mixer_t *vm, const struct frame_info *fi)
 						  attributes, values);
 }
 
-REGISTER_CODEC(NULL, vdpau_codec_create);
+REGISTER_CODEC(NULL, vdpau_codec_create, 100);

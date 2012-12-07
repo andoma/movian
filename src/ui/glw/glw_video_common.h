@@ -209,7 +209,7 @@ typedef struct glw_video {
 typedef struct glw_video_engine {
   uint32_t gve_type;
 
-  void (*gve_deliver)(glw_video_t *gv, const frame_info_t *fi);
+  void (*gve_deliver)(glw_video_t *gv, frame_info_t *fi);
 
   void (*gve_render)(glw_video_t *gv, glw_rctx_t *rc);
 

@@ -35,7 +35,6 @@
 
 #include "video/video_decoder.h"
 #include "video/video_playback.h"
-#include "video/ps3_vdec.h"
 
 
 /**
@@ -220,16 +219,15 @@ gv_color_matrix_set(glw_video_t *gv, const struct frame_info *fi)
   const float *f;
 
   switch(fi->fi_color_space) {
-  case AVCOL_SPC_BT709:
+  case COLOR_SPACE_BT_709:
     f = cmatrix_ITUR_BT_709;
     break;
 
-  case AVCOL_SPC_BT470BG:
-  case AVCOL_SPC_SMPTE170M:
+  case COLOR_SPACE_BT_601:
     f = cmatrix_ITUR_BT_601;
     break;
 
-  case AVCOL_SPC_SMPTE240M:
+  case COLOR_SPACE_SMPTE_240M:
     f = cmatrix_SMPTE_240M;
     break;
 
@@ -547,37 +545,36 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
+static void yuvp_deliver(glw_video_t *gv, frame_info_t *fi);
 
 /**
  *
  */
 static glw_video_engine_t glw_video_opengl = {
-  .gve_name = "RSX YUVP fragment shader",
+  .gve_type = 'YUVP',
   .gve_newframe = yuvp_newframe,
   .gve_render = yuvp_render,
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
+  .gve_deliver = yuvp_deliver,
 };
 
+GLW_REGISTER_GVE(glw_video_opengl);
 
 /**
  *
  */
-void
-glw_video_input_yuvp(glw_video_t *gv,
-		     uint8_t * const data[], const int pitch[],
-		     const frame_info_t *fi)
+static void
+yuvp_deliver(glw_video_t *gv, frame_info_t *fi)
 {
   int hvec[3], wvec[3];
   int i, h, w;
-  uint8_t *src;
+  const uint8_t *src;
   uint8_t *dst;
   int tff;
-  int hshift, vshift;
+  int hshift = fi->fi_hshift, vshift = fi->fi_vshift;
   glw_video_surface_t *s;
   const int parity = 0;
-
-  avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
   wvec[0] = fi->fi_width;
   wvec[1] = fi->fi_width >> hshift;
@@ -600,13 +597,13 @@ glw_video_input_yuvp(glw_video_t *gv,
     for(i = 0; i < 3; i++) {
       w = wvec[i];
       h = hvec[i];
-      src = data[i];
+      src = fi->fi_data[i];
       dst = s->gvs_data[i];
  
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i];
+	src += fi->fi_pitch[i];
       }
     }
 
@@ -622,13 +619,13 @@ glw_video_input_yuvp(glw_video_t *gv,
       w = wvec[i];
       h = hvec[i];
       
-      src = data[i]; 
+      src = fi->fi_data[i]; 
       dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i] * 2;
+	src += fi->fi_pitch[i] * 2;
       }
     }
     
@@ -641,13 +638,13 @@ glw_video_input_yuvp(glw_video_t *gv,
       w = wvec[i];
       h = hvec[i];
       
-      src = data[i] + pitch[i];
+      src = fi->fi_data[i] + fi->fi_pitch[i];
       dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i] * 2;
+	src += fi->fi_pitch[i] * 2;
       }
     }
     
@@ -657,31 +654,33 @@ glw_video_input_yuvp(glw_video_t *gv,
 }
 
 
+static void rsx_deliver(glw_video_t *gv, frame_info_t *fi);
+
 /**
  *
  */
 static glw_video_engine_t glw_video_rsxmem = {
-  .gve_name = "RSX GPU MEM fragment shader",
+  .gve_type = 'RSX',
   .gve_newframe = yuvp_newframe,
   .gve_render = yuvp_render,
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
+  .gve_deliver = rsx_deliver,
 };
+
+GLW_REGISTER_GVE(glw_video_rsxmem);
 
 /**
  *
  */
-void
-glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
-			const frame_info_t *fi)
+static void
+rsx_deliver(glw_video_t *gv, frame_info_t *fi)
 {
-  rsx_video_frame_t *rvf = frame;
   int hvec[3], wvec[3];
   int i;
-  int hshift, vshift;
+  int hshift = 1, vshift = 1;
   glw_video_surface_t *gvs;
 
-  avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
   wvec[0] = fi->fi_width;
   wvec[1] = fi->fi_width >> hshift;
@@ -702,8 +701,8 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
 
   surface_reset(gv, gvs);
 
-  gvs->gvs_size = rvf->rvf_size;
-  gvs->gvs_offset = rvf->rvf_offset;
+  gvs->gvs_offset = fi->fi_pitch[0];
+  gvs->gvs_size   = fi->fi_pitch[1];
 
   int offset = gvs->gvs_offset;
 
@@ -733,8 +732,8 @@ glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
   
     surface_reset(gv, gvs);
 
-    gvs->gvs_size = rvf->rvf_size;
-    gvs->gvs_offset = rvf->rvf_offset;
+    gvs->gvs_offset = fi->fi_pitch[0];
+    gvs->gvs_size   = fi->fi_pitch[1];
 
     offset = gvs->gvs_offset;
 

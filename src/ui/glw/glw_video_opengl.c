@@ -596,7 +596,7 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
-static void yuvp_deliver(glw_video_t *gv, const frame_info_t *fi);
+static void yuvp_deliver(glw_video_t *gv, frame_info_t *fi);
 
 /**
  *
@@ -617,7 +617,7 @@ GLW_REGISTER_GVE(glw_video_opengl);
  *
  */
 static void
-yuvp_deliver(glw_video_t *gv, const frame_info_t *fi)
+yuvp_deliver(glw_video_t *gv, frame_info_t *fi)
 {
   int hvec[3], wvec[3];
   int i, h, w;

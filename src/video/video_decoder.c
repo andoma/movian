@@ -247,11 +247,8 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   fi.fi_pitch[1] = frame->linesize[1];
   fi.fi_pitch[2] = frame->linesize[2];
 
-  fi.fi_type = 'YUVP';
-
-  avcodec_get_chroma_sub_sample(ctx->pix_fmt, &fi.fi_hshift, &fi.fi_vshift);
-
-
+  fi.fi_type = 'LAVC';
+  fi.fi_pix_fmt = ctx->pix_fmt;
   video_deliver_frame(vd, &fi);
 }
 
@@ -260,7 +257,7 @@ video_deliver_frame_avctx(video_decoder_t *vd,
  *
  */
 void
-video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
+video_deliver_frame(video_decoder_t *vd, frame_info_t *info)
 {
   vd->vd_skip = 0;
   vd->vd_frame_deliver(info, vd->vd_opaque);

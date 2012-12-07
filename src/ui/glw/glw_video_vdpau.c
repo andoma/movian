@@ -384,27 +384,29 @@ vdpau_init(glw_video_t *gv)
 }
 
 
+static void vdpau_deliver(glw_video_t *gv, frame_info_t *fi);
+
 /**
  *
  */
 static glw_video_engine_t glw_video_vdpau = {
-  .gve_name = "OpenGL/VDPAU",
+  .gve_type = 'VDPA',
   .gve_newframe = vdpau_newframe,
   .gve_render = vdpau_render,
   .gve_reset = vdpau_reset,
   .gve_init = vdpau_init,
+  .gve_deliver = vdpau_deliver,
 };
 
+GLW_REGISTER_GVE(glw_video_vdpau);
 
 /**
  *
  */
-void
-glw_video_input_vdpau(glw_video_t *gv,
-		      uint8_t * const data[], const int pitch[],
-		      const frame_info_t *fi)
+static void
+vdpau_deliver(glw_video_t *gv, frame_info_t *fi)
 {
-  struct vdpau_render_state *rs = (struct vdpau_render_state *)data[0];
+  struct vdpau_render_state *rs = (struct vdpau_render_state *)fi->fi_data[0];
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   vdpau_mixer_t *vm = &gv->gv_vm;
   glw_video_surface_t *s;

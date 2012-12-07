@@ -40,8 +40,8 @@ struct pixmap;
 
 
 typedef struct frame_info {
-  const uint8_t *fi_data[3];
-  int fi_pitch[3];
+  const uint8_t *fi_data[4];
+  int fi_pitch[4];
 
   uint32_t fi_type;
 
@@ -57,6 +57,8 @@ typedef struct frame_info {
 
   int fi_hshift;
   int fi_vshift;
+
+  int fi_pix_fmt;
 
   char fi_interlaced;     // Frame delivered is interlaced 
   char fi_tff;            // For interlaced frame, top-field-first
@@ -76,7 +78,7 @@ typedef struct frame_info {
 /**
  *
  */
-typedef void (vd_frame_deliver_t)(const frame_info_t *info, void *opaque);
+typedef void (vd_frame_deliver_t)(frame_info_t *info, void *opaque);
 
 /**
  *
@@ -187,8 +189,7 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
                                struct AVFrame *frame,
 			       const media_buf_t *mb, int decode_time);
 
-void video_deliver_frame(video_decoder_t *vd,
-			 const frame_info_t *info);
+void video_deliver_frame(video_decoder_t *vd, frame_info_t *info);
 
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),

@@ -32,7 +32,7 @@
 static glw_video_engine_t glw_video_blank;
 
 
-static void  glw_video_input(const frame_info_t *info, void *opaque);
+static void  glw_video_input(frame_info_t *info, void *opaque);
 
 
 /**
@@ -703,7 +703,7 @@ glw_register_video_engine(glw_video_engine_t *gve)
  * Frame delivery from video decoder
  */
 static void 
-glw_video_input(const frame_info_t *fi, void *opaque)
+glw_video_input(frame_info_t *fi, void *opaque)
 {
   glw_video_t *gv = opaque;
   glw_video_engine_t *gve;
@@ -722,11 +722,9 @@ glw_video_input(const frame_info_t *fi, void *opaque)
     return;
   }
   
-  LIST_FOREACH(gve, &engines, gve_link) {
-    if(gve->gve_type == fi->fi_type) {
+  LIST_FOREACH(gve, &engines, gve_link)
+    if(gve->gve_type == fi->fi_type)
       gve->gve_deliver(gv, fi);
-    }
-  }
 
 #if 0      
 
@@ -884,3 +882,62 @@ static glw_video_engine_t glw_video_blank = {
   .gve_reset = blank_reset,
   .gve_init = blank_init,
 };
+
+
+
+
+#if ENABLE_LIBAV
+
+
+static void
+video_deliver_lavc(glw_video_t *gv, frame_info_t *fi)
+{
+  switch(fi->fi_pix_fmt) {
+  case PIX_FMT_YUV420P:
+  case PIX_FMT_YUV422P:
+  case PIX_FMT_YUV444P:
+  case PIX_FMT_YUV410P:
+  case PIX_FMT_YUV411P:
+  case PIX_FMT_YUV440P:
+  case PIX_FMT_YUVJ420P:
+  case PIX_FMT_YUVJ422P:
+  case PIX_FMT_YUVJ444P:
+  case PIX_FMT_YUVJ440P:
+    avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &fi->fi_hshift,
+				  &fi->fi_vshift);
+    
+    fi->fi_type = 'YUVP';
+    break;
+    
+  case PIX_FMT_VDPAU_H264:
+  case PIX_FMT_VDPAU_MPEG1:
+  case PIX_FMT_VDPAU_MPEG2:
+  case PIX_FMT_VDPAU_WMV3:
+  case PIX_FMT_VDPAU_VC1:
+  case PIX_FMT_VDPAU_MPEG4:
+    fi->fi_type = 'VDPA';
+    break;
+    
+  default:
+    return;
+  }
+  glw_video_engine_t *gve;
+
+  LIST_FOREACH(gve, &engines, gve_link)
+    if(gve->gve_type == fi->fi_type)
+      gve->gve_deliver(gv, fi);
+}
+
+
+/**
+ *
+ */
+static glw_video_engine_t glw_video_lavc = {
+  .gve_type = 'LAVC',
+  .gve_deliver = video_deliver_lavc,
+};
+
+GLW_REGISTER_GVE(glw_video_lavc);
+
+#endif
+
