@@ -384,7 +384,7 @@ vdpau_init(glw_video_t *gv)
 }
 
 
-static void vdpau_deliver(glw_video_t *gv, frame_info_t *fi);
+static void vdpau_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
@@ -404,7 +404,7 @@ GLW_REGISTER_GVE(glw_video_vdpau);
  *
  */
 static void
-vdpau_deliver(glw_video_t *gv, frame_info_t *fi)
+vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 {
   struct vdpau_render_state *rs = (struct vdpau_render_state *)fi->fi_data[0];
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;

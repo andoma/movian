@@ -193,7 +193,7 @@ vo_set_source(void *opaque, const char *url)
 /**
  *
  */
-static void xv_video_frame_deliver(frame_info_t *fi, void *opaque);
+static void xv_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -233,7 +233,7 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
-static void xi_video_frame_deliver(frame_info_t *fi, void *opaque);
+static void xi_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -451,7 +451,7 @@ compute_output_dimensions(video_output_t *vo, int dar_num, int dar_den,
  *
  */
 static void 
-xv_video_frame_deliver(frame_info_t *fi, void *opaque)
+xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   int syncok;
@@ -567,7 +567,7 @@ get_pix_fmt(video_output_t *vo)
  *
  */
 static void
-xi_video_frame_deliver(frame_info_t *fi, void *opaque)
+xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   uint8_t *dst[4] = {0,0,0,0};
