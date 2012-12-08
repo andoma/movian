@@ -6,7 +6,7 @@
 #include <VideoDecodeAcceleration/VDADecoder.h>
 
 #include "showtime.h"
-#include "vda.h"
+#include "media.h"
 #include "video_decoder.h"
 #include "video_settings.h"
 
@@ -64,49 +64,51 @@ vf_cmp(const vda_frame_t *a, const vda_frame_t *b)
 static void
 emit_frame(vda_decoder_t *vdad, vda_frame_t *vf)
 {
-  AVFrame frame;
   int i;
   CGSize siz;
+
+  frame_info_t fi;
+  memset(&fi, 0, sizeof(fi));
 
   CVPixelBufferLockBaseAddress(vf->vf_buf, 0);
 
   for(i = 0; i < 3; i++ ) {
-    frame.data[i] = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
-    frame.linesize[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
+    fi.fi_data[i] = CVPixelBufferGetBaseAddressOfPlane(vf->vf_buf, i);
+    fi.fi_pitch[i] = CVPixelBufferGetBytesPerRowOfPlane(vf->vf_buf, i);
   }
   
-  if(vdad->vdad_last_pts != AV_NOPTS_VALUE && vf->vf_pts != AV_NOPTS_VALUE) {
+  if(vdad->vdad_last_pts != PTS_UNSET && vf->vf_pts != PTS_UNSET) {
     int64_t d = vf->vf_pts - vdad->vdad_last_pts;
 
     if(d > 1000 && d < 1000000)
       vdad->vdad_estimated_duration = d;
   }
 
-  frame_info_t fi;
-  memset(&fi, 0, sizeof(fi));
 
   siz = CVImageBufferGetEncodedSize(vf->vf_buf);
+  fi.fi_type = 'YUVP';
   fi.fi_width = siz.width;
   fi.fi_height = siz.height;
 
   fi.fi_duration = vf->vf_duration > 10000 ? vf->vf_duration : vdad->vdad_estimated_duration;
 
   siz = CVImageBufferGetDisplaySize(vf->vf_buf);
-  fi.fi_dar.num = siz.width;
-  fi.fi_dar.den = siz.height;
+  fi.fi_dar_num = siz.width;
+  fi.fi_dar_den = siz.height;
 
-  fi.fi_pix_fmt = PIX_FMT_YUV420P;
   fi.fi_pts = vf->vf_pts;
   fi.fi_color_space = -1;
   fi.fi_epoch = vf->vf_epoch;
   fi.fi_drive_clock = 1;
+  fi.fi_vshift = 1;
+  fi.fi_hshift = 1;
 
   video_decoder_t *vd = vdad->vdad_vd;
 
   vd->vd_estimated_duration = fi.fi_duration; // For bitrate calculations
 
   if(fi.fi_duration > 0)
-    video_deliver_frame(vd, FRAME_BUFFER_TYPE_LIBAV_FRAME, &frame, &fi);
+    video_deliver_frame(vd, &fi);
 
   CVPixelBufferUnlockBaseAddress(vf->vf_buf, 0);
   vdad->vdad_last_pts = vf->vf_pts;
@@ -176,7 +178,7 @@ vda_callback(void *aux, CFDictionaryRef frame_info, OSStatus status,
 
   LIST_INSERT_SORTED(&vdad->vdad_frames, vf, vf_link, vf_cmp);
 
-  if(vdad->vdad_max_ts != AV_NOPTS_VALUE) {
+  if(vdad->vdad_max_ts != PTS_UNSET) {
     if(vf->vf_pts > vdad->vdad_max_ts) {
       vdad->vdad_flush_to = vdad->vdad_max_ts;
       vdad->vdad_max_ts = vf->vf_pts;
@@ -211,9 +213,9 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
     VDADecoderFlush(vdad->vdad_decoder, 1);
     hts_mutex_lock(&vdad->vdad_mutex);
     destroy_frames(vdad);
-    vdad->vdad_max_ts = AV_NOPTS_VALUE;
-    vdad->vdad_flush_to = AV_NOPTS_VALUE;
-    vdad->vdad_last_pts = AV_NOPTS_VALUE;
+    vdad->vdad_max_ts   = PTS_UNSET;
+    vdad->vdad_flush_to = PTS_UNSET;
+    vdad->vdad_last_pts = PTS_UNSET;
     vd->vd_do_flush = 0;
     hts_mutex_unlock(&vdad->vdad_mutex);
   }
@@ -255,7 +257,7 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
  
   hts_mutex_lock(&vdad->vdad_mutex);
 
-  if(vdad->vdad_flush_to != AV_NOPTS_VALUE) {
+  if(vdad->vdad_flush_to != PTS_UNSET) {
     while((vf = LIST_FIRST(&vdad->vdad_frames)) != NULL) {
       if(vdad->vdad_flush_to < vf->vf_pts)
 	break;
@@ -289,7 +291,7 @@ vda_close(struct media_codec *mc)
  */
 static int
 video_vda_codec_create(media_codec_t *mc, int id,
-		       AVCodecContext *ctx, media_codec_params_t *mcp,
+		       const media_codec_params_t *mcp,
 		       media_pipe_t *mp)
 {
   OSStatus status = kVDADecoderNoErr;
@@ -309,8 +311,8 @@ video_vda_codec_create(media_codec_t *mc, int id,
   const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
 
-  if(ctx == NULL || mcp == NULL ||
-     id != CODEC_ID_H264 || ctx->extradata == NULL || ctx->extradata_size == 0)
+  if(mcp == NULL ||
+     id != CODEC_ID_H264 || mcp->extradata == NULL || mcp->extradata_size == 0)
     return 1;
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,
@@ -321,7 +323,7 @@ video_vda_codec_create(media_codec_t *mc, int id,
   height   = CFNumberCreate(NULL, kCFNumberSInt32Type, &mcp->height);
   width    = CFNumberCreate(NULL, kCFNumberSInt32Type, &mcp->width);
   format   = CFNumberCreate(NULL, kCFNumberSInt32Type, &avc1);
-  avc_data = CFDataCreate(NULL, ctx->extradata, ctx->extradata_size);
+  avc_data = CFDataCreate(NULL, mcp->extradata, mcp->extradata_size);
 
   CFDictionarySetValue(ci, kVDADecoderConfiguration_Height, height);
   CFDictionarySetValue(ci, kVDADecoderConfiguration_Width, width);
@@ -364,9 +366,9 @@ video_vda_codec_create(media_codec_t *mc, int id,
   }
 
   hts_mutex_init(&vdad->vdad_mutex);
-  vdad->vdad_max_ts = AV_NOPTS_VALUE;
-  vdad->vdad_flush_to = AV_NOPTS_VALUE;
-  vdad->vdad_last_pts = AV_NOPTS_VALUE;
+  vdad->vdad_max_ts   = PTS_UNSET;
+  vdad->vdad_flush_to = PTS_UNSET;
+  vdad->vdad_last_pts = PTS_UNSET;
   vdad->vdad_mc = mc;
   mc->opaque = vdad;
   mc->decode = vda_decode;
@@ -377,4 +379,4 @@ video_vda_codec_create(media_codec_t *mc, int id,
   return 0;
 }
 
-REGISTER_CODEC(NULL, video_vda_codec_create);
+REGISTER_CODEC(NULL, video_vda_codec_create, 100);

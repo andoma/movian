@@ -25,7 +25,6 @@
 
 #include "arch/threads.h"
 #include "showtime.h"
-#include "ps3_vdec.h"
 #include "video_decoder.h"
 #include "video_settings.h"
 #include "arch/halloc.h"
@@ -61,9 +60,10 @@ typedef struct vdec_pic {
   LIST_ENTRY(vdec_pic) link;
 
   frame_info_t fi;
-  rsx_video_frame_t rvf;
   int64_t order;
   int send_pts;
+#define vp_offset fi.fi_pitch[0]
+#define vp_size   fi.fi_pitch[1]
 } vdec_pic_t;
 
 
@@ -166,7 +166,7 @@ extern char *rsx_address;
 static void
 release_picture(vdec_pic_t *vp)
 {
-  rsx_free(vp->rvf.rvf_offset, vp->rvf.rvf_size);
+  rsx_free(vp->vp_offset, vp->vp_size);
   LIST_REMOVE(vp, link);
   free(vp);
 }
@@ -180,9 +180,9 @@ static vdec_pic_t *
 alloc_picture(vdec_decoder_t *vdd, int lumasize)
 {
   vdec_pic_t *vp = malloc(sizeof(vdec_pic_t));
-  vp->rvf.rvf_size = lumasize + lumasize / 2;
-  vp->rvf.rvf_offset = rsx_alloc(vp->rvf.rvf_size, 16);
-  if(vp->rvf.rvf_offset == -1)
+  vp->vp_size = lumasize + lumasize / 2;
+  vp->vp_offset = rsx_alloc(vp->vp_size, 16);
+  if(vp->vp_offset == -1)
     panic("Cell decoder out of RSX memory");
   return vp;
 }
@@ -198,7 +198,7 @@ free_picture_list(struct vdec_pic_list *l)
   while((vp = LIST_FIRST(l)) != NULL) {
     TRACE(TRACE_DEBUG, "VDEC", "Free picture %p", vp);
     TRACE(TRACE_DEBUG, "VDEC", "Free RSX mem %x +%d", 
-	  vp->rvf.rvf_offset, vp->rvf.rvf_size);
+	  vp->vp_offset, vp->vp_size);
     release_picture(vp);
   }
 }
@@ -278,8 +278,9 @@ emit_frame(video_decoder_t *vd, vdec_pic_t *vp)
   lastpts = vp->fi.fi_pts;
 #endif
 
-  video_deliver_frame(vd, FRAME_BUFFER_TYPE_RSX_MEMORY, &vp->rvf,
-		      &vp->fi);
+  vp->fi.fi_type = 'RSX';
+
+  video_deliver_frame(vd, &vp->fi);
 
 #if VDEC_DETAILED_DEBUG
   TRACE(TRACE_DEBUG, "VDEC DPY", "Frame delivered");
@@ -352,17 +353,20 @@ picture_out(vdec_decoder_t *vdd)
 
     switch(mpeg2->aspect_ratio) {
     case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.fi_dar.num = mpeg2->width;
-      vp->fi.fi_dar.den = mpeg2->height;
+      vp->fi.fi_dar_num = mpeg2->width;
+      vp->fi.fi_dar_den = mpeg2->height;
       break;
     case VDEC_MPEG2_ARI_DAR_4_3:
-      vp->fi.fi_dar = (AVRational){4,3};
+      vp->fi.fi_dar_num = 4;
+      vp->fi.fi_dar_den = 3;
       break;
     case VDEC_MPEG2_ARI_DAR_16_9:
-      vp->fi.fi_dar = (AVRational){16,9};
+      vp->fi.fi_dar_num = 16;
+      vp->fi.fi_dar_den = 9;
       break;
     case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.fi_dar = (AVRational){221,100};
+      vp->fi.fi_dar_num = 221;
+      vp->fi.fi_dar_den = 100;
       break;
     }
 
@@ -385,7 +389,6 @@ picture_out(vdec_decoder_t *vdd)
 
   } else {
     vdec_h264_info *h264 = (void *)(intptr_t)pi->codec_specific_addr;
-    AVRational sar;
 
     lumasize = h264->width * h264->height;
     vp = alloc_picture(vdd, lumasize);
@@ -399,19 +402,18 @@ picture_out(vdec_decoder_t *vdd)
     if(h264->color_description_present_flag)
       vp->fi.fi_color_space = h264->matrix_coefficients;
 
-    vp->fi.fi_dar.num = h264->width;
-    vp->fi.fi_dar.den = h264->height;
+    vp->fi.fi_dar_num = h264->width;
+    vp->fi.fi_dar_den = h264->height;
 
     if(h264->aspect_ratio_idc == 0xff) {
-      sar.num = h264->sar_width;
-      sar.den = h264->sar_height;
+      vp->fi.fi_dar_num *= h264->sar_width;
+      vp->fi.fi_dar_den *= h264->sar_height;
     } else {
       const uint8_t *p;
       p = h264_sar[h264->aspect_ratio_idc <= 16 ? h264->aspect_ratio_idc : 0];
-      sar.num = p[0];
-      sar.den = p[1];
+      vp->fi.fi_dar_num *= p[0];
+      vp->fi.fi_dar_den *= p[1];
     }
-    vp->fi.fi_dar = av_mul_q(vp->fi.fi_dar, sar);
 
     if(h264->idr_picture_flag)
       vdd->order_base += 0x100000000LL;
@@ -447,12 +449,11 @@ picture_out(vdec_decoder_t *vdd)
   
   vp->fi.fi_epoch = pm->epoch;
   vp->fi.fi_prescaled = 0;
-  vp->fi.fi_color_space = -1;
-  vp->fi.fi_color_range = 0;
+  vp->fi.fi_color_space = COLOR_SPACE_UNSET;
   vp->fi.fi_delta = pm->delta;
   vp->fi.fi_drive_clock = pm->drive_clock;
 
-  vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->rvf.rvf_offset));
+  vdec_get_picture(vdd->handle, &picfmt, rsx_to_ppu(vp->vp_offset));
 
   vp->order = order;
 
@@ -742,8 +743,7 @@ no_lib(media_pipe_t *mp, const char *codec)
  */
 static int
 video_ps3_vdec_codec_create(media_codec_t *mc, int id,
-			    struct AVCodecContext *ctx,
-			    media_codec_params_t *mcp,
+			    const media_codec_params_t *mcp,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
@@ -847,8 +847,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   vdd->level_major = mcp->level / 10;
   vdd->level_minor = mcp->level % 10;
 
-  if(id == CODEC_ID_H264 && ctx && ctx->extradata_size)
-    h264_load_extradata(vdd, ctx->extradata, ctx->extradata_size);
+  if(id == CODEC_ID_H264 && mcp->extradata_size)
+    h264_load_extradata(vdd, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;
 
@@ -860,9 +860,11 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
 
-  mc->codec_ctx = ctx ?: avcodec_alloc_context3(NULL);
-  mc->codec_ctx->codec_id   = id;
-  mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
+  if(mc->codec_ctx == NULL) {
+    mc->codec_ctx = avcodec_alloc_context3(NULL);
+    mc->codec_ctx->codec_id   = id;
+    mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
+  }
 
   mc->opaque = vdd;
   mc->decode = decoder_decode;
@@ -873,4 +875,4 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   return 0;
 }
 
-REGISTER_CODEC(video_ps3_vdec_init, video_ps3_vdec_codec_create);
+REGISTER_CODEC(video_ps3_vdec_init, video_ps3_vdec_codec_create, 100);

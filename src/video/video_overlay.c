@@ -34,6 +34,7 @@ video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo)
   hts_mutex_unlock(&vd->vd_overlay_mutex);
 }
 
+#if ENABLE_LIBAV
 
 /**
  * Decode subtitles from LAVC
@@ -111,7 +112,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
   avsubtitle_free(&sub);
 }
 
-
+#endif
 
 /**
  *
@@ -151,7 +152,7 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
     vo->vo_padding_left = -1;  // auto padding
   }
 
-  if(stop == AV_NOPTS_VALUE) {
+  if(stop == PTS_UNSET) {
     stop = start + calculate_subtitle_duration(txt_len) * 1000000;
     vo->vo_stop_estimated = 1;
   }
@@ -199,7 +200,7 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
     vo = video_overlay_render_cleartext(str, mb->mb_pts,
 					mb->mb_duration ?
 					mb->mb_pts + mb->mb_duration :
-					AV_NOPTS_VALUE, 1,
+					PTS_UNSET, 1,
 					mb->mb_font_context);
 
     if(vo != NULL)
@@ -211,8 +212,10 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
       
     if(mc->decode) 
       mc->decode(mc, vd, NULL, mb, 0);
+#if ENABLE_LIBAV
     else
       video_subtitles_lavc(vd, mb, mc->codec_ctx);
+#endif
   }
 }
 
@@ -278,23 +281,3 @@ video_overlay_flush(video_decoder_t *vd, int send)
   vo->vo_type = VO_FLUSH;
   video_overlay_enqueue(vd, vo);
 }
-
-
-/**
- *
- */
-static int
-video_overlay_codec_create(media_codec_t *mc, int id,
-			   AVCodecContext *ctx, 
-			   media_codec_params_t *mcp,
-			   media_pipe_t *mp)
-{
-  switch(id) {
-  case CODEC_ID_DVD_SUBTITLE:
-    return dvdspu_codec_create(mc, id, ctx, mp);
-  default:
-    return 1;
-  }
-}
-
-REGISTER_CODEC(NULL, video_overlay_codec_create);

@@ -167,11 +167,18 @@ void *myrealloc(void *ptr, size_t size);
 
 void *mycalloc(size_t count, size_t size);
 
+void *mymemalign(size_t align, size_t size);
+
 #else
 
 #define mymalloc(size) malloc(size)
 #define myrealloc(ptr, size) realloc(ptr, size)
 #define mycalloc(count, size) calloc(count, size)
+static inline void *mymemalign(size_t align, size_t size)
+{
+  void *p;
+  return posix_memalign(&p, align, size) ? NULL : p;
+}
 
 #endif
 

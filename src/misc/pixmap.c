@@ -21,15 +21,18 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include <libavcodec/avcodec.h>
-#include <libswscale/swscale.h>
-#include <libavutil/mem.h>
-#include <libavutil/common.h>
-
 #include "showtime.h"
 #include "arch/atomic.h"
 #include "pixmap.h"
 #include "misc/jpeg.h"
+
+
+#if ENABLE_LIBAV
+#include <libavcodec/avcodec.h>
+#include <libswscale/swscale.h>
+#include <libavutil/mem.h>
+#include <libavutil/common.h>
+#endif
 
 /**
  *
@@ -129,7 +132,8 @@ pixmap_create(int width, int height, pixmap_type_t type)
     /* swscale can write a bit after the buffer in its optimized algo
        therefore we need to allocate a bit extra 
     */
-    pm->pm_data = av_malloc(pm->pm_linesize * pm->pm_height + 8);
+    pm->pm_data = mymemalign(PIXMAP_ROW_ALIGN,
+                             pm->pm_linesize * pm->pm_height + 8);
     if(pm->pm_data == NULL) {
       free(pm);
       return NULL;
@@ -818,7 +822,7 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
 }
 
 
-
+#if ENABLE_LIBAV
 
 /**
  * Round v to nearest power of two
@@ -1265,7 +1269,7 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   return pm;
 }
 
-
+#endif // LIBAV_ENABLE
 
 // gcc -O3 src/misc/pixmap.c -o /tmp/pixmap -Isrc -DLOCAL_MAIN
 

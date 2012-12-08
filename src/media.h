@@ -20,12 +20,50 @@
 #define MEDIA_H
 
 #include <stdlib.h>
+
+#include "config.h"
+
+#if ENABLE_LIBAV
+#include <libavcodec/avcodec.h>
+
+#define MEDIA_TYPE_VIDEO      AVMEDIA_TYPE_VIDEO
+#define MEDIA_TYPE_AUDIO      AVMEDIA_TYPE_AUDIO
+#define MEDIA_TYPE_DATA       AVMEDIA_TYPE_DATA
+#define MEDIA_TYPE_SUBTITLE   AVMEDIA_TYPE_SUBTITLE
+#define MEDIA_TYPE_ATTACHMENT AVMEDIA_TYPE_ATTACHMENT
+
+#else
+
+enum codec_id {
+  CODEC_ID_AC3 = 1,
+  CODEC_ID_EAC3, 
+  CODEC_ID_AAC,
+  CODEC_ID_MP2,
+  CODEC_ID_MPEG2VIDEO,
+  CODEC_ID_H264,
+  CODEC_ID_DVB_SUBTITLE,
+  CODEC_ID_MOV_TEXT,
+  CODEC_ID_DVD_SUBTITLE,
+};
+
+#define MEDIA_TYPE_VIDEO      0
+#define MEDIA_TYPE_AUDIO      1
+#define MEDIA_TYPE_DATA       2
+#define MEDIA_TYPE_SUBTITLE   3
+#define MEDIA_TYPE_ATTACHMENT 4
+
+#endif
+
+
 #include "arch/atomic.h"
 #include "prop/prop.h"
 #include "event.h"
 #include "misc/pool.h"
 
+#define PTS_UNSET INT64_C(0x8000000000000000)
+
 void media_init(void);
+
 struct media_buf;
 struct media_queue;
 struct media_pipe;
@@ -49,18 +87,9 @@ TAILQ_HEAD(media_track_queue, media_track);
 /**
  *
  */
-typedef struct media_format {
-  int refcount;
-  struct AVFormatContext *fctx;
-} media_format_t;
-
-
-/**
- *
- */
 typedef struct media_codec {
   int refcount;
-  media_format_t *fw;
+  struct media_format *fw;
   int codec_id;
   int codec_ctx_alloced; /* Set if this struct owns the allocation
 			    of codec_ctx */
@@ -343,7 +372,7 @@ typedef struct media_pipe {
 
 struct AVFormatContext;
 struct AVCodecContext;
-
+struct media_format;
 
 /**
  *
@@ -366,27 +395,41 @@ typedef struct codec_def {
   LIST_ENTRY(codec_def) link;
   void (*init)(void);
   int (*open)(media_codec_t *mc, int id,
-	      struct AVCodecContext *ctx, media_codec_params_t *mcp,
+	      const media_codec_params_t *mcp,
 	      media_pipe_t *mp);
+  int prio;
 } codec_def_t;
 
 void media_register_codec(codec_def_t *cd);
 
-#define REGISTER_CODEC(init_, open_)				   \
+// Higher value of prio_ == better preference
+
+#define REGISTER_CODEC(init_, open_, prio_)			   \
   static codec_def_t HTS_JOIN(codecdef, __LINE__) = {		   \
     .init = init_,						   \
-    .open = open_						   \
+    .open = open_,						   \
+    .prio = prio_						   \
   };								   \
   static void  __attribute__((constructor))			   \
   HTS_JOIN(registercodecdef, __LINE__)(void)			   \
   { media_register_codec(&HTS_JOIN(codecdef, __LINE__)); }
 
+
 /**
  *
  */
+typedef struct media_format {
+  int refcount;
+  struct AVFormatContext *fctx;
+} media_format_t;
+
+#if ENABLE_LIBAV
+
 media_format_t *media_format_create(struct AVFormatContext *fctx);
 
 void media_format_deref(media_format_t *fw);
+
+#endif
 
 /**
  * Codecs
@@ -396,9 +439,10 @@ void media_codec_deref(media_codec_t *cw);
 media_codec_t *media_codec_ref(media_codec_t *cw);
 
 media_codec_t *media_codec_create(int codec_id, int parser,
-				  media_format_t *fw, 
+				  struct media_format *fw, 
 				  struct AVCodecContext *ctx,
-				  media_codec_params_t *mcp, media_pipe_t *mp);
+				  const media_codec_params_t *mcp,
+                                  media_pipe_t *mp);
 
 void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
 
@@ -483,12 +527,6 @@ void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
 		  int64_t duration);
 
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
-
-void metadata_from_ffmpeg(char *dst, size_t dstlen, 
-			  struct AVCodec *codec, struct AVCodecContext *avctx);
-
-void mp_set_mq_meta(media_queue_t *mq, struct AVCodec *codec,
-		    struct AVCodecContext *avctx);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 

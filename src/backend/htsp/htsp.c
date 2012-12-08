@@ -26,8 +26,6 @@
 #include "arch/threads.h"
 #include "arch/atomic.h"
 
-#include <libavcodec/avcodec.h>
-
 #include "showtime.h"
 #include "prop/prop_nodefilter.h"
 #include "networking/net.h"
@@ -1827,10 +1825,10 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 	mb->mb_duration = 0;
 
       if(htsmsg_get_s64(m, "dts", &mb->mb_dts))
-	mb->mb_dts = AV_NOPTS_VALUE;
+	mb->mb_dts = PTS_UNSET;
 
       if(htsmsg_get_s64(m, "pts", &mb->mb_pts))
-	mb->mb_pts = AV_NOPTS_VALUE;
+	mb->mb_pts = PTS_UNSET;
 
       if(hss->hss_cw != NULL)
 	mb->mb_cw = media_codec_ref(hss->hss_cw);
@@ -1864,8 +1862,8 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
   htsmsg_t *sub, *streams;
   const char *type;
   uint32_t idx;
-  enum CodecID   codec_id;
-  enum AVMediaType media_type;
+  int codec_id;
+  int media_type;
   const char *nicename, *lang, *title;
   media_codec_t *cw;
 
@@ -1922,32 +1920,32 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       if(!strcmp(type, "AC3")) {
 	codec_id = CODEC_ID_AC3;
-	media_type = AVMEDIA_TYPE_AUDIO;
+	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "AC3";
       } else if(!strcmp(type, "EAC3")) {
 	codec_id = CODEC_ID_EAC3;
-	media_type = AVMEDIA_TYPE_AUDIO;
+	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "EAC3";
       } else if(!strcmp(type, "AAC")) {
 	codec_id = CODEC_ID_AAC;
-	media_type = AVMEDIA_TYPE_AUDIO;
+	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "AAC";
       } else if(!strcmp(type, "MPEG2AUDIO")) {
 	codec_id = CODEC_ID_MP2;
-	media_type = AVMEDIA_TYPE_AUDIO;
+	media_type = MEDIA_TYPE_AUDIO;
 	nicename = "MPEG";
       } else if(!strcmp(type, "MPEG2VIDEO")) {
 	codec_id = CODEC_ID_MPEG2VIDEO;
-	media_type = AVMEDIA_TYPE_VIDEO;
+	media_type = MEDIA_TYPE_VIDEO;
 	nicename = "MPEG-2";
       } else if(!strcmp(type, "H264")) {
 	codec_id = CODEC_ID_H264;
-	media_type = AVMEDIA_TYPE_VIDEO;
+	media_type = MEDIA_TYPE_VIDEO;
 	nicename = "H264";
 	mcp.cheat_for_speed = 1;
       } else if(!strcmp(type, "DVBSUB")) {
 	codec_id = CODEC_ID_DVB_SUBTITLE;
-	media_type = AVMEDIA_TYPE_SUBTITLE;
+	media_type = MEDIA_TYPE_SUBTITLE;
 	nicename = "Bitmap";
 
 	uint32_t composition_id, ancillary_id;
@@ -1974,7 +1972,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
       } else if(!strcmp(type, "TEXTSUB")) {
 	codec_id = -1;
-	media_type = AVMEDIA_TYPE_SUBTITLE;
+	media_type = MEDIA_TYPE_SUBTITLE;
 	nicename = "Text";
       } else {
 	continue;
@@ -2011,7 +2009,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
       default:
 	break;
 
-      case AVMEDIA_TYPE_VIDEO:
+      case MEDIA_TYPE_VIDEO:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_VIDEO;
 
@@ -2020,7 +2018,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 
 	break;
 
-      case AVMEDIA_TYPE_SUBTITLE:
+      case MEDIA_TYPE_SUBTITLE:
 	hss->hss_mq = &mp->mp_video;
 	hss->hss_data_type = MB_SUBTITLE;
 
@@ -2029,7 +2027,7 @@ htsp_subscriptionStart(htsp_connection_t *hc, htsmsg_t *m)
 		     NULL, url, nicename, NULL, lang, "HTSP", NULL, 0);
 	break;
 
-      case AVMEDIA_TYPE_AUDIO:
+      case MEDIA_TYPE_AUDIO:
 	hss->hss_mq = &mp->mp_audio;
 	hss->hss_data_type = MB_AUDIO;
 	

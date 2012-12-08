@@ -5,8 +5,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <libavformat/avformat.h>
-
 #include "prop/prop.h"
 #include "ext/sqlite/sqlite3.h"
 
@@ -849,9 +847,9 @@ metadb_insert_stream(sqlite3 *db, int64_t videoitem_id,
   const char *media;
 
   switch(ms->ms_type) {
-  case AVMEDIA_TYPE_VIDEO:    media = "video"; break;
-  case AVMEDIA_TYPE_AUDIO:    media = "audio"; break;
-  case AVMEDIA_TYPE_SUBTITLE: media = "subtitle"; break;
+  case MEDIA_TYPE_VIDEO:    media = "video"; break;
+  case MEDIA_TYPE_AUDIO:    media = "audio"; break;
+  case MEDIA_TYPE_SUBTITLE: media = "subtitle"; break;
   default:
     return 0;
   }
@@ -2017,17 +2015,17 @@ metadb_metadata_get_streams(sqlite3 *db, metadata_t *md, int64_t videoitem_id)
   sqlite3_bind_int64(sel, 1, videoitem_id);
 
   while((rc = db_step(sel)) == SQLITE_ROW) {
-    enum AVMediaType type;
+    int type;
     int tn;
     const char *str = (const char *)sqlite3_column_text(sel, 4);
     if(!strcmp(str, "audio")) {
-      type = AVMEDIA_TYPE_AUDIO;
+      type = MEDIA_TYPE_AUDIO;
       tn = ++atrack;
     } else if(!strcmp(str, "video")) {
-      type = AVMEDIA_TYPE_VIDEO;
+      type = MEDIA_TYPE_VIDEO;
       tn = ++vtrack;
     } else if(!strcmp(str, "subtitle")) {
-      type = AVMEDIA_TYPE_SUBTITLE;
+      type = MEDIA_TYPE_SUBTITLE;
       tn = ++strack;
     } else {
       continue;

@@ -267,16 +267,15 @@ gv_color_matrix_set(glw_video_t *gv, const struct frame_info *fi)
   const float *f;
 
   switch(fi->fi_color_space) {
-  case AVCOL_SPC_BT709:
+  case COLOR_SPACE_BT_709:
     f = cmatrix_ITUR_BT_709;
     break;
 
-  case AVCOL_SPC_BT470BG:
-  case AVCOL_SPC_SMPTE170M:
+  case COLOR_SPACE_BT_601:
     f = cmatrix_ITUR_BT_601;
     break;
 
-  case AVCOL_SPC_SMPTE240M:
+  case COLOR_SPACE_SMPTE_240M:
     f = cmatrix_SMPTE_240M;
     break;
 
@@ -317,7 +316,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
     sa->gvs_duration -= output_duration;
 
     pts = sa->gvs_pts;
-    if(sa->gvs_pts != AV_NOPTS_VALUE)
+    if(sa->gvs_pts != PTS_UNSET)
       sa->gvs_pts += output_duration;
 
   } else if(sb != NULL) {
@@ -336,7 +335,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
       pts = sa->gvs_pts;
       x = output_duration - sa->gvs_duration;
       sb->gvs_duration -= x;
-      if(sb->gvs_pts != AV_NOPTS_VALUE)
+      if(sb->gvs_pts != PTS_UNSET)
 	sb->gvs_pts += x;
     }
     sa->gvs_duration = 0;
@@ -344,7 +343,7 @@ gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
   } else {
     gv->gv_sa = sa;
     gv->gv_sb = NULL;
-    if(sa->gvs_pts != AV_NOPTS_VALUE)
+    if(sa->gvs_pts != PTS_UNSET)
       sa->gvs_pts += output_duration;
 
     pts = sa->gvs_pts;
@@ -364,7 +363,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   glw_video_surface_t *sa, *sb, *s;
   media_pipe_t *mp = gv->gv_mp;
   int output_duration;
-  int64_t pts = AV_NOPTS_VALUE;
+  int64_t pts = PTS_UNSET;
   int frame_duration = gv->w.glw_root->gr_frameduration;
   int epoch = 0;
 
@@ -409,7 +408,7 @@ yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
       glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
   }
 
-  if(pts != AV_NOPTS_VALUE) {
+  if(pts != PTS_UNSET) {
     pts -= frame_duration * 2;
     glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
   }
@@ -597,38 +596,38 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
+static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
  */
 static glw_video_engine_t glw_video_opengl = {
-  .gve_name = "OpenGL YUVP fragment shader",
+  .gve_type = 'YUVP',
   .gve_newframe = yuvp_newframe,
   .gve_render = yuvp_render,
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
+  .gve_deliver = yuvp_deliver,
 };
+
+GLW_REGISTER_GVE(glw_video_opengl);
 
 
 /**
  *
  */
-void
-glw_video_input_yuvp(glw_video_t *gv,
-		     uint8_t * const data[], const int pitch[],
-		     const frame_info_t *fi)
+static void
+yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
 {
   int hvec[3], wvec[3];
   int i, h, w;
-  uint8_t *src;
+  const uint8_t *src;
   uint8_t *dst;
   int tff;
-  int hshift, vshift;
+  int hshift = fi->fi_hshift, vshift = fi->fi_vshift;
   glw_video_surface_t *s;
   const int parity = 0;
   int64_t pts = fi->fi_pts;
-
-  avcodec_get_chroma_sub_sample(fi->fi_pix_fmt, &hshift, &vshift);
 
   wvec[0] = fi->fi_width;
   wvec[1] = fi->fi_width >> hshift;
@@ -651,13 +650,13 @@ glw_video_input_yuvp(glw_video_t *gv,
     for(i = 0; i < 3; i++) {
       w = wvec[i];
       h = hvec[i];
-      src = data[i];
+      src = fi->fi_data[i];
       dst = s->gvs_data[i];
  
       while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i];
+	src += fi->fi_pitch[i];
       }
     }
 
@@ -673,13 +672,13 @@ glw_video_input_yuvp(glw_video_t *gv,
       w = wvec[i];
       h = hvec[i];
       
-      src = data[i]; 
+      src = fi->fi_data[i]; 
       dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i] * 2;
+	src += fi->fi_pitch[i] * 2;
       }
     }
     
@@ -692,19 +691,20 @@ glw_video_input_yuvp(glw_video_t *gv,
       w = wvec[i];
       h = hvec[i];
       
-      src = data[i] + pitch[i];
+      src = fi->fi_data[i] + fi->fi_pitch[i];
       dst = s->gvs_data[i];
       
       while(h -= 2 > 0) {
 	memcpy(dst, src, w);
 	dst += w;
-	src += pitch[i] * 2;
+	src += fi->fi_pitch[i] * 2;
       }
     }
     
-    if(pts != AV_NOPTS_VALUE)
+    if(pts != PTS_UNSET)
       pts += duration;
 
     glw_video_put_surface(gv, s, pts, fi->fi_epoch, duration, tff);
   }
 }
+
