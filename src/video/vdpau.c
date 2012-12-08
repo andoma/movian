@@ -603,6 +603,13 @@ vdpau_codec_create(media_codec_t *mc, int id,
     mc->codec_ctx = avcodec_alloc_context3(NULL);
     mc->codec_ctx->codec_id   = mc->codec->id;
     mc->codec_ctx->codec_type = mc->codec->type;
+
+    if(mcp->extradata != NULL) {
+      mc->codec_ctx->extradata = calloc(1, mcp->extradata_size +
+					FF_INPUT_BUFFER_PADDING_SIZE);
+      memcpy(mc->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
+      mc->codec_ctx->extradata_size = mcp->extradata_size;
+    }
     alloced = 1;
   }
 
