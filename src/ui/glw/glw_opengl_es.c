@@ -55,7 +55,7 @@ glw_opengl_init_context(glw_root_t *gr)
   glEnable(GL_CULL_FACE);
   gbr->gbr_frontface = GLW_CCW;
 
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1); // We should try to fix this
+  glPixelStorei(GL_UNPACK_ALIGNMENT, PIXMAP_ROW_ALIGN);
 
   gbr->gbr_texmode = GLW_OPENGL_TEXTURE_NPOT;
   gbr->gbr_primary_texture_mode = GL_TEXTURE_2D;
