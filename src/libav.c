@@ -39,7 +39,7 @@ media_codec_create_lavc(media_codec_t *cw, int id,
     return -1;
   
   if(ctx == NULL || id == CODEC_ID_AC3) {
-    cw->codec_ctx = avcodec_alloc_context3(NULL);
+    cw->codec_ctx = avcodec_alloc_context3(cw->codec);
     cw->codec_ctx_alloced = 1;
   } else {
     cw->codec_ctx = ctx;
@@ -47,8 +47,6 @@ media_codec_create_lavc(media_codec_t *cw, int id,
 
   //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
 
-  cw->codec_ctx->codec_id   = cw->codec->id;
-  cw->codec_ctx->codec_type = cw->codec->type;
   cw->codec_ctx->opaque = cw;
 
   if(mcp != NULL && mcp->extradata != NULL && !cw->codec_ctx->extradata) {

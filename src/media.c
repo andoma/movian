@@ -1202,6 +1202,11 @@ media_codec_create(int codec_id, int parser,
     if(!cd->open(mc, codec_id, mcp, mp))
       break;
 
+  if(cd == NULL) {
+    free(mc);
+    return NULL;
+  }
+
 #if ENABLE_LIBAV
   mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
 #endif
