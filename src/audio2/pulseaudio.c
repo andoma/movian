@@ -19,6 +19,15 @@ typedef struct decoder {
 } decoder_t;
 
 
+/**
+ *
+ */
+int64_t
+showtime_get_avtime(void)
+{
+  return showtime_get_ts();
+}
+
 
 /**
  *

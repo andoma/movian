@@ -46,15 +46,6 @@
 /**
  *
  */
-int64_t
-showtime_get_avtime(void)
-{
-  return showtime_get_ts();
-}
-
-/**
- *
- */
 const char *
 showtime_get_system_type(void)
 {

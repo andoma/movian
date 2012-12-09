@@ -127,15 +127,6 @@ showtime_get_ts(void)
 /**
  *
  */
-int64_t
-showtime_get_avtime(void)
-{
-  return mftb() / ticks_per_us;
-}
-
-/**
- *
- */
 typedef struct rootfsnode {
   LIST_ENTRY(rootfsnode) link;
   char *name;
