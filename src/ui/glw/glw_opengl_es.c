@@ -67,7 +67,7 @@ glw_opengl_init_context(glw_root_t *gr)
   const char *renderer = (const char *)glGetString(GL_RENDERER);
   TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
 
-  return glw_opengl_shaders_init(gr);
+  return glw_opengl_shaders_init(gr, 1);
 }
 
 

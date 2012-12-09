@@ -620,7 +620,7 @@ glw_destroy_program(struct glw_root *gr, struct glw_program *gp)
  *
  */
 int
-glw_opengl_shaders_init(glw_root_t *gr)
+glw_opengl_shaders_init(glw_root_t *gr, int delayed)
 {
   glw_backend_root_t *gbr = &gr->gr_be;
   char path[512];
@@ -684,7 +684,7 @@ glw_opengl_shaders_init(glw_root_t *gr)
 
   glDeleteShader(vs);
 
-  if(1) {
+  if(!delayed) {
     gr->gr_render = shader_render;
   } else {
     gr->gr_render = shader_render_delayed;
