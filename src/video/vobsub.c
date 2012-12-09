@@ -17,6 +17,7 @@
  */
 #include <stdio.h>
 #include <limits.h>
+
 #include <libavutil/mem.h>
 
 #include "showtime.h"
@@ -235,7 +236,7 @@ demux_pes(const vobsub_t *vs, media_pipe_t *mp,
 	  uint32_t sc, const uint8_t *buf, int len, int64_t pts)
 {
   uint8_t flags, hlen, x;
-  int64_t dts = AV_NOPTS_VALUE;
+  int64_t dts = PTS_UNSET;
 
   x     = getu8(buf, len);
   flags = getu8(buf, len);
@@ -297,8 +298,8 @@ demux_pes(const vobsub_t *vs, media_pipe_t *mp,
       memcpy(mb->mb_data + 18*4, outbuf, outlen);
       mb_enqueue_always(mp, &mp->mp_video, mb);
     }
-    pts = AV_NOPTS_VALUE;
-    dts = AV_NOPTS_VALUE;
+    pts = PTS_UNSET;
+    dts = PTS_UNSET;
     buf += rlen;
     len -= rlen;
   }
@@ -489,10 +490,10 @@ static int64_t
 vobsub_get_ts(const char *buf)
 {
   if(strlen(buf) < 12)
-    return AV_NOPTS_VALUE;
+    return PTS_UNSET;
 
   if(buf[2] != ':' || buf[5] != ':' || buf[8] != ':')
-    return AV_NOPTS_VALUE;
+    return PTS_UNSET;
 
   return 1000LL * (
     (buf[ 0] - '0') * 36000000LL +
@@ -526,9 +527,6 @@ vobsub_dtor(ext_subtitles_t *es)
   av_parser_close(vs->vs_parser);
   av_free(vs->vs_ctx);
   fa_close(vs->vs_sub);
-
-  
-
 }
 
 

@@ -1,13 +1,16 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include <libavutil/avutil.h>
-#include <libavcodec/avcodec.h>
-#include <libavutil/opt.h>
 
 #include "showtime.h"
 #include "media.h"
+#include "audio_ext.h"
 #include "audio.h"
+#include "libav.h"
+
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
 
 static audio_class_t *audio_class;
 
@@ -120,6 +123,20 @@ audio_decoder_destroy(struct audio_decoder *ad)
   }
 
   free(ad);
+}
+
+
+/**
+ *
+ */
+void
+audio_set_clock(media_pipe_t *mp, int64_t pts, int64_t delay, int epoch)
+{
+  hts_mutex_lock(&mp->mp_clock_mutex);
+  mp->mp_audio_clock = pts + delay;
+  mp->mp_audio_clock_avtime = showtime_get_avtime();
+  mp->mp_audio_clock_epoch = epoch;
+  hts_mutex_unlock(&mp->mp_clock_mutex);
 }
 
 

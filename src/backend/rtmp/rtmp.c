@@ -22,7 +22,6 @@
 #include <librtmp/log.h>
 
 #include <libavcodec/avcodec.h>
-#include <libavutil/mem.h>
 
 #include "navigator.h"
 #include "backend/backend.h"
@@ -319,28 +318,22 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   }
 
   if(r->vcodec == NULL) {
-    AVCodecContext *ctx;
     media_codec_params_t mcp = {0};
 
     switch(id) {
     case CODEC_ID_H264:
       if(type != 0 || size < 0)
 	return NULL;
-	
-      ctx = avcodec_alloc_context3(NULL);
-      ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
-      memcpy(ctx->extradata, data, size);
-      ctx->extradata_size =  size;
+
+      mcp.extradata      = data;
+      mcp.extradata_size = size;
       break;
 
     case CODEC_ID_VP6F:
       if(size < 1)
 	return NULL;
-
-      ctx = avcodec_alloc_context3(NULL);
-      ctx->extradata = av_mallocz(1 + FF_INPUT_BUFFER_PADDING_SIZE);
-      memcpy(ctx->extradata, &type, 1);
-      ctx->extradata_size =  1;
+      mcp.extradata      = data;
+      mcp.extradata_size = size;
       break;
 
     default:
@@ -348,7 +341,7 @@ get_packet_v(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     }
     mcp.width = r->width;
     mcp.height = r->height;
-    r->vcodec = media_codec_create(id, 0, NULL, ctx, &mcp, mp);
+    r->vcodec = media_codec_create(id, 0, NULL, NULL, &mcp, mp);
     return NULL;
   }
 
@@ -411,7 +404,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
   }
     
   if(r->acodec == NULL) {
-    AVCodecContext *ctx;
+    media_codec_params_t mcp = {0};
     int parse = 0;
     const char *fmt;
 
@@ -421,15 +414,12 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
       if(type != 0 || size < 0)
 	return NULL;
 	
-      ctx = avcodec_alloc_context3(NULL);
-      ctx->extradata = av_mallocz(size + FF_INPUT_BUFFER_PADDING_SIZE);
-      memcpy(ctx->extradata, data, size);
-      ctx->extradata_size =  size;
+      mcp.extradata      = data;
+      mcp.extradata_size = size;
       fmt = "AAC";
       break;
 
     case CODEC_ID_MP3:
-      ctx = avcodec_alloc_context3(NULL);
       parse = 1;
       fmt = "MP3";
       break;
@@ -450,7 +440,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 
     prop_set_string(mp->mp_prop_audio_track_current, "rtmp:1");
 
-    r->acodec = media_codec_create(id, parse, NULL, ctx, NULL, mp);
+    r->acodec = media_codec_create(id, parse, NULL, NULL, &mcp, mp);
     return NULL;
   }
 

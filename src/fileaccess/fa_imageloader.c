@@ -23,15 +23,17 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libavutil/imgutils.h>
-#include <libavformat/avformat.h>
-#include <libswscale/swscale.h>
-#include <libavutil/mathematics.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_imageloader.h"
+#if ENABLE_LIBAV
 #include "fa_libav.h"
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+#include <libavformat/avformat.h>
+#include <libavutil/mathematics.h>
+#endif
 #include "misc/pixmap.h"
 #include "misc/jpeg.h"
 #include "backend/backend.h"
@@ -44,6 +46,7 @@ static const uint8_t gif87sig[6] = {'G', 'I', 'F', '8', '7', 'a'};
 static const uint8_t svgsig1[5] = {'<', '?', 'x', 'm', 'l'};
 static const uint8_t svgsig2[4] = {'<', 's', 'v', 'g'};
 
+#if ENABLE_LIBAV
 static hts_mutex_t image_from_video_mutex;
 static AVCodecContext *pngencoder;
 
@@ -51,6 +54,7 @@ static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 				     char *errbuf, size_t errlen,
 				     int *cache_control,
 				     fa_load_cb_t *cb, void *opaque);
+#endif
 
 /**
  *
@@ -58,6 +62,7 @@ static pixmap_t *fa_image_from_video(const char *url, const image_meta_t *im,
 void
 fa_imageloader_init(void)
 {
+#if ENABLE_LIBAV
   hts_mutex_init(&image_from_video_mutex);
 
   AVCodec *c = avcodec_find_encoder(CODEC_ID_PNG);
@@ -67,6 +72,7 @@ fa_imageloader_init(void)
       return;
     pngencoder = ctx;
   }
+#endif
 }
 
 
@@ -172,9 +178,11 @@ fa_imageloader(const char *url, const struct image_meta *im,
   pixmap_t *pm;
   pixmap_type_t fmt;
 
+#if ENABLE_LIBAV
   if(strchr(url, '#'))
     return fa_image_from_video(url, im, errbuf, errlen, cache_control,
 			       cb, opaque);
+#endif
 
   if(!im->im_want_thumb)
     return fa_imageloader2(url, vpaths, errbuf, errlen, cache_control,
@@ -269,6 +277,8 @@ fa_imageloader(const char *url, const struct image_meta *im,
   }
   return pm;
 }
+
+#if ENABLE_LIBAV
 
 static char *ifv_url;
 static AVFormatContext *ifv_fctx;
@@ -548,3 +558,4 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   hts_mutex_unlock(&image_from_video_mutex);
   return pm;
 }
+#endif

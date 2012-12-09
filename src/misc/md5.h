@@ -1,5 +1,9 @@
 #pragma once
 
+#include "config.h"
+
+#if ENABLE_LIBAV
+
 #include <libavutil/md5.h>
 
 #define md5_decl(ctx) struct AVMD5 *ctx = NULL;
@@ -15,3 +19,14 @@
   av_md5_final(ctx, output);                    \
   av_freep(&ctx);                               \
   } while(0)
+#elif ENABLE_POLARSSL
+
+#include "polarssl/md5.h"
+
+#define md5_decl(ctx) md5_context *ctx = alloca(sizeof(md5_context));
+
+#define md5_init(ctx) md5_starts(ctx);
+
+#define md5_final(ctx, output) md5_finish(ctx, output);
+
+#endif
