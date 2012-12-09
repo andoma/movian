@@ -40,7 +40,7 @@ struct pixmap;
 
 
 typedef struct frame_info {
-  const uint8_t *fi_data[4];
+  uint8_t *fi_data[4];
   int fi_pitch[4];
 
   uint32_t fi_type;
@@ -190,8 +190,6 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 			       const media_buf_t *mb, int decode_time);
 
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
-
-void video_frame_meta(video_decoder_t *vd, const frame_info_t *info);
 
 void video_decoder_set_accelerator(video_decoder_t *vd,
 				   void (*stopfn)(void *opaque),

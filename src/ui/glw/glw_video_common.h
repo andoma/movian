@@ -51,6 +51,8 @@ typedef struct {
 
   int gvc_valid;
 
+  int gvc_pixfmt;
+
 } glw_video_config_t;
 
 
@@ -70,6 +72,10 @@ typedef struct glw_video_surface {
   int gvs_width;
   int gvs_height;
   int gvs_yshift;
+
+  int gvs_id;
+
+  void *gvs_opaque;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
@@ -171,7 +177,12 @@ typedef struct glw_video {
    */
   struct glw_video_surface_queue gv_decoded_queue;
 
+  int gv_layer;
+  int gv_running;
+  int gv_idgen;
 
+
+  int64_t gv_nextpts;
 
   /**
    * VDPAU specifics
@@ -186,7 +197,6 @@ typedef struct glw_video {
   GLuint gv_vdpau_texture;
   int64_t gv_vdpau_clockdiff;
 
-  int64_t gv_nextpts;
   vdpau_mixer_t gv_vm;
 #endif
 
@@ -268,7 +278,7 @@ void glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
 int glw_video_configure(glw_video_t *gv,
 			const glw_video_engine_t *engine,
 			const int *wvec, const int *hvec,
-			int surfaces, int flags);
+			int surfaces, int flags, int pixfmt);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

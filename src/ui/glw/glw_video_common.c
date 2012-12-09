@@ -612,7 +612,7 @@ int
 glw_video_configure(glw_video_t *gv,
 		    const glw_video_engine_t *engine,
 		    const int *wvec, const int *hvec,
-		    int surfaces, int flags)
+		    int surfaces, int flags, int pixfmt)
 {
   glw_video_config_t gvc = {0};
 
@@ -634,6 +634,7 @@ glw_video_configure(glw_video_t *gv,
 
   gvc.gvc_nsurfaces = surfaces;
   gvc.gvc_flags = flags;
+  gvc.gvc_pixfmt = pixfmt;
 
   if(memcmp(&gvc, &gv->gv_cfg_cur, sizeof(gvc))) {
 
@@ -717,7 +718,7 @@ glw_video_input(const frame_info_t *fi, void *opaque)
 
   if(fi == NULL) {
     // Blackout
-    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0);
+    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0, 0);
     hts_mutex_unlock(&gv->gv_surface_mutex);
     return;
   }
