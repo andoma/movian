@@ -388,6 +388,14 @@ fontstash_init(void)
 
   hts_mutex_init(&font_mutex);
 
+
+  prop_t *p = prop_create_root(NULL);
+
+  prop_concat_add_source(gconf.settings_look_and_feel,
+			 prop_create(p, "nodes"), NULL);
+
+  settings_add_url(p, _p("Fonts"), NULL, NULL, NULL, "fontstash:");
+
   char path[512];
 
   snprintf(path, sizeof(path), "file://%s/installedfonts",
@@ -425,13 +433,6 @@ fontstash_init(void)
     font_make_installed(f);
   }
   fa_dir_free(fd);
-
-  prop_t *p = prop_create_root(NULL);
-
-  prop_concat_add_source(gconf.settings_look_and_feel,
-			 prop_create(p, "nodes"), NULL);
-
-  settings_add_url(p, _p("Fonts"), NULL, NULL, NULL, "fontstash:");
 }
 
 
