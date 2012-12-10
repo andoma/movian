@@ -204,6 +204,6 @@ void glw_program_set_uniform_color(glw_backend_root_t *gbr,
 
 int glw_opengl_ff_init(struct glw_root *gr);
 
-int glw_opengl_shaders_init(struct glw_root *gr);
+int glw_opengl_shaders_init(struct glw_root *gr, int delayed);
 
 #endif /* GLW_OPENGL_H__ */

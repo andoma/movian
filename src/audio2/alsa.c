@@ -10,6 +10,8 @@ typedef struct decoder {
   audio_decoder_t ad;
   snd_pcm_t *h;
   int64_t samples;
+  int max_frames_per_write;
+  void *tmp;
 } decoder_t;
 
 
@@ -26,6 +28,7 @@ alsa_audio_fini(audio_decoder_t *ad)
     d->h = NULL;
     TRACE(TRACE_DEBUG, "ALSA", "Closing device");
   }
+  free(d->tmp);
 }
 
 
@@ -64,12 +67,37 @@ alsa_audio_reconfig(audio_decoder_t *ad)
     return -1;
   }
 
+  snd_pcm_hw_params_t *hwp;
+  snd_pcm_hw_params_alloca(&hwp);
+
+  snd_pcm_hw_params_current(h, hwp);
+
+  unsigned int val;
+  snd_pcm_uframes_t psize, bsize;
+
+  snd_pcm_hw_params_get_rate(hwp, &val, 0);
+  ad->ad_out_sample_rate = val;
+
+  snd_pcm_hw_params_get_period_size(hwp, &psize, 0);
+  ad->ad_tile_size = psize * 2;
+
+  snd_pcm_hw_params_get_buffer_size(hwp, &bsize);
+  d->max_frames_per_write = bsize;
+  
   TRACE(TRACE_DEBUG, "ALSA", "Opened %s", dev);
 
   ad->ad_out_sample_format = AV_SAMPLE_FMT_S16;
   ad->ad_out_sample_rate = 48000;
   ad->ad_out_channel_layout = AV_CH_LAYOUT_STEREO;
   d->h = h;
+
+  snd_pcm_prepare(d->h);
+  
+
+  int channels = 2;
+  d->tmp = realloc(d->tmp,
+		   sizeof(uint16_t) * channels * d->max_frames_per_write);
+
   return 0;
 }
 
@@ -82,8 +110,8 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   decoder_t *d = (decoder_t *)ad;
   media_pipe_t *mp = ad->ad_mp;
   int c;
-  uint8_t buf[samples * 4];
 
+ retry:
   c = snd_pcm_wait(d->h, 100);
   if(c >= 0) {
     c = snd_pcm_avail_update(d->h);
@@ -91,13 +119,17 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   if(c == -EPIPE) {
     snd_pcm_prepare(d->h);
     usleep(100000);
+    TRACE(TRACE_DEBUG, "ALSA", "Audio underrun");
     d->samples = 0;
+    goto retry;
   }
 
-  uint8_t *planes[8] = {0};
-  planes[0] = buf;
-  avresample_read(ad->ad_avr, planes, samples);
+  c = MIN(d->max_frames_per_write, c);
 
+  uint8_t *planes[8] = {0};
+  planes[0] = d->tmp;
+  c = avresample_read(ad->ad_avr, planes, c);
+  
   snd_pcm_status_t *status;
   int err;
   snd_pcm_status_alloca(&status);
@@ -121,8 +153,8 @@ alsa_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   if(!snd_pcm_delay(d->h, &fr))
     ad->ad_delay = 1000000L * fr / ad->ad_out_sample_rate;
 
-  c = snd_pcm_writei(d->h, buf, samples);
-  d->samples += samples;
+  c = snd_pcm_writei(d->h, d->tmp, c);
+  d->samples += c;
   return 0;
 }
 
@@ -134,6 +166,8 @@ static void
 alsa_audio_pause(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+  if(d->h == NULL)
+    return;
   snd_pcm_pause(d->h, 1);
   d->samples = 0;
 }
@@ -146,6 +180,8 @@ static void
 alsa_audio_play(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+  if(d->h == NULL)
+    return;
   snd_pcm_pause(d->h, 0);
   d->samples = 0;
 }
@@ -158,6 +194,8 @@ static void
 alsa_audio_flush(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+  if(d->h == NULL)
+    return;
   snd_pcm_drop(d->h);
   snd_pcm_prepare(d->h);
   d->samples = 0;

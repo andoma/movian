@@ -127,15 +127,6 @@ showtime_get_ts(void)
 /**
  *
  */
-int64_t
-showtime_get_avtime(void)
-{
-  return mftb() / ticks_per_us;
-}
-
-/**
- *
- */
 typedef struct rootfsnode {
   LIST_ENTRY(rootfsnode) link;
   char *name;
@@ -527,6 +518,7 @@ main(int argc, char **argv)
   gconf.concurrency = 2;
   gconf.can_standby = 1;
   gconf.trace_level = TRACE_DEBUG;
+  gconf.disable_http_reuse = 1;
 
   load_syms();
 

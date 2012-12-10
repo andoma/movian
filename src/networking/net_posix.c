@@ -534,7 +534,8 @@ net_get_interfaces(void)
   n = ni = calloc(1, sizeof(struct netif) * (num + 1));
   
   for(ifa = ifa_list; ifa != NULL; ifa = ifa->ifa_next) {
-    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK)) != IFF_UP ||
+    if((ifa->ifa_flags & (IFF_UP | IFF_LOOPBACK | IFF_RUNNING)) != 
+       (IFF_UP | IFF_RUNNING) ||
        ifa->ifa_addr == NULL || ifa->ifa_addr->sa_family != AF_INET)
 	 continue;
 
@@ -546,7 +547,12 @@ net_get_interfaces(void)
     n++;
   }
   
-  freeifaddrs (ifa_list);
+  freeifaddrs(ifa_list);
+
+  if(ni->ipv4 == 0) {
+    free(ni);
+    return NULL;
+  }
 
   return ni;
 }

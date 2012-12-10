@@ -52,10 +52,6 @@ typedef struct audio_decoder {
 
 } audio_decoder_t;
 
-
-void audio_set_clock(struct media_pipe *mp, int64_t pts, int64_t delay,
-                     int epoch);
-
 audio_class_t *audio_driver_init(void);
 
 

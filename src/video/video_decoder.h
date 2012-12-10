@@ -40,7 +40,7 @@ struct pixmap;
 
 
 typedef struct frame_info {
-  const uint8_t *fi_data[4];
+  uint8_t *fi_data[4];
   int fi_pitch[4];
 
   uint32_t fi_type;

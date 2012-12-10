@@ -424,7 +424,7 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 		       fi->fi_height };
 #endif
 
-  if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0))
+  if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0, 0))
     return;
 
   if((s = glw_video_get_surface(gv)) == NULL)

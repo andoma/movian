@@ -262,6 +262,7 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
   vd->vd_skip = 0;
   vd->vd_frame_deliver(info, vd->vd_opaque);
 
+
   if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
     return;
 
