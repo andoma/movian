@@ -35,6 +35,7 @@ typedef struct glw_view_loader {
 
   glw_transition_type_t efx_conf;
   rstr_t *url;
+  rstr_t *alt_url;
 
 } glw_view_loader_t;
 
@@ -207,15 +208,34 @@ set_source(glw_t *w, rstr_t *url)
     glw_suspend_subscriptions(c);
 
   if(url && rstr_get(url)[0]) {
-    glw_view_create(w->glw_root, url, w, 
-		    a->prop_self_override ?: a->prop, 
-		    a->prop_parent_override ?: a->prop_parent, a->args, 
-		    a->prop_clone, 1);
+    glw_t *d;
+    d = glw_view_create(w->glw_root, url, w, 
+			a->prop_self_override ?: a->prop, 
+			a->prop_parent_override ?: a->prop_parent, a->args, 
+			a->prop_clone, 1, 0);
+    if(d == NULL) {
+      glw_view_create(w->glw_root, a->alt_url, w, 
+		      a->prop_self_override ?: a->prop, 
+		      a->prop_parent_override ?: a->prop_parent, a->args, 
+		      a->prop_clone, 1, 1);
+    }
+
   } else {
     /* Fade out all */
     TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
       c->glw_parent_vl_tgt = 1;
   }
+}
+
+
+/**
+ *
+ */
+static void
+set_alt(glw_t *w, rstr_t *url)
+{
+  glw_view_loader_t *a = (glw_view_loader_t *)w;
+  rstr_set(&a->alt_url, url);
 }
 
 
@@ -298,6 +318,7 @@ static glw_class_t glw_view_loader = {
   .gc_signal_handler = glw_view_loader_callback,
   .gc_set_source = set_source,
   .gc_get_identity = get_identity,
+  .gc_set_alt = set_alt,
 };
 
 GLW_REGISTER_CLASS(glw_view_loader);

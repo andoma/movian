@@ -569,6 +569,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_alt)(struct glw *w, rstr_t *url);
+
+  /**
+   *
+   */
   void (*gc_set_sources)(struct glw *w, rstr_t **urls);
 
   /**
@@ -1134,7 +1139,7 @@ void glw_stencil_disable(glw_root_t *gr);
 glw_t *glw_view_create(glw_root_t *gr, rstr_t *url, 
 		       glw_t *parent, struct prop *prop,
 		       struct prop *prop_parent, prop_t *args,
-		       struct prop *prop_clone, int cache);
+		       struct prop *prop_clone, int cache, int nofail);
 
 /**
  * Transitions

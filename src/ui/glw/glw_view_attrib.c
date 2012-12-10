@@ -867,6 +867,40 @@ build_rstr_vector(struct token *t0)
  *
  */
 static int
+set_alt(glw_view_eval_context_t *ec, const token_attrib_t *a,
+	struct token *t)
+{
+  glw_t *w = ec->w;
+
+  rstr_t *r;
+
+  switch(t->type) {
+  default:
+    if(w->glw_class->gc_set_alt != NULL)
+      w->glw_class->gc_set_alt(w, NULL);
+    return 0;
+
+  case TOKEN_RSTRING:
+    r = t->t_rstring;
+    break;
+  case TOKEN_LINK:
+    r = t->t_link_rurl;
+    break;
+  }
+
+  r = fa_absolute_path(r, t->file);
+
+  if(w->glw_class->gc_set_alt != NULL)
+    w->glw_class->gc_set_alt(w, r);
+  rstr_release(r);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
 set_source(glw_view_eval_context_t *ec, const token_attrib_t *a,
 	   struct token *t)
 {
@@ -987,6 +1021,7 @@ static const token_attrib_t attribtab[] = {
   {"font",            set_font, 0},
   {"fragmentShader",  set_fs, 0},
   {"source",          set_source},
+  {"alt",             set_alt},
 
   {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
   {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},

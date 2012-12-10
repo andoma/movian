@@ -368,7 +368,8 @@ lexer(glw_root_t *gr,
  *
  */
 token_t *
-glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev)
+glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
+	       int *nofile)
 {
   char *src;
   token_t *last;
@@ -383,6 +384,8 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev)
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
     ei->line = prev->line;
     rstr_release(p);
+    if(nofile)
+      *nofile = 1;
     return NULL;
   }
 
