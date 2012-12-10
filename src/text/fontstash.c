@@ -24,9 +24,13 @@
 
 #include "showtime.h"
 #include "prop/prop.h"
+#include "prop/prop_nodefilter.h"
+#include "prop/prop_concat.h"
 #include "text.h"
 #include "notifications.h"
 #include "fileaccess/fileaccess.h"
+#include "backend/backend.h"
+#include "settings.h"
 
 LIST_HEAD(font_list, font);
 
@@ -43,12 +47,19 @@ typedef struct font {
 
   rstr_t *f_installed_path;
 
+  prop_t *f_prop_model;
+
 } font_t;
 
 static htsmsg_t *store;
 static hts_mutex_t font_mutex;
 static struct font_list fonts;
 static prop_t *font_prop_main, *font_prop_cond, *font_prop_subs;
+static prop_t *fontstash_installed_root;
+static prop_t *fontstash_browse_nodes;
+
+
+static void font_make_installed(font_t *f);
 
 /**
  *
@@ -66,7 +77,7 @@ font_find(const char *title)
   f->f_title = strdup(title);
   f->f_status = prop_create_root(NULL);
   f->f_prop_installed = prop_create(f->f_status, "installed");
-  f->f_prop_mainfont    = prop_create(f->f_status, "mainfont");
+  f->f_prop_mainfont  = prop_create(f->f_status, "mainfont");
   f->f_prop_condfont  = prop_create(f->f_status, "condfont");
   f->f_prop_subfont   = prop_create(f->f_status, "subfont");
   LIST_INSERT_HEAD(&fonts, f, f_link);
@@ -144,6 +155,7 @@ font_install(font_t *f, const char *url)
   f->f_installed_path = rstr_alloc(path);
   prop_set_int(f->f_prop_installed, 1);
   TRACE(TRACE_DEBUG, "fontstash", "Wrote %s to %s", f->f_title, path);
+  font_make_installed(f);
 }
 
 
@@ -245,6 +257,29 @@ font_event(void *opaque, prop_event_t event, ...)
 }
 
 
+
+/**
+ *
+ */
+static void
+font_make_installed(font_t *f)
+{
+  prop_t *p = f->f_prop_model = prop_create_root(NULL);
+  
+  prop_set(p, "type", PROP_SET_STRING, "font");
+  prop_setv(p, "metadata", "title", NULL, PROP_SET_STRING, f->f_title);
+  prop_link(f->f_status, prop_create(p, "status"));
+  if(prop_set_parent(p, fontstash_installed_root))
+    abort();
+
+  prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_SINGLETON,
+		 PROP_TAG_CALLBACK, font_event, f,
+		 PROP_TAG_ROOT, p,
+		 PROP_TAG_MUTEX, &font_mutex,
+		 NULL);
+}
+
+
 /**
  *
  */
@@ -264,17 +299,89 @@ fontstash_props_from_title(struct prop *prop, const char *url,
 }
 
 
+
+const char *fontclasses[3] = { "mainfont", "condfont", "subfont"};
+
+/**
+ *
+ */
+static void
+reset_font(int id)
+{
+  hts_mutex_lock(&font_mutex);
+  clear_font_prop(id);
+  htsmsg_delete_field(store, fontclasses[id]);
+  switch(id) {
+  case 0:
+    prop_set_void(font_prop_main);
+    break;
+  case 1:
+    prop_set_void(font_prop_cond);
+    break;
+  case 2:
+    prop_set_void(font_prop_subs);
+    break;
+  }
+  htsmsg_store_save(store, "fontstash");
+  hts_mutex_unlock(&font_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+reset_main(void *opaque, prop_event_t event, ...)
+{
+  reset_font(0);
+}
+static void
+reset_cond(void *opaque, prop_event_t event, ...)
+{
+  reset_font(1);
+}
+static void
+reset_subs(void *opaque, prop_event_t event, ...)
+{
+  reset_font(2);
+}
+
 /**
  *
  */
 void
 fontstash_init(void)
 {
+  prop_concat_t *pc;
+
   prop_t *fonts = prop_create(prop_get_global(), "fonts");
 
   font_prop_main = prop_create(fonts, "main");
   font_prop_cond = prop_create(fonts, "condensed");
   font_prop_subs = prop_create(fonts, "subs");
+  fontstash_installed_root = prop_create(fonts, "installed");
+
+  fontstash_browse_nodes = prop_create_root(NULL);
+
+  pc = prop_concat_create(fontstash_browse_nodes, 0);
+
+  prop_t *top = prop_create_root(NULL);
+  settings_create_action(top, _p("Reset main font to default"),
+			 reset_main, NULL, SETTINGS_RAW_NODES, NULL);
+  settings_create_action(top, _p("Reset narrow font to default"),
+			 reset_cond, NULL, SETTINGS_RAW_NODES, NULL);
+  settings_create_action(top, _p("Reset subtitle font to default"),
+			 reset_subs, NULL, SETTINGS_RAW_NODES, NULL);
+
+  prop_t *x = prop_create_root(NULL);
+  struct prop_nf *pn = prop_nf_create(x, fontstash_installed_root,
+				      NULL, PROP_NF_AUTODESTROY);
+  prop_nf_sort(pn, "node.metadata.title", 0, 0, NULL, 1);
+  prop_nf_release(pn);
+
+  prop_concat_add_source(pc, x, NULL);
+
+  prop_concat_add_source(pc, top, makesep(_p("Defaults")));
 
   if((store = htsmsg_store_load("fontstash")) == NULL)
     store = htsmsg_create_map();
@@ -315,6 +422,53 @@ fontstash_init(void)
       prop_set_rstring(font_prop_subs, f->f_installed_path);
       prop_set_int(f->f_prop_subfont, 1);
     }
+    font_make_installed(f);
   }
   fa_dir_free(fd);
+
+  prop_t *p = prop_create_root(NULL);
+
+  prop_concat_add_source(gconf.settings_look_and_feel,
+			 prop_create(p, "nodes"), NULL);
+
+  settings_add_url(p, _p("Fonts"), NULL, NULL, NULL, "fontstash:");
 }
+
+
+
+/**
+ *
+ */
+static int
+fontstash_canhandle(const char *url)
+{
+  return !strncmp(url, "fontstash:", strlen("fontstash:"));
+}
+
+
+
+/**
+ *
+ */
+static int
+fontstash_open_url(prop_t *page, const char *url, int sync)
+{
+  prop_t *m = prop_create(page, "model");
+  prop_t *md = prop_create(m, "metadata");
+  prop_set(m, "type", PROP_SET_STRING, "directory");
+
+  prop_link(_p("Installed fonts"), prop_create(md, "title"));
+  prop_link(fontstash_browse_nodes, prop_create(m, "nodes"));
+  return 0;
+}
+
+
+/**
+ *
+ */
+static backend_t be_fontstash = {
+  .be_canhandle = fontstash_canhandle,
+  .be_open      = fontstash_open_url,
+};
+
+BE_REGISTER(fontstash);

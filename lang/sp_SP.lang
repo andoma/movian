@@ -2,7 +2,7 @@
 native: Español
 maintainer: Diego Franco <diegofernandofranco@gmail.com>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: Agregar Pagina actual a Marcadores
@@ -14,8 +14,12 @@ id: Remove current page from bookmarks
 msg: Remover Pagina actual de Marcadores
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+# Missing translation
+msg: 
+
 id: Go to Home screen
 msg: Ir a Pantalla Principal
 
@@ -28,11 +32,23 @@ msg: Abrir Configuración
 id: Playqueue
 msg: Cola de reproducción
 
+id: Power off
+# Missing translation
+msg: 
+
 id: Reload current page
 msg: Recargar Pagina actual
 
+id: Suspend
+# Missing translation
+msg: 
+
+id: System
+# Missing translation
+msg: 
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: Agregar '%s' a pantalla principal
@@ -41,7 +57,7 @@ id: Remove '%s' from home screen
 msg: Remover '%s' de pantalla principal
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: Continuar desde %s
@@ -74,7 +90,7 @@ id: Unstar
 msg: No favorito
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: Audio
@@ -110,13 +126,13 @@ id: Video settings
 msg: Ajustes de video
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: Registro de Sistema
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Asignado por la aplicación: %d kB
@@ -170,10 +186,14 @@ id: Windowmanager: %s
 msg: Administrador de ventanas: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: Albúm
+
+id: Artist
+# Missing translation
+msg: 
 
 id: Custom
 msg: Personalizado
@@ -187,32 +207,40 @@ msg: Lista
 id: Slideshow
 msg: Presentación
 
+id: Tvchannels
+# Missing translation
+msg: 
+
 id: View
 msg: Vista
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: Buscar recursos en red local
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: Acerca de Showtime
+
+id: Dismiss
+msg: Descartar
 
 id: Plugins
 msg: Plugins
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-msg: Descartar
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 msg: Cámara:
@@ -221,7 +249,7 @@ id: Date:
 msg: Fecha:
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 msg: Autor:
@@ -236,11 +264,8 @@ id: Showtime %s or newer is required
 msg: Showtime %s o mas reciente es requerida
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Director:
-
 id: Duration:
 msg: Duración:
 
@@ -253,9 +278,6 @@ msg: Genero:
 id: Metadata from
 msg: Metadatos desde 
 
-id: Producer:
-msg: Productor:
-
 id: Rating:
 msg: Calificación:
 
@@ -263,13 +285,13 @@ id: Year:
 msg: Año:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: Agregar nueva entrada
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: No
@@ -278,7 +300,22 @@ id: Yes
 msg: Sí
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+# Missing translation
+msg: 
+
+id: Main
+# Missing translation
+msg: 
+
+id: Subs
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: Instalar
@@ -290,19 +327,26 @@ id: Upgrade
 msg: Actualizar
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: No se puede abrir recurso
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Pista %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: A ocurrido un error durante la descarga
@@ -356,7 +400,7 @@ id: Unable to query for new version
 msg: Incapaz de buscar nueva versión
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU demasiado lento para decodificar video
@@ -365,7 +409,14 @@ id: Playback status
 msg: Estatus de reproducción
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: Capitulo: %d
@@ -374,7 +425,7 @@ id: Title: %d
 msg: Titulo: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Dominio
@@ -389,7 +440,7 @@ id: Username
 msg: Nombre de Usuario
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Cancelar
@@ -398,19 +449,19 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Ningún medio cargado
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: Uso de Memoria:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Audio apagado
@@ -428,7 +479,18 @@ id: Use opensubtitles.org
 msg: Usar opensubtitles.org
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+# Missing translation
+msg: 
+
+id: Use original title
+# Missing translation
+msg: 
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Sistema con baja memoria (%d kB RAM disponible)
@@ -505,11 +567,19 @@ msg: Resultados de búsqueda para: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+# Missing translation
+msg: 
+
 id: Automatic login when Showtime starts
 msg: Ingreso automático al comienzo de Showtime
 
 id: Collaborative
 msg: Colaborativo
+
+id: Compilations
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Habilitar Spotify
@@ -546,6 +616,10 @@ msg: Re-Ingreso (cambiar usuario)
 
 id: Search result
 msg: Resultado de búsqueda
+
+id: Singles
+# Missing translation
+msg: 
 
 id: Spotify friends
 msg: Amigos de Spotify
@@ -727,6 +801,10 @@ msg: Automático
 id: Custom search query
 msg: buscar consulta personalizada
 
+id: Custom title
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Incluido en archivo
 
@@ -760,11 +838,12 @@ msg: No se encontraron datos
 id: None
 msg: Ninguno
 
-id: Providers for Movies
-msg: Proveedores de Películas
-
 id: Providers for Music
 msg: Proveedores de Música
+
+id: Providers for Video
+# Missing translation
+msg: 
 
 id: Refresh metadata
 msg: Refrescar Metadatos
@@ -781,12 +860,35 @@ msg: Consulta personalizada
 id: filename
 msg: Nombre de archivo
 
+id: filename as TV episode
+# Missing translation
+msg: 
+
 id: folder name
 msg: Nombre de carpeta
 
 #
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+# Missing translation
+msg: 
+
+id: Clear all metadata
+# Missing translation
+msg: 
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+# Missing translation
+msg: 
+
+#
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Nuevo marcador agregado: %s
 
@@ -832,11 +934,31 @@ msg: Actualizar automáticamente plugins
 id: Available plugins
 msg: Plugins disponibles
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: explorar plugins disponibles
 
+id: Browsing
+# Missing translation
+msg: 
+
+id: Cloud services
+# Missing translation
+msg: 
+
 id: Corrupt plugin bundle
 msg: Paquete de plugin corrupto
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Error en escritura de disco
@@ -847,14 +969,35 @@ msg: Descargando
 id: File open error
 msg: Error al abrir archivo
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Plugins instalados
+
+id: Installed version higher than available
+# Missing translation
+msg: 
 
 id: Installing
 msg: Instalando
 
-id: Invalud URI
-msg: URI no válido
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 msg: No instalable
@@ -865,11 +1008,31 @@ msg: No instalado
 id: Not upgradable
 msg: No actualizable
 
+id: Online TV
+# Missing translation
+msg: 
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
+
 id: Unable to load plugin.json: %s
 msg: No se puede cargar plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: No se puede cargar plugin.json: JSON Malformado
+
+id: Uncategorized
+# Missing translation
+msg: 
 
 id: Up to date
 msg: Actualizado a la fecha
@@ -879,6 +1042,14 @@ msg: Actualizable
 
 id: Upgraded plugin %s to version %s
 msg: Actualizar plugin %s a versión %s
+
+id: User interface extensions
+# Missing translation
+msg: 
+
+id: Video streaming
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -922,11 +1093,19 @@ msg: Ajustes de desarrolladores
 id: Discovered media sources
 msg: Medios Encontrados
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: General
 
 id: Global settings
 msg: Ajustes Globales
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Ajustes útiles para desarrolladores
@@ -935,11 +1114,35 @@ id: System related settings
 msg: Ajustes relacionados al sistema
 
 #
-# ./src/ui/glw/glw.c
+# ./src/text/fontstash.c
 #
-id: Display and user interface
-msg: Pantalla e Interfaz de usuario
+id: Narrow text
+# Missing translation
+msg: 
 
+id: Unable to load %s -- %s
+# Missing translation
+msg: 
+
+id: Unable to open %s for writing
+# Missing translation
+msg: 
+
+id: Unable to write to %s
+# Missing translation
+msg: 
+
+id: Use font %s for
+# Missing translation
+msg: 
+
+id: User interface
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_settings.c
+#
 id: Horizontal underscan
 msg: Underscan Horizontal
 
@@ -955,9 +1158,6 @@ msg: Underscan Vertical
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Modo pantalla completa
-
 id: Map mouse wheel to up/down
 msg: Mapear rueda de mouse arriba/abajo
 
@@ -1143,3 +1343,4 @@ msg: Aceleración de video y comportamiento de pantalla
 
 id: Video playback
 msg: Reproducción de video
+

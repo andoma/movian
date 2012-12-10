@@ -160,6 +160,29 @@ settings_add_dir(prop_t *parent, prop_t *title, const char *subtype,
  *
  */
 prop_t *
+settings_add_url(prop_t *parent, prop_t *title,
+		 const char *subtype, const char *icon,
+		 prop_t *shortdesc, const char *url)
+{
+  prop_t *p = setting_add(parent, title, "settings", 0);
+  prop_t *metadata = prop_create(p, "metadata");
+
+  if(shortdesc != NULL)
+    prop_link(shortdesc, prop_create(metadata, "shortdesc"));
+
+  prop_set_string(prop_create(p, "url"), url);
+  prop_set_string(prop_create(p, "subtype"), subtype);
+
+  if(icon != NULL)
+    prop_set_string(prop_create(metadata, "icon"), icon);
+  return p;
+}
+
+
+/**
+ *
+ */
+prop_t *
 settings_add_dir_cstr(prop_t *parent, const char *title, const char *subtype,
 		      const char *icon, const char *shortdesc,
 		      const char *url)
@@ -745,6 +768,20 @@ static backend_t be_settings = {
 };
 
 BE_REGISTER(settings);
+
+
+/**
+ *
+ */
+prop_t *
+makesep(prop_t *title)
+{
+  prop_t *d = prop_create_root(NULL);
+  prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
+  prop_set_string(prop_create(d, "type"), "separator");
+  return d;
+
+}
 
 /**
  *

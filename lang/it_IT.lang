@@ -259,9 +259,6 @@ msg: Richiesto Showtime %s o maggiore
 #
 # ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Regista:
-
 id: Duration:
 msg: Durata:
 
@@ -273,9 +270,6 @@ msg: Genere:
 
 id: Metadata from
 msg: Metadata da
-
-id: Producer:
-msg: Produttore:
 
 id: Rating:
 msg: Classificazione:
@@ -333,6 +327,13 @@ msg: Impossibile aprire la risorsa
 #
 id: Track %d / %d
 msg: Traccia %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -396,6 +397,13 @@ msg: CPU troppo lenta per poter decodificare questo video
 
 id: Playback status
 msg: Stato di riproduzione
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -856,6 +864,10 @@ msg: Pulire tutti i metadata significa perdere <b>tutte</b> le informazioni rigu
 #
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Aggiunto nuovo segnalibro: %s
 
@@ -901,14 +913,30 @@ msg: Aggiorna automaticamente i plugin
 id: Available plugins
 msg: Plugin disponibili
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: Sfoglia i plugin disponibili
+
+id: Browsing
+# Missing translation
+msg: 
 
 id: Cloud services
 msg: Servizi Cloud
 
 id: Corrupt plugin bundle
 msg: Bundle di plugin corrotto
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Errore di scrittura su disco
@@ -919,11 +947,31 @@ msg: Scaricamento
 id: File open error
 msg: Errore d'apertura del file
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Plugin installati
 
+id: Installed version higher than available
+# Missing translation
+msg: 
+
 id: Installing
 msg: Installazione
+
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
 
 id: Music streaming
 msg: Streaming di musica
@@ -939,6 +987,18 @@ msg: Non aggiornabile
 
 id: Online TV
 msg: TV online
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: Impossibile caricare plugin.json: %s
@@ -1006,11 +1066,19 @@ msg: Impostazioni sviluppatore
 id: Discovered media sources
 msg: Sorgenti media trovate
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: Generale
 
 id: Global settings
 msg: Impostazioni globali
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Impostazioni utili per sviluppatori
@@ -1040,11 +1108,8 @@ id: User interface
 msg: Interfaccia utente
 
 #
-# ./src/ui/glw/glw.c
+# ./src/ui/glw/glw_settings.c
 #
-id: Display and user interface
-msg: Schermo e interfaccia utente
-
 id: Horizontal underscan
 msg: Underscan orizzontale
 
@@ -1060,9 +1125,6 @@ msg: Underscan verticale
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Modalità a schermo pieno
-
 id: Map mouse wheel to up/down
 msg: Usa rotellina del mouse per scorrere su/giù
 

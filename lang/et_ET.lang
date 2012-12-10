@@ -2,7 +2,7 @@
 native: eesti
 maintainer: saaq
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 # Missing translation
@@ -17,8 +17,12 @@ id: Remove current page from bookmarks
 msg: 
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+# Missing translation
+msg: 
+
 id: Go to Home screen
 # Missing translation
 msg: 
@@ -34,12 +38,24 @@ msg:
 id: Playqueue
 msg: Esitusjärjekord
 
+id: Power off
+# Missing translation
+msg: 
+
 id: Reload current page
 # Missing translation
 msg: 
 
+id: Suspend
+# Missing translation
+msg: 
+
+id: System
+# Missing translation
+msg: 
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 # Missing translation
@@ -50,7 +66,7 @@ id: Remove '%s' from home screen
 msg: 
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 # Missing translation
@@ -92,7 +108,7 @@ id: Unstar
 msg: 
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 # Missing translation
@@ -134,14 +150,14 @@ id: Video settings
 msg: Videon seaded
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 # Missing translation
 msg: 
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 # Missing translation
@@ -200,9 +216,13 @@ id: Windowmanager: %s
 msg: Akende juhtimine: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
+# Missing translation
+msg: 
+
+id: Artist
 # Missing translation
 msg: 
 
@@ -222,21 +242,36 @@ id: Slideshow
 # Missing translation
 msg: 
 
+id: Tvchannels
+# Missing translation
+msg: 
+
 id: View
 # Missing translation
 msg: 
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 # Missing translation
 msg: 
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
+# Missing translation
+msg: 
+
+id: Dismiss
 # Missing translation
 msg: 
 
@@ -245,14 +280,7 @@ id: Plugins
 msg: 
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-# Missing translation
-msg: 
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 # Missing translation
@@ -263,7 +291,7 @@ id: Date:
 msg: 
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 # Missing translation
@@ -282,12 +310,8 @@ id: Showtime %s or newer is required
 msg: 
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-# Missing translation
-msg: 
-
 id: Duration:
 # Missing translation
 msg: 
@@ -304,10 +328,6 @@ id: Metadata from
 # Missing translation
 msg: 
 
-id: Producer:
-# Missing translation
-msg: 
-
 id: Rating:
 # Missing translation
 msg: 
@@ -317,14 +337,14 @@ id: Year:
 msg: 
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 # Missing translation
 msg: 
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: Ei
@@ -333,7 +353,22 @@ id: Yes
 msg: Jah
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+# Missing translation
+msg: 
+
+id: Main
+# Missing translation
+msg: 
+
+id: Subs
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 # Missing translation
@@ -348,19 +383,26 @@ id: Upgrade
 msg: 
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Ressursi ei suuda avada
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Rada %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 # Missing translation
@@ -431,7 +473,7 @@ id: Unable to query for new version
 msg: 
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU on liiga aeglane video dekodeerimiseks
@@ -440,7 +482,14 @@ id: Playback status
 msg: Esitamise staatus
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 # Missing translation
@@ -451,7 +500,7 @@ id: Title: %d
 msg: 
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 # Missing translation
@@ -467,7 +516,7 @@ id: Username
 msg: Kasutajanimi
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Loobu
@@ -476,20 +525,20 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Meediat ei laetud
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 # Missing translation
 msg: 
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Heli vaigistatud
@@ -507,7 +556,18 @@ id: Use opensubtitles.org
 msg: opensubtitles.org kasutamine
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+# Missing translation
+msg: 
+
+id: Use original title
+# Missing translation
+msg: 
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 # Missing translation
@@ -587,10 +647,18 @@ msg:
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+# Missing translation
+msg: 
+
 id: Automatic login when Showtime starts
 msg: Automaatne sisselogimine Showtime avamisel
 
 id: Collaborative
+# Missing translation
+msg: 
+
+id: Compilations
 # Missing translation
 msg: 
 
@@ -631,6 +699,10 @@ msg: Uuesti logimine (vaheta kasutajat)
 
 id: Search result
 msg: Otsingu tulemused
+
+id: Singles
+# Missing translation
+msg: 
 
 id: Spotify friends
 msg: Spotify sõbrad
@@ -828,6 +900,10 @@ id: Custom search query
 # Missing translation
 msg: 
 
+id: Custom title
+# Missing translation
+msg: 
+
 id: Embedded in file
 # Missing translation
 msg: 
@@ -871,11 +947,11 @@ id: None
 # Missing translation
 msg: 
 
-id: Providers for Movies
+id: Providers for Music
 # Missing translation
 msg: 
 
-id: Providers for Music
+id: Providers for Video
 # Missing translation
 msg: 
 
@@ -899,13 +975,36 @@ id: filename
 # Missing translation
 msg: 
 
+id: filename as TV episode
+# Missing translation
+msg: 
+
 id: folder name
+# Missing translation
+msg: 
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+# Missing translation
+msg: 
+
+id: Clear all metadata
+# Missing translation
+msg: 
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
 # Missing translation
 msg: 
 
 #
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 # Missing translation
 msg: 
@@ -962,11 +1061,31 @@ id: Available plugins
 # Missing translation
 msg: 
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 # Missing translation
 msg: 
 
+id: Browsing
+# Missing translation
+msg: 
+
+id: Cloud services
+# Missing translation
+msg: 
+
 id: Corrupt plugin bundle
+# Missing translation
+msg: 
+
+id: Default
 # Missing translation
 msg: 
 
@@ -982,7 +1101,15 @@ id: File open error
 # Missing translation
 msg: 
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
+# Missing translation
+msg: 
+
+id: Installed version higher than available
 # Missing translation
 msg: 
 
@@ -990,8 +1117,21 @@ id: Installing
 # Missing translation
 msg: 
 
-id: Invalud URI
-msg: Vigane URI
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 # Missing translation
@@ -1005,11 +1145,31 @@ id: Not upgradable
 # Missing translation
 msg: 
 
+id: Online TV
+# Missing translation
+msg: 
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
+
 id: Unable to load plugin.json: %s
 msg: Ei suuda laadida plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: Ei suuda laadida plugin.json: Vale JSON
+
+id: Uncategorized
+# Missing translation
+msg: 
 
 id: Up to date
 # Missing translation
@@ -1020,6 +1180,14 @@ id: Upgradable
 msg: 
 
 id: Upgraded plugin %s to version %s
+# Missing translation
+msg: 
+
+id: User interface extensions
+# Missing translation
+msg: 
+
+id: Video streaming
 # Missing translation
 msg: 
 
@@ -1071,12 +1239,20 @@ msg:
 id: Discovered media sources
 msg: Avastatud meedia allikad
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 # Missing translation
 msg: 
 
 id: Global settings
 msg: Üldised seaded
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 # Missing translation
@@ -1087,11 +1263,35 @@ id: System related settings
 msg: 
 
 #
-# ./src/ui/glw/glw.c
+# ./src/text/fontstash.c
 #
-id: Display and user interface
-msg: Ekraan ja kasutajaliides
+id: Narrow text
+# Missing translation
+msg: 
 
+id: Unable to load %s -- %s
+# Missing translation
+msg: 
+
+id: Unable to open %s for writing
+# Missing translation
+msg: 
+
+id: Unable to write to %s
+# Missing translation
+msg: 
+
+id: Use font %s for
+# Missing translation
+msg: 
+
+id: User interface
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_settings.c
+#
 id: Horizontal underscan
 msg: Horisontaalne underscan
 
@@ -1107,9 +1307,6 @@ msg: Vertikaalne underscan
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Täisekraanirežiim
-
 id: Map mouse wheel to up/down
 msg: Lisa hiire scrollimine üles/alla
 

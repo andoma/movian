@@ -1321,19 +1321,6 @@ add_view_type(prop_t *p, const char *type, const char *class, prop_t *title)
 /**
  *
  */
-static prop_t *
-makesep(prop_t *title)
-{
-  prop_t *d = prop_create_root(NULL);
-  prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
-  prop_set_string(prop_create(d, "type"), "separator");
-  return d;
-
-}
-
-/**
- *
- */
 static void
 plugins_view_settings_init(void)
 {

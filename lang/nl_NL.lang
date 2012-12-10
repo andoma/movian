@@ -259,9 +259,6 @@ msg: Showtime %s of nieuwer is vereist
 #
 # ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Regisseur:
-
 id: Duration:
 msg: Duur
 
@@ -273,9 +270,6 @@ msg: Genre:
 
 id: Metadata from
 msg: Metadata van
-
-id: Producer:
-msg: Producent:
 
 id: Rating:
 msg: Beoordeling:
@@ -333,6 +327,13 @@ msg: De bron kon niet worden geopend
 #
 id: Track %d / %d
 msg: Nummer %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -396,6 +397,13 @@ msg: De CPU is te langzaam om deze video te decoderen
 
 id: Playback status
 msg: Afspeelstatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -470,7 +478,7 @@ id: Use original title
 msg: Originele titel gebruiken
 
 #
-# ./src/arch/ps3/arch_ps3.c
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Het systeem heeft weinig geheugen over (%d kB RAM beschikbaar)
@@ -814,11 +822,12 @@ msg: Geen data gevonden
 id: None
 msg: Geen
 
-id: Providers for Movies
-msg: Filmaanbieders
-
 id: Providers for Music
 msg: Muziekaanbieders
+
+id: Providers for Video
+# Missing translation
+msg: 
 
 id: Refresh metadata
 msg: Metadata vernieuwen
@@ -856,6 +865,10 @@ msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n
 #
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Nieuwe bladwijzer toevoegen: %s
 
@@ -901,14 +914,30 @@ msg: Plugins automatisch bijwerken
 id: Available plugins
 msg: Beschikbare plugins
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: Bladeren door beschikbare plugins
+
+id: Browsing
+# Missing translation
+msg: 
 
 id: Cloud services
 msg: Cloudservices
 
 id: Corrupt plugin bundle
 msg: Beschadigde pluginbundel
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Schrijffout
@@ -919,14 +948,35 @@ msg: Downloaden
 id: File open error
 msg: Fout bij openen bestand
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Geïnstalleerde plugins
+
+id: Installed version higher than available
+# Missing translation
+msg: 
 
 id: Installing
 msg: Installeren
 
-id: Invalud URI
-msg: Ongeldige URI 
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 msg: Niet installeerbaar
@@ -939,6 +989,18 @@ msg: Niet bij te werken
 
 id: Online TV
 msg: Online tv
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: De plugin.json kon niet worden geladen: %s
@@ -1006,11 +1068,19 @@ msg: Ontwikkelaarsinstellingen
 id: Discovered media sources
 msg: Gevonden mediabronnen
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: Algemeen
 
 id: Global settings
 msg: Algemene instellingen
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Handige instellingen voor ontwikkelaars
@@ -1040,11 +1110,8 @@ id: User interface
 msg: Gebruikersinterface
 
 #
-# ./src/ui/glw/glw.c
+# ./src/ui/glw/glw_settings.c
 #
-id: Display and user interface
-msg: Weergave en gebruikersinterface
-
 id: Horizontal underscan
 msg: Horizontale underscan
 
@@ -1060,9 +1127,6 @@ msg: Verticale underscan
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Volledig scherm
-
 id: Map mouse wheel to up/down
 msg: Muiswiel naar boven/onder indelen
 
