@@ -45,6 +45,10 @@ prop_t *settings_add_dir_cstr(prop_t *parent, const char *title,
 			      const char *subtype, const char *icon,
 			      const char *shortdesc, const char *url);
 
+prop_t *settings_add_url(prop_t *parent, prop_t *title,
+			 const char *subtype, const char *icon,
+			 prop_t *shortdesc, const char *url);
+
 prop_t *settings_create_separator(prop_t *parent, prop_t *caption);
 
 
@@ -121,5 +125,7 @@ void settings_create_info(prop_t *parent, const char *image,
 
 prop_t *settings_create_bound_string(prop_t *parent, prop_t *title,
 				     prop_t *value);
+
+prop_t *makesep(prop_t *title);
 
 #endif /* SETTINGS_H__ */
