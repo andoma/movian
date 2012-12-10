@@ -142,7 +142,7 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_init(&out, 0);
 
   switch(method) {
-  case HTTP_CMD_GET:
+  case HTTP_CMD_POST:
     for (request = strtok_r(req, ",", &saved);
          request;
          request = strtok_r(NULL, ",", &saved))
