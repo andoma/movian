@@ -17,8 +17,7 @@ msg: Remover página atual dos favoritos
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Exit Showtime
-# Missing translation
-msg: 
+msg: Sair do Showtime
 
 id: Go to Home screen
 msg: Ir para a página inicial
@@ -33,19 +32,16 @@ id: Playqueue
 msg: Lista de reprodução
 
 id: Power off
-# Missing translation
-msg: 
+msg: Desligar
 
 id: Reload current page
 msg: Recarregar página atual
 
 id: Suspend
-# Missing translation
-msg: 
+msg: Suspender
 
 id: System
-# Missing translation
-msg: 
+msg: Sistema
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -60,7 +56,7 @@ msg: Remover '%s' da página inicial
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
-msg: Continuar apartir de %s
+msg: Continuar a partir de %s
 
 id: Continue playback here
 msg: Continuar reprodução aqui
@@ -150,7 +146,7 @@ id: Display info
 msg: Informações de visualização
 
 id: Framerate: %.2f Hz
-msg: Taxa de quadros: %.2f Hz
+msg: Framerate: %.2f Hz
 
 id: Free chunks: %d
 msg: Chunks livres: %d
@@ -192,8 +188,7 @@ id: Album
 msg: Álbum
 
 id: Artist
-# Missing translation
-msg: 
+msg: Artista
 
 id: Custom
 msg: Personalizado
@@ -208,8 +203,7 @@ id: Slideshow
 msg: Slideshow
 
 id: Tvchannels
-# Missing translation
-msg: 
+msg: Canais de TV
 
 id: View
 msg: Vista
@@ -224,8 +218,7 @@ msg: Recursos descobertos na rede local
 # ./glwskins/default/pages/home.view
 #
 id: Tiled
-# Missing translation
-msg: 
+msg: Azulejos
 
 #
 # ./glwskins/default/pages/home_clist.view
@@ -276,7 +269,7 @@ id: Genre:
 msg: Género:
 
 id: Metadata from
-msg: fonte dos metadados:
+msg: Metadados de
 
 id: Rating:
 msg: Avaliação:
@@ -303,16 +296,13 @@ msg: Sim
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-# Missing translation
-msg: 
+msg: Condensado
 
 id: Main
-# Missing translation
-msg: 
+msg: Principal
 
 id: Subs
-# Missing translation
-msg: 
+msg: Subs
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -342,8 +332,7 @@ msg: Faixa %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Em pausa
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -361,7 +350,7 @@ id: Check for updates now
 msg: Procurar por atualizações agora
 
 id: Checking for updates...
-msg: A procurar por atualizações
+msg: A procurar por atualizações...
 
 id: Current version:
 msg: Versão atual:
@@ -370,13 +359,13 @@ id: Download and install...
 msg: Efetuar download e instalar...
 
 id: Downloading...
-msg: A efetuar doenload...
+msg: A efetuar download...
 
 id: Installing...
 msg: A instalar...
 
 id: New version %s is available for download
-msg: A nova versão %s está disponível para download
+msg: Uma nova versão %s está disponível para download
 
 id: No upgrade available
 msg: Não existem atualizações disponíveis
@@ -412,8 +401,7 @@ msg: Estado da reprodução
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -482,12 +470,10 @@ msg: Utilizar o opensubtitles.org
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-# Missing translation
-msg: 
+msg: Idioma (código ISO 639-1)
 
 id: Use original title
-# Missing translation
-msg: 
+msg: Usar título original
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -511,10 +497,10 @@ id: Force stereo downmix
 msg: Forçar stereo downmix
 
 id: Phantom LFE
-msg: LFE fantasma
+msg: Fantasma LFE
 
 id: Phantom center
-msg: Center fantasma
+msg: Fantasma center
 
 id: Select audio output device and related configurations
 msg: Selecionar o dispositivo de saída de áudio e configurações relacionadas
@@ -568,8 +554,7 @@ msg: Resultado da pesquisa por: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-# Missing translation
-msg: 
+msg: Álbuns
 
 id: Automatic login when Showtime starts
 msg: Login automático quando o Showtime iniciar
@@ -578,8 +563,7 @@ id: Collaborative
 msg: Colaborativo
 
 id: Compilations
-# Missing translation
-msg: 
+msg: Compilações
 
 id: Enable Spotify
 msg: Ativar Spotify
@@ -618,8 +602,7 @@ id: Search result
 msg: Resultado da pesquisa
 
 id: Singles
-# Missing translation
-msg: 
+msg: Singles
 
 id: Spotify friends
 msg: Amigos do Spotify
@@ -802,8 +785,7 @@ id: Custom search query
 msg: Chave de pesquisa personalizada
 
 id: Custom title
-# Missing translation
-msg: 
+msg: Título personalizado
 
 id: Embedded in file
 msg: Embebido no ficheiro
@@ -842,8 +824,7 @@ id: Providers for Music
 msg: Fornecedores de dados de Música
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Fornecedores de vídeo
 
 id: Refresh metadata
 msg: Atualizar metadados
@@ -861,8 +842,7 @@ id: filename
 msg: nome de ficheiro
 
 id: filename as TV episode
-# Missing translation
-msg: 
+msg: nome do ficheiro como um episódio de TV
 
 id: folder name
 msg: nome de pasta
@@ -871,23 +851,19 @@ msg: nome de pasta
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-# Missing translation
-msg: 
+msg: %d items apagado(s)
 
 id: Clear all metadata
-# Missing translation
-msg: 
+msg: Limpar todos os metadados
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Limpar todos os metadados significa perder <b>toda</b> a informação sobre:\n\nSe uma faixa/filme foi vista\nO número de vezes que uma faixa/filme foi reproduzido\nA posição de resumo da reprodução\n\nE também vai apagar os metadados em cache de fontes externas como o themoviedb.org, etc\n\nTem a certeza que quer continuar?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Adicionar e remover items na página inicial
 
 id: Added new bookmark: %s
 msg: Adicionar novo favorito: %s
@@ -935,30 +911,25 @@ id: Available plugins
 msg: Plugins disponíveis
 
 id: Background
-# Missing translation
-msg: 
+msg: Fundo
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Palavras-passe de testes beta
 
 id: Browse available plugins
 msg: Listar plugins disponíveis
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Navegando
 
 id: Cloud services
-# Missing translation
-msg: 
+msg: Serviços em cloud
 
 id: Corrupt plugin bundle
 msg: Bundle de plugin corrupto
 
 id: Default
-# Missing translation
-msg: 
+msg: Por defeito
 
 id: Disk write error
 msg: Erro de escrita em disco
@@ -970,34 +941,28 @@ id: File open error
 msg: Erro ao abrir o ficheiro
 
 id: Home page
-# Missing translation
-msg: 
+msg: Página inicial
 
 id: Installed plugins
 msg: Plugins instalados
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Está instalada uma versão mais atual que a disponível
 
 id: Installing
 msg: A instalar
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Lista de álbuns
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Ecrã a carregar 
 
 id: Movies
-# Missing translation
-msg: 
+msg: Filmes
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Streaming de música
 
 id: Not installable
 msg: Não instalável
@@ -1009,20 +974,16 @@ id: Not upgradable
 msg: Não atualizável
 
 id: Online TV
-# Missing translation
-msg: 
+msg: TV online
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Vistas de plugins preferidas
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Protetor de ecrã
 
 id: TV channels
-# Missing translation
-msg: 
+msg: Canais de TV
 
 id: Unable to load plugin.json: %s
 msg: Não foi possível carregar o plugin.json: %s
@@ -1031,8 +992,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Não foi possível carregar o plugin.json: sintaxe de JSON incorreta
 
 id: Uncategorized
-# Missing translation
-msg: 
+msg: Não categorizado
 
 id: Up to date
 msg: Atualizado
@@ -1044,12 +1004,10 @@ id: Upgraded plugin %s to version %s
 msg: Plusgin %s atualizado para a versão %s
 
 id: User interface extensions
-# Missing translation
-msg: 
+msg: Extensões de interface de utilizador
 
 id: Video streaming
-# Missing translation
-msg: 
+msg: Streaming de vídeo
 
 #
 # ./src/runcontrol.c
@@ -1094,8 +1052,7 @@ id: Discovered media sources
 msg: Fontes de media descobertos
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Estilos de fontes e interface de utilizador
 
 id: General
 msg: Geral
@@ -1104,8 +1061,7 @@ id: Global settings
 msg: Definições globais
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Olhar e sentir
 
 id: Settings useful for developers
 msg: Configurações úteis para programadores
@@ -1117,28 +1073,22 @@ msg: Configurações relacionadas com o sistema
 # ./src/text/fontstash.c
 #
 id: Narrow text
-# Missing translation
-msg: 
+msg: Texto estreito
 
 id: Unable to load %s -- %s
-# Missing translation
-msg: 
+msg: Não foi possível carregar %s -- %s
 
 id: Unable to open %s for writing
-# Missing translation
-msg: 
+msg: Não foi possível abrir para escrita %s
 
 id: Unable to write to %s
-# Missing translation
-msg: 
+msg: Não foi possível escrever em %s
 
 id: Use font %s for
-# Missing translation
-msg: 
+msg: Usar a fonte %s para
 
 id: User interface
-# Missing translation
-msg: 
+msg: Interface de utilizador
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1198,7 +1148,7 @@ msg: Atualizar para releases desde
 # ./src/upnp/upnp.c
 #
 id: Enabled on home screen
-msg: Ativo no ecrã de início
+msg: Ativo na página inicial
 
 #
 # ./src/upnp/upnp_browse.c
@@ -1264,8 +1214,7 @@ id: Count video as played when reaching
 msg: Marcar vídeo como reproduzido quando chegar a
 
 id: Enable VDA
-# Missing translation
-msg: 
+msg: Ativar VDA
 
 id: Enable VDPAU
 msg: Ativar VDPAU
