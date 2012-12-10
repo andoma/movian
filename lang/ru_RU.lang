@@ -2,7 +2,7 @@ language: Russian
 native: Русский 
 maintainer: pvc1 <pvc1@yandex.ru>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: Добавить текущую страницу в закладки
@@ -14,7 +14,7 @@ id: Remove current page from bookmarks
 msg: Удалить текущую страницу из закладок
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Exit Showtime
 msg: Выйти из Showtime
@@ -44,7 +44,7 @@ id: System
 msg: Система
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: Добавить '%s' на главный экран
@@ -53,7 +53,7 @@ id: Remove '%s' from home screen
 msg: Удалить '%s' с главного экрана
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: Продолжить с %s
@@ -86,7 +86,7 @@ id: Unstar
 msg: Снять метку
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: Аудио
@@ -122,13 +122,13 @@ id: Video settings
 msg: Настройки видео
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: Системный лог
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Выделено приложению: %d Кб
@@ -182,7 +182,7 @@ id: Windowmanager: %s
 msg: Оконный менеджер: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: Альбом
@@ -209,7 +209,7 @@ id: View
 msg: Просмотр
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: Обнаруженные ресурсы в локальной сети
@@ -221,7 +221,7 @@ id: Tiled
 msg: Плитка
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: О программе
@@ -229,12 +229,11 @@ msg: О программе
 id: Dismiss
 msg: Отклонить
 
-
 id: Plugins
 msg: Плагины
 
 #
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 msg: Камера:
@@ -243,7 +242,7 @@ id: Date:
 msg: Дата:
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 msg: Автор:
@@ -258,11 +257,8 @@ id: Showtime %s or newer is required
 msg: Требуется Showtime %s или новее
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Режиссер:
-
 id: Duration:
 msg: Продолжительность:
 
@@ -275,9 +271,6 @@ msg: Жанр:
 id: Metadata from
 msg: Метаданные от
 
-id: Producer:
-msg: Продюсер:
-
 id: Rating:
 msg: Рейтинг:
 
@@ -285,13 +278,13 @@ id: Year:
 msg: Год:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: Добавить новую запись
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: Нет
@@ -312,7 +305,7 @@ id: Subs
 msg: Субтитры
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: Установка
@@ -324,19 +317,26 @@ id: Upgrade
 msg: Обновление
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Невозможно открыть ресурс
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Трек %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: Произошла ошибка во время загрузки
@@ -390,7 +390,7 @@ id: Unable to query for new version
 msg: Невозможно проверить новую версию
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU является слишком медленным для декодирования видео
@@ -399,7 +399,14 @@ id: Playback status
 msg: Статус воспроизведения
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: Раздел: %d
@@ -408,7 +415,7 @@ id: Title: %d
 msg: Глава: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Домен
@@ -423,7 +430,7 @@ id: Username
 msg: Имя пользователя
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Отмена
@@ -432,19 +439,19 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Медиа-файл не загружен
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: Использование памяти:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Звук выключен
@@ -471,7 +478,7 @@ id: Use original title
 msg: Использовать оригинальное название
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Мало памяти (доступно %d Кб RAM)
@@ -857,6 +864,10 @@ msg: При удалении метаданных будет удалена <b>�
 #
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
 
@@ -902,14 +913,30 @@ msg: Автоматическое обновление плагинов
 id: Available plugins
 msg: Доступные плагины
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: Просмотр доступных плагинов
+
+id: Browsing
+# Missing translation
+msg: 
 
 id: Cloud services
 msg: Облачные сервисы
 
 id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Ошибка записи диска
@@ -920,14 +947,35 @@ msg: Загрузка
 id: File open error
 msg: Ошибка при открытии файла
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Установленные плагины
+
+id: Installed version higher than available
+# Missing translation
+msg: 
 
 id: Installing
 msg: Установка
 
-id: Invalud URI
-msg: Недопустимый URL 
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 msg: Не может быть установлен
@@ -940,6 +988,18 @@ msg: Не обновляемый
 
 id: Online TV
 msg: Онлайн-ТВ
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
@@ -1007,11 +1067,19 @@ msg: Настройки для разработчиков
 id: Discovered media sources
 msg: Обнаруженные медиа источники
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: Общее
 
 id: Global settings
 msg: Главные настройки
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
@@ -1029,7 +1097,7 @@ id: Unable to load %s -- %s
 msg: Невозможно загрузить: %s -- %s
 
 id: Unable to open %s for writing
-msg:Невозможно открыть для записи: %s
+msg: Невозможно открыть для записи: %s
 
 id: Unable to write to %s
 msg: Невозможно записать в: %s
@@ -1041,11 +1109,8 @@ id: User interface
 msg: Пользовательский интерфейс
 
 #
-# ./src/ui/glw/glw.c
+# ./src/ui/glw/glw_settings.c
 #
-id: Display and user interface
-msg: Отображение и интерфейс пользователя
-
 id: Horizontal underscan
 msg: Горизонтальное сжатие
 
@@ -1061,9 +1126,6 @@ msg: Вертикальное сжатие
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Полноэкранный режим
-
 id: Map mouse wheel to up/down
 msg: Настройка колесика мыши вверх/вниз
 

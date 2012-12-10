@@ -2,7 +2,7 @@ language: Swedish
 native: Svenska
 maintainer: Andreas Öman <andreas@lonelycoder.com>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: Lägg till denna sida till bokmärken
@@ -14,8 +14,12 @@ id: Remove current page from bookmarks
 msg: Ta bort denna sida från bokmärken
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+# Missing translation
+msg: 
+
 id: Go to Home screen
 msg: Gå till hemsidan
 
@@ -28,11 +32,23 @@ msg: Öppna inställningar
 id: Playqueue
 msg: Spelkö
 
+id: Power off
+# Missing translation
+msg: 
+
 id: Reload current page
 msg: Ladda om nuvarande sida
 
+id: Suspend
+# Missing translation
+msg: 
+
+id: System
+# Missing translation
+msg: 
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: Lägg till '%s' till hemsidan
@@ -41,7 +57,7 @@ id: Remove '%s' from home screen
 msg: Ta bort '%s' från hemsidan
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: Fortsätt från %s
@@ -74,7 +90,7 @@ id: Unstar
 msg: Icke favorit
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: Ljud
@@ -110,13 +126,13 @@ id: Video settings
 msg: Videoinställningar
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: Systemlog
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Allokerat av applikationen: %d kB
@@ -170,10 +186,14 @@ id: Windowmanager: %s
 msg: Fönsterhanterare: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: Album
+
+id: Artist
+# Missing translation
+msg: 
 
 id: Custom
 msg: Speciell
@@ -187,32 +207,40 @@ msg: Lista
 id: Slideshow
 msg: Bildspel
 
+id: Tvchannels
+# Missing translation
+msg: 
+
 id: View
 msg: Vy
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: Hittade källor på lokala nätverket
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: Om Showtime
+
+id: Dismiss
+msg: Ta bort
 
 id: Plugins
 msg: Plugin
 
 #
-# ./glwthemes/default/pages/home_tiles.view
-#
-id: Dismiss
-msg: Ta bort
-
-#
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
 msg: Kamera:
@@ -221,7 +249,7 @@ id: Date:
 msg: Datum:
 
 #
-# ./glwthemes/default/pages/iteminfo/plugin.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
 msg: Upphovsman:
@@ -236,11 +264,8 @@ id: Showtime %s or newer is required
 msg: Showtime %s eller nyare behövs
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Regisör:
-
 id: Duration:
 msg: Längd:
 
@@ -253,9 +278,6 @@ msg: Genre:
 id: Metadata from
 msg: Metadata från
 
-id: Producer:
-msg: Producent:
-
 id: Rating:
 msg: Värdering:
 
@@ -263,13 +285,13 @@ id: Year:
 msg: År:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: Lägg till ny
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: Nej
@@ -278,7 +300,22 @@ id: Yes
 msg: Ja
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+# Missing translation
+msg: 
+
+id: Main
+# Missing translation
+msg: 
+
+id: Subs
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: Installera
@@ -290,19 +327,26 @@ id: Upgrade
 msg: Uppgradera
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Kan ej öppna resurs
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Spår %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: Ett fel inträffade under nerladdning
@@ -356,7 +400,7 @@ id: Unable to query for new version
 msg: Kan ej fråga efter ny version
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPUn är för långsam för att spela upp videon
@@ -365,7 +409,14 @@ id: Playback status
 msg: Uppspelningsstatus
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: Kapitel: %d
@@ -374,7 +425,7 @@ id: Title: %d
 msg: Titel: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Domän
@@ -389,7 +440,7 @@ id: Username
 msg: Användarnamn
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Avbryt
@@ -398,19 +449,19 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Ingen media laddad
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: Minnesanvändande:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Ljud tyst
@@ -428,7 +479,18 @@ id: Use opensubtitles.org
 msg: Använd opensubtitles.org
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+# Missing translation
+msg: 
+
+id: Use original title
+# Missing translation
+msg: 
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: System har lite ledigt minne (%d kB RAM tillgängligt)
@@ -505,11 +567,19 @@ msg: Sökresultat för: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+# Missing translation
+msg: 
+
 id: Automatic login when Showtime starts
 msg: Logga automatiskt in när Showtime startar
 
 id: Collaborative
 msg: Kollaborativ
+
+id: Compilations
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Använd Spotify
@@ -546,6 +616,10 @@ msg: Logga in igen (byt användare)
 
 id: Search result
 msg: Sökresultat
+
+id: Singles
+# Missing translation
+msg: 
 
 id: Spotify friends
 msg: Vänner på Spotify
@@ -727,6 +801,10 @@ msg: Automatisk
 id: Custom search query
 msg: Speciell sökfråga
 
+id: Custom title
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Inbäddad i fil
 
@@ -760,11 +838,12 @@ msg: Ingen data funnet
 id: None
 msg: Inget
 
-id: Providers for Movies
-msg: Leverantörer för filmer
-
 id: Providers for Music
 msg: Leverantörer för music
+
+id: Providers for Video
+# Missing translation
+msg: 
 
 id: Refresh metadata
 msg: Ladda om metadata
@@ -781,12 +860,35 @@ msg: speciell query
 id: filename
 msg: filnamn
 
+id: filename as TV episode
+# Missing translation
+msg: 
+
 id: folder name
 msg: katalognamn
 
 #
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+# Missing translation
+msg: 
+
+id: Clear all metadata
+# Missing translation
+msg: 
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+# Missing translation
+msg: 
+
+#
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: La till nytt bokmärke: %s
 
@@ -832,11 +934,31 @@ msg: Updatera plugin automatiskt
 id: Available plugins
 msg: Tillgängliga plugin
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: Lista tillgängliga plugin
 
+id: Browsing
+# Missing translation
+msg: 
+
+id: Cloud services
+# Missing translation
+msg: 
+
 id: Corrupt plugin bundle
 msg: Pluginfilen är korrupt
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Kunde ej skriva till disk
@@ -847,14 +969,35 @@ msg: Laddar ner
 id: File open error
 msg: Kunde ej öppna fil
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Installerade plugin
+
+id: Installed version higher than available
+# Missing translation
+msg: 
 
 id: Installing
 msg: Installerar
 
-id: Invalud URI
-msg: Felaktig URI
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 msg: Ej installerbar
@@ -865,11 +1008,31 @@ msg: Inte installerad
 id: Not upgradable
 msg: Inte uppgraderingsbar
 
+id: Online TV
+# Missing translation
+msg: 
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
+
 id: Unable to load plugin.json: %s
 msg: Kan ej ladda plugin.json: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
+
+id: Uncategorized
+# Missing translation
+msg: 
 
 id: Up to date
 msg: Senaste version
@@ -879,6 +1042,14 @@ msg: Uppgraderingsbar
 
 id: Upgraded plugin %s to version %s
 msg: Upgraderade plugin %s till version %s
+
+id: User interface extensions
+# Missing translation
+msg: 
+
+id: Video streaming
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -922,11 +1093,19 @@ msg: Utvecklarinställningar
 id: Discovered media sources
 msg: Upptäckta mediakällor
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: Generella inställningar
 
 id: Global settings
 msg: Globala inställningar
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Inställningar användbara för utvecklare
@@ -935,11 +1114,35 @@ id: System related settings
 msg: Systemrelaterade inställningar
 
 #
-# ./src/ui/glw/glw.c
+# ./src/text/fontstash.c
 #
-id: Display and user interface
-msg: Bildskärm och användargränsitt
+id: Narrow text
+# Missing translation
+msg: 
 
+id: Unable to load %s -- %s
+# Missing translation
+msg: 
+
+id: Unable to open %s for writing
+# Missing translation
+msg: 
+
+id: Unable to write to %s
+# Missing translation
+msg: 
+
+id: Use font %s for
+# Missing translation
+msg: 
+
+id: User interface
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_settings.c
+#
 id: Horizontal underscan
 msg: Horisontell underskanning
 
@@ -955,9 +1158,6 @@ msg: Vertikal underskanning
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Fullskärmsläge
-
 id: Map mouse wheel to up/down
 msg: Tolka musens scrollhjul som upp- och ned-knappar
 

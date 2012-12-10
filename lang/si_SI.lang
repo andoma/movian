@@ -2,7 +2,7 @@ language: Slovenian
 native: Slovenski
 maintainer: Drago Kraner <djkidy@gmail.com>
 #
-# ./glwthemes/default/cmdmenu.view
+# ./glwskins/default/cmdmenu.view
 #
 id: Add current page to bookmarks
 msg: Dodaj trenutno stran med priljubljene
@@ -14,8 +14,12 @@ id: Remove current page from bookmarks
 msg: Odstrani trenutno stran iz priljubljenih
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_common.view
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Exit Showtime
+# Missing translation
+msg: 
+
 id: Go to Home screen
 msg: Začetna stran
 
@@ -28,11 +32,23 @@ msg: Nastavitve
 id: Playqueue
 msg: Lista ponovitev
 
+id: Power off
+# Missing translation
+msg: 
+
 id: Reload current page
 msg: Osveži trenutno stran
 
+id: Suspend
+# Missing translation
+msg: 
+
+id: System
+# Missing translation
+msg: 
+
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_dir.view
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
 #
 id: Add '%s' to home screen
 msg: Dodaj '%s' na Začetno stran
@@ -41,7 +57,7 @@ id: Remove '%s' from home screen
 msg: Odstrani '%s' iz Začetne strani
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_item.view
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
 #
 id: Continue from %s
 msg: Nadaljuj od %s
@@ -74,7 +90,7 @@ id: Unstar
 msg: Unstar
 
 #
-# ./glwthemes/default/cmdmenu/cmdmenu_video.view
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
 #
 id: Audio
 msg: Zvok
@@ -110,13 +126,13 @@ id: Video settings
 msg: Nastavitve Videa
 
 #
-# ./glwthemes/default/log.view
+# ./glwskins/default/log.view
 #
 id: System log
 msg: Sistemski dnevnik
 
 #
-# ./glwthemes/default/pages/about.view
+# ./glwskins/default/pages/about.view
 #
 id: Allocated by application: %d kB
 msg: Dodeljeno iz aplikacije: %d kB
@@ -170,10 +186,14 @@ id: Windowmanager: %s
 msg: Upravljalec oken: %s
 
 #
-# ./glwthemes/default/pages/directory.view
+# ./glwskins/default/pages/directory.view
 #
 id: Album
 msg: Album
+
+id: Artist
+# Missing translation
+msg: 
 
 id: Custom
 msg: Po Meri
@@ -187,47 +207,59 @@ msg: Lista
 id: Slideshow
 msg: Slideshow
 
+id: Tvchannels
+# Missing translation
+msg: 
+
 id: View
 msg: Pogled
 
 #
-# ./glwthemes/default/pages/discovered.view
+# ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
 msg: Najdeni viri v lokalnem omrežju
 
 #
-# ./glwthemes/default/pages/home_clist.view
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/home_clist.view
 #
 id: About Showtime
 msg: O Showtime-u
+
+id: Dismiss
+msg: Prenehaj
 
 id: Plugins
 msg: Vtičniki
 
 #
-# ./glwthemes/default/pages/home_tiles.view
+# ./glwskins/default/pages/iteminfo/image.view
 #
-id: Dismiss
-msg: Prenehaj
+id: Camera: 
+# Missing translation
+msg: 
+
+id: Date: 
+# Missing translation
+msg: 
 
 #
-# ./glwthemes/default/pages/iteminfo/image.view
+# ./glwskins/default/pages/iteminfo/plugin.view
 #
-id: Camera:
-msg: Kamera:
+id: Author: 
+# Missing translation
+msg: 
 
-id: Date:
-msg: Datum:
-
-#
-# ./glwthemes/default/pages/iteminfo/plugin.view
-#
-id: Author:
-msg: Autor:
-
-id: Available version:
-msg: Dosegljiva verzija:
+id: Available version: 
+# Missing translation
+msg: 
 
 id: Installed version: 
 msg: Naložena verzija:
@@ -236,11 +268,8 @@ id: Showtime %s or newer is required
 msg: Potrebujete Showtime %s ali novejši
 
 #
-# ./glwthemes/default/pages/iteminfo/video.view
+# ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Director:
-
 id: Duration:
 msg: Dolžina:
 
@@ -253,9 +282,6 @@ msg: Žanr:
 id: Metadata from
 msg: Metadata od
 
-id: Producer:
-msg: Režiser:
-
 id: Rating:
 msg: Ocena:
 
@@ -263,13 +289,13 @@ id: Year:
 msg: Leto:
 
 #
-# ./glwthemes/default/pages/listitems/add.view
+# ./glwskins/default/pages/listitems/add.view
 #
 id: Add new entry
 msg: Dodaj nov vnos
 
 #
-# ./glwthemes/default/pages/listitems/bool.view
+# ./glwskins/default/pages/listitems/bool.view
 #
 id: No
 msg: Ne
@@ -278,7 +304,22 @@ id: Yes
 msg: Da 
 
 #
-# ./glwthemes/default/pages/listitems/plugin.view
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+# Missing translation
+msg: 
+
+id: Main
+# Missing translation
+msg: 
+
+id: Subs
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
 #
 id: Install
 msg: Naloži
@@ -290,19 +331,26 @@ id: Upgrade
 msg: Posodobi
 
 #
-# ./glwthemes/default/pages/openerror.view
+# ./glwskins/default/pages/openerror.view
 #
 id: Unable to open resource
 msg: Nemogoče odpreti izvor
 
 #
-# ./glwthemes/default/pages/playqueue.view
+# ./glwskins/default/pages/playqueue.view
 #
 id: Track %d / %d
 msg: Vrsta %d / %d
 
 #
-# ./glwthemes/default/pages/upgrade.view
+# ./glwskins/default/pages/slideshow.view
+#
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
 #
 id: An error occured during download
 msg: Napaka pri prenosu
@@ -356,7 +404,7 @@ id: Unable to query for new version
 msg: Nemogoče preveriti za novo verzijo
 
 #
-# ./glwthemes/default/pages/video.view
+# ./glwskins/default/pages/video.view
 #
 id: CPU is too slow to decode this video
 msg: CPU je prepočasen za dekodiranje videa
@@ -365,7 +413,14 @@ id: Playback status
 msg: Status predvajanja
 
 #
-# ./glwthemes/default/playdecks/dvd.view
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
 msg: Odstavek: %d
@@ -374,7 +429,7 @@ id: Title: %d
 msg: Naslov: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Domena
@@ -389,7 +444,7 @@ id: Username
 msg: Uporabniško ime
 
 #
-# ./glwthemes/default/popups/common.view
+# ./glwskins/default/popups/common.view
 #
 id: Cancel
 msg: Prekliči
@@ -398,19 +453,19 @@ id: OK
 msg: OK
 
 #
-# ./glwthemes/default/screensaver.view
+# ./glwskins/default/screensaver.view
 #
 id: No media loaded
 msg: Medij ni naložen
 
 #
-# ./glwthemes/default/sysinfo.view
+# ./glwskins/default/sysinfo.view
 #
 id: Memory usage:
 msg: Velikost uporabljenega spomina:
 
 #
-# ./glwthemes/default/universe.view
+# ./glwskins/default/universe.view
 #
 id: Audio muted
 msg: Izklop zvoka
@@ -428,7 +483,18 @@ id: Use opensubtitles.org
 msg: Uporaba opensubtitles.org
 
 #
-# ./src/arch/arch_ps3.c
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+# Missing translation
+msg: 
+
+id: Use original title
+# Missing translation
+msg: 
+
+#
+# ./src/arch/ps3/ps3_main.c
 #
 id: System is low on memory (%d kB RAM available)
 msg: Pomnilnik je skoraj poln (%d kb RAM na voljo)
@@ -505,11 +571,19 @@ msg: Rezultat iskanja za: %s
 #
 # ./src/backend/spotify/spotify.c
 #
+id: Albums
+# Missing translation
+msg: 
+
 id: Automatic login when Showtime starts
 msg: Samodejna prijava pri zagonu Showtime-a
 
 id: Collaborative
 msg: Kolaborativno
+
+id: Compilations
+# Missing translation
+msg: 
 
 id: Enable Spotify
 msg: Omogoči Spotify
@@ -546,6 +620,10 @@ msg: Ponovno logiranje (menjava uporabnika)
 
 id: Search result
 msg: Rezultati iskanja
+
+id: Singles
+# Missing translation
+msg: 
 
 id: Spotify friends
 msg: Spotify Prijatelji
@@ -727,6 +805,10 @@ msg: Avtomatsko
 id: Custom search query
 msg: Uporabniško iskanje
 
+id: Custom title
+# Missing translation
+msg: 
+
 id: Embedded in file
 msg: Vgrajeni v datotki
 
@@ -743,15 +825,12 @@ id: Metadata configuration and provider settings
 msg: Metadata konfiguracija in nastavitve ponudnika
 
 id: Metadata loaded from '%s' using %s
-# Missing translation
 msg: Metadata naložen iz '%s' ki uporablja %s
 
 id: Metadata search
-# Missing translation
 msg: Metadata iskanje
 
 id: Metadata source
-# Missing translation
 msg: Metadata izvor
 
 id: Movie
@@ -763,11 +842,12 @@ msg: Datotek ni na voljo
 id: None
 msg: Nič
 
-id: Providers for Movies
-msg: Ponudniki za Filme
-
 id: Providers for Music
 msg: Ponudniki za Glasbo
+
+id: Providers for Video
+# Missing translation
+msg: 
 
 id: Refresh metadata
 msg: Osveži metadata
@@ -776,22 +856,43 @@ id: Track %d
 msg: Track %d
 
 id: custom IMDb ID
-# Missing translation
 msg: IMDb ID po meri
 
 id: custom query
-# Missing translation
 msg: poizvedbe po meri
 
 id: filename
 msg: Ime datoteke
 
+id: filename as TV episode
+# Missing translation
+msg: 
+
 id: folder name
 msg: ime mape
 
 #
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+# Missing translation
+msg: 
+
+id: Clear all metadata
+# Missing translation
+msg: 
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+# Missing translation
+msg: 
+
+#
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: Dodane nove priljubljene: %s
 
@@ -814,7 +915,6 @@ id: Removed bookmark: %s
 msg: Odstranjene priljubljene: %s
 
 id: TV
-# Missing translation
 msg: TV
 
 id: Title
@@ -838,11 +938,31 @@ msg: Avtomatska posodobitev vtičnikov
 id: Available plugins
 msg: Dosegljivi vtičniki
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: Brskanje dosegljivih vtičnikov
 
+id: Browsing
+# Missing translation
+msg: 
+
+id: Cloud services
+# Missing translation
+msg: 
+
 id: Corrupt plugin bundle
 msg: Napaka pri obdelavi vtičnika
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: Napaka zapisa diska
@@ -853,14 +973,35 @@ msg: Prenašanje
 id: File open error
 msg: Napaka pri odpiranju
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: Naloženi vtičniki
+
+id: Installed version higher than available
+# Missing translation
+msg: 
 
 id: Installing
 msg: Nalaganje
 
-id: Invalid URI
-msg: Nepravilen URI
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
+
+id: Music streaming
+# Missing translation
+msg: 
 
 id: Not installable
 msg: Ni naložljivo
@@ -871,11 +1012,31 @@ msg: Ni naložen
 id: Not upgradable
 msg: Ni posodobljiv
 
+id: Online TV
+# Missing translation
+msg: 
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
+
 id: Unable to load plugin.json: %s
 msg: Dodatek.json nemorem naložit: %s
 
 id: Unable to load plugin.json: Malformed JSON
 msg: Dodatek.json nemorem naložit: Nepravilen JSON
+
+id: Uncategorized
+# Missing translation
+msg: 
 
 id: Up to date
 msg: Najnovejše
@@ -885,6 +1046,14 @@ msg: Posodobljiv
 
 id: Upgraded plugin %s to version %s
 msg: Posodobitev vtičnika %s v verzijo %s
+
+id: User interface extensions
+# Missing translation
+msg: 
+
+id: Video streaming
+# Missing translation
+msg: 
 
 #
 # ./src/runcontrol.c
@@ -922,17 +1091,26 @@ msg: Lokalno omrežje
 id: Applications and installed plugins
 msg: Naložene aplikacije in vtičniki
 
-id: Developer setting
-msg: Nastavitve ustvarjalca
+id: Developer settings
+# Missing translation
+msg: 
 
 id: Discovered media sources
 msg: Najdeni medija viri
+
+id: Fonts and user interface styling
+# Missing translation
+msg: 
 
 id: General
 msg: Glavno
 
 id: Global settings
 msg: Glavne nastavitve
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: Nastavitve uporabne za ustvarjalce
@@ -941,11 +1119,35 @@ id: System related settings
 msg: Nastavitve primerne sistemu
 
 #
-# ./src/ui/glw/glw.c
+# ./src/text/fontstash.c
 #
-id: Display and user interface
-msg: Prikaz in vmesnik
+id: Narrow text
+# Missing translation
+msg: 
 
+id: Unable to load %s -- %s
+# Missing translation
+msg: 
+
+id: Unable to open %s for writing
+# Missing translation
+msg: 
+
+id: Unable to write to %s
+# Missing translation
+msg: 
+
+id: Use font %s for
+# Missing translation
+msg: 
+
+id: User interface
+# Missing translation
+msg: 
+
+#
+# ./src/ui/glw/glw_settings.c
+#
 id: Horizontal underscan
 msg: Horizontalen podscan
 
@@ -961,9 +1163,6 @@ msg: Vertikalen podscan
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Celozaslonski način
-
 id: Map mouse wheel to up/down
 msg: Miškin kolešček za gor/dol
 
@@ -1085,7 +1284,7 @@ id: Ignore embedded styling
 msg: Ignoriraj vgrajeno oblikovanje
 
 id: Include all subtitle files from movie directory
-msg:Vključite vse podnapise iz mape filma
+msg: Vključite vse podnapise iz mape filma
 
 id: Left
 msg: Levo

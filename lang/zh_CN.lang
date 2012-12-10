@@ -398,6 +398,13 @@ id: Playback status
 msg: 播放信息
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -856,6 +863,10 @@ msg: 清除所有元信息意味着你将清除掉<b>所有</b>以下数据：\n
 #
 # ./src/navigator.c
 #
+id: Add and remove items on homepage
+# Missing translation
+msg: 
+
 id: Added new bookmark: %s
 msg: 添加新书签：%s
 
@@ -901,14 +912,30 @@ msg: 自动更新插件
 id: Available plugins
 msg: 可用插件
 
+id: Background
+# Missing translation
+msg: 
+
+id: Beta testing passwords
+# Missing translation
+msg: 
+
 id: Browse available plugins
 msg: 浏览可用插件
+
+id: Browsing
+# Missing translation
+msg: 
 
 id: Cloud services
 msg: 云服务
 
 id: Corrupt plugin bundle
 msg: 损坏的插件包
+
+id: Default
+# Missing translation
+msg: 
 
 id: Disk write error
 msg: 磁盘写入错误
@@ -919,11 +946,31 @@ msg: 正在下载
 id: File open error
 msg: 打开文件错误
 
+id: Home page
+# Missing translation
+msg: 
+
 id: Installed plugins
 msg: 已安装插件
 
+id: Installed version higher than available
+# Missing translation
+msg: 
+
 id: Installing
 msg: 正在安装
+
+id: List of albums
+# Missing translation
+msg: 
+
+id: Loading screen
+# Missing translation
+msg: 
+
+id: Movies
+# Missing translation
+msg: 
 
 id: Music streaming
 msg: 音乐流
@@ -939,6 +986,18 @@ msg: 不可升级
 
 id: Online TV
 msg: 在线电视
+
+id: Preferred views from plugins
+# Missing translation
+msg: 
+
+id: Screen saver
+# Missing translation
+msg: 
+
+id: TV channels
+# Missing translation
+msg: 
 
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
@@ -1006,11 +1065,19 @@ msg: 开发者设置
 id: Discovered media sources
 msg: 已检测到的媒体资源
 
+id: Fonts and user interface styling
+# Missing translation
+msg: 
+
 id: General
 msg: 常规
 
 id: Global settings
 msg: 全局设置
+
+id: Look and feel
+# Missing translation
+msg: 
 
 id: Settings useful for developers
 msg: 供开发者使用的设置
@@ -1040,11 +1107,8 @@ id: User interface
 msg: 用户界面
 
 #
-# ./src/ui/glw/glw.c
+# ./src/ui/glw/glw_settings.c
 #
-id: Display and user interface
-msg: 显示及用户界面
-
 id: Horizontal underscan
 msg: 水平欠扫描
 
@@ -1060,9 +1124,6 @@ msg: 垂直欠扫描
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: 全屏模式
-
 id: Map mouse wheel to up/down
 msg: 将鼠标滚轮映射到上/下按键
 
