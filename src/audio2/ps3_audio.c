@@ -56,6 +56,17 @@ typedef struct decoder {
 #define INVALID_PORT 0xffffffff
 
 
+
+/**
+ *
+ */
+int64_t
+showtime_get_avtime(void)
+{
+  return showtime_get_ts();
+}
+
+
 /**
  *
  */

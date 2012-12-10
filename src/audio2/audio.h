@@ -52,14 +52,6 @@ typedef struct audio_decoder {
 
 } audio_decoder_t;
 
-
-void audio_init(void);
-
-void audio_fini(void);
-
-audio_decoder_t *audio_decoder_create(struct media_pipe *mp);
-
-void audio_decoder_destroy(audio_decoder_t *ad);
-
 audio_class_t *audio_driver_init(void);
+
 

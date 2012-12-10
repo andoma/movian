@@ -51,6 +51,8 @@ typedef struct {
 
   int gvc_valid;
 
+  int gvc_pixfmt;
+
 } glw_video_config_t;
 
 
@@ -70,6 +72,10 @@ typedef struct glw_video_surface {
   int gvs_width;
   int gvs_height;
   int gvs_yshift;
+
+  int gvs_id;
+
+  void *gvs_opaque;
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
@@ -112,7 +118,9 @@ typedef struct glw_video {
 
   glw_t w;
 
-  AVRational gv_dar;
+  int gv_dar_num;
+  int gv_dar_den;
+
   int gv_vheight;
 
   int gv_rwidth;
@@ -169,7 +177,12 @@ typedef struct glw_video {
    */
   struct glw_video_surface_queue gv_decoded_queue;
 
+  int gv_layer;
+  int gv_running;
+  int gv_idgen;
 
+
+  int64_t gv_nextpts;
 
   /**
    * VDPAU specifics
@@ -184,7 +197,6 @@ typedef struct glw_video {
   GLuint gv_vdpau_texture;
   int64_t gv_vdpau_clockdiff;
 
-  int64_t gv_nextpts;
   vdpau_mixer_t gv_vm;
 #endif
 
@@ -205,7 +217,10 @@ typedef struct glw_video {
  *
  */
 typedef struct glw_video_engine {
-  const char *gve_name;
+  uint32_t gve_type;
+
+  void (*gve_deliver)(const frame_info_t *fi, glw_video_t *gv);
+
   void (*gve_render)(glw_video_t *gv, glw_rctx_t *rc);
 
   int64_t (*gve_newframe)(glw_video_t *gv, video_decoder_t *vd, int flags);
@@ -214,8 +229,16 @@ typedef struct glw_video_engine {
 
   int (*gve_init)(glw_video_t *gv);
 
+  LIST_ENTRY(glw_video_engine) gve_link;
+
 } glw_video_engine_t;
 
+
+void glw_register_video_engine(glw_video_engine_t *gve);
+
+#define GLW_REGISTER_GVE(n) \
+static void  __attribute__((constructor)) gveinit ## n(void) \
+{ glw_register_video_engine(&n);}
 
 
 int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
@@ -255,23 +278,7 @@ void glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
 int glw_video_configure(glw_video_t *gv,
 			const glw_video_engine_t *engine,
 			const int *wvec, const int *hvec,
-			int surfaces, int flags);
-
-
-/**
- *
- */
-void glw_video_input_yuvp(glw_video_t *gv,
-			  uint8_t * const data[], const int pitch[],
-			  const frame_info_t *fi);
-
-
-void glw_video_input_vdpau(glw_video_t *gv,
-			   uint8_t * const data[], const int pitch[],
-			   const frame_info_t *fi);
-
-void glw_video_input_rsx_mem(glw_video_t *gv, void *frame,
-			     const frame_info_t *fi);
+			int surfaces, int flags, int pixfmt);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

@@ -34,7 +34,7 @@ static int64_t
 ass_get_ts(const char *buf)
 {
   if(strlen(buf) != 10)
-    return AV_NOPTS_VALUE;
+    return PTS_UNSET;
 
   return 1000LL * (
     (buf[ 0] - '0') *  3600000LL +
@@ -474,8 +474,8 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
   const char *fmt = adc->adc_event_format;
   const ass_style_t *as = &ass_style_default;
   int layer = 0;
-  int64_t start = AV_NOPTS_VALUE;
-  int64_t end = AV_NOPTS_VALUE;
+  int64_t start = PTS_UNSET;
+  int64_t end = PTS_UNSET;
   const char *str = NULL;
   ass_dialoge_t ad;
 
@@ -505,7 +505,7 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
       as = adc_find_style(adc, val);
   }
 
-  if(start == AV_NOPTS_VALUE || end == AV_NOPTS_VALUE || str == NULL)
+  if(start == PTS_UNSET || end == PTS_UNSET || str == NULL)
     return NULL;
 
   if(as->as_bold)

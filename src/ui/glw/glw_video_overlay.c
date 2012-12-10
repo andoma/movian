@@ -82,7 +82,7 @@ gvo_create(int64_t pts, int type)
 {
   glw_video_overlay_t *gvo = calloc(1, sizeof(glw_video_overlay_t));
   gvo->gvo_start = pts;
-  gvo->gvo_stop = AV_NOPTS_VALUE;
+  gvo->gvo_stop = PTS_UNSET;
   gvo->gvo_alpha = 1;
   gvo->gvo_type = type;
   return gvo;
@@ -128,7 +128,7 @@ gvo_flush_infinite(glw_video_t *gv)
   for(gvo = LIST_FIRST(&gv->gv_overlays); gvo != NULL; gvo = next) {
     next = LIST_NEXT(gvo, gvo_link);
 
-    if(gvo->gvo_stop == AV_NOPTS_VALUE || gvo->gvo_stop_estimated)
+    if(gvo->gvo_stop == PTS_UNSET || gvo->gvo_stop_estimated)
       gvo_destroy(gv, gvo);
   }
 }
@@ -146,7 +146,7 @@ gvo_set_pts(glw_video_t *gv, int64_t pts)
   for(gvo = LIST_FIRST(&gv->gv_overlays); gvo != NULL; gvo = next) {
     next = LIST_NEXT(gvo, gvo_link);
 
-    if(gvo->gvo_stop != AV_NOPTS_VALUE && gvo->gvo_stop <= pts) {
+    if(gvo->gvo_stop != PTS_UNSET && gvo->gvo_stop <= pts) {
       gvo_destroy(gv, gvo);
       continue;
     }
@@ -546,7 +546,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   gvo_flush_all(gv);
 
   
-  glw_video_overlay_t *gvo = gvo_create(AV_NOPTS_VALUE, GVO_DVDSPU);
+  glw_video_overlay_t *gvo = gvo_create(PTS_UNSET, GVO_DVDSPU);
 
   gvo->gvo_canvas_width   = d->d_canvas_width;
   gvo->gvo_canvas_height  = d->d_canvas_height;

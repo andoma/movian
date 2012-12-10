@@ -115,7 +115,7 @@ dvdspu_decode(dvdspu_t *d, int64_t pts)
     date = getbe16(buf + d->d_cmdpos);
     picts = d->d_pts + ((date << 10) / 90) * 1000;
 
-    if(pts != AV_NOPTS_VALUE && pts < picts)
+    if(pts != PTS_UNSET && pts < picts)
       return retval;
 
     next_cmd_pos = getbe16(buf + d->d_cmdpos + 2);
@@ -377,16 +377,20 @@ dvdspu_codec_close(struct media_codec *mc)
 /**
  *
  */
-int
-dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
-		    AVCodecContext *ctx, media_pipe_t *mp)
+static int
+dvdspu_codec_create(media_codec_t *mc, int id,
+		    const media_codec_params_t *mcp,
+                    media_pipe_t *mp)
 {
-  if(ctx == NULL || ctx->extradata_size == 0)
+  if(id != CODEC_ID_DVD_SUBTITLE)
+    return 1;
+
+  if(mcp->extradata_size == 0)
     return 1;
   
   dvdspu_codec_t *dc = calloc(1, sizeof(dvdspu_codec_t));
 
-  char *s = strdup((const char *)ctx->extradata);
+  char *s = strdup((const char *)mcp->extradata);
   char *sf = s;
   int l;
 
@@ -407,3 +411,6 @@ dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
 
   return 0;
 }
+
+
+REGISTER_CODEC(NULL, dvdspu_codec_create, 50);

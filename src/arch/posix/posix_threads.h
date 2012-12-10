@@ -45,8 +45,8 @@ extern int hts_cond_wait_timeout(hts_cond_t *c, hts_mutex_t *m, int delta);
  */
 // These are not really used on POSIX
 #define THREAD_PRIO_LOW    0
-#define THREAD_PRIO_NORMAL 0
-#define THREAD_PRIO_HIGH   0
+#define THREAD_PRIO_NORMAL 1
+#define THREAD_PRIO_HIGH   2
 
 
 typedef pthread_t hts_thread_t;

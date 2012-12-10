@@ -1,13 +1,16 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include <libavutil/avutil.h>
-#include <libavcodec/avcodec.h>
-#include <libavutil/opt.h>
 
 #include "showtime.h"
 #include "media.h"
+#include "audio_ext.h"
 #include "audio.h"
+#include "libav.h"
+
+#include <libavutil/avutil.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/opt.h>
 
 static audio_class_t *audio_class;
 
@@ -121,6 +124,7 @@ audio_decoder_destroy(struct audio_decoder *ad)
 
   free(ad);
 }
+
 
 
 /**

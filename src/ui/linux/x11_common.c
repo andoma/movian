@@ -193,8 +193,7 @@ vo_set_source(void *opaque, const char *url)
 /**
  *
  */
-static void xv_video_frame_deliver(frame_buffer_type_t type, void *frame,
-				   const frame_info_t *fi, void *opaque);
+static void xv_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -234,8 +233,7 @@ init_with_xv(video_output_t *vo)
 /**
  *
  */
-static void xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
-				   const frame_info_t *fi, void *opaque);
+static void xi_video_frame_deliver(const frame_info_t *fi, void *opaque);
 
 /**
  *
@@ -433,10 +431,10 @@ wait_for_aclock(media_pipe_t *mp, int64_t pts, int epoch)
  *
  */
 static void
-compute_output_dimensions(video_output_t *vo, AVRational dar,
+compute_output_dimensions(video_output_t *vo, int dar_num, int dar_den,
 			  int *w, int *h)
 {
-  float a = (float)(vo->vo_w * dar.den) / (float)(vo->vo_h * dar.num);
+  float a = (float)(vo->vo_w * dar_den) / (float)(vo->vo_h * dar_num);
 
   if(a > 1) {
     *w = vo->vo_w / a;
@@ -453,17 +451,14 @@ compute_output_dimensions(video_output_t *vo, AVRational dar,
  *
  */
 static void 
-xv_video_frame_deliver(frame_buffer_type_t type, void *frame,
-		       const frame_info_t *fi, void *opaque)
+xv_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   int syncok;
   int outw, outh;
 
-  if(type != FRAME_BUFFER_TYPE_LIBAV_FRAME)
+  if(fi->fi_type != 'YUVP')
     return;
-
-  const AVFrame *avframe = frame;
 
   if(vo->vo_w < 1 || vo->vo_h < 1 || fi == NULL)
     return;
@@ -508,18 +503,18 @@ xv_video_frame_deliver(frame_buffer_type_t type, void *frame,
       h = h / 2;
     }
 
-    const uint8_t *src = avframe->data[i];
+    const uint8_t *src = fi->fi_data[i];
     char *dst = vo->vo_xv_image->data + vo->vo_xv_image->offsets[i];
     int pitch = vo->vo_xv_image->pitches[i];
     
     while(h--) {
       memcpy(dst, src, w);
       dst += pitch;
-      src += avframe->linesize[i];
+      src += fi->fi_pitch[i];
     }
   }
 
-  compute_output_dimensions(vo, fi->fi_dar, &outw, &outh);
+  compute_output_dimensions(vo, fi->fi_dar_num, fi->fi_dar_den, &outw, &outh);
 
   syncok = wait_for_aclock(vo->vo_mp, fi->fi_pts, fi->fi_epoch);
 
@@ -572,8 +567,7 @@ get_pix_fmt(video_output_t *vo)
  *
  */
 static void
-xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
-		       const frame_info_t *fi, void *opaque)
+xi_video_frame_deliver(const frame_info_t *fi, void *opaque)
 {
   video_output_t *vo = opaque;
   uint8_t *dst[4] = {0,0,0,0};
@@ -581,10 +575,8 @@ xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
   int syncok;
   int outw, outh;
 
-  if(type != FRAME_BUFFER_TYPE_LIBAV_FRAME)
+  if(fi->fi_type != 'YUVP')
     return;
-
-  const AVFrame *avframe = frame;
 
   if(vo->vo_w < 1 || vo->vo_h < 1)
     return;
@@ -593,7 +585,7 @@ xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
     outw = fi->fi_width;
     outh = fi->fi_height;
   } else {
-    compute_output_dimensions(vo, fi->fi_dar, &outw, &outh);
+    compute_output_dimensions(vo, fi->fi_dar_num, fi->fi_dar_den, &outw, &outh);
   }
 
   if(vo->vo_ximage != NULL && 
@@ -654,9 +646,9 @@ xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
   if(vo->vo_ximage->width          == fi->fi_width &&
      vo->vo_ximage->height         == fi->fi_height &&
      vo->vo_pix_fmt                == fi->fi_pix_fmt &&
-     vo->vo_ximage->bytes_per_line == avframe->linesize[0]) {
+     vo->vo_ximage->bytes_per_line == fi->fi_pitch[0]) {
 
-    memcpy(vo->vo_ximage->data, avframe->data[0], 
+    memcpy(vo->vo_ximage->data, fi->fi_data[0], 
 	   vo->vo_ximage->bytes_per_line * vo->vo_ximage->height);
 
   } else {
@@ -674,7 +666,7 @@ xi_video_frame_deliver(frame_buffer_type_t type, void *frame,
     dst[0] = (uint8_t *)vo->vo_ximage->data;
     dstpitch[0] = vo->vo_ximage->bytes_per_line;
     
-    sws_scale(vo->vo_scaler, (void *)avframe->data, avframe->linesize, 0,
+    sws_scale(vo->vo_scaler, (void *)fi->fi_data, fi->fi_pitch, 0,
 	      fi->fi_height, dst, dstpitch);
   }
 

@@ -51,15 +51,7 @@
 #include "arch/halloc.h"
 #include "ps3.h"
 
-#if ENABLE_PS3_VDEC
-#include "video/ps3_vdec.h"
-#endif
-
 // #define EMERGENCY_EXIT_THREAD
-
-
-
-
 static uint64_t ticks_per_us;
 
 static callout_t memlogger;
@@ -131,15 +123,6 @@ showtime_get_ts(void)
   return mftb() / ticks_per_us;
 }
 
-
-/**
- *
- */
-int64_t
-showtime_get_avtime(void)
-{
-  return mftb() / ticks_per_us;
-}
 
 /**
  *
@@ -535,6 +518,7 @@ main(int argc, char **argv)
   gconf.concurrency = 2;
   gconf.can_standby = 1;
   gconf.trace_level = TRACE_DEBUG;
+  gconf.disable_http_reuse = 1;
 
   load_syms();
 

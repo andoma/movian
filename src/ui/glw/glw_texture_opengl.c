@@ -21,8 +21,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libswscale/swscale.h>
-
 #include "glw.h"
 #include "glw_texture.h"
 

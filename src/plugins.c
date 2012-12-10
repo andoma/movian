@@ -72,8 +72,6 @@ static prop_t *plugin_root_installed;
 static prop_t *plugin_root_repo;
 
 static prop_t *plugin_root_model;
-static prop_courier_t *plugin_courier;
-
 
 LIST_HEAD(plugin_list, plugin);
 LIST_HEAD(plugin_view_list, plugin_view);
@@ -946,7 +944,6 @@ plugins_init(const char *loadme)
   plugins_view_settings_init();
 
   hts_mutex_init(&plugin_mutex);
-  plugin_courier = prop_courier_create_waitable();
 
   plugins_setup_root_props();
 

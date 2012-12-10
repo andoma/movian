@@ -30,20 +30,24 @@
 #include <gme/gme.h>
 #endif
 
-#include <libavutil/avstring.h>
-#include <libavformat/avio.h>
-#include <libavformat/avformat.h>
 
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_probe.h"
-#include "fa_libav.h"
 #include "navigator.h"
 #include "media.h"
 #include "misc/str.h"
 #include "misc/isolang.h"
 #include "misc/jpeg.h"
 #include "htsmsg/htsmsg_json.h"
+
+#if ENABLE_LIBAV
+#include <libavutil/avstring.h>
+#include <libavformat/avio.h>
+#include <libavformat/avformat.h>
+#include "fa_libav.h"
+#include "libav.h"
+#endif
 
 /**
  *

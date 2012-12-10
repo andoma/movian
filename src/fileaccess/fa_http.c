@@ -20,7 +20,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#if ENABLE_LIBAV
 #include <libavutil/base64.h>
+#endif
 #include <assert.h>
 #include <zlib.h>
 
@@ -743,7 +745,11 @@ http_client_oauth(struct http_auth_req *har,
 		 oauth_nonce,
 		 oauth_token);
 
+#if ENABLE_LIBAV
   av_base64_encode(sig, sizeof(sig), md, 20);
+#else
+  abort();
+#endif
   url_escape(str + strlen(str), sizeof(str) - strlen(str), sig,
 	     URL_ESCAPE_PARAM);
   snprintf(str + strlen(str), sizeof(str) - strlen(str), "\"");
@@ -1303,7 +1309,11 @@ authenticate(http_file_t *hf, char *errbuf, size_t errlen, int *non_interactive,
 
     /* Got auth credentials */  
     snprintf(buf1, sizeof(buf1), "%s:%s", username, password);
+#if ENABLE_LIBAV
     av_base64_encode(buf2, sizeof(buf2), (uint8_t *)buf1, strlen(buf1));
+#else
+    abort();
+#endif
 
     snprintf(buf1, sizeof(buf1), "Basic %s", buf2);
     hf->hf_auth = strdup(buf1);

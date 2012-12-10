@@ -23,12 +23,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include <libavformat/avformat.h>
-
-#include <libavformat/version.h>
-#include <libavcodec/version.h>
-#include <libavutil/avutil.h>
-
 #include "showtime.h"
 #include "event.h"
 #include "prop/prop.h"
@@ -36,7 +30,7 @@
 #include "arch/threads.h"
 
 #include "media.h"
-#include "audio2/audio.h"
+#include "audio2/audio_ext.h"
 #include "backend/backend.h"
 #include "navigator.h"
 #include "settings.h"
@@ -68,6 +62,14 @@
 #include "upnp/upnp.h"
 #endif
 
+#if ENABLE_LIBAV
+#include <libavformat/avformat.h>
+#include <libavformat/version.h>
+#include <libavcodec/version.h>
+#include <libavutil/avutil.h>
+#endif
+
+
 #include "misc/fs.h"
 
 inithelper_t *inithelpers;
@@ -78,7 +80,7 @@ inithelper_t *inithelpers;
 
 gconf_t gconf;
 
-
+#if ENABLE_LIBAV
 static int
 fflockmgr(void **_mtx, enum AVLockOp op)
 {
@@ -131,6 +133,7 @@ fflog(void *ptr, int level, const char *fmt, va_list vl)
   TRACE(level, avc ? avc->item_name(ptr) : "FFmpeg", "%s", line);
   line[0] = 0;
 }
+#endif
 
 
 /**
@@ -252,12 +255,14 @@ showtime_init(void)
   /* Initialize keyring */
   keyring_init();
 
+#if ENABLE_LIBAV
   /* Initialize libavcodec & libavformat */
   av_lockmgr_register(fflockmgr);
   av_log_set_callback(fflog);
   av_register_all();
 
   TRACE(TRACE_INFO, "libav", LIBAVFORMAT_IDENT", "LIBAVCODEC_IDENT", "LIBAVUTIL_IDENT);
+#endif
 
   /* Freetype */
 #if ENABLE_LIBFREETYPE

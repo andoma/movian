@@ -33,7 +33,7 @@ PROG=${BUILDDIR}/showtime
 include ${BUILDDIR}/config.mak
 
 CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
-CFLAGS += -Wmissing-prototypes -Iext/dvd ${OPTFLAGS}
+CFLAGS += -Wmissing-prototypes -Wno-multichar -Iext/dvd ${OPTFLAGS}
 
 
 
@@ -73,6 +73,7 @@ SRCS += src/showtime.c \
 	src/metadata/decoration.c \
 	src/metadata/browsemdb.c \
 
+SRCS-${CONFIG_LIBAV} += src/libav.c
 
 SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 
@@ -141,13 +142,6 @@ SRCS +=	src/htsmsg/htsbuf.c \
 # Virtual FS system
 ##############################################################
 SRCS += src/fileaccess/fileaccess.c \
-	src/fileaccess/fa_probe.c \
-	src/fileaccess/fa_libav.c \
-	src/fileaccess/fa_imageloader.c \
-	src/fileaccess/fa_backend.c \
-	src/fileaccess/fa_scanner.c \
-	src/fileaccess/fa_video.c \
-	src/fileaccess/fa_audio.c \
 	src/fileaccess/fa_fs.c \
 	src/fileaccess/fa_rar.c \
 	src/fileaccess/fa_http.c \
@@ -157,6 +151,15 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_sidfile.c \
 	src/fileaccess/fa_nativesmb.c \
 	src/fileaccess/fa_buffer.c \
+	src/fileaccess/fa_imageloader.c \
+
+SRCS-$(CONFIG_LIBAV) += \
+	src/fileaccess/fa_probe.c \
+	src/fileaccess/fa_libav.c \
+	src/fileaccess/fa_backend.c \
+	src/fileaccess/fa_scanner.c \
+	src/fileaccess/fa_video.c \
+	src/fileaccess/fa_audio.c \
 
 SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
@@ -236,7 +239,7 @@ SRCS += src/text/fontstash.c
 ##############################################################
 # Audio subsys
 ##############################################################
-SRCS += src/audio2/audio.c
+SRCS-$(CONFIG_LIBAV) += src/audio2/audio.c
 
 ##############################################################
 # DVD
@@ -254,7 +257,7 @@ SRCS  += src/backend/htsp/htsp.c \
 ##############################################################
 # Shoutcast
 ##############################################################
-SRCS  += src/backend/shoutcast/shoutcast.c \
+SRCS-$(CONFIG_LIBAV)  += src/backend/shoutcast/shoutcast.c \
 
 ##############################################################
 # Spotify

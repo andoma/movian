@@ -70,6 +70,16 @@ glw_pmtx_mul_vec4_i(Vec4 dst, const float *mt, const Vec4 a)
 }
 
 
+static inline void
+glw_pmtx_mul_vec4(Vec4 dst, const float *mt, const Vec4 a)
+{
+  dst[0] = mt[0] * a[0] + mt[4] * a[1] + mt[ 8] * a[2] + mt[12] * a[3];
+  dst[1] = mt[1] * a[0] + mt[5] * a[1] + mt[ 9] * a[2] + mt[13] * a[3];
+  dst[2] = mt[2] * a[0] + mt[6] * a[1] + mt[10] * a[2] + mt[14] * a[3];
+  dst[3] = mt[3] * a[0] + mt[7] * a[1] + mt[11] * a[2] + mt[15] * a[3];
+}
+
+
 static inline float
 glw_vec34_dot(const Vec3 A, const Vec4 B)
 {

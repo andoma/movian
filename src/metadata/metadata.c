@@ -20,8 +20,6 @@
 #include <stdio.h>
 #include <unistd.h>
 
-#include <libavformat/avformat.h>
-
 #include "prop/prop.h"
 #include "prop/prop_concat.h"
 #include "ext/sqlite/sqlite3.h"
@@ -214,7 +212,7 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 
   snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
 
-  if(ms->ms_disposition & AV_DISPOSITION_DEFAULT)
+  if(ms->ms_disposition & 1) // default
     score += 10;
   
   if(ms->ms_title != NULL) {
@@ -275,15 +273,15 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
     prop_t *p;
 
     switch(ms->ms_type) {
-    case AVMEDIA_TYPE_AUDIO:
+    case MEDIA_TYPE_AUDIO:
       p = prop_create(proproot, "audiostreams");
       pc = &ac;
       break;
-    case AVMEDIA_TYPE_VIDEO:
+    case MEDIA_TYPE_VIDEO:
       p = prop_create(proproot, "videostreams");
       pc = &vc;
       break;
-    case AVMEDIA_TYPE_SUBTITLE:
+    case MEDIA_TYPE_SUBTITLE:
       p = prop_create(proproot, "subtitlestreams");
       pc = &sc;
       break;

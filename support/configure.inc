@@ -285,13 +285,16 @@ EOF
 BUILD ?= $BUILD
 EOF
 
-    enable libav
 
 }
 
+enable libav
+
 libav_setup() {
     if disabled libav; then
-	return
+        disable dvd
+        disable librtmp
+        return
     fi
 
     if [ "x${LIBAV_PATH}" != "x" ]; then

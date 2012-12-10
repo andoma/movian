@@ -73,6 +73,3 @@ void dvdspu_enqueue(video_decoder_t *vd, const void *data, int size,
 
 void dvdspu_flush(video_decoder_t *vd);
 
-int dvdspu_codec_create(media_codec_t *mc, enum CodecID id,
-			AVCodecContext *ctx, media_pipe_t *mp);
-
