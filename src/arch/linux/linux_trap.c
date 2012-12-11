@@ -16,7 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#if defined(__i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__) || defined(__arm__)
 
 // Only do this on x86 for now
 
@@ -43,7 +43,6 @@
 #define MAXFRAMES 100
 
 static char line1[200];
-static char tmpbuf[1024];
 static char libs[2048];
 static char self[PATH_MAX];
 
@@ -91,14 +90,14 @@ add2lineresolve(const char *binary, void *addr, char *buf0, size_t buflen)
     dup2(fd[1], 1);
     close(fd[1]);
     if((f = open("/dev/null", O_RDWR)) == -1)
-      exit(1);
+      _exit(1);
 
     dup2(f, 0);
     dup2(f, 2);
     close(f);
 
     execve("/usr/bin/addr2line", (char *const *) argv, environ);
-    exit(2);
+    _exit(0);
   }
 
   close(fd[1]);
@@ -184,8 +183,33 @@ traphandler(int sig, siginfo_t *si, void *UC)
   TRAPMSG("Fault address %s (%s)", buf, reason ?: "N/A");
 
   TRAPMSG("Loaded libraries: %s ", libs);
-  snprintf(tmpbuf, sizeof(tmpbuf), "Register dump [%d]: ", NGREG);
 
+#if defined(__arm__) 
+  TRAPMSG("   trap_no = %08lx", uc->uc_mcontext.trap_no);
+  TRAPMSG("error_code = %08lx", uc->uc_mcontext.error_code);
+  TRAPMSG("   oldmask = %08lx", uc->uc_mcontext.oldmask);
+  TRAPMSG("        R0 = %08lx", uc->uc_mcontext.arm_r0);
+  TRAPMSG("        R1 = %08lx", uc->uc_mcontext.arm_r1);
+  TRAPMSG("        R2 = %08lx", uc->uc_mcontext.arm_r2);
+  TRAPMSG("        R3 = %08lx", uc->uc_mcontext.arm_r3);
+  TRAPMSG("        R4 = %08lx", uc->uc_mcontext.arm_r4);
+  TRAPMSG("        R5 = %08lx", uc->uc_mcontext.arm_r5);
+  TRAPMSG("        R6 = %08lx", uc->uc_mcontext.arm_r6);
+  TRAPMSG("        R7 = %08lx", uc->uc_mcontext.arm_r7);
+  TRAPMSG("        R8 = %08lx", uc->uc_mcontext.arm_r8);
+  TRAPMSG("        R9 = %08lx", uc->uc_mcontext.arm_r9);
+  TRAPMSG("       R10 = %08lx", uc->uc_mcontext.arm_r10);
+  TRAPMSG("        FP = %08lx", uc->uc_mcontext.arm_fp);
+  TRAPMSG("        IP = %08lx", uc->uc_mcontext.arm_ip);
+  TRAPMSG("        SP = %08lx", uc->uc_mcontext.arm_sp);
+  TRAPMSG("        LR = %08lx", uc->uc_mcontext.arm_lr);
+  TRAPMSG("        PC = %08lx", uc->uc_mcontext.arm_pc);
+  TRAPMSG("      CPSR = %08lx", uc->uc_mcontext.arm_cpsr);
+  TRAPMSG("fault_addr = %08lx", uc->uc_mcontext.fault_address);
+
+#else
+  char tmpbuf[1024];
+  snprintf(tmpbuf, sizeof(tmpbuf), "Register dump [%d]: ", NGREG);
   for(i = 0; i < NGREG; i++) {
 #if __WORDSIZE == 64
     sappend(tmpbuf, sizeof(tmpbuf), "%016llx ", uc->uc_mcontext.gregs[i]);
@@ -194,8 +218,9 @@ traphandler(int sig, siginfo_t *si, void *UC)
 #endif
   }
   TRAPMSG("%s", tmpbuf);
+#endif
 
-  TRAPMSG("STACKTRACE");
+  TRAPMSG("STACKTRACE (%d frames)", nframes);
 
   for(i = 0; i < nframes; i++) {
     addr2text(buf, sizeof(buf), frames[i]);
@@ -220,11 +245,9 @@ callback(struct dl_phdr_info *info, size_t size, void *data)
 void
 trap_init(void)
 {
-  uint8_t digest[20];
   struct sigaction sa, old;
   char path[256];
   int r;
-  memset(digest, 0, sizeof(digest));
 
   r = readlink("/proc/self/exe", self, sizeof(self) - 1);
   if(r == -1)
@@ -233,30 +256,7 @@ trap_init(void)
     self[r] = 0;
 
   snprintf(line1, sizeof(line1),
-	   "PRG: Showtime (%s) "
-	   "[%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-	   "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x] "
-	   "EXE: %s, CWD: %s ", htsversion_full,
-	   digest[0],
-	   digest[1],
-	   digest[2],
-	   digest[3],
-	   digest[4],
-	   digest[5],
-	   digest[6],
-	   digest[7],
-	   digest[8],
-	   digest[9],
-	   digest[10],
-	   digest[11],
-	   digest[12],
-	   digest[13],
-	   digest[14],
-	   digest[15],
-	   digest[16],
-	   digest[17],
-	   digest[18],
-	   digest[19],
+	   "PRG: Showtime (%s) EXE: %s, CWD: %s ", htsversion_full,
 	   self, getcwd(path, sizeof(path)));
 
   dl_iterate_phdr(callback, NULL);
