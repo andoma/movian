@@ -177,6 +177,7 @@ echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -
 
 
 freetype_setup
+LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 
 

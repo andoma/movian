@@ -21,7 +21,7 @@ CC=${TOOLCHAIN}gcc
 
 LIBAV_CFLAGS="-mminimal-toc -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 
-LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my"
+LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
 
 show_help(){
   common_help
