@@ -1192,7 +1192,7 @@ media_codec_create(int codec_id, int parser,
   mc->codec_ctx = ctx;
   
 #if ENABLE_LIBAV
-  if(ctx != NULL) {
+  if(ctx != NULL && mcp != NULL) {
     assert(ctx->extradata      == mcp->extradata);
     assert(ctx->extradata_size == mcp->extradata_size);
   }
