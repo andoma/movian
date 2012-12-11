@@ -69,6 +69,9 @@ add2lineresolve(const char *binary, void *addr, char *buf0, size_t buflen)
   pid_t p;
   char addrstr[30], *cp;
 
+  if(access("/usr/bin/addr2line", X_OK))
+    return -1;
+
   argv[0] = "addr2line";
   argv[1] = "-e";
   argv[2] = binary;
