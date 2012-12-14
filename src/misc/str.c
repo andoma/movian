@@ -996,7 +996,7 @@ int
 hex2bin(uint8_t *buf, size_t buflen, const char *str)
 {
   int hi, lo;
-
+  size_t bl = buflen;
   while(*str) {
     if(buflen == 0)
       return -1;
@@ -1008,7 +1008,7 @@ hex2bin(uint8_t *buf, size_t buflen, const char *str)
     *buf++ = hi << 4 | lo;
     buflen--;
   }
-  return 0;
+  return bl - buflen;
 }
 
 

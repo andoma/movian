@@ -19,6 +19,7 @@
 
 #ifdef linux
 #include <sys/prctl.h>
+#include <unistd.h>
 #endif
 
 #include "showtime.h"
@@ -146,13 +147,15 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
   pthread_attr_setstacksize(&attr, 128 * 1024);
 
 
-  if(prio == THREAD_PRIO_HIGH) {
+#ifdef linux
+  if(prio == THREAD_PRIO_HIGH && geteuid() == 0) {
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);
     struct sched_param param = {0};
     param.sched_priority = sched_get_priority_max(SCHED_RR);
     pthread_attr_setschedparam(&attr, &param);
   }
+#endif
 
   pthread_create(p, &attr, thread_trampoline,
 		make_trampoline(title, func, aux));

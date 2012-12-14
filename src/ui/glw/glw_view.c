@@ -132,7 +132,7 @@ typedef struct glw_cached_view {
 glw_t *
 glw_view_create(glw_root_t *gr, rstr_t *url,
 		glw_t *parent, prop_t *prop, prop_t *prop_parent, prop_t *args,
-		prop_t *prop_clone, int cache)
+		prop_t *prop_clone, int cache, int nofail)
 {
   token_t *eof, *l, *t;
   errorinfo_t ei;
@@ -147,12 +147,14 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
   }
 
   if(gcv == NULL) {
+    int nofile = 0;
     token_t *sof = glw_view_token_alloc(gr);
     sof->type = TOKEN_START;
     sof->file = rstr_dup(url);
-
-    if((l = glw_view_load1(gr, url, &ei, sof)) == NULL) {
+    if((l = glw_view_load1(gr, url, &ei, sof, &nofile)) == NULL) {
       glw_view_free_chain(gr, sof);
+      if(nofile && !nofail)
+	return NULL;
       return glw_view_error(gr, &ei, parent);
     }
     eof = glw_view_token_alloc(gr);

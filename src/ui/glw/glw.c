@@ -260,7 +260,7 @@ glw_load_universe(glw_root_t *gr)
 
   gr->gr_universe = glw_view_create(gr,
 				    universe, NULL, page,
-				    NULL, NULL, NULL, 0);
+				    NULL, NULL, NULL, 0, 1);
 
   rstr_release(universe);
 

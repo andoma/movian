@@ -95,8 +95,7 @@ alsa_audio_reconfig(audio_decoder_t *ad)
   
 
   int channels = 2;
-  d->tmp = realloc(d->tmp,
-		   sizeof(uint16_t) * channels * d->max_frames_per_write);
+  d->tmp = malloc(sizeof(uint16_t) * channels * d->max_frames_per_write);
 
   return 0;
 }
