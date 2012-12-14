@@ -320,6 +320,8 @@ libav_setup() {
 
     LIBAV_PATH=${LIBAV_INSTALL_DIR}
     echo >>${CONFIG_MAK} "LIBAV_BUILD_DIR=${LIBAV_BUILD_DIR}"
+    echo >>${CONFIG_MAK} "LIBAV_INSTALL_DIR=${LIBAV_INSTALL_DIR}"
+
     echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/libav.stamp"
     rm -f "build.${BUILD}/libav.stamp"
 }
