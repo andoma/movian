@@ -29,24 +29,8 @@ widget(keyintercept, {
 	  cloner($page.model.nodes, loader, {
 	    time: 0.1;
 	    effect: blend;
-	    source: "listitems/" + 
-	      translate($self.type, "default",
-			"audio", "audio",
-			"video", "video",
-			"separator", "separator",
-			"settings", "settings",
-			"bool", "bool",
-			"integer", "integer",
-			"string", "string",
-			"multiopt", "multiopt",
-			"action", "action",
-			"info", "info",
-			"plugin", "plugin",
-			"font", "font",
-			"tvchannel", "tvchannel",
-			"keymapentry", "keymapentry"
-		       )
-	      + ".view";
+	    alt: "listitems/default.view";
+	    source: "listitems/" + $self.type + ".view";
 	  });
 
 

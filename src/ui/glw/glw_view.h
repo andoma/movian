@@ -275,7 +275,8 @@ token_t *glw_view_lexer(const char *src, errorinfo_t *ei,
 
 
 token_t *glw_view_load1(glw_root_t *gr, rstr_t *url,
-			errorinfo_t *ei, token_t *prev);
+			errorinfo_t *ei, token_t *prev,
+			int *nofile);
 
 int glw_view_parse(token_t *sof, errorinfo_t *ei, glw_root_t *gr);
 

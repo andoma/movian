@@ -611,6 +611,7 @@ if [ "x$LIBSPOTIFY_ARCH" != "x" ] ; then
     echo >>${CONFIG_MAK} "LIBSPOTIFY_PATH=${P}"
 fi
 
+LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 
 #
