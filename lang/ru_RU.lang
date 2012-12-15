@@ -35,7 +35,7 @@ id: Power off
 msg: Отключить систему
 
 id: Reload current page
-msg: Перезагрузка текущей страницы
+msg: Перезагрузить текущую страницу
 
 id: Suspend
 msg: Отключить систему
@@ -71,10 +71,10 @@ id: Mark as unseen
 msg: Пометить как непросмотренное
 
 id: Play from beginning
-msg: Играть с начала
+msg: Воспроизведение с начала
 
 id: Play until end of list
-msg: Играть до конца списка
+msg: Воспроизведение до конца списка
 
 id: Queue
 msg: Очередь
@@ -206,7 +206,7 @@ id: Tvchannels
 msg: ТВ-каналы
 
 id: View
-msg: Просмотр
+msg: Вид
 
 #
 # ./glwskins/default/pages/discovered.view
@@ -259,6 +259,9 @@ msg: Требуется Showtime %s или новее
 #
 # ./glwskins/default/pages/iteminfo/video.view
 #
+id: Director:
+msg: Режиссер:
+
 id: Duration:
 msg: Продолжительность:
 
@@ -270,6 +273,9 @@ msg: Жанр:
 
 id: Metadata from
 msg: Метаданные от
+
+id: Producer:
+msg: Продюсер:
 
 id: Rating:
 msg: Рейтинг:
@@ -332,8 +338,7 @@ msg: Трек %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Пауза 
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -402,8 +407,7 @@ msg: Статус воспроизведения
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Воспроизведено 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -859,14 +863,13 @@ id: Clear all metadata
 msg: Удалить все метаданные
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был просмотрен\nКол-во раз, которые Трек/видео/фильм был просмотрен\nПозиция для продолжения просмотра\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
+msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был воспроизведен\nКол-во раз, которые Трек/видео/фильм был воспроизведен\nПозиция для продолжения воспроизведения\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Добавление и удаление элементов на главном экране
 
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
@@ -914,19 +917,16 @@ id: Available plugins
 msg: Доступные плагины
 
 id: Background
-# Missing translation
-msg: 
+msg: Фон
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Пароли бета-теста
 
 id: Browse available plugins
 msg: Просмотр доступных плагинов
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Вид элементов при навигации
 
 id: Cloud services
 msg: Облачные сервисы
@@ -935,11 +935,10 @@ id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
 
 id: Default
-# Missing translation
-msg: 
+msg: По умолчанию 
 
 id: Disk write error
-msg: Ошибка записи диска
+msg: Ошибка записи на диск
 
 id: Downloading
 msg: Загрузка
@@ -948,34 +947,28 @@ id: File open error
 msg: Ошибка при открытии файла
 
 id: Home page
-# Missing translation
-msg: 
+msg: Главный экран
 
 id: Installed plugins
 msg: Установленные плагины
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Установленная версия новее, чем доступная
 
 id: Installing
 msg: Установка
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Список альбомов
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Загрузочный экран
 
 id: Movies
-# Missing translation
-msg: 
+msg: Фильмы
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Потоковая музыка
 
 id: Not installable
 msg: Не может быть установлен
@@ -990,16 +983,13 @@ id: Online TV
 msg: Онлайн-ТВ
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Предпочтительный вид при установленных плагинах
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Хранитель экрана
 
 id: TV channels
-# Missing translation
-msg: 
+msg: ТВ каналы
 
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
@@ -1011,7 +1001,7 @@ id: Uncategorized
 msg: Без категории
 
 id: Up to date
-msg: До даты
+msg: Последняя версия
 
 id: Upgradable
 msg: Обновляемый
@@ -1068,8 +1058,7 @@ id: Discovered media sources
 msg: Обнаруженные медиа источники
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Шрифты и интерфейс пользователя
 
 id: General
 msg: Общее
@@ -1078,14 +1067,13 @@ id: Global settings
 msg: Главные настройки
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Внешний вид интерфейса
 
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
 
 id: System related settings
-msg: Настройки связанные с системой
+msg: Системные настройки
 
 #
 # ./src/text/fontstash.c
@@ -1111,6 +1099,9 @@ msg: Пользовательский интерфейс
 #
 # ./src/ui/glw/glw_settings.c
 #
+id: Display and user interface
+msg: Отображение и интерфейс пользователя
+
 id: Horizontal underscan
 msg: Горизонтальное сжатие
 
@@ -1126,6 +1117,9 @@ msg: Вертикальное сжатие
 #
 # ./src/ui/glw/glw_x11.c
 #
+id: Fullscreen mode
+msg: Полноэкранный режим
+
 id: Map mouse wheel to up/down
 msg: Настройка колесика мыши вверх/вниз
 
