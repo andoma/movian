@@ -79,6 +79,11 @@ widget(container_z, {
 	});
 
         #import "log.view"
+
+	widget(loader, {
+	  hidden: !$ui.osk.show;
+	  source: select($ui.osk.show, "osk.view", "");
+	});
       });
 
       // Now playing info

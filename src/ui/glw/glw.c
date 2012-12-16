@@ -45,6 +45,12 @@ const float glw_identitymtx[16] = {
   0,0,1,0,
   0,0,0,1};
 
+
+static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
+			 glw_t *w, int password);
+
+
+
 /*
  *
  */
@@ -211,6 +217,8 @@ glw_init(glw_root_t *gr)
   gr->gr_frameduration = 1000000 / gr->gr_framerate;
   gr->gr_ui_start = showtime_get_ts();
 
+  gr->gr_open_osk = glw_osk_open;
+
   return 0;
 }
 
@@ -221,6 +229,12 @@ glw_init(glw_root_t *gr)
 void
 glw_fini(glw_root_t *gr)
 {
+  if(gr->gr_osk_widget != NULL) {
+    glw_unref(gr->gr_osk_widget);
+    prop_unsubscribe(gr->gr_osk_text_sub);
+    prop_unsubscribe(gr->gr_osk_ev_sub);
+  }
+
   glw_text_bitmap_fini(gr);
   rstr_release(gr->gr_default_font);
   glw_tex_fini(gr);
@@ -2327,4 +2341,109 @@ glw_widget_unproject(Mtx m, float *xp, float *yp, const Vec3 p, const Vec3 dir)
   *xp = glw_vec3_extract(out, 0);
   *yp = glw_vec3_extract(out, 1);
   return 1;
+}
+
+
+/**
+ *
+ */
+static void
+glw_osk_text(void *opaque, const char *str)
+{
+  glw_root_t *gr = opaque;
+  glw_t *w = gr->gr_osk_widget;
+  if(w != NULL) {
+    w->glw_class->gc_update_text(w, str);
+  }
+}
+
+/**
+ *
+ */
+static void
+glw_osk_ok(glw_root_t *gr)
+{
+  glw_t *w = gr->gr_osk_widget;
+  if(w != NULL) {
+    event_t *e = event_create_action(ACTION_SUBMIT);
+    glw_event_to_widget(w, e, 0);
+    event_release(e);
+
+    glw_unref(gr->gr_osk_widget);
+    prop_unsubscribe(gr->gr_osk_text_sub);
+    prop_unsubscribe(gr->gr_osk_ev_sub);
+
+    gr->gr_osk_widget = NULL;
+    gr->gr_osk_text_sub = NULL;
+    gr->gr_osk_ev_sub = NULL;
+  }
+
+  prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
+  prop_set(osk, "show", PROP_SET_INT, 0);
+
+  
+}
+
+
+
+
+/**
+ *
+ */
+static void 
+glw_osk_event(void *opaque, prop_event_t event, ...)
+{
+  va_list ap;
+  
+  if(event != PROP_EXT_EVENT)
+    return;
+  
+  va_start(ap, event);
+  event_t *e = va_arg(ap, event_t *);
+  va_end(ap);
+
+  if(event_is_action(e, ACTION_OK)) {
+    glw_osk_ok(opaque);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+glw_osk_open(glw_root_t *gr, const char *title, const char *input,
+	     glw_t *w, int password)
+{
+  prop_t *osk = prop_create(gr->gr_prop_ui, "osk");
+
+  if(gr->gr_osk_widget != NULL) {
+    glw_unref(gr->gr_osk_widget);
+    prop_unsubscribe(gr->gr_osk_text_sub);
+    prop_unsubscribe(gr->gr_osk_ev_sub);
+  }
+  
+  prop_set(osk, "title", PROP_SET_STRING, title);
+  prop_set(osk, "text",  PROP_SET_STRING, input);
+  prop_set(osk, "password", PROP_SET_INT, password);
+  prop_set(osk, "show", PROP_SET_INT, 1);
+
+  gr->gr_osk_widget = w;
+  glw_ref(w);
+
+  gr->gr_osk_text_sub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK_STRING, glw_osk_text, gr,
+		   PROP_TAG_NAME("ui", "osk", "text"),
+		   PROP_TAG_ROOT, gr->gr_prop_ui,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   NULL);
+
+  gr->gr_osk_ev_sub =
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK, glw_osk_event, gr,
+		   PROP_TAG_NAME("ui", "osk", "eventSink"),
+		   PROP_TAG_ROOT, gr->gr_prop_ui,
+		   PROP_TAG_COURIER, gr->gr_courier,
+		   NULL);
 }

@@ -831,11 +831,19 @@ typedef struct glw_root {
   int gr_vtmp_cur;
   int gr_vtmp_capacity;
 
+  int gr_random;
+
+  // On Screen Keyboard
+
   void (*gr_open_osk)(struct glw_root *gr, 
 		      const char *title, const char *str, struct glw *w,
 		      int password);
 
-  int gr_random;
+
+  struct glw *gr_osk_widget;
+  prop_sub_t *gr_osk_text_sub;
+  prop_sub_t *gr_osk_ev_sub;
+
 
 } glw_root_t;
 
