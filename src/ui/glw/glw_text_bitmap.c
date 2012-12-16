@@ -332,7 +332,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_update_cursor = 0;
   }
 
-  gtb->gtb_paint_cursor = w->glw_class == &glw_text && glw_is_focused(w);
+  gtb->gtb_paint_cursor = 
+    gtb->gtb_flags & GTB_PERMANENT_CURSOR ||
+    (w->glw_class == &glw_text && glw_is_focused(w));
   gtb->gtb_need_layout = 0;
 
   if(gtb->gtb_state == GTB_VALID && gtb->gtb_deferred_realize) {

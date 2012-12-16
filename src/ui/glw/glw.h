@@ -144,6 +144,7 @@ typedef enum {
 #define GTB_BOLD          0x4
 #define GTB_ITALIC        0x8
 #define GTB_OUTLINE       0x10
+#define GTB_PERMANENT_CURSOR 0x20
 
 typedef struct glw_vertex {
   float x, y, z;

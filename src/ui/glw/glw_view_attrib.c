@@ -1061,6 +1061,7 @@ static const token_attrib_t attribtab[] = {
   {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
   {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
   {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
+  {"permanentCursor", mod_flag,  GTB_PERMANENT_CURSOR, mod_text_flags},
   
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
