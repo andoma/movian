@@ -4227,7 +4227,6 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *r;
   glw_t *w;
-  char buf[100];
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -4235,9 +4234,9 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   if(a != NULL && a->type == TOKEN_RSTRING) {
     w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
 
-    if(w != NULL && !glw_get_text(w, buf, sizeof(buf))) {
+    if(w != NULL && w->glw_class->gc_get_text != NULL) {
       r = eval_alloc(self, ec, TOKEN_RSTRING);
-      r->t_rstring = rstr_alloc(buf);
+      r->t_rstring = rstr_alloc(w->glw_class->gc_get_text(w));
       eval_push(ec, r);
       return 0;
     }

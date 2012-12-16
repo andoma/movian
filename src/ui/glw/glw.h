@@ -1237,8 +1237,6 @@ void glw_unref(glw_t *w);
 
 #define glw_ref(w) ((w)->glw_refcnt++)
 
-int glw_get_text(glw_t *w, char *buf, size_t buflen);
-
 glw_t *glw_get_prev_n(glw_t *c, int count);
 
 glw_t *glw_get_next_n(glw_t *c, int count);
