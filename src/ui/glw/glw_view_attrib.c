@@ -575,6 +575,10 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v[0] = v[1] = v[2] = v[3] = t->t_int;
     break;
 
+  case TOKEN_VOID:
+    v[0] = v[1] = v[2] = v[3] = 0;
+    break;
+
   default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
 			   a->name, token2name(t));
