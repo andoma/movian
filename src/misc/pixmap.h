@@ -61,6 +61,10 @@ typedef struct image_meta {
   char im_can_mono;
   char im_no_decoding;
   char im_32bit_swizzle; // can do full 32bit swizzle in hardware
+  char im_no_rgb24;
+  uint16_t im_corner_radius;
+  uint16_t im_margin;
+
 } image_meta_t;
 
 /**
@@ -131,7 +135,8 @@ pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 		      int xdisp, int ydisp, int rgba);
 
-pixmap_t *pixmap_create(int width, int height, pixmap_type_t type);
+pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
+			int margin);
 
 void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 
@@ -144,5 +149,9 @@ pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
 void svg_init(void);
 
 int color_is_not_gray(uint32_t rgb);
+
+void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
+
+pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r);
 
 #endif

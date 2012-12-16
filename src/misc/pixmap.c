@@ -25,7 +25,7 @@
 #include "arch/atomic.h"
 #include "pixmap.h"
 #include "misc/jpeg.h"
-
+#include "backend/backend.h"
 
 #if ENABLE_LIBAV
 #include <libavcodec/avcodec.h>
@@ -33,6 +33,7 @@
 #include <libavutil/mem.h>
 #include <libavutil/common.h>
 #endif
+
 
 /**
  *
@@ -71,6 +72,14 @@ bytes_per_pixel(pixmap_type_t fmt)
   }
 }
 
+
+
+static void *
+pm_pixel(pixmap_t *pm, unsigned int x, unsigned int y)
+{
+  return pm->pm_data + (y + pm->pm_margin) * pm->pm_linesize +
+    (x + pm->pm_margin) * bytes_per_pixel(pm->pm_type);
+}
 
 /**
  *
@@ -116,17 +125,18 @@ pixmap_alloc_coded(const void *data, size_t size, pixmap_type_t type)
  *
  */
 pixmap_t *
-pixmap_create(int width, int height, pixmap_type_t type)
+pixmap_create(int width, int height, pixmap_type_t type, int margin)
 {
   int bpp = bytes_per_pixel(type);
   const int rowalign = PIXMAP_ROW_ALIGN - 1;
 
   pixmap_t *pm = calloc(1, sizeof(pixmap_t));
   pm->pm_refcount = 1;
-  pm->pm_width = width;
-  pm->pm_height = height;
+  pm->pm_width = width + margin*2;
+  pm->pm_height = height + margin*2;
   pm->pm_linesize = ((pm->pm_width * bpp) + rowalign) & ~rowalign;
   pm->pm_type = type;
+  pm->pm_margin = margin;
 
   if(pm->pm_linesize > 0) {
     /* swscale can write a bit after the buffer in its optimized algo
@@ -178,6 +188,7 @@ pixmap_clone(const pixmap_t *src, int clear)
   dst->pm_linesize = src->pm_linesize;
   dst->pm_height = src->pm_height;
   dst->pm_type = src->pm_type;
+  dst->pm_margin = src->pm_margin;
 
   if(clear)
     dst->pm_pixels = calloc(1, dst->pm_linesize * dst->pm_height);
@@ -185,6 +196,181 @@ pixmap_clone(const pixmap_t *src, int clear)
     dst->pm_pixels = malloc(dst->pm_linesize * dst->pm_height);
 
   return dst;
+}
+
+
+/**
+ *
+ */
+static void
+horizontal_gradient_rgb24(pixmap_t *pm, const int *top, const int *bottom)
+{
+  int y;
+  const int h = pm->pm_height - pm->pm_margin * 2;
+  const int w = pm->pm_width - pm->pm_margin * 2;
+  unsigned int X=123456789, Y=362436069, Z=521288629, T;
+
+  for(y = 0; y < h; y++) {
+    uint8_t *d = pm_pixel(pm, 0, y);
+
+    int r = 255 * top[0] + (255 * (bottom[0] - top[0]) * y / h);
+    int g = 255 * top[1] + (255 * (bottom[1] - top[1]) * y / h);
+    int b = 255 * top[2] + (255 * (bottom[2] - top[2]) * y / h);
+    int x;
+    for(x = 0; x < w; x++) {
+      // Marsaglia's xorshf generator
+      X ^= X << 16;
+      X ^= X >> 5;
+      X ^= X << 1;
+      
+      T = X;
+      X = Y;
+      Y = Z;
+      Z = T ^ X ^ Y;
+      *d++ = (r + (Z & 0xff)) >> 8;
+      *d++ = (g + (Z & 0xff)) >> 8;
+      *d++ = (b + (Z & 0xff)) >> 8;
+    }
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
+horizontal_gradient_bgr32(pixmap_t *pm, const int *top, const int *bottom)
+{
+  int y;
+  const int h = pm->pm_height - pm->pm_margin * 2;
+  const int w = pm->pm_width - pm->pm_margin * 2;
+
+  unsigned int X=123456789, Y=362436069, Z=521288629, T;
+
+  for(y = 0; y < h; y++) {
+    uint32_t *d = pm_pixel(pm, 0, y);
+
+    int r = 255 * top[0] + (255 * (bottom[0] - top[0]) * y / h);
+    int g = 255 * top[1] + (255 * (bottom[1] - top[1]) * y / h);
+    int b = 255 * top[2] + (255 * (bottom[2] - top[2]) * y / h);
+    int x;
+    for(x = 0; x < w; x++) {
+      // Marsaglia's xorshf generator
+      X ^= X << 16;
+      X ^= X >> 5;
+      X ^= X << 1;
+      
+      T = X;
+      X = Y;
+      Y = Z;
+      Z = T ^ X ^ Y;
+      uint8_t R = (r + (Z & 0xff)) >> 8;
+      uint8_t G = (g + (Z & 0xff)) >> 8;
+      uint8_t B = (b + (Z & 0xff)) >> 8;
+      *d++ = 0xff000000 | B << 16 | G << 8 | R; 
+    }
+  }
+}
+
+
+
+/**
+ *
+ */
+void
+pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *bottom)
+{
+  switch(pm->pm_type) {
+  case PIXMAP_RGB24:
+    horizontal_gradient_rgb24(pm, top, bottom);
+    break;
+  case PIXMAP_BGR32:
+    horizontal_gradient_bgr32(pm, top, bottom);
+    break;
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static pixmap_t *
+rgb24_to_bgr32(pixmap_t *src)
+{
+  pixmap_t *dst = pixmap_create(src->pm_width, src->pm_height, PIXMAP_BGR32,
+				src->pm_margin);
+  int y;
+  
+  for(y = 0; y < src->pm_height; y++) {
+    const uint8_t *s = src->pm_pixels + y * src->pm_linesize;
+    uint32_t *d = (uint32_t *)(dst->pm_pixels + y * dst->pm_linesize);
+    int x;
+    for(x = 0; x < src->pm_width; x++) {
+      *d++ = 0xff000000 | s[2] << 16 | s[1] << 8 | s[0]; 
+      s+= 3;
+    }
+  }
+  return dst;
+}
+
+
+
+/**
+ *
+ */
+pixmap_t *
+pixmap_rounded_corners(pixmap_t *pm, int r)
+{
+  pixmap_t *tmp;
+  switch(pm->pm_type) {
+
+  default:
+    return pm;
+
+  case PIXMAP_BGR32:
+    break;
+
+  case PIXMAP_RGB24:
+    tmp = rgb24_to_bgr32(pm);
+    pixmap_release(pm);
+    pm = tmp;
+    break;
+  }
+
+
+  r = MIN(pm->pm_height / 2, r);
+
+  int r2 = r * r;
+  int i;
+  uint32_t *dst;
+  for(i = 0; i < r; i++) {
+    float x = r - sqrtf(r2 - i*i);
+    int len = x;
+    int alpha = 255 - (x - len) * 255;
+    int y = r - i - 1;
+
+    dst = pm_pixel(pm, 0, y);
+    memset(dst, 0, len * sizeof(uint32_t));
+    dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
+
+    dst += pm->pm_width - pm->pm_margin * 2;
+    memset(dst - len, 0, len * sizeof(uint32_t));
+    dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+
+
+    dst = pm_pixel(pm, 0, pm->pm_height - 1 - y - pm->pm_margin*2);
+
+    memset(dst, 0, len * sizeof(uint32_t));
+    dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
+
+    dst += pm->pm_width - pm->pm_margin * 2;
+    memset(dst - len, 0, len * sizeof(uint32_t));
+    dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+  }
+  return pm;
 }
 
 
@@ -842,7 +1028,8 @@ make_powerof2(int v)
 static pixmap_t *
 pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
 		       int src_w, int src_h,
-		       int dst_w, int dst_h)
+		       int dst_w, int dst_h,
+		       int with_alpha, int margin)
 {
   AVPicture pic;
   int dst_pix_fmt;
@@ -864,7 +1051,10 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
     break;
 
   default:
-    dst_pix_fmt = PIX_FMT_RGB24;
+    if(with_alpha)
+      dst_pix_fmt = PIX_FMT_BGR32;
+    else
+      dst_pix_fmt = PIX_FMT_RGB24;
     break;
   }
 
@@ -886,20 +1076,21 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   switch(dst_pix_fmt) {
   case PIX_FMT_RGB24:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24);
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, margin);
     break;
 
   default:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32);
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
     break;
   }
 
   if(pm == NULL) {
     sws_freeContext(sws);
-    return pm;
+    return NULL;
   }
 
-  pic.data[0] = pm->pm_data;
+  // Set scale destination with respect to margin
+  pic.data[0] = pm_pixel(pm, 0, 0);
   pic.linesize[0] = pm->pm_linesize;
   pic.linesize[1] = 0;
   pic.linesize[2] = 0;
@@ -936,7 +1127,7 @@ swizzle_xwzy(uint32_t *dst, const uint32_t *src, int len)
 }
 
 static pixmap_t *
-pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h)
+pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h, int m)
 {
 #if defined(__BIG_ENDIAN__)
   void (*fn)(uint32_t *dst, const uint32_t *src, int len);
@@ -950,12 +1141,12 @@ pixmap_32bit_swizzle(AVPicture *pict, int pix_fmt, int w, int h)
   }
 
   int y;
-  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32);
+  pixmap_t *pm = pixmap_create(w, h, PIXMAP_BGR32, m);
   if(pm == NULL)
     return NULL;
 
   for(y = 0; y < h; y++) {
-    fn((uint32_t *)(pm->pm_data + y * pm->pm_linesize),
+    fn(pm_pixel(pm, 0, y),
        (uint32_t *)(pict->data[0] + y * pict->linesize[0]),
        w);
   }
@@ -991,7 +1182,10 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     break;
 
   case PIX_FMT_RGB24:
-    fmt = PIXMAP_RGB24;
+    if(im->im_no_rgb24 || im->im_corner_radius)
+      need_format_conv = 1;
+    else
+      fmt = PIXMAP_RGB24;
     break;
 
   case PIX_FMT_BGR32:
@@ -1080,25 +1274,28 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 
 
   if(must_rescale || want_rescale || need_format_conv) {
-    pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h);
-    
+    int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
+
+    pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
+				want_alpha, im->im_margin);
     if(pm != NULL)
       return pm;
 
     if(need_format_conv) {
-      pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h);
+      pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h,
+				  want_alpha, im->im_margin);
       if(pm != NULL)
 	return pm;
 
-      return pixmap_32bit_swizzle(pict, pix_fmt, src_w, src_h);
+      return pixmap_32bit_swizzle(pict, pix_fmt, src_w, src_h, im->im_margin);
     }
   }
 
-  pm = pixmap_create(src_w, src_h, fmt);
+  pm = pixmap_create(src_w, src_h, fmt, im->im_margin);
   if(pm == NULL)
     return NULL;
 
-  uint8_t *dst = pm->pm_data;
+  uint8_t *dst = pm_pixel(pm, 0,0);
   uint8_t *src = pict->data[0];
   int h = src_h;
 
@@ -1299,3 +1496,59 @@ main(int argc, char **argv)
 }
 
 #endif
+
+
+/**
+ *
+ */
+static pixmap_t *
+be_showtime_pixmap_loader(const char *url, const image_meta_t *im,
+			  const char **vpaths, char *errbuf, size_t errlen,
+			  int *cache_control, be_load_cb_t *cb, void *opaque)
+{
+  pixmap_t *pm;
+  int w = im->im_req_width, h = im->im_req_height;
+  const char *s;
+  if((s = mystrbegins(url, "showtime:pixmap:gradient:")) != NULL) {
+    if(w == -1)
+      w = 128;
+    if(h == -1)
+      h = 128;
+    int t[4] = {0,0,0,255};
+    int b[4] = {0,0,0,255};
+    if(sscanf(s, "%d,%d,%d:%d,%d,%d",
+	      &t[0], &t[1], &t[2], &b[0], &b[1], &b[2]) != 6) {
+      snprintf(errbuf, errlen, "Invalid RGB codes");
+      return NULL;
+    }
+
+    pm = pixmap_create(w, h, PIXMAP_BGR32, im->im_margin);
+    pixmap_horizontal_gradient(pm, t, b);
+  } else {
+    snprintf(errbuf, errlen, "Invalid URL");
+    return NULL;
+  }
+  return pm;
+}
+
+
+/**
+ *
+ */
+static int
+be_showtime_pixmap_canhandle(const char *url)
+{
+  if(!strncmp(url, "showtime:pixmap:", strlen("showtime:pixmap:")))
+    return 1;
+  return 0;
+}
+
+/**
+ *
+ */
+static backend_t be_showtime_pixmap = {
+  .be_canhandle   = be_showtime_pixmap_canhandle,
+  .be_imageloader = be_showtime_pixmap_loader,
+};
+
+BE_REGISTER(showtime_pixmap);

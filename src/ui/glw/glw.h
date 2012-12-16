@@ -133,6 +133,7 @@ typedef enum {
   GLW_ATTRIB_CENTER,
   GLW_ATTRIB_ALPHA_FALLOFF,
   GLW_ATTRIB_BLUR_FALLOFF,
+  GLW_ATTRIB_RADIUS,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -1190,6 +1191,7 @@ do {						\
   case GLW_ATTRIB_X_SPACING:                    \
   case GLW_ATTRIB_Y_SPACING:                    \
   case GLW_ATTRIB_SCROLL_THRESHOLD:             \
+  case GLW_ATTRIB_RADIUS:			\
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_ANGLE:			\

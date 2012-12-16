@@ -268,8 +268,13 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
   } else {
     pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen, cache_control,
 			    cb, opaque);
-    if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding)
+    if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding) {
       pm = pixmap_decode(pm, im, errbuf, errlen);
+
+      if(im->im_corner_radius)
+	pm = pixmap_rounded_corners(pm, im->im_corner_radius);
+
+    }
   }
   if(m)
     htsmsg_destroy(m);

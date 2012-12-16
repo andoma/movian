@@ -1107,6 +1107,7 @@ static const token_attrib_t attribtab[] = {
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
   {"scrollThreshold", set_int,    GLW_ATTRIB_SCROLL_THRESHOLD},
   {"divider",         set_int,    0, set_divider},
+  {"cornerRadius",    set_int,    GLW_ATTRIB_RADIUS},
 
   {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, 0, set_translation},

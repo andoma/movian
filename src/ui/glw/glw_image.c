@@ -80,6 +80,7 @@ typedef struct glw_image {
   uint8_t gi_recompile : 1;
 
   int16_t gi_fixed_size;
+  int16_t gi_radius;
 
   glw_renderer_t gi_gr;
 
@@ -279,9 +280,9 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       
     if(gi->gi_bitmap_flags & GLW_IMAGE_FIXED_SIZE)
       glw_scale_to_pixels(&rc0, glt->glt_xs, glt->glt_ys);
-    else if(w->glw_class == &glw_image || w->glw_class == &glw_icon)
+    else if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
       glw_scale_to_aspect(&rc0, glt->glt_aspect);
-
+    }
     if(gi->gi_angle != 0)
       glw_Rotatef(&rc0, -gi->gi_angle, 0, 0, 1);
 
@@ -581,16 +582,22 @@ static void
 glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi, 
 			glw_loadable_texture_t *glt)
 {
-  glw_renderer_vtx_pos(&gi->gi_gr, 0, -1.0, -1.0, 0.0);
+  int m = glt->glt_margin;
+  float x1 = -1.0f + 2.0f * -m / (float)rc->rc_width;
+  float y1 = -1.0f + 2.0f * -m / (float)rc->rc_height;
+  float x2 =  1.0f + 2.0f *  m / (float)rc->rc_width;
+  float y2 =  1.0f + 2.0f *  m / (float)rc->rc_height;
+
+  glw_renderer_vtx_pos(&gi->gi_gr, 0, x1, y1, 0.0);
   settexcoord(&gi->gi_gr, 0, 0, 1, gr, glt);
 
-  glw_renderer_vtx_pos(&gi->gi_gr, 1,  1.0, -1.0, 0.0);
+  glw_renderer_vtx_pos(&gi->gi_gr, 1, x2, y1, 0.0);
   settexcoord(&gi->gi_gr, 1, 1, 1, gr, glt);
 
-  glw_renderer_vtx_pos(&gi->gi_gr, 2,  1.0,  1.0, 0.0);
+  glw_renderer_vtx_pos(&gi->gi_gr, 2, x2, y2, 0.0);
   settexcoord(&gi->gi_gr, 2, 1, 0, gr, glt);
 
-  glw_renderer_vtx_pos(&gi->gi_gr, 3, -1.0,  1.0, 0.0);
+  glw_renderer_vtx_pos(&gi->gi_gr, 3, x1, y2, 0.0);
   settexcoord(&gi->gi_gr, 3, 0, 0, gr, glt);
 }
 
@@ -659,13 +666,13 @@ glw_image_update_constraints(glw_image_t *gi)
 
     } else if(glt != NULL) {
       glw_set_constraints(&gi->w, 
-			  glt->glt_xs,
-			  glt->glt_ys,
+			  glt->glt_xs - glt->glt_margin * 2,
+			  glt->glt_ys - glt->glt_margin * 2,
 			  0, 0);
     }
 
   } else if(gi->w.glw_class == &glw_image && glt != NULL) {
-    float aspect = (float)glt->glt_xs / glt->glt_ys;
+    float aspect = (float)glt->glt_aspect;
 
     if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
       glw_set_constraints(&gi->w, 0, 0, -aspect, GLW_CONSTRAINT_W);
@@ -751,7 +758,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   glw_rctx_t rc0;
   glw_t *c;
   int hq = (w->glw_class == &glw_icon || w->glw_class == &glw_image);
-
+  hq = gi->gi_mode == GI_MODE_NORMAL || gi->gi_mode == GI_MODE_ALPHA_EDGES;
   gi->gi_switch_tgt = 180;
 
   if(gi->gi_sources && gi->gi_switch_tgt) {
@@ -790,9 +797,14 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	flags |= GLW_TEX_REPEAT;
 	
       if(hq) {
-	if(rc->rc_width < rc->rc_height) {
-	  xs = rc->rc_width;
+	if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+	  if(rc->rc_width < rc->rc_height) {
+	    xs = rc->rc_width;
+	  } else {
+	    ys = rc->rc_height;
+	  }
 	} else {
+	  xs = rc->rc_width;
 	  ys = rc->rc_height;
 	}
       }
@@ -800,12 +812,13 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       if(xs && ys) {
 
 	if(w->glw_flags & GLW_DEBUG)
-	  TRACE(TRACE_DEBUG, "IMG", "Loading texture: %s",
-		rstr_get(gi->gi_pending_url));
+	  TRACE(TRACE_DEBUG, "IMG", "Loading texture: %s (%d %d)",
+		rstr_get(gi->gi_pending_url),
+		xs, ys);
 
 	gi->gi_pending = glw_tex_create(w->glw_root,
 					gi->gi_pending_url,
-					flags, xs, ys);
+					flags, xs, ys, gi->gi_radius);
 	  
 	rstr_release(gi->gi_pending_url);
 	gi->gi_pending_url = NULL;
@@ -919,11 +932,18 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	
       int xs = -1, ys = -1, rescale;
 	
-      if(rc->rc_width < rc->rc_height) {
-	rescale = abs(rc->rc_width - glt->glt_xs);
-	xs = rc->rc_width;
+      if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
+
+	if(rc->rc_width < rc->rc_height) {
+	  rescale = abs(rc->rc_width - glt->glt_xs);
+	  xs = rc->rc_width;
+	} else {
+	  rescale = abs(rc->rc_height - glt->glt_ys);
+	  ys = rc->rc_height;
+	}
       } else {
-	rescale = abs(rc->rc_height - glt->glt_ys);
+	rescale = (rc->rc_width - glt->glt_xs) || (rc->rc_height - glt->glt_ys);
+	xs = rc->rc_width;
 	ys = rc->rc_height;
       }
 
@@ -940,7 +960,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	  flags |= GLW_TEX_REPEAT;
 	
 	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
-					flags, xs, ys);
+					flags, xs, ys, gi->gi_radius);
       }
     }
   } else {
@@ -1322,6 +1342,7 @@ glw_image_set(glw_t *w, va_list ap)
 {
   glw_image_t *gi = (glw_image_t *)w;
   glw_attribute_t attrib;
+  int r;
 
   do {
     attrib = va_arg(ap, int);
@@ -1342,6 +1363,14 @@ glw_image_set(glw_t *w, va_list ap)
 
     case GLW_ATTRIB_CHILD_ASPECT:
       gi->gi_child_aspect = va_arg(ap, double);
+      break;
+
+    case GLW_ATTRIB_RADIUS:
+      r = va_arg(ap, int);
+      if(gi->gi_radius != r) {
+	gi->gi_radius = r;
+	gi->gi_update = 1;
+      }
       break;
 
     default:

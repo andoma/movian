@@ -66,6 +66,8 @@ typedef struct glw_loadable_texture {
   float glt_s, glt_t;
   int16_t glt_tex_width;
   int16_t glt_tex_height;
+  int16_t glt_radius;
+  int16_t glt_margin;
 
 } glw_loadable_texture_t;
 
@@ -74,7 +76,8 @@ void glw_tex_init(glw_root_t *gr);
 void glw_tex_fini(glw_root_t *gr);
 
 glw_loadable_texture_t *glw_tex_create(glw_root_t *gr, rstr_t *url,
-				       int flags, int xs, int ys);
+				       int flags, int xs, int ys,
+				       int radius);
 
 void glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *ht);
 

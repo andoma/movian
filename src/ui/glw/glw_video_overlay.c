@@ -502,7 +502,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   ha.ey -= d->d_y1;
 #endif
 
-  pixmap_t *pm = pixmap_create(width, height, PIXMAP_BGR32);
+  pixmap_t *pm = pixmap_create(width, height, PIXMAP_BGR32, 0);
 
   /* XXX: this can be optimized in many ways */
 
