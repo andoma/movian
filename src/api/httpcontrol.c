@@ -123,6 +123,38 @@ prop_from_path(const char *path)
 }
 
 
+static int
+hc_prop_tree(http_connection_t *hc, const char *remain, void *opaque,
+	http_cmd_t method)
+{
+  htsbuf_queue_t out;
+  int rval;
+  prop_t *p = NULL;
+  char *path = (char *)http_arg_get_req(hc, "path");
+  int pretty = (int)http_arg_get_req(hc, "pretty");
+  int followlinks = (int)http_arg_get_req(hc, "followlinks");
+ 
+  if (path == NULL)
+    return 404;
+
+  p = prop_from_path(path);
+    
+  htsbuf_queue_init(&out, 0);
+
+  switch(method) {
+  case HTTP_CMD_GET:
+    prop_print_tree_json(p, &out, followlinks, pretty);
+    rval = http_send_reply(hc, 0, "application/json", NULL, NULL, 0, &out);
+    break;
+
+  default:
+    rval = HTTP_STATUS_METHOD_NOT_ALLOWED;
+    break;
+  }
+
+  return rval;
+}
+
 
 static int
 hc_prop(http_connection_t *hc, const char *remain, void *opaque,
@@ -478,6 +510,7 @@ httpcontrol_init(void)
 {
   http_path_add("/showtime/image", NULL, hc_image, 0);
   http_path_add("/showtime/open", NULL, hc_open, 1);
+  http_path_add("/showtime/tree", NULL, hc_prop_tree, 0);
   http_path_add("/showtime/prop", NULL, hc_prop, 0);
   http_path_add("/showtime/input/action", NULL, hc_action, 0);
   http_path_add("/showtime/input/utf8", NULL, hc_utf8, 1);

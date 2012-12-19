@@ -344,6 +344,10 @@ void prop_notify_childv(prop_vec_t *childv, prop_t *parent, prop_event_t event,
 
 void prop_print_tree0(prop_t *p, int indent, int followlinks);
 
+void prop_print_tree_json0(prop_t *p, htsbuf_queue_t *hq, int isarray, int indent, int followlinks, int pretty);
+
+void prop_print_json_value(prop_t *p, htsbuf_queue_t *hq, int isarray, int indent, int followlinks, int pretty);
+
 void prop_have_more_childs0(prop_t *p);
 
 void prop_want_more_childs0(prop_sub_t *s);
