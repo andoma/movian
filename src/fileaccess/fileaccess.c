@@ -888,3 +888,29 @@ fa_load_query(const char *url0, size_t *sizep,
   htsbuf_queue_flush(&q);
   return r;
 }
+
+
+/**
+ *
+ */
+int
+fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes)
+{
+  const int chunksize = 4096;
+  while(maxbytes > 0) {
+    char *buf = malloc(chunksize);
+    int l = fa_read(fh, buf, chunksize);
+    if(l < 0)
+      return -1;
+
+    if(l > 0) {
+      htsbuf_append_prealloc(hq, buf, l);
+    } else {
+      free(buf);
+    }
+    if(l != chunksize)
+      return 0;
+    maxbytes -= l;
+  }
+  return -1;
+}

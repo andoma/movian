@@ -23,12 +23,14 @@
 
 struct video_queue;
 struct fa_handle;
+struct vsource_list;
 
 event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
 			   int flags, int priority,
 			   char *errbuf, size_t errlen,
 			   const char *mimetype, const char *canonical_url,
-			   struct video_queue *vq);
+			   struct video_queue *vq,
+                           struct vsource_list *vsl);
 
 event_t *be_file_playvideo_fh(const char *url, media_pipe_t *mp,
                               int flags, int priority,

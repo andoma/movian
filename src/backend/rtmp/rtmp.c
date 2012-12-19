@@ -657,7 +657,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 	       char *errbuf, size_t errlen,
 	       const char *mimetype,
 	       const char *canonical_url,
-	       video_queue_t *vq)
+	       video_queue_t *vq,
+               struct vsource_list *vsl)
 {
   rtmp_t r = {0};
   event_t *e;

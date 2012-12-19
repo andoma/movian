@@ -1715,7 +1715,8 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
 		  char *errbuf, size_t errlen,
 		  const char *mimetype,
 		  const char *canonical_url,
-		  video_queue_t *vq)
+		  video_queue_t *vq,
+                  struct vsource_list *vsl)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];

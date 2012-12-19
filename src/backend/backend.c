@@ -87,7 +87,8 @@ backend_play_video(const char *url, struct media_pipe *mp,
 		   char *errbuf, size_t errlen,
 		   const char *mimetype, 
 		   const char *canonical_url,
-		   video_queue_t *vq)
+		   video_queue_t *vq,
+                   struct vsource_list *vsl)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -99,7 +100,7 @@ backend_play_video(const char *url, struct media_pipe *mp,
   mp_set_url(mp, canonical_url);
 
   return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
-			   canonical_url, vq);
+			   canonical_url, vq, vsl);
 }
 
 

@@ -193,6 +193,9 @@ rstr_t *fa_absolute_path(rstr_t *filename, rstr_t *at);
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
 
 struct htsbuf_queue;
+int fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes);
+
+struct htsbuf_queue;
 
 int http_request(const char *url, const char **arguments, 
 		 char **result, size_t *result_sizep,

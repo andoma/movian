@@ -26,6 +26,7 @@ struct media_pipe;
 struct navigator;
 struct event;
 struct image_meta;
+struct vsource_list;
 typedef struct video_queue video_queue_t;
 
 typedef int (be_load_cb_t)(void *opaque, int loaded, int total);
@@ -76,7 +77,8 @@ typedef struct backend {
 				 char *errbuf, size_t errlen,
 				 const char *mimetype,
 				 const char *canonical_url,
-				 video_queue_t *vq);
+				 video_queue_t *vq,
+                                 struct vsource_list *vsl);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
@@ -115,7 +117,8 @@ struct event *backend_play_video(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen,
 				 const char *mimetype,
 				 const char *canonical_url,
-				 video_queue_t *vq)
+				 video_queue_t *vq,
+                                 struct vsource_list *vsl)
   __attribute__ ((warn_unused_result));
 
 

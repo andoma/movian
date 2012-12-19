@@ -159,6 +159,8 @@ typedef enum {
 
   EVENT_REPAINT_UI,
 
+  EVENT_REOPEN,
+
   EVENT_DYNAMIC_ACTION,
 
 } event_type_t;
