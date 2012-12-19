@@ -709,7 +709,6 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     int l = fa_read(fh, buf, sizeof(buf) - 1);
     if(l > 10) {
       buf[l] = 0;
-      printf("%s\n", buf);
       if(mystrbegins(buf, "#EXTM3U") && strstr(buf, "#EXT-X-STREAM-INF:")) {
         htsbuf_queue_t hq;
         htsbuf_queue_init(&hq, 0);
