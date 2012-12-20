@@ -1487,6 +1487,7 @@ metadb_videoitem_set_preferred(void *db, const char *url, int64_t vid)
   sqlite3_bind_int64(stmt, 2, vid);
 
   rc = db_step(stmt);
+  sqlite3_finalize(stmt);
   if(rc == SQLITE_LOCKED)
     return METADATA_DEADLOCK;
   return 0;
@@ -1515,6 +1516,7 @@ metadb_videoitem_delete_from_ds(void *db, const char *url, int ds)
   sqlite3_bind_int(stmt, 2, ds);
 
   rc = db_step(stmt);
+  sqlite3_finalize(stmt);
   if(rc == SQLITE_LOCKED)
     return METADATA_DEADLOCK;
   return 0;
