@@ -93,6 +93,7 @@ typedef void (prop_callback_string_t)(void *opaque, const char *str);
 typedef void (prop_callback_rstr_t)(void *opaque, rstr_t *rstr);
 typedef void (prop_callback_int_t)(void *opaque, int value);
 typedef void (prop_callback_float_t)(void *opaque, float value);
+typedef void (prop_callback_event_t)(void *opaque, event_t *e);
 
 struct prop_sub;
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
@@ -142,6 +143,7 @@ enum {
   PROP_TAG_CALLBACK_RSTR,
   PROP_TAG_CALLBACK_INT,
   PROP_TAG_CALLBACK_FLOAT,
+  PROP_TAG_CALLBACK_EVENT,
   PROP_TAG_SET_INT,
   PROP_TAG_SET_FLOAT,
   PROP_TAG_COURIER,

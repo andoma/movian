@@ -559,6 +559,23 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
+static void 
+trampoline_event(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_event_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_EXT_EVENT)
+    cb(s->hps_opaque, va_arg(ap, event_t *));
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
 void
 prop_notify_dispatch(struct prop_notify_queue *q)
 {
@@ -2218,6 +2235,12 @@ prop_subscribe(int flags, ...)
     case PROP_TAG_CALLBACK_FLOAT:
       cb = va_arg(ap, void *);
       trampoline = trampoline_float;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_EVENT:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_event;
       opaque = va_arg(ap, void *);
       break;
 
