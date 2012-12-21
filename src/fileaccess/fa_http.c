@@ -2426,11 +2426,10 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	if(!isdir) {
 	  if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
 	    hf->hf_filesize = strtoll(d, NULL, 10);
-
-	  hf->hf_mtime = 0;
-	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
-	    http_ctime(&hf->hf_mtime, d);
-	}
+        }
+        hf->hf_mtime = 0;
+        if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
+          http_ctime(&hf->hf_mtime, d);
 	goto ok;
       } 
     }
