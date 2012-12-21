@@ -161,6 +161,8 @@ typedef enum {
 
   EVENT_REOPEN,
 
+  EVENT_REDIRECT,
+
   EVENT_DYNAMIC_ACTION,
 
 } event_type_t;
