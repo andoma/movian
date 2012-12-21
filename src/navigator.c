@@ -137,7 +137,7 @@ typedef struct navigator {
 
 } navigator_t;
 
-static void nav_eventsink(void *opaque, prop_event_t event, ...);
+static void nav_eventsink(void *opaque, event_t *e);
 
 static void nav_dtor_tracker(void *opaque, prop_event_t event, ...);
 
@@ -204,7 +204,7 @@ nav_create(prop_t *prop)
   nav->nav_eventsink = 
     prop_subscribe(0,
 		   PROP_TAG_NAME("nav", "eventsink"),
-		   PROP_TAG_CALLBACK, nav_eventsink, nav,
+		   PROP_TAG_CALLBACK_EVENT, nav_eventsink, nav,
 		   PROP_TAG_COURIER, nav_courier,
 		   PROP_TAG_ROOT, nav->nav_prop_root,
 		   NULL);
@@ -643,20 +643,11 @@ nav_reload_current(navigator_t *nav)
  *
  */
 static void
-nav_eventsink(void *opaque, prop_event_t event, ...)
+nav_eventsink(void *opaque, event_t *e)
 {
   navigator_t *nav = opaque;
-  event_t *e;
   event_openurl_t *ou;
 
-  va_list ap;
-  va_start(ap, event);
-
-  if(event != PROP_EXT_EVENT)
-    return;
-
-  e = va_arg(ap, event_t *);
-  
   if(event_is_action(e, ACTION_NAV_BACK)) {
     nav_back(nav);
 
