@@ -576,6 +576,23 @@ trampoline_event(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
+static void 
+trampoline_destroyed(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_destroyed_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_DESTROYED)
+    cb(s->hps_opaque, va_arg(ap, prop_sub_t *));
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
 void
 prop_notify_dispatch(struct prop_notify_queue *q)
 {
@@ -2241,6 +2258,12 @@ prop_subscribe(int flags, ...)
     case PROP_TAG_CALLBACK_EVENT:
       cb = va_arg(ap, void *);
       trampoline = trampoline_event;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_DESTROYED:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_destroyed;
       opaque = va_arg(ap, void *);
       break;
 
