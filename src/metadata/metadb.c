@@ -1142,62 +1142,44 @@ metadb_insert_imageitem(sqlite3 *db, int64_t item_id, const metadata_t *md)
 }
 
 
-
-
-
-
 /**
  *
  */
-void
-metadb_metadata_write(void *db, const char *url, time_t mtime,
-		      const metadata_t *md, const char *parent,
-		      time_t parent_mtime)
+int
+metadb_metadata_writex(void *db, const char *url, time_t mtime,
+                       const metadata_t *md, const char *parent,
+                       time_t parent_mtime)
 {
   int64_t item_id;
   int64_t parent_id = 0;
   int rc;
   sqlite3_stmt *stmt;
 
- again:
-  if(db_begin(db))
-    return;
-
   if(parent != NULL) {
     parent_id = db_item_get(db, parent, NULL);
-    if(parent_id == METADATA_DEADLOCK) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
+    if(parent_id == METADATA_DEADLOCK)
+      return METADATA_DEADLOCK;
 
     if(parent_id == METADATA_PERMANENT_ERROR)
       parent_id = db_item_create(db, parent, CONTENT_DIR, parent_mtime, 0);
 
-    if(parent_id == METADATA_DEADLOCK) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
+    if(parent_id == METADATA_DEADLOCK)
+      return METADATA_DEADLOCK;
   }
 
   item_id = db_item_get(db, url, NULL);
-  if(item_id == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
+  if(item_id == METADATA_DEADLOCK)
+    return METADATA_DEADLOCK;
 
   if(item_id < 0) {
 
     item_id = db_item_create(db, url, md->md_contenttype, mtime, parent_id);
 
-    if(item_id == METADATA_DEADLOCK) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
+    if(item_id == METADATA_DEADLOCK)
+      return METADATA_DEADLOCK;
 
-    if(item_id == -1) {
-      db_rollback(db);
-      return;
-    }
+    if(item_id == -1)
+      return METADATA_TEMPORARY_ERROR;
 
   } else {
 
@@ -1218,10 +1200,8 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 		    );
 
 
-    if(rc != SQLITE_OK) {
-      db_rollback(db);
-      return;
-    }
+    if(rc != SQLITE_OK)
+      return METADATA_PERMANENT_ERROR;
 
     if(md->md_contenttype)
       sqlite3_bind_int(stmt, 1, md->md_contenttype);
@@ -1232,10 +1212,8 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
 
     rc = db_step(stmt);
     sqlite3_finalize(stmt);
-    if(rc == METADATA_DEADLOCK) {
-      db_rollback_deadlock(db);
-      goto again;
-    }
+    if(rc == METADATA_DEADLOCK)
+      return METADATA_DEADLOCK;
   }
 
   int r;
@@ -1253,25 +1231,50 @@ metadb_metadata_write(void *db, const char *url, time_t mtime,
     r = metadb_insert_imageitem(db, item_id, md);
     break;
 
-  case CONTENT_DIR:
-  case CONTENT_DVD:
-    r = 0;
-    break;
 
   default:
-    r = 1;
+    return 0;
+  }
+  return r;
+}
+
+
+
+/**
+ *
+ */
+void
+metadb_metadata_write(void *db, const char *url, time_t mtime,
+		      const metadata_t *md, const char *parent,
+		      time_t parent_mtime)
+{
+  switch(md->md_contenttype) {
+  case CONTENT_AUDIO:
+  case CONTENT_VIDEO:
+  case CONTENT_IMAGE:
+  case CONTENT_DIR:
+  case CONTENT_DVD:
     break;
+  default:
+    return;
   }
 
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
+  while(1) {
+    if(db_begin(db))
+      return;
+    
+    int r = metadb_metadata_writex(db, url, mtime, md, parent, parent_mtime);
+    
+    if(r == METADATA_DEADLOCK) {
+      db_rollback_deadlock(db);
+      continue;
+    }
+    if(r)
+      db_rollback(db);
+    else
+      db_commit(db);
+    return;
   }
-
-  if(r)
-    db_rollback(db);
-  else
-    db_commit(db);
 }
 
 

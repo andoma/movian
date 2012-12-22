@@ -304,6 +304,10 @@ void metadb_metadata_write(void *db, const char *url, time_t mtime,
 			   const metadata_t *md, const char *parent,
 			   time_t parent_mtime);
 
+int metadb_metadata_writex(void *db, const char *url, time_t mtime,
+                           const metadata_t *md, const char *parent,
+                           time_t parent_mtime);
+
 metadata_t *metadb_metadata_get(void *db, const char *url, time_t mtime);
 
 struct fa_dir;
