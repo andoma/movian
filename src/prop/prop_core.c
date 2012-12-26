@@ -4021,6 +4021,59 @@ prop_have_more_childs(prop_t *p)
  *
  */
 void
+prop_mark_childs(prop_t *p)
+{
+  prop_t *c;
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      c->hp_flags |= PROP_MARKED;
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_unmark(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  p->hp_flags &= ~PROP_MARKED;
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+int
+prop_is_marked(prop_t *p)
+{
+  return p->hp_flags & PROP_MARKED ? 1 : 0;
+}
+
+
+/**
+ *
+ */
+void
+prop_destroy_marked_childs(prop_t *p)
+{
+  prop_t *c, *next;
+  for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+    next = TAILQ_NEXT(c, hp_parent_link);
+    if(c->hp_flags & PROP_MARKED)
+      prop_destroy0(c);
+  }
+}
+
+
+/**
+ *
+ */
+void
 prop_print_tree0(prop_t *p, int indent, int followlinks)
 {
   prop_t *c;

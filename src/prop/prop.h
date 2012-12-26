@@ -405,6 +405,13 @@ void prop_want_more_childs(prop_sub_t *s);
 
 void prop_have_more_childs(prop_t *p);
 
+void prop_mark_childs(prop_t *p);
+
+void prop_unmark(prop_t *p);
+
+int prop_is_marked(prop_t *p);
+
+void prop_destroy_marked_childs(prop_t *p);
 
 /**
  * Property tags
