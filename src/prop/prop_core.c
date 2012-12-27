@@ -4064,12 +4064,16 @@ prop_is_marked(prop_t *p)
 void
 prop_destroy_marked_childs(prop_t *p)
 {
-  prop_t *c, *next;
-  for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
-    next = TAILQ_NEXT(c, hp_parent_link);
-    if(c->hp_flags & PROP_MARKED)
-      prop_destroy0(c);
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c, *next;
+    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+      next = TAILQ_NEXT(c, hp_parent_link);
+      if(c->hp_flags & PROP_MARKED)
+        prop_destroy0(c);
+    }
   }
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
