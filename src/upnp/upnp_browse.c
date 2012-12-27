@@ -619,6 +619,7 @@ browse_directory(upnp_browse_t *ub, const char *title)
   rstr_t *t = rstr_alloc(title);
   decorated_browse_create(ub->ub_model, pnf, ub->ub_items, t, 0);
   rstr_release(t);
+  prop_nf_release(pnf);
 
   pc = prop_courier_create_waitable();
   ub->ub_run = 1;

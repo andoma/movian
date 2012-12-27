@@ -460,6 +460,26 @@ db_posint(sqlite3_stmt *stmt, int col)
 }
 
 
+/**
+ *
+ */
+void
+db_escape_path_query(char *dst, size_t dstlen, const char *src)
+{
+  for(; *src && dstlen > 3; dstlen--) {
+    if(*src == '%' || *src == '_') {
+      *dst++ = '\\';
+      *dst++ = *src++;
+      dstlen--;
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst++ = '%';
+  *dst = 0;
+}
+
+
 
 
 #if ENABLE_SQLITE_LOCKING

@@ -53,4 +53,6 @@ static inline void db_bind_rstr(sqlite3_stmt *stmt, int col, rstr_t *rstr)
 
 }
 
+void db_escape_path_query(char *dst, size_t dstlen, const char *src);
+
 void db_init(void);

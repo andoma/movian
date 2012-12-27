@@ -152,6 +152,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_nativesmb.c \
 	src/fileaccess/fa_buffer.c \
 	src/fileaccess/fa_imageloader.c \
+	src/fileaccess/fa_indexer.c \
 
 SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_probe.c \

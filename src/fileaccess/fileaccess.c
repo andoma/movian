@@ -44,6 +44,7 @@
 #include "fa_imageloader.h"
 #include "blobcache.h"
 #include "htsmsg/htsbuf.h"
+#include "fa_indexer.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 
@@ -560,6 +561,8 @@ fileaccess_init(void)
 #if ENABLE_READAHEAD_CACHE
   fa_cache_init();
 #endif
+
+  fa_indexer_init();
   return 0;
 }
 
