@@ -3370,6 +3370,9 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
 {
   prop_t *t;
 
+  if(p == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
