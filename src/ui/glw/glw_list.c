@@ -626,6 +626,8 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       // Last item went away, make sure to reset
       l->current_pos = 0;
       l->filtered_pos = 0;
+      w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+      l->suggest_cnt = 1;
     }
     update_focus_distance(w, extra);
     break;
