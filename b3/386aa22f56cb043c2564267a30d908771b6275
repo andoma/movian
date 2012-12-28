@@ -1,0 +1,9 @@
+Add support for user configurable fonts
+
+To install and use a new font put the font someplace where Showtime
+can browse it.
+When clicking on the font Showtime will what you want to use the font for.
+Showtime will copy the font to an internal storage location.
+
+To select between installed fonts or to reset to default, go to
+Settings -> Look and Feel -> Fonts
