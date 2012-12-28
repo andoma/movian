@@ -272,7 +272,8 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
       pm = pixmap_decode(pm, im, errbuf, errlen);
 
       if(im->im_corner_radius)
-	pm = pixmap_rounded_corners(pm, im->im_corner_radius);
+	pm = pixmap_rounded_corners(pm, im->im_corner_radius,
+				    im->im_corner_selection);
 
     }
   }

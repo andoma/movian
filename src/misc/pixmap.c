@@ -322,7 +322,7 @@ rgb24_to_bgr32(pixmap_t *src)
  *
  */
 pixmap_t *
-pixmap_rounded_corners(pixmap_t *pm, int r)
+pixmap_rounded_corners(pixmap_t *pm, int r, int which)
 {
   pixmap_t *tmp;
   switch(pm->pm_type) {
@@ -353,22 +353,31 @@ pixmap_rounded_corners(pixmap_t *pm, int r)
     int y = r - i - 1;
 
     dst = pm_pixel(pm, 0, y);
-    memset(dst, 0, len * sizeof(uint32_t));
-    dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
 
-    dst += pm->pm_width - pm->pm_margin * 2;
-    memset(dst - len, 0, len * sizeof(uint32_t));
-    dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+    if(which & PIXMAP_CORNER_TOPLEFT) {
+      memset(dst, 0, len * sizeof(uint32_t));
+      dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
+    }
+
+    if(which & PIXMAP_CORNER_TOPRIGHT) {
+      dst += pm->pm_width - pm->pm_margin * 2;
+      memset(dst - len, 0, len * sizeof(uint32_t));
+      dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+    }
 
 
     dst = pm_pixel(pm, 0, pm->pm_height - 1 - y - pm->pm_margin*2);
 
-    memset(dst, 0, len * sizeof(uint32_t));
-    dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
+    if(which & PIXMAP_CORNER_BOTTOMLEFT) {
+      memset(dst, 0, len * sizeof(uint32_t));
+      dst[len] = (dst[len] & 0x00ffffff) | alpha << 24;
+    }
 
-    dst += pm->pm_width - pm->pm_margin * 2;
-    memset(dst - len, 0, len * sizeof(uint32_t));
-    dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+    if(which & PIXMAP_CORNER_BOTTOMRIGHT) {
+      dst += pm->pm_width - pm->pm_margin * 2;
+      memset(dst - len, 0, len * sizeof(uint32_t));
+      dst[-len-1] = (dst[-len-1] & 0x00ffffff) | alpha << 24;
+    }
   }
   return pm;
 }

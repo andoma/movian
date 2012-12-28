@@ -158,17 +158,21 @@ typedef struct glw_rgb {
 /**
  * Image flags
  */
-#define GLW_IMAGE_FIXED_SIZE    0x2
-#define GLW_IMAGE_BEVEL_LEFT    0x8
-#define GLW_IMAGE_BEVEL_TOP     0x10
-#define GLW_IMAGE_BEVEL_RIGHT   0x20
-#define GLW_IMAGE_BEVEL_BOTTOM  0x40
-#define GLW_IMAGE_SET_ASPECT    0x80
-#define GLW_IMAGE_ADDITIVE      0x100
-#define GLW_IMAGE_BORDER_ONLY   0x200
-#define GLW_IMAGE_BORDER_LEFT   0x400
-#define GLW_IMAGE_BORDER_RIGHT  0x800
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS  0x1000
+#define GLW_IMAGE_CORNER_TOPLEFT       0x1
+#define GLW_IMAGE_CORNER_TOPRIGHT      0x2
+#define GLW_IMAGE_CORNER_BOTTOMLEFT    0x4
+#define GLW_IMAGE_CORNER_BOTTOMRIGHT   0x8
+#define GLW_IMAGE_FIXED_SIZE           0x10
+#define GLW_IMAGE_BEVEL_LEFT           0x20
+#define GLW_IMAGE_BEVEL_TOP            0x40
+#define GLW_IMAGE_BEVEL_RIGHT          0x80
+#define GLW_IMAGE_BEVEL_BOTTOM         0x100
+#define GLW_IMAGE_SET_ASPECT           0x200
+#define GLW_IMAGE_ADDITIVE             0x400
+#define GLW_IMAGE_BORDER_ONLY          0x800
+#define GLW_IMAGE_BORDER_LEFT          0x1000
+#define GLW_IMAGE_BORDER_RIGHT         0x2000
+#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x4000
 
 /**
  * Video flags

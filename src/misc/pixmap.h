@@ -62,9 +62,9 @@ typedef struct image_meta {
   char im_no_decoding;
   char im_32bit_swizzle; // can do full 32bit swizzle in hardware
   char im_no_rgb24;
+  uint8_t im_corner_selection;
   uint16_t im_corner_radius;
   uint16_t im_margin;
-
 } image_meta_t;
 
 /**
@@ -152,6 +152,11 @@ int color_is_not_gray(uint32_t rgb);
 
 void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
 
-pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r);
+#define PIXMAP_CORNER_TOPLEFT     0x1
+#define PIXMAP_CORNER_TOPRIGHT    0x2
+#define PIXMAP_CORNER_BOTTOMLEFT  0x4
+#define PIXMAP_CORNER_BOTTOMRIGHT 0x8
+
+pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
 
 #endif

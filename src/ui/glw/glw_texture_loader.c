@@ -158,6 +158,7 @@ loader_thread(void *aux)
       im.im_max_height = gr->gr_height;
       im.im_can_mono = 1;
       im.im_corner_radius = glt->glt_radius;
+      im.im_corner_selection = glt->glt_flags & 0xf;
 
       if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	cache_control = 0;

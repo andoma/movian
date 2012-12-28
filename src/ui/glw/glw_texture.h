@@ -21,7 +21,11 @@
 
 #include "misc/pixmap.h"
 
-#define GLW_TEX_REPEAT 0x1
+#define GLW_TEX_CORNER_TOPLEFT        PIXMAP_CORNER_TOPLEFT
+#define GLW_TEX_CORNER_TOPRIGHT       PIXMAP_CORNER_TOPRIGHT
+#define GLW_TEX_CORNER_BOTTOMLEFT     PIXMAP_CORNER_BOTTOMLEFT
+#define GLW_TEX_CORNER_BOTTOMRIGHT    PIXMAP_CORNER_BOTTOMRIGHT
+#define GLW_TEX_REPEAT                0x10
 
 typedef struct glw_loadable_texture {
 

@@ -773,7 +773,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if(gi->gi_pending_url != NULL) {
     // Request to load
     int xs = -1, ys = -1;
-    int flags = 0;
+    int flags = gi->gi_bitmap_flags & 0xf; // corners
     gi->gi_loading_new_url = 1;
 
     if(gi->gi_pending != NULL) {
@@ -955,7 +955,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	rescale = 0;
 
       if(rescale) {
-	int flags = 0;
+	int flags = gi->gi_bitmap_flags & 0xf; // corners
 	if(w->glw_class == &glw_repeatedimage)
 	  flags |= GLW_TEX_REPEAT;
 	
@@ -1054,7 +1054,14 @@ glw_image_ctor(glw_t *w)
 {
   glw_image_t *gi = (void *)w;
 
-  gi->gi_bitmap_flags = GLW_IMAGE_BORDER_LEFT | GLW_IMAGE_BORDER_RIGHT;
+  gi->gi_bitmap_flags =
+    GLW_TEX_CORNER_TOPLEFT |
+    GLW_TEX_CORNER_TOPRIGHT |
+    GLW_TEX_CORNER_BOTTOMLEFT |
+    GLW_TEX_CORNER_BOTTOMRIGHT |
+    GLW_IMAGE_BORDER_LEFT |
+    GLW_IMAGE_BORDER_RIGHT;
+
   gi->gi_autofade = 1;
   gi->gi_alpha_self = 1;
   gi->gi_color.r = 1.0;

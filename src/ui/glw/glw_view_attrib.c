@@ -1060,6 +1060,12 @@ static const token_attrib_t attribtab[] = {
   {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
   {"aspectFixedBorders", mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
 
+  {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,     mod_img_flags},
+  {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,    mod_img_flags},
+  {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,  mod_img_flags},
+  {"cornerBottomRight", mod_flag, GLW_IMAGE_CORNER_BOTTOMRIGHT, mod_img_flags},
+
+
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
   {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
