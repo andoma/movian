@@ -381,7 +381,6 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
       strstr((const char *)buf, "#EXT-X-TARGETDURATION:") ||
       strstr((const char *)buf, "#EXT-X-MEDIA-SEQUENCE:"))) {
     md->md_contenttype = CONTENT_VIDEO;
-    printf("HLS was probed!\n");
     return 1;
   }
   return 0;
