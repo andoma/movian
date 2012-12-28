@@ -4115,13 +4115,11 @@ void prop_print_json_value(prop_t *c, htsbuf_queue_t *hq, int isarray, int inden
       break;
 
     case PROP_VOID:
-      snprintf(buf, sizeof(buf), "\"\"");
-      htsbuf_append(hq, buf, strlen(buf));
+      htsbuf_append(hq, "null", 4);
       break;
     
     case PROP_ZOMBIE:
-      snprintf(buf, sizeof(buf), "\"<zombie, ref=%d>\"", c->hp_refcount);
-      htsbuf_append(hq, buf, strlen(buf));
+      htsbuf_append(hq, "null", 4);
       break;
 
     case PROP_FLOAT:
