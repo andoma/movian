@@ -166,7 +166,7 @@ void prop_unsubscribe(prop_sub_t *s);
 
 prop_t *prop_create_ex(prop_t *parent, const char *name,
 		       prop_sub_t *skipme, int noalloc, int incref)
-     __attribute__ ((malloc)) __attribute__((nonnull (1)));
+     __attribute__ ((malloc));
 
 #define prop_create(parent, name) \
   prop_create_ex(parent, name, NULL, __builtin_constant_p(name), 0)
