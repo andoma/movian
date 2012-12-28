@@ -218,6 +218,7 @@ play_video(const char *url, struct media_pipe *mp,
   struct vsource_list vsources;
   event_t *e;
   const char *canonical_url;
+  htsmsg_t *m = NULL;
   LIST_INIT(&vsources);
 
   mp_reinit_streams(mp);
@@ -259,14 +260,14 @@ play_video(const char *url, struct media_pipe *mp,
   } else {
 
     url += strlen("videoparams:");
-    htsmsg_t *m = htsmsg_json_deserialize(url);
+    m = htsmsg_json_deserialize(url);
 
     if(m == NULL) {
       snprintf(errbuf, errlen, "Invalid JSON");
       return NULL;
     }
 
-    const char *canonical_url = htsmsg_get_str(m, "canonicalUrl");
+    canonical_url = htsmsg_get_str(m, "canonicalUrl");
 
     // Sources
 
@@ -363,6 +364,8 @@ play_video(const char *url, struct media_pipe *mp,
   }
 
   vsource_cleanup(&vsources);
+  if(m)
+    htsmsg_destroy(m);
   return e;
 }
 

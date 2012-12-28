@@ -18,6 +18,7 @@
 
 #include <limits.h>
 #include <unistd.h>
+#include <stdio.h>
 
 #include "showtime.h"
 #include "backend/backend.h"

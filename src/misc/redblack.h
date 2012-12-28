@@ -18,6 +18,8 @@
 
 #pragma once
 
+#include <stdint.h>
+
 #define RB_TREE_NODE_RED      1
 #define RB_TREE_NODE_BLACK    0
 

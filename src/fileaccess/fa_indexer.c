@@ -296,6 +296,7 @@ indexer_thread(void *aux)
     if(!did_something)
       hts_cond_wait(&indexer_cond, &indexer_mutex);
   }
+  return NULL;
 }
 
 
