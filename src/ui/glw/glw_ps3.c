@@ -1112,10 +1112,10 @@ glw_ps3_start(void)
     gr->gr_base_underscan_v = 20;
   }
 
-  gr->gr_open_osk = osk_open;
-
   if(glw_init(gr))
     return 1;
+
+  gr->gr_open_osk = osk_open;
 
   TRACE(TRACE_DEBUG, "GLW", "loading universe");
 

@@ -157,6 +157,8 @@ loader_thread(void *aux)
       im.im_max_width  = gr->gr_width;
       im.im_max_height = gr->gr_height;
       im.im_can_mono = 1;
+      im.im_corner_radius = glt->glt_radius;
+      im.im_corner_selection = glt->glt_flags & 0xf;
 
       if(glt->glt_q == &gr->gr_tex_load_queue[LQ_TENTATIVE]) {
 	cache_control = 0;
@@ -230,6 +232,7 @@ loader_thread(void *aux)
 	    assert(!pixmap_is_coded(pm));
 	    glt->glt_orientation = pm->pm_orientation;
 	    glt->glt_aspect = pm->pm_aspect;
+	    glt->glt_margin = pm->pm_margin;
 	    glw_tex_backend_load(gr, glt, pm);
 	  }
 	}
@@ -385,7 +388,8 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
  *
  */
 glw_loadable_texture_t *
-glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys)
+glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys,
+	       int radius)
 {
   glw_loadable_texture_t *glt;
 
@@ -396,7 +400,8 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys)
     if(!strcmp(rstr_get(glt->glt_url), rstr_get(filename)) &&
        glt->glt_flags == flags &&
        glt->glt_req_xs == xs &&
-       glt->glt_req_ys == ys)
+       glt->glt_req_ys == ys &&
+       glt->glt_radius == radius)
       break;
 
   if(glt == NULL) {
@@ -407,6 +412,7 @@ glw_tex_create(glw_root_t *gr, rstr_t *filename, int flags, int xs, int ys)
     glt->glt_flags = flags;
     glt->glt_req_xs = xs;
     glt->glt_req_ys = ys;
+    glt->glt_radius = radius;
   }
 
   glt->glt_refcnt++;

@@ -1293,14 +1293,13 @@ text_render0(const uint32_t *uc, const int len,
 
   // --- allocate and init pixmap
 
-  pm = pixmap_create(target_width + margin*2, target_height + margin*2,
+  pm = pixmap_create(target_width, target_height,
 		     flags & TR_RENDER_NO_OUTPUT ? PIXMAP_NULL :
-		     color_output ? PIXMAP_BGR32 : PIXMAP_IA);
+		     color_output ? PIXMAP_BGR32 : PIXMAP_IA, margin);
 
   if(pm != NULL) {
     pm->pm_lines = lines;
     pm->pm_flags = pmflags;
-    pm->pm_margin = margin;
 
     if(pm->pm_data != NULL) {
   

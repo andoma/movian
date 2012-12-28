@@ -3169,8 +3169,8 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Event */
   token_t *r;
-  int action;
-
+  int action = 0;
+  int uc = 0;
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
@@ -3178,13 +3178,24 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "event(): "
 			    "First argument is not a string");
   
-  if(b->type != TOKEN_IDENTIFIER ||
-     (action = action_str2code(rstr_get(b->t_rstring))) < 0)
-    return glw_view_seterr(ec->ei, b, "event(): "
-			    "Invalid target event");
+  if(b->type == TOKEN_IDENTIFIER) {
+
+    action = action_str2code(rstr_get(b->t_rstring));
+    if(action < 0)
+      return glw_view_seterr(ec->ei, b,
+			     "targetedEvent(): Invalid action");
+  } else if(b->type == TOKEN_RSTRING) {
+
+    const char *str = rstr_get(b->t_rstring);
+    uc = utf8_get(&str);
+  } else {
+    return glw_view_seterr(ec->ei, b,
+			   "targetedEvent(): Invalid second argument");
+  }
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action);
+  r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action,
+					   uc);
   eval_push(ec, r);
   return 0;
 }
@@ -3207,7 +3218,7 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "event(): Invalid target event");
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(NULL, action);
+  r->t_gem = glw_event_map_internal_create(NULL, action, 0);
   eval_push(ec, r);
   return 0;
 }
@@ -4227,7 +4238,6 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *r;
   glw_t *w;
-  char buf[100];
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -4235,9 +4245,9 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   if(a != NULL && a->type == TOKEN_RSTRING) {
     w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
 
-    if(w != NULL && !glw_get_text(w, buf, sizeof(buf))) {
+    if(w != NULL && w->glw_class->gc_get_text != NULL) {
       r = eval_alloc(self, ec, TOKEN_RSTRING);
-      r->t_rstring = rstr_alloc(buf);
+      r->t_rstring = rstr_alloc(w->glw_class->gc_get_text(w));
       eval_push(ec, r);
       return 0;
     }

@@ -439,7 +439,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       h = im->im_req_height;
     }
 
-    pm = pixmap_create(w, h, PIXMAP_RGB24);
+    pm = pixmap_create(w, h, PIXMAP_RGB24, 0);
 
     if(pm == NULL) {
       ifv_close();

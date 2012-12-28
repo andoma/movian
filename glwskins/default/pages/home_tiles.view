@@ -63,6 +63,10 @@ $view.sizer = $ui.size / 2;
 
 widget(container_y, {
 
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+
   padding: $ui.size / 2;
 
   cloner($global.news, container_x, {

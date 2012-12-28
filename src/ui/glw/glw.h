@@ -133,6 +133,7 @@ typedef enum {
   GLW_ATTRIB_CENTER,
   GLW_ATTRIB_ALPHA_FALLOFF,
   GLW_ATTRIB_BLUR_FALLOFF,
+  GLW_ATTRIB_RADIUS,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -144,6 +145,7 @@ typedef enum {
 #define GTB_BOLD          0x4
 #define GTB_ITALIC        0x8
 #define GTB_OUTLINE       0x10
+#define GTB_PERMANENT_CURSOR 0x20
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -156,17 +158,21 @@ typedef struct glw_rgb {
 /**
  * Image flags
  */
-#define GLW_IMAGE_FIXED_SIZE    0x2
-#define GLW_IMAGE_BEVEL_LEFT    0x8
-#define GLW_IMAGE_BEVEL_TOP     0x10
-#define GLW_IMAGE_BEVEL_RIGHT   0x20
-#define GLW_IMAGE_BEVEL_BOTTOM  0x40
-#define GLW_IMAGE_SET_ASPECT    0x80
-#define GLW_IMAGE_ADDITIVE      0x100
-#define GLW_IMAGE_BORDER_ONLY   0x200
-#define GLW_IMAGE_BORDER_LEFT   0x400
-#define GLW_IMAGE_BORDER_RIGHT  0x800
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS  0x1000
+#define GLW_IMAGE_CORNER_TOPLEFT       0x1
+#define GLW_IMAGE_CORNER_TOPRIGHT      0x2
+#define GLW_IMAGE_CORNER_BOTTOMLEFT    0x4
+#define GLW_IMAGE_CORNER_BOTTOMRIGHT   0x8
+#define GLW_IMAGE_FIXED_SIZE           0x10
+#define GLW_IMAGE_BEVEL_LEFT           0x20
+#define GLW_IMAGE_BEVEL_TOP            0x40
+#define GLW_IMAGE_BEVEL_RIGHT          0x80
+#define GLW_IMAGE_BEVEL_BOTTOM         0x100
+#define GLW_IMAGE_SET_ASPECT           0x200
+#define GLW_IMAGE_ADDITIVE             0x400
+#define GLW_IMAGE_BORDER_ONLY          0x800
+#define GLW_IMAGE_BORDER_LEFT          0x1000
+#define GLW_IMAGE_BORDER_RIGHT         0x2000
+#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x4000
 
 /**
  * Video flags
@@ -829,11 +835,19 @@ typedef struct glw_root {
   int gr_vtmp_cur;
   int gr_vtmp_capacity;
 
+  int gr_random;
+
+  // On Screen Keyboard
+
   void (*gr_open_osk)(struct glw_root *gr, 
 		      const char *title, const char *str, struct glw *w,
 		      int password);
 
-  int gr_random;
+
+  struct glw *gr_osk_widget;
+  prop_sub_t *gr_osk_text_sub;
+  prop_sub_t *gr_osk_ev_sub;
+
 
 } glw_root_t;
 
@@ -1189,6 +1203,7 @@ do {						\
   case GLW_ATTRIB_X_SPACING:                    \
   case GLW_ATTRIB_Y_SPACING:                    \
   case GLW_ATTRIB_SCROLL_THRESHOLD:             \
+  case GLW_ATTRIB_RADIUS:			\
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_ANGLE:			\
@@ -1235,8 +1250,6 @@ void glw_suspend_subscriptions(glw_t *w);
 void glw_unref(glw_t *w);
 
 #define glw_ref(w) ((w)->glw_refcnt++)
-
-int glw_get_text(glw_t *w, char *buf, size_t buflen);
 
 glw_t *glw_get_prev_n(glw_t *c, int count);
 
