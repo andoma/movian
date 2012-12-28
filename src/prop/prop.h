@@ -425,7 +425,7 @@ const char *propname(prop_t *p);
 
 void prop_print_tree(prop_t *p, int followlinks);
 
-void prop_print_tree_json(prop_t *p, htsbuf_queue_t *hq, int followlinks, int pretty);
+void prop_print_tree_json(prop_t *p, htsbuf_queue_t *hq, int pretty);
 
 void prop_test(void);
 

@@ -132,7 +132,6 @@ hc_prop_tree(http_connection_t *hc, const char *remain, void *opaque,
   prop_t *p = NULL;
   char *path = (char *)http_arg_get_req(hc, "path");
   int pretty = (int)http_arg_get_req(hc, "pretty");
-  int followlinks = (int)http_arg_get_req(hc, "followlinks");
  
   if (path == NULL)
     return 404;
@@ -143,7 +142,7 @@ hc_prop_tree(http_connection_t *hc, const char *remain, void *opaque,
 
   switch(method) {
   case HTTP_CMD_GET:
-    prop_print_tree_json(p, &out, followlinks, pretty);
+    prop_print_tree_json(p, &out, pretty);
     rval = http_send_reply(hc, 0, "application/json", NULL, NULL, 0, &out);
     break;
 
