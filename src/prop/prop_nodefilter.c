@@ -74,7 +74,6 @@ typedef struct nfnode {
   struct nfn_pred_list preds;
 
   struct prop_nf *nf;
-  int16_t pos;
   char inserted:1;
   char frozen:1;
   char sortkey_type[MAX_SORT_KEYS];
@@ -138,8 +137,6 @@ typedef struct prop_nf {
   struct nfnode_queue out;
 
   char *filter;
-
-  int pos_valid;
 
   char *sortkey[MAX_SORT_KEYS];
   sortmap_t *sortmap[MAX_SORT_KEYS];
@@ -229,24 +226,6 @@ eval_preds(nfnode_t *nfn)
   return 0;
 }
 
-/**
- *
- */
-static void
-nf_renumber(prop_nf_t *nf)
-{
-  int pos;
-  nfnode_t *nfn;
-
-  if(nf->pos_valid)
-    return;
-
-  nf->pos_valid = 1;
-  pos = 0;
-  TAILQ_FOREACH(nfn, &nf->in, in_link)
-    nfn->pos = pos++;
-}
-
 
 /**
  *
@@ -334,7 +313,7 @@ nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
     if(r)
       return r * a->nf->sortorder[i];
   }
-  return a->pos - b->pos;
+  return a < b ? -1 : 1;
 }
 
 
@@ -402,8 +381,6 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
     }
 
   } else {
-
-    nf_renumber(nf);
 
     TAILQ_INSERT_SORTED(&nf->out, nfn, out_link, nf_egress_cmp);
   }
@@ -762,15 +739,7 @@ nf_add_node(prop_nf_t *nf, prop_t *node, nfnode_t *b)
 
   if(b != NULL) {
     TAILQ_INSERT_BEFORE(b, nfn, in_link);
-    nf->pos_valid = 0;
-
   } else {
-
-    if(nf->pos_valid) {
-      nfnode_t *l = TAILQ_LAST(&nf->in, nfnode_queue);
-      nfn->pos = l ? l->pos + 1 : 0;
-    }
-
     TAILQ_INSERT_TAIL(&nf->in, nfn, in_link);
   }
 
@@ -795,9 +764,6 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
   int i;
   nfnode_t *nfn;
 
-  if(b != NULL)
-    nf->pos_valid = 0;
-
   const int len = prop_vec_len(pv);
   nf->nodecount += len;
   for(i = 0; i < len; i++) {
@@ -805,11 +771,6 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
     nfn = calloc(1, sizeof(nfnode_t));
 
     prop_tag_set(p, nf, nfn);
-
-    if(nf->pos_valid) {
-      nfnode_t *l = TAILQ_LAST(&nf->in, nfnode_queue);
-      nfn->pos = l ? l->pos + 1 : 0;
-    }
 
     if(b != NULL) {
       TAILQ_INSERT_BEFORE(b, nfn, in_link);
@@ -846,7 +807,6 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
   int i;
   nfn_pred_t *nfnp;
 
-  nf->pos_valid = 0;
   nf->nodecount--;
   TAILQ_REMOVE(&nf->in, nfn, in_link);
   TAILQ_REMOVE(&nf->out, nfn, out_link);
@@ -879,8 +839,6 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
 static void
 nf_move_node(prop_nf_t *nf, nfnode_t *nfn, nfnode_t *b)
 {
-  nf->pos_valid = 0;
-
   TAILQ_REMOVE(&nf->in, nfn, in_link);
 
   if(b != NULL) {
@@ -921,6 +879,7 @@ nf_destroy_pred(struct prop_nf_pred *pnp)
   free(pnp);
 }
 
+
 /**
  *
  */
@@ -932,7 +891,6 @@ nf_destroy_preds(prop_nf_t *nf)
   while((pnp = LIST_FIRST(&nf->preds)) != NULL)
     nf_destroy_pred(pnp);
 }
-
 
 
 /**
@@ -947,7 +905,6 @@ nf_clear(prop_nf_t *nf)
     prop_tag_clear(nfn->in, nf);
     nf_del_node(nf, nfn);
   }
-  nf->pos_valid = 1;
 }
 
 

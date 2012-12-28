@@ -86,6 +86,8 @@ typedef enum {
 } prop_str_type_t;
 
 
+struct prop_sub;
+
 
 typedef void (prop_callback_t)(void *opaque, prop_event_t event, ...);
 typedef void (prop_callback_ui_t)(void *opaque, int user_int, 
@@ -94,8 +96,9 @@ typedef void (prop_callback_string_t)(void *opaque, const char *str);
 typedef void (prop_callback_rstr_t)(void *opaque, rstr_t *rstr);
 typedef void (prop_callback_int_t)(void *opaque, int value);
 typedef void (prop_callback_float_t)(void *opaque, float value);
+typedef void (prop_callback_event_t)(void *opaque, event_t *e);
+typedef void (prop_callback_destroyed_t)(void *opaque, struct prop_sub *s);
 
-struct prop_sub;
 typedef void (prop_trampoline_t)(struct prop_sub *s, prop_event_t event, ...);
 
 typedef void (prop_lockmgr_t)(void *ptr, int lock);
@@ -143,6 +146,8 @@ enum {
   PROP_TAG_CALLBACK_RSTR,
   PROP_TAG_CALLBACK_INT,
   PROP_TAG_CALLBACK_FLOAT,
+  PROP_TAG_CALLBACK_EVENT,
+  PROP_TAG_CALLBACK_DESTROYED,
   PROP_TAG_SET_INT,
   PROP_TAG_SET_FLOAT,
   PROP_TAG_COURIER,
@@ -401,6 +406,13 @@ void prop_want_more_childs(prop_sub_t *s);
 
 void prop_have_more_childs(prop_t *p);
 
+void prop_mark_childs(prop_t *p);
+
+void prop_unmark(prop_t *p);
+
+int prop_is_marked(prop_t *p);
+
+void prop_destroy_marked_childs(prop_t *p);
 
 /**
  * Property tags

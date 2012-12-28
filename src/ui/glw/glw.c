@@ -839,20 +839,20 @@ glw_move(glw_t *w, glw_t *b)
   } else {
     TAILQ_INSERT_BEFORE(b, w, glw_parent_link);
   }
-  glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
   if(p->glw_flags2 & GLW2_FLOATING_FOCUS) {
     if(w == TAILQ_FIRST(&p->glw_childs)) {
       glw_t *w2 = TAILQ_NEXT(w, glw_parent_link);
       if(w2 != NULL && p->glw_focused == w2) {
 	glw_t *c = glw_focus_by_path(w);
-	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+	glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF);
       }
     } else if(was_first) {
       glw_t *w2 = TAILQ_FIRST(&p->glw_childs);
       glw_t *c = glw_focus_by_path(w2);
-      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC);
+      glw_focus_set(c->glw_root, c, GLW_FOCUS_SET_AUTOMATIC_FF);
     }
   }
+  glw_signal0(p, GLW_SIGNAL_CHILD_MOVED, w);
 }
 
 
@@ -1008,7 +1008,8 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 
   gr->gr_focus_work = 1;
 
-  if(how == GLW_FOCUS_SET_AUTOMATIC) {
+  if(how == GLW_FOCUS_SET_AUTOMATIC ||
+     how == GLW_FOCUS_SET_AUTOMATIC_FF) {
     sig = GLW_SIGNAL_FOCUS_CHILD_AUTOMATIC;
   } else {
     sig = GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE;
@@ -1040,12 +1041,18 @@ glw_focus_set(glw_root_t *gr, glw_t *w, int how)
 	 * insert entries in random order
 	 */
 	int ff = p->glw_flags2 & GLW2_FLOATING_FOCUS && 
-	  x == TAILQ_FIRST(&p->glw_childs);
+	  (x == TAILQ_FIRST(&p->glw_childs) ||
+           how == GLW_FOCUS_SET_AUTOMATIC_FF);
 
 	if(y == NULL || how == GLW_FOCUS_SET_INTERACTIVE ||
 	   weight > y->glw_focus_weight || 
 	   (ff && weight == y->glw_focus_weight)) {
 	  x->glw_parent->glw_focused = x;
+#if 0
+          printf("Signal %s child %p focused %d %f %f %d\n", 
+                 x->glw_parent->glw_class->gc_name,
+                 x, how, weight, w->glw_focus_weight, ff);
+#endif
 	  glw_signal0(x->glw_parent, sig, x);
 	} else {
 	  /* Other path outranks our weight, stop now */

@@ -672,7 +672,7 @@ struct metadata_lazy_video {
   prop_sub_t *mlv_trig_desc;
   prop_sub_t *mlv_trig_rating;
 
-  int mlv_duration;
+  float mlv_duration;
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
@@ -1138,115 +1138,119 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
     }
   }
 
-  title = rstr_dup(custom_title);
+  if(mlv->mlv_m != NULL) {
+    title = rstr_dup(custom_title);
 
-  if(md != NULL) {
-    mlv->mlv_dsid = md->md_dsid;
-    ms = get_ms(mlv->mlv_type, md->md_dsid);
-    if(ms != NULL)
-      prop_set(mlv->mlv_m, "source", PROP_SET_STRING, ms->ms_description);
+    if(md != NULL) {
+      mlv->mlv_dsid = md->md_dsid;
+      ms = get_ms(mlv->mlv_type, md->md_dsid);
+      if(ms != NULL)
+        prop_set(mlv->mlv_m, "source", PROP_SET_STRING, ms->ms_description);
 
-    prop_set(mlv->mlv_m, "icon",        PROP_SET_RSTRING, md->md_icon);
-    prop_set(mlv->mlv_m, "tagline",     PROP_SET_RSTRING, md->md_tagline);
-    prop_set(mlv->mlv_m, "description", PROP_SET_RSTRING, md->md_description);
-    prop_set(mlv->mlv_m, "backdrop",    PROP_SET_RSTRING, md->md_backdrop);
-    prop_set(mlv->mlv_m, "genre",       PROP_SET_RSTRING, md->md_genre);
+      prop_set(mlv->mlv_m, "icon",        PROP_SET_RSTRING, md->md_icon);
+      prop_set(mlv->mlv_m, "tagline",     PROP_SET_RSTRING, md->md_tagline);
+      prop_set(mlv->mlv_m, "description", PROP_SET_RSTRING, md->md_description);
+      prop_set(mlv->mlv_m, "backdrop",    PROP_SET_RSTRING, md->md_backdrop);
+      prop_set(mlv->mlv_m, "genre",       PROP_SET_RSTRING, md->md_genre);
 
-    prop_set(mlv->mlv_m, "year",
-	      md->md_year ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_year);
+      prop_set(mlv->mlv_m, "year",
+               md->md_year ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_year);
 
-    prop_set(mlv->mlv_m, "rating",
-	      md->md_rating >= 0 ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_rating);
+      prop_set(mlv->mlv_m, "rating",
+               md->md_rating >= 0 ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_rating);
 
-    prop_set(mlv->mlv_m, "rating_count",
-	      md->md_rating_count >= 0 ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_rating_count);
+      prop_set(mlv->mlv_m, "rating_count",
+               md->md_rating_count >= 0 ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_rating_count);
       
-    set_cast_n_crew(mlv->mlv_m, md);
+      set_cast_n_crew(mlv->mlv_m, md);
 
-    metadata_t *season = NULL;
-    metadata_t *series = NULL;
+      metadata_t *season = NULL;
+      metadata_t *series = NULL;
 
-    if(md->md_parent && md->md_parent->md_type == METADATA_TYPE_SEASON) {
-      season = md->md_parent;
-      // It's a TV serie
+      if(md->md_parent && md->md_parent->md_type == METADATA_TYPE_SEASON) {
+        season = md->md_parent;
+        // It's a TV serie
 
-      prop_t *pepi = prop_create_r(mlv->mlv_m, "episode");
-      prop_t *psea = prop_create_r(mlv->mlv_m, "season");
-      prop_t *pser = prop_create_r(mlv->mlv_m, "series");
+        prop_t *pepi = prop_create_r(mlv->mlv_m, "episode");
+        prop_t *psea = prop_create_r(mlv->mlv_m, "season");
+        prop_t *pser = prop_create_r(mlv->mlv_m, "series");
 
-      prop_set(pepi, "number",     PROP_SET_INT,     md->md_idx);
-      prop_set(pepi, "title",      PROP_SET_RSTRING, md->md_title);
-      prop_set(pepi, "backdrop",   PROP_SET_RSTRING, md->md_backdrop);
-      prop_set(pepi, "bannerWide", PROP_SET_RSTRING, md->md_banner_wide);
-      prop_set(pepi, "icon",       PROP_SET_RSTRING, md->md_icon);
+        prop_set(pepi, "number",     PROP_SET_INT,     md->md_idx);
+        prop_set(pepi, "title",      PROP_SET_RSTRING, md->md_title);
+        prop_set(pepi, "backdrop",   PROP_SET_RSTRING, md->md_backdrop);
+        prop_set(pepi, "bannerWide", PROP_SET_RSTRING, md->md_banner_wide);
+        prop_set(pepi, "icon",       PROP_SET_RSTRING, md->md_icon);
 
-      prop_set(psea, "number",     PROP_SET_INT,     season->md_idx);
-      prop_set(psea, "title",      PROP_SET_RSTRING, season->md_title);
-      prop_set(psea, "backdrop",   PROP_SET_RSTRING, season->md_backdrop);
-      prop_set(psea, "bannerWide", PROP_SET_RSTRING, season->md_banner_wide);
-      prop_set(psea, "icon",       PROP_SET_RSTRING, season->md_icon);
+        prop_set(psea, "number",     PROP_SET_INT,     season->md_idx);
+        prop_set(psea, "title",      PROP_SET_RSTRING, season->md_title);
+        prop_set(psea, "backdrop",   PROP_SET_RSTRING, season->md_backdrop);
+        prop_set(psea, "bannerWide", PROP_SET_RSTRING, season->md_banner_wide);
+        prop_set(psea, "icon",       PROP_SET_RSTRING, season->md_icon);
 
-      set_cast_n_crew(psea, season);
+        set_cast_n_crew(psea, season);
 
-      if(season->md_parent &&
-	 season->md_parent->md_type == METADATA_TYPE_SERIES) {
-	series = season->md_parent;
+        if(season->md_parent &&
+           season->md_parent->md_type == METADATA_TYPE_SERIES) {
+          series = season->md_parent;
 
-	prop_set(pser, "title",      PROP_SET_RSTRING, series->md_title);
-	prop_set(pser, "backdrop",   PROP_SET_RSTRING, series->md_backdrop);
-	prop_set(pser, "bannerWide", PROP_SET_RSTRING, series->md_banner_wide);
-	prop_set(pser, "icon",       PROP_SET_RSTRING, series->md_icon);
-	set_cast_n_crew(pser, series);
+          prop_set(pser, "title",      PROP_SET_RSTRING, series->md_title);
+          prop_set(pser, "backdrop",   PROP_SET_RSTRING, series->md_backdrop);
+          prop_set(pser, "bannerWide", PROP_SET_RSTRING, series->md_banner_wide);
+          prop_set(pser, "icon",       PROP_SET_RSTRING, series->md_icon);
+          set_cast_n_crew(pser, series);
+        }
+
+        title = title ?: rstr_dup(mlv->mlv_filename);
+
+        prop_ref_dec(pepi);
+        prop_ref_dec(psea);
+        prop_ref_dec(pser);
+
+      } else {
+        title = title ?: rstr_dup(md->md_title);
       }
 
-      title = title ?: rstr_dup(mlv->mlv_filename);
+      if(season)
+        prop_set(mlv->mlv_m, "vtype", PROP_SET_STRING, "tvseries");
+      else
+        prop_set(mlv->mlv_m, "vtype", PROP_SET_VOID);
 
-      prop_ref_dec(pepi);
-      prop_ref_dec(psea);
-      prop_ref_dec(pser);
+      build_info_text(mlv, md);
+      metadata_destroy(md);
 
     } else {
-      title = title ?: rstr_dup(md->md_title);
+
+    bad:
+
+      if(mlv->mlv_m != NULL) {
+
+        prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
+
+        title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
+
+        mlv->mlv_dsid = 0;
+
+        build_info_text(mlv, NULL);
+      }
     }
+    prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, title);
 
-    if(season)
-      prop_set(mlv->mlv_m, "vtype", PROP_SET_STRING, "tvseries");
-    else
-      prop_set(mlv->mlv_m, "vtype", PROP_SET_VOID);
-
-    build_info_text(mlv, md);
-    metadata_destroy(md);
-
-  } else {
-
-  bad:
-
-    prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
-
-    title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
-
-    mlv->mlv_dsid = 0;
-
-    build_info_text(mlv, NULL);
+    prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
   }
 
-  prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, title);
   rstr_release(title);
-
-  prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
-
   LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
     ms->ms_mark = 0;
 
@@ -1739,7 +1743,7 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
  */
 metadata_lazy_video_t *
 metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
-			 rstr_t *imdb_id, int duration,
+			 rstr_t *imdb_id, float duration,
 			 prop_t *options, prop_t *root,
 			 rstr_t *folder, int lonely, int passive)
 {
@@ -1926,7 +1930,7 @@ mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
  *
  */
 void
-mlv_set_duration(metadata_lazy_video_t *mlv, int duration)
+mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
 {
   hts_mutex_lock(&metadata_mutex);
   mlv->mlv_duration = duration;
@@ -1949,6 +1953,36 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
     mlv_load(&mlv->mlv_mlp);
   }
   hts_mutex_unlock(&metadata_mutex);
+}
+
+
+/**
+ *
+ */
+int
+mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
+                 const char *imdb_id, float duration, const char *folder,
+                 int lonely)
+{
+  metadata_lazy_video_t mlv;
+  memset(&mlv, 0, sizeof(mlv));
+
+  mlv.mlv_url      = rstr_dup(url);
+  mlv.mlv_filename = rstr_dup(filename);
+  mlv.mlv_imdb_id  = rstr_alloc(imdb_id);
+  mlv.mlv_folder   = rstr_alloc(folder);
+  mlv.mlv_lonely   = 1;
+  mlv.mlv_duration = duration;
+  mlv.mlv_type     = METADATA_TYPE_VIDEO;
+
+  hts_mutex_lock(&metadata_mutex);
+  int r = mlv_get_video_info0(db, &mlv, 1);
+  hts_mutex_unlock(&metadata_mutex);
+  rstr_release(mlv.mlv_url);
+  rstr_release(mlv.mlv_filename);
+  rstr_release(mlv.mlv_imdb_id);
+  rstr_release(mlv.mlv_folder);
+  return r;
 }
 
 

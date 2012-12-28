@@ -174,6 +174,10 @@ struct prop {
 
 #define PROP_REF_TRACED            0x40
 
+  /**
+   * For mark and sweep
+   */
+#define PROP_MARKED                0x80
 
 
   /**

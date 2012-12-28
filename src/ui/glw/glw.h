@@ -1095,9 +1095,10 @@ void glw_unlock(glw_root_t *gr);
 
 void glw_store_matrix(glw_t *w, const glw_rctx_t *rc);
 
-#define GLW_FOCUS_SET_AUTOMATIC   0
-#define GLW_FOCUS_SET_INTERACTIVE 1
-#define GLW_FOCUS_SET_SUGGESTED   2
+#define GLW_FOCUS_SET_AUTOMATIC    0
+#define GLW_FOCUS_SET_AUTOMATIC_FF 1
+#define GLW_FOCUS_SET_INTERACTIVE  2
+#define GLW_FOCUS_SET_SUGGESTED    3
 
 void glw_focus_set(glw_root_t *gr, glw_t *w, int how);
 

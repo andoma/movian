@@ -921,6 +921,28 @@ js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSBool 
+js_page_redirect(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  const char *url;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &url))
+    return JS_FALSE;
+
+  event_t *e = event_create_str(EVENT_REDIRECT, url);
+  prop_send_ext_event(jm->jm_eventsink, e);
+  event_release(e);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_page_items(JSContext *cx, JSObject *obj, uintN argc,
 	      jsval *argv, jsval *rval)
 {
@@ -992,6 +1014,7 @@ js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc,
 static JSFunctionSpec page_functions[] = {
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
+    JS_FS("redirect",           js_page_redirect,1, 0, 0),
     JS_FS("dump",               js_page_dump,    0, 0, 0),
     JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
     JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),
