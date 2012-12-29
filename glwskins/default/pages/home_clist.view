@@ -184,7 +184,11 @@ widget(container_x, {
 	      .focusable = true;
               bind($view.searchQuery);
 	      .sizeScale = 1.5;
-	      onEvent(enter, navOpen("search:" + $view.searchQuery));
+	      onEvent(enter, navOpen("search:" + $view.searchQuery),
+		      $view.searchQuery);
+	      onEvent(submit, navOpen("search:" + $view.searchQuery),
+		      $view.searchQuery);
+	      description: _("Search / Open URL");
             });
 	  });
 	});

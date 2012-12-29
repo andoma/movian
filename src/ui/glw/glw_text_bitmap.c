@@ -106,6 +106,7 @@ typedef struct glw_text_bitmap {
 
   int gtb_flags;
 
+  char *gtb_description;
 
 } glw_text_bitmap_t;
 
@@ -400,6 +401,7 @@ glw_text_bitmap_dtor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
+  free(gtb->gtb_description);
   free(gtb->gtb_caption);
   free(gtb->gtb_uc_buffer);
   rstr_release(gtb->gtb_font);
@@ -624,7 +626,8 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
       if(w->glw_root->gr_open_osk != NULL) {
 
 	gtb_caption_refresh(gtb);
-	w->glw_root->gr_open_osk(w->glw_root, NULL, gtb->gtb_caption, w,
+	w->glw_root->gr_open_osk(w->glw_root, gtb->gtb_description,
+				 gtb->gtb_caption, w,
 				 gtb->gtb_flags & GTB_PASSWORD);
 	return 1;
       }
@@ -1028,7 +1031,8 @@ set_maxlines(glw_t *w, int v)
 static void
 do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 {
-  uint32_t *uc, len, i;
+  int i;
+  uint32_t *uc, len;
   pixmap_t *pm;
   int max_width, max_lines, flags, default_size, tr_align, min_size;
   float scale;
@@ -1048,8 +1052,11 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     uc = malloc((len + 3) * sizeof(int));
 
     if(gtb->gtb_flags & GTB_PASSWORD) {
-      for(i = 0; i < len; i++)
+      int show_one = !!(gtb->gtb_flags & GTB_OSK_PASSWORD);
+      for(i = 0; i < len - show_one; i++)
 	uc[i] = '*';
+      if(show_one && len)
+	uc[len - 1] = gtb->gtb_uc_buffer[len - 1];
     } else {
       memcpy(uc, gtb->gtb_uc_buffer, len * sizeof(int));
     }
@@ -1358,6 +1365,18 @@ update_text(glw_t *w, const char *str)
 }
 
 
+
+/**
+ *
+ */
+static void
+set_description(glw_t *w, const char *str)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  mystrset(&gtb->gtb_description, str);
+}
+
+
 /**
  *
  */
@@ -1413,6 +1432,7 @@ static glw_class_t glw_text = {
   .gc_set_min_size = set_min_size,
   .gc_set_max_lines = set_maxlines,
   .gc_update_text = update_text,
+  .gc_set_desc = set_description,
 
 };
 

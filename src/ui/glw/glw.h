@@ -145,6 +145,7 @@ typedef enum {
 #define GTB_ITALIC        0x8
 #define GTB_OUTLINE       0x10
 #define GTB_PERMANENT_CURSOR 0x20
+#define GTB_OSK_PASSWORD     0x40   /* Password for on screen keyboard */
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -585,6 +586,11 @@ typedef struct glw_class {
    *
    */
   void (*gc_set_how)(struct glw *w, const char *how);
+
+  /**
+   *
+   */
+  void (*gc_set_desc)(struct glw *w, const char *desc);
 
   /**
    *

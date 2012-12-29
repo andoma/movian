@@ -43,7 +43,7 @@ widget(keyintercept, {
 	widget(slider_y, {
 	  bind("list");
 	  width: 4;
-	  focusable: canScroll();
+	  focusable: true; // canScroll();
 	  navFocusable: true;
 	  alpha: iir(canScroll(), 16);
 	  

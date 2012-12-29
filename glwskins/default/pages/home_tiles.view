@@ -163,6 +163,7 @@ widget(container_y, {
 			$view.searchQuery);
 		onEvent(submit, navOpen("search:" + $view.searchQuery),
 			$view.searchQuery);
+		description: _("Search / Open URL");
               });
 /*
 	      widget(label, {
