@@ -339,7 +339,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 	continue;
       }
 
-      c->glw_parent_fade = GLW_LP(6, c->glw_parent_fade, 0);
+      glw_lp(&c->glw_parent_fade, co->w.glw_root, 0, 0.25);
       if(c->glw_parent_fade < 0.01) {
 	c->glw_parent_inited = 0;
 	continue;
@@ -364,19 +364,18 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 
       if(c->glw_flags & GLW_RETIRED) {
 
-	c->glw_parent_fade = GLW_LP(6, c->glw_parent_fade, 0);
+	glw_lp(&c->glw_parent_fade, co->w.glw_root, 0, 0.25);
 	if(c->glw_parent_fade < 0.01) {
 	  glw_destroy(c);
 	  continue;
 	}
 	
       } else if(!(c->glw_flags & GLW_HIDDEN)) {
-
-	c->glw_parent_fade = GLW_LP(6, c->glw_parent_fade, 1);
+	glw_lp(&c->glw_parent_fade, co->w.glw_root, 1, 0.25);
       }
 
       if(c->glw_parent_inited) {
-	c->glw_parent_pos = GLW_LP(6, c->glw_parent_pos, (bottom + top) * IH);
+	glw_lp(&c->glw_parent_pos, co->w.glw_root, (bottom + top) * IH, 0.25);
       } else {
 	c->glw_parent_pos = (bottom + top) * IH;
 	if(!(c->glw_flags & GLW_HIDDEN))

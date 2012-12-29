@@ -227,7 +227,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
 
   a->current_pos = GLW_MAX(0, GLW_MIN(a->current_pos,
 				      a->total_size - a->page_size));
-  a->filtered_pos = GLW_LP(6, a->filtered_pos, a->current_pos);
+
+  glw_lp(&a->filtered_pos, w->glw_root, a->current_pos, 0.25);
 
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -265,10 +266,8 @@ glw_array_layout(glw_array_t *a, glw_rctx_t *rc)
       c->glw_parent_pos_fx = c->glw_parent_pos_x;
       c->glw_parent_inst = 0;
     } else {
-      c->glw_parent_pos_fy =
-	GLW_LP(4, c->glw_parent_pos_fy, c->glw_parent_pos_y);
-      c->glw_parent_pos_fx =
-	GLW_LP(4, c->glw_parent_pos_fx, c->glw_parent_pos_x);
+      glw_lp(&c->glw_parent_pos_fy, w->glw_root, c->glw_parent_pos_y, 0.25);
+      glw_lp(&c->glw_parent_pos_fx, w->glw_root, c->glw_parent_pos_x, 0.25);
     }
 
     if(ypos - a->filtered_pos > -height &&

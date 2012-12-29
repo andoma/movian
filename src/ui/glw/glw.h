@@ -88,7 +88,6 @@ typedef float Vec2[2];
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
-#define GLW_LP(a, y0, y1) (((y0) * ((a) - 1.0) + (y1)) / (a))
 #define GLW_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define GLW_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define GLW_DEG2RAD(a) ((a) * M_PI * 2.0f / 360.0f)
@@ -1146,6 +1145,14 @@ void glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
 			const int16_t *border);
 
 void glw_stencil_disable(glw_root_t *gr);
+
+
+static inline void
+glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
+{
+  *v = *v + alpha * (t - *v);
+}
+
 
 
 /**

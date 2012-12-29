@@ -52,7 +52,7 @@ glw_coverflow_layout(glw_coverflow_t *gc, glw_rctx_t *rc)
   rc0 = *rc;
   rc0.rc_width = rc->rc_height;
 
-  gc->pos = GLW_LP(6, gc->pos, gc->pos_target);
+  glw_lp(&gc->pos, gc->w.glw_root, gc->pos_target, 0.25);
 
   TAILQ_FOREACH(c, &gc->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)

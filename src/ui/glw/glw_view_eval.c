@@ -3446,7 +3446,7 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
   if(springmode && f > self->t_extra_float)
     self->t_extra_float = f;
   else
-    self->t_extra_float =  GLW_LP(b->t_float, self->t_extra_float, f);
+    glw_lp(&self->t_extra_float, ec->w->glw_root, f, 1.0f / b->t_float);
 
   y = self->t_extra_float * 1000.;
   r = eval_alloc(self, ec, TOKEN_FLOAT);
