@@ -85,7 +85,6 @@ fatal() {
 
 enable libfreetype
 enable libfontconfig
-enable libasound
 enable libpulse
 enable lirc
 enable stdin
