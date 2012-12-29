@@ -210,7 +210,6 @@ save_state(void)
 
   htsmsg_add_msg(m, "roots", r);
   htsmsg_store_save(m, "indexer");
-  htsmsg_print(m);
   htsmsg_destroy(m);
 }
 
