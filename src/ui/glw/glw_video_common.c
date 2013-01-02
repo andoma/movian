@@ -730,61 +730,6 @@ glw_video_input(const frame_info_t *fi, void *opaque)
     if(gve->gve_type == fi->fi_type)
       gve->gve_deliver(fi, gv);
 
-#if 0      
-
-  switch(type) {
-#if CONFIG_GLW_BACKEND_RSX
-  case FRAME_BUFFER_TYPE_RSX_MEMORY:
-    glw_video_input_rsx_mem(gv, frame, fi);
-    break;
-#endif
-
-  case FRAME_BUFFER_TYPE_LIBAV_FRAME:
-    avframe = frame;
-
-    switch(fi->fi_pix_fmt) {
-    case PIX_FMT_YUV420P:
-    case PIX_FMT_YUV422P:
-    case PIX_FMT_YUV444P:
-    case PIX_FMT_YUV410P:
-    case PIX_FMT_YUV411P:
-    case PIX_FMT_YUV440P:
-
-    case PIX_FMT_YUVJ420P:
-    case PIX_FMT_YUVJ422P:
-    case PIX_FMT_YUVJ444P:
-    case PIX_FMT_YUVJ440P:
-      glw_video_input_yuvp(gv, avframe->data, avframe->linesize, fi);
-      break;
-      
-#if ENABLE_VDPAU
-    case PIX_FMT_VDPAU_H264:
-    case PIX_FMT_VDPAU_MPEG1:
-    case PIX_FMT_VDPAU_MPEG2:
-    case PIX_FMT_VDPAU_WMV3:
-    case PIX_FMT_VDPAU_VC1:
-    case PIX_FMT_VDPAU_MPEG4:
-      glw_video_input_vdpau(gv, avframe->data, avframe->linesize, fi);
-      break;
-#endif
-      
-    default:
-      TRACE(TRACE_ERROR, "GLW", 
-	  "PIX_FMT %s (0x%x) does not have a video engine",
-	   av_pix_fmt_descriptors[fi->fi_pix_fmt].name, fi->fi_pix_fmt);
-      break;
-    }
-    break;
-
-  default:
-      TRACE(TRACE_ERROR, "GLW", 
-	    "buffer type %d  does not have a video engine",
-	    type);
-      break;
-  }
-
-#endif
-
   hts_mutex_unlock(&gv->gv_surface_mutex);
 }
 
