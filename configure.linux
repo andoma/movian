@@ -225,6 +225,22 @@ fi
 echo >>${CONFIG_MAK} "CC=$CC"
 echo >>${CONFIG_MAK} "CXX=$CXX"
 
+
+#
+# sqlite3
+#
+if pkg-config sqlite3; then
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg +=  " `pkg-config --libs sqlite3`
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += " `pkg-config --cflags sqlite3`
+    echo "Using Sqlite3:         `pkg-config --modversion sqlite3`"
+    disable sqlite_internal
+else
+    echo "sqlite3 not found"
+    die
+fi
+
+
+
 #
 # libfreetype2
 #

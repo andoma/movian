@@ -25,9 +25,10 @@
 #include <unistd.h>
 #include <stdio.h>
 
+#include <sqlite3.h>
+
 #include "config.h"
 #include "showtime.h"
-#include "ext/sqlite/sqlite3.h"
 #include "prop/prop.h"
 #include "db/db_support.h"
 #include "kvstore.h"

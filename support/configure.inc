@@ -77,6 +77,7 @@ CONFIG_LIST="
  readahead_cache
  sqlite_vfs
  sqlite_locking
+ sqlite_internal
  libav
  vda
  tlsf
@@ -467,6 +468,10 @@ finalize() {
 
     if enabled sqlite_locking; then
 	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_MUTEX_NOOP"
+    fi
+
+    if enabled sqlite_internal; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += -Iext/sqlite"
     fi
 
     # Release tag

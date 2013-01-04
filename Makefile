@@ -107,8 +107,9 @@ SRCS-${CONFIG_TREX} += ext/trex/trex.c
 ##############################################################
 # Sqlite3
 ##############################################################
-SRCS += ext/sqlite/sqlite3.c \
-	src/db/db_support.c \
+SRCS-${CONFIG_SQLITE_INTERNAL} += ext/sqlite/sqlite3.c
+
+SRCS += src/db/db_support.c \
 	src/db/kvstore.c \
 
 
