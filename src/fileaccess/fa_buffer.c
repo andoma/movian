@@ -28,10 +28,25 @@
 #include "fileaccess.h"
 #include "fa_proto.h"
 
+#define FILE_PARKING 1
+
 #define BF_CHK 0
 
 #define BF_ZONES 8
 #define BF_MASK (BF_ZONES - 1)
+
+static hts_mutex_t buffered_global_mutex;
+
+/**
+ *
+ */
+static void __attribute__((constructor))
+fa_buffer_init(void)
+{
+  hts_mutex_init(&buffered_global_mutex);
+}
+
+
 
 typedef struct buffered_zone {
   int64_t bz_fpos;
@@ -44,6 +59,8 @@ typedef struct buffered_zone {
  */
 typedef struct buffered_file {
   fa_handle_t h;
+
+  time_t bf_park_time;
 
   fa_handle_t *bf_src;
 #if BF_CHK
@@ -61,12 +78,14 @@ typedef struct buffered_file {
 
   int64_t bf_size;
 
+  char *bf_url;
+
   buffered_zone_t bf_zones[BF_ZONES];
 
 } buffered_file_t;
 
 
-
+static buffered_file_t *parked;
 
 #ifdef DEBUG
 /**
@@ -112,8 +131,8 @@ erase_zone(buffered_file_t *bf, int mpos, int size)
 
 
 
-#ifdef DEBUG
-static void
+
+static void __attribute__((unused))
 dump_zones(const char *prefix, buffered_file_t *bf)
 {
   int i;
@@ -126,7 +145,6 @@ dump_zones(const char *prefix, buffered_file_t *bf)
 	   i, bz->bz_mpos, bz->bz_size, bz->bz_fpos);
   }
 }
-#endif
 
 
 /**
@@ -221,6 +239,20 @@ need_to_fill(const buffered_file_t *bf, int64_t fpos, size_t rd)
 }
 
 
+/**
+ *
+ */
+static void
+fab_destroy(buffered_file_t *bf)
+{
+  bf->bf_src->fh_proto->fap_close(bf->bf_src);
+
+  if(bf->bf_mem != NULL)
+    hfree(bf->bf_mem, bf->bf_mem_size);
+  free(bf->bf_url);
+  free(bf);
+}
+
 
 
 /**
@@ -229,13 +261,22 @@ need_to_fill(const buffered_file_t *bf, int64_t fpos, size_t rd)
 static void
 fab_close(fa_handle_t *handle)
 {
-  buffered_file_t *bf = (buffered_file_t *)handle;
-  fa_handle_t *src = bf->bf_src;
-  src->fh_proto->fap_close(src);
+#ifdef FILE_PARKING
+  buffered_file_t *closeme = NULL, *bf = (buffered_file_t *)handle;
 
-  if(bf->bf_mem != NULL)
-    hfree(bf->bf_mem, bf->bf_mem_size);
-  free(bf);
+  hts_mutex_lock(&buffered_global_mutex);
+  if(parked)
+    closeme = parked;
+  
+  parked = bf;
+  time(&parked->bf_park_time);
+  hts_mutex_unlock(&buffered_global_mutex);
+
+  if(closeme)
+    fab_destroy(closeme);
+#else
+  fab_destroy((buffered_file_t *)handle);
+#endif
 }
 
 
@@ -502,10 +543,39 @@ fa_handle_t *
 fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 		 struct prop *stats)
 {
+  buffered_file_t *closeme = NULL;
+  fa_handle_t *fh = NULL;
+  hts_mutex_lock(&buffered_global_mutex);
+
+  if(parked) {
+    // Flush too old parked files
+    time_t now;
+    time(&now);
+    if(now - parked->bf_park_time > 10) {
+      closeme = parked;
+      parked = NULL;
+    }
+  }
+
+
+  if(parked && !strcmp(parked->bf_url, url)) {
+    fh = (fa_handle_t *)parked;
+    parked = NULL;
+  }
+  
+
+  hts_mutex_unlock(&buffered_global_mutex);
+    
+  if(closeme != NULL)
+    fab_destroy(closeme);
+
+  if(fh != NULL)
+    return fh;
+
   int mflags = flags;
   flags &= ~ (FA_BUFFERED_SMALL | FA_BUFFERED_BIG);
 
-  fa_handle_t *fh = fa_open_ex(url, errbuf, errsize, flags, stats);
+  fh = fa_open_ex(url, errbuf, errsize, flags, stats);
   if(fh == NULL)
     return NULL;
 
@@ -513,9 +583,9 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
     return fh;
 
   buffered_file_t *bf = calloc(1, sizeof(buffered_file_t));
-
+  bf->bf_url = strdup(url);
   bf->bf_min_request = mflags & FA_BUFFERED_BIG ? 256 * 1024 : 64 * 1024;
-  bf->bf_mem_size = bf->bf_min_request * 4;
+  bf->bf_mem_size = 1024 * 1024;
 
   bf->bf_src = fh;
   bf->bf_size = -1;
