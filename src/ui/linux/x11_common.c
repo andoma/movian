@@ -272,7 +272,7 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 {
   XGCValues xgcv;
   video_output_t *vo;
-  vd_frame_deliver_t *deliver_fn;
+  video_frame_deliver_t *deliver_fn;
   
   if(!XShmQueryExtension(dpy)) {
     snprintf(errbuf, errlen, "No SHM Extension available");
