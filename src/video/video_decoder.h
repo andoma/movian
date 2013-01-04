@@ -38,56 +38,10 @@ struct AVFrame;
 struct video_decoder;
 struct pixmap;
 
-
-typedef struct frame_info {
-  uint8_t *fi_data[4];
-  int fi_pitch[4];
-
-  uint32_t fi_type;
-
-  int fi_width;
-  int fi_height;
-  int64_t fi_pts;
-  int64_t fi_delta;
-  int fi_epoch;
-  int fi_duration;
-
-  int fi_dar_num;
-  int fi_dar_den;
-
-  int fi_hshift;
-  int fi_vshift;
-
-  int fi_pix_fmt;
-
-  char fi_interlaced;     // Frame delivered is interlaced 
-  char fi_tff;            // For interlaced frame, top-field-first
-  char fi_prescaled;      // Output frame is prescaled to requested size
-  char fi_drive_clock;
-
-  enum {
-    COLOR_SPACE_UNSET = 0,
-    COLOR_SPACE_BT_709,
-    COLOR_SPACE_BT_601,
-    COLOR_SPACE_SMPTE_240M,
-  } fi_color_space;
-
-} frame_info_t;
-
-
-/**
- *
- */
-typedef void (vd_frame_deliver_t)(const frame_info_t *info, void *opaque);
-
 /**
  *
  */
 typedef struct video_decoder {
-
-  void *vd_opaque;
-
-  vd_frame_deliver_t *vd_frame_deliver;
 
   hts_thread_t vd_decoder_thread;
 
@@ -175,9 +129,7 @@ typedef struct video_decoder {
   struct media_buf vd_reorder[VIDEO_DECODER_REORDER_SIZE];
 } video_decoder_t;
 
-video_decoder_t *video_decoder_create(media_pipe_t *mp, 
-				      vd_frame_deliver_t *frame_delivery,
-				      void *opaque);
+video_decoder_t *video_decoder_create(media_pipe_t *mp);
 
 void video_decoder_stop(video_decoder_t *gv);
 

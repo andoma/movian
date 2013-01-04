@@ -260,7 +260,7 @@ void
 video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
   vd->vd_skip = 0;
-  vd->vd_frame_deliver(info, vd->vd_opaque);
+  vd->vd_mp->mp_video_frame_deliver(info, vd->vd_mp->mp_video_frame_opaque);
 
 
   if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
@@ -451,7 +451,7 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_BLACKOUT:
-      vd->vd_frame_deliver(NULL, vd->vd_opaque);
+      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       break;
 
     case MB_CTRL_FLUSH_SUBTITLES:
@@ -490,13 +490,9 @@ vd_thread(void *aux)
 
 
 video_decoder_t *
-video_decoder_create(media_pipe_t *mp, vd_frame_deliver_t *frame_delivery,
-		     void *opaque)
+video_decoder_create(media_pipe_t *mp)
 {
   video_decoder_t *vd = calloc(1, sizeof(video_decoder_t));
-
-  vd->vd_frame_deliver = frame_delivery;
-  vd->vd_opaque = opaque;
 
   mp_ref_inc(mp);
   vd->vd_mp = mp;

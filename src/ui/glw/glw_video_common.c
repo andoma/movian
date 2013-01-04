@@ -409,7 +409,10 @@ glw_video_ctor(glw_t *w)
 
   LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
-  gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
+  gv->gv_mp->mp_video_frame_deliver = glw_video_input;
+  gv->gv_mp->mp_video_frame_opaque = gv;
+
+  gv->gv_vd = video_decoder_create(gv->gv_mp);
   video_playback_create(gv->gv_mp);
 
   gv->gv_vo_scaling_sub =

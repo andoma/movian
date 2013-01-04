@@ -84,6 +84,52 @@ TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 TAILQ_HEAD(media_track_queue, media_track);
 
+
+/**
+ *
+ */
+typedef struct frame_info {
+  uint8_t *fi_data[4];
+  int fi_pitch[4];
+
+  uint32_t fi_type;
+
+  int fi_width;
+  int fi_height;
+  int64_t fi_pts;
+  int64_t fi_delta;
+  int fi_epoch;
+  int fi_duration;
+
+  int fi_dar_num;
+  int fi_dar_den;
+
+  int fi_hshift;
+  int fi_vshift;
+
+  int fi_pix_fmt;
+
+  char fi_interlaced;     // Frame delivered is interlaced 
+  char fi_tff;            // For interlaced frame, top-field-first
+  char fi_prescaled;      // Output frame is prescaled to requested size
+  char fi_drive_clock;
+
+  enum {
+    COLOR_SPACE_UNSET = 0,
+    COLOR_SPACE_BT_709,
+    COLOR_SPACE_BT_601,
+    COLOR_SPACE_SMPTE_240M,
+  } fi_color_space;
+
+} frame_info_t;
+
+
+/**
+ *
+ */
+typedef void (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
+
+
 /**
  *
  */
@@ -275,6 +321,9 @@ typedef struct media_pipe {
   hts_cond_t mp_backpressure;
 
   media_queue_t mp_video, mp_audio;
+
+  void *mp_video_frame_opaque;
+  video_frame_deliver_t *mp_video_frame_deliver;
   
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
