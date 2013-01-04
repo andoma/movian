@@ -24,54 +24,8 @@
 
 #include <gdk/gdkkeysyms.h>
 #include <X11/Xlib.h>
+#include <gtk/gtk.h>
 
-hts_mutex_t gu_mutex;
-
-
-/**
- *
- */
-static void
-gu_enter(void)
-{
-  hts_mutex_lock(&gu_mutex);
-}
-
-
-/**
- *
- */
-static void
-gu_leave(void)
-{
-  hts_mutex_unlock(&gu_mutex);
-}
-
-
-/**
- *
- */
-void gu_init(int *argc, char ***argv);
-
-void
-gu_init(int *argc, char ***argv)
-{
-  XInitThreads();
-
-  hts_mutex_init(&gu_mutex);
-
-  g_thread_init(NULL);
-
-  gdk_threads_set_lock_functions(gu_enter, gu_leave);
-
-  gdk_threads_init();
-  gdk_threads_enter();
-
-  gtk_init(argc, argv);
-
-  gu_pixbuf_init();
-
-}
 
 /**
  *
@@ -269,7 +223,7 @@ gu_tab_destroy(gu_tab_t *gt)
 static void
 build_tab_header(gu_tab_t *gt)
 {
-  prop_courier_t *pc = gt->gt_gw->gw_gu->gu_pc;
+  prop_courier_t *pc = glibcourier;
   GtkWidget *l, *img;
   prop_sub_t *s;
 
@@ -347,7 +301,7 @@ gu_tab_create(gu_window_t *gw, int select)
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("nav", "pages"),
 		     PROP_TAG_CALLBACK, gu_nav_pages, gt,
-		     PROP_TAG_COURIER, gw->gw_gu->gu_pc,
+		     PROP_TAG_COURIER, glibcourier,
 		     PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		     NULL);
 
@@ -374,7 +328,6 @@ gu_tab_create(gu_window_t *gw, int select)
 }
 
 
-
 /**
  *
  */
@@ -383,9 +336,9 @@ int gu_start(void);
 int
 gu_start(void)
 {
-  gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
+  gu_pixbuf_init();
 
-  gu->gu_pc = prop_courier_create_thread(&gu_mutex, "GU");
+  gtk_ui_t *gu = calloc(1, sizeof(gtk_ui_t));
 
   gu_win_create(gu, 1);
 

@@ -608,7 +608,7 @@ gds_row_add(GuDirStore *gds, prop_t *p, prop_t *p_before)
     c->s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 			  PROP_TAG_NAME_VECTOR, subpaths[i],
 			  PROP_TAG_CALLBACK, gds_cell_set, c,
-			  PROP_TAG_COURIER, gds->gu->gu_pc,
+			  PROP_TAG_COURIER, glibcourier,
 			  PROP_TAG_NAMED_ROOT, p, "self",
 			  NULL);
   }
@@ -813,7 +813,7 @@ gu_dir_store_new(gtk_ui_t *gu, prop_t *source)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "nodes"),
 		   PROP_TAG_CALLBACK, gds_node_sub, gds,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, source, "self",
 		   NULL);
 
@@ -821,7 +821,7 @@ gu_dir_store_new(gtk_ui_t *gu, prop_t *source)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "canDelete"),
 		   PROP_TAG_CALLBACK_INT, gds_canDelete_sub, gds,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, source, "self",
 		   NULL);
 

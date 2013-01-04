@@ -366,6 +366,8 @@ void prop_courier_wait_and_dispatch(prop_courier_t *pc);
 
 void prop_courier_poll(prop_courier_t *pc);
 
+int prop_courier_check(prop_courier_t *pc);
+
 void prop_courier_destroy(prop_courier_t *pc);
 
 void prop_notify_dispatch(struct prop_notify_queue *q);

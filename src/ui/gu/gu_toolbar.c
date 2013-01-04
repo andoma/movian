@@ -359,7 +359,7 @@ dyn_menu_item_add(gtk_ui_t *gu, dyn_menu_t *dm,
 		   PROP_TAG_NAME("node", "type"),
 		   PROP_TAG_CALLBACK_STRING, dmi_set_type, dmi,
 		   PROP_TAG_NAMED_ROOT, p, "node",
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
   dmi->dmi_title_sub =
@@ -367,7 +367,7 @@ dyn_menu_item_add(gtk_ui_t *gu, dyn_menu_t *dm,
 		   PROP_TAG_NAME("node", "metadata", "title"),
 		   PROP_TAG_CALLBACK_STRING, dmi_set_title, dmi,
 		   PROP_TAG_NAMED_ROOT, p, "node",
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
   dmi->dmi_enabled_sub =
@@ -375,7 +375,7 @@ dyn_menu_item_add(gtk_ui_t *gu, dyn_menu_t *dm,
 		   PROP_TAG_NAME("node", "enabled"),
 		   PROP_TAG_CALLBACK_INT, dmi_set_enabled, dmi,
 		   PROP_TAG_NAMED_ROOT, p, "node",
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
   dmi->dmi_value_sub =
@@ -383,7 +383,7 @@ dyn_menu_item_add(gtk_ui_t *gu, dyn_menu_t *dm,
 		   PROP_TAG_NAME("node", "value"),
 		   PROP_TAG_CALLBACK_INT, dmi_set_value, dmi,
 		   PROP_TAG_NAMED_ROOT, p, "node",
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 }
 
@@ -447,7 +447,7 @@ opts_clicked(GtkToolButton *toolbutton, gpointer user_data)
 		   PROP_TAG_NAME("nav", "currentpage", "model", "options"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &dm->dm_nodes,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
   g_signal_connect(dm->dm_menu, "destroy", G_CALLBACK(dyn_menu_destroyed), dm);
@@ -461,7 +461,6 @@ GtkWidget *
 gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
 {
   toolbar_t *t = calloc(1, sizeof(toolbar_t));
-  prop_courier_t *pc = gt->gt_gw->gw_gu->gu_pc;
   GtkWidget *toolbar;
   GtkWidget *w;
 
@@ -522,7 +521,7 @@ gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
 		   PROP_TAG_NAME("nav", "canGoBack"),
 		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
 		   t->back,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
 
@@ -531,7 +530,7 @@ gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
 		   PROP_TAG_NAME("nav", "canGoForward"),
 		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
 		   t->fwd,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
 
@@ -539,7 +538,7 @@ gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
     prop_subscribe(0,
 		   PROP_TAG_NAME("nav", "currentpage", "parent"),
 		   PROP_TAG_CALLBACK_STRING, set_go_up, t,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
 
@@ -548,7 +547,7 @@ gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
 		   PROP_TAG_NAME("nav", "canGoHome"),
 		   PROP_TAG_CALLBACK_INT, gu_subscription_set_sensitivity,
 		   t->home,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
 
@@ -556,7 +555,7 @@ gu_toolbar_add(gu_tab_t *gt, GtkWidget *parent)
     prop_subscribe(0,
 		   PROP_TAG_NAME("nav", "currentpage", "url"),
 		   PROP_TAG_CALLBACK_STRING, gu_nav_url_updated, t,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gt->gt_nav, "nav",
 		   NULL);
 
