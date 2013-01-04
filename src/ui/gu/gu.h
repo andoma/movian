@@ -83,7 +83,7 @@ void gu_fullwindow_update(gu_window_t *gw);
 
 void gu_nav_open_newwin(gtk_ui_t *gu, const char *url);
 
-gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav, int all);
+gu_window_t *gu_win_create(gtk_ui_t *gu, int all);
 
 void gu_win_destroy(gu_window_t *gw);
 
@@ -111,7 +111,7 @@ typedef struct gu_tab {
 
 } gu_tab_t;
 
-gu_tab_t *gu_tab_create(gu_window_t *gw, prop_t *nav, int select);
+gu_tab_t *gu_tab_create(gu_window_t *gw, int select);
 
 void gu_tab_destroy(gu_tab_t *gu);
 
