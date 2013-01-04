@@ -61,6 +61,18 @@ hc_open(http_connection_t *hc, const char *remain, void *opaque,
 
 
 static int
+hc_done(http_connection_t *hc, const char *remain, void *opaque,
+        http_cmd_t method)
+{
+  htsbuf_queue_t out;
+
+  htsbuf_queue_init(&out, 0);
+  htsbuf_qprintf(&out, "OK");
+  return http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
+}
+
+
+static int
 hc_image(http_connection_t *hc, const char *remain, void *opaque,
 	http_cmd_t method)
 {
@@ -475,6 +487,7 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
 static void
 httpcontrol_init(void)
 {
+  http_path_add("/showtime/done", NULL, hc_done, 0);
   http_path_add("/showtime/image", NULL, hc_image, 0);
   http_path_add("/showtime/open", NULL, hc_open, 1);
   http_path_add("/showtime/prop", NULL, hc_prop, 0);

@@ -53,6 +53,7 @@ enable dvd
 enable spotify
 enable vda
 enable fsevents
+enable webpopup
 
 for opt do
   optval="${opt#*=}"
@@ -146,6 +147,7 @@ fi
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Foundation"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework CoreFoundation"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Cocoa"
+echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework Webkit"
 # IOKit for dvd
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework IOKit"
 echo >>${CONFIG_MAK} "LDFLAGS_cfg += -framework OpenGL"

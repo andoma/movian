@@ -32,6 +32,7 @@
 #include "keyring.h"
 #include "notifications.h"
 #include "networking/net.h"
+#include "ui/webpopup.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -604,6 +605,74 @@ js_sysipaddr(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_webpopup(JSContext *cx, JSObject *obj,
+            uintN argc, jsval *argv, jsval *rval)
+{
+  const char *url;
+  const char *title;
+  const char *trap;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sss", &url, &title, &trap))
+    return JS_FALSE;
+
+  JSObject *robj = JS_NewObject(cx, NULL, NULL, NULL);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+#if ENABLE_WEBPOPUP
+  jsrefcount s = JS_SuspendRequest(cx);
+  webpopup_result_t *wr = webpopup_create(url, title, trap);
+  JS_ResumeRequest(cx, s);
+  
+
+  const char *t;
+  switch(wr->wr_resultcode) {
+  case WEBPOPUP_TRAPPED_URL:
+    t = "trapped";
+    break;
+  case WEBPOPUP_CLOSED_BY_USER:
+    t = "userclose";
+    break;
+  case WEBPOPUP_LOAD_ERROR:
+    t = "neterror";
+    break;
+  }
+
+  jsval val;
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, t));
+  JS_SetProperty(cx, robj, "result", &val);
+
+
+  if(wr->wr_trapped.url != NULL) {
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, wr->wr_trapped.url));
+    JS_SetProperty(cx, robj, "trappedUrl", &val);
+  }
+  
+  JSObject *hdrs = JS_NewObject(cx, NULL, NULL, NULL);
+  http_header_t *hh;
+  LIST_FOREACH(hh, &wr->wr_trapped.qargs, hh_link) {
+    jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, hh->hh_value));
+    JS_SetProperty(cx, hdrs, hh->hh_key, &val);
+  }
+  
+  val = OBJECT_TO_JSVAL(hdrs);
+  JS_SetProperty(cx, robj, "args", &val);
+
+  webpopup_result_free(wr);
+#else
+  jsval val;
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "unsupported"));
+  JS_SetProperty(cx, robj, "result", &val);
+#endif
+  return JS_TRUE;
+}
+
+
 
 
 /**
@@ -632,6 +701,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("entityDecode",     js_decodeEntety, 1, 0, 0),
     JS_FS("notify",           js_notify, 2, 0, 0),
     JS_FS("systemIpAddress",  js_sysipaddr, 0, 0, 0),
+    JS_FS("webpopup",         js_webpopup, 3, 0, 0),
     JS_FS_END
 };
 

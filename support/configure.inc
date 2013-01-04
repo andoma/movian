@@ -81,6 +81,7 @@ CONFIG_LIST="
  vda
  tlsf
  airplay
+ webpopup
 "
 
 cleanup() {

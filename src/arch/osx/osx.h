@@ -25,6 +25,8 @@
 
 extern prop_courier_t *mainloop_courier;
 
+void webpopup_init(void);
+
 /**
  *
  */

@@ -80,6 +80,8 @@ SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 BUNDLES += resources/metadb
 BUNDLES += resources/kvstore
 
+SRCS-$(CONFIG_WEBPOPUP) += src/ui/webpopup.c
+
 ##############################################################
 # Misc support
 ##############################################################
