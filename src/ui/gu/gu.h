@@ -32,16 +32,9 @@ LIST_HEAD(gu_tab_list, gu_tab);
  *
  */
 typedef struct gtk_ui {
-  prop_t *gu_root;
-  
-  hts_thread_t gu_thread;
-
   prop_courier_t *gu_pc;
-
   struct gu_window_list gu_windows;
-
   LIST_HEAD(, popup) popups;
-
 } gtk_ui_t;
 
 
