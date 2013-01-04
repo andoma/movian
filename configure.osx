@@ -164,16 +164,18 @@ fi
 #
 # libspotify
 #
+
+if disabled libspotify_load_runtime; then
  
-if [ "$SPOTIFY_FRAMEWORK" == "" ] ; then
-    download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal.zip zipfile
-    unzip -oq "$zipfile" -d "${BUILDDIR}"
-    SPOTIFY_FRAMEWORK="${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal/libspotify.framework"
+    if [ "$SPOTIFY_FRAMEWORK" == "" ] ; then
+        download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal.zip zipfile
+        unzip -oq "$zipfile" -d "${BUILDDIR}"
+        SPOTIFY_FRAMEWORK="${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal/libspotify.framework"
+    fi
+
+    echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
 fi
-
-echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
-echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
-
 
 
 freetype_setup
