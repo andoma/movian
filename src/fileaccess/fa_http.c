@@ -1514,16 +1514,20 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   case 405:
     if(!nohead) {
+
+      // This server does not support HEAD, remember that
       http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
 				HTTP_SERVER_QUIRK_NO_HEAD);
-      // Retry using GET
-      if(http_drain_content(hf)) {
-	snprintf(errbuf, errlen, "Connection lost");
-	return -1;
-      }
-      
+
+      // It's a bit unclear if we receive a body when we
+      // get a "405 Method Not Supported" as a result
+      // of a HEAD request (it seems to be differerent
+      // between different servers), so just disconnect
+      // and retry without HEAD
+
+      http_detach(hf, 0, "HEAD not supported");
       nohead = 1;
-      goto again;
+      goto reconnect;
     }
     snprintf(errbuf, errlen, "Unsupported method");
     return -1;
