@@ -93,7 +93,6 @@ typedef struct glw_x11 {
   Status status;
 
   int working_vsync;
-  int force_no_vsync;
 
   struct x11_screensaver_state *sss;
 
@@ -345,7 +344,7 @@ window_open(glw_x11_t *gx11, int fullscreen)
 
   glw_opengl_init_context(&gx11->gr);
 
-  if(gx11->glXSwapIntervalSGI != NULL && gx11->force_no_vsync ==0)
+  if(gx11->glXSwapIntervalSGI != NULL)
     gx11->glXSwapIntervalSGI(1);
 
   gx11->working_vsync = check_vsync(gx11);
@@ -1262,9 +1261,7 @@ glw_x11_start(void)
   gx11->displayname_real = getenv("DISPLAY");
 
   // This may aid some vsync problems with nVidia drivers
-  if(!gx11->force_no_vsync)
-    setenv("__GL_SYNC_TO_VBLANK", "1", 1);
-
+  setenv("__GL_SYNC_TO_VBLANK", "1", 1);
 
   if(glw_x11_init(gx11))
      return 1;

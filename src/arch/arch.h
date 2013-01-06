@@ -27,3 +27,5 @@ void arch_exit(void) __attribute__((noreturn));
 int64_t arch_cache_avail_bytes(void);
 
 int arch_pipe(int pipefd[2]);
+
+void arch_stop_req(void);

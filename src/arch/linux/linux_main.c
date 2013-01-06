@@ -106,6 +106,20 @@ static GSourceFuncs source_funcs = {
 };
 
 
+static int linux_run = 1;
+
+/**
+ *
+ */
+void
+arch_stop_req(void)
+{
+  linux_run = 0;
+  g_main_context_wakeup(g_main_context_default());
+}
+
+extern void gu_start(void);
+
 /**
  * Linux main
  */
@@ -136,18 +150,15 @@ main(int argc, char **argv)
   g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
 		  g_main_context_default());
 
+  g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
+		  g_main_context_default());
+
   linux_init_monitors();
 
-#if ENABLE_GU
-  if(gconf.ui && !strcmp(gconf.ui, "gu")) {
-    extern void gu_start(void);
-    gu_start();
-  } else
-#endif
- {
-  extern void glw_x11_start(void);
-  glw_x11_start();
- }
+  gu_start();
+
+  while(linux_run)
+    gtk_main_iteration();
 
   showtime_fini();
 

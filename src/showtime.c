@@ -556,7 +556,7 @@ showtime_shutdown(int retcode)
 
   htsmsg_store_flush();
 
-  event_to_ui(event_create_type(EVENT_STOP_UI));
+  arch_stop_req();
 }
 
 
