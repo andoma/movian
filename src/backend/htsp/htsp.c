@@ -1702,7 +1702,7 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
 
   return be_file_playvideo_fh(url, mp, flags, priority, 
                               errbuf, errlen, NULL, url,
-                              vq, &hf->h);
+                              vq, &hf->h, NULL);
 }
 
 

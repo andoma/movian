@@ -648,6 +648,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  video_queue_t *vq,
                   struct vsource_list *vsl)
 {
+  rstr_t *title = NULL;
   if(mimetype == NULL) {
     struct fa_stat fs;
 
@@ -683,7 +684,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     char *x = strrchr(tmp, '.');
     if(x)
       *x = 0;
-    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), tmp);
+    title = rstr_alloc(tmp);
+
+    prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);
   }
 
   const int seek_is_fast = fa_seek_is_fast(fh);
@@ -726,9 +729,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  return be_file_playvideo_fh(url, mp, flags, priority,
-                              errbuf, errlen, mimetype,
-                              canonical_url, vq, fh);
+  event_t *e = be_file_playvideo_fh(url, mp, flags, priority,
+				    errbuf, errlen, mimetype,
+				    canonical_url, vq, fh, title);
+  rstr_release(title);
+  return e;
 }
 
 /**
@@ -741,7 +746,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
                      const char *mimetype,
                      const char *canonical_url,
                      video_queue_t *vq,
-                     fa_handle_t *fh)
+                     fa_handle_t *fh,
+		     rstr_t *title)
 {
   const int seek_is_fast = fa_seek_is_fast(fh);
   
@@ -780,6 +786,21 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     metadata_destroy(md);
   }
 
+  // We're gonna change/release it further down so claim a reference
+  title = rstr_dup(title);
+
+  /**
+   * Overwrite with data from database if we have something which
+   * is not dsid == 1 (the file itself)
+   */
+  md = metadata_get_video_data(url);
+  if(md != NULL && md->md_dsid != 1) {
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
+    if(md->md_title)
+      rstr_set(&title, md->md_title);
+    metadata_destroy(md);
+  }
+
   /**
    * Subtitles fr
    */
@@ -793,6 +814,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   hts_thread_create_joinable("subloader", &sub_tid,
 			     sub_loader, &sl, THREAD_PRIO_LOW);
 
+  rstr_release(title);
 
   /**
    * Init codec contexts

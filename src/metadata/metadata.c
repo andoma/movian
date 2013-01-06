@@ -1994,6 +1994,23 @@ mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
 }
 
 
+/**
+ *
+ */
+metadata_t *
+metadata_get_video_data(const char *url)
+{
+  void *db = metadb_get();
+  metadata_t *md;
+
+  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md);
+  metadb_close(db);
+  if(r)
+    return NULL;
+  return md;
+}
+
+
 #define isnum(a) ((a) >= '0' && (a) <= '9')
 
 /**

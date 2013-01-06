@@ -24,6 +24,7 @@
 struct video_queue;
 struct fa_handle;
 struct vsource_list;
+struct rstr;
 
 event_t *be_file_playvideo(const char *url, media_pipe_t *mp,
 			   int flags, int priority,
@@ -38,6 +39,7 @@ event_t *be_file_playvideo_fh(const char *url, media_pipe_t *mp,
                               const char *mimetype,
                               const char *canonical_url,
                               struct video_queue *vq,
-                              struct fa_handle *fh);
+                              struct fa_handle *fh,
+			      struct rstr *title);
 
 #endif /* FA_VIDEO_H */

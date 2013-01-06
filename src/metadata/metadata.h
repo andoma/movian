@@ -303,6 +303,13 @@ void metadata_to_proptree(const metadata_t *md,
 			  struct prop *proproot,
 			  int cleanup_streams);
 
+metadata_t *metadata_get_video_data(const char *url);
+
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
 void metadb_init(void);
 
 void metadb_fini(void);

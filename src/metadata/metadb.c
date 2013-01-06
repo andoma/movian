@@ -1872,7 +1872,8 @@ metadb_get_videoinfo(void *db, const char *url,
   int rc;
   sqlite3_stmt *sel;
 
-  *fixed_ds = 0;
+  if(fixed_ds)
+    *fixed_ds = 0;
   *mdp = NULL;
 
   rc = db_prepare(db, &sel,
@@ -1900,7 +1901,8 @@ metadb_get_videoinfo(void *db, const char *url,
 
   sqlite3_finalize(sel);
 
-  *fixed_ds = ds_id;
+  if(fixed_ds)
+    *fixed_ds = ds_id;
 
   rc = db_prepare(db, &sel,
 		  "SELECT v.id, v.title, v.tagline, v.description, v.year, "
@@ -1932,18 +1934,20 @@ metadb_get_videoinfo(void *db, const char *url,
     if(!dsenabled)
       continue;
 
-    metadata_source_t *ms;
+    if(sources != NULL) {
+      metadata_source_t *ms;
 
-    LIST_FOREACH(ms, sources, ms_link)
-      if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
-	ms->ms_mark = 1;
-	ms->ms_qtype = qtype;
-	ms->ms_status = status;
-	break;
-      }
+      LIST_FOREACH(ms, sources, ms_link)
+	if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
+	  ms->ms_mark = 1;
+	  ms->ms_qtype = qtype;
+	  ms->ms_status = status;
+	  break;
+	}
 
-    if(ms == NULL)
-      continue;
+      if(ms == NULL)
+	continue;
+    }
 
     if(status == METAITEM_STATUS_ABSENT)
       continue;
