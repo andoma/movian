@@ -522,7 +522,7 @@ gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
  *
  */
 static void
-fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url,
+fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 		  const char *filename)
 {
   int i;
@@ -668,7 +668,7 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     return NULL;
   }
 
-  fa_lavf_load_meta(md, fctx, url, filename);
+  fa_lavf_load_meta(md, fctx, filename);
   fa_libav_close_format(fctx);
   return md;
 }
@@ -678,10 +678,11 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
  *
  */
 metadata_t *
-fa_metadata_from_fctx(AVFormatContext *fctx, const char *url)
+fa_metadata_from_fctx(AVFormatContext *fctx)
 {
   metadata_t *md = metadata_create();
-  fa_lavf_load_meta(md, fctx, url, NULL);
+  
+  fa_lavf_load_meta(md, fctx, NULL);
   return md;
 }
 

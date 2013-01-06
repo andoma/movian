@@ -774,7 +774,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   /**
    * Update property metadata
    */
-  metadata_t *md = fa_metadata_from_fctx(fctx, url);
+  metadata_t *md = fa_metadata_from_fctx(fctx);
   if(md != NULL) {
     metadata_to_proptree(md, mp->mp_prop_metadata, 0);
     metadata_destroy(md);
