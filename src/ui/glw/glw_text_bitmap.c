@@ -199,7 +199,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     float x1, y1, x2, y2;
 
     // Horizontal 
-    if(text_width > right - left) {
+    if(text_width > right - left || pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
       // Oversized, must cut
       text_width = right - left;
 
