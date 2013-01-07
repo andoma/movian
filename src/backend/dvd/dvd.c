@@ -27,7 +27,7 @@
 #include "notifications.h"
 #include "showtime.h"
 #include "metadata/metadata.h"
-#include "misc/str.h"
+#include "misc/isolang.h"
 #include <libavcodec/avcodec.h>
 #include <libavutil/mathematics.h>
 
@@ -547,6 +547,19 @@ dvd_set_spu_stream(dvd_player_t *dp, const char *id)
 /**
  *
  */
+static const char *
+dvdlang(uint16_t code)
+{
+  char buf[3];
+  buf[0] = code >> 8;
+  buf[1] = code;
+  buf[2] = 0;
+  return iso_639_1_lang(buf);
+}
+
+/**
+ *
+ */
 static void
 dvd_update_streams(dvd_player_t *dp)
 {
@@ -575,7 +588,7 @@ dvd_update_streams(dvd_player_t *dp)
 	  abort();
       }
 
-      prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
+      prop_set_string(prop_create(p, "title"), dvdlang(lang));
       prop_set_stringf(prop_create(p, "id"), "audio:%d", i);
 
 
@@ -629,7 +642,7 @@ dvd_update_streams(dvd_player_t *dp)
 	  abort();
       }
 
-      prop_set_string(prop_create(p, "title"), dvd_langcode_to_string(lang));
+      prop_set_string(prop_create(p, "title"), dvdlang(lang));
       prop_set_stringf(prop_create(p, "id"), "sub:%d", i);
       before = p;
     }

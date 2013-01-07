@@ -124,7 +124,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
 	char b[4];
 	memcpy(b, postfix - 3, 3);
 	b[3] = 0;
-	lang = isolang_iso2lang(b);
+	lang = iso_639_2_lang(b);
       }
 
       int score = fs_sub_match(video, rstr_get(fde->fde_url));
@@ -149,7 +149,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
 	char b[4];
 	memcpy(b, postfix - 3, 3);
 	b[3] = 0;
-	lang = isolang_iso2lang(b);
+	lang = iso_639_2_lang(b);
       }
 
       int score = fs_sub_match(video, rstr_get(fde->fde_url));

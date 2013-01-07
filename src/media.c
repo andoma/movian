@@ -1540,7 +1540,7 @@ mp_add_trackr(prop_t *parent,
   if(isolang != NULL) {
     prop_set_rstring(prop_create(p, "isolang"), isolang);
     
-    const char *language = isolang_iso2lang(rstr_get(isolang));
+    const char *language = iso_639_2_lang(rstr_get(isolang));
     if(language != NULL) {
       prop_set_string(prop_create(p, "language"), language);
     } else {
