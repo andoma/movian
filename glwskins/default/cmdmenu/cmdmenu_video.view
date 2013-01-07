@@ -97,6 +97,7 @@ widget(deck, {
 
       widget(container_x, {
 	alpha: 0.6 + iir(isFocused(), 6);
+	spacing: $ui.size / 2;
 	widget(icon, {
 	  source: "dataroot://resources/svg/Check.svg";
 	  shadow: true;
@@ -104,24 +105,31 @@ widget(deck, {
 	});
 
 	widget(label, {
-	  weight: 5;
+	  weight: 3;
 	  TextStyleItem();
-	  caption: join(" · ", $self.title, $self.language);
-	  ellipsize: true;
+	  caption: $self.title;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
-	  weight: 1;
+	  weight: 2;
+	  TextStyleItem();
+	  caption: $self.language;
+	  filterConstraintX: true;
+	});
+
+	widget(label, {
+	  weight: 0.5;
 	  TextStyleItem();
 	  caption: $self.format;
-	  ellipsize: true;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
 	  weight: 2;
 	  TextStyleItem();
 	  caption: $self.source;
-	  ellipsize: true;
+	  filterConstraintX: true;
 	});
       });
     });
