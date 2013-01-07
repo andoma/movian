@@ -1,0 +1,1 @@
+Avoid doing external metadata lookup for very short file names
