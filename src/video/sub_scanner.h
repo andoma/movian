@@ -1,6 +1,6 @@
 /*
- *  Open subtitles interface
- *  Copyright (C) 2010 Andreas Öman
+ *  Scanning of external subtitles
+ *  Copyright (C) 2013 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +17,12 @@
  */
 #pragma once
 
-#include "htsmsg/htsmsg.h"
-#include "arch/threads.h"
+typedef struct sub_scanner sub_scanner_t;
 
-struct prop;
-struct fa_handle;
+sub_scanner_t *sub_scanner_create(const char *url, int beflags, rstr_t *title,
+				  prop_t *proproot, int opensub_hash_valid,
+				  uint64_t opensub_hash, uint64_t fsize,
+				  rstr_t *imdbid);
 
-int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
-
-void opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
-		   uint64_t size, const char *title, const char *imdb);
-
+void sub_scanner_destroy(sub_scanner_t *ss); 
 
