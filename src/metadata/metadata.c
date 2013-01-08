@@ -836,8 +836,6 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
 
   if(is_reasonable_movie_name(rstr_get(mlv->mlv_filename))) {
 
-    printf("yup\n");
-
     metadata_filename_to_title(rstr_get(mlv->mlv_filename), &year, &title);
   
     TRACE(TRACE_DEBUG, "METADATA",
