@@ -105,14 +105,14 @@ widget(deck, {
 	});
 
 	widget(label, {
-	  weight: 3;
+	  weight: 4;
 	  TextStyleItem();
 	  caption: $self.title;
 	  filterConstraintX: true;
 	});
 
 	widget(label, {
-	  weight: 2;
+	  weight: 1;
 	  TextStyleItem();
 	  caption: $self.language;
 	  filterConstraintX: true;
