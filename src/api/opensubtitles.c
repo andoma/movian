@@ -28,6 +28,7 @@
 #include "xmlrpc.h"
 #include "fileaccess/fileaccess.h"
 #include "media.h"
+#include "i18n.h"
 
 #define OPENSUB_URL "http://api.opensubtitles.org/xml-rpc"
 
@@ -212,6 +213,19 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
 
   int r; // Retry counter
 
+  char lang[16];
+
+  const char *lang0 = i18n_subtitle_lang(0);
+  const char *lang1 = i18n_subtitle_lang(1);
+  const char *lang2 = i18n_subtitle_lang(2);
+
+  snprintf(lang, sizeof(lang), "%s%s%s%s%s",
+	   lang0 ?: "",
+	   lang0 && lang1 ? "," : "",
+	   lang1 ?: "",
+	   (lang0 || lang1) && lang2 ? "," : "",
+	   lang2 ?: "");
+
   for(r = 0; r < 2; r++) {
     
     TRACE(TRACE_DEBUG, "opensubtitles", "Doing query #%d", r);
@@ -231,18 +245,24 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
       snprintf(str, sizeof(str), "%" PRIx64, hash);
       htsmsg_add_str(q, "moviehash", str);
       htsmsg_add_s64(q, "moviebytesize", size);
+      if(*lang)
+	htsmsg_add_str(q, "sublanguageid", lang);
       htsmsg_add_msg(queries, NULL, q);
     }
 
     if(imdb != NULL && imdb[0] == 't' && imdb[1] == 't') {
       q = htsmsg_create_map();
       htsmsg_add_str(q, "imdbid", imdb+2);
+      if(*lang)
+	htsmsg_add_str(q, "sublanguageid", lang);
       htsmsg_add_msg(queries, NULL, q);
     }
 
     if(title != NULL && 0) {
       q = htsmsg_create_map();
       htsmsg_add_str(q, "query", title);
+      if(*lang)
+	htsmsg_add_str(q, "sublanguageid", lang);
       htsmsg_add_msg(queries, NULL, q);
     }
 
@@ -294,22 +314,28 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
       continue;
     }
     int added = 0;
-    htsmsg_print(data);
+
     HTSMSG_FOREACH(f, data) {
+      char src[64];
       if((entry = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
       
       const char *url = htsmsg_get_str(entry, "SubDownloadLink");
-
       if(url == NULL)
 	continue;
       added++;
+
+      snprintf(src, sizeof(src), "Opensubtitles (%s)", 
+	       htsmsg_get_str(entry, "MatchedBy"));
+
       hts_mutex_lock(mtx);
-      mp_add_track(p, NULL, url,
+      mp_add_track(p,
+		   htsmsg_get_str(entry, "SubFileName"),
+		   url,
 		   htsmsg_get_str(entry, "SubFormat"),
 		   NULL,
 		   htsmsg_get_str(entry, "SubLanguageID"),
-		   "opensubtitles.org", NULL, 0);
+		   src, NULL, 0);
       hts_mutex_unlock(mtx);
     }
     TRACE(TRACE_DEBUG, "opensubtitles", "Got %d subtitles", added);
