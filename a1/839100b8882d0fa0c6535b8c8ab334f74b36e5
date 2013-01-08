@@ -1,0 +1,4 @@
+Improved support for opensubtitles.org
+
+Showtime will now search in opensubtitles.org database using the
+Movie title and optionally the IMDB ID if it manages to resolve that
