@@ -427,8 +427,8 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_setting_sv_delta = 
     settings_create_int(mp->mp_setting_subtitle_root, "svdelta",
-			_p("Subtitle delay"), 0, NULL, -60000, 60000,
-			100, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
+			_p("Subtitle delay"), 0, NULL, -600000, 600000,
+			500, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
 			"ms", mp->mp_pc, NULL, NULL);
 
   mp->mp_setting_sub_scale = 
