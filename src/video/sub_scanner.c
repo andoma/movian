@@ -88,6 +88,8 @@ fs_sub_match(const char *video, const char *sub)
 }
 
 
+#define LOCAL_EXTRA_SCORE 5
+
 /**
  *
  */
@@ -140,7 +142,8 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
       hts_mutex_lock(&ss->ss_mutex);
       mp_add_track(ss->ss_proproot, rstr_get(fde->fde_filename),
 		   rstr_get(fde->fde_url),
-		   "SRT", NULL, lang, NULL, _p("External file"), score);
+		   "SRT", NULL, lang, NULL, _p("External file"),
+		   score + LOCAL_EXTRA_SCORE);
       hts_mutex_unlock(&ss->ss_mutex);
       
     }
@@ -165,14 +168,16 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
       hts_mutex_lock(&ss->ss_mutex);
       mp_add_track(ss->ss_proproot, rstr_get(fde->fde_filename),
 		   rstr_get(fde->fde_url),
-		   "ASS / SSA", NULL, lang, NULL, _p("External file"), score);
+		   "ASS / SSA", NULL, lang, NULL, _p("External file"),
+		   score + LOCAL_EXTRA_SCORE);
       hts_mutex_unlock(&ss->ss_mutex);
     }
 
     if(!strcasecmp(postfix, ".idx")) {
       int score = fs_sub_match(video, rstr_get(fde->fde_url));
       TRACE(TRACE_DEBUG, "Video", "VOBSUB %s score=%d", 
-	    rstr_get(fde->fde_url), score); 
+	    rstr_get(fde->fde_url),
+	    score + LOCAL_EXTRA_SCORE);
 
       if(score == 0 && !subtitle_settings.include_all_subs)
 	continue;
