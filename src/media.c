@@ -415,9 +415,26 @@ mp_create(const char *name, int flags, const char *type)
 
   mp->mp_setting_vzoom = 
     settings_create_int(mp->mp_setting_video_root, "vzoom",
-			_p("Video zoom"), video_settings.vzoom, NULL, 50, 200,
-			1, NULL, mp, SETTINGS_INITIAL_UPDATE,
+			_p("Video zoom"),
+			video_settings.vzoom, NULL,
+			50, 200, 1,
+			NULL, NULL, SETTINGS_INITIAL_UPDATE,
 			"%", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_hstretch = 
+    settings_create_bool(mp->mp_setting_video_root, "hstretch",
+			 _p("Stretch video to widescreen"),
+			 video_settings.stretch_horizontal, NULL,
+			 NULL, NULL, SETTINGS_INITIAL_UPDATE,
+			 mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_fstretch = 
+    settings_create_bool(mp->mp_setting_video_root, "fstretch",
+			 _p("Stretch video to fullscreen"),
+			 video_settings.stretch_fullscreen, NULL,
+			 NULL, NULL, SETTINGS_INITIAL_UPDATE,
+			 mp->mp_pc, NULL, NULL);
+
 
   mp->mp_setting_av_delta = 
     settings_create_int(mp->mp_setting_audio_root, "avdelta",
@@ -443,6 +460,9 @@ mp_create(const char *name, int flags, const char *type)
 			 subtitle_settings.align_on_video, NULL,
 			 NULL, NULL, 0,
 			 mp->mp_pc, NULL, NULL);
+
+
+
 
   return mp;
 }
@@ -514,6 +534,8 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_sub_scale);
   setting_destroy(mp->mp_setting_sub_on_video);
   setting_destroy(mp->mp_setting_vzoom);
+  setting_destroy(mp->mp_setting_hstretch);
+  setting_destroy(mp->mp_setting_fstretch);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);

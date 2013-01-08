@@ -53,12 +53,12 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
   float t_aspect = (float)gv->gv_dar_num / gv->gv_dar_den; 
 
-  if(video_settings.stretch_fullscreen)
+  if(gv->gv_fstretch)
     return;
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
-    if(video_settings.stretch_horizontal)
+    if(gv->gv_hstretch)
       return;
 
     // Shrink X
@@ -291,6 +291,8 @@ glw_video_dtor(glw_t *w)
   prop_ref_dec(gv->gv_model);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
+  prop_unsubscribe(gv->gv_hstretch_sub);
+  prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
 
   free(gv->gv_current_url);
@@ -429,6 +431,23 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_vzoom),
+		   NULL);
+
+  gv->gv_hstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_hstretch,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_hstretch),
+		   NULL);
+
+
+  gv->gv_fstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_fstretch,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_fstretch),
 		   NULL);
 
   gv->gv_vo_on_video_sub =
