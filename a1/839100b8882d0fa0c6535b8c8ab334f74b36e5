@@ -1,4 +1,8 @@
 Improved support for opensubtitles.org
 
 Showtime will now search in opensubtitles.org database using the
-Movie title and optionally the IMDB ID if it manages to resolve that
+movie title and optionally the IMDB ID if it manages to resolve that
+
+To limit the number of returned results it will only include the
+subtitles that matches the languages configured in Settings -> Languages.
+If no such configuration has been entered all results will be displayed.
