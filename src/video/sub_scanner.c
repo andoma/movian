@@ -51,6 +51,9 @@ struct sub_scanner {
   uint64_t ss_opensub_hash;  // opensubtitles hash
   uint64_t ss_fsize;         // Size of video file being played
 
+  int ss_season;
+  int ss_episode;
+
 };
 
 
@@ -226,7 +229,8 @@ sub_scanner_thread(void *aux)
   if(!ss->ss_stop) {
     opensub_query(ss->ss_proproot, &ss->ss_mutex, ss->ss_opensub_hash,
 		  ss->ss_opensub_hash_valid ? ss->ss_fsize : 0,
-		  rstr_get(ss->ss_title), rstr_get(ss->ss_imdbid));
+		  rstr_get(ss->ss_title), rstr_get(ss->ss_imdbid),
+		  ss->ss_season, ss->ss_episode);
   }
 
   sub_scanner_release(ss);
@@ -242,7 +246,7 @@ sub_scanner_t *
 sub_scanner_create(const char *url, int beflags, rstr_t *title,
 		   prop_t *proproot, int opensub_hash_valid,
 		   uint64_t opensub_hash, uint64_t fsize,
-		   rstr_t *imdbid)
+		   rstr_t *imdbid, int season, int episode)
 {
   sub_scanner_t *ss = calloc(1, sizeof(sub_scanner_t));
   hts_mutex_init(&ss->ss_mutex);
@@ -255,6 +259,8 @@ sub_scanner_create(const char *url, int beflags, rstr_t *title,
   ss->ss_opensub_hash_valid = opensub_hash_valid;
   ss->ss_opensub_hash = opensub_hash;
   ss->ss_fsize = fsize;
+  ss->ss_season = season;
+  ss->ss_episode = episode;
   hts_thread_create_detached("subscanner", sub_scanner_thread, ss,
 			     THREAD_PRIO_LOW);
   return ss;

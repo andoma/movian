@@ -29,6 +29,7 @@
 #include "fileaccess/fileaccess.h"
 #include "media.h"
 #include "i18n.h"
+#include "misc/redblack.h"
 
 #define OPENSUB_URL "http://api.opensubtitles.org/xml-rpc"
 
@@ -199,12 +200,44 @@ opensub_login(int force, char *errbuf, size_t errlen)
 
 
 
+
+static htsmsg_t *
+makeq(htsmsg_t *queries, const char *lang, int season, int episode)
+{
+  htsmsg_t *q = htsmsg_create_map();
+  if(*lang)
+    htsmsg_add_str(q, "sublanguageid", lang);
+  if(season > 0)
+    htsmsg_add_u32(q, "season", season);
+  if(episode > 0)
+    htsmsg_add_u32(q, "episode", episode);
+ 
+  htsmsg_add_msg(queries, NULL, q);
+  return q;
+}
+
+RB_HEAD(dedup_tree, dedup);
+
+typedef struct dedup {
+  RB_ENTRY(dedup) link;
+  char *str;
+} dedup_t;
+
+
+static int
+dedup_cmp(const dedup_t *a, const dedup_t *b)
+{
+  return strcmp(a->str, b->str);
+}
+
+
 /**
  *
  */
 void
 opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
-	      uint64_t size, const char *title, const char *imdb)
+	      uint64_t size, const char *title, const char *imdb,
+	      int season, int episode)
 {
   char errbuf[256];
   htsmsg_t *queries, *in, *out, *m, *data, *entry, *q;
@@ -218,6 +251,8 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
   const char *lang0 = i18n_subtitle_lang(0);
   const char *lang1 = i18n_subtitle_lang(1);
   const char *lang2 = i18n_subtitle_lang(2);
+  struct dedup_tree dt;
+  dedup_t *d;
 
   snprintf(lang, sizeof(lang), "%s%s%s%s%s",
 	   lang0 ?: "",
@@ -240,30 +275,19 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
     queries = htsmsg_create_list();
 
     if(size) {
-      q = htsmsg_create_map();
+      q = makeq(queries, lang, season, episode);
       char str[20];
       snprintf(str, sizeof(str), "%" PRIx64, hash);
       htsmsg_add_str(q, "moviehash", str);
       htsmsg_add_s64(q, "moviebytesize", size);
-      if(*lang)
-	htsmsg_add_str(q, "sublanguageid", lang);
-      htsmsg_add_msg(queries, NULL, q);
     }
 
     if(imdb != NULL && imdb[0] == 't' && imdb[1] == 't') {
-      q = htsmsg_create_map();
+      q = makeq(queries, lang, season, episode);
       htsmsg_add_str(q, "imdbid", imdb+2);
-      if(*lang)
-	htsmsg_add_str(q, "sublanguageid", lang);
-      htsmsg_add_msg(queries, NULL, q);
-    }
-
-    if(title != NULL && 0) {
-      q = htsmsg_create_map();
+    } else if(title != NULL) {
+      q = makeq(queries, lang, season, episode);
       htsmsg_add_str(q, "query", title);
-      if(*lang)
-	htsmsg_add_str(q, "sublanguageid", lang);
-      htsmsg_add_msg(queries, NULL, q);
     }
 
     in = htsmsg_create_list();
@@ -315,6 +339,8 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
     }
     int added = 0;
 
+    RB_INIT(&dt);
+
     HTSMSG_FOREACH(f, data) {
       char src[64];
       if((entry = htsmsg_get_map_by_field(f)) == NULL)
@@ -323,11 +349,27 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
       const char *url = htsmsg_get_str(entry, "SubDownloadLink");
       if(url == NULL)
 	continue;
+
+
+      const char *mb = htsmsg_get_str(entry, "MatchedBy");
+      if(mb == NULL)
+	continue;
+
+      d = malloc(sizeof(dedup_t));
+      d->str = strdup(url);
+      if(RB_INSERT_SORTED(&dt, d, link, dedup_cmp)) {
+	free(d->str);
+	free(d);
+	continue;
+      }
+
+      snprintf(src, sizeof(src), "Opensubtitles (%s)",  mb);
+
+      int xscore = 0;
+      if(!strcmp(mb, "moviehash"))
+	xscore++;
+
       added++;
-
-      snprintf(src, sizeof(src), "Opensubtitles (%s)", 
-	       htsmsg_get_str(entry, "MatchedBy"));
-
       hts_mutex_lock(mtx);
       mp_add_track(p,
 		   htsmsg_get_str(entry, "SubFileName"),
@@ -335,12 +377,19 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
 		   htsmsg_get_str(entry, "SubFormat"),
 		   NULL,
 		   htsmsg_get_str(entry, "SubLanguageID"),
-		   src, NULL, 0);
+		   src, NULL, xscore);
       hts_mutex_unlock(mtx);
     }
     TRACE(TRACE_DEBUG, "opensubtitles", "Got %d subtitles", added);
     
     htsmsg_destroy(out);
+
+    while((d = dt.root) != NULL) {
+      RB_REMOVE(&dt, d, link);
+      free(d->str);
+      free(d);
+    }
+
     return;
   }
 }

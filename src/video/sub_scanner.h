@@ -22,7 +22,7 @@ typedef struct sub_scanner sub_scanner_t;
 sub_scanner_t *sub_scanner_create(const char *url, int beflags, rstr_t *title,
 				  prop_t *proproot, int opensub_hash_valid,
 				  uint64_t opensub_hash, uint64_t fsize,
-				  rstr_t *imdbid);
+				  rstr_t *imdbid, int season, int episode);
 
 void sub_scanner_destroy(sub_scanner_t *ss); 
 

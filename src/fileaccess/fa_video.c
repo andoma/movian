@@ -621,13 +621,32 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
    * Overwrite with data from database if we have something which
    * is not dsid == 1 (the file itself)
    */
+  int season = -1;
+  int episode = -1;
   md = metadata_get_video_data(url);
   if(md != NULL && md->md_dsid != 1) {
     metadata_to_proptree(md, mp->mp_prop_metadata, 0);
-    if(md->md_title)
-      rstr_set(&title, md->md_title);
-    if(md->md_imdb_id)
-      rstr_set(&imdbid, md->md_imdb_id);
+
+    // Some hard coded stuff for subtitle scanner
+
+    if(md->md_parent &&
+       md->md_parent->md_type == METADATA_TYPE_SEASON &&
+       md->md_parent->md_parent && 
+       md->md_parent->md_parent->md_type == METADATA_TYPE_SERIES) {
+
+      episode = md->md_idx;
+      season = md->md_parent->md_idx;
+      if(md->md_parent->md_parent->md_title != NULL)
+	rstr_set(&title, md->md_parent->md_parent->md_title);
+
+    } else {
+
+      if(md->md_title)
+	rstr_set(&title, md->md_title);
+      if(md->md_imdb_id)
+	rstr_set(&imdbid, md->md_imdb_id);
+    }
+
     metadata_destroy(md);
   }
 
@@ -636,7 +655,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
    */
   sub_scanner_t *ss =
     sub_scanner_create(url, flags, title, mp->mp_prop_subtitle_tracks,
-		       opensub_hash_valid, hash, fsize, imdbid);
+		       opensub_hash_valid, hash, fsize, imdbid,
+		       season, episode);
 
   rstr_release(title);
   rstr_release(imdbid);
