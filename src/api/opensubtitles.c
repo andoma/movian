@@ -212,7 +212,6 @@ makeq(htsmsg_t *queries, const char *lang, int season, int episode)
   if(episode > 0)
     htsmsg_add_u32(q, "episode", episode);
  
-  htsmsg_add_msg(queries, NULL, q);
   return q;
 }
 
@@ -265,8 +264,8 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
     
     TRACE(TRACE_DEBUG, "opensubtitles", "Doing query #%d", r);
     TRACE(TRACE_DEBUG, "opensubtitles",
-	  "  Hash = 0x%016llx, title=%s, imdbid=%s", hash,
-	  title ?: "<unset>", imdb ?: "<unset>");
+	  "  Hash = 0x%016llx, title=%s, imdbid=%s, languages='%s'", hash,
+	  title ?: "<unset>", imdb ?: "<unset>", lang);
     if(opensub_login(r, errbuf, sizeof(errbuf))) {
       TRACE(TRACE_ERROR, "opensubtitles", "Unable to login: %s", errbuf);
       break;
@@ -280,14 +279,17 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
       snprintf(str, sizeof(str), "%" PRIx64, hash);
       htsmsg_add_str(q, "moviehash", str);
       htsmsg_add_s64(q, "moviebytesize", size);
+      htsmsg_add_msg(queries, NULL, q);
     }
 
     if(imdb != NULL && imdb[0] == 't' && imdb[1] == 't') {
       q = makeq(queries, lang, season, episode);
       htsmsg_add_str(q, "imdbid", imdb+2);
+      htsmsg_add_msg(queries, NULL, q);
     } else if(title != NULL) {
       q = makeq(queries, lang, season, episode);
       htsmsg_add_str(q, "query", title);
+      htsmsg_add_msg(queries, NULL, q);
     }
 
     in = htsmsg_create_list();
