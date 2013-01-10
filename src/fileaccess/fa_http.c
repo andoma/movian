@@ -1444,10 +1444,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       return 0;
 
     if(nohead) {
-      // Server did not honour our GET request with 1 byte range
-      // This is bad, bail out
-      snprintf(errbuf, errlen, "Unexpected 200 response on range request");
-      return -1;
+      http_detach(hf, 0, "Range request not understood");
+      hf->hf_streaming = 1;
+      goto reconnect;
     }
 
     if(hf->hf_filesize < 0) {
