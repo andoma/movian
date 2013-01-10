@@ -247,6 +247,9 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
 
   char lang[16];
 
+  if(size == 0 && title == NULL && imdb == NULL)
+    return;
+
   const char *lang0 = i18n_subtitle_lang(0);
   const char *lang1 = i18n_subtitle_lang(1);
   const char *lang2 = i18n_subtitle_lang(2);
