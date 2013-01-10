@@ -559,6 +559,7 @@ fa_buffered_open(const char *url, char *errbuf, size_t errsize, int flags,
 
 
   if(parked && !strcmp(parked->bf_url, url)) {
+    parked->bf_fpos = 0;
     fh = (fa_handle_t *)parked;
     parked = NULL;
   }
