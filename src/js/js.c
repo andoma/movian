@@ -33,6 +33,8 @@
 #include "notifications.h"
 #include "networking/net.h"
 #include "ui/webpopup.h"
+#include "misc/md5.h"
+#include "misc/sha.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -674,6 +676,56 @@ js_webpopup(JSContext *cx, JSObject *obj,
 
 
 
+/**
+ *
+ */
+static JSBool 
+js_md5digest(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  uint8_t d[16];
+  char ret[33];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  md5_decl(ctx);
+  md5_init(ctx);
+  md5_update(ctx, (void *)str, strlen(str));
+  md5_final(ctx, d);
+  bin2hex(ret, sizeof(ret), d, sizeof(d));
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ret));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_sha1digest(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  uint8_t d[20];
+  char ret[41];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  sha1_decl(ctx);
+  sha1_init(ctx);
+  sha1_update(ctx, (void *)str, strlen(str));
+  sha1_final(ctx, d);
+  bin2hex(ret, sizeof(ret), d, sizeof(d));
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ret));
+  return JS_TRUE;
+}
+
+
+
+
 
 /**
  *
@@ -702,6 +754,8 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("notify",           js_notify, 2, 0, 0),
     JS_FS("systemIpAddress",  js_sysipaddr, 0, 0, 0),
     JS_FS("webpopup",         js_webpopup, 3, 0, 0),
+    JS_FS("md5digest",        js_md5digest, 1, 0, 0),
+    JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
     JS_FS_END
 };
 
