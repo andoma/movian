@@ -107,14 +107,40 @@ vsource_insert(struct vsource_list *list,
  *
  */
 static void
+vsource_free(vsource_t *vs)
+{
+  free(vs->vs_url);
+  free(vs->vs_mimetype);
+  free(vs);
+}
+
+
+/**
+ *
+ */
+static vsource_t *
+vsource_dup(const vsource_t *src)
+{
+  vsource_t *dst = malloc(sizeof(vsource_t));
+  *dst = *src;
+  dst->vs_url = strdup(dst->vs_url);
+  dst->vs_mimetype = dst->vs_mimetype ? strdup(src->vs_url) : NULL;
+  return dst;
+}
+
+
+/**
+ *
+ */
+static void
 vsource_remove(struct vsource_list *list, const char *url)
 {
   vsource_t *vs;
   LIST_FOREACH(vs, list, vs_link) {
     if(!strcmp(vs->vs_url, url)) {
       LIST_REMOVE(vs, vs_link);
-      free(vs->vs_url);
-      free(vs);
+      vsource_free(vs);
+      return;
     }
   }
 }
@@ -340,9 +366,12 @@ play_video(const char *url, struct media_pipe *mp,
 
     TRACE(TRACE_DEBUG, "Video", "Playing %s", vs->vs_url);
 
+    vs = vsource_dup(vs);
+
     e = backend_play_video(vs->vs_url, mp, flags | vs->vs_flags, priority, 
                            errbuf, errlen, vs->vs_mimetype,
                            canonical_url, vq, &vsources);
+    vsource_free(vs);
   }
 
   while(e != NULL) {
@@ -358,9 +387,11 @@ play_video(const char *url, struct media_pipe *mp,
 
       TRACE(TRACE_DEBUG, "Video", "Playing %s", vs->vs_url);
 
+      vs = vsource_dup(vs);
       e = backend_play_video(vs->vs_url, mp, flags | vs->vs_flags, priority, 
                              errbuf, errlen, vs->vs_mimetype,
                              canonical_url, vq, &vsources);
+      vsource_free(vs);
 
     } else {
       break;
