@@ -4967,19 +4967,13 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
   token_t *a, *b, *c, *d, *r;
-
-  if(argc < 2)
+  int sortidx = 0;
+  if(argc < 1)
     return glw_view_seterr(ec->ei, self, "propSorter(): "
 			   "Too few arguments");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, argv[1])) == NULL)
-    return -1;
-
-  if(b->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, a, "propSorter(): "
-			   "Second argument is not a string");
   
   if(self->t_extra != NULL)
     prop_nf_release(self->t_extra);
@@ -4992,53 +4986,96 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 PROP_NF_TAKE_DST_OWNERSHIP);
 
-  prop_nf_sort(self->t_extra, rstr_get(b->t_rstring), 0, 0, NULL, 1);
+  argc -= 1;
+  argv += 1;
 
-  argc -= 2;
-  argv += 2;
-  for(; argc >= 4; argc -= 4, argv += 4) {
-
+  while(argc > 1) {
     if((a = token_resolve(ec, argv[0])) == NULL)
       return -1;
-    if((b = token_resolve(ec, argv[1])) == NULL)
-      return -1;
-    if((c = token_resolve(ec, argv[2])) == NULL)
-      return -1;
-    if((d = token_resolve(ec, argv[3])) == NULL)
-      return -1;
-    
-    const char *path = token_as_string(a);
-    if(path == NULL)
-      continue;
 
-    if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
-      continue;
+    if(a->type != TOKEN_IDENTIFIER)
+ 	return glw_view_seterr(ec->ei, argv[0], "propSorter(): "
+			       "invalid command token");
 
-    prop_nf_cmp_t cf;
-    if(!strcmp(rstr_get(b->t_rstring), "eq"))
-      cf = PROP_NF_CMP_EQ;
-    else if(!strcmp(rstr_get(b->t_rstring), "neq"))
-      cf = PROP_NF_CMP_NEQ;
-    else
-      continue;
+    const char *cmd = rstr_get(a->t_rstring);
 
-    prop_nf_mode_t mode;
-    if(!strcmp(rstr_get(d->t_rstring), "include"))
-      mode = PROP_NF_MODE_INCLUDE;
-    else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
-      mode = PROP_NF_MODE_EXCLUDE;
-    else
-      continue;
-    
-    const char *val = token_as_string(c);
+    argc -= 1;
+    argv += 1;
 
-    if(val != NULL) {
-      prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+    if(!strcmp(cmd, "filter")) {
+      if(argc < 4)
+	return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			       "too few arguments (%d) for filter command",
+			       argc);
+
+      if((a = token_resolve(ec, argv[0])) == NULL)
+	return -1;
+      if((b = token_resolve(ec, argv[1])) == NULL)
+	return -1;
+      if((c = token_resolve(ec, argv[2])) == NULL)
+	return -1;
+      if((d = token_resolve(ec, argv[3])) == NULL)
+	return -1;
+      
+      argc -= 4;
+      argv += 4;
+
+      const char *path = token_as_string(a);
+      if(path == NULL)
+	continue;
+      
+      if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
+	continue;
+
+      prop_nf_cmp_t cf;
+      if(!strcmp(rstr_get(b->t_rstring), "eq"))
+	cf = PROP_NF_CMP_EQ;
+      else if(!strcmp(rstr_get(b->t_rstring), "neq"))
+	cf = PROP_NF_CMP_NEQ;
+      else
+	continue;
+      
+      prop_nf_mode_t mode;
+      if(!strcmp(rstr_get(d->t_rstring), "include"))
+	mode = PROP_NF_MODE_INCLUDE;
+      else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
+	mode = PROP_NF_MODE_EXCLUDE;
+      else
+	continue;
+      
+      const char *val = token_as_string(c);
+
+      if(val != NULL) {
+	prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+      } else {
+	prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+      }
+      
+    } else if(!strcmp(cmd, "sort") && sortidx < 4) {
+      if(argc < 3)
+	return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			       "too few arguments (%d) for sort command",
+			       argc);
+
+      if((a = token_resolve(ec, argv[0])) == NULL)
+	return -1;
+      if((b = token_resolve(ec, argv[1])) == NULL)
+	return -1;
+      if((c = token_resolve(ec, argv[2])) == NULL)
+	return -1;
+
+      argc -= 3;
+      argv += 3;
+
+      prop_nf_sort(self->t_extra, rstr_get(a->t_rstring),
+		   token2bool(b), sortidx, NULL, token2bool(c));
+
+      sortidx++;
     } else {
-      prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+      return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			     "unknown command token");
     }
   }
-
   return 0;
 }
 

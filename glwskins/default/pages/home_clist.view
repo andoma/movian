@@ -196,16 +196,25 @@ widget(container_x, {
     });
 
 
-    $view.video  = propSorter($global.services.all, "node.title",
-			      "node.type", neq, "video", exclude);
-    $view.music  = propSorter($global.services.all, "node.title",
-			      "node.type", neq, "music", exclude);
-    $view.tv     = propSorter($global.services.all, "node.title",
-			      "node.type", neq, "tv", exclude);
-    $view.photos = propSorter($global.services.all, "node.title",
-			     "node.type", neq, "photos", exclude);
-    $view.other  = propSorter($global.services.all, "node.title",
-			      "node.type", neq, "other", exclude);
+    $view.video  = propSorter($global.services.all,
+			      sort,   "node.title", false, false,
+			      filter, "node.type", neq, "video", exclude);
+
+    $view.music  = propSorter($global.services.all,
+			      sort,   "node.title", false, false,
+			      filter, "node.type", neq, "music", exclude);
+
+    $view.tv     = propSorter($global.services.all,
+			      sort,   "node.title", false, false,
+			      filter, "node.type", neq, "tv", exclude);
+
+    $view.photos = propSorter($global.services.all,
+			      sort,   "node.title", false, false,
+			      filter, "node.type", neq, "photos", exclude);
+
+    $view.other  = propSorter($global.services.all,
+			      sort,   "node.title", false, false,
+			      filter, "node.type", neq, "other", exclude);
     
 
 
