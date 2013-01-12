@@ -679,6 +679,12 @@ struct metadata_lazy_video {
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
+  unsigned char mlv_qtype : 6;
+  union {
+    int16_t mlv_season;
+    int16_t mlv_year;
+  };
+  int16_t mlv_episode;
   int mlv_dsid;
 };
 
@@ -743,6 +749,12 @@ build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
       break;
     case METADATA_QTYPE_EPISODE:
       qtype = _("filename as TV episode");
+      break;
+    case METADATA_QTYPE_MOVIE:
+      qtype = _("Movie title");
+      break;
+    case METADATA_QTYPE_TVSHOW:
+      qtype = _("Title, Season, Episode");
       break;
     }
 
@@ -1008,18 +1020,35 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	qtype = METADATA_QTYPE_CUSTOM;
 	q = NULL;
       } else if(msf->query_by_imdb_id != NULL && mlv->mlv_imdb_id != NULL) {
+	if(mlv->mlv_passive)
+	  continue;
+
 	qtype = METADATA_QTYPE_IMDB;
 	q = rstr_get(mlv->mlv_imdb_id);
 
-	if(mlv->mlv_passive)
+      } else if(mlv->mlv_qtype == METADATA_QTYPE_MOVIE) {
+
+	if(msf->query_by_title_and_year == NULL)
 	  continue;
 
+	qtype = METADATA_QTYPE_MOVIE;
+	q = NULL;
+
+      } else if(mlv->mlv_qtype == METADATA_QTYPE_TVSHOW) {
+
+	if(msf->query_by_episode == NULL)
+	  continue;
+
+	qtype = METADATA_QTYPE_TVSHOW;
+	q = NULL;
+
+
       } else {
+	if(mlv->mlv_passive)
+	  continue;
 	qtype = METADATA_QTYPE_FILENAME_OR_DIRECTORY;
 	q = NULL;
 
-	if(mlv->mlv_passive)
-	  continue;
       }
 
       if(md && md->md_dsid == ms->ms_id && is_qtype_compat(qtype, md->md_qtype))
@@ -1064,6 +1093,24 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
 	case METADATA_QTYPE_FILENAME_OR_DIRECTORY:
 	  rval = query_by_filename_or_dirname(db, mlv, msf, &qtype);
+	  break;
+
+	case METADATA_QTYPE_MOVIE:
+	  TRACE(TRACE_DEBUG, "METADATA",
+		"Performing search lookup on movie title %s, year:%d using %s",
+		rstr_get(mlv->mlv_filename), mlv->mlv_year, ms->ms_name);
+
+	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
+					      rstr_get(mlv->mlv_filename),
+					      mlv->mlv_year, mlv->mlv_duration,
+					      qtype);
+	  break;
+
+	case METADATA_QTYPE_TVSHOW:
+	  rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
+				       rstr_get(mlv->mlv_filename),
+				       mlv->mlv_season, mlv->mlv_episode,
+				       qtype);
 	  break;
 
 	case METADATA_QTYPE_CUSTOM:
@@ -1751,10 +1798,11 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
  *
  */
 metadata_lazy_video_t *
-metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
+metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 			 rstr_t *imdb_id, float duration,
-			 prop_t *options, prop_t *root,
-			 rstr_t *folder, int lonely, int passive)
+			 prop_t *root,
+			 rstr_t *folder, int lonely, int passive,
+			 int year, int season, int episode)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1766,14 +1814,24 @@ metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   mlv->mlv_type = METADATA_TYPE_VIDEO;
   mlv->mlv_lonely = lonely;
   mlv->mlv_passive = passive;
-  mlv->mlv_m = prop_ref_inc(prop);
+  mlv->mlv_m = prop_create_r(root, "metadata");
+
+
+  if(season >= 0 && episode >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_TVSHOW;
+    mlv->mlv_season = season;
+    mlv->mlv_episode = episode;
+  } else if(year >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_MOVIE;
+    mlv->mlv_year = year;
+  }
 
   mlv->mlv_trig_title =
-    mlv_sub(mlv, prop, "title", METADATA_PROP_TITLE);
+    mlv_sub(mlv, mlv->mlv_m, "title", METADATA_PROP_TITLE);
   mlv->mlv_trig_desc =
-    mlv_sub(mlv, prop, "description", METADATA_PROP_DESCRIPTION);
+    mlv_sub(mlv, mlv->mlv_m, "description", METADATA_PROP_DESCRIPTION);
   mlv->mlv_trig_rating =
-    mlv_sub(mlv, prop, "rating", METADATA_PROP_RATING);
+    mlv_sub(mlv, mlv->mlv_m, "rating", METADATA_PROP_RATING);
   
 
   prop_t *m;
@@ -1915,8 +1973,12 @@ metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
 
   // Add all options
 
+  prop_t *options = prop_create_r(root, "options");
+
   prop_set_parent_vector(pv, options, NULL, NULL);
   prop_vec_release(pv);
+
+  prop_ref_dec(options);
 
   return mlv;
 }

@@ -38,6 +38,8 @@ typedef struct metadata_lazy_video metadata_lazy_video_t;
 #define METADATA_QTYPE_CUSTOM_IMDB 5
 #define METADATA_QTYPE_FILENAME_OR_DIRECTORY 6
 #define METADATA_QTYPE_EPISODE     7
+#define METADATA_QTYPE_MOVIE       8
+#define METADATA_QTYPE_TVSHOW      9
 
 
 #define METADATA_PERMANENT_ERROR -1
@@ -435,14 +437,14 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-metadata_lazy_video_t *metadata_bind_video_info(struct prop *prop,
-						rstr_t *url, rstr_t *filename,
+metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 						rstr_t *imdb_id,
                                                 float duration,
-						struct prop *options,
 						struct prop *root,
 						rstr_t *parent, int lonely,
-						int passive);
+						int passive,
+						int year, int season,
+						int episode);
 
 void mlv_unbind(metadata_lazy_video_t *mlv);
 

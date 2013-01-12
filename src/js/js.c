@@ -54,6 +54,56 @@ static JSClass global_class = {
 };
 
 
+
+/**
+ *
+ */
+JSBool
+js_is_prop_true(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  JSBool b;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return 0;
+  if(!JS_ValueToBoolean(cx, val, &b))
+    return 0;
+  return b;
+}
+
+
+
+/**
+ *
+ */
+rstr_t *
+js_prop_rstr(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return NULL;
+  if(!JSVAL_IS_STRING(val))
+    return NULL;
+  JSString *s = JS_ValueToString(cx, val);
+  return s ? rstr_alloc(JS_GetStringBytes(s)) : NULL;
+}
+
+
+/**
+ *
+ */
+int
+js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return d;
+  double v;
+  if(!JSVAL_IS_NUMBER(val) || !JS_ValueToNumber(cx, val, &v))
+    return d;
+  return v;
+}
+
+
 /**
  *
  */

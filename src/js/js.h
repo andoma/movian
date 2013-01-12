@@ -164,4 +164,10 @@ JSBool js_subscribe(JSContext *cx, uintN argc,
 		    struct js_subscription_list *list, prop_courier_t *pc,
 		    int *subsptr);
 
+JSBool js_is_prop_true(JSContext *cx, JSObject *o, const char *prop);
+
+rstr_t *js_prop_rstr(JSContext *cx, JSObject *o, const char *prop);
+
+int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
+
 #endif // JS_H__ 

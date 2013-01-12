@@ -166,21 +166,6 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
 
 
 
-/**
- *
- */
-static JSBool
-js_is_prop_true(JSContext *cx, JSObject *o, const char *prop)
-{
-  jsval val;
-  JSBool b;
-  if(!JS_GetProperty(cx, o, prop, &val))
-    return 0;
-  if(!JS_ValueToBoolean(cx, val, &b))
-    return 0;
-  return b;
-}
-
 
 /**
  *
