@@ -1,0 +1,5 @@
+ps3: Fix a crash on PS3 when playing AAC HEv2 files
+
+This was caused by too small stack for the threads
+
+Fixes #1515
