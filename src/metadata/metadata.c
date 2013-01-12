@@ -1576,6 +1576,9 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
 	if(s && *s)
 	  kv_url_opt_set(rstr_get(mlv->mlv_url), KVSTORE_DOMAIN_SYS,
 			 "metacustomquery", KVSTORE_SET_STRING, s);
+	else
+	  kv_url_opt_set(rstr_get(mlv->mlv_url), KVSTORE_DOMAIN_SYS,
+			 "metacustomquery", KVSTORE_SET_VOID);
       }
     }
       

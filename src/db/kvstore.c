@@ -543,6 +543,11 @@ kv_url_opt_set(const char *url, int domain, const char *key,
   case KVSTORE_SET_STRING:
     sqlite3_bind_text(stmt, 3, va_arg(apx, const char *), -1, SQLITE_STATIC);
     break;
+
+  case KVSTORE_SET_VOID:
+    sqlite3_bind_null(stmt, 3);
+    break;
+
   default:
     break;
   }
