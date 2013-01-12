@@ -1,0 +1,7 @@
+Fix a crash that was caused by invalid markup tags in SRT files
+
+Typicall this would happen if the SRT file contained a subtitle entry
+with just one tag that was invalid. Now such invalid tags will be
+presented as normal text instead.
+
+Fixes #1501
