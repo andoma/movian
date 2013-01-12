@@ -140,7 +140,8 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
     pfx[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
 
     uc = text_parse(txt, &len, 
-		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
+		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES | 
+			    TEXT_PARSE_SLOPPY_TAGS) : 0,
 		    pfx, 5, fontdomain);
     if(uc == NULL)
       return NULL;
