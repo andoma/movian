@@ -36,6 +36,7 @@
 #include "misc/md5.h"
 #include "misc/sha.h"
 #include "api/xmlrpc.h"
+#include "i18n.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -111,10 +112,8 @@ js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 void
 js_set_prop_str(JSContext *cx, JSObject *o, const char *prop, const char *str)
 {
-  if(str == NULL)
-    return;
-  jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str));
-  JS_SetProperty(cx, o, prop, &val);
+  if(str != NULL)
+    js_set_prop_jsval(cx, o, prop, STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str)));
 }
 
 
@@ -143,7 +142,7 @@ js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v)
       return;
     val = DOUBLE_TO_JSVAL(d);
   }
-  JS_SetProperty(cx, o, prop, &val);
+   js_set_prop_jsval(cx, o, prop, val);
 }
 
 
@@ -153,12 +152,9 @@ js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v)
 void
 js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v)
 {
-  jsval val;
   jsdouble *d = JS_NewDouble(cx, v);
-  if(d == NULL)
-    return;
-  val = DOUBLE_TO_JSVAL(d);
-  JS_SetProperty(cx, o, prop, &val);
+  if(d != NULL)
+    js_set_prop_jsval(cx, o, prop, DOUBLE_TO_JSVAL(d));
 }
 
 
@@ -893,6 +889,27 @@ js_xmlrpc(JSContext *cx, JSObject *obj,
 
 
 
+/**
+ *
+ */
+static JSBool 
+js_getsublang(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  int i;
+  JSObject *o = JS_NewArrayObject(cx, 0, NULL);
+  *rval = OBJECT_TO_JSVAL(o);
+  for(i = 0; i < 3; i++) {
+    const char *lang = i18n_subtitle_lang(i);
+    if(lang)
+      js_set_prop_str(cx, o, NULL, lang);
+  }
+  
+  return JS_TRUE;
+}
+
+
+
 
 
 /**
@@ -925,6 +942,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("md5digest",        js_md5digest, 1, 0, 0),
     JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
     JS_FS("xmlrpc",           js_xmlrpc, 3, 0, 0),
+    JS_FS("getSubtitleLanguages", js_getsublang, 0, 0, 0),
     JS_FS_END
 };
 
@@ -1015,6 +1033,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_setting_group_flush_from_plugin(cx, jsp);
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
   js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
+  js_subprovider_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -1111,6 +1130,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("cachePut",         js_cache_put, 4, 0, 0),
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
+    JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
     JS_FS_END
 };
 
@@ -1296,6 +1316,7 @@ js_init(void)
   JSFunction *fn;
 
   js_page_init();
+  js_metaprovider_init();
 
   JS_SetCStringsAreUTF8();
 

@@ -191,7 +191,6 @@ BUNDLES += resources/fileaccess
 ##############################################################
 SRCS += 		src/api/xmlrpc.c \
 			src/api/soap.c \
-			src/api/opensubtitles.c \
 			src/api/lastfm.c \
 			src/api/tmdb.c \
 			src/api/tvdb.c \
@@ -515,6 +514,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_prop.c                \
                         src/js/js_json.c                \
                         src/js/js_event.c               \
+                        src/js/js_metaprovider.c        \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr

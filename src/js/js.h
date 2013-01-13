@@ -17,6 +17,7 @@ LIST_HEAD(js_service_list, js_service);
 LIST_HEAD(js_setting_group_list, js_setting_group);
 LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_subscription_list, js_subscription);
+LIST_HEAD(js_subprovider_list, js_subprovider);
 
 /**
  *
@@ -37,6 +38,7 @@ typedef struct js_plugin {
   struct js_setting_group_list jsp_setting_groups;
   struct js_event_handler_list jsp_event_handlers;
   struct js_subscription_list jsp_subscriptions;
+  struct js_subprovider_list jsp_subproviders;
 
   struct fa_handle *jsp_ref;
 
@@ -130,6 +132,8 @@ void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 void js_subscription_flush_from_list(JSContext *cx,
 				     struct js_subscription_list *l);
 
+void js_subprovider_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 
 JSBool js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
@@ -191,5 +195,12 @@ void js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v);
 void js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name,
 		       jsval item);
 
+void js_metaprovider_init(void);
+
+JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc, 
+			 jsval *argv, jsval *rval);
+
+struct sub_scanner;
+void js_sub_query(struct sub_scanner *ss);
 
 #endif // JS_H__ 

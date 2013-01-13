@@ -47,6 +47,7 @@ typedef enum {
   PLUGIN_CAT_MUSIC,
   PLUGIN_CAT_CLOUD,
   PLUGIN_CAT_GLWVIEW,
+  PLUGIN_CAT_SUBTITLES,
   PLUGIN_CAT_OTHER,
   PLUGIN_CAT_num,
 } plugin_type_t;
@@ -58,6 +59,7 @@ static struct strtab catnames[] = {
   { "cloud",       PLUGIN_CAT_CLOUD },
   { "other",       PLUGIN_CAT_OTHER },
   { "glwview",     PLUGIN_CAT_GLWVIEW },
+  { "subtitles",   PLUGIN_CAT_SUBTITLES },
 };
 
 
@@ -1182,6 +1184,10 @@ plugin_open_repo(prop_t *page)
 
     case PLUGIN_CAT_GLWVIEW:
       gn = _p("User interface extensions");
+      break;
+
+    case PLUGIN_CAT_SUBTITLES:
+      gn = _p("Subtitles");
       break;
 
     default:

@@ -17,12 +17,45 @@
  */
 #pragma once
 
-typedef struct sub_scanner sub_scanner_t;
+
+/**
+ *
+ */
+typedef struct sub_scanner {
+  int ss_refcount;
+
+  int ss_beflags;
+
+  rstr_t *ss_title;          // Video title
+  rstr_t *ss_imdbid;
+
+  hts_mutex_t ss_mutex;  // Lock around ss_proproot
+  prop_t *ss_proproot;   // property where to add subs
+
+  char *ss_url;  // can be NULL 
+
+  int ss_stop;   // set if we should stop working (video playback have stopped)
+
+  int ss_opensub_hash_valid; // Set if hash is valid
+  uint64_t ss_opensub_hash;  // opensubtitles hash
+  uint64_t ss_fsize;         // Size of video file being played
+
+  int ss_season;
+  int ss_episode;
+
+  int ss_duration;
+
+} sub_scanner_t;
 
 sub_scanner_t *sub_scanner_create(const char *url, int beflags, rstr_t *title,
 				  prop_t *proproot, int opensub_hash_valid,
 				  uint64_t opensub_hash, uint64_t fsize,
-				  rstr_t *imdbid, int season, int episode);
+				  rstr_t *imdbid, int season, int episode,
+				  int duration);
 
 void sub_scanner_destroy(sub_scanner_t *ss); 
+
+void sub_scanner_release(sub_scanner_t *ss);
+
+void sub_scanner_retain(sub_scanner_t *ss);
 

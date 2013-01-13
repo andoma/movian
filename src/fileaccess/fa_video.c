@@ -657,7 +657,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   sub_scanner_t *ss =
     sub_scanner_create(url, flags, title, mp->mp_prop_subtitle_tracks,
 		       opensub_hash_valid, hash, fsize, imdbid,
-		       season, episode);
+		       season, episode, fctx->duration / 1000000);
 
   rstr_release(title);
   rstr_release(imdbid);
