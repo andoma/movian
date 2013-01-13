@@ -2068,7 +2068,9 @@ mp_load_ext_sub(media_pipe_t *mp, const char *url)
     mb->mb_data = subtitles_load(mp, url);
   
   mb->mb_dtor = ext_sub_dtor;
+  hts_mutex_lock(&mp->mp_mutex);
   mb_enq(mp, &mp->mp_video, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
 }
 
 
