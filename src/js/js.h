@@ -60,6 +60,14 @@ void js_load(const char *url);
 
 JSContext *js_newctx(JSErrorReporter er);
 
+htsmsg_t *js_htsmsg_from_object(JSContext *cx, JSObject *obj);
+
+void js_htsmsg_emit_jsval(JSContext *cx, jsval value, htsmsg_t *msg,
+			  const char *fieldname);
+
+JSBool js_object_from_htsmsg(JSContext *cx, const htsmsg_t *msg, jsval *rval);
+
+
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 		  jsval *argv, jsval *rval);
 
@@ -169,5 +177,19 @@ JSBool js_is_prop_true(JSContext *cx, JSObject *o, const char *prop);
 rstr_t *js_prop_rstr(JSContext *cx, JSObject *o, const char *prop);
 
 int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
+
+void js_set_prop_str(JSContext *cx, JSObject *o, const char *prop,
+		     const char *str);
+
+void js_set_prop_rstr(JSContext *cx, JSObject *o, const char *prop,
+		      rstr_t *rstr);
+
+void js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v);
+
+void js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v);
+
+void js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name,
+		       jsval item);
+
 
 #endif // JS_H__ 

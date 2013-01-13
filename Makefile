@@ -507,6 +507,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
 			ext/spidermonkey/prmjtime.c	\
                         src/arch/nspr/nspr.c            \
                         src/js/js.c                     \
+                        src/js/js_htsmsg.c              \
                         src/js/js_page.c                \
                         src/js/js_io.c                  \
                         src/js/js_service.c             \

@@ -35,6 +35,7 @@
 #include "ui/webpopup.h"
 #include "misc/md5.h"
 #include "misc/sha.h"
+#include "api/xmlrpc.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -102,6 +103,80 @@ js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
     return d;
   return v;
 }
+
+
+/**
+ *
+ */
+void
+js_set_prop_str(JSContext *cx, JSObject *o, const char *prop, const char *str)
+{
+  if(str == NULL)
+    return;
+  jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str));
+  JS_SetProperty(cx, o, prop, &val);
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_rstr(JSContext *cx, JSObject *o, const char *prop, rstr_t *r)
+{
+  js_set_prop_str(cx, o, prop, rstr_get(r));
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v)
+{
+  jsval val;
+  if(v <= INT32_MAX && v >= INT32_MIN && INT_FITS_IN_JSVAL(v))
+    val = INT_TO_JSVAL(v);
+  else {
+    jsdouble *d = JS_NewDouble(cx, v);
+    if(d == NULL)
+      return;
+    val = DOUBLE_TO_JSVAL(d);
+  }
+  JS_SetProperty(cx, o, prop, &val);
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v)
+{
+  jsval val;
+  jsdouble *d = JS_NewDouble(cx, v);
+  if(d == NULL)
+    return;
+  val = DOUBLE_TO_JSVAL(d);
+  JS_SetProperty(cx, o, prop, &val);
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name, jsval item)
+{
+  if(name)
+    JS_SetProperty(cx, obj, name, &item);
+  else {
+    jsuint length;
+    if(JS_GetArrayLength(cx, obj, &length))
+      JS_SetElement(cx, obj, length, &item);
+  }
+}
+
 
 
 /**
@@ -775,6 +850,49 @@ js_sha1digest(JSContext *cx, JSObject *obj,
 
 
 
+/**
+ *
+ */
+static JSBool 
+js_xmlrpc(JSContext *cx, JSObject *obj,
+	  uintN argc, jsval *argv, jsval *rval)
+{
+  char errbuf[256];
+  JSString *urlstr    = JS_ValueToString(cx, argv[0]);
+  JSString *methodstr = JS_ValueToString(cx, argv[1]);
+
+  htsmsg_t *args = htsmsg_create_list();
+
+  argc -= 2;
+  argv += 2;
+
+  while(argc > 0) {
+    js_htsmsg_emit_jsval(cx, argv[0], args, NULL);
+    argc--;
+    argv++;
+  }
+
+  jsrefcount s = JS_SuspendRequest(cx);
+
+  htsmsg_t *reply = xmlrpc_request(JS_GetStringBytes(urlstr),
+				   JS_GetStringBytes(methodstr),
+				   args, errbuf, sizeof(errbuf));
+
+  JS_ResumeRequest(cx, s);
+
+  if(reply == NULL) {
+    JS_ReportError(cx, errbuf);
+    return JS_FALSE;
+  }
+
+  js_object_from_htsmsg(cx, reply, rval);
+  htsmsg_destroy(reply);
+
+  return JS_TRUE;
+}
+
+
+
 
 
 /**
@@ -806,6 +924,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("webpopup",         js_webpopup, 3, 0, 0),
     JS_FS("md5digest",        js_md5digest, 1, 0, 0),
     JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
+    JS_FS("xmlrpc",           js_xmlrpc, 3, 0, 0),
     JS_FS_END
 };
 
