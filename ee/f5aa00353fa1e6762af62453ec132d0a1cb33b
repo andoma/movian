@@ -1,0 +1,2 @@
+Fix a bug that made "Custom query" impossible to erase in the metadata editor.
+It would come back next time the item was scanned
