@@ -1,0 +1,6 @@
+Add support for subtitle plugins
+
+This also removes the built-in support for opensubtitles.
+
+Opensubtitles is now available as a plugin.
+No username + password is needed as opensubtitles.org allows anonymous logins
