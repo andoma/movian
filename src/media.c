@@ -1546,32 +1546,30 @@ mp_add_trackr(prop_t *parent,
 	      int score)
 {
   prop_t *p = prop_create_root(NULL);
-  prop_t *s;
+  prop_t *s = prop_create(p, "source");
 
-  prop_set_string(prop_create(p, "url"), url);
-  prop_set_rstring(prop_create(p, "format"), format);
-  prop_set_rstring(prop_create(p, "longformat"), longformat);
+  prop_set(p, "url", PROP_SET_STRING, url);
+  prop_set(p, "format", PROP_SET_RSTRING, format);
+  prop_set(p, "longformat", PROP_SET_RSTRING, longformat);
   
-  s = prop_create(p, "source");
-
   if(sourcep != NULL)
     prop_link(sourcep, s);
   else
     prop_set_rstring(s, source);
 
   if(isolang != NULL) {
-    prop_set_rstring(prop_create(p, "isolang"), isolang);
+    prop_set(p, "isolang", PROP_SET_RSTRING, isolang);
     
     const char *language = iso_639_2_lang(rstr_get(isolang));
-    if(language != NULL) {
-      prop_set_string(prop_create(p, "language"), language);
+    if(language) {
+      prop_set(p, "language", PROP_SET_STRING, language);
     } else {
-      prop_set_rstring(prop_create(p, "language"), isolang);
+      prop_set(p, "language", PROP_SET_RSTRING, isolang);
     }
   }
 
-  prop_set_rstring(prop_create(p, "title"), title);
-  prop_set_int(prop_create(p, "score"), score);
+  prop_set(p, "title", PROP_SET_RSTRING, title);
+  prop_set(p, "basescore", PROP_SET_INT, score);
 
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -1615,7 +1613,7 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 0);
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 10000);
 }
 
 
@@ -1709,7 +1707,10 @@ mtm_rethink(media_track_mgr_t *mtm)
 
     int score = mt->mt_base_score + mt->mt_isolang_score;
 
-    if(score >= thres && (best == NULL || score > best_score)) {
+    
+
+    if(score < 10000 &&
+       score >= thres && (best == NULL || score > best_score)) {
       best = mt;
       best_score = score;
     }
@@ -1762,6 +1763,10 @@ mt_set_isolang(void *opaque, const char *str)
     mt->mt_isolang_score = 0;
     break;
   }
+  if(mt->mt_base_score >= 0)
+    prop_set(mt->mt_root, "score", PROP_SET_INT,
+	     mt->mt_base_score + mt->mt_isolang_score);
+
   mtm_rethink(mt->mt_mtm);
 }
 
@@ -1774,6 +1779,9 @@ mt_set_basescore(void *opaque, int v)
 {
   media_track_t *mt = opaque;
   mt->mt_base_score = v;
+  if(mt->mt_isolang_score >= 0)
+    prop_set(mt->mt_root, "score", PROP_SET_INT,
+	     mt->mt_base_score + mt->mt_isolang_score);
   mtm_rethink(mt->mt_mtm);
 }
 
@@ -1817,7 +1825,7 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 
   mt->mt_sub_basescore =
     prop_subscribe(0,
-		   PROP_TAG_NAME("node", "score"),
+		   PROP_TAG_NAME("node", "basescore"),
 		   PROP_TAG_CALLBACK_INT, mt_set_basescore, mt,
 		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
 		   PROP_TAG_NAMED_ROOT, root, "node",

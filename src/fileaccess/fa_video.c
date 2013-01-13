@@ -44,7 +44,6 @@
 #include "video/video_settings.h"
 #include "video/video_playback.h"
 #include "video/sub_scanner.h"
-#include "api/opensubtitles.h"
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -73,6 +72,8 @@ static void attachment_load(struct attachment_list *alist,
 			    int context);
 
 static void attachment_unload_all(struct attachment_list *alist);
+
+static int compute_opensub_hash(fa_handle_t *fh, uint64_t *hashp);
 
 /**
  *
@@ -581,10 +582,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   const int seek_is_fast = fa_seek_is_fast(fh);
   
   int opensub_hash_valid = 0;
-  uint64_t hash;
+  uint64_t hash = 0;
 
   if(seek_is_fast && !(flags & BACKEND_VIDEO_NO_OPENSUB_HASH))
-    opensub_hash_valid = !opensub_compute_hash(fh, &hash);
+    opensub_hash_valid = !compute_opensub_hash(fh, &hash);
 
   if(!opensub_hash_valid)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
@@ -837,4 +838,61 @@ attachment_unload_all(struct attachment_list *alist)
     a->dtor(a->opaque);
     free(a);
   }
+}
+
+
+
+/**
+ * Compute "opensubtitle" hash for the given file
+ *
+ * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
+ */
+static int
+compute_opensub_hash(fa_handle_t *fh, uint64_t *hashp)
+{
+  int i;
+  uint64_t hash;
+  int64_t *mem;
+
+  int64_t size = fa_fsize(fh);
+  
+  if(size < 65536)
+    return -1;
+
+  hash = size;
+
+  if(fa_seek(fh, 0, SEEK_SET) != 0)
+    return -1;
+
+  mem = malloc(sizeof(int64_t) * 8192);
+
+  if(fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
+    return -1;
+  }
+
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
+
+  if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
+     fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
+    return -1;
+  }
+
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
+  free(mem);
+  *hashp = hash;
+  return 0;
 }

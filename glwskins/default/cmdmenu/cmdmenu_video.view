@@ -67,10 +67,17 @@ widget(deck, {
 	});
 
 	widget(label, {
-	  weight: 5;
+	  weight: 2;
 	  TextStyleItem();
-	  caption: join(" · ", $self.title, $self.language);
-	  ellipsize: true;
+	  caption: $self.title;
+	  filterConstraintX: true;
+	});
+
+	widget(label, {
+	  weight: 2;
+	  TextStyleItem();
+	  caption: $self.language;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
@@ -89,7 +96,8 @@ widget(deck, {
 
     SEP(_("Subtitles"));
 
-    cloner($self.media.metadata.subtitlestreams, backdrop, {
+    cloner(propSorter($self.media.metadata.subtitlestreams,
+		      sort, "node.score", true, false), backdrop, {
       onEvent(activate, selectSubtitleTrack($self.url));
       focusable: true;
       source: "skin://pages/listitems/highlight.png";
@@ -131,6 +139,15 @@ widget(deck, {
 	  caption: $self.source;
 	  filterConstraintX: true;
 	});
+
+/*
+	widget(label, {
+	  weight: 0.5;
+	  TextStyleItem();
+	  caption: $self.score;
+	  filterConstraintX: true;
+	});
+*/
       });
     });
     

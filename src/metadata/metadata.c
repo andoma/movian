@@ -217,7 +217,9 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 
   if(ms->ms_disposition & 1) // default
     score += 10;
-  
+  else
+    score += 5;
+
   if(ms->ms_title != NULL) {
     title = rstr_dup(ms->ms_title);
   } else {

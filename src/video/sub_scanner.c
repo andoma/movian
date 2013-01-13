@@ -88,7 +88,7 @@ fs_sub_match(const char *video, const char *sub)
 }
 
 
-#define LOCAL_EXTRA_SCORE 5
+#define LOCAL_EXTRA_SCORE 3
 
 /**
  *

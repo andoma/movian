@@ -21,9 +21,6 @@
 #include "arch/threads.h"
 
 struct prop;
-struct fa_handle;
-
-int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
 
 void opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
 		   uint64_t size, const char *title, const char *imdb,

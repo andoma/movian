@@ -115,34 +115,6 @@ opensub_init(void)
 
 INITME(INIT_GROUP_API, opensub_init);
 
-
-#if 0
-/**
- *
- */
-static htsmsg_t *
-opensub_build_query(int64_t hash, int64_t movsize,
-		    const char *imdb, const char *title)
-{
-  htsmsg_t *m = htsmsg_create_map();
-
-  if(movsize) {
-    char str[20];
-    snprintf(str, sizeof(str), "%" PRIx64, hash);
-    htsmsg_add_str(m, "moviehash", str);
-    htsmsg_add_s64(m, "moviebytesize", movsize);
-  }
-
-  if(imdb != NULL) 
-    htsmsg_add_str(m, "imdbid", imdb);
-
-  if(title != NULL) 
-    htsmsg_add_str(m, "query", title);
-
-  return m;
-}
-#endif
-
 /**
  *
  */
@@ -401,58 +373,3 @@ opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
 
 
 
-
-/**
- * Compute "opensubtitle" hash for the given file
- *
- * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
- */
-int
-opensub_compute_hash(fa_handle_t *fh, uint64_t *hashp)
-{
-  int i;
-  uint64_t hash;
-  int64_t *mem;
-
-  int64_t size = fa_fsize(fh);
-  
-  if(size < 65536)
-    return -1;
-
-  hash = size;
-
-  if(fa_seek(fh, 0, SEEK_SET) != 0)
-    return -1;
-
-  mem = malloc(sizeof(int64_t) * 8192);
-
-  if(fa_read(fh, mem, 65536) != 65536) {
-    free(mem);
-    return -1;
-  }
-
-  for(i = 0; i < 8192; i++) {
-#if defined(__BIG_ENDIAN__)
-    hash += __builtin_bswap64(mem[i]);
-#else
-    hash += mem[i];
-#endif
-  }
-
-  if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
-     fa_read(fh, mem, 65536) != 65536) {
-    free(mem);
-    return -1;
-  }
-
-  for(i = 0; i < 8192; i++) {
-#if defined(__BIG_ENDIAN__)
-    hash += __builtin_bswap64(mem[i]);
-#else
-    hash += mem[i];
-#endif
-  }
-  free(mem);
-  *hashp = hash;
-  return 0;
-}

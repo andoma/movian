@@ -493,16 +493,16 @@ static void
 dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 {
   prop_destroy_childs(mp->mp_prop_audio_tracks);
-  mp_add_track(mp->mp_prop_audio_tracks, "Off", "audio:off",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 0);
+
+  mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
   mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 0);
+	       NULL, NULL, NULL, NULL, _p("DVD"), 50);
 
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
-  mp_add_track(mp->mp_prop_subtitle_tracks, "Off", "sub:off",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 0);
+
+  mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
   mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "sub:auto",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 0);
+	       NULL, NULL, NULL, NULL, _p("DVD"), 50);
 }
 
 
@@ -565,13 +565,12 @@ dvd_update_streams(dvd_player_t *dp)
 {
   int i;
   uint16_t lang;
-  prop_t *before = NULL, *p;
+  prop_t *p;
   media_pipe_t *mp = dp->dp_mp;
 
-  for(i = 7; i >= 0; i--) {
+  for(i = 0; i < 8; i++) {
 
-    if(dvdnav_get_audio_logical_stream(dp->dp_dvdnav, i) == -1 ||
-       (lang = dvdnav_audio_stream_to_lang(dp->dp_dvdnav, i)) == 0xffff) {
+    if(dvdnav_get_audio_logical_stream(dp->dp_dvdnav, i) == -1) {
 
       /* Not present */
 
@@ -584,26 +583,23 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_audio_props[i]) == NULL) {
 	p = dp->dp_audio_props[i] = prop_create_root(NULL);
-	if(prop_set_parent_ex(p, mp->mp_prop_audio_tracks, before, NULL))
+	if(prop_set_parent(p, mp->mp_prop_audio_tracks))
 	  abort();
       }
 
-      prop_set_string(prop_create(p, "title"), dvdlang(lang));
-      prop_set_stringf(prop_create(p, "id"), "audio:%d", i);
-
+      prop_set_stringf(prop_create(p, "url"), "audio:%d", i);
 
       int channels = dvdnav_audio_stream_channels(dp->dp_dvdnav, i);
-      prop_set_int(prop_create(p, "channels"), channels);
 
       const char *chtxt;
       switch(channels) {
-      case 1:  chtxt = "mono";   break;
-      case 2:  chtxt = "stereo"; break;
+      case 1:  chtxt = "Mono";   break;
+      case 2:  chtxt = "Stereo"; break;
       case 6:  chtxt = "5.1";    break;
-      default: chtxt = "???";    break;
+      default: chtxt = NULL;     break;
       }
       
-      prop_set_string(prop_create(p, "channelstext"), chtxt);
+      prop_set(p, "title", PROP_SET_STRING, chtxt);
 
       const char *format;
       switch(dvdnav_audio_stream_format(dp->dp_dvdnav, i)) {
@@ -617,15 +613,14 @@ dvd_update_streams(dvd_player_t *dp)
 
       prop_set_string(prop_create(p, "format"), format);
 
-      before = p;
+      if((lang = dvdnav_audio_stream_to_lang(dp->dp_dvdnav, i)) != 0xffff)
+	prop_set(p, "language", PROP_SET_STRING, dvdlang(lang));
     }
   }
 
-  before = NULL;
-  for(i = 31; i >= 0; i--) {
+  for(i = 0; i < 32; i++) {
 
-    if(dvdnav_get_spu_logical_stream(dp->dp_dvdnav, i) == -1 ||
-       (lang = dvdnav_spu_stream_to_lang(dp->dp_dvdnav, i)) == 0xffff) {
+    if(dvdnav_get_spu_logical_stream(dp->dp_dvdnav, i) == -1) {
 
       /* Not present */
 
@@ -638,13 +633,17 @@ dvd_update_streams(dvd_player_t *dp)
       
       if((p = dp->dp_spu_props[i]) == NULL) {
 	p = dp->dp_spu_props[i] = prop_create_root(NULL);
-	if(prop_set_parent_ex(p, mp->mp_prop_subtitle_tracks, before, NULL))
+	if(prop_set_parent(p, mp->mp_prop_subtitle_tracks))
 	  abort();
       }
 
-      prop_set_string(prop_create(p, "title"), dvdlang(lang));
-      prop_set_stringf(prop_create(p, "id"), "sub:%d", i);
-      before = p;
+      prop_link(_p("DVD"), prop_create(p, "source"));
+
+      if((lang = dvdnav_spu_stream_to_lang(dp->dp_dvdnav, i)) != 0xffff)
+	prop_set(p, "language", PROP_SET_STRING, dvdlang(lang));
+
+      prop_set_stringf(prop_create(p, "url"), "sub:%d", i);
+      prop_set(p, "basescore", PROP_SET_INT, 32-i);
     }
   }
 }
