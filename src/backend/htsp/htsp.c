@@ -1735,11 +1735,9 @@ static fa_protocol_t fa_protocol_htsp = {
  */
 static event_t *
 be_htsp_playdvr(const char *url, media_pipe_t *mp,
-                int flags, int priority,
                 char *errbuf, size_t errlen,
-                video_queue_t *vq,
-                htsp_connection_t *hc,
-                const char *remain)
+                video_queue_t *vq, htsp_connection_t *hc,
+                const char *remain, const video_args_t *va)
 {
   char filename[64];
 
@@ -1761,9 +1759,7 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
   htsmsg_get_s32(m, "id", &hf->hf_id);
   hf->hf_hc = hc;
 
-  return be_file_playvideo_fh(url, mp, flags, priority, 
-                              errbuf, errlen, NULL, url,
-                              vq, &hf->h, NULL);
+  return be_file_playvideo_fh(url, mp, errbuf, errlen, vq, &hf->h, va);
 }
 
 
@@ -1772,23 +1768,20 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
  */
 static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
-		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype,
-		  const char *canonical_url,
-		  video_queue_t *vq,
-                  struct vsource_list *vsl)
+		  video_queue_t *vq, struct vsource_list *vsl,
+		  const video_args_t *va)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
   htsp_subscription_t *hs;
   event_t *e;
-  int primary = !!(flags & BACKEND_VIDEO_PRIMARY);
+  int primary = !!(va->flags & BACKEND_VIDEO_PRIMARY);
   const char *r;
 
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",
-	url, primary ? "yes" : "no", priority);
+	url, primary ? "yes" : "no", va->priority);
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
@@ -1796,7 +1789,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   }
 
   if((r = mystrbegins(path, "/dvr/")) != NULL)
-    return be_htsp_playdvr(url, mp, flags, priority, errbuf, errlen, vq, hc, r);
+    return be_htsp_playdvr(url, mp, errbuf, errlen, vq, hc, r, va);
 
 
 
@@ -1811,7 +1804,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
-  e = htsp_subscriber(hc, hs, errbuf, errlen, primary, priority, vq, url);
+  e = htsp_subscriber(hc, hs, errbuf, errlen, primary, va->priority, vq, url);
 
   mp_flush(mp, 0);
   mp_shutdown(mp);

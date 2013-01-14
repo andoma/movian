@@ -653,12 +653,9 @@ static int rtmp_log_level;
  */
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
-	       int flags, int priority,
 	       char *errbuf, size_t errlen,
-	       const char *mimetype,
-	       const char *canonical_url,
-	       video_queue_t *vq,
-               struct vsource_list *vsl)
+	       video_queue_t *vq, struct vsource_list *vsl,
+	       const video_args_t *va)
 {
   rtmp_t r = {0};
   event_t *e;
@@ -674,10 +671,10 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   int64_t start = 0;
 
-  if(flags & BACKEND_VIDEO_RESUME ||
+  if(va->flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
-      !(flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
-    start = video_get_restartpos(canonical_url);
+      !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
+    start = video_get_restartpos(va->canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -726,9 +723,9 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
+  metadb_register_play(va->canonical_url, 0, CONTENT_VIDEO);
 
-  r.canonical_url = canonical_url;
+  r.canonical_url = va->canonical_url;
   r.restartpos_last = -1;
 
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
@@ -738,8 +735,8 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
     if(p >= video_settings.played_threshold) {
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);
-      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
-      metadb_set_video_restartpos(canonical_url, -1);
+      metadb_register_play(va->canonical_url, 1, CONTENT_VIDEO);
+      metadb_set_video_restartpos(va->canonical_url, -1);
     }
   }
 

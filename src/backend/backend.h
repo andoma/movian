@@ -51,7 +51,28 @@ typedef enum {
 #define BACKEND_VIDEO_SET_TITLE   0x8
 #define BACKEND_VIDEO_START_FROM_BEGINNING 0x10
 #define BACKEND_VIDEO_RESUME      0x20
-#define BACKEND_VIDEO_NO_OPENSUB_HASH     0x40
+#define BACKEND_VIDEO_NO_FILE_HASH     0x40
+
+
+/**
+ *
+ */
+typedef struct video_args {
+  int flags;
+  int priority;
+  const char *mimetype;
+  const char *canonical_url;
+  const char *title;
+  const char *imdb;
+  int season;
+  int episode;
+
+  int hash_valid;
+  int64_t filesize;
+  uint64_t opensubhash;
+
+} video_args_t;
+
 
 /**
  *
@@ -73,12 +94,10 @@ typedef struct backend {
 
   struct event *(*be_play_video)(const char *url,
 				 struct media_pipe *mp,
-				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype,
-				 const char *canonical_url,
 				 video_queue_t *vq,
-                                 struct vsource_list *vsl);
+                                 struct vsource_list *vsl,
+				 const video_args_t *va);
 
   struct event *(*be_play_audio)(const char *url, struct media_pipe *mp,
 				 char *errbuf, size_t errlen, int paused,
@@ -113,12 +132,10 @@ int backend_open(struct prop *page, const char *url, int sync)
      __attribute__ ((warn_unused_result));
 
 struct event *backend_play_video(const char *url, struct media_pipe *mp,
-				 int flags, int priority,
 				 char *errbuf, size_t errlen,
-				 const char *mimetype,
-				 const char *canonical_url,
 				 video_queue_t *vq,
-                                 struct vsource_list *vsl)
+                                 struct vsource_list *vsl,
+				 const video_args_t *va)
   __attribute__ ((warn_unused_result));
 
 

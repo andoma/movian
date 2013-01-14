@@ -180,12 +180,10 @@ be_dvd_canhandle(const char *url)
  */
 static event_t *
 be_dvd_play(const char *url, media_pipe_t *mp,
-	    int flags, int priority,
 	    char *errstr, size_t errlen,
-	    const char *mimetype,
-	    const char *canonical_url,
 	    struct video_queue *vq,
-	    struct vsource_list *vsl)
+	    struct vsource_list *vsl,
+	    const video_args_t *va)
 {
   event_t *e;
   if(strncmp(url, "dvd:", strlen("dvd:"))) {

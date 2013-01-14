@@ -83,12 +83,9 @@ backend_fini(void)
  */
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
-		   int flags, int priority,
 		   char *errbuf, size_t errlen,
-		   const char *mimetype, 
-		   const char *canonical_url,
-		   video_queue_t *vq,
-                   struct vsource_list *vsl)
+		   video_queue_t *vq, struct vsource_list *vsl,
+		   const video_args_t *va)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -97,10 +94,9 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  mp_set_url(mp, canonical_url);
+  mp_set_url(mp, va->canonical_url);
 
-  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
-			   canonical_url, vq, vsl);
+  return nb->be_play_video(url, mp, errbuf, errlen, vq, vsl, va);
 }
 
 

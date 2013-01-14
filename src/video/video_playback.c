@@ -248,6 +248,16 @@ play_video(const char *url, struct media_pipe *mp,
   event_t *e;
   const char *canonical_url;
   htsmsg_t *m = NULL;
+
+  video_args_t va;
+
+
+  memset(&va, 0, sizeof(va));
+  va.episode = -1;
+  va.season = -1;
+
+  va.priority = priority;
+
   LIST_INIT(&vsources);
 
   mp_reinit_streams(mp);
@@ -273,18 +283,16 @@ play_video(const char *url, struct media_pipe *mp,
 	return e;
       }
       snprintf(errbuf, errlen,
-	       "Page model for '%s' does not provide a video source",
-	       url);
+	       "Page model for '%s' does not provide a video source", url);
       return NULL;
 
     }
 
-    canonical_url = url;
+    va.canonical_url = canonical_url = url;
+    va.flags = flags | BACKEND_VIDEO_SET_TITLE;
 
     mp_set_url(mp, url);
-    e = be->be_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
-                          priority, errbuf, errlen, NULL,
-                          canonical_url, vq, &vsources);
+    e = be->be_play_video(url, mp, errbuf, errlen, vq, &vsources, &va);
 
   } else {
 
@@ -334,10 +342,12 @@ play_video(const char *url, struct media_pipe *mp,
   
     // Other metadata
 
-    if((str = htsmsg_get_str(m, "title")) != NULL)
+    if((str = htsmsg_get_str(m, "title")) != NULL) {
       prop_set_string(prop_create(mp->mp_prop_metadata, "title"), str);
-    else
+      va.title = str;
+    } else {
       flags |= BACKEND_VIDEO_SET_TITLE;
+    }
 
     // Subtitles
 
@@ -368,9 +378,11 @@ play_video(const char *url, struct media_pipe *mp,
 
     vs = vsource_dup(vs);
 
-    e = backend_play_video(vs->vs_url, mp, flags | vs->vs_flags, priority, 
-                           errbuf, errlen, vs->vs_mimetype,
-                           canonical_url, vq, &vsources);
+    va.canonical_url = canonical_url;
+    va.flags = flags | vs->vs_flags;
+    va.mimetype = vs->vs_mimetype;
+
+    e = backend_play_video(vs->vs_url, mp, errbuf, errlen, vq, &vsources, &va);
     vsource_free(vs);
   }
 
@@ -388,9 +400,13 @@ play_video(const char *url, struct media_pipe *mp,
       TRACE(TRACE_DEBUG, "Video", "Playing %s", vs->vs_url);
 
       vs = vsource_dup(vs);
-      e = backend_play_video(vs->vs_url, mp, flags | vs->vs_flags, priority, 
-                             errbuf, errlen, vs->vs_mimetype,
-                             canonical_url, vq, &vsources);
+
+      va.canonical_url = canonical_url;
+      va.flags = flags | vs->vs_flags;
+      va.mimetype = vs->vs_mimetype;
+
+      e = backend_play_video(vs->vs_url, mp, errbuf, errlen,
+			     vq, &vsources, &va);
       vsource_free(vs);
 
     } else {
