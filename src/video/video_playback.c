@@ -364,6 +364,9 @@ play_video(const char *url, struct media_pipe *mp,
     }
 
 
+    if((str = htsmsg_get_str(m, "imdbid")) != NULL)
+      va.imdb = str;
+
 
     // Subtitles
 
