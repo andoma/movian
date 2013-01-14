@@ -225,10 +225,13 @@ js_sub_query(sub_scanner_t *ss)
   if(ss->ss_fsize > 0)
     js_set_prop_dbl(cx, obj, "filesize", ss->ss_fsize);
   
-  if(ss->ss_opensub_hash_valid) {
-    char str[20];
+  if(ss->ss_hash_valid) {
+    char str[64];
     snprintf(str, sizeof(str), "%016" PRIx64, ss->ss_opensub_hash);
     js_set_prop_str(cx, obj, "opensubhash", str);
+
+    bin2hex(str, sizeof(str), ss->ss_subdbhash, 16);
+    js_set_prop_str(cx, obj, "subdbhash", str);
   }
 
   if(ss->ss_duration > 0)

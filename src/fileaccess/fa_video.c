@@ -44,6 +44,7 @@
 #include "video/video_settings.h"
 #include "video/video_playback.h"
 #include "video/sub_scanner.h"
+#include "misc/md5.h"
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -828,9 +829,13 @@ attachment_unload_all(struct attachment_list *alist)
 
 
 /**
- * Compute "opensubtitle" hash for the given file
+ * Compute hash for the given file
  *
- * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
+ * opensubhash
+ *   http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
+ *
+ * subdbhash
+ *   http://thesubdb.com/api/
  */
 static void
 compute_hash(fa_handle_t *fh, video_args_t *va)
@@ -840,7 +845,8 @@ compute_hash(fa_handle_t *fh, video_args_t *va)
   int64_t *mem;
 
   int64_t size = fa_fsize(fh);
-  
+  md5_decl(md5ctx);
+
   if(size < 65536)
     return;
 
@@ -856,6 +862,9 @@ compute_hash(fa_handle_t *fh, video_args_t *va)
     return;
   }
 
+  md5_init(md5ctx);
+  md5_update(md5ctx, (void *)mem, 65536);
+
   for(i = 0; i < 8192; i++) {
 #if defined(__BIG_ENDIAN__)
     hash += __builtin_bswap64(mem[i]);
@@ -867,8 +876,11 @@ compute_hash(fa_handle_t *fh, video_args_t *va)
   if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
      fa_read(fh, mem, 65536) != 65536) {
     free(mem);
+    md5_final(md5ctx, va->subdbhash); // need to free()
     return;
   }
+
+  md5_update(md5ctx, (void *)mem, 65536);
 
   for(i = 0; i < 8192; i++) {
 #if defined(__BIG_ENDIAN__)
@@ -878,6 +890,7 @@ compute_hash(fa_handle_t *fh, video_args_t *va)
 #endif
   }
   free(mem);
+  md5_final(md5ctx, va->subdbhash);
   va->opensubhash = hash;
   va->hash_valid = 1;
 }

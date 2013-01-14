@@ -71,6 +71,7 @@ typedef struct video_args {
   int hash_valid;
   int64_t filesize;
   uint64_t opensubhash;
+  uint8_t subdbhash[16]; // md5sum of first 64k + last 64k
 
 } video_args_t;
 

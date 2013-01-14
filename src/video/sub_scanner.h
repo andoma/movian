@@ -36,9 +36,10 @@ typedef struct sub_scanner {
 
   int ss_stop;   // set if we should stop working (video playback have stopped)
 
-  int ss_opensub_hash_valid; // Set if hash is valid
+  int ss_hash_valid; // Set if hash is valid
   uint64_t ss_opensub_hash;  // opensubtitles hash
   uint64_t ss_fsize;         // Size of video file being played
+  uint8_t ss_subdbhash[16];
 
   int ss_year;
   int ss_season;

@@ -239,13 +239,16 @@ sub_scanner_create(const char *url, prop_t *proproot,
   ss->ss_title = rstr_alloc(va->title);
   ss->ss_imdbid = rstr_alloc(va->imdb);
   ss->ss_proproot = prop_ref_inc(proproot);
-  ss->ss_opensub_hash_valid = va->hash_valid;
-  ss->ss_opensub_hash = va->opensubhash;
   ss->ss_fsize = va->filesize;
   ss->ss_year   = va->year;
   ss->ss_season = va->season;
   ss->ss_episode = va->episode;
   ss->ss_duration = duration;
+
+  ss->ss_hash_valid = va->hash_valid;
+  ss->ss_opensub_hash = va->opensubhash;
+  memcpy(ss->ss_subdbhash, va->subdbhash, 16);
+
   hts_thread_create_detached("subscanner", sub_scanner_thread, ss,
 			     THREAD_PRIO_LOW);
   return ss;
