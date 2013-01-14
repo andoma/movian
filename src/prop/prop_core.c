@@ -30,6 +30,8 @@
 #include "prop_i.h"
 #include "misc/str.h"
 #include "event.h"
+#include "htsmsg/htsbuf.h"
+#include "misc/dbl.h"
 
 #ifdef PROP_DEBUG
 int prop_trace;
@@ -4164,6 +4166,100 @@ prop_print_tree(prop_t *p, int followlinks)
   hts_mutex_unlock(&prop_mutex);
 }
 
+
+void
+prop_print_tree_json0(prop_t *p, htsbuf_queue_t *hq, int isarray, int indent, int pretty)
+{
+  prop_t *c;
+  char buf[200];
+  static const char *indentor = "\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t";
+
+  if (p->hp_type == PROP_DIR) {
+    htsbuf_append(hq, isarray ? "[" : "{", 1);
+
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+    if(pretty)
+      htsbuf_append(hq, indentor, indent < 16 ? indent : 16);
+
+      if(!isarray) {
+        snprintf(buf, sizeof(buf), "\"%s\"", c->hp_name ?: "*0");
+        htsbuf_append(hq, buf, strlen(buf));
+        htsbuf_append(hq, ": ", 2);
+      }
+
+      if(c->hp_originator != NULL) {
+        prop_print_tree_json0(c->hp_originator, hq, 0, indent + 1, pretty);
+      }
+      else {
+        prop_print_json_value(c, hq, isarray, indent, pretty);
+      }
+      if(TAILQ_NEXT(c, hp_parent_link))
+        htsbuf_append(hq, ",", 1);
+    }
+
+    if(pretty)
+      htsbuf_append(hq, indentor, indent-1 < 16 ? indent-1 : 16);
+    htsbuf_append(hq, isarray ? "]" : "}", 1);
+  }
+  else {
+    prop_print_json_value(p, hq, isarray, indent, pretty);
+  }
+}
+
+void prop_print_json_value(prop_t *c, htsbuf_queue_t *hq, int isarray, int indent, int pretty) {
+  char buf[200];
+
+  switch(c->hp_type) {
+    case PROP_RSTRING:
+      htsbuf_append_and_escape_jsonstr(hq, rstr_get(c->hp_rstring));
+      break;
+
+    case PROP_CSTRING:
+      htsbuf_append_and_escape_jsonstr(hq, c->hp_cstring);
+      break;
+
+    case PROP_LINK:
+      snprintf(buf, sizeof(buf), "%s <%s>", rstr_get(c->hpn_link_rtitle),
+	    rstr_get(c->hpn_link_rurl));
+      htsbuf_append_and_escape_jsonstr(hq, buf);
+      break;
+
+    case PROP_DIR:
+      if (c != NULL) {
+      prop_print_tree_json0(c, hq, (TAILQ_FIRST(&c->hp_childs) != NULL && TAILQ_FIRST(&c->hp_childs)->hp_name == NULL) ? 1 : 0, indent + 1, pretty);
+      }
+      break;
+
+    case PROP_VOID:
+      htsbuf_append(hq, "null", 4);
+      break;
+    
+    case PROP_ZOMBIE:
+      htsbuf_append(hq, "null", 4);
+      break;
+
+    case PROP_FLOAT:
+      my_double2str(buf, sizeof(buf), c->hp_float);
+      htsbuf_append(hq, buf, strlen(buf));
+      break;
+
+    case PROP_INT:
+      snprintf(buf, sizeof(buf), "%d", c->hp_int);
+      htsbuf_append(hq, buf, strlen(buf));
+      break;
+  }
+}
+
+/**
+ *
+ */
+void
+prop_print_tree_json(prop_t *p, htsbuf_queue_t *hq, int pretty)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_print_tree_json0(p, hq, 0, 2, pretty);
+  hts_mutex_unlock(&prop_mutex);
+}
 
 /**
  *

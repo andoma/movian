@@ -356,6 +356,8 @@ plugin_fill_prop0(struct htsmsg *pm, struct prop *p,
 		 PROP_TAG_MUTEX, &plugin_mutex,
 		 NULL);
 
+  prop_set_int(prop_create(p, "installed"), pl->pl_installed);
+
   prop_t *metadata = prop_create(p, "metadata");
 
   prop_link(pl->pl_status, prop_create(p, "status"));

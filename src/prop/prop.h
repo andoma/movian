@@ -25,6 +25,7 @@
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "misc/rstr.h"
+#include "htsmsg/htsbuf.h"
 
 // #define PROP_DEBUG
 
@@ -437,6 +438,8 @@ void *prop_tag_clear(prop_t *p, void *key);
 const char *propname(prop_t *p);
 
 void prop_print_tree(prop_t *p, int followlinks);
+
+void prop_print_tree_json(prop_t *p, htsbuf_queue_t *hq, int pretty);
 
 void prop_test(void);
 
