@@ -193,6 +193,27 @@ select_subtitle_track(media_pipe_t *mp, AVFormatContext *fctx, const char *id)
 
 
 /**
+ *
+ */
+static void
+update_seek_index(seek_index_t *si, int sec)
+{
+  if(si != NULL && si->si_nitems) {
+    int i, j = 0;
+    for(i = 0; i < si->si_nitems; j = i, i++)
+      if(si->si_items[i].si_start > sec)
+	break;
+    
+    if(si->si_current != &si->si_items[j]) {
+      si->si_current = &si->si_items[j];
+      prop_suggest_focus(si->si_current->si_prop);
+    }
+  }
+}
+
+
+
+/**
  * Thread for reading from lavf and sending to lavc
  */
 static event_t *
@@ -201,7 +222,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 		  char *errbuf, size_t errlen,
 		  const char *canonical_url,
 		  int freetype_context,
-		  seek_index_t *sidx, int cwvec_size)
+		  seek_index_t *sidx, // Minute for minute thumbs
+		  seek_index_t *cidx, // Chapters
+		  int cwvec_size)
 {
   media_buf_t *mb = NULL;
   media_queue_t *mq = NULL;
@@ -211,7 +234,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   event_ts_t *ets;
   int64_t ts;
 
+  int lastsec = -1;
   int restartpos_last = -1;
+  int64_t last_timestamp_presented = AV_NOPTS_VALUE;
 
   mp->mp_seek_base = 0;
   mp->mp_video.mq_seektarget = AV_NOPTS_VALUE;
@@ -341,24 +366,19 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       ets = (event_ts_t *)e;
       int sec = ets->ts / 1000000;
+      last_timestamp_presented = ets->ts;
 
-      if(sec != restartpos_last) {
+      // Update restartpos every 5 seconds
+      if(sec < restartpos_last || sec >= restartpos_last + 5) {
 	restartpos_last = sec;
 	metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
-
-	if(sidx != NULL && sidx->si_nitems) {
-	  int i, j = 0;
-	  for(i = 0; i < sidx->si_nitems; j = i, i++)
-	    if(sidx->si_items[i].si_start > sec)
-	      break;
-
-	  if(sidx->si_current != &sidx->si_items[j]) {
-	    sidx->si_current = &sidx->si_items[j];
-	    prop_suggest_focus(sidx->si_current->si_prop);
-	  }
-	}
       }
-
+      
+      if(sec != lastsec) {
+	lastsec = sec;
+	update_seek_index(sidx, sec);
+	update_seek_index(cidx, sec);
+      }
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
@@ -404,6 +424,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
     TRACE(TRACE_DEBUG, "Video", "Playback reached %d%%, counting as played",
 	  spp);
+  } else if(last_timestamp_presented != PTS_UNSET) {
+    metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
   }
   return e;
 }
@@ -420,7 +442,7 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
 
   char buf[URL_MAX];
 
-  int items = fctx->duration / 60000000;
+  int items = 1 + fctx->duration / 60000000;
 
   seek_index_t *si = mymalloc(sizeof(seek_index_t) +
 			      sizeof(seek_item_t) * items);
@@ -442,7 +464,7 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
     prop_t *p = prop_create_root(NULL);
 
     snprintf(buf, sizeof(buf), "%s#%d", url, i * 60);
-    prop_set_string(prop_create(p, "image"), buf);
+    prop_set(p, "image", PROP_SET_STRING, buf);
     prop_set_float(prop_create(p, "timestamp"), i * 60);
 
     item->si_prop = p;
@@ -453,6 +475,65 @@ build_index(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
   }
   return si;
 }
+
+/**
+ *
+ */
+static seek_index_t *
+build_chapters(media_pipe_t *mp, AVFormatContext *fctx, const char *url)
+{
+  if(fctx->nb_chapters == 0)
+    return NULL;
+
+  char buf[URL_MAX];
+
+  int items = fctx->nb_chapters;
+  seek_index_t *si = mymalloc(sizeof(seek_index_t) +
+			      sizeof(seek_item_t) * items);
+  if(si == NULL)
+    return NULL;
+
+  si->si_root = prop_create(mp->mp_prop_root, "chapterindex");
+  prop_t *parent = prop_create(si->si_root, "positions");
+
+  si->si_current = NULL;
+  si->si_nitems = items;
+
+  prop_set_int(prop_create(si->si_root, "available"), 1);
+
+  int i;
+  for(i = 0; i < items; i++) {
+    const AVChapter *avc = fctx->chapters[i];
+  
+    seek_item_t *item = &si->si_items[i];
+
+    prop_t *p = prop_create_root(NULL);
+
+    double start = av_rescale_q(avc->start, avc->time_base, AV_TIME_BASE_Q);
+    double end   = av_rescale_q(avc->end, avc->time_base, AV_TIME_BASE_Q);
+
+    item->si_start = start / 1000000.0;
+
+    snprintf(buf, sizeof(buf), "%s#%d", url, (int)item->si_start);
+    prop_set(p, "image", PROP_SET_STRING, buf);
+
+    prop_set_float(prop_create(p, "timestamp"), item->si_start);
+    prop_set_float(prop_create(p, "end"), end / 1000000.0);
+
+    AVDictionaryEntry *tag;
+    
+    tag = av_dict_get(avc->metadata, "title", NULL, AV_DICT_IGNORE_SUFFIX);
+    if(tag != NULL && utf8_verify(tag->value))
+      prop_set(p, "title", PROP_SET_STRING, tag->value);
+
+    item->si_prop = p;
+
+    if(prop_set_parent(p, parent))
+      abort();
+  }
+  return si;
+}
+
 
 /**
  *
@@ -750,14 +831,17 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   prop_set_string(mp->mp_prop_type, "video");
 
   seek_index_t *si = build_index(mp, fctx, url);
+  seek_index_t *ci = build_chapters(mp, fctx, url);
 
   metadb_register_play(va.canonical_url, 0, CONTENT_VIDEO);
 
   event_t *e;
   e = video_player_loop(fctx, cwvec, mp, va.flags, errbuf, errlen,
-			va.canonical_url, freetype_context, si, cwvec_size);
+			va.canonical_url, freetype_context, si, ci,
+			cwvec_size);
 
   seek_index_destroy(si);
+  seek_index_destroy(ci);
 
   TRACE(TRACE_DEBUG, "Video", "Stopped playback of %s", url);
 
