@@ -242,6 +242,7 @@ sub_scanner_create(const char *url, prop_t *proproot,
   ss->ss_opensub_hash_valid = va->hash_valid;
   ss->ss_opensub_hash = va->opensubhash;
   ss->ss_fsize = va->filesize;
+  ss->ss_year   = va->year;
   ss->ss_season = va->season;
   ss->ss_episode = va->episode;
   ss->ss_duration = duration;

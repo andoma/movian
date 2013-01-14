@@ -66,6 +66,7 @@ typedef struct video_args {
   const char *imdb;
   int season;
   int episode;
+  int year;
 
   int hash_valid;
   int64_t filesize;

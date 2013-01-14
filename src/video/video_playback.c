@@ -343,11 +343,27 @@ play_video(const char *url, struct media_pipe *mp,
     // Other metadata
 
     if((str = htsmsg_get_str(m, "title")) != NULL) {
-      prop_set_string(prop_create(mp->mp_prop_metadata, "title"), str);
+      prop_set(mp->mp_prop_metadata, "title", PROP_SET_STRING, str);
       va.title = str;
     } else {
       flags |= BACKEND_VIDEO_SET_TITLE;
     }
+
+    uint32_t u32;
+    if(!htsmsg_get_u32(m, "year", &u32)) {
+      prop_set(mp->mp_prop_metadata, "year", PROP_SET_INT, u32);
+      va.year = u32;
+    }
+    if(!htsmsg_get_u32(m, "season", &u32)) {
+      prop_set(mp->mp_prop_metadata, "season", PROP_SET_INT, u32);
+      va.season = u32;
+    }
+    if(!htsmsg_get_u32(m, "episode", &u32)) {
+      prop_set(mp->mp_prop_metadata, "episode", PROP_SET_INT, u32);
+      va.episode = u32;
+    }
+
+
 
     // Subtitles
 

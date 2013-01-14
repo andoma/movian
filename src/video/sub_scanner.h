@@ -40,6 +40,7 @@ typedef struct sub_scanner {
   uint64_t ss_opensub_hash;  // opensubtitles hash
   uint64_t ss_fsize;         // Size of video file being played
 
+  int ss_year;
   int ss_season;
   int ss_episode;
 

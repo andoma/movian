@@ -216,6 +216,9 @@ js_sub_query(sub_scanner_t *ss)
   if(ss->ss_season > 0)
     js_set_prop_int(cx, obj, "season", ss->ss_season);
 
+  if(ss->ss_year > 0)
+    js_set_prop_int(cx, obj, "year", ss->ss_year);
+
   if(ss->ss_episode > 0)
     js_set_prop_int(cx, obj, "episode", ss->ss_episode);
 
