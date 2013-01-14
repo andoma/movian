@@ -292,7 +292,8 @@ item_finalize(JSContext *cx, JSObject *obj)
   js_model_release(ji->ji_model);
   prop_ref_dec(ji->ji_root);
   rstr_release(ji->ji_url);
-  mlv_unbind(ji->ji_mlv);
+  if(ji->ji_mlv != NULL)
+    mlv_unbind(ji->ji_mlv);
   free(ji);
 }
 
