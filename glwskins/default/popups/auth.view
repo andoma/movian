@@ -38,11 +38,13 @@ widget(container_x, {
 	popupInputField(
 	  hidden: $self.disableUsername;
  	  widget(text, {
+	    description: _("Username");
 	    id: "username";
 	    focusable: true;
 	    bind($self.username);
 
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		   $self.username);
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);
@@ -53,11 +55,13 @@ widget(container_x, {
       
 	popupInputField(
 	  widget(text, {
+	    description: _("Password");
 	    id: "password";
 	    focusable: true;
 	    password: true;
 	    bind($self.password);
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		   $self.username);
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);
@@ -71,10 +75,13 @@ widget(container_x, {
 	popupInputField(
           hidden: $self.disableDomain;
 	  widget(text, {
+	    description: _("Domain");
 	    id: "domain";
 	    focusable: true;
 	    bind($self.domain);
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		    $self.domain);
+
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);

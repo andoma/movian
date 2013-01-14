@@ -85,6 +85,13 @@ set_how(glw_t *w, const char *str)
     w->glw_class->gc_set_how(w, str);
 }
 
+static void
+set_description(glw_t *w, const char *str)
+{
+  if(w->glw_class->gc_set_desc != NULL)
+    w->glw_class->gc_set_desc(w, str);
+}
+
 
 /**
  *
@@ -1021,6 +1028,7 @@ set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
   {"how",             set_string, 0, set_how},
+  {"description",     set_string, 0, set_description},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
   {"fragmentShader",  set_fs, 0},
@@ -1072,6 +1080,7 @@ static const token_attrib_t attribtab[] = {
   {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
   {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
   {"permanentCursor", mod_flag,  GTB_PERMANENT_CURSOR, mod_text_flags},
+  {"oskPassword",     mod_flag,  GTB_OSK_PASSWORD, mod_text_flags},
   
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},

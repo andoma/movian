@@ -488,8 +488,6 @@ static const metadata_source_funcs_t fns = {
 static void
 tvdb_init(void)
 {
-  if(1)
-    return;
 
   snprintf(tvdb_language, sizeof(tvdb_language), "%s", "en");
 

@@ -128,7 +128,7 @@ album_set_year(void *opaque, int year)
  *
  */
 static void
-add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
+add_header(GtkWidget *parent, prop_t *root)
 {
   GtkWidget *hbox, *w;
   albuminfo_t *ai = calloc(1, sizeof(albuminfo_t));
@@ -150,7 +150,7 @@ add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "album_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_title, ai,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -158,7 +158,7 @@ add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "artist_name"),
 		   PROP_TAG_CALLBACK_STRING, album_set_artist, ai,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -166,7 +166,7 @@ add_header(prop_courier_t *pc, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "album_year"),
 		   PROP_TAG_CALLBACK_INT, album_set_year, ai,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -211,7 +211,7 @@ gu_add_album(gu_tab_t *gt, GtkWidget *parent, prop_t *root)
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("self", "model", "album_art"),
 		     PROP_TAG_CALLBACK_STRING, album_set_art, w,
-		     PROP_TAG_COURIER, gt->gt_gw->gw_gu->gu_pc, 
+		     PROP_TAG_COURIER, glibcourier, 
 		     PROP_TAG_NAMED_ROOT, root, "self",
 		     NULL);
 
@@ -238,7 +238,7 @@ gu_directory_album_create(gu_tab_t *gt, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
-  add_header(gt->gt_gw->gw_gu->gu_pc, view, root);
+  add_header(view, root);
   gu_add_album(gt, view, root);
   gtk_widget_show_all(view);
 

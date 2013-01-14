@@ -156,7 +156,7 @@ shadow_tag(uint32_t *output, int olen, const char *attrib, const char *value,
  *
  */
 static int
-tag_to_code(char *s, uint32_t *output, int olen, int context)
+tag_to_code(char *s, uint32_t *output, int olen, int context, int flags)
 {
   char *tag;
   int endtag = 0;
@@ -207,6 +207,8 @@ tag_to_code(char *s, uint32_t *output, int olen, int context)
       c = TR_CODE_SHADOW;
     else
       return attrib_parser(tag+6, output, olen, shadow_tag, context);
+  else if(flags & TEXT_PARSE_SLOPPY_TAGS)
+    return -1;
   else
     return olen;
 
@@ -248,8 +250,14 @@ parse_str(uint32_t *output, const char *str, int flags, int context)
       }
       tmp[lp] = 0;
 
-      olen = tag_to_code(tmp, output, olen, context);
-      continue;
+      int r = tag_to_code(tmp, output, olen, context, flags);
+      if(r != -1) {
+	olen = r;
+	p = -1;
+	continue;
+      }
+      // Failed to parse tag
+      str = s2;
     }
 
     if(flags & TEXT_PARSE_HTML_ENTETIES && c == '&') {

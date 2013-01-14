@@ -85,8 +85,9 @@ glw_layer_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	a = 0;
       }
 
-      c->glw_parent_z     = GLW_LP(5, c->glw_parent_z,     z);
-      c->glw_parent_alpha = GLW_LP(5, c->glw_parent_alpha, a);
+
+      glw_lp(&c->glw_parent_z,     w->glw_root, z, 0.25);
+      glw_lp(&c->glw_parent_alpha, w->glw_root, a, 0.25);
 
       rc0.rc_layer = c->glw_parent_layer + rc->rc_layer;
 

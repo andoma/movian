@@ -210,12 +210,10 @@ cmd_move(svg_state_t *state)
   svg_mtx_vec_mul(pt, state->ctm, state->cur);
   toVector(&v, pt);
 
-  if(state->inpath) {
-    FT_Stroker_LineTo(state->stroker, &v);
-  } else {
-    FT_Stroker_BeginSubPath(state->stroker, &v, 0);
-    state->inpath = 1;
-  }
+  if(state->inpath > 1)
+    FT_Stroker_EndSubPath(state->stroker);
+  FT_Stroker_BeginSubPath(state->stroker, &v, 0);
+  state->inpath = 1;
 }
 
 
@@ -236,17 +234,38 @@ cmd_move_rel(svg_state_t *state, const float *p)
 }
 
 
+#define FT_EPSILON  2
+#define FT_IS_SMALL( x )  ( (x) > -FT_EPSILON && (x) < FT_EPSILON )
 
 static void
-cmd_curve(svg_state_t *state, const float *c, const float *d, const float *e)
+cmd_curve(svg_state_t *state, const float *s, const float *c,
+	  const float *d, const float *e)
 {
-  FT_Vector C,D,E;
+  FT_Vector S,C,D,E;
+
+  toVector(&S, s);
   toVector(&C, c);
   toVector(&D, d);
   toVector(&E, e);
 
-  if(state->inpath)
+
+  // if all control points are coincident this is a no-op
+  // This is checked by freetype but not reported and drawing
+  // a subpath with 0 elements will result in a segfault
+  // so we need to check this ourselves
+  if(FT_IS_SMALL( S.x - C.x) &&
+     FT_IS_SMALL( S.y - C.y) &&
+     FT_IS_SMALL( C.x - D.x) &&
+     FT_IS_SMALL( C.y - D.y) &&
+     FT_IS_SMALL( D.x - E.x) &&
+     FT_IS_SMALL( D.y - E.y))
+    return;
+
+  
+  if(state->inpath) {
     FT_Stroker_CubicTo(state->stroker, &C, &D, &E);
+    state->inpath++;
+  }
 }
 
 static void
@@ -277,7 +296,7 @@ cmd_curveto_rel(svg_state_t *state, const float *p)
   svg_mtx_vec_mul(td, state->ctm, d);
   svg_mtx_vec_mul(te, state->ctm, e);
 
-  cmd_curve(state, tc, td, te);
+  cmd_curve(state, ts, tc, td, te);
 }
 
 
@@ -309,7 +328,7 @@ cmd_curveto_abs(svg_state_t *state, const float *p)
   svg_mtx_vec_mul(td, state->ctm, d);
   svg_mtx_vec_mul(te, state->ctm, e);
 
-  cmd_curve(state, tc, td, te);
+  cmd_curve(state, ts, tc, td, te);
 }
 
 static void
@@ -320,8 +339,10 @@ cmd_lineto(svg_state_t *state)
 
   FT_Vector v;
   toVector(&v, pt);
-  if(state->inpath)
+  if(state->inpath) {
     FT_Stroker_LineTo(state->stroker, &v);
+    state->inpath++;
+  }
 }
 
 
@@ -352,9 +373,12 @@ cmd_lineto_abs(svg_state_t *state, const float *p)
 static void
 cmd_close(svg_state_t *state)
 {
-  if(state->inpath)
+  if(state->inpath > 1) {
     FT_Stroker_EndSubPath(state->stroker);
-  state->inpath = 0;
+    state->inpath = 0;
+  } else {
+    state->inpath = 1;
+  }
 }
 
 
@@ -368,6 +392,7 @@ stroke_path(svg_state_t *state, const char *str)
   int num_params = 0;
   int cur_param = 0;
   void (*cur_cmd)(svg_state_t *state, const float *params) = NULL; 
+  void (*next_cmd)(svg_state_t *state, const float *params) = NULL; 
 
   while(*str) {
     if(*str < 33) {
@@ -379,12 +404,12 @@ stroke_path(svg_state_t *state, const char *str)
       const char *endptr;
 
       double d = my_str2double(str, &endptr);
-
       if(endptr != str) {
 	values[cur_param] = d;
 	cur_param++;
 	if(cur_param == num_params) {
 	  cur_cmd(state, values);
+	  cur_cmd = next_cmd;
 	  cur_param = 0;
 	}
 
@@ -407,29 +432,32 @@ stroke_path(svg_state_t *state, const char *str)
     switch(mode) {
     case 'M':
       cur_cmd = cmd_move_abs;
+      next_cmd = cmd_lineto_abs;
       num_params = 2;
       break;
     case 'm':
       cur_cmd = cmd_move_rel;
+      next_cmd = cmd_lineto_rel;
       num_params = 2;
       break;
+
     case 'c':
-      cur_cmd = cmd_curveto_rel;
+      next_cmd = cur_cmd = cmd_curveto_rel;
       num_params = 6;
       break;
 
     case 'C':
-      cur_cmd = cmd_curveto_abs;
+      next_cmd = cur_cmd = cmd_curveto_abs;
       num_params = 6;
       break;
 
     case 'l':
-      cur_cmd = cmd_lineto_rel;
+      next_cmd = cur_cmd = cmd_lineto_rel;
       num_params = 2;
       break;
 
     case 'L':
-      cur_cmd = cmd_lineto_abs;
+      next_cmd = cur_cmd = cmd_lineto_abs;
       num_params = 2;
       break;
 
@@ -658,7 +686,7 @@ stroke_rect_element(svg_state_t *s, htsmsg_t *attribs)
  *
  */
 static void
-svg_parse_element(svg_state_t *s0, htsmsg_t *element, 
+svg_parse_element(const svg_state_t *s0, htsmsg_t *element, 
 		  int (*element_parser)(svg_state_t *s, htsmsg_t *element))
 {
   svg_state_t s = *s0;
@@ -736,10 +764,7 @@ svg_parse_element(svg_state_t *s0, htsmsg_t *element,
   if(element_parser(&s, a))
     return;
 
-  if(s.inpath) {
-    FT_Stroker_EndSubPath(s.stroker);
-    s.inpath = 0;
-  }
+  cmd_close(&s);
 
   FT_Raster_Params params;
   struct raster_params rp;

@@ -37,15 +37,13 @@
 #include "fa_libav.h"
 #include "backend/dvd/dvd.h"
 #include "notifications.h"
-#include "api/opensubtitles.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "text/text.h"
 #include "video/video_settings.h"
-#include "video/vobsub.h"
 #include "video/video_playback.h"
-
+#include "video/sub_scanner.h"
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -75,175 +73,7 @@ static void attachment_load(struct attachment_list *alist,
 
 static void attachment_unload_all(struct attachment_list *alist);
 
-/**
- *
- */
-typedef struct sub_load {
-  int sl_beflags;
-  prop_t *sl_p;
-  const char *sl_url;
-  int sl_stop;
-  int sl_opensub_hash_valid;
-  uint64_t sl_opensub_hash;
-  uint64_t sl_fsize;
-
-} sub_load_t;
-
-
-/**
- *
- */
-static int
-fs_sub_match(const char *video, const char *sub)
-{
-  sub = strrchr(sub, '/');
-  if(sub == NULL)
-    return 0;
-  sub++;
-
-  int vl = strlen(video);
-  int sl = strlen(sub);
-
-  if(sl >= vl && sub[vl] == '.' && !strncasecmp(sub, video, vl))
-    return 1;
-
-  char *x = strrchr(sub, '.');
-  if(x != NULL) {
-    size_t off = x - sub;
-    if(vl > off) {
-      if((video[off] == '.' || video[off] == ' ') && 
-	 !strncasecmp(sub, video, off))
-	return 1;
-    }
-  }
-  return 0;
-}
-
-
-/**
- *
- */
-static void
-fs_sub_scan_dir(prop_t *prop, const char *url, const char *video,
-		int *stop)
-{
-  char *postfix;
-  fa_dir_t *fd;
-  fa_dir_entry_t *fde;
-  char errbuf[256];
-
-  TRACE(TRACE_DEBUG, "Video", "Scanning for subs in %s for %s", url, video);
-
-  if((fd = fa_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
-	  url, errbuf);
-    return;
-  }
-
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
-    if(*stop)
-      break;
-
-    if(fde->fde_type == CONTENT_DIR &&
-       !strcasecmp(rstr_get(fde->fde_filename), "subs")) {
-      fs_sub_scan_dir(prop, rstr_get(fde->fde_url), video, stop);
-      continue;
-    }
-    const char *filename = rstr_get(fde->fde_filename);
-    postfix = strrchr(filename, '.');
-    if(postfix == NULL)
-      continue;
-
-    if(!strcasecmp(postfix, ".srt")) {
-      const char *lang = NULL;
-      if(postfix - filename > 4 && postfix[-4] == '.') {
-	char b[4];
-	memcpy(b, postfix - 3, 3);
-	b[3] = 0;
-	lang = isolang_iso2lang(b);
-      }
-
-      int score = fs_sub_match(video, rstr_get(fde->fde_url));
-      TRACE(TRACE_DEBUG, "Video", "SRT %s score=%d", 
-	    rstr_get(fde->fde_url), score); 
-
-      if(score == 0 && !subtitle_settings.include_all_subs)
-	continue;
-
-      mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
-		   "SRT", NULL, lang, NULL, _p("External file"), score);
-    }
-
-    
-    if(!strcasecmp(postfix, ".ass") || !strcasecmp(postfix, ".ssa")) {
-      const char *lang = NULL;
-      if(postfix - filename > 4 && postfix[-4] == '.') {
-	char b[4];
-	memcpy(b, postfix - 3, 3);
-	b[3] = 0;
-	lang = isolang_iso2lang(b);
-      }
-
-      int score = fs_sub_match(video, rstr_get(fde->fde_url));
-      TRACE(TRACE_DEBUG, "Video", "SSA/ASS %s score=%d",
-	    rstr_get(fde->fde_url), score); 
-
-      if(score == 0 && !subtitle_settings.include_all_subs)
-	continue;
-
-      mp_add_track(prop, rstr_get(fde->fde_filename), rstr_get(fde->fde_url),
-		   "ASS / SSA", NULL, lang, NULL, _p("External file"), score);
-    }
-
-    if(!strcasecmp(postfix, ".idx")) {
-      int score = fs_sub_match(video, rstr_get(fde->fde_url));
-      TRACE(TRACE_DEBUG, "Video", "VOBSUB %s score=%d", 
-	    rstr_get(fde->fde_url), score); 
-
-      if(score == 0 && !subtitle_settings.include_all_subs)
-	continue;
-
-      vobsub_probe(rstr_get(fde->fde_url), rstr_get(fde->fde_filename),
-		   score, prop, NULL);
-    }
-  }
-  fa_dir_free(fd);
-}
-
-
-/**
- *
- */
-static void *
-sub_loader(void *aux)
-{
-  sub_load_t *sl = aux;
-
-  if(!(sl->sl_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
-    char parent[URL_MAX];
-    char *fname = mystrdupa(sl->sl_url);
-
-    fname = strrchr(fname, '/') ?: fname;
-    fname++;
-    char *dot = strrchr(fname, '.');
-    if(dot)
-      *dot = 0;
-
-    fa_parent(parent, sizeof(parent), sl->sl_url);
-    fs_sub_scan_dir(sl->sl_p, parent, fname, &sl->sl_stop);
-  }
-
-  if(sl->sl_stop)
-    return NULL;
-
-  if(sl->sl_opensub_hash_valid && sl->sl_fsize != -1)
-    opensub_load_subtitles(sl->sl_p,
-			   opensub_build_query(NULL, sl->sl_opensub_hash,
-					       sl->sl_fsize, NULL, NULL));
-
-  return NULL;
-}
-
+static int compute_opensub_hash(fa_handle_t *fh, uint64_t *hashp);
 
 /**
  *
@@ -648,6 +478,7 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 		  video_queue_t *vq,
                   struct vsource_list *vsl)
 {
+  rstr_t *title = NULL;
   if(mimetype == NULL) {
     struct fa_stat fs;
 
@@ -683,7 +514,9 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     char *x = strrchr(tmp, '.');
     if(x)
       *x = 0;
-    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), tmp);
+    title = rstr_alloc(tmp);
+
+    prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);
   }
 
   const int seek_is_fast = fa_seek_is_fast(fh);
@@ -726,9 +559,11 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     }
   }
 
-  return be_file_playvideo_fh(url, mp, flags, priority,
-                              errbuf, errlen, mimetype,
-                              canonical_url, vq, fh);
+  event_t *e = be_file_playvideo_fh(url, mp, flags, priority,
+				    errbuf, errlen, mimetype,
+				    canonical_url, vq, fh, title);
+  rstr_release(title);
+  return e;
 }
 
 /**
@@ -741,18 +576,18 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
                      const char *mimetype,
                      const char *canonical_url,
                      video_queue_t *vq,
-                     fa_handle_t *fh)
+                     fa_handle_t *fh,
+		     rstr_t *title)
 {
   const int seek_is_fast = fa_seek_is_fast(fh);
   
-  uint64_t hash;
-  hts_thread_t sub_tid = 0;
-  sub_load_t sl = {0};
+  int opensub_hash_valid = 0;
+  uint64_t hash = 0;
 
   if(seek_is_fast && !(flags & BACKEND_VIDEO_NO_OPENSUB_HASH))
-    sl.sl_opensub_hash_valid = !opensub_compute_hash(fh, &hash);
+    opensub_hash_valid = !compute_opensub_hash(fh, &hash);
 
-  if(!sl.sl_opensub_hash_valid)
+  if(!opensub_hash_valid)
     TRACE(TRACE_DEBUG, "Video", "Unable to compute opensub hash");
 
   AVIOContext *avio = fa_libav_reopen(fh);
@@ -774,25 +609,58 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   /**
    * Update property metadata
    */
-  metadata_t *md = fa_metadata_from_fctx(fctx, url);
+  metadata_t *md = fa_metadata_from_fctx(fctx);
   if(md != NULL) {
     metadata_to_proptree(md, mp->mp_prop_metadata, 0);
     metadata_destroy(md);
   }
 
+  // We're gonna change/release it further down so claim a reference
+  title = rstr_dup(title);
+  rstr_t *imdbid = NULL;
   /**
-   * Subtitles fr
+   * Overwrite with data from database if we have something which
+   * is not dsid == 1 (the file itself)
    */
+  int season = -1;
+  int episode = -1;
+  md = metadata_get_video_data(url);
+  if(md != NULL && md->md_dsid != 1) {
+    metadata_to_proptree(md, mp->mp_prop_metadata, 0);
 
-  sl.sl_beflags = flags;
-  sl.sl_p = mp->mp_prop_subtitle_tracks;
-  sl.sl_url = url;
-  sl.sl_opensub_hash = hash;
-  sl.sl_fsize = fsize;
+    // Some hard coded stuff for subtitle scanner
 
-  hts_thread_create_joinable("subloader", &sub_tid,
-			     sub_loader, &sl, THREAD_PRIO_LOW);
+    if(md->md_parent &&
+       md->md_parent->md_type == METADATA_TYPE_SEASON &&
+       md->md_parent->md_parent && 
+       md->md_parent->md_parent->md_type == METADATA_TYPE_SERIES) {
 
+      episode = md->md_idx;
+      season = md->md_parent->md_idx;
+      if(md->md_parent->md_parent->md_title != NULL)
+	rstr_set(&title, md->md_parent->md_parent->md_title);
+
+    } else {
+
+      if(md->md_title)
+	rstr_set(&title, md->md_title);
+      if(md->md_imdb_id)
+	rstr_set(&imdbid, md->md_imdb_id);
+    }
+
+    metadata_destroy(md);
+  }
+
+  /**
+   * Create subtitle scanner
+   */
+  sub_scanner_t *ss =
+    sub_scanner_create(url, flags, title, mp->mp_prop_subtitle_tracks,
+		       opensub_hash_valid, hash, fsize, imdbid,
+		       season, episode, fctx->duration / 1000000);
+
+  rstr_release(title);
+  rstr_release(imdbid);
 
   /**
    * Init codec contexts
@@ -914,11 +782,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
 
   media_format_deref(fw);
 
-  sl.sl_stop = 1;
-  if(sub_tid)
-    hts_thread_join(&sub_tid);
-  TRACE(TRACE_DEBUG, "Video", "Subtitle scanner joined");
-  
+  sub_scanner_destroy(ss);
   return e;
 }
 
@@ -974,4 +838,61 @@ attachment_unload_all(struct attachment_list *alist)
     a->dtor(a->opaque);
     free(a);
   }
+}
+
+
+
+/**
+ * Compute "opensubtitle" hash for the given file
+ *
+ * http://trac.opensubtitles.org/projects/opensubtitles/wiki/HashSourceCodes
+ */
+static int
+compute_opensub_hash(fa_handle_t *fh, uint64_t *hashp)
+{
+  int i;
+  uint64_t hash;
+  int64_t *mem;
+
+  int64_t size = fa_fsize(fh);
+  
+  if(size < 65536)
+    return -1;
+
+  hash = size;
+
+  if(fa_seek(fh, 0, SEEK_SET) != 0)
+    return -1;
+
+  mem = malloc(sizeof(int64_t) * 8192);
+
+  if(fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
+    return -1;
+  }
+
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
+
+  if(fa_seek(fh, size - 65536, SEEK_SET) == -1 ||
+     fa_read(fh, mem, 65536) != 65536) {
+    free(mem);
+    return -1;
+  }
+
+  for(i = 0; i < 8192; i++) {
+#if defined(__BIG_ENDIAN__)
+    hash += __builtin_bswap64(mem[i]);
+#else
+    hash += mem[i];
+#endif
+  }
+  free(mem);
+  *hashp = hash;
+  return 0;
 }

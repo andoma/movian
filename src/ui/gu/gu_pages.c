@@ -108,7 +108,6 @@ static gu_nav_page_t *
 gu_nav_page_create(gu_tab_t *gt, prop_t *p)
 {
   gu_nav_page_t *gnp = calloc(1, sizeof(gu_nav_page_t));
-  gtk_ui_t *gu = gt->gt_gw->gw_gu;
 
   gnp->gnp_gt = gt;
   gnp->gnp_prop = prop_ref_inc(p);
@@ -126,7 +125,7 @@ gu_nav_page_create(gu_tab_t *gt, prop_t *p)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "type"),
 		   PROP_TAG_CALLBACK_STRING, gu_nav_page_set_type, gnp,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -134,7 +133,7 @@ gu_nav_page_create(gu_tab_t *gt, prop_t *p)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "url"),
 		   PROP_TAG_CALLBACK_STRING, gu_nav_page_set_url, gnp,
-		   PROP_TAG_COURIER, gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -256,7 +255,6 @@ gu_page_set_fullwindow(gu_nav_page_t *gnp, int enable)
 static void
 gu_openerror_create(gu_nav_page_t *gnp)
 {
-  prop_courier_t *pc = gnp->gnp_gt->gt_gw->gw_gu->gu_pc;
   prop_sub_t *s;
   GtkWidget *l;
 
@@ -278,7 +276,7 @@ gu_openerror_create(gu_nav_page_t *gnp)
  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		    PROP_TAG_NAME("self", "url"),
 		    PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
-		    PROP_TAG_COURIER, pc,
+		    PROP_TAG_COURIER, glibcourier,
 		    PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
 		    NULL);
   gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
@@ -292,7 +290,7 @@ gu_openerror_create(gu_nav_page_t *gnp)
  s = prop_subscribe(PROP_SUB_DIRECT_UPDATE,
 		    PROP_TAG_NAME("self", "model", "error"),
 		    PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
-		    PROP_TAG_COURIER, pc,
+		    PROP_TAG_COURIER, glibcourier,
 		    PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
 		    NULL);
   gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);

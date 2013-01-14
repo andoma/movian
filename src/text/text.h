@@ -119,7 +119,7 @@ int fontconfig_resolve(int uc, uint8_t style, const char *family,
 
 #define TEXT_PARSE_TAGS          0x1
 #define TEXT_PARSE_HTML_ENTETIES 0x2
-
+#define TEXT_PARSE_SLOPPY_TAGS   0x4 // Unknown tags are parsed as normal text
 
 uint32_t *text_parse(const char *str, int *lenp, int flags,
 		     const uint32_t *prefix, int prefixlen,

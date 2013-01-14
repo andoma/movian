@@ -106,7 +106,7 @@ start_thread(const char *name, hts_thread_t *p,
   ti->aux = aux;
 
   s32 r = sys_ppu_thread_create(p, (void *)thread_trampoline, (intptr_t)ti,
-				prio, 65536, flags, (char *)name);
+				prio, 131072, flags, (char *)name);
   if(r) {
     my_trace("Failed to create thread %s: error: 0x%x", name, r);
     exit(0);

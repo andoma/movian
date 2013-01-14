@@ -110,7 +110,6 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
 {
   prop_sub_t *sub;
   GtkWidget *w, *vbox, *hbox;
-  prop_courier_t *pc = gu->gu_pc;
 
   s->s_home = h;
   s->s_hbox = gtk_hbox_new(FALSE, 1);
@@ -130,7 +129,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "icon"),
 		       PROP_TAG_CALLBACK_STRING, home_set_icon, w,
-		       PROP_TAG_COURIER, pc, 
+		       PROP_TAG_COURIER, glibcourier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -156,7 +155,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "title"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -173,7 +172,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "status"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, w,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -204,7 +203,7 @@ source_add(gtk_ui_t *gu, home_t *h, prop_t *p, source_t *s, source_t *before,
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "url"),
 		       PROP_TAG_CALLBACK_STRING, source_set_url, s,
-		       PROP_TAG_COURIER, pc, 
+		       PROP_TAG_COURIER, glibcourier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -275,7 +274,7 @@ gu_home_create(gu_nav_page_t *gnp)
     prop_subscribe(0,
 		   PROP_TAG_NAME("global", "services", "enabled"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &h->h_sources,
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
 

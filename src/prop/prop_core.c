@@ -3796,6 +3796,20 @@ prop_courier_poll(prop_courier_t *pc)
 /**
  *
  */
+int
+prop_courier_check(prop_courier_t *pc)
+{
+  hts_mutex_lock(&prop_mutex);
+  int r = TAILQ_FIRST(&pc->pc_queue_exp) || TAILQ_FIRST(&pc->pc_queue_nor);
+  hts_mutex_unlock(&prop_mutex);
+  return r;
+
+}
+
+
+/**
+ *
+ */
 rstr_t *
 prop_get_string(prop_t *p, ...)
 {

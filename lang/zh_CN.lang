@@ -401,8 +401,7 @@ msg: 播放信息
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: 看过
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -864,8 +863,7 @@ msg: 清除所有元信息意味着你将清除掉<b>所有</b>以下数据：\n
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: 在首页添加或删除图标
 
 id: Added new bookmark: %s
 msg: 添加新书签：%s
@@ -913,19 +911,16 @@ id: Available plugins
 msg: 可用插件
 
 id: Background
-# Missing translation
-msg: 
+msg: 背景
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Beta测试用密码
 
 id: Browse available plugins
 msg: 浏览可用插件
 
 id: Browsing
-# Missing translation
-msg: 
+msg: 浏览
 
 id: Cloud services
 msg: 云服务
@@ -934,8 +929,7 @@ id: Corrupt plugin bundle
 msg: 损坏的插件包
 
 id: Default
-# Missing translation
-msg: 
+msg: 默认
 
 id: Disk write error
 msg: 磁盘写入错误
@@ -947,30 +941,25 @@ id: File open error
 msg: 打开文件错误
 
 id: Home page
-# Missing translation
-msg: 
+msg: 首页
 
 id: Installed plugins
 msg: 已安装插件
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: 安装版本比可用版本高
 
 id: Installing
 msg: 正在安装
 
 id: List of albums
-# Missing translation
-msg: 
+msg: 专辑列表
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: 载入屏幕显示
 
 id: Movies
-# Missing translation
-msg: 
+msg: 电影
 
 id: Music streaming
 msg: 音乐流
@@ -988,16 +977,13 @@ id: Online TV
 msg: 在线电视
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: 插件默认视图
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: 屏幕保护
 
 id: TV channels
-# Missing translation
-msg: 
+msg: 电视频道
 
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
@@ -1066,8 +1052,7 @@ id: Discovered media sources
 msg: 已检测到的媒体资源
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: 字体和用户界面类型
 
 id: General
 msg: 常规
@@ -1076,8 +1061,7 @@ id: Global settings
 msg: 全局设置
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: 外观
 
 id: Settings useful for developers
 msg: 供开发者使用的设置

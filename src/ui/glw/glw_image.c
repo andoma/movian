@@ -846,11 +846,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((glt = gi->gi_current) == NULL)
     return;
 
-  if(gi->gi_loading_new_url) {
-    gi->gi_autofade = GLW_LP(8, gi->gi_autofade, 0);
-  } else {
-    gi->gi_autofade = GLW_LP(8, gi->gi_autofade, 1);
-  }
+  glw_lp(&gi->gi_autofade, w->glw_root, !gi->gi_loading_new_url, 0.25);
 
   glw_tex_layout(gr, glt);
 

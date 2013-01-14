@@ -160,7 +160,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     s = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "metadata", "album_name"),
 		       PROP_TAG_CALLBACK_STRING, set_title, w,
-		       PROP_TAG_COURIER, ab->gt->gt_gw->gw_gu->gu_pc, 
+		       PROP_TAG_COURIER, glibcourier, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -181,7 +181,7 @@ collection_albums(void *opaque, prop_event_t event, ...)
     s = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "metadata", "album_art"),
 		       PROP_TAG_CALLBACK_STRING, album_set_art, w,
-		       PROP_TAG_COURIER, ab->gt->gt_gw->gw_gu->gu_pc, 
+		       PROP_TAG_COURIER, glibcourier, 
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -236,7 +236,7 @@ add_albums(gu_tab_t *gt, GtkWidget *parent, prop_t *root)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "nodes"),
 		   PROP_TAG_CALLBACK, collection_albums, ab,
-		   PROP_TAG_COURIER, gt->gt_gw->gw_gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier, 
 		   PROP_TAG_NAMED_ROOT, root, "self",
 		   NULL);
 
@@ -251,7 +251,7 @@ gu_directory_albumcollection_create(gu_tab_t *gt, prop_t *root)
 {
   GtkWidget *view = gtk_vbox_new(FALSE, 1);
   
-  add_header(gt->gt_gw->gw_gu->gu_pc, view, root);
+  add_header(glibcourier, view, root);
   add_albums(gt, view, root);
 
   gtk_widget_show_all(view);

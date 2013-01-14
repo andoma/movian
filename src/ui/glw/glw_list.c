@@ -148,7 +148,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_height * 2) {
       l->filtered_pos = l->current_pos;
     } else {
-      l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+      glw_lp(&l->filtered_pos, w->glw_root, l->current_pos, 0.25);
     }
   }
 
@@ -235,7 +235,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_width * 2) {
     l->filtered_pos = l->current_pos;
   } else {
-    l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+    glw_lp(&l->filtered_pos, w->glw_root, l->current_pos, 0.25);
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {

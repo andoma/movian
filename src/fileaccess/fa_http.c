@@ -1444,10 +1444,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       return 0;
 
     if(nohead) {
-      // Server did not honour our GET request with 1 byte range
-      // This is bad, bail out
-      snprintf(errbuf, errlen, "Unexpected 200 response on range request");
-      return -1;
+      http_detach(hf, 0, "Range request not understood");
+      hf->hf_streaming = 1;
+      goto reconnect;
     }
 
     if(hf->hf_filesize < 0) {
@@ -1514,16 +1513,20 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   case 405:
     if(!nohead) {
+
+      // This server does not support HEAD, remember that
       http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
 				HTTP_SERVER_QUIRK_NO_HEAD);
-      // Retry using GET
-      if(http_drain_content(hf)) {
-	snprintf(errbuf, errlen, "Connection lost");
-	return -1;
-      }
-      
+
+      // It's a bit unclear if we receive a body when we
+      // get a "405 Method Not Supported" as a result
+      // of a HEAD request (it seems to be differerent
+      // between different servers), so just disconnect
+      // and retry without HEAD
+
+      http_detach(hf, 0, "HEAD not supported");
       nohead = 1;
-      goto again;
+      goto reconnect;
     }
     snprintf(errbuf, errlen, "Unsupported method");
     return -1;

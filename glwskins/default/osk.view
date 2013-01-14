@@ -87,6 +87,8 @@ widget(container_y, {
 	  source: "showtime:pixmap:gradient:30,30,30:50,50,60";
 	  cornerRadius: 4;
 	  widget(text, {
+	    password: $ui.osk.password;
+	    oskPassword: true;
 	    padding: [$ui.size, 0];
 	    bind($ui.osk.text);
 	    sizeScale: 1.5;
@@ -96,10 +98,11 @@ widget(container_y, {
 	});
 	ACTION("←", targetedEvent("input", Left));
 	ACTION("→", targetedEvent("input", Right));
-	ACTION("OK", deliverEvent($ui.osk.eventSink, "Ok"));
 	ACTION("Clear", {
 	  $ui.osk.text = void;
-	});
+	}, 1.5);
+	ACTION("Cancel", deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
+	ACTION("OK", deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
       });
 
       widget(container_x, {

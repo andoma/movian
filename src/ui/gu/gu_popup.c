@@ -147,7 +147,7 @@ popup_create_auth(gtk_ui_t *gu, prop_t *p)
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("self", "id"),
 		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
-		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_COURIER, glibcourier, 
 		     PROP_TAG_NAMED_ROOT, p, "self",
 		     NULL);
   gu_unsubscribe_on_destroy(GTK_OBJECT(l), s);
@@ -159,7 +159,7 @@ popup_create_auth(gtk_ui_t *gu, prop_t *p)
   s = prop_subscribe(0,
 		     PROP_TAG_NAME("self", "reason"),
 		     PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, l,
-		     PROP_TAG_COURIER, gu->gu_pc, 
+		     PROP_TAG_COURIER, glibcourier,
 		     PROP_TAG_NAMED_ROOT, p, "self",
 		     NULL);
 
@@ -268,6 +268,6 @@ gu_popup_init(gtk_ui_t *gu)
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "popups"),
 		 PROP_TAG_CALLBACK, popups_update, gu,
-		 PROP_TAG_COURIER, gu->gu_pc, 
+		 PROP_TAG_COURIER, glibcourier,
 		 NULL);
 }

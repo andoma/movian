@@ -27,7 +27,8 @@ widget(container_x, {
 	    .focusable = true;
 	    bind($self.input);
 
-	    onEvent(enter, deliverEvent($self.eventSink, "Ok"));
+	    onEvent(enter, deliverEvent($self.eventSink, "Ok"),
+		   $self.input);
 	    onEvent(cancel, deliverEvent($self.eventSink));
 	  });
 	);

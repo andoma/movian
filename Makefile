@@ -80,6 +80,8 @@ SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 BUNDLES += resources/metadb
 BUNDLES += resources/kvstore
 
+SRCS-$(CONFIG_WEBPOPUP) += src/ui/webpopup.c
+
 ##############################################################
 # Misc support
 ##############################################################
@@ -105,8 +107,9 @@ SRCS-${CONFIG_TREX} += ext/trex/trex.c
 ##############################################################
 # Sqlite3
 ##############################################################
-SRCS += ext/sqlite/sqlite3.c \
-	src/db/db_support.c \
+SRCS-${CONFIG_SQLITE_INTERNAL} += ext/sqlite/sqlite3.c
+
+SRCS += src/db/db_support.c \
 	src/db/kvstore.c \
 
 
@@ -188,7 +191,6 @@ BUNDLES += resources/fileaccess
 ##############################################################
 SRCS += 		src/api/xmlrpc.c \
 			src/api/soap.c \
-			src/api/opensubtitles.c \
 			src/api/lastfm.c \
 			src/api/tmdb.c \
 			src/api/tvdb.c \
@@ -224,6 +226,7 @@ SRCS += src/video/video_playback.c \
 	src/video/video_settings.c \
 	src/video/video_dvdspu.c \
 	src/video/vobsub.c \
+	src/video/sub_scanner.c \
 
 SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
@@ -503,6 +506,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
 			ext/spidermonkey/prmjtime.c	\
                         src/arch/nspr/nspr.c            \
                         src/js/js.c                     \
+                        src/js/js_htsmsg.c              \
                         src/js/js_page.c                \
                         src/js/js_io.c                  \
                         src/js/js_service.c             \
@@ -510,6 +514,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_prop.c                \
                         src/js/js_json.c                \
                         src/js/js_event.c               \
+                        src/js/js_metaprovider.c        \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr

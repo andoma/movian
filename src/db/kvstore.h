@@ -22,6 +22,7 @@ int kv_url_opt_get_int(const char *url, int domain, const char *key, int def);
 
 #define KVSTORE_SET_STRING 1
 #define KVSTORE_SET_INT    2
+#define KVSTORE_SET_VOID   3
 
 void kv_url_opt_set(const char *url, int domain, const char *key,
 		    int type, ...);

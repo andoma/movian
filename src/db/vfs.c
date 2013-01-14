@@ -29,8 +29,9 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <sqlite3.h>
+
 #include "showtime.h"
-#include "ext/sqlite/sqlite3.h"
 #include "arch/atomic.h"
 #include "misc/sha.h"
 #if 0

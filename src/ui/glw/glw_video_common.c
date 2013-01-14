@@ -53,12 +53,12 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
   float t_aspect = (float)gv->gv_dar_num / gv->gv_dar_den; 
 
-  if(video_settings.stretch_fullscreen)
+  if(gv->gv_fstretch)
     return;
 
   if(t_aspect * rc->rc_height < rc->rc_width) {
 
-    if(video_settings.stretch_horizontal)
+    if(gv->gv_hstretch)
       return;
 
     // Shrink X
@@ -291,6 +291,8 @@ glw_video_dtor(glw_t *w)
   prop_ref_dec(gv->gv_model);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
+  prop_unsubscribe(gv->gv_hstretch_sub);
+  prop_unsubscribe(gv->gv_fstretch_sub);
   prop_unsubscribe(gv->gv_vo_on_video_sub);
 
   free(gv->gv_current_url);
@@ -409,7 +411,10 @@ glw_video_ctor(glw_t *w)
 
   LIST_INSERT_HEAD(&gr->gr_video_decoders, gv, gv_global_link);
 
-  gv->gv_vd = video_decoder_create(gv->gv_mp, glw_video_input, gv);
+  gv->gv_mp->mp_video_frame_deliver = glw_video_input;
+  gv->gv_mp->mp_video_frame_opaque = gv;
+
+  gv->gv_vd = video_decoder_create(gv->gv_mp);
   video_playback_create(gv->gv_mp);
 
   gv->gv_vo_scaling_sub =
@@ -426,6 +431,23 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_vzoom),
+		   NULL);
+
+  gv->gv_hstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_hstretch,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_hstretch),
+		   NULL);
+
+
+  gv->gv_fstretch_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_fstretch,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_fstretch),
 		   NULL);
 
   gv->gv_vo_on_video_sub =
@@ -726,61 +748,6 @@ glw_video_input(const frame_info_t *fi, void *opaque)
   LIST_FOREACH(gve, &engines, gve_link)
     if(gve->gve_type == fi->fi_type)
       gve->gve_deliver(fi, gv);
-
-#if 0      
-
-  switch(type) {
-#if CONFIG_GLW_BACKEND_RSX
-  case FRAME_BUFFER_TYPE_RSX_MEMORY:
-    glw_video_input_rsx_mem(gv, frame, fi);
-    break;
-#endif
-
-  case FRAME_BUFFER_TYPE_LIBAV_FRAME:
-    avframe = frame;
-
-    switch(fi->fi_pix_fmt) {
-    case PIX_FMT_YUV420P:
-    case PIX_FMT_YUV422P:
-    case PIX_FMT_YUV444P:
-    case PIX_FMT_YUV410P:
-    case PIX_FMT_YUV411P:
-    case PIX_FMT_YUV440P:
-
-    case PIX_FMT_YUVJ420P:
-    case PIX_FMT_YUVJ422P:
-    case PIX_FMT_YUVJ444P:
-    case PIX_FMT_YUVJ440P:
-      glw_video_input_yuvp(gv, avframe->data, avframe->linesize, fi);
-      break;
-      
-#if ENABLE_VDPAU
-    case PIX_FMT_VDPAU_H264:
-    case PIX_FMT_VDPAU_MPEG1:
-    case PIX_FMT_VDPAU_MPEG2:
-    case PIX_FMT_VDPAU_WMV3:
-    case PIX_FMT_VDPAU_VC1:
-    case PIX_FMT_VDPAU_MPEG4:
-      glw_video_input_vdpau(gv, avframe->data, avframe->linesize, fi);
-      break;
-#endif
-      
-    default:
-      TRACE(TRACE_ERROR, "GLW", 
-	  "PIX_FMT %s (0x%x) does not have a video engine",
-	   av_pix_fmt_descriptors[fi->fi_pix_fmt].name, fi->fi_pix_fmt);
-      break;
-    }
-    break;
-
-  default:
-      TRACE(TRACE_ERROR, "GLW", 
-	    "buffer type %d  does not have a video engine",
-	    type);
-      break;
-  }
-
-#endif
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 }

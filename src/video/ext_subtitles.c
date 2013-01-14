@@ -42,7 +42,8 @@ es_insert_text(ext_subtitles_t *es, const char *text,
 {
   video_overlay_t *vo;
   vo = video_overlay_render_cleartext(text, start, stop, tags, 0);
-  TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
+  if(vo != NULL)
+    TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
 }
 	       
 

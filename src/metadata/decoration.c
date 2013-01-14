@@ -167,12 +167,12 @@ analyze_video(deco_item_t *di)
     fname = rstr_dup(di->di_filename);
   }
 
-  di->di_mlv = metadata_bind_video_info(di->di_metadata,
-					di->di_url, fname,
+  di->di_mlv = metadata_bind_video_info(di->di_url, fname,
 					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
-					di->di_duration, di->di_options,
+					di->di_duration,
 					di->di_root, db->db_title,
-					db->db_lonely_video_item, 0);
+					db->db_lonely_video_item, 0,
+					-1, -1, -1);
   rstr_release(fname);
 }
 

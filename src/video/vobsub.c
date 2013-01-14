@@ -23,7 +23,7 @@
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "vobsub.h"
-#include "misc/str.h"
+#include "misc/isolang.h"
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "ext_subtitles.h"
@@ -108,7 +108,7 @@ vobsub_probe(const char *url, const char *filename,
       while(*p == ' ')
 	p++;
       if(strlen(p) >= 2) {
-	const char *lang = dvd_langcode_to_string(p[0] << 8 | p[1]);
+	const char *lang = iso_639_1_lang(p);
 
 	htsmsg_t *m = htsmsg_create_map();
 	htsmsg_add_str(m, "idx", url);
