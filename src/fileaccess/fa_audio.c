@@ -270,9 +270,12 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       ets = (event_ts_t *)e;
-      ts = ets->ts + fctx->start_time;
-      if(ts < fctx->start_time)
-	ts = fctx->start_time;
+
+      if(fctx->start_time != PTS_UNSET) {
+	ts = MAX(ets->ts + fctx->start_time, fctx->start_time);
+      } else {
+	ts = MAX(ets->ts, 0);
+      }
       av_seek_frame(fctx, -1, ts, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
       
@@ -280,8 +283,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
 
       if(mp->mp_seek_base < 1500000)
 	goto skip;
-
-      av_seek_frame(fctx, -1, 0, AVSEEK_FLAG_BACKWARD);
+      int64_t z = fctx->start_time != PTS_UNSET ? fctx->start_time : 0;
+      av_seek_frame(fctx, -1, z, AVSEEK_FLAG_BACKWARD);
       seekflush(mp, &mb);
 
     } else if(event_is_action(e, ACTION_SKIP_FORWARD) ||
