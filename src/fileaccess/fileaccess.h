@@ -235,5 +235,10 @@ fa_handle_t *fa_cache_open(const char *url, char *errbuf,
 fa_handle_t *fa_buffered_open(const char *url, char *errbuf, size_t errsize,
 			      int flags, struct prop *stats);
 
+// Memory backed files
+
+int memfile_register(const void *data, size_t len);
+
+void memfile_unregister(int id);
 
 #endif /* FILEACCESS_H */

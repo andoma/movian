@@ -29,10 +29,27 @@
 
 #include "fa_proto.h"
 
+static hts_mutex_t memfile_mutex;
+LIST_HEAD(memfile_list, memfile);
+static struct memfile_list memfiles;
+static int tally;
 struct filebundle *filebundles;
 
+/**
+ *
+ */
+typedef struct memfile {
+  LIST_ENTRY(memfile) mf_link;
+  const uint8_t *mf_data;
+  size_t mf_size;
+  int mf_id;
+} memfile_t;
 
- typedef struct fa_bundle_fh {
+
+/**
+ *
+ */
+typedef struct fa_bundle_fh {
   fa_handle_t h;
   const unsigned char *ptr;
   int size;
@@ -151,7 +168,6 @@ b_seek(fa_handle_t *handle, int64_t pos, int whence)
   fh->pos = np;
   return np;
 }
-
 
 
 /**
@@ -331,3 +347,128 @@ static fa_protocol_t fa_protocol_bundle = {
   .fap_stat  = b_stat,
 };
 FAP_REGISTER(bundle);
+
+
+
+
+
+
+/**
+ *
+ */
+static void
+mf_init(void)
+{
+  hts_mutex_init(&memfile_mutex);
+}
+
+
+static const memfile_t *
+find_memfile(const char *url)
+{
+  const memfile_t *mf;
+  char *endptr;
+  int id = strtol(url, &endptr, 10);
+  if(endptr == url || *endptr != 0)
+    return NULL;
+
+  hts_mutex_lock(&memfile_mutex);
+  LIST_FOREACH(mf, &memfiles, mf_link)
+    if(mf->mf_id == id)
+      break;
+  hts_mutex_unlock(&memfile_mutex);
+  return mf;
+}
+
+
+/**
+ *
+ */
+static fa_handle_t *
+mf_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+	int flags, struct prop *stats)
+{
+  const memfile_t *mf = find_memfile(url);
+  if(mf == NULL) {
+    snprintf(errbuf, errlen, "No such file or directory");
+    return NULL;
+  }
+
+  fa_bundle_fh_t *fh = calloc(1, sizeof(fa_bundle_fh_t));
+  fh->ptr = mf->mf_data;
+  fh->size = mf->mf_size;
+  fh->h.fh_proto = fap;
+  return &fh->h;
+}
+
+
+/**
+ *
+ */
+static int
+mf_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
+	char *errbuf, size_t errlen, int non_interactive)
+{
+  const memfile_t *mf = find_memfile(url);
+  memset(fs, 0, sizeof(struct fa_stat));
+
+  if(mf == NULL) {
+    snprintf(errbuf, errlen, "No such file or directory");
+    return FAP_STAT_ERR;
+  }
+
+  fs->fs_type = CONTENT_FILE;
+  fs->fs_size = mf->mf_size;
+  return FAP_STAT_OK;
+}
+
+
+/**
+ *
+ */
+static fa_protocol_t fa_protocol_memfile = {
+  .fap_name  = "memfile",
+  .fap_init  = mf_init,
+  .fap_open  = mf_open,
+  .fap_close = b_close,
+  .fap_read  = b_read,
+  .fap_seek  = b_seek,
+  .fap_fsize = b_fsize,
+  .fap_stat  = mf_stat,
+};
+FAP_REGISTER(memfile);
+
+
+/**
+ *
+ */
+int 
+memfile_register(const void *data, size_t len)
+{
+  memfile_t *mf = malloc(sizeof(memfile_t));
+  mf->mf_data = data;
+  mf->mf_size = len;
+  hts_mutex_lock(&memfile_mutex);
+  mf->mf_id = ++tally;
+  LIST_INSERT_HEAD(&memfiles, mf, mf_link);
+  hts_mutex_unlock(&memfile_mutex);
+  return mf->mf_id;
+}
+
+
+/**
+ *
+ */
+void
+memfile_unregister(int id)
+{
+  memfile_t *mf;
+  hts_mutex_lock(&memfile_mutex);
+  LIST_FOREACH(mf, &memfiles, mf_link)
+    if(mf->mf_id == id)
+      break;
+  if(mf != NULL)
+    LIST_REMOVE(mf, mf_link);
+  hts_mutex_unlock(&memfile_mutex);
+  free(mf);
+}
