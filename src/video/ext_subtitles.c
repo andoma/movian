@@ -514,6 +514,34 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, video_decoder_t *vd)
 }
 
 
+static ext_subtitles_t *
+subtitles_from_zipfile(media_pipe_t *mp, const void *data, size_t size)
+{
+  ext_subtitles_t *ret = NULL;
+  char errbuf[256];
+  char url[64];
+
+  int id = memfile_register(data, size);
+  snprintf(url, sizeof(url), "zip://memfile://%d", id);
+  fa_dir_t *fd = fa_scandir(url, errbuf, sizeof(errbuf));
+  if(fd != NULL) {
+    fa_dir_entry_t *fde;
+    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+      TRACE(TRACE_DEBUG, "Subtitles", "  Probing %s", rstr_get(fde->fde_url));
+      ret = subtitles_load(mp, rstr_get(fde->fde_url));
+      if(ret != NULL)
+	break;
+    }
+    fa_dir_free(fd);
+  } else {
+    TRACE(TRACE_ERROR, "Subtitles", "Unable to open ZIP -- %s", errbuf);
+  }
+
+  memfile_unregister(id);
+  return ret;
+}
+
+
 /**
  *
  */
@@ -533,6 +561,8 @@ subtitles_load(media_pipe_t *mp, const char *url)
     return sub;
   }
 
+  TRACE(TRACE_DEBUG, "Subtitles", "Trying to load %s", url);
+
   char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf),
 		       DISABLE_CACHE, 0, NULL, NULL);
 
@@ -540,6 +570,11 @@ subtitles_load(media_pipe_t *mp, const char *url)
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
 	  url, errbuf);
     return NULL;
+  }
+
+  if(size > 4 && !memcmp(data, "PK\003\004", 4)) {
+    TRACE(TRACE_DEBUG, "Subtitles", "%s is a ZIP archive, scanning...", url);
+    return subtitles_from_zipfile(mp, data, size);
   }
 
   if(gz_check(data, size)) {
