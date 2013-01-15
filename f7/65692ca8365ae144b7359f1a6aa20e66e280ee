@@ -1,0 +1,3 @@
+Fix broken seeking in FLAC files
+
+Fixes #1435
