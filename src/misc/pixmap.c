@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <sys/param.h>
 #include <string.h>
@@ -1185,6 +1186,8 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
   pixmap_type_t fmt = 0;
   pixmap_t *pm;
 
+  assert(pix_fmt != -1);
+
   switch(pix_fmt) {
   default:
     need_format_conv = 1;
@@ -1403,14 +1406,14 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   avpkt.data = pm->pm_data;
   avpkt.size = pm->pm_size;
 
-  avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
+  int r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
-  if(ctx->width == 0 || ctx->height == 0) {
+  if(r < 0 || ctx->width == 0 || ctx->height == 0) {
     pixmap_release(pm);
     avcodec_close(ctx);
     av_free(ctx);
     av_free(frame);
-    snprintf(errbuf, errlen, "Invalid picture dimensions");
+    snprintf(errbuf, errlen, "Unable to decode image");
     return NULL;
   }
 #if 0
