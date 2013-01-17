@@ -45,6 +45,8 @@
 #include "video/video_playback.h"
 #include "video/sub_scanner.h"
 #include "misc/md5.h"
+#include "misc/str.h"
+#include "i18n.h"
 
 typedef struct seek_item {
   prop_t *si_prop;
@@ -513,7 +515,15 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
     char *x = strrchr(tmp, '.');
     if(x)
       *x = 0;
-    title = rstr_alloc(tmp);
+
+    if(utf8_verify(tmp)) {
+      title = rstr_alloc(tmp);
+    } else {
+      char *t = utf8_from_bytes(tmp, 0, i18n_get_srt_charset());
+      title = rstr_alloc(t);
+      free(t);
+    }
+
     va.title = rstr_get(title);
 
     prop_set(mp->mp_prop_metadata, "title", PROP_SET_RSTRING, title);
