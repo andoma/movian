@@ -112,8 +112,9 @@ js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 void
 js_set_prop_str(JSContext *cx, JSObject *o, const char *prop, const char *str)
 {
-  if(str != NULL)
-    js_set_prop_jsval(cx, o, prop, STRING_TO_JSVAL(JS_NewStringCopyZ(cx, str)));
+  JSString *s = str ? JS_NewStringCopyZ(cx, str) : NULL;
+  if(s != NULL)
+    js_set_prop_jsval(cx, o, prop, STRING_TO_JSVAL(s));
 }
 
 
