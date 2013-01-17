@@ -3976,13 +3976,18 @@ static int
 glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
 		    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
+  token_t *a, *b;
   token_t *r;
   char tmp[30];
   const char *str = NULL;
   int s = 0;
 
-  a = token_resolve(ec, a);
+  if(argc < 1 || argc > 2)
+    return glw_view_seterr(ec->ei, self, 
+			    "value2duration(): Invalid number of arguments");
+
+  a =            token_resolve(ec, argv[0]);
+  b = argc > 1 ? token_resolve(ec, argv[1]) : NULL;
 
   if(a == NULL) {
     str = "";
@@ -4007,7 +4012,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
       int m = s / 60;
       int h = s / 3600;
   
-      if(h > 0) {
+      if(h > 0 || (b != NULL && token2bool(b))) {
 	snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
       } else {
 	snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
@@ -5865,7 +5870,7 @@ static const token_func_t funcvec[] = {
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
   {"isVoid", 1, glwf_isvoid},
-  {"value2duration", 1, glwf_value2duration},
+  {"value2duration", -1, glwf_value2duration},
   {"value2size", 1, glwf_value2size},
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
