@@ -1,0 +1,78 @@
+#!/bin/bash
+
+OS="rpi"
+DEFAULT_UI="glw"
+CONFIGURE_POSTFIX="rpi"
+
+source support/configure.inc
+
+show_help(){
+  common_help
+  exit 1
+}
+
+for opt do
+  optval="${opt#*=}"
+  case "$opt" in
+  --help) show_help
+  ;;
+  --toolchain=*) TOOLCHAIN="$optval"
+  ;;
+  --vcroot=*) VCROOT="$optval"
+  ;;
+  *)
+  common_opt $opt $optval
+  esac
+done
+
+[ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
+[ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
+
+setup_env "$@"
+
+
+enable sqlite_internal
+enable spidermonkey
+enable glw_backend_opengl_es
+enable glw
+enable polarssl
+enable librtmp
+enable httpserver
+enable dvd
+enable libfreetype
+enable stdin
+
+zlib_setup
+bzip2_setup
+freetype_setup --host=arm-linux-gnueabihf
+
+LIBAV_CFLAGS="-mfpu=vfp -I${BUILDDIR}/zlib/install/include"
+LIBAV_LDFLAGS="-L${BUILDDIR}/zlib/install/lib"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --cpu=arm1176jzf-s --target-os=linux --disable-armv5te --disable-neon --enable-armv6t2 --enable-armv6 --enable-armvfp"
+
+libav_setup
+
+cat >> ${CONFIG_MAK} <<EOF
+CC=${TOOLCHAIN}cc
+STRIP=${TOOLCHAIN}strip
+OBJDUMP=${TOOLCHAIN}objdump
+OBJCOPY=${TOOLCHAIN}objcopy
+CFLAGS_cfg += -mfpu=vfp
+
+CFLAGS_cfg  += -I${VCROOT}/include
+CFLAGS_cfg  += -I${VCROOT}/include/IL
+CFLAGS_cfg  += -I${VCROOT}/include/interface/vcos/pthreads/
+CFLAGS_cfg  += -I${VCROOT}/include/interface/vmcs_host/linux
+LDFLAGS_cfg += -L${VCROOT}/lib
+LDFLAGS_cfg += -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
+LDFLAGS_cfg += -lpthread -lrt -ldl
+EOF
+
+finalize
+
+echo
+echo "NOTE: Support for Raspberry Pi is still experimental"
+echo "NOTE: Audio/Video playback does not work yet"
+echo "NOTE: A lot of other things are probably broken as well"
+echo "NOTE: You have been warned"
+echo

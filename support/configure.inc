@@ -493,5 +493,4 @@ EOF
     rm -f ${CONFIG_H} ${CONFIG_MAK}
 
     cleanup
-    exit 0
 }
