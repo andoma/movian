@@ -1,0 +1,6 @@
+Add movie chapters support where supported by file formats
+
+Chapters can be found in menu during video playback next to seek
+thumbnails and audio/subltitle tracks
+
+Fixes #786
