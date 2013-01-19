@@ -751,12 +751,11 @@ svg_parse_element(const svg_state_t *s0, htsmsg_t *element,
 
   FT_Stroker_Rewind(s.stroker);
 
-  if(stroke_width)
-    FT_Stroker_Set(s.stroker,
-		   64 * stroke_width * s.scaling,
-		   FT_STROKER_LINECAP_BUTT,
-		   FT_STROKER_LINEJOIN_BEVEL,
-		   0);
+  FT_Stroker_Set(s.stroker,
+		 64 * stroke_width * s.scaling ?: 1,
+		 FT_STROKER_LINECAP_BUTT,
+		 FT_STROKER_LINEJOIN_BEVEL,
+		 0);
 
   s.cur[0] = 0;
   s.cur[1] = 0;
@@ -913,13 +912,15 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
     return NULL;
   }
 
-  state.scaling = (float)w / orig_width;
-  svg_mtx_identity(state.ctm);
-  svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);
+  if(w > 1 && h > 1) {
+    state.scaling = (float)w / orig_width;
+    svg_mtx_identity(state.ctm);
+    svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);
     
-  FT_Stroker_New(ft_lib, &state.stroker);
-  svg_parse_root(&state, tags);
-  FT_Stroker_Done(state.stroker);
+    FT_Stroker_New(ft_lib, &state.stroker);
+    svg_parse_root(&state, tags);
+    FT_Stroker_Done(state.stroker);
+  }
   return state.pm;
 }
 
