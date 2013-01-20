@@ -294,7 +294,7 @@ dvd_lpcm(dvd_player_t *dp, const uint8_t *buf, int len,
 {
   if(len < 3)
     return NULL;
-  int i;
+
   int channels = 1 + (buf[1] & 0x7);
   int freq     = lpcm_freq_tab[(buf[1] >> 4) & 3];
   int bps      = 16 + ((buf[1] >> 6) & 3) * 3;
@@ -314,10 +314,11 @@ dvd_lpcm(dvd_player_t *dp, const uint8_t *buf, int len,
   mb->mb_rate = freq;
 
 #if defined(__BIG_ENDIAN__)
-  memcpy(mb->mb_data, data, datalen);
+  memcpy(mb->mb_data, buf, len);
 #else
   const uint16_t *src = (const uint16_t *)buf;
   uint16_t *dst = mb->mb_data;
+  int i;
   for(i = 0; i < len / 2; i++) {
     *dst++ = (*src >> 8) | (*src << 8) ;
     src++;
