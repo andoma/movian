@@ -215,30 +215,22 @@ dvd_video_push(dvd_player_t *dp)
   mb_enqueue_always(mp, &mp->mp_video, mb);
 }
 
+
+
 /**
  *
  */
 static event_t *
-dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
-		  int data_type, void *data, int datalen, int rate,
-		  int64_t dts, int64_t pts)
+dvd_media_enqueue0(dvd_player_t *dp, media_queue_t *mq, media_buf_t *mb,
+		   int64_t dts, int64_t pts)
 {
-  media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, datalen);
   event_t *e;
 
-  AVCodecContext *ctx = cw->codec_ctx;
-
-  mb->mb_cw = media_codec_ref(cw);
-  mb->mb_data_type = data_type;
-  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
-    1000000LL * av_q2d(ctx->time_base);
-  mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_dts = dts;
   mb->mb_pts = pts;
-
   
-  if(pts != AV_NOPTS_VALUE && data_type == MB_VIDEO) {
+  if(pts != AV_NOPTS_VALUE && mb->mb_data_type == MB_VIDEO) {
     if(dp->dp_time_pts_delta == AV_NOPTS_VALUE) {
       int64_t t = av_rescale_q(dvdnav_get_current_time(dp->dp_dvdnav),
 			       mpeg_tc, AV_TIME_BASE_Q);
@@ -247,8 +239,7 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
     mb->mb_drive_clock = 1;
     mb->mb_delta = dp->dp_time_pts_delta;
   }
-
-  memcpy(mb->mb_data, data, datalen);
+  
 
   do {
 
@@ -268,6 +259,74 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 }
 
 
+
+/**
+ *
+ */
+static event_t *
+dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
+		  int data_type, void *data, int datalen,
+		  int64_t dts, int64_t pts)
+{
+  media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, datalen);
+
+  const AVCodecContext *ctx = cw->codec_ctx;
+
+  mb->mb_cw = media_codec_ref(cw);
+  mb->mb_data_type = data_type;
+  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
+    1000000LL * av_q2d(ctx->time_base);
+  
+  mb->mb_aspect_override = dp->dp_aspect_override;
+  memcpy(mb->mb_data, data, datalen);
+
+  return dvd_media_enqueue0(dp, mq, mb, dts, pts);
+}
+
+static const int lpcm_freq_tab[4] = { 48000, 96000, 44100, 32000 };
+
+/**
+ *
+ */
+static event_t *
+dvd_lpcm(dvd_player_t *dp, const uint8_t *buf, int len,
+	 int64_t dts, int64_t pts)
+{
+  if(len < 3)
+    return NULL;
+  int i;
+  int channels = 1 + (buf[1] & 0x7);
+  int freq     = lpcm_freq_tab[(buf[1] >> 4) & 3];
+  int bps      = 16 + ((buf[1] >> 6) & 3) * 3;
+
+  if(bps != 16)
+    return NULL;
+
+  buf += 3;
+  len -= 3;
+
+  int frames = len / channels / (bps >> 3);
+  media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, len);
+
+  mb->mb_data_type = MB_AUDIO;
+  mb->mb_duration = 1000000 * frames / freq;
+  mb->mb_channels = channels;
+  mb->mb_rate = freq;
+
+#if defined(__BIG_ENDIAN__)
+  memcpy(mb->mb_data, data, datalen);
+#else
+  const uint16_t *src = (const uint16_t *)buf;
+  uint16_t *dst = mb->mb_data;
+  for(i = 0; i < len / 2; i++) {
+    *dst++ = (*src >> 8) | (*src << 8) ;
+    src++;
+  }
+#endif
+  return dvd_media_enqueue0(dp, &dp->dp_mp->mp_audio, mb, dts, pts);
+}
+
+
 /**
  *
  */
@@ -278,7 +337,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   media_queue_t *mq;
   uint8_t flags, hlen, x;
   int64_t dts = AV_NOPTS_VALUE, pts = AV_NOPTS_VALUE;
-  int rlen, outlen, data_type = 0, rate = 0;
+  int rlen, outlen, data_type = 0;
   uint8_t *outbuf;
   int track;
   media_codec_t *cw, **cwp;
@@ -334,17 +393,23 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
   if(sc > 0x1ff)
     return NULL;
 
+  if(dts != AV_NOPTS_VALUE)
+    dts = av_rescale_q(dts, mpeg_tc, AV_TIME_BASE_Q);
+  
+  if(pts != AV_NOPTS_VALUE)
+    pts = av_rescale_q(pts, mpeg_tc, AV_TIME_BASE_Q);
+
+
   if(sc >= 0x1e0 && sc <= 0x1ef) {
     codec_id  = CODEC_ID_MPEG2VIDEO;
     data_type = MB_VIDEO;
-    rate = dp->dp_aspect_override;
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
 
     //    mcp.width = dp->dp_vwidth;
     //    mcp.height = dp->dp_vheight;
 
-  } else if((sc >= 0x80 && sc <= 0x9f) || (sc >= 0x1c0 && sc <= 0x1df)) {
+  } else if((sc >= 0x80 && sc <= 0xaf) || (sc >= 0x1c0 && sc <= 0x1df)) {
 
     if(dp->dp_audio_track == DP_AUDIO_DISABLE)
       return NULL;
@@ -360,18 +425,21 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     switch(sc) {
     case 0x80 ... 0x87:
       codec_id = CODEC_ID_AC3;
-      rate = 48000;
       break;
 	    
     case 0x88 ... 0x9f:
       codec_id = CODEC_ID_DTS;
-      rate = 48000;
       break;
+
+    case 0xa0 ... 0xaf:
+      return dvd_lpcm(dp, buf, len, dts, pts);
+
 
     case 0x1c0 ... 0x1df:
       codec_id = CODEC_ID_MP2;
-      rate = 48000;
       break;
+
+
     default:
       return NULL;
     }
@@ -410,23 +478,16 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
       return NULL;
   }
 
-  if(dts != AV_NOPTS_VALUE)
-    dts = av_rescale_q(dts, mpeg_tc, AV_TIME_BASE_Q);
-  
-  if(pts != AV_NOPTS_VALUE)
-    pts = av_rescale_q(pts, mpeg_tc, AV_TIME_BASE_Q);
-
-
   ctx = cw->codec_ctx;
  
   if(cw->parser_ctx == NULL) /* No parser available */
-    return dvd_media_enqueue(dp, mq, cw, data_type, buf, len, rate, dts, pts);
+    return dvd_media_enqueue(dp, mq, cw, data_type, buf, len, dts, pts);
 
   while(len > 0) {
     rlen = av_parser_parse2(cw->parser_ctx, ctx, &outbuf, &outlen, buf, len, 
 			    pts, dts, 0);
     if(outlen) {
-      e = dvd_media_enqueue(dp, mq, cw, data_type, outbuf, outlen, rate,
+      e = dvd_media_enqueue(dp, mq, cw, data_type, outbuf, outlen,
 			    cw->parser_ctx->dts, cw->parser_ctx->pts);
       if(e != NULL)
 	return e;
