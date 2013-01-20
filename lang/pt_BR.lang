@@ -101,6 +101,10 @@ msg: Configurações de audio
 id: Audio tracks
 msg: Opções de audio
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Buscar por tempo
 
@@ -238,6 +242,10 @@ msg: Desfazer
 
 id: Plugins
 msg: Plugins
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: Volume principal: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Configurações para opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utilizar opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,22 @@ msg: Falha de logon
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Data
 
 id: Filename
 msg: Nome de arquivo
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Desativado
 
 id: Show only supported files
 msg: Exibir apenas tipos de arquivos conhecidos
@@ -701,12 +711,6 @@ msg: Ordenação ativada
 #
 id: Search using spotlight
 msg: Buscar utilizando o spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Arquivo externo
 
 #
 # ./src/i18n.c
@@ -783,6 +787,12 @@ msg: Alinhar as legendas no quadro de vídeo
 id: Audio delay
 msg: Atraso de áudio
 
+id: Stretch video to fullscreen
+msg: Esticar vídeo para tela cheia
+
+id: Stretch video to widescreen
+msg: Esticar vídeo para widescreen
+
 id: Subtitle delay
 msg: Atraso de legendas
 
@@ -791,6 +801,13 @@ msg: Redimensionamento de legendas
 
 id: Video zoom
 msg: Zoom de vídeo
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +849,10 @@ msg: Origem de metadados
 id: Movie
 msg: Filme
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Dados não encontrados
 
@@ -847,6 +868,10 @@ msg:
 
 id: Refresh metadata
 msg: Atualizar metadados
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Trilha %d
@@ -1116,7 +1141,31 @@ msg: Definições relacionadas ao sistema
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1234,6 +1283,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Incapaz de obter informações do codec Cell. Erro 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Arquivo externo
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,9 +1345,6 @@ msg: Resolução máxima para desentrelaçamento de imagem
 id: No limit
 msg: Sem limite
 
-id: Off
-msg: Desativado
-
 id: Outline color
 msg: Cor do contorno
 
@@ -1313,12 +1365,6 @@ msg: Cor da sombra
 
 id: Shadow offset
 msg: Deslocamento da sombra
-
-id: Stretch video to fullscreen
-msg: Esticar vídeo para tela cheia
-
-id: Stretch video to widescreen
-msg: Esticar vídeo para widescreen
 
 id: Subtitle position
 msg: Posicionamento das legendas

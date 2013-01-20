@@ -101,6 +101,10 @@ msg: Nastavení zvuku
 id: Audio tracks
 msg: Zvukové stopy
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Hledat podle času
 
@@ -238,6 +242,10 @@ msg: Zamítnout
 
 id: Plugins
 msg: Pluginy
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: Hlasitost: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Nastavení pro opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Používat opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,22 @@ msg: Chyba přihlášení
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Datum
 
 id: Filename
 msg: Název souboru
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Vyp
 
 id: Show only supported files
 msg: Zobrazit jen podporované soubory
@@ -701,12 +711,6 @@ msg: Řadit podle
 #
 id: Search using spotlight
 msg: Hledat pomocí Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Externí soubor
 
 #
 # ./src/i18n.c
@@ -783,6 +787,12 @@ msg: Zarovnat titulky do obrazu
 id: Audio delay
 msg: Zpoždění zvuku
 
+id: Stretch video to fullscreen
+msg: Roztáhnout video na celou obrazovku
+
+id: Stretch video to widescreen
+msg: Roztáhnout video na šířku 
+
 id: Subtitle delay
 msg: Zpoždění titulků
 
@@ -791,6 +801,13 @@ msg: Velikost titulků
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +849,10 @@ msg: Zdroj metadat
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Data nenalezena
 
@@ -847,6 +868,10 @@ msg:
 
 id: Refresh metadata
 msg: Obnoit metadata
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Track %d
@@ -1116,7 +1141,31 @@ msg: Systémová nastavení
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1234,6 +1283,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Unable to query Cell codec. Error 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Externí soubor
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,9 +1345,6 @@ msg: Maximální rozlišení pro deinterlacer
 id: No limit
 msg: Bez omezení
 
-id: Off
-msg: Vyp
-
 id: Outline color
 msg: Barva obrysu
 
@@ -1313,12 +1365,6 @@ msg: Barva stínu
 
 id: Shadow offset
 msg: Posun stínu
-
-id: Stretch video to fullscreen
-msg: Roztáhnout video na celou obrazovku
-
-id: Stretch video to widescreen
-msg: Roztáhnout video na šířku 
 
 id: Subtitle position
 msg: Pozice titulků

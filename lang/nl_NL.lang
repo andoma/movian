@@ -97,6 +97,10 @@ msg: Geluidsinstellingen
 id: Audio tracks
 msg: Geluidssporen
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Zoeken op tijd
 
@@ -231,6 +235,10 @@ msg: Sluiten
 
 id: Plugins
 msg: Plugins
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -460,15 +468,6 @@ id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Instellingen voor opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Opensubtitles.org gebruiken
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -666,11 +665,22 @@ msg: Inlogfout
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Datum
 
 id: Filename
 msg: Bestandsnaam
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Uit
 
 id: Show only supported files
 msg: Alleen ondersteunde bestanden weergeven
@@ -686,12 +696,6 @@ msg: Sorteren op
 #
 id: Search using spotlight
 msg: Zoeken via Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Extern bestand
 
 #
 # ./src/i18n.c
@@ -768,6 +772,12 @@ msg: Ondertiteling op videoframe aanpassen
 id: Audio delay
 msg: Geluidsvertaging
 
+id: Stretch video to fullscreen
+msg: Video uitrekken naar volledig scherm
+
+id: Stretch video to widescreen
+msg: Video uitrekken naar breedbeeld
+
 id: Subtitle delay
 msg: Ondertitelingsvertaging
 
@@ -776,6 +786,13 @@ msg: Ondertitelingsgrootte
 
 id: Video zoom
 msg: Videovergroting
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -816,6 +833,10 @@ msg: Bron metadata
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Geen data gevonden
 
@@ -831,6 +852,10 @@ msg:
 
 id: Refresh metadata
 msg: Metadata vernieuwen
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Nummer %d
@@ -1091,8 +1116,32 @@ msg: Systeemgerelateerde instellingen
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
 msg: Smalle tekst
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
+# Missing translation
+msg: 
 
 id: Unable to load %s -- %s
 msg: Laden niet mogelijk: %s -- %s
@@ -1203,6 +1252,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Extern bestand
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1259,9 +1314,6 @@ msg: Maximale resolutie voor deinterlacer
 id: No limit
 msg: Geen limiet
 
-id: Off
-msg: Uit
-
 id: Outline color
 msg: Omtrekkleur
 
@@ -1282,12 +1334,6 @@ msg: Schaduwkleur
 
 id: Shadow offset
 msg: Schaduwafstand
-
-id: Stretch video to fullscreen
-msg: Video uitrekken naar volledig scherm
-
-id: Stretch video to widescreen
-msg: Video uitrekken naar breedbeeld
 
 id: Subtitle position
 msg: Ondertitelingspositie

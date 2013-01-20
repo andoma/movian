@@ -97,6 +97,10 @@ msg: 音频设置
 id: Audio tracks
 msg: 音轨
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: 按时间跳转
 
@@ -231,6 +235,10 @@ msg: 删除
 
 id: Plugins
 msg: 插件
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -458,15 +466,6 @@ id: Master volume: %d dB
 msg: 主音量: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: opensubtitles.org设置
-
-id: Use opensubtitles.org
-msg: 使用opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -664,11 +663,22 @@ msg: 登录失败
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: 日期
 
 id: Filename
 msg: 文件名
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: 关闭
 
 id: Show only supported files
 msg: 只显示支持的文件
@@ -684,12 +694,6 @@ msg: 排序
 #
 id: Search using spotlight
 msg: 使用spotlight搜索
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: 外部文件
 
 #
 # ./src/i18n.c
@@ -766,6 +770,12 @@ msg: 字幕显示在视频帧内
 id: Audio delay
 msg: 音频延迟
 
+id: Stretch video to fullscreen
+msg: 拉升视频至全屏
+
+id: Stretch video to widescreen
+msg: 拉伸视频至宽屏
+
 id: Subtitle delay
 msg: 字幕延迟
 
@@ -774,6 +784,13 @@ msg: 字幕缩放
 
 id: Video zoom
 msg: 视频缩放
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -814,6 +831,10 @@ msg: 元信息源
 id: Movie
 msg: 影片
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: 未找到数据
 
@@ -828,6 +849,10 @@ msg: 视频源
 
 id: Refresh metadata
 msg: 更新元信息
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: 轨道%d
@@ -1072,8 +1097,32 @@ msg: 系统相关设置
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
 msg: 缩窄文字
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
+# Missing translation
+msg: 
 
 id: Unable to load %s -- %s
 msg: 无法载入%s -- %s
@@ -1184,6 +1233,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: 无法查询Cell解码器，错误码0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: 外部文件
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1240,9 +1295,6 @@ msg: 去隔行化使用最大可能的分辨率
 id: No limit
 msg: 无限制
 
-id: Off
-msg: 关闭
-
 id: Outline color
 msg: 边框颜色
 
@@ -1263,12 +1315,6 @@ msg: 阴影颜色
 
 id: Shadow offset
 msg: 阴影偏移
-
-id: Stretch video to fullscreen
-msg: 拉升视频至全屏
-
-id: Stretch video to widescreen
-msg: 拉伸视频至宽屏
 
 id: Subtitle position
 msg: 字幕位置

@@ -97,6 +97,10 @@ msg: Impostazioni Audio
 id: Audio tracks
 msg: Tracce audio
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Salta per tempo
 
@@ -401,6 +405,13 @@ id: Playback status
 msg: Stato di riproduzione
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -453,15 +464,6 @@ msg: Audio silenziato
 
 id: Master volume: %d dB
 msg: Volume principale: %d dB
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Impostazioni per opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utilizza opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -692,12 +694,6 @@ id: Search using spotlight
 msg: Cerca usando spotlight
 
 #
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: File esterno
-
-#
 # ./src/i18n.c
 #
 id: Language
@@ -772,6 +768,12 @@ msg: Allineare sottotitoli su frame video
 id: Audio delay
 msg: Ritardo audio
 
+id: Stretch video to fullscreen
+msg: Adatta video a Schermo Pieno
+
+id: Stretch video to widescreen
+msg: Adatta video a widescreen
+
 id: Subtitle delay
 msg: Ritardo sottotitoli
 
@@ -826,6 +828,10 @@ msg: Sorgente metadata
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Nessun dato trovato
 
@@ -840,6 +846,10 @@ msg: Provider per Video
 
 id: Refresh metadata
 msg: Aggiorna metadata
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Traccia %d
@@ -1214,6 +1224,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Impossibile richiedere il Cell codec. Errore 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: File esterno
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,12 +1306,6 @@ msg: Colore ombra
 
 id: Shadow offset
 msg: Offset ombra
-
-id: Stretch video to fullscreen
-msg: Adatta video a Schermo Pieno
-
-id: Stretch video to widescreen
-msg: Adatta video a widescreen
 
 id: Subtitle position
 msg: Posizione sottotitoli

@@ -121,6 +121,10 @@ id: Audio tracks
 # Missing translation
 msg: 
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 # Missing translation
 msg: 
@@ -276,6 +280,10 @@ id: Dismiss
 msg: 
 
 id: Plugins
+# Missing translation
+msg: 
+
+id: Search / Open URL
 # Missing translation
 msg: 
 
@@ -550,15 +558,6 @@ id: Master volume: %d dB
 msg: Fő hangerő: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Beállitások a opensubtitles.org-hoz
-
-id: Use opensubtitles.org
-msg: opensubtitles.org-ot használ
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -779,6 +778,10 @@ msg:
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 # Missing translation
 msg: 
@@ -786,6 +789,13 @@ msg:
 id: Filename
 # Missing translation
 msg: 
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Ki
 
 id: Show only supported files
 # Missing translation
@@ -804,13 +814,6 @@ msg:
 #
 id: Search using spotlight
 msg: Keresés spotlight által
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-# Missing translation
-msg: 
 
 #
 # ./src/i18n.c
@@ -889,6 +892,13 @@ msg: Feliratok képkockához igazitása
 id: Audio delay
 msg: Hang csúsztatás
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
+id: Stretch video to widescreen
+msg: videó szélesvásznúra nyujtása
+
 id: Subtitle delay
 msg: Felirat csúsztatás
 
@@ -897,6 +907,13 @@ msg: Felirat méretezés
 
 id: Video zoom
 msg: Zoomolás
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -948,6 +965,10 @@ id: Movie
 # Missing translation
 msg: 
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 # Missing translation
 msg: 
@@ -965,6 +986,10 @@ id: Providers for Video
 msg: 
 
 id: Refresh metadata
+# Missing translation
+msg: 
+
+id: Title, Season, Episode
 # Missing translation
 msg: 
 
@@ -1274,7 +1299,31 @@ msg:
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1406,6 +1455,13 @@ id: Unable to query Cell codec. Error 0x%x
 msg: 
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1471,9 +1527,6 @@ id: No limit
 # Missing translation
 msg: 
 
-id: Off
-msg: Ki
-
 id: Outline color
 msg: Körvonal színe
 
@@ -1496,13 +1549,6 @@ msg: árnyék színe
 
 id: Shadow offset
 msg: árnyék offset
-
-id: Stretch video to fullscreen
-# Missing translation
-msg: 
-
-id: Stretch video to widescreen
-msg: videó szélesvásznúra nyujtása
 
 id: Subtitle position
 msg: Felirat helyzete

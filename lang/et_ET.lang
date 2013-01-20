@@ -121,6 +121,10 @@ id: Audio tracks
 # Missing translation
 msg: 
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 # Missing translation
 msg: 
@@ -276,6 +280,10 @@ id: Dismiss
 msg: 
 
 id: Plugins
+# Missing translation
+msg: 
+
+id: Search / Open URL
 # Missing translation
 msg: 
 
@@ -547,15 +555,6 @@ id: Master volume: %d dB
 msg: Peaheli tugevus: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: opensubtitles.org seaded
-
-id: Use opensubtitles.org
-msg: opensubtitles.org kasutamine
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -770,6 +769,10 @@ msg:
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 # Missing translation
 msg: 
@@ -777,6 +780,13 @@ msg:
 id: Filename
 # Missing translation
 msg: 
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Väljas
 
 id: Show only supported files
 # Missing translation
@@ -795,13 +805,6 @@ msg:
 #
 id: Search using spotlight
 msg: Otsi kasutades spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-# Missing translation
-msg: 
 
 #
 # ./src/i18n.c
@@ -880,6 +883,13 @@ msg: Joonda subtiitrid videoaknasse
 id: Audio delay
 msg: Heli viivitus
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
+id: Stretch video to widescreen
+msg: Venita video laiekraanile
+
 id: Subtitle delay
 msg: Subtiitrite viivitus
 
@@ -888,6 +898,13 @@ msg: Subtiitrite suurus
 
 id: Video zoom
 msg: Video suurendus
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -939,6 +956,10 @@ id: Movie
 # Missing translation
 msg: 
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 # Missing translation
 msg: 
@@ -956,6 +977,10 @@ id: Providers for Video
 msg: 
 
 id: Refresh metadata
+# Missing translation
+msg: 
+
+id: Title, Season, Episode
 # Missing translation
 msg: 
 
@@ -1265,7 +1290,31 @@ msg:
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1392,6 +1441,13 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Ei suuda esitada Cell koodeki päringut. Viga 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1457,9 +1513,6 @@ id: No limit
 # Missing translation
 msg: 
 
-id: Off
-msg: Väljas
-
 id: Outline color
 msg: Kontuuri värv
 
@@ -1481,13 +1534,6 @@ msg: Varju värv
 
 id: Shadow offset
 msg: Varju nihe
-
-id: Stretch video to fullscreen
-# Missing translation
-msg: 
-
-id: Stretch video to widescreen
-msg: Venita video laiekraanile
 
 id: Subtitle position
 msg: Subtiitrite asukoht

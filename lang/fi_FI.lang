@@ -121,6 +121,10 @@ id: Audio tracks
 # Missing translation
 msg: 
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 # Missing translation
 msg: 
@@ -276,6 +280,10 @@ id: Dismiss
 msg: 
 
 id: Plugins
+# Missing translation
+msg: 
+
+id: Search / Open URL
 # Missing translation
 msg: 
 
@@ -550,15 +558,6 @@ id: Master volume: %d dB
 msg: Äänenvoimakkuus: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: opensubtitles.org asetukset
-
-id: Use opensubtitles.org
-msg: opensubtitles.org käyttö
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -779,6 +778,10 @@ msg:
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 # Missing translation
 msg: 
@@ -786,6 +789,13 @@ msg:
 id: Filename
 # Missing translation
 msg: 
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Pois
 
 id: Show only supported files
 # Missing translation
@@ -803,13 +813,6 @@ msg:
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-# Missing translation
-msg: 
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
 # Missing translation
 msg: 
 
@@ -891,6 +894,13 @@ msg: Muuta tekstityksien kohtaa videolla
 id: Audio delay
 msg: Äänen viive
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
+id: Stretch video to widescreen
+msg: Venytä video widescreen muotoon 
+
 id: Subtitle delay
 msg: Tekstityksien viive
 
@@ -899,6 +909,13 @@ msg: Tekstityksien skaala
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -950,6 +967,10 @@ id: Movie
 # Missing translation
 msg: 
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 # Missing translation
 msg: 
@@ -967,6 +988,10 @@ id: Providers for Video
 msg: 
 
 id: Refresh metadata
+# Missing translation
+msg: 
+
+id: Title, Season, Episode
 # Missing translation
 msg: 
 
@@ -1278,7 +1303,31 @@ msg:
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1410,6 +1459,13 @@ id: Unable to query Cell codec. Error 0x%x
 msg: 
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1475,9 +1531,6 @@ id: No limit
 # Missing translation
 msg: 
 
-id: Off
-msg: Pois
-
 id: Outline color
 msg: Reunan väri
 
@@ -1500,13 +1553,6 @@ msg: Varjon väri
 
 id: Shadow offset
 msg: Varjon korjaus
-
-id: Stretch video to fullscreen
-# Missing translation
-msg: 
-
-id: Stretch video to widescreen
-msg: Venytä video widescreen muotoon 
 
 id: Subtitle position
 msg: Tekstityksen kohta ruudulla

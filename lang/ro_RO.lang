@@ -121,6 +121,10 @@ id: Audio tracks
 # Missing translation
 msg: 
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 # Missing translation
 msg: 
@@ -276,6 +280,10 @@ id: Dismiss
 msg: 
 
 id: Plugins
+# Missing translation
+msg: 
+
+id: Search / Open URL
 # Missing translation
 msg: 
 
@@ -549,15 +557,6 @@ id: Master volume: %d dB
 msg: Volumul general : %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Paramentrii pentru opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Folosește subtitrari de pe opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -775,6 +774,10 @@ msg:
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 # Missing translation
 msg: 
@@ -782,6 +785,13 @@ msg:
 id: Filename
 # Missing translation
 msg: 
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Oprit
 
 id: Show only supported files
 # Missing translation
@@ -800,13 +810,6 @@ msg:
 #
 id: Search using spotlight
 msg: Caută folosind spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-# Missing translation
-msg: 
 
 #
 # ./src/i18n.c
@@ -885,6 +888,13 @@ msg: Aliniază subtitrarea peste imaginea video
 id: Audio delay
 msg: Delay audio
 
+id: Stretch video to fullscreen
+# Missing translation
+msg: 
+
+id: Stretch video to widescreen
+msg: Lărgește imaginea pentru ecrane late
+
 id: Subtitle delay
 msg: Delay subtitrare
 
@@ -893,6 +903,13 @@ msg: Mărimea subtitrării
 
 id: Video zoom
 msg: Marește/Micșoarează imaginea folosind acest zoom video
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -944,6 +961,10 @@ id: Movie
 # Missing translation
 msg: 
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 # Missing translation
 msg: 
@@ -961,6 +982,10 @@ id: Providers for Video
 msg: 
 
 id: Refresh metadata
+# Missing translation
+msg: 
+
+id: Title, Season, Episode
 # Missing translation
 msg: 
 
@@ -1270,7 +1295,31 @@ msg:
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1397,6 +1446,13 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Imposibil de deschis codecul Cell. Eroare 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1462,9 +1518,6 @@ id: No limit
 # Missing translation
 msg: 
 
-id: Off
-msg: Oprit
-
 id: Outline color
 msg: Culoare contur
 
@@ -1487,13 +1540,6 @@ msg: Culoare umbră
 
 id: Shadow offset
 msg: Distanța față de umbră
-
-id: Stretch video to fullscreen
-# Missing translation
-msg: 
-
-id: Stretch video to widescreen
-msg: Lărgește imaginea pentru ecrane late
 
 id: Subtitle position
 msg: Poziția subtitrării

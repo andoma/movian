@@ -101,6 +101,10 @@ msg: Ljudinställningar
 id: Audio tracks
 msg: Ljudspår
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Sök per minut
 
@@ -238,6 +242,10 @@ msg: Ta bort
 
 id: Plugins
 msg: Plugin
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Inställningar för opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Använd opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,22 @@ msg: Login misslyckades
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Datum
 
 id: Filename
 msg: Filnamn
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Av
 
 id: Show only supported files
 msg: Visa bara spelbara filer
@@ -701,12 +711,6 @@ msg: Sortera på
 #
 id: Search using spotlight
 msg: Sök med spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Extern fil
 
 #
 # ./src/i18n.c
@@ -783,6 +787,12 @@ msg: Justera undertexter till videons storlek
 id: Audio delay
 msg: Ljuddelay
 
+id: Stretch video to fullscreen
+msg: Sträck ut videon över hela skärmen
+
+id: Stretch video to widescreen
+msg: Sträck ut videon horisontellt 
+
 id: Subtitle delay
 msg: Undertexterdelay
 
@@ -791,6 +801,13 @@ msg: Storlek på undertexter
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +849,10 @@ msg: Metadatakälla
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Ingen data funnet
 
@@ -847,6 +868,10 @@ msg:
 
 id: Refresh metadata
 msg: Ladda om metadata
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Spår %d
@@ -1116,7 +1141,31 @@ msg: Systemrelaterade inställningar
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1234,6 +1283,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Kan ej fråga Cell codec. Fel 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Extern fil
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,9 +1345,6 @@ msg: Maximal upplösning för deinterlacing
 id: No limit
 msg: Ingen begränsning
 
-id: Off
-msg: Av
-
 id: Outline color
 msg: Färg på konturer
 
@@ -1313,12 +1365,6 @@ msg: Färg på skuggor
 
 id: Shadow offset
 msg: Skuggoffset
-
-id: Stretch video to fullscreen
-msg: Sträck ut videon över hela skärmen
-
-id: Stretch video to widescreen
-msg: Sträck ut videon horisontellt 
 
 id: Subtitle position
 msg: Position på undertexter

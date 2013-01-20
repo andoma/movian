@@ -97,6 +97,10 @@ msg: Настройки аудио
 id: Audio tracks
 msg: Аудио дорожки
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Поиск по времени
 
@@ -232,6 +236,10 @@ msg: Отклонить
 id: Plugins
 msg: Плагины
 
+id: Search / Open URL
+# Missing translation
+msg: 
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
@@ -259,9 +267,6 @@ msg: Требуется Showtime %s или новее
 #
 # ./glwskins/default/pages/iteminfo/video.view
 #
-id: Director:
-msg: Режиссер:
-
 id: Duration:
 msg: Продолжительность:
 
@@ -273,9 +278,6 @@ msg: Жанр:
 
 id: Metadata from
 msg: Метаданные от
-
-id: Producer:
-msg: Продюсер:
 
 id: Rating:
 msg: Рейтинг:
@@ -462,15 +464,6 @@ msg: Звук выключен
 
 id: Master volume: %d dB
 msg: Общая громкость: %d дБ
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Настройки для opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Использовать opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -670,11 +663,22 @@ msg: Ошибка входа
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Дата
 
 id: Filename
 msg: Имя файла
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Выкл
 
 id: Show only supported files
 msg: Показывать только поддерживаемые файлы
@@ -690,12 +694,6 @@ msg: Сортировать по
 #
 id: Search using spotlight
 msg: Поиск с использованием spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Внешний файл
 
 #
 # ./src/i18n.c
@@ -772,6 +770,12 @@ msg: Выравнивание субтитров в кадре
 id: Audio delay
 msg: Задержка аудио
 
+id: Stretch video to fullscreen
+msg: Растянуть видео во весь экран
+
+id: Stretch video to widescreen
+msg: Растянуть видео на широкий экран
+
 id: Subtitle delay
 msg: Задержка субтитров
 
@@ -780,6 +784,13 @@ msg: Масштаб субтитров
 
 id: Video zoom
 msg: Масштаб видео
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -820,6 +831,10 @@ msg: Источник метаданных
 id: Movie
 msg: Фильмы
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Данные не найдены
 
@@ -834,6 +849,10 @@ msg: Поставщики для видео
 
 id: Refresh metadata
 msg: Обновить метаданные
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Трек %d
@@ -1078,8 +1097,32 @@ msg: Системные настройки
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
 msg: Узкий шрифт
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
+# Missing translation
+msg: 
 
 id: Unable to load %s -- %s
 msg: Невозможно загрузить: %s -- %s
@@ -1099,9 +1142,6 @@ msg: Пользовательский интерфейс
 #
 # ./src/ui/glw/glw_settings.c
 #
-id: Display and user interface
-msg: Отображение и интерфейс пользователя
-
 id: Horizontal underscan
 msg: Горизонтальное сжатие
 
@@ -1117,9 +1157,6 @@ msg: Вертикальное сжатие
 #
 # ./src/ui/glw/glw_x11.c
 #
-id: Fullscreen mode
-msg: Полноэкранный режим
-
 id: Map mouse wheel to up/down
 msg: Настройка колесика мыши вверх/вниз
 
@@ -1196,6 +1233,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Невозможно запросить Cell-кодек. Ошибка 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Внешний файл
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1252,9 +1295,6 @@ msg: Максимальное разрешение для деинтерлейс
 id: No limit
 msg: Без ограничений
 
-id: Off
-msg: Выкл
-
 id: Outline color
 msg: Цвет контура
 
@@ -1275,12 +1315,6 @@ msg: Цвет тени
 
 id: Shadow offset
 msg: Смещение тени
-
-id: Stretch video to fullscreen
-msg: Растянуть видео во весь экран
-
-id: Stretch video to widescreen
-msg: Растянуть видео на широкий экран
 
 id: Subtitle position
 msg: Позиция субтитров

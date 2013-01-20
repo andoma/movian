@@ -97,6 +97,10 @@ msg: Ustawienia Audio
 id: Audio tracks
 msg: Ścieżki dźwiękowe
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Przeszukaj według czasu
 
@@ -188,7 +192,6 @@ id: Album
 msg: Album
 
 id: Artist
-
 msg: Wykonawca
 
 id: Custom
@@ -204,7 +207,6 @@ id: Slideshow
 msg: Pokaz slajdów
 
 id: Tvchannels
-
 msg: Kanały TV
 
 id: View
@@ -234,26 +236,35 @@ msg: Odrzuć
 id: Plugins
 msg: Wtyczki
 
+id: Search / Open URL
+# Missing translation
+msg: 
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera:
-msg: Kamera:
+id: Camera: 
+# Missing translation
+msg: 
 
-id: Date:
-msg: Data:
+id: Date: 
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
-id: Author:
-msg: Autor
+id: Author: 
+# Missing translation
+msg: 
 
-id: Available version:
-msg: Dostępna wersja:
+id: Available version: 
+# Missing translation
+msg: 
 
-id: Installed version:
-msg: Zainstalowana wersja:
+id: Installed version: 
+# Missing translation
+msg: 
 
 id: Showtime %s or newer is required
 msg: Wymagany Showtime w wersji %s lub nowszy
@@ -460,15 +471,6 @@ id: Master volume: %d dB
 msg: Regulacja głośności: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Ustawienia dla opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Korzystaj z opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -666,11 +668,22 @@ msg: Błąd logowania
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Data
 
 id: Filename
 msg: Nazwa pliku
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Wyłączony
 
 id: Show only supported files
 msg: Pokazuj tylko obsługiwane formaty
@@ -686,12 +699,6 @@ msg: Sortuj
 #
 id: Search using spotlight
 msg: Szukaj za pomocą spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Zewnętrzny plik
 
 #
 # ./src/i18n.c
@@ -768,6 +775,12 @@ msg: Dopasuj napisy
 id: Audio delay
 msg: Opóźnienie audio
 
+id: Stretch video to fullscreen
+msg: Rozciągnij obraz do pełnego ekranu
+
+id: Stretch video to widescreen
+msg: Rozciągnij do panoramicznego
+
 id: Subtitle delay
 msg: Opóźnienie napisów
 
@@ -776,6 +789,13 @@ msg: Skalowanie napisów
 
 id: Video zoom
 msg: Zbliżenie
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -816,6 +836,10 @@ msg: Źródło metadanych
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Nie znaleziono danych
 
@@ -830,6 +854,10 @@ msg: Dostawcy Video
 
 id: Refresh metadata
 msg: Odśwież metadane
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Ścieżka %d
@@ -1074,8 +1102,32 @@ msg: Ustawienia związane z systemem
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
 msg: Zwężony
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
+# Missing translation
+msg: 
 
 id: Unable to load %s -- %s
 msg: Nie można załadować %s -- %s
@@ -1186,6 +1238,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Błąd sprawdzania kodeka Cell. Błąd 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Zewnętrzny plik
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1242,9 +1300,6 @@ msg: Maks. rozdzielczość przy usuwaniu przeplotu
 id: No limit
 msg: Bez limitu
 
-id: Off
-msg: Wyłączony
-
 id: Outline color
 msg: Kolor obrysu
 
@@ -1265,12 +1320,6 @@ msg: Kolor cienia
 
 id: Shadow offset
 msg: Offset cienia
-
-id: Stretch video to fullscreen
-msg: Rozciągnij obraz do pełnego ekranu
-
-id: Stretch video to widescreen
-msg: Rozciągnij do panoramicznego
 
 id: Subtitle position
 msg: Położenie napisów

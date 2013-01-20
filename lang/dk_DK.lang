@@ -118,6 +118,10 @@ id: Audio tracks
 # Missing translation
 msg: 
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 # Missing translation
 msg: 
@@ -268,6 +272,10 @@ id: Dismiss
 msg: 
 
 id: Plugins
+# Missing translation
+msg: 
+
+id: Search / Open URL
 # Missing translation
 msg: 
 
@@ -539,15 +547,6 @@ id: Master volume: %d dB
 msg: Master volume: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Indstilinger for opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Anvend opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -756,6 +755,10 @@ msg:
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 # Missing translation
 msg: 
@@ -763,6 +766,13 @@ msg:
 id: Filename
 # Missing translation
 msg: 
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Slukket
 
 id: Show only supported files
 # Missing translation
@@ -781,12 +791,6 @@ msg:
 #
 id: Search using spotlight
 msg: Søg via spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Ekstern fil
 
 #
 # ./src/i18n.c
@@ -865,6 +869,12 @@ msg: Juster undertekster efter videobillede
 id: Audio delay
 msg: Lyd forsinkelse
 
+id: Stretch video to fullscreen
+msg: Stræk video til fuld skærm
+
+id: Stretch video to widescreen
+msg: Stræk video til widescreen
+
 id: Subtitle delay
 msg: Undertekster forsinkelse
 
@@ -873,6 +883,13 @@ msg: Skalering af undertekster
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -923,6 +940,10 @@ id: Movie
 # Missing translation
 msg: 
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 # Missing translation
 msg: 
@@ -940,6 +961,10 @@ id: Providers for Video
 msg: 
 
 id: Refresh metadata
+# Missing translation
+msg: 
+
+id: Title, Season, Episode
 # Missing translation
 msg: 
 
@@ -1248,7 +1273,31 @@ msg:
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1371,6 +1420,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Kan ikke forespørge Cell codec. Fejl 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Ekstern fil
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1434,9 +1489,6 @@ id: No limit
 # Missing translation
 msg: 
 
-id: Off
-msg: Slukket
-
 id: Outline color
 msg: Farve på kontur
 
@@ -1458,12 +1510,6 @@ msg: Farve på skygge
 
 id: Shadow offset
 msg: Skyggens forskydning
-
-id: Stretch video to fullscreen
-msg: Stræk video til fuld skærm
-
-id: Stretch video to widescreen
-msg: Stræk video til widescreen
 
 id: Subtitle position
 msg: Position på undertekster

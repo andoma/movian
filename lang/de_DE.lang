@@ -101,6 +101,10 @@ msg: Toneinstellungen
 id: Audio tracks
 msg: Tonspuren
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Suchen per Zeitleiste
 
@@ -238,6 +242,10 @@ msg: Verwerfen
 
 id: Plugins
 msg: Plugins
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Einstellungen für opensubtitles.org
-
-id: Use opensubtitles.org
-msg: opensubtitles.org benutzen
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,22 @@ msg: Logon Fehler
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Datum
 
 id: Filename
 msg: Dateiname
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Aus
 
 id: Show only supported files
 msg: Nur unterstützte Dateitypen anzeigen
@@ -701,12 +711,6 @@ msg: Sortieren nach
 #
 id: Search using spotlight
 msg: Suchen per Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: externe Datei
 
 #
 # ./src/i18n.c
@@ -783,6 +787,12 @@ msg: Untertitel im Bild anzeigen
 id: Audio delay
 msg: Audioverzögerung
 
+id: Stretch video to fullscreen
+msg: Video auf Vollbild strecken
+
+id: Stretch video to widescreen
+msg: Video auf Bildschirmbreite strecken 
+
 id: Subtitle delay
 msg: Untertitelverzögerung
 
@@ -791,6 +801,13 @@ msg: Untertitelskalierung
 
 id: Video zoom
 msg: Videozoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +849,10 @@ msg: Metadatenquelle
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Keine Daten gefunden
 
@@ -847,6 +868,10 @@ msg:
 
 id: Refresh metadata
 msg: Metadaten erneuern
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Titel %d
@@ -1116,7 +1141,31 @@ msg: Systembezogene Einstellungen
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1234,6 +1283,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: externe Datei
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,9 +1345,6 @@ msg: Maximale Auflösung für Deinterlacer
 id: No limit
 msg: Keine Begrenzung
 
-id: Off
-msg: Aus
-
 id: Outline color
 msg: Rahmenfarbe
 
@@ -1313,12 +1365,6 @@ msg: Schattenfarbe
 
 id: Shadow offset
 msg: Schattenabstand
-
-id: Stretch video to fullscreen
-msg: Video auf Vollbild strecken
-
-id: Stretch video to widescreen
-msg: Video auf Bildschirmbreite strecken 
 
 id: Subtitle position
 msg: Untertitelposition

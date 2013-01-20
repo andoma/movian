@@ -101,6 +101,10 @@ msg: Paramètres audio
 id: Audio tracks
 msg: Pistes audio
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Recherche temporelle
 
@@ -238,6 +242,10 @@ msg: Rejeter
 
 id: Plugins
 msg: Extension
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: Volume du master : %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Paramètres pour opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utiliser opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,22 @@ msg: Impossible de se connecter
 #
 # ./src/fileaccess/fa_scanner.c
 #
+id: Artists
+# Missing translation
+msg: 
+
 id: Date
 msg: Date
 
 id: Filename
 msg: Nom du fichier
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Arrêt
 
 id: Show only supported files
 msg: N'afficher que les fichiers supportés
@@ -701,12 +711,6 @@ msg: Activer le tri
 #
 id: Search using spotlight
 msg: Chercher via spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Fichier externe
 
 #
 # ./src/i18n.c
@@ -783,6 +787,12 @@ msg: Faire correspondre les sous-titres avec l'image vidéo
 id: Audio delay
 msg: Délai audio
 
+id: Stretch video to fullscreen
+msg: Étirer la vidéo en plein écran
+
+id: Stretch video to widescreen
+msg: Étirer la vidéo pour les écrans large
+
 id: Subtitle delay
 msg: Délai des sous-titres
 
@@ -791,6 +801,13 @@ msg: Échelle des sous-titres
 
 id: Video zoom
 msg: Zoom vidéo
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +849,10 @@ msg: Fournisseur de métadonnées
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Pas de données trouvés
 
@@ -847,6 +868,10 @@ msg:
 
 id: Refresh metadata
 msg: Mise à jour des métadonnées
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Piste %d
@@ -1116,7 +1141,31 @@ msg: Paramètres liés au système
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1234,6 +1283,12 @@ id: Unable to query Cell codec. Error 0x%x
 msg: Imposible d'avoir le codec Cell. Error 0x%x
 
 #
+# ./src/video/sub_scanner.c
+#
+id: External file
+msg: Fichier externe
+
+#
 # ./src/video/video_settings.c
 #
 id: 1080
@@ -1290,9 +1345,6 @@ msg: Résolution maximale pour désentrelacer
 id: No limit
 msg: Pas de limite
 
-id: Off
-msg: Arrêt
-
 id: Outline color
 msg: Couleur du contour
 
@@ -1313,12 +1365,6 @@ msg: Couleur de l'ombre
 
 id: Shadow offset
 msg: Décalage de l'ombre
-
-id: Stretch video to fullscreen
-msg: Étirer la vidéo en plein écran
-
-id: Stretch video to widescreen
-msg: Étirer la vidéo pour les écrans large
 
 id: Subtitle position
 msg: Position des sous-titres
