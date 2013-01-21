@@ -98,8 +98,7 @@ id: Audio tracks
 msg: 音轨
 
 id: Chapters
-# Missing translation
-msg: 
+msg: 章节
 
 id: Seek by time
 msg: 按时间跳转
@@ -237,8 +236,7 @@ id: Plugins
 msg: 插件
 
 id: Search / Open URL
-# Missing translation
-msg: 
+msg: 查找/打开URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -664,8 +662,7 @@ msg: 登录失败
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
-# Missing translation
-msg: 
+msg: 歌手
 
 id: Date
 msg: 日期
@@ -674,8 +671,7 @@ id: Filename
 msg: 文件名
 
 id: Indexed mode
-# Missing translation
-msg: 
+msg: 索引方式
 
 id: Off
 msg: 关闭
@@ -789,8 +785,7 @@ msg: 视频缩放
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-# Missing translation
-msg: 
+msg: 正在索引
 
 #
 # ./src/metadata/metadata.c
@@ -832,8 +827,7 @@ id: Movie
 msg: 影片
 
 id: Movie title
-# Missing translation
-msg: 
+msg: 片名
 
 id: No data found
 msg: 未找到数据
@@ -851,8 +845,7 @@ id: Refresh metadata
 msg: 更新元信息
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: 片名，季，集
 
 id: Track %d
 msg: 轨道%d
@@ -1098,31 +1091,25 @@ msg: 系统相关设置
 # ./src/text/fontstash.c
 #
 id: Defaults
-# Missing translation
-msg: 
+msg: 默认
 
 id: Fonts
-# Missing translation
-msg: 
+msg: 字体
 
 id: Installed fonts
-# Missing translation
-msg: 
+msg: 已安装字体
 
 id: Narrow text
-msg: 缩窄文字
+msg: 窄体字
 
 id: Reset main font to default
-# Missing translation
-msg: 
+msg: 重置主字体
 
-id: Reset narrow font to default
-# Missing translation
-msg: 
+id: Reset narrow font to default、
+msg: 重置窄体字体
 
 id: Reset subtitle font to default
-# Missing translation
-msg: 
+msg: 重置字幕字体
 
 id: Unable to load %s -- %s
 msg: 无法载入%s -- %s
