@@ -697,11 +697,6 @@ $(BUILDDIR)/freetype.stamp:
 	@mkdir -p $(dir $@)
 	touch $@
 
-$(BUILDDIR)/zlib.stamp:
-	${MAKE} -C ${ZLIB_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
 $(BUILDDIR)/bzip2.stamp:
 	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
 	@mkdir -p ${BZIP2_INSTALL_DIR}/lib ${BZIP2_INSTALL_DIR}/include
