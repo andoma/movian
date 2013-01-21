@@ -943,14 +943,92 @@ pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 
 
 
-
-static unsigned int
-blur_read(const unsigned int *t, int w, int h, int x, int y, int stride,
-	  int channel, int bpp)
+static void
+box_blur_line_2chan(uint8_t *d, const uint32_t *a, const uint32_t *b,
+		    int width, int boxw, int m)
 {
-	if (x<0) x=0; else if (x>=w) x=w-1;
-	if (y<0) y=0; else if (y>=h) y=h-1;
-	return t[x*bpp+y*stride+channel];
+  int x;
+  unsigned int v;
+  for(x = 0; x < boxw; x++) {
+    const int x1 = 2 * MIN(x + boxw, width - 1);
+    const int x2 = 0;
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+  }
+
+  for(; x < width - boxw; x++) {
+    const int x1 = 2 * (x + boxw);
+    const int x2 = 2 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+  }
+
+  for(; x < width; x++) {
+    const int x1 = 2 * (width - 1);
+    const int x2 = 2 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+  }
+}
+
+
+
+static void
+box_blur_line_4chan(uint8_t *d, const uint32_t *a, const uint32_t *b,
+		    int width, int boxw, int m)
+{
+  int x;
+  unsigned int v;
+  for(x = 0; x < boxw; x++) {
+    const int x1 = 4 * MIN(x + boxw, width - 1);
+    const int x2 = 0;
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 2] + a[x2 + 2] - b[x2 + 2] - a[x1 + 2];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 3] + a[x2 + 3] - b[x2 + 3] - a[x1 + 3];
+    *d++ = (v * m) >> 16;
+  }
+
+  for(; x < width - boxw; x++) {
+    const int x1 = 4 * (x + boxw);
+    const int x2 = 4 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 2] + a[x2 + 2] - b[x2 + 2] - a[x1 + 2];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 3] + a[x2 + 3] - b[x2 + 3] - a[x1 + 3];
+    *d++ = (v * m) >> 16;
+  }
+
+  for(; x < width; x++) {
+    const int x1 = 4 * (width - 1);
+    const int x2 = 4 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 1] + a[x2 + 1] - b[x2 + 1] - a[x1 + 1];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 2] + a[x2 + 2] - b[x2 + 2] - a[x1 + 2];
+    *d++ = (v * m) >> 16;
+    v = b[x1 + 3] + a[x2 + 3] - b[x2 + 3] - a[x1 + 3];
+    *d++ = (v * m) >> 16;
+  }
 }
 
 
@@ -961,12 +1039,32 @@ void
 pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
 {
   unsigned int *tmp, *t;
-  int x, y, i, v;
+  int x, y, i;
   const uint8_t *s;
   const int w = pm->pm_width;
   const int h = pm->pm_height;
   const int ls = pm->pm_linesize;
   const int z = bytes_per_pixel(pm->pm_type);
+
+  boxw = MIN(boxw, w);
+
+  void (*fn)(uint8_t *dst, const uint32_t *a, const uint32_t *b, int width,
+	     int boxw, int m);
+
+  switch(z) {
+  case 2:
+    fn = box_blur_line_2chan;
+    break;
+  case 4:
+    fn = box_blur_line_4chan;
+    break;
+
+
+  default:
+    return;
+  }
+
+
 
   tmp = malloc(ls * h * sizeof(unsigned int));
   if(tmp == NULL)
@@ -1001,19 +1099,16 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
 
   int m = 65536 / ((boxw * 2 + 1) * (boxh * 2 + 1));
 
+
+
   for(y = 0; y < h; y++) {
     uint8_t *d = pm->pm_data + y * ls;
-    for(x = 0; x < w; x++) {
-      for(i = 0; i < z; i++) {
-	v = blur_read(tmp, w, h, x+boxw, y+boxh, ls, i, z)
-	  + blur_read(tmp, w, h, x-boxw, y-boxh, ls, i, z)
-	  - blur_read(tmp, w, h, x-boxw, y+boxh, ls, i, z)
-	  - blur_read(tmp, w, h, x+boxw, y-boxh, ls, i, z);
-	
-	*d++ = (v * m) >> 16;
-      }
-    }
+
+    const unsigned int *a = tmp + ls * MAX(0, y - boxh);
+    const unsigned int *b = tmp + ls * MIN(h - 1, y + boxh);
+    fn(d, a, b, w, boxw, m);
   }
+
   free(tmp);
 }
 
