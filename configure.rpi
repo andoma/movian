@@ -48,7 +48,7 @@ freetype_setup --host=arm-linux-gnueabihf
 
 LIBAV_CFLAGS="-mfpu=vfp -I${BUILDDIR}/zlib/install/include"
 LIBAV_LDFLAGS="-L${BUILDDIR}/zlib/install/lib"
-LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --cpu=arm1176jzf-s --target-os=linux --disable-armv5te --disable-neon --enable-armv6t2 --enable-armv6 --enable-armvfp"
+LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --cpu=arm1176jzf-s --target-os=linux --disable-armv5te --disable-neon --enable-armv6t2 --enable-armv6 --enable-vfp"
 
 libav_setup
 
