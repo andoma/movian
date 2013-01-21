@@ -98,8 +98,7 @@ id: Audio tracks
 msg: Faixas de áudio
 
 id: Chapters
-# Missing translation
-msg: 
+msg: Capítulos
 
 id: Seek by time
 msg: Procurar por tempo
@@ -237,8 +236,7 @@ id: Plugins
 msg: Plugins
 
 id: Search / Open URL
-# Missing translation
-msg: 
+msg: Procurar / Abrir URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -256,10 +254,10 @@ id: Author:
 msg: Autor:
 
 id: Available version: 
-msg: Versão disponível
+msg: Versão disponível:
 
 id: Installed version: 
-msg: Versão instalada
+msg: Versão instalada:
 
 id: Showtime %s or newer is required
 msg: É necessária a versão %s do Showtime ou uma versão mais recente
@@ -388,10 +386,10 @@ id: Showtime is up to date
 msg: O Showtime está atualizado
 
 id: Stable
-msg: Estável
+msg: Estáve
 
 id: Testing
-msg: Testes
+msg: Teste
 
 id: Unable to query for new version
 msg: Não foi possível procurar uma nova versão
@@ -664,8 +662,7 @@ msg: Falha no login
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
-# Missing translation
-msg: 
+msg: Artistas
 
 id: Date
 msg: Data
@@ -674,8 +671,7 @@ id: Filename
 msg: Nome de ficheiro
 
 id: Indexed mode
-# Missing translation
-msg: 
+msg: Modo de indexação
 
 id: Off
 msg: Deslig.
@@ -789,8 +785,7 @@ msg: Zoom de vídeo
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-# Missing translation
-msg: 
+msg: A indexar
 
 #
 # ./src/metadata/metadata.c
@@ -832,8 +827,7 @@ id: Movie
 msg: Filme
 
 id: Movie title
-# Missing translation
-msg: 
+msg: Título do filme
 
 id: No data found
 msg: Não foram encontrados dados
@@ -851,8 +845,7 @@ id: Refresh metadata
 msg: Atualizar metadados
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: Título, Temporada, Episódio
 
 id: Track %d
 msg: Faixa %d
@@ -1098,31 +1091,25 @@ msg: Configurações relacionadas com o sistema
 # ./src/text/fontstash.c
 #
 id: Defaults
-# Missing translation
-msg: 
+msg: Por defeito
 
 id: Fonts
-# Missing translation
-msg: 
+msg: Tipos de letra
 
 id: Installed fonts
-# Missing translation
-msg: 
+msg: Tipos de letra instalados
 
 id: Narrow text
 msg: Texto estreito
 
 id: Reset main font to default
-# Missing translation
-msg: 
+msg: Repor tipo de letra principal por defeito
 
 id: Reset narrow font to default
-# Missing translation
-msg: 
+msg: Repor tipo de letra estreito por defeito
 
 id: Reset subtitle font to default
-# Missing translation
-msg: 
+msg: Repor tipo de letra de legenda por defeito
 
 id: Unable to load %s -- %s
 msg: Não foi possível carregar %s -- %s
