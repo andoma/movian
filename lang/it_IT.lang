@@ -1,6 +1,6 @@
 language: Italian
 native: Italiano
-maintainer: Red Squirrel <iam@redsquirrel.tk>
+maintainer: Red Squirrel <iam@redsquirrel87.com>
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -98,8 +98,7 @@ id: Audio tracks
 msg: Tracce audio
 
 id: Chapters
-# Missing translation
-msg: 
+msg: Capitoli
 
 id: Seek by time
 msg: Salta per tempo
@@ -403,13 +402,6 @@ msg: CPU troppo lenta per poter decodificare questo video
 
 id: Playback status
 msg: Stato di riproduzione
-
-#
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -829,8 +821,7 @@ id: Movie
 msg: Film
 
 id: Movie title
-# Missing translation
-msg: 
+msg: Titolo del Film
 
 id: No data found
 msg: Nessun dato trovato
@@ -848,8 +839,7 @@ id: Refresh metadata
 msg: Aggiorna metadata
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: Titolo, Stagione, Episodio
 
 id: Track %d
 msg: Traccia %d
@@ -969,7 +959,7 @@ id: Installed plugins
 msg: Plugin installati
 
 id: Installed version higher than available
-msg: La versione installa è più recente di quella disponibile
+msg: La versione installata è più recente di quella disponibile
 
 id: Installing
 msg: Installazione
