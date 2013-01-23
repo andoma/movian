@@ -1,0 +1,3 @@
+Fix problem that caused picture stuttering in some movies after 20-25 minutes
+
+Fixes #1483
