@@ -1405,6 +1405,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   nohead = !!(http_server_quirk_set_get(hf->hf_connection->hc_hostname, 0) &
 	      HTTP_SERVER_QUIRK_NO_HEAD);
+  
+  nohead = 1; // We're gonna test without HEAD requests for a while
+              // There seems to be a lot of issues with it, in particular
+              // for servers serving HLS
 
  again:
 
