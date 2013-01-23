@@ -1,3 +1,6 @@
 [submodule "ext/libav"]
 	path = ext/libav
 	url = git://github.com/andoma/libav.git
+[submodule "ext/rtmpdump"]
+	path = ext/rtmpdump
+	url = git://github.com/andoma/rtmpdump.git

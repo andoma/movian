@@ -66,6 +66,7 @@ ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/su
 LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
 
 libav_setup
+rtmpdump_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${CC}

@@ -416,17 +416,17 @@ SRCS-$(CONFIG_APPLEREMOTE) += \
 ##############################################################
 # RTMP
 ##############################################################
-SRCS-$(CONFIG_LIBRTMP) +=	ext/librtmp/amf.c \
-				ext/librtmp/hashswf.c \
-				ext/librtmp/log.c \
-				ext/librtmp/rtmp.c \
-				ext/librtmp/parseurl.c
+SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
+				ext/rtmpdump/librtmp/hashswf.c \
+				ext/rtmpdump/librtmp/log.c \
+				ext/rtmpdump/librtmp/rtmp.c \
+				ext/rtmpdump/librtmp/parseurl.c
 
-${BUILDDIR}/ext/librtmp/%.o : CFLAGS = ${OPTFLAGS}
+${BUILDDIR}/ext/rtmpdump/librtmp/%.o : CFLAGS = ${OPTFLAGS}
 
 SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
 
-${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = ${OPTFLAGS} -Wall -Werror -Iext
+${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = ${OPTFLAGS} -Wall -Werror -Iext/rtmpdump
 
 
 ##############################################################

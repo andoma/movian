@@ -332,6 +332,17 @@ libav_setup() {
 #
 #
 #
+rtmpdump_setup() {
+    status=`git submodule status ext/rtmpdump | cut -b 1`
+    echo "Updating rtmpdump, submodule status = $status"
+    git submodule update --init ext/rtmpdump
+}
+
+
+
+#
+#
+#
 zlib_setup()
 {
     ZLIB_VER="1.2.3"
