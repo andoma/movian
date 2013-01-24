@@ -98,8 +98,7 @@ id: Audio tracks
 msg: Аудио дорожки
 
 id: Chapters
-# Missing translation
-msg: 
+msg: Главы
 
 id: Seek by time
 msg: Поиск по времени
@@ -237,8 +236,7 @@ id: Plugins
 msg: Плагины
 
 id: Search / Open URL
-# Missing translation
-msg: 
+msg: Найти / Открыть URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -664,8 +662,7 @@ msg: Ошибка входа
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
-# Missing translation
-msg: 
+msg: Артисты
 
 id: Date
 msg: Дата
@@ -674,8 +671,7 @@ id: Filename
 msg: Имя файла
 
 id: Indexed mode
-# Missing translation
-msg: 
+msg: Индексированный режим
 
 id: Off
 msg: Выкл
@@ -789,8 +785,7 @@ msg: Масштаб видео
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-# Missing translation
-msg: 
+msg: Индексация
 
 #
 # ./src/metadata/metadata.c
@@ -832,8 +827,7 @@ id: Movie
 msg: Фильмы
 
 id: Movie title
-# Missing translation
-msg: 
+msg: Название фильма
 
 id: No data found
 msg: Данные не найдены
@@ -851,8 +845,7 @@ id: Refresh metadata
 msg: Обновить метаданные
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: Название, сезон, эпизод
 
 id: Track %d
 msg: Трек %d
@@ -1098,31 +1091,25 @@ msg: Системные настройки
 # ./src/text/fontstash.c
 #
 id: Defaults
-# Missing translation
-msg: 
+msg: По умолчанию
 
 id: Fonts
-# Missing translation
-msg: 
+msg: Шрифты
 
 id: Installed fonts
-# Missing translation
-msg: 
+msg: Установленные шрифты
 
 id: Narrow text
 msg: Узкий шрифт
 
 id: Reset main font to default
-# Missing translation
-msg: 
+msg: Сброс основного шрифта по умолчанию
 
 id: Reset narrow font to default
-# Missing translation
-msg: 
+msg: Сброс узкого шрифта по умолчанию
 
 id: Reset subtitle font to default
-# Missing translation
-msg: 
+msg: Сброс шрифта субтитров по умолчанию
 
 id: Unable to load %s -- %s
 msg: Невозможно загрузить: %s -- %s
