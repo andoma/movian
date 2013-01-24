@@ -1,6 +1,7 @@
 /*
  *  Showtime HTTP server
  *  Copyright (C) 2010 Andreas Öman
+ *  Copyright (C) 2012 Fábio Ferreira
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -142,49 +143,49 @@ hc_prop(http_connection_t *hc, const char *remain, void *opaque,
   htsbuf_queue_t out;
   rstr_t *r;
   int rval, i;
-  prop_t *p;
-  const char *action = http_arg_get_req(hc, "action");
+  prop_t *p = NULL;
+  char *req = (char *)http_arg_get_req(hc, "requests");
+  char *request;
+  char *saved;
 
-  if(remain == NULL)
+  if(req == NULL)
     return 404;
 
-  p = prop_from_path(remain);
-
-  if(p == NULL)
-    return 404;
-  
   htsbuf_queue_init(&out, 0);
 
   switch(method) {
-  case HTTP_CMD_GET:
-
-    if(action != NULL) {
-      event_t *e = event_create_action_str(action);
-      prop_send_ext_event(p, e);
-      event_release(e);
-      rval = HTTP_STATUS_OK;
-      break;
-    }
-
-    r = prop_get_string(p, NULL);
-
-    if(r == NULL) {
-
-      char **childs = prop_get_name_of_childs(p);
-      if(childs == NULL) {
-	rval = HTTP_STATUS_UNSUPPORTED_MEDIA_TYPE;
-	break;
+  case HTTP_CMD_POST:
+    for (request = strtok_r(req, ",", &saved);
+         request;
+         request = strtok_r(NULL, ",", &saved))
+    {
+      p = prop_from_path(request);
+      if (p == NULL) {
+        htsbuf_qprintf(&out, "error:404");
       }
-      htsbuf_qprintf(&out, "dir");
-      for(i = 0; childs[i] != NULL; i++) {
-	htsbuf_qprintf(&out, "%c%s", i ? ',' : ':', childs[i]);
+      else {
+        r = prop_get_string(p, NULL);
+
+        if(r == NULL) {
+
+          char **childs = prop_get_name_of_childs(p);
+          if(childs == NULL) {
+            htsbuf_qprintf(&out, "error:404");
+          }
+          else {
+            htsbuf_qprintf(&out, "dir");
+            for(i = 0; childs[i] != NULL; i++) {
+	      htsbuf_qprintf(&out, "%c%s", i ? ',' : ':', childs[i]);
+            }
+          }
+        } else {
+          htsbuf_qprintf(&out, "value:");
+          htsbuf_append(&out, rstr_get(r), strlen(rstr_get(r)));
+          rstr_release(r);
+        }
       }
-    } else {
-      htsbuf_qprintf(&out, "value:");
-      htsbuf_append(&out, rstr_get(r), strlen(rstr_get(r)));
-      rstr_release(r);
+      htsbuf_append(&out, "\n", 1);
     }
-    htsbuf_append(&out, "\n", 1);
     rval = http_send_reply(hc, 0, "text/ascii", NULL, NULL, 0, &out);
     break;
 

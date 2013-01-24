@@ -8,10 +8,10 @@ id: Add current page to bookmarks
 msg: Agregar Pagina actual a Marcadores
 
 id: Open settings
-msg: Abrir Configuracion
+msg: Abrir Configuración
 
 id: Remove current page from bookmarks
-msg: Remover Pagina actual de Marcadores
+msg: Quitar Pagina actual de Marcadores
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
@@ -33,19 +33,16 @@ id: Playqueue
 msg: Cola de reproducción
 
 id: Power off
-# Missing translation
-msg: 
+msg: Apagar
 
 id: Reload current page
 msg: Recargar Pagina actual
 
 id: Suspend
-# Missing translation
-msg: 
+msg: Suspender
 
 id: System
-# Missing translation
-msg: 
+msg: Sistema
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -54,7 +51,7 @@ id: Add '%s' to home screen
 msg: Agregar '%s' a pantalla principal
 
 id: Remove '%s' from home screen
-msg: Remover '%s' de pantalla principal
+msg: Quitar '%s' de pantalla principal
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_item.view
@@ -166,7 +163,7 @@ id: Height: %d px
 msg: Altura: %d px
 
 id: Memory status
-msg: Estatus de memoria
+msg: Estado de la memoria
 
 id: Renderer: %s
 msg: Renderizado: %s
@@ -196,8 +193,7 @@ id: Album
 msg: Albúm
 
 id: Artist
-# Missing translation
-msg: 
+msg: Artista
 
 id: Custom
 msg: Personalizado
@@ -212,8 +208,7 @@ id: Slideshow
 msg: Presentación
 
 id: Tvchannels
-# Missing translation
-msg: 
+msg: Canales de TV
 
 id: View
 msg: Vista
@@ -311,16 +306,13 @@ msg: Sí
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-# Missing translation
-msg: 
+msg: Condensado
 
 id: Main
-# Missing translation
-msg: 
+msg: Principal
 
 id: Subs
-# Missing translation
-msg: 
+msg: Subtitulos
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -350,8 +342,7 @@ msg: Pista %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Pausado
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -420,8 +411,7 @@ msg: Estatus de reproducción
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Visto:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -567,8 +557,7 @@ msg: Resultados de búsqueda para: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-# Missing translation
-msg: 
+msg: Albums
 
 id: Automatic login when Showtime starts
 msg: Ingreso automático al comienzo de Showtime
@@ -577,8 +566,7 @@ id: Collaborative
 msg: Colaborativo
 
 id: Compilations
-# Missing translation
-msg: 
+msg: Compilaciones
 
 id: Enable Spotify
 msg: Habilitar Spotify
@@ -617,8 +605,7 @@ id: Search result
 msg: Resultado de búsqueda
 
 id: Singles
-# Missing translation
-msg: 
+msg: Individuales
 
 id: Spotify friends
 msg: Amigos de Spotify
@@ -819,8 +806,7 @@ id: Custom search query
 msg: buscar consulta personalizada
 
 id: Custom title
-# Missing translation
-msg: 
+msg: Titulo personalizado
 
 id: Embedded in file
 msg: Incluido en archivo
@@ -863,8 +849,7 @@ id: Providers for Music
 msg: Proveedores de Música
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Proveedores de Vídeo
 
 id: Refresh metadata
 msg: Refrescar Metadatos
@@ -886,8 +871,7 @@ id: filename
 msg: Nombre de archivo
 
 id: filename as TV episode
-# Missing translation
-msg: 
+msg: nombre del archivo como episodio de TV
 
 id: folder name
 msg: Nombre de carpeta
@@ -896,23 +880,19 @@ msg: Nombre de carpeta
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-# Missing translation
-msg: 
+msg: %d archivos borrados
 
 id: Clear all metadata
-# Missing translation
-msg: 
+msg: Vaciar todos los metadatos
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Vaciar todos los metadatos significa perder <b>toda</b> la información de:\n\nSi has visto/escuchado alguna pelicula/cancion\nNumero de veces que has reproducido una cancion/pelicula\nRecontinuar la posicion de Playback\n\nY tambien borrara los metadatos cacheados de fuentes externas como themoviedb.org, etc\n\nEstas seguro que quieres continuar?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Añadir y borrar objetos de la pantalla principal
 
 id: Added new bookmark: %s
 msg: Nuevo marcador agregado: %s
@@ -960,30 +940,25 @@ id: Available plugins
 msg: Plugins disponibles
 
 id: Background
-# Missing translation
-msg: 
+msg: Fondo de Pantalla
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Contraseñas de Beta testers
 
 id: Browse available plugins
-msg: explorar plugins disponibles
+msg: Explorar plugins disponibles
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Explorando
 
 id: Cloud services
-# Missing translation
-msg: 
+msg: servicios en la Nube
 
 id: Corrupt plugin bundle
 msg: Paquete de plugin corrupto
 
 id: Default
-# Missing translation
-msg: 
+msg: Predeterminado
 
 id: Disk write error
 msg: Error en escritura de disco
@@ -995,34 +970,28 @@ id: File open error
 msg: Error al abrir archivo
 
 id: Home page
-# Missing translation
-msg: 
+msg: Pantalla principal
 
 id: Installed plugins
 msg: Plugins instalados
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: La version instalada es mas alta que la disponible
 
 id: Installing
 msg: Instalando
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Lista de albums
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Pantalla de carga
 
 id: Movies
-# Missing translation
-msg: 
+msg: Peliculas
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Streaming de Musica
 
 id: Not installable
 msg: No instalable
@@ -1034,20 +1003,16 @@ id: Not upgradable
 msg: No actualizable
 
 id: Online TV
-# Missing translation
-msg: 
+msg: TV Online
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Vista preferida de plugins
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Salvapantallas
 
 id: TV channels
-# Missing translation
-msg: 
+msg: Canales de TV
 
 id: Unable to load plugin.json: %s
 msg: No se puede cargar plugin.json: %s
@@ -1056,8 +1021,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: No se puede cargar plugin.json: JSON Malformado
 
 id: Uncategorized
-# Missing translation
-msg: 
+msg: Descategorizado
 
 id: Up to date
 msg: Actualizado a la fecha
@@ -1066,15 +1030,13 @@ id: Upgradable
 msg: Actualizable
 
 id: Upgraded plugin %s to version %s
-msg: Actualizar plugin %s a versión %s
+msg: Actualizado el plugin %s a la versión %s
 
 id: User interface extensions
-# Missing translation
-msg: 
+msg: Extensiones de la interfaz de usuario
 
 id: Video streaming
-# Missing translation
-msg: 
+msg: Video en streaming
 
 #
 # ./src/runcontrol.c
@@ -1119,8 +1081,7 @@ id: Discovered media sources
 msg: Medios Encontrados
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Fuentes y estilos de la interfaz de usuario
 
 id: General
 msg: General
@@ -1129,8 +1090,7 @@ id: Global settings
 msg: Ajustes Globales
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Vistas
 
 id: Settings useful for developers
 msg: Ajustes útiles para desarrolladores
@@ -1154,8 +1114,7 @@ id: Installed fonts
 msg: 
 
 id: Narrow text
-# Missing translation
-msg: 
+msg: Reducir texto
 
 id: Reset main font to default
 # Missing translation
@@ -1170,24 +1129,19 @@ id: Reset subtitle font to default
 msg: 
 
 id: Unable to load %s -- %s
-# Missing translation
-msg: 
+msg: Imposible cargar %s -- %s
 
 id: Unable to open %s for writing
-# Missing translation
-msg: 
+msg: Imposible abrir %s para escribir
 
 id: Unable to write to %s
-# Missing translation
-msg: 
+msg: Imposible escribir en %s
 
 id: Use font %s for
-# Missing translation
-msg: 
+msg: Usar fuente %s para
 
 id: User interface
-# Missing translation
-msg: 
+msg: Interfaz de Usuario
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1268,7 +1222,7 @@ msg: Servicio no encontrado
 # ./src/video/ps3_vdec.c
 #
 id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
-msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede no reproducir el video.
+msg: Cell-h264: Forzando nivel 4.2 para contenido en nivel %d.%d. Puede que el video no se reproduzca.
 
 id: Unable to accelerate %s, library not loaded.
 msg: No se pudo acelerar %s, catálogo no fue cargado.
