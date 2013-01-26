@@ -32,8 +32,8 @@ typedef struct video_overlay {
   int16_t vo_x;
   int16_t vo_y;
 
-  int16_t vo_fadein;
-  int16_t vo_fadeout;
+  int vo_fadein;
+  int vo_fadeout;
 
 
   int16_t vo_padding_left;// if -1, padding is determined by overlay compositing
