@@ -273,7 +273,7 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
   pts -= info->fi_delta;
 
   if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, pts, vd);
+    subtitles_pick(vd->vd_ext_subtitles, pts, vd->vd_mp);
 }
 
 
@@ -372,8 +372,8 @@ vd_thread(void *aux)
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
-      video_overlay_flush(vd, 1);
-      dvdspu_flush(vd);
+      video_overlay_flush(mp, 1);
+      dvdspu_flush(mp);
       break;
 
     case MB_VIDEO:
@@ -408,7 +408,7 @@ vd_thread(void *aux)
 #if ENABLE_DVD
     case MB_DVD_RESET_SPU:
       vd->vd_spu_curbut = 1;
-      dvdspu_flush(vd);
+      dvdspu_flush(mp);
       break;
 
     case MB_CTRL_DVD_HILITE:
@@ -430,13 +430,13 @@ vd_thread(void *aux)
       break;
 
     case MB_DVD_SPU:
-      dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, 
+      dvdspu_enqueue(mp, mb->mb_data, mb->mb_size, 
 		     vd->vd_dvd_clut, 0, 0, mb->mb_pts);
       break;
 #endif
 
     case MB_CTRL_DVD_SPU2:
-      dvdspu_enqueue(vd, mb->mb_data+72, mb->mb_size-72,
+      dvdspu_enqueue(mp, mb->mb_data+72, mb->mb_size-72,
 		     mb->mb_data,
 		     ((const uint32_t *)mb->mb_data)[16],
 		     ((const uint32_t *)mb->mb_data)[17],
@@ -447,7 +447,7 @@ vd_thread(void *aux)
 
     case MB_SUBTITLE:
       if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)
-	video_overlay_decode(vd, mb);
+	video_overlay_decode(mp, mb);
       break;
 
     case MB_CTRL_BLACKOUT:
@@ -455,7 +455,7 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_FLUSH_SUBTITLES:
-      video_overlay_flush(vd, 1);
+      video_overlay_flush(mp, 1);
       break;
 
     case MB_CTRL_EXT_SUBTITLE:
@@ -465,7 +465,7 @@ vd_thread(void *aux)
       // Steal subtitle from the media_buf
       vd->vd_ext_subtitles = mb->mb_data;
       mb->mb_data = NULL; 
-      video_overlay_flush(vd, 1);
+      video_overlay_flush(mp, 1);
       break;
 
     default:
@@ -499,12 +499,6 @@ video_decoder_create(media_pipe_t *mp)
 
   vd_init_timings(vd);
 
-  TAILQ_INIT(&vd->vd_spu_queue);
-  hts_mutex_init(&vd->vd_spu_mutex);
-
-  TAILQ_INIT(&vd->vd_overlay_queue);
-  hts_mutex_init(&vd->vd_overlay_mutex);
-
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
 			     THREAD_PRIO_NORMAL);
@@ -535,15 +529,5 @@ video_decoder_stop(video_decoder_t *vd)
 void
 video_decoder_destroy(video_decoder_t *vd)
 {
-  dvdspu_t *d;
-
-  while((d = TAILQ_FIRST(&vd->vd_spu_queue)) != NULL)
-    dvdspu_destroy(vd, d);
-
-  hts_mutex_destroy(&vd->vd_spu_mutex);
-
-  video_overlay_flush(vd, 0);
-
-  hts_mutex_destroy(&vd->vd_overlay_mutex);
   free(vd);
 }

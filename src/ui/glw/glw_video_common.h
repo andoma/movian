@@ -216,6 +216,10 @@ typedef struct glw_video {
   prop_sub_t *gv_fstretch_sub;
   int gv_fstretch;
 
+  // DVD SPU stuff
+
+  int gv_spu_in_menu;
+
 } glw_video_t;
 
 

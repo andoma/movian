@@ -479,7 +479,7 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
   int hi_alpha[4];
   dvdnav_highlight_area_t ha;
   pci_t *pci = &vd->vd_pci;
-  vd->vd_spu_in_menu = pci->hli.hl_gi.hli_ss;
+  gv->gv_spu_in_menu = pci->hli.hl_gi.hli_ss;
 
   if(pci->hli.hl_gi.hli_ss &&
      dvdnav_get_highlight_area(pci, vd->vd_spu_curbut, 0, &ha) 
@@ -585,17 +585,18 @@ spu_repaint(glw_video_t *gv, dvdspu_t *d)
 static void
 glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
 {
+  media_pipe_t *mp = gv->gv_mp;
   video_decoder_t *vd = gv->gv_vd;
   dvdspu_t *d;
   int x;
 
-  hts_mutex_lock(&vd->vd_spu_mutex);
+  hts_mutex_lock(&mp->mp_overlay_mutex);
 
  again:
-  d = TAILQ_FIRST(&vd->vd_spu_queue);
+  d = TAILQ_FIRST(&mp->mp_spu_queue);
 
   if(d == NULL) {
-    hts_mutex_unlock(&vd->vd_spu_mutex);
+    hts_mutex_unlock(&mp->mp_overlay_mutex);
     return;
   }
 
@@ -607,8 +608,8 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
   switch(x) {
   case -1:
   destroy:
-    dvdspu_destroy(vd, d);
-    vd->vd_spu_in_menu = 0;
+    dvdspu_destroy_one(mp, d);
+    gv->gv_spu_in_menu = 0;
     gvo_flush_all(gv);
     goto again;
 
@@ -623,7 +624,7 @@ glw_video_overlay_spu_layout(glw_video_t *gv, int64_t pts)
     spu_repaint(gv, d);
     break;
   }
-  hts_mutex_unlock(&vd->vd_spu_mutex);
+  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 
@@ -764,12 +765,12 @@ gvo_create_from_vo_text(glw_video_t *gv, video_overlay_t *vo)
 static void
 glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
 {
-  video_decoder_t *vd = gv->gv_vd;
+  media_pipe_t *mp = gv->gv_mp;
   video_overlay_t *vo;
 
-  hts_mutex_lock(&vd->vd_overlay_mutex);
+  hts_mutex_lock(&mp->mp_overlay_mutex);
 
-  while((vo = TAILQ_FIRST(&vd->vd_overlay_queue)) != NULL) {
+  while((vo = TAILQ_FIRST(&mp->mp_overlay_queue)) != NULL) {
     switch(vo->vo_type) {
     case VO_TIMED_FLUSH:
       if(vo->vo_start > pts)
@@ -777,7 +778,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
       // FALLTHRU
     case VO_FLUSH:
       gvo_flush_all(gv);
-      video_overlay_dequeue_destroy(vd, vo);
+      video_overlay_dequeue_destroy(mp, vo);
       continue;
 
     case VO_BITMAP:
@@ -786,7 +787,7 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
       gvo_flush_infinite(gv);
       if(vo->vo_pixmap != NULL)
         gvo_create_from_vo_bitmap(gv, vo);
-      video_overlay_dequeue_destroy(vd, vo);
+      video_overlay_dequeue_destroy(mp, vo);
       continue;
 
     case VO_TEXT:
@@ -794,13 +795,13 @@ glw_video_overlay_sub_set_pts(glw_video_t *gv, int64_t pts)
         break;
       gvo_flush_infinite(gv);
       gvo_create_from_vo_text(gv, vo);
-      video_overlay_dequeue_destroy(vd, vo);
+      video_overlay_dequeue_destroy(mp, vo);
       continue;
 
     }
     break;
   }
-  hts_mutex_unlock(&vd->vd_overlay_mutex);
+  hts_mutex_unlock(&mp->mp_overlay_mutex);
   gvo_set_pts(gv, pts);
 }
 

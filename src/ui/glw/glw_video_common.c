@@ -357,7 +357,7 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     return 0;
 
   case GLW_SIGNAL_EVENT:
-    return glw_video_widget_event(extra, gv->gv_mp, vd->vd_spu_in_menu);
+    return glw_video_widget_event(extra, gv->gv_mp, gv->gv_spu_in_menu);
 
   case GLW_SIGNAL_DESTROY:
     hts_mutex_lock(&gv->gv_surface_mutex);

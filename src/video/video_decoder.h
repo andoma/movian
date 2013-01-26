@@ -27,9 +27,6 @@
 #include <dvdnav/dvdnav.h>
 #endif
 
-TAILQ_HEAD(dvdspu_queue, dvdspu);
-TAILQ_HEAD(video_overlay_queue, video_overlay);
-
 #define VIDEO_DECODER_REORDER_SIZE 16
 #define VIDEO_DECODER_REORDER_MASK (VIDEO_DECODER_REORDER_SIZE-1)
 
@@ -90,10 +87,6 @@ typedef struct video_decoder {
   /**
    * DVD / SPU related members
    */
-  struct dvdspu_queue vd_spu_queue;
-
-  
-  hts_mutex_t vd_spu_mutex;
 
 #ifdef CONFIG_DVD
   uint32_t vd_dvd_clut[16];
@@ -102,14 +95,10 @@ typedef struct video_decoder {
 
   int vd_spu_curbut;
   int vd_spu_repaint;
-  int vd_spu_in_menu;
 
   /**
    * Video overlay and subtitles
    */
-  struct video_overlay_queue vd_overlay_queue;
-  hts_mutex_t vd_overlay_mutex;
-
   struct ext_subtitles *vd_ext_subtitles;
 
   /**
@@ -131,9 +120,9 @@ typedef struct video_decoder {
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp);
 
-void video_decoder_stop(video_decoder_t *gv);
+void video_decoder_stop(video_decoder_t *vd);
 
-void video_decoder_destroy(video_decoder_t *gv);
+void video_decoder_destroy(video_decoder_t *vd);
 
 void video_deliver_frame_avctx(video_decoder_t *vd,
 			       media_pipe_t *mp, media_queue_t *mq,
@@ -142,11 +131,6 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 			       const media_buf_t *mb, int decode_time);
 
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
-
-void video_decoder_set_accelerator(video_decoder_t *vd,
-				   void (*stopfn)(void *opaque),
-				   void (*blackoutfn)(void *opaque),
-				   void *opaque);
 
 #endif /* VIDEO_DECODER_H */
 

@@ -456,8 +456,7 @@ ve_deliver(vobsub_t *vs, vobsub_entry_t *ve)
  *
  */
 static void
-vobsub_picker(struct ext_subtitles *es, int64_t pts,
-	      struct video_decoder *vd)
+vobsub_picker(struct ext_subtitles *es, int64_t pts)
 {
   vobsub_t *vs = (vobsub_t *)es;
   vobsub_entry_t *ve = vs->vs_cur;

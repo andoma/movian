@@ -29,8 +29,7 @@ typedef struct ext_subtitles {
   video_overlay_t *es_cur;
 
   void (*es_dtor)(struct ext_subtitles *es);
-  void (*es_picker)(struct ext_subtitles *es, int64_t pts,
-		    struct video_decoder *vd);
+  void (*es_picker)(struct ext_subtitles *es, int64_t pts);
 
 } ext_subtitles_t;
 
@@ -42,5 +41,4 @@ ext_subtitles_t *subtitles_load(struct media_pipe *mp, const char *url);
 
 ext_subtitles_t *load_ssa(const char *url, char *buf, size_t len);
 
-void subtitles_pick(ext_subtitles_t *es, int64_t pts,
-		    struct video_decoder *vd);
+void subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp);

@@ -33,6 +33,7 @@
 #include "i18n.h"
 #include "video/ext_subtitles.h"
 #include "video/video_settings.h"
+#include "video/dvdspu.h"
 #include "settings.h"
 #include "db/kvstore.h"
 
@@ -279,6 +280,11 @@ mp_create(const char *name, int flags, const char *type)
 
   hts_mutex_init(&mp->mp_mutex);
   hts_mutex_init(&mp->mp_clock_mutex);
+
+  hts_mutex_init(&mp->mp_overlay_mutex);
+  TAILQ_INIT(&mp->mp_overlay_queue);
+  TAILQ_INIT(&mp->mp_spu_queue);
+
   hts_cond_init(&mp->mp_backpressure, &mp->mp_mutex);
   mp->mp_pc = prop_courier_create_thread(&mp->mp_mutex, "mp");
 
@@ -523,6 +529,7 @@ mp_destroy(media_pipe_t *mp)
 {
   event_t *e;
 
+
   /* Make sure a clean shutdown has been made */
   assert(mp->mp_audio_decoder == NULL);
   assert(mp != media_primary);
@@ -558,9 +565,13 @@ mp_destroy(media_pipe_t *mp)
 
   prop_destroy(mp->mp_prop_root);
 
+  video_overlay_flush(mp, 0);
+  dvdspu_destroy_all(mp);
+
   hts_cond_destroy(&mp->mp_backpressure);
   hts_mutex_destroy(&mp->mp_mutex);
   hts_mutex_destroy(&mp->mp_clock_mutex);
+  hts_mutex_destroy(&mp->mp_overlay_mutex);
 
   pool_destroy(mp->mp_mb_pool);
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "video_decoder.h"
+#include "media.h"
 
 struct ext_subtitles;
 
@@ -47,22 +47,17 @@ typedef struct video_overlay {
 
 } video_overlay_t;
 
-void video_overlay_dequeue_destroy(video_decoder_t *vd, 
-				   video_overlay_t *vo);
+void video_overlay_dequeue_destroy(media_pipe_t *mp, video_overlay_t *vo);
 
 void video_overlay_destroy(video_overlay_t *vo);
 
-void video_overlay_decode(video_decoder_t *vd, media_buf_t *mb);
+void video_overlay_decode(media_pipe_t *mp, media_buf_t *mb);
 
-void video_overlay_flush(video_decoder_t *vd, int send);
+void video_overlay_flush(media_pipe_t *mp, int send);
 
-void video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo);
+void video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo);
 
 video_overlay_t *video_overlay_dup(video_overlay_t *vo);
-
-void video_overlay_decode_ext_subtitle(video_decoder_t *vd, 
-				       struct ext_subtitles *es,
-				       video_overlay_t *vo);
 
 video_overlay_t *video_overlay_render_cleartext(const char *txt, int64_t start,
 						int64_t stop, int tags,

@@ -83,7 +83,8 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 TAILQ_HEAD(media_track_queue, media_track);
-
+TAILQ_HEAD(video_overlay_queue, video_overlay);
+TAILQ_HEAD(dvdspu_queue, dvdspu);
 
 /**
  *
@@ -325,6 +326,10 @@ typedef struct media_pipe {
   void *mp_video_frame_opaque;
   video_frame_deliver_t *mp_video_frame_deliver;
   
+  hts_mutex_t mp_overlay_mutex; // Also protects mp_spu_queue
+  struct video_overlay_queue mp_overlay_queue;
+  struct dvdspu_queue mp_spu_queue;
+
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_avtime;
