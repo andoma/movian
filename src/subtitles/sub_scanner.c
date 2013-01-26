@@ -27,7 +27,7 @@
 #include "js/js.h"
 
 #include "sub_scanner.h"
-#include "video_settings.h"
+#include "video/video_settings.h"
 #include "backend/backend.h"
 
 

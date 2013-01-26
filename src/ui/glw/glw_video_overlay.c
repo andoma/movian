@@ -22,8 +22,9 @@
 #include "glw_video_overlay.h"
 #include "glw_texture.h"
 #include "video/video_playback.h"
-#include "video/video_overlay.h"
-#include "video/dvdspu.h"
+
+#include "subtitles/video_overlay.h"
+#include "subtitles/dvdspu.h"
 
 /**
  *

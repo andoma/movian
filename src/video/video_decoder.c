@@ -33,11 +33,12 @@
 #include "video_decoder.h"
 #include "event.h"
 #include "media.h"
-#include "ext_subtitles.h"
-#include "video_overlay.h"
 #include "misc/sha.h"
-#include "dvdspu.h"
 #include "libav.h"
+
+#include "subtitles/ext_subtitles.h"
+#include "subtitles/video_overlay.h"
+#include "subtitles/dvdspu.h"
 
 
 static const int libav_colorspace_tbl[] = {

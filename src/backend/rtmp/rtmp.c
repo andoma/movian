@@ -31,7 +31,7 @@
 #include "misc/isolang.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
-#include "video/sub_scanner.h"
+#include "subtitles/sub_scanner.h"
 #include "metadata/metadata.h"
 
 typedef struct {

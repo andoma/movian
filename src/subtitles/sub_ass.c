@@ -23,7 +23,7 @@
 #include "misc/pixmap.h"
 #include "misc/str.h"
 #include "sub.h"
-#include "video_settings.h"
+#include "video/video_settings.h"
 #include "ext_subtitles.h"
 
 /**

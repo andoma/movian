@@ -31,9 +31,9 @@
 #include "backend/backend.h"
 #include "misc/isolang.h"
 #include "i18n.h"
-#include "video/ext_subtitles.h"
 #include "video/video_settings.h"
-#include "video/dvdspu.h"
+#include "subtitles/ext_subtitles.h"
+#include "subtitles/dvdspu.h"
 #include "settings.h"
 #include "db/kvstore.h"
 

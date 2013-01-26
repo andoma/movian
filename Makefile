@@ -220,17 +220,21 @@ SRCS-$(CONFIG_HTTPSERVER) += \
 ##############################################################
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
-	src/video/video_overlay.c \
-	src/video/sub_ass.c \
-	src/video/ext_subtitles.c \
 	src/video/video_settings.c \
-	src/video/video_dvdspu.c \
-	src/video/vobsub.c \
-	src/video/sub_scanner.c \
 
 SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 SRCS-$(CONFIG_VDA)      += src/video/vda.c
+
+##############################################################
+# Subtitles
+##############################################################
+SRCS += src/subtitles/sub_ass.c \
+	src/subtitles/ext_subtitles.c \
+	src/subtitles/dvdspu.c \
+	src/subtitles/vobsub.c \
+	src/subtitles/sub_scanner.c \
+	src/subtitles/video_overlay.c \
 
 ##############################################################
 # Text rendering

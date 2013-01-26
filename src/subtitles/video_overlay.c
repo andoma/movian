@@ -17,12 +17,12 @@
  */
 
 #include "showtime.h"
-#include "video_decoder.h"
+#include "media.h"
 #include "text/text.h"
 #include "misc/pixmap.h"
 #include "misc/str.h"
 #include "video_overlay.h"
-#include "video_settings.h"
+#include "video/video_settings.h"
 #include "dvdspu.h"
 #include "sub.h"
 
