@@ -1,0 +1,3 @@
+Fix broken date-sorting (Allow user to sort on newest or oldest first)
+
+Fixes #1297
