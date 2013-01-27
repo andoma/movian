@@ -688,8 +688,13 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
-msg: Datum
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Ime datoteke
@@ -1144,6 +1149,12 @@ id: System related settings
 msg: Nastavitve primerne sistemu
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Zunanja datoteka
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1286,12 +1297,6 @@ msg: Ne morem odpreti Cell-Kodeka. Nemogoče najti %d bytov pomnilnika.
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Ne morem odpreti Cell-Kodeka. Napaka 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Zunanja datoteka
 
 #
 # ./src/video/video_settings.c

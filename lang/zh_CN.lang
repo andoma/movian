@@ -664,8 +664,13 @@ msg: 登录失败
 id: Artists
 msg: 歌手
 
-id: Date
-msg: 日期
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: 文件名
@@ -1088,6 +1093,12 @@ id: System related settings
 msg: 系统相关设置
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: 外部文件
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1105,8 +1116,9 @@ msg: 窄体字
 id: Reset main font to default
 msg: 重置主字体
 
-id: Reset narrow font to default、
-msg: 重置窄体字体
+id: Reset narrow font to default
+# Missing translation
+msg: 
 
 id: Reset subtitle font to default
 msg: 重置字幕字体
@@ -1218,12 +1230,6 @@ msg: 无法启用Cell解码器，不能分配%d字节的内存。
 
 id: Unable to query Cell codec. Error 0x%x
 msg: 无法查询Cell解码器，错误码0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: 外部文件
 
 #
 # ./src/video/video_settings.c

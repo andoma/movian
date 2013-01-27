@@ -664,8 +664,13 @@ msg: Falha no login
 id: Artists
 msg: Artistas
 
-id: Date
-msg: Data
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Nome de ficheiro
@@ -1088,6 +1093,12 @@ id: System related settings
 msg: Configurações relacionadas com o sistema
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Ficheiro externo
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1218,12 +1229,6 @@ msg: Não foi possível abrir o codificador Cell. Não foi possível alocar %d b
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Não foi possível pesquisar no codificador Cell. Erro 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Ficheiro externo
 
 #
 # ./src/video/video_settings.c

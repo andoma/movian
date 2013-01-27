@@ -684,8 +684,13 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
-msg: 日期
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: 檔案名稱
@@ -1139,6 +1144,12 @@ id: System related settings
 msg: 系統設定
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: 外部檔案
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1281,12 +1292,6 @@ msg: 無法開啟 Cell 解碼套件。無法配置容量為 %d 位元組的記�
 
 id: Unable to query Cell codec. Error 0x%x
 msg: 無法查詢 Cell 解碼套件。錯誤 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: 外部檔案
 
 #
 # ./src/video/video_settings.c

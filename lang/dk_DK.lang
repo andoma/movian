@@ -759,7 +759,11 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
 # Missing translation
 msg: 
 
@@ -1271,6 +1275,12 @@ id: System related settings
 msg: 
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Ekstern fil
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1418,12 +1428,6 @@ msg: Kan ikke åbne Cell codec. Kan ikke accelerere %d bytes af RAM
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Kan ikke forespørge Cell codec. Fejl 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Ekstern fil
 
 #
 # ./src/video/video_settings.c

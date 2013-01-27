@@ -759,7 +759,11 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
 # Missing translation
 msg: 
 
@@ -1271,6 +1275,12 @@ id: System related settings
 msg: 
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Външен файл
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1418,12 +1428,6 @@ msg: Невъзможно отварянето на Cell-кодек. Невъз�
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Невъзможна заявка към Cell-кодек. Грешка 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Външен файл
 
 #
 # ./src/video/video_settings.c

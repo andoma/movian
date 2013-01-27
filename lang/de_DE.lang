@@ -404,6 +404,13 @@ id: Playback status
 msg: Wiedergabestatus
 
 #
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+# Missing translation
+msg: 
+
+#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -658,8 +665,13 @@ msg: Logon Fehler
 id: Artists
 msg: Künstler
 
-id: Date
-msg: Datum
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Dateiname
@@ -1082,6 +1094,12 @@ id: System related settings
 msg: Systembezogene Einstellungen
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: externe Datei
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1212,12 +1230,6 @@ msg: Kann Cell-Codec nicht öfffnen. \nKann keine %d Bytes Speicher zuweisen.
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Kann Cell-Codec nicht abfragen. Fehler 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: externe Datei
 
 #
 # ./src/video/video_settings.c

@@ -684,8 +684,13 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
-msg: Date
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Nom du fichier
@@ -1139,6 +1144,12 @@ id: System related settings
 msg: Paramètres liés au système
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Fichier externe
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1281,12 +1292,6 @@ msg: Impossible d'ouvrir le codec Cell. Incapable d'allouer %d octects de RAM
 
 id: Unable to query Cell codec. Error 0x%x
 msg: Imposible d'avoir le codec Cell. Error 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Fichier externe
 
 #
 # ./src/video/video_settings.c

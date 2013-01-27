@@ -782,7 +782,11 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
 # Missing translation
 msg: 
 
@@ -1297,6 +1301,13 @@ id: System related settings
 msg: 
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+# Missing translation
+msg: 
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1451,13 +1462,6 @@ id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
 msg: 
 
 id: Unable to query Cell codec. Error 0x%x
-# Missing translation
-msg: 
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
 # Missing translation
 msg: 
 

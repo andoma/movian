@@ -669,8 +669,13 @@ id: Artists
 # Missing translation
 msg: 
 
-id: Date
-msg: Datum
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Bestandsnaam
@@ -1114,6 +1119,12 @@ id: System related settings
 msg: Systeemgerelateerde instellingen
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Extern bestand
+
+#
 # ./src/text/fontstash.c
 #
 id: Defaults
@@ -1250,12 +1261,6 @@ msg: De Cell-codec kon niet worden geopend. %d bytes aan RAM toewijzen niet moge
 
 id: Unable to query Cell codec. Error 0x%x
 msg: De Cell-codec kon niet worden aangevraagd. Fout 0x%x
-
-#
-# ./src/video/sub_scanner.c
-#
-id: External file
-msg: Extern bestand
 
 #
 # ./src/video/video_settings.c
