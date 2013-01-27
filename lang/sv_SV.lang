@@ -665,12 +665,10 @@ id: Artists
 msg: Artister
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: Datum (nyast först)
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: Datum (äldst först)
 
 id: Filename
 msg: Filnamn
