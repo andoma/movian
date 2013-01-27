@@ -133,7 +133,6 @@ widget(container_y, {
 	shadow: true;
 	sizeScale: 2;
 	color: [0.431, 0.811, 1];
-	alpha: iir($view.searchFocused || $view.searchQuery, 10);
       });
 
       widget(container_y, {
