@@ -1,0 +1,7 @@
+Rework subtitle scheduling
+
+This allows us to pick subtitles that are out of sync with video stream
+Also makes it possible to do negative subtitle time shifting for embedded subs
+
+Fixes #727
+Fixes #1470
