@@ -235,6 +235,7 @@ typedef struct media_buf {
 typedef struct media_queue {
   struct media_buf_queue mq_q_data;
   struct media_buf_queue mq_q_ctrl;
+  struct media_buf_queue mq_q_aux;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
 
@@ -535,8 +536,6 @@ void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 		     uint32_t u);
-
-media_buf_t *mp_deq(media_pipe_t *mp, media_queue_t *mq);
 
 void mp_flush(media_pipe_t *mp, int blackout);
 

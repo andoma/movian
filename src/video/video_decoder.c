@@ -272,6 +272,7 @@ video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
   int64_t pts = info->fi_pts;
   pts -= vd->vd_mp->mp_svdelta;
   pts -= info->fi_delta;
+  vd->vd_subpts = pts;
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_pick(vd->vd_ext_subtitles, pts, vd->vd_mp);
@@ -325,11 +326,21 @@ vd_thread(void *aux)
 
     media_buf_t *ctrl = TAILQ_FIRST(&mq->mq_q_ctrl);
     media_buf_t *data = TAILQ_FIRST(&mq->mq_q_data);
-
+    media_buf_t *aux  = TAILQ_FIRST(&mq->mq_q_aux);
 
     if(ctrl != NULL) {
       TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
       mb = ctrl;
+
+    } else if(aux != NULL && aux->mb_pts < vd->vd_subpts + 1000000LL) {
+
+      if(vd->vd_hold) {
+	hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
+	continue;
+      }
+
+      TAILQ_REMOVE(&mq->mq_q_aux, aux, mb_link);
+      mb = aux;
 
     } else if(data != NULL) {
 

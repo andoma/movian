@@ -220,6 +220,7 @@ mq_init(media_queue_t *mq, prop_t *p, hts_mutex_t *mutex, media_pipe_t *mp)
   mq->mq_mp = mp;
   TAILQ_INIT(&mq->mq_q_data);
   TAILQ_INIT(&mq->mq_q_ctrl);
+  TAILQ_INIT(&mq->mq_q_aux);
 
   mq->mq_packets_current = 0;
   mq->mq_stream = -1;
@@ -517,6 +518,7 @@ mq_flush(media_pipe_t *mp, media_queue_t *mq)
 {
   mq_flush_q(mp, mq, &mq->mq_q_data);
   mq_flush_q(mp, mq, &mq->mq_q_ctrl);
+  mq_flush_q(mp, mq, &mq->mq_q_aux);
   mq_update_stats(mp, mq);
 }
 
@@ -639,29 +641,12 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 /**
  *
  */
-media_buf_t *
-mp_deq(media_pipe_t *mp, media_queue_t *mq)
-{
-  media_buf_t *mb;
-  if((mb = TAILQ_FIRST(&mq->mq_q_ctrl)) != NULL) { 
-    TAILQ_REMOVE(&mq->mq_q_ctrl, mb, mb_link);
-    return mb;
-  }
-  if((mb = TAILQ_FIRST(&mq->mq_q_data)) != NULL) {
-    TAILQ_REMOVE(&mq->mq_q_data, mb, mb_link);
-    return mb;
-  }
-  return NULL;
-}
-
-
-/**
- *
- */
 static void
 mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
-  if(mb->mb_data_type > MB_CTRL) {
+  if(mb->mb_data_type == MB_SUBTITLE) {
+    TAILQ_INSERT_TAIL(&mq->mq_q_aux, mb, mb_link);
+  } else if(mb->mb_data_type > MB_CTRL) {
     TAILQ_INSERT_TAIL(&mq->mq_q_ctrl, mb, mb_link);
   } else {
     TAILQ_INSERT_TAIL(&mq->mq_q_data, mb, mb_link);
@@ -965,15 +950,15 @@ mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 
   if(auxtype != -1) {
     media_buf_t *after;
-    TAILQ_FOREACH_REVERSE(after, &mq->mq_q_data, media_buf_queue, mb_link) {
+    TAILQ_FOREACH_REVERSE(after, &mq->mq_q_aux, media_buf_queue, mb_link) {
       if(after->mb_data_type == auxtype)
 	break;
     }
     
     if(after == NULL)
-      TAILQ_INSERT_HEAD(&mq->mq_q_data, mb, mb_link);
+      TAILQ_INSERT_HEAD(&mq->mq_q_aux, mb, mb_link);
     else
-      TAILQ_INSERT_AFTER(&mq->mq_q_data, after, mb, mb_link);
+      TAILQ_INSERT_AFTER(&mq->mq_q_aux, after, mb, mb_link);
 
   } else {
     TAILQ_INSERT_TAIL(&mq->mq_q_data, mb, mb_link);
