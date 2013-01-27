@@ -109,7 +109,7 @@ typedef struct glw_video_surface {
 } glw_video_surface_t;
 
 
-#define GLW_VIDEO_MAX_SURFACES 6
+#define GLW_VIDEO_MAX_SURFACES 10
 
 /**
  *

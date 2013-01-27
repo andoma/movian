@@ -237,14 +237,22 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
   }
 
   if(0) {
-   static int64_t lastpts, lastaclock;
+    static int64_t lastpts, lastaclock, lastclock;
    
-  printf("%s: AVDIFF = %10f %10d %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %15"PRId64" %s\n", 
-	 mp->mp_name, vd->vd_avdiff_x, vd->vd_avdiff,
-	 aclock, aclock - lastaclock, pts, pts - lastpts,
-	 mp->mp_audio_clock, status);
+   TRACE(TRACE_DEBUG, "AVDIFF", "%10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+	 vd->vd_avdiff_x,
+	 vd->vd_avdiff,
+	 aclock,
+	 aclock - lastaclock,
+	 pts,
+	 pts - lastpts,
+	 mp->mp_audio_clock,
+	 gr->gr_frame_start_avtime - lastclock,
+	 status,
+	 showtime_get_avtime() - aclock);
   lastpts = pts;
   lastaclock = aclock;
+  lastclock = gr->gr_frame_start_avtime;
  }
 }
 
@@ -637,6 +645,8 @@ glw_video_configure(glw_video_t *gv,
 		    int surfaces, int flags, int pixfmt)
 {
   glw_video_config_t gvc = {0};
+
+  assert(surfaces <= GLW_VIDEO_MAX_SURFACES);
 
   gvc.gvc_valid = 1;
 
