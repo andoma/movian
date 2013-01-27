@@ -857,7 +857,9 @@ set_sort_order(void *opaque, prop_event_t event, ...)
     if(val != NULL) {
       if(!strcmp(val, "title"))
 	prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 1);
-      if(!strcmp(val, "date"))
+      else if(!strcmp(val, "date"))
+	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 1, 3, NULL, 0);
+      else if(!strcmp(val, "dateold"))
 	prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 3, NULL, 0);
     }
     kv_url_opt_set(s->s_url, KVSTORE_DOMAIN_SYS, "sortorder", 
@@ -893,14 +895,22 @@ add_sort_option_type(scanner_t *s, prop_t *model)
     abort();
 
   prop_t *on_date = prop_create_root("date");
-  prop_link(_p("Date"), prop_create(on_date, "title"));
+  prop_link(_p("Date (newest first)"), prop_create(on_date, "title"));
   if(prop_set_parent(on_date, options))
+    abort();
+
+  prop_t *on_dateold = prop_create_root("dateold");
+  prop_link(_p("Date (oldest first)"), prop_create(on_dateold, "title"));
+  if(prop_set_parent(on_dateold, options))
     abort();
 
   rstr_t *cur = kv_url_opt_get_rstr(s->s_url, KVSTORE_DOMAIN_SYS, 
 				    "sortorder");
 
   if(cur != NULL && !strcmp(rstr_get(cur), "date")) {
+    prop_select(on_date);
+    prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 1, 3, NULL, 0);
+  } else if(cur != NULL && !strcmp(rstr_get(cur), "dateold")) {
     prop_select(on_date);
     prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 3, NULL, 0);
   } else {

@@ -1345,13 +1345,14 @@ prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
 	     const prop_nf_sort_strmap_t *map, int hide_on_missing)
 {
   nfnode_t *nfn;
+  int m = desc ? -1 : 1;
 
   hts_mutex_lock(&prop_mutex);
   
   assert(idx < MAX_SORT_KEYS);
 
   if(nf->sortkey[idx]) {
-    if(path && !strcmp(path, nf->sortkey[idx]))
+    if(path && !strcmp(path, nf->sortkey[idx]) && nf->sortorder[idx] == m)
       goto done;
     free(nf->sortkey[idx]);
   } else {
@@ -1365,7 +1366,7 @@ prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
 
   if(path) {
     nf->sortkey[idx] = strdup(path);
-    nf->sortorder[idx] = desc ? -1 : 1;
+    nf->sortorder[idx] = m;
     nf->sort_hide_on_missing[idx] = hide_on_missing;
   } else {
     nf->sortkey[idx] = NULL;
