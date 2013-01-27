@@ -1087,7 +1087,8 @@ fa_scanner_page(const char *url, time_t url_mtime,
   s->s_direct_close = prop_ref_inc(direct_close);
   s->s_title = rstr_dup(title);
 
-  add_indexed_option(s, model);
+  if(gconf.enable_experimental)
+    add_indexed_option(s, model);
 
   prop_t *onlysupported;
 

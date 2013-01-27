@@ -829,6 +829,17 @@ init_dev_settings(void)
   prop_t *t;
   
   t = prop_create_root(NULL);
+  prop_set_string(t, "Experimental features (Use at own risk)");
+
+  settings_create_bool(gconf.settings_dev, "experimental", t, 0,
+		       store, settings_generic_set_bool,
+		       &gconf.enable_experimental, 
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+
+
+  t = prop_create_root(NULL);
   prop_set_string(t, "Enable binrelpace");
 
   settings_create_bool(gconf.settings_dev, "binreplace", t, 0,
