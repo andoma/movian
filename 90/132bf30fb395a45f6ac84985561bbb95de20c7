@@ -1,0 +1,5 @@
+ps3: Increase audio buffer size
+
+Fix stuttering playback with some audio formats (APE is one)
+
+Fixes #1451
