@@ -672,17 +672,18 @@ glw_image_update_constraints(glw_image_t *gi)
     }
 
   } else if(gi->w.glw_class == &glw_image && glt != NULL) {
-    float aspect = (float)glt->glt_aspect;
 
-    if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
-      glw_set_constraints(&gi->w, 0, 0, -aspect, GLW_CONSTRAINT_W);
+    if(glt->glt_state == GLT_STATE_ERROR) {
+      glw_clear_constraints(&gi->w);
+    } else if(gi->gi_bitmap_flags & GLW_IMAGE_SET_ASPECT) {
+      glw_set_constraints(&gi->w, 0, 0, -glt->glt_aspect, GLW_CONSTRAINT_W);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_X) {
 
-      int ys = gi->w.glw_req_size_x / aspect;
+      int ys = gi->w.glw_req_size_x / glt->glt_aspect;
       glw_set_constraints(&gi->w, 0, ys, 0, GLW_CONSTRAINT_Y);
     } else if(gi->w.glw_flags & GLW_CONSTRAINT_CONF_Y) {
 
-      int xs = gi->w.glw_req_size_y * aspect;
+      int xs = gi->w.glw_req_size_y * glt->glt_aspect;
       glw_set_constraints(&gi->w, xs, 0, 0, GLW_CONSTRAINT_X);
     }
   }
