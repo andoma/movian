@@ -1420,7 +1420,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     http_send_verb(&q, hf, "GET");
-    htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
+    htsbuf_qprintf(&q, "Range: bytes=0-0\r\n");
     http_headers_auth(&headers, hf, "GET", NULL);
   } else {
     http_send_verb(&q, hf, "HEAD");
@@ -1844,7 +1844,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       char range[100];
 
-      if(hf->hf_filesize == -1) {
+      if(hf->hf_filesize == -1 || hf->hf_no_ranges) {
 	range[0] = 0;
 
       } else if(hf->hf_streaming || hf->hf_consecutive_read > STREAMING_LIMIT) {
@@ -1897,6 +1897,11 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	  }
 	}
 	break;
+
+      case 416:
+	hf->hf_no_ranges = 1;
+	http_detach(hf, 0, "Requested Range Not Satisfiable");
+	continue;
 
       default:
 	TRACE(TRACE_DEBUG, "HTTP", 
