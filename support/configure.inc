@@ -83,6 +83,7 @@ CONFIG_LIST="
  tlsf
  airplay
  webpopup
+ valgrind
 "
 
 cleanup() {

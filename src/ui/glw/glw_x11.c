@@ -41,7 +41,7 @@
 #include "navigator.h"
 
 #include "glw_settings.h"
-#if WITH_VALGRIND
+#if ENABLE_VALGRIND
 #include <valgrind/callgrind.h>
 #endif
 
@@ -840,13 +840,13 @@ gl_keypress(glw_x11_t *gx11, XEvent *event)
       break;
     }
   }
-#if WITH_VALGRIND
-  if(keysym == XK_F5 && state == Mod1Mask) {
+#if ENABLE_VALGRIND
+  if(keysym == XK_F1 && state == Mod1Mask) {
     CALLGRIND_START_INSTRUMENTATION;
     printf("Callgrind started\n");
     return 0;
   }
-  if(keysym == XK_F6 && state == Mod1Mask) {
+  if(keysym == XK_F2 && state == Mod1Mask) {
     CALLGRIND_STOP_INSTRUMENTATION;
     printf("Callgrind stopped\n");
     return 0;
