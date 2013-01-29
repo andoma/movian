@@ -82,7 +82,7 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
     return;
   }
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(ss->ss_stop)
       break;
 

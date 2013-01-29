@@ -27,6 +27,7 @@
 #include "networking/http.h"
 #include "metadata/metadata.h"
 #include "navigator.h"
+#include "misc/redblack.h"
 
 typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
 
@@ -38,7 +39,7 @@ int fileaccess_init(void);
 /**
  *
  */
-TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
+RB_HEAD(fa_dir_entry_tree, fa_dir_entry);
 
 
 /**
@@ -57,7 +58,7 @@ typedef struct fa_stat {
  *
  */
 typedef struct fa_dir_entry {
-  TAILQ_ENTRY(fa_dir_entry) fde_link;
+  RB_ENTRY(fa_dir_entry) fde_link;
   rstr_t *fde_filename;
   rstr_t *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
@@ -84,19 +85,26 @@ typedef struct fa_dir_entry {
  *
  */
 typedef struct fa_dir {
-  struct fa_dir_entry_queue fd_entries;
+  struct fa_dir_entry_tree fd_entries;
   int fd_count;
 } fa_dir_t;
 
 fa_dir_t *fa_dir_alloc(void);
 
-void fa_dir_free(fa_dir_t *nd);
+void fa_dir_free(fa_dir_t *fd);
 
-fa_dir_entry_t *fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type);
+fa_dir_entry_t *fa_dir_add(fa_dir_t *fd, const char *path, const char *name, int type);
+
+fa_dir_entry_t *fa_dir_find(const fa_dir_t *fd, rstr_t *url);
 
 void fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde);
 
 int fa_dir_entry_stat(fa_dir_entry_t *fde);
+
+void fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde);
+
+void fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde);
+
 
 /**
  *

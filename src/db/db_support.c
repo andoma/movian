@@ -232,7 +232,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
     return -1;
   }
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(fde->fde_type != CONTENT_FILE || strchr(rstr_get(fde->fde_filename), '~'))
       continue;
     tgtver = MAX(tgtver, atoi(rstr_get(fde->fde_filename)));

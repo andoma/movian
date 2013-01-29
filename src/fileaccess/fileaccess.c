@@ -364,7 +364,7 @@ fa_findfile(const char *path, const char *file,
   if(fd == NULL)
     return -2;
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+  RB_FOREACH(fde, &fd->fd_entries, fde_link)
     if(!strcasecmp(rstr_get(fde->fde_filename), file)) {
       snprintf(fullpath, fullpathlen, "%s%s%s", path, 
 	       path[strlen(path)-1] == '/' ? "" : "/",
@@ -445,7 +445,7 @@ fa_dir_t *
 fa_dir_alloc(void)
 {
   fa_dir_t *fd = malloc(sizeof(fa_dir_t));
-  TAILQ_INIT(&fd->fd_entries);
+  RB_INIT(&fd->fd_entries);
   fd->fd_count = 0;
   return fd;
 }
@@ -467,7 +467,7 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
     metadata_destroy(fde->fde_md);
 
   fd->fd_count--;
-  TAILQ_REMOVE(&fd->fd_entries, fde, fde_link);
+  fa_dir_remove(fd, fde);
   rstr_release(fde->fde_filename);
   rstr_release(fde->fde_url);
   free(fde);
@@ -482,7 +482,7 @@ fa_dir_free(fa_dir_t *fd)
 {
   fa_dir_entry_t *fde;
 
-  while((fde = TAILQ_FIRST(&fd->fd_entries)) != NULL)
+  while((fde = fd->fd_entries.root) != NULL)
     fa_dir_entry_free(fd, fde);
   free(fd);
 }
@@ -505,9 +505,8 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_filename = rstr_alloc(filename);
   fde->fde_type     = type;
 
-  TAILQ_INSERT_TAIL(&fd->fd_entries, fde, fde_link);
+  fa_dir_insert(fd, fde);
 
-  fd->fd_count++;
   return fde;
 }
 
@@ -519,6 +518,48 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
 {
   return fde_create(fd, url, filename, type);
 }
+
+
+/**
+ *
+ */
+static int
+fa_dir_cmp(const fa_dir_entry_t *a, const fa_dir_entry_t *b)
+{
+  return strcmp(rstr_get(a->fde_url), rstr_get(b->fde_url));
+}
+
+/**
+ *
+ */
+void
+fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde)
+{
+  RB_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_cmp);
+  fd->fd_count++;
+}
+
+void
+fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde)
+{
+  RB_REMOVE(&fd->fd_entries, fde, fde_link);
+  fd->fd_count--;
+}
+
+
+
+
+/**
+ *
+ */
+fa_dir_entry_t *
+fa_dir_find(const fa_dir_t *fd, rstr_t *url)
+{
+  fa_dir_entry_t fde;
+  fde.fde_url = url;
+  return RB_FIND(&fd->fd_entries, &fde, fde_link, fa_dir_cmp);
+}
+
 
 
 /**

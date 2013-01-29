@@ -526,7 +526,7 @@ subtitles_from_zipfile(media_pipe_t *mp, const void *data, size_t size)
   fa_dir_t *fd = fa_scandir(url, errbuf, sizeof(errbuf));
   if(fd != NULL) {
     fa_dir_entry_t *fde;
-    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       TRACE(TRACE_DEBUG, "Subtitles", "  Probing %s", rstr_get(fde->fde_url));
       ret = subtitles_load(mp, rstr_get(fde->fde_url));
       if(ret != NULL)

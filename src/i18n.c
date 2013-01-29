@@ -629,7 +629,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     const char *filename = rstr_get(fde->fde_filename);
     if(filename[strlen(filename) - 1] == '~')
       continue;

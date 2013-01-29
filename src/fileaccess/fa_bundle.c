@@ -187,7 +187,7 @@ b_fsize(fa_handle_t *handle)
 static int
 b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  fa_dir_entry_t *fde;
+  fa_dir_entry_t *fde, *last = NULL;
   struct filebundle *fb;
   char buf[PATH_MAX];
   char buf2[PATH_MAX];
@@ -203,7 +203,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	if((s = strchr(buf2, '/')) != NULL)
 	  *s = 0;
       
-	TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+	RB_FOREACH(fde, &fd->fd_entries, fde_link)
 	  if(!strcmp(rstr_get(fde->fde_filename), buf2))
 	    break;
 	if(fde != NULL)
@@ -230,14 +230,14 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	  if((s = strchr(buf2, '/')) != NULL)
 	    *s = 0;
 
-	  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link)
+	  RB_FOREACH(fde, &fd->fd_entries, fde_link)
 	    if(!strcmp(rstr_get(fde->fde_filename), buf2))
 	      break;
 	  if(fde != NULL)
 	    continue;
 
 	  snprintf(buf, sizeof(buf), "bundle://%.*s%s", len, fb->prefix, buf2);
-	  fa_dir_add(fd, buf, buf2, CONTENT_DIR);
+	  last = fa_dir_add(fd, buf, buf2, CONTENT_DIR);
 	}
 	ok = 1;
 	continue;
@@ -253,15 +253,14 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	  if((s = strchr(buf2, '/')) != NULL) {
 	    *s = 0;
 
-	    fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
-	    if(fde != NULL && !strcmp(rstr_get(fde->fde_filename), buf2))
+	    if(last != NULL && !strcmp(rstr_get(last->fde_filename), buf2))
 	      continue;
 	    snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix, buf2);
 	  } else {
 	    snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix,
 		     fbe->filename);
 	  }
-	  fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
+	  last = fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
 	}
       }
 
@@ -288,8 +287,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	if((s = strchr(buf2, '/')) != NULL) {
 	  *s = 0;
 
-	  fde = TAILQ_LAST(&fd->fd_entries, fa_dir_entry_queue);
-	  if(fde != NULL && !strcmp(rstr_get(fde->fde_filename), buf2))
+	  if(last != NULL && !strcmp(rstr_get(last->fde_filename), buf2))
 	    continue;
 	  
 	  snprintf(buf, sizeof(buf), "bundle://%s/%.*s/%s", fb->prefix,
@@ -298,8 +296,7 @@ b_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 	  snprintf(buf, sizeof(buf), "bundle://%s/%s", fb->prefix,
 		   fbe->filename);
 	}
-	printf("Adding URL %s\n", buf);
-	fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
+	last = fa_dir_add(fd, buf, buf2, s ? CONTENT_DIR : CONTENT_FILE);
       }
     }
   }
