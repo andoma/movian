@@ -1008,7 +1008,6 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READINESS ||
-     signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED ||
      signal == GLW_SIGNAL_RESELECT_CHANGED)
     eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
   return 0;
@@ -4843,22 +4842,6 @@ glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return focus distance
- */
-static int 
-glwf_focusDistance(glw_view_eval_context_t *ec, struct token *self,
-		   token_t **argv, unsigned int argc)
-{
-  token_t *r = eval_alloc(self, ec, TOKEN_INT);
-  glw_t *w = ec->w;
-  r->t_int = w->glw_focus_distance;
-  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  *
  */
 static int 
@@ -5893,7 +5876,6 @@ static const token_func_t funcvec[] = {
   {"delay", 3, glwf_delay, glwf_delay_ctor, glwf_delay_dtor},
   {"isReady", 0, glwf_isReady},
   {"suggestFocus", 1, glwf_suggestFocus},
-  {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},
   {"deliverEvent", -1, glwf_deliverEvent},

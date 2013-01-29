@@ -537,64 +537,6 @@ scroll_to_me(glw_list_t *l, glw_t *c)
 }
 
 
-
-
-/**
- *
- */
-static void
-glw_flood_focus_distance(glw_t *w, int v)
-{
-  glw_t *c;
-
-  if(w->glw_focus_distance != v) {
-    w->glw_focus_distance = v;
-    glw_signal0(w, GLW_SIGNAL_FOCUS_DISTANCE_CHANGED, NULL);
-  }
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_flood_focus_distance(c, v);
-}
-
-/**
- *
- */
-static void
-update_focus_distance(glw_t *w, glw_t *ign)
-{
-  glw_t *c, *p, *n;
-  int d = 0;
-
-  if((c = w->glw_focused) == NULL)
-    return;
-
-  p = n = c;
-
-  glw_flood_focus_distance(c, 0);
-
-  while(1) {
-    p = p ? glw_prev_widget(p) : NULL;
-    n = n ? glw_next_widget(n) : NULL;
-
-    if(p == ign)
-      p = p ? glw_prev_widget(p) : NULL;
-    
-    if(n == ign)
-      n = n ? glw_next_widget(n) : NULL;
-
-    if(p == NULL && n == NULL)
-      break;
-
-    d++;
-    if(p != NULL)
-      glw_flood_focus_distance(p, d);
-    if(n != NULL)
-      glw_flood_focus_distance(n, d);
-  }
-}
-
-
-
 /**
  *
  */
@@ -611,7 +553,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     scroll_to_me(l, extra);
     l->suggest_cnt = 0;
     w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
-    update_focus_distance(w, NULL);
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -629,7 +570,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       w->glw_flags2 |= GLW2_FLOATING_FOCUS;
       l->suggest_cnt = 1;
     }
-    update_focus_distance(w, extra);
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
@@ -643,7 +583,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_CHILD_CREATED:
   case GLW_SIGNAL_CHILD_MOVED:
     scroll_to_me(l, w->glw_focused);
-    update_focus_distance(w, NULL);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:

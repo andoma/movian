@@ -41,7 +41,6 @@ widget(container_y, {
 	  autoRefocusable: true;
 	  focusable: true;
 	  width: $ui.size * 12;
-	  $clone.fd = focusDistance();
 
 	  onEvent(activate, navOpen($self.url, void, void, $parent.model));
 

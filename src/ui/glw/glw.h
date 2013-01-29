@@ -276,11 +276,6 @@ typedef enum {
    */
   GLW_SIGNAL_READINESS,
 
-  /**
-   * Emitted by certain widget to tell its children how far
-   * away from current focus they are
-   */
-  GLW_SIGNAL_FOCUS_DISTANCE_CHANGED,
 
   /**
    * Emitted when gc_can_select_child maybe will return a different value
@@ -1023,7 +1018,6 @@ typedef struct glw {
   float glw_focus_weight;
 
   uint8_t glw_alignment;
-  int16_t glw_focus_distance;
 
   char *glw_id;
 
