@@ -404,13 +404,6 @@ id: Playback status
 msg: Wiedergabestatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -666,12 +659,10 @@ id: Artists
 msg: Künstler
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: Datum (neuste zuerst)
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: Datum (älteste zuerst)
 
 id: Filename
 msg: Dateiname
