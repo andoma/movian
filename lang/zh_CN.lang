@@ -665,12 +665,10 @@ id: Artists
 msg: 歌手
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: 日期（新的优先）
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: 日期（老的优先）
 
 id: Filename
 msg: 文件名
@@ -1117,8 +1115,7 @@ id: Reset main font to default
 msg: 重置主字体
 
 id: Reset narrow font to default
-# Missing translation
-msg: 
+msg: 重置窄字体
 
 id: Reset subtitle font to default
 msg: 重置字幕字体
