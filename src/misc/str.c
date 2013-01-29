@@ -813,13 +813,15 @@ dictcmp(const char *a, const char *b)
     ua = utf8_get(&a);
     ub = utf8_get(&b);
 
-    ua = unicode_casefold(ua);
-    ub = unicode_casefold(ub);
-
     switch((ua >= '0' && ua <= '9' ? 1 : 0)|(ub >= '0' && ub <= '9' ? 2 : 0)) {
     case 0:  /* 0: a is not a digit, nor is b */
-      if(ua != ub)
-	return ua - ub;
+
+      if(ua != ub) {
+	ua = unicode_casefold(ua);
+	ub = unicode_casefold(ub);
+	if(ua != ub)
+	  return ua - ub;
+      }
       if(ua == 0)
 	return 0;
       break;
@@ -827,8 +829,13 @@ dictcmp(const char *a, const char *b)
     case 2:  /* 2: a is not a digit,  b is */
 	return ua - ub;
     case 3:  /* both are digits, switch to integer compare */
-      da = strtol(a-1, (char **)&a, 10);
-      db = strtol(b-1, (char **)&b, 10);
+      da = ua - '0';
+      db = ub - '0';
+
+      while(*a >= '0' && *a <= '9')
+	da = da * 10L + *a++ - '0';
+      while(*b >= '0' && *b <= '9')
+	db = db * 10L + *b++ - '0';
       if(da != db)
 	return da - db;
       break;
