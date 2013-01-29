@@ -1,0 +1,5 @@
+httpclient: Fix a regression when using range queries to determine filesize
+
+Caused problems with minidlna (possibly other servers)
+
+Fixes #1576
