@@ -1420,7 +1420,7 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
     tcp_huge_buffer(hf->hf_connection->hc_tc);
   } else if(nohead) {
     http_send_verb(&q, hf, "GET");
-    htsbuf_qprintf(&q, "Range: bytes=0-0\r\n");
+    htsbuf_qprintf(&q, "Range: bytes=0-1\r\n");
     http_headers_auth(&headers, hf, "GET", NULL);
   } else {
     http_send_verb(&q, hf, "HEAD");
