@@ -1,0 +1,3 @@
+Fix regression causing crash with embedded DVD/VOBSUB tracks
+
+Fixes #1577
