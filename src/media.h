@@ -147,7 +147,8 @@ typedef struct media_codec {
 
   void *opaque;
 
-  // If decode returns 1 the accelerator keeps ownership of mb
+  struct media_pipe *mp;
+
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 

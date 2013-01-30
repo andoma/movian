@@ -1207,6 +1207,7 @@ media_codec_create(int codec_id, int parser,
   media_codec_t *mc = calloc(1, sizeof(media_codec_t));
   codec_def_t *cd;
 
+  mc->mp = mp;
   mc->codec_ctx = ctx;
   
 #if ENABLE_LIBAV

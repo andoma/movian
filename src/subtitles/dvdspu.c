@@ -371,7 +371,7 @@ dvdspu_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 		    struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
   dvdspu_codec_t *dc = mc->opaque;
-  dvdspu_enqueue(mq->mq_mp, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
+  dvdspu_enqueue(mc->mp, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
 		 mb->mb_pts);
 }
 
