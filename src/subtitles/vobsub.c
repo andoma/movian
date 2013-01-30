@@ -38,7 +38,7 @@ vobsub_decode_palette(uint32_t *clut, const char *str)
   int i = 0;
   while(*str && i < 16) {
     int v = strtol(str, &end, 16);
-    clut[i++] = v;
+    clut[i++] = (v & 0xff0000) >> 16 | (v & 0xff00) | (v & 0xff) << 16;
     str = end;
     while(*str == ' ')
       str++;
