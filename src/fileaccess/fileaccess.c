@@ -524,10 +524,14 @@ fa_dir_add(fa_dir_t *fd, const char *url, const char *filename, int type)
  *
  */
 static int
-fa_dir_cmp(const fa_dir_entry_t *a, const fa_dir_entry_t *b)
+fa_dir_cmp1(const fa_dir_entry_t *a, const fa_dir_entry_t *b)
 {
-  return strcmp(rstr_get(a->fde_url), rstr_get(b->fde_url));
+  int r = strcmp(rstr_get(a->fde_url), rstr_get(b->fde_url));
+  if(r)
+    return r;
+  return a < b ? 1 : -1;
 }
+
 
 /**
  *
@@ -535,7 +539,8 @@ fa_dir_cmp(const fa_dir_entry_t *a, const fa_dir_entry_t *b)
 void
 fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde)
 {
-  RB_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_cmp);
+  if(RB_INSERT_SORTED(&fd->fd_entries, fde, fde_link, fa_dir_cmp1))
+    abort();
   fd->fd_count++;
 }
 
@@ -547,6 +552,14 @@ fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde)
 }
 
 
+/**
+ *
+ */
+static int
+fa_dir_cmp2(const fa_dir_entry_t *a, const fa_dir_entry_t *b)
+{
+  return strcmp(rstr_get(a->fde_url), rstr_get(b->fde_url));
+}
 
 
 /**
@@ -557,7 +570,7 @@ fa_dir_find(const fa_dir_t *fd, rstr_t *url)
 {
   fa_dir_entry_t fde;
   fde.fde_url = url;
-  return RB_FIND(&fd->fd_entries, &fde, fde_link, fa_dir_cmp);
+  return RB_FIND(&fd->fd_entries, &fde, fde_link, fa_dir_cmp2);
 }
 
 
