@@ -157,6 +157,119 @@ pixmap_create(int width, int height, pixmap_type_t type, int margin)
 }
 
 
+/**
+ *
+ */
+pixmap_t *
+pixmap_create_vector(int width, int height)
+{
+  pixmap_t *pm = calloc(1, sizeof(pixmap_t));
+  pm->pm_refcount = 1;
+  pm->pm_capacity = 256;
+  pm->pm_width = width;
+  pm->pm_height = height;
+  pm->pm_data = malloc(pm->pm_capacity * sizeof(int32_t));
+  if(pm->pm_data == NULL) {
+    free(pm);
+    return NULL;
+  }
+  pm->pm_type = PIXMAP_VECTOR;
+  return pm;
+}
+
+
+/**
+ *
+ */
+static const char vec_cmd_len[] = {
+  [VC_SET_FILL_ENABLE] = 1,
+  [VC_SET_FILL_COLOR] = 1,
+  [VC_SET_STROKE_WIDTH] = 1,
+  [VC_SET_STROKE_COLOR] = 1,
+  [VC_MOVE_TO] = 2,
+  [VC_LINE_TO] = 2,
+  [VC_CUBIC_TO] = 6,
+};
+
+
+/**
+ *
+ */
+static void
+vec_realloc(pixmap_t *pm, vec_cmd_t cmd)
+{
+  int len = vec_cmd_len[cmd] + 1;
+  if(pm->pm_used + len > pm->pm_capacity) {
+    pm->pm_capacity = 2 * pm->pm_capacity + len + 16;
+    pm->pm_data = realloc(pm->pm_data, pm->pm_capacity * sizeof(float));
+  }
+}
+
+
+/**
+ *
+ */
+void
+vec_emit_0(pixmap_t *pm, vec_cmd_t cmd)
+{
+  vec_realloc(pm, cmd);
+  pm->pm_int[pm->pm_used++] = cmd;
+}
+
+
+/**
+ *
+ */
+void
+vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int32_t i)
+{
+  vec_realloc(pm, cmd);
+
+  switch(cmd) {
+  case VC_SET_FILL_COLOR:
+  case VC_SET_STROKE_COLOR:
+    pm->pm_flags |= PIXMAP_COLORIZED;
+    break;
+  default:
+    break;
+  }
+
+  pm->pm_int[pm->pm_used++] = cmd;
+  pm->pm_int[pm->pm_used++] = i;
+}
+
+
+/**
+ *
+ */
+void
+vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a)
+{
+  vec_realloc(pm, cmd);
+  pm->pm_int[pm->pm_used++] = cmd;
+  pm->pm_flt[pm->pm_used++] = a[0];
+  pm->pm_flt[pm->pm_used++] = a[1];
+}
+
+
+/**
+ *
+ */
+void
+vec_emit_f3(pixmap_t *pm, vec_cmd_t cmd, const float *a, const float *b, const float *c)
+{
+  vec_realloc(pm, cmd);
+  int ptr = pm->pm_used;
+  pm->pm_int[ptr+0] = cmd;
+  pm->pm_flt[ptr+1] = a[0];
+  pm->pm_flt[ptr+2] = a[1];
+  pm->pm_flt[ptr+3] = b[0];
+  pm->pm_flt[ptr+4] = b[1];
+  pm->pm_flt[ptr+5] = c[0];
+  pm->pm_flt[ptr+6] = c[1];
+  pm->pm_used = ptr + 7;
+}
+
 
 /**
  *

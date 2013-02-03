@@ -268,6 +268,9 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
     if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding) {
       pm = pixmap_decode(pm, im, errbuf, errlen);
 
+      if(pm->pm_type == PIXMAP_VECTOR)
+        pm = pixmap_rasterize_ft(pm);
+
       if(im->im_corner_radius)
 	pm = pixmap_rounded_corners(pm, im->im_corner_radius,
 				    im->im_corner_selection);
