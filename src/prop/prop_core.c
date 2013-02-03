@@ -1964,7 +1964,8 @@ prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
 {
   prop_t *parent;
 
-  assert(p != before);
+  if(p == before)
+    return;
 
   if(TAILQ_NEXT(p, hp_parent_link) != before) {
     parent = p->hp_parent;
@@ -1979,8 +1980,6 @@ prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
 void
 prop_req_move(prop_t *p, prop_t *before)
 {
-  if(p == before)
-    return;
   hts_mutex_lock(&prop_mutex);
   prop_req_move0(p, before, NULL);
   hts_mutex_unlock(&prop_mutex);
