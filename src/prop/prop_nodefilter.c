@@ -81,11 +81,13 @@ typedef struct nfnode {
   struct prop_nf *nf;
   char inserted:1;
   char sortkey_type[MAX_SORT_KEYS];
+
 #define SORTKEY_NONE  0
 #define SORTKEY_RSTR  1
 #define SORTKEY_INT   2
 #define SORTKEY_FLOAT 3
 #define SORTKEY_CSTR  4
+#define SORTKEY_VOID  5
 
   prop_sub_t *sortsub[MAX_SORT_KEYS];
 
@@ -603,7 +605,7 @@ nf_set_sortkey_x(int x, nfnode_t *nfn, prop_event_t event, va_list ap)
     break;
 
   default:
-    nfn->sortkey_type[x] = SORTKEY_NONE;
+    nfn->sortkey_type[x] = SORTKEY_VOID;
     break;
   }
   nf_insert_node(nfn->nf, nfn);
@@ -912,9 +914,9 @@ prop_nf_release0(struct prop_nf *pnf)
 
   assert(TAILQ_FIRST(&pnf->in) == NULL);
   if(pnf->sorted) {
-    assert(TAILQ_FIRST(&pnf->out_queue) == NULL);
-  } else {
     assert(pnf->out_tree.root == NULL);
+  } else {
+    assert(TAILQ_FIRST(&pnf->out_queue) == NULL);
   }
   if(pnf->filtersub != NULL)
     prop_unsubscribe0(pnf->filtersub);
