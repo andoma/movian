@@ -31,12 +31,14 @@
 #include "prop_nodefilter.h"
 #include "misc/pixmap.h"
 #include "misc/str.h"
+#include "misc/redblack.h"
 
 #define MAX_SORT_KEYS 4
 
 TAILQ_HEAD(nfnode_queue, nfnode);
 LIST_HEAD(nfn_pred_list, nfn_pred);
 LIST_HEAD(prop_nf_pred_list, prop_nf_pred);
+RB_HEAD(nfnode_tree, nfnode);
 
 
 /**
@@ -64,8 +66,11 @@ typedef struct nfn_pred {
  */
 typedef struct nfnode {
   TAILQ_ENTRY(nfnode) in_link;
-  TAILQ_ENTRY(nfnode) out_link;
-  
+  union {
+    TAILQ_ENTRY(nfnode) out_queue_link;
+    RB_ENTRY(nfnode) out_tree_link;
+  };
+
   prop_t *in;
   prop_t *out;
 
@@ -75,7 +80,6 @@ typedef struct nfnode {
 
   struct prop_nf *nf;
   char inserted:1;
-  char frozen:1;
   char sortkey_type[MAX_SORT_KEYS];
 #define SORTKEY_NONE  0
 #define SORTKEY_RSTR  1
@@ -126,6 +130,7 @@ typedef struct prop_nf {
   int pred_tally;
 
   int nodecount;
+  int sorted;
   prop_t *src;
   prop_t *dst;
   prop_sub_t *srcsub;
@@ -134,12 +139,14 @@ typedef struct prop_nf {
   prop_sub_t *filtersub;
 
   struct nfnode_queue in;
-  struct nfnode_queue out;
+  struct nfnode_queue out_queue;
+  struct nfnode_tree out_tree;
 
   char *filter;
 
   char *sortkey[MAX_SORT_KEYS];
   sortmap_t *sortmap[MAX_SORT_KEYS];
+
 
   struct prop_nf_pred_list preds;
 
@@ -317,37 +324,6 @@ nf_egress_cmp(const nfnode_t *a, const nfnode_t *b)
 }
 
 
-/**
- *
- */
-static int
-nf_sort_cmp(const void *A, const void *B)
-{
-  const nfnode_t *a = *(const nfnode_t **)A;
-  const nfnode_t *b = *(const nfnode_t **)B;
-  return nf_egress_cmp(a, b);
-}
-
-/**
- * Resort the entire list
- */
-static void
-nf_sort(prop_nf_t *nf)
-{
-  int i = 0;
-  nfnode_t *nfn, **v = malloc(nf->nodecount * sizeof(nfnode_t *));
-
-  TAILQ_FOREACH(nfn, &nf->out, out_link)
-    v[i++] = nfn;
-
-  assert(i == nf->nodecount);
-  qsort(v, i, sizeof(nfnode_t *), nf_sort_cmp);
-
-  TAILQ_INIT(&nf->out);
-  for(i = 0; i < nf->nodecount; i++)
-    TAILQ_INSERT_TAIL(&nf->out, v[i], out_link);
-  free(v);
-}
 
 
 /**
@@ -359,15 +335,23 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
 {
   nfnode_t *b;
 
-  if(nfn->inserted)
-    TAILQ_REMOVE(&nf->out, nfn, out_link);
+  if(nfn->inserted) {
+
+    if(nf->sorted) {
+      RB_REMOVE(&nf->out_tree, nfn, out_tree_link);
+    } else {
+      TAILQ_REMOVE(&nf->out_queue, nfn, out_queue_link);
+    }
+  }
 
   nfn->inserted = 1;
 
-  if(nfn->sortkey_type[0] == SORTKEY_NONE &&
-     nfn->sortkey_type[1] == SORTKEY_NONE &&
-     nfn->sortkey_type[2] == SORTKEY_NONE &&
-     nfn->sortkey_type[3] == SORTKEY_NONE) {
+  if(nf->sorted) {
+
+    if(RB_INSERT_SORTED(&nf->out_tree, nfn, out_tree_link, nf_egress_cmp))
+      abort();
+
+  } else {
 
     b = TAILQ_NEXT(nfn, in_link);
     
@@ -375,14 +359,10 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
       b = TAILQ_NEXT(b, in_link);
 
     if(b != NULL) {
-      TAILQ_INSERT_BEFORE(b, nfn, out_link);
+      TAILQ_INSERT_BEFORE(b, nfn, out_queue_link);
     } else {
-      TAILQ_INSERT_TAIL(&nf->out, nfn, out_link);
+      TAILQ_INSERT_TAIL(&nf->out_queue, nfn, out_queue_link);
     }
-
-  } else {
-
-    TAILQ_INSERT_SORTED(&nf->out, nfn, out_link, nf_egress_cmp);
   }
 
   if(nfn->out == NULL)
@@ -390,7 +370,11 @@ nf_insert_node(prop_nf_t *nf, nfnode_t *nfn)
 
   b = nfn;
   do {
-    b = TAILQ_NEXT(b, out_link);
+    if(nf->sorted) {
+      b = RB_NEXT(b, out_tree_link);
+    } else {
+      b = TAILQ_NEXT(b, out_queue_link);
+    }
   } while(b != NULL && b->out == NULL);
 
   prop_move0(nfn->out, b ? b->out : NULL, nf->dstsub);
@@ -430,7 +414,11 @@ nf_update_egress(prop_nf_t *nf, nfnode_t *nfn)
 
     b = nfn;
     do {
-      b = TAILQ_NEXT(b, out_link);
+      if(nf->sorted) {
+        b = RB_NEXT(b, out_tree_link);
+      } else {
+        b = TAILQ_NEXT(b, out_queue_link);
+      }
     } while(b != NULL && b->out == NULL);
 
     prop_set_parent0(nfn->out, nf->dst, b ? b->out : NULL, nf->dstsub);
@@ -618,9 +606,6 @@ nf_set_sortkey_x(int x, nfnode_t *nfn, prop_event_t event, va_list ap)
     nfn->sortkey_type[x] = SORTKEY_NONE;
     break;
   }
-  if(nfn->frozen) {
-    return;
-  }
   nf_insert_node(nfn->nf, nfn);
   nf_update_egress(nfn->nf, nfn);
 }
@@ -781,18 +766,10 @@ nf_add_nodes(prop_nf_t *nf, prop_vec_t *pv, nfnode_t *b)
     nfn->nf = nf;
     nfn->in = p;
 
-    nfn->frozen = 1;
-
     nf_update_multisub(nf, nfn);
     nfn_insert_preds(nf, nfn);
 
     nf_update_order_all(nf, nfn);
-  }
-
-  nf_sort(nf);
-
-  TAILQ_FOREACH(nfn, &nf->out, out_link) {
-    nfn->frozen = 0;
     nf_update_egress(nf, nfn);
   }
 }
@@ -809,7 +786,11 @@ nf_del_node(prop_nf_t *nf, nfnode_t *nfn)
 
   nf->nodecount--;
   TAILQ_REMOVE(&nf->in, nfn, in_link);
-  TAILQ_REMOVE(&nf->out, nfn, out_link);
+  if(nf->sorted) {
+    RB_REMOVE(&nf->out_tree, nfn, out_tree_link);
+  } else {
+    TAILQ_REMOVE(&nf->out_queue, nfn, out_queue_link);
+  }
 
   if(nfn->out != NULL)
     prop_destroy0(nfn->out);
@@ -930,8 +911,11 @@ prop_nf_release0(struct prop_nf *pnf)
   prop_destroy0(pnf->dst);
 
   assert(TAILQ_FIRST(&pnf->in) == NULL);
-  assert(TAILQ_FIRST(&pnf->out) == NULL);
-
+  if(pnf->sorted) {
+    assert(TAILQ_FIRST(&pnf->out_queue) == NULL);
+  } else {
+    assert(pnf->out_tree.root == NULL);
+  }
   if(pnf->filtersub != NULL)
     prop_unsubscribe0(pnf->filtersub);
 
@@ -943,9 +927,6 @@ prop_nf_release0(struct prop_nf *pnf)
   free(pnf->filter);
 
   nf_destroy_preds(pnf);
-
-  assert(TAILQ_FIRST(&pnf->in) == NULL);
-  assert(TAILQ_FIRST(&pnf->out)== NULL);
   free(pnf);
 }
 
@@ -1150,7 +1131,7 @@ prop_nf_create(prop_t *dst, prop_t *src, prop_t *filter, int flags)
   prop_nf_t *nf = calloc(1, sizeof(prop_nf_t));
   nf->flags = flags;
   TAILQ_INIT(&nf->in);
-  TAILQ_INIT(&nf->out);
+  TAILQ_INIT(&nf->out_queue);
 
   nf->dst = flags & PROP_NF_TAKE_DST_OWNERSHIP ? dst : prop_xref_addref(dst);
   nf->src = src;
@@ -1340,6 +1321,19 @@ prop_nf_pred_remove(struct prop_nf *nf, int id)
 /**
  *
  */
+static int
+chksorted(const struct prop_nf *nf)
+{
+  int i;
+  for(i = 0; i < MAX_SORT_KEYS; i++)
+    if(nf->sortkey[i])
+      return 1;
+  return 0;
+}
+
+/**
+ *
+ */
 void
 prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
 	     const prop_nf_sort_strmap_t *map, int hide_on_missing)
@@ -1372,6 +1366,20 @@ prop_nf_sort(struct prop_nf *nf, const char *path, int desc, unsigned int idx,
     nf->sortkey[idx] = NULL;
     nf->sortorder[idx] = 0;
     nf->sort_hide_on_missing[idx] = 0;
+  }
+
+
+  if(nf->sorted != chksorted(nf)) {
+    // Filter switched to sorted mode
+    TAILQ_FOREACH(nfn, &nf->in, in_link)
+      nfn->inserted = 0;
+
+    nf->sorted = !nf->sorted;
+    if(nf->sorted) {
+      RB_INIT(&nf->out_tree);
+    } else {
+      TAILQ_INIT(&nf->out_queue);
+    }
   }
 
   TAILQ_FOREACH(nfn, &nf->in, in_link)
