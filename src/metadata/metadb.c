@@ -1866,7 +1866,7 @@ metadb_get_videoitem(void *db, const char *url)
  */
 int
 metadb_get_videoinfo(void *db, const char *url,
-		     struct metadata_source_list *sources,
+		     struct metadata_source_queue *sources,
 		     int *fixed_ds, metadata_t **mdp)
 {
   int rc;
@@ -1937,7 +1937,7 @@ metadb_get_videoinfo(void *db, const char *url,
     if(sources != NULL) {
       metadata_source_t *ms;
 
-      LIST_FOREACH(ms, sources, ms_link)
+      TAILQ_FOREACH(ms, sources, ms_link)
 	if(ms->ms_id == dsid && cfgid == ms->ms_cfgid) {
 	  ms->ms_mark = 1;
 	  ms->ms_qtype = qtype;

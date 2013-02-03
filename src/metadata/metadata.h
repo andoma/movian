@@ -213,7 +213,7 @@ typedef struct metadata {
 } metadata_t;
 
 
-LIST_HEAD(metadata_source_list, metadata_source);
+TAILQ_HEAD(metadata_source_queue, metadata_source);
 
 /**
  *
@@ -264,12 +264,13 @@ typedef enum {
  *
  */
 typedef struct metadata_source {
-  LIST_ENTRY(metadata_source) ms_link;
+  TAILQ_ENTRY(metadata_source) ms_link;
   char *ms_name;
   char *ms_description;
   int ms_prio;
   int ms_id;
   int ms_enabled;
+  int ms_type;
 
   const metadata_source_funcs_t *ms_funcs;
   struct prop *ms_settings;
@@ -405,7 +406,7 @@ int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				int64_t cfgid);
 
 int metadb_get_videoinfo(void *db, const char *url,
-			 struct metadata_source_list *sources,
+			 struct metadata_source_queue *sources,
 			 int *fixed_ds, metadata_t **mdp);
 
 int64_t metadb_get_videoitem(void *db, const char *url);
