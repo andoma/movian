@@ -1,0 +1,3 @@
+ps3: Remove "/dev_hdd0/tmp/turnoff" before shutting down system
+
+Fixes #1594
