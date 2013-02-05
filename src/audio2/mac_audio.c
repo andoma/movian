@@ -6,12 +6,13 @@
 #include "audio.h"
 #include "media.h"
 
-#define NUM_BUFS 3
+#define NUM_BUFS 8
 
 typedef struct decoder {
   audio_decoder_t ad;
   AudioQueueRef aq;
   int framesize;
+  int underrun;
   struct {
     AudioQueueBufferRef buf;
     int avail;
@@ -41,7 +42,7 @@ return_buf(void *aux, AudioQueueRef aq, AudioQueueBufferRef buf)
           tavail++;
       }
       if(tavail == NUM_BUFS)
-        printf("Underrun!\n");
+        d->underrun = 1;
       return;
     }
   }
@@ -239,6 +240,11 @@ mac_audio_deliver(audio_decoder_t *ad, int samples,
 {
   decoder_t *d = (decoder_t *)ad;
   int bytes = samples * d->framesize;
+
+  if(d->underrun) {
+    d->underrun = 0;
+    usleep(40000);
+  }
 
   AudioQueueBufferRef b = getbuf(d, bytes);
   if(b == NULL)
