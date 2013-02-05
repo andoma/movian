@@ -196,7 +196,7 @@ static const char vec_cmd_len[] = {
  *
  */
 static void
-vec_realloc(pixmap_t *pm, vec_cmd_t cmd)
+vec_resize(pixmap_t *pm, vec_cmd_t cmd)
 {
   int len = vec_cmd_len[cmd] + 1;
   if(pm->pm_used + len > pm->pm_capacity) {
@@ -212,7 +212,7 @@ vec_realloc(pixmap_t *pm, vec_cmd_t cmd)
 void
 vec_emit_0(pixmap_t *pm, vec_cmd_t cmd)
 {
-  vec_realloc(pm, cmd);
+  vec_resize(pm, cmd);
   pm->pm_int[pm->pm_used++] = cmd;
 }
 
@@ -223,7 +223,7 @@ vec_emit_0(pixmap_t *pm, vec_cmd_t cmd)
 void
 vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int32_t i)
 {
-  vec_realloc(pm, cmd);
+  vec_resize(pm, cmd);
 
   switch(cmd) {
   case VC_SET_FILL_COLOR:
@@ -245,7 +245,7 @@ vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int32_t i)
 void
 vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a)
 {
-  vec_realloc(pm, cmd);
+  vec_resize(pm, cmd);
   pm->pm_int[pm->pm_used++] = cmd;
   pm->pm_flt[pm->pm_used++] = a[0];
   pm->pm_flt[pm->pm_used++] = a[1];
@@ -258,7 +258,7 @@ vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a)
 void
 vec_emit_f3(pixmap_t *pm, vec_cmd_t cmd, const float *a, const float *b, const float *c)
 {
-  vec_realloc(pm, cmd);
+  vec_resize(pm, cmd);
   int ptr = pm->pm_used;
   pm->pm_int[ptr+0] = cmd;
   pm->pm_flt[ptr+1] = a[0];
