@@ -1020,6 +1020,21 @@ js_page_items(JSContext *cx, JSObject *obj, uintN argc,
 }
 
 
+
+
+/**
+ *
+ */
+static JSBool 
+js_page_flush(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  prop_destroy_childs(jm->jm_nodes);
+  return JS_TRUE;
+}
+
+
 /**
  *
  */
@@ -1047,6 +1062,7 @@ static JSFunctionSpec model_functions[] = {
     JS_FS("appendPassiveItem",  js_appendPassiveItem, 1, 0, 0),
     JS_FS("appendAction",       js_appendAction,      3, 0, 0),
     JS_FS("appendModel",        js_appendModel,       2, 0, 1),
+    JS_FS("flush",              js_page_flush,        0, 0, 0),
     JS_FS_END
 };
 
