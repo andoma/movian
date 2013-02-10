@@ -17,8 +17,7 @@ msg: Ta bort denna sida från bokmärken
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Exit Showtime
-# Missing translation
-msg: 
+msg: Avsluta Showtime
 
 id: Go to Home screen
 msg: Gå till hemsidan
@@ -33,19 +32,16 @@ id: Playqueue
 msg: Spelkö
 
 id: Power off
-# Missing translation
-msg: 
+msg: Stäng av
 
 id: Reload current page
 msg: Ladda om nuvarande sida
 
 id: Suspend
-# Missing translation
-msg: 
+msg: Viloläge
 
 id: System
-# Missing translation
-msg: 
+msg: System
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -100,6 +96,9 @@ msg: Ljudinställningar
 
 id: Audio tracks
 msg: Ljudspår
+
+id: Chapters
+msg: Kapitel
 
 id: Seek by time
 msg: Sök per minut
@@ -192,8 +191,7 @@ id: Album
 msg: Album
 
 id: Artist
-# Missing translation
-msg: 
+msg: Artist
 
 id: Custom
 msg: Speciell
@@ -208,8 +206,7 @@ id: Slideshow
 msg: Bildspel
 
 id: Tvchannels
-# Missing translation
-msg: 
+msg: Tvkanaler
 
 id: View
 msg: Vy
@@ -224,8 +221,7 @@ msg: Hittade källor på lokala nätverket
 # ./glwskins/default/pages/home.view
 #
 id: Tiled
-# Missing translation
-msg: 
+msg: Brickor
 
 #
 # ./glwskins/default/pages/home_clist.view
@@ -238,6 +234,9 @@ msg: Ta bort
 
 id: Plugins
 msg: Plugin
+
+id: Search / Open URL
+msg: Sök / Öppna URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -303,16 +302,13 @@ msg: Ja
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-# Missing translation
-msg: 
+msg: Smal
 
 id: Main
-# Missing translation
-msg: 
+msg: Normal
 
 id: Subs
-# Missing translation
-msg: 
+msg: Undertexter
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -342,8 +338,7 @@ msg: Spår %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Pausad
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -412,8 +407,7 @@ msg: Uppspelningsstatus
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Sedd: 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -470,24 +464,13 @@ id: Master volume: %d dB
 msg: Huvudvolym: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Inställningar för opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Använd opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-# Missing translation
-msg: 
+msg: Språk (ISO 639-1 förkortning)
 
 id: Use original title
-# Missing translation
-msg: 
+msg: Använd orginaltitel
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -568,8 +551,7 @@ msg: Sökresultat för: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-# Missing translation
-msg: 
+msg: Album
 
 id: Automatic login when Showtime starts
 msg: Logga automatiskt in när Showtime startar
@@ -578,8 +560,7 @@ id: Collaborative
 msg: Kollaborativ
 
 id: Compilations
-# Missing translation
-msg: 
+msg: Samlingar
 
 id: Enable Spotify
 msg: Använd Spotify
@@ -618,8 +599,7 @@ id: Search result
 msg: Sökresultat
 
 id: Singles
-# Missing translation
-msg: 
+msg: Singlar
 
 id: Spotify friends
 msg: Vänner på Spotify
@@ -681,11 +661,23 @@ msg: Login misslyckades
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Datum
+id: Artists
+msg: Artister
+
+id: Date (newest first)
+msg: Datum (nyast först)
+
+id: Date (oldest first)
+msg: Datum (äldst först)
 
 id: Filename
 msg: Filnamn
+
+id: Indexed mode
+msg: Indexerat läge
+
+id: Off
+msg: Av
 
 id: Show only supported files
 msg: Visa bara spelbara filer
@@ -701,12 +693,6 @@ msg: Sortera på
 #
 id: Search using spotlight
 msg: Sök med spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Extern fil
 
 #
 # ./src/i18n.c
@@ -783,6 +769,12 @@ msg: Justera undertexter till videons storlek
 id: Audio delay
 msg: Ljuddelay
 
+id: Stretch video to fullscreen
+msg: Sträck ut videon över hela skärmen
+
+id: Stretch video to widescreen
+msg: Sträck ut videon horisontellt 
+
 id: Subtitle delay
 msg: Undertexterdelay
 
@@ -791,6 +783,12 @@ msg: Storlek på undertexter
 
 id: Video zoom
 msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indexerar
 
 #
 # ./src/metadata/metadata.c
@@ -802,8 +800,7 @@ id: Custom search query
 msg: Speciell sökfråga
 
 id: Custom title
-# Missing translation
-msg: 
+msg: Egen titel
 
 id: Embedded in file
 msg: Inbäddad i fil
@@ -832,6 +829,9 @@ msg: Metadatakälla
 id: Movie
 msg: Film
 
+id: Movie title
+msg: Filmtitel
+
 id: No data found
 msg: Ingen data funnet
 
@@ -842,11 +842,13 @@ id: Providers for Music
 msg: Leverantörer för music
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Videotjänster
 
 id: Refresh metadata
 msg: Ladda om metadata
+
+id: Title, Season, Episode
+msg: Titel, Säsong, Episod
 
 id: Track %d
 msg: Spår %d
@@ -861,8 +863,7 @@ id: filename
 msg: filnamn
 
 id: filename as TV episode
-# Missing translation
-msg: 
+msg: filnamn som TV-episod
 
 id: folder name
 msg: katalognamn
@@ -871,23 +872,19 @@ msg: katalognamn
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-# Missing translation
-msg: 
+msg: %d objekt borttagna
 
 id: Clear all metadata
-# Missing translation
-msg: 
+msg: Ta bort all metadata
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Att ta bort all mteadata betyder att du förlorar <b>all</b> information om:\n\nOm ett spår/film blivit spelat\nAntal gånger ett spår/film har blivit spelat\nÅterstartsposition\n\nÄr du säker?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Lägg till och ta bort saker på hemsidan
 
 id: Added new bookmark: %s
 msg: La till nytt bokmärke: %s
@@ -935,30 +932,25 @@ id: Available plugins
 msg: Tillgängliga plugin
 
 id: Background
-# Missing translation
-msg: 
+msg: Bakgrund
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Betatestlösenord
 
 id: Browse available plugins
 msg: Lista tillgängliga plugin
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Browsing
 
 id: Cloud services
-# Missing translation
-msg: 
+msg: Molntjänster
 
 id: Corrupt plugin bundle
 msg: Pluginfilen är korrupt
 
 id: Default
-# Missing translation
-msg: 
+msg: Standard
 
 id: Disk write error
 msg: Kunde ej skriva till disk
@@ -970,34 +962,28 @@ id: File open error
 msg: Kunde ej öppna fil
 
 id: Home page
-# Missing translation
-msg: 
+msg: Hemsida
 
 id: Installed plugins
 msg: Installerade plugin
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Installerad version är högre än den som är tillgänglig
 
 id: Installing
 msg: Installerar
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Lista av album
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Laddskärm
 
 id: Movies
-# Missing translation
-msg: 
+msg: Filmer
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Musikstreaming
 
 id: Not installable
 msg: Ej installerbar
@@ -1009,20 +995,16 @@ id: Not upgradable
 msg: Inte uppgraderingsbar
 
 id: Online TV
-# Missing translation
-msg: 
+msg: OnlineTV
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Föredragna vyer från plugin
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Skärmsläckare
 
 id: TV channels
-# Missing translation
-msg: 
+msg: TV-kanaler
 
 id: Unable to load plugin.json: %s
 msg: Kan ej ladda plugin.json: %s
@@ -1031,8 +1013,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Kan ej ladda plugin.json: Felaktigt formaterad JSON
 
 id: Uncategorized
-# Missing translation
-msg: 
+msg: Okategoriserat
 
 id: Up to date
 msg: Senaste version
@@ -1044,12 +1025,10 @@ id: Upgraded plugin %s to version %s
 msg: Upgraderade plugin %s till version %s
 
 id: User interface extensions
-# Missing translation
-msg: 
+msg: Användargränsnitt
 
 id: Video streaming
-# Missing translation
-msg: 
+msg: Videoströmning
 
 #
 # ./src/runcontrol.c
@@ -1094,8 +1073,7 @@ id: Discovered media sources
 msg: Upptäckta mediakällor
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Fonter och användargränsnitt
 
 id: General
 msg: Generella inställningar
@@ -1104,8 +1082,7 @@ id: Global settings
 msg: Globala inställningar
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Utseende och stil
 
 id: Settings useful for developers
 msg: Inställningar användbara för utvecklare
@@ -1114,31 +1091,49 @@ id: System related settings
 msg: Systemrelaterade inställningar
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Extern fil
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Standard
+
+id: Fonts
+msg: Typsnitt
+
+id: Installed fonts
+msg: Installerade typsnitt
+
 id: Narrow text
-# Missing translation
-msg: 
+msg: Smal text
+
+id: Reset main font to default
+msg: Återställ huvudtypsnitt till standard
+
+id: Reset narrow font to default
+msg: Återställ smalt typsnitt till standard
+
+id: Reset subtitle font to default
+msg: Återställ typsnitt för undertexter
 
 id: Unable to load %s -- %s
-# Missing translation
-msg: 
+msg: Kan ej ladda %s -- %s
 
 id: Unable to open %s for writing
-# Missing translation
-msg: 
+msg: Kan ej öppna %s för skrivning
 
 id: Unable to write to %s
-# Missing translation
-msg: 
+msg: Kan ej skriva till %s
 
 id: Use font %s for
-# Missing translation
-msg: 
+msg: Använd typsnitt %s till
 
 id: User interface
-# Missing translation
-msg: 
+msg: Användargränsnitt
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1290,9 +1285,6 @@ msg: Maximal upplösning för deinterlacing
 id: No limit
 msg: Ingen begränsning
 
-id: Off
-msg: Av
-
 id: Outline color
 msg: Färg på konturer
 
@@ -1313,12 +1305,6 @@ msg: Färg på skuggor
 
 id: Shadow offset
 msg: Skuggoffset
-
-id: Stretch video to fullscreen
-msg: Sträck ut videon över hela skärmen
-
-id: Stretch video to widescreen
-msg: Sträck ut videon horisontellt 
 
 id: Subtitle position
 msg: Position på undertexter

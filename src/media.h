@@ -83,6 +83,53 @@ TAILQ_HEAD(media_buf_queue, media_buf);
 TAILQ_HEAD(media_pipe_queue, media_pipe);
 LIST_HEAD(media_pipe_list, media_pipe);
 TAILQ_HEAD(media_track_queue, media_track);
+TAILQ_HEAD(video_overlay_queue, video_overlay);
+TAILQ_HEAD(dvdspu_queue, dvdspu);
+
+/**
+ *
+ */
+typedef struct frame_info {
+  uint8_t *fi_data[4];
+  int fi_pitch[4];
+
+  uint32_t fi_type;
+
+  int fi_width;
+  int fi_height;
+  int64_t fi_pts;
+  int64_t fi_delta;
+  int fi_epoch;
+  int fi_duration;
+
+  int fi_dar_num;
+  int fi_dar_den;
+
+  int fi_hshift;
+  int fi_vshift;
+
+  int fi_pix_fmt;
+
+  char fi_interlaced;     // Frame delivered is interlaced 
+  char fi_tff;            // For interlaced frame, top-field-first
+  char fi_prescaled;      // Output frame is prescaled to requested size
+  char fi_drive_clock;
+
+  enum {
+    COLOR_SPACE_UNSET = 0,
+    COLOR_SPACE_BT_709,
+    COLOR_SPACE_BT_601,
+    COLOR_SPACE_SMPTE_240M,
+  } fi_color_space;
+
+} frame_info_t;
+
+
+/**
+ *
+ */
+typedef void (video_frame_deliver_t)(const frame_info_t *info, void *opaque);
+
 
 /**
  *
@@ -100,7 +147,8 @@ typedef struct media_codec {
 
   void *opaque;
 
-  // If decode returns 1 the accelerator keeps ownership of mb
+  struct media_pipe *mp;
+
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
@@ -188,6 +236,7 @@ typedef struct media_buf {
 typedef struct media_queue {
   struct media_buf_queue mq_q_data;
   struct media_buf_queue mq_q_ctrl;
+  struct media_buf_queue mq_q_aux;
 
   unsigned int mq_packets_current;    /* Packets currently in queue */
 
@@ -275,7 +324,14 @@ typedef struct media_pipe {
   hts_cond_t mp_backpressure;
 
   media_queue_t mp_video, mp_audio;
+
+  void *mp_video_frame_opaque;
+  video_frame_deliver_t *mp_video_frame_deliver;
   
+  hts_mutex_t mp_overlay_mutex; // Also protects mp_spu_queue
+  struct video_overlay_queue mp_overlay_queue;
+  struct dvdspu_queue mp_spu_queue;
+
   hts_mutex_t mp_clock_mutex;
   int64_t mp_audio_clock;
   int64_t mp_audio_clock_avtime;
@@ -366,6 +422,8 @@ typedef struct media_pipe {
   struct setting *mp_setting_sub_scale;  // Subtitle scaling
   struct setting *mp_setting_sub_on_video; // Subtitle always on video
   struct setting *mp_setting_vzoom;      // Video zoom in %
+  struct setting *mp_setting_hstretch;   // Horizontal stretch
+  struct setting *mp_setting_fstretch;   // Fullscreen stretch
   struct setting *mp_setting_vdpau_deinterlace;      // Deinterlace interlaced content
 
 } media_pipe_t;
@@ -479,8 +537,6 @@ void mp_send_cmd(media_pipe_t *mp, media_queue_t *mq, int cmd);
 void mp_send_cmd_data(media_pipe_t *mp, media_queue_t *mq, int cmd, void *d);
 void mp_send_cmd_u32(media_pipe_t *mp, media_queue_t *mq, int cmd, 
 		     uint32_t u);
-
-media_buf_t *mp_deq(media_pipe_t *mp, media_queue_t *mq);
 
 void mp_flush(media_pipe_t *mp, int blackout);
 

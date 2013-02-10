@@ -1008,7 +1008,6 @@ eval_dynamic_widget_meta_sig(glw_t *w, void *opaque,
      signal == GLW_SIGNAL_CAN_SCROLL_CHANGED ||
      signal == GLW_SIGNAL_FULLWINDOW_CONSTRAINT_CHANGED ||
      signal == GLW_SIGNAL_READINESS ||
-     signal == GLW_SIGNAL_FOCUS_DISTANCE_CHANGED ||
      signal == GLW_SIGNAL_RESELECT_CHANGED)
     eval_dynamic(w, opaque, NULL, NULL, NULL, NULL);
   return 0;
@@ -3169,8 +3168,8 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];       /* Target name */
   token_t *b = argv[1];       /* Event */
   token_t *r;
-  int action;
-
+  int action = 0;
+  int uc = 0;
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
 
@@ -3178,13 +3177,24 @@ glwf_targetedEvent(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "event(): "
 			    "First argument is not a string");
   
-  if(b->type != TOKEN_IDENTIFIER ||
-     (action = action_str2code(rstr_get(b->t_rstring))) < 0)
-    return glw_view_seterr(ec->ei, b, "event(): "
-			    "Invalid target event");
+  if(b->type == TOKEN_IDENTIFIER) {
+
+    action = action_str2code(rstr_get(b->t_rstring));
+    if(action < 0)
+      return glw_view_seterr(ec->ei, b,
+			     "targetedEvent(): Invalid action");
+  } else if(b->type == TOKEN_RSTRING) {
+
+    const char *str = rstr_get(b->t_rstring);
+    uc = utf8_get(&str);
+  } else {
+    return glw_view_seterr(ec->ei, b,
+			   "targetedEvent(): Invalid second argument");
+  }
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action);
+  r->t_gem = glw_event_map_internal_create(rstr_get(a->t_rstring), action,
+					   uc);
   eval_push(ec, r);
   return 0;
 }
@@ -3207,7 +3217,7 @@ glwf_event(glw_view_eval_context_t *ec, struct token *self,
     return glw_view_seterr(ec->ei, a, "event(): Invalid target event");
   
   r = eval_alloc(self, ec, TOKEN_EVENT);
-  r->t_gem = glw_event_map_internal_create(NULL, action);
+  r->t_gem = glw_event_map_internal_create(NULL, action, 0);
   eval_push(ec, r);
   return 0;
 }
@@ -3435,7 +3445,7 @@ glwf_iir(glw_view_eval_context_t *ec, struct token *self,
   if(springmode && f > self->t_extra_float)
     self->t_extra_float = f;
   else
-    self->t_extra_float =  GLW_LP(b->t_float, self->t_extra_float, f);
+    glw_lp(&self->t_extra_float, ec->w->glw_root, f, 1.0f / b->t_float);
 
   y = self->t_extra_float * 1000.;
   r = eval_alloc(self, ec, TOKEN_FLOAT);
@@ -3965,13 +3975,18 @@ static int
 glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
 		    token_t **argv, unsigned int argc)
 {
-  token_t *a = argv[0];
+  token_t *a, *b;
   token_t *r;
   char tmp[30];
   const char *str = NULL;
   int s = 0;
 
-  a = token_resolve(ec, a);
+  if(argc < 1 || argc > 2)
+    return glw_view_seterr(ec->ei, self, 
+			    "value2duration(): Invalid number of arguments");
+
+  a =            token_resolve(ec, argv[0]);
+  b = argc > 1 ? token_resolve(ec, argv[1]) : NULL;
 
   if(a == NULL) {
     str = "";
@@ -3996,7 +4011,7 @@ glwf_value2duration(glw_view_eval_context_t *ec, struct token *self,
       int m = s / 60;
       int h = s / 3600;
   
-      if(h > 0) {
+      if(h > 0 || (b != NULL && token2bool(b))) {
 	snprintf(tmp, sizeof(tmp), "%d:%02d:%02d", h, m % 60, s % 60);
       } else {
 	snprintf(tmp, sizeof(tmp), "%d:%02d", m % 60, s % 60);
@@ -4227,7 +4242,6 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
   token_t *r;
   glw_t *w;
-  char buf[100];
 
   if((a = token_resolve(ec, a)) == NULL)
     return -1;
@@ -4235,9 +4249,9 @@ glwf_getCaption(glw_view_eval_context_t *ec, struct token *self,
   if(a != NULL && a->type == TOKEN_RSTRING) {
     w = glw_find_neighbour(ec->w, rstr_get(a->t_rstring));
 
-    if(w != NULL && !glw_get_text(w, buf, sizeof(buf))) {
+    if(w != NULL && w->glw_class->gc_get_text != NULL) {
       r = eval_alloc(self, ec, TOKEN_RSTRING);
-      r->t_rstring = rstr_alloc(buf);
+      r->t_rstring = rstr_alloc(w->glw_class->gc_get_text(w));
       eval_push(ec, r);
       return 0;
     }
@@ -4828,22 +4842,6 @@ glwf_isReady(glw_view_eval_context_t *ec, struct token *self,
 
 
 /**
- * Return focus distance
- */
-static int 
-glwf_focusDistance(glw_view_eval_context_t *ec, struct token *self,
-		   token_t **argv, unsigned int argc)
-{
-  token_t *r = eval_alloc(self, ec, TOKEN_INT);
-  glw_t *w = ec->w;
-  r->t_int = w->glw_focus_distance;
-  ec->dynamic_eval |= GLW_VIEW_DYNAMIC_EVAL_WIDGET_META;
-  eval_push(ec, r);
-  return 0;
-}
-
-
-/**
  *
  */
 static int 
@@ -4957,19 +4955,13 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
 		token_t **argv, unsigned int argc)
 {
   token_t *a, *b, *c, *d, *r;
-
-  if(argc < 2)
+  int sortidx = 0;
+  if(argc < 1)
     return glw_view_seterr(ec->ei, self, "propSorter(): "
 			   "Too few arguments");
 
   if((a = resolve_property_name2(ec, argv[0])) == NULL)
     return -1;
-  if((b = token_resolve(ec, argv[1])) == NULL)
-    return -1;
-
-  if(b->type != TOKEN_RSTRING)
-    return glw_view_seterr(ec->ei, a, "propSorter(): "
-			   "Second argument is not a string");
   
   if(self->t_extra != NULL)
     prop_nf_release(self->t_extra);
@@ -4982,53 +4974,96 @@ glwf_propSorter(glw_view_eval_context_t *ec, struct token *self,
   self->t_extra = prop_nf_create(r->t_prop, a->t_prop, NULL,
 				 PROP_NF_TAKE_DST_OWNERSHIP);
 
-  prop_nf_sort(self->t_extra, rstr_get(b->t_rstring), 0, 0, NULL, 1);
+  argc -= 1;
+  argv += 1;
 
-  argc -= 2;
-  argv += 2;
-  for(; argc >= 4; argc -= 4, argv += 4) {
-
+  while(argc > 1) {
     if((a = token_resolve(ec, argv[0])) == NULL)
       return -1;
-    if((b = token_resolve(ec, argv[1])) == NULL)
-      return -1;
-    if((c = token_resolve(ec, argv[2])) == NULL)
-      return -1;
-    if((d = token_resolve(ec, argv[3])) == NULL)
-      return -1;
-    
-    const char *path = token_as_string(a);
-    if(path == NULL)
-      continue;
 
-    if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
-      continue;
+    if(a->type != TOKEN_IDENTIFIER)
+ 	return glw_view_seterr(ec->ei, argv[0], "propSorter(): "
+			       "invalid command token");
 
-    prop_nf_cmp_t cf;
-    if(!strcmp(rstr_get(b->t_rstring), "eq"))
-      cf = PROP_NF_CMP_EQ;
-    else if(!strcmp(rstr_get(b->t_rstring), "neq"))
-      cf = PROP_NF_CMP_NEQ;
-    else
-      continue;
+    const char *cmd = rstr_get(a->t_rstring);
 
-    prop_nf_mode_t mode;
-    if(!strcmp(rstr_get(d->t_rstring), "include"))
-      mode = PROP_NF_MODE_INCLUDE;
-    else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
-      mode = PROP_NF_MODE_EXCLUDE;
-    else
-      continue;
-    
-    const char *val = token_as_string(c);
+    argc -= 1;
+    argv += 1;
 
-    if(val != NULL) {
-      prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+    if(!strcmp(cmd, "filter")) {
+      if(argc < 4)
+	return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			       "too few arguments (%d) for filter command",
+			       argc);
+
+      if((a = token_resolve(ec, argv[0])) == NULL)
+	return -1;
+      if((b = token_resolve(ec, argv[1])) == NULL)
+	return -1;
+      if((c = token_resolve(ec, argv[2])) == NULL)
+	return -1;
+      if((d = token_resolve(ec, argv[3])) == NULL)
+	return -1;
+      
+      argc -= 4;
+      argv += 4;
+
+      const char *path = token_as_string(a);
+      if(path == NULL)
+	continue;
+      
+      if(b->type != TOKEN_IDENTIFIER || d->type != TOKEN_IDENTIFIER)
+	continue;
+
+      prop_nf_cmp_t cf;
+      if(!strcmp(rstr_get(b->t_rstring), "eq"))
+	cf = PROP_NF_CMP_EQ;
+      else if(!strcmp(rstr_get(b->t_rstring), "neq"))
+	cf = PROP_NF_CMP_NEQ;
+      else
+	continue;
+      
+      prop_nf_mode_t mode;
+      if(!strcmp(rstr_get(d->t_rstring), "include"))
+	mode = PROP_NF_MODE_INCLUDE;
+      else if(!strcmp(rstr_get(d->t_rstring), "exclude"))
+	mode = PROP_NF_MODE_EXCLUDE;
+      else
+	continue;
+      
+      const char *val = token_as_string(c);
+
+      if(val != NULL) {
+	prop_nf_pred_str_add(self->t_extra, path, cf, val, NULL, mode);
+      } else {
+	prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+      }
+      
+    } else if(!strcmp(cmd, "sort") && sortidx < 4) {
+      if(argc < 3)
+	return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			       "too few arguments (%d) for sort command",
+			       argc);
+
+      if((a = token_resolve(ec, argv[0])) == NULL)
+	return -1;
+      if((b = token_resolve(ec, argv[1])) == NULL)
+	return -1;
+      if((c = token_resolve(ec, argv[2])) == NULL)
+	return -1;
+
+      argc -= 3;
+      argv += 3;
+
+      prop_nf_sort(self->t_extra, rstr_get(a->t_rstring),
+		   token2bool(b), sortidx, NULL, token2bool(c));
+
+      sortidx++;
     } else {
-      prop_nf_pred_int_add(self->t_extra, path, cf, token2int(b), NULL, mode);
+      return glw_view_seterr(ec->ei, argv[-1], "propSorter(): "
+			     "unknown command token");
     }
   }
-
   return 0;
 }
 
@@ -5818,7 +5853,7 @@ static const token_func_t funcvec[] = {
   {"strftime", 2, glwf_strftime},
   {"isSet", 1, glwf_isset},
   {"isVoid", 1, glwf_isvoid},
-  {"value2duration", 1, glwf_value2duration},
+  {"value2duration", -1, glwf_value2duration},
   {"value2size", 1, glwf_value2size},
   {"createChild", 1, glwf_createchild},
   {"delete", 1, glwf_delete},
@@ -5841,7 +5876,6 @@ static const token_func_t funcvec[] = {
   {"delay", 3, glwf_delay, glwf_delay_ctor, glwf_delay_dtor},
   {"isReady", 0, glwf_isReady},
   {"suggestFocus", 1, glwf_suggestFocus},
-  {"focusDistance", 0, glwf_focusDistance},
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},
   {"deliverEvent", -1, glwf_deliverEvent},

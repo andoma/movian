@@ -1390,6 +1390,7 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   media_pipe_t *mp = hs->hs_mp;
   const char *err;
   char *name = NULL;
+  int mp_flags = 0;
 
   const char *q = strstr(url, "/channel/");
   if(q == NULL)
@@ -1402,7 +1403,8 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   htsmsg_add_u32(m, "channelId", chid);
   htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
   htsmsg_add_u32(m, "weight", prio_to_weight(priority));
-
+  htsmsg_add_u32(m, "timeshiftPeriod", 3600);
+  
   if((m = htsp_reqreply(hc, m)) == NULL) {
     snprintf(errbuf, errlen, "Connection with server lost");
     return NULL;
@@ -1414,11 +1416,14 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
     return NULL;
   }
 
+  if(htsmsg_get_u32_or_default(m, "timeshiftPeriod", 0))
+    mp_flags |= MP_PLAY_CAPS_PAUSE;
+
   htsmsg_destroy(m);
 
   prop_set_string(mp->mp_prop_playstatus, "play");
 
-  mp_configure(mp, 0, MP_BUFFER_DEEP, 0);
+  mp_configure(mp, mp_flags, MP_BUFFER_DEEP, 0);
 
   if(primary)
     mp_become_primary(mp);
@@ -1432,7 +1437,63 @@ htsp_subscriber(htsp_connection_t *hc, htsp_subscription_t *hs,
   while(1) {
     e = mp_dequeue_event(mp);
     
-    if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
+    if(event_is_type(e, EVENT_SEEK)) {
+      event_ts_t *ets = (event_ts_t *)e;
+
+      TRACE(TRACE_DEBUG, "HTSP", "%s: Seek to %"PRId64, name, ets->ts);
+      
+      m = htsmsg_create_map();
+      
+      htsmsg_add_str(m, "method", "subscriptionSkip");
+      htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+      htsmsg_add_u32(m, "absolute", 1);
+      htsmsg_add_s64(m, "time", ets->ts);
+
+      if((m = htsp_reqreply(hc, m)) == NULL) {
+	snprintf(errbuf, errlen, "Connection with server lost");
+	rstr_release(rurl);
+	return NULL;
+      }
+      
+      if((err = htsmsg_get_str(m, "error")) != NULL) {
+	snprintf(errbuf, errlen, "From server: %s", err);
+	htsmsg_destroy(m);
+	rstr_release(rurl);
+	return NULL;
+      }
+      
+      htsmsg_destroy(m);      
+
+
+    } else if(mp_flags & MP_PLAY_CAPS_PAUSE && event_is_type(e, EVENT_HOLD)) {
+
+      event_int_t *ei = (event_int_t *)e;
+      int hold = ei->val;
+
+      TRACE(TRACE_DEBUG, "HTSP", "%s: Hold set to %d", name, hold);
+
+      m = htsmsg_create_map();
+      
+      htsmsg_add_str(m, "method", "subscriptionSpeed");
+      htsmsg_add_u32(m, "subscriptionId", hs->hs_sid);
+      htsmsg_add_u32(m, "speed", 100 * !hold);
+
+      if((m = htsp_reqreply(hc, m)) == NULL) {
+	snprintf(errbuf, errlen, "Connection with server lost");
+	rstr_release(rurl);
+	return NULL;
+      }
+      
+      if((err = htsmsg_get_str(m, "error")) != NULL) {
+	snprintf(errbuf, errlen, "From server: %s", err);
+	htsmsg_destroy(m);
+	rstr_release(rurl);
+	return NULL;
+      }
+      
+      htsmsg_destroy(m);      
+
+    } else if(event_is_type(e, EVENT_SELECT_SUBTITLE_TRACK)) {
       event_select_track_t *est = (event_select_track_t *)e;
 
       if(!strncmp(est->id, "sub:", strlen("sub:")))
@@ -1674,11 +1735,9 @@ static fa_protocol_t fa_protocol_htsp = {
  */
 static event_t *
 be_htsp_playdvr(const char *url, media_pipe_t *mp,
-                int flags, int priority,
                 char *errbuf, size_t errlen,
-                video_queue_t *vq,
-                htsp_connection_t *hc,
-                const char *remain)
+                video_queue_t *vq, htsp_connection_t *hc,
+                const char *remain, const video_args_t *va)
 {
   char filename[64];
 
@@ -1700,9 +1759,7 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
   htsmsg_get_s32(m, "id", &hf->hf_id);
   hf->hf_hc = hc;
 
-  return be_file_playvideo_fh(url, mp, flags, priority, 
-                              errbuf, errlen, NULL, url,
-                              vq, &hf->h);
+  return be_file_playvideo_fh(url, mp, errbuf, errlen, vq, &hf->h, va);
 }
 
 
@@ -1711,22 +1768,20 @@ be_htsp_playdvr(const char *url, media_pipe_t *mp,
  */
 static event_t *
 be_htsp_playvideo(const char *url, media_pipe_t *mp,
-		  int flags, int priority,
 		  char *errbuf, size_t errlen,
-		  const char *mimetype,
-		  const char *canonical_url,
-		  video_queue_t *vq)
+		  video_queue_t *vq, struct vsource_list *vsl,
+		  const video_args_t *va)
 {
   htsp_connection_t *hc;
   char path[URL_MAX];
   htsp_subscription_t *hs;
   event_t *e;
-  int primary = !!(flags & BACKEND_VIDEO_PRIMARY);
+  int primary = !!(va->flags & BACKEND_VIDEO_PRIMARY);
   const char *r;
 
   TRACE(TRACE_DEBUG, "HTSP",
 	"Starting video playback %s primary=%s, priority=%d",
-	url, primary ? "yes" : "no", priority);
+	url, primary ? "yes" : "no", va->priority);
 
   if((hc = htsp_connection_find(url, path, sizeof(path), 
 				errbuf, errlen)) == NULL) {
@@ -1734,7 +1789,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   }
 
   if((r = mystrbegins(path, "/dvr/")) != NULL)
-    return be_htsp_playdvr(url, mp, flags, priority, errbuf, errlen, vq, hc, r);
+    return be_htsp_playdvr(url, mp, errbuf, errlen, vq, hc, r, va);
 
 
 
@@ -1749,7 +1804,7 @@ be_htsp_playvideo(const char *url, media_pipe_t *mp,
   LIST_INSERT_HEAD(&hc->hc_subscriptions, hs, hs_link);
   hts_mutex_unlock(&hc->hc_subscription_mutex);
 
-  e = htsp_subscriber(hc, hs, errbuf, errlen, primary, priority, vq, url);
+  e = htsp_subscriber(hc, hs, errbuf, errlen, primary, va->priority, vq, url);
 
   mp_flush(mp, 0);
   mp_shutdown(mp);
@@ -1798,6 +1853,7 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
   const void *bin;
   size_t binlen;
   media_buf_t *mb;
+  int64_t timeshift;
 
   if(htsmsg_get_u32(m, "stream", &stream)  ||
      htsmsg_get_bin(m, "payload", &bin, &binlen))
@@ -1830,6 +1886,9 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
       if(htsmsg_get_s64(m, "pts", &mb->mb_pts))
 	mb->mb_pts = PTS_UNSET;
 
+      if(htsmsg_get_s64(m, "timeshift", &timeshift))
+	timeshift = 0;
+
       if(hss->hss_cw != NULL)
 	mb->mb_cw = media_codec_ref(hss->hss_cw);
 
@@ -1839,6 +1898,9 @@ htsp_mux_input(htsp_connection_t *hc, htsmsg_t *m)
 
       if(mb->mb_data_type == MB_SUBTITLE)
 	mb->mb_font_context = 0;
+
+      if(mb->mb_data_type == MB_VIDEO)
+	mb->mb_drive_clock = 1;
 
       if(mb_enqueue_no_block(mp, hss->hss_mq, mb,
 			     mb->mb_data_type == MB_SUBTITLE ? 

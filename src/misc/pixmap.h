@@ -16,6 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+// This file should be renamed as it's not really all about pixmaps anymore
+
 #ifndef PIXMAP_H__
 #define PIXMAP_H__
 
@@ -29,13 +31,13 @@
 #include <inttypes.h>
 #include "layout.h"
 
-
 typedef enum {
   PIXMAP_none,
   PIXMAP_PNG,
   PIXMAP_JPEG,
   PIXMAP_GIF,
   PIXMAP_SVG,
+  PIXMAP_VECTOR,
   PIXMAP_coded,
   PIXMAP_NULL,
   PIXMAP_BGR32,
@@ -61,6 +63,10 @@ typedef struct image_meta {
   char im_can_mono;
   char im_no_decoding;
   char im_32bit_swizzle; // can do full 32bit swizzle in hardware
+  char im_no_rgb24;
+  uint8_t im_corner_selection;
+  uint16_t im_corner_radius;
+  uint16_t im_margin;
 } image_meta_t;
 
 /**
@@ -84,54 +90,60 @@ typedef struct pixmap {
 #define PIXMAP_THUMBNAIL 0x1       // This is a thumbnail
 #define PIXMAP_TEXT_WRAPPED 0x2    // Contains wrapped text
 #define PIXMAP_TEXT_TRUNCATED 0x4 // Contains truncated text
-
+#define PIXMAP_COLORIZED      0x8
   pixmap_type_t pm_type;
+
+
+  union {
+    uint8_t *pm_pixels;
+    void *pm_data;
+    float *pm_flt;
+    int32_t *pm_int;
+  };
 
   union {
     struct {
-      uint8_t *pixels;
       int *charpos;
       int linesize;
       int charposlen;
     } raw;
 
     struct {
-      void *data;
       size_t size;
     } codec;
+
+    struct {
+      int capacity;
+      int used;
+    } vector;
   };
 
 } pixmap_t;
 
-#define pm_data codec.data
 #define pm_size codec.size
 
-#define pm_pixels     raw.pixels
 #define pm_linesize   raw.linesize
 #define pm_charpos    raw.charpos
 #define pm_charposlen raw.charposlen
 
+#define pm_capacity   vector.capacity
+#define pm_used       vector.used
+
+
 pixmap_t *pixmap_alloc_coded(const void *data, size_t size,
 			     pixmap_type_t type);
+
+pixmap_t *pixmap_create_vector(int width, int height);
 
 pixmap_t *pixmap_dup(pixmap_t *pm);
 
 void pixmap_release(pixmap_t *pm);
 
-#define PIXMAP_BLUR        0
-#define PIXMAP_EDGE_DETECT 1
-#define PIXMAP_EMBOSS      2
-
-pixmap_t *pixmap_convolution_filter(const pixmap_t *src, int kernel);
-
-pixmap_t *pixmap_multiply_alpha(const pixmap_t *src);
-
-pixmap_t *pixmap_extract_channel(const pixmap_t *src, unsigned int channel);
-
 void pixmap_composite(pixmap_t *dst, const pixmap_t *src,
 		      int xdisp, int ydisp, int rgba);
 
-pixmap_t *pixmap_create(int width, int height, pixmap_type_t type);
+pixmap_t *pixmap_create(int width, int height, pixmap_type_t type,
+			int margin);
 
 void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 
@@ -144,5 +156,39 @@ pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
 void svg_init(void);
 
 int color_is_not_gray(uint32_t rgb);
+
+void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
+
+#define PIXMAP_CORNER_TOPLEFT     0x1
+#define PIXMAP_CORNER_TOPRIGHT    0x2
+#define PIXMAP_CORNER_BOTTOMLEFT  0x4
+#define PIXMAP_CORNER_BOTTOMRIGHT 0x8
+
+pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
+
+/**
+ * Vector graphics
+ */
+typedef enum {
+  VC_SET_FILL_ENABLE,
+  VC_SET_FILL_COLOR,
+  VC_SET_STROKE_WIDTH,
+  VC_SET_STROKE_COLOR,
+  VC_BEGIN,
+  VC_END,
+  VC_MOVE_TO,
+  VC_LINE_TO,
+  VC_CUBIC_TO,
+  VC_CLOSE,
+} vec_cmd_t;
+
+void vec_emit_0(pixmap_t *pm, vec_cmd_t cmd);
+void vec_emit_i1(pixmap_t *pm, vec_cmd_t cmd, int arg);
+void vec_emit_f1(pixmap_t *pm, vec_cmd_t cmd, const float *a);
+void vec_emit_f3(pixmap_t *pm, vec_cmd_t cmd, const float *a, const float *b, const float *c);
+
+pixmap_t *pixmap_rasterize_ft(pixmap_t *pm);
+
+void rasterizer_ft_init(void);
 
 #endif

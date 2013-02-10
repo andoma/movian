@@ -32,6 +32,11 @@
 #include "keyring.h"
 #include "notifications.h"
 #include "networking/net.h"
+#include "ui/webpopup.h"
+#include "misc/md5.h"
+#include "misc/sha.h"
+#include "api/xmlrpc.h"
+#include "i18n.h"
 
 prop_courier_t *js_global_pc;
 JSContext *js_global_cx;
@@ -49,6 +54,126 @@ static JSClass global_class = {
   JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,JS_FinalizeStub,
   JSCLASS_NO_OPTIONAL_MEMBERS
 };
+
+
+
+/**
+ *
+ */
+JSBool
+js_is_prop_true(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  JSBool b;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return 0;
+  if(!JS_ValueToBoolean(cx, val, &b))
+    return 0;
+  return b;
+}
+
+
+
+/**
+ *
+ */
+rstr_t *
+js_prop_rstr(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return NULL;
+  if(!JSVAL_IS_STRING(val))
+    return NULL;
+  JSString *s = JS_ValueToString(cx, val);
+  return s ? rstr_alloc(JS_GetStringBytes(s)) : NULL;
+}
+
+
+/**
+ *
+ */
+int
+js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return d;
+  double v;
+  if(!JSVAL_IS_NUMBER(val) || !JS_ValueToNumber(cx, val, &v))
+    return d;
+  return v;
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_str(JSContext *cx, JSObject *o, const char *prop, const char *str)
+{
+  JSString *s = str ? JS_NewStringCopyZ(cx, str) : NULL;
+  if(s != NULL)
+    js_set_prop_jsval(cx, o, prop, STRING_TO_JSVAL(s));
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_rstr(JSContext *cx, JSObject *o, const char *prop, rstr_t *r)
+{
+  js_set_prop_str(cx, o, prop, rstr_get(r));
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v)
+{
+  jsval val;
+  if(v <= INT32_MAX && v >= INT32_MIN && INT_FITS_IN_JSVAL(v))
+    val = INT_TO_JSVAL(v);
+  else {
+    jsdouble *d = JS_NewDouble(cx, v);
+    if(d == NULL)
+      return;
+    val = DOUBLE_TO_JSVAL(d);
+  }
+   js_set_prop_jsval(cx, o, prop, val);
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v)
+{
+  jsdouble *d = JS_NewDouble(cx, v);
+  if(d != NULL)
+    js_set_prop_jsval(cx, o, prop, DOUBLE_TO_JSVAL(d));
+}
+
+
+/**
+ *
+ */
+void
+js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name, jsval item)
+{
+  if(name)
+    JS_SetProperty(cx, obj, name, &item);
+  else {
+    jsuint length;
+    if(JS_GetArrayLength(cx, obj, &length))
+      JS_SetElement(cx, obj, length, &item);
+  }
+}
+
 
 
 /**
@@ -604,6 +729,188 @@ js_sysipaddr(JSContext *cx, JSObject *obj,
 }
 
 
+/**
+ *
+ */
+static JSBool 
+js_webpopup(JSContext *cx, JSObject *obj,
+            uintN argc, jsval *argv, jsval *rval)
+{
+  const char *url;
+  const char *title;
+  const char *trap;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "sss", &url, &title, &trap))
+    return JS_FALSE;
+
+  JSObject *robj = JS_NewObject(cx, NULL, NULL, NULL);
+  *rval = OBJECT_TO_JSVAL(robj);
+
+#if ENABLE_WEBPOPUP
+  jsrefcount s = JS_SuspendRequest(cx);
+  webpopup_result_t *wr = webpopup_create(url, title, trap);
+  JS_ResumeRequest(cx, s);
+  
+
+  const char *t;
+  switch(wr->wr_resultcode) {
+  case WEBPOPUP_TRAPPED_URL:
+    t = "trapped";
+    break;
+  case WEBPOPUP_CLOSED_BY_USER:
+    t = "userclose";
+    break;
+  case WEBPOPUP_LOAD_ERROR:
+    t = "neterror";
+    break;
+  }
+
+  jsval val;
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, t));
+  JS_SetProperty(cx, robj, "result", &val);
+
+
+  if(wr->wr_trapped.url != NULL) {
+    val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, wr->wr_trapped.url));
+    JS_SetProperty(cx, robj, "trappedUrl", &val);
+  }
+  
+  JSObject *hdrs = JS_NewObject(cx, NULL, NULL, NULL);
+  http_header_t *hh;
+  LIST_FOREACH(hh, &wr->wr_trapped.qargs, hh_link) {
+    jsval val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, hh->hh_value));
+    JS_SetProperty(cx, hdrs, hh->hh_key, &val);
+  }
+  
+  val = OBJECT_TO_JSVAL(hdrs);
+  JS_SetProperty(cx, robj, "args", &val);
+
+  webpopup_result_free(wr);
+#else
+  jsval val;
+
+  val = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, "unsupported"));
+  JS_SetProperty(cx, robj, "result", &val);
+#endif
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSBool 
+js_md5digest(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  uint8_t d[16];
+  char ret[33];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  md5_decl(ctx);
+  md5_init(ctx);
+  md5_update(ctx, (void *)str, strlen(str));
+  md5_final(ctx, d);
+  bin2hex(ret, sizeof(ret), d, sizeof(d));
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ret));
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
+js_sha1digest(JSContext *cx, JSObject *obj,
+	     uintN argc, jsval *argv, jsval *rval)
+{
+  const char *str;
+  uint8_t d[20];
+  char ret[41];
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s", &str))
+    return JS_FALSE;
+
+  sha1_decl(ctx);
+  sha1_init(ctx);
+  sha1_update(ctx, (void *)str, strlen(str));
+  sha1_final(ctx, d);
+  bin2hex(ret, sizeof(ret), d, sizeof(d));
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ret));
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSBool 
+js_xmlrpc(JSContext *cx, JSObject *obj,
+	  uintN argc, jsval *argv, jsval *rval)
+{
+  char errbuf[256];
+  JSString *urlstr    = JS_ValueToString(cx, argv[0]);
+  JSString *methodstr = JS_ValueToString(cx, argv[1]);
+
+  htsmsg_t *args = htsmsg_create_list();
+
+  argc -= 2;
+  argv += 2;
+
+  while(argc > 0) {
+    js_htsmsg_emit_jsval(cx, argv[0], args, NULL);
+    argc--;
+    argv++;
+  }
+
+  jsrefcount s = JS_SuspendRequest(cx);
+
+  htsmsg_t *reply = xmlrpc_request(JS_GetStringBytes(urlstr),
+				   JS_GetStringBytes(methodstr),
+				   args, errbuf, sizeof(errbuf));
+
+  JS_ResumeRequest(cx, s);
+
+  if(reply == NULL) {
+    JS_ReportError(cx, errbuf);
+    return JS_FALSE;
+  }
+
+  js_object_from_htsmsg(cx, reply, rval);
+  htsmsg_destroy(reply);
+
+  return JS_TRUE;
+}
+
+
+
+/**
+ *
+ */
+static JSBool 
+js_getsublang(JSContext *cx, JSObject *obj,
+	      uintN argc, jsval *argv, jsval *rval)
+{
+  int i;
+  JSObject *o = JS_NewArrayObject(cx, 0, NULL);
+  *rval = OBJECT_TO_JSVAL(o);
+  for(i = 0; i < 3; i++) {
+    const char *lang = i18n_subtitle_lang(i);
+    if(lang)
+      js_set_prop_str(cx, o, NULL, lang);
+  }
+  
+  return JS_TRUE;
+}
+
+
+
 
 
 /**
@@ -632,6 +939,11 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("entityDecode",     js_decodeEntety, 1, 0, 0),
     JS_FS("notify",           js_notify, 2, 0, 0),
     JS_FS("systemIpAddress",  js_sysipaddr, 0, 0, 0),
+    JS_FS("webpopup",         js_webpopup, 3, 0, 0),
+    JS_FS("md5digest",        js_md5digest, 1, 0, 0),
+    JS_FS("sha1digest",       js_sha1digest, 1, 0, 0),
+    JS_FS("xmlrpc",           js_xmlrpc, 3, 0, 0),
+    JS_FS("getSubtitleLanguages", js_getsublang, 0, 0, 0),
     JS_FS_END
 };
 
@@ -722,6 +1034,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_setting_group_flush_from_plugin(cx, jsp);
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
   js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
+  js_subprovider_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -818,6 +1131,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("cachePut",         js_cache_put, 4, 0, 0),
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
+    JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
     JS_FS_END
 };
 
@@ -1003,6 +1317,7 @@ js_init(void)
   JSFunction *fn;
 
   js_page_init();
+  js_metaprovider_init();
 
   JS_SetCStringsAreUTF8();
 

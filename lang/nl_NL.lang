@@ -1,6 +1,6 @@
 language: Dutch
 native: Nederlands
-maintainer: GuardianSoul
+maintainer: GuardianSoul, eussNL
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -96,6 +96,9 @@ msg: Geluidsinstellingen
 
 id: Audio tracks
 msg: Geluidssporen
+
+id: Chapters
+msg: Hoofdstukken
 
 id: Seek by time
 msg: Zoeken op tijd
@@ -232,26 +235,29 @@ msg: Sluiten
 id: Plugins
 msg: Plugins
 
+id: Search / Open URL
+msg: Zoeken / Open URL
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera: 
+id: Camera:
 msg: Camera:
 
-id: Date: 
+id: Date:
 msg: Datum:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
-id: Author: 
-msg: Auteur: 
+id: Author:
+msg: Auteur:
 
-id: Available version: 
-msg: Beschikbare versie: 
+id: Available version:
+msg: Beschikbare versie:
 
-id: Installed version: 
-msg: Geïnstalleerde versie: 
+id: Installed version:
+msg: Geïnstalleerde versie:
 
 id: Showtime %s or newer is required
 msg: Showtime %s of nieuwer is vereist
@@ -332,8 +338,7 @@ msg: Nummer %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Gepauzeerd
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -402,8 +407,7 @@ msg: Afspeelstatus
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Gezien
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -458,15 +462,6 @@ msg: Geluid gedempt
 
 id: Master volume: %d dB
 msg: Hoofdvolume: %d dB
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Instellingen voor opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Opensubtitles.org gebruiken
 
 #
 # ./src/api/tmdb.c
@@ -666,11 +661,23 @@ msg: Inlogfout
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Datum
+id: Artists
+msg: Artiesten
+
+id: Date (newest first)
+msg: Datum (nieuwste eerst)
+
+id: Date (oldest first)
+msg: Datum (oudste eerst)
 
 id: Filename
 msg: Bestandsnaam
+
+id: Indexed mode
+msg: Geïndexeerde modus
+
+id: Off
+msg: Uit
 
 id: Show only supported files
 msg: Alleen ondersteunde bestanden weergeven
@@ -686,12 +693,6 @@ msg: Sorteren op
 #
 id: Search using spotlight
 msg: Zoeken via Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Extern bestand
 
 #
 # ./src/i18n.c
@@ -768,6 +769,12 @@ msg: Ondertiteling op videoframe aanpassen
 id: Audio delay
 msg: Geluidsvertaging
 
+id: Stretch video to fullscreen
+msg: Video uitrekken naar volledig scherm
+
+id: Stretch video to widescreen
+msg: Video uitrekken naar breedbeeld
+
 id: Subtitle delay
 msg: Ondertitelingsvertaging
 
@@ -776,6 +783,12 @@ msg: Ondertitelingsgrootte
 
 id: Video zoom
 msg: Videovergroting
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indexeren
 
 #
 # ./src/metadata/metadata.c
@@ -816,6 +829,9 @@ msg: Bron metadata
 id: Movie
 msg: Film
 
+id: Movie title
+msg: Film titel
+
 id: No data found
 msg: Geen data gevonden
 
@@ -826,11 +842,13 @@ id: Providers for Music
 msg: Muziekaanbieders
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Videoaanbieders
 
 id: Refresh metadata
 msg: Metadata vernieuwen
+
+id: Title, Season, Episode
+msg: Titel, Seizoen, Aflevering
 
 id: Track %d
 msg: Nummer %d
@@ -866,8 +884,7 @@ msg: Door alle metadata te verwijderen verliest u <b>alle</b> informatie over:\n
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Items toevoegen en verwijderen aan thuispagina
 
 id: Added new bookmark: %s
 msg: Nieuwe bladwijzer toevoegen: %s
@@ -915,19 +932,16 @@ id: Available plugins
 msg: Beschikbare plugins
 
 id: Background
-# Missing translation
-msg: 
+msg: Achtergrond
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Beta testers wachtwoord
 
 id: Browse available plugins
 msg: Bladeren door beschikbare plugins
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Bladeren
 
 id: Cloud services
 msg: Cloudservices
@@ -936,8 +950,7 @@ id: Corrupt plugin bundle
 msg: Beschadigde pluginbundel
 
 id: Default
-# Missing translation
-msg: 
+msg: Standaard
 
 id: Disk write error
 msg: Schrijffout
@@ -949,34 +962,28 @@ id: File open error
 msg: Fout bij openen bestand
 
 id: Home page
-# Missing translation
-msg: 
+msg: Thuispagina
 
 id: Installed plugins
 msg: Geïnstalleerde plugins
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Geïnstalleerde versie hoger dan beschikbaar
 
 id: Installing
 msg: Installeren
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Lijst van albums
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Laadscherm
 
 id: Movies
-# Missing translation
-msg: 
+msg: Films
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Muziek streaming
 
 id: Not installable
 msg: Niet installeerbaar
@@ -991,16 +998,13 @@ id: Online TV
 msg: Online tv
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Vookeursinstellingen van plugins
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Schermbeveiliging
 
 id: TV channels
-# Missing translation
-msg: 
+msg: TV kanalen
 
 id: Unable to load plugin.json: %s
 msg: De plugin.json kon niet worden geladen: %s
@@ -1069,8 +1073,7 @@ id: Discovered media sources
 msg: Gevonden mediabronnen
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Lettertypen en gebruikersinterface stijlen
 
 id: General
 msg: Algemeen
@@ -1079,8 +1082,7 @@ id: Global settings
 msg: Algemene instellingen
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Uiterlijk
 
 id: Settings useful for developers
 msg: Handige instellingen voor ontwikkelaars
@@ -1089,10 +1091,34 @@ id: System related settings
 msg: Systeemgerelateerde instellingen
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Extern bestand
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Standaardinstellingen
+
+id: Fonts
+msg: Lettertypen
+
+id: Installed fonts
+msg: Geïnstalleerde lettertypen
+
 id: Narrow text
 msg: Smalle tekst
+
+id: Reset main font to default
+msg: Herstel hoofd lettertype naar standaard
+
+id: Reset narrow font to default
+msg: Herstel small lettertype naar standaard
+
+id: Reset subtitle font to default
+msg: Herstel ondertitel lettertype naar standaard
 
 id: Unable to load %s -- %s
 msg: Laden niet mogelijk: %s -- %s
@@ -1259,9 +1285,6 @@ msg: Maximale resolutie voor deinterlacer
 id: No limit
 msg: Geen limiet
 
-id: Off
-msg: Uit
-
 id: Outline color
 msg: Omtrekkleur
 
@@ -1282,12 +1305,6 @@ msg: Schaduwkleur
 
 id: Shadow offset
 msg: Schaduwafstand
-
-id: Stretch video to fullscreen
-msg: Video uitrekken naar volledig scherm
-
-id: Stretch video to widescreen
-msg: Video uitrekken naar breedbeeld
 
 id: Subtitle position
 msg: Ondertitelingspositie
@@ -1312,4 +1329,3 @@ msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
-

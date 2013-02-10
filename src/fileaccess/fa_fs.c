@@ -232,7 +232,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
   LIST_INIT(&pending_create);
   
   while(1) {
-    n = poll(&fds, 1, 5000); // We'd like to call breakcheck() every 5 secs
+    n = poll(&fds, 1, 1000);
     
     if(n < 0)
       break;
@@ -370,7 +370,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
 				   kCFRunLoopDefaultMode);
   FSEventStreamStart(fse);				   
   while(1) {
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 5, false);
+    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
 
     if(breakcheck(opaque))
       break;

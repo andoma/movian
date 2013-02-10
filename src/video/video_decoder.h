@@ -27,9 +27,6 @@
 #include <dvdnav/dvdnav.h>
 #endif
 
-TAILQ_HEAD(dvdspu_queue, dvdspu);
-TAILQ_HEAD(video_overlay_queue, video_overlay);
-
 #define VIDEO_DECODER_REORDER_SIZE 16
 #define VIDEO_DECODER_REORDER_MASK (VIDEO_DECODER_REORDER_SIZE-1)
 
@@ -38,56 +35,10 @@ struct AVFrame;
 struct video_decoder;
 struct pixmap;
 
-
-typedef struct frame_info {
-  uint8_t *fi_data[4];
-  int fi_pitch[4];
-
-  uint32_t fi_type;
-
-  int fi_width;
-  int fi_height;
-  int64_t fi_pts;
-  int64_t fi_delta;
-  int fi_epoch;
-  int fi_duration;
-
-  int fi_dar_num;
-  int fi_dar_den;
-
-  int fi_hshift;
-  int fi_vshift;
-
-  int fi_pix_fmt;
-
-  char fi_interlaced;     // Frame delivered is interlaced 
-  char fi_tff;            // For interlaced frame, top-field-first
-  char fi_prescaled;      // Output frame is prescaled to requested size
-  char fi_drive_clock;
-
-  enum {
-    COLOR_SPACE_UNSET = 0,
-    COLOR_SPACE_BT_709,
-    COLOR_SPACE_BT_601,
-    COLOR_SPACE_SMPTE_240M,
-  } fi_color_space;
-
-} frame_info_t;
-
-
-/**
- *
- */
-typedef void (vd_frame_deliver_t)(const frame_info_t *info, void *opaque);
-
 /**
  *
  */
 typedef struct video_decoder {
-
-  void *vd_opaque;
-
-  vd_frame_deliver_t *vd_frame_deliver;
 
   hts_thread_t vd_decoder_thread;
 
@@ -136,10 +87,6 @@ typedef struct video_decoder {
   /**
    * DVD / SPU related members
    */
-  struct dvdspu_queue vd_spu_queue;
-
-  
-  hts_mutex_t vd_spu_mutex;
 
 #ifdef CONFIG_DVD
   uint32_t vd_dvd_clut[16];
@@ -148,14 +95,11 @@ typedef struct video_decoder {
 
   int vd_spu_curbut;
   int vd_spu_repaint;
-  int vd_spu_in_menu;
 
   /**
    * Video overlay and subtitles
    */
-  struct video_overlay_queue vd_overlay_queue;
-  hts_mutex_t vd_overlay_mutex;
-
+  int64_t vd_subpts;
   struct ext_subtitles *vd_ext_subtitles;
 
   /**
@@ -175,13 +119,11 @@ typedef struct video_decoder {
   struct media_buf vd_reorder[VIDEO_DECODER_REORDER_SIZE];
 } video_decoder_t;
 
-video_decoder_t *video_decoder_create(media_pipe_t *mp, 
-				      vd_frame_deliver_t *frame_delivery,
-				      void *opaque);
+video_decoder_t *video_decoder_create(media_pipe_t *mp);
 
-void video_decoder_stop(video_decoder_t *gv);
+void video_decoder_stop(video_decoder_t *vd);
 
-void video_decoder_destroy(video_decoder_t *gv);
+void video_decoder_destroy(video_decoder_t *vd);
 
 void video_deliver_frame_avctx(video_decoder_t *vd,
 			       media_pipe_t *mp, media_queue_t *mq,
@@ -190,11 +132,6 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 			       const media_buf_t *mb, int decode_time);
 
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
-
-void video_decoder_set_accelerator(video_decoder_t *vd,
-				   void (*stopfn)(void *opaque),
-				   void (*blackoutfn)(void *opaque),
-				   void *opaque);
 
 #endif /* VIDEO_DECODER_H */
 

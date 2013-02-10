@@ -77,10 +77,13 @@ CONFIG_LIST="
  readahead_cache
  sqlite_vfs
  sqlite_locking
+ sqlite_internal
  libav
  vda
  tlsf
  airplay
+ webpopup
+ valgrind
 "
 
 cleanup() {
@@ -314,7 +317,7 @@ libav_setup() {
     mkdir -p "${LIBAV_BUILD_DIR}"
     mkdir -p "${LIBAV_INSTALL_DIR}"
 
-    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-protocols --disable-network --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png --disable-demuxer=applehttp --disable-avconv --disable-avprobe --disable-avfilter"
+    LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=png --disable-avconv --disable-avprobe --disable-avfilter"
 
     (cd ${LIBAV_BUILD_DIR} && ${TOPDIR}/ext/libav/configure ${LIBAV_ARCH_FLAGS} ${LIBAV_COMMON_FLAGS} --prefix=${LIBAV_INSTALL_DIR} --extra-cflags="${LIBAV_CFLAGS} ${EXTRA_CFLAGS}" --extra-ldflags="${LIBAV_LDFLAGS} ${EXTRA_LDFLAGS}" --cc="${CC}") || die
 
@@ -325,6 +328,17 @@ libav_setup() {
     echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/libav.stamp"
     rm -f "build.${BUILD}/libav.stamp"
 }
+
+
+#
+#
+#
+rtmpdump_setup() {
+    status=`git submodule status ext/rtmpdump | cut -b 1`
+    echo "Updating rtmpdump, submodule status = $status"
+    git submodule update --init ext/rtmpdump
+}
+
 
 
 #
@@ -345,9 +359,7 @@ zlib_setup()
         CC=${TOOLCHAIN}gcc AR="${TOOLCHAIN}ar -r" RANLIB=${TOOLCHAIN}ranlib \
         ./configure --static --prefix=${ZLIB_INSTALL_DIR})
     
-    echo >>${CONFIG_MAK} "ZLIB_BUILD_DIR=${ZLIB_SRC_DIR}"
-    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/zlib.stamp"
-    rm -f "build.${BUILD}/zlib.stamp"
+    (cd ${ZLIB_SRC_DIR} && make install)
 
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${ZLIB_INSTALL_DIR}/include"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${ZLIB_INSTALL_DIR}/lib"
@@ -368,9 +380,9 @@ bzip2_setup()
     tar -x -C "${BUILDDIR}" -f "${bzip2tarball}"
     mkdir -p "${BZIP2_INSTALL_DIR}"
 
-    sed -i bak s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
-    sed -i bak s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
-    sed -i bak s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
+    sed -i s#^CC=gcc\$#CC=${TOOLCHAIN}gcc# ${BZIP2_SRC_DIR}/Makefile
+    sed -i s#^AR=ar\$#AR=${TOOLCHAIN}ar# ${BZIP2_SRC_DIR}/Makefile
+    sed -i s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
     echo >>${CONFIG_MAK} "BZIP2_INSTALL_DIR=${BZIP2_INSTALL_DIR}"
@@ -468,6 +480,10 @@ finalize() {
 	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_MUTEX_NOOP"
     fi
 
+    if enabled sqlite_internal; then
+	echo >>${CONFIG_MAK} "CFLAGS_cfg += -Iext/sqlite"
+    fi
+
     # Release tag
     if enabled release; then
 	echo >>${CONFIG_MAK} "CFLAGS_dbg = -DNDEBUG -D_NDEBUG"
@@ -487,5 +503,4 @@ EOF
     rm -f ${CONFIG_H} ${CONFIG_MAK}
 
     cleanup
-    exit 0
 }

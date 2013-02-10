@@ -84,7 +84,6 @@ source_add(gtk_ui_t *gu, settinglist_t *sl,
 {
   prop_sub_t *sub;
   GtkWidget *w, *vbox;
-  prop_courier_t *pc = gu->gu_pc;
 
   s->s_settinglist = sl;
   s->s_hbox = gtk_hbox_new(FALSE, 1);
@@ -108,7 +107,7 @@ source_add(gtk_ui_t *gu, settinglist_t *sl,
   sub = prop_subscribe(0,
 		       PROP_TAG_NAME("self", "model", "metadata", "icon"),
 		       PROP_TAG_CALLBACK_STRING, set_icon, w,
-		       PROP_TAG_COURIER, pc, 
+		       PROP_TAG_COURIER, glibcourier,
 		       PROP_TAG_NAMED_ROOT, p, "self",
 		       NULL);
 
@@ -134,7 +133,7 @@ source_add(gtk_ui_t *gu, settinglist_t *sl,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "metadata", "title"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label_xl, w,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -151,7 +150,7 @@ source_add(gtk_ui_t *gu, settinglist_t *sl,
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "model", "metadata", "shortdesc"),
 		   PROP_TAG_CALLBACK_STRING, gu_subscription_set_label, w,
-		   PROP_TAG_COURIER, pc, 
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, p, "self",
 		   NULL);
 
@@ -255,7 +254,7 @@ gu_settings_create(gu_nav_page_t *gnp)
 		   PROP_TAG_NAME("page", "model", "nodes"),
 		   PROP_TAG_CALLBACK, gu_cloner_subscription, &sl->sl_nodes,
 		   PROP_TAG_ROOT, gnp->gnp_prop, 
-		   PROP_TAG_COURIER, gu->gu_pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   NULL);
 
 

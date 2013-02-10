@@ -5,7 +5,7 @@ widget(container_y, {
   alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
   blur:      iir(clamp(getLayer(), 0, 1), 7);
 
-  PageTitle($page.model.metadata.title);
+  PageTitle();
   VerticalSeparator();
 
   widget(dummy, {
@@ -41,7 +41,6 @@ widget(container_y, {
 	  autoRefocusable: true;
 	  focusable: true;
 	  width: $ui.size * 12;
-	  $clone.fd = focusDistance();
 
 	  onEvent(activate, navOpen($self.url, void, void, $parent.model));
 

@@ -17,6 +17,7 @@ LIST_HEAD(js_service_list, js_service);
 LIST_HEAD(js_setting_group_list, js_setting_group);
 LIST_HEAD(js_event_handler_list, js_event_handler);
 LIST_HEAD(js_subscription_list, js_subscription);
+LIST_HEAD(js_subprovider_list, js_subprovider);
 
 /**
  *
@@ -37,6 +38,7 @@ typedef struct js_plugin {
   struct js_setting_group_list jsp_setting_groups;
   struct js_event_handler_list jsp_event_handlers;
   struct js_subscription_list jsp_subscriptions;
+  struct js_subprovider_list jsp_subproviders;
 
   struct fa_handle *jsp_ref;
 
@@ -59,6 +61,14 @@ typedef struct js_context_private {
 void js_load(const char *url);
 
 JSContext *js_newctx(JSErrorReporter er);
+
+htsmsg_t *js_htsmsg_from_object(JSContext *cx, JSObject *obj);
+
+void js_htsmsg_emit_jsval(JSContext *cx, jsval value, htsmsg_t *msg,
+			  const char *fieldname);
+
+JSBool js_object_from_htsmsg(JSContext *cx, const htsmsg_t *msg, jsval *rval);
+
 
 JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 		  jsval *argv, jsval *rval);
@@ -122,6 +132,8 @@ void js_service_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
 void js_subscription_flush_from_list(JSContext *cx,
 				     struct js_subscription_list *l);
 
+void js_subprovider_flush_from_plugin(JSContext *cx, js_plugin_t *jsp);
+
 JSObject *js_object_from_prop(JSContext *cx, prop_t *p);
 
 JSBool js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
@@ -163,5 +175,32 @@ JSBool js_subscribe(JSContext *cx, uintN argc,
 		    jsval *argv, jsval *rval, prop_t *root, const char *pname,
 		    struct js_subscription_list *list, prop_courier_t *pc,
 		    int *subsptr);
+
+JSBool js_is_prop_true(JSContext *cx, JSObject *o, const char *prop);
+
+rstr_t *js_prop_rstr(JSContext *cx, JSObject *o, const char *prop);
+
+int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
+
+void js_set_prop_str(JSContext *cx, JSObject *o, const char *prop,
+		     const char *str);
+
+void js_set_prop_rstr(JSContext *cx, JSObject *o, const char *prop,
+		      rstr_t *rstr);
+
+void js_set_prop_int(JSContext *cx, JSObject *o, const char *prop, int v);
+
+void js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v);
+
+void js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name,
+		       jsval item);
+
+void js_metaprovider_init(void);
+
+JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc, 
+			 jsval *argv, jsval *rval);
+
+struct sub_scanner;
+void js_sub_query(struct sub_scanner *ss);
 
 #endif // JS_H__ 

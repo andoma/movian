@@ -182,6 +182,7 @@ glw_view_loader_dtor(glw_t *w)
 {
   glw_view_loader_t *a = (void *)w;
   rstr_release(a->url);
+  rstr_release(a->alt_url);
 }
 
 

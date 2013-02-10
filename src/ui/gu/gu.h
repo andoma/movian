@@ -23,6 +23,8 @@
 
 #include "prop/prop.h"
 
+extern prop_courier_t *glibcourier;
+
 struct event;
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
 LIST_HEAD(gu_window_list, gu_window);
@@ -32,16 +34,8 @@ LIST_HEAD(gu_tab_list, gu_tab);
  *
  */
 typedef struct gtk_ui {
-  prop_t *gu_root;
-  
-  hts_thread_t gu_thread;
-
-  prop_courier_t *gu_pc;
-
   struct gu_window_list gu_windows;
-
   LIST_HEAD(, popup) popups;
-
 } gtk_ui_t;
 
 
@@ -83,7 +77,7 @@ void gu_fullwindow_update(gu_window_t *gw);
 
 void gu_nav_open_newwin(gtk_ui_t *gu, const char *url);
 
-gu_window_t *gu_win_create(gtk_ui_t *gu, prop_t *nav, int all);
+gu_window_t *gu_win_create(gtk_ui_t *gu, int all);
 
 void gu_win_destroy(gu_window_t *gw);
 
@@ -111,7 +105,7 @@ typedef struct gu_tab {
 
 } gu_tab_t;
 
-gu_tab_t *gu_tab_create(gu_window_t *gw, prop_t *nav, int select);
+gu_tab_t *gu_tab_create(gu_window_t *gw, int select);
 
 void gu_tab_destroy(gu_tab_t *gu);
 

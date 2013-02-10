@@ -10,7 +10,7 @@
   });
 }
 
-#define PageTitle(CAPTION) {
+#define PageTitlePlain(CAPTION) {
   widget(label, {
     height: $ui.size * 2;
     shadow: true;
@@ -18,6 +18,55 @@
     sizeScale: 2;
     padding: [5,0];
     caption: CAPTION;
+  });
+}
+
+
+#define PageTitle(CAPTION) {
+  widget(container_x, {
+    widget(label, {
+      weight: 5;
+      filterConstraintX: true;
+      height: $ui.size * 2;
+      shadow: true;
+      outline: true;
+      sizeScale: 2;
+      padding: [5,0];
+      caption: $page.model.metadata.title;
+    });
+
+    widget(container_y, {
+      widget(label, {
+        filterConstraintX: true;
+        filterConstraintY: true;
+        align: center;
+        shadow: true;
+        outline: true;
+        caption: $page.model.status;
+      });
+
+      widget(container_y, {
+        alpha: iir($page.model.progressmeter, 8);
+        filterConstraintY: true;
+        align: center;
+        widget(container_z, {
+	  widget(backdrop, {
+	    border: 4;
+	    height: 8;
+	    source: "skin://playdecks/duration-bar-bg.png";
+	  });
+      
+	  widget(clip, {
+	    clipping: [-1, 0, 1 - ($page.model.percentage / 100), 0];
+	    widget(backdrop, {
+	      margin: [-8, -3, -8, -5];
+	      border: [16, 8];
+	      source: "skin://playdecks/duration-bar-colorized.png";
+	    });
+	  });
+        });
+      });
+    });
   });
 }
 

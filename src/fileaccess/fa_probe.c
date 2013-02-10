@@ -241,14 +241,15 @@ jpeginfo_reader(void *handle, void *buf, off_t offset, size_t size)
 
 
 static void
-fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh)
+fa_probe_exif(metadata_t *md, const char *url, uint8_t *pb, fa_handle_t *fh,
+              int buflen)
 {
   jpeginfo_t ji;
 
   if(jpeg_info(&ji, jpeginfo_reader, fh, 
 	       JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION |
 	       JPEG_INFO_METADATA,
-	       pb, 256, NULL, 0))
+	       pb, buflen, NULL, 0))
     return;
   
   md->md_time = ji.ji_time;
@@ -268,25 +269,29 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
 		const char *filename)
 {
   uint16_t flags;
-  uint8_t buf[256];
+  uint8_t buf[1025];
 
-  if(fa_read(fh, buf, sizeof(buf)) != sizeof(buf))
+  int l = fa_read(fh, buf, sizeof(buf) - 1);
+  if(l < 8)
     return 0;
+  
+  buf[l] = 0;
 
-  if(!memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
+  if(l >= 256 && !memcmp(buf, "SNES-SPC700 Sound File Data", 27)) {
     fa_probe_spc(md, buf, filename);
     md->md_contenttype = CONTENT_AUDIO;
     return 1;
   }
 
-  if(!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4)) {
+  if(l >= 256 && (!memcmp(buf, "PSID", 4) || !memcmp(buf, "RSID", 4))) {
     fa_probe_psid(md, buf); 
     md->md_contenttype = CONTENT_ALBUM;
     metdata_set_redirect(md, "sidfile://%s/", url);
     return 1;
   }
 
-  if(buf[0] == 'R'  && buf[1] == 'a'  && buf[2] == 'r' && buf[3] == '!' &&
+  if(l >= 16 && 
+     buf[0] == 'R'  && buf[1] == 'a'  && buf[2] == 'r' && buf[3] == '!' &&
      buf[4] == 0x1a && buf[5] == 0x07 && buf[6] == 0x0 && buf[9] == 0x73) {
 
     flags = buf[10] | buf[11] << 8;
@@ -338,17 +343,12 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   }
 #endif
 
-  if((buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F') ||
-     (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f')) {
+  if(l > 16 &&
+     ((buf[6] == 'J' && buf[7] == 'F' && buf[8] == 'I' && buf[9] == 'F') ||
+      (buf[6] == 'E' && buf[7] == 'x' && buf[8] == 'i' && buf[9] == 'f'))) {
     /* JPEG image */
     md->md_contenttype = CONTENT_IMAGE;
-    fa_probe_exif(md, url, buf, fh); // Try to get more info
-    return 1;
-  }
-
-  if(!memcmp(buf, "<showtimeplaylist", strlen("<showtimeplaylist"))) {
-    /* Ugly playlist thing (see fa_video.c) */
-    md->md_contenttype = CONTENT_VIDEO;
+    fa_probe_exif(md, url, buf, fh, l); // Try to get more info
     return 1;
   }
 
@@ -376,7 +376,13 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
     return 1;
   }
 
-
+  if(l > 16 && mystrbegins((const char *)buf, "#EXTM3U") &&
+     (strstr((const char *)buf, "#EXT-X-STREAM-INF:") ||
+      strstr((const char *)buf, "#EXT-X-TARGETDURATION:") ||
+      strstr((const char *)buf, "#EXT-X-MEDIA-SEQUENCE:"))) {
+    md->md_contenttype = CONTENT_VIDEO;
+    return 1;
+  }
   return 0;
 }
 
@@ -516,7 +522,7 @@ gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
  *
  */
 static void
-fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx, const char *url,
+fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
 		  const char *filename)
 {
   int i;
@@ -662,7 +668,7 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
     return NULL;
   }
 
-  fa_lavf_load_meta(md, fctx, url, filename);
+  fa_lavf_load_meta(md, fctx, filename);
   fa_libav_close_format(fctx);
   return md;
 }
@@ -672,10 +678,11 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
  *
  */
 metadata_t *
-fa_metadata_from_fctx(AVFormatContext *fctx, const char *url)
+fa_metadata_from_fctx(AVFormatContext *fctx)
 {
   metadata_t *md = metadata_create();
-  fa_lavf_load_meta(md, fctx, url, NULL);
+  
+  fa_lavf_load_meta(md, fctx, NULL);
   return md;
 }
 

@@ -184,6 +184,19 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       if(frame->sample_rate == 0)
 	return;
 
+      if(frame->channel_layout == 0) {
+	switch(mb->mb_cw->codec_ctx->channels) {
+	case 1:
+	  frame->channel_layout = AV_CH_LAYOUT_MONO;
+	  break;
+	case 2:
+	  frame->channel_layout = AV_CH_LAYOUT_STEREO;
+	  break;
+	default:
+	  return;
+	}
+      }
+
       if(mp->mp_stats)
 	mp_set_mq_meta(mq, mb->mb_cw->codec, mb->mb_cw->codec_ctx);
 
@@ -331,7 +344,7 @@ audio_decode_thread(void *aux)
     if(ctrl != NULL) {
       TAILQ_REMOVE(&mq->mq_q_ctrl, ctrl, mb_link);
       mb = ctrl;
-    } else if(data != NULL && avail < 16384) {
+    } else if(data != NULL && avail < ad->ad_tile_size) {
       TAILQ_REMOVE(&mq->mq_q_data, data, mb_link);
       mb = data;
     } else {

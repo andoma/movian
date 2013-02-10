@@ -19,7 +19,7 @@
 #include <inttypes.h>
 
 #include "showtime.h"
-#include "video_decoder.h"
+#include "media.h"
 #include "vobsub.h"
 #include "dvdspu.h"
 
@@ -288,7 +288,7 @@ dvdspu_decode_clut(uint32_t *dst, const uint32_t *src)
  *
  */
 void
-dvdspu_enqueue(video_decoder_t *vd, const void *data, int size, 
+dvdspu_enqueue(media_pipe_t *mp, const void *data, int size, 
 	       const uint32_t *clut, int width, int height, int64_t pts)
 {
   dvdspu_t *d;
@@ -306,36 +306,50 @@ dvdspu_enqueue(video_decoder_t *vd, const void *data, int size,
   d->d_canvas_width  = width;
   d->d_canvas_height = height;
 
-  hts_mutex_lock(&vd->vd_spu_mutex);
-  TAILQ_INSERT_TAIL(&vd->vd_spu_queue, d, d_link);
-  hts_mutex_unlock(&vd->vd_spu_mutex);
+  hts_mutex_lock(&mp->mp_overlay_mutex);
+  TAILQ_INSERT_TAIL(&mp->mp_spu_queue, d, d_link);
+  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 /**
  *
  */
 void
-dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d)
+dvdspu_destroy_one(media_pipe_t *mp, dvdspu_t *d)
 {
-  TAILQ_REMOVE(&vd->vd_spu_queue, d, d_link);
+  TAILQ_REMOVE(&mp->mp_spu_queue, d, d_link);
   free(d->d_bitmap);
   free(d);
 }
 
+
 /**
  *
  */
 void
-dvdspu_flush(video_decoder_t *vd)
+dvdspu_destroy_all(media_pipe_t *mp)
 {
   dvdspu_t *d;
 
-  hts_mutex_lock(&vd->vd_spu_mutex);
-  
-  TAILQ_FOREACH(d, &vd->vd_spu_queue, d_link)
+  while((d = TAILQ_FIRST(&mp->mp_spu_queue)) != NULL)
+    dvdspu_destroy_one(mp, d);
+}
+
+
+/**
+ *
+ */
+void
+dvdspu_flush(media_pipe_t *mp)
+{
+  dvdspu_t *d;
+
+  hts_mutex_lock(&mp->mp_overlay_mutex);
+
+  TAILQ_FOREACH(d, &mp->mp_spu_queue, d_link)
     d->d_destroyme = 1;
 
-  hts_mutex_unlock(&vd->vd_spu_mutex);
+  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 
@@ -357,7 +371,7 @@ dvdspu_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 		    struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
   dvdspu_codec_t *dc = mc->opaque;
-  dvdspu_enqueue(vd, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
+  dvdspu_enqueue(mc->mp, mb->mb_data, mb->mb_size, dc->clut, dc->w, dc->h,
 		 mb->mb_pts);
 }
 

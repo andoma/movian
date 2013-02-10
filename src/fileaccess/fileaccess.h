@@ -27,6 +27,7 @@
 #include "networking/http.h"
 #include "metadata/metadata.h"
 #include "navigator.h"
+#include "misc/redblack.h"
 
 typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
 
@@ -38,7 +39,7 @@ int fileaccess_init(void);
 /**
  *
  */
-TAILQ_HEAD(fa_dir_entry_queue, fa_dir_entry);
+RB_HEAD(fa_dir_entry_tree, fa_dir_entry);
 
 
 /**
@@ -57,7 +58,7 @@ typedef struct fa_stat {
  *
  */
 typedef struct fa_dir_entry {
-  TAILQ_ENTRY(fa_dir_entry) fde_link;
+  RB_ENTRY(fa_dir_entry) fde_link;
   rstr_t *fde_filename;
   rstr_t *fde_url;
   int   fde_type; /* CONTENT_ .. types from showtime.h */
@@ -84,19 +85,26 @@ typedef struct fa_dir_entry {
  *
  */
 typedef struct fa_dir {
-  struct fa_dir_entry_queue fd_entries;
+  struct fa_dir_entry_tree fd_entries;
   int fd_count;
 } fa_dir_t;
 
 fa_dir_t *fa_dir_alloc(void);
 
-void fa_dir_free(fa_dir_t *nd);
+void fa_dir_free(fa_dir_t *fd);
 
-fa_dir_entry_t *fa_dir_add(fa_dir_t *nd, const char *path, const char *name, int type);
+fa_dir_entry_t *fa_dir_add(fa_dir_t *fd, const char *path, const char *name, int type);
+
+fa_dir_entry_t *fa_dir_find(const fa_dir_t *fd, rstr_t *url);
 
 void fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde);
 
 int fa_dir_entry_stat(fa_dir_entry_t *fde);
+
+void fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde);
+
+void fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde);
+
 
 /**
  *
@@ -168,9 +176,11 @@ int fa_notify(const char *url, void *opaque,
 
 void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 
-void fa_scanner(const char *url, time_t mtime, 
-		prop_t *model, const char *playme,
-		prop_t *direct_close, rstr_t *title);
+void fa_scanner_page(const char *url, time_t mtime, 
+                     prop_t *model, const char *playme,
+                     prop_t *direct_close, rstr_t *title);
+
+int fa_scanner_scan(const char *url, time_t mtime);
 
 void *fa_load(const char *url, size_t *sizep, const char **vpaths,
 	      char *errbuf, size_t errlen, int *cache_control, int flags,
@@ -191,6 +201,9 @@ int fa_normalize(const char *url, char *dst, size_t dstlen);
 rstr_t *fa_absolute_path(rstr_t *filename, rstr_t *at);
 
 int fa_check_url(const char *url, char *errbuf, size_t errlen);
+
+struct htsbuf_queue;
+int fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes);
 
 struct htsbuf_queue;
 
@@ -230,5 +243,10 @@ fa_handle_t *fa_cache_open(const char *url, char *errbuf,
 fa_handle_t *fa_buffered_open(const char *url, char *errbuf, size_t errsize,
 			      int flags, struct prop *stats);
 
+// Memory backed files
+
+int memfile_register(const void *data, size_t len);
+
+void memfile_unregister(int id);
 
 #endif /* FILEACCESS_H */

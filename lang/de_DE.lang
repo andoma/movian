@@ -17,8 +17,7 @@ msg: Aktuelle Seite aus Lesezeichen entfernen
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Exit Showtime
-# Missing translation
-msg: 
+msg: Showtime beenden
 
 id: Go to Home screen
 msg: Zum Hauptmenü
@@ -33,19 +32,16 @@ id: Playqueue
 msg: Wiedergabeliste
 
 id: Power off
-# Missing translation
-msg: 
+msg: Ausschalten
 
 id: Reload current page
 msg: Aktuelle Seite neuladen
 
 id: Suspend
-# Missing translation
-msg: 
+msg: System ausschalten 
 
 id: System
-# Missing translation
-msg: 
+msg: System
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -100,6 +96,9 @@ msg: Toneinstellungen
 
 id: Audio tracks
 msg: Tonspuren
+
+id: Chapters
+msg: Kapitel
 
 id: Seek by time
 msg: Suchen per Zeitleiste
@@ -192,8 +191,7 @@ id: Album
 msg: Album
 
 id: Artist
-# Missing translation
-msg: 
+msg: Künstler
 
 id: Custom
 msg: Eigene
@@ -208,8 +206,7 @@ id: Slideshow
 msg: Slideshow
 
 id: Tvchannels
-# Missing translation
-msg: 
+msg: TV-Kanäle 
 
 id: View
 msg: Ansicht
@@ -224,8 +221,7 @@ msg: Gefundene Quellen im lokalen Netzwerk
 # ./glwskins/default/pages/home.view
 #
 id: Tiled
-# Missing translation
-msg: 
+msg: Gekachelt 
 
 #
 # ./glwskins/default/pages/home_clist.view
@@ -238,6 +234,9 @@ msg: Verwerfen
 
 id: Plugins
 msg: Plugins
+
+id: Search / Open URL
+msg: URL suchen/öffnen
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -303,16 +302,13 @@ msg: Ja
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-# Missing translation
-msg: 
+msg: komprimiert
 
 id: Main
-# Missing translation
-msg: 
+msg: Haupt
 
 id: Subs
-# Missing translation
-msg: 
+msg: Untertitel
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -342,8 +338,7 @@ msg: Titel %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Unterbrochen
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -409,13 +404,6 @@ id: Playback status
 msg: Wiedergabestatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -470,24 +458,13 @@ id: Master volume: %d dB
 msg: Lautstärke: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Einstellungen für opensubtitles.org
-
-id: Use opensubtitles.org
-msg: opensubtitles.org benutzen
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-# Missing translation
-msg: 
+msg: Sprache (ISO 639-1 code)
 
 id: Use original title
-# Missing translation
-msg: 
+msg: Originaltitel benutzen
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -568,8 +545,7 @@ msg: Suchergebnis für: %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-# Missing translation
-msg: 
+msg: Alben
 
 id: Automatic login when Showtime starts
 msg: Automatisch bei Programmstart einloggen
@@ -578,8 +554,7 @@ id: Collaborative
 msg: Gemeinschaftlich
 
 id: Compilations
-# Missing translation
-msg: 
+msg: Zusammenstellungen
 
 id: Enable Spotify
 msg: Spotify anschalten
@@ -618,8 +593,7 @@ id: Search result
 msg: Suchergebnisse
 
 id: Singles
-# Missing translation
-msg: 
+msg: Singles
 
 id: Spotify friends
 msg: Spotify Freunde
@@ -681,11 +655,23 @@ msg: Logon Fehler
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Datum
+id: Artists
+msg: Künstler
+
+id: Date (newest first)
+msg: Datum (neuste zuerst)
+
+id: Date (oldest first)
+msg: Datum (älteste zuerst)
 
 id: Filename
 msg: Dateiname
+
+id: Indexed mode
+msg: Indexmodus
+
+id: Off
+msg: Aus
 
 id: Show only supported files
 msg: Nur unterstützte Dateitypen anzeigen
@@ -701,12 +687,6 @@ msg: Sortieren nach
 #
 id: Search using spotlight
 msg: Suchen per Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: externe Datei
 
 #
 # ./src/i18n.c
@@ -783,6 +763,12 @@ msg: Untertitel im Bild anzeigen
 id: Audio delay
 msg: Audioverzögerung
 
+id: Stretch video to fullscreen
+msg: Video auf Vollbild strecken
+
+id: Stretch video to widescreen
+msg: Video auf Bildschirmbreite strecken 
+
 id: Subtitle delay
 msg: Untertitelverzögerung
 
@@ -791,6 +777,12 @@ msg: Untertitelskalierung
 
 id: Video zoom
 msg: Videozoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indizieren
 
 #
 # ./src/metadata/metadata.c
@@ -802,8 +794,7 @@ id: Custom search query
 msg: Eigene Suchanfrage
 
 id: Custom title
-# Missing translation
-msg: 
+msg: Eigener Titel
 
 id: Embedded in file
 msg: in Datei eingebunden
@@ -832,6 +823,9 @@ msg: Metadatenquelle
 id: Movie
 msg: Film
 
+id: Movie title
+msg: Filmtitel
+
 id: No data found
 msg: Keine Daten gefunden
 
@@ -842,11 +836,13 @@ id: Providers for Music
 msg: Quelle für Musik
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Quelle für Musik
 
 id: Refresh metadata
 msg: Metadaten erneuern
+
+id: Title, Season, Episode
+msg: Titel, Staffel, Episode
 
 id: Track %d
 msg: Titel %d
@@ -861,8 +857,7 @@ id: filename
 msg: Dateiname
 
 id: filename as TV episode
-# Missing translation
-msg: 
+msg: Dateinahme als TV-Serie
 
 id: folder name
 msg: Verzeichnisname
@@ -871,23 +866,19 @@ msg: Verzeichnisname
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-# Missing translation
-msg: 
+msg: %d Einträge gelöscht
 
 id: Clear all metadata
-# Missing translation
-msg: 
+msg: Alle Metadaten löschen
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-# Missing translation
-msg: 
+msg: Wirklich <b>alle</b> Informationen über:\nWiedergabehäufigkeit\nWiedergabeposition\nsowie Metadaten aus externen Quellen(z.B. themoviedb.org)\nlöschen?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Dateien auf Startseite hinzufügen/entfernen
 
 id: Added new bookmark: %s
 msg: Neues Lesezeichen hinzugefügt
@@ -935,30 +926,25 @@ id: Available plugins
 msg: Verfügbare Plugins
 
 id: Background
-# Missing translation
-msg: 
+msg: Hintergrund
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Passwort für Betatests
 
 id: Browse available plugins
 msg: Verfügbare Plugins durchsuchen
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Durchsuchen
 
 id: Cloud services
-# Missing translation
-msg: 
+msg: Cloud-Services
 
 id: Corrupt plugin bundle
 msg: Kaputte Plugindatei
 
 id: Default
-# Missing translation
-msg: 
+msg: Standard
 
 id: Disk write error
 msg: Disk Schreibfehler
@@ -970,34 +956,28 @@ id: File open error
 msg: Fehler beim Datei öffnen
 
 id: Home page
-# Missing translation
-msg: 
+msg: Startseite
 
 id: Installed plugins
 msg: Installierte Plugins
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Installierte Version ist höher als die verfügbare
 
 id: Installing
 msg: Installiere
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Liste der Alben
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Ladebildschirm
 
 id: Movies
-# Missing translation
-msg: 
+msg: Filme
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Musik streaming
 
 id: Not installable
 msg: nicht installierbar
@@ -1009,20 +989,16 @@ id: Not upgradable
 msg: nicht updatebar
 
 id: Online TV
-# Missing translation
-msg: 
+msg: Online TV
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Bevorzugte Ansicht der Plugins
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Bildschirmschoner
 
 id: TV channels
-# Missing translation
-msg: 
+msg: TV-Kanäle
 
 id: Unable to load plugin.json: %s
 msg: Kann plugin.json nicht laden
@@ -1031,8 +1007,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: kann plugin.json nicht laden: fehlformatiertes JSON
 
 id: Uncategorized
-# Missing translation
-msg: 
+msg: Unkategorisiert
 
 id: Up to date
 msg: Auf neuestem Stand
@@ -1044,12 +1019,10 @@ id: Upgraded plugin %s to version %s
 msg: Plugin von Version %s auf %s geupdatet
 
 id: User interface extensions
-# Missing translation
-msg: 
+msg: Benutzeroberflächen-Erweiterungen
 
 id: Video streaming
-# Missing translation
-msg: 
+msg: Video streaming
 
 #
 # ./src/runcontrol.c
@@ -1094,8 +1067,7 @@ id: Discovered media sources
 msg: Gefundene Medienquellen
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Schriftarten und Benutzeroberfläche
 
 id: General
 msg: Allgemein
@@ -1104,8 +1076,7 @@ id: Global settings
 msg: Allgemeine Einstellungen
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Aussehen und Bedienung
 
 id: Settings useful for developers
 msg: Nützliche Einstellungen für Entwickler
@@ -1114,31 +1085,49 @@ id: System related settings
 msg: Systembezogene Einstellungen
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: externe Datei
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Standard
+
+id: Fonts
+msg: Schriftarten
+
+id: Installed fonts
+msg: Installierte Schriftarten
+
 id: Narrow text
-# Missing translation
-msg: 
+msg: enger Text 
+
+id: Reset main font to default
+msg: Hauptschriftart auf Standard setzen
+
+id: Reset narrow font to default
+msg: Engen Text auf Standard setzen
+
+id: Reset subtitle font to default
+msg: Untertitelschriftart auf Standard setzen
 
 id: Unable to load %s -- %s
-# Missing translation
-msg: 
+msg: Kann %s -- %s nicht laden
 
 id: Unable to open %s for writing
-# Missing translation
-msg: 
+msg: Kann %s nicht zum Schreiben öffnen
 
 id: Unable to write to %s
-# Missing translation
-msg: 
+msg: Kann %s nicht beschreiben
 
 id: Use font %s for
-# Missing translation
-msg: 
+msg: Benutze Font %s für 
 
 id: User interface
-# Missing translation
-msg: 
+msg: Benutzeroberfläche
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1290,9 +1279,6 @@ msg: Maximale Auflösung für Deinterlacer
 id: No limit
 msg: Keine Begrenzung
 
-id: Off
-msg: Aus
-
 id: Outline color
 msg: Rahmenfarbe
 
@@ -1313,12 +1299,6 @@ msg: Schattenfarbe
 
 id: Shadow offset
 msg: Schattenabstand
-
-id: Stretch video to fullscreen
-msg: Video auf Vollbild strecken
-
-id: Stretch video to widescreen
-msg: Video auf Bildschirmbreite strecken 
 
 id: Subtitle position
 msg: Untertitelposition

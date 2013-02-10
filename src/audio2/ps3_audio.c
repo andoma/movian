@@ -51,6 +51,7 @@ typedef struct decoder {
   u64 snd_queue_key;
   int channels;
   int write_ptr;
+  int audio_blocks;
 } decoder_t;
 
 #define INVALID_PORT 0xffffffff
@@ -90,6 +91,7 @@ static int
 ps3_audio_init(audio_decoder_t *ad)
 {
   decoder_t *d = (decoder_t *)ad;
+  d->audio_blocks = 16;
   d->port_num = INVALID_PORT;
   ad->ad_tile_size = AUDIO_BLOCK_SAMPLES;
   return 0;
@@ -197,7 +199,7 @@ ps3_audio_reconfig(audio_decoder_t *ad)
   AudioPortParam params;
 
   params.numChannels = d->channels;
-  params.numBlocks = AUDIO_BLOCK_8;
+  params.numBlocks = d->audio_blocks;
   params.attr = 0;
   params.level = 1;
 	
@@ -295,11 +297,11 @@ ps3_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
       break;
     }
 
-    bi = (bi + 1) & 7;
+    bi = (bi + 1) & (d->audio_blocks - 1);
 
     if(pts != AV_NOPTS_VALUE) {
 
-      pts -= 1000000LL * (AUDIO_BLOCK_SAMPLES * (AUDIO_BLOCK_8 - 1)) / 48000;
+      pts -= 1000000LL * (AUDIO_BLOCK_SAMPLES * (d->audio_blocks - 1)) / 48000;
 
       media_pipe_t *mp = ad->ad_mp;
 

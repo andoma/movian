@@ -14,6 +14,9 @@ SRCS += src/arch/linux/linux_main.c \
 SRCS-$(CONFIG_LIBPULSE)  += src/audio2/pulseaudio.c
 SRCS-$(CONFIG_LIBASOUND) += src/audio2/alsa.c src/audio2/alsa_default.c 
 
+${BUILDDIR}/src/arch/linux/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} \
+-Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations
+
 
 DVDCSS_CFLAGS = -DHAVE_LINUX_DVD_STRUCT -DDVD_STRUCT_IN_LINUX_CDROM_H -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 

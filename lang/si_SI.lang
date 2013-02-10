@@ -101,6 +101,10 @@ msg: Nastavitve zvoka
 id: Audio tracks
 msg: Zvočni zapisi
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: Preskoči po času
 
@@ -238,6 +242,10 @@ msg: Prenehaj
 
 id: Plugins
 msg: Vtičniki
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -474,15 +482,6 @@ id: Master volume: %d dB
 msg: Glasnost: %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Nastavitve za opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Uporaba opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -685,11 +684,27 @@ msg: Napaka prijave
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Datum
+id: Artists
+# Missing translation
+msg: 
+
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Ime datoteke
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: Izklop
 
 id: Show only supported files
 msg: Prikaži samo podprte datoteke
@@ -705,12 +720,6 @@ msg: Razvrsti
 #
 id: Search using spotlight
 msg: Za iskanje uporabi Spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Zunanja datoteka
 
 #
 # ./src/i18n.c
@@ -787,6 +796,12 @@ msg: Poravnava podnapisov z sliko
 id: Audio delay
 msg: Zamik zvoka
 
+id: Stretch video to fullscreen
+msg: Rastegne video v cel zaslon
+
+id: Stretch video to widescreen
+msg: Raztegni video za Widescreen 
+
 id: Subtitle delay
 msg: Zamik podnapisov
 
@@ -795,6 +810,13 @@ msg: Velikost podnapisov
 
 id: Video zoom
 msg: Video približevanje
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -836,6 +858,10 @@ msg: Metadata izvor
 id: Movie
 msg: Film
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: Datotek ni na voljo
 
@@ -851,6 +877,10 @@ msg:
 
 id: Refresh metadata
 msg: Osveži metadata
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: Track %d
@@ -1119,9 +1149,39 @@ id: System related settings
 msg: Nastavitve primerne sistemu
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Zunanja datoteka
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1295,9 +1355,6 @@ msg: največja resolucija za deinterlacer
 id: No limit
 msg: Ni omejitev
 
-id: Off
-msg: Izklop
-
 id: Outline color
 msg: Okvirne barve
 
@@ -1318,12 +1375,6 @@ msg: Prikaži barve
 
 id: Shadow offset
 msg: Izravnava senčenja
-
-id: Stretch video to fullscreen
-msg: Rastegne video v cel zaslon
-
-id: Stretch video to widescreen
-msg: Raztegni video za Widescreen 
 
 id: Subtitle position
 msg: Položaj podnapisov

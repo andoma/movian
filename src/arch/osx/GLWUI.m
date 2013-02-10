@@ -108,7 +108,7 @@
 				     backing:NSBackingStoreBuffered
 				       defer:NO];
     
-    [window setTitle:@"Showtime"];
+     [window setTitle:@"Showtime"];
   }
   
   view = [[GLWView alloc] initWithFrame:frame:gr:fullscreen];

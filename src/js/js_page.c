@@ -275,6 +275,8 @@ typedef struct js_item {
   prop_sub_t *ji_eventsub;
   jsval ji_this;
   int ji_enable_set_property;
+  rstr_t *ji_url;
+  metadata_lazy_video_t *ji_mlv;
 } js_item_t;
 
 
@@ -289,6 +291,9 @@ item_finalize(JSContext *cx, JSObject *obj)
   TAILQ_REMOVE(&ji->ji_model->jm_items, ji, ji_link);
   js_model_release(ji->ji_model);
   prop_ref_dec(ji->ji_root);
+  rstr_release(ji->ji_url);
+  if(ji->ji_mlv != NULL)
+    mlv_unbind(ji->ji_mlv);
   free(ji);
 }
 
@@ -559,6 +564,51 @@ js_item_addOptSeparator(JSContext *cx, JSObject *obj,
 }
 
 
+
+/**
+ *
+ */
+static JSBool 
+js_item_bindVideoMetadata(JSContext *cx, JSObject *obj,
+			  uintN argc, jsval *argv, jsval *rval)
+{
+  js_item_t *ji = JS_GetPrivate(cx, obj);
+  JSObject *o = NULL;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "o", &o))
+    return JS_FALSE;
+  
+  rstr_t *title = js_prop_rstr(cx, o, "filename");
+  int year      = js_prop_int_or_default(cx, o, "year", 0);
+
+  if(title != NULL) {
+    // Raw filename case
+    title = metadata_remove_postfix_rstr(title);
+    year = -1;
+  } else {
+    title = js_prop_rstr(cx, o, "title");
+  }
+
+  int season    = js_prop_int_or_default(cx, o, "season", -1);
+  int episode   = js_prop_int_or_default(cx, o, "episode", -1);
+  rstr_t *imdb  = js_prop_rstr(cx, o, "imdb");
+  int duration  = js_prop_int_or_default(cx, o, "duration", 0);
+
+  if(ji->ji_mlv != NULL)
+    mlv_unbind(ji->ji_mlv);
+
+  ji->ji_mlv =
+    metadata_bind_video_info(ji->ji_url, title, imdb, duration,
+			     ji->ji_root, NULL, 0, 0, year, season, episode);
+  rstr_release(imdb);
+  rstr_release(title);
+  
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+
 /**
  *
  */
@@ -572,6 +622,7 @@ static JSFunctionSpec item_proto_functions[] = {
   JS_FS("enable",             js_item_enable,          0, 0, 0),
   JS_FS("disable",            js_item_disable,         0, 0, 0),
   JS_FS("moveBefore",         js_item_moveBefore,      1, 0, 0),
+  JS_FS("bindVideoMetadata",  js_item_bindVideoMetadata, 1, 0, 0),
   JS_FS_END
 };
 
@@ -589,8 +640,10 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 
   prop_t *item = prop_create_root(NULL);
 
+  rstr_t *rurl = url ? rstr_alloc(url) : NULL;
+
   if(url != NULL)
-    prop_set_string(prop_create(item, "url"), url);
+    prop_set(item, "url", PROP_SET_RSTRING, rurl);
 
   if(data != NULL)
     js_prop_set_from_jsval(cx, prop_create(item, "data"), *data);
@@ -610,6 +663,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
 
     if(backend_resolve_item(url, item)) {
       prop_destroy(item);
+      rstr_release(rurl);
       return JS_TRUE;
     }
   }
@@ -629,6 +683,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     *rval =  OBJECT_TO_JSVAL(robj);
     js_item_t *ji = calloc(1, sizeof(js_item_t));
     atomic_add(&model->jm_refcount, 1);
+    ji->ji_url = rstr_dup(rurl);
     ji->ji_model = model;
     ji->ji_root =  p;
     TAILQ_INSERT_TAIL(&model->jm_items, ji, ji_link);
@@ -646,6 +701,7 @@ js_appendItem0(JSContext *cx, js_model_t *model, prop_t *parent,
     JS_AddNamedRoot(cx, &ji->ji_this, "item_this");
     prop_tag_set(ji->ji_root, model, ji);
   }
+  rstr_release(rurl);
   return JS_TRUE;
 }
 
@@ -921,6 +977,28 @@ js_page_dump(JSContext *cx, JSObject *obj, uintN argc,
  *
  */
 static JSBool 
+js_page_redirect(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  const char *url;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s", &url))
+    return JS_FALSE;
+
+  event_t *e = event_create_str(EVENT_REDIRECT, url);
+  prop_send_ext_event(jm->jm_eventsink, e);
+  event_release(e);
+
+  *rval = JSVAL_VOID;
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSBool 
 js_page_items(JSContext *cx, JSObject *obj, uintN argc,
 	      jsval *argv, jsval *rval)
 {
@@ -938,6 +1016,21 @@ js_page_items(JSContext *cx, JSObject *obj, uintN argc,
   TAILQ_FOREACH(ji, &jm->jm_items, ji_link)
     JS_SetElement(cx, robj, pos++, &ji->ji_this);
 
+  return JS_TRUE;
+}
+
+
+
+
+/**
+ *
+ */
+static JSBool 
+js_page_flush(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  js_model_t *jm = JS_GetPrivate(cx, obj);
+  prop_destroy_childs(jm->jm_nodes);
   return JS_TRUE;
 }
 
@@ -969,6 +1062,7 @@ static JSFunctionSpec model_functions[] = {
     JS_FS("appendPassiveItem",  js_appendPassiveItem, 1, 0, 0),
     JS_FS("appendAction",       js_appendAction,      3, 0, 0),
     JS_FS("appendModel",        js_appendModel,       2, 0, 1),
+    JS_FS("flush",              js_page_flush,        0, 0, 0),
     JS_FS_END
 };
 
@@ -992,6 +1086,7 @@ js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc,
 static JSFunctionSpec page_functions[] = {
     JS_FS("onEvent",            js_page_onEvent, 2, 0, 0),
     JS_FS("error",              js_page_error,   1, 0, 0),
+    JS_FS("redirect",           js_page_redirect,1, 0, 0),
     JS_FS("dump",               js_page_dump,    0, 0, 0),
     JS_FS("waitForValue",       js_page_wfv,     2, 0, 0),
     JS_FS("subscribe",          js_page_subscribe, 2, 0, 0),

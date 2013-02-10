@@ -28,6 +28,11 @@ widget(deck, {
     }, "dataroot://resources/svg/SeekByFrame.svg",
 	 $global.media.current.seekindex.available);
 
+    ITEM(_("Chapters"), {
+      $view.page = 7;
+    }, "dataroot://resources/svg/Book.svg",
+	 $global.media.current.chapterindex.available);
+
     SEP(_("Settings"));
 
     ITEM(_("Audio"), {
@@ -67,10 +72,17 @@ widget(deck, {
 	});
 
 	widget(label, {
-	  weight: 5;
+	  weight: 2;
 	  TextStyleItem();
-	  caption: join(" · ", $self.title, $self.language);
-	  ellipsize: true;
+	  caption: $self.title;
+	  filterConstraintX: true;
+	});
+
+	widget(label, {
+	  weight: 2;
+	  TextStyleItem();
+	  caption: $self.language;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
@@ -89,7 +101,8 @@ widget(deck, {
 
     SEP(_("Subtitles"));
 
-    cloner($self.media.metadata.subtitlestreams, backdrop, {
+    cloner(propSorter($self.media.metadata.subtitlestreams,
+		      sort, "node.score", true, false), backdrop, {
       onEvent(activate, selectSubtitleTrack($self.url));
       focusable: true;
       source: "skin://pages/listitems/highlight.png";
@@ -97,6 +110,7 @@ widget(deck, {
 
       widget(container_x, {
 	alpha: 0.6 + iir(isFocused(), 6);
+	spacing: $ui.size / 2;
 	widget(icon, {
 	  source: "dataroot://resources/svg/Check.svg";
 	  shadow: true;
@@ -104,25 +118,41 @@ widget(deck, {
 	});
 
 	widget(label, {
-	  weight: 5;
+	  weight: 4;
 	  TextStyleItem();
-	  caption: join(" · ", $self.title, $self.language);
-	  ellipsize: true;
+	  caption: $self.title;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
 	  weight: 1;
 	  TextStyleItem();
+	  caption: $self.language;
+	  filterConstraintX: true;
+	});
+
+	widget(label, {
+	  weight: 0.5;
+	  TextStyleItem();
 	  caption: $self.format;
-	  ellipsize: true;
+	  filterConstraintX: true;
 	});
 
 	widget(label, {
 	  weight: 2;
 	  TextStyleItem();
 	  caption: $self.source;
-	  ellipsize: true;
+	  filterConstraintX: true;
 	});
+
+/*
+	widget(label, {
+	  weight: 0.5;
+	  TextStyleItem();
+	  caption: $self.score;
+	  filterConstraintX: true;
+	});
+*/
       });
     });
     
@@ -221,7 +251,7 @@ widget(deck, {
 	      align: bottom;
 	      shadow: true;
 	      outline: true;
-	      caption: value2duration($self.timestamp);
+	      caption: value2duration($self.timestamp, true);
 	      color: isFocused() + 0.6;
 	    });
 	    
@@ -244,6 +274,66 @@ widget(deck, {
       });
     });
       space(1);
+    });
+  );
+
+
+  // Page 7 - Chapters
+
+  commandMenuChromeWide(
+
+    SEP(_("Chapters"));
+
+    cloner($global.media.current.chapterindex.positions, backdrop, {
+
+      source: "skin://pages/listitems/highlight.png";
+      alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+      focusable: true;
+      onEvent(activate, {
+	$global.media.current.currenttime = $self.timestamp;
+      });
+
+      widget(container_x, {
+	spacing: $ui.size;
+	widget(label, {
+	  color: select(isFocused(), 1.0, 0.6);
+	  caption: value2duration($self.timestamp, true);
+	  align: left;
+	});
+
+	widget(container_y, {
+          filterConstraintX: true;
+          alpha: iir($parent.media.currenttime > $self.timestamp &&
+		     $parent.media.currenttime < $self.end, 8);
+	  
+          filterConstraintY: true;
+          align: center;
+          widget(container_z, {
+	    widget(backdrop, {
+	      border: 4;
+	      height: 8;
+	      source: "skin://playdecks/duration-bar-bg.png";
+	    });
+	    
+	    widget(clip, {
+	      clipping: [-1, 0, 1 - (($parent.media.currenttime - $self.timestamp) / ($self.end - $self.timestamp)), 0];
+	      widget(backdrop, {
+		margin: [-8, -3, -8, -5];
+		border: [16, 8];
+		source: "skin://playdecks/duration-bar-colorized.png";
+	      });
+	    });
+          });
+	});
+	
+
+	widget(label, {
+	  filterConstraintX: true;
+	  weight: 4;
+	  color: select(isFocused(), 1.0, 0.6);
+	  caption: $self.title;
+	});
+      });
     });
   );
 

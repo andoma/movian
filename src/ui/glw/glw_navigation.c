@@ -437,6 +437,10 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	      while(pagecnt--) {
 		c = d;
 		d = glw_prev_widget(c);
+
+		while(d != NULL && !glw_is_child_focusable(d))
+		  d = glw_prev_widget(d);
+
 		if(d == NULL) {
 		  loop = 0;
 		  break;
@@ -449,6 +453,11 @@ glw_navigate(glw_t *w, event_t *e, int local)
 	  } else if(pagemode == 2) {
 	    
 	    c = glw_first_widget(p);
+
+	    
+	    while(c != NULL && !glw_is_child_focusable(c))
+	      c = glw_next_widget(c);
+
 	    loop = 0;
 
 	  } else {

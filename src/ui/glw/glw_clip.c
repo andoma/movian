@@ -374,7 +374,7 @@ stencil_set_source(glw_t *w, rstr_t *filename)
   if(gs->gs_tex != NULL)
     glw_tex_deref(w->glw_root, gs->gs_tex);
 
-  gs->gs_tex = glw_tex_create(w->glw_root, filename, 0, -1, -1);
+  gs->gs_tex = glw_tex_create(w->glw_root, filename, 0, -1, -1, 0);
 }
 
 

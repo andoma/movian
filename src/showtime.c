@@ -267,7 +267,7 @@ showtime_init(void)
   /* Freetype */
 #if ENABLE_LIBFREETYPE
   freetype_init();
-  svg_init();
+  rasterizer_ft_init();
 #endif
 
 #if ENABLE_GLW

@@ -1,0 +1,201 @@
+// On screen keyboard
+
+$view.shift = 0;
+$view.caps = 0;
+
+#define KEY_(CH, ACTION, W=1, FW=0.5) {
+  widget(backdrop, {
+    weight: W;
+    filterConstraintX: true;
+    filterConstraintY: true;
+    source: select(isFocused(),
+		   "showtime:pixmap:gradient:180,200,255:80,90,100",
+		   "showtime:pixmap:gradient:255,255,255:180,180,180");
+	   
+    focusable: FW;
+    cornerRadius: 4;
+    onEvent(activate, {
+      fireEvent(targetedEvent("input", ACTION));
+      $view.shift = 0;
+    });
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isFocused(), 1, 0);
+      shadow: select(isFocused(), 1, 0);
+    });
+  });
+}
+
+
+$view.shifted = $view.shift ^^ $view.caps;
+
+#define KEY(CH, SCH, W=1, FW=0.5) {
+  KEY_(select($view.shifted, SCH, CH),
+       select($view.shifted, SCH, CH), W, FW);
+}
+
+
+#define ACTION(CH, EV, W=1, LIT=false) {
+  widget(backdrop, {
+    weight: W;
+    filterConstraintX: true;
+    filterConstraintY: true;
+    source: select(LIT, "showtime:pixmap:gradient:200,255,200:150,200,150",
+		   select(isFocused(),
+			  "showtime:pixmap:gradient:180,200,255:80,90,100",
+			  "showtime:pixmap:gradient:255,255,255:180,180,180"));
+	   
+    focusable: 0.5;
+    cornerRadius: 4;
+    onEvent(activate, EV);
+    widget(label, {
+      align: center;
+      caption: CH;
+      bold: true;
+      color: select(isFocused(), 1, 0);
+      shadow: select(isFocused(), 1, 0);
+    });
+  });
+}
+
+widget(container_y, {
+  padding: [$ui.width / 6, 0];
+  space(1);
+  widget(backdrop, {
+    source: "showtime:pixmap:gradient:148,158,168:80,90,100";
+    cornerRadius: $ui.size / 4;
+    widget(container_y, {
+      padding: $ui.size;
+      spacing: 4;
+
+      widget(label, {
+	sizeScale: 1.5;
+	caption: $ui.osk.title;
+	shadow: true;
+      });
+      
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+
+	widget(backdrop, {
+	  weight: 10;
+	  filterConstraintX: true;
+	  filterConstraintY: true;
+	  source: "showtime:pixmap:gradient:30,30,30:50,50,60";
+	  cornerRadius: 4;
+	  widget(text, {
+	    password: $ui.osk.password;
+	    oskPassword: true;
+	    padding: [$ui.size, 0];
+	    bind($ui.osk.text);
+	    sizeScale: 1.5;
+	    permanentCursor: true;
+	    id: "input";
+	  });
+	});
+	ACTION("←", targetedEvent("input", Left));
+	ACTION("→", targetedEvent("input", Right));
+	ACTION("Clear", {
+	  $ui.osk.text = void;
+	}, 1.5);
+	ACTION("Cancel", deliverEvent($ui.osk.eventSink, "Cancel"), 1.5);
+	ACTION("OK", deliverEvent($ui.osk.eventSink, "Ok"), 1.5);
+      });
+
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+	KEY("§", "½");
+	KEY("1", "!");
+	KEY("2", '"');
+	KEY("3", "#");
+	KEY("4", "¤");
+	KEY("5", "%");
+	KEY("6", "&");
+	KEY("7", "/");
+	KEY("8", "(");
+	KEY("9", ")");
+	KEY("0", "=");
+	KEY("+", "?");
+	KEY("'", "'");
+	ACTION("BS", targetedEvent("input", Backspace), 2);
+      });
+
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+	space(1.5);
+	KEY("q", "Q", 1, 1);
+	KEY("w", "W");
+	KEY("e", "E");
+	KEY("r", "R");
+	KEY("t", "T");
+	KEY("y", "Y");
+	KEY("u", "U");
+	KEY("i", "I");
+	KEY("o", "O");
+	KEY("p", "P");
+	KEY("å", "Å");
+	KEY("^", "^");
+	space(1.5);
+      });
+
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+	ACTION("Lock", {
+	  $view.caps = !$view.caps;
+	}, 1.66, $view.caps);
+	KEY("a", "A");
+	KEY("s", "S");
+	KEY("d", "D");
+	KEY("f", "F");
+	KEY("g", "G");
+	KEY("h", "H");
+	KEY("j", "J");
+	KEY("k", "K");
+	KEY("l", "L");
+	KEY("ö", "Ö");
+	KEY("ä", "Ä");
+	KEY("'", "*");
+	space(1);
+      });
+
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+	ACTION("Shift", {
+	  $view.shift = !$view.shift;
+	}, 1.25, $view.shift);
+	KEY("<", ">");
+	KEY("z", "Z");
+	KEY("x", "X");
+	KEY("c", "C");
+	KEY("v", "V");
+	KEY("b", "B");
+	KEY("n", "N");
+	KEY("m", "M");
+	KEY(",", ";");
+	KEY(".", ":");
+	KEY("-", "_");
+	ACTION("Shift", {
+	  $view.shift = !$view.shift;
+	}, 3, $view.shift);
+      });
+
+
+      widget(container_x, {
+	spacing: 4;
+	height: $ui.size * 2;
+	space(0.75);
+	KEY_("Space", " ");
+	space(1);
+      });
+
+    });
+  });
+  space(1);
+});

@@ -18,13 +18,12 @@
 #include <stdio.h>
 
 #include "showtime.h"
-#include "video_decoder.h"
 #include "video_overlay.h"
 #include "text/text.h"
 #include "misc/pixmap.h"
 #include "misc/str.h"
 #include "sub.h"
-#include "video_settings.h"
+#include "video/video_settings.h"
 #include "ext_subtitles.h"
 
 /**
@@ -631,7 +630,7 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
  *
  */
 void
-sub_ass_render(video_decoder_t *vd, const char *src,
+sub_ass_render(media_pipe_t *mp, const char *src,
 	       const uint8_t *header, int header_len,
 	       int fontdomain)
 {
@@ -655,7 +654,7 @@ sub_ass_render(video_decoder_t *vd, const char *src,
   video_overlay_t *vo = ad_dialogue_decode(&adc, src, fontdomain);
 
   if(vo != NULL)
-    video_overlay_enqueue(vd, vo);
+    video_overlay_enqueue(mp, vo);
 
   adc_cleanup(&adc);
 }

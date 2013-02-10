@@ -79,6 +79,7 @@ typedef struct glw_text_bitmap {
   uint8_t gtb_update_cursor;
   uint8_t gtb_need_layout;
   uint8_t gtb_deferred_realize;
+  uint8_t gtb_caption_dirty;
 
   int16_t gtb_edit_ptr;
 
@@ -105,11 +106,13 @@ typedef struct glw_text_bitmap {
 
   int gtb_flags;
 
+  char *gtb_description;
 
 } glw_text_bitmap_t;
 
 static void gtb_notify(glw_text_bitmap_t *gtb);
 static void gtb_realize(glw_text_bitmap_t *gtb);
+static void gtb_caption_refresh(glw_text_bitmap_t *gtb);
 
 static glw_class_t glw_text, glw_label;
 
@@ -196,7 +199,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     float x1, y1, x2, y2;
 
     // Horizontal 
-    if(text_width > right - left) {
+    if(text_width > right - left || pm->pm_flags & PIXMAP_TEXT_TRUNCATED) {
       // Oversized, must cut
       text_width = right - left;
 
@@ -332,7 +335,9 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_update_cursor = 0;
   }
 
-  gtb->gtb_paint_cursor = w->glw_class == &glw_text && glw_is_focused(w);
+  gtb->gtb_paint_cursor = 
+    gtb->gtb_flags & GTB_PERMANENT_CURSOR ||
+    (w->glw_class == &glw_text && glw_is_focused(w));
   gtb->gtb_need_layout = 0;
 
   if(gtb->gtb_state == GTB_VALID && gtb->gtb_deferred_realize) {
@@ -396,6 +401,7 @@ glw_text_bitmap_dtor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
+  free(gtb->gtb_description);
   free(gtb->gtb_caption);
   free(gtb->gtb_uc_buffer);
   rstr_release(gtb->gtb_font);
@@ -507,7 +513,7 @@ del_char(glw_text_bitmap_t *gtb)
 
   for(i = gtb->gtb_edit_ptr; i != gtb->gtb_uc_len; i++)
     gtb->gtb_uc_buffer[i] = gtb->gtb_uc_buffer[i + 1];
-
+  gtb->gtb_caption_dirty = 1;
   return 1;
 }
 
@@ -534,6 +540,7 @@ insert_char(glw_text_bitmap_t *gtb, int ch)
   gtb->gtb_uc_len++;
   gtb->gtb_edit_ptr++;
   gtb->gtb_update_cursor = 1;
+  gtb->gtb_caption_dirty = 1;
   return 1;
 }
 
@@ -617,14 +624,10 @@ glw_text_bitmap_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
     } else if(event_is_action(e, ACTION_ACTIVATE)) {
       if(w->glw_root->gr_open_osk != NULL) {
-	char buf[512];
-	char *q = buf;
-	int i;
-	for(i = 0; i < gtb->gtb_uc_len; i++)
-	  q += utf8_put(q, gtb->gtb_uc_buffer[i]);
-	*q = 0;
 
-	w->glw_root->gr_open_osk(w->glw_root, NULL, buf, w,
+	gtb_caption_refresh(gtb);
+	w->glw_root->gr_open_osk(w->glw_root, gtb->gtb_description,
+				 gtb->gtb_caption, w,
 				 gtb->gtb_flags & GTB_PASSWORD);
 	return 1;
       }
@@ -697,6 +700,8 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   int len;
   int flags = 0;
 
+  gtb_caption_refresh(gtb);
+
   if(gtb->gtb_caption && !strcmp(str ?: "", gtb->gtb_caption) &&
      type == gtb->gtb_type)
     return;
@@ -720,6 +725,7 @@ caption_set_internal(glw_text_bitmap_t *gtb, const char *str, int type)
   free(gtb->gtb_uc_buffer);
   gtb->gtb_uc_buffer = text_parse(gtb->gtb_caption ?: "", &len, flags,
 				  NULL, 0, 0);
+  gtb->gtb_caption_dirty = 0;
   gtb->gtb_uc_len = gtb->gtb_uc_size = len;
 
   if(gtb->w.glw_class == &glw_text) {
@@ -758,6 +764,7 @@ glw_gtb_set_caption_raw(glw_t *w, uint32_t *uc, int len)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
   free(gtb->gtb_uc_buffer);
+  gtb->gtb_caption_dirty = 1;
 
   gtb->gtb_uc_buffer = uc;
   gtb->gtb_uc_len = len;
@@ -1024,7 +1031,8 @@ set_maxlines(glw_t *w, int v)
 static void
 do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 {
-  uint32_t *uc, len, i;
+  int i;
+  uint32_t *uc, len;
   pixmap_t *pm;
   int max_width, max_lines, flags, default_size, tr_align, min_size;
   float scale;
@@ -1044,8 +1052,11 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     uc = malloc((len + 3) * sizeof(int));
 
     if(gtb->gtb_flags & GTB_PASSWORD) {
-      for(i = 0; i < len; i++)
+      int show_one = !!(gtb->gtb_flags & GTB_OSK_PASSWORD);
+      for(i = 0; i < len - show_one; i++)
 	uc[i] = '*';
+      if(show_one && len)
+	uc[len - 1] = gtb->gtb_uc_buffer[len - 1];
     } else {
       memcpy(uc, gtb->gtb_uc_buffer, len * sizeof(int));
     }
@@ -1233,27 +1244,6 @@ glw_text_flush(glw_root_t *gr)
 }
 
 
-/**
- *
- */
-int
-glw_get_text(glw_t *w, char *buf, size_t buflen)
-{
-  glw_text_bitmap_t *gtb = (void *)w;
-  char *q;
-  int i;
-
-  if(w->glw_class != &glw_label && w->glw_class != &glw_text) {
-    return -1;
-  }
-
-  q = buf;
-  for(i = 0; i < gtb->gtb_uc_len; i++)
-    q += utf8_put(q, gtb->gtb_uc_buffer[i]);
-  *q = 0;
-  return 0;
-}
-
 
 /**
  *
@@ -1261,13 +1251,36 @@ glw_get_text(glw_t *w, char *buf, size_t buflen)
 static void
 gtb_notify(glw_text_bitmap_t *gtb)
 {
-  char buf[100];
   gtb_realize(gtb);
 
   if(gtb->gtb_p != NULL) {
-    glw_get_text(&gtb->w, buf, sizeof(buf));
-    prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, buf, 0);
+    gtb_caption_refresh(gtb);
+    prop_set_string_ex(gtb->gtb_p, gtb->gtb_sub, gtb->gtb_caption, 0);
   }
+}
+
+
+/**
+ *
+ */
+static void
+gtb_caption_refresh(glw_text_bitmap_t *gtb)
+{
+  int len = 0, i;
+  char *s;
+
+  if(gtb->gtb_caption_dirty == 0)
+    return;
+
+  for(i = 0; i < gtb->gtb_uc_len; i++)
+    len += utf8_put(NULL, gtb->gtb_uc_buffer[i]);
+  
+  free(gtb->gtb_caption);
+  gtb->gtb_caption = s = malloc(len + 1);
+  for(i = 0; i < gtb->gtb_uc_len; i++)
+    s += utf8_put(s, gtb->gtb_uc_buffer[i]);
+  *s = 0;
+  gtb->gtb_caption_dirty = 0;
 }
 
 
@@ -1312,6 +1325,7 @@ static const char *
 glw_text_bitmap_get_text(glw_t *w)
 {
   glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  gtb_caption_refresh(gtb);
   return gtb->gtb_caption;
 }
 
@@ -1348,6 +1362,18 @@ update_text(glw_t *w, const char *str)
   } else {
     set_caption(w, str, 0);
   }
+}
+
+
+
+/**
+ *
+ */
+static void
+set_description(glw_t *w, const char *str)
+{
+  glw_text_bitmap_t *gtb = (glw_text_bitmap_t *)w;
+  mystrset(&gtb->gtb_description, str);
 }
 
 
@@ -1406,6 +1432,7 @@ static glw_class_t glw_text = {
   .gc_set_min_size = set_min_size,
   .gc_set_max_lines = set_maxlines,
   .gc_update_text = update_text,
+  .gc_set_desc = set_description,
 
 };
 

@@ -559,6 +559,40 @@ trampoline_rstr(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
+static void 
+trampoline_event(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_event_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_EXT_EVENT)
+    cb(s->hps_opaque, va_arg(ap, event_t *));
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
+static void 
+trampoline_destroyed(prop_sub_t *s, prop_event_t event, ...)
+{
+  prop_callback_destroyed_t *cb = s->hps_callback;
+
+  va_list ap;
+  va_start(ap, event);
+
+  if(event == PROP_DESTROYED)
+    cb(s->hps_opaque, va_arg(ap, prop_sub_t *));
+  va_end(ap);
+}
+
+
+/**
+ *
+ */
 void
 prop_notify_dispatch(struct prop_notify_queue *q)
 {
@@ -1930,7 +1964,8 @@ prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
 {
   prop_t *parent;
 
-  assert(p != before);
+  if(p == before)
+    return;
 
   if(TAILQ_NEXT(p, hp_parent_link) != before) {
     parent = p->hp_parent;
@@ -1945,8 +1980,6 @@ prop_req_move0(prop_t *p, prop_t *before, prop_sub_t *skipme)
 void
 prop_req_move(prop_t *p, prop_t *before)
 {
-  if(p == before)
-    return;
   hts_mutex_lock(&prop_mutex);
   prop_req_move0(p, before, NULL);
   hts_mutex_unlock(&prop_mutex);
@@ -2218,6 +2251,18 @@ prop_subscribe(int flags, ...)
     case PROP_TAG_CALLBACK_FLOAT:
       cb = va_arg(ap, void *);
       trampoline = trampoline_float;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_EVENT:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_event;
+      opaque = va_arg(ap, void *);
+      break;
+
+    case PROP_TAG_CALLBACK_DESTROYED:
+      cb = va_arg(ap, void *);
+      trampoline = trampoline_destroyed;
       opaque = va_arg(ap, void *);
       break;
 
@@ -3324,6 +3369,9 @@ prop_unlink_ex(prop_t *p, prop_sub_t *skipme)
 {
   prop_t *t;
 
+  if(p == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
 
   if(p->hp_type == PROP_ZOMBIE) {
@@ -3745,6 +3793,20 @@ prop_courier_poll(prop_courier_t *pc)
 /**
  *
  */
+int
+prop_courier_check(prop_courier_t *pc)
+{
+  hts_mutex_lock(&prop_mutex);
+  int r = TAILQ_FIRST(&pc->pc_queue_exp) || TAILQ_FIRST(&pc->pc_queue_nor);
+  hts_mutex_unlock(&prop_mutex);
+  return r;
+
+}
+
+
+/**
+ *
+ */
 rstr_t *
 prop_get_string(prop_t *p, ...)
 {
@@ -3967,6 +4029,63 @@ prop_have_more_childs(prop_t *p)
 {
   hts_mutex_lock(&prop_mutex);
   prop_have_more_childs0(p);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_mark_childs(prop_t *p)
+{
+  prop_t *c;
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      c->hp_flags |= PROP_MARKED;
+  }
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
+prop_unmark(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  p->hp_flags &= ~PROP_MARKED;
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+int
+prop_is_marked(prop_t *p)
+{
+  return p->hp_flags & PROP_MARKED ? 1 : 0;
+}
+
+
+/**
+ *
+ */
+void
+prop_destroy_marked_childs(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  if(p->hp_type == PROP_DIR) {
+    prop_t *c, *next;
+    for(c = TAILQ_FIRST(&p->hp_childs); c != NULL; c = next) {
+      next = TAILQ_NEXT(c, hp_parent_link);
+      if(c->hp_flags & PROP_MARKED)
+        prop_destroy0(c);
+    }
+  }
   hts_mutex_unlock(&prop_mutex);
 }
 

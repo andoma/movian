@@ -85,6 +85,13 @@ set_how(glw_t *w, const char *str)
     w->glw_class->gc_set_how(w, str);
 }
 
+static void
+set_description(glw_t *w, const char *str)
+{
+  if(w->glw_class->gc_set_desc != NULL)
+    w->glw_class->gc_set_desc(w, str);
+}
+
 
 /**
  *
@@ -575,6 +582,10 @@ set_int16_4(glw_view_eval_context_t *ec, const token_attrib_t *a,
     v[0] = v[1] = v[2] = v[3] = t->t_int;
     break;
 
+  case TOKEN_VOID:
+    v[0] = v[1] = v[2] = v[3] = 0;
+    break;
+
   default:
     return glw_view_seterr(ec->ei, t, "Attribute '%s' expects a vec4, got %s",
 			   a->name, token2name(t));
@@ -1017,6 +1028,7 @@ set_page(glw_view_eval_context_t *ec, const token_attrib_t *a,
 static const token_attrib_t attribtab[] = {
   {"id",              set_string, 0, set_id},
   {"how",             set_string, 0, set_how},
+  {"description",     set_string, 0, set_description},
   {"caption",         set_caption, 0},
   {"font",            set_font, 0},
   {"fragmentShader",  set_fs, 0},
@@ -1056,11 +1068,19 @@ static const token_attrib_t attribtab[] = {
   {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
   {"aspectFixedBorders", mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
 
+  {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,     mod_img_flags},
+  {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,    mod_img_flags},
+  {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,  mod_img_flags},
+  {"cornerBottomRight", mod_flag, GLW_IMAGE_CORNER_BOTTOMRIGHT, mod_img_flags},
+
+
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},
   {"ellipsize",       mod_flag,  GTB_ELLIPSIZE, mod_text_flags},
   {"bold",            mod_flag,  GTB_BOLD, mod_text_flags},
   {"italic",          mod_flag,  GTB_ITALIC, mod_text_flags},
   {"outline",         mod_flag,  GTB_OUTLINE, mod_text_flags},
+  {"permanentCursor", mod_flag,  GTB_PERMANENT_CURSOR, mod_text_flags},
+  {"oskPassword",     mod_flag,  GTB_OSK_PASSWORD, mod_text_flags},
   
   {"primary",         mod_flag, GLW_VIDEO_PRIMARY, mod_video_flags},
   {"noAudio",         mod_flag, GLW_VIDEO_NO_AUDIO, mod_video_flags},
@@ -1106,6 +1126,7 @@ static const token_attrib_t attribtab[] = {
   {"Yspacing",        set_int,    GLW_ATTRIB_Y_SPACING},
   {"scrollThreshold", set_int,    GLW_ATTRIB_SCROLL_THRESHOLD},
   {"divider",         set_int,    0, set_divider},
+  {"cornerRadius",    set_int,    GLW_ATTRIB_RADIUS},
 
   {"color",           set_float3, 0, set_rgb},
   {"translation",     set_float3, 0, set_translation},

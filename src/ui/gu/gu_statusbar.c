@@ -120,7 +120,7 @@ gu_statusbar_add(gu_window_t *gw, GtkWidget *parent)
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "notifications", "nodes"),
 		 PROP_TAG_CALLBACK, notifications_update, sb,
-		 PROP_TAG_COURIER, gw->gw_gu->gu_pc, 
+		 PROP_TAG_COURIER, glibcourier,
 		 NULL);
   return sb->bar;
 }

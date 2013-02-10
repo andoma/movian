@@ -107,7 +107,7 @@ gu_directory_create(gu_nav_page_t *gnp)
     prop_subscribe(0,
 		   PROP_TAG_NAME("page", "model", "contents"),
 		   PROP_TAG_CALLBACK_STRING, set_contents, gd,
-		   PROP_TAG_COURIER, gd->gd_gt->gt_gw->gw_gu->gu_pc, 
+		   PROP_TAG_COURIER, glibcourier, 
 		   PROP_TAG_ROOT, gnp->gnp_prop, 
 		   NULL);
 

@@ -97,6 +97,9 @@ msg: Configurações de áudio
 id: Audio tracks
 msg: Faixas de áudio
 
+id: Chapters
+msg: Capítulos
+
 id: Seek by time
 msg: Procurar por tempo
 
@@ -232,6 +235,9 @@ msg: Anular
 id: Plugins
 msg: Plugins
 
+id: Search / Open URL
+msg: Procurar / Abrir URL
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
@@ -248,10 +254,10 @@ id: Author:
 msg: Autor:
 
 id: Available version: 
-msg: Versão disponível
+msg: Versão disponível:
 
 id: Installed version: 
-msg: Versão instalada
+msg: Versão instalada:
 
 id: Showtime %s or newer is required
 msg: É necessária a versão %s do Showtime ou uma versão mais recente
@@ -380,10 +386,10 @@ id: Showtime is up to date
 msg: O Showtime está atualizado
 
 id: Stable
-msg: Estável
+msg: Estáve
 
 id: Testing
-msg: Testes
+msg: Teste
 
 id: Unable to query for new version
 msg: Não foi possível procurar uma nova versão
@@ -456,15 +462,6 @@ msg: Sem áudio
 
 id: Master volume: %d dB
 msg: Volume principal: %d dB
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Configurações para o opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utilizar o opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -664,11 +661,25 @@ msg: Falha no login
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Data
+id: Artists
+msg: Artistas
+
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Nome de ficheiro
+
+id: Indexed mode
+msg: Modo de indexação
+
+id: Off
+msg: Deslig.
 
 id: Show only supported files
 msg: Mostrar apenas ficheiros suportados
@@ -684,12 +695,6 @@ msg: Ordenar por
 #
 id: Search using spotlight
 msg: Procurar utilizando o spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Ficheiro externo
 
 #
 # ./src/i18n.c
@@ -766,6 +771,12 @@ msg: Alinhar as legendas no quadro de vídeo
 id: Audio delay
 msg: Atraso de áudio
 
+id: Stretch video to fullscreen
+msg: Esticar vídeo para fullscreen
+
+id: Stretch video to widescreen
+msg: Esticar vídeo para widescreen
+
 id: Subtitle delay
 msg: Atraso de legendas
 
@@ -774,6 +785,12 @@ msg: Redimensionamento de legendas
 
 id: Video zoom
 msg: Zoom de vídeo
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: A indexar
 
 #
 # ./src/metadata/metadata.c
@@ -814,6 +831,9 @@ msg: Fonte dos metadados
 id: Movie
 msg: Filme
 
+id: Movie title
+msg: Título do filme
+
 id: No data found
 msg: Não foram encontrados dados
 
@@ -828,6 +848,9 @@ msg: Fornecedores de vídeo
 
 id: Refresh metadata
 msg: Atualizar metadados
+
+id: Title, Season, Episode
+msg: Título, Temporada, Episódio
 
 id: Track %d
 msg: Faixa %d
@@ -1070,10 +1093,34 @@ id: System related settings
 msg: Configurações relacionadas com o sistema
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Ficheiro externo
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Por defeito
+
+id: Fonts
+msg: Tipos de letra
+
+id: Installed fonts
+msg: Tipos de letra instalados
+
 id: Narrow text
 msg: Texto estreito
+
+id: Reset main font to default
+msg: Repor tipo de letra principal por defeito
+
+id: Reset narrow font to default
+msg: Repor tipo de letra estreito por defeito
+
+id: Reset subtitle font to default
+msg: Repor tipo de letra de legenda por defeito
 
 id: Unable to load %s -- %s
 msg: Não foi possível carregar %s -- %s
@@ -1240,9 +1287,6 @@ msg: Resolução máxima para o deinterlacer
 id: No limit
 msg: Sem limite
 
-id: Off
-msg: Deslig.
-
 id: Outline color
 msg: Cor do contorno
 
@@ -1263,12 +1307,6 @@ msg: Cor da sombra
 
 id: Shadow offset
 msg: Deslocamento da sombra
-
-id: Stretch video to fullscreen
-msg: Esticar vídeo para fullscreen
-
-id: Stretch video to widescreen
-msg: Esticar vídeo para widescreen
 
 id: Subtitle position
 msg: Posicionamento das legendas

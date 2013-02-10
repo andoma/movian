@@ -140,7 +140,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
     s->slider_size_px = rc->rc_height;
   }
 
-  s->knob_pos_px = GLW_LP(4, p, s->knob_pos_px);
+  glw_lp(&s->knob_pos_px, w->glw_root, p, 0.25);
 
   glw_layout0(c, &rc0);
 }

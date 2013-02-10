@@ -131,12 +131,14 @@ widget(container_z, {
       XITEM_TITLE("System");
     });
 
-    cloner(propSorter(propGrouper($global.services.enabled, "node.type"), "node.name"), container_z, {
+    cloner(propSorter(propGrouper($global.services.enabled, "node.type"),
+		      sort, "node.name", false, false), container_z, {
       XITEM_PROPS();
 
       widget(list_y, {
 	YLIST_PROPS();
-	cloner(propSorter($self.nodes, "node.title"), container_z, {
+	cloner(propSorter($self.nodes,
+			  sort, "node.title", false, false), container_z, {
 	  HOMEITEM($self.title,
 		   $self.icon ?? 
 		   "dataroot://resources/svg/" + 

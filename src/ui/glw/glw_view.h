@@ -112,7 +112,7 @@ typedef struct token {
   union {
     int elements;
     void *extra;
-    double f;
+    float f;
     int args;
     int i;
   } arg;

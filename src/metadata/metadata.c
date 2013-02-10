@@ -20,9 +20,10 @@
 #include <stdio.h>
 #include <unistd.h>
 
+#include <sqlite3.h>
+
 #include "prop/prop.h"
 #include "prop/prop_concat.h"
-#include "ext/sqlite/sqlite3.h"
 
 #include "showtime.h"
 #include "media.h"
@@ -43,7 +44,7 @@
 
 static hts_mutex_t metadata_mutex;
 static prop_courier_t *metadata_courier;
-static struct metadata_source_list metadata_sources[METADATA_TYPE_num];
+static struct metadata_source_queue metadata_sources[METADATA_TYPE_num];
 prop_t *metadata_sources_settings[METADATA_TYPE_num];
 
 static void metadata_filename_to_title(const char *filename,
@@ -55,6 +56,8 @@ static int metadata_filename_to_episode(const char *filename,
 
 static int metadata_folder_to_season(const char *s,
 				     int *seasonp, rstr_t **titlep);
+
+static int is_reasonable_movie_name(const char *s);
 
 /**
  *
@@ -214,7 +217,9 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 
   if(ms->ms_disposition & 1) // default
     score += 10;
-  
+  else
+    score += 5;
+
   if(ms->ms_title != NULL) {
     title = rstr_dup(ms->ms_title);
   } else {
@@ -672,10 +677,16 @@ struct metadata_lazy_video {
   prop_sub_t *mlv_trig_desc;
   prop_sub_t *mlv_trig_rating;
 
-  int mlv_duration;
+  float mlv_duration;
   unsigned char mlv_type;
   unsigned char mlv_lonely : 1;
   unsigned char mlv_passive : 1;
+  unsigned char mlv_qtype : 6;
+  union {
+    int16_t mlv_season;
+    int16_t mlv_year;
+  };
+  int16_t mlv_episode;
   int mlv_dsid;
 };
 
@@ -700,7 +711,7 @@ static metadata_source_t *
 get_ms(metadata_type_t type, int id)
 {
   metadata_source_t *ms;
-  LIST_FOREACH(ms, &metadata_sources[type], ms_link)
+  TAILQ_FOREACH(ms, &metadata_sources[type], ms_link)
     if(ms->ms_enabled && ms->ms_id == id)
       break;
   return ms;
@@ -740,6 +751,12 @@ build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
       break;
     case METADATA_QTYPE_EPISODE:
       qtype = _("filename as TV episode");
+      break;
+    case METADATA_QTYPE_MOVIE:
+      qtype = _("Movie title");
+      break;
+    case METADATA_QTYPE_TVSHOW:
+      qtype = _("Title, Season, Episode");
       break;
     }
 
@@ -831,35 +848,38 @@ query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
   if(msf->query_by_title_and_year == NULL)
     return METADATA_PERMANENT_ERROR;
 
+  if(is_reasonable_movie_name(rstr_get(mlv->mlv_filename))) {
 
-
-  metadata_filename_to_title(rstr_get(mlv->mlv_filename), &year, &title);
+    metadata_filename_to_title(rstr_get(mlv->mlv_filename), &year, &title);
   
-  TRACE(TRACE_DEBUG, "METADATA",
-	"Performing search lookup for %s year:%d, based on filename",
-	rstr_get(title), year);
-
-  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
-				      rstr_get(title), year,
-				      mlv->mlv_duration,
-				      METADATA_QTYPE_FILENAME);
-  *qtype = METADATA_QTYPE_FILENAME;
-
-  if(rval == METADATA_PERMANENT_ERROR && year != 0) {
-    // Try without year
-
     TRACE(TRACE_DEBUG, "METADATA",
-	  "Performing search lookup for %s without year, based on filename",
+	  "Performing search lookup for %s year:%d, based on filename",
 	  rstr_get(title), year);
 
     rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
-					rstr_get(title), 0,
+					rstr_get(title), year,
 					mlv->mlv_duration,
 					METADATA_QTYPE_FILENAME);
     *qtype = METADATA_QTYPE_FILENAME;
+
+    if(rval == METADATA_PERMANENT_ERROR && year != 0) {
+      // Try without year
+
+      TRACE(TRACE_DEBUG, "METADATA",
+	    "Performing search lookup for %s without year, based on filename",
+	    rstr_get(title), year);
+
+      rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
+					  rstr_get(title), 0,
+					  mlv->mlv_duration,
+					  METADATA_QTYPE_FILENAME);
+      *qtype = METADATA_QTYPE_FILENAME;
+    }
+    rstr_release(title);
+  } else {
+    rval = METADATA_PERMANENT_ERROR;
   }
 
-  rstr_release(title);
 
   if(rval == METADATA_PERMANENT_ERROR && mlv->mlv_lonely) {
 
@@ -935,7 +955,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   metadata_t *md = NULL;
   int64_t rval;
   metadata_source_t *ms;
-  struct metadata_source_list *msl = &metadata_sources[mlv->mlv_type];
+  struct metadata_source_queue *msl = &metadata_sources[mlv->mlv_type];
   int r;
   int fixed_ds;
   const char *sq = rstr_get(mlv->mlv_custom_query);
@@ -954,7 +974,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
     goto bad;
   }
 
-  LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
+  TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
     ms->ms_mark = 0;
 
  redo:
@@ -977,7 +997,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
   if(md == NULL || !md->md_preferred) {
 
-    LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+    TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
 
       /* Skip disabled datasources */
       if(!ms->ms_enabled)
@@ -1002,18 +1022,35 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 	qtype = METADATA_QTYPE_CUSTOM;
 	q = NULL;
       } else if(msf->query_by_imdb_id != NULL && mlv->mlv_imdb_id != NULL) {
+	if(mlv->mlv_passive)
+	  continue;
+
 	qtype = METADATA_QTYPE_IMDB;
 	q = rstr_get(mlv->mlv_imdb_id);
 
-	if(mlv->mlv_passive)
+      } else if(mlv->mlv_qtype == METADATA_QTYPE_MOVIE) {
+
+	if(msf->query_by_title_and_year == NULL)
 	  continue;
 
+	qtype = METADATA_QTYPE_MOVIE;
+	q = NULL;
+
+      } else if(mlv->mlv_qtype == METADATA_QTYPE_TVSHOW) {
+
+	if(msf->query_by_episode == NULL)
+	  continue;
+
+	qtype = METADATA_QTYPE_TVSHOW;
+	q = NULL;
+
+
       } else {
+	if(mlv->mlv_passive)
+	  continue;
 	qtype = METADATA_QTYPE_FILENAME_OR_DIRECTORY;
 	q = NULL;
 
-	if(mlv->mlv_passive)
-	  continue;
       }
 
       if(md && md->md_dsid == ms->ms_id && is_qtype_compat(qtype, md->md_qtype))
@@ -1058,6 +1095,24 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 
 	case METADATA_QTYPE_FILENAME_OR_DIRECTORY:
 	  rval = query_by_filename_or_dirname(db, mlv, msf, &qtype);
+	  break;
+
+	case METADATA_QTYPE_MOVIE:
+	  TRACE(TRACE_DEBUG, "METADATA",
+		"Performing search lookup on movie title %s, year:%d using %s",
+		rstr_get(mlv->mlv_filename), mlv->mlv_year, ms->ms_name);
+
+	  rval = msf->query_by_title_and_year(db, rstr_get(mlv->mlv_url),
+					      rstr_get(mlv->mlv_filename),
+					      mlv->mlv_year, mlv->mlv_duration,
+					      qtype);
+	  break;
+
+	case METADATA_QTYPE_TVSHOW:
+	  rval = msf->query_by_episode(db, rstr_get(mlv->mlv_url),
+				       rstr_get(mlv->mlv_filename),
+				       mlv->mlv_season, mlv->mlv_episode,
+				       qtype);
 	  break;
 
 	case METADATA_QTYPE_CUSTOM:
@@ -1138,116 +1193,120 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
     }
   }
 
-  title = rstr_dup(custom_title);
+  if(mlv->mlv_m != NULL) {
+    title = rstr_dup(custom_title);
 
-  if(md != NULL) {
-    mlv->mlv_dsid = md->md_dsid;
-    ms = get_ms(mlv->mlv_type, md->md_dsid);
-    if(ms != NULL)
-      prop_set(mlv->mlv_m, "source", PROP_SET_STRING, ms->ms_description);
+    if(md != NULL) {
+      mlv->mlv_dsid = md->md_dsid;
+      ms = get_ms(mlv->mlv_type, md->md_dsid);
+      if(ms != NULL)
+        prop_set(mlv->mlv_m, "source", PROP_SET_STRING, ms->ms_description);
 
-    prop_set(mlv->mlv_m, "icon",        PROP_SET_RSTRING, md->md_icon);
-    prop_set(mlv->mlv_m, "tagline",     PROP_SET_RSTRING, md->md_tagline);
-    prop_set(mlv->mlv_m, "description", PROP_SET_RSTRING, md->md_description);
-    prop_set(mlv->mlv_m, "backdrop",    PROP_SET_RSTRING, md->md_backdrop);
-    prop_set(mlv->mlv_m, "genre",       PROP_SET_RSTRING, md->md_genre);
+      prop_set(mlv->mlv_m, "icon",        PROP_SET_RSTRING, md->md_icon);
+      prop_set(mlv->mlv_m, "tagline",     PROP_SET_RSTRING, md->md_tagline);
+      prop_set(mlv->mlv_m, "description", PROP_SET_RSTRING, md->md_description);
+      prop_set(mlv->mlv_m, "backdrop",    PROP_SET_RSTRING, md->md_backdrop);
+      prop_set(mlv->mlv_m, "genre",       PROP_SET_RSTRING, md->md_genre);
 
-    prop_set(mlv->mlv_m, "year",
-	      md->md_year ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_year);
+      prop_set(mlv->mlv_m, "year",
+               md->md_year ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_year);
 
-    prop_set(mlv->mlv_m, "rating",
-	      md->md_rating >= 0 ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_rating);
+      prop_set(mlv->mlv_m, "rating",
+               md->md_rating >= 0 ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_rating);
 
-    prop_set(mlv->mlv_m, "rating_count",
-	      md->md_rating_count >= 0 ? PROP_SET_INT : PROP_SET_VOID,
-	      md->md_rating_count);
+      prop_set(mlv->mlv_m, "rating_count",
+               md->md_rating_count >= 0 ? PROP_SET_INT : PROP_SET_VOID,
+               md->md_rating_count);
       
-    set_cast_n_crew(mlv->mlv_m, md);
+      set_cast_n_crew(mlv->mlv_m, md);
 
-    metadata_t *season = NULL;
-    metadata_t *series = NULL;
+      metadata_t *season = NULL;
+      metadata_t *series = NULL;
 
-    if(md->md_parent && md->md_parent->md_type == METADATA_TYPE_SEASON) {
-      season = md->md_parent;
-      // It's a TV serie
+      if(md->md_parent && md->md_parent->md_type == METADATA_TYPE_SEASON) {
+        season = md->md_parent;
+        // It's a TV serie
 
-      prop_t *pepi = prop_create_r(mlv->mlv_m, "episode");
-      prop_t *psea = prop_create_r(mlv->mlv_m, "season");
-      prop_t *pser = prop_create_r(mlv->mlv_m, "series");
+        prop_t *pepi = prop_create_r(mlv->mlv_m, "episode");
+        prop_t *psea = prop_create_r(mlv->mlv_m, "season");
+        prop_t *pser = prop_create_r(mlv->mlv_m, "series");
 
-      prop_set(pepi, "number",     PROP_SET_INT,     md->md_idx);
-      prop_set(pepi, "title",      PROP_SET_RSTRING, md->md_title);
-      prop_set(pepi, "backdrop",   PROP_SET_RSTRING, md->md_backdrop);
-      prop_set(pepi, "bannerWide", PROP_SET_RSTRING, md->md_banner_wide);
-      prop_set(pepi, "icon",       PROP_SET_RSTRING, md->md_icon);
+        prop_set(pepi, "number",     PROP_SET_INT,     md->md_idx);
+        prop_set(pepi, "title",      PROP_SET_RSTRING, md->md_title);
+        prop_set(pepi, "backdrop",   PROP_SET_RSTRING, md->md_backdrop);
+        prop_set(pepi, "bannerWide", PROP_SET_RSTRING, md->md_banner_wide);
+        prop_set(pepi, "icon",       PROP_SET_RSTRING, md->md_icon);
 
-      prop_set(psea, "number",     PROP_SET_INT,     season->md_idx);
-      prop_set(psea, "title",      PROP_SET_RSTRING, season->md_title);
-      prop_set(psea, "backdrop",   PROP_SET_RSTRING, season->md_backdrop);
-      prop_set(psea, "bannerWide", PROP_SET_RSTRING, season->md_banner_wide);
-      prop_set(psea, "icon",       PROP_SET_RSTRING, season->md_icon);
+        prop_set(psea, "number",     PROP_SET_INT,     season->md_idx);
+        prop_set(psea, "title",      PROP_SET_RSTRING, season->md_title);
+        prop_set(psea, "backdrop",   PROP_SET_RSTRING, season->md_backdrop);
+        prop_set(psea, "bannerWide", PROP_SET_RSTRING, season->md_banner_wide);
+        prop_set(psea, "icon",       PROP_SET_RSTRING, season->md_icon);
 
-      set_cast_n_crew(psea, season);
+        set_cast_n_crew(psea, season);
 
-      if(season->md_parent &&
-	 season->md_parent->md_type == METADATA_TYPE_SERIES) {
-	series = season->md_parent;
+        if(season->md_parent &&
+           season->md_parent->md_type == METADATA_TYPE_SERIES) {
+          series = season->md_parent;
 
-	prop_set(pser, "title",      PROP_SET_RSTRING, series->md_title);
-	prop_set(pser, "backdrop",   PROP_SET_RSTRING, series->md_backdrop);
-	prop_set(pser, "bannerWide", PROP_SET_RSTRING, series->md_banner_wide);
-	prop_set(pser, "icon",       PROP_SET_RSTRING, series->md_icon);
-	set_cast_n_crew(pser, series);
+          prop_set(pser, "title",      PROP_SET_RSTRING, series->md_title);
+          prop_set(pser, "backdrop",   PROP_SET_RSTRING, series->md_backdrop);
+          prop_set(pser, "bannerWide", PROP_SET_RSTRING, series->md_banner_wide);
+          prop_set(pser, "icon",       PROP_SET_RSTRING, series->md_icon);
+          set_cast_n_crew(pser, series);
+        }
+
+        title = title ?: rstr_dup(mlv->mlv_filename);
+
+        prop_ref_dec(pepi);
+        prop_ref_dec(psea);
+        prop_ref_dec(pser);
+
+      } else {
+        title = title ?: rstr_dup(md->md_title);
       }
 
-      title = title ?: rstr_dup(mlv->mlv_filename);
+      if(season)
+        prop_set(mlv->mlv_m, "vtype", PROP_SET_STRING, "tvseries");
+      else
+        prop_set(mlv->mlv_m, "vtype", PROP_SET_VOID);
 
-      prop_ref_dec(pepi);
-      prop_ref_dec(psea);
-      prop_ref_dec(pser);
+      build_info_text(mlv, md);
+      metadata_destroy(md);
 
     } else {
-      title = title ?: rstr_dup(md->md_title);
+
+    bad:
+
+      if(mlv->mlv_m != NULL) {
+
+        prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
+        prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
+
+        title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
+
+        mlv->mlv_dsid = 0;
+
+        build_info_text(mlv, NULL);
+      }
     }
+    prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, title);
 
-    if(season)
-      prop_set(mlv->mlv_m, "vtype", PROP_SET_STRING, "tvseries");
-    else
-      prop_set(mlv->mlv_m, "vtype", PROP_SET_VOID);
-
-    build_info_text(mlv, md);
-    metadata_destroy(md);
-
-  } else {
-
-  bad:
-
-    prop_set(mlv->mlv_m, "source",      PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "icon",        PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "tagline",     PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "description", PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "backdrop",    PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "genre",       PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "year",        PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "rating",      PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "rating_count",PROP_SET_VOID);
-    prop_set(mlv->mlv_m, "vtype",       PROP_SET_VOID);
-
-    title = title ?: rstr_dup(custom_title ?: mlv->mlv_filename);
-
-    mlv->mlv_dsid = 0;
-
-    build_info_text(mlv, NULL);
+    prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
   }
 
-  prop_set(mlv->mlv_m, "title", PROP_SET_RSTRING, title);
   rstr_release(title);
-
-  prop_set(mlv->mlv_m, "loading", PROP_SET_INT, 0);
-
-  LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
+  TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link)
     ms->ms_mark = 0;
 
   return 0;
@@ -1381,7 +1440,7 @@ load_sources(metadata_lazy_video_t *mlv)
   prop_link(_p("Automatic"), prop_create(c, "title"));
   pv = prop_vec_append(pv, c);
 
-  LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+  TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
     if(!ms->ms_enabled)
       continue;
     c = prop_create_root(ms->ms_name);
@@ -1425,7 +1484,7 @@ mlv_set_source(metadata_lazy_video_t *mlv, const char *name)
       id = 1;
     } else {
       metadata_source_t *ms = NULL;
-      LIST_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
+      TAILQ_FOREACH(ms, &metadata_sources[mlv->mlv_type], ms_link) {
 	if(ms->ms_enabled && !strcmp(ms->ms_name, name)) {
 	  id = ms->ms_id;
 	  break;
@@ -1566,6 +1625,9 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
 	if(s && *s)
 	  kv_url_opt_set(rstr_get(mlv->mlv_url), KVSTORE_DOMAIN_SYS,
 			 "metacustomquery", KVSTORE_SET_STRING, s);
+	else
+	  kv_url_opt_set(rstr_get(mlv->mlv_url), KVSTORE_DOMAIN_SYS,
+			 "metacustomquery", KVSTORE_SET_VOID);
       }
     }
       
@@ -1738,10 +1800,11 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
  *
  */
 metadata_lazy_video_t *
-metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
-			 rstr_t *imdb_id, int duration,
-			 prop_t *options, prop_t *root,
-			 rstr_t *folder, int lonely, int passive)
+metadata_bind_video_info(rstr_t *url, rstr_t *filename,
+			 rstr_t *imdb_id, float duration,
+			 prop_t *root,
+			 rstr_t *folder, int lonely, int passive,
+			 int year, int season, int episode)
 {
   metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
 
@@ -1753,14 +1816,24 @@ metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
   mlv->mlv_type = METADATA_TYPE_VIDEO;
   mlv->mlv_lonely = lonely;
   mlv->mlv_passive = passive;
-  mlv->mlv_m = prop_ref_inc(prop);
+  mlv->mlv_m = prop_create_r(root, "metadata");
+
+
+  if(season >= 0 && episode >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_TVSHOW;
+    mlv->mlv_season = season;
+    mlv->mlv_episode = episode;
+  } else if(year >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_MOVIE;
+    mlv->mlv_year = year;
+  }
 
   mlv->mlv_trig_title =
-    mlv_sub(mlv, prop, "title", METADATA_PROP_TITLE);
+    mlv_sub(mlv, mlv->mlv_m, "title", METADATA_PROP_TITLE);
   mlv->mlv_trig_desc =
-    mlv_sub(mlv, prop, "description", METADATA_PROP_DESCRIPTION);
+    mlv_sub(mlv, mlv->mlv_m, "description", METADATA_PROP_DESCRIPTION);
   mlv->mlv_trig_rating =
-    mlv_sub(mlv, prop, "rating", METADATA_PROP_RATING);
+    mlv_sub(mlv, mlv->mlv_m, "rating", METADATA_PROP_RATING);
   
 
   prop_t *m;
@@ -1902,8 +1975,12 @@ metadata_bind_video_info(prop_t *prop, rstr_t *url, rstr_t *filename,
 
   // Add all options
 
+  prop_t *options = prop_create_r(root, "options");
+
   prop_set_parent_vector(pv, options, NULL, NULL);
   prop_vec_release(pv);
+
+  prop_ref_dec(options);
 
   return mlv;
 }
@@ -1926,7 +2003,7 @@ mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
  *
  */
 void
-mlv_set_duration(metadata_lazy_video_t *mlv, int duration)
+mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
 {
   hts_mutex_lock(&metadata_mutex);
   mlv->mlv_duration = duration;
@@ -1949,6 +2026,53 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
     mlv_load(&mlv->mlv_mlp);
   }
   hts_mutex_unlock(&metadata_mutex);
+}
+
+
+/**
+ *
+ */
+int
+mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
+                 const char *imdb_id, float duration, const char *folder,
+                 int lonely)
+{
+  metadata_lazy_video_t mlv;
+  memset(&mlv, 0, sizeof(mlv));
+
+  mlv.mlv_url      = rstr_dup(url);
+  mlv.mlv_filename = rstr_dup(filename);
+  mlv.mlv_imdb_id  = rstr_alloc(imdb_id);
+  mlv.mlv_folder   = rstr_alloc(folder);
+  mlv.mlv_lonely   = 1;
+  mlv.mlv_duration = duration;
+  mlv.mlv_type     = METADATA_TYPE_VIDEO;
+
+  hts_mutex_lock(&metadata_mutex);
+  int r = mlv_get_video_info0(db, &mlv, 1);
+  hts_mutex_unlock(&metadata_mutex);
+  rstr_release(mlv.mlv_url);
+  rstr_release(mlv.mlv_filename);
+  rstr_release(mlv.mlv_imdb_id);
+  rstr_release(mlv.mlv_folder);
+  return r;
+}
+
+
+/**
+ *
+ */
+metadata_t *
+metadata_get_video_data(const char *url)
+{
+  void *db = metadb_get();
+  metadata_t *md;
+
+  int r = metadb_get_videoinfo(db, url, NULL, NULL, &md);
+  metadb_close(db);
+  if(r)
+    return NULL;
+  return md;
 }
 
 
@@ -2224,6 +2348,19 @@ metadata_folder_to_season(const char *s,
 }
 
 
+/**
+ *
+ */
+static int
+is_reasonable_movie_name(const char *s)
+{
+  int n = 0;
+  for(;*s; s++) {
+    if(*s >= 0x30)
+      n++;
+  }
+  return n >= 3;
+}
 
 
 
@@ -2381,6 +2518,7 @@ metadata_add_source(const char *name, const char *description,
   metadb_close(db);
 
   metadata_source_t *ms = calloc(1, sizeof(metadata_source_t));
+  ms->ms_type = type;
   ms->ms_prio = prio;
   ms->ms_name = strdup(name);
   ms->ms_description = strdup(description);
@@ -2390,9 +2528,13 @@ metadata_add_source(const char *name, const char *description,
   ms->ms_partial_props = partials;
   ms->ms_complete_props = complete;
 
+  hts_mutex_lock(&metadata_mutex);
+
   ms->ms_settings = 
     settings_add_dir_cstr(metadata_sources_settings[type],
 			  ms->ms_description, NULL, NULL, NULL, NULL);
+
+  prop_tag_set(ms->ms_settings, metadata_courier, ms);
 
   settings_create_bool(ms->ms_settings, "enabled", _p("Enabled"),
 		       ms->ms_enabled, NULL, ms_set_enable, ms,
@@ -2400,8 +2542,11 @@ metadata_add_source(const char *name, const char *description,
 
   ms_set_enable(ms, enabled);
 
-  hts_mutex_lock(&metadata_mutex);
-  LIST_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp);
+  TAILQ_INSERT_SORTED(&metadata_sources[type], ms, ms_link, ms_prio_cmp);
+
+  metadata_source_t *n = TAILQ_NEXT(ms, ms_link);
+  prop_move(ms->ms_settings, n ? n->ms_settings : NULL);
+
   hts_mutex_unlock(&metadata_mutex);
 
   return ms;
@@ -2409,6 +2554,79 @@ metadata_add_source(const char *name, const char *description,
  err:
   metadb_close(db);
   return NULL;
+}
+
+
+
+/**
+ *
+ */
+static void
+class_handle_move(metadata_source_t *ms, metadata_source_t *before)
+{
+  int type = ms->ms_type;
+
+  TAILQ_REMOVE(&metadata_sources[type], ms, ms_link);
+
+  if(before) {
+    TAILQ_INSERT_BEFORE(before, ms, ms_link);
+  } else {
+    TAILQ_INSERT_TAIL(&metadata_sources[type], ms, ms_link);
+  }
+
+  void *db = metadb_get();
+
+  int prio = 1;
+  TAILQ_FOREACH(ms, &metadata_sources[type], ms_link)  {
+    sqlite3_stmt *stmt;
+    int rc;
+
+    ms->ms_prio = prio++;
+
+    rc = db_prepare(db, &stmt,
+		    "UPDATE datasource "
+                    "SET prio = ?1 "
+                    "WHERE "
+                    "id = ?2");
+
+    if(rc != SQLITE_OK) {
+      TRACE(TRACE_ERROR, "SQLITE", "SQL Error at %s:%d",
+	    __FUNCTION__, __LINE__);
+    } else {
+      sqlite3_bind_int(stmt, 1, ms->ms_prio);
+      sqlite3_bind_int(stmt, 2, ms->ms_id);
+      
+      db_step(stmt);
+      sqlite3_finalize(stmt);
+    }
+  }
+  metadb_close(db);
+}
+
+
+/**
+ *
+ */
+static void
+provider_class_node_sub(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p1, *p2;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_REQ_MOVE_CHILD:
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    class_handle_move(prop_tag_get(p1, metadata_courier),
+                      p2 ? prop_tag_get(p2, metadata_courier) : NULL);
+    prop_move(p1, p2);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
 }
 
 
@@ -2428,8 +2646,16 @@ add_provider_class(prop_concat_t *pc,
 
   prop_link(title, prop_create(prop_create(d, "metadata"), "title"));
   prop_set_string(prop_create(d, "type"), "separator");
-  
+
+  prop_t *n = prop_create(c, "nodes");
+
   prop_concat_add_source(pc, prop_create(c, "nodes"), d);
+
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK, provider_class_node_sub, NULL,
+                 PROP_TAG_COURIER, metadata_courier,
+                 PROP_TAG_ROOT, n,
+                 NULL);
 }
 
 

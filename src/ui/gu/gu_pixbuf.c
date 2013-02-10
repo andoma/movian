@@ -22,7 +22,7 @@
 #include "showtime.h"
 #include "misc/pixmap.h"
 
-extern hts_mutex_t gu_mutex;
+extern hts_mutex_t gdk_mutex;
 static hts_cond_t async_loader_cond;
 
 #define PIXBUFCACHE_SIZE (10 * 1024 * 1024)
@@ -92,7 +92,7 @@ gu_pixbuf_get_internal(rstr_t *url, int *sizep,
     return NULL;
 
   if(relock)
-    hts_mutex_lock(&gu_mutex);
+    hts_mutex_lock(&gdk_mutex);
 
   return gdk_pixbuf_new_from_data(pm->pm_data,
 				  GDK_COLORSPACE_RGB,
@@ -262,12 +262,12 @@ pixbuf_loader_thread(void *aux)
   int size = 0;
   GdkPixbuf *pb;
 
-  hts_mutex_lock(&gu_mutex);
+  hts_mutex_lock(&gdk_mutex);
 
   while(1) {
 
     while((pba = TAILQ_FIRST(&pbaqueue)) == NULL)
-      hts_cond_wait(&async_loader_cond, &gu_mutex);
+      hts_cond_wait(&async_loader_cond, &gdk_mutex);
     
     TAILQ_REMOVE(&pbaqueue, pba, pba_link);
 
@@ -276,12 +276,12 @@ pixbuf_loader_thread(void *aux)
     if(pb != NULL) {
       g_object_set(G_OBJECT(pba->pba_target), "pixbuf", pb, NULL);
     } else {
-      hts_mutex_unlock(&gu_mutex);
+      hts_mutex_unlock(&gdk_mutex);
 
       pb = gu_pixbuf_get_internal(pba->pba_url, &size, pba->pba_width, 
 				  pba->pba_height, 1);
       if(pb == NULL) {
-	hts_mutex_lock(&gu_mutex);
+	hts_mutex_lock(&gdk_mutex);
       } else {
 
 	gu_pixbuf_add_to_cache(pba->pba_url, size, pba->pba_width, 

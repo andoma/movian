@@ -58,6 +58,7 @@ typedef struct glw_list {
 #define glw_parent_height glw_parent_val[0].i32
 #define glw_parent_width  glw_parent_val[1].i32
 #define glw_parent_pos    glw_parent_val[2].f
+#define glw_parent_inst   glw_parent_val[3].i32
 
 
 const static float top_plane[4] = {0,-1,0,1};
@@ -148,7 +149,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_height * 2) {
       l->filtered_pos = l->current_pos;
     } else {
-      l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+      glw_lp(&l->filtered_pos, w->glw_root, l->current_pos, 0.25);
     }
   }
 
@@ -164,7 +165,13 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
       rc0.rc_height = rc0.rc_width / 10;
     }
 
-    c->glw_parent_pos = ypos;
+    if(c->glw_parent_inst) {
+      c->glw_parent_pos = ypos;
+      c->glw_parent_inst = 0;
+    } else {
+      glw_lp(&c->glw_parent_pos, w->glw_root, ypos, 0.25);
+    }
+
     c->glw_parent_height = rc0.rc_height;
     c->glw_norm_weight = rc0.rc_height * IH;
     
@@ -235,7 +242,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
   if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_width * 2) {
     l->filtered_pos = l->current_pos;
   } else {
-    l->filtered_pos = GLW_LP(6, l->filtered_pos, l->current_pos);
+    glw_lp(&l->filtered_pos, w->glw_root, l->current_pos, 0.25);
   }
 
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
@@ -289,6 +296,64 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static void
+glw_list_y_render_one(glw_list_t *l, glw_t *c, int width, int height,
+                      const glw_rctx_t *rc0, const glw_rctx_t *rc1)
+{
+  int ct, cb;
+  int ft, fb;
+  glw_root_t *gr = l->w.glw_root;
+  float y = c->glw_parent_pos - l->filtered_pos;
+  glw_rctx_t rc2;
+
+  if(!l->noclip && (y + c->glw_parent_height < 0 || y > height)) {
+    c->glw_flags |= GLW_CLIPPED;
+    return;
+  } else {
+    c->glw_flags &= ~GLW_CLIPPED;
+  }
+  
+  ct = cb = ft = fb = -1;
+  
+  if(l->noclip) {
+    if(y < 0) 
+      ft = glw_fader_enable(gr, rc0, top_plane,
+                            l->alpha_falloff, l->blur_falloff);
+
+    if(y + c->glw_parent_height > height)
+      ft = glw_fader_enable(gr, rc0, bottom_plane,
+                            l->alpha_falloff, l->blur_falloff);
+	
+  } else {
+    if(y < 0)
+      ct = glw_clip_enable(gr, rc0, GLW_CLIP_TOP, 0);
+      
+    if(y + c->glw_parent_height > height)
+      cb = glw_clip_enable(gr, rc0, GLW_CLIP_BOTTOM, 0);
+  }
+
+  rc2 = *rc1;
+  glw_reposition(&rc2,
+                 0,
+                 height - c->glw_parent_pos,
+                 width,
+                 height - c->glw_parent_pos - c->glw_parent_height);
+
+  glw_render0(c, &rc2);
+
+  if(ct != -1)
+    glw_clip_disable(gr, ct);
+  if(cb != -1)
+    glw_clip_disable(gr, cb);
+  if(ft != -1)
+    glw_fader_disable(gr, ft);
+  if(fb != -1)
+    glw_fader_disable(gr, fb);
+}
+
 
 /**
  *
@@ -298,10 +363,7 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
 {
   glw_t *c;
   glw_list_t *l = (glw_list_t *)w;
-  glw_rctx_t rc0, rc1, rc2;
-  int ct, cb, height, width;
-  int ft, fb;
-  float y;
+  glw_rctx_t rc0, rc1;
 
   if(rc->rc_alpha < 0.01f)
     return;
@@ -313,64 +375,22 @@ glw_list_render_y(glw_t *w, const glw_rctx_t *rc)
 
   glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
 		 rc->rc_width  - l->padding_right, l->padding_bottom);
-  height = rc0.rc_height;
-  width = rc0.rc_width;
 
   if(!l->noclip)
     glw_store_matrix(w, &rc0);
   rc1 = rc0;
 
-  glw_Translatef(&rc1, 0, 2.0f * l->filtered_pos / height, 0);
+  glw_Translatef(&rc1, 0, 2.0f * l->filtered_pos / rc0.rc_height, 0);
   
   TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN)
       continue;
-
-    y = c->glw_parent_pos - l->filtered_pos;
-    if(!l->noclip && (y + c->glw_parent_height < 0 || y > height)) {
-      c->glw_flags |= GLW_CLIPPED;
-      continue;
-    } else {
-      c->glw_flags &= ~GLW_CLIPPED;
-    }
-
-    ct = cb = ft = fb = -1;
-
-    if(l->noclip) {
-      if(y < 0) 
-	ft = glw_fader_enable(w->glw_root, &rc0, top_plane,
-			      l->alpha_falloff, l->blur_falloff);
-
-      if(y + c->glw_parent_height > height)
-	ft = glw_fader_enable(w->glw_root, &rc0, bottom_plane,
-			      l->alpha_falloff, l->blur_falloff);
-	
-    } else {
-      if(y < 0)
-	ct = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_TOP, 0);
-      
-      if(y + c->glw_parent_height > height)
-	cb = glw_clip_enable(w->glw_root, &rc0, GLW_CLIP_BOTTOM, 0);
-    }
-
-    rc2 = rc1;
-    glw_reposition(&rc2,
-		   0,
-		   height - c->glw_parent_pos,
-		   width,
-		   height - c->glw_parent_pos - c->glw_parent_height);
-
-    glw_render0(c, &rc2);
-
-    if(ct != -1)
-      glw_clip_disable(w->glw_root, ct);
-    if(cb != -1)
-      glw_clip_disable(w->glw_root, cb);
-    if(ft != -1)
-      glw_fader_disable(w->glw_root, ft);
-    if(fb != -1)
-      glw_fader_disable(w->glw_root, fb);
+    if(w->glw_focused != c)
+      glw_list_y_render_one(l, c, rc0.rc_width, rc0.rc_height, &rc0, &rc1);
   }
+  if(w->glw_focused != NULL)
+    glw_list_y_render_one(l, w->glw_focused, rc0.rc_width, rc0.rc_height,
+                          &rc0, &rc1);
 }
 
 
@@ -537,64 +557,6 @@ scroll_to_me(glw_list_t *l, glw_t *c)
 }
 
 
-
-
-/**
- *
- */
-static void
-glw_flood_focus_distance(glw_t *w, int v)
-{
-  glw_t *c;
-
-  if(w->glw_focus_distance != v) {
-    w->glw_focus_distance = v;
-    glw_signal0(w, GLW_SIGNAL_FOCUS_DISTANCE_CHANGED, NULL);
-  }
-
-  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-    glw_flood_focus_distance(c, v);
-}
-
-/**
- *
- */
-static void
-update_focus_distance(glw_t *w, glw_t *ign)
-{
-  glw_t *c, *p, *n;
-  int d = 0;
-
-  if((c = w->glw_focused) == NULL)
-    return;
-
-  p = n = c;
-
-  glw_flood_focus_distance(c, 0);
-
-  while(1) {
-    p = p ? glw_prev_widget(p) : NULL;
-    n = n ? glw_next_widget(n) : NULL;
-
-    if(p == ign)
-      p = p ? glw_prev_widget(p) : NULL;
-    
-    if(n == ign)
-      n = n ? glw_next_widget(n) : NULL;
-
-    if(p == NULL && n == NULL)
-      break;
-
-    d++;
-    if(p != NULL)
-      glw_flood_focus_distance(p, d);
-    if(n != NULL)
-      glw_flood_focus_distance(n, d);
-  }
-}
-
-
-
 /**
  *
  */
@@ -602,6 +564,7 @@ static int
 glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 {
   glw_list_t *l = (void *)w;
+  glw_t *c;
 
   switch(signal) {
   default:
@@ -611,7 +574,6 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     scroll_to_me(l, extra);
     l->suggest_cnt = 0;
     w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
-    update_focus_distance(w, NULL);
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -626,8 +588,9 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       // Last item went away, make sure to reset
       l->current_pos = 0;
       l->filtered_pos = 0;
+      w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+      l->suggest_cnt = 1;
     }
-    update_focus_distance(w, extra);
     break;
 
   case GLW_SIGNAL_POINTER_EVENT:
@@ -639,9 +602,11 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_CHILD_CREATED:
+  case GLW_SIGNAL_CHILD_UNHIDDEN:
+    c = extra;
+    c->glw_parent_inst = 1;
   case GLW_SIGNAL_CHILD_MOVED:
     scroll_to_me(l, w->glw_focused);
-    update_focus_distance(w, NULL);
     break;
 
   case GLW_SIGNAL_CHILD_CONSTRAINTS_CHANGED:

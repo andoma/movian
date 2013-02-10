@@ -272,7 +272,7 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
 {
   XGCValues xgcv;
   video_output_t *vo;
-  vd_frame_deliver_t *deliver_fn;
+  video_frame_deliver_t *deliver_fn;
   
   if(!XShmQueryExtension(dpy)) {
     snprintf(errbuf, errlen, "No SHM Extension available");
@@ -305,7 +305,10 @@ x11_vo_create(Display *dpy, int win, prop_courier_t *pc, prop_t *self,
   vo->vo_gc = XCreateGC(vo->vo_dpy, vo->vo_win, 0, &xgcv);
 
   vo->vo_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
-  vo->vo_vd = video_decoder_create(vo->vo_mp, deliver_fn, vo);
+  vo->vo_mp->mp_video_frame_deliver = deliver_fn;
+  vo->vo_mp->mp_video_frame_opaque = vo;
+
+  vo->vo_vd = video_decoder_create(vo->vo_mp);
   video_playback_create(vo->vo_mp);
 
   prop_link(vo->vo_mp->mp_prop_root, prop_create(self, "media"));

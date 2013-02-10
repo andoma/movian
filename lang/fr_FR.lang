@@ -17,8 +17,7 @@ msg: Supprimer la page actuel des favoris
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Exit Showtime
-# Missing translation
-msg: 
+msg: Sortie Showtime
 
 id: Go to Home screen
 msg: Retour à la page d'accueil
@@ -33,19 +32,16 @@ id: Playqueue
 msg: File de lecture
 
 id: Power off
-# Missing translation
-msg: 
+msg: Éteindre
 
 id: Reload current page
 msg: Rafraichir
 
 id: Suspend
-# Missing translation
-msg: 
+msg: Suspendre
 
 id: System
-# Missing translation
-msg: 
+msg: Système
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -100,6 +96,9 @@ msg: Paramètres audio
 
 id: Audio tracks
 msg: Pistes audio
+
+id: Chapters
+msg: Chapitres
 
 id: Seek by time
 msg: Recherche temporelle
@@ -192,8 +191,7 @@ id: Album
 msg: Titre de l'Album
 
 id: Artist
-# Missing translation
-msg: 
+msg: Artiste
 
 id: Custom
 msg: Personnalisé
@@ -208,8 +206,7 @@ id: Slideshow
 msg: Diaporama
 
 id: Tvchannels
-# Missing translation
-msg: 
+msg: TV chaînes
 
 id: View
 msg: Vu
@@ -224,8 +221,7 @@ msg: Equipements détectés sur le réseau
 # ./glwskins/default/pages/home.view
 #
 id: Tiled
-# Missing translation
-msg: 
+msg: Carrelée
 
 #
 # ./glwskins/default/pages/home_clist.view
@@ -239,25 +235,28 @@ msg: Rejeter
 id: Plugins
 msg: Extension
 
+id: Search / Open URL
+msg: Recherche / Ouvrir URL
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera: 
+id: Camera:
 msg: Modèle de Caméra:
 
-id: Date: 
+id: Date:
 msg: Date:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
-id: Author: 
+id: Author:
 msg: Auteur:
 
-id: Available version: 
+id: Available version:
 msg: Version disponible:
 
-id: Installed version: 
+id: Installed version:
 msg: Version installée:
 
 id: Showtime %s or newer is required
@@ -303,16 +302,13 @@ msg: Oui
 # ./glwskins/default/pages/listitems/font.view
 #
 id: Condensed
-# Missing translation
-msg: 
+msg: Condensée
 
 id: Main
-# Missing translation
-msg: 
+msg: Principal
 
 id: Subs
-# Missing translation
-msg: 
+msg: Sous-titres
 
 #
 # ./glwskins/default/pages/listitems/plugin.view
@@ -342,8 +338,7 @@ msg: Piste %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Pause
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -412,8 +407,7 @@ msg: Status de la lecture
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Vu:
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -470,24 +464,13 @@ id: Master volume: %d dB
 msg: Volume du master : %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Paramètres pour opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utiliser opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
-# Missing translation
-msg: 
+msg: Langue (code ISO 639-1)
 
 id: Use original title
-# Missing translation
-msg: 
+msg: Utiliser le titre d'origine
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -568,8 +551,7 @@ msg: Résultat de recherche pour : %s
 # ./src/backend/spotify/spotify.c
 #
 id: Albums
-# Missing translation
-msg: 
+msg: Albums
 
 id: Automatic login when Showtime starts
 msg: S'authentifier automatiquement au démarrage de Showtime
@@ -578,8 +560,7 @@ id: Collaborative
 msg: En collaboration
 
 id: Compilations
-# Missing translation
-msg: 
+msg: Compilations
 
 id: Enable Spotify
 msg: Activer Spotify
@@ -619,7 +600,7 @@ msg: Résultat de la recherche
 
 id: Singles
 # Missing translation
-msg: 
+msg:
 
 id: Spotify friends
 msg: Amis de Spotify
@@ -681,11 +662,23 @@ msg: Impossible de se connecter
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Date
+id: Artists
+msg: Artistes
+
+id: Date (newest first)
+msg: Date (plus récent)
+
+id: Date (oldest first)
+msg: Date (plus ancien)
 
 id: Filename
 msg: Nom du fichier
+
+id: Indexed mode
+msg: Mode indexé
+
+id: Off
+msg: Arrêt
 
 id: Show only supported files
 msg: N'afficher que les fichiers supportés
@@ -701,12 +694,6 @@ msg: Activer le tri
 #
 id: Search using spotlight
 msg: Chercher via spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Fichier externe
 
 #
 # ./src/i18n.c
@@ -783,6 +770,12 @@ msg: Faire correspondre les sous-titres avec l'image vidéo
 id: Audio delay
 msg: Délai audio
 
+id: Stretch video to fullscreen
+msg: Étirer la vidéo en plein écran
+
+id: Stretch video to widescreen
+msg: Étirer la vidéo pour les écrans large
+
 id: Subtitle delay
 msg: Délai des sous-titres
 
@@ -791,6 +784,12 @@ msg: Échelle des sous-titres
 
 id: Video zoom
 msg: Zoom vidéo
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indexage
 
 #
 # ./src/metadata/metadata.c
@@ -802,8 +801,7 @@ id: Custom search query
 msg: Recherche personnalisée
 
 id: Custom title
-# Missing translation
-msg: 
+msg: Titre personnalisé
 
 id: Embedded in file
 msg: Incorporé dans le fichier
@@ -832,6 +830,9 @@ msg: Fournisseur de métadonnées
 id: Movie
 msg: Film
 
+id: Movie title
+msg: Film titre
+
 id: No data found
 msg: Pas de données trouvés
 
@@ -842,11 +843,13 @@ id: Providers for Music
 msg: Moteur de recherche pour la musique
 
 id: Providers for Video
-# Missing translation
-msg: 
+msg: Fournisseurs pour la vidéo
 
 id: Refresh metadata
 msg: Mise à jour des métadonnées
+
+id: Title, Season, Episode
+msg: Titre, Saison, Episode
 
 id: Track %d
 msg: Piste %d
@@ -861,8 +864,7 @@ id: filename
 msg: Nom de fichier
 
 id: filename as TV episode
-# Missing translation
-msg: 
+msg: Nom de fichier comme Episode TV
 
 id: folder name
 msg: Nom du répertoire
@@ -871,23 +873,20 @@ msg: Nom du répertoire
 # ./src/metadata/metadb.c
 #
 id: %d items deleted
-# Missing translation
-msg: 
+msg: %d éléments supprimés
 
 id: Clear all metadata
-# Missing translation
-msg: 
+msg: Effacer toutes les métadonnées
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
 # Missing translation
-msg: 
+msg:
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Ajouter et supprimer des éléments sur site
 
 id: Added new bookmark: %s
 msg: Ajouter un favori: %s
@@ -935,30 +934,25 @@ id: Available plugins
 msg: Extensions disponibles
 
 id: Background
-# Missing translation
-msg: 
+msg: Fond
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: mots de passe de test bêta
 
 id: Browse available plugins
 msg: Parcourir les extensions disponibles
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Navigation
 
 id: Cloud services
-# Missing translation
-msg: 
+msg: Services de cloud
 
 id: Corrupt plugin bundle
 msg: Package d'extension corrompue
 
 id: Default
-# Missing translation
-msg: 
+msg: Défaut
 
 id: Disk write error
 msg: Erreur d'écriture
@@ -970,37 +964,31 @@ id: File open error
 msg: Impossible d'ouvrir le fichier
 
 id: Home page
-# Missing translation
-msg: 
+msg: Page d'accueil
 
 id: Installed plugins
 msg: Extensions installées
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Version installée supérieure disponible
 
 id: Installing
 msg: Installation
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Liste des albums
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Écran de chargement
 
 id: Movies
-# Missing translation
-msg: 
+msg: Films
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: musique en streaming
 
 id: Not installable
-msg: Installation impossible
+msg: Pas installable
 
 id: Not installed
 msg: Non installé
@@ -1009,20 +997,16 @@ id: Not upgradable
 msg: Mise à jour impossible
 
 id: Online TV
-# Missing translation
-msg: 
+msg: TV en ligne
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Vues privilégiées des plugins
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Economiseur d'écran
 
 id: TV channels
-# Missing translation
-msg: 
+msg: Chaînes de TV
 
 id: Unable to load plugin.json: %s
 msg: Impossible de charger le plugin.json: %s
@@ -1031,8 +1015,7 @@ id: Unable to load plugin.json: Malformed JSON
 msg: Impossible de charger le plugin.json: JSON malformé
 
 id: Uncategorized
-# Missing translation
-msg: 
+msg: Non classé
 
 id: Up to date
 msg: A jour
@@ -1044,12 +1027,10 @@ id: Upgraded plugin %s to version %s
 msg: Mise à jour de l'extension %s vers %s
 
 id: User interface extensions
-# Missing translation
-msg: 
+msg: Extensions de l'interface utilisateur
 
 id: Video streaming
-# Missing translation
-msg: 
+msg: Streaming vidéo
 
 #
 # ./src/runcontrol.c
@@ -1094,8 +1075,7 @@ id: Discovered media sources
 msg: Sources de médias découvertes
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Fontes et le style d'interface utilisateur
 
 id: General
 msg: Général
@@ -1105,7 +1085,7 @@ msg: Paramètres globaux
 
 id: Look and feel
 # Missing translation
-msg: 
+msg:
 
 id: Settings useful for developers
 msg: Paramètres utiles pour les développeurs
@@ -1114,31 +1094,49 @@ id: System related settings
 msg: Paramètres liés au système
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Fichier externe
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Par défaut
+
+id: Fonts
+msg: Fontes
+
+id: Installed fonts
+msg: Fontes installées
+
 id: Narrow text
-# Missing translation
-msg: 
+msg: Texte étroite
+
+id: Reset main font to default
+msg: Réinitialiser font principal par défaut
+
+id: Reset narrow font to default
+msg: Réinitialiser font étroite par défaut
+
+id: Reset subtitle font to default
+msg: Réinitialiser font des sous-titres par défaut
 
 id: Unable to load %s -- %s
-# Missing translation
-msg: 
+msg: Impossible de charger% s -% s
 
 id: Unable to open %s for writing
-# Missing translation
-msg: 
+msg: Impossible d'ouvrir% s en écriture
 
 id: Unable to write to %s
-# Missing translation
-msg: 
+msg: Impossible d'écrire sur% s
 
 id: Use font %s for
-# Missing translation
-msg: 
+msg: utiliser font %s pour
 
 id: User interface
-# Missing translation
-msg: 
+msg: Interface utilisateur
 
 #
 # ./src/ui/glw/glw_settings.c
@@ -1290,9 +1288,6 @@ msg: Résolution maximale pour désentrelacer
 id: No limit
 msg: Pas de limite
 
-id: Off
-msg: Arrêt
-
 id: Outline color
 msg: Couleur du contour
 
@@ -1313,12 +1308,6 @@ msg: Couleur de l'ombre
 
 id: Shadow offset
 msg: Décalage de l'ombre
-
-id: Stretch video to fullscreen
-msg: Étirer la vidéo en plein écran
-
-id: Stretch video to widescreen
-msg: Étirer la vidéo pour les écrans large
 
 id: Subtitle position
 msg: Position des sous-titres
@@ -1343,4 +1332,3 @@ msg: Accélération vidéo et comportement de l'affichage
 
 id: Video playback
 msg: Lecture vidéo
-

@@ -30,15 +30,25 @@ static void nls_init(prop_t *parent, htsmsg_t *store);
 
 
 
-static char *lang_audio[3];
-static char *lang_subtitle[3];
+static char lang_audio[3][4];
+static char lang_subtitle[3][4];
 static const uint16_t *srt_charset;
 
 static void
 set_lang(void *opaque, const char *str)
 {
-  char **s = opaque;
-  mystrset(s, str);
+  char *s = (char *)opaque;
+  if(str == NULL) {
+    *s = 0;
+    return;
+  }
+
+  if(strlen(str) > 3) {
+    memcpy(s, str, 3);
+    s[3] = 0;
+  } else {
+    strcpy(s, str);
+  }
 }
 
 static void
@@ -130,7 +140,7 @@ i18n_init(void)
  *
  */
 static int
-findscore(const char *str, char *vec[])
+findscore(const char *str, char vec[][4])
 {
   int i;
   if(str == NULL || *str == 0)
@@ -159,6 +169,16 @@ int
 i18n_subtitle_score(const char *str)
 {
   return findscore(str, lang_subtitle);
+}
+
+
+/**
+ *
+ */
+const char *
+i18n_subtitle_lang(unsigned int num)
+{
+  return num < 3 && lang_subtitle[num][0] ? lang_subtitle[num] : NULL;
 }
 
 
@@ -609,7 +629,7 @@ nls_init(prop_t *parent, htsmsg_t *store)
   settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     const char *filename = rstr_get(fde->fde_filename);
     if(filename[strlen(filename) - 1] == '~')
       continue;

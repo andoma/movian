@@ -101,6 +101,10 @@ msg: 音訊設定
 id: Audio tracks
 msg: 音軌
 
+id: Chapters
+# Missing translation
+msg: 
+
 id: Seek by time
 msg: 按時間軸搜尋
 
@@ -238,6 +242,10 @@ msg: 解散
 
 id: Plugins
 msg: 外掛程式
+
+id: Search / Open URL
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -470,15 +478,6 @@ id: Master volume: %d dB
 msg: 主音量： %d dB
 
 #
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: opensubtitles.org 相關設定
-
-id: Use opensubtitles.org
-msg: 啟用 opensubtitles.org
-
-#
 # ./src/api/tmdb.c
 #
 id: Language (ISO 639-1 code)
@@ -681,11 +680,27 @@ msg: 登入失敗
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: 日期
+id: Artists
+# Missing translation
+msg: 
+
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: 檔案名稱
+
+id: Indexed mode
+# Missing translation
+msg: 
+
+id: Off
+msg: 關閉
 
 id: Show only supported files
 msg: 只顯示支援的檔案
@@ -701,12 +716,6 @@ msg: 排序項目
 #
 id: Search using spotlight
 msg: 使用 spotlight 進行搜尋
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: 外部檔案
 
 #
 # ./src/i18n.c
@@ -783,6 +792,12 @@ msg: 字幕與視訊校正
 id: Audio delay
 msg: 音訊延遲
 
+id: Stretch video to fullscreen
+msg: 延展影片至全螢幕
+
+id: Stretch video to widescreen
+msg: 延展影片至寬螢幕
+
 id: Subtitle delay
 msg: 字幕延遲
 
@@ -791,6 +806,13 @@ msg: 字幕大小
 
 id: Video zoom
 msg: 視訊縮放
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+# Missing translation
+msg: 
 
 #
 # ./src/metadata/metadata.c
@@ -832,6 +854,10 @@ msg: 標記資訊來源
 id: Movie
 msg: 電影
 
+id: Movie title
+# Missing translation
+msg: 
+
 id: No data found
 msg: 查無資料
 
@@ -847,6 +873,10 @@ msg:
 
 id: Refresh metadata
 msg: 更新標記資料
+
+id: Title, Season, Episode
+# Missing translation
+msg: 
 
 id: Track %d
 msg: 第 %d 軌
@@ -1114,9 +1144,39 @@ id: System related settings
 msg: 系統設定
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: 外部檔案
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+# Missing translation
+msg: 
+
+id: Fonts
+# Missing translation
+msg: 
+
+id: Installed fonts
+# Missing translation
+msg: 
+
 id: Narrow text
+# Missing translation
+msg: 
+
+id: Reset main font to default
+# Missing translation
+msg: 
+
+id: Reset narrow font to default
+# Missing translation
+msg: 
+
+id: Reset subtitle font to default
 # Missing translation
 msg: 
 
@@ -1290,9 +1350,6 @@ msg: 去交錯器支援的最大解析度
 id: No limit
 msg: 無限制
 
-id: Off
-msg: 關閉
-
 id: Outline color
 msg: 外框色彩
 
@@ -1313,12 +1370,6 @@ msg: 陰影色彩
 
 id: Shadow offset
 msg: 陰影位置
-
-id: Stretch video to fullscreen
-msg: 延展影片至全螢幕
-
-id: Stretch video to widescreen
-msg: 延展影片至寬螢幕
 
 id: Subtitle position
 msg: 字幕位置

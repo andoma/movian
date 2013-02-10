@@ -497,9 +497,10 @@ my_localtime(const time_t *now, struct tm *tm)
 void
 arch_exit(void)
 {
-  if(gconf.exit_code == SHOWTIME_EXIT_STANDBY)
+  if(gconf.exit_code == SHOWTIME_EXIT_STANDBY) {
+    unlink("/dev_hdd0/tmp/turnoff");
     Lv2Syscall3(379, 0x100, 0, 0 );
-
+  }
   if(gconf.exit_code == SHOWTIME_EXIT_RESTART)
     sysProcessExitSpawn2(gconf.binary, 0, 0, 0, 0, 1200, 0x70);
 

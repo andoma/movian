@@ -63,6 +63,10 @@ $view.sizer = $ui.size / 2;
 
 widget(container_y, {
 
+  alpha: 1 - iir(clamp(getLayer(), 0, 1), 7) * 0.5;
+  blur:      iir(clamp(getLayer(), 0, 1), 7);
+
+
   padding: $ui.size / 2;
 
   cloner($global.news, container_x, {
@@ -129,7 +133,6 @@ widget(container_y, {
 	shadow: true;
 	sizeScale: 2;
 	color: [0.431, 0.811, 1];
-	alpha: iir($view.searchFocused || $view.searchQuery, 10);
       });
 
       widget(container_y, {
@@ -159,6 +162,7 @@ widget(container_y, {
 			$view.searchQuery);
 		onEvent(submit, navOpen("search:" + $view.searchQuery),
 			$view.searchQuery);
+		description: _("Search / Open URL");
               });
 /*
 	      widget(label, {

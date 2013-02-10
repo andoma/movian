@@ -28,6 +28,7 @@
 #include "arch/darwin.h"
 #include "arch/posix/posix.h"
 #include "osx.h"
+#include "ui/webpopup.h"
 
 prop_courier_t *mainloop_courier;
 
@@ -80,6 +81,10 @@ main(int argc, char **argv)
   gconf.concurrency = get_system_concurrency();
 
   showtime_init();
+
+#if ENABLE_WEBPOPUP
+  webpopup_init();
+#endif
 
   mainloop_courier_init();
 

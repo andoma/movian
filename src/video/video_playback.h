@@ -23,6 +23,8 @@
 
 struct rstr;
 struct video_queue;
+struct vsource_list;
+
 void video_playback_create(media_pipe_t *mp);
 
 void video_playback_destroy(media_pipe_t *mp);
@@ -30,5 +32,7 @@ void video_playback_destroy(media_pipe_t *mp);
 struct rstr *video_queue_find_next(struct video_queue *vq, 
 				   const char *url, int reverse,
 				   int wrap);
+
+void vsource_add_hls(struct vsource_list *vsl, char *hlslist, const char *url);
 
 #endif /* PLAY_VIDEO_H */

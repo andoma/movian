@@ -35,7 +35,7 @@ id: Power off
 msg: Отключить систему
 
 id: Reload current page
-msg: Перезагрузка текущей страницы
+msg: Перезагрузить текущую страницу
 
 id: Suspend
 msg: Отключить систему
@@ -71,10 +71,10 @@ id: Mark as unseen
 msg: Пометить как непросмотренное
 
 id: Play from beginning
-msg: Играть с начала
+msg: Воспроизведение с начала
 
 id: Play until end of list
-msg: Играть до конца списка
+msg: Воспроизведение до конца списка
 
 id: Queue
 msg: Очередь
@@ -96,6 +96,9 @@ msg: Настройки аудио
 
 id: Audio tracks
 msg: Аудио дорожки
+
+id: Chapters
+msg: Главы
 
 id: Seek by time
 msg: Поиск по времени
@@ -206,7 +209,7 @@ id: Tvchannels
 msg: ТВ-каналы
 
 id: View
-msg: Просмотр
+msg: Вид
 
 #
 # ./glwskins/default/pages/discovered.view
@@ -231,6 +234,9 @@ msg: Отклонить
 
 id: Plugins
 msg: Плагины
+
+id: Search / Open URL
+msg: Найти / Открыть URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -332,8 +338,7 @@ msg: Трек %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: Пауза 
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -402,8 +407,7 @@ msg: Статус воспроизведения
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: Воспроизведено 
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -458,15 +462,6 @@ msg: Звук выключен
 
 id: Master volume: %d dB
 msg: Общая громкость: %d дБ
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Настройки для opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Использовать opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -666,11 +661,25 @@ msg: Ошибка входа
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Дата
+id: Artists
+msg: Артисты
+
+id: Date (newest first)
+# Missing translation
+msg: 
+
+id: Date (oldest first)
+# Missing translation
+msg: 
 
 id: Filename
 msg: Имя файла
+
+id: Indexed mode
+msg: Индексированный режим
+
+id: Off
+msg: Выкл
 
 id: Show only supported files
 msg: Показывать только поддерживаемые файлы
@@ -686,12 +695,6 @@ msg: Сортировать по
 #
 id: Search using spotlight
 msg: Поиск с использованием spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: Внешний файл
 
 #
 # ./src/i18n.c
@@ -768,6 +771,12 @@ msg: Выравнивание субтитров в кадре
 id: Audio delay
 msg: Задержка аудио
 
+id: Stretch video to fullscreen
+msg: Растянуть видео во весь экран
+
+id: Stretch video to widescreen
+msg: Растянуть видео на широкий экран
+
 id: Subtitle delay
 msg: Задержка субтитров
 
@@ -776,6 +785,12 @@ msg: Масштаб субтитров
 
 id: Video zoom
 msg: Масштаб видео
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Индексация
 
 #
 # ./src/metadata/metadata.c
@@ -816,6 +831,9 @@ msg: Источник метаданных
 id: Movie
 msg: Фильмы
 
+id: Movie title
+msg: Название фильма
+
 id: No data found
 msg: Данные не найдены
 
@@ -830,6 +848,9 @@ msg: Поставщики для видео
 
 id: Refresh metadata
 msg: Обновить метаданные
+
+id: Title, Season, Episode
+msg: Название, сезон, эпизод
 
 id: Track %d
 msg: Трек %d
@@ -859,14 +880,13 @@ id: Clear all metadata
 msg: Удалить все метаданные
 
 id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
-msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был просмотрен\nКол-во раз, которые Трек/видео/фильм был просмотрен\nПозиция для продолжения просмотра\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
+msg: При удалении метаданных будет удалена <b>вся</b> информация:\n\nТрек/видео/фильм был воспроизведен\nКол-во раз, которые Трек/видео/фильм был воспроизведен\nПозиция для продолжения воспроизведения\n\nТак же все метаданные, сохраненные из внешних источников, таких как themoviedb.org и т.п.\n\nВы действительно хотите продолжить?
 
 #
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Добавление и удаление элементов на главном экране
 
 id: Added new bookmark: %s
 msg: Добавлены новые закладки: %s
@@ -914,19 +934,16 @@ id: Available plugins
 msg: Доступные плагины
 
 id: Background
-# Missing translation
-msg: 
+msg: Фон
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Пароли бета-теста
 
 id: Browse available plugins
 msg: Просмотр доступных плагинов
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Вид элементов при навигации
 
 id: Cloud services
 msg: Облачные сервисы
@@ -935,11 +952,10 @@ id: Corrupt plugin bundle
 msg: Поврежденный пакет плагина
 
 id: Default
-# Missing translation
-msg: 
+msg: По умолчанию 
 
 id: Disk write error
-msg: Ошибка записи диска
+msg: Ошибка записи на диск
 
 id: Downloading
 msg: Загрузка
@@ -948,34 +964,28 @@ id: File open error
 msg: Ошибка при открытии файла
 
 id: Home page
-# Missing translation
-msg: 
+msg: Главный экран
 
 id: Installed plugins
 msg: Установленные плагины
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: Установленная версия новее, чем доступная
 
 id: Installing
 msg: Установка
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Список альбомов
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Загрузочный экран
 
 id: Movies
-# Missing translation
-msg: 
+msg: Фильмы
 
 id: Music streaming
-# Missing translation
-msg: 
+msg: Потоковая музыка
 
 id: Not installable
 msg: Не может быть установлен
@@ -990,16 +1000,13 @@ id: Online TV
 msg: Онлайн-ТВ
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Предпочтительный вид при установленных плагинах
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Хранитель экрана
 
 id: TV channels
-# Missing translation
-msg: 
+msg: ТВ каналы
 
 id: Unable to load plugin.json: %s
 msg: Не удается загрузить plugin.json: %s
@@ -1011,7 +1018,7 @@ id: Uncategorized
 msg: Без категории
 
 id: Up to date
-msg: До даты
+msg: Последняя версия
 
 id: Upgradable
 msg: Обновляемый
@@ -1068,8 +1075,7 @@ id: Discovered media sources
 msg: Обнаруженные медиа источники
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Шрифты и интерфейс пользователя
 
 id: General
 msg: Общее
@@ -1078,20 +1084,43 @@ id: Global settings
 msg: Главные настройки
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Внешний вид интерфейса
 
 id: Settings useful for developers
 msg: Настройки полезные для разработчиков
 
 id: System related settings
-msg: Настройки связанные с системой
+msg: Системные настройки
+
+#
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Внешний файл
 
 #
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: По умолчанию
+
+id: Fonts
+msg: Шрифты
+
+id: Installed fonts
+msg: Установленные шрифты
+
 id: Narrow text
 msg: Узкий шрифт
+
+id: Reset main font to default
+msg: Сброс основного шрифта по умолчанию
+
+id: Reset narrow font to default
+msg: Сброс узкого шрифта по умолчанию
+
+id: Reset subtitle font to default
+msg: Сброс шрифта субтитров по умолчанию
 
 id: Unable to load %s -- %s
 msg: Невозможно загрузить: %s -- %s
@@ -1258,9 +1287,6 @@ msg: Максимальное разрешение для деинтерлейс
 id: No limit
 msg: Без ограничений
 
-id: Off
-msg: Выкл
-
 id: Outline color
 msg: Цвет контура
 
@@ -1281,12 +1307,6 @@ msg: Цвет тени
 
 id: Shadow offset
 msg: Смещение тени
-
-id: Stretch video to fullscreen
-msg: Растянуть видео во весь экран
-
-id: Stretch video to widescreen
-msg: Растянуть видео на широкий экран
 
 id: Subtitle position
 msg: Позиция субтитров

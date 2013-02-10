@@ -209,26 +209,10 @@ destroy_obj(void *opaque, void *obj)
 }
 
 
-/**
- *
- */
-static void
-add_item(JSContext *cx, JSObject *obj, const char *name, jsval item)
-{
-  if(name)
-    JS_SetProperty(cx, obj, name, &item);
-  else {
-    jsuint length;
-    if(JS_GetArrayLength(cx, obj, &length))
-      JS_SetElement(cx, obj, length, &item);
-  }
-}
-
-
 static void
 add_obj(void *opaque, void *parent, const char *name, void *child)
 {
-  add_item(opaque, parent, name, OBJECT_TO_JSVAL(child));
+  js_set_prop_jsval(opaque, parent, name, OBJECT_TO_JSVAL(child));
 }
 
 
@@ -239,7 +223,7 @@ add_string(void *opaque, void *parent, const char *name, char *str)
   if(s == NULL)
     free(str);
   else
-    add_item(opaque, parent, name, STRING_TO_JSVAL(s));
+    js_set_prop_jsval(opaque, parent, name, STRING_TO_JSVAL(s));
 }
 
 static void 
@@ -247,14 +231,14 @@ add_double(void *opaque, void *parent, const char *name, double v)
 {
   jsdouble *d = JS_NewDouble(opaque, v);
   if(d != NULL)
-    add_item(opaque, parent, name, DOUBLE_TO_JSVAL(d));
+    js_set_prop_jsval(opaque, parent, name, DOUBLE_TO_JSVAL(d));
 }
 
 static void 
 add_long(void *opaque, void *parent, const char *name, long v)
 {
   if(v <= INT32_MAX && v >= INT32_MIN && INT_FITS_IN_JSVAL(v))
-    add_item(opaque, parent, name, INT_TO_JSVAL(v));
+    js_set_prop_jsval(opaque, parent, name, INT_TO_JSVAL(v));
   else
     add_double(opaque, parent, name, v);
 }
@@ -263,13 +247,13 @@ add_long(void *opaque, void *parent, const char *name, long v)
 static void 
 add_bool(void *opaque, void *parent, const char *name, int v)
 {
-  add_item(opaque, parent, name, BOOLEAN_TO_JSVAL(!!v));
+  js_set_prop_jsval(opaque, parent, name, BOOLEAN_TO_JSVAL(!!v));
 }
 
 static void 
 add_null(void *opaque, void *parent, const char *name)
 {
-  add_item(opaque, parent, name, JSVAL_NULL);
+  js_set_prop_jsval(opaque, parent, name, JSVAL_NULL);
 }
 
 

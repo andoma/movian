@@ -15,22 +15,15 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef OPENSUBTITLES_H__
-#define OPENSUBTITLES_H__
+#pragma once
 
 #include "htsmsg/htsmsg.h"
 #include "arch/threads.h"
 
 struct prop;
-struct fa_handle;
 
-int opensub_compute_hash(struct fa_handle *fh, uint64_t *hashp);
+void opensub_query(struct prop *p, hts_mutex_t *mtx, uint64_t hash,
+		   uint64_t size, const char *title, const char *imdb,
+		   int season, int episode);
 
-htsmsg_t *opensub_build_query(const char *lang, int64_t hash, int64_t movsize,
-			      const char *imdb, const char *title);
-
-void opensub_load_subtitles(struct prop *node, htsmsg_t *query);
-
-#endif // OPENSUBTITLES_H__
 

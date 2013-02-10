@@ -115,6 +115,8 @@ typedef struct vdec_decoder {
   int64_t order_base;
   int64_t flush_to;
   
+  int poc_ext;
+
   pktmeta_t pktmeta[64];
   int pktmeta_cur;
 
@@ -415,10 +417,25 @@ picture_out(vdec_decoder_t *vdd)
       vp->fi.fi_dar_den *= p[1];
     }
 
-    if(h264->idr_picture_flag)
+    if(h264->idr_picture_flag) {
       vdd->order_base += 0x100000000LL;
+      vdd->poc_ext = 0;
+    }
 
-    order = vdd->order_base + (uint16_t)h264->pic_order_count[0];
+    uint32_t om = h264->pic_order_count[0] & 0x7fff;
+
+    int p = om >> 13;
+    if(p == ((vdd->poc_ext + 1) & 3)) {
+      vdd->poc_ext = p;
+      if(p == 0)
+	vdd->order_base += 0x100000000LL;
+    }
+
+    if(p == 3 && vdd->poc_ext == 0) {
+      order = vdd->order_base + om - 0x100000000LL;
+    } else {
+      order = vdd->order_base + om;
+    }
 
     if(pts == AV_NOPTS_VALUE && dts != AV_NOPTS_VALUE &&
        h264->picture_type[0] == 2)

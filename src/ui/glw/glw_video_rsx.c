@@ -583,7 +583,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
-  if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 3,
+  if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 10,
 			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0,
 			 0))
     return;
@@ -691,7 +691,7 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
 
-  if(glw_video_configure(gv, &glw_video_rsxmem, wvec, hvec, 3,
+  if(glw_video_configure(gv, &glw_video_rsxmem, wvec, hvec, 10,
 			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0,
 			 0))
     return;

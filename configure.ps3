@@ -19,7 +19,7 @@ source support/configure.inc
 TOOLCHAIN="${PS3DEV}/host/ppu/bin/ppu-"
 CC=${TOOLCHAIN}gcc
 
-LIBAV_CFLAGS="-mminimal-toc -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
+LIBAV_CFLAGS="-mminimal-toc -I${PSL1GHT}/target/include -B${PSL1GHT}/target/lib -B${PS3DEV}/host/ppu/lib -I${PS3DEV}/host/ppu/include -include ${TOPDIR}/support/nostrictansi.h"
 
 LIBAV_ARCH_FLAGS="--cross-prefix=${PS3DEV}/host/ppu/bin/ppu- --enable-cross-compile --arch=powerpc64 --cpu=cell --target-os=none --malloc-prefix=my --disable-shared --enable-static"
 
@@ -44,6 +44,7 @@ done
 setup_env "$@"
 
 
+enable sqlite_internal
 enable libfreetype
 enable spidermonkey
 enable trex
@@ -65,6 +66,7 @@ ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/su
 LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
 
 libav_setup
+rtmpdump_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${CC}

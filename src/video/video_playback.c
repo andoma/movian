@@ -70,6 +70,7 @@ typedef struct vsource {
   char *vs_url;
   char *vs_mimetype;
   int vs_bitrate;
+  int vs_flags;
 } vsource_t;
 
 
@@ -88,7 +89,7 @@ vs_cmp(const vsource_t *a, const vsource_t *b)
  */
 static void
 vsource_insert(struct vsource_list *list, 
-	       const char *url, const char *mimetype, int bitrate)
+	       const char *url, const char *mimetype, int bitrate, int flags)
 {
   if(backend_canhandle(url) == NULL)
     return;
@@ -97,7 +98,51 @@ vsource_insert(struct vsource_list *list,
   vs->vs_bitrate = bitrate;
   vs->vs_url = strdup(url);
   vs->vs_mimetype = mimetype ? strdup(mimetype) : NULL;
+  vs->vs_flags = flags;
   LIST_INSERT_SORTED(list, vs, vs_link, vs_cmp);
+}
+
+
+/**
+ *
+ */
+static void
+vsource_free(vsource_t *vs)
+{
+  free(vs->vs_url);
+  free(vs->vs_mimetype);
+  free(vs);
+}
+
+
+/**
+ *
+ */
+static vsource_t *
+vsource_dup(const vsource_t *src)
+{
+  vsource_t *dst = malloc(sizeof(vsource_t));
+  *dst = *src;
+  dst->vs_url = strdup(dst->vs_url);
+  dst->vs_mimetype = dst->vs_mimetype ? strdup(src->vs_url) : NULL;
+  return dst;
+}
+
+
+/**
+ *
+ */
+static void
+vsource_remove(struct vsource_list *list, const char *url)
+{
+  vsource_t *vs;
+  LIST_FOREACH(vs, list, vs_link) {
+    if(!strcmp(vs->vs_url, url)) {
+      LIST_REMOVE(vs, vs_link);
+      vsource_free(vs);
+      return;
+    }
+  }
 }
 
 
@@ -121,49 +166,68 @@ vsource_cleanup(struct vsource_list *list)
  *
  */
 static void
-vsource_load_hls(struct vsource_list *list, const char *url,
-		 const char *mimetype)
+vsource_parse_hls(struct vsource_list *list, char *s, const char *base)
 {
+  int bandwidth = -1;
   int l;
-  char *buf, *s;
+
+  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+    s[l] = 0;
+    if(l == 0)
+      continue;
+    const char *s2, *s3;
+    if((s2 = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL) {
+      s3 = strstr(s2, "BANDWIDTH=");
+      if(s3 != NULL)
+        bandwidth = atoi(s3 + strlen("BANDWIDTH="));
+    } else if(*s == '#') {
+      continue;
+    } else if(bandwidth != -1) {
+      char *playlist = url_resolve_relative_from_base(base, s);
+      vsource_insert(list, playlist, "application/x-mpegURL", bandwidth,
+		     BACKEND_VIDEO_NO_FS_SCAN);
+      free(playlist);
+      bandwidth = -1;
+    }
+  }
+}
+
+
+
+
+/**
+ *
+ */
+static void
+vsource_load_hls(struct vsource_list *list, const char *url)
+{
+  char *buf;
   char errbuf[256];
-  int flags = 0;
 
-  s = buf = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf), NULL, flags,
-		    NULL, NULL);
+  buf = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
 
-  if(s == NULL) {
+  if(buf == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open %s -- %s", url, errbuf);
     return;
   }
 
-  if(mystrbegins(s, "#EXTM3U")) {
-
-    int bandwidth = -1;
-
-    for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
-      s[l] = 0;
-      if(l == 0)
-	continue;
-
-      const char *s2, *s3;
-      if((s2 = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL) {
-	s3 = strstr(s2, "BANDWIDTH=");
-	if(s3 != NULL)
-	  bandwidth = atoi(s3 + strlen("BANDWIDTH="));
-      } else if(*s == '#') {
-	continue;
-      } else if(bandwidth != -1) {
-	char *playlist = url_resolve_relative_from_base(url, s);
-	vsource_insert(list, playlist, mimetype, bandwidth);
-	free(playlist);
-	bandwidth = -1;
-      }
-    }
+  if(mystrbegins(buf, "#EXTM3U")) {
+    vsource_parse_hls(list, buf, url);
   } else {
     TRACE(TRACE_INFO, "HLS", "%s is not an EXTM3U file", url);
   }
   free(buf);
+}
+
+
+/**
+ *
+ */
+void
+vsource_add_hls(struct vsource_list *vsl, char *hls, const char *url)
+{
+  vsource_remove(vsl, url);
+  vsource_parse_hls(vsl, hls, url);
 }
 
 
@@ -181,6 +245,20 @@ play_video(const char *url, struct media_pipe *mp,
   htsmsg_field_t *f;
   vsource_t *vs;
   struct vsource_list vsources;
+  event_t *e;
+  const char *canonical_url;
+  htsmsg_t *m = NULL;
+
+  video_args_t va;
+
+
+  memset(&va, 0, sizeof(va));
+  va.episode = -1;
+  va.season = -1;
+
+  va.priority = priority;
+
+  LIST_INIT(&vsources);
 
   mp_reinit_streams(mp);
 
@@ -205,102 +283,159 @@ play_video(const char *url, struct media_pipe *mp,
 	return e;
       }
       snprintf(errbuf, errlen,
-	       "Page model for '%s' does not provide a video source",
-	       url);
+	       "Page model for '%s' does not provide a video source", url);
       return NULL;
 
     }
+
+    va.canonical_url = canonical_url = url;
+    va.flags = flags | BACKEND_VIDEO_SET_TITLE;
+
     mp_set_url(mp, url);
+    e = be->be_play_video(url, mp, errbuf, errlen, vq, &vsources, &va);
 
-    return be->be_play_video(url, mp, flags | BACKEND_VIDEO_SET_TITLE,
-			     priority, errbuf, errlen, NULL,
-			     url, vq);
-  }
+  } else {
 
-  url += strlen("videoparams:");
-  htsmsg_t *m = htsmsg_json_deserialize(url);
+    url += strlen("videoparams:");
+    m = htsmsg_json_deserialize(url);
 
-  if(m == NULL) {
-    snprintf(errbuf, errlen, "Invalid JSON");
-    return NULL;
-  }
-
-  LIST_INIT(&vsources);
-
-  const char *canonical_url = htsmsg_get_str(m, "canonicalUrl");
-
-  // Sources
-
-  if((sources = htsmsg_get_list(m, "sources")) == NULL) {
-    snprintf(errbuf, errlen, "No sources list in JSON parameters");
-    return NULL;
-  }
-  
-  HTSMSG_FOREACH(f, sources) {
-    htsmsg_t *src = &f->hmf_msg;
-    const char *url      = htsmsg_get_str(src, "url");
-    const char *mimetype = htsmsg_get_str(src, "mimetype");
-    int bitrate          = htsmsg_get_u32_or_default(src, "bitrate", -1);
-
-    if(url == NULL)
-      continue;
-
-    if(mimetype != NULL && 
-       (!strcmp(mimetype, "application/vnd.apple.mpegurl") ||
-	!strcmp(mimetype, "audio/mpegurl"))) {
-      if(0)vsource_load_hls(&vsources, url, mimetype);
-      continue;
+    if(m == NULL) {
+      snprintf(errbuf, errlen, "Invalid JSON");
+      return NULL;
     }
 
-    vsource_insert(&vsources, url, mimetype, bitrate);
-  }
+    canonical_url = htsmsg_get_str(m, "canonicalUrl");
 
-  if(LIST_FIRST(&vsources) == NULL) {
-    snprintf(errbuf, errlen, "No players found for sources");
-    vsource_cleanup(&vsources);
-    return NULL;
-  }
+    // Sources
+
+    if((sources = htsmsg_get_list(m, "sources")) == NULL) {
+      snprintf(errbuf, errlen, "No sources list in JSON parameters");
+      return NULL;
+    }
+
+    HTSMSG_FOREACH(f, sources) {
+      htsmsg_t *src = &f->hmf_msg;
+      const char *url      = htsmsg_get_str(src, "url");
+      const char *mimetype = htsmsg_get_str(src, "mimetype");
+      int bitrate          = htsmsg_get_u32_or_default(src, "bitrate", -1);
+
+      if(url == NULL)
+        continue;
+
+      if(mimetype != NULL && 
+         (!strcmp(mimetype, "application/vnd.apple.mpegurl") ||
+          !strcmp(mimetype, "audio/mpegurl"))) {
+        vsource_load_hls(&vsources, url);
+        continue;
+      }
+
+      vsource_insert(&vsources, url, mimetype, bitrate,
+		     BACKEND_VIDEO_NO_FS_SCAN);
+    }
+
+
+    if(LIST_FIRST(&vsources) == NULL) {
+      snprintf(errbuf, errlen, "No players found for sources");
+      vsource_cleanup(&vsources);
+      return NULL;
+    }
   
-  // Other metadata
+    // Other metadata
 
-  if((str = htsmsg_get_str(m, "title")) != NULL)
-    prop_set_string(prop_create(mp->mp_prop_metadata, "title"), str);
-  else
-    flags |= BACKEND_VIDEO_SET_TITLE;
+    if((str = htsmsg_get_str(m, "title")) != NULL) {
+      prop_set(mp->mp_prop_metadata, "title", PROP_SET_STRING, str);
+      va.title = str;
+    } else {
+      flags |= BACKEND_VIDEO_SET_TITLE;
+    }
 
-  // Subtitles
+    uint32_t u32;
+    if(!htsmsg_get_u32(m, "year", &u32)) {
+      prop_set(mp->mp_prop_metadata, "year", PROP_SET_INT, u32);
+      va.year = u32;
+    }
+    if(!htsmsg_get_u32(m, "season", &u32)) {
+      prop_set(mp->mp_prop_metadata, "season", PROP_SET_INT, u32);
+      va.season = u32;
+    }
+    if(!htsmsg_get_u32(m, "episode", &u32)) {
+      prop_set(mp->mp_prop_metadata, "episode", PROP_SET_INT, u32);
+      va.episode = u32;
+    }
 
-  if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
-    HTSMSG_FOREACH(f, subs) {
-      htsmsg_t *sub = &f->hmf_msg;
-      const char *title = htsmsg_get_str(sub, "title");
-      const char *url = htsmsg_get_str(sub, "url");
-      const char *lang = htsmsg_get_str(sub, "language");
-      const char *source = htsmsg_get_str(sub, "source");
 
-      mp_add_track(mp->mp_prop_subtitle_tracks, title, url, 
-		   NULL, NULL, lang, source, NULL, 0);
+    if((str = htsmsg_get_str(m, "imdbid")) != NULL)
+      va.imdb = str;
+
+
+    // Subtitles
+
+    if((subs = htsmsg_get_list(m, "subtitles")) != NULL) {
+      HTSMSG_FOREACH(f, subs) {
+        htsmsg_t *sub = &f->hmf_msg;
+        const char *title = htsmsg_get_str(sub, "title");
+        const char *url = htsmsg_get_str(sub, "url");
+        const char *lang = htsmsg_get_str(sub, "language");
+        const char *source = htsmsg_get_str(sub, "source");
+
+        mp_add_track(mp->mp_prop_subtitle_tracks, title, url, 
+                     NULL, NULL, lang, source, NULL, 0);
+      }
+    }
+
+    // Check if we should disable filesystem scanning (subtitles)
+
+    if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
+      flags |= BACKEND_VIDEO_NO_FS_SCAN;
+
+    vs = LIST_FIRST(&vsources);
+  
+    if(canonical_url == NULL)
+      canonical_url = vs->vs_url;
+
+    TRACE(TRACE_DEBUG, "Video", "Playing %s", vs->vs_url);
+
+    vs = vsource_dup(vs);
+
+    va.canonical_url = canonical_url;
+    va.flags = flags | vs->vs_flags;
+    va.mimetype = vs->vs_mimetype;
+
+    e = backend_play_video(vs->vs_url, mp, errbuf, errlen, vq, &vsources, &va);
+    vsource_free(vs);
+  }
+
+  while(e != NULL) {
+
+    if(event_is_type(e, EVENT_REOPEN)) {
+
+      vsource_t *vs = LIST_FIRST(&vsources);
+      if(vs == NULL) {
+        snprintf(errbuf, errlen, "No alternate video sources");
+        e = NULL;
+        break;
+      }
+
+      TRACE(TRACE_DEBUG, "Video", "Playing %s", vs->vs_url);
+
+      vs = vsource_dup(vs);
+
+      va.canonical_url = canonical_url;
+      va.flags = flags | vs->vs_flags;
+      va.mimetype = vs->vs_mimetype;
+
+      e = backend_play_video(vs->vs_url, mp, errbuf, errlen,
+			     vq, &vsources, &va);
+      vsource_free(vs);
+
+    } else {
+      break;
     }
   }
-
-  // Check if we should disable filesystem scanning of related files (subtitles)
-
-  if(htsmsg_get_u32_or_default(m, "no_fs_scan", 0))
-    flags |= BACKEND_VIDEO_NO_FS_SCAN;
-
-  vs = LIST_FIRST(&vsources);
-  
-  if(canonical_url == NULL)
-    canonical_url = vs->vs_url;
-
-  event_t *e;
-
-  e = backend_play_video(vs->vs_url, mp, flags, priority, 
-			 errbuf, errlen, vs->vs_mimetype,
-			 canonical_url, vq);
 
   vsource_cleanup(&vsources);
-
+  if(m)
+    htsmsg_destroy(m);
   return e;
 }
 

@@ -17,7 +17,8 @@
  */
 
 #pragma once
-#include "video_decoder.h"
+
+#include "media.h"
 
 
 /**
@@ -54,22 +55,17 @@ typedef struct dvdspu {
 
 } dvdspu_t;
 
-void dvdspu_decoder_init(video_decoder_t *vd);
+void dvdspu_destroy_one(media_pipe_t *mp, dvdspu_t *d);
 
-void dvdspu_decoder_deinit(video_decoder_t *vd);
-
-void dvdspu_destroy(video_decoder_t *vd, dvdspu_t *d);
-
-void dvdspu_decoder_dispatch(video_decoder_t *vd, media_buf_t *mb,
-			     media_pipe_t *mp);
+void dvdspu_destroy_all(media_pipe_t *mp);
 
 int dvdspu_decode(dvdspu_t *d, int64_t pts);
 
 void dvdspu_decode_clut(uint32_t *dst, const uint32_t *src);
 
-void dvdspu_enqueue(video_decoder_t *vd, const void *data, int size,
+void dvdspu_enqueue(media_pipe_t *mp, const void *data, int size,
 		    const uint32_t *clut, int w, int h,
 		    int64_t pts);
 
-void dvdspu_flush(video_decoder_t *vd);
+void dvdspu_flush(media_pipe_t *mp);
 

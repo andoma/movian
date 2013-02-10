@@ -23,7 +23,7 @@
 #include "showtime.h"
 #include "fileaccess/fileaccess.h"
 #include "vobsub.h"
-#include "misc/str.h"
+#include "misc/isolang.h"
 #include "media.h"
 #include "htsmsg/htsmsg_json.h"
 #include "ext_subtitles.h"
@@ -38,7 +38,7 @@ vobsub_decode_palette(uint32_t *clut, const char *str)
   int i = 0;
   while(*str && i < 16) {
     int v = strtol(str, &end, 16);
-    clut[i++] = v;
+    clut[i++] = (v & 0xff0000) >> 16 | (v & 0xff00) | (v & 0xff) << 16;
     str = end;
     while(*str == ' ')
       str++;
@@ -108,7 +108,7 @@ vobsub_probe(const char *url, const char *filename,
       while(*p == ' ')
 	p++;
       if(strlen(p) >= 2) {
-	const char *lang = dvd_langcode_to_string(p[0] << 8 | p[1]);
+	const char *lang = iso_639_1_lang(p);
 
 	htsmsg_t *m = htsmsg_create_map();
 	htsmsg_add_str(m, "idx", url);
@@ -456,8 +456,7 @@ ve_deliver(vobsub_t *vs, vobsub_entry_t *ve)
  *
  */
 static void
-vobsub_picker(struct ext_subtitles *es, int64_t pts,
-	      struct video_decoder *vd)
+vobsub_picker(struct ext_subtitles *es, int64_t pts)
 {
   vobsub_t *vs = (vobsub_t *)es;
   vobsub_entry_t *ve = vs->vs_cur;

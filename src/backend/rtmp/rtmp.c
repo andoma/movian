@@ -31,6 +31,7 @@
 #include "misc/isolang.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
+#include "subtitles/sub_scanner.h"
 #include "metadata/metadata.h"
 
 typedef struct {
@@ -653,15 +654,16 @@ static int rtmp_log_level;
  */
 static event_t *
 rtmp_playvideo(const char *url0, media_pipe_t *mp,
-	       int flags, int priority,
 	       char *errbuf, size_t errlen,
-	       const char *mimetype,
-	       const char *canonical_url,
-	       video_queue_t *vq)
+	       video_queue_t *vq, struct vsource_list *vsl,
+	       const video_args_t *va0)
 {
+  video_args_t va = *va0;
   rtmp_t r = {0};
   event_t *e;
   char *url = mystrdupa(url0);
+
+  va.flags |= BACKEND_VIDEO_NO_FS_SCAN;
 
   prop_set_string(mp->mp_prop_type, "video");
 
@@ -673,10 +675,10 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   int64_t start = 0;
 
-  if(flags & BACKEND_VIDEO_RESUME ||
+  if(va.flags & BACKEND_VIDEO_RESUME ||
      (video_settings.resume_mode == VIDEO_RESUME_YES &&
-      !(flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
-    start = video_get_restartpos(canonical_url);
+      !(va.flags & BACKEND_VIDEO_START_FROM_BEGINNING)))
+    start = video_get_restartpos(va.canonical_url);
 
   if(!RTMP_SetupURL(r.r, url)) {
     snprintf(errbuf, errlen, "Unable to setup RTMP-session");
@@ -725,20 +727,25 @@ rtmp_playvideo(const char *url0, media_pipe_t *mp,
 
   mp_become_primary(mp);
 
-  metadb_register_play(canonical_url, 0, CONTENT_VIDEO);
+  metadb_register_play(va.canonical_url, 0, CONTENT_VIDEO);
 
-  r.canonical_url = canonical_url;
+  r.canonical_url = va.canonical_url;
   r.restartpos_last = -1;
 
+  sub_scanner_t *ss =
+    sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va, 0);
+
   e = rtmp_loop(&r, mp, url, errbuf, errlen);
+
+  sub_scanner_destroy(ss);
 
   if(r.total_duration) {
     int p = mp->mp_seek_base / (r.total_duration * 10);
     if(p >= video_settings.played_threshold) {
       TRACE(TRACE_DEBUG, "RTMP", "Playback reached %d%%, counting as played",
 	    p);
-      metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
-      metadb_set_video_restartpos(canonical_url, -1);
+      metadb_register_play(va.canonical_url, 1, CONTENT_VIDEO);
+      metadb_set_video_restartpos(va.canonical_url, -1);
     }
   }
 

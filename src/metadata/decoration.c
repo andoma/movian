@@ -41,7 +41,7 @@ static int deco_pendings;
 /**
  *
  */
-typedef struct deco_browse {
+struct deco_browse {
   LIST_ENTRY(deco_browse) db_link;
   prop_sub_t *db_sub;
   struct deco_item_queue db_items;
@@ -81,8 +81,7 @@ typedef struct deco_browse {
   int db_flags;
 
   int db_lonely_video_item;
-
-} deco_browse_t;
+};
 
 
 /**
@@ -168,12 +167,12 @@ analyze_video(deco_item_t *di)
     fname = rstr_dup(di->di_filename);
   }
 
-  di->di_mlv = metadata_bind_video_info(di->di_metadata,
-					di->di_url, fname,
+  di->di_mlv = metadata_bind_video_info(di->di_url, fname,
 					di->di_ds->ds_imdb_id ?: db->db_imdb_id,
-					di->di_duration, di->di_options,
+					di->di_duration,
 					di->di_root, db->db_title,
-					db->db_lonely_video_item, 0);
+					db->db_lonely_video_item, 0,
+					-1, -1, -1);
   rstr_release(fname);
 }
 
@@ -998,6 +997,17 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
  *
  */
 void
+decorated_browse_destroy(deco_browse_t *db)
+{
+  hts_mutex_lock(&deco_mutex);
+  deco_browse_destroy(db);
+  hts_mutex_unlock(&deco_mutex);
+}
+
+/**
+ *
+ */
+deco_browse_t *
 decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
 			rstr_t *title, int flags)
 {
@@ -1005,19 +1015,22 @@ decorated_browse_create(prop_t *model, struct prop_nf *pnf, prop_t *items,
 
   deco_browse_t *db = calloc(1, sizeof(deco_browse_t));
   TAILQ_INIT(&db->db_items);
-  db->db_sub = prop_subscribe(PROP_SUB_TRACK_DESTROY,
+  db->db_sub = prop_subscribe(flags & DECO_FLAGS_NO_AUTO_DESTROY ? 0 :
+                              PROP_SUB_TRACK_DESTROY,
 			      PROP_TAG_CALLBACK, deco_browse_node_cb, db,
 			      PROP_TAG_ROOT, items,
 			      PROP_TAG_COURIER, deco_courier,
 			      NULL);
 
-  db->db_pnf = pnf;
+
+  db->db_pnf = prop_nf_retain(pnf);
   LIST_INSERT_HEAD(&deco_browses, db, db_link);
   db->db_prop_model = prop_ref_inc(model);
   db->db_prop_contents = prop_create_r(model, "contents");
   db->db_title = rstr_dup(title);
   db->db_flags = flags;
   hts_mutex_unlock(&deco_mutex);
+  return db;
 }
 
 

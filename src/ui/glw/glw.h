@@ -88,7 +88,6 @@ typedef float Vec2[2];
 
 #define GLW_LERP(a, y0, y1) ((y0) + (a) * ((y1) - (y0)))
 #define GLW_S(a) (sin(GLW_LERP(a, M_PI * -0.5, M_PI * 0.5)) * 0.5 + 0.5)
-#define GLW_LP(a, y0, y1) (((y0) * ((a) - 1.0) + (y1)) / (a))
 #define GLW_MIN(a, b) ((a) < (b) ? (a) : (b))
 #define GLW_MAX(a, b) ((a) > (b) ? (a) : (b))
 #define GLW_DEG2RAD(a) ((a) * M_PI * 2.0f / 360.0f)
@@ -133,6 +132,7 @@ typedef enum {
   GLW_ATTRIB_CENTER,
   GLW_ATTRIB_ALPHA_FALLOFF,
   GLW_ATTRIB_BLUR_FALLOFF,
+  GLW_ATTRIB_RADIUS,
   GLW_ATTRIB_num,
 } glw_attribute_t;
 
@@ -144,6 +144,8 @@ typedef enum {
 #define GTB_BOLD          0x4
 #define GTB_ITALIC        0x8
 #define GTB_OUTLINE       0x10
+#define GTB_PERMANENT_CURSOR 0x20
+#define GTB_OSK_PASSWORD     0x40   /* Password for on screen keyboard */
 
 typedef struct glw_vertex {
   float x, y, z;
@@ -156,17 +158,21 @@ typedef struct glw_rgb {
 /**
  * Image flags
  */
-#define GLW_IMAGE_FIXED_SIZE    0x2
-#define GLW_IMAGE_BEVEL_LEFT    0x8
-#define GLW_IMAGE_BEVEL_TOP     0x10
-#define GLW_IMAGE_BEVEL_RIGHT   0x20
-#define GLW_IMAGE_BEVEL_BOTTOM  0x40
-#define GLW_IMAGE_SET_ASPECT    0x80
-#define GLW_IMAGE_ADDITIVE      0x100
-#define GLW_IMAGE_BORDER_ONLY   0x200
-#define GLW_IMAGE_BORDER_LEFT   0x400
-#define GLW_IMAGE_BORDER_RIGHT  0x800
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS  0x1000
+#define GLW_IMAGE_CORNER_TOPLEFT       0x1
+#define GLW_IMAGE_CORNER_TOPRIGHT      0x2
+#define GLW_IMAGE_CORNER_BOTTOMLEFT    0x4
+#define GLW_IMAGE_CORNER_BOTTOMRIGHT   0x8
+#define GLW_IMAGE_FIXED_SIZE           0x10
+#define GLW_IMAGE_BEVEL_LEFT           0x20
+#define GLW_IMAGE_BEVEL_TOP            0x40
+#define GLW_IMAGE_BEVEL_RIGHT          0x80
+#define GLW_IMAGE_BEVEL_BOTTOM         0x100
+#define GLW_IMAGE_SET_ASPECT           0x200
+#define GLW_IMAGE_ADDITIVE             0x400
+#define GLW_IMAGE_BORDER_ONLY          0x800
+#define GLW_IMAGE_BORDER_LEFT          0x1000
+#define GLW_IMAGE_BORDER_RIGHT         0x2000
+#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x4000
 
 /**
  * Video flags
@@ -270,11 +276,6 @@ typedef enum {
    */
   GLW_SIGNAL_READINESS,
 
-  /**
-   * Emitted by certain widget to tell its children how far
-   * away from current focus they are
-   */
-  GLW_SIGNAL_FOCUS_DISTANCE_CHANGED,
 
   /**
    * Emitted when gc_can_select_child maybe will return a different value
@@ -584,6 +585,11 @@ typedef struct glw_class {
   /**
    *
    */
+  void (*gc_set_desc)(struct glw *w, const char *desc);
+
+  /**
+   *
+   */
   void (*gc_set_alpha_self)(struct glw *w, float a);
 
   /**
@@ -829,11 +835,19 @@ typedef struct glw_root {
   int gr_vtmp_cur;
   int gr_vtmp_capacity;
 
+  int gr_random;
+
+  // On Screen Keyboard
+
   void (*gr_open_osk)(struct glw_root *gr, 
 		      const char *title, const char *str, struct glw *w,
 		      int password);
 
-  int gr_random;
+
+  struct glw *gr_osk_widget;
+  prop_sub_t *gr_osk_text_sub;
+  prop_sub_t *gr_osk_ev_sub;
+
 
 } glw_root_t;
 
@@ -1004,7 +1018,6 @@ typedef struct glw {
   float glw_focus_weight;
 
   uint8_t glw_alignment;
-  int16_t glw_focus_distance;
 
   char *glw_id;
 
@@ -1081,9 +1094,10 @@ void glw_unlock(glw_root_t *gr);
 
 void glw_store_matrix(glw_t *w, const glw_rctx_t *rc);
 
-#define GLW_FOCUS_SET_AUTOMATIC   0
-#define GLW_FOCUS_SET_INTERACTIVE 1
-#define GLW_FOCUS_SET_SUGGESTED   2
+#define GLW_FOCUS_SET_AUTOMATIC    0
+#define GLW_FOCUS_SET_AUTOMATIC_FF 1
+#define GLW_FOCUS_SET_INTERACTIVE  2
+#define GLW_FOCUS_SET_SUGGESTED    3
 
 void glw_focus_set(glw_root_t *gr, glw_t *w, int how);
 
@@ -1131,6 +1145,14 @@ void glw_stencil_enable(glw_root_t *gr, const glw_rctx_t *rc,
 			const int16_t *border);
 
 void glw_stencil_disable(glw_root_t *gr);
+
+
+static inline void
+glw_lp(float *v, const glw_root_t *gr, float t, float alpha)
+{
+  *v = *v + alpha * (t - *v);
+}
+
 
 
 /**
@@ -1189,6 +1211,7 @@ do {						\
   case GLW_ATTRIB_X_SPACING:                    \
   case GLW_ATTRIB_Y_SPACING:                    \
   case GLW_ATTRIB_SCROLL_THRESHOLD:             \
+  case GLW_ATTRIB_RADIUS:			\
     (void)va_arg(ap, int);			\
     break;					\
   case GLW_ATTRIB_ANGLE:			\
@@ -1235,8 +1258,6 @@ void glw_suspend_subscriptions(glw_t *w);
 void glw_unref(glw_t *w);
 
 #define glw_ref(w) ((w)->glw_refcnt++)
-
-int glw_get_text(glw_t *w, char *buf, size_t buflen);
 
 glw_t *glw_get_prev_n(glw_t *c, int count);
 

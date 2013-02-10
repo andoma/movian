@@ -83,11 +83,9 @@ backend_fini(void)
  */
 event_t *
 backend_play_video(const char *url, struct media_pipe *mp,
-		   int flags, int priority,
 		   char *errbuf, size_t errlen,
-		   const char *mimetype, 
-		   const char *canonical_url,
-		   video_queue_t *vq)
+		   video_queue_t *vq, struct vsource_list *vsl,
+		   const video_args_t *va)
 {
   backend_t *nb = backend_canhandle(url);
 
@@ -96,10 +94,9 @@ backend_play_video(const char *url, struct media_pipe *mp,
     return NULL;
   }
 
-  mp_set_url(mp, canonical_url);
+  mp_set_url(mp, va->canonical_url);
 
-  return nb->be_play_video(url, mp, flags, priority, errbuf, errlen, mimetype,
-			   canonical_url, vq);
+  return nb->be_play_video(url, mp, errbuf, errlen, vq, vsl, va);
 }
 
 
@@ -268,8 +265,17 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
   } else {
     pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen, cache_control,
 			    cb, opaque);
-    if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding)
+    if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding) {
       pm = pixmap_decode(pm, im, errbuf, errlen);
+
+      if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)
+        pm = pixmap_rasterize_ft(pm);
+
+      if(pm != NULL && im->im_corner_radius)
+	pm = pixmap_rounded_corners(pm, im->im_corner_radius,
+				    im->im_corner_selection);
+
+    }
   }
   if(m)
     htsmsg_destroy(m);

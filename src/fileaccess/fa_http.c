@@ -319,10 +319,12 @@ validate_cookie(const char *req_host, const char *req_path,
   /*
    * The value for the Domain attribute contains no embedded dots or
    * does not start with a dot.
+   * Unless it matches the req_host perfectly
    */
 
-  if(*domain != '.' || strchr(domain + 1, '.') == NULL)
-    return 0;
+  if(strcmp(domain, req_host))
+    if(*domain != '.' || strchr(domain + 1, '.') == NULL)
+      return 0;
 
   /*
    * The value for the request-host does not domain-match the Domain
@@ -1405,6 +1407,10 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   nohead = !!(http_server_quirk_set_get(hf->hf_connection->hc_hostname, 0) &
 	      HTTP_SERVER_QUIRK_NO_HEAD);
+  
+  nohead = 1; // We're gonna test without HEAD requests for a while
+              // There seems to be a lot of issues with it, in particular
+              // for servers serving HLS
 
  again:
 
@@ -1444,10 +1450,9 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
       return 0;
 
     if(nohead) {
-      // Server did not honour our GET request with 1 byte range
-      // This is bad, bail out
-      snprintf(errbuf, errlen, "Unexpected 200 response on range request");
-      return -1;
+      http_detach(hf, 0, "Range request not understood");
+      hf->hf_streaming = 1;
+      goto reconnect;
     }
 
     if(hf->hf_filesize < 0) {
@@ -1514,16 +1519,20 @@ http_open0(http_file_t *hf, int probe, char *errbuf, int errlen,
 
   case 405:
     if(!nohead) {
+
+      // This server does not support HEAD, remember that
       http_server_quirk_set_get(hf->hf_connection->hc_hostname, 
 				HTTP_SERVER_QUIRK_NO_HEAD);
-      // Retry using GET
-      if(http_drain_content(hf)) {
-	snprintf(errbuf, errlen, "Connection lost");
-	return -1;
-      }
-      
+
+      // It's a bit unclear if we receive a body when we
+      // get a "405 Method Not Supported" as a result
+      // of a HEAD request (it seems to be differerent
+      // between different servers), so just disconnect
+      // and retry without HEAD
+
+      http_detach(hf, 0, "HEAD not supported");
       nohead = 1;
-      goto again;
+      goto reconnect;
     }
     snprintf(errbuf, errlen, "Unsupported method");
     return -1;
@@ -1837,7 +1846,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 
       char range[100];
 
-      if(hf->hf_filesize == -1) {
+      if(hf->hf_filesize == -1 || hf->hf_no_ranges) {
 	range[0] = 0;
 
       } else if(hf->hf_streaming || hf->hf_consecutive_read > STREAMING_LIMIT) {
@@ -1890,6 +1899,11 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
 	  }
 	}
 	break;
+
+      case 416:
+	hf->hf_no_ranges = 1;
+	http_detach(hf, 0, "Requested Range Not Satisfiable");
+	continue;
 
       default:
 	TRACE(TRACE_DEBUG, "HTTP", 
@@ -2426,11 +2440,10 @@ parse_propfind(http_file_t *hf, htsmsg_t *xml, fa_dir_t *fd,
 	if(!isdir) {
 	  if((d = get_cdata_by_tag(c, "DAV:getcontentlength")) != NULL)
 	    hf->hf_filesize = strtoll(d, NULL, 10);
-
-	  hf->hf_mtime = 0;
-	  if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
-	    http_ctime(&hf->hf_mtime, d);
-	}
+        }
+        hf->hf_mtime = 0;
+        if((d = get_cdata_by_tag(c, "DAV:getlastmodified")) != NULL)
+          http_ctime(&hf->hf_mtime, d);
 	goto ok;
       } 
     }

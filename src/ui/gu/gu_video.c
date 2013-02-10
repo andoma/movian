@@ -109,7 +109,6 @@ mouse_press(GtkWidget *w, GdkEventButton *event, gpointer user_data)
 void
 gu_video_create(gu_nav_page_t *gnp)
 {
-  prop_courier_t *pc = gnp->gnp_gt->gt_gw->gw_gu->gu_pc;
   struct video_output *vo;
   char errbuf[256];
   char buf[512];
@@ -122,7 +121,7 @@ gu_video_create(gu_nav_page_t *gnp)
 
   vo = x11_vo_create(GDK_WINDOW_XDISPLAY(gnp->gnp_pageroot->window),
 		     GDK_WINDOW_XID(gnp->gnp_pageroot->window),
-		     pc, gnp->gnp_prop, errbuf, sizeof(errbuf));
+		     glibcourier, gnp->gnp_prop, errbuf, sizeof(errbuf));
 
   if(vo == NULL) {
     gtk_widget_destroy(gnp->gnp_pageroot);
@@ -143,7 +142,7 @@ gu_video_create(gu_nav_page_t *gnp)
     prop_subscribe(0,
 		   PROP_TAG_NAME("self", "media", "playstatus"),
 		   PROP_TAG_CALLBACK_STRING, video_set_playstatus, gv,
-		   PROP_TAG_COURIER, pc,
+		   PROP_TAG_COURIER, glibcourier,
 		   PROP_TAG_NAMED_ROOT, gnp->gnp_prop, "self",
 		   NULL);
 

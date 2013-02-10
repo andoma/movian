@@ -47,6 +47,7 @@ typedef enum {
   PLUGIN_CAT_MUSIC,
   PLUGIN_CAT_CLOUD,
   PLUGIN_CAT_GLWVIEW,
+  PLUGIN_CAT_SUBTITLES,
   PLUGIN_CAT_OTHER,
   PLUGIN_CAT_num,
 } plugin_type_t;
@@ -58,6 +59,7 @@ static struct strtab catnames[] = {
   { "cloud",       PLUGIN_CAT_CLOUD },
   { "other",       PLUGIN_CAT_OTHER },
   { "glwview",     PLUGIN_CAT_GLWVIEW },
+  { "subtitles",   PLUGIN_CAT_SUBTITLES },
 };
 
 
@@ -664,7 +666,7 @@ plugin_load_installed(void)
   fa_dir_t *fd = fa_scandir(path, NULL, 0);
 
   if(fd != NULL) {
-    TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       snprintf(path, sizeof(path), "zip://%s", rstr_get(fde->fde_url));
       if(plugin_load(path, errbuf, sizeof(errbuf), 0, 1)) {
 	TRACE(TRACE_ERROR, "plugins", "Unable to load %s\n%s", path, errbuf);
@@ -1184,6 +1186,10 @@ plugin_open_repo(prop_t *page)
 
     case PLUGIN_CAT_GLWVIEW:
       gn = _p("User interface extensions");
+      break;
+
+    case PLUGIN_CAT_SUBTITLES:
+      gn = _p("Subtitles");
       break;
 
     default:

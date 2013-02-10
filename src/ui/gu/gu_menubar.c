@@ -112,7 +112,7 @@ static void
 m_openwindow(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
-  gu_win_create(gw->gw_gu, NULL, 0);
+  gu_win_create(gw->gw_gu, 0);
 }
 
 
@@ -123,7 +123,7 @@ static void
 m_opentab(GtkWidget *menu_item, gpointer callback_data)
 {
   gu_window_t *gw = callback_data;
-  gu_tab_create(gw, NULL, 1);
+  gu_tab_create(gw, 1);
 }
 
 

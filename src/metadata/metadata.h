@@ -38,6 +38,8 @@ typedef struct metadata_lazy_video metadata_lazy_video_t;
 #define METADATA_QTYPE_CUSTOM_IMDB 5
 #define METADATA_QTYPE_FILENAME_OR_DIRECTORY 6
 #define METADATA_QTYPE_EPISODE     7
+#define METADATA_QTYPE_MOVIE       8
+#define METADATA_QTYPE_TVSHOW      9
 
 
 #define METADATA_PERMANENT_ERROR -1
@@ -93,7 +95,18 @@ typedef enum {
 } metadata_image_type_t;
 
 
-
+/**
+ * Index status
+ * These are stored directly in the sqlite metadata database so they
+ * must never be changed
+ */
+typedef enum {
+  INDEX_STATUS_NIL = 0,
+  INDEX_STATUS_ERROR = 1,
+  INDEX_STATUS_STATED = 2,
+  INDEX_STATUS_FILE_ANALYZED = 3,
+  INDEX_STATUS_METADATA_BOUND = 4,
+} metadata_index_status_t;
 
 const char *content2type(contenttype_t ctype);
 
@@ -200,7 +213,7 @@ typedef struct metadata {
 } metadata_t;
 
 
-LIST_HEAD(metadata_source_list, metadata_source);
+TAILQ_HEAD(metadata_source_queue, metadata_source);
 
 /**
  *
@@ -251,12 +264,13 @@ typedef enum {
  *
  */
 typedef struct metadata_source {
-  LIST_ENTRY(metadata_source) ms_link;
+  TAILQ_ENTRY(metadata_source) ms_link;
   char *ms_name;
   char *ms_description;
   int ms_prio;
   int ms_id;
   int ms_enabled;
+  int ms_type;
 
   const metadata_source_funcs_t *ms_funcs;
   struct prop *ms_settings;
@@ -292,6 +306,13 @@ void metadata_to_proptree(const metadata_t *md,
 			  struct prop *proproot,
 			  int cleanup_streams);
 
+metadata_t *metadata_get_video_data(const char *url);
+
+
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
+
 void metadb_init(void);
 
 void metadb_fini(void);
@@ -302,7 +323,14 @@ void metadb_close(void *db);
 
 void metadb_metadata_write(void *db, const char *url, time_t mtime,
 			   const metadata_t *md, const char *parent,
-			   time_t parent_mtime);
+			   time_t parent_mtime,
+                           metadata_index_status_t indexstatus);
+
+int metadb_metadata_writex(void *db, const char *url, time_t mtime,
+                           const metadata_t *md, const char *parent,
+                           time_t parent_mtime,
+                           metadata_index_status_t indexstatus);
+
 
 metadata_t *metadb_metadata_get(void *db, const char *url, time_t mtime);
 
@@ -378,7 +406,7 @@ int64_t metadb_insert_videoitem(void *db, const char *url, int ds_id,
 				int64_t cfgid);
 
 int metadb_get_videoinfo(void *db, const char *url,
-			 struct metadata_source_list *sources,
+			 struct metadata_source_queue *sources,
 			 int *fixed_ds, metadata_t **mdp);
 
 int64_t metadb_get_videoitem(void *db, const char *url);
@@ -392,10 +420,17 @@ int metadb_videoitem_delete_from_ds(void *db, const char *url, int ds);
 
 void decoration_init(void);
 
+#define DECO_FLAGS_NO_AUTO_DESTROY  0x1
 #define DECO_FLAGS_RAW_FILENAMES    0x2
 
-void decorated_browse_create(struct prop *model, struct prop_nf *pnf,
-			     struct prop *items, rstr_t *title, int flags);
+typedef struct deco_browse deco_browse_t;
+
+deco_browse_t *decorated_browse_create(struct prop *model, struct prop_nf *pnf,
+                                       struct prop *items, rstr_t *title,
+                                       int flags);
+
+// Use if DECO_FLAGS_NO_AUTO_DESTROY
+void decorated_browse_destroy(deco_browse_t *db);
 
 void metadata_init(void);
 
@@ -403,23 +438,45 @@ void metadata_bind_artistpics(struct prop *prop, rstr_t *artist);
 
 void metadata_bind_albumart(struct prop *prop, rstr_t *artist, rstr_t *album);
 
-metadata_lazy_video_t *metadata_bind_video_info(struct prop *prop,
-						rstr_t *url, rstr_t *filename,
-						rstr_t *imdb_id, int duration,
-						struct prop *options,
+metadata_lazy_video_t *metadata_bind_video_info(rstr_t *url, rstr_t *filename,
+						rstr_t *imdb_id,
+                                                float duration,
 						struct prop *root,
 						rstr_t *parent, int lonely,
-						int passive);
+						int passive,
+						int year, int season,
+						int episode);
 
 void mlv_unbind(metadata_lazy_video_t *mlv);
 
 void mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id);
 
-void mlv_set_duration(metadata_lazy_video_t *mlv, int duration);
+void mlv_set_duration(metadata_lazy_video_t *mlv, float duration);
 
 void mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely);
+
+int mlv_direct_query(void *db, rstr_t *url, rstr_t *filename,
+                     const char *imdb_id, float duration, const char *folder,
+                     int lonely);
 
 rstr_t *metadata_remove_postfix_rstr(rstr_t *in);
 
 rstr_t *metadata_remove_postfix(const char *in);
 
+
+/**
+ * Browse library
+ */ 
+
+typedef enum {
+  LIBRARY_QUERY_ALBUMS,
+  LIBRARY_QUERY_ALBUM,
+  LIBRARY_QUERY_ARTISTS,
+  LIBRARY_QUERY_ARTIST,
+  LIBRARY_QUERY_VIDEOS,
+} library_query_t;
+
+void metadata_browse(void *db, const char *url,
+                     struct prop *nodes, struct prop *model,
+                     library_query_t qtype,
+                     int (*checkstop)(void *opaque), void *opaque);

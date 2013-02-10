@@ -1,4 +1,3 @@
-
 Showtime Plugin documentation for developers
 ============================================
 
@@ -54,7 +53,9 @@ Example of a plugin.json file (from the Headweb plugin):
       "file": "headweb.js",
       "showtimeVersion": "3.1",
       "version": "1.0",
+      "category": "",
       "author": "Andreas Öman",
+      "homepage": "",
       "title": "Headweb",
       "icon": "headweb_square.png",
       "synopsis": "Headweb online video",
@@ -104,6 +105,11 @@ version of a user's plugin the user will be presented with the
 possibility to upgrade the plugin.  If the field is omitted Showtime
 will set the version to "Unknown"
 
+### category (RECOMMENDED)
+
+Category of the plugin. If the field is omitted Showtime
+will set the category to "Unknown"
+
 ### synopsis (RECOMMENDED)
 
 A short one line summary of the plugin or the service it accesses
@@ -111,6 +117,10 @@ A short one line summary of the plugin or the service it accesses
 ### author (OPTIONAL)
 
 Plugin developer. Any UTF-8 characters is valid.
+
+### homepage (RECOMMENDED)
+
+A URI with the location of the plugin homepage
 
 ### icon (OPTIONAL)
 

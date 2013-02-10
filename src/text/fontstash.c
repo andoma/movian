@@ -411,7 +411,7 @@ fontstash_init(void)
   const char *subfont  = htsmsg_get_str(store, "subfont");
 
   fa_dir_entry_t *fde;
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     font_t *f = font_find(rstr_get(fde->fde_filename));
     f->f_installed_path = rstr_dup(fde->fde_url);
     prop_set_int(f->f_prop_installed, 1);

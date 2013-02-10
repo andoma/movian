@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ext/sqlite/sqlite3.h"
+#include <sqlite3.h>
 #include "misc/rstr.h"
 
 int db_one_statement(sqlite3 *db, const char *sql, const char *src);
@@ -52,5 +52,7 @@ static inline void db_bind_rstr(sqlite3_stmt *stmt, int col, rstr_t *rstr)
   sqlite3_bind_text(stmt, col, (void *)rstr_get(rstr), -1, SQLITE_STATIC);
 
 }
+
+void db_escape_path_query(char *dst, size_t dstlen, const char *src);
 
 void db_init(void);

@@ -39,6 +39,8 @@ typedef struct prop_concat_source {
   int pcs_count;
   int pcs_flags;
 
+  int pcs_index;
+
 } prop_concat_source_t;
 
 
@@ -49,6 +51,7 @@ struct prop_concat {
   struct prop_concat_source_queue pc_queue;
   prop_t *pc_dst;
   prop_sub_t *pc_dstsub;
+  int pc_index_tally;
 };
 
 
@@ -94,6 +97,7 @@ add_child(prop_concat_source_t *pcs, prop_concat_t *pc, prop_t *p)
 {
   prop_t *out = prop_create_root(NULL);
   prop_tag_set(p, pcs, out);
+  prop_tag_set(out, pcs, p);
   prop_link0(p, out, NULL, 0);
   
   prop_set_parent0(out, pc->pc_dst, find_next_out(pcs), NULL);
@@ -130,6 +134,7 @@ src_cb(void *opaque, prop_event_t event, ...)
     p = va_arg(ap, prop_t *);
     out = prop_create_root(NULL);
     prop_tag_set(p, pcs, out);
+    prop_tag_set(out, pcs, p);
     prop_link0(p, out, NULL, 0);
 
     q = va_arg(ap, prop_t *);
@@ -150,6 +155,7 @@ src_cb(void *opaque, prop_event_t event, ...)
   case PROP_DEL_CHILD:
     p = va_arg(ap, prop_t *);
     out = prop_tag_clear(p, pcs);
+    prop_tag_clear(out, pcs);
     before = TAILQ_NEXT(out, hp_parent_link);
     prop_destroy0(out);
 
@@ -191,6 +197,80 @@ src_cb(void *opaque, prop_event_t event, ...)
 }
 
 
+/**
+ *
+ */
+static void 
+req_move(prop_concat_t *pc, prop_t *p, prop_t *b)
+{
+  prop_concat_source_t *ps, *bs;
+
+  TAILQ_FOREACH(ps, &pc->pc_queue, pcs_link) {
+    prop_t *pp = prop_tag_get(p, ps);
+
+    if(pp != NULL) {
+
+      if(b == NULL) {
+        prop_req_move0(pp, NULL, ps->pcs_srcsub);
+        return;
+      }
+
+      prop_t *bb = NULL;
+      TAILQ_FOREACH(bs, &pc->pc_queue, pcs_link) {
+
+        if(b == bs->pcs_header) {
+          bb = NULL;
+          bs = TAILQ_PREV(bs, prop_concat_source_queue, pcs_link);
+          break;
+        }
+
+        bb = prop_tag_get(b, bs);
+        
+        if(bb != NULL)
+          break;
+      }
+
+      if(bs == NULL || bs->pcs_index < ps->pcs_index) {
+        prop_req_move0(pp, TAILQ_FIRST(&pp->hp_parent->hp_childs), ps->pcs_srcsub);
+        return;
+      }
+      
+      if(bs->pcs_index > ps->pcs_index) {
+        prop_req_move0(pp, NULL, ps->pcs_srcsub);
+        return;
+      }
+
+      prop_req_move0(pp, bb, ps->pcs_srcsub);
+      return;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static void
+dst_cb(void *opaque, prop_event_t event, ...)
+{
+  prop_concat_t *pc = opaque;
+  va_list ap;
+  prop_t *p1, *p2;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_REQ_MOVE_CHILD:
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    req_move(pc, p1, p2);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
 
 /**
  *
@@ -213,6 +293,8 @@ prop_concat_add_source(prop_concat_t *pc, prop_t *src, prop_t *header)
 				   PROP_TAG_ROOT, src,
 				   NULL);
 
+  pcs->pcs_index = pc->pc_index_tally++;
+
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -228,6 +310,11 @@ prop_concat_create(prop_t *dst, int flags)
   pc->pc_dst = flags & PROP_CONCAT_TAKE_DST_OWNERSHIP ?
     dst : prop_xref_addref(dst);
   TAILQ_INIT(&pc->pc_queue);
+
+  pc->pc_dstsub = prop_subscribe(PROP_SUB_INTERNAL | PROP_SUB_DONTLOCK,
+                                 PROP_TAG_CALLBACK, dst_cb, pc,
+                                 PROP_TAG_ROOT, dst,
+                                 NULL);
 
   return pc;
 }

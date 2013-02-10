@@ -112,7 +112,10 @@ for path in sys.argv[1:]:
     print "Processing %s (%s / %s) maintained by %s" % \
         (path, language, native, maintainer)  
 
+    missed = 0
+
     for source in sorted(phrases):
+
         emit('#')
         emit('# %s' % source)
         emit('#')
@@ -132,7 +135,7 @@ for path in sys.argv[1:]:
                             phrase[0], phrase[1]))
                     emit('msg[0]: ')
                     emit('msg[1]: ')
-                    print " ! Missing plural translation for %s" % phrase[0]
+                    missed += 1
             else:
                 emit('id: %s' % phrase)
                 if phrase in in_phrases:
@@ -140,8 +143,9 @@ for path in sys.argv[1:]:
                 else:
                     emit("# Missing translation")
                     emit('msg: ')
-                    print " ! Missing translation for %s" % phrase
+                    missed += 1
 
             emit('')
 
+    print "  %d translations missing" % (missed, )
     outfile.close()

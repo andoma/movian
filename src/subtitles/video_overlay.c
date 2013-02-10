@@ -17,21 +17,21 @@
  */
 
 #include "showtime.h"
-#include "video_decoder.h"
+#include "media.h"
 #include "text/text.h"
 #include "misc/pixmap.h"
 #include "misc/str.h"
 #include "video_overlay.h"
-#include "video_settings.h"
+#include "video/video_settings.h"
 #include "dvdspu.h"
 #include "sub.h"
 
 void
-video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo)
+video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)
 {
-  hts_mutex_lock(&vd->vd_overlay_mutex);
-  TAILQ_INSERT_TAIL(&vd->vd_overlay_queue, vo, vo_link);
-  hts_mutex_unlock(&vd->vd_overlay_mutex);
+  hts_mutex_lock(&mp->mp_overlay_mutex);
+  TAILQ_INSERT_TAIL(&mp->mp_overlay_queue, vo, vo_link);
+  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 #if ENABLE_LIBAV
@@ -40,7 +40,7 @@ video_overlay_enqueue(video_decoder_t *vd, video_overlay_t *vo)
  * Decode subtitles from LAVC
  */
 static void
-video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
+video_subtitles_lavc(media_pipe_t *mp, media_buf_t *mb,
 		     AVCodecContext *ctx)
 {
   AVSubtitle sub;
@@ -60,7 +60,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
     vo = calloc(1, sizeof(video_overlay_t));
     vo->vo_type = VO_TIMED_FLUSH;
     vo->vo_start = mb->mb_pts + sub.start_display_time * 1000;
-    video_overlay_enqueue(vd, vo);
+    video_overlay_enqueue(mp, vo);
   } else {
 
     for(i = 0; i < sub.num_rects; i++) {
@@ -77,7 +77,7 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 	vo->vo_x = r->x;
 	vo->vo_y = r->y;
 
-	vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32);
+	vo->vo_pixmap = pixmap_create(r->w, r->h, PIXMAP_BGR32, 0);
 
 	if(vo->vo_pixmap == NULL) {
 	  free(vo);
@@ -95,11 +95,11 @@ video_subtitles_lavc(video_decoder_t *vd, media_buf_t *mb,
 
 	  src += r->pict.linesize[0];
 	}
-	video_overlay_enqueue(vd, vo);
+	video_overlay_enqueue(mp, vo);
 	break;
 
       case SUBTITLE_ASS:
-	sub_ass_render(vd, r->ass,
+	sub_ass_render(mp, r->ass,
 		       ctx->subtitle_header, ctx->subtitle_header_size,
 		       mb->mb_font_context);
 	break;
@@ -140,7 +140,8 @@ video_overlay_render_cleartext(const char *txt, int64_t start, int64_t stop,
     pfx[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
 
     uc = text_parse(txt, &len, 
-		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES) : 0,
+		    tags ? (TEXT_PARSE_TAGS | TEXT_PARSE_HTML_ENTETIES | 
+			    TEXT_PARSE_SLOPPY_TAGS) : 0,
 		    pfx, 5, fontdomain);
     if(uc == NULL)
       return NULL;
@@ -177,7 +178,7 @@ calculate_subtitle_duration(int txt_len)
  *
  */
 void 
-video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
+video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
 {
   media_codec_t *mc = mb->mb_cw;
   
@@ -204,17 +205,17 @@ video_overlay_decode(video_decoder_t *vd, media_buf_t *mb)
 					mb->mb_font_context);
 
     if(vo != NULL)
-      video_overlay_enqueue(vd, vo);
+      video_overlay_enqueue(mp, vo);
 
     free(str);
 
   } else {
       
     if(mc->decode) 
-      mc->decode(mc, vd, NULL, mb, 0);
+      mc->decode(mc, NULL, NULL, mb, 0);
 #if ENABLE_LIBAV
     else
-      video_subtitles_lavc(vd, mb, mc->codec_ctx);
+      video_subtitles_lavc(mp, mb, mc->codec_ctx);
 #endif
   }
 }
@@ -256,9 +257,9 @@ video_overlay_dup(video_overlay_t *src)
  *
  */
 void
-video_overlay_dequeue_destroy(video_decoder_t *vd, video_overlay_t *vo)
+video_overlay_dequeue_destroy(media_pipe_t *mp, video_overlay_t *vo)
 {
-  TAILQ_REMOVE(&vd->vd_overlay_queue, vo, vo_link);
+  TAILQ_REMOVE(&mp->mp_overlay_queue, vo, vo_link);
   video_overlay_destroy(vo);
 }
 
@@ -267,17 +268,17 @@ video_overlay_dequeue_destroy(video_decoder_t *vd, video_overlay_t *vo)
  *
  */
 void
-video_overlay_flush(video_decoder_t *vd, int send)
+video_overlay_flush(media_pipe_t *mp, int send)
 {
   video_overlay_t *vo;
 
-  while((vo = TAILQ_FIRST(&vd->vd_overlay_queue)) != NULL)
-    video_overlay_dequeue_destroy(vd, vo);
+  while((vo = TAILQ_FIRST(&mp->mp_overlay_queue)) != NULL)
+    video_overlay_dequeue_destroy(mp, vo);
 
   if(!send)
     return;
 
   vo = calloc(1, sizeof(video_overlay_t));
   vo->vo_type = VO_FLUSH;
-  video_overlay_enqueue(vd, vo);
+  video_overlay_enqueue(mp, vo);
 }

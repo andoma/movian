@@ -1,6 +1,6 @@
 language: Italian
 native: Italiano
-maintainer: Red Squirrel <iam@redsquirrel.tk>
+maintainer: Red Squirrel <iam@redsquirrel87.com>
 #
 # ./glwskins/default/cmdmenu.view
 #
@@ -96,6 +96,9 @@ msg: Impostazioni Audio
 
 id: Audio tracks
 msg: Tracce audio
+
+id: Chapters
+msg: Capitoli
 
 id: Seek by time
 msg: Salta per tempo
@@ -232,6 +235,9 @@ msg: Rimuovi
 id: Plugins
 msg: Plugins
 
+id: Search / Open URL
+msg: Cerca / Apri URL
+
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
@@ -332,8 +338,7 @@ msg: Traccia %d / %d
 # ./glwskins/default/pages/slideshow.view
 #
 id: Paused
-# Missing translation
-msg: 
+msg: In Pausa
 
 #
 # ./glwskins/default/pages/upgrade.view
@@ -399,13 +404,6 @@ id: Playback status
 msg: Stato di riproduzione
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -458,15 +456,6 @@ msg: Audio silenziato
 
 id: Master volume: %d dB
 msg: Volume principale: %d dB
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: Impostazioni per opensubtitles.org
-
-id: Use opensubtitles.org
-msg: Utilizza opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -666,11 +655,23 @@ msg: Accesso fallito
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: Data
+id: Artists
+msg: Artisti
+
+id: Date (newest first)
+msg: Data (dal piu' recente)
+
+id: Date (oldest first)
+msg: Data (dal piu' vecchio)
 
 id: Filename
 msg: Nome file
+
+id: Indexed mode
+msg: Modalità indicizzata
+
+id: Off
+msg: Disattiva
 
 id: Show only supported files
 msg: Mostra solo file supportati
@@ -686,12 +687,6 @@ msg: Ordina
 #
 id: Search using spotlight
 msg: Cerca usando spotlight
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: File esterno
 
 #
 # ./src/i18n.c
@@ -768,6 +763,12 @@ msg: Allineare sottotitoli su frame video
 id: Audio delay
 msg: Ritardo audio
 
+id: Stretch video to fullscreen
+msg: Adatta video a Schermo Pieno
+
+id: Stretch video to widescreen
+msg: Adatta video a widescreen
+
 id: Subtitle delay
 msg: Ritardo sottotitoli
 
@@ -776,6 +777,12 @@ msg: Dimensione dei sottotitoli
 
 id: Video zoom
 msg: Zoom video
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indicizzando
 
 #
 # ./src/metadata/metadata.c
@@ -816,6 +823,9 @@ msg: Sorgente metadata
 id: Movie
 msg: Film
 
+id: Movie title
+msg: Titolo del Film
+
 id: No data found
 msg: Nessun dato trovato
 
@@ -830,6 +840,9 @@ msg: Provider per Video
 
 id: Refresh metadata
 msg: Aggiorna metadata
+
+id: Title, Season, Episode
+msg: Titolo, Stagione, Episodio
 
 id: Track %d
 msg: Traccia %d
@@ -865,8 +878,7 @@ msg: Pulire tutti i metadata significa perdere <b>tutte</b> le informazioni rigu
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: Aggiungi e rimuovi oggetti sulla homepage
 
 id: Added new bookmark: %s
 msg: Aggiunto nuovo segnalibro: %s
@@ -914,19 +926,16 @@ id: Available plugins
 msg: Plugin disponibili
 
 id: Background
-# Missing translation
-msg: 
+msg: Sfondo
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Password di beta testing
 
 id: Browse available plugins
 msg: Sfoglia i plugin disponibili
 
 id: Browsing
-# Missing translation
-msg: 
+msg: Sfogliando
 
 id: Cloud services
 msg: Servizi Cloud
@@ -935,8 +944,7 @@ id: Corrupt plugin bundle
 msg: Bundle di plugin corrotto
 
 id: Default
-# Missing translation
-msg: 
+msg: Default
 
 id: Disk write error
 msg: Errore di scrittura su disco
@@ -948,30 +956,25 @@ id: File open error
 msg: Errore d'apertura del file
 
 id: Home page
-# Missing translation
-msg: 
+msg: Pagina Iniziale
 
 id: Installed plugins
 msg: Plugin installati
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: La versione installata è più recente di quella disponibile
 
 id: Installing
 msg: Installazione
 
 id: List of albums
-# Missing translation
-msg: 
+msg: Elenco degli album
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: Schermata di caricamento
 
 id: Movies
-# Missing translation
-msg: 
+msg: Film
 
 id: Music streaming
 msg: Streaming di musica
@@ -989,16 +992,13 @@ id: Online TV
 msg: TV online
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: Visualizzazioni preferite dai plugin
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: Salvaschermo
 
 id: TV channels
-# Missing translation
-msg: 
+msg: Canali TV
 
 id: Unable to load plugin.json: %s
 msg: Impossibile caricare plugin.json: %s
@@ -1067,8 +1067,7 @@ id: Discovered media sources
 msg: Sorgenti media trovate
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: Stile dell'interfaccia e caratteri
 
 id: General
 msg: Generale
@@ -1077,8 +1076,7 @@ id: Global settings
 msg: Impostazioni globali
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: Aspetto e comportamento
 
 id: Settings useful for developers
 msg: Impostazioni utili per sviluppatori
@@ -1087,10 +1085,34 @@ id: System related settings
 msg: Impostazioni relative al sistema
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: File esterno
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: Default
+
+id: Fonts
+msg: Caratteri
+
+id: Installed fonts
+msg: Caratteri installati
+
 id: Narrow text
 msg: Narrow text
+
+id: Reset main font to default
+msg: Ripristina carattere principale di default
+
+id: Reset narrow font to default
+msg: Ripristina carattere stretto di default
+
+id: Reset subtitle font to default
+msg: Ripristina carattere sottotitoli di default
 
 id: Unable to load %s -- %s
 msg: Impossibile caricare %s -- %s
@@ -1257,9 +1279,6 @@ msg: Risoluzione massima per il deinterlacciatore
 id: No limit
 msg: Nessun limite
 
-id: Off
-msg: Disattiva
-
 id: Outline color
 msg: Colore contorni
 
@@ -1280,12 +1299,6 @@ msg: Colore ombra
 
 id: Shadow offset
 msg: Offset ombra
-
-id: Stretch video to fullscreen
-msg: Adatta video a Schermo Pieno
-
-id: Stretch video to widescreen
-msg: Adatta video a widescreen
 
 id: Subtitle position
 msg: Posizione sottotitoli

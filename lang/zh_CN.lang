@@ -97,6 +97,9 @@ msg: 音频设置
 id: Audio tracks
 msg: 音轨
 
+id: Chapters
+msg: 章节
+
 id: Seek by time
 msg: 按时间跳转
 
@@ -231,6 +234,9 @@ msg: 删除
 
 id: Plugins
 msg: 插件
+
+id: Search / Open URL
+msg: 查找/打开URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
@@ -401,8 +407,7 @@ msg: 播放信息
 # ./glwskins/default/pages/wideinfo/video.view
 #
 id: Seen:
-# Missing translation
-msg: 
+msg: 看过
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -457,15 +462,6 @@ msg: 已静音
 
 id: Master volume: %d dB
 msg: 主音量: %d dB
-
-#
-# ./src/api/opensubtitles.c
-#
-id: Settings for opensubtitles.org
-msg: opensubtitles.org设置
-
-id: Use opensubtitles.org
-msg: 使用opensubtitles.org
 
 #
 # ./src/api/tmdb.c
@@ -665,11 +661,23 @@ msg: 登录失败
 #
 # ./src/fileaccess/fa_scanner.c
 #
-id: Date
-msg: 日期
+id: Artists
+msg: 歌手
+
+id: Date (newest first)
+msg: 日期（新的优先）
+
+id: Date (oldest first)
+msg: 日期（老的优先）
 
 id: Filename
 msg: 文件名
+
+id: Indexed mode
+msg: 索引方式
+
+id: Off
+msg: 关闭
 
 id: Show only supported files
 msg: 只显示支持的文件
@@ -685,12 +693,6 @@ msg: 排序
 #
 id: Search using spotlight
 msg: 使用spotlight搜索
-
-#
-# ./src/fileaccess/fa_video.c
-#
-id: External file
-msg: 外部文件
 
 #
 # ./src/i18n.c
@@ -767,6 +769,12 @@ msg: 字幕显示在视频帧内
 id: Audio delay
 msg: 音频延迟
 
+id: Stretch video to fullscreen
+msg: 拉升视频至全屏
+
+id: Stretch video to widescreen
+msg: 拉伸视频至宽屏
+
 id: Subtitle delay
 msg: 字幕延迟
 
@@ -775,6 +783,12 @@ msg: 字幕缩放
 
 id: Video zoom
 msg: 视频缩放
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: 正在索引
 
 #
 # ./src/metadata/metadata.c
@@ -815,6 +829,9 @@ msg: 元信息源
 id: Movie
 msg: 影片
 
+id: Movie title
+msg: 片名
+
 id: No data found
 msg: 未找到数据
 
@@ -829,6 +846,9 @@ msg: 视频源
 
 id: Refresh metadata
 msg: 更新元信息
+
+id: Title, Season, Episode
+msg: 片名，季，集
 
 id: Track %d
 msg: 轨道%d
@@ -864,8 +884,7 @@ msg: 清除所有元信息意味着你将清除掉<b>所有</b>以下数据：\n
 # ./src/navigator.c
 #
 id: Add and remove items on homepage
-# Missing translation
-msg: 
+msg: 在首页添加或删除图标
 
 id: Added new bookmark: %s
 msg: 添加新书签：%s
@@ -913,19 +932,16 @@ id: Available plugins
 msg: 可用插件
 
 id: Background
-# Missing translation
-msg: 
+msg: 背景
 
 id: Beta testing passwords
-# Missing translation
-msg: 
+msg: Beta测试用密码
 
 id: Browse available plugins
 msg: 浏览可用插件
 
 id: Browsing
-# Missing translation
-msg: 
+msg: 浏览
 
 id: Cloud services
 msg: 云服务
@@ -934,8 +950,7 @@ id: Corrupt plugin bundle
 msg: 损坏的插件包
 
 id: Default
-# Missing translation
-msg: 
+msg: 默认
 
 id: Disk write error
 msg: 磁盘写入错误
@@ -947,30 +962,25 @@ id: File open error
 msg: 打开文件错误
 
 id: Home page
-# Missing translation
-msg: 
+msg: 首页
 
 id: Installed plugins
 msg: 已安装插件
 
 id: Installed version higher than available
-# Missing translation
-msg: 
+msg: 安装版本比可用版本高
 
 id: Installing
 msg: 正在安装
 
 id: List of albums
-# Missing translation
-msg: 
+msg: 专辑列表
 
 id: Loading screen
-# Missing translation
-msg: 
+msg: 载入屏幕显示
 
 id: Movies
-# Missing translation
-msg: 
+msg: 电影
 
 id: Music streaming
 msg: 音乐流
@@ -988,16 +998,13 @@ id: Online TV
 msg: 在线电视
 
 id: Preferred views from plugins
-# Missing translation
-msg: 
+msg: 插件默认视图
 
 id: Screen saver
-# Missing translation
-msg: 
+msg: 屏幕保护
 
 id: TV channels
-# Missing translation
-msg: 
+msg: 电视频道
 
 id: Unable to load plugin.json: %s
 msg: 无法载入plugin.json: %s
@@ -1066,8 +1073,7 @@ id: Discovered media sources
 msg: 已检测到的媒体资源
 
 id: Fonts and user interface styling
-# Missing translation
-msg: 
+msg: 字体和用户界面类型
 
 id: General
 msg: 常规
@@ -1076,8 +1082,7 @@ id: Global settings
 msg: 全局设置
 
 id: Look and feel
-# Missing translation
-msg: 
+msg: 外观
 
 id: Settings useful for developers
 msg: 供开发者使用的设置
@@ -1086,10 +1091,34 @@ id: System related settings
 msg: 系统相关设置
 
 #
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: 外部文件
+
+#
 # ./src/text/fontstash.c
 #
+id: Defaults
+msg: 默认
+
+id: Fonts
+msg: 字体
+
+id: Installed fonts
+msg: 已安装字体
+
 id: Narrow text
-msg: 缩窄文字
+msg: 窄体字
+
+id: Reset main font to default
+msg: 重置主字体
+
+id: Reset narrow font to default
+msg: 重置窄字体
+
+id: Reset subtitle font to default
+msg: 重置字幕字体
 
 id: Unable to load %s -- %s
 msg: 无法载入%s -- %s
@@ -1256,9 +1285,6 @@ msg: 去隔行化使用最大可能的分辨率
 id: No limit
 msg: 无限制
 
-id: Off
-msg: 关闭
-
 id: Outline color
 msg: 边框颜色
 
@@ -1279,12 +1305,6 @@ msg: 阴影颜色
 
 id: Shadow offset
 msg: 阴影偏移
-
-id: Stretch video to fullscreen
-msg: 拉升视频至全屏
-
-id: Stretch video to widescreen
-msg: 拉伸视频至宽屏
 
 id: Subtitle position
 msg: 字幕位置

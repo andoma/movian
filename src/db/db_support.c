@@ -232,7 +232,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
     return -1;
   }
 
-  TAILQ_FOREACH(fde, &fd->fd_entries, fde_link) {
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
     if(fde->fde_type != CONTENT_FILE || strchr(rstr_get(fde->fde_filename), '~'))
       continue;
     tgtver = MAX(tgtver, atoi(rstr_get(fde->fde_filename)));
@@ -457,6 +457,26 @@ db_posint(sqlite3_stmt *stmt, int col)
   if(sqlite3_column_type(stmt, col) == SQLITE_INTEGER)
     return sqlite3_column_int(stmt, col);
   return -1;
+}
+
+
+/**
+ *
+ */
+void
+db_escape_path_query(char *dst, size_t dstlen, const char *src)
+{
+  for(; *src && dstlen > 3; dstlen--) {
+    if(*src == '%' || *src == '_') {
+      *dst++ = '\\';
+      *dst++ = *src++;
+      dstlen--;
+    } else {
+      *dst++ = *src++;
+    }
+  }
+  *dst++ = '%';
+  *dst = 0;
 }
 
 

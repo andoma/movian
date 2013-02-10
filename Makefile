@@ -80,6 +80,8 @@ SRCS-${CONFIG_EMU_THREAD_SPECIFICS} += src/arch/emu_thread_specifics.c
 BUNDLES += resources/metadb
 BUNDLES += resources/kvstore
 
+SRCS-$(CONFIG_WEBPOPUP) += src/ui/webpopup.c
+
 ##############################################################
 # Misc support
 ##############################################################
@@ -88,6 +90,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/rstr.c \
 	src/misc/pixmap.c \
 	src/misc/svg.c \
+	src/misc/rasterizer_ft.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/str.c \
@@ -105,8 +108,9 @@ SRCS-${CONFIG_TREX} += ext/trex/trex.c
 ##############################################################
 # Sqlite3
 ##############################################################
-SRCS += ext/sqlite/sqlite3.c \
-	src/db/db_support.c \
+SRCS-${CONFIG_SQLITE_INTERNAL} += ext/sqlite/sqlite3.c
+
+SRCS += src/db/db_support.c \
 	src/db/kvstore.c \
 
 
@@ -152,6 +156,7 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_nativesmb.c \
 	src/fileaccess/fa_buffer.c \
 	src/fileaccess/fa_imageloader.c \
+	src/fileaccess/fa_indexer.c \
 
 SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_probe.c \
@@ -187,7 +192,6 @@ BUNDLES += resources/fileaccess
 ##############################################################
 SRCS += 		src/api/xmlrpc.c \
 			src/api/soap.c \
-			src/api/opensubtitles.c \
 			src/api/lastfm.c \
 			src/api/tmdb.c \
 			src/api/tvdb.c \
@@ -217,16 +221,21 @@ SRCS-$(CONFIG_HTTPSERVER) += \
 ##############################################################
 SRCS += src/video/video_playback.c \
 	src/video/video_decoder.c \
-	src/video/video_overlay.c \
-	src/video/sub_ass.c \
-	src/video/ext_subtitles.c \
 	src/video/video_settings.c \
-	src/video/video_dvdspu.c \
-	src/video/vobsub.c \
 
 SRCS-$(CONFIG_VDPAU)    += src/video/vdpau.c
 SRCS-$(CONFIG_PS3_VDEC) += src/video/ps3_vdec.c
 SRCS-$(CONFIG_VDA)      += src/video/vda.c
+
+##############################################################
+# Subtitles
+##############################################################
+SRCS += src/subtitles/sub_ass.c \
+	src/subtitles/ext_subtitles.c \
+	src/subtitles/dvdspu.c \
+	src/subtitles/vobsub.c \
+	src/subtitles/sub_scanner.c \
+	src/subtitles/video_overlay.c \
 
 ##############################################################
 # Text rendering
@@ -412,17 +421,17 @@ SRCS-$(CONFIG_APPLEREMOTE) += \
 ##############################################################
 # RTMP
 ##############################################################
-SRCS-$(CONFIG_LIBRTMP) +=	ext/librtmp/amf.c \
-				ext/librtmp/hashswf.c \
-				ext/librtmp/log.c \
-				ext/librtmp/rtmp.c \
-				ext/librtmp/parseurl.c
+SRCS-$(CONFIG_LIBRTMP) +=	ext/rtmpdump/librtmp/amf.c \
+				ext/rtmpdump/librtmp/hashswf.c \
+				ext/rtmpdump/librtmp/log.c \
+				ext/rtmpdump/librtmp/rtmp.c \
+				ext/rtmpdump/librtmp/parseurl.c
 
-${BUILDDIR}/ext/librtmp/%.o : CFLAGS = ${OPTFLAGS}
+${BUILDDIR}/ext/rtmpdump/librtmp/%.o : CFLAGS = ${OPTFLAGS}
 
 SRCS-$(CONFIG_LIBRTMP)  +=      src/backend/rtmp/rtmp.c
 
-${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = ${OPTFLAGS} -Wall -Werror -Iext
+${BUILDDIR}/src/backend/rtmp/rtmp.o : CFLAGS = ${OPTFLAGS} -Wall -Werror -Iext/rtmpdump
 
 
 ##############################################################
@@ -502,6 +511,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
 			ext/spidermonkey/prmjtime.c	\
                         src/arch/nspr/nspr.c            \
                         src/js/js.c                     \
+                        src/js/js_htsmsg.c              \
                         src/js/js_page.c                \
                         src/js/js_io.c                  \
                         src/js/js_service.c             \
@@ -509,6 +519,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_prop.c                \
                         src/js/js_json.c                \
                         src/js/js_event.c               \
+                        src/js/js_metaprovider.c        \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr
@@ -688,11 +699,6 @@ $(BUILDDIR)/libav.stamp:
 $(BUILDDIR)/freetype.stamp:
 	${MAKE} -C ${FREETYPE_BUILD_DIR}
 	${MAKE} -C ${FREETYPE_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
-$(BUILDDIR)/zlib.stamp:
-	${MAKE} -C ${ZLIB_BUILD_DIR} install
 	@mkdir -p $(dir $@)
 	touch $@
 
