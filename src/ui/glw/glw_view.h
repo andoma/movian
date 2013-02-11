@@ -296,7 +296,7 @@ int glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec);
 
 int glw_view_preproc(glw_root_t *gr, token_t *p, errorinfo_t *ei);
 
-token_t *glw_view_clone_chain(glw_root_t *gr, token_t *src);
+token_t *glw_view_clone_chain(glw_root_t *gr, token_t *src, token_t **lp);
 
 void glw_view_cache_flush(glw_root_t *gr);
 

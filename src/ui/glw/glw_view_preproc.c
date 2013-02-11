@@ -26,7 +26,7 @@ TAILQ_HEAD(macro_arg_queue, macro_arg);
 typedef struct macro_arg {
   token_t *first, *last;
   rstr_t *rname;
-  token_t *def;
+  token_t *ma_def;
   TAILQ_ENTRY(macro_arg) link;
 } macro_arg_t;
 
@@ -60,8 +60,8 @@ macro_destroy(glw_root_t *gr, macro_t *m)
   while((ma = TAILQ_FIRST(&m->args)) != NULL) {
     TAILQ_REMOVE(&m->args, ma, link);
     rstr_release(ma->rname);
-    if(ma->def)
-      glw_view_token_free(gr, ma->def);
+    if(ma->ma_def)
+      glw_view_free_chain(gr, ma->ma_def);
     free(ma);
   }
 
@@ -236,10 +236,11 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      ma = a->tmp;
 	      e = ma->first;
 
-	      if(e == NULL && ma->def != NULL) {
-		b = glw_view_token_copy(gr, ma->def);
+	      if(e == NULL && ma->ma_def != NULL) {
+		token_t *last;
+		b = glw_view_clone_chain(gr, ma->ma_def, &last);
 		p->next = b;
-		p = b;
+		p = last;
 
 
 	      } else {
@@ -379,9 +380,25 @@ glw_view_preproc0(glw_root_t *gr, token_t *p, errorinfo_t *ei,
 	      consumetoken();
 	      
 
-	      ma->def = t;
-	      t = t->next;
-	      ma->def->next = NULL;
+	      ma->ma_def = t;
+	      int depth = 0;
+	      while(t->next->type != TOKEN_END) {
+		if(t->next->type == TOKEN_LEFT_PARENTHESIS)
+		  depth++;
+		if(t->next->type == TOKEN_RIGHT_PARENTHESIS) {
+		  if(depth == 0)
+		    break;
+		  depth--;
+		}
+		if(t->next->type == TOKEN_SEPARATOR) {
+		  break;
+		}
+		t = t->next;
+	      }
+
+	      token_t *x = t->next;
+	      t->next = NULL;
+	      t = x;
 
 	      defaultargs = 1;
 	    } else if(defaultargs) {

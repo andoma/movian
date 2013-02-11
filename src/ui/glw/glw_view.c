@@ -172,12 +172,12 @@ glw_view_create(glw_root_t *gr, rstr_t *url,
       gcv->gcv_sof = sof;
       gcv->gcv_url = rstr_dup(url);
       LIST_INSERT_HEAD(&gr->gr_views, gcv, gcv_link);
-      t = glw_view_clone_chain(gr, gcv->gcv_sof);
+      t = glw_view_clone_chain(gr, gcv->gcv_sof, NULL);
     } else {
       t = sof;
     }
   } else {
-    t = glw_view_clone_chain(gr, gcv->gcv_sof);
+    t = glw_view_clone_chain(gr, gcv->gcv_sof, NULL);
   }
 
 
