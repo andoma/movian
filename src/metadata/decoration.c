@@ -270,7 +270,7 @@ update_contents(deco_browse_t *db)
     db->db_current_contents = DB_CONTENTS_TV_SEASON;
 
     prop_set_string(db->db_prop_contents, "tvseason");
-    prop_nf_sort(db->db_pnf, "node.metadata.episode", 0, 1, NULL, 0);
+    prop_nf_sort(db->db_pnf, "node.metadata.episode.number", 0, 1, NULL, 0);
     prop_nf_sort(db->db_pnf, NULL, 0, 2, NULL, 0);
     return;
   }
