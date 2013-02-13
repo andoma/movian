@@ -173,29 +173,23 @@ typedef struct cached_image {
  *
  */
 struct pixmap *
-backend_imageloader(rstr_t *url0, const image_meta_t *im,
+backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 		    const char **vpaths, char *errbuf, size_t errlen,
 		    int *cache_control, be_load_cb_t *cb, void *opaque)
 {
   const char *url = rstr_get(url0);
   htsmsg_t *m = NULL;
 
-  if(im && (im->im_req_width < -1 || im->im_req_height < -1)) {
+  if(im0->im_req_width < -1 || im0->im_req_height < -1) {
     snprintf(errbuf, errlen, "Invalid dimensions");
     return NULL;
   }
 
-  if(!strncmp(url, "thumb://", 8)) {
-    image_meta_t im0;
+  image_meta_t im = *im0;
 
-    if(im != NULL) {
-      im0 = *im;
-    } else {
-      memset(&im0, 0, sizeof(im0));
-    }
-    url = url + 8;
-    im0.im_want_thumb = 1;
-    im = &im0;
+  if(!strncmp(url, "thumb://", 8)) {
+    url += 8;
+    im.im_want_thumb = 1;
   }
 
   if(!strncmp(url, "imageset:", 9)) {
@@ -223,18 +217,18 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
 
       if(best != NULL) {
 
-	if(im->im_req_width != -1) {
-	  if(w >= im->im_req_width &&
-	     (w < best_width || best_width < im->im_req_width))
+	if(im.im_req_width != -1) {
+	  if(w >= im.im_req_width &&
+	     (w < best_width || best_width < im.im_req_width))
 	    goto gotone;
-	  if(w < im->im_req_width && w > best_width)
+	  if(w < im.im_req_width && w > best_width)
 	    goto gotone;
 
-	} else if(im->im_req_height != -1) {
-	  if(h >= im->im_req_height &&
-	     (h < best_height || best_height < im->im_req_height))
+	} else if(im.im_req_height != -1) {
+	  if(h >= im.im_req_height &&
+	     (h < best_height || best_height < im.im_req_height))
 	    goto gotone;
-	  if(h < im->im_req_height && h > best_height)
+	  if(h < im.im_req_height && h > best_height)
 	    goto gotone;
 	} else {
 	  if(w > best_width)
@@ -258,22 +252,27 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im,
     url = best;
   }
 
+
+  im.im_margin = MAX(im.im_shadow * 2, im.im_margin);
   backend_t *nb = backend_canhandle(url);
   pixmap_t *pm = NULL;
   if(nb == NULL || nb->be_imageloader == NULL) {
     snprintf(errbuf, errlen, "No backend for URL");
   } else {
-    pm = nb->be_imageloader(url, im, vpaths, errbuf, errlen, cache_control,
+    pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control,
 			    cb, opaque);
-    if(pm != NULL && pm != NOT_MODIFIED && !im->im_no_decoding) {
-      pm = pixmap_decode(pm, im, errbuf, errlen);
+    if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
+      pm = pixmap_decode(pm, &im, errbuf, errlen);
 
       if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)
         pm = pixmap_rasterize_ft(pm);
 
-      if(pm != NULL && im->im_corner_radius)
-	pm = pixmap_rounded_corners(pm, im->im_corner_radius,
-				    im->im_corner_selection);
+      if(pm != NULL && im.im_shadow)
+        pixmap_drop_shadow(pm, im.im_shadow, im.im_shadow);
+
+      if(pm != NULL && im.im_corner_radius)
+	pm = pixmap_rounded_corners(pm, im.im_corner_radius,
+				    im.im_corner_selection);
 
     }
   }

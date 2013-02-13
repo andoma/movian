@@ -54,18 +54,19 @@ typedef enum {
  *
  */
 typedef struct image_meta {
-  int im_want_thumb;
   int im_req_width;
   int im_req_height;
   int im_max_width;
   int im_max_height;
-  char im_pot;
-  char im_can_mono;
-  char im_no_decoding;
-  char im_32bit_swizzle; // can do full 32bit swizzle in hardware
-  char im_no_rgb24;
+  char im_pot :1;
+  char im_can_mono:1;
+  char im_no_decoding:1;
+  char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
+  char im_no_rgb24:1;
+  char im_want_thumb:1;
   uint8_t im_corner_selection;
   uint16_t im_corner_radius;
+  uint16_t im_shadow;
   uint16_t im_margin;
 } image_meta_t;
 
@@ -165,6 +166,39 @@ void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
 #define PIXMAP_CORNER_BOTTOMRIGHT 0x8
 
 pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
+
+void pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh);
+
+/**
+ *
+ */
+static inline int 
+bytes_per_pixel(pixmap_type_t fmt)
+{
+  switch(fmt) {
+  case PIXMAP_BGR32:
+    return 4;
+
+  case PIXMAP_RGB24:
+    return 3;
+
+  case PIXMAP_IA:
+    return 2;
+    
+  case PIXMAP_I:
+    return 1;
+
+  default:
+    return 0;
+  }
+}
+
+static inline void *
+pm_pixel(pixmap_t *pm, unsigned int x, unsigned int y)
+{
+  return pm->pm_data + (y + pm->pm_margin) * pm->pm_linesize +
+    (x + pm->pm_margin) * bytes_per_pixel(pm->pm_type);
+}
 
 /**
  * Vector graphics

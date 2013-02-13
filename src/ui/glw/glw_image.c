@@ -81,6 +81,7 @@ typedef struct glw_image {
 
   int16_t gi_fixed_size;
   int16_t gi_radius;
+  int16_t gi_shadow;
 
   glw_renderer_t gi_gr;
 
@@ -295,20 +296,6 @@ glw_image_render(glw_t *w, const glw_rctx_t *rc)
       render_child_simple(w, &rc0);
 
     if(alpha_self > 0.01f) {
-
-      if(w->glw_flags2 & GLW2_SHADOW && !rc0.rc_inhibit_shadows) {
-	float xd =  6.0f / rc0.rc_width;
-	float yd = -6.0f / rc0.rc_height;
-
-	glw_Translatef(&rc0, xd, yd, 0.0f);
-	
-	static const glw_rgb_t black = {0,0,0};
-
-	glw_renderer_draw(&gi->gi_gr, w->glw_root, &rc0,
-			  &glt->glt_texture,
-			  &black, NULL, alpha_self * 0.75f, 1, NULL);
-	glw_Translatef(&rc0, -xd, -yd, 0.0f);
-      }
 
       if(gi->gi_bitmap_flags & GLW_IMAGE_ADDITIVE)
 	glw_blendmode(w->glw_root, GLW_BLEND_ADDITIVE);
@@ -583,10 +570,11 @@ glw_image_layout_normal(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
 			glw_loadable_texture_t *glt)
 {
   int m = glt->glt_margin;
-  float x1 = -1.0f + 2.0f * -m / (float)rc->rc_width;
-  float y1 = -1.0f + 2.0f * -m / (float)rc->rc_height;
-  float x2 =  1.0f + 2.0f *  m / (float)rc->rc_width;
-  float y2 =  1.0f + 2.0f *  m / (float)rc->rc_height;
+
+  float x1 = -1.0f + 2.0f * -m / (float)glt->glt_xs;
+  float y1 = -1.0f + 2.0f * -m / (float)glt->glt_ys;
+  float x2 =  1.0f + 2.0f *  m / (float)glt->glt_xs;
+  float y2 =  1.0f + 2.0f *  m / (float)glt->glt_ys;
 
   glw_renderer_vtx_pos(&gi->gi_gr, 0, x1, y1, 0.0);
   settexcoord(&gi->gi_gr, 0, 0, 1, gr, glt);
@@ -819,7 +807,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
 	gi->gi_pending = glw_tex_create(w->glw_root,
 					gi->gi_pending_url,
-					flags, xs, ys, gi->gi_radius);
+					flags, xs, ys, gi->gi_radius,
+                                        gi->gi_shadow);
 	  
 	rstr_release(gi->gi_pending_url);
 	gi->gi_pending_url = NULL;
@@ -932,10 +921,10 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
 
 	if(rc->rc_width < rc->rc_height) {
-	  rescale = abs(rc->rc_width - glt->glt_xs);
+	  rescale = abs(rc->rc_width - glt->glt_xs - glt->glt_margin * 2);
 	  xs = rc->rc_width;
 	} else {
-	  rescale = abs(rc->rc_height - glt->glt_ys);
+	  rescale = abs(rc->rc_height - glt->glt_ys - glt->glt_margin * 2);
 	  ys = rc->rc_height;
 	}
       } else {
@@ -957,7 +946,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	  flags |= GLW_TEX_REPEAT;
 	
 	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
-					flags, xs, ys, gi->gi_radius);
+					flags, xs, ys, gi->gi_radius,
+                                        gi->gi_shadow);
       }
     }
   } else {
@@ -1196,6 +1186,24 @@ mod_image_flags(glw_t *w, int set, int clr)
     gi->gi_mode = GI_MODE_BORDER_ONLY_SCALING;
   if(clr & GLW_IMAGE_BORDER_ONLY)
     gi->gi_mode = GI_MODE_BORDER_SCALING;
+}
+
+
+/**
+ *
+ */
+static void
+mod_flags2(glw_t *w, int set, int clr)
+{
+  glw_image_t *gi = (void *)w;
+  if((set | clr) & GLW2_SHADOW) {
+    if(set & GLW2_SHADOW)
+      gi->gi_shadow = 4;
+    else
+      gi->gi_shadow = 0;
+    
+    gi->gi_update = 1;
+  }
 }
 
 
@@ -1446,6 +1454,7 @@ static glw_class_t glw_image = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_image);
@@ -1473,6 +1482,7 @@ static glw_class_t glw_icon = {
   .gc_set_default_size = set_default_size,
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_icon);
@@ -1500,6 +1510,7 @@ static glw_class_t glw_backdrop = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_backdrop);
@@ -1528,6 +1539,7 @@ static glw_class_t glw_frontdrop = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_frontdrop);
@@ -1553,6 +1565,7 @@ static glw_class_t glw_repeatedimage = {
   .gc_set_alpha_self = set_alpha_self,
   .gc_get_identity = get_identity,
   .gc_set_fs = glw_image_set_fs,
+  .gc_mod_flags2 = mod_flags2,
 };
 
 GLW_REGISTER_CLASS(glw_repeatedimage);

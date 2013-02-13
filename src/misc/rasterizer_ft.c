@@ -171,7 +171,8 @@ rasterize_bgr32(const int yy, const int count, const FT_Span * const spans,
 
   if(y < 0 || y >= pm->pm_height)
     return;
-  d = pm->pm_data + pm->pm_linesize * y;
+
+  d = pm_pixel(pm, 0, y);
 
   for(s = 0; s < count; s++) {
     x = rp->left + spans[s].x;
@@ -250,7 +251,8 @@ rasterize_ia(const int yy, const int count, const FT_Span * const spans,
 
   if(y < 0 || y >= pm->pm_height)
     return;
-  d = pm->pm_data + pm->pm_linesize * y;
+
+  d = pm_pixel(pm, 0, y);
 
   for(s = 0; s < count; s++) {
     x = rp->left + spans[s].x;
@@ -387,7 +389,7 @@ pixmap_rasterize_ft(pixmap_t *src)
 
   dst = pixmap_create(src->pm_width, src->pm_height,
                       src->pm_flags & PIXMAP_COLORIZED ? PIXMAP_BGR32 : PIXMAP_IA,
-                      0);
+                      src->pm_margin);
 
   hts_mutex_lock(&ft_mutex);
 
