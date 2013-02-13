@@ -28,6 +28,7 @@
 #include "prop/prop_nodefilter.h"
 #include "upnp.h"
 #include "fileaccess/fileaccess.h"
+#include "db/kvstore.h"
 
 
 /**
@@ -64,7 +65,8 @@ typedef struct upnp_browse {
   int ub_loaded_entries;
   int ub_total_entries;
 
-  int ub_images;
+  prop_sub_t *ub_sortsub;
+  const char *ub_sortcriteria;
 
 } upnp_browse_t;
 
@@ -204,8 +206,7 @@ make_imageItem(prop_t *c, prop_t *m, htsmsg_t *item)
  */
 static void
 add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
-	 prop_sub_t *skip, const char *baseurl, upnp_browse_t *ub,
-	 void *db)
+	 prop_sub_t *skip, const char *baseurl, void *db)
 {
   const char *cls, *id, *url;
 
@@ -245,8 +246,6 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
     make_imageItem(c, m, item);
-    if(ub != NULL)
-      ub->ub_images++;
   } else {
     TRACE(TRACE_DEBUG, "UPNP", "Cant handle upnp:class %s (%s)", cls, url);
     prop_destroy(c);
@@ -302,8 +301,7 @@ add_container(htsmsg_t *item, prop_t *root, const char *baseurl,
  */
 static void
 nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
-		prop_t **trackptr, const char *baseurl, prop_sub_t *skip,
-		upnp_browse_t *ub)
+		prop_t **trackptr, const char *baseurl, prop_sub_t *skip)
 {
   htsmsg_t *items;
   htsmsg_field_t *f;
@@ -318,7 +316,7 @@ nodes_from_meta(htsmsg_t *meta, prop_t *root, const char *trackid,
     if(!strcmp(f->hmf_name, "item")) {
       htsmsg_t *item = htsmsg_get_map_by_field(f);
       if(item != NULL)
-	add_item(item, root, trackid, trackptr, skip, baseurl, ub, db);
+	add_item(item, root, trackid, trackptr, skip, baseurl, db);
     } else if(baseurl != NULL && !strcmp(f->hmf_name, "container")) {
       htsmsg_t *container = htsmsg_get_map_by_field(f);
       if(container != NULL)
@@ -381,7 +379,7 @@ upnp_browse_children(const char *uri, const char *id, prop_t *nodes,
     return -1;
   }
 
-  nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL, NULL);
+  nodes_from_meta(meta, nodes, trackid, trackptr, NULL, NULL);
   htsmsg_destroy(meta);
   htsmsg_destroy(out);
   return 0;
@@ -425,7 +423,7 @@ browse_items(upnp_browse_t *ub)
   htsmsg_add_str(in, "Filter", "*");
   htsmsg_add_u32(in, "StartingIndex", ub->ub_loaded_entries);
   htsmsg_add_u32(in, "RequestedCount", 500);
-  htsmsg_add_str(in, "SortCriteria", "");
+  htsmsg_add_str(in, "SortCriteria", ub->ub_sortcriteria);
 
   r = soap_exec(ub->ub_control_url, "ContentDirectory", 1, "Browse", in, &out,
 		errbuf, sizeof(errbuf));
@@ -453,18 +451,16 @@ browse_items(upnp_browse_t *ub)
 
   if((result = htsmsg_get_str(out, "Result")) == NULL)
     return browse_fail(ub, "No SOAP result");
+
   meta = htsmsg_xml_deserialize(strdup(result), errbuf, sizeof(errbuf));
   if(meta == NULL)
     return browse_fail(ub, "Malformed XML: %s", errbuf);
 
   nodes_from_meta(meta, ub->ub_items, NULL, NULL, 
-		  ub->ub_base_url, ub->ub_itemsub, ub);
+		  ub->ub_base_url, ub->ub_itemsub);
 
   TRACE(TRACE_DEBUG, "UPNP", "Browsed %d of %d items",
 	ub->ub_loaded_entries, ub->ub_total_entries);
-
-  if(ub->ub_images * 4 > ub->ub_loaded_entries * 3)
-    prop_set_string(ub->ub_contents, "images");
 
   htsmsg_destroy(meta);
   if(ub->ub_loaded_entries < ub->ub_total_entries)
@@ -601,6 +597,107 @@ upnp_browse_resolve(upnp_browse_t *ub)
 }
 
 
+
+/**
+ *
+ */
+static void
+set_sort_order(void *opaque, prop_event_t event, ...)
+{
+  upnp_browse_t *ub = opaque;
+  va_list ap;
+  prop_t *p;
+
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_SELECT_CHILD:
+    p = va_arg(ap, prop_t *);
+    rstr_t *r = prop_get_name(p);
+    const char *val = rstr_get(r);
+    if(val != NULL) {
+      if(!strcmp(val, "title"))
+	ub->ub_sortcriteria = "";
+      else if(!strcmp(val, "date"))
+	ub->ub_sortcriteria = "-dc:date";
+      else if(!strcmp(val, "dateold"))
+	ub->ub_sortcriteria = "+dc:date";
+    }
+    kv_url_opt_set(ub->ub_url, KVSTORE_DOMAIN_SYS, "sortorder", 
+		   KVSTORE_SET_STRING, val);
+    rstr_release(r);
+
+    printf("Sort criteria set to %s\n", ub->ub_sortcriteria);
+
+    ub->ub_loaded_entries = 0;
+    ub->ub_load_more = 1;
+    prop_destroy_childs(ub->ub_items);
+    break;
+
+  default:
+    break;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+add_sort_option_type(upnp_browse_t *ub, prop_t *model, prop_courier_t *pc)
+{
+  prop_t *parent = prop_create(model, "options");
+  prop_t *n = prop_create_root(NULL);
+  prop_t *m = prop_create(n, "metadata");
+  prop_t *options = prop_create(n, "options");
+
+  prop_set_string(prop_create(n, "type"), "multiopt");
+  prop_set_int(prop_create(n, "enabled"), 1);
+  prop_link(_p("Sort on"), prop_create(m, "title"));
+  
+
+  prop_t *on_title = prop_create_root("title");
+  prop_link(_p("Filename"), prop_create(on_title, "title"));
+  if(prop_set_parent(on_title, options))
+    abort();
+
+  prop_t *on_date = prop_create_root("date");
+  prop_link(_p("Date (newest first)"), prop_create(on_date, "title"));
+  if(prop_set_parent(on_date, options))
+    abort();
+
+  prop_t *on_dateold = prop_create_root("dateold");
+  prop_link(_p("Date (oldest first)"), prop_create(on_dateold, "title"));
+  if(prop_set_parent(on_dateold, options))
+    abort();
+
+  rstr_t *cur = kv_url_opt_get_rstr(ub->ub_url, KVSTORE_DOMAIN_SYS, 
+				    "sortorder");
+
+  if(cur != NULL && !strcmp(rstr_get(cur), "date")) {
+    prop_select(on_date);
+    ub->ub_sortcriteria = "-dc:date";
+  } else if(cur != NULL && !strcmp(rstr_get(cur), "dateold")) {
+    prop_select(on_date);
+    ub->ub_sortcriteria = "+dc:date";
+  } else {
+    prop_select(on_title);
+    ub->ub_sortcriteria = "";
+  }
+  rstr_release(cur);
+  ub->ub_sortsub = prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+				  PROP_TAG_CALLBACK, set_sort_order, ub,
+				  PROP_TAG_ROOT, options,
+				  PROP_TAG_COURIER, pc,
+				  NULL);
+  
+  if(prop_set_parent(n, parent))
+    prop_destroy(n);
+}
+
+
+
+
 /**
  *
  */
@@ -622,6 +719,8 @@ browse_directory(upnp_browse_t *ub, const char *title)
   prop_nf_release(pnf);
 
   pc = prop_courier_create_waitable();
+  add_sort_option_type(ub, ub->ub_model, pc);
+
   ub->ub_run = 1;
   ub->ub_itemsub = prop_subscribe(PROP_SUB_TRACK_DESTROY,
 				  PROP_TAG_CALLBACK, node_eventsub, ub,
@@ -643,8 +742,9 @@ browse_directory(upnp_browse_t *ub, const char *title)
   }
 
   prop_unsubscribe(ub->ub_itemsub);
-  prop_courier_destroy(pc);
+  prop_unsubscribe(ub->ub_sortsub);
 
+  prop_courier_destroy(pc);
 }
 
 
