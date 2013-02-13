@@ -41,7 +41,6 @@ typedef enum {
   PIXMAP_coded,
   PIXMAP_NULL,
   PIXMAP_BGR32,
-  PIXMAP_RGB24,
   PIXMAP_IA,
   PIXMAP_I,
 } pixmap_type_t;
@@ -62,7 +61,6 @@ typedef struct image_meta {
   char im_can_mono:1;
   char im_no_decoding:1;
   char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
-  char im_no_rgb24:1;
   char im_want_thumb:1;
   uint8_t im_corner_selection;
   uint16_t im_corner_radius;
@@ -178,9 +176,6 @@ bytes_per_pixel(pixmap_type_t fmt)
   switch(fmt) {
   case PIXMAP_BGR32:
     return 4;
-
-  case PIXMAP_RGB24:
-    return 3;
 
   case PIXMAP_IA:
     return 2;

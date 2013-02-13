@@ -98,9 +98,6 @@ typedef struct glw_backend_root {
 typedef struct glw_backend_texture {
   realityTexture tex;
   uint32_t size;
-  char type;
-#define GLW_TEXTURE_TYPE_NORMAL   0
-#define GLW_TEXTURE_TYPE_NO_ALPHA 1
 } glw_backend_texture_t;
 
 #define glw_tex_width(gbt) ((gbt)->tex.width)

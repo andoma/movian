@@ -439,7 +439,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
       h = im->im_req_height;
     }
 
-    pm = pixmap_create(w, h, PIXMAP_RGB24, 0);
+    pm = pixmap_create(w, h, PIXMAP_BGR32, 0);
 
     if(pm == NULL) {
       ifv_close();
@@ -449,7 +449,7 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
 
     struct SwsContext *sws;
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
-			 w, h, PIX_FMT_RGB24, SWS_BILINEAR, NULL, NULL, NULL);
+			 w, h, PIX_FMT_BGR32, SWS_BILINEAR, NULL, NULL, NULL);
     if(sws == NULL) {
       ifv_close();
       snprintf(errbuf, errlen, "Scaling failed");
