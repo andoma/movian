@@ -627,6 +627,7 @@ svg_decode1(htsmsg_t *doc, const image_meta_t *im,
   svg_mtx_scale(state.ctm, (float)w / orig_width, (float)h / orig_height);
 
   state.pm = pixmap_create_vector(w, h);
+  state.pm->pm_margin = im->im_margin;
   svg_parse_root(&state, tags);
   return state.pm;
 }

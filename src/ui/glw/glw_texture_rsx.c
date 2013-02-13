@@ -182,38 +182,6 @@ init_rgba(glw_root_t *gr, glw_backend_texture_t *tex,
  *
  */
 static void
-init_rgb(glw_root_t *gr, glw_backend_texture_t *tex,
-	 const uint8_t *src, int linesize,
-	 int width, int height, int repeat)
-{
-  int y, x;
-  uint32_t *dst = realloc_tex(gr, tex, width * height * 4);
-
-  for(y = 0; y < height; y++) {
-    const uint8_t *s = src;
-    for(x = 0; x < width; x++) {
-      uint8_t r = *s++;
-      uint8_t g = *s++;
-      uint8_t b = *s++;
-      *dst++ = 0xff000000 | (r << 16) | (g << 8) | b;
-    }
-    src += linesize;
-  }
-
-  init_tex(&tex->tex, tex->tex.offset, width, height, width * 4, 
-	   NV40_3D_TEX_FORMAT_FORMAT_A8R8G8B8, repeat,
-	   NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
-	   NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
-	   NV30_3D_TEX_SWIZZLE_S1_X_X | NV30_3D_TEX_SWIZZLE_S1_Y_Y |
-	   NV30_3D_TEX_SWIZZLE_S1_Z_Z | NV30_3D_TEX_SWIZZLE_S1_W_W
-	   );
-}
-
-
-/**
- *
- */
-static void
 init_i8a8(glw_root_t *gr, glw_backend_texture_t *tex,
 	  const uint8_t *src, int linesize,
 	  int width, int height, int repeat)
@@ -249,11 +217,6 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 	      pm->pm_width, pm->pm_height, repeat);
     break;
 
-  case PIXMAP_RGB24:
-    init_rgb(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
-	      pm->pm_width, pm->pm_height, repeat);
-    break;
-
   case PIXMAP_IA:
     init_i8a8(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
 	      pm->pm_width, pm->pm_height, repeat);
@@ -276,11 +239,6 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   case PIXMAP_IA:
     init_i8a8(gr, tex, pm->pm_data, pm->pm_linesize,
 	      pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
-    break;
-
-  case PIXMAP_RGB24:
-    init_rgb(gr, tex, pm->pm_data, pm->pm_linesize,
-	     pm->pm_width, pm->pm_height, flags & GLW_TEX_REPEAT);
     break;
 
   case PIXMAP_BGR32:

@@ -1073,7 +1073,8 @@ clone_eval(glw_clone_t *c)
 {
   sub_cloner_t *sc = c->c_sc;
   glw_view_eval_context_t n;
-  token_t *body = glw_view_clone_chain(c->c_w->glw_root, sc->sc_cloner_body);
+  token_t *body = glw_view_clone_chain(c->c_w->glw_root, sc->sc_cloner_body,
+				       NULL);
   const glw_class_t *gc = c->c_w->glw_class;
 
   if(gc->gc_freeze != NULL)
@@ -2687,7 +2688,7 @@ glwf_cloner(glw_view_eval_context_t *ec, struct token *self,
 
     cloner_cleanup(ec->gr, sc);
 
-    sc->sc_cloner_body = glw_view_clone_chain(ec->gr, c);
+    sc->sc_cloner_body = glw_view_clone_chain(ec->gr, c, NULL);
     sc->sc_cloner_class = cl;
 
     /* Create pending childs */
@@ -2777,7 +2778,7 @@ glw_event_map_eval_block_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   n.sublist = &l;
   n.event = src;
 
-  body = glw_view_clone_chain(n.gr, b->block);
+  body = glw_view_clone_chain(n.gr, b->block, NULL);
   glw_view_eval_block(body, &n);
   glw_prop_subscription_destroy_list(w->glw_root, &l);
   glw_view_free_chain(n.gr, body);
@@ -2822,7 +2823,7 @@ glw_event_map_eval_block_create(glw_view_eval_context_t *ec,
 {
   glw_event_map_eval_block_t *b = malloc(sizeof(glw_event_map_eval_block_t));
 
-  b->block = glw_view_clone_chain(ec->gr, block);
+  b->block = glw_view_clone_chain(ec->gr, block, NULL);
 
   b->prop        = prop_ref_inc(ec->prop);
   b->prop_parent = prop_ref_inc(ec->prop_parent);

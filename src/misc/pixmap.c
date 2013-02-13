@@ -35,6 +35,9 @@
 #include <libavutil/common.h>
 #endif
 
+//#define DIV255(x) ((x) / 255)
+//#define DIV255(x) ((x) >> 8)
+#define DIV255(x) (((((x)+255)>>8)+(x))>>8)
 
 /**
  *
@@ -49,38 +52,7 @@ color_is_not_gray(uint32_t rgb)
 }
 
 
-/**
- *
- */
-static int 
-bytes_per_pixel(pixmap_type_t fmt)
-{
-  switch(fmt) {
-  case PIXMAP_BGR32:
-    return 4;
 
-  case PIXMAP_RGB24:
-    return 3;
-
-  case PIXMAP_IA:
-    return 2;
-    
-  case PIXMAP_I:
-    return 1;
-
-  default:
-    return 0;
-  }
-}
-
-
-
-static void *
-pm_pixel(pixmap_t *pm, unsigned int x, unsigned int y)
-{
-  return pm->pm_data + (y + pm->pm_margin) * pm->pm_linesize +
-    (x + pm->pm_margin) * bytes_per_pixel(pm->pm_type);
-}
 
 /**
  *
@@ -294,43 +266,6 @@ pixmap_release(pixmap_t *pm)
  *
  */
 static void
-horizontal_gradient_rgb24(pixmap_t *pm, const int *top, const int *bottom)
-{
-  int y;
-  const int h = pm->pm_height - pm->pm_margin * 2;
-  const int w = pm->pm_width - pm->pm_margin * 2;
-  unsigned int X=123456789, Y=362436069, Z=521288629, T;
-
-  for(y = 0; y < h; y++) {
-    uint8_t *d = pm_pixel(pm, 0, y);
-
-    int r = 255 * top[0] + (255 * (bottom[0] - top[0]) * y / h);
-    int g = 255 * top[1] + (255 * (bottom[1] - top[1]) * y / h);
-    int b = 255 * top[2] + (255 * (bottom[2] - top[2]) * y / h);
-    int x;
-    for(x = 0; x < w; x++) {
-      // Marsaglia's xorshf generator
-      X ^= X << 16;
-      X ^= X >> 5;
-      X ^= X << 1;
-      
-      T = X;
-      X = Y;
-      Y = Z;
-      Z = T ^ X ^ Y;
-      *d++ = (r + (Z & 0xff)) >> 8;
-      *d++ = (g + (Z & 0xff)) >> 8;
-      *d++ = (b + (Z & 0xff)) >> 8;
-    }
-  }
-}
-
-
-
-/**
- *
- */
-static void
 horizontal_gradient_bgr32(pixmap_t *pm, const int *top, const int *bottom)
 {
   int y;
@@ -373,9 +308,6 @@ void
 pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *bottom)
 {
   switch(pm->pm_type) {
-  case PIXMAP_RGB24:
-    horizontal_gradient_rgb24(pm, top, bottom);
-    break;
   case PIXMAP_BGR32:
     horizontal_gradient_bgr32(pm, top, bottom);
     break;
@@ -388,46 +320,15 @@ pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *bottom)
 /**
  *
  */
-static pixmap_t *
-rgb24_to_bgr32(pixmap_t *src)
-{
-  pixmap_t *dst = pixmap_create(src->pm_width, src->pm_height, PIXMAP_BGR32,
-				src->pm_margin);
-  int y;
-  
-  for(y = 0; y < src->pm_height; y++) {
-    const uint8_t *s = src->pm_pixels + y * src->pm_linesize;
-    uint32_t *d = (uint32_t *)(dst->pm_pixels + y * dst->pm_linesize);
-    int x;
-    for(x = 0; x < src->pm_width; x++) {
-      *d++ = 0xff000000 | s[2] << 16 | s[1] << 8 | s[0]; 
-      s+= 3;
-    }
-  }
-  return dst;
-}
-
-
-
-/**
- *
- */
 pixmap_t *
 pixmap_rounded_corners(pixmap_t *pm, int r, int which)
 {
-  pixmap_t *tmp;
   switch(pm->pm_type) {
 
   default:
     return pm;
 
   case PIXMAP_BGR32:
-    break;
-
-  case PIXMAP_RGB24:
-    tmp = rgb24_to_bgr32(pm);
-    pixmap_release(pm);
-    pm = tmp;
     break;
   }
 
@@ -588,9 +489,6 @@ composite_GRAY8_on_BGR32(uint8_t *dst_, const uint8_t *src,
 
 #else
 
-//#define DIV255(x) ((x) / 255)
-//#define DIV255(x) ((x) >> 8)
-#define DIV255(x) (((((x)+255)>>8)+(x))>>8)
 
 
 static void
@@ -875,6 +773,240 @@ pixmap_box_blur(pixmap_t *pm, int boxw, int boxh)
 }
 
 
+
+/**
+ *
+ */
+static uint32_t
+mix_bgr32(uint32_t src, uint32_t dst)
+{
+  int SR =  src        & 0xff;
+  int SG = (src >> 8)  & 0xff;
+  int SB = (src >> 16) & 0xff;
+  int SA = (src >> 24) & 0xff;
+  
+  int DR =  dst        & 0xff;
+  int DG = (dst >> 8)  & 0xff;
+  int DB = (dst >> 16) & 0xff;
+  int DA = (dst >> 24) & 0xff;
+  
+  int FA = SA + DIV255((255 - SA) * DA);
+
+  if(FA == 0) {
+    dst = 0;
+  } else {
+    if(FA != 255)
+      SA = SA * 255 / FA;
+    
+    DA = 255 - SA;
+    
+    DB = DIV255(SB * SA + DB * DA);
+    DG = DIV255(SG * SA + DG * DA);
+    DR = DIV255(SR * SA + DR * DA);
+    
+    dst = FA << 24 | DB << 16 | DG << 8 | DR;
+  }
+  return dst;
+}
+
+
+
+/**
+ *
+ */
+static void
+drop_shadow_rgba(uint8_t *D, const uint32_t *a, const uint32_t *b,
+                 int width, int boxw, int m)
+{
+  uint32_t *d = (uint32_t *)D;
+
+  int x;
+  unsigned int v;
+  int s;
+  for(x = 0; x < boxw; x++) {
+    const int x1 = MIN(x + boxw, width - 1);
+    const int x2 = 0;
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+
+    *d = mix_bgr32(*d, s << 24);
+    d++;
+  }
+
+  for(; x < width - boxw; x++) {
+    const int x1 = (x + boxw);
+    const int x2 = (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+    *d = mix_bgr32(*d, s << 24);
+    d++;
+  }
+
+  for(; x < width; x++) {
+    const int x1 = (width - 1);
+    const int x2 = (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+    *d = mix_bgr32(*d, s << 24);
+    d++;
+  }
+}
+
+
+/**
+ *
+ */
+static void
+mix_ia(uint8_t *src, uint8_t *dst, int DR, int DA)
+{
+  int SR = src[0];
+  int SA = src[1];
+  
+  //  int DR = dst[0];
+  //  int DA = dst[1];
+  
+  int FA = SA + DIV255((255 - SA) * DA);
+
+  if(FA == 0) {
+    dst[0] = 0;
+    dst[1] = 0;
+  } else {
+    if(FA != 255)
+      SA = SA * 255 / FA;
+    
+    DA = 255 - SA;
+    
+    DR = DIV255(SR * SA + DR * DA);
+    dst[0] = DR;
+    dst[1] = FA;
+  }
+}
+
+/**
+ *
+ */
+static void
+drop_shadow_ia(uint8_t *d, const uint32_t *a, const uint32_t *b,
+               int width, int boxw, int m)
+{
+
+  int x;
+  unsigned int v;
+  int s;
+  for(x = 0; x < boxw; x++) {
+    const int x1 = 2 * MIN(x + boxw, width - 1);
+    const int x2 = 0;
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+
+    mix_ia(d, d, 0, s);
+    d+=2;
+  }
+
+  for(; x < width - boxw; x++) {
+    const int x1 = 2 * (x + boxw);
+    const int x2 = 2 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+    mix_ia(d, d, 0, s);
+    d+=2;
+  }
+
+  for(; x < width; x++) {
+    const int x1 = 2 * (width - 1);
+    const int x2 = 2 * (x - boxw);
+
+    v = b[x1 + 0] + a[x2 + 0] - b[x2 + 0] - a[x1 + 0];
+    s = (v * m) >> 16;
+    mix_ia(d, d, 0, s);
+    d+=2;
+  }
+}
+
+
+/**
+ *
+ */
+void
+pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
+{
+  const uint8_t *s;
+  unsigned int *tmp, *t;
+  int ach;   // Alpha channel
+  int z;
+  int w = pm->pm_width;
+  int h = pm->pm_height;
+  int ls = pm->pm_linesize;
+  int x, y;
+
+  assert(boxw > 0);
+  assert(boxh > 0);
+
+  boxw = MIN(boxw, w);
+
+  void (*fn)(uint8_t *dst, const uint32_t *a, const uint32_t *b, int width,
+	     int boxw, int m);
+
+  switch(pm->pm_type) {
+  case PIXMAP_BGR32:
+    ach = 3;
+    z = 4;
+    fn = drop_shadow_rgba;
+    break;
+
+  case PIXMAP_IA:
+    ach = 1;
+    z = 2;
+    fn = drop_shadow_ia;
+    break;
+
+  default:
+    return;
+  }
+
+  tmp = malloc(pm->pm_width * pm->pm_height * sizeof(unsigned int));
+  if(tmp == NULL)
+    return;
+
+  s = pm->pm_data + ach;
+  t = tmp;
+
+  for(y = 0; y < boxh; y++)
+    for(x = 0; x < w; x++)
+      *t++ = 0;
+    
+  for(; y < h; y++) {
+
+    s = pm->pm_data + (y - boxh) * ls + ach;
+    for(x = 0; x < boxw; x++)
+      *t++ = 0;
+    
+    for(; x < w; x++) {
+      t[0] = *s + t[-1] + t[-w] - t[-w - 1];
+      s += z;
+      t++;
+    }
+  }
+  
+  int m = 65536 / ((boxw * 2 + 1) * (boxh * 2 + 1));
+
+  for(y = 0; y < h; y++) {
+    uint8_t *d = pm->pm_data + y * ls;
+
+    const unsigned int *a = tmp + pm->pm_width * MAX(0, y - boxh);
+    const unsigned int *b = tmp + pm->pm_width * MIN(h - 1, y + boxh);
+    fn(d, a, b, w, boxw, m);
+  }
+  free(tmp);
+}
+
+
+
 #if ENABLE_LIBAV
 
 /**
@@ -896,7 +1028,7 @@ static pixmap_t *
 pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
 		       int src_w, int src_h,
 		       int dst_w, int dst_h,
-		       int with_alpha, int margin)
+		       int margin)
 {
   AVPicture pic;
   int dst_pix_fmt;
@@ -905,25 +1037,7 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   int strides[4];
   pixmap_t *pm;
 
-  switch(src_pix_fmt) {
-  case PIX_FMT_Y400A:
-  case PIX_FMT_BGRA:
-  case PIX_FMT_RGBA:
-  case PIX_FMT_ABGR:
-  case PIX_FMT_ARGB:
-#ifdef __PPC__
-    return NULL;
-#endif
-    dst_pix_fmt = PIX_FMT_BGR32;
-    break;
-
-  default:
-    if(with_alpha)
-      dst_pix_fmt = PIX_FMT_BGR32;
-    else
-      dst_pix_fmt = PIX_FMT_RGB24;
-    break;
-  }
+  dst_pix_fmt = PIX_FMT_BGR32;
 
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       dst_w, dst_h, dst_pix_fmt,
@@ -941,16 +1055,7 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-  switch(dst_pix_fmt) {
-  case PIX_FMT_RGB24:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, margin);
-    break;
-
-  default:
-    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
-    break;
-  }
-
+  pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
   if(pm == NULL) {
     sws_freeContext(sws);
     return NULL;
@@ -1050,13 +1155,6 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     need_format_conv = 1;
     break;
 
-  case PIX_FMT_RGB24:
-    if(im->im_no_rgb24 || im->im_corner_radius)
-      need_format_conv = 1;
-    else
-      fmt = PIXMAP_RGB24;
-    break;
-
   case PIX_FMT_BGR32:
     fmt = PIXMAP_BGR32;
     break;
@@ -1143,16 +1241,15 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 
 
   if(must_rescale || want_rescale || need_format_conv) {
-    int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
 
     pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
-				want_alpha, im->im_margin);
+                                im->im_margin);
     if(pm != NULL)
       return pm;
 
     if(need_format_conv) {
       pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h,
-				  want_alpha, im->im_margin);
+                                  im->im_margin);
       if(pm != NULL)
 	return pm;
 
@@ -1244,9 +1341,8 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     snprintf(errbuf, errlen, "No codec for image format");
     return NULL;
   }
-  ctx = avcodec_alloc_context3(NULL);
-  ctx->codec_id   = codec->id;
-  ctx->codec_type = codec->type;
+
+  ctx = avcodec_alloc_context3(codec);
   ctx->lowres = lowres;
 
   if(avcodec_open2(ctx, codec, NULL) < 0) {
@@ -1262,7 +1358,6 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   av_init_packet(&avpkt);
   avpkt.data = pm->pm_data;
   avpkt.size = pm->pm_size;
-
   int r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(r < 0 || ctx->width == 0 || ctx->height == 0) {
@@ -1270,7 +1365,8 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     avcodec_close(ctx);
     av_free(ctx);
     av_free(frame);
-    snprintf(errbuf, errlen, "Unable to decode image");
+    snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
+             ctx->width, ctx->height);
     return NULL;
   }
 #if 0
