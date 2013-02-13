@@ -1,0 +1,4 @@
+Make sure metadata scanner stops when we leave a directory
+
+Also fix possible crashes related to those occations
+Fixes #1601
