@@ -434,7 +434,7 @@ htsmsg_xml_parse_pi(xmlparser_t *xp, htsmsg_t *parent, char *src)
   }
 
   l = src - s;
-  if(l < 1 || l > 65536) {
+  if(l < 1 || l > 1024) {
     xmlerr(xp, "Invalid 'Processing instructions' name");
     return NULL;
   }
@@ -516,7 +516,7 @@ decode_label_reference(xmlparser_t *xp,
   }
 
   l = src - s;
-  if(l < 1 || l > 65535)
+  if(l < 1 || l > 1024)
     return NULL;
   label = alloca(l + 1);
   memcpy(label, s, l);
