@@ -1859,6 +1859,10 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   pv = prop_vec_append(pv, mlv->mlv_info);
 
+  // We're gonna start binding stuff now which ties us in
+  // global data structures, so we need to lock
+
+  hts_mutex_lock(&metadata_mutex);
 
   // Metadata source selection
 
@@ -1981,6 +1985,8 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   prop_vec_release(pv);
 
   prop_ref_dec(options);
+
+  hts_mutex_unlock(&metadata_mutex);
 
   return mlv;
 }
@@ -2670,6 +2676,12 @@ mlp_dispatch(void)
     TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
     mlp->mlp_queued = 0;
     mlp->mlp_class->mlc_load(mlp);
+
+    // This is so lame.
+    // mlc_load should be able to be called unlocked
+    hts_mutex_unlock(&metadata_mutex);
+    usleep(1);
+    hts_mutex_lock(&metadata_mutex);
   }
 }
 
