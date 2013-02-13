@@ -47,7 +47,7 @@ static const uint8_t svgsig1[5] = {'<', '?', 'x', 'm', 'l'};
 static const uint8_t svgsig2[4] = {'<', 's', 'v', 'g'};
 
 #if ENABLE_LIBAV
-static hts_mutex_t image_from_video_mutex;
+static hts_mutex_t image_from_video_mutex[2];
 static AVCodecContext *thumbctx;
 static AVCodec *thumbcodec;
 
@@ -64,7 +64,8 @@ void
 fa_imageloader_init(void)
 {
 #if ENABLE_LIBAV
-  hts_mutex_init(&image_from_video_mutex);
+  hts_mutex_init(&image_from_video_mutex[0]);
+  hts_mutex_init(&image_from_video_mutex[1]);
   thumbcodec = avcodec_find_encoder(CODEC_ID_MJPEG);
 #endif
 }
@@ -569,19 +570,19 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   *tim++ = 0;
   int secs = atoi(tim);
 
-  hts_mutex_lock(&image_from_video_mutex);
+  hts_mutex_lock(&image_from_video_mutex[0]);
   
   if(strcmp(url, stated_url ?: "")) {
     free(stated_url);
     stated_url = NULL;
     if(fa_stat(url, &fs, errbuf, errlen)) {
-      hts_mutex_unlock(&image_from_video_mutex);
+      hts_mutex_unlock(&image_from_video_mutex[0]);
       return NULL;
     }
     stated_url = strdup(url);
   }
   stattime = fs.fs_mtime;
-  hts_mutex_unlock(&image_from_video_mutex);
+  hts_mutex_unlock(&image_from_video_mutex[0]);
 
   if(im->im_req_width < 100 && im->im_req_height < 100) {
     siz = "min";
@@ -606,10 +607,10 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
     return NULL;
   }
 
-  hts_mutex_lock(&image_from_video_mutex);
+  hts_mutex_lock(&image_from_video_mutex[1]);
   pm = fa_image_from_video2(url, im, cacheid, errbuf, errlen,
 			    secs, stattime, cb, opaque);
-  hts_mutex_unlock(&image_from_video_mutex);
+  hts_mutex_unlock(&image_from_video_mutex[1]);
   return pm;
 }
 #endif
