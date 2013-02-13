@@ -1341,9 +1341,8 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     snprintf(errbuf, errlen, "No codec for image format");
     return NULL;
   }
-  ctx = avcodec_alloc_context3(NULL);
-  ctx->codec_id   = codec->id;
-  ctx->codec_type = codec->type;
+
+  ctx = avcodec_alloc_context3(codec);
   ctx->lowres = lowres;
 
   if(avcodec_open2(ctx, codec, NULL) < 0) {
@@ -1359,7 +1358,6 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   av_init_packet(&avpkt);
   avpkt.data = pm->pm_data;
   avpkt.size = pm->pm_size;
-
   int r = avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(r < 0 || ctx->width == 0 || ctx->height == 0) {
@@ -1367,7 +1365,8 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     avcodec_close(ctx);
     av_free(ctx);
     av_free(frame);
-    snprintf(errbuf, errlen, "Unable to decode image");
+    snprintf(errbuf, errlen, "Unable to decode image of size (%d x %d)",
+             ctx->width, ctx->height);
     return NULL;
   }
 #if 0
