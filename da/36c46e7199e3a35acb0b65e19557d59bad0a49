@@ -1,0 +1,3 @@
+Fix recent regression causing vertical lines in images on PS3
+
+Fixes #1617
