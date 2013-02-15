@@ -99,7 +99,6 @@ typedef struct vdec_decoder {
   uint8_t *extradata;
   int extradata_injected;
 
-  int convert_to_annexb;
 
   struct vdec_pic_list pictures;
 
@@ -119,6 +118,11 @@ typedef struct vdec_decoder {
 
   pktmeta_t pktmeta[64];
   int pktmeta_cur;
+  int lsize;
+
+  uint8_t *tmpbuf;
+  int tmpbufsize;
+
 
 } vdec_decoder_t;
 
@@ -535,10 +539,12 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
  *
  */
 static void
-h264_to_annexb(uint8_t *b, size_t fsize)
+h264_to_annexb_inplace(uint8_t *b, size_t fsize)
 {
   uint8_t *p = b;
   while(p < b + fsize) {
+    if(p[0])
+      break; // Avoid overflows with this simple check
     int len = (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
     p[0] = 0;
     p[1] = 0;
@@ -547,6 +553,37 @@ h264_to_annexb(uint8_t *b, size_t fsize)
     p += len + 4;
   }
 }
+
+
+/**
+ *
+ */
+static int
+h264_to_annexb(uint8_t *dst, uint8_t *b, size_t fsize, int lsize)
+{
+  uint8_t *p = b;
+  int i;
+  int ol = 0;
+  while(p < b + fsize) {
+
+    int len = 0;
+    for(i = 0; i < lsize; i++)
+      len = len << 8 | *p++;
+
+    if(dst) {
+      dst[0] = 0;
+      dst[1] = 0;
+      dst[2] = 0;
+      dst[3] = 1;
+      memcpy(dst + 4, p, len);
+      dst += 4 + len;
+    }
+    ol += 4 + len;
+    p += len;
+  }
+  return ol;
+}
+
 
 
 /**
@@ -651,10 +688,28 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
     vdd->extradata_injected = 1;
   }
 
-  if(vdd->convert_to_annexb)
-    h264_to_annexb(mb->mb_data, mb->mb_size);
-  
-  submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, vd);
+  int l;
+
+  switch(vdd->lsize) {
+  case 4:
+    h264_to_annexb_inplace(mb->mb_data, mb->mb_size);
+  case 0:
+    submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, vd);
+    break;
+  case 3:
+  case 2:
+  case 1:
+    l = h264_to_annexb(NULL, mb->mb_data, mb->mb_size, vdd->lsize);
+    if(l > vdd->tmpbufsize) {
+      vdd->tmpbuf = realloc(vdd->tmpbuf, l);
+      vdd->tmpbufsize = l;
+    }
+    if(vdd->tmpbuf == NULL)
+      return;
+    h264_to_annexb(vdd->tmpbuf, mb->mb_data, mb->mb_size, vdd->lsize);
+    submit_au(vdd, &au, vdd->tmpbuf, l, mb->mb_skip == 1, vd);
+    break;
+  }
   vd->vd_do_flush = 0;
 }
 
@@ -679,6 +734,7 @@ decoder_close(struct media_codec *mc)
 
   prop_ref_dec(vdd->metainfo);
   free(vdd->extradata);
+  free(vdd->tmpbuf);
   free(vdd);
   TRACE(TRACE_DEBUG, "VDEC", "Cell decoder closed");
 }
@@ -705,9 +761,11 @@ h264_load_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
 
   uint8_t buf[4] = {0,0,0,1};
 
-  if(len < 7)
+  if(len < 7 || data[0] != 1)
     return;
-  if(data[0] != 1)
+
+  int lsize = (data[4] & 0x3) + 1;
+  if(lsize == 3)
     return;
 
   n = data[5] & 0x1f;
@@ -740,7 +798,8 @@ h264_load_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
     data += s;
     len -= s;
   }
-  vdd->convert_to_annexb = 1;
+
+  vdd->lsize = lsize;
 }
 
 
