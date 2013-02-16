@@ -33,6 +33,7 @@
 #include <libswscale/swscale.h>
 #include <libavutil/mem.h>
 #include <libavutil/common.h>
+#include <libavutil/pixdesc.h>
 #endif
 
 //#define DIV255(x) ((x) / 255)
@@ -1039,9 +1040,17 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
 
   dst_pix_fmt = PIX_FMT_BGR32;
 
+  const int swscale_debug = 0;
+
+  if(swscale_debug)
+    TRACE(TRACE_DEBUG, "info", "Converting %d x %d [%s] to %d x %d [%s]",
+	  src_w, src_h, av_get_pix_fmt_name(src_pix_fmt),
+	  dst_w, dst_h, av_get_pix_fmt_name(dst_pix_fmt));
+  
   sws = sws_getContext(src_w, src_h, src_pix_fmt, 
 		       dst_w, dst_h, dst_pix_fmt,
-		       SWS_LANCZOS, NULL, NULL, NULL);
+		       SWS_LANCZOS | 
+		       (swscale_debug ? SWS_PRINT_INFO : 0), NULL, NULL, NULL);
   if(sws == NULL)
     return NULL;
 
@@ -1139,12 +1148,11 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 		  int req_w0, int req_h0,
 		  const image_meta_t *im)
 {
-  int x, y, i;
+  int i;
   int need_format_conv = 0;
   int want_rescale = 0; // Want rescaling cause it looks better
   int must_rescale = 0; // Must rescale cause we cant display it otherwise
-  uint32_t *palette, *u32p;
-  uint8_t *map;
+  uint32_t *palette;
   pixmap_type_t fmt = 0;
   pixmap_t *pm;
 
@@ -1178,46 +1186,15 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     break;
 
   case PIX_FMT_PAL8:
-    /* FFmpeg can not convert palette alpha values so we need to
-       do this ourselfs */
-    
-    /* It seems that some png implementation leavs the color set even
-       if alpha is set to zero. This resluts in ugly aliasing effects
-       when scaling image in opengl, so if alpha == 0, clear RGB */
-
-    map = pict->data[1];
-    for(i = 0; i < 4*256; i+=4) {
-      if(map[i + 3] == 0) {
-	map[i + 0] = 0;
-	map[i + 1] = 0;
-	map[i + 2] = 0;
-      }
-    }
-
-    map = pict->data[0];
     palette = (uint32_t *)pict->data[1];
 
-    AVPicture pict2;
-    
-    memset(&pict2, 0, sizeof(pict2));
-    
-    pict2.data[0] = av_malloc(src_w * src_h * 4);
-    pict2.linesize[0] = src_w * 4;
-
-    u32p = (void *)pict2.data[0];
-
-    for(y = 0; y < src_h; y++) {
-      for(x = 0; x < src_w; x++) {
-	*u32p++ = palette[map[x]];
-      }
-      map += pict->linesize[0];
+    for(i = 0; i < 256; i++) {
+      if((palette[i] >> 24) == 0)
+	palette[i] = 0;
     }
 
-    pm = pixmap_from_avpic(&pict2, PIX_FMT_BGRA, 
-			   src_w, src_h, req_w0, req_h0, im);
-
-    av_free(pict2.data[0]);
-    return pm;
+    need_format_conv = 1;
+    break;
   }
 
   int req_w = req_w0, req_h = req_h0;
