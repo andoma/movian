@@ -267,6 +267,43 @@ pixmap_release(pixmap_t *pm)
  *
  */
 static void
+horizontal_gradient_rgb24(pixmap_t *pm, const int *top, const int *bottom)
+{
+  int y;
+  const int h = pm->pm_height - pm->pm_margin * 2;
+  const int w = pm->pm_width - pm->pm_margin * 2;
+  unsigned int X=123456789, Y=362436069, Z=521288629, T;
+
+  for(y = 0; y < h; y++) {
+    uint8_t *d = pm_pixel(pm, 0, y);
+
+    int r = 255 * top[0] + (255 * (bottom[0] - top[0]) * y / h);
+    int g = 255 * top[1] + (255 * (bottom[1] - top[1]) * y / h);
+    int b = 255 * top[2] + (255 * (bottom[2] - top[2]) * y / h);
+    int x;
+    for(x = 0; x < w; x++) {
+      // Marsaglia's xorshf generator
+      X ^= X << 16;
+      X ^= X >> 5;
+      X ^= X << 1;
+      
+      T = X;
+      X = Y;
+      Y = Z;
+      Z = T ^ X ^ Y;
+      *d++ = (r + (Z & 0xff)) >> 8;
+      *d++ = (g + (Z & 0xff)) >> 8;
+      *d++ = (b + (Z & 0xff)) >> 8;
+    }
+  }
+}
+
+
+
+/**
+ *
+ */
+static void
 horizontal_gradient_bgr32(pixmap_t *pm, const int *top, const int *bottom)
 {
   int y;
@@ -309,6 +346,9 @@ void
 pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *bottom)
 {
   switch(pm->pm_type) {
+  case PIXMAP_RGB24:
+    horizontal_gradient_rgb24(pm, top, bottom);
+    break;
   case PIXMAP_BGR32:
     horizontal_gradient_bgr32(pm, top, bottom);
     break;
@@ -321,15 +361,46 @@ pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *bottom)
 /**
  *
  */
+static pixmap_t *
+rgb24_to_bgr32(pixmap_t *src)
+{
+  pixmap_t *dst = pixmap_create(src->pm_width, src->pm_height, PIXMAP_BGR32,
+				src->pm_margin);
+  int y;
+  
+  for(y = 0; y < src->pm_height; y++) {
+    const uint8_t *s = src->pm_pixels + y * src->pm_linesize;
+    uint32_t *d = (uint32_t *)(dst->pm_pixels + y * dst->pm_linesize);
+    int x;
+    for(x = 0; x < src->pm_width; x++) {
+      *d++ = 0xff000000 | s[2] << 16 | s[1] << 8 | s[0]; 
+      s+= 3;
+    }
+  }
+  return dst;
+}
+
+
+
+/**
+ *
+ */
 pixmap_t *
 pixmap_rounded_corners(pixmap_t *pm, int r, int which)
 {
+  pixmap_t *tmp;
   switch(pm->pm_type) {
 
   default:
     return pm;
 
   case PIXMAP_BGR32:
+    break;
+
+  case PIXMAP_RGB24:
+    tmp = rgb24_to_bgr32(pm);
+    pixmap_release(pm);
+    pm = tmp;
     break;
   }
 
@@ -1029,7 +1100,7 @@ static pixmap_t *
 pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt, 
 		       int src_w, int src_h,
 		       int dst_w, int dst_h,
-		       int margin)
+		       int with_alpha, int margin)
 {
   AVPicture pic;
   int dst_pix_fmt;
@@ -1038,7 +1109,25 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   int strides[4];
   pixmap_t *pm;
 
-  dst_pix_fmt = PIX_FMT_BGR32;
+  switch(src_pix_fmt) {
+  case PIX_FMT_Y400A:
+  case PIX_FMT_BGRA:
+  case PIX_FMT_RGBA:
+  case PIX_FMT_ABGR:
+  case PIX_FMT_ARGB:
+#ifdef __PPC__
+    return NULL;
+#endif
+    dst_pix_fmt = PIX_FMT_BGR32;
+    break;
+
+  default:
+    if(with_alpha)
+      dst_pix_fmt = PIX_FMT_BGR32;
+    else
+      dst_pix_fmt = PIX_FMT_RGB24;
+    break;
+  }
 
   const int swscale_debug = 0;
 
@@ -1064,7 +1153,16 @@ pixmap_rescale_swscale(const AVPicture *pict, int src_pix_fmt,
   strides[2] = pict->linesize[2];
   strides[3] = pict->linesize[3];
 
-  pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
+  switch(dst_pix_fmt) {
+  case PIX_FMT_RGB24:
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_RGB24, margin);
+    break;
+
+  default:
+    pm = pixmap_create(dst_w, dst_h, PIXMAP_BGR32, margin);
+    break;
+  }
+
   if(pm == NULL) {
     sws_freeContext(sws);
     return NULL;
@@ -1163,6 +1261,13 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
     need_format_conv = 1;
     break;
 
+  case PIX_FMT_RGB24:
+    if(im->im_no_rgb24 || im->im_corner_radius)
+      need_format_conv = 1;
+    else
+      fmt = PIXMAP_RGB24;
+    break;
+
   case PIX_FMT_BGR32:
     fmt = PIXMAP_BGR32;
     break;
@@ -1218,15 +1323,16 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 
 
   if(must_rescale || want_rescale || need_format_conv) {
+    int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
 
     pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
-                                im->im_margin);
+				want_alpha, im->im_margin);
     if(pm != NULL)
       return pm;
 
     if(need_format_conv) {
       pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, src_w, src_h,
-                                  im->im_margin);
+				  want_alpha, im->im_margin);
       if(pm != NULL)
 	return pm;
 

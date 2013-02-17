@@ -69,6 +69,16 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   glBindTexture(m, glt->glt_texture.tex);
 
 
+  switch(glt->glt_format) {
+  case GL_RGB:
+    glt->glt_texture.type = GLW_TEXTURE_TYPE_NO_ALPHA;
+    break;
+
+  default:
+    glt->glt_texture.type = GLW_TEXTURE_TYPE_NORMAL;
+    break;
+  }
+
   glt->glt_texture.width  = glt->glt_xs;
   glt->glt_texture.height = glt->glt_ys;
 
@@ -117,6 +127,13 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
   switch(pm->pm_type) {
   default:
     return 1;
+
+  case PIXMAP_RGB24:
+    glt->glt_format = GL_RGB;
+    glt->glt_ext_format = GL_RGB;
+    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    break;
+
 
   case PIXMAP_BGR32:
     glt->glt_format = GL_RGBA;
@@ -174,10 +191,17 @@ glw_tex_upload(glw_root_t *gr, glw_backend_texture_t *tex,
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
     format     = GL_RGBA;
+    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
+    break;
+
+  case PIXMAP_RGB24:
+    format     = GL_RGB;
+    tex->type  = GLW_TEXTURE_TYPE_NO_ALPHA;
     break;
 
   case PIXMAP_IA:
     format     = GL_LUMINANCE_ALPHA;
+    tex->type  = GLW_TEXTURE_TYPE_NORMAL;
     break;
 
   default:

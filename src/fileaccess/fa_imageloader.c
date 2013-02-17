@@ -516,7 +516,6 @@ fa_image_from_video2(const char *url, const image_meta_t *im,
     sws = sws_getContext(ifv_ctx->width, ifv_ctx->height, ifv_ctx->pix_fmt,
 			 w, h, AV_PIX_FMT_BGR32, SWS_BILINEAR,
                          NULL, NULL, NULL);
-
     if(sws == NULL) {
       ifv_close();
       snprintf(errbuf, errlen, "Scaling failed");
