@@ -51,7 +51,8 @@ glw_opengl_init_context(glw_root_t *gr)
   glw_backend_root_t *gbr = &gr->gr_be;
 
   glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+		      GL_ONE, GL_ONE);
   glEnable(GL_CULL_FACE);
   gbr->gbr_frontface = GLW_CCW;
 
@@ -65,7 +66,7 @@ glw_opengl_init_context(glw_root_t *gr)
 
   const char *vendor   = (const char *)glGetString(GL_VENDOR);
   const char *renderer = (const char *)glGetString(GL_RENDERER);
-  TRACE(TRACE_INFO, "GLW", "OpenGL Renderer: '%s' by '%s'", renderer, vendor);
+  TRACE(TRACE_INFO, "GLW", "OpenGLES Renderer: '%s' by '%s'", renderer, vendor);
 
   return glw_opengl_shaders_init(gr, 1);
 }

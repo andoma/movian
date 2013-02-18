@@ -128,7 +128,8 @@ render_unlocked(glw_root_t *gr)
   int64_t ts = showtime_get_ts();
 
   int current_blendmode = GLW_BLEND_NORMAL;
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+		      GL_ONE, GL_ONE);
 
   int program_switches = 0;
 
@@ -188,20 +189,23 @@ render_unlocked(glw_root_t *gr)
       current_blendmode = rj->blendmode;
       switch(current_blendmode) {
       case GLW_BLEND_NORMAL:
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+			    GL_ONE, GL_ONE);
+
 	break;
 	
       case GLW_BLEND_ADDITIVE:
-	glBlendFunc(GL_SRC_COLOR, GL_ONE);
+	glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE, GL_ONE, GL_ONE);
 	break;
       }
     }
       
     glDrawArrays(GL_TRIANGLES, rj->vertex_offset, rj->num_vertices);
   }
-  if(current_blendmode != GLW_BLEND_NORMAL) 
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
+  if(current_blendmode != GLW_BLEND_NORMAL) {
+    glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE,
+			GL_ONE, GL_ONE);
+  }
   ts = showtime_get_ts() - ts;
   static int hold;
   

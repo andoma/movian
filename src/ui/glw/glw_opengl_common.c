@@ -51,11 +51,12 @@ glw_blendmode(struct glw_root *gr, int mode)
 
   switch(mode) {
   case GLW_BLEND_NORMAL:
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA,
+			GL_ONE, GL_ONE);
     break;
 
   case GLW_BLEND_ADDITIVE:
-    glBlendFunc(GL_SRC_COLOR, GL_ONE);
+    glBlendFuncSeparate(GL_SRC_COLOR, GL_ONE, GL_ONE, GL_ONE);
     break;
   }
 }
