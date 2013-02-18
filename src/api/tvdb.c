@@ -24,11 +24,25 @@
 #include "htsmsg/htsmsg_xml.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/dbl.h"
+#include "settings.h"
 
 static metadata_source_t *tvdb;
 static char tvdb_language[3];
 
 #define TVDB_APIKEY "0ADF8BA762FED295"
+
+
+/**
+ *
+ */
+static void
+update_cfgid(void)
+{
+  if(!strcmp(tvdb_language, "en"))
+    tvdb->ms_cfgid = 0; // For legacy reasons
+  else
+    tvdb->ms_cfgid = tvdb_language[0] | (tvdb_language[1] << 8);
+}
 
 
 static htsmsg_t *
@@ -297,7 +311,8 @@ tvdb_find_series(void *db, const char *id, int qtype,
   if(series_vid > 0)
     return series_vid;
 
-  htsmsg_t *ser = loadxml("%s/series/%s/en.xml", TVDB_APIKEY, id);
+  htsmsg_t *ser = loadxml("%s/series/%s/%s.xml", TVDB_APIKEY, id,
+			  tvdb_language);
   if(ser == NULL)
     return METADATA_TEMPORARY_ERROR;
 
@@ -389,8 +404,9 @@ tvdb_query_by_episode(void *db, const char *item_url,
   // Get episode
 
   
-  htsmsg_t *epi = loadxml("%s/series/%s/default/%d/%d/en.xml",
-			  TVDB_APIKEY, series_id, season, episode);
+  htsmsg_t *epi = loadxml("%s/series/%s/default/%d/%d/%s.xml",
+			  TVDB_APIKEY, series_id, season, episode,
+			  tvdb_language);
   if(epi == NULL)
     return METADATA_TEMPORARY_ERROR;
 
@@ -481,6 +497,18 @@ static const metadata_source_funcs_t fns = {
 };
 
 
+/**
+ *
+ */
+static void
+set_lang(void *opaque, const char *str)
+{
+  if(strlen(str) != 2)
+    str = NULL;
+  snprintf(tvdb_language, sizeof(tvdb_language), "%s", str ?: "en");
+  update_cfgid();
+}
+
 
 /**
  *
@@ -507,6 +535,18 @@ tvdb_init(void)
 			     1 << METADATA_PROP_CREW |
 			     1 << METADATA_PROP_BACKDROP
 			     );
+
+  if(tvdb == NULL)
+    return;
+
+  htsmsg_t *store = htsmsg_store_load("tvdb") ?: htsmsg_create_map();
+
+  settings_create_string(tvdb->ms_settings, "language",
+			 _p("Language (ISO 639-1 code)"),
+			 NULL, store, set_lang, NULL,
+			 SETTINGS_INITIAL_UPDATE, NULL,
+			 settings_generic_save_settings, 
+			 (void *)"tvdb");
 }
 
 INITME(INIT_GROUP_API, tvdb_init);
