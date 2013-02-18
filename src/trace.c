@@ -88,6 +88,8 @@ tracev(int flags, int level, const char *subsys, const char *fmt, va_list ap)
   l = strlen(buf2);
 
   while((s = strsep(&p, "\n")) != NULL) {
+    if(!*s)
+      continue; // Avoid empty lines
     if(level <= gconf.trace_level)
       trace_arch(level, buf2, s);
     if(!(flags & TRACE_NO_PROP) && level != TRACE_EMERG) {
