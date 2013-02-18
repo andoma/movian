@@ -15,9 +15,18 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/ioctl.h>
+#include <linux/fb.h>
+#include <linux/kd.h>
+
 #include <assert.h>
 
 #include <bcm_host.h>
+#include <OMX_Core.h>
 
 #include <EGL/egl.h>
 #include <GLES2/gl2.h>
@@ -55,102 +64,130 @@ showtime_get_avtime(void)
 static void
 egl_init(void)
 {
-   int32_t success = 0;
-   EGLBoolean result;
-   EGLint num_config;
+  int32_t success = 0;
+  EGLBoolean result;
+  EGLint num_config;
 
-   static EGL_DISPMANX_WINDOW_T nativewindow;
+  EGL_DISPMANX_WINDOW_T nw;
 
-   DISPMANX_ELEMENT_HANDLE_T dispman_element;
-   DISPMANX_DISPLAY_HANDLE_T dispman_display;
-   DISPMANX_UPDATE_HANDLE_T dispman_update;
-   VC_RECT_T dst_rect;
-   VC_RECT_T src_rect;
+  DISPMANX_ELEMENT_HANDLE_T de;
+  DISPMANX_DISPLAY_HANDLE_T dd;
+  DISPMANX_UPDATE_HANDLE_T u;
+  VC_RECT_T dst_rect;
+  VC_RECT_T src_rect;
 
-   static const EGLint attribute_list[] =
-   {
+  static const EGLint attribute_list[] =
+    {
       EGL_RED_SIZE, 8,
       EGL_GREEN_SIZE, 8,
       EGL_BLUE_SIZE, 8,
       EGL_ALPHA_SIZE, 8,
       EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
       EGL_NONE
-   };
+    };
    
-   static const EGLint context_attributes[] = 
-   {
+  static const EGLint context_attributes[] = 
+    {
       EGL_CONTEXT_CLIENT_VERSION, 2,
       EGL_NONE
-   };
-   EGLConfig config;
+    };
 
-   // get an EGL display connection
-   display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-   assert(display!=EGL_NO_DISPLAY);
-   check();
 
-   // initialize the EGL display connection
-   result = eglInitialize(display, NULL, NULL);
-   assert(EGL_FALSE != result);
-   check();
+  EGLConfig config;
 
-   // get an appropriate EGL frame buffer configuration
-   result = eglChooseConfig(display, attribute_list, &config, 1, &num_config);
-   assert(EGL_FALSE != result);
-   check();
+  // get an EGL display connection
+  display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+  assert(display != EGL_NO_DISPLAY);
+  check();
 
-   // get an appropriate EGL frame buffer configuration
-   result = eglBindAPI(EGL_OPENGL_ES_API);
-   assert(EGL_FALSE != result);
-   check();
+  // initialize the EGL display connection
+  result = eglInitialize(display, NULL, NULL);
+  assert(result != EGL_FALSE);
+  check();
 
-   // create an EGL rendering context
-   context = eglCreateContext(display, config, EGL_NO_CONTEXT, context_attributes);
-   assert(context!=EGL_NO_CONTEXT);
-   check();
+  // get an appropriate EGL frame buffer configuration
+  result = eglChooseConfig(display, attribute_list, &config, 1, &num_config);
+  assert(result != EGL_FALSE);
+  check();
 
-   // create an EGL window surface
-   success = graphics_get_display_size(0 /* LCD */, &screen_width, &screen_height);
-   assert( success >= 0 );
+  // get an appropriate EGL frame buffer configuration
+  result = eglBindAPI(EGL_OPENGL_ES_API);
+  assert(result != EGL_FALSE);
+  check();
 
-   dst_rect.x = 0;
-   dst_rect.y = 0;
-   dst_rect.width = screen_width;
-   dst_rect.height = screen_height;
+  // create an EGL rendering context
+  context = eglCreateContext(display, config, EGL_NO_CONTEXT,
+			     context_attributes);
+  assert(context != EGL_NO_CONTEXT);
+  check();
+
+  // create an EGL window surface
+  success = graphics_get_display_size(0, &screen_width, &screen_height);
+  assert(success >= 0);
+
+  dd = vc_dispmanx_display_open(0);
+  u = vc_dispmanx_update_start(0);
+
+  DISPMANX_RESOURCE_HANDLE_T r;
+  uint32_t ip;
+
+  int rw = 32;
+  int rh = 32;
+
+  r = vc_dispmanx_resource_create(VC_IMAGE_RGB565, rw, rh, &ip);
+  
+  void *zero = calloc(1, rw * rh * 2);
+
+  VC_RECT_T rect;
+  vc_dispmanx_rect_set(&rect, 0, 0, rw, rh);
+
+  vc_dispmanx_resource_write_data(r, VC_IMAGE_RGB565, rw * 2, zero, &rect);
+
+  free(zero);
+
+  dst_rect.x = 0;
+  dst_rect.y = 0;
+  dst_rect.width = screen_width;
+  dst_rect.height = screen_height;
+
+  src_rect.x = 0;
+  src_rect.y = 0;
+  src_rect.width = rw << 16;
+  src_rect.height = rh << 16;        
+  vc_dispmanx_element_add(u, dd, 0, &dst_rect, r,
+			  &src_rect, DISPMANX_PROTECTION_NONE,
+			  NULL, NULL, 0);
+
+  dst_rect.x = 0;
+  dst_rect.y = 0;
+  dst_rect.width = screen_width;
+  dst_rect.height = screen_height;
+
+  src_rect.x = 0;
+  src_rect.y = 0;
+  src_rect.width = screen_width << 16;
+  src_rect.height = screen_height << 16;        
+
+  de = vc_dispmanx_element_add(u, dd, 10, &dst_rect, 0,
+			       &src_rect, DISPMANX_PROTECTION_NONE,
+			       NULL, NULL, 0);
+
+  memset(&nw, 0, sizeof(nw));
+  nw.element = de;
+  nw.width = screen_width;
+  nw.height = screen_height;
+  vc_dispmanx_update_submit_sync(u);
       
-   src_rect.x = 0;
-   src_rect.y = 0;
-   src_rect.width = screen_width << 16;
-   src_rect.height = screen_height << 16;        
+  check();
 
-   dispman_display = vc_dispmanx_display_open( 0 /* LCD */);
-   dispman_update = vc_dispmanx_update_start( 0 );
-         
-   dispman_element = vc_dispmanx_element_add ( dispman_update, dispman_display,
-      0/*layer*/, &dst_rect, 0/*src*/,
-      &src_rect, DISPMANX_PROTECTION_NONE, 0 /*alpha*/, 0/*clamp*/, 0/*transform*/);
-      
-   nativewindow.element = dispman_element;
-   nativewindow.width = screen_width;
-   nativewindow.height = screen_height;
-   vc_dispmanx_update_submit_sync( dispman_update );
-      
-   check();
+  surface = eglCreateWindowSurface(display, config, &nw, NULL);
+  assert(surface != EGL_NO_SURFACE);
+  check();
 
-   surface = eglCreateWindowSurface( display, config, &nativewindow, NULL );
-   assert(surface != EGL_NO_SURFACE);
-   check();
-
-   // connect the context to the surface
-   result = eglMakeCurrent(display, surface, surface, context);
-   assert(EGL_FALSE != result);
-   check();
-
-   // Set background color and clear buffers
-   glClearColor(0.15f, 0.25f, 0.35f, 1.0f);
-   glClear( GL_COLOR_BUFFER_BIT );
-
-   check();
+  // connect the context to the surface
+  result = eglMakeCurrent(display, surface, surface, context);
+  assert(EGL_FALSE != result);
+  check();
 }
 
 
@@ -206,6 +243,8 @@ main(int argc, char **argv)
 {
   bcm_host_init();
 
+  OMX_Init();
+
   gconf.binary = argv[0];
 
   posix_init();
@@ -238,18 +277,3 @@ arch_exit(void)
 {
   exit(gconf.exit_code);
 }
-
-
-#include "audio2/audio.h"
-
-static audio_class_t dummy_audio_class = {
-  .ac_alloc_size   = 1024,
-};
-
-
-audio_class_t *
-audio_driver_init(void)
-{
-  return &dummy_audio_class;
-}
-
