@@ -503,7 +503,7 @@ static const metadata_source_funcs_t fns = {
 static void
 set_lang(void *opaque, const char *str)
 {
-  if(strlen(str) != 2)
+  if(str != NULL && strlen(str) != 2)
     str = NULL;
   snprintf(tvdb_language, sizeof(tvdb_language), "%s", str ?: "en");
   update_cfgid();
