@@ -564,9 +564,7 @@ tmdb_init(void)
   if(tmdb == NULL)
     return;
 
-  htsmsg_t *store = htsmsg_store_load("tmdb");
-  if(store == NULL)
-    store = htsmsg_create_map();
+  htsmsg_t *store = htsmsg_store_load("tmdb") ?: htsmsg_create_map();
 
   settings_create_string(tmdb->ms_settings, "language",
 			 _p("Language (ISO 639-1 code)"),
