@@ -380,15 +380,15 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	  glw_view_token_free(gr, t1);
 
 	  t = t->next;
-	  continue;
 
+	} else {
 
-	} else if(glw_view_function_resolve(t)) {
-	  return glw_view_seterr(ei, t, "Unknown function: %s", 
-				  rstr_get(t->t_rstring));
+          token_t *n = glw_view_function_resolve(gr, ei, t);
+
+          if(n == NULL)
+            return -1;
+          t = n;
 	}
-
-	t = t1->next;
 	continue;
       }
     }

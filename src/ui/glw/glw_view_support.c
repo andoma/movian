@@ -171,6 +171,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 
   case TOKEN_FUNCTION:
     dst->t_func = src->t_func;
+    dst->t_func_arg = src->t_func_arg;
     if(dst->t_func->ctor != NULL)
       dst->t_func->ctor(dst);
   case TOKEN_LEFT_BRACKET:

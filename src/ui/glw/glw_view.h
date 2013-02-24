@@ -134,7 +134,10 @@ typedef struct token {
 
     float float_vec_int[4];
 
-    const struct token_func   *func;
+    struct {
+      const struct token_func   *func;
+      const void *farg;
+    };
     const struct token_attrib *attrib;
 
     struct glw_event_map *gem;
@@ -167,6 +170,7 @@ typedef struct token {
 #define t_float_vector_int u.float_vec_int
 #define t_int             u.ival
 #define t_func            u.func
+#define t_func_arg        u.farg
 #define t_attrib          u.attrib
 #define t_gem             u.gem
 #define t_prop            u.prop
@@ -249,6 +253,7 @@ typedef struct token_func {
 	    struct token **argv, unsigned int argc);
   void (*ctor)(struct token *self);
   void (*dtor)(glw_root_t *gr, struct token *self);
+  token_t *(*preproc)(glw_root_t *gr, errorinfo_t *ei, token_t *t);
 } token_func_t;
 
 
@@ -286,7 +291,8 @@ const char *token2name(token_t *t);
 
 void glw_view_print_tree(token_t *f, int indent);
 
-int glw_view_function_resolve(token_t *t);
+token_t *glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t);
+
 
 int glw_view_attrib_resolve(token_t *t);
 

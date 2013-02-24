@@ -2571,25 +2571,19 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
   int r;
   const glw_class_t *c;
   glw_view_eval_context_t n;
-  token_t *a = argv[0];
-  token_t *b = argv[1];
+  token_t *b = argv[0];
 
   if(ec->w == NULL) 
     return glw_view_seterr(ec->ei, self, 
 			    "Widget can not be created in this scope");
-
-  if(a->type != TOKEN_IDENTIFIER)
-    return glw_view_seterr(ec->ei, self, 
-			    "widget: Invalid first argument, "
-			    "expected widget class");
     
   if(b->type != TOKEN_BLOCK)
     return glw_view_seterr(ec->ei, self, 
 			    "widget: Invalid second argument, "
 			    "expected block");
 
-  if((c = glw_class_find_by_name(rstr_get(a->t_rstring))) == NULL)
-    return glw_view_seterr(ec->ei, self, "widget: Invalid class");
+
+  c = self->t_func_arg;
 
   memset(&n, 0, sizeof(n));
   n.prop = ec->prop;
@@ -2617,6 +2611,38 @@ glwf_widget(glw_view_eval_context_t *ec, struct token *self,
     c->gc_thaw(n.w);
 
   return r ? -1 : 0;
+}
+
+
+/**
+ *
+ */
+static token_t *
+glwf_resolve_widget_class(glw_root_t *gr, errorinfo_t *ei, token_t *t)
+{
+  assert(t->next->type == TOKEN_LEFT_PARENTHESIS);
+  token_t *a = t->next->next;
+  const glw_class_t *c;
+
+  if(a->type != TOKEN_IDENTIFIER) {
+    glw_view_seterr(ei, t,
+                    "widget: Invalid first argument, expected widget class");
+    return NULL;
+  }
+
+  if((c = glw_class_find_by_name(rstr_get(a->t_rstring))) == NULL) {
+    glw_view_seterr(ei, t,
+                    "widget: No such widget: %s", rstr_get(a->t_rstring));
+    return NULL;
+  }
+
+  t->t_func_arg = c;
+
+  token_t *r = t->next->next->next->next;
+  glw_view_token_free(gr, t->next->next->next);
+  glw_view_token_free(gr, t->next->next);
+  t->next->next = r;
+  return r;
 }
 
 
@@ -5835,7 +5861,7 @@ glwf_selectedElement(glw_view_eval_context_t *ec, struct token *self,
  *
  */
 static const token_func_t funcvec[] = {
-  {"widget", 2, glwf_widget},
+  {"widget", 1, glwf_widget, NULL, NULL, glwf_resolve_widget_class},
   {"cloner", 3, glwf_cloner},
   {"space", 1, glwf_space},
   {"onEvent", -1, glwf_onEvent},
@@ -5906,19 +5932,27 @@ static const token_func_t funcvec[] = {
 /**
  *
  */
-int 
-glw_view_function_resolve(token_t *t)
+
+token_t *
+glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t)
 {
   int i;
+  const char *fname = rstr_get(t->t_rstring);
 
   for(i = 0; i < sizeof(funcvec) / sizeof(funcvec[0]); i++)
-    if(!strcmp(funcvec[i].name, rstr_get(t->t_rstring))) {
+    if(!strcmp(funcvec[i].name, fname)) {
       rstr_release(t->t_rstring);
       t->t_func = &funcvec[i];
       t->type = TOKEN_FUNCTION;
       if(t->t_func->ctor != NULL)
 	t->t_func->ctor(t);
-      return 0;
+
+      if(t->t_func->preproc != NULL)
+        return t->t_func->preproc(gr, ei, t);
+      else
+        return t->next->next;
     }
-  return -1;
+
+  glw_view_seterr(ei, t, "Unknown function: %s", fname);
+  return NULL;
 }
