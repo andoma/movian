@@ -30,7 +30,7 @@
 #include "prop_i.h"
 #include "misc/str.h"
 #include "event.h"
-
+#include "misc/pool.h"
 #ifdef PROP_DEBUG
 int prop_trace;
 #endif
@@ -40,6 +40,10 @@ hts_mutex_t prop_tag_mutex;
 static prop_t *prop_global;
 
 static prop_courier_t *global_courier;
+
+static pool_t *prop_pool;
+static pool_t *notify_pool;
+static pool_t *sub_pool;
 
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
@@ -275,7 +279,26 @@ prop_ref_dec(prop_t *p)
 #ifdef PROP_DEBUG
   memset(p, 0xdd, sizeof(prop_t));
 #endif
-  free(p);
+  hts_mutex_lock(&prop_mutex);
+  pool_put(prop_pool, p);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+static void
+prop_ref_dec_locked(prop_t *p)
+{
+  if(p == NULL || atomic_add(&p->hp_refcount, -1) > 1)
+    return;
+  assert(p->hp_type == PROP_ZOMBIE);
+  assert(p->hp_tags == NULL);
+#ifdef PROP_DEBUG
+  memset(p, 0xdd, sizeof(prop_t));
+#endif
+  pool_put(prop_pool, p);
 }
 
 /**
@@ -314,12 +337,11 @@ prop_xref_addref(prop_t *p)
  *
  */
 static void
-prop_sub_ref_dec(prop_sub_t *s)
+prop_sub_ref_dec_locked(prop_sub_t *s)
 {
   if(atomic_add(&s->hps_refcount, -1) > 1)
     return;
-
-  free(s);
+  pool_put(sub_pool, s);
 }
 
 
@@ -347,50 +369,50 @@ prop_notify_free(prop_notify_t *n)
   switch(n->hpn_event) {
   case PROP_SET_DIR:
   case PROP_SET_VOID:
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_RSTRING:
     rstr_release(n->hpn_rstring);
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_CSTRING:
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_RLINK:
     rstr_release(n->hpn_link_rtitle);
     rstr_release(n->hpn_link_rurl);
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_INT:
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SET_FLOAT:
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_ADD_CHILD:
   case PROP_DEL_CHILD:
   case PROP_REQ_NEW_CHILD:
   case PROP_SUGGEST_FOCUS:
-    prop_ref_dec(n->hpn_prop);
+    prop_ref_dec_locked(n->hpn_prop);
     break;
 
   case PROP_ADD_CHILD_BEFORE:
   case PROP_MOVE_CHILD:
   case PROP_REQ_MOVE_CHILD:
   case PROP_SELECT_CHILD:
-    prop_ref_dec(n->hpn_prop);
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_EXT_EVENT:
     event_release(n->hpn_ext_event);
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
@@ -400,7 +422,7 @@ prop_notify_free(prop_notify_t *n)
     break;
 
   case PROP_ADD_CHILD_VECTOR_BEFORE:
-    prop_ref_dec(n->hpn_prop2);
+    prop_ref_dec_locked(n->hpn_prop2);
     // FALLTHRU
   case PROP_REQ_DELETE_VECTOR:
   case PROP_ADD_CHILD_VECTOR:
@@ -410,8 +432,8 @@ prop_notify_free(prop_notify_t *n)
   case PROP_SET_STRING:
     break;
   }
-  prop_sub_ref_dec(n->hpn_sub);
-  free(n); 
+  prop_sub_ref_dec_locked(n->hpn_sub);
+  pool_put(notify_pool, n);
 }
 
 
@@ -617,8 +639,12 @@ prop_notify_dispatch(struct prop_notify_queue *q)
        */
       prop_lockmgr_t *lockmgr = s->hps_lockmgr;
       void *lock = s->hps_lock;
-      
+
+      TAILQ_REMOVE(q, n, hpn_link);
+
+      hts_mutex_lock(&prop_mutex);
       prop_notify_free(n); // subscription may be free'd here
+      hts_mutex_unlock(&prop_mutex);
       
       if(lock)
 	lockmgr(lock, 0);
@@ -771,10 +797,19 @@ prop_notify_dispatch(struct prop_notify_queue *q)
 
     if(s->hps_lock != NULL)
       s->hps_lockmgr(s->hps_lock, 0);
- 
-    prop_sub_ref_dec(s);
-    free(n);
   }
+
+  
+
+  hts_mutex_lock(&prop_mutex);
+
+  for(n = TAILQ_FIRST(q); n != NULL; n = next) {
+    next = TAILQ_NEXT(n, hpn_link);
+
+    prop_sub_ref_dec_locked(n->hpn_sub);
+    pool_put(notify_pool, n);
+  }
+  hts_mutex_unlock(&prop_mutex);
 }
 
 
@@ -874,7 +909,7 @@ courier_enqueue(prop_sub_t *s, prop_notify_t *n)
 static prop_notify_t *
 get_notify(prop_sub_t *s)
 {
-  prop_notify_t *n = malloc(sizeof(prop_notify_t));
+  prop_notify_t *n = pool_get(notify_pool);
   atomic_add(&s->hps_refcount, 1);
   n->hpn_sub = s;
   assert((s->hps_flags & PROP_SUB_INTERNAL) == 0);
@@ -1429,8 +1464,7 @@ prop_insert(prop_t *p, prop_t *parent, prop_t *before, prop_sub_t *skipme)
 prop_t *
 prop_make(const char *name, int noalloc, prop_t *parent)
 {
-  prop_t *hp;
-  hp = malloc(sizeof(prop_t));
+  prop_t *hp = pool_get(prop_pool);
 #ifdef PROP_DEBUG
   SIMPLEQ_INIT(&hp->hp_ref_trace);
 #endif
@@ -1775,7 +1809,7 @@ prop_destroy0(prop_t *p)
     free((void *)p->hp_name);
   p->hp_name = NULL;
 
-  prop_ref_dec(p);
+  prop_ref_dec_locked(p);
   return 1;
 }
 
@@ -2362,8 +2396,8 @@ prop_subscribe(int flags, ...)
   if(canonical && canonical->hp_type == PROP_ZOMBIE)
     canonical = NULL;
 
-  s = malloc(sizeof(prop_sub_t));
 
+  s = pool_get(sub_pool);
   s->hps_zombie = 0;
   s->hps_flags = flags;
   s->hps_trampoline = trampoline;
@@ -2518,7 +2552,7 @@ prop_unsubscribe0(prop_sub_t *s)
     }
     s->hps_canonical_prop = NULL;
   }
-  prop_sub_ref_dec(s);
+  prop_sub_ref_dec_locked(s);
 }
 
 
@@ -2548,6 +2582,11 @@ prop_init(void)
 {
   hts_mutex_init(&prop_mutex);
   hts_mutex_init(&prop_tag_mutex);
+
+  prop_pool   = pool_create("prop", sizeof(prop_t), 0);
+  notify_pool = pool_create("notify", sizeof(prop_notify_t), 0);
+  sub_pool    = pool_create("subs", sizeof(prop_sub_t), 0);
+
   prop_global = prop_make("global", 1, NULL);
 
   global_courier = prop_courier_create_thread(NULL, "global");
