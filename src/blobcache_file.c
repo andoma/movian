@@ -367,6 +367,7 @@ blobcache_put(const char *key, const char *stash,
     p->bi_key_hash = dk;
     p->bi_size = 0;
     p->bi_link = hashvector[dk & ITEM_HASH_MASK];
+    p->bi_etag = NULL;
     hashvector[dk & ITEM_HASH_MASK] = p;
   }
 
