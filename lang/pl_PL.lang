@@ -98,8 +98,7 @@ id: Audio tracks
 msg: Ścieżki dźwiękowe
 
 id: Chapters
-# Missing translation
-msg: 
+msg: Rozdziały
 
 id: Seek by time
 msg: Przeszukaj według czasu
@@ -237,34 +236,28 @@ id: Plugins
 msg: Wtyczki
 
 id: Search / Open URL
-# Missing translation
-msg: 
+msg: Szukaj / Otwórz URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Aparat:
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Data:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Autor:
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Dostępna wersja
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Zainstalowana wersja
 
 id: Showtime %s or newer is required
 msg: Wymagany Showtime w wersji %s lub nowszy
@@ -669,23 +662,19 @@ msg: Błąd logowania
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
-# Missing translation
-msg: 
+msg: Wykonawcy
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: Data (nowe na początku)
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: Data (nowe na końcu)
 
 id: Filename
 msg: Nazwa pliku
 
 id: Indexed mode
-# Missing translation
-msg: 
+msg: Tryb indeksowania
 
 id: Off
 msg: Wyłączony
@@ -799,8 +788,7 @@ msg: Zbliżenie
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-# Missing translation
-msg: 
+msg: Indeksowanie
 
 #
 # ./src/metadata/metadata.c
@@ -842,8 +830,7 @@ id: Movie
 msg: Film
 
 id: Movie title
-# Missing translation
-msg: 
+msg: Tytuł filmu
 
 id: No data found
 msg: Nie znaleziono danych
@@ -861,8 +848,7 @@ id: Refresh metadata
 msg: Odśwież metadane
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: Tytuł, Sezon, Odcinek
 
 id: Track %d
 msg: Ścieżka %d
@@ -1114,31 +1100,25 @@ msg: Zewnętrzny plik
 # ./src/text/fontstash.c
 #
 id: Defaults
-# Missing translation
-msg: 
+msg: Domyślne
 
 id: Fonts
-# Missing translation
-msg: 
+msg: Czcionki
 
 id: Installed fonts
-# Missing translation
-msg: 
+msg: Zainstalowane czcionki
 
 id: Narrow text
 msg: Zwężony
 
 id: Reset main font to default
-# Missing translation
-msg: 
+msg: Zmień główną czcionkę na domyślną
 
 id: Reset narrow font to default
-# Missing translation
-msg: 
+msg: Zmień zwżoną czcionkę na domyślną
 
 id: Reset subtitle font to default
-# Missing translation
-msg: 
+msg: Zmień czcionkę napisów na domyślną
 
 id: Unable to load %s -- %s
 msg: Nie można załadować %s -- %s
