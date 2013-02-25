@@ -1548,13 +1548,17 @@ prop_create_ex(prop_t *parent, const char *name, prop_sub_t *skipme,
   return p;
 }
 
+
 /**
  *
  */
 prop_t *
 prop_create_root_ex(const char *name, int noalloc)
 {
-  return prop_make(name, noalloc, NULL);
+  hts_mutex_lock(&prop_mutex);
+  prop_t *p = prop_make(name, noalloc, NULL);
+  hts_mutex_unlock(&prop_mutex);
+  return p;
 }
 
 
@@ -2586,8 +2590,10 @@ prop_init(void)
   prop_pool   = pool_create("prop", sizeof(prop_t), 0);
   notify_pool = pool_create("notify", sizeof(prop_notify_t), 0);
   sub_pool    = pool_create("subs", sizeof(prop_sub_t), 0);
-
+  
+  hts_mutex_lock(&prop_mutex);
   prop_global = prop_make("global", 1, NULL);
+  hts_mutex_unlock(&prop_mutex);
 
   global_courier = prop_courier_create_thread(NULL, "global");
 }

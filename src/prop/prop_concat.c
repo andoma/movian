@@ -95,7 +95,7 @@ pcs_destroy(prop_concat_source_t *pcs)
 static void
 add_child(prop_concat_source_t *pcs, prop_concat_t *pc, prop_t *p)
 {
-  prop_t *out = prop_create_root(NULL);
+  prop_t *out = prop_make(NULL, 0, NULL);
   prop_tag_set(p, pcs, out);
   prop_tag_set(out, pcs, p);
   prop_link0(p, out, NULL, 0);
@@ -132,7 +132,7 @@ src_cb(void *opaque, prop_event_t event, ...)
 
   case PROP_ADD_CHILD_BEFORE:
     p = va_arg(ap, prop_t *);
-    out = prop_create_root(NULL);
+    out = prop_make(NULL, 0, NULL);
     prop_tag_set(p, pcs, out);
     prop_tag_set(out, pcs, p);
     prop_link0(p, out, NULL, 0);
