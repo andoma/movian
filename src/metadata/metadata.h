@@ -422,6 +422,7 @@ void decoration_init(void);
 
 #define DECO_FLAGS_NO_AUTO_DESTROY  0x1
 #define DECO_FLAGS_RAW_FILENAMES    0x2
+#define DECO_FLAGS_NO_AUTO_SORTING  0x4
 
 typedef struct deco_browse deco_browse_t;
 
