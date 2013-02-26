@@ -58,7 +58,8 @@ CC=${TOOLCHAIN}cc
 STRIP=${TOOLCHAIN}strip
 OBJDUMP=${TOOLCHAIN}objdump
 OBJCOPY=${TOOLCHAIN}objcopy
-CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s
+CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
+CFLAGS_cfg += -DOMX_SKIP64BIT
 
 CFLAGS_cfg  += -I${VCROOT}/include
 CFLAGS_cfg  += -I${VCROOT}/include/IL
