@@ -122,7 +122,10 @@ typedef struct token {
 #define t_extra_float arg.f
 #define t_extra_int   arg.i
 
-  struct glw_prop_sub *propsubr;
+  union {
+    const struct token_attrib *t_attrib;
+    struct glw_prop_sub *t_propsubr;
+  };
 
   union {
     int  ival;
@@ -138,13 +141,10 @@ typedef struct token {
       const struct token_func   *func;
       const void *farg;
     };
-    const struct token_attrib *attrib;
 
     struct glw_event_map *gem;
 
     struct prop *prop;
-
-    struct pixmap *pixmap;
 
     struct {
       rstr_t *rtitle;
@@ -171,7 +171,6 @@ typedef struct token {
 #define t_int             u.ival
 #define t_func            u.func
 #define t_func_arg        u.farg
-#define t_attrib          u.attrib
 #define t_gem             u.gem
 #define t_prop            u.prop
 #define t_pixmap          u.pixmap

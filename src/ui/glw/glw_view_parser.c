@@ -268,6 +268,62 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
   return -1;
 }
 
+
+/**
+ * Optimize the common case of
+ *
+ *   attribute: static-value;
+ *
+ * which is represented as
+ *
+ *  RPN -> next
+ *   |
+ *   +-- [attribute] -- [value] -- [assignment operator]
+ *
+ * into
+ *
+ *  [value] -> next
+ *
+ *  and we tag value with pointer to the attribute
+ *
+ * This special form is understood by the evaluator (see glw_view_eval_block())
+ *
+ */
+static void
+optimize_attribute_assignment(token_t *t, token_t *prev, glw_root_t *gr)
+{
+  if(t->type == TOKEN_RPN) {
+    token_t *att = t->child;
+    if(att->type == TOKEN_OBJECT_ATTRIBUTE &&
+       att->next != NULL && att->next->next != NULL &&
+       att->next->next->next == NULL &&
+       att->next->next->type == TOKEN_ASSIGNMENT) {
+
+      token_t *val = att->next;
+      token_t *ass = att->next->next;
+      if(val->type == TOKEN_FLOAT ||
+         val->type == TOKEN_INT ||
+         val->type == TOKEN_VECTOR_FLOAT ||
+         val->type == TOKEN_VOID ||
+         val->type == TOKEN_CSTRING ||
+         val->type == TOKEN_RSTRING ||
+         val->type == TOKEN_IDENTIFIER) {
+
+        assert(att->t_attrib != NULL);
+        val->t_attrib = att->t_attrib;
+
+        val->next = t->next;
+        prev->next = val;
+        
+        glw_view_token_free(gr, ass);
+        glw_view_token_free(gr, att);
+        glw_view_token_free(gr, t);
+      }
+    }
+  }
+}
+
+
 /**
  *
  */
@@ -434,7 +490,11 @@ parse_one_expression(token_t *prev, token_t *first, errorinfo_t *ei,
       l->next = NULL;
       prev->next = t;
       t->child = first;
-      return parse_prep_expression(t, ei, gr);
+      if(parse_prep_expression(t, ei, gr))
+        return -1;
+
+      optimize_attribute_assignment(t, prev, gr);
+      return 0;
 
     case TOKEN_BLOCK_CLOSE:
       glw_view_seterr(ei, t, "Unexpected '}'");

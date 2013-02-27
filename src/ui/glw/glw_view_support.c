@@ -146,6 +146,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
   dst->line = src->line;
 
   dst->type = src->type;
+  dst->t_propsubr = src->t_propsubr;
 
   switch(src->type) {
   case TOKEN_FLOAT:
@@ -166,7 +167,6 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 
   case TOKEN_PROPERTY_SUBSCRIPTION:
   case TOKEN_DIRECTORY:
-    dst->propsubr = src->propsubr;
     break;
 
   case TOKEN_FUNCTION:
