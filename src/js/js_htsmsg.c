@@ -85,8 +85,8 @@ js_htsmsg_from_object(JSContext *cx, JSObject *obj)
   htsmsg_t *msg = NULL;
 
   if((ida = JS_Enumerate(cx, obj)) == NULL)
-    return NULL;
-  
+    return htsmsg_create_map();
+
   for(i = 0; i < ida->length; i++) {
     jsval name, value;
     char *fieldname = NULL;
@@ -131,6 +131,13 @@ js_htsmsg_from_object(JSContext *cx, JSObject *obj)
     free(fieldname);
   }
   JS_DestroyIdArray(cx, ida);
+
+  if(msg == NULL) {
+    if(!strcmp(JS_GetClass(cx, obj)->name, "Array"))
+      return htsmsg_create_list();
+    else
+      return htsmsg_create_map();
+  }
   return msg;
 }
 
