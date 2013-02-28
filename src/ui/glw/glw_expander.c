@@ -39,7 +39,7 @@ update_constraints(glw_expander_t *exp)
   glw_t *c = TAILQ_FIRST(&exp->w.glw_childs);
   int e, o;
   
-  int f = c ? glw_filter_constraints(c->glw_flags) : 0;
+  int f = c ? glw_filter_constraints(c) : 0;
 
   if(exp->w.glw_class == &glw_expander_x) {
     e = exp->expansion * (c != NULL ? c->glw_req_size_x : 0);

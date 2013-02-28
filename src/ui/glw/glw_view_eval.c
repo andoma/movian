@@ -1130,7 +1130,7 @@ clone_req_move(sub_cloner_t *sc, glw_t *w, const glw_move_op_t *mop)
   if(steps == 0)
     return;
 
-  w->glw_parent->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+  w->glw_parent->glw_flags &= ~GLW_FLOATING_FOCUS;
 
   if(steps < 0) {
     glw_t *x;
@@ -2270,7 +2270,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   if(ec->w->glw_flags2 & GLW2_EXPEDITE_SUBSCRIPTIONS)
     f |= PROP_SUB_EXPEDITE;
 
-  if(ec->debug || ec->w->glw_flags & GLW_DEBUG)
+  if(ec->debug || ec->w->glw_flags2 & GLW2_DEBUG)
     f |= PROP_SUB_DEBUG;
 
   if(prop != NULL) {

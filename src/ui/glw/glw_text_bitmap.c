@@ -181,7 +181,7 @@ glw_text_bitmap_layout(glw_t *w, glw_rctx_t *rc)
     gtb->gtb_saved_height = rc->rc_height;
     gtb->gtb_need_layout = 1;
 
-    if(gtb->w.glw_flags & GLW_DEBUG)
+    if(gtb->w.glw_flags2 & GLW2_DEBUG)
       printf("   parent widget gives us :%d x %d\n", rc->rc_width, rc->rc_height);
 
   }
@@ -374,7 +374,7 @@ glw_text_bitmap_render(glw_t *w, const glw_rctx_t *rc)
   if(alpha < 0.01f)
     return;
 
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
   if(glw_is_tex_inited(&gtb->gtb_texture) && pm != NULL) {
@@ -472,7 +472,7 @@ gtb_set_constraints(glw_root_t *gr, glw_text_bitmap_t *gtb,
 
 #endif
 
-  if(gtb->w.glw_flags & GLW_DEBUG)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraints %c%c %d,%d\n",
 	   flags & GLW_CONSTRAINT_X ? 'X' : ' ',
 	   flags & GLW_CONSTRAINT_Y ? 'Y' : ' ',
@@ -818,7 +818,7 @@ glw_text_bitmap_ctor(glw_t *w)
   glw_text_bitmap_t *gtb = (void *)w;
   glw_root_t *gr = w->glw_root;
 
-  w->glw_flags |= GLW_FOCUS_ON_CLICK;
+  w->glw_flags2 |= GLW2_FOCUS_ON_CLICK;
   gtb->gtb_edit_ptr = -1;
   gtb->gtb_size_scale = 1.0;
   gtb->gtb_color.r = 1.0;
@@ -1038,7 +1038,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   float scale;
   rstr_t *font;
 
-  if(gtb->w.glw_flags & GLW_DEBUG) {
+  if(gtb->w.glw_flags2 & GLW2_DEBUG) {
     printf("do_render(%p, %d): ", gtb, no_output);
     for(i = 0; i < gtb->gtb_uc_len; i++)
       printf("%C", gtb->gtb_uc_buffer[i]);
@@ -1078,12 +1078,12 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
     max_width =
       gtb->gtb_saved_width - gtb->gtb_padding_left - gtb->gtb_padding_right;
   }
-  if(gtb->w.glw_flags & GLW_DEBUG)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("   max_width=%d\n", max_width);
 
   max_lines = gtb->gtb_maxlines;
 
-  if(gtb->w.glw_flags & GLW_DEBUG)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
     flags |= TR_RENDER_DEBUG;
 
   if(gtb->gtb_flags & GTB_ELLIPSIZE)
@@ -1131,7 +1131,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
   else
     font = rstr_dup(gr->gr_default_font);
 
-  if(gtb->w.glw_flags & GLW_DEBUG)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG)
     printf("Font is %s\n", rstr_get(font));
 
   /* gtb (i.e the widget) may be destroyed directly after we unlock,
@@ -1164,7 +1164,7 @@ do_render(glw_text_bitmap_t *gtb, glw_root_t *gr, int no_output)
 
   glw_unref(&gtb->w);
 
-  if(gtb->w.glw_flags & GLW_DEBUG && pm != NULL)
+  if(gtb->w.glw_flags2 & GLW2_DEBUG && pm != NULL)
     printf("   pm = %d x %d (m=%d)\n", pm->pm_width, pm->pm_height, pm->pm_margin);
 
   if(gtb->gtb_state == GTB_RENDERING) {

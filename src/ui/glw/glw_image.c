@@ -417,7 +417,7 @@ glw_image_layout_tesselated(glw_root_t *gr, glw_rctx_t *rc, glw_image_t *gi,
       }
 
     }
-    if(gi->w.glw_flags & GLW_DEBUG)
+    if(gi->w.glw_flags2 & GLW2_DEBUG)
       printf("Automargin %d,%d,%d,%d\n",
 	     gi->gi_automargin_left,
 	     gi->gi_automargin_top,
@@ -648,7 +648,7 @@ glw_image_update_constraints(glw_image_t *gi)
       if(gi->w.glw_flags2 & GLW2_AUTOMARGIN)
 	gi->gi_update = 1;
 
-      if(gi->w.glw_flags & GLW_DEBUG)
+      if(gi->w.glw_flags2 & GLW2_DEBUG)
 	printf("Req size: %d,%d\n", c->glw_req_size_x, c->glw_req_size_y);
 
 
@@ -800,7 +800,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 
       if(xs && ys) {
 
-	if(w->glw_flags & GLW_DEBUG)
+	if(w->glw_flags2 & GLW2_DEBUG)
 	  TRACE(TRACE_DEBUG, "IMG", "Loading texture: %s (%d %d)",
 		rstr_get(gi->gi_pending_url),
 		xs, ys);
@@ -963,7 +963,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if((c = TAILQ_FIRST(&w->glw_childs)) != NULL) {
     rc0 = *rc;
     
-    if(gi->w.glw_flags & GLW_DEBUG)
+    if(gi->w.glw_flags2 & GLW2_DEBUG)
       printf("Output width = %d-%d=%d   Output height=%d-%d=%d\n",
 	     rc0.rc_width, (gi->gi_box_left + gi->gi_box_right),
 	     rc0.rc_width - (gi->gi_box_left + gi->gi_box_right),
@@ -1106,7 +1106,7 @@ update_box(glw_image_t *gi)
   gi->gi_box_bottom =
     gi->gi_margin_bottom + gi->gi_border_bottom + gi->gi_padding_bottom;
 
-  if(gi->w.glw_flags & GLW_DEBUG)
+  if(gi->w.glw_flags2 & GLW2_DEBUG)
     printf("Box: %d,%d,%d,%d == %d,%d\n",
 	   gi->gi_box_left,
 	   gi->gi_box_top,

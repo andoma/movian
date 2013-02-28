@@ -82,7 +82,7 @@ layout(glw_clist_t *l, glw_rctx_t *rc)
       lptrail = 0;
     }
 
-    int f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c);
 	
     if(f & GLW_CONSTRAINT_Y) {
       itemh = c->glw_req_size_y;
@@ -199,7 +199,7 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
@@ -216,7 +216,7 @@ signal_handler(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;
 
   }
@@ -231,7 +231,7 @@ static void
 ctor(glw_t *w)
 {
   glw_clist_t *l = (glw_clist_t *)w;
-  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  w->glw_flags |= GLW_FLOATING_FOCUS;
   l->center = 0.5;
 }
 

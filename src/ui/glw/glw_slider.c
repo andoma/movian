@@ -106,7 +106,7 @@ glw_slider_layout(glw_t *w, glw_rctx_t *rc)
      rc->rc_width == 0 || rc->rc_height == 0)
     return;
 
-  f = glw_filter_constraints(c->glw_flags);
+  f = glw_filter_constraints(c);
 
   if(s->fixed_knob_size) {
     if(w->glw_class == &glw_slider_x) {

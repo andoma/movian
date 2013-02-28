@@ -782,25 +782,6 @@ mod_hidden(glw_view_eval_context_t *ec, const token_attrib_t *a,
  *
  */
 static void
-mod_flags1(glw_t *w, int set, int clr)
-{
-  set &= ~w->glw_flags; // Mask out already set flags
-  w->glw_flags |= set;
-
-  if(set & GLW_HIDDEN)
-    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_HIDDEN, w);
-
-  clr &= w->glw_flags;
-  w->glw_flags &= ~clr;
-  
-  if(clr & GLW_HIDDEN)
-    glw_signal0(w->glw_parent, GLW_SIGNAL_CHILD_UNHIDDEN, w);
-}
-
-/**
- *
- */
-static void
 mod_flags2(glw_t *w, int set, int clr)
 {
   set &= ~w->glw_flags2;
@@ -1035,43 +1016,42 @@ static const token_attrib_t attribtab[] = {
   {"source",          set_source},
   {"alt",             set_alt},
 
-  {"debug",                   mod_flag, GLW_DEBUG, mod_flags1},
-  {"filterConstraintX",       mod_flag, GLW_CONSTRAINT_IGNORE_X, mod_flags1},
-  {"filterConstraintY",       mod_flag, GLW_CONSTRAINT_IGNORE_Y, mod_flags1},
-  {"filterConstraintWeight",  mod_flag, GLW_CONSTRAINT_IGNORE_W, mod_flags1},
-  {"hidden",                  mod_hidden},
-  {"noInitialTransform",      mod_flag, GLW_NO_INITIAL_TRANS, mod_flags1},
-  {"focusOnClick",            mod_flag, GLW_FOCUS_ON_CLICK, mod_flags1},
-  {"autoRefocusable",         mod_flag, GLW_AUTOREFOCUSABLE, mod_flags1},
-  {"navFocusable",            mod_flag, GLW_NAV_FOCUSABLE, mod_flags1},
-  {"homogenous",              mod_flag, GLW_HOMOGENOUS, mod_flags1},
+  {"hidden",                mod_hidden},
+  {"filterConstraintX",     mod_flag, GLW2_CONSTRAINT_IGNORE_X,    mod_flags2},
+  {"filterConstraintY",     mod_flag, GLW2_CONSTRAINT_IGNORE_Y,    mod_flags2},
+  {"filterConstraintWeight",mod_flag, GLW2_CONSTRAINT_IGNORE_W,    mod_flags2},
+  {"debug",                 mod_flag, GLW2_DEBUG,                  mod_flags2},
+  {"noInitialTransform",    mod_flag, GLW2_NO_INITIAL_TRANS,       mod_flags2},
+  {"focusOnClick",          mod_flag, GLW2_FOCUS_ON_CLICK,         mod_flags2},
+  {"autoRefocusable",       mod_flag, GLW2_AUTOREFOCUSABLE,        mod_flags2},
+  {"navFocusable",          mod_flag, GLW2_NAV_FOCUSABLE,          mod_flags2},
+  {"homogenous",            mod_flag, GLW2_HOMOGENOUS,             mod_flags2},
+  {"enabled",               mod_flag, GLW2_ENABLED,                mod_flags2},
+  {"alwaysLayout",          mod_flag, GLW2_ALWAYS_LAYOUT,          mod_flags2},
+  {"alwaysGrabKnob",        mod_flag, GLW2_ALWAYS_GRAB_KNOB,       mod_flags2},
+  {"autohide",              mod_flag, GLW2_AUTOHIDE,               mod_flags2},
+  {"shadow",                mod_flag, GLW2_SHADOW,                 mod_flags2},
+  {"autofade",              mod_flag, GLW2_AUTOFADE,               mod_flags2},
+  {"automargin",            mod_flag, GLW2_AUTOMARGIN,             mod_flags2},
+  {"expediteSubscriptions", mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
+  {"reverseRender",         mod_flag, GLW2_REVERSE_RENDER,         mod_flags2},
 
-  {"enabled",                 mod_flag, GLW2_ENABLED, mod_flags2},
-  {"alwaysLayout",            mod_flag, GLW2_ALWAYS_LAYOUT, mod_flags2},
-  {"alwaysGrabKnob",          mod_flag, GLW2_ALWAYS_GRAB_KNOB, mod_flags2},
-  {"autohide",                mod_flag, GLW2_AUTOHIDE, mod_flags2},
-  {"shadow",                  mod_flag, GLW2_SHADOW, mod_flags2},
-  {"autofade",                mod_flag, GLW2_AUTOFADE, mod_flags2},
-  {"automargin",              mod_flag, GLW2_AUTOMARGIN, mod_flags2},
-  {"expediteSubscriptions",   mod_flag, GLW2_EXPEDITE_SUBSCRIPTIONS, mod_flags2},
-  {"reverseRender",           mod_flag, GLW2_REVERSE_RENDER, mod_flags2},
-
-  {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE, mod_img_flags},
-  {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT, mod_img_flags},
-  {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP, mod_img_flags},
-  {"bevelRight",      mod_flag, GLW_IMAGE_BEVEL_RIGHT, mod_img_flags},
+  {"fixedSize",       mod_flag, GLW_IMAGE_FIXED_SIZE,   mod_img_flags},
+  {"bevelLeft",       mod_flag, GLW_IMAGE_BEVEL_LEFT,   mod_img_flags},
+  {"bevelTop",        mod_flag, GLW_IMAGE_BEVEL_TOP,    mod_img_flags},
+  {"bevelRight",      mod_flag, GLW_IMAGE_BEVEL_RIGHT,  mod_img_flags},
   {"bevelBottom",     mod_flag, GLW_IMAGE_BEVEL_BOTTOM, mod_img_flags},
-  {"aspectConstraint",mod_flag, GLW_IMAGE_SET_ASPECT, mod_img_flags},
-  {"additive",        mod_flag, GLW_IMAGE_ADDITIVE, mod_img_flags},
-  {"borderOnly",      mod_flag, GLW_IMAGE_BORDER_ONLY, mod_img_flags},
-  {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT, mod_img_flags},
+  {"aspectConstraint",mod_flag, GLW_IMAGE_SET_ASPECT,   mod_img_flags},
+  {"additive",        mod_flag, GLW_IMAGE_ADDITIVE,     mod_img_flags},
+  {"borderOnly",      mod_flag, GLW_IMAGE_BORDER_ONLY,  mod_img_flags},
+  {"leftBorder",      mod_flag, GLW_IMAGE_BORDER_LEFT,  mod_img_flags},
   {"rightBorder",     mod_flag, GLW_IMAGE_BORDER_RIGHT, mod_img_flags},
-  {"aspectFixedBorders", mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
 
-  {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,     mod_img_flags},
-  {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,    mod_img_flags},
-  {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,  mod_img_flags},
-  {"cornerBottomRight", mod_flag, GLW_IMAGE_CORNER_BOTTOMRIGHT, mod_img_flags},
+  {"aspectFixedBorders",mod_flag, GLW_IMAGE_ASPECT_FIXED_BORDERS, mod_img_flags},
+  {"cornerTopLeft",     mod_flag, GLW_IMAGE_CORNER_TOPLEFT,       mod_img_flags},
+  {"cornerTopRight",    mod_flag, GLW_IMAGE_CORNER_TOPRIGHT,      mod_img_flags},
+  {"cornerBottomLeft",  mod_flag, GLW_IMAGE_CORNER_BOTTOMLEFT,    mod_img_flags},
+  {"cornerBottomRight", mod_flag, GLW_IMAGE_CORNER_BOTTOMRIGHT,   mod_img_flags},
 
 
   {"password",        mod_flag,  GTB_PASSWORD, mod_text_flags},

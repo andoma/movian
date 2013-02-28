@@ -943,48 +943,33 @@ typedef struct glw {
 
   int glw_flags;
 
-#define GLW_ACTIVE               0x1
-#define GLW_AUTOREFOCUSABLE      0x2
-#define GLW_NAV_FOCUSABLE        0x4     /* Widget is focusable when navigating
-					    with keyboard input */
-
-#define GLW_DEBUG                0x8     /* Debug this object */
-#define GLW_FOCUS_BLOCKED        0x10
-#define GLW_UPDATE_METRICS       0x20
-
-#define GLW_IN_FOCUS_PATH        0x40
-#define GLW_IN_PRESSED_PATH      0x80
-#define GLW_IN_HOVER_PATH        0x100
-
-#define GLW_DESTROYING           0x200  /* glw_destroy() has been called */
-
-
-#define GLW_HIDDEN               0x400
-
-#define GLW_RETIRED              0x800
-#define GLW_NO_INITIAL_TRANS     0x1000
-#define GLW_CAN_SCROLL           0x2000
-
-#define GLW_CONSTRAINT_X         0x10000
-#define GLW_CONSTRAINT_Y         0x20000
-#define GLW_CONSTRAINT_W         0x40000
-#define GLW_CONSTRAINT_D         0x80000
-
-  // We rely on shifts to filter these against each other so they
-  // must be consecutive, see glw_filter_constraints()
-#define GLW_CONSTRAINT_IGNORE_X  0x100000
-#define GLW_CONSTRAINT_IGNORE_Y  0x200000
-#define GLW_CONSTRAINT_IGNORE_W  0x400000
-#define GLW_CONSTRAINT_IGNORE_D  0x800000
+#define GLW_CONSTRAINT_X         0x1
+#define GLW_CONSTRAINT_Y         0x2
+#define GLW_CONSTRAINT_W         0x4
+#define GLW_CONSTRAINT_D         0x8
 
 #define GLW_CONSTRAINT_FLAGS (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y | \
                               GLW_CONSTRAINT_W | GLW_CONSTRAINT_D )
 
-#define GLW_CLIPPED              0x1000000 
+#define GLW_ACTIVE               0x10
+#define GLW_FLOATING_FOCUS       0x20
+#define GLW_FOCUS_BLOCKED        0x40
+#define GLW_UPDATE_METRICS       0x80
 
-#define GLW_HOMOGENOUS           0x2000000
+#define GLW_IN_FOCUS_PATH        0x100
+#define GLW_IN_PRESSED_PATH      0x200
+#define GLW_IN_HOVER_PATH        0x400
+#define GLW_DESTROYING           0x800
 
-#define GLW_FOCUS_ON_CLICK       0x4000000
+#define GLW_HIDDEN               0x1000
+#define GLW_RETIRED              0x2000
+#define GLW_CAN_SCROLL           0x4000
+
+
+
+#define GLW_CLIPPED              0x1000000
+
+
 
 
 #define GLW_CONSTRAINT_CONF_W    0x10000000
@@ -994,16 +979,29 @@ typedef struct glw {
 
 
   int glw_flags2;
-#define GLW2_ENABLED        0x1
-#define GLW2_FLOATING_FOCUS 0x2
-#define GLW2_ALWAYS_LAYOUT  0x4
-#define GLW2_ALWAYS_GRAB_KNOB 0x8
-#define GLW2_AUTOHIDE        0x10
-#define GLW2_SHADOW          0x20
-#define GLW2_AUTOFADE        0x40
-#define GLW2_EXPEDITE_SUBSCRIPTIONS     0x80
-#define GLW2_AUTOMARGIN                 0x100
-#define GLW2_REVERSE_RENDER             0x200
+
+#define GLW2_CONSTRAINT_IGNORE_X        GLW_CONSTRAINT_X
+#define GLW2_CONSTRAINT_IGNORE_Y        GLW_CONSTRAINT_Y
+#define GLW2_CONSTRAINT_IGNORE_W        GLW_CONSTRAINT_W
+#define GLW2_CONSTRAINT_IGNORE_D        GLW_CONSTRAINT_D
+
+#define GLW2_ENABLED                    0x10
+#define GLW2_ALWAYS_LAYOUT              0x20
+#define GLW2_ALWAYS_GRAB_KNOB           0x40
+#define GLW2_AUTOHIDE                   0x80
+#define GLW2_SHADOW                     0x100
+#define GLW2_AUTOFADE                   0x200
+#define GLW2_EXPEDITE_SUBSCRIPTIONS     0x400
+#define GLW2_AUTOMARGIN                 0x800
+#define GLW2_REVERSE_RENDER             0x1000
+#define GLW2_NO_INITIAL_TRANS           0x2000
+#define GLW2_FOCUS_ON_CLICK             0x4000
+#define GLW2_AUTOREFOCUSABLE            0x8000
+#define GLW2_NAV_FOCUSABLE              0x10000    /* Widget is focusable when navigating
+                                                      with keyboard input */
+#define GLW2_HOMOGENOUS                 0x20000
+#define GLW2_DEBUG                      0x40000     /* Debug this object */
+
 
 #define GLW2_LEFT_EDGE            0x10000000
 #define GLW2_TOP_EDGE             0x20000000
@@ -1043,8 +1041,11 @@ typedef struct glw {
 #define glw_have_f_constraint(w) (((w)->glw_flags & GLW_CONSTRAINT_F) \
                        && !((w)->glw_flags & GLW_CONSTRAINT_IGNORE_F))
 
-#define glw_filter_constraints(f) \
- (((f) & GLW_CONSTRAINT_FLAGS) & ~(((f) >> 4) & GLW_CONSTRAINT_FLAGS))
+static inline int
+glw_filter_constraints(const glw_t *w)
+{
+  return (w->glw_flags & ~w->glw_flags2) & GLW_CONSTRAINT_FLAGS;
+}
 
 
 int glw_init(glw_root_t *gr);

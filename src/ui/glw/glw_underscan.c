@@ -70,7 +70,7 @@ render(glw_t *w, const glw_rctx_t *rc)
       continue;
     glw_render0(c, &rc0);
   }
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, &rc0);
 }
 

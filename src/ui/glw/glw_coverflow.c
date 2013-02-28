@@ -184,7 +184,7 @@ glw_coverflow_render(glw_t *w, const glw_rctx_t *rc)
 static void
 glw_coverflow_ctor(glw_t *w)
 {
-  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  w->glw_flags |= GLW_FLOATING_FOCUS;
 }
 
 
@@ -205,12 +205,12 @@ glw_coverflow_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     return 0;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     gc->scroll_to_me = extra;
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:

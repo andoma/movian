@@ -525,7 +525,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(a, extra);
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_CREATED:
@@ -557,7 +557,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;
 
   case GLW_SIGNAL_CHILD_MOVED:
@@ -575,7 +575,7 @@ glw_array_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 static void
 glw_array_ctor(glw_t *w)
 {
-  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  w->glw_flags |= GLW_FLOATING_FOCUS;
 }
 
 /**

@@ -152,7 +152,7 @@ playfield_select_child(glw_t *w, glw_t *c, prop_t *origin)
   }
   
   if(c != NULL) {
-    if(w->glw_selected == NULL && w->glw_flags & GLW_NO_INITIAL_TRANS) 
+    if(w->glw_selected == NULL && w->glw_flags2 & GLW2_NO_INITIAL_TRANS) 
       c->glw_parent_amount = 1;
 
     if(c->glw_parent_detached)

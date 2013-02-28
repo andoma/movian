@@ -105,7 +105,7 @@ deck_select_child(glw_t *w, glw_t *c, prop_t *origin)
   }
 
   if(gd->efx_conf != GLW_TRANS_NONE &&
-     (gd->prev != NULL || !(w->glw_flags & GLW_NO_INITIAL_TRANS)))
+     (gd->prev != NULL || !(w->glw_flags2 & GLW2_NO_INITIAL_TRANS)))
     gd->v = 0;
 
   glw_signal0(w, GLW_SIGNAL_RESELECT_CHANGED, NULL);

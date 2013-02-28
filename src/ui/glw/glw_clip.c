@@ -65,7 +65,7 @@ glw_clip_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_clip_t *gc = (glw_clip_t *)w;
 
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
   int l = gc->gc_clipping[0] >= 0 ? 
@@ -178,7 +178,7 @@ glw_fade_render(glw_t *w, const glw_rctx_t *rc)
   glw_t *c;
   glw_fade_t *gf = (glw_fade_t *)w;
   int fader = -1;
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, rc);
 
   if(gf->gf_run)
@@ -338,7 +338,7 @@ glw_stencil_render(glw_t *w, const glw_rctx_t *rc)
     glw_render0(c, rc);
 
   glw_stencil_disable(w->glw_root);
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     glw_wirebox(w->glw_root, &rc0);
 }
 

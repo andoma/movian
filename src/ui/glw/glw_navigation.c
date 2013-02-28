@@ -138,7 +138,7 @@ find_candidate(glw_t *w, query_t *query, float d_mul)
   if(w->glw_flags & (GLW_HIDDEN | GLW_FOCUS_BLOCKED))
     return;
   
-  if(glw_is_focusable(w) && w->glw_flags & GLW_NAV_FOCUSABLE) {
+  if(glw_is_focusable(w) && w->glw_flags2 & GLW2_NAV_FOCUSABLE) {
 
     x1 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 0);
     x2 = compute_position(w, GLW_ORIENTATION_HORIZONTAL, 1);

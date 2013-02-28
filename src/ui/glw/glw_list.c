@@ -157,7 +157,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    int f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_Y) {
       rc0.rc_height = c->glw_req_size_y;
@@ -249,7 +249,7 @@ glw_list_layout_x(glw_list_t *l, glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    int f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_X) {
       rc0.rc_width = c->glw_req_size_x;
@@ -573,7 +573,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
   case GLW_SIGNAL_FOCUS_CHILD_INTERACTIVE:
     scroll_to_me(l, extra);
     l->suggest_cnt = 0;
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     return 0;
 
   case GLW_SIGNAL_CHILD_DESTROYED:
@@ -588,7 +588,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
       // Last item went away, make sure to reset
       l->current_pos = 0;
       l->filtered_pos = 0;
-      w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+      w->glw_flags |= GLW_FLOATING_FOCUS;
       l->suggest_cnt = 1;
     }
     break;
@@ -616,7 +616,7 @@ glw_list_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
     break;
 
   case GLW_SIGNAL_EVENT_BUBBLE:
-    w->glw_flags2 &= ~GLW2_FLOATING_FOCUS;
+    w->glw_flags &= ~GLW_FLOATING_FOCUS;
     break;
 
   case GLW_SIGNAL_FHP_PATH_CHANGED:
@@ -704,7 +704,7 @@ glw_list_y_ctor(glw_t *w)
   
   l->child_aspect = 20;
   l->suggest_cnt = 1;
-  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  w->glw_flags |= GLW_FLOATING_FOCUS;
 }
 
 
@@ -718,7 +718,7 @@ glw_list_x_ctor(glw_t *w)
   
   l->child_aspect = 1;
   l->suggest_cnt = 1;
-  w->glw_flags2 |= GLW2_FLOATING_FOCUS;
+  w->glw_flags |= GLW_FLOATING_FOCUS;
 }
 
 /**

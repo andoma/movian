@@ -83,7 +83,7 @@ glw_view_loader_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extr
 
     if(TAILQ_FIRST(&w->glw_childs) == c &&
        TAILQ_NEXT(c, glw_parent_link) == NULL &&
-       w->glw_flags & GLW_NO_INITIAL_TRANS) {
+       w->glw_flags2 & GLW2_NO_INITIAL_TRANS) {
       c->glw_parent_vl_cur = 0;
     } else {
       c->glw_parent_vl_cur = -1;
@@ -195,7 +195,7 @@ set_source(glw_t *w, rstr_t *url)
   glw_view_loader_t *a = (glw_view_loader_t *)w;
   glw_t *c;
   
-  if(w->glw_flags & GLW_DEBUG)
+  if(w->glw_flags2 & GLW2_DEBUG)
     TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", 
 	  rstr_get(url) ?: "(void)");
 

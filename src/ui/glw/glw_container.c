@@ -58,18 +58,18 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
   co->co_biggest = 0;
   co->co_using_aspect = 0;
 
-  if(co->w.glw_flags & GLW_DEBUG)
+  if(co->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraint round\n");
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
-    f = glw_filter_constraints(c->glw_flags);
+    f = glw_filter_constraints(c);
 
     cflags |= f & (GLW_CONSTRAINT_X | GLW_CONSTRAINT_Y);
 
-    if(co->w.glw_flags & GLW_DEBUG)
+    if(co->w.glw_flags2 & GLW2_DEBUG)
       printf("%c%c%c %d %d %f\n",
 	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
 	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
@@ -83,7 +83,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
 
     if(f & GLW_CONSTRAINT_X) {
 
-      if(co->w.glw_flags & GLW_HOMOGENOUS) {
+      if(co->w.glw_flags2 & GLW2_HOMOGENOUS) {
 	co->co_biggest = GLW_MAX(c->glw_req_size_x, co->co_biggest);
 	numfix++;
       } else {
@@ -103,7 +103,7 @@ glw_container_x_constraints(glw_container_t *co, glw_t *skip)
     elements++;
   }
 
-  if(co->w.glw_flags & GLW_HOMOGENOUS)
+  if(co->w.glw_flags2 & GLW2_HOMOGENOUS)
     width += numfix * co->co_biggest;
 
   if(elements > 0)
@@ -144,7 +144,7 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     // If any of our childs wants a fixed aspect we need to compute
     // the total width those will consume
     TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
-      int f = glw_filter_constraints(c->glw_flags);
+      int f = glw_filter_constraints(c);
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w < 0)
 	width += rc0.rc_height * -w;
@@ -183,10 +183,10 @@ glw_container_x_layout(glw_container_t *co, glw_rctx_t *rc)
     if(c->glw_flags & GLW_HIDDEN)
       continue;
 
-    int f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_X) {
-      if(co->w.glw_flags & GLW_HOMOGENOUS)
+      if(co->w.glw_flags2 & GLW2_HOMOGENOUS)
 	cw = co->co_biggest * fixscale;
       else
 	cw = c->glw_req_size_x * fixscale;
@@ -234,16 +234,16 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   int cflags = 0, f;
   int elements = 0;
 
-  if(co->w.glw_flags & GLW_DEBUG)
+  if(co->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraint round\n");
 
   TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
     if(c->glw_flags & GLW_HIDDEN || c == skip)
       continue;
 
-    f = glw_filter_constraints(c->glw_flags);
+    f = glw_filter_constraints(c);
 
-    if(co->w.glw_flags & GLW_DEBUG)
+    if(co->w.glw_flags2 & GLW2_DEBUG)
       printf("%c%c%c %d %d %f\n",
 	     f & GLW_CONSTRAINT_X ? 'X' : ' ',
 	     f & GLW_CONSTRAINT_Y ? 'Y' : ' ',
@@ -346,7 +346,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       }
     }
 
-    int f = glw_filter_constraints(c->glw_flags);
+    int f = glw_filter_constraints(c);
 
     if(f & GLW_CONSTRAINT_Y) {
       cw = fixscale * c->glw_req_size_y;
