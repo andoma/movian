@@ -162,10 +162,10 @@ tmdb_configure(void)
 
   if(!tmdb_configured) {
 
-    char *result;
+    buf_t *result;
     char errbuf[256];
     result = fa_load_query("http://api.themoviedb.org/3/configuration",
-			   NULL, errbuf, sizeof(errbuf), NULL,
+			   errbuf, sizeof(errbuf), NULL,
 			   (const char *[]){
 			     "api_key", TMDB_APIKEY,
 			       "language", getlang(),
@@ -177,8 +177,9 @@ tmdb_configure(void)
       goto done;
     }
 
-    htsmsg_t *doc = htsmsg_json_deserialize(result);
-    free(result);
+    htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+    buf_release(result);
+
     if(doc == NULL) {
       TRACE(TRACE_INFO, "TMDB", "Unable to parse configuration (JSON err)");
       goto done;
@@ -203,12 +204,12 @@ tmdb_load_movie_cast(const char *lookup_id)
 {
   char url[300];
   char errbuf[256];
-  char *result;
+  buf_t *result;
 
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s/casts",
 	   lookup_id);
 
-  result = fa_load_query(url, NULL, errbuf, sizeof(errbuf),
+  result = fa_load_query(url, errbuf, sizeof(errbuf),
 			 NULL,
 			 (const char *[]){
 			   "api_key", TMDB_APIKEY,
@@ -220,8 +221,8 @@ tmdb_load_movie_cast(const char *lookup_id)
     return NULL;
   }
 
-  htsmsg_t *doc = htsmsg_json_deserialize(result);
-  free(result);
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  buf_release(result);
   return doc;
 }
 
@@ -298,11 +299,11 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
 {
   char url[300];
   char errbuf[256];
-  char *result;
+  buf_t *result;
 
   snprintf(url, sizeof(url), "http://api.themoviedb.org/3/movie/%s", lookup_id);
 
-  result = fa_load_query(url, NULL, errbuf, sizeof(errbuf),
+  result = fa_load_query(url, errbuf, sizeof(errbuf),
 			 NULL,
 			 (const char *[]){
 			   "api_key", TMDB_APIKEY,
@@ -314,8 +315,8 @@ tmdb_load_movie_info(void *db, const char *item_url, const char *lookup_id,
     return METADATA_TEMPORARY_ERROR;
   }
 
-  htsmsg_t *doc = htsmsg_json_deserialize(result);
-  free(result);
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  buf_release(result);
   if(doc == NULL) {
     TRACE(TRACE_INFO, "TMDB", "Invalid JSON", errbuf);
     return METADATA_TEMPORARY_ERROR;
@@ -397,7 +398,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
 			     int qtype)
 {
   char errbuf[256];
-  char *result;
+  buf_t *result;
   char yeartxt[20];
 
   if(tmdb == NULL)
@@ -409,7 +410,7 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
     yeartxt[0] = 0;
 
   result = fa_load_query("http://api.themoviedb.org/3/search/movie",
-			 NULL, errbuf, sizeof(errbuf), NULL,
+			 errbuf, sizeof(errbuf), NULL,
 			 (const char *[]){"query", title,
 			     "year", *yeartxt ? yeartxt : NULL,
 			     "api_key", TMDB_APIKEY,
@@ -420,8 +421,8 @@ tmdb_query_by_title_and_year(void *db, const char *item_url,
   if(result == NULL)
     return METADATA_TEMPORARY_ERROR;
 
-  htsmsg_t *doc = htsmsg_json_deserialize(result);
-  free(result);
+  htsmsg_t *doc = htsmsg_json_deserialize(buf_cstr(result));
+  buf_release(result);
   if(doc == NULL)
     return METADATA_TEMPORARY_ERROR;
   int results = htsmsg_get_s32_or_default(doc, "total_results", 0);

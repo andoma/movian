@@ -316,12 +316,11 @@ load_index(void)
  *
  */
 int
-blobcache_put(const char *key, const char *stash,
-	      const void *data, size_t size, int maxage,
-	      const char *etag, time_t mtime)
+blobcache_put(const char *key, const char *stash, buf_t *b,
+              int maxage, const char *etag, time_t mtime)
 {
   uint64_t dk = digest_key(key, stash);
-  uint64_t dc = digest_content(data, size);
+  uint64_t dc = digest_content(b->b_ptr, b->b_size);
   uint32_t now = time(NULL);
   char filename[PATH_MAX];
   blobcache_item_t *p;
@@ -339,7 +338,7 @@ blobcache_put(const char *key, const char *stash,
     if(p->bi_key_hash == dk)
       break;
 
-  if(p != NULL && p->bi_content_hash == dc && p->bi_size == size) {
+  if(p != NULL && p->bi_content_hash == dc && p->bi_size == b->b_size) {
     p->bi_modtime = mtime;
     p->bi_expiry = now + maxage;
     p->bi_lastaccess = now;
@@ -355,7 +354,7 @@ blobcache_put(const char *key, const char *stash,
     return 0;
   }
 
-  if(write(fd, data, size) != size) {
+  if(write(fd, b->b_ptr, b->b_size) != b->b_size) {
     unlink(filename);
     hts_mutex_unlock(&cache_lock);
     return 0;
@@ -379,7 +378,7 @@ blobcache_put(const char *key, const char *stash,
   p->bi_lastaccess = now;
   p->bi_content_hash = dc;
   current_cache_size -= p->bi_size;
-  p->bi_size = size;
+  p->bi_size = b->b_size;
   current_cache_size += p->bi_size;
 
   if(blobcache_compute_maxsize() < current_cache_size &&
@@ -394,8 +393,8 @@ blobcache_put(const char *key, const char *stash,
 /**
  *
  */
-void *
-blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
+buf_t *
+blobcache_get(const char *key, const char *stash, int pad,
 	      int *ignore_expiry, char **etagp, time_t *mtimep)
 {
   uint64_t dk = digest_key(key, stash);
@@ -458,22 +457,20 @@ blobcache_get(const char *key, const char *stash, size_t *sizep, int pad,
   if(ignore_expiry != NULL)
     *ignore_expiry = expired;
 
-  uint8_t *r = mymalloc(st.st_size + pad);
-  if(r == NULL) {
+  buf_t *b = buf_create(st.st_size + pad);
+  if(b == NULL) {
     close(fd);
     return NULL;
   }
 
-  if(read(fd, r, st.st_size) != st.st_size) {
-    free(r);
+  if(read(fd, b->b_ptr, st.st_size) != st.st_size) {
+    buf_release(b);
     close(fd);
     return NULL;
   }
-  memset(r + st.st_size, 0, pad);
+  memset(b->b_ptr + st.st_size, 0, pad);
   close(fd);
-
-  *sizep = st.st_size;
-  return r;
+  return b;
 }
 
 

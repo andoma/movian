@@ -256,9 +256,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
     ver++;
     snprintf(path, sizeof(path), "%s/%03d.sql", schemadir, ver);
 
-    size_t size;
-    char *sql = fa_load(path, &size, NULL, buf, sizeof(buf), NULL, 0,
-			NULL, NULL);
+    buf_t *sql = fa_load(path, NULL, buf, sizeof(buf), NULL, 0, NULL, NULL);
     if(sql == NULL) {
       TRACE(TRACE_ERROR, "DB",
 	    "%s: Unable to upgrade db schema to version %d using %s -- %s",
@@ -273,7 +271,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
       break;
     }
 
-    const char *s = sql;
+    const char *s = buf_cstr(sql);
 
     while(strchr(s, ';') != NULL) {
       sqlite3_stmt *stmt;
@@ -297,7 +295,7 @@ db_upgrade_schema(sqlite3 *db, const char *schemadir, const char *dbname)
 
     db_commit(db);
     TRACE(TRACE_INFO, "DB", "%s: Upgraded to version %d", dbname, ver);
-    free(sql);
+    buf_release(sql);
   }
  fail:
   db_rollback(db);

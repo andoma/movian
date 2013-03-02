@@ -1171,8 +1171,7 @@ js_plugin_unload(const char *id)
 int
 js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 {
-  char *sbuf;
-  size_t size;
+  buf_t *buf;
   JSContext *cx;
   js_plugin_t *jsp;
   JSObject *pobj, *gobj;
@@ -1183,8 +1182,7 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
   
   ref = fa_reference(url);
 
-  if((sbuf = fa_load(url, &size, NULL, errbuf, errlen, NULL, 0,
-		     NULL, NULL)) == NULL) {
+  if((buf = fa_load(url, NULL, errbuf, errlen, NULL, 0, NULL, NULL)) == NULL) {
     fa_unreference(ref);
     return -1;
   }
@@ -1239,8 +1237,8 @@ js_plugin_load(const char *id, const char *url, char *errbuf, size_t errlen)
 
   jsp->jsp_protect_object = 1;
 
-  s = JS_CompileScript(cx, pobj, sbuf, size, url, 1);
-  free(sbuf);
+  s = JS_CompileScript(cx, pobj, buf_cstr(buf), buf->b_size, url, 1);
+  buf_release(buf);
 
   if(s != NULL) {
     JSObject *sobj = JS_NewScriptObject(cx, s);

@@ -74,8 +74,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   int r;
   htsmsg_t *out;
   htsbuf_queue_t post;
-  char *xmldata;
-  size_t xmlsize;
+  buf_t *result;
   struct http_header_list hdrs = {0};
   char tmp[100];
 
@@ -94,7 +93,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
 
   http_header_add(&hdrs, "SOAPACTION", tmp, 0);
 
-  r = http_request(uri, NULL, &xmldata, &xmlsize, errbuf, errlen,
+  r = http_request(uri, NULL, &result, errbuf, errlen,
 		   &post, "text/xml; charset=\"utf-8\"",
 		   0, NULL, &hdrs, NULL, NULL, NULL);
 
@@ -105,7 +104,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
   if(r)
     return -1;
 
-  out = htsmsg_xml_deserialize(xmldata, errbuf, errlen);
+  out = htsmsg_xml_deserialize_buf2(result, errbuf, errlen);
   if(out == NULL)
     return -1;
 

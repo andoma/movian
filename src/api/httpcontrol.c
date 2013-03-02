@@ -369,16 +369,15 @@ hc_logfile(http_connection_t *hc, const char *remain, void *opaque,
   if(remain == NULL)
     return 400;
   const int n = atoi(remain);
-  size_t size;
   const char *mode = http_arg_get_req(hc, "mode");
 
   char p1[500];
   snprintf(p1, sizeof(p1), "%s/log/showtime.log.%d", gconf.cache_path, n);
-  char *buf = fa_load(p1, &size, NULL, NULL, 0, NULL, 0, NULL, NULL);
-  
+  buf_t *buf = fa_load(p1, NULL, NULL, 0, NULL, 0, NULL, NULL);
+
   if(buf == NULL)
     return 404;
-  htsbuf_append_prealloc(&out, buf, size);
+  htsbuf_append_buf(&out, buf);
   if (mode != NULL && !strcmp(mode, "download")) {
     snprintf(p1, sizeof(p1), "attachment; filename=\"showtime.log.%d\"", n);
     http_set_response_hdr(hc, "Content-Disposition", p1);

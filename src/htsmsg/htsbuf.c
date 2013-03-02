@@ -432,3 +432,10 @@ htsbuf_to_rstr(htsbuf_queue_t *hq, const char *prefix)
   htsbuf_read(hq, rstr_data(r) + pfxlen, hq->hq_size);
   return r;
 }
+
+
+void
+htsbuf_append_buf(htsbuf_queue_t *hq, buf_t *b)
+{
+  htsbuf_append(hq, b->b_ptr, b->b_size);
+}

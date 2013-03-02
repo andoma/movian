@@ -23,7 +23,7 @@
 #include <inttypes.h>
 
 #include "misc/queue.h"
-
+#include "misc/buf.h"
 
 TAILQ_HEAD(htsbuf_data_queue, htsbuf_data);
 
@@ -52,6 +52,8 @@ void htsbuf_qprintf(htsbuf_queue_t *hq, const char *fmt, ...);
 void htsbuf_append(htsbuf_queue_t *hq, const void *buf, size_t len);
 
 void htsbuf_append_prealloc(htsbuf_queue_t *hq, const void *buf, size_t len);
+
+void htsbuf_append_buf(htsbuf_queue_t *hq, buf_t *b);
 
 void htsbuf_data_free(htsbuf_queue_t *hq, htsbuf_data_t *hd);
 

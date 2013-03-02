@@ -24,14 +24,16 @@
 
 #include "gz.h"
 #include "showtime.h"
+#include "misc/buf.h"
 
 /**
  *
  */
 int
-gz_check(const char *in, size_t inlen)
+gz_check(const buf_t *b)
 {
-  if(inlen < 10 || in[0] != 0x1f || in[1] != 0x8b || in[2] != 0x08)
+  const uint8_t *in = buf_c8(b);
+  if(b->b_size < 10 || in[0] != 0x1f || in[1] != 0x8b || in[2] != 0x08)
     return 0;
   return 1;
 }
@@ -40,22 +42,26 @@ gz_check(const char *in, size_t inlen)
 /**
  *
  */
-void *
-gz_inflate(char *in, size_t inlen, size_t *outlenptr,
-	   char *errbuf, size_t errlen)
+buf_t *
+gz_inflate(buf_t *bin, char *errbuf, size_t errlen)
 {
   z_stream z = {0};
   unsigned char *out;
   size_t outlen;
   int r;
 
-  if(!gz_check(in, inlen)) {
+  if(!gz_check(bin)) {
     snprintf(errbuf, errlen, "Invalid header");
+    buf_release(bin);
     return NULL;
   }
 
+  const uint8_t *in = buf_c8(bin);
+  size_t inlen = bin->b_size;
+
   if(in[3] != 0) {
     snprintf(errbuf, errlen, "Header extensions is not supported");
+    buf_release(bin);
     return NULL;
   }
 
@@ -67,6 +73,7 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
 
   if(inflateInit2(&z, -MAX_WBITS) != Z_OK) {
     snprintf(errbuf, errlen, "Inflate init failed");
+    buf_release(bin);
     return NULL;
   }
 
@@ -75,6 +82,7 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
   if(out == NULL) {
     snprintf(errbuf, errlen, "Out of memory");
     inflateEnd(&z);
+    buf_release(bin);
     return NULL;
   }
 
@@ -96,12 +104,13 @@ gz_inflate(char *in, size_t inlen, size_t *outlenptr,
       snprintf(errbuf, errlen, "inflate: %s", z.msg);
       inflateEnd(&z);
       free(out);
+      buf_release(bin);
       return NULL;
     }
   }
 
   out[z.total_out] = 0;
-  *outlenptr = z.total_out;
   inflateEnd(&z);
-  return out;
+  buf_release(bin);
+  return buf_create_and_adopt(z.total_out, out, &free);
 }

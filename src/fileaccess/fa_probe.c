@@ -309,13 +309,13 @@ fa_probe_header(metadata_t *md, const char *url, fa_handle_t *fh,
   if(buf[0] == 0x50 && buf[1] == 0x4b && buf[2] == 0x03 && buf[3] == 0x04) {
 
     char path[256];
-    char *buf;
+    buf_t *buf;
 
     snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-    buf = fa_load(path, NULL, NULL, NULL, 0, NULL, 0, NULL, NULL);
+    buf = fa_load(path, NULL, NULL, 0, NULL, 0, NULL, NULL);
     if(buf != NULL) {
-      htsmsg_t *json = htsmsg_json_deserialize(buf);
-      free(buf);
+      htsmsg_t *json = htsmsg_json_deserialize(buf_cstr(buf));
+      buf_release(buf);
 
       if(json != NULL) {
 	const char *title = htsmsg_get_str(json, "title");

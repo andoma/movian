@@ -113,8 +113,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 				  int width, int height),
 		       void *opaque)
 {
-  char *result;
-  size_t resultsize;
+  buf_t *result;
   char errbuf[100];
   int n, page = 1;
   htsmsg_t *xml, *info;
@@ -131,7 +130,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 		       "artist", artist,
 		       "api_key", LASTFM_APIKEY,
 		       NULL, NULL},
-		   &result, &resultsize, errbuf, sizeof(errbuf),
+		   &result, errbuf, sizeof(errbuf),
 		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
 		   NULL, NULL);
   if(n) {
@@ -140,7 +139,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
   }
   
   /* XML parser consumes 'buf' */
-  if((info = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+  if((info = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }
@@ -169,7 +168,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
 			 "order", "popularity",
 			 "page", str,
 			 NULL, NULL},
-		     &result, &resultsize, errbuf, sizeof(errbuf),
+		     &result, errbuf, sizeof(errbuf),
 		     NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
 		     NULL, NULL);
 
@@ -178,8 +177,7 @@ lastfm_load_artistinfo(void *db, const char *artist,
       break;
     }
 
-    /* XML parser consumes 'buf' */
-    if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+    if((xml = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
       TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
       break;
     }
@@ -298,8 +296,7 @@ lastfm_parse_albuminfo(void *db, htsmsg_t *xml, const char *artist,
 void
 lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 {
-  char *result;
-  size_t resultsize;
+  buf_t *result;
   char errbuf[100];
   int n;
   htsmsg_t *xml;
@@ -315,7 +312,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
 		       "album", album,
 		       "api_key", LASTFM_APIKEY,
 		       NULL, NULL},
-		   &result, &resultsize, errbuf, sizeof(errbuf),
+		   &result, errbuf, sizeof(errbuf),
 		   NULL, NULL, FA_COMPRESSION, NULL, NULL, NULL,
 		   NULL, NULL);
 
@@ -324,7 +321,7 @@ lastfm_load_albuminfo(void *db, const char *album, const char *artist)
    return;
   }
   /* XML parser consumes 'buf' */
-  if((xml = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf))) == NULL) {
+  if((xml = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf))) == NULL) {
     TRACE(TRACE_DEBUG, "lastfm", "lastfm xml parse failed: %s",  errbuf);
     return;
   }

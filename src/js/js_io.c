@@ -29,8 +29,7 @@
 #include "backend/backend.h"
 
 typedef struct js_http_response {
-  char *data;
-  size_t datalen;
+  buf_t *buf;
   char *contenttype;
 } js_http_response_t;
 
@@ -45,7 +44,7 @@ http_response_finalize(JSContext *cx, JSObject *obj)
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
 
   free(jhr->contenttype);
-  free(jhr->data);
+  buf_release(jhr->buf);
   free(jhr);
 }
 
@@ -58,7 +57,7 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 		       jsval *argv, jsval *rval)
 {
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
-  const char *r = jhr->data, *r2;
+  const char *r = buf_cstr(jhr->buf), *r2;
   char *tmpbuf = NULL;
   int isxml;
   const charset_t *cs = NULL;
@@ -89,11 +88,11 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
   }
   
 
-  if(cs == NULL && !utf8_verify(jhr->data))
+  if(cs == NULL && !utf8_verify(buf_cstr(jhr->buf)))
     cs = charset_get(NULL);
 
   if(cs != NULL)
-    r = tmpbuf = utf8_from_bytes(jhr->data, jhr->datalen, cs->ptr);
+    r = tmpbuf = utf8_from_bytes(buf_cstr(jhr->buf), jhr->buf->b_size, cs->ptr);
 
   if(isxml && 
      (r2 = strstr(r, "<?xml ")) != NULL &&
@@ -178,8 +177,7 @@ js_http_request(JSContext *cx, jsval *rval,
   char **httpargs = NULL;
   int i;
   char errbuf[256];
-  char *result = NULL;
-  size_t resultsize = 0;
+  buf_t *result;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
   struct http_header_list in_headers;
@@ -282,7 +280,6 @@ js_http_request(JSContext *cx, jsval *rval,
   jsrefcount s = JS_SuspendRequest(cx);
   int n = http_request(url, (const char **)httpargs, 
 		       headreq ? NULL : &result,
-		       headreq ? NULL : &resultsize,
 		       errbuf, sizeof(errbuf),
 		       postdata, postcontenttype,
 		       flags,
@@ -302,11 +299,7 @@ js_http_request(JSContext *cx, jsval *rval,
 
   js_http_response_t *jhr = calloc(1, sizeof(js_http_response_t));
 
-  if(result) {
-    jhr->data = result;
-    jhr->datalen = resultsize;
-  }
-
+  jhr->buf = result;
   mystrset(&jhr->contenttype,
 	   http_header_get(&response_headers, "content-type"));
 
@@ -416,15 +409,13 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 {
   const char *url;
   char errbuf[256];
-  void *result;
-  size_t size;
+  buf_t *result;
 
   if(!JS_ConvertArguments(cx, argc, argv, "s", &url))
     return JS_FALSE;
 
   jsrefcount s = JS_SuspendRequest(cx);
-  result = fa_load(url, &size, NULL, errbuf, sizeof(errbuf), NULL, 0,
-		   NULL, NULL);
+  result = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
   JS_ResumeRequest(cx, s);
 
   if(result == NULL) {
@@ -432,7 +423,8 @@ js_readFile(JSContext *cx, JSObject *obj, uintN argc,
     return JS_FALSE;
   }
 
-  *rval = STRING_TO_JSVAL(JS_NewString(cx, result, size));
+  *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, buf_cstr(result)));
+  buf_release(result);
   return JS_TRUE;
 }
 #endif

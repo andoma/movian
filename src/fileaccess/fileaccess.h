@@ -28,6 +28,7 @@
 #include "metadata/metadata.h"
 #include "navigator.h"
 #include "misc/redblack.h"
+#include "misc/buf.h"
 
 typedef int (fa_load_cb_t)(void *opaque, int loaded, int total);
 
@@ -182,15 +183,15 @@ void fa_scanner_page(const char *url, time_t mtime,
 
 int fa_scanner_scan(const char *url, time_t mtime);
 
-void *fa_load(const char *url, size_t *sizep, const char **vpaths,
-	      char *errbuf, size_t errlen, int *cache_control, int flags,
-	      fa_load_cb_t *cb, void *opaque);
+buf_t *fa_load(const char *url, const char **vpaths,
+               char *errbuf, size_t errlen, int *cache_control, int flags,
+               fa_load_cb_t *cb, void *opaque);
 
-uint8_t *fa_load_and_close(fa_handle_t *fh, size_t *sizep);
+buf_t *fa_load_and_close(fa_handle_t *fh);
 
-void *fa_load_query(const char *url, size_t *sizep,
-		    char *errbuf, size_t errlen, int *cache_control,
-		    const char **arguments, int flags);
+buf_t *fa_load_query(const char *url,
+                     char *errbuf, size_t errlen, int *cache_control,
+                     const char **arguments, int flags);
 
 int fa_parent(char *dst, size_t dstlen, const char *url);
 
@@ -208,7 +209,7 @@ int fa_read_to_htsbuf(struct htsbuf_queue *hq, fa_handle_t *fh, int maxbytes);
 struct htsbuf_queue;
 
 int http_request(const char *url, const char **arguments, 
-		 char **result, size_t *result_sizep,
+                 buf_t **result,
 		 char *errbuf, size_t errlen,
 		 struct htsbuf_queue *postdata, const char *postcontenttype,
 		 int flags, struct http_header_list *headers_out,

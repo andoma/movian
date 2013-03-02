@@ -84,7 +84,7 @@ static void
 check_upgrade(int set_news)
 {
   char url[1024];
-  char *result;
+  buf_t *b;
   htsmsg_t *json;
   char errbuf[1024];
 
@@ -104,17 +104,17 @@ check_upgrade(int set_news)
   snprintf(url, sizeof(url), "%s/%s-%s.json", ctrlbase, upgrade_track,
 	   archname);
 
-  result = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf),
-		   NULL, 0, NULL, NULL);
-  if(result == NULL) {
+  b = fa_load(url, NULL, errbuf, sizeof(errbuf),
+              NULL, 0, NULL, NULL);
+  if(b == NULL) {
     prop_set_string(upgrade_error, errbuf);
   err:
     prop_set_string(upgrade_status, "checkError");
     return;
   }
-  
-  json = htsmsg_json_deserialize(result);
-  free(result);
+
+  json = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
 
   if(json == NULL) {
     prop_set_string(upgrade_error, "Malformed JSON in repository");
@@ -258,10 +258,9 @@ install_thread(void *aux)
   TRACE(TRACE_INFO, "upgrade", "Starting download of %s (%d bytes)", 
 	download_url, download_size);
  
-  char *result;
-  size_t result_size;
+  buf_t *b;
 
-  int r = http_request(download_url, NULL, &result, &result_size,
+  int r = http_request(download_url, NULL, &b,
 		       errbuf, sizeof(errbuf), NULL, NULL, 0,
 		       NULL, NULL, NULL, download_callback, NULL);
   
@@ -271,7 +270,7 @@ install_thread(void *aux)
   }
 
   TRACE(TRACE_DEBUG, "upgrade", "Verifying SHA-1 of %d bytes",
-	(int)result_size);
+        (int)b->b_size);
 
   prop_set_string(upgrade_status, "install");
 
@@ -281,7 +280,7 @@ install_thread(void *aux)
   int match;
 
   sha1_init(shactx);
-  sha1_update(shactx, (void *)result, result_size);
+  sha1_update(shactx, b->b_ptr, b->b_size);
   sha1_final(shactx, digest);
 
 
@@ -293,18 +292,18 @@ install_thread(void *aux)
 
   if(!match) {
     install_error("SHA-1 sum mismatch");
-    free(result);
+    buf_release(b);
     return NULL;
   }
 
   const char *fname = gconf.binary;
 
   TRACE(TRACE_INFO, "upgrade", "Replacing %s with %d bytes received",
-	fname, (int)result_size);
+	fname, (int)b->b_size);
 
   if(unlink(fname)) {
     install_error("Unlink failed");
-    free(result);
+    buf_release(b);
     return NULL;
   }
 
@@ -313,12 +312,13 @@ install_thread(void *aux)
   int fd = open(fname, O_CREAT | O_RDWR, 0777);
   if(fd == -1) {
     install_error("Unable to open file");
-    free(result);
+    buf_release(b);
     return NULL;
   }
 
-  int fail = write(fd, result, result_size) != result_size || close(fd);
-  free(result);
+  int fail = write(fd, b->b_ptr, b->b_size) != b->b_size;
+  fail |= !!close(fd);
+  buf_release(b);
 
   if(fail) {
     install_error("Unable to write to file");

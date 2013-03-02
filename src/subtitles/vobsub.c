@@ -73,7 +73,7 @@ void
 vobsub_probe(const char *url, const char *filename,
 	     int score, struct prop *prop, const char *subfile)
 {
-  char *buf;
+  buf_t *b;
   char errbuf[256];
   struct fa_stat st;
 
@@ -92,14 +92,13 @@ vobsub_probe(const char *url, const char *filename,
     return;
   }
 
-  buf = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf),
-		DISABLE_CACHE, 0, NULL, NULL);
-  if(buf == NULL) {
+  b = fa_load(url, NULL, errbuf, sizeof(errbuf), DISABLE_CACHE, 0, NULL, NULL);
+  if(b == NULL) {
     TRACE(TRACE_ERROR, "VOBSUB", "Unable to load %s -- %s", url, errbuf);
     return;
   }
-  
-  char *s = buf;
+  b = buf_make_writable(b);
+  char *s = buf_str(b);
   int l;
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     const char *p;
@@ -129,7 +128,7 @@ vobsub_probe(const char *url, const char *filename,
       }
     }
   }
-  free(buf);
+  buf_release(b);
 }
 
 
@@ -553,10 +552,10 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
     return NULL;
   }
 
-  char *buf;
+  buf_t *b;
 
-  if((buf = fa_load(idxfile, NULL, NULL, errbuf, errlen,
-		    DISABLE_CACHE, 0, NULL, NULL)) == NULL)
+  if((b = fa_load(idxfile, NULL, errbuf, errlen,
+                  DISABLE_CACHE, 0, NULL, NULL)) == NULL)
     return NULL;
 
   vobsub_t *vs = calloc(1, sizeof(vobsub_t));
@@ -565,14 +564,15 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   vs->vs_ctx = avcodec_alloc_context3(NULL);
 
   if((vs->vs_sub = fa_open(subfile, errbuf, errlen)) == NULL) {
-    free(buf);
+    buf_release(b);
     free(vs);
     return NULL;
   }
 
   TAILQ_INIT(&vs->vs_entries);
   
-  char *s = buf;
+  b = buf_make_writable(b);
+  char *s = buf_str(b);
   int l;
   int parse_ts = 0;
   int write_stop = 0;
@@ -625,7 +625,7 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   if(write_stop)
     vs->vs_stop = fa_fsize(vs->vs_sub);
 
-  free(buf);
+  buf_release(b);
 
   vs->vs_es.es_dtor = vobsub_dtor;
   vs->vs_es.es_picker = vobsub_picker;

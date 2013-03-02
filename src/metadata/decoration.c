@@ -1107,12 +1107,11 @@ decoration_init(void)
 static void
 load_nfo(deco_item_t *di)
 {
-  char *buf = fa_load(rstr_get(di->di_url), NULL, NULL, NULL, 0, NULL, 0,
-		      NULL, NULL);
-  if(buf == NULL)
+  buf_t *b = fa_load(rstr_get(di->di_url), NULL, NULL, 0, NULL, 0, NULL, NULL);
+  if(b == NULL)
     return;
 
-  const char *tt = strstr(buf, "http://www.imdb.com/title/tt");
+  const char *tt = strstr(buf_cstr(b), "http://www.imdb.com/title/tt");
   if(tt != NULL) {
     tt += strlen("http://www.imdb.com/title/");
 
@@ -1123,5 +1122,5 @@ load_nfo(deco_item_t *di)
     
     rstr_release(r);
   }
-  free(buf);
+  buf_release(b);
 }

@@ -624,49 +624,44 @@ fileaccess_init(void)
 /**
  *
  */
-void *
-fa_load(const char *url, size_t *sizep, const char **vpaths,
+buf_t *
+fa_load(const char *url, const char **vpaths,
 	char *errbuf, size_t errlen, int *cache_control, int flags,
 	fa_load_cb_t *cb, void *opaque)
 {
   fa_protocol_t *fap;
   fa_handle_t *fh;
-  size_t size;
-  char *data = NULL, *filename;
+  char *filename;
   int r;
   char *etag = NULL;
   time_t mtime = 0;
   int is_expired = 0;
-
-  if(sizep == NULL) // For convenience
-    sizep = &size;
+  buf_t *buf = NULL;
 
   if((filename = fa_resolve_proto(url, &fap, vpaths, errbuf, errlen)) == NULL)
     return NULL;
 
   if(fap->fap_load != NULL) {
-    char *data2;
-    size_t size2;
+    buf_t *data2;
     int max_age = 0;
 
     if(cache_control != BYPASS_CACHE && cache_control != DISABLE_CACHE) {
-      data = blobcache_get(url, "fa_load", sizep, 1,
-			   &is_expired, &etag, &mtime);
+      buf = blobcache_get(url, "fa_load", 1, &is_expired, &etag, &mtime);
 
-      if(data != NULL) {
+      if(buf != NULL) {
 	if(cache_control != NULL) {
 	  // Upper layer can deal with expired data, pass it
 	  *cache_control = is_expired;
 	  free(etag);
 	  free(filename);
-	  return data;
+	  return buf;
 	}
 	
 	// It was not expired, return it
 	if(!is_expired) {
 	  free(etag);
 	  free(filename);
-	  return data;
+	  return buf;
 	}
       } else if(cache_control != NULL) {
 	snprintf(errbuf, errlen, "Not cached");
@@ -679,7 +674,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     if(cache_control == BYPASS_CACHE)
       blobcache_get_meta(url, "fa_load", &etag, &mtime);
     
-    data2 = fap->fap_load(fap, filename, &size2, errbuf, errlen,
+    data2 = fap->fap_load(fap, filename, errbuf, errlen,
 			  &etag, &mtime, &max_age, flags, cb, opaque);
     
     free(filename);
@@ -688,15 +683,15 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
 	return NOT_MODIFIED;
 
       free(etag);
-      return data;
+      return buf;
     }
 
-    free(data);
+    buf_release(buf);
 
     int d;
     if(data2 && cache_control != DISABLE_CACHE &&
        (cache_control || max_age || etag || mtime)) {
-      d = blobcache_put(url, "fa_load", data2, size2, max_age, etag, mtime);
+      d = blobcache_put(url, "fa_load", data2, max_age, etag, mtime);
     } else {
       d = 0;
     }
@@ -707,8 +702,6 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
       return NOT_MODIFIED;
     }
 
-    if(sizep != NULL)
-      *sizep = size2;
     return data2;
   }
 
@@ -721,14 +714,14 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
   if(fh == NULL)
     return NULL;
 
-  size = fa_fsize(fh);
+  size_t size = fa_fsize(fh);
   if(size == -1) {
     snprintf(errbuf, errlen, "Unable to load file from non-seekable fs");
     fa_close(fh);
     return NULL;
   }
 
-  data = mymalloc(size + 1);
+  uint8_t *data = mymalloc(size + 1);
   if(data == NULL) {
     snprintf(errbuf, errlen, "Out of memory");
     fa_close(fh);
@@ -744,8 +737,7 @@ fa_load(const char *url, size_t *sizep, const char **vpaths,
     return NULL;
   }
   data[size] = 0;
-  *sizep = size;
-  return data;
+  return buf_create_and_adopt(size, data, &free);
 }
 
 
@@ -880,8 +872,8 @@ fa_url_get_last_component(char *dst, size_t dstlen, const char *url)
 /**
  *
  */
-uint8_t *
-fa_load_and_close(fa_handle_t *fh, size_t *sizep)
+buf_t *
+fa_load_and_close(fa_handle_t *fh)
 {
   size_t r;
   size_t size = fa_fsize(fh);
@@ -901,23 +893,20 @@ fa_load_and_close(fa_handle_t *fh, size_t *sizep)
     return NULL;
   }
 
-  if(sizep != NULL)
-    *sizep = size;
-  mem[size] = 0; 
-  return mem;
+  mem[size] = 0;
+  return buf_create_and_adopt(size, mem, &free);
 }
 
 
 /**
  *
  */
-void *
-fa_load_query(const char *url0, size_t *sizep,
+buf_t *
+fa_load_query(const char *url0,
 	      char *errbuf, size_t errlen, int *cache_control,
 	      const char **arguments, int flags)
 {
   htsbuf_queue_t q;
-  void *r;
   htsbuf_queue_init(&q, 0);
 
   htsbuf_append(&q, url0, strlen(url0));
@@ -939,11 +928,11 @@ fa_load_query(const char *url0, size_t *sizep,
   
   char *url = htsbuf_to_string(&q);
 
-  r = fa_load(url, sizep, NULL, errbuf, errlen, cache_control, flags,
-	      NULL, NULL);
+  buf_t *b = fa_load(url, NULL, errbuf, errlen, cache_control, flags,
+                     NULL, NULL);
   free(url);
   htsbuf_queue_flush(&q);
-  return r;
+  return b;
 }
 
 

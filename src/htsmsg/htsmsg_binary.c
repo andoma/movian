@@ -96,7 +96,7 @@ htsmsg_binary_des0(htsmsg_t *msg, const uint8_t *buf, size_t len)
     case HMF_LIST:
       sub = &f->hmf_msg;
       TAILQ_INIT(&sub->hm_fields);
-      sub->hm_data = NULL;
+      sub->hm_free_opaque = NULL;
       if(htsmsg_binary_des0(sub, buf, datalen) < 0)
 	return -1;
       break;
@@ -120,10 +120,11 @@ htsmsg_binary_des0(htsmsg_t *msg, const uint8_t *buf, size_t len)
  *
  */
 htsmsg_t *
-htsmsg_binary_deserialize(const void *data, size_t len, const void *buf)
+htsmsg_binary_deserialize(const void *data, size_t len, void *buf)
 {
   htsmsg_t *msg = htsmsg_create_map();
-  msg->hm_data = buf;
+  msg->hm_opaque = buf;
+  msg->hm_free_opaque = &free;
 
   if(htsmsg_binary_des0(msg, data, len) < 0) {
     htsmsg_destroy(msg);

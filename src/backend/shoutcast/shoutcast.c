@@ -85,7 +85,7 @@ be_shoutcast_canhandle(const char *url)
 }
 
 static int 
-sc_parse_playlist_pls(sc_shoutcast_t *sc, char *content)
+sc_parse_playlist_pls(sc_shoutcast_t *sc, const char *content)
 {
   char *ps, *pe;
   int idx = 0;
@@ -117,7 +117,7 @@ sc_parse_playlist_pls(sc_shoutcast_t *sc, char *content)
 }
 
 static int 
-sc_parse_playlist_m3u(sc_shoutcast_t *sc, char *content)
+sc_parse_playlist_m3u(sc_shoutcast_t *sc, const char *content)
 {
   char *ps, *pe;
   int idx = 0;
@@ -728,8 +728,7 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
 		   const char *mimetype)
 {
   int n;
-  char *result;
-  size_t ressize;
+  buf_t *result;
   int playlist_stream_cnt, current_stream_idx;
   sc_shoutcast_t *sc;
   http_header_t *hh;
@@ -750,7 +749,7 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
   // First get headers and check if we got a playlist url
   current_stream_idx = playlist_stream_cnt = 0;
   n = http_request(url0, NULL, 
-		  &result, &ressize, errbuf, errlen, 
+		  &result, errbuf, errlen, 
 		   NULL, NULL, 0, &sc->sc_headers, NULL, NULL,
 		  NULL, NULL);
 
@@ -763,16 +762,16 @@ be_shoutcast_play(const char *url0, media_pipe_t *mp,
     // TRACE(TRACE_DEBUG,"shoutcast", "%s: %s", hh->hh_key, hh->hh_value);
     if (!strcmp(hh->hh_key, "Content-Type")) {
       if (!strncmp(hh->hh_value, "audio/x-scpls", strlen("audio/x-scpls")))
-	playlist_stream_cnt = sc_parse_playlist_pls(sc, result);
+	playlist_stream_cnt = sc_parse_playlist_pls(sc, buf_cstr(result));
       else if (!strncmp(hh->hh_value, "audio/x-mpegurl", strlen("audio/x-mpegurl")))
-	playlist_stream_cnt = sc_parse_playlist_m3u(sc, result);
+	playlist_stream_cnt = sc_parse_playlist_m3u(sc, buf_cstr(result));
       else if (strncmp(hh->hh_value, "audio/", 6)) {
 	TRACE(TRACE_ERROR, "shoutcast", "Unhandled content type: %s",hh->hh_value);
 	return NULL;
       }
     }
   }
-  free(result);
+  buf_release(result);
 
 retry_next_stream:
   free(sc->sc_stream_url);

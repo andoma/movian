@@ -201,22 +201,23 @@ vsource_parse_hls(struct vsource_list *list, char *s, const char *base)
 static void
 vsource_load_hls(struct vsource_list *list, const char *url)
 {
-  char *buf;
+  buf_t *b;
   char errbuf[256];
 
-  buf = fa_load(url, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  b = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
 
-  if(buf == NULL) {
+  if(b == NULL) {
     TRACE(TRACE_INFO, "HLS", "Unable to open %s -- %s", url, errbuf);
     return;
   }
 
-  if(mystrbegins(buf, "#EXTM3U")) {
-    vsource_parse_hls(list, buf, url);
+  if(mystrbegins(buf_cstr(b), "#EXTM3U")) {
+    b = buf_make_writable(b);
+    vsource_parse_hls(list, buf_str(b), url);
   } else {
     TRACE(TRACE_INFO, "HLS", "%s is not an EXTM3U file", url);
   }
-  free(buf);
+  buf_release(b);
 }
 
 

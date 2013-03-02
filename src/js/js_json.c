@@ -308,7 +308,6 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
   char stash[256];
   const char *key,*lstash;
-  char *value;
   uint32_t len, maxage;
   JSObject *o;
   htsbuf_queue_t out;
@@ -331,14 +330,14 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   }
 
   len = out.hq_size;
-  value = JS_malloc(cx,len + 1);
-  value[len] = '\0';
-  htsbuf_read(&out, value, len);
+  buf_t *b = buf_create(len + 1);
+  htsbuf_read(&out, b->b_ptr, len);
+  buf_str(b)[len] = '\0';
 
   // put json encoded object onto cache
   snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
-  blobcache_put(key, stash, value, len, maxage, NULL, 0);
-
+  blobcache_put(key, stash, b, maxage, NULL, 0);
+  buf_release(b);
   return JS_TRUE;
 }
 
@@ -348,8 +347,7 @@ js_cache_put(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 JSBool
 js_cache_get(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 {
-  void *value;
-  size_t vsize;
+  buf_t *b;
   char stash[256];
   char errbuf[256];
   const char *key,*lstash;
@@ -362,9 +360,9 @@ js_cache_get(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
 
   // fetch json from cache
   snprintf(stash, sizeof(stash), "plugin/%s/%s", jsp->jsp_id, lstash);
-  value = blobcache_get(key, stash, &vsize, 0, NULL, NULL, NULL);
+  b = blobcache_get(key, stash, 0, NULL, NULL, NULL);
 
-  if(value == NULL) {
+  if(b == NULL) {
     *rval = OBJECT_TO_JSVAL(NULL);
     return JS_TRUE;
   }
@@ -373,8 +371,8 @@ js_cache_get(JSContext *cx, JSObject *obj, uintN argc, jsval *argv, jsval *rval)
   if(!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
 
-  o = json_deserialize(value, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
-
+  o = json_deserialize(buf_cstr(b), &json_to_jsapi, cx, errbuf, sizeof(errbuf));
+  buf_release(b);
   *rval = OBJECT_TO_JSVAL(o);
 
   JS_LeaveLocalRootScope(cx);
@@ -395,7 +393,8 @@ js_get_descriptor(JSContext *cx, JSObject *obj,
 		    uintN argc, jsval *argv, jsval *rval)
 {
   char pdesc[PATH_MAX];
-  char *pe, *desc;
+  char *pe;
+  buf_t *b;
   char errbuf[128];
   JSObject *o;
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
@@ -407,9 +406,8 @@ js_get_descriptor(JSContext *cx, JSObject *obj,
 
   snprintf(pe + 1, sizeof(pdesc) - (pe - pdesc), "plugin.json");
 
-  desc = fa_load(pdesc, NULL, NULL, errbuf, sizeof(errbuf), 
-		NULL, 0, NULL, NULL);
-  if (desc == NULL) {
+  b = fa_load(pdesc, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  if (b == NULL) {
     TRACE(TRACE_ERROR, "JS", "Unable to read %s -- %s", pdesc, errbuf);
     return JS_FALSE;
   }
@@ -417,8 +415,8 @@ js_get_descriptor(JSContext *cx, JSObject *obj,
   if (!JS_EnterLocalRootScope(cx))
     return JS_FALSE;
 
-  o = json_deserialize(desc, &json_to_jsapi, cx, errbuf, sizeof(errbuf));
-  free(desc);
+  o = json_deserialize(buf_cstr(b), &json_to_jsapi, cx, errbuf, sizeof(errbuf));
+  buf_release(b);
   *rval = OBJECT_TO_JSVAL(o);
 
   JS_LeaveLocalRootScope(cx);

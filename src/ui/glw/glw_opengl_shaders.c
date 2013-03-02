@@ -413,26 +413,28 @@ shader_render(struct glw_root *root,
 static GLuint
 glw_compile_shader(const char *path, int type, glw_root_t *gr)
 {
-  char *src;
   GLint v, len;
   GLuint s;
   char log[4096];
-  
-  if((src = fa_load(path, NULL, gr->gr_vpaths, log, sizeof(log), NULL, 0,
-		    NULL, NULL)) == NULL) {
+  buf_t *b;
+
+  if((b = fa_load(path, gr->gr_vpaths, log, sizeof(log), NULL, 0,
+                  NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s",
 	  path, log);
     return 0;
   }
-  
+
+  b = buf_make_writable(b);
+  char *src = buf_str(b);
   s = glCreateShader(type);
   glShaderSource(s, 1, (const char **)&src, NULL);
-  
+
   glCompileShader(s);
-  glGetShaderInfoLog(s, sizeof(log), &len, log); 
+  glGetShaderInfoLog(s, sizeof(log), &len, log);
   glGetShaderiv(s, GL_COMPILE_STATUS, &v);
-    
-  free(src);
+
+  buf_release(b);
 
   if(!v) {
     TRACE(TRACE_ERROR, "GLW", "Unable to compile shader %s", path);

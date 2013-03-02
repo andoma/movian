@@ -515,13 +515,13 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp)
 
 
 static ext_subtitles_t *
-subtitles_from_zipfile(media_pipe_t *mp, const void *data, size_t size)
+subtitles_from_zipfile(media_pipe_t *mp, buf_t *b)
 {
   ext_subtitles_t *ret = NULL;
   char errbuf[256];
   char url[64];
 
-  int id = memfile_register(data, size);
+  int id = memfile_register(b->b_ptr, b->b_size);
   snprintf(url, sizeof(url), "zip://memfile://%d", id);
   fa_dir_t *fd = fa_scandir(url, errbuf, sizeof(errbuf));
   if(fd != NULL) {
@@ -550,8 +550,7 @@ subtitles_load(media_pipe_t *mp, const char *url)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
-  size_t size;
-  int datalen;
+
   const char *s;
   if((s = mystrbegins(url, "vobsub:")) != NULL) {
     sub = vobsub_load(s, errbuf, sizeof(errbuf), mp);
@@ -563,42 +562,33 @@ subtitles_load(media_pipe_t *mp, const char *url)
 
   TRACE(TRACE_DEBUG, "Subtitles", "Trying to load %s", url);
 
-  char *data = fa_load(url, &size, NULL, errbuf, sizeof(errbuf),
-		       DISABLE_CACHE, 0, NULL, NULL);
+  buf_t *b = fa_load(url, NULL, errbuf, sizeof(errbuf),
+                     DISABLE_CACHE, 0, NULL, NULL);
 
-  if(data == NULL) {
+  if(b == NULL) {
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- %s", 
 	  url, errbuf);
     return NULL;
   }
 
-  if(size > 4 && !memcmp(data, "PK\003\004", 4)) {
+  if(b->b_size > 4 && !memcmp(buf_cstr(b), "PK\003\004", 4)) {
     TRACE(TRACE_DEBUG, "Subtitles", "%s is a ZIP archive, scanning...", url);
-    return subtitles_from_zipfile(mp, data, size);
+    return subtitles_from_zipfile(mp, b);
   }
-
-  if(gz_check(data, size)) {
+  
+  if(gz_check(b)) {
     // is .gz compressed, inflate it
 
-    char *inflated;
-    size_t inflatedlen;
-
-    inflated = gz_inflate(data, size,
-			  &inflatedlen, errbuf, sizeof(errbuf));
-
-    free(data);
-    if(inflated == NULL) {
+    b = gz_inflate(b, errbuf, sizeof(errbuf));
+    if(b == NULL) {
       TRACE(TRACE_ERROR, "Subtitles", "Unable to decompress %s -- %s", 
 	    url, errbuf);
       return NULL;
     }
-    data = inflated;
-    datalen = inflatedlen;
-  } else {
-    datalen = size;
   }
 
-  sub = subtitles_create(url, data, datalen);
+  b = buf_make_writable(b);
+  sub = subtitles_create(url, b->b_ptr, b->b_size);
 
   if(sub == NULL)
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- Unknown format", 

@@ -836,7 +836,8 @@ htsmsg_xml_deserialize(char *src, char *errbuf, size_t errbufsize)
   }
 
   if(xp.xp_srcdataused) {
-    m->hm_data = src0;
+    m->hm_opaque = src0;
+    m->hm_free_opaque = &free;
   } else {
     free(src0);
   }
@@ -855,5 +856,59 @@ htsmsg_xml_deserialize(char *src, char *errbuf, size_t errbufsize)
     }
   }
 
+  return NULL;
+}
+
+
+
+
+/**
+ *
+ */
+htsmsg_t *
+htsmsg_xml_deserialize_buf2(buf_t *buf, char *errbuf, size_t errbufsize)
+{
+  htsmsg_t *m;
+  xmlparser_t xp;
+  int i;
+  char *src;
+
+  buf = buf_make_writable(buf);
+
+  xp.xp_errmsg[0] = 0;
+  xp.xp_encoding = XML_ENCODING_UTF8;
+  LIST_INIT(&xp.xp_namespaces);
+  src = buf->b_ptr;
+
+  if((src = htsmsg_parse_prolog(&xp, src)) == NULL)
+    goto err;
+
+  m = htsmsg_create_map();
+
+  if(htsmsg_xml_parse_cd(&xp, m, src) == NULL) {
+    htsmsg_destroy(m);
+    goto err;
+  }
+
+  if(xp.xp_srcdataused) {
+    m->hm_opaque = buf;
+    m->hm_free_opaque = (void *)&buf_release;
+  } else {
+    buf_release(buf);
+  }
+  return m;
+
+ err:
+  snprintf(errbuf, errbufsize, "%s", xp.xp_errmsg);
+  
+  /* Remove any odd chars inside of errmsg */
+  for(i = 0; i < errbufsize; i++) {
+    if(errbuf[i] < 32) {
+      errbuf[i] = 0;
+      break;
+    }
+  }
+
+  buf_release(buf);
   return NULL;
 }

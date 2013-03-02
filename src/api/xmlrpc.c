@@ -321,8 +321,7 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 	       char *errbuf, size_t errlen)
 {
   htsbuf_queue_t q;
-  char *result;
-  size_t resultsize;
+  buf_t *result;
   htsmsg_t *xml, *r;
   htsbuf_queue_init(&q, -1);
   htsbuf_qprintf(&q, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"
@@ -335,7 +334,7 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
   htsbuf_qprintf(&q, "</params></methodCall>\n");
 
   int n = http_request(url, NULL,
-		       &result, &resultsize, errbuf, errlen,
+		       &result, errbuf, errlen,
 		       &q, "text/xml", 0, NULL, NULL,
 		       NULL, NULL, NULL);
 
@@ -343,8 +342,8 @@ xmlrpc_request(const char *url, const char *method, htsmsg_t *params,
 
   if(n)
     return NULL;
-
-  if((xml = htsmsg_xml_deserialize(result, errbuf, errlen)) == NULL)
+  xml = htsmsg_xml_deserialize_buf2(result, errbuf, errlen);
+  if(xml == NULL)
     return NULL;
 
   r = xmlrpc_convert_response(xml, errbuf, errlen);

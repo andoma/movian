@@ -2115,13 +2115,13 @@ http_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 /**
  *
  */
-static void *
+static buf_t *
 http_load(struct fa_protocol *fap, const char *url,
-	  size_t *sizep, char *errbuf, size_t errlen,
+	  char *errbuf, size_t errlen,
 	  char **etag, time_t *mtime, int *max_age,
 	  int flags, fa_load_cb_t *cb, void *opaque)
 {
-  char *res;
+  buf_t *b;
   int err;
   struct http_header_list headers_in;
   struct http_header_list headers_out;
@@ -2140,17 +2140,17 @@ http_load(struct fa_protocol *fap, const char *url,
     http_header_add(&headers_in, "If-None-Match", *etag, 0);
   }
 
-  err = http_request(url, NULL, &res, sizep, errbuf, errlen, NULL, NULL,
+  err = http_request(url, NULL, &b, errbuf, errlen, NULL, NULL,
 		     flags,
 		     &headers_out, &headers_in, NULL,
 		     cb, opaque);
   if(err == -1) {
-    res = NULL;
+    b = NULL;
     goto done;
   }
 
   if(err == 304) {
-    res = NOT_MODIFIED;
+    b = NOT_MODIFIED;
     goto done;
   }
 
@@ -2190,7 +2190,7 @@ http_load(struct fa_protocol *fap, const char *url,
  done:
   http_headers_free(&headers_in);
   http_headers_free(&headers_out);
-  return res;
+  return b;
 }
 
 
@@ -2672,7 +2672,7 @@ http_request_partial(void *opaque, int amount)
  */
 int
 http_request(const char *url, const char **arguments, 
-	     char **result, size_t *result_sizep,
+             buf_t **result,
 	     char *errbuf, size_t errlen,
 	     htsbuf_queue_t *postdata, const char *postcontenttype,
 	     int flags, struct http_header_list *headers_out,
@@ -2889,11 +2889,10 @@ http_request(const char *url, const char **arguments,
 
     mem[size] = 0;
 
-    if(result == NULL) {
-      free(mem);
+    if(result != NULL) {
+      *result = buf_create_and_adopt(size, mem, &free);
     } else {
-      *result = mem;
-      *result_sizep = size;
+      free(mem);
     }
 
   } else {
@@ -2993,13 +2992,11 @@ http_request(const char *url, const char **arguments,
     }
 
     buf[size] = 0;
-    if(result == NULL)
+    if(result != NULL) {
+      *result = buf_create_and_adopt(size, buf, &free);
+    } else {
       free(buf);
-    else
-      *result = buf;
-
-    if(result_sizep != NULL)
-      *result_sizep = size;
+    }
   }
 
   if(hf->hf_content_encoding == HTTP_CE_GZIP)

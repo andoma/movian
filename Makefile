@@ -102,6 +102,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/json.c \
 	src/misc/unicode_composition.c \
 	src/misc/pool.c \
+	src/misc/buf.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
@@ -262,6 +263,11 @@ SRCS-$(CONFIG_CDDA)      += src/backend/dvd/cdda.c
 # TV
 ##############################################################
 SRCS  += src/backend/htsp/htsp.c \
+
+##############################################################
+# TV
+##############################################################
+#SRCS  += src/backend/hls/hls.c \
 
 ##############################################################
 # Shoutcast

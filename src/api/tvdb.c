@@ -58,19 +58,17 @@ loadxml(const char *fmt, ...)
   vsnprintf(url+strlen(url), sizeof(url)-strlen(url), fmt, ap);
   va_end(ap);
 
-  char *result = fa_load_query(url, NULL, errbuf, sizeof(errbuf), NULL,
-			       NULL, FA_COMPRESSION);
+  buf_t *result = fa_load_query(url, errbuf, sizeof(errbuf), NULL,
+                                NULL, FA_COMPRESSION);
 
   if(result == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to query for %s -- %s", url, errbuf);
     return NULL;
   }
   
-  htsmsg_t *m = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf));
-  if(m == NULL) {
+  htsmsg_t *m = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf));
+  if(m == NULL)
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML from %s -- %s", url, errbuf);
-    return NULL;
-  }
   return m;
 }
 
@@ -362,11 +360,11 @@ tvdb_query_by_episode(void *db, const char *item_url,
 		      const char *title, int season, int episode,
 		      int qtype)
 {
-  char *result;
+  buf_t *result;
   char errbuf[256];
-
+  
   result = fa_load_query("http://www.thetvdb.com/api/GetSeries.php",
-			 NULL, errbuf, sizeof(errbuf), NULL,
+			 errbuf, sizeof(errbuf), NULL,
 			 (const char *[]){
 			   "seriesname", title,
 			     NULL, NULL},
@@ -377,7 +375,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
     return METADATA_TEMPORARY_ERROR;
   }
   
-  htsmsg_t *gs = htsmsg_xml_deserialize(result, errbuf, sizeof(errbuf));
+  htsmsg_t *gs = htsmsg_xml_deserialize_buf2(result, errbuf, sizeof(errbuf));
   if(gs == NULL) {
     TRACE(TRACE_INFO, "TVDB", "Unable to parse XML -- %s", errbuf);
     return METADATA_TEMPORARY_ERROR;

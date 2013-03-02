@@ -422,16 +422,16 @@ plugin_props_from_file(prop_t *prop, const char *zipfile)
 {
   char path[200];
   char errbuf[200];
-  char *buf;
+  buf_t *b;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", zipfile);
-  buf = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-  if(buf == NULL) {
+  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  if(b == NULL) {
     TRACE(TRACE_ERROR, "plugins", "Unable to open %s -- %s", path, errbuf);
     return;
   }
-  htsmsg_t *pm = htsmsg_json_deserialize(buf);
-  free(buf);
+  htsmsg_t *pm = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
 
   if(pm == NULL)
     return;
@@ -518,17 +518,17 @@ plugin_load(const char *url, char *errbuf, size_t errlen, int force,
 	    int as_installed)
 {
   char ctrlfile[URL_MAX];
-  char *json;
+  buf_t *b;
   htsmsg_t *ctrl;
 
   snprintf(ctrlfile, sizeof(ctrlfile), "%s/plugin.json", url);
 
-  if((json = fa_load(ctrlfile, NULL, NULL, errbuf, errlen, NULL, 0,
-		     NULL, NULL)) == NULL)
+  if((b = fa_load(ctrlfile, NULL, errbuf, errlen, NULL, 0,
+                  NULL, NULL)) == NULL)
     return -1;
 
-  ctrl = htsmsg_json_deserialize(json);
-  free(json);
+  ctrl = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
   if(ctrl != NULL) {
 
     const char *type = htsmsg_get_str(ctrl, "type");
@@ -682,7 +682,7 @@ plugin_load_installed(void)
 static htsmsg_t *
 repo_get(const char *repo, char *errbuf, size_t errlen)
 {
-  char *result;
+  buf_t *b;
   htsmsg_t *json;
   const char *qargs[32];
   int qp = 0;
@@ -703,13 +703,12 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     }
   }
   qargs[qp] = 0;
-  result = fa_load_query(repo, NULL, errbuf, errlen, NULL,
-			 qargs, FA_COMPRESSION);
-  if(result == NULL)
+  b = fa_load_query(repo, errbuf, errlen, NULL, qargs, FA_COMPRESSION);
+  if(b == NULL)
     return NULL;
-  
-  json = htsmsg_json_deserialize(result);
-  free(result);
+
+  json = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
 
   if(json == NULL) {
     snprintf(errbuf, errlen, "Malformed JSON in repository");
@@ -1048,17 +1047,17 @@ plugin_install(plugin_t *pl, const char *package)
   prop_set_rstring(pl->pl_statustxt, s);
   rstr_release(s);
 
-  size_t size;
+  buf_t *b = fa_load(package, NULL, errbuf, sizeof(errbuf),
+                     NULL, 0, NULL, NULL);
 
-  char *buf = fa_load(package, &size, NULL,
-		      errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-
-  if(buf == NULL) {
+  if(b == NULL) {
     prop_set_string(pl->pl_statustxt, errbuf);
     return -1;
   }
 
-  if(size < 4 ||
+  const uint8_t *buf = buf_c8(b);
+
+  if(b->b_size < 4 ||
      buf[0] != 0x50 || buf[1] != 0x4b || buf[2] != 0x03 || buf[3] != 0x04) {
     s = _("Corrupt plugin bundle");
     prop_set_rstring(pl->pl_statustxt, s);
@@ -1067,7 +1066,7 @@ plugin_install(plugin_t *pl, const char *package)
   }
   
   TRACE(TRACE_INFO, "plugins", "Plugin %s valid ZIP archive %d bytes",
-	pl->pl_id, (int)size);
+	pl->pl_id, (int)b->b_size);
   s = _("Installing");
   prop_set_rstring(pl->pl_statustxt, s);
   rstr_release(s);
@@ -1089,13 +1088,13 @@ plugin_install(plugin_t *pl, const char *package)
 
     TRACE(TRACE_ERROR, "plugins", "Unable to write to %s -- %s",
 	  path, strerror(errno));
-    free(buf);
+    buf_release(b);
     return -1;
   }
 
-  size_t r = write(fd, buf, size);
-  free(buf);
-  if(close(fd) || r != size) {
+  size_t r = write(fd, buf, b->b_size);
+  buf_release(b);
+  if(close(fd) || r != b->b_size) {
     s = _("Disk write error");
     prop_set_rstring(pl->pl_statustxt, s);
     rstr_release(s);
@@ -1243,17 +1242,17 @@ plugin_open_file(prop_t *page, const char *url)
 {
   char path[200];
   char errbuf[200];
-  char *buf;
+  buf_t *b;
 
   snprintf(path, sizeof(path), "zip://%s/plugin.json", url);
-  buf = fa_load(path, NULL, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-  if(buf == NULL) {
+  b = fa_load(path, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  if(b == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: %s"), errbuf);
     return;
   }
 
-  htsmsg_t *pm = htsmsg_json_deserialize(buf);
-  free(buf);
+  htsmsg_t *pm = htsmsg_json_deserialize(buf_cstr(b));
+  buf_release(b);
 
   if(pm == NULL) {
     nav_open_errorf(page, _("Unable to load plugin.json: Malformed JSON"));

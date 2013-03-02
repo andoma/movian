@@ -16,6 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <assert.h>
 #include "config.h"
 
 #include <stdio.h>
@@ -80,20 +81,20 @@ fa_imageloader2(const char *url, const char **vpaths,
 		char *errbuf, size_t errlen, int *cache_control,
 		fa_load_cb_t *cb, void *opaque)
 {
-  uint8_t *p;
-  size_t size;
+  buf_t *buf;
   jpeg_meminfo_t mi;
   pixmap_type_t fmt;
   int width = -1, height = -1, orientation = 0;
 
-  p = fa_load(url, &size, vpaths, errbuf, errlen, cache_control, 0, cb, opaque);
-  if(p == NULL || p == NOT_MODIFIED)
-    return (pixmap_t *)p;
+  buf = fa_load(url, vpaths, errbuf, errlen, cache_control, 0, cb, opaque);
+  if(buf == NULL || buf == NOT_MODIFIED)
+    return (pixmap_t *)buf;
 
+  const uint8_t *p = buf_c8(buf);
   mi.data = p;
-  mi.size = size;
+  mi.size = buf->b_size;
 
-  if(size < 16)
+  if(buf->b_size < 16)
     goto bad;
 
   /* Probe format */
@@ -105,8 +106,8 @@ fa_imageloader2(const char *url, const char **vpaths,
     
     if(jpeg_info(&ji, jpeginfo_mem_reader, &mi, 
 		 JPEG_INFO_DIMENSIONS | JPEG_INFO_ORIENTATION,
-		 p, size, errbuf, errlen)) {
-      free(p);
+		 p, buf->b_size, errbuf, errlen)) {
+      buf_release(buf);
       return NULL;
     }
 
@@ -129,11 +130,11 @@ fa_imageloader2(const char *url, const char **vpaths,
   } else {
   bad:
     snprintf(errbuf, errlen, "Unknown format");
-    free(p);
+    buf_release(buf);
     return NULL;
   }
 
-  pixmap_t *pm = pixmap_alloc_coded(p, size, fmt);
+  pixmap_t *pm = pixmap_alloc_coded(p, buf->b_size, fmt);
   if(pm != NULL) {
     pm->pm_width = width;
     pm->pm_height = height;
@@ -141,7 +142,7 @@ fa_imageloader2(const char *url, const char **vpaths,
   } else {
     snprintf(errbuf, errlen, "Out of memory");
   }
-  free(p);
+  buf_release(buf);
   return pm;
 }
 
@@ -356,10 +357,13 @@ write_thumb(const AVCodecContext *src, const AVFrame *sframe,
   memset(&out, 0, sizeof(AVPacket));
   int got_packet;
   int r = avcodec_encode_video2(ctx, &out, oframe, &got_packet);
-  if(r >= 0 && got_packet)
-    blobcache_put(cacheid, "videothumb", out.data, out.size, INT32_MAX,
-                  NULL, mtime);
-  av_free(out.data);
+  if(r >= 0 && got_packet) {
+    buf_t *b = buf_create_and_adopt(out.size, out.data, &av_free);
+    blobcache_put(cacheid, "videothumb", b, INT32_MAX, NULL, mtime);
+    buf_release(b);
+  } else {
+    assert(out.data == NULL);
+  }
   avpicture_free((AVPicture *)oframe);
 }
 
@@ -561,8 +565,6 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   time_t mtime = 0;
   pixmap_t *pm = NULL;
   char cacheid[512];
-  void *data;
-  size_t datasize;
   char *url = mystrdupa(url0);
   char *tim = strchr(url, '#');
   const char *siz;
@@ -592,14 +594,13 @@ fa_image_from_video(const char *url0, const image_meta_t *im,
   }
 
   snprintf(cacheid, sizeof(cacheid), "%s-%s", url0, siz);
-  data = blobcache_get(cacheid, "videothumb", &datasize, 0, 0,
-		       NULL, &mtime);
-  if(data != NULL && mtime == stattime) {
-    pm = pixmap_alloc_coded(data, datasize, PIXMAP_JPEG);
-    free(data);
+  buf_t *b = blobcache_get(cacheid, "videothumb", 0, 0, NULL, &mtime);
+  if(b != NULL && mtime == stattime) {
+    pm = pixmap_alloc_coded(b->b_ptr, b->b_size, PIXMAP_JPEG);
+    buf_release(b);
     return pm;
   }
-  free(data);
+  buf_release(b);
 
   if(ONLY_CACHED(cache_control)) {
     snprintf(errbuf, errlen, "Not cached");

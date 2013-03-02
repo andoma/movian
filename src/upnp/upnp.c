@@ -572,20 +572,20 @@ device_get_icon(htsmsg_t *dev)
 static void
 introspect_device(upnp_device_t *ud)
 {
-  char *xmldata;
-  size_t xmlsize;
+  buf_t *b;
   char errbuf[200];
   htsmsg_t *m, *svclist, *dev;
   const char *uuid;
 
-  if(http_request(ud->ud_url, NULL, &xmldata, &xmlsize, errbuf, sizeof(errbuf),
+  if(http_request(ud->ud_url, NULL, &b, errbuf, sizeof(errbuf),
 		  NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL)) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s -- %s",
 	  ud->ud_url, errbuf);
     return;
   }
 
-  if((m = htsmsg_xml_deserialize(xmldata, errbuf, sizeof(errbuf))) == NULL) {
+  m = htsmsg_xml_deserialize_buf2(b, errbuf, sizeof(errbuf));
+  if(m == NULL) {
     TRACE(TRACE_INFO, "UPNP", "Unable to introspect %s XML -- %s",
 	  ud->ud_url, errbuf);
     return;

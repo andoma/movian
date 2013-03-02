@@ -371,14 +371,13 @@ token_t *
 glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
 	       int *nofile)
 {
-  char *src;
   token_t *last;
   char errbuf[256];
 
   rstr_t *p = fa_absolute_path(url, prev->file);
-  src = fa_load(rstr_get(p), NULL, gr->gr_vpaths, 
-		errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-  if(src == NULL) {
+  buf_t *b = fa_load(rstr_get(p), gr->gr_vpaths, 
+                     errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  if(b == NULL) {
     snprintf(ei->error, sizeof(ei->error), "Unable to open \"%s\" -- %s",
 	     rstr_get(p), errbuf);
     snprintf(ei->file,  sizeof(ei->file),  "%s", rstr_get(prev->file));
@@ -389,8 +388,8 @@ glw_view_load1(glw_root_t *gr, rstr_t *url, errorinfo_t *ei, token_t *prev,
     return NULL;
   }
 
-  last = lexer(gr, src, ei, p, prev);
-  free(src);
+  last = lexer(gr, buf_cstr(b), ei, p, prev);
+  buf_release(b);
   rstr_release(p);
   return last;
 }

@@ -119,10 +119,8 @@ font_install(font_t *f, const char *url)
   if(f->f_installed_path != NULL)
     return;
 
-  size_t size;
-  char *buf = fa_load(url, &size, NULL,
-		      errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
-  if(buf == NULL) {
+  buf_t *b = fa_load(url, NULL, errbuf, sizeof(errbuf), NULL, 0, NULL, NULL);
+  if(b == NULL) {
     notify_add(NULL, NOTIFY_ERROR, NULL, 5, _("Unable to load %s -- %s"),
 	       url, errbuf);
     return;
@@ -140,12 +138,12 @@ font_install(font_t *f, const char *url)
 
     notify_add(NULL, NOTIFY_ERROR, NULL, 5,
 	       _("Unable to open %s for writing"), path);
-    free(buf);
+    buf_release(b);
     return;
   }
-  
-  size_t r = write(fd, buf, size);
-  free(buf);
+  size_t size = b->b_size;
+  size_t r = write(fd, b->b_ptr, b->b_size);
+  buf_release(b);
   if(close(fd) || r != size) {
     notify_add(NULL, NOTIFY_ERROR, NULL, 5,
 	       _("Unable to write to %s"), path);

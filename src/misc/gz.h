@@ -16,12 +16,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef GZ_H__
-#define GZ_H__
+#pragma once
 
-void *gz_inflate(char *in, size_t inlen, size_t *outlenptr,
-		 char *errbuf, size_t errlen);
+struct buf *gz_inflate(struct buf *b, char *errbuf, size_t errlen);
 
-int gz_check(const char *in, size_t inlen);
-
-#endif // GZ_H__
+int gz_check(const struct buf *b);
