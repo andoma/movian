@@ -231,6 +231,23 @@ sub_scanner_t *
 sub_scanner_create(const char *url, prop_t *proproot,
 		   const video_args_t *va, int duration)
 {
+  int noscan = va->title == NULL && va->imdb == NULL && !va->hash_valid;
+
+  TRACE(TRACE_DEBUG, "Subscanner",
+        "%s subtitle scan for %s (imdbid:%s) "
+        "year:%d season:%d episode:%d duration:%d opensubhash:%016llx",
+        noscan ? "No" : "Starting",
+        va->title ?: "<unknown>",
+        va->imdb ?: "<unknown>",
+        va->year,
+        va->season,
+        va->episode,
+        duration,
+        va->opensubhash);
+
+  if(noscan)
+    return NULL;
+
   sub_scanner_t *ss = calloc(1, sizeof(sub_scanner_t));
   hts_mutex_init(&ss->ss_mutex);
   ss->ss_refcount = 2; // one for thread, one for caller
@@ -260,6 +277,8 @@ sub_scanner_create(const char *url, prop_t *proproot,
 void
 sub_scanner_destroy(sub_scanner_t *ss)
 {
+  if(ss == NULL)
+    return;
   ss->ss_stop = 1;
   hts_mutex_lock(&ss->ss_mutex);
   prop_ref_dec(ss->ss_proproot);

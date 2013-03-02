@@ -733,7 +733,8 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
    */
   sub_scanner_t *ss =
     sub_scanner_create(url, mp->mp_prop_subtitle_tracks, &va,
-		       fctx->duration / 1000000);
+		       fctx->duration != AV_NOPTS_VALUE ? 
+                       fctx->duration / 1000000 : 0);
 
   /**
    * Init codec contexts
