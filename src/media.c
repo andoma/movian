@@ -57,6 +57,9 @@ static prop_t *media_prop_current;
 static struct media_pipe_list media_pipe_stack;
 media_pipe_t *media_primary;
 
+void (*media_pipe_init_extra)(media_pipe_t *mp);
+void (*media_pipe_fini_extra)(media_pipe_t *mp);
+
 static int mp_seek_in_queues(media_pipe_t *mp, int64_t pos);
 
 static void seek_by_propchange(void *opaque, prop_event_t event, ...);
@@ -469,7 +472,8 @@ mp_create(const char *name, int flags, const char *type)
 			 mp->mp_pc, NULL, NULL);
 
 
-
+  if(media_pipe_init_extra != NULL)
+    media_pipe_init_extra(mp);
 
   return mp;
 }
@@ -531,12 +535,14 @@ mp_destroy(media_pipe_t *mp)
 {
   event_t *e;
 
-
   /* Make sure a clean shutdown has been made */
   assert(mp->mp_audio_decoder == NULL);
   assert(mp != media_primary);
   assert(!(mp->mp_flags & MP_ON_STACK));
 
+
+  if(media_pipe_fini_extra != NULL)
+    media_pipe_fini_extra(mp);
 
   setting_destroy(mp->mp_setting_av_delta);
   setting_destroy(mp->mp_setting_sv_delta);

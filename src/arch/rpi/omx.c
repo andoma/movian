@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 
+#include "media.h"
 #include "omx.h"
 
 /**
@@ -36,6 +37,11 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 
     printf("%s: ERROR 0x%x\n", oc->oc_name, (int)data1);
     exit(1);
+
+  case OMX_EventPortSettingsChanged: 
+    oc->oc_port_settings_changed = 1;
+    break;
+    
   default:
     break;
   }
@@ -54,16 +60,27 @@ oc_empty_buffer_done(OMX_HANDLETYPE hComponent,
                      OMX_BUFFERHEADERTYPE* buf)
 {
   omx_component_t *oc = opaque;
-
   hts_mutex_lock(oc->oc_mtx);
-
   oc->oc_inflight_buffers--;
   buf->pAppPrivate = oc->oc_avail;
   oc->oc_avail = buf;
   hts_cond_signal(oc->oc_avail_cond);
   hts_mutex_unlock(oc->oc_mtx);
-
   return 0;
+}
+
+
+
+/**
+ *
+ */
+static void
+omx_wait_command(omx_component_t *oc)
+{
+  hts_mutex_lock(oc->oc_mtx);
+  while(!oc->oc_cmd_done)
+    hts_cond_wait(&oc->oc_event_cond, oc->oc_mtx);
+  hts_mutex_unlock(oc->oc_mtx);
 }
 
 
@@ -71,7 +88,8 @@ oc_empty_buffer_done(OMX_HANDLETYPE hComponent,
  *
  */
 static void
-omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p, int wait)
+omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
+		 int wait)
 {
   oc->oc_cmd_done = 0;
 
@@ -79,13 +97,8 @@ omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p, int w
 
   omxchk(OMX_SendCommand(oc->oc_handle, cmd, v, p));
 
-  if(!wait)
-    return;
-
-  hts_mutex_lock(oc->oc_mtx);
-  while(!oc->oc_cmd_done)
-    hts_cond_wait(&oc->oc_event_cond, oc->oc_mtx);
-  hts_mutex_unlock(oc->oc_mtx);
+  if(wait)
+    omx_wait_command(oc);
 }
 
 
@@ -196,6 +209,8 @@ omx_alloc_buffers(omx_component_t *oc, int port)
     buf->pAppPrivate = oc->oc_avail;
     oc->oc_avail = buf;
   }
+  omx_wait_command(oc); // Waits for the OMX_CommandPortEnable command
+
 }
 
 
@@ -225,8 +240,10 @@ void
 omx_wait_buffers(omx_component_t *oc)
 {
   hts_mutex_lock(oc->oc_mtx);
-  while(oc->oc_inflight_buffers)
+  while(oc->oc_inflight_buffers) {
+    printf("inflight=%d\n", oc->oc_inflight_buffers);
     hts_cond_wait(oc->oc_avail_cond, oc->oc_mtx);
+  }
   hts_mutex_unlock(oc->oc_mtx);
 }
 
@@ -253,7 +270,7 @@ omx_release_buffers(omx_component_t *oc, int port)
  */
 omx_tunnel_t *
 omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
-		  int dstport, int portstream)
+		  int dstport)
 {
   OMX_STATETYPE state;
   omxchk(OMX_GetState(src->oc_handle, &state));
@@ -292,3 +309,92 @@ omx_tunnel_destroy(omx_tunnel_t *ot)
   omxchk(OMX_SetupTunnel(ot->ot_src->oc_handle, ot->ot_srcport, NULL, 0));
   free(ot);
 }
+
+
+/**
+ *
+ */
+int64_t
+omx_get_media_time(omx_component_t *oc)
+{
+  OMX_TIME_CONFIG_TIMESTAMPTYPE ts;
+  OMX_INIT_STRUCTURE(ts);
+
+  omxchk(OMX_GetConfig(oc->oc_handle,
+		       OMX_IndexConfigTimeCurrentMediaTime,
+		       &ts));
+  return omx_ticks_to_s64(ts.nTimestamp);
+ 
+}
+
+
+/**
+ *
+ */
+void
+omx_flush_port(omx_component_t *oc, int port)
+{
+  printf("Flushing %s %d\n", oc->oc_name, port);
+  omx_send_command(oc, OMX_CommandFlush, port, NULL, 1);
+}
+
+
+/**
+ *
+ */
+static void
+omx_mp_init(media_pipe_t *mp)
+{
+  if(!(mp->mp_flags & MP_VIDEO))
+    return;
+
+  omx_component_t *c;
+
+  c = omx_component_create("OMX.broadcom.clock", &mp->mp_mutex, NULL);
+  mp->mp_extra = c;
+
+  omx_set_state(c, OMX_StateIdle);
+
+  OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
+  OMX_INIT_STRUCTURE(cstate);
+  cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
+  cstate.nWaitMask = 1;
+  omxchk(OMX_SetParameter(c->oc_handle,
+			  OMX_IndexConfigTimeClockState, &cstate));
+
+  OMX_TIME_CONFIG_ACTIVEREFCLOCKTYPE refClock;
+  OMX_INIT_STRUCTURE(refClock);
+  refClock.eClock = OMX_TIME_RefClockAudio;
+  //  refClock.eClock = OMX_TIME_RefClockVideo;
+  // refClock.eClock = OMX_TIME_RefClockNone;
+
+  omxchk(OMX_SetConfig(c->oc_handle,
+		       OMX_IndexConfigTimeActiveRefClock, &refClock));
+
+  omx_set_state(c, OMX_StateExecuting);
+}
+
+
+/**
+ *
+ */
+static void
+omx_mp_fini(media_pipe_t *mp)
+{
+  if(mp->mp_extra != NULL)
+    omx_component_destroy(mp->mp_extra);
+}
+
+
+/**
+ *
+ */
+void
+omx_init(void)
+{
+  OMX_Init();
+
+  media_pipe_init_extra = omx_mp_init;
+  media_pipe_fini_extra = omx_mp_fini;
+}
+

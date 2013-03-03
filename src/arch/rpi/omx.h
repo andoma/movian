@@ -22,6 +22,8 @@ typedef struct omx_component {
   OMX_BUFFERHEADERTYPE *oc_avail;
   int oc_inflight_buffers;
   int oc_cmd_done;
+  int oc_port_settings_changed;
+
 } omx_component_t;
 
 typedef struct omx_tunnel {
@@ -53,6 +55,7 @@ omxchk0(OMX_ERRORTYPE er, const char *fn, int line)
 #endif
 
 
+void omx_init(void);
 omx_component_t *omx_component_create(const char *name, hts_mutex_t *mtx,
 				      hts_cond_t *avail);
 void omx_component_destroy(omx_component_t *oc);
@@ -62,6 +65,8 @@ OMX_BUFFERHEADERTYPE *omx_get_buffer(omx_component_t *oc);
 void omx_wait_buffers(omx_component_t *oc);
 void omx_release_buffers(omx_component_t *oc, int port);
 omx_tunnel_t *omx_tunnel_create(omx_component_t *src, int srcport,
-				omx_component_t *dst, int dstport,
-				int portstream);
+				omx_component_t *dst, int dstport);
 void omx_tunnel_destroy(omx_tunnel_t *ot);
+int64_t omx_get_media_time(omx_component_t *oc);
+void omx_flush_port(omx_component_t *oc, int port);
+

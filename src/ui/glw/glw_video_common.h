@@ -184,6 +184,8 @@ typedef struct glw_video {
 
   int64_t gv_nextpts;
 
+  void *gv_aux;
+
   /**
    * VDPAU specifics
    */

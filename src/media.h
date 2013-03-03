@@ -426,7 +426,16 @@ typedef struct media_pipe {
   struct setting *mp_setting_fstretch;   // Fullscreen stretch
   struct setting *mp_setting_vdpau_deinterlace;      // Deinterlace interlaced content
 
+  /**
+   * Extra (created by media_pipe_init_extra)
+   */
+  void *mp_extra;
+
 } media_pipe_t;
+
+extern void (*media_pipe_init_extra)(media_pipe_t *mp);
+extern void (*media_pipe_fini_extra)(media_pipe_t *mp);
+
 
 struct AVFormatContext;
 struct AVCodecContext;

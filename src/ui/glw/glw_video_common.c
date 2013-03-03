@@ -317,6 +317,9 @@ glw_video_dtor(glw_t *w)
   hts_cond_destroy(&gv->gv_avail_queue_cond);
   hts_cond_destroy(&gv->gv_reconf_cond);
   hts_mutex_destroy(&gv->gv_surface_mutex);
+
+  mp_ref_dec(gv->gv_mp);
+  gv->gv_mp = NULL;
 }
 
 
@@ -374,8 +377,6 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
     hts_mutex_unlock(&gv->gv_surface_mutex);
     video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
-    mp_ref_dec(gv->gv_mp);
-    gv->gv_mp = NULL;
     return 0;
 
   case GLW_SIGNAL_POINTER_EVENT:

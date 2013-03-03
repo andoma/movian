@@ -39,6 +39,7 @@
 #include "prop/prop.h"
 #include "ui/glw/glw.h"
 #include "navigator.h"
+#include "omx.h"
 
 static uint32_t screen_width, screen_height;
 static EGLDisplay display;
@@ -137,7 +138,7 @@ egl_init(void)
   r = vc_dispmanx_resource_create(VC_IMAGE_RGB565, rw, rh, &ip);
   
   void *zero = calloc(1, rw * rh * 2);
-
+  memset(zero, 0xcc, rw * rh * 2);
   VC_RECT_T rect;
   vc_dispmanx_rect_set(&rect, 0, 0, rw, rh);
 
@@ -153,10 +154,12 @@ egl_init(void)
   src_rect.x = 0;
   src_rect.y = 0;
   src_rect.width = rw << 16;
-  src_rect.height = rh << 16;        
-  vc_dispmanx_element_add(u, dd, 0, &dst_rect, r,
+  src_rect.height = rh << 16;     
+#if 0
+  vc_dispmanx_element_add(u, dd, 1, &dst_rect, r,
 			  &src_rect, DISPMANX_PROTECTION_NONE,
 			  NULL, NULL, 0);
+#endif
 
   dst_rect.x = 0;
   dst_rect.y = 0;
@@ -243,7 +246,7 @@ main(int argc, char **argv)
 {
   bcm_host_init();
 
-  OMX_Init();
+  omx_init();
 
   gconf.binary = argv[0];
 
