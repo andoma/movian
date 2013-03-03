@@ -29,6 +29,7 @@
 #include "video_settings.h"
 #include "arch/halloc.h"
 #include "notifications.h"
+#include "h264_annexb.h"
 
 static int vdec_mpeg2_loaded;
 static int vdec_h264_loaded;
@@ -95,10 +96,6 @@ typedef struct vdec_decoder {
 
   int sequence_done;
 
-  size_t extradata_size;
-  uint8_t *extradata;
-  int extradata_injected;
-
 
   struct vdec_pic_list pictures;
 
@@ -118,10 +115,8 @@ typedef struct vdec_decoder {
 
   pktmeta_t pktmeta[64];
   int pktmeta_cur;
-  int lsize;
 
-  uint8_t *tmpbuf;
-  int tmpbufsize;
+  h264_annexb_ctx_t annexb;
 
 
 } vdec_decoder_t;
@@ -536,57 +531,6 @@ decoder_callback(uint32_t handle, uint32_t msg_type, int32_t err_code,
 
 
 /**
- *
- */
-static void
-h264_to_annexb_inplace(uint8_t *b, size_t fsize)
-{
-  uint8_t *p = b;
-  while(p < b + fsize) {
-    if(p[0])
-      break; // Avoid overflows with this simple check
-    int len = (p[0] << 24) + (p[1] << 16) + (p[2] << 8) + p[3];
-    p[0] = 0;
-    p[1] = 0;
-    p[2] = 0;
-    p[3] = 1;
-    p += len + 4;
-  }
-}
-
-
-/**
- *
- */
-static int
-h264_to_annexb(uint8_t *dst, uint8_t *b, size_t fsize, int lsize)
-{
-  uint8_t *p = b;
-  int i;
-  int ol = 0;
-  while(p < b + fsize) {
-
-    int len = 0;
-    for(i = 0; i < lsize; i++)
-      len = len << 8 | *p++;
-
-    if(dst) {
-      dst[0] = 0;
-      dst[1] = 0;
-      dst[2] = 0;
-      dst[3] = 1;
-      memcpy(dst + 4, p, len);
-      dst += 4 + len;
-    }
-    ol += 4 + len;
-    p += len;
-  }
-  return ol;
-}
-
-
-
-/**
  * Return 0 if ownership of 'data' has been transfered from caller
  */
 static void
@@ -641,7 +585,7 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vd->vd_do_flush) {
     end_sequence_and_wait(vdd);
     vdec_start_sequence(vdd->handle);
-    vdd->extradata_injected = 0;
+    vdd->annexb.extradata_injected = 0;
     vd->vd_nextpts = AV_NOPTS_VALUE;
     vdd->flush_to = -1;
   }
@@ -683,33 +627,17 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   au.dts.low = dts;
   au.dts.hi  = dts >> 32;
 
-  if(vdd->extradata != NULL && vdd->extradata_injected == 0) {
-    submit_au(vdd, &au, vdd->extradata, vdd->extradata_size, 0, vd);
-    vdd->extradata_injected = 1;
+  if(vdd->annexb.extradata != NULL && vdd->annexb.extradata_injected == 0) {
+    submit_au(vdd, &au, vdd->annexb.extradata,
+	      vdd->annexb.extradata_size, 0, vd);
+    vdd->annexb.extradata_injected = 1;
   }
 
-  int l;
+  uint8_t *data = mb->mb_data;
+  size_t size = mb->mb_size;
 
-  switch(vdd->lsize) {
-  case 4:
-    h264_to_annexb_inplace(mb->mb_data, mb->mb_size);
-  case 0:
-    submit_au(vdd, &au, mb->mb_data, mb->mb_size, mb->mb_skip == 1, vd);
-    break;
-  case 3:
-  case 2:
-  case 1:
-    l = h264_to_annexb(NULL, mb->mb_data, mb->mb_size, vdd->lsize);
-    if(l > vdd->tmpbufsize) {
-      vdd->tmpbuf = realloc(vdd->tmpbuf, l);
-      vdd->tmpbufsize = l;
-    }
-    if(vdd->tmpbuf == NULL)
-      return;
-    h264_to_annexb(vdd->tmpbuf, mb->mb_data, mb->mb_size, vdd->lsize);
-    submit_au(vdd, &au, vdd->tmpbuf, l, mb->mb_skip == 1, vd);
-    break;
-  }
+  h264_to_annexb(&vdd->annexb, &data, &size);
+  submit_au(vdd, &au, data, size, mb->mb_skip == 1, vd);
   vd->vd_do_flush = 0;
 }
 
@@ -733,73 +661,9 @@ decoder_close(struct media_codec *mc)
   hts_mutex_destroy(&vdd->mtx);
 
   prop_ref_dec(vdd->metainfo);
-  free(vdd->extradata);
-  free(vdd->tmpbuf);
+  h264_to_annexb_cleanup(&vdd->annexb);
   free(vdd);
   TRACE(TRACE_DEBUG, "VDEC", "Cell decoder closed");
-}
-
-
-/**
- *
- */
-static void
-vdd_append_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
-{
-  vdd->extradata = realloc(vdd->extradata, vdd->extradata_size + len);
-  memcpy(vdd->extradata + vdd->extradata_size, data, len);
-  vdd->extradata_size += len;
-}
-
-/**
- *
- */
-static void
-h264_load_extradata(vdec_decoder_t *vdd, const uint8_t *data, int len)
-{
-  int i, n, s;
-
-  uint8_t buf[4] = {0,0,0,1};
-
-  if(len < 7 || data[0] != 1)
-    return;
-
-  int lsize = (data[4] & 0x3) + 1;
-  if(lsize == 3)
-    return;
-
-  n = data[5] & 0x1f;
-  data += 6;
-  len -= 6;
-
-  for(i = 0; i < n && len >= 2; i++) {
-    s = ((data[0] << 8) | data[1]) + 2;
-    if(len < s)
-      break;
-
-    vdd_append_extradata(vdd, buf, 4);
-    vdd_append_extradata(vdd, data + 2, s - 2);
-    data += s;
-    len -= s;
-  }
-  
-  if(len < 1)
-    return;
-  n = *data++;
-  len--;
-
-  for(i = 0; i < n && len >= 2; i++) {
-    s = ((data[0] << 8) | data[1]) + 2;
-    if(len < s)
-      break;
-
-    vdd_append_extradata(vdd, buf, 4);
-    vdd_append_extradata(vdd, data + 2, s - 2);
-    data += s;
-    len -= s;
-  }
-
-  vdd->lsize = lsize;
 }
 
 
@@ -924,7 +788,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   vdd->level_minor = mcp->level % 10;
 
   if(id == CODEC_ID_H264 && mcp->extradata_size)
-    h264_load_extradata(vdd, mcp->extradata, mcp->extradata_size);
+    h264_to_annexb_init(&vdd->annexb, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;
 
