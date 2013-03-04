@@ -196,7 +196,6 @@ h264_deliver(const frame_info_t *fi, glw_video_t *gv)
 
   const void *data = fi->fi_data[0];
   size_t len       = fi->fi_pitch[0];
-  //  static int vfirst;
 
   while(len > 0) {
     OMX_BUFFERHEADERTYPE *buf = omx_get_buffer_locked(rv->rv_vdecoder);
@@ -213,12 +212,7 @@ h264_deliver(const frame_info_t *fi, glw_video_t *gv)
     data += buf->nFilledLen;
     len  -= buf->nFilledLen;
     buf->nTimeStamp = omx_ticks_from_s64(fi->fi_pts);
-#if 0
-    if(!vfirst) {
-      buf->nFlags |= OMX_BUFFERFLAG_STARTTIME;
-      vfirst = 1;
-    }
-#endif
+
     if(fi->fi_pitch[1])
       buf->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
 
