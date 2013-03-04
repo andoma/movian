@@ -16,9 +16,12 @@
 typedef struct omx_component {
   OMX_HANDLETYPE oc_handle;
   char *oc_name;
-  hts_mutex_t *oc_mtx;
-  hts_cond_t oc_event_cond;
+  hts_mutex_t *oc_avail_mtx;
   hts_cond_t *oc_avail_cond;
+
+  hts_mutex_t oc_event_mtx;
+  hts_cond_t oc_event_cond;
+
   OMX_BUFFERHEADERTYPE *oc_avail;
   int oc_inflight_buffers;
   int oc_cmd_done;
@@ -61,6 +64,7 @@ omx_component_t *omx_component_create(const char *name, hts_mutex_t *mtx,
 void omx_component_destroy(omx_component_t *oc);
 void omx_set_state(omx_component_t *oc, OMX_STATETYPE reqstate);
 void omx_alloc_buffers(omx_component_t *oc, int port);
+OMX_BUFFERHEADERTYPE *omx_get_buffer_locked(omx_component_t *oc);
 OMX_BUFFERHEADERTYPE *omx_get_buffer(omx_component_t *oc);
 void omx_wait_buffers(omx_component_t *oc);
 void omx_release_buffers(omx_component_t *oc, int port);

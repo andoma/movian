@@ -35,10 +35,6 @@
 
 
 typedef struct rpi_video {
-
-  hts_mutex_t rv_mtx;
-  hts_cond_t rv_cond;
-
   omx_component_t *rv_vdecoder;
   omx_component_t *rv_vrender;
   omx_component_t *rv_vsched;
@@ -54,15 +50,16 @@ typedef struct rpi_video {
  *
  */
 static int
-rpi_video_init(rpi_video_t *rv, media_pipe_t *mp)
+rpi_video_init(glw_video_t *gv, rpi_video_t *rv, media_pipe_t *mp)
 {
 
   rv->rv_vdecoder = omx_component_create("OMX.broadcom.video_decode",
-					 &rv->rv_mtx, &rv->rv_cond);
+					 &gv->gv_surface_mutex,
+					 &gv->gv_avail_queue_cond);
   rv->rv_vrender  = omx_component_create("OMX.broadcom.video_render",
-					 &rv->rv_mtx, &rv->rv_cond);
+					 NULL, NULL);
   rv->rv_vsched   = omx_component_create("OMX.broadcom.video_scheduler",
-					 &rv->rv_mtx, &rv->rv_cond);
+					 NULL, NULL);
 
   if(rv->rv_vdecoder == NULL ||
      rv->rv_vrender  == NULL ||
@@ -154,7 +151,7 @@ rpi_h264_init(glw_video_t *gv)
 {
   rpi_video_t *rv = calloc(1, sizeof(rpi_video_t));
   gv->gv_aux = rv;
-  rpi_video_init(rv, gv->gv_mp);
+  rpi_video_init(gv, rv, gv->gv_mp);
 
   
   return 0;
@@ -191,6 +188,7 @@ GLW_REGISTER_GVE(glw_video_h264);
 static void
 h264_deliver(const frame_info_t *fi, glw_video_t *gv)
 {
+
   if(glw_video_configure(gv, &glw_video_h264, NULL, NULL, 0, 0, 0))
     return;
 
@@ -201,7 +199,8 @@ h264_deliver(const frame_info_t *fi, glw_video_t *gv)
   //  static int vfirst;
 
   while(len > 0) {
-    OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(rv->rv_vdecoder);
+    OMX_BUFFERHEADERTYPE *buf = omx_get_buffer_locked(rv->rv_vdecoder);
+    pthread_mutex_unlock(&gv->gv_surface_mutex);
     buf->nOffset = 0;
     buf->nFilledLen = MIN(len, buf->nAllocLen);
     memcpy(buf->pBuffer, data, buf->nFilledLen);
@@ -248,6 +247,6 @@ h264_deliver(const frame_info_t *fi, glw_video_t *gv)
 			   OMX_IndexConfigDisplayRegion, &dr));
     }
     omxchk(OMX_EmptyThisBuffer(rv->rv_vdecoder->oc_handle, buf));
+    pthread_mutex_lock(&gv->gv_surface_mutex);
   }  
-
 }
