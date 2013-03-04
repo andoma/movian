@@ -6,6 +6,7 @@ SRCS += src/arch/rpi/rpi_main.c \
 	src/video/h264_passthru.c \
 	src/video/h264_annexb.c \
 	src/ui/glw/glw_video_rpi.c \
+	src/ui/background.c \
 
 SRCS += src/arch/linux/linux_misc.c \
 	src/arch/linux/linux_trap.c \

@@ -194,6 +194,9 @@ glw_init(glw_root_t *gr)
 
   glw_text_bitmap_init(gr);
 
+  prop_setv(gr->gr_prop_ui, "skin", "path", NULL,
+	    PROP_SET_STRING, gr->gr_skin);
+
   gr->gr_pointer_visible    = prop_create(gr->gr_prop_ui, "pointerVisible");
   gr->gr_is_fullscreen      = prop_create(gr->gr_prop_ui, "fullscreen");
   gr->gr_screensaver_active = prop_create(gr->gr_prop_ui, "screensaverActive");

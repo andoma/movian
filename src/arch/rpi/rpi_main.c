@@ -38,14 +38,17 @@
 #include "arch/linux/linux.h"
 #include "prop/prop.h"
 #include "ui/glw/glw.h"
+#include "ui/background.h"
 #include "navigator.h"
 #include "omx.h"
+#include "backend/backend.h"
 
 static uint32_t screen_width, screen_height;
 static EGLDisplay display;
 static EGLContext context;
 static EGLSurface surface;
 
+static DISPMANX_DISPLAY_HANDLE_T dispman_display;
 
 /**
  *
@@ -72,7 +75,6 @@ egl_init(void)
   EGL_DISPMANX_WINDOW_T nw;
 
   DISPMANX_ELEMENT_HANDLE_T de;
-  DISPMANX_DISPLAY_HANDLE_T dd;
   DISPMANX_UPDATE_HANDLE_T u;
   VC_RECT_T dst_rect;
   VC_RECT_T src_rect;
@@ -126,12 +128,14 @@ egl_init(void)
   success = graphics_get_display_size(0, &screen_width, &screen_height);
   assert(success >= 0);
 
-  dd = vc_dispmanx_display_open(0);
+  dispman_display = vc_dispmanx_display_open(0);
+
+
   u = vc_dispmanx_update_start(0);
 
   DISPMANX_RESOURCE_HANDLE_T r;
   uint32_t ip;
-
+ 
   int rw = 32;
   int rh = 32;
 
@@ -171,7 +175,7 @@ egl_init(void)
   src_rect.width = screen_width << 16;
   src_rect.height = screen_height << 16;        
 
-  de = vc_dispmanx_element_add(u, dd, 10, &dst_rect, 0,
+  de = vc_dispmanx_element_add(u, dispman_display, 10, &dst_rect, 0,
 			       &src_rect, DISPMANX_PROTECTION_NONE,
 			       NULL, NULL, 0);
 
@@ -194,6 +198,119 @@ egl_init(void)
 }
 
 
+static  DISPMANX_ELEMENT_HANDLE_T bg_element;
+static int bg_resource;
+static float bg_current_alpha;
+static VC_RECT_T bg_src_rect;
+static VC_RECT_T bg_dst_rect;
+
+/**
+ *
+ */
+static void
+bg_refresh_element(void)
+{
+  DISPMANX_UPDATE_HANDLE_T u = vc_dispmanx_update_start(0);
+
+  VC_DISPMANX_ALPHA_T alpha;
+  alpha.flags =  DISPMANX_FLAGS_ALPHA_FIXED_ALL_PIXELS;
+  alpha.opacity = bg_current_alpha * 255;
+  alpha.mask = 0;
+
+  if(alpha.opacity == 0) {
+    if(bg_element) {
+      vc_dispmanx_element_remove(u, bg_element);
+      bg_element = 0;
+    }
+  } else if(!bg_element) {
+    if(bg_resource) {
+      bg_element = vc_dispmanx_element_add(u, dispman_display, -10,
+					   &bg_dst_rect, bg_resource,
+					   &bg_src_rect,
+					   DISPMANX_PROTECTION_NONE,
+					   &alpha, NULL, 0);
+    }
+  } else {
+    vc_dispmanx_element_change_attributes(u, bg_element,
+					  1 << 1,
+					  0,
+					  alpha.opacity,
+					  NULL, NULL, 0, 0);
+  }
+  vc_dispmanx_update_submit_sync(u);
+}
+
+
+
+
+/**
+ *
+ */
+static void
+set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
+{
+  char errbuf[256];
+  image_meta_t im = {0};
+  im.im_req_width  = screen_width;
+  im.im_req_height = screen_height;
+
+  pixmap_t *pm;
+  pm = backend_imageloader(url, &im, vpaths, errbuf, sizeof(errbuf),
+			   NULL, NULL, NULL);
+
+  if(pm == NULL) {
+    TRACE(TRACE_ERROR, "BG", "Unable to load %s -- %s", rstr_get(url), errbuf);
+    return;
+  }
+
+  uint32_t ip;
+  VC_IMAGE_TYPE_T it;
+
+  switch(pm->pm_type) {
+  case PIXMAP_BGR32:
+    it = VC_IMAGE_ARGB8888;
+    break;
+  case PIXMAP_RGB24:
+    it = VC_IMAGE_RGB888;
+    break;
+  default:
+    pixmap_release(pm);
+    return;
+  }
+
+  if(bg_resource)
+    vc_dispmanx_resource_delete(bg_resource);
+
+
+  bg_resource =
+    vc_dispmanx_resource_create(it, pm->pm_width, pm->pm_height, &ip);
+  
+  vc_dispmanx_rect_set(&bg_src_rect, 0, 0,
+		       pm->pm_width << 16, pm->pm_height << 16);
+  vc_dispmanx_rect_set(&bg_dst_rect, 0, 0,
+		       pm->pm_width, pm->pm_height);
+
+  vc_dispmanx_resource_write_data(bg_resource, it, pm->pm_linesize,
+				  pm->pm_pixels, &bg_dst_rect);
+
+  pixmap_release(pm);
+
+  bg_refresh_element();
+}
+
+/**
+ *
+ */
+static void
+set_bg_alpha(float alpha, void *opaque)
+{
+  bg_current_alpha = alpha;
+  bg_refresh_element();
+}
+
+
+
+
 /**
  *
  */
@@ -203,6 +320,11 @@ run(void)
   glw_root_t *gr = calloc(1, sizeof(glw_root_t));
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
+  prop_set(gr->gr_prop_ui, "nobackground", PROP_SET_INT, 1);
+
+  background_init(gr->gr_prop_ui, gr->gr_prop_nav,
+		  set_bg_image, set_bg_alpha, NULL);
+
   gr->gr_width = screen_width;
   gr->gr_height = screen_height;
 

@@ -2,7 +2,7 @@ setDefaultFont($global.fonts.main);
 $ui.monofont = "dataroot://resources/fonts/UbuntuMono-Regular.ttf";
 $ui.condensedfont = $global.fonts.condensed ?? 
   "skin://fonts/OpenSans-CondBold.ttf";
-$ui.background = "graphics/background.jpg";
+$ui.background = "skin://graphics/background.jpg";
 
 onEvent(logwindow, {
   $ui.logwindow = !$ui.logwindow;
