@@ -52,7 +52,7 @@ static rsx_vp_t *
 load_vp(const char *filename)
 {
   char errmsg[100];
-  realityVertexProgram *vp;
+  buf_t *b;
   int i;
   const char *name;
   char url[512];
@@ -60,12 +60,14 @@ load_vp(const char *filename)
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
 	   showtime_dataroot(), filename);
 
-  if((vp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL,
-		   0, NULL, NULL)) == NULL) {
+  if((b = fa_load(url, NULL, errmsg, sizeof(errmsg), NULL,
+		  0, NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;
   }
+
+  realityVertexProgram *vp = b->b_ptr;
 
   TRACE(TRACE_DEBUG, "glw", "Loaded Vertex program %s", url);
   TRACE(TRACE_DEBUG, "glw", "    input mask: %x", 
@@ -128,7 +130,7 @@ static rsx_fp_t *
 load_fp(glw_root_t *gr, const char *filename)
 {
   char errmsg[100];
-  realityFragmentProgram *fp;
+  buf_t *b;
   int i;
   const char *name;
 
@@ -136,13 +138,14 @@ load_fp(glw_root_t *gr, const char *filename)
   snprintf(url, sizeof(url), "%s/src/ui/glw/rsx/%s", 
 	   showtime_dataroot(), filename);
 
-  if((fp = fa_load(url, NULL, NULL, errmsg, sizeof(errmsg), NULL,
+  if((b = fa_load(url, NULL, errmsg, sizeof(errmsg), NULL,
 		   0, NULL, NULL)) == NULL) {
     TRACE(TRACE_ERROR, "glw", "Unable to load shader %s -- %s\n",
 	  url, log);
     return NULL;
   }
 
+  realityFragmentProgram *fp = b->b_ptr;
   TRACE(TRACE_DEBUG, "glw", "Loaded fragment program %s", url);
   TRACE(TRACE_DEBUG, "glw", "  num regs: %d", fp->num_regs);
 

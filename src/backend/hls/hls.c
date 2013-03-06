@@ -254,6 +254,9 @@ hls_ext_x_stream_inf(hls_t *h, const char *V)
   while(*v) {
     const char *key, *value;
     v = get_attrib(v, &key, &value);
+    if(v == NULL)
+      break;
+
     if(!strcmp(key, "BANDWIDTH"))
       hv->hv_bitrate = atoi(value);
     else if(!strcmp(key, "AUDIO"))

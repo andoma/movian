@@ -44,9 +44,6 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   int registered_play = 0;
 
   void *player;
-  void *data;
-  size_t size;
-
   
   url0 += strlen("sidplayer:");
 
@@ -60,12 +57,14 @@ be_sid2player_play(const char *url0, media_pipe_t *mp,
   *p++= 0;
   subsong = atoi(p);
 
-  if((data = fa_load(url, &size, NULL, errbuf, errlen, NULL, 0,
-		     NULL, NULL)) == NULL)
+  buf_t *b;
+
+  if((b = fa_load(url, NULL, errbuf, errlen, NULL, 0,
+		  NULL, NULL)) == NULL)
     return NULL;
 
-  player = sidcxx_load(data, size, subsong, errbuf, errlen);
-  free(data);
+  player = sidcxx_load(b->b_ptr, b->b_size, subsong, errbuf, errlen);
+  buf_release(b);
   if(player == NULL)
     return NULL;
 

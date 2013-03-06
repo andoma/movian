@@ -46,14 +46,12 @@
 static int
 gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 {
-  size_t size;
   char *p, *fpath = mystrdupa(url);
   char name[32];
   char turl[URL_MAX];
   int tracks, i;
   fa_dir_entry_t *fde;
   const char *title;
-  char *buf;
   Music_Emu *emu;
   gme_info_t *info;
   gme_err_t err;
@@ -65,12 +63,13 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
 
   *p = 0;
 
-  if((buf = fa_load(fpath, &size, NULL, errbuf, errlen, NULL,
-		    0, NULL, NULL)) == NULL)
+  buf_t *b;
+  if((b = fa_load(fpath,  NULL, errbuf, errlen, NULL,
+		  0, NULL, NULL)) == NULL)
     return -1;
 
-  err = gme_open_data(buf, size, &emu, gme_info_only);
-  free(buf);
+  err = gme_open_data(b->b_ptr, b->b_size, &emu, gme_info_only);
+  buf_release(b);
   if(err != NULL)
     return 0;
 
@@ -169,7 +168,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
  *
  */
 static event_t *
-fa_gme_playfile_internal(media_pipe_t *mp, void *buf, size_t size,
+fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
 			 char *errbuf, size_t errlen, int hold, int track,
 			 const char *url)
 {
@@ -258,17 +257,17 @@ event_t *
 fa_gme_playfile(media_pipe_t *mp, fa_handle_t *fh,
 		char *errbuf, size_t errlen, int hold, const char *url)
 {
-  uint8_t *mem;
-  size_t size;
+  buf_t *b;
   event_t *e;
 
-  if((mem = fa_load_and_close(fh, &size)) == NULL) {
+  if((b = fa_load_and_close(fh)) == NULL) {
     snprintf(errbuf, errlen, "Unable to read data from file");
     return NULL;
   }
 
-  e = fa_gme_playfile_internal(mp, mem, size, errbuf, errlen, hold, 0, url);
-  free(mem);
+  e = fa_gme_playfile_internal(mp, b->b_ptr, b->b_size, errbuf, errlen,
+			       hold, 0, url);
+  buf_release(b);
   return e;
 }
 
@@ -283,8 +282,6 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
   event_t *e;
   char *url, *p;
   int track;
-  void *mem;
-  size_t size;
 
   url0 += strlen("gmeplayer:");
 
@@ -297,14 +294,13 @@ be_gmeplayer_play(const char *url0, media_pipe_t *mp,
 
   *p++= 0;
   track = atoi(p) - 1;
-
-  if((mem = fa_load(url, &size, NULL, errbuf, errlen, NULL,
-		    0, NULL, NULL)) == NULL)
+  buf_t *b;
+  if((b = fa_load(url, NULL, errbuf, errlen, NULL, 0, NULL, NULL)) == NULL)
     return NULL;
 
-  e = fa_gme_playfile_internal(mp, mem, size,
+  e = fa_gme_playfile_internal(mp, b->b_ptr, b->b_size,
 			       errbuf, errlen, hold, track, url0);
-  free(mem);
+  buf_release(b);
   return e;
 }
 
