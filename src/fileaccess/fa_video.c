@@ -337,7 +337,8 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
       if(mb->mb_data_type == MB_VIDEO) {
 	mb->mb_drive_clock = 1;
-	mb->mb_delta = fctx->start_time;
+        if(fctx->start_time != AV_NOPTS_VALUE)
+          mb->mb_delta = fctx->start_time;
       }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
