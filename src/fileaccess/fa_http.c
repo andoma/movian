@@ -2991,7 +2991,8 @@ http_request(const char *url, const char **arguments,
       size = z.total_out;
     }
 
-    buf[size] = 0;
+    if(buf != NULL)
+      buf[size] = 0;
     if(result != NULL) {
       *result = buf_create_and_adopt(size, buf, &free);
     } else {
