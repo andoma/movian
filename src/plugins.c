@@ -846,7 +846,7 @@ plugins_setup_root_props(void)
   prop_set_string(prop_create(plugin_root_model, "contents"), "plugins");
   prop_set_string(prop_create(plugin_root_model, "type"), "directory");
 
-  prop_link(_p("Plugins"),
+  prop_link(_p("Apps"),
 	    prop_create(prop_create(plugin_root_model, "metadata"), "title"));
 
   pc = prop_concat_create(prop_create(plugin_root_model, "nodes"), 0);
@@ -857,7 +857,7 @@ plugins_setup_root_props(void)
   
   p = prop_create(sta, NULL);
   prop_set_string(prop_create(p, "type"), "directory");
-  prop_link(_p("Browse available plugins"),
+  prop_link(_p("Browse available apps"),
 	    prop_create(prop_create(p, "metadata"), "title"));
   prop_set_string(prop_create(p, "url"), "plugin:repo");
 
@@ -871,7 +871,7 @@ plugins_setup_root_props(void)
 
 
   d = prop_create_root(NULL);
-  prop_link(_p("Installed plugins"),
+  prop_link(_p("Installed apps"),
 	    prop_create(prop_create(d, "metadata"), "title"));
   prop_set_string(prop_create(d, "type"), "separator");
   prop_concat_add_source(pc, inst, d);
@@ -1257,7 +1257,7 @@ plugin_open_repo(prop_t *page)
   prop_set_int(prop_create(model, "safeui"), 1);
   prop_set_string(prop_create(model, "contents"), "plugins");
 
-  prop_link(_p("Available plugins"),
+  prop_link(_p("Available apps"),
 	    prop_create(prop_create(model, "metadata"), "title"));
 
   pc = prop_concat_create(prop_create(model, "nodes"), 0); // XXX leak

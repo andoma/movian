@@ -99,7 +99,7 @@ service_init(void)
   all_services = prop_create(gs, "all");
 
   service_create0("showtime:plugin",
-		  NULL, _p("Plugins"), "plugin:start",
+		  NULL, _p("Apps"), "plugin:start",
 		  "plugin", NULL, 0, 1, SVC_ORIGIN_SYSTEM);
 
   service_create0("showtime:discovered",
