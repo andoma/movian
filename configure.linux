@@ -90,8 +90,6 @@ enable lirc
 enable stdin
 enable gu
 enable avahi
-enable spotify
-enable libspotify_load_runtime
 enable cdda
 enable cddb
 enable libxss
@@ -620,20 +618,13 @@ fi
 LIBSPOTIFY_ARCH=""
 case "$ARCH" in
     x86_64)
-	LIBSPOTIFY_ARCH="Linux-x86_64"
+	libspotify_setup "12.1.51-Linux-x86_64"
 	;;
     i686)
-	LIBSPOTIFY_ARCH="Linux-i686"
+	libspotify_setup "12.1.51-Linux-i686"
 	;;
 esac
 
-if [ "x$LIBSPOTIFY_ARCH" != "x" ] ; then
-    download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-${LIBSPOTIFY_ARCH}-release.tar.gz libspotifytarball
-    tar -x -C "${BUILDDIR}" -f "$libspotifytarball"
-    P=${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-${LIBSPOTIFY_ARCH}-release
-    echo >>${CONFIG_H} "#define LIBSPOTIFY_PATH \"${P}\""
-    echo >>${CONFIG_MAK} "LIBSPOTIFY_PATH=${P}"
-fi
 
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup

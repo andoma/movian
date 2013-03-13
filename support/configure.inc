@@ -16,7 +16,6 @@ BUILD=${CONFIGURE_POSTFIX}
 TMPDIR=${TOPDIR}/tmp
 GLW_DEFAULT_SKIN="default"
 DEFAULT_LOGTARGET=""
-LIBSPOTIFY_VERSION="12.1.51"
 
 CONFIG_LIST="
  libasound
@@ -432,7 +431,20 @@ freetype_setup()
 
 
 
-
+#
+#
+#
+libspotify_setup() {
+     download_file https://developer.spotify.com/download/libspotify/libspotify-$1-release.tar.gz libspotifytarball
+     tar -x -C "${BUILDDIR}" -f "$libspotifytarball"
+     P=${BUILDDIR}/libspotify-$1-release
+     echo >>${CONFIG_H} "#define LIBSPOTIFY_PATH \"${P}\""
+     echo >>${CONFIG_MAK} "LIBSPOTIFY_PATH=${P}"
+     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I$P/include"
+     support/spotifysyms.sh "$P/include/libspotify/api.h" "$P/include/libspotify/apifunctions.h"
+     enable spotify
+     enable libspotify_load_runtime
+}
 
 
 #

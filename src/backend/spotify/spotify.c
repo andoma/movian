@@ -38,7 +38,7 @@
 #include "playqueue.h"
 #include "media.h"
 #include "notifications.h"
-#include "ext/spotify/api.h"
+#include "libspotify/api.h"
 #include "keyring.h"
 #include "misc/ptrvec.h"
 #include "service.h"
@@ -52,7 +52,7 @@
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
 #endif
-#include "ext/spotify/apifunctions.h"
+#include "libspotify/apifunctions.h"
 
 
 struct spotify_page;
