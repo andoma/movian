@@ -16,8 +16,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PLUGINS_H__
-#define PLUGINS_H__
+#pragma once
 
 void plugins_init(const char *loadme);
 
@@ -31,4 +30,8 @@ void plugins_reload_dev_plugin(void);
 
 void plugin_props_from_file(prop_t *prop, const char *zipfile);
 
-#endif // PLUGINS_H__
+void plugin_add_static(const char *id, const char *category,
+		       const char *title, const char *icon,
+		       const char *synopsis,
+		       const char *description,
+		       void (*cb)(int enabled));

@@ -272,6 +272,7 @@ typedef struct inithelper {
   enum {
     INIT_GROUP_API,
     INIT_GROUP_IPC,
+    INIT_GROUP_STATIC_APPS,
   } group;
   void (*fn)(void);
 } inithelper_t;
@@ -290,3 +291,5 @@ extern inithelper_t *inithelpers;
     ih->next = inithelpers;					   \
     inithelpers = ih;						   \
   }
+
+void init_group(int group);

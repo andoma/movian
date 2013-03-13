@@ -155,7 +155,7 @@ init_global_info(void)
 /**
  *
  */
-static void
+void
 init_group(int group)
 {
   const inithelper_t *ih;

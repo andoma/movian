@@ -48,6 +48,7 @@
 #include "htsmsg/htsmsg_json.h"
 #include "metadata/metadata.h"
 #include "prop/prop_concat.h"
+#include "plugins.h"
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
 #include <dlfcn.h>
@@ -140,8 +141,6 @@ static LIST_HEAD(, spotify_user) spotify_users;
 #if SPOTIFY_WITH_SOCIAL
 static void spotify_userinfo_updated(sp_session *session);
 #endif
-
-static prop_t *friend_nodes;
 
 
 /**
@@ -4372,15 +4371,6 @@ courier_notify(void *opaque)
 static service_t *spotify_service;
 static int spotify_autologin;
 
-/**
- *
- */
-static void
-spotify_set_enable(void *opaque, int value)
-{
-  spotify_is_enabled = value;
-}
-
 
 /**
  *
@@ -4475,17 +4465,120 @@ spotify_control(void *opaque, prop_event_t event, ...)
 /**
  *
  */
-static int
-be_spotify_init(void)
+static void
+enable_cb(int enabled)
 {
-  prop_t *spotify;
-  prop_t *s, *ctrl;
-  setting_t *ena;
+  prop_t *spotify = prop_create(prop_get_global(), "spotify");
+
+  static prop_t *title;
+  static htsmsg_t *store;
+
+  if(spotify_is_enabled == enabled)
+    return;
+
+  spotify_is_enabled = enabled;
+
+  if(!spotify_courier) {
+    spotify_courier = prop_courier_create_notify(courier_notify, NULL);
+    current_user_rootlist = playlistcontainer_create("Self", 1);
+#if SPOTIFY_WITH_SOCIAL
+    friend_nodes = prop_create(spotify, "friends");
+#endif
+    
+    TAILQ_INIT(&spotify_msgs);
+
+    hts_mutex_init(&spotify_mutex);
+    hts_cond_init(&spotify_cond_main, &spotify_mutex);
+    hts_cond_init(&spotify_cond_uri, &spotify_mutex);
+    hts_cond_init(&spotify_cond_image, &spotify_mutex);
+
+    prop_subscribe(0,
+		   PROP_TAG_CALLBACK, spotify_control, NULL,
+		   PROP_TAG_ROOT, prop_create(spotify, "control"),
+		   PROP_TAG_COURIER, spotify_courier,
+		   NULL);
+
+    store = htsmsg_store_load("spotify") ?: htsmsg_create_map();
+    prop_set_string(title = prop_create_root(NULL), "Spotify");
+
+
+  }
+
+  static setting_t *spotify_setting[5];
+  static prop_t *spotify_setting_root;
+
+  if(enabled) {
+
+    spotify_service = service_create("showtime:spotify",
+				     "Spotify", "spotify:start",
+				     "music", rstr_get(spotify_icon_url),
+				     0, 1,
+				     SVC_ORIGIN_APP);
+
+    prop_t *s = 
+    spotify_setting_root =
+      settings_add_dir(gconf.settings_apps, title, NULL,
+		       rstr_get(spotify_icon_url),
+		       _p("Spotify music service"),
+		       "spotify:settings");
+
+    spotify_setting[0] = 
+      settings_create_bool(s, "autologin", 
+			   _p("Automatic login when Showtime starts"), 1, 
+			   store, settings_generic_set_bool, &spotify_autologin,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   settings_generic_save_settings, (void *)"spotify");
+
+    spotify_setting[1] = 
+      settings_create_bool(s, "highbitrate", _p("High bitrate"), 0,
+			   store, spotify_set_bitrate, NULL,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   settings_generic_save_settings, (void *)"spotify");
+
+    spotify_setting[2] = 
+      settings_create_bool(s, "offlinebitrate", _p("Offline sync in 96kbps"), 0,
+			   store, spotify_set_offline_bitrate, NULL,
+			   SETTINGS_INITIAL_UPDATE, NULL,
+			   settings_generic_save_settings, (void *)"spotify");
+
+    spotify_setting[3] = 
+      settings_create_action(s, _p("Relogin (switch user)"),
+			     spotify_relogin, NULL, 0, spotify_courier);
+
+    spotify_setting[4] = 
+      settings_create_action(s, _p("Forget me"),
+			     spotify_forget_me, NULL, 0, spotify_courier);
+
+
+  } else {
+    int i;
+    for(i = 0; i < 5; i++) 
+      setting_destroy(spotify_setting[i]);
+    prop_destroy(spotify_setting_root);
+
+    service_destroy(spotify_service);
+  }
+
+  if(spotify_is_enabled && spotify_autologin && !is_thread_running) {
+    TRACE(TRACE_DEBUG, "spotify", "Autologin");
+    spotify_start(NULL, 0, 1);
+  }
+
+
+}
+
+
+/**
+ *
+ */
+static void
+spotify_init(void)
+{
   char iconurl[512];
 
 #ifdef CONFIG_LIBSPOTIFY_LOAD_RUNTIME
   if(be_spotify_dlopen())
-    return 1;
+    return;
 #endif
 
   snprintf(iconurl, sizeof(iconurl),
@@ -4494,89 +4587,14 @@ be_spotify_init(void)
 
   TRACE(TRACE_INFO, "Spotify", "Using library version %s", f_sp_build_id());
 
-  prop_t *title = prop_create_root(NULL);
-  prop_set_string(title, "Spotify");
+  plugin_add_static("spotify", "music", "Spotify", iconurl,
+		    "Spotify music streaming service",
+		    "Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.", enable_cb);
 
-  s = settings_add_dir(gconf.settings_apps, title, NULL, iconurl,
-		       _p("Spotify music service"),
-		       "spotify:settings");
-
-  spotify_courier = prop_courier_create_notify(courier_notify, NULL);
-
-  spotify = prop_create(prop_get_global(), "spotify");
-
-  friend_nodes = prop_create(spotify, "friends");
-
-  current_user_rootlist = playlistcontainer_create("Self", 1);
-
-  TAILQ_INIT(&spotify_msgs);
-
-  hts_mutex_init(&spotify_mutex);
-  hts_cond_init(&spotify_cond_main, &spotify_mutex);
-  hts_cond_init(&spotify_cond_uri, &spotify_mutex);
-  hts_cond_init(&spotify_cond_image, &spotify_mutex);
-
-  // Configuration
-
-  htsmsg_t *store = htsmsg_store_load("spotify") ?: htsmsg_create_map();
-
-  settings_create_info(s, 
-		       iconurl,
-		       _p("Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime."));
-
-  spotify_service = service_create("showtime:spotify",
-				   "Spotify", "spotify:start",
-				   "music", iconurl, 0, 0,
-				   SVC_ORIGIN_APP);
-
-  settings_create_separator(s, NULL);
-
-  ena = settings_create_bool(s, "enable", _p("Enable Spotify"), 0, 
-			     store, spotify_set_enable, NULL,
-			     SETTINGS_INITIAL_UPDATE, NULL,
-			     settings_generic_save_settings, (void *)"spotify");
-
-  settings_create_bool(s, "autologin", 
-		       _p("Automatic login when Showtime starts"), 1, 
-		       store, settings_generic_set_bool, &spotify_autologin,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, (void *)"spotify");
-
-  settings_create_bool(s, "highbitrate", _p("High bitrate"), 0,
-		       store, spotify_set_bitrate, NULL,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, (void *)"spotify");
-
-  settings_create_bool(s, "offlinebitrate", _p("Offline sync in 96kbps"), 0,
-		       store, spotify_set_offline_bitrate, NULL,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, (void *)"spotify");
-
-  settings_create_action(s, _p("Relogin (switch user)"),
-			 spotify_relogin, NULL, 0, spotify_courier);
-
-  settings_create_action(s, _p("Forget me"),
-			 spotify_forget_me, NULL, 0, spotify_courier);
-
-  prop_link(settings_get_value(ena),
-	    prop_create(spotify_service->s_root, "enabled"));
-
-  if(spotify_is_enabled && spotify_autologin) {
-    TRACE(TRACE_DEBUG, "spotify", "Autologin");
-    spotify_start(NULL, 0, 1);
-  }
-
-  spotify = prop_create(prop_get_global(), "spotify");
-  ctrl = prop_create(spotify, "control");
-
-  prop_subscribe(0,
-		 PROP_TAG_CALLBACK, spotify_control, NULL,
-		 PROP_TAG_ROOT, ctrl,
-		 PROP_TAG_COURIER, spotify_courier,
-		 NULL);
-
-  return 0;
 }
+
+
+
 
 
 /**
@@ -4695,7 +4713,7 @@ be_resolve_item(const char *url, prop_t *item)
  *
  */
 static backend_t be_spotify = {
-  .be_init = be_spotify_init,
+  //  .be_init = be_spotify_init,
   .be_canhandle = be_spotify_canhandle,
   .be_open = be_spotify_open,
   .be_play_audio = be_spotify_play,
@@ -4705,3 +4723,6 @@ static backend_t be_spotify = {
 };
 
 BE_REGISTER(spotify);
+
+
+INITME(INIT_GROUP_STATIC_APPS, spotify_init);
