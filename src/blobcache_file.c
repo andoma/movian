@@ -435,7 +435,7 @@ blobcache_get(const char *key, const char *stash, int pad,
 
   blobcache_flush_t *bf;
   buf_t *b = NULL;
-  int fd;
+  int fd = -1;
   TAILQ_FOREACH_REVERSE(bf, &flush_queue, blobcache_flush_queue, bf_link) {
     if(bf->bf_key_hash == p->bi_key_hash) {
       // Item is not yet written to disk
