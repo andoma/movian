@@ -44,13 +44,13 @@
 
 typedef struct blobcache_item {
   struct blobcache_item *bi_link;
+  char *bi_etag;
   uint64_t bi_key_hash;
   uint64_t bi_content_hash;
   uint32_t bi_lastaccess;
   uint32_t bi_expiry;
   uint32_t bi_modtime;
   uint32_t bi_size;
-  char *bi_etag;
 } blobcache_item_t;
 
 typedef struct blobcache_diskitem {
@@ -64,21 +64,30 @@ typedef struct blobcache_diskitem {
   uint8_t di_etag[0];
 } __attribute__((packed)) blobcache_diskitem_t;
 
+
+TAILQ_HEAD(blobcache_flush_queue, blobcache_flush);
+
+typedef struct blobcache_flush {
+  TAILQ_ENTRY(blobcache_flush) bf_link;
+  uint64_t bf_key_hash;
+  buf_t *bf_buf;
+} blobcache_flush_t;
+
+
+
 #define ITEM_HASH_SIZE 256
 #define ITEM_HASH_MASK (ITEM_HASH_SIZE - 1)
 
 static blobcache_item_t *hashvector[ITEM_HASH_SIZE];
 
+static struct blobcache_flush_queue flush_queue;
+
 static pool_t *item_pool;
 static hts_mutex_t cache_lock;
-static int zombie;
-
-
-
-
-static callout_t blobcache_callout;
-
-static void blobcache_do_prune(struct callout *c, void *opaque);
+static hts_cond_t cache_cond;
+static pthread_t bcthread;
+static int bcrun = 1;
+static int index_dirty;
 
 #define BLOB_CACHE_MINSIZE  (10 * 1000 * 1000)
 #define BLOB_CACHE_MAXSIZE (500 * 1000 * 1000)
@@ -89,7 +98,7 @@ static uint64_t current_cache_size;
 /**
  *
  */
-static uint64_t 
+static uint64_t
 blobcache_compute_maxsize(void)
 {
   uint64_t avail = arch_cache_avail_bytes() + current_cache_size;
@@ -162,6 +171,10 @@ save_index(void)
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
   size_t siz;
+
+  if(!index_dirty)
+    return;
+
   snprintf(filename, sizeof(filename), "%s/bc2/index.dat", gconf.cache_path);
   
   int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
@@ -214,11 +227,16 @@ save_index(void)
   sha1_update(shactx, base, siz - 20);
   sha1_final(shactx, out);
 
-  if(write(fd, base, siz) != siz)
+  if(write(fd, base, siz) != siz) {
     TRACE(TRACE_INFO, "blobcache", "Unable to store index file %s -- %s",
 	  filename, strerror(errno));
+  } else {
+    index_dirty = 0;
+  }
+
   free(base);
   close(fd);
+
 }
 
 
@@ -322,14 +340,13 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   uint64_t dk = digest_key(key, stash);
   uint64_t dc = digest_content(b->b_ptr, b->b_size);
   uint32_t now = time(NULL);
-  char filename[PATH_MAX];
   blobcache_item_t *p;
 
   if(etag != NULL && strlen(etag) > 255)
     etag = NULL;
 
   hts_mutex_lock(&cache_lock);
-  if(zombie) {
+  if(!bcrun) {
     hts_mutex_unlock(&cache_lock);
     return 0;
   }
@@ -337,6 +354,9 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
     if(p->bi_key_hash == dk)
       break;
+
+  hts_cond_signal(&cache_cond);
+  index_dirty = 1;
 
   if(p != NULL && p->bi_content_hash == dc && p->bi_size == b->b_size) {
     p->bi_modtime = mtime;
@@ -347,19 +367,11 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
     return 1;
   }
 
-  make_filename(filename, sizeof(filename), dk, 1);
-  int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
-  if(fd == -1) {
-    hts_mutex_unlock(&cache_lock);
-    return 0;
-  }
-
-  if(write(fd, b->b_ptr, b->b_size) != b->b_size) {
-    unlink(filename);
-    hts_mutex_unlock(&cache_lock);
-    return 0;
-  }
-  close(fd);
+  blobcache_flush_t *bf = pool_get(item_pool);
+  bf->bf_key_hash = dk;
+  bf->bf_buf = buf_retain(b);
+  TAILQ_INSERT_TAIL(&flush_queue, bf, bf_link);
+  hts_cond_signal(&cache_cond);
 
   if(p == NULL) {
     p = pool_get(item_pool);
@@ -381,10 +393,6 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   p->bi_size = b->b_size;
   current_cache_size += p->bi_size;
 
-  if(blobcache_compute_maxsize() < current_cache_size &&
-     !callout_isarmed(&blobcache_callout))
-    callout_arm(&blobcache_callout, blobcache_do_prune, NULL, 5);
-
   hts_mutex_unlock(&cache_lock);
   return 0;
 }
@@ -405,7 +413,7 @@ blobcache_get(const char *key, const char *stash, int pad,
 
   hts_mutex_lock(&cache_lock);
 
-  if(zombie) {
+  if(!bcrun) {
     p = NULL;
   } else {
     for(q = &hashvector[dk & ITEM_HASH_MASK]; (p = *q); q = &p->bi_link)
@@ -417,31 +425,43 @@ blobcache_get(const char *key, const char *stash, int pad,
     hts_mutex_unlock(&cache_lock);
     return NULL;
   }
-  
+
   now = time(NULL);
 
   int expired = now > p->bi_expiry;
 
-  if(expired && ignore_expiry == NULL) {
-    goto bad;
-  }
-
-  make_filename(filename, sizeof(filename), p->bi_key_hash, 0);
-  int fd = open(filename, O_RDONLY, 0);
-  if(fd == -1) {
-  bad:
-    *q = p->bi_link;
-    pool_put(item_pool, p);
-    hts_mutex_unlock(&cache_lock);
-    return NULL;
-  }
-  
-  if(fstat(fd, &st))
+  if(expired && ignore_expiry == NULL)
     goto bad;
 
-  if(st.st_size != p->bi_size) {
-    unlink(filename);
-    goto bad;
+  blobcache_flush_t *bf;
+  buf_t *b = NULL;
+  int fd;
+  TAILQ_FOREACH_REVERSE(bf, &flush_queue, blobcache_flush_queue, bf_link) {
+    if(bf->bf_key_hash == p->bi_key_hash) {
+      // Item is not yet written to disk
+      b = buf_retain(bf->bf_buf);
+      break;
+    }
+  }
+
+  if(b == NULL) {
+    make_filename(filename, sizeof(filename), p->bi_key_hash, 0);
+    fd = open(filename, O_RDONLY, 0);
+    if(fd == -1) {
+    bad:
+      *q = p->bi_link;
+      pool_put(item_pool, p);
+      hts_mutex_unlock(&cache_lock);
+      return NULL;
+    }
+
+    if(fstat(fd, &st))
+      goto bad;
+
+    if(st.st_size != p->bi_size) {
+      unlink(filename);
+      goto bad;
+    }
   }
 
   if(mtimep)
@@ -451,25 +471,29 @@ blobcache_get(const char *key, const char *stash, int pad,
     *etagp = p->bi_etag ? strdup(p->bi_etag) : NULL;
 
   p->bi_lastaccess = now;
-
-  hts_mutex_unlock(&cache_lock);
+  index_dirty = 1; // We don't deem it important enough to wakeup on get
 
   if(ignore_expiry != NULL)
     *ignore_expiry = expired;
 
-  buf_t *b = buf_create(st.st_size + pad);
-  if(b == NULL) {
-    close(fd);
-    return NULL;
-  }
+  hts_mutex_unlock(&cache_lock);
 
-  if(read(fd, b->b_ptr, st.st_size) != st.st_size) {
-    buf_release(b);
+  if(b == NULL) {
+
+    b = buf_create(st.st_size + pad);
+    if(b == NULL) {
+      close(fd);
+      return NULL;
+    }
+
+    if(read(fd, b->b_ptr, st.st_size) != st.st_size) {
+      buf_release(b);
+      close(fd);
+      return NULL;
+    }
+    memset(b->b_ptr + st.st_size, 0, pad);
     close(fd);
-    return NULL;
   }
-  memset(b->b_ptr + st.st_size, 0, pad);
-  close(fd);
   return b;
 }
 
@@ -488,7 +512,7 @@ blobcache_get_meta(const char *key, const char *stash,
   blobcache_item_t *p;
   int r;
   hts_mutex_lock(&cache_lock);
-  if(zombie) {
+  if(!bcrun) {
     p = NULL;
   } else {
     for(p = hashvector[dk & ITEM_HASH_MASK]; p != NULL; p = p->bi_link)
@@ -610,10 +634,6 @@ prune_to_size(void)
   int i, tot, j = 0;
   blobcache_item_t *p, **sv;
 
-  hts_mutex_lock(&cache_lock);
-  if(zombie)
-    goto out;
-
   uint64_t maxsize = blobcache_compute_maxsize();
   tot = pool_num(item_pool);
 
@@ -636,6 +656,7 @@ prune_to_size(void)
       break;
     current_cache_size -= p->bi_size;
     prune_item(p);
+    index_dirty = 1;
   }
 
   for(; i < j; i++) {
@@ -646,8 +667,6 @@ prune_to_size(void)
 
   free(sv);
   save_index();
- out:
-  hts_mutex_unlock(&cache_lock);
 }
 
 
@@ -712,6 +731,7 @@ cache_clear(void *opaque, prop_event_t event, ...)
     for(p = hashvector[i]; p != NULL; p = n) {
       n = p->bi_link;
       prune_item(p);
+      index_dirty = 1;
     }
     hashvector[i] = NULL;
   }
@@ -721,6 +741,63 @@ cache_clear(void *opaque, prop_event_t event, ...)
   notify_add(NULL, NOTIFY_INFO, NULL, 3, _("Cache cleared"));
 }
 
+
+
+/**
+ *
+ */
+static void *
+flushthread(void *aux)
+{
+  blobcache_flush_t *bf;
+
+  hts_mutex_lock(&cache_lock);
+
+  while(bcrun) {
+
+    if((bf = TAILQ_FIRST(&flush_queue)) == NULL) {
+
+      if(index_dirty) {
+        if(hts_cond_wait_timeout(&cache_cond, &cache_lock, 5000))
+          save_index();
+      } else {
+        hts_cond_wait(&cache_cond, &cache_lock);
+      }
+      continue;
+    }
+
+    hts_mutex_unlock(&cache_lock);
+    char filename[PATH_MAX];
+    make_filename(filename, sizeof(filename), bf->bf_key_hash, 1);
+    buf_t *b = bf->bf_buf;
+
+    int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
+    if(fd != -1) {
+
+      if(write(fd, b->b_ptr, b->b_size) != b->b_size)
+        unlink(filename);
+
+      if(close(fd))
+        unlink(filename);
+    }
+    hts_mutex_lock(&cache_lock);
+
+    assert(TAILQ_FIRST(&flush_queue) == bf);
+    TAILQ_REMOVE(&flush_queue, bf, bf_link);
+    buf_release(bf->bf_buf);
+    pool_put(item_pool, bf);
+
+    if(blobcache_compute_maxsize() < current_cache_size)
+      prune_to_size();
+  }
+  save_index();
+  hts_mutex_unlock(&cache_lock);
+  return NULL;
+}
+
+static_assert(sizeof(blobcache_flush_t) <= sizeof(blobcache_item_t),
+              "blobcache_flush too big");
+
 /**
  *
  */
@@ -729,6 +806,8 @@ blobcache_init(void)
 {
   char buf[256];
 
+  TAILQ_INIT(&flush_queue);
+
   blobcache_prune_old();
   snprintf(buf, sizeof(buf), "%s/bc2", gconf.cache_path);
   if(mkdir(buf, 0777) && errno != EEXIST)
@@ -736,6 +815,7 @@ blobcache_init(void)
 	  buf, strerror(errno));
 
   hts_mutex_init(&cache_lock);
+  hts_cond_init(&cache_cond, &cache_lock);
   item_pool = pool_create("blobcacheitems", sizeof(blobcache_item_t), 0);
 
   load_index();
@@ -747,6 +827,9 @@ blobcache_init(void)
 
   settings_create_action(gconf.settings_general, _p("Clear cached files"),
 			 cache_clear, NULL, 0, NULL);
+
+  hts_thread_create_joinable("blobcache", &bcthread, flushthread, NULL,
+                             THREAD_PRIO_LOW);
 }
 
 
@@ -754,16 +837,8 @@ void
 blobcache_fini(void)
 {
   hts_mutex_lock(&cache_lock);
-  zombie = 1;
-  save_index();
+  bcrun = 0;
+  hts_cond_signal(&cache_cond);
   hts_mutex_unlock(&cache_lock);
-}
-
-/**
- *
- */
-static void
-blobcache_do_prune(struct callout *c, void *opaque)
-{
-  prune_to_size();
+  hts_thread_join(&bcthread);
 }
