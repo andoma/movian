@@ -169,15 +169,17 @@ fi
 #
 
 if disabled libspotify_load_runtime; then
- 
+    LIBSPOTIFY_VERSION="12.1.51"
+
     if [ "$SPOTIFY_FRAMEWORK" == "" ] ; then
         download_file https://developer.spotify.com/download/libspotify/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal.zip zipfile
         unzip -oq "$zipfile" -d "${BUILDDIR}"
         SPOTIFY_FRAMEWORK="${BUILDDIR}/libspotify-${LIBSPOTIFY_VERSION}-Darwin-universal/libspotify.framework"
     fi
-
+    support/spotifysyms.sh "${SPOTIFY_FRAMEWORK}/headers/api.h" "${SPOTIFY_FRAMEWORK}/headers/apifunctions.h"
     echo >>${CONFIG_MAK} "SPOTIFY_FRAMEWORK = ${SPOTIFY_FRAMEWORK}"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK)) -framework libspotify"
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -F\$(shell dirname \$(SPOTIFY_FRAMEWORK))"
 fi
 
 
