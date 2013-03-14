@@ -30,6 +30,11 @@
 #include "arch/threads.h"
 #include "misc/rstr.h"
 
+#if __GNUC__ >= 4 && __GNUC_MINOR__ >=6
+#define static_assert(x, y) _Static_assert(x, y)
+#else
+#define static_assert(x, y)
+#endif
 
 void parse_opts(int argc, char **argv);
 
