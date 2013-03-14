@@ -85,7 +85,7 @@ static struct blobcache_flush_queue flush_queue;
 static pool_t *item_pool;
 static hts_mutex_t cache_lock;
 static hts_cond_t cache_cond;
-static pthread_t bcthread;
+static hts_thread_t bcthread;
 static int bcrun = 1;
 static int index_dirty;
 
