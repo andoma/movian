@@ -35,10 +35,30 @@
 
 #include "http.h"
 #include "http_server.h"
+#include "misc/sha.h"
+#include <libavutil/base64.h>
+
 
 int http_server_port;
 static LIST_HEAD(, http_path) http_paths;
 LIST_HEAD(http_connection_list, http_connection); 
+
+
+/**
+ *
+ */
+typedef struct http_path {
+  LIST_ENTRY(http_path) hp_link;
+  const char *hp_path;
+  void *hp_opaque;
+  http_callback_t *hp_callback;
+  int hp_len;
+  int hp_leaf;
+  websocket_callback_init_t *hp_ws_init;
+  websocket_callback_data_t *hp_ws_data;
+  websocket_callback_fini_t *hp_ws_fini;
+} http_path_t;
+
 
 /**
  *
@@ -50,9 +70,10 @@ struct http_connection {
   int hc_events;
 
   int hc_state;
-#define HCS_COMMAND 0
-#define HCS_HEADERS 1
-#define HCS_POSTDATA 2
+#define HCS_COMMAND   0
+#define HCS_HEADERS   1
+#define HCS_POSTDATA  2
+#define HCS_WEBSOCKET 3
 
   struct http_header_list hc_request_headers;
   struct http_header_list hc_req_args;
@@ -80,6 +101,9 @@ struct http_connection {
   size_t hc_post_offset;
 
   char hc_myaddr[32];
+
+  const http_path_t *hc_path;
+  void *hc_opaque;
 };
 
 
@@ -103,18 +127,6 @@ static struct strtab HTTP_versiontab[] = {
   { "HTTP/1.1",        HTTP_VERSION_1_1 },
 };
 
-
-/**
- *
- */
-typedef struct http_path {
-  LIST_ENTRY(http_path) hp_link;
-  const char *hp_path;
-  void *hp_opaque;
-  http_callback_t *hp_callback;
-  int hp_len;
-  int hp_leaf;
-} http_path_t;
 
 
 /**
@@ -169,7 +181,28 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
 /**
  *
  */
-static http_path_t *
+void *
+http_add_websocket(const char *path,
+		   websocket_callback_init_t *init,
+		   websocket_callback_data_t *data,
+		   websocket_callback_fini_t *fini)
+{
+  http_path_t *hp = malloc(sizeof(http_path_t));
+
+  hp->hp_len = strlen(path);
+  hp->hp_path = strdup(path);
+  hp->hp_ws_init = init;
+  hp->hp_ws_data = data;
+  hp->hp_ws_fini = fini;
+  hp->hp_leaf = 2;
+  LIST_INSERT_HEAD(&http_paths, hp, hp_link);
+  return hp;  
+}
+
+/**
+ *
+ */
+static const http_path_t *
 http_resolve(http_connection_t *hc, char **remainp, char **argsp)
 {
   http_path_t *hp;
@@ -437,7 +470,7 @@ http_redirect(http_connection_t *hc, const char *location)
  *
  */
 static void
-http_exec(http_connection_t *hc, http_path_t *hp, char *remain,
+http_exec(http_connection_t *hc, const http_path_t *hp, char *remain,
 	  http_cmd_t method)
 {
   hsprintf("%p: Dispatching [%s] on thread 0x%lx\n",
@@ -597,6 +630,48 @@ http_parse_get_args(http_connection_t *hc, char *args)
   }
 }
 
+#define WSGUID "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
+
+/**
+ *
+ */
+static int
+http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
+{
+  sha1_decl(shactx);
+  char sig[64];
+  uint8_t d[20];
+  struct http_header_list headers;
+
+  const char *k = http_header_get(&hc->hc_request_headers, "Sec-WebSocket-Key");
+
+  if(k == NULL) {
+    http_error(hc, HTTP_STATUS_BAD_REQUEST, NULL);
+    return 0;
+  }
+
+  sha1_init(shactx);
+  sha1_update(shactx, (const uint8_t *)k, strlen(k));
+  sha1_update(shactx, (const uint8_t *)WSGUID, strlen(WSGUID));
+  sha1_final(shactx, d);
+
+  av_base64_encode(sig, sizeof(sig), d, 20);
+
+  LIST_INIT(&headers);
+
+  http_header_add(&headers, "Connection", "Upgrade", 0);
+  http_header_add(&headers, "Upgrade", "websocket", 0);
+  http_header_add(&headers, "Sec-WebSocket-Accept", sig, 0);
+
+  http_send_raw(hc, 101, "Switching Protocols", &headers, NULL);
+  hc->hc_state = HCS_WEBSOCKET;
+ 
+  hc->hc_path = hp;
+  hc->hc_opaque = NULL;
+  hp->hp_ws_init(hc);
+  return 0;
+}
+
 
 /**
  *
@@ -604,7 +679,7 @@ http_parse_get_args(http_connection_t *hc, char *args)
 static int
 http_cmd_get(http_connection_t *hc, http_cmd_t method)
 {
-  http_path_t *hp;
+  const http_path_t *hp;
   char *remain;
   char *args;
 
@@ -617,6 +692,23 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
   if(args != NULL)
     http_parse_get_args(hc, args);
 
+  const char *c = http_header_get(&hc->hc_request_headers, "Connection");
+  const char *u = http_header_get(&hc->hc_request_headers, "Upgrade");
+
+  if(c && u && !strcasecmp(c, "Upgrade") && !strcasecmp(u, "websocket")) {
+    if(hp->hp_leaf != 2) {
+      http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
+      return 0;
+    }
+    return http_cmd_start_websocket(hc, hp);
+  }
+
+  if(hp->hp_leaf == 2) {
+    // Websocket endpoint don't wanna deal with normal HTTP requests
+    http_error(hc, HTTP_STATUS_METHOD_NOT_ALLOWED, NULL);
+    return 0;
+  }
+
   http_exec(hc, hp, remain, method);
   return 0;
 }
@@ -628,7 +720,7 @@ http_cmd_get(http_connection_t *hc, http_cmd_t method)
 static int
 http_read_post(http_connection_t *hc)
 {
-  http_path_t *hp;
+  const http_path_t *hp;
   const char *content_type;
   char *v, *argv[2], *args, *remain;
   int n;
@@ -792,6 +884,111 @@ http_read_line(http_connection_t *hc, char *buf, size_t bufsize)
 /**
  *
  */
+void
+websocket_send(http_connection_t *hc, int opcode, const void *data,
+	       size_t len)
+{
+  uint8_t hdr[14]; // max header length
+  int hlen;
+  hdr[0] = 0x80 | (opcode & 0xf);
+  if(len <= 125) {
+    hdr[1] = len;
+    hlen = 2;
+  } else if(len < 65536) {
+    hdr[1] = 126;
+    hdr[2] = len >> 8;
+    hdr[3] = len;
+    hlen = 4;
+  } else {
+    hdr[1] = 127;
+    uint64_t u64 = len;
+#if defined(__LITTLE_ENDIAN__)
+    u64 = __builtin_bswap64(u64);
+#endif
+    memcpy(hdr + 2, &u64, sizeof(uint64_t));
+    hlen = 10;
+  }
+
+  htsbuf_append(&hc->hc_output, hdr, hlen);
+  htsbuf_append(&hc->hc_output, data, len);
+}
+
+
+
+/**
+ *
+ */
+static int
+websocket_input(http_connection_t *hc)
+{
+  uint8_t hdr[14]; // max header length
+  int p = htsbuf_peek(&hc->hc_input, &hdr, 14);
+  const uint8_t *m;
+
+  if(p < 2)
+    return 0;
+
+  int opcode  = hdr[0] & 0xf;
+  int64_t len = hdr[1] & 0x7f;
+  int hoff = 2;
+
+  if(len == 126) {
+    if(p < 4)
+      return 0;
+    len = hdr[2] << 8 | hdr[3];
+    hoff = 4;
+  } else if(len == 127) {
+    if(p < 10)
+      return 0;
+    memcpy(&len, hdr + 2, sizeof(uint64_t));
+#if defined(__LITTLE_ENDIAN__)
+    len = __builtin_bswap64(len);
+#endif
+    hoff = 10;
+  }
+
+  if(hdr[1] & 0x80) {
+    if(p < hoff + 4)
+      return 0;
+    m = hdr + hoff;
+
+    hoff += 4;
+  } else {
+    m = NULL;
+  }
+
+  if(hc->hc_input.hq_size < hoff + len)
+    return 0;
+
+  uint8_t *d = mymalloc(len);
+  if(d == NULL)
+    return 1;
+
+  htsbuf_drop(&hc->hc_input, hoff);
+  htsbuf_read(&hc->hc_input, d, len);
+
+  if(m != NULL) {
+    int i;
+    for(i = 0; i < len; i++)
+      d[i] ^= m[i&3];
+  }
+  
+
+  if(opcode == 8) {
+    // PING
+    websocket_send(hc, 9, d, len);
+  } else {
+    hc->hc_path->hp_ws_data(hc, opcode, d, len, hc->hc_opaque);
+  }
+  free(d);
+  return -1;
+}
+
+
+
+/**
+ *
+ */
 static int
 http_handle_input(http_connection_t *hc)
 {
@@ -806,7 +1003,9 @@ http_handle_input(http_connection_t *hc)
       free(hc->hc_post_data);
       hc->hc_post_data = NULL;
 
-      if((r = http_read_line(hc, buf, sizeof(buf))) == -1)
+      r = http_read_line(hc, buf, sizeof(buf));
+
+      if(r == -1)
 	return 1;
 
       if(r == 0)
@@ -868,6 +1067,12 @@ http_handle_input(http_connection_t *hc)
     case HCS_POSTDATA:
       if(!http_read_post(hc))
 	return 0;
+      break;
+
+    case HCS_WEBSOCKET:
+      if((r = websocket_input(hc)) != -1)
+	return r;
+      break;
     }
   }
 }
@@ -909,7 +1114,7 @@ http_write(http_connection_t *hc)
     free(hd);
   }
   hc->hc_events &= ~POLLOUT;
-  return !hc->hc_keep_alive;
+  return 0;
 }
 
 
@@ -924,9 +1129,10 @@ http_io(http_connection_t *hc, int revents)
     return 1;
 
   if(revents & POLLIN) {
-    char *mem = malloc(1000);
+    int rlen = 1000;
+    char *mem = malloc(rlen);
     
-    r = read(hc->hc_fd, mem, 1000);
+    r = read(hc->hc_fd, mem, rlen);
     if(r > 0) {
       htsbuf_append_prealloc(&hc->hc_input, mem, r);
       if(http_handle_input(hc))
@@ -959,6 +1165,9 @@ http_close(http_server_t *hs, http_connection_t *hc)
   free(hc->hc_url);
   free(hc->hc_url_orig);
   free(hc->hc_post_data);
+
+  if(hc->hc_path != NULL && hc->hc_path->hp_ws_fini != NULL)
+    hc->hc_path->hp_ws_fini(hc, hc->hc_opaque);
   free(hc);
 }
 

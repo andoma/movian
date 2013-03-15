@@ -35,6 +35,28 @@ void http_server_init(void);
 void *http_path_add(const char *path, void *opaque, http_callback_t *callback,
 		    int leaf);
 
+
+typedef int (websocket_callback_init_t)(http_connection_t *hc);
+
+typedef int (websocket_callback_data_t)(http_connection_t *hc,
+					int opcode,
+					uint8_t *data,
+					size_t len,
+					void *opaque);
+
+typedef void (websocket_callback_fini_t)(http_connection_t *hc,
+					 void *opaque);
+
+void *http_add_websocket(const char *path, 
+			 websocket_callback_init_t *init,
+			 websocket_callback_data_t *data,
+			 websocket_callback_fini_t *fini);
+
+void websocket_send(http_connection_t *hc, int opcode, const void *data,
+		    size_t len);
+
+void http_set_opaque(http_connection_t *hc, void *opaque);
+
 int http_send_reply(http_connection_t *hc, int rc, const char *content, 
 		    const char *encoding, const char *location, int maxage,
 		    htsbuf_queue_t *output);

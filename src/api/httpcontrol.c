@@ -480,6 +480,41 @@ hc_hexdump(http_connection_t *hc, const char *remain, void *opaque,
 
 
 
+
+/**
+ *
+ */
+static int
+hc_echo_init(http_connection_t *hc)
+{
+  TRACE(TRACE_DEBUG, "WS", "Connected to echo");
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+hc_echo_data(http_connection_t *hc, int opcode, 
+	     uint8_t *data, size_t len, void *opaque)
+{
+  websocket_send(hc, opcode, data, len);
+  TRACE(TRACE_DEBUG, "WS", "Echoing %d bytes (opcode:%d)", len, opcode);
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+hc_echo_fini(http_connection_t *hc, void *opaque)
+{
+  TRACE(TRACE_DEBUG, "WS", "Disconnected from echo");
+}
+
+
 /**
  *
  */
@@ -496,6 +531,8 @@ httpcontrol_init(void)
   http_path_add("/showtime/diag", NULL, hc_diagnostics, 1);
   http_path_add("/showtime/logfile", NULL, hc_logfile, 0);
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
+  http_add_websocket("/showtime/ws/echo",
+		     hc_echo_init, hc_echo_data, hc_echo_fini);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init);
