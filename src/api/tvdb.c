@@ -22,6 +22,7 @@
 #include "showtime.h"
 #include "metadata/metadata.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/dbl.h"
 #include "settings.h"

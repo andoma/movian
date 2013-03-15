@@ -22,6 +22,7 @@
 
 #include "showtime.h"
 #include "htsmsg/htsmsg_json.h"
+#include "htsmsg/htsmsg_store.h"
 #include "fileaccess/fileaccess.h"
 #include "misc/pixmap.h"
 #include "backend/backend.h"

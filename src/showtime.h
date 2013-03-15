@@ -26,7 +26,6 @@
 #include <sys/time.h>
 #include <time.h>
 
-#include "htsmsg/htsmsg_store.h"
 #include "arch/threads.h"
 #include "misc/rstr.h"
 

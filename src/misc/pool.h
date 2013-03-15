@@ -1,5 +1,6 @@
 #pragma once
 #include "arch/threads.h"
+#include "misc/queue.h"
 
 // #define POOL_DEBUG
 

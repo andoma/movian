@@ -31,6 +31,8 @@
 #include "backend/backend_prop.h"
 #include "prop/prop_nodefilter.h"
 #include "prop/prop_concat.h"
+#include "htsmsg/htsmsg_store.h"
+
 
 #define SETTINGS_URL "settings:"
 static prop_t *settings_root;

@@ -31,6 +31,7 @@
 #include "fileaccess/fileaccess.h"
 #include "backend/backend.h"
 #include "settings.h"
+#include "htsmsg/htsmsg_store.h"
 
 LIST_HEAD(font_list, font);
 

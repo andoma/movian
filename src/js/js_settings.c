@@ -21,9 +21,9 @@
 #include <assert.h>
 
 #include "js.h"
-#include "htsmsg/htsmsg.h"
 #include "db/kvstore.h"
 #include "settings.h"
+#include "htsmsg/htsmsg_store.h"
 
 LIST_HEAD(js_setting_list, js_setting);
 

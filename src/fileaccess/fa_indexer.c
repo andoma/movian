@@ -25,6 +25,7 @@
 #include "db/db_support.h"
 #include "fa_indexer.h"
 #include "fileaccess.h"
+#include "htsmsg/htsmsg_store.h"
 
 /**
  *

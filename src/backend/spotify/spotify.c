@@ -46,6 +46,7 @@
 #include "settings.h"
 #include "htsmsg/htsbuf.h"
 #include "htsmsg/htsmsg_json.h"
+#include "htsmsg/htsmsg_store.h"
 #include "metadata/metadata.h"
 #include "prop/prop_concat.h"
 #include "plugins.h"

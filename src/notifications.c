@@ -25,6 +25,7 @@
 #include "misc/callout.h"
 #include "event.h"
 #include "keyring.h"
+#include "htsmsg/htsmsg_store.h"
 
 static prop_t *notify_prop_entries;
 static hts_mutex_t news_mutex;

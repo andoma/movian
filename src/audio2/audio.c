@@ -7,6 +7,7 @@
 #include "audio_ext.h"
 #include "audio.h"
 #include "libav.h"
+#include "htsmsg/htsmsg_store.h"
 
 #include <libavutil/avutil.h>
 #include <libavcodec/avcodec.h>

@@ -5,6 +5,8 @@
 #include "showtime.h"
 #include "prop/prop.h"
 #include "ext/spidermonkey/jsapi.h"
+#include "htsmsg/htsmsg.h"
+
 
 extern prop_courier_t *js_global_pc;
 extern JSContext *js_global_cx;

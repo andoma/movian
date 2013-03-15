@@ -26,6 +26,7 @@
 #include "service.h"
 #include "misc/strtab.h"
 #include "settings.h"
+#include "htsmsg/htsmsg_store.h"
 
 #ifdef CONFIG_AVAHI
 #include "avahi.h"

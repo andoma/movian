@@ -55,7 +55,7 @@ typedef struct upnp_service {
   char *us_icon_url;
 
   char *us_settings_path;
-  htsmsg_t *us_settings_store;
+  struct htsmsg *us_settings_store;
 
   struct prop *us_settings;
   struct setting *us_setting_enabled;
@@ -94,8 +94,8 @@ typedef struct upnp_device {
  */
 typedef struct upnp_service_method {
   const char *usm_name;
-  htsmsg_t *(*usm_fn)(struct http_connection *hc, htsmsg_t *in,
-		      const char *myhost, int myport);
+  struct htsmsg *(*usm_fn)(struct http_connection *hc, struct htsmsg *in,
+			   const char *myhost, int myport);
 
 } upnp_service_method_t;
 
@@ -124,8 +124,8 @@ typedef struct upnp_local_service {
   const char *uls_name;
   int uls_version;
   struct upnp_subscription_list uls_subscriptions;
-  htsmsg_t *(*uls_generate_props)(struct upnp_local_service *svc,
-				  const char *myhost, int myport);
+  struct htsmsg *(*uls_generate_props)(struct upnp_local_service *svc,
+				       const char *myhost, int myport);
   struct callout uls_notifytimer;
   upnp_service_method_t uls_methods[];
 } upnp_local_service_t;

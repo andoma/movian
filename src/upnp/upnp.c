@@ -21,6 +21,8 @@
 #include "networking/http_server.h"
 #include "networking/ssdp.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "htsmsg/htsmsg_store.h"
+
 #include "event.h"
 #include "playqueue.h"
 #include "fileaccess/fileaccess.h"

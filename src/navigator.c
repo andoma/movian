@@ -34,6 +34,7 @@
 #include "notifications.h"
 #include "misc/str.h"
 #include "db/kvstore.h"
+#include "htsmsg/htsmsg_store.h"
 
 TAILQ_HEAD(nav_page_queue, nav_page);
 LIST_HEAD(bookmark_list, bookmark);

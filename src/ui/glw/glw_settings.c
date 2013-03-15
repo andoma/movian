@@ -21,6 +21,7 @@
 #include "settings.h"
 #include "glw.h"
 #include "glw_settings.h"
+#include "htsmsg/htsmsg_store.h"
 
 glw_settings_t glw_settings;
 

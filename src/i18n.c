@@ -25,6 +25,7 @@
 #include "misc/str.h"
 #include "fileaccess/fileaccess.h"
 #include "networking/http_server.h"
+#include "htsmsg/htsmsg_store.h"
 
 static void nls_init(prop_t *parent, htsmsg_t *store);
 

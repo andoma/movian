@@ -22,6 +22,7 @@
 #include "showtime.h"
 #include "serdev.h"
 #include "misc/strtab.h"
+#include "htsmsg/htsmsg_store.h"
 
 #define CONFNAME "ipc/serdev/lgtv"
 

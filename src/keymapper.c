@@ -25,9 +25,7 @@
 #include "keymapper.h"
 #include "settings.h"
 #include "event.h"
-
-
-#include "event.h"
+#include "htsmsg/htsmsg_store.h"
 
 LIST_HEAD(keymap_entry_list, keymap_entry);
 

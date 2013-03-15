@@ -30,6 +30,7 @@
 #include "plugins.h"
 #include "settings.h"
 #include "htsmsg/htsmsg_json.h"
+#include "htsmsg/htsmsg_store.h"
 #include "backend/backend.h"
 #include "misc/str.h"
 #include "prop/prop_nodefilter.h"

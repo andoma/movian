@@ -50,6 +50,7 @@
 #include "video/video_settings.h"
 #include "metadata/metadata.h"
 #include "db/db_support.h"
+#include "htsmsg/htsmsg_store.h"
 #include "js/js.h"
 #include "db/kvstore.h"
 #include "upgrade.h"

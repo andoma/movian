@@ -36,6 +36,7 @@
 #include "fa_search.h"
 #include "service.h"
 #include "settings.h"
+#include "htsmsg/htsmsg_store.h"
 
 /* FIXME: utf-8 support? */
 

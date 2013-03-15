@@ -28,6 +28,7 @@
 #include "arch/arch.h"
 #include "fileaccess/fileaccess.h"
 #include "htsmsg/htsmsg_json.h"
+#include "htsmsg/htsmsg_store.h"
 #include "misc/sha.h"
 #include "misc/str.h"
 #include "settings.h"
