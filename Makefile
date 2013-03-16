@@ -198,6 +198,7 @@ SRCS += 		src/api/xmlrpc.c \
 			src/api/tvdb.c \
 
 SRCS-$(CONFIG_HTTPSERVER) += src/api/httpcontrol.c
+SRCS-$(CONFIG_HTTPSERVER) += src/api/stpp.c
 SRCS-$(CONFIG_AIRPLAY) += src/api/airplay.c
 
 ##############################################################
