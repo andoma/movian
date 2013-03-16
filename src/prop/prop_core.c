@@ -2863,17 +2863,10 @@ prop_float_to_int(prop_t *p)
  *
  */
 static prop_t *
-prop_get_float(prop_t *p, int *forceupdate)
+prop_get_float_locked(prop_t *p, int *forceupdate)
 {
-  if(p == NULL)
+  if(p == NULL || p->hp_type == PROP_ZOMBIE)
     return NULL;
-
-  hts_mutex_lock(&prop_mutex);
-
-  if(p->hp_type == PROP_ZOMBIE) {
-    hts_mutex_unlock(&prop_mutex);
-    return NULL;
-  }
 
   if(p->hp_type == PROP_INT) {
     prop_int_to_float(p);
@@ -2884,10 +2877,9 @@ prop_get_float(prop_t *p, int *forceupdate)
 
   if(p->hp_type != PROP_FLOAT) {
 
-    if(prop_clean(p)) {
-      hts_mutex_unlock(&prop_mutex);
+    if(prop_clean(p))
       return NULL;
-    }
+
     if(forceupdate != NULL)
       *forceupdate = 1;
     p->hp_float = 0;
@@ -2896,32 +2888,41 @@ prop_get_float(prop_t *p, int *forceupdate)
   return p;
 }
 
+
+/**
+ *
+ */
+static void
+prop_set_float_exl(prop_t *p, prop_sub_t *skipme, float v, int how)
+{
+  int forceupdate = !!how;
+  if((p = prop_get_float_locked(p, &forceupdate)) != NULL) {
+
+    if(forceupdate || p->hp_float != v) {
+
+      if(p->hp_flags & PROP_CLIPPED_VALUE) {
+	if(v > p->u.f.max)
+	  v  = p->u.f.max;
+	if(v < p->u.f.min)
+	  v  = p->u.f.min;
+      }
+
+      p->hp_float = v;
+      
+      prop_notify_value(p, skipme, "prop_set_float_ex()", how);
+    }
+  }
+}
+
+
 /**
  *
  */
 void
 prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v, int how)
 {
-  int forceupdate = !!how;
-
-  if((p = prop_get_float(p, &forceupdate)) == NULL)
-    return;
-  
-  if(!forceupdate && p->hp_float == v) {
-    hts_mutex_unlock(&prop_mutex);
-    return;
-  }
-
-  if(p->hp_flags & PROP_CLIPPED_VALUE) {
-    if(v > p->u.f.max)
-      v  = p->u.f.max;
-    if(v < p->u.f.min)
-      v  = p->u.f.min;
-  }
-
-  p->hp_float = v;
-
-  prop_notify_value(p, skipme, "prop_set_float_ex()", how);
+  hts_mutex_lock(&prop_mutex);
+  prop_set_float_exl(p, skipme, v, how);
   hts_mutex_unlock(&prop_mutex);
 }
 
@@ -2932,22 +2933,22 @@ prop_set_float_ex(prop_t *p, prop_sub_t *skipme, float v, int how)
 void
 prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 {
-  float n;
-  if((p = prop_get_float(p, NULL)) == NULL)
-    return;
+  hts_mutex_lock(&prop_mutex);
 
-  n = p->hp_float + v;
+  if((p = prop_get_float_locked(p, NULL)) != NULL) {
+    float n = p->hp_float + v;
 
-  if(p->hp_flags & PROP_CLIPPED_VALUE) {
-    if(n > p->u.f.max)
-      n  = p->u.f.max;
-    if(n < p->u.f.min)
-      n  = p->u.f.min;
-  }
+    if(p->hp_flags & PROP_CLIPPED_VALUE) {
+      if(n > p->u.f.max)
+	n  = p->u.f.max;
+      if(n < p->u.f.min)
+	n  = p->u.f.min;
+    }
 
-  if(p->hp_float != n) {
-    p->hp_float = n;
-    prop_notify_value(p, skipme, "prop_add_float()", 0);
+    if(p->hp_float != n) {
+      p->hp_float = n;
+      prop_notify_value(p, skipme, "prop_add_float()", 0);
+    }
   }
   hts_mutex_unlock(&prop_mutex);
 }
@@ -2959,26 +2960,26 @@ prop_add_float_ex(prop_t *p, prop_sub_t *skipme, float v)
 void
 prop_set_float_clipping_range(prop_t *p, float min, float max)
 {
-  float n;
+  hts_mutex_lock(&prop_mutex);
 
-  if((p = prop_get_float(p, NULL)) == NULL)
-    return;
+  if((p = prop_get_float_locked(p, NULL)) != NULL) {
 
-  p->hp_flags |= PROP_CLIPPED_VALUE;
+    p->hp_flags |= PROP_CLIPPED_VALUE;
 
-  p->u.f.min = min;
-  p->u.f.max = max;
+    p->u.f.min = min;
+    p->u.f.max = max;
 
-  n = p->hp_float;
+    float n = p->hp_float;
 
-  if(n > max)
-    n  = max;
-  if(n < min)
-    n  = min;
+    if(n > max)
+      n  = max;
+    if(n < min)
+      n  = min;
 
-  if(n != p->hp_float) {
-    p->hp_float = n;
-    prop_notify_value(p, NULL, "prop_set_float_clipping_range()", 0);
+    if(n != p->hp_float) {
+      p->hp_float = n;
+      prop_notify_value(p, NULL, "prop_set_float_clipping_range()", 0);
+    }
   }
 
   hts_mutex_unlock(&prop_mutex);
@@ -3920,6 +3921,9 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
     break;
   case PROP_SET_INT:
     prop_set_int_exl(p, skipme, va_arg(ap, int));
+    break;
+  case PROP_SET_FLOAT:
+    prop_set_float_exl(p, skipme, va_arg(ap, double), 0);
     break;
   case PROP_SET_VOID:
     prop_set_void_exl(p, skipme);
