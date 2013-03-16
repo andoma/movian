@@ -642,13 +642,17 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
   char sig[64];
   uint8_t d[20];
   struct http_header_list headers;
-
+  int err;
   const char *k = http_header_get(&hc->hc_request_headers, "Sec-WebSocket-Key");
 
   if(k == NULL) {
     http_error(hc, HTTP_STATUS_BAD_REQUEST, NULL);
     return 0;
   }
+
+  hc->hc_opaque = NULL;
+  if((err = hp->hp_ws_init(hc)) != 0)
+    return http_error(hc, err, NULL);
 
   sha1_init(shactx);
   sha1_update(shactx, (const uint8_t *)k, strlen(k));
@@ -667,8 +671,6 @@ http_cmd_start_websocket(http_connection_t *hc, const http_path_t *hp)
   hc->hc_state = HCS_WEBSOCKET;
  
   hc->hc_path = hp;
-  hc->hc_opaque = NULL;
-  hp->hp_ws_init(hc);
   return 0;
 }
 
