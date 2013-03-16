@@ -133,6 +133,7 @@ void prop_init(void);
 #define PROP_SUB_TRACK_DESTROY_EXP    0x400
 #define PROP_SUB_SINGLETON            0x800
 #define PROP_SUB_USER_INT             0x1000
+#define PROP_SUB_ALT_PATH             0x2000
 // Remember that flags field is uint16_t in prop_i.h so don't go above 0x8000
 
 

@@ -2367,9 +2367,12 @@ prop_subscribe(int flags, ...)
 
   } else {
 
-    p = prop_resolve_tree(name[0], &proproots);
-    
-    name++;
+    if(flags & PROP_SUB_ALT_PATH) {
+      p = LIST_FIRST(&proproots) ? LIST_FIRST(&proproots)->p : NULL;
+    } else {
+      p = prop_resolve_tree(name[0], &proproots);
+      name++;
+    }
 
     if(dolock)
       hts_mutex_lock(&prop_mutex);
