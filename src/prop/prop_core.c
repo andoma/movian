@@ -3978,6 +3978,59 @@ prop_setv_ex(prop_sub_t *skipme, prop_t *p, ...)
 }
 
 
+/**
+ *
+ */
+void
+prop_setdn(prop_sub_t *skipme, prop_t *p, const char *str, ...)
+{
+  va_list ap;
+  prop_t *c = p;
+
+  if(p == NULL)
+    return;
+
+  va_start(ap, str);
+
+  hts_mutex_lock(&prop_mutex);
+
+  while(1) {
+    if(p->hp_type == PROP_ZOMBIE)
+      goto bad;
+
+    if(str == NULL || !*str)
+      break;
+
+    const char *s2 = strchr(str, '.');
+    if(s2 != NULL) {
+      int l = s2 - str;
+      s2++;
+      char *s3 = alloca(l+1);
+      s3[l] = 0;
+      str = memcpy(s3, str, l);
+    }
+
+
+    if(p->hp_type == PROP_DIR) {
+      TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+	if(c->hp_name != NULL && !strcmp(c->hp_name, str))
+	  break;
+    } else 
+      c = NULL;
+    if(c == NULL)
+      c = prop_create0(p, str, skipme, 0);
+    p = c;
+    str = s2;
+  }
+
+  prop_seti(skipme, p, ap);
+
+ bad:
+  hts_mutex_unlock(&prop_mutex);
+  va_end(ap);
+}
+
+
 
 /**
  *

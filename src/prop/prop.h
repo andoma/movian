@@ -200,6 +200,8 @@ void prop_setv_ex(prop_sub_t *skipme, prop_t *p, ...);
 
 void prop_set_ex(prop_t *p, const char *name, int noalloc, ...);
 
+void prop_setdn(prop_sub_t *skipme, prop_t *p, const char *str, ...);
+
 #define prop_set(p, name, type...) \
   prop_set_ex(p, name, __builtin_constant_p(name), type)
 
