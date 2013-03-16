@@ -3272,6 +3272,7 @@ typedef struct glwf_changed_extra {
   union {
     rstr_t *rstr;
     float value;
+    int i;
     const char *cstr;
     prop_t *prop;
   } u;
@@ -3310,7 +3311,7 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
   if(a->type != TOKEN_FLOAT && a->type != TOKEN_RSTRING &&
      a->type != TOKEN_VOID && a->type != TOKEN_CSTRING && 
-     a->type != TOKEN_PROPERTY_REF)
+     a->type != TOKEN_INT && a->type != TOKEN_PROPERTY_REF)
     return glw_view_seterr(ec->ei, self,
 			   "Invalid first operand (%s) to changed()",
 			   token2name(a));
@@ -3340,6 +3341,10 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
 
     case TOKEN_FLOAT:
       e->u.value = a->t_float;
+      break;
+
+    case TOKEN_INT:
+      e->u.i = a->t_int;
       break;
 
     case TOKEN_PROPERTY_REF:
@@ -3375,6 +3380,13 @@ glwf_changed(glw_view_eval_context_t *ec, struct token *self,
     case TOKEN_FLOAT:
       if(e->u.value != a->t_float) {
 	e->u.value = a->t_float;
+	change = 1;
+      }
+      break;
+
+    case TOKEN_INT:
+      if(e->u.i != a->t_int) {
+	e->u.i = a->t_int;
 	change = 1;
       }
       break;
