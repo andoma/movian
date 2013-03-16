@@ -27,6 +27,8 @@
 
 #include <netinet/in.h>
 
+#include <libavutil/base64.h>
+
 #define hsprintf(fmt...) // printf(fmt)
 
 #if ENABLE_POSIX_NETWORKING
@@ -36,7 +38,8 @@
 #include "http.h"
 #include "http_server.h"
 #include "misc/sha.h"
-#include <libavutil/base64.h>
+#include "prop/prop.h"
+#include "arch/arch.h"
 
 
 int http_server_port;
@@ -104,6 +107,8 @@ struct http_connection {
 
   const http_path_t *hc_path;
   void *hc_opaque;
+
+  struct http_server *hc_server;
 };
 
 
@@ -135,14 +140,17 @@ static struct strtab HTTP_versiontab[] = {
 typedef struct http_server {
   int hs_numcon;
   int hs_fd;
+  int hs_pipe[2];
 
   int hs_fds_size;
   struct pollfd *hs_fds;
 
   struct http_connection_list hs_connections;
+  prop_courier_t *hs_courier;
 
 } http_server_t;
 
+static int http_write(http_connection_t *hc);
 
 /**
  *
@@ -1246,6 +1254,7 @@ http_accept(http_server_t *hs)
   }
 
   hc = calloc(1, sizeof(http_connection_t));
+  hc->hc_server = hs;
   hc->hc_fd = fd;
   hc->hc_events = POLLIN | POLLHUP | POLLERR;
   LIST_INSERT_HEAD(&hs->hs_connections, hc, hc_link);
@@ -1305,7 +1314,7 @@ http_server(void *aux)
   http_connection_t *hc, *nxt;
 
   while(1) {
-    n = hs->hs_numcon + 1;
+    n = hs->hs_numcon + 2;
 
     if(hs->hs_fds_size < n) {
       hs->hs_fds_size = n + 3;
@@ -1320,6 +1329,9 @@ http_server(void *aux)
     }
 
     hs->hs_fds[n].fd = hs->hs_fd;
+    hs->hs_fds[n].events = POLLIN;
+    n++;
+    hs->hs_fds[n].fd = hs->hs_pipe[0];
     hs->hs_fds[n].events = POLLIN;
     n++;
     r = poll(hs->hs_fds, n, -1);
@@ -1338,9 +1350,27 @@ http_server(void *aux)
     }
     if(hs->hs_fds[n].revents & POLLIN)
       http_accept(hs);
+    if(hs->hs_fds[n+1].revents & POLLIN) {
+      char dump;
+      if(read(hs->hs_pipe[0], &dump, 1) == 1)
+	prop_courier_poll(hs->hs_courier);
+    }
   }
   return NULL;
 }
+
+
+/**
+ *
+ */
+static void
+http_courier_notify(void *opaque)
+{
+  http_server_t *hs = opaque;
+  if(write(hs->hs_pipe[1], "x", 1) != 1)
+    TRACE(TRACE_ERROR, "HTTP", "Pipe problems");
+}
+
 
 
 /**
@@ -1388,9 +1418,21 @@ http_server_init(void)
   TRACE(TRACE_INFO, "HTTPSRV", "Listening on port %d", http_server_port);
 
   listen(fd, 1);
-    
   hs = calloc(1, sizeof(http_server_t));
+
+  arch_pipe(hs->hs_pipe);
   hs->hs_fd = fd;  
+  hs->hs_courier = prop_courier_create_notify(http_courier_notify, hs);
   hts_thread_create_detached("httpsrv", http_server, hs,
 			     THREAD_PRIO_NORMAL);
+}
+
+
+/**
+ *
+ */
+prop_courier_t *
+http_get_courier(http_connection_t *hc)
+{
+  return hc->hc_server->hs_courier;
 }

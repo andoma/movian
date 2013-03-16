@@ -550,3 +550,51 @@ main(int argc, char **argv)
 
 
 }
+
+
+int
+arch_pipe(int pipefd[2])
+{
+  int fd;
+  struct sockaddr_in si = {0};
+  socklen_t addrlen = sizeof(struct sockaddr_in);
+
+  if((fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1)
+    return -1;
+
+  si.sin_family = AF_INET;
+  si.sin_addr.s_addr = htonl(0x7f000001);
+
+  if(bind(fd, (struct sockaddr *)&si, sizeof(struct sockaddr_in))) {
+    close(fd);
+    return -1;
+  }
+
+  if(getsockname(fd, (struct sockaddr *)&si, &addrlen)) {
+    close(fd);
+    return -1;
+  }
+
+  listen(fd, 1);
+
+  if((pipefd[0] = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+    close(fd);
+    return -1;
+  }
+
+  if(connect(pipefd[0], (struct sockaddr *)&si, addrlen) < 0) {
+    close(fd);
+    close(pipefd[0]);
+    return -1;
+  }
+  
+  addrlen = sizeof(struct sockaddr_in);
+  pipefd[1] = accept(fd, (struct sockaddr *)&si, &addrlen) ;
+  close(fd);
+  if(pipefd[1] == -1) {
+    close(pipefd[0]);
+    return -1;
+  }
+
+  return 0;
+}

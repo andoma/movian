@@ -231,3 +231,10 @@ my_localtime(const time_t *now, struct tm *tm)
 {
   localtime_r(now, tm);
 }
+
+
+int
+arch_pipe(int pipefd[2])
+{
+  return pipe(pipefd);
+}

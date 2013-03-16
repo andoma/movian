@@ -59,6 +59,8 @@ void websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq);
 
 void http_set_opaque(http_connection_t *hc, void *opaque);
 
+struct prop_courier *http_get_courier(http_connection_t *hc);
+
 int http_send_reply(http_connection_t *hc, int rc, const char *content, 
 		    const char *encoding, const char *location, int maxage,
 		    htsbuf_queue_t *output);
