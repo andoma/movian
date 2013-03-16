@@ -908,7 +908,7 @@ add_sort_option_type(scanner_t *s, prop_t *model)
     prop_nf_sort(s->s_pnf, "node.metadata.timestamp", 0, 3, NULL, 0);
   } else {
     prop_select(on_title);
-    prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 0);
+    prop_nf_sort(s->s_pnf, "node.metadata.title", 0, 3, NULL, 1);
   }
   rstr_release(cur);
   s->s_refcount++;
