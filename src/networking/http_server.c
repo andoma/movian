@@ -887,8 +887,17 @@ http_read_line(http_connection_t *hc, char *buf, size_t bufsize)
  *
  */
 void
-websocket_send(http_connection_t *hc, int opcode, const void *data,
-	       size_t len)
+http_set_opaque(http_connection_t *hc, void *opaque)
+{
+  hc->hc_opaque = opaque;
+}
+
+
+/**
+ *
+ */
+static void
+websocket_send_hdr(http_connection_t *hc, int opcode, size_t len)
 {
   uint8_t hdr[14]; // max header length
   int hlen;
@@ -912,7 +921,31 @@ websocket_send(http_connection_t *hc, int opcode, const void *data,
   }
 
   htsbuf_append(&hc->hc_output, hdr, hlen);
+}
+
+
+/**
+ *
+ */
+void
+websocket_send(http_connection_t *hc, int opcode, const void *data,
+	       size_t len)
+{
+  websocket_send_hdr(hc, opcode, len);
   htsbuf_append(&hc->hc_output, data, len);
+  http_write(hc);
+}
+
+
+/**
+ *
+ */
+void
+websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq)
+{
+  websocket_send_hdr(hc, opcode, hq->hq_size);
+  htsbuf_appendq(&hc->hc_output, hq);
+  http_write(hc);
 }
 
 

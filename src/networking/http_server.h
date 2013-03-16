@@ -55,6 +55,8 @@ void *http_add_websocket(const char *path,
 void websocket_send(http_connection_t *hc, int opcode, const void *data,
 		    size_t len);
 
+void websocket_sendq(http_connection_t *hc, int opcode, htsbuf_queue_t *hq);
+
 void http_set_opaque(http_connection_t *hc, void *opaque);
 
 int http_send_reply(http_connection_t *hc, int rc, const char *content, 
