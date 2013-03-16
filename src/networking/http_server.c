@@ -960,12 +960,13 @@ websocket_input(http_connection_t *hc)
   if(hc->hc_input.hq_size < hoff + len)
     return 0;
 
-  uint8_t *d = mymalloc(len);
+  uint8_t *d = mymalloc(len+1);
   if(d == NULL)
     return 1;
 
   htsbuf_drop(&hc->hc_input, hoff);
   htsbuf_read(&hc->hc_input, d, len);
+  d[len] = 0;
 
   if(m != NULL) {
     int i;
