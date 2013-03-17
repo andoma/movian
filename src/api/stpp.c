@@ -208,6 +208,20 @@ stpp_sub_json_move_child(stpp_subscription_t *ss, http_connection_t *hc,
 
 
 /**
+ *
+ */
+static void
+ss_clear_props(stpp_subscription_t *ss)
+{
+  stpp_prop_t *sp;
+  while((sp = LIST_FIRST(&ss->ss_props)) != NULL) {
+    prop_tag_clear(sp->sp_prop, ss);
+    stpp_property_unexport_from_sub(ss, sp);
+  }
+}
+
+
+/**
  * Hardwired JSON output
  */
 static void
@@ -229,11 +243,13 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     my_double2str(buf, sizeof(buf), va_arg(ap, double));
     snprintf(buf2, sizeof(buf2), "[4,%u,%s]", ss->ss_id, buf);
     websocket_send(hc, 1, buf2, strlen(buf2));
+    ss_clear_props(ss);
     break;
 
   case PROP_SET_INT:
     snprintf(buf2, sizeof(buf2), "[4,%u,%d]", ss->ss_id, va_arg(ap, int));
     websocket_send(hc, 1, buf2, strlen(buf2));
+    ss_clear_props(ss);
     break;
 
   case PROP_SET_RSTRING:
@@ -247,11 +263,13 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     htsbuf_append_and_escape_jsonstr(&hq, str);
     htsbuf_append(&hq, "]", 1);
     websocket_sendq(hc, 1, &hq);
+    ss_clear_props(ss);
     break;
 
   case PROP_SET_VOID:
     snprintf(buf2, sizeof(buf2), "[4,%u,null]", ss->ss_id);
     websocket_send(hc, 1, buf2, strlen(buf2));
+    ss_clear_props(ss);
     break;
 
   case PROP_SET_RLINK:
@@ -264,6 +282,7 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     htsbuf_append_and_escape_jsonstr(&hq, str2);
     htsbuf_append(&hq, "]", 1);
     websocket_sendq(hc, 1, &hq);
+    ss_clear_props(ss);
     break;
 
   case PROP_SET_DIR:
@@ -342,10 +361,7 @@ stpp_cmd_sub(stpp_t *stpp, unsigned int id, int propref, const char *path)
 static void
 ss_destroy(stpp_t *stpp, stpp_subscription_t *ss)
 {
-  stpp_prop_t *sp;
-  while((sp = LIST_FIRST(&ss->ss_props)) != NULL)
-    stpp_property_unexport_from_sub(ss, sp);
-
+  ss_clear_props(ss);
   prop_unsubscribe(ss->ss_sub);
   RB_REMOVE(&stpp->stpp_subscriptions, ss, ss_link);
   free(ss);
@@ -361,10 +377,8 @@ stpp_cmd_unsub(stpp_t *stpp, unsigned int id)
   stpp_subscription_t s, *ss;
   s.ss_id = id;
   
-  if((ss = RB_FIND(&stpp->stpp_subscriptions, &s, ss_link, ss_cmp)) == NULL) {
-    TRACE(TRACE_ERROR, "STPP", "Unsubscribing unknown subscription ID %d", id);
+  if((ss = RB_FIND(&stpp->stpp_subscriptions, &s, ss_link, ss_cmp)) == NULL)
     return;
-  }
   ss_destroy(stpp, ss);
 }
 
