@@ -280,7 +280,7 @@ stpp_sub_json(void *opaque, prop_event_t event, ...)
     htsbuf_append_and_escape_jsonstr(&hq, str);
     htsbuf_append(&hq, ",", 1);
     htsbuf_append_and_escape_jsonstr(&hq, str2);
-    htsbuf_append(&hq, "]", 1);
+    htsbuf_append(&hq, "]]", 2);
     websocket_sendq(hc, 1, &hq);
     ss_clear_props(ss);
     break;
