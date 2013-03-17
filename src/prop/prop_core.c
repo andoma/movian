@@ -209,9 +209,47 @@ prop_ref_dec_traced(prop_t *p, const char *file, int line)
   extern void prop_tag_dump(prop_t *p);
   prop_tag_dump(p);
 
+  hts_mutex_lock(&prop_mutex);
   assert(p->hp_tags == NULL);
-  free(p);
+  pool_put(prop_pool, p);
+  hts_mutex_unlock(&prop_mutex);
 }
+
+
+/**
+ *
+ */
+static void
+prop_ref_dec_traced_locked(prop_t *p, const char *file, int line)
+{
+  if(p == NULL)
+    return;
+
+  if(p->hp_flags & PROP_REF_TRACED) {
+    struct prop_ref_trace *prt = malloc(sizeof(struct prop_ref_trace));
+    prt->file = file;
+    prt->line = line;
+    prt->value = p->hp_refcount - 1;
+    prt->which = 0;
+    hts_mutex_lock(&prop_ref_mutex);
+    SIMPLEQ_INSERT_TAIL(&p->hp_ref_trace, prt, link);
+    hts_mutex_unlock(&prop_ref_mutex);
+  }
+  
+  if(atomic_add(&p->hp_refcount, -1) > 1)
+    return;
+  if(p->hp_flags & PROP_REF_TRACED) 
+    printf("Prop %p was finalized by %s:%d\n", p, file, line);
+  assert(p->hp_type == PROP_ZOMBIE);
+
+  extern void prop_tag_dump(prop_t *p);
+  prop_tag_dump(p);
+
+  assert(p->hp_tags == NULL);
+  pool_put(prop_pool, p);
+}
+
+#define prop_ref_dec_locked(p) prop_ref_dec_traced_locked(p, __FILE__, __LINE__)
 
 
 /**
