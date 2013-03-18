@@ -38,7 +38,7 @@ id: Reload current page
 msg: Odśwież
 
 id: Suspend
-msg: Zawieś
+msg: Wyłącz system
 
 id: System
 msg: System
@@ -65,10 +65,10 @@ id: Delete
 msg: Usuń
 
 id: Mark as seen
-msg: Oznacz jako widziane
+msg: Oznacz, jako widziane
 
 id: Mark as unseen
-msg: Oznacz jako niewidziane
+msg: Oznacz, jako niewidziane
 
 id: Play from beginning
 msg: Odtwórz od początku
@@ -98,8 +98,7 @@ id: Audio tracks
 msg: Ścieżki dźwiękowe
 
 id: Chapters
-# Missing translation
-msg: 
+msg: Rozdziały
 
 id: Seek by time
 msg: Przeszukaj według czasu
@@ -216,7 +215,7 @@ msg: Widok
 # ./glwskins/default/pages/discovered.view
 #
 id: Discovered resources on local network
-msg: Wykryte zasoby w sieci lokalnej
+msg: Wykryte zasoby w sieci LAN
 
 #
 # ./glwskins/default/pages/home.view
@@ -237,34 +236,28 @@ id: Plugins
 msg: Wtyczki
 
 id: Search / Open URL
-# Missing translation
-msg: 
+msg: Szukaj / Otwórz URL
 
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
 id: Camera: 
-# Missing translation
-msg: 
+msg: Kamera:
 
 id: Date: 
-# Missing translation
-msg: 
+msg: Data:
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
 id: Author: 
-# Missing translation
-msg: 
+msg: Autor:
 
 id: Available version: 
-# Missing translation
-msg: 
+msg: Dostępna wersja:
 
 id: Installed version: 
-# Missing translation
-msg: 
+msg: Zainstalowana wersja:
 
 id: Showtime %s or newer is required
 msg: Wymagany Showtime w wersji %s lub nowszy
@@ -273,7 +266,7 @@ msg: Wymagany Showtime w wersji %s lub nowszy
 # ./glwskins/default/pages/iteminfo/video.view
 #
 id: Duration:
-msg: Długość"
+msg: Długość:
 
 id: File date:
 msg: Data pliku:
@@ -282,7 +275,7 @@ id: Genre:
 msg: Gatunek:
 
 id: Metadata from
-msg: Metadane z
+msg: Metadane z 
 
 id: Rating:
 msg: Ocena:
@@ -468,7 +461,7 @@ id: Audio muted
 msg: Wyciszono
 
 id: Master volume: %d dB
-msg: Regulacja głośności: %d dB
+msg: Głośność: %d dB
 
 #
 # ./src/api/tmdb.c
@@ -477,7 +470,7 @@ id: Language (ISO 639-1 code)
 msg: Język (Kod ISO 639-1)
 
 id: Use original title
-msg: Użyj oryginalnego tytyłu
+msg: Użyj oryginalnego tytułu
 
 #
 # ./src/arch/ps3/ps3_main.c
@@ -522,10 +515,10 @@ msg: Zmiana wyjścia audio na %s
 # ./src/backend/dvd/cdda.c
 #
 id: Invalid CD URL
-msg: Nieprawidłowy adres URL
+msg: Błędny adres ścieżki CD
 
 id: Invalid CD track
-msg: Błąd odczytu utworów z CD
+msg: Błąd odczytu ścieżki CD
 
 id: Unable to open CD
 msg: Nie można otworzyć CD
@@ -618,7 +611,7 @@ id: Spotify offers you legal and free access to a huge library of music. To use 
 msg: Spotify oferuje bezpłatny i legalny dostęp do ogromnej biblioteki z muzyką. Aby korzystać z Spotify w Showtime wymagane jest konto Premium Spotify.\nWięcej informacji na temat Spotify, pod adresem http://www.spotify.com/\n\nAby uzyskać dostęp do dowolnej funkcji Spotify w Showtime, musisz podać login i hasło.
 
 id: Spotify playlists
-msg: Lista odtwarzania z Spotify
+msg: Lista odtwarzania Spotify
 
 id: Spotify: Connection error: %s
 msg: Spotify: Błąd połączenia: %s
@@ -669,23 +662,19 @@ msg: Błąd logowania
 # ./src/fileaccess/fa_scanner.c
 #
 id: Artists
-# Missing translation
-msg: 
+msg: Wykonawcy
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: Data (nowe na początku)
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: Data (starsze na początku)
 
 id: Filename
 msg: Nazwa pliku
 
 id: Indexed mode
-# Missing translation
-msg: 
+msg: Tryb indeksowania
 
 id: Off
 msg: Wyłączony
@@ -694,7 +683,7 @@ id: Show only supported files
 msg: Pokazuj tylko obsługiwane formaty
 
 id: Sort folders first
-msg: Najpierw sortuj foldery
+msg: Sortuj foldery jako pierwsze
 
 id: Sort on
 msg: Sortuj
@@ -703,7 +692,7 @@ msg: Sortuj
 # ./src/fileaccess/fa_spotlight.c
 #
 id: Search using spotlight
-msg: Szukaj za pomocą spotlight
+msg: Szukaj używając spotlight
 
 #
 # ./src/i18n.c
@@ -712,7 +701,7 @@ id: Language
 msg: Język
 
 id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
-msg: Język powinien być skonfigurowany jako trzy znaki kodu ISO, na przykład (eng, swe, pol)
+msg: Język powinien być skonfigurowany, jako trzy znaki kodu ISO, na przykład (eng, swe, pol)
 
 id: Languages
 msg: Języki
@@ -799,8 +788,7 @@ msg: Zbliżenie
 # ./src/metadata/browsemdb.c
 #
 id: Indexing
-# Missing translation
-msg: 
+msg: Indeksowanie
 
 #
 # ./src/metadata/metadata.c
@@ -842,8 +830,7 @@ id: Movie
 msg: Film
 
 id: Movie title
-# Missing translation
-msg: 
+msg: Tytuł filmu
 
 id: No data found
 msg: Nie znaleziono danych
@@ -861,8 +848,7 @@ id: Refresh metadata
 msg: Odśwież metadane
 
 id: Title, Season, Episode
-# Missing translation
-msg: 
+msg: Tytuł, Sezon, Odcinek
 
 id: Track %d
 msg: Ścieżka %d
@@ -877,7 +863,7 @@ id: filename
 msg: nazwa pliku
 
 id: filename as TV episode
-msg: nazwa pliku jak odcinek TV
+msg: nazwa pliku jako odcinek
 
 id: folder name
 msg: nazwa folderu
@@ -949,7 +935,7 @@ id: Background
 msg: Tło
 
 id: Beta testing passwords
-msg: Hasła beta-testów
+msg: Hasło beta-testów
 
 id: Browse available plugins
 msg: Przeglądaj dostępne wtyczki
@@ -1000,13 +986,13 @@ id: Music streaming
 msg: Strumieniowanie Muzyki
 
 id: Not installable
-msg: Nieinstalowalny
+msg: Nie do instalacji
 
 id: Not installed
-msg: Nie zainstalowany
+msg: Niezainstalowany
 
 id: Not upgradable
-msg: Nie możliwy do aktualizacji
+msg: Bez możliwości aktualizacji
 
 id: Online TV
 msg: Internet TV
@@ -1036,10 +1022,10 @@ id: Upgradable
 msg: Możliwość aktualizacji
 
 id: Upgraded plugin %s to version %s
-msg: Zaktualizowano wtyczkę w wersji %s do %s
+msg: Zaktualizowano wtyczkę z wersji %s do %s
 
 id: User interface extensions
-msg: Rozszerzenia interfeju użytkownika
+msg: Rozszerzenia interfejsu użytkownika
 
 id: Video streaming
 msg: Strumieniowanie Video
@@ -1081,10 +1067,10 @@ id: Applications and installed plugins
 msg: Aplikacje i zainstalowane wtyczki
 
 id: Developer settings
-msg: Ustawienia dewelopera
+msg: Ustawienia programisty
 
 id: Discovered media sources
-msg: Wykryte media
+msg: Wykryte źródła mediów
 
 id: Fonts and user interface styling
 msg: Czcionki i wygląd iterfejsu użytkownika
@@ -1114,31 +1100,25 @@ msg: Zewnętrzny plik
 # ./src/text/fontstash.c
 #
 id: Defaults
-# Missing translation
-msg: 
+msg: Domyślne
 
 id: Fonts
-# Missing translation
-msg: 
+msg: Czcionki
 
 id: Installed fonts
-# Missing translation
-msg: 
+msg: Zainstalowane czcionki
 
 id: Narrow text
 msg: Zwężony
 
 id: Reset main font to default
-# Missing translation
-msg: 
+msg: Zmień główną czcionkę na domyślną
 
 id: Reset narrow font to default
-# Missing translation
-msg: 
+msg: Zmień zwężoną czcionkę na domyślną
 
 id: Reset subtitle font to default
-# Missing translation
-msg: 
+msg: Zmień czcionkę napisów na domyślną
 
 id: Unable to load %s -- %s
 msg: Nie można załadować %s -- %s
@@ -1147,7 +1127,7 @@ id: Unable to open %s for writing
 msg: Nie można otworzyć %s do zapisu
 
 id: Unable to write to %s
-msg: Nie można zapisać do %s
+msg: Nie można zapisać w %s
 
 id: Use font %s for
 msg: Użyj czcionki %s dla
@@ -1180,13 +1160,13 @@ msg: Mapuj kółko myszy
 # ./src/ui/linux/nvidia.c
 #
 id: Auto-switch to this mode
-msg: Automatycznie przełącz na ten tryb
+msg: Automatycznie przełącz w ten tryb
 
 id: DVI-Video color range
 msg: Paleta kolorów z DVI-Video
 
 id: Switch to this mode now
-msg: Przełącz na ten tryb
+msg: Przełącz w ten tryb
 
 id: Video modes
 msg: Tryby wyświetlania Video
