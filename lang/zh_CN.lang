@@ -38,7 +38,7 @@ id: Reload current page
 msg: 刷新
 
 id: Suspend
-msg: 挂起
+msg: 关机
 
 id: System
 msg: 系统
