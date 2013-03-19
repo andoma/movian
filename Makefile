@@ -32,8 +32,10 @@ PROG=${BUILDDIR}/showtime
 
 include ${BUILDDIR}/config.mak
 
-CFLAGS  = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations 
-CFLAGS += -Wmissing-prototypes -Wno-multichar -Iext/dvd ${OPTFLAGS}
+CFLAGS_std = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
+		-Wmissing-prototypes -Wno-multichar  -Iext/dvd
+
+CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 
 
 
@@ -374,6 +376,8 @@ SRCS-$(CONFIG_NVCTRL)             += src/ui/linux/nvidia.c
 BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL) += src/ui/glw/glsl
 BUNDLES-$(CONFIG_GLW_BACKEND_OPENGL_ES) += src/ui/glw/glsl
 
+${BUILDDIR}/src/ui/glw/%.o : CFLAGS = ${OPTFLAGS} ${CFLAGS_std} -ffast-math
+
 ##############################################################
 # GTK based interface
 ##############################################################
@@ -398,8 +402,7 @@ SRCS-$(CONFIG_GU) +=    src/ui/gu/gu.c \
 			src/ui/gu/gu_video.c \
 			src/ui/linux/x11_common.c \
 
-${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} \
--Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations
+${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} ${CFLAGS_std}
 
 
 ##############################################################

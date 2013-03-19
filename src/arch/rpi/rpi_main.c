@@ -366,6 +366,10 @@ run(void)
 int
 main(int argc, char **argv)
 {
+  asm volatile("vmrs r0, fpscr\n"
+	       "orr r0, $(1 << 24)\n"
+	       "vmsr fpscr, r0" : : : "r0");
+
   bcm_host_init();
 
   omx_init();
