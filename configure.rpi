@@ -28,6 +28,8 @@ done
 [ -z "$TOOLCHAIN" ] && die_cause "--toolchain not specified"
 [ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
 
+CC=${TOOLCHAIN}gcc
+
 setup_env "$@"
 
 
@@ -56,7 +58,7 @@ rtmpdump_setup
 libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
-CC=${TOOLCHAIN}cc
+CC=${CC}
 STRIP=${TOOLCHAIN}strip
 OBJDUMP=${TOOLCHAIN}objdump
 OBJCOPY=${TOOLCHAIN}objcopy
@@ -71,6 +73,12 @@ LDFLAGS_cfg += -L${VCROOT}/lib
 LDFLAGS_cfg += -lopenmaxil -lGLESv2 -lEGL -lvcos -lbcm_host -lvchiq_arm
 LDFLAGS_cfg += -lpthread -lrt -ldl
 EOF
+
+if enabled release; then
+    # the rpi firmware have assignment to variables that are only
+    # referenced via asserts so we need this to work around that
+    echo >>${CONFIG_MAK} "CFLAGS_cfg += -Wno-error=unused-but-set-variable"
+fi
 
 finalize
 
