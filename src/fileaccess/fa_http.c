@@ -2788,7 +2788,7 @@ http_request(const char *url, const char **arguments,
   case 303:
     postdata = NULL;
     postcontenttype = NULL;
-    method = "GET";
+    method = result ? "GET" : "HEAD";
     // FALLTHRU
   case 301:
   case 307:
