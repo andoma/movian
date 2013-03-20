@@ -230,7 +230,7 @@ common_opt(){
   --cleanbuild) enable cleanbuild
   ;;
 
-  --ccache) CC="ccache $CC"
+  --ccache) enable ccache
   ;;
 
   --release) enable release
@@ -247,6 +247,10 @@ setup_env(){
     if enabled cleanbuild; then
 	echo "Cleaning builddir: ${BUILDDIR}"
 	rm -rf ${BUILDDIR}
+    fi
+
+    if enabled ccache; then
+	CC="ccache $CC"
     fi
 
     mkdir -p ${BUILDDIR}

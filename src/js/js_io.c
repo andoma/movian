@@ -57,15 +57,21 @@ http_response_toString(JSContext *cx, JSObject *obj, uintN argc,
 		       jsval *argv, jsval *rval)
 {
   js_http_response_t *jhr = JS_GetPrivate(cx, obj);
-  const char *r = buf_cstr(jhr->buf), *r2;
   char *tmpbuf = NULL;
   int isxml;
   const charset_t *cs = NULL;
 
+  if(jhr->buf == NULL) {
+    *rval = JSVAL_NULL;
+    return JS_TRUE;
+  }
+
+  const char *r = buf_cstr(jhr->buf), *r2;
   if(r == NULL) {
     *rval = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, ""));
     return JS_TRUE;
   }
+
 
   if(jhr->contenttype != NULL) {
     const char *charset = strstr(jhr->contenttype, "charset=");
@@ -177,7 +183,7 @@ js_http_request(JSContext *cx, jsval *rval,
   char **httpargs = NULL;
   int i;
   char errbuf[256];
-  buf_t *result;
+  buf_t *result = NULL;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
   struct http_header_list in_headers;
