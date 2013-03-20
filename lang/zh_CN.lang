@@ -844,6 +844,9 @@ msg: 音乐源
 id: Providers for Video
 msg: 视频源
 
+id: Providers for Video
+msg: 视频提供商
+
 id: Refresh metadata
 msg: 更新元信息
 
