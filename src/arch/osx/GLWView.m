@@ -313,7 +313,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
 /**
  *
  */
-- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)root:(bool)fs
+- (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)root :(bool)fs
 {
   NSOpenGLPixelFormat *wpf;
   NSOpenGLPixelFormatAttribute attribs_windowed[] = {
