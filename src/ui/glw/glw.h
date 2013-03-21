@@ -1077,9 +1077,9 @@ void glw_move(glw_t *w, glw_t *b);
 
 void glw_remove_from_parent(glw_t *w, glw_t *p);
 
-void glw_lock(glw_root_t *gr);
+#define glw_lock(gr) hts_mutex_lock(&(gr)->gr_mutex);
 
-void glw_unlock(glw_root_t *gr);
+#define glw_unlock(gr) hts_mutex_unlock(&(gr)->gr_mutex);
 
 
 /**

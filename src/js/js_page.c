@@ -1406,12 +1406,11 @@ js_open(js_model_t *jm)
   jm->jm_cx = cx;
 
   while(jm->jm_subs) {
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
     jsrefcount s = JS_SuspendRequest(cx);
-    prop_courier_wait(jm->jm_pc, &nor, &exp, 0);
+    prop_courier_wait(jm->jm_pc, &q, 0);
     JS_ResumeRequest(cx, s);
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_notify_dispatch(&q);
 
     if(jm->jm_pending_want_more && jm->jm_paginator) {
       jm->jm_pending_want_more = 0;

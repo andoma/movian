@@ -1051,18 +1051,17 @@ deco_thread(void *aux)
   hts_mutex_lock(&deco_mutex);
 
   while(1) {
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
 
     int do_timo = 0;
     if(deco_pendings)
       do_timo = 50;
 
     hts_mutex_unlock(&deco_mutex);
-    r = prop_courier_wait(deco_courier, &nor, &exp, do_timo);
+    r = prop_courier_wait(deco_courier, &q, do_timo);
     hts_mutex_lock(&deco_mutex);
 
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_notify_dispatch(&q);
 
     if(r && deco_pendings) {
       deco_pendings = 0;

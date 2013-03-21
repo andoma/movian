@@ -29,6 +29,12 @@ hts_mutex_assert0(pthread_mutex_t *l, const char *file, int line)
 
 #define hts_mutex_assert(l) hts_mutex_assert0(l, __FILE__, __LINE__)
 
+static inline int
+hts_mutex_trylock(pthread_mutex_t *m)
+{
+  return pthread_mutex_trylock(m) == EBUSY;
+}
+
 /**
  * Condition variables
  */

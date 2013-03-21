@@ -41,6 +41,9 @@ struct prop_courier {
   struct prop_notify_queue pc_queue_nor;
   struct prop_notify_queue pc_queue_exp;
 
+  struct prop_notify_queue pc_dispatch_queue;
+  struct prop_notify_queue pc_free_queue;
+
   void *pc_entry_lock;
   prop_lockmgr_t *pc_lockmgr;
 

@@ -50,26 +50,6 @@ static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
 			 glw_t *w, int password);
 
 
-
-/*
- *
- */
-void
-glw_lock(glw_root_t *gr)
-{
-  hts_mutex_lock(&gr->gr_mutex);
-}
-
-/*
- *
- */
-void
-glw_unlock(glw_root_t *gr)
-{
-  hts_mutex_unlock(&gr->gr_mutex);
-}
-
-
 /*
  *
  */
@@ -479,7 +459,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
 
-  prop_courier_poll(gr->gr_courier);
+  prop_courier_poll_timed(gr->gr_courier, 5000);
 
   //  glw_cursor_layout_frame(gr);
 

@@ -2695,15 +2695,14 @@ metadata_thread(void *aux)
 {
   hts_mutex_lock(&metadata_mutex);
   while(1) {
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
 
     int timo = TAILQ_FIRST(&mlpqueue) != NULL ? 50 : 0;
     hts_mutex_unlock(&metadata_mutex);
-    int r = prop_courier_wait(metadata_courier, &nor, &exp, timo);
+    int r = prop_courier_wait(metadata_courier, &q, timo);
     hts_mutex_lock(&metadata_mutex);
 
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_notify_dispatch(&q);
 
     if(r)
       mlp_dispatch();

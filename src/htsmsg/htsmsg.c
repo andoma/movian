@@ -542,7 +542,6 @@ htsmsg_detach_submsg(htsmsg_field_t *f)
   htsmsg_t *r = htsmsg_create_map();
 
   TAILQ_MOVE(&r->hm_fields, &f->hmf_msg.hm_fields, hmf_link);
-  TAILQ_INIT(&f->hmf_msg.hm_fields);
   r->hm_islist = f->hmf_type == HMF_LIST;
   return r;
 }

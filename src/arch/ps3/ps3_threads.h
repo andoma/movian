@@ -24,6 +24,7 @@ typedef sys_mutex_t hts_mutex_t;
 extern void hts_mutex_init(hts_mutex_t *m);
 extern void hts_mutex_init_recursive(hts_mutex_t *m);
 extern void hts_mutex_lock(hts_mutex_t *m);
+extern int hts_mutex_trylock(hts_mutex_t *m);
 extern void hts_mutex_unlock(hts_mutex_t *m);
 extern void hts_mutex_destroy(hts_mutex_t *m);
 #define hts_mutex_assert(m)

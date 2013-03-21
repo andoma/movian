@@ -176,12 +176,11 @@ js_wait_for_value(JSContext *cx, prop_t *root, const char *subname,
 
   while(!wfv.done) {
 
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
     jsrefcount s = JS_SuspendRequest(cx);
-    prop_courier_wait(pc, &nor, &exp, 0);
+    prop_courier_wait(pc, &q, 0);
     JS_ResumeRequest(cx, s);
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_notify_dispatch(&q);
   }
 
   prop_unsubscribe(s);
