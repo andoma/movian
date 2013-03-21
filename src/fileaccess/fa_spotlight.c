@@ -27,6 +27,8 @@
 #include "service.h"
 #include "settings.h"
 #include "metadata/metadata.h"
+#include "htsmsg/htsmsg_store.h"
+
 
 static int spotlight_enabled;
 

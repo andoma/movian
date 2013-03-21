@@ -39,7 +39,7 @@ void webpopup_init(void);
   bool stopped;
   CVDisplayLinkRef m_displayLink;
 }
-- (id)initWithFrame:(NSRect)frameRect:(struct glw_root *)gr:(bool)fs;
+- (id)initWithFrame:(NSRect)frameRect :(struct glw_root *)gr :(bool)fs;
 - (void)stop;
 
 @end
