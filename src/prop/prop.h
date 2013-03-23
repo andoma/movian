@@ -369,6 +369,8 @@ void prop_courier_poll(prop_courier_t *pc);
 
 void prop_courier_poll_timed(prop_courier_t *pc, int maxtime);
 
+void prop_courier_poll_with_alarm(prop_courier_t *pc, int maxtime);
+
 int prop_courier_check(prop_courier_t *pc);
 
 void prop_courier_destroy(prop_courier_t *pc);

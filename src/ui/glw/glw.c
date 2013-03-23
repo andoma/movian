@@ -145,6 +145,11 @@ glw_init(glw_root_t *gr)
   char skinbuf[PATH_MAX];
   const char *skin = gconf.skin;
 
+  if(gr->gr_prop_dispatcher == NULL)
+    gr->gr_prop_dispatcher = &prop_courier_poll_timed;
+
+  gr->gr_prop_maxtime = -1;
+
   assert(glw_settings.gs_settings != NULL);
 
   if(prop_set_parent(gr->gr_prop_ui, prop_get_global()))
@@ -459,7 +464,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
 
-  prop_courier_poll_timed(gr->gr_courier, 5000);
+  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
 
   //  glw_cursor_layout_frame(gr);
 

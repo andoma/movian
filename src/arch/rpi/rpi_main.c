@@ -43,6 +43,8 @@
 #include "omx.h"
 #include "backend/backend.h"
 
+#include <signal.h>
+
 static uint32_t screen_width, screen_height;
 static EGLDisplay display;
 static EGLContext context;
@@ -310,6 +312,13 @@ set_bg_alpha(float alpha, void *opaque)
 
 
 
+static void
+the_alarm(int x)
+{
+  extern int alarm_fired;
+  alarm_fired = 1;
+}
+
 
 /**
  *
@@ -337,6 +346,23 @@ run(void)
   glw_opengl_init_context(gr);
 
   glClearColor(0,0,0,0);
+
+  // Arrange for prop_courier_poll_with_alarm
+
+  struct sigaction sa;
+  memset(&sa, 0, sizeof(sa));
+  sa.sa_handler = the_alarm;
+  sa.sa_flags = SA_RESTART;
+  sigaction(SIGALRM, &sa, NULL);
+
+
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGALRM);
+  pthread_sigmask(SIG_UNBLOCK, &set, NULL);
+
+  gr->gr_prop_dispatcher = &prop_courier_poll_with_alarm;
+  gr->gr_prop_maxtime = 5000;
 
   while(!gr->gr_stop) {
 
@@ -369,6 +395,11 @@ main(int argc, char **argv)
   asm volatile("vmrs r0, fpscr\n"
 	       "orr r0, $(1 << 24)\n"
 	       "vmsr fpscr, r0" : : : "r0");
+
+  sigset_t set;
+  sigemptyset(&set);
+  sigaddset(&set, SIGALRM);
+  sigprocmask(SIG_BLOCK, &set, NULL);
 
   bcm_host_init();
 

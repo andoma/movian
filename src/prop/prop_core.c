@@ -30,7 +30,6 @@
 #include "prop_i.h"
 #include "misc/str.h"
 #include "event.h"
-#include "misc/pool.h"
 #ifdef PROP_DEBUG
 int prop_trace;
 #endif
@@ -41,9 +40,9 @@ static prop_t *prop_global;
 
 static prop_courier_t *global_courier;
 
-static pool_t *prop_pool;
-static pool_t *notify_pool;
-static pool_t *sub_pool;
+pool_t *prop_pool;
+pool_t *notify_pool;
+pool_t *sub_pool;
 
 static void prop_unlink0(prop_t *p, prop_sub_t *skipme, const char *origin,
 			 struct prop_notify_queue *pnq);
@@ -105,52 +104,6 @@ prop_get_name(prop_t *p)
 
 
 
-
-/**
- *
- */
-typedef struct prop_notify {
-  TAILQ_ENTRY(prop_notify) hpn_link;
-  prop_sub_t *hpn_sub;
-  prop_event_t hpn_event;
-
-  union {
-    prop_t *p;
-    prop_vec_t *pv;
-    struct {
-      float f;
-      int how;
-    } f;
-    int i;
-    struct {
-      rstr_t *rstr;
-      prop_str_type_t type;
-    } rstr;
-    struct event *e;
-    struct {
-      rstr_t *rtitle;
-      rstr_t *rurl;
-    } link;
-    const char *str;
-
-  } u;
-
-#define hpn_prop   u.p
-#define hpn_propv  u.pv
-#define hpn_float  u.f.f
-#define hpn_float_how  u.f.how
-#define hpn_int    u.i
-#define hpn_rstring u.rstr.rstr
-#define hpn_rstrtype u.rstr.type
-#define hpn_cstring u.str
-#define hpn_ext_event  u.e
-#define hpn_link_rtitle u.link.rtitle
-#define hpn_link_rurl   u.link.rurl
-
-  prop_t *hpn_prop2;
-  int hpn_flags;
-
-} prop_notify_t;
 
 
 /**
@@ -374,7 +327,7 @@ prop_xref_addref(prop_t *p)
 /**
  *
  */
-static void
+void
 prop_sub_ref_dec_locked(prop_sub_t *s)
 {
   if(atomic_add(&s->hps_refcount, -1) > 1)
@@ -650,7 +603,7 @@ trampoline_destroyed(prop_sub_t *s, prop_event_t event, ...)
 /**
  *
  */
-static void
+void
 prop_dispatch_one(prop_notify_t *n)
 {
   prop_sub_t *s = n->hpn_sub;
@@ -3865,6 +3818,9 @@ prop_courier_poll(prop_courier_t *pc)
 void
 prop_courier_poll_timed(prop_courier_t *pc, int maxtime)
 {
+  if(maxtime == -1)
+    return prop_courier_poll(pc);
+
   prop_notify_t *n, *next;
 
   if(!hts_mutex_trylock(&prop_mutex)) {

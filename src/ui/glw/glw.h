@@ -651,6 +651,9 @@ typedef struct glw_root {
   prop_t *gr_prop_ui;
   prop_t *gr_prop_nav;
 
+  void (*gr_prop_dispatcher)(prop_courier_t *pc, int timeout);
+  int gr_prop_maxtime;
+
   int gr_stop;
   prop_sub_t *gr_evsub;
 
