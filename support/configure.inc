@@ -487,6 +487,9 @@ finalize() {
     # Languages
     echo >>${CONFIG_MAK} "BUNDLES+=lang"
 
+    # Static web resources
+    echo >>${CONFIG_MAK} "BUNDLES+=static"
+
     # sqlite
     if enabled sqlite_vfs; then
 	echo >>${CONFIG_MAK} "SQLITE_CFLAGS_cfg += -DSQLITE_OS_OTHER=1 -DSQLITE_DEFAULT_LOCKING_MODE=1"

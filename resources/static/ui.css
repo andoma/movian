@@ -1,0 +1,48 @@
+body {
+    font-family: arial;
+}
+
+#pageTitle {
+    font-weight:900;
+    font-size:150%;
+}
+
+#items {
+    display: table;
+    width: 100%;
+}
+
+.listcell {
+    display: table-cell;
+    width: 100%;
+/*    display: inline-block; */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0px 5px;
+}
+
+.itemduration {
+    width: 10%;
+    text-align:right;
+}
+
+.itemartist {
+    width: 10%;
+}
+.itemalbum {
+    width: 10%;
+}
+
+div.listrow {
+    padding: 5px;
+    display: table-row;
+}
+
+div:nth-child(2n).listrow {
+    background-color: #eee;
+}
+
+div:hover.listrow {
+    background-color: #ddd;
+}
