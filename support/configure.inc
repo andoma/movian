@@ -488,7 +488,7 @@ finalize() {
     echo >>${CONFIG_MAK} "BUNDLES+=lang"
 
     # Static web resources
-    echo >>${CONFIG_MAK} "BUNDLES+=static"
+    echo >>${CONFIG_MAK} "BUNDLES+=resources/static"
 
     # sqlite
     if enabled sqlite_vfs; then
