@@ -83,8 +83,18 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   const char *content;
   image_meta_t im = {0};
   im.im_no_decoding = 1;
-
-  rstr_t *url = rstr_alloc(remain);
+  rstr_t *url;
+  const char *u = http_arg_get_req(hc, "url");
+  
+  if(u != NULL) {
+    url = rstr_alloc(u);
+    url_deescape(rstr_data(url));
+  } else {
+    if(remain == NULL) {
+      return 404;
+    }
+    url = rstr_alloc(remain);
+  }
 
   pm = backend_imageloader(url, &im, NULL, errbuf, sizeof(errbuf), NULL,
 			   NULL, NULL);
