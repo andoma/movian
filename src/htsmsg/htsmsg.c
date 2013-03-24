@@ -107,8 +107,8 @@ htsmsg_field_find(htsmsg_t *msg, const char *name)
 {
   htsmsg_field_t *f;
 
-  if((intptr_t)name < 0) {
-    int num = -(intptr_t)name - 1;
+  if(-((unsigned long)(intptr_t)name) < 4096) {
+    unsigned int num = -(intptr_t)name - 1;
     HTSMSG_FOREACH(f, msg) {
       if(!num--)
 	return f;
