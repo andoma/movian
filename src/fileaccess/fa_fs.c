@@ -276,7 +276,7 @@ fs_seek(fa_handle_t *fh0, int64_t pos, int whence)
   if(fh->part_count == 1)
     return lseek(fh->parts[0].fd, pos, whence);
 
-  int64_t act_pos;
+  int64_t act_pos = fh->read_pos;
   int i;
   int pn;
 
@@ -286,7 +286,7 @@ fs_seek(fa_handle_t *fh0, int64_t pos, int whence)
     break;
 
   case SEEK_CUR:
-    act_pos = pos + fh->read_pos;
+    act_pos += pos;
     break;
 
   case SEEK_END:
