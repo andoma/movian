@@ -1,0 +1,12 @@
+Add support for reading splitted files transparently
+
+For local file systems (such as internal HD, connected USB drives, etc)
+Showtime can now automatically concat files named foo.001, foo.002, ...
+into one file.
+
+Some tools that can do these types of splits
+FFSJ, HJ-Split, WinSplit, MasterSplitter...
+
+Note that this is not the same thing as splitting a file with MKV tools
+
+Fixes #1193
