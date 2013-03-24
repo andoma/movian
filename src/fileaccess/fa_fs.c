@@ -32,9 +32,17 @@
 
 #include "fa_proto.h"
 
+typedef struct part {
+  int fd;
+  off_t size;
+} part_t;
+
 typedef struct fs_handle {
   fa_handle_t h;
-  int fd;
+  int part_count;
+  off_t total_size;
+  int64_t read_pos;
+  part_t parts[0];
 } fs_handle_t;
 
 
@@ -50,8 +58,53 @@ fs_urlsnprintf(char *buf, size_t bufsize, const char *prefix, const char *base,
   snprintf(buf, bufsize, "%s%s%s%s", prefix, base,
 	   blen > 0 && base[blen - 1] == '/' ? "" : "/", fname);
 }
-	       
 
+static int
+is_splitted_file_name(const char *s)
+{
+  // foobar.00x
+  size_t size = strlen(s);
+  if(size < 4)
+    return 0;
+  s += size - 4;
+
+  if(s[0] == '.' &&
+     s[1] >= '0' && s[1] <= '9' &&
+     s[2] >= '0' && s[2] <= '9' &&
+     s[3] >= '0' && s[3] <= '9')
+    return atoi(s+1);
+  return 0;
+}
+
+static int
+file_exists(char *fn)
+{
+  struct stat st;
+  return !stat(fn,&st) && !S_ISDIR(st.st_mode);
+}
+
+static void
+get_split_piece_name(char *dst, size_t dstlen, const char *fn, int num)
+{
+  snprintf(dst, dstlen, "%s.%03d", fn, num + 1);
+}
+
+static int
+split_exists(const char* fn,int num)
+{
+  char buf[PATH_MAX];
+  get_split_piece_name(buf, sizeof(buf), fn, num);
+  return file_exists(buf);
+}
+
+static unsigned int
+get_split_piece_count(const char *fn)
+{
+  int count = 0;
+  while(split_exists(fn, count))
+    count++;
+  return count;
+}
 
 static int
 fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
@@ -61,12 +114,13 @@ fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
   struct dirent *d;
   int type;
   DIR *dir;
+  int split_num;
 
   if((dir = opendir(url)) == NULL) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
     return -1;
   }
-  
+
   while((d = readdir(dir)) != NULL) {
     fs_urlsnprintf(buf, sizeof(buf), "", url, d->d_name);
 
@@ -77,42 +131,30 @@ fs_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     case S_IFDIR:
       type = CONTENT_DIR;
       break;
+
     case S_IFREG:
       type = CONTENT_FILE;
+
+      if((split_num = is_splitted_file_name(d->d_name)) > 0) {
+        if(split_num != 1)
+          continue;
+        // Strip off last part (.00x) of filename
+        buf[strlen(buf) - 4] = 0;
+        d->d_name[strlen(d->d_name) - 4] = 0;
+      }
       break;
+
     default:
       continue;
     }
-    
-    fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
 
+    fs_urlsnprintf(buf, sizeof(buf), "file://", url, d->d_name);
     fa_dir_add(fd, buf, d->d_name, type);
   }
   closedir(dir);
   return 0;
 }
 
-/**
- * Open file
- */
-static fa_handle_t *
-fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
-	int flags, struct prop *stats)
-{
-  fs_handle_t *fh;
-
-  int fd = open(url, O_RDONLY, 0);
-  if(fd == -1) {
-    snprintf(errbuf, errlen, "%s", strerror(errno));
-    return NULL;
-  }
-  fh = malloc(sizeof(fs_handle_t));
-  fh->fd = fd;
-
-  fh->h.fh_proto = fap;
-
-  return &fh->h;
-}
 
 /**
  * Close file
@@ -121,8 +163,86 @@ static void
 fs_close(fa_handle_t *fh0)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
-  close(fh->fd);
+  int i;
+  for(i = 0; i < fh->part_count; i++)
+    if(fh->parts[i].fd != -1)
+      close(fh->parts[i].fd);
   free(fh);
+}
+
+
+/**
+ * Open file
+ */
+static fa_handle_t *
+fs_open(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
+	int flags, struct prop *stats)
+{
+  fs_handle_t *fh=NULL;
+  struct stat st;
+  int i;
+  int fd = open(url, O_RDONLY, 0);
+
+  if(fd == -1) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    int c = get_split_piece_count(url);
+    if(c == 0)
+      return NULL;
+
+    fh = calloc(1, sizeof(fs_handle_t) + sizeof(part_t) * c);
+    for(i = 0; i < c; i++)
+      fh->parts[i].fd = -1;
+
+    fh->part_count = c;
+    for(i = 0; i < c; i++) {
+      char buf[PATH_MAX];
+      get_split_piece_name(buf, sizeof(buf), url, i);
+
+      if((fh->parts[i].fd = open(buf, O_RDONLY)) == -1) {
+        snprintf(errbuf, errlen, "%s", strerror(errno));
+        fs_close(&fh->h);
+        return NULL;
+      }
+
+      if(fstat(fh->parts[i].fd, &st)) {
+        snprintf(errbuf, errlen, "%s", strerror(errno));
+        fs_close(&fh->h);
+        return NULL;
+      }
+
+      fh->parts[i].size = st.st_size;
+      fh->total_size += st.st_size;
+    }
+  } else {
+
+    //normal file
+    fh = calloc(1, sizeof(fs_handle_t) + sizeof(part_t));
+    fh->part_count = 1;
+    fh->parts[0].fd = fd;
+    if(fstat(fd, &st)) {
+      snprintf(errbuf, errlen, "%s", strerror(errno));
+      fs_close(&fh->h);
+      return NULL;
+    }
+    fh->total_size = st.st_size;
+  }
+
+  fh->h.fh_proto = fap;
+  return &fh->h;
+}
+
+
+static int
+get_current_read_piece_num(fs_handle_t *fh)
+{
+  int i = 0;
+  off_t size = fh->parts[0].size;
+  for(i = 0; i < fh->part_count; i++) {
+    if(fh->read_pos <= size)
+      break;
+    size += fh->parts[i+1].size;
+  }
+  return MIN(i, fh->part_count - 1);
 }
 
 /**
@@ -132,8 +252,17 @@ static int
 fs_read(fa_handle_t *fh0, void *buf, size_t size)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
+  if(fh->part_count == 1)
+    return read(fh->parts[0].fd, buf, size);
 
-  return read(fh->fd, buf, size);
+  int pn = get_current_read_piece_num(fh);
+  int rsize = read(fh->parts[pn].fd, buf, size);
+  if(rsize < size && pn < fh->part_count - 1) {
+    lseek(fh->parts[pn + 1].fd, 0, SEEK_SET);
+    rsize += read(fh->parts[pn + 1].fd, buf + rsize, size - rsize);
+  }
+  fh->read_pos += rsize;
+  return rsize;
 }
 
 /**
@@ -143,7 +272,35 @@ static int64_t
 fs_seek(fa_handle_t *fh0, int64_t pos, int whence)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
-  return lseek(fh->fd, pos, whence);
+
+  if(fh->part_count == 1)
+    return lseek(fh->parts[0].fd, pos, whence);
+
+  int64_t act_pos;
+  int i;
+  int pn;
+
+  switch(whence) {
+  case SEEK_SET:
+    act_pos = pos;
+    break;
+
+  case SEEK_CUR:
+    act_pos = pos + fh->read_pos;
+    break;
+
+  case SEEK_END:
+    act_pos = fh->total_size - pos;
+    break;
+  }
+
+  fh->read_pos = act_pos;
+  pn = get_current_read_piece_num(fh);
+  pos = act_pos;
+  for(i = 0; i < pn ;i++)
+    pos = pos - fh->parts[i].size;
+
+  return lseek(fh->parts[pn].fd, pos, SEEK_SET);
 }
 
 /**
@@ -153,12 +310,14 @@ static int64_t
 fs_fsize(fa_handle_t *fh0)
 {
   fs_handle_t *fh = (fs_handle_t *)fh0;
-  struct stat st;
-  
-  if(fstat(fh->fd, &st) < 0)
-    return -1;
+  if(fh->part_count == 1) {
+    struct stat st;
+    if(fstat(fh->parts[0].fd, &st) < 0)
+      return -1;
+    return st.st_size;
+  }
 
-  return st.st_size;
+  return fh->total_size;
 }
 
 
@@ -170,9 +329,28 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 	char *errbuf, size_t errlen, int non_interactive)
 {
   struct stat st;
+  int piece_num,i;
   if(stat(url, &st)) {
     snprintf(errbuf, errlen, "%s", strerror(errno));
-    return FAP_STAT_ERR;
+
+    piece_num = get_split_piece_count(url);
+    if(piece_num == 0)
+      return FAP_STAT_ERR;
+
+    memset(fs, 0, sizeof(struct fa_stat));
+    for(i = 0; i < piece_num; i++) {
+      char buf[PATH_MAX];
+      get_split_piece_name(buf, sizeof(buf), url,i);
+
+      if(stat(buf, &st)) {
+        snprintf(errbuf, errlen, "%s", strerror(errno));
+        return FAP_STAT_ERR;
+      }
+      fs->fs_size += st.st_size;
+      fs->fs_mtime = st.st_mtime;
+      fs->fs_type = CONTENT_FILE;
+    }
+    return FAP_STAT_OK;
   }
 
   memset(fs, 0, sizeof(struct fa_stat));
