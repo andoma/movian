@@ -43,6 +43,8 @@ distance_to_line_segment(float cx, float cy,
 {
   float r_num = (cx - ax) * (bx - ax) + (cy - ay) * (by - ay);
   float r_den = (bx - ax) * (bx - ax) + (by - ay) * (by - ay);
+  if(r_den == 0.0f)
+    return 0.0f;
   float r = r_num / r_den;
 
   if(r >= 0 && r <= 1) {
