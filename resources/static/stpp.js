@@ -118,6 +118,18 @@ STPPClient.prototype.bindInnerHTML = function(propref, path, elem, xlate) {
 }
 
 
+STPPClient.prototype.bindIconURI = function(propref, path, elem, xlate) {
+  var s = this.subValue(propref, path, function(v) {
+    if(typeof v == 'object' && v != null && v[0] == 'link')
+      v = v[2];
+    elem.src = '/showtime/image?url=' + v
+  });
+  elem.addEventListener('DOMNodeRemovedFromDocument', function(e) {
+    s.destroy();
+  }, false);
+}
+
+
 //
 // ElementFactory
 //

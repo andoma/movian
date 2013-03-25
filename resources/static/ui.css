@@ -7,36 +7,13 @@ body {
     font-size:150%;
 }
 
-#items {
-    display: table;
-    width: 100%;
-}
 
-.listcell {
-    display: table-cell;
-    width: 100%;
-/*    display: inline-block; */
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    padding: 0px 5px;
-}
-
-.itemduration {
-    width: 10%;
-    text-align:right;
-}
-
-.itemartist {
-    width: 10%;
-}
-.itemalbum {
-    width: 10%;
-}
 
 div.listrow {
-    padding: 5px;
-    display: table-row;
+    clear:both;
+    display: block;
+    height: 64px;
+    padding: 5px 10px;
 }
 
 div:nth-child(2n).listrow {
@@ -45,4 +22,40 @@ div:nth-child(2n).listrow {
 
 div:hover.listrow {
     background-color: #ddd;
+}
+
+
+.listcell {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0px 10px;
+}
+
+
+.itemicon {
+    float: left;
+    height: 64px;
+}
+
+.itemtitle {
+    display: block;
+    font-weight:900;
+}
+
+.itemartist {
+    display: block;
+}
+
+.itemalbum {
+    display: block;
+    font-weight:100;
+    font-size:75%;
+}
+
+
+.itemduration {
+    float: right;
+    font-weight:900;
 }

@@ -51,6 +51,17 @@ window.onload = function() {
 
 
 	  'audio': function(e) {
+	    var s = document.createElement('img');
+	    s.className = 'listcell itemicon';
+	    stpp.bindIconURI(node, "metadata.album_art", s);
+	    e.appendChild(s);
+
+
+	    var s = document.createElement('span');
+	    s.className = 'listcell itemduration'
+	    stpp.bindInnerHTML(node, "metadata.duration", s, durationText);
+	    e.appendChild(s);
+
 	    var s = document.createElement('span');
 	    s.className = 'listcell itemtitle'
 	    stpp.bindInnerHTML(node, "metadata.title", s);
@@ -62,14 +73,10 @@ window.onload = function() {
 	    e.appendChild(s);
 
 	    var s = document.createElement('span');
-	    s.className = 'listcell itemalbumt'
+	    s.className = 'listcell itemalbum'
 	    stpp.bindInnerHTML(node, "metadata.album", s);
 	    e.appendChild(s);
 
-	    var s = document.createElement('span');
-	    s.className = 'listcell itemduration'
-	    stpp.bindInnerHTML(node, "metadata.duration", s, durationText);
-	    e.appendChild(s);
 
 	  },
 
