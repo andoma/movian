@@ -1180,15 +1180,22 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 #if ENABLE_LIBAV
-  if(cw->codec_ctx != NULL && cw->codec_ctx->codec != NULL)
-    avcodec_close(cw->codec_ctx);
+  if(cw->ctx != NULL && cw->ctx->codec != NULL)
+    avcodec_close(cw->ctx);
+
+  if(cw->ctx != cw->fmt_ctx && cw->fmt_ctx != NULL &&
+     cw->fmt_ctx->codec != NULL)
+    avcodec_close(cw->fmt_ctx);
 #endif
 
   if(cw->close != NULL)
     cw->close(cw);
 
-  if(cw->codec_ctx_alloced)
-    free(cw->codec_ctx);
+  if(cw->ctx != cw->fmt_ctx)
+    free(cw->ctx);
+
+  if(cw->fmt_ctx && cw->fw == NULL)
+    free(cw->fmt_ctx);
 
 #if ENABLE_LIBAV
   if(cw->parser_ctx != NULL)
@@ -1214,7 +1221,8 @@ media_codec_create(int codec_id, int parser,
   codec_def_t *cd;
 
   mc->mp = mp;
-  mc->codec_ctx = ctx;
+  mc->fmt_ctx = ctx;
+  mc->codec_id = codec_id;
   
 #if ENABLE_LIBAV
   if(ctx != NULL && mcp != NULL) {
@@ -1224,7 +1232,7 @@ media_codec_create(int codec_id, int parser,
 #endif
 
   LIST_FOREACH(cd, &registeredcodecs, link)
-    if(!cd->open(mc, codec_id, mcp, mp))
+    if(!cd->open(mc, mcp, mp))
       break;
 
   if(cd == NULL) {
@@ -1233,15 +1241,23 @@ media_codec_create(int codec_id, int parser,
   }
 
 #if ENABLE_LIBAV
-  mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
+  if(parser) {
+    assert(fw == NULL);
+
+    const AVCodec *codec = avcodec_find_decoder(codec_id);
+    assert(codec != NULL);
+    mc->fmt_ctx = avcodec_alloc_context3(codec);
+    mc->parser_ctx = av_parser_init(codec_id);
+  }
 #endif
 
   mc->refcount = 1;
   mc->fw = fw;
-  mc->codec_id = codec_id;
 
-  if(fw != NULL)
+  if(fw != NULL) {
+    assert(!parser);
     atomic_add(&fw->refcount, 1);
+  }
 
   return mc;
 }

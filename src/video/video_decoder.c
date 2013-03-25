@@ -68,7 +68,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   int got_pic = 0;
   media_pipe_t *mp = vd->vd_mp;
   media_codec_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->codec_ctx;
+  AVCodecContext *ctx = cw->ctx;
   AVFrame *frame = vd->vd_frame;
   int t;
   
@@ -111,7 +111,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 		   mq->mq_prop_decode_peak);
 
   if(mp->mp_stats)
-    mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
+    mp_set_mq_meta(mq, cw->ctx->codec, cw->ctx);
 
   mb = &vd->vd_reorder[frame->reordered_opaque];
 

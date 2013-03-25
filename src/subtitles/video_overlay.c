@@ -215,7 +215,7 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
       mc->decode(mc, NULL, NULL, mb, 0);
 #if ENABLE_LIBAV
     else
-      video_subtitles_lavc(mp, mb, mc->codec_ctx);
+      video_subtitles_lavc(mp, mb, mc->ctx);
 #endif
   }
 }

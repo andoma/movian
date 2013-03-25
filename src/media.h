@@ -138,11 +138,10 @@ typedef struct media_codec {
   int refcount;
   struct media_format *fw;
   int codec_id;
-  int codec_ctx_alloced; /* Set if this struct owns the allocation
-			    of codec_ctx */
 
-  struct AVCodec *codec; // This may be NULL for HW accelerated decoders
-  struct AVCodecContext *codec_ctx;
+  struct AVCodecContext *fmt_ctx;     // Context owned by AVFormatContext
+  struct AVCodecContext *ctx;         // Context owned by decoder thread
+  
   struct AVCodecParserContext *parser_ctx;
 
   void *opaque;
@@ -461,8 +460,7 @@ typedef struct media_codec_params {
 typedef struct codec_def {
   LIST_ENTRY(codec_def) link;
   void (*init)(void);
-  int (*open)(media_codec_t *mc, int id,
-	      const media_codec_params_t *mcp,
+  int (*open)(media_codec_t *mc, const media_codec_params_t *mcp,
 	      media_pipe_t *mp);
   int prio;
 } codec_def_t;

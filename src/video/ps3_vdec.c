@@ -45,11 +45,13 @@ LIST_HEAD(vdec_pic_list, vdec_pic);
 typedef struct pktmeta {
   int64_t delta;
   int epoch;
+  char aspect_override;
   char skip : 1;
   char flush : 1; 
   char nopts : 1;
   char nodts : 1;
   char drive_clock : 1;
+  char disable_deinterlacer : 1;
 } pktmeta_t;
 
 
@@ -346,28 +348,46 @@ picture_out(vdec_decoder_t *vdd)
     vp->fi.fi_height = mpeg2->height;
     vp->fi.fi_duration = mpeg2->frame_rate <= 8 ? 
       mpeg_durations[mpeg2->frame_rate] : 40000;
-    vp->fi.fi_interlaced = !mpeg2->progressive_frame;
-    vp->fi.fi_tff = mpeg2->top_field_first;
-    
+
+    if(pm->disable_deinterlacer) {
+      vp->fi.fi_interlaced = 0;
+    } else {
+      vp->fi.fi_interlaced = !mpeg2->progressive_frame;
+      vp->fi.fi_tff = mpeg2->top_field_first;
+    }
+
     if(mpeg2->color_description)
       vp->fi.fi_color_space = mpeg2->matrix_coefficients;
 
-    switch(mpeg2->aspect_ratio) {
-    case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.fi_dar_num = mpeg2->width;
-      vp->fi.fi_dar_den = mpeg2->height;
+    switch(pm->aspect_override) {
+
+    default:
+      switch(mpeg2->aspect_ratio) {
+      case VDEC_MPEG2_ARI_SAR_1_1:
+	vp->fi.fi_dar_num = mpeg2->width;
+	vp->fi.fi_dar_den = mpeg2->height;
+	break;
+      case VDEC_MPEG2_ARI_DAR_4_3:
+	vp->fi.fi_dar_num = 4;
+	vp->fi.fi_dar_den = 3;
+	break;
+      case VDEC_MPEG2_ARI_DAR_16_9:
+	vp->fi.fi_dar_num = 16;
+	vp->fi.fi_dar_den = 9;
+	break;
+      case VDEC_MPEG2_ARI_DAR_2P21_1:
+	vp->fi.fi_dar_num = 221;
+	vp->fi.fi_dar_den = 100;
+	break;
+      }
       break;
-    case VDEC_MPEG2_ARI_DAR_4_3:
+    case 1:
       vp->fi.fi_dar_num = 4;
       vp->fi.fi_dar_den = 3;
       break;
-    case VDEC_MPEG2_ARI_DAR_16_9:
+    case 2:
       vp->fi.fi_dar_num = 16;
       vp->fi.fi_dar_den = 9;
-      break;
-    case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.fi_dar_num = 221;
-      vp->fi.fi_dar_den = 100;
       break;
     }
 
@@ -556,8 +576,17 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
     }
   }
 
+  if(data == NULL) {
+    // When we want to flush out all frames from the decoder
+    // we just wait for them by sleeping. Lame but kinda works
+    hts_mutex_unlock(&vdd->mtx);
+    usleep(100000);
+    hts_mutex_lock(&vdd->mtx);
+  }
+
   while((vp = LIST_FIRST(&vdd->pictures)) != NULL) {
-    if(vdd->flush_to < vp->order)
+    // data == NULL means that we should do a complete flush
+    if(vdd->flush_to < vp->order && data != NULL)
       break;
     LIST_REMOVE(vp, link);
 
@@ -600,6 +629,8 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   pm->flush = vd->vd_do_flush;
   pm->delta = mb->mb_delta;
   pm->drive_clock = mb->mb_drive_clock;
+  pm->aspect_override = mb->mb_aspect_override;
+  pm->disable_deinterlacer = mb->mb_disable_deinterlacer;
 
   int64_t pts = mb->mb_pts, dts = mb->mb_dts;
 
@@ -682,8 +713,7 @@ no_lib(media_pipe_t *mp, const char *codec)
  *
  */
 static int
-video_ps3_vdec_codec_create(media_codec_t *mc, int id,
-			    const media_codec_params_t *mcp,
+video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
@@ -695,7 +725,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
     return 1;
 
-  switch(id) {
+  switch(mc->codec_id) {
   case CODEC_ID_MPEG2VIDEO:
     if(!vdec_mpeg2_loaded)
       return no_lib(mp, "MPEG-2");
@@ -761,7 +791,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   vdd->mem = (void *)(uint64_t)taddr;
 
   TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
-	id == CODEC_ID_H264 ? "h264" : "MPEG2", dec_type.profile_level,
+	mc->codec_id == CODEC_ID_H264 ? "h264" : "MPEG2",
+	dec_type.profile_level,
 	dec_attr.mem_size);
 
   vdd->config.mem_addr = (intptr_t)vdd->mem;
@@ -787,7 +818,7 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   vdd->level_major = mcp->level / 10;
   vdd->level_minor = mcp->level % 10;
 
-  if(id == CODEC_ID_H264 && mcp->extradata_size)
+  if(mc->codec_id == CODEC_ID_H264 && mcp->extradata_size)
     h264_to_annexb_init(&vdd->annexb, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;

@@ -604,7 +604,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
       if(codec == NULL) {
 	snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
       } else {
-	metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
+	metadata_from_libav(tmp1, sizeof(tmp1), codec, avctx);
       }
 
       lang = av_dict_get(stream->metadata, "language", NULL,

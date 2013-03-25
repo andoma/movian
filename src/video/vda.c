@@ -290,8 +290,7 @@ vda_close(struct media_codec *mc)
  *
  */
 static int
-video_vda_codec_create(media_codec_t *mc, int id,
-		       const media_codec_params_t *mcp,
+video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		       media_pipe_t *mp)
 {
   OSStatus status = kVDADecoderNoErr;
@@ -311,8 +310,8 @@ video_vda_codec_create(media_codec_t *mc, int id,
   const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
 
-  if(mcp == NULL ||
-     id != CODEC_ID_H264 || mcp->extradata == NULL || mcp->extradata_size == 0)
+  if(mcp == NULL || mc->codec_id != CODEC_ID_H264 ||
+     mcp->extradata == NULL || mcp->extradata_size == 0)
     return 1;
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,

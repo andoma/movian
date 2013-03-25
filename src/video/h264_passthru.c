@@ -75,11 +75,10 @@ h264_pt_close(struct media_codec *mc)
  *
  */
 static int
-h264_pt_codec_create(media_codec_t *mc, int id,
-		     const media_codec_params_t *mcp,
+h264_pt_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		     media_pipe_t *mp)
 {
-  if(id != CODEC_ID_H264)
+  if(mc->codec_id != CODEC_ID_H264)
     return 1;
 
   mc->opaque = calloc(1, sizeof(h264_annexb_ctx_t));

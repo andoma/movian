@@ -114,11 +114,14 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
   while((s = TAILQ_FIRST(&gv->gv_decoded_queue)) != NULL) {
     int64_t delta = gr->gr_frameduration * 2;
     int64_t aclock, d;
+    int a_epoch;
     pts = s->gvs_pts;
 
     hts_mutex_lock(&mp->mp_clock_mutex);
     aclock = mp->mp_audio_clock + gr->gr_frame_start - 
       mp->mp_audio_clock_avtime + mp->mp_avdelta;
+    a_epoch = mp->mp_audio_clock_epoch;
+
     hts_mutex_unlock(&mp->mp_clock_mutex);
 
     d = s->gvs_pts - aclock;
@@ -126,7 +129,8 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     if(s->gvs_pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
       pts = gv->gv_nextpts;
 
-    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock)
+    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock &&
+	a_epoch == s->gvs_epoch)
       break;
 
     st = vd->vdp_presentation_queue_display(gv->gv_vdpau_pq,
@@ -141,7 +145,7 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     TAILQ_REMOVE(&gv->gv_decoded_queue, s, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, s, gvs_link);
   }
-  return pts;
+  return gv->gv_nextpts;
 }
 
 

@@ -12,6 +12,7 @@
 #include <libavutil/avutil.h>
 #include <libavcodec/avcodec.h>
 #include <libavutil/opt.h>
+#include <libavutil/mem.h>
 
 static audio_class_t *audio_class;
 
@@ -174,19 +175,38 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       avpkt.data = mb->mb_data + offset;
       avpkt.size = mb->mb_size - offset;
       
-      r = avcodec_decode_audio4(mb->mb_cw->codec_ctx, frame,
-				&got_frame, &avpkt);
+      AVCodecContext *ctx = mb->mb_cw->ctx;
+
+      if(ctx == NULL) {
+	media_codec_t *mc = mb->mb_cw;
+
+	AVCodec *codec = avcodec_find_decoder(mc->codec_id);
+	assert(codec != NULL); // Checked in libav.c
+
+	ctx = mc->ctx = avcodec_alloc_context3(codec);
+
+	if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
+	  av_freep(&mc->ctx);
+	  return;
+	}
+      }
+
+      r = avcodec_decode_audio4(ctx, frame, &got_frame, &avpkt);
       if(r < 0)
 	return;
 
-      if(frame->sample_rate == 0)
-	frame->sample_rate = mb->mb_cw->codec_ctx->sample_rate;
+      if(frame->sample_rate == 0) {
+	frame->sample_rate = ctx->sample_rate;
+
+	if(frame->sample_rate == 0 && mb->mb_cw->fmt_ctx)
+	  frame->sample_rate = mb->mb_cw->fmt_ctx->sample_rate;
     
-      if(frame->sample_rate == 0)
-	return;
+	if(frame->sample_rate == 0)
+	  return;
+      }
 
       if(frame->channel_layout == 0) {
-	switch(mb->mb_cw->codec_ctx->channels) {
+	switch(ctx->channels) {
 	case 1:
 	  frame->channel_layout = AV_CH_LAYOUT_MONO;
 	  break;
@@ -199,7 +219,7 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
       }
 
       if(mp->mp_stats)
-	mp_set_mq_meta(mq, mb->mb_cw->codec, mb->mb_cw->codec_ctx);
+	mp_set_mq_meta(mq, ctx->codec, ctx);
 
     }
 

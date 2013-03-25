@@ -802,6 +802,7 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
     cwvec[i] = media_codec_create(ctx->codec_id, 0, fw, ctx, &mcp, mp);
 
     if(cwvec[i] != NULL) {
+      TRACE(TRACE_DEBUG, "Video", " Stream #%d: Codec created", i);
       switch(ctx->codec_type) {
       case AVMEDIA_TYPE_VIDEO:
 	if(mp->mp_video.mq_stream == -1) {
