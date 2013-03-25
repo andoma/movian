@@ -1,4 +1,4 @@
-.DEFAULT_GOAL := ${PROG}.bundle
+.DEFAULT_GOAL := ${PROG}.stripped
 
 SRCS += src/arch/rpi/rpi_main.c \
 	src/arch/rpi/omx.c \
