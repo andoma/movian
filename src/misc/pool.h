@@ -25,7 +25,6 @@ typedef struct pool {
 } pool_t;
 
 
-#define POOL_REENTRANT 0x1
 #define POOL_ZERO_MEM  0x2
 
 pool_t *pool_create(const char *name, size_t item_size, int flags);
