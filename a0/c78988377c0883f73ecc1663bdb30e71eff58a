@@ -1,0 +1,5 @@
+ps3: Fix broken navigation
+
+Most visible error was that up/down didn't work on home page
+
+Fixes #1669
