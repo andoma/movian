@@ -1396,7 +1396,7 @@ cifs_get_connection(const char *hostname, int port, char *errbuf, size_t errlen,
 	  SMBTRACE("%s:%d Session setup", hostname, port);
 	  cc->cc_status = CC_RUNNING;
 	  hts_thread_create_joinable("SMB", &cc->cc_thread, smb_dispatch,
-				     cc, THREAD_PRIO_NORMAL);
+				     cc, THREAD_PRIO_FILESYSTEM);
 
 	  callout_arm(&cc->cc_timer, cifs_periodic, cc, SMB_ECHO_INTERVAL);
 	}

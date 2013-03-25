@@ -1125,7 +1125,8 @@ fa_scanner_page(const char *url, time_t url_mtime,
 
   s->s_ref = fa_reference(s->s_url);
 
-  hts_thread_create_detached("fa scanner", scanner_thread, s, THREAD_PRIO_LOW);
+  hts_thread_create_detached("fa scanner", scanner_thread, s,
+			     THREAD_PRIO_MODEL);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_CALLBACK_DESTROYED, scanner_stop, s,

@@ -103,7 +103,7 @@ audio_decoder_create(struct media_pipe *mp)
   ad->ad_epoch = 0;
 
   hts_thread_create_joinable("audio decoder", &ad->ad_tid,
-                             audio_decode_thread, ad, THREAD_PRIO_HIGH);
+                             audio_decode_thread, ad, THREAD_PRIO_AUDIO);
   return ad;
 }
 

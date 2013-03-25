@@ -25,6 +25,7 @@
 #include <sys/prctl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <linux/capability.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdint.h>
@@ -33,6 +34,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <malloc.h>
+
+#include <sys/syscall.h>
 
 #include "showtime.h"
 #include "misc/callout.h"
@@ -222,3 +225,26 @@ linux_init_monitors(void)
   timercb(NULL, NULL);
 }
 
+
+/**
+ *
+ */
+void
+linux_check_capabilities(void)
+{
+  struct __user_cap_header_struct x;
+  struct __user_cap_data_struct s[3];
+
+  x.version = _LINUX_CAPABILITY_VERSION_3;
+  x.pid = getpid();
+
+  if(syscall(SYS_capget, &x, s)) {
+    perror("linux_check_capabilities");
+    return;
+  }
+
+  if(s[0].effective & (1 << CAP_SYS_NICE)) {
+    extern int posix_set_thread_priorities;
+    posix_set_thread_priorities = 1;
+  }
+}

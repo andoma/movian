@@ -2726,7 +2726,7 @@ metadata_init(void)
   TAILQ_INIT(&mlpqueue);
 
   hts_thread_create_detached("metadata", metadata_thread, NULL, 
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_METADATA);
   
   s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
 		       _p("Metadata configuration and provider settings"),

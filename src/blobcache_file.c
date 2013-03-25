@@ -829,7 +829,7 @@ blobcache_init(void)
 			 cache_clear, NULL, 0, NULL);
 
   hts_thread_create_joinable("blobcache", &bcthread, flushthread, NULL,
-                             THREAD_PRIO_LOW);
+                             THREAD_PRIO_BGTASK);
 }
 
 

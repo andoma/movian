@@ -19,6 +19,7 @@
 
 #ifdef linux
 #include <sys/prctl.h>
+#include <sys/resource.h>
 #include <unistd.h>
 #endif
 
@@ -27,6 +28,8 @@
 
 #include <errno.h>
 
+
+int posix_set_thread_priorities;
 
 void
 hts_mutex_init_recursive(hts_mutex_t *m)
@@ -73,6 +76,7 @@ typedef struct {
   char *title;
   void *(*func)(void *);
   void *aux;
+  int prio;
 } trampoline_t;
 
 
@@ -80,12 +84,14 @@ typedef struct {
  *
  */
 static trampoline_t *
-make_trampoline(const char *title, void *(*func)(void *), void *aux)
+make_trampoline(const char *title, void *(*func)(void *), void *aux,
+		int prio)
 {
   trampoline_t *t = malloc(sizeof(trampoline_t));
   t->title = strdup(title);
   t->func = func;
   t->aux = aux;
+  t->prio = prio;
   return t;
 }
 
@@ -99,6 +105,8 @@ thread_trampoline(void *aux)
   void *r;
 
 #if defined(linux)
+  if(posix_set_thread_priorities)
+    setpriority(PRIO_PROCESS, syscall(224), t->prio);
   prctl(PR_SET_NAME, t->title, 0, 0, 0);
 #elif defined(APPLE)
   pthread_setname_np(t->title);
@@ -132,7 +140,7 @@ hts_thread_create_detached(const char *title, void *(*func)(void *), void *aux,
   pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_DETACHED);
   pthread_attr_setstacksize(&attr, 128 * 1024);
   pthread_create(&id, &attr, thread_trampoline,
-		 make_trampoline(title, func, aux));
+		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
   TRACE(TRACE_DEBUG, "thread", "Created detached thread: %s", title);
 
@@ -148,7 +156,7 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 
 
 #ifdef linux
-  if(prio == THREAD_PRIO_HIGH && geteuid() == 0) {
+  if(prio <= -10 && posix_set_thread_priorities) {
     pthread_attr_setinheritsched(&attr, PTHREAD_EXPLICIT_SCHED);
     pthread_attr_setschedpolicy(&attr, SCHED_RR);
     struct sched_param param = {0};
@@ -158,7 +166,7 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 #endif
 
   pthread_create(p, &attr, thread_trampoline,
-		make_trampoline(title, func, aux));
+		 make_trampoline(title, func, aux, prio));
   pthread_attr_destroy(&attr);
 
   TRACE(TRACE_DEBUG, "thread", "Created thread: %s", title);

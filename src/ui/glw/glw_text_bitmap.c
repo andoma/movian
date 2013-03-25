@@ -1297,7 +1297,8 @@ glw_text_bitmap_init(glw_root_t *gr)
 
   gr->gr_font_thread_running = 1;
   hts_thread_create_joinable("GLW font renderer", &gr->gr_font_thread,
-			     font_render_thread, gr, THREAD_PRIO_NORMAL);
+			     font_render_thread, gr,
+			     THREAD_PRIO_UI_WORKER_HIGH);
 }
 
 

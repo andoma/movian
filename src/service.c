@@ -92,7 +92,7 @@ service_init(void)
   hts_cond_init(&service_cond, &service_mutex);
 
   hts_thread_create_detached("service probe", service_probe_loop, NULL,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_BGTASK);
 
   // $global.service.all
 

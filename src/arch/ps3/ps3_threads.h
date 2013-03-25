@@ -122,9 +122,17 @@ extern int hts_cond_wait_timeoutx(hts_cond_t *c, hts_mutex_t *m, int delay, cons
  */
 typedef sys_ppu_thread_t hts_thread_t;
 
-#define THREAD_PRIO_LOW    3000
-#define THREAD_PRIO_NORMAL 2999
-#define THREAD_PRIO_HIGH   3
+#define THREAD_PRIO_AUDIO          10
+#define THREAD_PRIO_VIDEO          100
+#define THREAD_PRIO_DEMUXER        200
+#define THREAD_PRIO_UI_WORKER_HIGH 400
+#define THREAD_PRIO_FILESYSTEM     500
+#define THREAD_PRIO_MODEL          1000
+#define THREAD_PRIO_METADATA       2000
+#define THREAD_PRIO_UI_WORKER_LOW  2300
+#define THREAD_PRIO_METADATA_BG    2600
+#define THREAD_PRIO_BGTASK         3000
+
 
 extern void hts_thread_create_detached(const char *, void *(*)(void *), void *,
 				       int prio);

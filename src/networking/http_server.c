@@ -1433,7 +1433,7 @@ http_server_init(void)
   hs->hs_fd = fd;  
   hs->hs_courier = prop_courier_create_notify(http_courier_notify, hs);
   hts_thread_create_detached("httpsrv", http_server, hs,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_MODEL);
 }
 
 

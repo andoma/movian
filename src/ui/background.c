@@ -252,5 +252,5 @@ background_init(prop_t *ui, prop_t *nav,
 		 NULL);
 
   hts_thread_create_detached("bgloader", bgloader_thread, bgh, 
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_UI_WORKER_LOW);
 }

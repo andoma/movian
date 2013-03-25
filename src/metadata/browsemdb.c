@@ -542,7 +542,8 @@ library_open(prop_t *page, const char *url, int sync)
     return 0;
   }
 
-  hts_thread_create_detached("bmdbquery", bmdb_thread, b, THREAD_PRIO_LOW);
+  hts_thread_create_detached("bmdbquery", bmdb_thread, b,
+			     THREAD_PRIO_METADATA);
   return 0;
 }
 

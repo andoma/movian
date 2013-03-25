@@ -825,7 +825,7 @@ video_playback_create(media_pipe_t *mp)
 {
   mp_ref_inc(mp);
   hts_thread_create_detached("video player",  video_player_idle, mp,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_DEMUXER);
 }
 
 

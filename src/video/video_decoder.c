@@ -513,7 +513,7 @@ video_decoder_create(media_pipe_t *mp)
 
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_VIDEO);
   
   return vd;
 }

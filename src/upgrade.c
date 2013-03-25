@@ -343,7 +343,7 @@ static void
 install(void)
 {
   hts_thread_create_detached("upgrade", install_thread, NULL,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_BGTASK);
 }
 
 

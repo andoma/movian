@@ -1096,7 +1096,7 @@ decoration_init(void)
   hts_mutex_init(&deco_mutex);
   deco_courier = prop_courier_create_waitable();
 
-  hts_thread_create_detached("deco", deco_thread, NULL, THREAD_PRIO_LOW);
+  hts_thread_create_detached("deco", deco_thread, NULL, THREAD_PRIO_METADATA);
 }
 
 

@@ -1419,7 +1419,8 @@ js_load(const char *url)
 {
   char *u = strdup(url);
   
-  hts_thread_create_detached("rawjs", js_load_thread, u, THREAD_PRIO_LOW);
+  hts_thread_create_detached("rawjs", js_load_thread, u,
+			     THREAD_PRIO_MODEL);
 }
 
 

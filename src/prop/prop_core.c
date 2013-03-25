@@ -3650,7 +3650,7 @@ prop_courier_create_thread(hts_mutex_t *entrymutex, const char *name)
 
   pc->pc_run = 1;
   hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_MODEL);
   return pc;
 }
 
@@ -3719,7 +3719,7 @@ prop_courier_create_lockmgr(const char *name, prop_lockmgr_t *mgr, void *lock,
 
   pc->pc_run = 1;
   hts_thread_create_joinable(buf, &pc->pc_thread, prop_courier, pc,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_MODEL);
   return pc;
 }
 

@@ -508,5 +508,5 @@ ssdp_init(const char *uuid)
   shutdown_hook_add(ssdp_shutdown, NULL, 1);
   ssdp_uuid = strdup(uuid);
   hts_thread_create_detached("ssdp", ssdp_thread, NULL,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_BGTASK);
 }

@@ -1066,6 +1066,6 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
 
   ub->ub_title = prop_create_r(metadata, "title");
   hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_MODEL);
   return 0;
 }

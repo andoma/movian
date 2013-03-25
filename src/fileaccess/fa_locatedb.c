@@ -404,7 +404,7 @@ locatedb_search(prop_t *model, const char *query)
   fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
 
   hts_thread_create_detached("fa search", fa_searcher, fas,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_MODEL);
 }
 
 

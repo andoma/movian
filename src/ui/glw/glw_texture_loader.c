@@ -258,7 +258,9 @@ spawn_loader(glw_root_t *gr, int only_fast, int idx)
   la->la_gr = gr;
   la->la_only_fast = only_fast;
   hts_thread_create_joinable("GLW texture loader", &gr->gr_tex_threads[idx],
-			     loader_thread, la, THREAD_PRIO_LOW);
+			     loader_thread, la,
+			     only_fast ? THREAD_PRIO_UI_WORKER_HIGH :
+			     THREAD_PRIO_UI_WORKER_LOW);
 }
 
 /**

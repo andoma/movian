@@ -246,7 +246,7 @@ get_cd_meta(const char *device)
 
 #if ENABLE_CDDB
     hts_thread_create_detached("CDDB query", cddb_thread, cm,
-			       THREAD_PRIO_NORMAL);
+			       THREAD_PRIO_MODEL);
 #endif
   }
   hts_mutex_unlock(&cd_meta_mutex);
