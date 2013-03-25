@@ -335,6 +335,7 @@ static void
 run(void)
 {
   glw_root_t *gr = calloc(1, sizeof(glw_root_t));
+  gr->gr_reduce_cpu = 1;
   gr->gr_prop_ui = prop_create_root("ui");
   gr->gr_prop_nav = nav_spawn();
   prop_set(gr->gr_prop_ui, "nobackground", PROP_SET_INT, 1);
