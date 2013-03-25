@@ -90,7 +90,7 @@ const static AVRational mpeg_tc = {1, 90000};
 static void *
 dvd_fa_open(const char *url)
 {
-  return fa_open(url, NULL, 0);
+  return fa_open_ex(url, NULL, 0, FA_BUFFERED_BIG, NULL);
 }
 
 static int
