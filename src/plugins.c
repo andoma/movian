@@ -1196,7 +1196,10 @@ plugin_install(plugin_t *pl, const char *package)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
-  unlink(path);
+  if(unlink(path)) {
+    TRACE(TRACE_DEBUG, "plugins", "First unlinking %s -- %s",
+	  path, strerror(errno));
+  }
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
@@ -1209,10 +1212,11 @@ plugin_install(plugin_t *pl, const char *package)
     buf_release(b);
     return -1;
   }
-
-  size_t r = write(fd, buf, b->b_size);
+  size_t bsize = b->b_size;
+  size_t r = write(fd, buf, bsize);
   buf_release(b);
-  if(close(fd) || r != b->b_size) {
+  if(close(fd) || r != bsize) {
+    buf_release(b);
     s = _("Disk write error");
     prop_set_rstring(pl->pl_statustxt, s);
     rstr_release(s);
