@@ -185,6 +185,9 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
 	ctx = mc->ctx = avcodec_alloc_context3(codec);
 
+	if(ad->ad_stereo_downmix)
+	  ctx->request_channels = 2;
+
 	if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
 	  av_freep(&mc->ctx);
 	  return;

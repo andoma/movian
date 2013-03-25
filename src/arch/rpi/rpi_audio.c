@@ -12,6 +12,16 @@ typedef struct decoder {
   int d_first_sent;
 } decoder_t;
 
+/**
+ *
+ */
+static int
+rpi_audio_init(audio_decoder_t *ad)
+{
+  ad->ad_stereo_downmix = 1;
+  return 0;
+}
+
 
 /**
  *
@@ -167,6 +177,7 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
  */
 static audio_class_t rpi_audio_class = {
   .ac_alloc_size     = sizeof(decoder_t),
+  .ac_init           = rpi_audio_init,
   .ac_fini           = rpi_audio_fini,
   .ac_reconfig       = rpi_audio_reconfig,
   .ac_deliver_locked = rpi_audio_deliver,

@@ -48,6 +48,9 @@ typedef struct audio_decoder {
   enum AVSampleFormat ad_out_sample_format;
   int64_t ad_out_channel_layout;
 
+  int ad_stereo_downmix; /* We can only output stereo so ask for downmix
+			    as early as codec initialization */
+
   AVAudioResampleContext *ad_avr;
 
 } audio_decoder_t;
