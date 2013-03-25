@@ -82,13 +82,6 @@ h264_pt_codec_create(media_codec_t *mc, int id,
   if(id != CODEC_ID_H264)
     return 1;
 
-  if(mc->codec_ctx == NULL) {
-    // this is lame
-    mc->codec_ctx = avcodec_alloc_context3(NULL);
-    mc->codec_ctx->codec_id   = id;
-    mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
-  }
-
   mc->opaque = calloc(1, sizeof(h264_annexb_ctx_t));
  
   if(mcp->extradata_size)

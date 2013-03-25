@@ -800,12 +800,6 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
 
-  if(mc->codec_ctx == NULL) {
-    mc->codec_ctx = avcodec_alloc_context3(NULL);
-    mc->codec_ctx->codec_id   = id;
-    mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
-  }
-
   mc->opaque = vdd;
   mc->decode = decoder_decode;
   mc->close = decoder_close;
