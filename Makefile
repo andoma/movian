@@ -37,7 +37,10 @@ CFLAGS_std = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
 
 CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 
+#PGFLAGS ?= -pg
 
+OPTFLAGS += ${PGFLAGS}
+LDFLAGS += ${PGFLAGS}
 
 
 ##############################################################
