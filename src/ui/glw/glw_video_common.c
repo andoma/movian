@@ -63,13 +63,13 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
     // Shrink X
     int border = rc->rc_width - t_aspect * rc->rc_height;
-    int left  = (border + 1) / 2;
-    int right = rc->rc_width - (border / 2);
+    int left  = (border + 1.0f) * 0.5f;
+    int right = rc->rc_width - border * 0.5f;
 
     float s = (right - left) / (float)rc->rc_width;
     float t = -1.0f + (right + left) / (float)rc->rc_width;
 
-    glw_Translatef(rc, t, 0, 0);
+    glw_Translatef(rc, t, 0.0f, 0.0f);
     glw_Scalef(rc, s, 1.0f, 1.0f);
 
     rc->rc_width = right - left;
@@ -77,13 +77,13 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
   } else {
     // Shrink Y
     int border = rc->rc_height - rc->rc_width / t_aspect;
-    int bottom  = (border + 1) / 2;
-    int top     = rc->rc_height - (border / 2);
+    int bottom  = (border + 1.0f) * 0.5f;
+    int top     = rc->rc_height - border * 0.5f;
 
     float s = (top - bottom) / (float)rc->rc_height;
     float t = -1.0f + (top + bottom) / (float)rc->rc_height;
 
-    glw_Translatef(rc, 0, t, 0);
+    glw_Translatef(rc, 0.0f, t, 0.0f);
     glw_Scalef(rc, 1.0f, s, 1.0f);
     rc->rc_height = top - bottom;
   }
