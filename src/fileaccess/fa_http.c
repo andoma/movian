@@ -148,7 +148,24 @@ typedef struct http_connection {
   char hc_ssl;
   char hc_reused;
 
+  time_t hc_reuse_before;
+
 } http_connection_t;
+
+
+
+/**
+ *
+ */
+static void
+http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
+{
+  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
+  tcp_close(hc->hc_tc);
+  free(hc);
+}
+
 
 
 /**
@@ -158,13 +175,25 @@ static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
 		    char *errbuf, int errlen, int dbg)
 {
-  http_connection_t *hc;
+  http_connection_t *hc, *next;
   tcpcon_t *tc;
   int id;
+  time_t now;
+
+  time(&now);
 
   hts_mutex_lock(&http_connections_mutex);
 
-  TAILQ_FOREACH(hc, &http_connections, hc_link) {
+  for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
+    next = TAILQ_NEXT(hc, hc_link);
+
+    if(now >= hc->hc_reuse_before) {
+      TAILQ_REMOVE(&http_connections, hc, hc_link);
+      http_parked_connections--;
+      http_connection_destroy(hc, dbg, "Keep alive expired");
+      continue;
+    }
+
     if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
        hc->hc_ssl == ssl) {
       TAILQ_REMOVE(&http_connections, hc, hc_link);
@@ -201,32 +230,40 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
+http_connection_park(http_connection_t *hc, int dbg, int max_age)
 {
-  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
-	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
-  tcp_close(hc->hc_tc);
-  free(hc);
-}
+  time_t now;
+  http_connection_t *next;
 
+  time(&now);
 
-/**
- *
- */
-static void
-http_connection_park(http_connection_t *hc, int dbg)
-{
   HTTP_TRACE(dbg, "Parking connection to %s:%d (id=%d)",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id);
+
+  hc->hc_reuse_before = now + max_age;
+
   hts_mutex_lock(&http_connections_mutex);
   TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
+  http_parked_connections++;
 
-  if(http_parked_connections == 5) {
+  if(http_parked_connections > 5) {
+    for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
+      next = TAILQ_NEXT(hc, hc_link);
+
+      if(now >= hc->hc_reuse_before) {
+	TAILQ_REMOVE(&http_connections, hc, hc_link);
+	http_parked_connections--;
+	http_connection_destroy(hc, dbg, "Keep alive expired");
+      }
+    }
+  }
+
+  while(http_parked_connections > 5) {
     hc = TAILQ_FIRST(&http_connections);
+    assert(hc != NULL);
     TAILQ_REMOVE(&http_connections, hc, hc_link);
     http_connection_destroy(hc, dbg, "Too many idle connections");
-  } else {
-    http_parked_connections++;
+    http_parked_connections--;
   }
 
   hts_mutex_unlock(&http_connections_mutex);
@@ -507,6 +544,7 @@ typedef struct http_file {
 #define HTTP_CE_IDENTITY 0
 #define HTTP_CE_GZIP 1
 
+  int hf_max_age;
 
   prop_t *hf_stats_speed;
 
@@ -1072,6 +1110,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   hf->hf_chunked_transfer = 0;
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
+  hf->hf_max_age = 30;
 
   HF_TRACE(hf, "%s: Response:", hf->hf_url);
 
@@ -1141,6 +1180,13 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       continue;
     }
 
+    if(!strcasecmp(argv[0], "Keep-Alive")) {
+      const char *x = strstr(argv[1], "timeout=");
+      if(x != NULL)
+	hf->hf_max_age = atoi(x + strlen("timeout="));
+      continue;
+    }
+
     if(!strcasecmp(argv[0], "Content-Encoding")) {
       if(!strcasecmp(argv[1], "gzip"))
 	hf->hf_content_encoding = HTTP_CE_GZIP;
@@ -1205,7 +1251,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
     return;
 
   if(reusable && !gconf.disable_http_reuse) {
-    http_connection_park(hf->hf_connection, hf->hf_debug);
+    http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
   }
@@ -1813,6 +1859,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   /* Max 5 retries */
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
+  retry:
     if((hc = hf->hf_connection) == NULL) {
       if(http_connect(hf, NULL, 0))
 	return -1;
@@ -1877,6 +1924,11 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       tcp_write_queue(hc->hc_tc, &q);
 
       code = http_read_response(hf, NULL);
+      if(code == -1 && hf->hf_connection->hc_reused) {
+	http_detach(hf, 0, "Read error on reused connection, retrying");
+	goto retry;
+      }
+
       switch(code) {
       case 206:
 	// Range transfer OK
@@ -2509,6 +2561,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     code = http_read_response(hf, NULL);
 
     if(code == -1) {
+      if(hf->hf_connection->hc_reused)
+	i--;
       http_detach(hf, 0, "Read error");
       continue;
     }
