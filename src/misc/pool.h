@@ -13,8 +13,8 @@ LIST_HEAD(pool_segment_list, pool_segment);
 typedef struct pool {
   struct pool_segment_list p_segments;
   
-  size_t p_item_size;
-
+  size_t p_item_size_req;  // Size requested by user
+  size_t p_item_size;      // Actual size of memory allocated
   int p_flags;
 
   hts_mutex_t p_mutex;
