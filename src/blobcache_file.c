@@ -320,6 +320,8 @@ load_index(void)
       memcpy(p->bi_etag, in, etaglen);
       p->bi_etag[etaglen] = 0;
       in += etaglen;
+    } else {
+      p->bi_etag = NULL;
     }
     p->bi_link = hashvector[p->bi_key_hash & ITEM_HASH_MASK];
     hashvector[p->bi_key_hash & ITEM_HASH_MASK] = p;
