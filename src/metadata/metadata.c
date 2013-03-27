@@ -670,7 +670,10 @@ struct metadata_lazy_video {
   prop_sub_t *mlv_refresh_sub;
 
   rstr_t *mlv_custom_query;
+  prop_sub_t *mlv_custom_query_sub;
+
   rstr_t *mlv_custom_title;
+  prop_sub_t *mlv_custom_title_sub;
  
   // Triggers
   prop_sub_t *mlv_trig_title;
@@ -1745,6 +1748,8 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
   prop_unsubscribe(mlv->mlv_alt_opt_sub);
   prop_unsubscribe(mlv->mlv_sq_sub);
   prop_unsubscribe(mlv->mlv_refresh_sub);
+  prop_unsubscribe(mlv->mlv_custom_title_sub);
+  prop_unsubscribe(mlv->mlv_custom_query_sub);
 
   prop_ref_dec(mlv->mlv_title_opt);
   prop_ref_dec(mlv->mlv_info);
@@ -1759,6 +1764,7 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
   rstr_release(mlv->mlv_custom_query);
   rstr_release(mlv->mlv_custom_title);
   rstr_release(mlv->mlv_url);
+  rstr_release(mlv->mlv_folder);
 }
 
 
@@ -1920,7 +1926,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
     rstr_release(cur);
   }
 
-  mlv->mlv_sq_sub = 
+  mlv->mlv_custom_query_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_query, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
@@ -1952,7 +1958,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   // Custom movie title
 
-  mlv->mlv_sq = prop_ref_inc(prop_create_root(NULL));
+  prop_t *p = prop_create_root(NULL);
   prop_set_string(prop_create(mlv->mlv_sq, "type"), "string");
   prop_set_int(prop_create(mlv->mlv_sq, "enabled"), 1);
   m = prop_create(mlv->mlv_sq, "metadata");
@@ -1967,7 +1973,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
     rstr_release(cur);
   }
 
-  mlv->mlv_sq_sub = 
+  mlv->mlv_custom_title_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_custom_title, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
@@ -1975,7 +1981,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
-  pv = prop_vec_append(pv, mlv->mlv_sq);
+  pv = prop_vec_append(pv, p);
 
   // Add all options
 

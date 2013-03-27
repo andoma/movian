@@ -882,6 +882,8 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   prop_unsubscribe(di->di_sub_album);
   prop_unsubscribe(di->di_sub_artist);
   prop_unsubscribe(di->di_sub_duration);
+  prop_unsubscribe(di->di_sub_series);
+  prop_unsubscribe(di->di_sub_season);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);

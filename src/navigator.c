@@ -331,6 +331,7 @@ nav_close(nav_page_t *np, int with_prop)
     nav_update_cango(nav);
   }
   prop_ref_dec(np->np_opened_from);
+  rstr_release(np->np_title);
   free(np->np_url);
   free(np);
 }
