@@ -2103,7 +2103,6 @@ metadata_get(void *db, int item_id, int contenttype, get_cache_t *gc)
 {
   int64_t vi_id;
   metadata_t *md = metadata_create();
-  md->md_cached = 1;
   md->md_contenttype = contenttype; 
 
   int r;
@@ -2156,7 +2155,7 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
     return NULL;
 
   rc = db_prepare(db, &sel,
-		  "SELECT id,contenttype from item "
+		  "SELECT id,contenttype,parent from item "
 		  "where url=?1 AND "
 		  "mtime=?2 AND "
 		  "metadataversion=" METADATA_VERSION_STR
@@ -2185,6 +2184,12 @@ metadb_metadata_get(void *db, const char *url, time_t mtime)
 				sqlite3_column_int(sel, 1),
 				&gc);
   get_cache_release(&gc);
+
+  if(md != NULL)
+    md->md_cache_status = 
+      sqlite3_column_int(sel, 2) ? 
+      METADATA_CACHE_STATUS_FULL :
+      METADATA_CACHE_STATUS_UNPARENTED;
 
   sqlite3_finalize(sel);
   db_rollback(db);
@@ -2254,6 +2259,8 @@ metadb_metadata_scandir(void *db, const char *url, time_t *mtime)
       }
 
       fde->fde_md = metadata_get(db, item_id, contenttype, &gc);
+      if(fde->fde_md != NULL)
+	fde->fde_md->md_cache_status = METADATA_CACHE_STATUS_FULL;
     }
   }
 
@@ -2298,6 +2305,46 @@ metadb_unparent_item(void *db, const char *url)
   }
 
   sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  rc = db_step(stmt);
+  if(rc == SQLITE_LOCKED) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+
+  sqlite3_finalize(stmt);
+  db_commit(db);
+}
+
+
+/**
+ *
+ */
+void
+metadb_parent_item(void *db, const char *url, const char *parent_url)
+{
+  int rc;
+  int64_t parent_id;
+ again:
+  if(db_begin(db))
+    return;
+
+  parent_id = db_item_get(db, parent_url, NULL);
+  if(parent_id == METADATA_DEADLOCK) {
+    db_rollback_deadlock(db);
+    goto again;
+  }
+  sqlite3_stmt *stmt;
+    
+  rc = db_prepare(db, &stmt,
+		  "UPDATE item SET parent = ?2 WHERE url=?1");
+  
+  if(rc != SQLITE_OK) {
+    db_rollback(db);
+    return;
+  }
+
+  sqlite3_bind_text(stmt, 1, url, -1, SQLITE_STATIC);
+  sqlite3_bind_int64(stmt, 2, parent_id);
   rc = db_step(stmt);
   if(rc == SQLITE_LOCKED) {
     db_rollback_deadlock(db);

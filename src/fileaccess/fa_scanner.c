@@ -264,9 +264,12 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
     prop_t *meta = prop_create_r(fde->fde_prop, "metadata");
     
 
-    if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde)) {
+    if(!fde->fde_ignore_cache && !fa_dir_entry_stat(fde) &&
+       (fde->fde_md == NULL || !fde->fde_md->md_cache_status)) {
+
       if(fde->fde_md != NULL)
 	metadata_destroy(fde->fde_md);
+
       fde->fde_md = metadb_metadata_get(getdb(s), rstr_get(fde->fde_url),
 					fde->fde_stat.fs_mtime);
     }
@@ -308,12 +311,21 @@ deep_probe(fa_dir_entry_t *fde, scanner_t *s)
           break;
         }
       }
-      
-      if(fde->fde_md->md_cached == 0) {
+
+      switch(fde->fde_md->md_cache_status) {
+      case METADATA_CACHE_STATUS_NO:
 	metadb_metadata_write(getdb(s), rstr_get(fde->fde_url),
 			      fde->fde_stat.fs_mtime,
 			      fde->fde_md, s->s_url, s->s_mtime,
                               is);
+	break;
+      case METADATA_CACHE_STATUS_FULL:
+	// All set
+	break;
+      case METADATA_CACHE_STATUS_UNPARENTED:
+	// Reparent item
+	metadb_parent_item(getdb(s), rstr_get(fde->fde_url), s->s_url);
+	break;
       }
     }
     prop_ref_dec(meta);
