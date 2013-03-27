@@ -15,18 +15,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef RSTR_H__
-#define RSTR_H__
+#pragma once
 
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include "arch/atomic.h"
 
-#define USE_RSTR
-
-#ifdef USE_RSTR
+#define USE_RSTR_REFCOUNTING
 
 // #define RSTR_STATS
 
@@ -39,7 +35,9 @@ extern int rstr_frees;
 
 
 typedef struct rstr {
+#ifdef USE_RSTR_REFCOUNTING
   int32_t refcnt;
+#endif
   char str[0];
 } rstr_t;
 
@@ -62,16 +60,21 @@ static inline rstr_t *
  __attribute__ ((warn_unused_result))
 rstr_dup(rstr_t *rs)
 {
+#ifdef USE_RSTR_REFCOUNTING
   if(rs != NULL)
     atomic_add(&rs->refcnt, 1);
 #ifdef RSTR_STATS
   atomic_add(&rstr_dups, 1);
 #endif
   return rs;
+#else // USE_RSTR_REFCOUNTING
+  return rstr_alloc(rstr_get(rs));
+#endif
 }
 
 static inline void rstr_release(rstr_t *rs)
 {
+#ifdef USE_RSTR_REFCOUNTING
 #ifdef RSTR_STATS
   atomic_add(&rstr_releases, 1);
 #endif
@@ -81,6 +84,9 @@ static inline void rstr_release(rstr_t *rs)
 #endif
     free(rs);
   }
+#else // USE_RSTR_REFCOUNTING
+  free(rs);
+#endif
 }
 
 static inline void rstr_set(rstr_t **p, rstr_t *r)
@@ -111,31 +117,3 @@ void rstr_vec_append(rstr_vec_t **rvp, rstr_t *str);
 
 void rstr_vec_free(rstr_vec_t *rv);
 
-#else
-
-#include <string.h>
-
-typedef char rstr_t;
-
-void rstr_release(rstr_t *);
-
-rstr_t *rstr_dup(rstr_t *);
-
-#define rstr_get(n) (n)
-
-#define rstr_data(n) (n)
-
-rstr_t *rstr_alloc(const char *in);
-
-rstr_t *rstr_allocl(const char *in, size_t len);
-
-static inline void rstr_set(rstr_t **p, rstr_t *r)
-{
-  free(*p);
-  *p = r ? strdup(r) : NULL;
-}
-
-#endif
-
-
-#endif /* RSTR_H__ */
