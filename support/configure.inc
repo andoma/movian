@@ -237,6 +237,10 @@ common_opt(){
 }
 
 
+add_stamp() {
+    echo >>${CONFIG_MAK} "STAMPS += ${BUILDDIR}/stamps/$1.stamp"
+}
+
 setup_env(){
     BUILDDIR=build.${BUILD}
 
@@ -257,6 +261,8 @@ setup_env(){
     CONFIG_DEF=${TOPDIR}/config.default
 
     mkdir -p ${BUILDDIR}
+
+    rm -rf "${BUILDDIR}/stamps"
 
     EXT_INSTALL_DIR=${BUILDDIR}/ext
 
@@ -297,12 +303,6 @@ EOF
 enable libav
 
 libav_setup() {
-    if disabled libav; then
-        disable dvd
-        disable librtmp
-        return
-    fi
-
     status=`git submodule status ext/libav | cut -b 1`
     echo "Updating libav, submodule status = $status"
     git submodule update --init ext/libav
@@ -320,8 +320,7 @@ libav_setup() {
     echo >>${CONFIG_MAK} "LIBAV_BUILD_DIR=${LIBAV_BUILD_DIR}"
     echo >>${CONFIG_MAK} "LIBAV_INSTALL_DIR=${LIBAV_INSTALL_DIR}"
 
-    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/libav.stamp"
-    rm -f "build.${BUILD}/libav.stamp"
+    add_stamp libav
 }
 
 
@@ -347,32 +346,9 @@ xmp_setup() {
     echo "Updating XMP, submodule status = $status"
     git submodule update --init ext/xmp
 
-
-    XMP_SRC_DIR=${TOPDIR}/ext/xmp/
-    XMP_BUILD_DIR=${BUILDDIR}/xmp/build
-
-    # XMP can't build out-of-tree
-    rm -rf "${XMP_BUILD_DIR}"
-    mkdir -p "${XMP_BUILD_DIR}"
-    cp -a "${XMP_SRC_DIR}"/* "${XMP_BUILD_DIR}"/
-
-    (cd ${XMP_BUILD_DIR} && autoreconf)
-
-    (cd ${XMP_BUILD_DIR} && \
-        CC=${TOOLCHAIN}gcc AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
-        ./configure \
-        $1 \
-	--prefix=${EXT_INSTALL_DIR} \
-	--enable-static=yes \
-	--enable-shared=no)
-
-    echo >>${CONFIG_MAK} "XMP_BUILD_DIR=${XMP_BUILD_DIR}"
-    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/xmp.stamp"
-
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lxmp"
-    rm -f "build.${BUILD}/xmp.stamp"
+    add_stamp xmp
 }
-
 
 
 #
@@ -412,8 +388,8 @@ bzip2_setup()
     sed -i s#^RANLIB=ranlib\$#RANLIB=${TOOLCHAIN}ranlib# ${BZIP2_SRC_DIR}/Makefile
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
-    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/bzip2.stamp"
-    rm -f "build.${BUILD}/bzip2.stamp"
+
+    add_stamp bzip2
 }
 
 
@@ -443,11 +419,10 @@ freetype_setup()
 	--enable-shared=no)
 
     echo >>${CONFIG_MAK} "FREETYPE_BUILD_DIR=${FREETYPE_BUILD_DIR}"
-    echo >>${CONFIG_MAK} "STAMPS += build.${BUILD}/freetype.stamp"
-    rm -f "build.${BUILD}/freetype.stamp"
 
     echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${EXT_INSTALL_DIR}/include/freetype2"
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lfreetype -lbz2"
+    add_stamp freetype
 }
 
 
@@ -473,8 +448,16 @@ libspotify_setup() {
 #
 finalize() {
 
-    echo >>${CONFIG_MAK} "CFLAGS_cfg += -I${BUILDDIR}/ext/include"
-    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -L${BUILDDIR}/ext/lib"
+    cat >>${CONFIG_MAK} <<EOF
+CC=$CC
+CXX=$CXX
+CFLAGS_cfg += -I${BUILDDIR}/ext/include
+LDFLAGS_cfg += -L${BUILDDIR}/ext/lib
+STRIP=${TOOLCHAIN}strip
+OBJDUMP=${TOOLCHAIN}objdump
+OBJCOPY=${TOOLCHAIN}objcopy
+RANLIB=${TOOLCHAIN}ranlib
+EOF
 
     if enabled libav; then
 	echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lavresample -lswscale -lavformat -lavcodec -lavutil"

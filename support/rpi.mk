@@ -11,6 +11,7 @@ SRCS += src/arch/rpi/rpi_main.c \
 
 SRCS += src/arch/linux/linux_misc.c \
 	src/arch/linux/linux_trap.c \
+	src/fileaccess/fa_opencookie.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \

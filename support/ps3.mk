@@ -8,6 +8,7 @@ SRCS += src/arch/ps3/ps3_main.c \
 	src/arch/ps3/ps3_trap.c \
 	src/networking/net_psl1ght.c \
 	src/audio2/ps3_audio.c \
+	src/fileaccess/fa_funopen.c \
 	ext/tlsf/tlsf_ps3.c \
 
 #

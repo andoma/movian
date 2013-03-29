@@ -1,5 +1,5 @@
 /*
- *  Fa to FILE wrappers (GNU)
+ *  Fa to FILE wrappers (BSD)
  *  Copyright (C) 2013 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
@@ -16,17 +16,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _GNU_SOURCE 
 #include <stdio.h>
 #include "fileaccess.h"
-
-
 
 /**
  *
  */
-static ssize_t
-cookie_read(void *fh, char *buf, size_t size)
+static int
+read_FILE(void *fh, char *buf, int size)
 {
   return fa_read(fh, buf, size);
 }
@@ -35,12 +32,10 @@ cookie_read(void *fh, char *buf, size_t size)
 /**
  *
  */
-static int
-cookie_seek(void *fh, off64_t *offsetp, int whence)
+static fpos_t
+seek_FILE(void *fh, fpos_t pos, int whence)
 {
-  int64_t s = fa_seek(fh, *offsetp, whence);
-  *offsetp = s;
-  return 0;
+  return fa_seek(fh, pos, whence);
 }
 
 
@@ -48,23 +43,12 @@ cookie_seek(void *fh, off64_t *offsetp, int whence)
  *
  */
 static int
-cookie_close(void *fh)
+close_FILE(void *fh)
 {
   fa_close(fh);
   return 0;
 }
 
-static cookie_io_functions_t fn_full = {
-  .read  = cookie_read,
-  .seek  = cookie_seek,
-  .close = cookie_close,
-};
-
-
-static cookie_io_functions_t fn_noclose = {
-  .read  = cookie_read,
-  .seek  = cookie_seek,
-};
 
 /**
  *
@@ -72,5 +56,5 @@ static cookie_io_functions_t fn_noclose = {
 FILE *
 fa_fopen(fa_handle_t *fh, int doclose)
 {
-  return fopencookie(fh, "rb", doclose ? fn_full : fn_noclose);
+  return funopen(fh, read_FILE, NULL, seek_FILE, doclose ? close_FILE : NULL);
 }

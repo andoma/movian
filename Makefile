@@ -18,16 +18,19 @@
 .SUFFIXES:
 SUFFIXES=
 
+
+C ?= ${CURDIR}
+
+include ${C}/config.default
+BUILDDIR ?= ${C}/build.${BUILD}
+
 # All targets deps on Makefile, but we can comment that out during dev:ing
 ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
-
-include ${CURDIR}/config.default
 
 ALLDEPS += ${STAMPS}
 
 OPTFLAGS ?= -O2
 
-BUILDDIR = build.${BUILD}
 PROG=${BUILDDIR}/showtime
 
 include ${BUILDDIR}/config.mak
@@ -620,11 +623,11 @@ BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
 # Common CFLAGS for all files
 CFLAGS_com += -g -funsigned-char ${OPTFLAGS} ${CFLAGS_dbg}
 CFLAGS_com += -D_FILE_OFFSET_BITS=64
-CFLAGS_com += -iquote${BUILDDIR} -iquote${CURDIR}/src -iquote${CURDIR}
+CFLAGS_com += -iquote${BUILDDIR} -iquote${C}/src -iquote${C}
 
 # Tools
 
-MKBUNDLE = $(CURDIR)/support/mkbundle
+MKBUNDLE = $(C)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
@@ -663,15 +666,15 @@ ${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
 
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 ${BUILDDIR}/%.o: %.m $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 ${BUILDDIR}/%.o: %.cpp $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 clean:
 	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles
@@ -682,7 +685,7 @@ distclean:
 	find . -name "*~" | xargs rm -f
 
 reconfigure:
-	$(CURDIR)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
+	$(C)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
 
 showconfig:
 	@echo $(CONFIGURE_ARGS)
@@ -690,7 +693,7 @@ showconfig:
 # Create buildversion.h
 src/version.c: $(BUILDDIR)/buildversion.h
 $(BUILDDIR)/buildversion.h: FORCE
-	@$(CURDIR)/support/version.sh $(CURDIR) $@
+	@$(C)/support/version.sh $(C) $@
 FORCE:
 
 # Include dependency files if they exist.
@@ -699,36 +702,19 @@ FORCE:
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
-	$(CC) $(CFLAGS_cfg) -I${CURDIR}/src/fileaccess -c -o $@ $<
+	$(CC) $(CFLAGS_cfg) -I${C}/src/fileaccess -c -o $@ $<
 
-$(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
+$(BUILDDIR)/bundles/%.c: % $(C)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
 
-$(BUILDDIR)/bzip2.stamp:
-	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
-	cp ${BZIP2_BUILD_DIR}/libbz2.a ${EXT_INSTALL_DIR}/lib
-	cp ${BZIP2_BUILD_DIR}/bzlib.h  ${EXT_INSTALL_DIR}/include
 
+export C
+export BUILDDIR
+export OPTFLAGS
+
+# External builds
+$(BUILDDIR)/stamps/%.stamp:
+	${MAKE} -f ${C}/ext/$*.mk build
 	@mkdir -p $(dir $@)
 	touch $@
-
-
-$(BUILDDIR)/libav.stamp:
-	${MAKE} -C ${LIBAV_BUILD_DIR}
-	${MAKE} -C ${LIBAV_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
-$(BUILDDIR)/freetype.stamp:
-	${MAKE} -C ${FREETYPE_BUILD_DIR}
-	${MAKE} -C ${FREETYPE_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
-$(BUILDDIR)/xmp.stamp:
-	${MAKE} -C ${XMP_BUILD_DIR}
-	${MAKE} -C ${XMP_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
