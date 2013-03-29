@@ -10,6 +10,7 @@ SRCS += src/arch/linux/linux_main.c \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \
+	src/fileaccess/fa_opencookie.c \
 
 SRCS-$(CONFIG_LIBPULSE)  += src/audio2/pulseaudio.c
 SRCS-$(CONFIG_LIBASOUND) += src/audio2/alsa.c src/audio2/alsa_default.c 

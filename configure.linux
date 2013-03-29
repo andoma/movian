@@ -629,6 +629,7 @@ esac
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 rtmpdump_setup
+xmp_setup
 
 #
 # Finalize

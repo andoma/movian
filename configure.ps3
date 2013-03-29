@@ -67,6 +67,7 @@ LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
 
 libav_setup
 rtmpdump_setup
+xmp_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CC=${CC}

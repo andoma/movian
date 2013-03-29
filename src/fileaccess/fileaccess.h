@@ -20,6 +20,7 @@
 #define FILEACCESS_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 

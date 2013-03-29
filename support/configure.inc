@@ -343,9 +343,9 @@ xmp_setup() {
         return
     fi
 
-#    status=`git submodule status ext/xmp | cut -b 1`
-#    echo "Updating XMP, submodule status = $status"
-#    git submodule update --init ext/xmp
+    status=`git submodule status ext/xmp | cut -b 1`
+    echo "Updating XMP, submodule status = $status"
+    git submodule update --init ext/xmp
 
 
     XMP_SRC_DIR=${TOPDIR}/ext/xmp/
@@ -355,6 +355,8 @@ xmp_setup() {
     rm -rf "${XMP_BUILD_DIR}"
     mkdir -p "${XMP_BUILD_DIR}"
     cp -a "${XMP_SRC_DIR}"/* "${XMP_BUILD_DIR}"/
+
+    (cd ${XMP_BUILD_DIR} && autoreconf)
 
     (cd ${XMP_BUILD_DIR} && \
         CC=${TOOLCHAIN}gcc AR=${TOOLCHAIN}ar RANLIB=${TOOLCHAIN}ranlib \
