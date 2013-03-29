@@ -251,6 +251,7 @@ setup_env(){
 
     if enabled ccache; then
 	CC="ccache $CC"
+	CXX="ccache $CXX"
     fi
 
     mkdir -p ${BUILDDIR}

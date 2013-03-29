@@ -29,6 +29,7 @@ done
 [ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
 
 CC=${TOOLCHAIN}gcc
+CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
 
