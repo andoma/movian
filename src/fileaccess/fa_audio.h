@@ -15,9 +15,7 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-
-#ifndef FA_AUDIO_H
-#define FA_AUDIO_H
+#pragma once
 
 #include "media.h"
 struct backend;
@@ -34,4 +32,8 @@ event_t *fa_gme_playfile(media_pipe_t *mp, struct fa_handle *fh,
 			 const char *url);
 #endif
 
-#endif /* FA_AUDIO_H */
+#if 1
+event_t *fa_xmp_playfile(media_pipe_t *mp, FILE *f,
+			 char *errbuf, size_t errlen, int hold,
+			 const char *url, size_t size);
+#endif

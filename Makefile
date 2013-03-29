@@ -173,6 +173,7 @@ SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_video.c \
 	src/fileaccess/fa_audio.c \
 
+SRCS-$(CONFIG_XMP)             += src/fileaccess/fa_xmp.c
 SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
@@ -704,6 +705,15 @@ $(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
 
+$(BUILDDIR)/bzip2.stamp:
+	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
+	cp ${BZIP2_BUILD_DIR}/libbz2.a ${EXT_INSTALL_DIR}/lib
+	cp ${BZIP2_BUILD_DIR}/bzlib.h  ${EXT_INSTALL_DIR}/include
+
+	@mkdir -p $(dir $@)
+	touch $@
+
+
 $(BUILDDIR)/libav.stamp:
 	${MAKE} -C ${LIBAV_BUILD_DIR}
 	${MAKE} -C ${LIBAV_BUILD_DIR} install
@@ -716,13 +726,9 @@ $(BUILDDIR)/freetype.stamp:
 	@mkdir -p $(dir $@)
 	touch $@
 
-$(BUILDDIR)/bzip2.stamp:
-	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
-	@mkdir -p ${BZIP2_INSTALL_DIR}/lib ${BZIP2_INSTALL_DIR}/include
-
-	cp ${BZIP2_BUILD_DIR}/libbz2.a ${BZIP2_INSTALL_DIR}/lib
-	cp ${BZIP2_BUILD_DIR}/bzlib.h  ${BZIP2_INSTALL_DIR}/include
-
+$(BUILDDIR)/xmp.stamp:
+	${MAKE} -C ${XMP_BUILD_DIR}
+	${MAKE} -C ${XMP_BUILD_DIR} install
 	@mkdir -p $(dir $@)
 	touch $@
 

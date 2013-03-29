@@ -250,10 +250,13 @@ int memfile_register(const void *data, size_t len);
 
 void memfile_unregister(int id);
 
-
 // Expose part of a file as a new file, fa is owned by the slicer
 // so you must never touch it again
 
 fa_handle_t *fa_slice_open(fa_handle_t *fa, int64_t offset, int64_t size);
+
+// fa to FILE wrapper
+
+FILE *fa_fopen(fa_handle_t *fh, int doclose);
 
 #endif /* FILEACCESS_H */
