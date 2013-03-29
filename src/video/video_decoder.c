@@ -384,8 +384,11 @@ vd_thread(void *aux)
       vd_init_timings(vd);
       vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
-      video_overlay_flush(mp, 1);
-      dvdspu_flush(mp);
+      
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      dvdspu_flush_locked(mp);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     case MB_VIDEO:
@@ -419,8 +422,10 @@ vd_thread(void *aux)
 
 #if ENABLE_DVD
     case MB_DVD_RESET_SPU:
+      hts_mutex_lock(&mp->mp_overlay_mutex);
       vd->vd_spu_curbut = 1;
-      dvdspu_flush(mp);
+      dvdspu_flush_locked(mp);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     case MB_CTRL_DVD_HILITE:
@@ -467,7 +472,9 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_FLUSH_SUBTITLES:
-      video_overlay_flush(mp, 1);
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     case MB_CTRL_EXT_SUBTITLE:
@@ -477,7 +484,9 @@ vd_thread(void *aux)
       // Steal subtitle from the media_buf
       vd->vd_ext_subtitles = mb->mb_data;
       mb->mb_data = NULL; 
-      video_overlay_flush(mp, 1);
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     default:

@@ -340,16 +340,11 @@ dvdspu_destroy_all(media_pipe_t *mp)
  *
  */
 void
-dvdspu_flush(media_pipe_t *mp)
+dvdspu_flush_locked(media_pipe_t *mp)
 {
   dvdspu_t *d;
-
-  hts_mutex_lock(&mp->mp_overlay_mutex);
-
   TAILQ_FOREACH(d, &mp->mp_spu_queue, d_link)
     d->d_destroyme = 1;
-
-  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 

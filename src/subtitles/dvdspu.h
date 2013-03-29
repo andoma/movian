@@ -67,5 +67,5 @@ void dvdspu_enqueue(media_pipe_t *mp, const void *data, int size,
 		    const uint32_t *clut, int w, int h,
 		    int64_t pts);
 
-void dvdspu_flush(media_pipe_t *mp);
+void dvdspu_flush_locked(media_pipe_t *mp);
 

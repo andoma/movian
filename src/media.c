@@ -573,7 +573,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_destroy(mp->mp_prop_root);
 
-  video_overlay_flush(mp, 0);
+  video_overlay_flush_locked(mp, 0);
   dvdspu_destroy_all(mp);
 
   hts_cond_destroy(&mp->mp_backpressure);

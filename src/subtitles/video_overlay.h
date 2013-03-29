@@ -53,7 +53,7 @@ void video_overlay_destroy(video_overlay_t *vo);
 
 void video_overlay_decode(media_pipe_t *mp, media_buf_t *mb);
 
-void video_overlay_flush(media_pipe_t *mp, int send);
+void video_overlay_flush_locked(media_pipe_t *mp, int send);
 
 void video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo);
 
