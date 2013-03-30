@@ -858,4 +858,7 @@ init_dev_settings(void)
 
   add_dev_bool("Disable HTTP connection reuse",
 	       "nohttpreuse", &gconf.disable_http_reuse);
+
+  add_dev_bool("Log AV-diff stats",
+	       "detailedavdiff", &gconf.enable_detailed_avdiff);
 }

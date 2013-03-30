@@ -147,10 +147,6 @@ typedef struct glw_video {
   kalman_t gv_avfilter;
   float gv_avdiff_x;
   int gv_avdiff;
-  int gv_avd_delta;
-
-
-
 
   video_decoder_t *gv_vd;
   media_pipe_t *gv_mp;

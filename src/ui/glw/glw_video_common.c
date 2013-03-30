@@ -169,82 +169,98 @@ glw_video_compute_output_duration(glw_video_t *gv, int frame_duration)
 }
 
 
+
+// These are directly used in UI so renumbering is not possible
+#define AVDIFF_LOCKED          0
+#define AVDIFF_NO_LOCK         1
+#define AVDIFF_INCORRECT_EPOCH 2
+#define AVDIFF_HOLD            3
+#define AVDIFF_CATCH_UP        4
+
+const char *statustab[] = {
+  [AVDIFF_LOCKED]          = "locked",
+  [AVDIFF_NO_LOCK]         = "no lock",
+  [AVDIFF_INCORRECT_EPOCH] = "incorrect epoch",
+  [AVDIFF_HOLD]            = "holding",
+  [AVDIFF_CATCH_UP]        = "catching up",
+};
+
 /**
  *
  */
-static void
+static int
 glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp, 
 			 int64_t pts, int epoch, glw_video_t *gv)
 {
-  int64_t aclock;
-  const char *status;
+  int code;
+
+  hts_mutex_lock(&mp->mp_clock_mutex);
+
+  int64_t aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
+    - mp->mp_audio_clock_avtime + mp->mp_avdelta;
 
   if(mp->mp_audio_clock_epoch != epoch) {
     /* Not the same clock epoch, can not sync */
     gv->gv_avdiff_x = 0;
     kalman_init(&gv->gv_avfilter);
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 3);
-    return;
-  }
+    code = AVDIFF_INCORRECT_EPOCH;
 
-  hts_mutex_lock(&mp->mp_clock_mutex);
-
-  aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
-    - mp->mp_audio_clock_avtime;
-
-  hts_mutex_unlock(&mp->mp_clock_mutex);
-
-  aclock += mp->mp_avdelta;
-
-  gv->gv_avdiff = aclock - pts - gv->gv_avd_delta;
-
-  if(abs(gv->gv_avdiff) < 10000000) {
-
-    gv->gv_avdiff_x = kalman_update(&gv->gv_avfilter, 
-				    (double)gv->gv_avdiff / 1000000);
-    if(gv->gv_avdiff_x > 10.0f)
-      gv->gv_avdiff_x = 10.0f;
-    
-    if(gv->gv_avdiff_x < -10.0f)
-      gv->gv_avdiff_x = -10.0f;
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 0);
-    status = "lock";
   } else {
-    status = "nolock";
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 1);
-  }
 
-  if(mp->mp_stats) {
-    if(!gv->gv_avdiff_update_thres) {
-      prop_set_float(mp->mp_prop_avdiff, gv->gv_avdiff_x);
-      gv->gv_avdiff_update_thres = 5;
+
+    gv->gv_avdiff = aclock - pts;
+
+    if(abs(gv->gv_avdiff) < 30000000) {
+
+      gv->gv_avdiff_x = kalman_update(&gv->gv_avfilter, 
+				      (double)gv->gv_avdiff / 1000000);
+      gv->gv_avdiff_x = MAX(MIN(gv->gv_avdiff_x, 30.0f), -30.0f);
+      code = AVDIFF_LOCKED;
+
+      if(gv->gv_avdiff_x > 0.1f) 
+	code = AVDIFF_CATCH_UP;
+      if(gv->gv_avdiff_x < -0.1f) 
+	code = AVDIFF_HOLD;
+
     } else {
-      gv->gv_avdiff_update_thres--;
+      code = AVDIFF_NO_LOCK;
+    }
+
+    if(mp->mp_stats) {
+      if(!gv->gv_avdiff_update_thres) {
+	prop_set_float(mp->mp_prop_avdiff, gv->gv_avdiff_x);
+	gv->gv_avdiff_update_thres = 5;
+      } else {
+	gv->gv_avdiff_update_thres--;
+      }
     }
   }
 
-  if(0) {
+  hts_mutex_unlock(&mp->mp_clock_mutex);
+
+  if(mp->mp_stats)
+    prop_set_int(mp->mp_prop_avdiff_error, code);
+
+  if(gconf.enable_detailed_avdiff) {
     static int64_t lastpts, lastaclock, lastclock;
-   
-   TRACE(TRACE_DEBUG, "AVDIFF", "E:%3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
-	 epoch,
-	 gv->gv_avdiff_x,
-	 gv->gv_avdiff,
-	 aclock,
-	 aclock - lastaclock,
-	 pts,
-	 pts - lastpts,
-	 mp->mp_audio_clock,
-	 gr->gr_frame_start_avtime - lastclock,
-	 status,
-	 showtime_get_avtime() - aclock);
-  lastpts = pts;
-  lastaclock = aclock;
-  lastclock = gr->gr_frame_start_avtime;
- }
+
+    TRACE(TRACE_DEBUG, "AVDIFF", "E:%3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+	  epoch,
+	  gv->gv_avdiff_x,
+	  gv->gv_avdiff,
+	  aclock,
+	  aclock - lastaclock,
+	  pts,
+	  pts - lastpts,
+	  mp->mp_audio_clock,
+	  gr->gr_frame_start_avtime - lastclock,
+	  statustab[code],
+	  showtime_get_avtime() - aclock);
+    lastpts = pts;
+    lastaclock = aclock;
+    lastclock = gr->gr_frame_start_avtime;
+  }
+  return code;
 }
 
 
@@ -321,6 +337,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
   
   /* Find new surface to display */
   hts_mutex_assert(&gv->gv_surface_mutex);
+ again:
   sa = TAILQ_FIRST(&gv->gv_decoded_queue);
   if(sa == NULL) {
     /* No frame available */
@@ -351,7 +368,18 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
       pts = glw_video_compute_blend(gv, sa, sb, output_duration);
       if(pts != PTS_UNSET) {
 	pts -= frame_duration * 2;
-	glw_video_compute_avdiff(gr, mp, pts, epoch, gv);
+	int code = glw_video_compute_avdiff(gr, mp, pts, epoch, gv);
+
+	if(code == AVDIFF_HOLD) {
+	  kalman_init(&gv->gv_avfilter);
+	  return pts;
+	}
+
+	if(code == AVDIFF_CATCH_UP) {
+	  r(gv, sa, &gv->gv_cfg_cur, &gv->gv_decoded_queue);
+	  kalman_init(&gv->gv_avfilter);
+	  goto again;
+	}
       }
     }
 

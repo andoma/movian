@@ -256,10 +256,14 @@ widget(container_z, {
 		widget(label, {
 		  TextStyleItem();
 		  caption: translate($self.media.avdiffError,
-				     fmt("%d ms %s", $self.media.avdiff * 1000),
+				     fmt("%d ms", $self.media.avdiff * 1000),
 				     1, "Huge diff",
-				     2, "Holdoff",
-				     3, "Epoch mismatch");
+				     2, "Epoch mismatch",
+				     3, fmt("%d ms holding",
+					    $self.media.avdiff * 1000),
+				     4, fmt("%d ms catching up",
+					    $self.media.avdiff * 1000)
+				    );
 		});
 		
 		widget(label, {
