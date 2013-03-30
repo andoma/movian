@@ -368,7 +368,7 @@ zlib_setup()
         CC=${TOOLCHAIN}gcc AR="${TOOLCHAIN}ar -r" RANLIB=${TOOLCHAIN}ranlib \
         ./configure --static --prefix=${EXT_INSTALL_DIR})
 
-    (cd ${ZLIB_SRC_DIR} && make install)
+    (cd ${ZLIB_SRC_DIR} && make -j4 && make install)
 }
 
 
