@@ -174,7 +174,6 @@ static void
 file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
 {
   char errbuf[200];
-  prop_t *meta;
   metadata_t *md;
 
   void *db = metadb_get();
@@ -192,32 +191,33 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
   if(md->md_redirect != NULL)
     url = md->md_redirect;
 
-  meta = prop_create_root("metadata");
+  prop_t *meta = prop_create_root("metadata");
+
+  metadata_to_proptree(md, meta, 0);
 
   switch(md->md_contenttype) {
   case CONTENT_ARCHIVE:
   case CONTENT_ALBUM:
-    prop_destroy(meta);
     file_open_browse(page, url, fs->fs_mtime);
     break;
 
   case CONTENT_AUDIO:
     if(!file_open_audio(page, url)) {
-      prop_destroy(meta);
       break;
     }
     playqueue_play(url, meta, 0);
     playqueue_open(page);
+    meta = NULL;
     break;
 
   case CONTENT_VIDEO:
   case CONTENT_DVD:
-    prop_destroy(meta);
     backend_open_video(page, url, 0);
     break;
 
   case CONTENT_IMAGE:
     file_open_image(page, meta);
+    meta = NULL;
     break;
 
   case CONTENT_PLUGIN:
@@ -225,11 +225,11 @@ file_open_file(prop_t *page, const char *url, fa_stat_t *fs)
     break;
 
   default:
-    prop_destroy(meta);
     nav_open_errorf(page, _("Can't handle content type %d"),
 		    md->md_contenttype);
     break;
   }
+  prop_destroy(meta);
   metadata_destroy(md);
 }
 
