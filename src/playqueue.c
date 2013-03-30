@@ -1087,12 +1087,12 @@ player_thread(void *aux)
       continue;
     }
 
-    p = prop_get_by_name(PNVEC("self", "metadata"), 1,
-			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
-			 NULL);
-    prop_link_ex(p, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
-    prop_ref_dec(p);
+    prop_t *sm = prop_get_by_name(PNVEC("self", "metadata"), 1,
+                                  PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+                                  NULL);
+    prop_link_ex(sm, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
 
+    mp->mp_prop_metadata_source = sm;
 
     m = prop_get_by_name(PNVEC("self", "media"), 1,
 			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
@@ -1120,6 +1120,7 @@ player_thread(void *aux)
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);
+    prop_ref_dec(sm);
     startpaused = 0;
 
     prop_set_int(p, 0);

@@ -1545,8 +1545,14 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
   }
 
   mp->mp_duration = duration;
-  prop_set_float(prop_create(mp->mp_prop_metadata, "duration"),
-                 mp->mp_duration / 1000000.0);
+
+
+  float d = mp->mp_duration / 1000000.0;
+  prop_set(mp->mp_prop_metadata, "duration", PROP_SET_FLOAT, d);
+
+  if(duration && mp->mp_prop_metadata_source)
+    prop_set(mp->mp_prop_metadata_source, "duration", PROP_SET_FLOAT, d);
+
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
 }
 
