@@ -82,7 +82,7 @@ fa_xmp_playfile(media_pipe_t *mp, FILE *f, char *errbuf, size_t errlen,
           mb->mb_pts = fi.time * 1000;
           mb->mb_drive_clock = 1;
           memcpy(mb->mb_data, fi.buffer, fi.buffer_size);
-          //          prop_set_float(dur, fi.total_time / 1000.0);
+	  mp_set_duration(mp, fi.total_time * 1000);
         }
 
         if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {

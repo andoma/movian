@@ -590,6 +590,8 @@ void mp_set_url(media_pipe_t *mp, const char *url);
 void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
 		  int64_t duration);
 
+void mp_set_duration(media_pipe_t *mp, int64_t duration);
+
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
