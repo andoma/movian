@@ -53,7 +53,6 @@ static const int libav_colorspace_tbl[] = {
 static void
 vd_init_timings(video_decoder_t *vd)
 {
-  kalman_init(&vd->vd_avfilter);
   vd->vd_prevpts = AV_NOPTS_VALUE;
   vd->vd_nextpts = AV_NOPTS_VALUE;
   vd->vd_estimated_duration = 0;
@@ -86,7 +85,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
     vd->vd_nextpts = AV_NOPTS_VALUE;
     vd->vd_estimated_duration = 0;
     avcodec_flush_buffers(ctx);
-    vd->vd_compensate_thres = 5;
   }
 
   vd->vd_reorder[vd->vd_reorder_ptr] = *mb;

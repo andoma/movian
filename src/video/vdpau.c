@@ -386,7 +386,6 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
     vd->vd_nextpts = AV_NOPTS_VALUE;
     vd->vd_estimated_duration = 0;
     avcodec_flush_buffers(ctx);
-    vd->vd_compensate_thres = 5;
   }
 
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;

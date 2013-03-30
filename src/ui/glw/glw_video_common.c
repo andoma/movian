@@ -147,19 +147,19 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
 /**
  *
  */
-int
-glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
+static int
+glw_video_compute_output_duration(glw_video_t *gv, int frame_duration)
 {
   int delta;
   const int maxdiff = 5000;
 
-  if(vd->vd_avdiff_x > 0) {
-    delta = pow(vd->vd_avdiff_x * 1000.0f, 2);
+  if(gv->gv_avdiff_x > 0) {
+    delta = pow(gv->gv_avdiff_x * 1000.0f, 2);
     if(delta > maxdiff)
       delta = maxdiff;
 
-  } else if(vd->vd_avdiff_x < 0) {
-    delta = -pow(-vd->vd_avdiff_x * 1000.0f, 2);
+  } else if(gv->gv_avdiff_x < 0) {
+    delta = -pow(-gv->gv_avdiff_x * 1000.0f, 2);
     if(delta < -maxdiff)
       delta = -maxdiff;
   } else {
@@ -173,30 +173,20 @@ glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
  *
  */
 static void
-glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp, 
-			 int64_t pts, int epoch)
+glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp, 
+			 int64_t pts, int epoch, glw_video_t *gv)
 {
   int64_t aclock;
   const char *status;
 
   if(mp->mp_audio_clock_epoch != epoch) {
     /* Not the same clock epoch, can not sync */
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
+    gv->gv_avdiff_x = 0;
+    kalman_init(&gv->gv_avfilter);
     if(mp->mp_stats)
       prop_set_int(mp->mp_prop_avdiff_error, 3);
     return;
   }
-
-  if(vd->vd_compensate_thres > 0) {
-    vd->vd_compensate_thres--;
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 2);
-    return;
-  }
-  
 
   hts_mutex_lock(&mp->mp_clock_mutex);
 
@@ -207,17 +197,17 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 
   aclock += mp->mp_avdelta;
 
-  vd->vd_avdiff = aclock - (pts - 16666) - vd->vd_avd_delta;
+  gv->gv_avdiff = aclock - pts - gv->gv_avd_delta;
 
-  if(abs(vd->vd_avdiff) < 10000000) {
+  if(abs(gv->gv_avdiff) < 10000000) {
 
-    vd->vd_avdiff_x = kalman_update(&vd->vd_avfilter, 
-				    (double)vd->vd_avdiff / 1000000);
-    if(vd->vd_avdiff_x > 10.0f)
-      vd->vd_avdiff_x = 10.0f;
+    gv->gv_avdiff_x = kalman_update(&gv->gv_avfilter, 
+				    (double)gv->gv_avdiff / 1000000);
+    if(gv->gv_avdiff_x > 10.0f)
+      gv->gv_avdiff_x = 10.0f;
     
-    if(vd->vd_avdiff_x < -10.0f)
-      vd->vd_avdiff_x = -10.0f;
+    if(gv->gv_avdiff_x < -10.0f)
+      gv->gv_avdiff_x = -10.0f;
     if(mp->mp_stats)
       prop_set_int(mp->mp_prop_avdiff_error, 0);
     status = "lock";
@@ -228,20 +218,21 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
   }
 
   if(mp->mp_stats) {
-    if(!vd->vd_may_update_avdiff) {
-      prop_set_float(mp->mp_prop_avdiff, vd->vd_avdiff_x);
-      vd->vd_may_update_avdiff = 5;
+    if(!gv->gv_avdiff_update_thres) {
+      prop_set_float(mp->mp_prop_avdiff, gv->gv_avdiff_x);
+      gv->gv_avdiff_update_thres = 5;
     } else {
-      vd->vd_may_update_avdiff--;
+      gv->gv_avdiff_update_thres--;
     }
   }
 
   if(0) {
     static int64_t lastpts, lastaclock, lastclock;
    
-   TRACE(TRACE_DEBUG, "AVDIFF", "%10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
-	 vd->vd_avdiff_x,
-	 vd->vd_avdiff,
+   TRACE(TRACE_DEBUG, "AVDIFF", "E:%3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+	 epoch,
+	 gv->gv_avdiff_x,
+	 gv->gv_avdiff,
 	 aclock,
 	 aclock - lastaclock,
 	 pts,
@@ -325,9 +316,8 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
   int output_duration;
   int64_t pts = PTS_UNSET;
   int frame_duration = gv->w.glw_root->gr_frameduration;
-  int epoch = 0;
 
-  output_duration = glw_video_compute_output_duration(vd, frame_duration);
+  output_duration = glw_video_compute_output_duration(gv, frame_duration);
   
   /* Find new surface to display */
   hts_mutex_assert(&gv->gv_surface_mutex);
@@ -346,6 +336,9 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 
   } else {
       
+
+    int epoch = sa->gvs_epoch;
+
     /* There are frames available that we are going to display,
        push back old frames to decoder */
     while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
@@ -354,9 +347,13 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     /* */
     sb = TAILQ_NEXT(sa, gvs_link);
 
-    if(!vd->vd_hold)
+    if(!vd->vd_hold) {
       pts = glw_video_compute_blend(gv, sa, sb, output_duration);
-    epoch = sa->gvs_epoch;
+      if(pts != PTS_UNSET) {
+	pts -= frame_duration * 2;
+	glw_video_compute_avdiff(gr, mp, pts, epoch, gv);
+      }
+    }
 
     if(!vd->vd_hold || sb != NULL) {
       if(sa != NULL && sa->gvs_duration == 0)
@@ -365,10 +362,6 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     if(sb != NULL && sb->gvs_duration == 0)
       glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
 
-    if(pts != PTS_UNSET) {
-      pts -= frame_duration * 2;
-      glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
-    }
   }
   return pts;
 }
@@ -515,6 +508,7 @@ glw_video_ctor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
 
+  kalman_init(&gv->gv_avfilter);
 
   gv->gv_cfg_req.gvc_engine = &glw_video_blank;
   gv->gv_cfg_cur.gvc_engine = &glw_video_blank;

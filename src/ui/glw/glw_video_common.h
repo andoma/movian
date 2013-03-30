@@ -139,6 +139,19 @@ typedef struct glw_video {
   prop_t *gv_model;
   char gv_freezed;
 
+  /**
+   * AV Diff handling
+   */
+
+  int gv_avdiff_update_thres; // Avoid updating user facing avdiff too often
+  kalman_t gv_avfilter;
+  float gv_avdiff_x;
+  int gv_avdiff;
+  int gv_avd_delta;
+
+
+
+
   video_decoder_t *gv_vd;
   media_pipe_t *gv_mp;
 
@@ -252,8 +265,6 @@ void glw_register_video_engine(glw_video_engine_t *gve);
 static void  __attribute__((constructor)) gveinit ## n(void) \
 { glw_register_video_engine(&n);}
 
-
-int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 
 typedef void (gv_surface_pixmap_release_t)(glw_video_t *gv,
 					   glw_video_surface_t *gvs,
