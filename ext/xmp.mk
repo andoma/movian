@@ -120,4 +120,4 @@ ${BUILDDIR}/%.o: ${C}/%.c
 
 build: ${BD}/lib/libxmp.a ${BD}/include/xmp.h
 	cp ${BD}/include/xmp.h ${BUILDDIR}/ext/include/
-	cp -d ${BD}/lib/libxmp.* ${BUILDDIR}/ext/lib/
+	cp -pP ${BD}/lib/libxmp.* ${BUILDDIR}/ext/lib/

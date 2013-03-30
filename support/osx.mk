@@ -8,6 +8,7 @@ SRCS += src/arch/osx/osx_app.m \
 	src/arch/posix/posix.c \
 	src/arch/posix/posix_threads.c \
 	src/networking/net_posix.c \
+	src/fileaccess/fa_funopen.c \
 
 SRCS-$(CONFIG_WEBPOPUP) += src/arch/osx/osx_webpopup.m
 
