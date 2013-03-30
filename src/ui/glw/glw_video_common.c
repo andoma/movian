@@ -172,7 +172,7 @@ glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
 /**
  *
  */
-void
+static void
 glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp, 
 			 int64_t pts, int epoch)
 {
@@ -257,6 +257,121 @@ glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp,
 }
 
 
+/**
+ *
+ */
+static int64_t
+glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
+			glw_video_surface_t *sb, int output_duration)
+{
+  int64_t pts;
+  int x;
+
+  if(sa->gvs_duration >= output_duration) {
+  
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+
+    sa->gvs_duration -= output_duration;
+
+    pts = sa->gvs_pts;
+    if(sa->gvs_pts != PTS_UNSET)
+      sa->gvs_pts += output_duration;
+
+  } else if(sb != NULL) {
+
+    gv->gv_sa = sa;
+    gv->gv_sb = sb;
+    gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
+
+    if(sa->gvs_duration + 
+       sb->gvs_duration < output_duration) {
+
+      sa->gvs_duration = 0;
+      pts = sb->gvs_pts;
+
+    } else {
+      pts = sa->gvs_pts;
+      x = output_duration - sa->gvs_duration;
+      sb->gvs_duration -= x;
+      if(sb->gvs_pts != PTS_UNSET)
+	sb->gvs_pts += x;
+    }
+    sa->gvs_duration = 0;
+
+  } else {
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+    if(sa->gvs_pts != PTS_UNSET)
+      sa->gvs_pts += output_duration;
+
+    pts = sa->gvs_pts;
+  }
+
+  return pts;
+}
+
+
+/**
+ *
+ */
+int64_t 
+glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
+			 gv_surface_pixmap_release_t *r)
+{
+  glw_root_t *gr = gv->w.glw_root;
+  glw_video_surface_t *sa, *sb, *s;
+  media_pipe_t *mp = gv->gv_mp;
+  int output_duration;
+  int64_t pts = PTS_UNSET;
+  int frame_duration = gv->w.glw_root->gr_frameduration;
+  int epoch = 0;
+
+  output_duration = glw_video_compute_output_duration(vd, frame_duration);
+  
+  /* Find new surface to display */
+  hts_mutex_assert(&gv->gv_surface_mutex);
+  sa = TAILQ_FIRST(&gv->gv_decoded_queue);
+  if(sa == NULL) {
+    /* No frame available */
+    sa = TAILQ_FIRST(&gv->gv_displaying_queue);
+    if(sa != NULL) {
+      /* Continue to display last frame */
+      gv->gv_sa = sa;
+      gv->gv_sa = NULL;
+    } else {
+      gv->gv_sa = NULL;
+      gv->gv_sa = NULL;
+    }
+
+  } else {
+      
+    /* There are frames available that we are going to display,
+       push back old frames to decoder */
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
+      r(gv, s, &gv->gv_cfg_cur, &gv->gv_displaying_queue);
+
+    /* */
+    sb = TAILQ_NEXT(sa, gvs_link);
+
+    if(!vd->vd_hold)
+      pts = glw_video_compute_blend(gv, sa, sb, output_duration);
+    epoch = sa->gvs_epoch;
+
+    if(!vd->vd_hold || sb != NULL) {
+      if(sa != NULL && sa->gvs_duration == 0)
+	glw_video_enqueue_for_display(gv, sa, &gv->gv_decoded_queue);
+    }
+    if(sb != NULL && sb->gvs_duration == 0)
+      glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
+
+    if(pts != PTS_UNSET) {
+      pts -= frame_duration * 2;
+      glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
+    }
+  }
+  return pts;
+}
 
 
 /**

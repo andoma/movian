@@ -255,9 +255,14 @@ static void  __attribute__((constructor)) gveinit ## n(void) \
 
 int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
 
-void glw_video_compute_avdiff(glw_root_t *gr,
-			      video_decoder_t *vd, media_pipe_t *mp, 
-			      int64_t pts, int epoch);
+typedef void (gv_surface_pixmap_release_t)(glw_video_t *gv,
+					   glw_video_surface_t *gvs,
+					   const glw_video_config_t *gvc,
+					   struct glw_video_surface_queue *fq);
+
+int64_t glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd,
+				 int flags, gv_surface_pixmap_release_t *r);
+
 void glw_video_render(glw_t *w, const glw_rctx_t *rc);
 
 void glw_video_reset(glw_root_t *gr);
