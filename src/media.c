@@ -996,6 +996,18 @@ mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 /**
  *
  */
+static void
+update_epoch_in_queue(struct media_buf_queue *q, int epoch)
+{
+  media_buf_t *mb;
+  TAILQ_FOREACH(mb, q, mb_link)
+    mb->mb_epoch = epoch;
+}
+
+
+/**
+ *
+ */
 static int
 mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 {
@@ -1050,6 +1062,11 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       }
       mb->mb_skip = 2;
       rval = 0;
+
+      mp->mp_epoch++;
+      update_epoch_in_queue(&mp->mp_audio.mq_q_data, mp->mp_epoch);
+      update_epoch_in_queue(&mp->mp_video.mq_q_data, mp->mp_epoch);
+      update_epoch_in_queue(&mp->mp_video.mq_q_aux, mp->mp_epoch);
 
       mb = media_buf_alloc_locked(mp, 0);
       mb->mb_data_type = MB_CTRL_BLACKOUT;
