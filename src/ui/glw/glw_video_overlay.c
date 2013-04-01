@@ -270,7 +270,7 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 
 #if ENABLE_DVD
   video_decoder_t *vd = gv->gv_vd;
-  if(gv->gv_cfg_cur.gvc_width[0] > 0 &&
+  if(gv->gv_width > 0 &&
      (glw_is_focused(&gv->w) || !vd->vd_pci.hli.hl_gi.hli_ss))
     show_dvd_overlays = 1;
 #endif
@@ -367,9 +367,8 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
 	  w = gvo->gvo_canvas_width;
 	  h = gvo->gvo_canvas_height;
 	} else {
-	  float ys = gv->gv_cfg_cur.gvc_flags & GVC_YHALF ? 2 : 1;
-	  w = gv->gv_cfg_cur.gvc_width[0];
-	  h = gv->gv_cfg_cur.gvc_height[0] * ys;
+	  w = gv->gv_width;
+	  h = gv->gv_height;
 	}
       
 	glw_Scalef(&rc0, 2 / w, -2 / h, 1.0f);

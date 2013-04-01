@@ -29,10 +29,26 @@
 #include "glw_renderer.h"
 #include "glw_texture.h"
 
-static glw_video_engine_t glw_video_blank;
+//static glw_video_engine_t glw_video_blank;
 
 
 static void glw_video_input(const frame_info_t *info, void *opaque);
+
+
+
+/**
+ *
+ */
+static void
+glw_video_reap(glw_video_t *gv)
+{
+  glw_video_reap_task_t *t;
+  while((t = LIST_FIRST(&gv->gv_reaps)) != NULL) {
+    LIST_REMOVE(t, link);
+    t->fn(gv, t);
+    free(t);
+  }
+}
 
 
 /**
@@ -324,7 +340,7 @@ glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
  */
 int64_t 
 glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
-			 gv_surface_pixmap_release_t *r)
+			 gv_surface_pixmap_release_t *release)
 {
   glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa, *sb, *s;
@@ -359,7 +375,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
     /* There are frames available that we are going to display,
        push back old frames to decoder */
     while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
-      r(gv, s, &gv->gv_cfg_cur, &gv->gv_displaying_queue);
+      release(gv, s, &gv->gv_displaying_queue);
 
     /* */
     sb = TAILQ_NEXT(sa, gvs_link);
@@ -376,7 +392,7 @@ glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
 	}
 
 	if(code == AVDIFF_CATCH_UP) {
-	  r(gv, sa, &gv->gv_cfg_cur, &gv->gv_decoded_queue);
+	  release(gv, sa, &gv->gv_decoded_queue);
 	  kalman_init(&gv->gv_avfilter);
 	  goto again;
 	}
@@ -448,10 +464,14 @@ glw_video_dtor(glw_t *w)
   LIST_REMOVE(gv, gv_global_link);
   video_decoder_destroy(vd);
 
+  hts_mutex_lock(&gv->gv_surface_mutex);  /* Not strictly necessary
+					     but keep asserts happy 
+					  */
   glw_video_surfaces_cleanup(gv);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 
   hts_cond_destroy(&gv->gv_avail_queue_cond);
-  hts_cond_destroy(&gv->gv_reconf_cond);
+  hts_cond_destroy(&gv->gv_init_cond);
   hts_mutex_destroy(&gv->gv_surface_mutex);
 
   mp_ref_dec(gv->gv_mp);
@@ -471,10 +491,18 @@ glw_video_newframe(glw_t *w, int flags)
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
-  if(memcmp(&gv->gv_cfg_cur, &gv->gv_cfg_req, sizeof(glw_video_config_t)))
-    glw_video_surface_reconfigure(gv);
+  glw_video_reap(gv);
 
-  pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
+  if(gv->gv_need_init) {
+    gv->gv_engine->gve_init(gv);
+    gv->gv_need_init = 0;
+    hts_cond_signal(&gv->gv_init_cond);
+  }
+
+  if(gv->gv_engine != NULL)
+    pts = gv->gv_engine->gve_newframe(gv, vd, flags);
+  else
+    pts = PTS_UNSET;
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 
@@ -508,17 +536,15 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   case GLW_SIGNAL_DESTROY:
     hts_mutex_lock(&gv->gv_surface_mutex);
-    hts_cond_signal(&gv->gv_reconf_cond);
     hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_cond_signal(&gv->gv_init_cond);
     hts_mutex_unlock(&gv->gv_surface_mutex);
     video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
     return 0;
 
   case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_overlay_pointer_event(vd, 
-					   gv->gv_cfg_cur.gvc_width[0],
-					   gv->gv_cfg_cur.gvc_height[0],
+    return glw_video_overlay_pointer_event(vd, gv->gv_width, gv->gv_height,
 					   extra, gv->gv_mp);
 
   default:
@@ -538,16 +564,17 @@ glw_video_ctor(glw_t *w)
 
   kalman_init(&gv->gv_avfilter);
 
-  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
-  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
+  //  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
+  //  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
 
   TAILQ_INIT(&gv->gv_avail_queue);
+  TAILQ_INIT(&gv->gv_parked_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
   TAILQ_INIT(&gv->gv_decoded_queue);
 
   hts_mutex_init(&gv->gv_surface_mutex);
   hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
-  hts_cond_init(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
+  hts_cond_init(&gv->gv_init_cond, &gv->gv_surface_mutex);
 
   gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
 #if CONFIG_GLW_BACKEND_OPENGL
@@ -731,6 +758,8 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
+  w->glw_root->gr_screensaver_counter = 0;
+
   glw_video_rctx_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
@@ -746,7 +775,9 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     glw_Scalef(&rc1, zoom, zoom, 1.0);
   }
 
-  gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc1);
+  if(gv->gv_engine != NULL)
+    gv->gv_engine->gve_render(gv, &rc1);
+
   glw_video_overlay_render(gv, rc, &rc0);
 }
 
@@ -777,71 +808,92 @@ GLW_REGISTER_CLASS(glw_video);
  *
  */
 int
-glw_video_configure(glw_video_t *gv,
-		    const glw_video_engine_t *engine,
-		    const int *wvec, const int *hvec,
-		    int surfaces, int flags, int pixfmt)
+glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
 {
-  glw_video_config_t gvc = {0};
+  hts_mutex_assert(&gv->gv_surface_mutex);
 
-  assert(surfaces <= GLW_VIDEO_MAX_SURFACES);
+  if(gv->gv_engine != engine) {
 
-  gvc.gvc_valid = 1;
-
-  gvc.gvc_engine = engine;
-
-  if(wvec != NULL) {
-    gvc.gvc_width[0] = wvec[0];
-    gvc.gvc_width[1] = wvec[1];
-    gvc.gvc_width[2] = wvec[2];
-  }
-
-  if(hvec != NULL) {
-    gvc.gvc_height[0] = hvec[0];
-    gvc.gvc_height[1] = hvec[1];
-    gvc.gvc_height[2] = hvec[2];
-  }
-
-  gvc.gvc_nsurfaces = surfaces;
-  gvc.gvc_flags = flags;
-  gvc.gvc_pixfmt = pixfmt;
-
-  if(memcmp(&gvc, &gv->gv_cfg_cur, sizeof(gvc))) {
-
-    memcpy(&gv->gv_cfg_req, &gvc, sizeof(gvc));
-    while(memcmp(&gvc, &gv->gv_cfg_cur, sizeof(gvc))) {
+    if(gv->gv_engine != NULL)
+      gv->gv_engine->gve_reset(gv);
     
-      if(gv->w.glw_flags & GLW_DESTROYING)
-	return -1;
+    gv->gv_engine = engine;
 
-      hts_cond_wait(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
+    if(engine->gve_init_on_ui_thread) {
+      gv->gv_need_init = 1;
+      while(1) {
+	if(gv->w.glw_flags & GLW_DESTROYING)
+	  return 1;
+	if(!gv->gv_need_init)
+	  break;
+	hts_cond_wait(&gv->gv_init_cond, &gv->gv_surface_mutex);
+      }
+    } else {
+      engine->gve_init(gv);
     }
   }
-
-  // Reset screen saver every time we get a new frame
-  gv->w.glw_root->gr_screensaver_counter = 0;
   return 0;
 }
-	       
+
+
+/**
+ *
+ */
+void *
+glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn)
+{
+  glw_video_reap_task_t *t = calloc(1, s);
+  t->fn = fn;
+  LIST_INSERT_HEAD(&gv->gv_reaps, t, link);
+  hts_mutex_assert(&gv->gv_surface_mutex);
+  return t;
+}
+
 
 /**
  *
  */
 glw_video_surface_t *
-glw_video_get_surface(glw_video_t *gv)
+glw_video_get_surface(glw_video_t *gv, const int *w, const int *h)
 {
-  glw_video_surface_t *s;
+  glw_video_surface_t *gvs;
+  hts_mutex_assert(&gv->gv_surface_mutex);
 
-  while((s = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL) {
+  while(1) {
     if(gv->w.glw_flags & GLW_DESTROYING)
       return NULL;
 
+    if((gvs = TAILQ_FIRST(&gv->gv_avail_queue)) != NULL) {
+      TAILQ_REMOVE(&gv->gv_avail_queue, gvs, gvs_link);
+      
+      if(w == NULL)
+	return gvs;
+
+      if(w[0] == gvs->gvs_width[0] &&
+	 w[1] == gvs->gvs_width[1] &&
+	 w[2] == gvs->gvs_width[2] &&
+	 h[0] == gvs->gvs_height[0] &&
+	 h[1] == gvs->gvs_height[1] &&
+	 h[2] == gvs->gvs_height[2])
+	return gvs;
+
+      gvs->gvs_width[0]  = w[0];
+      gvs->gvs_width[1]  = w[1];
+      gvs->gvs_width[2]  = w[2];
+      gvs->gvs_height[0] = h[0];
+      gvs->gvs_height[1] = h[1];
+      gvs->gvs_height[2] = h[2];
+      
+      if(gv->gv_engine != NULL && gv->gv_engine->gve_surface_init != NULL) {
+	gv->gv_engine->gve_surface_init(gv, gvs);
+	return gvs;
+      }
+
+      TAILQ_INSERT_TAIL(&gv->gv_parked_queue, gvs, gvs_link);
+      continue;
+    }
     hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
   }
-
-  TAILQ_REMOVE(&gv->gv_avail_queue, s, gvs_link);
-  hts_mutex_assert(&gv->gv_surface_mutex);
-  return s;
 }
 
 
@@ -850,11 +902,13 @@ glw_video_get_surface(glw_video_t *gv)
  */
 void
 glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
-		      int64_t pts, int epoch, int duration, int yshift)
+		      int64_t pts, int epoch, int duration,
+		      int interlaced, int yshift)
 {
   s->gvs_pts = pts;
   s->gvs_epoch = epoch;
   s->gvs_duration = duration;
+  s->gvs_interlaced = interlaced;
   s->gvs_yshift = yshift;
   TAILQ_INSERT_TAIL(&gv->gv_decoded_queue, s, gvs_link);
   hts_mutex_assert(&gv->gv_surface_mutex);
@@ -883,7 +937,7 @@ glw_video_input(const frame_info_t *fi, void *opaque)
 
   if(fi == NULL) {
     // Blackout
-    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0, 0);
+    //    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0, 0);
   } else {
 
     gv->gv_dar_num = fi->fi_dar_num;
@@ -906,8 +960,12 @@ glw_video_input(const frame_info_t *fi, void *opaque)
 void
 glw_video_surfaces_cleanup(glw_video_t *gv)
 {
-  gv->gv_cfg_cur.gvc_engine->gve_reset(gv);
+  if(gv->gv_engine != NULL)
+    gv->gv_engine->gve_reset(gv);
+  
+  glw_video_reap(gv);
   TAILQ_INIT(&gv->gv_avail_queue);
+  TAILQ_INIT(&gv->gv_parked_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
   TAILQ_INIT(&gv->gv_decoded_queue);
 }
@@ -929,74 +987,11 @@ glw_video_reset(glw_root_t *gr)
     hts_mutex_lock(&gv->gv_surface_mutex);
 
     glw_video_surfaces_cleanup(gv);
-    gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
+    gv->gv_engine = NULL;
 
     hts_mutex_unlock(&gv->gv_surface_mutex);
   }
 }
-
-
-
-/**
- * 
- */
-void
-glw_video_surface_reconfigure(glw_video_t *gv)
-{
-  glw_video_surfaces_cleanup(gv);
-
-  gv->gv_cfg_cur = gv->gv_cfg_req;
-  gv->gv_cfg_cur.gvc_engine->gve_init(gv);
-
-  hts_cond_signal(&gv->gv_reconf_cond);
-}
-
-
-/**
- *
- */
-static int64_t
-blank_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
-{
-  return PTS_UNSET;
-}
-
-/**
- *
- */
-static void
-blank_render(glw_video_t *gv, glw_rctx_t *rc)
-{
-}
-
-
-/**
- *
- */
-static void
-blank_reset(glw_video_t *gv)
-{
-}
-
-/**
- *
- */
-static int
-blank_init(glw_video_t *gv)
-{
-  return 0;
-}
-
-/**
- *
- */
-static glw_video_engine_t glw_video_blank = {
-  .gve_newframe = blank_newframe,
-  .gve_render = blank_render,
-  .gve_reset = blank_reset,
-  .gve_init = blank_init,
-};
-
 
 
 
