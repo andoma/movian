@@ -1,0 +1,6 @@
+GLW: Rework video display pipeline
+
+This makes it possible to switch resolution of video on-the-fly,
+will be needed when doing seamless HLS bitrate switching.
+
+Also happens to fix bug #603
