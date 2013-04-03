@@ -319,7 +319,7 @@ token_resolve_ex(glw_view_eval_context_t *ec, token_t *t, int type)
     return NULL;
   }
 
-  if((t->type == TOKEN_PROPERTY_VALUE_NAME ||
+  if((t->type == TOKEN_PROPERTY_NAME ||
       t->type == TOKEN_PROPERTY_REF) && subscribe_prop(ec, t, type))
     return NULL;
   
@@ -735,18 +735,19 @@ eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
  *
  */
 static int
-resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
+resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 {
   token_t *t;
   const char *pname[16];
   prop_t *p;
-  int i;
-  
+  int i, j;
+
   for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-    pname[i++]  = rstr_get(t->t_rstring);
+    for(j = 0; j < t->t_elements && i < 15; j++)
+      pname[i++]  = rstr_get(t->t_pnvec[j]);
   pname[i] = NULL;
-  
-  p = prop_get_by_name(pname, follow_links,
+
+  p = prop_get_by_name(pname, !(a->t_flags & TOKEN_F_CANONICAL_PATH),
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_NAMED_ROOT, ec->prop_viewx, "view",
@@ -759,12 +760,14 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a, int follow_links)
   if(p == NULL)
     return glw_view_seterr(ec->ei, a, "Unable to resolve property %s",
 			   pname[i-1]);
-  
+
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
-  
+
   glw_view_free_chain(ec->gr, a->child);
   a->child = NULL;
-  rstr_release(a->t_rstring);
+
+  for(j = 0; j < a->t_elements; j++)
+    rstr_release(a->t_pnvec[j]);
   a->type = TOKEN_PROPERTY_REF;
   a->t_prop = p;
   return 0;
@@ -778,8 +781,8 @@ static token_t *
 resolve_property_name2(glw_view_eval_context_t *ec, token_t *t)
 {
   switch(t->type) {
-  case TOKEN_PROPERTY_VALUE_NAME:
-    if(resolve_property_name(ec, t, 1))
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, t))
       return NULL;
     /* FALLTHRU */
   case TOKEN_PROPERTY_REF:
@@ -847,7 +850,7 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     return glw_view_seterr(ec->ei, self, "Invalid assignment");
 
   /* Catch some special cases here */
-  if(b->type == TOKEN_PROPERTY_VALUE_NAME && 
+  if(b->type == TOKEN_PROPERTY_NAME && 
      !strcmp(rstr_get(b->t_rstring), "event")) {
     /* Assignment from $event, if our eval context has an event use it */
     if(ec->event == NULL || ec->event->e_type_x != EVENT_KEYDESC)
@@ -910,12 +913,8 @@ eval_assign(glw_view_eval_context_t *ec, struct token *self, int conditional)
     r = a->t_attrib->set(ec, a->t_attrib, b);
     break;
 
-  case TOKEN_PROPERTY_VALUE_NAME:
-    if(resolve_property_name(ec, a, 1))
-      return -1;
-    if(0)
-  case TOKEN_PROPERTY_CANONICAL_NAME:
-    if(resolve_property_name(ec, a, 0))
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, a))
       return -1;
 
   case TOKEN_PROPERTY_REF:
@@ -2187,7 +2186,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   glw_prop_sub_t *gps;
   prop_sub_t *s;
   glw_t *w = ec->w;
-  int i = 0;
+  int i, j;
   token_t *t;
   const char *propname[16];
   prop_callback_t *cb;
@@ -2198,9 +2197,10 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 			    "Properties can not be mapped in this scope");
 
   switch(self->type) {
-  case TOKEN_PROPERTY_VALUE_NAME:
-    for(t = self; t != NULL && i < 15; t = t->child)
-      propname[i++]  = rstr_get(t->t_rstring);
+  case TOKEN_PROPERTY_NAME:
+    for(i = 0, t = self; t != NULL && i < 15; t = t->child)
+      for(j = 0; j < t->t_elements && i < 15; j++)
+        propname[i++]  = rstr_get(t->t_pnvec[j]);
     propname[i] = NULL;
     break;
 
@@ -2212,9 +2212,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
     abort();
   }
 
-  int f = 0; 
-
-
+  int f = 0;
 
   switch(type) {
   case GPS_VALUE:
@@ -2306,8 +2304,9 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   gps->gps_rpn = ec->passive_subscriptions ? NULL : ec->rpn;
 
-  if(self->type == TOKEN_PROPERTY_VALUE_NAME) {
-    rstr_release(self->t_rstring);
+  if(self->type == TOKEN_PROPERTY_NAME) {
+    for(j = 0; j < self->t_elements; j++)
+      rstr_release(self->t_pnvec[j]);
     glw_view_free_chain(ec->gr, self->child);
     self->child = NULL;
   }
@@ -2394,8 +2393,7 @@ glw_view_eval_rpn0(token_t *t0, glw_view_eval_context_t *ec)
     case TOKEN_VOID:
     case TOKEN_PROPERTY_REF:
     case TOKEN_PROPERTY_OWNER:
-    case TOKEN_PROPERTY_VALUE_NAME:
-    case TOKEN_PROPERTY_CANONICAL_NAME:
+    case TOKEN_PROPERTY_NAME:
     case TOKEN_PROPERTY_SUBSCRIPTION:
       eval_push(ec, t);
       break;
@@ -4146,7 +4144,7 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
   prop_t *p;
   int i;
 
-  if(a->type != TOKEN_PROPERTY_VALUE_NAME)
+  if(a->type != TOKEN_PROPERTY_NAME)
     return 0;
   
   for(i = 0, t = a; t != NULL && i < 15; t = t->child)
@@ -4179,12 +4177,8 @@ glwf_delete(glw_view_eval_context_t *ec, struct token *self,
   token_t *a = argv[0];
 
   switch(a->type) {
-  case TOKEN_PROPERTY_VALUE_NAME:
-    if(resolve_property_name(ec, a, 1))
-      return -1;
-    if(0)
-  case TOKEN_PROPERTY_CANONICAL_NAME:
-    if(resolve_property_name(ec, a, 0))
+  case TOKEN_PROPERTY_NAME:
+    if(resolve_property_name(ec, a))
       return -1;
 
   case TOKEN_PROPERTY_REF:
@@ -4328,7 +4322,7 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
   const char *propname[16];
   int i;
 
-  if(a != NULL && a->type == TOKEN_PROPERTY_VALUE_NAME) {
+  if(a != NULL && a->type == TOKEN_PROPERTY_NAME) {
 
     for(i = 0, t = a; t != NULL && i < 15; t = t->child)
       propname[i++]  = rstr_get(t->t_rstring);

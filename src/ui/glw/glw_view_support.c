@@ -45,6 +45,7 @@ glw_view_token_alloc(glw_root_t *gr)
 void
 glw_view_token_free(glw_root_t *gr, token_t *t)
 {
+  int i;
   rstr_release(t->file);
 
   switch(t->type) {
@@ -111,9 +112,9 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
 
   case TOKEN_RSTRING:
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_VALUE_NAME:
-  case TOKEN_PROPERTY_CANONICAL_NAME:
-    rstr_release(t->t_rstring);
+  case TOKEN_PROPERTY_NAME:
+    for(i = 0; i < t->t_elements; i++)
+      rstr_release(t->t_pnvec[i]);
     break;
 
   case TOKEN_EVENT:
@@ -140,6 +141,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
 token_t *
 glw_view_token_copy(glw_root_t *gr, token_t *src)
 {
+  int i;
   token_t *dst = pool_get(gr->gr_token_pool);
 
   dst->file = rstr_dup(src->file);
@@ -190,9 +192,13 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
     dst->t_rstrtype = src->t_rstrtype;
     // FALLTHRU
   case TOKEN_IDENTIFIER:
-  case TOKEN_PROPERTY_VALUE_NAME:
-  case TOKEN_PROPERTY_CANONICAL_NAME:
     dst->t_rstring = rstr_dup(src->t_rstring);
+    break;
+
+  case TOKEN_PROPERTY_NAME:
+    for(i = 0; i < src->t_elements; i++)
+      dst->t_pnvec[i] = rstr_dup(src->t_pnvec[i]);
+    dst->t_elements = src->t_elements;
     break;
 
   case TOKEN_START:
@@ -352,9 +358,11 @@ token2name(token_t *t)
   case TOKEN_PROPERTY_REF:
     return "property ref";
 
-  case TOKEN_PROPERTY_VALUE_NAME:
-  case TOKEN_PROPERTY_CANONICAL_NAME:
-    snprintf(buf, sizeof(buf), "<property> %s", rstr_get(t->t_rstring));
+  case TOKEN_PROPERTY_NAME:
+    snprintf(buf, sizeof(buf), "<property> ");
+    for(i = 0; i < t->t_elements; i++)
+      snprintf(buf + strlen(buf), sizeof(buf) - strlen(buf), "%s ",
+               rstr_get(t->t_pnvec[i]));
     return buf;
 
   case TOKEN_OBJECT_ATTRIBUTE:
