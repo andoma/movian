@@ -2564,6 +2564,7 @@ glw_view_eval_block(token_t *t, glw_view_eval_context_t *ec)
     case TOKEN_CSTRING:
     case TOKEN_RSTRING:
     case TOKEN_IDENTIFIER:
+    case TOKEN_MOD_FLAGS:
       if(t->t_attrib->set(ec, t->t_attrib, t))
         return -1;
       break;

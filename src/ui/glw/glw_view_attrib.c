@@ -1162,7 +1162,7 @@ static int
 or_flags2_fn(glw_view_eval_context_t *ec, const token_attrib_t *a, 
              struct token *t)
 {
-  mod_flags2(ec->w, t->t_int, 0);
+  mod_flags2(ec->w, t->t_set, t->t_clr);
   return 0;
 }
 
@@ -1177,7 +1177,7 @@ static int
 or_img_flags_fn(glw_view_eval_context_t *ec, const token_attrib_t *a,
                 struct token *t)
 {
-  mod_img_flags(ec->w, t->t_int, 0);
+  mod_img_flags(ec->w, t->t_set, t->t_clr);
   return 0;
 }
 
@@ -1191,7 +1191,7 @@ static int
 or_txt_flags_fn(glw_view_eval_context_t *ec, const token_attrib_t *a,
                  struct token *t)
 {
-  mod_text_flags(ec->w, t->t_int, 0);
+  mod_text_flags(ec->w, t->t_set, t->t_clr);
   return 0;
 }
 
@@ -1211,11 +1211,22 @@ merge_token(token_t *t, glw_root_t *gr, token_t **p, token_t **fp,
 {
   if(*fp == NULL) {
     *fp = t;
-    t->t_int = t->t_attrib->attrib;
+    if(t->t_int) {
+      t->t_set = t->t_attrib->attrib;
+      t->t_clr = 0;
+    } else {
+      t->t_set = 0;
+      t->t_clr = t->t_attrib->attrib;
+    }
     t->t_attrib = a;
+    t->type = TOKEN_MOD_FLAGS;
     return 0;
   } else {
-    (*fp)->t_int |= t->t_attrib->attrib;
+    if(t->t_int) {
+      (*fp)->t_set |= t->t_attrib->attrib;
+    } else {
+      (*fp)->t_clr |= t->t_attrib->attrib;
+    }
     *p = t->next;
     glw_view_token_free(gr, t);
     return 1;
@@ -1232,7 +1243,7 @@ glw_view_attrib_optimize(token_t *t, glw_root_t *gr)
   token_t *f2 = NULL, *img = NULL, *txt = NULL, **p = &t;
 
   while((t = *p) != NULL) {
-    if(t->type == TOKEN_INT && t->t_int) {
+    if(t->type == TOKEN_INT) {
       if(t->t_attrib->fn == &mod_flags2 &&
          merge_token(t, gr, p, &f2, &or_flags2))
         continue;

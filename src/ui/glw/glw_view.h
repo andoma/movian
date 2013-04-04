@@ -85,6 +85,7 @@ typedef enum {
   TOKEN_EVENT,
   TOKEN_LINK,                  // A link with title and url
   TOKEN_VECTOR,                // List of tokens
+  TOKEN_MOD_FLAGS,
   TOKEN_num,
 
 } token_type_t;
@@ -163,8 +164,14 @@ typedef struct token {
 
     const char *cstr;
 
+    struct {
+      int set;
+      int clr;
+    } modflags;
   } u;
 
+#define t_set             u.modflags.set
+#define t_clr             u.modflags.clr
 #define t_pnvec           u.pnvec
 #define t_cstring         u.cstr
 #define t_rstring         u.rstr.rstr

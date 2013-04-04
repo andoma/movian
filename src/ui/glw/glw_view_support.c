@@ -108,6 +108,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
   case TOKEN_NOP:
   case TOKEN_COLON:
   case TOKEN_VECTOR:
+  case TOKEN_MOD_FLAGS:
     break;
 
   case TOKEN_RSTRING:
@@ -139,7 +140,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
  * Clone a token
  */
 token_t *
-glw_view_token_copy(glw_root_t *gr, token_t *src)
+glw_view_token_copy(glw_root_t *gr, token_t * restrict src)
 {
   int i;
   token_t *dst = pool_get(gr->gr_token_pool);
@@ -155,6 +156,8 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
     dst->t_float = src->t_float;
     break;
 
+  case TOKEN_MOD_FLAGS:
+    dst->t_clr = src->t_clr;
   case TOKEN_INT:
     dst->t_int = src->t_int;
     break;
