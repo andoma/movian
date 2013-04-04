@@ -4171,6 +4171,8 @@ prop_mark_childs(prop_t *p)
 void
 prop_unmark(prop_t *p)
 {
+  if(p == NULL)
+    return;
   hts_mutex_lock(&prop_mutex);
   p->hp_flags &= ~PROP_MARKED;
   hts_mutex_unlock(&prop_mutex);
