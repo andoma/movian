@@ -71,22 +71,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   AVFrame *frame = vd->vd_frame;
   int t;
   
-  if(vd->vd_do_flush) {
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = NULL;
-    avpkt.size = 0;
-    do {
-      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-    } while(got_pic);
-
-    vd->vd_do_flush = 0;
-    vd->vd_prevpts = AV_NOPTS_VALUE;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vd->vd_estimated_duration = 0;
-    avcodec_flush_buffers(ctx);
-  }
-
   vd->vd_reorder[vd->vd_reorder_ptr] = *mb;
   ctx->reordered_opaque = vd->vd_reorder_ptr;
   vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
@@ -118,6 +102,26 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mb, t);
 }
+
+
+/**
+ *
+ */
+void
+video_flush_avctx(media_codec_t *mc, video_decoder_t *vd)
+{
+  AVCodecContext *ctx = mc->ctx;
+  int got_pic = 0;
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = NULL;
+  avpkt.size = 0;
+  do {
+    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
+  } while(got_pic);
+  avcodec_flush_buffers(ctx);
+}
+
 
 /**
  *
@@ -256,24 +260,34 @@ video_deliver_frame_avctx(video_decoder_t *vd,
  *
  */
 void
+video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
+			       int epoch, int64_t delta)
+{
+  if(ts == PTS_UNSET)
+    return;
+
+  mp_set_current_time(vd->vd_mp, ts, epoch, delta);
+
+  vd->vd_subpts = ts - vd->vd_mp->mp_svdelta - delta;
+
+  if(vd->vd_ext_subtitles != NULL)
+    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts, vd->vd_mp);
+}
+
+
+/**
+ *
+ */
+void
 video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
   vd->vd_skip = 0;
   vd->vd_mp->mp_video_frame_deliver(info, vd->vd_mp->mp_video_frame_opaque);
 
 
-  if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
-    return;
-
-  mp_set_current_time(vd->vd_mp, info->fi_pts, info->fi_epoch, info->fi_delta);
-  
-  int64_t pts = info->fi_pts;
-  pts -= vd->vd_mp->mp_svdelta;
-  pts -= info->fi_delta;
-  vd->vd_subpts = pts;
-
-  if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, pts, vd->vd_mp);
+  if(info->fi_drive_clock)
+    video_decoder_set_current_time(vd, info->fi_pts, info->fi_epoch,
+				   info->fi_delta);
 }
 
 
@@ -311,10 +325,9 @@ vd_thread(void *aux)
   media_pipe_t *mp = vd->vd_mp;
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
-  media_codec_t *mc;
+  media_codec_t *mc, *mc_current = NULL;
   int run = 1;
   int reqsize = -1;
-  int reinit = 0;
   int size;
   vd->vd_frame = avcodec_alloc_frame();
 
@@ -380,20 +393,33 @@ vd_thread(void *aux)
 
     case MB_CTRL_FLUSH:
       vd_init_timings(vd);
-      vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
       
       hts_mutex_lock(&mp->mp_overlay_mutex);
       video_overlay_flush_locked(mp, 1);
       dvdspu_flush_locked(mp);
       hts_mutex_unlock(&mp->mp_overlay_mutex);
+
+      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
+
+      if(mc_current != NULL) {
+	if(mc_current->flush != NULL)
+	  mc_current->flush(mc_current, vd);
+	else
+	  video_flush_avctx(mc_current, vd);
+      }
+
+      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
+      if(mp->mp_seek_video_done != NULL)
+	mp->mp_seek_video_done(mp);
       break;
 
     case MB_VIDEO:
-      if(reinit) {
-	reinit = 0;
-	if(mc->reinit != NULL)
-	  mc->reinit(mc);
+      if(mc != mc_current) {
+	if(mc_current != NULL)
+	  media_codec_deref(mc_current);
+
+	mc_current = media_codec_ref(mc);
       }
 
       if(mb->mb_skip == 2)
@@ -415,7 +441,9 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_REINITIALIZE:
-      reinit = 1;
+      if(mc_current != NULL && mc_current->reinit != NULL)
+	mc_current->reinit(mc_current);
+
       break;
 
 #if ENABLE_DVD
@@ -463,10 +491,6 @@ vd_thread(void *aux)
     case MB_SUBTITLE:
       if(vd->vd_ext_subtitles == NULL && mb->mb_stream == mq->mq_stream2)
 	video_overlay_decode(mp, mb);
-      break;
-
-    case MB_CTRL_BLACKOUT:
-      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
       break;
 
     case MB_CTRL_FLUSH_SUBTITLES:

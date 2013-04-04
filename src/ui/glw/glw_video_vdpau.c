@@ -69,6 +69,9 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
   glw_video_surface_t *s;
   int64_t pts = AV_NOPTS_VALUE;
 
+  gv->gv_cmatrix_cur[0] = (gv->gv_cmatrix_cur[0] * 3.0f +
+			   gv->gv_cmatrix_tgt[0]) / 4.0f;
+
   if(flags & GLW_REINITIALIZE_VDPAU) {
 
     int i;
@@ -199,7 +202,9 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
 
   glw_load_program(gbr, NULL);
 
-  glColor4f(1,1,1,1);
+  float c = gv->gv_cmatrix_cur[0];
+
+  glColor4f(c, c, c, 1);
 
   glBegin(GL_QUADS);
   glTexCoord2f(0, h);
@@ -397,6 +402,16 @@ vdpau_init(glw_video_t *gv)
 }
 
 
+/**
+ *
+ */
+static void
+vdpau_blackout(glw_video_t *gv)
+{
+  gv->gv_cmatrix_tgt[0] = 0.0f;
+}
+
+
 static void vdpau_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
@@ -410,6 +425,7 @@ static glw_video_engine_t glw_video_vdpau = {
   .gve_init = vdpau_init,
   .gve_deliver = vdpau_deliver,
   .gve_init_on_ui_thread = 1,
+  .gve_blackout = vdpau_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_vdpau);
@@ -438,6 +454,8 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 
   if(glw_video_configure(gv, &glw_video_vdpau))
     return;
+
+  gv->gv_cmatrix_tgt[0] = 1.0f;
 
   /* Video mixer */
   if(gv->gv_vm.vm_width  != fi->fi_width ||

@@ -3,8 +3,7 @@
 SRCS += src/arch/rpi/rpi_main.c \
 	src/arch/rpi/omx.c \
 	src/arch/rpi/rpi_audio.c \
-	src/video/h264_passthru.c \
-	src/video/h264_annexb.c \
+	src/arch/rpi/rpi_video.c \
 	src/ui/glw/glw_video_rpi.c \
 	src/ui/background.c \
 	src/prop/prop_posix.c \

@@ -151,6 +151,8 @@ typedef struct media_codec {
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
+  void (*flush)(struct media_codec *mc, struct video_decoder *vd);
+
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
 
@@ -186,7 +188,6 @@ typedef struct media_buf {
     MB_CTRL_PLAY,
     MB_CTRL_EXIT,
     MB_CTRL_FLUSH_SUBTITLES,
-    MB_CTRL_BLACKOUT,
 
     MB_CTRL_DVD_HILITE,
     MB_CTRL_EXT_SUBTITLE,
@@ -430,6 +431,10 @@ typedef struct media_pipe {
    * Extra (created by media_pipe_init_extra)
    */
   void *mp_extra;
+
+  void (*mp_seek_initiate)(struct media_pipe *mp);
+  void (*mp_seek_audio_done)(struct media_pipe *mp);
+  void (*mp_seek_video_done)(struct media_pipe *mp);
 
 } media_pipe_t;
 

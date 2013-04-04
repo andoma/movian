@@ -618,20 +618,19 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   mp->mp_seek_base = ts;
 
-
   if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
     prop_set_float(prop_create(mp->mp_prop_root, "seektime"), ts / 1000000.0);
-    return;
-  }
+  } else {
 
-  /* If there already is a seek event enqueued, update it */
-  TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
-    if(!event_is_type(e, EVENT_SEEK))
-      continue;
+    /* If there already is a seek event enqueued, update it */
+    TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
+      if(!event_is_type(e, EVENT_SEEK))
+	continue;
 
-    ets = (event_ts_t *)e;
-    ets->ts = ts;
-    return;
+      ets = (event_ts_t *)e;
+      ets->ts = ts;
+      return;
+    }
   }
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
@@ -641,6 +640,9 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   e = &ets->h;
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+
+  if(mp->mp_seek_initiate != NULL)
+    mp->mp_seek_initiate(mp);
 }
 
 
@@ -1069,10 +1071,6 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       update_epoch_in_queue(&mp->mp_video.mq_q_aux, mp->mp_epoch);
 
       mb = media_buf_alloc_locked(mp, 0);
-      mb->mb_data_type = MB_CTRL_BLACKOUT;
-      mb_enq(mp, &mp->mp_video, mb);
-
-      mb = media_buf_alloc_locked(mp, 0);
       mb->mb_data_type = MB_CTRL_FLUSH;
       mb_enq(mp, &mp->mp_video, mb);
 
@@ -1106,10 +1104,6 @@ mp_flush(media_pipe_t *mp, int blank)
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
     mb->mb_data_type = MB_CTRL_FLUSH;
-    mb_enq(mp, v, mb);
-
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_CTRL_BLACKOUT;
     mb_enq(mp, v, mb);
   }
 

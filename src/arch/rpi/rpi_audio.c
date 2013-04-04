@@ -10,6 +10,7 @@ typedef struct decoder {
   omx_tunnel_t *d_clock_tun;
   int d_bpf; // Bytes per frame
   int d_first_sent;
+  int d_last_epoch;
 } decoder_t;
 
 /**
@@ -34,12 +35,12 @@ rpi_audio_fini(audio_decoder_t *ad)
   if(d->d_render == NULL)
     return;
 
+  if(d->d_clock_tun)
+    omx_tunnel_destroy(d->d_clock_tun);
+
   omx_wait_buffers(d->d_render);
   omx_set_state(d->d_render, OMX_StateIdle);
   omx_release_buffers(d->d_render, 100);
-
-  if(d->d_clock_tun)
-    omx_tunnel_destroy(d->d_clock_tun);
 
   omx_set_state(d->d_render, OMX_StateLoaded);
   omx_component_destroy(d->d_render);
@@ -157,15 +158,30 @@ rpi_audio_deliver(audio_decoder_t *ad, int samples, int64_t pts, int epoch)
   data[0] = (uint8_t *)buf->pBuffer;
   int r = avresample_read(ad->ad_avr, data, samples);
 
-  if(!d->d_first_sent) {
+
+  hts_mutex_unlock(&ad->ad_mp->mp_mutex);
+
+  if(d->d_last_epoch != epoch) {
+
+    if(pts != PTS_UNSET)
+      d->d_last_epoch = epoch;
+
+    buf->nFlags |= OMX_BUFFERFLAG_DISCONTINUITY;
+  }
+
+  if(!d->d_first_sent && pts != PTS_UNSET) {
     buf->nFlags |= OMX_BUFFERFLAG_STARTTIME;
     d->d_first_sent = 1;
   }
 
   buf->nOffset = 0;
   buf->nFilledLen = r * d->d_bpf;
-  buf->nTimeStamp = omx_ticks_from_s64(pts);
-  hts_mutex_unlock(&ad->ad_mp->mp_mutex);
+
+  if(pts != PTS_UNSET)
+    buf->nTimeStamp = omx_ticks_from_s64(pts);
+  else
+    buf->nFlags |= OMX_BUFFERFLAG_TIME_UNKNOWN;
+
   omxchk(OMX_EmptyThisBuffer(oc->oc_handle, buf));
   hts_mutex_lock(&ad->ad_mp->mp_mutex);
   return 0;

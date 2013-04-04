@@ -331,8 +331,8 @@ gv_color_matrix_update(glw_video_t *gv)
 {
   int i;
   for(i = 0; i < 16; i++)
-    gv->gv_cmatrix_cur[i] = (gv->gv_cmatrix_cur[i] * 15.0 +
-			     gv->gv_cmatrix_tgt[i]) / 16.0;
+    gv->gv_cmatrix_cur[i] = (gv->gv_cmatrix_cur[i] * 3.0f +
+			     gv->gv_cmatrix_tgt[i]) / 4.0f;
 }
 
 
@@ -530,6 +530,17 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static void
+yuvp_blackout(glw_video_t *gv)
+{
+  memset(gv->gv_cmatrix_tgt, 0, sizeof(float) * 16);
+}
+
+
+
 static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
@@ -542,6 +553,7 @@ static glw_video_engine_t glw_video_opengl = {
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
   .gve_deliver = yuvp_deliver,
+  .gve_blackout = yuvp_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_opengl);

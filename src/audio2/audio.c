@@ -409,6 +409,9 @@ audio_decode_thread(void *aux)
 	if(ac->ac_flush)
 	  ac->ac_flush(ad);
 	ad->ad_pts = AV_NOPTS_VALUE;
+
+	if(mp->mp_seek_audio_done != NULL)
+	  mp->mp_seek_audio_done(mp);
 	break;
 
       case MB_CTRL_EXIT:

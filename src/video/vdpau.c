@@ -372,22 +372,6 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
   int got_pic = 0;
   AVFrame *frame = vd->vd_frame;
   
-  if(vd->vd_do_flush) {
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = NULL;
-    avpkt.size = 0;
-    do {
-      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-    } while(got_pic);
-
-    vd->vd_do_flush = 0;
-    vd->vd_prevpts = AV_NOPTS_VALUE;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vd->vd_estimated_duration = 0;
-    avcodec_flush_buffers(ctx);
-  }
-
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
 
   vc->vc_mb = mb;
@@ -622,6 +606,7 @@ vdpau_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mc->ctx->opaque = mc;
   mc->opaque = vc;
   mc->decode = vdpau_decode;
+  mc->flush  = video_flush_avctx;
   mc->close  = vdpau_codec_close;
   mc->reinit = vdpau_codec_reinit;
   return 0;

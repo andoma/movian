@@ -120,6 +120,7 @@ typedef struct vdec_decoder {
 
   h264_annexb_ctx_t annexb;
 
+  int do_flush;
 
 } vdec_decoder_t;
 
@@ -611,14 +612,6 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vdd->metainfo == NULL)
     vdd->metainfo = prop_ref_inc(mq->mq_prop_codec);
 
-  if(vd->vd_do_flush) {
-    end_sequence_and_wait(vdd);
-    vdec_start_sequence(vdd->handle);
-    vdd->annexb.extradata_injected = 0;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vdd->flush_to = -1;
-  }
-
   pktmeta_t *pm = &vdd->pktmeta[vdd->pktmeta_cur];
   au.userdata = vdd->pktmeta_cur;
 
@@ -626,7 +619,8 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   
   pm->epoch = mb->mb_epoch;
   pm->skip = mb->mb_skip == 1;
-  pm->flush = vd->vd_do_flush;
+  pm->flush = vdd->do_flush;
+  vdd->do_flush = 0;
   pm->delta = mb->mb_delta;
   pm->drive_clock = mb->mb_drive_clock;
   pm->aspect_override = mb->mb_aspect_override;
@@ -669,7 +663,22 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 
   h264_to_annexb(&vdd->annexb, &data, &size);
   submit_au(vdd, &au, data, size, mb->mb_skip == 1, vd);
-  vd->vd_do_flush = 0;
+}
+
+
+/**
+ *
+ */
+static void
+decoder_flush(struct media_codec *mc, struct video_decoder *vd)
+{
+  vdec_decoder_t *vdd = mc->opaque;
+  end_sequence_and_wait(vdd);
+  vdec_start_sequence(vdd->handle);
+  vdd->annexb.extradata_injected = 0;
+  vd->vd_nextpts = AV_NOPTS_VALUE;
+  vdd->flush_to = -1;
+  vdd->do_flush = 1;
 }
 
 
@@ -833,7 +842,9 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 
   mc->opaque = vdd;
   mc->decode = decoder_decode;
-  mc->close = decoder_close;
+  mc->flush  = decoder_flush;
+  mc->close  = decoder_close;
+
 
   vdec_start_sequence(vdd->handle);
 

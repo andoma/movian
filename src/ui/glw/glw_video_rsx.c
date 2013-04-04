@@ -439,6 +439,16 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static void
+yuvp_blackout(glw_video_t *gv)
+{
+  memset(gv->gv_cmatrix_tgt, 0, sizeof(float) * 16);
+}
+
+
 static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
@@ -452,6 +462,7 @@ static glw_video_engine_t glw_video_yuvp = {
   .gve_init = yuvp_init,
   .gve_deliver = yuvp_deliver,
   .gve_surface_init = surface_init,
+  .gve_blackout = yuvp_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_yuvp);
@@ -560,6 +571,7 @@ static glw_video_engine_t glw_video_rsxmem = {
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
   .gve_deliver = rsx_deliver,
+  .gve_blackout = yuvp_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_rsxmem);

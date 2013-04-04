@@ -936,8 +936,10 @@ glw_video_input(const frame_info_t *fi, void *opaque)
   hts_mutex_lock(&gv->gv_surface_mutex);
 
   if(fi == NULL) {
-    // Blackout
-    //    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0, 0);
+
+    if(gv->gv_engine != NULL && gv->gv_engine->gve_blackout != NULL)
+      gv->gv_engine->gve_blackout(gv);
+
   } else {
 
     gv->gv_dar_num = fi->fi_dar_num;

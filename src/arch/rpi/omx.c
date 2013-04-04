@@ -348,6 +348,57 @@ omx_flush_port(omx_component_t *oc, int port)
 }
 
 
+static int cnt;
+
+/**
+ *
+ */
+static void
+omx_mp_begin_seek(media_pipe_t *mp)
+{
+  printf("OMX Begin seek\n");
+  omx_component_t *c = mp->mp_extra;
+
+  OMX_TIME_CONFIG_CLOCKSTATETYPE cs;
+  OMX_INIT_STRUCTURE(cs);
+  cs.eState = OMX_TIME_ClockStateStopped;
+  omxchk(OMX_SetParameter(c->oc_handle, OMX_IndexConfigTimeClockState, &cs));
+  cnt = 2;
+}
+
+
+/**
+ *
+ */
+static void
+omx_mp_seek_audio_done(media_pipe_t *mp)
+{
+  cnt--;
+  printf("hej cnt=%d\n", cnt);
+
+  if(cnt == 0) {
+    omx_component_t *c = mp->mp_extra;
+
+    OMX_TIME_CONFIG_CLOCKSTATETYPE cstate;
+    OMX_INIT_STRUCTURE(cstate);
+    cstate.eState = OMX_TIME_ClockStateWaitingForStartTime;
+    cstate.nWaitMask = 1;
+    omxchk(OMX_SetParameter(c->oc_handle, OMX_IndexConfigTimeClockState, &cstate));
+  }
+
+}
+
+
+/**
+ *
+ */
+static void
+omx_mp_seek_video_done(media_pipe_t *mp)
+{
+  omx_mp_seek_audio_done(mp);
+}
+
+
 /**
  *
  */
@@ -356,6 +407,12 @@ omx_mp_init(media_pipe_t *mp)
 {
   if(!(mp->mp_flags & MP_VIDEO))
     return;
+
+  if(0) {
+    mp->mp_seek_initiate = omx_mp_begin_seek;
+    mp->mp_seek_audio_done = omx_mp_seek_audio_done;
+    mp->mp_seek_video_done = omx_mp_seek_video_done;
+  }
 
   omx_component_t *c;
 
