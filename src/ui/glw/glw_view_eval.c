@@ -731,21 +731,33 @@ eval_null_coalesce(glw_view_eval_context_t *ec, struct token *self)
 }
 
 
+
+/**
+ *
+ */
+static void
+propname_to_array(const char *pname[], const token_t *a)
+{
+  const token_t *t;
+  int i, j;
+  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
+    for(j = 0; j < t->t_elements && i < 15; j++)
+      pname[i++]  = rstr_get(t->t_pnvec[j]);
+  pname[i] = NULL;
+}
+
+
 /**
  *
  */
 static int
 resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 {
-  token_t *t;
   const char *pname[16];
   prop_t *p;
-  int i, j;
+  int j;
 
-  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-    for(j = 0; j < t->t_elements && i < 15; j++)
-      pname[i++]  = rstr_get(t->t_pnvec[j]);
-  pname[i] = NULL;
+  propname_to_array(pname, a);
 
   p = prop_get_by_name(pname, !(a->t_flags & TOKEN_F_CANONICAL_PATH),
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
@@ -758,8 +770,7 @@ resolve_property_name(glw_view_eval_context_t *ec, token_t *a)
 		       NULL);
 
   if(p == NULL)
-    return glw_view_seterr(ec->ei, a, "Unable to resolve property %s",
-			   pname[i-1]);
+    return glw_view_seterr(ec->ei, a, "Unable to resolve property");
 
   /* Transform TOKEN_PROPERTY_NAME -> TOKEN_PROPERTY */
 
@@ -2186,8 +2197,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
   glw_prop_sub_t *gps;
   prop_sub_t *s;
   glw_t *w = ec->w;
-  int i, j;
-  token_t *t;
+  int j;
   const char *propname[16];
   prop_callback_t *cb;
   prop_t *prop = NULL;
@@ -2198,10 +2208,7 @@ subscribe_prop(glw_view_eval_context_t *ec, struct token *self, int type)
 
   switch(self->type) {
   case TOKEN_PROPERTY_NAME:
-    for(i = 0, t = self; t != NULL && i < 15; t = t->child)
-      for(j = 0; j < t->t_elements && i < 15; j++)
-        propname[i++]  = rstr_get(t->t_pnvec[j]);
-    propname[i] = NULL;
+    propname_to_array(propname, self);
     break;
 
   case TOKEN_PROPERTY_REF:
@@ -4139,19 +4146,15 @@ glwf_createchild(glw_view_eval_context_t *ec, struct token *self,
 		 token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
-  token_t *t;
   const char *propname[16];
   prop_t *p;
-  int i;
 
   if(a->type != TOKEN_PROPERTY_NAME)
     return 0;
-  
-  for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-    propname[i++]  = rstr_get(t->t_rstring);
-  propname[i] = NULL;
-  
-  p = prop_get_by_name(propname, 1, 
+
+  propname_to_array(propname, a);
+
+  p = prop_get_by_name(propname, 1,
 		       PROP_TAG_NAMED_ROOT, ec->prop, "self",
 		       PROP_TAG_NAMED_ROOT, ec->prop_parent, "parent",
 		       PROP_TAG_ROOT, ec->w->glw_root->gr_prop_ui,
@@ -4318,15 +4321,11 @@ glwf_bind(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
 {
   token_t *a = argv[0];
-  token_t *t;
   const char *propname[16];
-  int i;
 
   if(a != NULL && a->type == TOKEN_PROPERTY_NAME) {
 
-    for(i = 0, t = a; t != NULL && i < 15; t = t->child)
-      propname[i++]  = rstr_get(t->t_rstring);
-    propname[i] = NULL;
+    propname_to_array(propname, a);
 
     if(ec->w->glw_class->gc_bind_to_property != NULL)
       ec->w->glw_class->gc_bind_to_property(ec->w,
