@@ -538,6 +538,7 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
 
   first->type = TOKEN_BLOCK;
   if(first->next->type == term) {
+    // Empty block
     p = first->next;
     first->next = p->next;
     glw_view_token_free(gr, p);
@@ -554,6 +555,7 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
       first->next = p->next->next;
       glw_view_token_free(gr, p->next);
       p->next = NULL;
+      glw_view_attrib_optimize(first->child, gr);
       return 0;
     }
 

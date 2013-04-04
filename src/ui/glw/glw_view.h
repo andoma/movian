@@ -296,8 +296,9 @@ void glw_view_print_tree(token_t *f, int indent);
 
 token_t *glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t);
 
-
 int glw_view_attrib_resolve(token_t *t);
+
+void glw_view_attrib_optimize(token_t *t, glw_root_t *gr);
 
 int glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 
