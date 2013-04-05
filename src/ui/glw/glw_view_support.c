@@ -140,7 +140,7 @@ glw_view_token_free(glw_root_t *gr, token_t *t)
  * Clone a token
  */
 token_t *
-glw_view_token_copy(glw_root_t *gr, token_t * restrict src)
+glw_view_token_copy(glw_root_t *gr, token_t *src)
 {
   int i;
   token_t *dst = pool_get(gr->gr_token_pool);
