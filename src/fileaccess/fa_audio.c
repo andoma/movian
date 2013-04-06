@@ -44,6 +44,44 @@
 #endif
 
 
+/**
+ *
+ */
+static event_t *
+audio_play_zipfile(fa_handle_t *fh, media_pipe_t *mp,
+		  char *errbuf, size_t errlen, int hold)
+{
+  event_t *e = NULL;
+  buf_t *b = fa_load_and_close(fh);
+  char url[64];
+  if(b == NULL) {
+    snprintf(errbuf, errlen, "Load error");
+    return NULL;
+  }
+  
+  int id = memfile_register(b->b_ptr, b->b_size);
+  snprintf(url, sizeof(url), "zip://memfile://%d", id);
+  fa_dir_t *fd = fa_scandir(url, errbuf, sizeof(errbuf));
+  if(fd != NULL) {
+    fa_dir_entry_t *fde;
+    RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+      e = be_file_playaudio(rstr_get(fde->fde_url), mp, errbuf, errlen,
+			    hold, NULL);
+      if(e != NULL)
+	goto out;
+    }
+    snprintf(errbuf, errlen, "No audio file found in ZIP archive");
+  } else {
+    snprintf(errbuf, errlen, "Unable to parse ZIP archive");
+  }
+ out:
+  if(fd != NULL)
+    fa_dir_free(fd);
+  buf_release(b);
+  memfile_unregister(id);
+  return e;
+}
+
 
 /**
  *
@@ -92,6 +130,8 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   media_codec_t *cw;
   event_t *e;
   int registered_play = 0;
+  uint8_t pb[128];
+  size_t psiz;
 
   mp->mp_seek_base = 0;
 
@@ -99,19 +139,20 @@ be_file_playaudio(const char *url, media_pipe_t *mp,
   if(fh == NULL)
     return NULL;
 
-  // First we need to check for a few other formats
-#if ENABLE_LIBGME
 
-  uint8_t pb[128];
-  size_t psiz;
-  
   psiz = fa_read(fh, pb, sizeof(pb));
   if(psiz < sizeof(pb)) {
     fa_close(fh);
-    snprintf(errbuf, errlen, "Fill too small");
+    snprintf(errbuf, errlen, "File too small");
     return NULL;
   }
 
+  if(pb[0] == 0x50 && pb[1] == 0x4b && pb[2] == 0x03 && pb[3] == 0x04)
+    // ZIP File
+    return audio_play_zipfile(fh, mp, errbuf, errlen, hold);
+
+  // First we need to check for a few other formats
+#if ENABLE_LIBGME
   if(*gme_identify_header(pb))
     return fa_gme_playfile(mp, fh, errbuf, errlen, hold, url);
 #endif
