@@ -145,13 +145,13 @@ video_deliver_frame_avctx(video_decoder_t *vd,
       fi.fi_dar_num = frame->pan_scan->width;
       fi.fi_dar_den = frame->pan_scan->height;
     } else {
-      fi.fi_dar_num = ctx->width;
-      fi.fi_dar_den = ctx->height;
+      fi.fi_dar_num = frame->width;
+      fi.fi_dar_den = frame->height;
     }
 
-    if(ctx->sample_aspect_ratio.num) {
-      fi.fi_dar_num *= ctx->sample_aspect_ratio.num;
-      fi.fi_dar_den *= ctx->sample_aspect_ratio.den;
+    if(frame->sample_aspect_ratio.num) {
+      fi.fi_dar_num *= frame->sample_aspect_ratio.num;
+      fi.fi_dar_den *= frame->sample_aspect_ratio.den;
     }
       
     break;
@@ -217,17 +217,22 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     vd->vd_nextpts = AV_NOPTS_VALUE;
   }
 #if 0
-  static int64_t lastpts;
-  printf("%20ld : %-20ld %d %ld %d\n", pts, pts - lastpts, mb->mb_drive_clock,
-	 mb->mb_delta, duration);
+  static int64_t lastpts = AV_NOPTS_VALUE;
+  if(lastpts != AV_NOPTS_VALUE) {
+    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %d\n", pts, pts - lastpts, mb->mb_drive_clock,
+           mb->mb_delta, duration);
+    if(pts - lastpts > 1000000) {
+      abort();
+    }
+  }
   lastpts = pts;
 #endif
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  fi.fi_width = ctx->width;
-  fi.fi_height = ctx->height;
+  fi.fi_width = frame->width;
+  fi.fi_height = frame->height;
   fi.fi_pts = pts;
   fi.fi_epoch = mb->mb_epoch;
   fi.fi_delta = mb->mb_delta;
@@ -251,7 +256,7 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   fi.fi_pitch[2] = frame->linesize[2];
 
   fi.fi_type = 'LAVC';
-  fi.fi_pix_fmt = ctx->pix_fmt;
+  fi.fi_pix_fmt = frame->format;
   video_deliver_frame(vd, &fi);
 }
 

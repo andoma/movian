@@ -36,7 +36,7 @@
 #include "fileaccess/fileaccess.h"
 #include "fileaccess/fa_libav.h"
 
-#define TESTURL "https://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
+#define TESTURL "http://devimages.apple.com.edgekey.net/resources/http-streaming/examples/bipbop_16x9/bipbop_16x9_variant.m3u8"
 #define TESTURL2 "http://svtplay7k-f.akamaihd.net/i/world//open/20130127/1244301-001A/MOLANDERS-001A-7c59babd66879169_,900,348,564,1680,2800,.mp4.csmil/master.m3u8"
 
 
@@ -45,6 +45,10 @@
 LIST_HEAD(hls_variant_list, hls_variant);
 TAILQ_HEAD(hls_segment_queue, hls_segment);
 
+
+/**
+ *
+ */
 typedef struct hls_segment {
   TAILQ_ENTRY(hls_segment) hs_link;
   char *hs_url;
@@ -52,9 +56,13 @@ typedef struct hls_segment {
   int hs_byte_size;
   int64_t hs_duration; // in usec
   int hs_seq;
+  AVFormatContext *hs_fctx; // Set if open
 } hls_segment_t;
 
 
+/**
+ *
+ */
 typedef struct hls_variant {
   LIST_ENTRY(hls_variant) hv_link;
   char *hv_url;
@@ -80,17 +88,20 @@ typedef struct hls_variant {
 } hls_variant_t;
 
 
+/**
+ *
+ */
 typedef struct hls {
   const char *h_baseurl;
   struct hls_variant_list h_variants;
 
   hls_variant_t *h_pend;
 
-  struct media_codec *acodec;
+  int vstream;
   int astream;
 
-  struct media_codec *vcodec;
-  int vstream;
+  media_codec_t *vcodec;
+  media_codec_t *acodec;
 
 } hls_t;
 
@@ -339,52 +350,63 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 /**
  *
  */
+static int
+open_segment(hls_segment_t *hs)
+{
+  AVInputFormat *fmt = av_find_input_format("mpegts");
+  int err, i;
+  fa_handle_t *fh;
+  char errbuf[256];
+  assert(hs->hs_fctx == NULL);
+
+  for(i = 0; i < 20; i++) {
+
+    fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf),
+                    FA_BUFFERED_BIG, NULL);
+    if(fh == NULL) {
+      TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
+            hs->hs_url, errbuf);
+      usleep(200000);
+      continue;
+    }
+
+    printf("Open segment %s   %d:%d\n", hs->hs_url, hs->hs_byte_size, hs->hs_byte_offset);
+
+    if(hs->hs_byte_size != -1 && hs->hs_byte_offset != -1)
+      fh = fa_slice_open(fh, hs->hs_byte_offset, hs->hs_byte_size);
+
+    hs->hs_fctx = avformat_alloc_context();
+    hs->hs_fctx->pb = fa_libav_reopen(fh);
+
+    if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
+                                  fmt, NULL)) != 0) {
+      TRACE(TRACE_ERROR, "HLS", "Unable to open TS file %d", err);
+      usleep(200000);
+      continue;
+    }
+
+    hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
+    return 0;
+  }
+  TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- Too many attempts",
+        hs->hs_url);
+  return -1;
+}
+
+
+/**
+ *
+ */
 static event_t *
 play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
 {
-  AVInputFormat *fmt = av_find_input_format("mpegts");
-  AVFormatContext *fctx;
-  char errbuf[256];
-  AVIOContext *avio;
-  fa_handle_t *fh;
-  int err;
-  int retry_cnt = 0;
-
- again:
-  if(retry_cnt == 20) {
-    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- Too many attempts",
-          hs->hs_url);
-    return NULL;
-
-  }
-
-  retry_cnt++;
-
-  fh = fa_open_ex(hs->hs_url, errbuf, sizeof(errbuf), FA_BUFFERED_BIG, NULL);
-  if(fh == NULL) {
-    TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- %s",
-          hs->hs_url, errbuf);
-    usleep(200000);
-    goto again;
-  }
-
-  avio = fa_libav_reopen(fh);
-
-  fctx = avformat_alloc_context();
-  fctx->pb = avio;
-
-  if((err = avformat_open_input(&fctx, hs->hs_url, fmt, NULL)) != 0) {
-    TRACE(TRACE_ERROR, "HLS", "Unable to open TS file %d", err);
-    goto again;
-  }
-  fctx->flags |= AVFMT_FLAG_NOFILLIN;
-
   int i;
 
-  media_format_t *fw = media_format_create(fctx);
+  open_segment(hs);
   h->vstream = -1;
   h->astream = -1;
 
+  AVFormatContext *fctx = hs->hs_fctx;
   for(i = 0; i < fctx->nb_streams; i++) {
     AVCodecContext *ctx = fctx->streams[i]->codec;
 
@@ -392,11 +414,13 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
     case AVMEDIA_TYPE_VIDEO:
       if(h->vstream == -1) {
 #if 0
-        if(h->vcodec != NULL)
+        if(h->vcodec != NULL) {
           media_codec_deref(h->vcodec);
+          h->vcodec = NULL;
+        }
 #endif
         if(h->vcodec == NULL)
-          h->vcodec = media_codec_create(ctx->codec_id, 0, fw, ctx, NULL, mp);
+          h->vcodec = media_codec_create(ctx->codec_id, 0, NULL, NULL, NULL, mp);
         h->vstream = i;
       }
       break;
@@ -404,7 +428,7 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
     case AVMEDIA_TYPE_AUDIO:
       if(h->astream == -1) {
         if(h->acodec == NULL)
-          h->acodec = media_codec_create(ctx->codec_id, 0, fw, ctx, NULL, mp);
+          h->acodec = media_codec_create(ctx->codec_id, 0, NULL, NULL, NULL, mp);
         h->astream = i;
       }
       break;
@@ -413,6 +437,10 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
       break;
     }
   }
+
+
+  printf("vstream:%d\n", h->vstream);
+  printf("astream:%d\n", h->astream);
 
   media_queue_t *mq = NULL;
   media_buf_t *mb = NULL;
@@ -477,8 +505,6 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
         }
       }
 
-      mb->mb_stream = pkt.stream_index;
-
       if(mb->mb_data_type == MB_VIDEO) {
         mb->mb_drive_clock = 1;
         if(fctx->start_time != AV_NOPTS_VALUE)
@@ -516,11 +542,14 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
       }
 #endif
 #endif
+    } else if(event_is_type(e, EVENT_SEEK)) {
+      //      event_ts_t *ets = (event_ts_t *)e;
+      //      video_seek(fctx, mp, &mb, ets->ts, "direct");
     }
 
     event_release(e);
   }
-  media_format_deref(fw);
+  fa_libav_close_format(fctx);
   return e;
 }
 
@@ -564,9 +593,11 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     seq++;
     play_segment(h, mp, hs);
 
+#if 0
     hv = LIST_NEXT(hv, hv_link);
     if(hv == NULL)
       hv = LIST_FIRST(&h->h_variants);
+#endif
   }
 
   return NULL;

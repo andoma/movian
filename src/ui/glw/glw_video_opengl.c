@@ -112,8 +112,10 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
 {
   int i;
 
-  if(!gvs->gvs_pbo[0])
-    glGenBuffers(3, gvs->gvs_pbo);
+  if(gvs->gvs_pbo[0])
+    glDeleteBuffers(3, gvs->gvs_pbo);
+
+  glGenBuffers(3, gvs->gvs_pbo);
 
   if(!gvs->gvs_textures[0])
     glGenTextures(3, gvs->gvs_textures);
