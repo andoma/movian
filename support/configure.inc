@@ -303,15 +303,24 @@ EOF
 
 enable libav
 
+
+
+update_ext_submodule() {
+    status=`git submodule status ext/$1 | cut -b 1`
+    echo "Updating $1, submodule status = $status"
+    git submodule update --init ext/$1
+}
+
+
+
+
+
 libav_setup() {
-    status=`git submodule status ext/libav | cut -b 1`
-    echo "Updating libav, submodule status = $status"
-    git submodule update --init ext/libav
+    update_ext_submodule libav
     echo "Configuring libav..."
     
     LIBAV_BUILD_DIR=${BUILDDIR}/libav/build
 
-    [ "$status" = "+" ] && echo "Cleaning libav build dir" && rm -rf "${LIBAV_BUILD_DIR}"
     mkdir -p "${LIBAV_BUILD_DIR}"
 
     LIBAV_COMMON_FLAGS="--disable-encoders --disable-bsfs --disable-filters --disable-muxers --disable-devices --disable-demuxer=rtp --disable-protocol=rtp --disable-bzlib --disable-decoder=twinvq --disable-decoder=snow --disable-decoder=cavs --enable-encoder=mjpeg --disable-avconv --disable-avprobe --disable-avfilter"
@@ -329,9 +338,7 @@ libav_setup() {
 #
 #
 rtmpdump_setup() {
-    status=`git submodule status ext/rtmpdump | cut -b 1`
-    echo "Updating rtmpdump, submodule status = $status"
-    git submodule update --init ext/rtmpdump
+    update_ext_submodule rtmpdump
 }
 
 
@@ -343,10 +350,7 @@ xmp_setup() {
         return
     fi
 
-    status=`git submodule status ext/xmp | cut -b 1`
-    echo "Updating XMP, submodule status = $status"
-    git submodule update --init ext/xmp
-
+    update_ext_submodule xmp
     echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lxmp"
     add_stamp xmp
 }
