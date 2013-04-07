@@ -55,8 +55,13 @@ typedef struct hls_segment {
   int hs_byte_offset;
   int hs_byte_size;
   int64_t hs_duration; // in usec
+  int64_t hs_time_offset;
   int hs_seq;
   AVFormatContext *hs_fctx; // Set if open
+
+  int hs_vstream;
+  int hs_astream;
+
 } hls_segment_t;
 
 
@@ -97,12 +102,11 @@ typedef struct hls {
 
   hls_variant_t *h_pend;
 
-  int vstream;
-  int astream;
 
-  media_codec_t *vcodec;
-  media_codec_t *acodec;
+  media_codec_t *h_codec_h264;
+  media_codec_t *h_codec_aac;
 
+  AVInputFormat *h_fmt;
 } hls_t;
 
 
@@ -183,7 +187,7 @@ hv_find_segment(hls_variant_t *hv, int seq)
  *
  */
 static void
-variant_update(hls_t *h, hls_variant_t *hv)
+variant_update(hls_t *h, hls_variant_t *hv, media_pipe_t *mp)
 {
   if(hv->hv_frozen)
     return;
@@ -221,6 +225,7 @@ variant_update(hls_t *h, hls_variant_t *hv)
       hls_segment_t *hs = hv_add_segment(h, hv, s);
       hs->hs_byte_offset = byte_offset;
       hs->hs_byte_size   = byte_size;
+      hs->hs_time_offset = total_duration * 1000000LL;
       total_duration += duration;
       hs->hs_duration    = duration * 1000000LL;
       hs->hs_seq = seq++;
@@ -231,9 +236,12 @@ variant_update(hls_t *h, hls_variant_t *hv)
   }
 
   hv->hv_duration = total_duration * 1000000LL;
-
-
   buf_release(b);
+
+  mp_set_duration(mp, hv->hv_duration);
+  char buf[256];
+  snprintf(buf, sizeof(buf), "HLS %d Kbps",  hv->hv_bitrate / 1000);
+  prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, buf);
 }
 
 
@@ -350,14 +358,27 @@ rescale(AVFormatContext *fctx, int64_t ts, int si)
 /**
  *
  */
-static int
-open_segment(hls_segment_t *hs)
+static void
+segment_close(hls_t *h, hls_segment_t *hs)
 {
-  AVInputFormat *fmt = av_find_input_format("mpegts");
-  int err, i;
+  if(hs == NULL)
+    return;
+
+  if(hs->hs_fctx != NULL)
+    fa_libav_close_format(hs->hs_fctx);
+  hs->hs_fctx = NULL;
+}
+
+
+/**
+ *
+ */
+static int
+segment_open(hls_t *h, hls_segment_t *hs)
+{
+  int err, i, j;
   fa_handle_t *fh;
   char errbuf[256];
-  assert(hs->hs_fctx == NULL);
 
   for(i = 0; i < 20; i++) {
 
@@ -379,13 +400,36 @@ open_segment(hls_segment_t *hs)
     hs->hs_fctx->pb = fa_libav_reopen(fh);
 
     if((err = avformat_open_input(&hs->hs_fctx, hs->hs_url,
-                                  fmt, NULL)) != 0) {
+                                  h->h_fmt, NULL)) != 0) {
       TRACE(TRACE_ERROR, "HLS", "Unable to open TS file %d", err);
       usleep(200000);
       continue;
     }
 
+    avformat_find_stream_info(hs->hs_fctx, NULL);
+
     hs->hs_fctx->flags |= AVFMT_FLAG_NOFILLIN;
+    hs->hs_vstream = -1;
+    hs->hs_astream = -1;
+
+    for(j = 0; j < hs->hs_fctx->nb_streams; j++) {
+      const AVCodecContext *ctx = hs->hs_fctx->streams[j]->codec;
+
+      switch(ctx->codec_type) {
+      case AVMEDIA_TYPE_VIDEO:
+	if(hs->hs_vstream == -1 && ctx->codec_id == CODEC_ID_H264)
+	  hs->hs_vstream = j;
+	break;
+
+      case AVMEDIA_TYPE_AUDIO:
+	if(hs->hs_astream == -1 && ctx->codec_id == CODEC_ID_AAC)
+	  hs->hs_astream = j;
+	break;
+	
+      default:
+	break;
+      }
+    }
     return 0;
   }
   TRACE(TRACE_INFO, "HLS", "Unable to open segment %s -- Too many attempts",
@@ -398,90 +442,87 @@ open_segment(hls_segment_t *hs)
  *
  */
 static event_t *
-play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
+hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
+         const video_args_t *va)
 {
-  int i;
-
-  open_segment(hs);
-  h->vstream = -1;
-  h->astream = -1;
-
-  AVFormatContext *fctx = hs->hs_fctx;
-  for(i = 0; i < fctx->nb_streams; i++) {
-    AVCodecContext *ctx = fctx->streams[i]->codec;
-
-    switch(ctx->codec_type) {
-    case AVMEDIA_TYPE_VIDEO:
-      if(h->vstream == -1) {
-#if 0
-        if(h->vcodec != NULL) {
-          media_codec_deref(h->vcodec);
-          h->vcodec = NULL;
-        }
-#endif
-        if(h->vcodec == NULL)
-          h->vcodec = media_codec_create(ctx->codec_id, 0, NULL, NULL, NULL, mp);
-        h->vstream = i;
-      }
-      break;
-
-    case AVMEDIA_TYPE_AUDIO:
-      if(h->astream == -1) {
-        if(h->acodec == NULL)
-          h->acodec = media_codec_create(ctx->codec_id, 0, NULL, NULL, NULL, mp);
-        h->astream = i;
-      }
-      break;
-
-    default:
-      break;
-    }
-  }
-
-
-  printf("vstream:%d\n", h->vstream);
-  printf("astream:%d\n", h->astream);
-
   media_queue_t *mq = NULL;
   media_buf_t *mb = NULL;
   event_t *e = NULL;
+  hls_segment_t *hs = NULL;
+  hls_variant_t *hv = NULL;
+  int seq = 1;
+
+  mp->mp_video.mq_stream = 0;
+  mp->mp_audio.mq_stream = 1;
+
+  if(!(va->flags & BACKEND_VIDEO_NO_AUDIO))
+    mp_become_primary(mp);
+
+  prop_set_string(mp->mp_prop_type, "video");
+
+  mp_set_playstatus_by_hold(mp, 0, NULL);
+
+  mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE, MP_BUFFER_DEEP, 0);
+
   while(1) {
 
     if(mb == NULL) {
+
+      if(hs == NULL) {
+
+	if(hv == NULL) 
+	  hv = LIST_FIRST(&h->h_variants);
+	
+	variant_update(h, hv, mp);
+
+	hs = hv_find_segment(hv, seq);
+	if(hs == NULL) {
+	  snprintf(errbuf, errlen, "Segment %d not found", seq);
+	  break;
+	}
+
+	if(segment_open(h, hs)) {
+	  snprintf(errbuf, errlen, "Unable to open segment %d", seq);
+	  break;
+	}
+	seq++;
+      }
+
       AVPacket pkt;
-      int r = av_read_frame(fctx, &pkt);
+      int r = av_read_frame(hs->hs_fctx, &pkt);
       if(r == AVERROR(EAGAIN))
         continue;
 
       if(r) {
-        e = event_create_type(EVENT_EOF);
-        break;
+	segment_close(h, hs);
+	hs = NULL;
+	continue;
       }
 
       int si = pkt.stream_index;
+      const AVStream *s = hs->hs_fctx->streams[si];
 
-      if(si == h->vstream && h->vcodec) {
+      if(si == hs->hs_vstream) {
         /* Current video stream */
         mb = media_buf_from_avpkt_unlocked(mp, &pkt);
         mb->mb_data_type = MB_VIDEO;
         mq = &mp->mp_video;
-
-        if(fctx->streams[si]->avg_frame_rate.num) {
-          mb->mb_duration = 1000000LL * fctx->streams[si]->avg_frame_rate.den /
-            fctx->streams[si]->avg_frame_rate.num;
+        if(s->avg_frame_rate.num) {
+          mb->mb_duration = 1000000LL * s->avg_frame_rate.den /
+            s->avg_frame_rate.num;
         } else {
-          mb->mb_duration = rescale(fctx, pkt.duration, si);
+          mb->mb_duration = rescale(hs->hs_fctx, pkt.duration, si);
         }
-        mb->mb_cw = media_codec_ref(h->vcodec);
+        mb->mb_cw = media_codec_ref(h->h_codec_h264);
         mb->mb_stream = 0;
 
-      } else if(si == h->astream && h->acodec) {
+      } else if(si == hs->hs_astream) {
 
         mb = media_buf_from_avpkt_unlocked(mp, &pkt);
         mb->mb_data_type = MB_AUDIO;
         mq = &mp->mp_audio;
 
-        mb->mb_cw = media_codec_ref(h->acodec);
+        mb->mb_cw = media_codec_ref(h->h_codec_aac);
         mb->mb_stream = 1;
 
       } else {
@@ -490,8 +531,8 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
         continue;
       }
 
-      mb->mb_pts = rescale(fctx, pkt.pts, si);
-      mb->mb_dts = rescale(fctx, pkt.dts, si);
+      mb->mb_pts = rescale(hs->hs_fctx, pkt.pts, si);
+      mb->mb_dts = rescale(hs->hs_fctx, pkt.dts, si);
 
       if(mq->mq_seektarget != AV_NOPTS_VALUE &&
          mb->mb_data_type != MB_SUBTITLE) {
@@ -505,11 +546,8 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
         }
       }
 
-      if(mb->mb_data_type == MB_VIDEO) {
+      if(mb->mb_data_type == MB_VIDEO)
         mb->mb_drive_clock = 1;
-        if(fctx->start_time != AV_NOPTS_VALUE)
-          mb->mb_delta = fctx->start_time;
-      }
 
       mb->mb_keyframe = !!(pkt.flags & AV_PKT_FLAG_KEY);
     }
@@ -549,62 +587,10 @@ play_segment(hls_t *h, media_pipe_t *mp, hls_segment_t *hs)
 
     event_release(e);
   }
-  fa_libav_close_format(fctx);
+
+  segment_close(h, hs);
   return e;
 }
-
-
-
-/**
- *
- */
-static event_t *
-hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
-         const video_args_t *va)
-{
-  mp->mp_video.mq_stream = 0;
-  mp->mp_audio.mq_stream = 1;
-
-  if(!(va->flags & BACKEND_VIDEO_NO_AUDIO))
-    mp_become_primary(mp);
-
-  prop_set_string(mp->mp_prop_type, "video");
-
-  mp_set_playstatus_by_hold(mp, 0, NULL);
-
-  hls_variant_t *hv = LIST_FIRST(&h->h_variants);
-
-  int seq = 1;
-  while(1) {
-    hls_segment_t *hs;
-
-    variant_update(h, hv);
-
-    mp_configure(mp, MP_PLAY_CAPS_SEEK | MP_PLAY_CAPS_PAUSE,
-                 MP_BUFFER_DEEP, hv->hv_duration);
-
-    char buf[256];
-    snprintf(buf, sizeof(buf), "HLS %d Kbps",  hv->hv_bitrate / 1000);
-    prop_set(mp->mp_prop_metadata, "format", PROP_SET_STRING, buf);
-
-    hs = hv_find_segment(hv, seq);
-    if(hs == NULL)
-      break;
-    seq++;
-    play_segment(h, mp, hs);
-
-#if 0
-    hv = LIST_NEXT(hv, hv_link);
-    if(hv == NULL)
-      hv = LIST_FIRST(&h->h_variants);
-#endif
-  }
-
-  return NULL;
-}
-
-
-
 
 
 
@@ -629,6 +615,10 @@ hls_playvideo2(buf_t *b, const char *url, media_pipe_t *mp,
   hls_t h;
   memset(&h, 0, sizeof(h));
   h.h_baseurl = url;
+  h.h_fmt = av_find_input_format("mpegts");
+  h.h_codec_h264 = media_codec_create(CODEC_ID_H264, 0, NULL, NULL, NULL, mp);
+  h.h_codec_aac  = media_codec_create(CODEC_ID_AAC,  0, NULL, NULL, NULL, mp);
+
   int l;
   for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
     s[l] = 0;
@@ -648,6 +638,8 @@ hls_playvideo2(buf_t *b, const char *url, media_pipe_t *mp,
 
   hls_play(&h, mp, errbuf, errlen, va0);
 
+  media_codec_deref(h.h_codec_h264);
+  media_codec_deref(h.h_codec_aac);
 
   buf_release(b);
   snprintf(errbuf, errlen, "Not implemented");
