@@ -150,6 +150,7 @@ glw_view_token_copy(glw_root_t *gr, token_t *src)
 
   dst->type = src->type;
   dst->t_propsubr = src->t_propsubr;
+  dst->t_flags = src->t_flags;
 
   switch(src->type) {
   case TOKEN_FLOAT:

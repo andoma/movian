@@ -343,9 +343,9 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	t->type == TOKEN_AMPERSAND) 
        && t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
       t0 = t2 = t;
-      t0->type = TOKEN_PROPERTY_NAME;
       if(t->type == TOKEN_AMPERSAND)
         t0->t_flags |= TOKEN_F_CANONICAL_PATH;
+      t0->type = TOKEN_PROPERTY_NAME;
 
       t0->next = t1->next;
       t0->t_elements = 1;
