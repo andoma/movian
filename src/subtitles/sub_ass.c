@@ -556,6 +556,13 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
       continue;
     }
 
+    if(c == '\\' && *str == 'h') {
+      // hard space
+      str++;
+      ad_txt_append(&ad, ' ');
+      continue;
+    }
+
     if(c == '{') {
       const char *end = strchr(str, '}');
       if(end == NULL)
