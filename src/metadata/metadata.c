@@ -725,7 +725,7 @@ get_ms(metadata_type_t type, int id)
  *
  */
 static void 
-build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
+build_info_text(const metadata_lazy_video_t *mlv, const metadata_t *md)
 {
   rstr_t *txt;
   
@@ -804,7 +804,7 @@ is_qtype_compat(int qa, int qb)
  *
  */
 static int64_t
-query_by_filename_or_dirname(void *db, metadata_lazy_video_t *mlv,
+query_by_filename_or_dirname(void *db, const metadata_lazy_video_t *mlv,
 			     const metadata_source_funcs_t *msf, int *qtype)
 {
   int year;
