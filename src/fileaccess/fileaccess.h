@@ -124,6 +124,7 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 #define FA_DISABLE_AUTH    0x40
 #define FA_COMPRESSION     0x80
 #define FA_NOFOLLOW        0x100
+#define FA_FAST_FAIL       0x200
 
 /**
  *

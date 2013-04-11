@@ -173,7 +173,7 @@ http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
  */
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
-		    char *errbuf, int errlen, int dbg)
+		    char *errbuf, int errlen, int dbg, int timeout)
 {
   http_connection_t *hc, *next;
   tcpcon_t *tc;
@@ -209,7 +209,7 @@ http_connection_get(const char *hostname, int port, int ssl,
   id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 30000, ssl)) == NULL) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, timeout, ssl)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -537,6 +537,8 @@ typedef struct http_file {
   char hf_streaming; /* Optimize for streaming from start to end
 		      * rather than random seeking 
 		      */
+
+  char hf_fast_fail;
 
   char hf_req_compression;
   
@@ -1420,8 +1422,13 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(!hf->hf_path[0])
     strcpy(hf->hf_path, "/");
 
+  int timeout = 30000;
+
+  if(hf->hf_fast_fail)
+    timeout = 2000;
+
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
-					  hf->hf_debug);
+					  hf->hf_debug, timeout);
 
   return hf->hf_connection ? 0 : -1;
 }
@@ -1795,7 +1802,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
-
+  hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
   if(stats != NULL) {
     hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
     prop_set_int(prop_create(stats, "bitrateValid"), 1);
