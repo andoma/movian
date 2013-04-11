@@ -526,6 +526,9 @@ vd_thread(void *aux)
 
   hts_mutex_unlock(&mp->mp_mutex);
 
+  if(mc_current != NULL)
+    media_codec_deref(mc_current);
+
   if(vd->vd_ext_subtitles != NULL)
     subtitles_destroy(vd->vd_ext_subtitles);
 
