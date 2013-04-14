@@ -261,4 +261,7 @@ fa_handle_t *fa_slice_open(fa_handle_t *fa, int64_t offset, int64_t size);
 
 FILE *fa_fopen(fa_handle_t *fh, int doclose);
 
+fa_handle_t *fa_aescbc_open(fa_handle_t *fa, const uint8_t *iv,
+			    const uint8_t *key);
+
 #endif /* FILEACCESS_H */

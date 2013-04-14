@@ -883,11 +883,12 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
   }
 }
 
+
 /**
  *
  */
 static int64_t
-mq_realtime_delay(media_queue_t *mq)
+mq_realtime_delay_locked(media_queue_t *mq)
 {
   media_buf_t *f, *l;
 
@@ -907,8 +908,22 @@ mq_realtime_delay(media_queue_t *mq)
 /**
  *
  */
+int64_t
+mq_realtime_delay(media_queue_t *mq)
+{
+  hts_mutex_lock(&mq->mq_mp->mp_mutex);
+  int64_t r = mq_realtime_delay_locked(mq);
+  hts_mutex_unlock(&mq->mq_mp->mp_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
 event_t *
-mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+			  int *blocked)
 {
   event_t *e = NULL;
   
@@ -924,9 +939,12 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 	mp->mp_audio.mq_packets_current >= (mp->mp_audio.mq_stream != -1 ? 5 : 0) &&
 	(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit ||
 	 (mp->mp_max_realtime_delay != 0 && 
-	  mq_realtime_delay(mq) > mp->mp_max_realtime_delay)))
+	  mq_realtime_delay_locked(mq) > mp->mp_max_realtime_delay))) {
+    if(blocked != NULL)
+      *blocked = *blocked + 1;
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-  
+  }
+
   if(e != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
   } else {

@@ -861,4 +861,8 @@ init_dev_settings(void)
 
   add_dev_bool("Log AV-diff stats",
 	       "detailedavdiff", &gconf.enable_detailed_avdiff);
+
+  add_dev_bool("Debug HLS",
+	       "hlsdebug", &gconf.enable_hls_debug);
+
 }

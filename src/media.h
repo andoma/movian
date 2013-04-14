@@ -534,8 +534,12 @@ void mp_ref_dec(media_pipe_t *mp);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 			int auxtype);
-struct event *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
-				media_buf_t *mb);
+struct event *mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, 
+					media_buf_t *mb, int *blocked);
+
+#define mb_enqueue_with_events(mp, mq, mb) \
+  mb_enqueue_with_events_ex(mp, mq, mb, NULL)
+
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
@@ -596,6 +600,8 @@ void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
 		  int64_t duration);
 
 void mp_set_duration(media_pipe_t *mp, int64_t duration);
+
+int64_t mq_realtime_delay(media_queue_t *mq);
 
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 

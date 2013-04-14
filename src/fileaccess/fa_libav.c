@@ -55,16 +55,20 @@ fa_libav_reopen(fa_handle_t *fh)
 {
   AVIOContext *avio;
 
-  if(fa_seek(fh, 0, SEEK_SET) != 0)
-    return NULL;
+  int seekable = fa_fsize(fh) != -1;
+
+  if(seekable)
+    if(fa_seek(fh, 0, SEEK_SET) != 0)
+      return NULL;
 
   int buf_size = 32768;
   void *buf = av_malloc(buf_size);
 
   avio = avio_alloc_context(buf, buf_size, 0, fh, fa_libav_read, NULL, 
 			    fa_libav_seek);
-  if(avio != NULL && fa_fsize(fh) == -1)
+  if(avio != NULL && !seekable)
     avio->seekable = 0;
+
   return avio;
 }
 

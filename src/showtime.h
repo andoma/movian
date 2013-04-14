@@ -240,6 +240,7 @@ typedef struct gconf {
   int disable_http_reuse;
   int enable_experimental;
   int enable_detailed_avdiff;
+  int enable_hls_debug;
 
   const char *devplugin;
   const char *plugin_repo;
