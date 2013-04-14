@@ -529,7 +529,8 @@ upnp_browse_resolve(upnp_browse_t *ub)
   upnp_device_t *ud = NULL;
   upnp_service_t *us;
 
-  char *url = ub->ub_url;
+  char *url = mystrdupa(ub->ub_url);
+  char *base = url;
 
   url += strlen("upnp:");
   
@@ -587,7 +588,7 @@ upnp_browse_resolve(upnp_browse_t *ub)
   *url = 0;
   url++;
 
-  ub->ub_base_url = strdup(ub->ub_url);
+  ub->ub_base_url = strdup(base);
   ub->ub_control_url = us->us_control_url ? strdup(us->us_control_url) : NULL;
   ub->ub_event_url   = us->us_event_url   ? strdup(us->us_event_url)   : NULL;
   ub->ub_id = strdup(url);
@@ -865,6 +866,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   // Construct videoparam JSON blob
 
   htsmsg_t *vp = htsmsg_create_map();
+  htsmsg_add_str(vp, "canonicalUrl", ub->ub_url);
 
   htsmsg_add_u32(vp, "no_fs_scan", 1); /* Don't try to scan parent directory
 					* for subtitles
@@ -956,8 +958,8 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
 /**
  *
  */
-static void 
-browse_self(upnp_browse_t *ub)
+static void
+browse_self(upnp_browse_t *ub, int sync)
 {
   int r;
   htsmsg_t *in = htsmsg_create_map(), *out;
@@ -992,10 +994,10 @@ browse_self(upnp_browse_t *ub)
     return browse_fail(ub, "Malformed XML: %s", errbuf);
   }
 
-  if((x = htsmsg_get_map_multi(meta, 
-			       "tags", "DIDL-Lite",
-			       "tags", "container",
-			       NULL)) != NULL) {
+  if(!sync && (x = htsmsg_get_map_multi(meta, 
+                                        "tags", "DIDL-Lite",
+                                        "tags", "container",
+                                        NULL)) != NULL) {
     browse_container(ub, x);
  
   } else if((x = htsmsg_get_map_multi(meta, 
@@ -1026,7 +1028,7 @@ upnp_browse_thread(void *aux)
   }
 
   // Check what we are browsing
-  browse_self(ub);
+  browse_self(ub, 0);
 
 
   ub_destroy(ub);
@@ -1065,7 +1067,16 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
   prop_t *metadata = prop_create(ub->ub_model, "metadata");
 
   ub->ub_title = prop_create_r(metadata, "title");
-  hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
-			     THREAD_PRIO_MODEL);
+
+  if(sync) {
+
+    if(!upnp_browse_resolve(ub))
+      browse_self(ub, 1);
+    ub_destroy(ub);
+
+  } else {
+    hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
+                               THREAD_PRIO_MODEL);
+  }
   return 0;
 }
