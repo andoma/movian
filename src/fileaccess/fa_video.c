@@ -39,6 +39,7 @@
 #include "notifications.h"
 #include "htsmsg/htsmsg_xml.h"
 #include "backend/backend.h"
+#include "backend/hls/hls.h"
 #include "misc/isolang.h"
 #include "text/text.h"
 #include "video/video_settings.h"
@@ -643,10 +644,13 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
           snprintf(errbuf, errlen, "Unable to read HLS playlist file");
         }
         fa_close(fh);
+
         char *hlslist = htsbuf_to_string(&hq);
-        vsource_add_hls(vsl, hlslist, url);
+	event_t *e = hls_play_extm3u(hlslist, url, mp, errbuf, errlen,
+				     vq, vsl, &va);
         free(hlslist);
-        return event_create_type(EVENT_REOPEN);
+	rstr_release(title);
+	return e;
       }
     }
   }

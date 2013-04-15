@@ -70,7 +70,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   AVCodecContext *ctx = cw->ctx;
   AVFrame *frame = vd->vd_frame;
   int t;
-  
+
   vd->vd_reorder[vd->vd_reorder_ptr] = *mb;
   ctx->reordered_opaque = vd->vd_reorder_ptr;
   vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
@@ -79,7 +79,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
    * If we are seeking, drop any non-reference frames
    */
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
-
   avgtime_start(&vd->vd_decode_time);
 
   AVPacket avpkt;
@@ -286,7 +285,6 @@ video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
 void
 video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
-  vd->vd_skip = 0;
   vd->vd_mp->mp_video_frame_deliver(info, vd->vd_mp->mp_video_frame_opaque);
 
 
@@ -426,9 +424,6 @@ vd_thread(void *aux)
 
 	mc_current = media_codec_ref(mc);
       }
-
-      if(mb->mb_skip == 2)
-	vd->vd_skip = 1;
 
       size = mb->mb_size;
 

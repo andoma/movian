@@ -47,8 +47,6 @@ typedef struct video_decoder {
 
   media_pipe_t *vd_mp;
 
-  int vd_skip;
-
   int64_t vd_nextpts;
   int64_t vd_prevpts;
   int vd_prevpts_cnt;

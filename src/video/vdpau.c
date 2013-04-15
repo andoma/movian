@@ -389,10 +389,8 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
   if(!got_pic || mb->mb_skip == 1)
     return;
 
-  vd->vd_skip = 0;
   vvs = frame->opaque;
   video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
-  return;
 }
 
 

@@ -473,10 +473,17 @@ picture_out(vdec_decoder_t *vdd)
 	  pts,
 	  h264->picture_type[0]);
 #endif
-    snprintf(metainfo, sizeof(metainfo),
-	     "h264 (Level %d.%d) %dx%d%c (Cell)",
-	     vdd->level_major, vdd->level_minor,
-	     h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+
+    if(vdd->level_major)
+      snprintf(metainfo, sizeof(metainfo),
+	       "h264 (Level %d.%d) %dx%d%c (Cell)",
+	       vdd->level_major, vdd->level_minor,
+	       h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+    else
+      snprintf(metainfo, sizeof(metainfo),
+	       "h264 %dx%d%c (Cell)",
+	       h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+
   }
 
   prop_set_string(vdd->metainfo, metainfo);
@@ -731,8 +738,6 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   int spu_threads;
   int r;
 
-  if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
-    return 1;
 
   switch(mc->codec_id) {
   case CODEC_ID_MPEG2VIDEO:
@@ -745,31 +750,18 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     break;
 
   case CODEC_ID_H264:
-    if(mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
+    if(mcp != NULL && mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
       return 1; // can't play this
 
     if(!vdec_h264_loaded) 
       return no_lib(mp, "h264");
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-#if 0
-    if(mcp->level != 0 && mcp->level <= 42) {
-      dec_type.profile_level = mcp->level;
-    } else {
-      dec_type.profile_level = 42;
-      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
-		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
-    }
-#else
-
-    if(mcp->level > 42) {
+    if(mcp != NULL && mcp->level > 42) {
       notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
 		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     dec_type.profile_level = 42;
-
-#endif
-
     spu_threads = 4;
     break;
 
@@ -824,10 +816,12 @@ video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     return 1;
   }
 
-  vdd->level_major = mcp->level / 10;
-  vdd->level_minor = mcp->level % 10;
+  if(mcp != NULL) {
+    vdd->level_major = mcp->level / 10;
+    vdd->level_minor = mcp->level % 10;
+  }
 
-  if(mc->codec_id == CODEC_ID_H264 && mcp->extradata_size)
+  if(mc->codec_id == CODEC_ID_H264 && mcp != NULL && mcp->extradata_size)
     h264_to_annexb_init(&vdd->annexb, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;
