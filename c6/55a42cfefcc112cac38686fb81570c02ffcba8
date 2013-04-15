@@ -1,0 +1,7 @@
+Add a new HLS (HTTP Live Streaming) streamer
+
+This new streamer supports adaptive rate switching between different
+bitrates (and resolution) depending on the available bandwidth.
+
+It will also start faster and seek faster due to the fact that it use
+the lowest available bitrate during these events
