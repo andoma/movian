@@ -302,7 +302,7 @@ EOF
 }
 
 enable libav
-
+enable xmp
 
 
 update_ext_submodule() {
