@@ -730,9 +730,6 @@ static const struct {
   { XK_Left,         Mod1Mask,    ACTION_NAV_BACK},
   { XK_Right,        Mod1Mask,    ACTION_NAV_FWD},
 
-  { XK_Left,         ShiftMask,   ACTION_SEEK_BACKWARD},
-  { XK_Right,        ShiftMask,   ACTION_SEEK_FORWARD},
-
   { XK_Left,         ShiftMask | ControlMask,   ACTION_SKIP_BACKWARD},
   { XK_Right,        ShiftMask | ControlMask,   ACTION_SKIP_FORWARD},
   
