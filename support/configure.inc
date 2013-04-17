@@ -265,7 +265,7 @@ setup_env(){
 
     rm -rf "${BUILDDIR}/stamps"
 
-    EXT_INSTALL_DIR=${BUILDDIR}/ext
+    EXT_INSTALL_DIR=${BUILDDIR}/inst
 
     mkdir -p ${EXT_INSTALL_DIR}/include ${EXT_INSTALL_DIR}/lib
 
@@ -456,12 +456,13 @@ finalize() {
     cat >>${CONFIG_MAK} <<EOF
 CC=$CC
 CXX=$CXX
-CFLAGS_cfg += -I${BUILDDIR}/ext/include
-LDFLAGS_cfg += -L${BUILDDIR}/ext/lib
+CFLAGS_cfg  += -I${EXT_INSTALL_DIR}/include
+LDFLAGS_cfg += -L${EXT_INSTALL_DIR}/lib
 STRIP=${TOOLCHAIN}strip
 OBJDUMP=${TOOLCHAIN}objdump
 OBJCOPY=${TOOLCHAIN}objcopy
 RANLIB=${TOOLCHAIN}ranlib
+EXT_INSTALL_DIR=${EXT_INSTALL_DIR}
 EOF
 
     if enabled libav; then

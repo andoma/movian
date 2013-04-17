@@ -119,5 +119,5 @@ ${BUILDDIR}/%.o: ${C}/%.c
 	$(CC) -MD -MP $(CFLAGS) -c -o $@ $<
 
 build: ${BD}/lib/libxmp.a ${BD}/include/xmp.h
-	cp ${BD}/include/xmp.h ${BUILDDIR}/ext/include/
-	cp -pP ${BD}/lib/libxmp.* ${BUILDDIR}/ext/lib/
+	cp ${BD}/include/xmp.h ${EXT_INSTALL_DIR}/include/
+	cp -pP ${BD}/lib/libxmp.* ${EXT_INSTALL_DIR}/lib/
