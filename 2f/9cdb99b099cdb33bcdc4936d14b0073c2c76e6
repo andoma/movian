@@ -1,0 +1,3 @@
+Fix recently introduced memory leak
+
+Fixes #1677
