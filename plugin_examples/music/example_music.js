@@ -31,6 +31,11 @@
       artist: "Andreas Öman"
     });
 
+    page.appendItem(B + "enigma.mod.zip", "audio", {
+      title: "mod.Enigma",
+      artist: "Tip & Firefox"
+    });
+
     page.loading = false;
   });
 })(this);
