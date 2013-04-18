@@ -202,14 +202,14 @@ nav_create(prop_t *prop)
   nav->nav_prop_can_go_back = prop_create(nav->nav_prop_root, "canGoBack");
   nav->nav_prop_can_go_fwd  = prop_create(nav->nav_prop_root, "canGoForward");
   nav->nav_prop_can_go_home = prop_create(nav->nav_prop_root, "canGoHome");
+  prop_t *eventsink         = prop_create(nav->nav_prop_root, "eventsink");
   prop_set_int(nav->nav_prop_can_go_home, 1);
 
-  nav->nav_eventsink = 
+  nav->nav_eventsink =
     prop_subscribe(0,
-		   PROP_TAG_NAME("nav", "eventsink"),
 		   PROP_TAG_CALLBACK_EVENT, nav_eventsink, nav,
 		   PROP_TAG_COURIER, nav_courier,
-		   PROP_TAG_ROOT, nav->nav_prop_root,
+		   PROP_TAG_ROOT, eventsink,
 		   NULL);
 
   nav->nav_dtor_tracker =
@@ -229,8 +229,11 @@ nav_create(prop_t *prop)
     while(gconf.state_plugins_loaded == 0)
       hts_cond_wait(&gconf.state_cond, &gconf.state_mutex);
     hts_mutex_unlock(&gconf.state_mutex);
-    
-    nav_open0(nav, gconf.initial_url, gconf.initial_view, NULL, NULL, NULL);
+
+    event_t *e = event_create_openurl(gconf.initial_url, gconf.initial_view,
+                                      NULL, NULL, NULL);
+    prop_send_ext_event(eventsink, e);
+    event_release(e);
   }
 
   return nav;
