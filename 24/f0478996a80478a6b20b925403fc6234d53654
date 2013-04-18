@@ -1,0 +1,3 @@
+Fix problem with video codec opened before last one is closed in continous playback
+
+This would cause crashes on PS3 when playing in continous mode
