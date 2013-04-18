@@ -332,6 +332,8 @@ vd_thread(void *aux)
   int run = 1;
   int reqsize = -1;
   int size;
+  int reinit = 0;
+
   vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -410,6 +412,9 @@ vd_thread(void *aux)
 	  mc_current->flush(mc_current, vd);
 	else
 	  video_flush_avctx(mc_current, vd);
+
+	media_codec_deref(mc_current);
+	mc_current = NULL;
       }
 
       mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
@@ -423,6 +428,12 @@ vd_thread(void *aux)
 	  media_codec_deref(mc_current);
 
 	mc_current = media_codec_ref(mc);
+      }
+
+      if(reinit) {
+	if(mc->reinit != NULL)
+	  mc->reinit(mc);
+	reinit = 0;
       }
 
       size = mb->mb_size;
@@ -441,9 +452,7 @@ vd_thread(void *aux)
       break;
 
     case MB_CTRL_REINITIALIZE:
-      if(mc_current != NULL && mc_current->reinit != NULL)
-	mc_current->reinit(mc_current);
-
+      reinit = 1;
       break;
 
 #if ENABLE_DVD
