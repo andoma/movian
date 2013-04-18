@@ -574,6 +574,21 @@ fa_dir_find(const fa_dir_t *fd, rstr_t *url)
 }
 
 
+/**
+ *
+ */
+void
+fa_dir_print(fa_dir_t *fd)
+{
+  fa_dir_entry_t *fde;
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    printf("%s <%s>\n\t%s\n", rstr_get(fde->fde_filename),
+           fde->fde_type == CONTENT_FILE ? "file" : "dir",
+           rstr_get(fde->fde_url));
+  }
+}
+
+
 
 /**
  *

@@ -107,6 +107,7 @@ void fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde);
 
 void fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde);
 
+void fa_dir_print(fa_dir_t *fd);
 
 /**
  *
