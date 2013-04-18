@@ -707,7 +707,8 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
   }
   qargs[qp] = 0;
   hts_mutex_unlock(&plugin_mutex);
-  b = fa_load_query(repo, errbuf, errlen, NULL, qargs, FA_COMPRESSION);
+  b = fa_load_query(repo, errbuf, errlen, NULL, qargs,
+		    FA_COMPRESSION | FA_DISABLE_AUTH);
   hts_mutex_lock(&plugin_mutex);
   if(b == NULL)
     return NULL;
