@@ -795,7 +795,7 @@ plugin_load_repo(void)
       }
     }
   }
-  
+
   r = htsmsg_get_list(msg, "blacklist");
   if(r != NULL) {
     htsmsg_field_t *f;
@@ -811,10 +811,10 @@ plugin_load_repo(void)
 	continue;
 
       LIST_FOREACH(pl, &plugins, pl_link)
-	if(pl->pl_installed && pl->pl_inst_ver &&
+	if(!strcmp(id, pl->pl_id) && pl->pl_installed && pl->pl_inst_ver &&
 	   !strcmp(version, pl->pl_inst_ver))
 	  break;
-      
+
       if(pl != NULL) {
 	notify_add(NULL, NOTIFY_ERROR, NULL, 10, 
 		   _("Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually."), pl->pl_title, pl->pl_inst_ver);
