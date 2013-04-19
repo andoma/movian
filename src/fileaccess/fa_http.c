@@ -32,8 +32,10 @@
 #include "fa_proto.h"
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "htsmsg/htsmsg_store.h"
 #include "misc/str.h"
 #include "misc/sha.h"
+#include "misc/callout.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -384,12 +386,83 @@ validate_cookie(const char *req_host, const char *req_path,
   return 1;
 }
 
+
+/**
+ *
+ */
+static void
+cookie_persist(struct callout *c, void *aux)
+{
+  http_cookie_t *hc;
+  time_t now;
+  time(&now);
+
+  htsmsg_t *m = htsmsg_create_list();
+
+  hts_mutex_lock(&http_cookies_mutex);
+  LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(hc->hc_expire == -1 || now > hc->hc_expire)
+      continue;
+
+    htsmsg_t *c = htsmsg_create_map();
+    htsmsg_add_str(c, "name", hc->hc_name);
+    htsmsg_add_str(c, "path", hc->hc_path);
+    htsmsg_add_str(c, "domain", hc->hc_domain);
+    htsmsg_add_str(c, "value", hc->hc_value);
+    htsmsg_add_s32(c, "expire", hc->hc_expire);
+    htsmsg_add_msg(m, NULL, c);
+  }
+  hts_mutex_unlock(&http_cookies_mutex);
+  htsmsg_store_save(m, "httpcookies", NULL);
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+static void
+load_cookies(void)
+{
+  htsmsg_t *m = htsmsg_store_load("httpcookies");
+  htsmsg_field_t *f;
+  time_t now;
+  time(&now);
+  HTSMSG_FOREACH(f, m) {
+    htsmsg_t *o;
+    if((o = htsmsg_get_map_by_field(f)) == NULL)
+      continue;
+
+    const char *name   = htsmsg_get_str(o, "name");
+    const char *path   = htsmsg_get_str(o, "path");
+    const char *domain = htsmsg_get_str(o, "domain");
+    const char *value  = htsmsg_get_str(o, "value");
+    time_t expire      = htsmsg_get_s32_or_default(o, "expire", -1);
+
+    if(name == NULL || path == NULL || domain == NULL ||
+       value == NULL || expire < now)
+      continue;
+
+    http_cookie_t *hc = calloc(1, sizeof(http_cookie_t));
+    LIST_INSERT_HEAD(&http_cookies, hc, hc_link);
+    hc->hc_name   = strdup(name);
+    hc->hc_path   = strdup(path);
+    hc->hc_domain = strdup(domain);
+    hc->hc_value  = strdup(value);
+    hc->hc_expire = expire;
+  }
+  htsmsg_destroy(m);
+}
+
+
 /**
  *
  */
 static void
 http_cookie_set(char *cookie, const char *req_host, const char *req_path)
 {
+  static callout_t cookie_persist_timer;
+
   char *argv[20];
   int argc, i;
   const char *domain = req_host;
@@ -441,7 +514,10 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
     hc->hc_path = strdup(path);
     hc->hc_domain = strdup(domain);
   }
-  
+
+  if(expire != -1)
+    callout_arm(&cookie_persist_timer, cookie_persist, NULL, 5);
+
   mystrset(&hc->hc_value, value);
   hc->hc_expire = expire;
 
@@ -459,12 +535,19 @@ http_cookie_append(const char *req_host, const char *req_path,
   http_cookie_t *hc;
   htsbuf_queue_t hq;
   const char *s = "";
+  time_t now;
+  time(&now);
+
   htsbuf_queue_init(&hq, 0);
 
   hts_mutex_lock(&http_cookies_mutex);
   LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(hc->hc_expire != -1 && now > hc->hc_expire)
+      continue;
+
     if(!validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
       continue;
+
     htsbuf_append(&hq, s, strlen(s));
     htsbuf_append(&hq, hc->hc_name, strlen(hc->hc_name));
     htsbuf_append(&hq, "=", 1);
@@ -2312,6 +2395,7 @@ http_init(void)
   hts_mutex_init(&http_cookies_mutex);
   hts_mutex_init(&http_server_quirk_mutex);
   hts_mutex_init(&http_auth_caches_mutex);
+  load_cookies();
 }
 
 /**
@@ -2340,7 +2424,6 @@ FAP_REGISTER(http);
  *
  */
 static fa_protocol_t fa_protocol_https = {
-  .fap_init  = http_init,
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "https",
   .fap_scan  = http_scandir,
