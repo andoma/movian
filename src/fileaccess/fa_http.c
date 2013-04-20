@@ -425,6 +425,8 @@ static void
 load_cookies(void)
 {
   htsmsg_t *m = htsmsg_store_load("httpcookies");
+  if(m == NULL)
+    return;
   htsmsg_field_t *f;
   time_t now;
   time(&now);
