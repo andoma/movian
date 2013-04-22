@@ -3382,6 +3382,9 @@ prop_link0(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
 void
 prop_link_ex(prop_t *src, prop_t *dst, prop_sub_t *skipme, int hard)
 {
+  if(src == NULL || dst == NULL)
+    return;
+
   hts_mutex_lock(&prop_mutex);
   prop_link0(src, dst, skipme, hard);
   hts_mutex_unlock(&prop_mutex);
