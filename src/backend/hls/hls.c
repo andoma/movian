@@ -1161,7 +1161,7 @@ hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
       if(l == 0)
         continue;
       const char *v;
-      printf("HLS: %s\n", s);
+      //      printf("HLS: %s\n", s);
       if((v = mystrbegins(s, "#EXT-X-MEDIA:")) != NULL)
         hls_ext_x_media(&h, v);
       else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
