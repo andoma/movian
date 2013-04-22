@@ -424,8 +424,9 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
   if(spp >= video_settings.played_threshold) {
     metadb_set_video_restartpos(canonical_url, -1);
     metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
-    TRACE(TRACE_DEBUG, "Video", "Playback reached %d%%, counting as played",
-	  spp);
+    TRACE(TRACE_DEBUG, "Video",
+	  "Playback reached %d%%, counting as played (%s)",
+	  spp, canonical_url);
   } else if(last_timestamp_presented != PTS_UNSET) {
     metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
   }

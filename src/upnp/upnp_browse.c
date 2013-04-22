@@ -160,11 +160,8 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
  *
  */
 static void
-make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
-	       const char *baseurl, const char *id)
+make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item, const char *url)
 {
-  char url[URL_MAX];
-
   prop_set_string(prop_create(c, "type"), "video");
 
   const char *title = 
@@ -176,8 +173,6 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
 
   item_set_str(m, item, "icon",
 	       "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI");
-
-  snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
   prop_set_string(prop_create(c, "url"), url);
 
@@ -239,9 +234,12 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
       metadb_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
-    make_videoItem(c, m, item, baseurl, id);
+
+    char vurl[URL_MAX];
+    snprintf(vurl, sizeof(vurl), "%s:%s", baseurl, id);
+    make_videoItem(c, m, item, vurl);
     if(db != NULL)
-      metadb_bind_url_to_prop(db, url, c);
+      metadb_bind_url_to_prop(db, vurl, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
