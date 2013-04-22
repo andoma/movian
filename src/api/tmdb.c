@@ -576,7 +576,7 @@ tmdb_init(void)
 			 (void *)"tmdb");
 
   settings_create_bool(tmdb->ms_settings, "enabled", _p("Use original title"),
-		       0, NULL, use_orig_title, NULL,
+		       0, store, use_orig_title, NULL,
 		       SETTINGS_INITIAL_UPDATE, NULL,
 		       settings_generic_save_settings, 
 		       (void *)"tmdb");
