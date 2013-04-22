@@ -1,0 +1,5 @@
+upnp: Correctly bind playcount, restartpos metadata for video items
+
+After a recent other fix some metadata bound to UPnP items were lost
+
+Fixes #1693
