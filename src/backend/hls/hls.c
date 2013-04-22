@@ -1153,20 +1153,25 @@ hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
 
   hls_variant_t *hv = NULL;
 
-  int l;
-  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
-    s[l] = 0;
-    if(l == 0)
-      continue;
-    const char *v;
-    //    printf("HLS: %s\n", s);
-    if((v = mystrbegins(s, "#EXT-X-MEDIA:")) != NULL)
-      hls_ext_x_media(&h, v);
-    else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
-      hls_ext_x_stream_inf(&h, v, &hv);
-    else if(s[0] != '#') {
-      hls_add_variant(&h, s, &hv, &h.h_primary);
+  if(strstr(s, "#EXT-X-STREAM-INF:")) {
+
+    int l;
+    for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
+      s[l] = 0;
+      if(l == 0)
+        continue;
+      const char *v;
+      printf("HLS: %s\n", s);
+      if((v = mystrbegins(s, "#EXT-X-MEDIA:")) != NULL)
+        hls_ext_x_media(&h, v);
+      else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
+        hls_ext_x_stream_inf(&h, v, &hv);
+      else if(s[0] != '#') {
+        hls_add_variant(&h, s, &hv, &h.h_primary);
+      }
     }
+  } else {
+    hls_add_variant(&h, h.h_baseurl, &hv, &h.h_primary);
   }
   hls_dump(&h);
 

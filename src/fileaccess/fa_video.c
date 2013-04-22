@@ -626,16 +626,18 @@ be_file_playvideo(const char *url, media_pipe_t *mp,
 #endif
     }
   }
-  
 
-  // See if this is an HLS multi-variant playlist
+
+  // See if this is an HLS playlist
 
   if(fa_seek(fh, 0, SEEK_SET) == 0) {
     char buf[1024];
     int l = fa_read(fh, buf, sizeof(buf) - 1);
     if(l > 10) {
       buf[l] = 0;
-      if(mystrbegins(buf, "#EXTM3U") && strstr(buf, "#EXT-X-STREAM-INF:")) {
+      if(mystrbegins(buf, "#EXTM3U") &&
+         (strstr(buf, "#EXT-X-STREAM-INF:") ||
+          strstr(buf, "#EXTINF"))) {
         htsbuf_queue_t hq;
         htsbuf_queue_init(&hq, 0);
         htsbuf_append(&hq, buf, l);
