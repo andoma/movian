@@ -1,0 +1,3 @@
+Fix broken settings for TMDB (Did not save 'use original title' to disk)
+
+Fixes #1694
