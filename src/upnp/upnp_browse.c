@@ -492,6 +492,7 @@ ub_destroy(upnp_browse_t *ub)
   prop_ref_dec(ub->ub_contents);
   prop_ref_dec(ub->ub_filter);
   prop_ref_dec(ub->ub_canFilter);
+  free(ub);
 }
 
 

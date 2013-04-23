@@ -2354,6 +2354,7 @@ metadata_folder_to_season(const char *s,
 	}
 	return 0;
       }
+      hts_regfree(&re);
     }
   }
   return -1;

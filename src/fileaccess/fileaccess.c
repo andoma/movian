@@ -713,7 +713,7 @@ fa_load(const char *url, const char **vpaths,
     free(etag);
 
     if(cache_control == BYPASS_CACHE && d) {
-      free(data2);
+      buf_release(data2);
       return NOT_MODIFIED;
     }
 
