@@ -654,7 +654,7 @@ struct metadata_lazy_video {
   prop_t *mlv_m;
 
   prop_t *mlv_title_opt;
-  prop_t *mlv_info;
+  prop_t *mlv_info_opt;
   prop_t *mlv_info_text;
 
   prop_t *mlv_source_opt;
@@ -663,16 +663,15 @@ struct metadata_lazy_video {
   prop_t *mlv_alt_opt;
   prop_sub_t *mlv_alt_opt_sub;
 
-  prop_t *mlv_sq;
-  prop_sub_t *mlv_sq_sub;
-
-  prop_t *mlv_refresh;
+  prop_t *mlv_refresh_opt;
   prop_sub_t *mlv_refresh_sub;
 
   rstr_t *mlv_custom_query;
+  prop_t *mlv_custom_query_opt;
   prop_sub_t *mlv_custom_query_sub;
 
   rstr_t *mlv_custom_title;
+  prop_t *mlv_custom_title_opt;
   prop_sub_t *mlv_custom_title_sub;
  
   // Triggers
@@ -973,7 +972,8 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
   if(custom_title && !*rstr_get(custom_title))
     custom_title = NULL;
 
-  if(mlv->mlv_duration && mlv->mlv_duration < 300) {
+  // If duration is low skip this unless user have specified a custom query
+  if(mlv->mlv_duration && mlv->mlv_duration < 300 && sq == NULL) {
     goto bad;
   }
 
@@ -1648,7 +1648,7 @@ mlv_sub_actions(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-mlv_sub_query(void *opaque, prop_event_t event, ...)
+mlv_custom_query_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_lazy_video_t *mlv = opaque;
   va_list ap;
@@ -1724,11 +1724,12 @@ mlv_kill(metadata_lazy_prop_t *mlp)
 {
   metadata_lazy_video_t *mlv = (metadata_lazy_video_t *)mlp;
   prop_destroy(mlv->mlv_title_opt);
-  prop_destroy(mlv->mlv_info);
+  prop_destroy(mlv->mlv_info_opt);
   prop_destroy(mlv->mlv_source_opt);
   prop_destroy(mlv->mlv_alt_opt);
-  prop_destroy(mlv->mlv_sq);
-  prop_destroy(mlv->mlv_refresh);
+  prop_destroy(mlv->mlv_custom_query_opt);
+  prop_destroy(mlv->mlv_custom_title_opt);
+  prop_destroy(mlv->mlv_refresh_opt);
 }
 
 /**
@@ -1746,21 +1747,22 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
   
   prop_unsubscribe(mlv->mlv_source_opt_sub);
   prop_unsubscribe(mlv->mlv_alt_opt_sub);
-  prop_unsubscribe(mlv->mlv_sq_sub);
   prop_unsubscribe(mlv->mlv_refresh_sub);
   prop_unsubscribe(mlv->mlv_custom_title_sub);
   prop_unsubscribe(mlv->mlv_custom_query_sub);
 
   prop_ref_dec(mlv->mlv_title_opt);
-  prop_ref_dec(mlv->mlv_info);
+  prop_ref_dec(mlv->mlv_info_opt);
   prop_ref_dec(mlv->mlv_info_text);
   prop_ref_dec(mlv->mlv_source_opt);
   prop_ref_dec(mlv->mlv_alt_opt);
-  prop_ref_dec(mlv->mlv_refresh);
+  prop_ref_dec(mlv->mlv_refresh_opt);
+
+  prop_ref_dec(mlv->mlv_custom_query_opt);
+  prop_ref_dec(mlv->mlv_custom_title_opt);
 
   rstr_release(mlv->mlv_filename);
   rstr_release(mlv->mlv_imdb_id);
-  prop_ref_dec(mlv->mlv_sq);
   rstr_release(mlv->mlv_custom_query);
   rstr_release(mlv->mlv_custom_title);
   rstr_release(mlv->mlv_url);
@@ -1842,81 +1844,93 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
     mlv_sub(mlv, mlv->mlv_m, "rating", METADATA_PROP_RATING);
   
 
-  prop_t *m;
+  prop_t *p;
   prop_vec_t *pv = prop_vec_create(10);
 
+  // -------------------------------------------------------------------
   // Separator
 
-  mlv->mlv_title_opt = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_title_opt, "type"), "separator");
-  prop_set_int(prop_create(mlv->mlv_title_opt, "enabled"), 1);
-  m = prop_create(mlv->mlv_title_opt, "metadata");
-  prop_link(_p("Metadata search"), prop_create(m, "title"));
+  p = mlv->mlv_title_opt = prop_ref_inc(prop_create_root(NULL));
+  prop_set(p, "type",    PROP_SET_STRING, "separator");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
 
-  pv = prop_vec_append(pv, mlv->mlv_title_opt);
+  prop_link(_p("Metadata search"),
+	    prop_create(prop_create(mlv->mlv_title_opt, "metadata"), "title"));
 
+  pv = prop_vec_append(pv, p);
+
+  // -------------------------------------------------------------------
   // Info
 
-  mlv->mlv_info = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_info, "type"), "info");
-  prop_set_int(prop_create(mlv->mlv_info, "enabled"), 1);
-  mlv->mlv_info_text = prop_create_r(prop_create(mlv->mlv_info, "metadata"),
-				     "title");
+  p = mlv->mlv_info_opt = prop_ref_inc(prop_create_root(NULL));
+  prop_set(p, "type",    PROP_SET_STRING, "info");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+  mlv->mlv_info_text = prop_create_r(prop_create(p, "metadata"), "title");
 
-  pv = prop_vec_append(pv, mlv->mlv_info);
+  pv = prop_vec_append(pv, p);
 
   // We're gonna start binding stuff now which ties us in
   // global data structures, so we need to lock
 
   hts_mutex_lock(&metadata_mutex);
 
+  // -------------------------------------------------------------------
   // Metadata source selection
 
-  mlv->mlv_source_opt = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_source_opt, "type"), "multiopt");
-  prop_set_int(prop_create(mlv->mlv_source_opt, "enabled"), 1);
-  m = prop_create(mlv->mlv_source_opt, "metadata");
-  prop_link(_p("Metadata source"), prop_create(m, "title"));
+  p = mlv->mlv_source_opt = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",    PROP_SET_STRING, "multiopt");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+
+  prop_link(_p("Metadata source"),
+	    prop_create(prop_create(p, "metadata"), "title"));
 
   mlv->mlv_source_opt_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_source, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, prop_create(mlv->mlv_source_opt, "options"),
+		   PROP_TAG_ROOT, prop_create(p, "options"),
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
-  pv = prop_vec_append(pv, mlv->mlv_source_opt);
+  pv = prop_vec_append(pv, p);
 
+  // -------------------------------------------------------------------
   // Metadata alternative selection
 
-  mlv->mlv_alt_opt = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_alt_opt, "type"), "multiopt");
-  prop_set_int(prop_create(mlv->mlv_alt_opt, "enabled"), 1);
-  m = prop_create(mlv->mlv_alt_opt, "metadata");
-  prop_link(_p("Movie"), prop_create(m, "title"));
+  p = mlv->mlv_alt_opt = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",    PROP_SET_STRING, "multiopt");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+
+  prop_link(_p("Movie"),
+	    prop_create(prop_create(p, "metadata"), "title"));
 
   mlv->mlv_alt_opt_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_alternative, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, prop_create(mlv->mlv_alt_opt, "options"),
+		   PROP_TAG_ROOT, prop_create(p, "options"),
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
-  pv = prop_vec_append(pv, mlv->mlv_alt_opt);
+  pv = prop_vec_append(pv, p);
 
 
 
+  // -------------------------------------------------------------------
   // Metadata search query
 
-  mlv->mlv_sq = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_sq, "type"), "string");
-  prop_set_int(prop_create(mlv->mlv_sq, "enabled"), 1);
-  m = prop_create(mlv->mlv_sq, "metadata");
-  prop_set_string(prop_create(mlv->mlv_sq, "action"), "refreshMetadata");
-  prop_link(_p("Custom search query"), prop_create(m, "title"));
-  prop_t *v = prop_create(mlv->mlv_sq, "value");
+  p = mlv->mlv_custom_query_opt = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",    PROP_SET_STRING, "string");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+
+  prop_link(_p("Custom search query"),
+	    prop_create(prop_create(p, "metadata"), "title"));
+
+  prop_t *v = prop_create(p, "value");
 
   rstr_t *cur = kv_url_opt_get_rstr(rstr_get(url), KVSTORE_DOMAIN_SYS, 
 				    "metacustomquery");
@@ -1928,23 +1942,25 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   mlv->mlv_custom_query_sub = 
     prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, mlv_sub_query, mlv,
+		   PROP_TAG_CALLBACK, mlv_custom_query_cb, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
 		   PROP_TAG_ROOT, v,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
-  pv = prop_vec_append(pv, mlv->mlv_sq);
+  pv = prop_vec_append(pv, p);
     
-
+  // -------------------------------------------------------------------
   // Metadata refresh
 
-  mlv->mlv_refresh = prop_ref_inc(prop_create_root(NULL));
-  prop_set_string(prop_create(mlv->mlv_refresh, "type"), "action");
-  prop_set_string(prop_create(mlv->mlv_refresh, "action"), "refreshMetadata");
-  prop_set_int(prop_create(mlv->mlv_refresh, "enabled"), 1);
-  m = prop_create(mlv->mlv_refresh, "metadata");
-  prop_link(_p("Refresh metadata"), prop_create(m, "title"));
+  p = mlv->mlv_refresh_opt = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",    PROP_SET_STRING, "action");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+
+  prop_link(_p("Refresh metadata"),
+	    prop_create(prop_create(p, "metadata"), "title"));
 
   mlv->mlv_refresh_sub = 
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
@@ -1954,17 +1970,21 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
-  pv = prop_vec_append(pv, mlv->mlv_refresh);
+  pv = prop_vec_append(pv, p);
 
+  // -------------------------------------------------------------------
   // Custom movie title
 
-  prop_t *p = prop_create_root(NULL);
-  prop_set_string(prop_create(mlv->mlv_sq, "type"), "string");
-  prop_set_int(prop_create(mlv->mlv_sq, "enabled"), 1);
-  m = prop_create(mlv->mlv_sq, "metadata");
-  prop_set_string(prop_create(mlv->mlv_sq, "action"), "refreshMetadata");
-  prop_link(_p("Custom title"), prop_create(m, "title"));
-  v = prop_create(mlv->mlv_sq, "value");
+  p = mlv->mlv_custom_title_opt = prop_ref_inc(prop_create_root(NULL));
+
+  prop_set(p, "type",    PROP_SET_STRING, "string");
+  prop_set(p, "enabled", PROP_SET_INT, 1);
+  prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+
+  prop_link(_p("Custom title"),
+	    prop_create(prop_create(p, "metadata"), "title"));
+
+  v = prop_create(p, "value");
 
   cur = metadb_item_get_user_title(rstr_get(url));
 
