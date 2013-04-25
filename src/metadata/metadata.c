@@ -656,7 +656,8 @@ struct metadata_lazy_video {
 
   prop_t *mlv_title_opt;
   prop_t *mlv_info_opt;
-  prop_t *mlv_info_text;
+  prop_t *mlv_info_text_prop;
+  rstr_t *mlv_info_text_rstr;
 
   prop_t *mlv_source_opt;
   prop_sub_t *mlv_source_opt_sub;
@@ -727,7 +728,7 @@ get_ms(metadata_type_t type, int id)
  *
  */
 static void 
-build_info_text(const metadata_lazy_video_t *mlv, const metadata_t *md)
+build_info_text(metadata_lazy_video_t *mlv, const metadata_t *md)
 {
   rstr_t *txt;
   
@@ -779,8 +780,10 @@ build_info_text(const metadata_lazy_video_t *mlv, const metadata_t *md)
     rstr_release(qtype);
   }
 
-  prop_set_rstring(mlv->mlv_info_text, txt);
-  rstr_release(txt);
+  prop_set_rstring(mlv->mlv_info_text_prop, txt);
+  rstr_release(mlv->mlv_info_text_rstr);
+
+  mlv->mlv_info_text_rstr = txt;
 }
 
 
@@ -1757,7 +1760,8 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
 
   prop_ref_dec(mlv->mlv_title_opt);
   prop_ref_dec(mlv->mlv_info_opt);
-  prop_ref_dec(mlv->mlv_info_text);
+  prop_ref_dec(mlv->mlv_info_text_prop);
+  rstr_release(mlv->mlv_info_text_rstr);
   prop_ref_dec(mlv->mlv_source_opt);
   prop_ref_dec(mlv->mlv_alt_opt);
   prop_ref_dec(mlv->mlv_refresh_opt);
@@ -1838,7 +1842,8 @@ mlv_add_options(metadata_lazy_video_t *mlv)
   p = mlv->mlv_info_opt = prop_ref_inc(prop_create_root(NULL));
   prop_set(p, "type",    PROP_SET_STRING, "info");
   prop_set(p, "enabled", PROP_SET_INT, 1);
-  mlv->mlv_info_text = prop_create_r(prop_create(p, "metadata"), "title");
+  mlv->mlv_info_text_prop = prop_create_r(prop_create(p, "metadata"), "title");
+  prop_set_rstring(mlv->mlv_info_text_prop, mlv->mlv_info_text_rstr);
 
   pv = prop_vec_append(pv, p);
 
