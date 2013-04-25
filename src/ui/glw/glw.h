@@ -1069,6 +1069,8 @@ void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
 
+void glw_idle(glw_root_t *gr);
+
 void glw_post_scene(glw_root_t *gr);
 
 void glw_reap(glw_root_t *gr);

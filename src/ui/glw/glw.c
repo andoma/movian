@@ -428,6 +428,16 @@ glw_reap(glw_root_t *gr)
  *
  */
 void
+glw_idle(glw_root_t *gr)
+{
+  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
+  glw_reap(gr);
+}
+
+/**
+ *
+ */
+void
 glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
