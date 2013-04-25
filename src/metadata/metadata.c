@@ -651,6 +651,7 @@ struct metadata_lazy_video {
   rstr_t *mlv_folder;
   rstr_t *mlv_imdb_id;
 
+  prop_t *mlv_root;
   prop_t *mlv_m;
 
   prop_t *mlv_title_opt;
@@ -674,6 +675,8 @@ struct metadata_lazy_video {
   prop_t *mlv_custom_title_opt;
   prop_sub_t *mlv_custom_title_sub;
  
+  prop_sub_t *mlv_options_monitor_sub;
+
   // Triggers
   prop_sub_t *mlv_trig_title;
   prop_sub_t *mlv_trig_desc;
@@ -1677,7 +1680,7 @@ mlv_custom_query_cb(void *opaque, prop_event_t event, ...)
  *
  */
 static void
-mlv_sub_custom_title(void *opaque, prop_event_t event, ...)
+mlv_custom_title_cb(void *opaque, prop_event_t event, ...)
 {
   metadata_lazy_video_t *mlv = opaque;
   va_list ap;
@@ -1744,7 +1747,8 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
   prop_unsubscribe(mlv->mlv_trig_desc);
   prop_unsubscribe(mlv->mlv_trig_rating);
 
-  
+  prop_unsubscribe(mlv->mlv_options_monitor_sub);
+
   prop_unsubscribe(mlv->mlv_source_opt_sub);
   prop_unsubscribe(mlv->mlv_alt_opt_sub);
   prop_unsubscribe(mlv->mlv_refresh_sub);
@@ -1767,6 +1771,9 @@ mlv_dtor(metadata_lazy_prop_t *mlp)
   rstr_release(mlv->mlv_custom_title);
   rstr_release(mlv->mlv_url);
   rstr_release(mlv->mlv_folder);
+
+  prop_ref_dec(mlv->mlv_m);
+  prop_ref_dec(mlv->mlv_root);
 }
 
 
@@ -1807,43 +1814,9 @@ mlv_sub(metadata_lazy_video_t *mlv, prop_t *m,
 /**
  *
  */
-metadata_lazy_video_t *
-metadata_bind_video_info(rstr_t *url, rstr_t *filename,
-			 rstr_t *imdb_id, float duration,
-			 prop_t *root,
-			 rstr_t *folder, int lonely, int passive,
-			 int year, int season, int episode)
+static void
+mlv_add_options(metadata_lazy_video_t *mlv)
 {
-  metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
-
-  mlv->mlv_filename = rstr_dup(filename);
-  mlv->mlv_folder = rstr_dup(folder);
-  mlv->mlv_url = rstr_dup(url);
-  mlv->mlv_duration = duration;
-  mlv->mlv_imdb_id = rstr_dup(imdb_id);
-  mlv->mlv_type = METADATA_TYPE_VIDEO;
-  mlv->mlv_lonely = lonely;
-  mlv->mlv_passive = passive;
-  mlv->mlv_m = prop_create_r(root, "metadata");
-
-
-  if(season >= 0 && episode >= 0) {
-    mlv->mlv_qtype = METADATA_QTYPE_TVSHOW;
-    mlv->mlv_season = season;
-    mlv->mlv_episode = episode;
-  } else if(year >= 0) {
-    mlv->mlv_qtype = METADATA_QTYPE_MOVIE;
-    mlv->mlv_year = year;
-  }
-
-  mlv->mlv_trig_title =
-    mlv_sub(mlv, mlv->mlv_m, "title", METADATA_PROP_TITLE);
-  mlv->mlv_trig_desc =
-    mlv_sub(mlv, mlv->mlv_m, "description", METADATA_PROP_DESCRIPTION);
-  mlv->mlv_trig_rating =
-    mlv_sub(mlv, mlv->mlv_m, "rating", METADATA_PROP_RATING);
-  
-
   prop_t *p;
   prop_vec_t *pv = prop_vec_create(10);
 
@@ -1869,10 +1842,6 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
 
   pv = prop_vec_append(pv, p);
 
-  // We're gonna start binding stuff now which ties us in
-  // global data structures, so we need to lock
-
-  hts_mutex_lock(&metadata_mutex);
 
   // -------------------------------------------------------------------
   // Metadata source selection
@@ -1926,25 +1895,18 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   prop_set(p, "type",    PROP_SET_STRING, "string");
   prop_set(p, "enabled", PROP_SET_INT, 1);
   prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+  prop_set(p, "value",   PROP_SET_RSTRING, mlv->mlv_custom_query);
 
   prop_link(_p("Custom search query"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  prop_t *v = prop_create(p, "value");
-
-  rstr_t *cur = kv_url_opt_get_rstr(rstr_get(url), KVSTORE_DOMAIN_SYS, 
-				    "metacustomquery");
-
-  if(cur != NULL) {
-    prop_set_rstring(v, cur);
-    rstr_release(cur);
-  }
-
+ 
   mlv->mlv_custom_query_sub = 
-    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_NAME("option", "value"),
 		   PROP_TAG_CALLBACK, mlv_custom_query_cb, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, v,
+		   PROP_TAG_NAMED_ROOT, p, "option",
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
@@ -1966,7 +1928,7 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_actions, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, root,
+		   PROP_TAG_ROOT, p,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
@@ -1980,37 +1942,117 @@ metadata_bind_video_info(rstr_t *url, rstr_t *filename,
   prop_set(p, "type",    PROP_SET_STRING, "string");
   prop_set(p, "enabled", PROP_SET_INT, 1);
   prop_set(p, "action",  PROP_SET_STRING, "refreshMetadata");
+  prop_set(p, "value",   PROP_SET_RSTRING, mlv->mlv_custom_title);
 
   prop_link(_p("Custom title"),
 	    prop_create(prop_create(p, "metadata"), "title"));
 
-  v = prop_create(p, "value");
-
-  cur = metadb_item_get_user_title(rstr_get(url));
-
-  if(cur != NULL) {
-    prop_set_rstring(v, cur);
-    rstr_release(cur);
-  }
-
   mlv->mlv_custom_title_sub = 
-    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
-		   PROP_TAG_CALLBACK, mlv_sub_custom_title, mlv,
+    prop_subscribe(PROP_SUB_TRACK_DESTROY | PROP_SUB_NO_INITIAL_UPDATE,
+		   PROP_TAG_NAME("option", "value"),
+		   PROP_TAG_CALLBACK, mlv_custom_title_cb, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, v,
+		   PROP_TAG_NAMED_ROOT, p, "option",
 		   NULL);
+
   mlv->mlv_mlp.mlp_refcount++;
 
   pv = prop_vec_append(pv, p);
 
   // Add all options
 
-  prop_t *options = prop_create_r(root, "options");
+  prop_t *options = prop_create_r(mlv->mlv_root, "options");
 
   prop_set_parent_vector(pv, options, NULL, NULL);
   prop_vec_release(pv);
 
   prop_ref_dec(options);
+
+}
+
+
+/**
+ *
+ */
+static void
+mlv_options_cb(void *opaque, prop_event_t event, ...)
+{
+  metadata_lazy_video_t *mlv = opaque;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    mlp_destroy(&mlv->mlv_mlp);
+    break;
+
+  case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
+    printf("Adding options\n");
+    mlv_add_options(mlv);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+/**
+ *
+ */
+metadata_lazy_video_t *
+metadata_bind_video_info(rstr_t *url, rstr_t *filename,
+			 rstr_t *imdb_id, float duration,
+			 prop_t *root,
+			 rstr_t *folder, int lonely, int passive,
+			 int year, int season, int episode)
+{
+  metadata_lazy_video_t *mlv = mlp_alloc(&mlc_video);
+
+  mlv->mlv_filename = rstr_dup(filename);
+  mlv->mlv_folder = rstr_dup(folder);
+  mlv->mlv_url = rstr_dup(url);
+  mlv->mlv_duration = duration;
+  mlv->mlv_imdb_id = rstr_dup(imdb_id);
+  mlv->mlv_type = METADATA_TYPE_VIDEO;
+  mlv->mlv_lonely = lonely;
+  mlv->mlv_passive = passive;
+  mlv->mlv_root = prop_ref_inc(root);
+  mlv->mlv_m = prop_create_r(root, "metadata");
+
+
+  if(season >= 0 && episode >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_TVSHOW;
+    mlv->mlv_season = season;
+    mlv->mlv_episode = episode;
+  } else if(year >= 0) {
+    mlv->mlv_qtype = METADATA_QTYPE_MOVIE;
+    mlv->mlv_year = year;
+  }
+
+  mlv->mlv_custom_title = metadb_item_get_user_title(rstr_get(mlv->mlv_url));
+  mlv->mlv_custom_query = kv_url_opt_get_rstr(rstr_get(mlv->mlv_url),
+					      KVSTORE_DOMAIN_SYS, 
+					      "metacustomquery");
+
+  hts_mutex_lock(&metadata_mutex);
+
+  mlv->mlv_trig_title =
+    mlv_sub(mlv, mlv->mlv_m, "title", METADATA_PROP_TITLE);
+  mlv->mlv_trig_desc =
+    mlv_sub(mlv, mlv->mlv_m, "description", METADATA_PROP_DESCRIPTION);
+  mlv->mlv_trig_rating =
+    mlv_sub(mlv, mlv->mlv_m, "rating", METADATA_PROP_RATING);
+
+  mlv->mlv_mlp.mlp_refcount++;
+
+  mlv->mlv_options_monitor_sub = 
+    prop_subscribe(PROP_SUB_SUBSCRIPTION_MONITOR | PROP_SUB_TRACK_DESTROY,
+		   PROP_TAG_NAME("node", "options"),
+		   PROP_TAG_CALLBACK, mlv_options_cb, mlv,
+		   PROP_TAG_COURIER, metadata_courier,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
 
   hts_mutex_unlock(&metadata_mutex);
 
