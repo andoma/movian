@@ -143,6 +143,7 @@ jsg_release(js_setting_group_t *jsg)
   
   free(jsg->jsg_spath);
   prop_ref_dec(jsg->jsg_root);
+  free(jsg->jsg_kv_url);
   free(jsg);
 }
 

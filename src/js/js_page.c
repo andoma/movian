@@ -574,16 +574,17 @@ js_item_bindVideoMetadata(JSContext *cx, JSObject *obj,
 {
   js_item_t *ji = JS_GetPrivate(cx, obj);
   JSObject *o = NULL;
-
+  rstr_t *title;
   if(!JS_ConvertArguments(cx, argc, argv, "o", &o))
     return JS_FALSE;
   
-  rstr_t *title = js_prop_rstr(cx, o, "filename");
-  int year      = js_prop_int_or_default(cx, o, "year", 0);
+  rstr_t *filename = js_prop_rstr(cx, o, "filename");
+  int year         = js_prop_int_or_default(cx, o, "year", 0);
 
-  if(title != NULL) {
+  if(filename != NULL) {
     // Raw filename case
-    title = metadata_remove_postfix_rstr(title);
+    title = metadata_remove_postfix_rstr(filename);
+    rstr_release(filename);
     year = -1;
   } else {
     title = js_prop_rstr(cx, o, "title");
