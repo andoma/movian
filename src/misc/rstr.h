@@ -20,9 +20,13 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include "config.h"
 #include "arch/atomic.h"
 
+#if !ENABLE_BUGHUNT
 #define USE_RSTR_REFCOUNTING
+#endif
+
 
 // #define RSTR_STATS
 

@@ -21,12 +21,15 @@
 
 #include <stdlib.h>
 
+#include "config.h"
 #include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "misc/rstr.h"
 
-// #define PROP_DEBUG
+#if ENABLE_BUGHUNT
+#define PROP_DEBUG
+#endif
 
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;

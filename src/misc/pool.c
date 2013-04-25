@@ -27,7 +27,10 @@
 #include "showtime.h"
 #include "pool.h"
 
-// #define POOL_BY_MALLOC
+#if ENABLE_BUGHUNT
+#define POOL_BY_MALLOC
+#endif
+
 
 /**
  *

@@ -1,8 +1,8 @@
 #pragma once
+#include "showtime.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 
-// #define POOL_DEBUG
 
 LIST_HEAD(pool_segment_list, pool_segment);
 

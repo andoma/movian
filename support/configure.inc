@@ -84,6 +84,7 @@ CONFIG_LIST="
  webpopup
  valgrind
  xmp
+ bughunt
 "
 
 cleanup() {
