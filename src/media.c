@@ -1473,6 +1473,7 @@ mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
     
     event_ts_t *ets = event_create(EVENT_CURRENT_TIME, sizeof(event_ts_t));
     ets->ts = ts;
+    ets->epoch = epoch;
     mp->mp_seek_base = ts;
     mp_enqueue_event_locked(mp, &ets->h);
     event_release(&ets->h);

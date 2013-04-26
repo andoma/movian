@@ -740,6 +740,7 @@ video_player_idle(void *aux)
       e = play_video(rstr_get(play_url), mp, 
 		     play_flags, play_priority, 
 		     errbuf, sizeof(errbuf), vq);
+      mp_bump_epoch(mp);
       if(e == NULL)
 	prop_set_string(errprop, errbuf);
     }

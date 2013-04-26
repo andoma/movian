@@ -75,7 +75,7 @@ struct video_decoder;
 typedef struct event_ts {
   event_t h;
   int64_t ts;
-
+  int epoch;
 } event_ts_t;
 
 

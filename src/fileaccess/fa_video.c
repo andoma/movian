@@ -367,20 +367,24 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
     if(event_is_type(e, EVENT_CURRENT_TIME)) {
 
       ets = (event_ts_t *)e;
-      int sec = ets->ts / 1000000;
-      last_timestamp_presented = ets->ts;
 
-      // Update restartpos every 5 seconds
-      if(sec < restartpos_last || sec >= restartpos_last + 5) {
-	restartpos_last = sec;
-	metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
-      }
+      if(ets->epoch == mp->mp_epoch) {
+	int sec = ets->ts / 1000000;
+	last_timestamp_presented = ets->ts;
+
+	// Update restartpos every 5 seconds
+	if(sec < restartpos_last || sec >= restartpos_last + 5) {
+	  restartpos_last = sec;
+	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
+	}
       
-      if(sec != lastsec) {
-	lastsec = sec;
-	update_seek_index(sidx, sec);
-	update_seek_index(cidx, sec);
+	if(sec != lastsec) {
+	  lastsec = sec;
+	  update_seek_index(sidx, sec);
+	  update_seek_index(cidx, sec);
+	}
       }
+
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
