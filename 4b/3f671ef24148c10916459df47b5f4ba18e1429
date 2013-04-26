@@ -1,0 +1,3 @@
+Fix bug that caused "Custom search query" to disappear for video items
+
+Fixes #1696
