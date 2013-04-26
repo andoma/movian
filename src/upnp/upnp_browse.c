@@ -236,7 +236,7 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
 		     strlen("object.item.videoItem"))) {
 
     char vurl[URL_MAX];
-    snprintf(vurl, sizeof(vurl), "%s:%s", baseurl, id);
+    snprintf(vurl, sizeof(vurl), "%s:%s#%s", baseurl, id, url);
     make_videoItem(c, m, item, vurl);
     if(db != NULL)
       metadb_bind_url_to_prop(db, vurl, c);
@@ -825,6 +825,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   const char *url = NULL, *mimetype = NULL, *title;
   char *str, *vpstr;
   size_t len;
+  char canonicalurl[512];
 
   if((tags = htsmsg_get_map(item, "tags")) == NULL)
     return browse_fail(ub, "UPNP Video playback: No tags in item");
@@ -864,8 +865,10 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 
   // Construct videoparam JSON blob
 
+  snprintf(canonicalurl, sizeof(canonicalurl), "%s#%s", ub->ub_url, url);
+
   htsmsg_t *vp = htsmsg_create_map();
-  htsmsg_add_str(vp, "canonicalUrl", ub->ub_url);
+  htsmsg_add_str(vp, "canonicalUrl", canonicalurl);
 
   htsmsg_add_u32(vp, "no_fs_scan", 1); /* Don't try to scan parent directory
 					* for subtitles
@@ -1041,9 +1044,13 @@ upnp_browse_thread(void *aux)
 int
 be_upnp_browse(prop_t *page, const char *url, int sync)
 {
-
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
   ub->ub_url = strdup(url);
+
+  char *hash = strchr(ub->ub_url, '#');
+  if(hash != NULL)
+    *hash = 0;
+
   ub->ub_page = prop_ref_inc(page);
   ub->ub_source = prop_create_r(ub->ub_page, "source");
 
