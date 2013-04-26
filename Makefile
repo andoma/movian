@@ -36,7 +36,7 @@ PROG=${BUILDDIR}/showtime
 include ${BUILDDIR}/config.mak
 
 CFLAGS_std = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
-		-Wmissing-prototypes -Wno-multichar  -Iext/dvd
+		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99
 
 CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 

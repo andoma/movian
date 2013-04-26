@@ -87,4 +87,8 @@ const char *charset_get_name(const void *ptr);
 
 struct rstr *get_random_string(void);
 
+char *lp_get(char **lp);
+
+#define LINEPARSE(out, src) for(char *lp = src, *out; (out = lp_get(&lp)) != NULL; )
+
 #endif

@@ -1369,3 +1369,30 @@ get_random_string(void)
   }
   return rstr_allocl(buf, 40);
 }
+
+
+/**
+ *
+ */
+char *
+lp_get(char **lp)
+{
+  char *r;
+  do {
+    if(*lp == NULL)
+      return NULL;
+    r = *lp;
+    int l = strcspn(r, "\r\n");
+     if(r[l] == 0) {
+      *lp = NULL;
+    } else {
+      r[l] = 0;
+      char *s = r + l + 1;
+      while(*s == '\r' || *s == '\n')
+        s++;
+      *lp = s;
+    }
+  } while(*r == 0);
+  return r;
+}
+
