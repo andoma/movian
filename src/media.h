@@ -155,6 +155,7 @@ typedef struct media_codec {
 
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
+  void (*reconfigure)(struct media_codec *mc);
 
 } media_codec_t;
 
@@ -192,7 +193,8 @@ typedef struct media_buf {
     MB_CTRL_DVD_HILITE,
     MB_CTRL_EXT_SUBTITLE,
 
-    MB_CTRL_REINITIALIZE,
+    MB_CTRL_REINITIALIZE, // Full reinit (such as VDPAU context loss)
+    MB_CTRL_RECONFIGURE,  // Reconfigure (such as OMX output port changed)
 
     MB_CTRL_REQ_OUTPUT_SIZE,
     MB_CTRL_DVD_SPU2,
@@ -435,6 +437,7 @@ typedef struct media_pipe {
   void (*mp_seek_initiate)(struct media_pipe *mp);
   void (*mp_seek_audio_done)(struct media_pipe *mp);
   void (*mp_seek_video_done)(struct media_pipe *mp);
+  void (*mp_hold_changed)(struct media_pipe *mp);
 
 } media_pipe_t;
 
@@ -520,6 +523,8 @@ void media_buf_free_locked(media_pipe_t *mp, media_buf_t *mb);
 void media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb);
 
 struct AVPacket;
+
+void mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
 media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);

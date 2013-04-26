@@ -455,6 +455,10 @@ vd_thread(void *aux)
       reinit = 1;
       break;
 
+    case MB_CTRL_RECONFIGURE:
+      mb->mb_cw->reconfigure(mc);
+      break;
+
 #if ENABLE_DVD
     case MB_DVD_RESET_SPU:
       hts_mutex_lock(&mp->mp_overlay_mutex);

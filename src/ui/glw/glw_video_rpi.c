@@ -1,6 +1,6 @@
 /*
- *  VDPAU accelerated OpenGL video engine
- *  Copyright (C) 2010 Andreas Öman
+ *  OMX video output
+ *  Copyright (C) 2013 Andreas Öman
  *
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -47,6 +47,8 @@ typedef struct rpi_video_display {
   int64_t rvd_delta;
   int rvd_epoch;
 
+  int rvd_reconfigure;
+
 } rpi_video_display_t;
 
 
@@ -58,7 +60,6 @@ rvd_init(glw_video_t *gv)
 {
   rpi_video_display_t *rvd = calloc(1, sizeof(rpi_video_display_t));
   gv->gv_aux = rvd;
-
   return 0;
 }
 
@@ -71,12 +72,17 @@ rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   rpi_video_display_t *rvd = gv->gv_aux;
 
-  int64_t pts = omx_get_media_time(gv->gv_mp->mp_extra);
+  int64_t pts = omx_get_media_time(omx_get_clock(gv->gv_mp));
 
-  if(rvd->rvd_vsched && rvd->rvd_vsched->oc_port_settings_changed) {
-    rvd->rvd_vsched->oc_port_settings_changed = 0;
+  if(rvd->rvd_vsched && rvd->rvd_reconfigure) {
+    rvd->rvd_reconfigure = 0;
+
+    if(rvd->rvd_tun_vsched_vrender)
+      omx_tunnel_destroy(rvd->rvd_tun_vsched_vrender);
+    
     rvd->rvd_tun_vsched_vrender =
       omx_tunnel_create(rvd->rvd_vsched, 11, rvd->rvd_vrender, 90);
+
     omx_set_state(rvd->rvd_vrender, OMX_StateExecuting);
 
 
@@ -95,6 +101,16 @@ rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
   return pts;
 }
 
+
+/**
+ *
+ */
+static void
+vsched_port_settings_changed(omx_component_t *oc)
+{
+  rpi_video_display_t *rvd = oc->oc_opaque;
+  rvd->rvd_reconfigure = 1;
+}
 
 
 /**
@@ -146,8 +162,6 @@ static void
 rvd_blackout(glw_video_t *gv)
 {
   rpi_video_display_t *rvd = gv->gv_aux;
-  printf("Flusing video display\n");
-
   omx_flush_port(rvd->rvd_vsched, 10);
   omx_flush_port(rvd->rvd_vsched, 11);
   omx_flush_port(rvd->rvd_vrender, 90);
@@ -185,17 +199,28 @@ rvd_deliver(const frame_info_t *fi, glw_video_t *gv)
 
   if(fi->fi_data[0]) {
 
-    rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
-					    NULL, NULL);
-    rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
-					    NULL, NULL);
-    rvd->rvd_tun_clock_vsched =
-      omx_tunnel_create(mp->mp_extra, 81, rvd->rvd_vsched, 12);
+    if(rvd->rvd_vrender == NULL) {
+      rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
+					      NULL, NULL);
+      rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
+					      NULL, NULL);
+      rvd->rvd_tun_clock_vsched =
+	omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12);
     
+      rvd->rvd_vsched->oc_opaque = rvd;
+      rvd->rvd_vsched->oc_port_settings_changed_cb =
+	vsched_port_settings_changed;
+
+      omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
+    }
+
+    if(rvd->rvd_tun_vdecoder_vsched != NULL)
+      omx_tunnel_destroy(rvd->rvd_tun_vdecoder_vsched);
+      
     rvd->rvd_tun_vdecoder_vsched =
       omx_tunnel_create((void *)fi->fi_data[0], 131, rvd->rvd_vsched, 10);
+
     omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
-    omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
   }
 
   if(fi->fi_drive_clock) {

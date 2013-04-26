@@ -38,6 +38,23 @@ typedef struct rpi_video_codec {
 } rpi_video_codec_t;
 
 
+
+/**
+ *
+ */
+static void
+rpi_video_port_settings_changed(omx_component_t *oc)
+{
+  media_codec_t *mc = oc->oc_opaque;
+  media_pipe_t *mp = mc->mp;
+  hts_mutex_lock(&mp->mp_mutex);
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_RECONFIGURE;
+  mb->mb_cw = media_codec_ref(mc);
+  mb_enq(mp, &mp->mp_video, mb);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
+
 /**
  *
  */
@@ -79,15 +96,6 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
     if(mb->mb_skip)
       buf->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
 
-    if(rvc->rvc_decoder->oc_port_settings_changed) {
-      rvc->rvc_decoder->oc_port_settings_changed = 0;
-      frame_info_t fi;
-      memset(&fi, 0, sizeof(fi));
-      fi.fi_type        = 'omx';
-      fi.fi_data[0]     = (void *)rvc->rvc_decoder;
-      mp->mp_video_frame_deliver(&fi, mp->mp_video_frame_opaque);
-    }
-
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
   }  
 
@@ -111,7 +119,6 @@ rpi_codec_flush(struct media_codec *mc, struct video_decoder *vd)
 {
   rpi_video_codec_t *rvc = mc->opaque;
 
-  printf("Flusing video decoder\n");
   omx_flush_port(rvc->rvc_decoder, 130);
   omx_flush_port(rvc->rvc_decoder, 131);
 }
@@ -139,6 +146,23 @@ rpi_codec_close(struct media_codec *mc)
   free(rvc);
 }
 
+
+/**
+ *
+ */
+static void
+rpi_codec_reconfigure(struct media_codec *mc)
+{
+  media_pipe_t *mp = mc->mp;
+  rpi_video_codec_t *rvc = mc->opaque;
+
+  frame_info_t fi;
+  memset(&fi, 0, sizeof(fi));
+  fi.fi_type    = 'omx';
+  fi.fi_data[0] = (void *)rvc->rvc_decoder;
+  mp->mp_video_frame_deliver(&fi, mp->mp_video_frame_opaque);
+
+}
 
 /**
  *
@@ -190,6 +214,8 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   }
 
   rvc->rvc_decoder = d;
+  d->oc_port_settings_changed_cb = rpi_video_port_settings_changed;
+  d->oc_opaque = mc;
 
   omx_set_state(d, OMX_StateIdle);
 
@@ -216,7 +242,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   omx_alloc_buffers(d, 130);
   omx_set_state(d, OMX_StateExecuting);
 
-  if(mcp->extradata_size) {
+  if(mcp != NULL && mcp->extradata_size) {
 
     hts_mutex_lock(&mp->mp_mutex);
     OMX_BUFFERHEADERTYPE *buf = omx_get_buffer_locked(rvc->rvc_decoder);
@@ -232,6 +258,7 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
   mc->close  = rpi_codec_close;
   mc->decode = rpi_codec_decode;
   mc->flush  = rpi_codec_flush;
+  mc->reconfigure = rpi_codec_reconfigure;
   return 0;
 }
 

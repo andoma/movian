@@ -649,7 +649,7 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 /**
  *
  */
-static void
+void
 mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   if(mb->mb_data_type == MB_SUBTITLE) {
@@ -699,6 +699,8 @@ send_hold(media_pipe_t *mp)
   event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+  if(mp->mp_hold_changed != NULL)
+    mp->mp_hold_changed(mp);
 }
 
 
