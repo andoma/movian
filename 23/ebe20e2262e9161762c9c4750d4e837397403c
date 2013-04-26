@@ -1,0 +1,7 @@
+upnp: Include video playback URL in canonical URL
+
+Fixes problem with UPNP servers that just give sequential numbers to
+directory items. If just using the URL items would be confused with
+other items if video are removed from the directory
+
+Fixes #1697
