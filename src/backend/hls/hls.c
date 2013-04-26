@@ -378,9 +378,7 @@ variant_update(hls_variant_t *hv, hls_t *h)
   buf_t *b = fa_load(hv->hv_url, NULL, NULL, 0, NULL, 
 		     FA_COMPRESSION, NULL, NULL);
   b = buf_make_writable(b);
-  char *s = buf_str(b);
 
-  int l;
   double duration = 0;
   int byte_offset = -1;
   int byte_size = -1;
@@ -389,12 +387,8 @@ variant_update(hls_variant_t *hv, hls_t *h)
 
   memset(&hvp, 0, sizeof(hvp));
 
-  for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
-    s[l] = 0;
-    if(l == 0)
-      continue;
+  LINEPARSE(s, buf_str(b)) {
     const char *v;
-
     if((v = mystrbegins(s, "#EXTINF:")) != NULL) {
       duration = my_str2double(v, NULL);
     } else if((v = mystrbegins(s, "#EXT-X-ENDLIST")) != NULL) {
@@ -1131,12 +1125,12 @@ hls_demuxer_init(hls_demuxer_t *hd)
  *
  */
 event_t *
-hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
+hls_play_extm3u(char *buf, const char *url, media_pipe_t *mp,
 		char *errbuf, size_t errlen,
 		video_queue_t *vq, struct vsource_list *vsl,
 		const video_args_t *va0)
 {
-  if(!mystrbegins(s, "#EXTM3U")) {
+  if(!mystrbegins(buf, "#EXTM3U")) {
     snprintf(errbuf, errlen, "Not an m3u file");
     return NULL;
   }
@@ -1153,15 +1147,10 @@ hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
 
   hls_variant_t *hv = NULL;
 
-  if(strstr(s, "#EXT-X-STREAM-INF:")) {
+  if(strstr(buf, "#EXT-X-STREAM-INF:")) {
 
-    int l;
-    for(; l = strcspn(s, "\r\n"), *s; s += l+1+strspn(s+l+1, "\r\n")) {
-      s[l] = 0;
-      if(l == 0)
-        continue;
+    LINEPARSE(s, buf) {
       const char *v;
-      //      printf("HLS: %s\n", s);
       if((v = mystrbegins(s, "#EXT-X-MEDIA:")) != NULL)
         hls_ext_x_media(&h, v);
       else if((v = mystrbegins(s, "#EXT-X-STREAM-INF:")) != NULL)
@@ -1173,6 +1162,7 @@ hls_play_extm3u(char *s, const char *url, media_pipe_t *mp,
   } else {
     hls_add_variant(&h, h.h_baseurl, &hv, &h.h_primary);
   }
+
   hls_dump(&h);
 
   event_t *e = hls_play(&h, mp, errbuf, errlen, va0);
