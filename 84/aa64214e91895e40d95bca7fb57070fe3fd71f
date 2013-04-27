@@ -1,0 +1,9 @@
+Initial attempt of a built-in FTP client in Showtime
+
+To use it enter 'ftp://ip.address.of.ftpserver' in search bar
+or create a bookmark (much like the CIFS/SMB client)
+
+Note that the code has only been tested against a few FTP servers
+so it's probably still buggy. If you find any problems and want
+to report please turn on "FTP logging" in settings:dev and include
+the logfile in ticket.
