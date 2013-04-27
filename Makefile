@@ -102,6 +102,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/str.c \
+	src/misc/time.c \
 	src/misc/codepages.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
@@ -168,6 +169,9 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_aes.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_indexer.c \
+
+SRCS += src/fileaccess/fa_ftp.c \
+	src/fileaccess/ftpparse.c \
 
 SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_probe.c \

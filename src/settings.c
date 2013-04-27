@@ -865,4 +865,7 @@ init_dev_settings(void)
   add_dev_bool("Debug HLS",
 	       "hlsdebug", &gconf.enable_hls_debug);
 
+  add_dev_bool("Debug FTP",
+	       "ftpdebug", &gconf.enable_ftp_debug);
+
 }

@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "http.h"
+#include "misc/time.h"
 
 /**
  *
@@ -159,17 +160,6 @@ static const char *http_months[12] = {
 static const char *http_weekdays[7] = {
   "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
 
-static int
-leapyear(int year)
-{
-  return (year & 3) == 0 && (year % 100 != 0 || year % 400 == 0);
-}
-
-
-static const int mdays[2][12] = {
-  {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334},
-  {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335}
-};
 
 /**
  *
@@ -191,28 +181,11 @@ http_ctime(time_t *tp, const char *d)
 	    wday, &mday, &dummy, month, &dummy, &year, &hour, &min, &sec) != 9)
     return -1;
 
-  if(year < 1970 || year > 2038)
-    return -1;
-
-  i = 1970;
-  if(year >= 2011) {
-    sec += 1293840000;
-    i = 2011;
-  }
-
-  for(; i < year; i++) 
-    sec += 86400 * (365 + leapyear(i));
-
   for(i = 0; i < 12; i++)
     if(!strcasecmp(http_months[i], month))
       break;
-  if(i == 12)
-    return -1;
 
-  sec += mdays[leapyear(year)][i] * 86400;
-  sec += 86400 * (mday - 1) + hour * 3600 + min * 60;
-  *tp = sec;
-  return 0;
+  return mktime_utc(tp, year, i, mday, hour, min, sec);
 }
 
 /**
