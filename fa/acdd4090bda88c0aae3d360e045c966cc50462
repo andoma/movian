@@ -1,0 +1,9 @@
+Avoid loading .mkv attachments into RAM
+
+Instead we keep a reference to where in the MKV file the attachment
+is located and we can later open a slice of the mkv-file as the attachment.
+
+This combined with the fact that freetype can open fonts from a file
+handle reduces the static memory use for attachments to 0 bytes
+
+Fixes #1689 (out of memory (av error -12) with certain MKV files)
