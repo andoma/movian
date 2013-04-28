@@ -72,8 +72,8 @@ typedef struct attachment {
 } attachment_t;
 
 static void attachment_load(struct attachment_list *alist,
-			    const uint8_t *ptr, size_t len,
-			    int context);
+			    const char *url, int64_t offset, 
+			    int size, int font_domain, const char *source);
 
 static void attachment_unload_all(struct attachment_list *alist);
 
@@ -773,9 +773,10 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
   for(i = 0; i < fctx->nb_streams; i++) {
     char str[256];
     media_codec_params_t mcp = {0};
-
-    AVCodecContext *ctx = fctx->streams[i]->codec;
-
+    AVStream *st = fctx->streams[i];
+    AVCodecContext *ctx = st->codec;
+    AVDictionaryEntry *fn, *mt;
+    
     avcodec_string(str, sizeof(str), ctx, 0);
     TRACE(TRACE_DEBUG, "Video", " Stream #%d: %s", i, str);
 
@@ -795,8 +796,17 @@ be_file_playvideo_fh(const char *url, media_pipe_t *mp,
       break;
 
     case AVMEDIA_TYPE_ATTACHMENT:
-      attachment_load(&alist, ctx->extradata, ctx->extradata_size,
-		      freetype_context);
+      fn = av_dict_get(st->metadata, "filename", NULL, AV_DICT_IGNORE_SUFFIX);
+      mt = av_dict_get(st->metadata, "mimetype", NULL, AV_DICT_IGNORE_SUFFIX);
+
+      TRACE(TRACE_DEBUG, "Video", "         filename: %s mimetype: %s size: %d",
+	    fn ? fn->value : "<unknown>",
+	    mt ? mt->value : "<unknown>",
+	    st->attached_size);
+
+      if(st->attached_size)
+	attachment_load(&alist, url, st->attached_offset, st->attached_size,
+			freetype_context, fn ? fn->value : "<unknown>");
       break;
 
     default:
@@ -901,22 +911,24 @@ attachment_add_dtor(struct attachment_list *alist,
  *
  */
 static void
-attachment_load(struct attachment_list *alist, const uint8_t *ptr, size_t len,
-		int context)
+attachment_load(struct attachment_list *alist, const char *url, int64_t offset, 
+		int size, int font_domain, const char *source)
 {
-  if(len < 20)
+  char errbuf[256];
+  if(size < 20)
     return;
 
-#if ENABLE_LIBFREETYPE
-  if(!memcmp(ptr, (const uint8_t []){0,1,0,0,0}, 5) ||
-     !memcmp(ptr, "OTTO", 4)) {
-
-    void *h = freetype_load_font_from_memory(ptr, len, context);
-    if(h != NULL)
-      attachment_add_dtor(alist, freetype_unload_font, h);
+  fa_handle_t *fh = fa_open(url, errbuf, sizeof(errbuf));
+  if(fh == NULL) {
+    TRACE(TRACE_ERROR, "Video", "Unable to open attachement -- %s", errbuf);
     return;
   }
-#endif
+
+  fh = fa_slice_open(fh, offset, size);
+
+  void *h = freetype_load_font_from_fh(fh, font_domain, NULL, 0);
+  if(h != NULL)
+     attachment_add_dtor(alist, freetype_unload_font, h);
 }
 
 /**
