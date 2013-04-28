@@ -1933,7 +1933,7 @@ mlv_add_options(metadata_lazy_video_t *mlv)
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, mlv_sub_actions, mlv,
 		   PROP_TAG_COURIER, metadata_courier,
-		   PROP_TAG_ROOT, p,
+		   PROP_TAG_ROOT, mlv->mlv_root,
 		   NULL);
   mlv->mlv_mlp.mlp_refcount++;
 
