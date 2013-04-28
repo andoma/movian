@@ -1992,8 +1992,10 @@ mlv_options_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_SUBSCRIPTION_MONITOR_ACTIVE:
-    printf("Adding options\n");
     mlv_add_options(mlv);
+    mlv->mlv_mlp.mlp_refcount--;
+    prop_unsubscribe(mlv->mlv_options_monitor_sub);
+    mlv->mlv_options_monitor_sub = NULL;
     break;
 
   default:
