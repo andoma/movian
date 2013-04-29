@@ -78,6 +78,9 @@ JSBool js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 JSBool js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
 		   jsval *argv, jsval *rval);
 
+JSBool js_httpReq(JSContext *cx, JSObject *obj, uintN argc,
+		  jsval *argv, jsval *rval);
+
 JSBool js_readFile(JSContext *cx, JSObject *obj, uintN argc,
 		   jsval *argv, jsval *rval);
 
@@ -181,6 +184,8 @@ JSBool js_subscribe(JSContext *cx, uintN argc,
 JSBool js_is_prop_true(JSContext *cx, JSObject *o, const char *prop);
 
 rstr_t *js_prop_rstr(JSContext *cx, JSObject *o, const char *prop);
+
+JSObject *js_prop_obj(JSContext *cx, JSObject *o, const char *prop);
 
 int js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d);
 

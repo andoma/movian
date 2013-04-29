@@ -178,17 +178,17 @@ js_http_add_args(char ***httpargs, JSContext *cx, JSObject *argobj)
 static JSBool 
 js_http_request(JSContext *cx, jsval *rval,
 		const char *url, JSObject *argobj, jsval *postval,
-		JSObject *headerobj, JSObject *ctrlobj)
+		JSObject *headerobj, JSObject *ctrlobj, const char *method)
 {
   char **httpargs = NULL;
   int i;
   char errbuf[256];
-  buf_t *result = NULL;
   htsbuf_queue_t *postdata = NULL;
   const char *postcontenttype = NULL;
   struct http_header_list in_headers;
   int flags = 0;
   int headreq = 0;
+  int cache = 0;
 
   LIST_INIT(&in_headers);
 
@@ -199,6 +199,10 @@ js_http_request(JSContext *cx, jsval *rval,
       flags |= FA_NOFOLLOW;
     if(js_is_prop_true(cx, ctrlobj, "headRequest"))
       headreq = 1;
+    if(js_is_prop_true(cx, ctrlobj, "caching"))
+      cache = 1;
+    if(js_is_prop_true(cx, ctrlobj, "compression"))
+      flags |= FA_COMPRESSION;
   }
 
   if(argobj != NULL)
@@ -281,33 +285,61 @@ js_http_request(JSContext *cx, jsval *rval,
   if(jcp != NULL && jcp->jcp_flags & JCP_DISABLE_AUTH)
     flags |= FA_DISABLE_AUTH;
 
-  struct http_header_list response_headers;
-
-  jsrefcount s = JS_SuspendRequest(cx);
-  int n = http_request(url, (const char **)httpargs, 
-		       headreq ? NULL : &result,
-		       errbuf, sizeof(errbuf),
-		       postdata, postcontenttype,
-		       flags,
-		       &response_headers, &in_headers, NULL, NULL, NULL);
-  JS_ResumeRequest(cx, s);
-
-  if(httpargs != NULL)
-    strvec_free(httpargs);
-
-  if(postdata != NULL)
-    htsbuf_queue_flush(postdata);
-
-  if(n) {
-    JS_ReportError(cx, errbuf);
-    return JS_FALSE;
+  if(method != NULL && !strcmp(method, "HEAD")) {
+    method = NULL;
+    headreq = 1;
   }
 
-  js_http_response_t *jhr = calloc(1, sizeof(js_http_response_t));
+  struct http_header_list response_headers;
+  js_http_response_t *jhr;
+  jsrefcount s = JS_SuspendRequest(cx);
 
-  jhr->buf = result;
-  mystrset(&jhr->contenttype,
-	   http_header_get(&response_headers, "content-type"));
+
+  if(cache && method == NULL && !headreq && !postdata) {
+    LIST_INIT(&response_headers);
+
+    buf_t *b = fa_load_query(url, errbuf, sizeof(errbuf), NULL,
+			     (const char **)httpargs, flags);
+    JS_ResumeRequest(cx, s);
+
+    if(b == NULL) {
+      JS_ReportError(cx, errbuf);
+      return JS_FALSE;
+    }
+
+    jhr = calloc(1, sizeof(js_http_response_t));
+    jhr->buf = b;
+    mystrset(&jhr->contenttype, rstr_get(b->b_content_type));
+
+  } else {
+
+    buf_t *result = NULL;
+
+    int n = http_request(url, (const char **)httpargs, 
+			 headreq ? NULL : &result,
+			 errbuf, sizeof(errbuf),
+			 postdata, postcontenttype,
+			 flags,
+			 &response_headers, &in_headers, method, NULL, NULL);
+    JS_ResumeRequest(cx, s);
+
+    if(httpargs != NULL)
+      strvec_free(httpargs);
+
+    if(postdata != NULL)
+      htsbuf_queue_flush(postdata);
+
+    if(n) {
+      JS_ReportError(cx, errbuf);
+      return JS_FALSE;
+    }
+
+    jhr = calloc(1, sizeof(js_http_response_t));
+  
+    jhr->buf = result;
+    mystrset(&jhr->contenttype,
+	     http_header_get(&response_headers, "content-type"));
+  }
 
   JSObject *robj = JS_NewObjectWithGivenProto(cx, &http_response_class,
 					      NULL, NULL);
@@ -359,6 +391,8 @@ js_http_request(JSContext *cx, jsval *rval,
   val = OBJECT_TO_JSVAL(multiheaders);
   JS_SetProperty(cx, robj, "multiheaders", &val);
 
+  js_set_prop_str(cx, robj, "contenttype", jhr->contenttype);
+
   JS_LeaveLocalRootScope(cx);
 
   http_headers_free(&response_headers);
@@ -382,7 +416,7 @@ js_httpGet(JSContext *cx, JSObject *obj, uintN argc,
 			  &ctrlobj))
     return JS_FALSE;
 
-  return js_http_request(cx, rval, url, argobj, NULL, hdrobj, ctrlobj);
+  return js_http_request(cx, rval, url, argobj, NULL, hdrobj, ctrlobj, NULL);
 }
 
 /**
@@ -402,7 +436,41 @@ js_httpPost(JSContext *cx, JSObject *obj, uintN argc,
 			  &hdrobj, &ctrlobj))
     return JS_FALSE;
   
-  return js_http_request(cx, rval, url, argobj, &postval, hdrobj, ctrlobj);
+  return js_http_request(cx, rval, url, argobj, &postval, hdrobj,
+			 ctrlobj, NULL);
+}
+
+
+/**
+ *
+ */
+JSBool 
+js_httpReq(JSContext *cx, JSObject *obj, uintN argc,
+	   jsval *argv, jsval *rval)
+{
+  const char *url;
+  jsval postval, *pv = NULL;
+  JSObject *ctrlobj = NULL;
+  JSObject *argobj = NULL;
+  JSObject *hdrobj = NULL;
+  rstr_t *method = NULL;
+
+  if(!JS_ConvertArguments(cx, argc, argv, "s/o", &url, &ctrlobj))
+    return JS_FALSE;
+
+  if(ctrlobj != NULL) {
+    
+    argobj = js_prop_obj(cx, ctrlobj, "args");
+    hdrobj = js_prop_obj(cx, ctrlobj, "headers");
+    method = js_prop_rstr(cx, ctrlobj, "method");
+    if(JS_GetProperty(cx, ctrlobj, "postdata", &postval))
+      pv = &postval;
+  }
+
+  JSBool v = js_http_request(cx, rval, url, argobj, pv, hdrobj, ctrlobj,
+			     rstr_get(method));
+  rstr_release(method);
+  return v;
 }
 
 /**

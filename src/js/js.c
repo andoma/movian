@@ -93,6 +93,21 @@ js_prop_rstr(JSContext *cx, JSObject *o, const char *prop)
 /**
  *
  */
+JSObject *
+js_prop_obj(JSContext *cx, JSObject *o, const char *prop)
+{
+  jsval val;
+  if(!JS_GetProperty(cx, o, prop, &val))
+    return NULL;
+  if(!JSVAL_IS_OBJECT(val))
+    return NULL;
+  return JSVAL_TO_OBJECT(val);
+}
+
+
+/**
+ *
+ */
 int
 js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 {
@@ -921,6 +936,7 @@ static JSFunctionSpec showtime_functions[] = {
     JS_FS("print",            js_print,    1, 0, 0),
     JS_FS("httpGet",          js_httpGet, 2, 0, 0),
     JS_FS("httpPost",         js_httpPost, 2, 0, 0),
+    JS_FS("httpReq",          js_httpReq, 1, 0, 0),
 #if ENABLE_RELEASE == 0
     JS_FS("readFile",         js_readFile, 1, 0, 0),
 #endif
