@@ -2299,6 +2299,10 @@ http_load(struct fa_protocol *fap, const char *url,
     goto done;
   }
 
+  s = http_header_get(&headers_out, "content-type");
+  if(s != NULL && b != NULL)
+    b->b_content_type = rstr_alloc(s);
+
   if(mtime != NULL) {
     *mtime = 0;
     if((s = http_header_get(&headers_out, "last-modified")) != NULL) {

@@ -11,6 +11,7 @@ buf_release(buf_t *b)
   if(b != NULL && atomic_add(&b->b_refcount, -1) == 1) {
     if(b->b_free != NULL)
       b->b_free(b->b_ptr);
+    rstr_release(b->b_content_type);
     free(b);
   }
 }
@@ -22,6 +23,8 @@ buf_make_writable(buf_t *b)
     return b;
 
   buf_t *b2 = buf_create_and_copy(b->b_size, b->b_ptr);
+  
+  b2->b_content_type = rstr_dup(b->b_content_type);
   buf_release(b);
   return b2;
 }
@@ -44,6 +47,7 @@ buf_create(size_t size)
   b->b_size = size;
   b->b_ptr = b->b_content;
   b->b_free = NULL;
+  b->b_content_type = NULL;
   b->b_content[size] = 0;
   return b;
 }
@@ -57,5 +61,6 @@ buf_create_and_adopt(size_t size, void *data, void (*freefn)(void *))
   b->b_size = size;
   b->b_ptr = data;
   b->b_free = freefn;
+  b->b_content_type = NULL;
   return b;
 }

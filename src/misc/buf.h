@@ -2,12 +2,14 @@
 
 #include <assert.h>
 #include "arch/atomic.h"
+#include "rstr.h"
 
 typedef struct buf {
   int b_refcount;
   size_t b_size;
   void *b_ptr;
   void (*b_free)(void *);
+  rstr_t *b_content_type;
   uint8_t b_content[0];
 } buf_t;
 
