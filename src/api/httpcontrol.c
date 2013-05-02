@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <sys/stat.h>
+#include <limits.h>
 
 #include "networking/http_server.h"
 #include "event.h"
@@ -82,8 +83,18 @@ hc_image(http_connection_t *hc, const char *remain, void *opaque,
   const char *content;
   image_meta_t im = {0};
   im.im_no_decoding = 1;
-
-  rstr_t *url = rstr_alloc(remain);
+  rstr_t *url;
+  const char *u = http_arg_get_req(hc, "url");
+  
+  if(u != NULL) {
+    url = rstr_alloc(u);
+    url_deescape(rstr_data(url));
+  } else {
+    if(remain == NULL) {
+      return 404;
+    }
+    url = rstr_alloc(remain);
+  }
 
   pm = backend_imageloader(url, &im, NULL, errbuf, sizeof(errbuf), NULL,
 			   NULL, NULL);
@@ -518,6 +529,91 @@ hc_echo_fini(http_connection_t *hc, void *opaque)
 /**
  *
  */
+static const struct {
+  const char *pfx;
+  const char *contenttype;
+} cttable[] = {
+  { "html", "text/html" },
+  { "js", "application/javascript" },
+  { "css", "text/css" },
+};
+
+
+/**
+ *
+ */
+static int
+hc_serve_file(http_connection_t *hc, const char *file, const char *contenttype)
+{
+  htsbuf_queue_t out;
+
+  if(contenttype == NULL) {
+    const char *pfx = strrchr(file, '.');
+    if(pfx != NULL) {
+      pfx++;
+      int i;
+      for(i = 0; i < sizeof(cttable) / sizeof(cttable[0]); i++) {
+	if(!strcmp(pfx, cttable[i].pfx)) {
+	  contenttype = cttable[i].contenttype;
+	  break;
+	}
+      }
+    }
+  }
+
+  buf_t *b = fa_load(file, NULL, NULL, 0, NULL, 0, NULL, NULL);
+  if(b == NULL)
+    return 404;
+
+  htsbuf_queue_init(&out, 0);
+  htsbuf_append(&out, b->b_ptr, b->b_size);
+  buf_release(b);
+  return http_send_reply(hc, 0, contenttype, NULL, NULL, 0, &out);
+}
+
+
+/**
+ *
+ */
+static int
+hc_root(http_connection_t *hc, const char *remain, void *opaque,
+	  http_cmd_t method)
+{
+  if(!gconf.enable_experimental)
+    return 403;
+  return hc_serve_file(hc, "dataroot://resources/static/index.html", NULL);
+}
+
+/**
+ *
+ */
+static int
+hc_favicon(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  return hc_serve_file(hc, "dataroot://resources/static/favicon.ico",
+		       "image/ico");
+}
+
+
+/**
+ *
+ */
+static int
+hc_static(http_connection_t *hc, const char *remain, void *opaque,
+	   http_cmd_t method)
+{
+  char path[PATH_MAX];
+  if(remain == NULL || strstr(remain, ".."))
+    return 404;
+  snprintf(path, sizeof(path), "dataroot://resources/static/%s", remain);
+  return hc_serve_file(hc, path, NULL);
+}
+
+
+/**
+ *
+ */
 static void
 httpcontrol_init(void)
 {
@@ -533,6 +629,10 @@ httpcontrol_init(void)
   http_path_add("/showtime/replace", NULL, hc_binreplace, 1);
   http_add_websocket("/showtime/ws/echo",
 		     hc_echo_init, hc_echo_data, hc_echo_fini);
+
+  http_path_add("/", NULL, hc_root, 1);
+  http_path_add("/favicon.ico", NULL, hc_favicon, 1);
+  http_path_add("/showtime/static", NULL, hc_static, 0);
 }
 
 INITME(INIT_GROUP_API, httpcontrol_init);

@@ -605,6 +605,7 @@ siblings_populate(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_HAVE_MORE_CHILDS:
   case PROP_EXT_EVENT:
+  case PROP_REQ_MOVE_CHILD:
     break;
 
   default:
@@ -861,7 +862,7 @@ playqueue_init(void)
   playqueue_nodes = prop_create(playqueue_root, "nodes");
 
   hts_thread_create_detached("audioplayer", player_thread, NULL,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_DEMUXER);
 
   prop_subscribe(0,
 		 PROP_TAG_NAME("playqueue", "eventsink"),
@@ -1087,12 +1088,12 @@ player_thread(void *aux)
       continue;
     }
 
-    p = prop_get_by_name(PNVEC("self", "metadata"), 1,
-			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
-			 NULL);
-    prop_link_ex(p, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
-    prop_ref_dec(p);
+    prop_t *sm = prop_get_by_name(PNVEC("self", "metadata"), 1,
+                                  PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
+                                  NULL);
+    prop_link_ex(sm, mp->mp_prop_metadata, NULL, PROP_LINK_XREFED);
 
+    mp->mp_prop_metadata_source = sm;
 
     m = prop_get_by_name(PNVEC("self", "media"), 1,
 			 PROP_TAG_NAMED_ROOT, pqe->pqe_node, "self",
@@ -1120,6 +1121,7 @@ player_thread(void *aux)
 
     e = backend_play_audio(pqe->pqe_url, mp, errbuf, sizeof(errbuf),
 			   startpaused, NULL);
+    prop_ref_dec(sm);
     startpaused = 0;
 
     prop_set_int(p, 0);

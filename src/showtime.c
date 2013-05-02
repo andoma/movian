@@ -299,7 +299,7 @@ showtime_init(void)
   plugins_init(gconf.devplugin);
 
   /* Start software installer thread (plugins, upgrade, etc) */
-  hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_LOW);
+  hts_thread_create_detached("swinst", swthread, NULL, THREAD_PRIO_BGTASK);
 
   /* Internationalization */
   i18n_init();

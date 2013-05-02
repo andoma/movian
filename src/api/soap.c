@@ -124,7 +124,7 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
 
   if(outargs != NULL) {
     htsmsg_field_t *f;
-    htsmsg_t *out = htsmsg_create_map();
+    htsmsg_t *out2 = htsmsg_create_map();
     // Convert args from XML style to more compact style
     HTSMSG_FOREACH(f, outargs) {
       htsmsg_t *a;
@@ -133,11 +133,12 @@ soap_exec(const char *uri, const char *service, int version, const char *method,
       if((a = htsmsg_get_map_by_field(f)) == NULL)
 	continue;
       if((s = htsmsg_get_str(a, "cdata")) != NULL)
-	htsmsg_add_str(out, f->hmf_name, s);
+	htsmsg_add_str(out2, f->hmf_name, s);
     }
-    *outp = out;
+    *outp = out2;
   } else {
     *outp = NULL;
   }
+  htsmsg_destroy(out);
   return 0;
 }

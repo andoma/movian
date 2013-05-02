@@ -107,8 +107,8 @@ htsmsg_field_find(htsmsg_t *msg, const char *name)
 {
   htsmsg_field_t *f;
 
-  if((intptr_t)name < 0) {
-    int num = -(intptr_t)name - 1;
+  if(-((unsigned long)(intptr_t)name) < 4096) {
+    unsigned int num = -(intptr_t)name - 1;
     HTSMSG_FOREACH(f, msg) {
       if(!num--)
 	return f;
@@ -542,7 +542,6 @@ htsmsg_detach_submsg(htsmsg_field_t *f)
   htsmsg_t *r = htsmsg_create_map();
 
   TAILQ_MOVE(&r->hm_fields, &f->hmf_msg.hm_fields, hmf_link);
-  TAILQ_INIT(&f->hmf_msg.hm_fields);
   r->hm_islist = f->hmf_type == HMF_LIST;
   return r;
 }

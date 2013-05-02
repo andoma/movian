@@ -29,6 +29,7 @@ done
 [ -z "$VCROOT" ]    && die_cause "--vcroot not specified"
 
 CC=${TOOLCHAIN}gcc
+CXX=${TOOLCHAIN}g++
 
 setup_env "$@"
 
@@ -48,20 +49,17 @@ zlib_setup
 bzip2_setup
 freetype_setup --host=arm-linux-gnueabihf
 
-LIBAV_CFLAGS="-mfpu=vfp -mcpu=arm1176jzf-s -I${BUILDDIR}/zlib/install/include"
-LIBAV_LDFLAGS="-L${BUILDDIR}/zlib/install/lib"
+LIBAV_CFLAGS="-mfpu=vfp -mcpu=arm1176jzf-s -I${BUILDDIR}/ext/include"
+LIBAV_LDFLAGS="-L${BUILDDIR}/ext/lib"
 LIBAV_ARCH_FLAGS="--cross-prefix=${TOOLCHAIN} --enable-cross-compile --arch=arm --cpu=arm1176jzf-s --target-os=linux --disable-armv5te --disable-neon --enable-armv6t2 --enable-armv6 --enable-vfp"
 
 libav_setup
 rtmpdump_setup
+xmp_setup
 
 libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
-CC=${CC}
-STRIP=${TOOLCHAIN}strip
-OBJDUMP=${TOOLCHAIN}objdump
-OBJCOPY=${TOOLCHAIN}objcopy
 CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
 

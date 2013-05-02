@@ -365,30 +365,13 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
 	     struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
   media_codec_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->codec_ctx;
+  AVCodecContext *ctx = cw->ctx;
   vdpau_codec_t *vc = mc->opaque;
   media_pipe_t *mp = vd->vd_mp;
   vdpau_video_surface_t *vvs;
   int got_pic = 0;
   AVFrame *frame = vd->vd_frame;
   
-  if(vd->vd_do_flush) {
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = NULL;
-    avpkt.size = 0;
-    do {
-      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-    } while(got_pic);
-
-    vd->vd_do_flush = 0;
-    vd->vd_prevpts = AV_NOPTS_VALUE;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vd->vd_estimated_duration = 0;
-    avcodec_flush_buffers(ctx);
-    vd->vd_compensate_thres = 5;
-  }
-
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_NONE;
 
   vc->vc_mb = mb;
@@ -401,15 +384,13 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
   avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
 
   if(mp->mp_stats)
-    mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
+    mp_set_mq_meta(mq, cw->ctx->codec, cw->ctx);
 
   if(!got_pic || mb->mb_skip == 1)
     return;
 
-  vd->vd_skip = 0;
   vvs = frame->opaque;
   video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
-  return;
 }
 
 
@@ -507,14 +488,14 @@ vdpau_codec_reinit(media_codec_t *mc)
  *
  */
 static int
-vdpau_codec_create(media_codec_t *mc, int id,
-		   const media_codec_params_t *mcp,
+vdpau_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		   media_pipe_t *mp)
 {
   VdpDecoderProfile profile;
   vdpau_dev_t *vd = mp->mp_vdpau_dev;
   VdpStatus r;
   int refframes;
+  AVCodec *codec;
 
   if(vd == NULL)
     return 1;
@@ -522,23 +503,23 @@ vdpau_codec_create(media_codec_t *mc, int id,
   if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
     return 1;
 
-  switch(id) {
+  switch(mc->codec_id) {
 
   case CODEC_ID_MPEG1VIDEO:
     profile = VDP_DECODER_PROFILE_MPEG1; 
-    mc->codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
+    codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
     refframes = 2;
     break;
 
   case CODEC_ID_MPEG2VIDEO:
     profile = VDP_DECODER_PROFILE_MPEG2_MAIN; 
-    mc->codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
+    codec = avcodec_find_decoder_by_name("mpegvideo_vdpau");
     refframes = 2;
     break;
 
   case CODEC_ID_H264:
     profile = VDP_DECODER_PROFILE_H264_HIGH; 
-    mc->codec = avcodec_find_decoder_by_name("h264_vdpau");
+    codec = avcodec_find_decoder_by_name("h264_vdpau");
     refframes = 16;
     break;
 #if 0 // Seems broken
@@ -558,7 +539,7 @@ vdpau_codec_create(media_codec_t *mc, int id,
     return 1;
   }
 
-  if(mc->codec == NULL)
+  if(codec == NULL)
     return -1;
 
   vdpau_codec_t *vc = calloc(1, sizeof(vdpau_codec_t));
@@ -598,39 +579,32 @@ vdpau_codec_create(media_codec_t *mc, int id,
 
   TRACE(TRACE_DEBUG, "VDPAU", "Decoder initialized");
 	  
-  int alloced = 0;
-  if(mc->codec_ctx == NULL) {
-    mc->codec_ctx = avcodec_alloc_context3(NULL);
-    mc->codec_ctx->codec_id   = mc->codec->id;
-    mc->codec_ctx->codec_type = mc->codec->type;
+  mc->ctx = avcodec_alloc_context3(codec);
 
-    if(mcp->extradata != NULL) {
-      mc->codec_ctx->extradata = calloc(1, mcp->extradata_size +
-					FF_INPUT_BUFFER_PADDING_SIZE);
-      memcpy(mc->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
-      mc->codec_ctx->extradata_size = mcp->extradata_size;
-    }
-    alloced = 1;
+  if(mcp->extradata != NULL) {
+    mc->ctx->extradata = calloc(1, mcp->extradata_size +
+				FF_INPUT_BUFFER_PADDING_SIZE);
+    memcpy(mc->ctx->extradata, mcp->extradata, mcp->extradata_size);
+    mc->ctx->extradata_size = mcp->extradata_size;
   }
 
-  if(avcodec_open2(mc->codec_ctx, mc->codec, NULL) < 0) {
-    if(alloced)
-      free(mc->codec_ctx);
-    mc->codec = NULL;
+  if(avcodec_open2(mc->ctx, codec, NULL) < 0) {
+    free(mc->ctx);
     vc_destroy(vc);
     return -1;
   }
 
-  mc->codec_ctx->get_buffer      = vdpau_get_buffer;
-  mc->codec_ctx->release_buffer  = vdpau_release_buffer;
-  mc->codec_ctx->draw_horiz_band = vdpau_draw_horiz_band;
-  mc->codec_ctx->get_format      = vdpau_get_pixfmt;
+  mc->ctx->get_buffer      = vdpau_get_buffer;
+  mc->ctx->release_buffer  = vdpau_release_buffer;
+  mc->ctx->draw_horiz_band = vdpau_draw_horiz_band;
+  mc->ctx->get_format      = vdpau_get_pixfmt;
 
-  mc->codec_ctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
+  mc->ctx->slice_flags = SLICE_FLAG_CODED_ORDER | SLICE_FLAG_ALLOW_FIELD;
 
-  mc->codec_ctx->opaque = mc;
+  mc->ctx->opaque = mc;
   mc->opaque = vc;
   mc->decode = vdpau_decode;
+  mc->flush  = video_flush_avctx;
   mc->close  = vdpau_codec_close;
   mc->reinit = vdpau_codec_reinit;
   return 0;

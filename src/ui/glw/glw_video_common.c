@@ -29,10 +29,26 @@
 #include "glw_renderer.h"
 #include "glw_texture.h"
 
-static glw_video_engine_t glw_video_blank;
+//static glw_video_engine_t glw_video_blank;
 
 
 static void glw_video_input(const frame_info_t *info, void *opaque);
+
+
+
+/**
+ *
+ */
+static void
+glw_video_reap(glw_video_t *gv)
+{
+  glw_video_reap_task_t *t;
+  while((t = LIST_FIRST(&gv->gv_reaps)) != NULL) {
+    LIST_REMOVE(t, link);
+    t->fn(gv, t);
+    free(t);
+  }
+}
 
 
 /**
@@ -63,13 +79,13 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
 
     // Shrink X
     int border = rc->rc_width - t_aspect * rc->rc_height;
-    int left  = (border + 1) / 2;
-    int right = rc->rc_width - (border / 2);
+    int left  = (border + 1.0f) * 0.5f;
+    int right = rc->rc_width - border * 0.5f;
 
     float s = (right - left) / (float)rc->rc_width;
     float t = -1.0f + (right + left) / (float)rc->rc_width;
 
-    glw_Translatef(rc, t, 0, 0);
+    glw_Translatef(rc, t, 0.0f, 0.0f);
     glw_Scalef(rc, s, 1.0f, 1.0f);
 
     rc->rc_width = right - left;
@@ -77,13 +93,13 @@ glw_video_rctx_adjust(glw_rctx_t *rc, const glw_video_t *gv)
   } else {
     // Shrink Y
     int border = rc->rc_height - rc->rc_width / t_aspect;
-    int bottom  = (border + 1) / 2;
-    int top     = rc->rc_height - (border / 2);
+    int bottom  = (border + 1.0f) * 0.5f;
+    int top     = rc->rc_height - border * 0.5f;
 
     float s = (top - bottom) / (float)rc->rc_height;
     float t = -1.0f + (top + bottom) / (float)rc->rc_height;
 
-    glw_Translatef(rc, 0, t, 0);
+    glw_Translatef(rc, 0.0f, t, 0.0f);
     glw_Scalef(rc, 1.0f, s, 1.0f);
     rc->rc_height = top - bottom;
   }
@@ -147,19 +163,19 @@ glw_video_widget_event(event_t *e, media_pipe_t *mp, int in_menu)
 /**
  *
  */
-int
-glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
+static int
+glw_video_compute_output_duration(glw_video_t *gv, int frame_duration)
 {
   int delta;
   const int maxdiff = 5000;
 
-  if(vd->vd_avdiff_x > 0) {
-    delta = pow(vd->vd_avdiff_x * 1000.0f, 2);
+  if(gv->gv_avdiff_x > 0) {
+    delta = pow(gv->gv_avdiff_x * 1000.0f, 2);
     if(delta > maxdiff)
       delta = maxdiff;
 
-  } else if(vd->vd_avdiff_x < 0) {
-    delta = -pow(-vd->vd_avdiff_x * 1000.0f, 2);
+  } else if(gv->gv_avdiff_x < 0) {
+    delta = -pow(-gv->gv_avdiff_x * 1000.0f, 2);
     if(delta < -maxdiff)
       delta = -maxdiff;
   } else {
@@ -169,94 +185,230 @@ glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration)
 }
 
 
+
+// These are directly used in UI so renumbering is not possible
+#define AVDIFF_LOCKED          0
+#define AVDIFF_NO_LOCK         1
+#define AVDIFF_INCORRECT_EPOCH 2
+#define AVDIFF_HOLD            3
+#define AVDIFF_CATCH_UP        4
+
+const char *statustab[] = {
+  [AVDIFF_LOCKED]          = "locked",
+  [AVDIFF_NO_LOCK]         = "no lock",
+  [AVDIFF_INCORRECT_EPOCH] = "incorrect epoch",
+  [AVDIFF_HOLD]            = "holding",
+  [AVDIFF_CATCH_UP]        = "catching up",
+};
+
 /**
  *
  */
-void
-glw_video_compute_avdiff(glw_root_t *gr, video_decoder_t *vd, media_pipe_t *mp, 
-			 int64_t pts, int epoch)
+static int
+glw_video_compute_avdiff(glw_root_t *gr, media_pipe_t *mp, 
+			 int64_t pts, int epoch, glw_video_t *gv)
 {
-  int64_t aclock;
-  const char *status;
-
-  if(mp->mp_audio_clock_epoch != epoch) {
-    /* Not the same clock epoch, can not sync */
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 3);
-    return;
-  }
-
-  if(vd->vd_compensate_thres > 0) {
-    vd->vd_compensate_thres--;
-    vd->vd_avdiff_x = 0;
-    kalman_init(&vd->vd_avfilter);
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 2);
-    return;
-  }
-  
+  int code;
 
   hts_mutex_lock(&mp->mp_clock_mutex);
 
-  aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
-    - mp->mp_audio_clock_avtime;
+  int64_t aclock = mp->mp_audio_clock + gr->gr_frame_start_avtime
+    - mp->mp_audio_clock_avtime + mp->mp_avdelta;
 
-  hts_mutex_unlock(&mp->mp_clock_mutex);
+  if(mp->mp_audio_clock_epoch != epoch) {
+    /* Not the same clock epoch, can not sync */
+    gv->gv_avdiff_x = 0;
+    kalman_init(&gv->gv_avfilter);
+    code = AVDIFF_INCORRECT_EPOCH;
 
-  aclock += mp->mp_avdelta;
-
-  vd->vd_avdiff = aclock - (pts - 16666) - vd->vd_avd_delta;
-
-  if(abs(vd->vd_avdiff) < 10000000) {
-
-    vd->vd_avdiff_x = kalman_update(&vd->vd_avfilter, 
-				    (double)vd->vd_avdiff / 1000000);
-    if(vd->vd_avdiff_x > 10.0f)
-      vd->vd_avdiff_x = 10.0f;
-    
-    if(vd->vd_avdiff_x < -10.0f)
-      vd->vd_avdiff_x = -10.0f;
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 0);
-    status = "lock";
   } else {
-    status = "nolock";
-    if(mp->mp_stats)
-      prop_set_int(mp->mp_prop_avdiff_error, 1);
-  }
 
-  if(mp->mp_stats) {
-    if(!vd->vd_may_update_avdiff) {
-      prop_set_float(mp->mp_prop_avdiff, vd->vd_avdiff_x);
-      vd->vd_may_update_avdiff = 5;
+
+    gv->gv_avdiff = aclock - pts;
+
+    if(abs(gv->gv_avdiff) < 30000000) {
+
+      gv->gv_avdiff_x = kalman_update(&gv->gv_avfilter, 
+				      (double)gv->gv_avdiff / 1000000);
+      gv->gv_avdiff_x = MAX(MIN(gv->gv_avdiff_x, 30.0f), -30.0f);
+      code = AVDIFF_LOCKED;
+
+      if(gv->gv_avdiff_x > 0.1f) 
+	code = AVDIFF_CATCH_UP;
+      if(gv->gv_avdiff_x < -0.1f) 
+	code = AVDIFF_HOLD;
+
     } else {
-      vd->vd_may_update_avdiff--;
+      code = AVDIFF_NO_LOCK;
+    }
+
+    if(mp->mp_stats) {
+      if(!gv->gv_avdiff_update_thres) {
+	prop_set_float(mp->mp_prop_avdiff, gv->gv_avdiff_x);
+	gv->gv_avdiff_update_thres = 5;
+      } else {
+	gv->gv_avdiff_update_thres--;
+      }
     }
   }
 
-  if(0) {
+  hts_mutex_unlock(&mp->mp_clock_mutex);
+
+  if(mp->mp_stats)
+    prop_set_int(mp->mp_prop_avdiff_error, code);
+
+  if(gconf.enable_detailed_avdiff) {
     static int64_t lastpts, lastaclock, lastclock;
-   
-   TRACE(TRACE_DEBUG, "AVDIFF", "%10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
-	 vd->vd_avdiff_x,
-	 vd->vd_avdiff,
-	 aclock,
-	 aclock - lastaclock,
-	 pts,
-	 pts - lastpts,
-	 mp->mp_audio_clock,
-	 gr->gr_frame_start_avtime - lastclock,
-	 status,
-	 showtime_get_avtime() - aclock);
-  lastpts = pts;
-  lastaclock = aclock;
-  lastclock = gr->gr_frame_start_avtime;
- }
+
+    TRACE(TRACE_DEBUG, "AVDIFF", "E:%3d %10f %10d %15"PRId64":a:%-8"PRId64" %15"PRId64":v:%-8"PRId64" %15"PRId64" %15"PRId64" %s %lld", 
+	  epoch,
+	  gv->gv_avdiff_x,
+	  gv->gv_avdiff,
+	  aclock,
+	  aclock - lastaclock,
+	  pts,
+	  pts - lastpts,
+	  mp->mp_audio_clock,
+	  gr->gr_frame_start_avtime - lastclock,
+	  statustab[code],
+	  showtime_get_avtime() - aclock);
+    lastpts = pts;
+    lastaclock = aclock;
+    lastclock = gr->gr_frame_start_avtime;
+  }
+  return code;
 }
 
 
+/**
+ *
+ */
+static int64_t
+glw_video_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
+			glw_video_surface_t *sb, int output_duration)
+{
+  int64_t pts;
+  int x;
+
+  if(sa->gvs_duration >= output_duration) {
+  
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+
+    sa->gvs_duration -= output_duration;
+
+    pts = sa->gvs_pts;
+    if(sa->gvs_pts != PTS_UNSET)
+      sa->gvs_pts += output_duration;
+
+  } else if(sb != NULL) {
+
+    gv->gv_sa = sa;
+    gv->gv_sb = sb;
+    gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
+
+    if(sa->gvs_duration + 
+       sb->gvs_duration < output_duration) {
+
+      sa->gvs_duration = 0;
+      pts = sb->gvs_pts;
+
+    } else {
+      pts = sa->gvs_pts;
+      x = output_duration - sa->gvs_duration;
+      sb->gvs_duration -= x;
+      if(sb->gvs_pts != PTS_UNSET)
+	sb->gvs_pts += x;
+    }
+    sa->gvs_duration = 0;
+
+  } else {
+    gv->gv_sa = sa;
+    gv->gv_sb = NULL;
+    if(sa->gvs_pts != PTS_UNSET)
+      sa->gvs_pts += output_duration;
+
+    pts = sa->gvs_pts;
+  }
+
+  return pts;
+}
+
+
+/**
+ *
+ */
+int64_t 
+glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd, int flags,
+			 gv_surface_pixmap_release_t *release)
+{
+  glw_root_t *gr = gv->w.glw_root;
+  glw_video_surface_t *sa, *sb, *s;
+  media_pipe_t *mp = gv->gv_mp;
+  int output_duration;
+  int64_t pts = PTS_UNSET;
+  int frame_duration = gv->w.glw_root->gr_frameduration;
+
+  output_duration = glw_video_compute_output_duration(gv, frame_duration);
+  
+  /* Find new surface to display */
+  hts_mutex_assert(&gv->gv_surface_mutex);
+ again:
+  sa = TAILQ_FIRST(&gv->gv_decoded_queue);
+  if(sa == NULL) {
+    /* No frame available */
+    sa = TAILQ_FIRST(&gv->gv_displaying_queue);
+    if(sa != NULL) {
+      /* Continue to display last frame */
+      gv->gv_sa = sa;
+      gv->gv_sa = NULL;
+    } else {
+      gv->gv_sa = NULL;
+      gv->gv_sa = NULL;
+    }
+
+  } else {
+      
+
+    int epoch = sa->gvs_epoch;
+
+    /* There are frames available that we are going to display,
+       push back old frames to decoder */
+    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
+      release(gv, s, &gv->gv_displaying_queue);
+
+    /* */
+    sb = TAILQ_NEXT(sa, gvs_link);
+
+    if(!vd->vd_hold) {
+      pts = glw_video_compute_blend(gv, sa, sb, output_duration);
+      if(pts != PTS_UNSET) {
+	pts -= frame_duration * 2;
+	int code = glw_video_compute_avdiff(gr, mp, pts, epoch, gv);
+
+	if(code == AVDIFF_HOLD) {
+	  kalman_init(&gv->gv_avfilter);
+	  return pts;
+	}
+
+	if(code == AVDIFF_CATCH_UP) {
+	  release(gv, sa, &gv->gv_decoded_queue);
+	  kalman_init(&gv->gv_avfilter);
+	  goto again;
+	}
+      }
+    }
+
+    if(!vd->vd_hold || sb != NULL) {
+      if(sa != NULL && sa->gvs_duration == 0)
+	glw_video_enqueue_for_display(gv, sa, &gv->gv_decoded_queue);
+    }
+    if(sb != NULL && sb->gvs_duration == 0)
+      glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
+
+  }
+  return pts;
+}
 
 
 /**
@@ -312,10 +464,14 @@ glw_video_dtor(glw_t *w)
   LIST_REMOVE(gv, gv_global_link);
   video_decoder_destroy(vd);
 
+  hts_mutex_lock(&gv->gv_surface_mutex);  /* Not strictly necessary
+					     but keep asserts happy 
+					  */
   glw_video_surfaces_cleanup(gv);
+  hts_mutex_unlock(&gv->gv_surface_mutex);
 
   hts_cond_destroy(&gv->gv_avail_queue_cond);
-  hts_cond_destroy(&gv->gv_reconf_cond);
+  hts_cond_destroy(&gv->gv_init_cond);
   hts_mutex_destroy(&gv->gv_surface_mutex);
 
   mp_ref_dec(gv->gv_mp);
@@ -335,10 +491,18 @@ glw_video_newframe(glw_t *w, int flags)
 
   hts_mutex_lock(&gv->gv_surface_mutex);
 
-  if(memcmp(&gv->gv_cfg_cur, &gv->gv_cfg_req, sizeof(glw_video_config_t)))
-    glw_video_surface_reconfigure(gv);
+  glw_video_reap(gv);
 
-  pts = gv->gv_cfg_cur.gvc_engine->gve_newframe(gv, vd, flags);
+  if(gv->gv_need_init) {
+    gv->gv_engine->gve_init(gv);
+    gv->gv_need_init = 0;
+    hts_cond_signal(&gv->gv_init_cond);
+  }
+
+  if(gv->gv_engine != NULL)
+    pts = gv->gv_engine->gve_newframe(gv, vd, flags);
+  else
+    pts = PTS_UNSET;
 
   hts_mutex_unlock(&gv->gv_surface_mutex);
 
@@ -372,17 +536,15 @@ glw_video_widget_callback(glw_t *w, void *opaque, glw_signal_t signal,
 
   case GLW_SIGNAL_DESTROY:
     hts_mutex_lock(&gv->gv_surface_mutex);
-    hts_cond_signal(&gv->gv_reconf_cond);
     hts_cond_signal(&gv->gv_avail_queue_cond);
+    hts_cond_signal(&gv->gv_init_cond);
     hts_mutex_unlock(&gv->gv_surface_mutex);
     video_playback_destroy(gv->gv_mp);
     video_decoder_stop(vd);
     return 0;
 
   case GLW_SIGNAL_POINTER_EVENT:
-    return glw_video_overlay_pointer_event(vd, 
-					   gv->gv_cfg_cur.gvc_width[0],
-					   gv->gv_cfg_cur.gvc_height[0],
+    return glw_video_overlay_pointer_event(vd, gv->gv_width, gv->gv_height,
 					   extra, gv->gv_mp);
 
   default:
@@ -400,17 +562,19 @@ glw_video_ctor(glw_t *w)
   glw_video_t *gv = (glw_video_t *)w;
   glw_root_t *gr = w->glw_root;
 
+  kalman_init(&gv->gv_avfilter);
 
-  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
-  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
+  //  gv->gv_cfg_req.gvc_engine = &glw_video_blank;
+  //  gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
 
   TAILQ_INIT(&gv->gv_avail_queue);
+  TAILQ_INIT(&gv->gv_parked_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
   TAILQ_INIT(&gv->gv_decoded_queue);
 
   hts_mutex_init(&gv->gv_surface_mutex);
   hts_cond_init(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
-  hts_cond_init(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
+  hts_cond_init(&gv->gv_init_cond, &gv->gv_surface_mutex);
 
   gv->gv_mp = mp_create("Video decoder", MP_VIDEO | MP_PRIMABLE, NULL);
 #if CONFIG_GLW_BACKEND_OPENGL
@@ -594,6 +758,8 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
   glw_video_t *gv = (glw_video_t *)w;
   glw_rctx_t rc0 = *rc;
 
+  w->glw_root->gr_screensaver_counter = 0;
+
   glw_video_rctx_adjust(&rc0, gv);
 
   gv->gv_rwidth  = rc0.rc_width;
@@ -609,7 +775,9 @@ glw_video_render(glw_t *w, const glw_rctx_t *rc)
     glw_Scalef(&rc1, zoom, zoom, 1.0);
   }
 
-  gv->gv_cfg_cur.gvc_engine->gve_render(gv, &rc1);
+  if(gv->gv_engine != NULL)
+    gv->gv_engine->gve_render(gv, &rc1);
+
   glw_video_overlay_render(gv, rc, &rc0);
 }
 
@@ -640,71 +808,92 @@ GLW_REGISTER_CLASS(glw_video);
  *
  */
 int
-glw_video_configure(glw_video_t *gv,
-		    const glw_video_engine_t *engine,
-		    const int *wvec, const int *hvec,
-		    int surfaces, int flags, int pixfmt)
+glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine)
 {
-  glw_video_config_t gvc = {0};
+  hts_mutex_assert(&gv->gv_surface_mutex);
 
-  assert(surfaces <= GLW_VIDEO_MAX_SURFACES);
+  if(gv->gv_engine != engine) {
 
-  gvc.gvc_valid = 1;
-
-  gvc.gvc_engine = engine;
-
-  if(wvec != NULL) {
-    gvc.gvc_width[0] = wvec[0];
-    gvc.gvc_width[1] = wvec[1];
-    gvc.gvc_width[2] = wvec[2];
-  }
-
-  if(hvec != NULL) {
-    gvc.gvc_height[0] = hvec[0];
-    gvc.gvc_height[1] = hvec[1];
-    gvc.gvc_height[2] = hvec[2];
-  }
-
-  gvc.gvc_nsurfaces = surfaces;
-  gvc.gvc_flags = flags;
-  gvc.gvc_pixfmt = pixfmt;
-
-  if(memcmp(&gvc, &gv->gv_cfg_cur, sizeof(gvc))) {
-
-    memcpy(&gv->gv_cfg_req, &gvc, sizeof(gvc));
-    while(memcmp(&gvc, &gv->gv_cfg_cur, sizeof(gvc))) {
+    if(gv->gv_engine != NULL)
+      gv->gv_engine->gve_reset(gv);
     
-      if(gv->w.glw_flags & GLW_DESTROYING)
-	return -1;
+    gv->gv_engine = engine;
 
-      hts_cond_wait(&gv->gv_reconf_cond, &gv->gv_surface_mutex);
+    if(engine->gve_init_on_ui_thread) {
+      gv->gv_need_init = 1;
+      while(1) {
+	if(gv->w.glw_flags & GLW_DESTROYING)
+	  return 1;
+	if(!gv->gv_need_init)
+	  break;
+	hts_cond_wait(&gv->gv_init_cond, &gv->gv_surface_mutex);
+      }
+    } else {
+      engine->gve_init(gv);
     }
   }
-
-  // Reset screen saver every time we get a new frame
-  gv->w.glw_root->gr_screensaver_counter = 0;
   return 0;
 }
-	       
+
+
+/**
+ *
+ */
+void *
+glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn)
+{
+  glw_video_reap_task_t *t = calloc(1, s);
+  t->fn = fn;
+  LIST_INSERT_HEAD(&gv->gv_reaps, t, link);
+  hts_mutex_assert(&gv->gv_surface_mutex);
+  return t;
+}
+
 
 /**
  *
  */
 glw_video_surface_t *
-glw_video_get_surface(glw_video_t *gv)
+glw_video_get_surface(glw_video_t *gv, const int *w, const int *h)
 {
-  glw_video_surface_t *s;
+  glw_video_surface_t *gvs;
+  hts_mutex_assert(&gv->gv_surface_mutex);
 
-  while((s = TAILQ_FIRST(&gv->gv_avail_queue)) == NULL) {
+  while(1) {
     if(gv->w.glw_flags & GLW_DESTROYING)
       return NULL;
 
+    if((gvs = TAILQ_FIRST(&gv->gv_avail_queue)) != NULL) {
+      TAILQ_REMOVE(&gv->gv_avail_queue, gvs, gvs_link);
+      
+      if(w == NULL)
+	return gvs;
+
+      if(w[0] == gvs->gvs_width[0] &&
+	 w[1] == gvs->gvs_width[1] &&
+	 w[2] == gvs->gvs_width[2] &&
+	 h[0] == gvs->gvs_height[0] &&
+	 h[1] == gvs->gvs_height[1] &&
+	 h[2] == gvs->gvs_height[2])
+	return gvs;
+
+      gvs->gvs_width[0]  = w[0];
+      gvs->gvs_width[1]  = w[1];
+      gvs->gvs_width[2]  = w[2];
+      gvs->gvs_height[0] = h[0];
+      gvs->gvs_height[1] = h[1];
+      gvs->gvs_height[2] = h[2];
+      
+      if(gv->gv_engine != NULL && gv->gv_engine->gve_surface_init != NULL) {
+	gv->gv_engine->gve_surface_init(gv, gvs);
+	return gvs;
+      }
+
+      TAILQ_INSERT_TAIL(&gv->gv_parked_queue, gvs, gvs_link);
+      continue;
+    }
     hts_cond_wait(&gv->gv_avail_queue_cond, &gv->gv_surface_mutex);
   }
-
-  TAILQ_REMOVE(&gv->gv_avail_queue, s, gvs_link);
-  hts_mutex_assert(&gv->gv_surface_mutex);
-  return s;
 }
 
 
@@ -713,11 +902,13 @@ glw_video_get_surface(glw_video_t *gv)
  */
 void
 glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
-		      int64_t pts, int epoch, int duration, int yshift)
+		      int64_t pts, int epoch, int duration,
+		      int interlaced, int yshift)
 {
   s->gvs_pts = pts;
   s->gvs_epoch = epoch;
   s->gvs_duration = duration;
+  s->gvs_interlaced = interlaced;
   s->gvs_yshift = yshift;
   TAILQ_INSERT_TAIL(&gv->gv_decoded_queue, s, gvs_link);
   hts_mutex_assert(&gv->gv_surface_mutex);
@@ -745,8 +936,10 @@ glw_video_input(const frame_info_t *fi, void *opaque)
   hts_mutex_lock(&gv->gv_surface_mutex);
 
   if(fi == NULL) {
-    // Blackout
-    glw_video_configure(gv, &glw_video_blank, NULL, NULL, 0, 0, 0);
+
+    if(gv->gv_engine != NULL && gv->gv_engine->gve_blackout != NULL)
+      gv->gv_engine->gve_blackout(gv);
+
   } else {
 
     gv->gv_dar_num = fi->fi_dar_num;
@@ -769,8 +962,12 @@ glw_video_input(const frame_info_t *fi, void *opaque)
 void
 glw_video_surfaces_cleanup(glw_video_t *gv)
 {
-  gv->gv_cfg_cur.gvc_engine->gve_reset(gv);
+  if(gv->gv_engine != NULL)
+    gv->gv_engine->gve_reset(gv);
+  
+  glw_video_reap(gv);
   TAILQ_INIT(&gv->gv_avail_queue);
+  TAILQ_INIT(&gv->gv_parked_queue);
   TAILQ_INIT(&gv->gv_displaying_queue);
   TAILQ_INIT(&gv->gv_decoded_queue);
 }
@@ -792,74 +989,11 @@ glw_video_reset(glw_root_t *gr)
     hts_mutex_lock(&gv->gv_surface_mutex);
 
     glw_video_surfaces_cleanup(gv);
-    gv->gv_cfg_cur.gvc_engine = &glw_video_blank;
+    gv->gv_engine = NULL;
 
     hts_mutex_unlock(&gv->gv_surface_mutex);
   }
 }
-
-
-
-/**
- * 
- */
-void
-glw_video_surface_reconfigure(glw_video_t *gv)
-{
-  glw_video_surfaces_cleanup(gv);
-
-  gv->gv_cfg_cur = gv->gv_cfg_req;
-  gv->gv_cfg_cur.gvc_engine->gve_init(gv);
-
-  hts_cond_signal(&gv->gv_reconf_cond);
-}
-
-
-/**
- *
- */
-static int64_t
-blank_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
-{
-  return PTS_UNSET;
-}
-
-/**
- *
- */
-static void
-blank_render(glw_video_t *gv, glw_rctx_t *rc)
-{
-}
-
-
-/**
- *
- */
-static void
-blank_reset(glw_video_t *gv)
-{
-}
-
-/**
- *
- */
-static int
-blank_init(glw_video_t *gv)
-{
-  return 0;
-}
-
-/**
- *
- */
-static glw_video_engine_t glw_video_blank = {
-  .gve_newframe = blank_newframe,
-  .gve_render = blank_render,
-  .gve_reset = blank_reset,
-  .gve_init = blank_init,
-};
-
 
 
 

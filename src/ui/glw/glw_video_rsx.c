@@ -117,14 +117,15 @@ init_tex(realityTexture *tex, uint32_t offset,
  *
  */
 static void
-surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
-	     const glw_video_config_t *gvc)
+surface_init(glw_video_t *gv, glw_video_surface_t *gvs)
 {
   int i;
   int siz[3];
 
+  surface_reset(gv, gvs);
+
   for(i = 0; i < 3; i++)
-    siz[i] = ROUND_UP(gvc->gvc_width[i] * gvc->gvc_height[i], 16);
+    siz[i] = ROUND_UP(gvs->gvs_width[i] * gvs->gvs_height[i], 16);
 
   gvs->gvs_size = siz[0] + siz[1] + siz[2];
   gvs->gvs_offset = rsx_alloc(gvs->gvs_size, 16);
@@ -138,9 +139,9 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 
     init_tex(&gvs->gvs_tex[i],
 	     offset,
-	     gvc->gvc_width[i],
-	     gvc->gvc_height[i],
-	     gvc->gvc_width[i],
+	     gvs->gvs_width[i],
+	     gvs->gvs_height[i],
+	     gvs->gvs_width[i],
 	     NV30_3D_TEX_FORMAT_FORMAT_I8, 0,
 	     NV30_3D_TEX_SWIZZLE_S0_X_S1 | NV30_3D_TEX_SWIZZLE_S0_Y_S1 |
 	     NV30_3D_TEX_SWIZZLE_S0_Z_S1 | NV30_3D_TEX_SWIZZLE_S0_W_S1 |
@@ -149,7 +150,6 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 	     );
     offset += siz[i];
   }
-  TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
 }
 
 
@@ -159,13 +159,14 @@ surface_init(glw_video_t *gv, glw_video_surface_t *gvs,
 static int
 yuvp_init(glw_video_t *gv)
 {
-  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   int i;
 
   memset(gv->gv_cmatrix_cur, 0, sizeof(float) * 16);
 
-  for(i = 0; i < gvc->gvc_nsurfaces; i++)
-    surface_init(gv, &gv->gv_surfaces[i], gvc);
+  for(i = 0; i < 10; i++) {
+    glw_video_surface_t *gvs = &gv->gv_surfaces[i];
+    TAILQ_INSERT_TAIL(&gv->gv_avail_queue, gvs, gvs_link);
+  }
   return 0;
 }
 
@@ -178,7 +179,6 @@ yuvp_init(glw_video_t *gv)
  */
 static void
 gv_surface_pixmap_release(glw_video_t *gv, glw_video_surface_t *gvs,
-			  const glw_video_config_t *gvc,
 			  struct glw_video_surface_queue *fromqueue)
 {
   TAILQ_REMOVE(fromqueue, gvs, gvs_link);
@@ -254,113 +254,10 @@ gv_color_matrix_update(glw_video_t *gv)
  *
  */
 static int64_t
-gv_compute_blend(glw_video_t *gv, glw_video_surface_t *sa,
-		 glw_video_surface_t *sb, int output_duration)
-{
-  int64_t pts;
-  int x;
-
-  if(sa->gvs_duration >= output_duration) {
-  
-    gv->gv_sa = sa;
-    gv->gv_sb = NULL;
-
-    pts = sa->gvs_pts;
-
-    sa->gvs_duration -= output_duration;
-    sa->gvs_pts      += output_duration;
-
-  } else if(sb != NULL) {
-
-    gv->gv_sa = sa;
-    gv->gv_sb = sb;
-    gv->gv_blend = (float) sa->gvs_duration / (float)output_duration;
-
-    if(sa->gvs_duration + 
-       sb->gvs_duration < output_duration) {
-
-      sa->gvs_duration = 0;
-      pts = sb->gvs_pts;
-
-    } else {
-      pts = sa->gvs_pts;
-      x = output_duration - sa->gvs_duration;
-      sb->gvs_duration -= x;
-      sb->gvs_pts      += x;
-    }
-    sa->gvs_duration = 0;
-
-  } else {
-    gv->gv_sa = sa;
-    gv->gv_sb = NULL;
-    sa->gvs_pts      += output_duration;
-
-    pts = sa->gvs_pts;
-  }
-
-  return pts;
-}
-
-
-/**
- *
- */
-static int64_t
 yuvp_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
-  glw_root_t *gr = gv->w.glw_root;
-  glw_video_surface_t *sa, *sb, *s;
-  media_pipe_t *mp = gv->gv_mp;
-  int output_duration;
-  int64_t pts = AV_NOPTS_VALUE;
-  int frame_duration = gv->w.glw_root->gr_frameduration;
-  int epoch = 0;
-
   gv_color_matrix_update(gv);
-  output_duration = glw_video_compute_output_duration(vd, frame_duration);
-
-  
-  /* Find new surface to display */
-  sa = TAILQ_FIRST(&gv->gv_decoded_queue);
-  if(sa == NULL) {
-    /* No frame available */
-    sa = TAILQ_FIRST(&gv->gv_displaying_queue);
-    if(sa != NULL) {
-      /* Continue to display last frame */
-      gv->gv_sa = sa;
-      gv->gv_sa = NULL;
-    } else {
-      gv->gv_sa = NULL;
-      gv->gv_sa = NULL;
-    }
-
-  } else {
-      
-    /* There are frames available that we are going to display,
-       push back old frames to decoder */
-    while((s = TAILQ_FIRST(&gv->gv_displaying_queue)) != NULL)
-      gv_surface_pixmap_release(gv, s, &gv->gv_cfg_cur, 
-				&gv->gv_displaying_queue);
-
-    /* */
-    sb = TAILQ_NEXT(sa, gvs_link);
-    if(!vd->vd_hold)
-      pts = gv_compute_blend(gv, sa, sb, output_duration);
-    epoch = sa->gvs_epoch;
-
-    if(!vd->vd_hold || sb != NULL) {
-      if(sa != NULL && sa->gvs_duration == 0)
-	glw_video_enqueue_for_display(gv, sa, &gv->gv_decoded_queue);
-    }
-    if(sb != NULL && sb->gvs_duration == 0)
-      glw_video_enqueue_for_display(gv, sb, &gv->gv_decoded_queue);
-  }
-
-  if(pts != AV_NOPTS_VALUE) {
-    pts -= frame_duration * 2;
-    glw_video_compute_avdiff(gr, vd, mp, pts, epoch);
-  }
-  return pts;
+  return glw_video_newframe_blend(gv, vd, flags, &gv_surface_pixmap_release);
 }
 
 /**
@@ -377,7 +274,7 @@ render_video_quad(int interlace, int width, int height,
   rsx_vp_t *rvp = be->be_vp_yuv2rgb;
   float x1, x2, y1, y2;
   float b1 = 0, b2 = 0;
-  const int bordersize = 3;
+  const int bordersize = 0;
   float rgba[4];
   float tc[12];
 
@@ -486,11 +383,8 @@ render_video_1f(const glw_video_t *gv, glw_video_surface_t *s,
     if(rfp->rfp_texunit[i] != -1)
       realitySetTexture(ctx, rfp->rfp_texunit[i], &s->gvs_tex[i]);
 
-  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
-
-  
-  render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), 
-		    gvc->gvc_width[0], gvc->gvc_height[0],
+  render_video_quad(s->gvs_interlaced,
+		    s->gvs_width[0], s->gvs_height[0],
 		    s->gvs_yshift, 0, gv->w.glw_root, rfp, gv, rc);
 }
 
@@ -516,10 +410,8 @@ render_video_2f(const glw_video_t *gv,
     if(rfp->rfp_texunit[i+3] != -1)
       realitySetTexture(ctx, rfp->rfp_texunit[i+3], &sb->gvs_tex[i]);
 
-  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
-  
-  render_video_quad(!!(gvc->gvc_flags & GVC_CUTBORDER), 
-		    gvc->gvc_width[0], gvc->gvc_height[0],
+  render_video_quad(sa->gvs_interlaced || sb->gvs_interlaced,
+		    sa->gvs_width[0], sa->gvs_height[0],
 		    sa->gvs_yshift, sb->gvs_yshift,
 		    gv->w.glw_root, rfp, gv, rc);
 }
@@ -531,11 +423,13 @@ render_video_2f(const glw_video_t *gv,
 static void
 yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 {
-  //  glw_root_t *gr = gv->w.glw_root;
   glw_video_surface_t *sa = gv->gv_sa, *sb = gv->gv_sb;
 
   if(sa == NULL)
     return;
+
+  gv->gv_width  = sa->gvs_width[0];
+  gv->gv_height = sa->gvs_height[0];
 
   if(sb != NULL) {
     render_video_2f(gv, sa, sb, rc);
@@ -545,21 +439,33 @@ yuvp_render(glw_video_t *gv, glw_rctx_t *rc)
 }
 
 
+/**
+ *
+ */
+static void
+yuvp_blackout(glw_video_t *gv)
+{
+  memset(gv->gv_cmatrix_tgt, 0, sizeof(float) * 16);
+}
+
+
 static void yuvp_deliver(const frame_info_t *fi, glw_video_t *gv);
 
 /**
  *
  */
-static glw_video_engine_t glw_video_opengl = {
+static glw_video_engine_t glw_video_yuvp = {
   .gve_type = 'YUVP',
   .gve_newframe = yuvp_newframe,
   .gve_render = yuvp_render,
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
   .gve_deliver = yuvp_deliver,
+  .gve_surface_init = surface_init,
+  .gve_blackout = yuvp_blackout,
 };
 
-GLW_REGISTER_GVE(glw_video_opengl);
+GLW_REGISTER_GVE(glw_video_yuvp);
 
 /**
  *
@@ -583,14 +489,11 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[1] = fi->fi_height >> (vshift + fi->fi_interlaced);
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
-  if(glw_video_configure(gv, &glw_video_opengl, wvec, hvec, 10,
-			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0,
-			 0))
-    return;
+  glw_video_configure(gv, &glw_video_yuvp);
   
   gv_color_matrix_set(gv, fi);
 
-  if((s = glw_video_get_surface(gv)) == NULL)
+  if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
     return;
 
   if(!fi->fi_interlaced) {
@@ -608,7 +511,8 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
       }
     }
 
-    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration, 0);
+    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration,
+			  0, 0);
 
   } else {
 
@@ -623,16 +527,16 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
       src = fi->fi_data[i]; 
       dst = s->gvs_data[i];
       
-      while(h -= 2 > 0) {
+      while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
 	src += fi->fi_pitch[i] * 2;
       }
     }
     
-    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, duration, !tff);
+    glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, duration, 1, !tff);
 
-    if((s = glw_video_get_surface(gv)) == NULL)
+    if((s = glw_video_get_surface(gv, wvec, hvec)) == NULL)
       return;
 
     for(i = 0; i < 3; i++) {
@@ -642,7 +546,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
       src = fi->fi_data[i] + fi->fi_pitch[i];
       dst = s->gvs_data[i];
       
-      while(h -= 2 > 0) {
+      while(h--) {
 	memcpy(dst, src, w);
 	dst += w;
 	src += fi->fi_pitch[i] * 2;
@@ -650,7 +554,7 @@ yuvp_deliver(const frame_info_t *fi, glw_video_t *gv)
     }
     
     glw_video_put_surface(gv, s, fi->fi_pts + duration,
-			  fi->fi_epoch, duration, tff);
+			  fi->fi_epoch, duration, 1, tff);
   }
 }
 
@@ -667,6 +571,7 @@ static glw_video_engine_t glw_video_rsxmem = {
   .gve_reset = yuvp_reset,
   .gve_init = yuvp_init,
   .gve_deliver = rsx_deliver,
+  .gve_blackout = yuvp_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_rsxmem);
@@ -691,20 +596,19 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
   hvec[2] = fi->fi_height >> (vshift + fi->fi_interlaced);
 
 
-  if(glw_video_configure(gv, &glw_video_rsxmem, wvec, hvec, 10,
-			 fi->fi_interlaced ? (GVC_YHALF | GVC_CUTBORDER) : 0,
-			 0))
-    return;
+  glw_video_configure(gv, &glw_video_rsxmem);
   
   gv_color_matrix_set(gv, fi);
 
-  if((gvs = glw_video_get_surface(gv)) == NULL)
+  if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
     return;
 
   surface_reset(gv, gvs);
 
   gvs->gvs_offset = fi->fi_pitch[0];
   gvs->gvs_size   = fi->fi_pitch[1];
+  gvs->gvs_width[0]  = fi->fi_width;
+  gvs->gvs_height[0] = fi->fi_height;
 
   int offset = gvs->gvs_offset;
 
@@ -727,15 +631,17 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
       offset += w * (fi->fi_height >> (i ? vshift : 0));
     }
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
-			  fi->fi_duration/2, 0);
+			  fi->fi_duration/2, 1, !fi->fi_tff);
 
-    if((gvs = glw_video_get_surface(gv)) == NULL)
+    if((gvs = glw_video_get_surface(gv, NULL, NULL)) == NULL)
       return;
   
     surface_reset(gv, gvs);
 
     gvs->gvs_offset = fi->fi_pitch[0];
     gvs->gvs_size   = fi->fi_pitch[1];
+    gvs->gvs_width[0]  = fi->fi_width;
+    gvs->gvs_height[0] = fi->fi_height;
 
     offset = gvs->gvs_offset;
 
@@ -756,7 +662,7 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
     }
 
     glw_video_put_surface(gv, gvs, fi->fi_pts + fi->fi_duration, fi->fi_epoch,
-			  fi->fi_duration/2, 0);
+			  fi->fi_duration/2, 1, fi->fi_tff);
 
   } else {
     // Progressive
@@ -777,7 +683,7 @@ rsx_deliver(const frame_info_t *fi, glw_video_t *gv)
       offset += w * h;
     }
     glw_video_put_surface(gv, gvs, fi->fi_pts, fi->fi_epoch,
-			  fi->fi_duration, 0);
+			  fi->fi_duration, 0, 0);
   }
 }
 

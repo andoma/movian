@@ -1152,3 +1152,110 @@ glw_view_attrib_resolve(token_t *t)
     }
   return -1;
 }
+
+
+
+/**
+ *
+ */
+static int
+or_flags2_fn(glw_view_eval_context_t *ec, const token_attrib_t *a, 
+             struct token *t)
+{
+  mod_flags2(ec->w, t->t_set, t->t_clr);
+  return 0;
+}
+
+
+
+
+
+/**
+ *
+ */
+static int
+or_img_flags_fn(glw_view_eval_context_t *ec, const token_attrib_t *a,
+                struct token *t)
+{
+  mod_img_flags(ec->w, t->t_set, t->t_clr);
+  return 0;
+}
+
+
+
+
+/**
+ *
+ */
+static int
+or_txt_flags_fn(glw_view_eval_context_t *ec, const token_attrib_t *a,
+                 struct token *t)
+{
+  mod_text_flags(ec->w, t->t_set, t->t_clr);
+  return 0;
+}
+
+
+
+static const token_attrib_t or_flags2    = {"or_flags2",    or_flags2_fn};
+static const token_attrib_t or_img_flags = {"or_img_flags", or_img_flags_fn};
+static const token_attrib_t or_txt_flags = {"or_txt_flags", or_txt_flags_fn};
+
+
+/**
+ *
+ */
+static int
+merge_token(token_t *t, glw_root_t *gr, token_t **p, token_t **fp,
+            const token_attrib_t *a)
+{
+  if(*fp == NULL) {
+    *fp = t;
+    if(t->t_int) {
+      t->t_set = t->t_attrib->attrib;
+      t->t_clr = 0;
+    } else {
+      t->t_set = 0;
+      t->t_clr = t->t_attrib->attrib;
+    }
+    t->t_attrib = a;
+    t->type = TOKEN_MOD_FLAGS;
+    return 0;
+  } else {
+    if(t->t_int) {
+      (*fp)->t_set |= t->t_attrib->attrib;
+    } else {
+      (*fp)->t_clr |= t->t_attrib->attrib;
+    }
+    *p = t->next;
+    glw_view_token_free(gr, t);
+    return 1;
+  }
+}
+
+
+/**
+ *
+ */
+void
+glw_view_attrib_optimize(token_t *t, glw_root_t *gr)
+{
+  token_t *f2 = NULL, *img = NULL, *txt = NULL, **p = &t;
+
+  while((t = *p) != NULL) {
+    if(t->type == TOKEN_INT) {
+      if(t->t_attrib->fn == &mod_flags2 &&
+         merge_token(t, gr, p, &f2, &or_flags2))
+        continue;
+
+      if(t->t_attrib->fn == &mod_img_flags &&
+         merge_token(t, gr, p, &img, &or_img_flags))
+        continue;
+
+      if(t->t_attrib->fn == &mod_text_flags &&
+         merge_token(t, gr, p, &txt, &or_txt_flags))
+        continue;
+    }
+    p = &t->next;
+  }
+}

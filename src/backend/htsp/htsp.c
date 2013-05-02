@@ -1122,9 +1122,9 @@ htsp_connection_find(const char *url, char *path, size_t pathlen,
 
   htsp_login(hc);
 
-  hts_thread_create_detached("HTSP main", htsp_thread, hc, THREAD_PRIO_NORMAL);
+  hts_thread_create_detached("HTSP main", htsp_thread, hc, THREAD_PRIO_DEMUXER);
   hts_thread_create_detached("HTSP worker", htsp_worker_thread, hc,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_METADATA);
 
   hts_mutex_unlock(&htsp_global_mutex);
   return hc;

@@ -53,7 +53,6 @@ static const int libav_colorspace_tbl[] = {
 static void
 vd_init_timings(video_decoder_t *vd)
 {
-  kalman_init(&vd->vd_avfilter);
   vd->vd_prevpts = AV_NOPTS_VALUE;
   vd->vd_nextpts = AV_NOPTS_VALUE;
   vd->vd_estimated_duration = 0;
@@ -68,26 +67,9 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
   int got_pic = 0;
   media_pipe_t *mp = vd->vd_mp;
   media_codec_t *cw = mb->mb_cw;
-  AVCodecContext *ctx = cw->codec_ctx;
+  AVCodecContext *ctx = cw->ctx;
   AVFrame *frame = vd->vd_frame;
   int t;
-  
-  if(vd->vd_do_flush) {
-    AVPacket avpkt;
-    av_init_packet(&avpkt);
-    avpkt.data = NULL;
-    avpkt.size = 0;
-    do {
-      avcodec_decode_video2(ctx, frame, &got_pic, &avpkt);
-    } while(got_pic);
-
-    vd->vd_do_flush = 0;
-    vd->vd_prevpts = AV_NOPTS_VALUE;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vd->vd_estimated_duration = 0;
-    avcodec_flush_buffers(ctx);
-    vd->vd_compensate_thres = 5;
-  }
 
   vd->vd_reorder[vd->vd_reorder_ptr] = *mb;
   ctx->reordered_opaque = vd->vd_reorder_ptr;
@@ -97,7 +79,6 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
    * If we are seeking, drop any non-reference frames
    */
   ctx->skip_frame = mb->mb_skip == 1 ? AVDISCARD_NONREF : AVDISCARD_DEFAULT;
-
   avgtime_start(&vd->vd_decode_time);
 
   AVPacket avpkt;
@@ -111,7 +92,7 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 		   mq->mq_prop_decode_peak);
 
   if(mp->mp_stats)
-    mp_set_mq_meta(mq, cw->codec, cw->codec_ctx);
+    mp_set_mq_meta(mq, cw->ctx->codec, cw->ctx);
 
   mb = &vd->vd_reorder[frame->reordered_opaque];
 
@@ -120,6 +101,26 @@ vd_decode_video(video_decoder_t *vd, media_queue_t *mq, media_buf_t *mb)
 
   video_deliver_frame_avctx(vd, mp, mq, ctx, frame, mb, t);
 }
+
+
+/**
+ *
+ */
+void
+video_flush_avctx(media_codec_t *mc, video_decoder_t *vd)
+{
+  AVCodecContext *ctx = mc->ctx;
+  int got_pic = 0;
+  AVPacket avpkt;
+  av_init_packet(&avpkt);
+  avpkt.data = NULL;
+  avpkt.size = 0;
+  do {
+    avcodec_decode_video2(ctx, vd->vd_frame, &got_pic, &avpkt);
+  } while(got_pic);
+  avcodec_flush_buffers(ctx);
+}
+
 
 /**
  *
@@ -143,13 +144,13 @@ video_deliver_frame_avctx(video_decoder_t *vd,
       fi.fi_dar_num = frame->pan_scan->width;
       fi.fi_dar_den = frame->pan_scan->height;
     } else {
-      fi.fi_dar_num = ctx->width;
-      fi.fi_dar_den = ctx->height;
+      fi.fi_dar_num = frame->width;
+      fi.fi_dar_den = frame->height;
     }
 
-    if(ctx->sample_aspect_ratio.num) {
-      fi.fi_dar_num *= ctx->sample_aspect_ratio.num;
-      fi.fi_dar_den *= ctx->sample_aspect_ratio.den;
+    if(frame->sample_aspect_ratio.num) {
+      fi.fi_dar_num *= frame->sample_aspect_ratio.num;
+      fi.fi_dar_den *= frame->sample_aspect_ratio.den;
     }
       
     break;
@@ -215,17 +216,22 @@ video_deliver_frame_avctx(video_decoder_t *vd,
     vd->vd_nextpts = AV_NOPTS_VALUE;
   }
 #if 0
-  static int64_t lastpts;
-  printf("%20ld : %-20ld %d %ld %d\n", pts, pts - lastpts, mb->mb_drive_clock,
-	 mb->mb_delta, duration);
+  static int64_t lastpts = AV_NOPTS_VALUE;
+  if(lastpts != AV_NOPTS_VALUE) {
+    printf("DEC: %20"PRId64" : %-20"PRId64" %d %"PRId64" %d\n", pts, pts - lastpts, mb->mb_drive_clock,
+           mb->mb_delta, duration);
+    if(pts - lastpts > 1000000) {
+      abort();
+    }
+  }
   lastpts = pts;
 #endif
 
   vd->vd_interlaced |=
     frame->interlaced_frame && !mb->mb_disable_deinterlacer;
 
-  fi.fi_width = ctx->width;
-  fi.fi_height = ctx->height;
+  fi.fi_width = frame->width;
+  fi.fi_height = frame->height;
   fi.fi_pts = pts;
   fi.fi_epoch = mb->mb_epoch;
   fi.fi_delta = mb->mb_delta;
@@ -249,8 +255,27 @@ video_deliver_frame_avctx(video_decoder_t *vd,
   fi.fi_pitch[2] = frame->linesize[2];
 
   fi.fi_type = 'LAVC';
-  fi.fi_pix_fmt = ctx->pix_fmt;
+  fi.fi_pix_fmt = frame->format;
   video_deliver_frame(vd, &fi);
+}
+
+
+/**
+ *
+ */
+void
+video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
+			       int epoch, int64_t delta)
+{
+  if(ts == PTS_UNSET)
+    return;
+
+  mp_set_current_time(vd->vd_mp, ts, epoch, delta);
+
+  vd->vd_subpts = ts - vd->vd_mp->mp_svdelta - delta;
+
+  if(vd->vd_ext_subtitles != NULL)
+    subtitles_pick(vd->vd_ext_subtitles, vd->vd_subpts, vd->vd_mp);
 }
 
 
@@ -260,22 +285,12 @@ video_deliver_frame_avctx(video_decoder_t *vd,
 void
 video_deliver_frame(video_decoder_t *vd, const frame_info_t *info)
 {
-  vd->vd_skip = 0;
   vd->vd_mp->mp_video_frame_deliver(info, vd->vd_mp->mp_video_frame_opaque);
 
 
-  if(!info->fi_drive_clock || info->fi_pts == AV_NOPTS_VALUE)
-    return;
-
-  mp_set_current_time(vd->vd_mp, info->fi_pts, info->fi_epoch, info->fi_delta);
-  
-  int64_t pts = info->fi_pts;
-  pts -= vd->vd_mp->mp_svdelta;
-  pts -= info->fi_delta;
-  vd->vd_subpts = pts;
-
-  if(vd->vd_ext_subtitles != NULL)
-    subtitles_pick(vd->vd_ext_subtitles, pts, vd->vd_mp);
+  if(info->fi_drive_clock)
+    video_decoder_set_current_time(vd, info->fi_pts, info->fi_epoch,
+				   info->fi_delta);
 }
 
 
@@ -313,11 +328,12 @@ vd_thread(void *aux)
   media_pipe_t *mp = vd->vd_mp;
   media_queue_t *mq = &mp->mp_video;
   media_buf_t *mb;
-  media_codec_t *mc;
+  media_codec_t *mc, *mc_current = NULL;
   int run = 1;
   int reqsize = -1;
-  int reinit = 0;
   int size;
+  int reinit = 0;
+
   vd->vd_frame = avcodec_alloc_frame();
 
   hts_mutex_lock(&mp->mp_mutex);
@@ -382,21 +398,43 @@ vd_thread(void *aux)
 
     case MB_CTRL_FLUSH:
       vd_init_timings(vd);
-      vd->vd_do_flush = 1;
       vd->vd_interlaced = 0;
-      video_overlay_flush(mp, 1);
-      dvdspu_flush(mp);
+      
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      dvdspu_flush_locked(mp);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
+
+      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
+
+      if(mc_current != NULL) {
+	if(mc_current->flush != NULL)
+	  mc_current->flush(mc_current, vd);
+	else
+	  video_flush_avctx(mc_current, vd);
+
+	media_codec_deref(mc_current);
+	mc_current = NULL;
+      }
+
+      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
+      if(mp->mp_seek_video_done != NULL)
+	mp->mp_seek_video_done(mp);
       break;
 
     case MB_VIDEO:
-      if(reinit) {
-	reinit = 0;
-	if(mc->reinit != NULL)
-	  mc->reinit(mc);
+      if(mc != mc_current) {
+	if(mc_current != NULL)
+	  media_codec_deref(mc_current);
+
+	mc_current = media_codec_ref(mc);
       }
 
-      if(mb->mb_skip == 2)
-	vd->vd_skip = 1;
+      if(reinit) {
+	if(mc->reinit != NULL)
+	  mc->reinit(mc);
+	reinit = 0;
+      }
 
       size = mb->mb_size;
 
@@ -417,10 +455,16 @@ vd_thread(void *aux)
       reinit = 1;
       break;
 
+    case MB_CTRL_RECONFIGURE:
+      mb->mb_cw->reconfigure(mc);
+      break;
+
 #if ENABLE_DVD
     case MB_DVD_RESET_SPU:
+      hts_mutex_lock(&mp->mp_overlay_mutex);
       vd->vd_spu_curbut = 1;
-      dvdspu_flush(mp);
+      dvdspu_flush_locked(mp);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     case MB_CTRL_DVD_HILITE:
@@ -462,12 +506,10 @@ vd_thread(void *aux)
 	video_overlay_decode(mp, mb);
       break;
 
-    case MB_CTRL_BLACKOUT:
-      mp->mp_video_frame_deliver(NULL, mp->mp_video_frame_opaque);
-      break;
-
     case MB_CTRL_FLUSH_SUBTITLES:
-      video_overlay_flush(mp, 1);
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     case MB_CTRL_EXT_SUBTITLE:
@@ -477,7 +519,9 @@ vd_thread(void *aux)
       // Steal subtitle from the media_buf
       vd->vd_ext_subtitles = mb->mb_data;
       mb->mb_data = NULL; 
-      video_overlay_flush(mp, 1);
+      hts_mutex_lock(&mp->mp_overlay_mutex);
+      video_overlay_flush_locked(mp, 1);
+      hts_mutex_unlock(&mp->mp_overlay_mutex);
       break;
 
     default:
@@ -489,6 +533,9 @@ vd_thread(void *aux)
   }
 
   hts_mutex_unlock(&mp->mp_mutex);
+
+  if(mc_current != NULL)
+    media_codec_deref(mc_current);
 
   if(vd->vd_ext_subtitles != NULL)
     subtitles_destroy(vd->vd_ext_subtitles);
@@ -513,7 +560,7 @@ video_decoder_create(media_pipe_t *mp)
 
   hts_thread_create_joinable("video decoder", 
 			     &vd->vd_decoder_thread, vd_thread, vd,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_VIDEO);
   
   return vd;
 }

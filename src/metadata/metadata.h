@@ -205,8 +205,10 @@ typedef struct metadata {
   char md_qtype;
 
   char md_preferred:1;        // Preferred by the user (set in database)
-  char md_cached:1;           // Set if data is from a cached lookup
-
+  char md_cache_status:2;     // Set if data is from a cached lookup
+#define METADATA_CACHE_STATUS_NO         0
+#define METADATA_CACHE_STATUS_FULL       1
+#define METADATA_CACHE_STATUS_UNPARENTED 2
 
 
 
@@ -337,6 +339,8 @@ metadata_t *metadb_metadata_get(void *db, const char *url, time_t mtime);
 struct fa_dir;
 struct fa_dir *metadb_metadata_scandir(void *db, const char *url,
 				       time_t *mtimep);
+
+void metadb_parent_item(void *db, const char *url, const char *parent_url);
 
 void metadb_unparent_item(void *db, const char *url);
 

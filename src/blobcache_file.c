@@ -40,7 +40,7 @@
 #include "settings.h"
 #include "notifications.h"
 
-#define BC2_MAGIC 0x62630203
+#define BC2_MAGIC 0x62630205
 
 typedef struct blobcache_item {
   struct blobcache_item *bi_link;
@@ -51,6 +51,7 @@ typedef struct blobcache_item {
   uint32_t bi_expiry;
   uint32_t bi_modtime;
   uint32_t bi_size;
+  uint8_t bi_content_type_len;
 } blobcache_item_t;
 
 typedef struct blobcache_diskitem {
@@ -61,6 +62,7 @@ typedef struct blobcache_diskitem {
   uint32_t di_modtime;
   uint32_t di_size;
   uint8_t di_etaglen;
+  uint8_t di_content_type_len;
   uint8_t di_etag[0];
 } __attribute__((packed)) blobcache_diskitem_t;
 
@@ -212,7 +214,7 @@ save_index(void)
       di->di_modtime      = p->bi_modtime;
       di->di_size         = p->bi_size;
       di->di_etaglen      = etaglen;
-      
+      di->di_content_type_len = p->bi_content_type_len;
       out += sizeof(blobcache_diskitem_t);
       if(etaglen) {
 	memcpy(out, p->bi_etag, etaglen);
@@ -312,6 +314,7 @@ load_index(void)
     p->bi_expiry       = di->di_expiry;
     p->bi_modtime      = di->di_modtime;
     p->bi_size         = di->di_size;
+    p->bi_content_type_len = di->di_content_type_len;
     int etaglen        = di->di_etaglen;
 
     in += sizeof(blobcache_diskitem_t);
@@ -320,6 +323,8 @@ load_index(void)
       memcpy(p->bi_etag, in, etaglen);
       p->bi_etag[etaglen] = 0;
       in += etaglen;
+    } else {
+      p->bi_etag = NULL;
     }
     p->bi_link = hashvector[p->bi_key_hash & ITEM_HASH_MASK];
     hashvector[p->bi_key_hash & ITEM_HASH_MASK] = p;
@@ -377,6 +382,7 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
     p = pool_get(item_pool);
     p->bi_key_hash = dk;
     p->bi_size = 0;
+    p->bi_content_type_len = 0;
     p->bi_link = hashvector[dk & ITEM_HASH_MASK];
     p->bi_etag = NULL;
     hashvector[dk & ITEM_HASH_MASK] = p;
@@ -392,7 +398,8 @@ blobcache_put(const char *key, const char *stash, buf_t *b,
   current_cache_size -= p->bi_size;
   p->bi_size = b->b_size;
   current_cache_size += p->bi_size;
-
+  p->bi_content_type_len = b->b_content_type ?
+    strlen(rstr_get(b->b_content_type)) : 0;
   hts_mutex_unlock(&cache_lock);
   return 0;
 }
@@ -458,7 +465,7 @@ blobcache_get(const char *key, const char *stash, int pad,
     if(fstat(fd, &st))
       goto bad;
 
-    if(st.st_size != p->bi_size) {
+    if(st.st_size != p->bi_size + p->bi_content_type_len) {
       unlink(filename);
       goto bad;
     }
@@ -480,18 +487,28 @@ blobcache_get(const char *key, const char *stash, int pad,
 
   if(b == NULL) {
 
-    b = buf_create(st.st_size + pad);
+    b = buf_create(p->bi_size + pad);
     if(b == NULL) {
       close(fd);
       return NULL;
     }
 
-    if(read(fd, b->b_ptr, st.st_size) != st.st_size) {
+    if(p->bi_content_type_len) {
+      b->b_content_type = rstr_allocl(NULL, p->bi_content_type_len);
+      if(read(fd, rstr_data(b->b_content_type), p->bi_content_type_len) !=
+	 p->bi_content_type_len) {
+	buf_release(b);
+	close(fd);
+	return NULL;
+      }
+    }
+
+    if(read(fd, b->b_ptr, p->bi_size) != p->bi_size) {
       buf_release(b);
       close(fd);
       return NULL;
     }
-    memset(b->b_ptr + st.st_size, 0, pad);
+    memset(b->b_ptr + p->bi_size, 0, pad);
     close(fd);
   }
   return b;
@@ -774,6 +791,13 @@ flushthread(void *aux)
     int fd = open(filename, O_CREAT | O_WRONLY | O_TRUNC, 0666);
     if(fd != -1) {
 
+      if(b->b_content_type != NULL) {
+	const char *str = rstr_get(b->b_content_type);
+	size_t len = strlen(str);
+	if(write(fd, str, len) != len)
+	  unlink(filename);
+      }
+
       if(write(fd, b->b_ptr, b->b_size) != b->b_size)
         unlink(filename);
 
@@ -829,7 +853,7 @@ blobcache_init(void)
 			 cache_clear, NULL, 0, NULL);
 
   hts_thread_create_joinable("blobcache", &bcthread, flushthread, NULL,
-                             THREAD_PRIO_LOW);
+                             THREAD_PRIO_BGTASK);
 }
 
 

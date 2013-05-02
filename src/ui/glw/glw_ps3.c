@@ -1099,6 +1099,8 @@ glw_ps3_start(void)
   if(glw_ps3_init(gp))
      return 1;
 
+  gp->gr.gr_prop_maxtime = 10000;
+
   glw_root_t *gr = &gp->gr;
 
   if(gp->res.height >= 1080) {

@@ -207,7 +207,8 @@ glw_playfield_callback(glw_t *w, void *opaque, glw_signal_t signal, void *extra)
 	c->glw_parent_amount = GLW_MAX(v, c->glw_parent_amount - s);
       }
 
-      //      if(c->glw_parent_amount > 0 && c->glw_parent_amount < 2)
+      if((c->glw_parent_amount > 0 && c->glw_parent_amount < 2) ||
+	 !w->glw_root->gr_reduce_cpu)
 	glw_layout0(c, rc);
 
       if(c->glw_parent_amount <= 1 && c->glw_parent_detached)

@@ -28,44 +28,43 @@
  *
  */
 static int
-media_codec_create_lavc(media_codec_t *cw, int id,
-                        const media_codec_params_t *mcp,
+media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
                         media_pipe_t *mp)
 {
-  AVCodecContext *ctx = cw->codec_ctx;
-  cw->codec = avcodec_find_decoder(id);
-  
-  if(cw->codec == NULL)
+  const AVCodec *codec = avcodec_find_decoder(cw->codec_id);
+
+  if(codec == NULL)
     return -1;
-  
-  if(ctx == NULL || id == CODEC_ID_AC3) {
-    cw->codec_ctx = avcodec_alloc_context3(cw->codec);
-    cw->codec_ctx_alloced = 1;
-  } else {
-    cw->codec_ctx = ctx;
+
+  if(cw->codec_id == CODEC_ID_AC3 ||
+     cw->codec_id == CODEC_ID_DTS) {
+
+    // We create codec instances later in audio thread.
+    return 0;
   }
+  
+  cw->ctx = cw->fmt_ctx ?: avcodec_alloc_context3(codec);
 
   //  cw->codec_ctx->debug = FF_DEBUG_PICT_INFO | FF_DEBUG_BUGS;
 
-  cw->codec_ctx->opaque = cw;
-
-  if(mcp != NULL && mcp->extradata != NULL && !cw->codec_ctx->extradata) {
-    cw->codec_ctx->extradata = calloc(1, mcp->extradata_size +
-				      FF_INPUT_BUFFER_PADDING_SIZE);
-    memcpy(cw->codec_ctx->extradata, mcp->extradata, mcp->extradata_size);
-    cw->codec_ctx->extradata_size = mcp->extradata_size;
+  if(mcp != NULL && mcp->extradata != NULL && !cw->ctx->extradata) {
+    cw->ctx->extradata = calloc(1, mcp->extradata_size +
+				FF_INPUT_BUFFER_PADDING_SIZE);
+    memcpy(cw->ctx->extradata, mcp->extradata, mcp->extradata_size);
+    cw->ctx->extradata_size = mcp->extradata_size;
   }
 
-  if(id == CODEC_ID_H264 && gconf.concurrency > 1) {
-    cw->codec_ctx->thread_count = gconf.concurrency;
+  if(cw->codec_id == CODEC_ID_H264 && gconf.concurrency > 1) {
+    cw->ctx->thread_count = gconf.concurrency;
     if(mcp && mcp->cheat_for_speed)
-      cw->codec_ctx->flags2 |= CODEC_FLAG2_FAST;
+      cw->ctx->flags2 |= CODEC_FLAG2_FAST;
   }
 
-  if(avcodec_open2(cw->codec_ctx, cw->codec, NULL) < 0) {
-    if(ctx == NULL)
-      free(cw->codec_ctx);
-    cw->codec = NULL;
+  if(avcodec_open2(cw->ctx, codec, NULL) < 0) {
+    TRACE(TRACE_INFO, "libav", "Unable to open codec %s",
+	  codec ? codec->name : "<noname>");
+    if(cw->fmt_ctx != cw->ctx)
+      av_freep(&cw->ctx);
     return -1;
   }
   return 0;
@@ -104,8 +103,8 @@ media_format_deref(media_format_t *fw)
  * 
  */
 void
-metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec, 
-		     AVCodecContext *avctx)
+metadata_from_libav(char *dst, size_t dstlen,
+		    const AVCodec *codec, const AVCodecContext *avctx)
 {
   char *n;
   int off = snprintf(dst, dstlen, "%s", codec->name);
@@ -160,10 +159,11 @@ metadata_from_ffmpeg(char *dst, size_t dstlen, AVCodec *codec,
  * 
  */
 void
-mp_set_mq_meta(media_queue_t *mq, AVCodec *codec, AVCodecContext *avctx)
+mp_set_mq_meta(media_queue_t *mq, const AVCodec *codec, 
+	       const AVCodecContext *avctx)
 {
   char buf[128];
-  metadata_from_ffmpeg(buf, sizeof(buf), codec, avctx);
+  metadata_from_libav(buf, sizeof(buf), codec, avctx);
   prop_set_string(mq->mq_prop_codec, buf);
 }
 

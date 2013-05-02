@@ -1,8 +1,8 @@
 #pragma once
+#include "showtime.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 
-// #define POOL_DEBUG
 
 LIST_HEAD(pool_segment_list, pool_segment);
 
@@ -13,8 +13,8 @@ LIST_HEAD(pool_segment_list, pool_segment);
 typedef struct pool {
   struct pool_segment_list p_segments;
   
-  size_t p_item_size;
-
+  size_t p_item_size_req;  // Size requested by user
+  size_t p_item_size;      // Actual size of memory allocated
   int p_flags;
 
   hts_mutex_t p_mutex;
@@ -25,7 +25,6 @@ typedef struct pool {
 } pool_t;
 
 
-#define POOL_REENTRANT 0x1
 #define POOL_ZERO_MEM  0x2
 
 pool_t *pool_create(const char *name, size_t item_size, int flags);

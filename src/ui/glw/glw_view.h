@@ -71,8 +71,7 @@ typedef enum {
   TOKEN_PROPERTY_REF,          // We just keep a reference
   TOKEN_PROPERTY_OWNER,        // We own the property and must destroy it
                                // when token is free'd
-  TOKEN_PROPERTY_VALUE_NAME,
-  TOKEN_PROPERTY_CANONICAL_NAME,
+  TOKEN_PROPERTY_NAME,
   TOKEN_PROPERTY_SUBSCRIPTION,
   TOKEN_OBJECT_ATTRIBUTE,
   TOKEN_VOID,                 // Void property
@@ -86,6 +85,7 @@ typedef enum {
   TOKEN_EVENT,
   TOKEN_LINK,                  // A link with title and url
   TOKEN_VECTOR,                // List of tokens
+  TOKEN_MOD_FLAGS,
   TOKEN_num,
 
 } token_type_t;
@@ -108,6 +108,7 @@ typedef struct token {
   int16_t t_num_args;
   uint16_t t_flags;
 #define TOKEN_F_SELECTED 0x1 // The 'selected' in a vector
+#define TOKEN_F_CANONICAL_PATH 0x2 // Do not follow paths when resolving prop
 
   union {
     int elements;
@@ -127,8 +128,12 @@ typedef struct token {
     struct glw_prop_sub *t_propsubr;
   };
 
+#define TOKEN_PROPERTY_NAME_VEC_SIZE (16 / __SIZEOF_POINTER__)
+
   union {
     int  ival;
+
+    rstr_t *pnvec[TOKEN_PROPERTY_NAME_VEC_SIZE];
 
     struct {
       float value;
@@ -159,9 +164,15 @@ typedef struct token {
 
     const char *cstr;
 
+    struct {
+      int set;
+      int clr;
+    } modflags;
   } u;
 
-
+#define t_set             u.modflags.set
+#define t_clr             u.modflags.clr
+#define t_pnvec           u.pnvec
 #define t_cstring         u.cstr
 #define t_rstring         u.rstr.rstr
 #define t_rstrtype        u.rstr.type
@@ -292,8 +303,9 @@ void glw_view_print_tree(token_t *f, int indent);
 
 token_t *glw_view_function_resolve(glw_root_t *gr, errorinfo_t *ei, token_t *t);
 
-
 int glw_view_attrib_resolve(token_t *t);
+
+void glw_view_attrib_optimize(token_t *t, glw_root_t *gr);
 
 int glw_view_seterr(errorinfo_t *ei, token_t *b, const char *fmt, ...);
 

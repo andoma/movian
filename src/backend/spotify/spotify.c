@@ -4082,7 +4082,7 @@ spotify_start(char *errbuf, size_t errlen, int silent)
     is_thread_running = 1;
     silent_start = silent;
     hts_thread_create_detached("spotify", spotify_thread, NULL,
-			       THREAD_PRIO_NORMAL);
+			       THREAD_PRIO_MODEL);
     shutdown_hook_add(spotify_shutdown_early, NULL, 1);
     shutdown_hook_add(spotify_shutdown_late, NULL, 0);
   }

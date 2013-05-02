@@ -27,10 +27,8 @@
 #include <sys/un.h>
 #include <errno.h>
 
-#include "htsmsg/htsbuf.h"
-
-#include "event.h"
 #include "showtime.h"
+#include "htsmsg/htsbuf.h"
 #include "event.h"
 
 
@@ -170,7 +168,7 @@ lirc_open(void)
 
   lirc_fd = fd;
   hts_thread_create_detached("lirc", lirc_thread, NULL,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_UI_WORKER_HIGH);
 }
 
 

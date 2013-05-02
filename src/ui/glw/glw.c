@@ -50,26 +50,6 @@ static void glw_osk_open(glw_root_t *gr, const char *title, const char *input,
 			 glw_t *w, int password);
 
 
-
-/*
- *
- */
-void
-glw_lock(glw_root_t *gr)
-{
-  hts_mutex_lock(&gr->gr_mutex);
-}
-
-/*
- *
- */
-void
-glw_unlock(glw_root_t *gr)
-{
-  hts_mutex_unlock(&gr->gr_mutex);
-}
-
-
 /*
  *
  */
@@ -164,6 +144,11 @@ glw_init(glw_root_t *gr)
 {
   char skinbuf[PATH_MAX];
   const char *skin = gconf.skin;
+
+  if(gr->gr_prop_dispatcher == NULL)
+    gr->gr_prop_dispatcher = &prop_courier_poll_timed;
+
+  gr->gr_prop_maxtime = -1;
 
   assert(glw_settings.gs_settings != NULL);
 
@@ -443,6 +428,16 @@ glw_reap(glw_root_t *gr)
  *
  */
 void
+glw_idle(glw_root_t *gr)
+{
+  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
+  glw_reap(gr);
+}
+
+/**
+ *
+ */
+void
 glw_prepare_frame(glw_root_t *gr, int flags)
 {
   glw_t *w;
@@ -479,7 +474,7 @@ glw_prepare_frame(glw_root_t *gr, int flags)
   prop_set_int(gr->gr_prop_width, gr->gr_width);
   prop_set_int(gr->gr_prop_height, gr->gr_height);
 
-  prop_courier_poll(gr->gr_courier);
+  gr->gr_prop_dispatcher(gr->gr_courier, gr->gr_prop_maxtime);
 
   //  glw_cursor_layout_frame(gr);
 

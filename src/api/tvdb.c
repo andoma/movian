@@ -484,6 +484,7 @@ tvdb_query_by_episode(void *db, const char *item_url,
 
  out:
   // cleanup
+  metadata_destroy(md);
   htsmsg_destroy(epi);
   flush_seasons(&seasons);
   return itemid;

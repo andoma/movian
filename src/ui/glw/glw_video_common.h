@@ -32,28 +32,15 @@
 
 LIST_HEAD(glw_video_overlay_list, glw_video_overlay);
 TAILQ_HEAD(glw_video_surface_queue, glw_video_surface);
+LIST_HEAD(glw_video_reap_task_list, glw_video_reap_task);
 
 /**
  *
  */
-typedef struct {
-
-  const struct glw_video_engine *gvc_engine;
-
-  int gvc_width[3];
-  int gvc_height[3];
-
-  int gvc_nsurfaces;
-
-  int gvc_flags;
-#define GVC_YHALF     0x1
-#define GVC_CUTBORDER 0x2
-
-  int gvc_valid;
-
-  int gvc_pixfmt;
-
-} glw_video_config_t;
+typedef struct glw_video_reap_task {
+  LIST_ENTRY(glw_video_reap_task) link;
+  void (*fn)(struct glw_video *gv, void *ptr);
+} glw_video_reap_task_t;
 
 
 /**
@@ -69,8 +56,10 @@ typedef struct glw_video_surface {
 
   void *gvs_data[3];
 
-  int gvs_width;
-  int gvs_height;
+  int gvs_width[3];
+  int gvs_height[3];
+
+  int gvs_interlaced;
   int gvs_yshift;
 
   int gvs_id;
@@ -79,21 +68,9 @@ typedef struct glw_video_surface {
 
 #if CONFIG_GLW_BACKEND_OPENGL
   GLuint gvs_pbo[3];
-  void *gvs_pbo_ptr[3];
-
-  int gvs_uploaded;
-
-  GLuint gvs_textures[3];
-
-  unsigned int gvs_frame_buffer;
-
-#endif
-
-
-#if CONFIG_GLW_BACKEND_GX
-  GXTexObj gvs_obj[3];
-  void *gvs_mem[3];
   int gvs_size[3];
+  int gvs_uploaded;
+  GLuint gvs_textures[3];
 #endif
 
 #if CONFIG_GLW_BACKEND_RSX
@@ -118,6 +95,9 @@ typedef struct glw_video {
 
   glw_t w;
 
+  int gv_width;
+  int gv_height;
+
   int gv_dar_num;
   int gv_dar_den;
 
@@ -139,6 +119,15 @@ typedef struct glw_video {
   prop_t *gv_model;
   char gv_freezed;
 
+  /**
+   * AV Diff handling
+   */
+
+  int gv_avdiff_update_thres; // Avoid updating user facing avdiff too often
+  kalman_t gv_avfilter;
+  float gv_avdiff_x;
+  int gv_avdiff;
+
   video_decoder_t *gv_vd;
   media_pipe_t *gv_mp;
 
@@ -151,14 +140,21 @@ typedef struct glw_video {
 
   float gv_cmatrix_cur[16];
   float gv_cmatrix_tgt[16];
-  
-  glw_video_config_t gv_cfg_cur;
-  glw_video_config_t gv_cfg_req;
-  hts_cond_t gv_reconf_cond;
 
-  glw_video_surface_t gv_surfaces[GLW_VIDEO_MAX_SURFACES];
-  
   hts_mutex_t gv_surface_mutex;
+
+  struct glw_video_reap_task_list gv_reaps;
+
+  const struct glw_video_engine *gv_engine;
+  int gv_need_init;
+  hts_cond_t gv_init_cond;
+  glw_video_surface_t gv_surfaces[GLW_VIDEO_MAX_SURFACES];
+
+
+  /**
+   * Frames that needs to be prepared before they can be used
+   */
+  struct glw_video_surface_queue gv_parked_queue;
 
   /**
    * Frames available for decoder
@@ -231,7 +227,11 @@ typedef struct glw_video {
 typedef struct glw_video_engine {
   uint32_t gve_type;
 
+  int gve_init_on_ui_thread;
+
   void (*gve_deliver)(const frame_info_t *fi, glw_video_t *gv);
+
+  void (*gve_blackout)(glw_video_t *gv);
 
   void (*gve_render)(glw_video_t *gv, glw_rctx_t *rc);
 
@@ -240,6 +240,8 @@ typedef struct glw_video_engine {
   void (*gve_reset)(glw_video_t *gv);
 
   int (*gve_init)(glw_video_t *gv);
+
+  void (*gve_surface_init)(glw_video_t *gv, glw_video_surface_t *gvs);
 
   LIST_ENTRY(glw_video_engine) gve_link;
 
@@ -253,11 +255,13 @@ static void  __attribute__((constructor)) gveinit ## n(void) \
 { glw_register_video_engine(&n);}
 
 
-int glw_video_compute_output_duration(video_decoder_t *vd, int frame_duration);
+typedef void (gv_surface_pixmap_release_t)(glw_video_t *gv,
+					   glw_video_surface_t *gvs,
+					   struct glw_video_surface_queue *fq);
 
-void glw_video_compute_avdiff(glw_root_t *gr,
-			      video_decoder_t *vd, media_pipe_t *mp, 
-			      int64_t pts, int epoch);
+int64_t glw_video_newframe_blend(glw_video_t *gv, video_decoder_t *vd,
+				 int flags, gv_surface_pixmap_release_t *r);
+
 void glw_video_render(glw_t *w, const glw_rctx_t *rc);
 
 void glw_video_reset(glw_root_t *gr);
@@ -277,20 +281,18 @@ glw_video_enqueue_for_display(glw_video_t *gv, glw_video_surface_t *gvs,
 /**
  *
  */
-
-void glw_video_surface_reconfigure(glw_video_t *gv);
-
 void glw_video_surfaces_cleanup(glw_video_t *gv);
 
-glw_video_surface_t *glw_video_get_surface(glw_video_t *gv);
+glw_video_surface_t *glw_video_get_surface(glw_video_t *gv,
+					   const int *w, const int *h);
 
 void glw_video_put_surface(glw_video_t *gv, glw_video_surface_t *s,
-			   int64_t pts, int epoch, int duration, int yshift);
+			   int64_t pts, int epoch, int duration,
+			   int interlaced, int yshift);
 
-int glw_video_configure(glw_video_t *gv,
-			const glw_video_engine_t *engine,
-			const int *wvec, const int *hvec,
-			int surfaces, int flags, int pixfmt);
+int glw_video_configure(glw_video_t *gv, const glw_video_engine_t *engine);
+
+void *glw_video_add_reap_task(glw_video_t *gv, size_t s, void *fn);
 
 #endif /* GLW_VIDEO_COMMON_H */
 

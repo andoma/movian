@@ -1,0 +1,61 @@
+body {
+    font-family: arial;
+}
+
+#pageTitle {
+    font-weight:900;
+    font-size:150%;
+}
+
+
+
+div.listrow {
+    clear:both;
+    display: block;
+    height: 64px;
+    padding: 5px 10px;
+}
+
+div:nth-child(2n).listrow {
+    background-color: #eee;
+}
+
+div:hover.listrow {
+    background-color: #ddd;
+}
+
+
+.listcell {
+    display: inline-block;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0px 10px;
+}
+
+
+.itemicon {
+    float: left;
+    height: 64px;
+}
+
+.itemtitle {
+    display: block;
+    font-weight:900;
+}
+
+.itemartist {
+    display: block;
+}
+
+.itemalbum {
+    display: block;
+    font-weight:100;
+    font-size:75%;
+}
+
+
+.itemduration {
+    float: right;
+    font-weight:900;
+}

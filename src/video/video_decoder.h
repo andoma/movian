@@ -21,7 +21,6 @@
 
 #include "media.h"
 #include "misc/avgtime.h"
-#include "misc/kalman.h"
 
 #if ENABLE_DVD
 #include <dvdnav/dvdnav.h>
@@ -44,15 +43,9 @@ typedef struct video_decoder {
 
   int vd_hold;
 
-  int vd_compensate_thres;
-
   LIST_ENTRY(glw_video) vd_global_link;
 
-
   media_pipe_t *vd_mp;
-
-  int vd_do_flush;
-  int vd_skip;
 
   int64_t vd_nextpts;
   int64_t vd_prevpts;
@@ -60,12 +53,6 @@ typedef struct video_decoder {
   int vd_estimated_duration;
 
   struct AVFrame *vd_frame;
-
-  /* Clock (audio - video sync, etc) related members */
-
-  int vd_avdiff;
-  int vd_avd_delta;
-
    
   /* stats */
 
@@ -73,16 +60,9 @@ typedef struct video_decoder {
   avgtime_t vd_upload_time;
 
 
-  /* Kalman filter for AVdiff compensation */
-
-  kalman_t vd_avfilter;
-  float vd_avdiff_x;
-
   /* Deinterlacing */
 
   int vd_interlaced; // Used to keep deinterlacing on
-
-  int vd_may_update_avdiff;
 
   /**
    * DVD / SPU related members
@@ -131,7 +111,13 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
                                struct AVFrame *frame,
 			       const media_buf_t *mb, int decode_time);
 
+
+void video_flush_avctx(media_codec_t *mc, video_decoder_t *vd);
+
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
+
+void video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
+				    int epoch, int64_t delta);
 
 #endif /* VIDEO_DECODER_H */
 

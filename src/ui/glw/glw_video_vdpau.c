@@ -69,6 +69,9 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
   glw_video_surface_t *s;
   int64_t pts = AV_NOPTS_VALUE;
 
+  gv->gv_cmatrix_cur[0] = (gv->gv_cmatrix_cur[0] * 3.0f +
+			   gv->gv_cmatrix_tgt[0]) / 4.0f;
+
   if(flags & GLW_REINITIALIZE_VDPAU) {
 
     int i;
@@ -78,7 +81,7 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     gv->gv_vdpau_pq = VDP_INVALID_HANDLE;
     gv->gv_vdpau_pqt = VDP_INVALID_HANDLE;
     
-    gv->gv_cfg_cur.gvc_valid = 0;
+    gv->gv_engine = NULL;
     
     mp_send_cmd(mp, &mp->mp_video, MB_CTRL_REINITIALIZE);
 
@@ -114,11 +117,14 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
   while((s = TAILQ_FIRST(&gv->gv_decoded_queue)) != NULL) {
     int64_t delta = gr->gr_frameduration * 2;
     int64_t aclock, d;
+    int a_epoch;
     pts = s->gvs_pts;
 
     hts_mutex_lock(&mp->mp_clock_mutex);
     aclock = mp->mp_audio_clock + gr->gr_frame_start - 
       mp->mp_audio_clock_avtime + mp->mp_avdelta;
+    a_epoch = mp->mp_audio_clock_epoch;
+
     hts_mutex_unlock(&mp->mp_clock_mutex);
 
     d = s->gvs_pts - aclock;
@@ -126,7 +132,8 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     if(s->gvs_pts == AV_NOPTS_VALUE || d < -5000000LL || d > 5000000LL)
       pts = gv->gv_nextpts;
 
-    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock)
+    if(pts != AV_NOPTS_VALUE && (pts - delta) >= aclock &&
+	a_epoch == s->gvs_epoch)
       break;
 
     st = vd->vdp_presentation_queue_display(gv->gv_vdpau_pq,
@@ -135,13 +142,13 @@ vdpau_newframe(glw_video_t *gv, video_decoder_t *vd0, int flags)
     if(pts != AV_NOPTS_VALUE)
       gv->gv_nextpts = pts + s->gvs_duration;
 
-    gv->gv_fwidth  = s->gvs_width;
-    gv->gv_fheight = s->gvs_height;
+    gv->gv_width  = s->gvs_width[0];
+    gv->gv_height = s->gvs_height[0];
 
     TAILQ_REMOVE(&gv->gv_decoded_queue, s, gvs_link);
     TAILQ_INSERT_TAIL(&gv->gv_displaying_queue, s, gvs_link);
   }
-  return pts;
+  return gv->gv_nextpts;
 }
 
 
@@ -184,8 +191,8 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
   int w = gv->gv_rwidth  - 1;
   int h = gv->gv_rheight - 1;
 #else
-  int w = gv->gv_fwidth  - 1;
-  int h = gv->gv_fheight - 1;
+  int w = gv->gv_width  - 1;
+  int h = gv->gv_height - 1;
 #endif
 
   glMatrixMode(GL_PROJECTION);
@@ -195,7 +202,9 @@ vdpau_render(glw_video_t *gv, glw_rctx_t *rc)
 
   glw_load_program(gbr, NULL);
 
-  glColor4f(1,1,1,1);
+  float c = gv->gv_cmatrix_cur[0];
+
+  glColor4f(c, c, c, 1);
 
   glBegin(GL_QUADS);
   glTexCoord2f(0, h);
@@ -231,6 +240,30 @@ surface_reset(vdpau_dev_t *vd, glw_video_t *gv, glw_video_surface_t *gvs)
 }
 
 
+
+typedef struct reap_task {
+  glw_video_reap_task_t hdr;
+  
+  GLuint tex;
+  Pixmap xpixmap;
+  GLXPixmap glx_pixmap;
+  
+
+} reap_task_t;
+
+
+static void
+do_reap(glw_video_t *gv, reap_task_t *t)
+{
+  vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
+
+  if(t->tex)
+    glDeleteTextures(1, &t->tex);
+
+  glXDestroyPixmap(vd->vd_dpy, t->glx_pixmap);
+  XFreePixmap(vd->vd_dpy, t->xpixmap);
+}
+
 /**
  *
  */
@@ -239,11 +272,10 @@ vdpau_reset(glw_video_t *gv)
 {
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   int i;
-
-  if(gv->gv_vdpau_texture) {
-    glDeleteTextures(1, &gv->gv_vdpau_texture);
-    gv->gv_vdpau_texture = 0;
-  }
+  reap_task_t *t = glw_video_add_reap_task(gv, sizeof(reap_task_t), do_reap);
+  
+  t->tex = gv->gv_vdpau_texture;
+  gv->gv_vdpau_texture = 0;
 
   for(i = 0; i < GLW_VIDEO_MAX_SURFACES; i++)
     surface_reset(vd, gv, &gv->gv_surfaces[i]);
@@ -254,9 +286,8 @@ vdpau_reset(glw_video_t *gv)
   if(gv->gv_vdpau_pqt != VDP_INVALID_HANDLE)
     vd->vdp_presentation_queue_target_destroy(gv->gv_vdpau_pqt);
 
-  glXDestroyPixmap(vd->vd_dpy, gv->gv_glx_pixmap);
-  XFreePixmap(vd->vd_dpy, gv->gv_xpixmap);
-
+  t->glx_pixmap = gv->gv_glx_pixmap;
+  t->xpixmap = gv->gv_xpixmap;
   gv->gv_vdpau_running = 0;
   gv->gv_vdpau_clockdiff = 0;
 }
@@ -266,10 +297,7 @@ vdpau_reset(glw_video_t *gv)
  *
  */
 static int
-surface_init(vdpau_dev_t *vd, 
-	     glw_video_t *gv,
-	     glw_video_surface_t *gvs,
-	     const glw_video_config_t *gvc)
+surface_init(vdpau_dev_t *vd, glw_video_t *gv, glw_video_surface_t *gvs)
 {
   VdpStatus r;
 
@@ -314,7 +342,6 @@ int glx_pixmap_attribs[] = {
 static int
 vdpau_init(glw_video_t *gv)
 {
-  const glw_video_config_t *gvc = &gv->gv_cfg_cur;
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   int i, nconfs;
   VdpStatus st;
@@ -362,25 +389,26 @@ vdpau_init(glw_video_t *gv)
     return -1;
   }
 
-  /* Video mixer */
-  st = vdpau_mixer_create(vd, &gv->gv_vm, 
-			  gvc->gvc_width[0], gvc->gvc_height[0]);
-			  
-
-  if(st != VDP_STATUS_OK) {
-    TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
-    return -1;
-  }
-  
+  gv->gv_vm.vm_mixer = VDP_INVALID_HANDLE;
 
   /* Surfaces */
-  for(i = 0; i < gvc->gvc_nsurfaces; i++) {
-    if(surface_init(vd, gv, &gv->gv_surfaces[i], gvc)) {
+  for(i = 0; i < 4; i++) {
+    if(surface_init(vd, gv, &gv->gv_surfaces[i])) {
       return -1;
     }
   }
   gv->gv_nextpts = AV_NOPTS_VALUE;
   return 0;
+}
+
+
+/**
+ *
+ */
+static void
+vdpau_blackout(glw_video_t *gv)
+{
+  gv->gv_cmatrix_tgt[0] = 0.0f;
 }
 
 
@@ -396,6 +424,8 @@ static glw_video_engine_t glw_video_vdpau = {
   .gve_reset = vdpau_reset,
   .gve_init = vdpau_init,
   .gve_deliver = vdpau_deliver,
+  .gve_init_on_ui_thread = 1,
+  .gve_blackout = vdpau_blackout,
 };
 
 GLW_REGISTER_GVE(glw_video_vdpau);
@@ -410,8 +440,6 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
   vdpau_dev_t *vd = gv->w.glw_root->gr_be.gbr_vdpau_dev;
   vdpau_mixer_t *vm = &gv->gv_vm;
   glw_video_surface_t *s;
-  int wvec[3] = {fi->fi_width};
-  int hvec[3] = {fi->fi_height};
   VdpRect src_rect = { 0, 0, fi->fi_width, fi->fi_height };
 
 #if 0
@@ -424,13 +452,31 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 		       fi->fi_height };
 #endif
 
-  if(glw_video_configure(gv, &glw_video_vdpau, wvec, hvec, 4, 0, 0))
+  if(glw_video_configure(gv, &glw_video_vdpau))
     return;
 
-  if((s = glw_video_get_surface(gv)) == NULL)
+  gv->gv_cmatrix_tgt[0] = 1.0f;
+
+  /* Video mixer */
+  if(gv->gv_vm.vm_width  != fi->fi_width ||
+     gv->gv_vm.vm_height != fi->fi_height) {
+    
+    VdpStatus st;
+
+    vdpau_mixer_deinit(&gv->gv_vm);
+    
+    st = vdpau_mixer_create(vd, &gv->gv_vm, fi->fi_width, fi->fi_height);
+    if(st != VDP_STATUS_OK) {
+      TRACE(TRACE_ERROR, "VDPAU", "Unable to create video mixer");
+      return;
+    }
+  }
+
+  if((s = glw_video_get_surface(gv, NULL, NULL)) == NULL)
     return;
-  s->gvs_width = fi->fi_width;
-  s->gvs_height = fi->fi_height;
+
+  s->gvs_width[0]  = fi->fi_width;
+  s->gvs_height[0] = fi->fi_height;
 
   vdpau_mixer_set_color_matrix(vm, fi);
 
@@ -458,13 +504,14 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 			       &dst_rect, &dst_rect,
 			       0, NULL);
 
-    glw_video_put_surface(gv, s, fi->fi_pts - duration, fi->fi_epoch, duration, 0);
+    glw_video_put_surface(gv, s, fi->fi_pts - duration,
+			  fi->fi_epoch, duration, 0, 0);
 
-    if((s = glw_video_get_surface(gv)) == NULL)
+    if((s = glw_video_get_surface(gv, NULL, NULL)) == NULL)
       return;
 
-    s->gvs_width = fi->fi_width;
-    s->gvs_height = fi->fi_height;
+    s->gvs_width[0] = fi->fi_width;
+    s->gvs_height[0] = fi->fi_height;
 
     vd->vdp_video_mixer_render(vm->vm_mixer, VDP_INVALID_HANDLE, NULL,
 			       fi->fi_tff,
@@ -484,6 +531,6 @@ vdpau_deliver(const frame_info_t *fi, glw_video_t *gv)
 			       &dst_rect, &dst_rect, 0, NULL);
   }
 
-  glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration, 0);
+  glw_video_put_surface(gv, s, fi->fi_pts, fi->fi_epoch, fi->fi_duration, 0, 0);
 }
 #endif

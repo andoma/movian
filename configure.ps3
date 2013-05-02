@@ -67,12 +67,9 @@ LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
 
 libav_setup
 rtmpdump_setup
+xmp_setup
 
 cat >> ${CONFIG_MAK} <<EOF
-CC=${CC}
-STRIP=${TOOLCHAIN}strip
-OBJDUMP=${TOOLCHAIN}objdump
-OBJCOPY=${TOOLCHAIN}objcopy
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN
 CFLAGS_cfg += -DPATH_MAX=512 -DPS3
 CFLAGS_cfg += -I${PSL1GHT}/target/include

@@ -215,7 +215,7 @@ video_overlay_decode(media_pipe_t *mp, media_buf_t *mb)
       mc->decode(mc, NULL, NULL, mb, 0);
 #if ENABLE_LIBAV
     else
-      video_subtitles_lavc(mp, mb, mc->codec_ctx);
+      video_subtitles_lavc(mp, mb, mc->ctx);
 #endif
   }
 }
@@ -268,7 +268,7 @@ video_overlay_dequeue_destroy(media_pipe_t *mp, video_overlay_t *vo)
  *
  */
 void
-video_overlay_flush(media_pipe_t *mp, int send)
+video_overlay_flush_locked(media_pipe_t *mp, int send)
 {
   video_overlay_t *vo;
 
@@ -280,5 +280,5 @@ video_overlay_flush(media_pipe_t *mp, int send)
 
   vo = calloc(1, sizeof(video_overlay_t));
   vo->vo_type = VO_FLUSH;
-  video_overlay_enqueue(mp, vo);
+  TAILQ_INSERT_TAIL(&mp->mp_overlay_queue, vo, vo_link);
 }

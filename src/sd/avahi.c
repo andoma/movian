@@ -416,5 +416,5 @@ void
 avahi_init(void)
 {
   hts_thread_create_detached("AVAHI", avahi_thread, NULL,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_BGTASK);
 }

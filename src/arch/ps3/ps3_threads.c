@@ -234,6 +234,18 @@ hts_mutex_lock(hts_mutex_t *m)
 }
 
 
+int
+hts_mutex_trylock(hts_mutex_t *m)
+{
+#ifdef PS3_LW_PRIMITIVES
+  int r = sys_lwmutex_trylock(m);
+#else
+  int r = sys_mutex_trylock(*m);
+#endif
+  return !!r;
+}
+
+
 void
 hts_mutex_unlock(hts_mutex_t *m)
 {

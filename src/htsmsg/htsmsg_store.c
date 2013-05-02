@@ -71,7 +71,6 @@ pending_store_destroy(pending_store_t *ps)
 static void
 pending_store_write(pending_store_t *ps)
 {
-  char *path;
   char fullpath[PATH_MAX];
   char fullpath2[PATH_MAX];
   int x, l, fd;
@@ -80,29 +79,34 @@ pending_store_write(pending_store_t *ps)
   htsbuf_data_t *hd;
   int ok;
 
-  path = mystrdupa(ps->ps_path);
-  l = strlen(ps->ps_path);
-  for(x = 0; x < l; x++) {
-    if(path[x] == '/') {
-      /* It's a directory here */
-
-      path[x] = 0;
-      snprintf(fullpath, sizeof(fullpath), "%s/%s", showtime_settings_path, path);
-
-      if(stat(fullpath, &st) && mkdir(fullpath, 0700)) {
-	TRACE(TRACE_ERROR, "Settings", "Unable to create dir \"%s\": %s",
-	       fullpath, strerror(errno));
-	return;
-      }
-      path[x] = '/';
-    }
-  }
-
  retry:
 
   snprintf(fullpath, sizeof(fullpath), "%s/%s%s",
-	   showtime_settings_path, path, 
+	   showtime_settings_path, ps->ps_path,
 	   rename_cant_overwrite ? "" : ".tmp");
+
+  l = strlen(fullpath);
+  for(x = 1; x < l; x++) {
+    if(fullpath[x] == '/') {
+      /* It's a directory here */
+
+      fullpath[x] = 0;
+
+      if(stat(fullpath, &st)) {
+        TRACE(TRACE_DEBUG, "Settings", "Dir %s does not exist", fullpath);
+
+        if(mkdir(fullpath, 0700)) {
+          TRACE(TRACE_ERROR, "Settings", "Unable to create dir \"%s\": %s",
+                fullpath, strerror(errno));
+          return;
+        } else {
+          TRACE(TRACE_DEBUG, "Settings", "Created dir %s", fullpath);
+        }
+      }
+      fullpath[x] = '/';
+    }
+  }
+
 
   if((fd = open(fullpath, O_CREAT | O_TRUNC | O_WRONLY, 0700)) < 0) {
     TRACE(TRACE_ERROR, "Settings", "Unable to create \"%s\" - %s",
@@ -135,7 +139,8 @@ pending_store_write(pending_store_t *ps)
     return;
   }
 
-  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path, path);
+  snprintf(fullpath2, sizeof(fullpath2), "%s/%s", showtime_settings_path,
+           ps->ps_path);
 
   if(!rename_cant_overwrite && rename(fullpath, fullpath2)) {
 

@@ -88,10 +88,13 @@ text_render(const uint32_t *uc, int len, int flags, int default_size,
 
 
 #if ENABLE_LIBFREETYPE
+
+struct fa_handle;
+
 int freetype_init(void);
 
-void *freetype_load_font_from_memory(const void *ptr, size_t len,
-				     int font_domain);
+void * freetype_load_font_from_fh(struct fa_handle *fh, int font_domain,
+				  char *errbuf, size_t errlen);
 
 void *freetype_load_font(const char *url, int context, const char **vpaths);
 

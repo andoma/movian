@@ -90,7 +90,7 @@ const static AVRational mpeg_tc = {1, 90000};
 static void *
 dvd_fa_open(const char *url)
 {
-  return fa_open(url, NULL, 0);
+  return fa_open_ex(url, NULL, 0, FA_BUFFERED_BIG, NULL);
 }
 
 static int
@@ -202,13 +202,14 @@ dvd_video_push(dvd_player_t *dp)
   if(cw == NULL)
     return;
 
+  const AVCodecContext *ctx = cw->fmt_ctx;
+
   mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_cw = media_codec_ref(cw);
   mb->mb_aspect_override = dp->dp_aspect_override;
   mb->mb_disable_deinterlacer = 1;
   mb->mb_data_type = MB_VIDEO;
-  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
-    1000000LL * av_q2d(cw->codec_ctx->time_base);
+  mb->mb_duration = ctx->ticks_per_frame * 1000000LL * av_q2d(ctx->time_base);
   mb->mb_pts = AV_NOPTS_VALUE;
   mb->mb_dts = AV_NOPTS_VALUE;
 
@@ -270,16 +271,13 @@ dvd_media_enqueue(dvd_player_t *dp, media_queue_t *mq, media_codec_t *cw,
 {
   media_buf_t *mb = media_buf_alloc_unlocked(dp->dp_mp, datalen);
 
-  const AVCodecContext *ctx = cw->codec_ctx;
+  const AVCodecContext *ctx = cw->fmt_ctx;
 
   mb->mb_cw = media_codec_ref(cw);
   mb->mb_data_type = data_type;
-  mb->mb_duration = cw->codec_ctx->ticks_per_frame * 
-    1000000LL * av_q2d(ctx->time_base);
-  
+  mb->mb_duration = 2000000LL * av_q2d(ctx->time_base);
   mb->mb_aspect_override = dp->dp_aspect_override;
   memcpy(mb->mb_data, data, datalen);
-
   return dvd_media_enqueue0(dp, mq, mb, dts, pts);
 }
 
@@ -407,8 +405,8 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
     cwp = &dp->dp_video;
     mq = &mp->mp_video;
 
-    //    mcp.width = dp->dp_vwidth;
-    //    mcp.height = dp->dp_vheight;
+    mcp.width = dp->dp_vwidth;
+    mcp.height = dp->dp_vheight;
 
   } else if((sc >= 0x80 && sc <= 0xaf) || (sc >= 0x1c0 && sc <= 0x1df)) {
 
@@ -479,7 +477,7 @@ dvd_pes(dvd_player_t *dp, uint32_t sc, uint8_t *buf, int len)
       return NULL;
   }
 
-  ctx = cw->codec_ctx;
+  ctx = cw->fmt_ctx;
  
   if(cw->parser_ctx == NULL) /* No parser available */
     return dvd_media_enqueue(dp, mq, cw, data_type, buf, len, dts, pts);

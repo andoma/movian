@@ -209,17 +209,6 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
   int i;
   uint8_t skip = mb->mb_skip;
 
-  if(vd->vd_do_flush) {
-    VDADecoderFlush(vdad->vdad_decoder, 1);
-    hts_mutex_lock(&vdad->vdad_mutex);
-    destroy_frames(vdad);
-    vdad->vdad_max_ts   = PTS_UNSET;
-    vdad->vdad_flush_to = PTS_UNSET;
-    vdad->vdad_last_pts = PTS_UNSET;
-    vd->vd_do_flush = 0;
-    hts_mutex_unlock(&vdad->vdad_mutex);
-  }
-
   vdad->vdad_vd = vd;
 
   coded_frame = CFDataCreate(kCFAllocatorDefault, mb->mb_data, mb->mb_size);
@@ -277,6 +266,24 @@ vda_decode(struct media_codec *mc, struct video_decoder *vd,
  *
  */
 static void
+vda_flush(struct media_codec *mc, struct video_decoder *vd)
+{
+  vda_decoder_t *vdad = mc->opaque;
+
+  VDADecoderFlush(vdad->vdad_decoder, 1);
+  hts_mutex_lock(&vdad->vdad_mutex);
+  destroy_frames(vdad);
+  vdad->vdad_max_ts   = PTS_UNSET;
+  vdad->vdad_flush_to = PTS_UNSET;
+  vdad->vdad_last_pts = PTS_UNSET;
+  hts_mutex_unlock(&vdad->vdad_mutex);
+}
+
+
+/**
+ *
+ */
+static void
 vda_close(struct media_codec *mc)
 {
   vda_decoder_t *vdad = mc->opaque;
@@ -290,8 +297,7 @@ vda_close(struct media_codec *mc)
  *
  */
 static int
-video_vda_codec_create(media_codec_t *mc, int id,
-		       const media_codec_params_t *mcp,
+video_vda_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		       media_pipe_t *mp)
 {
   OSStatus status = kVDADecoderNoErr;
@@ -311,8 +317,8 @@ video_vda_codec_create(media_codec_t *mc, int id,
   const int pixfmt = kCVPixelFormatType_420YpCbCr8Planar;
   const int avc1 = 'avc1';
 
-  if(mcp == NULL ||
-     id != CODEC_ID_H264 || mcp->extradata == NULL || mcp->extradata_size == 0)
+  if(mcp == NULL || mc->codec_id != CODEC_ID_H264 ||
+     mcp->extradata == NULL || mcp->extradata_size == 0)
     return 1;
 
   ci = CFDictionaryCreateMutable(kCFAllocatorDefault,
@@ -373,6 +379,7 @@ video_vda_codec_create(media_codec_t *mc, int id,
   mc->opaque = vdad;
   mc->decode = vda_decode;
   mc->close = vda_close;
+  mc->flush = vda_flush;
 
   TRACE(TRACE_INFO, "VDA", "Opened decoder");
   

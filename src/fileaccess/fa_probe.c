@@ -30,6 +30,9 @@
 #include <gme/gme.h>
 #endif
 
+#if ENABLE_XMP
+#include "xmp.h"
+#endif
 
 #include "showtime.h"
 #include "fileaccess.h"
@@ -432,10 +435,34 @@ fa_probe_iso(metadata_t *md, fa_handle_t *fh)
 }
 
 
-#if ENABLE_LIBGME
 /**
  *
  */
+#if ENABLE_XMP
+static int
+xmp_probe(metadata_t *md, const char *url, fa_handle_t *fh)
+{
+  struct xmp_test_info info;
+  FILE *f = fa_fopen(fh, 0);
+  if(f == NULL)
+    return 0;
+
+  int r = xmp_test_modulef(f, &info);
+  fclose(f);
+  if(r < 0)
+    return 0;
+
+  md->md_title  = rstr_alloc(info.name);
+  md->md_contenttype = CONTENT_AUDIO;
+  return 1;
+}
+#endif
+
+
+/**
+ *
+ */
+#if ENABLE_LIBGME
 static int
 gme_probe(metadata_t *md, const char *url, fa_handle_t *fh)
 {
@@ -604,7 +631,7 @@ fa_lavf_load_meta(metadata_t *md, AVFormatContext *fctx,
       if(codec == NULL) {
 	snprintf(tmp1, sizeof(tmp1), "%s", codecname(avctx->codec_id));
       } else {
-	metadata_from_ffmpeg(tmp1, sizeof(tmp1), codec, avctx);
+	metadata_from_libav(tmp1, sizeof(tmp1), codec, avctx);
       }
 
       lang = av_dict_get(stream->metadata, "language", NULL,
@@ -650,6 +677,11 @@ fa_probe_metadata(const char *url, char *errbuf, size_t errsize,
 
 #if ENABLE_LIBGME
   if(gme_probe(md, url, fh))
+    return md;
+#endif
+
+#if ENABLE_XMP
+  if(xmp_probe(md, url, fh))
     return md;
 #endif
 

@@ -340,16 +340,11 @@ dvdspu_destroy_all(media_pipe_t *mp)
  *
  */
 void
-dvdspu_flush(media_pipe_t *mp)
+dvdspu_flush_locked(media_pipe_t *mp)
 {
   dvdspu_t *d;
-
-  hts_mutex_lock(&mp->mp_overlay_mutex);
-
   TAILQ_FOREACH(d, &mp->mp_spu_queue, d_link)
     d->d_destroyme = 1;
-
-  hts_mutex_unlock(&mp->mp_overlay_mutex);
 }
 
 
@@ -392,11 +387,10 @@ dvdspu_codec_close(struct media_codec *mc)
  *
  */
 static int
-dvdspu_codec_create(media_codec_t *mc, int id,
-		    const media_codec_params_t *mcp,
+dvdspu_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
                     media_pipe_t *mp)
 {
-  if(id != CODEC_ID_DVD_SUBTITLE)
+  if(mc->codec_id != CODEC_ID_DVD_SUBTITLE)
     return 1;
 
   if(mcp->extradata_size == 0)

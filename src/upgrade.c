@@ -106,7 +106,7 @@ check_upgrade(int set_news)
 	   archname);
 
   b = fa_load(url, NULL, errbuf, sizeof(errbuf),
-              NULL, 0, NULL, NULL);
+              NULL, FA_DISABLE_AUTH, NULL, NULL);
   if(b == NULL) {
     prop_set_string(upgrade_error, errbuf);
   err:
@@ -343,7 +343,7 @@ static void
 install(void)
 {
   hts_thread_create_detached("upgrade", install_thread, NULL,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_BGTASK);
 }
 
 

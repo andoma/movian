@@ -20,6 +20,7 @@
 #define FILEACCESS_H
 
 #include <stdint.h>
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -106,6 +107,7 @@ void fa_dir_insert(fa_dir_t *fd, fa_dir_entry_t *fde);
 
 void fa_dir_remove(fa_dir_t *fd, fa_dir_entry_t *fde);
 
+void fa_dir_print(fa_dir_t *fd);
 
 /**
  *
@@ -123,6 +125,7 @@ extern struct fa_protocol_list fileaccess_all_protocols;
 #define FA_DISABLE_AUTH    0x40
 #define FA_COMPRESSION     0x80
 #define FA_NOFOLLOW        0x100
+#define FA_FAST_FAIL       0x200
 
 /**
  *
@@ -249,5 +252,17 @@ fa_handle_t *fa_buffered_open(const char *url, char *errbuf, size_t errsize,
 int memfile_register(const void *data, size_t len);
 
 void memfile_unregister(int id);
+
+// Expose part of a file as a new file, fa is owned by the slicer
+// so you must never touch it again
+
+fa_handle_t *fa_slice_open(fa_handle_t *fa, int64_t offset, int64_t size);
+
+// fa to FILE wrapper
+
+FILE *fa_fopen(fa_handle_t *fh, int doclose);
+
+fa_handle_t *fa_aescbc_open(fa_handle_t *fa, const uint8_t *iv,
+			    const uint8_t *key);
 
 #endif /* FILEACCESS_H */

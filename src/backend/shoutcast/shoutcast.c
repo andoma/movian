@@ -470,7 +470,7 @@ static int sc_initialize(sc_shoutcast_t *sc)
 
     // all good lets start playback thread
     hts_thread_create_joinable("shoutcast playback", &sc->sc_playback_thread_id, 
-			       sc_playback_thread, sc, THREAD_PRIO_NORMAL);
+			       sc_playback_thread, sc, THREAD_PRIO_DEMUXER);
     
     return 0;
 }

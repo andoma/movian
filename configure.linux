@@ -220,10 +220,6 @@ else
     die
 fi
 
-echo >>${CONFIG_MAK} "CC=$CC"
-echo >>${CONFIG_MAK} "CXX=$CXX"
-
-
 
 #
 # sqlite3
@@ -629,6 +625,7 @@ esac
 LIBAV_ARCH_FLAGS="--disable-shared --enable-static"
 libav_setup
 rtmpdump_setup
+xmp_setup
 
 #
 # Finalize

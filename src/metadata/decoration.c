@@ -882,6 +882,8 @@ deco_item_destroy(deco_browse_t *db, deco_item_t *di)
   prop_unsubscribe(di->di_sub_album);
   prop_unsubscribe(di->di_sub_artist);
   prop_unsubscribe(di->di_sub_duration);
+  prop_unsubscribe(di->di_sub_series);
+  prop_unsubscribe(di->di_sub_season);
 
   TAILQ_REMOVE(&db->db_items, di, di_link);
   free(di->di_postfix);
@@ -1051,18 +1053,17 @@ deco_thread(void *aux)
   hts_mutex_lock(&deco_mutex);
 
   while(1) {
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
 
     int do_timo = 0;
     if(deco_pendings)
       do_timo = 50;
 
     hts_mutex_unlock(&deco_mutex);
-    r = prop_courier_wait(deco_courier, &nor, &exp, do_timo);
+    r = prop_courier_wait(deco_courier, &q, do_timo);
     hts_mutex_lock(&deco_mutex);
 
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_notify_dispatch(&q);
 
     if(r && deco_pendings) {
       deco_pendings = 0;
@@ -1097,7 +1098,7 @@ decoration_init(void)
   hts_mutex_init(&deco_mutex);
   deco_courier = prop_courier_create_waitable();
 
-  hts_thread_create_detached("deco", deco_thread, NULL, THREAD_PRIO_LOW);
+  hts_thread_create_detached("deco", deco_thread, NULL, THREAD_PRIO_METADATA);
 }
 
 

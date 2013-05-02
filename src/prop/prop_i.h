@@ -21,9 +21,13 @@
 
 
 #include "prop.h"
+#include "misc/pool.h"
 
 extern hts_mutex_t prop_mutex;
 extern hts_mutex_t prop_tag_mutex;
+extern pool_t *prop_pool;
+extern pool_t *notify_pool;
+extern pool_t *sub_pool;
 
 
 
@@ -40,6 +44,9 @@ struct prop_courier {
 
   struct prop_notify_queue pc_queue_nor;
   struct prop_notify_queue pc_queue_exp;
+
+  struct prop_notify_queue pc_dispatch_queue;
+  struct prop_notify_queue pc_free_queue;
 
   void *pc_entry_lock;
   prop_lockmgr_t *pc_lockmgr;
@@ -60,6 +67,54 @@ struct prop_courier {
   int pc_refcount;
 
 };
+
+
+
+/**
+ *
+ */
+typedef struct prop_notify {
+  TAILQ_ENTRY(prop_notify) hpn_link;
+  prop_sub_t *hpn_sub;
+  prop_event_t hpn_event;
+
+  union {
+    prop_t *p;
+    prop_vec_t *pv;
+    struct {
+      float f;
+      int how;
+    } f;
+    int i;
+    struct {
+      rstr_t *rstr;
+      prop_str_type_t type;
+    } rstr;
+    struct event *e;
+    struct {
+      rstr_t *rtitle;
+      rstr_t *rurl;
+    } link;
+    const char *str;
+
+  } u;
+
+#define hpn_prop   u.p
+#define hpn_propv  u.pv
+#define hpn_float  u.f.f
+#define hpn_float_how  u.f.how
+#define hpn_int    u.i
+#define hpn_rstring u.rstr.rstr
+#define hpn_rstrtype u.rstr.type
+#define hpn_cstring u.str
+#define hpn_ext_event  u.e
+#define hpn_link_rtitle u.link.rtitle
+#define hpn_link_rurl   u.link.rurl
+
+  prop_t *hpn_prop2;
+  int hpn_flags;
+
+} prop_notify_t;
 
 
 
@@ -355,5 +410,9 @@ void prop_want_more_childs0(prop_sub_t *s);
 
 void prop_set_string_exl(prop_t *p, prop_sub_t *skipme, const char *str,
 			 prop_str_type_t type);
+
+void prop_sub_ref_dec_locked(prop_sub_t *s);
+
+void prop_dispatch_one(prop_notify_t *n);
 
 #endif // PROP_I_H__

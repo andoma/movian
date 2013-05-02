@@ -140,8 +140,7 @@ parse_shunting_yard(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     case TOKEN_OBJECT_ATTRIBUTE:
     case TOKEN_BLOCK:
     case TOKEN_PROPERTY_REF:
-    case TOKEN_PROPERTY_VALUE_NAME:
-    case TOKEN_PROPERTY_CANONICAL_NAME:
+    case TOKEN_PROPERTY_NAME:
     case TOKEN_VOID:
       t = tokenqueue_enqueue(&outq, t, curfunc);
       continue;
@@ -343,21 +342,19 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
     if((t->type == TOKEN_DOLLAR ||
 	t->type == TOKEN_AMPERSAND) 
        && t1 != NULL && t1->type == TOKEN_IDENTIFIER) {
-      
       t0 = t2 = t;
-      
-      t0->type = t->type == TOKEN_DOLLAR ? TOKEN_PROPERTY_VALUE_NAME : 
-	TOKEN_PROPERTY_CANONICAL_NAME;
+      if(t->type == TOKEN_AMPERSAND)
+        t0->t_flags |= TOKEN_F_CANONICAL_PATH;
+      t0->type = TOKEN_PROPERTY_NAME;
 
       t0->next = t1->next;
-      t0->t_rstring = t1->t_rstring;
+      t0->t_elements = 1;
+      t0->t_pnvec[0] = t1->t_rstring;
       t1->t_rstring = NULL;
 
       glw_view_token_free(gr, t1);
 
-
       t = t0->next;
-      
       while(t != NULL && t->type == TOKEN_DOT) {
 	t1 = t->next;
 	if(t1 == NULL || t1->type != TOKEN_IDENTIFIER) {
@@ -366,12 +363,21 @@ parse_prep_expression(token_t *expr, errorinfo_t *ei, glw_root_t *gr)
 	}
 
 	t0->next = t1->next;
-	t1->next = NULL;
 
-	glw_view_token_free(gr, t);
-
-	t2->child = t1;
-	t2 = t1;
+        if(t2->t_elements < TOKEN_PROPERTY_NAME_VEC_SIZE) {
+          // Can still fit stuff in previous token
+          t2->t_pnvec[t2->t_elements++] = t1->t_rstring;
+          t1->t_rstring = NULL;
+          glw_view_token_free(gr, t);
+          glw_view_token_free(gr, t1);
+        } else {
+          t1->next = NULL;
+          t1->type = TOKEN_PROPERTY_NAME;
+          t1->t_elements = 1;
+          glw_view_token_free(gr, t);
+          t2->child = t1;
+          t2 = t1;
+        }
 	t = t0->next;
       }
       continue;
@@ -532,6 +538,7 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
 
   first->type = TOKEN_BLOCK;
   if(first->next->type == term) {
+    // Empty block
     p = first->next;
     first->next = p->next;
     glw_view_token_free(gr, p);
@@ -548,6 +555,7 @@ parse_block(token_t *first, errorinfo_t *ei, token_type_t term,
       first->next = p->next->next;
       glw_view_token_free(gr, p->next);
       p->next = NULL;
+      glw_view_attrib_optimize(first->child, gr);
       return 0;
     }
 

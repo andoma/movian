@@ -327,5 +327,6 @@ fa_indexer_init(void)
     htsmsg_destroy(m);
   }
 
-  hts_thread_create_detached("indexer", indexer_thread, NULL, THREAD_PRIO_LOW);
+  hts_thread_create_detached("indexer", indexer_thread, NULL,
+			     THREAD_PRIO_METADATA_BG);
 }

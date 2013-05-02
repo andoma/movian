@@ -461,7 +461,7 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
     int outlen;
     uint8_t *outbuf;
     int rlen = av_parser_parse2(mc->parser_ctx,
-				mc->codec_ctx, &outbuf, &outlen, 
+				mc->fmt_ctx, &outbuf, &outlen, 
 				data, size, dts, dts, AV_NOPTS_VALUE);
     if(outlen) {
       event_t *e = sendpkt(r, &mp->mp_audio, mc,

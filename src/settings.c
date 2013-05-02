@@ -805,6 +805,24 @@ settings_generic_set_int(void *opaque, int value)
   *p = value;
 }
 
+static htsmsg_t *devstore;
+
+/**
+ *
+ */
+static void
+add_dev_bool(const char *title, const char *id, int *val)
+{
+  prop_t *t = prop_create_root(NULL);
+  prop_set_string(t, title);
+
+  settings_create_bool(gconf.settings_dev, id, t, 0,
+		       devstore, settings_generic_set_bool,
+		       val,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings, 
+		       (void *)"dev");
+}
 
 
 /**
@@ -813,10 +831,9 @@ settings_generic_set_int(void *opaque, int value)
 static void
 init_dev_settings(void)
 {
-  htsmsg_t *store;
 
-  if((store = htsmsg_store_load("dev")) == NULL)
-    store = htsmsg_create_map();
+  if((devstore = htsmsg_store_load("dev")) == NULL)
+    devstore = htsmsg_create_map();
 
   gconf.settings_dev = settings_add_dir(prop_create_root(NULL),
 				  _p("Developer settings"), NULL, NULL,
@@ -827,60 +844,28 @@ init_dev_settings(void)
   prop_set_string(prop_create(r, "description"),
 		  "Settings for developers. If you don't know what this is, don't touch it");
 
+  add_dev_bool("Various experimental features (Use at own risk)",
+	       "experimental", &gconf.enable_experimental);
 
-  prop_t *t;
-  
-  t = prop_create_root(NULL);
-  prop_set_string(t, "Experimental features (Use at own risk)");
+  add_dev_bool("Enable binreplace",
+	       "binreplace", &gconf.enable_bin_replace);
 
-  settings_create_bool(gconf.settings_dev, "experimental", t, 0,
-		       store, settings_generic_set_bool,
-		       &gconf.enable_experimental, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
+  add_dev_bool("Enable omnigrade",
+	       "omnigrade", &gconf.enable_omnigrade);
 
+  add_dev_bool("Debug all HTTP requests",
+	       "httpdebug", &gconf.enable_http_debug);
 
-  t = prop_create_root(NULL);
-  prop_set_string(t, "Enable binrelpace");
+  add_dev_bool("Disable HTTP connection reuse",
+	       "nohttpreuse", &gconf.disable_http_reuse);
 
-  settings_create_bool(gconf.settings_dev, "binreplace", t, 0,
-		       store, settings_generic_set_bool,
-		       &gconf.enable_bin_replace, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
+  add_dev_bool("Log AV-diff stats",
+	       "detailedavdiff", &gconf.enable_detailed_avdiff);
 
-  t = prop_create_root(NULL);
-  prop_set_string(t, "Enable omnigrade");
+  add_dev_bool("Debug HLS",
+	       "hlsdebug", &gconf.enable_hls_debug);
 
-  settings_create_bool(gconf.settings_dev, "omnigrade", t, 0,
-		       store, settings_generic_set_bool,
-		       &gconf.enable_omnigrade, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
-
-
-  t = prop_create_root(NULL);
-  prop_set_string(t, "Debug all HTTP requests");
-
-  settings_create_bool(gconf.settings_dev, "httpdebug", t, 0,
-		       store, settings_generic_set_bool,
-		       &gconf.enable_http_debug, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
-
-  t = prop_create_root(NULL);
-  prop_set_string(t, "Disable HTTP connection reuse");
-
-  settings_create_bool(gconf.settings_dev, "nohttpreuse", t, 0,
-		       store, settings_generic_set_bool,
-		       &gconf.disable_http_reuse, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"dev");
-
+  add_dev_bool("Debug FTP",
+	       "ftpdebug", &gconf.enable_ftp_debug);
 
 }

@@ -192,7 +192,7 @@ stdin_start(void)
   shutdown_hook_add(stdin_shutdown_early, NULL, 0);
 
   hts_thread_create_detached("stdin", stdin_thread, NULL,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_UI_WORKER_HIGH);
 }
 
 

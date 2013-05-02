@@ -267,7 +267,7 @@ sub_scanner_create(const char *url, prop_t *proproot,
   memcpy(ss->ss_subdbhash, va->subdbhash, 16);
 
   hts_thread_create_detached("subscanner", sub_scanner_thread, ss,
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_METADATA);
   return ss;
 }
 

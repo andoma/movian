@@ -639,6 +639,6 @@ vobsub_load(const char *json, char *errbuf, size_t errlen,
   hts_cond_init(&vs->vs_cond, &vs->vs_mutex);
   
   hts_thread_create_joinable("vobsub loader", &vs->vs_tid,
-			     vobsub_thread, vs, THREAD_PRIO_LOW);
+			     vobsub_thread, vs, THREAD_PRIO_METADATA);
   return &vs->vs_es;
 }

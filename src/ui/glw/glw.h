@@ -651,6 +651,10 @@ typedef struct glw_root {
   prop_t *gr_prop_ui;
   prop_t *gr_prop_nav;
 
+  void (*gr_prop_dispatcher)(prop_courier_t *pc, int timeout);
+  int gr_prop_maxtime;
+
+  int gr_reduce_cpu;
   int gr_stop;
   prop_sub_t *gr_evsub;
 
@@ -1065,6 +1069,8 @@ void *glw_get_opaque(glw_t *w, glw_callback_t *func);
 
 void glw_prepare_frame(glw_root_t *gr, int flags);
 
+void glw_idle(glw_root_t *gr);
+
 void glw_post_scene(glw_root_t *gr);
 
 void glw_reap(glw_root_t *gr);
@@ -1077,9 +1083,9 @@ void glw_move(glw_t *w, glw_t *b);
 
 void glw_remove_from_parent(glw_t *w, glw_t *p);
 
-void glw_lock(glw_root_t *gr);
+#define glw_lock(gr) hts_mutex_lock(&(gr)->gr_mutex);
 
-void glw_unlock(glw_root_t *gr);
+#define glw_unlock(gr) hts_mutex_unlock(&(gr)->gr_mutex);
 
 
 /**

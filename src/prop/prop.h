@@ -21,12 +21,15 @@
 
 #include <stdlib.h>
 
+#include "config.h"
 #include "event.h"
 #include "arch/threads.h"
 #include "misc/queue.h"
 #include "misc/rstr.h"
 
-// #define PROP_DEBUG
+#if ENABLE_BUGHUNT
+#define PROP_DEBUG
+#endif
 
 typedef struct prop_courier prop_courier_t;
 typedef struct prop prop_t;
@@ -360,14 +363,16 @@ prop_courier_t *prop_courier_create_lockmgr(const char *name,
 					    void (*prologue)(void),
 					    void (*epilogue)(void));
 
-int prop_courier_wait(prop_courier_t *pc,
-		      struct prop_notify_queue *exp,
-		      struct prop_notify_queue *nor,
+int prop_courier_wait(prop_courier_t *pc, struct prop_notify_queue *q,
 		      int timeout);
 
 void prop_courier_wait_and_dispatch(prop_courier_t *pc);
 
 void prop_courier_poll(prop_courier_t *pc);
+
+void prop_courier_poll_timed(prop_courier_t *pc, int maxtime);
+
+void prop_courier_poll_with_alarm(prop_courier_t *pc, int maxtime);
 
 int prop_courier_check(prop_courier_t *pc);
 

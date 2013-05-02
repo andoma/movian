@@ -18,26 +18,32 @@
 .SUFFIXES:
 SUFFIXES=
 
+
+C ?= ${CURDIR}
+
+include ${C}/config.default
+BUILDDIR ?= ${C}/build.${BUILD}
+
 # All targets deps on Makefile, but we can comment that out during dev:ing
 ALLDEPS=${BUILDDIR}/config.mak Makefile support/${OS}.mk
-
-include ${CURDIR}/config.default
 
 ALLDEPS += ${STAMPS}
 
 OPTFLAGS ?= -O2
 
-BUILDDIR = build.${BUILD}
 PROG=${BUILDDIR}/showtime
 
 include ${BUILDDIR}/config.mak
 
 CFLAGS_std = -Wall -Werror -Wwrite-strings -Wno-deprecated-declarations \
-		-Wmissing-prototypes -Wno-multichar  -Iext/dvd
+		-Wmissing-prototypes -Wno-multichar  -Iext/dvd -std=gnu99
 
 CFLAGS = ${CFLAGS_std} ${OPTFLAGS}
 
+#PGFLAGS ?= -pg
 
+OPTFLAGS += ${PGFLAGS}
+LDFLAGS += ${PGFLAGS}
 
 
 ##############################################################
@@ -96,6 +102,7 @@ SRCS +=	src/misc/ptrvec.c \
 	src/misc/jpeg.c \
 	src/misc/gz.c \
 	src/misc/str.c \
+	src/misc/time.c \
 	src/misc/codepages.c \
 	src/misc/fs.c \
 	src/misc/extents.c \
@@ -158,8 +165,13 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_sidfile.c \
 	src/fileaccess/fa_nativesmb.c \
 	src/fileaccess/fa_buffer.c \
+	src/fileaccess/fa_slice.c \
+	src/fileaccess/fa_aes.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_indexer.c \
+
+SRCS += src/fileaccess/fa_ftp.c \
+	src/fileaccess/ftpparse.c \
 
 SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_probe.c \
@@ -169,6 +181,7 @@ SRCS-$(CONFIG_LIBAV) += \
 	src/fileaccess/fa_video.c \
 	src/fileaccess/fa_audio.c \
 
+SRCS-$(CONFIG_XMP)             += src/fileaccess/fa_xmp.c
 SRCS-$(CONFIG_LIBGME)          += src/fileaccess/fa_gmefile.c
 SRCS-$(CONFIG_LOCATEDB)        += src/fileaccess/fa_locatedb.c
 SRCS-$(CONFIG_SPOTLIGHT)       += src/fileaccess/fa_spotlight.c
@@ -615,11 +628,11 @@ BUNDLE_OBJS=$(BUNDLE_SRCS:%.c=%.o)
 # Common CFLAGS for all files
 CFLAGS_com += -g -funsigned-char ${OPTFLAGS} ${CFLAGS_dbg}
 CFLAGS_com += -D_FILE_OFFSET_BITS=64
-CFLAGS_com += -iquote${BUILDDIR} -iquote${CURDIR}/src -iquote${CURDIR}
+CFLAGS_com += -iquote${BUILDDIR} -iquote${C}/src -iquote${C}
 
 # Tools
 
-MKBUNDLE = $(CURDIR)/support/mkbundle
+MKBUNDLE = $(C)/support/mkbundle
 
 ifndef V
 ECHO   = printf "$(1)\t%s\n" $(2)
@@ -658,15 +671,15 @@ ${PROG}.ziptail: $(OBJS) $(ALLDEPS) $(BUILDDIR)/support/dataroot/ziptail.o
 
 ${BUILDDIR}/%.o: %.c $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 ${BUILDDIR}/%.o: %.m $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CC) -MD -MP $(CFLAGS_com) $(CFLAGS) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 ${BUILDDIR}/%.o: %.cpp $(ALLDEPS)
 	@mkdir -p $(dir $@)
-	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(CURDIR)/$<
+	$(CXX) -MD -MP $(CFLAGS_com) $(CFLAGS_cfg) -c -o $@ $(C)/$<
 
 clean:
 	rm -rf ${BUILDDIR}/src ${BUILDDIR}/ext ${BUILDDIR}/bundles
@@ -677,7 +690,7 @@ distclean:
 	find . -name "*~" | xargs rm -f
 
 reconfigure:
-	$(CURDIR)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
+	$(C)/configure.${CONFIGURE_POSTFIX} $(CONFIGURE_ARGS)
 
 showconfig:
 	@echo $(CONFIGURE_ARGS)
@@ -685,7 +698,7 @@ showconfig:
 # Create buildversion.h
 src/version.c: $(BUILDDIR)/buildversion.h
 $(BUILDDIR)/buildversion.h: FORCE
-	@$(CURDIR)/support/version.sh $(CURDIR) $@
+	@$(C)/support/version.sh $(C) $@
 FORCE:
 
 # Include dependency files if they exist.
@@ -694,31 +707,19 @@ FORCE:
 
 # Bundle files
 $(BUILDDIR)/bundles/%.o: $(BUILDDIR)/bundles/%.c $(ALLDEPS)
-	$(CC) $(CFLAGS_cfg) -I${CURDIR}/src/fileaccess -c -o $@ $<
+	$(CC) $(CFLAGS_cfg) -I${C}/src/fileaccess -c -o $@ $<
 
-$(BUILDDIR)/bundles/%.c: % $(CURDIR)/support/mkbundle $(ALLDEPS)
+$(BUILDDIR)/bundles/%.c: % $(C)/support/mkbundle $(ALLDEPS)
 	@mkdir -p $(dir $@)
 	$(MKBUNDLE) -o $@ -s $< -d ${BUILDDIR}/bundles/$<.d -p $<
 
-$(BUILDDIR)/libav.stamp:
-	${MAKE} -C ${LIBAV_BUILD_DIR}
-	${MAKE} -C ${LIBAV_BUILD_DIR} install
+
+export C
+export BUILDDIR
+export OPTFLAGS
+
+# External builds
+$(BUILDDIR)/stamps/%.stamp:
+	${MAKE} -f ${C}/ext/$*.mk build
 	@mkdir -p $(dir $@)
 	touch $@
-
-$(BUILDDIR)/freetype.stamp:
-	${MAKE} -C ${FREETYPE_BUILD_DIR}
-	${MAKE} -C ${FREETYPE_BUILD_DIR} install
-	@mkdir -p $(dir $@)
-	touch $@
-
-$(BUILDDIR)/bzip2.stamp:
-	${MAKE} -C ${BZIP2_BUILD_DIR} libbz2.a
-	@mkdir -p ${BZIP2_INSTALL_DIR}/lib ${BZIP2_INSTALL_DIR}/include
-
-	cp ${BZIP2_BUILD_DIR}/libbz2.a ${BZIP2_INSTALL_DIR}/lib
-	cp ${BZIP2_BUILD_DIR}/bzlib.h  ${BZIP2_INSTALL_DIR}/include
-
-	@mkdir -p $(dir $@)
-	touch $@
-

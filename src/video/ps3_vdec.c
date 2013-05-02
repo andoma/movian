@@ -45,11 +45,13 @@ LIST_HEAD(vdec_pic_list, vdec_pic);
 typedef struct pktmeta {
   int64_t delta;
   int epoch;
+  char aspect_override;
   char skip : 1;
   char flush : 1; 
   char nopts : 1;
   char nodts : 1;
   char drive_clock : 1;
+  char disable_deinterlacer : 1;
 } pktmeta_t;
 
 
@@ -118,6 +120,7 @@ typedef struct vdec_decoder {
 
   h264_annexb_ctx_t annexb;
 
+  int do_flush;
 
 } vdec_decoder_t;
 
@@ -346,28 +349,46 @@ picture_out(vdec_decoder_t *vdd)
     vp->fi.fi_height = mpeg2->height;
     vp->fi.fi_duration = mpeg2->frame_rate <= 8 ? 
       mpeg_durations[mpeg2->frame_rate] : 40000;
-    vp->fi.fi_interlaced = !mpeg2->progressive_frame;
-    vp->fi.fi_tff = mpeg2->top_field_first;
-    
+
+    if(pm->disable_deinterlacer) {
+      vp->fi.fi_interlaced = 0;
+    } else {
+      vp->fi.fi_interlaced = !mpeg2->progressive_frame;
+      vp->fi.fi_tff = mpeg2->top_field_first;
+    }
+
     if(mpeg2->color_description)
       vp->fi.fi_color_space = mpeg2->matrix_coefficients;
 
-    switch(mpeg2->aspect_ratio) {
-    case VDEC_MPEG2_ARI_SAR_1_1:
-      vp->fi.fi_dar_num = mpeg2->width;
-      vp->fi.fi_dar_den = mpeg2->height;
+    switch(pm->aspect_override) {
+
+    default:
+      switch(mpeg2->aspect_ratio) {
+      case VDEC_MPEG2_ARI_SAR_1_1:
+	vp->fi.fi_dar_num = mpeg2->width;
+	vp->fi.fi_dar_den = mpeg2->height;
+	break;
+      case VDEC_MPEG2_ARI_DAR_4_3:
+	vp->fi.fi_dar_num = 4;
+	vp->fi.fi_dar_den = 3;
+	break;
+      case VDEC_MPEG2_ARI_DAR_16_9:
+	vp->fi.fi_dar_num = 16;
+	vp->fi.fi_dar_den = 9;
+	break;
+      case VDEC_MPEG2_ARI_DAR_2P21_1:
+	vp->fi.fi_dar_num = 221;
+	vp->fi.fi_dar_den = 100;
+	break;
+      }
       break;
-    case VDEC_MPEG2_ARI_DAR_4_3:
+    case 1:
       vp->fi.fi_dar_num = 4;
       vp->fi.fi_dar_den = 3;
       break;
-    case VDEC_MPEG2_ARI_DAR_16_9:
+    case 2:
       vp->fi.fi_dar_num = 16;
       vp->fi.fi_dar_den = 9;
-      break;
-    case VDEC_MPEG2_ARI_DAR_2P21_1:
-      vp->fi.fi_dar_num = 221;
-      vp->fi.fi_dar_den = 100;
       break;
     }
 
@@ -452,10 +473,17 @@ picture_out(vdec_decoder_t *vdd)
 	  pts,
 	  h264->picture_type[0]);
 #endif
-    snprintf(metainfo, sizeof(metainfo),
-	     "h264 (Level %d.%d) %dx%d%c (Cell)",
-	     vdd->level_major, vdd->level_minor,
-	     h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+
+    if(vdd->level_major)
+      snprintf(metainfo, sizeof(metainfo),
+	       "h264 (Level %d.%d) %dx%d%c (Cell)",
+	       vdd->level_major, vdd->level_minor,
+	       h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+    else
+      snprintf(metainfo, sizeof(metainfo),
+	       "h264 %dx%d%c (Cell)",
+	       h264->width, h264->height, vp->fi.fi_interlaced ? 'i' : 'p');
+
   }
 
   prop_set_string(vdd->metainfo, metainfo);
@@ -556,8 +584,17 @@ submit_au(vdec_decoder_t *vdd, struct vdec_au *au, void *data, size_t len,
     }
   }
 
+  if(data == NULL) {
+    // When we want to flush out all frames from the decoder
+    // we just wait for them by sleeping. Lame but kinda works
+    hts_mutex_unlock(&vdd->mtx);
+    usleep(100000);
+    hts_mutex_lock(&vdd->mtx);
+  }
+
   while((vp = LIST_FIRST(&vdd->pictures)) != NULL) {
-    if(vdd->flush_to < vp->order)
+    // data == NULL means that we should do a complete flush
+    if(vdd->flush_to < vp->order && data != NULL)
       break;
     LIST_REMOVE(vp, link);
 
@@ -582,14 +619,6 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   if(vdd->metainfo == NULL)
     vdd->metainfo = prop_ref_inc(mq->mq_prop_codec);
 
-  if(vd->vd_do_flush) {
-    end_sequence_and_wait(vdd);
-    vdec_start_sequence(vdd->handle);
-    vdd->annexb.extradata_injected = 0;
-    vd->vd_nextpts = AV_NOPTS_VALUE;
-    vdd->flush_to = -1;
-  }
-
   pktmeta_t *pm = &vdd->pktmeta[vdd->pktmeta_cur];
   au.userdata = vdd->pktmeta_cur;
 
@@ -597,9 +626,12 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
   
   pm->epoch = mb->mb_epoch;
   pm->skip = mb->mb_skip == 1;
-  pm->flush = vd->vd_do_flush;
+  pm->flush = vdd->do_flush;
+  vdd->do_flush = 0;
   pm->delta = mb->mb_delta;
   pm->drive_clock = mb->mb_drive_clock;
+  pm->aspect_override = mb->mb_aspect_override;
+  pm->disable_deinterlacer = mb->mb_disable_deinterlacer;
 
   int64_t pts = mb->mb_pts, dts = mb->mb_dts;
 
@@ -638,7 +670,22 @@ decoder_decode(struct media_codec *mc, struct video_decoder *vd,
 
   h264_to_annexb(&vdd->annexb, &data, &size);
   submit_au(vdd, &au, data, size, mb->mb_skip == 1, vd);
-  vd->vd_do_flush = 0;
+}
+
+
+/**
+ *
+ */
+static void
+decoder_flush(struct media_codec *mc, struct video_decoder *vd)
+{
+  vdec_decoder_t *vdd = mc->opaque;
+  end_sequence_and_wait(vdd);
+  vdec_start_sequence(vdd->handle);
+  vdd->annexb.extradata_injected = 0;
+  vd->vd_nextpts = AV_NOPTS_VALUE;
+  vdd->flush_to = -1;
+  vdd->do_flush = 1;
 }
 
 
@@ -682,8 +729,7 @@ no_lib(media_pipe_t *mp, const char *codec)
  *
  */
 static int
-video_ps3_vdec_codec_create(media_codec_t *mc, int id,
-			    const media_codec_params_t *mcp,
+video_ps3_vdec_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 			    media_pipe_t *mp)
 {
   vdec_decoder_t *vdd;
@@ -692,10 +738,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   int spu_threads;
   int r;
 
-  if(mcp == NULL || mcp->width == 0 || mcp->height == 0)
-    return 1;
 
-  switch(id) {
+  switch(mc->codec_id) {
   case CODEC_ID_MPEG2VIDEO:
     if(!vdec_mpeg2_loaded)
       return no_lib(mp, "MPEG-2");
@@ -706,31 +750,18 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
     break;
 
   case CODEC_ID_H264:
-    if(mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
+    if(mcp != NULL && mcp->profile == FF_PROFILE_H264_CONSTRAINED_BASELINE)
       return 1; // can't play this
 
     if(!vdec_h264_loaded) 
       return no_lib(mp, "h264");
 
     dec_type.codec_type = VDEC_CODEC_TYPE_H264;
-#if 0
-    if(mcp->level != 0 && mcp->level <= 42) {
-      dec_type.profile_level = mcp->level;
-    } else {
-      dec_type.profile_level = 42;
-      notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
-		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
-    }
-#else
-
-    if(mcp->level > 42) {
+    if(mcp != NULL && mcp->level > 42) {
       notify_add(mp->mp_prop_notifications, NOTIFY_WARNING, NULL, 10,
 		 _("Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback."), mcp->level / 10, mcp->level % 10);
     }
     dec_type.profile_level = 42;
-
-#endif
-
     spu_threads = 4;
     break;
 
@@ -761,7 +792,8 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
   vdd->mem = (void *)(uint64_t)taddr;
 
   TRACE(TRACE_DEBUG, "VDEC", "Opening codec %s level %d using %d bytes of RAM",
-	id == CODEC_ID_H264 ? "h264" : "MPEG2", dec_type.profile_level,
+	mc->codec_id == CODEC_ID_H264 ? "h264" : "MPEG2",
+	dec_type.profile_level,
 	dec_attr.mem_size);
 
   vdd->config.mem_addr = (intptr_t)vdd->mem;
@@ -784,10 +816,12 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
     return 1;
   }
 
-  vdd->level_major = mcp->level / 10;
-  vdd->level_minor = mcp->level % 10;
+  if(mcp != NULL) {
+    vdd->level_major = mcp->level / 10;
+    vdd->level_minor = mcp->level % 10;
+  }
 
-  if(id == CODEC_ID_H264 && mcp->extradata_size)
+  if(mc->codec_id == CODEC_ID_H264 && mcp != NULL && mcp->extradata_size)
     h264_to_annexb_init(&vdd->annexb, mcp->extradata, mcp->extradata_size);
 
   vdd->max_order = -1;
@@ -800,15 +834,11 @@ video_ps3_vdec_codec_create(media_codec_t *mc, int id,
 	"Cell accelerated codec created using %d bytes of RAM",
 	dec_attr.mem_size);
 
-  if(mc->codec_ctx == NULL) {
-    mc->codec_ctx = avcodec_alloc_context3(NULL);
-    mc->codec_ctx->codec_id   = id;
-    mc->codec_ctx->codec_type = AVMEDIA_TYPE_VIDEO;
-  }
-
   mc->opaque = vdd;
   mc->decode = decoder_decode;
-  mc->close = decoder_close;
+  mc->flush  = decoder_flush;
+  mc->close  = decoder_close;
+
 
   vdec_start_sequence(vdd->handle);
 

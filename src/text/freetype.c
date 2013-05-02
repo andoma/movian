@@ -233,13 +233,14 @@ face_close(FT_Stream stream)
  *
  */
 static face_t *
-face_create_epilogue(face_t *face, const char *source, int font_domain)
+face_create_epilogue(face_t *face, int font_domain)
 {
   const char *family = face->face->family_name;
   const char *style = face->face->style_name;
   char buf[256];
-  TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] from %s",
-	family, style, source);
+
+  TRACE(TRACE_DEBUG, "Freetype", "Loaded '%s' [%s] domain:%d",
+	family, style, font_domain);
 
   if(style != NULL) {
     char *f = mystrdupa(style), *tmp = NULL;
@@ -268,30 +269,17 @@ face_create_epilogue(face_t *face, const char *source, int font_domain)
  *
  */
 static face_t *
-face_create_from_uri(const char *path, int font_domain, const char **vpaths)
+face_create_from_fh(fa_handle_t *fh, int font_domain, 
+		    char *errbuf, size_t errlen)
 {
-  char errbuf[256];
   FT_Open_Args oa = {0};
   FT_Error err;
   int64_t s;
   face_t *face;
 
-  TAILQ_FOREACH(face, &faces, link)
-    if(face->url != NULL && !strcmp(face->url, path) &&
-       face->font_domain == font_domain)
-      return face;
-  fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0);
-  if(fh == NULL) {
-    TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
-	  path, errbuf);
-    return NULL;
-  }
-
   s = fa_fsize(fh);
   if(s < 0) {
-    TRACE(TRACE_ERROR, "Freetype",
-	  "Unable to load font: %s -- Not a seekable file",
-	  path);
+    snprintf(errbuf, errlen, "Not a seekable file");
     fa_close(fh);
     return NULL;
   }
@@ -308,32 +296,44 @@ face_create_from_uri(const char *path, int font_domain, const char **vpaths)
   oa.flags = FT_OPEN_STREAM;
   
   if((err = FT_Open_Face(text_library, &oa, 0, &face->face)) != 0) {
-    TRACE(TRACE_ERROR, "Freetype",
-	  "Unable to create font face: %s 0x%x", path, err);
+    snprintf(errbuf, errlen, "Unable to open face: %d", err);
     free(face);
     free(srec);
     return NULL;
   }
-  face->url = strdup(path);
 
-  return face_create_epilogue(face, path, font_domain);
+  return face_create_epilogue(face, font_domain);
 }
-
 
 
 /**
  *
  */
 static face_t *
-face_create_from_memory(const void *ptr, size_t len, int context)
+face_create_from_uri(const char *path, int font_domain, const char **vpaths)
 {
-  face_t *face = calloc(1, sizeof(face_t));
+  char errbuf[256];
+  face_t *face;
 
-  if(FT_New_Memory_Face(text_library, ptr, len, 0, &face->face)) {
-    free(face);
+  TAILQ_FOREACH(face, &faces, link)
+    if(face->url != NULL && !strcmp(face->url, path) &&
+       face->font_domain == font_domain)
+      return face;
+  fa_handle_t *fh = fa_open_vpaths(path, vpaths, errbuf, sizeof(errbuf), 0);
+  if(fh == NULL) {
+    TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
+	  path, errbuf);
     return NULL;
   }
-  return face_create_epilogue(face, "memory", context);
+
+  face = face_create_from_fh(fh, font_domain, errbuf, sizeof(errbuf));
+  if(face == NULL) {
+    TRACE(TRACE_ERROR, "Freetype", "Unable to load font: %s -- %s",
+	  path, errbuf);
+    return NULL;
+  }
+  face->url = strdup(path);
+  return face;
 }
 
 
@@ -1454,12 +1454,13 @@ freetype_load_font(const char *url, int context, const char **vpaths)
  *
  */
 void *
-freetype_load_font_from_memory(const void *ptr, size_t len, int context)
+freetype_load_font_from_fh(fa_handle_t *fh, int font_domain,
+			   char *errbuf, size_t errlen)
 {
   face_t *f;
   hts_mutex_lock(&text_mutex);
 
-  f = face_create_from_memory(ptr, len, context);
+  f = face_create_from_fh(fh, font_domain, errbuf, errlen);
   if(f != NULL)
     f->persistent++;
 

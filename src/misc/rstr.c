@@ -20,8 +20,6 @@
 #include <string.h>
 #include "rstr.h"
 
-#ifdef USE_RSTR
-
 #ifdef RSTR_STATS
 int rstr_allocs;
 int rstr_dups;
@@ -36,7 +34,9 @@ rstr_alloc(const char *in)
     return NULL;
   size_t l = strlen(in);
   rstr_t *rs = malloc(sizeof(rstr_t) + l + 1);
+#ifdef USE_RSTR_REFCOUNTING
   rs->refcnt = 1;
+#endif
   memcpy(rs->str, in, l + 1);
 
 #ifdef RSTR_STATS
@@ -49,7 +49,9 @@ rstr_t *
 rstr_allocl(const char *in, size_t len)
 {
   rstr_t *rs = malloc(sizeof(rstr_t) + len + 1);
+#ifdef USE_RSTR_REFCOUNTING
   rs->refcnt = 1;
+#endif
   if(in != NULL)
     memcpy(rs->str, in, len);
   rs->str[len] = 0;
@@ -122,41 +124,3 @@ rstr_vec_free(rstr_vec_t *rv)
   free(rv);
 }
 
-
-#else
-
-rstr_t *
-rstr_dup(rstr_t *in)
-{
-  return in ? strdup(in) : NULL;
-}
-
-void
-rstr_release(rstr_t *x)
-{
-  free(x);
-}
-
-
-rstr_t *
-rstr_alloc(const char *in)
-{
-  if(in)
-    return strdup(in);
-  else
-    return NULL;
-}
-
-rstr_t *
-rstr_allocl(const char *in, size_t len)
-{
-  char *r = malloc(len + 1);
-
-  if(in)
-    memcpy(r, in, len);
-  r[len] = 0;
-  return r;
-}
-
-
-#endif

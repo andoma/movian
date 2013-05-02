@@ -27,6 +27,11 @@
 #include "showtime.h"
 #include "pool.h"
 
+#if ENABLE_BUGHUNT
+#define POOL_BY_MALLOC
+#endif
+
+
 /**
  *
  */
@@ -65,7 +70,7 @@ typedef struct pool_segment {
 /**
  *
  */
-static void
+static void  __attribute__((unused))
 pool_segment_create(pool_t *p)
 {
   size_t i;
@@ -96,6 +101,7 @@ pool_segment_create(pool_t *p)
 void
 pool_init(pool_t *p, const char *name, size_t item_size, int flags)
 {
+  p->p_item_size_req = item_size;
   item_size = ROUND_UP(item_size, 8);
 
   p->p_name = name;
@@ -106,9 +112,6 @@ pool_init(pool_t *p, const char *name, size_t item_size, int flags)
 
   p->p_item_size = item_size;
   p->p_flags = flags;
-
-  if(flags & POOL_REENTRANT)
-    hts_mutex_init(&p->p_mutex);
 }
 
 
@@ -183,8 +186,6 @@ pool_destroy(pool_t *p)
     TRACE(TRACE_INFO, "pool", "Destroying pool '%s', %d items out",
 	  p->p_name, p->p_num_out);
 
-  if(p->p_flags & POOL_REENTRANT)
-    hts_mutex_destroy(&p->p_mutex);
   free(p);
 }
 
@@ -202,9 +203,13 @@ pool_get_ex(pool_t *p, const char *file, int line)
 pool_get(pool_t *p)
 #endif
 {
-  if(p->p_flags & POOL_REENTRANT)
-    hts_mutex_lock(&p->p_mutex);
-
+  p->p_num_out++;
+#ifdef POOL_BY_MALLOC
+  if(p->p_flags & POOL_ZERO_MEM)
+    return calloc(1, p->p_item_size_req);
+  else
+    return malloc(p->p_item_size_req);
+#else
   pool_item_t *pi = p->p_item;
   if(pi == NULL) {
     pool_segment_create(p);
@@ -212,10 +217,6 @@ pool_get(pool_t *p)
   }
   p->p_item = pi->link;
 
-  p->p_num_out++;
-
-  if(p->p_flags & POOL_REENTRANT)
-    hts_mutex_unlock(&p->p_mutex);
 
   if(p->p_flags & POOL_ZERO_MEM)
     memset(pi, 0, p->p_item_size);
@@ -229,6 +230,8 @@ pool_get(pool_t *p)
 #else
   return pi;
 #endif
+#endif
+
 }
 
 /**
@@ -237,6 +240,10 @@ pool_get(pool_t *p)
 void
 pool_put(pool_t *p, void *ptr)
 {
+#ifdef POOL_BY_MALLOC
+  free(ptr);
+#else
+
 #ifdef POOL_DEBUG
   pool_item_t *pi = ptr - sizeof(pool_item_dbg_t);
 #else
@@ -255,15 +262,10 @@ pool_put(pool_t *p, void *ptr)
   memset(pi, 0xff, p->p_item_size);
 #endif
 
-  if(p->p_flags & POOL_REENTRANT)
-    hts_mutex_lock(&p->p_mutex);
-
   pi->link = p->p_item;
   p->p_item = pi;
+#endif
   p->p_num_out--;
-
-  if(p->p_flags & POOL_REENTRANT)
-    hts_mutex_unlock(&p->p_mutex);
 }
 
 

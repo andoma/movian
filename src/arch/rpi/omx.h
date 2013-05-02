@@ -25,7 +25,9 @@ typedef struct omx_component {
   OMX_BUFFERHEADERTYPE *oc_avail;
   int oc_inflight_buffers;
   int oc_cmd_done;
-  int oc_port_settings_changed;
+
+  void *oc_opaque;
+  void (*oc_port_settings_changed_cb)(struct omx_component *oc);
 
 } omx_component_t;
 
@@ -73,4 +75,6 @@ omx_tunnel_t *omx_tunnel_create(omx_component_t *src, int srcport,
 void omx_tunnel_destroy(omx_tunnel_t *ot);
 int64_t omx_get_media_time(omx_component_t *oc);
 void omx_flush_port(omx_component_t *oc, int port);
+struct media_pipe;
+omx_component_t *omx_get_clock(struct media_pipe *mp);
 

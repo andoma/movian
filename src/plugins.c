@@ -706,7 +706,10 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     }
   }
   qargs[qp] = 0;
-  b = fa_load_query(repo, errbuf, errlen, NULL, qargs, FA_COMPRESSION);
+  hts_mutex_unlock(&plugin_mutex);
+  b = fa_load_query(repo, errbuf, errlen, NULL, qargs,
+		    FA_COMPRESSION | FA_DISABLE_AUTH);
+  hts_mutex_lock(&plugin_mutex);
   if(b == NULL)
     return NULL;
 
@@ -733,14 +736,7 @@ repo_get(const char *repo, char *errbuf, size_t errlen)
     return NULL;
   }
   
-  htsmsg_field_t *f = htsmsg_field_find(json, "plugins");
-  if(f == NULL) {
-    htsmsg_destroy(json);
-    return htsmsg_create_list();
-  }
-  htsmsg_t *r = htsmsg_detach_submsg(f);
-  htsmsg_destroy(json);
-  return r;
+  return json;
 }
 
 
@@ -752,8 +748,15 @@ plugin_load_repo(void)
 {
   plugin_t *pl, *next;
   char errbuf[512];
-  htsmsg_t *r = repo_get(get_repo(), errbuf, sizeof(errbuf));
-  
+  htsmsg_t *msg = repo_get(get_repo(), errbuf, sizeof(errbuf));
+
+  if(msg == NULL) {
+    TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
+	  get_repo(), errbuf);
+    return;
+  }
+
+  htsmsg_t *r = htsmsg_get_list(msg, "plugins");
   if(r != NULL) {
     htsmsg_field_t *f;
 
@@ -783,7 +786,6 @@ plugin_load_repo(void)
       }
     }
 
-    htsmsg_destroy(r);
 
     for(pl = LIST_FIRST(&plugins); pl != NULL; pl = next) {
       next = LIST_NEXT(pl, pl_link);
@@ -792,10 +794,35 @@ plugin_load_repo(void)
 	prop_destroy_by_name(plugin_root_repo, pl->pl_id);
       }
     }
-  } else {
-    TRACE(TRACE_ERROR, "plugins", "Unable to load repo %s -- %s",
-	  get_repo(), errbuf);
   }
+
+  r = htsmsg_get_list(msg, "blacklist");
+  if(r != NULL) {
+    htsmsg_field_t *f;
+    HTSMSG_FOREACH(f, r) {
+      htsmsg_t *pm;
+      if((pm = htsmsg_get_map_by_field(f)) == NULL)
+	continue;
+
+      const char *id      = htsmsg_get_str(pm, "id");
+      const char *version = htsmsg_get_str(pm, "version");
+
+      if(id == NULL || version == NULL)
+	continue;
+
+      LIST_FOREACH(pl, &plugins, pl_link)
+	if(!strcmp(id, pl->pl_id) && pl->pl_installed && pl->pl_inst_ver &&
+	   !strcmp(version, pl->pl_inst_ver))
+	  break;
+
+      if(pl != NULL) {
+	notify_add(NULL, NOTIFY_ERROR, NULL, 10, 
+		   _("Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually."), pl->pl_title, pl->pl_inst_ver);
+	plugin_remove(pl);
+      }
+    }
+  }
+  htsmsg_destroy(msg);
 }
 
 
@@ -1135,7 +1162,7 @@ plugin_remove(plugin_t *pl)
   pl->pl_inst_prop = NULL;
   pl->pl_installed = 0;
   pl->pl_loaded = 0;
-
+  mystrset(&pl->pl_inst_ver, NULL);
   update_state(pl);
 }
 
@@ -1196,7 +1223,10 @@ plugin_install(plugin_t *pl, const char *package)
 
   snprintf(path, sizeof(path), "%s/installedplugins/%s.zip",
 	   gconf.persistent_path, pl->pl_id);
-  unlink(path);
+  if(unlink(path)) {
+    TRACE(TRACE_DEBUG, "plugins", "First unlinking %s -- %s",
+	  path, strerror(errno));
+  }
 
   int fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0660);
   if(fd == -1) {
@@ -1209,10 +1239,11 @@ plugin_install(plugin_t *pl, const char *package)
     buf_release(b);
     return -1;
   }
-
-  size_t r = write(fd, buf, b->b_size);
+  size_t bsize = b->b_size;
+  size_t r = write(fd, buf, bsize);
   buf_release(b);
-  if(close(fd) || r != b->b_size) {
+  if(close(fd) || r != bsize) {
+    buf_release(b);
     s = _("Disk write error");
     prop_set_rstring(pl->pl_statustxt, s);
     rstr_release(s);

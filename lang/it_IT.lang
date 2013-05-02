@@ -131,60 +131,6 @@ id: System log
 msg: Log di sistema
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Allocati dall'applicazione: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Allocati da malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: RAM disponibile: %d kB
-
-id: Detected CPUs: %d
-msg: CPU rilevate: %d
-
-id: Display info
-msg: Informazioni di visualizzazione
-
-id: Framerate: %.2f Hz
-msg: Framerate: %.2f Hz
-
-id: Free chunks: %d
-msg: Chunks disponibili: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Altezza: %d px
-
-id: Memory status
-msg: Stato della Memoria
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Informazioni di sistema
-
-id: Total system RAM: %d kB
-msg: RAM totale: %d kB
-
-id: Unused memory: %d kB
-msg: Memoria inutilizzata: %d kB
-
-id: Version: %s
-msg: Versione: %s
-
-id: Width: %d px
-msg: Larghezza: %d px
-
-id: Windowmanager: %s
-msg: Gestore finestre: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -556,9 +502,6 @@ msg: Collaborativo
 id: Compilations
 msg: Compilation
 
-id: Enable Spotify
-msg: Attiva Spotify
-
 id: Forget me
 msg: Dimenticami
 
@@ -600,9 +543,6 @@ msg: Amici su Spotify
 
 id: Spotify music service
 msg: Servizio musicale di Spotify
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify ti offre un accesso libero e legale a un'ingente raccolta di musica. Per usare Spotify in Showtime necessiti di un account Premium su Spotify.\nPer maggiori informazioni su Spotify visita http://www.spotify.com/\n\nTi verranno chiesti i tuoi dati login (nome utente e password) su Spotify quando accedi per la prima volta a qualsiasi funzione di Spotify in Showtime.
 
 id: Spotify playlists
 msg: Spotify playlist
@@ -919,11 +859,14 @@ msg: URL
 id: Alternate plugin Repository URL
 msg: URL Repository alternativo del plugin
 
+id: Apps
+msg: Applicazioni
+
 id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
-id: Available plugins
-msg: Plugin disponibili
+id: Available apps
+msg: Applicazioni disponibili
 
 id: Background
 msg: Sfondo
@@ -931,8 +874,8 @@ msg: Sfondo
 id: Beta testing passwords
 msg: Password di beta testing
 
-id: Browse available plugins
-msg: Sfoglia i plugin disponibili
+id: Browse available apps
+msg: Sfoglia applicazioni disponibili
 
 id: Browsing
 msg: Sfogliando
@@ -958,8 +901,8 @@ msg: Errore d'apertura del file
 id: Home page
 msg: Pagina Iniziale
 
-id: Installed plugins
-msg: Plugin installati
+id: Installed apps
+msg: Applicazioni installate
 
 id: Installed version higher than available
 msg: La versione installata è più recente di quella disponibile

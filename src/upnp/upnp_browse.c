@@ -160,11 +160,8 @@ make_audioItem(prop_t *c, prop_t *m, htsmsg_t *item)
  *
  */
 static void
-make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
-	       const char *baseurl, const char *id)
+make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item, const char *url)
 {
-  char url[URL_MAX];
-
   prop_set_string(prop_create(c, "type"), "video");
 
   const char *title = 
@@ -176,8 +173,6 @@ make_videoItem(prop_t *c, prop_t *m, htsmsg_t *item,
 
   item_set_str(m, item, "icon",
 	       "urn:schemas-upnp-org:metadata-1-0/upnp/albumArtURI");
-
-  snprintf(url, sizeof(url), "%s:%s", baseurl, id);
 
   prop_set_string(prop_create(c, "url"), url);
 
@@ -239,9 +234,12 @@ add_item(htsmsg_t *item, prop_t *root, const char *trackid, prop_t **trackptr,
       metadb_bind_url_to_prop(db, url, c);
   } else if(!strncmp(cls, "object.item.videoItem",
 		     strlen("object.item.videoItem"))) {
-    make_videoItem(c, m, item, baseurl, id);
+
+    char vurl[URL_MAX];
+    snprintf(vurl, sizeof(vurl), "%s:%s#%s", baseurl, id, url);
+    make_videoItem(c, m, item, vurl);
     if(db != NULL)
-      metadb_bind_url_to_prop(db, url, c);
+      metadb_bind_url_to_prop(db, vurl, c);
   } else if(!strncmp(cls, "object.item.imageItem",
 		     strlen("object.item.imageItem"))) {
     prop_set_string(prop_create(c, "url"), url);
@@ -494,6 +492,7 @@ ub_destroy(upnp_browse_t *ub)
   prop_ref_dec(ub->ub_contents);
   prop_ref_dec(ub->ub_filter);
   prop_ref_dec(ub->ub_canFilter);
+  free(ub);
 }
 
 
@@ -529,7 +528,8 @@ upnp_browse_resolve(upnp_browse_t *ub)
   upnp_device_t *ud = NULL;
   upnp_service_t *us;
 
-  char *url = ub->ub_url;
+  char *url = mystrdupa(ub->ub_url);
+  char *base = url;
 
   url += strlen("upnp:");
   
@@ -587,7 +587,7 @@ upnp_browse_resolve(upnp_browse_t *ub)
   *url = 0;
   url++;
 
-  ub->ub_base_url = strdup(ub->ub_url);
+  ub->ub_base_url = strdup(base);
   ub->ub_control_url = us->us_control_url ? strdup(us->us_control_url) : NULL;
   ub->ub_event_url   = us->us_event_url   ? strdup(us->us_event_url)   : NULL;
   ub->ub_id = strdup(url);
@@ -825,6 +825,7 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
   const char *url = NULL, *mimetype = NULL, *title;
   char *str, *vpstr;
   size_t len;
+  char canonicalurl[512];
 
   if((tags = htsmsg_get_map(item, "tags")) == NULL)
     return browse_fail(ub, "UPNP Video playback: No tags in item");
@@ -864,7 +865,10 @@ browse_video_item(upnp_browse_t *ub, htsmsg_t *item)
 
   // Construct videoparam JSON blob
 
+  snprintf(canonicalurl, sizeof(canonicalurl), "%s#%s", ub->ub_url, url);
+
   htsmsg_t *vp = htsmsg_create_map();
+  htsmsg_add_str(vp, "canonicalUrl", canonicalurl);
 
   htsmsg_add_u32(vp, "no_fs_scan", 1); /* Don't try to scan parent directory
 					* for subtitles
@@ -956,8 +960,8 @@ browse_container(upnp_browse_t *ub, htsmsg_t *container)
 /**
  *
  */
-static void 
-browse_self(upnp_browse_t *ub)
+static void
+browse_self(upnp_browse_t *ub, int sync)
 {
   int r;
   htsmsg_t *in = htsmsg_create_map(), *out;
@@ -992,10 +996,10 @@ browse_self(upnp_browse_t *ub)
     return browse_fail(ub, "Malformed XML: %s", errbuf);
   }
 
-  if((x = htsmsg_get_map_multi(meta, 
-			       "tags", "DIDL-Lite",
-			       "tags", "container",
-			       NULL)) != NULL) {
+  if(!sync && (x = htsmsg_get_map_multi(meta, 
+                                        "tags", "DIDL-Lite",
+                                        "tags", "container",
+                                        NULL)) != NULL) {
     browse_container(ub, x);
  
   } else if((x = htsmsg_get_map_multi(meta, 
@@ -1026,7 +1030,7 @@ upnp_browse_thread(void *aux)
   }
 
   // Check what we are browsing
-  browse_self(ub);
+  browse_self(ub, 0);
 
 
   ub_destroy(ub);
@@ -1040,9 +1044,13 @@ upnp_browse_thread(void *aux)
 int
 be_upnp_browse(prop_t *page, const char *url, int sync)
 {
-
   upnp_browse_t *ub = calloc(1, sizeof(upnp_browse_t));
   ub->ub_url = strdup(url);
+
+  char *hash = strchr(ub->ub_url, '#');
+  if(hash != NULL)
+    *hash = 0;
+
   ub->ub_page = prop_ref_inc(page);
   ub->ub_source = prop_create_r(ub->ub_page, "source");
 
@@ -1065,7 +1073,16 @@ be_upnp_browse(prop_t *page, const char *url, int sync)
   prop_t *metadata = prop_create(ub->ub_model, "metadata");
 
   ub->ub_title = prop_create_r(metadata, "title");
-  hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
-			     THREAD_PRIO_LOW);
+
+  if(sync) {
+
+    if(!upnp_browse_resolve(ub))
+      browse_self(ub, 1);
+    ub_destroy(ub);
+
+  } else {
+    hts_thread_create_detached("upnpbrowse", upnp_browse_thread, ub,
+                               THREAD_PRIO_MODEL);
+  }
   return 0;
 }

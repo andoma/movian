@@ -110,18 +110,19 @@ widget(container_z, {
   widget(container_y, {
     autofade: true;
     expediteSubscriptions: true;
-    padding: 30;
+    padding: 50;
     align: top;
     cloner($global.notifications.nodes, container_x, {
-      space(1);
       widget(backdrop, {
+	filterConstraintX: true;
 	source: "skin://graphics/blackdrop16.png";
 	border: 7;
-	alphaSelf: 0.5;
+	alphaSelf: 0.9;
 
 	widget(container_x, {
 	  spacing: 10;
 	  widget(icon, {
+	    align: topLeft;
 	    sizeScale: 1.5;
 	    source: "dataroot://resources/svg/Alert.svg";
 	    color: translate($self.type, [1,1,1],
@@ -134,6 +135,7 @@ widget(container_z, {
 	    caption: $self.text;
 	    shadow: true;
 	    sizeScale: 1.5;
+	    maxlines: 4;
 	    color: translate($self.type, [1,1,1],
 			     "info", [0.5, 1, 0.5],
 			     "warning",  [1, 1, 0.5],

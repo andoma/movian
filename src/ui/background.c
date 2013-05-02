@@ -128,14 +128,13 @@ bgloader_thread(void *aux)
   float current_alpha = 0;
 
   while(1) {
-    struct prop_notify_queue exp, nor;
+    struct prop_notify_queue q;
 
     float alpha = 1.0f;
     int timo = alpha != current_alpha ? 50 : 0;
 
-    prop_courier_wait(bgh->pc, &nor, &exp, timo);
-    prop_notify_dispatch(&exp);
-    prop_notify_dispatch(&nor);
+    prop_courier_wait(bgh->pc, &q, timo);
+    prop_notify_dispatch(&q);
 
     rstr_t *bg;
     if(bgh->bg_url[0]) {
@@ -253,5 +252,5 @@ background_init(prop_t *ui, prop_t *nav,
 		 NULL);
 
   hts_thread_create_detached("bgloader", bgloader_thread, bgh, 
-			     THREAD_PRIO_LOW);
+			     THREAD_PRIO_UI_WORKER_LOW);
 }

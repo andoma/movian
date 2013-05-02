@@ -168,6 +168,15 @@ http_get_post_data(http_connection_t *hc, size_t *sizep, int steal)
 
 
 /**
+ *
+ */
+static int
+hp_cmp(const http_path_t *a, const http_path_t *b)
+{
+  return b->hp_len - a->hp_len;
+}
+
+/**
  * Add a callback for a given "virtual path" on our HTTP server
  */
 void *
@@ -181,7 +190,7 @@ http_path_add(const char *path, void *opaque, http_callback_t *callback,
   hp->hp_opaque = opaque;
   hp->hp_callback = callback;
   hp->hp_leaf = leaf;
-  LIST_INSERT_HEAD(&http_paths, hp, hp_link);
+  LIST_INSERT_SORTED(&http_paths, hp, hp_link, hp_cmp);
   return hp;
 }
 
@@ -1424,7 +1433,7 @@ http_server_init(void)
   hs->hs_fd = fd;  
   hs->hs_courier = prop_courier_create_notify(http_courier_notify, hs);
   hts_thread_create_detached("httpsrv", http_server, hs,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_MODEL);
 }
 
 

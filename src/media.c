@@ -573,7 +573,7 @@ mp_destroy(media_pipe_t *mp)
 
   prop_destroy(mp->mp_prop_root);
 
-  video_overlay_flush(mp, 0);
+  video_overlay_flush_locked(mp, 0);
   dvdspu_destroy_all(mp);
 
   hts_cond_destroy(&mp->mp_backpressure);
@@ -618,20 +618,19 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
 
   mp->mp_seek_base = ts;
 
-
   if(!mp_seek_in_queues(mp, ts + mp->mp_start_time)) {
     prop_set_float(prop_create(mp->mp_prop_root, "seektime"), ts / 1000000.0);
-    return;
-  }
+  } else {
 
-  /* If there already is a seek event enqueued, update it */
-  TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
-    if(!event_is_type(e, EVENT_SEEK))
-      continue;
+    /* If there already is a seek event enqueued, update it */
+    TAILQ_FOREACH(e, &mp->mp_eq, e_link) {
+      if(!event_is_type(e, EVENT_SEEK))
+	continue;
 
-    ets = (event_ts_t *)e;
-    ets->ts = ts;
-    return;
+      ets = (event_ts_t *)e;
+      ets->ts = ts;
+      return;
+    }
   }
 
   ets = event_create(EVENT_SEEK, sizeof(event_ts_t));
@@ -641,13 +640,16 @@ mp_direct_seek(media_pipe_t *mp, int64_t ts)
   e = &ets->h;
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+
+  if(mp->mp_seek_initiate != NULL)
+    mp->mp_seek_initiate(mp);
 }
 
 
 /**
  *
  */
-static void
+void
 mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 {
   if(mb->mb_data_type == MB_SUBTITLE) {
@@ -697,6 +699,8 @@ send_hold(media_pipe_t *mp)
   event_t *e = event_create_int(EVENT_HOLD, mp->mp_hold);
   TAILQ_INSERT_TAIL(&mp->mp_eq, e, e_link);
   hts_cond_signal(&mp->mp_backpressure);
+  if(mp->mp_hold_changed != NULL)
+    mp->mp_hold_changed(mp);
 }
 
 
@@ -881,11 +885,12 @@ mq_update_stats(media_pipe_t *mp, media_queue_t *mq)
   }
 }
 
+
 /**
  *
  */
 static int64_t
-mq_realtime_delay(media_queue_t *mq)
+mq_realtime_delay_locked(media_queue_t *mq)
 {
   media_buf_t *f, *l;
 
@@ -905,8 +910,22 @@ mq_realtime_delay(media_queue_t *mq)
 /**
  *
  */
+int64_t
+mq_realtime_delay(media_queue_t *mq)
+{
+  hts_mutex_lock(&mq->mq_mp->mp_mutex);
+  int64_t r = mq_realtime_delay_locked(mq);
+  hts_mutex_unlock(&mq->mq_mp->mp_mutex);
+  return r;
+}
+
+
+/**
+ *
+ */
 event_t *
-mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
+mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
+			  int *blocked)
 {
   event_t *e = NULL;
   
@@ -922,9 +941,12 @@ mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 	mp->mp_audio.mq_packets_current >= (mp->mp_audio.mq_stream != -1 ? 5 : 0) &&
 	(mp->mp_buffer_current + mb->mb_size > mp->mp_buffer_limit ||
 	 (mp->mp_max_realtime_delay != 0 && 
-	  mq_realtime_delay(mq) > mp->mp_max_realtime_delay)))
+	  mq_realtime_delay_locked(mq) > mp->mp_max_realtime_delay))) {
+    if(blocked != NULL)
+      *blocked = *blocked + 1;
     hts_cond_wait(&mp->mp_backpressure, &mp->mp_mutex);
-  
+  }
+
   if(e != NULL) {
     TAILQ_REMOVE(&mp->mp_eq, e, e_link);
   } else {
@@ -996,6 +1018,18 @@ mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb)
 /**
  *
  */
+static void
+update_epoch_in_queue(struct media_buf_queue *q, int epoch)
+{
+  media_buf_t *mb;
+  TAILQ_FOREACH(mb, q, mb_link)
+    mb->mb_epoch = epoch;
+}
+
+
+/**
+ *
+ */
 static int
 mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
 {
@@ -1051,9 +1085,10 @@ mp_seek_in_queues(media_pipe_t *mp, int64_t pos)
       mb->mb_skip = 2;
       rval = 0;
 
-      mb = media_buf_alloc_locked(mp, 0);
-      mb->mb_data_type = MB_CTRL_BLACKOUT;
-      mb_enq(mp, &mp->mp_video, mb);
+      mp->mp_epoch++;
+      update_epoch_in_queue(&mp->mp_audio.mq_q_data, mp->mp_epoch);
+      update_epoch_in_queue(&mp->mp_video.mq_q_data, mp->mp_epoch);
+      update_epoch_in_queue(&mp->mp_video.mq_q_aux, mp->mp_epoch);
 
       mb = media_buf_alloc_locked(mp, 0);
       mb->mb_data_type = MB_CTRL_FLUSH;
@@ -1089,10 +1124,6 @@ mp_flush(media_pipe_t *mp, int blank)
   if(v->mq_stream >= 0) {
     mb = media_buf_alloc_locked(mp, 0);
     mb->mb_data_type = MB_CTRL_FLUSH;
-    mb_enq(mp, v, mb);
-
-    mb = media_buf_alloc_locked(mp, 0);
-    mb->mb_data_type = MB_CTRL_BLACKOUT;
     mb_enq(mp, v, mb);
   }
 
@@ -1180,15 +1211,22 @@ media_codec_deref(media_codec_t *cw)
   if(atomic_add(&cw->refcount, -1) > 1)
     return;
 #if ENABLE_LIBAV
-  if(cw->codec_ctx != NULL && cw->codec_ctx->codec != NULL)
-    avcodec_close(cw->codec_ctx);
+  if(cw->ctx != NULL && cw->ctx->codec != NULL)
+    avcodec_close(cw->ctx);
+
+  if(cw->ctx != cw->fmt_ctx && cw->fmt_ctx != NULL &&
+     cw->fmt_ctx->codec != NULL)
+    avcodec_close(cw->fmt_ctx);
 #endif
 
   if(cw->close != NULL)
     cw->close(cw);
 
-  if(cw->codec_ctx_alloced)
-    free(cw->codec_ctx);
+  if(cw->ctx != cw->fmt_ctx)
+    free(cw->ctx);
+
+  if(cw->fmt_ctx && cw->fw == NULL)
+    free(cw->fmt_ctx);
 
 #if ENABLE_LIBAV
   if(cw->parser_ctx != NULL)
@@ -1214,7 +1252,8 @@ media_codec_create(int codec_id, int parser,
   codec_def_t *cd;
 
   mc->mp = mp;
-  mc->codec_ctx = ctx;
+  mc->fmt_ctx = ctx;
+  mc->codec_id = codec_id;
   
 #if ENABLE_LIBAV
   if(ctx != NULL && mcp != NULL) {
@@ -1224,7 +1263,7 @@ media_codec_create(int codec_id, int parser,
 #endif
 
   LIST_FOREACH(cd, &registeredcodecs, link)
-    if(!cd->open(mc, codec_id, mcp, mp))
+    if(!cd->open(mc, mcp, mp))
       break;
 
   if(cd == NULL) {
@@ -1233,15 +1272,23 @@ media_codec_create(int codec_id, int parser,
   }
 
 #if ENABLE_LIBAV
-  mc->parser_ctx = parser ? av_parser_init(codec_id) : NULL;
+  if(parser) {
+    assert(fw == NULL);
+
+    const AVCodec *codec = avcodec_find_decoder(codec_id);
+    assert(codec != NULL);
+    mc->fmt_ctx = avcodec_alloc_context3(codec);
+    mc->parser_ctx = av_parser_init(codec_id);
+  }
 #endif
 
   mc->refcount = 1;
   mc->fw = fw;
-  mc->codec_id = codec_id;
 
-  if(fw != NULL)
+  if(fw != NULL) {
+    assert(!parser);
     atomic_add(&fw->refcount, 1);
+  }
 
   return mc;
 }
@@ -1426,6 +1473,7 @@ mp_set_current_time(media_pipe_t *mp, int64_t ts, int epoch, int64_t delta)
     
     event_ts_t *ets = event_create(EVENT_CURRENT_TIME, sizeof(event_ts_t));
     ets->ts = ts;
+    ets->epoch = epoch;
     mp->mp_seek_base = ts;
     mp_enqueue_event_locked(mp, &ets->h);
     event_release(&ets->h);
@@ -1502,6 +1550,23 @@ mp_set_url(media_pipe_t *mp, const char *url)
   prop_set_string(mp->mp_prop_url, url);
 }
 
+
+/**
+ *
+ */
+void
+mp_set_duration(media_pipe_t *mp, int64_t duration)
+{
+  mp->mp_duration = duration;
+
+  float d = mp->mp_duration / 1000000.0;
+  prop_set(mp->mp_prop_metadata, "duration", PROP_SET_FLOAT, d);
+
+  if(duration && mp->mp_prop_metadata_source)
+    prop_set(mp->mp_prop_metadata_source, "duration", PROP_SET_FLOAT, d);
+}
+
+
 /**
  *
  */
@@ -1528,10 +1593,8 @@ mp_configure(media_pipe_t *mp, int caps, int buffer_size, int64_t duration)
     break;
   }
 
-  mp->mp_duration = duration;
-  prop_set_float(prop_create(mp->mp_prop_metadata, "duration"),
-                 mp->mp_duration / 1000000.0);
   prop_set_int(mp->mp_prop_buffer_limit, mp->mp_buffer_limit);
+  mp_set_duration(mp, duration);
 }
 
 

@@ -1,0 +1,1326 @@
+﻿language: Danish
+native: Dansk
+maintainer: Klaus Rauteberg <showtime@rautenberg.dk>
+#
+# ./glwskins/default/cmdmenu.view
+#
+id: Add current page to bookmarks
+msg: Tilføj aktuel side til bogmærker
+
+id: Open settings
+msg: Åben indstillinger
+
+id: Remove current page from bookmarks
+msg: Fjern aktuel side fra bogmærker
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_common.view
+#
+id: Exit Showtime
+msg: Afslut Showtime
+
+id: Go to Home screen
+msg: Gå til Startsiden
+
+id: Navigation
+msg: Navigation
+
+id: Open Settings
+msg: Åben indstillinger
+
+id: Playqueue
+msg: Afspilningskø
+
+id: Power off
+msg: Sluk
+
+id: Reload current page
+msg: Genstart aktuel side
+
+id: Suspend
+msg: Suspendere
+
+id: System
+msg: System
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_dir.view
+#
+id: Add '%s' to home screen
+msg: Tilføj 's%' til startsiden
+
+id: Remove '%s' from home screen
+msg: Fjern '%s' fra startsiden
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_item.view
+#
+id: Continue from %s
+msg: Fortsæt fra %s
+
+id: Continue playback here
+msg: Fortsæt afspilning her
+
+id: Delete
+msg: Slet
+
+id: Mark as seen
+msg: Marker som set
+
+id: Mark as unseen
+msg: Marker som ikke set
+
+id: Play from beginning
+msg: Afspil fra starten
+
+id: Play until end of list
+msg: Afspil indtil slut af liste
+
+id: Queue
+msg: Kø
+
+id: Star
+msg: Favorit
+
+id: Unstar
+msg: Fjern favorit
+
+#
+# ./glwskins/default/cmdmenu/cmdmenu_video.view
+#
+id: Audio
+msg: Lyd
+
+id: Audio settings
+msg: Lydindstillinger
+
+id: Audio tracks
+msg: Lydspor
+
+id: Chapters
+msg: Kapitel
+
+id: Seek by time
+msg: Søgning efter tid
+
+id: Settings
+msg: Indstillinger
+
+id: Subtitle settings
+msg: Indstillinger for undertekster
+
+id: Subtitle tracks
+msg: Undertekstspor
+
+id: Subtitles
+msg: Undertekster
+
+id: Video
+msg: Video
+
+id: Video menu
+msg: Videomenu
+
+id: Video settings
+msg: Videoindstillinger
+
+#
+# ./glwskins/default/log.view
+#
+id: System log
+msg: Systemlog
+
+#
+# ./glwskins/default/pages/about.view
+#
+id: Allocated by application: %d kB
+msg: Tildelt af applikationen: %d Kb
+
+id: Allocated by malloc: %d kB
+msg: Tildelt af malloc: %d Kb
+
+id: Avail system RAM: %d kB
+msg: Tilgængelig system RAM: %d Kb
+
+id: Detected CPUs: %d
+msg: Fundne CPU'er: %d
+
+id: Display info
+msg: Skærminformation
+
+id: Framerate: %.2f Hz
+msg: Opdateringsfrekvens: %.2f Hz
+
+id: Free chunks: %d
+msg: Ledige stykker: %d
+
+id: GPU: %s
+msg: GPU: %s
+
+id: Height: %d px
+msg: Højde: %d px
+
+id: Memory status
+msg: Hukommelsesstatus
+
+id: Renderer: %s
+msg: Renderere: %s
+
+id: System info
+msg: Systeminformation
+
+id: Total system RAM: %d kB
+msg: Total system RAM: %d kB
+
+id: Unused memory: %d kB
+msg: Ubrugt hukommelse: %d Kb
+
+id: Version: %s
+msg: Version: %s
+
+id: Width: %d px
+msg: Bredde: %d px
+
+id: Windowmanager: %s
+msg: vindue håndtering: %s
+
+#
+# ./glwskins/default/pages/directory.view
+#
+id: Album
+msg: Album
+
+id: Artist
+msg: Artist
+
+id: Custom
+msg: Brugerdefineret
+
+id: Images
+msg: Billeder
+
+id: List
+msg: Liste
+
+id: Slideshow
+msg: Slideshow
+
+id: Tvchannels
+msg: Tvkanaler
+
+id: View
+msg: Vis
+
+#
+# ./glwskins/default/pages/discovered.view
+#
+id: Discovered resources on local network
+msg: Opdagede ressourcer på lokalt netværk
+
+#
+# ./glwskins/default/pages/home.view
+#
+id: Tiled
+msg: Brickor
+
+#
+# ./glwskins/default/pages/home_clist.view
+#
+id: About Showtime
+msg: Om Showtime
+
+id: Dismiss
+msg: Fjern
+
+id: Plugins
+msg: Plugins
+
+id: Search / Open URL
+msg: Søg / Åben URL
+
+#
+# ./glwskins/default/pages/iteminfo/image.view
+#
+id: Camera: 
+msg: Kamera:
+
+id: Date: 
+msg: Dato:
+
+#
+# ./glwskins/default/pages/iteminfo/plugin.view
+#
+id: Author: 
+msg: Forfatter:
+
+id: Available version: 
+msg: Tilgængelig version:
+
+id: Installed version: 
+msg: Installeret version:
+
+id: Showtime %s or newer is required
+msg: Showtime %s eller nyere er krævet
+
+#
+# ./glwskins/default/pages/iteminfo/video.view
+#
+id: Duration:
+msg: Varighed:
+
+id: File date:
+msg: Fildato:
+
+id: Genre:
+msg: Genre:
+
+id: Metadata from
+msg: Metadata fra
+
+id: Rating:
+msg: Rating:
+
+id: Year:
+msg: År:
+
+#
+# ./glwskins/default/pages/listitems/add.view
+#
+id: Add new entry
+msg: Tilføj ny post
+
+#
+# ./glwskins/default/pages/listitems/bool.view
+#
+id: No
+msg: Nej
+
+id: Yes
+msg: Ja
+
+#
+# ./glwskins/default/pages/listitems/font.view
+#
+id: Condensed
+msg: Smal
+
+id: Main
+msg: Normal
+
+id: Subs
+msg: Undertekster
+
+#
+# ./glwskins/default/pages/listitems/plugin.view
+#
+id: Install
+msg: Installere
+
+id: Uninstall
+msg: Afinstallere
+
+id: Upgrade
+msg: Opdatere
+
+#
+# ./glwskins/default/pages/openerror.view
+#
+id: Unable to open resource
+msg: Kan ikke åbne ressource
+
+#
+# ./glwskins/default/pages/playqueue.view
+#
+id: Track %d / %d
+msg: Spor %d / %d
+
+#
+# ./glwskins/default/pages/slideshow.view
+#
+id: An error occured during download
+msg: En fejl opstod under download
+
+id: Available version:
+msg: Tilgængelig verson:
+
+id: Changelog for %s releases
+msg: Ændringslog for %s udgivelser
+
+id: Check for updates now
+msg: Søg efter opdateringer nu
+
+id: Checking for updates...
+msg: Søger efter opdateringer...
+
+id: Current version:
+msg: Aktuel version:
+
+id: Download and install...
+msg: Download og installer...
+
+id: Downloading...
+msg: Downloader...
+
+id: Installing...
+msg: Installerer...
+
+id: New version %s is available for download
+msg: Ny version %s er klar til download
+
+id: No upgrade available
+msg: Ingen opdatering tilgængelig
+
+id: Restarting Showtime in %d seconds...
+msg: Genstarter Showtime om %d sekunder...
+
+id: Retry...
+msg: Forsøg igen...
+
+id: Showtime is up to date
+msg: Showtime er opdateret
+
+id: Stable
+msg: Stabil
+
+id: Testing
+msg: Tester
+
+id: Unable to query for new version
+msg: Kan ikke forespørge efter ny version
+
+#
+# ./glwskins/default/pages/video.view
+#
+id: CPU is too slow to decode this video
+msg: CPU'en er for langsom til at afkode denne video
+
+id: Playback status
+msg: Afspilningsstatus
+
+#
+# ./glwskins/default/pages/wideinfo/video.view
+#
+id: Seen:
+msg: Set: 
+
+#
+# ./glwskins/default/playdecks/dvd.view
+#
+id: Chapter: %d
+msg: Kapitel: %d
+
+id: Title: %d
+msg: Titel: %d
+
+#
+# ./glwthemes/default/popups/auth.view
+#
+id: Domain
+msg: Domæne
+
+id: Password
+msg: Kodeord
+
+id: Remember me
+msg: Husk mig
+
+id: Username
+msg: Brugernavn
+
+#
+# ./glwskins/default/popups/common.view
+#
+id: Cancel
+msg: Afbryd
+
+id: OK
+msg: OK
+
+#
+# ./glwskins/default/screensaver.view
+#
+id: No media loaded
+msg: Intet medie hentet
+
+#
+# ./glwskins/default/sysinfo.view
+#
+id: Memory usage:
+msg: Hukommelsesforbrug:
+
+#
+# ./glwskins/default/universe.view
+#
+id: Audio muted
+msg: Audio mute
+
+id: Master volume: %d dB
+msg: Master volume: %d dB
+
+#
+# ./src/api/tmdb.c
+#
+id: Language (ISO 639-1 code)
+msg: Sprog (ISO 639-1 kode)
+
+id: Use original title
+msg: Brug orginaltitel
+
+#
+# ./src/arch/ps3/ps3_main.c
+#
+id: System is low on memory (%d kB RAM available)
+msg: Systemet mangler hukommelse (%d Kb RAM tilgængelig)
+
+#
+# ./src/audio/audio.c
+#
+id: Audio output
+msg: Audio udgang
+
+id: Audio/Video sync delay
+msg: Audio/Video sync delay
+
+id: Current output device
+msg: Nuværende lydudgang
+
+id: Force stereo downmix
+msg: Tving stereo downmix
+
+id: Phantom LFE
+msg: Fantom LFE
+
+id: Phantom center
+msg: Fantom center
+
+id: Select audio output device and related configurations
+msg: Vælg lydudgang og relaterede konfigurationer
+
+id: Small front speakers
+msg: Små fronthøjtalere
+
+id: Swap LFE+center with surround
+msg: Byt LFE+center med surround
+
+id: Switching audio output to %s
+msg: Skifter lydudgang til %s
+
+#
+# ./src/backend/dvd/cdda.c
+#
+id: Invalid CD URL
+msg: Ugyldig CD URL
+
+id: Invalid CD track
+msg: Ugyldig CD track
+
+id: Unable to open CD
+msg: Kan ikke åbne CD
+
+#
+# ./src/backend/dvd/dvd.c
+#
+id: DVD
+msg: DVD
+
+id: DVD read error, restarting disc
+msg: DVD læsefejl, genstarter disk
+
+#
+# ./src/backend/htsp/htsp.c
+#
+id: Invalid HTSP URL
+msg: Ugyldig HTSP URL
+
+#
+# ./src/backend/search.c
+#
+id: Search
+msg: Søg
+
+id: Search result for: %s
+msg: Søgeresultat for: %s
+
+#
+# ./src/backend/spotify/spotify.c
+#
+id: Albums
+msg: Album
+
+id: Automatic login when Showtime starts
+msg: Automatisk login når Showtime starter
+
+id: Collaborative
+msg: Samarbejde
+
+id: Compilations
+msg: Samlinger
+
+id: Enable Spotify
+msg: Anvend Spotify
+
+id: Forget me
+msg: Glem mig
+
+id: Friends
+msg: Venner
+
+id: High bitrate
+msg: Høj bithastighet
+
+id: Inbox
+msg: Indbakke
+
+id: New albums on Spotify
+msg: Nye album på Spotify
+
+id: New releases
+msg: Nye opdateringer
+
+id: Offline
+msg: Offline
+
+id: Offline sync in 96kbps
+msg: Offline sync i 96 kbps
+
+id: Playlists
+msg: Afspilningslister
+
+id: Relogin (switch user)
+msg: Login på ny (skift bruger)
+
+id: Search result
+msg: Søgeresultat
+
+id: Singles
+msg: Singler
+
+id: Spotify friends
+msg: Spotify venner
+
+id: Spotify music service
+msg: Spotify musiktjeneste
+
+id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
+msg: Spotify tilbyder lovlig og fri adgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nFørste gang du bruger Spotify i Showtime, vil du blive bedt om at indtate dit Spotify brugernavn og kodeord.
+
+id: Spotify playlists
+msg: Spotyfy afspilningslister
+
+id: Spotify: Connection error: %s
+msg: Spotify: Forbindelsesfejl: %s
+
+id: Starred
+msg: Medvirkende
+
+#
+# ./src/blobcache_file.c
+#
+id: Cache cleared
+msg: Cachen er slettet
+
+id: Clear cached files
+msg: Tøm cachen
+
+#
+# ./src/fileaccess/fa_backend.c
+#
+id: Can't handle content type %d
+msg: Kan ikke håndtere indholdstype %d
+
+id: Unable to open file: %s
+msg: Kan ikke åbne filen: %s
+
+#
+# ./src/fileaccess/fa_locatedb.c
+#
+id: Search using Unix locatedb
+msg: Søg via Unix locatedb
+
+#
+# ./src/fileaccess/fa_nativesmb.c
+#
+id: Access denied
+msg: Adgang nægtet
+
+id: Account restricted
+msg: Konto begrænset
+
+id: Bad network share name
+msg: Dårligt netværk sharenavn
+
+id: Logon failure
+msg: Logonfejl
+
+#
+# ./src/fileaccess/fa_scanner.c
+#
+id: Artists
+msg: Artister
+
+id: Date (newest first)
+msg: Dato(nyeste først)
+
+id: Date (oldest first)
+msg: Dato(ældste først)
+
+id: Filename
+msg: Filnavn
+
+id: Indexed mode
+msg: Indekseret tilstand
+
+id: Off
+msg: Sluk
+
+id: Show only supported files
+msg: Vis kun supporterede filer
+
+id: Sort folders first
+msg: Sorter mapper først
+
+id: Sort on
+msg: Sorter efter
+
+#
+# ./src/fileaccess/fa_spotlight.c
+#
+id: Search using spotlight
+msg: Søg via spotlight
+
+#
+# ./src/i18n.c
+#
+id: Language
+msg: Sprog
+
+id: Language codes should be configured as three character ISO codes, example (eng, swe, fra)
+msg: Sprogkoder skal konfigureres som tre karakterer (ISO koder), f.eks.: eng, swe, fra, dnk
+
+id: Languages
+msg: Sprog
+
+id: Preferred languages
+msg: Fortrukne sprog
+
+id: Primary audio language code
+msg: Primært sprog for lyd
+
+id: Primary subtitle language code
+msg: Primært sprog for undertekster
+
+id: SRT character set
+msg: Karaktersæt for SRT undertekster
+
+id: Secondary audio language code
+msg: Sekundær sprog for lyd
+
+id: Secondary subtitle language code
+msg: Sekundær sprog for undertekster
+
+id: Tertiary audio language code
+msg: Tertiær sprog for lyd
+
+id: Tertiary subtitle language code
+msg: Tertiær sprog for undertekster
+
+#
+# ./src/ipc/serdev/lgtv.c
+#
+id: Automatic TV power on/off
+msg: Automatisk tænd/sluk af TV
+
+id: Input source
+msg: Indputskilde
+
+id: LG Television set
+msg: LG TV
+
+#
+# ./src/keymapper.c
+#
+id: Configure mapping of keyboard and remote controller keys
+msg: Indstillinger af tastatur og knapper til fjerbetjening
+
+id: Keymapper
+msg: Tastatur mapning
+
+#
+# ./src/keyring.c
+#
+id: Forget remembered passwords
+msg: Slet gemte kodeord
+
+id: Rembered passwords erased
+msg: Gemte kodeord er slettet
+
+#
+# ./src/media.c
+#
+id: Align subtitles on video frame
+msg: Juster undertekster efter videobillede
+
+id: Audio delay
+msg: Lyd forsinkelse
+
+id: Stretch video to fullscreen
+msg: Stræk video til hele skærmen
+
+id: Stretch video to widescreen
+msg: Stræk video horisontalt
+
+id: Subtitle delay
+msg: Undertekster forsinkelse
+
+id: Subtitle scaling
+msg: Skalering af undertekster
+
+id: Video zoom
+msg: Video zoom
+
+#
+# ./src/metadata/browsemdb.c
+#
+id: Indexing
+msg: Indekserer
+
+#
+# ./src/metadata/metadata.c
+#
+id: Automatic
+msg: Automatisk
+
+id: Custom search query
+msg: Brugerdefinerede søgning
+
+id: Custom title
+msg: Egen titel
+
+id: Embedded in file
+msg: Indlejret i fil
+
+id: Enabled
+msg: Aktiveret
+
+id: IMDb ID
+msg: IMDb ID
+
+id: Metadata
+msg: Metadata
+
+id: Metadata configuration and provider settings
+msg: Metadata konfiguration og providerindstillinger
+
+id: Metadata loaded from '%s' using %s
+msg: Metadata hentet fra '%s' ved hjælp af %s
+
+id: Metadata search
+msg: Metadata søgning
+
+id: Metadata source
+msg: Metadata kilde 
+
+id: Movie
+msg: Film
+
+id: Movie title
+msg: Filmtitel
+
+id: No data found
+msg: Ingen data fundet
+
+id: None
+msg: Ingen
+
+id: Providers for Music
+msg: Udbydere af musik
+
+id: Providers for Video
+msg: Videotjenester
+
+id: Refresh metadata
+msg: Opdater metadata
+
+id: Title, Season, Episode
+msg: Titel, Årstid, Episode
+
+id: Track %d
+msg: Spor %d
+
+id: custom IMDb ID
+msg: brugerdefinerede IMDb ID
+
+id: custom query
+msg: brugerdefinerede søgning
+
+id: filename
+msg: filnavn
+
+id: filename as TV episode
+msg: filnavn som TV episode
+
+id: folder name
+msg: mappenavn
+
+#
+# ./src/metadata/metadb.c
+#
+id: %d items deleted
+msg: %d objekter slettet
+
+id: Clear all metadata
+msg: Fjern alle metadata
+
+id: Clearing all metadata means losing <b>all</b> information about:\n\nIf a track/movie has been seen\nNumber of times a track/movie has been played\nPlayback resume position\n\nIt will also erase the metadata cached from external sources such as themoviedb.org, etc\n\nAre you sure you proceed?
+msg: At fjerne alle metadata betyder at du mister <b>alle</b> informationer om:\n\nHvis et spor/film er blevet set\nAntal gange et spor/film er blevet afspillet\nFortsæt afspilling\n\nEr du sikker?
+
+#
+# ./src/navigator.c
+#
+id: Add and remove items on homepage
+msg: Tilføj og fjern ting på startsiden
+
+id: Added new bookmark: %s
+msg: Nyt bogmærke tilføjet: %s
+
+id: Bookmarks
+msg: Bogmærker
+
+id: Music
+msg: Musik
+
+id: No handler for URL
+msg: Ingen håndtering af URL-adressen
+
+id: Other
+msg: Andre
+
+id: Photos
+msg: Billeder
+
+id: Removed bookmark: %s
+msg: Slettet bogmærke: %s
+
+id: TV
+msg: TV
+
+id: Title
+msg: Titel
+
+id: Type
+msg: Type
+
+id: URL
+msg: URL
+
+#
+# ./src/plugins.c
+#
+id: Alternate plugin Repository URL
+msg: Alternativ plugin Respository URL
+
+id: Automatically upgrade plugins
+msg: Opdater automatisk plugins
+
+id: Available plugins
+msg: Tilgængelige plugins
+
+id: Background
+msg: Baggrund
+
+id: Beta testing passwords
+msg: Betatest password
+
+id: Browse available plugins
+msg: Gennemse tilgængelige
+
+id: Browsing
+msg: Browsing
+
+id: Cloud services
+msg: Cloudtjenester
+
+id: Corrupt plugin bundle
+msg: Korrupt plugin bundt
+
+id: Default
+msg: Standard
+
+id: Disk write error
+msg: Kunne ikke skrive til disken
+
+id: Downloading
+msg: Downloader
+
+id: File open error
+msg: Fil åbningsfejl
+
+id: Home page
+msg: Startside
+
+id: Installed plugins
+msg: Installerede plugins
+
+id: Installed version higher than available
+msg: Den installerede version er højere end den der er tilgængelig
+
+id: Installing
+msg: Installerer
+
+id: List of albums
+msg: Liste over albums
+
+id: Loading screen
+msg: Downloading skærm
+
+id: Movies
+msg: Film
+
+id: Music streaming
+msg: Musik streaming
+
+id: Not installable
+msg: Ikke installerbare
+
+id: Not installed
+msg: Ikke installeret
+
+id: Not upgradable
+msg: Ikke opdaterbare
+
+id: Online TV
+msg: Online TV
+
+id: Preferred views from plugins
+msg: Fortrukne visninger fra plugins
+
+id: Screen saver
+msg: Pauseskærm
+
+id: TV channels
+msg: TV kanaler
+
+id: Unable to load plugin.json: %s
+msg: Kan ikke hente plugin.json: %s
+
+id: Unable to load plugin.json: Malformed JSON
+msg: Kan ikke hente plugin.json: Forkert formateret JSON
+
+id: Uncategorized
+msg: Ikke kategoriseret
+
+id: Up to date
+msg: Seneste version
+
+id: Upgradable
+msg: Opdaterbare
+
+id: Upgraded plugin %s to version %s
+msg: Opdateret plugin %s to version %s
+
+id: User interface extensions
+msg: Brugergrænseflade
+
+id: Video streaming
+msg: Video streaming
+
+#
+# ./src/runcontrol.c
+#
+id: Automatic standby
+msg: Automatisk standby
+
+id: Logout
+msg: Log ud
+
+id: Open shell
+msg: Åben shell
+
+id: Power off system
+msg: Sluk systemet
+
+id: Starting and stopping Showtime
+msg: Starter og stopper Showtime
+
+#
+# ./src/sd/sd.c
+#
+id: Name
+msg: Navn
+
+#
+# ./src/service.c
+#
+id: Local network
+msg: Lokale netværk
+
+#
+# ./src/settings.c
+#
+id: Applications and installed plugins
+msg: Aplikationer og installerede plugins
+
+id: Developer settings
+msg: Udvikler indstillinger
+
+id: Discovered media sources
+msg: Mediekilder fundet
+
+id: Fonts and user interface styling
+msg: Skrifttyper og brugergrænseflade
+
+id: General
+msg: Generelle indstillinger
+
+id: Global settings
+msg: Globale indstillinger
+
+id: Look and feel
+msg: Udseende og stil
+
+id: Settings useful for developers
+msg: Indstillinger nyttige for udviklere
+
+id: System related settings
+msg: Systemrelaterede indstillinger
+
+#
+# ./src/subtitles/sub_scanner.c
+#
+id: External file
+msg: Ekstern fil
+
+#
+# ./src/text/fontstash.c
+#
+id: Defaults
+msg: Standard
+
+id: Fonts
+msg: Skrifttyper
+
+id: Installed fonts
+msg: Installerede skrifttyper
+
+id: Narrow text
+msg: Smal text
+
+id: Reset main font to default
+msg: Nulstil standard skrifttype til standard
+
+id: Reset narrow font to default
+msg: Nulstil smal skrifttype til standard
+
+id: Reset subtitle font to default
+msg: Nulstil undertekst skrifttype til standard
+
+id: Unable to load %s -- %s
+msg: Kan ikke hente %s -- %s
+
+id: Unable to open %s for writing
+msg: Kan ikke åbne %s for skrivning
+
+id: Unable to write to %s
+msg: Kan ikke skrive til %s
+
+id: Use font %s for
+msg: Benyt skrifttype %s til
+
+id: User interface
+msg: Brugergrænseflade
+
+#
+# ./src/ui/glw/glw_settings.c
+#
+id: Horizontal underscan
+msg: Vandret underscanning
+
+id: Screensaver delay
+msg: Pauseskærm forsinkelse
+
+id: Userinterface size
+msg: Størrelse på brugergrænseflade
+
+id: Vertical underscan
+msg: Lodret underscanning
+
+#
+# ./src/ui/glw/glw_x11.c
+#
+id: Map mouse wheel to up/down
+msg: Tildel musens scrollhjul til op/ned taster
+
+#
+# ./src/ui/linux/nvidia.c
+#
+id: Auto-switch to this mode
+msg: Skift automatisk til denne tilstand
+
+id: DVI-Video color range
+msg: DVI-video farveudvalg 
+
+id: Switch to this mode now
+msg: Skift til denne tilstand nu
+
+id: Video modes
+msg: Videotilstande
+
+#
+# ./src/upgrade.c
+#
+id: Notify about upgrades
+msg: Informer om opdateringer
+
+id: Open download page
+msg: Åben downloadside
+
+id: Showtime version %s is available
+msg: Showtime version %s er tilgængelig
+
+id: Software upgrade
+msg: Softwareopdatering
+
+id: Upgrade to releases from
+msg: Opdatere til udgivelser fra
+
+#
+# ./src/upnp/upnp.c
+#
+id: Enabled on home screen
+msg: Tillgænglig på startsiden
+
+#
+# ./src/upnp/upnp_browse.c
+#
+id: Device not found
+msg: Enhed findes ikke
+
+id: Malformed URI after device
+msg: Fejlagtig URI efter enhed
+
+id: Malformed URI after service
+msg: Fejlagtig URI efter tjeneste
+
+id: Service not found
+msg: Tjenesten findes ikke
+
+#
+# ./src/video/ps3_vdec.c
+#
+id: Cell-h264: Forcing level 4.2 for content in level %d.%d. This may break video playback.
+msg: Cell-h264:  Tving level 4.2 til indhold i level %d.%d. Dette vil nok stoppe videoafspilning.
+
+id: Unable to accelerate %s, library not loaded.
+msg: Kan ikke accelerere %s, bibliotek ikke hentet.
+
+id: Unable to open Cell codec. Error 0x%x
+msg: Kan ikke åbne Cell codec. Fejl 0x%x
+
+id: Unable to open Cell codec. Unable to allocate %d bytes of RAM
+msg: Kan ikke åbne Cell codec. Kan ikke accelerere %d bytes af RAM.
+
+id: Unable to query Cell codec. Error 0x%x
+msg: Kan ikke forespørge Cell codec. Fejl 0x%x
+
+#
+# ./src/video/video_settings.c
+#
+id: 1080
+msg: 1080
+
+id: 576
+msg: 576
+
+id: 720
+msg: 720
+
+id: Always try to select a subtitle
+msg: Forsøg altid at vælge en undertekst
+
+id: Auto
+msg: Auto
+
+id: Automatically play next video in list
+msg: Afspil automatisk næste video i listen
+
+id: Center
+msg: Centreret
+
+id: Color
+msg: Farve
+
+id: Count video as played when reaching
+msg: Marker video som vist når den når
+
+id: Enable VDA
+msg: Aktiver VDA
+
+id: Enable VDPAU
+msg: Aktiver VDPAU
+
+id: Force subtitles to reside on video frame
+msg: Tving undettekster til at ligge ovenpå videobilledet
+
+id: Generic settings for video subtitles
+msg: Generelle indstillinger for undertekster
+
+id: Ignore embedded styling
+msg: Ignorer indlejret stilkoder
+
+id: Include all subtitle files from movie directory
+msg: Medtag alle undertekstfiler fra filmmappen
+
+id: Left
+msg: Venstre
+
+id: Maximum resolution for deinterlacer
+msg: Maksimal opløsning af deinterlacer
+
+id: No limit
+msg: Ingen grænser
+
+id: Outline color
+msg: Farve på konturer
+
+id: Outline size
+msg: Størrelse på konturer
+
+id: Preferred VDPAU deinterlacer method
+msg: Foretrukket VDPAU deinterlacer metode
+
+id: Resume video playback
+msg: Fortsæt video afspilning
+
+id: Right
+msg: Højre
+
+id: Shadow color
+msg: Farve på skygge
+
+id: Shadow offset
+msg: Skyggens forskydning
+
+id: Subtitle position
+msg: Position på undertekster
+
+id: Subtitle size
+msg: Størrelse på undertekster
+
+id: Subtitle size and positioning
+msg: Størrelse på undertekster og position
+
+id: Subtitle styling
+msg: Stil på undertekster
+
+id: Temporal
+msg: Midlertidig
+
+id: Temporal/Spatial
+msg: Midlertidig/Rumlig
+
+id: Video acceleration and display behaviour
+msg: Videoacceleration og skærmpræsentation
+
+id: Video playback
+msg: Videoafspilning
+

@@ -32,8 +32,10 @@
 #include "fa_proto.h"
 #include "showtime.h"
 #include "htsmsg/htsmsg_xml.h"
+#include "htsmsg/htsmsg_store.h"
 #include "misc/str.h"
 #include "misc/sha.h"
+#include "misc/callout.h"
 
 #if ENABLE_SPIDERMONKEY
 #include "js/js.h"
@@ -148,7 +150,24 @@ typedef struct http_connection {
   char hc_ssl;
   char hc_reused;
 
+  time_t hc_reuse_before;
+
 } http_connection_t;
+
+
+
+/**
+ *
+ */
+static void
+http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
+{
+  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
+	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
+  tcp_close(hc->hc_tc);
+  free(hc);
+}
+
 
 
 /**
@@ -156,15 +175,27 @@ typedef struct http_connection {
  */
 static http_connection_t *
 http_connection_get(const char *hostname, int port, int ssl,
-		    char *errbuf, int errlen, int dbg)
+		    char *errbuf, int errlen, int dbg, int timeout)
 {
-  http_connection_t *hc;
+  http_connection_t *hc, *next;
   tcpcon_t *tc;
   int id;
+  time_t now;
+
+  time(&now);
 
   hts_mutex_lock(&http_connections_mutex);
 
-  TAILQ_FOREACH(hc, &http_connections, hc_link) {
+  for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
+    next = TAILQ_NEXT(hc, hc_link);
+
+    if(now >= hc->hc_reuse_before) {
+      TAILQ_REMOVE(&http_connections, hc, hc_link);
+      http_parked_connections--;
+      http_connection_destroy(hc, dbg, "Keep alive expired");
+      continue;
+    }
+
     if(!strcmp(hc->hc_hostname, hostname) && hc->hc_port == port &&
        hc->hc_ssl == ssl) {
       TAILQ_REMOVE(&http_connections, hc, hc_link);
@@ -180,7 +211,7 @@ http_connection_get(const char *hostname, int port, int ssl,
   id = ++http_connection_tally;
   hts_mutex_unlock(&http_connections_mutex);
 
-  if((tc = tcp_connect(hostname, port, errbuf, errlen, 30000, ssl)) == NULL) {
+  if((tc = tcp_connect(hostname, port, errbuf, errlen, timeout, ssl)) == NULL) {
     HTTP_TRACE(dbg, "Connection to %s:%d failed", hostname, port);
     return NULL;
   }
@@ -201,32 +232,40 @@ http_connection_get(const char *hostname, int port, int ssl,
  *
  */
 static void
-http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
+http_connection_park(http_connection_t *hc, int dbg, int max_age)
 {
-  HTTP_TRACE(dbg, "Disconnected from %s:%d (id=%d) %s",
-	     hc->hc_hostname, hc->hc_port, hc->hc_id, reason);
-  tcp_close(hc->hc_tc);
-  free(hc);
-}
+  time_t now;
+  http_connection_t *next;
 
+  time(&now);
 
-/**
- *
- */
-static void
-http_connection_park(http_connection_t *hc, int dbg)
-{
   HTTP_TRACE(dbg, "Parking connection to %s:%d (id=%d)",
 	     hc->hc_hostname, hc->hc_port, hc->hc_id);
+
+  hc->hc_reuse_before = now + max_age;
+
   hts_mutex_lock(&http_connections_mutex);
   TAILQ_INSERT_TAIL(&http_connections, hc, hc_link);
+  http_parked_connections++;
 
-  if(http_parked_connections == 5) {
+  if(http_parked_connections > 5) {
+    for(hc = TAILQ_FIRST(&http_connections); hc != NULL; hc = next) {
+      next = TAILQ_NEXT(hc, hc_link);
+
+      if(now >= hc->hc_reuse_before) {
+	TAILQ_REMOVE(&http_connections, hc, hc_link);
+	http_parked_connections--;
+	http_connection_destroy(hc, dbg, "Keep alive expired");
+      }
+    }
+  }
+
+  while(http_parked_connections > 5) {
     hc = TAILQ_FIRST(&http_connections);
+    assert(hc != NULL);
     TAILQ_REMOVE(&http_connections, hc, hc_link);
     http_connection_destroy(hc, dbg, "Too many idle connections");
-  } else {
-    http_parked_connections++;
+    http_parked_connections--;
   }
 
   hts_mutex_unlock(&http_connections_mutex);
@@ -347,12 +386,85 @@ validate_cookie(const char *req_host, const char *req_path,
   return 1;
 }
 
+
+/**
+ *
+ */
+static void
+cookie_persist(struct callout *c, void *aux)
+{
+  http_cookie_t *hc;
+  time_t now;
+  time(&now);
+
+  htsmsg_t *m = htsmsg_create_list();
+
+  hts_mutex_lock(&http_cookies_mutex);
+  LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(hc->hc_expire == -1 || now > hc->hc_expire)
+      continue;
+
+    htsmsg_t *c = htsmsg_create_map();
+    htsmsg_add_str(c, "name", hc->hc_name);
+    htsmsg_add_str(c, "path", hc->hc_path);
+    htsmsg_add_str(c, "domain", hc->hc_domain);
+    htsmsg_add_str(c, "value", hc->hc_value);
+    htsmsg_add_s32(c, "expire", hc->hc_expire);
+    htsmsg_add_msg(m, NULL, c);
+  }
+  hts_mutex_unlock(&http_cookies_mutex);
+  htsmsg_store_save(m, "httpcookies", NULL);
+  htsmsg_destroy(m);
+}
+
+
+/**
+ *
+ */
+static void
+load_cookies(void)
+{
+  htsmsg_t *m = htsmsg_store_load("httpcookies");
+  if(m == NULL)
+    return;
+  htsmsg_field_t *f;
+  time_t now;
+  time(&now);
+  HTSMSG_FOREACH(f, m) {
+    htsmsg_t *o;
+    if((o = htsmsg_get_map_by_field(f)) == NULL)
+      continue;
+
+    const char *name   = htsmsg_get_str(o, "name");
+    const char *path   = htsmsg_get_str(o, "path");
+    const char *domain = htsmsg_get_str(o, "domain");
+    const char *value  = htsmsg_get_str(o, "value");
+    time_t expire      = htsmsg_get_s32_or_default(o, "expire", -1);
+
+    if(name == NULL || path == NULL || domain == NULL ||
+       value == NULL || expire < now)
+      continue;
+
+    http_cookie_t *hc = calloc(1, sizeof(http_cookie_t));
+    LIST_INSERT_HEAD(&http_cookies, hc, hc_link);
+    hc->hc_name   = strdup(name);
+    hc->hc_path   = strdup(path);
+    hc->hc_domain = strdup(domain);
+    hc->hc_value  = strdup(value);
+    hc->hc_expire = expire;
+  }
+  htsmsg_destroy(m);
+}
+
+
 /**
  *
  */
 static void
 http_cookie_set(char *cookie, const char *req_host, const char *req_path)
 {
+  static callout_t cookie_persist_timer;
+
   char *argv[20];
   int argc, i;
   const char *domain = req_host;
@@ -404,7 +516,10 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
     hc->hc_path = strdup(path);
     hc->hc_domain = strdup(domain);
   }
-  
+
+  if(expire != -1)
+    callout_arm(&cookie_persist_timer, cookie_persist, NULL, 5);
+
   mystrset(&hc->hc_value, value);
   hc->hc_expire = expire;
 
@@ -422,12 +537,19 @@ http_cookie_append(const char *req_host, const char *req_path,
   http_cookie_t *hc;
   htsbuf_queue_t hq;
   const char *s = "";
+  time_t now;
+  time(&now);
+
   htsbuf_queue_init(&hq, 0);
 
   hts_mutex_lock(&http_cookies_mutex);
   LIST_FOREACH(hc, &http_cookies, hc_link) {
+    if(hc->hc_expire != -1 && now > hc->hc_expire)
+      continue;
+
     if(!validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
       continue;
+
     htsbuf_append(&hq, s, strlen(s));
     htsbuf_append(&hq, hc->hc_name, strlen(hc->hc_name));
     htsbuf_append(&hq, "=", 1);
@@ -501,12 +623,15 @@ typedef struct http_file {
 		      * rather than random seeking 
 		      */
 
+  char hf_fast_fail;
+
   char hf_req_compression;
   
   char hf_content_encoding;
 #define HTTP_CE_IDENTITY 0
 #define HTTP_CE_GZIP 1
 
+  int hf_max_age;
 
   prop_t *hf_stats_speed;
 
@@ -1072,6 +1197,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
   hf->hf_chunked_transfer = 0;
   free(hf->hf_content_type);
   hf->hf_content_type = NULL;
+  hf->hf_max_age = 30;
 
   HF_TRACE(hf, "%s: Response:", hf->hf_url);
 
@@ -1141,10 +1267,18 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
       continue;
     }
 
+    if(!strcasecmp(argv[0], "Keep-Alive")) {
+      const char *x = strstr(argv[1], "timeout=");
+      if(x != NULL)
+	hf->hf_max_age = atoi(x + strlen("timeout="));
+      continue;
+    }
+
     if(!strcasecmp(argv[0], "Content-Encoding")) {
       if(!strcasecmp(argv[1], "gzip"))
 	hf->hf_content_encoding = HTTP_CE_GZIP;
-      else if(!strcasecmp(argv[1], "identity"))
+      else if(!strcasecmp(argv[1], "identity") ||
+	      !strcasecmp(argv[1], "utf-8"))
 	hf->hf_content_encoding = HTTP_CE_IDENTITY;
       else
 	return -1;
@@ -1205,7 +1339,7 @@ http_detach(http_file_t *hf, int reusable, const char *reason)
     return;
 
   if(reusable && !gconf.disable_http_reuse) {
-    http_connection_park(hf->hf_connection, hf->hf_debug);
+    http_connection_park(hf->hf_connection, hf->hf_debug, hf->hf_max_age);
   } else {
     http_connection_destroy(hf->hf_connection, hf->hf_debug, reason);
   }
@@ -1373,8 +1507,13 @@ http_connect(http_file_t *hf, char *errbuf, int errlen)
   if(!hf->hf_path[0])
     strcpy(hf->hf_path, "/");
 
+  int timeout = 30000;
+
+  if(hf->hf_fast_fail)
+    timeout = 2000;
+
   hf->hf_connection = http_connection_get(hostname, port, ssl, errbuf, errlen,
-					  hf->hf_debug);
+					  hf->hf_debug, timeout);
 
   return hf->hf_connection ? 0 : -1;
 }
@@ -1748,7 +1887,7 @@ http_open_ex(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen,
   hf->hf_url = strdup(url);
   hf->hf_debug = !!(flags & FA_DEBUG) || gconf.enable_http_debug;
   hf->hf_streaming = !!(flags & FA_STREAMING);
-
+  hf->hf_fast_fail = !!(flags & FA_FAST_FAIL);
   if(stats != NULL) {
     hf->hf_stats_speed = prop_ref_inc(prop_create(stats, "bitrate"));
     prop_set_int(prop_create(stats, "bitrateValid"), 1);
@@ -1813,6 +1952,7 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
   /* Max 5 retries */
   for(i = 0; i < 5; i++) {
     /* If not connected, try to (re-)connect */
+  retry:
     if((hc = hf->hf_connection) == NULL) {
       if(http_connect(hf, NULL, 0))
 	return -1;
@@ -1877,6 +2017,11 @@ http_read_i(http_file_t *hf, void *buf, const size_t size)
       tcp_write_queue(hc->hc_tc, &q);
 
       code = http_read_response(hf, NULL);
+      if(code == -1 && hf->hf_connection->hc_reused) {
+	http_detach(hf, 0, "Read error on reused connection, retrying");
+	goto retry;
+      }
+
       switch(code) {
       case 206:
 	// Range transfer OK
@@ -2154,6 +2299,10 @@ http_load(struct fa_protocol *fap, const char *url,
     goto done;
   }
 
+  s = http_header_get(&headers_out, "content-type");
+  if(s != NULL && b != NULL)
+    b->b_content_type = rstr_alloc(s);
+
   if(mtime != NULL) {
     *mtime = 0;
     if((s = http_header_get(&headers_out, "last-modified")) != NULL) {
@@ -2252,6 +2401,7 @@ http_init(void)
   hts_mutex_init(&http_cookies_mutex);
   hts_mutex_init(&http_server_quirk_mutex);
   hts_mutex_init(&http_auth_caches_mutex);
+  load_cookies();
 }
 
 /**
@@ -2280,7 +2430,6 @@ FAP_REGISTER(http);
  *
  */
 static fa_protocol_t fa_protocol_https = {
-  .fap_init  = http_init,
   .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
   .fap_name  = "https",
   .fap_scan  = http_scandir,
@@ -2509,6 +2658,8 @@ dav_propfind(http_file_t *hf, fa_dir_t *fd, char *errbuf, size_t errlen,
     code = http_read_response(hf, NULL);
 
     if(code == -1) {
+      if(hf->hf_connection->hc_reused)
+	i--;
       http_detach(hf, 0, "Read error");
       continue;
     }
@@ -2788,7 +2939,7 @@ http_request(const char *url, const char **arguments,
   case 303:
     postdata = NULL;
     postcontenttype = NULL;
-    method = "GET";
+    method = result ? "GET" : "HEAD";
     // FALLTHRU
   case 301:
   case 307:

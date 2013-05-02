@@ -27,6 +27,8 @@
 #include "service.h"
 #include "settings.h"
 #include "metadata/metadata.h"
+#include "htsmsg/htsmsg_store.h"
+
 
 static int spotlight_enabled;
 
@@ -270,7 +272,7 @@ spotlight_search(prop_t *model, const char *query)
   fas->fas_nodes = prop_ref_inc(prop_create(model, "nodes"));
   
   hts_thread_create_detached("spotlight search", spotlight_searcher, fas,
-			     THREAD_PRIO_NORMAL);
+			     THREAD_PRIO_MODEL);
 }
 
 static int

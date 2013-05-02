@@ -75,7 +75,7 @@ struct video_decoder;
 typedef struct event_ts {
   event_t h;
   int64_t ts;
-
+  int epoch;
 } event_ts_t;
 
 
@@ -138,11 +138,10 @@ typedef struct media_codec {
   int refcount;
   struct media_format *fw;
   int codec_id;
-  int codec_ctx_alloced; /* Set if this struct owns the allocation
-			    of codec_ctx */
 
-  struct AVCodec *codec; // This may be NULL for HW accelerated decoders
-  struct AVCodecContext *codec_ctx;
+  struct AVCodecContext *fmt_ctx;     // Context owned by AVFormatContext
+  struct AVCodecContext *ctx;         // Context owned by decoder thread
+  
   struct AVCodecParserContext *parser_ctx;
 
   void *opaque;
@@ -152,8 +151,11 @@ typedef struct media_codec {
   void (*decode)(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize);
 
+  void (*flush)(struct media_codec *mc, struct video_decoder *vd);
+
   void (*close)(struct media_codec *mc);
   void (*reinit)(struct media_codec *mc);
+  void (*reconfigure)(struct media_codec *mc);
 
 } media_codec_t;
 
@@ -187,12 +189,12 @@ typedef struct media_buf {
     MB_CTRL_PLAY,
     MB_CTRL_EXIT,
     MB_CTRL_FLUSH_SUBTITLES,
-    MB_CTRL_BLACKOUT,
 
     MB_CTRL_DVD_HILITE,
     MB_CTRL_EXT_SUBTITLE,
 
-    MB_CTRL_REINITIALIZE,
+    MB_CTRL_REINITIALIZE, // Full reinit (such as VDPAU context loss)
+    MB_CTRL_RECONFIGURE,  // Reconfigure (such as OMX output port changed)
 
     MB_CTRL_REQ_OUTPUT_SIZE,
     MB_CTRL_DVD_SPU2,
@@ -352,6 +354,7 @@ typedef struct media_pipe {
   prop_t *mp_prop_notifications;
   prop_t *mp_prop_primary;
   prop_t *mp_prop_metadata;
+  prop_t *mp_prop_metadata_source;
   prop_t *mp_prop_model;
   prop_t *mp_prop_playstatus;
   prop_t *mp_prop_pausereason;
@@ -431,6 +434,11 @@ typedef struct media_pipe {
    */
   void *mp_extra;
 
+  void (*mp_seek_initiate)(struct media_pipe *mp);
+  void (*mp_seek_audio_done)(struct media_pipe *mp);
+  void (*mp_seek_video_done)(struct media_pipe *mp);
+  void (*mp_hold_changed)(struct media_pipe *mp);
+
 } media_pipe_t;
 
 extern void (*media_pipe_init_extra)(media_pipe_t *mp);
@@ -461,8 +469,7 @@ typedef struct media_codec_params {
 typedef struct codec_def {
   LIST_ENTRY(codec_def) link;
   void (*init)(void);
-  int (*open)(media_codec_t *mc, int id,
-	      const media_codec_params_t *mcp,
+  int (*open)(media_codec_t *mc, const media_codec_params_t *mcp,
 	      media_pipe_t *mp);
   int prio;
 } codec_def_t;
@@ -517,6 +524,8 @@ void media_buf_free_unlocked(media_pipe_t *mp, media_buf_t *mb);
 
 struct AVPacket;
 
+void mb_enq(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
+
 media_buf_t *media_buf_alloc_locked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_alloc_unlocked(media_pipe_t *mp, size_t payloadsize);
 media_buf_t *media_buf_from_avpkt_unlocked(media_pipe_t *mp, struct AVPacket *pkt);
@@ -530,8 +539,12 @@ void mp_ref_dec(media_pipe_t *mp);
 
 int mb_enqueue_no_block(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb,
 			int auxtype);
-struct event *mb_enqueue_with_events(media_pipe_t *mp, media_queue_t *mq, 
-				media_buf_t *mb);
+struct event *mb_enqueue_with_events_ex(media_pipe_t *mp, media_queue_t *mq, 
+					media_buf_t *mb, int *blocked);
+
+#define mb_enqueue_with_events(mp, mq, mb) \
+  mb_enqueue_with_events_ex(mp, mq, mb, NULL)
+
 void mb_enqueue_always(media_pipe_t *mp, media_queue_t *mq, media_buf_t *mb);
 
 void mp_enqueue_event(media_pipe_t *mp, struct event *e);
@@ -590,6 +603,10 @@ void mp_set_url(media_pipe_t *mp, const char *url);
 
 void mp_configure(media_pipe_t *mp, int caps, int buffer_mode,
 		  int64_t duration);
+
+void mp_set_duration(media_pipe_t *mp, int64_t duration);
+
+int64_t mq_realtime_delay(media_queue_t *mq);
 
 void mp_load_ext_sub(media_pipe_t *mp, const char *url);
 

@@ -140,13 +140,25 @@
 } while(0)
 
 #define TAILQ_MOVE(newhead, oldhead, field) do { \
-        if(TAILQ_FIRST(oldhead)) { \
-           TAILQ_FIRST(oldhead)->field.tqe_prev = &(newhead)->tqh_first;  \
-        } \
-        (newhead)->tqh_first = (oldhead)->tqh_first;                   \
-        (newhead)->tqh_last = (oldhead)->tqh_last;                     \
+    if(TAILQ_FIRST(oldhead)) {						\
+      TAILQ_FIRST(oldhead)->field.tqe_prev = &(newhead)->tqh_first;	\
+      (newhead)->tqh_last = (oldhead)->tqh_last;			\
+      (newhead)->tqh_first = (oldhead)->tqh_first;			\
+      TAILQ_INIT(oldhead);						\
+    } else {								\
+      TAILQ_INIT(newhead);						\
+    }									\
 } while (/*CONSTCOND*/0) 
  
+#define TAILQ_MERGE(q1, q2, field) do {			\
+  if((q2)->tqh_first) {					\
+    *(q1)->tqh_last = (q2)->tqh_first;			\
+    (q2)->tqh_first->field.tqe_prev = (q1)->tqh_last;	\
+    (q1)->tqh_last = (q2)->tqh_last;			\
+    TAILQ_INIT(q2);					\
+  }							\
+} while(/*CONSTCOND*/0)
+
 
 #ifndef SIMPLEQ_HEAD
 #define SIMPLEQ_HEAD(name, type)					\
