@@ -465,9 +465,10 @@ ftp_list_dir_LIST(ftp_connection_t *fc, const char *path, fa_dir_t *fd)
   while(1) {
     if(tcp_read_line(tc, resp, sizeof(resp)) < 0)
       break;
-
+    FTP_TRACE("[%dc]: Recv: %s", fc->fc_id, resp);
     ftp_add_dir_entry(fc, path, fd, resp);
   }
+  FTP_TRACE("[%dc]: Closed", fc->fc_id);
 
   tcp_close(tc);
 
