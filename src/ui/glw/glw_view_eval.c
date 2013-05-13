@@ -1584,6 +1584,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
 
   }
@@ -1687,6 +1688,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -1759,6 +1761,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -1853,6 +1856,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -2167,6 +2171,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
 
   }

@@ -409,6 +409,7 @@ prop_notify_free_payload(prop_notify_t *n)
   case PROP_WANT_MORE_CHILDS:
   case PROP_HAVE_MORE_CHILDS:
   case PROP_DESTROYED:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 }
@@ -763,6 +764,7 @@ prop_dispatch_one(prop_notify_t *n)
     prop_ref_dec(n->hpn_prop2);
     break;
   case PROP_SET_STRING:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -3930,11 +3932,15 @@ prop_seti(prop_sub_t *skipme, prop_t *p, va_list ap)
       prop_set_string_exl(p, skipme, str, PROP_STR_UTF8);
     break;
   case PROP_SET_RSTRING:
+  case PROP_ADOPT_RSTRING:
     rstr = va_arg(ap, rstr_t *);
     if(rstr == NULL)
       prop_set_void_exl(p, skipme);
-    else
+    else {
       prop_set_rstring_exl(p, skipme, rstr);
+      if(ev == PROP_ADOPT_RSTRING)
+        rstr_release(rstr);
+    }
     break;
   case PROP_SET_INT:
     prop_set_int_exl(p, skipme, va_arg(ap, int));
