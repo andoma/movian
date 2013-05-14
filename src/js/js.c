@@ -109,6 +109,22 @@ js_prop_obj(JSContext *cx, JSObject *o, const char *prop)
  *
  */
 int
+js_prop_fn(JSContext *cx, JSObject *o, const char *prop, jsval *r)
+{
+  if(!JS_GetProperty(cx, o, prop, r))
+    return -1;
+  if(!JSVAL_IS_OBJECT(*r))
+    return -1;
+  if(!JS_ObjectIsFunction(cx, JSVAL_TO_OBJECT(*r)))
+    return -1;
+  return 0;
+}
+
+
+/**
+ *
+ */
+int
 js_prop_int_or_default(JSContext *cx, JSObject *o, const char *prop, int d)
 {
   jsval val;
@@ -1051,6 +1067,7 @@ js_plugin_unload0(JSContext *cx, js_plugin_t *jsp)
   js_event_destroy_handlers(cx, &jsp->jsp_event_handlers);
   js_subscription_flush_from_list(cx, &jsp->jsp_subscriptions);
   js_subprovider_flush_from_plugin(cx, jsp);
+  js_hook_flush_from_plugin(cx, jsp);
 }
 
 /**
@@ -1148,6 +1165,7 @@ static JSFunctionSpec plugin_functions[] = {
     JS_FS("getDescriptor",    js_get_descriptor, 0, 0, 0),
     JS_FS("subscribe",        js_subscribe_global, 2, 0, 0),
     JS_FS("addSubtitleProvider", js_addsubprovider, 1, 0, 0),
+    JS_FS("addItemHook",         js_addItemHook, 1, 0, 0),
     JS_FS_END
 };
 

@@ -28,6 +28,9 @@
 static void
 event_bubble(glw_t *w, event_t *e)
 {
+  if(e->e_nav == NULL)
+    e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
+
   while(w != NULL) {
     if(glw_signal0(w, GLW_SIGNAL_EVENT_BUBBLE, e))
       return;
@@ -164,6 +167,65 @@ glw_event_map_playTrack_create(prop_t *track, prop_t *source, int mode)
 
   g->map.gem_dtor = glw_event_map_playTrack_dtor;
   g->map.gem_fire = glw_event_map_playTrack_fire;
+  return &g->map;
+}
+
+
+/**
+ *
+ */
+typedef struct glw_event_propref {
+  glw_event_map_t map;
+  prop_t *prop;
+  prop_t *target;
+} glw_event_propref_t;
+
+
+/**
+ *
+ */
+static void
+glw_event_map_propref_dtor(glw_root_t *gr, glw_event_map_t *gem)
+{
+  glw_event_propref_t *g = (glw_event_propref_t *)gem;
+
+  prop_ref_dec(g->prop);
+  prop_ref_dec(g->target);
+  free(g);
+}
+
+/**
+ *
+ */
+static void
+glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
+{
+  glw_event_propref_t *g = (glw_event_propref_t *)gem;
+
+  event_t *e = event_create_prop(EVENT_PROPREF, g->prop);
+
+  if(g->target != NULL) {
+    prop_send_ext_event(g->target, e);
+    event_release(e);
+  } else {
+    e->e_mapped = 1;
+    event_bubble(w, e);
+  }
+}
+
+
+/**
+ *
+ */
+glw_event_map_t *
+glw_event_map_propref_create(prop_t *prop, prop_t *target)
+{
+  glw_event_propref_t *g = malloc(sizeof(glw_event_propref_t));
+
+  g->prop   = prop_ref_inc(prop);
+  g->target = prop_ref_inc(target);
+  g->map.gem_dtor = glw_event_map_propref_dtor;
+  g->map.gem_fire = glw_event_map_propref_fire;
   return &g->map;
 }
 

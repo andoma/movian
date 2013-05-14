@@ -59,6 +59,60 @@ pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 }
 
 
+/**
+ *
+ */
+static JSBool
+pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  const char *name = name_by_id(id);
+  prop_t *p = JS_GetPrivate(cx, obj);
+  prop_t *c;
+  *vp = JSVAL_NULL;
+
+  hts_mutex_lock(&prop_mutex);
+  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+    if(c->hp_name != NULL && !strcmp(c->hp_name, name))
+      break;
+
+  if(c != NULL) {
+    jsdouble *d;
+
+    switch(c->hp_type) {
+    default:
+      break;
+
+    case PROP_CSTRING:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, c->hp_cstring));
+      break;
+    case PROP_RSTRING:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_rstring)));
+      break;
+    case PROP_LINK:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_link_rtitle)));
+      break;
+
+    case PROP_FLOAT:
+      if((d = JS_NewDouble(cx, c->hp_float)) != NULL)
+        *vp = DOUBLE_TO_JSVAL(d);
+      break;
+
+    case PROP_INT:
+      if(INT_FITS_IN_JSVAL(c->hp_int))
+        *vp = INT_TO_JSVAL(c->hp_int);
+      else if((d = JS_NewDouble(cx, c->hp_int)) != NULL)
+        *vp = DOUBLE_TO_JSVAL(d);
+      break;
+
+    case PROP_DIR:
+      *vp = OBJECT_TO_JSVAL(js_object_from_prop(cx, c));
+      break;
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return JS_TRUE;
+}
+
 
 /**
  *
@@ -79,7 +133,7 @@ static JSClass prop_bridge_class = {
   JSCLASS_HAS_PRIVATE,
   pb_setProperty, 
   pb_delProperty,
-  JS_PropertyStub,
+  pb_getProperty,
   pb_setProperty,
   JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,
   pb_finalize,

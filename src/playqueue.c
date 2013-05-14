@@ -203,7 +203,6 @@ pqe_event_dtor(event_t *e)
   playqueue_event_t *pe = (playqueue_event_t *)e;
   if(pe->pe_pqe != NULL)
     pqe_unref(pe->pe_pqe);
-  free(e);
 }
 
 /**

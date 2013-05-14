@@ -29,14 +29,6 @@
 #include "misc/strtab.h"
 #include "prop/prop.h"
 
-/**
- *
- */
-static void
-event_default_dtor(event_t *e)
-{
-  free(e);
-}
 
 /**
  *
@@ -45,7 +37,8 @@ void *
 event_create(event_type_t type, size_t size)
 {
   event_t *e = malloc(size);
-  e->e_dtor = event_default_dtor;
+  e->e_nav = NULL;
+  e->e_dtor = NULL;
   e->e_refcount = 1;
   e->e_mapped = 0;
   assert(type > EVENT_OFFSET);
@@ -95,8 +88,12 @@ event_addref(event_t *e)
 void
 event_release(event_t *e)
 {
-  if(atomic_add(&e->e_refcount, -1) == 1)
-    e->e_dtor(e);
+  if(atomic_add(&e->e_refcount, -1) == 1) {
+    if(e->e_dtor != NULL)
+      e->e_dtor(e);
+    prop_ref_dec(e->e_nav);
+    free(e);
+  }
 }
 
 
@@ -225,7 +222,6 @@ event_playurl_dtor(event_t *e)
     prop_destroy(ep->model);
   free(ep->url);
   free(ep->how);
-  free(ep);
 }
 
 /**
@@ -259,7 +255,6 @@ event_openurl_dtor(event_t *e)
   free(ou->url);
   free(ou->view);
   free(ou->how);
-  free(ou);
 }
 
 
@@ -292,7 +287,6 @@ playtrack_dtor(event_t *e)
   prop_destroy(ep->track);
   if(ep->source != NULL)
     prop_destroy(ep->source);
-  free(ep);
 }
 
 
@@ -321,7 +315,6 @@ event_select_track_dtor(event_t *e)
 {
   event_select_track_t *est = (void *)e;
   free(est->id);
-  free(e);
 }
 
 
@@ -428,7 +421,6 @@ event_prop_dtor(event_t *e)
 {
   event_prop_t *ep = (event_prop_t *)e;
   prop_ref_dec(ep->p);
-  free(e);
 }
 
 

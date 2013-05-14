@@ -543,6 +543,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_json.c                \
                         src/js/js_event.c               \
                         src/js/js_metaprovider.c        \
+                        src/js/js_hook.c                \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr
