@@ -85,11 +85,11 @@ js_event_dispatch(JSContext *cx, struct js_event_handler_list *list,
 		  event_t *e, JSObject *this)
 {
   if(event_is_type(e, EVENT_ACTION_VECTOR)) {
-  event_action_vector_t *eav = (event_action_vector_t *)e;
-  int i;
-  for(i = 0; i < eav->num; i++)
-    js_event_dispatch_action(cx, list, action_code2str(eav->actions[i]), this);
-    
+    event_action_vector_t *eav = (event_action_vector_t *)e;
+    int i;
+    for(i = 0; i < eav->num; i++)
+      js_event_dispatch_action(cx, list,
+                               action_code2str(eav->actions[i]), this);
   } else if(event_is_type(e, EVENT_DYNAMIC_ACTION)) {
     js_event_dispatch_action(cx, list, e->e_payload, this);
   }
