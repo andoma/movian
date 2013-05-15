@@ -31,6 +31,21 @@
   ITEM(_("Suspend"), event(Standby),
        "dataroot://resources/svg/Power.svg", $global.runcontrol.canStandby);
 
+  ITEMSLIDER(_("Time until sleep"),
+             0,
+             $global.runcontrol.sleepTimeMax,
+             $global.runcontrol.sleepTimeStep,
+             $global.runcontrol.sleepTime, _("min"),
+             $global.runcontrol.sleepTimer);
+
+
+
+  ITEM(select($global.runcontrol.sleepTimer,
+              _("Disable sleep timer"),
+              _("Activate sleep timer")), {
+    $global.runcontrol.sleepTimer = !$global.runcontrol.sleepTimer;
+  }, "dataroot://resources/svg/Power.svg", $global.runcontrol.canStandby);
+
   ITEM(_("Power off"), event(PowerOff),
        "dataroot://resources/svg/Power.svg", $global.runcontrol.canPowerOff);
 
@@ -161,6 +176,59 @@
       });
     });
   });
+}
+
+
+#define ITEMSLIDER(CAPTION, MIN, MAX, STEP, VALUE, UNIT, ENABLED) {
+widget(backdrop, {
+  source: "skin://pages/listitems/highlight.png";
+  hidden: !(ENABLED);
+  alphaSelf: iir(isFocused() * 1, 8) + isHovered() * 0.1;
+
+  widget(container_x, {
+    spacing: 13;
+    widget(dummy, { width: $ui.size;});
+
+    widget(label, {
+      shadow: true;
+      outline: true;
+      color: select(isFocused(), 1.0, 0.6);
+      caption: CAPTION;
+      ellipsize: true;
+    });
+
+    widget(slider_x, {
+      focusable: true;
+      min: MIN;
+      max: MAX;
+      step: STEP;
+      bind(VALUE);
+      widget(backdrop, {
+	source: "skin://graphics/plate8.png";
+	margin: 3;
+	border: 4;
+	padding: -4;
+	alphaSelf: 0.3;
+	color: 0;
+	widget(backdrop, {
+	  source: "skin://graphics/border-tiny.png";
+	  border: 4;
+	  padding: [8, -4];
+	  alphaSelf: 0.5;
+	  borderOnly: true;
+	  widget(label, {
+	    padding: [0,0];
+	    sizeScale: 0.8;
+	    align: center;
+	    caption: fmt("%d %s", VALUE, UNIT);
+	    shadow: true;
+	    outline: true;
+	  });
+	});
+      });
+    });
+  });
+});
 }
 
 
