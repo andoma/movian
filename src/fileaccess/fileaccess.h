@@ -265,4 +265,9 @@ FILE *fa_fopen(fa_handle_t *fh, int doclose);
 fa_handle_t *fa_aescbc_open(fa_handle_t *fa, const uint8_t *iv,
 			    const uint8_t *key);
 
+
+// Bandwidth limiter
+
+fa_handle_t *fa_bwlimit_open(fa_handle_t *fa, int bps);
+
 #endif /* FILEACCESS_H */
