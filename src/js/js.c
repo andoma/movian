@@ -1350,6 +1350,7 @@ js_init(void)
 
   js_page_init();
   js_metaprovider_init();
+  js_hook_init();
 
   JS_SetCStringsAreUTF8();
 
