@@ -118,12 +118,13 @@ static int
 glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
 {
   glw_t *c, *w = &l->w;
-  int ypos = 0;
+  const int bd = l->scroll_threshold;
+  int ypos = bd;
   glw_rctx_t rc0 = *rc;
 
   glw_reposition(&rc0, l->padding_left, rc->rc_height - l->padding_top,
 		 rc->rc_width  - l->padding_right, l->padding_bottom);
-  int height = rc0.rc_height;
+  int height0 = rc0.rc_height - bd * 2;
 
   float IH = 1.0f / rc0.rc_height;
 
@@ -147,7 +148,7 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     l->velocity *= 0.75;
 
     l->current_pos = GLW_MAX(0, GLW_MIN(l->current_pos,
-					l->total_size - l->page_size));
+					l->total_size - l->page_size + bd));
 
     if(fabsf(l->current_pos - l->filtered_pos) > rc->rc_height * 2) {
       l->filtered_pos = l->current_pos;
@@ -179,18 +180,18 @@ glw_list_layout_y(glw_list_t *l, glw_rctx_t *rc)
     c->glw_norm_weight = rc0.rc_height * IH;
     
 
-    if(ypos - l->filtered_pos > -height &&
-       ypos - l->filtered_pos <  height * 2)
+    if(ypos - l->filtered_pos > -height0 &&
+       ypos - l->filtered_pos <  height0 * 2)
       glw_layout0(c, &rc0);
 
     if(c == l->scroll_to_me) {
       l->scroll_to_me = NULL;
      
-      if(ypos - l->filtered_pos < 0) {
-	l->current_pos = ypos;
+      if(ypos - l->filtered_pos < bd) {
+	l->current_pos = ypos - bd;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
-      } else if(ypos - l->filtered_pos + rc0.rc_height > height) {
-	l->current_pos = ypos + rc0.rc_height - height;
+      } else if(ypos - l->filtered_pos + rc0.rc_height > height0) {
+	l->current_pos = ypos + rc0.rc_height - height0;
 	l->w.glw_flags |= GLW_UPDATE_METRICS;
       }
     }
