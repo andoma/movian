@@ -1,0 +1,4 @@
+Add support for deleting files.
+
+This currently only works for local file systems and must
+be enabled in Settings -> General
