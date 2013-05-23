@@ -995,8 +995,7 @@ deco_browse_node_cb(void *opaque, prop_event_t event, ...)
     break;
 
   default:
-    printf("Cant handle event %d\n", event);
-    abort();
+    break;
   }
   va_end(ap);
 }

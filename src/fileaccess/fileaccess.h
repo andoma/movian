@@ -68,9 +68,9 @@ typedef struct fa_dir_entry {
   struct prop *fde_metadata;
 
   enum {
-    FDE_PROBE_NONE,
-    FDE_PROBE_FILENAME,
-    FDE_PROBE_DEEP,
+    FDE_PROBED_NONE,
+    FDE_PROBED_FILENAME,
+    FDE_PROBED_CONTENTS,
 
   } fde_probestatus;
 
@@ -170,13 +170,16 @@ int fa_can_handle(const char *url, char *errbuf, size_t errsize);
 fa_handle_t *fa_reference(const char *url);
 void fa_unreference(fa_handle_t *fh);
 
-int fa_notify(const char *url, void *opaque,
-	      void (*change)(void *opaque,
-			     fa_notify_op_t op, 
-			     const char *filename,
-			     const char *url,
-			     int type),
-	      int (*breakcheck)(void *opaque));
+int fa_unlink(const char *url, char *errbuf, size_t errsize);
+
+fa_handle_t *fa_notify_start(const char *url, void *opaque,
+                             void (*change)(void *opaque,
+                                            fa_notify_op_t op, 
+                                            const char *filename,
+                                            const char *url,
+                                            int type));
+
+void fa_notify_stop(fa_handle_t *fh);
 
 void fa_ffmpeg_error_to_txt(int err, char *buf, size_t buflen);
 

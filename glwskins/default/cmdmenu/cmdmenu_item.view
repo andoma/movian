@@ -113,7 +113,7 @@ commandMenuChrome(
   ITEM(_("Delete"), { 
     delete($args);
   }, "dataroot://resources/svg/Delete.svg",
-       $self.model.canDelete,
+       $self.model.canDelete || $args.canDelete,
        [1,0.8,0.8]);
 
 

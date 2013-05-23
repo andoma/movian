@@ -87,6 +87,12 @@ typedef struct fa_protocol {
 		  char *errbuf, size_t errsize, int non_interactive);
 
   /**
+   * unlink (ie, delete) file
+   */
+  int (*fap_unlink)(struct fa_protocol *fap, const char *url,
+                    char *errbuf, size_t errsize);
+
+  /**
    * Add a reference to the url.
    *
    * Let underlying protocols know that we probably want to read more info
@@ -106,18 +112,16 @@ typedef struct fa_protocol {
    * Monitor the filesystem directory described by url for changes
    *
    * If a change occures, change() is invoked
-   *
-   * Breakcheck is called periodically and if the caller returns true
-   * the notify will stop and this function will return
    */
-  void (*fap_notify)(struct fa_protocol *fap, const char *url,
-		     void *opaque,
-		     void (*change)(void *opaque,
-				    fa_notify_op_t op, 
-				    const char *filename,
-				    const char *url,
-				    int type),
-		     int (*breakcheck)(void *opaque));
+  fa_handle_t *(*fap_notify_start)(struct fa_protocol *fap, const char *url,
+                                   void *opaque,
+                                   void (*change)(void *opaque,
+                                                  fa_notify_op_t op,
+                                                  const char *filename,
+                                                  const char *url,
+                                                  int type));
+
+  void (*fap_notify_stop)(fa_handle_t *fh);
 
   /**
    * Load the 'url' into memory

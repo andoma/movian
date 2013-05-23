@@ -265,6 +265,8 @@ typedef struct gconf {
 
   int state_plugins_loaded;
 
+  int fa_allow_delete;
+
 } gconf_t;
 
 extern gconf_t gconf;

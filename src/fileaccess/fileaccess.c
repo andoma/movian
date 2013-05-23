@@ -44,7 +44,9 @@
 #include "fa_imageloader.h"
 #include "blobcache.h"
 #include "htsmsg/htsbuf.h"
+#include "htsmsg/htsmsg_store.h"
 #include "fa_indexer.h"
+#include "settings.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 
@@ -321,6 +323,31 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
 }
 
 
+/**
+ *
+ */
+int
+fa_unlink(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  if(fap->fap_unlink == NULL) {
+    snprintf(errbuf, errsize, "Deleting files supported for this file system");
+    r = -1;
+  } else {
+    r = fap->fap_unlink(fap, filename, errbuf, errsize);
+  }
+  free(filename);
+
+  return r;
+}
+
+
 
 
 /**
@@ -411,31 +438,39 @@ fa_unreference(fa_handle_t *fh)
 /**
  *
  */
-int
-fa_notify(const char *url, void *opaque,
-	  void (*change)(void *opaque,
-			 fa_notify_op_t op, 
-			 const char *filename,
-			 const char *url,
-			 int type),
-	  int (*breakcheck)(void *opaque))
+fa_handle_t *
+fa_notify_start(const char *url, void *opaque,
+                void (*change)(void *opaque,
+                               fa_notify_op_t op, 
+                               const char *filename,
+                               const char *url,
+                               int type))
 {
   fa_protocol_t *fap;
   char *filename;
-
+  fa_handle_t *fh;
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
-    return -1;
+    return NULL;
 
-  if(fap->fap_notify == NULL) {
+  if(fap->fap_notify_start == NULL) {
     free(filename);
-    return -1;
+    return NULL;
   }
 
-  fap->fap_notify(fap, filename, opaque, change, breakcheck);
+  fh = fap->fap_notify_start(fap, filename, opaque, change);
   free(filename);
-  return 0;
+  return fh;
 }
 
+
+/**
+ *
+ */
+void
+fa_notify_stop(fa_handle_t *fh)
+{
+  fh->fh_proto->fap_notify_stop(fh);
+}
 
 
 /**
@@ -632,6 +667,22 @@ fileaccess_init(void)
 #endif
 
   fa_indexer_init();
+
+  htsmsg_t *store;
+
+  if((store = htsmsg_store_load("faconf")) == NULL)
+    store = htsmsg_create_map();
+
+  settings_create_separator(gconf.settings_general,
+			  _p("File access"));
+
+  settings_create_bool(gconf.settings_general,
+		       "delete", _p("Enable file deletion from item menu"),
+		       0, store, settings_generic_set_bool, &gconf.fa_allow_delete,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings,
+		       (void *)"faconf");
+
   return 0;
 }
 

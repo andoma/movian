@@ -362,6 +362,35 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 
 
 /**
+ * Unlink (remove file)
+ */
+static int
+fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  if(unlink(url)) {
+    int piece_num,i;
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+
+    piece_num = get_split_piece_count(url);
+    if(piece_num == 0)
+      return -1;
+
+    for(i = 0; i < piece_num; i++) {
+      char buf[PATH_MAX];
+      get_split_piece_name(buf, sizeof(buf), url,i);
+
+      if(unlink(buf)) {
+        snprintf(errbuf, errlen, "%s", strerror(errno));
+        return -1;
+      }
+    }
+    return 0;
+  }
+  return 0;
+}
+
+
+/**
  * FS change notification 
  */
 #if ENABLE_INOTIFY
@@ -492,16 +521,20 @@ fs_notify(struct fa_protocol *fap, const char *url,
 #include <CoreServices/CoreServices.h>
 
 struct fs_notify_aux {
+  fa_handle_t h;
+
   void *opaque;
   void (*change)(void *opaque,
-		 fa_notify_op_t op, 
+		 fa_notify_op_t op,
 		 const char *filename,
 		 const char *url,
-		 int type);  
-}; 
+		 int type);
+
+  FSEventStreamRef fse;
+};
 
 
-static void 
+static void
 fs_notify_callback(ConstFSEventStreamRef streamRef,
 		   void *clientCallBackInfo,
 		   size_t numEvents,
@@ -513,51 +546,53 @@ fs_notify_callback(ConstFSEventStreamRef streamRef,
   fna->change(fna->opaque, FA_NOTIFY_DIR_CHANGE, NULL, NULL, 0);
 }
 
+
 /**
  *
  */
-static void
-fs_notify(struct fa_protocol *fap, const char *url,
-	  void *opaque,
-	  void (*change)(void *opaque,
-			 fa_notify_op_t op, 
-			 const char *filename,
-			 const char *url,
-			 int type),
-	  int (*breakcheck)(void *opaque))
+static fa_handle_t *
+fs_notify_start(struct fa_protocol *fap, const char *url,
+                void *opaque,
+                void (*change)(void *opaque,
+                               fa_notify_op_t op,
+                               const char *filename,
+                               const char *url,
+                               int type))
 {
-  FSEventStreamRef fse;
   FSEventStreamContext ctx = {0};
-  struct fs_notify_aux fna;
-  fna.opaque = opaque;
-  fna.change = change;
-  ctx.info = &fna;
+  struct fs_notify_aux *fna = calloc(1, sizeof(struct fs_notify_aux));
+  fna->opaque = opaque;
+  fna->change = change;
+  ctx.info = fna;
 
   CFStringRef p = CFStringCreateWithCString(NULL, url, kCFStringEncodingUTF8);
 
   CFArrayRef paths = CFArrayCreate(NULL, (const void **)&p, 1, NULL);
 
-  fse = FSEventStreamCreate(kCFAllocatorDefault, 
-			    fs_notify_callback, &ctx, paths,
-			    kFSEventStreamEventIdSinceNow,
-			    0.1, 0);
+  fna->fse = FSEventStreamCreate(kCFAllocatorDefault,
+                                 fs_notify_callback, &ctx, paths,
+                                 kFSEventStreamEventIdSinceNow,
+                                 0.1, 0);
   CFRelease(paths);
   CFRelease(p);
 
-  FSEventStreamScheduleWithRunLoop(fse, CFRunLoopGetCurrent(),
+  FSEventStreamScheduleWithRunLoop(fna->fse, CFRunLoopGetMain(),
 				   kCFRunLoopDefaultMode);
-  FSEventStreamStart(fse);				   
-  while(1) {
-    CFRunLoopRunInMode(kCFRunLoopDefaultMode, 1, false);
-
-    if(breakcheck(opaque))
-      break;
-  }
-
-  FSEventStreamStop(fse);
-  FSEventStreamInvalidate(fse);
-  FSEventStreamRelease(fse);
+  FSEventStreamStart(fna->fse);
+  return &fna->h;
 }
+
+
+static void
+fs_notify_stop(fa_handle_t *fh)
+{
+  struct fs_notify_aux *fna = (struct fs_notify_aux *)fh;
+  FSEventStreamStop(fna->fse);
+  FSEventStreamInvalidate(fna->fse);
+  FSEventStreamRelease(fna->fse);
+  free(fna);
+}
+
 #endif
 
 
@@ -587,11 +622,13 @@ fa_protocol_t fa_protocol_fs = {
   .fap_seek  = fs_seek,
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
+  .fap_unlink= fs_unlink,
 #if ENABLE_INOTIFY
   .fap_notify = fs_notify,
 #endif
 #if ENABLE_FSEVENTS
-  .fap_notify = fs_notify,
+  .fap_notify_start = fs_notify_start,
+  .fap_notify_stop  = fs_notify_stop,
 #endif
 #if ENABLE_REALPATH
   .fap_normalize = fs_normalize,
