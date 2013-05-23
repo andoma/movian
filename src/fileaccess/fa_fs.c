@@ -393,6 +393,7 @@ fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 /**
  * FS change notification 
  */
+#if 0
 #if ENABLE_INOTIFY
 #include <sys/inotify.h>
 #include <poll.h>
@@ -515,6 +516,7 @@ fs_notify(struct fa_protocol *fap, const char *url,
 }
 
 #endif
+#endif
 
 #if ENABLE_FSEVENTS
 #include <CoreFoundation/CoreFoundation.h>
@@ -624,7 +626,7 @@ fa_protocol_t fa_protocol_fs = {
   .fap_stat  = fs_stat,
   .fap_unlink= fs_unlink,
 #if ENABLE_INOTIFY
-  .fap_notify = fs_notify,
+  //  .fap_notify = fs_notify,
 #endif
 #if ENABLE_FSEVENTS
   .fap_notify_start = fs_notify_start,
