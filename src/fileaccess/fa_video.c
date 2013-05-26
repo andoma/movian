@@ -425,7 +425,7 @@ video_player_loop(AVFormatContext *fctx, media_codec_t **cwvec,
 
   int spp = mp->mp_seek_base * 100 / fctx->duration;
 
-  if(spp >= video_settings.played_threshold) {
+  if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
     metadb_set_video_restartpos(canonical_url, -1);
     metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
     TRACE(TRACE_DEBUG, "Video",
