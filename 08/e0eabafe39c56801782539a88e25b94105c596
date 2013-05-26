@@ -1,0 +1,3 @@
+Support deleting directories (and not only files)
+
+Refs #1062
