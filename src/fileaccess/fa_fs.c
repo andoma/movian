@@ -367,6 +367,15 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 static int
 fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
+  struct stat st;
+  if(!stat(url, &st) && S_ISDIR(st.st_mode)) {
+    if(rmdir(url)) {
+      snprintf(errbuf, errlen, "%s", strerror(errno));
+      return -1;
+    }
+    return 0;
+  }
+
   if(unlink(url)) {
     int piece_num,i;
     snprintf(errbuf, errlen, "%s", strerror(errno));
