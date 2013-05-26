@@ -330,18 +330,30 @@ int
 fa_unlink(const char *url, char *errbuf, size_t errsize)
 {
   fa_protocol_t *fap;
+  fa_stat_t st;
   char *filename;
   int r;
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return -1;
 
-  if(fap->fap_unlink == NULL) {
-    snprintf(errbuf, errsize, "Deleting files supported for this file system");
-    r = -1;
-  } else {
-    r = fap->fap_unlink(fap, filename, errbuf, errsize);
+  r = fap->fap_stat(fap, filename, &st, errbuf, errsize, 0);
+  if(!r) {
+
+    int (*fn)(struct fa_protocol *, const char *, char *, size_t);
+
+
+    fn = st.fs_type == CONTENT_DIR ? fap->fap_rmdir : fap->fap_unlink;
+
+    if(fn == NULL) {
+      snprintf(errbuf, errsize,
+	       "Deleting not supported for this file system");
+      r = -1;
+    } else {
+      r = fn(fap, filename, errbuf, errsize);
+    }
   }
+
   free(filename);
 
   return r;

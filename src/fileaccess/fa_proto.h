@@ -37,6 +37,7 @@ typedef struct fa_protocol {
   int fap_flags;
 #define FAP_INCLUDE_PROTO_IN_URL 0x1
 #define FAP_ALLOW_CACHE          0x2
+#define FAP_NO_PARKING           0x4
 
   void (*fap_init)(void);
 
@@ -90,6 +91,12 @@ typedef struct fa_protocol {
    * unlink (ie, delete) file
    */
   int (*fap_unlink)(struct fa_protocol *fap, const char *url,
+                    char *errbuf, size_t errsize);
+
+  /**
+   * delete directory
+   */
+  int (*fap_rmdir)(struct fa_protocol *fap, const char *url,
                     char *errbuf, size_t errsize);
 
   /**

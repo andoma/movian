@@ -360,6 +360,19 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
   return FAP_STAT_OK;
 }
 
+/**
+ * Rmdir (remote directory)
+ */
+static int
+fs_rmdir(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  if(rmdir(url)) {
+    snprintf(errbuf, errlen, "%s", strerror(errno));
+    return -1;
+  }
+  return 0;
+}
+
 
 /**
  * Unlink (remove file)
@@ -367,15 +380,6 @@ fs_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 static int
 fs_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
 {
-  struct stat st;
-  if(!stat(url, &st) && S_ISDIR(st.st_mode)) {
-    if(rmdir(url)) {
-      snprintf(errbuf, errlen, "%s", strerror(errno));
-      return -1;
-    }
-    return 0;
-  }
-
   if(unlink(url)) {
     int piece_num,i;
     snprintf(errbuf, errlen, "%s", strerror(errno));
@@ -634,6 +638,7 @@ fa_protocol_t fa_protocol_fs = {
   .fap_fsize = fs_fsize,
   .fap_stat  = fs_stat,
   .fap_unlink= fs_unlink,
+  .fap_rmdir = fs_rmdir,
 #if ENABLE_INOTIFY
   //  .fap_notify = fs_notify,
 #endif

@@ -605,13 +605,36 @@ typedef struct {
 } __attribute__((packed)) EchoReply_t;
 
 
+typedef struct {
+  NBT_t nbt;
+  SMB_t hdr;
+  uint8_t word_count;
+  uint16_t search_attributes;
+  uint16_t byte_count;
+  uint8_t buffer_format;
+  uint8_t data[0];
+} __attribute__((packed)) SMB_DELETE_FILE_req_t;
+
+
+typedef struct {
+  NBT_t nbt;
+  SMB_t hdr;
+  uint8_t word_count;
+  uint16_t byte_count;
+  uint8_t buffer_format;
+  uint8_t data[0];
+} __attribute__((packed)) SMB_DELETE_DIR_req_t;
+
+
 #define NBT_SESSION_MSG 0x00
 
 
 
 #define SMB_PROTO 0x424d53ff
 
+#define SMB_DELETE_DIR     0x01
 #define SMB_CLOSE          0x04
+#define SMB_DELETE_FILE    0x06
 #define SMB_TRANSACTION    0x25
 #define SMB_ECHO           0x2b
 #define SMB_READ_ANDX      0x2e
@@ -1943,6 +1966,69 @@ cifs_enum_shares(cifs_connection_t *cc, fa_dir_t *fd,
 }
 
 
+/**
+ *
+ */
+static int
+cifs_delete(const char *url, char *errbuf, size_t errlen, int dir)
+{
+  char filename[512];
+  int r;
+  cifs_tree_t *ct;
+  cifs_connection_t *cc;
+
+  r = cifs_resolve(url, filename, sizeof(filename), errbuf, errlen,
+		   0, &ct, &cc);
+
+  if(r != CIFS_RESOLVE_TREE)
+    return -1;
+
+  backslashify(filename);
+  cc = ct->ct_cc;
+
+  int plen = utf8_to_smb(cc, NULL, filename);
+  int tlen;
+  void *reqbuf;
+  if(dir) {
+
+    tlen = sizeof(SMB_DELETE_DIR_req_t) + plen;
+    SMB_DELETE_DIR_req_t *req = reqbuf = alloca(tlen);
+    memset(req, 0, tlen);
+    smb_init_header(cc, &req->hdr, SMB_DELETE_DIR,
+		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
+    utf8_to_smb(cc, req->data, filename);
+    req->byte_count = htole_16(plen);
+    
+  } else {
+
+    tlen = sizeof(SMB_DELETE_FILE_req_t) + plen;
+    SMB_DELETE_FILE_req_t *req = reqbuf = alloca(tlen);
+    memset(req, 0, tlen);
+    smb_init_header(cc, &req->hdr, SMB_DELETE_FILE,
+		    SMB_FLAGS_CANONICAL_PATHNAMES, 0, ct->ct_tid, 1);
+    req->word_count = 1;
+    req->buffer_format = 4;
+    utf8_to_smb(cc, req->data, filename);
+    req->byte_count = htole_16(plen);
+  }
+
+  void *rbuf;
+  int rlen;
+  
+  if(nbt_async_req_reply(ct->ct_cc, reqbuf, tlen, &rbuf, &rlen)) {
+    snprintf(errbuf, errlen, "I/O error");
+    cifs_release_tree(ct);
+    return -1;
+  }
+
+  if(check_smb_error(ct, rbuf, rlen, sizeof(SMB_t), errbuf, errlen))
+    return -1;
+
+  cifs_release_tree(ct);
+  free(rbuf);
+  return 0;
+}
+
 
 /**
  *
@@ -2458,6 +2544,25 @@ smb_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 /**
  *
  */
+static int
+smb_unlink(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  return cifs_delete(url, errbuf, errlen, 0);
+}
+
+/**
+ *
+ */
+static int
+smb_rmdir(fa_protocol_t *fap, const char *url, char *errbuf, size_t errlen)
+{
+  return cifs_delete(url, errbuf, errlen, 1);
+}
+
+
+/**
+ *
+ */
 static void
 cifs_periodic(struct callout *c, void *opaque)
 {
@@ -2508,7 +2613,7 @@ smb_init(void)
  * Main SMB protocol dispatch
  */
 static fa_protocol_t fa_protocol_smb = {
-  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE,
+  .fap_flags = FAP_INCLUDE_PROTO_IN_URL | FAP_ALLOW_CACHE | FAP_NO_PARKING,
   .fap_init  = smb_init,
   .fap_name  = "smb",
   .fap_scan  = smb_scandir,
@@ -2518,5 +2623,7 @@ static fa_protocol_t fa_protocol_smb = {
   .fap_seek  = smb_seek,
   .fap_fsize = smb_fsize,
   .fap_stat  = smb_stat,
+  .fap_unlink= smb_unlink,
+  .fap_rmdir = smb_rmdir,
 };
 FAP_REGISTER(smb);
