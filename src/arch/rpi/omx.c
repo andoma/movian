@@ -13,9 +13,10 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 {
   omx_component_t *oc = opaque;
 
+#if 0
   omxdbg("%s: event  0x%x 0x%x 0x%x %p\n",
          oc->oc_name, event, (int)data1, (int)data2, eventdata);
-
+#endif
 
   switch(event) {
   case OMX_EventCmdComplete:
@@ -45,6 +46,11 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
   case OMX_EventPortSettingsChanged:
     if(oc->oc_port_settings_changed_cb != NULL)
       oc->oc_port_settings_changed_cb(oc);
+    break;
+
+  case OMX_EventMark:
+    if(oc->oc_event_mark_cb != NULL)
+      oc->oc_event_mark_cb(oc, eventdata);
     break;
     
   default:
@@ -341,6 +347,20 @@ omx_get_media_time(omx_component_t *oc)
   return omx_ticks_to_s64(ts.nTimestamp);
  
 }
+
+
+/**
+ *
+ */
+void
+omx_enable_buffer_marks(omx_component_t *oc)
+{
+  OMX_CONFIG_BOOLEANTYPE t;
+  OMX_INIT_STRUCTURE(t);
+  t.bEnabled = 1;
+  omxchk(OMX_SetParameter(oc->oc_handle, OMX_IndexParamPassBufferMarks, &t));
+}
+
 
 
 /**

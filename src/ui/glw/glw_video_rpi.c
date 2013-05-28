@@ -33,8 +33,6 @@
 #include "video/video_settings.h"
 #include "arch/rpi/omx.h"
 
-omx_component_t *the_renderer;
-
 
 typedef struct rpi_video_display {
   omx_component_t *rvd_vrender;
@@ -44,10 +42,10 @@ typedef struct rpi_video_display {
   omx_tunnel_t *rvd_tun_vdecoder_vsched;
   omx_tunnel_t *rvd_tun_vsched_vrender;
 
-  int64_t rvd_delta;
-  int rvd_epoch;
-
   int rvd_reconfigure;
+  int64_t rvd_pts;
+
+  glw_video_t *rvd_gv;
 
 } rpi_video_display_t;
 
@@ -59,6 +57,8 @@ static int
 rvd_init(glw_video_t *gv)
 {
   rpi_video_display_t *rvd = calloc(1, sizeof(rpi_video_display_t));
+  rvd->rvd_pts = PTS_UNSET;
+  rvd->rvd_gv = gv;
   gv->gv_aux = rvd;
   return 0;
 }
@@ -71,8 +71,6 @@ static int64_t
 rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
 {
   rpi_video_display_t *rvd = gv->gv_aux;
-
-  int64_t pts = omx_get_media_time(omx_get_clock(gv->gv_mp));
 
   if(rvd->rvd_vsched && rvd->rvd_reconfigure) {
     rvd->rvd_reconfigure = 0;
@@ -94,13 +92,29 @@ rvd_newframe(glw_video_t *gv, video_decoder_t *vd, int flags)
     omxchk(OMX_SetConfig(rvd->rvd_vrender->oc_handle,
 			 OMX_IndexConfigDisplayRegion, &dr));
   }
-
-  video_decoder_set_current_time(gv->gv_vd, pts,
-				 rvd->rvd_epoch, rvd->rvd_delta);
-
-  return pts;
+  return rvd->rvd_pts;
 }
 
+
+/**
+ *
+ */
+static void
+buffer_mark(omx_component_t *oc, void *ptr)
+{
+  rpi_video_display_t *rvd = oc->oc_opaque;
+  glw_video_t *gv = rvd->rvd_gv;
+  media_pipe_t *mp = gv->gv_mp;
+  video_decoder_t *vd = gv->gv_vd;
+  const media_buf_meta_t *mbm = ptr;
+
+  rvd->rvd_pts = mbm->mbm_pts;
+
+  hts_mutex_lock(&mp->mp_mutex);
+  vd->vd_reorder_current = mbm;
+  hts_cond_signal(&mp->mp_video.mq_avail);
+  hts_mutex_unlock(&mp->mp_mutex);
+}
 
 /**
  *
@@ -200,16 +214,26 @@ rvd_deliver(const frame_info_t *fi, glw_video_t *gv)
   if(fi->fi_data[0]) {
 
     if(rvd->rvd_vrender == NULL) {
+
       rvd->rvd_vrender = omx_component_create("OMX.broadcom.video_render",
 					      NULL, NULL);
       rvd->rvd_vsched  = omx_component_create("OMX.broadcom.video_scheduler",
 					      NULL, NULL);
+
+      rvd->rvd_vsched->oc_opaque = rvd;
+      rvd->rvd_vrender->oc_opaque = rvd;
+
+      gv->gv_vd->vd_render_component = rvd->rvd_vrender;
+       
+      omx_enable_buffer_marks(rvd->rvd_vrender);
+
       rvd->rvd_tun_clock_vsched =
 	omx_tunnel_create(omx_get_clock(mp), 81, rvd->rvd_vsched, 12);
     
-      rvd->rvd_vsched->oc_opaque = rvd;
       rvd->rvd_vsched->oc_port_settings_changed_cb =
 	vsched_port_settings_changed;
+
+      rvd->rvd_vrender->oc_event_mark_cb = buffer_mark;
 
       omx_set_state(rvd->rvd_vrender, OMX_StateIdle);
     }
@@ -221,10 +245,5 @@ rvd_deliver(const frame_info_t *fi, glw_video_t *gv)
       omx_tunnel_create((void *)fi->fi_data[0], 131, rvd->rvd_vsched, 10);
 
     omx_set_state(rvd->rvd_vsched,  OMX_StateExecuting);
-  }
-
-  if(fi->fi_drive_clock) {
-    rvd->rvd_epoch = fi->fi_epoch;
-    rvd->rvd_delta = fi->fi_delta;
   }
 }

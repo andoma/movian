@@ -161,14 +161,43 @@ typedef struct media_codec {
 
 
 /**
+ * 
+ */
+typedef struct media_buf_meta {
+  int64_t mbm_delta;
+  int64_t mbm_pts;
+  int64_t mbm_dts;
+  int mbm_epoch;
+  uint32_t mbm_duration;
+  uint32_t mbm_aspect_override      : 2;
+  uint32_t mbm_skip                 : 2;
+  uint32_t mbm_keyframe             : 1;
+  uint32_t mbm_flush                : 1; 
+  uint32_t mbm_nopts                : 1;
+  uint32_t mbm_nodts                : 1;
+  uint32_t mbm_drive_clock          : 1;
+  uint32_t mbm_disable_deinterlacer : 1;
+} media_buf_meta_t;
+
+
+/**
  * A buffer
  */
 typedef struct media_buf {
-  int64_t mb_dts;
-  int64_t mb_pts;
-  int64_t mb_delta;
-
   TAILQ_ENTRY(media_buf) mb_link;
+
+  media_buf_meta_t mb_meta;
+
+#define mb_delta                mb_meta.mbm_delta
+#define mb_pts                  mb_meta.mbm_pts
+#define mb_dts                  mb_meta.mbm_dts
+#define mb_duration             mb_meta.mbm_duration
+#define mb_epoch                mb_meta.mbm_epoch
+#define mb_aspect_override      mb_meta.mbm_aspect_override
+#define mb_skip                 mb_meta.mbm_skip
+#define mb_disable_deinterlacer mb_meta.mbm_disable_deinterlacer
+#define mb_keyframe             mb_meta.mbm_keyframe
+#define mb_drive_clock          mb_meta.mbm_drive_clock
 
   enum {
     MB_VIDEO,
@@ -200,7 +229,7 @@ typedef struct media_buf {
     MB_CTRL_DVD_SPU2,
     
     MB_CTRL_UNBLOCK,
-    
+
   } mb_data_type;
 
   void *mb_data;
@@ -217,18 +246,9 @@ typedef struct media_buf {
   };
 
 
-  uint32_t mb_duration;
-
-  uint8_t mb_aspect_override : 2;
-  uint8_t mb_disable_deinterlacer : 1;
-  uint8_t mb_skip : 2;
-  uint8_t mb_keyframe : 1;
-  uint8_t mb_drive_clock : 1;
-
   uint8_t mb_stream;
 
   uint8_t mb_channels;
-  int mb_epoch;
 
 } media_buf_t;
 
@@ -266,6 +286,9 @@ typedef struct media_queue {
   struct media_pipe *mq_mp;
 
 } media_queue_t;
+
+
+
 
 /**
  * Media pipe

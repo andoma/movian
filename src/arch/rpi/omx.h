@@ -28,6 +28,7 @@ typedef struct omx_component {
 
   void *oc_opaque;
   void (*oc_port_settings_changed_cb)(struct omx_component *oc);
+  void (*oc_event_mark_cb)(struct omx_component *oc, void *ptr);
 
 } omx_component_t;
 
@@ -77,4 +78,5 @@ int64_t omx_get_media_time(omx_component_t *oc);
 void omx_flush_port(omx_component_t *oc, int port);
 struct media_pipe;
 omx_component_t *omx_get_clock(struct media_pipe *mp);
+void omx_enable_buffer_marks(omx_component_t *oc);
 
