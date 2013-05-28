@@ -47,6 +47,7 @@
 #include "htsmsg/htsmsg_store.h"
 #include "fa_indexer.h"
 #include "settings.h"
+#include "notifications.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 
@@ -326,45 +327,6 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
 /**
  *
  */
-int
-fa_unlink(const char *url, char *errbuf, size_t errsize)
-{
-  fa_protocol_t *fap;
-  fa_stat_t st;
-  char *filename;
-  int r;
-
-  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
-    return -1;
-
-  r = fap->fap_stat(fap, filename, &st, errbuf, errsize, 0);
-  if(!r) {
-
-    int (*fn)(struct fa_protocol *, const char *, char *, size_t);
-
-
-    fn = st.fs_type == CONTENT_DIR ? fap->fap_rmdir : fap->fap_unlink;
-
-    if(fn == NULL) {
-      snprintf(errbuf, errsize,
-	       "Deleting not supported for this file system");
-      r = -1;
-    } else {
-      r = fn(fap, filename, errbuf, errsize);
-    }
-  }
-
-  free(filename);
-
-  return r;
-}
-
-
-
-
-/**
- *
- */
 fa_dir_t *
 fa_scandir(const char *url, char *errbuf, size_t errsize)
 {
@@ -513,8 +475,10 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
   if(fde->fde_md != NULL)
     metadata_destroy(fde->fde_md);
 
-  fd->fd_count--;
-  fa_dir_remove(fd, fde);
+  if(fd != NULL) {
+    fd->fd_count--;
+    fa_dir_remove(fd, fde);
+  }
   rstr_release(fde->fde_filename);
   rstr_release(fde->fde_url);
   free(fde);
@@ -552,7 +516,8 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_filename = rstr_alloc(filename);
   fde->fde_type     = type;
 
-  fa_dir_insert(fd, fde);
+  if(fd != NULL)
+    fa_dir_insert(fd, fde);
 
   return fde;
 }
@@ -649,6 +614,142 @@ fa_dir_entry_stat(fa_dir_entry_t *fde)
   if(!fa_stat(rstr_get(fde->fde_url), &fde->fde_stat, NULL, 0))
     fde->fde_statdone = 1;
   return !fde->fde_statdone;
+}
+
+
+/**
+ * recursive directory scan
+ */
+static void
+fa_rscan(const char *url, void (*fn)(void *aux, fa_dir_entry_t *fde),
+         void *aux)
+{
+  fa_dir_t *fd = fa_scandir(url, NULL, 0);
+  fa_dir_entry_t *fde;
+  if(fd == NULL)
+    return;
+
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(fde->fde_type == CONTENT_DIR)
+      fa_rscan(rstr_get(fde->fde_url), fn, aux);
+    else
+      fn(aux, fde);
+  }
+  fa_dir_free(fd);
+
+  fde = fde_create(NULL, url, url, CONTENT_DIR);
+  fn(aux, fde);
+  fa_dir_entry_free(NULL, fde);
+}
+
+
+/**
+ *
+ */
+static void
+rscan_count_one(void *aux, fa_dir_entry_t *fde)
+{
+  int *v = aux;
+  v[fde->fde_type == CONTENT_DIR]++;
+}
+
+
+/**
+ *
+ */
+static void
+unlink_recursive_one(void *aux, fa_dir_entry_t *fde)
+{
+  char errbuf[256];
+  fa_protocol_t *fap;
+  char *filename;
+
+  if((filename = fa_resolve_proto(rstr_get(fde->fde_url), &fap, NULL,
+                                  errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_ERROR, "FS", "Unable to resolve %s -- %s",
+          rstr_get(fde->fde_url), errbuf);
+    return;
+  }
+
+
+  int r;
+  if(fde->fde_type == CONTENT_FILE) {
+    r = fap->fap_unlink(fap, filename, errbuf, sizeof(errbuf));
+  } else {
+    r = fap->fap_rmdir(fap, filename, errbuf, sizeof(errbuf));
+  }
+
+  if(r)
+    TRACE(TRACE_ERROR, "FS", "Unable to delete %s -- %s",
+          rstr_get(fde->fde_url), errbuf);
+
+  free(filename);
+}
+
+
+
+
+/**
+ *
+ */
+int
+fa_unlink(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  fa_stat_t st;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  r = fap->fap_stat(fap, filename, &st, errbuf, errsize, 0);
+  if(!r) {
+
+    r = -1;
+    if(st.fs_type == CONTENT_FILE) {
+      if(fap->fap_unlink == NULL) {
+        snprintf(errbuf, errsize,
+                 "Deleting not supported for this file system");
+      } else {
+        r = fap->fap_unlink(fap, filename, errbuf, errsize);
+      }
+    } else if(st.fs_type == CONTENT_DIR) {
+      int types[2] = {};
+
+      fa_rscan(filename, rscan_count_one, types);
+
+      rstr_t *ftxt = _pl("%d files",       "%d file",      types[0]);
+      rstr_t *dtxt = _pl("%d directories", "%d directory", types[1]);
+      rstr_t *del  = _("Are you sure you want to delete:");
+
+      char tmp[512];
+      int l;
+      l =  snprintf(tmp,     sizeof(tmp),     "%s\n", rstr_get(del));
+      l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), types[0]);
+      l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+      l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(dtxt), types[1]);
+      l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+
+      int x = message_popup(tmp,
+                            MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
+
+      if(x != MESSAGE_POPUP_OK) {
+        snprintf(errbuf, errsize, "Canceled by user");
+      } else {
+        fa_rscan(filename, unlink_recursive_one, NULL);
+        r = 0;
+      }
+
+
+    } else {
+      snprintf(errbuf, errsize, "Can't delete this type");
+    }
+  }
+
+  free(filename);
+
+  return r;
 }
 
 

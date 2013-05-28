@@ -60,6 +60,7 @@ extern const char *showtime_dataroot(void);
 
 
 #define _(string) nls_get_rstring(string)
+#define _pl(a,b,c) nls_get_rstringp(a,b,c)
 #define _p(string) nls_get_prop(string)
 
 rstr_t *nls_get_rstring(const char *string);
