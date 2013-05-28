@@ -1,0 +1,3 @@
+Add support for recursive delete of files
+
+Also, in case when deleting a directory, ask user for confirmation
