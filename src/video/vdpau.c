@@ -288,7 +288,7 @@ vdpau_get_buffer(struct AVCodecContext *ctx, AVFrame *pic)
   pic->opaque = vvs;
   pic->type = FF_BUFFER_TYPE_USER;
 
-  memcpy(&vvs->vvs_mb, mb, sizeof(media_buf_t));
+  memcpy(&vvs->vvs_mbm, &mb->mb_meta, sizeof(media_buf_meta_t));
   return 0;
 }
 
@@ -390,7 +390,7 @@ vdpau_decode(struct media_codec *mc, struct video_decoder *vd,
     return;
 
   vvs = frame->opaque;
-  video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mb, 0);
+  video_deliver_frame_avctx(vd, vd->vd_mp, mq, ctx, frame, &vvs->vvs_mbm, 0);
 }
 
 
