@@ -686,7 +686,32 @@ unlink_recursive_one(void *aux, fa_dir_entry_t *fde)
   free(filename);
 }
 
+/**
+ *
+ */
+static int
+verify_delete(int files, int dirs)
+{
+  rstr_t *ftxt = _pl("%d files",       "%d file",      files);
+  rstr_t *dtxt = _pl("%d directories", "%d directory", dirs);
+  rstr_t *del  = _("Are you sure you want to delete:");
 
+  char tmp[512];
+  int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get(del));
+  l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);
+  l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  if(dirs) {
+    l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(dtxt), dirs);
+    l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  }
+
+  int x = message_popup(tmp, MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
+
+  rstr_release(ftxt);
+  rstr_release(dtxt);
+  rstr_release(del);
+  return x;
+}
 
 
 /**
@@ -712,36 +737,31 @@ fa_unlink(const char *url, char *errbuf, size_t errsize)
         snprintf(errbuf, errsize,
                  "Deleting not supported for this file system");
       } else {
-        r = fap->fap_unlink(fap, filename, errbuf, errsize);
+
+        if(verify_delete(1, 0) != MESSAGE_POPUP_OK) {
+          snprintf(errbuf, errsize, "Canceled by user");
+        } else {
+          r = fap->fap_unlink(fap, filename, errbuf, errsize);
+        }
       }
+
     } else if(st.fs_type == CONTENT_DIR) {
-      int types[2] = {};
 
-      fa_rscan(filename, rscan_count_one, types);
-
-      rstr_t *ftxt = _pl("%d files",       "%d file",      types[0]);
-      rstr_t *dtxt = _pl("%d directories", "%d directory", types[1]);
-      rstr_t *del  = _("Are you sure you want to delete:");
-
-      char tmp[512];
-      int l;
-      l =  snprintf(tmp,     sizeof(tmp),     "%s\n", rstr_get(del));
-      l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), types[0]);
-      l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
-      l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(dtxt), types[1]);
-      l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
-
-      int x = message_popup(tmp,
-                            MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
-
-      if(x != MESSAGE_POPUP_OK) {
-        snprintf(errbuf, errsize, "Canceled by user");
+      if(fap->fap_unlink == NULL || fap->fap_rmdir == NULL) {
+        snprintf(errbuf, errsize,
+                 "Deleting not supported for this file system");
       } else {
-        fa_rscan(filename, unlink_recursive_one, NULL);
-        r = 0;
+
+        int types[2] = {};
+
+        fa_rscan(url, rscan_count_one, types);
+        if(verify_delete(types[0], types[1]) != MESSAGE_POPUP_OK) {
+          snprintf(errbuf, errsize, "Canceled by user");
+        } else {
+          fa_rscan(url, unlink_recursive_one, NULL);
+          r = 0;
+        }
       }
-
-
     } else {
       snprintf(errbuf, errsize, "Can't delete this type");
     }
