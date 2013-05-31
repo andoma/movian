@@ -37,10 +37,19 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 
     case OMX_ErrorSameState:
       goto complete;
+
+    case OMX_ErrorStreamCorrupt:
+      TRACE(TRACE_INFO, "OMX", "%s: Corrupt stream", oc->oc_name);
+      hts_mutex_lock(oc->oc_avail_mtx);
+      oc->oc_stream_corrupt = 1;
+      hts_cond_signal(oc->oc_avail_cond);
+      hts_mutex_unlock(oc->oc_avail_mtx);
+      break;
+
       
     default:
       TRACE(TRACE_ERROR, "OMX", "%s: ERROR 0x%x\n", oc->oc_name, (int)data1);
-      exit(1);
+      break;
     }
     break;
 
@@ -116,7 +125,7 @@ omx_wait_command(omx_component_t *oc)
 /**
  *
  */
-static void
+void
 omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
 		 int wait)
 {

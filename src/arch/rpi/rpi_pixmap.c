@@ -21,6 +21,10 @@
 #include "omx.h"
 #include "misc/pixmap.h"
 
+// #define NOCOPY
+
+
+
 typedef struct rpi_pixmap_decoder {
   hts_mutex_t rpd_mtx;
   hts_cond_t rpd_cond;
@@ -66,6 +70,9 @@ pixmap_decoder_create(int cfmt)
   rpd->rpd_decoder->oc_port_settings_changed_cb = decoder_port_settings_changed;
   rpd->rpd_decoder->oc_opaque = rpd;
 
+  rpd->rpd_resizer = omx_component_create("OMX.broadcom.resize",
+					  &rpd->rpd_mtx, &rpd->rpd_cond);
+
   omx_set_state(rpd->rpd_decoder, OMX_StateIdle);
 
   OMX_IMAGE_PARAM_PORTFORMATTYPE fmt;
@@ -75,11 +82,10 @@ pixmap_decoder_create(int cfmt)
   omxchk(OMX_SetParameter(rpd->rpd_decoder->oc_handle,
 			  OMX_IndexParamImagePortFormat, &fmt));
 
+#ifndef NOCOPY
   omx_alloc_buffers(rpd->rpd_decoder, rpd->rpd_decoder->oc_inport);
-
-  rpd->rpd_resizer = omx_component_create("OMX.broadcom.resize",
-					  &rpd->rpd_mtx, &rpd->rpd_cond);
   omx_set_state(rpd->rpd_decoder, OMX_StateExecuting);
+#endif
   return rpd;
 }
 
@@ -157,6 +163,15 @@ setup_tunnel(rpi_pixmap_decoder_t *rpd)
 }
 
 
+#ifdef TIMING
+#define CHECKPOINT(x)				\
+  ts2 = showtime_get_ts();			\
+  printf("%s in %lld\n", x, ts2 - ts);		\
+  ts = ts2;
+#else
+#define CHECKPOINT(x)
+#endif
+
 
 /**
  *
@@ -165,24 +180,84 @@ static pixmap_t *
 rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 		  char *errbuf, size_t errlen)
 {
+
   if(pm->pm_type != PIXMAP_JPEG)
     return NULL;
 
+#ifdef TIMING
+  int64_t ts = showtime_get_ts(), ts2;
+#endif
   rpi_pixmap_decoder_t *rpd = pixmap_decoder_create(OMX_IMAGE_CodingJPEG);
 
   if(rpd == NULL)
     return NULL;
   rpd->rpd_im = im;
 
+#ifdef NOCOPY
+
+
+#error check rpd->rpd_decoder->oc_stream_corrupt
+
+  OMX_PARAM_PORTDEFINITIONTYPE portdef;
+
+  memset(&portdef, 0, sizeof(portdef));
+  portdef.nSize = sizeof(OMX_PARAM_PORTDEFINITIONTYPE);
+  portdef.nVersion.nVersion = OMX_VERSION;
+  portdef.nPortIndex = rpd->rpd_decoder->oc_inport;
+
+  omxchk(OMX_GetParameter(rpd->rpd_decoder->oc_handle,
+			  OMX_IndexParamPortDefinition, &portdef));
+
+  omx_send_command(rpd->rpd_decoder, OMX_CommandPortEnable,
+		   rpd->rpd_decoder->oc_inport, NULL, 0);
+
+  OMX_BUFFERHEADERTYPE *buf;
+  
+  for(int i = 0; i < portdef.nBufferCountActual; i++) {
+    omxchk(OMX_UseBuffer(rpd->rpd_decoder->oc_handle, &buf,
+			 rpd->rpd_decoder->oc_inport, 
+			 NULL, pm->pm_size, pm->pm_data));
+  }
+
+  // Waits for the OMX_CommandPortEnable command
+  omx_wait_command(rpd->rpd_decoder);
+  
+  omx_set_state(rpd->rpd_decoder, OMX_StateExecuting);
+
+  CHECKPOINT("Initialized");
+
+  buf->nOffset = 0;
+  buf->nFilledLen = pm->pm_size;
+
+  buf->nFlags |= OMX_BUFFERFLAG_EOS;
+
+  rpd->rpd_decoder->oc_inflight_buffers++;
+
+  omxchk(OMX_EmptyThisBuffer(rpd->rpd_decoder->oc_handle, buf));
+  
+  hts_mutex_lock(&rpd->rpd_mtx);
+  while(rpd->rpd_change == 0)
+    hts_cond_wait(&rpd->rpd_cond, &rpd->rpd_mtx);
+  hts_mutex_unlock(&rpd->rpd_mtx);
+  CHECKPOINT("Setup tunnel");
+  setup_tunnel(rpd);
+
+
+
+#else
+
   const void *data = pm->pm_data;
   size_t len = pm->pm_size;
 
-  hts_mutex_lock(&rpd->rpd_mtx);
 
-#if 1
+
+  hts_mutex_lock(&rpd->rpd_mtx);
 
   while(len > 0) {
     OMX_BUFFERHEADERTYPE *buf;
+
+    if(rpd->rpd_decoder->oc_stream_corrupt)
+      break;
 
     if(rpd->rpd_change == 1) {
       rpd->rpd_change = 2;
@@ -218,18 +293,10 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
     hts_mutex_lock(&rpd->rpd_mtx);
   }
 
-#else
-
-
-
-
-#endif
-
-
-
-
-  pixmap_release(pm);
-  pm = NULL;
+  if(rpd->rpd_decoder->oc_stream_corrupt) {
+    hts_mutex_unlock(&rpd->rpd_mtx);
+    goto err;
+  }
 
   if(rpd->rpd_change != 2) {
     while(rpd->rpd_change == 0)
@@ -240,9 +307,13 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   } else {
     hts_mutex_unlock(&rpd->rpd_mtx);
   }
+#endif
+
   
   omx_wait_fill_buffer(rpd->rpd_resizer, rpd->rpd_buf);
+  CHECKPOINT("Got buffer");
 
+ err:
   omx_flush_port(rpd->rpd_decoder, rpd->rpd_decoder->oc_inport);
   omx_flush_port(rpd->rpd_decoder, rpd->rpd_decoder->oc_outport);
 
@@ -275,7 +346,14 @@ rpi_pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   hts_mutex_destroy(&rpd->rpd_mtx);
 
   pixmap_t *out = rpd->rpd_pm;
+  if(out) {
+    pixmap_release(pm);
+  } else {
+    snprintf(errbuf, errlen, "Load error");
+  }
+
   free(rpd);
+  CHECKPOINT("All done");
   return out;
 }
 

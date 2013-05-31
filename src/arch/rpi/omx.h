@@ -34,6 +34,8 @@ typedef struct omx_component {
   int oc_inport;
   int oc_outport;
 
+  int oc_stream_corrupt;
+
 } omx_component_t;
 
 typedef struct omx_tunnel {
@@ -69,6 +71,8 @@ void omx_init(void);
 omx_component_t *omx_component_create(const char *name, hts_mutex_t *mtx,
 				      hts_cond_t *avail);
 void omx_component_destroy(omx_component_t *oc);
+void omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
+		      int wait);
 void omx_set_state(omx_component_t *oc, OMX_STATETYPE reqstate);
 void omx_alloc_buffers(omx_component_t *oc, int port);
 OMX_BUFFERHEADERTYPE *omx_get_buffer_locked(omx_component_t *oc);
