@@ -146,7 +146,7 @@ set_bg_image(rstr_t *url, const char **vpaths, void *opaque)
 
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
-    it = VC_IMAGE_ARGB8888;
+    it = VC_IMAGE_RGBX32;
     break;
   case PIXMAP_RGB24:
     it = VC_IMAGE_RGB888;

@@ -151,6 +151,9 @@ void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 			char *errbuf, size_t errlen);
 
+extern pixmap_t *(*accel_pixmap_decode)(pixmap_t *pm, const image_meta_t *im,
+					char *errbuf, size_t errlen);
+
 pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
 		     char *errbuf, size_t errlen);
 
@@ -168,6 +171,10 @@ void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
 pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
 
 void pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh);
+
+void pixmap_compute_rescale_dim(const image_meta_t *im,
+				int src_width, int src_height,
+				int *dst_width, int *dst_height);
 
 /**
  *

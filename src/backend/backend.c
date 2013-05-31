@@ -261,7 +261,15 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
   } else {
     pm = nb->be_imageloader(url, &im, vpaths, errbuf, errlen, cache_control,
 			    cb, opaque);
+
     if(pm != NULL && pm != NOT_MODIFIED && !im.im_no_decoding) {
+
+      if(cb != NULL && cb(opaque, pm->pm_size, pm->pm_size)) {
+	snprintf(errbuf, errlen, "Aborted");
+	pixmap_release(pm);
+	return NULL;
+      }
+
       pm = pixmap_decode(pm, &im, errbuf, errlen);
 
       if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)

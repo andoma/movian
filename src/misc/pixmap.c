@@ -36,6 +36,9 @@
 #include <libavutil/pixdesc.h>
 #endif
 
+pixmap_t *(*accel_pixmap_decode)(pixmap_t *pm, const image_meta_t *im,
+				 char *errbuf, size_t errlen);
+
 //#define DIV255(x) ((x) / 255)
 //#define DIV255(x) ((x) >> 8)
 #define DIV255(x) (((((x)+255)>>8)+(x))>>8)
@@ -1364,6 +1367,52 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 /**
  *
  */
+void
+pixmap_compute_rescale_dim(const image_meta_t *im,
+			   int src_width, int src_height,
+			   int *dst_width, int *dst_height)
+{
+  int w;
+  int h;
+  if(im->im_want_thumb) {
+    w = 160;
+    h = 160 * src_height / src_width;
+  } else {
+    w = src_width;
+    h = src_height;
+  }
+
+  if(im->im_req_width != -1 && im->im_req_height != -1) {
+    w = im->im_req_width;
+    h = im->im_req_height;
+
+  } else if(im->im_req_width != -1) {
+    w = im->im_req_width;
+    h = im->im_req_width * src_height / src_width;
+
+  } else if(im->im_req_height != -1) {
+    w = im->im_req_height * src_width / src_height;
+    h = im->im_req_height;
+
+  } else if(w > 64 && h > 64) {
+
+    if(im->im_max_width && w > im->im_max_width) {
+      h = h * im->im_max_width / w;
+      w = im->im_max_width;
+    }
+
+    if(im->im_max_height && h > im->im_max_height) {
+      w = w * im->im_max_height / h;
+      h = im->im_max_height;
+    }
+  }
+  *dst_width  = w;
+  *dst_height = h;
+}
+
+/**
+ *
+ */
 pixmap_t *
 pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 	      char *errbuf, size_t errlen)
@@ -1380,6 +1429,12 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
   if(!pixmap_is_coded(pm)) {
     pm->pm_aspect = (float)pm->pm_width / (float)pm->pm_height;
     return pm;
+  }
+
+  if(accel_pixmap_decode != NULL) {
+    pixmap_t *r = accel_pixmap_decode(pm, im, errbuf, errlen);
+    if(r != NULL) 
+      return r;
   }
 
   switch(pm->pm_type) {
@@ -1452,44 +1507,17 @@ pixmap_decode(pixmap_t *pm, const image_meta_t *im,
              ctx->width, ctx->height);
     return NULL;
   }
+
 #if 0
-  printf("%d x %d => %d x %d (lowres=%d) req = %d x %d\n",
+  printf("%d x %d => %d x %d (lowres=%d) req = %d x %d%s%s\n",
 	 ji.ji_width, ji.ji_height,
 	 ctx->width, ctx->height, lowres,
-	 im->im_req_width, im->im_req_height);
+	 im->im_req_width, im->im_req_height,
+	 im->im_want_thumb ? ", want thumb" : "",
+	 pm->pm_flags & PIXMAP_THUMBNAIL ? ", is thumb" : "");
 #endif
-  if(im->im_want_thumb && pm->pm_flags & PIXMAP_THUMBNAIL) {
-    w = 160;
-    h = 160 * ctx->height / ctx->width;
-  } else {
-    w = ctx->width;
-    h = ctx->height;
-  }
 
-  if(im->im_req_width != -1 && im->im_req_height != -1) {
-    w = im->im_req_width;
-    h = im->im_req_height;
-
-  } else if(im->im_req_width != -1) {
-    w = im->im_req_width;
-    h = im->im_req_width * ctx->height / ctx->width;
-
-  } else if(im->im_req_height != -1) {
-    w = im->im_req_height * ctx->width / ctx->height;
-    h = im->im_req_height;
-
-  } else if(w > 64 && h > 64) {
-
-    if(im->im_max_width && w > im->im_max_width) {
-      h = h * im->im_max_width / w;
-      w = im->im_max_width;
-    }
-
-    if(im->im_max_height && h > im->im_max_height) {
-      w = w * im->im_max_height / h;
-      h = im->im_max_height;
-    }
-  }
+  pixmap_compute_rescale_dim(im, ctx->width, ctx->height, &w, &h);
 
   pixmap_release(pm);
 
