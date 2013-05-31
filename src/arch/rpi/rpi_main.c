@@ -402,6 +402,13 @@ const static action_type_t *btn_to_action[256] = {
   [CEC_User_Control_Forward]     = AVEC(ACTION_SKIP_FORWARD),
 
   [CEC_User_Control_Record]      = AVEC(ACTION_RECORD),
+
+  [CEC_User_Control_RootMenu]    = AVEC(ACTION_HOME),
+
+  [CEC_User_Control_F1Blue]      = AVEC(ACTION_ENABLE_SCREENSAVER),
+  [CEC_User_Control_F2Red]       = AVEC(ACTION_MENU),
+  [CEC_User_Control_F3Green]     = AVEC(ACTION_SHOW_MEDIA_STATS),
+  [CEC_User_Control_F4Yellow]    = AVEC(ACTION_ITEMMENU),
 };
 
 
@@ -419,7 +426,9 @@ cec_emit_key_down(int code)
       i++;
     event_t *e = event_create_action_multi(avec, i);
     event_to_ui(e);
-   }
+  } else {
+    TRACE(TRACE_DEBUG, "CEC", "Unmapped code 0x%02x", code);
+  }
 }
 
 
