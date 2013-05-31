@@ -648,11 +648,15 @@ accesstimecmp(const void *A, const void *B)
 static void
 prune_to_size(void)
 {
-  int i, tot, j = 0;
+  int i, tot = 0, j = 0;
   blobcache_item_t *p, **sv;
 
   uint64_t maxsize = blobcache_compute_maxsize();
-  tot = pool_num(item_pool);
+
+
+  for(i = 0; i < ITEM_HASH_SIZE; i++)
+    for(p = hashvector[i]; p != NULL; p = p->bi_link)
+      tot++;
 
   sv = malloc(sizeof(blobcache_item_t *) * tot);
   current_cache_size = 0;
