@@ -1084,17 +1084,6 @@ pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh)
 
 #if ENABLE_LIBAV
 
-/**
- * Round v to nearest power of two
- */
-static int
-make_powerof2(int v)
-{
-  int m;
-  m = ((1 << (av_log2(v))) + (1 << (av_log2(v) + 1))) / 2;
-  return 1 << (av_log2(v) + (v > m));
-}
-
 
 /**
  * Rescaling with FFmpeg's swscaler
@@ -1252,7 +1241,6 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
   int i;
   int need_format_conv = 0;
   int want_rescale = 0; // Want rescaling cause it looks better
-  int must_rescale = 0; // Must rescale cause we cant display it otherwise
   uint32_t *palette;
   pixmap_type_t fmt = 0;
   pixmap_t *pm;
@@ -1307,25 +1295,9 @@ pixmap_from_avpic(AVPicture *pict, int pix_fmt,
 
   int req_w = req_w0, req_h = req_h0;
 
-  if(im->im_pot) {
-    /* We lack non-power-of-two texture support, check if we must rescale.
-     * Since the bitmap aspect is already calculated, it will automatically 
-     * compensate the rescaling when we render the texture.
-     */
-    
-    if(1 << av_log2(req_w0) != req_w0)
-      req_w = make_powerof2(req_w0);
+  want_rescale = req_w != src_w || req_h != src_h;
 
-    if(1 << av_log2(req_h0) != req_h0)
-      req_h = make_powerof2(req_h0);
-
-    must_rescale = req_w != src_w || req_h != src_h;
-  } else {
-    want_rescale = req_w != src_w || req_h != src_h;
-  }
-
-
-  if(must_rescale || want_rescale || need_format_conv) {
+  if(want_rescale || need_format_conv) {
     int want_alpha = im->im_no_rgb24 || im->im_corner_radius;
 
     pm = pixmap_rescale_swscale(pict, pix_fmt, src_w, src_h, req_w, req_h,
