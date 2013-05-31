@@ -131,7 +131,7 @@ bgloader_thread(void *aux)
     struct prop_notify_queue q;
 
     float alpha = 1.0f;
-    int timo = alpha != current_alpha ? 50 : 0;
+    int timo = alpha != current_alpha ? 16 : 0;
 
     prop_courier_wait(bgh->pc, &q, timo);
     prop_notify_dispatch(&q);
