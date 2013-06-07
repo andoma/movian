@@ -237,32 +237,34 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt,
 		     pixmap_t *pm)
 {
   int repeat = glt->glt_flags & GLW_TEX_REPEAT;
+  int size;
 
-  glt->glt_xs = pm->pm_width;
-  glt->glt_ys = pm->pm_height;
   glt->glt_s = 1;
   glt->glt_t = 1;
 
   switch(pm->pm_type) {
   case PIXMAP_BGR32:
+    size = pm->pm_linesize * pm->pm_height;
     init_abgr(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
 	      pm->pm_width, pm->pm_height, repeat);
     break;
 
   case PIXMAP_RGB24:
+    size = pm->pm_width * pm->pm_height * 4;
     init_rgb(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
 	      pm->pm_width, pm->pm_height, repeat);
     break;
 
   case PIXMAP_IA:
+    size = pm->pm_linesize * pm->pm_height;
     init_i8a8(gr, &glt->glt_texture, pm->pm_data, pm->pm_linesize,
 	      pm->pm_width, pm->pm_height, repeat);
     break;
 
   default:
-    return 1;
+    return 0;
   }
-  return 0;
+  return size;
 }
 
 /**

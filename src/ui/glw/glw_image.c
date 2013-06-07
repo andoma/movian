@@ -62,6 +62,8 @@ typedef struct glw_image {
  
   int gi_bitmap_flags;
 
+  uint8_t gi_rescale_hold;
+
   uint8_t gi_mode;
 
 #define GI_MODE_NORMAL           0
@@ -738,6 +740,23 @@ static uint16_t borderonlyobject[] = {
 /**
  *
  */
+static glw_loadable_texture_t *
+glw_image_tex_load(glw_image_t *gi, rstr_t *url, int width, int height)
+{
+  int flags = gi->gi_bitmap_flags & GLW_IMAGE_TEX_OVERLAP;
+
+  if(gi->w.glw_class == &glw_repeatedimage)
+    flags |= GLW_TEX_REPEAT;
+
+  return glw_tex_create(gi->w.glw_root, url, flags, width, height,
+                        gi->gi_radius, gi->gi_shadow);
+}
+
+
+
+/**
+ *
+ */
 static void 
 glw_image_layout(glw_t *w, glw_rctx_t *rc)
 {
@@ -762,7 +781,6 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
   if(gi->gi_pending_url != NULL) {
     // Request to load
     int xs = -1, ys = -1;
-    int flags = gi->gi_bitmap_flags & 0xf; // corners
     gi->gi_loading_new_url = 1;
 
     if(gi->gi_pending != NULL) {
@@ -781,10 +799,7 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       gi->gi_update = 1;
 
     } else {
-    
-      if(w->glw_class == &glw_repeatedimage)
-	flags |= GLW_TEX_REPEAT;
-	
+
       if(hq) {
 	if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
 	  if(rc->rc_width < rc->rc_height) {
@@ -805,11 +820,8 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 		rstr_get(gi->gi_pending_url),
 		xs, ys);
 
-	gi->gi_pending = glw_tex_create(w->glw_root,
-					gi->gi_pending_url,
-					flags, xs, ys, gi->gi_radius,
-                                        gi->gi_shadow);
-	  
+	gi->gi_pending = glw_image_tex_load(gi, gi->gi_pending_url, xs, ys);
+
 	rstr_release(gi->gi_pending_url);
 	gi->gi_pending_url = NULL;
       }
@@ -910,14 +922,11 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
       gi->gi_need_reload = hq;
     }
 
-
     if(gi->gi_need_reload && gi->gi_pending == NULL &&
        gi->gi_pending_url == NULL && rc->rc_width && rc->rc_height) {
 
-      gi->gi_need_reload = 0;
-	
       int xs = -1, ys = -1, rescale;
-	
+
       if(w->glw_class == &glw_image || w->glw_class == &glw_icon) {
 
 	if(rc->rc_width < rc->rc_height) {
@@ -933,7 +942,6 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	ys = rc->rc_height;
       }
 
-
       // Requesting aspect cause a lot of rounding errors
       // so to avoid ending up in infinite reload loops,
       // consider 1px off as nothing
@@ -941,13 +949,15 @@ glw_image_layout(glw_t *w, glw_rctx_t *rc)
 	rescale = 0;
 
       if(rescale) {
-	int flags = gi->gi_bitmap_flags & 0xf; // corners
-	if(w->glw_class == &glw_repeatedimage)
-	  flags |= GLW_TEX_REPEAT;
-	
-	gi->gi_pending = glw_tex_create(w->glw_root, glt->glt_url,
-					flags, xs, ys, gi->gi_radius,
-                                        gi->gi_shadow);
+        if(gi->gi_rescale_hold < 5) {
+          gi->gi_rescale_hold++;
+        } else {
+          gi->gi_rescale_hold = 0;
+          gi->gi_pending = glw_image_tex_load(gi, glt->glt_url, xs, ys);
+          gi->gi_need_reload = 0;
+        }
+      } else {
+        gi->gi_need_reload = 0;
       }
     }
   } else {

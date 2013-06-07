@@ -270,6 +270,8 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 	return NULL;
       }
 
+      uint8_t original_type = pm->pm_original_type ?: pm->pm_type;
+
       pm = pixmap_decode(pm, &im, errbuf, errlen);
 
       if(pm != NULL && pm->pm_type == PIXMAP_VECTOR)
@@ -282,6 +284,8 @@ backend_imageloader(rstr_t *url0, const image_meta_t *im0,
 	pm = pixmap_rounded_corners(pm, im.im_corner_radius,
 				    im.im_corner_selection);
 
+      if(pm != NULL)
+        pm->pm_original_type = original_type;
     }
   }
   if(m)

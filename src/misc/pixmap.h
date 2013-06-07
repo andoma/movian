@@ -76,6 +76,7 @@ typedef struct pixmap {
   int pm_refcount;
 
   uint8_t pm_orientation;   // LAYOUT_ORIENTATION_ from layout.h
+  uint8_t pm_original_type;
 
   uint16_t pm_width;
   uint16_t pm_height;
