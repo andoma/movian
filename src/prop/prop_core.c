@@ -3756,6 +3756,18 @@ prop_courier_wait(prop_courier_t *pc, struct prop_notify_queue *q, int timeout)
  *
  */
 void
+prop_courier_wakeup(prop_courier_t *pc)
+{
+  hts_mutex_lock(&prop_mutex);
+  hts_cond_signal(&pc->pc_cond);
+  hts_mutex_unlock(&prop_mutex);
+}
+
+
+/**
+ *
+ */
+void
 prop_courier_wait_and_dispatch(prop_courier_t *pc)
 {
   struct prop_notify_queue q;

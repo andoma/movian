@@ -1311,10 +1311,7 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
 static void
 mlv_load(void *db, metadata_lazy_prop_t *mlp)
 {
-  if(mlp->mlp_zombie)
-    return;
-  metadata_lazy_video_t *mlv = (metadata_lazy_video_t *)mlp;
-  mlv_get_video_info0(db, mlv, 0);
+  mlv_get_video_info0(db, (metadata_lazy_video_t *)mlp, 0);
 }
 
 
@@ -1982,10 +1979,8 @@ mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
 {
   hts_mutex_lock(&metadata_mutex);
   rstr_set(&mlv->mlv_imdb_id, imdb_id);
-  mlp_dequeue(&mlv->mlv_mlp);
-  void *db = metadb_get();
-  mlv_load(db, &mlv->mlv_mlp);
-  metadb_close(db);
+  mlp_enqueue(&mlv->mlv_mlp);
+  prop_courier_wakeup(metadata_courier);
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -1997,10 +1992,8 @@ mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
 {
   hts_mutex_lock(&metadata_mutex);
   mlv->mlv_duration = duration;
-  mlp_dequeue(&mlv->mlv_mlp);
-  void *db = metadb_get();
-  mlv_load(db, &mlv->mlv_mlp);
-  metadb_close(db);
+  mlp_enqueue(&mlv->mlv_mlp);
+  prop_courier_wakeup(metadata_courier);
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -2014,10 +2007,8 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
   hts_mutex_lock(&metadata_mutex);
   if(mlv->mlv_lonely != lonely) {
     mlv->mlv_lonely = lonely;
-    mlp_dequeue(&mlv->mlv_mlp);
-    void *db = metadb_get();
-    mlv_load(db, &mlv->mlv_mlp);
-    metadb_close(db);
+    mlp_enqueue(&mlv->mlv_mlp);
+    prop_courier_wakeup(metadata_courier);
   }
   hts_mutex_unlock(&metadata_mutex);
 }
@@ -2665,10 +2656,9 @@ mlp_dispatch(void)
   while((mlp = TAILQ_FIRST(&mlpqueue)) != NULL) {
     TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
     mlp->mlp_queued = 0;
-    mlp->mlp_class->mlc_load(db, mlp);
+    if(!mlp->mlp_zombie)
+      mlp->mlp_class->mlc_load(db, mlp);
 
-    // This is so lame.
-    // mlc_load should be able to be called unlocked
     hts_mutex_unlock(&metadata_mutex);
     usleep(1);
     hts_mutex_lock(&metadata_mutex);
