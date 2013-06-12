@@ -354,6 +354,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w > 0)
 	cw = weightavail * w / co->weight_sum;
+      else
+        cw = rc0.rc_width / -w;
     }
 
     pos += cw;
