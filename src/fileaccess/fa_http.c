@@ -159,6 +159,83 @@ typedef struct http_connection {
 /**
  *
  */
+typedef struct http_file {
+  fa_handle_t h;
+
+  http_connection_t *hf_connection;
+
+  char *hf_url;
+  char *hf_auth;
+  char *hf_location;
+  char *hf_auth_realm;
+
+
+  char hf_authurl[128];
+  char hf_path[URL_MAX];
+
+  int hf_chunk_size;
+
+  int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
+
+  int64_t hf_filesize; /* -1 if filesize can not be determined */
+  int64_t hf_pos;
+
+  int64_t hf_consecutive_read;
+
+  char *hf_content_type;
+
+  /* The negotiated connection mode (ie, what the server replied with) */
+  enum {
+    CONNECTION_MODE_PERSISTENT,
+    CONNECTION_MODE_CLOSE,
+  } hf_connection_mode;
+
+  time_t hf_mtime;
+
+  char hf_chunked_transfer;
+  char hf_isdir;
+
+  char hf_auth_failed;
+  
+
+  char hf_debug;
+
+  char hf_no_ranges; // Server does not accept range queries
+
+  char hf_want_close;
+
+  char hf_accept_ranges;
+
+  char hf_version;
+
+  char hf_streaming; /* Optimize for streaming from start to end
+		      * rather than random seeking 
+		      */
+
+  char hf_fast_fail;
+
+  char hf_req_compression;
+  
+  char hf_content_encoding;
+#define HTTP_CE_IDENTITY 0
+#define HTTP_CE_GZIP 1
+
+  int hf_max_age;
+
+  prop_t *hf_stats_speed;
+
+#define STAT_VEC_SIZE 20
+  int hf_stats[STAT_VEC_SIZE];
+  int hf_stats_ptr;
+  int hf_num_stats;
+  char hf_line[4096];
+
+} http_file_t;
+
+
+/**
+ *
+ */
 static void
 http_connection_destroy(http_connection_t *hc, int dbg, const char *reason)
 {
@@ -353,7 +430,7 @@ validate_cookie(const char *req_host, const char *req_path,
    * URI.
    */
    if(strncmp(req_path, path, strlen(path)))
-    return 0;
+    return 1;
 
   /*
    * The value for the Domain attribute contains no embedded dots or
@@ -363,7 +440,7 @@ validate_cookie(const char *req_host, const char *req_path,
 
   if(strcmp(domain, req_host))
     if(*domain != '.' || strchr(domain + 1, '.') == NULL)
-      return 0;
+      return 2;
 
   /*
    * The value for the request-host does not domain-match the Domain
@@ -371,7 +448,7 @@ validate_cookie(const char *req_host, const char *req_path,
    */
   const char *s = strstr(req_host, domain);
   if(s == NULL || s[strlen(domain)] != 0)
-    return 0;
+    return 3;
 
   /*
    * The request-host is a FQDN (not IP address) and has the form HD,
@@ -381,9 +458,9 @@ validate_cookie(const char *req_host, const char *req_path,
 
   for(x = req_host; x != s; x++) {
     if(*x == '.')
-      return 0;
+      return 4;
   }
-  return 1;
+  return 0;
 }
 
 
@@ -461,10 +538,12 @@ load_cookies(void)
  *
  */
 static void
-http_cookie_set(char *cookie, const char *req_host, const char *req_path)
+http_cookie_set(char *cookie, http_file_t *hf)
 {
   static callout_t cookie_persist_timer;
 
+  const char *req_host = hf->hf_connection->hc_hostname;
+  const char *req_path = hf->hf_path;
   char *argv[20];
   int argc, i;
   const char *domain = req_host;
@@ -475,13 +554,17 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
   http_cookie_t *hc;
 
   argc = http_tokenize(cookie, argv, 20, ';');
-  if(argc == 0)
+  if(argc == 0) {
+    HF_TRACE(hf, "Ignoring malformed cookie");
     return;
+  }
 
   name = argv[0];
   value = strchr(name, '=');
-  if(value == NULL)
+  if(value == NULL) {
+    HF_TRACE(hf, "Ignoring malformed cookie, no value");
     return;
+  }
   *value = 0;
   value++;
 
@@ -497,8 +580,15 @@ http_cookie_set(char *cookie, const char *req_host, const char *req_path)
     }
   }
 
-  if(!validate_cookie(req_host, req_path, domain, path))
+  int r;
+  if((r = validate_cookie(req_host, req_path, domain, path))) {
+    HF_TRACE(hf, "Rejected cookie name=%s path=%s domain=%s value=%s error=%d",
+             name, path, domain, value, r);
     return;
+  }
+
+  HF_TRACE(hf, "Updating cookie name=%s path=%s domain=%s value=%s",
+           name, path, domain, value);
 
   hts_mutex_lock(&http_cookies_mutex);
 
@@ -547,7 +637,7 @@ http_cookie_append(const char *req_host, const char *req_path,
     if(hc->hc_expire != -1 && now > hc->hc_expire)
       continue;
 
-    if(!validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
+    if(validate_cookie(req_host, req_path, hc->hc_domain, hc->hc_path))
       continue;
 
     htsbuf_append(&hq, s, strlen(s));
@@ -566,82 +656,6 @@ http_cookie_append(const char *req_host, const char *req_path,
 }
 
 
-
-/**
- *
- */
-typedef struct http_file {
-  fa_handle_t h;
-
-  http_connection_t *hf_connection;
-
-  char *hf_url;
-  char *hf_auth;
-  char *hf_location;
-  char *hf_auth_realm;
-
-
-  char hf_authurl[128];
-  char hf_path[URL_MAX];
-
-  int hf_chunk_size;
-
-  int64_t hf_rsize; /* Size of reply, if chunked: don't care about this */
-
-  int64_t hf_filesize; /* -1 if filesize can not be determined */
-  int64_t hf_pos;
-
-  int64_t hf_consecutive_read;
-
-  char *hf_content_type;
-
-  /* The negotiated connection mode (ie, what the server replied with) */
-  enum {
-    CONNECTION_MODE_PERSISTENT,
-    CONNECTION_MODE_CLOSE,
-  } hf_connection_mode;
-
-  time_t hf_mtime;
-
-  char hf_chunked_transfer;
-  char hf_isdir;
-
-  char hf_auth_failed;
-  
-
-  char hf_debug;
-
-  char hf_no_ranges; // Server does not accept range queries
-
-  char hf_want_close;
-
-  char hf_accept_ranges;
-
-  char hf_version;
-
-  char hf_streaming; /* Optimize for streaming from start to end
-		      * rather than random seeking 
-		      */
-
-  char hf_fast_fail;
-
-  char hf_req_compression;
-  
-  char hf_content_encoding;
-#define HTTP_CE_IDENTITY 0
-#define HTTP_CE_GZIP 1
-
-  int hf_max_age;
-
-  prop_t *hf_stats_speed;
-
-#define STAT_VEC_SIZE 20
-  int hf_stats[STAT_VEC_SIZE];
-  int hf_stats_ptr;
-  int hf_num_stats;
-  char hf_line[4096];
-
-} http_file_t;
 
 
 static void http_detach(http_file_t *hf, int reusable, const char *reason);
@@ -1315,7 +1329,7 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     }
 
     if(!strcasecmp(argv[0], "Set-Cookie"))
-      http_cookie_set(argv[1], hf->hf_connection->hc_hostname, hf->hf_path);
+      http_cookie_set(argv[1], hf);
   }
 
   if(code >= 200 && code < 400) {
