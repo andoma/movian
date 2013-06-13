@@ -4651,7 +4651,7 @@ spotify_shutdown_late(void *opaque, int exitcode)
 static void
 be_spotify_search(prop_t *source, const char *query)
 {
-  if(spotify_start(NULL, 0, 0))
+  if(spotify_start(NULL, 0, 1))
     return;
   
   spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));
