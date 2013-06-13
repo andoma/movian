@@ -431,17 +431,14 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
 {
   glw_t *c;
 
-  c = TAILQ_FIRST(&w->glw_childs);
-  while(c != NULL) {
-    if(c == skip)
-      c = TAILQ_NEXT(c, glw_parent_link);
-    
-    if(c == NULL || !(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
-      break;
-    c = TAILQ_NEXT(c, glw_parent_link);
-  }
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-       
+    if(c->glw_flags & GLW_HIDDEN || c == skip)
+      continue;
+
+    if(!(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
+      break;
+  }
 
   if(c != NULL)
     glw_copy_constraints(w, c);
