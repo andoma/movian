@@ -362,47 +362,28 @@ render_video_quad(int interlace, int rectmode, int width, int height,
 {
   float x1, x2, y1, y2;
   float b1 = 0, b2 = 0;
-  const int bordersize = 0;
 
   static const float vertices[12] = {-1, -1, 1, -1, 1, 1, -1, 1};
   const uint8_t elements[6] = {0,1,2,0,2,3};
   float tc[12];
 
+  x1 = 0;
+  y1 = 0;
+
   if(rectmode) {
 
-    if(interlace) {
-
-      x1 = bordersize;
-      y1 = bordersize;
-      x2 = width  - bordersize;
-      y2 = height - bordersize;
-
-    } else {
-
-      x1 = 0;
-      y1 = 0;
-      x2 = width;
-      y2 = height;
-    }
+    x2 = width;
+    y2 = height;
 
   } else {
-    
-    if(interlace) {
 
-      x1 = 0 + (bordersize / (float)width);
-      y1 = 0 + (bordersize / (float)height);
-      x2 = 1 - (bordersize / (float)width);
-      y2 = 1 - (bordersize / (float)height);
+    x2 = 1;
+    y2 = 1;
+
+    if(interlace) {
 
       b1 = (0.5 * bob1) / (float)height;
       b2 = (0.5 * bob2) / (float)height;
-
-    } else {
-
-      x1 = 0;
-      y1 = 0;
-      x2 = 1;
-      y2 = 1;
     }
   }
 
