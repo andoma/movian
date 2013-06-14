@@ -299,14 +299,21 @@ js_sub_cb(void *opaque, prop_event_t event, ...)
   jsval v = JSVAL_NULL;
   int i32;
   const char *str;
+  double d;
 
   switch(event) {
   case PROP_SET_INT:
     i32 = va_arg(ap, int);
-    v = INT_TO_JSVAL(i32);
-    break;
+
+    if(i32 <= INT32_MAX && i32 >= INT32_MIN && INT_FITS_IN_JSVAL(i32)) {
+      v = INT_TO_JSVAL(i32);
+      break;
+    }
+    d = i32;
+    if(0)
   case PROP_SET_FLOAT:
-    v = DOUBLE_TO_JSVAL(JS_NewDouble(cx, va_arg(ap, double)));
+      d = va_arg(ap, double);
+    v = DOUBLE_TO_JSVAL(JS_NewDouble(cx, d));
     break;
   case PROP_SET_RSTRING:
     str = rstr_get(va_arg(ap, rstr_t *));
