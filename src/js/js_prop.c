@@ -251,8 +251,9 @@ typedef struct js_subscription {
   prop_sub_t *jss_sub;
   jsval jss_fn;
   int jss_refcount;
-  int *jss_subcnt;
   JSContext *jss_cx;
+  int (*jss_dtor)(void *aux);
+  void *jss_aux;
 } js_subscription_t;
 
 
@@ -325,11 +326,10 @@ js_sub_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    if(jss->jss_subcnt != NULL) {
-      (*jss->jss_subcnt)--;
+    if(jss->jss_dtor != NULL && jss->jss_dtor(jss->jss_aux))
       js_sub_destroy(cx, jss);
-    }
     return;
+
   default:
     break;
   }
@@ -392,11 +392,11 @@ static JSClass page_options_class = {
 /**
  *
  */
-JSBool 
-js_subscribe(JSContext *cx, uintN argc, 
+JSBool
+js_subscribe(JSContext *cx, uintN argc,
 	     jsval *argv, jsval *rval, prop_t *root, const char *pname,
 	     struct js_subscription_list *list, prop_courier_t *pc,
-	     int *subsptr)
+             int (*dtor)(void *aux), void *aux)
 {
   const char *name;
   JSObject *func;
@@ -409,13 +409,11 @@ js_subscribe(JSContext *cx, uintN argc,
   jss->jss_fn = OBJECT_TO_JSVAL(func);
   JS_AddNamedRoot(cx, &jss->jss_fn, "subscription");
 
-  // Abuse subsptr to tell if we're a page or global sub
-  jss->jss_cx = subsptr ? cx : js_global_cx;
-  jss->jss_subcnt = subsptr;
-  if(subsptr)
-    (*subsptr)++;
+  jss->jss_cx = pc == js_global_pc ? js_global_cx : cx;
+  jss->jss_dtor = dtor;
+  jss->jss_aux = aux;
 
-  jss->jss_sub = 
+  jss->jss_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, js_sub_cb, jss,
 		   PROP_TAG_NAMESTR, name,
@@ -439,13 +437,14 @@ js_subscribe(JSContext *cx, uintN argc,
 /**
  *
  */
-JSBool 
-js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc, 
+JSBool
+js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc,
 		    jsval *argv, jsval *rval)
 {
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
   return js_subscribe(cx, argc, argv, rval, NULL, NULL,
-		      &jsp->jsp_subscriptions, js_global_pc, NULL);
+		      &jsp->jsp_subscriptions, js_global_pc,
+                      NULL, NULL);
 }
 
 

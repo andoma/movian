@@ -181,10 +181,10 @@ void js_event_handler_create(JSContext *cx, struct js_event_handler_list *list,
 
 void js_page_init(void);
 
-JSBool js_subscribe(JSContext *cx, uintN argc, 
+JSBool js_subscribe(JSContext *cx, uintN argc,
 		    jsval *argv, jsval *rval, prop_t *root, const char *pname,
 		    struct js_subscription_list *list, prop_courier_t *pc,
-		    int *subsptr);
+                    int (*dtor)(void *aux), void *aux);
 
 JSBool js_is_prop_true(JSContext *cx, JSObject *o, const char *prop);
 

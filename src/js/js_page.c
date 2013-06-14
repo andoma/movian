@@ -1071,14 +1071,26 @@ static JSFunctionSpec model_functions[] = {
 /**
  *
  */
-static JSBool 
-js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc, 
+static int
+js_page_subscription_destroyed(void *aux)
+{
+  js_model_t *jm = aux;
+  jm->jm_subs--;
+  return 1;
+}
+
+/**
+ *
+ */
+static JSBool
+js_page_subscribe(JSContext *cx, JSObject *obj, uintN argc,
 		  jsval *argv, jsval *rval)
 {
   js_model_t *jm = JS_GetPrivate(cx, obj);
+  jm->jm_subs++;
   return js_subscribe(cx, argc, argv, rval, jm->jm_root, "page",
 		      &jm->jm_subscriptions, jm->jm_pc,
-		      &jm->jm_subs);
+                      js_page_subscription_destroyed, jm);
 }
 
 /**
