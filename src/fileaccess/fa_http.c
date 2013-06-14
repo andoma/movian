@@ -587,8 +587,9 @@ http_cookie_set(char *cookie, http_file_t *hf)
     return;
   }
 
-  HF_TRACE(hf, "Updating cookie name=%s path=%s domain=%s value=%s",
-           name, path, domain, value);
+  HF_TRACE(hf, "Updating cookie name=%s path=%s domain=%s value=%s expires in %d seconds",
+           name, path, domain, value,
+           expire > 0 ? ((int)expire - time(NULL)) : -1);
 
   hts_mutex_lock(&http_cookies_mutex);
 
