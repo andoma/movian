@@ -454,7 +454,7 @@ event_to_prop(prop_t *p, event_t *e)
 void
 event_to_ui(event_t *e)
 {
-  event_to_prop(prop_get_by_name(PNVEC("global", "ui", "eventSink"),
+  event_to_prop(prop_get_by_name(PNVEC("global", "userinterfaces", "ui", "eventSink"),
 				 1, NULL), e);
   event_release(e);
 }
@@ -493,7 +493,7 @@ event_dispatch(event_t *e)
 	    event_is_action(e, ACTION_PLAYQUEUE) ||
 	    event_is_action(e, ACTION_RELOAD_DATA) ||
 	    event_is_type(e, EVENT_OPENURL)) {
-    event_to_prop(prop_get_by_name(PNVEC("global", "nav", "eventsink"),
+    event_to_prop(prop_get_by_name(PNVEC("global", "navigators", "nav", "eventsink"),
 				   1, NULL), e);
 
   } else if(event_is_action(e, ACTION_VOLUME_UP) ||
