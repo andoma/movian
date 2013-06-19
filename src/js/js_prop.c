@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include "js.h"
-
+#include "misc/str.h"
 #include "prop/prop_i.h"
 
 /**
@@ -53,8 +53,9 @@ static JSBool
 pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   const char *name = name_by_id(id);
+  prop_t *p = JS_GetPrivate(cx, obj);
   if(name != NULL)
-    js_prop_set_from_jsval(cx, prop_create(JS_GetPrivate(cx, obj), name), *vp);
+    js_prop_set_from_jsval(cx, prop_create(p, name), *vp);
   return JS_TRUE;
 }
 
@@ -65,15 +66,32 @@ pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static JSBool
 pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
-  const char *name = name_by_id(id);
   prop_t *p = JS_GetPrivate(cx, obj);
   prop_t *c;
-  *vp = JSVAL_NULL;
 
   hts_mutex_lock(&prop_mutex);
-  TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
-    if(c->hp_name != NULL && !strcmp(c->hp_name, name))
-      break;
+
+  if(JSVAL_IS_STRING(id)) {
+    const char *name = JS_GetStringBytes(JSVAL_TO_STRING(id));
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name))
+        break;
+
+  } else if(JSVAL_IS_INT(id)) {
+    int num = JSVAL_TO_INT(id);
+
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name)
+        continue;
+      if(num == 0)
+        break;
+      num--;
+    }
+  } else {
+    hts_mutex_unlock(&prop_mutex);
+    return JS_FALSE;
+  }
+
 
   if(c != NULL) {
     jsdouble *d;
@@ -120,25 +138,52 @@ pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static void
 pb_finalize(JSContext *cx, JSObject *obj)
 {
-  prop_t *p = JS_GetPrivate(cx, obj);
-  prop_ref_dec(p);
+  prop_ref_dec(JS_GetPrivate(cx, obj));
 }
 
 
 /**
  *
  */
-static JSClass prop_bridge_class = {
-  "PropBridgeClass",
+static JSBool
+pb_enumerate(JSContext *cx, JSObject *obj)
+{
+  prop_t *p = JS_GetPrivate(cx, obj);
+
+  char **v = prop_get_name_of_childs(p);
+  if(v == NULL)
+    return JS_FALSE;
+
+  for(char **x = v; *x; x++) {
+    const char *name = *x;
+    if(*name == '*') {
+      JS_DefineProperty(cx, obj, (const char *)atoi(name+1), JSVAL_NULL,
+                        NULL, NULL, JSPROP_ENUMERATE | JSPROP_INDEX);
+    } else {
+      JS_DefineProperty(cx, obj, *x, JSVAL_NULL, NULL, NULL, JSPROP_ENUMERATE);
+
+    }
+  }
+  strvec_free(v);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSClass prop_map_class = {
+  "Prop",
   JSCLASS_HAS_PRIVATE,
-  pb_setProperty, 
+  pb_getProperty,
   pb_delProperty,
   pb_getProperty,
   pb_setProperty,
-  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,
+  pb_enumerate,
+  JS_ResolveStub,
+  JS_ConvertStub,
   pb_finalize,
 };
-
 
 
 /**
@@ -147,11 +192,11 @@ static JSClass prop_bridge_class = {
 JSObject *
 js_object_from_prop(JSContext *cx, prop_t *p)
 {
-  JSObject *obj = JS_NewObjectWithGivenProto(cx, &prop_bridge_class,
-					     NULL, NULL);
+  JSObject *obj = JS_NewObjectWithGivenProto(cx, &prop_map_class, NULL, NULL);
   JS_SetPrivate(cx, obj, prop_ref_inc(p));
   return obj;
 }
+
 
 typedef struct {
   jsval value;
