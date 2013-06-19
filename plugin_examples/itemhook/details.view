@@ -1,0 +1,95 @@
+
+#define INFO(X, Y) {
+  widget(container_x, {
+    focusable: true;
+    widget(label, {
+      filterConstraintX: true;
+      weight: 0.5;
+      caption: X + ":";
+      align: right;
+      color: 0.7;
+    });
+    widget(label, {
+      filterConstraintX: true;
+      caption: Y;
+    });
+  });
+}
+
+$view.m = $page.model.metadata.info.metadata;
+
+widget(list_y, {
+  widget(label, {
+    sizeScale: 2;
+    caption: "Some info for " + $view.m.title;
+  });
+  widget(quad, {
+    height: 1;
+  });
+  INFO("Tagline", $view.m.tagline);
+  INFO("Format", $view.m.format);
+  INFO("Genre", $view.m.genre);
+  INFO("Year", $view.m.year);
+
+  widget(dummy, {
+    height: $ui.size;
+  });
+
+  widget(label, {
+    sizeScale: 1.5;
+    caption: "Audio tracks";
+  });
+
+  widget(quad, {
+    height: 1;
+  });
+
+  cloner($view.m.audiostreams, container_z, {
+    INFO($self.title, $self.longformat);
+  });
+
+  widget(label, {
+    sizeScale: 1.5;
+    caption: "Subtitle tracks";
+  });
+
+  widget(quad, {
+    height: 1;
+  });
+
+  cloner($view.m.subtitlestreams, container_z, {
+    INFO($self.title, $self.longformat + ' (' + $self.language + ')');
+  });
+
+
+  widget(label, {
+    sizeScale: 1.5;
+    caption: "Cast";
+  });
+
+  widget(quad, {
+    height: 1;
+  });
+
+  cloner($view.m.cast, container_x, {
+    focusable: true;
+    padding: [$ui.size, 5];
+    widget(icon, {
+      sizeScale: 3;
+      source: $self.portrait;
+    });
+
+    widget(container_y, {
+      widget(label, {
+        caption: $self.name;
+      });
+
+      widget(label, {
+        caption: "As: " + $self.character;
+      });
+    });
+  });
+
+
+
+});
