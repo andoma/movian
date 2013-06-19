@@ -162,6 +162,57 @@ typedef struct {
 /**
  *
  */
+static JSClass prop_ref_class = {
+  "propref",
+  JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, pb_finalize,
+};
+
+
+static JSBool
+js_openURL(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  const char *url;
+  const char *view = NULL;
+  const char *how = NULL;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s/ss", &url, &view, &how))
+    return JS_FALSE;
+
+  event_t *e = event_create_openurl(url, view, NULL, NULL, how);
+  prop_send_ext_event(JS_GetPrivate(cx, obj), e);
+  event_release(e);
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSFunctionSpec setting_functions[] = {
+    JS_FS("openURL", js_openURL, 1, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+JSObject *
+js_nav_create(JSContext *cx, prop_t *p)
+{
+  JSObject *proto = js_object_from_prop(cx, p);
+  JSObject *obj = JS_NewObject(cx, &prop_ref_class, proto, NULL);
+  JS_SetPrivate(cx, obj, prop_create_r(p, "eventsink"));
+  JS_DefineFunctions(cx, obj, setting_functions);
+  return obj;
+}
+
+
+/**
+ *
+ */
 static void
 vfw_setval(void *opaque, prop_event_t event, ...)
 {

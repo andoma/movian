@@ -205,6 +205,7 @@ glw_event_map_propref_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   event_t *e = event_create_prop(EVENT_PROPREF, g->prop);
 
   if(g->target != NULL) {
+    e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
     prop_send_ext_event(g->target, e);
     event_release(e);
   } else {
@@ -328,9 +329,10 @@ glw_event_map_deliverEvent_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
     return;
   }
 
-  src = event_create_action_str(rstr_get(de->action));
-  prop_send_ext_event(de->target, src);
-  event_release(src);
+  event_t *e = event_create_action_str(rstr_get(de->action));
+  e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
+  prop_send_ext_event(de->target, e);
+  event_release(e);
 }
 
 
@@ -482,6 +484,7 @@ glw_event_map_internal_fire(glw_t *w, glw_event_map_t *gem, event_t *src)
   else
     e = event_create_action(g->event);
   e->e_mapped = 1;
+  e->e_nav = prop_ref_inc(w->glw_root->gr_prop_nav);
 
   if(g->target != NULL) {
 

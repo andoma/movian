@@ -104,13 +104,15 @@ hook_eventsub(void *opaque, prop_event_t event, ...)
 
       if(JS_EnterLocalRootScope(cx)) {
         JSObject *o = js_object_from_prop(cx, ep->p);
-        void *mark;
+        JSObject *nav = e->e_nav ? js_nav_create(cx, e->e_nav) : NULL;
+
         jsval result;
+        jsval argv[2];
 
-        jsval *argv = JS_PushArguments(cx, &mark, "o", o);
+        argv[0] = OBJECT_TO_JSVAL(o);
+        argv[1] = nav ? OBJECT_TO_JSVAL(nav) : 0;
 
-        JS_CallFunctionValue(cx, NULL, jh->jh_func, 1, argv, &result);
-        JS_PopArguments(cx, mark);
+        JS_CallFunctionValue(cx, NULL, jh->jh_func, nav ? 2 : 1, argv, &result);
 
         JS_LeaveLocalRootScope(cx);
       }

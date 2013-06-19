@@ -209,6 +209,8 @@ void js_set_prop_dbl(JSContext *cx, JSObject *o, const char *prop, double v);
 void js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name,
 		       jsval item);
 
+JSObject *js_nav_create(JSContext *cx, prop_t *p);
+
 void js_metaprovider_init(void);
 
 JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc, 
