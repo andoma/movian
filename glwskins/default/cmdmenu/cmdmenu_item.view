@@ -116,6 +116,14 @@ commandMenuChrome(
        $self.model.canDelete || $args.canDelete,
        [1,0.8,0.8]);
 
+  cloner($global.itemhooks, container_z, {
+    hidden: !($self.itemtype == $args.type || $self.itemtype == void);
+    ITEM($self.metadata.title, {
+      fireEvent(deliverRef($self.eventSink, $args));
+      $view.close = true;
+    },
+         $self.metadata.icon);
+  });
 
   cloner($args.options, loader, {
     time: 0.1;
@@ -124,15 +132,6 @@ commandMenuChrome(
     source: "cmditems/" + $self.type + ".view";
     hidden: !$self.enabled;
     args: $view;
-  });
-
-  cloner($global.itemhooks, container_z, {
-    ITEM($self.metadata.title, {
-      fireEvent(deliverRef($self.eventSink, $args));
-      $view.close = true;
-    },
-         $self.metadata.icon,
-         $self.itemtype == $args.type || $self.itemtype == void);
   });
 
   widget(dummy, {
