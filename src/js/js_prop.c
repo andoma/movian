@@ -157,8 +157,9 @@ pb_enumerate(JSContext *cx, JSObject *obj)
   for(char **x = v; *x; x++) {
     const char *name = *x;
     if(*name == '*') {
-      JS_DefineProperty(cx, obj, (const char *)atoi(name+1), JSVAL_NULL,
-                        NULL, NULL, JSPROP_ENUMERATE | JSPROP_INDEX);
+      JS_DefineProperty(cx, obj, (const char *)(intptr_t)atoi(name+1),
+                        JSVAL_NULL, NULL, NULL,
+                        JSPROP_ENUMERATE | JSPROP_INDEX);
     } else {
       JS_DefineProperty(cx, obj, *x, JSVAL_NULL, NULL, NULL, JSPROP_ENUMERATE);
 
