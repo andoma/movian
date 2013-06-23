@@ -134,6 +134,15 @@ i18n_init(void)
 			     set_srt_charset, NULL, NULL,
 			     store, settings_generic_save_settings, 
 			     (void *)"i18n");
+
+
+  settings_create_bool(s, "skipthe",
+                       _p("Ignore 'The' at beginning of words when sorting"),
+                       0, store, settings_generic_set_bool,
+                       &gconf.ignore_the_prefix,
+                       SETTINGS_INITIAL_UPDATE,  NULL,
+                       settings_generic_save_settings,
+                       (void *)"i18n");
 }
 
 

@@ -268,6 +268,9 @@ typedef struct gconf {
 
   int fa_allow_delete;
 
+  int ignore_the_prefix;
+
+
 } gconf_t;
 
 extern gconf_t gconf;

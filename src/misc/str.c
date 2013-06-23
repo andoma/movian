@@ -782,6 +782,9 @@ unicode_casefold(unsigned int i)
 static const char *
 no_the(const char *a)
 {
+  if(!gconf.ignore_the_prefix)
+    return a;
+
   if(a[0] != 't' && a[0] != 'T')
     return a;
   if(a[1] != 'h' && a[1] != 'H')
