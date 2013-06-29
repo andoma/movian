@@ -22,8 +22,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdio.h>
-#include "arch/halloc.h"
+#include <errno.h>
 
+#include "arch/halloc.h"
 #include "showtime.h"
 #include "fileaccess.h"
 #include "fa_proto.h"
