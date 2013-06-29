@@ -65,12 +65,15 @@ typedef struct ftp_file {
   fa_handle_t fh;
   ftp_connection_t *ff_fc;
   char *ff_pathx;
-  char ff_pathbuf[1024];
+  int ff_port;
 
   int64_t ff_fpos;
   int64_t ff_size;
 
   tcpcon_t *ff_xfer;
+
+  char ff_hostname[128];
+  char ff_pathbuf[1024];
 
 } ftp_file_t;
 
@@ -293,18 +296,20 @@ ftp_file_release(ftp_file_t *ff, int drop)
 
   assert(ff->ff_xfer == NULL);
 
-  if(drop) {
+  if(fc != NULL) {
 
-    fc_disconnect(fc);
+    if(drop) {
 
-  } else {
+      fc_disconnect(fc);
 
-    fc->fc_expire = showtime_get_ts() + 10000000;
-    hts_mutex_lock(&ftp_global_mutex);
-    LIST_INSERT_HEAD(&ftp_connections, fc, fc_link);
-    hts_mutex_unlock(&ftp_global_mutex);
+    } else {
+
+      fc->fc_expire = showtime_get_ts() + 10000000;
+      hts_mutex_lock(&ftp_global_mutex);
+      LIST_INSERT_HEAD(&ftp_connections, fc, fc_link);
+      hts_mutex_unlock(&ftp_global_mutex);
+    }
   }
-
   free(ff);
 }
 
@@ -336,10 +341,27 @@ ftp_open_data_transfer(ftp_connection_t *fc)
     TRACE(TRACE_ERROR, "FTP", "Data channel connection failed to %s:%d -- %s",
           host, port, buf);
   } else {
-    FTP_TRACE("Data channel connected to %s:%d", host, port);
+    FTP_TRACE("[%d]: Data channel connected to %s:%d", fc->fc_id, host, port);
   }
   return tc;
 }
+
+
+/**
+ *
+ */
+static int
+ff_reconnect(ftp_file_t *ff, char *errbuf, int errlen, int non_interactive)
+{
+  if(ff->ff_fc != NULL)
+    return 0;
+
+  ff->ff_fc = fc_connect(ff->ff_hostname, ff->ff_port,
+			 errbuf, errlen, non_interactive);
+
+  return ff->ff_fc == NULL;
+}
+
 
 
 /**
@@ -350,20 +372,15 @@ ftp_file_init(const char *url, char *errbuf, int errlen, int non_interactive)
 {
   ftp_file_t *ff = malloc(sizeof(ftp_file_t));
   char proto[16];
-  char hostname[256];
-  int port;
 
-  url_split(proto, sizeof(proto), NULL, 0, hostname, sizeof(hostname), &port,
+  ff->ff_port = 0;
+
+  url_split(proto, sizeof(proto), NULL, 0,
+	    ff->ff_hostname, sizeof(ff->ff_hostname), &ff->ff_port,
             ff->ff_pathbuf, sizeof(ff->ff_pathbuf), url);
 
-  if(port < 0)
-    port = 21;
-
-  ff->ff_fc = fc_connect(hostname, port, errbuf, errlen, non_interactive);
-  if(ff->ff_fc == NULL) {
-    free(ff);
-    return NULL;
-  }
+  if(ff->ff_port < 0)
+    ff->ff_port = 21;
 
   if(ff->ff_pathbuf[0] == '/')
     ff->ff_pathx = ff->ff_pathbuf + 1;
@@ -373,6 +390,12 @@ ftp_file_init(const char *url, char *errbuf, int errlen, int non_interactive)
   ff->ff_fpos = 0;
   ff->ff_size = -1;
   ff->ff_xfer = NULL;
+  ff->ff_fc = NULL;
+
+  if(ff_reconnect(ff, errbuf, errlen, non_interactive)) {
+    free(ff);
+    return NULL;
+  }
   return ff;
 }
 
@@ -465,10 +488,10 @@ ftp_list_dir_LIST(ftp_connection_t *fc, const char *path, fa_dir_t *fd)
   while(1) {
     if(tcp_read_line(tc, resp, sizeof(resp)) < 0)
       break;
-    FTP_TRACE("[%dc]: Recv: %s", fc->fc_id, resp);
+    FTP_TRACE("[%dd]: Recv: %s", fc->fc_id, resp);
     ftp_add_dir_entry(fc, path, fd, resp);
   }
-  FTP_TRACE("[%dc]: Closed", fc->fc_id);
+  FTP_TRACE("[%dd]: Closed", fc->fc_id);
 
   tcp_close(tc);
 
@@ -589,6 +612,9 @@ ftp_read(fa_handle_t *fh, void *buf, size_t size0)
   ftp_file_t *ff = (ftp_file_t *)fh;
   int64_t size = size0;
 
+  if(ff_reconnect(ff, NULL, 0, 0))
+    return -1;
+
   if(ff->ff_fpos + size > ff->ff_size)
     size = ff->ff_size - ff->ff_fpos;
 
@@ -617,6 +643,7 @@ ftp_read(fa_handle_t *fh, void *buf, size_t size0)
   size_t rval = 0;
   while(size > 0) {
     int r = tcp_read_data_nowait(ff->ff_xfer, buf, size);
+    FTP_TRACE("[%dd]: Recv data: %d", ff->ff_fc->fc_id, r);
     if(r < 0) {
       tcp_close(ff->ff_xfer);
       ff->ff_xfer = NULL;
@@ -667,18 +694,30 @@ ftp_seek(fa_handle_t *fh, int64_t pos, int whence)
   if(np < 0)
     return -1;
 
+  FTP_TRACE("After seek pos = %"PRId64" np = %"PRId64"", ff->ff_fpos, np);
+
   if(ff->ff_fpos == np)
     return ff->ff_fpos;
 
   if(ff->ff_xfer != NULL) {
+    assert(ff->ff_fc != NULL);
+    FTP_TRACE("[%dd]: Closing due to seek", ff->ff_fc->fc_id);
     tcp_close(ff->ff_xfer);
     ff->ff_xfer = NULL;
     int r = fc_read_result(ff->ff_fc, NULL, 0);
+    FTP_TRACE("[%d]: Read terminated with %d", ff->ff_fc->fc_id, r);
+
+    if(r == -1) {
+      fc_disconnect(ff->ff_fc);
+      ff->ff_fc = NULL;
+    }
+
     if(r >= 500)
       return -1;
   }
 
   ff->ff_fpos = np;
+  FTP_TRACE("After seek pos = %"PRId64"", ff->ff_fpos);
   return ff->ff_fpos;
 }
 
@@ -690,6 +729,10 @@ static int64_t
 ftp_fsize(fa_handle_t *fh)
 {
   ftp_file_t *ff = (ftp_file_t *)fh;
+
+  if(ff_reconnect(ff, NULL, 0, 0))
+    return -1;
+
   return ftp_file_size(ff);
 }
 
