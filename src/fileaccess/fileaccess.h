@@ -273,4 +273,9 @@ fa_handle_t *fa_aescbc_open(fa_handle_t *fa, const uint8_t *iv,
 
 fa_handle_t *fa_bwlimit_open(fa_handle_t *fa, int bps);
 
+// Compare reader
+
+fa_handle_t *fa_cmp_open(fa_handle_t *fa, const char *locafile);
+
 #endif /* FILEACCESS_H */
+
