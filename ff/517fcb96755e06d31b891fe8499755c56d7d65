@@ -1,0 +1,3 @@
+No longer ignore 'The' prefix when sorting.
+
+The old behavior can be re-enabled under Settings -> Languages
