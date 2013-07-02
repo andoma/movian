@@ -132,7 +132,6 @@ js_hook_destroy(JSContext *cx, js_hook_t *jh)
   LIST_REMOVE(jh, jh_plugin_link);
 
   prop_destroy(jh->jh_prop_root);
-  prop_unsubscribe(jh->jh_prop_sub);
   js_hook_release(cx, jh);
 }
 
