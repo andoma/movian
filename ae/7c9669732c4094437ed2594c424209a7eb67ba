@@ -1,0 +1,9 @@
+Rework subtitle provider ordering
+
+It's now possible for the user to freely select the order in which
+subtitles should appear.
+
+It's also possible to select on a per-provider base if the provider
+should be candidate for automatic selection by Showtime itself
+
+Fixes #1535
