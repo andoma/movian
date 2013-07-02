@@ -533,7 +533,7 @@ glw_event_map_intercept(glw_t *w, event_t *e)
 
   LIST_FOREACH(gem, &w->glw_event_maps, gem_link) {
 
-    if((gem->gem_action == -1 && event_is_type(e, EVENT_KEYDESC)) ||
+    if((gem->gem_action == ACTION_invalid && event_is_type(e, EVENT_KEYDESC)) ||
        event_is_action(e, gem->gem_action)) {
       gem->gem_fire(w, gem, e);
       return 1;

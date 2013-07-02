@@ -119,6 +119,8 @@ typedef enum {
   ACTION_SYSINFO,
 
   ACTION_mappable_end,
+
+  ACTION_invalid = -1,
 } action_type_t;
 
 
