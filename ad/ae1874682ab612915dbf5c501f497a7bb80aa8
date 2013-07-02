@@ -1,0 +1,6 @@
+Add support for a central subtitle folder.
+
+The folder can be used to store subtitle files that Showtime can use
+when playing a movie.
+
+To configure path to the folder, open Settings -> Subtitles
