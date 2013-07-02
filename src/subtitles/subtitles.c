@@ -40,10 +40,12 @@ static hts_mutex_t subtitle_provider_mutex;
 static struct subtitle_provider_queue subtitle_providers;
 static int num_subtitle_providers;
 static prop_t *subtitle_settings_group;
+static char *central_path;
 
 static subtitle_provider_t *sp_same_filename;
 static subtitle_provider_t *sp_any_filename;
-//static subtitle_provider_t *sp_central_dir;
+static subtitle_provider_t *sp_central_dir_same_filename;
+static subtitle_provider_t *sp_central_dir_any_filename;
 static subtitle_provider_t *sp_embedded;
 
 static htsmsg_t *sp_cfg;
@@ -258,8 +260,14 @@ check_subtitle_file(sub_scanner_t *ss,
   if(postfix == NULL)
     return;
 
-  if(fs_sub_match(video_filename, sub_url) != match_result)
-    return;
+  if(match_result == -1) {
+
+    base_score += fs_sub_match(video_filename, sub_url);
+
+  } else {
+    if(fs_sub_match(video_filename, sub_url) != match_result)
+      return;
+  }
 
   if(!strcasecmp(postfix, ".srt")) {
     if(postfix - sub_filename > 4 && postfix[-4] == '.') {
@@ -307,11 +315,17 @@ check_subtitle_file(sub_scanner_t *ss,
  * video - filename of video
  */
 static void
-fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
+fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video,
+                const char *descend_filter, unsigned int level,
+                const subtitle_provider_t *sp1,
+                const subtitle_provider_t *sp2)
 {
   fa_dir_t *fd;
   fa_dir_entry_t *fde;
   char errbuf[256];
+
+  if(level == 0)
+    return;
 
   TRACE(TRACE_DEBUG, "Video", "Scanning for subs in %s for %s", url, video);
 
@@ -326,23 +340,31 @@ fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
       break;
 
     if(fde->fde_type == CONTENT_DIR &&
-       !strcasecmp(rstr_get(fde->fde_filename), "subs")) {
-      fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video);
+       (descend_filter == NULL ||
+        !strcasecmp(rstr_get(fde->fde_filename), descend_filter))) {
+      fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video, descend_filter,
+                      level - 1, sp1, sp2);
       continue;
     }
+
+    const char *postfix = strrchr(rstr_get(fde->fde_url), '.');
+    if(!strcasecmp(postfix, ".zip")) {
+      char zipurl[1024];
+      snprintf(zipurl, sizeof(zipurl), "zip://%s", rstr_get(fde->fde_url));
+      fs_sub_scan_dir(ss, zipurl, video, descend_filter, level - 1, sp1, sp2);
+      continue;
+    }
+
     const char *filename = rstr_get(fde->fde_filename);
     const char *url      = rstr_get(fde->fde_url);
 
-    if(sp_same_filename->sp_enabled)
-      check_subtitle_file(ss, filename, url, video,
-                          subtitle_score(sp_same_filename),
-                          1, sp_same_filename->sp_autosel);
+    if(sp1->sp_enabled)
+      check_subtitle_file(ss, filename, url, video, subtitle_score(sp1),
+                          1, sp1->sp_autosel);
 
-    if(sp_any_filename->sp_enabled)
-      check_subtitle_file(ss, filename, url, video,
-                          subtitle_score(sp_any_filename),
-                          0, sp_any_filename->sp_autosel);
-
+    if(sp2->sp_enabled)
+      check_subtitle_file(ss, filename, url, video, subtitle_score(sp2),
+                          0, sp2->sp_autosel);
   }
   fa_dir_free(fd);
 }
@@ -403,19 +425,34 @@ sub_scanner_thread(void *aux)
 
   hts_mutex_unlock(&subtitle_provider_mutex);
 
+  char *fname = mystrdupa(ss->ss_url);
+  fname = strrchr(fname, '/') ?: fname;
+  fname++;
+  char *dot = strrchr(fname, '.');
+  if(dot)
+    *dot = 0;
+
   if(!(ss->ss_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
     char parent[URL_MAX];
-    char *fname = mystrdupa(ss->ss_url);
-
-    fname = strrchr(fname, '/') ?: fname;
-    fname++;
-    char *dot = strrchr(fname, '.');
-    if(dot)
-      *dot = 0;
-
     fa_parent(parent, sizeof(parent), ss->ss_url);
-    fs_sub_scan_dir(ss, parent, fname);
+    fs_sub_scan_dir(ss, parent, fname, "subs", 2,
+                    sp_same_filename, sp_any_filename);
   }
+
+  hts_mutex_lock(&subtitle_provider_mutex);
+  if(central_path != NULL && central_path[0]) {
+    const char *path = mystrdupa(central_path);
+    hts_mutex_unlock(&subtitle_provider_mutex);
+
+    fs_sub_scan_dir(ss, path, fname, NULL, 2,
+                    sp_central_dir_same_filename,
+                    sp_central_dir_any_filename);
+
+  } else {
+    hts_mutex_unlock(&subtitle_provider_mutex);
+  }
+
+
 
   int i;
   for(i = 0; i < cnt; i++) {
@@ -624,6 +661,13 @@ set_subtitle_outline_size(void *opaque, int v)
   subtitle_settings.outline_size = v;
 }
 
+static void
+set_central_dir(void *opaque, const char *str)
+{
+  hts_mutex_lock(&subtitle_provider_mutex);
+  mystrset(&central_path, str);
+  hts_mutex_unlock(&subtitle_provider_mutex);
+}
 
 
 
@@ -641,6 +685,15 @@ subtitles_init_settings(prop_concat_t *pc)
   //----------------------------------------------------------
 
   htsmsg_t *store = htsmsg_store_load("subtitles") ?: htsmsg_create_map();
+
+  settings_create_separator(s, _p("Central subtitle folder"));
+
+  settings_create_string(s, "subtitlefolder", _p("Path to central folder"),
+                         NULL,
+			 store, set_central_dir, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings,
+			 (void *)"subtitles");
 
 
   settings_create_separator(s, _p("Subtitle size and positioning"));
@@ -712,6 +765,7 @@ subtitles_init_settings(prop_concat_t *pc)
 }
 
 
+
 /**
  *
  */
@@ -739,26 +793,48 @@ subtitles_init_providers(prop_concat_t *pc)
                  PROP_TAG_ROOT, n,
                  NULL);
 
+  //------------------------------------------------
+
   sp_embedded =
     subtitle_provider_create("showtime_embedded_subs",
                              _p("Subtitles embedded in video file"),
                              400000, "video", 1, 1);
+
+  //------------------------------------------------
 
   sp_same_filename =
     subtitle_provider_create("showtime_same_filename",
                              _p("Subtitles with matching filename in same folder as video"),
                              500000, "subtitle", 1, 1);
 
+  //------------------------------------------------
+
   sp_any_filename =
-    subtitle_provider_create("showtime_same_folder",
+    subtitle_provider_create("showtime_any_filename",
                              _p("Any subtitle in same folder as video"),
                              501000, "subtitle", 0, 1);
-#if 0
-  sp_central_dir =
-    subtitle_provider_create("showtime_central_sub_dir",
-                             _p("Subtitles with matching filename from central subtitle folder"),
-                             502000, "subtitle", 0, 1);
-#endif
+
+  //------------------------------------------------
+
+  sp_central_dir_same_filename =
+    subtitle_provider_create("showtime_central_dir_same_filename",
+                             _p("Subtitles with matching filename in central folder"),
+                             502000, "subtitle", 1, 1);
+
+  //------------------------------------------------
+
+  sp_central_dir_any_filename =
+    subtitle_provider_create("showtime_central_dir_any_filename",
+                             _p("Any subtitle in central folder"),
+                             503000, "subtitle", 0, 1);
+
+
+  int prio = 0;
+  subtitle_provider_t *sp;
+  TAILQ_FOREACH(sp, &subtitle_providers, sp_link) {
+    sp->sp_prio = ++prio;
+  }
+
 }
 
 /**
