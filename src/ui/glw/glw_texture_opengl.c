@@ -92,11 +92,11 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   if(glt->glt_tex_width && glt->glt_tex_height) {
 
     glTexImage2D(m, 0, glt->glt_format, glt->glt_tex_width, glt->glt_tex_height,
-		 0, glt->glt_ext_format, glt->glt_ext_type, NULL);
+		 0, glt->glt_format, GL_UNSIGNED_BYTE, NULL);
 
     glTexSubImage2D(m, 0, 0, 0, 
 		    glt->glt_xs, glt->glt_ys, 
-		    glt->glt_ext_format, glt->glt_ext_type,
+		    glt->glt_format, GL_UNSIGNED_BYTE,
 		    p);
 
     glt->glt_s = (float)glt->glt_xs / (float)glt->glt_tex_width;
@@ -108,8 +108,8 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 
     glTexImage2D(m, 0, glt->glt_format, 
 		 glt->glt_xs, glt->glt_ys,
-		 0, glt->glt_ext_format,
-		 glt->glt_ext_type, p);
+		 0, glt->glt_format,
+		 GL_UNSIGNED_BYTE, p);
   }
 
 
@@ -124,33 +124,31 @@ glw_tex_backend_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
 int
 glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
 {
+  int size;
+
   switch(pm->pm_type) {
   default:
-    return 1;
+    return 0;
 
   case PIXMAP_RGB24:
     glt->glt_format = GL_RGB;
-    glt->glt_ext_format = GL_RGB;
-    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    size = pm->pm_width * pm->pm_height * 4;
     break;
 
 
   case PIXMAP_BGR32:
     glt->glt_format = GL_RGBA;
-    glt->glt_ext_format = GL_RGBA;
-    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    size = pm->pm_width * pm->pm_height * 4;
     break;
     
   case PIXMAP_IA:
     glt->glt_format = GL_LUMINANCE_ALPHA;
-    glt->glt_ext_format = GL_LUMINANCE_ALPHA;
-    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    size = pm->pm_width * pm->pm_height * 2;
     break;
 
   case PIXMAP_I:
     glt->glt_format = GL_LUMINANCE;
-    glt->glt_ext_format = GL_LUMINANCE;
-    glt->glt_ext_type = GL_UNSIGNED_BYTE;
+    size = pm->pm_width * pm->pm_height;
     break;
   }
   
@@ -159,10 +157,7 @@ glw_tex_backend_load(glw_root_t *gr, glw_loadable_texture_t *glt, pixmap_t *pm)
 
   glt->glt_pixmap = pixmap_dup(pm);
 
-  glt->glt_xs = pm->pm_width;
-  glt->glt_ys = pm->pm_height;
-
-  return 0;
+  return size;
 }
 
 /**

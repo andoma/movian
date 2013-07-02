@@ -25,6 +25,7 @@
 #include "sub.h"
 #include "video/video_settings.h"
 #include "ext_subtitles.h"
+#include "subtitles.h"
 
 /**
  *

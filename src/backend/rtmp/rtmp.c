@@ -31,7 +31,7 @@
 #include "misc/isolang.h"
 #include "video/video_playback.h"
 #include "video/video_settings.h"
-#include "subtitles/sub_scanner.h"
+#include "subtitles/subtitles.h"
 #include "metadata/metadata.h"
 
 typedef struct {
@@ -437,7 +437,8 @@ get_packet_a(rtmp_t *r, uint8_t *data, int size, int64_t dts,
 		 NULL, 
 		 NULL,
 		 NULL,
-		 0);
+		 0,
+                 1);
 
     prop_set_string(mp->mp_prop_audio_track_current, "rtmp:1");
 

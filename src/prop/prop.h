@@ -61,6 +61,7 @@ typedef enum {
   PROP_SET_FLOAT,
   PROP_SET_DIR,
   PROP_SET_RLINK,
+  PROP_ADOPT_RSTRING,
 
   PROP_ADD_CHILD,
   PROP_ADD_CHILD_BEFORE,
@@ -365,6 +366,8 @@ prop_courier_t *prop_courier_create_lockmgr(const char *name,
 
 int prop_courier_wait(prop_courier_t *pc, struct prop_notify_queue *q,
 		      int timeout);
+
+void prop_courier_wakeup(prop_courier_t *pc);
 
 void prop_courier_wait_and_dispatch(prop_courier_t *pc);
 

@@ -95,7 +95,7 @@ typedef struct vdpau_video_surface {
   VdpVideoSurface vvs_surface;
 
   int vvs_idx;
-  struct media_buf vvs_mb;
+  struct media_buf_meta vvs_mbm;
 } vdpau_video_surface_t;
 
 

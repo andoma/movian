@@ -3,6 +3,7 @@
 
 #include "media.h"
 #include "omx.h"
+#include "rpi_pixmap.h"
 
 /**
  *
@@ -13,9 +14,10 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 {
   omx_component_t *oc = opaque;
 
+#if 1
   omxdbg("%s: event  0x%x 0x%x 0x%x %p\n",
          oc->oc_name, event, (int)data1, (int)data2, eventdata);
-
+#endif
 
   switch(event) {
   case OMX_EventCmdComplete:
@@ -35,16 +37,30 @@ oc_event_handler(OMX_HANDLETYPE component, OMX_PTR opaque, OMX_EVENTTYPE event,
 
     case OMX_ErrorSameState:
       goto complete;
+
+    case OMX_ErrorStreamCorrupt:
+      TRACE(TRACE_INFO, "OMX", "%s: Corrupt stream", oc->oc_name);
+      hts_mutex_lock(oc->oc_avail_mtx);
+      oc->oc_stream_corrupt = 1;
+      hts_cond_signal(oc->oc_avail_cond);
+      hts_mutex_unlock(oc->oc_avail_mtx);
+      break;
+
       
     default:
       TRACE(TRACE_ERROR, "OMX", "%s: ERROR 0x%x\n", oc->oc_name, (int)data1);
-      exit(1);
+      break;
     }
     break;
 
   case OMX_EventPortSettingsChanged:
     if(oc->oc_port_settings_changed_cb != NULL)
       oc->oc_port_settings_changed_cb(oc);
+    break;
+
+  case OMX_EventMark:
+    if(oc->oc_event_mark_cb != NULL)
+      oc->oc_event_mark_cb(oc, eventdata);
     break;
     
   default:
@@ -77,7 +93,26 @@ oc_empty_buffer_done(OMX_HANDLETYPE hComponent,
 /**
  *
  */
-static void
+static OMX_ERRORTYPE
+oc_fill_buffer_done(OMX_HANDLETYPE hComponent,
+                     OMX_PTR opaque,
+                     OMX_BUFFERHEADERTYPE* buf)
+{
+  omx_component_t *oc = opaque;
+
+  hts_mutex_lock(oc->oc_avail_mtx);
+  oc->oc_filled = buf;
+  hts_cond_signal(oc->oc_avail_cond);
+  hts_mutex_unlock(oc->oc_avail_mtx);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
+void
 omx_wait_command(omx_component_t *oc)
 {
   hts_mutex_lock(&oc->oc_event_mtx);
@@ -90,7 +125,7 @@ omx_wait_command(omx_component_t *oc)
 /**
  *
  */
-static void
+void
 omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
 		 int wait)
 {
@@ -127,7 +162,7 @@ omx_component_create(const char *name, hts_mutex_t *mtx, hts_cond_t *avail)
 
   cb.EventHandler    = oc_event_handler;
   cb.EmptyBufferDone = oc_empty_buffer_done;
-  cb.FillBufferDone  = NULL;
+  cb.FillBufferDone  = oc_fill_buffer_done;
 
   //  omxdbg("Creating %s\n", oc->oc_name);
   omxchk(OMX_GetHandle(&oc->oc_handle, oc->oc_name, oc, &cb));
@@ -140,15 +175,18 @@ omx_component_create(const char *name, hts_mutex_t *mtx, hts_cond_t *avail)
     ports.nVersion.nVersion = OMX_VERSION;
 
     omxchk(OMX_GetParameter(oc->oc_handle, types[i], &ports));
-    //    omxdbg("%s: type:%d: ports: %ld +%ld\n", name, i, ports.nStartPortNumber, ports.nPorts);
+    omxdbg("%s: type:%d: ports: %ld +%ld\n", name, i, ports.nStartPortNumber, ports.nPorts);
 
-    int i;
-    for(i = 0; i < ports.nPorts; i++)
-      omx_send_command(oc, OMX_CommandPortDisable, ports.nStartPortNumber + i, NULL, 0);
+    if(ports.nPorts > 0) {
+      oc->oc_inport = ports.nStartPortNumber;
+      oc->oc_outport = ports.nStartPortNumber + 1;
+    }
+
+    for(int j = 0; j < ports.nPorts; j++)
+      omx_send_command(oc, OMX_CommandPortDisable, ports.nStartPortNumber + j, NULL, 0);
+
   }
 
-  //  oc->oc_inport = ports.nStartPortNumber;
-  //  oc->oc_outport = ports.nStartPortNumber + 1;
 
   return oc;
 }
@@ -301,7 +339,10 @@ omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
   omxchk(OMX_SetupTunnel(src->oc_handle, srcport, dst->oc_handle, dstport));
   omx_send_command(src, OMX_CommandPortEnable, srcport, NULL, 0);
   omx_send_command(dst, OMX_CommandPortEnable, dstport, NULL, 0);
-  omx_set_state(dst, OMX_StateIdle);
+
+  omxchk(OMX_GetState(dst->oc_handle, &state));
+  if(state == OMX_StateLoaded)
+    omx_set_state(dst, OMX_StateIdle);
 
   omx_tunnel_t *ot = malloc(sizeof(omx_tunnel_t));
   ot->ot_src = src;
@@ -311,6 +352,15 @@ omx_tunnel_create(omx_component_t *src, int srcport, omx_component_t *dst,
   return ot;
 }
 
+
+/**
+ *
+ */
+void
+omx_port_enable(omx_component_t *c, int port)
+{
+  omx_send_command(c, OMX_CommandPortEnable, port, NULL, 0);
+}
 
 /**
  *
@@ -329,6 +379,21 @@ omx_tunnel_destroy(omx_tunnel_t *ot)
 /**
  *
  */
+int
+omx_wait_fill_buffer(omx_component_t *oc, OMX_BUFFERHEADERTYPE *buf)
+{
+  hts_mutex_lock(oc->oc_avail_mtx);
+  while(oc->oc_filled == NULL)
+    hts_cond_wait(oc->oc_avail_cond, oc->oc_avail_mtx);
+  hts_mutex_unlock(oc->oc_avail_mtx);
+  return 0;
+}
+
+
+
+/**
+ *
+ */
 int64_t
 omx_get_media_time(omx_component_t *oc)
 {
@@ -341,6 +406,20 @@ omx_get_media_time(omx_component_t *oc)
   return omx_ticks_to_s64(ts.nTimestamp);
  
 }
+
+
+/**
+ *
+ */
+void
+omx_enable_buffer_marks(omx_component_t *oc)
+{
+  OMX_CONFIG_BOOLEANTYPE t;
+  OMX_INIT_STRUCTURE(t);
+  t.bEnabled = 1;
+  omxchk(OMX_SetParameter(oc->oc_handle, OMX_IndexParamPassBufferMarks, &t));
+}
+
 
 
 /**
@@ -619,5 +698,7 @@ omx_init(void)
 
   media_pipe_init_extra = omx_mp_init;
   media_pipe_fini_extra = omx_mp_fini;
+
+  rpi_pixmap_init();
 }
 

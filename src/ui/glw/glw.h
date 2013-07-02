@@ -162,17 +162,21 @@ typedef struct glw_rgb {
 #define GLW_IMAGE_CORNER_TOPRIGHT      0x2
 #define GLW_IMAGE_CORNER_BOTTOMLEFT    0x4
 #define GLW_IMAGE_CORNER_BOTTOMRIGHT   0x8
-#define GLW_IMAGE_FIXED_SIZE           0x10
-#define GLW_IMAGE_BEVEL_LEFT           0x20
-#define GLW_IMAGE_BEVEL_TOP            0x40
-#define GLW_IMAGE_BEVEL_RIGHT          0x80
-#define GLW_IMAGE_BEVEL_BOTTOM         0x100
-#define GLW_IMAGE_SET_ASPECT           0x200
-#define GLW_IMAGE_ADDITIVE             0x400
-#define GLW_IMAGE_BORDER_ONLY          0x800
-#define GLW_IMAGE_BORDER_LEFT          0x1000
-#define GLW_IMAGE_BORDER_RIGHT         0x2000
-#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x4000
+
+// Defines the overlapping flags between GLW_TEX_ and GLW_IMAGE_
+#define GLW_IMAGE_TEX_OVERLAP      0xff
+
+#define GLW_IMAGE_FIXED_SIZE           0x100
+#define GLW_IMAGE_BEVEL_LEFT           0x200
+#define GLW_IMAGE_BEVEL_TOP            0x400
+#define GLW_IMAGE_BEVEL_RIGHT          0x800
+#define GLW_IMAGE_BEVEL_BOTTOM         0x1000
+#define GLW_IMAGE_SET_ASPECT           0x2000
+#define GLW_IMAGE_ADDITIVE             0x4000
+#define GLW_IMAGE_BORDER_ONLY          0x8000
+#define GLW_IMAGE_BORDER_LEFT          0x10000
+#define GLW_IMAGE_BORDER_RIGHT         0x20000
+#define GLW_IMAGE_ASPECT_FIXED_BORDERS 0x40000
 
 /**
  * Video flags
@@ -747,6 +751,11 @@ typedef struct glw_root {
   struct glw_loadable_texture_list gr_tex_flush_list;
   struct glw_loadable_texture_queue gr_tex_rel_queue;
 
+  struct {
+    struct glw_loadable_texture_queue q;
+    int size;
+    int limit;
+  } gr_tex_stash[2];
 
   struct glw_loadable_texture_list gr_tex_list;
 

@@ -221,8 +221,6 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
     return nil;
   }
 
-  glw_load_universe(gr);
-
   evsub = prop_subscribe(0,
 			 PROP_TAG_CALLBACK, eventsink, self,
 			 PROP_TAG_NAME("ui", "eventSink"),
@@ -241,6 +239,11 @@ update_sys_activity(CFRunLoopTimerRef timer, void *info)
 			 NULL);
 
   [self openWin:NO];
+
+  glw_lock(gr);
+  glw_load_universe(gr);
+  glw_unlock(gr);
+
   return self;
 }
 

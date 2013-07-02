@@ -113,9 +113,17 @@ commandMenuChrome(
   ITEM(_("Delete"), { 
     delete($args);
   }, "dataroot://resources/svg/Delete.svg",
-       $self.model.canDelete,
+       $self.model.canDelete || $args.canDelete,
        [1,0.8,0.8]);
 
+  cloner($global.itemhooks, container_z, {
+    hidden: !($self.itemtype == $args.type || $self.itemtype == void);
+    ITEM($self.metadata.title, {
+      fireEvent(deliverRef($self.eventSink, $args));
+      $view.close = true;
+    },
+         $self.metadata.icon);
+  });
 
   cloner($args.options, loader, {
     time: 0.1;
@@ -126,11 +134,9 @@ commandMenuChrome(
     args: $view;
   });
 
-
   widget(dummy, {
     navFocusable: false;
     focusable: 0.0001;
   });
-
 )
 

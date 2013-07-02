@@ -264,6 +264,11 @@ fab_close(fa_handle_t *handle)
 #ifdef FILE_PARKING
   buffered_file_t *closeme = NULL, *bf = (buffered_file_t *)handle;
 
+  if(bf->bf_src->fh_proto->fap_flags & FAP_NO_PARKING) {
+    fab_destroy((buffered_file_t *)handle);
+    return;
+  }
+
   hts_mutex_lock(&buffered_global_mutex);
   if(parked)
     closeme = parked;

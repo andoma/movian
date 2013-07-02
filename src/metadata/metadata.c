@@ -41,6 +41,7 @@
 #include "video/video_settings.h"
 
 #include "settings.h"
+#include "subtitles/subtitles.h"
 
 static hts_mutex_t metadata_mutex;
 static prop_courier_t *metadata_courier;
@@ -207,10 +208,10 @@ type2content(const char *str)
  *
  */
 static void
-metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
+metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
+                          int score, int autosel)
 {
   char url[16];
-  int score = 0;
   rstr_t *title;
 
   snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
@@ -219,6 +220,7 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
     score += 10;
   else
     score += 5;
+
 
   if(ms->ms_title != NULL) {
     title = rstr_dup(ms->ms_title);
@@ -239,7 +241,8 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 		ms->ms_isolang,
 		NULL,
 		_p("Embedded in file"),
-		score);
+		score,
+                autosel);
   
   rstr_release(title);
 }
@@ -276,7 +279,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
 
     prop_t *p;
-
+    int score = 0;
+    int autosel = 1;
     switch(ms->ms_type) {
     case MEDIA_TYPE_AUDIO:
       p = prop_create(proproot, "audiostreams");
@@ -287,6 +291,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
       pc = &vc;
       break;
     case MEDIA_TYPE_SUBTITLE:
+      score   = subtitles_embedded_score();
+      autosel = subtitles_embedded_autosel();
       p = prop_create(proproot, "subtitlestreams");
       pc = &sc;
       break;
@@ -297,7 +303,9 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
       prop_destroy_childs(p);
       *pc = 1;
     }
-    metadata_stream_make_prop(ms, p);
+    if(score == -1)
+      continue;
+    metadata_stream_make_prop(ms, p, score, autosel);
   }
 
   if(md->md_format != NULL)
@@ -332,7 +340,7 @@ struct metadata_lazy_prop;
  *
  */
 typedef struct metadata_lazy_class {
-  void (*mlc_load)(struct metadata_lazy_prop *mlp);
+  void (*mlc_load)(void *db, struct metadata_lazy_prop *mlp);
   void (*mlc_kill)(struct metadata_lazy_prop *mlp);
   void (*mlc_dtor)(struct metadata_lazy_prop *mlp);
   size_t mlc_alloc_size;
@@ -483,24 +491,16 @@ typedef struct metadata_lazy_artist {
  *
  */
 static void
-mlp_artist_load(metadata_lazy_prop_t *mlp)
+mlp_artist_load(void *db, metadata_lazy_prop_t *mlp)
 {
   metadata_lazy_artist_t *mla = (metadata_lazy_artist_t *)mlp;
-
-  void *db = metadb_get();
   int r;
 
-  if(!db_begin(db)) {
-    r = metadb_get_artist_pics(db, rstr_get(mla->mla_artist),
+  r = metadb_get_artist_pics(db, rstr_get(mla->mla_artist),
 			       mlp_add_artist_to_prop, mla->mla_prop);
-    
-    if(r)
-      lastfm_load_artistinfo(db, rstr_get(mla->mla_artist),
+  if(r)
+    lastfm_load_artistinfo(db, rstr_get(mla->mla_artist),
 			     mlp_add_artist_to_prop, mla->mla_prop);
-    
-    db_commit(db);
-  }
-  metadb_close(db);
 }
 
 
@@ -564,32 +564,23 @@ typedef struct metadata_lazy_album {
  *
  */
 static void
-mlp_album_load(metadata_lazy_prop_t *mlp)
+mlp_album_load(void *db, metadata_lazy_prop_t *mlp)
 {
   metadata_lazy_album_t *mla = (metadata_lazy_album_t *)mlp;
-
-  void *db = metadb_get();
   rstr_t *r;
 
-  if(!db_begin(db)) {
-    r = metadb_get_album_art(db,rstr_get(mla->mla_album),
-			     rstr_get(mla->mla_artist));
-  
-    if(r == NULL) {
+  r = metadb_get_album_art(db,rstr_get(mla->mla_album),
+                           rstr_get(mla->mla_artist));
+
+  if(r == NULL) {
       // No album art available in our db, try to get some
-      
-      lastfm_load_albuminfo(db, rstr_get(mla->mla_album),
-			    rstr_get(mla->mla_artist));
-      
-      r = metadb_get_album_art(db,rstr_get(mla->mla_album),
-			       rstr_get(mla->mla_artist));
-    }
-    
-    prop_set_rstring(mla->mla_prop, r);
-    rstr_release(r);
-    db_commit(db);
+    lastfm_load_albuminfo(db, rstr_get(mla->mla_album),
+                          rstr_get(mla->mla_artist));
+    r = metadb_get_album_art(db,rstr_get(mla->mla_album),
+                             rstr_get(mla->mla_artist));
   }
-  metadb_close(db);
+  prop_set_rstring(mla->mla_prop, r);
+  rstr_release(r);
 }
 
 
@@ -1326,29 +1317,9 @@ mlv_get_video_info0(void *db, metadata_lazy_video_t *mlv, int refresh)
  *
  */
 static void
-mlv_load(metadata_lazy_prop_t *mlp)
+mlv_load(void *db, metadata_lazy_prop_t *mlp)
 {
-  if(mlp->mlp_zombie)
-    return;
-
-  metadata_lazy_video_t *mlv = (metadata_lazy_video_t *)mlp;
-
-  void *db = metadb_get();
-
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-
-  int r = mlv_get_video_info0(db, mlv, 0);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  db_commit(db);
-  metadb_close(db);
+  mlv_get_video_info0(db, (metadata_lazy_video_t *)mlp, 0);
 }
 
 
@@ -1374,25 +1345,8 @@ static void
 mlv_set_preferred(metadata_lazy_video_t *mlv, int64_t vid)
 {
   void *db = metadb_get();
-  int r;
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-  r = metadb_videoitem_set_preferred(db, rstr_get(mlv->mlv_url), vid);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  r = mlv_get_video_info0(db, mlv, 0);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  db_commit(db);
+  metadb_videoitem_set_preferred(db, rstr_get(mlv->mlv_url), vid);
+  mlv_get_video_info0(db, mlv, 0);
   metadb_close(db);
 }
 
@@ -1500,29 +1454,11 @@ mlv_set_source(metadata_lazy_video_t *mlv, const char *name)
 	}
       }
     }
-  } 
+  }
 
   void *db = metadb_get();
-  int r;
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-
-  r = metadb_item_set_preferred_ds(db, rstr_get(mlv->mlv_url), id);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  r = mlv_get_video_info0(db, mlv, 0);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  db_commit(db);
+  metadb_item_set_preferred_ds(db, rstr_get(mlv->mlv_url), id);
+  mlv_get_video_info0(db, mlv, 0);
   metadb_close(db);
   load_alternatives(mlv);
 }
@@ -1569,35 +1505,11 @@ static void
 mlv_refresh_video_info(metadata_lazy_video_t *mlv)
 {
   void *db = metadb_get();
-  int r;
-
   assert(mlv != NULL);
 
- again:
-  if(db_begin(db)) {
-    metadb_close(db);
-    return;
-  }
-
-  r = metadb_item_set_preferred_ds(db, rstr_get(mlv->mlv_url), 0);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  r = metadb_videoitem_set_preferred(db, rstr_get(mlv->mlv_url), 0);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  r = mlv_get_video_info0(db, mlv, 1);
-  if(r == METADATA_DEADLOCK) {
-    db_rollback_deadlock(db);
-    goto again;
-  }
-
-  db_commit(db);
+  metadb_item_set_preferred_ds(db, rstr_get(mlv->mlv_url), 0);
+  metadb_videoitem_set_preferred(db, rstr_get(mlv->mlv_url), 0);
+  mlv_get_video_info0(db, mlv, 1);
   metadb_close(db);
   load_alternatives(mlv);
 }
@@ -2075,8 +1987,8 @@ mlv_set_imdb_id(metadata_lazy_video_t *mlv, rstr_t *imdb_id)
 {
   hts_mutex_lock(&metadata_mutex);
   rstr_set(&mlv->mlv_imdb_id, imdb_id);
-  mlp_dequeue(&mlv->mlv_mlp);
-  mlv_load(&mlv->mlv_mlp);
+  mlp_enqueue(&mlv->mlv_mlp);
+  prop_courier_wakeup(metadata_courier);
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -2088,8 +2000,8 @@ mlv_set_duration(metadata_lazy_video_t *mlv, float duration)
 {
   hts_mutex_lock(&metadata_mutex);
   mlv->mlv_duration = duration;
-  mlp_dequeue(&mlv->mlv_mlp);
-  mlv_load(&mlv->mlv_mlp);
+  mlp_enqueue(&mlv->mlv_mlp);
+  prop_courier_wakeup(metadata_courier);
   hts_mutex_unlock(&metadata_mutex);
 }
 
@@ -2103,8 +2015,8 @@ mlv_set_lonely(metadata_lazy_video_t *mlv, int lonely)
   hts_mutex_lock(&metadata_mutex);
   if(mlv->mlv_lonely != lonely) {
     mlv->mlv_lonely = lonely;
-    mlp_dequeue(&mlv->mlv_mlp);
-    mlv_load(&mlv->mlv_mlp);
+    mlp_enqueue(&mlv->mlv_mlp);
+    prop_courier_wakeup(metadata_courier);
   }
   hts_mutex_unlock(&metadata_mutex);
 }
@@ -2731,7 +2643,7 @@ add_provider_class(prop_concat_t *pc,
 
   prop_t *n = prop_create(c, "nodes");
 
-  prop_concat_add_source(pc, prop_create(c, "nodes"), d);
+  prop_concat_add_source(pc, n, d);
 
   prop_subscribe(0,
                  PROP_TAG_CALLBACK, provider_class_node_sub, NULL,
@@ -2748,17 +2660,18 @@ static void
 mlp_dispatch(void)
 {
   metadata_lazy_prop_t *mlp;
+  void *db = metadb_get();
   while((mlp = TAILQ_FIRST(&mlpqueue)) != NULL) {
     TAILQ_REMOVE(&mlpqueue, mlp, mlp_link);
     mlp->mlp_queued = 0;
-    mlp->mlp_class->mlc_load(mlp);
+    if(!mlp->mlp_zombie)
+      mlp->mlp_class->mlc_load(db, mlp);
 
-    // This is so lame.
-    // mlc_load should be able to be called unlocked
     hts_mutex_unlock(&metadata_mutex);
     usleep(1);
     hts_mutex_lock(&metadata_mutex);
   }
+  metadb_close(db);
 }
 
 
@@ -2787,6 +2700,9 @@ metadata_thread(void *aux)
 }
 
 
+
+prop_concat_t *metadata_prop_concat;
+
 /**
  *
  */
@@ -2806,7 +2722,7 @@ metadata_init(void)
   
   s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
 		       _p("Metadata configuration and provider settings"),
-		       NULL);
+		       "settings:metadata");
 
   pc = prop_concat_create(prop_create(s, "nodes"), 0);
 

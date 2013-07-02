@@ -144,6 +144,7 @@ glw_init(glw_root_t *gr)
 {
   char skinbuf[PATH_MAX];
   const char *skin = gconf.skin;
+  prop_t *p;
 
   if(gr->gr_prop_dispatcher == NULL)
     gr->gr_prop_dispatcher = &prop_courier_poll_timed;
@@ -152,11 +153,18 @@ glw_init(glw_root_t *gr)
 
   assert(glw_settings.gs_settings != NULL);
 
-  if(prop_set_parent(gr->gr_prop_ui, prop_get_global()))
+  p = prop_create(prop_get_global(), "userinterfaces");
+
+  if(prop_set_parent(gr->gr_prop_ui, p))
     abort();
 
-  if(prop_set_parent(gr->gr_prop_nav, prop_get_global()))
+  p = prop_create(prop_get_global(), "navigators");
+
+  if(prop_set_parent(gr->gr_prop_nav, p))
     abort();
+
+  prop_link(gr->gr_prop_nav, prop_create(p, "current"));
+
 
   if(skin == NULL) {
     snprintf(skinbuf, sizeof(skinbuf),

@@ -462,13 +462,14 @@ glw_video_dtor(glw_t *w)
   glw_video_overlay_deinit(gv);
   
   LIST_REMOVE(gv, gv_global_link);
-  video_decoder_destroy(vd);
 
   hts_mutex_lock(&gv->gv_surface_mutex);  /* Not strictly necessary
 					     but keep asserts happy 
 					  */
   glw_video_surfaces_cleanup(gv);
   hts_mutex_unlock(&gv->gv_surface_mutex);
+
+  video_decoder_destroy(vd);
 
   hts_cond_destroy(&gv->gv_avail_queue_cond);
   hts_cond_destroy(&gv->gv_init_cond);

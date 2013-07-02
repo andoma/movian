@@ -24,7 +24,8 @@ widget(backdrop, {
 		  "display", "dataroot://resources/svg/Display.svg",
 		  "search", "dataroot://resources/svg/Search.svg",
 		  "keymap", "dataroot://resources/svg/Keyboard.svg",
-		  "subtitle", "dataroot://resources/svg/Script.svg"
+		  "subtitle", "dataroot://resources/svg/Script.svg",
+                  "plugin", "dataroot://resources/svg/Plugin.svg"
 		 );
       sizeScale: 2;
       shadow: true;

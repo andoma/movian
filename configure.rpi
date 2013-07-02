@@ -60,6 +60,7 @@ xmp_setup
 libspotify_setup "12.1.103-Linux-armv6-bcm2708hardfp"
 
 cat >> ${CONFIG_MAK} <<EOF
+CFLAGS_cfg +=  -fgnu89-inline
 CFLAGS_cfg += -mfpu=vfp -mcpu=arm1176jzf-s -funwind-tables
 CFLAGS_cfg += -DOMX_SKIP64BIT
 

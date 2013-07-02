@@ -91,7 +91,7 @@ gmefile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
       
     fde = fa_dir_add(fd, turl, title, CONTENT_AUDIO);
 
-    fde->fde_probestatus = FDE_PROBE_DEEP;
+    fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
     fde->fde_metadata = prop_create_root("metadata");
     prop_set_string(prop_create(fde->fde_metadata, "title"), title);
@@ -163,6 +163,7 @@ seekflush(media_pipe_t *mp, media_buf_t **mbp)
   }
 }
 
+#define MB_EOF ((void *)-1)
 
 /**
  *
@@ -196,35 +197,43 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
 
   while(1) {
 
-    if(gme_track_ended(emu)) {
-      e = event_create_type(EVENT_EOF);
-      break;
-    }
-
     if(mb == NULL) {
-      mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * 2);
-      mb->mb_data_type = MB_AUDIO;
-      mb->mb_channels = 2;
-      mb->mb_rate = sample_rate;
-      mb->mb_pts = gme_tell(emu) * 1000;
-      mb->mb_drive_clock = 1;
 
-      if(!registered_play && mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
-	registered_play = 1;
-	metadb_register_play(url, 1, CONTENT_AUDIO);
+      if(gme_track_ended(emu)) {
+	mb = MB_EOF;
+      } else {
+	mb = media_buf_alloc_unlocked(mp, sizeof(int16_t) * CHUNK_SIZE * 2);
+	mb->mb_data_type = MB_AUDIO;
+	mb->mb_channels = 2;
+	mb->mb_rate = sample_rate;
+	mb->mb_pts = gme_tell(emu) * 1000;
+	mb->mb_drive_clock = 1;
+
+	if(!registered_play && mb->mb_pts > METADB_AUDIO_PLAY_THRESHOLD) {
+	  registered_play = 1;
+	  metadb_register_play(url, 1, CONTENT_AUDIO);
+	}
+
+	gme_play(emu, CHUNK_SIZE * mb->mb_channels, mb->mb_data);
       }
-
-      gme_play(emu, CHUNK_SIZE * mb->mb_channels, mb->mb_data);
     }
 
-    if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
+    if(mb == MB_EOF) {
+      /* Wait for queues to drain */
+      e = mp_wait_for_empty_queues(mp);
+
+      if(e == NULL) {
+	e = event_create_type(EVENT_EOF);
+	break;
+      }
+    } else if((e = mb_enqueue_with_events(mp, mq, mb)) == NULL) {
       mb = NULL; /* Enqueue succeeded */
       continue;
     }
+
     if(event_is_type(e, EVENT_PLAYQUEUE_JUMP)) {
       mp_flush(mp, 0);
       break;
-
 
     } else if(event_is_type(e, EVENT_SEEK)) {
 
@@ -243,7 +252,7 @@ fa_gme_playfile_internal(media_pipe_t *mp, const void *buf, size_t size,
 
   gme_delete(emu);
 
-  if(mb != NULL)
+  if(mb != NULL && mb != MB_EOF)
     media_buf_free_unlocked(mp, mb);
 
   return e;

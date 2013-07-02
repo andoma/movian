@@ -234,6 +234,8 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
   int cflags = 0, f;
   int elements = 0;
 
+  co->co_using_aspect = 0;
+
   if(co->w.glw_flags2 & GLW2_DEBUG)
     printf("Constraint round\n");
 
@@ -262,6 +264,8 @@ glw_container_y_constraints(glw_container_t *co, glw_t *skip)
     } else if(f & GLW_CONSTRAINT_W) {
       if(c->glw_req_weight > 0)
 	weight += c->glw_req_weight;
+      else
+	co->co_using_aspect = 1;
     } else {
       weight += 1.0f;
     }
@@ -289,7 +293,7 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
 {
   glw_t *c, *n;
   glw_rctx_t rc0 = *rc;
-  const int height = co->height;
+  int height = co->height;
   float IH;
   int weightavail;  // Pixels available for weighted childs
   float pos;        // Current position
@@ -300,6 +304,17 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
     return 0;
 
   rc0.rc_width = rc->rc_width - co->co_padding_left - co->co_padding_right;
+
+  if(co->co_using_aspect) {
+    // If any of our childs wants a fixed aspect we need to compute
+    // the total width those will consume
+    TAILQ_FOREACH(c, &co->w.glw_childs, glw_parent_link) {
+      int f = glw_filter_constraints(c);
+      float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
+      if(w < 0)
+	height += rc0.rc_width / -w;
+    }
+  }
 
   if(height > rc->rc_height) {
     // Requested pixel size > available height, must scale
@@ -354,6 +369,8 @@ glw_container_y_layout(glw_container_t *co, glw_rctx_t *rc)
       float w = (f & GLW_CONSTRAINT_W ? c->glw_req_weight : 1.0f);
       if(w > 0)
 	cw = weightavail * w / co->weight_sum;
+      else
+        cw = rc0.rc_width / -w;
     }
 
     pos += cw;
@@ -414,17 +431,14 @@ glw_container_z_constraints(glw_t *w, glw_t *skip)
 {
   glw_t *c;
 
-  c = TAILQ_FIRST(&w->glw_childs);
-  while(c != NULL) {
-    if(c == skip)
-      c = TAILQ_NEXT(c, glw_parent_link);
-    
-    if(c == NULL || !(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
-      break;
-    c = TAILQ_NEXT(c, glw_parent_link);
-  }
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link) {
 
-       
+    if(c->glw_flags & GLW_HIDDEN || c == skip)
+      continue;
+
+    if(!(c->glw_class->gc_flags & GLW_UNCONSTRAINED))
+      break;
+  }
 
   if(c != NULL)
     glw_copy_constraints(w, c);

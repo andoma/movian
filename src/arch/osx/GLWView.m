@@ -252,7 +252,7 @@ newframe(CVDisplayLinkRef displayLink, const CVTimeStamp *now,
   
   glw_prepare_frame(gr, GLW_NO_FRAMERATE_UPDATE);
   
-  if(!minimized && gr->gr_width > 1 && gr->gr_height > 1) {
+  if(!minimized && gr->gr_width > 1 && gr->gr_height > 1 && gr->gr_universe) {
 
     glw_rctx_t rc;
     glw_rctx_init(&rc, gr->gr_width, gr->gr_height, 1);

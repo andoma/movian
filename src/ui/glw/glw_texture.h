@@ -21,11 +21,13 @@
 
 #include "misc/pixmap.h"
 
-#define GLW_TEX_CORNER_TOPLEFT        PIXMAP_CORNER_TOPLEFT
-#define GLW_TEX_CORNER_TOPRIGHT       PIXMAP_CORNER_TOPRIGHT
-#define GLW_TEX_CORNER_BOTTOMLEFT     PIXMAP_CORNER_BOTTOMLEFT
-#define GLW_TEX_CORNER_BOTTOMRIGHT    PIXMAP_CORNER_BOTTOMRIGHT
-#define GLW_TEX_REPEAT                0x10
+#define GLW_TEX_CORNER_TOPLEFT        GLW_IMAGE_CORNER_TOPLEFT
+#define GLW_TEX_CORNER_TOPRIGHT       GLW_IMAGE_CORNER_TOPRIGHT
+#define GLW_TEX_CORNER_BOTTOMLEFT     GLW_IMAGE_CORNER_BOTTOMLEFT
+#define GLW_TEX_CORNER_BOTTOMRIGHT    GLW_IMAGE_CORNER_BOTTOMRIGHT
+#define GLW_TEX_UNIMPORTANT           GLW_IMAGE_UNIMPORTANT
+
+#define GLW_TEX_REPEAT                0x80000000
 
 typedef struct glw_loadable_texture {
 
@@ -43,6 +45,7 @@ typedef struct glw_loadable_texture {
     GLT_STATE_VALID,
     GLT_STATE_ERROR,
     GLT_STATE_LOAD_ABORT,
+    GLT_STATE_STASHED,
   } glt_state;
 
   unsigned int glt_refcnt;
@@ -61,11 +64,11 @@ typedef struct glw_loadable_texture {
   int16_t glt_xs;
   int16_t glt_ys;
 
-  int glt_format;
-  int glt_ext_format;
-  int glt_ext_type;
+  uint8_t glt_orientation;
+  uint8_t glt_stash;
+  uint8_t glt_original_type;
 
-  unsigned int glt_orientation;
+  int glt_format;
 
   float glt_s, glt_t;
   int16_t glt_tex_width;
@@ -73,6 +76,8 @@ typedef struct glw_loadable_texture {
   int16_t glt_radius;
   int16_t glt_margin;
   int16_t glt_shadow;
+
+  int glt_size;
 
 } glw_loadable_texture_t;
 

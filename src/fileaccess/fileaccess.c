@@ -44,7 +44,10 @@
 #include "fa_imageloader.h"
 #include "blobcache.h"
 #include "htsmsg/htsbuf.h"
+#include "htsmsg/htsmsg_store.h"
 #include "fa_indexer.h"
+#include "settings.h"
+#include "notifications.h"
 
 struct fa_protocol_list fileaccess_all_protocols;
 
@@ -321,8 +324,6 @@ fa_stat(const char *url, struct fa_stat *buf, char *errbuf, size_t errsize)
 }
 
 
-
-
 /**
  *
  */
@@ -411,31 +412,39 @@ fa_unreference(fa_handle_t *fh)
 /**
  *
  */
-int
-fa_notify(const char *url, void *opaque,
-	  void (*change)(void *opaque,
-			 fa_notify_op_t op, 
-			 const char *filename,
-			 const char *url,
-			 int type),
-	  int (*breakcheck)(void *opaque))
+fa_handle_t *
+fa_notify_start(const char *url, void *opaque,
+                void (*change)(void *opaque,
+                               fa_notify_op_t op, 
+                               const char *filename,
+                               const char *url,
+                               int type))
 {
   fa_protocol_t *fap;
   char *filename;
-
+  fa_handle_t *fh;
   if((filename = fa_resolve_proto(url, &fap, NULL, NULL, 0)) == NULL)
-    return -1;
+    return NULL;
 
-  if(fap->fap_notify == NULL) {
+  if(fap->fap_notify_start == NULL) {
     free(filename);
-    return -1;
+    return NULL;
   }
 
-  fap->fap_notify(fap, filename, opaque, change, breakcheck);
+  fh = fap->fap_notify_start(fap, filename, opaque, change);
   free(filename);
-  return 0;
+  return fh;
 }
 
+
+/**
+ *
+ */
+void
+fa_notify_stop(fa_handle_t *fh)
+{
+  fh->fh_proto->fap_notify_stop(fh);
+}
 
 
 /**
@@ -466,8 +475,10 @@ fa_dir_entry_free(fa_dir_t *fd, fa_dir_entry_t *fde)
   if(fde->fde_md != NULL)
     metadata_destroy(fde->fde_md);
 
-  fd->fd_count--;
-  fa_dir_remove(fd, fde);
+  if(fd != NULL) {
+    fd->fd_count--;
+    fa_dir_remove(fd, fde);
+  }
   rstr_release(fde->fde_filename);
   rstr_release(fde->fde_url);
   free(fde);
@@ -505,7 +516,8 @@ fde_create(fa_dir_t *fd, const char *url, const char *filename, int type)
   fde->fde_filename = rstr_alloc(filename);
   fde->fde_type     = type;
 
-  fa_dir_insert(fd, fde);
+  if(fd != NULL)
+    fa_dir_insert(fd, fde);
 
   return fde;
 }
@@ -606,6 +618,162 @@ fa_dir_entry_stat(fa_dir_entry_t *fde)
 
 
 /**
+ * recursive directory scan
+ */
+static void
+fa_rscan(const char *url, void (*fn)(void *aux, fa_dir_entry_t *fde),
+         void *aux)
+{
+  fa_dir_t *fd = fa_scandir(url, NULL, 0);
+  fa_dir_entry_t *fde;
+  if(fd == NULL)
+    return;
+
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(fde->fde_type == CONTENT_DIR)
+      fa_rscan(rstr_get(fde->fde_url), fn, aux);
+    else
+      fn(aux, fde);
+  }
+  fa_dir_free(fd);
+
+  fde = fde_create(NULL, url, url, CONTENT_DIR);
+  fn(aux, fde);
+  fa_dir_entry_free(NULL, fde);
+}
+
+
+/**
+ *
+ */
+static void
+rscan_count_one(void *aux, fa_dir_entry_t *fde)
+{
+  int *v = aux;
+  v[fde->fde_type == CONTENT_DIR]++;
+}
+
+
+/**
+ *
+ */
+static void
+unlink_recursive_one(void *aux, fa_dir_entry_t *fde)
+{
+  char errbuf[256];
+  fa_protocol_t *fap;
+  char *filename;
+
+  if((filename = fa_resolve_proto(rstr_get(fde->fde_url), &fap, NULL,
+                                  errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_ERROR, "FS", "Unable to resolve %s -- %s",
+          rstr_get(fde->fde_url), errbuf);
+    return;
+  }
+
+
+  int r;
+  if(fde->fde_type == CONTENT_FILE) {
+    r = fap->fap_unlink(fap, filename, errbuf, sizeof(errbuf));
+  } else {
+    r = fap->fap_rmdir(fap, filename, errbuf, sizeof(errbuf));
+  }
+
+  if(r)
+    TRACE(TRACE_ERROR, "FS", "Unable to delete %s -- %s",
+          rstr_get(fde->fde_url), errbuf);
+
+  free(filename);
+}
+
+/**
+ *
+ */
+static int
+verify_delete(int files, int dirs)
+{
+  rstr_t *ftxt = _pl("%d files",       "%d file",      files);
+  rstr_t *dtxt = _pl("%d directories", "%d directory", dirs);
+  rstr_t *del  = _("Are you sure you want to delete:");
+
+  char tmp[512];
+  int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get(del));
+  l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);
+  l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  if(dirs) {
+    l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(dtxt), dirs);
+    l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  }
+
+  int x = message_popup(tmp, MESSAGE_POPUP_CANCEL | MESSAGE_POPUP_OK, NULL);
+
+  rstr_release(ftxt);
+  rstr_release(dtxt);
+  rstr_release(del);
+  return x;
+}
+
+
+/**
+ *
+ */
+int
+fa_unlink(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  fa_stat_t st;
+  char *filename;
+  int r;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return -1;
+
+  r = fap->fap_stat(fap, filename, &st, errbuf, errsize, 0);
+  if(!r) {
+
+    r = -1;
+    if(st.fs_type == CONTENT_FILE) {
+      if(fap->fap_unlink == NULL) {
+        snprintf(errbuf, errsize,
+                 "Deleting not supported for this file system");
+      } else {
+
+        if(verify_delete(1, 0) != MESSAGE_POPUP_OK) {
+          snprintf(errbuf, errsize, "Canceled by user");
+        } else {
+          r = fap->fap_unlink(fap, filename, errbuf, errsize);
+        }
+      }
+
+    } else if(st.fs_type == CONTENT_DIR) {
+
+      if(fap->fap_unlink == NULL || fap->fap_rmdir == NULL) {
+        snprintf(errbuf, errsize,
+                 "Deleting not supported for this file system");
+      } else {
+
+        int types[2] = {};
+
+        fa_rscan(url, rscan_count_one, types);
+        if(verify_delete(types[0], types[1]) != MESSAGE_POPUP_OK) {
+          snprintf(errbuf, errsize, "Canceled by user");
+        } else {
+          fa_rscan(url, unlink_recursive_one, NULL);
+          r = 0;
+        }
+      }
+    } else {
+      snprintf(errbuf, errsize, "Can't delete this type");
+    }
+  }
+
+  free(filename);
+
+  return r;
+}
+
+
+/**
  *
  */
 void
@@ -632,6 +800,22 @@ fileaccess_init(void)
 #endif
 
   fa_indexer_init();
+
+  htsmsg_t *store;
+
+  if((store = htsmsg_store_load("faconf")) == NULL)
+    store = htsmsg_create_map();
+
+  settings_create_separator(gconf.settings_general,
+			  _p("File access"));
+
+  settings_create_bool(gconf.settings_general,
+		       "delete", _p("Enable file deletion from item menu"),
+		       0, store, settings_generic_set_bool, &gconf.fa_allow_delete,
+		       SETTINGS_INITIAL_UPDATE, NULL,
+		       settings_generic_save_settings,
+		       (void *)"faconf");
+
   return 0;
 }
 

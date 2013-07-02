@@ -11,5 +11,9 @@ case $1 in
     push)
 	git push origin refs/notes/changelog
 	;;
+    pull)
+        git fetch origin refs/notes/changelog:refs/notes/changelog
+        ;;
+
 esac
 

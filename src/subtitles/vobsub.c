@@ -71,7 +71,8 @@ vobsub_decode_size(int *width, int *height, const char *str)
  */
 void
 vobsub_probe(const char *url, const char *filename,
-	     int score, struct prop *prop, const char *subfile)
+	     int score, struct prop *prop, const char *subfile,
+             int autosel)
 {
   buf_t *b;
   char errbuf[256];
@@ -117,10 +118,10 @@ vobsub_probe(const char *url, const char *filename,
 	  htsmsg_add_u32(m, "index", atoi(p + strlen("index:")));
 
 	rstr_t *u = htsmsg_json_serialize_to_rstr(m, "vobsub:");
-	
 
 	mp_add_track(prop, filename, rstr_get(u),
-		     "VobSub", NULL, lang, NULL, _p("External file"), score);
+		     "VobSub", NULL, lang, NULL, _p("External file"), score,
+                     autosel);
 	rstr_release(u);
 
 	if(p == NULL)

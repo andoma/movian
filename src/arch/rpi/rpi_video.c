@@ -35,6 +35,8 @@ typedef struct rpi_video_codec {
   omx_component_t *rvc_decoder;
   hts_cond_t rvc_avail_cond;
   int rvc_last_epoch;
+  const char *rvc_name;
+  int rvc_name_set;
 } rpi_video_codec_t;
 
 
@@ -55,6 +57,7 @@ rpi_video_port_settings_changed(omx_component_t *oc)
   hts_mutex_unlock(&mp->mp_mutex);
 }
 
+
 /**
  *
  */
@@ -62,10 +65,13 @@ static void
 rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
 		 struct media_queue *mq, struct media_buf *mb, int reqsize)
 {
-  media_pipe_t *mp = vd->vd_mp;
   rpi_video_codec_t *rvc = mc->opaque;
   const void *data = mb->mb_data;
   size_t len       = mb->mb_size;
+
+  media_buf_meta_t *mbm = &vd->vd_reorder[vd->vd_reorder_ptr];
+  *mbm = mb->mb_meta;
+  vd->vd_reorder_ptr = (vd->vd_reorder_ptr + 1) & VIDEO_DECODER_REORDER_MASK;
 
   while(len > 0) {
     OMX_BUFFERHEADERTYPE *buf = omx_get_buffer(rvc->rvc_decoder);
@@ -74,6 +80,11 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
     memcpy(buf->pBuffer, data, buf->nFilledLen);
     buf->nFlags = 0;
 
+    if(vd->vd_render_component) {
+      buf->hMarkTargetComponent = vd->vd_render_component;
+      buf->pMarkData = mbm;
+      mbm = NULL;
+    }
 
     if(rvc->rvc_last_epoch != mb->mb_epoch) {
       buf->nFlags |= OMX_BUFFERFLAG_DISCONTINUITY;
@@ -97,18 +108,12 @@ rpi_codec_decode(struct media_codec *mc, struct video_decoder *vd,
       buf->nFlags |= OMX_BUFFERFLAG_DECODEONLY;
 
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
-  }  
-
-  frame_info_t fi;
-  memset(&fi, 0, sizeof(fi));
-  fi.fi_drive_clock = mb->mb_drive_clock;
-  fi.fi_epoch       = mb->mb_epoch;
-  fi.fi_pts         = PTS_UNSET;
-  fi.fi_delta       = mb->mb_delta;
-  fi.fi_type        = 'omx';
-  mp->mp_video_frame_deliver(&fi, mp->mp_video_frame_opaque);
+  }
+  if(rvc->rvc_name_set)
+    return;
+  rvc->rvc_name_set = 1;
+  prop_set_string(mq->mq_prop_codec, rvc->rvc_name);
 }
-
 
 
 /**
@@ -172,17 +177,20 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
 		 media_pipe_t *mp)
 {
   int fmt;
+  const char *name = NULL;
 
   switch(mc->codec_id) {
 
   case CODEC_ID_H264:
     fmt = OMX_VIDEO_CodingAVC;
+    name = "h264 (VideoCore)";
     break;
 
   case CODEC_ID_MPEG2VIDEO:
     if(!omx_enable_mpg2)
       return 1;
     fmt = OMX_VIDEO_CodingMPEG2;
+    name = "MPEG2 (VideoCore)";
     break;
 
 #if 0
@@ -254,11 +262,14 @@ rpi_codec_create(media_codec_t *mc, const media_codec_params_t *mcp,
     omxchk(OMX_EmptyThisBuffer(rvc->rvc_decoder->oc_handle, buf));
   }
 
+  omx_enable_buffer_marks(d);
+
   mc->opaque = rvc;
   mc->close  = rpi_codec_close;
   mc->decode = rpi_codec_decode;
   mc->flush  = rpi_codec_flush;
   mc->reconfigure = rpi_codec_reconfigure;
+  rvc->rvc_name = name;
   return 0;
 }
 

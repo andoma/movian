@@ -36,6 +36,7 @@
 #include "text/text.h"
 #include "db/kvstore.h"
 #include "fa_indexer.h"
+#include "notifications.h"
 
 extern int media_buffer_hungry;
 
@@ -72,10 +73,11 @@ typedef struct scanner {
 
   rstr_t *s_title;
 
-  hts_mutex_t s_mutex;
-  hts_cond_t s_cond;
   browser_mode_t s_checkstop_cmp;
   deco_browse_t *s_db;
+
+  prop_courier_t *s_pc;
+
 } scanner_t;
 
 
@@ -89,12 +91,7 @@ static void browse_as_dir(scanner_t *s);
 static void
 set_mode(scanner_t *s, browser_mode_t mode)
 {
-  hts_mutex_lock(&s->s_mutex);
-  if(s->s_mode != BROWSER_STOP) {
-    s->s_mode = mode;
-    hts_cond_signal(&s->s_cond);
-  }
-  hts_mutex_unlock(&s->s_mutex);
+  s->s_mode = mode;
   fa_indexer_enable(s->s_url, mode != BROWSER_DIR);
 }
 
@@ -179,6 +176,9 @@ make_prop(fa_dir_entry_t *fde)
 
   assert(fde->fde_prop == NULL);
   fde->fde_prop = prop_ref_inc(p);
+
+  prop_set(p, "canDelete", PROP_SET_INT, gconf.fa_allow_delete);
+
 }
 
 /**
@@ -257,7 +257,7 @@ type_from_filename(const char *filename)
 static void
 deep_probe(fa_dir_entry_t *fde, scanner_t *s)
 {
-  fde->fde_probestatus = FDE_PROBE_DEEP;
+  fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
   if(fde->fde_type != CONTENT_UNKNOWN) {
 
@@ -383,14 +383,14 @@ analyzer(scanner_t *s, int probe)
     if(s->s_mode != BROWSER_DIR)
       break;
 
-    if(fde->fde_probestatus == FDE_PROBE_NONE) {
+    if(fde->fde_probestatus == FDE_PROBED_NONE) {
       if(fde->fde_type == CONTENT_FILE)
 	fde->fde_type = type_from_filename(rstr_get(fde->fde_filename));
 
-      fde->fde_probestatus = FDE_PROBE_FILENAME;
+      fde->fde_probestatus = FDE_PROBED_FILENAME;
     }
 
-    if(fde->fde_probestatus == FDE_PROBE_FILENAME && probe)
+    if(fde->fde_probestatus == FDE_PROBED_FILENAME && probe)
       deep_probe(fde, s);
   }
 }
@@ -399,8 +399,36 @@ analyzer(scanner_t *s, int probe)
 /**
  *
  */
+static scanner_t *
+scanner_create(const char *url, time_t mtime)
+{
+  scanner_t *s = calloc(1, sizeof(scanner_t));
+  s->s_pc = prop_courier_create_waitable();
+
+  s->s_url = strdup(url);
+  s->s_mode = BROWSER_DIR;
+  s->s_mtime = mtime;
+  return s;
+}
+
+
+/**
+ *
+ */
 static void
-scanner_unref(scanner_t *s)
+scanner_destroy(scanner_t *s)
+{
+  closedb(s);
+  free(s->s_url);
+  prop_courier_destroy(s->s_pc);
+  free(s);
+}
+
+/**
+ *
+ */
+static void
+scanner_release(scanner_t *s)
 {
   if(atomic_add(&s->s_refcount, -1) > 1)
     return;
@@ -408,22 +436,7 @@ scanner_unref(scanner_t *s)
   fa_unreference(s->s_ref);
   if(s->s_pnf != NULL)
     prop_nf_release(s->s_pnf);
-  free(s->s_url);
-  hts_cond_destroy(&s->s_cond);
-  hts_mutex_destroy(&s->s_mutex);
-  free(s);
-}
-
-
-/**
- *
- */
-static int
-scanner_checkstop(void *opaque)
-{
-  scanner_t *s = opaque;
-  closedb(s);
-  return s->s_mode != BROWSER_DIR;
+  scanner_destroy(s);
 }
 
 
@@ -467,6 +480,7 @@ scanner_entry_destroy(scanner_t *s, fa_dir_entry_t *fde, const char *src)
   fa_dir_entry_free(s->s_fd, fde);
 }
 
+#if 0
 /**
  *
  */
@@ -501,7 +515,7 @@ scanner_notification(void *opaque, fa_notify_op_t op, const char *filename,
   }
   analyzer(s, 1);
 }
-
+#endif
 
 /**
  * Very simple and O^2 diff
@@ -532,7 +546,7 @@ rescan(scanner_t *s)
 	 a->fde_stat.fs_mtime != b->fde_stat.fs_mtime) {
 	// Modification time has changed,  trig deep probe
 	a->fde_type = b->fde_type;
-	a->fde_probestatus = FDE_PROBE_NONE;
+	a->fde_probestatus = FDE_PROBED_NONE;
 	a->fde_stat = b->fde_stat;
 	a->fde_ignore_cache = 1;
 	changed = 1;
@@ -573,6 +587,7 @@ doscan(scanner_t *s, int with_notify)
   int pending_rescan = 0;
   int err = 1;
 
+  assert(s->s_fd == NULL);
   s->s_fd = metadb_metadata_scandir(getdb(s), s->s_url, NULL);
 
   if(s->s_fd == NULL) {
@@ -618,12 +633,15 @@ doscan(scanner_t *s, int with_notify)
     err = rescan(s);
 
   closedb(s);
-
-  if(with_notify) {
-    if(fa_notify(s->s_url, s, scanner_notification, scanner_checkstop)) {
-      prop_set_int(s->s_direct_close, 1);
-    }
-  }
+#if 0
+  fa_handle_t *n = fa_notify_start(s->s_url, s, scanner_notification);
+#endif
+  while(s->s_mode == BROWSER_DIR)
+    prop_courier_wait_and_dispatch(s->s_pc);
+#if 0
+  if(n != NULL)
+    fa_notify_stop(n);
+#endif
   fa_dir_free(s->s_fd);
   return err;
 }
@@ -665,18 +683,14 @@ scanner_thread(void *aux)
 
   browser_mode_t mode = -1;
 
-  hts_mutex_lock(&s->s_mutex);
-
   while(s->s_mode != BROWSER_STOP) {
 
     if(s->s_mode == mode) {
-      hts_cond_wait(&s->s_cond, &s->s_mutex);
+      prop_courier_wait_and_dispatch(s->s_pc);
       continue;
     }
 
     mode = s->s_mode;
-    hts_mutex_unlock(&s->s_mutex);
-    
     cleanup_model(s);
 
     s->s_checkstop_cmp = mode;
@@ -705,11 +719,9 @@ scanner_thread(void *aux)
                       LIBRARY_QUERY_ARTISTS, checkstop_index, s);
       break;
     }
-    hts_mutex_lock(&s->s_mutex);
   }
   cleanup_model(s);
 
-  hts_mutex_unlock(&s->s_mutex);
   closedb(s);
 
   free(s->s_playme);
@@ -719,7 +731,7 @@ scanner_thread(void *aux)
   prop_ref_dec(s->s_loading);
   prop_ref_dec(s->s_direct_close);
   rstr_release(s->s_title);
-  scanner_unref(s);
+  scanner_release(s);
   return NULL;
 }
 
@@ -728,16 +740,57 @@ scanner_thread(void *aux)
  *
  */
 static void
-scanner_stop(void *opaque, prop_sub_t *sub)
+delete_items(scanner_t *s, prop_vec_t *pv)
+{
+  char errbuf[256];
+  for(int i = 0, c = prop_vec_len(pv); i < c; i++) {
+    fa_dir_entry_t *fde;
+    RB_FOREACH(fde, &s->s_fd->fd_entries, fde_link) {
+      if(fde->fde_prop == prop_vec_get(pv, i))
+        break;
+    }
+    if(fde == NULL)
+      continue;
+
+
+    if(fa_unlink(rstr_get(fde->fde_url), errbuf, sizeof(errbuf))) {
+      notify_add(NULL, NOTIFY_ERROR, NULL, 5,
+                 _("Unable to delete %s\n%s"),
+                 rstr_get(fde->fde_filename), errbuf);
+    } else {
+      notify_add(NULL, NOTIFY_INFO, NULL, 5,
+                 _("Deleted %s"), rstr_get(fde->fde_filename));
+      scanner_entry_destroy(s, fde, "user");
+    }
+  }
+}
+
+/**
+ *
+ */
+static void
+scanner_nodes_callback(void *opaque, prop_event_t event, ...)
 {
   scanner_t *s = opaque;
+  va_list ap;
 
-  prop_unsubscribe(sub);
-  hts_mutex_lock(&s->s_mutex);
-  s->s_mode = BROWSER_STOP;
-  hts_cond_signal(&s->s_cond);
-  hts_mutex_unlock(&s->s_mutex);
-  scanner_unref(s);
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_DESTROYED:
+    prop_unsubscribe(va_arg(ap, prop_sub_t *));
+    s->s_mode = BROWSER_STOP;
+    scanner_release(s);
+    break;
+
+  case PROP_REQ_DELETE_VECTOR:
+    delete_items(s, va_arg(ap, prop_vec_t *));
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
 }
 
 
@@ -756,7 +809,7 @@ set_indexed_mode(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    scanner_unref(s);
+    scanner_release(s);
     break;
 
   case PROP_SELECT_CHILD:
@@ -830,6 +883,7 @@ add_indexed_option(scanner_t *s, prop_t *model)
   prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_TRACK_DESTROY,
                  PROP_TAG_CALLBACK, set_indexed_mode, s,
                  PROP_TAG_ROOT, options,
+                 PROP_TAG_COURIER, s->s_pc,
                  NULL);
 
   if(prop_set_parent(n, parent))
@@ -852,7 +906,7 @@ set_sort_order(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    scanner_unref(s);
+    scanner_release(s);
     break;
 
   case PROP_SELECT_CHILD:
@@ -958,7 +1012,7 @@ set_sort_dirs(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    scanner_unref(s);
+    scanner_release(s);
     break;
     
   case PROP_SET_INT:
@@ -1020,7 +1074,7 @@ set_only_supported_files(void *opaque, prop_event_t event, ...)
   switch(event) {
   case PROP_DESTROYED:
     prop_unsubscribe(va_arg(ap, prop_sub_t *));
-    scanner_unref(s);
+    scanner_release(s);
     break;
     
   case PROP_SET_INT:
@@ -1086,14 +1140,8 @@ fa_scanner_page(const char *url, time_t url_mtime,
                 prop_t *model, const char *playme,
                 prop_t *direct_close, rstr_t *title)
 {
-  scanner_t *s = calloc(1, sizeof(scanner_t));
-  s->s_url = strdup(url);
-  s->s_mode = BROWSER_DIR;
-  s->s_mtime = url_mtime;
+  scanner_t *s = scanner_create(url, url_mtime);
   s->s_playme = rstr_alloc(playme);
-
-  hts_mutex_init(&s->s_mutex);
-  hts_cond_init(&s->s_cond, &s->s_mutex);
 
   s->s_nodes = prop_create_r(model, "source");
   s->s_loading = prop_create_r(model, "loading");
@@ -1141,8 +1189,9 @@ fa_scanner_page(const char *url, time_t url_mtime,
 			     THREAD_PRIO_MODEL);
 
   prop_subscribe(PROP_SUB_TRACK_DESTROY,
-                 PROP_TAG_CALLBACK_DESTROYED, scanner_stop, s,
-                 PROP_TAG_ROOT, s->s_model,
+                 PROP_TAG_CALLBACK, scanner_nodes_callback, s,
+                 PROP_TAG_ROOT, s->s_nodes,
+                 PROP_TAG_COURIER, s->s_pc,
                  NULL);
 }
 
@@ -1153,16 +1202,8 @@ fa_scanner_page(const char *url, time_t url_mtime,
 int
 fa_scanner_scan(const char *url, time_t mtime)
 {
-  scanner_t s = {0};
-  s.s_mode = BROWSER_DIR;
-  s.s_url = strdup(url);
-  s.s_mtime = mtime;
-  hts_mutex_init(&s.s_mutex);
-  hts_cond_init(&s.s_cond, &s.s_mutex);
-  int r = doscan(&s, 0);
-  closedb(&s);
-  hts_cond_destroy(&s.s_cond);
-  hts_mutex_destroy(&s.s_mutex);
-  free(s.s_url);
+  scanner_t *s = scanner_create(url, mtime);
+  int r = doscan(s, 0);
+  scanner_destroy(s);
   return r;
 }

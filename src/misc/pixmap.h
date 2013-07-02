@@ -58,7 +58,6 @@ typedef struct image_meta {
   int im_req_height;
   int im_max_width;
   int im_max_height;
-  char im_pot :1;
   char im_can_mono:1;
   char im_no_decoding:1;
   char im_32bit_swizzle:1; // can do full 32bit swizzle in hardware
@@ -77,6 +76,7 @@ typedef struct pixmap {
   int pm_refcount;
 
   uint8_t pm_orientation;   // LAYOUT_ORIENTATION_ from layout.h
+  uint8_t pm_original_type;
 
   uint16_t pm_width;
   uint16_t pm_height;
@@ -151,6 +151,9 @@ void pixmap_box_blur(pixmap_t *pm, int boxw, int boxh);
 pixmap_t *pixmap_decode(pixmap_t *pm, const image_meta_t *im,
 			char *errbuf, size_t errlen);
 
+extern pixmap_t *(*accel_pixmap_decode)(pixmap_t *pm, const image_meta_t *im,
+					char *errbuf, size_t errlen);
+
 pixmap_t *svg_decode(pixmap_t *pm, const image_meta_t *im,
 		     char *errbuf, size_t errlen);
 
@@ -168,6 +171,10 @@ void pixmap_horizontal_gradient(pixmap_t *pm, const int *top, const int *btm);
 pixmap_t *pixmap_rounded_corners(pixmap_t *pm, int r, int which);
 
 void pixmap_drop_shadow(pixmap_t *pm, int boxw, int boxh);
+
+void pixmap_compute_rescale_dim(const image_meta_t *im,
+				int src_width, int src_height,
+				int *dst_width, int *dst_height);
 
 /**
  *

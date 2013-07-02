@@ -37,6 +37,7 @@ typedef struct fa_protocol {
   int fap_flags;
 #define FAP_INCLUDE_PROTO_IN_URL 0x1
 #define FAP_ALLOW_CACHE          0x2
+#define FAP_NO_PARKING           0x4
 
   void (*fap_init)(void);
 
@@ -87,6 +88,18 @@ typedef struct fa_protocol {
 		  char *errbuf, size_t errsize, int non_interactive);
 
   /**
+   * unlink (ie, delete) file
+   */
+  int (*fap_unlink)(struct fa_protocol *fap, const char *url,
+                    char *errbuf, size_t errsize);
+
+  /**
+   * delete directory
+   */
+  int (*fap_rmdir)(struct fa_protocol *fap, const char *url,
+                    char *errbuf, size_t errsize);
+
+  /**
    * Add a reference to the url.
    *
    * Let underlying protocols know that we probably want to read more info
@@ -106,18 +119,16 @@ typedef struct fa_protocol {
    * Monitor the filesystem directory described by url for changes
    *
    * If a change occures, change() is invoked
-   *
-   * Breakcheck is called periodically and if the caller returns true
-   * the notify will stop and this function will return
    */
-  void (*fap_notify)(struct fa_protocol *fap, const char *url,
-		     void *opaque,
-		     void (*change)(void *opaque,
-				    fa_notify_op_t op, 
-				    const char *filename,
-				    const char *url,
-				    int type),
-		     int (*breakcheck)(void *opaque));
+  fa_handle_t *(*fap_notify_start)(struct fa_protocol *fap, const char *url,
+                                   void *opaque,
+                                   void (*change)(void *opaque,
+                                                  fa_notify_op_t op,
+                                                  const char *filename,
+                                                  const char *url,
+                                                  int type));
+
+  void (*fap_notify_stop)(fa_handle_t *fh);
 
   /**
    * Load the 'url' into memory

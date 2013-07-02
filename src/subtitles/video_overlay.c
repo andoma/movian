@@ -22,9 +22,9 @@
 #include "misc/pixmap.h"
 #include "misc/str.h"
 #include "video_overlay.h"
-#include "video/video_settings.h"
 #include "dvdspu.h"
 #include "sub.h"
+#include "subtitles/subtitles.h"
 
 void
 video_overlay_enqueue(media_pipe_t *mp, video_overlay_t *vo)

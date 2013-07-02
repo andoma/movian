@@ -26,13 +26,14 @@ mktime_utc(time_t *tp, unsigned int year, unsigned int month, unsigned int day,
   if(year < 1970 || year > 2038 || month >= 12)
     return -1;
 
+  i = 1970;
   if(year >= 2011) {
     sec += 1293840000;
-    year = 2011;
+    i = 2011;
   }
 
-  for(i = 0; i < year; i++)
-    sec += 86400 * (365 + leapyear(year));
+  for(; i < year; i++)
+    sec += 86400 * (365 + leapyear(i));
 
   sec += mdays[leapyear(year)][month] * 86400;
   sec += 86400 * (day - 1) + hour * 3600 + min * 60;

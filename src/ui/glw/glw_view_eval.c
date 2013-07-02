@@ -656,9 +656,9 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
   if((b = token_resolve(ec, b)) == NULL)
     return -1;
 
-    if((aa = token_as_string(a)) != NULL &&
-       (bb = token_as_string(b)) != NULL) {
-      rr = !strcmp(aa, bb);
+  if((aa = token_as_string(a)) != NULL &&
+     (bb = token_as_string(b)) != NULL) {
+    rr = !strcmp(aa, bb);
   } else if(a->type != b->type) {
     rr = 0;
   } else {
@@ -669,6 +669,9 @@ eval_eq(glw_view_eval_context_t *ec, struct token *self, int neq)
       break;
     case TOKEN_FLOAT:
       rr = a->t_float == b->t_float;
+      break;
+    case TOKEN_VOID:
+      rr = 1;
       break;
     default:
       rr = 0;
@@ -1584,6 +1587,7 @@ prop_callback_cloner(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
 
   }
@@ -1687,6 +1691,7 @@ prop_callback_value(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -1759,6 +1764,7 @@ prop_callback_counter(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -1853,6 +1859,7 @@ ve_cb(void *opaque, prop_event_t event, ...)
   case PROP_SUGGEST_FOCUS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
   }
 
@@ -2167,6 +2174,7 @@ prop_callback_vectorizer(void *opaque, prop_event_t event, ...)
   case PROP_WANT_MORE_CHILDS:
   case PROP_SET_STRING:
   case PROP_REQ_MOVE_CHILD:
+  case PROP_ADOPT_RSTRING:
     break;
 
   }
@@ -3044,6 +3052,35 @@ glwf_navOpen(glw_view_eval_context_t *ec, struct token *self,
 /**
  *
  */
+static int
+glwf_deliverRef(glw_view_eval_context_t *ec, struct token *self,
+	     token_t **argv, unsigned int argc)
+{
+  token_t *a, *b, *r;
+
+  if((a = resolve_property_name2(ec, argv[0])) == NULL)
+    return -1;
+  if((b = resolve_property_name2(ec, argv[1])) == NULL)
+    return -1;
+
+  if(a->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, a, "deliverRef(): "
+                           "First argument is not a property");
+
+  if(b->type != TOKEN_PROPERTY_REF)
+    return glw_view_seterr(ec->ei, a, "deliverRef(): "
+                           "Second argument is not a property");
+
+  r = eval_alloc(self, ec, TOKEN_EVENT);
+  r->t_gem = glw_event_map_propref_create(b->t_prop, a->t_prop);
+  eval_push(ec, r);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static int 
 glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
 		  token_t **argv, unsigned int argc)
@@ -3059,7 +3096,7 @@ glwf_deliverEvent(glw_view_eval_context_t *ec, struct token *self,
     return -1;
 
   if(a->type != TOKEN_PROPERTY_REF)
-    return glw_view_seterr(ec->ei, a, "navOpen(): "
+    return glw_view_seterr(ec->ei, a, "deliverEvent(): "
 			    "First argument is not a property");
 
   if(argc == 2) {
@@ -5925,6 +5962,7 @@ static const token_func_t funcvec[] = {
   {"count", 1, glwf_count},
   {"vectorize", 1, glwf_vectorize},
   {"deliverEvent", -1, glwf_deliverEvent},
+  {"deliverRef", 2, glwf_deliverRef},
   {"propGrouper", 2, glwf_propGrouper, glwf_null_ctor, glwf_propGrouper_dtor},
   {"propSorter", -1, glwf_propSorter, glwf_null_ctor, glwf_propSorter_dtor},
   {"getLayer", 0, glwf_getLayer},

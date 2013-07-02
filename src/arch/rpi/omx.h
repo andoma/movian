@@ -23,11 +23,18 @@ typedef struct omx_component {
   hts_cond_t oc_event_cond;
 
   OMX_BUFFERHEADERTYPE *oc_avail;
+  OMX_BUFFERHEADERTYPE *oc_filled;
   int oc_inflight_buffers;
   int oc_cmd_done;
 
   void *oc_opaque;
   void (*oc_port_settings_changed_cb)(struct omx_component *oc);
+  void (*oc_event_mark_cb)(struct omx_component *oc, void *ptr);
+
+  int oc_inport;
+  int oc_outport;
+
+  int oc_stream_corrupt;
 
 } omx_component_t;
 
@@ -53,7 +60,7 @@ omxchk0(OMX_ERRORTYPE er, const char *fn, int line)
 
 #define omxchk(fn) omxchk0(fn, # fn, __LINE__);
 
-#if 1
+#if 0
 #define omxdbg(fmt...) TRACE(TRACE_DEBUG, "OMX", fmt);
 #else
 #define omxdbg(fmt...)
@@ -64,10 +71,13 @@ void omx_init(void);
 omx_component_t *omx_component_create(const char *name, hts_mutex_t *mtx,
 				      hts_cond_t *avail);
 void omx_component_destroy(omx_component_t *oc);
+void omx_send_command(omx_component_t *oc, OMX_COMMANDTYPE cmd, int v, void *p,
+		      int wait);
 void omx_set_state(omx_component_t *oc, OMX_STATETYPE reqstate);
 void omx_alloc_buffers(omx_component_t *oc, int port);
 OMX_BUFFERHEADERTYPE *omx_get_buffer_locked(omx_component_t *oc);
 OMX_BUFFERHEADERTYPE *omx_get_buffer(omx_component_t *oc);
+int omx_wait_fill_buffer(omx_component_t *oc, OMX_BUFFERHEADERTYPE *buf);
 void omx_wait_buffers(omx_component_t *oc);
 void omx_release_buffers(omx_component_t *oc, int port);
 omx_tunnel_t *omx_tunnel_create(omx_component_t *src, int srcport,
@@ -77,4 +87,7 @@ int64_t omx_get_media_time(omx_component_t *oc);
 void omx_flush_port(omx_component_t *oc, int port);
 struct media_pipe;
 omx_component_t *omx_get_clock(struct media_pipe *mp);
+void omx_enable_buffer_marks(omx_component_t *oc);
+void omx_port_enable(omx_component_t *c, int port);
+void omx_wait_command(omx_component_t *oc);
 

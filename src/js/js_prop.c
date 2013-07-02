@@ -18,7 +18,7 @@
 
 #include <string.h>
 #include "js.h"
-
+#include "misc/str.h"
 #include "prop/prop_i.h"
 
 /**
@@ -53,11 +53,83 @@ static JSBool
 pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 {
   const char *name = name_by_id(id);
+  prop_t *p = JS_GetPrivate(cx, obj);
   if(name != NULL)
-    js_prop_set_from_jsval(cx, prop_create(JS_GetPrivate(cx, obj), name), *vp);
+    js_prop_set_from_jsval(cx, prop_create(p, name), *vp);
   return JS_TRUE;
 }
 
+
+/**
+ *
+ */
+static JSBool
+pb_getProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
+{
+  prop_t *p = JS_GetPrivate(cx, obj);
+  prop_t *c;
+
+  hts_mutex_lock(&prop_mutex);
+
+  if(JSVAL_IS_STRING(id)) {
+    const char *name = JS_GetStringBytes(JSVAL_TO_STRING(id));
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link)
+      if(c->hp_name != NULL && !strcmp(c->hp_name, name))
+        break;
+
+  } else if(JSVAL_IS_INT(id)) {
+    int num = JSVAL_TO_INT(id);
+
+    TAILQ_FOREACH(c, &p->hp_childs, hp_parent_link) {
+      if(c->hp_name)
+        continue;
+      if(num == 0)
+        break;
+      num--;
+    }
+  } else {
+    hts_mutex_unlock(&prop_mutex);
+    return JS_FALSE;
+  }
+
+
+  if(c != NULL) {
+    jsdouble *d;
+
+    switch(c->hp_type) {
+    default:
+      break;
+
+    case PROP_CSTRING:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, c->hp_cstring));
+      break;
+    case PROP_RSTRING:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_rstring)));
+      break;
+    case PROP_LINK:
+      *vp = STRING_TO_JSVAL(JS_NewStringCopyZ(cx, rstr_get(c->hp_link_rtitle)));
+      break;
+
+    case PROP_FLOAT:
+      if((d = JS_NewDouble(cx, c->hp_float)) != NULL)
+        *vp = DOUBLE_TO_JSVAL(d);
+      break;
+
+    case PROP_INT:
+      if(INT_FITS_IN_JSVAL(c->hp_int))
+        *vp = INT_TO_JSVAL(c->hp_int);
+      else if((d = JS_NewDouble(cx, c->hp_int)) != NULL)
+        *vp = DOUBLE_TO_JSVAL(d);
+      break;
+
+    case PROP_DIR:
+      *vp = OBJECT_TO_JSVAL(js_object_from_prop(cx, c));
+      break;
+    }
+  }
+  hts_mutex_unlock(&prop_mutex);
+  return JS_TRUE;
+}
 
 
 /**
@@ -66,25 +138,53 @@ pb_setProperty(JSContext *cx, JSObject *obj, jsval id, jsval *vp)
 static void
 pb_finalize(JSContext *cx, JSObject *obj)
 {
-  prop_t *p = JS_GetPrivate(cx, obj);
-  prop_ref_dec(p);
+  prop_ref_dec(JS_GetPrivate(cx, obj));
 }
 
 
 /**
  *
  */
-static JSClass prop_bridge_class = {
-  "PropBridgeClass",
+static JSBool
+pb_enumerate(JSContext *cx, JSObject *obj)
+{
+  prop_t *p = JS_GetPrivate(cx, obj);
+
+  char **v = prop_get_name_of_childs(p);
+  if(v == NULL)
+    return JS_FALSE;
+
+  for(char **x = v; *x; x++) {
+    const char *name = *x;
+    if(*name == '*') {
+      JS_DefineProperty(cx, obj, (const char *)(intptr_t)atoi(name+1),
+                        JSVAL_NULL, NULL, NULL,
+                        JSPROP_ENUMERATE | JSPROP_INDEX);
+    } else {
+      JS_DefineProperty(cx, obj, *x, JSVAL_NULL, NULL, NULL, JSPROP_ENUMERATE);
+
+    }
+  }
+  strvec_free(v);
+  return JS_TRUE;
+}
+
+
+/**
+ *
+ */
+static JSClass prop_map_class = {
+  "Prop",
   JSCLASS_HAS_PRIVATE,
-  pb_setProperty, 
+  pb_getProperty,
   pb_delProperty,
-  JS_PropertyStub,
+  pb_getProperty,
   pb_setProperty,
-  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub,
+  pb_enumerate,
+  JS_ResolveStub,
+  JS_ConvertStub,
   pb_finalize,
 };
-
 
 
 /**
@@ -93,16 +193,67 @@ static JSClass prop_bridge_class = {
 JSObject *
 js_object_from_prop(JSContext *cx, prop_t *p)
 {
-  JSObject *obj = JS_NewObjectWithGivenProto(cx, &prop_bridge_class,
-					     NULL, NULL);
+  JSObject *obj = JS_NewObjectWithGivenProto(cx, &prop_map_class, NULL, NULL);
   JS_SetPrivate(cx, obj, prop_ref_inc(p));
   return obj;
 }
+
 
 typedef struct {
   jsval value;
   int done;
 } wfv_t;
+
+
+/**
+ *
+ */
+static JSClass prop_ref_class = {
+  "propref",
+  JSCLASS_HAS_PRIVATE,
+  JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,JS_PropertyStub,
+  JS_EnumerateStub,JS_ResolveStub,JS_ConvertStub, pb_finalize,
+};
+
+
+static JSBool
+js_openURL(JSContext *cx, JSObject *obj, uintN argc,
+	      jsval *argv, jsval *rval)
+{
+  const char *url;
+  const char *view = NULL;
+  const char *how = NULL;
+
+  if (!JS_ConvertArguments(cx, argc, argv, "s/ss", &url, &view, &how))
+    return JS_FALSE;
+
+  event_t *e = event_create_openurl(url, view, NULL, NULL, how);
+  prop_send_ext_event(JS_GetPrivate(cx, obj), e);
+  event_release(e);
+  return JS_TRUE;
+}
+
+/**
+ *
+ */
+static JSFunctionSpec setting_functions[] = {
+    JS_FS("openURL", js_openURL, 1, 0, 0),
+    JS_FS_END
+};
+
+
+/**
+ *
+ */
+JSObject *
+js_nav_create(JSContext *cx, prop_t *p)
+{
+  JSObject *proto = js_object_from_prop(cx, p);
+  JSObject *obj = JS_NewObject(cx, &prop_ref_class, proto, NULL);
+  JS_SetPrivate(cx, obj, prop_create_r(p, "eventsink"));
+  JS_DefineFunctions(cx, obj, setting_functions);
+  return obj;
+}
 
 
 /**
@@ -197,8 +348,9 @@ typedef struct js_subscription {
   prop_sub_t *jss_sub;
   jsval jss_fn;
   int jss_refcount;
-  int *jss_subcnt;
   JSContext *jss_cx;
+  int (*jss_dtor)(void *aux);
+  void *jss_aux;
 } js_subscription_t;
 
 
@@ -245,14 +397,21 @@ js_sub_cb(void *opaque, prop_event_t event, ...)
   jsval v = JSVAL_NULL;
   int i32;
   const char *str;
+  double d;
 
   switch(event) {
   case PROP_SET_INT:
     i32 = va_arg(ap, int);
-    v = INT_TO_JSVAL(i32);
-    break;
+
+    if(i32 <= INT32_MAX && i32 >= INT32_MIN && INT_FITS_IN_JSVAL(i32)) {
+      v = INT_TO_JSVAL(i32);
+      break;
+    }
+    d = i32;
+    if(0)
   case PROP_SET_FLOAT:
-    v = DOUBLE_TO_JSVAL(JS_NewDouble(cx, va_arg(ap, double)));
+      d = va_arg(ap, double);
+    v = DOUBLE_TO_JSVAL(JS_NewDouble(cx, d));
     break;
   case PROP_SET_RSTRING:
     str = rstr_get(va_arg(ap, rstr_t *));
@@ -264,11 +423,10 @@ js_sub_cb(void *opaque, prop_event_t event, ...)
     break;
 
   case PROP_DESTROYED:
-    if(jss->jss_subcnt != NULL) {
-      (*jss->jss_subcnt)--;
+    if(jss->jss_dtor != NULL && jss->jss_dtor(jss->jss_aux))
       js_sub_destroy(cx, jss);
-    }
     return;
+
   default:
     break;
   }
@@ -331,11 +489,11 @@ static JSClass page_options_class = {
 /**
  *
  */
-JSBool 
-js_subscribe(JSContext *cx, uintN argc, 
+JSBool
+js_subscribe(JSContext *cx, uintN argc,
 	     jsval *argv, jsval *rval, prop_t *root, const char *pname,
 	     struct js_subscription_list *list, prop_courier_t *pc,
-	     int *subsptr)
+             int (*dtor)(void *aux), void *aux)
 {
   const char *name;
   JSObject *func;
@@ -348,13 +506,11 @@ js_subscribe(JSContext *cx, uintN argc,
   jss->jss_fn = OBJECT_TO_JSVAL(func);
   JS_AddNamedRoot(cx, &jss->jss_fn, "subscription");
 
-  // Abuse subsptr to tell if we're a page or global sub
-  jss->jss_cx = subsptr ? cx : js_global_cx;
-  jss->jss_subcnt = subsptr;
-  if(subsptr)
-    (*subsptr)++;
+  jss->jss_cx = pc == js_global_pc ? js_global_cx : cx;
+  jss->jss_dtor = dtor;
+  jss->jss_aux = aux;
 
-  jss->jss_sub = 
+  jss->jss_sub =
     prop_subscribe(PROP_SUB_TRACK_DESTROY,
 		   PROP_TAG_CALLBACK, js_sub_cb, jss,
 		   PROP_TAG_NAMESTR, name,
@@ -378,13 +534,14 @@ js_subscribe(JSContext *cx, uintN argc,
 /**
  *
  */
-JSBool 
-js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc, 
+JSBool
+js_subscribe_global(JSContext *cx, JSObject *obj, uintN argc,
 		    jsval *argv, jsval *rval)
 {
   js_plugin_t *jsp = JS_GetPrivate(cx, obj);
   return js_subscribe(cx, argc, argv, rval, NULL, NULL,
-		      &jsp->jsp_subscriptions, js_global_pc, NULL);
+		      &jsp->jsp_subscriptions, js_global_pc,
+                      NULL, NULL);
 }
 
 

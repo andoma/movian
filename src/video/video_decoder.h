@@ -26,7 +26,7 @@
 #include <dvdnav/dvdnav.h>
 #endif
 
-#define VIDEO_DECODER_REORDER_SIZE 16
+#define VIDEO_DECODER_REORDER_SIZE 256
 #define VIDEO_DECODER_REORDER_MASK (VIDEO_DECODER_REORDER_SIZE-1)
 
 struct AVCodecontext;
@@ -91,12 +91,15 @@ typedef struct video_decoder {
   int vd_frame_size[VD_FRAME_SIZE_LEN];
   int vd_frame_size_ptr;
 
+  void *vd_render_component;
+
   /**
    * Reordering 
    */
-
   int vd_reorder_ptr;
-  struct media_buf vd_reorder[VIDEO_DECODER_REORDER_SIZE];
+  media_buf_meta_t vd_reorder[VIDEO_DECODER_REORDER_SIZE];
+  const media_buf_meta_t *vd_reorder_current;
+
 } video_decoder_t;
 
 video_decoder_t *video_decoder_create(media_pipe_t *mp);
@@ -109,15 +112,12 @@ void video_deliver_frame_avctx(video_decoder_t *vd,
 			       media_pipe_t *mp, media_queue_t *mq,
 			       struct AVCodecContext *ctx,
                                struct AVFrame *frame,
-			       const media_buf_t *mb, int decode_time);
+			       const media_buf_meta_t *mbm, int decode_time);
 
 
 void video_flush_avctx(media_codec_t *mc, video_decoder_t *vd);
 
 void video_deliver_frame(video_decoder_t *vd, const frame_info_t *info);
-
-void video_decoder_set_current_time(video_decoder_t *vd, int64_t ts,
-				    int epoch, int64_t delta);
 
 #endif /* VIDEO_DECODER_H */
 

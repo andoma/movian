@@ -75,7 +75,7 @@ sidfile_scandir(fa_dir_t *fd, const char *url, char *errbuf, size_t errlen)
     snprintf(turl, sizeof(turl), "sidplayer:%s/%d", fpath, i + 1);
     fde = fa_dir_add(fd, turl, name, CONTENT_AUDIO);
 
-    fde->fde_probestatus = FDE_PROBE_DEEP;
+    fde->fde_probestatus = FDE_PROBED_CONTENTS;
 
     fde->fde_metadata = prop_create_root("metadata");
     prop_set_string(prop_create(fde->fde_metadata, "title"), name);

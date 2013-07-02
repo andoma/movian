@@ -420,6 +420,10 @@ ssdp_thread(void *aux)
   fdm = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
 
   setsockopt(fdm, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(int));
+#if defined(SO_REUSEPORT)
+  setsockopt(fdm, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(int));
+#endif
+
 #if defined(IP_RECVDSTADDR)
   setsockopt(fdm, IPPROTO_IP, IP_RECVDSTADDR, &one, sizeof(int));
 #endif
@@ -427,7 +431,7 @@ ssdp_thread(void *aux)
   si.sin_port = htons(1900);
 
   if(bind(fdm, (struct sockaddr *)&si, sizeof(struct sockaddr_in)) == -1) {
-    TRACE(TRACE_ERROR, "SSDP", "Unable to bind");
+    TRACE(TRACE_ERROR, "SSDP", "Unable to bind -- %s", strerror(errno));
     return NULL;
   }
 

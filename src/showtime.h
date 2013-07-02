@@ -60,6 +60,7 @@ extern const char *showtime_dataroot(void);
 
 
 #define _(string) nls_get_rstring(string)
+#define _pl(a,b,c) nls_get_rstringp(a,b,c)
 #define _p(string) nls_get_prop(string)
 
 rstr_t *nls_get_rstring(const char *string);
@@ -264,6 +265,11 @@ typedef struct gconf {
   hts_cond_t state_cond;
 
   int state_plugins_loaded;
+
+  int fa_allow_delete;
+
+  int ignore_the_prefix;
+
 
 } gconf_t;
 

@@ -62,7 +62,7 @@ struct spotify_page;
 /**
  *
  */
-static int silent_start;
+static int spotify_may_query_username;
 static int spotify_is_enabled;
 static prop_courier_t *spotify_courier;
 static media_pipe_t *spotify_mp;
@@ -3948,7 +3948,7 @@ spotify_thread(void *aux)
 
   spotify_session = s;
 
-  spotify_try_login(s, 0, NULL, silent_start);
+  spotify_try_login(s, 0, NULL, !spotify_may_query_username);
 
   /* Wakeup any sleepers that are waiting for us to start */
 
@@ -3963,7 +3963,8 @@ spotify_thread(void *aux)
 
       if(!pending_login && (sm = TAILQ_FIRST(&spotify_msgs)) != NULL) {
 	if(!is_logged_in) {
-	  do_login = 1;
+
+          do_login = 1 + spotify_may_query_username;
 	  sm = NULL;
 	}
 	break;
@@ -3984,7 +3985,7 @@ spotify_thread(void *aux)
     hts_mutex_unlock(&spotify_mutex);
 
     if(do_login) {
-      spotify_try_login(s, 0, NULL, 0);
+      spotify_try_login(s, 0, NULL, do_login == 1);
       do_login = 0;
     }
 
@@ -4078,9 +4079,11 @@ spotify_start(char *errbuf, size_t errlen, int silent)
 
   hts_mutex_lock(&spotify_mutex);
 
+  if(!silent)
+    spotify_may_query_username = 1;
+
   if(!is_thread_running) {
     is_thread_running = 1;
-    silent_start = silent;
     hts_thread_create_detached("spotify", spotify_thread, NULL,
 			       THREAD_PRIO_MODEL);
     shutdown_hook_add(spotify_shutdown_early, NULL, 1);
@@ -4651,7 +4654,7 @@ spotify_shutdown_late(void *opaque, int exitcode)
 static void
 be_spotify_search(prop_t *source, const char *query)
 {
-  if(spotify_start(NULL, 0, 0))
+  if(spotify_start(NULL, 0, 1))
     return;
   
   spotify_search_t *ss = calloc(1, sizeof(spotify_search_t));

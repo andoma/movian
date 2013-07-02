@@ -27,6 +27,77 @@
 
 #include "backend/backend.h"
 
+
+/**
+ *
+ */
+static void
+glw_tex_purge_stash(glw_root_t *gr, int stash)
+{
+  while(gr->gr_tex_stash[stash].size > gr->gr_tex_stash[stash].limit) {
+    glw_loadable_texture_t *glt = TAILQ_FIRST(&gr->gr_tex_stash[stash].q);
+    if(glt == NULL)
+      break;
+
+    assert(glt->glt_q == &gr->gr_tex_stash[stash].q);
+
+    TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
+    gr->gr_tex_stash[stash].size -= glt->glt_size;
+
+    glw_tex_backend_free_loader_resources(glt);
+    glw_tex_backend_free_render_resources(gr, glt);
+    glt->glt_state = GLT_STATE_INACTIVE;
+
+    if(glt->glt_refcnt == 0) {
+
+      if(glt->glt_url != NULL) {
+        rstr_release(glt->glt_url);
+        glt->glt_url = NULL;
+        LIST_REMOVE(glt, glt_global_link);
+      }
+      free(glt);
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static int
+glw_tex_stash(glw_root_t *gr, glw_loadable_texture_t *glt, int unreferenced)
+{
+
+  if(glt->glt_url == NULL)
+    return 1;
+
+  glt->glt_state = GLT_STATE_STASHED;
+
+  int stash = glt->glt_original_type == PIXMAP_JPEG;
+
+  glt->glt_stash = stash;
+  glt->glt_q = &gr->gr_tex_stash[stash].q;
+
+  TAILQ_INSERT_TAIL(glt->glt_q, glt, glt_work_link);
+  gr->gr_tex_stash[stash].size += glt->glt_size;
+
+  glw_tex_purge_stash(gr, stash);
+  return 0;
+}
+
+
+
+static void
+glw_tex_unstash(glw_root_t *gr, glw_loadable_texture_t *glt)
+{
+  int stash = glt->glt_stash;
+
+  TAILQ_REMOVE(glt->glt_q, glt, glt_work_link);
+  gr->gr_tex_stash[stash].size -= glt->glt_size;
+}
+
+
+
 void
 glw_tex_autoflush(glw_root_t *gr)
 {
@@ -37,8 +108,10 @@ glw_tex_autoflush(glw_root_t *gr)
 
     switch(glt->glt_state) {
     case GLT_STATE_VALID:
-      glw_tex_backend_free_render_resources(gr, glt);
-      glt->glt_state = GLT_STATE_INACTIVE;
+      if(glw_tex_stash(gr, glt, 0)) {
+        glw_tex_backend_free_render_resources(gr, glt);
+        glt->glt_state = GLT_STATE_INACTIVE;
+      }
       break;
 
     case GLT_STATE_QUEUED:
@@ -51,11 +124,12 @@ glw_tex_autoflush(glw_root_t *gr)
       glt->glt_state = GLT_STATE_LOAD_ABORT;
       break;
 
+    case GLT_STATE_STASHED:
     case GLT_STATE_LOAD_ABORT:
     case GLT_STATE_ERROR:
     case GLT_STATE_INACTIVE:
-      printf("%s: Autoflush unexpected state %d\n", 
-	     rstr_get(glt->glt_url), glt->glt_state);
+      printf("%s: %p, Autoflush unexpected state %d\n",
+	     rstr_get(glt->glt_url), glt, glt->glt_state);
       abort();
     }
   }
@@ -230,11 +304,18 @@ loader_thread(void *aux)
 	  }
 
 	  if(pm != NOT_MODIFIED) {
+
+            // Actually upload the texture to the render backend
+
 	    assert(!pixmap_is_coded(pm));
-	    glt->glt_orientation = pm->pm_orientation;
-	    glt->glt_aspect = pm->pm_aspect;
-	    glt->glt_margin = pm->pm_margin;
-	    glw_tex_backend_load(gr, glt, pm);
+	    glt->glt_orientation   = pm->pm_orientation;
+	    glt->glt_aspect        = pm->pm_aspect;
+	    glt->glt_margin        = pm->pm_margin;
+            glt->glt_original_type = pm->pm_original_type;
+            glt->glt_xs            = pm->pm_width;
+            glt->glt_ys            = pm->pm_height;
+
+	    glt->glt_size          = glw_tex_backend_load(gr, glt, pm);
 	  }
 	}
 
@@ -259,7 +340,7 @@ spawn_loader(glw_root_t *gr, int only_fast, int idx)
   la->la_only_fast = only_fast;
   hts_thread_create_joinable("GLW texture loader", &gr->gr_tex_threads[idx],
 			     loader_thread, la,
-			     only_fast ? THREAD_PRIO_UI_WORKER_HIGH :
+			     only_fast ? THREAD_PRIO_UI_WORKER_MED :
 			     THREAD_PRIO_UI_WORKER_LOW);
 }
 
@@ -272,9 +353,15 @@ glw_tex_init(glw_root_t *gr)
   int i;
   gr->gr_tex_threads_running = 1;
   hts_cond_init(&gr->gr_tex_load_cond, &gr->gr_mutex);
-  
+
   TAILQ_INIT(&gr->gr_tex_rel_queue);
-  for(i = 0; i < LQ_num; i++) 
+  TAILQ_INIT(&gr->gr_tex_stash[0].q);
+  TAILQ_INIT(&gr->gr_tex_stash[1].q);
+
+  gr->gr_tex_stash[0].limit = 16 * 1024 * 1024;
+  gr->gr_tex_stash[1].limit = 16 * 1024 * 1024;
+
+  for(i = 0; i < LQ_num; i++)
     TAILQ_INIT(&gr->gr_tex_load_queue[i]);
 
   for(i = 0; i < GLW_TEXTURE_THREADS; i++)
@@ -311,10 +398,14 @@ glw_tex_flush_all(glw_root_t *gr)
 
     case GLT_STATE_INACTIVE:
       break;
-      
+
+    case GLT_STATE_STASHED:
+      glw_tex_unstash(gr, glt);
+
+      if(0)
     case GLT_STATE_VALID:
+        LIST_REMOVE(glt, glt_flush_link);
       glw_tex_backend_free_render_resources(gr, glt);
-      LIST_REMOVE(glt, glt_flush_link);
       glt->glt_state = GLT_STATE_INACTIVE;
       break;
 
@@ -369,13 +460,27 @@ glw_tex_deref(glw_root_t *gr, glw_loadable_texture_t *glt)
     return;
   }
 
-  if(glt->glt_state == GLT_STATE_VALID ||
-     glt->glt_state == GLT_STATE_QUEUED ||
-     glt->glt_state == GLT_STATE_LOADING)
+  switch(glt->glt_state) {
+  case GLT_STATE_VALID:
     LIST_REMOVE(glt, glt_flush_link);
+    if(glw_tex_stash(gr, glt, 1))
+      break;
+    return;
+
+  case GLT_STATE_STASHED:
+    return;
+
+  case GLT_STATE_QUEUED:
+  case GLT_STATE_LOADING:
+    LIST_REMOVE(glt, glt_flush_link);
+    break;
+  case GLT_STATE_INACTIVE:
+  case GLT_STATE_ERROR:
+  case GLT_STATE_LOAD_ABORT:
+    break;
+  }
 
   glw_tex_backend_free_loader_resources(glt);
-
   TAILQ_INSERT_TAIL(&gr->gr_tex_rel_queue, glt, glt_work_link);
 
   if(glt->glt_url == NULL)
@@ -456,6 +561,11 @@ glw_tex_layout(glw_root_t *gr, glw_loadable_texture_t *glt)
   switch(glt->glt_state) {
   case GLT_STATE_INACTIVE:
     gl_tex_req_load(gr, glt);
+    break;
+
+  case GLT_STATE_STASHED:
+    glw_tex_unstash(gr, glt);
+    glt->glt_state = GLT_STATE_VALID;
     break;
 
   case GLT_STATE_VALID:

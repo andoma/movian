@@ -166,6 +166,8 @@ SRCS += src/fileaccess/fileaccess.c \
 	src/fileaccess/fa_nativesmb.c \
 	src/fileaccess/fa_buffer.c \
 	src/fileaccess/fa_slice.c \
+	src/fileaccess/fa_bwlimit.c \
+	src/fileaccess/fa_cmp.c \
 	src/fileaccess/fa_aes.c \
 	src/fileaccess/fa_imageloader.c \
 	src/fileaccess/fa_indexer.c \
@@ -247,7 +249,8 @@ SRCS-$(CONFIG_VDA)      += src/video/vda.c
 ##############################################################
 # Subtitles
 ##############################################################
-SRCS += src/subtitles/sub_ass.c \
+SRCS += src/subtitles/subtitles.c \
+	src/subtitles/sub_ass.c \
 	src/subtitles/ext_subtitles.c \
 	src/subtitles/dvdspu.c \
 	src/subtitles/vobsub.c \
@@ -543,6 +546,7 @@ SRCS-$(CONFIG_SPIDERMONKEY) += ext/spidermonkey/jsapi.c	\
                         src/js/js_json.c                \
                         src/js/js_event.c               \
                         src/js/js_metaprovider.c        \
+                        src/js/js_hook.c                \
 
 ${BUILDDIR}/ext/spidermonkey/%.o : CFLAGS = \
 	-Iext/spidermonkey -Isrc/arch/nspr
