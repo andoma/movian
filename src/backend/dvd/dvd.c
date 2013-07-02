@@ -556,13 +556,13 @@ dvd_init_streams(dvd_player_t *dp, media_pipe_t *mp)
 
   mp_add_track_off(mp->mp_prop_audio_tracks, "audio:off");
   mp_add_track(mp->mp_prop_audio_tracks, "Auto", "audio:auto",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 50);
+	       NULL, NULL, NULL, NULL, _p("DVD"), 50, 1);
 
   prop_destroy_childs(mp->mp_prop_subtitle_tracks);
 
   mp_add_track_off(mp->mp_prop_subtitle_tracks, "sub:off");
   mp_add_track(mp->mp_prop_subtitle_tracks, "Auto", "sub:auto",
-	       NULL, NULL, NULL, NULL, _p("DVD"), 50);
+	       NULL, NULL, NULL, NULL, _p("DVD"), 50, 1);
 }
 
 

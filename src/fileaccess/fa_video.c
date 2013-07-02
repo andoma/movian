@@ -44,7 +44,7 @@
 #include "text/text.h"
 #include "video/video_settings.h"
 #include "video/video_playback.h"
-#include "subtitles/sub_scanner.h"
+#include "subtitles/subtitles.h"
 #include "misc/md5.h"
 #include "misc/str.h"
 #include "i18n.h"

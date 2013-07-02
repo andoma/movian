@@ -211,8 +211,6 @@ void js_set_prop_jsval(JSContext *cx, JSObject *obj, const char *name,
 
 JSObject *js_nav_create(JSContext *cx, prop_t *p);
 
-void js_metaprovider_init(void);
-
 JSBool js_addsubprovider(JSContext *cx, JSObject *obj, uintN argc, 
 			 jsval *argv, jsval *rval);
 
@@ -221,8 +219,4 @@ void js_hook_init(void); // Replace with init helper
 JSBool js_addItemHook(JSContext *cx, JSObject *obj, uintN argc,
                       jsval *argv, jsval *rval);
 
-
-struct sub_scanner;
-void js_sub_query(struct sub_scanner *ss);
-
-#endif // JS_H__ 
+#endif // JS_H__

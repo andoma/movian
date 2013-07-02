@@ -249,7 +249,8 @@ SRCS-$(CONFIG_VDA)      += src/video/vda.c
 ##############################################################
 # Subtitles
 ##############################################################
-SRCS += src/subtitles/sub_ass.c \
+SRCS += src/subtitles/subtitles.c \
+	src/subtitles/sub_ass.c \
 	src/subtitles/ext_subtitles.c \
 	src/subtitles/dvdspu.c \
 	src/subtitles/vobsub.c \

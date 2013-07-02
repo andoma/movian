@@ -41,6 +41,7 @@
 #include "video/video_settings.h"
 
 #include "settings.h"
+#include "subtitles/subtitles.h"
 
 static hts_mutex_t metadata_mutex;
 static prop_courier_t *metadata_courier;
@@ -207,10 +208,10 @@ type2content(const char *str)
  *
  */
 static void
-metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
+metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent,
+                          int score, int autosel)
 {
   char url[16];
-  int score = 0;
   rstr_t *title;
 
   snprintf(url, sizeof(url), "libav:%d", ms->ms_streamindex);
@@ -219,6 +220,7 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
     score += 10;
   else
     score += 5;
+
 
   if(ms->ms_title != NULL) {
     title = rstr_dup(ms->ms_title);
@@ -239,7 +241,8 @@ metadata_stream_make_prop(const metadata_stream_t *ms, prop_t *parent)
 		ms->ms_isolang,
 		NULL,
 		_p("Embedded in file"),
-		score);
+		score,
+                autosel);
   
   rstr_release(title);
 }
@@ -276,7 +279,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
   TAILQ_FOREACH(ms, &md->md_streams, ms_link) {
 
     prop_t *p;
-
+    int score = 0;
+    int autosel = 1;
     switch(ms->ms_type) {
     case MEDIA_TYPE_AUDIO:
       p = prop_create(proproot, "audiostreams");
@@ -287,6 +291,8 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
       pc = &vc;
       break;
     case MEDIA_TYPE_SUBTITLE:
+      score   = subtitles_embedded_score();
+      autosel = subtitles_embedded_autosel();
       p = prop_create(proproot, "subtitlestreams");
       pc = &sc;
       break;
@@ -297,7 +303,9 @@ metadata_to_proptree(const metadata_t *md, prop_t *proproot,
       prop_destroy_childs(p);
       *pc = 1;
     }
-    metadata_stream_make_prop(ms, p);
+    if(score == -1)
+      continue;
+    metadata_stream_make_prop(ms, p, score, autosel);
   }
 
   if(md->md_format != NULL)
@@ -2635,7 +2643,7 @@ add_provider_class(prop_concat_t *pc,
 
   prop_t *n = prop_create(c, "nodes");
 
-  prop_concat_add_source(pc, prop_create(c, "nodes"), d);
+  prop_concat_add_source(pc, n, d);
 
   prop_subscribe(0,
                  PROP_TAG_CALLBACK, provider_class_node_sub, NULL,
@@ -2692,6 +2700,9 @@ metadata_thread(void *aux)
 }
 
 
+
+prop_concat_t *metadata_prop_concat;
+
 /**
  *
  */
@@ -2711,7 +2722,7 @@ metadata_init(void)
   
   s = settings_add_dir(NULL, _p("Metadata"), "settings", NULL,
 		       _p("Metadata configuration and provider settings"),
-		       NULL);
+		       "settings:metadata");
 
   pc = prop_concat_create(prop_create(s, "nodes"), 0);
 

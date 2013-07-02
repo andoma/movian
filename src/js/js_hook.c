@@ -28,7 +28,6 @@
 #include "misc/str.h"
 #include "event.h"
 #include "htsmsg/htsmsg_json.h"
-#include "subtitles/sub_scanner.h"
 #include "media.h"
 
 typedef struct js_hook {

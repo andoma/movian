@@ -1,0 +1,781 @@
+/*
+ *  Showtime mediacenter
+ *  Copyright (C) 2007-2012 Andreas Öman
+ *
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+#include "showtime.h"
+#include "prop/prop.h"
+#include "arch/threads.h"
+#include "fileaccess/fileaccess.h"
+#include "misc/isolang.h"
+#include "media.h"
+#include "vobsub.h"
+#include "backend/backend.h"
+#include "js/js.h"
+
+#include "subtitles.h"
+#include "video/video_settings.h"
+#include "backend/backend.h"
+#include "prop/prop_concat.h"
+#include "settings.h"
+#include "htsmsg/htsmsg_store.h"
+#include "misc/str.h"
+
+TAILQ_HEAD(subtitle_provider_queue, subtitle_provider);
+
+static hts_mutex_t subtitle_provider_mutex;
+static struct subtitle_provider_queue subtitle_providers;
+static int num_subtitle_providers;
+static prop_t *subtitle_settings_group;
+
+static subtitle_provider_t *sp_same_filename;
+static subtitle_provider_t *sp_any_filename;
+//static subtitle_provider_t *sp_central_dir;
+static subtitle_provider_t *sp_embedded;
+
+static htsmsg_t *sp_cfg;
+
+
+/**
+ *
+ */
+static int
+subtitle_score(const subtitle_provider_t *sp)
+{
+  return (1 + num_subtitle_providers - sp->sp_prio) * 1000;
+}
+
+/**
+ *
+ */
+int
+subtitles_embedded_score(void)
+{
+  if(!sp_embedded->sp_enabled)
+    return -1;
+  return subtitle_score(sp_embedded);
+}
+
+
+/**
+ *
+ */
+int
+subtitles_embedded_autosel(void)
+{
+  return sp_embedded->sp_autosel;
+}
+
+
+/**
+ *
+ */
+static void
+sp_set_enable(void *aux, int enabled)
+{
+  subtitle_provider_t *sp = aux;
+  sp->sp_enabled = enabled;
+  prop_setv(sp->sp_settings, "metadata", "enabled", NULL, PROP_SET_INT,
+	    sp->sp_enabled);
+
+  htsmsg_t *c = htsmsg_get_map(sp_cfg, sp->sp_id);
+  htsmsg_delete_field(c, "enabled");
+  htsmsg_add_u32(c, "enabled", sp->sp_enabled);
+  htsmsg_store_save(sp_cfg, "subtitleproviders");
+}
+
+
+/**
+ *
+ */
+static void
+sp_set_autosel(void *aux, int autosel)
+{
+  subtitle_provider_t *sp = aux;
+  sp->sp_autosel = autosel;
+
+  htsmsg_t *c = htsmsg_get_map(sp_cfg, sp->sp_id);
+  htsmsg_delete_field(c, "autosel");
+  htsmsg_add_u32(c, "autosel", sp->sp_autosel);
+  htsmsg_store_save(sp_cfg, "subtitleproviders");
+}
+
+
+/**
+ *
+ */
+static int
+sp_prio_cmp(const subtitle_provider_t *a, const subtitle_provider_t *b)
+{
+  return a->sp_prio - b->sp_prio;
+}
+
+
+/**
+ *
+ */
+void
+subtitle_provider_register(subtitle_provider_t *sp, const char *id,
+                           prop_t *title, int default_prio,
+                           const char *subtype, int default_enable,
+                           int default_autosel)
+{
+  sp->sp_id = strdup(id);
+  sp->sp_prio = default_prio ?: 1000000;
+
+  sp->sp_enabled = default_enable;
+  sp->sp_autosel = default_autosel;
+  sp->sp_settings =settings_add_dir(subtitle_settings_group,
+                                    title, subtype, NULL, NULL, NULL);
+
+  prop_tag_set(sp->sp_settings, &subtitle_providers, sp);
+
+  hts_mutex_lock(&subtitle_provider_mutex);
+
+  htsmsg_t *c = htsmsg_get_map(sp_cfg, sp->sp_id);
+  if(c != NULL) {
+    sp->sp_enabled = htsmsg_get_u32_or_default(c, "enabled", sp->sp_enabled);
+    sp->sp_autosel = htsmsg_get_u32_or_default(c, "autosel", sp->sp_autosel);
+    sp->sp_prio    = htsmsg_get_u32_or_default(c, "prio",    sp->sp_prio);
+  } else {
+    htsmsg_add_msg(sp_cfg, sp->sp_id, htsmsg_create_map());
+  }
+
+  settings_create_bool(sp->sp_settings, "enabled", _p("Enabled"),
+		       sp->sp_enabled, NULL, sp_set_enable, sp,
+		       0, NULL, NULL, NULL);
+
+  settings_create_bool(sp->sp_settings, "autoselect",
+                       _p("Automatically select from this source"),
+		       sp->sp_autosel, NULL, sp_set_autosel, sp,
+		       0, NULL, NULL, NULL);
+
+
+  num_subtitle_providers++;
+  TAILQ_INSERT_SORTED(&subtitle_providers, sp, sp_link, sp_prio_cmp);
+
+  subtitle_provider_t *n = TAILQ_NEXT(sp, sp_link);
+  prop_move(sp->sp_settings, n ? n->sp_settings : NULL);
+
+  hts_mutex_unlock(&subtitle_provider_mutex);
+
+  prop_setv(sp->sp_settings, "metadata", "enabled", NULL, PROP_SET_INT,
+	    sp->sp_enabled);
+
+}
+
+
+/**
+ *
+ */
+static subtitle_provider_t *
+subtitle_provider_create(const char *id, prop_t *title, int default_prio,
+                         const char *subtype, int default_enable,
+                         int default_autosel)
+{
+  subtitle_provider_t *sp = calloc(1, sizeof(subtitle_provider_t));
+  subtitle_provider_register(sp, id, title, default_prio, subtype,
+                             default_enable, default_autosel);
+  return sp;
+}
+
+
+/**
+ *
+ */
+void
+subtitle_provider_unregister(subtitle_provider_t *sp)
+{
+  hts_mutex_lock(&subtitle_provider_mutex);
+  prop_tag_clear(sp->sp_settings, &subtitle_providers);
+  TAILQ_REMOVE(&subtitle_providers, sp, sp_link);
+  num_subtitle_providers--;
+  hts_mutex_unlock(&subtitle_provider_mutex);
+  free(sp->sp_id);
+  prop_destroy(sp->sp_settings);
+}
+
+
+/**
+ * video - filename of video
+ * sub - URL to subtitle
+ *
+ * return 1 if the subtitle filename matches the video filename
+ */
+static int
+fs_sub_match(const char *video, const char *sub)
+{
+  // Get last path component of sub to form a filename
+  sub = strrchr(sub, '/');
+  if(sub == NULL)
+    return 0;
+  sub++;
+
+  int vl = strlen(video);
+  int sl = strlen(sub);
+
+  if(sl >= vl && sub[vl] == '.' && !strncasecmp(sub, video, vl))
+    return 1;
+
+  char *x = strrchr(sub, '.');
+  if(x != NULL) {
+    size_t off = x - sub;
+    if(vl > off) {
+      if((video[off] == '.' || video[off] == ' ') &&
+	 !strncasecmp(sub, video, off))
+	return 1;
+    }
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+check_subtitle_file(sub_scanner_t *ss,
+                    const char * const sub_filename, const char * const sub_url,
+                    const char * const video_filename,
+                    int base_score, int match_result, int autosel)
+{
+  const char *postfix = strrchr(sub_filename, '.');
+  const char *lang = NULL;
+  const char *type = NULL;
+  if(postfix == NULL)
+    return;
+
+  if(fs_sub_match(video_filename, sub_url) != match_result)
+    return;
+
+  if(!strcasecmp(postfix, ".srt")) {
+    if(postfix - sub_filename > 4 && postfix[-4] == '.') {
+      char b[4];
+      memcpy(b, postfix - 3, 3);
+      b[3] = 0;
+      lang = iso_639_2_lang(b);
+    }
+
+    type = "SRT";
+
+  } else if(!strcasecmp(postfix, ".ass") || !strcasecmp(postfix, ".ssa")) {
+    if(postfix - sub_filename > 4 && postfix[-4] == '.') {
+      char b[4];
+      memcpy(b, postfix - 3, 3);
+      b[3] = 0;
+      lang = iso_639_2_lang(b);
+    }
+
+    type = "ASS / SSA";
+
+  } else if(!strcasecmp(postfix, ".idx")) {
+
+    hts_mutex_lock(&ss->ss_mutex);
+    vobsub_probe(sub_url, sub_filename, base_score, ss->ss_proproot, NULL,
+                 autosel);
+    hts_mutex_unlock(&ss->ss_mutex);
+    return;
+
+  } else {
+    return;
+  }
+
+  hts_mutex_lock(&ss->ss_mutex);
+  mp_add_track(ss->ss_proproot, sub_filename, sub_url, type, NULL, lang, NULL,
+               _p("External file"), base_score, autosel);
+  hts_mutex_unlock(&ss->ss_mutex);
+  return;
+}
+
+
+
+/**
+ * url - directory to scan in
+ * video - filename of video
+ */
+static void
+fs_sub_scan_dir(sub_scanner_t *ss, const char *url, const char *video)
+{
+  fa_dir_t *fd;
+  fa_dir_entry_t *fde;
+  char errbuf[256];
+
+  TRACE(TRACE_DEBUG, "Video", "Scanning for subs in %s for %s", url, video);
+
+  if((fd = fa_scandir(url, errbuf, sizeof(errbuf))) == NULL) {
+    TRACE(TRACE_DEBUG, "Video", "Unable to scan %s for subtitles: %s",
+	  url, errbuf);
+    return;
+  }
+
+  RB_FOREACH(fde, &fd->fd_entries, fde_link) {
+    if(ss->ss_stop)
+      break;
+
+    if(fde->fde_type == CONTENT_DIR &&
+       !strcasecmp(rstr_get(fde->fde_filename), "subs")) {
+      fs_sub_scan_dir(ss, rstr_get(fde->fde_url), video);
+      continue;
+    }
+    const char *filename = rstr_get(fde->fde_filename);
+    const char *url      = rstr_get(fde->fde_url);
+
+    if(sp_same_filename->sp_enabled)
+      check_subtitle_file(ss, filename, url, video,
+                          subtitle_score(sp_same_filename),
+                          1, sp_same_filename->sp_autosel);
+
+    if(sp_any_filename->sp_enabled)
+      check_subtitle_file(ss, filename, url, video,
+                          subtitle_score(sp_any_filename),
+                          0, sp_any_filename->sp_autosel);
+
+  }
+  fa_dir_free(fd);
+}
+
+
+/**
+ *
+ */
+void
+sub_scanner_release(sub_scanner_t *ss)
+{
+  if(atomic_add(&ss->ss_refcount, -1) > 1)
+    return;
+
+  rstr_release(ss->ss_title);
+  rstr_release(ss->ss_imdbid);
+  free(ss->ss_url);
+  hts_mutex_destroy(&ss->ss_mutex);
+  free(ss);
+}
+
+
+/**
+ *
+ */
+void
+sub_scanner_retain(sub_scanner_t *ss)
+{
+  atomic_add(&ss->ss_refcount, 1);
+}
+
+
+
+/**
+ *
+ */
+static void *
+sub_scanner_thread(void *aux)
+{
+  sub_scanner_t *ss = aux;
+  subtitle_provider_t *sp, **v;
+
+  hts_mutex_lock(&subtitle_provider_mutex);
+
+  int cnt = 0;
+  TAILQ_FOREACH(sp, &subtitle_providers, sp_link)
+    sp->sp_prio = ++cnt;
+
+  v = alloca(cnt * sizeof(void *));
+  cnt = 0;
+  TAILQ_FOREACH(sp, &subtitle_providers, sp_link) {
+    if(!sp->sp_enabled)
+      continue;
+    v[cnt++] = sp;
+    if(sp->sp_retain != NULL)
+      sp->sp_retain(sp);
+  }
+
+  hts_mutex_unlock(&subtitle_provider_mutex);
+
+  if(!(ss->ss_beflags & BACKEND_VIDEO_NO_FS_SCAN)) {
+    char parent[URL_MAX];
+    char *fname = mystrdupa(ss->ss_url);
+
+    fname = strrchr(fname, '/') ?: fname;
+    fname++;
+    char *dot = strrchr(fname, '.');
+    if(dot)
+      *dot = 0;
+
+    fa_parent(parent, sizeof(parent), ss->ss_url);
+    fs_sub_scan_dir(ss, parent, fname);
+  }
+
+  int i;
+  for(i = 0; i < cnt; i++) {
+    subtitle_provider_t *sp = v[i];
+    if(sp->sp_query != NULL)
+      sp->sp_query(sp, ss->ss_stop ? NULL : ss, subtitle_score(sp));
+  }
+
+  sub_scanner_release(ss);
+  return NULL;
+}
+
+
+
+/**
+ *
+ */
+sub_scanner_t *
+sub_scanner_create(const char *url, prop_t *proproot,
+		   const video_args_t *va, int duration)
+{
+  int noscan = va->title == NULL && va->imdb == NULL && !va->hash_valid;
+
+  TRACE(TRACE_DEBUG, "Subscanner",
+        "%s subtitle scan for %s (imdbid:%s) "
+        "year:%d season:%d episode:%d duration:%d opensubhash:%016llx",
+        noscan ? "No" : "Starting",
+        va->title ?: "<unknown>",
+        va->imdb ?: "<unknown>",
+        va->year,
+        va->season,
+        va->episode,
+        duration,
+        va->opensubhash);
+
+  if(noscan)
+    return NULL;
+
+  sub_scanner_t *ss = calloc(1, sizeof(sub_scanner_t));
+  hts_mutex_init(&ss->ss_mutex);
+  ss->ss_refcount = 2; // one for thread, one for caller
+  ss->ss_url = url ? strdup(url) : NULL;
+  ss->ss_beflags = va->flags;
+  ss->ss_title = rstr_alloc(va->title);
+  ss->ss_imdbid = rstr_alloc(va->imdb);
+  ss->ss_proproot = prop_ref_inc(proproot);
+  ss->ss_fsize = va->filesize;
+  ss->ss_year   = va->year;
+  ss->ss_season = va->season;
+  ss->ss_episode = va->episode;
+  ss->ss_duration = duration;
+
+  ss->ss_hash_valid = va->hash_valid;
+  ss->ss_opensub_hash = va->opensubhash;
+  memcpy(ss->ss_subdbhash, va->subdbhash, 16);
+
+  hts_thread_create_detached("subscanner", sub_scanner_thread, ss,
+			     THREAD_PRIO_METADATA);
+  return ss;
+}
+
+/**
+ *
+ */
+void
+sub_scanner_destroy(sub_scanner_t *ss)
+{
+  if(ss == NULL)
+    return;
+  ss->ss_stop = 1;
+  hts_mutex_lock(&ss->ss_mutex);
+  prop_ref_dec(ss->ss_proproot);
+  ss->ss_proproot = NULL;
+  hts_mutex_unlock(&ss->ss_mutex);
+  sub_scanner_release(ss);
+}
+/**
+ *
+ */
+static void
+subtitle_provider_handle_move(subtitle_provider_t *sp,
+                              subtitle_provider_t *before)
+{
+  TAILQ_REMOVE(&subtitle_providers, sp, sp_link);
+
+  if(before) {
+    TAILQ_INSERT_BEFORE(before, sp, sp_link);
+  } else {
+    TAILQ_INSERT_TAIL(&subtitle_providers, sp, sp_link);
+  }
+
+  int prio = 0;
+
+  TAILQ_FOREACH(sp, &subtitle_providers, sp_link) {
+    sp->sp_prio = ++prio;
+    htsmsg_t *c = htsmsg_get_map(sp_cfg, sp->sp_id);
+    htsmsg_delete_field(c, "prio");
+    htsmsg_add_u32(c, "prio", sp->sp_prio);
+  }
+  htsmsg_store_save(sp_cfg, "subtitleproviders");
+}
+
+/**
+ *
+ */
+static void
+subtitle_settings_group_cb(void *opaque, prop_event_t event, ...)
+{
+  prop_t *p1, *p2;
+  va_list ap;
+  va_start(ap, event);
+
+  switch(event) {
+  case PROP_REQ_MOVE_CHILD:
+    p1 = va_arg(ap, prop_t *);
+    p2 = va_arg(ap, prop_t *);
+    subtitle_provider_handle_move(prop_tag_get(p1, &subtitle_providers),
+                                  p2 ? prop_tag_get(p2, &subtitle_providers)
+                                  : NULL);
+    prop_move(p1, p2);
+    break;
+
+  default:
+    break;
+  }
+  va_end(ap);
+}
+
+
+struct subtitle_settings subtitle_settings;
+
+static int
+parse_bgr(const char *str)
+{
+  int bgr;
+  if(*str == '#')
+    str++;
+
+  if(strlen(str) == 6) {
+
+    bgr  = hexnibble(str[0]) << 4;
+    bgr |= hexnibble(str[1]);
+    bgr |= hexnibble(str[2]) << 12;
+    bgr |= hexnibble(str[3]) << 8;
+    bgr |= hexnibble(str[4]) << 20;
+    bgr |= hexnibble(str[5]) << 16;
+    return bgr;
+  }
+
+  return 0;
+}
+
+
+
+static void
+set_subtitle_style_override(void *opaque, int v)
+{
+  subtitle_settings.style_override = v;
+}
+
+static void
+set_subtitle_scale(void *opaque, int v)
+{
+  subtitle_settings.scaling = v;
+}
+
+static void
+set_subtitle_alignment(void *opaque, const char *str)
+{
+  subtitle_settings.alignment = atoi(str);
+}
+
+static void
+set_subtitle_align_on_video(void *opaque, int v)
+{
+  subtitle_settings.align_on_video = v;
+}
+
+static void
+set_subtitle_color(void *opaque, const char *str)
+{
+  subtitle_settings.color = parse_bgr(str);
+}
+
+static void
+set_subtitle_shadow_color(void *opaque, const char *str)
+{
+  subtitle_settings.shadow_color = parse_bgr(str);
+}
+
+static void
+set_subtitle_shadow_size(void *opaque, int v)
+{
+  subtitle_settings.shadow_displacement = v;
+}
+
+static void
+set_subtitle_outline_color(void *opaque, const char *str)
+{
+  subtitle_settings.outline_color = parse_bgr(str);
+}
+
+static void
+set_subtitle_outline_size(void *opaque, int v)
+{
+  subtitle_settings.outline_size = v;
+}
+
+
+
+
+/**
+ *
+ */
+static void
+subtitles_init_settings(prop_concat_t *pc)
+{
+  setting_t *x;
+
+  prop_t *s = prop_create_root(NULL);
+  prop_concat_add_source(pc, prop_create(s, "nodes"), NULL);
+
+  //----------------------------------------------------------
+
+  htsmsg_t *store = htsmsg_store_load("subtitles") ?: htsmsg_create_map();
+
+
+  settings_create_separator(s, _p("Subtitle size and positioning"));
+
+  settings_create_int(s, "scale", _p("Subtitle size"),
+		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
+		      SETTINGS_INITIAL_UPDATE, "%", NULL,
+		      settings_generic_save_settings,
+		      (void *)"subtitles");
+
+  settings_create_bool(s, "subonvideoframe",
+		       _p("Force subtitles to reside on video frame"), 0,
+		       store, set_subtitle_align_on_video, NULL,
+		       SETTINGS_INITIAL_UPDATE,  NULL,
+		       settings_generic_save_settings,
+		       (void *)"subtitles");
+
+  x = settings_create_multiopt(s, "align", _p("Subtitle position"), 0);
+
+  settings_multiopt_add_opt(x, "2", _p("Center"), 1);
+  settings_multiopt_add_opt(x, "1", _p("Left"), 0);
+  settings_multiopt_add_opt(x, "3", _p("Right"), 0);
+  settings_multiopt_add_opt(x, "0", _p("Auto"), 0);
+
+  settings_multiopt_initiate(x,set_subtitle_alignment, NULL, NULL,
+			     store, settings_generic_save_settings,
+			     (void *)"subtitles");
+
+  settings_create_separator(s, _p("Subtitle styling"));
+
+  settings_create_string(s, "color", _p("Color"), "FFFFFF",
+			 store, set_subtitle_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings,
+			 (void *)"subtitles");
+
+  settings_create_string(s, "shadowcolor", _p("Shadow color"),
+			 "000000",
+			 store, set_subtitle_shadow_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings,
+			 (void *)"subtitles");
+
+  settings_create_int(s, "shadowcolorsize", _p("Shadow offset"),
+		      2, store, 0, 10, 1, set_subtitle_shadow_size, NULL,
+		      SETTINGS_INITIAL_UPDATE, "px", NULL,
+		      settings_generic_save_settings,
+		      (void *)"subtitles");
+
+  settings_create_string(s, "outlinecolor", _p("Outline color"),
+			 "000000",
+			 store, set_subtitle_outline_color, NULL,
+			 SETTINGS_INITIAL_UPDATE,  NULL,
+			 settings_generic_save_settings,
+			 (void *)"subtitles");
+
+  settings_create_int(s, "shadowoutlinesize", _p("Outline size"),
+		      1, store, 0, 4, 1, set_subtitle_outline_size, NULL,
+		      SETTINGS_INITIAL_UPDATE, "px", NULL,
+		      settings_generic_save_settings,
+		      (void *)"subtitles");
+
+  settings_create_bool(s, "styleoverride",
+		       _p("Ignore embedded styling"), 0,
+		       store, set_subtitle_style_override, NULL,
+		       SETTINGS_INITIAL_UPDATE,  NULL,
+		       settings_generic_save_settings,
+		       (void *)"subtitles");
+}
+
+
+/**
+ *
+ */
+static void
+subtitles_init_providers(prop_concat_t *pc)
+{
+  sp_cfg = htsmsg_store_load("subtitleproviders") ?: htsmsg_create_map();
+
+  prop_t *d = prop_create_root(NULL);
+
+  prop_link(_p("Providers for Subtitles"),
+            prop_create(prop_create(d, "metadata"), "title"));
+  prop_set(d, "type", PROP_SET_STRING, "separator");
+
+  prop_t *c = prop_create_root(NULL);
+  subtitle_settings_group = c;
+
+  prop_t *n = prop_create(c, "nodes");
+
+  prop_concat_add_source(pc, n, d);
+
+  prop_subscribe(0,
+                 PROP_TAG_CALLBACK, subtitle_settings_group_cb, NULL,
+                 PROP_TAG_MUTEX, &subtitle_provider_mutex,
+                 PROP_TAG_ROOT, n,
+                 NULL);
+
+  sp_embedded =
+    subtitle_provider_create("showtime_embedded_subs",
+                             _p("Subtitles embedded in video file"),
+                             400000, "video", 1, 1);
+
+  sp_same_filename =
+    subtitle_provider_create("showtime_same_filename",
+                             _p("Subtitles with matching filename in same folder as video"),
+                             500000, "subtitle", 1, 1);
+
+  sp_any_filename =
+    subtitle_provider_create("showtime_same_folder",
+                             _p("Any subtitle in same folder as video"),
+                             501000, "subtitle", 0, 1);
+#if 0
+  sp_central_dir =
+    subtitle_provider_create("showtime_central_sub_dir",
+                             _p("Subtitles with matching filename from central subtitle folder"),
+                             502000, "subtitle", 0, 1);
+#endif
+}
+
+/**
+ *
+ */
+void
+subtitles_init(void)
+{
+  TAILQ_INIT(&subtitle_providers);
+  hts_mutex_init(&subtitle_provider_mutex);
+
+  prop_t *s = settings_add_dir(NULL, _p("Subtitles"), "subtitle", NULL,
+                               _p("Generic settings for video subtitles"),
+                               "settings:subtitles");
+
+  prop_concat_t *pc = prop_concat_create(prop_create(s, "nodes"), 0);
+
+  subtitles_init_providers(pc);
+  subtitles_init_settings(pc);
+}

@@ -34,6 +34,7 @@
 #include "video/video_settings.h"
 #include "subtitles/ext_subtitles.h"
 #include "subtitles/dvdspu.h"
+#include "subtitles/subtitles.h"
 #include "settings.h"
 #include "db/kvstore.h"
 
@@ -1611,7 +1612,8 @@ mp_add_trackr(prop_t *parent,
 	      rstr_t *isolang,
 	      rstr_t *source,
 	      prop_t *sourcep,
-	      int score)
+	      int score,
+              int autosel)
 {
   prop_t *p = prop_create_root(NULL);
   prop_t *s = prop_create(p, "source");
@@ -1638,6 +1640,7 @@ mp_add_trackr(prop_t *parent,
 
   prop_set(p, "title", PROP_SET_RSTRING, title);
   prop_set(p, "basescore", PROP_SET_INT, score);
+  prop_set(p, "autosel", PROP_SET_INT, autosel);
 
   if(prop_set_parent(p, parent))
     prop_destroy(p);
@@ -1656,7 +1659,8 @@ mp_add_track(prop_t *parent,
 	     const char *isolang,
 	     const char *source,
 	     prop_t *sourcep,
-	     int score)
+	     int score,
+             int autosel)
 {
   rstr_t *rtitle      = rstr_alloc(title);
   rstr_t *rformat     = rstr_alloc(format);
@@ -1665,7 +1669,7 @@ mp_add_track(prop_t *parent,
   rstr_t *rsource     = rstr_alloc(source);
 
   mp_add_trackr(parent, rtitle, url, rformat, rlongformat, risolang,
-		rsource, sourcep, score);
+		rsource, sourcep, score, autosel);
   
   rstr_release(rtitle);
   rstr_release(rformat);
@@ -1681,7 +1685,7 @@ mp_add_track(prop_t *parent,
 void
 mp_add_track_off(prop_t *prop, const char *url)
 {
-  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 10000);
+  mp_add_track(prop, "Off", url, NULL, NULL, NULL, NULL, NULL, 100000, 1);
 }
 
 
@@ -1696,7 +1700,10 @@ typedef struct media_track {
   int mt_isolang_score;
 
   prop_sub_t *mt_sub_basescore;
-  int mt_base_score;
+  int mt_basescore;
+
+  prop_sub_t *mt_sub_autosel;
+  int mt_autosel;
 
   media_track_mgr_t *mt_mtm;
   prop_t *mt_root;
@@ -1727,7 +1734,6 @@ static void
 mtm_rethink(media_track_mgr_t *mtm)
 {
   media_track_t *mt, *best = NULL;
-  int thres = 20;
   int best_score = 0;
 
   if (mtm->mtm_current_url) {
@@ -1746,16 +1752,13 @@ mtm_rethink(media_track_mgr_t *mtm)
     return;
   }
 
-  if(mtm->mtm_type == MEDIA_TRACK_MANAGER_AUDIO ||
-     subtitle_settings.always_select)
-    thres = 0;
-
   if(mtm->mtm_user_set)
     return;
 
   TAILQ_FOREACH(mt, &mtm->mtm_tracks, mt_link) {
     if(mt->mt_url == NULL ||
-       mt->mt_base_score == -1 ||
+       mt->mt_basescore == -1 ||
+       mt->mt_autosel == -1 ||
        mt->mt_isolang_score == -1)
       continue;
 
@@ -1773,12 +1776,12 @@ mtm_rethink(media_track_mgr_t *mtm)
     if(!strcmp(mt->mt_url, "sub:off") || !strcmp(mt->mt_url, "audio:off"))
       continue;
 
-    int score = mt->mt_base_score + mt->mt_isolang_score;
+    if(!mt->mt_autosel)
+      continue;
 
-    
+    int score = mt->mt_basescore + mt->mt_isolang_score;
 
-    if(score < 10000 &&
-       score >= thres && (best == NULL || score > best_score)) {
+    if(score < 100000 && (best == NULL || score > best_score)) {
       best = mt;
       best_score = score;
     }
@@ -1831,9 +1834,9 @@ mt_set_isolang(void *opaque, const char *str)
     mt->mt_isolang_score = 0;
     break;
   }
-  if(mt->mt_base_score >= 0)
+  if(mt->mt_basescore >= 0)
     prop_set(mt->mt_root, "score", PROP_SET_INT,
-	     mt->mt_base_score + mt->mt_isolang_score);
+	     mt->mt_basescore + mt->mt_isolang_score);
 
   mtm_rethink(mt->mt_mtm);
 }
@@ -1846,10 +1849,22 @@ static void
 mt_set_basescore(void *opaque, int v)
 {
   media_track_t *mt = opaque;
-  mt->mt_base_score = v;
+  mt->mt_basescore = v;
   if(mt->mt_isolang_score >= 0)
     prop_set(mt->mt_root, "score", PROP_SET_INT,
-	     mt->mt_base_score + mt->mt_isolang_score);
+	     mt->mt_basescore + mt->mt_isolang_score);
+  mtm_rethink(mt->mt_mtm);
+}
+
+
+/**
+ *
+ */
+static void
+mt_set_autosel(void *opaque, int v)
+{
+  media_track_t *mt = opaque;
+  mt->mt_autosel = v;
   mtm_rethink(mt->mt_mtm);
 }
 
@@ -1867,7 +1882,8 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
   mt->mt_root = root;
 
   mt->mt_isolang_score = -1;
-  mt->mt_base_score = -1;
+  mt->mt_basescore = -1;
+  mt->mt_autosel = -1;
 
   if(before) {
     TAILQ_INSERT_BEFORE(before, mt, mt_link);
@@ -1898,6 +1914,14 @@ mtm_add_track(media_track_mgr_t *mtm, prop_t *root, media_track_t *before)
 		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
 		   PROP_TAG_NAMED_ROOT, root, "node",
 		   NULL);
+
+  mt->mt_sub_autosel =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("node", "autosel"),
+		   PROP_TAG_CALLBACK_INT, mt_set_autosel, mt,
+		   PROP_TAG_COURIER, mtm->mtm_mp->mp_pc,
+		   PROP_TAG_NAMED_ROOT, root, "node",
+		   NULL);
 }
 
 
@@ -1918,6 +1942,7 @@ mt_destroy(media_track_mgr_t *mtm, media_track_t *mt)
   prop_unsubscribe(mt->mt_sub_url);
   prop_unsubscribe(mt->mt_sub_isolang);
   prop_unsubscribe(mt->mt_sub_basescore);
+  prop_unsubscribe(mt->mt_sub_autosel);
   free(mt->mt_url);
   free(mt);
 }

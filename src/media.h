@@ -643,7 +643,8 @@ void mp_add_track(prop_t *parent,
 		  const char *isolang,
 		  const char *source,
 		  prop_t *sourcep,
-		  int score);
+		  int score,
+                  int autosel);
 
 void mp_add_trackr(prop_t *parent,
 		   rstr_t *title,
@@ -653,7 +654,8 @@ void mp_add_trackr(prop_t *parent,
 		   rstr_t *isolang,
 		   rstr_t *source,
 		   prop_t *sourcep,
-		   int score);
+		   int score,
+                   int autosel);
 
 void mp_add_track_off(prop_t *tracks, const char *title);
 

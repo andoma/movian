@@ -23,7 +23,7 @@ struct media_pipe;
 
 void vobsub_probe(const char *url, const char *filename,
 		  int score, struct prop *prop,
-		  const char *subfile);
+		  const char *subfile, int autosel);
 
 struct ext_subtitles *vobsub_load(const char *json, char *errbuf,
 				  size_t errlen, struct media_pipe *mp);

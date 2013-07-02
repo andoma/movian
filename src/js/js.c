@@ -1349,7 +1349,6 @@ js_init(void)
   JSFunction *fn;
 
   js_page_init();
-  js_metaprovider_init();
   js_hook_init();
 
   JS_SetCStringsAreUTF8();

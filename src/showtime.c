@@ -49,6 +49,7 @@
 #include "text/text.h"
 #include "video/video_settings.h"
 #include "metadata/metadata.h"
+#include "subtitles/subtitles.h"
 #include "db/db_support.h"
 #include "htsmsg/htsmsg_store.h"
 #include "js/js.h"
@@ -249,6 +250,7 @@ showtime_init(void)
   metadata_init();
   metadb_init();
   kvstore_init();
+  subtitles_init();
 
   /* Metadata decoration init */
   decoration_init();
