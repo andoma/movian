@@ -252,9 +252,6 @@ widget(container_x, {
     DIVIDER("System", false);
 
     ITEM("dataroot://resources/svg/Settings.svg", _("Settings"), "settings:");
-    ITEM("dataroot://resources/svg/Info.svg", _("About Showtime"), "page:about");
-    ITEM("dataroot://resources/svg/Plugin.svg", _("Plugins"), "plugin:start");
-
-
+    ITEM("dataroot://resources/svg/Plugin.svg", _("Apps"), "plugin:start");
   });
 });
