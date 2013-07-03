@@ -458,7 +458,8 @@ sub_scanner_thread(void *aux)
   for(i = 0; i < cnt; i++) {
     subtitle_provider_t *sp = v[i];
     if(sp->sp_query != NULL)
-      sp->sp_query(sp, ss->ss_stop ? NULL : ss, subtitle_score(sp));
+      sp->sp_query(sp, ss->ss_stop ? NULL : ss, subtitle_score(sp),
+		   sp->sp_autosel);
   }
 
   sub_scanner_release(ss);

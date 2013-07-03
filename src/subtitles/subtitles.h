@@ -61,7 +61,7 @@ typedef struct subtitle_provider {
   int sp_autosel;
   int sp_prio;
   void (*sp_query)(struct subtitle_provider *sp, struct sub_scanner *ss,
-                   int score);
+                   int score, int autosel);
   void (*sp_retain)(struct subtitle_provider *sp);
 
   struct prop *sp_settings;
