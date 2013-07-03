@@ -1,0 +1,6 @@
+Fix problem when reading after end-of-file on CIFS/SMB shares.
+
+This resulted in various hangs and OOM crashes when reading files
+over CIFS/SMB
+
+Fixes #1695
