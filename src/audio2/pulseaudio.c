@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <pulse/pulseaudio.h>
 #include <assert.h>
 
@@ -80,18 +81,12 @@ static const struct {
 };
 
 
-
 /**
  *
  */
 static int
-pulseaudio_audio_reconfig(audio_decoder_t *ad)
+pulseaudio_make_context_ready(void)
 {
-  decoder_t *d = (decoder_t *)ad;
-  int i;
-
-  pa_threaded_mainloop_lock(mainloop);
-
   while(1) {
     switch(pa_context_get_state(ctx)) {
     case PA_CONTEXT_UNCONNECTED:
@@ -104,13 +99,115 @@ pulseaudio_audio_reconfig(audio_decoder_t *ad)
 
     case PA_CONTEXT_FAILED:
     case PA_CONTEXT_TERMINATED:
-      pa_threaded_mainloop_unlock(mainloop);
       return -1;
 
     case PA_CONTEXT_READY:
       break;
     }
     break;
+  }
+  return 0;
+}
+
+
+/**
+ *
+ */
+static int
+pulseaudio_check_passthru(audio_decoder_t *ad, int codec_id)
+{
+  decoder_t *d = (decoder_t *)ad;
+
+  int e;
+
+  switch(codec_id) {
+  case AV_CODEC_ID_DTS:
+    e = PA_ENCODING_DTS_IEC61937;
+    break;
+  case AV_CODEC_ID_AC3:
+    e = PA_ENCODING_AC3_IEC61937;
+    break;
+  case AV_CODEC_ID_EAC3:
+    e = PA_ENCODING_EAC3_IEC61937;
+    break;
+#if 0
+  case AV_CODEC_ID_MP1:
+  case AV_CODEC_ID_MP2:
+  case AV_CODEC_ID_MP3:
+    e = PA_ENCODING_MPEG_IEC61937;
+    break;
+#endif
+  default:
+    return 0;
+  }
+
+  pa_threaded_mainloop_lock(mainloop);
+
+  if(pulseaudio_make_context_ready()) {
+    pa_threaded_mainloop_unlock(mainloop);
+    return 0;
+  }
+
+  if(d->s) {
+    pa_stream_disconnect(d->s);
+    pa_stream_unref(d->s);
+  }
+
+  pa_format_info *vec[1];
+
+  vec[0] = pa_format_info_new();
+
+  vec[0]->encoding = e;
+  pa_format_info_set_rate(vec[0], 48000);
+  pa_format_info_set_channels(vec[0], 2);
+
+  d->s = pa_stream_new_extended(ctx, "Showtime playback", vec, 1, NULL);
+  int flags = 0;
+
+  pa_stream_set_state_callback(d->s, stream_state_callback, d);
+  pa_stream_set_write_callback(d->s, stream_write_callback, d);
+
+  flags |= PA_STREAM_AUTO_TIMING_UPDATE | PA_STREAM_INTERPOLATE_TIMING | 
+    PA_STREAM_NOT_MONOTONIC;
+
+  pa_stream_connect_playback(d->s, NULL, NULL, flags, NULL, NULL);
+
+  while(1) {
+    switch(pa_stream_get_state(d->s)) {
+    case PA_STREAM_UNCONNECTED:
+    case PA_STREAM_CREATING:
+      pa_threaded_mainloop_wait(mainloop);
+      continue;
+
+    case PA_STREAM_READY:
+      pa_threaded_mainloop_unlock(mainloop);
+      ad->ad_tile_size = 512;
+      d->ss = *pa_stream_get_sample_spec(d->s);
+      return 1;
+
+    case PA_STREAM_TERMINATED:
+    case PA_STREAM_FAILED:
+      pa_threaded_mainloop_unlock(mainloop);
+      return 0;
+    }
+  }
+}
+
+
+/**
+ *
+ */
+static int
+pulseaudio_audio_reconfig(audio_decoder_t *ad)
+{
+  decoder_t *d = (decoder_t *)ad;
+  int i;
+
+  pa_threaded_mainloop_lock(mainloop);
+
+  if(pulseaudio_make_context_ready()) {
+    pa_threaded_mainloop_unlock(mainloop);
+    return -1;
   }
 
   if(d->s) {
@@ -289,10 +386,17 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
 			 int64_t pts, int epoch)
 {
   decoder_t *d = (decoder_t *)ad;
-  size_t bytes = samples * d->framesize;
+  size_t bytes;
+
+  if(ad->ad_spdif_muxer != NULL) {
+    bytes = ad->ad_spdif_frame_size;
+  } else {
+    bytes = samples * d->framesize;
+  }
+
   void *buf;
   assert(d->s != NULL);
-  
+
   pa_threaded_mainloop_lock(mainloop);
 
   int writable = pa_stream_writable_size(d->s);
@@ -305,11 +409,15 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
   pa_stream_begin_write(d->s, &buf, &bytes);
   assert(bytes > 0);
 
-  int rsamples = bytes / d->framesize;
-  uint8_t *data[8] = {0};
-  data[0] = (uint8_t *)buf;
-  assert(rsamples <= samples);
-  avresample_read(ad->ad_avr, data, rsamples);
+  if(ad->ad_spdif_muxer != NULL) {
+    memcpy(buf, ad->ad_spdif_frame, ad->ad_spdif_frame_size);
+  } else {
+    int rsamples = bytes / d->framesize;
+    uint8_t *data[8] = {0};
+    data[0] = (uint8_t *)buf;
+    assert(rsamples <= samples);
+    avresample_read(ad->ad_avr, data, rsamples);
+  }
 
   if(pts != AV_NOPTS_VALUE) {
 
@@ -332,11 +440,11 @@ pulseaudio_audio_deliver(audio_decoder_t *ad, int samples,
   }
 
   pa_stream_write(d->s, buf, bytes, NULL, 0LL, PA_SEEK_RELATIVE);
+  ad->ad_spdif_frame_size = 0;
 
   pa_threaded_mainloop_unlock(mainloop);
   return 0;
 }
-
 
 /**
  *
@@ -368,6 +476,7 @@ static audio_class_t pulseaudio_audio_class = {
   .ac_flush        = pulseaudio_audio_flush,
   .ac_reconfig     = pulseaudio_audio_reconfig,
   .ac_deliver_unlocked = pulseaudio_audio_deliver,
+  .ac_check_passthru = pulseaudio_check_passthru,
 };
 
 

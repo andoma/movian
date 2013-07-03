@@ -11,6 +11,8 @@
 
 #include <libavutil/avutil.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+
 #include <libavutil/opt.h>
 #include <libavutil/mem.h>
 
@@ -108,6 +110,25 @@ audio_decoder_create(struct media_pipe *mp)
 }
 
 
+static void
+audio_cleanup_spdif_muxer(audio_decoder_t *ad)
+{
+  if(ad->ad_spdif_muxer == NULL)
+    return;
+  free(ad->ad_spdif_frame);
+  ad->ad_spdif_frame = NULL;
+  ad->ad_spdif_frame_alloc = 0;
+
+  av_free(ad->ad_spdif_muxer->pb);
+
+  free(ad->ad_mux_buffer);
+  ad->ad_mux_buffer = NULL;
+
+  avformat_free_context(ad->ad_spdif_muxer);
+  ad->ad_spdif_muxer = NULL;
+}
+
+
 /**
  *
  */
@@ -124,9 +145,89 @@ audio_decoder_destroy(struct audio_decoder *ad)
     avresample_free(&ad->ad_avr);
   }
 
+  audio_cleanup_spdif_muxer(ad);
   free(ad);
 }
 
+
+/**
+ *
+ */
+static int
+spdif_mux_write(void *opaque, uint8_t *buf, int buf_size)
+{
+  audio_decoder_t *ad = opaque;
+  int nl = ad->ad_spdif_frame_size + buf_size;
+  if(nl > ad->ad_spdif_frame_alloc) {
+    ad->ad_spdif_frame_alloc = nl;
+    ad->ad_spdif_frame = realloc(ad->ad_spdif_frame, ad->ad_spdif_frame_alloc);
+  }
+
+  memcpy(ad->ad_spdif_frame + ad->ad_spdif_frame_size, buf, buf_size);
+  ad->ad_spdif_frame_size = nl;
+  return 0;
+}
+
+
+/**
+ *
+ */
+static void
+audio_setup_spdif_muxer(audio_decoder_t *ad, AVCodec *codec,
+			media_queue_t *mq)
+{
+  AVOutputFormat *ofmt = av_guess_format("spdif", NULL, NULL);
+  if(ofmt == NULL)
+    return;
+
+  const int mux_buffer_size = 16384;
+  assert(ad->ad_mux_buffer == NULL);
+  ad->ad_mux_buffer = malloc(mux_buffer_size);
+
+  AVFormatContext *fctx = avformat_alloc_context();
+  fctx->oformat = ofmt;
+  fctx->pb = avio_alloc_context(ad->ad_mux_buffer, mux_buffer_size,
+				1, ad, NULL, spdif_mux_write, NULL);
+  AVStream *s = avformat_new_stream(fctx, codec);
+  s->codec->sample_rate = 48000; // ???
+  if(avcodec_open2(s->codec, codec, NULL)) {
+
+    TRACE(TRACE_ERROR, "audio", "Unable to open %s codec for SPDIF",
+	  codec->name);
+  bad:
+    av_free(fctx->pb);
+    free(ad->ad_mux_buffer);
+    ad->ad_mux_buffer = NULL;
+    avformat_free_context(fctx);
+    return;
+  }
+  
+  if(avformat_write_header(fctx, NULL)) {
+    TRACE(TRACE_ERROR, "audio", "Unable to open SPDIF muxer",
+	  codec->name);
+    goto bad;
+  }
+  ad->ad_spdif_muxer = fctx;
+  TRACE(TRACE_DEBUG, "audio", "SPDIF muxer opened");
+
+  const char *name;
+  switch(codec->id) {
+  case AV_CODEC_ID_DTS:  name = "DTS"; break;
+  case AV_CODEC_ID_AC3:  name = "AC3"; break;
+  case AV_CODEC_ID_EAC3: name = "EAC3"; break;
+  default:
+    name = "";
+    break;
+  }
+
+  char str[64];
+  snprintf(str, sizeof(str), "%s%sPass-Through", name, *name ? " " : "");
+  prop_set_string(mq->mq_prop_codec, str);
+
+  ad->ad_in_sample_rate = 0;
+  ad->ad_in_sample_format = 0;
+  ad->ad_in_channel_layout = 0;
+}
 
 
 /**
@@ -171,14 +272,38 @@ audio_process_audio(audio_decoder_t *ad, media_buf_t *mb)
 
     } else {
 
+      media_codec_t *mc = mb->mb_cw;
+
+      AVCodecContext *ctx = mc->ctx;
+
+      if(mc->codec_id != ad->ad_in_codec_id) {
+	AVCodec *codec = avcodec_find_decoder(mc->codec_id);
+	TRACE(TRACE_DEBUG, "audio", "Codec changed to %s",
+	      codec ? codec->name : "???");
+	ad->ad_in_codec_id = mc->codec_id;
+
+	audio_cleanup_spdif_muxer(ad);
+  
+	if(ac->ac_check_passthru != NULL && codec != NULL &&
+	   ac->ac_check_passthru(ad, mc->codec_id)) {
+
+	  audio_setup_spdif_muxer(ad, codec, mq);
+	}
+      }
+
       av_init_packet(&avpkt);
       avpkt.data = mb->mb_data + offset;
       avpkt.size = mb->mb_size - offset;
-      
-      AVCodecContext *ctx = mb->mb_cw->ctx;
+
+      if(ad->ad_spdif_muxer != NULL) {
+	av_write_frame(ad->ad_spdif_muxer, &avpkt);
+	avio_flush(ad->ad_spdif_muxer->pb);
+	ad->ad_pts = mb->mb_pts;
+	ad->ad_epoch = mb->mb_epoch;
+	return;
+      }
 
       if(ctx == NULL) {
-	media_codec_t *mc = mb->mb_cw;
 
 	AVCodec *codec = avcodec_find_decoder(mc->codec_id);
 	assert(codec != NULL); // Checked in libav.c
@@ -330,14 +455,18 @@ audio_decode_thread(void *aux)
 
   while(run) {
 
-    int avail = ad->ad_avr != NULL ? avresample_available(ad->ad_avr) : 0;
-
+    int avail;
+    
+    if(ad->ad_spdif_muxer != NULL) {
+      avail = ad->ad_spdif_frame_size;
+    } else {
+      avail = ad->ad_avr != NULL ? avresample_available(ad->ad_avr) : 0;
+    }
     media_buf_t *data = TAILQ_FIRST(&mq->mq_q_data);
     media_buf_t *ctrl = TAILQ_FIRST(&mq->mq_q_ctrl);
 
     if(avail >= ad->ad_tile_size && blocked == 0 && !ad->ad_paused) {
       assert(avail != 0);
-      assert(ad->ad_avr != NULL);
 
       int samples = MIN(ad->ad_tile_size, avail);
       int r;
@@ -348,8 +477,6 @@ audio_decode_thread(void *aux)
           hts_cond_wait(&mq->mq_avail, &mp->mp_mutex);
           continue;
         }
-        ad->ad_pts = AV_NOPTS_VALUE;
-        continue;
       } else {
         hts_mutex_unlock(&mp->mp_mutex);
         r = ac->ac_deliver_unlocked(ad, samples, ad->ad_pts, ad->ad_epoch);
@@ -358,7 +485,6 @@ audio_decode_thread(void *aux)
 
       if(r) {
 	blocked = 1;
-	continue;
       } else {
 	ad->ad_pts = AV_NOPTS_VALUE;
       }
