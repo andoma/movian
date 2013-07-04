@@ -736,6 +736,7 @@ hls_seek(hls_t *h, int64_t pts, int64_t ts)
   h->h_mp->mp_video.mq_seektarget = pts;
   h->h_mp->mp_audio.mq_seektarget = pts;
   hd->hd_seek_to = ts;
+  prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, pts / 1000000.0);
 }
 
 
