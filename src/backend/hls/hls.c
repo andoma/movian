@@ -736,7 +736,7 @@ hls_seek(hls_t *h, int64_t pts, int64_t ts)
   h->h_mp->mp_video.mq_seektarget = pts;
   h->h_mp->mp_audio.mq_seektarget = pts;
   hd->hd_seek_to = ts;
-  prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, pts / 1000000.0);
+  prop_set(h->h_mp->mp_prop_root, "seektime", PROP_SET_FLOAT, ts / 1000000.0);
 }
 
 
@@ -838,7 +838,9 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
   media_queue_t *mq = NULL;
   media_buf_t *mb = NULL;
   event_t *e = NULL;
-
+  const char *canonical_url = va->canonical_url;
+  int restartpos_last = -1;
+  int64_t last_timestamp_presented = AV_NOPTS_VALUE;
 
   mp->mp_video.mq_stream = 0;
   mp->mp_audio.mq_stream = 1;
@@ -861,6 +863,16 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     hd->hd_seek = hv;
     break;
   }
+
+  if(va->flags & BACKEND_VIDEO_RESUME ||
+     (video_settings.resume_mode == VIDEO_RESUME_YES &&
+      !(va->flags & BACKEND_VIDEO_START_FROM_BEGINNING))) {
+    int64_t start = video_get_restartpos(canonical_url) * 1000;
+    if(start) {
+      hls_seek(h, start, start);
+    }
+  }
+
 
   hd->hd_current = hd->hd_seek;
 
@@ -971,27 +983,20 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
     }
 
     if(event_is_type(e, EVENT_CURRENT_TIME)) {
-#if 0
+
       event_ts_t *ets = (event_ts_t *)e;
-      int sec = ets->ts / 1000000;
 
-      printf("sec=%d %lld\n", sec, ets->ts);
+      if(ets->epoch == mp->mp_epoch) {
+	int sec = ets->ts / 1000000;
+	last_timestamp_presented = ets->ts;
 
-#if 0
-      last_timestamp_presented = ets->ts;
-
-      // Update restartpos every 5 seconds
-      if(sec < restartpos_last || sec >= restartpos_last + 5) {
-	restartpos_last = sec;
-	metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
+	// Update restartpos every 5 seconds
+	if(sec < restartpos_last || sec >= restartpos_last + 5) {
+	  restartpos_last = sec;
+	  metadb_set_video_restartpos(canonical_url, ets->ts / 1000);
+	}
       }
-      if(sec != lastsec) {
-	lastsec = sec;
-	update_seek_index(sidx, sec);
-	update_seek_index(cidx, sec);
-      }
-#endif
-#endif
+
     } else if(event_is_type(e, EVENT_SEEK)) {
 
       if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
@@ -1016,6 +1021,22 @@ hls_play(hls_t *h, media_pipe_t *mp, char *errbuf, size_t errlen,
 
   if(mb != NULL && mb != MB_EOF && mb != MB_NYA)
     media_buf_free_unlocked(mp, mb);
+
+  // Compute stop position (in percentage of video length)
+
+  int spp = mp->mp_duration ? mp->mp_seek_base * 100 / mp->mp_duration : 0;
+
+  if(spp >= video_settings.played_threshold || event_is_type(e, EVENT_EOF)) {
+    metadb_set_video_restartpos(canonical_url, -1);
+    metadb_register_play(canonical_url, 1, CONTENT_VIDEO);
+    TRACE(TRACE_DEBUG, "Video",
+	  "Playback reached %d%%, counting as played (%s)",
+	  spp, canonical_url);
+  } else if(last_timestamp_presented != PTS_UNSET) {
+    metadb_set_video_restartpos(canonical_url, last_timestamp_presented / 1000);
+  }
+
+  // Shutdown
 
   mp_flush(mp, 0);
   mp_shutdown(mp);
