@@ -1,0 +1,6 @@
+Fix an issue with subtitle scanning
+
+This might fix some recent crashes people have seen when
+Showtime scans for subtitles
+
+Fixes #1715 (maybe)
