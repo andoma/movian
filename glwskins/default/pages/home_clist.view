@@ -196,23 +196,23 @@ widget(container_x, {
     });
 
 
-    $view.video  = propSorter($global.services.all,
+    $view.video  = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "video", exclude);
 
-    $view.music  = propSorter($global.services.all,
+    $view.music  = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "music", exclude);
 
-    $view.tv     = propSorter($global.services.all,
+    $view.tv     = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "tv", exclude);
 
-    $view.photos = propSorter($global.services.all,
+    $view.photos = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "photos", exclude);
 
-    $view.other  = propSorter($global.services.all,
+    $view.other  = propSorter($global.services.enabled,
 			      sort,   "node.title", false, false,
 			      filter, "node.type", neq, "other", exclude);
     
@@ -252,9 +252,6 @@ widget(container_x, {
     DIVIDER("System", false);
 
     ITEM("dataroot://resources/svg/Settings.svg", _("Settings"), "settings:");
-    ITEM("dataroot://resources/svg/Info.svg", _("About Showtime"), "page:about");
-    ITEM("dataroot://resources/svg/Plugin.svg", _("Plugins"), "plugin:start");
-
-
+    ITEM("dataroot://resources/svg/Plugin.svg", _("Apps"), "plugin:start");
   });
 });

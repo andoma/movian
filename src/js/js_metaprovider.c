@@ -50,7 +50,7 @@ typedef struct js_sub_job {
 } js_sub_job_t;
 
 static void js_sub_query(subtitle_provider_t *SP, sub_scanner_t *ss,
-                         int score);
+                         int score, int autosel);
 
 
 /**
@@ -195,7 +195,8 @@ static JSClass subreq_class = {
  *
  */
 static void
-js_sub_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score)
+js_sub_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score,
+	     int autosel)
 {
   js_subprovider_t *sp = (js_subprovider_t *)SP;
 
@@ -210,7 +211,7 @@ js_sub_query(subtitle_provider_t *SP, sub_scanner_t *ss, int score)
     js_sub_job_t *jsj = malloc(sizeof(js_sub_job_t));
     jsj->jsj_ss = ss;
     jsj->jsj_score = score;
-
+    jsj->jsj_autosel = autosel;
     sub_scanner_retain(ss);
     JS_SetPrivate(cx, obj, jsj);
 

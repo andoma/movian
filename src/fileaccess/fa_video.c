@@ -125,7 +125,8 @@ video_seek(AVFormatContext *fctx, media_pipe_t *mp, media_buf_t **mbp,
 
   pos -= fctx->start_time;
 
-  prop_set_float(prop_create(mp->mp_prop_root, "seektime"), pos / 1000000.0);
+
+  prop_set(mp->mp_prop_root, "seektime", PROP_SET_FLOAT, pos / 1000000.0);
 }
 
 

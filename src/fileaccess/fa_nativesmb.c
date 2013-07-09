@@ -2364,6 +2364,8 @@ smb_read(fa_handle_t *fh, void *buf, size_t size)
   nbt_req_t *nr = NULL;
   struct nbt_req_list reqs;
 
+  if(sf->sf_pos >= sf->sf_file_size)
+    return 0;
 
   if(sf->sf_pos + size > sf->sf_file_size)
     size = sf->sf_file_size - sf->sf_pos;

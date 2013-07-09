@@ -193,7 +193,7 @@ static void
 set_source(glw_t *w, rstr_t *url)
 {
   glw_view_loader_t *a = (glw_view_loader_t *)w;
-  glw_t *c;
+  glw_t *c, *d;
   
   if(w->glw_flags2 & GLW2_DEBUG)
     TRACE(TRACE_DEBUG, "GLW", "Loader loading %s", 
@@ -209,23 +209,25 @@ set_source(glw_t *w, rstr_t *url)
     glw_suspend_subscriptions(c);
 
   if(url && rstr_get(url)[0]) {
-    glw_t *d;
     d = glw_view_create(w->glw_root, url, w, 
 			a->prop_self_override ?: a->prop, 
 			a->prop_parent_override ?: a->prop_parent, a->args, 
 			a->prop_clone, 1, 0);
-    if(d == NULL) {
-      glw_view_create(w->glw_root, a->alt_url, w, 
-		      a->prop_self_override ?: a->prop, 
-		      a->prop_parent_override ?: a->prop_parent, a->args, 
-		      a->prop_clone, 1, 1);
-    }
-
-  } else {
-    /* Fade out all */
-    TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
-      c->glw_parent_vl_tgt = 1;
+    if(d != NULL)
+      return;
   }
+
+  if(a->alt_url != NULL) {
+    d = glw_view_create(w->glw_root, a->alt_url, w, 
+			a->prop_self_override ?: a->prop, 
+			a->prop_parent_override ?: a->prop_parent, a->args, 
+			a->prop_clone, 1, 1);
+    if(d != NULL)
+      return;
+  }
+
+  TAILQ_FOREACH(c, &w->glw_childs, glw_parent_link)
+    c->glw_parent_vl_tgt = 1;
 }
 
 

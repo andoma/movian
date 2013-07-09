@@ -386,7 +386,7 @@ event_create_action_str(const char *str)
 {
   action_type_t a = action_str2code(str);
 
-  if(a == -1)
+  if(a == ACTION_invalid)
     return event_create_str(EVENT_DYNAMIC_ACTION, str);
   return event_create_action(a);
 }

@@ -4,6 +4,7 @@
 #include <libavresample/avresample.h>
 
 #include "arch/threads.h"
+#include "media.h"
 
 struct media_pipe;
 struct audio_decoder;
@@ -22,7 +23,7 @@ typedef struct audio_class {
   void (*ac_pause)(struct audio_decoder *ad);
   void (*ac_play)(struct audio_decoder *ad);
   void (*ac_flush)(struct audio_decoder *ad);
-
+  int (*ac_check_passthru)(struct audio_decoder *ad, int codec);
 } audio_class_t;
 
 
@@ -40,6 +41,7 @@ typedef struct audio_decoder {
 
   int ad_paused;
 
+  int ad_in_codec_id;
   int ad_in_sample_rate;
   enum AVSampleFormat ad_in_sample_format;
   int64_t ad_in_channel_layout;
@@ -52,6 +54,14 @@ typedef struct audio_decoder {
 			    as early as codec initialization */
 
   AVAudioResampleContext *ad_avr;
+
+  void *ad_mux_buffer;
+  
+  struct AVFormatContext *ad_spdif_muxer;
+
+  void *ad_spdif_frame;
+  int ad_spdif_frame_size;
+  int ad_spdif_frame_alloc;
 
 } audio_decoder_t;
 

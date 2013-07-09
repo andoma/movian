@@ -90,6 +90,7 @@ struct http_connection {
   enum {
     HTTP_VERSION_1_0,
     HTTP_VERSION_1_1,
+    HTTP_VERSION_unknown = -1,
   } hc_version;
 
   char *hc_url;
@@ -852,6 +853,10 @@ http_handle_request(http_connection_t *hc)
     /* Keep-alive is default on, but can be disabled */
     hc->hc_keep_alive = !(v != NULL && !strcasecmp(v, "close"));
     break;
+
+  default:
+    http_error(hc, HTTP_NOT_IMPLEMENTED, NULL);
+    return 0;
   }
 
   hc->hc_no_output = hc->hc_cmd == HTTP_CMD_HEAD;

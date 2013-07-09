@@ -37,6 +37,7 @@ media_codec_create_lavc(media_codec_t *cw, const media_codec_params_t *mcp,
     return -1;
 
   if(cw->codec_id == CODEC_ID_AC3 ||
+     cw->codec_id == CODEC_ID_EAC3 ||
      cw->codec_id == CODEC_ID_DTS) {
 
     // We create codec instances later in audio thread.
