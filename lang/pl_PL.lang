@@ -16,6 +16,14 @@ msg: Usuń stronę z zakładek
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Zamknij Showtime
 
@@ -42,6 +50,14 @@ msg: Wyłącz system
 
 id: System
 msg: System
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Log systemowy
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Zajęte przez aplikację: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Zajęte przez funkcję malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: Dostępna pamięć RAM: %d kB
-
-id: Detected CPUs: %d
-msg: Procesor: %d
-
-id: Display info
-msg: Informacje
-
-id: Framerate: %.2f Hz
-msg: Częstotliwość wyświetlanego obrazu %.2f Hz
-
-id: Free chunks: %d
-msg: Wolne segmenty: %d
-
-id: GPU: %s
-msg: Procesor graficzny: %s
-
-id: Height: %d px
-msg: Wysokość: %d px
-
-id: Memory status
-msg: Status pamięci
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Informacje o systemie
-
-id: Total system RAM: %d kB
-msg: Całkowita dostępna pamięć RAM: %d kB
-
-id: Unused memory: %d kB
-msg: Wolna pamięć: %d kB
-
-id: Version: %s
-msg: Wersja: %s
-
-id: Width: %d px
-msg: Szerokość: %d px
-
-id: Windowmanager: %s
-msg: Okno menadżera: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Sąsiadujący
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: O Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Odrzuć
-
-id: Plugins
-msg: Wtyczki
 
 id: Search / Open URL
 msg: Szukaj / Otwórz URL
@@ -404,12 +364,6 @@ id: Playback status
 msg: Status odtwarzania
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Widziany:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -562,9 +516,6 @@ msg: Wspólne
 id: Compilations
 msg: Składanki
 
-id: Enable Spotify
-msg: Włącz Spotify
-
 id: Forget me
 msg: Nie zapamiętuj
 
@@ -606,9 +557,6 @@ msg: Znajomi ze Spotify
 
 id: Spotify music service
 msg: Serwis muzyczny Spotify
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify oferuje bezpłatny i legalny dostęp do ogromnej biblioteki z muzyką. Aby korzystać z Spotify w Showtime wymagane jest konto Premium Spotify.\nWięcej informacji na temat Spotify, pod adresem http://www.spotify.com/\n\nAby uzyskać dostęp do dowolnej funkcji Spotify w Showtime, musisz podać login i hasło.
 
 id: Spotify playlists
 msg: Lista odtwarzania Spotify
@@ -670,6 +618,10 @@ msg: Data (nowe na początku)
 id: Date (oldest first)
 msg: Data (starsze na początku)
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Nazwa pliku
 
@@ -688,6 +640,10 @@ msg: Sortuj foldery jako pierwsze
 id: Sort on
 msg: Sortuj
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -695,8 +651,37 @@ id: Search using spotlight
 msg: Szukaj używając spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Język
 
@@ -928,8 +913,9 @@ msg: Alternatywne repozytorium wtyczek - adres
 id: Automatically upgrade plugins
 msg: Automatycznie aktualizuj wtyczki
 
-id: Available plugins
-msg: Dostępne wtyczki
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Tło
@@ -937,8 +923,9 @@ msg: Tło
 id: Beta testing passwords
 msg: Hasło beta-testów
 
-id: Browse available plugins
-msg: Przeglądaj dostępne wtyczki
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Przeglądanie
@@ -964,8 +951,9 @@ msg: Błąd otwierania pliku
 id: Home page
 msg: Strona główna
 
-id: Installed plugins
-msg: Zainstalowane wtyczki
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Zainstalowana wersja jest nowsza od dostępnej
@@ -996,6 +984,13 @@ msg: Bez możliwości aktualizacji
 
 id: Online TV
 msg: Internet TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Wtyczki
 
 id: Preferred views from plugins
 msg: Preferowany podgląd z wtyczek
@@ -1091,10 +1086,94 @@ id: System related settings
 msg: Ustawienia związane z systemem
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Automatycznie
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Środek
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Kolor
+
 id: External file
 msg: Zewnętrzny plik
+
+id: Force subtitles to reside on video frame
+msg: Wymuś wyświetlanie napisów
+
+id: Generic settings for video subtitles
+msg: Ustawienia domyślne dla napisów
+
+id: Ignore embedded styling
+msg: Ignoruj wbudowany styl
+
+id: Left
+msg: Lewy
+
+id: Outline color
+msg: Kolor obrysu
+
+id: Outline size
+msg: Rozmiar obrysu
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Prawy
+
+id: Shadow color
+msg: Kolor cienia
+
+id: Shadow offset
+msg: Offset cienia
+
+id: Subtitle position
+msg: Położenie napisów
+
+id: Subtitle size
+msg: Rozmiar napisów
+
+id: Subtitle size and positioning
+msg: Rozmiar i pozycja napisów
+
+id: Subtitle styling
+msg: Styl napisów
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1240,20 +1319,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Staraj się wybierać napisy
-
-id: Auto
-msg: Automatycznie
-
 id: Automatically play next video in list
 msg: Automatycznie odtwarzaj kolejny plik z listy
-
-id: Center
-msg: Środek
-
-id: Color
-msg: Kolor
 
 id: Count video as played when reaching
 msg: Traktuj Video jako obejrzane po osiągnięciu
@@ -1264,59 +1331,17 @@ msg: Włącz VDA
 id: Enable VDPAU
 msg: Włącz VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Wymuś wyświetlanie napisów
-
-id: Generic settings for video subtitles
-msg: Ustawienia domyślne dla napisów
-
-id: Ignore embedded styling
-msg: Ignoruj wbudowany styl
-
-id: Include all subtitle files from movie directory
-msg: Dołącz wszystkie napisy z folderu z filmem
-
-id: Left
-msg: Lewy
-
 id: Maximum resolution for deinterlacer
 msg: Maks. rozdzielczość przy usuwaniu przeplotu
 
 id: No limit
 msg: Bez limitu
 
-id: Outline color
-msg: Kolor obrysu
-
-id: Outline size
-msg: Rozmiar obrysu
-
 id: Preferred VDPAU deinterlacer method
 msg: Preferowana metoda usuwania przeplotu dla VDPAU
 
 id: Resume video playback
 msg: Wznów odtwarzanie Video
-
-id: Right
-msg: Prawy
-
-id: Shadow color
-msg: Kolor cienia
-
-id: Shadow offset
-msg: Offset cienia
-
-id: Subtitle position
-msg: Położenie napisów
-
-id: Subtitle size
-msg: Rozmiar napisów
-
-id: Subtitle size and positioning
-msg: Rozmiar i pozycja napisów
-
-id: Subtitle styling
-msg: Styl napisów
 
 id: Temporal
 msg: Czasowy

@@ -16,6 +16,14 @@ msg: 将当前页从书签删除
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: 退出Showtime
 
@@ -42,6 +50,14 @@ msg: 关机
 
 id: System
 msg: 系统
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: 系统日志
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: 程序已分配：%d kB
-
-id: Allocated by malloc: %d kB
-msg: mallock已分配：%d kB
-
-id: Avail system RAM: %d kB
-msg: 系统可用内存: %d kB
-
-id: Detected CPUs: %d
-msg: 检测到CPU数: %d
-
-id: Display info
-msg: 显示信息
-
-id: Framerate: %.2f Hz
-msg: 帧速: %.2f Hz
-
-id: Free chunks: %d
-msg: 剩余块：%d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: 高: %d px
-
-id: Memory status
-msg: 内存状态
-
-id: Renderer: %s
-msg: 渲染器: %s
-
-id: System info
-msg: 系统信息
-
-id: Total system RAM: %d kB
-msg: 系统内存总数: %d kB
-
-id: Unused memory: %d kB
-msg: 剩余内存：%d kB
-
-id: Version: %s
-msg: 版本: %s
-
-id: Width: %d px
-msg: 宽: %d px
-
-id: Windowmanager: %s
-msg: 窗口管理器: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: 平铺
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: 关于Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: 删除
-
-id: Plugins
-msg: 插件
 
 id: Search / Open URL
 msg: 查找/打开URL
@@ -404,12 +364,6 @@ id: Playback status
 msg: 播放信息
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: 看过
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -562,9 +516,6 @@ msg: 协作
 id: Compilations
 msg: 选集
 
-id: Enable Spotify
-msg: 启用Spotify
-
 id: Forget me
 msg: 忘记我
 
@@ -606,9 +557,6 @@ msg: Spotify上的朋友
 
 id: Spotify music service
 msg: Spotify音乐服务
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify可以让你合法和免费的访问巨量音乐库。你需要一个Spotify的Preemium账号才能在Showtime中访问Spotify。\n请访问http://www.spotify.com/以了解更多关于Spotify的信息。\n\n你在Showtime中第一次使用Spotify功能时会提示您输入Spotify用户名和密码。
 
 id: Spotify playlists
 msg: Spotify播放列表
@@ -670,6 +618,10 @@ msg: 日期（新的优先）
 id: Date (oldest first)
 msg: 日期（老的优先）
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: 文件名
 
@@ -688,6 +640,10 @@ msg: 排序时文件夹优先
 id: Sort on
 msg: 排序
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -695,8 +651,37 @@ id: Search using spotlight
 msg: 使用spotlight搜索
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: 语言
 
@@ -928,8 +913,9 @@ msg: 更改插件库URL
 id: Automatically upgrade plugins
 msg: 自动更新插件
 
-id: Available plugins
-msg: 可用插件
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: 背景
@@ -937,8 +923,9 @@ msg: 背景
 id: Beta testing passwords
 msg: Beta测试用密码
 
-id: Browse available plugins
-msg: 浏览可用插件
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: 浏览
@@ -964,8 +951,9 @@ msg: 打开文件错误
 id: Home page
 msg: 首页
 
-id: Installed plugins
-msg: 已安装插件
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: 安装版本比可用版本高
@@ -996,6 +984,13 @@ msg: 不可升级
 
 id: Online TV
 msg: 在线电视
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: 插件
 
 id: Preferred views from plugins
 msg: 插件默认视图
@@ -1091,10 +1086,94 @@ id: System related settings
 msg: 系统相关设置
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: 自动
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: 居中
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: 颜色
+
 id: External file
 msg: 外部文件
+
+id: Force subtitles to reside on video frame
+msg: 强制字幕在视频帧内显示
+
+id: Generic settings for video subtitles
+msg: 视频字幕通用设置
+
+id: Ignore embedded styling
+msg: 忽略嵌入样式
+
+id: Left
+msg: 靠左
+
+id: Outline color
+msg: 边框颜色
+
+id: Outline size
+msg: 边框大小
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: 靠右
+
+id: Shadow color
+msg: 阴影颜色
+
+id: Shadow offset
+msg: 阴影偏移
+
+id: Subtitle position
+msg: 字幕位置
+
+id: Subtitle size
+msg: 字幕大小
+
+id: Subtitle size and positioning
+msg: 字幕大小和位置
+
+id: Subtitle styling
+msg: 字幕样式
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1240,20 +1319,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: 总是显示字幕
-
-id: Auto
-msg: 自动
-
 id: Automatically play next video in list
 msg: 文件播放结束时自动播放列表中的下一个文件
-
-id: Center
-msg: 居中
-
-id: Color
-msg: 颜色
 
 id: Count video as played when reaching
 msg: 将视频视为已播放当播放进度达到
@@ -1264,59 +1331,17 @@ msg: 启用VDA
 id: Enable VDPAU
 msg: 启用VDPAU
 
-id: Force subtitles to reside on video frame
-msg: 强制字幕在视频帧内显示
-
-id: Generic settings for video subtitles
-msg: 视频字幕通用设置
-
-id: Ignore embedded styling
-msg: 忽略嵌入样式
-
-id: Include all subtitle files from movie directory
-msg: 载入视频目录下所有字幕文件
-
-id: Left
-msg: 靠左
-
 id: Maximum resolution for deinterlacer
 msg: 去隔行化使用最大可能的分辨率
 
 id: No limit
 msg: 无限制
 
-id: Outline color
-msg: 边框颜色
-
-id: Outline size
-msg: 边框大小
-
 id: Preferred VDPAU deinterlacer method
 msg: 优先使用VDPAU去隔行化方式
 
 id: Resume video playback
 msg: 从上次结束位置开始播放
-
-id: Right
-msg: 靠右
-
-id: Shadow color
-msg: 阴影颜色
-
-id: Shadow offset
-msg: 阴影偏移
-
-id: Subtitle position
-msg: 字幕位置
-
-id: Subtitle size
-msg: 字幕大小
-
-id: Subtitle size and positioning
-msg: 字幕大小和位置
-
-id: Subtitle styling
-msg: 字幕样式
 
 id: Temporal
 msg: 临时的

@@ -16,6 +16,14 @@ msg: Ta bort denna sida från bokmärken
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Avsluta Showtime
 
@@ -42,6 +50,14 @@ msg: Viloläge
 
 id: System
 msg: System
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Allokerat av applikationen: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Allokerat av malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: Tillgängligt systemminne: %d kB
-
-id: Detected CPUs: %d
-msg: Funna CPUer: %d
-
-id: Display info
-msg: Bildskärmsinformation
-
-id: Framerate: %.2f Hz
-msg: Uppdateringsfrekvens %.2f Hz
-
-id: Free chunks: %d
-msg: Lediga segment: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Höjd: %d px
-
-id: Memory status
-msg: Minnesstatus
-
-id: Renderer: %s
-msg: Renderare: %s
-
-id: System info
-msg: Systeminformation
-
-id: Total system RAM: %d kB
-msg: Totalt systemminne: %d kB
-
-id: Unused memory: %d kB
-msg: Oanvänt minne: %d kB
-
-id: Version: %s
-msg: Version: %s
-
-id: Width: %d px
-msg: Bredd: %d px
-
-id: Windowmanager: %s
-msg: Fönsterhanterare: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Brickor
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Om Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Ta bort
-
-id: Plugins
-msg: Plugin
 
 id: Search / Open URL
 msg: Sök / Öppna URL
@@ -404,12 +364,6 @@ id: Playback status
 msg: Uppspelningsstatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Sedd: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -562,9 +516,6 @@ msg: Kollaborativ
 id: Compilations
 msg: Samlingar
 
-id: Enable Spotify
-msg: Använd Spotify
-
 id: Forget me
 msg: Glöm mig
 
@@ -606,9 +557,6 @@ msg: Vänner på Spotify
 
 id: Spotify music service
 msg: Spotify musiktjänst
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify erbjuder laglig och fri tillgång till ett stort bibliotek av musik. För att använda Spotify i Showtime behöver du ett Spotify Premium-konto.\nFör mer information om Spotify, besök http://www.spotify.com/\n\nDu kommer bli frågad efter ditt Spotifyanvändarnamn och lösenord när du använder någon av Spotify funktionerna i Showtime för första gången.
 
 id: Spotify playlists
 msg: Spotyfyspellistor
@@ -670,6 +618,10 @@ msg: Datum (nyast först)
 id: Date (oldest first)
 msg: Datum (äldst först)
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Filnamn
 
@@ -688,6 +640,10 @@ msg: Sortera kataloger först
 id: Sort on
 msg: Sortera på
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -695,8 +651,37 @@ id: Search using spotlight
 msg: Sök med spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Språk
 
@@ -928,8 +913,9 @@ msg: Alternativ URL för pluginmagasin
 id: Automatically upgrade plugins
 msg: Updatera plugin automatiskt
 
-id: Available plugins
-msg: Tillgängliga plugin
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Bakgrund
@@ -937,8 +923,9 @@ msg: Bakgrund
 id: Beta testing passwords
 msg: Betatestlösenord
 
-id: Browse available plugins
-msg: Lista tillgängliga plugin
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Browsing
@@ -964,8 +951,9 @@ msg: Kunde ej öppna fil
 id: Home page
 msg: Hemsida
 
-id: Installed plugins
-msg: Installerade plugin
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Installerad version är högre än den som är tillgänglig
@@ -996,6 +984,13 @@ msg: Inte uppgraderingsbar
 
 id: Online TV
 msg: OnlineTV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugin
 
 id: Preferred views from plugins
 msg: Föredragna vyer från plugin
@@ -1091,10 +1086,94 @@ id: System related settings
 msg: Systemrelaterade inställningar
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Centrerad
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Färg
+
 id: External file
 msg: Extern fil
+
+id: Force subtitles to reside on video frame
+msg: Tvinga undertexter att alltid ligga ovanpå videobilden
+
+id: Generic settings for video subtitles
+msg: Generella inställningar för undertexter
+
+id: Ignore embedded styling
+msg: Ignorera inbäddade stilkoder
+
+id: Left
+msg: Vänster
+
+id: Outline color
+msg: Färg på konturer
+
+id: Outline size
+msg: Storlek på konturer
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Höger
+
+id: Shadow color
+msg: Färg på skuggor
+
+id: Shadow offset
+msg: Skuggoffset
+
+id: Subtitle position
+msg: Position på undertexter
+
+id: Subtitle size
+msg: Storlek på undertexter
+
+id: Subtitle size and positioning
+msg: Storlek och position för undertexter
+
+id: Subtitle styling
+msg: Stil på undertexter
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1240,20 +1319,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Försök alltid välja en undertext
-
-id: Auto
-msg: Auto
-
 id: Automatically play next video in list
 msg: Spela nästa video i listan automatiskt
-
-id: Center
-msg: Centrerad
-
-id: Color
-msg: Färg
 
 id: Count video as played when reaching
 msg: Räkna videon som spelad när den nått
@@ -1264,59 +1331,17 @@ msg: Slå på VDA
 id: Enable VDPAU
 msg: Aktivera VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Tvinga undertexter att alltid ligga ovanpå videobilden
-
-id: Generic settings for video subtitles
-msg: Generella inställningar för undertexter
-
-id: Ignore embedded styling
-msg: Ignorera inbäddade stilkoder
-
-id: Include all subtitle files from movie directory
-msg: Inkludera alla undertexterfiler från filmens katalog
-
-id: Left
-msg: Vänster
-
 id: Maximum resolution for deinterlacer
 msg: Maximal upplösning för deinterlacing
 
 id: No limit
 msg: Ingen begränsning
 
-id: Outline color
-msg: Färg på konturer
-
-id: Outline size
-msg: Storlek på konturer
-
 id: Preferred VDPAU deinterlacer method
 msg: Föredragen metod för VDPAU deinterlacing
 
 id: Resume video playback
 msg: Återuppta videouppspelning
-
-id: Right
-msg: Höger
-
-id: Shadow color
-msg: Färg på skuggor
-
-id: Shadow offset
-msg: Skuggoffset
-
-id: Subtitle position
-msg: Position på undertexter
-
-id: Subtitle size
-msg: Storlek på undertexter
-
-id: Subtitle size and positioning
-msg: Storlek och position för undertexter
-
-id: Subtitle styling
-msg: Stil på undertexter
 
 id: Temporal
 msg: Temporär

@@ -16,6 +16,14 @@ msg: Rimuovi la pagina attuale dai preferiti
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Esci da Showtime
 
@@ -42,6 +50,14 @@ msg: Sospendi
 
 id: System
 msg: Sistema
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -172,14 +188,11 @@ msg: Tiled
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Riguardo Showtime
+id: Apps
+msg: Applicazioni
 
 id: Dismiss
 msg: Rimuovi
-
-id: Plugins
-msg: Plugins
 
 id: Search / Open URL
 msg: Cerca / Apri URL
@@ -604,6 +617,10 @@ msg: Data (dal piu' recente)
 id: Date (oldest first)
 msg: Data (dal piu' vecchio)
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Nome file
 
@@ -622,6 +639,10 @@ msg: Ordina prima le cartelle
 id: Sort on
 msg: Ordina
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -629,8 +650,37 @@ id: Search using spotlight
 msg: Cerca usando spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Linguaggio
 
@@ -859,9 +909,6 @@ msg: URL
 id: Alternate plugin Repository URL
 msg: URL Repository alternativo del plugin
 
-id: Apps
-msg: Applicazioni
-
 id: Automatically upgrade plugins
 msg: Aggiorna automaticamente i plugin
 
@@ -933,6 +980,13 @@ msg: Non aggiornabile
 
 id: Online TV
 msg: TV online
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
 
 id: Preferred views from plugins
 msg: Visualizzazioni preferite dai plugin
@@ -1028,10 +1082,94 @@ id: System related settings
 msg: Impostazioni relative al sistema
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Al centro
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Colore
+
 id: External file
 msg: File esterno
+
+id: Force subtitles to reside on video frame
+msg: Forza i sottotitoli a rimanere sempre in primo piano
+
+id: Generic settings for video subtitles
+msg: Impostazioni generiche per i sottotitoli
+
+id: Ignore embedded styling
+msg: Ignora i codici di stile incorporati
+
+id: Left
+msg: Sinistra
+
+id: Outline color
+msg: Colore contorni
+
+id: Outline size
+msg: Dimensioni contorni
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Destra
+
+id: Shadow color
+msg: Colore ombra
+
+id: Shadow offset
+msg: Offset ombra
+
+id: Subtitle position
+msg: Posizione sottotitoli
+
+id: Subtitle size
+msg: Dimensione sottotitoli
+
+id: Subtitle size and positioning
+msg: Dimensione e posizione dei sottotitoli
+
+id: Subtitle styling
+msg: Stile sottotitoli
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1177,20 +1315,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Prova sempre a selezionare un file di sottotitoli
-
-id: Auto
-msg: Auto
-
 id: Automatically play next video in list
 msg: Riproduci automaticamente il successivo video nella lista
-
-id: Center
-msg: Al centro
-
-id: Color
-msg: Colore
 
 id: Count video as played when reaching
 msg: Conteggia il video come riprodotto quando raggiunge
@@ -1201,59 +1327,17 @@ msg: Attiva VDA
 id: Enable VDPAU
 msg: Attiva VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Forza i sottotitoli a rimanere sempre in primo piano
-
-id: Generic settings for video subtitles
-msg: Impostazioni generiche per i sottotitoli
-
-id: Ignore embedded styling
-msg: Ignora i codici di stile incorporati
-
-id: Include all subtitle files from movie directory
-msg: Includi tutti i file di sottotitoli presenti nella cartella del filmato
-
-id: Left
-msg: Sinistra
-
 id: Maximum resolution for deinterlacer
 msg: Risoluzione massima per il deinterlacciatore
 
 id: No limit
 msg: Nessun limite
 
-id: Outline color
-msg: Colore contorni
-
-id: Outline size
-msg: Dimensioni contorni
-
 id: Preferred VDPAU deinterlacer method
 msg: Metodo di deinterlacciamento VDPAU preferito
 
 id: Resume video playback
 msg: Riprendi riproduzione del video
-
-id: Right
-msg: Destra
-
-id: Shadow color
-msg: Colore ombra
-
-id: Shadow offset
-msg: Offset ombra
-
-id: Subtitle position
-msg: Posizione sottotitoli
-
-id: Subtitle size
-msg: Dimensione sottotitoli
-
-id: Subtitle size and positioning
-msg: Dimensione e posizione dei sottotitoli
-
-id: Subtitle styling
-msg: Stile sottotitoli
 
 id: Temporal
 msg: Temporale
