@@ -17,12 +17,10 @@ msg: Ta bort denna sida från bokmärken
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Aktivera sov-timer
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Avaktivera sov-timer
 
 id: Exit Showtime
 msg: Avsluta Showtime
@@ -52,12 +50,10 @@ id: System
 msg: System
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tid tills sovning
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -189,8 +185,7 @@ msg: Brickor
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Applikationer
 
 id: Dismiss
 msg: Ta bort
@@ -619,8 +614,7 @@ id: Date (oldest first)
 msg: Datum (äldst först)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Tog bort %s
 
 id: Filename
 msg: Filnamn
@@ -641,8 +635,7 @@ id: Sort on
 msg: Sortera på
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Kan ej ta bort %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -654,33 +647,29 @@ msg: Sök med spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Är du säker att du vill ta bort:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Tillåt borttagning av filer från menyn
 
 id: File access
-# Missing translation
-msg: 
+msg: Fill tillgång
 
 id: %d directories
 # Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d kataloger
+msg[1]: %d katalog
 
 id: %d files
 # Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d filer
+msg[1]: %d fil
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Ignorerar 'The' i början av ord vid sortering
 
 id: Language
 msg: Språk
@@ -914,8 +903,7 @@ id: Automatically upgrade plugins
 msg: Updatera plugin automatiskt
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Tillgängliga applikationer
 
 id: Background
 msg: Bakgrund
@@ -924,8 +912,7 @@ id: Beta testing passwords
 msg: Betatestlösenord
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Lista tillgängliga applikationer
 
 id: Browsing
 msg: Browsing
@@ -952,8 +939,7 @@ id: Home page
 msg: Hemsida
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Installerade applikationer
 
 id: Installed version higher than available
 msg: Installerad version är högre än den som är tillgänglig
@@ -986,8 +972,7 @@ id: Online TV
 msg: OnlineTV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Plugin %s %s har blivit avinstallerad eftersom den kan orsaka problem.\nDu kan prova installera en nyare version manuellt.
 
 id: Plugins
 msg: Plugin
