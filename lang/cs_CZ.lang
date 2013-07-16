@@ -16,6 +16,14 @@ msg: Odtranit z oblíbených
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 # Missing translation
 msg: 
@@ -44,6 +52,14 @@ id: Suspend
 msg: 
 
 id: System
+# Missing translation
+msg: 
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
 # Missing translation
 msg: 
 
@@ -136,60 +152,6 @@ id: System log
 msg: Systémové události
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Obsazeno aplikací: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Obsazeno pomocí malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: Paměť RAM k dispozici: %d kB
-
-id: Detected CPUs: %d
-msg: Nalezené procesory: %d
-
-id: Display info
-msg: Displej
-
-id: Framerate: %.2f Hz
-msg: Obnovovací frekvence %.2f Hz
-
-id: Free chunks: %d
-msg: Volné segmenty: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Výška: %d px
-
-id: Memory status
-msg: Stav paměti
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Systémové informace
-
-id: Total system RAM: %d kB
-msg: Celková velikost paměti: %d kB
-
-id: Unused memory: %d kB
-msg: Nevyužitá paměť: %d kB
-
-id: Version: %s
-msg: Verze: %s
-
-id: Width: %d px
-msg: Šířka: %d px
-
-id: Windowmanager: %s
-msg: Správce oken: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -234,14 +196,12 @@ msg:
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: O programu
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Zamítnout
-
-id: Plugins
-msg: Pluginy
 
 id: Search / Open URL
 # Missing translation
@@ -417,13 +377,6 @@ id: Playback status
 msg: Stav přehrávání
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -580,9 +533,6 @@ id: Compilations
 # Missing translation
 msg: 
 
-id: Enable Spotify
-msg: Povolit Spotify
-
 id: Forget me
 msg: Nepamatovat si mě 
 
@@ -625,9 +575,6 @@ msg: Spotify přátele
 
 id: Spotify music service
 msg: Spotify hudební služby
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify vám nabízí legální a volný přístup k obrovskému hudebnímu archivu. Pro jeho využití v tomto programu potřebujete účet Spotify Premium. \n Pro více informací o Spotify  navštivte http://www.spotify.com/\n\n Před prvním spuštění Spotify v Showtime budete požádáni o vaše uživatelské jméno a heslo.
 
 id: Spotify playlists
 msg: Spotyfy seznamy skladeb
@@ -692,6 +639,10 @@ id: Date (oldest first)
 # Missing translation
 msg: 
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Název souboru
 
@@ -711,6 +662,10 @@ msg: Adresáře na začátek
 id: Sort on
 msg: Řadit podle
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -718,8 +673,37 @@ id: Search using spotlight
 msg: Hledat pomocí Spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Jazyk
 
@@ -961,8 +945,9 @@ msg: URL náhradního úložiště pluginů
 id: Automatically upgrade plugins
 msg: Automaticky upgradovat pluginy
 
-id: Available plugins
-msg: Dostupné pluginy
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 # Missing translation
@@ -972,8 +957,9 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available plugins
-msg: Prohlížet dostupné pluginy
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 # Missing translation
@@ -1003,8 +989,9 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed plugins
-msg: Nainstalované pluginy
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 # Missing translation
@@ -1041,6 +1028,13 @@ msg: Nelze aktualizovat
 id: Online TV
 # Missing translation
 msg: 
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Pluginy
 
 id: Preferred views from plugins
 # Missing translation
@@ -1144,10 +1138,94 @@ id: System related settings
 msg: Systémová nastavení
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Střed
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Barva
+
 id: External file
 msg: Externí soubor
+
+id: Force subtitles to reside on video frame
+msg: Vynutit titulky na ploše videa
+
+id: Generic settings for video subtitles
+msg: Obecná nastavení video titulků
+
+id: Ignore embedded styling
+msg: Ignorovat vložené styly
+
+id: Left
+msg: Levý
+
+id: Outline color
+msg: Barva obrysu
+
+id: Outline size
+msg: Velikost obrysu
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Pravý
+
+id: Shadow color
+msg: Barva stínu
+
+id: Shadow offset
+msg: Posun stínu
+
+id: Subtitle position
+msg: Pozice titulků
+
+id: Subtitle size
+msg: Velikost titulků
+
+id: Subtitle size and positioning
+msg: Velikost a pozice titulků
+
+id: Subtitle styling
+msg: Styl titulků
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1305,20 +1383,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Vždy zkusit vybrat titulky
-
-id: Auto
-msg: Auto
-
 id: Automatically play next video in list
 msg: Automaticky přehrát další video v seznamu
-
-id: Center
-msg: Střed
-
-id: Color
-msg: Barva
 
 id: Count video as played when reaching
 msg: Považovat video za přehrané po dosažení
@@ -1329,59 +1395,17 @@ msg: Povolit VDA
 id: Enable VDPAU
 msg: Povolit VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Vynutit titulky na ploše videa
-
-id: Generic settings for video subtitles
-msg: Obecná nastavení video titulků
-
-id: Ignore embedded styling
-msg: Ignorovat vložené styly
-
-id: Include all subtitle files from movie directory
-msg: Načíst všecny titulky z adresáře s filmem
-
-id: Left
-msg: Levý
-
 id: Maximum resolution for deinterlacer
 msg: Maximální rozlišení pro deinterlacer
 
 id: No limit
 msg: Bez omezení
 
-id: Outline color
-msg: Barva obrysu
-
-id: Outline size
-msg: Velikost obrysu
-
 id: Preferred VDPAU deinterlacer method
 msg: Preferovaná metoda VDPAU deinterlaceru
 
 id: Resume video playback
 msg: Obnovit přehrávání
-
-id: Right
-msg: Pravý
-
-id: Shadow color
-msg: Barva stínu
-
-id: Shadow offset
-msg: Posun stínu
-
-id: Subtitle position
-msg: Pozice titulků
-
-id: Subtitle size
-msg: Velikost titulků
-
-id: Subtitle size and positioning
-msg: Velikost a pozice titulků
-
-id: Subtitle styling
-msg: Styl titulků
 
 id: Temporal
 msg: Temporální

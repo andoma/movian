@@ -16,6 +16,12 @@ msg: Aktuelle Seite aus Lesezeichen entfernen
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+msg: Aktiviere automatisches Ausschalten
+
+id: Disable sleep timer
+msg: Deaktiviere automatisches Ausschalten
+
 id: Exit Showtime
 msg: Showtime beenden
 
@@ -42,6 +48,12 @@ msg: System ausschalten
 
 id: System
 msg: System
+
+id: Time until sleep
+msg: Zeit bis Ausschalten
+
+id: min
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +143,6 @@ id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Zugewiesen durch Anwendung: %d kb
-
-id: Allocated by malloc: %d kB
-msg: Zugewiesen durch malloc: %d kb
-
-id: Avail system RAM: %d kB
-msg: Verfügbarer Systemspeicher: %d kB
-
-id: Detected CPUs: %d
-msg: Gefundene CPUs: %d
-
-id: Display info
-msg: Anzeige Infos
-
-id: Framerate: %.2f Hz
-msg: Bildrate %.2f Hz
-
-id: Free chunks: %d
-msg: Freie chunks: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Höhe: %d px
-
-id: Memory status
-msg: Speicherstatus
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Systeminformation
-
-id: Total system RAM: %d kB
-msg: Gesamter Systemspeicher: %d kB
-
-id: Unused memory: %d kB
-msg: Ungenutzter Speicher: %d kb
-
-id: Version: %s
-msg: Version: %s
-
-id: Width: %d px
-msg: Breite: %d px
-
-id: Windowmanager: %s
-msg: Fenstermanager: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +184,11 @@ msg: Gekachelt
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Über Showtime
+id: Apps
+msg: Apps
 
 id: Dismiss
 msg: Verwerfen
-
-id: Plugins
-msg: Plugins
 
 id: Search / Open URL
 msg: URL suchen/öffnen
@@ -556,9 +511,6 @@ msg: Gemeinschaftlich
 id: Compilations
 msg: Zusammenstellungen
 
-id: Enable Spotify
-msg: Spotify anschalten
-
 id: Forget me
 msg: Benutzer vergessen
 
@@ -600,9 +552,6 @@ msg: Spotify Freunde
 
 id: Spotify music service
 msg: Spotify Musikdienste
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify bietet ihnen legalen und freien Zugang zu einer großen Auswahl an Musik. Um Spotify mit Showtime zu benutzen brauchen sie einen Spotify Premium Zugang. \nFür mehr Informationen über Spotify, besuchen Sie http://www.spotify.com/\n\nBei der ersten Benutzung von Spotify in Showtime werden Sie zur Eingabe ihres Spotify Benutzernamens und Passworts aufgefordert.
 
 id: Spotify playlists
 msg: Spotyfy Wiedergabelisten
@@ -664,6 +613,9 @@ msg: Datum (neuste zuerst)
 id: Date (oldest first)
 msg: Datum (älteste zuerst)
 
+id: Deleted %s
+msg: %s gelöscht
+
 id: Filename
 msg: Dateiname
 
@@ -682,6 +634,9 @@ msg: Ordner zuerst
 id: Sort on
 msg: Sortieren nach
 
+id: Unable to delete %s\n%s
+msg: %s\n%s kann nicht gelöscht werden
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -689,8 +644,31 @@ id: Search using spotlight
 msg: Suchen per Spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+msg: Wirklich löschen:
+
+id: Enable file deletion from item menu
+msg: Aktiviere Löschmöglichkeit im Menü
+
+id: File access
+msg: Datei-Zugriff
+
+id: %d directories
+msg[0]: %d Verzeichniss
+msg[1]: %d Verzeichnisse
+
+id: %d files
+msg[0]: %d Datei
+msg[1]: %d Dateien
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+msg: "Der,Die,Das" beim Sortieren ignorieren
+
 id: Language
 msg: Sprache
 
@@ -922,8 +900,8 @@ msg: Alternative URL für Plugins
 id: Automatically upgrade plugins
 msg: Plugins automatisch updaten
 
-id: Available plugins
-msg: Verfügbare Plugins
+id: Available apps
+msg: Verfügbare Apps
 
 id: Background
 msg: Hintergrund
@@ -931,8 +909,8 @@ msg: Hintergrund
 id: Beta testing passwords
 msg: Passwort für Betatests
 
-id: Browse available plugins
-msg: Verfügbare Plugins durchsuchen
+id: Browse available apps
+msg: verfügbare Apps durchsuchen
 
 id: Browsing
 msg: Durchsuchen
@@ -958,8 +936,8 @@ msg: Fehler beim Datei öffnen
 id: Home page
 msg: Startseite
 
-id: Installed plugins
-msg: Installierte Plugins
+id: Installed apps
+msg: Installierte Apps
 
 id: Installed version higher than available
 msg: Installierte Version ist höher als die verfügbare
@@ -990,6 +968,12 @@ msg: nicht updatebar
 
 id: Online TV
 msg: Online TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+msg: Plugin %s %s wurde deinstalliert, da es evtl. Probleme verursacht.\n Sie können versuchen manuell eine andere Version zu installieren.
+
+id: Plugins
+msg: Plugins
 
 id: Preferred views from plugins
 msg: Bevorzugte Ansicht der Plugins
@@ -1085,10 +1069,85 @@ id: System related settings
 msg: Systembezogene Einstellungen
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+msg: Alle Untertitel im Hauptordner
+
+id: Any subtitle in same folder as video
+msg: Alle Untertitel im gleichen Ordner wie Video
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+msg: Automatisch aus dieser Quelle wählen
+
+id: Center
+msg: Zentriert
+
+id: Central subtitle folder
+msg: Hauptordner für Untertitel
+
+id: Color
+msg: Farbe
+
 id: External file
 msg: externe Datei
+
+id: Force subtitles to reside on video frame
+msg: Untertitel im Bild anzeigen
+
+id: Generic settings for video subtitles
+msg: Allgemeine Einstellungen für Untertitel
+
+id: Ignore embedded styling
+msg: eingebetteten Stil ignorieren
+
+id: Left
+msg: Links
+
+id: Outline color
+msg: Rahmenfarbe
+
+id: Outline size
+msg: Rahmengröße
+
+id: Path to central folder
+msg: Pfad zum Haptordner
+
+id: Providers for Subtitles
+msg: Anbieter für Untertitel
+
+id: Right
+msg: Rechts
+
+id: Shadow color
+msg: Schattenfarbe
+
+id: Shadow offset
+msg: Schattenabstand
+
+id: Subtitle position
+msg: Untertitelposition
+
+id: Subtitle size
+msg: Untertitelgröße
+
+id: Subtitle size and positioning
+msg: Untertitelgröße und Position
+
+id: Subtitle styling
+msg: Untertitelstil
+
+id: Subtitles embedded in video file
+msg: Untertitel im Video eingebunden
+
+id: Subtitles with matching filename in central folder
+msg: Untertitel mit passendem Namen im Hauptordner
+
+id: Subtitles with matching filename in same folder as video
+msg: Untertitel mit passendem Namen im Videoordner
 
 #
 # ./src/text/fontstash.c
@@ -1234,20 +1293,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Immer versuchen Untertitel auszuwählen
-
-id: Auto
-msg: Auto
-
 id: Automatically play next video in list
 msg: Nächstes Video in der Liste automatisch starten 
-
-id: Center
-msg: Zentriert
-
-id: Color
-msg: Farbe
 
 id: Count video as played when reaching
 msg: Video als abgespielt markieren ab
@@ -1258,59 +1305,17 @@ msg: VDA aktivieren
 id: Enable VDPAU
 msg: VDPAU aktivieren
 
-id: Force subtitles to reside on video frame
-msg: Untertitel im Bild anzeigen
-
-id: Generic settings for video subtitles
-msg: Allgemeine Einstellungen für Untertitel
-
-id: Ignore embedded styling
-msg: eingebetteten Stil ignorieren
-
-id: Include all subtitle files from movie directory
-msg: Alle Untertitel im Verzeichnis anzeigen
-
-id: Left
-msg: Links
-
 id: Maximum resolution for deinterlacer
 msg: Maximale Auflösung für Deinterlacer
 
 id: No limit
 msg: Keine Begrenzung
 
-id: Outline color
-msg: Rahmenfarbe
-
-id: Outline size
-msg: Rahmengröße
-
 id: Preferred VDPAU deinterlacer method
 msg: Bevorzugte VDPAU Deinterlacer-Methode
 
 id: Resume video playback
 msg: Wiedergabe von letzter Position
-
-id: Right
-msg: Rechts
-
-id: Shadow color
-msg: Schattenfarbe
-
-id: Shadow offset
-msg: Schattenabstand
-
-id: Subtitle position
-msg: Untertitelposition
-
-id: Subtitle size
-msg: Untertitelgröße
-
-id: Subtitle size and positioning
-msg: Untertitelgröße und Position
-
-id: Subtitle styling
-msg: Untertitelstil
 
 id: Temporal
 msg: Temporal

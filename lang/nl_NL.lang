@@ -16,6 +16,14 @@ msg: Huidige pagina van bladwijzers verwijderen
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Showtime afsluiten
 
@@ -42,6 +50,14 @@ msg: Slaapstand
 
 id: System
 msg: Systeem
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Systeemlogboek
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Toegewezen door applicatie: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Toegewezen door malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: RAM-geheugen over: %d kB
-
-id: Detected CPUs: %d
-msg: Gedetecteerde CPU's: %d
-
-id: Display info
-msg: Weergaveinfo
-
-id: Framerate: %.2f Hz
-msg: Beeldfrequentie: %.2f Hz
-
-id: Free chunks: %d
-msg: Aantal vrije chunks: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Hoogte: %d px
-
-id: Memory status
-msg: Geheugenstatus
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Systeeminformatie
-
-id: Total system RAM: %d kB
-msg: Totale RAM-geheugen: %d kB
-
-id: Unused memory: %d kB
-msg: Niet-gebruikte geheugen: %d kB
-
-id: Version: %s
-msg: Versie: %s
-
-id: Width: %d px
-msg: Breedte: %d px
-
-id: Windowmanager: %s
-msg: Vensterbeheerder: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Betegeld
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Over Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Sluiten
-
-id: Plugins
-msg: Plugins
 
 id: Search / Open URL
 msg: Zoeken / Open URL
@@ -241,23 +201,28 @@ msg: Zoeken / Open URL
 #
 # ./glwskins/default/pages/iteminfo/image.view
 #
-id: Camera:
-msg: Camera:
+id: Camera: 
+# Missing translation
+msg: 
 
-id: Date:
-msg: Datum:
+id: Date: 
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/pages/iteminfo/plugin.view
 #
-id: Author:
-msg: Auteur:
+id: Author: 
+# Missing translation
+msg: 
 
-id: Available version:
-msg: Beschikbare versie:
+id: Available version: 
+# Missing translation
+msg: 
 
-id: Installed version:
-msg: Geïnstalleerde versie:
+id: Installed version: 
+# Missing translation
+msg: 
 
 id: Showtime %s or newer is required
 msg: Showtime %s of nieuwer is vereist
@@ -402,12 +367,6 @@ msg: De CPU is te langzaam om deze video te decoderen
 
 id: Playback status
 msg: Afspeelstatus
-
-#
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Gezien
 
 #
 # ./glwskins/default/playdecks/dvd.view
@@ -562,9 +521,6 @@ msg: Gezamenlijk
 id: Compilations
 msg: Verzamelalbums
 
-id: Enable Spotify
-msg: Spotify inschakelen
-
 id: Forget me
 msg: Vergeet mij
 
@@ -606,9 +562,6 @@ msg: Spotify-vrienden
 
 id: Spotify music service
 msg: Spotify-muziekservice
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify biedt u een legale en gratis toegang tot een enorme muziekbibliotheek. Om Spotify te kunnen gebruiken heeft u een Spotify Premium-account nodig.\nGa voor meer informatie over Spotify naar http://www.spotify.com/\n\nAls u de Spotify-functies in Showtime voor het eerst gebruikt, zal er gevraagd worden naar uw Spotify-gebruikersnaam en -wachtwoord.
 
 id: Spotify playlists
 msg: Spotify-afspeellijsten
@@ -670,6 +623,10 @@ msg: Datum (nieuwste eerst)
 id: Date (oldest first)
 msg: Datum (oudste eerst)
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Bestandsnaam
 
@@ -688,6 +645,10 @@ msg: Mappen eerst sorteren
 id: Sort on
 msg: Sorteren op
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -695,8 +656,37 @@ id: Search using spotlight
 msg: Zoeken via Spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Taal
 
@@ -928,8 +918,9 @@ msg: Alternatieve repository-URL voor plugin
 id: Automatically upgrade plugins
 msg: Plugins automatisch bijwerken
 
-id: Available plugins
-msg: Beschikbare plugins
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Achtergrond
@@ -937,8 +928,9 @@ msg: Achtergrond
 id: Beta testing passwords
 msg: Beta testers wachtwoord
 
-id: Browse available plugins
-msg: Bladeren door beschikbare plugins
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Bladeren
@@ -964,8 +956,9 @@ msg: Fout bij openen bestand
 id: Home page
 msg: Thuispagina
 
-id: Installed plugins
-msg: Geïnstalleerde plugins
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Geïnstalleerde versie hoger dan beschikbaar
@@ -996,6 +989,13 @@ msg: Niet bij te werken
 
 id: Online TV
 msg: Online tv
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
 
 id: Preferred views from plugins
 msg: Vookeursinstellingen van plugins
@@ -1091,10 +1091,94 @@ id: System related settings
 msg: Systeemgerelateerde instellingen
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Automatisch
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Centreren
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Kleur
+
 id: External file
 msg: Extern bestand
+
+id: Force subtitles to reside on video frame
+msg: Ondertitels forceren om op videoframe te blijven
+
+id: Generic settings for video subtitles
+msg: Algemene instellingen voor video-ondertitels
+
+id: Ignore embedded styling
+msg: Geïntegreerde stijl nergeren
+
+id: Left
+msg: Links
+
+id: Outline color
+msg: Omtrekkleur
+
+id: Outline size
+msg: Omtrekgrootte
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Rechts
+
+id: Shadow color
+msg: Schaduwkleur
+
+id: Shadow offset
+msg: Schaduwafstand
+
+id: Subtitle position
+msg: Ondertitelingspositie
+
+id: Subtitle size
+msg: Ondertitelingsgrootte
+
+id: Subtitle size and positioning
+msg: Ondertitelingsgrootte en -positionering
+
+id: Subtitle styling
+msg: Ondertitelingsstijl
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1240,20 +1324,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Altijd proberen een ondertiteling te selecteren
-
-id: Auto
-msg: Automatisch
-
 id: Automatically play next video in list
 msg: De volgende video in de lijst automatisch afspelen
-
-id: Center
-msg: Centreren
-
-id: Color
-msg: Kleur
 
 id: Count video as played when reaching
 msg: Video als afgespeeld rekenen bij nadering
@@ -1264,59 +1336,17 @@ msg: VDA inschakelen
 id: Enable VDPAU
 msg: VDPAU inschakelen
 
-id: Force subtitles to reside on video frame
-msg: Ondertitels forceren om op videoframe te blijven
-
-id: Generic settings for video subtitles
-msg: Algemene instellingen voor video-ondertitels
-
-id: Ignore embedded styling
-msg: Geïntegreerde stijl nergeren
-
-id: Include all subtitle files from movie directory
-msg: Alle ondertitels van de filmmap toevoegen
-
-id: Left
-msg: Links
-
 id: Maximum resolution for deinterlacer
 msg: Maximale resolutie voor deinterlacer
 
 id: No limit
 msg: Geen limiet
 
-id: Outline color
-msg: Omtrekkleur
-
-id: Outline size
-msg: Omtrekgrootte
-
 id: Preferred VDPAU deinterlacer method
 msg: Voorkeursmethode voor VDPAU-deinterlacer
 
 id: Resume video playback
 msg: Videoweergave hervatten
-
-id: Right
-msg: Rechts
-
-id: Shadow color
-msg: Schaduwkleur
-
-id: Shadow offset
-msg: Schaduwafstand
-
-id: Subtitle position
-msg: Ondertitelingspositie
-
-id: Subtitle size
-msg: Ondertitelingsgrootte
-
-id: Subtitle size and positioning
-msg: Ondertitelingsgrootte en -positionering
-
-id: Subtitle styling
-msg: Ondertitelingsstijl
 
 id: Temporal
 msg: Tijdelijk
@@ -1329,3 +1359,4 @@ msg: Videoversnelling en weergavegedrag
 
 id: Video playback
 msg: Videoweergave
+

@@ -16,6 +16,14 @@ msg: Fjern aktuel side fra bogmærker
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Afslut Showtime
 
@@ -42,6 +50,14 @@ msg: Suspendere
 
 id: System
 msg: System
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Systemlog
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Tildelt af applikationen: %d Kb
-
-id: Allocated by malloc: %d kB
-msg: Tildelt af malloc: %d Kb
-
-id: Avail system RAM: %d kB
-msg: Tilgængelig system RAM: %d Kb
-
-id: Detected CPUs: %d
-msg: Fundne CPU'er: %d
-
-id: Display info
-msg: Skærminformation
-
-id: Framerate: %.2f Hz
-msg: Opdateringsfrekvens: %.2f Hz
-
-id: Free chunks: %d
-msg: Ledige stykker: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Højde: %d px
-
-id: Memory status
-msg: Hukommelsesstatus
-
-id: Renderer: %s
-msg: Renderere: %s
-
-id: System info
-msg: Systeminformation
-
-id: Total system RAM: %d kB
-msg: Total system RAM: %d kB
-
-id: Unused memory: %d kB
-msg: Ubrugt hukommelse: %d Kb
-
-id: Version: %s
-msg: Version: %s
-
-id: Width: %d px
-msg: Bredde: %d px
-
-id: Windowmanager: %s
-msg: vindue håndtering: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Brickor
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Om Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Fjern
-
-id: Plugins
-msg: Plugins
 
 id: Search / Open URL
 msg: Søg / Åben URL
@@ -337,6 +297,13 @@ msg: Spor %d / %d
 #
 # ./glwskins/default/pages/slideshow.view
 #
+id: Paused
+# Missing translation
+msg: 
+
+#
+# ./glwskins/default/pages/upgrade.view
+#
 id: An error occured during download
 msg: En fejl opstod under download
 
@@ -398,12 +365,6 @@ id: Playback status
 msg: Afspilningsstatus
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Set: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -413,7 +374,7 @@ id: Title: %d
 msg: Titel: %d
 
 #
-# ./glwthemes/default/popups/auth.view
+# ./glwskins/default/popups/auth.view
 #
 id: Domain
 msg: Domæne
@@ -556,9 +517,6 @@ msg: Samarbejde
 id: Compilations
 msg: Samlinger
 
-id: Enable Spotify
-msg: Anvend Spotify
-
 id: Forget me
 msg: Glem mig
 
@@ -600,9 +558,6 @@ msg: Spotify venner
 
 id: Spotify music service
 msg: Spotify musiktjeneste
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify tilbyder lovlig og fri adgang til et stort kartotek af musik. For at anvende Spotify i Showtime, skal du bruge en Spotify Premium-konto.\nFor yderligere information om Spotify, besøg http://www.spotify.com/\n\nFørste gang du bruger Spotify i Showtime, vil du blive bedt om at indtate dit Spotify brugernavn og kodeord.
 
 id: Spotify playlists
 msg: Spotyfy afspilningslister
@@ -664,6 +619,10 @@ msg: Dato(nyeste først)
 id: Date (oldest first)
 msg: Dato(ældste først)
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Filnavn
 
@@ -682,6 +641,10 @@ msg: Sorter mapper først
 id: Sort on
 msg: Sorter efter
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -689,8 +652,37 @@ id: Search using spotlight
 msg: Søg via spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Sprog
 
@@ -922,8 +914,9 @@ msg: Alternativ plugin Respository URL
 id: Automatically upgrade plugins
 msg: Opdater automatisk plugins
 
-id: Available plugins
-msg: Tilgængelige plugins
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Baggrund
@@ -931,8 +924,9 @@ msg: Baggrund
 id: Beta testing passwords
 msg: Betatest password
 
-id: Browse available plugins
-msg: Gennemse tilgængelige
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Browsing
@@ -958,8 +952,9 @@ msg: Fil åbningsfejl
 id: Home page
 msg: Startside
 
-id: Installed plugins
-msg: Installerede plugins
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Den installerede version er højere end den der er tilgængelig
@@ -990,6 +985,13 @@ msg: Ikke opdaterbare
 
 id: Online TV
 msg: Online TV
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
 
 id: Preferred views from plugins
 msg: Fortrukne visninger fra plugins
@@ -1085,10 +1087,94 @@ id: System related settings
 msg: Systemrelaterede indstillinger
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Auto
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Centreret
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Farve
+
 id: External file
 msg: Ekstern fil
+
+id: Force subtitles to reside on video frame
+msg: Tving undettekster til at ligge ovenpå videobilledet
+
+id: Generic settings for video subtitles
+msg: Generelle indstillinger for undertekster
+
+id: Ignore embedded styling
+msg: Ignorer indlejret stilkoder
+
+id: Left
+msg: Venstre
+
+id: Outline color
+msg: Farve på konturer
+
+id: Outline size
+msg: Størrelse på konturer
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Højre
+
+id: Shadow color
+msg: Farve på skygge
+
+id: Shadow offset
+msg: Skyggens forskydning
+
+id: Subtitle position
+msg: Position på undertekster
+
+id: Subtitle size
+msg: Størrelse på undertekster
+
+id: Subtitle size and positioning
+msg: Størrelse på undertekster og position
+
+id: Subtitle styling
+msg: Stil på undertekster
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1234,20 +1320,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Forsøg altid at vælge en undertekst
-
-id: Auto
-msg: Auto
-
 id: Automatically play next video in list
 msg: Afspil automatisk næste video i listen
-
-id: Center
-msg: Centreret
-
-id: Color
-msg: Farve
 
 id: Count video as played when reaching
 msg: Marker video som vist når den når
@@ -1258,59 +1332,17 @@ msg: Aktiver VDA
 id: Enable VDPAU
 msg: Aktiver VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Tving undettekster til at ligge ovenpå videobilledet
-
-id: Generic settings for video subtitles
-msg: Generelle indstillinger for undertekster
-
-id: Ignore embedded styling
-msg: Ignorer indlejret stilkoder
-
-id: Include all subtitle files from movie directory
-msg: Medtag alle undertekstfiler fra filmmappen
-
-id: Left
-msg: Venstre
-
 id: Maximum resolution for deinterlacer
 msg: Maksimal opløsning af deinterlacer
 
 id: No limit
 msg: Ingen grænser
 
-id: Outline color
-msg: Farve på konturer
-
-id: Outline size
-msg: Størrelse på konturer
-
 id: Preferred VDPAU deinterlacer method
 msg: Foretrukket VDPAU deinterlacer metode
 
 id: Resume video playback
 msg: Fortsæt video afspilning
-
-id: Right
-msg: Højre
-
-id: Shadow color
-msg: Farve på skygge
-
-id: Shadow offset
-msg: Skyggens forskydning
-
-id: Subtitle position
-msg: Position på undertekster
-
-id: Subtitle size
-msg: Størrelse på undertekster
-
-id: Subtitle size and positioning
-msg: Størrelse på undertekster og position
-
-id: Subtitle styling
-msg: Stil på undertekster
 
 id: Temporal
 msg: Midlertidig

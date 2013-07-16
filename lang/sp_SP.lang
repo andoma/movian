@@ -16,6 +16,14 @@ msg: Remover Pagina actual de Marcadores
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Salir de Showtime
 
@@ -42,6 +50,14 @@ msg: Suspender
 
 id: System
 msg: Sistema
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Registro de Sistema
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Asignado por la aplicación: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Asignado por malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: RAM disponible en sistema: %d kB
-
-id: Detected CPUs: %d
-msg: CPUs Detectados: %d
-
-id: Display info
-msg: Pantalla de información
-
-id: Framerate: %.2f Hz
-msg: Cuadros por segundo %.2f Hz
-
-id: Free chunks: %d
-msg: Bloques libres: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Altura: %d px
-
-id: Memory status
-msg: Estatus de memoria
-
-id: Renderer: %s
-msg: Renderizado: %s
-
-id: System info
-msg: Información de sistema
-
-id: Total system RAM: %d kB
-msg: RAM total del sistema: %d kB
-
-id: Unused memory: %d kB
-msg: Memoria disponible: %d kB
-
-id: Version: %s
-msg: Versión: %s
-
-id: Width: %d px
-msg: Ancho: %d px
-
-id: Windowmanager: %s
-msg: Administrador de ventanas: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Mozaico
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: Acerca de Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Descartar
-
-id: Plugins
-msg: Plugins
 
 id: Search / Open URL
 msg: Buscar / Abrir URL
@@ -404,12 +364,6 @@ id: Playback status
 msg: Estatus de reproducción
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Visto:
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -562,9 +516,6 @@ msg: Colaborativo
 id: Compilations
 msg: Compilaciones
 
-id: Enable Spotify
-msg: Habilitar Spotify
-
 id: Forget me
 msg: Olvidarme
 
@@ -606,9 +557,6 @@ msg: Amigos de Spotify
 
 id: Spotify music service
 msg: Servicio de música Spotify
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify ofrece acceso libre y legal a una enorme librería de música. Para usar Spotify en Showtime se necesita una cuenta Premium de Spotify.\nPara más información acerca de Spotify, visita http://www.spotify.com/\n\nLa primera vez que acceda a cualquier característica de Spotify en Showtime deberá ingresar su nombre de usuario y contraseña.
 
 id: Spotify playlists
 msg: Lista de reproducción de Spotyfy
@@ -670,6 +618,10 @@ msg: Fecha (recientes primero)
 id: Date (oldest first)
 msg: Fecha (antiguos primero
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Nombre de Archivo
 
@@ -688,6 +640,10 @@ msg: Ordenar primero carpetas
 id: Sort on
 msg: Orden activo
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -695,8 +651,37 @@ id: Search using spotlight
 msg: Buscar usando spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Idioma
 
@@ -928,8 +913,9 @@ msg: URL alternativa de repositorio de Plugins
 id: Automatically upgrade plugins
 msg: Actualizar automáticamente plugins
 
-id: Available plugins
-msg: Plugins disponibles
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Fondo
@@ -937,8 +923,9 @@ msg: Fondo
 id: Beta testing passwords
 msg: Contraseñas de testeo Beta
 
-id: Browse available plugins
-msg: explorar plugins disponibles
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Explorando
@@ -964,8 +951,9 @@ msg: Error al abrir archivo
 id: Home page
 msg: Pagina Principal
 
-id: Installed plugins
-msg: Plugins instalados
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Version instalada superior a la disponible
@@ -996,6 +984,13 @@ msg: No actualizable
 
 id: Online TV
 msg: Tv en linea
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Plugins
 
 id: Preferred views from plugins
 msg: Vistas preferidas de plugins
@@ -1091,10 +1086,94 @@ id: System related settings
 msg: Ajustes relacionados al sistema
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Automático
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Centrado
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Color
+
 id: External file
 msg: Archivo externo
+
+id: Force subtitles to reside on video frame
+msg: Forzar subtítulo sobre cuadro de video
+
+id: Generic settings for video subtitles
+msg: Ajustes genéricos para subtítulos
+
+id: Ignore embedded styling
+msg: Ignorar estilo integrado
+
+id: Left
+msg: Izquierda
+
+id: Outline color
+msg: Color del Contorno
+
+id: Outline size
+msg: Tamaño del Contorno
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Derecha
+
+id: Shadow color
+msg: Color de sombra
+
+id: Shadow offset
+msg: Offset de sombra
+
+id: Subtitle position
+msg: Posición de subtítulos
+
+id: Subtitle size
+msg: Tamaño de subtítulos
+
+id: Subtitle size and positioning
+msg: Posición y tamaño de subtítulos
+
+id: Subtitle styling
+msg: Estilo de subtítulos
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1240,20 +1319,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Siempre tratar de seleccionar subtítulo
-
-id: Auto
-msg: Automático
-
 id: Automatically play next video in list
 msg: Reproducir siguiente video en la lista
-
-id: Center
-msg: Centrado
-
-id: Color
-msg: Color
 
 id: Count video as played when reaching
 msg: Contar video como reproducido cuando alcance
@@ -1264,59 +1331,17 @@ msg: Activar VDA
 id: Enable VDPAU
 msg: Activar VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Forzar subtítulo sobre cuadro de video
-
-id: Generic settings for video subtitles
-msg: Ajustes genéricos para subtítulos
-
-id: Ignore embedded styling
-msg: Ignorar estilo integrado
-
-id: Include all subtitle files from movie directory
-msg: Incluir todos los subtítulos en el directorio
-
-id: Left
-msg: Izquierda
-
 id: Maximum resolution for deinterlacer
 msg: Resolución máxima del deinterlacer
 
 id: No limit
 msg: Sin límite
 
-id: Outline color
-msg: Color del Contorno
-
-id: Outline size
-msg: Tamaño del Contorno
-
 id: Preferred VDPAU deinterlacer method
 msg: Método preferido para VDPAU deinterlacer
 
 id: Resume video playback
 msg: Continuar reproducción de video
-
-id: Right
-msg: Derecha
-
-id: Shadow color
-msg: Color de sombra
-
-id: Shadow offset
-msg: Offset de sombra
-
-id: Subtitle position
-msg: Posición de subtítulos
-
-id: Subtitle size
-msg: Tamaño de subtítulos
-
-id: Subtitle size and positioning
-msg: Posición y tamaño de subtítulos
-
-id: Subtitle styling
-msg: Estilo de subtítulos
 
 id: Temporal
 msg: Temporal

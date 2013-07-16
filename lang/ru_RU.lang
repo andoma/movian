@@ -16,6 +16,14 @@ msg: Удалить текущую страницу из закладок
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 msg: Выйти из Showtime
 
@@ -42,6 +50,14 @@ msg: Отключить систему
 
 id: System
 msg: Система
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
+# Missing translation
+msg: 
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -131,60 +147,6 @@ id: System log
 msg: Системный лог
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Выделено приложению: %d Кб
-
-id: Allocated by malloc: %d kB
-msg: Выделено malloc: %d Кб
-
-id: Avail system RAM: %d kB
-msg: Доступная память RAM: %d Кб
-
-id: Detected CPUs: %d
-msg: Обнаружен CPU: %d
-
-id: Display info
-msg: Отображение информации
-
-id: Framerate: %.2f Hz
-msg: Частота кадров %.2f Hz
-
-id: Free chunks: %d
-msg: Свободные части: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Высота: %d px
-
-id: Memory status
-msg: Состояние памяти
-
-id: Renderer: %s
-msg: Рендер: %s
-
-id: System info
-msg: Системная информация
-
-id: Total system RAM: %d kB
-msg: Общая память RAM: %d Кб
-
-id: Unused memory: %d kB
-msg: Неиспользованная память: %d Кб
-
-id: Version: %s
-msg: Версия: %s
-
-id: Width: %d px
-msg: Ширина: %d px
-
-id: Windowmanager: %s
-msg: Оконный менеджер: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -226,14 +188,12 @@ msg: Плитка
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: О программе
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Отклонить
-
-id: Plugins
-msg: Плагины
 
 id: Search / Open URL
 msg: Найти / Открыть URL
@@ -404,12 +364,6 @@ id: Playback status
 msg: Статус воспроизведения
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-msg: Воспроизведено 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -562,9 +516,6 @@ msg: Совместный
 id: Compilations
 msg: Сборник
 
-id: Enable Spotify
-msg: Включить Spotify
-
 id: Forget me
 msg: Забыть меня
 
@@ -606,9 +557,6 @@ msg: Друзья на Spotify
 
 id: Spotify music service
 msg: Музыкальный сервис Spotify
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify предлагает вам легальный и свободный доступ к огромной библиотеке музыки. Для использования Spotify в Showtime вам нужен Spotify премиум аккаунт.\nДля получения информации посетите http://www.spotify.com/\n\nВы должны будете ввести логин и пароль Spotify при первом использовании функций Spotify в Showtime.
 
 id: Spotify playlists
 msg: Плейлисты Spotify
@@ -672,6 +620,10 @@ id: Date (oldest first)
 # Missing translation
 msg: 
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Имя файла
 
@@ -690,6 +642,10 @@ msg: Сортировка сперва папок
 id: Sort on
 msg: Сортировать по
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -697,8 +653,37 @@ id: Search using spotlight
 msg: Поиск с использованием spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Язык
 
@@ -930,8 +915,9 @@ msg: Альтернативный URL-репозитория плагинов
 id: Automatically upgrade plugins
 msg: Автоматическое обновление плагинов
 
-id: Available plugins
-msg: Доступные плагины
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 msg: Фон
@@ -939,8 +925,9 @@ msg: Фон
 id: Beta testing passwords
 msg: Пароли бета-теста
 
-id: Browse available plugins
-msg: Просмотр доступных плагинов
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 msg: Вид элементов при навигации
@@ -966,8 +953,9 @@ msg: Ошибка при открытии файла
 id: Home page
 msg: Главный экран
 
-id: Installed plugins
-msg: Установленные плагины
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 msg: Установленная версия новее, чем доступная
@@ -998,6 +986,13 @@ msg: Не обновляемый
 
 id: Online TV
 msg: Онлайн-ТВ
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Плагины
 
 id: Preferred views from plugins
 msg: Предпочтительный вид при установленных плагинах
@@ -1093,10 +1088,94 @@ id: System related settings
 msg: Системные настройки
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Авто
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Центр
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Цвет
+
 id: External file
 msg: Внешний файл
+
+id: Force subtitles to reside on video frame
+msg: Принудительно прописывать субтитры в кадре
+
+id: Generic settings for video subtitles
+msg: Общие настройки для видео субтитров
+
+id: Ignore embedded styling
+msg: Игнорировать встроенный стиль
+
+id: Left
+msg: Слева
+
+id: Outline color
+msg: Цвет контура
+
+id: Outline size
+msg: Размер контура
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Справа
+
+id: Shadow color
+msg: Цвет тени
+
+id: Shadow offset
+msg: Смещение тени
+
+id: Subtitle position
+msg: Позиция субтитров
+
+id: Subtitle size
+msg: Размер субтитров
+
+id: Subtitle size and positioning
+msg: Размер и позиция субтитров
+
+id: Subtitle styling
+msg: Стиль субтитров
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1242,20 +1321,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Всегда пытаться выбрать субтитры
-
-id: Auto
-msg: Авто
-
 id: Automatically play next video in list
 msg: Автоматически проигрывать следующее видео в списке
-
-id: Center
-msg: Центр
-
-id: Color
-msg: Цвет
 
 id: Count video as played when reaching
 msg: Считать видео проигранным при достижении
@@ -1266,59 +1333,17 @@ msg: Включить VDA
 id: Enable VDPAU
 msg: Включить VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Принудительно прописывать субтитры в кадре
-
-id: Generic settings for video subtitles
-msg: Общие настройки для видео субтитров
-
-id: Ignore embedded styling
-msg: Игнорировать встроенный стиль
-
-id: Include all subtitle files from movie directory
-msg: "Подхватывать" все файлы субтитров в папке
-
-id: Left
-msg: Слева
-
 id: Maximum resolution for deinterlacer
 msg: Максимальное разрешение для деинтерлейсинга
 
 id: No limit
 msg: Без ограничений
 
-id: Outline color
-msg: Цвет контура
-
-id: Outline size
-msg: Размер контура
-
 id: Preferred VDPAU deinterlacer method
 msg: Предпочтительный метод VPDAU деинтерлейсинга 
 
 id: Resume video playback
 msg: Boзoбнoвить вocпpoизвeдeниe видeo
-
-id: Right
-msg: Справа
-
-id: Shadow color
-msg: Цвет тени
-
-id: Shadow offset
-msg: Смещение тени
-
-id: Subtitle position
-msg: Позиция субтитров
-
-id: Subtitle size
-msg: Размер субтитров
-
-id: Subtitle size and positioning
-msg: Размер и позиция субтитров
-
-id: Subtitle styling
-msg: Стиль субтитров
 
 id: Temporal
 msg: Временный

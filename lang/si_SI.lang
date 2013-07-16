@@ -16,6 +16,14 @@ msg: Odstrani trenutno stran iz priljubljenih
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 # Missing translation
 msg: 
@@ -44,6 +52,14 @@ id: Suspend
 msg: 
 
 id: System
+# Missing translation
+msg: 
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
 # Missing translation
 msg: 
 
@@ -136,60 +152,6 @@ id: System log
 msg: Sistemski dnevnik
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: Dodeljeno iz aplikacije: %d kB
-
-id: Allocated by malloc: %d kB
-msg: Dodeljeno iz malloc: %d kB
-
-id: Avail system RAM: %d kB
-msg: Na voljo sistemskega pomnilnika: %d kB
-
-id: Detected CPUs: %d
-msg: Najdeni CPU-ji: %d
-
-id: Display info
-msg: Prikaži info
-
-id: Framerate: %.2f Hz
-msg: Hitrost slik %.2f Hz
-
-id: Free chunks: %d
-msg: Prosti koščki: %d
-
-id: GPU: %s
-msg: GPU: %s
-
-id: Height: %d px
-msg: Višina: %d px
-
-id: Memory status
-msg: Status pomnilnika
-
-id: Renderer: %s
-msg: Renderer: %s
-
-id: System info
-msg: Sistemske informacije
-
-id: Total system RAM: %d kB
-msg: Celoten sistemski pomnilnik: %d kB
-
-id: Unused memory: %d kB
-msg: Neuporabljen pomnilnik: %d kB
-
-id: Version: %s
-msg: Verzija: %s
-
-id: Width: %d px
-msg: Širina: %d px
-
-id: Windowmanager: %s
-msg: Upravljalec oken: %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -234,14 +196,12 @@ msg:
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: O Showtime-u
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: Prenehaj
-
-id: Plugins
-msg: Vtičniki
 
 id: Search / Open URL
 # Missing translation
@@ -421,13 +381,6 @@ id: Playback status
 msg: Status predvajanja
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -584,9 +537,6 @@ id: Compilations
 # Missing translation
 msg: 
 
-id: Enable Spotify
-msg: Omogoči Spotify
-
 id: Forget me
 msg: Pozabi uporabnika
 
@@ -629,9 +579,6 @@ msg: Spotify Prijatelji
 
 id: Spotify music service
 msg: Spotify glasbena storitev
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify vam ponuja pravni in prost dostop do raznovrstnih glasbe. Da bi lahko uporabljali Spotify s Showtime, potrebujete dostop Spotify Premium. \n Za več informacij o Spotify, obiščite http://www.spotify.com/\n\n Pred prvo uporabo Spotify v Showtime, boste morali vnesti svoje uporabniško ime in geslo Spotify.
 
 id: Spotify playlists
 msg: Spotyfy Lista predvajanja
@@ -696,6 +643,10 @@ id: Date (oldest first)
 # Missing translation
 msg: 
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: Ime datoteke
 
@@ -715,6 +666,10 @@ msg: Razvrsti prvo po mapah
 id: Sort on
 msg: Razvrsti
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -722,8 +677,37 @@ id: Search using spotlight
 msg: Za iskanje uporabi Spotlight
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: Jezik
 
@@ -965,8 +949,9 @@ msg: Alternativna URL povezava do vtičnikov
 id: Automatically upgrade plugins
 msg: Avtomatska posodobitev vtičnikov
 
-id: Available plugins
-msg: Dosegljivi vtičniki
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 # Missing translation
@@ -976,8 +961,9 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available plugins
-msg: Brskanje dosegljivih vtičnikov
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 # Missing translation
@@ -1007,8 +993,9 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed plugins
-msg: Naloženi vtičniki
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 # Missing translation
@@ -1045,6 +1032,13 @@ msg: Ni posodobljiv
 id: Online TV
 # Missing translation
 msg: 
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: Vtičniki
 
 id: Preferred views from plugins
 # Missing translation
@@ -1149,10 +1143,94 @@ id: System related settings
 msg: Nastavitve primerne sistemu
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: Avto
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: Sredina
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: Barva
+
 id: External file
 msg: Zunanja datoteka
+
+id: Force subtitles to reside on video frame
+msg: Prisiliti podnapise v video okvir
+
+id: Generic settings for video subtitles
+msg: Generične nastavitve za video podnapise
+
+id: Ignore embedded styling
+msg: Ignoriraj vgrajeno oblikovanje
+
+id: Left
+msg: Levo
+
+id: Outline color
+msg: Okvirne barve
+
+id: Outline size
+msg: Okvirna velikost
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: Desno
+
+id: Shadow color
+msg: Prikaži barve
+
+id: Shadow offset
+msg: Izravnava senčenja
+
+id: Subtitle position
+msg: Položaj podnapisov
+
+id: Subtitle size
+msg: Velikost podnapisov
+
+id: Subtitle size and positioning
+msg: Velikost in Položaj podnapisov
+
+id: Subtitle styling
+msg: Oblikovanje podnapisov
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1310,20 +1388,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: Vedno poskusite izbrati podnapise
-
-id: Auto
-msg: Avto
-
 id: Automatically play next video in list
 msg: Avtomatsko predvajajte naslednji video iz liste
-
-id: Center
-msg: Sredina
-
-id: Color
-msg: Barva
 
 id: Count video as played when reaching
 msg: Štetje videa kadar predvajanje doseže
@@ -1334,59 +1400,17 @@ msg: Omogočiti VDA
 id: Enable VDPAU
 msg: Omogočiti VDPAU
 
-id: Force subtitles to reside on video frame
-msg: Prisiliti podnapise v video okvir
-
-id: Generic settings for video subtitles
-msg: Generične nastavitve za video podnapise
-
-id: Ignore embedded styling
-msg: Ignoriraj vgrajeno oblikovanje
-
-id: Include all subtitle files from movie directory
-msg: Vključite vse podnapise iz mape filma
-
-id: Left
-msg: Levo
-
 id: Maximum resolution for deinterlacer
 msg: največja resolucija za deinterlacer
 
 id: No limit
 msg: Ni omejitev
 
-id: Outline color
-msg: Okvirne barve
-
-id: Outline size
-msg: Okvirna velikost
-
 id: Preferred VDPAU deinterlacer method
 msg: Priporočena VDPAU deinterlacer metoda
 
 id: Resume video playback
 msg: Nadaljevanje predvajanja
-
-id: Right
-msg: Desno
-
-id: Shadow color
-msg: Prikaži barve
-
-id: Shadow offset
-msg: Izravnava senčenja
-
-id: Subtitle position
-msg: Položaj podnapisov
-
-id: Subtitle size
-msg: Velikost podnapisov
-
-id: Subtitle size and positioning
-msg: Velikost in Položaj podnapisov
-
-id: Subtitle styling
-msg: Oblikovanje podnapisov
 
 id: Temporal
 msg: Časovno

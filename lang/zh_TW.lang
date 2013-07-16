@@ -16,6 +16,14 @@ msg: 將本頁自書籤中移除
 #
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
+id: Activate sleep timer
+# Missing translation
+msg: 
+
+id: Disable sleep timer
+# Missing translation
+msg: 
+
 id: Exit Showtime
 # Missing translation
 msg: 
@@ -44,6 +52,14 @@ id: Suspend
 msg: 
 
 id: System
+# Missing translation
+msg: 
+
+id: Time until sleep
+# Missing translation
+msg: 
+
+id: min
 # Missing translation
 msg: 
 
@@ -136,60 +152,6 @@ id: System log
 msg: 系統紀錄
 
 #
-# ./glwskins/default/pages/about.view
-#
-id: Allocated by application: %d kB
-msg: 程式使用： %d kB
-
-id: Allocated by malloc: %d kB
-msg: 動態宣告： %d kB
-
-id: Avail system RAM: %d kB
-msg: 可用： %d kB
-
-id: Detected CPUs: %d
-msg: 處理器數量： %d
-
-id: Display info
-msg: 顯示器資訊
-
-id: Framerate: %.2f Hz
-msg: 畫面更新率： %.2f Hz
-
-id: Free chunks: %d
-msg: 可用區塊： %d
-
-id: GPU: %s
-msg: 視訊處理器： %s
-
-id: Height: %d px
-msg: 高度： %d 像素
-
-id: Memory status
-msg: 記憶體資訊
-
-id: Renderer: %s
-msg: 渲染器： %s
-
-id: System info
-msg: 系統資訊
-
-id: Total system RAM: %d kB
-msg: 總共： %d kB
-
-id: Unused memory: %d kB
-msg: 未使用： %d kB
-
-id: Version: %s
-msg: 版本： %s
-
-id: Width: %d px
-msg: 寬度： %d 像素
-
-id: Windowmanager: %s
-msg: 視窗管理員： %s
-
-#
 # ./glwskins/default/pages/directory.view
 #
 id: Album
@@ -234,14 +196,12 @@ msg:
 #
 # ./glwskins/default/pages/home_clist.view
 #
-id: About Showtime
-msg: 關於 Showtime
+id: Apps
+# Missing translation
+msg: 
 
 id: Dismiss
 msg: 解散
-
-id: Plugins
-msg: 外掛程式
 
 id: Search / Open URL
 # Missing translation
@@ -417,13 +377,6 @@ id: Playback status
 msg: 影片資訊
 
 #
-# ./glwskins/default/pages/wideinfo/video.view
-#
-id: Seen:
-# Missing translation
-msg: 
-
-#
 # ./glwskins/default/playdecks/dvd.view
 #
 id: Chapter: %d
@@ -580,9 +533,6 @@ id: Compilations
 # Missing translation
 msg: 
 
-id: Enable Spotify
-msg: 啟用 Spotify
-
 id: Forget me
 msg: 清除使用者資訊
 
@@ -625,9 +575,6 @@ msg: Spotify 聯絡人
 
 id: Spotify music service
 msg: Spotify 音樂服務
-
-id: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
-msg: Spotify offers you legal and free access to a huge library of music. To use Spotify in Showtime you need a Spotify Preemium account.\nFor more information about Spotify, visit http://www.spotify.com/\n\nYou will be prompted for your Spotify username and password when first accessing any of the Spotify features in Showtime.
 
 id: Spotify playlists
 msg: Spotify 播放列表
@@ -692,6 +639,10 @@ id: Date (oldest first)
 # Missing translation
 msg: 
 
+id: Deleted %s
+# Missing translation
+msg: 
+
 id: Filename
 msg: 檔案名稱
 
@@ -711,6 +662,10 @@ msg: 優先顯示目錄
 id: Sort on
 msg: 排序項目
 
+id: Unable to delete %s\n%s
+# Missing translation
+msg: 
+
 #
 # ./src/fileaccess/fa_spotlight.c
 #
@@ -718,8 +673,37 @@ id: Search using spotlight
 msg: 使用 spotlight 進行搜尋
 
 #
+# ./src/fileaccess/fileaccess.c
+#
+id: Are you sure you want to delete:
+# Missing translation
+msg: 
+
+id: Enable file deletion from item menu
+# Missing translation
+msg: 
+
+id: File access
+# Missing translation
+msg: 
+
+id: %d directories
+# Missing plural translation for '%d directories' and '%d directory'
+msg[0]: 
+msg[1]: 
+
+id: %d files
+# Missing plural translation for '%d files' and '%d file'
+msg[0]: 
+msg[1]: 
+
+#
 # ./src/i18n.c
 #
+id: Ignore 'The' at beginning of words when sorting
+# Missing translation
+msg: 
+
 id: Language
 msg: 語言
 
@@ -961,8 +945,9 @@ msg: 變更外掛程式來源伺服器
 id: Automatically upgrade plugins
 msg: 自動更新外掛程式
 
-id: Available plugins
-msg: 可用的外掛程式
+id: Available apps
+# Missing translation
+msg: 
 
 id: Background
 # Missing translation
@@ -972,8 +957,9 @@ id: Beta testing passwords
 # Missing translation
 msg: 
 
-id: Browse available plugins
-msg: 瀏覽可用的外掛程式
+id: Browse available apps
+# Missing translation
+msg: 
 
 id: Browsing
 # Missing translation
@@ -1003,8 +989,9 @@ id: Home page
 # Missing translation
 msg: 
 
-id: Installed plugins
-msg: 已安裝的外掛程式
+id: Installed apps
+# Missing translation
+msg: 
 
 id: Installed version higher than available
 # Missing translation
@@ -1041,6 +1028,13 @@ msg: 無法更新
 id: Online TV
 # Missing translation
 msg: 
+
+id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
+# Missing translation
+msg: 
+
+id: Plugins
+msg: 外掛程式
 
 id: Preferred views from plugins
 # Missing translation
@@ -1144,10 +1138,94 @@ id: System related settings
 msg: 系統設定
 
 #
-# ./src/subtitles/sub_scanner.c
+# ./src/subtitles/subtitles.c
 #
+id: Any subtitle in central folder
+# Missing translation
+msg: 
+
+id: Any subtitle in same folder as video
+# Missing translation
+msg: 
+
+id: Auto
+msg: 自動
+
+id: Automatically select from this source
+# Missing translation
+msg: 
+
+id: Center
+msg: 置中
+
+id: Central subtitle folder
+# Missing translation
+msg: 
+
+id: Color
+msg: 字幕色彩
+
 id: External file
 msg: 外部檔案
+
+id: Force subtitles to reside on video frame
+msg: 強制顯示字幕於視訊影格
+
+id: Generic settings for video subtitles
+msg: 字幕設定
+
+id: Ignore embedded styling
+msg: 忽略字幕既有樣式
+
+id: Left
+msg: 左側
+
+id: Outline color
+msg: 外框色彩
+
+id: Outline size
+msg: 外框大小
+
+id: Path to central folder
+# Missing translation
+msg: 
+
+id: Providers for Subtitles
+# Missing translation
+msg: 
+
+id: Right
+msg: 右側
+
+id: Shadow color
+msg: 陰影色彩
+
+id: Shadow offset
+msg: 陰影位置
+
+id: Subtitle position
+msg: 字幕位置
+
+id: Subtitle size
+msg: 字幕大小
+
+id: Subtitle size and positioning
+msg: 字幕大小及位置
+
+id: Subtitle styling
+msg: 字幕樣式
+
+id: Subtitles embedded in video file
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in central folder
+# Missing translation
+msg: 
+
+id: Subtitles with matching filename in same folder as video
+# Missing translation
+msg: 
 
 #
 # ./src/text/fontstash.c
@@ -1305,20 +1383,8 @@ msg: 576
 id: 720
 msg: 720
 
-id: Always try to select a subtitle
-msg: 自動選擇字幕
-
-id: Auto
-msg: 自動
-
 id: Automatically play next video in list
 msg: 自動接續播放列表中的媒體檔案
-
-id: Center
-msg: 置中
-
-id: Color
-msg: 字幕色彩
 
 id: Count video as played when reaching
 msg: 觀賞影片達到若干比例時增加已播放次數紀錄
@@ -1329,59 +1395,17 @@ msg: 啟用 VDA
 id: Enable VDPAU
 msg: 啟用 VDPAU
 
-id: Force subtitles to reside on video frame
-msg: 強制顯示字幕於視訊影格
-
-id: Generic settings for video subtitles
-msg: 字幕設定
-
-id: Ignore embedded styling
-msg: 忽略字幕既有樣式
-
-id: Include all subtitle files from movie directory
-msg: 自動匯入影片目錄中的字幕檔
-
-id: Left
-msg: 左側
-
 id: Maximum resolution for deinterlacer
 msg: 去交錯器支援的最大解析度
 
 id: No limit
 msg: 無限制
 
-id: Outline color
-msg: 外框色彩
-
-id: Outline size
-msg: 外框大小
-
 id: Preferred VDPAU deinterlacer method
 msg: 偏好的 VDPAU 去交錯器演算法
 
 id: Resume video playback
 msg: 自中斷處繼續播放影片
-
-id: Right
-msg: 右側
-
-id: Shadow color
-msg: 陰影色彩
-
-id: Shadow offset
-msg: 陰影位置
-
-id: Subtitle position
-msg: 字幕位置
-
-id: Subtitle size
-msg: 字幕大小
-
-id: Subtitle size and positioning
-msg: 字幕大小及位置
-
-id: Subtitle styling
-msg: 字幕樣式
 
 id: Temporal
 msg: 時間優先
