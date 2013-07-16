@@ -1421,7 +1421,6 @@ js_fini(void)
 
   prop_unsubscribe(js_event_sub);
 
-  prop_courier_destroy(js_global_pc);
 
   cx = js_global_cx;
   JS_SetContextThread(cx);
@@ -1429,6 +1428,8 @@ js_fini(void)
 
   JS_DestroyRuntime(runtime);
   JS_ShutDown();
+
+  prop_courier_destroy(js_global_pc);
 }
 
 
