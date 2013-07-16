@@ -17,12 +17,10 @@ msg: Usuń stronę z zakładek
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Włącz wyłącznik czasowy
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Wyłącz wyłącznik czasowymsg: 
 
 id: Exit Showtime
 msg: Zamknij Showtime
@@ -52,12 +50,10 @@ id: System
 msg: System
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Czas do uśpienia
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -189,8 +185,7 @@ msg: Sąsiadujący
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Aplikacje
 
 id: Dismiss
 msg: Odrzuć
@@ -619,8 +614,7 @@ id: Date (oldest first)
 msg: Data (starsze na początku)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: Usunięto %s
 
 id: Filename
 msg: Nazwa pliku
@@ -641,8 +635,7 @@ id: Sort on
 msg: Sortuj
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Nie można usunąć %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -654,33 +647,28 @@ msg: Szukaj używając spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Czy napewno chcesz usunąć:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Włącz opcję usuwania pliku w menu
 
 id: File access
-# Missing translation
-msg: 
+msg: Dostęp do pliku
 
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d foldery
+msg[1]: %d folder
 
 id: %d files
 # Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d pliki 
+msg[1]: %d plik
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Przy sortowaniu ignoruj 'The' jeśli występuje w wyrazie
 
 id: Language
 msg: Język
@@ -914,8 +902,7 @@ id: Automatically upgrade plugins
 msg: Automatycznie aktualizuj wtyczki
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Dostępne aplikacje
 
 id: Background
 msg: Tło
@@ -924,8 +911,7 @@ id: Beta testing passwords
 msg: Hasło beta-testów
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Przeglądaj dostępne aplikacje
 
 id: Browsing
 msg: Przeglądanie
@@ -952,8 +938,7 @@ id: Home page
 msg: Strona główna
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Zainstalowane aplikacje
 
 id: Installed version higher than available
 msg: Zainstalowana wersja jest nowsza od dostępnej
@@ -986,8 +971,7 @@ id: Online TV
 msg: Internet TV
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: Wtyczka %s %s została odinstalowana gdyż może powodować problemy.\nRęczna instalacja innej wersji może rozwiązać ten problem.
 
 id: Plugins
 msg: Wtyczki
@@ -1089,26 +1073,22 @@ msg: Ustawienia związane z systemem
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Dowolne napisy w głównym folderze
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Dowolne napisy w folderze z plikiem video
 
 id: Auto
 msg: Automatycznie
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Automatycznie wybierz z danego źródła
 
 id: Center
 msg: Środek
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Główny folder z napisami
 
 id: Color
 msg: Kolor
@@ -1135,12 +1115,10 @@ id: Outline size
 msg: Rozmiar obrysu
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Ścieżka do głównego folderu
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Dostawcy napisów
 
 id: Right
 msg: Prawy
@@ -1164,16 +1142,13 @@ id: Subtitle styling
 msg: Styl napisów
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Napisy zintegrowane z plikiem video
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Napisy z pasującą nazwą z głównego folderu
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Napisy z pasującą nazwą z folderu z plikiem video
 
 #
 # ./src/text/fontstash.c
