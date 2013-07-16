@@ -40,7 +40,8 @@
 #include "settings.h"
 #include "notifications.h"
 
-#define BC2_MAGIC 0x62630205
+#define BC2_MAGIC_current 0x62630206
+#define BC2_MAGIC_05      0x62630205
 
 typedef struct blobcache_item {
   struct blobcache_item *bi_link;
@@ -184,7 +185,7 @@ save_index(void)
     return;
   
   int items = 0;
-  siz = 8 + 20;
+  siz = 12 + 20;
 
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
@@ -199,9 +200,11 @@ save_index(void)
     close(fd);
     return;
   }
-  *(uint32_t *)out = BC2_MAGIC;
+  *(uint32_t *)out = BC2_MAGIC_current;
   out += 4;
   *(uint32_t *)out = items;
+  out += 4;
+  *(uint32_t *)out = time(NULL);
   out += 4;
   for(i = 0; i < ITEM_HASH_SIZE; i++) {
     for(p = hashvector[i]; p != NULL; p = p->bi_link) {
@@ -250,7 +253,8 @@ static void
 load_index(void)
 {
   char filename[PATH_MAX];
-  uint8_t *in, *base;
+  const uint8_t *in;
+  void *base;
   int i;
   blobcache_item_t *p;
   blobcache_diskitem_t *di;
@@ -263,29 +267,24 @@ load_index(void)
   if(fd == -1)
     return;
 
-  if(fstat(fd, &st) || st.st_size < 28) {
+  if(fstat(fd, &st) || st.st_size <= 20) {
     close(fd);
     return;
   }
 
-  base = in = mymalloc(st.st_size);
-  if(in == NULL) {
+  in = base = mymalloc(st.st_size);
+  if(base == NULL) {
     close(fd);
     return;
   }
 
-  size_t r = read(fd, in, st.st_size);
+  size_t r = read(fd, base, st.st_size);
   close(fd);
   if(r != st.st_size) {
-    free(in);
+    free(base);
     return;
   }
 
-
-  if(*(uint32_t *)in != BC2_MAGIC) {
-    free(in);
-    return;
-  }
 
   sha1_decl(shactx);
   sha1_init(shactx);
@@ -293,16 +292,38 @@ load_index(void)
   sha1_final(shactx, digest);
 
   if(memcmp(digest, in + st.st_size - 20, 20)) {
-    free(in);
+    free(base);
     TRACE(TRACE_INFO, "blobcache", "Index file corrupt, throwing away cache");
     return;
   }
 
+  uint32_t magic = *(uint32_t *)in;
   in += 4;
-
   int items = *(uint32_t *)in;
-
   in += 4;
+
+  switch(magic) {
+  case BC2_MAGIC_current: {
+    if(*(uint32_t *)in > time(NULL)) {
+      TRACE(TRACE_INFO, "blobcache",
+	    "Clock going backwards, throwing away cache");
+      free(base);
+      return;
+    }
+    in += 4;
+    break;
+  }
+
+  case BC2_MAGIC_05:
+    TRACE(TRACE_INFO, "blobcache", "Upgrading from older format 0x%08x", magic);
+    break;
+
+  default:
+    TRACE(TRACE_INFO, "blobcache", "Invalid magic 0x%08x", magic);
+    free(base);
+    return;
+  }
+
 
   for(i = 0; i < items; i++) {
     di = (blobcache_diskitem_t *)in;
