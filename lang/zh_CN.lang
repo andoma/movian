@@ -17,12 +17,10 @@ msg: 将当前页从书签删除
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: 启用休眠定时器
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: 禁用休眠定时器
 
 id: Exit Showtime
 msg: 退出Showtime
@@ -52,12 +50,10 @@ id: System
 msg: 系统
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: 直到休眠
 
 id: min
-# Missing translation
-msg: 
+msg: 最小
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -189,8 +185,7 @@ msg: 平铺
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: 应用
 
 id: Dismiss
 msg: 删除
@@ -619,8 +614,7 @@ id: Date (oldest first)
 msg: 日期（老的优先）
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: 删除%s
 
 id: Filename
 msg: 文件名
@@ -641,8 +635,7 @@ id: Sort on
 msg: 排序
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: 无法删除%s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -654,33 +647,27 @@ msg: 使用spotlight搜索
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: 是否确定要删除：
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: 启用文件删除功能
 
 id: File access
-# Missing translation
-msg: 
+msg: 文件访问
 
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d个文件夹
+msg[1]: %d个文件夹
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d个文件
+msg[1]: %d个文件
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: 排序时忽略开头的'The'
 
 id: Language
 msg: 语言
@@ -914,8 +901,7 @@ id: Automatically upgrade plugins
 msg: 自动更新插件
 
 id: Available apps
-# Missing translation
-msg: 
+msg: 可用应用
 
 id: Background
 msg: 背景
@@ -924,8 +910,7 @@ id: Beta testing passwords
 msg: Beta测试用密码
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: 浏览可用的应用
 
 id: Browsing
 msg: 浏览
@@ -952,8 +937,7 @@ id: Home page
 msg: 首页
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: 已安装的应用
 
 id: Installed version higher than available
 msg: 安装版本比可用版本高
@@ -986,8 +970,7 @@ id: Online TV
 msg: 在线电视
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: 由于可能引起问题，插件%s %s已被卸载。\n您可以尝试手工安装此插件的其它版本。
 
 id: Plugins
 msg: 插件
@@ -1089,26 +1072,22 @@ msg: 系统相关设置
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: 主文件夹的所有字幕
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: 视频相同文件夹下的所有字幕
 
 id: Auto
 msg: 自动
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: 自动选择
 
 id: Center
 msg: 居中
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: 字幕主文件夹
 
 id: Color
 msg: 颜色
@@ -1135,12 +1114,10 @@ id: Outline size
 msg: 边框大小
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: 主文件夹路径
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: 字幕源
 
 id: Right
 msg: 靠右
@@ -1164,16 +1141,13 @@ id: Subtitle styling
 msg: 字幕样式
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: 视频内嵌字幕
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: 主文件夹中文件名匹配的字幕
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: 视频所在文件夹中文件名匹配的字幕
 
 #
 # ./src/text/fontstash.c
