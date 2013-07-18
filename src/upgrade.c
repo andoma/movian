@@ -323,7 +323,8 @@ attempt_upgrade(int accept_patch)
   buf_t *b;
 
   int r = http_request(download_url, NULL, &b,
-		       errbuf, sizeof(errbuf), NULL, NULL, 0,
+		       errbuf, sizeof(errbuf), NULL, NULL,
+		       FA_COMPRESSION | FA_DEBUG,
 		       &response_headers, &req_headers, NULL,
 		       download_callback, NULL);
   
@@ -338,7 +339,8 @@ attempt_upgrade(int accept_patch)
 
 #if CONFIG_BSPATCH
 
-  const char *encoding = http_header_get(&response_headers, "Encoding");
+  const char *encoding = http_header_get(&response_headers,
+					 "Content-Encoding");
 
   int got_patch = encoding && !strcmp(encoding, ae);
 
