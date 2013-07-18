@@ -60,7 +60,6 @@ enable ps3_vdec
 enable sqlite_vfs
 enable sqlite_locking
 enable tlsf
-enable bspatch
 
 mkdir -p ${BUILDDIR}/libav
 ${PS3DEV}/host/ppu/bin/ppu-gcc -c -o ${BUILDDIR}/libav/mallocstub.o ${TOPDIR}/support/mallocstub.c

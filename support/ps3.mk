@@ -46,7 +46,7 @@ ${SYMS}: ${BUILDDIR}/showtime.ziptail support/ps3.mk
 
 ${ZS}:  ${BUILDDIR}/zipbundles/bundle.zip ${SYMS} support/ps3.mk
 	cp $< $@
-	zip -0j ${ZS} ${SYMS}
+	zip -9j ${ZS} ${SYMS}
 
 ${SELF}: ${ELF} ${ZS} support/ps3.mk 
 	make_self $< $@
