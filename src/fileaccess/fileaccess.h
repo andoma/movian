@@ -256,6 +256,8 @@ int memfile_register(const void *data, size_t len);
 
 void memfile_unregister(int id);
 
+fa_handle_t *memfile_make(const void *mem, size_t len);
+
 // Expose part of a file as a new file, fa is owned by the slicer
 // so you must never touch it again
 

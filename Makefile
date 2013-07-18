@@ -115,6 +115,8 @@ SRCS +=	src/misc/ptrvec.c \
 
 SRCS-${CONFIG_TREX} += ext/trex/trex.c
 
+SRCS-${CONFIG_BSPATCH} += ext/bspatch/bspatch.c
+
 ##############################################################
 # Sqlite3
 ##############################################################

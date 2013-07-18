@@ -85,6 +85,7 @@ CONFIG_LIST="
  valgrind
  xmp
  bughunt
+ bspatch
 "
 
 cleanup() {
@@ -395,6 +396,7 @@ bzip2_setup()
 
     echo >>${CONFIG_MAK} "BZIP2_BUILD_DIR=${BZIP2_SRC_DIR}"
 
+    echo >>${CONFIG_MAK} "LDFLAGS_cfg += -lbz2"
     add_stamp bzip2
 }
 
