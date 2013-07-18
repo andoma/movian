@@ -255,7 +255,7 @@ install_error(const char *str)
 /**
  *
  */
-static void
+static int
 attempt_upgrade(int accept_patch)
 {
   const char *fname = gconf.binary;
@@ -286,24 +286,24 @@ attempt_upgrade(int accept_patch)
 
     fd = open(fname, O_RDONLY);
     if(fd == -1)
-      return;
+      return -1;
 
     struct stat st;
     if(fstat(fd, &st)) {
       close(fd);
-      return;
+      return -1;
     }
 
     current_size = st.st_size;
     current_data = halloc(current_size);
     if(current_data == NULL) {
       close(fd);
-      return;
+      return -1;
     }
     if(read(fd, current_data, current_size) != current_size) {
       hfree(current_data, current_size);
       close(fd);
-      return;
+      return -1;
     }
     close(fd);
 
@@ -334,7 +334,7 @@ attempt_upgrade(int accept_patch)
     if(current_data)
       hfree(current_data, current_size);
 
-    return;
+    return -1;
   }
 
 #if CONFIG_BSPATCH
@@ -356,7 +356,7 @@ attempt_upgrade(int accept_patch)
       if(new == NULL) {
 	TRACE(TRACE_DEBUG, "upgrade", "Patch is corrupt");
 	hfree(current_data, current_size);
-	return;
+	return -1;
       }
       b = new;
     }
@@ -384,7 +384,7 @@ attempt_upgrade(int accept_patch)
   if(!match) {
     install_error("SHA-1 sum mismatch");
     buf_release(b);
-    return;
+    return -1;
   }
 
   TRACE(TRACE_INFO, "upgrade", "Replacing %s with %d bytes received",
@@ -393,7 +393,7 @@ attempt_upgrade(int accept_patch)
   if(unlink(fname)) {
     install_error("Unlink failed");
     buf_release(b);
-    return;
+    return -1;
   }
 
   TRACE(TRACE_DEBUG, "upgrade", "Executable removed, rewriting");
@@ -402,7 +402,7 @@ attempt_upgrade(int accept_patch)
   if(fd == -1) {
     install_error("Unable to open file");
     buf_release(b);
-    return;
+    return -1;
   }
 
   int fail = write(fd, b->b_ptr, b->b_size) != b->b_size;
@@ -411,7 +411,7 @@ attempt_upgrade(int accept_patch)
 
   if(fail) {
     install_error("Unable to write to file");
-    return;
+    return -1;
   }
 
   TRACE(TRACE_INFO, "upgrade", "All done, restarting");
@@ -423,6 +423,8 @@ attempt_upgrade(int accept_patch)
     sleep(1);
   }
   showtime_shutdown(13);
+
+  return 0;
 }
 
 
@@ -430,8 +432,11 @@ attempt_upgrade(int accept_patch)
 static void *
 install_thread(void *aux)
 {
-  if(gconf.enable_patched_upgrade)
-    attempt_upgrade(1);
+  if(gconf.enable_patched_upgrade) {
+    if(!attempt_upgrade(1))
+      return NULL;
+  }
+
   attempt_upgrade(0);
   return NULL;
 }
