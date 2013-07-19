@@ -1,6 +1,8 @@
 
 build()
 {
+    mkdir -p ${WORKINGDIR}
+
     TEMPFILE="${WORKINGDIR}/tmpfile.zip"
     TOOLCHAIN_URL=http://www.lonelycoder.com/download/arm-unknown-linux-gnueabi.tar.gz
     TOOLCHAIN="${WORKINGDIR}/arm-unknown-linux-gnueabi"
