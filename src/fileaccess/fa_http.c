@@ -1292,11 +1292,8 @@ http_read_response(http_file_t *hf, struct http_header_list *headers)
     if(!strcasecmp(argv[0], "Content-Encoding")) {
       if(!strcasecmp(argv[1], "gzip"))
 	hf->hf_content_encoding = HTTP_CE_GZIP;
-      else if(!strcasecmp(argv[1], "identity") ||
-	      !strcasecmp(argv[1], "utf-8"))
-	hf->hf_content_encoding = HTTP_CE_IDENTITY;
       else
-	return -1;
+	hf->hf_content_encoding = HTTP_CE_IDENTITY;
     }
     if(!strcasecmp(argv[0], "Content-Length")) {
       i64 = strtoll(argv[1], NULL, 0);

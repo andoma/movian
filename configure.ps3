@@ -68,6 +68,7 @@ LIBAV_LDFLAGS="${BUILDDIR}/libav/mallocstub.o"
 libav_setup
 rtmpdump_setup
 xmp_setup
+bzip2_setup
 
 cat >> ${CONFIG_MAK} <<EOF
 CFLAGS_cfg += -mminimal-toc -DWORDS_BIGENDIAN

@@ -234,6 +234,30 @@ widget(container_y, {
       });
     });
 
+    widget(container_y, {
+      id: "prepare";
+      align: center;
+
+      widget(label, {
+	caption: _("Checking current installed version");
+	shadow: true;
+	outline: true;
+	align: center;
+      });
+    });
+
+    widget(container_y, {
+      id: "patch";
+      align: center;
+
+      widget(label, {
+	caption: _("Patching binary");
+	shadow: true;
+	outline: true;
+	align: center;
+      });
+    });
+
 
     page: $global.upgrade.status;
   });

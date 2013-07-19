@@ -868,4 +868,7 @@ init_dev_settings(void)
   add_dev_bool("Debug FTP",
 	       "ftpdebug", &gconf.enable_ftp_debug);
 
+  add_dev_bool("Upgrade using patches",
+	       "patchupgrade", &gconf.enable_patched_upgrade);
+
 }

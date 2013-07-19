@@ -18,11 +18,11 @@ msg: Удалить текущую страницу из закладок
 #
 id: Activate sleep timer
 # Missing translation
-msg: 
+msg: Включить таймер сна
 
 id: Disable sleep timer
 # Missing translation
-msg: 
+msg: Выключить таймер сна
 
 id: Exit Showtime
 msg: Выйти из Showtime
@@ -53,11 +53,11 @@ msg: Система
 
 id: Time until sleep
 # Missing translation
-msg: 
+msg: Время до сна
 
 id: min
 # Missing translation
-msg: 
+msg: мин
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -190,7 +190,7 @@ msg: Плитка
 #
 id: Apps
 # Missing translation
-msg: 
+msg: Приложения
 
 id: Dismiss
 msg: Отклонить
@@ -614,15 +614,15 @@ msg: Артисты
 
 id: Date (newest first)
 # Missing translation
-msg: 
+msg: Дата (сперва новые)
 
 id: Date (oldest first)
 # Missing translation
-msg: 
+msg: Дата (сперва старые)
 
 id: Deleted %s
 # Missing translation
-msg: 
+msg: Удаление %s
 
 id: Filename
 msg: Имя файла
@@ -644,7 +644,7 @@ msg: Сортировать по
 
 id: Unable to delete %s\n%s
 # Missing translation
-msg: 
+msg: Не удалось удалить %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -657,32 +657,32 @@ msg: Поиск с использованием spotlight
 #
 id: Are you sure you want to delete:
 # Missing translation
-msg: 
+msg: Вы уверены, что хотите удалить:
 
 id: Enable file deletion from item menu
 # Missing translation
-msg: 
+msg: Включить удаление файла из пункта меню
 
 id: File access
 # Missing translation
-msg: 
+msg: Доступ к файлу
 
 id: %d directories
 # Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d директорий
+msg[1]: %d директория
 
 id: %d files
 # Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d файлов
+msg[1]: %d файл
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
 # Missing translation
-msg: 
+msg: Игнорировать 'The' в начале слова при сортировке
 
 id: Language
 msg: Язык
@@ -917,7 +917,7 @@ msg: Автоматическое обновление плагинов
 
 id: Available apps
 # Missing translation
-msg: 
+msg: Доступные приложения
 
 id: Background
 msg: Фон
@@ -927,7 +927,7 @@ msg: Пароли бета-теста
 
 id: Browse available apps
 # Missing translation
-msg: 
+msg: Просмотр доступных приложений
 
 id: Browsing
 msg: Вид элементов при навигации
@@ -955,7 +955,7 @@ msg: Главный экран
 
 id: Installed apps
 # Missing translation
-msg: 
+msg: Установленные приложения
 
 id: Installed version higher than available
 msg: Установленная версия новее, чем доступная
@@ -989,7 +989,7 @@ msg: Онлайн-ТВ
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
 # Missing translation
-msg: 
+msg: Плагин %s %s был удален, потому что он вызывает проблемы.\nПопробуйте переустановить вручную другую версию.
 
 id: Plugins
 msg: Плагины
@@ -1092,25 +1092,25 @@ msg: Системные настройки
 #
 id: Any subtitle in central folder
 # Missing translation
-msg: 
+msg: Любые субтитры в основной папке
 
 id: Any subtitle in same folder as video
 # Missing translation
-msg: 
+msg: Любые субтитры в одной папке с видео
 
 id: Auto
 msg: Авто
 
 id: Automatically select from this source
 # Missing translation
-msg: 
+msg: Автоматически выбирать из этого источника
 
 id: Center
 msg: Центр
 
 id: Central subtitle folder
 # Missing translation
-msg: 
+msg: Основная папка субтитров
 
 id: Color
 msg: Цвет
@@ -1138,11 +1138,11 @@ msg: Размер контура
 
 id: Path to central folder
 # Missing translation
-msg: 
+msg: Путь к основной папке 
 
 id: Providers for Subtitles
 # Missing translation
-msg: 
+msg: Поставщики для субтитров
 
 id: Right
 msg: Справа
@@ -1167,15 +1167,15 @@ msg: Стиль субтитров
 
 id: Subtitles embedded in video file
 # Missing translation
-msg: 
+msg: Субтитры встроенные в видеофайл
 
 id: Subtitles with matching filename in central folder
 # Missing translation
-msg: 
+msg: Субтитры с соответствующим именем файла в основной папке
 
 id: Subtitles with matching filename in same folder as video
 # Missing translation
-msg: 
+msg: Субтитры с соответствующим именем файла в одной папке с видео
 
 #
 # ./src/text/fontstash.c

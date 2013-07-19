@@ -469,3 +469,17 @@ memfile_unregister(int id)
   hts_mutex_unlock(&memfile_mutex);
   free(mf);
 }
+
+
+/**
+ *
+ */
+fa_handle_t *
+memfile_make(const void *mem, size_t len)
+{
+  fa_bundle_fh_t *fh = calloc(1, sizeof(fa_bundle_fh_t));
+  fh->ptr = mem;
+  fh->size = len;
+  fh->h.fh_proto = &fa_protocol_memfile;
+  return &fh->h;
+}
