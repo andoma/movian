@@ -422,6 +422,8 @@ typedef struct ass_dialogue {
   int ad_fadein;
   int ad_fadeout;
 
+  int ad_alignment;
+
 } ass_dialoge_t;
 
 
@@ -449,15 +451,36 @@ ass_handle_override(ass_dialoge_t *ad, const char *src, int len)
   
   while((cmd = strchr(str, '\\')) != NULL) {
     str = ++cmd;
-    if(str[0] == 'i')
+    if(str[0] == 'i') {
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_ITALIC_ON : TR_CODE_ITALIC_OFF);
-    else if(str[0] == 'b')
+    } else if(str[0] == 'b') {
       ad_txt_append(ad, str[1] == '1' ? TR_CODE_BOLD_ON : TR_CODE_BOLD_OFF);
-    else if(sscanf(str, "fad(%d,%d)", &v1, &v2) == 2) {
+    } else if(sscanf(str, "fad(%d,%d)", &v1, &v2) == 2) {
       ad->ad_fadein = v1 * 1000;
       ad->ad_fadeout = v2 * 1000;
-    } else
+    } else if(str[0] == 'c') {
+      str++;
+      int code = TR_CODE_COLOR;
+      if(*str != '&') {
+        switch(*str) {
+        default:  code = TR_CODE_COLOR;         break;
+        case '2': /* Not supported by us */     break;
+        case '3': code = TR_CODE_OUTLINE_COLOR; break;
+        case '4': code = TR_CODE_SHADOW_COLOR;  break;
+        }
+        str++;
+      }
+      uint32_t col = ass_parse_color(str);
+      ad_txt_append(ad, code | col);
+      break;
+
+      // Alignment
+    } else if(str[0] == 'a' && str[1] == 'n') {
+      // Alignment
+      ad->ad_alignment = atoi(str+2);
+    } else {
       TRACE(TRACE_DEBUG, "ASS", "Can't handle override: %s", str);
+    }
   }
 }
 
@@ -592,7 +615,7 @@ ad_dialogue_decode(const ass_decoder_ctx_t *adc, const char *line,
   vo->vo_stop = end;
   vo->vo_fadein = ad.ad_fadein;
   vo->vo_fadeout = ad.ad_fadeout;
-  vo->vo_alignment = as->as_alignment;
+  vo->vo_alignment = ad.ad_alignment ?: as->as_alignment;
 
   vo->vo_padding_left  =  as->as_margin_left;
   vo->vo_padding_right  = as->as_margin_right;
