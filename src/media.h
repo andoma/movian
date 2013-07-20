@@ -446,6 +446,8 @@ typedef struct media_pipe {
   struct setting *mp_setting_av_delta;   // Audio vs. Video delta
   struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
   struct setting *mp_setting_sub_scale;  // Subtitle scaling
+  struct setting *mp_setting_sub_displace_y;
+  struct setting *mp_setting_sub_displace_x;
   struct setting *mp_setting_sub_on_video; // Subtitle always on video
   struct setting *mp_setting_vzoom;      // Video zoom in %
   struct setting *mp_setting_hstretch;   // Horizontal stretch

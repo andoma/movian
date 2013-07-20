@@ -472,6 +472,20 @@ mp_create(const char *name, int flags, const char *type)
 			 NULL, NULL, 0,
 			 mp->mp_pc, NULL, NULL);
 
+  mp->mp_setting_sub_displace_y = 
+    settings_create_int(mp->mp_setting_subtitle_root, "sub_displace_y",
+			_p("Subtitle vertical displacement"),
+			0,
+			NULL, -300, 300, 5, NULL, NULL, 0,
+			"px", mp->mp_pc, NULL, NULL);
+
+  mp->mp_setting_sub_displace_x = 
+    settings_create_int(mp->mp_setting_subtitle_root, "sub_displace_x",
+			_p("Subtitle horizontal displacement"),
+			0,
+			NULL, -300, 300, 5, NULL, NULL, 0,
+			"px", mp->mp_pc, NULL, NULL);
+
 
   if(media_pipe_init_extra != NULL)
     media_pipe_init_extra(mp);
@@ -548,6 +562,8 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_av_delta);
   setting_destroy(mp->mp_setting_sv_delta);
   setting_destroy(mp->mp_setting_sub_scale);
+  setting_destroy(mp->mp_setting_sub_displace_x);
+  setting_destroy(mp->mp_setting_sub_displace_y);
   setting_destroy(mp->mp_setting_sub_on_video);
   setting_destroy(mp->mp_setting_vzoom);
   setting_destroy(mp->mp_setting_hstretch);

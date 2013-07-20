@@ -202,6 +202,12 @@ typedef struct glw_video {
   prop_sub_t *gv_vo_scaling_sub;
   float gv_vo_scaling;
 
+  prop_sub_t *gv_vo_displace_y_sub;
+  int gv_vo_displace_y;
+
+  prop_sub_t *gv_vo_displace_x_sub;
+  int gv_vo_displace_x;
+
   prop_sub_t *gv_vo_on_video_sub;
   int gv_vo_on_video;
 
