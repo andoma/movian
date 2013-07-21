@@ -611,6 +611,7 @@ const static action_type_t *btn_to_action_sel[BTN_max] = {
   [BTN_TRIANGLE]   = AVEC(ACTION_SWITCH_VIEW),
   [BTN_CIRCLE]     = AVEC(ACTION_STOP),
   [BTN_START]      = AVEC(ACTION_PLAYQUEUE),
+  [BTN_SQUARE]     = AVEC(ACTION_ENABLE_SCREENSAVER),
 };
 
 
