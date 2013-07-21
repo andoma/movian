@@ -1,0 +1,3 @@
+When deleting RAR file, delete all files in multivolume archive
+
+Fixes #1711
