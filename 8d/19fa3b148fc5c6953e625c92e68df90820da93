@@ -1,0 +1,11 @@
+ps3: Make it possible to configure seeking using L2/R2
+
+It can be configured in three modes:
+
+* Enabled
+* Enabled but only in combination with Select
+* Disabled
+
+Setting found in Settings -> Look and feel
+
+Fixes #1691
