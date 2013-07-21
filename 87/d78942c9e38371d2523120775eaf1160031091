@@ -1,0 +1,8 @@
+Correct subtitle cordinates if subs displays outside of visible screen
+
+For subtitles that specifies absolute coordinatese (PGS, etc) Showtime
+now checks if the subtitle image fits on screen. If the subtitle
+does not fit it tries to position the subtitle first using 1280x720
+resolution. If it does not fit there either it retries with 1920x1080.
+
+Fixes #1051
