@@ -150,6 +150,8 @@ typedef enum {
 
 fa_dir_t *fa_scandir(const char *url, char *errbuf, size_t errsize);
 
+fa_dir_t *fa_get_parts(const char *url, char *errbuf, size_t errsize);
+
 #define fa_open(u, e, es) fa_open_ex(u, e, es, 0, NULL)
 
 void *fa_open_ex(const char *url, char *errbuf, size_t errsize, int flags,

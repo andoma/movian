@@ -355,6 +355,34 @@ fa_scandir(const char *url, char *errbuf, size_t errsize)
 /**
  *
  */
+fa_dir_t *
+fa_get_parts(const char *url, char *errbuf, size_t errsize)
+{
+  fa_protocol_t *fap;
+  fa_dir_t *fd;
+  char *filename;
+
+  if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
+    return NULL;
+
+  if(fap->fap_get_parts != NULL) {
+    fd = fa_dir_alloc();
+    if(fap->fap_get_parts(fd, filename, errbuf, errsize)) {
+      fa_dir_free(fd);
+      fd = NULL;
+    }
+  } else {
+    snprintf(errbuf, errsize, "Protocol does not implement part scanning");
+    fd = NULL;
+  }
+  free(filename);
+  return fd;
+}
+
+
+/**
+ *
+ */
 int
 fa_findfile(const char *path, const char *file, 
 	    char *fullpath, size_t fullpathlen)
@@ -642,15 +670,30 @@ fa_rscan(const char *url, void (*fn)(void *aux, fa_dir_entry_t *fde),
   fa_dir_entry_free(NULL, fde);
 }
 
+TAILQ_HEAD(delscan_item_queue, delscan_item);
+
+/**
+ *
+ */
+typedef struct delscan_item {
+  TAILQ_ENTRY(delscan_item) link;
+  rstr_t *url;
+  int type;
+} delscan_item_t;
+
+
 
 /**
  *
  */
 static void
-rscan_count_one(void *aux, fa_dir_entry_t *fde)
+delitem_add(struct delscan_item_queue *diq, const char *url,
+	    int type)
 {
-  int *v = aux;
-  v[fde->fde_type == CONTENT_DIR]++;
+  delscan_item_t *di = malloc(sizeof(delscan_item_t));
+  di->url = rstr_alloc(url);
+  di->type = type;
+  TAILQ_INSERT_TAIL(diq, di, link);
 }
 
 
@@ -658,50 +701,129 @@ rscan_count_one(void *aux, fa_dir_entry_t *fde)
  *
  */
 static void
-unlink_recursive_one(void *aux, fa_dir_entry_t *fde)
+delitem_addr(struct delscan_item_queue *diq, rstr_t *url, int type)
 {
+  delscan_item_t *di = malloc(sizeof(delscan_item_t));
+  di->url = rstr_dup(url);
+  di->type = type;
+  TAILQ_INSERT_TAIL(diq, di, link);
+}
+
+
+/**
+ *
+ */
+static void
+delitem_add_fde(void *aux, fa_dir_entry_t *fde)
+{
+  delitem_addr(aux, fde->fde_url, fde->fde_type);
+}
+
+
+
+/**
+ *
+ */
+static void
+unlink_items(const struct delscan_item_queue *diq)
+{
+  const delscan_item_t *di;
   char errbuf[256];
   fa_protocol_t *fap;
   char *filename;
 
-  if((filename = fa_resolve_proto(rstr_get(fde->fde_url), &fap, NULL,
-                                  errbuf, sizeof(errbuf))) == NULL) {
-    TRACE(TRACE_ERROR, "FS", "Unable to resolve %s -- %s",
-          rstr_get(fde->fde_url), errbuf);
-    return;
+  TAILQ_FOREACH(di, diq, link) {
+
+    if((filename = fa_resolve_proto(rstr_get(di->url), &fap, NULL,
+				    errbuf, sizeof(errbuf))) == NULL) {
+      TRACE(TRACE_ERROR, "FS", "Unable to resolve %s -- %s",
+	    rstr_get(di->url), errbuf);
+      continue;
+    }
+
+    // #define NO_ACTUAL_UNLINK // good when testing and I don't wanna zap stuff
+
+    int r;
+    if(di->type == CONTENT_DIR) {
+#ifdef NO_ACTUAL_UNLINK
+      printf("rmdir(%s)\n", filename);
+      r = 0;
+#else
+      r = fap->fap_rmdir(fap, filename, errbuf, sizeof(errbuf));
+#endif
+    } else {
+#ifdef NO_ACTUAL_UNLINK
+      printf("unlink(%s)\n", filename);
+      r = 0;
+#else
+      r = fap->fap_unlink(fap, filename, errbuf, sizeof(errbuf));
+#endif
+    }
+
+    if(r)
+      TRACE(TRACE_ERROR, "FS", "Unable to delete %s -- %s",
+	    rstr_get(di->url), errbuf);
+    free(filename);
   }
+}
 
 
-  int r;
-  if(fde->fde_type == CONTENT_FILE) {
-    r = fap->fap_unlink(fap, filename, errbuf, sizeof(errbuf));
-  } else {
-    r = fap->fap_rmdir(fap, filename, errbuf, sizeof(errbuf));
+/**
+ *
+ */
+static void
+free_items(struct delscan_item_queue *diq)
+{
+  delscan_item_t *a, *b;
+  for(a = TAILQ_FIRST(diq); a != NULL; a = b) {
+    b = TAILQ_NEXT(a, link);
+    rstr_release(a->url);
+    free(a);
   }
-
-  if(r)
-    TRACE(TRACE_ERROR, "FS", "Unable to delete %s -- %s",
-          rstr_get(fde->fde_url), errbuf);
-
-  free(filename);
 }
 
 /**
  *
  */
 static int
-verify_delete(int files, int dirs)
+verify_delete(const struct delscan_item_queue *diq)
 {
-  rstr_t *ftxt = _pl("%d files",       "%d file",      files);
-  rstr_t *dtxt = _pl("%d directories", "%d directory", dirs);
+  int files = 0;
+  int dirs = 0;
+  int parts = 0;
+  const delscan_item_t *di;
+  TAILQ_FOREACH(di, diq, link) {
+    switch(di->type) {
+    case CONTENT_DIR:
+      dirs++;
+      break;
+    case CONTENT_FILE:
+      files++;
+      break;
+    case 1000:
+      parts++;
+      break;
+    }
+  }
+
+  rstr_t *ftxt = _pl("%d files",         "%d file",         files);
+  rstr_t *dtxt = _pl("%d directories",   "%d directory",    dirs);
+  rstr_t *ptxt = _pl("%d archive parts", "%d archive part", parts);
   rstr_t *del  = _("Are you sure you want to delete:");
 
   char tmp[512];
   int l = snprintf(tmp, sizeof(tmp), "%s\n", rstr_get(del));
-  l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);
-  l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  
+  if(files) {
+    l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ftxt), files);
+    l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  }
   if(dirs) {
     l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(dtxt), dirs);
+    l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
+  }
+  if(parts) {
+    l += snprintf(tmp + l, sizeof(tmp) - l, rstr_get(ptxt), parts);
     l += snprintf(tmp + l, sizeof(tmp) - l, "\n");
   }
 
@@ -723,53 +845,71 @@ fa_unlink(const char *url, char *errbuf, size_t errsize)
   fa_protocol_t *fap;
   fa_stat_t st;
   char *filename;
-  int r;
+  struct delscan_item_queue diq;
+  TAILQ_INIT(&diq);
 
   if((filename = fa_resolve_proto(url, &fap, NULL, errbuf, errsize)) == NULL)
     return -1;
 
-  r = fap->fap_stat(fap, filename, &st, errbuf, errsize, 0);
-  if(!r) {
+  if(fap->fap_stat(fap, filename, &st, errbuf, errsize, 0))
+    goto bad;
 
-    r = -1;
-    if(st.fs_type == CONTENT_FILE) {
-      if(fap->fap_unlink == NULL) {
-        snprintf(errbuf, errsize,
-                 "Deleting not supported for this file system");
-      } else {
-
-        if(verify_delete(1, 0) != MESSAGE_POPUP_OK) {
-          snprintf(errbuf, errsize, "Canceled by user");
-        } else {
-          r = fap->fap_unlink(fap, filename, errbuf, errsize);
-        }
-      }
-
-    } else if(st.fs_type == CONTENT_DIR) {
-
-      if(fap->fap_unlink == NULL || fap->fap_rmdir == NULL) {
-        snprintf(errbuf, errsize,
-                 "Deleting not supported for this file system");
-      } else {
-
-        int types[2] = {};
-
-        fa_rscan(url, rscan_count_one, types);
-        if(verify_delete(types[0], types[1]) != MESSAGE_POPUP_OK) {
-          snprintf(errbuf, errsize, "Canceled by user");
-        } else {
-          fa_rscan(url, unlink_recursive_one, NULL);
-          r = 0;
-        }
-      }
-    } else {
-      snprintf(errbuf, errsize, "Can't delete this type");
+  if(st.fs_type == CONTENT_FILE) {
+    if(fap->fap_unlink == NULL) {
+      snprintf(errbuf, errsize,
+	       "Deleting not supported for this file system");
+      goto bad;
     }
+
+    const char *pfx = strrchr(url, '.');
+    if(!strcasecmp(pfx, ".rar")) {
+      char path[PATH_MAX];
+      snprintf(path, sizeof(path), "rar://%s", url);
+      fa_dir_t *fd = fa_get_parts(path, errbuf, errsize);
+      if(fd == NULL)
+	goto bad;
+      
+      fa_dir_entry_t *fde;
+      RB_FOREACH(fde, &fd->fd_entries, fde_link)
+	delitem_addr(&diq, fde->fde_url, 1000);
+
+      fa_dir_free(fd);
+
+
+    } else {
+      delitem_add(&diq, url, CONTENT_FILE);
+    }
+
+  } else if(st.fs_type == CONTENT_DIR) {
+    
+    if(fap->fap_unlink == NULL || fap->fap_rmdir == NULL) {
+      snprintf(errbuf, errsize,
+	       "Deleting not supported for this file system");
+      goto bad;
+    }
+    
+    fa_rscan(url, delitem_add_fde, &diq);
+  } else {
+    snprintf(errbuf, errsize, "Can't delete this type");
+    goto bad;
+  }
+      
+  if(verify_delete(&diq) != MESSAGE_POPUP_OK) {
+    snprintf(errbuf, errsize, "Canceled by user");
+    goto bad;
   }
 
-  free(filename);
+  unlink_items(&diq);
+  free_items(&diq);
 
-  return r;
+  free(filename);
+  return 0;
+
+bad:
+  free(filename);
+  free_items(&diq);
+  return -1;
+
 }
 
 

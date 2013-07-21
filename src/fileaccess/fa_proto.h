@@ -157,6 +157,16 @@ typedef struct fa_protocol {
    */
   int (*fap_seek_is_fast)(fa_handle_t *fh);
 
+  /**
+   * Return all parts that relates to the given URL
+   *
+   * For RAR archives this would be all part-files
+   * 
+   */
+  int (*fap_get_parts)(fa_dir_t *fa, const char *url,
+		       char *errbuf, size_t errsize);
+
+
 } fa_protocol_t;
 
 
