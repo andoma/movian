@@ -26,6 +26,8 @@
 #include <errno.h>
 #include <malloc.h>
 
+#include "settings.h"
+
 #include "glw.h"
 #include "glw_settings.h"
 #include "glw_video_common.h"
@@ -58,6 +60,8 @@
 typedef struct glw_ps3 {
 
   glw_root_t gr;
+
+  int gp_seekmode;
 
   VideoResolution res;
 
@@ -886,8 +890,10 @@ handle_pads(glw_ps3_t *gp)
     handle_btn(gp, i, BTN_L3,       pd->BTN_L3,       sel, 0);
 
 
-    handle_seek(gp, i, 1,        pd->BTN_R2,       pd->PRE_R2);
-    handle_seek(gp, i, -1,       pd->BTN_L2,       pd->PRE_L2);
+    if(gp->gp_seekmode == 0 || (gp->gp_seekmode == 1 && sel)) {
+      handle_seek(gp, i, 1,        pd->BTN_R2,       pd->PRE_R2);
+      handle_seek(gp, i, -1,       pd->BTN_L2,       pd->PRE_L2);
+    }
   }
 }
 
@@ -1081,6 +1087,15 @@ glw_ps3_mainloop(glw_ps3_t *gp)
   sysUnregisterCallback(EVENT_SLOT0);
 }
 
+
+static void
+set_seekmode(void *opaque, const char *str)
+{
+  glw_ps3_t *gp = opaque;
+  gp->gp_seekmode = atoi(str);
+}
+
+
 int glw_ps3_start(void);
 
 /**
@@ -1116,6 +1131,21 @@ glw_ps3_start(void)
 
   if(glw_init(gr))
     return 1;
+
+  setting_t *s =
+    settings_create_multiopt(glw_settings.gs_settings,
+			     "analogseekmode",
+			     _p("Seek using L2 and R2 button"),
+			     SETTINGS_INITIAL_UPDATE);
+
+  settings_multiopt_add_opt(s, "0", _p("Yes"), 1);
+  settings_multiopt_add_opt(s, "1", _p("Yes with Select button"), 0);
+  settings_multiopt_add_opt(s, "2", _p("No"), 0);
+
+  settings_multiopt_initiate(s, set_seekmode, gp,
+			     gr->gr_courier,
+			     glw_settings.gs_settings_store,
+			     glw_settings_save, gr);
 
   gr->gr_open_osk = osk_open;
 
