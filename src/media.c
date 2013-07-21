@@ -258,6 +258,16 @@ mq_destroy(media_queue_t *mq)
 /**
  *
  */
+static void
+update_auto_standby(void *aux, int value)
+{
+  media_pipe_t *mp = aux;
+  mp->mp_auto_standby = value;
+}
+
+/**
+ *
+ */
 media_pipe_t *
 mp_create(const char *name, int flags, const char *type)
 {
@@ -305,6 +315,8 @@ mp_create(const char *name, int flags, const char *type)
   mp->mp_prop_notifications = prop_create(mp->mp_prop_root, "notifications");
   mp->mp_prop_url         = prop_create(mp->mp_prop_root, "url");
 
+
+  mp->mp_setting_root = prop_create(mp->mp_prop_root, "settings");
 
   //--------------------------------------------------
   // Video
@@ -486,6 +498,15 @@ mp_create(const char *name, int flags, const char *type)
 			NULL, -300, 300, 5, NULL, NULL, 0,
 			"px", mp->mp_pc, NULL, NULL);
 
+  if(flags & MP_VIDEO) {
+    mp->mp_setting_standby_after_eof = 
+      settings_create_bool(mp->mp_setting_root, "autostandby",
+			   _p("Go to standby after video ends"), 
+			   0, NULL,
+			   update_auto_standby, mp, 0,
+			   mp->mp_pc, NULL, NULL);
+  }
+
 
   if(media_pipe_init_extra != NULL)
     media_pipe_init_extra(mp);
@@ -568,6 +589,9 @@ mp_destroy(media_pipe_t *mp)
   setting_destroy(mp->mp_setting_vzoom);
   setting_destroy(mp->mp_setting_hstretch);
   setting_destroy(mp->mp_setting_fstretch);
+
+  if(mp->mp_setting_standby_after_eof)
+    setting_destroy(mp->mp_setting_standby_after_eof);
 
   prop_unsubscribe(mp->mp_sub_currenttime);
   prop_unsubscribe(mp->mp_sub_stats);

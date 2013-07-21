@@ -363,6 +363,7 @@ typedef struct media_pipe {
   int mp_audio_clock_epoch;
   int mp_avdelta;           // Audio vs video delta (µs)
   int mp_svdelta;           // Subtitle vs video delta (µs)
+  int mp_auto_standby;
   int mp_stats;
 
   struct audio_decoder *mp_audio_decoder;
@@ -442,6 +443,7 @@ typedef struct media_pipe {
   prop_t *mp_setting_video_root;
   prop_t *mp_setting_audio_root;
   prop_t *mp_setting_subtitle_root;
+  prop_t *mp_setting_root;
 
   struct setting *mp_setting_av_delta;   // Audio vs. Video delta
   struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
@@ -453,6 +455,8 @@ typedef struct media_pipe {
   struct setting *mp_setting_hstretch;   // Horizontal stretch
   struct setting *mp_setting_fstretch;   // Fullscreen stretch
   struct setting *mp_setting_vdpau_deinterlace;      // Deinterlace interlaced content
+  struct setting *mp_setting_standby_after_eof;
+
 
   /**
    * Extra (created by media_pipe_init_extra)
