@@ -17,12 +17,10 @@ msg: Remover página atual dos favoritos
 # ./glwskins/default/cmdmenu/cmdmenu_common.view
 #
 id: Activate sleep timer
-# Missing translation
-msg: 
+msg: Ativar temporização de suspensão
 
 id: Disable sleep timer
-# Missing translation
-msg: 
+msg: Desativar temporização de suspensão
 
 id: Exit Showtime
 msg: Sair do Showtime
@@ -52,12 +50,10 @@ id: System
 msg: Sistema
 
 id: Time until sleep
-# Missing translation
-msg: 
+msg: Tempo até suspensão
 
 id: min
-# Missing translation
-msg: 
+msg: min
 
 #
 # ./glwskins/default/cmdmenu/cmdmenu_dir.view
@@ -189,8 +185,7 @@ msg: Azulejos
 # ./glwskins/default/pages/home_clist.view
 #
 id: Apps
-# Missing translation
-msg: 
+msg: Apps
 
 id: Dismiss
 msg: Anular
@@ -613,16 +608,13 @@ id: Artists
 msg: Artistas
 
 id: Date (newest first)
-# Missing translation
-msg: 
+msg: Data (mais recentes primeiro)
 
 id: Date (oldest first)
-# Missing translation
-msg: 
+msg: Data (mais antigos primeiro)
 
 id: Deleted %s
-# Missing translation
-msg: 
+msg: %s eliminado
 
 id: Filename
 msg: Nome de ficheiro
@@ -643,8 +635,7 @@ id: Sort on
 msg: Ordenar por
 
 id: Unable to delete %s\n%s
-# Missing translation
-msg: 
+msg: Não foi possível eliminar %s\n%s
 
 #
 # ./src/fileaccess/fa_spotlight.c
@@ -656,33 +647,27 @@ msg: Procurar utilizando o spotlight
 # ./src/fileaccess/fileaccess.c
 #
 id: Are you sure you want to delete:
-# Missing translation
-msg: 
+msg: Tem a certeza que pretende eliminar:
 
 id: Enable file deletion from item menu
-# Missing translation
-msg: 
+msg: Ativar eliminação de ficheiros através do item de menu
 
 id: File access
-# Missing translation
-msg: 
+msg: Acesso a ficheiros
 
 id: %d directories
-# Missing plural translation for '%d directories' and '%d directory'
-msg[0]: 
-msg[1]: 
+msg[0]: %d diretórios
+msg[1]: %d diretório
 
 id: %d files
-# Missing plural translation for '%d files' and '%d file'
-msg[0]: 
-msg[1]: 
+msg[0]: %d ficheiros
+msg[1]: %d ficheiro
 
 #
 # ./src/i18n.c
 #
 id: Ignore 'The' at beginning of words when sorting
-# Missing translation
-msg: 
+msg: Na ordenação, ignorar 'The' no ínicio das palavras
 
 id: Language
 msg: Idioma
@@ -916,8 +901,7 @@ id: Automatically upgrade plugins
 msg: Atualizar automaticamente os plugins
 
 id: Available apps
-# Missing translation
-msg: 
+msg: Apps disponíveis
 
 id: Background
 msg: Fundo
@@ -926,8 +910,7 @@ id: Beta testing passwords
 msg: Palavras-passe de testes beta
 
 id: Browse available apps
-# Missing translation
-msg: 
+msg: Navegar pelas apps disponíveis
 
 id: Browsing
 msg: Navegando
@@ -954,8 +937,7 @@ id: Home page
 msg: Página inicial
 
 id: Installed apps
-# Missing translation
-msg: 
+msg: Apps instaladas
 
 id: Installed version higher than available
 msg: Está instalada uma versão mais atual que a disponível
@@ -988,8 +970,7 @@ id: Online TV
 msg: TV online
 
 id: Plugin %s %s has been uninstalled because it may cause problems.\nYou may try reinstalling a different version manually.
-# Missing translation
-msg: 
+msg: O plugin %s %s foi desinstalado porque poderia causar problemas.\nPode tentar reinstalar manualmente uma versão diferente.
 
 id: Plugins
 msg: Plugins
@@ -1091,26 +1072,22 @@ msg: Configurações relacionadas com o sistema
 # ./src/subtitles/subtitles.c
 #
 id: Any subtitle in central folder
-# Missing translation
-msg: 
+msg: Qualquer legenda numa pasta central
 
 id: Any subtitle in same folder as video
-# Missing translation
-msg: 
+msg: Qualquer legenda na mesma pasta do vídeo
 
 id: Auto
 msg: Automático
 
 id: Automatically select from this source
-# Missing translation
-msg: 
+msg: Selecionar automaticamente a partir desta fonte
 
 id: Center
 msg: Centrado
 
 id: Central subtitle folder
-# Missing translation
-msg: 
+msg: Pasta de lengendas central
 
 id: Color
 msg: Cor
@@ -1137,12 +1114,10 @@ id: Outline size
 msg: Tamanho do contorno
 
 id: Path to central folder
-# Missing translation
-msg: 
+msg: Caminho para a pasta central
 
 id: Providers for Subtitles
-# Missing translation
-msg: 
+msg: Fornecedores de legendas
 
 id: Right
 msg: Direita
@@ -1166,16 +1141,13 @@ id: Subtitle styling
 msg: Estilo das legendas
 
 id: Subtitles embedded in video file
-# Missing translation
-msg: 
+msg: Legendas incorporadas no ficheiro de vídeo
 
 id: Subtitles with matching filename in central folder
-# Missing translation
-msg: 
+msg: Legendas com um nome idêntico na pasta central
 
 id: Subtitles with matching filename in same folder as video
-# Missing translation
-msg: 
+msg: Legendas com um nome idêntico na pasta do vídeo
 
 #
 # ./src/text/fontstash.c
