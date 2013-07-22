@@ -1,0 +1,6 @@
+Use original dimensions for subtitle canvas from subtitle track.
+
+This fix position/scaling issues of subtitles that comes
+from a video resolution different than the current video track.
+
+Fixes #1051
