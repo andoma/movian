@@ -750,6 +750,14 @@ video_player_idle(void *aux)
       rstr_set(&play_url, NULL);
       e = mp_dequeue_event(mp);
     }
+
+    if(event_is_type(e, EVENT_EOF) && mp->mp_auto_standby) {
+      showtime_shutdown(SHOWTIME_EXIT_STANDBY);
+      event_release(e);
+      e = NULL;
+      break;
+    }
+
     if(event_is_type(e, EVENT_PLAY_URL)) {
       force_continuous = 0;
       prop_set_void(errprop);

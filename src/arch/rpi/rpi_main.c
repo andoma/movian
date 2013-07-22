@@ -68,8 +68,6 @@ showtime_get_avtime(void)
 }
 
 
-#define check() assert(glGetError() == 0)
-
 
 
 static  DISPMANX_ELEMENT_HANDLE_T bg_element;
@@ -292,19 +290,23 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 
   // get an appropriate EGL frame buffer configuration
   result = eglBindAPI(EGL_OPENGL_ES_API);
-  assert(result != EGL_FALSE);
-  check();
+  if(result == EGL_FALSE) {
+    exit(2);
+  }
 
   // create an EGL rendering context
   context = eglCreateContext(dpy, config, EGL_NO_CONTEXT,
 			     context_attributes);
-  assert(context != EGL_NO_CONTEXT);
-  check();
+
+  if(context == EGL_NO_CONTEXT) {
+    exit(2);
+  }
 
   // create an EGL window surface
   success = graphics_get_display_size(0, &screen_width, &screen_height);
-  assert(success >= 0);
-
+  if(success < 0) {
+    exit(2);
+  }
 
 
   u = vc_dispmanx_update_start(0);
@@ -329,16 +331,18 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   nw.height = screen_height;
   vc_dispmanx_update_submit_sync(u);
       
-  check();
 
   surface = eglCreateWindowSurface(dpy, config, &nw, NULL);
-  assert(surface != EGL_NO_SURFACE);
-  check();
+  if(surface == EGL_NO_SURFACE) {
+    exit(2);
+  }
 
   // connect the context to the surface
   result = eglMakeCurrent(dpy, surface, surface, context);
-  assert(EGL_FALSE != result);
-  check();
+  if(result == EGL_FALSE) {
+    exit(2);
+  }
+
 
   gr->gr_width = screen_width;
   gr->gr_height = screen_height;
@@ -372,11 +376,8 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
   glw_flush(gr);
 
   eglMakeCurrent(dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-  check();
   eglDestroySurface(dpy, surface);
-  check();
   eglDestroyContext(dpy, context);
-  check();
   TRACE(TRACE_DEBUG, "RPI", "UI terminated");
 }
 
@@ -684,13 +685,13 @@ static void
 rpi_mainloop(void)
 {
   EGLDisplay dpy = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-  assert(dpy != EGL_NO_DISPLAY);
-  check();
+  if(dpy == EGL_NO_DISPLAY)
+    exit(2);
   
   // initialize the EGL display connection
   int result = eglInitialize(dpy, NULL, NULL);
-  assert(result != EGL_FALSE);
-  check();
+  if(result == EGL_FALSE)
+    exit(2);
 
   dispman_display = vc_dispmanx_display_open(0);
 

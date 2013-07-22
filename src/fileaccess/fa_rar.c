@@ -846,6 +846,26 @@ rar_stat(fa_protocol_t *fap, const char *url, struct fa_stat *fs,
 /**
  *
  */
+static int
+rar_get_parts(fa_dir_t *fd, const char *url,
+	      char *errbuf, size_t errsize)
+{
+  const char *r;
+  rar_archive_t *ra = rar_archive_find(url, &r);
+  rar_volume_t *rv;
+
+  if(ra == NULL)
+    return -1;
+
+  LIST_FOREACH(rv, &ra->ra_volumes, rv_link)
+    fa_dir_add(fd, rv->rv_url, rv->rv_url, CONTENT_FILE);
+  return 0;
+}
+
+
+/**
+ *
+ */
 static void
 rar_init(void)
 {
@@ -865,5 +885,7 @@ static fa_protocol_t fa_protocol_rar = {
   .fap_stat  = rar_stat,
   .fap_reference = rar_reference,
   .fap_unreference = rar_unreference,
+  .fap_get_parts = rar_get_parts,
+  
 };
 FAP_REGISTER(rar);

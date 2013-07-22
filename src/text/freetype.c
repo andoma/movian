@@ -413,6 +413,23 @@ face_resolve(int uc, uint8_t style, const char *font, int font_domain,
 	f = NULL;
     }
   }
+#if 0
+  // Try anything from the exact domain
+  if(f == NULL) {
+    TAILQ_FOREACH(f, &faces, link) {
+      if(f->font_domain == font_domain &&
+         f->style == style &&
+         FT_Get_Char_Index(f->face, uc))
+      return f;
+    }
+    TAILQ_FOREACH(f, &faces, link) {
+      if(f->font_domain == font_domain &&
+         FT_Get_Char_Index(f->face, uc))
+      return f;
+    }
+  }
+#endif
+
 
   // Try default font
   if(f == NULL && default_font != NULL)

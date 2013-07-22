@@ -450,6 +450,8 @@ glw_video_dtor(glw_t *w)
 
   prop_ref_dec(gv->gv_model);
   prop_unsubscribe(gv->gv_vo_scaling_sub);
+  prop_unsubscribe(gv->gv_vo_displace_x_sub);
+  prop_unsubscribe(gv->gv_vo_displace_y_sub);
   prop_unsubscribe(gv->gv_vzoom_sub);
   prop_unsubscribe(gv->gv_hstretch_sub);
   prop_unsubscribe(gv->gv_fstretch_sub);
@@ -597,6 +599,22 @@ glw_video_ctor(glw_t *w)
 		   PROP_TAG_COURIER, w->glw_root->gr_courier,
 		   PROP_TAG_ROOT,
 		   settings_get_value(gv->gv_mp->mp_setting_sub_scale),
+		   NULL);
+
+  gv->gv_vo_displace_y_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_displace_y,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_sub_displace_y),
+		   NULL);
+
+  gv->gv_vo_displace_x_sub =
+    prop_subscribe(0,
+		   PROP_TAG_SET_INT, &gv->gv_vo_displace_x,
+		   PROP_TAG_COURIER, w->glw_root->gr_courier,
+		   PROP_TAG_ROOT,
+		   settings_get_value(gv->gv_mp->mp_setting_sub_displace_x),
 		   NULL);
 
   gv->gv_vzoom_sub =

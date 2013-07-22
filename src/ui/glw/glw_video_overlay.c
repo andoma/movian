@@ -282,6 +282,12 @@ glw_video_overlay_render(glw_video_t *gv, const glw_rctx_t *frc,
     else
       rc0 = *frc;
 
+    // Never to user displacement if in DVD menu, it will fail
+    if(!gv->gv_spu_in_menu)
+      glw_Translatef(&rc0,
+		     gv->gv_vo_displace_x * 2.0f / rc0.rc_width,
+		     gv->gv_vo_displace_y * 2.0f / rc0.rc_height, 0);
+
     switch(gvo->gvo_type) {
     case GVO_DVDSPU:
       if(!show_dvd_overlays)
@@ -664,7 +670,25 @@ gvo_create_from_vo_bitmap(glw_video_t *gv, video_overlay_t *vo)
   gvo->gvo_alignment = vo->vo_alignment;
 
   if(vo->vo_alignment == 0) {
+    // Absolute coordinates
+
     gvo->gvo_videoframe_align = 1;
+
+    if(gvo->gvo_canvas_height == 0 &&
+       (vo->vo_y + H + 16 >= gv->gv_height ||
+	vo->vo_x + W + 16 >= gv->gv_width)) {
+      // Will display outside visible frame
+
+      if(vo->vo_y + H < 720 && vo->vo_x + w < 1280) {
+	gvo->gvo_canvas_width  = 1280;
+	gvo->gvo_canvas_height = 720;
+      } else {
+	gvo->gvo_canvas_width  = 1920;
+	gvo->gvo_canvas_height = 1080;
+      }
+    }
+
+
 
     glw_renderer_vtx_pos(r, 0, vo->vo_x,     vo->vo_y + H, 0.0f);
     glw_renderer_vtx_pos(r, 1, vo->vo_x + W, vo->vo_y + H, 0.0f);
