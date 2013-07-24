@@ -104,6 +104,7 @@ enable httpserver
 enable timegm
 enable inotify
 enable realpath
+enable webpopup
 #enable airplay -- not functional yet
 #enable libxrandr  -- code does not really work yet
 

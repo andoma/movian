@@ -14,6 +14,7 @@ SRCS += src/arch/linux/linux_main.c \
 
 SRCS-$(CONFIG_LIBPULSE)  += src/audio2/pulseaudio.c
 SRCS-$(CONFIG_LIBASOUND) += src/audio2/alsa.c src/audio2/alsa_default.c 
+SRCS-$(CONFIG_WEBPOPUP) += src/arch/linux/linux_webpopup.c
 
 ${BUILDDIR}/src/arch/linux/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} \
 -Wall -Werror -Wmissing-prototypes -Wno-cast-qual -Wno-deprecated-declarations

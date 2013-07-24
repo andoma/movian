@@ -794,6 +794,9 @@ js_webpopup(JSContext *cx, JSObject *obj,
   case WEBPOPUP_LOAD_ERROR:
     t = "neterror";
     break;
+  default:
+    t = "error";
+    break;
   }
 
   jsval val;

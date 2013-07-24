@@ -166,6 +166,7 @@ mainloop(void)
       aux= ui_current->start(nav);
     }
 
+    linux_webpopup_check();
     gtk_main_iteration();
   }
 
@@ -220,14 +221,13 @@ main(int argc, char **argv)
   g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
 		  g_main_context_default());
 
-  g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
-		  g_main_context_default());
-
   prop_subscribe(0,
 		 PROP_TAG_NAME("global", "eventsink"),
 		 PROP_TAG_CALLBACK_EVENT, linux_global_eventsink, NULL,
 		 PROP_TAG_COURIER, glibcourier, 
 		 NULL);
+
+  linux_webpopup_init();
 
   linux_init_monitors();
 

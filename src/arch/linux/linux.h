@@ -8,6 +8,10 @@ int get_system_concurrency(void);
 
 void linux_check_capabilities(void);
 
+void linux_webpopup_init(void);
+
+void linux_webpopup_check(void);
+
 struct prop;
 
 typedef struct linux_ui {
