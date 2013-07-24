@@ -1,0 +1,6 @@
+Add wrap support when navigating lists.
+
+ie. When navigating and reaching beginning/end of a list, move
+cursor to other side of list
+
+Fixed #576
