@@ -28,7 +28,7 @@
 #include "event.h"
 #include "misc/strtab.h"
 #include "prop/prop.h"
-
+#include "arch/arch.h"
 
 /**
  *
@@ -181,6 +181,8 @@ static struct strtab actionnames[] = {
   { "ReloadData",            ACTION_RELOAD_DATA },
   { "Playqueue",             ACTION_PLAYQUEUE },
   { "Sysinfo",               ACTION_SYSINFO },
+
+  { "SwitchUI",              ACTION_SWITCH_UI },
 
 };
 
@@ -559,7 +561,7 @@ const static int action_from_fkey[13][2] = {
   { ACTION_SWITCH_VIEW,       0 },
   { 0,                        ACTION_VOLUME_MUTE_TOGGLE },
   { ACTION_FULLSCREEN_TOGGLE, ACTION_VOLUME_DOWN },
-  { 0,                        ACTION_VOLUME_UP },
+  { ACTION_SWITCH_UI,         ACTION_VOLUME_UP },
 };
 
 

@@ -551,7 +551,7 @@ nav_page_setup_prop(navigator_t *nav, nav_page_t *np, const char *view,
   prop_set_int(np->np_bookmarked, nav_page_is_bookmarked(np));
 
   np->np_bookmarked_sub = 
-    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE,
+    prop_subscribe(PROP_SUB_NO_INITIAL_UPDATE | PROP_SUB_IGNORE_VOID,
 		   PROP_TAG_ROOT, np->np_bookmarked,
 		   PROP_TAG_CALLBACK_INT, nav_page_bookmarked_set, np,
 		   PROP_TAG_COURIER, nav_courier,

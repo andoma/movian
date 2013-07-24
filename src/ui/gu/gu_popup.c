@@ -265,9 +265,26 @@ popups_update(void *opaque, prop_event_t event, ...)
 void
 gu_popup_init(gtk_ui_t *gu)
 {
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "popups"),
-		 PROP_TAG_CALLBACK, popups_update, gu,
-		 PROP_TAG_COURIER, glibcourier,
-		 NULL);
+  gu->gu_popup_sub =
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "popups"),
+		   PROP_TAG_CALLBACK, popups_update, gu,
+		   PROP_TAG_COURIER, glibcourier,
+		   NULL);
 }
+
+
+/**
+ *
+ */
+void
+gu_popup_fini(gtk_ui_t *gu)
+{
+  prop_unsubscribe(gu->gu_popup_sub);
+
+  popup_t *pop;
+  while((pop = LIST_FIRST(&gu->popups)) != NULL)
+    popup_destroy(pop);
+
+}
+

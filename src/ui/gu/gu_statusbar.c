@@ -40,6 +40,7 @@ typedef struct statusbar_entry {
 typedef struct statusbar {
   GtkWidget *bar;
   guint ctxid;
+  prop_sub_t *sub;
   LIST_HEAD(, statusbar_entry) entries;
 } statusbar_t;
 
@@ -101,6 +102,21 @@ notifications_update(void *opaque, prop_event_t event, ...)
 }
 
 
+
+/**
+ *
+ */
+static void
+notifications_dtor(GtkObject *object, gpointer user_data)
+{
+  statusbar_t *sb = user_data;
+
+  prop_unsubscribe(sb->sub);
+  free(sb);
+}
+
+
+
 /**
  *
  */
@@ -117,11 +133,15 @@ gu_statusbar_add(gu_window_t *gw, GtkWidget *parent)
   sb->ctxid =  gtk_statusbar_get_context_id(GTK_STATUSBAR(sb->bar),
 					    "notifications");
 
-  prop_subscribe(0,
-		 PROP_TAG_NAME("global", "notifications", "nodes"),
-		 PROP_TAG_CALLBACK, notifications_update, sb,
-		 PROP_TAG_COURIER, glibcourier,
-		 NULL);
+  sb->sub = 
+    prop_subscribe(0,
+		   PROP_TAG_NAME("global", "notifications", "nodes"),
+		   PROP_TAG_CALLBACK, notifications_update, sb,
+		   PROP_TAG_COURIER, glibcourier,
+		   NULL);
+
+  g_signal_connect(sb->bar, "destroy", G_CALLBACK(notifications_dtor), sb);
+
   return sb->bar;
 }
 

@@ -24,6 +24,7 @@
 #include "prop/prop.h"
 
 extern prop_courier_t *glibcourier;
+extern hts_mutex_t gdk_mutex;
 
 struct event;
 LIST_HEAD(gu_nav_page_list, gu_nav_page);
@@ -36,6 +37,8 @@ LIST_HEAD(gu_tab_list, gu_tab);
 typedef struct gtk_ui {
   struct gu_window_list gu_windows;
   LIST_HEAD(, popup) popups;
+  struct prop_sub *gu_popup_sub;
+  struct gu_window *gu_last_focused;
 } gtk_ui_t;
 
 
@@ -77,7 +80,7 @@ void gu_fullwindow_update(gu_window_t *gw);
 
 void gu_nav_open_newwin(gtk_ui_t *gu, const char *url);
 
-gu_window_t *gu_win_create(gtk_ui_t *gu, int all);
+gu_window_t *gu_win_create(gtk_ui_t *gu, int all, prop_t *nav);
 
 void gu_win_destroy(gu_window_t *gw);
 
@@ -105,9 +108,9 @@ typedef struct gu_tab {
 
 } gu_tab_t;
 
-gu_tab_t *gu_tab_create(gu_window_t *gw, int select);
+gu_tab_t *gu_tab_create(gu_window_t *gw, int select, prop_t *nav);
 
-void gu_tab_destroy(gu_tab_t *gu);
+void gu_tab_close(gu_tab_t *gu);
 
 void gu_tab_send_event(gu_tab_t *gw, struct event *e);
 
@@ -146,6 +149,10 @@ typedef struct gu_nav_page {
 
 } gu_nav_page_t;
 
+//gtk_ui_t *gu_start(void);
+
+//void gu_stop(gtk_ui_t *gu);
+
 void gu_nav_pages(void *opaque, prop_event_t event, ...);
 
 void gu_directory_create(gu_nav_page_t *gnp);
@@ -159,6 +166,8 @@ GtkWidget *gu_playdeck_add(gu_window_t *gw, GtkWidget *parent);
 GtkWidget *gu_statusbar_add(gu_window_t *gw, GtkWidget *parent);
 
 void gu_popup_init(gtk_ui_t *gu);
+
+void gu_popup_fini(gtk_ui_t *gu);
 
 void gu_home_create(gu_nav_page_t *gnp);
 
@@ -223,7 +232,8 @@ GdkPixbuf *gu_contentstr_to_icon(const char *str, int height);
  */
 void gu_pixbuf_init(void);
 
-GdkPixbuf *gu_pixbuf_get_sync(const char *url, int width, int height);
+GdkPixbuf *gu_pixbuf_get_sync(const char *url,
+			      int width, int height);
 
 void gu_pixbuf_async_set(const char *url, int width, int height, 
 			 GtkObject *target);

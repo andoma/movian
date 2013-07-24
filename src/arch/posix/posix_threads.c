@@ -152,7 +152,8 @@ hts_thread_create_joinable(const char *title, hts_thread_t *p,
 {
   pthread_attr_t attr;
   pthread_attr_init(&attr);
-  pthread_attr_setstacksize(&attr, 128 * 1024);
+  if(prio)
+    pthread_attr_setstacksize(&attr, 128 * 1024);
 
 
 #ifdef linux

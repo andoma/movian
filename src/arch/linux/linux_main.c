@@ -27,7 +27,7 @@
 
 #include "linux.h"
 #include "prop/prop.h"
-
+#include "navigator.h"
 
 hts_mutex_t gdk_mutex;
 prop_courier_t *glibcourier;
@@ -106,19 +106,87 @@ static GSourceFuncs source_funcs = {
 };
 
 
-static int linux_run = 1;
+static int running;
+
+extern const linux_ui_t ui_glw, ui_gu;
+
+static const linux_ui_t *ui_wanted = &ui_glw, *ui_current;
+
+
 
 /**
  *
  */
-void
+int
 arch_stop_req(void)
 {
-  linux_run = 0;
+  running = 0;
   g_main_context_wakeup(g_main_context_default());
+  return 0;
 }
 
-extern void gu_start(void);
+
+/**
+ *
+ */
+static void
+switch_ui(void)
+{
+  if(ui_current == &ui_glw)
+    ui_wanted = &ui_gu;
+  else
+    ui_wanted = &ui_glw;
+}
+
+
+/**
+ *
+ */
+static void
+mainloop(void)
+{
+  void *aux = NULL;
+
+  running = 1;
+
+  while(running) {
+
+    if(ui_current != ui_wanted) {
+
+      prop_t *nav;
+
+      if(ui_current != NULL) {
+	nav = ui_current->stop(aux);
+      } else {
+	nav = NULL;
+      }
+
+      ui_current = ui_wanted;
+
+      aux= ui_current->start(nav);
+    }
+
+    gtk_main_iteration();
+  }
+
+  if(ui_current != NULL) {
+    prop_t *nav = ui_current->stop(aux);
+    if(nav != NULL)
+      prop_destroy(nav);
+  }
+}
+
+
+/**
+ *
+ */
+static void
+linux_global_eventsink(void *opaque, event_t *e)
+{
+  if(event_is_action(e, ACTION_SWITCH_UI))
+    switch_ui();
+}
+
 
 /**
  * Linux main
@@ -132,8 +200,10 @@ main(int argc, char **argv)
 
   XInitThreads();
   hts_mutex_init(&gdk_mutex);
+
   g_thread_init(NULL);
   gdk_threads_set_lock_functions(gdk_obtain, gdk_release);
+
   gdk_threads_init();
   gdk_threads_enter();
   gtk_init(&argc, &argv);
@@ -153,12 +223,15 @@ main(int argc, char **argv)
   g_source_attach(g_source_new(&source_funcs, sizeof(GSource)),
 		  g_main_context_default());
 
+  prop_subscribe(0,
+		 PROP_TAG_NAME("global", "eventsink"),
+		 PROP_TAG_CALLBACK_EVENT, linux_global_eventsink, NULL,
+		 PROP_TAG_COURIER, glibcourier, 
+		 NULL);
+
   linux_init_monitors();
 
-  gu_start();
-
-  while(linux_run)
-    gtk_main_iteration();
+  mainloop();
 
   showtime_fini();
 

@@ -551,12 +551,20 @@ showtime_shutdown(int retcode)
 
   gconf.exit_code = retcode;
 
-  // run early shutdown hooks (those must be fast)
-  shutdown_hook_run(1);
-
+  // Always write out pending settings ASAP
   htsmsg_store_flush();
 
-  arch_stop_req();
+  if(!arch_stop_req()) {
+    // If arch_stop_req() returns -1 it will not actually
+    // exit showtime but rather suspend the UI and turn off HDMI ,etc
+    // Typically used on some targets where we want to enter a 
+    // semi-standby state.
+    // So only do shutdown hooks if we are about to exit for real.
+
+    // Run early shutdown hooks (those must be fast since this
+    // function may be called from UI thread)
+    shutdown_hook_run(1);
+  }
 }
 
 

@@ -53,10 +53,18 @@ DISPMANX_DISPLAY_HANDLE_T dispman_display;
 #define DISPLAY_STATUS_ON              1
 #define DISPLAY_STATUS_ON_NOT_VISIBLE  2
 
+#define RUNMODE_EXIT                   0
+#define RUNMODE_RUNNING                1
+#define RUNMODE_STANDBY                2
+
 hts_mutex_t display_mutex;
 hts_cond_t display_cond;
 
 static int display_status;
+
+
+
+static int runmode;
 
 /**
  *
@@ -353,7 +361,8 @@ ui_run(glw_root_t *gr, EGLDisplay dpy)
 
   TRACE(TRACE_DEBUG, "RPI", "UI starting");
 
-  while(!gr->gr_stop && display_status == DISPLAY_STATUS_ON) {
+  while(runmode == RUNMODE_RUNNING &&
+	display_status == DISPLAY_STATUS_ON) {
 
     glw_lock(gr);
 
@@ -697,19 +706,17 @@ rpi_mainloop(void)
 
   glw_root_t *gr = ui_create();
 
-  while(!gr->gr_stop) {
+  runmode = RUNMODE_RUNNING;
 
-    switch(display_status) {
-    case DISPLAY_STATUS_OFF:
+  while(runmode != RUNMODE_EXIT) {
+
+    if(display_status == DISPLAY_STATUS_ON && runmode == RUNMODE_RUNNING) {
+      ui_run(gr, dpy);
+    } else {
       glw_lock(gr);
       glw_idle(gr);
       glw_unlock(gr);
       usleep(100000);
-      break;
-
-    case DISPLAY_STATUS_ON:
-      ui_run(gr, dpy);
-      break;
     }
   }
 }
@@ -785,3 +792,15 @@ arch_exit(void)
 {
   exit(gconf.exit_code);
 }
+
+
+/**
+ *
+ */
+int
+arch_stop_req(void)
+{
+  runmode = RUNMODE_EXIT;
+  return 0;
+}
+
