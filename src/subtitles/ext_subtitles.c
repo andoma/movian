@@ -32,6 +32,8 @@
 #include "i18n.h"
 #include "video_overlay.h"
 #include "vobsub.h"
+#include "text/text.h"
+#include "subtitles.h"
 
 /**
  *
@@ -45,7 +47,7 @@ es_insert_text(ext_subtitles_t *es, const char *text,
   if(vo != NULL)
     TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
 }
-	       
+
 
 /**
  *
@@ -199,6 +201,7 @@ is_ass(const char *buf, size_t len)
     return 0;
   return 1;
 }
+
 
 /**
  *
@@ -363,6 +366,189 @@ load_ttml(const char *url, char **buf, size_t len)
  *
  */
 static int
+get_sub_timestamp(const char *buf, int *start, int *stop)
+{
+  const char *b = buf;
+  if(*b != '{')
+    return -1;
+  *start = strtol(b + 1, (char **)&b, 10);
+  if(b[0] != '}' || b[1] != '{')
+    return -1;
+  *stop = strtol(b + 2, (char **)&b, 10);
+  if(b[0] != '}')
+    return -1;
+
+  return b + 1 - buf;
+}
+
+
+/**
+ *
+ */
+static int
+is_sub(const char *buf, size_t len)
+{
+  int start, stop;
+  return get_sub_timestamp(buf, &start, &stop) != -1;
+}
+
+
+/**
+ *
+ */
+static ext_subtitles_t *
+load_sub(const char *url, char *buf, size_t len, int force_utf8,
+         AVRational *fr)
+{
+  ext_subtitles_t *es = calloc(1, sizeof(ext_subtitles_t));
+  char *tmp = NULL;
+  AVRational fr0 = {25, 1};
+
+  if(fr == NULL) {
+    fr = &fr0;
+  }
+
+  TAILQ_INIT(&es->es_entries);
+
+  if(force_utf8 || utf8_verify(buf)) {
+  } else {
+    TRACE(TRACE_INFO, "Subtitles",
+	  "%s is not valid UTF-8. Decoding it as %s",
+	  url, charset_get_name(i18n_get_srt_charset()));
+    tmp = utf8_from_bytes(buf, len, i18n_get_srt_charset());
+    buf = tmp;
+  }
+
+
+  LINEPARSE(s, buf) {
+    int start, stop;
+    int x = get_sub_timestamp(s, &start, &stop);
+    if(x <= 0)
+      continue;
+
+    s += x;
+
+    if(start == 1 && stop == 1) {
+      // Set framerate
+      fr0.num = my_str2double(s, NULL) * 1000000.0;
+      fr0.den = 1000000;
+      fr = &fr0;
+    }
+
+    int reset_color    = 0;
+    int reset_bold     = 0;
+    int reset_italic   = 0;
+    int reset_font     = 0;
+    uint32_t outbuf[1024];
+
+    outbuf[0] = TR_CODE_COLOR         | subtitle_settings.color;
+    outbuf[1] = TR_CODE_SHADOW        | subtitle_settings.shadow_displacement;
+    outbuf[2] = TR_CODE_SHADOW_COLOR  | subtitle_settings.shadow_color;
+    outbuf[3] = TR_CODE_OUTLINE       | subtitle_settings.outline_size;
+    outbuf[4] = TR_CODE_OUTLINE_COLOR | subtitle_settings.outline_color;
+    int outptr = 5;
+
+    while(*s && outptr <= 1000) {
+      if(*s == '{') {
+        s++;
+
+        int doreset = 0;
+
+        switch(*s) {
+        default:
+          break;
+
+        case 'y':
+          doreset = 1;
+          // FALLTHRU
+        case 'Y':
+          s++;
+          while(*s != '}' && *s) {
+            if(*s == 'b') {
+              outbuf[outptr++] = TR_CODE_BOLD_ON;
+              reset_bold = doreset;
+            } else if(*s == 'i') {
+              outbuf[outptr++] = TR_CODE_ITALIC_ON;
+              reset_italic = doreset;
+            }
+            s++;
+          }
+          break;
+
+        case 'c':
+          reset_color = 1;
+          // FALLTHRU
+        case 'C':
+          if(strlen(s) < 9)
+            break;
+          s+= 3;
+          outbuf[outptr++] = TR_CODE_COLOR |
+            (hexnibble(s[0]) << 20) |
+            (hexnibble(s[1]) << 16) |
+            (hexnibble(s[2]) << 12) |
+            (hexnibble(s[3]) <<  8) |
+            (hexnibble(s[4]) <<  4) |
+            (hexnibble(s[5])      );
+          break;
+        }
+
+        while(*s != '}' && *s)
+          s++;
+
+        if(*s)
+          s++;
+        continue;
+
+      } else if(*s == '|') {
+        outbuf[outptr++] = '\n';
+
+        if(reset_color) {
+          outbuf[outptr++] = TR_CODE_COLOR | subtitle_settings.color;;
+          reset_color = 0;
+        }
+
+        if(reset_bold) {
+          outbuf[outptr++] = TR_CODE_BOLD_OFF;
+          reset_bold = 0;
+        }
+
+        if(reset_italic) {
+          outbuf[outptr++] = TR_CODE_ITALIC_OFF;
+          reset_italic = 0;
+        }
+
+        if(reset_font) {
+          outbuf[outptr++] = TR_CODE_FONT_RESET;
+          reset_italic = 0;
+        }
+
+      } else {
+        outbuf[outptr++] = *s;
+      }
+      s++;
+    }
+
+
+    video_overlay_t *vo = calloc(1, sizeof(video_overlay_t));
+    vo->vo_type = VO_TEXT;
+    vo->vo_text = malloc(outptr * sizeof(uint32_t));
+    memcpy(vo->vo_text, outbuf, outptr * sizeof(uint32_t));
+    vo->vo_text_length = outptr;
+    vo->vo_padding_left = -1;  // auto padding
+    vo->vo_start = 1000000LL * start * fr->den / fr->num;
+    vo->vo_stop =  1000000LL * stop  * fr->den / fr->num;
+    TAILQ_INSERT_TAIL(&es->es_entries, vo, vo_link);
+
+  }
+  free(tmp);
+  return es;
+}
+
+
+/**
+ *
+ */
+static int
 vocmp(const void *A, const void *B)
 {
   const video_overlay_t *a = *(const video_overlay_t **)A;
@@ -410,7 +596,7 @@ es_sort(ext_subtitles_t *es)
  *
  */
 static ext_subtitles_t *
-subtitles_create(const char *path, char *buf, size_t len)
+subtitles_create(const char *path, char *buf, size_t len, AVRational *fr)
 {
   ext_subtitles_t *s = NULL;
   
@@ -437,9 +623,10 @@ subtitles_create(const char *path, char *buf, size_t len)
       s = load_srt(path, b0, len, force_utf8);
     if(is_ass(b0, len))
       s = load_ssa(path, b0, len);
+    if(is_sub(b0, len))
+      s = load_sub(path, b0, len, force_utf8, fr);
   }
 
-  //  if(s)dump_subtitles(s);
   if(s)
     es_sort(s);
   free(buf);
@@ -515,7 +702,7 @@ subtitles_pick(ext_subtitles_t *es, int64_t pts, media_pipe_t *mp)
 
 
 static ext_subtitles_t *
-subtitles_from_zipfile(media_pipe_t *mp, buf_t *b)
+subtitles_from_zipfile(media_pipe_t *mp, buf_t *b, AVRational *fr)
 {
   ext_subtitles_t *ret = NULL;
   char errbuf[256];
@@ -528,7 +715,7 @@ subtitles_from_zipfile(media_pipe_t *mp, buf_t *b)
     fa_dir_entry_t *fde;
     RB_FOREACH(fde, &fd->fd_entries, fde_link) {
       TRACE(TRACE_DEBUG, "Subtitles", "  Probing %s", rstr_get(fde->fde_url));
-      ret = subtitles_load(mp, rstr_get(fde->fde_url));
+      ret = subtitles_load(mp, rstr_get(fde->fde_url), fr);
       if(ret != NULL)
 	break;
     }
@@ -546,7 +733,7 @@ subtitles_from_zipfile(media_pipe_t *mp, buf_t *b)
  *
  */
 ext_subtitles_t *
-subtitles_load(media_pipe_t *mp, const char *url)
+subtitles_load(media_pipe_t *mp, const char *url, AVRational *fr)
 {
   ext_subtitles_t *sub;
   char errbuf[256];
@@ -573,7 +760,7 @@ subtitles_load(media_pipe_t *mp, const char *url)
 
   if(b->b_size > 4 && !memcmp(buf_cstr(b), "PK\003\004", 4)) {
     TRACE(TRACE_DEBUG, "Subtitles", "%s is a ZIP archive, scanning...", url);
-    return subtitles_from_zipfile(mp, b);
+    return subtitles_from_zipfile(mp, b, fr);
   }
   
   if(gz_check(b)) {
@@ -588,7 +775,7 @@ subtitles_load(media_pipe_t *mp, const char *url)
   }
 
   b = buf_make_writable(b);
-  sub = subtitles_create(url, b->b_ptr, b->b_size);
+  sub = subtitles_create(url, b->b_ptr, b->b_size, fr);
 
   if(sub == NULL)
     TRACE(TRACE_ERROR, "Subtitles", "Unable to load %s -- Unknown format", 

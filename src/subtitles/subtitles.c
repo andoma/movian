@@ -289,6 +289,10 @@ check_subtitle_file(sub_scanner_t *ss,
 
     type = "ASS / SSA";
 
+  } else if(!strcasecmp(postfix, ".sub")) {
+
+    type = "SUB";
+
   } else if(!strcasecmp(postfix, ".idx")) {
 
     hts_mutex_lock(&ss->ss_mutex);

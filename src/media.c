@@ -2192,13 +2192,13 @@ ext_sub_dtor(media_buf_t *mb)
  *
  */
 void
-mp_load_ext_sub(media_pipe_t *mp, const char *url)
+mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate)
 {
   media_buf_t *mb = media_buf_alloc_unlocked(mp, 0);
   mb->mb_data_type = MB_CTRL_EXT_SUBTITLE;
   
   if(url != NULL)
-    mb->mb_data = subtitles_load(mp, url);
+    mb->mb_data = subtitles_load(mp, url, framerate);
   
   mb->mb_dtor = ext_sub_dtor;
   hts_mutex_lock(&mp->mp_mutex);

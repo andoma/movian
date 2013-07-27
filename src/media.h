@@ -637,7 +637,7 @@ void mp_set_duration(media_pipe_t *mp, int64_t duration);
 
 int64_t mq_realtime_delay(media_queue_t *mq);
 
-void mp_load_ext_sub(media_pipe_t *mp, const char *url);
+void mp_load_ext_sub(media_pipe_t *mp, const char *url, AVRational *framerate);
 
 void mq_update_stats(media_pipe_t *mp, media_queue_t *mq);
 
