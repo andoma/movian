@@ -94,7 +94,6 @@ enable cdda
 enable cddb
 enable libxss
 enable libxv
-enable serdev
 enable openssl
 enable locatedb
 enable vdpau

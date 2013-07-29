@@ -220,10 +220,6 @@ typedef struct gconf {
   int noui;
   int fullscreen;
 
-#if ENABLE_SERDEV
-  int enable_serdev;
-#endif
-
   int can_standby;
   int can_poweroff;
   int can_open_shell;

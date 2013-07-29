@@ -429,10 +429,6 @@ ${BUILDDIR}/src/ui/gu/%.o : CFLAGS = $(CFLAGS_GTK) ${OPTFLAGS} ${CFLAGS_std}
 SRCS-$(CONFIG_LIRC) +=  src/ipc/lirc.c
 SRCS-$(CONFIG_STDIN)+=  src/ipc/stdin.c
 
-SRCS-$(CONFIG_SERDEV) +=	src/ipc/serdev/serdev.c \
-				src/ipc/serdev/lgtv.c \
-
-
 ##############################################################
 # Apple remote and keyspan front row remote
 ##############################################################

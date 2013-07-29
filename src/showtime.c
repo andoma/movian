@@ -368,9 +368,6 @@ parse_opts(int argc, char **argv)
 #endif
 	     "   -v <view>         - Use specific view for <url>.\n"
 	     "   --cache <path>    - Set path for cache [%s].\n"
-#if ENABLE_SERDEV
-	     "   --serdev          - Probe service ports for devices.\n"
-#endif
 #if ENABLE_HTTPSERVER
 	     "   --disable-upnp    - Disable UPNP/DLNA stack.\n"
 #endif
@@ -417,12 +414,6 @@ parse_opts(int argc, char **argv)
       gconf.listen_on_stdin = 1;
       argc -= 1; argv += 1;
       continue;
-#if ENABLE_SERDEV
-    } else if(!strcmp(argv[0], "--serdev")) {
-      gconf.enable_serdev = 1;
-      argc -= 1; argv += 1;
-      continue;
-#endif
 #if ENABLE_HTTPSERVER
     } else if(!strcmp(argv[0], "--disable-upnp")) {
       gconf.disable_upnp = 1;

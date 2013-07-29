@@ -51,7 +51,6 @@ CONFIG_LIST="
  libgme
  libxss
  libxv
- serdev
  openssl
  polarssl
  librtmp
