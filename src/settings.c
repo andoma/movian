@@ -60,6 +60,8 @@ struct setting {
   char *s_pending_value;
 
   char *s_store_name;
+  prop_sub_t *s_sub_enabler;
+
   char s_enable_writeback;
   char s_kvstore;
 };
@@ -520,6 +522,8 @@ setting_create(int type, prop_t *parent, int flags, ...)
 
   prop_t *m = prop_create_r(s->s_root, "metadata");
   prop_t *title = prop_create_r(m, "title");
+  prop_t *enabled = prop_create_r(s->s_root, "enabled");
+
   do {
     tag = va_arg(ap, int);
     switch(tag) {
@@ -638,6 +642,12 @@ setting_create(int type, prop_t *parent, int flags, ...)
       mystrset(&s->s_store_name, va_arg(ap, const char *));
       mystrset(&s->s_id, va_arg(ap, const char *));
       s->s_kvstore = 1;
+      break;
+
+    case SETTING_TAG_PROP_ENABLER:
+      prop_link(va_arg(ap, prop_t *), enabled);
+      prop_ref_dec(enabled);
+      enabled = NULL;
       break;
 
     case 0:
@@ -761,6 +771,11 @@ setting_create(int type, prop_t *parent, int flags, ...)
                      PROP_TAG_MUTEX, mtx,
                      NULL);
     break;
+  }
+
+  if(enabled != NULL) {
+    prop_set_int(enabled, 1);
+    prop_ref_dec(enabled);
   }
 
   s->s_enable_writeback = 1;
