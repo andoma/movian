@@ -2530,9 +2530,13 @@ metadata_add_source(const char *name, const char *description,
 
   prop_tag_set(ms->ms_settings, metadata_courier, ms);
 
-  settings_create_bool(ms->ms_settings, "enabled", _p("Enabled"),
-		       ms->ms_enabled, NULL, ms_set_enable, ms,
-		       0, metadata_courier, NULL, NULL);
+
+  setting_create(SETTING_BOOL, ms->ms_settings, 0,
+                 SETTING_TITLE(_p("Enabled")),
+                 SETTING_COURIER(metadata_courier),
+                 SETTING_CALLBACK(ms_set_enable, ms),
+                 SETTING_VALUE(ms->ms_enabled),
+                 NULL);
 
   ms_set_enable(ms, enabled);
 

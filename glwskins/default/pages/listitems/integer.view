@@ -39,12 +39,15 @@ widget(backdrop, {
 	  padding: [8, -4];
 	  alphaSelf: 0.5;
 	  borderOnly: true;
-	  
+
 	  widget(label, {
 	    padding: [10,0];
 	    sizeScale: 0.8;
 	    align: center;
-	    caption: fmt("%d %s", $self.value, $self.unit);
+
+	    caption: select(!isVoid($self.zerotext) && !$self.value,
+                            $self.zerotext,
+                            fmt("%d %s", $self.value, $self.unit));
 	    shadow: true;
 	    outline: true;
 	  });

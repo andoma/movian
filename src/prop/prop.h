@@ -387,6 +387,8 @@ void prop_courier_stop(prop_courier_t *pc);
 
 prop_t *prop_find(prop_t *parent, ...)  __attribute__((__sentinel__(0)));
 
+prop_t *prop_first_child(prop_t *p);
+
 void prop_send_ext_event(prop_t *p, event_t *e);
 
 

@@ -156,15 +156,21 @@ subtitle_provider_register(subtitle_provider_t *sp, const char *id,
     htsmsg_add_msg(sp_cfg, sp->sp_id, htsmsg_create_map());
   }
 
-  settings_create_bool(sp->sp_settings, "enabled", _p("Enabled"),
-		       sp->sp_enabled, NULL, sp_set_enable, sp,
-		       0, NULL, NULL, NULL);
+  sp->sp_setting_enabled =
+    setting_create(SETTING_BOOL, sp->sp_settings, 0,
+                   SETTING_VALUE(sp->sp_enabled),
+                   SETTING_TITLE(_p("Enabled")),
+                   SETTING_CALLBACK(sp_set_enable, sp),
+                   SETTING_MUTEX(&subtitle_provider_mutex),
+                   NULL);
 
-  settings_create_bool(sp->sp_settings, "autoselect",
-                       _p("Automatically select from this source"),
-		       sp->sp_autosel, NULL, sp_set_autosel, sp,
-		       0, NULL, NULL, NULL);
-
+  sp->sp_setting_autosel =
+    setting_create(SETTING_BOOL, sp->sp_settings, 0,
+                   SETTING_VALUE(sp->sp_autosel),
+                   SETTING_VALUE(_p("Automatically select from this source")),
+                   SETTING_CALLBACK(sp_set_autosel, sp),
+                   SETTING_MUTEX(&subtitle_provider_mutex),
+                   NULL);
 
   num_subtitle_providers++;
   TAILQ_INSERT_SORTED(&subtitle_providers, sp, sp_link, sp_prio_cmp);
@@ -205,6 +211,8 @@ subtitle_provider_unregister(subtitle_provider_t *sp)
   prop_tag_clear(sp->sp_settings, &subtitle_providers);
   TAILQ_REMOVE(&subtitle_providers, sp, sp_link);
   num_subtitle_providers--;
+  setting_destroy(sp->sp_setting_enabled);
+  setting_destroy(sp->sp_setting_autosel);
   hts_mutex_unlock(&subtitle_provider_mutex);
   free(sp->sp_id);
   prop_destroy(sp->sp_settings);
@@ -612,31 +620,6 @@ parse_bgr(const char *str)
 }
 
 
-
-static void
-set_subtitle_style_override(void *opaque, int v)
-{
-  subtitle_settings.style_override = v;
-}
-
-static void
-set_subtitle_scale(void *opaque, int v)
-{
-  subtitle_settings.scaling = v;
-}
-
-static void
-set_subtitle_alignment(void *opaque, const char *str)
-{
-  subtitle_settings.alignment = atoi(str);
-}
-
-static void
-set_subtitle_align_on_video(void *opaque, int v)
-{
-  subtitle_settings.align_on_video = v;
-}
-
 static void
 set_subtitle_color(void *opaque, const char *str)
 {
@@ -650,21 +633,9 @@ set_subtitle_shadow_color(void *opaque, const char *str)
 }
 
 static void
-set_subtitle_shadow_size(void *opaque, int v)
-{
-  subtitle_settings.shadow_displacement = v;
-}
-
-static void
 set_subtitle_outline_color(void *opaque, const char *str)
 {
   subtitle_settings.outline_color = parse_bgr(str);
-}
-
-static void
-set_subtitle_outline_size(void *opaque, int v)
-{
-  subtitle_settings.outline_size = v;
 }
 
 static void
@@ -683,8 +654,6 @@ set_central_dir(void *opaque, const char *str)
 static void
 subtitles_init_settings(prop_concat_t *pc)
 {
-  setting_t *x;
-
   prop_t *s = prop_create_root(NULL);
   prop_concat_add_source(pc, prop_create(s, "nodes"), NULL);
 
@@ -694,80 +663,86 @@ subtitles_init_settings(prop_concat_t *pc)
 
   settings_create_separator(s, _p("Central subtitle folder"));
 
-  settings_create_string(s, "subtitlefolder", _p("Path to central folder"),
-                         NULL,
-			 store, set_central_dir, NULL,
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings,
-			 (void *)"subtitles");
-
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Path to central folder")),
+                 SETTING_CALLBACK(set_central_dir, NULL),
+                 SETTING_HTSMSG("subtitlefolder", store, "subtitles"),
+                 NULL);
 
   settings_create_separator(s, _p("Subtitle size and positioning"));
 
-  settings_create_int(s, "scale", _p("Subtitle size"),
-		      100, store, 30, 500, 5, set_subtitle_scale, NULL,
-		      SETTINGS_INITIAL_UPDATE, "%", NULL,
-		      settings_generic_save_settings,
-		      (void *)"subtitles");
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Subtitle size")),
+                 SETTING_VALUE(100),
+                 SETTING_RANGE(30, 500),
+                 SETTING_STEP(5),
+                 SETTING_UNIT_CSTR("%"),
+                 SETTING_WRITE_INT(&subtitle_settings.scaling),
+                 SETTING_HTSMSG("scale", store, "subtitles"),
+                 NULL);
 
-  settings_create_bool(s, "subonvideoframe",
-		       _p("Force subtitles to reside on video frame"), 0,
-		       store, set_subtitle_align_on_video, NULL,
-		       SETTINGS_INITIAL_UPDATE,  NULL,
-		       settings_generic_save_settings,
-		       (void *)"subtitles");
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Force subtitles to reside on video frame")),
+                 SETTING_HTSMSG("subonvideoframe", store, "subtitles"),
+                 SETTING_WRITE_BOOL(&subtitle_settings.align_on_video),
+                 NULL);
 
-  x = settings_create_multiopt(s, "align", _p("Subtitle position"), 0);
+  setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Subtitle position")),
+                 SETTING_HTSMSG("align", store, "subtitles"),
+                 SETTING_WRITE_INT(&subtitle_settings.alignment),
+                 SETTING_OPTION("2", _p("Center")),
+                 SETTING_OPTION("1", _p("Left")),
+                 SETTING_OPTION("3", _p("Right")),
+                 SETTING_OPTION("0", _p("Auto")),
+                 NULL);
 
-  settings_multiopt_add_opt(x, "2", _p("Center"), 1);
-  settings_multiopt_add_opt(x, "1", _p("Left"), 0);
-  settings_multiopt_add_opt(x, "3", _p("Right"), 0);
-  settings_multiopt_add_opt(x, "0", _p("Auto"), 0);
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Color")),
+                 SETTING_VALUE("FFFFFF"),
+                 SETTING_HTSMSG("color", store, "subtitles"),
+                 SETTING_CALLBACK(set_subtitle_color, NULL),
+                 NULL);
 
-  settings_multiopt_initiate(x,set_subtitle_alignment, NULL, NULL,
-			     store, settings_generic_save_settings,
-			     (void *)"subtitles");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Shadow color")),
+                 SETTING_VALUE("000000"),
+                 SETTING_HTSMSG("shadowcolor", store, "subtitles"),
+                 SETTING_CALLBACK(set_subtitle_shadow_color, NULL),
+                 NULL);
 
-  settings_create_separator(s, _p("Subtitle styling"));
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Shadow offset")),
+                 SETTING_VALUE(2),
+                 SETTING_RANGE(0, 10),
+                 SETTING_STEP(1),
+                 SETTING_UNIT_CSTR("px"),
+                 SETTING_HTSMSG("shadowcolorsize", store, "subtitles"),
+                 SETTING_WRITE_INT(&subtitle_settings.shadow_displacement),
+                 NULL);
 
-  settings_create_string(s, "color", _p("Color"), "FFFFFF",
-			 store, set_subtitle_color, NULL,
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings,
-			 (void *)"subtitles");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Outline color")),
+                 SETTING_VALUE("000000"),
+                 SETTING_HTSMSG("outlinecolor", store, "subtitles"),
+                 SETTING_CALLBACK(set_subtitle_outline_color, NULL),
+                 NULL);
 
-  settings_create_string(s, "shadowcolor", _p("Shadow color"),
-			 "000000",
-			 store, set_subtitle_shadow_color, NULL,
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings,
-			 (void *)"subtitles");
+  setting_create(SETTING_INT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Outline size")),
+                 SETTING_VALUE(1),
+                 SETTING_RANGE(0, 4),
+                 SETTING_STEP(1),
+                 SETTING_UNIT_CSTR("px"),
+                 SETTING_HTSMSG("shadowoutlinesize", store, "subtitles"),
+                 SETTING_WRITE_INT(&subtitle_settings.outline_size),
+                 NULL);
 
-  settings_create_int(s, "shadowcolorsize", _p("Shadow offset"),
-		      2, store, 0, 10, 1, set_subtitle_shadow_size, NULL,
-		      SETTINGS_INITIAL_UPDATE, "px", NULL,
-		      settings_generic_save_settings,
-		      (void *)"subtitles");
-
-  settings_create_string(s, "outlinecolor", _p("Outline color"),
-			 "000000",
-			 store, set_subtitle_outline_color, NULL,
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings,
-			 (void *)"subtitles");
-
-  settings_create_int(s, "shadowoutlinesize", _p("Outline size"),
-		      1, store, 0, 4, 1, set_subtitle_outline_size, NULL,
-		      SETTINGS_INITIAL_UPDATE, "px", NULL,
-		      settings_generic_save_settings,
-		      (void *)"subtitles");
-
-  settings_create_bool(s, "styleoverride",
-		       _p("Ignore embedded styling"), 0,
-		       store, set_subtitle_style_override, NULL,
-		       SETTINGS_INITIAL_UPDATE,  NULL,
-		       settings_generic_save_settings,
-		       (void *)"subtitles");
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Ignore embedded styling")),
+                 SETTING_HTSMSG("styleoverride", store, "subtitles"),
+                 SETTING_WRITE_BOOL(&subtitle_settings.style_override),
+                 NULL);
 }
 
 

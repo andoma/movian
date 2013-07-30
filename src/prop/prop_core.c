@@ -3577,6 +3577,20 @@ prop_find(prop_t *p, ...)
 /**
  *
  */
+prop_t *
+prop_first_child(prop_t *p)
+{
+  hts_mutex_lock(&prop_mutex);
+  prop_t *c = p && p->hp_type == PROP_DIR ? TAILQ_FIRST(&p->hp_childs) : NULL;
+  c = prop_ref_inc(c);
+  hts_mutex_unlock(&prop_mutex);
+  return c;
+}
+
+
+/**
+ *
+ */
 void
 prop_request_new_child(prop_t *p)
 {

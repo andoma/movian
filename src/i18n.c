@@ -71,7 +71,6 @@ i18n_init(void)
   prop_t *s = settings_add_dir(NULL, _p("Languages"), NULL, NULL,
 			       _p("Preferred languages"),
 			       "settings:i18n");
-  setting_t *x;
   int i;
 
   htsmsg_t *store = htsmsg_store_load("i18n");
@@ -85,64 +84,67 @@ i18n_init(void)
 		       NULL,
 		       _p("Language codes should be configured as three character ISO codes, example (eng, swe, fra)"));
 
-  settings_create_string(s, "audio1", _p("Primary audio language code"), NULL, 
-			 store, set_lang, &lang_audio[0],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Primary audio language code")),
+                 SETTING_CALLBACK(set_lang, &lang_audio[0]),
+                 SETTING_HTSMSG("audio1", store, "i18n"),
+                 NULL);
 
-  settings_create_string(s, "audio2", _p("Secondary audio language code"),
-			 NULL, 
-			 store, set_lang, &lang_audio[1],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Secondary audio language code")),
+                 SETTING_CALLBACK(set_lang, &lang_audio[1]),
+                 SETTING_HTSMSG("audio2", store, "i18n"),
+                 NULL);
 
-  settings_create_string(s, "audio3", _p("Tertiary audio language code"), NULL, 
-			 store, set_lang, &lang_audio[2],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
-  
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Tertiary audio language code")),
+                 SETTING_CALLBACK(set_lang, &lang_audio[2]),
+                 SETTING_HTSMSG("audio3", store, "i18n"),
+                 NULL);
 
-  settings_create_string(s, "subtitle1", _p("Primary subtitle language code"),
-			 NULL, store, set_lang, &lang_subtitle[0],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
 
-  settings_create_string(s, "subtitle2", _p("Secondary subtitle language code"),
-			 NULL, store, set_lang, &lang_subtitle[1],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Primary subtitle language code")),
+                 SETTING_CALLBACK(&set_lang, &lang_subtitle[0]),
+                 SETTING_HTSMSG("subtitle1", store, "i18n"),
+                 NULL);
 
-  settings_create_string(s, "subtitle3", _p("Tertiary subtitle language code"),
-			 NULL, store, set_lang, &lang_subtitle[2],
-			 SETTINGS_INITIAL_UPDATE,  NULL,
-			 settings_generic_save_settings, 
-			 (void *)"i18n");
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Secondary subtitle language code")),
+                 SETTING_CALLBACK(&set_lang, &lang_subtitle[1]),
+                 SETTING_HTSMSG("subtitle2", store, "i18n"),
+                 NULL);
 
-  x = settings_create_multiopt(s, "srt_charset", _p("SRT character set"), 0);
-			       
+  setting_create(SETTING_STRING, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Tertiary subtitle language code")),
+                 SETTING_CALLBACK(&set_lang, &lang_subtitle[2]),
+                 SETTING_HTSMSG("subtitle3", store, "i18n"),
+                 NULL);
 
+  const char **optlist = NULL;
   const charset_t *cs;
-  for(i = 0; (cs = charset_get_idx(i)) != NULL; i++)
-    settings_multiopt_add_opt_cstr(x, cs->id, cs->title, i == 0);
+  for(i = 0; (cs = charset_get_idx(i)) != NULL; i++) {}
 
-  settings_multiopt_initiate(x,
-			     set_srt_charset, NULL, NULL,
-			     store, settings_generic_save_settings, 
-			     (void *)"i18n");
+  optlist = alloca((i * 2 + 1) * sizeof(const char *));
 
+  for(i = 0; (cs = charset_get_idx(i)) != NULL; i++) {
+    optlist[i * 2 + 0] = cs->id;
+    optlist[i * 2 + 1] = cs->title;
+  }
+  optlist[i * 2] = NULL;
 
-  settings_create_bool(s, "skipthe",
-                       _p("Ignore 'The' at beginning of words when sorting"),
-                       0, store, settings_generic_set_bool,
-                       &gconf.ignore_the_prefix,
-                       SETTINGS_INITIAL_UPDATE,  NULL,
-                       settings_generic_save_settings,
-                       (void *)"i18n");
+  setting_create(SETTING_MULTIOPT, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("SRT character set")),
+                 SETTING_HTSMSG("srt_charset", store, "i18n"),
+                 SETTING_CALLBACK(set_srt_charset, NULL),
+                 SETTING_OPTION_LIST(optlist),
+                 NULL);
+
+  setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Ignore 'The' at beginning of words when sorting")),
+                 SETTING_HTSMSG("skipthe", store, "i18n"),
+                 SETTING_WRITE_BOOL(&gconf.ignore_the_prefix),
+                 NULL);
 }
 
 
@@ -606,14 +608,12 @@ langcmp(lang_t *a, lang_t *b)
 }
 
 
-
 /**
  *
  */
-static void 
+static void
 nls_init(prop_t *parent, htsmsg_t *store)
 {
-  setting_t  *x;
   char buf[200];
   char buf2[200];
   snprintf(buf2, sizeof(buf2), "%s/lang", showtime_dataroot());
@@ -633,10 +633,9 @@ nls_init(prop_t *parent, htsmsg_t *store)
     return;
   }
 
-  x = settings_create_multiopt(parent, "language", _p("Language"), 0);
-			       
+  const char **optlist = NULL;
+  int num = 0;
 
-  settings_multiopt_add_opt_cstr(x, "none", "English (default)", 1);
   LIST_INIT(&list);
 
   RB_FOREACH(fde, &fd->fd_entries, fde_link) {
@@ -662,15 +661,30 @@ nls_init(prop_t *parent, htsmsg_t *store)
     snprintf(buf2, sizeof(buf2), "%s (%s)", native, language);
     l->str = mystrdupa(buf2);
     LIST_INSERT_SORTED(&list, l, link, langcmp);
+    num++;
   }
 
-  LIST_FOREACH(l, &list, link)
-    settings_multiopt_add_opt_cstr(x, l->id, l->str, 0);
+  num++;
+  optlist = alloca((num * 2 + 1) * sizeof(const char *));
 
-  settings_multiopt_initiate(x,
-			     set_language, NULL, NULL,
-			     store, settings_generic_save_settings, 
-			     (void *)"i18n");
-  
+  int idx = 0;
+  optlist[idx++] = "none";
+  optlist[idx++] = "English (default)";
+
+  LIST_FOREACH(l, &list, link) {
+    optlist[idx++] = l->id;
+    optlist[idx++] = l->str;
+  }
+
+  optlist[idx] = NULL;
+
+
+  setting_create(SETTING_MULTIOPT, parent, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Language")),
+                 SETTING_HTSMSG("language", store, "i18n"),
+                 SETTING_CALLBACK(set_language, NULL),
+                 SETTING_OPTION_LIST(optlist),
+                 NULL);
+
   fa_dir_free(fd);
 }

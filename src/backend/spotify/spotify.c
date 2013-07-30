@@ -4526,30 +4526,33 @@ enable_cb(int enabled)
 		       _p("Spotify music service"),
 		       "spotify:settings");
 
-    spotify_setting[0] = 
-      settings_create_bool(s, "autologin", 
-			   _p("Automatic login when Showtime starts"), 1, 
-			   store, settings_generic_set_bool, &spotify_autologin,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   settings_generic_save_settings, (void *)"spotify");
+    spotify_setting[0] =
+      setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Automatic login when Showtime starts")),
+                     SETTING_VALUE(1),
+                     SETTING_WRITE_BOOL(&spotify_autologin),
+                     SETTING_HTSMSG("autologin", store, "spotify"),
+                     NULL);
 
-    spotify_setting[1] = 
-      settings_create_bool(s, "highbitrate", _p("High bitrate"), 0,
-			   store, spotify_set_bitrate, NULL,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   settings_generic_save_settings, (void *)"spotify");
+    spotify_setting[1] =
+      setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("High bitrate")),
+                     SETTING_CALLBACK(spotify_set_bitrate, NULL),
+                     SETTING_HTSMSG("highbitrate", store, "spotify"),
+                     NULL);
 
-    spotify_setting[2] = 
-      settings_create_bool(s, "offlinebitrate", _p("Offline sync in 96kbps"), 0,
-			   store, spotify_set_offline_bitrate, NULL,
-			   SETTINGS_INITIAL_UPDATE, NULL,
-			   settings_generic_save_settings, (void *)"spotify");
+    spotify_setting[2] =
+      setting_create(SETTING_BOOL, s, SETTINGS_INITIAL_UPDATE,
+                     SETTING_TITLE(_p("Offline sync in 96kbps")),
+                     SETTING_CALLBACK(spotify_set_offline_bitrate, NULL),
+                     SETTING_HTSMSG("offlinebitrate", store, "spotify"),
+                     NULL);
 
-    spotify_setting[3] = 
+    spotify_setting[3] =
       settings_create_action(s, _p("Relogin (switch user)"),
 			     spotify_relogin, NULL, 0, spotify_courier);
 
-    spotify_setting[4] = 
+    spotify_setting[4] =
       settings_create_action(s, _p("Forget me"),
 			     spotify_forget_me, NULL, 0, spotify_courier);
 

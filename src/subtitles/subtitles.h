@@ -66,6 +66,9 @@ typedef struct subtitle_provider {
 
   struct prop *sp_settings;
 
+  struct setting *sp_setting_enabled;
+  struct setting *sp_setting_autosel;
+
 } subtitle_provider_t;
 
 

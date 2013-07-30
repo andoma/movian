@@ -1135,20 +1135,18 @@ glw_ps3_start(void)
   if(glw_init(gr))
     return 1;
 
-  setting_t *s =
-    settings_create_multiopt(glw_settings.gs_settings,
-			     "analogseekmode",
-			     _p("Seek using L2 and R2 button"),
-			     SETTINGS_INITIAL_UPDATE);
 
-  settings_multiopt_add_opt(s, "0", _p("Yes"), 1);
-  settings_multiopt_add_opt(s, "1", _p("Yes with Select button"), 0);
-  settings_multiopt_add_opt(s, "2", _p("No"), 0);
-
-  settings_multiopt_initiate(s, set_seekmode, gp,
-			     gr->gr_courier,
-			     glw_settings.gs_settings_store,
-			     glw_settings_save, gr);
+  setting_create(SETTING_MULTIOPT, glw_settings.gs_settings,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Seek using L2 and R2 button")),
+                 SETTING_OPTION("0", _p("Yes")),
+                 SETTING_OPTION("1", _p("Yes with Select button")),
+                 SETTING_OPTION("2", _p("No")),
+                 SETTING_COURIER(gr->gr_courier),
+                 SETTING_CALLBACK(set_seekmode, gp),
+                 SETTING_HTSMSG("analogseekmode",
+                                glw_settings.gs_settings_store, "glw"),
+                 NULL);
 
   gr->gr_open_osk = osk_open;
 

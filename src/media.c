@@ -258,16 +258,6 @@ mq_destroy(media_queue_t *mq)
 /**
  *
  */
-static void
-update_auto_standby(void *aux, int value)
-{
-  media_pipe_t *mp = aux;
-  mp->mp_auto_standby = value;
-}
-
-/**
- *
- */
 media_pipe_t *
 mp_create(const char *name, int flags, const char *type)
 {
@@ -436,75 +426,101 @@ mp_create(const char *name, int flags, const char *type)
   //--------------------------------------------------
   // Settings
 
-  mp->mp_setting_vzoom = 
-    settings_create_int(mp->mp_setting_video_root, "vzoom",
-			_p("Video zoom"),
-			video_settings.vzoom, NULL,
-			50, 200, 1,
-			NULL, NULL, SETTINGS_INITIAL_UPDATE,
-			"%", mp->mp_pc, NULL, NULL);
+  mp->mp_setting_vzoom =
+    setting_create(SETTING_INT, mp->mp_setting_video_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Video zoom")),
+                   SETTING_RANGE(50, 200),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_VALUE(video_settings.vzoom),
+                   SETTING_COURIER(mp->mp_pc),
+                   NULL);
 
-  mp->mp_setting_hstretch = 
-    settings_create_bool(mp->mp_setting_video_root, "hstretch",
-			 _p("Stretch video to widescreen"),
-			 video_settings.stretch_horizontal, NULL,
-			 NULL, NULL, SETTINGS_INITIAL_UPDATE,
-			 mp->mp_pc, NULL, NULL);
+  mp->mp_setting_hstretch =
+    setting_create(SETTING_BOOL, mp->mp_setting_video_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Stretch video to widescreen")),
+                   SETTING_VALUE(video_settings.stretch_horizontal),
+                   NULL);
 
-  mp->mp_setting_fstretch = 
-    settings_create_bool(mp->mp_setting_video_root, "fstretch",
-			 _p("Stretch video to fullscreen"),
-			 video_settings.stretch_fullscreen, NULL,
-			 NULL, NULL, SETTINGS_INITIAL_UPDATE,
-			 mp->mp_pc, NULL, NULL);
+  mp->mp_setting_fstretch =
+    setting_create(SETTING_BOOL, mp->mp_setting_video_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Stretch video to fullscreen")),
+                   SETTING_VALUE(video_settings.stretch_fullscreen),
+                   NULL);
 
+  mp->mp_setting_av_delta =
+    setting_create(SETTING_INT, mp->mp_setting_audio_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Audio delay")),
+                   SETTING_RANGE(-5000, 5000),
+                   SETTING_STEP(50),
+                   SETTING_UNIT_CSTR("ms"),
+                   SETTING_CALLBACK(update_av_delta, mp),
+                   NULL);
 
-  mp->mp_setting_av_delta = 
-    settings_create_int(mp->mp_setting_audio_root, "avdelta",
-			_p("Audio delay"), 0, NULL, -5000, 5000,
-			50, update_av_delta, mp, SETTINGS_INITIAL_UPDATE,
-			"ms", mp->mp_pc, NULL, NULL);
+  mp->mp_setting_sv_delta =
+    setting_create(SETTING_INT, mp->mp_setting_subtitle_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Subtitle delay")),
+                   SETTING_RANGE(-600000, 600000),
+                   SETTING_STEP(500),
+                   SETTING_UNIT_CSTR("ms"),
+                   SETTING_CALLBACK(update_sv_delta, mp),
+                   NULL);
 
-  mp->mp_setting_sv_delta = 
-    settings_create_int(mp->mp_setting_subtitle_root, "svdelta",
-			_p("Subtitle delay"), 0, NULL, -600000, 600000,
-			500, update_sv_delta, mp, SETTINGS_INITIAL_UPDATE,
-			"ms", mp->mp_pc, NULL, NULL);
+  mp->mp_setting_sub_scale =
+    setting_create(SETTING_INT, mp->mp_setting_subtitle_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Subtitle scaling")),
+                   SETTING_RANGE(30, 500),
+                   SETTING_STEP(5),
+                   SETTING_UNIT_CSTR("%"),
+                   SETTING_VALUE(subtitle_settings.scaling),
+                   NULL);
 
-  mp->mp_setting_sub_scale = 
-    settings_create_int(mp->mp_setting_subtitle_root, "subscale",
-			_p("Subtitle scaling"), subtitle_settings.scaling,
-			NULL, 30, 500, 5, NULL, NULL, 0,
-			"%", mp->mp_pc, NULL, NULL);
+  mp->mp_setting_sub_on_video =
+    setting_create(SETTING_BOOL, mp->mp_setting_subtitle_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Align subtitles on video frame")),
+                   SETTING_VALUE(subtitle_settings.align_on_video),
+                   NULL);
 
-  mp->mp_setting_sub_on_video = 
-    settings_create_bool(mp->mp_setting_subtitle_root, "subonvideoframe",
-			 _p("Align subtitles on video frame"), 
-			 subtitle_settings.align_on_video, NULL,
-			 NULL, NULL, 0,
-			 mp->mp_pc, NULL, NULL);
+  mp->mp_setting_sub_displace_y =
+    setting_create(SETTING_INT, mp->mp_setting_subtitle_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_RANGE(-300, 300),
+                   SETTING_STEP(5),
+                   SETTING_UNIT_CSTR("px"),
+                   SETTING_TITLE(_p("Subtitle vertical displacement")),
+                   NULL);
 
-  mp->mp_setting_sub_displace_y = 
-    settings_create_int(mp->mp_setting_subtitle_root, "sub_displace_y",
-			_p("Subtitle vertical displacement"),
-			0,
-			NULL, -300, 300, 5, NULL, NULL, 0,
-			"px", mp->mp_pc, NULL, NULL);
+  mp->mp_setting_sub_displace_x =
+    setting_create(SETTING_INT, mp->mp_setting_subtitle_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_RANGE(-300, 300),
+                   SETTING_STEP(5),
+                   SETTING_UNIT_CSTR("px"),
+                   SETTING_TITLE(_p("Subtitle horizontal displacement")),
+                   NULL);
 
-  mp->mp_setting_sub_displace_x = 
-    settings_create_int(mp->mp_setting_subtitle_root, "sub_displace_x",
-			_p("Subtitle horizontal displacement"),
-			0,
-			NULL, -300, 300, 5, NULL, NULL, 0,
-			"px", mp->mp_pc, NULL, NULL);
-
-  if(flags & MP_VIDEO) {
-    mp->mp_setting_standby_after_eof = 
-      settings_create_bool(mp->mp_setting_root, "autostandby",
-			   _p("Go to standby after video ends"), 
-			   0, NULL,
-			   update_auto_standby, mp, 0,
-			   mp->mp_pc, NULL, NULL);
+  if(flags & MP_VIDEO && gconf.can_standby) {
+    mp->mp_setting_standby_after_eof =
+      setting_create(SETTING_BOOL, mp->mp_setting_root,
+                     SETTINGS_INITIAL_UPDATE,
+                     SETTING_COURIER(mp->mp_pc),
+                     SETTING_WRITE_INT(&mp->mp_auto_standby),
+                     SETTING_TITLE(_p("Go to standby after video ends")),
+                     NULL);
   }
 
 

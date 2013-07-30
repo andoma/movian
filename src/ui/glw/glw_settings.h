@@ -38,8 +38,6 @@ extern glw_settings_t glw_settings;
 
 void glw_settings_adj_size(int delta);
 
-void glw_settings_save(void *opaque, htsmsg_t *msg);
-
 void glw_settings_init(void);
 
 void glw_settings_fini(void);

@@ -127,18 +127,6 @@ typedef struct glw_x11 {
 
 
 /**
- * Use can remap mousewheel to up/down key actions
- */
-static void
-gx11_set_wheel_mapping(void *opaque, int value)
-{
-  glw_x11_t *gx11 = opaque;
-  gx11->map_mouse_wheel_to_keys = value;
-}
-
-
-
-/**
  *
  */
 static void
@@ -1277,12 +1265,14 @@ glw_x11_thread(void *aux)
 #endif
 
   gx11->settings_mouse_btn =
-    settings_create_bool(glw_settings.gs_settings, "map_mouse_wheel_to_keys",
-			 _p("Map mouse wheel to up/down"),
-			 0, glw_settings.gs_settings_store,
-			 gx11_set_wheel_mapping, gx11, 
-			 SETTINGS_INITIAL_UPDATE, gr->gr_courier,
-			 glw_settings_save, gr);
+    setting_create(SETTING_BOOL, glw_settings.gs_settings,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_TITLE(_p("Map mouse wheel to up/down")),
+                   SETTING_HTSMSG("map_mouse_wheel_to_keys",
+                                  glw_settings.gs_settings_store, "glw"),
+                   SETTING_COURIER(gr->gr_courier),
+                   SETTING_WRITE_BOOL(&gx11->map_mouse_wheel_to_keys),
+                   NULL);
 
   prop_sub_t *evsub =
     prop_subscribe(0,

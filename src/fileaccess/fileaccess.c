@@ -943,18 +943,15 @@ fileaccess_init(void)
 
   htsmsg_t *store;
 
-  if((store = htsmsg_store_load("faconf")) == NULL)
-    store = htsmsg_create_map();
+  store = htsmsg_store_load("faconf") ?: htsmsg_create_map();
 
-  settings_create_separator(gconf.settings_general,
-			  _p("File access"));
+  settings_create_separator(gconf.settings_general, _p("File access"));
 
-  settings_create_bool(gconf.settings_general,
-		       "delete", _p("Enable file deletion from item menu"),
-		       0, store, settings_generic_set_bool, &gconf.fa_allow_delete,
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings,
-		       (void *)"faconf");
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Enable file deletion from item menu")),
+                 SETTING_WRITE_BOOL(&gconf.fa_allow_delete),
+                 SETTING_HTSMSG("delete", store, "faconf"),
+                 NULL);
 
   return 0;
 }

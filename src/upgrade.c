@@ -489,16 +489,6 @@ set_upgrade_track(void *opaque, const char *str)
 }
 
 
-
-/**
- *
- */
-static void
-set_notify_upgrades(void *opaque, int v)
-{
-  notify_upgrades = v;
-}
-
 /**
  *
  */
@@ -528,27 +518,25 @@ upgrade_init(void)
   if((store = htsmsg_store_load("upgrade")) == NULL)
     store = htsmsg_create_map();
 
-  setting_t *x;
-
   settings_create_separator(gconf.settings_general,
 			  _p("Software upgrade"));
 
-  x = settings_create_multiopt(gconf.settings_general, "track",
-			       _p("Upgrade to releases from"), 0);
+  setting_create(SETTING_MULTIOPT, gconf.settings_general,
+                 SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Upgrade to releases from")),
+                 SETTING_HTSMSG("track", store, "upgrade"),
+                 SETTING_OPTION("stable",  _p("Stable")),
+                 SETTING_OPTION("testing", _p("Testing")),
+                 SETTING_CALLBACK(set_upgrade_track, NULL),
+                 NULL);
 
-  settings_multiopt_add_opt(x, "stable", _p("Stable"), 1);
-  settings_multiopt_add_opt(x, "testing", _p("Testing"), 0);
 
-  settings_multiopt_initiate(x, set_upgrade_track, NULL, NULL, 
-			     store, settings_generic_save_settings,
-                             (void *)"upgrade");
-
-  settings_create_bool(gconf.settings_general, "check",
-		       _p("Notify about upgrades"), 1,
-		       store, set_notify_upgrades, NULL, 
-		       SETTINGS_INITIAL_UPDATE, NULL,
-		       settings_generic_save_settings, 
-		       (void *)"upgrade");
+  setting_create(SETTING_BOOL, gconf.settings_general, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Notify about upgrades")),
+                 SETTING_VALUE(1),
+                 SETTING_HTSMSG("check", store, "upgrade"),
+                 SETTING_WRITE_BOOL(&notify_upgrades),
+                 NULL);
 
   prop_t *p = prop_create_root(NULL);
   prop_link(_p("Check for updates now"),

@@ -297,22 +297,26 @@ link_vmode(nvctrl_data_t *nvd, const char *name,
   store = htsmsg_store_load("displays/%s_vmodes/%s", nvd->settings_instance, 
 			    nv->name) ?: htsmsg_create_map();
 
-  settings_create_bool(r, "auto", _p("Auto-switch to this mode"), 1,
-		       store, 
-		       settings_generic_set_bool, &nv->autoswitch,
-		       SETTINGS_INITIAL_UPDATE, nvd->pc, 
-		       vmode_settings_save, nv);
+  setting_create(SETTING_BOOL, r, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("Auto-switch to this mode")),
+                 SETTING_VALUE(1),
+                 SETTING_WRITE_BOOL(&nv->autoswitch),
+                 SETTING_COURIER(nvd->pc),
+                 SETTING_HTSMSG_CUSTOM_SAVER("auto", store,
+                                             vmode_settings_save, nv),
+                 NULL);
 
-  settings_create_bool(r, "dvivideo", _p("DVI-Video color range"), dvivideo,
-		       store, 
-		       set_dvi_range, nv,
-		       SETTINGS_INITIAL_UPDATE, nvd->pc, 
-		       vmode_settings_save, nv);
+  setting_create(SETTING_BOOL, r, SETTINGS_INITIAL_UPDATE,
+                 SETTING_TITLE(_p("DVI-Video color range")),
+                 SETTING_VALUE(dvivideo),
+                 SETTING_COURIER(nvd->pc),
+                 SETTING_CALLBACK(set_dvi_range, nv),
+                 SETTING_HTSMSG_CUSTOM_SAVER("dvivideo", store,
+                                             vmode_settings_save, nv),
+                 NULL);
 
   settings_create_action(r, "switch", _p("Switch to this mode now"),
 			 vmode_switchnow, nv, nvd->pc);
-
-
 }
 
 
