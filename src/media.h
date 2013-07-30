@@ -230,6 +230,8 @@ typedef struct media_buf {
     
     MB_CTRL_UNBLOCK,
 
+    MB_CTRL_SET_VOLUME,
+
   } mb_data_type;
 
   void *mb_data;
@@ -437,6 +439,7 @@ typedef struct media_pipe {
   prop_t *mp_setting_root;
 
   struct setting *mp_setting_av_delta;   // Audio vs. Video delta
+  struct setting *mp_setting_audio_vol;  // Audio volume
   struct setting *mp_setting_sv_delta;   // Subtitle vs. Video delta
   struct setting *mp_setting_sub_scale;  // Subtitle scaling
   struct setting *mp_setting_sub_displace_y;

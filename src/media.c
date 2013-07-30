@@ -69,6 +69,8 @@ static void update_av_delta(void *opaque, int value);
 
 static void update_sv_delta(void *opaque, int value);
 
+static void update_audio_volume(void *opaque, int value);
+
 static void media_eventsink(void *opaque, prop_event_t event, ...);
 
 static void track_mgr_init(media_pipe_t *mp, media_track_mgr_t *mtm,
@@ -445,6 +447,7 @@ static void
 mp_settings_clear(media_pipe_t *mp)
 {
   setting_destroyp(&mp->mp_setting_av_delta);
+  setting_destroyp(&mp->mp_setting_audio_vol);
   setting_destroyp(&mp->mp_setting_sv_delta);
   setting_destroyp(&mp->mp_setting_sub_scale);
   setting_destroyp(&mp->mp_setting_sub_displace_x);
@@ -511,6 +514,18 @@ mp_settings_init(media_pipe_t *mp, const char *url)
                    SETTING_UNIT_CSTR("ms"),
                    SETTING_CALLBACK(update_av_delta, mp),
                    SETTING_KVSTORE(url, "avdelta"),
+                   NULL);
+
+  mp->mp_setting_audio_vol =
+    setting_create(SETTING_INT, mp->mp_setting_audio_root,
+                   SETTINGS_INITIAL_UPDATE,
+                   SETTING_COURIER(mp->mp_pc),
+                   SETTING_TITLE(_p("Audio volume")),
+                   SETTING_RANGE(-50, 50),
+                   SETTING_UNIT_CSTR("dB"),
+                   SETTING_CALLBACK(update_audio_volume, mp),
+                   SETTING_KVSTORE(url, "audiovolume"),
+                   SETTING_PROP_ENABLER(prop_create(c, "canAdjustVolume")),
                    NULL);
 
   mp->mp_setting_sv_delta =
@@ -1552,6 +1567,21 @@ update_sv_delta(void *opaque, int v)
   media_pipe_t *mp = opaque;
   mp->mp_svdelta = v * 1000;
   TRACE(TRACE_DEBUG, "SVSYNC", "Set to %ds", v);
+}
+
+
+/**
+ *
+ */
+static void
+update_audio_volume(void *opaque, int value)
+{
+  media_pipe_t *mp = opaque;
+
+  media_buf_t *mb = media_buf_alloc_locked(mp, 0);
+  mb->mb_data_type = MB_CTRL_SET_VOLUME;
+  mb->mb_data32 = value;
+  mb_enq(mp, &mp->mp_audio, mb);
 }
 
 

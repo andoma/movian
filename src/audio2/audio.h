@@ -63,6 +63,9 @@ typedef struct audio_decoder {
   int ad_spdif_frame_size;
   int ad_spdif_frame_alloc;
 
+  double ad_matrix[64];
+  int ad_matrix_loaded;
+  float ad_vol_scale;
 } audio_decoder_t;
 
 audio_class_t *audio_driver_init(void);
